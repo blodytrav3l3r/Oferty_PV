@@ -247,6 +247,179 @@ function _excelGetVisibleCell(row, visibleIdx) {
     return row.children[visibleIdx] || null;
 }
 
+/* ===== BULK-PASTE GUARD: snapshot + rowMap + liczniki (anti-loss) =====
+ * SSoT podczas paste: wells[] + pasteFiltered[] (zamrożona mapa adresowania).
+ * DOM służy tylko do odczytu aktualnego TR. Brak TR ≠ utrata danych (model-only).
+ * Invariant raportu: applied + locked + unsupported === total (mismatches to flaga
+ * jakości części applied, nie osobna partycja). */
+function _excelSnapshotFiltered() {
+    try {
+        if (typeof _excelGetFilteredIndexes === 'function') return [..._excelGetFilteredIndexes()];
+    } catch (_e) {}
+    return [];
+}
+/* Jednorazowy skan kontenera tabeli na tick → Map<wIdx, TR>. Zakres ograniczony do
+ * kontenera (nie document-global), odświeżany co tick (chunk 50). */
+function _excelBuildRowMap() {
+    const map = new Map();
+    try {
+        if (typeof document === 'undefined') return map;
+        const scope = document.getElementById && document.getElementById('excel-table-container');
+        const list =
+            scope && scope.querySelectorAll
+                ? scope.querySelectorAll('tr[data-widx]')
+                : document.querySelectorAll('tr[data-widx]');
+        for (let i = 0; i < (list ? list.length : 0); i++) {
+            const tr = list[i];
+            const w = tr && tr.getAttribute ? parseInt(tr.getAttribute('data-widx'), 10) : NaN;
+            if (!isNaN(w) && !map.has(w)) map.set(w, tr);
+        }
+    } catch (_e) {}
+    return map;
+}
+/* Adresowanie wiersza: najpierw rowMap; pozycyjny fallback TYLKO gdy data-widx
+ * się zgadza (bez weryfikacji przy wirtualizacji/filtrze wskazywałby złą studnię). */
+function _excelResolvePasteRow(rowMap, visibleRows, si, modelWIdx) {
+    if (rowMap) {
+        const hit = rowMap.get(modelWIdx);
+        if (hit) return hit;
+    }
+    const cand = visibleRows ? visibleRows[si] : null;
+    if (cand && typeof cand.getAttribute === 'function') {
+        const w = parseInt(cand.getAttribute('data-widx'), 10);
+        if (w === modelWIdx) return cand;
+    }
+    return null;
+}
+/* Logical → deskryptor kolumny (układ: 0-6 stałe, 7.. przejścia, 2 gap, właz,
+ * komponenty, Hdenn, Uszczelki, [redukcja], kineta, psia buda, akcje). */
+function _excelLogicalToColumn(logical) {
+    if (typeof logical !== 'number' || isNaN(logical) || logical < 0) return { kind: 'unknown' };
+    if (logical <= 2) return { kind: 'structural' };
+    if (logical === 3) return { kind: 'name' };
+    if (logical === 4) return { kind: 'rzWlazu' };
+    if (logical === 5) return { kind: 'rzDna' };
+    if (logical === 6) return { kind: 'readonly' };
+    const maxTr =
+        typeof _excelMaxTransitions !== 'undefined' && _excelMaxTransitions[_excelActiveTab]
+            ? _excelMaxTransitions[_excelActiveTab]
+            : 1;
+    const prefixLen = 10 + maxTr * 4;
+    if (logical >= 7 && logical < 7 + maxTr * 4) {
+        return {
+            kind: 'przejscie',
+            trIdx: Math.floor((logical - 7) / 4),
+            subType: (logical - 7) % 4
+        };
+    }
+    if (logical === 7 + maxTr * 4 || logical === 8 + maxTr * 4) return { kind: 'readonly' }; // gap +/- (brak danych)
+    if (logical === prefixLen - 1) {
+        let products = null;
+        try {
+            if (
+                typeof _excelBuildComponentColumns === 'function' &&
+                typeof _excelGetReferenceWell === 'function'
+            ) {
+                const all = _excelBuildComponentColumns(
+                    _excelActiveTab,
+                    _excelGetReferenceWell(_excelActiveTab)
+                );
+                const wlaz = (all || []).find(function (c) {
+                    return c.componentType === 'wlaz';
+                });
+                if (wlaz) products = wlaz.products || [];
+            }
+        } catch (_e) {}
+        return { kind: 'wlaz', products: products };
+    }
+    try {
+        const all =
+            typeof _excelBuildComponentColumns === 'function' &&
+            typeof _excelGetReferenceWell === 'function'
+                ? _excelBuildComponentColumns(
+                      _excelActiveTab,
+                      _excelGetReferenceWell(_excelActiveTab)
+                  )
+                : null;
+        const compLen = all ? all.length : 0;
+        if (logical >= prefixLen && logical < prefixLen + compLen)
+            return { kind: 'comp', col: all[logical - prefixLen] };
+        const compEnd = prefixLen + compLen;
+        if (logical >= compEnd) {
+            const hasReduction =
+                ['1200', '1500', '2000', '2500', 'styczne'].indexOf(String(_excelActiveTab)) >= 0;
+            let t = logical - compEnd; // 0 Hdenn, 1 Uszczelki, … (auto, readonly)
+            if (t === 0 || t === 1) return { kind: 'readonly' };
+            t -= 2;
+            if (hasReduction) {
+                if (t === 0) return { kind: 'redukcja' };
+                t -= 1;
+            }
+            if (t === 0) return { kind: 'kineta' };
+            if (t === 1) return { kind: 'psia' };
+            return { kind: 'readonly' }; // akcje i poza zakresem
+        }
+    } catch (_e) {}
+    return { kind: 'unknown' };
+}
+function _excelPasteStatsNew() {
+    return { total: 0, applied: 0, locked: 0, unsupported: 0 };
+}
+/* Zliczanie per komórka do ctx.stats (brak ctx = ścieżki fill/cut — bez liczenia). */
+function _excelPasteCount(ctx, status) {
+    if (!ctx) return status;
+    if (!ctx.stats) ctx.stats = _excelPasteStatsNew();
+    ctx.stats.total++;
+    if (status === 'locked') ctx.stats.locked++;
+    else if (status === 'unsupported') ctx.stats.unsupported++;
+    else ctx.stats.applied++;
+    return status;
+}
+/* Ciche pominięcia też wchodzą do partycji (jako unsupported — niezastosowane).
+ * Obejmuje: wiersz poza snapshotem, kolumnę bez mapy semantycznej, lukę w seq.
+ * Bez ctx (fill/cut, stare testy) — no-op. */
+function _excelPasteCountSkipped(ctx, n) {
+    if (!ctx || !n || n <= 0) return;
+    if (!ctx.stats) ctx.stats = _excelPasteStatsNew();
+    ctx.stats.total += n;
+    ctx.stats.unsupported += n;
+}
+function _excelResolveWlazProductId(desc, valStr) {
+    const v = String(valStr == null ? '' : valStr).trim();
+    if (!v) return '';
+    const pool = (desc && desc.products) || [];
+    for (let i = 0; i < pool.length; i++) if (String(pool[i].id) === v) return pool[i].id;
+    const low = v.toLowerCase();
+    for (let i = 0; i < pool.length; i++) {
+        if (
+            String(pool[i].name || '')
+                .trim()
+                .toLowerCase() === low
+        )
+            return pool[i].id;
+    }
+    return null;
+}
+/* Czy logical leży w zakresie kolumn przejść (7 .. 7+maxTr*4-1).
+ * Strażnik ścieżki model-only: bez niego gałąź przejść łapała też kolumny
+ * komponentów i tail (wszystkie >= 7) i po cichu gubiła wklejane ilości. */
+function _excelModelLogicalIsPrzejscie(effLogical) {
+    if (typeof effLogical !== 'number' || isNaN(effLogical) || effLogical < 7) return false;
+    const maxTr =
+        typeof _excelMaxTransitions !== 'undefined' && _excelMaxTransitions[_excelActiveTab]
+            ? _excelMaxTransitions[_excelActiveTab]
+            : 1;
+    return effLogical < 7 + maxTr * 4;
+}
+function _excelParsePasteBoolean(valStr) {
+    const v = String(valStr == null ? '' : valStr)
+        .trim()
+        .toLowerCase();
+    if (['true', '1', 'tak', 't', 'x', '✓', '✔', 'yes', 'y', 'on'].indexOf(v) >= 0) return true;
+    if (['', 'false', '0', 'nie', 'n', 'no', 'off'].indexOf(v) >= 0) return false;
+    return null;
+}
+
 if (typeof window !== 'undefined') {
     window._excelPasteMismatches = [];
     window._excelMismatchIndex = null;
@@ -1223,10 +1396,10 @@ function _excelBuildSemanticMap(headerParts, dn) {
     }
     return map;
 }
-function _excelPasteSemantic(lines, visibleRows, map, ctx) {
+function _excelPasteSemantic(lines, visibleRows, map, ctx, snapshot) {
     // ctx opcjonalny — F1 lokalny cache dla Rodzaj/Średnica
-    const _filtered =
-        typeof _excelGetFilteredIndexes === 'function' ? _excelGetFilteredIndexes() : [];
+    const _filtered = Array.isArray(snapshot) ? snapshot : _excelSnapshotFiltered();
+    const _rowMap = _excelBuildRowMap();
     let _startFilteredIdx = 0;
     if (
         visibleRows &&
@@ -1239,31 +1412,45 @@ function _excelPasteSemantic(lines, visibleRows, map, ctx) {
         if (pos >= 0) _startFilteredIdx = pos;
     }
     for (let si = 0; si < lines.length; si++) {
-        const modelWIdx = _filtered[_startFilteredIdx + si];
-        if (modelWIdx === undefined || !wells[modelWIdx]) continue;
         const parts = lines[si].split('\t');
-        const row = visibleRows ? visibleRows[si] : null;
+        const modelWIdx = _filtered[_startFilteredIdx + si];
+        if (modelWIdx === undefined || !wells[modelWIdx]) {
+            _excelPasteCountSkipped(ctx, parts.length);
+            continue;
+        }
+        const row = _excelResolvePasteRow(_rowMap, visibleRows, si, modelWIdx);
         for (let ci = 0; ci < parts.length; ci++) {
             const targetCol = map[ci];
-            if (targetCol == null) continue;
+            if (targetCol == null) {
+                _excelPasteCountSkipped(ctx, 1);
+                continue;
+            }
             const targetVal = parts[ci].replace(/\r/g, '').trim();
             const tdEl = row ? _excelGetCellByLogical(row, targetCol) : null;
             const target = tdEl ? tdEl.querySelector('input, select') : null;
-            _excelSetModelCellValue(modelWIdx, targetCol, targetVal, ctx, target);
+            _excelPasteCount(
+                ctx,
+                _excelSetModelCellValue(modelWIdx, targetCol, targetVal, ctx, target)
+            );
         }
     }
 }
-function _excelPasteSemanticBatch(lines, visibleRows, map, doneCallback, ctx) {
+function _excelPasteSemanticBatch(lines, visibleRows, map, doneCallback, ctx, snapshot) {
     const CHUNK = 50;
     let idx = 0;
     const total = lines.length;
     if (total < 100) {
-        _excelPasteSemantic(lines, visibleRows, map, ctx);
+        _excelPasteSemantic(
+            lines,
+            visibleRows,
+            map,
+            ctx,
+            Array.isArray(snapshot) ? snapshot : _excelSnapshotFiltered()
+        );
         if (doneCallback) doneCallback();
         return;
     }
-    const _filtered =
-        typeof _excelGetFilteredIndexes === 'function' ? _excelGetFilteredIndexes() : [];
+    const _filtered = Array.isArray(snapshot) ? snapshot : _excelSnapshotFiltered();
     let _startFilteredIdx = 0;
     if (
         visibleRows &&
@@ -1281,19 +1468,29 @@ function _excelPasteSemanticBatch(lines, visibleRows, map, doneCallback, ctx) {
             _excelCancelPasteBatch();
             return;
         }
+        const _rowMap = _excelBuildRowMap(); // świeża mapa co tick (chunk 50)
         const end = Math.min(idx + CHUNK, total);
         for (; idx < end; idx++) {
-            const modelWIdx = _filtered[_startFilteredIdx + idx];
-            if (modelWIdx === undefined || !wells[modelWIdx]) continue;
             const parts = lines[idx].split('\t');
-            const row = visibleRows ? visibleRows[idx] : null;
+            const modelWIdx = _filtered[_startFilteredIdx + idx];
+            if (modelWIdx === undefined || !wells[modelWIdx]) {
+                _excelPasteCountSkipped(ctx, parts.length);
+                continue;
+            }
+            const row = _excelResolvePasteRow(_rowMap, visibleRows, idx, modelWIdx);
             for (let ci = 0; ci < parts.length; ci++) {
                 const targetCol = map[ci];
-                if (targetCol == null) continue;
+                if (targetCol == null) {
+                    _excelPasteCountSkipped(ctx, 1);
+                    continue;
+                }
                 const targetVal = parts[ci].replace(/\r/g, '').trim();
                 const tdEl = row ? _excelGetCellByLogical(row, targetCol) : null;
                 const target = tdEl ? tdEl.querySelector('input, select') : null;
-                _excelSetModelCellValue(modelWIdx, targetCol, targetVal, ctx, target);
+                _excelPasteCount(
+                    ctx,
+                    _excelSetModelCellValue(modelWIdx, targetCol, targetVal, ctx, target)
+                );
             }
         }
         _excelShowPasteProgress(idx, total);
@@ -1464,6 +1661,15 @@ function _excelHandlePaste(e) {
     let _batched = false;
     // F1 lokalny ctx jednego paste — nie global, przekazywany do Sync/Batch/Semantic
     const _pasteCtx = typeof _excelBuildPasteCache === 'function' ? _excelBuildPasteCache() : null;
+    if (_pasteCtx) _pasteCtx.stats = _excelPasteStatsNew();
+    /* Zamrożona mapa adresowania na cały paste (wells[] + pasteFiltered[] = SSoT,
+       DOM tylko do odczytu). Snapshot PO ewentualnym auto-tworzeniu studni —
+       gałąź default resetuje _pasteFiltered po dopisaniu studni. */
+    let _pasteFiltered = null;
+    const _ensurePasteFiltered = function () {
+        if (!_pasteFiltered) _pasteFiltered = _excelSnapshotFiltered();
+        return _pasteFiltered;
+    };
     const _finishPaste = function () {
         // batch finalize: zachowaj semantykę change handlerów raz dla affected wells (Q1)
         if (_pasteCtx)
@@ -1502,6 +1708,39 @@ function _excelHandlePaste(e) {
                 if (window._excelPasteMismatches && window._excelPasteMismatches.length > 0)
                     _excelShowMismatchModal(window._excelPasteMismatches);
             }, 120);
+        }
+        /* Raport kompletności: applied + locked + unsupported === total.
+           Mismatches to flaga jakości części applied, nie osobna partycja. */
+        if (_pasteCtx && _pasteCtx.stats && _pasteCtx.stats.total > 0) {
+            const _st = _pasteCtx.stats;
+            if (
+                _st.applied + _st.locked + _st.unsupported !== _st.total &&
+                typeof console !== 'undefined' &&
+                console.warn
+            ) {
+                try {
+                    console.warn('[Excel paste] invariant applied+locked+unsupported!==total', _st);
+                } catch (_e) {}
+            }
+            if (typeof _excelInvalidateFilteredIndexes === 'function') {
+                try {
+                    _excelInvalidateFilteredIndexes();
+                } catch (_e) {}
+            }
+            if (typeof showToast === 'function') {
+                const _extra = [];
+                if (_st.locked > 0) _extra.push('zablokowanych: ' + _st.locked);
+                if (_st.unsupported > 0) _extra.push('pominiętych: ' + _st.unsupported);
+                showToast(
+                    'Wklejono ' +
+                        _st.applied +
+                        ' z ' +
+                        _st.total +
+                        ' komórek' +
+                        (_extra.length > 0 ? ' (' + _extra.join(', ') + ')' : ''),
+                    _st.unsupported + _st.locked > 0 ? 'warning' : 'success'
+                );
+            }
         }
         if (typeof _excelAutoSelectEnabled !== 'undefined' && _excelAutoSelectEnabled) {
             const toAuto = [];
@@ -1678,11 +1917,33 @@ function _excelHandlePaste(e) {
             _batched = lines.length > 100;
             if (_batched) {
                 if (_pasteCtx)
-                    _excelPasteBatch(lines, visibleRows, _firstCol, _finishPaste, _pasteCtx);
-                else _excelPasteBatch(lines, visibleRows, _firstCol, _finishPaste);
+                    _excelPasteBatch(
+                        lines,
+                        visibleRows,
+                        _firstCol,
+                        _finishPaste,
+                        _pasteCtx,
+                        _ensurePasteFiltered()
+                    );
+                else
+                    _excelPasteBatch(
+                        lines,
+                        visibleRows,
+                        _firstCol,
+                        _finishPaste,
+                        null,
+                        _ensurePasteFiltered()
+                    );
             } else {
-                if (_pasteCtx) _excelPasteSync(lines, visibleRows, _firstCol, _pasteCtx);
-                else _excelPasteSync(lines, visibleRows, _firstCol);
+                if (_pasteCtx)
+                    _excelPasteSync(
+                        lines,
+                        visibleRows,
+                        _firstCol,
+                        _pasteCtx,
+                        _ensurePasteFiltered()
+                    );
+                else _excelPasteSync(lines, visibleRows, _firstCol, null, _ensurePasteFiltered());
             }
         } else if (_excelSelectedCols.length > 0) {
             const cols = [..._excelSelectedCols].sort(function (a, b) {
@@ -1710,23 +1971,75 @@ function _excelHandlePaste(e) {
                             visibleRows,
                             _semanticMap,
                             _finishPaste,
-                            _pasteCtx
+                            _pasteCtx,
+                            _ensurePasteFiltered()
                         );
-                    else _excelPasteSemanticBatch(lines, visibleRows, _semanticMap, _finishPaste);
+                    else
+                        _excelPasteSemanticBatch(
+                            lines,
+                            visibleRows,
+                            _semanticMap,
+                            _finishPaste,
+                            null,
+                            _ensurePasteFiltered()
+                        );
                 } else {
-                    if (_pasteCtx) _excelPasteSemantic(lines, visibleRows, _semanticMap, _pasteCtx);
-                    else _excelPasteSemantic(lines, visibleRows, _semanticMap);
+                    if (_pasteCtx)
+                        _excelPasteSemantic(
+                            lines,
+                            visibleRows,
+                            _semanticMap,
+                            _pasteCtx,
+                            _ensurePasteFiltered()
+                        );
+                    else
+                        _excelPasteSemantic(
+                            lines,
+                            visibleRows,
+                            _semanticMap,
+                            null,
+                            _ensurePasteFiltered()
+                        );
                 }
                 if (!_batched) _finishPaste();
                 _batched = true;
             } else {
                 if (_batched) {
                     if (_pasteCtx)
-                        _excelPasteBatch(lines, visibleRows, cols[0] || 3, _finishPaste, _pasteCtx);
-                    else _excelPasteBatch(lines, visibleRows, cols[0] || 3, _finishPaste);
+                        _excelPasteBatch(
+                            lines,
+                            visibleRows,
+                            cols[0] || 3,
+                            _finishPaste,
+                            _pasteCtx,
+                            _ensurePasteFiltered()
+                        );
+                    else
+                        _excelPasteBatch(
+                            lines,
+                            visibleRows,
+                            cols[0] || 3,
+                            _finishPaste,
+                            null,
+                            _ensurePasteFiltered()
+                        );
                 } else {
-                    if (_pasteCtx) _excelPasteSync(lines, visibleRows, cols[0] || 3, _pasteCtx);
-                    else _excelPasteSync(lines, visibleRows, cols[0] || 3);
+                    if (_pasteCtx)
+                        _excelPasteSync(
+                            lines,
+                            visibleRows,
+                            cols[0] || 3,
+                            _pasteCtx,
+                            _ensurePasteFiltered()
+                        );
+                    else
+                        _excelPasteSync(
+                            lines,
+                            visibleRows,
+                            cols[0] || 3,
+                            null,
+                            _ensurePasteFiltered()
+                        );
                 }
                 if (!_batched) _finishPaste();
                 _batched = true;
@@ -1821,6 +2134,8 @@ function _excelHandlePaste(e) {
                                 ? _excelGetFilteredIndexes()
                                 : [];
                         availableRows = Math.max(0, _updatedFiltered.length - _startPosInFiltered);
+                        /* Studnie dopisane — snapshot adresowania buduj PO tym punkcie. */
+                        _pasteFiltered = null;
                     }
                 } else {
                     lines = lines.slice(0, availableRows);
@@ -1841,12 +2156,35 @@ function _excelHandlePaste(e) {
                             visibleRows,
                             _semanticMap,
                             _finishPaste,
-                            _pasteCtx
+                            _pasteCtx,
+                            _ensurePasteFiltered()
                         );
-                    else _excelPasteSemanticBatch(lines, visibleRows, _semanticMap, _finishPaste);
+                    else
+                        _excelPasteSemanticBatch(
+                            lines,
+                            visibleRows,
+                            _semanticMap,
+                            _finishPaste,
+                            null,
+                            _ensurePasteFiltered()
+                        );
                 } else {
-                    if (_pasteCtx) _excelPasteSemantic(lines, visibleRows, _semanticMap, _pasteCtx);
-                    else _excelPasteSemantic(lines, visibleRows, _semanticMap);
+                    if (_pasteCtx)
+                        _excelPasteSemantic(
+                            lines,
+                            visibleRows,
+                            _semanticMap,
+                            _pasteCtx,
+                            _ensurePasteFiltered()
+                        );
+                    else
+                        _excelPasteSemantic(
+                            lines,
+                            visibleRows,
+                            _semanticMap,
+                            null,
+                            _ensurePasteFiltered()
+                        );
                 }
                 if (!_batched) _finishPaste();
                 _batched = true; // suppress duplicate _finishPaste in finally
@@ -1857,14 +2195,17 @@ function _excelHandlePaste(e) {
                         visibleRows,
                         colIdx,
                         _batched ? _finishPaste : null,
-                        _pasteCtx
+                        _pasteCtx,
+                        _ensurePasteFiltered()
                     );
                 else
                     (_batched ? _excelPasteBatch : _excelPasteSync)(
                         lines,
                         visibleRows,
                         colIdx,
-                        _batched ? _finishPaste : null
+                        _batched ? _finishPaste : null,
+                        null,
+                        _ensurePasteFiltered()
                     );
             }
         }
@@ -1874,7 +2215,8 @@ function _excelHandlePaste(e) {
            pierwszym tickiem i każda komórka pchała osobny snapshot undo. */
         if (!_batched) _finishPaste();
     }
-    showToast('Wklejono', 'info');
+    /* Ścieżka sync raportuje szczegółowo w _finishPaste; tu tylko sygnał startu batcha async. */
+    if (_batched) showToast('Wklejanie w tle...', 'info');
 }
 
 /* ===== BATCH PASTE (async chunked) ===== */
@@ -1923,20 +2265,20 @@ function _excelCancelPasteBatch() {
  * @param {number} startColIdx
  * @param {Function|null} doneCallback
  * @param {*} [ctx] - F1 lokalny cache, przekazywany do _excelSetCellValue
+ * @param {number[]|null} [snapshot] - zamrożona mapa adresowania (pasteFiltered)
  */
-function _excelPasteBatch(lines, visibleRows, startColIdx, doneCallback, ctx) {
+function _excelPasteBatch(lines, visibleRows, startColIdx, doneCallback, ctx, snapshot) {
     const CHUNK = 50;
     let idx = 0;
     const total = lines.length;
     const seqBatch = ctx && ctx.seq ? ctx.seq : null;
     const startPosBatch = seqBatch ? _excelFindSeqPosByVis(seqBatch, startColIdx) : -1;
     if (total < 100) {
-        _excelPasteSync(lines, visibleRows, startColIdx, ctx);
+        _excelPasteSync(lines, visibleRows, startColIdx, ctx, snapshot);
         if (doneCallback) doneCallback();
         return;
     }
-    const _filtered =
-        typeof _excelGetFilteredIndexes === 'function' ? _excelGetFilteredIndexes() : [];
+    const _filtered = Array.isArray(snapshot) ? snapshot : _excelSnapshotFiltered();
     let _startFilteredIdx = 0;
     if (visibleRows && visibleRows.length > 0 && visibleRows[0]) {
         const firstWIdx = parseInt(visibleRows[0].getAttribute('data-widx'), 10);
@@ -1949,18 +2291,25 @@ function _excelPasteBatch(lines, visibleRows, startColIdx, doneCallback, ctx) {
             _excelCancelPasteBatch();
             return;
         }
+        const _rowMap = _excelBuildRowMap(); // świeża mapa co tick (chunk 50)
         const end = Math.min(idx + CHUNK, total);
         for (; idx < end; idx++) {
-            const modelWIdx = _filtered[_startFilteredIdx + idx];
-            if (modelWIdx === undefined || !wells[modelWIdx]) continue;
             const line = lines[idx];
             const parts = line.split('\t');
-            const row = visibleRows ? visibleRows[idx] : null;
+            const modelWIdx = _filtered[_startFilteredIdx + idx];
+            if (modelWIdx === undefined || !wells[modelWIdx]) {
+                _excelPasteCountSkipped(ctx, parts.length);
+                continue;
+            }
+            const row = _excelResolvePasteRow(_rowMap, visibleRows, idx, modelWIdx);
             parts.forEach(function (v, ci) {
                 let visIdx, logical;
                 if (seqBatch && startPosBatch >= 0) {
                     const entry = seqBatch[startPosBatch + ci];
-                    if (!entry) return;
+                    if (!entry) {
+                        _excelPasteCountSkipped(ctx, 1);
+                        return;
+                    }
                     visIdx = entry.vis;
                     logical = entry.logical;
                 } else {
@@ -1970,7 +2319,10 @@ function _excelPasteBatch(lines, visibleRows, startColIdx, doneCallback, ctx) {
                 const targetVal = v.replace(/\r/g, '').trim();
                 const tdEl = row && row.children ? row.children[visIdx] : null;
                 const target = tdEl ? tdEl.querySelector('input, select') : null;
-                _excelSetModelCellValue(modelWIdx, logical, targetVal, ctx, target);
+                _excelPasteCount(
+                    ctx,
+                    _excelSetModelCellValue(modelWIdx, logical, targetVal, ctx, target)
+                );
             });
         }
         _excelShowPasteProgress(idx, total);
@@ -1990,12 +2342,13 @@ function _excelPasteBatch(lines, visibleRows, startColIdx, doneCallback, ctx) {
  * @param {HTMLElement[]} visibleRows — widoczne wiersze docelowe (pomijają display:none)
  * @param {number} startColIdx — visibleIdx (row.children index, nie logical)
  * @param {*} [ctx] - F1 lokalny cache
+ * @param {number[]|null} [snapshot] - zamrożona mapa adresowania (pasteFiltered)
  */
-function _excelPasteSync(lines, visibleRows, startColIdx, ctx) {
+function _excelPasteSync(lines, visibleRows, startColIdx, ctx, snapshot) {
     const seq = ctx && ctx.seq ? ctx.seq : null;
     const startPos = seq ? _excelFindSeqPosByVis(seq, startColIdx) : -1;
-    const _filtered =
-        typeof _excelGetFilteredIndexes === 'function' ? _excelGetFilteredIndexes() : [];
+    const _filtered = Array.isArray(snapshot) ? snapshot : _excelSnapshotFiltered();
+    const _rowMap = _excelBuildRowMap();
     let _startFilteredIdx = 0;
     if (
         visibleRows &&
@@ -2008,15 +2361,21 @@ function _excelPasteSync(lines, visibleRows, startColIdx, ctx) {
         if (pos >= 0) _startFilteredIdx = pos;
     }
     for (let si = 0; si < lines.length; si++) {
-        const modelWIdx = _filtered[_startFilteredIdx + si];
-        if (modelWIdx === undefined || !wells[modelWIdx]) continue;
         const parts = lines[si].split('\t');
-        const row = visibleRows ? visibleRows[si] : null;
+        const modelWIdx = _filtered[_startFilteredIdx + si];
+        if (modelWIdx === undefined || !wells[modelWIdx]) {
+            _excelPasteCountSkipped(ctx, parts.length);
+            continue;
+        }
+        const row = _excelResolvePasteRow(_rowMap, visibleRows, si, modelWIdx);
         parts.forEach(function (v, ci) {
             let visIdx, logical;
             if (seq && startPos >= 0) {
                 const entry = seq[startPos + ci];
-                if (!entry) return;
+                if (!entry) {
+                    _excelPasteCountSkipped(ctx, 1);
+                    return;
+                }
                 visIdx = entry.vis;
                 logical = entry.logical;
             } else {
@@ -2026,33 +2385,37 @@ function _excelPasteSync(lines, visibleRows, startColIdx, ctx) {
             const targetVal = v.replace(/\r/g, '').trim();
             const tdEl = row && row.children ? row.children[visIdx] : null;
             const target = tdEl ? tdEl.querySelector('input, select') : null;
-            _excelSetModelCellValue(modelWIdx, logical, targetVal, ctx, target);
+            _excelPasteCount(
+                ctx,
+                _excelSetModelCellValue(modelWIdx, logical, targetVal, ctx, target)
+            );
         });
     }
 }
 
-/** Zapewnia bezpośredni zapis wartości do modelu studni (obsługuje wirtualizację, gdy brak elementu TR w DOM) */
+/** Zapewnia bezpośredni zapis wartości do modelu studni (obsługuje wirtualizację, gdy brak elementu TR w DOM).
+ * Zwraca status: 'applied' | 'locked' | 'unsupported' (do licznika raportu paste). */
 function _excelSetModelCellValue(wIdx, effLogical, val, ctx, targetElement) {
-    if (isNaN(wIdx) || wIdx < 0 || typeof wells === 'undefined' || !wells[wIdx]) return;
-    if (typeof _excelIsWellLocked === 'function' && _excelIsWellLocked(wIdx)) return;
+    if (isNaN(wIdx) || wIdx < 0 || typeof wells === 'undefined' || !wells[wIdx])
+        return 'unsupported';
+    if (typeof _excelIsWellLocked === 'function' && _excelIsWellLocked(wIdx)) return 'locked';
 
     if (targetElement) {
-        _excelSetCellValue(targetElement, val, ctx, effLogical);
-        return;
+        return _excelSetCellValue(targetElement, val, ctx, effLogical);
     }
 
     const well = wells[wIdx];
     const valStr = String(val || '').trim();
 
     if (effLogical === 3) {
-        if (valStr) {
-            well.name = valStr;
-            well.numer = valStr.replace(/ (PRE|UTH)$/i, '').trim();
-            if (typeof autoUpdateWellName === 'function') {
-                try {
-                    autoUpdateWellName(well, wIdx);
-                } catch (_e) {}
-            }
+        if (!valStr) return 'unsupported'; /* nazwa studni — nigdy nie kasuj */
+        const well = wells[wIdx];
+        well.name = valStr;
+        well.numer = valStr.replace(/ (PRE|UTH)$/i, '').trim();
+        if (typeof autoUpdateWellName === 'function') {
+            try {
+                autoUpdateWellName(well, wIdx);
+            } catch (_e) {}
         }
     } else if (effLogical === 4) {
         const num = parseFloat(valStr.replace(',', '.'));
@@ -2060,7 +2423,7 @@ function _excelSetModelCellValue(wIdx, effLogical, val, ctx, targetElement) {
     } else if (effLogical === 5) {
         const num = parseFloat(valStr.replace(',', '.'));
         well.rzednaDna = !isNaN(num) ? num : null;
-    } else if (effLogical >= 7) {
+    } else if (_excelModelLogicalIsPrzejscie(effLogical)) {
         const maxTr =
             typeof _excelMaxTransitions !== 'undefined' && _excelMaxTransitions[_excelActiveTab]
                 ? _excelMaxTransitions[_excelActiveTab]
@@ -2257,6 +2620,65 @@ function _excelSetModelCellValue(wIdx, effLogical, val, ctx, targetElement) {
                 }
             }
         }
+    } else {
+        /* Ścieżka model-only dla pozostałych kolumn (właz, komponenty, kineta,
+           psia buda, redukcja) — brak TR w DOM (wirtualizacja) nie gubi danych.
+           Wspólna logika z handlerami DOM (DRY). */
+        const _desc =
+            typeof _excelLogicalToColumn === 'function' ? _excelLogicalToColumn(effLogical) : null;
+        if (!_desc) return 'unsupported';
+        if (
+            _desc.kind === 'readonly' ||
+            _desc.kind === 'structural' ||
+            _desc.kind === 'unknown' ||
+            _desc.kind === 'name' ||
+            _desc.kind === 'rzWlazu' ||
+            _desc.kind === 'rzDna' ||
+            _desc.kind === 'przejscie'
+        )
+            return 'unsupported'; /* obsłużone wyżej; tu tylko tail + komponenty */
+        if (_desc.kind === 'wlaz') {
+            if (typeof _excelWlazModelUpdate !== 'function') return 'unsupported';
+            const _pid = _excelResolveWlazProductId(_desc, valStr);
+            if (_pid === null) return 'unsupported';
+            _excelWlazModelUpdate(wIdx, _pid);
+        } else if (_desc.kind === 'comp' && _desc.col) {
+            if (typeof _excelCompModelUpdate !== 'function') return 'unsupported';
+            const _c = _desc.col;
+            _excelCompModelUpdate(
+                wIdx,
+                _c.componentType,
+                _c.height,
+                valStr,
+                _c.productId || null,
+                _c.fromReduction ? _c.targetDn || 1000 : undefined
+            );
+            if (
+                (_c.componentType === 'krag' || _c.componentType === 'krag_ot') &&
+                typeof _excelBatchKragTouched !== 'undefined'
+            )
+                _excelBatchKragTouched = true;
+        } else if (_desc.kind === 'kineta') {
+            if (typeof _excelKinetaModelUpdate !== 'function') return 'unsupported';
+            _excelKinetaModelUpdate(wIdx, valStr);
+        } else if (_desc.kind === 'psia') {
+            if (typeof _excelPsiaBudaModelUpdate !== 'function') return 'unsupported';
+            const _pb = _excelParsePasteBoolean(valStr);
+            if (_pb === null) return 'unsupported';
+            _excelPsiaBudaModelUpdate(wIdx, _pb);
+        } else if (_desc.kind === 'redukcja') {
+            if (typeof _excelReductionModelUpdate !== 'function') return 'unsupported';
+            const _rv = String(valStr || '').trim();
+            if (_rv !== '') {
+                const _digits = _rv.replace(/\D/g, '');
+                if (!_digits) return 'unsupported';
+                _excelReductionModelUpdate(wIdx, _digits);
+            } else {
+                _excelReductionModelUpdate(wIdx, '');
+            }
+        } else {
+            return 'unsupported';
+        }
     }
 
     if (typeof _excelMarkDirty === 'function') {
@@ -2264,10 +2686,12 @@ function _excelSetModelCellValue(wIdx, effLogical, val, ctx, targetElement) {
             _excelMarkDirty();
         } catch (_e) {}
     }
+    return 'applied';
 }
 
 /**
  * Ustawia wartość komórki (input lub select) i dispatchuje eventy.
+ * Zwraca status ('applied' | 'locked' | 'unsupported'); brak return = applied.
  * @param {Element} target
  * @param {string} val
  * @param {*} [ctx] - lokalny paste ctx z _excelBuildPasteCache (F1); gdy podany, Rodzaj/Srednica ida fast-path bez dispatch
@@ -2278,7 +2702,7 @@ function _excelSetCellValue(target, val, ctx, logicalCol) {
        Obejmuje paste, Delete, Ctrl+X, Ctrl+D, Ctrl+R (wszystkie ida przez to miejsce). */
     const tr = target && target.closest ? target.closest('tr[data-widx]') : null;
     const wIdx = tr ? parseInt(tr.getAttribute('data-widx'), 10) : -1;
-    if (!isNaN(wIdx) && _excelIsWellLocked(wIdx)) return;
+    if (!isNaN(wIdx) && _excelIsWellLocked(wIdx)) return 'locked';
     const td = target && target.closest ? target.closest('td') : null;
     const colIdx =
         td && td.parentElement ? Array.prototype.indexOf.call(td.parentElement.children, td) : -1;
@@ -2495,7 +2919,7 @@ function _excelSetCellValue(target, val, ctx, logicalCol) {
         const clean = String(val || '')
             .replace(/\r/g, '')
             .trim();
-        if (!clean) return;
+        if (!clean) return 'unsupported';
         if (isNaN(wIdx) || !wells[wIdx]) return;
         const well = wells[wIdx];
         well.name = clean;
@@ -2591,7 +3015,7 @@ function _excelSetCellValue(target, val, ctx, logicalCol) {
                     ? _excelMaxTransitions[_excelActiveTab]
                     : 1;
             const trIdx = Math.floor((colIdx - 7) / 4);
-            if (trIdx >= maxTrFb) return; // gap/Wlaz — nie przejście
+            if (trIdx >= maxTrFb) return 'unsupported'; // gap/Wlaz — nie przejście
             const subType = (colIdx - 7) % 4; // 0: rzedna, 1: angle, 2: category, 3: productId
             if (!wells[wIdx].przejscia) wells[wIdx].przejscia = [];
             while (wells[wIdx].przejscia.length <= trIdx) {

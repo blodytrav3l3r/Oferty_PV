@@ -54,6 +54,22 @@ describe('excel multi-column paste — visible semantics (A) with hidden columns
         );
         ctx = context;
     });
+    // Siatka bezpieczeństwa: wspólny ctx z beforeAll — każdy test może podmienić
+    // mocki; afterEach odtwarza bazę niezależnie od przebiegu testu (brak zatruć).
+    let _excelMockBaseline: any = null;
+    afterEach(() => {
+        if (_excelMockBaseline && ctx) {
+            ctx._excelSetCellValue = _excelMockBaseline.setCellValue;
+            ctx._excelIsWellLocked = _excelMockBaseline.isWellLocked;
+            if (typeof ctx._excelTestSetHidden === 'function') ctx._excelTestSetHidden([]);
+        }
+    });
+    beforeAll(() => {
+        _excelMockBaseline = {
+            setCellValue: ctx._excelSetCellValue,
+            isWellLocked: ctx._excelIsWellLocked
+        };
+    });
 
     function makeRow(visibleCount: number, prefixLen = 14) {
         // prefixLen = 10+maxTr*4 with maxTr=1 => 14 (7 +4 +2 +1)
@@ -227,7 +243,11 @@ describe('excel multi-column paste — visible semantics (A) with hidden columns
         ctx._excelTestSetHidden([hiddenId]);
         const visible = ctx._excelFilterVisibleColumns(all);
         const prefixLen = ctx._excelGetComponentPrefixLen();
+        /* Kontrakt model-first: wiersz adresowany przez data-widx, nie pozycję.
+           Bez getAttribute wiersz nie jest przypisywalny do studni (model-only). */
         const row: any = {
+            getAttribute: (a: string) => (a === 'data-widx' ? '0' : null),
+            style: { display: '' },
             children: [] as any[]
         };
         const totalVisible = prefixLen + visible.length + 5;
@@ -250,11 +270,15 @@ describe('excel multi-column paste — visible semantics (A) with hidden columns
             t.value = v;
         };
         // Paste 3 values starting at first visible comp (prefixLen)
-        ctx._excelPasteSync(['x\ty\tz'], [row], prefixLen);
-        expect(written).toEqual(['x', 'y', 'z']);
-        ctx._excelSetCellValue = orig;
-        ctx._excelIsWellLocked = savedLock;
-        ctx._excelTestSetHidden([]);
+        try {
+            ctx._excelPasteSync(['x\ty\tz'], [row], prefixLen);
+            expect(written).toEqual(['x', 'y', 'z']);
+        } finally {
+            // Restore ZAWSZE — mock nie może zatruć kolejnych testów (wspólny ctx beforeAll).
+            ctx._excelSetCellValue = orig;
+            ctx._excelIsWellLocked = savedLock;
+            ctx._excelTestSetHidden([]);
+        }
     });
 
     test('przejście 4 kolumny 2x4: Rz.wlot (10,5 comma), Kąt, Rodzaj, Średnica — kolejność 7,8,9,10, brak shift', () => {

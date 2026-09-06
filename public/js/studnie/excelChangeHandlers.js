@@ -2,6 +2,10 @@
 /* ===== EXCEL CHANGE HANDLERS — Handlery zmian wartości w tabeli studni ===== */
 
 /* ===== HANDLERS ===== */
+/* Cichy tryb paste: model+dirty+remap, ZERO renderów — jeden finalny render robi doneCallback. */
+function _excelPasteQuiet() {
+    return typeof _excelPasteInProgress !== 'undefined' && _excelPasteInProgress;
+}
 function excelOnRzednaChange(wIdx) {
     const row = document.querySelector(`tr[data-widx="${wIdx}"]`);
     if (!row) return;
@@ -30,15 +34,15 @@ function excelOnRzednaChange(wIdx) {
     well.rzednaWlazu = rzWlazu;
     well.rzednaDna = rzDna;
     _excelMarkDirty();
+    // podczas bulk paste nie odpalaj solvera ani preview per komórka — zrobi to batch na końcu (Faza3)
+    if (_excelPasteQuiet()) {
+        _excelMarkAsManual(wIdx);
+        return;
+    }
     _excelRefreshAutoCells(wIdx, row);
     _excelUpdateLeftPreview(wIdx);
     if (typeof _excelImmediatePreview === 'function') _excelImmediatePreview(wIdx);
 
-    // podczas bulk paste nie odpalaj solvera per komórka — zrobi to batch na końcu (Faza3)
-    if (typeof _excelPasteInProgress !== 'undefined' && _excelPasteInProgress) {
-        _excelMarkAsManual(wIdx);
-        return;
-    }
     if (
         _excelAutoSelectEnabled &&
         well.autoSelect !== false &&
@@ -181,6 +185,7 @@ function excelOnPrzejscieChange(wIdx, trIdx, field, value) {
     wells[wIdx].przejscia.forEach((p, i) => {
         p.displayIndex = i;
     });
+    if (_excelPasteQuiet()) return; /* model gotowy; preview/refresh raz w doneCallback */
     _excelUpdateLeftPreview(wIdx);
     if (typeof _excelImmediatePreview === 'function') _excelImmediatePreview(wIdx);
     _excelDebouncedRefresh();
@@ -219,15 +224,15 @@ function excelOnPrzejscieTypeChange(wIdx, trIdx, value) {
         currentWellIndex = savedIdx;
         if (typeof _excelUpdateHeaderProdCodes === 'function') _excelUpdateHeaderProdCodes();
     }
-    if (typeof _excelImmediatePreview === 'function') _excelImmediatePreview(wIdx);
-    _excelDebouncedRefresh();
+    if (typeof _excelImmediatePreview === 'function' && !_excelPasteQuiet())
+        _excelImmediatePreview(wIdx);
+    if (!_excelPasteQuiet()) _excelDebouncedRefresh();
 }
 
-function excelOnWlazChange(wIdx, productId) {
-    if (!_excelGuardWellLocked(wIdx)) return;
-    if (typeof _excelPasteInProgress === 'undefined' || !_excelPasteInProgress)
-        _excelSaveUndoSnapshot(wIdx);
+/* Wspólny rdzeń modelowy włazu — handler DOM i ścieżka model-only wklejania. */
+function _excelWlazModelUpdate(wIdx, productId) {
     const well = wells[wIdx];
+    if (!well) return;
     well.config = (well.config || []).filter((item) => {
         const p =
             typeof getStudnieProductById === 'function'
@@ -242,6 +247,15 @@ function excelOnWlazChange(wIdx, productId) {
             _excelClearResCache(well);
         } catch (_e) {}
     }
+    _excelMarkAsManual(wIdx);
+}
+
+function excelOnWlazChange(wIdx, productId) {
+    if (!_excelGuardWellLocked(wIdx)) return;
+    if (!_excelPasteQuiet()) _excelSaveUndoSnapshot(wIdx);
+    _excelWlazModelUpdate(wIdx, productId);
+    if (_excelPasteQuiet()) return; /* model gotowy; render/preview raz w doneCallback */
+    const well = wells[wIdx];
     _excelMarkManual(well);
     _excelUpdateLeftPreview(wIdx);
     _excelUpdateHeaderProdCodes();
@@ -268,18 +282,11 @@ function _excelWellHasHoles(well) {
     return well.przejscia.some((pr) => !isNaN(parseFloat(pr.rzednaWlaczenia)));
 }
 
-function excelOnCompChange(wIdx, componentType, height, value, productId, redDn) {
-    if (componentType === 'uszczelka') {
-        if (typeof showToast === 'function')
-            showToast(
-                'Uszczelki liczone automatycznie (jak w konfiguratorze) — zmień typ uszczelki w parametrach studni.',
-                'info'
-            );
-        return;
-    }
-    if (!_excelGuardWellLocked(wIdx)) return;
-    if (typeof _excelPasteInProgress === 'undefined' || !_excelPasteInProgress)
-        _excelSaveUndoSnapshot(wIdx);
+/* Wspólny rdzeń modelowy zmiany komponentu — jedno źródło dla handlera DOM
+   (excelOnCompChange) i ścieżki model-only wklejania (brak TR w DOM przy wirtualizacji).
+   Nie dotyka DOM ani nie renderuje; ogon DOM/preview jest w excelOnCompChange.
+   Zwraca otMutated (realna zamiana krag <-> krag_ot). */
+function _excelCompModelUpdate(wIdx, componentType, height, value, productId, redDn) {
     _excelMarkAsManual(wIdx);
     const well = wells[wIdx];
     const newQty = parseInt(value) || 0;
@@ -373,16 +380,6 @@ function excelOnCompChange(wIdx, componentType, height, value, productId, redDn)
         }
         if (otMutated && typeof _excelClearResCache === 'function') _excelClearResCache(well);
     }
-    /* Pełny re-render wywołaj TYLKO wtedy gdy nastąpiła realna zamiana krag <-> krag_ot
-       (otMutated = true). W przeciwnym razie bezwarunkowy re-render niszczy aktywny element
-       <input> podczas wpisywania z klawiatury (oninput). */
-    if (componentType === 'krag' || componentType === 'krag_ot') {
-        if (typeof _excelPasteInProgress !== 'undefined' && _excelPasteInProgress) {
-            if (typeof _excelBatchKragTouched !== 'undefined') _excelBatchKragTouched = true;
-        } else if (otMutated) {
-            _excelMarkManual(well);
-        }
-    }
 
     // Uszczelki jak w głównym konfiguratorze — auto przeliczenie po każdej zmianie nośników
     if (typeof recalcGaskets === 'function') {
@@ -390,6 +387,36 @@ function excelOnCompChange(wIdx, componentType, height, value, productId, redDn)
             recalcGaskets(well);
             _excelClearResCache(well);
         } catch (_e) {}
+    }
+    return otMutated;
+}
+
+function excelOnCompChange(wIdx, componentType, height, value, productId, redDn) {
+    if (componentType === 'uszczelka') {
+        if (typeof showToast === 'function')
+            showToast(
+                'Uszczelki liczone automatycznie (jak w konfiguratorze) — zmień typ uszczelki w parametrach studni.',
+                'info'
+            );
+        return;
+    }
+    if (!_excelGuardWellLocked(wIdx)) return;
+    if (!_excelPasteQuiet()) _excelSaveUndoSnapshot(wIdx);
+    const otMutated = _excelCompModelUpdate(wIdx, componentType, height, value, productId, redDn);
+    if (_excelPasteQuiet()) {
+        /* model+dirty gotowe; pełny re-render odroczony (flaga batch) zamiast rendera per komórka */
+        if (componentType === 'krag' || componentType === 'krag_ot') {
+            if (typeof _excelBatchKragTouched !== 'undefined') _excelBatchKragTouched = true;
+        }
+        return;
+    }
+    const well = wells[wIdx];
+    const newQty = parseInt(value) || 0;
+    /* Pełny re-render wywołaj TYLKO wtedy gdy nastąpiła realna zamiana krag <-> krag_ot
+       (otMutated = true). W przeciwnym razie bezwarunkowy re-render niszczy aktywny element
+       <input> podczas wpisywania z klawiatury (oninput). */
+    if ((componentType === 'krag' || componentType === 'krag_ot') && otMutated) {
+        _excelMarkManual(well);
     }
 
     const row = document.querySelector(`tr[data-widx="${wIdx}"]`);
@@ -453,22 +480,25 @@ function excelOnCompChange(wIdx, componentType, height, value, productId, redDn)
     }
 }
 
-function excelOnKinetaChange(wIdx, value) {
-    if (!_excelGuardWellLocked(wIdx)) return;
-    if (typeof _excelPasteInProgress === 'undefined' || !_excelPasteInProgress)
-        _excelSaveUndoSnapshot(wIdx);
+/* Wspólny rdzeń modelowy kinety — handler DOM i ścieżka model-only wklejania. */
+function _excelKinetaModelUpdate(wIdx, value) {
     _excelMarkAsManual(wIdx);
     wells[wIdx].kineta = value;
     if (typeof syncKineta === 'function') syncKineta(wells[wIdx]);
+}
+
+function excelOnKinetaChange(wIdx, value) {
+    if (!_excelGuardWellLocked(wIdx)) return;
+    if (!_excelPasteQuiet()) _excelSaveUndoSnapshot(wIdx);
+    _excelKinetaModelUpdate(wIdx, value);
+    if (_excelPasteQuiet()) return; /* model gotowy; preview/refresh raz w doneCallback */
     _excelUpdateLeftPreview(wIdx);
     if (typeof _excelImmediatePreview === 'function') _excelImmediatePreview(wIdx);
     _excelDebouncedRefresh();
 }
 
-function excelOnPsiaBudaChange(wIdx, checked) {
-    if (!_excelGuardWellLocked(wIdx)) return;
-    if (typeof _excelPasteInProgress === 'undefined' || !_excelPasteInProgress)
-        _excelSaveUndoSnapshot(wIdx);
+/* Wspólny rdzeń modelowy psiej budy — handler DOM i ścieżka model-only wklejania. */
+function _excelPsiaBudaModelUpdate(wIdx, checked) {
     _excelMarkAsManual(wIdx);
     const well = wells[wIdx];
     if (checked) {
@@ -489,6 +519,13 @@ function excelOnPsiaBudaChange(wIdx, checked) {
         }
     }
     well.psiaBuda = checked;
+}
+
+function excelOnPsiaBudaChange(wIdx, checked) {
+    if (!_excelGuardWellLocked(wIdx)) return;
+    if (!_excelPasteQuiet()) _excelSaveUndoSnapshot(wIdx);
+    _excelPsiaBudaModelUpdate(wIdx, checked);
+    if (_excelPasteQuiet()) return; /* model gotowy; preview/refresh raz w doneCallback */
     const row = document.querySelector(`tr[data-widx="${wIdx}"]`);
     if (row) _excelRefreshAutoCells(wIdx, row);
     _excelUpdateLeftPreview(wIdx);
@@ -496,11 +533,9 @@ function excelOnPsiaBudaChange(wIdx, checked) {
     _excelDebouncedRefresh();
 }
 
-/* ===== Redukcja — pojedynczy select: Brak / DN1000 / DN1200 ===== */
-async function excelOnReductionSelectChange(wIdx, value) {
-    if (!_excelGuardWellLocked(wIdx)) return;
-    if (typeof _excelPasteInProgress === 'undefined' || !_excelPasteInProgress)
-        _excelSaveUndoSnapshot(wIdx);
+/* Wspólny rdzeń modelowy redukcji — handler DOM i ścieżka model-only wklejania.
+   Bez autoSelect (asynchroniczny solver); podczas paste solver odpala raz doneCallback. */
+function _excelReductionModelUpdate(wIdx, value) {
     const well = wells[wIdx];
     if (!well) return;
     if (!value) {
@@ -511,6 +546,16 @@ async function excelOnReductionSelectChange(wIdx, value) {
         well.redukcjaTargetDN = parseInt(value) || 1000;
     }
     _excelClearResCache(well);
+}
+
+/* ===== Redukcja — pojedynczy select: Brak / DN1000 / DN1200 ===== */
+async function excelOnReductionSelectChange(wIdx, value) {
+    if (!_excelGuardWellLocked(wIdx)) return;
+    if (!_excelPasteQuiet()) _excelSaveUndoSnapshot(wIdx);
+    _excelReductionModelUpdate(wIdx, value);
+    const well = wells[wIdx];
+    if (!well) return;
+    if (_excelPasteQuiet()) return; /* model gotowy; solver/render raz w doneCallback */
     _excelUpdateLeftPreview(wIdx);
     if (!well.autoLocked && typeof autoSelectComponents === 'function') {
         well.configSource = 'AUTO';
