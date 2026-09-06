@@ -148,9 +148,20 @@
                             >
                                 <i data-lucide="refresh-cw"></i> Odśwież
                             </button>
+
+                            <button
+                                type="button"
+                                id="zlecenia-clear-filters"
+                                class="btn btn-secondary btn-sm"
+                                onclick="AppZlecenia.clearAllFilters()"
+                                title="Wyczyść wszystkie aktywne filtry"
+                                style="flex-shrink: 0"
+                            >
+                                Wyczyść filtry (0)
+                            </button>
                         </div>
 
-                        <!-- Toolbar dodatkowych filtrów: status, daty, użytkownik, czyszczenie -->
+                        <!-- Toolbar dodatkowych filtrów: status, daty, użytkownik -->
                         <div class="zlecenia-virtual-toolbar" id="zlecenia-toolbar">
                             <div class="zlecenia-filters">
                                 <button
@@ -275,16 +286,6 @@
                                 aria-label="Filtr: ostatnie 30 dni"
                             >
                                 30 dni
-                            </button>
-
-                            <button
-                                type="button"
-                                id="zlecenia-clear-filters"
-                                class="btn btn-secondary btn-sm"
-                                onclick="AppZlecenia.clearAllFilters()"
-                                title="Wyczyść wszystkie aktywne filtry"
-                            >
-                                Wyczyść filtry (0)
                             </button>
                         </div>
 
