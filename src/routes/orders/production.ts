@@ -188,6 +188,12 @@ router.put(
                     ...rest
                 } = o;
                 const dataStr = JSON.stringify(rest);
+                // P0-A: finalny numer produkcyjny do kolumny pod UNIQUE.
+                // Update z undefined nie nadpisuje (Prisma pomija undefined).
+                const prodNum =
+                    typeof (rest as Record<string, unknown>).productionOrderNumber === 'string'
+                        ? ((rest as Record<string, unknown>).productionOrderNumber as string)
+                        : undefined;
 
                 const old = await prisma.production_orders_rel.findUnique({
                     where: { id: docId },
@@ -230,7 +236,8 @@ router.put(
                         elementKey: elementKey || '',
                         createdAt: createdAt || new Date().toISOString(),
                         updatedAt: updatedAt || new Date().toISOString(),
-                        data: dataStr
+                        data: dataStr,
+                        productionNumber: prodNum ?? null
                     },
                     update: {
                         userId: targetUserId,
@@ -241,7 +248,8 @@ router.put(
                         elementKey: elementKey || '',
                         createdAt: createdAt || new Date().toISOString(),
                         updatedAt: updatedAt || new Date().toISOString(),
-                        data: dataStr
+                        data: dataStr,
+                        productionNumber: prodNum
                     }
                 });
                 saved.push(docId);
@@ -250,6 +258,14 @@ router.put(
             searchCache.invalidateNamespace('production');
             res.json({ ok: true, saved });
         } catch (e: unknown) {
+            // P0-A: P2002 = dubel finalnego numeru (UNIQUE) — safety net, nie sterowanie.
+            if ((e as { code?: string }).code === 'P2002') {
+                return res.status(409).json({
+                    error: 'Numer produkcyjny już zajęty — pobierz nowy numer',
+                    code: 'PRODUCTION_NUMBER_CONFLICT',
+                    saved
+                });
+            }
             const message = e instanceof Error ? e.message : 'Unknown error';
             logger.error('Production', 'Błąd serwera', message);
             res.status(500).json({ error: 'Wewnętrzny błąd serwera', saved });
@@ -285,6 +301,11 @@ router.post(
                 ...rest
             } = o;
             const dataStr = JSON.stringify(rest);
+            // P0-A: finalny numer produkcyjny do kolumny pod UNIQUE.
+            const prodNum =
+                typeof (rest as Record<string, unknown>).productionOrderNumber === 'string'
+                    ? ((rest as Record<string, unknown>).productionOrderNumber as string)
+                    : undefined;
 
             const createdAt = normalizeDate(createdAtRaw);
             const updatedAt = normalizeDate(updatedAtRaw);
@@ -333,7 +354,8 @@ router.post(
                     elementKey: elementKey || '',
                     createdAt: createdAt,
                     updatedAt: updatedAt,
-                    data: dataStr
+                    data: dataStr,
+                    productionNumber: prodNum ?? null
                 },
                 update: {
                     userId: targetUserId,
@@ -343,13 +365,21 @@ router.post(
                     elementIndex: elementIndex || 0,
                     elementKey: elementKey || '',
                     updatedAt: updatedAt,
-                    data: dataStr
+                    data: dataStr,
+                    productionNumber: prodNum
                 }
             });
 
             searchCache.invalidateNamespace('production');
             res.json({ ok: true, id: docId });
         } catch (e: unknown) {
+            // P0-A: P2002 = dubel finalnego numeru (UNIQUE) — safety net, nie sterowanie.
+            if ((e as { code?: string }).code === 'P2002') {
+                return res.status(409).json({
+                    error: 'Numer produkcyjny już zajęty — pobierz nowy numer',
+                    code: 'PRODUCTION_NUMBER_CONFLICT'
+                });
+            }
             const message = e instanceof Error ? e.message : 'Unknown error';
             logger.error('Production', 'Błąd POST', message);
             res.status(500).json({ error: 'Wewnętrzny błąd serwera' });

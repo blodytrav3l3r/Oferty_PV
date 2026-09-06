@@ -53,6 +53,17 @@ Pliki: `prisma/schema.prisma`, `prisma/migrations/`, `src/routes/orders/numberin
 Testy: próba dubla finalnego numeru → 409; schemat zawiera constraint.
 Rollback: migracja w dół + restore backupu.
 
+Lekcja wdrożeniowa P0-A (2026-09-07, potwierdzone): silnik `prisma migrate deploy`
+nie ustawia busy_timeout i głoduje przy pracującym serwerze (`database is locked`
+przy każdym podejściu), mimo że zapis przez `node:sqlite` z `busy_timeout=30000`
+przeszedł za 1. razem. Awaryjna ścieżka: SQL przez klienta z busy_timeout, potem
+rejestr w `_prisma_migrations` z checksumą = SHA-256 hex pliku `migration.sql`
+(zweryfikowane zgodnością na `20260902000001`). Przy okazji domknięto zaległą
+`20260905000000_add_prod_well_index` (była w plikach, nie w tabeli) —
+`migrate status` czysty. Wniosek: migracje wdrażać przy zatrzymanym Node albo
+tym trybem awaryjnym; nigdy edytować pliku migracji po nałożeniu (baseline ma
+dryf checksumy — nie ruszać).
+
 ## P0-B Numeracja atomowa — rezerwacja zakresu (uwaga 2)
 
 Pliki: `src/routes/orders/numbering.ts:111-260`, `production.ts:416-444`.
@@ -79,6 +90,12 @@ Pliki: `studnieOrders.crud.ts:159-256`, `ruryOrders.crud.ts`, `production.ts:192
   guard nie może być `SELECT owner → SELECT PZ → DELETE` — warunek biznesowy
   musi być prawdziwy w momencie zapisu, np.
   `DELETE ... WHERE id=? AND ownerId=?`, `UPDATE ... WHERE id=? AND version=?`.
+- Dlaczego brak `SELECT FOR UPDATE`: SQLite nie ma locków wierszowych, tylko
+  poziomy bazy (`SHARED` → `RESERVED` → `EXCLUSIVE`); jeden pisarz blokuje całą
+  bazę, więc parser nie zna składni `FOR UPDATE`. `BEGIN IMMEDIATE` daje co
+  najwyżej RESERVED-lock bazy, nie trzyma wiersza między SELECT a DELETE.
+  Stąd guard musi być predykatem w samym zapisie (0 wierszy = konflikt/brak
+  uprawnień, atomowo), a kolejkę pisarzy kryje `busy_timeout` + WAL.
 - FTS po COMMIT (patrz P0-E). Trucizna na poz. 137 → rollback całości, 0 zapisów.
 
 ## P0-D Optimistic locking jednym SQL (uwaga 4)

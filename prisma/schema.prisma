@@ -409,6 +409,11 @@ model production_orders_rel {
   updatedAt    String?
   data         String?
   creatorId    String? @default("")
+  // P0-A: finalny numer produkcyjny jako kolumna (wcześniej tylko w JSON
+  // data $.productionOrderNumber) — pod UNIQUE(userId, productionNumber).
+  productionNumber String?
+
+  @@unique([userId, productionNumber], map: "uq_prod_user_number")
 
   @@index([userId], map: "idx_prod_user")
   @@index([creatorId], map: "idx_prod_creator")
