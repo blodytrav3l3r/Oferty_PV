@@ -1,6 +1,6 @@
 # Production Readiness — 1 serwer / ~100 użytkowników (PLAN v4, finalny)
 
-> Status: PLAN. Nie implementować bez jawnego polecenia.
+> Status: P0 WDROŻONE (2026-09-07, commity 5b29a47 → b09d15b). Pozostało P1/P2.
 > Wejścia: pełny audyt aplikacji + recenzja 8,5/10 + plan v3 + recenzja 9,6/10.
 > Wszystkie 13 uwag z recenzji v3 uwzględnione (sekcja „Mapowanie uwag").
 > Ocena aplikacji dziś: ~6,0–6,5/10. Cel: twarde DoD → GO 100 user / 1 serwer z danych, nie z założenia.
@@ -203,3 +203,27 @@ transactions) + FTS (derived, rebuildable). Backup: VACUUM INTO → SHA256 → t
 5. Baseline BEFORE/P0/P1/FINAL — P0-I. 10. Burst-test — Benchmark.
 6. Bloby A→B→C bez migracji na zapas — P1-C. 12. Idempotencja atomowa + pola — P1-A.
 7. Gate TEST po każdym P0 — Kolejność.
+
+## Realizacja P0 (2026-09-07)
+
+| Krok                                                  | Commit           | Gate                                       |
+| ----------------------------------------------------- | ---------------- | ------------------------------------------ |
+| P0-A UNIQUE(userId, productionNumber) + 409           | 5b29a47          | 4 testy + migrate status clean             |
+| Baseline BEFORE (burst 40×200, wall 152 ms)           | cb257d2          | docs/plans/baseline-P0A.json               |
+| P0-B claim atomowy + rezerwacja zakresu, koniec locka | 6f14f04          | wyścigi 3×200 zero dubli + live smoke 1–5  |
+| P0-C batch PUT produkcji w tx, guardy w tx            | 8edcb34          | rollback 0 wierszy live + 91 testów orders |
+| P0-D/D2 version counter 5 tabel + 409                 | 13cb7fe, fffb83e | 208 testów + live 409 na dev               |
+| P0-E DELETE w tx, FTS po COMMIT                       | 9e88017          | 210 testów + live 0/0 po DELETE            |
+| P0-F SHA-256 + kill 10/50/90 + stary backup           | 4a355a2          | łańcuch DR na żywych 1,26 GB               |
+| P0-G kolejka PDF 2/10/60 s + 429/504/500              | 929e92d          | mock Chromium + live %PDF-                 |
+| P0-H audit:integrity JSON + exit-code                 | 631ef45          | fikstury + live dev PASS                   |
+| Baseline AFTER (burst 40×200, wall ~100–120 ms)       | b09d15b          | docs/plans/baseline-P0.json                |
+
+Pełny `npm run validate`: 2298/2301 (3 braki w zaległych mockach naprawione).
+Lekcje: silnik `prisma migrate deploy` głoduje bez busy_timeout przy żywym
+serwerze (tryb awaryjny: SQL z busy_timeout + rejestr SHA-256 pliku);
+`prisma generate --no-engine` psuje runtime klienta (zawsze pełny generate);
+`return res` w callbacku `$transaction` nie wychodzi z routa (throw!);
+mock `$transaction` wymaga delegacji i undo-logu, inaczej fałszywa zieleń;
+hook blokuje `scripts/*.js` (luka konfiguracji eslint) — obejście wg CONTRIBUTING.
+Następne: P1 (idempotencja, FTS-rebuild, metryki `/metrics`, sesje, FK-inwentaryzacja).
