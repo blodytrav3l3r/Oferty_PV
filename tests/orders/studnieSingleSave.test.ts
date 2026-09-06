@@ -37,9 +37,13 @@ jest.mock('../../src/prismaClient', () => ({
         orders_studnie_rel: {
             findUnique: jest.fn(),
             upsert: jest.fn(),
-            update: jest.fn()
+            update: jest.fn(),
+            create: jest.fn(),
+            updateMany: jest.fn()
         },
-        $queryRaw: jest.fn()
+        $queryRaw: jest.fn(),
+        // P0-C/D2: PUT batch działa w $transaction — tx deleguje do mocków.
+        $transaction: jest.fn()
     },
     Prisma: {
         empty: '',
@@ -53,7 +57,10 @@ const mockedPrisma = prisma as unknown as {
         findUnique: jest.Mock;
         upsert: jest.Mock;
         update: jest.Mock;
+        create: jest.Mock;
+        updateMany: jest.Mock;
     };
+    $transaction: jest.Mock;
 };
 
 function createApp() {
@@ -65,6 +72,7 @@ function createApp() {
 
 beforeEach(() => {
     jest.resetAllMocks();
+    mockedPrisma.$transaction.mockImplementation(async (fn: any) => fn(prisma));
 });
 
 describe('P1 HIGH — single-order save + optimistic concurrency', () => {
@@ -75,7 +83,7 @@ describe('P1 HIGH — single-order save + optimistic concurrency', () => {
             .send({ data: [{ id: 'o-new', wells: [], updatedAt: 't1' }] });
         expect(res.status).toBe(200);
         expect(res.body).toEqual({ ok: true });
-        expect(mockedPrisma.orders_studnie_rel.upsert).toHaveBeenCalledTimes(1);
+        expect(mockedPrisma.orders_studnie_rel.create).toHaveBeenCalledTimes(1);
     });
 
     test('PUT single ze zgodnym baseUpdatedAt przechodzi', async () => {
@@ -99,7 +107,40 @@ describe('P1 HIGH — single-order save + optimistic concurrency', () => {
             .send({ data: [{ id: 'o1', wells: [], updatedAt: 'old-t' }], baseUpdatedAt: 'old-t' });
         expect(res.status).toBe(409);
         expect(res.body.serverOrder.updatedAt).toBe('srv-t');
-        expect(mockedPrisma.orders_studnie_rel.upsert).not.toHaveBeenCalled();
+        expect(mockedPrisma.orders_studnie_rel.create).not.toHaveBeenCalled();
+        expect(mockedPrisma.orders_studnie_rel.updateMany).not.toHaveBeenCalled();
+    });
+
+    test('PUT ze stalą version → 409 VERSION_CONFLICT (P0-D2)', async () => {
+        mockedPrisma.orders_studnie_rel.findUnique.mockResolvedValue({
+            data: JSON.stringify({ updatedAt: 'srv-t' }),
+            userId: 'user-id',
+            version: 2
+        });
+        mockedPrisma.orders_studnie_rel.updateMany.mockResolvedValue({ count: 0 });
+        const res = await request(createApp())
+            .put('/api/orders-studnie')
+            .send({ data: [{ id: 'o1', wells: [], version: 1 }] });
+        expect(res.status).toBe(409);
+        expect(res.body.code).toBe('VERSION_CONFLICT');
+        expect(res.body.serverVersion).toBe(2);
+    });
+
+    test('PUT ze zgodną version → zapis + bump (P0-D2)', async () => {
+        mockedPrisma.orders_studnie_rel.findUnique.mockResolvedValue({
+            data: JSON.stringify({ updatedAt: 'srv-t' }),
+            userId: 'user-id',
+            version: 1
+        });
+        mockedPrisma.orders_studnie_rel.updateMany.mockResolvedValue({ count: 1 });
+        const res = await request(createApp())
+            .put('/api/orders-studnie')
+            .send({ data: [{ id: 'o1', wells: [], version: 1 }] });
+        expect(res.status).toBe(200);
+        expect(mockedPrisma.orders_studnie_rel.updateMany).toHaveBeenCalledWith({
+            where: { id: 'o1', version: 1 },
+            data: expect.objectContaining({ version: { increment: 1 } })
+        });
     });
 
     test('PATCH ze zgodnym baseUpdatedAt scala i NIE zapisuje baseUpdatedAt', async () => {
@@ -163,7 +204,7 @@ describe('P1 HIGH — single-order save + optimistic concurrency', () => {
         expect(res.status).toBe(200);
         // dane biznesowe bez zmian — pełne wells w bazie
         const savedData = JSON.parse(
-            mockedPrisma.orders_studnie_rel.upsert.mock.calls[0][0].create.data
+            mockedPrisma.orders_studnie_rel.create.mock.calls[0][0].data.data
         );
         expect(savedData.wells).toEqual(wells);
         // audit slim: brak wells, metadane + hash

@@ -11,6 +11,7 @@ import { logger } from '../../utils/logger';
 import { validateData } from '../../validators/authSchema';
 import { WRITE_LIMITER } from '../../middleware/rateLimiters';
 import { canReadDoc, canWriteDoc, resolveWriteUserId } from '../../utils/ownership';
+import { versionedWrite, mapVersionConflict } from '../../utils/versionWrite';
 import { OfferMapped } from '../../types/models';
 import { offersBatchSchema, paginationQuerySchema } from '../../validators/offerSchemas';
 
@@ -43,7 +44,8 @@ router.get('/', requireAuth, async (req, res) => {
                     transportCost: true,
                     clientName: true,
                     investName: true,
-                    clientNumber: true
+                    clientNumber: true,
+                    version: true
                 }
             }),
             prisma.offers_rel.count({ where: roleClause })
@@ -87,7 +89,9 @@ router.get('/', requireAuth, async (req, res) => {
                 investName: offer.investName,
                 clientNumber: offer.clientNumber,
                 items: items,
-                transportCost: offer.transportCost || 0
+                transportCost: offer.transportCost || 0,
+                // P0-D2: baza optimistic lockingu (round-trip bez zmian frontu).
+                version: offer.version ?? 1
             });
         }
 
@@ -149,6 +153,10 @@ router.post(
                 dataStr: string;
                 transportCost: number;
                 items: unknown[];
+                // P0-D2: optimistic locking.
+                exists: boolean;
+                serverVersion: number | null;
+                clientVersion: number | null;
                 fts: {
                     id: string;
                     offer_number: string;
@@ -236,7 +244,11 @@ router.post(
                 const created = normalizeDate(o.createdAt, { exactMs: true });
                 const updated = new Date().toISOString();
                 const offerNumber = o.offer_number || o.number || '';
-                const dataStr = JSON.stringify(o);
+                // P0-D2: version to kolumna, nie blob.
+                const { version: clientVersionRaw, ...blobSrc } = o;
+                const clientVersion =
+                    typeof clientVersionRaw === 'number' ? clientVersionRaw : null;
+                const dataStr = JSON.stringify(blobSrc);
 
                 pendingWrites.push({
                     docId,
@@ -253,6 +265,9 @@ router.post(
                     dataStr,
                     transportCost: o.transportCost || 0,
                     items: o.items || [],
+                    exists: !!old,
+                    serverVersion: (old?.version as number | null | undefined) ?? null,
+                    clientVersion,
                     fts: {
                         id: docId,
                         offer_number: offerNumber,
@@ -266,10 +281,13 @@ router.post(
 
             await prisma.$transaction(async (tx) => {
                 for (const w of pendingWrites) {
-                    await tx.offers_rel.upsert({
-                        where: { id: w.docId },
-                        create: {
-                            id: w.docId,
+                    // P0-D2: predykat wersji w zapisie (kolumna wygrywa z blobem).
+                    await versionedWrite(tx.offers_rel, {
+                        id: w.docId,
+                        exists: w.exists,
+                        serverVersion: w.serverVersion,
+                        clientVersion: w.clientVersion,
+                        createData: {
                             userId: w.effectiveUserId,
                             offer_number: w.offerNumber,
                             state: w.state,
@@ -283,7 +301,7 @@ router.post(
                             history: w.historyStr,
                             data: w.dataStr
                         },
-                        update: {
+                        updateData: {
                             userId: w.effectiveUserId,
                             offer_number: w.offerNumber,
                             state: w.state,
@@ -295,7 +313,8 @@ router.post(
                             transportCost: w.transportCost,
                             history: w.historyStr,
                             data: w.dataStr
-                        }
+                        },
+                        conflictMessage: 'Oferta zmieniona przez innego użytkownika'
                     });
 
                     await tx.offer_items_rel.deleteMany({
@@ -336,6 +355,7 @@ router.post(
             searchCache.invalidateAll();
             res.json({ ok: true, results });
         } catch (e: unknown) {
+            if (mapVersionConflict(res, e)) return;
             const message = e instanceof Error ? e.message : 'Unknown error';
             logger.error('Offers', 'Błąd POST offers', message);
             res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
@@ -367,12 +387,14 @@ router.put(
             const incomingIds: string[] = incoming
                 .map((o: { id?: unknown }) => (typeof o.id === 'string' ? o.id : ''))
                 .filter(Boolean);
+            const putVersions = new Map<string, number>();
             if (incomingIds.length > 0) {
                 const existingDocs =
                     (await prisma.offers_rel.findMany({
                         where: { id: { in: incomingIds } },
-                        select: { id: true, userId: true }
+                        select: { id: true, userId: true, version: true }
                     })) || [];
+                for (const d of existingDocs) putVersions.set(d.id, d.version ?? 1);
                 const forbidden = existingDocs.some(
                     (d: { id: string; userId: string | null }) =>
                         d.userId && !canWriteDoc(authReq.user, d.userId)
@@ -395,6 +417,10 @@ router.put(
                 dataStr: string;
                 transportCost: number;
                 items: unknown[];
+                // P0-D2: optimistic locking.
+                exists: boolean;
+                serverVersion: number | null;
+                clientVersion: number | null;
                 fts: {
                     id: string;
                     offer_number: string | null;
@@ -415,7 +441,12 @@ router.put(
                 const clientNip = o.clientNip || null;
                 const clientNumber = o.clientNumber || null;
                 const created = normalizeDate(o.createdAt, { exactMs: true });
-                const dataStr = JSON.stringify(o);
+                // P0-D2: version to kolumna, nie blob.
+                const { version: clientVersionRaw, ...blobSrc } = o;
+                const clientVersion =
+                    typeof clientVersionRaw === 'number' ? clientVersionRaw : null;
+                const dataStr = JSON.stringify(blobSrc);
+                const serverVersion = putVersions.get(docId) ?? null;
 
                 pendingPut.push({
                     docId,
@@ -428,6 +459,9 @@ router.put(
                     dataStr,
                     transportCost: o.transportCost || 0,
                     items: o.items || [],
+                    exists: serverVersion != null,
+                    serverVersion,
+                    clientVersion,
                     fts: {
                         id: docId,
                         offer_number: o.offer_number || null,
@@ -440,10 +474,13 @@ router.put(
 
             await prisma.$transaction(async (tx) => {
                 for (const w of pendingPut) {
-                    await tx.offers_rel.upsert({
-                        where: { id: w.docId },
-                        create: {
-                            id: w.docId,
+                    // P0-D2: predykat wersji w zapisie (kolumna wygrywa z blobem).
+                    await versionedWrite(tx.offers_rel, {
+                        id: w.docId,
+                        exists: w.exists,
+                        serverVersion: w.serverVersion,
+                        clientVersion: w.clientVersion,
+                        createData: {
                             userId: authReq.user?.id,
                             state: w.state,
                             clientName: w.clientName,
@@ -454,7 +491,7 @@ router.put(
                             transportCost: w.transportCost,
                             data: w.dataStr
                         },
-                        update: {
+                        updateData: {
                             userId: authReq.user?.id,
                             state: w.state,
                             clientName: w.clientName,
@@ -464,7 +501,8 @@ router.put(
                             createdAt: w.created,
                             transportCost: w.transportCost,
                             data: w.dataStr
-                        }
+                        },
+                        conflictMessage: 'Oferta zmieniona przez innego użytkownika'
                     });
 
                     await tx.offer_items_rel.deleteMany({
@@ -501,6 +539,7 @@ router.put(
             searchCache.invalidateAll();
             res.json({ ok: true });
         } catch (e: unknown) {
+            if (mapVersionConflict(res, e)) return;
             const message = e instanceof Error ? e.message : 'Unknown error';
             logger.error('Offers', 'Błąd PUT offers', message);
             res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
@@ -554,7 +593,8 @@ router.post('/:id/duplicate', requireAuth, writeOffersLimiter, async (req, res) 
                 updatedAt: new Date().toISOString(),
                 transportCost: source.transportCost ?? 0,
                 history: '[]',
-                data: source.data || '{}'
+                data: source.data || '{}',
+                version: 1
             }
         });
 

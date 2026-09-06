@@ -39,12 +39,16 @@ jest.mock('../../src/prismaClient', () => ({
             findUnique: jest.fn(),
             upsert: jest.fn(),
             update: jest.fn(),
+            create: jest.fn(),
+            updateMany: jest.fn(),
             deleteMany: jest.fn(),
             findMany: jest.fn()
         },
         $queryRaw: jest.fn(),
         $executeRaw: jest.fn().mockResolvedValue(1),
-        $executeRawUnsafe: jest.fn().mockResolvedValue(1)
+        $executeRawUnsafe: jest.fn().mockResolvedValue(1),
+        // P0-C/D2: PUT batch działa w $transaction — tx deleguje do mocków.
+        $transaction: jest.fn()
     },
     Prisma: {
         empty: '',
@@ -74,6 +78,7 @@ beforeEach(() => {
     mockUser.id = 'user-id';
     mockUser.role = 'user';
     mockUser.subUsers = [];
+    (prisma.$transaction as jest.Mock).mockImplementation(async (fn: any) => fn(prisma));
 });
 
 describe('Rury Orders CRUD', () => {
@@ -84,6 +89,7 @@ describe('Rury Orders CRUD', () => {
         mockUser.id = 'user-id';
         mockUser.role = 'user';
         mockUser.subUsers = [];
+        (prisma.$transaction as jest.Mock).mockImplementation(async (fn: any) => fn(prisma));
         app = createApp();
     });
 
@@ -184,7 +190,7 @@ describe('Rury Orders CRUD', () => {
     describe('PUT /', () => {
         it('tworzy nowe zamówienie (upsert create)', async () => {
             (prisma.orders_rury_rel.findUnique as jest.Mock).mockResolvedValue(null);
-            (prisma.orders_rury_rel.upsert as jest.Mock).mockResolvedValue({});
+            (prisma.orders_rury_rel.create as jest.Mock).mockResolvedValue({});
 
             const res = await request(app)
                 .put('/api/orders-rury')
@@ -202,7 +208,7 @@ describe('Rury Orders CRUD', () => {
 
             expect(res.statusCode).toBe(200);
             expect(res.body.ok).toBe(true);
-            expect(prisma.orders_rury_rel.upsert).toHaveBeenCalled();
+            expect(prisma.orders_rury_rel.create).toHaveBeenCalled();
         });
 
         it('aktualizuje istniejące zamówienie właściciela', async () => {
@@ -211,7 +217,7 @@ describe('Rury Orders CRUD', () => {
                 userId: 'user-id',
                 data: JSON.stringify({ clientName: 'Stary' })
             });
-            (prisma.orders_rury_rel.upsert as jest.Mock).mockResolvedValue({});
+            (prisma.orders_rury_rel.update as jest.Mock).mockResolvedValue({});
 
             const res = await request(app)
                 .put('/api/orders-rury')
@@ -235,7 +241,27 @@ describe('Rury Orders CRUD', () => {
                 .send({ data: [{ id: 'or-1', status: 'accepted' }] });
 
             expect(res.statusCode).toBe(403);
-            expect(prisma.orders_rury_rel.upsert).not.toHaveBeenCalled();
+            expect(prisma.orders_rury_rel.create).not.toHaveBeenCalled();
+            expect(prisma.orders_rury_rel.updateMany).not.toHaveBeenCalled();
+        });
+
+        it('stale version → 409 VERSION_CONFLICT (P0-D2)', async () => {
+            (prisma.orders_rury_rel.findUnique as jest.Mock).mockResolvedValue({
+                id: 'or-1',
+                userId: 'user-id',
+                version: 2,
+                data: '{}'
+            });
+            (prisma.orders_rury_rel.updateMany as jest.Mock).mockResolvedValue({ count: 0 });
+
+            const res = await request(app)
+                .put('/api/orders-rury')
+                .set('x-user-id', 'user-id')
+                .send({ data: [{ id: 'or-1', status: 'accepted', version: 1 }] });
+
+            expect(res.statusCode).toBe(409);
+            expect(res.body.code).toBe('VERSION_CONFLICT');
+            expect(res.body.serverVersion).toBe(2);
         });
     });
 
@@ -355,6 +381,26 @@ describe('Rury Orders CRUD', () => {
                 .send({ status: 'accepted' });
 
             expect(res.statusCode).toBe(404);
+        });
+
+        it('stale version w PATCH → 409 VERSION_CONFLICT (P0-D2)', async () => {
+            (prisma.orders_rury_rel.findUnique as jest.Mock).mockResolvedValue({
+                id: 'or-1',
+                userId: 'user-id',
+                status: 'new',
+                version: 2,
+                data: '{}'
+            });
+            (prisma.orders_rury_rel.updateMany as jest.Mock).mockResolvedValue({ count: 0 });
+
+            const res = await request(app)
+                .patch('/api/orders-rury/or-1')
+                .set('x-user-id', 'user-id')
+                .send({ status: 'accepted', version: 1 });
+
+            expect(res.statusCode).toBe(409);
+            expect(res.body.code).toBe('VERSION_CONFLICT');
+            expect(res.body.serverVersion).toBe(2);
         });
     });
 

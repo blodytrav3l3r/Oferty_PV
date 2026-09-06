@@ -40,4 +40,6 @@ export interface OfferMapped {
     items: OfferItem[];
     transportCost: number;
     history?: unknown[];
+    // P0-D2: baza optimistic lockingu.
+    version?: number | null;
 }

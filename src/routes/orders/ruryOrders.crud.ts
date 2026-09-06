@@ -10,6 +10,7 @@ import { ruryOrdersBatchSchema, ruryOrderUpdateSchema } from '../../validators/o
 import { logger } from '../../utils/logger';
 import { canWriteDoc, canReadWithShare } from '../../utils/ownership';
 import { buildRoleWhereConditionWithShares } from '../../utils/roleFilter';
+import { versionedWrite, mapVersionConflict } from '../../utils/versionWrite';
 import crypto from 'crypto';
 
 const router = express.Router();
@@ -45,9 +46,10 @@ router.get('/', requireAuth, async (req, res) => {
                 offerId: string | null;
                 status: string | null;
                 createdAt: string | null;
+                version: number | null;
                 data: string | null;
             }>
-        >`SELECT id, "userId", "offerId", status, data,
+        >`SELECT id, "userId", "offerId", status, data, version,
             CASE WHEN "createdAt" GLOB '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]'
                 THEN datetime(CAST("createdAt" AS INTEGER)/1000, 'unixepoch')
                 ELSE "createdAt" END as "createdAt"
@@ -62,7 +64,9 @@ router.get('/', requireAuth, async (req, res) => {
                 offerId: o.offerId,
                 status: o.status,
                 createdAt: o.createdAt,
-                ...parsedData
+                ...parsedData,
+                // P0-D2: kolumna wygrywa z blobem.
+                version: o.version ?? 1
             };
         });
 
@@ -118,75 +122,96 @@ router.put(
         try {
             const incoming = req.body.data || [];
 
-            for (const o of incoming) {
-                let docId = o.id;
-                if (!docId) {
-                    docId = crypto.randomUUID();
-                }
+            // P0-C/D2: cały batch w jednej transakcji + predykat wersji.
+            await prisma.$transaction(
+                async (tx) => {
+                    for (const o of incoming) {
+                        let docId = o.id;
+                        if (!docId) {
+                            docId = crypto.randomUUID();
+                        }
 
-                const {
-                    id: _id,
-                    type: _type,
-                    userId: incomingUserId,
-                    offerId,
-                    createdAt: createdAtRaw,
-                    status,
-                    ...rest
-                } = o;
-                const dataStr = JSON.stringify(rest);
+                        const {
+                            id: _id,
+                            type: _type,
+                            userId: incomingUserId,
+                            offerId,
+                            createdAt: createdAtRaw,
+                            status,
+                            version: clientVersionRaw,
+                            ...rest
+                        } = o;
+                        // P0-D2: baza optimistic lockingu — nie trafia do bloba JSON.
+                        const clientVersion =
+                            typeof clientVersionRaw === 'number' ? clientVersionRaw : null;
+                        const dataStr = JSON.stringify(rest);
 
-                const createdAt = normalizeDate(createdAtRaw);
+                        const createdAt = normalizeDate(createdAtRaw);
 
-                const old = await prisma.orders_rury_rel.findUnique({
-                    where: { id: docId },
-                    select: { data: true, userId: true }
-                });
+                        const old = await tx.orders_rury_rel.findUnique({
+                            where: { id: docId },
+                            select: { data: true, userId: true, version: true }
+                        });
 
-                if (old && !canWriteDoc(authReq.user, old.userId)) {
-                    return res.status(403).json({ error: 'Brak uprawnień do tego zamówienia' });
-                }
-                const targetUserId = old?.userId || incomingUserId || authReq.user?.id || '';
-                if (!canWriteDoc(authReq.user, targetUserId)) {
-                    return res.status(403).json({ error: 'Brak uprawnień do tego zamówienia' });
-                }
-                const newData = { ...rest };
+                        if (old && !canWriteDoc(authReq.user, old.userId)) {
+                            throw { status: 403, message: 'Brak uprawnień do tego zamówienia' };
+                        }
+                        const targetUserId =
+                            old?.userId || incomingUserId || authReq.user?.id || '';
+                        if (!canWriteDoc(authReq.user, targetUserId)) {
+                            throw { status: 403, message: 'Brak uprawnień do tego zamówienia' };
+                        }
+                        const newData = { ...rest };
 
-                if (old) {
-                    logAudit(
-                        'order',
-                        docId,
-                        authReq.user?.id || '',
-                        'update',
-                        newData,
-                        parseJsonField<Record<string, unknown>>(old.data, {})
-                    );
-                } else {
-                    logAudit('order', docId, authReq.user?.id || '', 'create', newData);
-                }
+                        if (old) {
+                            logAudit(
+                                'order',
+                                docId,
+                                authReq.user?.id || '',
+                                'update',
+                                newData,
+                                parseJsonField<Record<string, unknown>>(old.data, {})
+                            );
+                        } else {
+                            logAudit('order', docId, authReq.user?.id || '', 'create', newData);
+                        }
 
-                await prisma.orders_rury_rel.upsert({
-                    where: { id: docId },
-                    create: {
-                        id: docId,
-                        userId: targetUserId,
-                        offerId: offerId || '',
-                        createdAt: createdAt,
-                        status: status || 'new',
-                        data: dataStr
-                    },
-                    update: {
-                        userId: targetUserId,
-                        offerId: offerId || '',
-                        createdAt: createdAt,
-                        status: status || 'new',
-                        data: dataStr
+                        // P0-D2: predykat wersji w zapisie (kolumna wygrywa z blobem).
+                        await versionedWrite(tx.orders_rury_rel, {
+                            id: docId,
+                            exists: !!old,
+                            serverVersion: old?.version ?? null,
+                            clientVersion,
+                            createData: {
+                                userId: targetUserId,
+                                offerId: offerId || '',
+                                createdAt: createdAt,
+                                status: status || 'new',
+                                data: dataStr
+                            },
+                            updateData: {
+                                userId: targetUserId,
+                                offerId: offerId || '',
+                                createdAt: createdAt,
+                                status: status || 'new',
+                                data: dataStr
+                            },
+                            conflictMessage: 'Zamówienie zmieniono w międzyczasie'
+                        });
                     }
-                });
-            }
+                },
+                { timeout: 30000 }
+            );
 
             searchCache.invalidateAll();
             res.json({ ok: true });
         } catch (e: unknown) {
+            if (mapVersionConflict(res, e)) return;
+            if ((e as { status?: number }).status === 403) {
+                return res
+                    .status(403)
+                    .json({ error: (e as { message?: string }).message || 'Brak uprawnień' });
+            }
             const message = e instanceof Error ? e.message : 'Unknown error';
             logger.error('Orders', 'Błąd PUT orders-rury', message);
             res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
@@ -216,7 +241,9 @@ router.get('/:id', requireAuth, async (req, res) => {
                 offerId: o.offerId,
                 status: o.status,
                 createdAt: o.createdAt,
-                ...parsedData
+                ...parsedData,
+                // P0-D2: kolumna wygrywa z blobem.
+                version: o.version ?? 1
             }
         });
     } catch (_e: unknown) {
@@ -236,7 +263,7 @@ router.patch(
 
             const o = await prisma.orders_rury_rel.findUnique({
                 where: { id: docId },
-                select: { id: true, userId: true, status: true, data: true }
+                select: { id: true, userId: true, status: true, data: true, version: true }
             });
             const isOwner = o && o.userId === authReq.user?.id;
             const isProParent =
@@ -255,6 +282,9 @@ router.patch(
             delete updatedData.offerId;
             delete updatedData.status;
             delete updatedData.createdAt;
+            // P0-D2: version to kolumna, nie blob.
+            const patchVersion = typeof req.body.version === 'number' ? req.body.version : null;
+            delete updatedData.version;
 
             const newStatus = req.body.status || o.status;
             const newUserId = req.body.userId || o.userId;
@@ -267,14 +297,35 @@ router.patch(
 
             const dataStr = JSON.stringify(updatedData);
 
-            await prisma.orders_rury_rel.update({
-                where: { id: docId },
-                data: {
-                    status: newStatus,
-                    userId: newUserId,
-                    data: dataStr
+            if (patchVersion != null) {
+                // P0-D2: predykat w JEDNYM SQL.
+                const upd = await prisma.orders_rury_rel.updateMany({
+                    where: { id: docId, version: patchVersion },
+                    data: {
+                        status: newStatus,
+                        userId: newUserId,
+                        data: dataStr,
+                        version: { increment: 1 }
+                    }
+                });
+                if (upd.count === 0) {
+                    return res.status(409).json({
+                        error: 'Zamówienie zmieniono w międzyczasie',
+                        code: 'VERSION_CONFLICT',
+                        serverVersion: o.version ?? 1
+                    });
                 }
-            });
+            } else {
+                await prisma.orders_rury_rel.update({
+                    where: { id: docId },
+                    data: {
+                        status: newStatus,
+                        userId: newUserId,
+                        data: dataStr,
+                        version: { increment: 1 }
+                    }
+                });
+            }
 
             logAudit('order', docId, authReq.user?.id || '', 'update', updatedData, oldData);
 

@@ -46,7 +46,8 @@ jest.mock('../../src/prismaClient', () => ({
             upsert: jest.fn(),
             delete: jest.fn(),
             count: jest.fn(),
-            create: jest.fn()
+            create: jest.fn(),
+            updateMany: jest.fn()
         },
         offer_items_rel: {
             findMany: jest.fn(),
@@ -96,6 +97,14 @@ beforeEach(() => {
     mockUser.id = 'user-id';
     mockUser.role = 'user';
     mockUser.subUsers = [];
+    // P0-D2: delegacja tx, żeby ścieżka zapisu naprawdę się wykonywała.
+    (prisma.$transaction as jest.Mock).mockImplementation((cb: (tx: unknown) => unknown) => {
+        // @ts-ignore
+        const prismaMock = jest.requireMock('../../src/prismaClient').default;
+        return cb(prismaMock);
+    });
+    (prisma.offers_rel.create as jest.Mock).mockResolvedValue({});
+    (prisma.offers_rel.updateMany as jest.Mock).mockResolvedValue({ count: 1 });
 });
 
 describe('Rury Offers CRUD — warstwa zapisu', () => {
@@ -205,6 +214,23 @@ describe('Rury Offers CRUD — warstwa zapisu', () => {
             expect(savedHistory[0].items).toEqual([
                 { productId: 'p-1', quantity: 1, discount: 0, price: 10 }
             ]);
+        });
+
+        it('stale version → 409 VERSION_CONFLICT (P0-D2)', async () => {
+            (prisma.offers_rel.findMany as jest.Mock).mockResolvedValue([
+                { ...mockOfferRury, version: 2 }
+            ]);
+            (prisma.offer_items_rel.findMany as jest.Mock).mockResolvedValue([]);
+            (prisma.offers_rel.updateMany as jest.Mock).mockResolvedValue({ count: 0 });
+
+            const res = await request(app)
+                .post('/api/offers')
+                .set('x-user-id', 'user-id')
+                .send({ data: [{ id: 'o-1', status: 'draft', items: [], version: 1 }] });
+
+            expect(res.statusCode).toBe(409);
+            expect(res.body.code).toBe('VERSION_CONFLICT');
+            expect(res.body.serverVersion).toBe(2);
         });
 
         it('zwraca 403 przy edycji cudzej oferty', async () => {

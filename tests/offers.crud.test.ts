@@ -34,6 +34,8 @@ jest.mock('../src/prismaClient', () => ({
             findMany: jest.fn(),
             findUnique: jest.fn(),
             upsert: jest.fn(),
+            create: jest.fn(),
+            updateMany: jest.fn(),
             delete: jest.fn(),
             count: jest.fn()
         },
@@ -41,6 +43,8 @@ jest.mock('../src/prismaClient', () => ({
             findMany: jest.fn(),
             findUnique: jest.fn(),
             upsert: jest.fn(),
+            create: jest.fn(),
+            updateMany: jest.fn(),
             delete: jest.fn(),
             count: jest.fn()
         },
@@ -195,7 +199,7 @@ describe('Offers CRUD Routes', () => {
         it('powinien utworzyć lub zaktualizować ofertę rury (upsert)', async () => {
             (prisma.offers_rel.findMany as jest.Mock).mockResolvedValue([mockOfferRury]);
             (prisma.offer_items_rel.findMany as jest.Mock).mockResolvedValue([mockItem]);
-            (prisma.offers_rel.upsert as jest.Mock).mockResolvedValue({});
+            (prisma.offers_rel.updateMany as jest.Mock).mockResolvedValue({ count: 1 });
             (prisma.offer_items_rel.deleteMany as jest.Mock).mockResolvedValue({});
             (prisma.offer_items_rel.create as jest.Mock).mockResolvedValue({});
             (prisma.offer_items_rel.createMany as jest.Mock).mockResolvedValue({});
@@ -216,8 +220,22 @@ describe('Offers CRUD Routes', () => {
 
             expect(res.statusCode).toBe(200);
             expect(res.body.ok).toBe(true);
-            expect(prisma.offers_rel.upsert).toHaveBeenCalled();
+            expect(prisma.offers_rel.updateMany).toHaveBeenCalled();
             expect(prisma.offer_items_rel.deleteMany).toHaveBeenCalled();
+        });
+
+        it('stale version → 409 VERSION_CONFLICT (P0-D2)', async () => {
+            (prisma.offers_rel.findMany as jest.Mock).mockResolvedValue([mockOfferRury]);
+            (prisma.offer_items_rel.findMany as jest.Mock).mockResolvedValue([mockItem]);
+            (prisma.offers_rel.updateMany as jest.Mock).mockResolvedValue({ count: 0 });
+
+            const res = await request(app)
+                .post('/api/offers')
+                .set('x-user-id', 'user-id')
+                .send({ data: [{ id: 'o-1', status: 'active', items: [], version: 1 }] });
+
+            expect(res.statusCode).toBe(409);
+            expect(res.body.code).toBe('VERSION_CONFLICT');
         });
     });
 
@@ -307,7 +325,7 @@ describe('Offers CRUD Routes', () => {
 
         it('powinien zaktualizować grupowo oferty rur (PUT /)', async () => {
             (prisma.offers_rel.findMany as jest.Mock).mockResolvedValue([]);
-            (prisma.offers_rel.upsert as jest.Mock).mockResolvedValue({});
+            (prisma.offers_rel.create as jest.Mock).mockResolvedValue({});
             (prisma.offer_items_rel.deleteMany as jest.Mock).mockResolvedValue({});
             (prisma.offer_items_rel.create as jest.Mock).mockResolvedValue({});
             (prisma.offer_items_rel.createMany as jest.Mock).mockResolvedValue({});
@@ -321,7 +339,7 @@ describe('Offers CRUD Routes', () => {
         it('powinien zaktualizować grupowo oferty studni (PUT /studnie)', async () => {
             (prisma.offers_studnie_rel.findMany as jest.Mock).mockResolvedValue([]);
             (prisma.$queryRaw as jest.Mock).mockResolvedValue([]);
-            (prisma.offers_studnie_rel.upsert as jest.Mock).mockResolvedValue({});
+            (prisma.offers_studnie_rel.create as jest.Mock).mockResolvedValue({});
             const res = await request(app)
                 .put('/api/offers/studnie')
                 .set('x-user-id', 'user-id')
@@ -359,12 +377,27 @@ describe('Offers CRUD Routes', () => {
                 { id: 's-1', userId: 'user-id' }
             ]);
             (prisma.$queryRaw as jest.Mock).mockResolvedValue([]);
-            (prisma.offers_studnie_rel.upsert as jest.Mock).mockResolvedValue({});
+            (prisma.offers_studnie_rel.updateMany as jest.Mock).mockResolvedValue({ count: 1 });
             const res = await request(app)
                 .put('/api/offers/studnie')
                 .set('x-user-id', 'user-id')
                 .send({ data: [{ id: 's-1', status: 'draft' }] });
             expect(res.statusCode).toBe(200);
+        });
+
+        it('PUT /studnie ze stalą version → 409 VERSION_CONFLICT (P0-D2)', async () => {
+            (prisma.offers_studnie_rel.findMany as jest.Mock).mockResolvedValue([
+                { id: 's-1', userId: 'user-id', version: 2, data: '{}' }
+            ]);
+            (prisma.$queryRaw as jest.Mock).mockResolvedValue([]);
+            (prisma.offers_studnie_rel.updateMany as jest.Mock).mockResolvedValue({ count: 0 });
+            const res = await request(app)
+                .put('/api/offers/studnie')
+                .set('x-user-id', 'user-id')
+                .send({ data: [{ id: 's-1', status: 'draft', version: 1 }] });
+            expect(res.statusCode).toBe(409);
+            expect(res.body.code).toBe('VERSION_CONFLICT');
+            expect(res.body.serverVersion).toBe(2);
         });
     });
 });

@@ -11,6 +11,7 @@ import { observeStudnieOrderDto } from '../../validators/orderSchemas';
 import { canWriteDoc, canReadWithShare } from '../../utils/ownership';
 import { buildRoleWhereConditionWithShares } from '../../utils/roleFilter';
 import { countProductionOrdersForOrder } from '../../utils/productionOrderGuard';
+import { versionedWrite, mapVersionConflict } from '../../utils/versionWrite';
 import crypto from 'crypto';
 import { logger } from '../../utils/logger';
 
@@ -91,9 +92,10 @@ router.get('/', requireAuth, async (req, res) => {
                 offerStudnieId: string | null;
                 status: string | null;
                 createdAt: string | null;
+                version: number | null;
                 data: string | null;
             }>
-        >`SELECT id, "userId", "offerStudnieId", status, data,
+        >`SELECT id, "userId", "offerStudnieId", status, data, version,
             CASE WHEN "createdAt" GLOB '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]'
                 THEN datetime(CAST("createdAt" AS INTEGER)/1000, 'unixepoch')
                 ELSE "createdAt" END as "createdAt"
@@ -108,7 +110,9 @@ router.get('/', requireAuth, async (req, res) => {
                 offerStudnieId: o.offerStudnieId,
                 status: o.status,
                 createdAt: o.createdAt,
-                ...parsedData
+                ...parsedData,
+                // P0-D2: kolumna wygrywa z blobem.
+                version: o.version ?? 1
             };
         });
 
@@ -156,108 +160,144 @@ router.put(
                 }
             }
 
-            for (const o of incoming) {
-                let docId = o.id;
-                if (!docId) {
-                    docId = crypto.randomUUID();
-                }
+            // P0-C/D2: cały batch w jednej transakcji + predykat wersji.
+            await prisma.$transaction(
+                async (tx) => {
+                    for (const o of incoming) {
+                        let docId = o.id;
+                        if (!docId) {
+                            docId = crypto.randomUUID();
+                        }
 
-                const {
-                    id: _id,
-                    type: _type,
-                    userId: incomingUserId,
-                    offerStudnieId,
-                    createdAt: createdAtRaw,
-                    status,
-                    ...rest
-                } = o;
-                const dataStr = JSON.stringify(rest);
+                        const {
+                            id: _id,
+                            type: _type,
+                            userId: incomingUserId,
+                            offerStudnieId,
+                            createdAt: createdAtRaw,
+                            status,
+                            version: clientVersionRaw,
+                            ...rest
+                        } = o;
+                        // P0-D2: baza optimistic lockingu — nie trafia do bloba JSON.
+                        const clientVersion =
+                            typeof clientVersionRaw === 'number' ? clientVersionRaw : null;
+                        const dataStr = JSON.stringify(rest);
 
-                const createdAt = normalizeDate(createdAtRaw);
+                        const createdAt = normalizeDate(createdAtRaw);
 
-                const old = await prisma.orders_studnie_rel.findUnique({
-                    where: { id: docId },
-                    select: { data: true, userId: true }
-                });
+                        const old = await tx.orders_studnie_rel.findUnique({
+                            where: { id: docId },
+                            select: { data: true, userId: true, version: true }
+                        });
 
-                if (old && !canWriteDoc(authReq.user, old.userId)) {
-                    return res.status(403).json({ error: 'Brak uprawnień do tego zamówienia' });
-                }
-                // P1 HIGH: optimistic concurrency dla single-save (data.length === 1).
-                // baseUpdatedAt == null (create) albo zgodny → zapis; rozjazd → 409.
-                const singleBase =
-                    incoming.length === 1
-                        ? (req.body.baseUpdatedAt as string | undefined)
-                        : undefined;
-                if (old && singleBase != null) {
-                    const oldData = parseJsonField<Record<string, unknown>>(old.data, {});
-                    const serverUpdatedAt = oldData['updatedAt'];
-                    if (
-                        typeof serverUpdatedAt === 'string' &&
-                        serverUpdatedAt !== '' &&
-                        serverUpdatedAt !== singleBase
-                    ) {
-                        return res.status(409).json({
-                            error: 'Zamówienie zmieniono w międzyczasie',
-                            serverOrder: {
-                                id: docId,
-                                type: 'order',
-                                userId: old.userId,
-                                ...oldData
+                        if (old && !canWriteDoc(authReq.user, old.userId)) {
+                            throw { status: 403, message: 'Brak uprawnień do tego zamówienia' };
+                        }
+                        // P1 HIGH: optimistic concurrency dla single-save (data.length === 1).
+                        // baseUpdatedAt == null (create) albo zgodny → zapis; rozjazd → 409.
+                        const singleBase =
+                            incoming.length === 1
+                                ? (req.body.baseUpdatedAt as string | undefined)
+                                : undefined;
+                        if (old && singleBase != null) {
+                            const oldData = parseJsonField<Record<string, unknown>>(old.data, {});
+                            const serverUpdatedAt = oldData['updatedAt'];
+                            if (
+                                typeof serverUpdatedAt === 'string' &&
+                                serverUpdatedAt !== '' &&
+                                serverUpdatedAt !== singleBase
+                            ) {
+                                // P0-C: w tx nie ma return res — throw cofa batch.
+                                throw {
+                                    status: 409,
+                                    message: 'Zamówienie zmieniono w międzyczasie',
+                                    serverOrder: {
+                                        id: docId,
+                                        type: 'order',
+                                        userId: old.userId,
+                                        ...oldData
+                                    }
+                                };
                             }
+                        }
+                        const targetUserId =
+                            old?.userId || incomingUserId || authReq.user?.id || '';
+                        if (!canWriteDoc(authReq.user, targetUserId)) {
+                            throw { status: 403, message: 'Brak uprawnień do tego zamówienia' };
+                        }
+                        const newData = { ...rest };
+                        const resolvedOfferId =
+                            offerStudnieId || (o.offerId as string | undefined) || '';
+
+                        if (old) {
+                            logAudit(
+                                'order',
+                                docId,
+                                authReq.user?.id || '',
+                                'update',
+                                newData,
+                                parseJsonField<Record<string, unknown>>(old.data, {})
+                            );
+                        } else {
+                            // create: slim (pełne wells zostają w orders_studnie_rel)
+                            logAudit(
+                                'order',
+                                docId,
+                                authReq.user?.id || '',
+                                'create',
+                                buildOrderCreateAudit(newData, resolvedOfferId, docId)
+                            );
+                        }
+
+                        // P0-D2: predykat wersji w zapisie (kolumna wygrywa z blobem).
+                        await versionedWrite(tx.orders_studnie_rel, {
+                            id: docId,
+                            exists: !!old,
+                            serverVersion: old?.version ?? null,
+                            clientVersion,
+                            createData: {
+                                userId: targetUserId,
+                                offerStudnieId: resolvedOfferId,
+                                createdAt: createdAt,
+                                status: status || 'new',
+                                data: dataStr
+                            },
+                            updateData: {
+                                userId: targetUserId,
+                                offerStudnieId: resolvedOfferId,
+                                createdAt: createdAt,
+                                status: status || 'new',
+                                data: dataStr
+                            },
+                            conflictMessage: 'Zamówienie zmieniono w międzyczasie'
                         });
                     }
-                }
-                const targetUserId = old?.userId || incomingUserId || authReq.user?.id || '';
-                if (!canWriteDoc(authReq.user, targetUserId)) {
-                    return res.status(403).json({ error: 'Brak uprawnień do tego zamówienia' });
-                }
-                const newData = { ...rest };
-                const resolvedOfferId = offerStudnieId || (o.offerId as string | undefined) || '';
-
-                if (old) {
-                    logAudit(
-                        'order',
-                        docId,
-                        authReq.user?.id || '',
-                        'update',
-                        newData,
-                        parseJsonField<Record<string, unknown>>(old.data, {})
-                    );
-                } else {
-                    // create: slim (pełne wells zostają w orders_studnie_rel)
-                    logAudit(
-                        'order',
-                        docId,
-                        authReq.user?.id || '',
-                        'create',
-                        buildOrderCreateAudit(newData, resolvedOfferId, docId)
-                    );
-                }
-
-                await prisma.orders_studnie_rel.upsert({
-                    where: { id: docId },
-                    create: {
-                        id: docId,
-                        userId: targetUserId,
-                        offerStudnieId: resolvedOfferId,
-                        createdAt: createdAt,
-                        status: status || 'new',
-                        data: dataStr
-                    },
-                    update: {
-                        userId: targetUserId,
-                        offerStudnieId: resolvedOfferId,
-                        createdAt: createdAt,
-                        status: status || 'new',
-                        data: dataStr
-                    }
-                });
-            }
+                },
+                { timeout: 30000 }
+            );
 
             searchCache.invalidateAll();
             res.json({ ok: true });
         } catch (e: unknown) {
+            // P0-C: baseUpdatedAt-throw niesie gotowy serverOrder (przed generyką).
+            if (
+                (e as { status?: number }).status === 409 &&
+                (e as { serverOrder?: unknown }).serverOrder
+            ) {
+                return res.status(409).json({
+                    error: (e as { message?: string }).message || 'Konflikt wersji',
+                    code: (e as { code?: string }).code,
+                    serverVersion: (e as { serverVersion?: number }).serverVersion,
+                    serverOrder: (e as { serverOrder?: unknown }).serverOrder
+                });
+            }
+            if (mapVersionConflict(res, e)) return;
+            if ((e as { status?: number }).status === 403) {
+                return res
+                    .status(403)
+                    .json({ error: (e as { message?: string }).message || 'Brak uprawnień' });
+            }
             const message = e instanceof Error ? e.message : 'Unknown error';
             logger.error('StudnieOrders', 'Błąd serwera', message);
             res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
@@ -289,7 +329,9 @@ router.get('/:id', requireAuth, async (req, res) => {
                 offerStudnieId: o.offerStudnieId,
                 status: o.status,
                 createdAt: o.createdAt,
-                ...parsedData
+                ...parsedData,
+                // P0-D2: kolumna wygrywa z blobem.
+                version: o.version ?? 1
             }
         });
     } catch (e: unknown) {
@@ -311,7 +353,14 @@ router.patch(
 
             const o = await prisma.orders_studnie_rel.findUnique({
                 where: { id: docId },
-                select: { id: true, userId: true, offerStudnieId: true, status: true, data: true }
+                select: {
+                    id: true,
+                    userId: true,
+                    offerStudnieId: true,
+                    status: true,
+                    data: true,
+                    version: true
+                }
             });
             if (!o || !canWriteDoc(authReq.user, o.userId)) {
                 return res.status(404).json({ error: 'Zamówienie nie znalezione' });
@@ -348,6 +397,9 @@ router.patch(
             delete updatedData.status;
             delete updatedData.createdAt;
             delete updatedData.baseUpdatedAt;
+            // P0-D2: version to kolumna, nie blob.
+            const patchVersion = typeof req.body.version === 'number' ? req.body.version : null;
+            delete updatedData.version;
 
             const newStatus = req.body.status || o.status;
             const newUserId = req.body.userId || o.userId;
@@ -358,14 +410,43 @@ router.patch(
             }
             const dataStr = JSON.stringify(updatedData);
 
-            await prisma.orders_studnie_rel.update({
-                where: { id: docId },
-                data: {
-                    status: newStatus,
-                    userId: newUserId,
-                    data: dataStr
+            if (patchVersion != null) {
+                // P0-D2: predykat w JEDNYM SQL.
+                const upd = await prisma.orders_studnie_rel.updateMany({
+                    where: { id: docId, version: patchVersion },
+                    data: {
+                        status: newStatus,
+                        userId: newUserId,
+                        data: dataStr,
+                        version: { increment: 1 }
+                    }
+                });
+                if (upd.count === 0) {
+                    return res.status(409).json({
+                        error: 'Zamówienie zmieniono w międzyczasie',
+                        code: 'VERSION_CONFLICT',
+                        serverVersion: o.version ?? 1,
+                        serverOrder: {
+                            id: o.id,
+                            type: 'order',
+                            userId: o.userId,
+                            offerStudnieId: o.offerStudnieId,
+                            status: o.status,
+                            ...oldData
+                        }
+                    });
                 }
-            });
+            } else {
+                await prisma.orders_studnie_rel.update({
+                    where: { id: docId },
+                    data: {
+                        status: newStatus,
+                        userId: newUserId,
+                        data: dataStr,
+                        version: { increment: 1 }
+                    }
+                });
+            }
 
             logAudit('order', docId, authReq.user?.id || '', 'update', updatedData, oldData);
 

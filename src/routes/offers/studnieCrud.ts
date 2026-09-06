@@ -11,6 +11,7 @@ import { validateData } from '../../validators/authSchema';
 import { WRITE_LIMITER } from '../../middleware/rateLimiters';
 import { buildRoleWhereConditionWithShares } from '../../utils/roleFilter';
 import { canWriteDoc, resolveWriteUserId, canReadWithShare } from '../../utils/ownership';
+import { versionedWrite, mapVersionConflict } from '../../utils/versionWrite';
 import { offersStudnieBatchSchema, paginationQuerySchema } from '../../validators/offerSchemas';
 import { hasProductionOrdersForOffer } from '../../utils/productionOrderGuard';
 
@@ -322,8 +323,9 @@ router.get('/studnie', requireAuth, async (req, res) => {
                       totalPrice: number | null;
                       createdAt: string | null;
                       updatedAt: string | null;
+                      version: number | null;
                   }>
-              >`SELECT id, "userId", "offer_number", state, "wellCount", "totalPrice",
+              >`SELECT id, "userId", "offer_number", state, "wellCount", "totalPrice", version,
                 CASE WHEN "createdAt" GLOB '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]'
                     THEN datetime(CAST("createdAt" AS INTEGER)/1000, 'unixepoch')
                     ELSE "createdAt" END as "createdAt",
@@ -343,8 +345,9 @@ router.get('/studnie', requireAuth, async (req, res) => {
                       totalPrice: number | null;
                       createdAt: string | null;
                       updatedAt: string | null;
+                      version: number | null;
                   }>
-              >`SELECT id, "userId", "offer_number", state, "wellCount", "totalPrice",
+              >`SELECT id, "userId", "offer_number", state, "wellCount", "totalPrice", version,
                 CASE WHEN "createdAt" GLOB '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]'
                     THEN datetime(CAST("createdAt" AS INTEGER)/1000, 'unixepoch')
                     ELSE "createdAt" END as "createdAt",
@@ -388,7 +391,9 @@ router.get('/studnie', requireAuth, async (req, res) => {
                 updatedAt: offer.updatedAt || offer.createdAt || new Date().toISOString(),
                 lastEditedBy: offer.userId,
                 wellCount: typeof offer.wellCount === 'number' ? offer.wellCount : 0,
-                totalPrice: typeof offer.totalPrice === 'number' ? offer.totalPrice : 0
+                totalPrice: typeof offer.totalPrice === 'number' ? offer.totalPrice : 0,
+                // P0-D2: baza optimistic lockingu (round-trip bez zmian frontu).
+                version: offer.version ?? 1
             };
         });
 
@@ -484,11 +489,19 @@ router.post(
                 data: string | null;
                 state: string | null;
                 userId: string | null;
+                version: number | null;
             }> =
                 incomingIds.length > 0
                     ? (await prisma.offers_studnie_rel.findMany({
                           where: { id: { in: incomingIds } },
-                          select: { id: true, history: true, data: true, state: true, userId: true }
+                          select: {
+                              id: true,
+                              history: true,
+                              data: true,
+                              state: true,
+                              userId: true,
+                              version: true
+                          }
                       })) || []
                     : [];
             const oldMap = new Map(oldsList.map((r) => [r.id, r]));
@@ -499,6 +512,10 @@ router.post(
                 docId: string;
                 create: Record<string, unknown>;
                 update: Record<string, unknown>;
+                // P0-D2: optimistic locking.
+                exists: boolean;
+                serverVersion: number | null;
+                clientVersion: number | null;
                 fts: {
                     id: string;
                     offer_number: string | null;
@@ -619,7 +636,10 @@ router.post(
                 const created = normalizeDate(o.createdAt);
                 const updated = new Date().toISOString();
                 const offerNumber = o.number || o.offer_number || '';
-                const dataStr = JSON.stringify(o);
+                // P0-D2: version to kolumna (top-level o.version), nie blob o.
+                const postClientVersion = typeof o.version === 'number' ? o.version : null;
+                const { version: _postVersion, ...blobSrc } = o as Record<string, unknown>;
+                const dataStr = JSON.stringify(blobSrc);
                 const historyStr = JSON.stringify(newHistory);
                 const wellCount = extractWellsFromIncoming(o as Record<string, unknown>).length;
                 // E-2: derived persisted metadata — klient nie ustawia autorytatywnie
@@ -636,6 +656,9 @@ router.post(
 
                 pending.push({
                     docId,
+                    exists: !!old,
+                    serverVersion: old?.version ?? null,
+                    clientVersion: postClientVersion,
                     create: {
                         id: docId,
                         userId: effectiveUserId,
@@ -681,10 +704,15 @@ router.post(
             await prisma.$transaction(
                 async (tx) => {
                     for (const w of pending) {
-                        await (tx as unknown as typeof prisma).offers_studnie_rel.upsert({
-                            where: { id: w.docId },
-                            create: w.create as never,
-                            update: w.update as never
+                        // P0-D2: predykat wersji w zapisie (kolumna wygrywa z blobem).
+                        await versionedWrite(tx.offers_studnie_rel, {
+                            id: w.docId,
+                            exists: w.exists,
+                            serverVersion: w.serverVersion,
+                            clientVersion: w.clientVersion,
+                            createData: w.create,
+                            updateData: w.update,
+                            conflictMessage: 'Oferta zmieniona przez innego użytkownika'
                         });
                     }
                 },
@@ -703,6 +731,7 @@ router.post(
             searchCache.invalidateAll();
             res.json({ ok: true, results });
         } catch (e: unknown) {
+            if (mapVersionConflict(res, e)) return;
             const message = e instanceof Error ? e.message : 'Unknown error';
             logger.error('Offers', 'Błąd POST offers/studnie', message);
             res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
@@ -723,11 +752,16 @@ router.put(
             const incomingIds: string[] = incoming
                 .map((o) => (typeof o.id === 'string' ? o.id : ''))
                 .filter(Boolean);
-            const existingDocs: Array<{ id: string; userId: string | null; data: string | null }> =
+            const existingDocs: Array<{
+                id: string;
+                userId: string | null;
+                data: string | null;
+                version: number | null;
+            }> =
                 incomingIds.length > 0
                     ? (await prisma.offers_studnie_rel.findMany({
                           where: { id: { in: incomingIds } },
-                          select: { id: true, userId: true, data: true }
+                          select: { id: true, userId: true, data: true, version: true }
                       })) || []
                     : [];
             const existingById = new Map(existingDocs.map((d) => [d.id, d]));
@@ -747,6 +781,10 @@ router.put(
                 docId: string;
                 create: Record<string, unknown>;
                 update: Record<string, unknown>;
+                // P0-D2: optimistic locking.
+                exists: boolean;
+                serverVersion: number | null;
+                clientVersion: number | null;
                 fts: {
                     id: string;
                     offer_number: string | null;
@@ -814,8 +852,14 @@ router.put(
                     return isNaN(n) ? 0 : n;
                 })();
 
+                // P0-D2: version to kolumna (top-level o.version), nie blob o.data.
+                const putClientVersion = typeof o.version === 'number' ? o.version : null;
+                const putOld = existingById.get(docId);
                 pendingPut.push({
                     docId,
+                    exists: !!putOld,
+                    serverVersion: putOld?.version ?? null,
+                    clientVersion: putClientVersion,
                     create: {
                         id: docId,
                         userId: authReq.user?.id,
@@ -853,10 +897,15 @@ router.put(
             await prisma.$transaction(
                 async (tx) => {
                     for (const w of pendingPut) {
-                        await (tx as unknown as typeof prisma).offers_studnie_rel.upsert({
-                            where: { id: w.docId },
-                            create: w.create as never,
-                            update: w.update as never
+                        // P0-D2: predykat wersji w zapisie (kolumna wygrywa z blobem).
+                        await versionedWrite(tx.offers_studnie_rel, {
+                            id: w.docId,
+                            exists: w.exists,
+                            serverVersion: w.serverVersion,
+                            clientVersion: w.clientVersion,
+                            createData: w.create,
+                            updateData: w.update,
+                            conflictMessage: 'Oferta zmieniona przez innego użytkownika'
                         });
                     }
                 },
@@ -867,6 +916,7 @@ router.put(
             searchCache.invalidateAll();
             res.json({ ok: true });
         } catch (e: unknown) {
+            if (mapVersionConflict(res, e)) return;
             const message = e instanceof Error ? e.message : 'Unknown error';
             logger.error('Offers', 'Błąd serwera', message);
             res.status(500).json({ error: 'Wewnętrzny błąd serwera' });

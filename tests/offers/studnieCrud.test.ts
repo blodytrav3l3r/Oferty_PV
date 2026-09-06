@@ -54,6 +54,8 @@ jest.mock('../../src/prismaClient', () => ({
             findMany: jest.fn(),
             findUnique: jest.fn(),
             upsert: jest.fn(),
+            create: jest.fn(),
+            updateMany: jest.fn(),
             delete: jest.fn()
         },
         $queryRaw: jest.fn(),
@@ -112,9 +114,9 @@ describe('Studnie Offers CRUD — autoryzacja (IDOR)', () => {
     });
 
     describe('POST /api/offers/studnie (upsert studni)', () => {
-        it('tworzy nową ofertę studni i wywołuje upsert + syncFts5', async () => {
+        it('tworzy nową ofertę studni i wywołuje create + syncFts5', async () => {
             (prisma.offers_studnie_rel.findMany as jest.Mock).mockResolvedValue([]);
-            (prisma.offers_studnie_rel.upsert as jest.Mock).mockResolvedValue({});
+            (prisma.offers_studnie_rel.create as jest.Mock).mockResolvedValue({});
 
             const res = await request(app)
                 .post('/api/offers/studnie')
@@ -122,12 +124,24 @@ describe('Studnie Offers CRUD — autoryzacja (IDOR)', () => {
 
             expect(res.statusCode).toBe(200);
             expect(res.body.ok).toBe(true);
-            expect(prisma.offers_studnie_rel.upsert).toHaveBeenCalledWith(
-                expect.objectContaining({
-                    where: { id: 's-new' },
-                    create: expect.objectContaining({ userId: 'user-id', state: 'draft' })
-                })
-            );
+            expect(prisma.offers_studnie_rel.create).toHaveBeenCalledWith({
+                data: expect.objectContaining({ userId: 'user-id', state: 'draft', version: 1 })
+            });
+        });
+
+        it('stale version → 409 VERSION_CONFLICT (P0-D2)', async () => {
+            (prisma.offers_studnie_rel.findMany as jest.Mock).mockResolvedValue([
+                { ...mockOfferStudnie, version: 2 }
+            ]);
+            (prisma.offers_studnie_rel.updateMany as jest.Mock).mockResolvedValue({ count: 0 });
+
+            const res = await request(app)
+                .post('/api/offers/studnie')
+                .send({ data: [{ id: 's-1', clientName: 'ACME', status: 'draft', version: 1 }] });
+
+            expect(res.statusCode).toBe(409);
+            expect(res.body.code).toBe('VERSION_CONFLICT');
+            expect(res.body.serverVersion).toBe(2);
         });
 
         it('zwraca 403 przy edycji cudzej oferty studni (nie przejmuje jej)', async () => {
@@ -140,7 +154,8 @@ describe('Studnie Offers CRUD — autoryzacja (IDOR)', () => {
                 .send({ data: [{ id: 's-1', clientName: 'HACK', status: 'draft' }] });
 
             expect(res.statusCode).toBe(403);
-            expect(prisma.offers_studnie_rel.upsert).not.toHaveBeenCalled();
+            expect(prisma.offers_studnie_rel.create).not.toHaveBeenCalled();
+            expect(prisma.offers_studnie_rel.updateMany).not.toHaveBeenCalled();
         });
 
         it('zwraca 403 gdy user próbuje utworzyć ofertę dla innego użytkownika', async () => {
@@ -151,7 +166,8 @@ describe('Studnie Offers CRUD — autoryzacja (IDOR)', () => {
                 .send({ data: [{ userId: 'other-user', clientName: 'ACME', status: 'draft' }] });
 
             expect(res.statusCode).toBe(403);
-            expect(prisma.offers_studnie_rel.upsert).not.toHaveBeenCalled();
+            expect(prisma.offers_studnie_rel.create).not.toHaveBeenCalled();
+            expect(prisma.offers_studnie_rel.updateMany).not.toHaveBeenCalled();
         });
 
         it('pro może aktualizować ofertę swojego sub-usera', async () => {
@@ -160,15 +176,15 @@ describe('Studnie Offers CRUD — autoryzacja (IDOR)', () => {
             (prisma.offers_studnie_rel.findMany as jest.Mock).mockResolvedValue([
                 { ...mockOfferStudnie, userId: 'sub-user' }
             ]);
-            (prisma.offers_studnie_rel.upsert as jest.Mock).mockResolvedValue({});
+            (prisma.offers_studnie_rel.updateMany as jest.Mock).mockResolvedValue({ count: 1 });
 
             const res = await request(app)
                 .post('/api/offers/studnie')
                 .send({ data: [{ id: 's-1', clientName: 'ACME', status: 'draft' }] });
 
             expect(res.statusCode).toBe(200);
-            const upsertCall = (prisma.offers_studnie_rel.upsert as jest.Mock).mock.calls[0][0];
-            expect(upsertCall.update.userId).toBe('sub-user');
+            const updateCall = (prisma.offers_studnie_rel.updateMany as jest.Mock).mock.calls[0][0];
+            expect(updateCall.data.userId).toBe('sub-user');
         });
     });
 });

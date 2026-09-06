@@ -39,7 +39,8 @@ jest.mock('../src/prismaClient', () => ({
             findUnique: jest.fn(),
             upsert: jest.fn(),
             delete: jest.fn(),
-            create: jest.fn()
+            create: jest.fn(),
+            updateMany: jest.fn()
         },
         offers_studnie_rel: {
             findMany: jest.fn(),
@@ -56,12 +57,8 @@ jest.mock('../src/prismaClient', () => ({
         $queryRawUnsafe: jest.fn().mockResolvedValue([]),
         $executeRaw: jest.fn(),
         $executeRawUnsafe: jest.fn().mockResolvedValue(1),
-        $transaction: jest.fn().mockImplementation((cb: (tx: unknown) => unknown) => {
-            // w teście transakcja to po prostu wywołanie cb z tym samym mockiem
-            // @ts-ignore
-            const prismaMock = require('../src/prismaClient').default;
-            return cb(prismaMock);
-        })
+        $transaction: jest.fn()
+        // P0-D2: delegacja tx ustawiana w beforeEach (lint: zakaz require).
     }
 }));
 
@@ -100,6 +97,7 @@ describe('Ownership E2E — offers routes', () => {
     beforeEach(() => {
         jest.clearAllMocks();
         currentUser = { id: 'user1', role: 'user', subUsers: [] };
+        (prisma.$transaction as jest.Mock).mockImplementation(async (fn: any) => fn(prisma));
         app = createApp();
     });
 
@@ -159,7 +157,8 @@ describe('Ownership E2E — offers routes', () => {
                 });
 
             expect(res.statusCode).toBe(403);
-            expect(prisma.offers_rel.upsert).not.toHaveBeenCalled();
+            expect(prisma.offers_rel.create).not.toHaveBeenCalled();
+            expect(prisma.offers_rel.updateMany).not.toHaveBeenCalled();
         });
 
         it('owner CAN create own offer (200)', async () => {
@@ -182,9 +181,9 @@ describe('Ownership E2E — offers routes', () => {
                 });
 
             expect(res.statusCode).toBe(200);
-            expect(prisma.offers_rel.upsert).toHaveBeenCalled();
-            const upsertCall = (prisma.offers_rel.upsert as jest.Mock).mock.calls[0][0];
-            expect(upsertCall.create.userId).toBe('user1');
+            expect(prisma.offers_rel.create).toHaveBeenCalled();
+            const createCall = (prisma.offers_rel.create as jest.Mock).mock.calls[0][0];
+            expect(createCall.data.userId).toBe('user1');
         });
 
         it('admin CAN create offer for any userId via body', async () => {
@@ -209,9 +208,9 @@ describe('Ownership E2E — offers routes', () => {
                 });
 
             expect(res.statusCode).toBe(200);
-            expect(prisma.offers_rel.upsert).toHaveBeenCalled();
-            const upsertCall = (prisma.offers_rel.upsert as jest.Mock).mock.calls[0][0];
-            expect(upsertCall.create.userId).toBe('sub-user');
+            expect(prisma.offers_rel.create).toHaveBeenCalled();
+            const createCall = (prisma.offers_rel.create as jest.Mock).mock.calls[0][0];
+            expect(createCall.data.userId).toBe('sub-user');
         });
 
         it('pro CAN create offer for sub-user', async () => {
@@ -236,8 +235,8 @@ describe('Ownership E2E — offers routes', () => {
                 });
 
             expect(res.statusCode).toBe(200);
-            const upsertCall = (prisma.offers_rel.upsert as jest.Mock).mock.calls[0][0];
-            expect(upsertCall.create.userId).toBe('sub-user');
+            const createCall = (prisma.offers_rel.create as jest.Mock).mock.calls[0][0];
+            expect(createCall.data.userId).toBe('sub-user');
         });
 
         it('pro CANNOT create offer for unrelated user', async () => {
