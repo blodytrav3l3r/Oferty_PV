@@ -303,7 +303,7 @@ model offers_rel {
   clientNip     String?
   clientNumber  String?  @default("")
   // P0-D2: licznik optimistic lockingu (UPDATE ... WHERE id+version, 409).
-  version       Int?     @default(1)
+  version       Int      @default(1)
 
   @@index([userId], map: "idx_offers_user")
   @@index([createdAt], map: "idx_offers_created")
@@ -335,7 +335,7 @@ model offers_studnie_rel {
   wellCount     Int?     @default(0)
   totalPrice    Float?   @default(0)
   // P0-D2: licznik optimistic lockingu (UPDATE ... WHERE id+version, 409).
-  version       Int?     @default(1)
+  version       Int      @default(1)
 
   @@index([userId], map: "idx_offersstud_user")
   @@index([createdAt], map: "idx_offersstud_created")
@@ -377,7 +377,7 @@ model orders_studnie_rel {
   status         String?
   data           String?
   // P0-D2: licznik optimistic lockingu (UPDATE ... WHERE id+version, 409).
-  version        Int?    @default(1)
+  version       Int      @default(1)
 
   @@index([userId], map: "idx_ordstud_user")
   @@index([offerStudnieId], map: "idx_ordstud_offer")
@@ -392,8 +392,7 @@ model orders_rury_rel {
   status    String?
   data      String?
   // P0-D2: licznik optimistic lockingu (UPDATE ... WHERE id+version, 409).
-  version   Int?    @default(1)
-
+  version       Int      @default(1)
   @@index([userId], map: "idx_ordrury_user")
   @@index([offerId], map: "idx_ordrury_offer")
 }
@@ -421,7 +420,7 @@ model production_orders_rel {
   // data $.productionOrderNumber) — pod UNIQUE(userId, productionNumber).
   productionNumber String?
   // P0-D: licznik optimistic lockingu (UPDATE ... WHERE id+version, 409).
-  version Int? @default(1)
+  version Int @default(1)
 
   @@unique([userId, productionNumber], map: "uq_prod_user_number")
 

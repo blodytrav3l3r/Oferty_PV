@@ -55,6 +55,27 @@ function integrityCheck(filePath) {
     }
 }
 
+/* P0-F: weryfikacja SHA-256 backupu (sidecar `<backup>.sha256` z backup.ts).
+ * Brak sidecara (starsze backupy) = ostrzeżenie, nie blokada. */
+function verifyChecksum(filePath) {
+    const crypto = require('crypto');
+    const sidecar = filePath + '.sha256';
+    if (!fs.existsSync(sidecar)) {
+        console.warn('[WARN] Brak pliku .sha256 — pomijam weryfikacje sumy (starszy backup).');
+        return true;
+    }
+    const expected = fs.readFileSync(sidecar, 'utf8').trim().split(/\s+/)[0];
+    const actual = crypto.createHash('sha256').update(fs.readFileSync(filePath)).digest('hex');
+    if (expected !== actual) {
+        console.error(`[BLAD] Suma SHA-256 backupu niezgodna (plik uszkodzony/ podmieniony).`);
+        console.error(`[BLAD] oczekiwano: ${expected}`);
+        console.error(`[BLAD] otrzymano:  ${actual}`);
+        return false;
+    }
+    console.log('[OK] Suma SHA-256 backupu zgodna.');
+    return true;
+}
+
 function runPrisma(args) {
     return execFileSync(process.execPath, [PRISMA_CLI, ...args], {
         cwd: PRISMA_DIR,
@@ -88,6 +109,9 @@ function confirm() {
         console.error(`[BLAD] Plik backupu nie jest poprawna baza SQLite: ${sourcePath}`);
         process.exit(1);
     }
+    if (!verifyChecksum(sourcePath)) {
+        process.exit(1);
+    }
     if (!integrityCheck(sourcePath)) {
         console.error(`[BLAD] Backup nie przeszedl PRAGMA integrity_check: ${sourcePath}`);
         process.exit(1);
@@ -99,6 +123,11 @@ function confirm() {
             fs.unlinkSync(sidecar);
         }
     }
+    // P0-F: re-weryfikacja po kopiowaniu (uszkodzony zapis docelowy).
+    if (!integrityCheck(DB_PATH)) {
+        console.error('[BLAD] Przywrocona baza nie przechodzi PRAGMA integrity_check.');
+        process.exit(1);
+    }
     console.log(`Baza przywrocona z: ${sourcePath}`);
     console.log('[INFO] Synchronizuje schemat bazy (migrate deploy)...');
     try {
@@ -108,8 +137,11 @@ function confirm() {
     } catch (e) {
         const stderr =
             e && e.stderr ? String(e.stderr).trim() : e instanceof Error ? e.message : String(e);
+        // P0-F: komunikat straznika (legacy backup) zachowany, ale restore bez
+        // schematu to nie restore — twardy blad zamiast cichego ostrzezenia.
         console.warn('[WARN] Nie udalo sie zsynchronizowac schematu.');
         console.warn('[WARN] Uruchom recznie: npx prisma migrate deploy');
         console.warn(stderr.split('\n').slice(0, 6).join('\n'));
+        process.exit(1);
     }
 })();

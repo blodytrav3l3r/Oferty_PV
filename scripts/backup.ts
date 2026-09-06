@@ -1,4 +1,5 @@
 import { PrismaClient } from '../generated/prisma';
+import * as crypto from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -28,6 +29,11 @@ async function main() {
         const stats = fs.statSync(backupPath);
         if (stats.size === 0) throw new Error('Backup pusty (0 B) — VACUUM nie utworzył pliku');
         console.log(`[Backup] Utworzono: ${backupPath} (${(stats.size / 1024).toFixed(1)} KB)`);
+
+        // P0-F: SHA-256 backupu — restore weryfikuje przed nadpisaniem bazy.
+        const hash = crypto.createHash('sha256').update(fs.readFileSync(backupPath)).digest('hex');
+        fs.writeFileSync(backupPath + '.sha256', `${hash}  ${backupName}\n`, 'utf8');
+        console.log(`[Backup] SHA-256: ${hash}`);
 
         // weryfikacja integralności backupu
         try {
@@ -62,6 +68,9 @@ async function main() {
             const toDelete = backups.shift();
             if (toDelete) {
                 fs.unlinkSync(path.join(backupDir, toDelete));
+                try {
+                    fs.unlinkSync(path.join(backupDir, toDelete + '.sha256'));
+                } catch {}
                 console.log(`[Backup] Usunięto starą kopię: ${toDelete}`);
             }
         }

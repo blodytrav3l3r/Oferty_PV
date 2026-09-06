@@ -18,6 +18,9 @@ const ADD_WELLCOUNT = '20260831000000_add_wellcount';
 const ADD_TOTALPRICE = '20260902000000_add_totalprice';
 const ADD_PERF_INDEXES = '20260902000001_add_performance_indexes';
 const ADD_PROD_WELL_INDEX = '20260905000000_add_prod_well_index';
+const PROD_NUMBER_UNIQUE = '20260907000000_prod_number_unique';
+const PROD_VERSION = '20260907000001_prod_version';
+const DOC_VERSIONS = '20260907000002_doc_versions';
 
 describe('A3 baseline migracji', () => {
     it('deploy na czystej bazie tworzy pelny schemat zgodny z schema.prisma', () => {
@@ -29,7 +32,10 @@ describe('A3 baseline migracji', () => {
             ADD_WELLCOUNT,
             ADD_TOTALPRICE,
             ADD_PERF_INDEXES,
-            ADD_PROD_WELL_INDEX
+            ADD_PROD_WELL_INDEX,
+            PROD_NUMBER_UNIQUE,
+            PROD_VERSION,
+            DOC_VERSIONS
         ]);
         try {
             const out = project.runPrisma(['migrate', 'deploy']);
