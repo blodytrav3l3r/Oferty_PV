@@ -169,7 +169,7 @@ function showOfferHistory(id) {
           <div>
             <div style="font-size: var(--fs-lg); color:var(--text-secondary);">Wersja przed zmianą</div>
             <div style="font-size: var(--fs-3xl); font-weight: var(--fw-bold);"><i data-lucide="banknote"></i> ${fmt(h.totalBrutto)} PLN</div>
-            <div class="fs-md-muted">Pozycji: ${h.items ? h.items.length : 0}</div>
+            <div class="fs-md-muted">Pozycji: ${h.items ? h.items.length : h.itemsCount || 0}</div>
           </div>
           <div class="text-right">
             <div style="font-size: var(--fs-md); color:var(--text-muted); margin-bottom:0.2rem;">Różnica do kolejnej wersji:</div>

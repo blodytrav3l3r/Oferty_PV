@@ -174,6 +174,9 @@ function computeOrderValueWithTransport(order, offerType) {
 
 function getOfferPrice(offer) {
     if (offer.type === 'studnia_oferta' || !!offer.wells?.length) {
+        // P1-C: LIST niesie gotową sumę (wellsExportTotal); pełne wellsExport tylko w detalu.
+        const preSum = offer.wellsExportTotal ?? offer.data?.wellsExportTotal;
+        if (typeof preSum === 'number') return preSum;
         const exportData = offer.wellsExport || (offer.data && offer.data.wellsExport);
         if (exportData) return exportData.reduce((sum, w) => sum + (w.totalPrice || 0), 0);
     }
@@ -194,8 +197,10 @@ function getOfferPrice(offer) {
 
 function getOfferItemCount(offer) {
     const isWell = offer.type === 'studnia_oferta' || !!offer.wells?.length;
-    if (isWell) return offer.wells?.length || offer.data?.wells?.length || 0;
-    return offer.items?.length || offer.data?.items?.length || 0;
+    // P1-C: LIST niesie wellsCount/itemsCount zamiast pełnych tablic (DETAIL ma pełne).
+    if (isWell)
+        return offer.wells?.length || offer.data?.wells?.length || offer.data?.wellsCount || 0;
+    return offer.items?.length || offer.data?.items?.length || offer.data?.itemsCount || 0;
 }
 
 function resolveUserName(raw) {

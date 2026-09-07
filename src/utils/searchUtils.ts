@@ -180,7 +180,26 @@ export interface RawOfferRow {
     createdAt: string | null;
     updatedAt: string | null;
     offer_number: string | null;
-    data: string | null;
+    // P1-C: LIST nie ciągnie pełnego bloba. Projekcja pól kart (skalary +
+    // mały wellsExport + liczniki); pełny blob tylko w DETAIL (GET /:id).
+    d_clientName: string | null;
+    d_investName: string | null;
+    d_investAddress: string | null;
+    d_clientNip: string | null;
+    d_clientNumber: string | null;
+    d_totalNetto: number | null;
+    d_totalBrutto: number | null;
+    d_summary: string | null;
+    d_costSummary: string | null;
+    d_wellsExportTotal: number | bigint | null;
+    d_wellsCount: number | bigint | null;
+    d_itemsCount: number | bigint | null;
+    d_userName: string | null;
+    d_creatorName: string | null;
+    d_createdByUserName: string | null;
+    d_budowa: string | null;
+    d_number: string | null;
+    d_offerNumber: string | null;
     history: string | null;
     _type: string;
     transportCost: number | null;
@@ -213,21 +232,82 @@ export interface SearchOfferRowMapped {
     [key: string]: unknown;
 }
 
+/** Prisma zwraca INTEGER z funkcji JSON jako BigInt — konwersja do number. */
+function toNum(v: number | bigint | null | undefined): number | undefined {
+    if (typeof v === 'number') return v;
+    if (typeof v === 'bigint') return Number(v);
+    return undefined;
+}
+
 export function mapOfferRow(row: RawOfferRow): SearchOfferRowMapped {
-    const offer = { ...row } as unknown as SearchOfferRowMapped;
+    // P1-C: wiersz nie niesie już pełnego bloba — klucze d_* lądują w data.
+    const offer = {
+        ...(row as unknown as Record<string, unknown>)
+    } as unknown as SearchOfferRowMapped;
+    for (const k of Object.keys(offer)) {
+        if (k.startsWith('d_')) delete (offer as Record<string, unknown>)[k];
+    }
     offer.type = row._type === 'studnie' ? 'studnia_oferta' : 'offer';
     offer.number = row.offer_number || '';
     offer._orderCount = Number(row._orderCount);
 
-    if (typeof row.data === 'string') {
+    // P1-C: data to projekcja (nie pełny blob). Małe JSON parsowane lokalnie.
+    const data: Record<string, unknown> = {};
+    const str = (v: string | null) => (typeof v === 'string' && v !== '' ? v : undefined);
+    const num = (v: number | null) => (typeof v === 'number' ? v : undefined);
+    const setStr = (k: string, v: string | null) => {
+        const s = str(v);
+        if (s !== undefined) data[k] = s;
+    };
+    const setNum = (k: string, v: number | null) => {
+        const n = num(v);
+        if (n !== undefined) data[k] = n;
+    };
+    setStr('clientName', row.d_clientName);
+    setStr('investName', row.d_investName);
+    setStr('investAddress', row.d_investAddress);
+    setStr('clientNip', row.d_clientNip);
+    setStr('clientNumber', row.d_clientNumber);
+    setNum('totalNetto', row.d_totalNetto);
+    setNum('totalBrutto', row.d_totalBrutto);
+    setStr('userName', row.d_userName);
+    setStr('creatorName', row.d_creatorName);
+    setStr('createdByUserName', row.d_createdByUserName);
+    setStr('budowa', row.d_budowa);
+    setStr('number', row.d_number);
+    setStr('offerNumber', row.d_offerNumber);
+    const obj = (v: string | null) => {
+        if (typeof v !== 'string' || v === '') return undefined;
         try {
-            offer.data = JSON.parse(row.data) as Record<string, unknown>;
+            return JSON.parse(v) as unknown;
         } catch {
-            offer.data = {};
+            return undefined;
         }
-    } else {
-        offer.data = {};
+    };
+    const summary = obj(row.d_summary) as Record<string, unknown> | undefined;
+    if (summary && typeof summary === 'object') {
+        const slim: Record<string, unknown> = {};
+        for (const k of ['totalValue', 'totalNetto', 'totalBrutto']) {
+            if (typeof summary[k] === 'number') slim[k] = summary[k];
+        }
+        if (Object.keys(slim).length > 0) data.summary = slim;
     }
+    const costSummary = obj(row.d_costSummary) as Record<string, unknown> | undefined;
+    if (
+        costSummary &&
+        typeof costSummary === 'object' &&
+        typeof costSummary.totalValue === 'number'
+    ) {
+        data.costSummary = { totalValue: costSummary.totalValue };
+    }
+    const wellsExportTotal = toNum(row.d_wellsExportTotal);
+    // P1-C: suma policzona w SQL (2317 pełnych kopii studni = MB na liście).
+    if (wellsExportTotal !== undefined) data.wellsExportTotal = wellsExportTotal;
+    const wellsCount = toNum(row.d_wellsCount);
+    if (wellsCount !== undefined) data.wellsCount = wellsCount;
+    const itemsCount = toNum(row.d_itemsCount);
+    if (itemsCount !== undefined) data.itemsCount = itemsCount;
+    offer.data = data;
 
     if (typeof row.history === 'string') {
         try {
@@ -240,12 +320,9 @@ export function mapOfferRow(row: RawOfferRow): SearchOfferRowMapped {
     }
 
     if (!offer.clientName && !offer.investName) {
-        const dataObj = offer.data;
-        if (dataObj && typeof dataObj === 'object') {
-            offer.clientName = (dataObj.clientName as string) || '';
-            offer.investName = (dataObj.investName as string) || '';
-            offer.clientNip = (dataObj.clientNip as string) || '';
-        }
+        offer.clientName = (data.clientName as string) || '';
+        offer.investName = (data.investName as string) || '';
+        offer.clientNip = (data.clientNip as string) || '';
     }
 
     offer.clientName = offer.clientName || '';

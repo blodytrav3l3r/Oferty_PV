@@ -85,12 +85,43 @@ router.get('/', requireAuth, async (req, res) => {
             SELECT * FROM (
                 SELECT
                     o.id, "userId", "clientId", state, "createdAt", "updatedAt",
-                    "offer_number", data, history,
+                    "offer_number",
+                    -- P1-C: historia na liście w wersji slim (popup: skalary + itemsCount;
+                    -- pełna historia tylko w DETAIL). 29 MB history na liście to przeszłość.
+                    COALESCE((SELECT json_group_array(json_object(
+                        'updatedAt', value->>'updatedAt', 'timestamp', value->>'timestamp',
+                        'state', value->>'state', 'totalBrutto', value->>'totalBrutto',
+                        'lastEditedBy', value->>'lastEditedBy', 'userName', value->>'userName',
+                        'itemsCount', json_array_length(value, '$.items')))
+                    FROM json_each(COALESCE(o.history, '[]'))), '[]') AS history,
                     "clientName", "investName", "clientNip",
                     COALESCE(NULLIF(o."clientNumber", ''), json_extract(o.data, '$.clientNumber'), '') AS "clientNumber",
                     'rury' AS "_type",
                     "transportCost",
-                    COALESCE(o_rury.order_count, 0) AS "_orderCount"
+                    COALESCE(o_rury.order_count, 0) AS "_orderCount",
+                    json_extract(o.data, '$.clientName') AS "d_clientName",
+                    json_extract(o.data, '$.investName') AS "d_investName",
+                    json_extract(o.data, '$.investAddress') AS "d_investAddress",
+                    json_extract(o.data, '$.clientNip') AS "d_clientNip",
+                    json_extract(o.data, '$.clientNumber') AS "d_clientNumber",
+                    json_extract(o.data, '$.totalNetto') AS "d_totalNetto",
+                    json_extract(o.data, '$.totalBrutto') AS "d_totalBrutto",
+                    json_extract(o.data, '$.summary') AS "d_summary",
+                    json_extract(o.data, '$.costSummary') AS "d_costSummary",
+                    -- P1-C: suma wellsExport jako skalar (2317 pełnych kopii = MB).
+                    -- NULL gdy brak (cena liczy się ze skalarów jak dotąd).
+                    CASE WHEN json_extract(o.data, '$.wellsExport') IS NULL THEN NULL
+                    ELSE (SELECT COALESCE(SUM(value->>'totalPrice'), 0)
+                          FROM json_each(o.data, '$.wellsExport'))
+                    END AS "d_wellsExportTotal",
+                    json_array_length(o.data, '$.wells') AS "d_wellsCount",
+                    json_array_length(o.data, '$.items') AS "d_itemsCount",
+                    json_extract(o.data, '$.userName') AS "d_userName",
+                    json_extract(o.data, '$.creatorName') AS "d_creatorName",
+                    json_extract(o.data, '$.createdByUserName') AS "d_createdByUserName",
+                    json_extract(o.data, '$.budowa') AS "d_budowa",
+                    json_extract(o.data, '$.number') AS "d_number",
+                    json_extract(o.data, '$.offerNumber') AS "d_offerNumber"
                 FROM offers_rel o
                 LEFT JOIN (
                     SELECT "offerId", COUNT(*) as order_count
@@ -103,12 +134,42 @@ router.get('/', requireAuth, async (req, res) => {
 
                 SELECT
                     s.id, "userId", "clientId", state, "createdAt", "updatedAt",
-                    "offer_number", data, history,
+                    "offer_number",
+                    -- P1-C: historia slim jak wyżej (popup studni i tak idzie po audit endpoint).
+                    COALESCE((SELECT json_group_array(json_object(
+                        'updatedAt', value->>'updatedAt', 'timestamp', value->>'timestamp',
+                        'state', value->>'state', 'totalBrutto', value->>'totalBrutto',
+                        'lastEditedBy', value->>'lastEditedBy', 'userName', value->>'userName',
+                        'itemsCount', json_array_length(value, '$.items')))
+                    FROM json_each(COALESCE(s.history, '[]'))), '[]') AS history,
                     "clientName", "investName", "clientNip",
                     COALESCE(NULLIF(s."clientNumber", ''), json_extract(s.data, '$.clientNumber'), '') AS "clientNumber",
                     'studnie' AS "_type",
                     "transportCost",
-                    COALESCE(o_stud.order_count, 0) AS "_orderCount"
+                    COALESCE(o_stud.order_count, 0) AS "_orderCount",
+                    json_extract(s.data, '$.clientName') AS "d_clientName",
+                    json_extract(s.data, '$.investName') AS "d_investName",
+                    json_extract(s.data, '$.investAddress') AS "d_investAddress",
+                    json_extract(s.data, '$.clientNip') AS "d_clientNip",
+                    json_extract(s.data, '$.clientNumber') AS "d_clientNumber",
+                    json_extract(s.data, '$.totalNetto') AS "d_totalNetto",
+                    json_extract(s.data, '$.totalBrutto') AS "d_totalBrutto",
+                    json_extract(s.data, '$.summary') AS "d_summary",
+                    json_extract(s.data, '$.costSummary') AS "d_costSummary",
+                    -- P1-C: suma wellsExport jako skalar (2317 pełnych kopii = MB).
+                    -- NULL gdy brak (cena liczy się ze skalarów jak dotąd).
+                    CASE WHEN json_extract(s.data, '$.wellsExport') IS NULL THEN NULL
+                    ELSE (SELECT COALESCE(SUM(value->>'totalPrice'), 0)
+                          FROM json_each(s.data, '$.wellsExport'))
+                    END AS "d_wellsExportTotal",
+                    json_array_length(s.data, '$.wells') AS "d_wellsCount",
+                    json_array_length(s.data, '$.items') AS "d_itemsCount",
+                    json_extract(s.data, '$.userName') AS "d_userName",
+                    json_extract(s.data, '$.creatorName') AS "d_creatorName",
+                    json_extract(s.data, '$.createdByUserName') AS "d_createdByUserName",
+                    json_extract(s.data, '$.budowa') AS "d_budowa",
+                    json_extract(s.data, '$.number') AS "d_number",
+                    json_extract(s.data, '$.offerNumber') AS "d_offerNumber"
                 FROM offers_studnie_rel s
                 LEFT JOIN (
                     SELECT "offerStudnieId", COUNT(*) as order_count
@@ -202,8 +263,8 @@ router.get('/orders', requireAuth, async (req, res) => {
             LIMIT 50
         `);
 
-        const mapped = ((rows as RawOfferRow[]) || []).map((r) => {
-            const parsed = parseJsonField<Record<string, unknown>>(r.data, {});
+        const mapped = ((rows as Array<Record<string, unknown>>) || []).map((r) => {
+            const parsed = parseJsonField<Record<string, unknown>>(r.data as string, {});
             return { ...r, data: parsed, ...parsed };
         });
 

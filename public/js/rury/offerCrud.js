@@ -376,14 +376,26 @@ function downloadExistingOffer(id) {
 
 /* ===== HISTORIA OFERTY ===== */
 
-function restoreOfferVersion(offerId, historyIndex) {
+async function restoreOfferVersion(offerId, historyIndex) {
     const offer =
         typeof getOfferRuryById === 'function'
             ? getOfferRuryById(offerId)
             : offers.find((o) => o.id === offerId);
-    if (!offer || !offer.history || !offer.history[historyIndex]) return;
+    if (!offer) return;
+    // P1-C: lista niesie historię slim (bez pełnych pozycji) — pełny snapshot z detalu.
+    let history = offer.history;
+    if (!history?.[historyIndex]?.items) {
+        try {
+            const { storageService: ss } = await import('../shared/StorageService.js');
+            const srv = ss ? await ss.getOfferById(offerId) : null;
+            if (srv?.history?.[historyIndex]) history = srv.history;
+        } catch (_e) {
+            /* fallback na wersję z listy */
+        }
+    }
+    if (!history || !history[historyIndex]) return;
 
-    const snapshot = offer.history[historyIndex];
+    const snapshot = history[historyIndex];
 
     // Wczytaj migawke jako nowa oferte z biezacym ID edycji
     editingOfferId = offer.id;
