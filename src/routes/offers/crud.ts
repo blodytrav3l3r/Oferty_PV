@@ -9,6 +9,7 @@ import { searchCache } from '../../utils/searchCache';
 import { removeFts5 } from '../../utils/fts5Sync';
 import { hasProductionOrdersForOffer } from '../../utils/productionOrderGuard';
 import { mapPrismaError } from '../../utils/prismaErrors';
+import { HOT_TX_OPTS } from '../../utils/hotTx';
 
 const router = express.Router();
 
@@ -203,7 +204,7 @@ router.delete('/:id', requireAuth, writeOffersLimiter, async (req, res) => {
                             e instanceof Error ? e.message : String(e)
                         );
                     }
-                });
+                }, HOT_TX_OPTS);
             } catch (e: unknown) {
                 if ((e as { status?: number }).status === 403) {
                     return res
@@ -279,7 +280,7 @@ router.delete('/:id', requireAuth, writeOffersLimiter, async (req, res) => {
                         e instanceof Error ? e.message : String(e)
                     );
                 }
-            });
+            }, HOT_TX_OPTS);
         } catch (e: unknown) {
             if ((e as { status?: number }).status === 403) {
                 return res

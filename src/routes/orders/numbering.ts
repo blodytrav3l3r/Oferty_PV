@@ -3,6 +3,7 @@ import prisma from '../../prismaClient';
 import { requireAuth, AuthenticatedRequest } from '../../middleware/auth';
 import { canWriteDoc } from '../../utils/ownership';
 import { logger } from '../../utils/logger';
+import { HOT_TX_OPTS } from '../../utils/hotTx';
 
 const router = express.Router();
 
@@ -24,53 +25,50 @@ async function claimProductionSeqs(
     let lastErr: unknown = null;
     for (let attempt = 1; attempt <= 3; attempt++) {
         try {
-            return await prisma.$transaction(
-                async (tx) => {
-                    const recycled = await tx.recycled_production_numbers.findMany({
-                        where: { userId, year },
-                        orderBy: { seqNumber: 'asc' },
-                        take: count
+            return await prisma.$transaction(async (tx) => {
+                const recycled = await tx.recycled_production_numbers.findMany({
+                    where: { userId, year },
+                    orderBy: { seqNumber: 'asc' },
+                    take: count
+                });
+                const wanted = recycled.map((r) => r.seqNumber);
+                if (wanted.length > 0) {
+                    const del = await tx.recycled_production_numbers.deleteMany({
+                        where: { userId, year, seqNumber: { in: wanted } }
                     });
-                    const wanted = recycled.map((r) => r.seqNumber);
-                    if (wanted.length > 0) {
-                        const del = await tx.recycled_production_numbers.deleteMany({
-                            where: { userId, year, seqNumber: { in: wanted } }
-                        });
-                        // Ktoś sprzątnął część puli spod nas — retry z nowym odczytem.
-                        if (del.count !== wanted.length) throw new Error('RECYCLED_RACE_RETRY');
-                    }
-                    const out: number[] = [...wanted];
-                    // Rezerwacja zakresu: dokładamy atomowymi inkrementami, pomijając
-                    // numery wzięte z recycled (stan patologiczny: recycled powyżej
-                    // głowy licznika). Zwykle jedna iteracja.
-                    let need = count - out.length;
-                    let guard = 0;
-                    while (need > 0) {
-                        if (++guard > 5) throw new Error('RANGE_RESERVE_FAIL');
-                        // Baza wiersza licznika (pierwszy claim) albo nic.
-                        await tx.$executeRaw`INSERT INTO production_order_counters ("userId", year, "lastNumber")
+                    // Ktoś sprzątnął część puli spod nas — retry z nowym odczytem.
+                    if (del.count !== wanted.length) throw new Error('RECYCLED_RACE_RETRY');
+                }
+                const out: number[] = [...wanted];
+                // Rezerwacja zakresu: dokładamy atomowymi inkrementami, pomijając
+                // numery wzięte z recycled (stan patologiczny: recycled powyżej
+                // głowy licznika). Zwykle jedna iteracja.
+                let need = count - out.length;
+                let guard = 0;
+                while (need > 0) {
+                    if (++guard > 5) throw new Error('RANGE_RESERVE_FAIL');
+                    // Baza wiersza licznika (pierwszy claim) albo nic.
+                    await tx.$executeRaw`INSERT INTO production_order_counters ("userId", year, "lastNumber")
                         VALUES (${userId}, ${year}, ${startNum - 1})
                         ON CONFLICT("userId", year) DO NOTHING`;
-                        // Atomowa rezerwacja: jeden UPDATE, głowa po inkrementacji.
-                        await tx.$executeRaw`UPDATE production_order_counters
+                    // Atomowa rezerwacja: jeden UPDATE, głowa po inkrementacji.
+                    await tx.$executeRaw`UPDATE production_order_counters
                         SET "lastNumber" = "lastNumber" + ${need}
                         WHERE "userId" = ${userId} AND year = ${year}`;
-                        const head = (
-                            await tx.$queryRaw<
-                                Array<{ lastNumber: number }>
-                            >`SELECT "lastNumber" AS "lastNumber"
+                    const head = (
+                        await tx.$queryRaw<
+                            Array<{ lastNumber: number }>
+                        >`SELECT "lastNumber" AS "lastNumber"
                         FROM production_order_counters WHERE "userId" = ${userId} AND year = ${year}`
-                        )[0]?.lastNumber;
-                        if (typeof head !== 'number') throw new Error('COUNTER_READ_FAIL');
-                        for (let s = head - need + 1; s <= head && out.length < count; s++) {
-                            if (!out.includes(s)) out.push(s);
-                        }
-                        need = count - out.length;
+                    )[0]?.lastNumber;
+                    if (typeof head !== 'number') throw new Error('COUNTER_READ_FAIL');
+                    for (let s = head - need + 1; s <= head && out.length < count; s++) {
+                        if (!out.includes(s)) out.push(s);
                     }
-                    return out.sort((a, b) => a - b);
-                },
-                { maxWait: 15000, timeout: 30000 }
-            );
+                    need = count - out.length;
+                }
+                return out.sort((a, b) => a - b);
+            }, HOT_TX_OPTS);
         } catch (e) {
             // Retry tylko przy wyścigu o recycled, reszta od razu w górę.
             const msg = e instanceof Error ? e.message : '';

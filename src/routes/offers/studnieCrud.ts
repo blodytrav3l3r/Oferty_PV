@@ -13,6 +13,7 @@ import { buildRoleWhereConditionWithShares } from '../../utils/roleFilter';
 import { canWriteDoc, resolveWriteUserId, canReadWithShare } from '../../utils/ownership';
 import { versionedWrite, mapVersionConflict } from '../../utils/versionWrite';
 import { mapPrismaError } from '../../utils/prismaErrors';
+import { HOT_TX_OPTS } from '../../utils/hotTx';
 import {
     claimIdempotencyKey,
     completeIdempotencyKey,
@@ -514,6 +515,7 @@ router.post(
                 state: string | null;
                 userId: string | null;
                 version: number | null;
+                totalPrice: number | null;
             }> =
                 incomingIds.length > 0
                     ? (await prisma.offers_studnie_rel.findMany({
@@ -524,7 +526,8 @@ router.post(
                               data: true,
                               state: true,
                               userId: true,
-                              version: true
+                              version: true,
+                              totalPrice: true
                           }
                       })) || []
                     : [];
@@ -632,16 +635,19 @@ router.post(
                             docId
                         );
                     }
-                    let snapshotData: Record<string, unknown> = {};
-                    try {
-                        snapshotData = JSON.parse(old.data || '{}');
-                    } catch {
-                        snapshotData = {};
-                    }
+                    // FINAL: snapshot slim jak rury (bez bloba data!) — pełne
+                    // dane lądują w audit_logs (logAudit poniżej). Pełny snapshot
+                    // 7 MB × 5 wpisów = 29 MB history paraliżowało każdy search
+                    // (json_each po history na liście).
+                    const oldWells = extractWellsFromOfferData(old.data);
                     const snapshot = {
+                        updatedAt: new Date().toISOString(),
                         timestamp: new Date().toISOString(),
                         state: old.state,
-                        data: snapshotData
+                        totalPrice: old.totalPrice ?? 0,
+                        totalBrutto: old.totalPrice ?? 0,
+                        wellCount: Array.isArray(oldWells) ? oldWells.length : 0,
+                        lastEditedBy: authReq.user?.username || authReq.user?.id || null
                     };
                     newHistory.unshift(snapshot);
                     if (newHistory.length > 5) newHistory = newHistory.slice(0, 5);
@@ -737,23 +743,20 @@ router.post(
             // Atomowy zapis wszystkich ofert — all-or-nothing (P1.1 correctness).
             // Timeout 30 s zamiast domyślnych 5 s: upsert oferty z ~3k studni
             // (~10 MB JSON) potrafi trwać >6 s na SQLite (Transaction API error).
-            await prisma.$transaction(
-                async (tx) => {
-                    for (const w of pending) {
-                        // P0-D2: predykat wersji w zapisie (kolumna wygrywa z blobem).
-                        await versionedWrite(tx.offers_studnie_rel, {
-                            id: w.docId,
-                            exists: w.exists,
-                            serverVersion: w.serverVersion,
-                            clientVersion: w.clientVersion,
-                            createData: w.create,
-                            updateData: w.update,
-                            conflictMessage: 'Oferta zmieniona przez innego użytkownika'
-                        });
-                    }
-                },
-                { timeout: 30000 }
-            );
+            await prisma.$transaction(async (tx) => {
+                for (const w of pending) {
+                    // P0-D2: predykat wersji w zapisie (kolumna wygrywa z blobem).
+                    await versionedWrite(tx.offers_studnie_rel, {
+                        id: w.docId,
+                        exists: w.exists,
+                        serverVersion: w.serverVersion,
+                        clientVersion: w.clientVersion,
+                        createData: w.create,
+                        updateData: w.update,
+                        conflictMessage: 'Oferta zmieniona przez innego użytkownika'
+                    });
+                }
+            }, HOT_TX_OPTS);
             const results: Record<string, unknown>[] = [];
             let ftsFailed = 0;
             for (const w of pending) {
@@ -944,23 +947,20 @@ router.put(
                     }
                 });
             }
-            await prisma.$transaction(
-                async (tx) => {
-                    for (const w of pendingPut) {
-                        // P0-D2: predykat wersji w zapisie (kolumna wygrywa z blobem).
-                        await versionedWrite(tx.offers_studnie_rel, {
-                            id: w.docId,
-                            exists: w.exists,
-                            serverVersion: w.serverVersion,
-                            clientVersion: w.clientVersion,
-                            createData: w.create,
-                            updateData: w.update,
-                            conflictMessage: 'Oferta zmieniona przez innego użytkownika'
-                        });
-                    }
-                },
-                { timeout: 30000 }
-            );
+            await prisma.$transaction(async (tx) => {
+                for (const w of pendingPut) {
+                    // P0-D2: predykat wersji w zapisie (kolumna wygrywa z blobem).
+                    await versionedWrite(tx.offers_studnie_rel, {
+                        id: w.docId,
+                        exists: w.exists,
+                        serverVersion: w.serverVersion,
+                        clientVersion: w.clientVersion,
+                        createData: w.create,
+                        updateData: w.update,
+                        conflictMessage: 'Oferta zmieniona przez innego użytkownika'
+                    });
+                }
+            }, HOT_TX_OPTS);
             let ftsPutFailed = 0;
             for (const w of pendingPut) {
                 if (!(await syncFts5('studnie', w.fts))) ftsPutFailed++;
@@ -1046,7 +1046,7 @@ router.delete('/studnie/:id', requireAuth, writeOffersLimiter, async (req, res) 
                         e instanceof Error ? e.message : String(e)
                     );
                 }
-            });
+            }, HOT_TX_OPTS);
         } catch (e: unknown) {
             if ((e as { status?: number }).status === 403) {
                 return res

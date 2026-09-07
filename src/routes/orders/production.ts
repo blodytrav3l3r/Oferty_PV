@@ -12,6 +12,7 @@ import { WRITE_LIMITER } from '../../middleware/rateLimiters';
 import { searchCache } from '../../utils/searchCache';
 import { mapProductionOrderRow } from '../../utils/productionSearchUtils';
 import { mapPrismaError } from '../../utils/prismaErrors';
+import { HOT_TX_OPTS } from '../../utils/hotTx';
 import {
     claimIdempotencyKey,
     completeIdempotencyKey,
@@ -182,147 +183,135 @@ router.put(
         try {
             const incoming = req.body.data || [];
 
-            await prisma.$transaction(
-                async (tx) => {
-                    for (const o of incoming) {
-                        let docId = o.id;
-                        if (!docId) {
-                            docId = crypto.randomUUID();
-                        }
+            await prisma.$transaction(async (tx) => {
+                for (const o of incoming) {
+                    let docId = o.id;
+                    if (!docId) {
+                        docId = crypto.randomUUID();
+                    }
 
-                        const {
-                            id: _id,
-                            type: _type,
-                            userId: incomingUserId,
-                            orderId,
-                            wellId,
-                            elementIndex,
-                            elementKey,
-                            createdAt,
-                            updatedAt,
-                            // P0-D: baza optimistic lockingu — nie trafia do bloba JSON.
-                            version: clientVersionRaw,
-                            ...rest
-                        } = o;
-                        const clientVersion =
-                            typeof clientVersionRaw === 'number' ? clientVersionRaw : null;
-                        const dataStr = JSON.stringify(rest);
-                        // P0-A: finalny numer produkcyjny do kolumny pod UNIQUE.
-                        // Update z undefined nie nadpisuje (Prisma pomija undefined).
-                        const prodNum =
-                            typeof (rest as Record<string, unknown>).productionOrderNumber ===
-                            'string'
-                                ? ((rest as Record<string, unknown>)
-                                      .productionOrderNumber as string)
-                                : undefined;
+                    const {
+                        id: _id,
+                        type: _type,
+                        userId: incomingUserId,
+                        orderId,
+                        wellId,
+                        elementIndex,
+                        elementKey,
+                        createdAt,
+                        updatedAt,
+                        // P0-D: baza optimistic lockingu — nie trafia do bloba JSON.
+                        version: clientVersionRaw,
+                        ...rest
+                    } = o;
+                    const clientVersion =
+                        typeof clientVersionRaw === 'number' ? clientVersionRaw : null;
+                    const dataStr = JSON.stringify(rest);
+                    // P0-A: finalny numer produkcyjny do kolumny pod UNIQUE.
+                    // Update z undefined nie nadpisuje (Prisma pomija undefined).
+                    const prodNum =
+                        typeof (rest as Record<string, unknown>).productionOrderNumber === 'string'
+                            ? ((rest as Record<string, unknown>).productionOrderNumber as string)
+                            : undefined;
 
-                        const old = await tx.production_orders_rel.findUnique({
-                            where: { id: docId },
-                            select: { data: true, userId: true, version: true }
+                    const old = await tx.production_orders_rel.findUnique({
+                        where: { id: docId },
+                        select: { data: true, userId: true, version: true }
+                    });
+
+                    // P0-C: guard W transakcji — return zamieniony na throw, żeby
+                    // cofnąć cały batch (wcześniej: 403 w połowie = partial write).
+                    if (old && !canWriteDoc(authReq.user, old.userId)) {
+                        throw {
+                            status: 403,
+                            message: 'Brak uprawnień do zapisu dla tego użytkownika'
+                        };
+                    }
+
+                    const targetUserId = old?.userId || incomingUserId || authReq.user?.id || '';
+                    if (!canWriteDoc(authReq.user, targetUserId)) {
+                        throw { status: 403, message: 'Brak uprawnień do tego zlecenia' };
+                    }
+
+                    if (old) {
+                        logAudit(
+                            'production_order',
+                            docId,
+                            authReq.user?.id || '',
+                            'update',
+                            rest,
+                            parseJsonField<Record<string, unknown>>(old.data, {})
+                        );
+                    } else {
+                        logAudit('production_order', docId, authReq.user?.id || '', 'create', rest);
+                    }
+
+                    if (!old) {
+                        await tx.production_orders_rel.create({
+                            data: {
+                                id: docId,
+                                userId: targetUserId,
+                                creatorId: authReq.user?.id,
+                                orderId: orderId || '',
+                                wellId: wellId || '',
+                                elementIndex: elementIndex || 0,
+                                elementKey: elementKey || '',
+                                createdAt: createdAt || new Date().toISOString(),
+                                updatedAt: updatedAt || new Date().toISOString(),
+                                data: dataStr,
+                                productionNumber: prodNum ?? null,
+                                version: 1
+                            }
                         });
-
-                        // P0-C: guard W transakcji — return zamieniony na throw, żeby
-                        // cofnąć cały batch (wcześniej: 403 w połowie = partial write).
-                        if (old && !canWriteDoc(authReq.user, old.userId)) {
+                    } else if (clientVersion != null) {
+                        // P0-D: predykat w JEDNYM SQL (SET version+1 WHERE
+                        // id+version). 0 wierszy = ktoś zapisał wcześniej.
+                        const upd = await tx.production_orders_rel.updateMany({
+                            where: { id: docId, version: clientVersion },
+                            data: {
+                                userId: targetUserId,
+                                creatorId: authReq.user?.id,
+                                orderId: orderId || '',
+                                wellId: wellId || '',
+                                elementIndex: elementIndex || 0,
+                                elementKey: elementKey || '',
+                                createdAt: createdAt || new Date().toISOString(),
+                                updatedAt: updatedAt || new Date().toISOString(),
+                                data: dataStr,
+                                productionNumber: prodNum,
+                                version: { increment: 1 }
+                            }
+                        });
+                        if (upd.count === 0) {
                             throw {
-                                status: 403,
-                                message: 'Brak uprawnień do zapisu dla tego użytkownika'
+                                status: 409,
+                                code: 'VERSION_CONFLICT',
+                                message:
+                                    'Zlecenie zmienione przez innego użytkownika — odśwież i spróbuj ponownie',
+                                serverVersion: old.version ?? 1
                             };
                         }
-
-                        const targetUserId =
-                            old?.userId || incomingUserId || authReq.user?.id || '';
-                        if (!canWriteDoc(authReq.user, targetUserId)) {
-                            throw { status: 403, message: 'Brak uprawnień do tego zlecenia' };
-                        }
-
-                        if (old) {
-                            logAudit(
-                                'production_order',
-                                docId,
-                                authReq.user?.id || '',
-                                'update',
-                                rest,
-                                parseJsonField<Record<string, unknown>>(old.data, {})
-                            );
-                        } else {
-                            logAudit(
-                                'production_order',
-                                docId,
-                                authReq.user?.id || '',
-                                'create',
-                                rest
-                            );
-                        }
-
-                        if (!old) {
-                            await tx.production_orders_rel.create({
-                                data: {
-                                    id: docId,
-                                    userId: targetUserId,
-                                    creatorId: authReq.user?.id,
-                                    orderId: orderId || '',
-                                    wellId: wellId || '',
-                                    elementIndex: elementIndex || 0,
-                                    elementKey: elementKey || '',
-                                    createdAt: createdAt || new Date().toISOString(),
-                                    updatedAt: updatedAt || new Date().toISOString(),
-                                    data: dataStr,
-                                    productionNumber: prodNum ?? null,
-                                    version: 1
-                                }
-                            });
-                        } else if (clientVersion != null) {
-                            // P0-D: predykat w JEDNYM SQL (SET version+1 WHERE
-                            // id+version). 0 wierszy = ktoś zapisał wcześniej.
-                            const upd = await tx.production_orders_rel.updateMany({
-                                where: { id: docId, version: clientVersion },
-                                data: {
-                                    userId: targetUserId,
-                                    creatorId: authReq.user?.id,
-                                    orderId: orderId || '',
-                                    wellId: wellId || '',
-                                    elementIndex: elementIndex || 0,
-                                    elementKey: elementKey || '',
-                                    createdAt: createdAt || new Date().toISOString(),
-                                    updatedAt: updatedAt || new Date().toISOString(),
-                                    data: dataStr,
-                                    productionNumber: prodNum,
-                                    version: { increment: 1 }
-                                }
-                            });
-                            if (upd.count === 0) {
-                                throw {
-                                    status: 409,
-                                    code: 'VERSION_CONFLICT',
-                                    message:
-                                        'Zlecenie zmienione przez innego użytkownika — odśwież i spróbuj ponownie',
-                                    serverVersion: old.version ?? 1
-                                };
+                    } else {
+                        await tx.production_orders_rel.update({
+                            where: { id: docId },
+                            data: {
+                                userId: targetUserId,
+                                creatorId: authReq.user?.id,
+                                orderId: orderId || '',
+                                wellId: wellId || '',
+                                elementIndex: elementIndex || 0,
+                                elementKey: elementKey || '',
+                                createdAt: createdAt || new Date().toISOString(),
+                                updatedAt: updatedAt || new Date().toISOString(),
+                                data: dataStr,
+                                productionNumber: prodNum,
+                                version: { increment: 1 }
                             }
-                        } else {
-                            await tx.production_orders_rel.update({
-                                where: { id: docId },
-                                data: {
-                                    userId: targetUserId,
-                                    creatorId: authReq.user?.id,
-                                    orderId: orderId || '',
-                                    wellId: wellId || '',
-                                    elementIndex: elementIndex || 0,
-                                    elementKey: elementKey || '',
-                                    createdAt: createdAt || new Date().toISOString(),
-                                    updatedAt: updatedAt || new Date().toISOString(),
-                                    data: dataStr,
-                                    productionNumber: prodNum,
-                                    version: { increment: 1 }
-                                }
-                            });
-                        }
-                        saved.push(docId);
+                        });
                     }
-                },
-                { timeout: 30000 }
-            );
+                    saved.push(docId);
+                }
+            }, HOT_TX_OPTS);
 
             searchCache.invalidateNamespace('production');
             res.json({ ok: true, saved });
@@ -624,7 +613,7 @@ router.post('/batch-delete', requireAuth, writeProductionLimiter, async (req, re
                 logAudit('production_order', order.id, order.userId || '', 'delete', null, oldData);
                 await recycleProductionNumber(order.userId || '', oldData, tx);
             }
-        });
+        }, HOT_TX_OPTS);
         searchCache.invalidateNamespace('production');
         res.json({ deleted: deletedCount, skipped });
     } catch (e: unknown) {
@@ -766,7 +755,7 @@ router.delete('/:id', requireAuth, writeProductionLimiter, async (req, res) => {
                         where: { id: docId, userId: authReq.user?.id }
                     });
                 }
-            });
+            }, HOT_TX_OPTS);
         } catch (e: unknown) {
             if ((e as { status?: number }).status === 403) {
                 return res

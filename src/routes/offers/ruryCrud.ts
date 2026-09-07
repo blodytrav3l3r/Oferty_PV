@@ -21,9 +21,7 @@ import {
 import { OfferMapped } from '../../types/models';
 import { offersBatchSchema, paginationQuerySchema } from '../../validators/offerSchemas';
 import { recordDbBusy } from '../../utils/metrics';
-
-// ponytail: 1 pisarz SQLite — kolejka pod loadem przekracza domyślne 5 s tx.
-const HOT_TX_OPTS = { maxWait: 15000, timeout: 30000 };
+import { HOT_TX_OPTS } from '../../utils/hotTx';
 
 const router = express.Router();
 const uuidv4 = crypto.randomUUID.bind(crypto);

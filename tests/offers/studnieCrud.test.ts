@@ -186,5 +186,37 @@ describe('Studnie Offers CRUD — autoryzacja (IDOR)', () => {
             const updateCall = (prisma.offers_studnie_rel.updateMany as jest.Mock).mock.calls[0][0];
             expect(updateCall.data.userId).toBe('sub-user');
         });
+
+        it('FINAL: snapshot historii slim (bez bloba data), max 5 wpisów', async () => {
+            const fat = {
+                ...mockOfferStudnie,
+                version: 2,
+                totalPrice: 100,
+                data: JSON.stringify({ wells: [{ id: 'w1' }] }),
+                history: JSON.stringify(
+                    Array.from({ length: 5 }, (_, i) => ({
+                        timestamp: `2026-01-0${i + 1}`,
+                        state: 'draft',
+                        data: { big: 'x'.repeat(1000) }
+                    }))
+                )
+            };
+            (prisma.offers_studnie_rel.findMany as jest.Mock).mockResolvedValue([fat]);
+            (prisma.offers_studnie_rel.updateMany as jest.Mock).mockResolvedValue({ count: 1 });
+
+            const res = await request(app)
+                .post('/api/offers/studnie')
+                .send({ data: [{ id: 's-1', clientName: 'ACME', status: 'draft' }] });
+
+            expect(res.statusCode).toBe(200);
+            const updateCall = (prisma.offers_studnie_rel.updateMany as jest.Mock).mock.calls[0][0];
+            const hist = JSON.parse(updateCall.data.history as string);
+            expect(hist.length).toBeLessThanOrEqual(5);
+            // Nowy snapshot slim (legacy tłuste wpisy wypadają w kolejnych zapisach).
+            expect(hist[0]).not.toHaveProperty('data');
+            expect(hist[0]).toEqual(
+                expect.objectContaining({ state: 'draft', totalPrice: 100, wellCount: 1 })
+            );
+        });
     });
 });

@@ -12,6 +12,7 @@ import { canWriteDoc, canReadWithShare } from '../../utils/ownership';
 import { buildRoleWhereConditionWithShares } from '../../utils/roleFilter';
 import { versionedWrite, mapVersionConflict } from '../../utils/versionWrite';
 import { mapPrismaError } from '../../utils/prismaErrors';
+import { HOT_TX_OPTS } from '../../utils/hotTx';
 import crypto from 'crypto';
 
 const router = express.Router();
@@ -124,85 +125,81 @@ router.put(
             const incoming = req.body.data || [];
 
             // P0-C/D2: cały batch w jednej transakcji + predykat wersji.
-            await prisma.$transaction(
-                async (tx) => {
-                    for (const o of incoming) {
-                        let docId = o.id;
-                        if (!docId) {
-                            docId = crypto.randomUUID();
-                        }
-
-                        const {
-                            id: _id,
-                            type: _type,
-                            userId: incomingUserId,
-                            offerId,
-                            createdAt: createdAtRaw,
-                            status,
-                            version: clientVersionRaw,
-                            ...rest
-                        } = o;
-                        // P0-D2: baza optimistic lockingu — nie trafia do bloba JSON.
-                        const clientVersion =
-                            typeof clientVersionRaw === 'number' ? clientVersionRaw : null;
-                        const dataStr = JSON.stringify(rest);
-
-                        const createdAt = normalizeDate(createdAtRaw);
-
-                        const old = await tx.orders_rury_rel.findUnique({
-                            where: { id: docId },
-                            select: { data: true, userId: true, version: true }
-                        });
-
-                        if (old && !canWriteDoc(authReq.user, old.userId)) {
-                            throw { status: 403, message: 'Brak uprawnień do tego zamówienia' };
-                        }
-                        const targetUserId =
-                            old?.userId || incomingUserId || authReq.user?.id || '';
-                        if (!canWriteDoc(authReq.user, targetUserId)) {
-                            throw { status: 403, message: 'Brak uprawnień do tego zamówienia' };
-                        }
-                        const newData = { ...rest };
-
-                        if (old) {
-                            logAudit(
-                                'order',
-                                docId,
-                                authReq.user?.id || '',
-                                'update',
-                                newData,
-                                parseJsonField<Record<string, unknown>>(old.data, {})
-                            );
-                        } else {
-                            logAudit('order', docId, authReq.user?.id || '', 'create', newData);
-                        }
-
-                        // P0-D2: predykat wersji w zapisie (kolumna wygrywa z blobem).
-                        await versionedWrite(tx.orders_rury_rel, {
-                            id: docId,
-                            exists: !!old,
-                            serverVersion: old?.version ?? null,
-                            clientVersion,
-                            createData: {
-                                userId: targetUserId,
-                                offerId: offerId || '',
-                                createdAt: createdAt,
-                                status: status || 'new',
-                                data: dataStr
-                            },
-                            updateData: {
-                                userId: targetUserId,
-                                offerId: offerId || '',
-                                createdAt: createdAt,
-                                status: status || 'new',
-                                data: dataStr
-                            },
-                            conflictMessage: 'Zamówienie zmieniono w międzyczasie'
-                        });
+            await prisma.$transaction(async (tx) => {
+                for (const o of incoming) {
+                    let docId = o.id;
+                    if (!docId) {
+                        docId = crypto.randomUUID();
                     }
-                },
-                { timeout: 30000 }
-            );
+
+                    const {
+                        id: _id,
+                        type: _type,
+                        userId: incomingUserId,
+                        offerId,
+                        createdAt: createdAtRaw,
+                        status,
+                        version: clientVersionRaw,
+                        ...rest
+                    } = o;
+                    // P0-D2: baza optimistic lockingu — nie trafia do bloba JSON.
+                    const clientVersion =
+                        typeof clientVersionRaw === 'number' ? clientVersionRaw : null;
+                    const dataStr = JSON.stringify(rest);
+
+                    const createdAt = normalizeDate(createdAtRaw);
+
+                    const old = await tx.orders_rury_rel.findUnique({
+                        where: { id: docId },
+                        select: { data: true, userId: true, version: true }
+                    });
+
+                    if (old && !canWriteDoc(authReq.user, old.userId)) {
+                        throw { status: 403, message: 'Brak uprawnień do tego zamówienia' };
+                    }
+                    const targetUserId = old?.userId || incomingUserId || authReq.user?.id || '';
+                    if (!canWriteDoc(authReq.user, targetUserId)) {
+                        throw { status: 403, message: 'Brak uprawnień do tego zamówienia' };
+                    }
+                    const newData = { ...rest };
+
+                    if (old) {
+                        logAudit(
+                            'order',
+                            docId,
+                            authReq.user?.id || '',
+                            'update',
+                            newData,
+                            parseJsonField<Record<string, unknown>>(old.data, {})
+                        );
+                    } else {
+                        logAudit('order', docId, authReq.user?.id || '', 'create', newData);
+                    }
+
+                    // P0-D2: predykat wersji w zapisie (kolumna wygrywa z blobem).
+                    await versionedWrite(tx.orders_rury_rel, {
+                        id: docId,
+                        exists: !!old,
+                        serverVersion: old?.version ?? null,
+                        clientVersion,
+                        createData: {
+                            userId: targetUserId,
+                            offerId: offerId || '',
+                            createdAt: createdAt,
+                            status: status || 'new',
+                            data: dataStr
+                        },
+                        updateData: {
+                            userId: targetUserId,
+                            offerId: offerId || '',
+                            createdAt: createdAt,
+                            status: status || 'new',
+                            data: dataStr
+                        },
+                        conflictMessage: 'Zamówienie zmieniono w międzyczasie'
+                    });
+                }
+            }, HOT_TX_OPTS);
 
             searchCache.invalidateAll();
             res.json({ ok: true });
@@ -378,7 +375,7 @@ router.delete('/:id', requireAuth, writeOrdersLimiter, async (req, res) => {
                     e instanceof Error ? e.message : String(e)
                 );
             }
-        });
+        }, HOT_TX_OPTS);
         searchCache.invalidateAll();
         res.json({ ok: true });
     } catch (e: unknown) {
