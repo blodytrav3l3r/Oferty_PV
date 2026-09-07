@@ -14,6 +14,11 @@ function _excelBulkIsAborted(signal) {
 function _excelBulkShowProgress(label, done, total, onCancel) {
     let el = document.getElementById('excel-paste-progress');
     const pct = total > 0 ? Math.min(100, Math.round((done / total) * 100)) : 0;
+    // P2: label trafia do innerHTML — escapuj (wzorzec #3/#24).
+    const safeLabel =
+        typeof window !== 'undefined' && typeof window.escapeHtml === 'function'
+            ? window.escapeHtml(label || 'Przetwarzanie...')
+            : label || 'Przetwarzanie...';
     if (!el) {
         el = document.createElement('div');
         el.id = 'excel-paste-progress';
@@ -25,7 +30,7 @@ function _excelBulkShowProgress(label, done, total, onCancel) {
     }
     el.innerHTML =
         '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.4rem;"><span style="font-size:12px;color:#94a3b8;">' +
-        (label || 'Przetwarzanie...') +
+        safeLabel +
         ' <span id="excel-paste-pct">' +
         pct +
         '%</span></span><span style="font-size:12px;color:#94a3b8;" id="excel-paste-count">' +
