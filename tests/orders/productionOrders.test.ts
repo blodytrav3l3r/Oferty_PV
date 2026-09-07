@@ -160,9 +160,10 @@ describe('Production Orders (PZ) routes', () => {
             );
             (prisma.idempotency_keys.updateMany as jest.Mock).mockImplementation(
                 async ({ where, data }: any) => {
-                    const w = where.userId_endpoint_key;
-                    const k = `${w.userId}|${w.endpoint}|${w.key}`;
+                    // P1-A: updateMany bierze skalary (compound-unique tylko w findUnique).
+                    const k = `${where.userId}|${where.endpoint}|${where.key}`;
                     if (!keys[k]) return { count: 0 };
+                    if (where.status && keys[k].status !== where.status) return { count: 0 };
                     Object.assign(keys[k], data);
                     return { count: 1 };
                 }
