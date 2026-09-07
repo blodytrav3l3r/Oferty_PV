@@ -244,6 +244,16 @@ Następne: P1 (idempotencja, FTS-rebuild, metryki `/metrics`, sesje, FK-inwentar
 | P2 escape label w bulk-progress                       | c3829c9 | 2 testy + bulk 9/9                       |
 | P2 `mapPrismaError` P2025→404/P2002→409 (14 catchy)   | eb7f050 | 4 testy + crud 114/114                   |
 | P1-E guard users DELETE (403 przy dokumentach)        | (ten)   | 11 testów users + `audit:integrity` PASS |
+| P1-C/B pomiar LIST → SPLIT NIE (parse <0,1 ms)        | (ten)   | 6 KB/20, search 7,7 KB, RSS 118 MB       |
+
+### P1-C decyzja o splicie `offer_data` (2026-09-07, pomiar na żywym dev)
+
+- LIST rury `?limit=20`: 6 KB, parse 0,05 ms, net 32 ms. Search: 7,7 KB, parse
+  0,06 ms, net 321 ms (ciężki SQL `json_each`, łagodzi `searchCache`).
+  RSS 118 MB. `data` na liście to projekcja skalarów, nie blob.
+- Decyzja: SPLIT NIE — brak dowodu (parse <0,1 ms, KB nie MB).
+  Split = migracja + dual-write bez potrzeby. Dźwignia na przyszłość:
+  SQL-owe `json_extract` w search (kolumny materializowane/FTS), nie split.
 
 ### P1-E inwentaryzacja relacji (2026-09-07, `audit:integrity` PASS, 0 sierot)
 
