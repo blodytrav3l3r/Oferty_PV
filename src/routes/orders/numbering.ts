@@ -69,7 +69,7 @@ async function claimProductionSeqs(
                     }
                     return out.sort((a, b) => a - b);
                 },
-                { timeout: 15000 }
+                { maxWait: 15000, timeout: 30000 }
             );
         } catch (e) {
             // Retry tylko przy wyścigu o recycled, reszta od razu w górę.

@@ -19,6 +19,10 @@ import {
 } from '../../utils/idempotency';
 import { OfferMapped } from '../../types/models';
 import { offersBatchSchema, paginationQuerySchema } from '../../validators/offerSchemas';
+import { recordDbBusy } from '../../utils/metrics';
+
+// ponytail: 1 pisarz SQLite — kolejka pod loadem przekracza domyślne 5 s tx.
+const HOT_TX_OPTS = { maxWait: 15000, timeout: 30000 };
 
 const router = express.Router();
 const uuidv4 = crypto.randomUUID.bind(crypto);
@@ -377,7 +381,7 @@ router.post(
                         });
                     }
                 }
-            });
+            }, HOT_TX_OPTS);
             let ftsFailed = 0;
             for (const w of pendingWrites) {
                 if (!(await syncFts5('rury', w.fts))) ftsFailed++;
@@ -404,6 +408,7 @@ router.post(
         } catch (e: unknown) {
             if (mapVersionConflict(res, e)) return;
             const message = e instanceof Error ? e.message : 'Unknown error';
+            if (/locked|busy|timeout|P2028|P2034/i.test(message)) recordDbBusy();
             logger.error('Offers', 'Błąd POST offers', message);
             res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
         }
@@ -578,7 +583,7 @@ router.put(
                         });
                     }
                 }
-            });
+            }, HOT_TX_OPTS);
             let ftsPutFailed = 0;
             for (const w of pendingPut) {
                 if (!(await syncFts5('rury', w.fts))) ftsPutFailed++;
@@ -595,6 +600,7 @@ router.put(
         } catch (e: unknown) {
             if (mapVersionConflict(res, e)) return;
             const message = e instanceof Error ? e.message : 'Unknown error';
+            if (/locked|busy|timeout|P2028|P2034/i.test(message)) recordDbBusy();
             logger.error('Offers', 'Błąd PUT offers', message);
             res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
         }
