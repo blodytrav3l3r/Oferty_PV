@@ -1,8 +1,11 @@
 import { Request, Response, NextFunction } from 'express';
 import { logger } from '../utils/logger';
+import { recordDbBusy } from '../utils/metrics';
 
 export function errorHandler(err: Error, _req: Request, res: Response, _next: NextFunction) {
     logger.error('UnhandledError', err.message, err.stack || '');
+    // M: licznik SQLITE_BUSY/lock — contention pisarzy na 1 DB.
+    if (/locked|busy|timeout/i.test(err.message || '')) recordDbBusy();
     // PayloadTooLargeError z body-parser (przekroczony limit express.json) —
     // jako 413 z jawnym komunikatem zamiast mylącego generycznego 500.
     const status = (err as { status?: unknown }).status;

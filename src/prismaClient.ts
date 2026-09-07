@@ -6,6 +6,7 @@ import path from 'path';
 import { PrismaClient, Prisma } from '../generated/prisma';
 import { resolveProjectRoot } from './utils/paths';
 import { countDbQuery } from './utils/dbQueryCounter';
+import { recordDbQuery } from './utils/metrics';
 
 /**
  * Normalizuje względną ścieżkę w DATABASE_URL do absolutnej.
@@ -42,7 +43,29 @@ const databaseUrl = normalizeDatabaseUrl(
         'file:../data/app_database.sqlite?connection_limit=1&busy_timeout=30000'
 );
 
-export const prisma = new PrismaClient({ datasources: { db: { url: databaseUrl } } });
+export const prisma = new PrismaClient({
+    datasources: { db: { url: databaseUrl } },
+    // M: query events do metryk (stdout dla warn/error bez zmian).
+    log: [
+        { emit: 'stdout', level: 'warn' },
+        { emit: 'stdout', level: 'error' },
+        { emit: 'event', level: 'query' }
+    ]
+});
+
+interface QueryEvent {
+    duration: number;
+}
+
+{
+    const queryAware = prisma as unknown as {
+        $on: (event: 'query', cb: (e: QueryEvent) => void) => void;
+    };
+    // M: globalny czas DB do /metrics (lekki licznik, bez PII/zapytań).
+    queryAware.$on('query', (e) => {
+        recordDbQuery(typeof e?.duration === 'number' ? e.duration : 0);
+    });
+}
 
 if (process.env.NODE_ENV !== 'production') {
     const queryAware = prisma as unknown as {

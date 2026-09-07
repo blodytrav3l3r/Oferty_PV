@@ -16,6 +16,9 @@ import swaggerUi from 'swagger-ui-express';
 import swaggerSpec from './swagger';
 
 import { ensureAdminExists } from './middleware/auth';
+import { requireAuth, requireAdmin } from './middleware/auth';
+import { getMetricsSnapshot } from './utils/metrics';
+import { getPdfMetrics } from './services/pdf/pdfEngine';
 import {
     httpsRedirect,
     securityHeaders,
@@ -133,6 +136,24 @@ app.get('/health/ready', async (_req, res) => {
         const msg = e instanceof Error ? e.message : String(e);
         res.status(503).json({ status: 'not_ready', db: 'error', error: msg.slice(0, 200) });
     }
+});
+
+/**
+ * @openapi
+ * /metrics:
+ *   get:
+ *     tags: [System]
+ *     summary: Metryki in-process (admin) — P50/P95 per endpoint, DB, loop-lag, PDF
+ *     responses:
+ *       200:
+ *         description: Snapshot metryk JSON
+ *       401:
+ *         description: Brak autoryzacji
+ *       403:
+ *         description: Wymagana rola admin
+ */
+app.get('/metrics', requireAuth, requireAdmin, (_req, res) => {
+    res.json(getMetricsSnapshot(getPdfMetrics()));
 });
 
 /* ===== DOKUMENTACJA API (Swagger) ===== */
