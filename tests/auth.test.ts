@@ -15,7 +15,9 @@ jest.mock('../src/prismaClient', () => ({
         },
         sessions: {
             create: jest.fn(),
-            delete: jest.fn()
+            delete: jest.fn(),
+            findMany: jest.fn(),
+            deleteMany: jest.fn()
         }
     }
 }));
@@ -162,6 +164,8 @@ describe('Auth Routes - Z-70', () => {
             (bcrypt.compare as jest.Mock).mockResolvedValue(true);
             (bcrypt.hash as jest.Mock).mockResolvedValue('newhashed');
             (prisma.users.update as jest.Mock).mockResolvedValue({});
+            (prisma.sessions.findMany as jest.Mock).mockResolvedValue([]);
+            (prisma.sessions.deleteMany as jest.Mock).mockResolvedValue({ count: 0 });
 
             const res = await request(app)
                 .post('/api/auth/change-password')
@@ -170,6 +174,78 @@ describe('Auth Routes - Z-70', () => {
 
             expect(res.statusCode).toBe(200);
             expect(res.body.ok).toBe(true);
+        });
+
+        it('P1-D: zmiana hasła kasuje inne sesje, bieżąca zostaje', async () => {
+            (prisma.users.findUnique as jest.Mock).mockResolvedValue({
+                id: 'user-id',
+                username: 'admin',
+                password: 'hashed'
+            });
+            (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+            (bcrypt.hash as jest.Mock).mockResolvedValue('newhashed');
+            (prisma.users.update as jest.Mock).mockResolvedValue({});
+            const { hashToken } = jest.requireActual(
+                '../src/middleware/auth'
+            ) as typeof import('../src/middleware/auth');
+            const current = 'current-token';
+            (prisma.sessions.findMany as jest.Mock).mockResolvedValue([
+                { token: hashToken(current) },
+                { token: hashToken('other-1') },
+                { token: hashToken('other-2') }
+            ]);
+            (prisma.sessions.deleteMany as jest.Mock).mockResolvedValue({ count: 2 });
+
+            const res = await request(app)
+                .post('/api/auth/change-password')
+                .set('x-test-user', JSON.stringify({ id: 'user-id', role: 'admin' }))
+                .set('x-auth-token', current)
+                .send({ oldPassword: 'oldPass', newPassword: 'NewPass123!' });
+
+            expect(res.statusCode).toBe(200);
+            expect(res.body.sessionsRevoked).toBe(2);
+            const delArg = (prisma.sessions.deleteMany as jest.Mock).mock.calls[0][0];
+            // bieżąca sesja poza kasowaniem.
+            expect(delArg.where.token.in).not.toContain(hashToken(current));
+            expect(delArg.where.token.in).toHaveLength(2);
+        });
+    });
+
+    describe('P1-D sesje (unit, prawdziwe funkcje)', () => {
+        const realAuth = jest.requireActual(
+            '../src/middleware/auth'
+        ) as typeof import('../src/middleware/auth');
+
+        it('createSession rotuje powyżej 10 (kasuje najstarsze)', async () => {
+            const rows = Array.from({ length: 12 }, (_, i) => ({
+                token: `t${i}`,
+                createdAt: BigInt(i)
+            }));
+            (prisma.sessions.findMany as jest.Mock).mockResolvedValue(rows);
+            (prisma.sessions.create as jest.Mock).mockResolvedValue({});
+            (prisma.sessions.deleteMany as jest.Mock).mockResolvedValue({ count: 2 });
+            await realAuth.createSession('u1');
+            expect(prisma.sessions.create).toHaveBeenCalled();
+            // 12 znalezionych przy limicie 10 → nadmiar 2 (najstarsze).
+            expect(prisma.sessions.deleteMany).toHaveBeenCalledWith({
+                where: { token: { in: ['t0', 't1'] } }
+            });
+        });
+
+        it('createSession nie kasuje przy <= 10 sesjach', async () => {
+            const rows = Array.from({ length: 5 }, (_, i) => ({
+                token: `t${i}`,
+                createdAt: BigInt(i)
+            }));
+            (prisma.sessions.findMany as jest.Mock).mockResolvedValue(rows);
+            (prisma.sessions.deleteMany as jest.Mock).mockClear();
+            await realAuth.createSession('u1');
+            expect(prisma.sessions.deleteMany).not.toHaveBeenCalled();
+        });
+
+        it('deleteUserSessions zwraca 0 bez sesji', async () => {
+            (prisma.sessions.findMany as jest.Mock).mockResolvedValue([]);
+            expect(await realAuth.deleteUserSessions('u1')).toBe(0);
         });
     });
 

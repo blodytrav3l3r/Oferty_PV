@@ -4,6 +4,7 @@ import prisma from '../prismaClient';
 import {
     createSession,
     deleteSession,
+    deleteUserSessions,
     requireAuth,
     requireAdmin,
     SESSION_MAX_AGE_MS,
@@ -205,7 +206,11 @@ router.post(
                 data: { password: hash }
             });
 
-            res.json({ ok: true });
+            // P1-D: zmiana hasła unieważnia wszystkie inne sesje (bieżąca zostaje).
+            const currentToken = (req.headers['x-auth-token'] as string) || req.cookies?.authToken;
+            const revoked = await deleteUserSessions(authReq.user!.id, currentToken);
+
+            res.json({ ok: true, sessionsRevoked: revoked });
         } catch (e: unknown) {
             logger.error(
                 'auth',

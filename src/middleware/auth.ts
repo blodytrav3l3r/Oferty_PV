@@ -7,6 +7,9 @@ import { logger } from '../utils/logger';
 
 export const SESSION_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000; // 7 dni
 
+// P1-D: limit aktywnych sesji na użytkownika (rotacja najstarszych).
+export const SESSION_MAX_PER_USER = 10;
+
 // Fallback hasła admina z .env.example — instalatory (install.bat/install.sh) generują
 // losowe hasło przy świeżej instalacji; ta wartość to wyłącznie tryb dev/awaryjny.
 const DEFAULT_ADMIN_FALLBACK_PASSWORD = 'anim123456';
@@ -42,6 +45,7 @@ export function hashToken(token: string): string {
 
 /**
  * Tworzy nową sesję dla użytkownika.
+ * P1-D: powyżej SESSION_MAX_PER_USER kasuje najstarsze (rotacja).
  */
 export async function createSession(userId: string): Promise<string> {
     const token = crypto.randomBytes(32).toString('hex');
@@ -54,6 +58,23 @@ export async function createSession(userId: string): Promise<string> {
             createdAt: now
         }
     });
+
+    try {
+        const stale = await prisma.sessions.findMany({
+            where: { userId },
+            select: { token: true, createdAt: true },
+            orderBy: { createdAt: 'asc' }
+        });
+        const excess = stale.length - SESSION_MAX_PER_USER;
+        if (excess > 0) {
+            const victims = stale.slice(0, excess).map((s) => s.token);
+            await prisma.sessions.deleteMany({
+                where: { token: { in: victims } }
+            });
+        }
+    } catch (e) {
+        logger.error('Auth', 'Błąd rotacji sesji', e);
+    }
 
     return token;
 }
@@ -90,6 +111,30 @@ export async function deleteSession(token: string): Promise<void> {
         });
     } catch (_e) {
         // Ignoruj jeśli sesja nie istnieje
+    }
+}
+
+/**
+ * P1-D: kasuje WSZYSTKIE sesje użytkownika (np. po zmianie hasła).
+ * `exceptToken` (surowy token) — sesja do zachowania (ta, z której zmieniono hasło).
+ * Zwraca liczbę skasowanych.
+ */
+export async function deleteUserSessions(userId: string, exceptToken?: string): Promise<number> {
+    try {
+        const keep = exceptToken ? hashToken(exceptToken) : null;
+        const rows = await prisma.sessions.findMany({
+            where: { userId },
+            select: { token: true }
+        });
+        const victims = rows.map((r) => r.token).filter((t) => t !== keep);
+        if (victims.length === 0) return 0;
+        const res = await prisma.sessions.deleteMany({
+            where: { token: { in: victims } }
+        });
+        return res.count;
+    } catch (e) {
+        logger.error('Auth', 'Błąd kasowania sesji użytkownika', e);
+        return 0;
     }
 }
 
