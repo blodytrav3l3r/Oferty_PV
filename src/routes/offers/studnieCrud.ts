@@ -12,6 +12,7 @@ import { WRITE_LIMITER } from '../../middleware/rateLimiters';
 import { buildRoleWhereConditionWithShares } from '../../utils/roleFilter';
 import { canWriteDoc, resolveWriteUserId, canReadWithShare } from '../../utils/ownership';
 import { versionedWrite, mapVersionConflict } from '../../utils/versionWrite';
+import { mapPrismaError } from '../../utils/prismaErrors';
 import {
     claimIdempotencyKey,
     completeIdempotencyKey,
@@ -780,6 +781,7 @@ router.post(
             res.json({ ok: true, results });
         } catch (e: unknown) {
             if (mapVersionConflict(res, e)) return;
+            if (mapPrismaError(res, e)) return;
             const message = e instanceof Error ? e.message : 'Unknown error';
             logger.error('Offers', 'Błąd POST offers/studnie', message);
             res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
@@ -974,6 +976,7 @@ router.put(
             res.json({ ok: true });
         } catch (e: unknown) {
             if (mapVersionConflict(res, e)) return;
+            if (mapPrismaError(res, e)) return;
             const message = e instanceof Error ? e.message : 'Unknown error';
             logger.error('Offers', 'Błąd serwera', message);
             res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
@@ -1061,6 +1064,7 @@ router.delete('/studnie/:id', requireAuth, writeOffersLimiter, async (req, res) 
         searchCache.invalidateAll();
         res.json({ ok: true });
     } catch (e: unknown) {
+        if (mapPrismaError(res, e)) return;
         const message = e instanceof Error ? e.message : 'Unknown error';
         logger.error('Offers', `Błąd DELETE /studnie/:id (${req.params.id})`, message);
         res.status(500).json({ error: 'Wewnętrzny błąd serwera' });

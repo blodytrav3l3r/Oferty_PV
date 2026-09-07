@@ -11,6 +11,7 @@ import { validateData } from '../../validators/authSchema';
 import { WRITE_LIMITER } from '../../middleware/rateLimiters';
 import { searchCache } from '../../utils/searchCache';
 import { mapProductionOrderRow } from '../../utils/productionSearchUtils';
+import { mapPrismaError } from '../../utils/prismaErrors';
 import {
     claimIdempotencyKey,
     completeIdempotencyKey,
@@ -350,6 +351,7 @@ router.put(
                     saved: []
                 });
             }
+            if (mapPrismaError(res, e, { saved: [] })) return;
             const message = e instanceof Error ? e.message : 'Unknown error';
             logger.error('Production', 'Błąd serwera', message);
             res.status(500).json({ error: 'Wewnętrzny błąd serwera', saved: [] });
@@ -541,6 +543,7 @@ router.post(
                     code: 'PRODUCTION_NUMBER_CONFLICT'
                 });
             }
+            if (mapPrismaError(res, e)) return;
             const message = e instanceof Error ? e.message : 'Unknown error';
             logger.error('Production', 'Błąd POST', message);
             res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
@@ -630,6 +633,7 @@ router.post('/batch-delete', requireAuth, writeProductionLimiter, async (req, re
                 .status(403)
                 .json({ error: (e as { message?: string }).message || 'Brak uprawnień' });
         }
+        if (mapPrismaError(res, e)) return;
         const message = e instanceof Error ? e.message : 'Unknown error';
         logger.error('Production', 'Błąd serwera', message);
         res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
@@ -774,6 +778,7 @@ router.delete('/:id', requireAuth, writeProductionLimiter, async (req, res) => {
         searchCache.invalidateNamespace('production');
         res.json({ ok: true });
     } catch (e: unknown) {
+        if (mapPrismaError(res, e)) return;
         const message = e instanceof Error ? e.message : 'Unknown error';
         logger.error('Production', 'Błąd serwera', message);
         res.status(500).json({ error: 'Wewnętrzny błąd serwera' });

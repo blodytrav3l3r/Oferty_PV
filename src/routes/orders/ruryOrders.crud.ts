@@ -11,6 +11,7 @@ import { logger } from '../../utils/logger';
 import { canWriteDoc, canReadWithShare } from '../../utils/ownership';
 import { buildRoleWhereConditionWithShares } from '../../utils/roleFilter';
 import { versionedWrite, mapVersionConflict } from '../../utils/versionWrite';
+import { mapPrismaError } from '../../utils/prismaErrors';
 import crypto from 'crypto';
 
 const router = express.Router();
@@ -207,6 +208,7 @@ router.put(
             res.json({ ok: true });
         } catch (e: unknown) {
             if (mapVersionConflict(res, e)) return;
+            if (mapPrismaError(res, e)) return;
             if ((e as { status?: number }).status === 403) {
                 return res
                     .status(403)
@@ -332,6 +334,7 @@ router.patch(
             searchCache.invalidateAll();
             res.json({ ok: true });
         } catch (e: unknown) {
+            if (mapPrismaError(res, e)) return;
             const message = e instanceof Error ? e.message : 'Unknown error';
             logger.error('RuryOrders', 'Błąd zapisu zamówień rury', message);
             res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
@@ -379,6 +382,7 @@ router.delete('/:id', requireAuth, writeOrdersLimiter, async (req, res) => {
         searchCache.invalidateAll();
         res.json({ ok: true });
     } catch (e: unknown) {
+        if (mapPrismaError(res, e)) return;
         const message = e instanceof Error ? e.message : 'Unknown error';
         logger.error('Offers', 'Błąd serwera', message);
         res.status(500).json({ error: 'Wewnętrzny błąd serwera' });

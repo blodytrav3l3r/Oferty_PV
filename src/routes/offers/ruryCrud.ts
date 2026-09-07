@@ -12,6 +12,7 @@ import { validateData } from '../../validators/authSchema';
 import { WRITE_LIMITER } from '../../middleware/rateLimiters';
 import { canReadDoc, canWriteDoc, resolveWriteUserId } from '../../utils/ownership';
 import { versionedWrite, mapVersionConflict } from '../../utils/versionWrite';
+import { mapPrismaError } from '../../utils/prismaErrors';
 import {
     claimIdempotencyKey,
     completeIdempotencyKey,
@@ -407,6 +408,7 @@ router.post(
             res.json({ ok: true, results });
         } catch (e: unknown) {
             if (mapVersionConflict(res, e)) return;
+            if (mapPrismaError(res, e)) return;
             const message = e instanceof Error ? e.message : 'Unknown error';
             if (/locked|busy|timeout|P2028|P2034/i.test(message)) recordDbBusy();
             logger.error('Offers', 'Błąd POST offers', message);
@@ -599,6 +601,7 @@ router.put(
             res.json({ ok: true });
         } catch (e: unknown) {
             if (mapVersionConflict(res, e)) return;
+            if (mapPrismaError(res, e)) return;
             const message = e instanceof Error ? e.message : 'Unknown error';
             if (/locked|busy|timeout|P2028|P2034/i.test(message)) recordDbBusy();
             logger.error('Offers', 'Błąd PUT offers', message);
@@ -689,6 +692,7 @@ router.post('/:id/duplicate', requireAuth, writeOffersLimiter, async (req, res) 
         searchCache.invalidateAll();
         return res.json({ ok: true, data: { id: newId } });
     } catch (e: unknown) {
+        if (mapPrismaError(res, e)) return;
         const message = e instanceof Error ? e.message : 'Unknown error';
         logger.error('Offers', 'Błąd POST /:id/duplicate', message);
         res.status(500).json({ error: 'Wewnętrzny błąd serwera' });

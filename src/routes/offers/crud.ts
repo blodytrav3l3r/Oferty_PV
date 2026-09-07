@@ -8,6 +8,7 @@ import { canReadWithShare } from '../../utils/ownership';
 import { searchCache } from '../../utils/searchCache';
 import { removeFts5 } from '../../utils/fts5Sync';
 import { hasProductionOrdersForOffer } from '../../utils/productionOrderGuard';
+import { mapPrismaError } from '../../utils/prismaErrors';
 
 const router = express.Router();
 
@@ -294,6 +295,7 @@ router.delete('/:id', requireAuth, writeOffersLimiter, async (req, res) => {
         res.json({ ok: true });
         return;
     } catch (e: unknown) {
+        if (mapPrismaError(res, e)) return;
         const message = e instanceof Error ? e.message : 'Unknown error';
         logger.error('Offers', 'Błąd serwera', message);
         res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
