@@ -399,18 +399,34 @@ export async function initApp(): Promise<void> {
     }
 
     // WAL + synchronous=NORMAL + busy_timeout — parallel batch (P1-4) — niezależne PRAGMA
+    // P1-E: foreign_keys=ON — bez tego FK (offer_items_rel.offerId) jest uśpione.
+    // connection_limit=1: pula ma jedno połączenie, pragma trzyma się go na stałe.
     try {
         await Promise.all([
             prisma.$queryRawUnsafe('PRAGMA journal_mode=WAL'),
             prisma.$queryRawUnsafe('PRAGMA synchronous=NORMAL'),
             prisma.$queryRawUnsafe('PRAGMA busy_timeout=30000'),
-            prisma.$executeRawUnsafe('PRAGMA user_version = 20000')
+            prisma.$executeRawUnsafe('PRAGMA user_version = 20000'),
+            prisma.$executeRawUnsafe('PRAGMA foreign_keys = ON')
         ]);
-        logger.info('Server', 'PRAGMA WAL/synchronous/busy_timeout/user_version ustawione');
+        logger.info(
+            'Server',
+            'PRAGMA WAL/synchronous/busy_timeout/user_version/foreign_keys ustawione'
+        );
+        // P1-E self-check: FK musi być realnie egzekwowane na połączeniu aplikacji.
+        const fkOn = (await prisma.$queryRawUnsafe('PRAGMA foreign_keys')) as Array<{
+            foreign_keys: number;
+        }>;
+        if (!fkOn?.[0]?.foreign_keys) {
+            logger.warn(
+                'Server',
+                'PRAGMA foreign_keys=OFF na połączeniu — FK uśpione, działa tylko straż kodowa'
+            );
+        }
     } catch (err) {
         logger.warn(
             'Server',
-            'Nie udało się ustawić PRAGMA WAL/synchronous/busy_timeout/user_version:',
+            'Nie udało się ustawić PRAGMA WAL/synchronous/busy_timeout/user_version/foreign_keys:',
             err instanceof Error ? err.message : err
         );
     }

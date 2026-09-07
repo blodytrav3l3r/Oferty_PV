@@ -271,6 +271,10 @@ model offer_items_rel {
   discount  Float?
   price     Float?
 
+  // P1-E: siatka ostatniej linii — kod kasuje pozycje w tx przed ofertą,
+  // FK wyłapuje obejścia. Bez CASCADE (kod jest właścicielem kasowania).
+  offer offers_rel? @relation(fields: [offerId], references: [id], onDelete: Restrict)
+
   @@index([offerId], map: "idx_offitems_offer")
 }
 
@@ -302,8 +306,10 @@ model offers_rel {
   investName    String?
   clientNip     String?
   clientNumber  String?  @default("")
-  // P0-D2: licznik optimistic lockingu (UPDATE ... WHERE id+version, 409).
+  // P1-D2: licznik optimistic lockingu (UPDATE ... WHERE id+version, 409).
   version       Int      @default(1)
+  // P1-E: back-relacja siatki FK (offer_items_rel.offerId, Restrict).
+  items         offer_items_rel[]
 
   @@index([userId], map: "idx_offers_user")
   @@index([createdAt], map: "idx_offers_created")

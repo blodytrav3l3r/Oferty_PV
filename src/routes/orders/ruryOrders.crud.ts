@@ -363,12 +363,19 @@ router.delete('/:id', requireAuth, writeOrdersLimiter, async (req, res) => {
                     where: { id: docId, userId: authReq.user?.id }
                 });
             }
+            // P1-E: shares w tej samej tx (koniec okna crash→sierota).
+            try {
+                await (tx as any).document_shares?.deleteMany?.({
+                    where: { documentType: 'order_rury', documentId: docId }
+                });
+            } catch (e: unknown) {
+                logger.warn(
+                    'Offers',
+                    'Pomijam czyszczenie shares (legacy?)',
+                    e instanceof Error ? e.message : String(e)
+                );
+            }
         });
-        try {
-            await (prisma as any).document_shares?.deleteMany?.({
-                where: { documentType: 'order_rury', documentId: docId }
-            });
-        } catch {}
         searchCache.invalidateAll();
         res.json({ ok: true });
     } catch (e: unknown) {

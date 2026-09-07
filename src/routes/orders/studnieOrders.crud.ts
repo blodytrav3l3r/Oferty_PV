@@ -505,6 +505,18 @@ router.delete('/:id', requireAuth, writeOrdersLimiter, async (req, res) => {
                         where: { id: docId, userId: authReq.user?.id }
                     });
                 }
+                // P1-E: shares w tej samej tx (koniec okna crash→sierota).
+                try {
+                    await (tx as any).document_shares?.deleteMany?.({
+                        where: { documentType: 'order_studnie', documentId: docId }
+                    });
+                } catch (e: unknown) {
+                    logger.warn(
+                        'StudnieOrders',
+                        'Pomijam czyszczenie shares (legacy?)',
+                        e instanceof Error ? e.message : String(e)
+                    );
+                }
             });
         } catch (e: unknown) {
             if ((e as { status?: number }).status === 403) {
@@ -514,11 +526,6 @@ router.delete('/:id', requireAuth, writeOrdersLimiter, async (req, res) => {
             }
             throw e;
         }
-        try {
-            await (prisma as any).document_shares?.deleteMany?.({
-                where: { documentType: 'order_studnie', documentId: docId }
-            });
-        } catch {}
         searchCache.invalidateAll();
         res.json({ ok: true });
     } catch (e: unknown) {

@@ -21,6 +21,8 @@ const ADD_PROD_WELL_INDEX = '20260905000000_add_prod_well_index';
 const PROD_NUMBER_UNIQUE = '20260907000000_prod_number_unique';
 const PROD_VERSION = '20260907000001_prod_version';
 const DOC_VERSIONS = '20260907000002_doc_versions';
+const IDEMPOTENCY_KEYS = '20260907000003_idempotency_keys';
+const FK_ITEMS_OFFER = '20260907000004_fk_items_offer';
 
 describe('A3 baseline migracji', () => {
     it('deploy na czystej bazie tworzy pelny schemat zgodny z schema.prisma', () => {
@@ -35,7 +37,9 @@ describe('A3 baseline migracji', () => {
             ADD_PROD_WELL_INDEX,
             PROD_NUMBER_UNIQUE,
             PROD_VERSION,
-            DOC_VERSIONS
+            DOC_VERSIONS,
+            IDEMPOTENCY_KEYS,
+            FK_ITEMS_OFFER
         ]);
         try {
             const out = project.runPrisma(['migrate', 'deploy']);

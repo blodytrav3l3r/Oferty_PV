@@ -54,6 +54,10 @@ jest.mock('../src/prismaClient', () => ({
             create: jest.fn(),
             createMany: jest.fn()
         },
+        // P1-E: guard kasowania oferty z żywymi zamówieniami.
+        orders_rury_rel: {
+            count: jest.fn()
+        },
         $queryRawUnsafe: jest.fn().mockResolvedValue([]),
         $executeRaw: jest.fn(),
         $executeRawUnsafe: jest.fn().mockResolvedValue(1),
@@ -275,6 +279,7 @@ describe('Ownership E2E — offers routes', () => {
         it('owner CAN delete own offer', async () => {
             (prisma.offers_rel.findUnique as jest.Mock).mockResolvedValue(myOffer);
             (prisma.offer_items_rel.findMany as jest.Mock).mockResolvedValue([]);
+            (prisma.orders_rury_rel.count as jest.Mock).mockResolvedValue(0);
             (prisma.offer_items_rel.deleteMany as jest.Mock).mockResolvedValue({});
             (prisma.offers_rel.delete as jest.Mock).mockResolvedValue({});
             const res = await request(app).delete('/api/offers/o-mine');
@@ -286,10 +291,21 @@ describe('Ownership E2E — offers routes', () => {
             currentUser = { id: 'admin1', role: 'admin', subUsers: [] };
             (prisma.offers_rel.findUnique as jest.Mock).mockResolvedValue(otherUsersOffer);
             (prisma.offer_items_rel.findMany as jest.Mock).mockResolvedValue([]);
+            (prisma.orders_rury_rel.count as jest.Mock).mockResolvedValue(0);
             (prisma.offer_items_rel.deleteMany as jest.Mock).mockResolvedValue({});
             (prisma.offers_rel.delete as jest.Mock).mockResolvedValue({});
             const res = await request(app).delete('/api/offers/o-other');
             expect(res.statusCode).toBe(200);
+        });
+
+        it('P1-E: owner CANNOT delete offer with live orders (403)', async () => {
+            currentUser = { id: 'user1', role: 'user', subUsers: [] };
+            (prisma.offers_rel.findUnique as jest.Mock).mockResolvedValue(myOffer);
+            (prisma.offer_items_rel.findMany as jest.Mock).mockResolvedValue([]);
+            (prisma.orders_rury_rel.count as jest.Mock).mockResolvedValue(1);
+            const res = await request(app).delete('/api/offers/o-mine');
+            expect(res.statusCode).toBe(403);
+            expect(prisma.offers_rel.delete).not.toHaveBeenCalled();
         });
     });
 

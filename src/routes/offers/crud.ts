@@ -168,6 +168,7 @@ router.delete('/:id', requireAuth, writeOffersLimiter, async (req, res) => {
 
             // P0-E: guard + kasowanie biznesowe w JEDNEJ transakcji.
             // FTS to dane pochodne — po COMMIT, nigdy nie blokuje kasowania.
+            // P1-E: także żywe zamówienia (nie tylko PZ) blokują kasowanie.
             try {
                 await prisma.$transaction(async (tx) => {
                     if (await hasProductionOrdersForOffer(id, tx)) {
@@ -177,7 +178,30 @@ router.delete('/:id', requireAuth, writeOffersLimiter, async (req, res) => {
                                 'Nie można usunąć oferty — ma przypisane zlecenia produkcyjne. Usuń najpierw zlecenia w zamówieniach tej oferty.'
                         };
                     }
+                    const orderCount = await tx.orders_studnie_rel.count({
+                        where: { offerStudnieId: id }
+                    });
+                    if (orderCount > 0) {
+                        throw {
+                            status: 403,
+                            message:
+                                'Nie można usunąć oferty — ma przypisane zamówienia. Usuń najpierw zamówienia tej oferty.'
+                        };
+                    }
                     await tx.offers_studnie_rel.delete({ where: { id } });
+                    // P1-E: shares w tej samej tx (koniec okna crash→sierota).
+                    // Try/catch: legacy bazy bez tabeli document_shares.
+                    try {
+                        await (tx as any).document_shares?.deleteMany?.({
+                            where: { documentType: 'offer_studnie', documentId: id }
+                        });
+                    } catch (e: unknown) {
+                        logger.warn(
+                            'Offers',
+                            'Pomijam czyszczenie shares (legacy?)',
+                            e instanceof Error ? e.message : String(e)
+                        );
+                    }
                 });
             } catch (e: unknown) {
                 if ((e as { status?: number }).status === 403) {
@@ -187,11 +211,6 @@ router.delete('/:id', requireAuth, writeOffersLimiter, async (req, res) => {
                 }
                 throw e;
             }
-            try {
-                await (prisma as any).document_shares?.deleteMany?.({
-                    where: { documentType: 'offer_studnie', documentId: id }
-                });
-            } catch {}
             await removeFts5('studnie', id);
 
             logger.info('Offers', `Oferta studnie ${id} usunięta przez ${authReq.user?.username}`);
@@ -227,19 +246,47 @@ router.delete('/:id', requireAuth, writeOffersLimiter, async (req, res) => {
 
         // P0-E: kasowanie biznesowe w JEDNEJ transakcji.
         // FTS to dane pochodne — po COMMIT, nigdy nie blokuje kasowania.
-        await prisma.$transaction(async (tx) => {
-            await tx.offer_items_rel.deleteMany({
-                where: { offerId: id }
-            });
-            await tx.offers_rel.delete({
-                where: { id }
-            });
-        });
+        // P1-E: oferta z żywymi zamówieniami nie do usunięcia (jak PZ) —
+        // re-check w tx, koniec TOCTOU i cichych sierot po offerId.
         try {
-            await (prisma as any).document_shares?.deleteMany?.({
-                where: { documentType: 'offer', documentId: id }
+            await prisma.$transaction(async (tx) => {
+                const orderCount = await tx.orders_rury_rel.count({
+                    where: { offerId: id }
+                });
+                if (orderCount > 0) {
+                    throw {
+                        status: 403,
+                        message:
+                            'Nie można usunąć oferty — ma przypisane zamówienia. Usuń najpierw zamówienia tej oferty.'
+                    };
+                }
+                await tx.offer_items_rel.deleteMany({
+                    where: { offerId: id }
+                });
+                await tx.offers_rel.delete({
+                    where: { id }
+                });
+                // P1-E: shares w tej samej tx (koniec okna crash→sierota).
+                try {
+                    await (tx as any).document_shares?.deleteMany?.({
+                        where: { documentType: 'offer', documentId: id }
+                    });
+                } catch (e: unknown) {
+                    logger.warn(
+                        'Offers',
+                        'Pomijam czyszczenie shares (legacy?)',
+                        e instanceof Error ? e.message : String(e)
+                    );
+                }
             });
-        } catch {}
+        } catch (e: unknown) {
+            if ((e as { status?: number }).status === 403) {
+                return res
+                    .status(403)
+                    .json({ error: (e as { message?: string }).message || 'Brak uprawnień' });
+            }
+            throw e;
+        }
         await removeFts5('rury', id);
 
         logger.info('Offers', `Oferta rury ${id} usunięta przez ${authReq.user?.username}`);
