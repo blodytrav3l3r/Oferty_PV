@@ -227,3 +227,31 @@ serwerze (tryb awaryjny: SQL z busy_timeout + rejestr SHA-256 pliku);
 mock `$transaction` wymaga delegacji i undo-logu, inaczej fałszywa zieleń;
 hook blokuje `scripts/*.js` (luka konfiguracji eslint) — obejście wg CONTRIBUTING.
 Następne: P1 (idempotencja, FTS-rebuild, metryki `/metrics`, sesje, FK-inwentaryzacja).
+
+## Realizacja P1/P2 (2026-09-07, po P0)
+
+| Krok                                                  | Commit  | Gate                                     |
+| ----------------------------------------------------- | ------- | ---------------------------------------- |
+| P1-A klucz idempotencji POST + replay 24 h            | 0515f1b | live smoke retry → to samo id            |
+| Metryki in-process + `/metrics` (P0-I)                | afb5110 | 200 admin, 401 anonim                    |
+| P1-B status + rebuild FTS (derived, cron liczniki)    | 76bae9c | live status/rebuild                      |
+| P1-D kasowanie obcych sesji + rotacja 10              | d6ee4fe | 13 testów + live                         |
+| P1-C LIST slim (projekcja zamiast blobów)             | 378db75 | parity kart + bigint live                |
+| P1-E FK pozycji + guardy 403 + `PRAGMA foreign_keys`  | 1c7bf55 | live FK strzela, guardy 403              |
+| P1-F `scripts/load-100.mjs` + HOT_TX_OPTS 15/30 s     | 6022a10 | quick: write/batch 194/194 zero fail     |
+| P2 cache szablonów PDF + letterhead                   | fc98d1d | 4 testy + pdf 19/19                      |
+| P2 flaga `_excelVirtualListenersOn` (leak listenerów) | 41ee1cb | oracle 3/3                               |
+| P2 escape label w bulk-progress                       | c3829c9 | 2 testy + bulk 9/9                       |
+| P2 `mapPrismaError` P2025→404/P2002→409 (14 catchy)   | eb7f050 | 4 testy + crud 114/114                   |
+| P1-E guard users DELETE (403 przy dokumentach)        | (ten)   | 11 testów users + `audit:integrity` PASS |
+
+### P1-E inwentaryzacja relacji (2026-09-07, `audit:integrity` PASS, 0 sierot)
+
+- `offer_items_rel.offerId` → FK Restrict ✅ (1c7bf55). Kod kasuje pozycje w tx przed ofertą.
+- `offer_studnie_items_rel` — MARTWA tabela (zero odwołań w kodzie, pozycje w blobie JSON). Bez FK, bez akcji (drop = osobna migracja, poza zakresem).
+- `orders_studnie_rel.offerStudnieId`, `orders_rury_rel.offerId` — BEZ FK (świadomie): guard 403 + kasowanie w jednej tx (P0-E/P1-E), `audit:integrity` pilnuje sierot. FK Restrict możliwe po weryfikacji na kopii prod (migracja padnie przy sierotach) — krok opcjonalny, nie blokuje GO.
+- `production_orders_rel.wellId/elementIndex` — tożsamość W JSON (nie tabela) → FK niemożliwe; strażnik `pzGuard` + guardy kodu. Bez zmian.
+- `document_shares.documentId` — polimorficzne → FK niemożliwe; czyszczenie w tx kasowania. Bez zmian.
+- `recycled_production_numbers` — pula code-owned (claim atomowy P0-B). Bez FK.
+- `*.userId` — wektor sierot to DELETE usera (był bez guarda!) → naprawione guardem 403 + kasowanie sesji w tx (ten commit). `clients_rel.userId` (shared pool, Wariant A) — sierota widoczna dla wszystkich, akceptowane.
+- Zakaz masowego CASCADE przestrzegany: jedyny FK to Restrict; kasowanie należy do kodu w tx.

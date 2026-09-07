@@ -2,6 +2,7 @@ import express from 'express';
 import bcrypt from 'bcryptjs';
 import prisma from '../prismaClient';
 import { requireAuth, requireAdmin, AuthenticatedRequest } from '../middleware/auth';
+import { mapPrismaError } from '../utils/prismaErrors';
 import { validateData } from '../validators/authSchema';
 import { ADMIN_USERS_LIMITER } from '../middleware/rateLimiters';
 import { userUpdateSchema } from '../validators/offerSchemas';
@@ -159,11 +160,29 @@ router.delete('/:id', requireAuth, requireAdmin, adminUsersLimiter, async (req, 
         return res.status(400).json({ error: 'Nie możesz usunąć siebie' });
 
     try {
-        await prisma.users.delete({
-            where: { id: req.params.id }
+        // P1-E: użytkownik z dokumentami nie do usunięcia (koniec sierot userId).
+        // Przeniesienie dokumentów na innego usera to osobna funkcja (poza zakresem).
+        const [offers, offersStudnie, ordersStudnie, ordersRury, prodOrders] = await Promise.all([
+            prisma.offers_rel.count({ where: { userId: req.params.id } }),
+            prisma.offers_studnie_rel.count({ where: { userId: req.params.id } }),
+            prisma.orders_studnie_rel.count({ where: { userId: req.params.id } }),
+            prisma.orders_rury_rel.count({ where: { userId: req.params.id } }),
+            prisma.production_orders_rel.count({ where: { userId: req.params.id } })
+        ]);
+        const owned = offers + offersStudnie + ordersStudnie + ordersRury + prodOrders;
+        if (owned > 0) {
+            return res.status(403).json({
+                error: `Nie można usunąć użytkownika — ma ${owned} dokumentów (ofert/zamówień/zleceń). Przenieś je najpierw na innego użytkownika.`
+            });
+        }
+        await prisma.$transaction(async (tx) => {
+            // Sesje w tej samej tx — brak okna martwy-user-z-żywą-sesją.
+            await tx.sessions.deleteMany({ where: { userId: req.params.id } });
+            await tx.users.delete({ where: { id: req.params.id } });
         });
         res.json({ ok: true });
     } catch (e: unknown) {
+        if (mapPrismaError(res, e)) return;
         const message = e instanceof Error ? e.message : 'Unknown error';
         logger.error('Users', 'Błąd serwera', message);
         res.status(500).json({ error: 'Wewnętrzny błąd serwera' });

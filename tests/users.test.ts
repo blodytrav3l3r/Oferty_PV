@@ -39,9 +39,23 @@ jest.mock('../src/prismaClient', () => ({
             findUnique: jest.fn(),
             update: jest.fn(),
             delete: jest.fn()
-        }
+        },
+        sessions: {
+            deleteMany: jest.fn()
+        },
+        offers_rel: { count: jest.fn() },
+        offers_studnie_rel: { count: jest.fn() },
+        orders_studnie_rel: { count: jest.fn() },
+        orders_rury_rel: { count: jest.fn() },
+        production_orders_rel: { count: jest.fn() },
+        $transaction: jest.fn(async (fn: any) => fn(prismaMockRef()))
     }
 }));
+
+function prismaMockRef(): any {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    return require('../src/prismaClient').default;
+}
 
 const mockUsers = [
     {
@@ -188,15 +202,59 @@ describe('Users Routes', () => {
             expect(res.body.error).toBe('Nie możesz usunąć siebie');
         });
 
-        it('powinien usunąć usera', async () => {
-            (prisma.users.delete as jest.Mock).mockResolvedValueOnce({});
+        it('powinien usunąć usera bez dokumentów (sesje + user w tx)', async () => {
+            (prisma.offers_rel.count as jest.Mock).mockResolvedValue(0);
+            (prisma.offers_studnie_rel.count as jest.Mock).mockResolvedValue(0);
+            (prisma.orders_studnie_rel.count as jest.Mock).mockResolvedValue(0);
+            (prisma.orders_rury_rel.count as jest.Mock).mockResolvedValue(0);
+            (prisma.production_orders_rel.count as jest.Mock).mockResolvedValue(0);
+            (prisma.sessions.deleteMany as jest.Mock).mockResolvedValue({ count: 2 });
+            (prisma.users.delete as jest.Mock).mockResolvedValue({});
             const res = await request(app)
                 .delete('/api/users/user-id')
                 .set('x-user-id', 'admin-id')
                 .set('x-user-role', 'admin');
 
             expect(res.statusCode).toBe(200);
+            expect(prisma.$transaction).toHaveBeenCalled();
+            expect(prisma.sessions.deleteMany).toHaveBeenCalledWith({
+                where: { userId: 'user-id' }
+            });
             expect(prisma.users.delete).toHaveBeenCalledWith({ where: { id: 'user-id' } });
+        });
+
+        it('P1-E: 403 gdy user ma dokumenty (koniec sierot userId)', async () => {
+            (prisma.offers_rel.count as jest.Mock).mockResolvedValue(3);
+            (prisma.offers_studnie_rel.count as jest.Mock).mockResolvedValue(0);
+            (prisma.orders_studnie_rel.count as jest.Mock).mockResolvedValue(0);
+            (prisma.orders_rury_rel.count as jest.Mock).mockResolvedValue(0);
+            (prisma.production_orders_rel.count as jest.Mock).mockResolvedValue(0);
+            const res = await request(app)
+                .delete('/api/users/user-id')
+                .set('x-user-id', 'admin-id')
+                .set('x-user-role', 'admin');
+
+            expect(res.statusCode).toBe(403);
+            expect(prisma.users.delete).not.toHaveBeenCalled();
+        });
+
+        it('nieistniejący user → 404 zamiast 500 (P2025)', async () => {
+            (prisma.offers_rel.count as jest.Mock).mockResolvedValue(0);
+            (prisma.offers_studnie_rel.count as jest.Mock).mockResolvedValue(0);
+            (prisma.orders_studnie_rel.count as jest.Mock).mockResolvedValue(0);
+            (prisma.orders_rury_rel.count as jest.Mock).mockResolvedValue(0);
+            (prisma.production_orders_rel.count as jest.Mock).mockResolvedValue(0);
+            (prisma.sessions.deleteMany as jest.Mock).mockResolvedValue({ count: 0 });
+            (prisma.users.delete as jest.Mock).mockRejectedValue(
+                Object.assign(new Error('No record'), { code: 'P2025' })
+            );
+            const res = await request(app)
+                .delete('/api/users/ghost-id')
+                .set('x-user-id', 'admin-id')
+                .set('x-user-role', 'admin');
+
+            expect(res.statusCode).toBe(404);
+            expect(res.body.code).toBe('NOT_FOUND');
         });
     });
 
