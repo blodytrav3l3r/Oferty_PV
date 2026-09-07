@@ -1,6 +1,9 @@
 # Production Readiness — 1 serwer / ~100 użytkowników (PLAN v4, finalny)
 
-> Status: P0 WDROŻONE (2026-09-07, commity 5b29a47 → b09d15b). Pozostało P1/P2.
+> Status: P0 WDROŻONE (2026-09-07, 5b29a47 → b09d15b). P1/P2 w kodzie domknięte
+> (tabela „Realizacja P1/P2", commity 0515f1b → dfae10a; P1-C i polling
+> rozstrzygnięte pomiarem NIE). Otwarte: P1-D cookie-only (decyzja),
+> FINAL benchmark 15 min na kopii prod + DoD/GO.
 > Wejścia: pełny audyt aplikacji + recenzja 8,5/10 + plan v3 + recenzja 9,6/10.
 > Wszystkie 13 uwag z recenzji v3 uwzględnione (sekcja „Mapowanie uwag").
 > Ocena aplikacji dziś: ~6,0–6,5/10. Cel: twarde DoD → GO 100 user / 1 serwer z danych, nie z założenia.
@@ -243,9 +246,9 @@ Następne: P1 (idempotencja, FTS-rebuild, metryki `/metrics`, sesje, FK-inwentar
 | P2 flaga `_excelVirtualListenersOn` (leak listenerów) | 41ee1cb | oracle 3/3                               |
 | P2 escape label w bulk-progress                       | c3829c9 | 2 testy + bulk 9/9                       |
 | P2 `mapPrismaError` P2025→404/P2002→409 (14 catchy)   | eb7f050 | 4 testy + crud 114/114                   |
-| P1-E guard users DELETE (403 przy dokumentach)        | (ten)   | 11 testów users + `audit:integrity` PASS |
-| P1-C/B pomiar LIST → SPLIT NIE (parse <0,1 ms)        | (ten)   | 6 KB/20, search 7,7 KB, RSS 118 MB       |
-| P2 polling dirty-flag → NIE (2,8 ms/500 ms przy 10k)  | (ten)   | pomiar node, ryzyko nieświeżego UI       |
+| P1-E guard users DELETE (403 przy dokumentach)        | 48c89e2 | 11 testów users + `audit:integrity` PASS |
+| P1-C/B pomiar LIST → SPLIT NIE (parse <0,1 ms)        | 0e2f2bf | 6 KB/20, search 7,7 KB, RSS 118 MB       |
+| P2 polling dirty-flag → NIE (2,8 ms/500 ms przy 10k)  | dfae10a | pomiar node, ryzyko nieświeżego UI       |
 
 ### P1-C decyzja o splicie `offer_data` (2026-09-07, pomiar na żywym dev)
 
