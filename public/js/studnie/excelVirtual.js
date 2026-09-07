@@ -953,6 +953,10 @@ function _excelVirtualHandleKeydown(e) {
 
 (function () {
     if (typeof document !== 'undefined' && typeof document.addEventListener === 'function') {
+        // P2: skrypt może być ewaluowany wielokrotnie (przeładowanie modułu) —
+        // bez flagi każdy copy/keydown odpalałby N zduplikowanych handlerów.
+        if (typeof window !== 'undefined' && window._excelVirtualListenersOn) return;
+        if (typeof window !== 'undefined') window._excelVirtualListenersOn = true;
         document.addEventListener('copy', _excelVirtualHandleCopy, true);
         document.addEventListener('keydown', _excelVirtualHandleKeydown, true);
     }
