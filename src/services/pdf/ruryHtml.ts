@@ -1,10 +1,9 @@
-import fs from 'fs';
 import path from 'path';
 import { DOCX_COLORS } from '../docx/colors';
 import { escapeHtml, formatDatePL } from './helpers';
 import { buildContactSectionHTML } from './offerUsers';
 import type { RuryOfferData } from './types';
-import { PRINT_TOKENS_CSS } from './printTokens';
+import { loadPdfTemplate } from './templateCache';
 import { loadLetterheadBase64 } from './letterhead';
 import { resolvePublicDir } from '../../utils/paths';
 
@@ -177,19 +176,7 @@ export async function generateRuryHTML(data: RuryOfferData): Promise<string> {
         : `<div><strong>Data ważności oferty:</strong> ${validityString}</div>`;
 
     const templatePath = path.join(resolvePublicDir(), 'templates', 'ofertaRury.html');
-    let template: string;
-    try {
-        template = fs
-            .readFileSync(templatePath, 'utf-8')
-            .replace(/\{\{PRINT_TOKENS\}\}/g, PRINT_TOKENS_CSS);
-    } catch (e) {
-        throw new Error(
-            'Nie mozna wczytac szablonu PDF (' +
-                templatePath +
-                '): ' +
-                (e instanceof Error ? e.message : String(e))
-        );
-    }
+    const template = loadPdfTemplate(templatePath);
 
     const letterhead = loadLetterheadBase64();
     const naglowekBase64 = letterhead.header;

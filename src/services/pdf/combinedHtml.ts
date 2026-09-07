@@ -1,9 +1,8 @@
-import fs from 'fs';
 import path from 'path';
 import type { RuryOfferData, StudnieOfferData } from './types';
 import { escapeHtml, formatDatePL } from './helpers';
 import { buildContactSectionHTML } from './offerUsers';
-import { PRINT_TOKENS_CSS } from './printTokens';
+import { loadPdfTemplate } from './templateCache';
 import { loadLetterheadBase64 } from './letterhead';
 import { resolvePublicDir } from '../../utils/paths';
 import { buildRurySectionHTML } from './ruryHtml';
@@ -42,19 +41,7 @@ export async function generateCombinedHTML(
         : `<div><strong>Data ważności oferty:</strong> ${validityString}</div>`;
 
     const templatePath = path.join(resolvePublicDir(), 'templates', 'ofertaStudnie.html');
-    let template: string;
-    try {
-        template = fs
-            .readFileSync(templatePath, 'utf-8')
-            .replace(/\{\{PRINT_TOKENS\}\}/g, PRINT_TOKENS_CSS);
-    } catch (e) {
-        throw new Error(
-            'Nie mozna wczytac szablonu PDF (' +
-                templatePath +
-                '): ' +
-                (e instanceof Error ? e.message : String(e))
-        );
-    }
+    const template = loadPdfTemplate(templatePath);
 
     const { header: naglowekBase64, footer: stopkaBase64 } = loadLetterheadBase64();
 

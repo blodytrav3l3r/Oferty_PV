@@ -1,12 +1,11 @@
 import prisma from '../../prismaClient';
-import fs from 'fs';
 import path from 'path';
 import { logger } from '../../utils/logger';
 import { resolvePublicDir } from '../../utils/paths';
 import { escapeHtml } from './helpers';
+import { loadPdfTemplate } from './templateCache';
 import { generatePDF } from './pdfEngine';
 import type { KartaBudowyMeta, KartaBudowyOrderData } from '../../types/kartaBudowy';
-import { PRINT_TOKENS_CSS } from './printTokens';
 
 function buildKartaBudowyBaseHtml(
     kb: KartaBudowyMeta,
@@ -14,19 +13,7 @@ function buildKartaBudowyBaseHtml(
     nrOferty: string
 ): string {
     const templatePath = path.join(resolvePublicDir(), 'templates', 'kartaBudowy.html');
-    let html: string;
-    try {
-        html = fs
-            .readFileSync(templatePath, 'utf-8')
-            .replace(/\{\{PRINT_TOKENS\}\}/g, PRINT_TOKENS_CSS);
-    } catch (e) {
-        throw new Error(
-            'Nie mozna wczytac szablonu PDF (' +
-                templatePath +
-                '): ' +
-                (e instanceof Error ? e.message : String(e))
-        );
-    }
+    let html: string = loadPdfTemplate(templatePath);
 
     html = html.replace(/\{\{NR_ZAMOWIENIA\}\}/g, nrZamowienia);
     html = html.replace(/\{\{OFFER_NUMBERS\}\}/g, nrOferty);
