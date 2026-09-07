@@ -42,7 +42,11 @@ function countProbe(dbPath: string): number {
     }
 }
 
-function waitForOutput(child: ReturnType<typeof spawn>, needle: string, timeoutMs = 30000): Promise<void> {
+function waitForOutput(
+    child: ReturnType<typeof spawn>,
+    needle: string,
+    timeoutMs = 30000
+): Promise<void> {
     return new Promise((resolve, reject) => {
         let buf = '';
         const timer = setTimeout(() => reject(new Error(`timeout na ${needle}`)), timeoutMs);
@@ -73,7 +77,8 @@ describe('P0-F kill/recovery', () => {
                     stdio: ['ignore', 'pipe', 'pipe']
                 });
                 // Czekaj aż writer dotrze do co najmniej `written` wierszy.
-                const milestone = written <= 25 ? 25 : written <= 50 ? 50 : written <= 75 ? 75 : 100;
+                const milestone =
+                    written <= 25 ? 25 : written <= 50 ? 50 : written <= 75 ? 75 : 100;
                 await waitForOutput(child, `progress:${milestone}`);
                 child.kill('SIGKILL');
                 await new Promise<void>((resolve) => {
@@ -121,12 +126,9 @@ describe('P0-F kill/recovery', () => {
         try {
             project.runPrisma(['migrate', 'deploy']);
             const db = new DatabaseSync(project.dbPath);
-            db.prepare('INSERT INTO ProductsRury (id, name, category, price) VALUES (?, ?, ?, ?)').run(
-                'r_old',
-                'Rura stara',
-                'Rury Betonowe',
-                11.0
-            );
+            db.prepare(
+                'INSERT INTO ProductsRury (id, name, category, price) VALUES (?, ?, ?, ?)'
+            ).run('r_old', 'Rura stara', 'Rury Betonowe', 11.0);
             db.close();
 
             const backupPath = path.join(project.dir, 'old_backup.sqlite');
@@ -156,7 +158,9 @@ describe('P0-F kill/recovery', () => {
             });
             expect(out).toContain('[OK] Schemat zsynchronizowany');
             const check = new DatabaseSync(project.dbPath, { readOnly: true });
-            const n = (check.prepare('SELECT COUNT(*) AS n FROM ProductsRury').get() as { n: number }).n;
+            const n = (
+                check.prepare('SELECT COUNT(*) AS n FROM ProductsRury').get() as { n: number }
+            ).n;
             check.close();
             expect(n).toBe(1);
             const status = project.runPrisma(['migrate', 'status']);
