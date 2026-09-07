@@ -1,0 +1,104 @@
+{
+    "quick": false,
+    "ops": {
+        "read": {
+            "n": 2417,
+            "p50": 21.3,
+            "p95": 251.7,
+            "p99": 1229.6,
+            "fail": 0,
+            "throttled": 0,
+            "statuses": {
+                "200": 2417
+            },
+            "errSample": []
+        },
+        "claim": {
+            "n": 60,
+            "p50": 29.9,
+            "p95": 112.9,
+            "p99": 1990.6,
+            "fail": 0,
+            "throttled": 0,
+            "statuses": {
+                "200": 60
+            },
+            "errSample": []
+        },
+        "write": {
+            "n": 878,
+            "p50": 51.6,
+            "p95": 263.1,
+            "p99": 2227.8,
+            "fail": 0,
+            "throttled": 0,
+            "statuses": {
+                "200": 878
+            },
+            "errSample": []
+        },
+        "batch": {
+            "n": 209,
+            "p50": 66.7,
+            "p95": 369.3,
+            "p99": 3499.1,
+            "fail": 0,
+            "throttled": 0,
+            "statuses": {
+                "200": 209
+            },
+            "errSample": []
+        },
+        "pdf": {
+            "n": 17,
+            "p50": 3161,
+            "p95": 4895.2,
+            "p99": 4895.2,
+            "fail": 0,
+            "throttled": 0,
+            "statuses": {
+                "200": 17
+            },
+            "errSample": []
+        }
+    },
+    "burst": {
+        "wallMs": 5356,
+        "n": 100,
+        "p50": 1174.1,
+        "p95": 2221.1,
+        "statuses": {
+            "200": 100
+        }
+    },
+    "metrics": {
+        "busyDelta": 0,
+        "dbQueries": 21741,
+        "dbAvgMs": 9.27,
+        "loopLagMaxMs": 150,
+        "rssMB": 342,
+        "pdf": {
+            "activeJobs": 0,
+            "queueDepth": 0,
+            "done": 19,
+            "failed429": 0,
+            "failed504": 0,
+            "failed500": 0,
+            "totalMs": 54350,
+            "concurrency": 2,
+            "maxQueue": 10
+        }
+    },
+    "dod": {
+        "5xx==0": true,
+        "write-fail==0": true,
+        "busyDelta==0": true,
+        "P95 CRUD<500ms": true,
+        "throttled==0": true,
+        "fails5xx": 0,
+        "writeFail": 0,
+        "busyDelta": 0,
+        "crudP95": 369.3,
+        "throttled": 0
+    }
+}

@@ -1,9 +1,9 @@
 # Production Readiness — 1 serwer / ~100 użytkowników (PLAN v4, finalny)
 
-> Status: P0 WDROŻONE (2026-09-07, 5b29a47 → b09d15b). P1/P2 w kodzie domknięte
-> (tabela „Realizacja P1/P2", commity 0515f1b → dfae10a; P1-C i polling
-> rozstrzygnięte pomiarem NIE). Otwarte: P1-D cookie-only (decyzja),
-> FINAL benchmark 15 min na kopii prod + DoD/GO.
+> Status: GO (2026-09-08). P0 + P1/P2 w kodzie domknięte, FINAL DoD PASS
+> (run 6: 0×5xx, P95 CRUD 369 ms, burst 100/100, PDF 17/17).
+> Warunek: prod `DATABASE_URL` z `connection_limit=3` (działa od restartu).
+> Otwarte po GO: P1-D cookie-only (decyzja), trim historii-potwora na LIVE.
 > Wejścia: pełny audyt aplikacji + recenzja 8,5/10 + plan v3 + recenzja 9,6/10.
 > Wszystkie 13 uwag z recenzji v3 uwzględnione (sekcja „Mapowanie uwag").
 > Ocena aplikacji dziś: ~6,0–6,5/10. Cel: twarde DoD → GO 100 user / 1 serwer z danych, nie z założenia.
@@ -278,3 +278,34 @@ Następne: P1 (idempotencja, FTS-rebuild, metryki `/metrics`, sesje, FK-inwentar
 - `recycled_production_numbers` — pula code-owned (claim atomowy P0-B). Bez FK.
 - `*.userId` — wektor sierot to DELETE usera (był bez guarda!) → naprawione guardem 403 + kasowanie sesji w tx (ten commit). `clients_rel.userId` (shared pool, Wariant A) — sierota widoczna dla wszystkich, akceptowane.
 - Zakaz masowego CASCADE przestrzegany: jedyny FK to Restrict; kasowanie należy do kodu w tx.
+
+## FINAL benchmark — GO (2026-09-08, kopia prod 1,26 GB, anonimizowana)
+
+Metoda: backup SHA-256 → kopia `bench_anon.sqlite` (PII: maile/telefony/NIP/nazwy
+→ fikcja, audit/sesje wyczyszczone, FTS rebuild, `inSync`) → osobna instancja
+na :3100 → 3× `load-100.mjs` full (15 min steady 80/15/3/1/1) + 3× burst 100.
+Wynik pełny: `docs/plans/baseline-FINAL.json` (run 6, kod finalny).
+
+| Run | Kod                                | 5xx | write-fail | read P95 | write P95 | batch P95 | burst 100 |
+| --- | ---------------------------------- | --- | ---------- | -------- | --------- | --------- | --------- |
+| 1   | P1-F (stary)                       | 71  | 71         | 15360 ms | 18877 ms  | 30011 ms  | 90/100    |
+| 2   | +HOT_TX rury                       | 9   | 9          | 16763 ms | 23055 ms  | 30010 ms  | 100/100   |
+| 3-5 | +HOT_TX wszędz. + pool 3           | 0   | 0          | 770-1361 | 366-1187  | 319-627   | 100/100   |
+| 6   | + slim snapshot + trim 29 MB→657 B | 0   | 0          | 252 ms   | 263 ms    | 369 ms    | 100/100   |
+
+Bottlenecki znalezione pomiarem (kolejno): tx-timeout 5 s na PUT/DELETE
+(HOT_TX_OPTS 15/30 s, centralnie `src/utils/hotTx.ts`) → serializacja
+1 połączenia (`connection_limit` 1→3, WAL czyta równolegle, pisarze przez
+`busy_timeout`) → historia-potwór 29 MB (snapshoty studni embeddowały pełny
+blob `data`; od runu 6 slim jak rury + cap 5; pełne dane w `audit_logs`).
+
+Run 6 (DoD): 5xx=0, write-fail=0, busy=0, throttled=0, P95 CRUD 369 ms (<500),
+PDF 17/17 (p50 3,2 s, p95 4,9 s <5 s), burst wall 5,4 s, RSS 342 MB,
+loopLagMax 150 ms, dbAvg 9 ms. **DoD PASS → GO.**
+
+Warunki GO (do zastosowania na produkcji): `DATABASE_URL` z
+`connection_limit=3` (lokalny `.env` już przestawiony — działa od restartu
+serwera) + `busy_timeout=30000` (jest). Otwarte po GO: P1-D cookie-only
+(decyzja), trim historii-potwora na LIVE (29 MB, backstop audytu cienki —
+2 wiersze; naturalny zanik po 5 zapisach albo jawna decyzja), FK Restrict
+na `orders_*` (opcjonalne).
