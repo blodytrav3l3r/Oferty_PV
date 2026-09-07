@@ -245,6 +245,7 @@ Następne: P1 (idempotencja, FTS-rebuild, metryki `/metrics`, sesje, FK-inwentar
 | P2 `mapPrismaError` P2025→404/P2002→409 (14 catchy)   | eb7f050 | 4 testy + crud 114/114                   |
 | P1-E guard users DELETE (403 przy dokumentach)        | (ten)   | 11 testów users + `audit:integrity` PASS |
 | P1-C/B pomiar LIST → SPLIT NIE (parse <0,1 ms)        | (ten)   | 6 KB/20, search 7,7 KB, RSS 118 MB       |
+| P2 polling dirty-flag → NIE (2,8 ms/500 ms przy 10k)  | (ten)   | pomiar node, ryzyko nieświeżego UI       |
 
 ### P1-C decyzja o splicie `offer_data` (2026-09-07, pomiar na żywym dev)
 
@@ -254,6 +255,15 @@ Następne: P1 (idempotencja, FTS-rebuild, metryki `/metrics`, sesje, FK-inwentar
 - Decyzja: SPLIT NIE — brak dowodu (parse <0,1 ms, KB nie MB).
   Split = migracja + dual-write bez potrzeby. Dźwignia na przyszłość:
   SQL-owe `json_extract` w search (kolumny materializowane/FTS), nie split.
+
+### P2 polling dirty-flag — decyzja NIE (2026-09-07, pomiar)
+
+- Koszt `_excelBuildWellsSnapshot`: 0,03 ms (100) / 0,38 ms (1k) / 2,84 ms
+  (10k, ~202 KB string) na tick 500 ms = 0,6% budżetu wątku. Sync DOM
+  i tak tylko przy zmianie (snapshot guard już jest).
+- Licznik mutacji musiałby objąć WSZYSTKICH pisarzy `wells[]` (modal +
+  główny panel: solver, sort, import) — pominięty pisarz = wiecznie
+  nieświeże UI AUTO/MAN. Zysk 3 ms/500 ms nie wart ryzyka. Bez akcji.
 
 ### P1-E inwentaryzacja relacji (2026-09-07, `audit:integrity` PASS, 0 sierot)
 
