@@ -327,6 +327,7 @@ import productionSearchRoutes from './routes/orders/productionSearch';
 import priceOverridesRoutes from './routes/priceOverrides';
 import exportCombinedRoutes from './routes/exportCombined';
 import sharesRoutes from './routes/shares';
+import adminRoutes from './routes/admin';
 
 app.use('/api/auth', apiLimiter, authRoutes);
 app.use('/api/users', apiLimiter, userRoutes);
@@ -361,6 +362,7 @@ app.use('/api/telemetry', aiMlRoutes); // ML prediction API
 app.use('/api/price-overrides', apiLimiter, priceOverridesRoutes);
 app.use('/api/export-combined', exportCombinedRoutes);
 app.use('/api/shares', apiLimiter, sharesRoutes);
+app.use('/api/admin', apiLimiter, adminRoutes);
 
 /* ===== RAPORTY VIOLACJI CSP (Faza 1 planu CSP — monitoring) ===== */
 app.post('/api/csp-report', express.text({ type: 'application/csp-report' }), (req, res) => {

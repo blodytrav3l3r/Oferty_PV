@@ -754,10 +754,17 @@ router.post(
                 { timeout: 30000 }
             );
             const results: Record<string, unknown>[] = [];
+            let ftsFailed = 0;
             for (const w of pending) {
-                await syncFts5('studnie', w.fts);
+                if (!(await syncFts5('studnie', w.fts))) ftsFailed++;
                 results.push({ id: w.docId, ok: true });
             }
+            // P1-B: cichy dryf FTS widoczny w logu (zapis biznesowy już zacommitowany).
+            if (ftsFailed > 0)
+                logger.warn(
+                    'Offers',
+                    `FTS sync pominięty dla ${ftsFailed}/${pending.length} ofert studni`
+                );
 
             logger.info(
                 'Offers',
@@ -952,7 +959,16 @@ router.put(
                 },
                 { timeout: 30000 }
             );
-            for (const w of pendingPut) await syncFts5('studnie', w.fts);
+            let ftsPutFailed = 0;
+            for (const w of pendingPut) {
+                if (!(await syncFts5('studnie', w.fts))) ftsPutFailed++;
+            }
+            // P1-B: cichy dryf FTS widoczny w logu (zapis biznesowy już zacommitowany).
+            if (ftsPutFailed > 0)
+                logger.warn(
+                    'Offers',
+                    `FTS sync pominięty dla ${ftsPutFailed}/${pendingPut.length} ofert studni (PUT)`
+                );
 
             searchCache.invalidateAll();
             res.json({ ok: true });

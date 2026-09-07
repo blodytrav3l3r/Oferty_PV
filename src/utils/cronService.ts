@@ -45,6 +45,9 @@ class CronService {
         // Co 24h — ML SelfEvaluation (A/B + auto-rollback)
         this.schedule('mlSelfEvaluation', 24 * 60 * 60 * 1000, () => this.runMlSelfEvaluation());
 
+        // P1-B: co 24h — kontrola spójności FTS (tylko liczniki + warn, bez auto-rebuildu)
+        this.schedule('ftsConsistencyCheck', 24 * 60 * 60 * 1000, () => this.runFtsCheck());
+
         logger.info('CronService', 'Cron zainicjalizowany (hourly + daily + ml)');
     }
 
@@ -97,6 +100,32 @@ class CronService {
         this.intervals.clear();
         this.running.clear();
         this.enabled = false;
+    }
+
+    /**
+     * P1-B: kontrola spójności FTS vs tabele biznesowe.
+     * Tylko odczyt + warn. Rebuild wyłącznie na żądanie (POST /api/admin/fts-rebuild).
+     */
+    async runFtsCheck(): Promise<void> {
+        try {
+            const { ftsSyncStatus } = await import('./fts5Sync');
+            const st = await ftsSyncStatus();
+            if (!st.inSync) {
+                logger.warn(
+                    'CronService',
+                    `[ftsCheck] ROZJAZD FTS: rury ${st.tables.rury.fts}/${st.tables.rury.offers}, ` +
+                        `studnie ${st.tables.studnie.fts}/${st.tables.studnie.offers}, ` +
+                        `brakujące: ${st.missingIds.length} — rebuild: POST /api/admin/fts-rebuild`
+                );
+            } else {
+                logger.info(
+                    'CronService',
+                    `[ftsCheck] OK: rury ${st.tables.rury.fts}, studnie ${st.tables.studnie.fts}`
+                );
+            }
+        } catch (e) {
+            logger.error('CronService', `[ftsCheck] failed: ${e}`);
+        }
     }
 
     /**

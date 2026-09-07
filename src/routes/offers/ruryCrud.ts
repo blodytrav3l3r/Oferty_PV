@@ -378,9 +378,16 @@ router.post(
                     }
                 }
             });
+            let ftsFailed = 0;
             for (const w of pendingWrites) {
-                await syncFts5('rury', w.fts);
+                if (!(await syncFts5('rury', w.fts))) ftsFailed++;
             }
+            // P1-B: cichy dryf FTS widoczny w logu (zapis biznesowy już zacommitowany).
+            if (ftsFailed > 0)
+                logger.warn(
+                    'Offers',
+                    `FTS sync pominięty dla ${ftsFailed}/${pendingWrites.length} ofert rury`
+                );
 
             logger.info(
                 'Offers',
@@ -572,9 +579,16 @@ router.put(
                     }
                 }
             });
+            let ftsPutFailed = 0;
             for (const w of pendingPut) {
-                await syncFts5('rury', w.fts);
+                if (!(await syncFts5('rury', w.fts))) ftsPutFailed++;
             }
+            // P1-B: cichy dryf FTS widoczny w logu (zapis biznesowy już zacommitowany).
+            if (ftsPutFailed > 0)
+                logger.warn(
+                    'Offers',
+                    `FTS sync pominięty dla ${ftsPutFailed}/${pendingPut.length} ofert rury (PUT)`
+                );
 
             searchCache.invalidateAll();
             res.json({ ok: true });
