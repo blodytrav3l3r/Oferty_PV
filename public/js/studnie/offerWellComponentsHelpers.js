@@ -109,6 +109,7 @@ function calculateAssignedPrzejscia(well) {
 
             assigned[idx].push({
                 ...pr,
+                _hostType: target ? target.componentType : null,
                 _drillingBasePrice: drillingBasePrice,
                 _drillingProd: bestDrillProd
             });

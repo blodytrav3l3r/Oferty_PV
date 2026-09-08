@@ -389,8 +389,7 @@ function freezeWellPrices(wellsArr, preserveExisting = false) {
         });
 
         const discountKey = well.dn === 'styczna' ? 'styczne' : well.dn;
-        const discNadbudowa = getWellNadbudowaPct(well, wellDiscounts[discountKey] || {});
-        const mult = 1 - discNadbudowa / 100;
+        const disc = wellDiscounts[discountKey] || {};
 
         const configMap =
             typeof buildConfigMap !== 'undefined'
@@ -415,9 +414,10 @@ function freezeWellPrices(wellsArr, preserveExisting = false) {
             let drillingBasePrice = 0;
             let drillProdName = '';
             let drillProdDn = '';
+            let hostType = null;
             const isInsitu = p.name && p.name.toUpperCase().includes('INSITU');
 
-            if (!isInsitu && configMap.length > 0) {
+            if (configMap.length > 0) {
                 const rzDna = parseFloat(well.rzednaDna) || 0;
                 let pel = parseFloat(item.rzednaWlaczenia);
                 if (isNaN(pel)) pel = rzDna;
@@ -425,7 +425,9 @@ function freezeWellPrices(wellsArr, preserveExisting = false) {
 
                 if (typeof findAssignedElement === 'function') {
                     const assigned = findAssignedElement(mmFromBottom, configMap);
+                    if (assigned && assigned.entry) hostType = assigned.entry.componentType;
                     if (
+                        !isInsitu &&
                         assigned &&
                         assigned.entry &&
                         (assigned.entry.componentType === 'krag' ||
@@ -463,6 +465,10 @@ function freezeWellPrices(wellsArr, preserveExisting = false) {
 
             const transPriceBase = p.price || 0;
             const bP = transPriceBase + drillingBasePrice;
+            const mult =
+                typeof getTransitionHostPct === 'function'
+                    ? 1 - getTransitionHostPct(well, disc, hostType) / 100
+                    : 1 - getWellNadbudowaPct(well, disc) / 100;
             item.frozenPrice = bP * mult;
             item.frozenPriceBase = bP;
             item.frozenName = p.name || p.category;

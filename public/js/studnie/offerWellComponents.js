@@ -266,9 +266,16 @@ function renderWellComponentsList(well, wellTransportCost, disc, _change) {
     return html;
 }
 
+// Badge rabatu dla podwierszy (przejścia/wiercenia/kineta) — wygląd jak getDiscountStr.
+function subDiscountStr(pct) {
+    const r = Math.round((parseFloat(pct) || 0) * 10) / 10;
+    if (!(r > 0)) return '';
+    const label = Number.isInteger(r) ? String(r) : String(r).replace('.', ',');
+    return ` <span style="font-size: var(--fs-2xs); color:var(--success); margin-left:0.3rem;">(-${label}%)</span>`;
+}
+
 function renderComponentSubItems(well, p, item, itemPrzejscia, disc, wellTransportCost, itemIndex) {
     let html = '';
-    const nadbudowaMult = 1 - getWellNadbudowaPct(well, disc) / 100;
     const isBase = p.componentType === 'dennica' || p.componentType === 'styczna';
 
     const bd =
@@ -339,8 +346,17 @@ function renderComponentSubItems(well, p, item, itemPrzejscia, disc, wellTranspo
             if (!prProd) return;
 
             if (pr.frozenTransitionPrice != null) {
+                // Zamrożona cena zawiera ten sam rabat dla przejścia i wiercenia
+                // (jeden mult przy freeze) — % odtwarzany z sum frozenPrice/frozenPriceBase.
+                const frPct =
+                    pr.frozenPriceBase > 0 && pr.frozenPrice != null
+                        ? (1 - pr.frozenPrice / pr.frozenPriceBase) * 100
+                        : typeof getTransitionHostPct === 'function'
+                          ? getTransitionHostPct(well, disc, pr._hostType)
+                          : 0;
+                const frBadge = subDiscountStr(frPct);
                 html += `<tr class="opacity-6-sm-accent">
-                    <td colspan="3" class="pl-lg">↳ + Przejście: ${escapeHtml(pr.frozenName || prProd.category)} ${escapeHtml(prProd.dn || '')} (${pr.angle}°)</td>
+                    <td colspan="3" class="pl-lg">↳ + Przejście: ${escapeHtml(pr.frozenName || prProd.category)} ${escapeHtml(prProd.dn || '')} (${pr.angle}°)${frBadge}</td>
                     <td class="text-right">${fmt(pr.frozenTransitionPrice)} PLN</td>
                 </tr>`;
                 if (pr.doplata) {
@@ -353,14 +369,21 @@ function renderComponentSubItems(well, p, item, itemPrzejscia, disc, wellTranspo
                 }
                 if (pr.frozenDrillingPrice > 0) {
                     html += `<tr class="included-row-warn">
-                        <td colspan="3" class="pl-lg">↳ + ${escapeHtml(pr.frozenDrillingName || 'Wiercenie')} ${escapeHtml(pr.frozenDrillingDn || '')}</td>
+                        <td colspan="3" class="pl-lg">↳ + ${escapeHtml(pr.frozenDrillingName || 'Wiercenie')} ${escapeHtml(pr.frozenDrillingDn || '')}${frBadge}</td>
                         <td class="text-right">${fmt(pr.frozenDrillingPrice)} PLN</td>
                     </tr>`;
                 }
             } else {
-                const prPrice = (prProd.price || 0) * nadbudowaMult;
+                // Rabat wg hosta przejścia: dennica/styczna -> dennicowy, reszta -> nadbudowa.
+                const prPct =
+                    typeof getTransitionHostPct === 'function'
+                        ? getTransitionHostPct(well, disc, pr._hostType)
+                        : getWellNadbudowaPct(well, disc);
+                const prMult = 1 - prPct / 100;
+                const prBadge = subDiscountStr(prPct);
+                const prPrice = (prProd.price || 0) * prMult;
                 html += `<tr class="opacity-6-sm-accent">
-                    <td colspan="3" class="pl-lg">↳ + Przejście: ${escapeHtml(prProd.category)} ${escapeHtml(prProd.dn)} (${pr.angle}°)</td>
+                    <td colspan="3" class="pl-lg">↳ + Przejście: ${escapeHtml(prProd.category)} ${escapeHtml(prProd.dn)} (${pr.angle}°)${prBadge}</td>
                     <td class="text-right">${fmt(prPrice)} PLN</td>
                 </tr>`;
                 if (pr.doplata) {
@@ -372,9 +395,9 @@ function renderComponentSubItems(well, p, item, itemPrzejscia, disc, wellTranspo
                     </tr>`;
                 }
                 if (pr._drillingBasePrice > 0 && pr._drillingProd) {
-                    const drillPrice = pr._drillingBasePrice * nadbudowaMult;
+                    const drillPrice = pr._drillingBasePrice * prMult;
                     html += `<tr class="included-row-warn">
-                        <td colspan="3" class="pl-lg">↳ + ${escapeHtml(pr._drillingProd.name)} ${pr._drillingProd.dn || ''}</td>
+                        <td colspan="3" class="pl-lg">↳ + ${escapeHtml(pr._drillingProd.name)} ${pr._drillingProd.dn || ''}${prBadge}</td>
                         <td class="text-right">${fmt(drillPrice)} PLN</td>
                     </tr>`;
                 }
@@ -399,9 +422,16 @@ function renderComponentSubItems(well, p, item, itemPrzejscia, disc, wellTranspo
                 (kineta.frozenPrice != null && window.isPreviewMode
                     ? kineta.frozenPrice
                     : getItemAssessedPrice(well, kp, true, kineta)) * (kineta.quantity || 1);
+            const kPct =
+                kineta.frozenPrice != null && window.isPreviewMode && kineta.frozenPriceBase > 0
+                    ? (1 - kineta.frozenPrice / kineta.frozenPriceBase) * 100
+                    : kp
+                      ? getWellDiscountPct(well, kp, disc)
+                      : 0;
             html +=
                 '<tr style="opacity:0.6; font-size: var(--fs-sm); color:var(--pink-hover);"><td colspan="3" class="pl-lg">↳ + ' +
                 escapeHtml(kp ? kp.name : 'Kineta') +
+                subDiscountStr(kPct) +
                 '</td><td class="text-right">' +
                 fmt(kPrice) +
                 ' PLN</td></tr>';

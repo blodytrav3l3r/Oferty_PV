@@ -198,15 +198,20 @@ function calculateLinePricing(
                     ? getStudnieProductById(pr.productId)
                     : studnieProducts.find((x) => x.id === pr.productId);
             if (prProd) {
+                // Rabat wg hosta przejścia: dennica/styczna -> dennicowy, reszta -> nadbudowa.
+                const prMult =
+                    typeof getTransitionHostPct === 'function'
+                        ? 1 - getTransitionHostPct(well, disc, pr._hostType) / 100
+                        : nadbudowaMult;
                 if (pr.frozenTransitionPrice != null) {
                     totalLinePrice +=
                         pr.frozenTransitionPrice +
                         (pr.doplata || 0) +
                         (pr.frozenDrillingPrice || 0);
                 } else {
-                    totalLinePrice += (prProd.price || 0) * nadbudowaMult + (pr.doplata || 0);
+                    totalLinePrice += (prProd.price || 0) * prMult + (pr.doplata || 0);
                     if (pr._drillingBasePrice > 0) {
-                        totalLinePrice += pr._drillingBasePrice * nadbudowaMult;
+                        totalLinePrice += pr._drillingBasePrice * prMult;
                     }
                 }
                 totalLineWeight += prProd.weight || 0;

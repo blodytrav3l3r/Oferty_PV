@@ -47,43 +47,65 @@ const ZWIENCZENIE_TYPES = [
     'plyta_din',
     'plyta_zamykajaca',
     'plyta_najazdowa',
-    'pierscien_odciazajacy'
+    'pierscien_odciazajacy',
+    'wlaz'
 ];
 
 /**
  * Rabat (%) dla komponentu wg klasy nośności studni.
- * - zakończenie (konus/płyty) -> zwienczenie<KlasaZwieńcz.> ?? nadbudowa (baza)
- * - dennica/kineta/styczna    -> dennica<KlasaKorpus> ?? dennica (baza)
- * - pozostałe (kregi, nadbudowa) -> nadbudowa<KlasaKorpus> ?? nadbudowa (baza)
+ * - zakończenie (konus/płyty/pierścień/właz) -> zwienczenie<KlasaZwieńcz.>
+ * - dennica/kineta/styczna    -> dennica<KlasaKorpus>
+ * - pozostałe (kregi, avr, nadbudowa) -> nadbudowa<KlasaKorpus>
+ * Elementy E600/F900 mają wyłącznie własne rabaty klasowe: brak wpisanego
+ * rabatu klasowego = 0% (nie bierzemy bazy z D400). Baza dotyczy tylko D400.
  */
 function getWellDiscountPct(well, p, disc) {
     if (!disc) disc = {};
     if (ZWIENCZENIE_TYPES.includes(p.componentType)) {
-        const key = well.klasaNosnosci_zwienczenie
-            ? 'zwienczenie' + well.klasaNosnosci_zwienczenie
-            : '';
-        return key && disc[key] != null ? disc[key] : disc.nadbudowa || 0;
+        const zCls = well.klasaNosnosci_zwienczenie || 'D400';
+        if (zCls !== 'D400') return disc['zwienczenie' + zCls] || 0;
+        return disc.nadbudowa || 0;
     }
-    const suffix = well.klasaNosnosci_korpus || '';
+    const kCls = well.klasaNosnosci_korpus || 'D400';
     if (
         p.componentType === 'dennica' ||
         p.componentType === 'kineta' ||
         p.componentType === 'styczna'
     ) {
-        const key = 'dennica' + suffix;
-        return key && disc[key] != null ? disc[key] : disc.dennica || 0;
+        if (kCls !== 'D400') return disc['dennica' + kCls] || 0;
+        return disc.dennica || 0;
     }
     return getWellNadbudowaPct(well, disc);
 }
 
 /**
  * Rabat (%) nadbudowy wg klasy nośności korpusu (kregi, przejścia, wiercenia).
- * Fallback do bazowego nadbudowa.
+ * Korpus E600/F900 bez wpisanego rabatu klasowego = 0% (bez fallbacku do bazy).
+ * Fallback do bazowego nadbudowa tylko dla D400.
  */
 function getWellNadbudowaPct(well, disc) {
     if (!disc) disc = {};
-    const key = 'nadbudowa' + (well.klasaNosnosci_korpus || '');
-    return key && disc[key] != null ? disc[key] : disc.nadbudowa || 0;
+    const kCls = well.klasaNosnosci_korpus || 'D400';
+    if (kCls !== 'D400') return disc['nadbudowa' + kCls] || 0;
+    return disc.nadbudowa || 0;
+}
+
+/**
+ * Rabat (%) przejścia/wiercenia wg elementu-hostu (przypisanie przez
+ * buildConfigMap + findAssignedElement).
+ * - host dennicowy (dennica/styczna) -> rabat dennicy wg klasy korpusu
+ *   (dla stycznej z wiersza `styczne`),
+ * - pozostałe hosty (krag/krag_ot/...) i brak hosta -> rabat nadbudowy wg klasy.
+ * Brak wpisanego rabatu klasowego E600/F900 = 0% (bez fallbacku do bazy D400).
+ * Kręgi liczone są niezależnie przez getItemAssessedPrice — tu nic nie zmieniaj.
+ */
+function getTransitionHostPct(well, disc, hostType) {
+    if (!disc) disc = {};
+    if (hostType === 'dennica' || hostType === 'styczna') {
+        // Ta sama reguła co dennica (w tym 0% bez wpisanego rabatu klasowego).
+        return getWellDiscountPct(well, { componentType: 'dennica' }, disc);
+    }
+    return getWellNadbudowaPct(well, disc);
 }
 
 function getItemAssessedPrice(well, p, applyDiscount = true, item = null) {
@@ -446,8 +468,8 @@ function calcWellStats(well) {
     if (well.przejscia) {
         const discountKey = well.dn === 'styczna' ? 'styczne' : well.dn;
         const activeDiscounts = getWellActiveDiscounts(well);
-        const discNadbudowa = getWellNadbudowaPct(well, activeDiscounts[discountKey] || {});
-        const mult = 1 - discNadbudowa / 100;
+        const disc = activeDiscounts[discountKey] || {};
+        const rzDnaGlob = parseFloat(well.rzednaDna) || 0;
 
         let configMap = [];
         if (typeof buildConfigMap === 'function') {
@@ -467,6 +489,18 @@ function calcWellStats(well) {
                     ? getStudnieProductById(item.productId)
                     : studnieProducts.find((pr) => pr.id === item.productId);
             if (!p) return;
+
+            // Host przejścia (dennica/styczna vs krag/...) wg rzędnej — od niego
+            // zależy rabat (dennica) i kubełek cenowy (priceDennica/priceNadbudowa).
+            let hostType = null;
+            if (configMap.length > 0 && typeof findAssignedElement === 'function') {
+                let pelHost = parseFloat(item.rzednaWlaczenia);
+                if (isNaN(pelHost)) pelHost = rzDnaGlob;
+                const assignedHost = findAssignedElement((pelHost - rzDnaGlob) * 1000, configMap);
+                if (assignedHost && assignedHost.entry) hostType = assignedHost.entry.componentType;
+            }
+            const isDennicaHost = hostType === 'dennica' || hostType === 'styczna';
+            const mult = 1 - getTransitionHostPct(well, disc, hostType) / 100;
 
             let drillingBasePrice = 0;
             const isInsitu = p.name && p.name.toUpperCase().includes('INSITU');
@@ -524,14 +558,26 @@ function calcWellStats(well) {
             }
 
             priceBase += bP;
-            priceNadbudowaBase += bP;
+            if (isDennicaHost) {
+                priceDennicaBase += bP;
+            } else {
+                priceNadbudowaBase += bP;
+            }
 
             price += dP;
-            priceNadbudowa += dP;
+            if (isDennicaHost) {
+                priceDennica += dP;
+            } else {
+                priceNadbudowa += dP;
+            }
 
             if (item.doplata) {
                 price += item.doplata;
-                priceNadbudowa += item.doplata;
+                if (isDennicaHost) {
+                    priceDennica += item.doplata;
+                } else {
+                    priceNadbudowa += item.doplata;
+                }
             }
 
             weight += p.weight || 0;
@@ -588,6 +634,7 @@ function calcWellStats(well) {
 window.getItemPriceBreakdown = getItemPriceBreakdown;
 window.getWellDiscountPct = getWellDiscountPct;
 window.getWellNadbudowaPct = getWellNadbudowaPct;
+window.getTransitionHostPct = getTransitionHostPct;
 
 /* ===== Rejestracja globali ===== */
 window.calcWellStats = calcWellStats;
