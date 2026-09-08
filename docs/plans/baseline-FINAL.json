@@ -100,5 +100,24 @@
         "busyDelta": 0,
         "crudP95": 369.3,
         "throttled": 0
+    },
+    "environment": {
+        "date": "2026-09-08",
+        "commit": "ef86653",
+        "node": "v24.18.0",
+        "prisma": "6.19.3",
+        "cpuCores": 8,
+        "ramGB": 67,
+        "databaseUrl": "file:../data/bench_anon.sqlite?connection_limit=3&busy_timeout=30000",
+        "connectionLimit": 3,
+        "busyTimeoutMs": 30000,
+        "journalMode": "WAL",
+        "hotTxOpts": { "maxWait": 15000, "timeout": 30000 },
+        "pdfQueue": { "concurrency": 2, "maxQueue": 10, "timeoutS": 60 },
+        "snapshotRetention": 5,
+        "dataset": "backup_2026-09-07_1788814728246.sqlite 1260500KB, anonimizowany (PII->fikcja, audit/sesje wyczyszczone, FTS rebuild inSync)",
+        "dbSizeBytes": 1290752000,
+        "docCounts": { "offers_rel": 17, "offers_studnie_rel": 1, "orders_studnie_rel": 1 },
+        "singleNodeProcess": true
     }
 }
