@@ -145,6 +145,32 @@ window.getPrzejsciaCategories = getPrzejsciaCategories;
 window.getPrzejsciaForCategory = getPrzejsciaForCategory;
 window.getPrzejscieByCategoryAndDn = getPrzejscieByCategoryAndDn;
 window.getAllPrzejsciaActive = getAllPrzejsciaActive;
+/* ===== DENNICA — overlap kielicha (SSoT wysokości) ===== */
+// Fizyka: dennica/styczna traci 100mm tylko gdy stoi na elemencie z kielelichem:
+// dennica, styczna, krąg, krag_ot, płyta redukcyjna. Kineta siedzi wewnątrz
+// dennicy (bez wpływu na wysokość), uszczelka nie liczy się w ogóle.
+// Spód pełny; psiaBuda traktuje spód jak zajęty (spód też -100).
+const DENNICA_OVERLAP_MM = 100;
+const SOCKET_TYPES = new Set(['dennica', 'styczna', 'krag', 'krag_ot', 'plyta_redukcyjna']);
+/**
+ * @param {any} p produkt
+ * @returns {boolean}
+ */
+function isDennicaLikeProduct(p) {
+    return !!p && (p.componentType === 'dennica' || p.componentType === 'styczna');
+}
+/**
+ * @param {any} p produkt
+ * @param {string|null} belowType componentType elementu bezpośrednio poniżej (null = spód; psiaBuda seeduje 'dennica')
+ * @returns {number} 100 albo 0
+ */
+function dennicaHeightPenalty(p, belowType) {
+    return isDennicaLikeProduct(p) && SOCKET_TYPES.has(belowType) ? DENNICA_OVERLAP_MM : 0;
+}
+window.DENNICA_OVERLAP_MM = DENNICA_OVERLAP_MM;
+window.SOCKET_TYPES = SOCKET_TYPES;
+window.isDennicaLikeProduct = isDennicaLikeProduct;
+window.dennicaHeightPenalty = dennicaHeightPenalty;
 Object.defineProperty(window, 'studnieProductsById', {
     configurable: true,
     get: () => studnieProductsById

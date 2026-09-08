@@ -406,7 +406,8 @@ function calcWellStats(well) {
         priceDennicaBase = 0,
         priceNadbudowaBase = 0;
 
-    let lastWasDennica = !!well.psiaBuda;
+    let belowType = null;
+    let psiaSeed = !!well.psiaBuda;
     const configReversed = [...(well.config || [])].reverse();
 
     configReversed.forEach((item) => {
@@ -418,7 +419,7 @@ function calcWellStats(well) {
                   : studnieProducts.find((pr) => pr.id === item.productId);
         if (!p) return;
 
-        const isDennicaLike = p.componentType === 'dennica' || p.componentType === 'styczna';
+        const isDennicaLike = isDennicaLikeProduct(p);
 
         let itemPriceDisc, itemPriceBaseVal;
         const useFrozenPrice = item.frozenPrice != null && window.isPreviewMode;
@@ -455,12 +456,14 @@ function calcWellStats(well) {
 
         for (let q = 0; q < item.quantity; q++) {
             let h = p.height || 0;
-            if (isDennicaLike && lastWasDennica) {
-                h -= 100;
+            if (isDennicaLike) {
+                h -= dennicaHeightPenalty(p, psiaSeed ? 'dennica' : belowType);
+                psiaSeed = false;
+                belowType = p.componentType;
             }
             height += h;
             if (p.componentType !== 'uszczelka') {
-                lastWasDennica = isDennicaLike;
+                belowType = p.componentType;
             }
         }
     });

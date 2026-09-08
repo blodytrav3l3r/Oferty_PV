@@ -101,6 +101,12 @@ describe('Rabaty klasowe studni (E600/F900) — getWellDiscountPct przez getItem
             path.join(__dirname, '../../public/js/studnie/actionsWellPricing.js'),
             'utf8'
         );
+        const globalsCode = fs.readFileSync(
+            path.join(__dirname, '../../public/js/studnie/globals.js'),
+            'utf8'
+        );
+        vm.runInContext(globalsCode, context);
+        context.window.studnieProducts = studnieProducts;
         vm.runInContext(paintingCode, context);
         vm.runInContext(transitionsCode, context);
         vm.runInContext(pricingCode, context);

@@ -43,7 +43,8 @@ function enforceOtRings(targetWell) {
 
     // Config jest od góry (właz) do dołu (dennica) — iteruj od końca
     const configReversed = [...well.config].reverse();
-    let lastWasDennica = !!well.psiaBuda;
+    let belowType = null;
+    let psiaSeed = !!well.psiaBuda;
     for (const item of configReversed) {
         const p =
             typeof getStudnieProductById === 'function'
@@ -51,11 +52,13 @@ function enforceOtRings(targetWell) {
                 : studnieProducts.find((pr) => pr.id === item.productId);
         if (!p || !p.height) continue;
         const qty = item.quantity || 1;
-        const isDennicaLike = p.componentType === 'dennica' || p.componentType === 'styczna';
+        const isDennicaLike = isDennicaLikeProduct(p);
         for (let i = 0; i < qty; i++) {
             let actualHeight = p.height || 0;
-            if (isDennicaLike && lastWasDennica) {
-                actualHeight -= 100;
+            if (isDennicaLike) {
+                actualHeight -= dennicaHeightPenalty(p, psiaSeed ? 'dennica' : belowType);
+                psiaSeed = false;
+                belowType = p.componentType;
             }
 
             segments.push({
@@ -66,7 +69,9 @@ function enforceOtRings(targetWell) {
                 product: p
             });
             cy += actualHeight;
-            lastWasDennica = isDennicaLike;
+            if (p.componentType !== 'uszczelka') {
+                belowType = p.componentType;
+            }
         }
     }
 

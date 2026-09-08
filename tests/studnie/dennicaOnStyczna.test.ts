@@ -44,11 +44,13 @@ describe('Dennica na stycznej — reguła "dennica na dennicy" (efektywna wysoko
             window: {}
         };
         vm.createContext(context);
-        const code = fs.readFileSync(
-            path.join(__dirname, '../../public/js/studnie/transitionRenderer.js'),
-            'utf8'
-        );
-        vm.runInContext(code, context);
+        for (const f of ['globals.js', 'transitionRenderer.js']) {
+            const code = fs.readFileSync(
+                path.join(__dirname, '../../public/js/studnie', f),
+                'utf8'
+            );
+            vm.runInContext(code, context, { filename: f });
+        }
         ctx = context;
     });
 

@@ -39,6 +39,7 @@ describe('enforceOtRings and excelOnCompChange ring selection', () => {
 
     function runScriptInContext(well: any) {
         const context = {
+            window: {},
             getCurrentWell: () => well,
             studnieProducts,
             MIN_OT_HEIGHT: 500,
@@ -50,7 +51,14 @@ describe('enforceOtRings and excelOnCompChange ring selection', () => {
             path.join(__dirname, '../../public/js/studnie/diagramOtRings.js'),
             'utf8'
         );
+        const codeGlobals = fs.readFileSync(
+            path.join(__dirname, '../../public/js/studnie/globals.js'),
+            'utf8'
+        );
         vm.createContext(context);
+        vm.runInContext(codeGlobals, context);
+        // globals.js ma własny let studnieProducts — wstrzyknij przez setter (Map SSoT)
+        context.window.studnieProducts = studnieProducts;
         vm.runInContext(code, context);
         return context;
     }
@@ -114,6 +122,10 @@ describe('enforceOtRings and excelOnCompChange ring selection', () => {
             enforceOtRings: null,
             excelOnCompChange: null
         };
+        const codeGlobals = fs.readFileSync(
+            path.join(__dirname, '../../public/js/studnie/globals.js'),
+            'utf8'
+        );
         const codeOt = fs.readFileSync(
             path.join(__dirname, '../../public/js/studnie/diagramOtRings.js'),
             'utf8'
@@ -123,6 +135,11 @@ describe('enforceOtRings and excelOnCompChange ring selection', () => {
             'utf8'
         );
         vm.createContext(context);
+        vm.runInContext(codeGlobals, context);
+        // globals.js ma własny let studnieProducts — wstrzyknij przez setter (Map SSoT)
+        context.window.studnieProducts = studnieProducts;
+        context.window.wells = wells;
+        context.window.currentWellIndex = 0;
         vm.runInContext(codeOt, context);
         vm.runInContext(codeChange, context);
         return context;

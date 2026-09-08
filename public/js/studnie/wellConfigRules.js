@@ -57,7 +57,8 @@
  */
 function buildConfigSegmentMap(configItems, psiaBuda) {
     let y = 0;
-    let lastWasD = !!psiaBuda;
+    let belowType = null;
+    let psiaSeed = !!psiaBuda;
     if (!configItems) return [];
     return configItems.map((item, idx) => {
         const prod =
@@ -65,10 +66,10 @@ function buildConfigSegmentMap(configItems, psiaBuda) {
                 ? getStudnieProductById(item.productId)
                 : studnieProducts.find((p) => p.id === item.productId);
         let h = prod ? parseFloat(prod.height) || 0 : 0;
-        const isDennicaLike =
-            !!prod && (prod.componentType === 'dennica' || prod.componentType === 'styczna');
-        if (isDennicaLike && lastWasD) {
-            h -= 100;
+        if (isDennicaLikeProduct(prod)) {
+            h -= dennicaHeightPenalty(prod, psiaSeed ? 'dennica' : belowType);
+            psiaSeed = false;
+            belowType = prod.componentType;
         }
         const seg = {
             itemBase: item,
@@ -78,7 +79,8 @@ function buildConfigSegmentMap(configItems, psiaBuda) {
             type: prod ? prod.componentType : ''
         };
         y += h;
-        lastWasD = isDennicaLike;
+        if (!prod || prod.componentType !== 'uszczelka')
+            belowType = prod ? prod.componentType : null;
         return seg;
     });
 }

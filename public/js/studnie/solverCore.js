@@ -18,17 +18,18 @@
  */
 function buildConfigSegments(configItems, psiaBuda) {
     let y = 0;
-    let lastWasD = !!psiaBuda;
+    let belowType = null;
+    let psiaSeed = !!psiaBuda;
     return configItems.map((item) => {
         const prod =
             typeof getStudnieProductById === 'function'
                 ? getStudnieProductById(item.productId)
                 : studnieProducts.find((p) => p.id === item.productId);
         let h = prod ? parseFloat(prod.height) || 0 : 0;
-        const isDennicaLike =
-            prod && (prod.componentType === 'dennica' || prod.componentType === 'styczna');
-        if (isDennicaLike && lastWasD) {
-            h -= 100;
+        if (isDennicaLikeProduct(prod)) {
+            h -= dennicaHeightPenalty(prod, psiaSeed ? 'dennica' : belowType);
+            psiaSeed = false;
+            belowType = prod.componentType;
         }
         const seg = {
             itemBase: item,
@@ -37,7 +38,8 @@ function buildConfigSegments(configItems, psiaBuda) {
             type: prod ? prod.componentType : ''
         };
         y += h;
-        lastWasD = !!isDennicaLike;
+        if (!prod || prod.componentType !== 'uszczelka')
+            belowType = prod ? prod.componentType : null;
         return seg;
     });
 }
@@ -68,7 +70,8 @@ function applyDrilledRings(kregItems, segments, well, availProducts) {
 
         let currentDennicaEnd = 0;
         let cy = 0;
-        let lastWasD = !!well.psiaBuda;
+        let belowType = null;
+        let psiaSeed = !!well.psiaBuda;
         const configReversed = [...newItems].reverse();
         for (const item of configReversed) {
             const p =
@@ -77,11 +80,14 @@ function applyDrilledRings(kregItems, segments, well, availProducts) {
                     : studnieProducts.find((pr) => pr.id === item.productId);
             if (!p) continue;
             let h = p.height || 0;
-            const isDennicaLike = p.componentType === 'dennica' || p.componentType === 'styczna';
-            if (isDennicaLike && lastWasD) h -= 100;
+            const isDennicaLike = isDennicaLikeProduct(p);
+            if (isDennicaLike) {
+                h -= dennicaHeightPenalty(p, psiaSeed ? 'dennica' : belowType);
+                psiaSeed = false;
+            }
             if (isDennicaLike) currentDennicaEnd = cy + h;
             cy += h;
-            lastWasD = isDennicaLike;
+            if (p.componentType !== 'uszczelka') belowType = p.componentType;
         }
 
         const prDN =

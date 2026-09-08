@@ -19,7 +19,8 @@ function calculateAssignedPrzejscia(well) {
         );
     } else {
         let currY = 0;
-        let dennicaCount = 0;
+        let belowType = null;
+        let psiaSeed = !!well.psiaBuda;
         for (let j = well.config.length - 1; j >= 0; j--) {
             const p =
                 typeof getStudnieProductById === 'function'
@@ -27,11 +28,17 @@ function calculateAssignedPrzejscia(well) {
                     : studnieProducts.find((x) => x.id === well.config[j].productId);
             if (!p) continue;
             let h = 0;
-            if (p.componentType === 'dennica' || p.componentType === 'styczna') {
-                dennicaCount++;
-                h = (p.height || 0) - (dennicaCount > 1 ? 100 : 0);
+            if (isDennicaLikeProduct(p)) {
+                const qty = well.config[j].quantity || 1;
+                for (let q = 0; q < qty; q++) {
+                    h +=
+                        (p.height || 0) - dennicaHeightPenalty(p, psiaSeed ? 'dennica' : belowType);
+                    belowType = p.componentType;
+                }
+                psiaSeed = false;
             } else {
                 h = (p.height || 0) * (well.config[j].quantity || 1);
+                if (p.componentType !== 'uszczelka') belowType = p.componentType;
             }
             configMap.push({
                 index: j,

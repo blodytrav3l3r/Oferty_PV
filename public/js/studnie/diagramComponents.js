@@ -26,7 +26,8 @@
  */
 function buildVisibleComponents(well) {
     const components = [];
-    let lastWasDennica = !!well.psiaBuda;
+    let belowType = null;
+    let psiaSeed = !!well.psiaBuda;
     const configReversedElements = [...well.config].reverse();
 
     configReversedElements.forEach((item, revIdx) => {
@@ -35,11 +36,16 @@ function buildVisibleComponents(well) {
                 ? getStudnieProductById(item.productId)
                 : studnieProducts.find((pr) => pr.id === item.productId);
         if (!p) return;
-        const isDennicaLike = p.componentType === 'dennica' || p.componentType === 'styczna';
+        const isDennicaLike = isDennicaLikeProduct(p);
         for (let i = 0; i < item.quantity; i++) {
             let effH = p.height || 0;
-            if (isDennicaLike && lastWasDennica) {
-                effH = Math.max(0, effH - 100);
+            if (isDennicaLike) {
+                effH = Math.max(
+                    0,
+                    effH - dennicaHeightPenalty(p, psiaSeed ? 'dennica' : belowType)
+                );
+                psiaSeed = false;
+                belowType = p.componentType;
             }
 
             components.push({
@@ -52,7 +58,7 @@ function buildVisibleComponents(well) {
                 isPlaceholder: !!item.isPlaceholder
             });
             if (p.componentType !== 'uszczelka') {
-                lastWasDennica = isDennicaLike;
+                belowType = p.componentType;
             }
         }
     });

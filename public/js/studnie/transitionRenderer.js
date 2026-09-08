@@ -286,21 +286,24 @@ function buildConfigMap(well, findProductFn, includeName = false) {
 
     const configMap = [];
     let currY = 0;
-    let dennicaProcessedCount = 0;
+    // psiaSeed: psia buda wciska -100 pierwszej dennicy od spodu, nawet nad kinetą
+    let belowType = null;
+    let psiaSeed = !!well.psiaBuda;
 
     for (let j = well.config.length - 1; j >= 0; j--) {
         const cItem = well.config[j];
         const p = findProductFn(cItem.productId);
         if (!p) continue;
         let h = 0;
-        const isDennicaLike = p.componentType === 'dennica' || p.componentType === 'styczna';
-        if (isDennicaLike) {
+        if (isDennicaLikeProduct(p)) {
             for (let q = 0; q < cItem.quantity; q++) {
-                dennicaProcessedCount++;
-                h += (p.height || 0) - (dennicaProcessedCount > 1 ? 100 : 0);
+                h += (p.height || 0) - dennicaHeightPenalty(p, psiaSeed ? 'dennica' : belowType);
+                belowType = p.componentType;
             }
+            psiaSeed = false;
         } else {
             h = (p.height || 0) * cItem.quantity;
+            if (p.componentType !== 'uszczelka') belowType = p.componentType;
         }
         const entry = {
             index: j,

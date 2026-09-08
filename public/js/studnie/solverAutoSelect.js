@@ -734,10 +734,13 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
     function checkConflicts(kItems, denH, reduceH, topItems) {
         const segs = [];
         let y = 0;
-        segs.push({ type: 'dennica', h: denH, start: 0, end: denH });
-        y += denH;
+        const effDenH =
+            denH -
+            dennicaHeightPenalty({ componentType: 'dennica' }, well.psiaBuda ? 'dennica' : null);
+        segs.push({ type: 'dennica', h: effDenH, start: 0, end: effDenH });
+        y += effDenH;
 
-        let lastWasDennica = !!well.psiaBuda;
+        let belowType = 'dennica';
 
         for (const k of kItems) {
             let actualH = k._h;
@@ -745,12 +748,9 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
                 typeof getStudnieProductById === 'function'
                     ? getStudnieProductById(k.productId)
                     : studnieProducts.find((p) => p.id === k.productId);
-            const kpDennicaLike =
-                kp && (kp.componentType === 'dennica' || kp.componentType === 'styczna');
-            if (kpDennicaLike && lastWasDennica) {
-                actualH -= 100;
+            if (isDennicaLikeProduct(kp)) {
+                actualH -= dennicaHeightPenalty(kp, belowType);
             }
-
             if (k.productId === reductionPlate?.id) {
                 segs.push({ type: 'plyta_redukcyjna', h: actualH, start: y, end: y + actualH });
             } else {
@@ -758,7 +758,7 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
             }
             y += actualH;
             if (kp && kp.componentType !== 'uszczelka') {
-                lastWasDennica = kpDennicaLike;
+                belowType = kp.componentType;
             }
         }
         for (const t of [...topItems].reverse()) {
@@ -768,14 +768,14 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
                     : studnieProducts.find((p) => p.id === t.productId);
             if (tp) {
                 let actualH = tp.height;
-                const tpDennicaLike =
-                    tp.componentType === 'dennica' || tp.componentType === 'styczna';
-                if (tpDennicaLike && lastWasDennica) actualH -= 100;
+                if (isDennicaLikeProduct(tp)) {
+                    actualH -= dennicaHeightPenalty(tp, belowType);
+                }
 
                 segs.push({ type: tp.componentType, h: actualH, start: y, end: y + actualH });
                 y += actualH;
                 if (tp.componentType !== 'uszczelka') {
-                    lastWasDennica = tpDennicaLike;
+                    belowType = tp.componentType;
                 }
             }
         }

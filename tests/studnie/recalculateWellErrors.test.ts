@@ -28,16 +28,23 @@ describe('recalculateWellErrors — czyszczenie błędów przy pustym configu', 
 
     function loadSolver() {
         const context: any = {
+            window: {},
             studnieProducts,
             FLOW_TYPES: Object.freeze({ WYLOT: 'wylot', WLOT: 'wlot', DOLOT: 'dolot' }),
             logger: (global as any).logger,
             wells: []
         };
+        const codeGlobals = fs.readFileSync(
+            path.join(__dirname, '../../public/js/studnie/globals.js'),
+            'utf8'
+        );
         const code = fs.readFileSync(
             path.join(__dirname, '../../public/js/studnie/solverValidation.js'),
             'utf8'
         );
         vm.createContext(context);
+        vm.runInContext(codeGlobals, context);
+        context.window.studnieProducts = studnieProducts;
         vm.runInContext(code, context);
         return context;
     }

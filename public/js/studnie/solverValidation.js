@@ -64,7 +64,8 @@ function recalculateWellErrors(well) {
         if (rzDna !== null && !isNaN(rzDna)) {
             const segments = [];
             let cy = 0;
-            let lastWasDennica = !!well.psiaBuda;
+            let belowType = null;
+            let psiaSeed = !!well.psiaBuda;
             const configReversed = [...well.config].reverse();
             for (const item of configReversed) {
                 const p =
@@ -73,12 +74,13 @@ function recalculateWellErrors(well) {
                         : studnieProducts.find((pr) => pr.id === item.productId);
                 if (!p || !p.height) continue;
                 const qty = item.quantity || 1;
-                const isDennicaLike =
-                    p.componentType === 'dennica' || p.componentType === 'styczna';
+                const isDennicaLike = isDennicaLikeProduct(p);
                 for (let i = 0; i < qty; i++) {
                     let actualHeight = p.height || 0;
-                    if (isDennicaLike && lastWasDennica) {
-                        actualHeight -= 100;
+                    if (isDennicaLike) {
+                        actualHeight -= dennicaHeightPenalty(p, psiaSeed ? 'dennica' : belowType);
+                        psiaSeed = false;
+                        belowType = p.componentType;
                     }
 
                     segments.push({
@@ -90,7 +92,7 @@ function recalculateWellErrors(well) {
                     });
                     cy += actualHeight;
                     if (p.componentType !== 'uszczelka') {
-                        lastWasDennica = isDennicaLike;
+                        belowType = p.componentType;
                     }
                 }
             }
