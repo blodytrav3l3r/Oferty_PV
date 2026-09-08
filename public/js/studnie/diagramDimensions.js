@@ -34,7 +34,7 @@ function drawSegmentDimensions(dimLinesY, pxMm) {
     const uniqueY = [...new Set(dimLinesY.map((v) => Math.round(v * 10) / 10))].sort(
         (a, b) => b - a
     );
-    const dX = 52;
+    const dX = 58;
     const dimColor = SVG_COLORS.dimLine;
 
     let svgOut = '';
@@ -68,7 +68,7 @@ function drawSegmentDimensions(dimLinesY, pxMm) {
  */
 function drawTotalHeightBar(canvas, totalMm) {
     const { mT, drawH } = canvas;
-    const aX = 12;
+    const aX = 18;
     const aDimColor = SVG_COLORS.dimLine;
 
     let svg = '';

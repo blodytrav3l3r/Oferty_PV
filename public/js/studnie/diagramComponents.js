@@ -114,7 +114,7 @@ function getElementOuterDn(comp, bodyDN) {
  */
 function calculateCanvasParams(visible, bodyDN) {
     const svgW = 380;
-    const mL = 75,
+    const mL = 82,
         mR = 65,
         mT = 15,
         mB = 22;
@@ -230,7 +230,7 @@ function drawComponentLabel(cx, y, h, label) {
 function drawComponentDimension(y, h, heightMm) {
     if (h <= 6) return '';
 
-    const dx = 32;
+    const dx = 38;
     let svg = '';
     // Kreska pionowa wymiaru
     svg += `<line x1="${dx}" y1="${y + 1}" x2="${dx}" y2="${y + h - 1}" style="stroke:${SVG_COLORS.dimLine}" stroke-width="0.7"/>`;
@@ -239,7 +239,10 @@ function drawComponentDimension(y, h, heightMm) {
     svg += `<line x1="${dx - 3}" y1="${y + h - 1}" x2="${dx + 3}" y2="${y + h - 1}" style="stroke:${SVG_COLORS.dimLine}" stroke-width="0.7"/>`;
     // Tekst wymiaru (pionowo z lewej strony)
     const dimFontSize = Math.min(11, Math.max(8, h * 0.3));
-    svg += `<text x="${dx - 4}" y="${y + h / 2}" transform="rotate(-90 ${dx - 4} ${y + h / 2})" text-anchor="middle" style="fill:${SVG_COLORS.dimText}" font-size="${dimFontSize}" font-family="Inter,sans-serif" font-weight="600">${heightMm}</text>`;
+    // ponytail: reuse displayUnits helper — value-only, unit is global context (mm/cm/m)
+    const dimLabel =
+        typeof formatHeightValue === 'function' ? formatHeightValue(heightMm) : String(heightMm);
+    svg += `<text x="${dx - 4}" y="${y + h / 2}" transform="rotate(-90 ${dx - 4} ${y + h / 2})" text-anchor="middle" style="fill:${SVG_COLORS.dimText}" font-size="${dimFontSize}" font-family="Inter,sans-serif" font-weight="600">${dimLabel}</text>`;
     return svg;
 }
 
