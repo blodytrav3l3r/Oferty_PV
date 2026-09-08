@@ -32,8 +32,15 @@ function loadOrderHelpers(priceById: Record<string, number>) {
         path.join(__dirname, '../../public/js/studnie/orderHelpers.js'),
         'utf8'
     );
+    const dtoCode = fs.readFileSync(
+        path.join(__dirname, '../../public/js/studnie/orderDto.js'),
+        'utf8'
+    );
     vm.createContext(context);
     vm.runInContext(code, context);
+    // orderDto.js jak w przeglądarce (studnie.html): te same globale,
+    // wellConfigHash/toWellOrderDTO dla detekcji configChanged (Faza 3, #5).
+    vm.runInContext(dtoCode, context);
     return context.window;
 }
 
@@ -169,8 +176,20 @@ describe('orderDto slim snapshot — DoD P1', () => {
             transportRate: 0,
             originalSnapshot: {
                 slimWells: [
-                    { id: 'well-1', name: 'S1', price: 1000, weight: 2000, configHash: 'a' },
-                    { id: 'well-2', name: 'S2', price: 2000, weight: 4000, configHash: 'b' }
+                    {
+                        id: 'well-1',
+                        name: 'S1',
+                        price: 1000,
+                        weight: 2000,
+                        configHash: helpers.wellConfigHash(helpers.toWellOrderDTO(liveWells[0]))
+                    },
+                    {
+                        id: 'well-2',
+                        name: 'S2',
+                        price: 2000,
+                        weight: 4000,
+                        configHash: helpers.wellConfigHash(helpers.toWellOrderDTO(liveWells[1]))
+                    }
                 ],
                 wellDiscounts: {},
                 transportKm: 0,
@@ -197,7 +216,15 @@ describe('orderDto slim snapshot — DoD P1', () => {
         const slimChanged = JSON.parse(JSON.stringify(slimOrder));
         slimChanged.wells = JSON.parse(JSON.stringify(changedLive));
         const expected = {
-            wells: { 1: { type: 'modified', fields: ['price'], priceDiff: 500 } },
+            wells: {
+                1: {
+                    type: 'modified',
+                    fields: ['price'],
+                    priceDiff: 500,
+                    priceChanged: true,
+                    configChanged: false
+                }
+            },
             transportChanged: false
         };
         expect(helpers.getOrderChanges(legacyChanged)).toEqual(expected);
@@ -220,7 +247,13 @@ describe('orderDto slim snapshot — DoD P1', () => {
             transportMode: norm(undefined),
             originalSnapshot: {
                 slimWells: [
-                    { id: 'well-1', name: 'S1', price: 1000, weight: 2000, configHash: 'a' }
+                    {
+                        id: 'well-1',
+                        name: 'S1',
+                        price: 1000,
+                        weight: 2000,
+                        configHash: helpers.wellConfigHash(helpers.toWellOrderDTO(liveWells[0]))
+                    }
                 ],
                 wellDiscounts: {},
                 transportKm: 10,
@@ -236,14 +269,21 @@ describe('orderDto slim snapshot — DoD P1', () => {
 
     test('F0 #1 (heal): legacy rozjazd full/fractional nie flaguje studni', () => {
         const helpers = loadOrderHelpers({ 'well-1': 1000 });
+        const currWell = { ...dtoWell() };
         const order = {
-            wells: [{ ...dtoWell() }],
+            wells: [currWell],
             transportKm: 0,
             transportRate: 0,
             transportMode: 'fractional',
             originalSnapshot: {
                 slimWells: [
-                    { id: 'well-1', name: 'S1', price: 1000, weight: 2000, configHash: 'a' }
+                    {
+                        id: 'well-1',
+                        name: 'S1',
+                        price: 1000,
+                        weight: 2000,
+                        configHash: helpers.wellConfigHash(helpers.toWellOrderDTO(currWell))
+                    }
                 ],
                 wellDiscounts: {},
                 transportKm: 0,
@@ -260,14 +300,21 @@ describe('orderDto slim snapshot — DoD P1', () => {
 
     test('F0 #2: zmiana samego transportu nie flaguje ŻADNEJ studni', () => {
         const helpers = loadOrderHelpers({ 'well-1': 1000 });
+        const currWell = { ...dtoWell() };
         const order = {
-            wells: [{ ...dtoWell() }],
+            wells: [currWell],
             transportKm: 50,
             transportRate: 5,
             transportMode: 'fractional',
             originalSnapshot: {
                 slimWells: [
-                    { id: 'well-1', name: 'S1', price: 1000, weight: 2000, configHash: 'a' }
+                    {
+                        id: 'well-1',
+                        name: 'S1',
+                        price: 1000,
+                        weight: 2000,
+                        configHash: helpers.wellConfigHash(helpers.toWellOrderDTO(currWell))
+                    }
                 ],
                 wellDiscounts: {},
                 transportKm: 10,
@@ -298,13 +345,17 @@ describe('orderDto slim snapshot — DoD P1', () => {
         const mkOrder = (currNames: string[], snapNames: string[]) => {
             const helpers = loadOrderHelpers(prices);
             const curr = currNames.map(mkWell);
-            const slimWells = snapNames.map((n) => ({
-                id: 'well-' + n,
-                name: 'S' + n,
-                price: prices['well-' + n],
-                weight: 0,
-                configHash: 'h' + n
-            }));
+            // Prawdziwe hashe (Faza 3, #5) — fikcyjne 'h'+n zawsze dawałyby configChanged.
+            const slimWells = snapNames.map((n) => {
+                const w = mkWell(n);
+                return {
+                    id: w.id,
+                    name: w.name,
+                    price: prices[w.id],
+                    weight: 0,
+                    configHash: helpers.wellConfigHash(helpers.toWellOrderDTO(w))
+                };
+            });
             return {
                 helpers,
                 order: {
@@ -402,6 +453,99 @@ describe('orderDto slim snapshot — DoD P1', () => {
             const h1 = dto.wellConfigHash(raw[0]);
             oh.migrateWellData(raw);
             expect(dto.wellConfigHash(raw[0])).toBe(h1);
+        });
+    });
+
+    describe('F3 #5: configChanged vs priceChanged', () => {
+        const mkConfigOrder = (currWell: any, origWell: any, withHash = true) => {
+            const helpers = loadOrderHelpers({ 'well-1': 1000 });
+            const slimEntry: any = {
+                id: 'well-1',
+                name: 'S1',
+                price: 1000,
+                weight: 2000,
+                configHash: withHash
+                    ? helpers.wellConfigHash(helpers.toWellOrderDTO(origWell))
+                    : undefined
+            };
+            return {
+                helpers,
+                order: {
+                    wells: [currWell],
+                    transportKm: 0,
+                    transportRate: 0,
+                    transportMode: 'fractional',
+                    originalSnapshot: {
+                        slimWells: [slimEntry],
+                        wellDiscounts: {},
+                        transportKm: 0,
+                        transportRate: 0,
+                        transportMode: 'fractional'
+                    }
+                }
+            };
+        };
+
+        test('config-only: inny config, ta sama cena → fields [config]', () => {
+            const { helpers, order } = mkConfigOrder(
+                { ...dtoWell(), config: [{ productId: 'krag-1', quantity: 5 }] },
+                dtoWell()
+            );
+            expect(helpers.getOrderChanges(order)).toEqual({
+                wells: {
+                    0: {
+                        type: 'modified',
+                        fields: ['config'],
+                        priceDiff: 0,
+                        priceChanged: false,
+                        configChanged: true
+                    }
+                },
+                transportChanged: false
+            });
+        });
+
+        test('price-only: ta sama config, inna cena → fields [price]', () => {
+            const curr = { ...dtoWell(), _testPrice: 1200 };
+            const { helpers, order } = mkConfigOrder(curr, dtoWell());
+            expect(helpers.getOrderChanges(order)).toEqual({
+                wells: {
+                    0: {
+                        type: 'modified',
+                        fields: ['price'],
+                        priceDiff: 200,
+                        priceChanged: true,
+                        configChanged: false
+                    }
+                },
+                transportChanged: false
+            });
+        });
+
+        test('both: inny config i inna cena → fields [price, config]', () => {
+            const curr = {
+                ...dtoWell(),
+                _testPrice: 1200,
+                config: [{ productId: 'krag-1', quantity: 5 }]
+            };
+            const { helpers, order } = mkConfigOrder(curr, dtoWell());
+            const res = helpers.getOrderChanges(order);
+            expect(res.wells[0].fields).toEqual(['price', 'config']);
+            expect(res.wells[0].priceChanged).toBe(true);
+            expect(res.wells[0].configChanged).toBe(true);
+            expect(res.wells[0].priceDiff).toBe(200);
+        });
+
+        test('brak configHash w snapshocie → degradacja do samej ceny', () => {
+            const { helpers, order } = mkConfigOrder(
+                { ...dtoWell(), config: [{ productId: 'krag-1', quantity: 5 }] },
+                dtoWell(),
+                false
+            );
+            expect(helpers.getOrderChanges(order)).toEqual({
+                wells: {},
+                transportChanged: false
+            });
         });
     });
 });

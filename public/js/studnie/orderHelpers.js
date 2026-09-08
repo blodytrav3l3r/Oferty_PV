@@ -532,6 +532,40 @@ function calcComparableWellPrice(well) {
 }
 
 /**
+ * Hash kanonicznego wejścia cenowego studni (Faza 3, #5). Zwraca null gdy
+ * orderDto.js niedostępny (np. kartoteka) albo hash niepoliczalny — wtedy
+ * detekcja spada do samej ceny (zachowanie sprzed Fazy 3).
+ */
+function dtoConfigHash(well) {
+    if (typeof wellConfigHash !== 'function' || typeof toWellOrderDTO !== 'function') return null;
+    try {
+        return wellConfigHash(toWellOrderDTO(well));
+    } catch (_e) {
+        return null;
+    }
+}
+
+/**
+ * Buduje wpis zmiany studni z rozdzielonymi wymiarami (Faza 3, #5):
+ * priceChanged (cena) vs configChanged (konfiguracja). Konsumenci czytają
+ * type/fields — kształt wstecznie kompatybilny.
+ */
+function buildWellChange(currPrice, origPrice, configChanged) {
+    const priceChanged = Math.abs(currPrice - origPrice) > 0.01;
+    if (!priceChanged && !configChanged) return null;
+    const fields = [];
+    if (priceChanged) fields.push('price');
+    if (configChanged) fields.push('config');
+    return {
+        type: 'modified',
+        fields,
+        priceDiff: priceChanged ? currPrice - origPrice : 0,
+        priceChanged,
+        configChanged: !!configChanged
+    };
+}
+
+/**
  * Parowanie oryginał↔bieżące po ID (Faza 1, #3). ID = tożsamość, kolejność
  * nie jest zmianą. Fallback pozycyjny TYLKO dla studni bez ID (legacy).
  * @returns {Array<{origIdx: number|null, currIdx: number|null}>}
@@ -621,13 +655,11 @@ function getOrderChanges(order) {
             }
             const currPrice = calcComparableWellPrice(curr[currIdx]);
             const origPrice = roundToGrosz(slimWells[origIdx].price);
-            if (Math.abs(currPrice - origPrice) > 0.01) {
-                changes[currIdx] = {
-                    type: 'modified',
-                    fields: ['price'],
-                    priceDiff: currPrice - origPrice
-                };
-            }
+            const origHash = slimWells[origIdx].configHash;
+            const currHash = dtoConfigHash(curr[currIdx]);
+            const configChanged = origHash != null && currHash !== null && currHash !== origHash;
+            const change = buildWellChange(currPrice, origPrice, configChanged);
+            if (change) changes[currIdx] = change;
         }
     } else {
         const orig = structuredClone(originalWells);
@@ -665,14 +697,12 @@ function getOrderChanges(order) {
 
                 const origPrice = calcComparableWellPrice(orig[origIdx]);
                 const currPrice = calcComparableWellPrice(curr[currIdx]);
-
-                if (Math.abs(currPrice - origPrice) > 0.01) {
-                    changes[currIdx] = {
-                        type: 'modified',
-                        fields: ['price'],
-                        priceDiff: currPrice - origPrice
-                    };
-                }
+                const origHash = dtoConfigHash(orig[origIdx]);
+                const currHash = dtoConfigHash(curr[currIdx]);
+                const configChanged =
+                    origHash !== null && currHash !== null && currHash !== origHash;
+                const change = buildWellChange(currPrice, origPrice, configChanged);
+                if (change) changes[currIdx] = change;
             }
         } finally {
             window.isPreviewMode = savedPreviewMode;
@@ -715,6 +745,8 @@ window.DEFAULT_TRANSPORT_MODE = DEFAULT_TRANSPORT_MODE;
 window.calcComparableWellPrice = calcComparableWellPrice;
 window.matchWellPairs = matchWellPairs;
 window.freezeWellPreco = freezeWellPreco;
+window.dtoConfigHash = dtoConfigHash;
+window.buildWellChange = buildWellChange;
 
 /* ===== Rejestracja globali ===== */
 window.loadOrdersStudnie = loadOrdersStudnie;
