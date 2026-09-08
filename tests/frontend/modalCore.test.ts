@@ -11,6 +11,13 @@ describe('frontend: modalCore', () => {
         expect(content).toMatch(/export function trapFocus/);
     });
 
+    it('restoreBodyScroll ignoruje ukryte overlaye (regresja znikających pasków)', () => {
+        expect(content).toMatch(/export function hasVisibleModalOverlay/);
+        expect(content).toMatch(/window\.hasVisibleModalOverlay/);
+        expect(content).toMatch(/hasVisibleModalOverlay\(\)/);
+        expect(content).not.toMatch(/if\s*\(!document\.querySelector\('\.js-modal-overlay'\)\)/);
+    });
+
     it('używa .modal-overlay.js-modal-overlay i aria-modal', () => {
         expect(content).toMatch(/modal-overlay js-modal-overlay/);
         expect(content).toMatch(/ariaModal/);

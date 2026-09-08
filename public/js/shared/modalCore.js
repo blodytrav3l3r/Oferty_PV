@@ -7,8 +7,26 @@
 
 import { escapeHtml } from './escapeHtml.js';
 
+/**
+ * Sprawdza, czy istnieje WIDOCZNY overlay modala.
+ * Ukryte (display:none) overlaye — np. statyczny transport-modal w DOM
+ * albo modale schowane przez closeModal(id) — nie liczą się.
+ * Bez tego body zostawało z overflow:hidden i pasek strony znikał.
+ */
+export function hasVisibleModalOverlay() {
+    const overlays = document.querySelectorAll('.js-modal-overlay');
+    for (const el of overlays) {
+        const display =
+            typeof window !== 'undefined' && typeof window.getComputedStyle === 'function'
+                ? window.getComputedStyle(el).display
+                : el.style.display;
+        if (display !== 'none') return true;
+    }
+    return false;
+}
+
 export function restoreBodyScroll() {
-    if (!document.querySelector('.js-modal-overlay')) {
+    if (!hasVisibleModalOverlay()) {
         document.body.style.overflow = '';
     }
 }
@@ -145,6 +163,7 @@ export function showModal(opts) {
 /* Bridge dla legacy — usunąć po zmigrowaniu wszystkich callerów */
 window.showModal = showModal;
 window.closeModal = closeModal;
+window.hasVisibleModalOverlay = hasVisibleModalOverlay;
 window.restoreBodyScroll = restoreBodyScroll;
 window.trapFocus = trapFocus;
 window.untrapFocus = untrapFocus;

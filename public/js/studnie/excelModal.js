@@ -455,8 +455,9 @@ function _excelCloseOverlay() {
     if (overlay) {
         if (typeof untrapFocus === 'function') untrapFocus(overlay);
         overlay.remove();
-        // modalCore showModal ustawia body overflow hidden — przywróć gdy brak innych overlayów
-        if (!document.querySelector('.js-modal-overlay')) document.body.style.overflow = '';
+        // modalCore showModal ustawia body overflow hidden — przywróć gdy brak widocznych overlayów
+        if (typeof window.restoreBodyScroll === 'function') window.restoreBodyScroll();
+        else if (!document.querySelector('.js-modal-overlay')) document.body.style.overflow = '';
     }
     _excelDirty = false;
     _excelClosing = false;

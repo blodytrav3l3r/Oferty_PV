@@ -17,7 +17,14 @@ function _restoreBodyScroll() {
         window.restoreBodyScroll();
         return;
     }
-    if (!document.querySelector('.js-modal-overlay')) document.body.style.overflow = '';
+    // Fallback bez modalCore: liczą się tylko widoczne overlaye (ukryte display:none ignoruj).
+    const hasVisible =
+        typeof window.hasVisibleModalOverlay === 'function'
+            ? window.hasVisibleModalOverlay()
+            : Array.from(document.querySelectorAll('.js-modal-overlay')).some(
+                  (el) => el.style.display !== 'none'
+              );
+    if (!hasVisible) document.body.style.overflow = '';
 }
 
 function getUserDisplayName(user) {

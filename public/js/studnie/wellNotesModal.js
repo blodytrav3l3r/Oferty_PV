@@ -74,9 +74,17 @@ function openWellNotesModal(idx) {
         el.addEventListener('click', function (ev) {
             if (ev.target === el) {
                 el.remove();
-                document.body.style.overflow = document.querySelector('.js-modal-overlay')
-                    ? 'hidden'
-                    : '';
+                // Liczą się tylko widoczne overlaye — ukryte (display:none) ignoruj.
+                const anyVisible =
+                    typeof window.hasVisibleModalOverlay === 'function'
+                        ? window.hasVisibleModalOverlay()
+                        : Array.prototype.some.call(
+                              document.querySelectorAll('.js-modal-overlay'),
+                              function (o) {
+                                  return o.style.display !== 'none';
+                              }
+                          );
+                document.body.style.overflow = anyVisible ? 'hidden' : '';
             }
         });
         document.body.appendChild(el);
@@ -99,7 +107,8 @@ function openWellNotesModal(idx) {
                 const m = document.getElementById('well-uwagi-modal');
                 if (m) {
                     m.remove();
-                    if (!document.querySelector('.js-modal-overlay'))
+                    if (typeof window.restoreBodyScroll === 'function') window.restoreBodyScroll();
+                    else if (!document.querySelector('.js-modal-overlay'))
                         document.body.style.overflow = '';
                 }
             }
