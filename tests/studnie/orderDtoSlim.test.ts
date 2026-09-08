@@ -248,4 +248,83 @@ describe('orderDto slim snapshot — DoD P1', () => {
             transportChanged: true
         });
     });
+
+    describe('F1 #3: tożsamość po ID, kolejność nie jest zmianą', () => {
+        const prices: Record<string, number> = {
+            'well-A': 1000,
+            'well-B': 2000,
+            'well-C': 3000,
+            'well-D': 4000,
+            'well-X': 1500
+        };
+        const mkWell = (n: string) => ({
+            id: 'well-' + n,
+            name: 'S' + n,
+            dn: '1000',
+            config: []
+        });
+        const mkOrder = (currNames: string[], snapNames: string[]) => {
+            const helpers = loadOrderHelpers(prices);
+            const curr = currNames.map(mkWell);
+            const slimWells = snapNames.map((n) => ({
+                id: 'well-' + n,
+                name: 'S' + n,
+                price: prices['well-' + n],
+                weight: 0,
+                configHash: 'h' + n
+            }));
+            return {
+                helpers,
+                order: {
+                    wells: curr,
+                    transportKm: 0,
+                    transportRate: 0,
+                    transportMode: 'fractional',
+                    originalSnapshot: {
+                        slimWells,
+                        wellDiscounts: {},
+                        transportKm: 0,
+                        transportRate: 0,
+                        transportMode: 'fractional'
+                    }
+                }
+            };
+        };
+
+        test('reorder B A C D → zero zmian', () => {
+            const { helpers, order } = mkOrder(['B', 'A', 'C', 'D'], ['A', 'B', 'C', 'D']);
+            expect(helpers.getOrderChanges(order)).toEqual({
+                wells: {},
+                transportChanged: false
+            });
+        });
+
+        test('wstawienie X w środek → tylko X added, reszta czysta', () => {
+            const { helpers, order } = mkOrder(['A', 'X', 'B', 'C', 'D'], ['A', 'B', 'C', 'D']);
+            expect(helpers.getOrderChanges(order)).toEqual({
+                wells: { 1: { type: 'added' } },
+                transportChanged: false
+            });
+        });
+
+        test('usunięcie B → tylko removed:well-B, reszta czysta', () => {
+            const { helpers, order } = mkOrder(['A', 'C', 'D'], ['A', 'B', 'C', 'D']);
+            expect(helpers.getOrderChanges(order)).toEqual({
+                wells: { 'removed:well-B': { type: 'removed', name: 'SB' } },
+                transportChanged: false
+            });
+        });
+
+        test('matchWellPairs: fallback pozycyjny dla studni bez ID', () => {
+            const { helpers } = mkOrder(['A'], ['A']);
+            const pairs = helpers.matchWellPairs(
+                [{ name: 'bez-id-1' }, { name: 'bez-id-2' }],
+                [{ name: 'bez-id-1' }, { name: 'bez-id-2' }]
+            );
+            expect(pairs).toEqual([
+                { origIdx: 0, currIdx: 0 },
+                { origIdx: 1, currIdx: 1 }
+            ]);
+        });
+    });
 });

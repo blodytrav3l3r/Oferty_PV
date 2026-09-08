@@ -491,6 +491,68 @@ function normalizeTransportMode(mode) {
 }
 
 /**
+ * Cena porównywalna studni — JEDYNA definicja ceny do detekcji zmian (Faza 1, #7).
+ * Kontekst frozen (isPreviewMode=true), BEZ transportu. Używają jej badge
+ * (getOrderChanges) i tabela (kolumna Różnica) — ta sama liczba w obu miejscach.
+ */
+const roundToGroszShared = (v) => Math.round((Number(v) || 0) * 100) / 100;
+function calcComparableWellPrice(well) {
+    const saved = window.isPreviewMode;
+    window.isPreviewMode = true;
+    try {
+        return roundToGroszShared(calcWellStats(well).price);
+    } finally {
+        window.isPreviewMode = saved;
+    }
+}
+
+/**
+ * Parowanie oryginał↔bieżące po ID (Faza 1, #3). ID = tożsamość, kolejność
+ * nie jest zmianą. Fallback pozycyjny TYLKO dla studni bez ID (legacy).
+ * @returns {Array<{origIdx: number|null, currIdx: number|null}>}
+ */
+function matchWellPairs(origArr, currArr) {
+    const orig = origArr || [];
+    const curr = currArr || [];
+    const pairs = [];
+    const usedOrig = new Set();
+    const wellIdOf = (w) => (w && w.id != null && String(w.id) !== '' ? String(w.id) : null);
+    const byId = new Map();
+    orig.forEach((w, idx) => {
+        const id = wellIdOf(w);
+        if (id === null) return;
+        if (!byId.has(id)) byId.set(id, []);
+        byId.get(id).push(idx);
+    });
+    const pendingCurr = [];
+    curr.forEach((w, idx) => {
+        const id = wellIdOf(w);
+        if (id !== null && byId.has(id) && byId.get(id).length > 0) {
+            const origIdx = byId.get(id).shift();
+            usedOrig.add(origIdx);
+            pairs.push({ origIdx, currIdx: idx });
+        } else {
+            pendingCurr.push(idx);
+        }
+    });
+    const freeOrigNoId = [];
+    orig.forEach((w, idx) => {
+        if (usedOrig.has(idx)) return;
+        if (wellIdOf(w) === null) freeOrigNoId.push(idx);
+        else pairs.push({ origIdx: idx, currIdx: null });
+    });
+    pendingCurr.forEach((currIdx) => {
+        if (wellIdOf(curr[currIdx]) === null && freeOrigNoId.length > 0) {
+            pairs.push({ origIdx: freeOrigNoId.shift(), currIdx });
+        } else {
+            pairs.push({ origIdx: null, currIdx });
+        }
+    });
+    freeOrigNoId.forEach((origIdx) => pairs.push({ origIdx, currIdx: null }));
+    return pairs;
+}
+
+/**
  * Porównuje bieżący stan studni z zapisanym snapshotem zamówienia.
  * Zwraca { wells: { indexWell: { type, fields, priceDiff } }, transportChanged: bool }.
  * Zmiana transportu NIGDY nie flaguje studni — to osobny wymiar (Faza 0, #2).
@@ -519,32 +581,28 @@ function getOrderChanges(order) {
     const curr = order.wells;
 
     if (slimWells) {
-        const savedPreviewMode = window.isPreviewMode;
-        window.isPreviewMode = true;
-        try {
-            const maxLen = Math.max(slimWells.length, curr.length);
-            for (let i = 0; i < maxLen; i++) {
-                if (i >= slimWells.length) {
-                    changes[i] = { type: 'added' };
-                    continue;
-                }
-                if (i >= curr.length) {
-                    changes[i] = { type: 'removed', name: slimWells[i].name };
-                    continue;
-                }
-                const currStats = calcWellStats(curr[i]);
-                const origPrice = roundToGrosz(slimWells[i].price);
-                const currPrice = roundToGrosz(currStats.price);
-                if (Math.abs(currPrice - origPrice) > 0.01) {
-                    changes[i] = {
-                        type: 'modified',
-                        fields: ['price'],
-                        priceDiff: currPrice - origPrice
-                    };
-                }
+        for (const { origIdx, currIdx } of matchWellPairs(slimWells, curr)) {
+            if (origIdx === null) {
+                changes[currIdx] = { type: 'added' };
+                continue;
             }
-        } finally {
-            window.isPreviewMode = savedPreviewMode;
+            if (currIdx === null) {
+                const origWell = slimWells[origIdx];
+                changes['removed:' + (origWell.id ?? 'idx' + origIdx)] = {
+                    type: 'removed',
+                    name: origWell.name
+                };
+                continue;
+            }
+            const currPrice = calcComparableWellPrice(curr[currIdx]);
+            const origPrice = roundToGrosz(slimWells[origIdx].price);
+            if (Math.abs(currPrice - origPrice) > 0.01) {
+                changes[currIdx] = {
+                    type: 'modified',
+                    fields: ['price'],
+                    priceDiff: currPrice - origPrice
+                };
+            }
         }
     } else {
         const orig = structuredClone(originalWells);
@@ -567,25 +625,24 @@ function getOrderChanges(order) {
         window.isPreviewMode = true;
 
         try {
-            const maxLen = Math.max(orig.length, curr.length);
-            for (let i = 0; i < maxLen; i++) {
-                if (i >= orig.length) {
-                    changes[i] = { type: 'added' };
+            for (const { origIdx, currIdx } of matchWellPairs(orig, curr)) {
+                if (origIdx === null) {
+                    changes[currIdx] = { type: 'added' };
                     continue;
                 }
-                if (i >= curr.length) {
-                    changes[i] = { type: 'removed', name: orig[i].name };
+                if (currIdx === null) {
+                    changes['removed:' + (orig[origIdx].id ?? 'idx' + origIdx)] = {
+                        type: 'removed',
+                        name: orig[origIdx].name
+                    };
                     continue;
                 }
 
-                const origStats = calcWellStats(orig[i]);
-                const currStats = calcWellStats(curr[i]);
-
-                const origPrice = roundToGrosz(origStats.price);
-                const currPrice = roundToGrosz(currStats.price);
+                const origPrice = calcComparableWellPrice(orig[origIdx]);
+                const currPrice = calcComparableWellPrice(curr[currIdx]);
 
                 if (Math.abs(currPrice - origPrice) > 0.01) {
-                    changes[i] = {
+                    changes[currIdx] = {
                         type: 'modified',
                         fields: ['price'],
                         priceDiff: currPrice - origPrice
@@ -630,6 +687,8 @@ window.freezeWellPrices = freezeWellPrices;
 window.getOrderChanges = getOrderChanges;
 window.normalizeTransportMode = normalizeTransportMode;
 window.DEFAULT_TRANSPORT_MODE = DEFAULT_TRANSPORT_MODE;
+window.calcComparableWellPrice = calcComparableWellPrice;
+window.matchWellPairs = matchWellPairs;
 
 /* ===== Rejestracja globali ===== */
 window.loadOrdersStudnie = loadOrdersStudnie;

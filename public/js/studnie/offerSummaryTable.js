@@ -40,41 +40,25 @@ function renderOfferSummaryTable(order, orderChanges, totals) {
             return dnA - dnB;
         });
 
-    let origTotalTransportCost = 0;
-    let origTotalWeight = 0;
+    // Faza 1, #3+#7: lookup oryginału po ID + cena porównywalna (bez transportu).
+    // Ta sama definicja ceny co badge (calcComparableWellPrice).
+    let origLookup = null;
     if (showPriceComparison && order) {
         const snap = order.originalSnapshot;
-        const origSnap = Array.isArray(snap) ? null : snap;
-        // P1: slim snapshot ma gotowe wagi; legacy liczy przez calcWellStats.
         const slimWellsArr =
-            origSnap && Array.isArray(origSnap.slimWells) ? origSnap.slimWells : null;
-        const origWellsArr = slimWellsArr || (Array.isArray(snap) ? snap : snap.wells || []);
-        origWellsArr.forEach((w) => {
-            origTotalWeight += slimWellsArr ? w.weight || 0 : calcWellStats(w).weight;
+            !Array.isArray(snap) && Array.isArray(snap.slimWells) ? snap.slimWells : null;
+        const originalWells = slimWellsArr || (Array.isArray(snap) ? snap : snap.wells || []);
+        const byId = new Map();
+        originalWells.forEach((w) => {
+            const id = w && w.id != null && String(w.id) !== '' ? String(w.id) : null;
+            if (id !== null && !byId.has(id)) byId.set(id, w);
         });
-        if (origSnap) {
-            const oKm = parseFloat(origSnap.transportKm) || 0;
-            const oRate = parseFloat(origSnap.transportRate) || 0;
-            const oMode = origSnap.transportMode || 'full';
-            if (oKm > 0 && oRate > 0 && origTotalWeight > 0) {
-                const origOffer =
-                    typeof offersStudnie !== 'undefined' && offersStudnie
-                        ? typeof getOfferStudnieById === 'function'
-                            ? getOfferStudnieById(order.offerId)
-                            : offersStudnie.find((o) => o.id === order.offerId)
-                        : null;
-                const origOfferWeight = origOffer?.totalWeight || origTotalWeight;
-                const origCostPerTrip = oKm * oRate;
-                const origFullOfferCost =
-                    (typeof calcTransportCount === 'function'
-                        ? calcTransportCount(origOfferWeight, oMode)
-                        : Math.ceil(origOfferWeight / MAX_TRANSPORT_WEIGHT)) * origCostPerTrip;
-                origTotalTransportCost =
-                    origOfferWeight > 0
-                        ? origFullOfferCost * (origTotalWeight / origOfferWeight)
-                        : 0;
-            }
-        }
+        origLookup = {
+            slim: !!slimWellsArr,
+            list: originalWells,
+            byId,
+            discounts: Array.isArray(snap) ? null : snap.wellDiscounts || null
+        };
     }
 
     sortedWells.forEach(({ well, originalIndex }, displayIndex) => {
@@ -85,51 +69,52 @@ function renderOfferSummaryTable(order, orderChanges, totals) {
                 : 0;
         stats.price += wellTransportCost;
 
+        const comparable =
+            typeof calcComparableWellPrice === 'function'
+                ? calcComparableWellPrice(well)
+                : stats.price;
         runningTotalPrice += stats.price;
         runningTotalWeight += stats.weight;
 
         const dnKey = well.dn || '—';
         if (!dnGroups[dnKey])
-            dnGroups[dnKey] = { count: 0, sumPrice: 0, sumHeight: 0, sumOfferPrice: 0 };
+            dnGroups[dnKey] = {
+                count: 0,
+                sumPrice: 0,
+                sumHeight: 0,
+                sumOfferPrice: 0,
+                sumComparable: 0
+            };
         dnGroups[dnKey].count++;
         dnGroups[dnKey].sumPrice += stats.price;
         dnGroups[dnKey].sumHeight += stats.height;
+        dnGroups[dnKey].sumComparable += comparable;
 
         let offerPrice = null;
-        if (showPriceComparison) {
-            const snap = order.originalSnapshot;
-            const slimWellsArr =
-                !Array.isArray(snap) && Array.isArray(snap.slimWells) ? snap.slimWells : null;
-            const originalWells = slimWellsArr || (Array.isArray(snap) ? snap : snap.wells || []);
-            const originalDiscounts = Array.isArray(snap) ? null : snap.wellDiscounts || null;
-
-            if (originalWells[originalIndex]) {
-                const origWell = originalWells[originalIndex];
-                let origStats;
-                if (slimWellsArr) {
-                    // P1: gotowa cena/waga ze snapshotu, bez calcWellStats.
-                    origStats = { price: origWell.price || 0, weight: origWell.weight || 0 };
+        if (origLookup) {
+            const wellId =
+                well && well.id != null && String(well.id) !== '' ? String(well.id) : null;
+            const origWell =
+                (wellId !== null && origLookup.byId.get(wellId)) ||
+                (wellId === null ? origLookup.list[originalIndex] : undefined);
+            if (origWell) {
+                if (origLookup.slim) {
+                    // P1: gotowa cena ze snapshotu, bez calcWellStats.
+                    offerPrice = origWell.price || 0;
                 } else {
                     const currentGlobalDiscounts =
                         typeof wellDiscounts !== 'undefined' ? structuredClone(wellDiscounts) : {};
                     try {
-                        if (originalDiscounts && typeof wellDiscounts !== 'undefined') {
-                            window.wellDiscounts = originalDiscounts;
+                        if (origLookup.discounts && typeof wellDiscounts !== 'undefined') {
+                            window.wellDiscounts = origLookup.discounts;
                         }
-
-                        origStats = calcWellStats(origWell);
+                        offerPrice = calcComparableWellPrice(origWell);
                     } finally {
-                        if (originalDiscounts && typeof wellDiscounts !== 'undefined') {
+                        if (origLookup.discounts && typeof wellDiscounts !== 'undefined') {
                             window.wellDiscounts = currentGlobalDiscounts;
                         }
                     }
                 }
-
-                const origTransportCost =
-                    origTotalWeight > 0
-                        ? origTotalTransportCost * (origStats.weight / origTotalWeight)
-                        : 0;
-                offerPrice = origStats.price + origTransportCost;
                 dnGroups[dnKey].sumOfferPrice += offerPrice;
             }
         }
@@ -143,7 +128,8 @@ function renderOfferSummaryTable(order, orderChanges, totals) {
             showOrderSelection,
             displayIndex + 1,
             offerPrice,
-            showPriceComparison
+            showPriceComparison,
+            comparable
         );
         html += renderWellDetailsRow(
             well,
@@ -194,7 +180,7 @@ function renderOfferSummaryFooter(
             let offerPriceCell = '';
             if (showPriceComparison) {
                 if (g.sumOfferPrice > 0) {
-                    const priceDiff = g.sumPrice - g.sumOfferPrice;
+                    const priceDiff = g.sumComparable - g.sumOfferPrice;
                     const diffColor =
                         priceDiff > 0
                             ? 'var(--success-hover)'
@@ -221,14 +207,16 @@ function renderOfferSummaryFooter(
     }
 
     let totalOfferPrice = 0;
+    let totalComparable = 0;
     let totalPriceDiffCell = '';
     let totalOfferPriceCell = '';
     if (showPriceComparison) {
         Object.values(dnGroups).forEach((g) => {
             totalOfferPrice += g.sumOfferPrice || 0;
+            totalComparable += g.sumComparable || 0;
         });
         if (totalOfferPrice > 0) {
-            const totalDiff = price - totalOfferPrice;
+            const totalDiff = totalComparable - totalOfferPrice;
             const diffColor =
                 totalDiff > 0
                     ? 'var(--success-hover)'

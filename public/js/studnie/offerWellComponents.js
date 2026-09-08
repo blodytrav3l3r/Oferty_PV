@@ -9,7 +9,8 @@ function renderWellHeaderRow(
     showOrderSelection,
     lp,
     offerPrice,
-    showPriceComparison
+    showPriceComparison,
+    comparablePrice
 ) {
     const isExpanded = expandedWellIndices.has(i);
     const rowStyle = getWellRowStyle(change, isOrdered);
@@ -74,7 +75,9 @@ function renderWellHeaderRow(
     let offerPriceCell = '';
     let priceDiffCell = '';
     if (offerPrice !== null) {
-        const priceDiff = stats.price - offerPrice;
+        // Faza 1, #7: Różnica z ceny porównywalnej (bez transportu),
+        // ta sama definicja co badge — nie stats.price (z transportem).
+        const priceDiff = (comparablePrice ?? stats.price) - offerPrice;
         const diffColor =
             priceDiff > 0
                 ? 'var(--success-hover)'
