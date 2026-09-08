@@ -108,11 +108,11 @@ function updateOfferSummaryUI(totals) {
         const wellsList = typeof wells !== 'undefined' ? wells : [];
 
         const tileBase =
-            'padding:2px 4px; border-radius: var(--radius-2xs); text-align:center; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:0; min-width:0;';
+            'padding:2px 4px; border-radius: var(--radius-2xs); text-align:center; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:0; min-width:0; max-width:100%; overflow:hidden;';
         const labelStyle =
-            'font-size: var(--fs-sm); font-weight: var(--fw-extrabold); line-height:1.15; color:var(--text-primary);';
+            'font-size: var(--fs-sm); font-weight: var(--fw-extrabold); line-height:1.15; color:var(--text-primary); max-width:100%;';
         const detailStyle =
-            'font-size: var(--fs-xs); font-weight: var(--fw-semibold); line-height:1.15; color:rgba(var(--white-rgb), 0.8);';
+            'font-size: var(--fs-2xs); font-weight: var(--fw-semibold); line-height:1.2; color:rgba(var(--white-rgb), 0.8); white-space:normal; overflow-wrap:anywhere; max-width:100%;';
         const dimVal = 'opacity:0.5; color:rgba(var(--white-rgb), 0.8);';
         const disabledTile = `${tileBase} background:rgba(var(--white-rgb), 0.05); color:rgba(var(--slate-500-rgb), 0.5); border:1px solid rgba(var(--white-rgb), 0.05);`;
 
@@ -157,7 +157,7 @@ function updateOfferSummaryUI(totals) {
                 if (!used) return;
                 if (!classHas) return;
                 const color = cls === 'E600' ? 'var(--accent2-hover)' : 'var(--warn-hover)';
-                classRows += `<span style="${detailStyle}; color:${color}; white-space:nowrap;">${fmtDisc(cls + ' D:', d['dennica' + cls], null)} ${fmtDisc('N:', d['nadbudowa' + cls], null)} ${fmtDisc('Z:', d['zwienczenie' + cls], null)}</span>`;
+                classRows += `<span style="${detailStyle}; color:${color};">${fmtDisc(cls + ' D:', d['dennica' + cls], null)} ${fmtDisc('N:', d['nadbudowa' + cls], null)} ${fmtDisc('Z:', d['zwienczenie' + cls], null)}</span>`;
             });
 
             return `<div style="${tileBase} ${bg}"><span style="${labelStyle}">${label}</span><span style="${detailStyle}">${details}</span>${classRows}</div>`;
@@ -212,7 +212,7 @@ function updateOfferSummaryUI(totals) {
         };
 
         discountsInfoEl.innerHTML = `
-            <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:3px; width:100%;">
+            <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:3px; width:100%; min-width:0;">
                 ${buildDnTile('1000')}
                 ${buildDnTile('1500')}
                 ${buildDnTile('2500')}

@@ -382,6 +382,8 @@
 #offer-active-discounts-info {
     max-height: 110px;
     overflow-y: auto;
+    overflow-x: hidden;
+    min-width: 0;
     padding-right: 2px;
 }
 #offer-active-discounts-info::-webkit-scrollbar {
