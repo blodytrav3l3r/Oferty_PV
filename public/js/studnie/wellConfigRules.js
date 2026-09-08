@@ -159,7 +159,9 @@ function filterByWellParams(p, well) {
 }
 
 function filterSealsByWellType(sealItems, well) {
-    if (!well.uszczelka || well.uszczelka === 'brak' || well.uszczelka === 'smar') {
+    // Zamknięty zbiór: brak/GSG/SDV/SDV PO/NBR. 'smar' nie istnieje —
+    // legacy śmieci w danych zachowują się jak 'brak' (spójnie z recalcGaskets).
+    if (!well.uszczelka || well.uszczelka === 'brak' || !GASKET_TYPES.includes(well.uszczelka)) {
         return [];
     }
     const keyword = well.uszczelka.replace('Uszczelka ', '').toUpperCase();

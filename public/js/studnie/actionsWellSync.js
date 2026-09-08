@@ -1,33 +1,51 @@
 // @ts-check
 /* ===== SYNCHRONIZACJA KONFIGURACJI I WALIDACJA ===== */
 
+/** Zamknięty zbiór typów uszczelek. 'smar' nie istnieje — legacy śmieci w danych
+ * traktowane jak 'brak' (zero uszczelek), nigdy cichy default GSG. */
+const GASKET_TYPES = ['GSG', 'SDV', 'SDV PO', 'NBR'];
+
+/**
+ * Kanoniczna nazwa produktu uszczelki dla typu i DN — jedno źródło prawdy
+ * (ta sama mapa co lokalny gasketNameForDn w mlDualRanking.js).
+ */
+function gasketNameForType(uType, dn) {
+    if (uType === 'SDV') return `Uszczelka SDV DN${dn}`;
+    if (uType === 'SDV PO') return `Uszczelka SDV DN${dn} SDV z pierścieniem odciążającym`;
+    if (uType === 'NBR') return `Uszczelka GSG DN${dn} z NBR`;
+    return `Uszczelka GSG DN${dn}`;
+}
+
+function lookupGasketProduct(productId) {
+    return typeof getStudnieProductById === 'function'
+        ? getStudnieProductById(productId)
+        : studnieProducts.find((pr) => pr.id === productId);
+}
+
 function recalcGaskets(well) {
     if (!well) well = getCurrentWell();
     if (!well) return;
 
     const existingGasketPrices = new Map();
+    const existingByDn = new Map();
     well.config.forEach((item) => {
-        const p =
-            typeof getStudnieProductById === 'function'
-                ? getStudnieProductById(item.productId)
-                : studnieProducts.find((pr) => pr.id === item.productId);
-        if (p && p.componentType === 'uszczelka' && item.frozenPrice != null) {
+        const p = lookupGasketProduct(item.productId);
+        if (!p || p.componentType !== 'uszczelka') return;
+        if (item.frozenPrice != null && !existingGasketPrices.has(item.productId)) {
             existingGasketPrices.set(item.productId, {
                 frozenPrice: item.frozenPrice,
                 frozenPriceBase: item.frozenPriceBase
             });
         }
+        if (p.dn && !existingByDn.has(p.dn)) existingByDn.set(p.dn, item);
     });
 
     const newConfig = well.config.filter((item) => {
-        const p =
-            typeof getStudnieProductById === 'function'
-                ? getStudnieProductById(item.productId)
-                : studnieProducts.find((pr) => pr.id === item.productId);
+        const p = lookupGasketProduct(item.productId);
         return !(p && p.componentType === 'uszczelka');
     });
 
-    if (well.uszczelka && well.uszczelka !== 'brak') {
+    if (well.uszczelka && GASKET_TYPES.includes(well.uszczelka)) {
         const uType = well.uszczelka;
         const requiredGaskets = {};
 
@@ -73,12 +91,17 @@ function recalcGaskets(well) {
 
         for (const dn in requiredGaskets) {
             const qty = requiredGaskets[dn];
-            let gasketName = `Uszczelka GSG DN${dn}`;
-            if (uType === 'GSG') gasketName = `Uszczelka GSG DN${dn}`;
-            else if (uType === 'SDV') gasketName = `Uszczelka SDV DN${dn}`;
-            else if (uType === 'SDV PO')
-                gasketName = `Uszczelka SDV DN${dn} SDV z pierścieniem odciążającym`;
-            else if (uType === 'NBR') gasketName = `Uszczelka GSG DN${dn} z NBR`;
+            const gasketName = gasketNameForType(uType, dn);
+            const kept = existingByDn.get(dn);
+            const keptProd = kept ? lookupGasketProduct(kept.productId) : null;
+
+            if (kept && keptProd && keptProd.name === gasketName) {
+                // Ten sam typ: zachowaj pozycję w całości, tylko ilość.
+                // Zmiana uszczelki ma ruszać wyłącznie uszczelki — reszta
+                // configu (i frozenPrice kręgów) jest poza tą funkcją.
+                newConfig.push({ ...kept, quantity: qty });
+                continue;
+            }
 
             const gasketProd = studnieProducts.find(
                 (p) => p.componentType === 'uszczelka' && p.name === gasketName
@@ -97,6 +120,10 @@ function recalcGaskets(well) {
                     }
                 }
                 newConfig.push(newItem);
+            } else if (kept && keptProd) {
+                // Katalog nie zna oczekiwanej nazwy (rename produktu) —
+                // zachowaj istniejącą pozycję po productId zamiast gubić uszczelkę.
+                newConfig.push({ ...kept, quantity: qty });
             }
         }
     }
@@ -345,6 +372,8 @@ function enforceLoadClassRulesWizard(changedParam, value) {
 
 /* ===== Rejestracja globali ===== */
 window.recalcGaskets = recalcGaskets;
+window.GASKET_TYPES = GASKET_TYPES;
+window.gasketNameForType = gasketNameForType;
 window.syncKineta = syncKineta;
 window.enforceGlobalKonusPehdRule = enforceGlobalKonusPehdRule;
 window.enforceLoadClassRules = enforceLoadClassRules;

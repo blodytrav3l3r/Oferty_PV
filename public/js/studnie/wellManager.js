@@ -205,6 +205,17 @@ async function updateWellParam(paramKey, value) {
     if (typeof updateConfigToMatchParams === 'function') {
         updateConfigToMatchParams(well);
     }
+    // Uszczelka to parametr czysto cenowy: nie zmienia zbioru kandydatów
+    // (computeSolveInputHash ją wyklucza), więc solver jest zbędny —
+    // refreshAll() poniżej i tak podmieni uszczelki (recalcGaskets) i ceny.
+    // Pełny solver przebudowałby config od zera (zrzut frozenPrice, ryzyko
+    // przeliczenia kręgów) — tego użytkownik nie oczekuje po zmianie uszczelki.
+    if (paramKey === 'uszczelka') {
+        refreshAll();
+        /* Odśwież tabelę excela jeśli modal otwarty — tylko przy zmianie z zewnątrz */
+        if (typeof window.refreshExcelFromConfig === 'function') window.refreshExcelFromConfig();
+        return;
+    }
     // Po zamianie elementów zawsze uruchom ponowny auto-dobór (jeśli studnia nie jest zablokowana)
     if (!well.autoLocked) {
         await autoSelectComponents(true);
