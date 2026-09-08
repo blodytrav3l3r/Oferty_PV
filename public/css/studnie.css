@@ -1302,6 +1302,12 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
     justify-content: center;
 }
 
+.styczna-product-btn--active {
+    border-color: var(--accent-border) !important;
+    background: var(--bg-hover) !important;
+    box-shadow: 0 0 0 2px var(--accent-border);
+}
+
 .tile[data-type='plyta_din'],
 .tile[data-type='plyta_najazdowa'],
 .tile[data-type='plyta_zamykajaca'] {

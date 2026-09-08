@@ -10,13 +10,41 @@ function showStycznaPopup(mode = 'select') {
         ...studnieProducts.filter((p) => p.componentType === 'styczna' && p.id.includes('KOREK'))
     ].sort((a, b) => (a.dn || 0) - (b.dn || 0));
 
-    const renderProductRow = (p) => `
-        <button class="styczna-product-btn" onclick="handleStycznaProductChoice('${escapeJsStr(p.id)}', '${escapeJsStr(mode)}')" style="
+    // Aktualnie wybrana styczna — tylko w trybie podmiany ('select'); w 'add' nic do podświetlenia.
+    let currentStycznaId = null;
+    if (mode === 'select' && typeof getCurrentWell === 'function') {
+        const well = getCurrentWell();
+        if (well && Array.isArray(well.config)) {
+            const resolve =
+                typeof getStudnieProductById === 'function'
+                    ? (id) => getStudnieProductById(id)
+                    : (id) => studnieProducts.find((pr) => pr.id === id);
+            const entry = well.config.find((c) => {
+                const p = resolve(c.productId);
+                return p && p.componentType === 'styczna';
+            });
+            if (entry) currentStycznaId = entry.productId;
+            if (!currentStycznaId && well.stycznaDn != null) {
+                const wantKorek = (well.stycznaVariant || 'standard') === 'korek';
+                const fb = [...standardProducts, ...korekProducts].find(
+                    (p) =>
+                        String(p.dn) === String(well.stycznaDn) &&
+                        p.id.includes('KOREK') === wantKorek
+                );
+                if (fb) currentStycznaId = fb.id;
+            }
+        }
+    }
+
+    const renderProductRow = (p) => {
+        const isCurrent = currentStycznaId !== null && p.id === currentStycznaId;
+        return `
+        <button class="styczna-product-btn${isCurrent ? ' styczna-product-btn--active' : ''}"${isCurrent ? ' aria-current="true"' : ''} onclick="handleStycznaProductChoice('${escapeJsStr(p.id)}', '${escapeJsStr(mode)}')" style="
             display:grid; grid-template-columns:1fr auto auto; align-items:center; gap:0.6rem;
             padding:0.55rem 0.8rem; background:rgba(var(--white-rgb), 0.05); border:1px solid rgba(var(--white-rgb), 0.1);
             border-radius: var(--radius-sm); cursor:pointer; transition:all 0.15s; text-align:left; color:inherit; width:100%;
-        " onmouseenter="this.style.borderColor='rgba(var(--warn-rgb), 0.5)'; this.style.background='rgba(var(--warn-rgb), 0.1)'"
-           onmouseleave="this.style.borderColor='rgba(var(--white-rgb), 0.1)'; this.style.background='rgba(var(--white-rgb), 0.05)'">
+        " onmouseenter="if(!this.classList.contains('styczna-product-btn--active')){this.style.borderColor='rgba(var(--warn-rgb), 0.5)'; this.style.background='rgba(var(--warn-rgb), 0.1)'}"
+            onmouseleave="if(!this.classList.contains('styczna-product-btn--active')){this.style.borderColor='rgba(var(--white-rgb), 0.1)'; this.style.background='rgba(var(--white-rgb), 0.05)'}">
             <div>
                 <div style="font-size: var(--fs-md); font-weight: var(--fw-bold); color:var(--text-primary, var(--white));">DN${p.dn}</div>
                 <div style="font-size: var(--fs-xs); color:var(--text-muted, var(--slate-500)); margin-top:1px;">${escapeHtml(p.name)}</div>
@@ -24,6 +52,7 @@ function showStycznaPopup(mode = 'select') {
             <div class="fs-sm-muted">${p.weight ? fmtInt(p.weight) + ' kg' : ''}</div>
             <div style="font-size: var(--fs-lg); font-weight: var(--fw-extrabold); color:var(--success, var(--success));">${fmtInt(p.price)} PLN</div>
         </button>`;
+    };
 
     const renderSection = (title, icon, products) => {
         if (products.length === 0) return '';
@@ -54,7 +83,7 @@ function showStycznaPopup(mode = 'select') {
     });
 }
 
-function handleStycznaProductChoice(productId, mode) {
+async function handleStycznaProductChoice(productId, mode) {
     closeModal();
     const product =
         typeof getStudnieProductById === 'function'
@@ -135,7 +164,14 @@ function handleStycznaProductChoice(productId, mode) {
         well.name = isKorek
             ? 'St. Styczna z korkiem DN' + product.dn + ' (#' + (currentWellIndex + 1) + ')'
             : 'St. Styczna DN' + product.dn + ' (#' + (currentWellIndex + 1) + ')';
-        doSelectDN('styczna');
+        // well.dn już 'styczna' przy zmianie DN (np. 1400->1800), więc doSelectDN('styczna')
+        // trafiał w guard well.dn !== dn i pomijał autoSelect + refreshAll — stąd ręczny Przelicz.
+        // Przeliczamy bezwarunkowo: AUTO = pełny auto-dobór, MANUAL = podmiana elementu + refresh cen.
+        if (!well.autoLocked) {
+            well.configSource = 'AUTO';
+            await autoSelectComponents(true);
+        }
+        refreshAll();
     }
 }
 
