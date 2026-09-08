@@ -104,14 +104,19 @@ router.get('/', requireAuth, async (req, res) => {
                     json_extract(o.data, '$.investAddress') AS "d_investAddress",
                     json_extract(o.data, '$.clientNip') AS "d_clientNip",
                     json_extract(o.data, '$.clientNumber') AS "d_clientNumber",
-                    json_extract(o.data, '$.totalNetto') AS "d_totalNetto",
-                    json_extract(o.data, '$.totalBrutto') AS "d_totalBrutto",
+                    -- CAST AS REAL: totalNetto/Brutto bywają number lub stringiem
+                    -- ("29405"); Prisma wnioskuje typ z 1. wiersza i rzuca BigInt
+                    -- przy mieszanych typach. REAL wraca zawsze jako number.
+                    CAST(json_extract(o.data, '$.totalNetto') AS REAL) AS "d_totalNetto",
+                    CAST(json_extract(o.data, '$.totalBrutto') AS REAL) AS "d_totalBrutto",
                     json_extract(o.data, '$.summary') AS "d_summary",
                     json_extract(o.data, '$.costSummary') AS "d_costSummary",
                     -- P1-C: suma wellsExport jako skalar (2317 pełnych kopii = MB).
                     -- NULL gdy brak (cena liczy się ze skalarów jak dotąd).
+                    -- CAST AS REAL: SUM() bez decltype Prisma mapuje na BigInt
+                    -- i rzuca przy ułamkach (np. 8135347.5) — REAL wraca jako number.
                     CASE WHEN json_extract(o.data, '$.wellsExport') IS NULL THEN NULL
-                    ELSE (SELECT COALESCE(SUM(value->>'totalPrice'), 0)
+                    ELSE (SELECT CAST(ROUND(COALESCE(SUM(value->>'totalPrice'), 0), 2) AS REAL)
                           FROM json_each(o.data, '$.wellsExport'))
                     END AS "d_wellsExportTotal",
                     json_array_length(o.data, '$.wells') AS "d_wellsCount",
@@ -152,14 +157,16 @@ router.get('/', requireAuth, async (req, res) => {
                     json_extract(s.data, '$.investAddress') AS "d_investAddress",
                     json_extract(s.data, '$.clientNip') AS "d_clientNip",
                     json_extract(s.data, '$.clientNumber') AS "d_clientNumber",
-                    json_extract(s.data, '$.totalNetto') AS "d_totalNetto",
-                    json_extract(s.data, '$.totalBrutto') AS "d_totalBrutto",
+                    -- CAST AS REAL jak wyżej (mieszane typy number/string).
+                    CAST(json_extract(s.data, '$.totalNetto') AS REAL) AS "d_totalNetto",
+                    CAST(json_extract(s.data, '$.totalBrutto') AS REAL) AS "d_totalBrutto",
                     json_extract(s.data, '$.summary') AS "d_summary",
                     json_extract(s.data, '$.costSummary') AS "d_costSummary",
                     -- P1-C: suma wellsExport jako skalar (2317 pełnych kopii = MB).
                     -- NULL gdy brak (cena liczy się ze skalarów jak dotąd).
+                    -- CAST AS REAL: jak wyżej (BigInt rzuca przy ułamkach).
                     CASE WHEN json_extract(s.data, '$.wellsExport') IS NULL THEN NULL
-                    ELSE (SELECT COALESCE(SUM(value->>'totalPrice'), 0)
+                    ELSE (SELECT CAST(ROUND(COALESCE(SUM(value->>'totalPrice'), 0), 2) AS REAL)
                           FROM json_each(s.data, '$.wellsExport'))
                     END AS "d_wellsExportTotal",
                     json_array_length(s.data, '$.wells') AS "d_wellsCount",
