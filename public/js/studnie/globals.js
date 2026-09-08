@@ -322,6 +322,10 @@ function showSectionStudnie(id) {
         syncOfferClientSummary();
         if (typeof syncOfferTabFields === 'function') syncOfferTabFields();
         renderOfferSummary();
+        // RAZEM ma być widoczne znad fixed stopki (rAF: po ustabilizowaniu layoutu).
+        if (typeof scrollOfferTotalIntoView === 'function') {
+            requestAnimationFrame(() => scrollOfferTotalIntoView());
+        }
 
         // Baner kontekstu
         const ctxBanner = document.getElementById('offer-context-banner-studnie');

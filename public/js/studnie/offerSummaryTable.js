@@ -243,7 +243,7 @@ function renderOfferSummaryFooter(
         }
     }
 
-    html += `<tr class="border-top-glass2">
+    html += `<tr class="border-top-glass2" id="offer-total-row">
           <td colspan="${baseColspan}" style="font-weight: var(--fw-bold); font-size: var(--fs-xl); color:var(--text-primary); padding:1rem 0.5rem; white-space:nowrap;">RAZEM (${count} studni)</td>
           ${totalOfferPriceCell}
           <td class="text-right" style="font-weight: var(--fw-extrabold); font-size: var(--fs-2xl); color:var(--success); white-space:nowrap; padding:0.5rem 0.75rem;">${fmt(price)} PLN</td>

@@ -1,13 +1,54 @@
 /* ===== AKTUALIZACJA UI PODSUMOWANIA ===== */
 
-function applyOfferFooterSpacing() {
-    const main = document.querySelector('.main');
+/* ===== ODSTĘP POD TABELĄ OFERTY (wiersz RAZEM znad fixed stopki) ===== */
+
+// Rezerwa, gdy stopki brak w DOM albo pomiar niemożliwy.
+const OFFER_FOOTER_SPACING_FALLBACK_PX = 200;
+// Luz między końcem treści a fixed stopką.
+const OFFER_FOOTER_SPACING_GAP_PX = 24;
+
+function isOfferOverlayVisible(el) {
+    return !!el && window.getComputedStyle(el).display !== 'none';
+}
+
+/* Łączna wysokość fixed elementów na dole (stopka + pasek nawigacji + luz).
+ * Mierzona na żywo, bo kafelki rabatów zawijają się na wąskich ekranach. */
+function getOfferFixedBottomHeight() {
     const footer = document.getElementById('offer-summary-footer-fixed');
-    if (main && footer) {
-        main.style.paddingBottom = footer.offsetHeight + 28 + 'px';
-    }
+    const nav = document.getElementById('studnie-wizard-bottom-nav');
+    let height = OFFER_FOOTER_SPACING_GAP_PX;
+    if (isOfferOverlayVisible(footer)) height += footer.offsetHeight;
+    if (isOfferOverlayVisible(nav)) height += nav.offsetHeight;
+    return height;
+}
+
+function applyOfferFooterSpacing() {
+    // Padding MUSI być wewnątrz scrollowanej sekcji (#section-offer) —
+    // padding na .main leży poza scrollportem i nie odsłania wiersza RAZEM.
+    const section = document.getElementById('section-offer');
+    if (!section) return;
+    section.style.paddingBottom =
+        Math.max(getOfferFixedBottomHeight(), OFFER_FOOTER_SPACING_FALLBACK_PX) + 'px';
 }
 window.applyOfferFooterSpacing = applyOfferFooterSpacing;
+
+/* Dociąga wiersz RAZEM znad fixed stopki — tylko gdy jest zasłonięty.
+ * Wołane przy wejściu w zakładkę Oferta (nie przy każdym re-renderze,
+ * by nie wyrywać scrolla np. przy rozwijaniu pozycji). */
+function scrollOfferTotalIntoView() {
+    const section = document.getElementById('section-offer');
+    const totalRow = document.getElementById('offer-total-row');
+    if (!section || !totalRow || typeof totalRow.scrollIntoView !== 'function') return;
+    const reserved = getOfferFixedBottomHeight();
+    const rowRect = totalRow.getBoundingClientRect();
+    const sectionRect = section.getBoundingClientRect();
+    const fullyVisible =
+        rowRect.top >= sectionRect.top && rowRect.bottom <= sectionRect.bottom - reserved;
+    if (fullyVisible) return;
+    totalRow.scrollIntoView({ block: 'end' });
+    section.scrollTop += reserved;
+}
+window.scrollOfferTotalIntoView = scrollOfferTotalIntoView;
 
 function updateOfferSummaryUI(totals) {
     const totalEl = document.getElementById('sum-total-netto');
