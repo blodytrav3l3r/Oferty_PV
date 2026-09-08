@@ -870,14 +870,14 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
                     kregi,
                     tolBelow,
                     tolAbove,
-                    dennicaItem.height
+                    effDenH
                 );
 
                 // Phase 3: Osadź OT warianty w layoutach
                 const otLayout = buildCandidateLayouts(dennicaItem, kItems, well, availProducts);
                 const otKItems = otLayout.rings;
 
-                const deficit = requiredMm - (dennicaItem.height + topCfg.height + filled);
+                const deficit = requiredMm - (effDenH + topCfg.height + filled);
                 if (deficit > maxAvr || deficit < -tolAbove) continue;
 
                 const { avrItems, avrH } = findBestAvrFill(deficit, maxAvr);
@@ -1035,16 +1035,14 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
             let lift = 0;
             while (lift < 40) {
                 for (const dennicaItem of dennicy) {
-                    const bottomNeed = Math.max(dynamicMinBottom - dennicaItem.height, 0);
+                    // Psia buda: dennica efektywna -100mm (kielich zajęty) — bSec i deficit na eff.
+                    const effDenHRed = well.psiaBuda
+                        ? dennicaItem.height - 100
+                        : dennicaItem.height;
+                    const bottomNeed = Math.max(dynamicMinBottom - effDenHRed, 0);
 
-                    const bKregi = fillKregiDP(
-                        bottomNeed,
-                        kregi,
-                        0,
-                        tolAbove + 60,
-                        dennicaItem.height
-                    );
-                    const bSec = dennicaItem.height + bKregi.filled;
+                    const bKregi = fillKregiDP(bottomNeed, kregi, 0, tolAbove + 60, effDenHRed);
+                    const bSec = effDenHRed + bKregi.filled;
 
                     const targetBodyNeed = requiredMm - bSec - reductionPlate.height - topRedH;
                     if (targetBodyNeed < 0) continue;
