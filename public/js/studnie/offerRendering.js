@@ -22,7 +22,10 @@ function renderOfferSummary() {
     refreshAllWellErrors();
 
     const order = orderEditMode ? getCurrentOfferOrder() : null;
-    const orderChanges = orderEditMode && order ? getOrderChanges({ ...order, wells: wells }) : {};
+    const orderChanges =
+        orderEditMode && order
+            ? getOrderChanges({ ...order, wells: wells })
+            : { wells: {}, transportChanged: false };
 
     generateOfferNotes(false);
 

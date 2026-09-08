@@ -2,14 +2,23 @@
 
 function renderOrderBanners(order, orderChanges) {
     let html = '';
-    const hasChanges = Object.keys(orderChanges).length > 0;
+    const wellChanges = (orderChanges && orderChanges.wells) || {};
+    const transportChanged = !!(orderChanges && orderChanges.transportChanged);
+    const changeCount = Object.keys(wellChanges).length;
+    const hasChanges = changeCount > 0 || transportChanged;
 
     if (order) {
-        const changeCount = Object.keys(orderChanges).length;
+        const statusText = !hasChanges
+            ? '— bez zmian'
+            : changeCount > 0 && transportChanged
+              ? `— ${changeCount} studni zmienionych • zmieniono transport`
+              : changeCount > 0
+                ? `— ${changeCount} studni zmienionych`
+                : '— zmieniono transport';
         html += `<div style="display:flex; align-items:center; justify-content:space-between; padding:0.5rem 0.8rem; margin-bottom:0.5rem; background:${hasChanges ? 'rgba(var(--danger-rgb), 0.1)' : 'rgba(var(--success-rgb), 0.1)'}; border:1px solid ${hasChanges ? 'rgba(var(--danger-rgb), 0.3)' : 'rgba(var(--success-rgb), 0.3)'}; border-radius: var(--radius-sm);">
             <div class="flex-gap-4">
                 <span class="fs-3xl"><i data-lucide="package"></i></span>
-                <span style="font-size: var(--fs-base); font-weight: var(--fw-bold); color:${hasChanges ? 'var(--danger-hover)' : 'var(--success-hover)'};">ZAMÓWIENIE ${hasChanges ? '— ' + changeCount + ' studni zmienionych' : '— bez zmian'}</span>
+                <span style="font-size: var(--fs-base); font-weight: var(--fw-bold); color:${hasChanges ? 'var(--danger-hover)' : 'var(--success-hover)'};">ZAMÓWIENIE ${statusText}</span>
             </div>
             <button class="btn btn-sm" style="background:rgba(var(--success-rgb), 0.15); border:1px solid rgba(var(--success-rgb), 0.3); color:var(--success-hover); font-size: var(--fs-xs); padding:0.15rem 0.4rem;" onclick="orderEditMode ? saveCurrentOrder() : saveOrderStudnie()"><i data-lucide="package" aria-hidden="true"></i> Zapisz zamówienie</button>
         </div>`;

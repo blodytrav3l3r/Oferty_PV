@@ -147,8 +147,14 @@ describe('orderDto slim snapshot — DoD P1', () => {
             }
         };
         // brak zmian: oba puste
-        expect(helpers.getOrderChanges(legacyOrder)).toEqual({});
-        expect(helpers.getOrderChanges(slimOrder)).toEqual({});
+        expect(helpers.getOrderChanges(legacyOrder)).toEqual({
+            wells: {},
+            transportChanged: false
+        });
+        expect(helpers.getOrderChanges(slimOrder)).toEqual({
+            wells: {},
+            transportChanged: false
+        });
 
         // zmiana ceny S2 (stara 2000 → bieżąca 2500): oba identyczne diffy
         const changedLive = JSON.parse(JSON.stringify(liveWells));
@@ -158,8 +164,88 @@ describe('orderDto slim snapshot — DoD P1', () => {
         legacyChanged.originalSnapshot.wells[1]._testPrice = 2000;
         const slimChanged = JSON.parse(JSON.stringify(slimOrder));
         slimChanged.wells = JSON.parse(JSON.stringify(changedLive));
-        const expected = { 1: { type: 'modified', fields: ['price'], priceDiff: 500 } };
+        const expected = {
+            wells: { 1: { type: 'modified', fields: ['price'], priceDiff: 500 } },
+            transportChanged: false
+        };
         expect(helpers.getOrderChanges(legacyChanged)).toEqual(expected);
         expect(helpers.getOrderChanges(slimChanged)).toEqual(expected);
+    });
+
+    test('F0 #1: brak transportMode w ofercie → znormalizowany default, zero flag', () => {
+        const helpers = loadOrderHelpers({ 'well-1': 1000 });
+        const liveWells = [{ ...dtoWell() }];
+        // symulacja finalizeOrderFromOffer po fixie: obie strony przez normalize
+        const norm = helpers.normalizeTransportMode;
+        expect(norm(undefined)).toBe('fractional');
+        expect(norm(null)).toBe('fractional');
+        expect(norm('full')).toBe('full');
+        expect(norm('fractional')).toBe('fractional');
+        const order = {
+            wells: liveWells,
+            transportKm: 10,
+            transportRate: 5,
+            transportMode: norm(undefined),
+            originalSnapshot: {
+                slimWells: [
+                    { id: 'well-1', name: 'S1', price: 1000, weight: 2000, configHash: 'a' }
+                ],
+                wellDiscounts: {},
+                transportKm: 10,
+                transportRate: 5,
+                transportMode: norm(undefined)
+            }
+        };
+        expect(helpers.getOrderChanges(order)).toEqual({
+            wells: {},
+            transportChanged: false
+        });
+    });
+
+    test('F0 #1 (heal): legacy rozjazd full/fractional nie flaguje studni', () => {
+        const helpers = loadOrderHelpers({ 'well-1': 1000 });
+        const order = {
+            wells: [{ ...dtoWell() }],
+            transportKm: 0,
+            transportRate: 0,
+            transportMode: 'fractional',
+            originalSnapshot: {
+                slimWells: [
+                    { id: 'well-1', name: 'S1', price: 1000, weight: 2000, configHash: 'a' }
+                ],
+                wellDiscounts: {},
+                transportKm: 0,
+                transportRate: 0,
+                transportMode: 'full'
+            }
+        };
+        // km/rate 0 po obu stronach + znormalizowany tryb → brak flag
+        // (stary kod dawał transportChanged=true przez sam default)
+        const res = helpers.getOrderChanges(order);
+        expect(res.transportChanged).toBe(false);
+        expect(res.wells).toEqual({});
+    });
+
+    test('F0 #2: zmiana samego transportu nie flaguje ŻADNEJ studni', () => {
+        const helpers = loadOrderHelpers({ 'well-1': 1000 });
+        const order = {
+            wells: [{ ...dtoWell() }],
+            transportKm: 50,
+            transportRate: 5,
+            transportMode: 'fractional',
+            originalSnapshot: {
+                slimWells: [
+                    { id: 'well-1', name: 'S1', price: 1000, weight: 2000, configHash: 'a' }
+                ],
+                wellDiscounts: {},
+                transportKm: 10,
+                transportRate: 5,
+                transportMode: 'fractional'
+            }
+        };
+        expect(helpers.getOrderChanges(order)).toEqual({
+            wells: {},
+            transportChanged: true
+        });
     });
 });

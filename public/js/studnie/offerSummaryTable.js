@@ -1,6 +1,7 @@
 /* ===== TABELA PODSUMOWANIA OFERTY ===== */
 
 function renderOfferSummaryTable(order, orderChanges, totals) {
+    const wellChanges = (orderChanges && orderChanges.wells) || {};
     const showOrderSelection = !orderEditMode;
     const orderedWellIds =
         showOrderSelection && typeof getOrderedWellIds === 'function'
@@ -137,7 +138,7 @@ function renderOfferSummaryTable(order, orderChanges, totals) {
             well,
             originalIndex,
             stats,
-            orderChanges[originalIndex],
+            wellChanges[originalIndex],
             orderedWellIds.has(well.id),
             showOrderSelection,
             displayIndex + 1,
@@ -147,7 +148,7 @@ function renderOfferSummaryTable(order, orderChanges, totals) {
         html += renderWellDetailsRow(
             well,
             originalIndex,
-            orderChanges[originalIndex],
+            wellChanges[originalIndex],
             wellTransportCost,
             getOfferColumnsCount(showOrderSelection, showPriceComparison)
         );

@@ -36,8 +36,10 @@ function renderOrderModeBanner() {
 
     const order = orderEditMode.order;
     const changes = getOrderChanges({ ...order, wells: wells });
-    const changeCount = Object.keys(changes).length;
-    const hasChanges = changeCount > 0;
+    const wellChanges = (changes && changes.wells) || {};
+    const transportChanged = !!(changes && changes.transportChanged);
+    const changeCount = Object.keys(wellChanges).length;
+    const hasChanges = changeCount > 0 || transportChanged;
 
     banner.style.cssText = `
         display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.5rem;
@@ -53,7 +55,7 @@ function renderOrderModeBanner() {
                     <i data-lucide="package" style="width:18px; height:18px;"></i> TRYB ZAMÓWIENIA — ${escapeHtml(order.number || '')}
                 </div>
                 <div class="fs-xs-muted">
-                    ${hasChanges ? `<i data-lucide="alert-triangle" style="width:14px; height:14px;"></i> ${changeCount} studni zmienionych od oryginału` : '<i data-lucide="check-circle-2" style="width:14px; height:14px;"></i> Bez zmian od oryginału'}
+                    ${hasChanges ? `<i data-lucide="alert-triangle" style="width:14px; height:14px;"></i> ${changeCount > 0 ? `${changeCount} studni zmienionych od oryginału` : ''}${changeCount > 0 && transportChanged ? ' • ' : ''}${transportChanged ? 'zmieniono transport' : ''}` : '<i data-lucide="check-circle-2" style="width:14px; height:14px;"></i> Bez zmian od oryginału'}
                     • Utworzono: ${new Date(order.createdAt).toLocaleString('pl-PL')}
                 </div>
             </div>

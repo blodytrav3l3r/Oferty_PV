@@ -264,11 +264,11 @@ async function finalizeOrderFromOffer(offer, selectedWells, kartaBudowyData) {
             wellDiscounts: structuredClone(effectiveDiscounts),
             transportKm: offer.transportKm,
             transportRate: offer.transportRate,
-            transportMode: offer.transportMode || 'full'
+            transportMode: normalizeTransportMode(offer.transportMode)
         },
         transportKm: offer.transportKm,
         transportRate: offer.transportRate,
-        transportMode: offer.transportMode || 'fractional',
+        transportMode: normalizeTransportMode(offer.transportMode),
         kartaBudowy: kartaBudowyData,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -693,7 +693,7 @@ async function enterOrderEditMode(orderId) {
             });
             const km = parseFloat(order.transportKm || offer?.transportKm) || 0;
             const rate = parseFloat(order.transportRate || offer?.transportRate) || 0;
-            const _mode = order.transportMode || offer?.transportMode || 'full';
+            const _mode = normalizeTransportMode(order.transportMode || offer?.transportMode);
             let tc = 0;
             if (km > 0 && rate > 0 && _t > 0) {
                 const _offerTotalWeight = offer?.totalWeight || _t;

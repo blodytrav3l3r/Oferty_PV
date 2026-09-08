@@ -449,7 +449,8 @@ function getOrderChangeInfo(order) {
         if (isStudnie && typeof window.getOrderChanges === 'function') {
             try {
                 const changes = window.getOrderChanges(order);
-                const changed = Object.keys(changes || {}).length > 0;
+                const wellChanged = Object.keys((changes && changes.wells) || {}).length > 0;
+                const changed = wellChanged || !!(changes && changes.transportChanged);
                 const currentPrice = Number(order?.totalNetto || order?.totalTotalNetto || 0);
                 const originalPrice = Number(
                     order?.originalTotalTotalNetto || order?.originalTotalNetto || currentPrice
@@ -475,7 +476,7 @@ function getOrderChangeInfo(order) {
             if (typeof window.getOrderChanges === 'function') {
                 try {
                     const c = window.getOrderChanges(order);
-                    if (c && Object.keys(c).length > 0) {
+                    if (c && (Object.keys(c.wells || {}).length > 0 || c.transportChanged)) {
                         const currentPrice = Number(
                             order?.totalNetto || order?.totalTotalNetto || 0
                         );

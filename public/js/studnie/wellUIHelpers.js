@@ -336,8 +336,9 @@ function _wellBuildCardHtml(w, i, logicalRow, transportVal, stats) {
     let changeStyling = '';
     let changeBadge = '';
     const orderChangesObj = _getOrderChangesCached();
-    if (orderChangesObj && orderChangesObj[i]) {
-        const changeType = orderChangesObj[i].type;
+    const wellChangesObj = (orderChangesObj && orderChangesObj.wells) || {};
+    if (wellChangesObj && wellChangesObj[i]) {
+        const changeType = wellChangesObj[i].type;
         if (changeType === 'added') {
             changeStyling =
                 'border-left: 3px solid var(--success); background: rgba(var(--success-rgb), 0.05);';

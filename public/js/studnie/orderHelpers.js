@@ -481,11 +481,22 @@ function freezeWellPrices(wellsArr, preserveExisting = false) {
 }
 
 /**
+ * Jedyny dozwolony default trybu transportu (Faza 0, #1).
+ * Snapshot, order i odczyt w enterOrderEditMode MUSZĄ używać tej funkcji —
+ * rozjazd defaultów ('full' vs 'fractional') flagował kiedyś wszystkie studnie.
+ */
+const DEFAULT_TRANSPORT_MODE = 'fractional';
+function normalizeTransportMode(mode) {
+    return mode === 'full' || mode === 'fractional' ? mode : DEFAULT_TRANSPORT_MODE;
+}
+
+/**
  * Porównuje bieżący stan studni z zapisanym snapshotem zamówienia.
- * Zwraca obiekt { indexWell: { type, fields, priceDiff } }.
+ * Zwraca { wells: { indexWell: { type, fields, priceDiff } }, transportChanged: bool }.
+ * Zmiana transportu NIGDY nie flaguje studni — to osobny wymiar (Faza 0, #2).
  */
 function getOrderChanges(order) {
-    if (!order || !order.originalSnapshot) return {};
+    if (!order || !order.originalSnapshot) return { wells: {}, transportChanged: false };
     const changes = {};
 
     const originalSnapshotData = order.originalSnapshot;
@@ -589,35 +600,36 @@ function getOrderChanges(order) {
     const savedTransportPreviewMode = window.isPreviewMode;
     window.isPreviewMode = true;
 
+    let transportChanged = false;
     try {
         const origTransportKm = originalSnapshotData.transportKm;
         const origTransportRate = originalSnapshotData.transportRate;
         const origTransportMode = originalSnapshotData.transportMode;
-        const transportChanged =
+        // Tryb bez skonfigurowanego transportu (km/stawka 0) nie zmienia ceny —
+        // różnica defaultów w legacy snapshotach ('full' vs 'fractional') to szum.
+        const transportConfigured =
+            (order.transportKm || 0) > 0 ||
+            (origTransportKm || 0) > 0 ||
+            (order.transportRate || 0) > 0 ||
+            (origTransportRate || 0) > 0;
+        transportChanged =
+            transportConfigured &&
             (origTransportKm != null || origTransportRate != null) &&
             (Math.abs((order.transportKm || 0) - (origTransportKm || 0)) > 0.01 ||
                 Math.abs((order.transportRate || 0) - (origTransportRate || 0)) > 0.01 ||
-                (order.transportMode || 'full') !== (origTransportMode || 'full'));
-        if (transportChanged) {
-            for (let i = 0; i < curr.length; i++) {
-                if (!changes[i] || changes[i].type !== 'added') {
-                    if (changes[i] && changes[i].type === 'modified') {
-                        changes[i].fields.push('transport');
-                    } else {
-                        changes[i] = { type: 'modified', fields: ['transport'], priceDiff: 0 };
-                    }
-                }
-            }
-        }
+                normalizeTransportMode(order.transportMode) !==
+                    normalizeTransportMode(origTransportMode));
     } finally {
         window.isPreviewMode = savedTransportPreviewMode;
     }
 
-    return changes;
+    return { wells: changes, transportChanged };
 }
 
 window.freezeWellPrices = freezeWellPrices;
 window.getOrderChanges = getOrderChanges;
+window.normalizeTransportMode = normalizeTransportMode;
+window.DEFAULT_TRANSPORT_MODE = DEFAULT_TRANSPORT_MODE;
 
 /* ===== Rejestracja globali ===== */
 window.loadOrdersStudnie = loadOrdersStudnie;
