@@ -640,6 +640,23 @@ function getCurrentOfferOrder() {
         : null;
 }
 
+/**
+ * Heal typu uszczelki dla zamówień zapisanych bez pola well.uszczelka
+ * (allowlist DTO sprzed fixu). Typ odtwarzany z pozycji w configu, tylko
+ * w pamięci — bez migracji bazy. Śmieci (np. 'smar') normalizowane tak samo.
+ */
+function healUszczelkaType(w) {
+    if (!w || typeof inferUszczelkaType !== 'function') return;
+    const knownList =
+        typeof GASKET_TYPES !== 'undefined' && Array.isArray(GASKET_TYPES)
+            ? GASKET_TYPES.concat(['brak'])
+            : ['brak', 'GSG', 'SDV', 'SDV PO', 'NBR'];
+    if (knownList.includes(w.uszczelka)) return;
+    const inferred = inferUszczelkaType(w);
+    if (inferred) w.uszczelka = inferred;
+    else delete w.uszczelka;
+}
+
 async function enterOrderEditMode(orderId) {
     try {
         logger.info('orderManager', '[enterOrderEditMode] START orderId=', orderId);
@@ -718,6 +735,7 @@ async function enterOrderEditMode(orderId) {
             if (!Array.isArray(w.config)) w.config = [];
             if (!Array.isArray(w.przejscia)) w.przejscia = [];
             if (typeof syncKineta === 'function') syncKineta(w);
+            healUszczelkaType(w);
         });
 
         logger.info('orderManager', '[enterOrderEditMode] wells migrated, count:', wells.length);
@@ -865,6 +883,7 @@ async function loadOrderSnapshot(rebuiltData, orderId) {
             if (!Array.isArray(w.przejscia)) w.przejscia = [];
 
             if (typeof syncKineta === 'function') syncKineta(w);
+            healUszczelkaType(w);
 
             if (w.przejscia) {
                 w.przejscia.forEach((pr) => {

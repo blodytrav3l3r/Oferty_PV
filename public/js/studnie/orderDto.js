@@ -75,6 +75,9 @@ const ORDER_WELL_FIELDS = [
     'zakonczenie',
     'zakonczenieByDn',
     'redukcjaDN1000',
+    'redukcjaMinH',
+    'redukcjaZakonczenie',
+    'redukcjaZakonczenieByDn',
     'redukcjaTargetDN',
     'redukcjaKinety',
     'wkladkaDennica',
@@ -88,6 +91,9 @@ const ORDER_WELL_FIELDS = [
     'dennicaMaterial',
     'material',
     'nadbudowa',
+    'uszczelka',
+    'type',
+    'stycznaDn',
     'klasaBetonu',
     'klasaNosnosci_korpus',
     'klasaNosnosci_zwienczenie',
@@ -202,6 +208,7 @@ window.ORDER_PRZEJSCIE_FIELDS = ORDER_PRZEJSCIE_FIELDS;
  */
 const WELL_PRICING_FIELDS = [
     'dn',
+    'uszczelka',
     'psiaBuda',
     'klasaNosnosci_korpus',
     'klasaNosnosci_zwienczenie',

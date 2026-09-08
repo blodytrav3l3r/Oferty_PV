@@ -124,7 +124,6 @@ describe('orderDto — allowlist transportowa (P0.1)', () => {
             'configErrors',
             'configStatus',
             'wellHeight',
-            'type',
             'warehouse',
             'solverCache',
             'renderMeta',
@@ -132,6 +131,25 @@ describe('orderDto — allowlist transportowa (P0.1)', () => {
         ]) {
             expect(out).not.toHaveProperty(k);
         }
+    });
+
+    test('pola sterujące logiką post-load PRZECHODZĄ do DTO (fix uszczelek)', () => {
+        const well = {
+            ...fullUiWell(),
+            uszczelka: 'SDV',
+            stycznaDn: '1000',
+            redukcjaMinH: 2500,
+            redukcjaZakonczenie: 'red-1',
+            redukcjaZakonczenieByDn: { 1000: 'red-1' }
+        };
+        const out = dto.toWellOrderDTO(well);
+        // 'type' też biznesowe (hash solvera, mlDualRanking) — nie runtime
+        expect(out.type).toBe('krag');
+        expect(out.uszczelka).toBe('SDV');
+        expect(out.stycznaDn).toBe('1000');
+        expect(out.redukcjaMinH).toBe(2500);
+        expect(out.redukcjaZakonczenie).toBe('red-1');
+        expect(out.redukcjaZakonczenieByDn).toEqual({ 1000: 'red-1' });
     });
 
     test('zachowuje _elemId i frozenPrice (PZ + kolumna Ceny z oferty)', () => {

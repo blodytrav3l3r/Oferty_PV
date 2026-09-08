@@ -8,12 +8,64 @@ const GASKET_TYPES = ['GSG', 'SDV', 'SDV PO', 'NBR'];
 /**
  * Kanoniczna nazwa produktu uszczelki dla typu i DN — jedno źródło prawdy
  * (ta sama mapa co lokalny gasketNameForDn w mlDualRanking.js).
+ * UWAGA: realny katalog odbiega od mapy (SDV PO bez 'SDV' w środku, podwójne
+ * spacje) — dlatego dobór produktu idzie przez słowa kluczowe
+ * (findGasketProduct), nie przez exact-match nazwy.
  */
 function gasketNameForType(uType, dn) {
     if (uType === 'SDV') return `Uszczelka SDV DN${dn}`;
     if (uType === 'SDV PO') return `Uszczelka SDV DN${dn} SDV z pierścieniem odciążającym`;
     if (uType === 'NBR') return `Uszczelka GSG DN${dn} z NBR`;
     return `Uszczelka GSG DN${dn}`;
+}
+
+/**
+ * Dobór produktu uszczelki po DN i słowach kluczowych typu (mirror
+ * filterSealsByWellType z wellConfigRules.js). Odporny na rename produktów
+ * i literówki w nazwach katalogowych — exact-match gubił SDV PO i NBR-2500.
+ */
+function findGasketProduct(uType, dn) {
+    if (typeof studnieProducts === 'undefined' || !Array.isArray(studnieProducts)) return null;
+    const candidates = studnieProducts.filter(
+        (p) => p && p.componentType === 'uszczelka' && String(p.dn) === String(dn)
+    );
+    if (candidates.length === 0) return null;
+    if (typeof filterSealsByWellType === 'function') {
+        try {
+            const matches = filterSealsByWellType(candidates, { uszczelka: uType });
+            if (Array.isArray(matches) && matches.length > 0) return matches[0];
+        } catch (_e) {
+            // fallback poniżej — dobór nigdy nie blokuje przeliczenia
+        }
+    }
+    return candidates[0] || null;
+}
+
+/**
+ * Reverse-map nazwy produktu → typ uszczelki (te same słowa kluczowe co
+ * filterSealsByWellType). Heal legacy zamówień bez pola well.uszczelka (F2):
+ * typ odtwarzany z pozycji w configu, tylko w pamięci, bez migracji bazy.
+ * @returns {string|null} typ z GASKET_TYPES albo null gdy niejednoznaczne
+ */
+function inferUszczelkaType(well) {
+    if (!well || !Array.isArray(well.config)) return null;
+    for (const item of well.config) {
+        const p = lookupGasketProduct(item && item.productId);
+        if (!p || p.componentType !== 'uszczelka') continue;
+        const nameUpper = String(p.name || '').toUpperCase();
+        if (!nameUpper) continue;
+        if (nameUpper.includes('NBR')) return 'NBR';
+        if (
+            nameUpper.includes('SDV') &&
+            (nameUpper.includes('PO') ||
+                nameUpper.includes('PIERŚCIENIEM') ||
+                nameUpper.includes('PIERSCIENIEM'))
+        )
+            return 'SDV PO';
+        if (nameUpper.includes('SDV')) return 'SDV';
+        if (nameUpper.includes('GSG')) return 'GSG';
+    }
+    return null;
 }
 
 function lookupGasketProduct(productId) {
@@ -45,7 +97,12 @@ function recalcGaskets(well) {
         return !(p && p.componentType === 'uszczelka');
     });
 
-    if (well.uszczelka && GASKET_TYPES.includes(well.uszczelka)) {
+    // Jawny 'brak' = usuń uszczelki. Nieznany/brak typu przy istniejących
+    // pozycjach = HANDS-OFF (nie dotykaj configu) — kasowanie na ślepo
+    // gubiło uszczelki w zamówieniach bez pola well.uszczelka (allowlist DTO).
+    if (well.uszczelka === 'brak') {
+        well.config = newConfig;
+    } else if (GASKET_TYPES.includes(well.uszczelka)) {
         const uType = well.uszczelka;
         const requiredGaskets = {};
 
@@ -91,21 +148,20 @@ function recalcGaskets(well) {
 
         for (const dn in requiredGaskets) {
             const qty = requiredGaskets[dn];
-            const gasketName = gasketNameForType(uType, dn);
             const kept = existingByDn.get(dn);
             const keptProd = kept ? lookupGasketProduct(kept.productId) : null;
+            // Dobór po słowach kluczowych — odporny na rename i literówki
+            // w nazwach katalogowych (exact-match gubił SDV PO i NBR-2500).
+            const gasketProd = findGasketProduct(uType, dn);
 
-            if (kept && keptProd && keptProd.name === gasketName) {
-                // Ten sam typ: zachowaj pozycję w całości, tylko ilość.
+            if (kept && keptProd && gasketProd && kept.productId === gasketProd.id) {
+                // Ten sam produkt: zachowaj pozycję w całości, tylko ilość.
                 // Zmiana uszczelki ma ruszać wyłącznie uszczelki — reszta
                 // configu (i frozenPrice kręgów) jest poza tą funkcją.
                 newConfig.push({ ...kept, quantity: qty });
                 continue;
             }
 
-            const gasketProd = studnieProducts.find(
-                (p) => p.componentType === 'uszczelka' && p.name === gasketName
-            );
             if (gasketProd) {
                 const newItem = {
                     productId: gasketProd.id,
@@ -126,9 +182,9 @@ function recalcGaskets(well) {
                 newConfig.push({ ...kept, quantity: qty });
             }
         }
+        well.config = newConfig;
     }
-
-    well.config = newConfig;
+    // Nieznany/brak typu: hands-off — config zostaje jak wczytany.
 }
 
 function syncKineta(well) {
@@ -374,6 +430,8 @@ function enforceLoadClassRulesWizard(changedParam, value) {
 window.recalcGaskets = recalcGaskets;
 window.GASKET_TYPES = GASKET_TYPES;
 window.gasketNameForType = gasketNameForType;
+window.findGasketProduct = findGasketProduct;
+window.inferUszczelkaType = inferUszczelkaType;
 window.syncKineta = syncKineta;
 window.enforceGlobalKonusPehdRule = enforceGlobalKonusPehdRule;
 window.enforceLoadClassRules = enforceLoadClassRules;

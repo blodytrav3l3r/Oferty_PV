@@ -412,6 +412,25 @@ describe('orderDto slim snapshot — DoD P1', () => {
     });
 
     describe('F2 #4+#6: mrożenie preco i normalizacja przed snapshotem', () => {
+        test('DTO trzyma pola sterujace logika post-load (uszczelka i pokrewne)', () => {
+            for (const f of [
+                'uszczelka',
+                'type',
+                'stycznaDn',
+                'redukcjaMinH',
+                'redukcjaZakonczenie',
+                'redukcjaZakonczenieByDn'
+            ]) {
+                expect(dto.ORDER_WELL_FIELDS).toContain(f);
+            }
+            expect(dto.WELL_PRICING_FIELDS).toContain('uszczelka');
+            const out = dto.toWellOrderDTO({ ...dtoWell(), uszczelka: 'SDV' });
+            expect(out.uszczelka).toBe('SDV');
+            // hash widzi typ uszczelki (Faza 3 nie jest slepa na typ)
+            const a = dto.wellConfigHash({ ...dtoWell(), uszczelka: 'GSG' });
+            const b = dto.wellConfigHash({ ...dtoWell(), uszczelka: 'SDV' });
+            expect(a).not.toBe(b);
+        });
         test('DTO przepuszcza frozenPrecoSuma (allowlist)', () => {
             expect(dto.ORDER_WELL_FIELDS).toContain('frozenPrecoSuma');
             const out = dto.toWellOrderDTO({ ...dtoWell(), frozenPrecoSuma: 123.45 });
