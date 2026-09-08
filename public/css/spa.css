@@ -1,6 +1,7 @@
 /* Obsluga plynnego przelaczania modulow SPA. */
 #spa-main {
     position: relative;
+    background: var(--bg-primary);
     padding: 0;
     margin: 0;
     overflow: hidden;

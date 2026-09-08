@@ -4522,7 +4522,7 @@ select.form-input option {
 .tm-actions {
     padding: 0.75rem 1rem;
     border-top: 1px solid var(--border-glass);
-    background: linear-gradient(180deg, var(--bg-glass) 0%, var(--bg-secondary) 100%);
+    background: var(--bg-secondary);
     flex-shrink: 0;
     box-shadow: 0 -4px 16px rgba(var(--black-rgb), 0.15);
 }
