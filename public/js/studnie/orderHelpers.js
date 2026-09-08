@@ -477,7 +477,32 @@ function freezeWellPrices(wellsArr, preserveExisting = false) {
             item.frozenDrillingName = drillProdName;
             item.frozenDrillingDn = drillProdDn;
         });
+
+        freezeWellPreco(well, preserveExisting);
     });
+}
+
+/**
+ * Mrozi katalogową sumę PRECO studni (Faza 2, #4). Spike: PRECO to jedyny
+ * składnik calcWellStats czytany z live cennika (precoPricing) — reszta jest
+ * mrożona (frozenPrice*) albo polami studni. Rabat preco zostaje live
+ * (celowa edycja rabatu to realna zmiana). Warunek identyczny z konsumpcją
+ * w calcWellStats — brak mrożenia tam, gdzie cena go nie używa.
+ */
+function freezeWellPreco(well, preserveExisting = false) {
+    if (!well) return;
+    if (preserveExisting && well.frozenPrecoSuma != null) return;
+    if (well.kineta !== 'preco' && well.kineta !== 'precotop') {
+        delete well.frozenPrecoSuma;
+        return;
+    }
+    if (typeof calcPrecoPricing !== 'function') return;
+    try {
+        const preco = calcPrecoPricing(well);
+        well.frozenPrecoSuma = preco && !preco.error ? preco.suma || 0 : 0;
+    } catch (_e) {
+        // pasywnie — brak mrożenia zamiast wywalenia zapisu
+    }
 }
 
 /**
@@ -689,6 +714,7 @@ window.normalizeTransportMode = normalizeTransportMode;
 window.DEFAULT_TRANSPORT_MODE = DEFAULT_TRANSPORT_MODE;
 window.calcComparableWellPrice = calcComparableWellPrice;
 window.matchWellPairs = matchWellPairs;
+window.freezeWellPreco = freezeWellPreco;
 
 /* ===== Rejestracja globali ===== */
 window.loadOrdersStudnie = loadOrdersStudnie;

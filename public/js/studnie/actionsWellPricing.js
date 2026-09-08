@@ -596,7 +596,12 @@ function calcWellStats(well) {
     let errorMessage = null;
 
     if (well.kineta === 'preco' || well.kineta === 'precotop') {
-        const precoResult = calcPrecoPricing(well);
+        // Faza 2, #4: w podglądzie (detekcja/tabela) katalogowa suma z mrożenia —
+        // zmiana cennika PRECO po utworzeniu zamówienia nie flaguje studni.
+        // Rabat preco celowo live (edycja rabatu to realna zmiana ceny).
+        const frozenSuma =
+            window.isPreviewMode && well.frozenPrecoSuma != null ? well.frozenPrecoSuma : null;
+        const precoResult = frozenSuma !== null ? { suma: frozenSuma } : calcPrecoPricing(well);
         if (precoResult.error) {
             hasError = true;
             errorMessage = precoResult.error;

@@ -97,6 +97,7 @@ const ORDER_WELL_FIELDS = [
     'malowanieWewCena',
     'malowanieZ',
     'malowanieZewCena',
+    'frozenPrecoSuma',
     'powlokaNameW',
     'powlokaNameZ',
     'agresjaChemiczna',

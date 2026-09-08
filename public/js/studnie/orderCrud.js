@@ -203,6 +203,11 @@ async function finalizeOrderFromOffer(offer, selectedWells, kartaBudowyData) {
         offer && offer.wellDiscounts ? structuredClone(offer.wellDiscounts) : {};
 
     const selectedWellsCopy = structuredClone(selectedWells);
+    // Faza 2, #6: normalizacja kopii PRZED DTO/snapshotem — ten sam kształt
+    // co po loadzie (enterOrderEditMode: migrateWellData + syncKineta).
+    // Bez tego snapshot i live well to dwie reprezentacje tej samej studni.
+    // Działa na klonie — oryginalne studnie oferty nietknięte.
+    if (typeof migrateWellData === 'function') migrateWellData(selectedWellsCopy);
     if (typeof syncKineta === 'function') {
         selectedWellsCopy.forEach((w) => syncKineta(w));
     }

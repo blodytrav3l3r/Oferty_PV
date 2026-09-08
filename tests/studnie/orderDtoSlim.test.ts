@@ -37,6 +37,38 @@ function loadOrderHelpers(priceById: Record<string, number>) {
     return context.window;
 }
 
+function loadOfferHelpers() {
+    const context: any = { window: {} };
+    const code = fs.readFileSync(
+        path.join(__dirname, '../../public/js/studnie/offerHelpers.js'),
+        'utf8'
+    );
+    vm.createContext(context);
+    vm.runInContext(code, context);
+    return context.window;
+}
+
+function loadFreezer(suma: number) {
+    const context: any = {
+        window: {},
+        structuredClone: (obj: any) => JSON.parse(JSON.stringify(obj)),
+        logger: { info: () => {}, warn: () => {}, error: () => {} },
+        wellDiscounts: {},
+        studnieProducts: [],
+        getStudnieProductById: () => null,
+        getWellNadbudowaPct: () => 0,
+        calcPrecoPricing: () => ({ suma }),
+        calcWellStats: () => ({ price: 0, weight: 0 })
+    };
+    const code = fs.readFileSync(
+        path.join(__dirname, '../../public/js/studnie/orderHelpers.js'),
+        'utf8'
+    );
+    vm.createContext(context);
+    vm.runInContext(code, context);
+    return context.window;
+}
+
 function dtoWell() {
     return {
         id: 'well-1',
@@ -325,6 +357,51 @@ describe('orderDto slim snapshot — DoD P1', () => {
                 { origIdx: 0, currIdx: 0 },
                 { origIdx: 1, currIdx: 1 }
             ]);
+        });
+    });
+
+    describe('F2 #4+#6: mrożenie preco i normalizacja przed snapshotem', () => {
+        test('DTO przepuszcza frozenPrecoSuma (allowlist)', () => {
+            expect(dto.ORDER_WELL_FIELDS).toContain('frozenPrecoSuma');
+            const out = dto.toWellOrderDTO({ ...dtoWell(), frozenPrecoSuma: 123.45 });
+            expect(out.frozenPrecoSuma).toBe(123.45);
+        });
+
+        test('freezeWellPreco: mrozi sumę, preserveExisting chroni, beton czyści', () => {
+            const h1 = loadFreezer(777);
+            const well: any = { id: 'w', kineta: 'preco', config: [], przejscia: [] };
+            h1.freezeWellPrices([well]);
+            expect(well.frozenPrecoSuma).toBe(777);
+            // zmiana cennika + legacy preserveExisting → mrożenie nietknięte
+            const h2 = loadFreezer(999);
+            h2.freezeWellPrices([well], true);
+            expect(well.frozenPrecoSuma).toBe(777);
+            // bez preserveExisting → odświeżenie do nowej sumy
+            h2.freezeWellPrices([well]);
+            expect(well.frozenPrecoSuma).toBe(999);
+            // studnia bez preco nie trzyma cudzego mrożenia
+            const beton: any = {
+                id: 'b',
+                kineta: 'beton',
+                config: [],
+                przejscia: [],
+                frozenPrecoSuma: 5
+            };
+            h1.freezeWellPrices([beton]);
+            expect(beton.frozenPrecoSuma).toBeUndefined();
+        });
+
+        test('#6: migrate idempotentny — podwójna normalizacja, stabilny hash', () => {
+            const oh = loadOfferHelpers();
+            const raw: any = [
+                { id: 'w1', name: 'S1', dn: '1000', kineta: 'beton', config: [], przejscia: [] }
+            ];
+            oh.migrateWellData(raw);
+            expect(raw[0].dennicaMaterial).toBe('betonowa');
+            expect(raw[0].klasaNosnosci_korpus).toBe('D400');
+            const h1 = dto.wellConfigHash(raw[0]);
+            oh.migrateWellData(raw);
+            expect(dto.wellConfigHash(raw[0])).toBe(h1);
         });
     });
 });
