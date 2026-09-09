@@ -110,6 +110,9 @@ let _excelPasteInProgress = false;
 /* Batch dotknął kręgu krag/krag_ot — wymaga jednego odroczonego pełnego
    re-rendera na koniec operacji (fill/paste), zamiast re-rendera per komórka. */
 let _excelBatchKragTouched = false;
+/* Batch dotknął pary odciążającej (płyta<->pierścień) — wymaga jednego
+   odroczonego pełnego re-rendera na koniec fill/paste (jak kręgi). */
+let _excelBatchReliefTouched = false;
 
 let _excelUndoStack = [];
 let _excelRedoStack = [];

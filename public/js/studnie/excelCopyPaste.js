@@ -31,6 +31,7 @@ function _excelBuildVisibleSeq() {
     }
     let allComp = [];
     let visibleComp = [];
+    let renderedCount = 0;
     try {
         if (
             typeof _excelBuildComponentColumns === 'function' &&
@@ -47,13 +48,18 @@ function _excelBuildVisibleSeq() {
                     : allComp;
         }
     } catch (_e) {}
-    visibleComp.forEach(function (col, visPos) {
+    visibleComp.forEach(function (col) {
         const allIdx = allComp.findIndex(function (c) {
             return c.id === col.id;
         });
         if (allIdx < 0) return;
         const logical = prefixLen + allIdx;
-        const vis = prefixLen + visPos;
+        // Kolumny select/auto (np. Wlaz) NIE maja wlasnego TD w sekcji komponentow
+        // (tbody je pomija, Wlaz siedzi w prefiksie) — nie dostaja vis, inaczej
+        // kazda kolumna za nimi adresowalaby zly TD (off-by-N, baza #47).
+        if (col.type === 'select' || col.type === 'auto') return;
+        const vis = prefixLen + renderedCount;
+        renderedCount++;
         seq.push({ vis: vis, logical: logical, id: col.id });
     });
     // tail: Hdenn, Uszcz, Reduction?, Kineta, PsiaBuda, Akcje — stale, nigdy ukryte
@@ -61,7 +67,7 @@ function _excelBuildVisibleSeq() {
         ['1200', '1500', '2000', '2500', 'styczne'].indexOf(String(_excelActiveTab)) >= 0;
     const tailCount = 2 + (hasReduction ? 1 : 0) + 2 + 1;
     const tailLogicalBase = prefixLen + allComp.length;
-    const tailVisBase = prefixLen + visibleComp.length;
+    const tailVisBase = prefixLen + renderedCount;
     for (let t = 0; t < tailCount; t++) {
         seq.push({ vis: tailVisBase + t, logical: tailLogicalBase + t, id: 'tail_' + t });
     }
@@ -202,12 +208,6 @@ function _excelGetCellByLogical(row, logicalIdx) {
             : 1;
     const prefixLen = 10 + maxTr * 4;
     if (logicalIdx < prefixLen) return row.children[logicalIdx] || null;
-    if (
-        typeof _excelHiddenColumnIds === 'undefined' ||
-        !_excelHiddenColumnIds ||
-        _excelHiddenColumnIds.length === 0
-    )
-        return row.children[logicalIdx] || null;
     try {
         const all =
             typeof _excelBuildComponentColumns === 'function' &&
@@ -222,23 +222,35 @@ function _excelGetCellByLogical(row, logicalIdx) {
             typeof _excelFilterVisibleColumns === 'function'
                 ? _excelFilterVisibleColumns(all)
                 : all;
-        const totalHidden = all.length - visible.length;
+        // Renderowane TD sekcji komponentow = widoczne MINUS select/auto
+        // (tbody je pomija, Wlaz siedzi w prefiksie) — baza #47.
+        const rendered = visible.filter(function (c) {
+            return c && c.type !== 'select' && c.type !== 'auto';
+        });
         const compEnd = prefixLen + all.length;
         if (logicalIdx >= prefixLen && logicalIdx < compEnd) {
-            const compLogicalPos = logicalIdx - prefixLen;
-            const target = all[compLogicalPos];
+            const target = all[logicalIdx - prefixLen];
             if (!target) return null;
-            if (_excelHiddenColumnIds.indexOf(target.id) >= 0) return null;
+            if (target.type === 'select' || target.type === 'auto') return null;
+            if (
+                typeof _excelHiddenColumnIds !== 'undefined' &&
+                _excelHiddenColumnIds &&
+                _excelHiddenColumnIds.indexOf(target.id) >= 0
+            )
+                return null;
             let vp = -1;
-            for (let i = 0; i < visible.length; i++)
-                if (visible[i].id === target.id) {
+            for (let i = 0; i < rendered.length; i++)
+                if (rendered[i].id === target.id) {
                     vp = i;
                     break;
                 }
             if (vp < 0) return null;
             return row.children[prefixLen + vp] || null;
         }
-        if (logicalIdx >= compEnd) return row.children[logicalIdx - totalHidden] || null;
+        // Tail (staly, nigdy ukryty): korekta o ukryte + pomijane select/auto.
+        const hiddenCount = all.length - visible.length;
+        const skippedCount = visible.length - rendered.length;
+        return row.children[logicalIdx - hiddenCount - skippedCount] || null;
     } catch (_e) {}
     return row.children[logicalIdx] || null;
 }
@@ -2658,6 +2670,13 @@ function _excelSetModelCellValue(wIdx, effLogical, val, ctx, targetElement) {
                 typeof _excelBatchKragTouched !== 'undefined'
             )
                 _excelBatchKragTouched = true;
+            if (
+                (_c.componentType === 'pierscien_odciazajacy' ||
+                    _c.componentType === 'plyta_najazdowa' ||
+                    _c.componentType === 'plyta_zamykajaca') &&
+                typeof _excelBatchReliefTouched !== 'undefined'
+            )
+                _excelBatchReliefTouched = true;
         } else if (_desc.kind === 'kineta') {
             if (typeof _excelKinetaModelUpdate !== 'function') return 'unsupported';
             _excelKinetaModelUpdate(wIdx, valStr);
@@ -3205,6 +3224,7 @@ function _excelHandleFillDown() {
     });
     if (plan.length === 0) return;
     if (typeof _excelBatchKragTouched !== 'undefined') _excelBatchKragTouched = false;
+    if (typeof _excelBatchReliefTouched !== 'undefined') _excelBatchReliefTouched = false;
     _excelSaveUndoSnapshot();
     _excelPasteInProgress = true;
     try {
@@ -3219,6 +3239,12 @@ function _excelHandleFillDown() {
            finalny config), zamiast re-rendera po każdej komórce (H1). */
         if (typeof _excelBatchKragTouched !== 'undefined' && _excelBatchKragTouched) {
             _excelBatchKragTouched = false;
+            if (typeof _excelRenderTable === 'function') _excelRenderTable(_excelActiveTab);
+        }
+        /* Para odciążająca: partner ląduje w innej kolumnie niż edytowana —
+           bez pełnego rendera kolumna partnera nie pokaże "1". */
+        if (typeof _excelBatchReliefTouched !== 'undefined' && _excelBatchReliefTouched) {
+            _excelBatchReliefTouched = false;
             if (typeof _excelRenderTable === 'function') _excelRenderTable(_excelActiveTab);
         }
         _excelDebouncedRefresh();

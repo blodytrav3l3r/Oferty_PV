@@ -303,6 +303,30 @@ function _excelCompModelUpdate(wIdx, componentType, height, value, productId, re
     const isRingType = componentType === 'krag' || componentType === 'krag_ot';
     const hasHoles = isRingType && _excelWellHasHoles(well);
 
+    /* Para odciążająca: czy zmieniana strona istniała przed mutacją (guard przed
+       czyszczeniem pustej komórki — wtedy sync przy qty 0 robi no-op). */
+    const isReliefType =
+        componentType === 'pierscien_odciazajacy' ||
+        componentType === 'plyta_najazdowa' ||
+        componentType === 'plyta_zamykajaca';
+    let hadReliefSide = false;
+    if (isReliefType) {
+        const wantSide =
+            componentType === 'pierscien_odciazajacy'
+                ? ['pierscien_odciazajacy']
+                : ['plyta_najazdowa', 'plyta_zamykajaca'];
+        for (const item of well.config || []) {
+            const hp =
+                typeof getStudnieProductById === 'function'
+                    ? getStudnieProductById(item.productId)
+                    : studnieProducts.find((pr) => pr.id === item.productId);
+            if (hp && wantSide.indexOf(hp.componentType) !== -1 && (item.quantity || 0) > 0) {
+                hadReliefSide = true;
+                break;
+            }
+        }
+    }
+
     const existingItems = [];
     if (!productId) {
         for (const item of well.config || []) {
@@ -381,6 +405,22 @@ function _excelCompModelUpdate(wIdx, componentType, height, value, productId, re
         if (otMutated && typeof _excelClearResCache === 'function') _excelClearResCache(well);
     }
 
+    /* Para odciążająca płyta<->pierścień — kierunkowy sync w modelu (SSoT
+       _excelSyncReliefPair): działa dla wpisywania, paste, fill i Delete. */
+    let reliefMutated = false;
+    if (isReliefType) {
+        if (typeof _excelSyncReliefPair === 'function') {
+            try {
+                reliefMutated = _excelSyncReliefPair(well, componentType, newQty, hadReliefSide);
+            } catch (_e) {}
+        }
+        if (reliefMutated) {
+            if (typeof _excelClearResCache === 'function') _excelClearResCache(well);
+            if (_excelPasteQuiet() && typeof _excelBatchReliefTouched !== 'undefined')
+                _excelBatchReliefTouched = true;
+        }
+    }
+
     // Uszczelki jak w głównym konfiguratorze — auto przeliczenie po każdej zmianie nośników
     if (typeof recalcGaskets === 'function') {
         try {
@@ -388,7 +428,72 @@ function _excelCompModelUpdate(wIdx, componentType, height, value, productId, re
             _excelClearResCache(well);
         } catch (_e) {}
     }
-    return otMutated;
+    return otMutated || reliefMutated;
+}
+
+/* Odświeżenie komórek pary odciążającej w miejscu (bez re-rendera).
+   Po mutacji modelu partner (płyta<->pierścień) siedzi w innej kolumnie niż
+   edytowana — pełny render wymieniłby DOM i wyrzucił fokus/selekcję przy
+   wpisywaniu (oninput). Wartości liczy ten sam _excelCountProductInConfig
+   co render TBODY; mapowanie kolumna->TD przez _excelBuildVisibleSeq
+   (vis == indeks TD: select/auto pomijane, baza #47; ukryte kolumny pomijane). */
+function _excelRefreshReliefCells(wIdx, row) {
+    if (typeof wells === 'undefined' || !wells[wIdx] || !row) return;
+    if (typeof _excelGetVisibleComponentColumns !== 'function') return;
+    if (typeof _excelCountProductInConfig !== 'function') return;
+    if (typeof _excelBuildVisibleSeq !== 'function') return;
+    var well = wells[wIdx];
+    var tab = typeof _excelActiveTab !== 'undefined' ? _excelActiveTab : '1000';
+    var cols = [];
+    try {
+        cols = (_excelGetVisibleComponentColumns(tab, well) || []).filter(function (c) {
+            return (
+                c &&
+                c.type !== 'select' &&
+                c.type !== 'auto' &&
+                (c.componentType === 'plyta_najazdowa' ||
+                    c.componentType === 'plyta_zamykajaca' ||
+                    c.componentType === 'pierscien_odciazajacy')
+            );
+        });
+    } catch (_e) {
+        return;
+    }
+    if (cols.length === 0) return;
+    var seq = [];
+    try {
+        seq = _excelBuildVisibleSeq() || [];
+    } catch (_e) {
+        return;
+    }
+    cols.forEach(function (c) {
+        var expected = 0;
+        try {
+            expected = _excelCountProductInConfig(
+                well,
+                c.componentType,
+                c.height,
+                c.productId,
+                c.fromReduction ? c.targetDn || well.redukcjaTargetDN || 1000 : null
+            );
+        } catch (_e) {
+            return;
+        }
+        var visIdx = -1;
+        for (var i = 0; i < seq.length; i++) {
+            if (seq[i] && seq[i].id === c.id) {
+                visIdx = seq[i].vis;
+                break;
+            }
+        }
+        if (visIdx < 0 || !row.children || !row.children[visIdx]) return;
+        var input = row.children[visIdx].querySelector
+            ? row.children[visIdx].querySelector('input')
+            : null;
+        if (!input) return;
+        var want = expected ? String(expected) : '';
+        if (input.value !== want) input.value = want;
+    });
 }
 
 function excelOnCompChange(wIdx, componentType, height, value, productId, redDn) {
@@ -402,7 +507,14 @@ function excelOnCompChange(wIdx, componentType, height, value, productId, redDn)
     }
     if (!_excelGuardWellLocked(wIdx)) return;
     if (!_excelPasteQuiet()) _excelSaveUndoSnapshot(wIdx);
-    const otMutated = _excelCompModelUpdate(wIdx, componentType, height, value, productId, redDn);
+    const modelMutated = _excelCompModelUpdate(
+        wIdx,
+        componentType,
+        height,
+        value,
+        productId,
+        redDn
+    );
     if (_excelPasteQuiet()) {
         /* model+dirty gotowe; pełny re-render odroczony (flaga batch) zamiast rendera per komórka */
         if (componentType === 'krag' || componentType === 'krag_ot') {
@@ -411,62 +523,28 @@ function excelOnCompChange(wIdx, componentType, height, value, productId, redDn)
         return;
     }
     const well = wells[wIdx];
-    const newQty = parseInt(value) || 0;
-    /* Pełny re-render wywołaj TYLKO wtedy gdy nastąpiła realna zamiana krag <-> krag_ot
-       (otMutated = true). W przeciwnym razie bezwarunkowy re-render niszczy aktywny element
-       <input> podczas wpisywania z klawiatury (oninput). */
-    if ((componentType === 'krag' || componentType === 'krag_ot') && otMutated) {
+    const isRelief =
+        componentType === 'plyta_najazdowa' ||
+        componentType === 'plyta_zamykajaca' ||
+        componentType === 'pierscien_odciazajacy';
+    /* Pełny re-render TYLKO po realnej zamianie krag <-> krag_ot.
+       Para relief aktualizowana jest w miejscu (_excelRefreshReliefCells) —
+       render przy wpisywaniu (oninput) wyrzucał fokus i niebieskie
+       zaznaczenie nawigacji strzałkami. */
+    if ((componentType === 'krag' || componentType === 'krag_ot') && modelMutated) {
         _excelMarkManual(well);
     }
 
     const row = document.querySelector(`tr[data-widx="${wIdx}"]`);
-    if (row) _excelRefreshAutoCells(wIdx, row);
+    if (row) {
+        _excelRefreshAutoCells(wIdx, row);
+        if (isRelief && modelMutated) _excelRefreshReliefCells(wIdx, row);
+    }
     if (typeof _excelImmediatePreview === 'function') _excelImmediatePreview(wIdx);
     else _excelUpdateLeftPreview(wIdx);
     _excelUpdateHeaderProdCodes();
     _excelDebouncedRefresh();
 
-    if (
-        newQty > 0 &&
-        (componentType === 'plyta_najazdowa' ||
-            componentType === 'plyta_zamykajaca' ||
-            componentType === 'pierscien_odciazajacy')
-    ) {
-        const isRing = componentType === 'pierscien_odciazajacy';
-        const partnerTypes = isRing
-            ? ['plyta_najazdowa', 'plyta_zamykajaca']
-            : ['pierscien_odciazajacy'];
-        const _avail =
-            typeof getAvailableProducts === 'function'
-                ? getAvailableProducts(well)
-                : studnieProducts || [];
-        let hasPartner = false;
-        for (let ci = 0; ci < (well.config || []).length; ci++) {
-            const cp = _avail.find(function (pr) {
-                return pr.id === well.config[ci].productId;
-            });
-            // Komplet płyta+pierścień dobierany po DN — wysokości płyty (150/200)
-            // i pierścienia (50/150/200) celowo się różnią, więc filtr H by go zrywał.
-            if (cp && partnerTypes.indexOf(cp.componentType) !== -1) {
-                hasPartner = true;
-                break;
-            }
-        }
-        if (!hasPartner) {
-            const partnerCandidates = _avail.filter(function (p) {
-                return (
-                    partnerTypes.indexOf(p.componentType) !== -1 &&
-                    parseInt(p.dn) === parseInt(well.dn)
-                );
-            });
-            if (partnerCandidates.length > 0) {
-                const partner = partnerCandidates[0];
-                _excelInsertConfigItem(well, partner.componentType, partner.id, 1);
-                _excelSortConfig(well);
-                _excelRenderTable(_excelActiveTab);
-            }
-        }
-    }
     if (typeof _excelImmediatePreview === 'function') _excelImmediatePreview(wIdx);
     else {
         if (typeof window.updateSummary === 'function') window.updateSummary();
