@@ -2722,6 +2722,43 @@ td.excel-tr-alt .excel-sel-wrap > div {
 th.excel-tr-alt {
     background: rgba(var(--accent-rgb), 0.07) !important;
 }
+/* ── Delikatny tint pól ilości wg typu elementu (kolumny komponentów) ──
+   Tło inputu = color-mix z tokenem koloru elementu (SSoT: --cmp-*), więc
+   kolumna od razu mówi, jaki element kryje. Samo tło — tekst/ramki/focus bez zmian. */
+td.excel-tint--avr input {
+    background: color-mix(in srgb, var(--slate-400) 13%, var(--slate-950)) !important;
+}
+td.excel-tint--konus input {
+    background: color-mix(in srgb, var(--cmp-konus) 13%, var(--slate-950)) !important;
+}
+td.excel-tint--krag input,
+td.excel-tint--krag_ot input {
+    background: color-mix(in srgb, var(--cmp-krag) 13%, var(--slate-950)) !important;
+}
+td.excel-tint--dennica input {
+    background: color-mix(in srgb, var(--cmp-dennica) 13%, var(--slate-950)) !important;
+}
+td.excel-tint--styczna input {
+    background: color-mix(in srgb, var(--cmp-styczna) 13%, var(--slate-950)) !important;
+}
+td.excel-tint--osadnik input {
+    background: color-mix(in srgb, var(--cmp-osadnik) 13%, var(--slate-950)) !important;
+}
+td.excel-tint--plyta_din input {
+    background: color-mix(in srgb, var(--cmp-plyta-din) 13%, var(--slate-950)) !important;
+}
+td.excel-tint--plyta_najazdowa input {
+    background: color-mix(in srgb, var(--cmp-plyta-najazdowa) 13%, var(--slate-950)) !important;
+}
+td.excel-tint--plyta_zamykajaca input {
+    background: color-mix(in srgb, var(--cmp-plyta-zamykajaca) 13%, var(--slate-950)) !important;
+}
+td.excel-tint--pierscien_odciazajacy input {
+    background: color-mix(in srgb, var(--cmp-pierscien) 13%, var(--slate-950)) !important;
+}
+td.excel-tint--plyta_redukcyjna input {
+    background: color-mix(in srgb, var(--cmp-plyta-redukcyjna) 13%, var(--slate-950)) !important;
+}
 .well-param-label {
     min-width: 172px;
     max-width: 172px;

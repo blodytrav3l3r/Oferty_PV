@@ -445,7 +445,9 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             const hArg = c.height != null ? c.height : 'null';
             const redArg = c.fromReduction ? ',' + (c.targetDn || 1000) : '';
             html +=
-                '<td class="excel-td excel-td-center" style="min-width:95px;"><input type="number" min="0" step="1" value="' +
+                '<td class="excel-td excel-td-center excel-tint--' +
+                c.componentType +
+                '" style="min-width:95px;"><input type="number" min="0" step="1" value="' +
                 (count || '') +
                 '" oninput="excelOnCompChange(' +
                 wIdx +

@@ -128,27 +128,11 @@ function _excelRenderTable(dn) {
         /** @type {any} */
         const c = col;
         const ct = c.componentType;
-        const hc =
-            ct === 'avr'
-                ? 'var(--warn-hover)'
-                : ct === 'krag' || ct === 'krag_ot'
-                  ? 'var(--success-hover)'
-                  : ct === 'dennica'
-                    ? 'var(--warn)'
-                    : ct === 'konus'
-                      ? 'var(--warn-hover)'
-                      : ct === 'plyta_din' ||
-                          ct === 'plyta_najazdowa' ||
-                          ct === 'plyta_zamykajaca' ||
-                          ct === 'pierscien_odciazajacy'
-                        ? 'var(--blue-hover)'
-                        : ct === 'plyta_redukcyjna'
-                          ? 'var(--pink-hover)'
-                          : ct === 'osadnik'
-                            ? 'var(--accent2-hover)'
-                            : ct === 'styczna'
-                              ? 'var(--pink-hover)'
-                              : 'var(--blue-hover)';
+        // Kolor nagłówka = kolor elementu w konfiguratorze (SSoT: COMPONENT_THEME).
+        // Wyjątki: avr → stroke (fill #475569 nieczytelny na ciemnym tle),
+        // właz nie trafia tu (kolumna select, nagłówek zostaje zielony).
+        const theme = typeof COMPONENT_THEME !== 'undefined' ? COMPONENT_THEME[ct] : null;
+        const hc = ct === 'avr' ? 'var(--slate-400)' : (theme && theme.fill) || 'var(--blue-hover)';
         const colLabel = escapeHtml(c.shortLabel || c.label);
         /* escape przed wrapem — _excelWrapDetail dodaje <br>, które nie może być ucieczone */
         const colDetail = _excelWrapDetail(escapeHtml(c.detailLabel)) || '·';
