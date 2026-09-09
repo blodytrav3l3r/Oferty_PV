@@ -4,6 +4,55 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.25.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.24.0...v1.25.0) (2026-09-09)
+
+### Features
+
+- **api:** klucz idempotencji dla post ([0515f1b](https://github.com/blodytrav3l3r/Oferty_PV/commit/0515f1b4f2d5d0185f6268c4475264eb3cff0840))
+- **api:** kolejka generowania pdf z limitem ([929e92d](https://github.com/blodytrav3l3r/Oferty_PV/commit/929e92d4cdd40de6d1c68a24a5e37fb6f8ee0fdf))
+- **api:** mapowanie bledow prisma na 404 i 409 ([eb7f050](https://github.com/blodytrav3l3r/Oferty_PV/commit/eb7f050ad331682234b2fd051032a8af837f89d3))
+- **api:** metryki in-process i endpoint ([afb5110](https://github.com/blodytrav3l3r/Oferty_PV/commit/afb5110d38a538a67a85ecf64332b12451d907cf))
+- **api:** status i przebudowa indeksu fts ([76bae9c](https://github.com/blodytrav3l3r/Oferty_PV/commit/76bae9ccebc5e0cf353ddda7e96a0d192aeb9e93))
+- **auth:** guard usuwania usera z dokumentami ([48c89e2](https://github.com/blodytrav3l3r/Oferty_PV/commit/48c89e24d780e198f650e2cf05d9175fe2078503))
+- **auth:** uniewaznianie sesji po zmianie hasla ([d6ee4fe](https://github.com/blodytrav3l3r/Oferty_PV/commit/d6ee4fe9d6b551df75af9c7fb91cfe95c05ccdf2))
+- **orders:** atomowa numeracja produkcji w transakcji ([6f14f04](https://github.com/blodytrav3l3r/Oferty_PV/commit/6f14f04a2445f3370558fc059c060c8399032f2d))
+- **orders:** atomowy batch put produkcji ([8edcb34](https://github.com/blodytrav3l3r/Oferty_PV/commit/8edcb3452f9a0be43f0242427e795756826a8136))
+- **orders:** licznik wersji przeciw cichej utracie ([13cb7fe](https://github.com/blodytrav3l3r/Oferty_PV/commit/13cb7fea34c4c3b7a1ca731091eb6e5544ca2c51))
+- **orders:** transakcyjne kasowanie z guardami ([9e88017](https://github.com/blodytrav3l3r/Oferty_PV/commit/9e88017f855fa92585f3ac3a79867b037a8699d3))
+- **orders:** unikalny numer produkcyjny user+number ([5b29a47](https://github.com/blodytrav3l3r/Oferty_PV/commit/5b29a4737b9e687765c5e487d5a7ed13bd7b9c11))
+- **orders:** wersje optymistyczne zamowien i ofert ([fffb83e](https://github.com/blodytrav3l3r/Oferty_PV/commit/fffb83e7224756fc5e80c3abdeecd423dc4ccca0))
+- **prisma:** klucze obce i straznicy usuwania ([1c7bf55](https://github.com/blodytrav3l3r/Oferty_PV/commit/1c7bf55ac1d9bf957a51b73c510ede7768e57184))
+- **security:** kontrola spojnosci danych ([631ef45](https://github.com/blodytrav3l3r/Oferty_PV/commit/631ef456949e5d11e8bfd3d7a2a9eed4cf334305))
+- **security:** sha256 backupow i kill-test ([4a355a2](https://github.com/blodytrav3l3r/Oferty_PV/commit/4a355a260c2b7cfd5f04bcf677a2005229c84f19))
+- **studnie:** auto-przeliczanie i podswietlenie dn stycznej w popupie ([14d2e26](https://github.com/blodytrav3l3r/Oferty_PV/commit/14d2e26543a9b0f09f58bd7f738077b988e15b86))
+- **studnie:** grupowanie kolumn przejsc w excel ([d0beed6](https://github.com/blodytrav3l3r/Oferty_PV/commit/d0beed6a0de38cf476dadcad0d3d321ab11fbec8))
+- **studnie:** kolory naglowkow i tinty kolumn excel ([70cec25](https://github.com/blodytrav3l3r/Oferty_PV/commit/70cec251dfd63c864ea689fe93b95ae3203eb92c))
+- **studnie:** komplet odciazajacy z dylatacja 5cm ([fb331f9](https://github.com/blodytrav3l3r/Oferty_PV/commit/fb331f947195374658a2c0708723149517bdefb6))
+- **studnie:** mrozenie preco i normalizacja przed snapshotem ([0caca76](https://github.com/blodytrav3l3r/Oferty_PV/commit/0caca76e893108826a699a5b71cf034356211562))
+- **studnie:** podniesienie przejscia przy etykiecie dn ([6af7abf](https://github.com/blodytrav3l3r/Oferty_PV/commit/6af7abff97731a542dabe2a1f4c3b635c63627b0))
+- **studnie:** porownanie zamowienia po id i wspolna cena ([7ce5cfa](https://github.com/blodytrav3l3r/Oferty_PV/commit/7ce5cfaf245c9743656b5ab32a4bda1903923065))
+- **studnie:** rozroznienie configchanged i pricechanged ([ef32fe2](https://github.com/blodytrav3l3r/Oferty_PV/commit/ef32fe25a8965d0a6a5fcfd582bbd2ef02b4a015))
+
+### Bug Fixes
+
+- **api:** search ofert przestal zwracac 500 ([b5e10ec](https://github.com/blodytrav3l3r/Oferty_PV/commit/b5e10ec2eb581b53c94fd68740560d60f7ec1e68))
+- **studnie:** brak dublowania listenerow excel virtual ([41ee1cb](https://github.com/blodytrav3l3r/Oferty_PV/commit/41ee1cbcad9aa631253e8edc99d45d6841aa62fd))
+- **studnie:** escape label w bulk progress ([c3829c9](https://github.com/blodytrav3l3r/Oferty_PV/commit/c3829c9e4742c34ca7b07e39904686a955c240fb))
+- **studnie:** overlap dennicy -100 tylko nad typem z kielichem ([4d1fd65](https://github.com/blodytrav3l3r/Oferty_PV/commit/4d1fd65e5efa26f502aa8839241b11279025abc4))
+- **studnie:** para odciazajaca w excelu i offset wlaza ([85da20e](https://github.com/blodytrav3l3r/Oferty_PV/commit/85da20e8f37626898885ba5353d3e08cf74f653f)), closes [#47](https://github.com/blodytrav3l3r/Oferty_PV/issues/47)
+- **studnie:** pierscien 0 i dylatacja 50 w wysokosci kompletu ([e1cf84f](https://github.com/blodytrav3l3r/Oferty_PV/commit/e1cf84f932d117b083ef302e589af901c768ec59))
+- **studnie:** podsumowanie oferty bez rozjeżdżania ([6c7462a](https://github.com/blodytrav3l3r/Oferty_PV/commit/6c7462ab076c5049158ece12c6dd47d64656462c))
+- **studnie:** psia buda zaniżała dobór wysokości o 100mm ([cd12150](https://github.com/blodytrav3l3r/Oferty_PV/commit/cd1215061cb8018fd55d3fc176037831df894c25))
+- **studnie:** rabaty przejsc wg hosta i klasowe bez fallbacku do bazy ([69c853f](https://github.com/blodytrav3l3r/Oferty_PV/commit/69c853f9275ec677bfc4dcd41937f30b72c7ff89))
+- **studnie:** spójne jednostki i odsunięcie linii wymiarowych ([216dd01](https://github.com/blodytrav3l3r/Oferty_PV/commit/216dd0124d3e11f4b4171a6896d228c162f0ad2b))
+- **studnie:** transport nie flaguje studni jako zmienionych ([547345e](https://github.com/blodytrav3l3r/Oferty_PV/commit/547345e1adfb749efdffb628e1d36f4e990595e2))
+- **studnie:** uszczelki cale przy tworzeniu zamowienia ([5592e36](https://github.com/blodytrav3l3r/Oferty_PV/commit/5592e362af7e8b168e493b8c84d0e1c5ccb07aed))
+- **studnie:** wiersz razem widoczny znad fixed stopki ([19722d3](https://github.com/blodytrav3l3r/Oferty_PV/commit/19722d37dd937f647713d8199415377175966b7b))
+- **studnie:** zamrozony transport w zamowieniu i stabilny hash ([afbafaf](https://github.com/blodytrav3l3r/Oferty_PV/commit/afbafaf6b727bfaabc6ca14a946def258f712e3c))
+- **studnie:** zmiana uszczelki rusza tylko uszczelki ([12b74f5](https://github.com/blodytrav3l3r/Oferty_PV/commit/12b74f5b3258840ba90f1388b23a870c5f7cad84))
+- **ui:** odblokowanie scrolla ignoruje ukryte overlaye ([733f0f0](https://github.com/blodytrav3l3r/Oferty_PV/commit/733f0f0fa00a408b9223239ee3a8aaf802897683))
+- **ui:** ujednolicenie tła do --bg-primary ([75b3f9e](https://github.com/blodytrav3l3r/Oferty_PV/commit/75b3f9e63ad4d8f2bf5c5b28680991fee326f8c9))
+
 ## [1.24.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.23.0...v1.24.0) (2026-09-06)
 
 ### Features
