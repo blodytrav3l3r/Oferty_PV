@@ -59,6 +59,8 @@ const ORDER_PRZEJSCIE_FIELDS = [
  * _aiRankInfo, _lastSolveInputHash, __resCache, _psiaBudaBackup, configErrors,
  * configStatus, wellHeight, type, warehouse oraz przyszłe klucze cache.
  * material/nadbudowa = legacy odpowiedniki dennicaMaterial (back-compat).
+ * frozenTransportCost = zamrozony udzial transportu w zamowieniu (display-only,
+ * poza hashem cenowym) — niezmienione studnie trzymaja cene przy zmianach sasiadow.
  */
 const ORDER_WELL_FIELDS = [
     'id',
@@ -104,6 +106,7 @@ const ORDER_WELL_FIELDS = [
     'malowanieZ',
     'malowanieZewCena',
     'frozenPrecoSuma',
+    'frozenTransportCost',
     'powlokaNameW',
     'powlokaNameZ',
     'agresjaChemiczna',
@@ -232,23 +235,18 @@ const WELL_PRICING_FIELDS = [
     'doplata'
 ];
 
-const CONFIG_PRICING_FIELDS = [
-    'productId',
-    'quantity',
-    'frozenPrice',
-    'frozenPriceBase',
-    'disablePehd',
-    'disablePreco'
-];
+/**
+ * Pola pozycji config wchodzace do hasha porownania.
+ * Wylaczone celowo (wartosci pochodne, nie biznesowe): frozenPrice,
+ * frozenPriceBase — sa dopisywane przez freezeWellPrices PO zbudowaniu
+ * snapshotu (orderCrud: buildSlimWells przed freeze), wiec ich obecnosc
+ * w hashu flagowala kazda studnie jako zmieniona (SA/ZS/000043/2026).
+ * Zmiana cennika przy tym samym productId/qty jest wykrywana wymiarem
+ * ceny (priceChanged), nie wymiarem konfiguracji.
+ */
+const CONFIG_PRICING_FIELDS = ['productId', 'quantity', 'disablePehd', 'disablePreco'];
 
-const PRZEJSCIE_PRICING_FIELDS = [
-    'productId',
-    'dn',
-    'rzednaWlaczenia',
-    'angle',
-    'doplata',
-    'frozenPrice'
-];
+const PRZEJSCIE_PRICING_FIELDS = ['productId', 'dn', 'rzednaWlaczenia', 'angle', 'doplata'];
 
 /**
  * Deterministyczna serializacja: sortuje klucze obiektów rekurencyjnie.
@@ -328,8 +326,10 @@ function wellConfigHash(dtoWell) {
 const roundGrosz = (v) => Math.round((Number(v) || 0) * 100) / 100;
 
 /**
- * Buduje slim snapshot: [{id, name, price, weight, configHash}].
- * statsFn wstrzykiwany dla testowalności; produkcyjnie (w) => calcWellStats(w).
+ * Buduje slim snapshot: [{id, name, price, weight, configHash, transport}].
+ * transport = zamrozony udzial transportu (0 gdy brak — stare snapshoty
+ * fallbackuja do proporcji w tabeli). statsFn wstrzykiwany dla testowalności;
+ * produkcyjnie (w) => calcWellStats(w).
  * @param {Array} dtoWells studnie po toOrderWellsDTO
  * @param {Function} statsFn (well) => ({price, weight})
  * @returns {Array}
@@ -353,7 +353,8 @@ function buildSlimWells(dtoWells, statsFn) {
             name: w ? w.name : undefined,
             price,
             weight,
-            configHash: wellConfigHash(w)
+            configHash: wellConfigHash(w),
+            transport: roundGrosz(w && w.frozenTransportCost != null ? w.frozenTransportCost : 0)
         };
     });
 }

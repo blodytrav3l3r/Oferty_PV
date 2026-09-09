@@ -299,16 +299,33 @@ async function finalizeOrderFromOffer(offer, selectedWells, kartaBudowyData) {
     const gKm = parseFloat(offer.transportKm) || 0;
     const gRate = parseFloat(offer.transportRate) || 0;
     const offerMode = offer.transportMode || 'full';
-    const globalOfferTransport =
-        gKm > 0 && gRate > 0
-            ? (typeof calcTransportCount === 'function'
-                  ? calcTransportCount(globalOfferWeight, offerMode)
-                  : Math.ceil(globalOfferWeight / MAX_TRANSPORT_WEIGHT)) *
-              gKm *
-              gRate
-            : 0;
-    if (globalOfferWeight > 0 && totalWeight > 0) {
-        orderTransportCost = globalOfferTransport * (totalWeight / globalOfferWeight);
+    if (typeof calcOrderTheoreticalTransport === 'function') {
+        orderTransportCost = calcOrderTheoreticalTransport(
+            totalWeight,
+            globalOfferWeight,
+            gKm,
+            gRate,
+            offerMode
+        );
+    } else if (gKm > 0 && gRate > 0) {
+        const globalOfferTransport =
+            (typeof calcTransportCount === 'function'
+                ? calcTransportCount(globalOfferWeight, offerMode)
+                : Math.ceil(globalOfferWeight / MAX_TRANSPORT_WEIGHT)) *
+            gKm *
+            gRate;
+        if (globalOfferWeight > 0 && totalWeight > 0) {
+            orderTransportCost = globalOfferTransport * (totalWeight / globalOfferWeight);
+        }
+    }
+
+    // Zamrozenie udzialow transportu per studnia — niezmienione studnie
+    // trzymaja cene przy pozniejszych zmianach sasiadow (przed wellsExport i slim).
+    if (typeof freezeTransportShares === 'function') {
+        freezeTransportShares(orderWellsDTO, {
+            theoreticalTotal: orderTransportCost,
+            refreezeAll: true
+        });
     }
 
     // P1-A: wellsExport to projekcja (nie snapshot) — tylko skalary.
@@ -318,14 +335,30 @@ async function finalizeOrderFromOffer(offer, selectedWells, kartaBudowyData) {
     order.wellsExport = orderWellsDTO.map((well) => {
         const stats = calcWellStats(well);
         slimStatsByWell.push(stats);
+        const frozenShare =
+            well && well.frozenTransportCost != null && isFinite(Number(well.frozenTransportCost))
+                ? Number(well.frozenTransportCost)
+                : null;
         const wellTransportCost =
-            totalWeight > 0 ? orderTransportCost * (stats.weight / totalWeight) : 0;
+            frozenShare != null
+                ? frozenShare
+                : totalWeight > 0
+                  ? orderTransportCost * (stats.weight / totalWeight)
+                  : 0;
         const zwienczenie =
             typeof getWellZwienczenieName === 'function' ? getWellZwienczenieName(well) : '—';
         return buildWellsExportEntry(well, stats, wellTransportCost, zwienczenie);
     });
 
-    const finalOrderNetto = totalNetto + orderTransportCost;
+    const frozenSum = orderWellsDTO.reduce(
+        (s, w) =>
+            s +
+            (w && w.frozenTransportCost != null && isFinite(Number(w.frozenTransportCost))
+                ? Number(w.frozenTransportCost)
+                : 0),
+        0
+    );
+    const finalOrderNetto = totalNetto + frozenSum;
 
     order.totalWeight = totalWeight;
     order.totalNetto = finalOrderNetto;
@@ -947,6 +980,25 @@ async function saveCurrentOrder(options = {}) {
         freezeWellPrices(wells);
     }
 
+    // Transport do freeze: wczesny odczyt pol (przed DTO), zeby zamrozone
+    // udzialy trafily do order.wells przez allowlist DTO.
+    const transportKmVal = parseFloat(document.getElementById('transport-km')?.value) || 0;
+    const transportRateVal = parseFloat(document.getElementById('transport-rate')?.value) || 0;
+    const transportModeVal =
+        typeof currentTransportMode !== 'undefined' ? currentTransportMode : 'full';
+    const prevModeNorm =
+        typeof normalizeTransportMode === 'function'
+            ? normalizeTransportMode(order.transportMode)
+            : order.transportMode;
+    const nextModeNorm =
+        typeof normalizeTransportMode === 'function'
+            ? normalizeTransportMode(transportModeVal)
+            : transportModeVal;
+    const transportParamsChanged =
+        (order.transportKm || 0) !== transportKmVal ||
+        (order.transportRate || 0) !== transportRateVal ||
+        prevModeNorm !== nextModeNorm;
+
     order.wells =
         typeof toOrderWellsDTO === 'function'
             ? toOrderWellsDTO(structuredClone(wells))
@@ -972,8 +1024,31 @@ async function saveCurrentOrder(options = {}) {
             ? getOfferStudnieById(saveOfferId)
             : offersStudnie.find((o) => o.id === saveOfferId)
         : null;
-    const transportKmVal = parseFloat(document.getElementById('transport-km')?.value) || 0;
-    const transportRateVal = parseFloat(document.getElementById('transport-rate')?.value) || 0;
+
+    // Zamrozenie transportu: zmiana km/stawki/trybu = refreeze wszystkich,
+    // zmiana skladu/wagi = reszta na nowe/zmienione (pozostale trzymaja).
+    // Musi byc PO odczycie pol a PRZED DTO — ponizej tylko przepisanie na DTO.
+    if (typeof freezeTransportShares === 'function') {
+        const saveTheoretical =
+            typeof calcOrderTheoreticalTransport === 'function'
+                ? calcOrderTheoreticalTransport(
+                      totalWeight,
+                      offer?.totalWeight || totalWeight,
+                      transportKmVal,
+                      transportRateVal,
+                      transportModeVal
+                  )
+                : 0;
+        freezeTransportShares(wells, {
+            theoreticalTotal: saveTheoretical,
+            refreezeAll: transportParamsChanged,
+            orderLike: order
+        });
+        order.wells =
+            typeof toOrderWellsDTO === 'function'
+                ? toOrderWellsDTO(structuredClone(wells))
+                : structuredClone(wells);
+    }
 
     order.transportKm = transportKmVal;
     order.transportRate = transportRateVal;
@@ -989,8 +1064,17 @@ async function saveCurrentOrder(options = {}) {
         order.validity ||
         '7 dni';
 
-    let totalTransportCostForOffer = 0;
-    if (transportKmVal > 0 && transportRateVal > 0 && totalWeight > 0) {
+    // RAZEM z zamrozonych udzialow (nie z proporcji na zywo) — suma
+    // zamrozonych = to co widzi tabela; teoretyczny w linii rozliczenia.
+    let frozenTotal = 0;
+    wells.forEach((well) => {
+        const fz =
+            well && well.frozenTransportCost != null && isFinite(Number(well.frozenTransportCost))
+                ? Number(well.frozenTransportCost)
+                : 0;
+        frozenTotal += fz;
+    });
+    if (typeof freezeTransportShares !== 'function' && transportKmVal > 0) {
         const offerTotalWeight = offer?.totalWeight || totalWeight;
         const fullOfferCost =
             (typeof calcTransportCount === 'function'
@@ -998,18 +1082,25 @@ async function saveCurrentOrder(options = {}) {
                 : Math.ceil(offerTotalWeight / MAX_TRANSPORT_WEIGHT)) *
             transportKmVal *
             transportRateVal;
-        totalTransportCostForOffer =
-            offerTotalWeight > 0 ? fullOfferCost * (totalWeight / offerTotalWeight) : 0;
+        frozenTotal = offerTotalWeight > 0 ? (fullOfferCost * totalWeight) / offerTotalWeight : 0;
     }
-    const orderTotal = totalNetto + totalTransportCostForOffer;
+    const orderTotal = totalNetto + frozenTotal;
     order.totalNetto = orderTotal;
     order.totalBrutto = orderTotal * 1.23;
 
     // P1-A: projekcja skalarna (config/przejscia w wells, nie duplikowane).
     order.wellsExport = wells.map((well) => {
         const stats = calcWellStats(well);
+        const frozenShare =
+            well && well.frozenTransportCost != null && isFinite(Number(well.frozenTransportCost))
+                ? Number(well.frozenTransportCost)
+                : null;
         const wellTransportCost =
-            totalWeight > 0 ? totalTransportCostForOffer * (stats.weight / totalWeight) : 0;
+            frozenShare != null
+                ? frozenShare
+                : totalWeight > 0
+                  ? frozenTotal * (stats.weight / totalWeight)
+                  : 0;
         const zwienczenie =
             typeof getWellZwienczenieName === 'function' ? getWellZwienczenieName(well) : '—';
         return buildWellsExportEntry(well, stats, wellTransportCost, zwienczenie);

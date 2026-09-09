@@ -131,7 +131,7 @@ describe('orderDto slim snapshot — DoD P1', () => {
         expect(dto.wellConfigHash(r)).toBe(base);
     });
 
-    test('buildSlimWells: wpis {id,name,price,weight,configHash}, zaokrąglenie do grosza', () => {
+    test('buildSlimWells: wpis {id,name,price,weight,configHash,transport}, zaokrąglenie do grosza', () => {
         const slim = dto.buildSlimWells([dtoWell()], () => ({
             price: 1234.567,
             weight: 500.004
@@ -142,10 +142,17 @@ describe('orderDto slim snapshot — DoD P1', () => {
                 name: 'S1',
                 price: 1234.57,
                 weight: 500,
-                configHash: dto.wellConfigHash(dtoWell())
+                configHash: dto.wellConfigHash(dtoWell()),
+                transport: 0
             }
         ]);
         expect(dto.buildSlimWells(null, () => ({}))).toEqual([]);
+    });
+
+    test('buildSlimWells: niesie zamrozony udzial transportu ze snapshotu', () => {
+        const w = { ...dtoWell(), frozenTransportCost: 313.95055 };
+        const slim = dto.buildSlimWells([w], () => ({ price: 100, weight: 10 }));
+        expect(slim[0].transport).toBe(313.95);
     });
 
     test('getOrderChanges: legacy full snapshot i slim dają IDENTYCZNY wynik', () => {

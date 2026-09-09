@@ -515,10 +515,161 @@ function normalizeTransportMode(mode) {
     return mode === 'full' || mode === 'fractional' ? mode : DEFAULT_TRANSPORT_MODE;
 }
 
+const roundToGroszFrozen = (v) => Math.round((Number(v) || 0) * 100) / 100;
+
+/**
+ * Teoretyczny koszt transportu zamowienia (SSoT, skala oferta->zamowienie).
+ * Ten sam wzor co saveCurrentOrder/enterOrderEditMode/calculateOfferTotals:
+ * pelny koszt oferty x udzial masy biezacej. Bez offerWeight = liczenie wprost.
+ */
+function calcOrderTheoreticalTransport(currWeight, offerWeight, km, rate, mode) {
+    const cw = Number(currWeight) || 0;
+    const ow = Number(offerWeight) || 0 || cw;
+    const k = Number(km) || 0;
+    const r = Number(rate) || 0;
+    if (cw <= 0 || k <= 0 || r <= 0) return 0;
+    const maxW =
+        typeof MAX_TRANSPORT_WEIGHT !== 'undefined' && MAX_TRANSPORT_WEIGHT > 0
+            ? MAX_TRANSPORT_WEIGHT
+            : 24000;
+    const trips =
+        typeof calcTransportCount === 'function'
+            ? calcTransportCount(ow, mode)
+            : Math.ceil(ow / maxW);
+    const full = trips * k * r;
+    return ow > 0 ? (full * cw) / ow : 0;
+}
+
+/**
+ * Czysty rdzen zamrozenia transportu: rozdziela theoreticalTotal na udzialy.
+ * Studnie z frozen (niezmienione) trzymaja wartosc; reszte (rezydualna)
+ * dzieli wagowo na elastyczne; gdy keeps niefinnansowalne (ujemna reszta)
+ * — refreeze wszystkich proporcjonalnie. Suma = theoreticalTotal co do grosza
+ * (largest remainder, nigdy ujemne udzialy).
+ * @param {Array<{weight:number,frozen:number|null}>} items
+ * @param {number} theoreticalTotal
+ * @returns {Array<number>} udzialy per studnia (zaokraglone do grosza)
+ */
+function redistributeFrozenTransport(items, theoreticalTotal) {
+    const list = (Array.isArray(items) ? items : []).map((it) => ({
+        weight: Number(it && it.weight) || 0,
+        frozen: it && it.frozen != null && isFinite(Number(it.frozen)) ? Number(it.frozen) : null
+    }));
+    const out = new Array(list.length).fill(0);
+    const T = Number(theoreticalTotal) || 0;
+    if (list.length === 0 || T <= 0) return out;
+    const keepSet = new Set();
+    let sumKeep = 0;
+    list.forEach((it, i) => {
+        if (it.frozen != null) {
+            keepSet.add(i);
+            sumKeep += it.frozen;
+        }
+    });
+    let flex = list.map((_, i) => i).filter((i) => !keepSet.has(i));
+    let flexTarget = roundToGroszFrozen(T - sumKeep);
+    if (flexTarget < 0) {
+        // Keeps niefinnansowalne (np. usunieto ciezka studnie) — refreeze wszystkich.
+        keepSet.clear();
+        sumKeep = 0;
+        flex = list.map((_, i) => i);
+        flexTarget = T;
+    }
+    if (flex.length === 0) {
+        list.forEach((it, i) => {
+            out[i] = roundToGroszFrozen(it.frozen);
+        });
+        return out;
+    }
+    const flexWeight = flex.reduce((s, i) => s + list[i].weight, 0);
+    const exact = flex.map((i) =>
+        flexWeight > 0 ? (flexTarget * list[i].weight) / flexWeight : flexTarget / flex.length
+    );
+    const base = exact.map((v) => Math.floor(v * 100 + 1e-9) / 100);
+    const baseSum = base.reduce((s, v) => s + v, 0);
+    let leftover = Math.round(flexTarget * 100) - Math.round(baseSum * 100);
+    const order = flex.map((_, k) => k).sort((a, b) => exact[b] - base[b] - (exact[a] - base[a]));
+    const add = new Array(flex.length).fill(0);
+    for (let k = 0; k < order.length && leftover > 0; k++) {
+        add[order[k]] += 1;
+        leftover -= 1;
+    }
+    flex.forEach((i, k) => {
+        out[i] = roundToGroszFrozen(base[k] + add[k] / 100);
+    });
+    keepSet.forEach((i) => {
+        out[i] = roundToGroszFrozen(list[i].frozen);
+    });
+    return out;
+}
+
+/**
+ * Mrozi udzialy transportu na zywych studniach zamowienia (mutuje w miejscu).
+ * Niezmienione (brak wpisu w getOrderChanges + liczbowy frozenTransportCost)
+ * trzymaja wartosc, chyba ze opts.refreezeAll (zmiana km/stawki/trybu).
+ * Zwraca {shares, delta} — delta to roznica teoretyczny vs suma (do linii rozliczenia).
+ */
+function freezeTransportShares(liveWells, opts) {
+    const o = opts || {};
+    const arr = Array.isArray(liveWells) ? liveWells : [];
+    const statsFn =
+        typeof o.statsFn === 'function'
+            ? o.statsFn
+            : typeof calcWellStats === 'function'
+              ? calcWellStats
+              : null;
+    if (!statsFn || arr.length === 0) return { shares: [], delta: 0 };
+    const T = Number(o.theoreticalTotal) || 0;
+    if (T <= 0) {
+        const zeros = arr.map(() => 0);
+        arr.forEach((w) => {
+            if (w) w.frozenTransportCost = 0;
+        });
+        return { shares: zeros, delta: 0 };
+    }
+    let changedIdx = null;
+    if (!o.refreezeAll && o.orderLike && o.orderLike.originalSnapshot) {
+        try {
+            if (typeof getOrderChanges === 'function') {
+                const ch = getOrderChanges(Object.assign({}, o.orderLike, { wells: arr }));
+                changedIdx = new Set(
+                    Object.keys((ch && ch.wells) || {}).filter((k) => k.indexOf('removed:') !== 0)
+                );
+            }
+        } catch (_e) {
+            changedIdx = null;
+        }
+    }
+    const weights = arr.map((w) => {
+        try {
+            return Number(statsFn(w).weight) || 0;
+        } catch (_e2) {
+            return 0;
+        }
+    });
+    const items = arr.map((w, i) => {
+        const fr =
+            w && w.frozenTransportCost != null && isFinite(Number(w.frozenTransportCost))
+                ? Number(w.frozenTransportCost)
+                : null;
+        const keep =
+            !o.refreezeAll && fr != null && (changedIdx == null || !changedIdx.has(String(i)));
+        return { weight: weights[i], frozen: keep ? fr : null };
+    });
+    const shares = redistributeFrozenTransport(items, T);
+    arr.forEach((w, i) => {
+        if (w) w.frozenTransportCost = shares[i];
+    });
+    const sum = shares.reduce((s, v) => s + v, 0);
+    return { shares, delta: roundToGroszFrozen(T - sum) };
+}
+
 /**
  * Cena porównywalna studni — JEDYNA definicja ceny do detekcji zmian (Faza 1, #7).
- * Kontekst frozen (isPreviewMode=true), BEZ transportu. Używają jej badge
- * (getOrderChanges) i tabela (kolumna Różnica) — ta sama liczba w obu miejscach.
+ * Kontekst frozen (isPreviewMode=true), BEZ transportu. Uzywa jej badge
+ * (getOrderChanges); tabela dokleja udzial transportu do OBU kolumn
+ * (Cena z oferty ze snapshotu, Cena zamowienia biezaca), wiec wyswietlana
+ * Roznica tez jest z transportem, a detekcja zmian bez (transport to osobny wymiar).
  */
 const roundToGroszShared = (v) => Math.round((Number(v) || 0) * 100) / 100;
 function calcComparableWellPrice(well) {
@@ -742,6 +893,9 @@ window.freezeWellPrices = freezeWellPrices;
 window.getOrderChanges = getOrderChanges;
 window.normalizeTransportMode = normalizeTransportMode;
 window.DEFAULT_TRANSPORT_MODE = DEFAULT_TRANSPORT_MODE;
+window.calcOrderTheoreticalTransport = calcOrderTheoreticalTransport;
+window.redistributeFrozenTransport = redistributeFrozenTransport;
+window.freezeTransportShares = freezeTransportShares;
 window.calcComparableWellPrice = calcComparableWellPrice;
 window.matchWellPairs = matchWellPairs;
 window.freezeWellPreco = freezeWellPreco;

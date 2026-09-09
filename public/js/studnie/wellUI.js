@@ -182,6 +182,16 @@ window.updateSummary = function updateSummary() {
             wellTransportCost = totals.totalTransportCost * (stats.weight / totals.globalWeight);
         }
     }
+    // Tryb zamowienia: zamrozony udzial trzyma cene panelu przy zmianach sasiadow.
+    if (
+        typeof orderEditMode !== 'undefined' &&
+        orderEditMode &&
+        well &&
+        well.frozenTransportCost != null &&
+        isFinite(Number(well.frozenTransportCost))
+    ) {
+        wellTransportCost = Number(well.frozenTransportCost);
+    }
     const finalPrice = stats.price + wellTransportCost;
 
     // Dolny pasek

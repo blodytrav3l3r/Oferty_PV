@@ -44,6 +44,8 @@ function buildInvestInfoHtml() {
 
 /**
  * Oblicza mapę kosztów transportu per studnia (proporcjonalnie do wagi).
+ * W trybie zamowienia studnie z zamrozonym udzialem (frozenTransportCost)
+ * trzymaja wartosc — zmiana sasiada nie rusza ich ceny.
  * Zwraca Map<Well, number>.
  */
 function calculateWellTransportMap(wellsList) {
@@ -70,7 +72,16 @@ function calculateWellTransportMap(wellsList) {
 
     wellsList.forEach((w) => {
         const wWeight = calcWellStats(w).weight;
-        const share = globalWeight > 0 ? totalTransportCost * (wWeight / globalWeight) : 0;
+        let share = globalWeight > 0 ? totalTransportCost * (wWeight / globalWeight) : 0;
+        if (
+            typeof orderEditMode !== 'undefined' &&
+            orderEditMode &&
+            w &&
+            w.frozenTransportCost != null &&
+            isFinite(Number(w.frozenTransportCost))
+        ) {
+            share = Number(w.frozenTransportCost);
+        }
         map.set(w, share);
     });
 

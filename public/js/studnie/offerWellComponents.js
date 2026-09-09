@@ -75,8 +75,8 @@ function renderWellHeaderRow(
     let offerPriceCell = '';
     let priceDiffCell = '';
     if (offerPrice !== null) {
-        // Faza 1, #7: Różnica z ceny porównywalnej (bez transportu),
-        // ta sama definicja co badge — nie stats.price (z transportem).
+        // Porownanie w definicji Z transportem po obu stronach
+        // (caller dolicza udzial transportu do offerPrice i comparablePrice).
         const priceDiff = (comparablePrice ?? stats.price) - offerPrice;
         const diffColor =
             priceDiff > 0
