@@ -43,6 +43,10 @@ check_in('klucz localStorage szerokosci', 'excelState.js', r'_EXCEL_COL_WIDTHS_K
 check_in('_excelLoadColWidths zdefiniowana', 'excelState.js', r'function _excelLoadColWidths')
 check_in('_excelSaveColWidths zdefiniowana', 'excelState.js', r'function _excelSaveColWidths')
 check_in('zapis szerokosci po resize', 'excelTableManager.js', r'_excelSaveColWidths')
+check_in('resize na kanonicznym wierszu h1 (nie first-child)', 'excelTableManager.js', r'headRows\[1\]|nth-child\(2\)')
+check_in('stabilne data-excel-col w naglowku', 'excelTableRenderer.js', r'data-excel-col="trz-')
+check_in('restore szerokosci po colId', 'excelTableRenderer.js', r'_excelApplyColWidths')
+check_in('helpery kluczy szerokosci', 'excelState.js', r'function _excelParseColWidthKey')
 
 # ===== F3: Ctrl+D duplikacja studni =====
 check_in('excelDuplicateWell zdefiniowana', 'excelWellActions.js', r'function excelDuplicateWell')

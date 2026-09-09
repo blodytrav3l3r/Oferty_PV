@@ -660,7 +660,7 @@ function _excelVirtualRenderBody() {
                 for (let ci = 0; ci < _excelSelectedCols.length; ci++) {
                     const colIdx = _excelSelectedCols[ci];
                     const th = container.querySelector(
-                        'thead tr th:nth-child(' + (colIdx + 1) + ')'
+                        'thead tr:nth-child(2) th:nth-child(' + (colIdx + 1) + ')'
                     );
                     if (th) th.classList.add('excel-col-selected');
                 }
@@ -675,6 +675,14 @@ function _excelVirtualRenderBody() {
             const _tStickyStart = _perf ? _excelPerfNow() : 0;
             if (typeof _excelApplyStickyColumns === 'function') _excelApplyStickyColumns();
             if (typeof _excelApplyLockedRows === 'function') _excelApplyLockedRows();
+            /* Virtual podmienia tbody — nałóż zapisane szerokości na nowy slice */
+            if (typeof _excelApplyColWidths === 'function') {
+                try {
+                    _excelApplyColWidths(
+                        typeof _excelActiveTab !== 'undefined' ? _excelActiveTab : '1000'
+                    );
+                } catch (_e) {}
+            }
             // restore logical focus after recycle — only if grid had focus and active still in viewport
             if (_hadGridFocus && _activeBefore) {
                 // use latest active (may have been updated by ensureVisible)

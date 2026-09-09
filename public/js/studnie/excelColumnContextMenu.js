@@ -64,7 +64,25 @@ function _excelOpenColContextMenu(th, x, y) {
     const colId = th.getAttribute('data-col-id');
     _excelContextMenuColId = colId;
     const thRow = th.parentElement;
-    _excelContextMenuColIdx = thRow ? Array.from(thRow.children).indexOf(th) : null;
+    const thead = thRow && thRow.parentElement;
+    const isGroupRow = !!thead && thead.children.length > 0 && thead.children[0] === thRow;
+    if (isGroupRow && thRow) {
+        /* Klik w wiersz grupujący h3 (PRZ ma colspan=4) — mapuj na indeks
+           kanoniczny pierwszej pokrywanej kolumny (suma colspanów). */
+        let pos = 0;
+        let found = null;
+        Array.from(thRow.children).forEach(function (cell) {
+            if (found !== null) return;
+            if (cell === th) {
+                found = pos;
+                return;
+            }
+            pos += parseInt(cell.getAttribute('colspan') || '1', 10) || 1;
+        });
+        _excelContextMenuColIdx = found;
+    } else {
+        _excelContextMenuColIdx = thRow ? Array.from(thRow.children).indexOf(th) : null;
+    }
     let col = null;
     if (colId) {
         const refWell =

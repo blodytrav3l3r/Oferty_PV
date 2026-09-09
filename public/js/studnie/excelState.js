@@ -199,6 +199,24 @@ function _excelSaveColWidths() {
     } catch (_e) {}
 }
 
+/* Stabilny klucz szerokości: "zakładkaDN-colId" (np. "1000-trz-0-kat").
+   colId pochodzi z data-excel-col w kanonicznym wierszu nagłówka (h1) —
+   przeżywa dodanie/usunięcie kolumny przejścia, w przeciwieństwie do
+   indeksu fizycznego. Split zawsze na PIERWSZYM myślniku, bo colId
+   zawiera myślniki. */
+function _excelColWidthKey(tab, colId) {
+    return String(tab) + '-' + String(colId);
+}
+function _excelParseColWidthKey(key) {
+    if (typeof key !== 'string') return null;
+    const dash = key.indexOf('-');
+    if (dash <= 0) return null;
+    const tab = key.slice(0, dash);
+    const colId = key.slice(dash + 1);
+    if (!tab || !colId) return null;
+    return { tab: tab, colId: colId };
+}
+
 /* ===== wellIndexById — canonical wellId → wellIdx index ===== */
 function _excelBuildWellIndex() {
     _excelWellIndexById = new Map();

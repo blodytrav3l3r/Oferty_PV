@@ -102,8 +102,9 @@ function _excelRenderSortIndicator() {
         m.remove();
     });
     if (!_excelSortState) return;
+    /* Znacznik na kanonicznym wierszu h1 (drugi tr) — h3 ma colspan grup PRZ. */
     const th = /** @type {HTMLElement} */ (
-        container.querySelectorAll('thead tr:first-child th')[_excelSortState.colIdx]
+        container.querySelectorAll('thead tr:nth-child(2) th')[_excelSortState.colIdx]
     );
     if (!th) return;
     const mark = document.createElement('span');

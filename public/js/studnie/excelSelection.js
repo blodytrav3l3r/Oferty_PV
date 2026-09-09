@@ -8,7 +8,11 @@ function _excelInitColumnSelect() {
     const table = container.querySelector('table');
     if (!table) return;
 
-    const headers = table.querySelectorAll('thead tr:first-child th');
+    /* Kanoniczny wiersz h1 (drugi tr): 1 TH na kolumnę fizyczną.
+       Pierwszy wiersz (h3) ma colspan=4 na grupę PRZ — zły do indeksów. */
+    const headRows = table.querySelectorAll('thead tr');
+    if (headRows.length < 2) return;
+    const headers = headRows[1].querySelectorAll('th');
     headers.forEach((th, colIdx) => {
         th.addEventListener('mousedown', (/** @type {MouseEvent} */ e) => {
             if (e.target.closest('.excel-col-resize-handle')) return;
@@ -97,8 +101,26 @@ function _excelToggleColClass(colIdx, add) {
     if (!container) return;
     const table = container.querySelector('table');
     if (!table) return;
+    const headRows = table.querySelectorAll('thead tr');
+    const groupRow = headRows.length > 0 ? headRows[0] : null;
     const rows = table.querySelectorAll('tr');
     rows.forEach((row) => {
+        /* Wiersz grupujący h3 ma colspan (PRZ = 4) — znajdź komórkę,
+           której span pokrywa indeks kanoniczny. */
+        if (groupRow && row === groupRow) {
+            let pos = 0;
+            const cells = row.children;
+            for (let k = 0; k < cells.length; k++) {
+                const span = parseInt(cells[k].getAttribute('colspan') || '1', 10) || 1;
+                if (colIdx >= pos && colIdx < pos + span) {
+                    if (add) cells[k].classList.add('excel-col-selected');
+                    else cells[k].classList.remove('excel-col-selected');
+                    break;
+                }
+                pos += span;
+            }
+            return;
+        }
         const cell = row.children[colIdx];
         if (cell) {
             if (add) cell.classList.add('excel-col-selected');
