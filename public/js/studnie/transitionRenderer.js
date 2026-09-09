@@ -290,6 +290,18 @@ function buildConfigMap(well, findProductFn, includeName = false) {
     let belowType = null;
     let psiaSeed = !!well.psiaBuda;
 
+    // Komplet odciążający: pierścień nachodzi na krąg (wkład 0), pod płytą
+    // dylatacja — mapa musi zgadzać się z calcWellStats i solverem, inaczej
+    // przejścia przypisują się do złego hosta (cena wiercenia/rabat).
+    const __relief =
+        typeof getReliefKompletConfigIdx === 'function'
+            ? getReliefKompletConfigIdx(well.config, findProductFn)
+            : { ringZero: new Set(), gapAfter: new Set() };
+    const __reliefDyl =
+        typeof window !== 'undefined' && typeof window.RELIEF_DYLATACJA_MM === 'number'
+            ? window.RELIEF_DYLATACJA_MM
+            : 50;
+
     for (let j = well.config.length - 1; j >= 0; j--) {
         const cItem = well.config[j];
         const p = findProductFn(cItem.productId);
@@ -303,6 +315,8 @@ function buildConfigMap(well, findProductFn, includeName = false) {
             psiaSeed = false;
         } else {
             h = (p.height || 0) * cItem.quantity;
+            if (__relief.ringZero.has(j)) h = 0;
+            if (__relief.gapAfter.has(j)) h += __reliefDyl * (cItem.quantity || 1);
             if (p.componentType !== 'uszczelka') belowType = p.componentType;
         }
         const entry = {

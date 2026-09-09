@@ -11,8 +11,9 @@
  *   drawComponentShape()        — generuje SVG kształtu dla jednego komponentu
  *   drawComponentLabel()        — generuje etykietę tekstową wewnątrz komponentu
  *   drawComponentDimension()    — generuje wymiarówkę (lewa strona) dla komponentu
-+ *   drawReliefRingTabs()        — boczne zakładki pierścienia nachodzącego na krąg
++ *   drawReliefRingTabs()        — zakładki pierścienia poza trzonem, pod nawisem płyty
 + *   getReliefKompletIdx()       — wykrywa pary płyta+pierścień (dylatacja, wkład 0)
++ *   getReliefKompletConfigIdx() — to samo na indeksach well.config (SSoT dla calcWellStats/buildConfigMap)
  *   drawAllComponents()         — iteruje po komponentach i generuje pełny SVG
  *
  * Zależności globalne:
@@ -129,20 +130,18 @@ function reliefDylatacjaMm() {
 }
 
 /**
- * Wykrywa komplet płyta→pierścień w liście visible (top-down).
- * Zwraca indeksy: ringZero (pierścień rysowany jako zakładki, wkład 0),
- * gapAfter (po płycie wstawić dylatację 50mm).
+ * Czysty detektor par płyta→pierścień na liście typów (top-down).
+ * Komplet = płyta odciążająca bezpośrednio nad pierścieniem (sąsiadujące
+ * indeksy po sortWellConfigByOrder: płyta 2 → pierścień 3).
  */
-function getReliefKompletIdx(visible) {
+function __reliefPairs(types) {
     const ringZero = new Set();
     const gapAfter = new Set();
-    for (let i = 0; i < visible.length; i++) {
-        const ct = visible[i] && visible[i].componentType;
-        const next = visible[i + 1];
+    for (let i = 0; i + 1 < types.length; i++) {
+        const ct = types[i];
         if (
             (ct === 'plyta_zamykajaca' || ct === 'plyta_najazdowa') &&
-            next &&
-            next.componentType === 'pierscien_odciazajacy'
+            types[i + 1] === 'pierscien_odciazajacy'
         ) {
             gapAfter.add(i);
             ringZero.add(i + 1);
@@ -152,25 +151,63 @@ function getReliefKompletIdx(visible) {
 }
 
 /**
- * Rysuje pierścień odciążający jako dwie boczne zakładki nachodzące
- * w dół na krąg (zero wkładu w wysokość słupka).
+ * Wykrywa komplet płyta→pierścień w liście visible (top-down).
+ * Zwraca indeksy: ringZero (pierścień rysowany jako zakładki, wkład 0),
+ * gapAfter (po płycie wstawić dylatację 50mm).
  */
-function drawReliefRingTabs(cx, shaftW, yTop, tabHpx) {
+function getReliefKompletIdx(visible) {
+    return __reliefPairs(visible.map((v) => v && v.componentType));
+}
+
+/**
+ * Wykrywa komplet płyta→pierścień na indeksach well.config (top-down, SSoT
+ * dla kalkulacji wysokości: calcWellStats, buildConfigMap).
+ * Komplet tylko przy quantity 1 z obu stron — wkład 0 zakłada pojedynczy
+ * pierścień nachodzący na krąg. Solo/nie-sąsiadujące elementy liczą pełny height.
+ */
+function getReliefKompletConfigIdx(config, findProductFn) {
+    const empty = { ringZero: new Set(), gapAfter: new Set() };
+    if (!Array.isArray(config) || typeof findProductFn !== 'function') return empty;
+    const types = config.map((c) => {
+        try {
+            const p = findProductFn(c && c.productId);
+            return p && p.componentType;
+        } catch (_e) {
+            return null;
+        }
+    });
+    const pairs = __reliefPairs(types);
+    const ringZero = new Set();
+    const gapAfter = new Set();
+    pairs.ringZero.forEach((rIdx) => {
+        const pIdx = rIdx - 1;
+        if ((config[pIdx] || {}).quantity === 1 && (config[rIdx] || {}).quantity === 1) {
+            ringZero.add(rIdx);
+            gapAfter.add(pIdx);
+        }
+    });
+    return { ringZero, gapAfter };
+}
+/**
+ * Rysuje pierścień odciążający jako dwie boczne zakładki (lewa/prawa).
+ * Zakładki wiszą w całości POZA trzonem (zero nachodzenia na krąg z boków),
+ * pod nawisem płyty: zewnętrzna krawędź licuje z krawędzią płyty.
+ * Góra dosunięta do spodu płyty; wkład w wysokość słupka = 0.
+ */
+function drawReliefRingTabs(cx, shaftW, plateW, yTop, tabHpx) {
     const c = (typeof COMPONENT_THEME !== 'undefined' && COMPONENT_THEME.pierscien_odciazajacy) || {
         fill: 'var(--slate-500)',
         stroke: 'var(--slate-400)'
     };
-    const over = 10;
-    const inset = 16;
+    const tabW = Math.max((plateW - shaftW) / 2, 8);
     const h = Math.max(tabHpx, 6);
     const xL = cx - shaftW / 2;
     const xR = cx + shaftW / 2;
     return (
-        `<rect x="${xL - over}" y="${yTop}" width="${over + inset}" height="${h}" rx="2" style="fill:${c.fill};stroke:${c.stroke}" stroke-width="1.5" opacity="0.9"/>` +
-        `<rect x="${xR - inset}" y="${yTop}" width="${over + inset}" height="${h}" rx="2" style="fill:${c.fill};stroke:${c.stroke}" stroke-width="1.5" opacity="0.9"/>`
+        `<rect x="${xL - tabW}" y="${yTop}" width="${tabW}" height="${h}" rx="2" style="fill:${c.fill};stroke:${c.stroke}" stroke-width="1.5" opacity="0.9"/>` +
+        `<rect x="${xR}" y="${yTop}" width="${tabW}" height="${h}" rx="2" style="fill:${c.fill};stroke:${c.stroke}" stroke-width="1.5" opacity="0.9"/>`
     );
 }
-
 /* ===== OBLICZANIE PARAMETRÓW CANVAS ===== */
 
 /**
@@ -331,6 +368,8 @@ function drawAllComponents(visible, canvas) {
     let svgOut = '';
     let y = mT;
     const dimLinesY = [];
+    // Pasy pierścieni kompletu malowane PONAD kręgami (nachodzenie) — po pętli.
+    let reliefBars = '';
 
     visible.forEach((comp, vi) => {
         const outerDn = getElementOuterDn(comp, bodyDN);
@@ -362,14 +401,20 @@ function drawAllComponents(visible, canvas) {
                   `ontouchend="window.svgTouchEnd(event)">`
                 : '';
         const grpClose = comp._cfgIdx !== undefined ? `</g>` : '';
-
-        // Pierścień kompletu: boczne zakładki nachodzące w dół na krąg (wkład 0).
+        // Pierścień kompletu: boczne zakładki od spodu płyty (bez przerwy),
+        // w całości poza trzonem — pod nawisem płyty, wkład 0.
         if (relief.ringZero.has(vi)) {
             const tabHpx = Math.max((comp.height || 150) * pxMm, 6);
-            svgOut += grpOpen + drawReliefRingTabs(cx, w, y, tabHpx) + grpClose;
+            const tabsTop = y - dylMm * pxMm;
+            const shaftW = Math.max(mmToPx(typeof bodyDN === 'number' ? bodyDN : 1000), 20);
+            const platePrev = visible[vi - 1];
+            const plateW = platePrev
+                ? Math.max(mmToPx(getElementOuterDn(platePrev, bodyDN)), 20)
+                : shaftW;
+            reliefBars +=
+                grpOpen + drawReliefRingTabs(cx, shaftW, plateW, tabsTop, tabHpx) + grpClose;
             return;
         }
-
         let h = (comp.height || 0) * pxMm;
 
         // Syntetyczna grubość rysowania dla elementów bez fizycznej wysokości
@@ -391,10 +436,10 @@ function drawAllComponents(visible, canvas) {
 
         y += h;
 
-        // Dylatacja pod płytą kompletu: pusta przerwa 50mm z wymiarem.
+        // Dylatacja pod płytą kompletu: 50mm w słupku + wymiar (pas pierścienia
+        // kryje tę strefę — brak pustego prostokąta).
         if (relief.gapAfter.has(vi)) {
             const gapHpx = dylMm * pxMm;
-            svgOut += `<rect x="${x}" y="${y}" width="${w}" height="${gapHpx}" style="fill:transparent;stroke:${SVG_COLORS.dimLine}" stroke-width="0.7" stroke-dasharray="3,2" opacity="0.6"/>`;
             dimLinesY.push(y);
             dimLinesY.push(y + gapHpx);
             svgOut += drawComponentDimension(y, gapHpx, dylMm);
@@ -402,10 +447,15 @@ function drawAllComponents(visible, canvas) {
         }
     });
 
+    // Pasy pierścieni ponad kręgami (malowanie wierzchnie).
+    svgOut += reliefBars;
+
     return { svg: svgOut, dimLinesY };
 }
 
 /* ===== Rejestracja globali ===== */
 window.buildVisibleComponents = buildVisibleComponents;
+window.getReliefKompletIdx = getReliefKompletIdx;
+window.getReliefKompletConfigIdx = getReliefKompletConfigIdx;
 window.calculateCanvasParams = calculateCanvasParams;
 window.drawAllComponents = drawAllComponents;

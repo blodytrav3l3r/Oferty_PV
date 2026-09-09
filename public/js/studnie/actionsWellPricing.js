@@ -410,7 +410,26 @@ function calcWellStats(well) {
     let psiaSeed = !!well.psiaBuda;
     const configReversed = [...(well.config || [])].reverse();
 
-    configReversed.forEach((item) => {
+    // Komplet odciążający: pierścień nachodzi na krąg (wkład 0), pod płytą
+    // dylatacja RELIEF_DYLATACJA_MM. Bez tego płyta+pierścień sumowały pełne
+    // height z cennika (np. 150+150 zamiast 150+50+0).
+    const __reliefFind = (id) =>
+        typeof getStudnieProductById === 'function'
+            ? getStudnieProductById(id)
+            : (typeof studnieProducts !== 'undefined' ? studnieProducts : []).find(
+                  (pr) => pr.id === id
+              );
+    const __relief =
+        typeof getReliefKompletConfigIdx === 'function'
+            ? getReliefKompletConfigIdx(well.config || [], __reliefFind)
+            : { ringZero: new Set(), gapAfter: new Set() };
+    const __reliefDyl =
+        typeof window !== 'undefined' && typeof window.RELIEF_DYLATACJA_MM === 'number'
+            ? window.RELIEF_DYLATACJA_MM
+            : 50;
+
+    configReversed.forEach((item, rIdx) => {
+        const topIdx = configReversed.length - 1 - rIdx;
         const p =
             typeof resolveEffectiveProduct === 'function'
                 ? resolveEffectiveProduct(well, item.productId, item)
@@ -456,6 +475,7 @@ function calcWellStats(well) {
 
         for (let q = 0; q < item.quantity; q++) {
             let h = p.height || 0;
+            if (__relief.ringZero.has(topIdx)) h = 0;
             if (isDennicaLike) {
                 h -= dennicaHeightPenalty(p, psiaSeed ? 'dennica' : belowType);
                 psiaSeed = false;
@@ -466,6 +486,7 @@ function calcWellStats(well) {
                 belowType = p.componentType;
             }
         }
+        if (__relief.gapAfter.has(topIdx)) height += __reliefDyl * (item.quantity || 1);
     });
 
     if (well.przejscia) {
