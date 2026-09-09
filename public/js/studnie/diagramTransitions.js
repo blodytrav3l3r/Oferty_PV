@@ -9,7 +9,9 @@
  *   parseTransitionGeometry()     — parsuje geometrię przejścia (wymiary, pozycja)
  *   drawTransitionShape()         — generuje kształt SVG (kółko/elipsa/prostokąt)
  *   drawTransitionLabel()         — etykieta kąta na przejściu
- *   drawTransitionGuideLine()     — linia pomocnicza od przejścia do prawej osi wymiarowej
+ *   drawTransitionGuideLine()     — odnośnik od przejścia do etykiety DN (linia + kropka)
+ *   formatTransitionLift()        — podniesienie dolnej krawędzi nad dnem (`+1,00`/`-0,20`)
+ *   layoutTransitionLabels()      — rozsuwanie etykiet DN bez nachodzenia (shrink 11→10px)
  *
  * Zależności globalne:
  *   SVG_COLORS (diagramTheme.js)
@@ -67,32 +69,34 @@ function drawTransitions(well, canvas, dimLinesY) {
             isEgg,
             isBack,
             angle,
-            dnText: `DN ${Math.round(prH)}`,
+            liftM: mmFromBottom / 1000,
+            dnText: `DN ${Math.round(prH)} ${formatTransitionLift(mmFromBottom / 1000)}`.trim(),
             labelY: prY
         });
     });
 
-    // Rozwiąż kolizje etykiet DN: dwie kolumny na prawej osi (naprzemiennie),
-    // a w obrębie kolumny etykiety rozsuwane pionowo (tekst obrócony -90° rośnie w górę od punktu zaczepienia)
+    // Rozsuwanie etykiet DN: dwie kolumny na prawej osi (naprzemiennie).
+    // Etykieta obrócona -90° zajmuje pionowo ~len*charW, więc rozstaw
+    // liczony od połówek długości sąsiadów. Przy przepełnieniu osi
+    // czcionka ściskana 11px → 10px (decyzja użytkownika).
     items.sort((a, b) => a.labelY - b.labelY);
     items.forEach((it, i) => {
         it.col = i % 2;
         it.labelX = it.col === 0 ? rX + 5 : rX + 28;
     });
     const maxLabelY = mT + drawH - 15;
-    for (let col = 0; col < 2; col++) {
-        let prevY = -Infinity;
-        for (const it of items) {
-            if (it.col !== col) continue;
-            if (prevY !== -Infinity) {
-                const minGap = it.dnText.length * 6.5 + 6;
-                if (it.labelY - prevY < minGap) {
-                    it.labelY = Math.min(prevY + minGap, maxLabelY);
-                }
-            }
-            prevY = it.labelY;
-        }
+    let labelFontSize = 11;
+    layoutTransitionLabels(items, 11, mT, maxLabelY);
+    if (transitionLabelsOverflow(items, 11)) {
+        labelFontSize = 10;
+        items.forEach((it) => {
+            it.labelY = it.prY;
+        });
+        layoutTransitionLabels(items, 10, mT, maxLabelY);
     }
+    items.forEach((it) => {
+        it.fontSize = labelFontSize;
+    });
 
     let svgOut = '';
     items.forEach((it) => {
@@ -108,10 +112,90 @@ function drawTransitions(well, canvas, dimLinesY) {
         );
         svgOut += drawTransitionLabel(it.px, it.prY, it.angle, it.isBack);
         svgOut += drawTransitionGuideLine(it);
-        svgOut += `<text x="${it.labelX}" y="${it.labelY}" transform="rotate(-90 ${it.labelX} ${it.labelY})" text-anchor="middle" style="fill:${SVG_COLORS.transitionActive}" font-size="11" font-family="Inter,sans-serif" font-weight="700">${it.dnText}</text>`;
+        svgOut += `<text x="${it.labelX}" y="${it.labelY}" transform="rotate(-90 ${it.labelX} ${it.labelY})" text-anchor="middle" style="fill:${SVG_COLORS.transitionActive}" font-size="${it.fontSize}" font-family="Inter,sans-serif" font-weight="700">${it.dnText}</text>`;
     });
 
     return svgOut;
+}
+
+/**
+ * Formatuje podniesienie dolnej krawędzi przejścia nad dnem studni (metry).
+ * Zawsze ze znakiem: dodatnie `+1,00`, ujemne `-0,20` (decyzja użytkownika).
+ * Zwraca '' gdy brak danych — wtedy etykieta to sam `DN xxx`.
+ */
+function formatTransitionLift(liftM) {
+    const v = typeof liftM === 'number' ? liftM : parseFloat(liftM);
+    if (!isFinite(v)) return '';
+    const rounded = Math.round(v * 100) / 100;
+    const sign = rounded < 0 ? '-' : '+';
+    return sign + Math.abs(rounded).toFixed(2).replace('.', ',');
+}
+
+/**
+ * Połówka pionowego rozstawu etykiety (tekst obrócony -90°).
+ */
+function transitionLabelHalfSpan(dnText, fontSize) {
+    const charW = fontSize <= 10 ? 6.0 : 6.5;
+    return (dnText.length * charW) / 2 + 4;
+}
+
+/**
+ * Rozsuwa etykiety w obrębie kolumn + przebieg wsteczny przy dobiciu do końca osi.
+ */
+function layoutTransitionLabels(items, fontSize, mT, maxLabelY) {
+    for (let col = 0; col < 2; col++) {
+        let prevY = -Infinity;
+        let prevHalf = 0;
+        for (const it of items) {
+            if (it.col !== col) continue;
+            const half = transitionLabelHalfSpan(it.dnText, fontSize);
+            if (prevY !== -Infinity) {
+                const minGap = prevHalf + half + 4;
+                if (it.labelY - prevY < minGap) {
+                    it.labelY = prevY + minGap;
+                }
+            }
+            if (it.labelY > maxLabelY) it.labelY = maxLabelY;
+            prevY = it.labelY;
+            prevHalf = half;
+        }
+        let nextY = Infinity;
+        let nextHalf = 0;
+        const colItems = items.filter((it) => it.col === col);
+        for (let i = colItems.length - 1; i >= 0; i--) {
+            const it = colItems[i];
+            const half = transitionLabelHalfSpan(it.dnText, fontSize);
+            if (nextY !== Infinity) {
+                const minGap = half + nextHalf + 4;
+                if (nextY - it.labelY < minGap) {
+                    it.labelY = nextY - minGap;
+                }
+            }
+            if (it.labelY - half < mT) it.labelY = mT + half;
+            nextY = it.labelY;
+            nextHalf = half;
+        }
+    }
+}
+
+/**
+ * Sprawdza, czy po rozsunięciu zostały nakładające się etykiety.
+ */
+function transitionLabelsOverflow(items, fontSize) {
+    for (let col = 0; col < 2; col++) {
+        let prevY = -Infinity;
+        let prevHalf = 0;
+        for (const it of items) {
+            if (it.col !== col) continue;
+            const half = transitionLabelHalfSpan(it.dnText, fontSize);
+            if (prevY !== -Infinity && it.labelY - prevY < prevHalf + half + 4 - 0.01) {
+                return true;
+            }
+            prevY = it.labelY;
+            prevHalf = half;
+        }
+    }
+    return false;
 }
 
 /**
@@ -179,11 +263,16 @@ function drawTransitionLabel(px, prY, angle, isBack) {
 }
 
 /**
- * Generuje delikatną linię pomocniczą łączącą przejście z jego etykietą DN.
+ * Generuje odnośnik łączący przejście z jego etykietą DN (linia + kropka kotwicy).
+ * Etykieta po rozsunięciu może stać daleko od rury — linia zawsze je łączy.
  */
 function drawTransitionGuideLine(it) {
     const dimColor = it.isBack ? SVG_COLORS.dnLabel : SVG_COLORS.transitionActive;
-    return `<line x1="${it.px + it.radiusW + 2}" y1="${it.prY}" x2="${it.labelX}" y2="${it.labelY}" style="stroke:${dimColor}" stroke-width="0.8" stroke-dasharray="2,2" opacity="0.5"/>`;
+    const ax = it.px + it.radiusW + 2;
+    return (
+        `<circle cx="${ax}" cy="${it.prY}" r="1.6" style="fill:${dimColor}" opacity="0.8"/>` +
+        `<line x1="${ax}" y1="${it.prY}" x2="${it.labelX}" y2="${it.labelY}" style="stroke:${dimColor}" stroke-width="0.8" stroke-dasharray="2,2" opacity="0.5"/>`
+    );
 }
 
 /* ===== Rejestracja globali ===== */
