@@ -34,35 +34,39 @@
 
 ## Główne technologie
 
-| Technologia      | Wersja   | Licencja      | Zastosowanie              | Link                                                       | Komercyjnie |
-| ---------------- | -------- | ------------- | ------------------------- | ---------------------------------------------------------- | :---------: |
-| Node.js          | ≥22.13   | MIT           | Środowisko uruchomieniowe | https://nodejs.org                                         |     ✅      |
-| TypeScript       | ^6.0.2   | Apache-2.0    | Język programowania       | https://typescriptlang.org                                 |     ✅      |
-| Express          | ^4.22.2  | MIT           | Framework backend         | https://expressjs.com                                      |     ✅      |
-| Prisma           | ^6.0.0   | Apache-2.0    | ORM / baza danych         | https://prisma.io                                          |     ✅      |
-| SQLite           | —        | Public Domain | Baza danych               | https://sqlite.org                                         |     ✅      |
-| Jest             | ^30.3.0  | MIT           | Testy                     | https://jestjs.io                                          |     ✅      |
-| Puppeteer        | ^24.43.1 | Apache-2.0    | Generowanie PDF           | https://pptr.dev                                           |     ✅      |
-| Sentry           | ^10.59.0 | MIT           | Monitoring błędów         | https://sentry.io                                          |     ✅      |
-| Swagger          | ^6.3.0   | Apache-2.0    | Dokumentacja API          | https://swagger.io                                         |     ✅      |
-| docx (npm)       | ^9.6.1   | MIT           | Generowanie DOCX          | https://docx.js.org                                        |     ✅      |
-| Helmet           | ^8.1.0   | MIT           | Bezpieczeństwo HTTP       | https://helmetjs.github.io                                 |     ✅      |
-| Zod              | ^4.3.6   | MIT           | Walidacja danych          | https://zod.dev                                            |     ✅      |
-| ESLint           | ^10.8.1  | MIT           | Linter                    | https://eslint.org                                         |     ✅      |
-| Prettier         | ^3.9.4   | MIT           | Formatter kodu            | https://prettier.io                                        |     ✅      |
-| Husky            | ^9.1.7   | MIT           | Git hooks                 | https://typicode.github.io/husky                           |     ✅      |
-| commitlint       | ^21.1.0  | MIT           | Walidacja commitów        | https://commitlint.js.org                                  |     ✅      |
-| standard-version | ^9.5.0   | ISC           | Auto-wersjonowanie        | https://github.com/conventional-changelog/standard-version |     ✅      |
-| esbuild          | ^0.28.2  | MIT           | Bundling JS               | https://esbuild.github.io                                  |     ✅      |
-| Playwright       | ^1.62.1  | Apache-2.0    | E2E / a11y                | https://playwright.dev                                     |     ✅      |
+| Technologia        | Wersja   | Licencja      | Zastosowanie              | Link                                                        | Komercyjnie |
+| ------------------ | -------- | ------------- | ------------------------- | ----------------------------------------------------------- | :---------: |
+| Node.js            | ≥22.13   | MIT           | Środowisko uruchomieniowe | https://nodejs.org                                          |     ✅      |
+| TypeScript         | ^6.0.2   | Apache-2.0    | Język programowania       | https://typescriptlang.org                                  |     ✅      |
+| Express            | ^4.22.2  | MIT           | Framework backend         | https://expressjs.com                                       |     ✅      |
+| Prisma             | ^6.0.0   | Apache-2.0    | ORM / baza danych         | https://prisma.io                                           |     ✅      |
+| SQLite             | —        | Public Domain | Baza danych               | https://sqlite.org                                          |     ✅      |
+| Jest               | ^30.3.0  | MIT           | Testy                     | https://jestjs.io                                           |     ✅      |
+| Puppeteer          | ^24.43.1 | Apache-2.0    | Generowanie PDF           | https://pptr.dev                                            |     ✅      |
+| Sentry             | ^10.59.0 | MIT           | Monitoring błędów         | https://sentry.io                                           |     ✅      |
+| Swagger            | ^6.3.0   | Apache-2.0    | Dokumentacja API          | https://swagger.io                                          |     ✅      |
+| docx (npm)         | ^9.6.1   | MIT           | Generowanie DOCX          | https://docx.js.org                                         |     ✅      |
+| Helmet             | ^8.1.0   | MIT           | Bezpieczeństwo HTTP       | https://helmetjs.github.io                                  |     ✅      |
+| bcryptjs           | ^3.0.3   | MIT           | Haszowanie haseł          | https://github.com/dcodeIO/bcrypt.js                        |     ✅      |
+| compression        | ^1.8.1   | MIT           | Kompresja HTTP            | https://expressjs.com/en/resources/middleware/compression   |     ✅      |
+| cookie-parser      | ^1.4.7   | MIT           | Ciastka sesji             | https://expressjs.com/en/resources/middleware/cookie-parser |     ✅      |
+| dotenv             | ^17.4.1  | BSD-2-Clause  | Zmienne .env              | https://github.com/motdotla/dotenv                          |     ✅      |
+| swagger-ui-express | ^5.0.1   | Apache-2.0    | UI dokumentacji API       | https://swagger.io                                          |     ✅      |
+| Zod                | ^4.3.6   | MIT           | Walidacja danych          | https://zod.dev                                             |     ✅      |
+| ESLint             | ^10.8.1  | MIT           | Linter                    | https://eslint.org                                          |     ✅      |
+| Prettier           | ^3.9.4   | MIT           | Formatter kodu            | https://prettier.io                                         |     ✅      |
+| Husky              | ^9.1.7   | MIT           | Git hooks                 | https://typicode.github.io/husky                            |     ✅      |
+| commitlint         | ^21.1.0  | MIT           | Walidacja commitów        | https://commitlint.js.org                                   |     ✅      |
+| standard-version   | ^9.5.0   | ISC           | Auto-wersjonowanie        | https://github.com/conventional-changelog/standard-version  |     ✅      |
+| esbuild            | ^0.28.2  | MIT           | Bundling JS               | https://esbuild.github.io                                   |     ✅      |
+| Playwright         | ^1.62.1  | Apache-2.0    | E2E / a11y                | https://playwright.dev                                      |     ✅      |
 
 ## Narzędzia CI/CD
 
-| Narzędzie      | Licencja                 | Zastosowanie            | Komercyjnie |
-| -------------- | ------------------------ | ----------------------- | :---------: |
-| GitHub Actions | darmowe dla public repos | CI/CD pipeline          |     ✅      |
-| Docker         | Apache-2.0               | Konteneryzacja          |     ✅      |
-| Codecov        | MIT (action)             | Raporty pokrycia testów |     ✅      |
+| Narzędzie      | Licencja                 | Zastosowanie   | Komercyjnie |
+| -------------- | ------------------------ | -------------- | :---------: |
+| GitHub Actions | darmowe dla public repos | CI/CD pipeline |     ✅      |
+| Docker         | Apache-2.0               | Konteneryzacja |     ✅      |
 
 ## Podsumowanie zgodności komercyjnej
 

@@ -1,8 +1,8 @@
 # API — dokumentacja endpointów
 
 **Wersja:** 1.25.0  
-**Ostatnia aktualizacja:** 2026-08-24  
-**Dokumentacja Swagger/OpenAPI:** `/api/docs` (po uruchomieniu serwera) — źródło autorytatywne
+**Ostatnia aktualizacja:** 2026-09-09  
+**Dokumentacja Swagger/OpenAPI:** `/api/docs` (po uruchomieniu serwera) — źródło autorytatywne (surowy JSON: `GET /api/docs.json`)
 
 > **Uwaga:** Pełna, zawsze aktualna dokumentacja API dostępna jest przez Swagger pod `/api/docs`.
 > Poniższy opis może nie obejmować wszystkich endpointów — priorytetowo traktuj Swagger.
@@ -30,6 +30,22 @@ Sprawdzenie statusu serwera. Używany przez Docker HEALTHCHECK i Render health c
 ### `GET /api/version`
 
 Informacje o wersji aplikacji.
+
+### `GET /health/live`
+
+Liveness — czy proces Express odpowiada (publiczny). Odpowiedź: `{status: "ok", timestamp}`.
+
+### `GET /health/ready`
+
+Readiness — czy baza gotowa (publiczny, `SELECT 1`). Odpowiedź `200 {status: "ready", db: "ok"}` lub `503 {status: "not_ready", db: "error"}`.
+
+### `GET /metrics`
+
+Metryki in-process (tylko admin) — P50/P95 per endpoint, DB, loop-lag, PDF.
+
+### `POST /api/csp-report`
+
+Publiczny endpoint raportów CSP (`Content-Type: application/csp-report`, odpowiedź `204`, log warn przycięty do 2000 znaków).
 
 **Odpowiedź:**
 
@@ -82,7 +98,7 @@ Logowanie użytkownika. Zwraca token sesji i dane użytkownika.
 }
 ```
 
-**Rate limit:** 15 prób na 15 minut (LOGIN_LIMITER).
+**Rate limit:** 10 prób na minutę (LOGIN_LIMITER).
 
 ### `POST /api/auth/register`
 
@@ -163,6 +179,19 @@ Wymaga autoryzacji.
 | PUT    | `/api/products-studnie/pricelist` | Aktualizacja całego cennika studni  |
 
 Produkty są ładowane przez `prisma/seed.ts` z pliku `data/seed_studnie.json` (nie automatycznie przy starcie serwera).
+
+---
+
+## Wyszukiwanie ofert (`/api/offers/search`)
+
+Wymaga autoryzacji. Wyszukiwanie łączne (UNION rury + studnie) z kursorem (`nextCursor`/`nextCursorId`, limit max 100).
+
+| Metoda | Ścieżka                                            | Opis                              |
+| ------ | -------------------------------------------------- | --------------------------------- |
+| GET    | `/api/offers/search?q=&dateFrom=&dateTo=&...`      | Wyszukiwanie ofert (rury+studnie) |
+| GET    | `/api/offers/search/orders?id=&type=rury\|studnie` | Wyszukiwanie zamówień (max 50)    |
+
+`dateFrom`/`dateTo` muszą być w formacie ISO — nieprawidłowe wartości są odrzucane (zapytanie wykonuje się bez filtra dat).
 
 ---
 
@@ -258,12 +287,13 @@ Wymaga autoryzacji. Wyszukiwanie z kursorem (infinite scroll), paginacja po znor
 
 Wymaga autoryzacji. Montowana przed trasami `/:id` (barrel `orders/index.ts`).
 
-| Metoda | Ścieżka                                               | Opis                         |
-| ------ | ----------------------------------------------------- | ---------------------------- |
-| GET    | `/api/orders-studnie/next-number/:userId`             | Następny numer zamówienia    |
-| POST   | `/api/orders-studnie/claim-number/:userId`            | Rezerwacja numeru zamówienia |
-| POST   | `/api/orders-studnie/claim-production-number/:userId` | Rezerwacja numeru PZ         |
-| GET    | `/api/orders-studnie/recycled`                        | Recykling numerów            |
+| Metoda | Ścieżka                                                | Opis                                                                                  |
+| ------ | ------------------------------------------------------ | ------------------------------------------------------------------------------------- |
+| GET    | `/api/orders-studnie/next-number/:userId`              | Następny numer zamówienia                                                             |
+| POST   | `/api/orders-studnie/claim-number/:userId`             | Rezerwacja numeru zamówienia                                                          |
+| POST   | `/api/orders-studnie/claim-production-number/:userId`  | Rezerwacja numeru PZ                                                                  |
+| POST   | `/api/orders-studnie/claim-production-numbers/:userId` | Hurtowa rezerwacja numerów PZ (`{count: 1..200}`, max 200, format `SYM/LIT/NNNNN/RR`) |
+| GET    | `/api/orders-studnie/recycled`                         | Recykling numerów                                                                     |
 
 ## Klienci (`/api/clients`)
 
@@ -284,10 +314,11 @@ Wymaga autoryzacji.
 
 Wymaga autoryzacji (administrator).
 
-| Metoda | Ścieżka                            | Opis                        |
-| ------ | ---------------------------------- | --------------------------- |
-| GET    | `/api/audit`                       | Lista logów audytowych      |
-| GET    | `/api/audit/:entityType/:entityId` | Logi dla konkretnego zasobu |
+| Metoda | Ścieżka                                           | Opis                                                            |
+| ------ | ------------------------------------------------- | --------------------------------------------------------------- |
+| GET    | `/api/audit`                                      | Lista logów audytowych                                          |
+| GET    | `/api/audit/:entityType/:entityId`                | Logi dla konkretnego zasobu                                     |
+| GET    | `/api/audit/rebuild/:entityType/:entityId/:logId` | Rekonstrukcja stanu zasobu na moment wpisu (404 gdy brak wpisu) |
 
 ---
 
@@ -295,11 +326,12 @@ Wymaga autoryzacji (administrator).
 
 Wymaga autoryzacji (administrator).
 
-| Metoda | Ścieżka              | Opis                            |
-| ------ | -------------------- | ------------------------------- |
-| GET    | `/api/settings`      | Pobranie wszystkich ustawień    |
-| GET    | `/api/settings/:key` | Pobranie konkretnego ustawienia |
-| PUT    | `/api/settings/:key` | Aktualizacja ustawienia         |
+| Metoda | Ścieżka                     | Opis                                                            |
+| ------ | --------------------------- | --------------------------------------------------------------- |
+| GET    | `/api/settings`             | Pobranie wszystkich ustawień                                    |
+| GET    | `/api/settings/year-letter` | Litera roku (`{letter, year}`, klucz `year_letter_YYYY`)        |
+| PUT    | `/api/settings/year-letter` | Ustawienie litery roku (admin, uppercase, `{ok, letter, year}`) |
+| GET    | `/api/settings/:key`        | Pobranie konkretnego ustawienia                                 |
 
 ---
 
@@ -407,10 +439,12 @@ Wymaga autoryzacji.
 
 Wymaga autoryzacji (administrator).
 
-| Metoda | Ścieżka                   | Opis                      |
-| ------ | ------------------------- | ------------------------- |
-| GET    | `/api/feature-flags`      | Lista flag funkcjonalnych |
-| PUT    | `/api/feature-flags/:key` | Aktualizacja flagi        |
+| Metoda | Ścieżka                            | Opis                                                                   |
+| ------ | ---------------------------------- | ---------------------------------------------------------------------- |
+| GET    | `/api/feature-flags`               | Lista flag funkcjonalnych                                              |
+| PUT    | `/api/feature-flags/import-export` | Włączenie/wyłączenie import-eksport (`{enabled}`, audyt)               |
+| PUT    | `/api/feature-flags/ai-ml`         | Włączenie/wyłączenie AI/ML (`{enabled: boolean}`, 400 gdy nie-boolean) |
+| POST   | `/api/feature-flags/audit`         | Ręczny wpis audytu (`entityType`, `entityId`, `action`, 400 bez pól)   |
 
 ---
 
@@ -424,6 +458,19 @@ Wymaga autoryzacji (administrator).
 | PRICELIST_WRITE_LIMITER  | 1 godz | 30       | Aktualizacja cenników (`/api/products*`, `/api/preco-pricing`, `/api/price-overrides`) |
 | EXPORT_LIMITER           | 15 min | 20       | Eksport PDF/DOCX (`/api/export-combined/*`, `/:id/export-*`)                           |
 | WRITE_PRODUCTION_LIMITER | 1 min  | 30       | Zlecenia produkcyjne (`DELETE /api/orders-studnie/production/:id`)                     |
+| TELEMETRY_WRITE_LIMITER  | 1 min  | 1200     | Zapis telemetrii (`POST /api/telemetry/ai/config                                       | event | version | acceptance-full | predict/batch | reward*`) |
+| READ_LIMITER             | 1 min  | 600      | Odczyty telemetrii (dashboard, wiedza, modele, treningi — polling)                     |
+
+---
+
+## Administracja (`/api/admin`)
+
+Wymaga autoryzacji (administrator). FTS to dane pochodne — status i rebuild wyłącznie dla admina.
+
+| Metoda | Ścieżka                  | Opis                                                                                    |
+| ------ | ------------------------ | --------------------------------------------------------------------------------------- |
+| GET    | `/api/admin/fts-status`  | Szybka kontrola spójności FTS (tylko odczyty)                                           |
+| POST   | `/api/admin/fts-rebuild` | Pełna przebudowa FTS z tabel biznesowych (tylko na żądanie, `{ok, rows, lastProgress}`) |
 
 ---
 

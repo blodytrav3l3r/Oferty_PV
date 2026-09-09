@@ -20,6 +20,11 @@ Całkowite wycofanie Vite. Usunięto: `vite`, `esbuild`, `concurrently`, `wait-o
 `dev:frontend`. `npm run dev` = `ts-node-dev ./server.ts` (jeden proces na :3000),
 który serwuje API i `public/`.
 
+> Uwaga (2026-09): `esbuild ^0.28.2` wrócił do devDependencies jako narzędzie
+> bundlingu JS (`scripts/bundle-scripts.mjs`, por. `ARCHITECTURE.md`) — nie jako
+> dev server. Decyzja o wycofaniu Vite pozostaje w mocy (brak `vite.config.*`,
+> brak `vite` w zależnościach).
+
 ## Uzasadnienie
 
 1. **Zero zużywanych cech Vite** — klasyczne skrypty, brak HMR/TS/`import.meta.env`

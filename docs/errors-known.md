@@ -1,5 +1,11 @@
 # Znane błędy — Oferty_PV
 
+> Mapowanie numeracji ↔ `AGENTS.md` (tabela bazy błędów): sekwencje rozeszły się po #22
+> (osobne dopiski w obu plikach, bez przenumerowania — odnośniki `#3/#24/#39` w kodzie muszą zostać stabilne).
+> Odpowiedniki: errors-known #46/#47/#48 = AGENTS #24/#26/#46; errors-known #23 = AGENTS #25;
+> errors-known #24 (dedup AUTO_JS) / #25 (indeksy dedup) / #26 (FTS5) nie mają wierszy w AGENTS
+> (dedup opisany w `ARCHITECTURE.md`); AGENTS #47 = errors-known #49.
+
 ## 1. Seed timeout na Render (productsStudnie)
 
 **Problem**: 824 produktów × 35 pól = 28k wartości w jednej `$transaction` timeoutuje.
@@ -301,3 +307,9 @@
 **Problem**: `studnieProductsById Map` rebuildowana tylko w setterze `window.studnieProducts` (`globals.js`); bezpośrednie przypisanie (`studnieProducts = ...`) omijało rebuild → pusta Map → `getStudnieProductById` zwracał `null` (pusta lista, cena 0, brak przejść). Dodatkowo błąd precedence `?.componentType` zwracał obiekt zamiast boolean.
 **Objaw**: Pusta lista produktów, cena 0, brak przejść w diagramie.
 **Fix**: Hybryda: jawny kontrakt `window.studnieProducts =` + lazy `size` detector + `find` fallback w `getStudnieProductById`; formalny `__assertStudnieMapFresh()`; poprawka nawiasów przy `resolve(...)?.componentType === 'wlaz'`. Test: `globalsMapStale.test.ts`.
+
+## 49. Offset Właza w mapowaniu vis→TD (Excel, odpowiednik AGENTS #47)
+
+**Problem**: `_excelBuildVisibleSeq` i `_excelGetCellByLogical` liczyły kolumnę Właz (select) jako slot komponentów (`vis`), a render TBODY trzyma Właz w prefiksie i pomija select/auto w sekcji komponentów — każdy zapis/odczyt za Włazem lądował o 1 TD za daleko (para relief: fantomowa „1" w Krąg H=250, pusta komórka partnera).
+**Objaw**: Fantomowe ilości w kolumnach kręgów, puste komórki partnera pary relief.
+**Fix**: SSoT layoutu TD: `vis` tylko dla renderowanych kolumn (widoczne minus select/auto), `tailVisBase` od liczby renderowanych; `_excelGetCellByLogical` deleguje tę samą regułę. Testy: `excelReliefPair.test.ts`, `tests/playwright/excelReliefPair.cjs`.

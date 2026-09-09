@@ -92,8 +92,9 @@ liczb. Klasy CSS używają zmiennych `--z-*` z `style.base.css:218-222` (`--z-he
 
 - Trójkolumnowy grid studni: `.well-app-layout` (`350px 1fr 350px`).
 - Breakpointy (kanon): **1400px** (sidebar 350→300), **1200px** (ukryj diagram),
-  **900px** (1 kolumna), **768px** (form-row), **700px** (header wrap, ukryj teksty kafelków),
-  **480px** (centrowanie, ukryj logo text).
+  **1100px**, **900px** (1 kolumna), **768px** (form-row), **600px**, **700px** (header wrap, ukryj teksty kafelków),
+  **480px** (centrowanie, ukryj logo text). Lokalne odchylenia modułowe: 860 / 720 / 700 / 640 —
+  nie ujednolicaj bez porównania screenshotów przed/po (regresja UI 1.18.0).
 - Responsywność bez poziomego scrolla; test: 375 / 768 / 1024 / 1440.
 
 ## 5. Komponenty wspólne (SSoT klas: `style.base.css`)
@@ -119,7 +120,7 @@ liczb. Klasy CSS używają zmiennych `--z-*` z `style.base.css:218-222` (`--z-he
 ## 6. Modale — jeden wzorzec (`modalCore.js`)
 
 - Modal tworzymy **wyłącznie** przez `public/js/shared/modalCore.js` (klasa
-  `.modal-overlay.js-modal-overlay` + `.modal` zdefiniowane w `style.responsive.css:559+`, `showModal` w `modalCore.js:88`).
+  `.modal-overlay.js-modal-overlay` + `.modal` zdefiniowane w `style.responsive.css:559+`, `showModal` w `modalCore.js:106`).
 - **Zakaz** budowania modalów inline-styled w JS (stary wzorzec z `ui.js`/`clientManager.js`).
 - Zamknięcie Esc/overlay; focus wewnątrz modala; `aria-label` na overlayu i przyciskach.
 - Warstwy przez `LAYERS.*`, szerokości przez `.modal` (max 550px) / warianty szerokie.

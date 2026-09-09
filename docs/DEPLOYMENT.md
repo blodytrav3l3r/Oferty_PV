@@ -76,12 +76,15 @@ Projekt zawiera wygodne skrypty startowe:
 
 Plik `Dockerfile` buduje obraz na bazie `node:22-slim`. Wykonuje:
 
-1. Instalację OpenSSL (wymagany przez Prisma)
+1. Instalację OpenSSL (wymagany przez Prisma) + biblioteki systemowe Chromium dla Puppeteer (generowanie PDF: libnss3, libatk*, libcups2, libdrm2, libgbm1, libasound2, libpango, libcairo, fonts-liberation)
 2. `npm ci` (wszystkie zależności — bez `npm prune --production`; devDeps są potrzebne w runtime do seedowania i `migrate deploy`)
-3. `npx prisma generate` (generacja klienta)
-4. `npm run build` (kompilacja TypeScript)
-5. Symlink `dist/generated` → `generated` (klient Prisma)
+3. `npx prisma generate` (generacja klienta, `DATABASE_URL=file:/var/data/...`)
+4. `npm run build` (kompilacja TypeScript, zawiera `copy-prisma-client.mjs`)
+5. Symlink `dist/generated` → `generated` (klient Prisma; `rm -rf` przed `ln -sf`, bo build już kopiuje)
 6. Konfigurację katalogu `/var/data` dla bazy danych
+7. `ENV NODE_ENV=production PORT=10000 HOST=0.0.0.0 COOKIE_SECURE=true` (secure cookie za reverse proxy)
+8. `EXPOSE 10000` (mapowane na 3000 hosta: `3000:10000`)
+9. `ENTRYPOINT scripts/docker-entrypoint.sh` (naprawa CRLF + chmod, `migrate deploy` + seed przy starcie)
 
 ### docker-compose.yml
 
@@ -111,7 +114,7 @@ services:
             interval: 30s
             timeout: 10s
             retries: 3
-            start_period: 10s
+            start_period: 30s
 
 networks:
     sok-network:
@@ -163,12 +166,14 @@ Aplikacja dostępna pod: `http://localhost:3000`
 
 ### Health check
 
-Docker ma wbudowany HEALTHCHECK:
+Docker ma wbudowany HEALTHCHECK (w `Dockerfile`, `start-period: 15s`):
 
 ```
 HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
     CMD node -e "require('http').get('http://localhost:10000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
 ```
+
+Uwaga: `docker-compose.yml` używa `start_period: 30s` w sekcji `healthcheck` — dłuższy okres startu pod compose niż wbudowany w obraz.
 
 ## 4. VPS (Linux)
 
