@@ -179,7 +179,7 @@ function _excelBuildComponentColumns(dn, well) {
         const ctLabels = {
             plyta_din: 'Pł. DIN',
             plyta_najazdowa: 'Pł. najazd.',
-            plyta_zamykajaca: 'Pł. zamyk.',
+            plyta_zamykajaca: 'PŁ.ODC',
             pierscien_odciazajacy: 'Pierśc. odciąż.'
         };
         prods.forEach((p) => {

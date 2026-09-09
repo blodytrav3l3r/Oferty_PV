@@ -128,7 +128,7 @@ function _excelShortLabel(name, componentType) {
             return { short: short, detail: detail };
         }
         case 'plyta_zamykajaca': {
-            const short = 'Pł.zamyk';
+            const short = 'PŁ.ODC';
             let detail = name.replace(/^Płyta zamykająca\s*/i, '').trim();
             const hMatch = detail.match(/H[=:]?\s*(\d+)/i);
             if (hMatch) detail = hMatch[1];

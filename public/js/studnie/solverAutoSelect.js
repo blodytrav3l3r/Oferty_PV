@@ -21,6 +21,10 @@
 let isAutoSelectRunning = false;
 window.__autoSelectCallCount = 0;
 const __MAX_AUTO_SELECT_CALLS = 10;
+// Model kompletu odciążającego: pierścień nachodzi na krąg (wkład wysokości 0),
+// a pomiędzy kręgiem a płytą jest dylatacja 50mm (wliczana w wysokość i podgląd).
+const RELIEF_DYLATACJA_MM = 50;
+window.RELIEF_DYLATACJA_MM = RELIEF_DYLATACJA_MM;
 window.autoSelectComponents = async function autoSelectComponents(autoTriggered = false) {
     if (isAutoSelectRunning) {
         if (autoTriggered) logger.debug('wellSolver', '[AutoSelect] Pomijam — już trwa auto-dobór');
@@ -372,7 +376,8 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
                     { productId: plate.id, quantity: 1 },
                     { productId: ring.id, quantity: 1 }
                 );
-                h += plate.height + ring.height;
+                // Komplet: pierścień nachodzi na krąg (wkład 0) + dylatacja 50mm pod płytą.
+                h += plate.height + RELIEF_DYLATACJA_MM;
                 lbl = plate.name + ' + Pierścień';
             } else {
                 items.push({ productId: topP.id, quantity: 1 });
@@ -761,12 +766,41 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
                 belowType = kp.componentType;
             }
         }
+        // Komplet odciążający w walidacji: pierścień nachodzi na krąg (segment pusty),
+        // a pod płytą leży dylatacja 50mm (osobny segment).
+        const topHasRing = [...topItems].some((t) => {
+            const rp =
+                typeof getStudnieProductById === 'function'
+                    ? getStudnieProductById(t.productId)
+                    : studnieProducts.find((p) => p.id === t.productId);
+            return rp && rp.componentType === 'pierscien_odciazajacy';
+        });
         for (const t of [...topItems].reverse()) {
             const tp =
                 typeof getStudnieProductById === 'function'
                     ? getStudnieProductById(t.productId)
                     : studnieProducts.find((p) => p.id === t.productId);
             if (tp) {
+                if (tp.componentType === 'pierscien_odciazajacy') {
+                    segs.push({ type: tp.componentType, h: 0, start: y, end: y });
+                    if (tp.componentType !== 'uszczelka') {
+                        belowType = tp.componentType;
+                    }
+                    continue;
+                }
+                if (
+                    topHasRing &&
+                    (tp.componentType === 'plyta_zamykajaca' ||
+                        tp.componentType === 'plyta_najazdowa')
+                ) {
+                    segs.push({
+                        type: 'dylatacja',
+                        h: RELIEF_DYLATACJA_MM,
+                        start: y,
+                        end: y + RELIEF_DYLATACJA_MM
+                    });
+                    y += RELIEF_DYLATACJA_MM;
+                }
                 let actualH = tp.height;
                 if (isDennicaLikeProduct(tp)) {
                     actualH -= dennicaHeightPenalty(tp, belowType);
@@ -954,7 +988,6 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
                 rZak || getTopClosure(redTargetFiltered, targetDn, null, isWkladkaZwienczenie, mag);
             if (rZakFinal) {
                 topRedItems.push({ productId: rZakFinal.id, quantity: 1 });
-                topRedH += rZakFinal.height;
 
                 // AUTOMATYCZNE PAROWANIE (Płyta + Pierścień)
                 const isPlate = ['plyta_najazdowa', 'plyta_zamykajaca'].includes(
@@ -971,8 +1004,14 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
                     );
                     if (partner) {
                         topRedItems.push({ productId: partner.id, quantity: 1 });
-                        topRedH += partner.height;
+                        // Komplet: płyta + dylatacja 50mm, pierścień nachodzi na krąg (0).
+                        topRedH +=
+                            (isPlate ? rZakFinal.height : partner.height) + RELIEF_DYLATACJA_MM;
+                    } else {
+                        topRedH += rZakFinal.height;
                     }
+                } else {
+                    topRedH += rZakFinal.height;
                 }
             }
 

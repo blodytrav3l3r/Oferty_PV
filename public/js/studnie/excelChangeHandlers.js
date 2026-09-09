@@ -445,25 +445,20 @@ function excelOnCompChange(wIdx, componentType, height, value, productId, redDn)
             const cp = _avail.find(function (pr) {
                 return pr.id === well.config[ci].productId;
             });
+            // Komplet płyta+pierścień dobierany po DN — wysokości płyty (150/200)
+            // i pierścienia (50/150/200) celowo się różnią, więc filtr H by go zrywał.
             if (cp && partnerTypes.indexOf(cp.componentType) !== -1) {
-                if (height === undefined || parseInt(cp.height) === parseInt(height)) {
-                    hasPartner = true;
-                    break;
-                }
+                hasPartner = true;
+                break;
             }
         }
         if (!hasPartner) {
-            let partnerCandidates = _avail.filter(function (p) {
+            const partnerCandidates = _avail.filter(function (p) {
                 return (
                     partnerTypes.indexOf(p.componentType) !== -1 &&
                     parseInt(p.dn) === parseInt(well.dn)
                 );
             });
-            if (height !== undefined) {
-                partnerCandidates = partnerCandidates.filter(function (p) {
-                    return parseInt(p.height) === parseInt(height);
-                });
-            }
             if (partnerCandidates.length > 0) {
                 const partner = partnerCandidates[0];
                 _excelInsertConfigItem(well, partner.componentType, partner.id, 1);

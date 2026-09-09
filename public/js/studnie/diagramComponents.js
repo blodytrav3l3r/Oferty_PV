@@ -11,6 +11,8 @@
  *   drawComponentShape()        — generuje SVG kształtu dla jednego komponentu
  *   drawComponentLabel()        — generuje etykietę tekstową wewnątrz komponentu
  *   drawComponentDimension()    — generuje wymiarówkę (lewa strona) dla komponentu
++ *   drawReliefRingTabs()        — boczne zakładki pierścienia nachodzącego na krąg
++ *   getReliefKompletIdx()       — wykrywa pary płyta+pierścień (dylatacja, wkład 0)
  *   drawAllComponents()         — iteruje po komponentach i generuje pełny SVG
  *
  * Zależności globalne:
@@ -112,11 +114,68 @@ function getElementOuterDn(comp, bodyDN) {
     }
 }
 
+/* ===== KOMPLET ODCIĄŻAJĄCY (płyta + pierścień + dylatacja) ===== */
+
+/**
+ * Wysokość dylatacji pod płytą odciążającą (mm).
+ * Definicja w solverAutoSelect.js (ładuje się wcześniej); tu odczyt z guarda.
+ */
+function reliefDylatacjaMm() {
+    try {
+        if (typeof window !== 'undefined' && typeof window.RELIEF_DYLATACJA_MM === 'number')
+            return window.RELIEF_DYLATACJA_MM;
+    } catch (_e) {}
+    return 50;
+}
+
+/**
+ * Wykrywa komplet płyta→pierścień w liście visible (top-down).
+ * Zwraca indeksy: ringZero (pierścień rysowany jako zakładki, wkład 0),
+ * gapAfter (po płycie wstawić dylatację 50mm).
+ */
+function getReliefKompletIdx(visible) {
+    const ringZero = new Set();
+    const gapAfter = new Set();
+    for (let i = 0; i < visible.length; i++) {
+        const ct = visible[i] && visible[i].componentType;
+        const next = visible[i + 1];
+        if (
+            (ct === 'plyta_zamykajaca' || ct === 'plyta_najazdowa') &&
+            next &&
+            next.componentType === 'pierscien_odciazajacy'
+        ) {
+            gapAfter.add(i);
+            ringZero.add(i + 1);
+        }
+    }
+    return { ringZero, gapAfter };
+}
+
+/**
+ * Rysuje pierścień odciążający jako dwie boczne zakładki nachodzące
+ * w dół na krąg (zero wkładu w wysokość słupka).
+ */
+function drawReliefRingTabs(cx, shaftW, yTop, tabHpx) {
+    const c = (typeof COMPONENT_THEME !== 'undefined' && COMPONENT_THEME.pierscien_odciazajacy) || {
+        fill: 'var(--slate-500)',
+        stroke: 'var(--slate-400)'
+    };
+    const over = 10;
+    const inset = 16;
+    const h = Math.max(tabHpx, 6);
+    const xL = cx - shaftW / 2;
+    const xR = cx + shaftW / 2;
+    return (
+        `<rect x="${xL - over}" y="${yTop}" width="${over + inset}" height="${h}" rx="2" style="fill:${c.fill};stroke:${c.stroke}" stroke-width="1.5" opacity="0.9"/>` +
+        `<rect x="${xR - inset}" y="${yTop}" width="${over + inset}" height="${h}" rx="2" style="fill:${c.fill};stroke:${c.stroke}" stroke-width="1.5" opacity="0.9"/>`
+    );
+}
+
 /* ===== OBLICZANIE PARAMETRÓW CANVAS ===== */
 
 /**
  * Oblicza parametry skalowania i wymiarów canvas SVG.
- * @returns {{ svgW, svgH, drawW, drawH, mL, mR, mT, mB, pxMm, cx, totalMm }}
+ * @returns {{ svgW: number, svgH: number, drawW: number, drawH: number, mL: number, mR: number, mT: number, mB: number, pxMm: number, cx: number, totalMm: number, relief: { ringZero: Set<number>, gapAfter: Set<number> } }}
  */
 function calculateCanvasParams(visible, bodyDN) {
     const svgW = 380;
@@ -143,16 +202,20 @@ function calculateCanvasParams(visible, bodyDN) {
 
     const pxMm = drawW / maxElemWidth;
 
-    const totalMm = visible.reduce((s, c) => {
+    // Komplet odciążający: pierścień nachodzi na krąg (0), pod płytą dylatacja.
+    const relief = getReliefKompletIdx(visible);
+    const dylMm = reliefDylatacjaMm();
+    const totalMm = visible.reduce((s, c, idx) => {
+        if (relief.ringZero.has(idx)) return s;
         const h = c.height || 0;
-        return s + (h === 0 ? 18 / pxMm : h);
+        return s + (h === 0 ? 18 / pxMm : h) + (relief.gapAfter.has(idx) ? dylMm : 0);
     }, 0);
 
     const drawH = totalMm * pxMm;
     const svgH = drawH + mT + mB;
     const cx = mL + drawW / 2;
 
-    return { svgW, svgH, drawW, drawH, mL, mR, mT, mB, pxMm, cx, totalMm };
+    return { svgW, svgH, drawW, drawH, mL, mR, mT, mB, pxMm, cx, totalMm, relief };
 }
 
 /* ===== RYSOWANIE KSZTAŁTU POJEDYNCZEGO KOMPONENTU ===== */
@@ -262,22 +325,14 @@ function drawAllComponents(visible, canvas) {
     const { pxMm, cx, mT } = canvas;
     const bodyDN = canvas.bodyDN;
     const mmToPx = (mm) => mm * pxMm;
+    const relief = canvas.relief || { ringZero: new Set(), gapAfter: new Set() };
+    const dylMm = reliefDylatacjaMm();
 
     let svgOut = '';
     let y = mT;
     const dimLinesY = [];
 
-    visible.forEach((comp) => {
-        let h = (comp.height || 0) * pxMm;
-
-        // Syntetyczna grubość rysowania dla elementów bez fizycznej wysokości
-        if (h === 0) {
-            h = 18;
-        }
-
-        dimLinesY.push(y);
-        dimLinesY.push(y + h);
-
+    visible.forEach((comp, vi) => {
         const outerDn = getElementOuterDn(comp, bodyDN);
         const w = Math.max(mmToPx(outerDn), 20);
         const x = cx - w / 2;
@@ -293,31 +348,58 @@ function drawAllComponents(visible, canvas) {
         const plStyle = isPlaceholder
             ? 'opacity:0.6; filter:drop-shadow(0px 0px 8px rgba(var(--blue-hover-rgb), 0.9));'
             : '';
+        const grpOpen =
+            comp._cfgIdx !== undefined
+                ? `<g class="diag-comp-grp svg-cfg-${comp._cfgIdx}" style="transition:all 0.2s; ${plStyle}" cursor="grab" ${pointerEvents} ` +
+                  `data-cfg-idx="${comp._cfgIdx}" draggable="true" ` +
+                  `ondragstart="window.handleCfgDragStart(event)" ` +
+                  `ondragend="window.handleCfgDragEnd(event)" ` +
+                  `onmousedown="window.svgPointerDown(event, ${comp._cfgIdx})" ` +
+                  `onmouseenter="window.svgPointerEnter(event, ${comp._cfgIdx})" ` +
+                  `onmouseleave="window.svgPointerLeave(event, ${comp._cfgIdx})" ` +
+                  `onmouseup="window.svgPointerUp(event, ${comp._cfgIdx})" ` +
+                  `ontouchstart="window.svgTouchStart(event, ${comp._cfgIdx})" ` +
+                  `ontouchend="window.svgTouchEnd(event)">`
+                : '';
+        const grpClose = comp._cfgIdx !== undefined ? `</g>` : '';
+
+        // Pierścień kompletu: boczne zakładki nachodzące w dół na krąg (wkład 0).
+        if (relief.ringZero.has(vi)) {
+            const tabHpx = Math.max((comp.height || 150) * pxMm, 6);
+            svgOut += grpOpen + drawReliefRingTabs(cx, w, y, tabHpx) + grpClose;
+            return;
+        }
+
+        let h = (comp.height || 0) * pxMm;
+
+        // Syntetyczna grubość rysowania dla elementów bez fizycznej wysokości
+        if (h === 0) {
+            h = 18;
+        }
+
+        dimLinesY.push(y);
+        dimLinesY.push(y + h);
 
         // Otwieramy grupę SVG z event handlerami (drag & drop, hover)
-        if (comp._cfgIdx !== undefined) {
-            svgOut +=
-                `<g class="diag-comp-grp svg-cfg-${comp._cfgIdx}" style="transition:all 0.2s; ${plStyle}" cursor="grab" ${pointerEvents} ` +
-                `data-cfg-idx="${comp._cfgIdx}" draggable="true" ` +
-                `ondragstart="window.handleCfgDragStart(event)" ` +
-                `ondragend="window.handleCfgDragEnd(event)" ` +
-                `onmousedown="window.svgPointerDown(event, ${comp._cfgIdx})" ` +
-                `onmouseenter="window.svgPointerEnter(event, ${comp._cfgIdx})" ` +
-                `onmouseleave="window.svgPointerLeave(event, ${comp._cfgIdx})" ` +
-                `onmouseup="window.svgPointerUp(event, ${comp._cfgIdx})" ` +
-                `ontouchstart="window.svgTouchStart(event, ${comp._cfgIdx})" ` +
-                `ontouchend="window.svgTouchEnd(event)">`;
-        }
+        svgOut += grpOpen;
 
         svgOut += drawComponentShape(comp, x, y, w, h, cx, pxMm, c);
         svgOut += drawComponentLabel(cx, y, h, c.label);
         svgOut += drawComponentDimension(y, h, comp.height);
 
-        if (comp._cfgIdx !== undefined) {
-            svgOut += `</g>`;
-        }
+        svgOut += grpClose;
 
         y += h;
+
+        // Dylatacja pod płytą kompletu: pusta przerwa 50mm z wymiarem.
+        if (relief.gapAfter.has(vi)) {
+            const gapHpx = dylMm * pxMm;
+            svgOut += `<rect x="${x}" y="${y}" width="${w}" height="${gapHpx}" style="fill:transparent;stroke:${SVG_COLORS.dimLine}" stroke-width="0.7" stroke-dasharray="3,2" opacity="0.6"/>`;
+            dimLinesY.push(y);
+            dimLinesY.push(y + gapHpx);
+            svgOut += drawComponentDimension(y, gapHpx, dylMm);
+            y += gapHpx;
+        }
     });
 
     return { svg: svgOut, dimLinesY };
