@@ -97,18 +97,16 @@ function _excelRenderTable(dn) {
     h3 += `<th scope="col" style="${th3Base}background:var(--slate-950);color:${dnColor};position:sticky;left:318px;z-index:${LAYERS_EXCEL.STICKY_HEADER_TH};min-width:65px;text-align:center;">·</th>`;
 
     for (let i = 0; i < maxTr; i++) {
-        h1 += `<th scope="col" style="${thBase}background:var(--slate-950);color:${dnColor};min-width:78px;text-align:right;">Rz.wlot ${i}</th>`;
-        h2 += `<th scope="col" style="${th2Base}background:var(--slate-950);color:${dnColor};min-width:78px;text-align:right;">·</th>`;
-        h3 += `<th scope="col" style="${th3Base}background:var(--slate-950);color:${dnColor};min-width:78px;text-align:right;">·</th>`;
-        h1 += `<th scope="col" style="${thBase}background:var(--slate-950);color:${dnColor};min-width:55px;text-align:center;">Kąt ${i}°</th>`;
-        h2 += `<th scope="col" style="${th2Base}background:var(--slate-950);color:${dnColor};min-width:55px;text-align:center;">·</th>`;
-        h3 += `<th scope="col" style="${th3Base}background:var(--slate-950);color:${dnColor};min-width:55px;text-align:center;">·</th>`;
-        h1 += `<th scope="col" style="${thBase}background:var(--slate-950);color:${dnColor};min-width:125px;text-align:left;">Rodzaj ${i}</th>`;
-        h2 += `<th scope="col" style="${th2Base}background:var(--slate-950);color:${dnColor};min-width:125px;text-align:left;">·</th>`;
-        h3 += `<th scope="col" style="${th3Base}background:var(--slate-950);color:${dnColor};min-width:125px;text-align:left;">·</th>`;
-        h1 += `<th scope="col" style="${thBase}background:var(--slate-950);color:${dnColor};min-width:110px;text-align:left;">Średnica ${i}</th>`;
-        h2 += `<th scope="col" style="${th2Base}background:var(--slate-950);color:${dnColor};min-width:110px;text-align:left;">·</th>`;
-        h3 += `<th scope="col" style="${th3Base}background:var(--slate-950);color:${dnColor};min-width:110px;text-align:left;">·</th>`;
+        const _alt = i % 2 === 1 ? ' excel-tr-alt' : '';
+        h1 += `<th scope="col" class="excel-tr-first${_alt}" style="${thBase}background:var(--slate-950);color:${dnColor};min-width:78px;text-align:right;">Rz.wlot ${i}</th>`;
+        h2 += `<th scope="col" class="excel-tr-first${_alt}" style="${th2Base}background:var(--slate-950);color:${dnColor};min-width:78px;text-align:right;">·</th>`;
+        h3 += `<th scope="col" colspan="4" class="excel-tr-group${_alt}" style="${th3Base}background:var(--slate-950);color:${dnColor};text-align:center;">PRZ ${i}</th>`;
+        h1 += `<th scope="col" class="${_alt.trim()}" style="${thBase}background:var(--slate-950);color:${dnColor};min-width:55px;text-align:center;">Kąt ${i}°</th>`;
+        h2 += `<th scope="col" class="${_alt.trim()}" style="${th2Base}background:var(--slate-950);color:${dnColor};min-width:55px;text-align:center;">·</th>`;
+        h1 += `<th scope="col" class="${_alt.trim()}" style="${thBase}background:var(--slate-950);color:${dnColor};min-width:125px;text-align:left;">Rodzaj ${i}</th>`;
+        h2 += `<th scope="col" class="${_alt.trim()}" style="${th2Base}background:var(--slate-950);color:${dnColor};min-width:125px;text-align:left;">·</th>`;
+        h1 += `<th scope="col" class="excel-tr-last${_alt}" style="${thBase}background:var(--slate-950);color:${dnColor};min-width:110px;text-align:left;">Średnica ${i}</th>`;
+        h2 += `<th scope="col" class="excel-tr-last${_alt}" style="${th2Base}background:var(--slate-950);color:${dnColor};min-width:110px;text-align:left;">·</th>`;
     }
 
     // Przyciski +/-

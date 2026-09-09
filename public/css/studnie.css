@@ -2700,6 +2700,28 @@ select.form-input option {
 .excel-td-left {
     text-align: left;
 }
+/* ── Grupy kolumn przejść (PRZ i): separator początku/końca czwórki ── */
+.excel-tr-first {
+    border-left: 1px solid rgba(var(--accent-rgb), 0.35) !important;
+}
+.excel-tr-last {
+    border-right: 1px solid rgba(var(--accent-rgb), 0.35) !important;
+}
+.excel-tr-group {
+    font-weight: var(--fw-bold);
+    letter-spacing: 0.6px;
+    border-left: 1px solid rgba(var(--accent-rgb), 0.35);
+    border-right: 1px solid rgba(var(--accent-rgb), 0.35);
+}
+/* ── Naprzemienny tint pól nieparzystych grup przejść (PRZ 1, 3, …) ── */
+td.excel-tr-alt input,
+td.excel-tr-alt .excel-sel-wrap > div {
+    background: rgba(var(--accent-rgb), 0.07) !important;
+    border-color: rgba(var(--accent-rgb), 0.22) !important;
+}
+th.excel-tr-alt {
+    background: rgba(var(--accent-rgb), 0.07) !important;
+}
 .well-param-label {
     min-width: 172px;
     max-width: 172px;

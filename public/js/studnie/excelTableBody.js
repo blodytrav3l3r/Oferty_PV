@@ -358,7 +358,9 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
                 110
             );
             html +=
-                '<td class="excel-td excel-td-right"><input type="number" step="0.01" value="' +
+                '<td class="excel-td excel-td-right excel-tr-first' +
+                (_i % 2 === 1 ? ' excel-tr-alt' : '') +
+                '"><input type="number" step="0.01" value="' +
                 (hasExplicitRzWl ? prz.rzednaWlaczenia : '') +
                 '" placeholder="' +
                 rzWlPlaceholder +
@@ -371,7 +373,9 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
                 _excelCellInp(72) +
                 '" /></td>';
             html +=
-                '<td class="excel-td excel-td-center"><input type="number" step="1" value="' +
+                '<td class="excel-td excel-td-center' +
+                (_i % 2 === 1 ? ' excel-tr-alt' : '') +
+                '"><input type="number" step="1" value="' +
                 (prz.angle != null ? prz.angle : '') +
                 '" onchange="excelOnPrzejscieChange(' +
                 wIdx +
@@ -381,8 +385,18 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
                 '" onfocus="excelCellFocus(this);_excelSelWrapFocus(this)" onblur="excelCellBlur(this)" style="' +
                 _excelCellInp(50) +
                 'text-align:center;" /></td>';
-            html += '<td class="excel-td excel-td-left">' + typeHtml + '</td>';
-            html += '<td class="excel-td excel-td-left">' + dnHtml + '</td>';
+            html +=
+                '<td class="excel-td excel-td-left' +
+                (_i % 2 === 1 ? ' excel-tr-alt' : '') +
+                '">' +
+                typeHtml +
+                '</td>';
+            html +=
+                '<td class="excel-td excel-td-left excel-tr-last' +
+                (_i % 2 === 1 ? ' excel-tr-alt' : '') +
+                '">' +
+                dnHtml +
+                '</td>';
         }
         /* Gap */
         html += '<td class="code-cell-center"></td><td class="code-cell-center"></td>';
@@ -598,23 +612,32 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
         emptyRowBg +
         ';text-align:center;color:var(--slate-800);" data-cell="height-empty">\u2014</td>';
     for (let _j = 0; _j < maxTr; _j++) {
+        const _alt = _j % 2 === 1 ? ' excel-tr-alt' : '';
         html +=
-            '<td class="excel-td excel-td-empty" style="' +
+            '<td class="excel-td excel-td-empty excel-tr-first' +
+            _alt +
+            '" style="' +
             'text-align:right;"><input type="number" step="0.01" placeholder="\u2014" onfocus="excelCellFocus(this);_excelSelWrapFocus(this)" onblur="excelCellBlur(this)" style="' +
             _excelCellInp(72) +
             '" /></td>';
         html +=
-            '<td class="excel-td excel-td-empty" style="' +
+            '<td class="excel-td excel-td-empty' +
+            _alt +
+            '" style="' +
             'text-align:center;"><input type="number" step="1" placeholder="\u2014" onfocus="excelCellFocus(this);_excelSelWrapFocus(this)" onblur="excelCellBlur(this)" style="' +
             _excelCellInp(50) +
             '" /></td>';
         html +=
-            '<td class="excel-td excel-td-empty" style="' +
+            '<td class="excel-td excel-td-empty' +
+            _alt +
+            '" style="' +
             'text-align:left;">' +
             _excelOverlaySelectHtml([['', '\u2014']], '', null, 120, false) +
             '</td>';
         html +=
-            '<td class="excel-td excel-td-empty" style="' +
+            '<td class="excel-td excel-td-empty excel-tr-last' +
+            _alt +
+            '" style="' +
             'text-align:left;">' +
             _excelOverlaySelectHtml([['', '\u2014']], '', null, 110, false) +
             '</td>';
