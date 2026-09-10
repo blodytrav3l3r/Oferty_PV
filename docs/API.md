@@ -148,6 +148,22 @@ Wymaga autoryzacji. Typy dokumentów: `offer`, `offer_studnie`, `order_rury`, `o
 
 ---
 
+## Blokady edycji (`/api/locks`)
+
+Wymaga autoryzacji. Twarda blokada 1 dokument = 1 użytkownik (TTL 180 s, heartbeat 60 s).
+Typy dokumentów: `offer`, `offer_studnie`, `order_rury`, `order_studnie`.
+Świeża cudza blokada przy zapisie = `423 DOC_LOCKED` + `holder`; brak wiersza = brak blokady.
+
+| Metoda | Ścieżka                      | Opis                                                            |
+| ------ | ---------------------------- | --------------------------------------------------------------- |
+| POST   | `/api/locks/acquire`         | Przejmij/odśwież blokadę (`docType` + `docId`, `WRITE_LIMITER`) |
+| POST   | `/api/locks/heartbeat`       | Odśwież własną blokadę (`WRITE_LIMITER`)                        |
+| POST   | `/api/locks/release`         | Zwolnij własną/wygasłą blokadę (`WRITE_LIMITER`)                |
+| POST   | `/api/locks/force`           | Wymuś przejęcie (tylko admin, `WRITE_LIMITER`)                  |
+| GET    | `/api/locks/:docType/:docId` | Status blokady (`locked` + `lock` albo `locked: false`)         |
+
+---
+
 ## Produkty — Rury (`/api/products`)
 
 Wymaga autoryzacji.

@@ -668,13 +668,26 @@ Unique: `uq_share_doc_user` na `(documentType, documentId, sharedWithUserId)`. I
 
 Klucz główny: `(userId, endpoint, key)`. Indeks: `idx_idempotency_expires`. Tabela z migracji `20260907000003_idempotency_keys`.
 
+#### `doc_locks` — Twarda blokada edycji dokumentów
+
+| Kolumna     | Typ     | Opis                                                                 |
+| ----------- | ------- | -------------------------------------------------------------------- |
+| docType     | String  | Typ (`offer`/`offer_studnie`/`order_rury`/`order_studnie`, część PK) |
+| docId       | String  | ID dokumentu (część PK)                                              |
+| userId      | String? | ID użytkownika trzymającego blokadę                                  |
+| userName    | String? | Nazwa do wyświetlenia w modalu 423                                   |
+| lockedAt    | String  | Data przejęcia blokady                                               |
+| heartbeatAt | String  | Data ostatniego heartbeatu (TTL 180 s)                               |
+
+Klucz główny: `(docType, docId)`. Indeksy: `idx_doclocks_user`, `idx_doclocks_heartbeat`. Tabela z migracji `20260908000000_doc_locks`. Semantyka: brak wiersza = brak blokady (zapis przepuszczony, chroni optimistic locking 409); świeża cudza blokada = 423 przy zapisie.
+
 ---
 
 ## 3. Migracje
 
 Migracje Prisma znajdują się w katalogu `prisma/migrations/`.
 
-### Lista migracji (13)
+### Lista migracji (14)
 
 Projekt przeszedł z `prisma db push` na pełne migracje — cała historia schematu została
 skonsolidowana w migracji baseline `20260815000000_baseline` (pełny schemat: oferty,
@@ -696,6 +709,7 @@ na `ai_telemetry_logs` (`idx_logs_well`, `idx_logs_source_well`) pod deduplikacj
 | `20260907000002_doc_versions`            | Kolumny `version` ofert i zamówień                                                       |
 | `20260907000003_idempotency_keys`        | Tabela `idempotency_keys`                                                                |
 | `20260907000004_fk_items_offer`          | FK `offer_items_rel.offerId` -> `offers_rel` (Restrict)                                  |
+| `20260908000000_doc_locks`               | Tabela `doc_locks` (twarda blokada edycji 1 dokument = 1 użytkownik)                     |
 
 ### Komendy
 

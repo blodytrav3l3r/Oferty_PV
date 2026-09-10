@@ -314,7 +314,7 @@ Główne pliki rdzeniowe w `public/js/studnie/` po podziale:
 - Backup przez `VACUUM INTO` (WAL-safe snapshot)
 - Prisma ORM zarządza schematem i migracjami
 
-### Modele (40)
+### Modele (41)
 
 - **users** — użytkownicy systemu
 - **sessions** — sesje logowania (token-based)
@@ -346,6 +346,7 @@ Główne pliki rdzeniowe w `public/js/studnie/` po podziale:
 - **aiRewardLog** — logi nagród ML (unique `(wellId, action)` — dedup rewardów)
 - **document_shares** — udostępnianie dokumentów (oferty/zamówienia) między użytkownikami (`GET/POST /api/shares`, batch `POST /api/shares/revoke`, `DELETE /api/shares/:id`)
 - **idempotency_keys** — klucze idempotentności API (`@@id(userId, endpoint, key)`, `idx_idempotency_expires`)
+- **doc_locks** — twarda blokada edycji 1 dokument = 1 użytkownik (TTL 180 s + heartbeat 60 s, `POST/GET /api/locks`, 423 przy cudzej świeżej blokadzie)
 
 - **Indeksy telemetrii**: `idx_logs_well` (wellId) i `idx_logs_source_well` (solverSource, wellId) na
   `ai_telemetry_logs` — migracja `20260805100000_telemetry_well_dedup`, idempotentnie odtwarzane
@@ -474,10 +475,10 @@ Oferty_PV/
 │   ├── partials/                    # Partiale HTML (header, rury/*, studnie/*) — partialLoader
 │   └── templates/                   # 5 szablonów: ofertaRury/Studnie, kartaBudowy, zlecenie, etykieta
 │
-├── prisma/                          # Prisma (40 modeli, 13 migracji)
+├── prisma/                          # Prisma (41 modeli, 14 migracji)
 │   ├── schema.prisma                # Definicja schematu (808 linii)
 │   ├── seed.ts                      # Seed danych (ProductsRury/Studnie + Preco + AiModel)
-│   └── migrations/                  # 20260815000000_baseline + 20260815000001_uq_reward_well_action + 20260816000000_ai_training_run + 20260828000000_add_document_shares + 20260831000000_add_wellcount + 20260902000000_add_totalprice + 20260902000001_add_performance_indexes + 20260905000000_add_prod_well_index + 20260907000000_prod_number_unique + 20260907000001_prod_version + 20260907000002_doc_versions + 20260907000003_idempotency_keys + 20260907000004_fk_items_offer
+│   └── migrations/                  # 20260815000000_baseline + 20260815000001_uq_reward_well_action + 20260816000000_ai_training_run + 20260828000000_add_document_shares + 20260831000000_add_wellcount + 20260902000000_add_totalprice + 20260902000001_add_performance_indexes + 20260905000000_add_prod_well_index + 20260907000000_prod_number_unique + 20260907000001_prod_version + 20260907000002_doc_versions + 20260907000003_idempotency_keys + 20260907000004_fk_items_offer + 20260908000000_doc_locks
 │
 ├── data/                            # Baza danych
 │   ├── app_database.sqlite          # Główna baza (SQLite)
