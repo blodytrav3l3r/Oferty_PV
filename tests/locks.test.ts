@@ -26,7 +26,9 @@ jest.mock('../src/middleware/auth', () => ({
 }));
 
 jest.mock('../src/middleware/rateLimiters', () => ({
-    WRITE_LIMITER: (_req: any, _res: any, next: any) => next()
+    WRITE_LIMITER: (_req: any, _res: any, next: any) => next(),
+    // READ_LIMITER prawdziwy — test 429 ponizej sprawdza rzeczywista blokade.
+    READ_LIMITER: jest.requireActual('../src/middleware/rateLimiters').READ_LIMITER
 }));
 
 jest.mock('../src/utils/logger', () => ({
@@ -262,4 +264,15 @@ describe('Twarda blokada edycji (doc_locks)', () => {
             })
         ).resolves.toBeUndefined();
     });
+
+    test('GET status: 600/min przechodzi, 601. dostaje prawdziwe 429', async () => {
+        const app = createApp();
+        for (let i = 0; i < 600; i++) {
+            const r = await request(app).get('/api/locks/offer/rate-probe');
+            expect(r.status).toBe(200);
+        }
+        const blocked = await request(app).get('/api/locks/offer/rate-probe');
+        expect(blocked.status).toBe(429);
+        expect(blocked.body.error).toContain('Zbyt wiele');
+    }, 120000);
 });

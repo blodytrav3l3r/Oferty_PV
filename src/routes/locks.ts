@@ -6,7 +6,7 @@
 import express from 'express';
 import prisma from '../prismaClient';
 import { requireAuth, requireAdmin, AuthenticatedRequest } from '../middleware/auth';
-import { WRITE_LIMITER } from '../middleware/rateLimiters';
+import { WRITE_LIMITER, READ_LIMITER } from '../middleware/rateLimiters';
 import { validateData } from '../validators/authSchema';
 import { docLockBodySchema, docLockParamsSchema } from '../validators/lockSchemas';
 import { logger } from '../utils/logger';
@@ -102,7 +102,7 @@ router.post(
     }
 );
 
-router.get('/:docType/:docId', requireAuth, async (req, res) => {
+router.get('/:docType/:docId', requireAuth, READ_LIMITER, async (req, res) => {
     try {
         const parsed = docLockParamsSchema.safeParse(req.params);
         if (!parsed.success) return res.status(400).json({ error: 'Bledny typ lub ID dokumentu' });
