@@ -224,16 +224,19 @@ function showDocLockedModal(opts) {
             title,
             titleId: 'doc-locked-title',
             html:
-                '<div class="modal"><h3 id="doc-locked-title">' +
+                '<div class="modal"><div class="modal-header">' +
+                '<h3 id="doc-locked-title"><i data-lucide="lock" aria-hidden="true"></i> ' +
                 _esc(title) +
-                '</h3><div class="modal-body">' +
+                '</h3>' +
+                '<button type="button" class="btn-icon" aria-label="Zamknij" data-act="back"><i data-lucide="x" aria-hidden="true"></i></button>' +
+                '</div><div class="modal-body">' +
                 bodyHtml +
-                '</div><div class="modal-actions">' +
-                '<button type="button" class="btn secondary" data-act="back">Wróć do listy</button>' +
+                '</div><div class="modal-footer">' +
+                '<button type="button" class="btn btn-secondary" data-act="back"><i data-lucide="arrow-left" aria-hidden="true"></i> Wróć do listy</button>' +
                 (isAdmin
-                    ? '<button type="button" class="btn danger" data-act="force">Przejmij</button>'
+                    ? '<button type="button" class="btn btn-danger" data-act="force"><i data-lucide="shield-alert" aria-hidden="true"></i> Przejmij</button>'
                     : '') +
-                '<button type="button" class="btn primary" data-act="retry">Spróbuj ponownie</button>' +
+                '<button type="button" class="btn btn-primary" data-act="retry"><i data-lucide="refresh-cw" aria-hidden="true"></i> Spróbuj ponownie</button>' +
                 '</div></div>'
         });
         const close = function () {
