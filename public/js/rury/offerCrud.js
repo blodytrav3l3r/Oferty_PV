@@ -114,6 +114,7 @@ async function saveOffer() {
         transportMode: currentRuryTransportMode || 'full',
         transportCount: transportResult.totalTransports,
         transportCost: transportCost,
+        zabezpieczenieTransportuEnabled: !!window.zabezpieczenieTransportuEnabled,
         totalNetto: totalNetto,
         totalBrutto: totalNetto * 1.23
     });
@@ -208,7 +209,22 @@ async function loadOffer(id) {
     if (!offer) return;
 
     // Normalizuj, jeśli są to dane archiwalne
-    const normalized = srv && srv.normalizeOffer ? srv.normalizeOffer(offer) : offer;
+    let normalized = srv && srv.normalizeOffer ? srv.normalizeOffer(offer) : offer;
+
+    // Lista ofert (GET /) zwraca slim bez transportKm/Rate/Mode — dociągnij pełny dokument.
+    if (
+        srv &&
+        (normalized.transportKm === undefined ||
+            normalized.transportRate === undefined ||
+            normalized.transportMode === undefined)
+    ) {
+        try {
+            const full = await srv.getOfferById(id);
+            if (full) normalized = srv.normalizeOffer ? srv.normalizeOffer(full) : full;
+        } catch (_e) {
+            /* fallback na wersję z listy */
+        }
+    }
 
     if (typeof clearOrderEditState === 'function') clearOrderEditState();
     editingOfferId = id;
@@ -294,7 +310,10 @@ async function loadOffer(id) {
         if (window.lucide) lucide.createIcons();
     }
 
-    window.zabezpieczenieTransportuEnabled = true;
+    window.zabezpieczenieTransportuEnabled =
+        normalized.zabezpieczenieTransportuEnabled !== undefined
+            ? !!normalized.zabezpieczenieTransportuEnabled
+            : (normalized.items || []).some((i) => i.productId && i.productId.startsWith('ZT-'));
     if (typeof updateZabezpieczenieTransportuUI === 'function') updateZabezpieczenieTransportuUI();
     syncTransportSecurity();
     renderOfferItems();
@@ -417,7 +436,10 @@ async function restoreOfferVersion(offerId, historyIndex) {
     });
 
     currentOfferItems = structuredClone(snapshot.items || []);
-    window.zabezpieczenieTransportuEnabled = true;
+    window.zabezpieczenieTransportuEnabled =
+        snapshot.zabezpieczenieTransportuEnabled !== undefined
+            ? !!snapshot.zabezpieczenieTransportuEnabled
+            : (snapshot.items || []).some((i) => i.productId && i.productId.startsWith('ZT-'));
     if (typeof updateZabezpieczenieTransportuUI === 'function') updateZabezpieczenieTransportuUI();
     syncTransportSecurity();
     renderOfferItems();

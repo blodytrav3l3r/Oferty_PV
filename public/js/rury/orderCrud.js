@@ -170,7 +170,8 @@ async function finalizeOrderFromOffer(offer, kartaBudowyData) {
                 items: snapshotItems,
                 transportKm,
                 transportRate,
-                transportMode: currentRuryTransportMode || 'full'
+                transportMode: currentRuryTransportMode || 'full',
+                zabezpieczenieTransportuEnabled: !!window.zabezpieczenieTransportuEnabled
             },
             clientName,
             clientNip,
@@ -184,6 +185,7 @@ async function finalizeOrderFromOffer(offer, kartaBudowyData) {
             transportKm,
             transportRate,
             transportMode: currentRuryTransportMode || 'full',
+            zabezpieczenieTransportuEnabled: !!window.zabezpieczenieTransportuEnabled,
             items: orderItems,
             kartaBudowy: kartaBudowyData,
             createdAt: new Date().toISOString(),
@@ -236,6 +238,7 @@ async function saveRuryOrder() {
     orderData.transportKm = Number(document.getElementById('transport-km')?.value || 0);
     orderData.transportRate = Number(document.getElementById('transport-rate')?.value || 0);
     orderData.transportMode = currentRuryTransportMode || 'full';
+    orderData.zabezpieczenieTransportuEnabled = !!window.zabezpieczenieTransportuEnabled;
     orderData.updatedAt = new Date().toISOString();
 
     try {

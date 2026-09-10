@@ -456,7 +456,7 @@ window.updateTransportCostSummary = function () {
 
 /* ===== MODAL EDYCJI TRANSPORTU (Kliknięcie w kartę "Koszt transportu" na dolnym pasku) ===== */
 
-const ruryTransportSnapshot = { km: 0, rate: 0 };
+const ruryTransportSnapshot = { km: 0, rate: 0, mode: 'full' };
 
 window.onRuryTransportFormChange = function () {
     const modal = document.getElementById('rury-transport-modal');
@@ -481,7 +481,35 @@ window.onRuryTransportFormChange = function () {
     }
 };
 
+/**
+ * Odtwarza overlay #rury-transport-modal, gdy go nie ma w DOM.
+ * Brak modala = wyścig partiali (fetch jeszcze trwa) albo bare closeModal()
+ * (modalCore, bez ID) usunął statyczny overlay przy zamykaniu innego okna.
+ */
+async function ensureRuryTransportModal() {
+    if (document.getElementById('rury-transport-modal')) return true;
+    try {
+        const res = await fetch('partials/rury/transport-modal.html?v=' + Date.now());
+        if (!res.ok) return false;
+        const host = document.getElementById('partial-transport-modal') || document.body;
+        host.innerHTML = await res.text();
+        return !!document.getElementById('rury-transport-modal');
+    } catch (_e) {
+        return false;
+    }
+}
+
 window.openRuryTransportPopup = function () {
+    const modal = document.getElementById('rury-transport-modal');
+    if (!modal) {
+        console.warn('[transport] Brak #rury-transport-modal w DOM — odtwarzam z partialu.');
+        ensureRuryTransportModal().then(function (ok) {
+            if (ok) window.openRuryTransportPopup();
+            else if (typeof showToast === 'function')
+                showToast('Okno transportu w trakcie ładowania — kliknij ponownie', 'warning');
+        });
+        return;
+    }
     const kmInput = document.getElementById('transport-km');
     const rateInput = document.getElementById('transport-rate');
     const modalKm = document.getElementById('rury-transport-modal-km');
@@ -489,6 +517,7 @@ window.openRuryTransportPopup = function () {
 
     ruryTransportSnapshot.km = parseFloat(kmInput?.value) || 0;
     ruryTransportSnapshot.rate = parseFloat(rateInput?.value) || 0;
+    ruryTransportSnapshot.mode = currentRuryTransportMode || 'full';
 
     if (kmInput && modalKm) modalKm.value = kmInput.value || '0';
     if (rateInput && modalRate) modalRate.value = rateInput.value || '0';
@@ -500,26 +529,30 @@ window.openRuryTransportPopup = function () {
             : 'Koszty Transportu';
     }
 
-    // Wczytaj tryb transportu z oferty lub zamówienia
-    if (
-        typeof window.orderEditMode !== 'undefined' &&
-        window.orderEditMode &&
-        window.orderEditMode.order
+    // Wczytaj tryb transportu z zamówienia lub oferty (window.orderEditMode to boolean)
+    if (window.orderEditMode && typeof getCurrentRuryOrder === 'function') {
+        const cur = getCurrentRuryOrder();
+        if (cur && cur.transportMode) currentRuryTransportMode = cur.transportMode;
+    } else if (
+        typeof window.currentOfferData !== 'undefined' &&
+        window.currentOfferData &&
+        window.currentOfferData.transportMode
     ) {
-        currentRuryTransportMode = window.orderEditMode.order.transportMode || 'fractional';
-    } else if (typeof window.currentOfferData !== 'undefined' && window.currentOfferData) {
-        currentRuryTransportMode = window.currentOfferData.transportMode || 'full';
+        currentRuryTransportMode = window.currentOfferData.transportMode;
     }
     const modeLabel = document.getElementById('rury-transport-mode-label');
     if (modeLabel)
         modeLabel.textContent = currentRuryTransportMode === 'full' ? 'Pełne' : 'Rzeczywiste';
 
-    if (typeof window.updateRuryModalTransportDetails === 'function')
-        window.updateRuryModalTransportDetails();
-
-    const modal = document.getElementById('rury-transport-modal');
-    if (modal) modal.style.display = 'flex';
-    if (typeof lucide !== 'undefined') lucide.createIcons();
+    // Pokaż NAJPIERW — błąd w podglądzie kalkulacji nie może blokować otwarcia.
+    modal.style.display = 'flex';
+    try {
+        if (typeof window.updateRuryModalTransportDetails === 'function')
+            window.updateRuryModalTransportDetails();
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    } catch (e) {
+        console.warn('[transport] Błąd podglądu kalkulacji (modal otwarty):', e);
+    }
 };
 
 window.handleRuryTransportCancel = async function () {
@@ -529,8 +562,14 @@ window.handleRuryTransportCancel = async function () {
     };
     const modalKm = parseFloat(document.getElementById('rury-transport-modal-km')?.value) || 0;
     const modalRate = parseFloat(document.getElementById('rury-transport-modal-rate')?.value) || 0;
+    const modeChanged =
+        (currentRuryTransportMode || 'full') !== (ruryTransportSnapshot.mode || 'full');
 
-    if (modalKm !== ruryTransportSnapshot.km || modalRate !== ruryTransportSnapshot.rate) {
+    if (
+        modalKm !== ruryTransportSnapshot.km ||
+        modalRate !== ruryTransportSnapshot.rate ||
+        modeChanged
+    ) {
         if (typeof window.appConfirm === 'function') {
             const confirmed = await window.appConfirm(
                 `<div class="fs-3xl-eb">Wyjdź bez zapisywania</div>
@@ -543,6 +582,11 @@ window.handleRuryTransportCancel = async function () {
                 const rateInput = document.getElementById('transport-rate');
                 if (kmInput) kmInput.value = String(ruryTransportSnapshot.km);
                 if (rateInput) rateInput.value = String(ruryTransportSnapshot.rate);
+                currentRuryTransportMode = ruryTransportSnapshot.mode || 'full';
+                const modeLabel = document.getElementById('rury-transport-mode-label');
+                if (modeLabel)
+                    modeLabel.textContent =
+                        currentRuryTransportMode === 'full' ? 'Pełne' : 'Rzeczywiste';
                 if (typeof updateOfferSummary === 'function') updateOfferSummary();
 
                 hide();
@@ -570,6 +614,8 @@ window.handleRuryTransportSave = async function () {
     const okText = isOrderMode ? 'Zapisz Zamówienie' : 'Zapisz Ofertę';
 
     const persist = async () => {
+        if (typeof window.syncRuryTransportFromModal === 'function')
+            window.syncRuryTransportFromModal();
         hide();
         if (isOrderMode) {
             if (typeof saveRuryOrder === 'function') await saveRuryOrder();
@@ -620,8 +666,16 @@ window.syncRuryTransportFromModal = function () {
 };
 
 window.updateRuryModalTransportDetails = function () {
-    const km = Number(document.getElementById('transport-km')?.value) || 0;
-    const rate = Number(document.getElementById('transport-rate')?.value) || 0;
+    // Podgląd liczy z inputów modalu (gdy otwarty), nie z pól głównych — inaczej widać stare liczby.
+    const modalOpen = document.getElementById('rury-transport-modal')?.style.display === 'flex';
+    const kmSrc = modalOpen
+        ? document.getElementById('rury-transport-modal-km')?.value
+        : document.getElementById('transport-km')?.value;
+    const rateSrc = modalOpen
+        ? document.getElementById('rury-transport-modal-rate')?.value
+        : document.getElementById('transport-rate')?.value;
+    const km = Number(kmSrc) || 0;
+    const rate = Number(rateSrc) || 0;
     const costPerTrip = km * rate;
 
     const activeItems =

@@ -47,6 +47,12 @@ async function enterRuryOrderEditMode(orderId) {
         setVal('transport-km', orderData.transportKm);
         setVal('transport-rate', orderData.transportRate);
         currentRuryTransportMode = orderData.transportMode || 'fractional';
+        window.zabezpieczenieTransportuEnabled =
+            orderData.zabezpieczenieTransportuEnabled !== undefined
+                ? !!orderData.zabezpieczenieTransportuEnabled
+                : (orderData.items || []).some((i) => i.productId && i.productId.startsWith('ZT-'));
+        if (typeof updateZabezpieczenieTransportuUI === 'function')
+            updateZabezpieczenieTransportuUI();
         setVal('offer-date', orderData.date ? orderData.date.slice(0, 10) : '');
         setVal('offer-validity', orderData.validity || orderData.offerValidity);
         setVal('offer-payment-terms', orderData.paymentTerms);
