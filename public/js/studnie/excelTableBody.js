@@ -9,9 +9,20 @@ function _excelFormatHeight(mm) {
     return String(mm);
 }
 
-/* Tint wiersza wg configStatus — ERROR dominuje nad WARNING. Wspólny punkt
+/* Tint wiersza wg configStatus — ERROR dominuje nad WARNING, ale duplikat
+    nazwy przykrywa oba (decyzja: dup na wierzchu; błąd nadal sygnalizują
+    klasa excel-row-error/warning, kolor czcionki i tooltip). Wspólny punkt
     prawdy dla renderu i _excelRefreshDupColors (DRY, priorytet:
-    ERROR > WARNING > duplikat > aktywny > base). */
+    duplikat > ERROR > WARNING > aktywny > base). */
+/* Tooltip wiersza z błędami — DRY dla renderu i _excelRefreshDupColors. */
+function _excelErrorTitle(well) {
+    if (!well || !well.configErrors || well.configErrors.length === 0) return '';
+    return (
+        escapeHtml(String(well.configErrors[0])) +
+        (well.configErrors.length > 1 ? ' (+' + (well.configErrors.length - 1) + ')' : '')
+    );
+}
+
 function _excelGetRowStatus(well) {
     if (!well) return null;
     const s = well.configStatus;
@@ -142,15 +153,8 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
                 : statusKey === 'WARNING'
                   ? ' excel-row-warning'
                   : '';
-        const statusTitle =
-            well && well.configErrors && well.configErrors.length > 0
-                ? ' title="' +
-                  escapeHtml(String(well.configErrors[0])) +
-                  (well.configErrors.length > 1
-                      ? ' (+' + (well.configErrors.length - 1) + ')'
-                      : '') +
-                  '"'
-                : '';
+        const _errTitle = _excelErrorTitle(well);
+        const statusTitle = _errTitle ? ' title="' + _errTitle + '"' : '';
         const przejscia = well.przejscia || [];
         const solidBase = isEven ? 'var(--bg-primary)' : 'var(--bg-secondary)';
         const stickyBg = _excelStickyCellBg(rowBg, solidBase);
@@ -844,6 +848,11 @@ function _excelRefreshDupColors() {
         row.setAttribute('data-hover-bg', effHoverBg);
         row.setAttribute('data-active-bg', effActiveBg);
         row.style.background = effRowBg;
+        /* Tooltip z błędami — odświeżany razem z tłem, inaczej hover pokazuje
+           stary pierwszy błąd (D2). */
+        var _effTitle = typeof _excelErrorTitle === 'function' ? _excelErrorTitle(well) : '';
+        if (_effTitle) row.setAttribute('title', _effTitle);
+        else row.removeAttribute('title');
         if (effTextColor) {
             row.style.color = effTextColor;
             row.classList.add(effStatusKey === 'ERROR' ? 'excel-row-error' : 'excel-row-warning');

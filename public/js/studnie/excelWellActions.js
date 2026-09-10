@@ -115,7 +115,12 @@ function _excelUpdateWellParam(wIdx, paramKey, value) {
     try {
         if (typeof _excelSyncMainPreview === 'function') _excelSyncMainPreview(wIdx);
     } catch (_e) {}
-    _excelDebouncedRefresh();
+    _excelDebouncedRefresh(wIdx);
+    if (typeof recalculateWellErrors === 'function' && wells[wIdx]) {
+        try {
+            recalculateWellErrors(wells[wIdx]);
+        } catch (_e) {}
+    }
     _excelRenderTable(_excelActiveTab);
     const existing = document.getElementById('excel-params-popup');
     if (existing) {
@@ -238,7 +243,16 @@ function excelOpenWellParams(wIdx) {
 }
 
 function excelRefreshParamsPopup(wIdx) {
-    _excelDebouncedRefresh();
+    _excelDebouncedRefresh(wIdx);
+    if (
+        typeof recalculateWellErrors === 'function' &&
+        typeof wells !== 'undefined' &&
+        wells[wIdx]
+    ) {
+        try {
+            recalculateWellErrors(wells[wIdx]);
+        } catch (_e) {}
+    }
     _excelRenderTable(_excelActiveTab);
     const existing = document.getElementById('excel-params-popup');
     if (existing) {
@@ -263,7 +277,7 @@ function excelOnNameChange(wIdx, value) {
     _excelRefreshDupColors();
     _excelRenderTabs();
     _excelUpdateWellCount();
-    _excelDebouncedRefresh();
+    _excelDebouncedRefresh(wIdx);
     /* Re-aplikuj filtr wyszukiwarki — nazwa mogła przestać pasować do zapytania */
     if (typeof excelFilterWells === 'function') {
         const si = document.getElementById('excel-search-input');
@@ -316,7 +330,7 @@ function excelDuplicateWell(wIdx) {
     _excelRenderTable(_excelActiveTab);
     _excelUpdateWellCount();
     setTimeout(() => excelSelectRow(wIdx + 1), 50);
-    _excelDebouncedRefresh();
+    _excelDebouncedRefresh(wIdx + 1);
     showToast('Skopiowano: ' + copy.name, 'success');
 }
 

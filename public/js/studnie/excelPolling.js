@@ -99,24 +99,73 @@ function _excelStopPolling() {
     }
 }
 
-function _excelDebouncedRefresh() {
+/* Kolejka studni do przeliczenia błędów w timerze — _excelDebouncedRefresh(wIdx)
+   dokłada edytowany wiersz; brak argumentu = cała aktywna zakładka (operacje
+   strukturalne: kolumny przejść, undo/redo, paste-create, delete). */
+var _excelPendingErrorWIdxs = [];
+var _excelRefreshAllErrorsPending = false;
+
+/* Opróżnia kolejkę błędów: przelicza docelowe studnie i odświeża tła wierszy.
+   Zwraca true, gdy cokolwiek przeliczono. */
+function _excelRecalcPendingWellErrors() {
+    if (typeof wells === 'undefined' || !Array.isArray(wells)) return false;
+    if (typeof recalculateWellErrors !== 'function') return false;
+    var seen = {};
+    var targets = [];
+    function _add(i) {
+        if (typeof i !== 'number' || isNaN(i) || i < 0 || i >= wells.length) return;
+        if (!wells[i] || seen[i]) return;
+        seen[i] = 1;
+        targets.push(i);
+    }
+    var i;
+    if (_excelRefreshAllErrorsPending) {
+        for (i = 0; i < wells.length; i++) {
+            if (typeof _excelWellMatchesTab === 'function') {
+                try {
+                    if (!_excelWellMatchesTab(wells[i], _excelActiveTab)) continue;
+                } catch (_e) {}
+            }
+            _add(i);
+        }
+    } else {
+        for (i = 0; i < _excelPendingErrorWIdxs.length; i++) _add(_excelPendingErrorWIdxs[i]);
+        if (targets.length === 0 && typeof currentWellIndex !== 'undefined') _add(currentWellIndex);
+    }
+    _excelPendingErrorWIdxs = [];
+    _excelRefreshAllErrorsPending = false;
+    for (i = 0; i < targets.length; i++) {
+        try {
+            recalculateWellErrors(wells[targets[i]]);
+        } catch (_e) {}
+    }
+    if (targets.length > 0 && typeof _excelRefreshDupColors === 'function') {
+        try {
+            _excelRefreshDupColors();
+        } catch (_e) {}
+    }
+    return targets.length > 0;
+}
+
+function _excelDebouncedRefresh(editedWIdx) {
     _excelMarkDirty();
+    if (typeof editedWIdx === 'number' && !isNaN(editedWIdx)) {
+        _excelPendingErrorWIdxs.push(editedWIdx);
+    } else if (Array.isArray(editedWIdx)) {
+        for (var i = 0; i < editedWIdx.length; i++) {
+            if (typeof editedWIdx[i] === 'number' && !isNaN(editedWIdx[i]))
+                _excelPendingErrorWIdxs.push(editedWIdx[i]);
+        }
+    } else {
+        _excelRefreshAllErrorsPending = true;
+    }
     if (_excelRefreshTimer) clearTimeout(_excelRefreshTimer);
     _excelRefreshTimer = setTimeout(() => {
         _excelRefreshTimer = null;
         /* Tylko odśwież kody h3 — NIE refreshAll (zbyt wolne przy 50+ studniach) */
         _excelUpdateHeaderProdCodes();
-        /* Przelicz błędy aktywnej studni (lekko, jedna studnia) i odśwież tła */
-        if (
-            typeof recalculateWellErrors === 'function' &&
-            typeof currentWellIndex !== 'undefined' &&
-            currentWellIndex >= 0 &&
-            typeof wells !== 'undefined' &&
-            wells[currentWellIndex]
-        ) {
-            recalculateWellErrors(wells[currentWellIndex]);
-            if (typeof _excelRefreshDupColors === 'function') _excelRefreshDupColors();
-        }
+        /* Przelicz błędy edytowanych studni (kolejka) i odśwież tła */
+        _excelRecalcPendingWellErrors();
         /* Odśwież główny panel gdy Excel jest otwarty */
         if (typeof window.updateSummary === 'function') window.updateSummary();
         if (typeof window.renderWellDiagram === 'function') window.renderWellDiagram();

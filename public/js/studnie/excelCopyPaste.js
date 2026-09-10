@@ -1688,11 +1688,40 @@ function _excelHandlePaste(e) {
             try {
                 _excelFinalizePasteAffected(_pasteCtx);
             } catch (_e) {}
+        /* Przelicz błędy dotkniętych studni PRZED re-renderem — inaczej tabela
+           czyta stary configStatus (D1). */
+        if (_pasteCtx && _pasteCtx.affected && _pasteCtx.affected.size > 0) {
+            if (typeof recalculateWellErrors === 'function') {
+                _pasteCtx.affected.forEach(function (wIdx) {
+                    var w = typeof wells !== 'undefined' ? wells[wIdx] : null;
+                    if (!w) return;
+                    try {
+                        recalculateWellErrors(w);
+                    } catch (_e) {}
+                });
+            }
+        } else if (typeof recalculateWellErrors === 'function' && typeof wells !== 'undefined') {
+            for (var _ri = 0; _ri < wells.length; _ri++) {
+                if (!wells[_ri]) continue;
+                if (typeof _excelWellMatchesTab === 'function') {
+                    try {
+                        if (!_excelWellMatchesTab(wells[_ri], _excelActiveTab)) continue;
+                    } catch (_e) {}
+                }
+                try {
+                    recalculateWellErrors(wells[_ri]);
+                } catch (_e) {}
+            }
+        }
         _excelPasteInProgress = false;
         /* W4: wyczyść martwą selekcję (tablice i klasy) + pełny re-render. */
         if (typeof _excelResetLayoutDependentState === 'function')
             _excelResetLayoutDependentState();
         _excelRenderTable(_excelActiveTab);
+        if (typeof _excelRefreshDupColors === 'function')
+            try {
+                _excelRefreshDupColors();
+            } catch (_e) {}
         if (typeof _excelMarkDirty === 'function')
             try {
                 _excelMarkDirty();
@@ -3247,7 +3276,15 @@ function _excelHandleFillDown() {
             _excelBatchReliefTouched = false;
             if (typeof _excelRenderTable === 'function') _excelRenderTable(_excelActiveTab);
         }
-        _excelDebouncedRefresh();
+        var _fillWIdxs = [];
+        var _fillSeen = {};
+        plan.forEach(function (cell) {
+            if (typeof cell.wIdx === 'number' && !_fillSeen[cell.wIdx]) {
+                _fillSeen[cell.wIdx] = 1;
+                _fillWIdxs.push(cell.wIdx);
+            }
+        });
+        _excelDebouncedRefresh(_fillWIdxs);
         showToast('Wypełniono ' + plan.length + ' komórek', 'info');
     } finally {
         _excelPasteInProgress = false;

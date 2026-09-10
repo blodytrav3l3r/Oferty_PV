@@ -54,7 +54,7 @@ function excelOnRzednaChange(wIdx) {
         _excelAutoSelectForWell(wIdx);
     } else {
         _excelMarkAsManual(wIdx);
-        if (typeof _excelDebouncedRefresh === 'function') _excelDebouncedRefresh();
+        if (typeof _excelDebouncedRefresh === 'function') _excelDebouncedRefresh(wIdx);
     }
 }
 
@@ -188,7 +188,7 @@ function excelOnPrzejscieChange(wIdx, trIdx, field, value) {
     if (_excelPasteQuiet()) return; /* model gotowy; preview/refresh raz w doneCallback */
     _excelUpdateLeftPreview(wIdx);
     if (typeof _excelImmediatePreview === 'function') _excelImmediatePreview(wIdx);
-    _excelDebouncedRefresh();
+    _excelDebouncedRefresh(wIdx);
 }
 
 function excelOnPrzejscieTypeChange(wIdx, trIdx, value) {
@@ -216,6 +216,11 @@ function excelOnPrzejscieTypeChange(wIdx, trIdx, value) {
     const savedIdx = typeof currentWellIndex !== 'undefined' ? currentWellIndex : -1;
     currentWellIndex = -1;
     if (typeof _excelPasteInProgress === 'undefined' || !_excelPasteInProgress) {
+        if (typeof recalculateWellErrors === 'function' && wells[wIdx]) {
+            try {
+                recalculateWellErrors(wells[wIdx]);
+            } catch (_e) {}
+        }
         _excelRenderTable(_excelActiveTab);
     }
     /* Przywróć zaznaczenie — inaczej kody produktów w h3 zostają w fallbacku
@@ -226,7 +231,7 @@ function excelOnPrzejscieTypeChange(wIdx, trIdx, value) {
     }
     if (typeof _excelImmediatePreview === 'function' && !_excelPasteQuiet())
         _excelImmediatePreview(wIdx);
-    if (!_excelPasteQuiet()) _excelDebouncedRefresh();
+    if (!_excelPasteQuiet()) _excelDebouncedRefresh(wIdx);
 }
 
 /* Wspólny rdzeń modelowy włazu — handler DOM i ścieżka model-only wklejania. */
@@ -256,10 +261,15 @@ function excelOnWlazChange(wIdx, productId) {
     _excelWlazModelUpdate(wIdx, productId);
     if (_excelPasteQuiet()) return; /* model gotowy; render/preview raz w doneCallback */
     const well = wells[wIdx];
+    if (typeof recalculateWellErrors === 'function' && well) {
+        try {
+            recalculateWellErrors(well);
+        } catch (_e) {}
+    }
     _excelMarkManual(well);
     _excelUpdateLeftPreview(wIdx);
     _excelUpdateHeaderProdCodes();
-    _excelDebouncedRefresh();
+    _excelDebouncedRefresh(wIdx);
 }
 
 function _excelMarkManual(well) {
@@ -532,6 +542,11 @@ function excelOnCompChange(wIdx, componentType, height, value, productId, redDn)
        render przy wpisywaniu (oninput) wyrzucał fokus i niebieskie
        zaznaczenie nawigacji strzałkami. */
     if ((componentType === 'krag' || componentType === 'krag_ot') && modelMutated) {
+        if (typeof recalculateWellErrors === 'function' && well) {
+            try {
+                recalculateWellErrors(well);
+            } catch (_e) {}
+        }
         _excelMarkManual(well);
     }
 
@@ -543,7 +558,7 @@ function excelOnCompChange(wIdx, componentType, height, value, productId, redDn)
     if (typeof _excelImmediatePreview === 'function') _excelImmediatePreview(wIdx);
     else _excelUpdateLeftPreview(wIdx);
     _excelUpdateHeaderProdCodes();
-    _excelDebouncedRefresh();
+    _excelDebouncedRefresh(wIdx);
 }
 
 /* Wspólny rdzeń modelowy kinety — handler DOM i ścieżka model-only wklejania. */
@@ -560,7 +575,7 @@ function excelOnKinetaChange(wIdx, value) {
     if (_excelPasteQuiet()) return; /* model gotowy; preview/refresh raz w doneCallback */
     _excelUpdateLeftPreview(wIdx);
     if (typeof _excelImmediatePreview === 'function') _excelImmediatePreview(wIdx);
-    _excelDebouncedRefresh();
+    _excelDebouncedRefresh(wIdx);
 }
 
 /* Wspólny rdzeń modelowy psiej budy — handler DOM i ścieżka model-only wklejania. */
@@ -596,7 +611,7 @@ function excelOnPsiaBudaChange(wIdx, checked) {
     if (row) _excelRefreshAutoCells(wIdx, row);
     _excelUpdateLeftPreview(wIdx);
     if (typeof _excelImmediatePreview === 'function') _excelImmediatePreview(wIdx);
-    _excelDebouncedRefresh();
+    _excelDebouncedRefresh(wIdx);
 }
 
 /* Wspólny rdzeń modelowy redukcji — handler DOM i ścieżka model-only wklejania.
@@ -628,9 +643,14 @@ async function excelOnReductionSelectChange(wIdx, value) {
         well.config = [];
         await autoSelectComponents(true);
     }
+    if (typeof recalculateWellErrors === 'function' && well) {
+        try {
+            recalculateWellErrors(well);
+        } catch (_e) {}
+    }
     _excelRenderTable(_excelActiveTab);
     if (typeof _excelImmediatePreview === 'function') _excelImmediatePreview(wIdx);
-    _excelDebouncedRefresh();
+    _excelDebouncedRefresh(wIdx);
 }
 
 /* ===== Rejestracja globali ===== */

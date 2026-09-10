@@ -136,8 +136,8 @@ function excelCreateFromEmpty() {
         _excelRenderTabs();
         _excelRenderTable(_excelActiveTab);
         _excelUpdateWellCount();
-        _excelDebouncedRefresh();
         const newWIdx = wells.length - 1;
+        _excelDebouncedRefresh(newWIdx);
         if (_excelAutoSelectEnabled && rzw !== null && rzd !== null && rzw > rzd) {
             setTimeout(function () {
                 _excelAutoSelectForWell(newWIdx);
