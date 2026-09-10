@@ -108,7 +108,16 @@ function filterByWellParams(p, well) {
             const isZelbet = well.nadbudowa === 'zelbetowa';
             // Blokada KDB dla żelbetu i KDZ dla betonu (z wyjątkiem DN2000/2500, które są zawsze żelbetowe)
             if (isZelbet && id.startsWith('KDB') && p.dn !== 2000 && p.dn !== 2500) return false;
-            if (!isZelbet && id.startsWith('KDZ') && p.dn !== 2000 && p.dn !== 2500) return false;
+            // Wyjątek: krąg żelbetowy DN1500 H=250 widoczny też przy nadbudowie betonowej (tylko zwykły krag, bez krag_ot)
+            const isDn1500H250 = parseInt(p.dn, 10) === 1500 && parseInt(p.height, 10) === 250;
+            if (
+                !isZelbet &&
+                id.startsWith('KDZ') &&
+                p.dn !== 2000 &&
+                p.dn !== 2500 &&
+                !isDn1500H250
+            )
+                return false;
         }
 
         // Kręgi z otworem (krag_ot) - filtrowane beton/żelbet tak samo jak zwykłe kręgi

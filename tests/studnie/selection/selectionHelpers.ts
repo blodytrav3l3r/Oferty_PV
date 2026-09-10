@@ -107,7 +107,11 @@ export function filterByWellParams(
     if (p.componentType === 'krag') {
         const isZelbet = well.nadbudowa === 'zelbetowa';
         if (isZelbet && id.startsWith('KDB') && p.dn !== 2000 && p.dn !== 2500) return false;
-        if (!isZelbet && id.startsWith('KDZ') && p.dn !== 2000 && p.dn !== 2500) return false;
+        // Wyjątek: krąg żelbetowy DN1500 H=250 widoczny też przy nadbudowie betonowej (tylko zwykły krag, bez krag_ot)
+        const isDn1500H250 =
+            parseInt(String(p.dn), 10) === 1500 && parseInt(String(p.height), 10) === 250;
+        if (!isZelbet && id.startsWith('KDZ') && p.dn !== 2000 && p.dn !== 2500 && !isDn1500H250)
+            return false;
     }
 
     // Kregi OT

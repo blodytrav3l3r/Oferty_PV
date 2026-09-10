@@ -157,6 +157,45 @@ describe('filterByWellParams — material', () => {
         );
     });
 
+    it('DN1500 H250: KDZ widoczny przy betonie (tylko zwykły krag, bez krag_ot)', () => {
+        const kdz1500h250: MockProduct = {
+            id: 'KDZ-15-02-D',
+            name: 'KDZ',
+            componentType: 'krag',
+            dn: 1500,
+            height: 250,
+            formaStandardowaKLB: 1
+        };
+        const kdz1500h250ot: MockProduct = {
+            id: 'KDZ-15-02-OT',
+            name: 'KDZ OT',
+            componentType: 'krag_ot',
+            dn: 1500,
+            height: 250,
+            formaStandardowaKLB: 1
+        };
+        const kdz1500h500: MockProduct = {
+            id: 'KDZ-15-05-D',
+            name: 'KDZ',
+            componentType: 'krag',
+            dn: 1500,
+            height: 500,
+            formaStandardowaKLB: 1
+        };
+        expect(
+            filterByWellParams(kdz1500h250, { nadbudowa: 'betonowa', stopnie: 'drabinka' })
+        ).toBe(true);
+        expect(
+            filterByWellParams(kdz1500h250, { nadbudowa: 'zelbetowa', stopnie: 'drabinka' })
+        ).toBe(true);
+        expect(
+            filterByWellParams(kdz1500h250ot, { nadbudowa: 'betonowa', stopnie: 'drabinka' })
+        ).toBe(false);
+        expect(
+            filterByWellParams(kdz1500h500, { nadbudowa: 'betonowa', stopnie: 'drabinka' })
+        ).toBe(false);
+    });
+
     it('dennica DDD przepuszczana dla beton i żelbet', () => {
         const ddd1000: MockProduct = {
             id: 'DDD-10-045',
