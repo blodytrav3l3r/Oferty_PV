@@ -66,6 +66,12 @@ async function _excelAutoSelectForWell(wIdx) {
         }
     } finally {
         if (savedIdx >= 0) currentWellIndex = savedIdx;
+        /* Solver pracował na wIdx — po przywróceniu zaznaczenia preview
+         * (kafelki + diagram) musi wrócić na zaznaczony wiersz. */
+        try {
+            if (typeof _excelSyncMainPreview === 'function')
+                _excelSyncMainPreview(currentWellIndex);
+        } catch (_e) {}
     }
 }
 
@@ -191,6 +197,11 @@ async function _excelRunAutoSelectForWell(wIdx) {
         showToast('Błąd auto-doboru: ' + (e?.message || e), 'error');
     } finally {
         currentWellIndex = savedIdx >= 0 ? savedIdx : currentWellIndex;
+        /* Jw. — preview wraca na zaznaczony wiersz, nie na przeliczony. */
+        try {
+            if (typeof _excelSyncMainPreview === 'function')
+                _excelSyncMainPreview(currentWellIndex);
+        } catch (_e) {}
         if (runBtn)
             runBtn.innerHTML =
                 '<svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor" class="d-block"><polygon points="3,2 15,8 3,14"/></svg>';

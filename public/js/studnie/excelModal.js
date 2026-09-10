@@ -499,15 +499,53 @@ async function closeExcelTableModal() {
 }
 
 /* ===== WYBÓR WIERSZA ===== */
-function _excelUpdateLeftPreview(wIdx) {
-    const well = typeof wells !== 'undefined' && wells[wIdx] ? wells[wIdx] : null;
-    if (!well) return;
-    if (typeof currentWellIndex !== 'undefined') {
+/* SSoT podglądu głównego: preview ZAWSZE podąża za wierszem Excela
+ * (kafelki Wymagane/Zbudowano/Zostało/Cena + diagram + kody h3).
+ * Kafelki maluje wyłącznie updateSummary() — sam renderWellDiagram ich nie tyka,
+ * więc każdy caller woła tę jedną funkcję zamiast rozproszonych renderów. */
+function _excelSyncMainPreview(wIdx) {
+    var hasWells = typeof wells !== 'undefined' && Array.isArray(wells);
+    var well = hasWells && typeof wIdx === 'number' ? wells[wIdx] : null;
+    if (!well) {
+        /* Pusta lista — wyczyść kafelki/diagram zamiast zostawiać stale wartości. */
+        if (!(hasWells && wells.length === 0)) return;
+    } else if (typeof currentWellIndex !== 'undefined') {
         currentWellIndex = wIdx;
     }
-    if (typeof renderWellDiagram === 'function') {
-        renderWellDiagram();
+    /* updateSummary() przy okazji renderuje pełną listę studni (ciężkie przy 10k)
+     * — tu tłumimy TYLKO listę flagą, którą updateSummary i tak sprawdza.
+     * Lista odświeża się debounce'm (_excelDebouncedRefresh). */
+    var prevListGuard = false;
+    try {
+        if (typeof window !== 'undefined' && window._renderingWellsList) prevListGuard = true;
+        else if (typeof window !== 'undefined') window._renderingWellsList = true;
+        if (typeof window !== 'undefined' && typeof window.updateSummary === 'function')
+            window.updateSummary();
+        else if (typeof updateSummary === 'function') updateSummary();
+    } catch (_e) {
+    } finally {
+        try {
+            if (typeof window !== 'undefined' && !prevListGuard) window._renderingWellsList = false;
+        } catch (_e2) {}
     }
+    try {
+        if (typeof renderWellDiagram === 'function') renderWellDiagram();
+    } catch (_e) {}
+    try {
+        if (typeof _excelUpdateHeaderProdCodes === 'function') _excelUpdateHeaderProdCodes();
+    } catch (_e) {}
+}
+
+function _excelUpdateLeftPreview(wIdx) {
+    _excelSyncMainPreview(wIdx);
+}
+
+/* Alias wstecznej kompatybilności: excelChangeHandlers woła _excelImmediatePreview
+ * w 8 miejscach, a funkcja nigdy nie istniała (tylko declare w types.d.ts) —
+ * wszystkie guardy typeof były no-opem. Teraz wskazuje na SSoT. */
+function _excelImmediatePreview(wIdx) {
+    if (typeof wIdx === 'number' && !isNaN(wIdx)) _excelSyncMainPreview(wIdx);
+    else if (typeof currentWellIndex !== 'undefined') _excelSyncMainPreview(currentWellIndex);
 }
 
 function excelSelectRow(wIdx) {
@@ -551,10 +589,11 @@ function excelSelectRow(wIdx) {
         }
     }
 
-    _excelUpdateLeftPreview(wIdx);
-    /* Aktualizuj h3 — kody produktów ZALEŻĄ od zaznaczonej studni */
-    _excelUpdateHeaderProdCodes();
+    _excelSyncMainPreview(wIdx);
 }
 
 /* ===== Rejestracja globali ===== */
+window._excelSyncMainPreview = _excelSyncMainPreview;
+window._excelUpdateLeftPreview = _excelUpdateLeftPreview;
+window._excelImmediatePreview = _excelImmediatePreview;
 window.openExcelTableModal = openExcelTableModal;

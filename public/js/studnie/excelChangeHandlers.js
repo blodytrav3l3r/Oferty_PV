@@ -544,13 +544,6 @@ function excelOnCompChange(wIdx, componentType, height, value, productId, redDn)
     else _excelUpdateLeftPreview(wIdx);
     _excelUpdateHeaderProdCodes();
     _excelDebouncedRefresh();
-
-    if (typeof _excelImmediatePreview === 'function') _excelImmediatePreview(wIdx);
-    else {
-        if (typeof window.updateSummary === 'function') window.updateSummary();
-        if (typeof window.renderWellDiagram === 'function') window.renderWellDiagram();
-        if (typeof window.renderWellsList === 'function') window.renderWellsList();
-    }
 }
 
 /* Wspólny rdzeń modelowy kinety — handler DOM i ścieżka model-only wklejania. */

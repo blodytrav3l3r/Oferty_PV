@@ -111,6 +111,10 @@ function _excelUpdateWellParam(wIdx, paramKey, value) {
     if (paramKey === 'kineta' || paramKey === 'spocznik' || paramKey === 'spocznikH') {
         if (typeof syncKineta === 'function') syncKineta(well);
     }
+    /* Parametry cenowe (malowanie itd.) — kafelki preview natychmiast za wierszem. */
+    try {
+        if (typeof _excelSyncMainPreview === 'function') _excelSyncMainPreview(wIdx);
+    } catch (_e) {}
     _excelDebouncedRefresh();
     _excelRenderTable(_excelActiveTab);
     const existing = document.getElementById('excel-params-popup');
@@ -340,6 +344,10 @@ async function excelDeleteWell(wIdx) {
     if (typeof currentWellIndex !== 'undefined' && currentWellIndex >= wells.length) {
         currentWellIndex = Math.max(0, wells.length - 1);
     }
+    /* Preview za aktualnym zaznaczeniem (nie za usuniętym wierszem). */
+    try {
+        if (typeof _excelSyncMainPreview === 'function') _excelSyncMainPreview(currentWellIndex);
+    } catch (_e) {}
     _excelMaxTransitions[_excelActiveTab] = _excelGetMaxTransitions();
     _excelRenderTabs();
     _excelRenderTable(_excelActiveTab);

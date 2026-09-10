@@ -742,12 +742,65 @@ function _excelVirtualRenderBody() {
                 return '</thead><tbody></tbody>';
             };
         }
+        /* OT-swap (krag_ot<->krag) robi pełny re-render w trakcie edycji, a origRender
+           ze stubem tbody niszczy edytowany input (activeElement spada do body).
+           renderBody mierzy fokus dopiero po wipe, więc przechwyć komórkę PRZED
+           (SSoT: logicalColId, nie numeryczny colIdx). */
+        var _preActive = null;
+        try {
+            if (
+                typeof _excelVirtualSyncActiveFromElement === 'function' &&
+                typeof document !== 'undefined'
+            ) {
+                _preActive = _excelVirtualSyncActiveFromElement(document.activeElement);
+            }
+        } catch (_ePre) {}
         origRender(dn);
         if (skipped) window._excelRenderTbody = origTbody;
         // po header-only renderze podmień body na virtual slice
         _excelVirtualBuildFiltered();
         _excelVirtualAttach();
         _excelVirtualRenderBody();
+        /* Restore fokusa zgubionego przez wipe — tylko gdy fokus faktycznie uciekł
+           z grida; bez scrollowania (wiersz poza viewportem = odpuść). */
+        try {
+            if (_preActive && typeof document !== 'undefined') {
+                var _curAe = document.activeElement;
+                var _lost =
+                    !_curAe ||
+                    _curAe === document.body ||
+                    (typeof _excelVirtualIsExcelCell === 'function' &&
+                        !_excelVirtualIsExcelCell(_curAe));
+                if (_lost) {
+                    if (typeof _excelVirtualActiveCell !== 'undefined')
+                        _excelVirtualActiveCell = {
+                            logicalRow: _preActive.logicalRow,
+                            logicalColId: _preActive.logicalColId
+                        };
+                    if (
+                        _preActive.logicalRow >= _excelVirtualStart &&
+                        _preActive.logicalRow < _excelVirtualEnd &&
+                        typeof _excelVirtualFocusCell === 'function' &&
+                        _excelVirtualFocusCell(_preActive, { noScroll: true })
+                    ) {
+                        /* Karetka na koniec (reguła #33) — FocusCell robi select(),
+                           a zaznaczenie całości zastąpiłby kolejny klawisz. */
+                        var _restored = document.activeElement;
+                        if (
+                            _restored &&
+                            _restored.tagName === 'INPUT' &&
+                            _restored.type !== 'number' &&
+                            _restored.type !== 'range' &&
+                            typeof _restored.setSelectionRange === 'function' &&
+                            _restored.value
+                        ) {
+                            var _len = _restored.value.length;
+                            _restored.setSelectionRange(_len, _len);
+                        }
+                    }
+                }
+            }
+        } catch (_ePost) {}
         // nadpisz search aby rebuildował filtered
         const origFilter = window.excelFilterWells;
         if (origFilter && !origFilter._virtualPatched) {
