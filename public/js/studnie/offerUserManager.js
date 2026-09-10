@@ -2,7 +2,7 @@
 /* ===== ZARZĄDZANIE OPIEKUNEM OFERTY (STUDNIE) ===== */
 
 async function changeOfferUser() {
-    if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'pro')) {
+    if (!currentUser) {
         showToast('Brak uprawnień do zmiany opiekuna', 'error');
         return;
     }
@@ -63,7 +63,7 @@ async function changeOfferUser() {
 }
 
 async function changeOfferUserFromListStudnie(offerId) {
-    if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'pro')) {
+    if (!currentUser) {
         showToast('Brak uprawnień do zmiany opiekuna', 'error');
         return;
     }

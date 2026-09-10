@@ -106,12 +106,14 @@ function markOrderSaved(order, updatedAt) {
 }
 
 /**
- * Konflikt 409: podmień lokalną kopię na serwerową, toast, false (nie zapisano).
+ * Konflikt 409/423: podmień lokalną kopię na serwerową, toast, false (nie zapisano).
+ * Przy 423 (twarda blokada) formularz zostaje — toast mowi o blokadzie.
  * @param {Object} order
  * @param {Object} serverBody odpowiedź serwera z serverOrder
+ * @param {Object} [extra] opcjonalnie { lockHolder }
  * @returns {boolean} zawsze false
  */
-async function handleOrderConflict(order, serverBody) {
+async function handleOrderConflict(order, serverBody, extra) {
     try {
         const serverOrder = serverBody && serverBody.serverOrder;
         if (serverOrder && serverOrder.id) {
@@ -138,10 +140,18 @@ async function handleOrderConflict(order, serverBody) {
         // konflikt obsłużony mimo błędu scalania
     }
     if (typeof showToast === 'function') {
-        showToast(
-            'Zamówienie zmieniono w międzyczasie — wczytano aktualną wersję. Sprawdź i zapisz ponownie.',
-            'warning'
-        );
+        if (extra && extra.lockHolder && window.lockService) {
+            const info = window.lockService.describeHolder(extra.lockHolder);
+            showToast(
+                'Zapis odrzucony — dokument edytuje ' + info.name + '. Skopiuj swoje zmiany.',
+                'warning'
+            );
+        } else {
+            showToast(
+                'Zamówienie zmieniono w międzyczasie — wczytano aktualną wersję. Sprawdź i zapisz ponownie.',
+                'warning'
+            );
+        }
     }
     return false;
 }
@@ -205,8 +215,13 @@ async function putSingleOrderStudnie(order) {
             headers: authHeaders(),
             body
         });
-        if (res.status === 409) {
-            return handleOrderConflict(order, await res.json().catch(() => ({})));
+        if (res.status === 409 || res.status === 423) {
+            const conflictBody = await res.json().catch(() => ({}));
+            const extra =
+                res.status === 423 && conflictBody.holder
+                    ? { lockHolder: conflictBody.holder }
+                    : undefined;
+            return handleOrderConflict(order, conflictBody, extra);
         }
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         markOrderSaved(order, order.updatedAt);
@@ -234,8 +249,13 @@ async function patchSingleOrderStudnie(order, fields) {
             headers: authHeaders(),
             body
         });
-        if (res.status === 409) {
-            return handleOrderConflict(order, await res.json().catch(() => ({})));
+        if (res.status === 409 || res.status === 423) {
+            const conflictBody = await res.json().catch(() => ({}));
+            const extra =
+                res.status === 423 && conflictBody.holder
+                    ? { lockHolder: conflictBody.holder }
+                    : undefined;
+            return handleOrderConflict(order, conflictBody, extra);
         }
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         markOrderSaved(order, order.updatedAt);

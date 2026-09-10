@@ -13,6 +13,14 @@ function isOrderMode() {
 window.isOrderMode = isOrderMode;
 
 async function enterRuryOrderEditMode(orderId) {
+    // Twarda blokada: drugi uzytkownik nie otwiera formularza wcale (modal 423).
+    if (
+        window.lockService &&
+        !(await window.lockService.tryOpen('order_rury', orderId, function () {
+            enterRuryOrderEditMode(orderId);
+        }))
+    )
+        return;
     try {
         let orderData = (ordersRury || []).find((o) => o.id === orderId);
         if (!orderData) {
@@ -85,6 +93,7 @@ async function enterRuryOrderEditMode(orderId) {
 window.enterRuryOrderEditMode = enterRuryOrderEditMode;
 
 function exitOrderEditMode() {
+    if (window.lockService) window.lockService.releaseOf('order_rury', window.editingRuryOrderId);
     if (typeof clearOrderEditState === 'function') {
         clearOrderEditState();
     } else {

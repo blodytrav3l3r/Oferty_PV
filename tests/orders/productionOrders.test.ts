@@ -127,15 +127,17 @@ describe('Production Orders (PZ) routes', () => {
             expect(res.statusCode).toBe(400);
         });
 
-        it('zwraca 403 gdy user nie może zapisać dla innego użytkownika', async () => {
+        it('pozwala zapisać PZ dla innego użytkownika (model współpracy)', async () => {
             (prisma.production_orders_rel.findUnique as jest.Mock).mockResolvedValue(null);
+            (prisma.production_orders_rel.create as jest.Mock).mockResolvedValue({});
 
             const res = await request(app)
                 .post('/api/orders/production')
                 .set('x-user-id', 'user-id')
                 .send({ wellId: 'w-1', userId: 'other-user' });
 
-            expect(res.statusCode).toBe(403);
+            expect(res.statusCode).toBe(200);
+            expect(prisma.production_orders_rel.create).toHaveBeenCalled();
         });
 
         it('P1-A: retry z tym samym Idempotency-Key → ta sama odpowiedź, 1 dokument', async () => {
@@ -237,11 +239,14 @@ describe('Production Orders (PZ) routes', () => {
             expect(prisma.production_orders_rel.create).toHaveBeenCalledTimes(2);
         });
 
-        it('zwraca 403 przy edycji cudzego PZ', async () => {
+        it('pozwala edytować cudze PZ (model współpracy)', async () => {
             (prisma.production_orders_rel.findUnique as jest.Mock).mockResolvedValue({
                 id: 'pz-1',
                 userId: 'other-user',
                 data: '{}'
+            });
+            (prisma.production_orders_rel.updateMany as jest.Mock).mockResolvedValue({
+                count: 1
             });
 
             const res = await request(app)
@@ -249,7 +254,27 @@ describe('Production Orders (PZ) routes', () => {
                 .set('x-user-id', 'user-id')
                 .send({ data: [{ id: 'pz-1', wellId: 'w-1', status: 'draft' }] });
 
-            expect(res.statusCode).toBe(403);
+            expect(res.statusCode).toBe(200);
+        });
+
+        it('PUT PZ honoruje zmianę opiekuna, bez userId zostawia starą kolumnę', async () => {
+            (prisma.production_orders_rel.findUnique as jest.Mock).mockResolvedValue({
+                id: 'pz-1',
+                userId: 'other-user',
+                data: '{}'
+            });
+            (prisma.production_orders_rel.update as jest.Mock).mockResolvedValue({});
+
+            const res = await request(app)
+                .put('/api/orders/production')
+                .set('x-user-id', 'user-id')
+                .send({
+                    data: [{ id: 'pz-1', wellId: 'w-1', userId: 'third-user', status: 'draft' }]
+                });
+
+            expect(res.statusCode).toBe(200);
+            const updateCall = (prisma.production_orders_rel.update as jest.Mock).mock.calls[0][0];
+            expect(updateCall.data.userId).toBe('third-user');
         });
     });
 

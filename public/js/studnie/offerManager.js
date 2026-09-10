@@ -5,6 +5,7 @@
 /* Zapis oferty przeniesiony do offerSave.js */
 
 function clearOfferForm() {
+    if (typeof window !== 'undefined' && window.lockService) window.lockService.release();
     editingOfferIdStudnie = null;
     editingOfferAssignedUserId = null;
     editingOfferAssignedUserName = '';
@@ -30,10 +31,7 @@ function clearOfferForm() {
 
     const btnChangeUser = document.getElementById('btn-change-offer-user');
     if (btnChangeUser) {
-        btnChangeUser.style.display =
-            currentUser && (currentUser.role === 'admin' || currentUser.role === 'pro')
-                ? 'inline-block'
-                : 'none';
+        btnChangeUser.style.display = currentUser ? 'inline-block' : 'none';
         btnChangeUser.innerHTML = '<i data-lucide="user"></i> Zmien opiekuna';
     }
 
@@ -63,6 +61,17 @@ async function ensureOfferDetail(offer) {
 
 /** Migruj stare dane studni (material -> nadbudowa/dennicaMaterial) */
 async function loadSavedOfferStudnie(id_or_doc, optionalId, targetSection, preventStepOverride) {
+    // Twarda blokada: drugi uzytkownik nie otwiera formularza wcale (modal 423).
+    if (typeof window !== 'undefined' && window.lockService) {
+        const _lockId = typeof id_or_doc === 'object' ? id_or_doc?.id || optionalId : id_or_doc;
+        if (
+            _lockId &&
+            !(await window.lockService.tryOpen('offer_studnie', _lockId, function () {
+                loadSavedOfferStudnie(id_or_doc, optionalId, targetSection, preventStepOverride);
+            }))
+        )
+            return;
+    }
     const sectionToShow = targetSection || 'offer';
     let offer;
     if (typeof id_or_doc === 'object') {

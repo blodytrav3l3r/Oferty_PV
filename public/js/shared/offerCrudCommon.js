@@ -135,6 +135,7 @@ async function assignOfferSupervisor(currentUser, isNewOffer, editingId) {
  * @param {string|null} [spec.assignedUserName]
  * @param {string|null} [spec.createdByUserId]
  * @param {string|null} [spec.createdByUserName]
+ * @param {number} [spec.version] - jawny fallback gdy brak existingDoc
  * @returns {object}
  */
 function buildBaseOfferDoc(spec) {
@@ -147,7 +148,11 @@ function buildBaseOfferDoc(spec) {
     const assignedUserName = spec.assignedUserName || null;
     const createdByUserId = spec.createdByUserId || null;
     const createdByUserName = spec.createdByUserName || null;
-    return {
+    // P0-D2: round-trip licznika optimistic lockingu. Bez tego backend traktuje
+    // zapis jako "stary klient" (clientVersion=null) i cicho nadpisuje.
+    const existingVersion = existingDoc?.version;
+    const specVersion = spec.version;
+    const doc = {
         id: id,
         type: type,
         userId: assignedUserId || existingDoc?.userId || (currentUser ? currentUser.id : null),
@@ -178,6 +183,21 @@ function buildBaseOfferDoc(spec) {
         createdAt: existingDoc?.createdAt || new Date().toISOString(),
         lastEditedBy: buildUserDisplayName(currentUser)
     };
+    if (typeof existingVersion === 'number') doc.version = existingVersion;
+    else if (typeof specVersion === 'number') doc.version = specVersion;
+    return doc;
+}
+
+/**
+ * P0-D2: strukturalna detekcja konfliktu wersji. Tylko status/code,
+ * nigdy tekst komunikatu (teksty są kruche i zależne od języka).
+ * @param {unknown} err
+ * @returns {boolean}
+ */
+function isVersionConflict(err) {
+    if (!err || typeof err !== 'object') return false;
+    const e = /** @type {{status?: unknown, code?: unknown}} */ (err);
+    return e.status === 409 || e.code === 'VERSION_CONFLICT';
 }
 
 /**
@@ -274,5 +294,6 @@ window.clearOfferFormFields = clearOfferFormFields;
 window.buildUserDisplayName = buildUserDisplayName;
 window.assignOfferSupervisor = assignOfferSupervisor;
 window.buildBaseOfferDoc = buildBaseOfferDoc;
+window.isVersionConflict = isVersionConflict;
 window.normalizeValidityValue = normalizeValidityValue;
 window.syncOfferTabFields = syncOfferTabFields;

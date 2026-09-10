@@ -8,9 +8,10 @@ import { WRITE_LIMITER } from '../../middleware/rateLimiters';
 import { searchCache } from '../../utils/searchCache';
 import { ruryOrdersBatchSchema, ruryOrderUpdateSchema } from '../../validators/offerSchemas';
 import { logger } from '../../utils/logger';
-import { canWriteDoc, canReadWithShare } from '../../utils/ownership';
+import { canEditDoc, canAssignDoc, canReadWithShare } from '../../utils/ownership';
 import { buildRoleWhereConditionWithShares } from '../../utils/roleFilter';
 import { versionedWrite, mapVersionConflict } from '../../utils/versionWrite';
+import { assertDocLockForWrite, mapDocLockConflict } from '../../utils/docLocks';
 import { mapPrismaError } from '../../utils/prismaErrors';
 import { HOT_TX_OPTS } from '../../utils/hotTx';
 import crypto from 'crypto';
@@ -85,7 +86,7 @@ router.post('/claim-rury-number/:userId', requireAuth, async (req, res) => {
     try {
         const userId = req.params.userId;
         if (!userId) return res.status(400).json({ error: 'Brak userId' });
-        if (!canWriteDoc(authReq.user, userId)) {
+        if (!canEditDoc(authReq.user)) {
             return res.status(403).json({ error: 'Brak uprawnień do numeru tego użytkownika' });
         }
 
@@ -154,11 +155,17 @@ router.put(
                         select: { data: true, userId: true, version: true }
                     });
 
-                    if (old && !canWriteDoc(authReq.user, old.userId)) {
+                    if (old && !canEditDoc(authReq.user)) {
                         throw { status: 403, message: 'Brak uprawnień do tego zamówienia' };
                     }
-                    const targetUserId = old?.userId || incomingUserId || authReq.user?.id || '';
-                    if (!canWriteDoc(authReq.user, targetUserId)) {
+                    // Model współpracy: żądana zmiana opiekuna wygrywa,
+                    // fallback: stara kolumna, potem self.
+                    const targetUserId =
+                        (typeof incomingUserId === 'string' && incomingUserId) ||
+                        old?.userId ||
+                        authReq.user?.id ||
+                        '';
+                    if (!canAssignDoc(authReq.user)) {
                         throw { status: 403, message: 'Brak uprawnień do tego zamówienia' };
                     }
                     const newData = { ...rest };
@@ -177,6 +184,12 @@ router.put(
                     }
 
                     // P0-D2: predykat wersji w zapisie (kolumna wygrywa z blobem).
+                    // Twarda blokada: brak wiersza = stara sesja = przepusc (chroni 409).
+                    await assertDocLockForWrite(tx, {
+                        docType: 'order_rury',
+                        docId,
+                        user: { id: authReq.user?.id || '' }
+                    });
                     await versionedWrite(tx.orders_rury_rel, {
                         id: docId,
                         exists: !!old,
@@ -204,6 +217,7 @@ router.put(
             searchCache.invalidateAll();
             res.json({ ok: true });
         } catch (e: unknown) {
+            if (mapDocLockConflict(res, e)) return;
             if (mapVersionConflict(res, e)) return;
             if (mapPrismaError(res, e)) return;
             if ((e as { status?: number }).status === 403) {
@@ -264,14 +278,17 @@ router.patch(
                 where: { id: docId },
                 select: { id: true, userId: true, status: true, data: true, version: true }
             });
-            const isOwner = o && o.userId === authReq.user?.id;
-            const isProParent =
-                o &&
-                authReq.user?.role === 'pro' &&
-                (authReq.user?.subUsers || []).includes(o.userId || '');
-            if (!o || (authReq.user?.role !== 'admin' && !isOwner && !isProParent)) {
+            const isEditAllowed = canEditDoc(authReq.user);
+            if (!o || !isEditAllowed) {
                 return res.status(404).json({ error: 'Zamówienie nie znalezione' });
             }
+
+            // Twarda blokada: brak wiersza = stara sesja = przepusc (chroni 409).
+            await assertDocLockForWrite(prisma, {
+                docType: 'order_rury',
+                docId,
+                user: { id: authReq.user?.id || '' }
+            });
 
             const oldData = parseJsonField<Record<string, unknown>>(o.data, {});
             const updatedData = { ...oldData, ...req.body };
@@ -288,10 +305,10 @@ router.patch(
             const newStatus = req.body.status || o.status;
             const newUserId = req.body.userId || o.userId;
 
-            if (req.body.userId && req.body.userId !== o.userId && authReq.user?.role !== 'admin') {
+            if (req.body.userId && req.body.userId !== o.userId && !canAssignDoc(authReq.user)) {
                 return res
                     .status(403)
-                    .json({ error: 'Tylko administrator może zmienić opiekuna zamówienia' });
+                    .json({ error: 'Brak uprawnień do zmiany opiekuna zamówienia' });
             }
 
             const dataStr = JSON.stringify(updatedData);
@@ -331,6 +348,7 @@ router.patch(
             searchCache.invalidateAll();
             res.json({ ok: true });
         } catch (e: unknown) {
+            if (mapDocLockConflict(res, e)) return;
             if (mapPrismaError(res, e)) return;
             const message = e instanceof Error ? e.message : 'Unknown error';
             logger.error('RuryOrders', 'Błąd zapisu zamówień rury', message);

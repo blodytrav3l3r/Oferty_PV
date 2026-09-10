@@ -4,7 +4,13 @@ import { logAudit } from '../../db';
 import { requireAuth, AuthenticatedRequest } from '../../middleware/auth';
 import { parseJsonField, normalizeDate } from '../../helpers';
 import { logger } from '../../utils/logger';
-import { canReadDoc, canWriteDoc, resolveWriteUserId } from '../../utils/ownership';
+import {
+    canReadDoc,
+    canEditDoc,
+    canAssignDoc,
+    canDeleteDoc,
+    resolveEditUserId
+} from '../../utils/ownership';
 import { buildRoleWhereCondition } from '../../utils/roleFilter';
 import crypto from 'crypto';
 import { validateData } from '../../validators/authSchema';
@@ -221,15 +227,19 @@ router.put(
 
                     // P0-C: guard W transakcji — return zamieniony na throw, żeby
                     // cofnąć cały batch (wcześniej: 403 w połowie = partial write).
-                    if (old && !canWriteDoc(authReq.user, old.userId)) {
+                    if (old && !canEditDoc(authReq.user)) {
                         throw {
                             status: 403,
                             message: 'Brak uprawnień do zapisu dla tego użytkownika'
                         };
                     }
 
-                    const targetUserId = old?.userId || incomingUserId || authReq.user?.id || '';
-                    if (!canWriteDoc(authReq.user, targetUserId)) {
+                    const targetUserId =
+                        (typeof incomingUserId === 'string' && incomingUserId) ||
+                        old?.userId ||
+                        authReq.user?.id ||
+                        '';
+                    if (!canAssignDoc(authReq.user)) {
                         throw { status: 403, message: 'Brak uprawnień do tego zlecenia' };
                     }
 
@@ -419,13 +429,16 @@ router.post(
                 select: { data: true, userId: true, version: true }
             });
 
-            if (old && !canWriteDoc(authReq.user, old.userId)) {
+            if (old && !canEditDoc(authReq.user)) {
                 return res
                     .status(403)
                     .json({ error: 'Brak uprawnień do zapisu dla tego użytkownika' });
             }
 
-            const writeResult = resolveWriteUserId(authReq.user, old?.userId || incomingUserId);
+            const writeResult = resolveEditUserId(
+                authReq.user,
+                (typeof incomingUserId === 'string' && incomingUserId) || old?.userId
+            );
             if (!writeResult.allowed) {
                 return res
                     .status(403)
@@ -564,7 +577,7 @@ router.post('/batch-delete', requireAuth, writeProductionLimiter, async (req, re
         const deletable: typeof existing = [];
         let skipped = 0;
         for (const order of existing) {
-            if (!canWriteDoc(authReq.user, order.userId)) {
+            if (!canDeleteDoc(authReq.user, order.userId)) {
                 return res.status(403).json({ error: 'Brak uprawnień do usunięcia tego zlecenia' });
             }
             const oldData = parseJsonField<Record<string, unknown>>(order.data, {});
@@ -590,7 +603,7 @@ router.post('/batch-delete', requireAuth, writeProductionLimiter, async (req, re
             for (const order of deletable) {
                 const row = freshById.get(order.id);
                 if (!row) continue;
-                if (!canWriteDoc(authReq.user, row.userId)) {
+                if (!canDeleteDoc(authReq.user, row.userId)) {
                     throw { status: 403, message: 'Brak uprawnień do usunięcia tego zlecenia' };
                 }
                 const rowData = parseJsonField<Record<string, unknown>>(row.data, {});
@@ -640,7 +653,7 @@ router.post('/recycle-numbers', requireAuth, writeProductionLimiter, async (req,
         if (typeof userId !== 'string' || userId.length === 0) {
             return res.status(400).json({ error: 'Brak userId' });
         }
-        if (!canWriteDoc(authReq.user, userId)) {
+        if (!canEditDoc(authReq.user)) {
             return res.status(403).json({ error: 'Brak uprawnień do numerów tego użytkownika' });
         }
         if (!Array.isArray(seqNumbers) || seqNumbers.length === 0) {
@@ -716,7 +729,7 @@ router.delete('/:id', requireAuth, writeProductionLimiter, async (req, res) => {
             select: { id: true, userId: true, data: true }
         });
         if (!existing) return res.json({ ok: true });
-        if (!canWriteDoc(authReq.user, existing.userId)) {
+        if (!canDeleteDoc(authReq.user, existing.userId)) {
             return res.status(403).json({ error: 'Brak uprawnień do usunięcia tego zlecenia' });
         }
 
@@ -744,7 +757,7 @@ router.delete('/:id', requireAuth, writeProductionLimiter, async (req, res) => {
                         message: 'Nie można usunąć zatwierdzonego zlecenia. Najpierw je cofnij.'
                     };
                 }
-                if (row && !canWriteDoc(authReq.user, row.userId)) {
+                if (row && !canDeleteDoc(authReq.user, row.userId)) {
                     throw { status: 403, message: 'Brak uprawnień do usunięcia tego zlecenia' };
                 }
                 await recycleProductionNumber(existing.userId || '', oldData, tx);

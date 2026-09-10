@@ -144,30 +144,31 @@ describe('Studnie Offers CRUD — autoryzacja (IDOR)', () => {
             expect(res.body.serverVersion).toBe(2);
         });
 
-        it('zwraca 403 przy edycji cudzej oferty studni (nie przejmuje jej)', async () => {
+        it('pozwala edytować cudzą ofertę studni (model współpracy)', async () => {
             (prisma.offers_studnie_rel.findMany as jest.Mock).mockResolvedValue([
                 { ...mockOfferStudnie, userId: 'other-user' }
             ]);
+            (prisma.offers_studnie_rel.updateMany as jest.Mock).mockResolvedValue({ count: 1 });
 
             const res = await request(app)
                 .post('/api/offers/studnie')
                 .send({ data: [{ id: 's-1', clientName: 'HACK', status: 'draft' }] });
 
-            expect(res.statusCode).toBe(403);
-            expect(prisma.offers_studnie_rel.create).not.toHaveBeenCalled();
-            expect(prisma.offers_studnie_rel.updateMany).not.toHaveBeenCalled();
+            expect(res.statusCode).toBe(200);
         });
 
-        it('zwraca 403 gdy user próbuje utworzyć ofertę dla innego użytkownika', async () => {
+        it('pozwala utworzyć ofertę studni dla innego użytkownika', async () => {
             (prisma.offers_studnie_rel.findMany as jest.Mock).mockResolvedValue([]);
+            (prisma.offers_studnie_rel.create as jest.Mock).mockResolvedValue({});
 
             const res = await request(app)
                 .post('/api/offers/studnie')
                 .send({ data: [{ userId: 'other-user', clientName: 'ACME', status: 'draft' }] });
 
-            expect(res.statusCode).toBe(403);
-            expect(prisma.offers_studnie_rel.create).not.toHaveBeenCalled();
-            expect(prisma.offers_studnie_rel.updateMany).not.toHaveBeenCalled();
+            expect(res.statusCode).toBe(200);
+            expect(prisma.offers_studnie_rel.create).toHaveBeenCalledWith({
+                data: expect.objectContaining({ userId: 'other-user' })
+            });
         });
 
         it('pro może aktualizować ofertę swojego sub-usera', async () => {
@@ -185,6 +186,38 @@ describe('Studnie Offers CRUD — autoryzacja (IDOR)', () => {
             expect(res.statusCode).toBe(200);
             const updateCall = (prisma.offers_studnie_rel.updateMany as jest.Mock).mock.calls[0][0];
             expect(updateCall.data.userId).toBe('sub-user');
+        });
+
+        it('POST update honoruje zmianę opiekuna (kolumna = incoming.userId)', async () => {
+            (prisma.offers_studnie_rel.findMany as jest.Mock).mockResolvedValue([
+                { ...mockOfferStudnie, userId: 'user-id' }
+            ]);
+            (prisma.offers_studnie_rel.updateMany as jest.Mock).mockResolvedValue({ count: 1 });
+
+            const res = await request(app)
+                .post('/api/offers/studnie')
+                .send({
+                    data: [{ id: 's-1', userId: 'other-user', clientName: 'ACME', status: 'draft' }]
+                });
+
+            expect(res.statusCode).toBe(200);
+            const updateCall = (prisma.offers_studnie_rel.updateMany as jest.Mock).mock.calls[0][0];
+            expect(updateCall.data.userId).toBe('other-user');
+        });
+
+        it('POST update bez userId zostawia starą kolumnę', async () => {
+            (prisma.offers_studnie_rel.findMany as jest.Mock).mockResolvedValue([
+                { ...mockOfferStudnie, userId: 'user-id' }
+            ]);
+            (prisma.offers_studnie_rel.updateMany as jest.Mock).mockResolvedValue({ count: 1 });
+
+            const res = await request(app)
+                .post('/api/offers/studnie')
+                .send({ data: [{ id: 's-1', clientName: 'ACME', status: 'draft' }] });
+
+            expect(res.statusCode).toBe(200);
+            const updateCall = (prisma.offers_studnie_rel.updateMany as jest.Mock).mock.calls[0][0];
+            expect(updateCall.data.userId).toBe('user-id');
         });
 
         it('FINAL: snapshot historii slim (bez bloba data), max 5 wpisów', async () => {

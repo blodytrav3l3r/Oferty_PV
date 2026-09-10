@@ -138,6 +138,43 @@ async function saveOffer() {
         renderSavedOffers();
     } catch (err) {
         logger.error('offerCrud', '[App] Save error:', err);
+        // 423: zapis odrzucony — ktos inny trzyma blokade. Formularza NIE
+        // podmieniac (ochrona niezapisanych zmian uzytkownika).
+        if (window.lockService && window.lockService.isLocked(err)) {
+            const info = window.lockService.describeHolder(err.holder);
+            showToast(
+                'Zapis odrzucony — dokument edytuje ' + info.name + '. Skopiuj swoje zmiany.',
+                'warning'
+            );
+            return;
+        }
+        // P0-D2: konflikt wersji — serwer wygrywa, formularz zastąpiony świeżą
+        // kopią. Bez auto-merge (wartości kalkulacyjne zależne od siebie).
+        // Bezpieczne: loadOffer nie woła save (tylko render/showSection/goToPhase).
+        const conflict =
+            typeof isVersionConflict === 'function'
+                ? isVersionConflict(err)
+                : err?.status === 409 || err?.code === 'VERSION_CONFLICT';
+        if (conflict) {
+            showToast(
+                'Oferta zmieniona przez innego użytkownika — wczytano aktualną wersję',
+                'warning'
+            );
+            try {
+                const fresh = await storageService.getOfferById(offerDoc.id);
+                if (fresh) {
+                    const idx2 = offers.findIndex((o) => o.id === offerDoc.id);
+                    if (idx2 >= 0) offers[idx2] = { ...fresh, id: fresh.id };
+                    else offers.push({ ...fresh, id: fresh.id });
+                    if (typeof _rebuildRuryOffersMap === 'function') _rebuildRuryOffersMap();
+                    renderSavedOffers();
+                    await loadOffer(offerDoc.id);
+                }
+            } catch (_e) {
+                /* toast powyżej już poinformował */
+            }
+            return;
+        }
         showToast('Błąd zapisu oferty', 'error');
     } finally {
         window.isSavingOffer = false;
@@ -147,6 +184,7 @@ async function saveOffer() {
 /* ===== CZYSZCZENIE FORMULARZA ===== */
 
 function clearOfferForm() {
+    if (window.lockService) window.lockService.release();
     editingOfferId = null;
     editingOfferAssignedUserId = null;
     editingOfferAssignedUserName = '';
@@ -164,10 +202,7 @@ function clearOfferForm() {
 
     const btnChangeUser = document.getElementById('btn-change-offer-user');
     if (btnChangeUser) {
-        btnChangeUser.style.display =
-            currentUser && (currentUser.role === 'admin' || currentUser.role === 'pro')
-                ? 'inline-block'
-                : 'none';
+        btnChangeUser.style.display = currentUser ? 'inline-block' : 'none';
         btnChangeUser.innerHTML = `<i data-lucide="user"></i> Zmień opiekuna`;
         if (window.lucide) lucide.createIcons();
     }
@@ -186,6 +221,14 @@ function clearOfferForm() {
 /* ===== ŁADOWANIE OFERTY ===== */
 
 async function loadOffer(id) {
+    // Twarda blokada: drugi uzytkownik nie otwiera formularza wcale (modal 423).
+    if (
+        window.lockService &&
+        !(await window.lockService.tryOpen('offer', id, function () {
+            loadOffer(id);
+        }))
+    )
+        return;
     let offer =
         typeof getOfferRuryById === 'function'
             ? getOfferRuryById(id)
@@ -290,10 +333,7 @@ async function loadOffer(id) {
 
     const btnChangeUser = document.getElementById('btn-change-offer-user');
     if (btnChangeUser) {
-        btnChangeUser.style.display =
-            currentUser && (currentUser.role === 'admin' || currentUser.role === 'pro')
-                ? 'inline-block'
-                : 'none';
+        btnChangeUser.style.display = currentUser ? 'inline-block' : 'none';
         if (editingOfferAssignedUserName) {
             btnChangeUser.innerHTML = `<i data-lucide="user"></i> Opiekun: ${escapeHtml(editingOfferAssignedUserName)}`;
         } else {
@@ -375,6 +415,7 @@ async function deleteOffer(id) {
             return;
         }
         offers = offers.filter((o) => o.id !== id);
+        if (window.lockService) window.lockService.releaseOf('offer', id);
         renderSavedOffers();
         showToast('Oferta usunięta', 'info');
     } catch (err) {

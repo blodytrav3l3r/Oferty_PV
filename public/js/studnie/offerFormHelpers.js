@@ -76,10 +76,7 @@ function updateOfferFormHeader(number, offerId) {
 
     const btnChangeUser = document.getElementById('btn-change-offer-user');
     if (btnChangeUser) {
-        btnChangeUser.style.display =
-            currentUser && (currentUser.role === 'admin' || currentUser.role === 'pro')
-                ? 'inline-block'
-                : 'none';
+        btnChangeUser.style.display = currentUser ? 'inline-block' : 'none';
         if (editingOfferAssignedUserName) {
             btnChangeUser.innerHTML =
                 '<i data-lucide="user"></i> Opiekun: ' + escapeHtml(editingOfferAssignedUserName);

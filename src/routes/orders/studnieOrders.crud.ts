@@ -8,10 +8,11 @@ import { WRITE_LIMITER } from '../../middleware/rateLimiters';
 import { searchCache } from '../../utils/searchCache';
 import { studnieOrdersBatchSchema, studnieOrderUpdateSchema } from '../../validators/offerSchemas';
 import { observeStudnieOrderDto } from '../../validators/orderSchemas';
-import { canWriteDoc, canReadWithShare } from '../../utils/ownership';
+import { canEditDoc, canAssignDoc, canDeleteDoc, canReadWithShare } from '../../utils/ownership';
 import { buildRoleWhereConditionWithShares } from '../../utils/roleFilter';
 import { countProductionOrdersForOrder } from '../../utils/productionOrderGuard';
 import { versionedWrite, mapVersionConflict } from '../../utils/versionWrite';
+import { assertDocLockForWrite, mapDocLockConflict } from '../../utils/docLocks';
 import { mapPrismaError } from '../../utils/prismaErrors';
 import { HOT_TX_OPTS } from '../../utils/hotTx';
 import crypto from 'crypto';
@@ -192,7 +193,7 @@ router.put(
                         select: { data: true, userId: true, version: true }
                     });
 
-                    if (old && !canWriteDoc(authReq.user, old.userId)) {
+                    if (old && !canEditDoc(authReq.user)) {
                         throw { status: 403, message: 'Brak uprawnień do tego zamówienia' };
                     }
                     // P1 HIGH: optimistic concurrency dla single-save (data.length === 1).
@@ -222,8 +223,14 @@ router.put(
                             };
                         }
                     }
-                    const targetUserId = old?.userId || incomingUserId || authReq.user?.id || '';
-                    if (!canWriteDoc(authReq.user, targetUserId)) {
+                    // Model współpracy: żądana zmiana opiekuna wygrywa,
+                    // fallback: stara kolumna, potem self.
+                    const targetUserId =
+                        (typeof incomingUserId === 'string' && incomingUserId) ||
+                        old?.userId ||
+                        authReq.user?.id ||
+                        '';
+                    if (!canAssignDoc(authReq.user)) {
                         throw { status: 403, message: 'Brak uprawnień do tego zamówienia' };
                     }
                     const newData = { ...rest };
@@ -251,6 +258,12 @@ router.put(
                     }
 
                     // P0-D2: predykat wersji w zapisie (kolumna wygrywa z blobem).
+                    // Twarda blokada: brak wiersza = stara sesja = przepusc (chroni 409).
+                    await assertDocLockForWrite(tx, {
+                        docType: 'order_studnie',
+                        docId,
+                        user: { id: authReq.user?.id || '' }
+                    });
                     await versionedWrite(tx.orders_studnie_rel, {
                         id: docId,
                         exists: !!old,
@@ -290,6 +303,7 @@ router.put(
                     serverOrder: (e as { serverOrder?: unknown }).serverOrder
                 });
             }
+            if (mapDocLockConflict(res, e)) return;
             if (mapVersionConflict(res, e)) return;
             if (mapPrismaError(res, e)) return;
             if ((e as { status?: number }).status === 403) {
@@ -361,9 +375,16 @@ router.patch(
                     version: true
                 }
             });
-            if (!o || !canWriteDoc(authReq.user, o.userId)) {
+            if (!o || !canEditDoc(authReq.user)) {
                 return res.status(404).json({ error: 'Zamówienie nie znalezione' });
             }
+
+            // Twarda blokada: brak wiersza = stara sesja = przepusc (chroni 409).
+            await assertDocLockForWrite(prisma, {
+                docType: 'order_studnie',
+                docId,
+                user: { id: authReq.user?.id || '' }
+            });
 
             const oldData = parseJsonField<Record<string, unknown>>(o.data, {});
             // P1 HIGH: optimistic concurrency — baseUpdatedAt nie jest danymi.
@@ -402,7 +423,7 @@ router.patch(
 
             const newStatus = req.body.status || o.status;
             const newUserId = req.body.userId || o.userId;
-            if (!canWriteDoc(authReq.user, newUserId)) {
+            if (!canAssignDoc(authReq.user)) {
                 return res
                     .status(403)
                     .json({ error: 'Brak uprawnień do zapisu dla tego użytkownika' });
@@ -452,6 +473,7 @@ router.patch(
             searchCache.invalidateAll();
             res.json({ ok: true });
         } catch (e: unknown) {
+            if (mapDocLockConflict(res, e)) return;
             if (mapPrismaError(res, e)) return;
             const message = e instanceof Error ? e.message : 'Unknown error';
             logger.error('StudnieOrders', 'Błąd serwera', message);
@@ -470,7 +492,7 @@ router.delete('/:id', requireAuth, writeOrdersLimiter, async (req, res) => {
             select: { id: true, userId: true, offerStudnieId: true, data: true }
         });
         if (!existing) return res.json({ ok: true });
-        if (!canWriteDoc(authReq.user, existing.userId)) {
+        if (!canDeleteDoc(authReq.user, existing.userId)) {
             return res.status(403).json({ error: 'Brak uprawnień do usunięcia tego zamówienia' });
         }
 

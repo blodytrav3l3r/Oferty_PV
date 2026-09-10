@@ -27,6 +27,7 @@ async function deleteOfferStudnie(id) {
             return;
         }
         offersStudnie = offersStudnie.filter((o) => o.id !== id);
+        if (window.lockService) window.lockService.releaseOf('offer_studnie', id);
         if (typeof _rebuildOffersStudnieById === 'function') _rebuildOffersStudnieById();
         renderSavedOffersStudnie();
         showToast('Oferta usunięta', 'info');

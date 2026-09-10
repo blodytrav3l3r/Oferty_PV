@@ -322,7 +322,7 @@ function buildOfferCardHtml(offer, hasOrder, orders, order, role, isLocalList) {
     const itemCount = window.getOfferItemCount(offer);
 
     const dd = window.getOfferDisplayData(offer);
-    const isClickable = role === 'admin' || role === 'pro';
+    const isClickable = !!role;
 
     return `
                 <div class="modern-offer-card" data-offer-id="${escapeHtmlAttr(offer.id)}">

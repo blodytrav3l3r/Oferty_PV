@@ -20,7 +20,7 @@ var editingOfferId = null;
 /* ===== ZMIANA OPIEKUNA ===== */
 
 async function changeOfferUser() {
-    if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'pro')) {
+    if (!currentUser) {
         showToast('Brak uprawnień do zmiany opiekuna', 'error');
         return;
     }
@@ -132,13 +132,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.headerUser.render(currentUser);
     }
 
-    // Pokaż przycisk „Zmień opiekuna" dla admin/pro
+    // Pokaż przycisk „Zmień opiekuna" dla każdego zalogowanego (model współpracy)
     const btnChangeUser = document.getElementById('btn-change-offer-user');
-    if (
-        btnChangeUser &&
-        currentUser &&
-        (currentUser.role === 'admin' || currentUser.role === 'pro')
-    ) {
+    if (btnChangeUser && currentUser) {
         btnChangeUser.style.display = 'inline-block';
     }
 

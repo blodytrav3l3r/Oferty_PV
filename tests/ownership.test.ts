@@ -1,4 +1,12 @@
-import { canReadDoc, canWriteDoc, resolveWriteUserId } from '../src/utils/ownership';
+import {
+    canReadDoc,
+    canWriteDoc,
+    canEditDoc,
+    canAssignDoc,
+    canDeleteDoc,
+    resolveWriteUserId,
+    resolveEditUserId
+} from '../src/utils/ownership';
 import { User } from '../src/helpers';
 
 const admin: User = {
@@ -161,5 +169,59 @@ describe('resolveWriteUserId', () => {
         const r = resolveWriteUserId(regularUser, 'user2');
         expect(r.allowed).toBe(false);
         expect(r.effectiveUserId).toBe('');
+    });
+});
+
+describe('model współpracy: canEditDoc / canAssignDoc / canDeleteDoc', () => {
+    it('canEditDoc: każdy zalogowany może edytować (admin/pro/user), gość nie', () => {
+        expect(canEditDoc(admin)).toBe(true);
+        expect(canEditDoc(pro)).toBe(true);
+        expect(canEditDoc(regularUser)).toBe(true);
+        expect(canEditDoc(otherUser)).toBe(true);
+        expect(canEditDoc(undefined)).toBe(false);
+    });
+
+    it('canAssignDoc: każdy zalogowany może zmienić opiekuna, gość nie', () => {
+        expect(canAssignDoc(admin)).toBe(true);
+        expect(canAssignDoc(pro)).toBe(true);
+        expect(canAssignDoc(regularUser)).toBe(true);
+        expect(canAssignDoc(undefined)).toBe(false);
+    });
+
+    it('canDeleteDoc: status quo — owner + pro-parent + admin, obcy nie', () => {
+        expect(canDeleteDoc(regularUser, 'user1')).toBe(true);
+        expect(canDeleteDoc(pro, 'subA')).toBe(true);
+        expect(canDeleteDoc(admin, 'anyDoc')).toBe(true);
+        expect(canDeleteDoc(regularUser, 'user2')).toBe(false);
+        expect(canDeleteDoc(otherUser, 'user1')).toBe(false);
+        expect(canDeleteDoc(pro, 'otherUser')).toBe(false);
+        expect(canDeleteDoc(undefined, 'user1')).toBe(false);
+    });
+
+    it('resolveEditUserId: każdy zalogowany dla dowolnego userId', () => {
+        expect(resolveEditUserId(regularUser, 'user2')).toEqual({
+            allowed: true,
+            effectiveUserId: 'user2'
+        });
+        expect(resolveEditUserId(regularUser, null)).toEqual({
+            allowed: true,
+            effectiveUserId: 'user1'
+        });
+        expect(resolveEditUserId(undefined, 'user2')).toEqual({
+            allowed: false,
+            effectiveUserId: ''
+        });
+    });
+
+    it('macierz: odczyt po staremu, zapis/assign otwarte, delete po staremu', () => {
+        // READ — bez zmian
+        expect(canReadDoc(regularUser, 'user2')).toBe(false);
+        expect(canReadDoc(pro, 'subA')).toBe(true);
+        // EDIT + ASSIGN — otwarte
+        expect(canEditDoc(regularUser)).toBe(true);
+        expect(canAssignDoc(regularUser)).toBe(true);
+        // DELETE — stara reguła
+        expect(canDeleteDoc(regularUser, 'user2')).toBe(false);
+        expect(canDeleteDoc(regularUser, 'user1')).toBe(true);
     });
 });

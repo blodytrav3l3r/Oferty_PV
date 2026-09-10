@@ -788,6 +788,21 @@ model idempotency_keys {
   @@index([expiresAt], map: "idx_idempotency_expires")
 }
 
+// Twarda blokada edycji: 1 dokument = 1 uzytkownik.
+// TTL 180 s + heartbeat 60 s, wygasniecie leniwe przy acquire (bez crona).
+model doc_locks {
+  docType     String
+  docId       String
+  userId      String?
+  userName    String?
+  lockedAt    String
+  heartbeatAt String
+
+  @@id([docType, docId])
+  @@index([userId], map: "idx_doclocks_user")
+  @@index([heartbeatAt], map: "idx_doclocks_heartbeat")
+}
+
 model users {
   id                         String   @id
   username                   String   @unique

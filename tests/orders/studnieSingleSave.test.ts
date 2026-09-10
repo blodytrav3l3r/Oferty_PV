@@ -143,6 +143,40 @@ describe('P1 HIGH — single-order save + optimistic concurrency', () => {
         });
     });
 
+    test('PUT honoruje zmianę opiekuna, bez userId zostawia starą kolumnę', async () => {
+        mockedPrisma.orders_studnie_rel.findUnique.mockResolvedValue({
+            data: JSON.stringify({ updatedAt: 'srv-t' }),
+            userId: 'other-user',
+            version: 1
+        });
+        mockedPrisma.orders_studnie_rel.updateMany.mockResolvedValue({ count: 1 });
+        const res = await request(createApp())
+            .put('/api/orders-studnie')
+            .send({ data: [{ id: 'o1', userId: 'third-user', wells: [], version: 1 }] });
+        expect(res.status).toBe(200);
+        expect(mockedPrisma.orders_studnie_rel.updateMany).toHaveBeenCalledWith({
+            where: { id: 'o1', version: 1 },
+            data: expect.objectContaining({ userId: 'third-user' })
+        });
+    });
+
+    test('PUT cudzego bez userId nie przepisuje kolumny na edytującego', async () => {
+        mockedPrisma.orders_studnie_rel.findUnique.mockResolvedValue({
+            data: JSON.stringify({ updatedAt: 'srv-t' }),
+            userId: 'other-user',
+            version: 1
+        });
+        mockedPrisma.orders_studnie_rel.updateMany.mockResolvedValue({ count: 1 });
+        const res = await request(createApp())
+            .put('/api/orders-studnie')
+            .send({ data: [{ id: 'o1', wells: [], version: 1 }] });
+        expect(res.status).toBe(200);
+        expect(mockedPrisma.orders_studnie_rel.updateMany).toHaveBeenCalledWith({
+            where: { id: 'o1', version: 1 },
+            data: expect.objectContaining({ userId: 'other-user' })
+        });
+    });
+
     test('PATCH ze zgodnym baseUpdatedAt scala i NIE zapisuje baseUpdatedAt', async () => {
         mockedPrisma.orders_studnie_rel.findUnique.mockResolvedValue({
             id: 'o1',

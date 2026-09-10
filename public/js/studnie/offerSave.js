@@ -44,6 +44,7 @@ async function saveOfferStudnie() {
     // --- KONIEC TELEMETRII ---
 
     isSavingOffer = true;
+    let simpleId = editingOfferIdStudnie || null;
     try {
         const assignedUserRes = await assignOfferSupervisor(
             currentUser,
@@ -78,7 +79,7 @@ async function saveOfferStudnie() {
             }
         }
 
-        const simpleId = editingOfferIdStudnie || 'offer_studnie_' + Date.now();
+        simpleId = editingOfferIdStudnie || 'offer_studnie_' + Date.now();
         const pricing = calculateOfferPricing(
             wells,
             fields.transportKm,
@@ -228,6 +229,45 @@ async function saveOfferStudnie() {
         return true;
     } catch (err) {
         logger.error('offerManager', '[OfferManager] Save error:', err);
+        // 423: zapis odrzucony — ktos inny trzyma blokade. Formularza NIE
+        // podmieniac (ochrona niezapisanych zmian uzytkownika).
+        if (window.lockService && window.lockService.isLocked(err)) {
+            const info = window.lockService.describeHolder(err.holder);
+            showToast(
+                'Zapis odrzucony — dokument edytuje ' + info.name + '. Skopiuj swoje zmiany.',
+                'warning'
+            );
+            return false;
+        }
+        // P0-D2: konflikt wersji — serwer wygrywa, formularz zastąpiony świeżą
+        // kopią. Bez auto-merge. Bezpieczne: loadSavedOfferStudnie nie woła save.
+        const conflict =
+            typeof isVersionConflict === 'function'
+                ? isVersionConflict(err)
+                : err?.status === 409 || err?.code === 'VERSION_CONFLICT';
+        if (conflict) {
+            showToast(
+                'Oferta zmieniona przez innego użytkownika — wczytano aktualną wersję',
+                'warning'
+            );
+            try {
+                const { storageService: ss } = await import('../shared/StorageService.js');
+                const fresh = await ss.getOfferById(simpleId);
+                if (fresh) {
+                    const idx = offersStudnie.findIndex((o) => o.id === simpleId);
+                    if (idx >= 0) offersStudnie[idx] = { ...fresh, id: fresh.id };
+                    else offersStudnie.push({ ...fresh, id: fresh.id });
+                    if (typeof _rebuildOffersStudnieById === 'function')
+                        _rebuildOffersStudnieById();
+                    renderSavedOffersStudnie();
+                    if (typeof loadSavedOfferStudnie === 'function')
+                        await loadSavedOfferStudnie(fresh, fresh.id);
+                }
+            } catch (_e) {
+                /* toast powyżej już poinformował */
+            }
+            return false;
+        }
         showToast('Błąd zapisu oferty', 'error');
         return false;
     } finally {

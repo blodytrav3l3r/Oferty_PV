@@ -73,7 +73,19 @@ class StorageService {
             });
 
             const data = await resp.json();
-            if (!resp.ok) throw new Error(data.error || 'Błąd zapisu oferty');
+            // P0-D2: propagacja 409/423 w formie strukturalnej (status/code/...).
+            // Frontend rozpoznaje konflikt TYLKO po status/code — nigdy po tekście.
+            if (!resp.ok) {
+                const err =
+                    /** @type {Error & {status?: number, code?: string, serverVersion?: number, holder?: object}} */ (
+                        new Error(data.error || 'Błąd zapisu oferty')
+                    );
+                err.status = resp.status;
+                err.code = data.code;
+                err.serverVersion = data.serverVersion;
+                if (data.holder) err.holder = data.holder;
+                throw err;
+            }
 
             logger.info(
                 'StorageService',

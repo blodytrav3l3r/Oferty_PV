@@ -219,8 +219,7 @@ router.get('/shareable', requireAuth, async (req, res) => {
 });
 
 // GET /api/users-for-assignment (alias: /for-assignment)
-router.get('/for-assignment', requireAuth, async (req, res) => {
-    const authReq = req as AuthenticatedRequest;
+router.get('/for-assignment', requireAuth, async (_req, res) => {
     try {
         const users = await prisma.users.findMany();
 
@@ -245,13 +244,10 @@ router.get('/for-assignment', requireAuth, async (req, res) => {
             symbol: u.symbol
         });
 
-        if (authReq.user?.role === 'admin') {
-            return res.json({ data: users.map(mapUser) });
-        }
-
-        const allowedIds = [authReq.user?.id, ...(authReq.user?.subUsers || [])];
-        const filtered = users.filter((u) => allowedIds.includes(u.id));
-        res.json({ data: filtered.map(mapUser) });
+        // Model współpracy: każdy zalogowany może przypisać dokument każdemu
+        // (edycja + zmiana opiekuna otwarte), więc dropdown opiekunów pokazuje wszystkich.
+        // Lista udostępniania (GET /shareable) pozostaje filtrowana — osobny mechanizm.
+        return res.json({ data: users.map(mapUser) });
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error';
         logger.error('Users', 'Błąd serwera', message);

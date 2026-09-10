@@ -157,7 +157,7 @@ async function finalizeOrderFromOffer(offer, selectedWells, kartaBudowyData) {
                 : currentUser.username
             : '');
 
-    if (currentUser && (currentUser.role === 'admin' || currentUser.role === 'pro')) {
+    if (currentUser) {
         try {
             const usersResp = await fetch('/api/users-for-assignment', { headers: authHeaders() });
             if (!usersResp.ok) throw new Error(`HTTP ${usersResp.status}`);
@@ -563,6 +563,7 @@ function _clearOrderUrlParam(orderId) {
 /* 404/brak zamówienia: czyść tryb + URL + cache, odmaluj bieżący widok. Wells nietknięte. */
 function _handleMissingOrder(orderId) {
     orderEditMode = null;
+    if (window.lockService) window.lockService.releaseOf('order_studnie', orderId);
     _clearOrderUrlParam(orderId);
     if (typeof _invalidateOrdersLookupCache === 'function') _invalidateOrdersLookupCache();
     showToast('Zamówienie nie znalezione', 'error');
@@ -624,6 +625,7 @@ async function deleteOrderStudnie(orderId) {
     showToast('Zamówienie usunięte. Studnie odblokowane do ponownego zamówienia.', 'info');
 
     if (typeof renderWellConfig === 'function') renderWellConfig();
+    if (window.lockService) window.lockService.releaseOf('order_studnie', orderId);
 
     // Usunięte zamówienie było otwarte (tryb edycji lub ?order= w URL):
     // wyjdź z trybu i wróć do widoku oferty. Źródłem są dane OFERTY
@@ -691,6 +693,14 @@ function healUszczelkaType(w) {
 }
 
 async function enterOrderEditMode(orderId) {
+    // Twarda blokada: drugi uzytkownik nie otwiera formularza wcale (modal 423).
+    if (
+        window.lockService &&
+        !(await window.lockService.tryOpen('order_studnie', orderId, function () {
+            enterOrderEditMode(orderId);
+        }))
+    )
+        return;
     try {
         logger.info('orderManager', '[enterOrderEditMode] START orderId=', orderId);
         const res = await fetchWithTimeout(

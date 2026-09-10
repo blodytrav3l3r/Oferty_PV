@@ -1,7 +1,7 @@
 import express from 'express';
 import prisma from '../../prismaClient';
 import { requireAuth, AuthenticatedRequest } from '../../middleware/auth';
-import { canWriteDoc } from '../../utils/ownership';
+import { canEditDoc } from '../../utils/ownership';
 import { logger } from '../../utils/logger';
 import { HOT_TX_OPTS } from '../../utils/hotTx';
 
@@ -113,7 +113,7 @@ router.get('/next-number/:userId', requireAuth, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
         const userId = req.params.userId;
-        if (!canWriteDoc(authReq.user, userId)) {
+        if (!canEditDoc(authReq.user)) {
             return res.status(403).json({ error: 'Brak uprawnień do numeru tego użytkownika' });
         }
         const year = new Date().getFullYear();
@@ -144,7 +144,7 @@ router.post('/claim-number/:userId', requireAuth, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
         const userId = req.params.userId;
-        if (!canWriteDoc(authReq.user, userId)) {
+        if (!canEditDoc(authReq.user)) {
             return res.status(403).json({ error: 'Brak uprawnień do numeru tego użytkownika' });
         }
         const year = new Date().getFullYear();
@@ -179,7 +179,7 @@ router.post('/claim-production-number/:userId', requireAuth, async (req, res) =>
     const authReq = req as AuthenticatedRequest;
     try {
         const userId = req.params.userId;
-        if (!canWriteDoc(authReq.user, userId)) {
+        if (!canEditDoc(authReq.user)) {
             return res.status(403).json({ error: 'Brak uprawnień do numeru tego użytkownika' });
         }
         const year = new Date().getFullYear();
@@ -224,7 +224,7 @@ router.post('/claim-production-numbers/:userId', requireAuth, async (req, res) =
     const authReq = req as AuthenticatedRequest;
     try {
         const userId = req.params.userId;
-        if (!canWriteDoc(authReq.user, userId)) {
+        if (!canEditDoc(authReq.user)) {
             return res.status(403).json({ error: 'Brak uprawnień do numeru tego użytkownika' });
         }
         const count = (req.body || {}).count;

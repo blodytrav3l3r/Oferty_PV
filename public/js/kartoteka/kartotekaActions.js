@@ -442,6 +442,11 @@ export default {
             }
 
             await this.loadLocalOffers();
+            // Sprzatanie blokady usunietego dokumentu (tylko po sukcesie DELETE).
+            if (window.lockService) {
+                const docType = offerType === 'studnia_oferta' ? 'order_studnie' : 'order_rury';
+                window.lockService.releaseOf(docType, orderId);
+            }
         } catch (error) {
             logger.error('kartotekaUi', 'Błąd podczas usuwania zamówienia:', error);
             if (typeof window.showToast === 'function') {
@@ -462,6 +467,11 @@ export default {
 
         try {
             await storageService.deleteOffer(id);
+            // Sprzatanie blokady usunietego dokumentu (tylko po sukcesie DELETE).
+            if (window.lockService) {
+                const docType = String(id).startsWith('offer_studnie_') ? 'offer_studnie' : 'offer';
+                window.lockService.releaseOf(docType, id);
+            }
             if (typeof window.showToast === 'function') {
                 window.showToast('Oferta została usunięta.', 'success');
             }
@@ -590,7 +600,7 @@ export default {
     },
 
     async changeOfferUserFromList(offerId) {
-        if (this.role !== 'admin' && this.role !== 'pro') {
+        if (!this.role) {
             if (typeof window.showToast === 'function')
                 window.showToast('Brak uprawnień do zmiany opiekuna', 'error');
             return;

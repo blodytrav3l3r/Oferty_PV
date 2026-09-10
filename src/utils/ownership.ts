@@ -56,6 +56,48 @@ export function resolveWriteUserId(
     return { allowed: false, effectiveUserId: '' };
 }
 
+/**
+ * Model uprawnień dokumentów biznesowych (oferty/zlecenia):
+ * Read ownership ≠ Write ownership.
+ * - Odczyt: canReadDoc (owner / pro-parent / admin) + udostępnienia (share).
+ * - Edycja i zmiana opiekuna: każdy zalogowany (canEditDoc / canAssignDoc).
+ * - Usuwanie: stara reguła właścicielska (canDeleteDoc = canWriteDoc).
+ */
+export function canEditDoc(user: User | undefined): boolean {
+    return !!user;
+}
+
+/**
+ * Zmiana opiekuna (userId) dokumentu — każdy zalogowany.
+ * Zapis przechodzi przez ten sam versionedWrite (brak ścieżki bypass).
+ */
+export function canAssignDoc(user: User | undefined): boolean {
+    return !!user;
+}
+
+/**
+ * Usuwanie — status quo ante: owner / pro-parent / admin.
+ * Świadomie NIE otwierane dla wszystkich (operacja nieodwracalna).
+ */
+export function canDeleteDoc(
+    user: User | undefined,
+    docUserId: string | null | undefined
+): boolean {
+    return canWriteDoc(user, docUserId);
+}
+
+/**
+ * Rozstrzygnięcie userId przy tworzeniu/edycji dokumentu biznesowego:
+ * każdy zalogowany może zapisać dla dowolnego userId (wspólna baza handlowców).
+ */
+export function resolveEditUserId(
+    user: User | undefined,
+    requestedUserId: string | null | undefined
+): { allowed: boolean; effectiveUserId: string } {
+    if (!user) return { allowed: false, effectiveUserId: '' };
+    return { allowed: true, effectiveUserId: requestedUserId || user.id };
+}
+
 // --- Sharing helpers (Zasada 2: documentType + documentId) ---
 
 export const SHARE_DOCUMENT_TYPES = [

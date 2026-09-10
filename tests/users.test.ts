@@ -269,7 +269,7 @@ describe('Users Routes', () => {
             expect(res.body.data).toHaveLength(2);
         });
 
-        it('powinien zwrócić tylko przypisanych i siebie, dla powiązanego subUsera', async () => {
+        it('powinien zwrócić wszystkich userów każdemu zalogowanemu (model współpracy)', async () => {
             (prisma.users.findMany as jest.Mock).mockResolvedValue(mockUsers);
             const res = await request(app)
                 .get('/api/users/for-assignment')
@@ -278,7 +278,7 @@ describe('Users Routes', () => {
                 .set('x-subusers', '["user-id"]');
 
             expect(res.statusCode).toBe(200);
-            expect(res.body.data).toHaveLength(2); // self (admin-id) and subUser (user-id)
+            expect(res.body.data).toHaveLength(2); // pełna lista — każdy może przypisać każdemu
         });
     });
 });

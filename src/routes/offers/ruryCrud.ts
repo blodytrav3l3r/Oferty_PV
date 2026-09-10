@@ -10,8 +10,9 @@ import { buildRoleWhereClauseWithShares } from '../../utils/roleFilter';
 import { logger } from '../../utils/logger';
 import { validateData } from '../../validators/authSchema';
 import { WRITE_LIMITER } from '../../middleware/rateLimiters';
-import { canReadDoc, canWriteDoc, resolveWriteUserId } from '../../utils/ownership';
+import { canReadDoc, canEditDoc, resolveEditUserId } from '../../utils/ownership';
 import { versionedWrite, mapVersionConflict } from '../../utils/versionWrite';
+import { assertDocLockForWrite, mapDocLockConflict } from '../../utils/docLocks';
 import { mapPrismaError } from '../../utils/prismaErrors';
 import {
     claimIdempotencyKey,
@@ -212,14 +213,20 @@ router.post(
 
                 let effectiveUserId: string;
                 if (old) {
-                    if (!canWriteDoc(authReq.user, old.userId)) {
+                    if (!canEditDoc(authReq.user)) {
                         return res
                             .status(403)
                             .json({ error: 'Brak uprawnień do modyfikacji tej oferty' });
                     }
-                    effectiveUserId = old.userId || authReq.user?.id || '';
+                    // Model współpracy: update honoruje zmianę opiekuna
+                    // (incoming.userId), fallback: stara kolumna, potem self.
+                    effectiveUserId =
+                        (typeof o.userId === 'string' && o.userId) ||
+                        old.userId ||
+                        authReq.user?.id ||
+                        '';
                 } else {
-                    const resolved = resolveWriteUserId(authReq.user, o.userId);
+                    const resolved = resolveEditUserId(authReq.user, o.userId);
                     if (!resolved.allowed) {
                         return res.status(403).json({
                             error: 'Brak uprawnień do utworzenia oferty dla tego użytkownika'
@@ -318,6 +325,12 @@ router.post(
 
             await prisma.$transaction(async (tx) => {
                 for (const w of pendingWrites) {
+                    // Twarda blokada: brak wiersza = stara sesja = przepusc (chroni 409).
+                    await assertDocLockForWrite(tx, {
+                        docType: 'offer',
+                        docId: w.docId,
+                        user: { id: authReq.user?.id || '' }
+                    });
                     // P0-D2: predykat wersji w zapisie (kolumna wygrywa z blobem).
                     await versionedWrite(tx.offers_rel, {
                         id: w.docId,
@@ -405,6 +418,7 @@ router.post(
                 });
             res.json({ ok: true, results });
         } catch (e: unknown) {
+            if (mapDocLockConflict(res, e)) return;
             if (mapVersionConflict(res, e)) return;
             if (mapPrismaError(res, e)) return;
             const message = e instanceof Error ? e.message : 'Unknown error';
@@ -429,7 +443,7 @@ router.put(
                     where: { id: docId },
                     select: { userId: true }
                 });
-                if (existing && !canWriteDoc(authReq.user, existing.userId)) {
+                if (existing && !canEditDoc(authReq.user)) {
                     return res.status(403).json({ error: 'Forbidden' });
                 }
             }
@@ -440,6 +454,7 @@ router.put(
                 .map((o: { id?: unknown }) => (typeof o.id === 'string' ? o.id : ''))
                 .filter(Boolean);
             const putVersions = new Map<string, number>();
+            const putUserIds = new Map<string, string>();
             if (incomingIds.length > 0) {
                 const existingDocs =
                     (await prisma.offers_rel.findMany({
@@ -447,10 +462,10 @@ router.put(
                         select: { id: true, userId: true, version: true }
                     })) || [];
                 for (const d of existingDocs) putVersions.set(d.id, d.version ?? 1);
-                const forbidden = existingDocs.some(
-                    (d: { id: string; userId: string | null }) =>
-                        d.userId && !canWriteDoc(authReq.user, d.userId)
-                );
+                for (const d of existingDocs) {
+                    if (d.userId) putUserIds.set(d.id, d.userId);
+                }
+                const forbidden = !canEditDoc(authReq.user) && existingDocs.length > 0;
                 if (forbidden) {
                     return res.status(403).json({
                         error: 'Forbidden — nie masz uprawnień do modyfikacji jednej z ofert'
@@ -469,6 +484,8 @@ router.put(
                 dataStr: string;
                 transportCost: number;
                 items: unknown[];
+                // Model współpracy: żądana zmiana opiekuna (puste = bez zmiany).
+                requestedUserId: string;
                 // P0-D2: optimistic locking.
                 exists: boolean;
                 serverVersion: number | null;
@@ -511,6 +528,7 @@ router.put(
                     dataStr,
                     transportCost: o.transportCost || 0,
                     items: o.items || [],
+                    requestedUserId: typeof o.userId === 'string' ? o.userId : '',
                     exists: serverVersion != null,
                     serverVersion,
                     clientVersion,
@@ -526,6 +544,16 @@ router.put(
 
             await prisma.$transaction(async (tx) => {
                 for (const w of pendingPut) {
+                    // Twarda blokada: brak wiersza = stara sesja = przepusc (chroni 409).
+                    await assertDocLockForWrite(tx, {
+                        docType: 'offer',
+                        docId: w.docId,
+                        user: { id: authReq.user?.id || '' }
+                    });
+                    // Model współpracy: żądana zmiana opiekuna wygrywa,
+                    // fallback: stara kolumna, potem self (nigdy ślepo edytujący).
+                    const putUserId =
+                        w.requestedUserId || putUserIds.get(w.docId) || authReq.user?.id || '';
                     // P0-D2: predykat wersji w zapisie (kolumna wygrywa z blobem).
                     await versionedWrite(tx.offers_rel, {
                         id: w.docId,
@@ -533,7 +561,7 @@ router.put(
                         serverVersion: w.serverVersion,
                         clientVersion: w.clientVersion,
                         createData: {
-                            userId: authReq.user?.id,
+                            userId: putUserId,
                             state: w.state,
                             clientName: w.clientName,
                             investName: w.investName,
@@ -544,7 +572,7 @@ router.put(
                             data: w.dataStr
                         },
                         updateData: {
-                            userId: authReq.user?.id,
+                            userId: putUserId,
                             state: w.state,
                             clientName: w.clientName,
                             investName: w.investName,
@@ -598,6 +626,7 @@ router.put(
             searchCache.invalidateAll();
             res.json({ ok: true });
         } catch (e: unknown) {
+            if (mapDocLockConflict(res, e)) return;
             if (mapVersionConflict(res, e)) return;
             if (mapPrismaError(res, e)) return;
             const message = e instanceof Error ? e.message : 'Unknown error';
@@ -624,7 +653,7 @@ router.post('/:id/duplicate', requireAuth, writeOffersLimiter, async (req, res) 
         const sourceItems = await prisma.offer_items_rel.findMany({ where: { offerId: id } });
 
         const newId = uuidv4();
-        const resolved = resolveWriteUserId(authReq.user, undefined);
+        const resolved = resolveEditUserId(authReq.user, undefined);
         if (!resolved.allowed) {
             return res.status(403).json({ error: 'Brak uprawnień do utworzenia oferty' });
         }

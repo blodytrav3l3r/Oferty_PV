@@ -78,9 +78,7 @@ function renderSavedOffersStudnie() {
                         const assignedName = resolveName(o.userName);
 
                         let html = '';
-                        const isClickable =
-                            currentUser &&
-                            (currentUser.role === 'admin' || currentUser.role === 'pro');
+                        const isClickable = !!currentUser;
                         if (creatorName === assignedName && creatorName) {
                             html += `<span style="color:var(--accent-hover)${isClickable ? '; cursor:pointer' : ''}" ${isClickable ? `data-action="changeOfferUserFromListStudnie" data-id="${escapeJsStr(oId)}"` : ''}><i data-lucide="user" aria-hidden="true"></i> Autor i Opiekun: <strong>${escapeHtml(creatorName)}</strong></span>`;
                         } else {
@@ -110,7 +108,7 @@ function renderSavedOffersStudnie() {
                 <button class="btn btn-sm btn-primary fs-sm-036" data-action="loadSavedOfferStudnie" data-id="${escapeJsStr(oId)}" title="Wczytaj" >Wczytaj</button>
                 <button class="btn btn-sm btn-secondary" style="font-size: var(--fs-sm); padding:0.3rem 0.6rem; background: rgba(var(--danger-rgb), 0.15); border: 1px solid rgba(var(--danger-rgb), 0.3); color: var(--danger-hover); font-weight: var(--fw-bold);" data-action="showUniversalPrintModal" data-id="${escapeJsStr(oId)}" title="Drukuj ofertę / kartę budowy"><i data-lucide="printer" aria-hidden="true"></i> Drukuj</button>
                 <button class="btn btn-sm btn-secondary fs-sm-036" data-action="exportJSONStudnie" data-id="${escapeJsStr(oId)}" title="Pobierz plik JSON" ><i data-lucide="save" aria-hidden="true"></i> JSON</button>
-                ${currentUser && (currentUser.role === 'admin' || currentUser.role === 'pro') ? `<button class="btn btn-sm btn-secondary fs-sm-036" data-action="changeOfferUserFromListStudnie" data-id="${escapeJsStr(oId)}" title="Zmień opiekuna" ><i data-lucide="user" aria-hidden="true"></i> Opiekun</button>` : ''}
+                ${currentUser ? `<button class="btn btn-sm btn-secondary fs-sm-036" data-action="changeOfferUserFromListStudnie" data-id="${escapeJsStr(oId)}" title="Zmień opiekuna" ><i data-lucide="user" aria-hidden="true"></i> Opiekun</button>` : ''}
                 ${o.history && o.history.length > 0 ? `<button class="btn btn-sm btn-secondary fs-sm-036" data-action="showOfferHistoryStudnie" data-id="${escapeJsStr(oId)}" title="Historia zmian" ><i data-lucide="hourglass" aria-hidden="true"></i> Historia</button>` : ''}
                 <button class="btn btn-sm btn-secondary fs-sm-036" data-action="shareOfferStudnie" data-id="${escapeJsStr(oId)}" title="Udostępnij" aria-label="Udostępnij"><i data-lucide="share-2" aria-hidden="true"></i> Udostępnij</button>
                 <button class="btn btn-sm btn-danger fs-sm-036" data-action="deleteOfferStudnie" data-id="${escapeJsStr(oId)}" title="Usuń" ><i data-lucide="trash-2" aria-hidden="true"></i> Usuń</button>

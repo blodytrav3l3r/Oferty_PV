@@ -10,8 +10,9 @@ import { logger } from '../../utils/logger';
 import { validateData } from '../../validators/authSchema';
 import { WRITE_LIMITER } from '../../middleware/rateLimiters';
 import { buildRoleWhereConditionWithShares } from '../../utils/roleFilter';
-import { canWriteDoc, resolveWriteUserId, canReadWithShare } from '../../utils/ownership';
+import { canEditDoc, resolveEditUserId, canReadWithShare } from '../../utils/ownership';
 import { versionedWrite, mapVersionConflict } from '../../utils/versionWrite';
+import { assertDocLockForWrite, mapDocLockConflict } from '../../utils/docLocks';
 import { mapPrismaError } from '../../utils/prismaErrors';
 import { HOT_TX_OPTS } from '../../utils/hotTx';
 import {
@@ -571,14 +572,18 @@ router.post(
                 let effectiveUserId: string;
                 const old = oldMap.get(docId) || null;
                 if (old) {
-                    if (!canWriteDoc(authReq.user, old.userId)) {
+                    if (!canEditDoc(authReq.user)) {
                         return res
                             .status(403)
                             .json({ error: 'Brak uprawnień do modyfikacji tej oferty' });
                     }
-                    effectiveUserId = old.userId || authReq.user?.id || '';
+                    // Model współpracy: update honoruje zmianę opiekuna
+                    // (incoming.userId), fallback: stara kolumna, potem self.
+                    const requestedUserId =
+                        typeof o.userId === 'string' && o.userId ? o.userId : '';
+                    effectiveUserId = requestedUserId || old.userId || authReq.user?.id || '';
                 } else {
-                    const resolved = resolveWriteUserId(authReq.user, o.userId);
+                    const resolved = resolveEditUserId(authReq.user, o.userId);
                     if (!resolved.allowed) {
                         return res.status(403).json({
                             error: 'Brak uprawnień do utworzenia oferty dla tego użytkownika'
@@ -745,6 +750,12 @@ router.post(
             // (~10 MB JSON) potrafi trwać >6 s na SQLite (Transaction API error).
             await prisma.$transaction(async (tx) => {
                 for (const w of pending) {
+                    // Twarda blokada: brak wiersza = stara sesja = przepusc (chroni 409).
+                    await assertDocLockForWrite(tx, {
+                        docType: 'offer_studnie',
+                        docId: w.docId,
+                        user: { id: authReq.user?.id || '' }
+                    });
                     // P0-D2: predykat wersji w zapisie (kolumna wygrywa z blobem).
                     await versionedWrite(tx.offers_studnie_rel, {
                         id: w.docId,
@@ -783,6 +794,7 @@ router.post(
                 });
             res.json({ ok: true, results });
         } catch (e: unknown) {
+            if (mapDocLockConflict(res, e)) return;
             if (mapVersionConflict(res, e)) return;
             if (mapPrismaError(res, e)) return;
             const message = e instanceof Error ? e.message : 'Unknown error';
@@ -820,9 +832,7 @@ router.put(
             const existingById = new Map(existingDocs.map((d) => [d.id, d]));
             // P4-P0: guard + dane jednym zapytaniem (nie per oferta w pętli).
             const orderedGuardMapPut = await getOrderedWellIdsForOffers(incomingIds);
-            const forbidden = existingDocs.some(
-                (d) => d.userId && !canWriteDoc(authReq.user, d.userId)
-            );
+            const forbidden = !canEditDoc(authReq.user) && existingDocs.length > 0;
             if (forbidden) {
                 return res.status(403).json({
                     error: 'Forbidden — nie masz uprawnień do modyfikacji jednej z ofert'
@@ -908,6 +918,10 @@ router.put(
                 // P0-D2: version to kolumna (top-level o.version), nie blob o.data.
                 const putClientVersion = typeof o.version === 'number' ? o.version : null;
                 const putOld = existingById.get(docId);
+                // Model współpracy: żądana zmiana opiekuna wygrywa,
+                // fallback: stara kolumna, potem self (nigdy ślepo edytujący).
+                const putRequestedUserId = typeof o.userId === 'string' && o.userId ? o.userId : '';
+                const putUserId = putRequestedUserId || putOld?.userId || authReq.user?.id || '';
                 pendingPut.push({
                     docId,
                     exists: !!putOld,
@@ -915,7 +929,7 @@ router.put(
                     clientVersion: putClientVersion,
                     create: {
                         id: docId,
-                        userId: authReq.user?.id,
+                        userId: putUserId,
                         state: state,
                         clientName,
                         investName,
@@ -927,7 +941,7 @@ router.put(
                         totalPrice: totalPricePut
                     },
                     update: {
-                        userId: authReq.user?.id,
+                        userId: putUserId,
                         state: state,
                         clientName,
                         investName,
@@ -949,6 +963,12 @@ router.put(
             }
             await prisma.$transaction(async (tx) => {
                 for (const w of pendingPut) {
+                    // Twarda blokada: brak wiersza = stara sesja = przepusc (chroni 409).
+                    await assertDocLockForWrite(tx, {
+                        docType: 'offer_studnie',
+                        docId: w.docId,
+                        user: { id: authReq.user?.id || '' }
+                    });
                     // P0-D2: predykat wersji w zapisie (kolumna wygrywa z blobem).
                     await versionedWrite(tx.offers_studnie_rel, {
                         id: w.docId,
@@ -975,6 +995,7 @@ router.put(
             searchCache.invalidateAll();
             res.json({ ok: true });
         } catch (e: unknown) {
+            if (mapDocLockConflict(res, e)) return;
             if (mapVersionConflict(res, e)) return;
             if (mapPrismaError(res, e)) return;
             const message = e instanceof Error ? e.message : 'Unknown error';

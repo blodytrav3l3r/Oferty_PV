@@ -122,17 +122,17 @@ describe('T5.4: XSS — obecność escapeHtml w krytycznych plikach', () => {
 
 // ─── T5.6: userId change guard (static) ─────────────────────
 
-describe('T5.6: Blokada zmiany opiekuna zamówienia', () => {
-    it('ruryOrders.crud.ts powinien zawierać guard zmiany userId', () => {
+describe('T5.6: Zmiana opiekuna zamówienia (model współpracy)', () => {
+    it('ruryOrders.crud.ts pozwala zmienić opiekuna każdemu zalogowanemu (canAssignDoc)', () => {
         const content = fs.readFileSync(
             path.resolve(__dirname, '..', 'src/routes/orders/ruryOrders.crud.ts'),
             'utf-8'
         );
         expect(content).toContain('req.body.userId');
         expect(content).toContain('o.userId');
-        expect(content).toContain("role !== 'admin'");
+        expect(content).toContain('canAssignDoc');
         expect(content).toContain('403');
-        expect(content).toContain('Tylko administrator może zmienić opiekuna zamówienia');
+        expect(content).toContain('Brak uprawnień do zmiany opiekuna zamówienia');
     });
 });
 

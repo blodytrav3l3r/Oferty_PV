@@ -24,13 +24,68 @@ async function saveOrdersDataRury(data) {
             body: JSON.stringify({ data })
         });
         if (!res.ok) {
-            const errBody = await res.json().catch(() => ({ error: 'Unknown error' }));
+            const errBody = await res.json().catch(() => ({}));
+            // P0-D2: konflikt wersji — serwer wygrywa, odśwież listę.
+            // Twarda blokada 423: zapis odrzucony, lista odświeżona.
+            // Detekcja strukturalna (status/code), nigdy tekst komunikatu.
+            if (res.status === 409 || errBody.code === 'VERSION_CONFLICT') {
+                const err =
+                    /** @type {Error & {status?: number, code?: string, serverVersion?: number}} */ (
+                        new Error(errBody.error || 'Zamówienie zmieniono w międzyczasie')
+                    );
+                err.status = 409;
+                err.code = errBody.code || 'VERSION_CONFLICT';
+                err.serverVersion = errBody.serverVersion;
+                try {
+                    await loadOrdersRury();
+                } catch (_e) {
+                    /* lista mogła się nie odświeżyć — toast poniżej wystarczy */
+                }
+                if (typeof showToast === 'function')
+                    showToast(
+                        'Zamówienie zmieniono w międzyczasie — wczytano aktualną wersję',
+                        'warning'
+                    );
+                throw err;
+            }
+            if (res.status === 423 || errBody.code === 'DOC_LOCKED') {
+                const holderName =
+                    window.lockService && errBody.holder
+                        ? window.lockService.describeHolder(errBody.holder).name
+                        : 'inny użytkownik';
+                const err =
+                    /** @type {Error & {status?: number, code?: string, holder?: object}} */ (
+                        new Error(errBody.error || 'Dokument edytuje ' + holderName)
+                    );
+                err.status = 423;
+                err.code = errBody.code || 'DOC_LOCKED';
+                if (errBody.holder) err.holder = errBody.holder;
+                try {
+                    await loadOrdersRury();
+                } catch (_e) {
+                    /* lista mogła się nie odświeżyć — toast poniżej wystarczy */
+                }
+                if (typeof showToast === 'function')
+                    showToast(
+                        'Zapis odrzucony — dokument edytuje ' +
+                            holderName +
+                            '. Skopiuj swoje zmiany.',
+                        'warning'
+                    );
+                throw err;
+            }
             throw new Error(errBody.error || `HTTP ${res.status}`);
         }
         return res;
     } catch (err) {
         logger.error('orderCrud', 'Błąd zapisu zamówień rur:', err);
-        showToast('Błąd zapisu zamówień', 'error');
+        if (
+            err?.status !== 409 &&
+            err?.code !== 'VERSION_CONFLICT' &&
+            err?.status !== 423 &&
+            err?.code !== 'DOC_LOCKED'
+        )
+            showToast('Błąd zapisu zamówień', 'error');
         throw err;
     }
 }
@@ -217,7 +272,13 @@ async function finalizeOrderFromOffer(offer, kartaBudowyData) {
         }
     } catch (err) {
         logger.error('orderCrud', 'Błąd tworzenia zamówienia:', err);
-        showToast('Błąd tworzenia zamówienia', 'error');
+        if (
+            err?.status !== 409 &&
+            err?.code !== 'VERSION_CONFLICT' &&
+            err?.status !== 423 &&
+            err?.code !== 'DOC_LOCKED'
+        )
+            showToast('Błąd tworzenia zamówienia', 'error');
     }
 }
 
@@ -252,7 +313,13 @@ async function saveRuryOrder() {
         if (typeof updateRuryOrderSummary === 'function') updateRuryOrderSummary(savedOrder);
     } catch (err) {
         logger.error('orderCrud', 'Błąd zapisu zamówienia:', err);
-        showToast('Błąd zapisu zamówienia', 'error');
+        if (
+            err?.status !== 409 &&
+            err?.code !== 'VERSION_CONFLICT' &&
+            err?.status !== 423 &&
+            err?.code !== 'DOC_LOCKED'
+        )
+            showToast('Błąd zapisu zamówienia', 'error');
     }
 }
 window.saveRuryOrder = saveRuryOrder;
