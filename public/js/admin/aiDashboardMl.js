@@ -5,6 +5,64 @@
         return window.AI_ENDPOINTS || {};
     }
 
+    // F3: czysta prezentacja strukturalnego statusu bramki z backendu
+    // (trainingGate z /ai/ml-status). Zero logiki decyzyjnej po stronie UI.
+    function gateCards(gate) {
+        const g = gate || {};
+        const fmtHours = function (v) {
+            return v != null && Number.isFinite(Number(v)) ? Number(v).toFixed(1) + 'h' : 'brak';
+        };
+        const last = g.lastAttempt || null;
+        const lastHtml = last
+            ? window.escapeHtml(last.status || '—') +
+              (last.reason ? ' (' + window.escapeHtml(last.reason) + ')' : '') +
+              '<br><span style="color:var(--text-muted)">' +
+              window.escapeHtml((last.startedAt || '').slice(0, 16)) +
+              '</span>'
+            : 'brak prób';
+        return [
+            window.aiStatCard(
+                'Gotowy do treningu',
+                g.eligible ? 'Tak' : 'Nie',
+                g.eligible ? 'var(--success)' : 'var(--warn)',
+                'Decyzja bramki shouldTrain (SSoT z backendu): czy próba treningu ma sens'
+            ),
+            window.aiStatCard(
+                'Powód bramki',
+                window.escapeHtml(g.reason || '—'),
+                g.reason === 'ok' ? 'var(--success)' : 'var(--text-muted)',
+                'ok / already_running / too_soon / insufficient_new_data (backend, nie UI)'
+            ),
+            window.aiStatCard(
+                'Nowe dane',
+                (g.newSinceLastTrain != null ? g.newSinceLastTrain : '—') +
+                    ' / ' +
+                    (g.minNewData != null ? g.minNewData : 50),
+                'var(--accent)',
+                'Kwalifikujące nowe rekordy od ostatniego SUCCESS na tle progu (ta sama definicja co w pipeline)'
+            ),
+            window.aiStatCard(
+                'Od SUCCESS',
+                fmtHours(g.hoursSinceLastTrain),
+                'var(--accent-hover)',
+                'Czas od zakończonego treningu (minimum ' +
+                    (g.minHoursSinceLastTrain != null ? g.minHoursSinceLastTrain : 4) +
+                    'h)' +
+                    (g.nextEligibleAt ? '. Kolejny możliwy: ' + g.nextEligibleAt.slice(0, 16) : ''),
+                g.nextEligibleAt
+                    ? 'Kolejny trening możliwy od ' + g.nextEligibleAt.slice(0, 16)
+                    : 'Brak poprzedniego SUCCESS (first-run) lub bramka czasowa spełniona'
+            ),
+            window.aiStatCard(
+                'Ostatnia próba',
+                lastHtml,
+                'var(--text-muted)',
+                'Ostatnia RZECZYWISTA próba treningu (AiTrainingRun) — osobna informacja historyczna, nie decyzja bramki. ' +
+                    'Pokazuje m.in. split_guard, gdy bramka przepuściła, a trening zatrzymał się na guardach.'
+            )
+        ];
+    }
+
     function renderMlStatus(container) {
         container.innerHTML = window.aiLoadingHtml();
         const ENDPOINTS = getEndpoints();
@@ -195,6 +253,7 @@
                             "Rozmiar cache'a predykcji w pamięci (liczba zapisanych wyników)"
                         )
                     ]) +
+                    mlGroup('Bramka treningu', 'ai-ml-col-5', gateCards(status.trainingGate)) +
                     '<div class="ai-influence-widget">' +
                     '<label style="display:flex;align-items:center;gap:10px;cursor:pointer" title="Procentowy wp\u0142yw AI na ranking produkt\u00f3w (0% = tylko ludzkie preferencje, 100% = w pe\u0142ni automatyczny)">' +
                     '<i data-lucide="sliders-horizontal" style="width:16px;height:16px;color:var(--accent);flex-shrink:0"></i>' +

@@ -45,7 +45,8 @@ const mockRecordPredictionResult = jest.fn<any>();
 jest.mock('../../src/services/ml/TrainingPipeline', () => ({
     trainingPipeline: {
         run: jest.fn<any>().mockResolvedValue({ trained: false }),
-        getStatus: (...args: any[]) => mockGetStatus(...args)
+        getStatus: (...args: any[]) => mockGetStatus(...args),
+        gateStatus: jest.fn<any>().mockResolvedValue(null)
     }
 }));
 

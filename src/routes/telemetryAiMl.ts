@@ -622,6 +622,9 @@ router.get('/ai/ml-status', requireAuth, READ_LIMITER, async (_req: Request, res
                 noFeedback: labelCounts['NO_FEEDBACK'] ?? 0
             },
             trainingRunning: pipelineStatus.running,
+            // F3: strukturalny status bramki (SSoT z TrainingPipeline) +
+            // ostatnia rzeczywista próba. Frontend tylko prezentuje.
+            trainingGate: await trainingPipeline.gateStatus(),
             totalRewards: rewardLogs,
             cacheSize: predictionCacheSize(),
             aiMlEnabled: await isAiMlEnabled(),

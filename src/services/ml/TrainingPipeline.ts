@@ -51,6 +51,24 @@ export const SEED = 42;
 export type TrainingGateReason = 'already_running' | 'too_soon' | 'insufficient_new_data';
 export type TrainingGate = { ok: true } | { ok: false; reason: string };
 
+export interface TrainingGateStatus {
+    eligible: boolean;
+    reason: string;
+    newSinceLastTrain: number | null;
+    minNewData: number;
+    minHoursSinceLastTrain: number;
+    hoursSinceLastTrain: number | null;
+    lastSuccessAt: string | null;
+    nextEligibleAt: string | null;
+    lastAttempt: {
+        status: string;
+        reason: string | null;
+        startedAt: string;
+        finishedAt: string | null;
+    } | null;
+    running: boolean;
+}
+
 /**
  * Retencja historii treningów (F2, D6): trzymaj ostatnie keepLastRuns
  * (deterministycznie startedAt DESC, id DESC). Housekeeping, nie semantyka treningu.
@@ -256,12 +274,19 @@ export class TrainingPipeline {
     }
 
     /**
-     * Bramka danych: too_soon (minHoursSinceLastTrain od ZAKOŃCZONEGO SUCCESS)
-     * + minimum kwalifikujących nowych rekordów (wspólny predykat
-     * countEligibleNewFeatures — ten sam co w run()). Brak SUCCESS = first-run:
-     * too_soon=false, wymagane ≥50 kwalifikujących.
+     * Jedyna implementacja bramki danych (SSoT): too_soon (minHoursSinceLastTrain
+     * od ZAKOŃCZONEGO SUCCESS) + minimum kwalifikujących nowych rekordów (wspólny
+     * predykat countEligibleNewFeatures — ten sam co w run()). Brak SUCCESS =
+     * first-run: too_soon=false, wymagane ≥50 kwalifikujących.
+     * withCount=false pomija droższy COUNT przy too_soon (gorąca ścieżka crona).
      */
-    private async checkDataGate(): Promise<TrainingGate> {
+    private async evaluateGate(withCount: boolean): Promise<{
+        ok: boolean;
+        reason: string;
+        newSinceLastTrain: number | null;
+        hoursSinceLastTrain: number | null;
+        lastSuccessAt: string | null;
+    }> {
         const lastSuccess = await prisma.aiTrainingRun.findFirst({
             where: { status: TRAINING_STATUS.SUCCESS },
             orderBy: { startedAt: 'desc' }
@@ -269,25 +294,93 @@ export class TrainingPipeline {
         const lastSuccessAt = lastSuccess
             ? (lastSuccess.finishedAt ?? lastSuccess.startedAt)
             : null;
-        if (lastSuccessAt) {
-            const hoursSince = (Date.now() - new Date(lastSuccessAt).getTime()) / (1000 * 60 * 60);
-            if (hoursSince < ML_CONFIG.minHoursSinceLastTrain) {
-                logger.info(
-                    'TrainingPipeline',
-                    `Od ostatniego SUCCESS ${hoursSince.toFixed(1)}h < ${ML_CONFIG.minHoursSinceLastTrain}h — pomijam`
-                );
-                return { ok: false, reason: `too_soon:${hoursSince.toFixed(1)}h` };
-            }
+        const hoursSince =
+            lastSuccessAt !== null
+                ? (Date.now() - new Date(lastSuccessAt).getTime()) / (1000 * 60 * 60)
+                : null;
+        if (hoursSince !== null && hoursSince < ML_CONFIG.minHoursSinceLastTrain) {
+            return {
+                ok: false,
+                reason: `too_soon:${hoursSince.toFixed(1)}h`,
+                newSinceLastTrain: withCount ? await countEligibleNewFeatures(lastSuccessAt) : null,
+                hoursSinceLastTrain: hoursSince,
+                lastSuccessAt
+            };
         }
         const eligible = await countEligibleNewFeatures(lastSuccessAt);
         if (eligible < ML_CONFIG.minNewRecordsForTraining) {
-            logger.info(
-                'TrainingPipeline',
-                `Za mało nowych danych: ${eligible} < ${ML_CONFIG.minNewRecordsForTraining}`
-            );
-            return { ok: false, reason: `insufficient_new_data:${eligible}` };
+            return {
+                ok: false,
+                reason: `insufficient_new_data:${eligible}`,
+                newSinceLastTrain: eligible,
+                hoursSinceLastTrain: hoursSince,
+                lastSuccessAt
+            };
+        }
+        return {
+            ok: true,
+            reason: 'ok',
+            newSinceLastTrain: eligible,
+            hoursSinceLastTrain: hoursSince,
+            lastSuccessAt
+        };
+    }
+
+    private async checkDataGate(): Promise<TrainingGate> {
+        const g = await this.evaluateGate(false);
+        if (!g.ok) {
+            if (g.reason.startsWith('too_soon')) {
+                logger.info(
+                    'TrainingPipeline',
+                    `Od ostatniego SUCCESS ${(g.hoursSinceLastTrain ?? 0).toFixed(1)}h < ${ML_CONFIG.minHoursSinceLastTrain}h — pomijam`
+                );
+            } else {
+                logger.info(
+                    'TrainingPipeline',
+                    `Za mało nowych danych: ${g.newSinceLastTrain} < ${ML_CONFIG.minNewRecordsForTraining}`
+                );
+            }
+            return { ok: false, reason: g.reason };
         }
         return { ok: true };
+    }
+
+    /**
+     * Strukturalny status bramki dla dashboardu (F3, read-only): bieżąca decyzja
+     * + ostatnia RZECZYWISTA próba treningu (osobna informacja historyczna —
+     * nie część mechanizmu bramki). Frontend tylko prezentuje.
+     */
+    async gateStatus(): Promise<TrainingGateStatus> {
+        const g = await this.evaluateGate(true);
+        const last = await prisma.aiTrainingRun.findFirst({
+            orderBy: [{ startedAt: 'desc' }, { id: 'desc' }]
+        });
+        const nextEligibleAt =
+            !g.ok && g.reason.startsWith('too_soon') && g.lastSuccessAt !== null
+                ? new Date(
+                      new Date(g.lastSuccessAt).getTime() +
+                          ML_CONFIG.minHoursSinceLastTrain * 3600 * 1000
+                  ).toISOString()
+                : null;
+        return {
+            eligible: !this.running && g.ok,
+            reason: this.running ? 'already_running' : g.reason,
+            newSinceLastTrain: g.newSinceLastTrain,
+            minNewData: ML_CONFIG.minNewRecordsForTraining,
+            minHoursSinceLastTrain: ML_CONFIG.minHoursSinceLastTrain,
+            hoursSinceLastTrain: g.hoursSinceLastTrain,
+            lastSuccessAt: g.lastSuccessAt,
+            nextEligibleAt,
+            lastAttempt: last
+                ? {
+                      status: last.status,
+                      reason: last.error,
+                      startedAt: last.startedAt,
+                      finishedAt: last.finishedAt
+                  }
+                : null,
+            running: this.running
+        };
     }
 
     async run(

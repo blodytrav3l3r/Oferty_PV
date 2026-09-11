@@ -200,6 +200,89 @@ describe('restart persistence — lastSuccessAt z DB, nie z RAM', () => {
     });
 });
 
+describe('gateStatus() — strukturalny status dla dashboardu (F3)', () => {
+    beforeEach(() => {
+        jest.clearAllMocks();
+        mockSettingsFindUnique.mockResolvedValue(null);
+        mockRunFindFirst.mockReset();
+    });
+
+    function mockGateReads(successRow: any, lastAttemptRow: any): void {
+        mockRunFindFirst.mockImplementation((args: any) => {
+            if (args && args.where && args.where.status === 'SUCCESS') {
+                return Promise.resolve(successRow);
+            }
+            return Promise.resolve(lastAttemptRow);
+        });
+    }
+
+    it('kształt OK przy braku SUCCESS: eligible, progi, lastAttempt null', async () => {
+        const { trainingPipeline } = await import('../../src/services/ml/TrainingPipeline');
+        mockGateReads(null, null);
+        mockFeatureCount.mockResolvedValue(60);
+
+        const s = await trainingPipeline.gateStatus();
+
+        expect(s.eligible).toBe(true);
+        expect(s.reason).toBe('ok');
+        expect(s.newSinceLastTrain).toBe(60);
+        expect(s.minNewData).toBe(50);
+        expect(s.minHoursSinceLastTrain).toBe(4);
+        expect(s.hoursSinceLastTrain).toBeNull();
+        expect(s.lastSuccessAt).toBeNull();
+        expect(s.nextEligibleAt).toBeNull();
+        expect(s.lastAttempt).toBeNull();
+        expect(s.running).toBe(false);
+    });
+
+    it('too_soon: nextEligibleAt = finishedAt + 4h + mapowanie lastAttempt', async () => {
+        const { trainingPipeline } = await import('../../src/services/ml/TrainingPipeline');
+        const finishedAt = new Date(Date.now() - 2 * HOUR).toISOString();
+        mockGateReads(
+            { id: 'run-s', status: 'SUCCESS', startedAt: finishedAt, finishedAt },
+            {
+                id: 'run-9',
+                status: 'SKIPPED',
+                error: 'split_guard:dataset=41,train=28,val=6,test=7,testPos=6,testNeg=1',
+                startedAt: '2026-09-11T19:20:29.342Z',
+                finishedAt: '2026-09-11T19:20:30.000Z'
+            }
+        );
+        mockFeatureCount.mockResolvedValue(500);
+
+        const s = await trainingPipeline.gateStatus();
+
+        expect(s.eligible).toBe(false);
+        expect(s.reason).toMatch(/too_soon/);
+        expect(s.newSinceLastTrain).toBe(500);
+        expect(s.hoursSinceLastTrain).toBeGreaterThan(1.9);
+        expect(s.nextEligibleAt).toBe(
+            new Date(new Date(finishedAt).getTime() + 4 * HOUR).toISOString()
+        );
+        expect(s.lastAttempt).toEqual({
+            status: 'SKIPPED',
+            reason: 'split_guard:dataset=41,train=28,val=6,test=7,testPos=6,testNeg=1',
+            startedAt: '2026-09-11T19:20:29.342Z',
+            finishedAt: '2026-09-11T19:20:30.000Z'
+        });
+    });
+
+    it('already_running → eligible false bez liczenia na nowo', async () => {
+        const { trainingPipeline } = await import('../../src/services/ml/TrainingPipeline');
+        mockGateReads(null, null);
+        mockFeatureCount.mockResolvedValue(60);
+        (trainingPipeline as any).running = true;
+        try {
+            const s = await trainingPipeline.gateStatus();
+            expect(s.eligible).toBe(false);
+            expect(s.reason).toBe('already_running');
+            expect(s.running).toBe(true);
+        } finally {
+            (trainingPipeline as any).running = false;
+        }
+    });
+});
+
 describe('pruneTrainingRuns — retencja 100', () => {
     beforeEach(() => {
         jest.clearAllMocks();

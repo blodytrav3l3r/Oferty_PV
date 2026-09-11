@@ -67,9 +67,12 @@ Macierz decyzji:
 
 3. `pruneTrainingRuns()` (keep last 100, deterministycznie `startedAt DESC, id DESC` — stabilny klucz przy identycznych timestampach), wołany z nowego `dailyHousekeeping` w `cronService` (24h, obok `ftsConsistencyCheck`). Nie w `saveModel()`. `pruneOldModels` bez zmian.
 
-## 5. F3 — osobny etap: strukturalny status bramki
+## 5. F3 — Zaimplementowane: strukturalny status bramki
 
-- `GET /ai/ml-status` += `trainingGate: { newSinceLastTrain, minNewData, minHoursSinceLastTrain, hoursSinceLastTrain, eligible, reason, nextEligibleAt }` (liczone przez `countEligibleNewFeatures()` — ten sam SSoT). Frontend tylko prezentuje, zero logiki decyzyjnej.
+- `TrainingPipeline.gateStatus()` (SSoT: wewnętrzne `evaluateGate(withCount)`, współdzielone z `checkDataGate()` — jedna implementacja bramki, flaga steruje tylko dodatkowym COUNT na gorącej ścieżce).
+- `GET /ai/ml-status` += `trainingGate: { eligible, reason, newSinceLastTrain, minNewData, minHoursSinceLastTrain, hoursSinceLastTrain, lastSuccessAt, nextEligibleAt, lastAttempt: { status, reason, startedAt, finishedAt } | null, running }`. `lastAttempt` to osobna informacja historyczna (ostatnia RZECZYWISTA próba, np. split_guard) — nie część mechanizmu bramki.
+- Frontend (`aiDashboardMl.js` → `gateCards()`): grupa „Bramka treningu" (5 kart), czysta prezentacja, `escapeHtml` na reason/status, null-safe przy braku pola. Zero logiki decyzyjnej w UI.
+- Testy: 3 nowe (`gateStatus` kształt/too_soon+nextEligibleAt+lastAttempt/already_running). Pełne `test:quick` 2557/2557.
 
 ## 6. Testy
 
