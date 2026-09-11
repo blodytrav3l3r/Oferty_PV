@@ -561,11 +561,40 @@ function excelOnCompChange(wIdx, componentType, height, value, productId, redDn)
     _excelDebouncedRefresh(wIdx);
 }
 
-/* Wspólny rdzeń modelowy kinety — handler DOM i ścieżka model-only wklejania. */
+/* Wspólny rdzeń modelowy kinety — handler DOM i ścieżka model-only wklejania.
+   Sync kineta->spocznik jak w głównym konfiguratorze (wellManager.js:updateWellParam)
+   i popup Excel (_excelUpdateWellParam). */
 function _excelKinetaModelUpdate(wIdx, value) {
     _excelMarkAsManual(wIdx);
-    wells[wIdx].kineta = value;
-    if (typeof syncKineta === 'function') syncKineta(wells[wIdx]);
+    const well = wells[wIdx];
+    if (!well) return;
+    const oldVal = well.kineta;
+    well.kineta = value;
+    if (
+        value === 'beton' ||
+        value === 'beton_gfk' ||
+        value === 'klinkier' ||
+        value === 'preco' ||
+        value === 'precotop' ||
+        value === 'unolith' ||
+        value === 'predl' ||
+        value === 'kamionka' ||
+        value === 'brak'
+    ) {
+        well.spocznik = value;
+    }
+    if (value === 'preco' || value === 'precotop') {
+        if (oldVal !== 'preco' && oldVal !== 'precotop') {
+            well.precoFullHeight = 'nie';
+        }
+    }
+    if (value === 'preco' || value === 'precotop' || value === 'unolith') {
+        well.spocznikH = '1/1';
+    }
+    if (value === 'brak') {
+        well.spocznikH = 'brak';
+    }
+    if (typeof syncKineta === 'function') syncKineta(well);
 }
 
 function excelOnKinetaChange(wIdx, value) {
