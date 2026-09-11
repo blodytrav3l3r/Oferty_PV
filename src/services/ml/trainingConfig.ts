@@ -29,7 +29,8 @@ export const ML_CONFIG = {
     // Retencja rejestru modeli ML (pruneOldModels)
     retention: {
         keepLast: 10, // zawsze trzymaj N najnowszych (keepLast >= 2 gwarantuje działający rollback)
-        keepBest: 3 // + N najlepszych wg AUC (keepBest >= 1 gwarantuje cel promoteBestModel)
+        keepBest: 3, // + N najlepszych wg AUC (keepBest >= 1 gwarantuje cel promoteBestModel)
+        keepLastRuns: 100 // retencja historii AiTrainingRun (pruneTrainingRuns, tylko liczba — bez klauzuli wieku)
     },
     // Ograniczenia POST /ai/train (ETAP 8): min-interval między treningami
     // + max-duration — admin nie może uruchomić serii treningów w kilka sekund.

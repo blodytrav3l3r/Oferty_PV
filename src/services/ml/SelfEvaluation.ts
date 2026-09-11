@@ -7,7 +7,6 @@ import { ML_CONFIG } from './trainingConfig';
 import { ML_CONSTANTS } from '../../config/mlConstants';
 
 export class SelfEvaluation {
-    private lastRunAt: number = 0;
     private slidingWindow: Array<{ label: number; score: number }> = [];
     private readonly SLIDING_WINDOW_SIZE = 200;
     private featureVersion: string = ML_CONSTANTS.FEATURE_VERSION;
@@ -79,9 +78,10 @@ export class SelfEvaluation {
             return { rolledBack: false };
         }
 
-        const hoursSinceLast = (Date.now() - this.lastRunAt) / (1000 * 60 * 60);
-        if (!this.lastRunAt || hoursSinceLast >= ML_CONFIG.minHoursSinceLastTrain) {
-            this.lastRunAt = Date.now();
+        // Bramka SSoT z TrainingPipeline (trwałe lastSuccessAt z DB zamiast
+        // in-memory lastRunAt — przetrwa restart; decyzja spójna z cronem).
+        const gate = await trainingPipeline.shouldTrain();
+        if (gate.ok) {
             const result = await trainingPipeline.run();
             if (result.trained && result.metrics) {
                 await prisma.aiEvaluation.create({
@@ -99,10 +99,7 @@ export class SelfEvaluation {
                 return { rolledBack: false };
             }
         } else {
-            logger.info(
-                'SelfEvaluation',
-                `Od ostatniego treningu ${hoursSinceLast.toFixed(1)}h < ${ML_CONFIG.minHoursSinceLastTrain}h — pomijam`
-            );
+            logger.info('SelfEvaluation', `Bramka treningu: ${gate.reason} — pomijam`);
         }
 
         if (activeModel.metrics.rocAuc < ML_CONFIG.rollbackAucThreshold) {

@@ -25,7 +25,11 @@ import {
     computePrAuc
 } from './metrics';
 import { buildFeatureDistributions } from './featureDistributions';
-import { filterFeaturesByTrainingUsers, getTrainingUserIds } from './trainingUsers';
+import {
+    countEligibleNewFeatures,
+    filterFeaturesByTrainingUsers,
+    getTrainingUserIds
+} from './trainingUsers';
 
 // Semantyka statusów treningu (plan MLOps):
 // RUNNING | SUCCESS | SKIPPED | FAILED_NUMERICAL | FAILED_VALIDATION | FAILED_TIMEOUT | FAILED_ERROR
@@ -43,6 +47,34 @@ export const TRAINING_STATUS = {
 } as const;
 
 export const SEED = 42;
+
+export type TrainingGateReason = 'already_running' | 'too_soon' | 'insufficient_new_data';
+export type TrainingGate = { ok: true } | { ok: false; reason: string };
+
+/**
+ * Retencja historii treningów (F2, D6): trzymaj ostatnie keepLastRuns
+ * (deterministycznie startedAt DESC, id DESC). Housekeeping, nie semantyka treningu.
+ */
+export async function pruneTrainingRuns(
+    keep: number = ML_CONFIG.retention.keepLastRuns
+): Promise<{ deleted: number }> {
+    const kept = await prisma.aiTrainingRun.findMany({
+        orderBy: [{ startedAt: 'desc' }, { id: 'desc' }],
+        take: keep,
+        select: { id: true }
+    });
+    if (kept.length === 0) return { deleted: 0 };
+    const res = await prisma.aiTrainingRun.deleteMany({
+        where: { id: { notIn: kept.map((r) => r.id) } }
+    });
+    if (res.count > 0) {
+        logger.info(
+            'TrainingPipeline',
+            `Prune AiTrainingRun: usunięto ${res.count}, trzymam ${kept.length}`
+        );
+    }
+    return { deleted: res.count };
+}
 
 /**
  * Fingerprint datasetu treningowego: SHA-256 nad SORTOWANYMI rekordami.
@@ -195,7 +227,6 @@ export function computeRocAuc(scores: number[], labels: number[]): number {
 export class TrainingPipeline {
     private running = false;
     private mutex: Promise<void> | null = null;
-    private lastTrainedAt: string | null = null;
 
     private async acquire(): Promise<() => void> {
         let release: () => void;
@@ -212,6 +243,53 @@ export class TrainingPipeline {
         return release!;
     }
 
+    /**
+     * Read-only pre-flight gate (F1, SSoT decyzji): czy próba treningu ma sens?
+     * Advisory — mutex w run() pozostaje autorytatywnym zabezpieczeniem.
+     * Kolejność od najtańszego sprawdzenia: running → too_soon → count.
+     * Trwałe źródło czasu: ostatni AiTrainingRun SUCCESS z DB (finishedAt,
+     * fallback startedAt) — przetrwa restart serwera (poprzedni lastTrainedAt w RAM ginął).
+     */
+    async shouldTrain(): Promise<TrainingGate> {
+        if (this.running) return { ok: false, reason: 'already_running' };
+        return this.checkDataGate();
+    }
+
+    /**
+     * Bramka danych: too_soon (minHoursSinceLastTrain od ZAKOŃCZONEGO SUCCESS)
+     * + minimum kwalifikujących nowych rekordów (wspólny predykat
+     * countEligibleNewFeatures — ten sam co w run()). Brak SUCCESS = first-run:
+     * too_soon=false, wymagane ≥50 kwalifikujących.
+     */
+    private async checkDataGate(): Promise<TrainingGate> {
+        const lastSuccess = await prisma.aiTrainingRun.findFirst({
+            where: { status: TRAINING_STATUS.SUCCESS },
+            orderBy: { startedAt: 'desc' }
+        });
+        const lastSuccessAt = lastSuccess
+            ? (lastSuccess.finishedAt ?? lastSuccess.startedAt)
+            : null;
+        if (lastSuccessAt) {
+            const hoursSince = (Date.now() - new Date(lastSuccessAt).getTime()) / (1000 * 60 * 60);
+            if (hoursSince < ML_CONFIG.minHoursSinceLastTrain) {
+                logger.info(
+                    'TrainingPipeline',
+                    `Od ostatniego SUCCESS ${hoursSince.toFixed(1)}h < ${ML_CONFIG.minHoursSinceLastTrain}h — pomijam`
+                );
+                return { ok: false, reason: `too_soon:${hoursSince.toFixed(1)}h` };
+            }
+        }
+        const eligible = await countEligibleNewFeatures(lastSuccessAt);
+        if (eligible < ML_CONFIG.minNewRecordsForTraining) {
+            logger.info(
+                'TrainingPipeline',
+                `Za mało nowych danych: ${eligible} < ${ML_CONFIG.minNewRecordsForTraining}`
+            );
+            return { ok: false, reason: `insufficient_new_data:${eligible}` };
+        }
+        return { ok: true };
+    }
+
     async run(
         force = false
     ): Promise<{ trained: boolean; version?: string; metrics?: ModelMetrics; reason?: string }> {
@@ -221,7 +299,8 @@ export class TrainingPipeline {
         const release = await this.acquire();
         this.running = true;
 
-        // Run audit — jeden wiersz AiTrainingRun na każdy przebieg (też SKIPPED).
+        // Run audit — jeden wiersz AiTrainingRun na każdą RZECZYWISTĄ próbę treningu
+        // (split guard, brak klas, FAILED_*). Pre-flight skippidy wiersza nie tworzą.
         const runId = crypto.randomUUID();
         const startedAt = new Date().toISOString();
         let datasetSize = 0;
@@ -280,6 +359,17 @@ export class TrainingPipeline {
         };
 
         try {
+            // Pre-flight gate (F1/F2): tania decyzja PRZED ciężką pracą (extract/resync)
+            // i PRZED utworzeniem wiersza AiTrainingRun. Odrzucenie = brak wiersza (D5).
+            // Wewnątrz try, żeby early return przeszedł przez finally (mutex + running).
+            // To też re-check po mutexie dla callerów, które wołały shouldTrain()
+            // przed acquire (wyścig cron ↔ self-eval). Force (admin) omija bramkę
+            // z konstrukcji — gate żyje w callerach, nie w run().
+            if (!force) {
+                const gate = await this.checkDataGate();
+                if (!gate.ok) return { trained: false, reason: gate.reason };
+            }
+
             await prisma.aiTrainingRun.create({
                 data: {
                     id: runId,
@@ -354,31 +444,6 @@ export class TrainingPipeline {
                     `Za mało danych: ${features.length} < ${ML_CONFIG.minFeatureCountForTraining}`
                 );
                 return finish(TRAINING_STATUS.SKIPPED, `insufficient_data:${features.length}`);
-            }
-
-            const latestAt = features.length > 0 ? features[features.length - 1].createdAt : null;
-            // Invariant allowlisty: "nowe dane" liczone tylko spośród dozwolonych
-            // (join przez telemetryId — AiFeature nie ma userId).
-            let newCount = features.length;
-            if (this.lastTrainedAt) {
-                if (allowlist === null) {
-                    newCount = await prisma.aiFeature.count({
-                        where: { createdAt: { gt: this.lastTrainedAt } }
-                    });
-                } else {
-                    const recent = await prisma.aiFeature.findMany({
-                        where: { createdAt: { gt: this.lastTrainedAt } },
-                        select: { telemetryId: true }
-                    });
-                    newCount = (await filterFeaturesByTrainingUsers(recent)).length;
-                }
-            }
-            if (!force && newCount < ML_CONFIG.minNewRecordsForTraining) {
-                logger.info(
-                    'TrainingPipeline',
-                    `Za mało nowych danych: ${newCount} < ${ML_CONFIG.minNewRecordsForTraining}`
-                );
-                return finish(TRAINING_STATUS.SKIPPED, `insufficient_new_data:${newCount}`);
             }
 
             const { normalized, mins, maxs, dim, records } =
@@ -518,7 +583,6 @@ export class TrainingPipeline {
             candidateModelVersion = version;
             deployed = true;
             deploymentReason = gate.reason;
-            this.lastTrainedAt = latestAt;
             logger.info(
                 'TrainingPipeline',
                 `Wytrenowano i wdrożono ${version} (auc=${metrics.rocAuc})`

@@ -44,10 +44,11 @@ export function isTelemetryAllowed(
  * bez arbitralnego limitu na lookup (ids z batcha kandydującego).
  */
 export async function filterFeaturesByTrainingUsers<T extends { telemetryId?: string | null }>(
-    features: T[]
+    features: T[],
+    allow?: string[] | null
 ): Promise<T[]> {
-    const allow = await getTrainingUserIds();
-    if (allow === null) return features;
+    const allowlist = allow !== undefined ? allow : await getTrainingUserIds();
+    if (allowlist === null) return features;
     const ids = [...new Set(features.map((f) => f.telemetryId).filter((id): id is string => !!id))];
     if (ids.length === 0) return [];
     const owners = await prisma.ai_telemetry_logs.findMany({
@@ -55,7 +56,23 @@ export async function filterFeaturesByTrainingUsers<T extends { telemetryId?: st
         select: { id: true, userId: true }
     });
     const allowedIds = new Set(
-        owners.filter((o) => isTelemetryAllowed(o.userId, allow)).map((o) => o.id)
+        owners.filter((o) => isTelemetryAllowed(o.userId, allowlist)).map((o) => o.id)
     );
     return features.filter((f) => f.telemetryId && allowedIds.has(f.telemetryId));
+}
+
+/**
+ * SSoT definicji „kwalifikujących się" danych treningowych (bramka F1):
+ * AiFeature.createdAt > since + filtr allowlisty. Ten sam predykat dla
+ * shouldTrain() i TrainingPipeline.run() — gate i pipeline nigdy się nie rozjadą.
+ * Semantyka labeli bez zmian: NO_FEEDBACK odpada dopiero w loadAndNormalizeFeatures().
+ */
+export async function countEligibleNewFeatures(since: string | null): Promise<number> {
+    const allow = await getTrainingUserIds();
+    const where = since ? { createdAt: { gt: since } } : {};
+    if (allow === null) {
+        return prisma.aiFeature.count({ where });
+    }
+    const rows = await prisma.aiFeature.findMany({ where, select: { telemetryId: true } });
+    return (await filterFeaturesByTrainingUsers(rows, allow)).length;
 }

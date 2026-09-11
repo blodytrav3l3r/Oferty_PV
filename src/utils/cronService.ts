@@ -39,11 +39,14 @@ class CronService {
         // Co 24h — pełny cykl LearningEngine
         this.schedule('fullLearningCycle', 24 * 60 * 60 * 1000, () => this.runFullCycle());
 
-        // Co 15 minut — ML Training Pipeline
-        this.schedule('mlTrainingPipeline', 15 * 60 * 1000, () => this.runMlTraining());
+        // Co 4h — ML Training Pipeline (bramka shouldTrain decyduje, czy próba ma sens)
+        this.schedule('mlTrainingPipeline', 4 * 60 * 60 * 1000, () => this.runMlTraining());
 
         // Co 24h — ML SelfEvaluation (A/B + auto-rollback)
         this.schedule('mlSelfEvaluation', 24 * 60 * 60 * 1000, () => this.runMlSelfEvaluation());
+
+        // Co 24h — housekeeping historii treningów (retencja AiTrainingRun)
+        this.schedule('dailyHousekeeping', 24 * 60 * 60 * 1000, () => this.runHousekeeping());
 
         // P1-B: co 24h — kontrola spójności FTS (tylko liczniki + warn, bez auto-rebuildu)
         this.schedule('ftsConsistencyCheck', 24 * 60 * 60 * 1000, () => this.runFtsCheck());
@@ -174,6 +177,13 @@ class CronService {
     async runMlTraining(): Promise<void> {
         try {
             const pipeline = await loadTrainingPipeline();
+            // Pre-flight gate: lekka decyzja przed ciężkim pipeline'em.
+            // Odrzucenie nie tworzy wiersza AiTrainingRun (D5).
+            const gate = await pipeline.shouldTrain();
+            if (!gate.ok) {
+                logger.info('CronService', `[mlTraining] pomijam: ${gate.reason}`);
+                return;
+            }
             const result = await pipeline.run();
             if (result.trained) {
                 logger.info(
@@ -185,6 +195,23 @@ class CronService {
             }
         } catch (e) {
             logger.error('CronService', `[mlTraining] failed: ${e}`);
+        }
+    }
+
+    /**
+     * Housekeeping (F2): retencja historii treningów. Niezależny od semantyki
+     * treningu — awaria pruna nie dotyka ścieżki treningowej.
+     */
+    async runHousekeeping(): Promise<void> {
+        try {
+            const { pruneTrainingRuns } = await import('../services/ml/TrainingPipeline');
+            const res = await pruneTrainingRuns();
+            logger.info(
+                'CronService',
+                `[housekeeping] prune AiTrainingRun: usunięto ${res.deleted}`
+            );
+        } catch (e) {
+            logger.error('CronService', `[housekeeping] failed: ${e}`);
         }
     }
 

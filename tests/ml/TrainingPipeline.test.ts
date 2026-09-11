@@ -14,6 +14,8 @@ const mockUpdateMany = jest.fn<any>();
 const mockTransitionFindMany = jest.fn<any>().mockResolvedValue([]);
 const mockRunCreate = jest.fn<any>();
 const mockRunUpdate = jest.fn<any>();
+const mockRunFindFirst = jest.fn<any>();
+const mockRunDeleteMany = jest.fn<any>().mockResolvedValue({ count: 0 });
 
 jest.mock('../../src/prismaClient', () => ({
     __esModule: true,
@@ -41,8 +43,10 @@ jest.mock('../../src/prismaClient', () => ({
             deleteMany: jest.fn<any>().mockResolvedValue({ count: 0 })
         },
         aiTrainingRun: {
+            findFirst: (...args: any[]) => mockRunFindFirst(...args),
             create: (...args: any[]) => mockRunCreate(...args),
-            update: (...args: any[]) => mockRunUpdate(...args)
+            update: (...args: any[]) => mockRunUpdate(...args),
+            deleteMany: (...args: any[]) => mockRunDeleteMany(...args)
         },
         aiRewardLog: { count: jest.fn<any>().mockResolvedValue(0) },
         users: { update: jest.fn<any>() }
@@ -536,6 +540,9 @@ describe('Split 70/15/15 (ETAP 2)', () => {
         jest.spyOn(featureExtractor, 'resyncLabels').mockResolvedValue(0);
         jest.spyOn(featureExtractor, 'resyncFeatures').mockResolvedValue(0);
         (prisma.aiModel as any).findMany = jest.fn<any>().mockResolvedValue([]);
+        // Pre-flight gate musi przepuścić: brak SUCCESS + 500 kwalifikujących.
+        mockRunFindFirst.mockResolvedValue(null);
+        mockCount.mockResolvedValue(500);
         // 250 rekordów: n < minDatasetForSplit (300) → SKIPPED przed balansem klas
         const mixed = Array.from({ length: 250 }, (_, i) => ({
             dn: 1000,
@@ -654,11 +661,10 @@ describe('ModelRegistry', () => {
 describe('TrainingPipeline.run() — guardy (K6)', () => {
     beforeEach(async () => {
         jest.clearAllMocks();
-        // Testy A-14 ustawiają lastTrainedAt/mockCount na singletonie —
-        // reset, by nie persistowały do pozostałych testów guardów.
-        const { trainingPipeline } = await import('../../src/services/ml/TrainingPipeline');
-        (trainingPipeline as any).lastTrainedAt = null;
-        mockCount.mockResolvedValue(undefined);
+        // Bramka czyta trwały stan z DB (AiTrainingRun SUCCESS), nie z RAM —
+        // domyślnie: brak poprzedniego SUCCESS + 500 kwalifikujących (gate przepuszcza).
+        mockRunFindFirst.mockResolvedValue(null);
+        mockCount.mockResolvedValue(500);
     });
 
     function makeFeature(label: string, i = 0): any {
@@ -715,19 +721,20 @@ describe('TrainingPipeline.run() — guardy (K6)', () => {
         expect(res.reason).toMatch(/insufficient_data/);
     });
 
-    it('za mało NOWYCH danych (A-14) → insufficient_new_data przy force=false', async () => {
+    it('za mało NOWYCH danych (A-14) → insufficient_new_data przy force=false, bez wiersza', async () => {
         const { trainingPipeline } = await setupRun();
         mockFindMany.mockResolvedValue(
             Array.from({ length: 400 }, (_, i) => makeFeature('ACCEPTED', i))
         );
-        // lastTrainedAt ustawiony wcześniej — aiFeature.count = brak nowych
-        (trainingPipeline as any).lastTrainedAt = new Date(Date.UTC(2026, 8, 1)).toISOString();
+        // Brak SUCCESS + 0 kwalifikujących → pre-flight skip bez wiersza AiTrainingRun.
+        mockRunFindFirst.mockResolvedValue(null);
         mockCount.mockResolvedValue(0);
 
         const res = await trainingPipeline.run(false);
 
         expect(res.trained).toBe(false);
         expect(res.reason).toMatch(/insufficient_new_data:0/);
+        expect(mockRunCreate).not.toHaveBeenCalled();
     });
 
     it('A-14: force=true pomija guard nowych danych', async () => {
@@ -735,7 +742,6 @@ describe('TrainingPipeline.run() — guardy (K6)', () => {
         mockFindMany.mockResolvedValue(
             Array.from({ length: 400 }, (_, i) => makeFeature('ACCEPTED', i))
         );
-        (trainingPipeline as any).lastTrainedAt = new Date(Date.UTC(2026, 8, 1)).toISOString();
         mockCount.mockResolvedValue(0);
 
         const res = await trainingPipeline.run(true);
@@ -793,6 +799,10 @@ describe('TrainingPipeline AiTrainingRun (ETAP 1)', () => {
         jest.clearAllMocks();
         mockRunCreate.mockResolvedValue({ id: 'run-1' });
         mockRunUpdate.mockResolvedValue({ id: 'run-1' });
+        // Pre-flight gate przepuszcza (brak SUCCESS + 500 kwalifikujących),
+        // żeby testy docierały do tworzenia wiersza i właściwych guardów.
+        mockRunFindFirst.mockResolvedValue(null);
+        mockCount.mockResolvedValue(500);
     });
 
     function makeFeature(label: string, i = 0): any {
