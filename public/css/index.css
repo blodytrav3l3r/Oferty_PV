@@ -438,6 +438,12 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
     display: flex;
     flex-wrap: wrap;
     gap: 0.5rem;
+    max-height: 6.8rem;
+    overflow-y: auto;
+    align-content: flex-start;
+    padding-right: 0.25rem;
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
 }
 
 .recycled-badge {
