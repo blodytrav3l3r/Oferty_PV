@@ -69,7 +69,14 @@ export class LearningEngine {
         records: Array<Record<string, unknown>>;
         transitionsByConfig: Map<string, Array<Record<string, unknown>>>;
     }> {
+        // Invariant allowlisty: LearningEngine (jedyna ścieżka zasilania KB)
+        // czyta wyłącznie rekordy dozwolonych użytkowników.
+        const { getTrainingUserIds } = await import('../../ml/trainingUsers');
+        const trainingUserIds = await getTrainingUserIds();
         const where: Record<string, unknown> = { dn: { not: null } };
+        if (trainingUserIds !== null) {
+            where.userId = { in: trainingUserIds };
+        }
         if (since) {
             where.createdAt = { gt: since };
         }

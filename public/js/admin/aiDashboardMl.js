@@ -313,12 +313,14 @@
                         '<div class="ai-model-empty">Brak wytrenowanych modeli. Uruchom trening ML.</div>';
                 }
                 html +=
-                    '<div class="ai-training-runs-host"></div>' +
+                    '<div class="ai-training-sources-host" style="margin-bottom:28px"></div>' +
+                    '<div class="ai-training-runs-host" style="margin-bottom:28px"></div>' +
                     '<div class="ai-drift-host"></div>';
                 container.innerHTML = html;
                 if (typeof lucide !== 'undefined') {
                     lucide.createIcons({ root: container });
                 }
+                window.aiRenderTrainingSources(container);
                 window.aiRenderTrainingRuns(container);
                 window.aiRenderDrift(container);
                 const aiSlider = document.getElementById('ai-influence-slider');
@@ -602,6 +604,200 @@
             });
     }
     window.aiRenderMlStatus = renderMlStatus;
+
+    function renderTrainingSources(container) {
+        const host = container.querySelector('.ai-training-sources-host');
+        if (!host) return;
+        host.innerHTML = window.aiLoadingHtml();
+        const pSources = window.fetchJson(getEndpoints().trainingUsers);
+        const pUsers = window.fetchJson(getEndpoints().users);
+        if (!pSources || !pUsers) {
+            host.innerHTML = window.aiApiErrorHtml('server');
+            return;
+        }
+        Promise.all([pSources, pUsers])
+            .then(function (results) {
+                const sources = results[0] || {};
+                const usersResp = results[1] || {};
+                if (sources.error) {
+                    host.innerHTML = window.aiApiErrorHtml(sources.error);
+                    return;
+                }
+                const users = Array.isArray(usersResp.data)
+                    ? usersResp.data
+                    : Array.isArray(usersResp)
+                      ? usersResp
+                      : [];
+                const configured = sources.configured === true;
+                const selected = Array.isArray(sources.userIds) ? sources.userIds : [];
+                const selectedSet = {};
+                selected.forEach(function (id) {
+                    selectedSet[id] = true;
+                });
+                let banner;
+                if (!configured) {
+                    banner =
+                        '<div class="card-note card-note--with-icon"><i data-lucide="alert-triangle"></i>' +
+                        '<span><strong>Tryb: wszyscy użytkownicy</strong> (allowlista nieskonfigurowana) — model uczy się na danych wszystkich.</span></div>';
+                } else if (selected.length === 0) {
+                    banner =
+                        '<div class="card-note card-note--with-icon"><i data-lucide="pause-circle"></i>' +
+                        '<span><strong>Tryb: nikt</strong> — allowlista pusta, model nie uczy się na nowych danych.</span></div>';
+                } else {
+                    banner =
+                        '<div class="card-note card-note--with-icon"><i data-lucide="users"></i>' +
+                        '<span><strong>Tryb: allowlista (' +
+                        selected.length +
+                        ' wybranych)</strong> — trening i wzorce tylko z wybranych użytkowników. Wzorce historyczne sprzed konfiguracji wygasają naturalnie (archiwizacja 90 dni).</span></div>';
+                }
+                const tiles = users
+                    .map(function (u) {
+                        const fullName =
+                            u.firstName || u.lastName
+                                ? ((u.firstName || '') + ' ' + (u.lastName || '')).trim()
+                                : u.username || u.id;
+                        const username = u.username || u.id;
+                        const role = u.role || 'USER';
+                        const isChecked = Boolean(selectedSet[u.id]);
+                        const iconName = role === 'ADMIN' ? 'shield-check' : 'user';
+                        const roleBadge =
+                            role === 'ADMIN'
+                                ? '<span style="display:inline-block;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:700;background:rgba(var(--accent-rgb,59,130,246),0.2);color:var(--accent);border:1px solid rgba(var(--accent-rgb,59,130,246),0.3)">ADMIN</span>'
+                                : '<span style="display:inline-block;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:600;background:var(--bg-subtle,rgba(255,255,255,0.08));color:var(--text-secondary)">' +
+                                  window.escapeHtml(role) +
+                                  '</span>';
+                        const tileStyle = isChecked
+                            ? 'border-color:var(--accent);background:rgba(var(--accent-rgb, 59, 130, 246), 0.14);box-shadow:0 0 0 1px var(--accent);'
+                            : 'border-color:var(--border-color, #334155);background:var(--bg-card, #1e293b);box-shadow:none;';
+
+                        return (
+                            '<label class="ai-user-tile' +
+                            (isChecked ? ' selected' : '') +
+                            '" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--radius-md, 8px);border:1px solid;cursor:pointer;transition:all 0.15s ease;user-select:none;' +
+                            tileStyle +
+                            '">' +
+                            '<input type="checkbox" class="ai-source-user" value="' +
+                            window.aiEscapeHtmlAttr(u.id || '') +
+                            '"' +
+                            (isChecked ? ' checked' : '') +
+                            ' style="accent-color:var(--accent);width:16px;height:16px;flex-shrink:0;cursor:pointer">' +
+                            '<div class="ai-user-tile-avatar" style="width:34px;height:34px;border-radius:50%;background:rgba(var(--accent-rgb,59,130,246),0.12);border:1px solid rgba(var(--accent-rgb,59,130,246),0.25);display:flex;align-items:center;justify-content:center;color:var(--accent);flex-shrink:0">' +
+                            '<i data-lucide="' +
+                            iconName +
+                            '"></i>' +
+                            '</div>' +
+                            '<div style="display:flex;flex-direction:column;min-width:0;flex:1">' +
+                            '<span style="font-weight:600;font-size:var(--fs-md);color:var(--text-primary);line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' +
+                            window.escapeHtml(fullName) +
+                            '</span>' +
+                            '<div style="display:flex;align-items:center;gap:6px;margin-top:2px;font-size:var(--fs-xs);color:var(--text-muted)"><span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">@' +
+                            window.escapeHtml(username) +
+                            '</span>' +
+                            roleBadge +
+                            '</div>' +
+                            '</div>' +
+                            '</label>'
+                        );
+                    })
+                    .join('');
+                host.innerHTML =
+                    '<div class="ai-section-title"><i data-lucide="users"></i> Źródła danych treningowych</div>' +
+                    banner +
+                    '<div class="ai-training-sources-list" style="display:grid;grid-template-columns:repeat(auto-fill, minmax(220px, 1fr));gap:10px;max-height:280px;overflow-y:auto;margin-top:10px;padding:2px">' +
+                    (tiles || '<div class="card-note">Brak użytkowników do wyboru.</div>') +
+                    '</div>' +
+                    '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:16px;margin-bottom:8px;flex-wrap:wrap">' +
+                    '<div style="display:flex;align-items:center;gap:10px">' +
+                    '<button type="button" id="ai-sources-select-all" class="btn btn-sm" style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;font-size:var(--fs-xs);font-weight:600;cursor:pointer;border-radius:var(--radius-sm);background:rgba(var(--accent-rgb,59,130,246),0.16);border:1px solid var(--accent);color:var(--accent);transition:all 0.15s ease" title="Zaznacz wszystkich użytkowników"><i data-lucide="check-square" style="width:14px;height:14px"></i> Zaznacz wszystkich</button>' +
+                    '<button type="button" id="ai-sources-select-none" class="btn btn-sm" style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;font-size:var(--fs-xs);font-weight:600;cursor:pointer;border-radius:var(--radius-sm);background:rgba(var(--warn-rgb,245,158,11),0.12);border:1px solid var(--warn-border,rgba(245,158,11,0.4));color:var(--warn,#f59e0b);transition:all 0.15s ease" title="Odznacz wszystkich (wyłącza zbieranie od wszystkich)"><i data-lucide="square" style="width:14px;height:14px"></i> Odznacz wszystkich</button>' +
+                    '</div>' +
+                    '<div class="ai-sources-hint" style="display:inline-flex;align-items:center;gap:6px;font-size:var(--fs-xs);color:var(--text-secondary);background:var(--bg-subtle,rgba(255,255,255,0.06));padding:6px 12px;border-radius:var(--radius-sm, 6px);border:1px solid var(--border-color,rgba(255,255,255,0.1));margin-left:auto">' +
+                    '<i data-lucide="check-circle-2" style="width:14px;height:14px;color:var(--success)"></i> <span style="font-weight:500">Zmiana zapisuje się automatycznie</span>' +
+                    '</div>' +
+                    '</div>';
+                if (typeof lucide !== 'undefined') {
+                    lucide.createIcons({ root: host });
+                }
+                function updateTileState(cb) {
+                    const tile = cb.closest('.ai-user-tile');
+                    if (!tile) return;
+                    if (cb.checked) {
+                        tile.classList.add('selected');
+                        tile.style.borderColor = 'var(--accent)';
+                        tile.style.background = 'rgba(var(--accent-rgb, 59, 130, 246), 0.12)';
+                        tile.style.boxShadow = '0 0 0 1px var(--accent)';
+                    } else {
+                        tile.classList.remove('selected');
+                        tile.style.borderColor = 'var(--border-color, #334155)';
+                        tile.style.background = 'var(--bg-card, #1e293b)';
+                        tile.style.boxShadow = 'none';
+                    }
+                }
+                let saveTimer = null;
+                const save = function () {
+                    if (saveTimer) clearTimeout(saveTimer);
+                    saveTimer = setTimeout(function () {
+                        const checked = Array.prototype.map.call(
+                            host.querySelectorAll('.ai-source-user:checked'),
+                            function (el) {
+                                return el.value;
+                            }
+                        );
+                        const p = window.fetchJson(getEndpoints().trainingUsers, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ userIds: checked })
+                        });
+                        if (!p) return;
+                        p.then(function (result) {
+                            if (result && !result.error) {
+                                if (typeof window.showToast === 'function')
+                                    window.showToast(
+                                        'Źródła treningu: ' + checked.length + ' wybranych',
+                                        'success'
+                                    );
+                                window.aiRenderTrainingSources(container);
+                            } else if (typeof window.showToast === 'function') {
+                                window.showToast('Błąd zapisu źródeł treningu', 'error');
+                            }
+                        }).catch(function () {
+                            if (typeof window.showToast === 'function')
+                                window.showToast('Błąd zapisu źródeł treningu', 'error');
+                        });
+                    }, 600);
+                };
+                host.querySelectorAll('.ai-source-user').forEach(function (cb) {
+                    cb.addEventListener('change', function () {
+                        updateTileState(cb);
+                        save();
+                    });
+                });
+                const allBtn = host.querySelector('#ai-sources-select-all');
+                const noneBtn = host.querySelector('#ai-sources-select-none');
+                if (allBtn) {
+                    allBtn.addEventListener('click', function () {
+                        host.querySelectorAll('.ai-source-user').forEach(function (cb) {
+                            cb.checked = true;
+                            updateTileState(cb);
+                        });
+                        save();
+                    });
+                }
+                if (noneBtn) {
+                    noneBtn.addEventListener('click', function () {
+                        host.querySelectorAll('.ai-source-user').forEach(function (cb) {
+                            cb.checked = false;
+                            updateTileState(cb);
+                        });
+                        save();
+                    });
+                }
+            })
+            .catch(function () {
+                host.innerHTML = window.aiApiErrorHtml('server');
+            });
+    }
+    window.aiRenderTrainingSources = renderTrainingSources;
 
     function renderTrainingRuns(container) {
         const host = container.querySelector('.ai-training-runs-host');

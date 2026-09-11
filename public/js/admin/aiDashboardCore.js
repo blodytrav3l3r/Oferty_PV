@@ -15,6 +15,8 @@
         settings: '/api/telemetry/ai/settings',
         wellSelections: '/api/telemetry/ai/well-selections',
         trainingRuns: '/api/telemetry/ai/training/runs',
+        trainingUsers: '/api/telemetry/ai/training-users',
+        users: '/api/users',
         drift: '/api/telemetry/ai/drift',
         predictionsStats: '/api/telemetry/ai/predictions/stats'
     };

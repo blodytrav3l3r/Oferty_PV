@@ -509,6 +509,53 @@ router.post(
     }
 );
 
+/* ===== ALLOWLISTA UŻYTKOWNIKÓW TRENINGOWYCH ===== */
+
+router.get('/ai/training-users', requireAuth, requireAdmin, READ_LIMITER, async (_req, res) => {
+    try {
+        const { getTrainingUserIds } = await import('../services/ml/trainingUsers');
+        const userIds = await getTrainingUserIds();
+        res.json({ configured: userIds !== null, userIds });
+    } catch (e) {
+        sendInternalError(res, 'AiMlRoute', e);
+    }
+});
+
+router.put(
+    '/ai/training-users',
+    requireAuth,
+    requireAdmin,
+    WRITE_LIMITER,
+    requireAiMlEnabled,
+    async (req, res: Response) => {
+        const authReq = req as AuthenticatedRequest;
+        try {
+            const { TRAINING_USERS_KEY } = await import('../services/ml/trainingUsers');
+            const schema = z.object({ userIds: z.array(z.string().min(1)).max(500) });
+            const parsed = schema.safeParse(req.body);
+            if (!parsed.success) {
+                res.status(400).json({
+                    error: 'userIds musi być tablicą identyfikatorów użytkowników',
+                    details: parsed.error.issues
+                });
+                return;
+            }
+            const userIds = [...new Set(parsed.data.userIds)];
+            await prisma.settings.upsert({
+                where: { key: TRAINING_USERS_KEY },
+                update: { value: JSON.stringify(userIds) },
+                create: { key: TRAINING_USERS_KEY, value: JSON.stringify(userIds) }
+            });
+            await logAudit('settings', 'update', authReq.user?.id || '', TRAINING_USERS_KEY, {
+                count: userIds.length
+            });
+            res.json({ configured: true, userIds });
+        } catch (e) {
+            sendInternalError(res, 'AiMlRoute', e);
+        }
+    }
+);
+
 router.get('/ai/ml-status', requireAuth, READ_LIMITER, async (_req: Request, res: Response) => {
     try {
         const activeModel = await modelRegistry.getActiveModel();

@@ -25,6 +25,7 @@ import {
     computePrAuc
 } from './metrics';
 import { buildFeatureDistributions } from './featureDistributions';
+import { filterFeaturesByTrainingUsers, getTrainingUserIds } from './trainingUsers';
 
 // Semantyka statusów treningu (plan MLOps):
 // RUNNING | SUCCESS | SKIPPED | FAILED_NUMERICAL | FAILED_VALIDATION | FAILED_TIMEOUT | FAILED_ERROR
@@ -306,10 +307,45 @@ export class TrainingPipeline {
             // Okno treningowe: najnowsze TRAINING_BATCH_SIZE wektorów (sliding window).
             // Kolejność desc + reverse, by split train/val pozostał chronologiczny
             // (train = starsze z okna, val = najnowsze z okna).
-            const features = await prisma.aiFeature.findMany({
-                orderBy: { createdAt: 'desc' },
-                take: ML_CONSTANTS.TRAINING_BATCH_SIZE
-            });
+            // Invariant allowlisty: AiFeature nie ma userId — filtr przez join
+            // z telemetry per batch. Gdy filtr wycina rekordy, dobieramy starsze
+            // batche kursorem (createdAt, id), aż okno się wypełni lub dane się
+            // skończą. Guard insufficient_data liczony PO filtrze.
+            const allowlist = await getTrainingUserIds();
+            let features: Awaited<ReturnType<typeof prisma.aiFeature.findMany>> = [];
+            if (allowlist === null) {
+                features = await prisma.aiFeature.findMany({
+                    orderBy: { createdAt: 'desc' },
+                    take: ML_CONSTANTS.TRAINING_BATCH_SIZE
+                });
+            } else {
+                let cursor: { createdAt: string; id: string } | undefined;
+                const seen = new Set<string>();
+                while (features.length < ML_CONSTANTS.TRAINING_BATCH_SIZE) {
+                    const batch = await prisma.aiFeature.findMany({
+                        where: cursor
+                            ? {
+                                  OR: [
+                                      { createdAt: { lt: cursor.createdAt } },
+                                      { createdAt: cursor.createdAt, id: { lt: cursor.id } }
+                                  ]
+                              }
+                            : {},
+                        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+                        take: ML_CONSTANTS.TRAINING_BATCH_SIZE
+                    });
+                    if (batch.length === 0) break;
+                    const fresh = batch.filter((b) => !seen.has(b.id));
+                    if (fresh.length === 0) break;
+                    fresh.forEach((b) => seen.add(b.id));
+                    const allowed = await filterFeaturesByTrainingUsers(fresh);
+                    features.push(...allowed);
+                    const last = batch[batch.length - 1];
+                    cursor = { createdAt: last.createdAt, id: last.id };
+                    if (features.length >= ML_CONSTANTS.TRAINING_BATCH_SIZE) break;
+                }
+                features = features.slice(0, ML_CONSTANTS.TRAINING_BATCH_SIZE);
+            }
             features.reverse();
 
             if (features.length < ML_CONFIG.minFeatureCountForTraining) {
@@ -321,11 +357,22 @@ export class TrainingPipeline {
             }
 
             const latestAt = features.length > 0 ? features[features.length - 1].createdAt : null;
-            const newCount = this.lastTrainedAt
-                ? await prisma.aiFeature.count({
-                      where: { createdAt: { gt: this.lastTrainedAt } }
-                  })
-                : features.length;
+            // Invariant allowlisty: "nowe dane" liczone tylko spośród dozwolonych
+            // (join przez telemetryId — AiFeature nie ma userId).
+            let newCount = features.length;
+            if (this.lastTrainedAt) {
+                if (allowlist === null) {
+                    newCount = await prisma.aiFeature.count({
+                        where: { createdAt: { gt: this.lastTrainedAt } }
+                    });
+                } else {
+                    const recent = await prisma.aiFeature.findMany({
+                        where: { createdAt: { gt: this.lastTrainedAt } },
+                        select: { telemetryId: true }
+                    });
+                    newCount = (await filterFeaturesByTrainingUsers(recent)).length;
+                }
+            }
             if (!force && newCount < ML_CONFIG.minNewRecordsForTraining) {
                 logger.info(
                     'TrainingPipeline',

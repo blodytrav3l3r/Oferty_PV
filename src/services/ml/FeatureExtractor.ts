@@ -2,6 +2,7 @@ import crypto from 'crypto';
 import prisma from '../../prismaClient';
 import { logger } from '../../utils/logger';
 import { parseFeatureSnapshot } from './parseFeatureSnapshot';
+import { getTrainingUserIds, isTelemetryAllowed } from './trainingUsers';
 
 export interface FeatureVector {
     dn: number;
@@ -212,11 +213,14 @@ export function labelToTrainingWeight(label: FeatureLabel): number {
 
 export class FeatureExtractor {
     async extractAndStore(): Promise<number> {
+        // Invariant allowlisty: ekstrakcja tylko z rekordów dozwolonych użytkowników.
+        const trainingUserIds = await getTrainingUserIds();
         const telemetryRecords = await prisma.ai_telemetry_logs.findMany({
             where: {
                 dn: { not: null },
                 wellType: { not: null },
-                trainingEligible: true
+                trainingEligible: true,
+                ...(trainingUserIds !== null ? { userId: { in: trainingUserIds } } : {})
             },
             orderBy: { createdAt: 'desc' },
             take: 500
@@ -413,10 +417,14 @@ export class FeatureExtractor {
             parentConfigId: string | null;
         }> = [];
 
+        // Invariant allowlisty: resync etykiet tylko dla dozwolonych
+        // użytkowników — kursor paginuje już przefiltrowany zbiór.
+        const trainingUserIds = await getTrainingUserIds();
         do {
             const records = await prisma.ai_telemetry_logs.findMany({
                 where: {
                     trainingEligible: true,
+                    ...(trainingUserIds !== null ? { userId: { in: trainingUserIds } } : {}),
                     ...(cursor
                         ? {
                               OR: [
@@ -507,10 +515,15 @@ export class FeatureExtractor {
             .filter((id): id is string => Boolean(id));
         if (telemetryIds.length === 0) return 0;
 
+        // Invariant allowlisty: przeliczaj tylko wektory dozwolonych
+        // użytkowników. Lookup userId po stronie telemetry (ids z batcha
+        // kandydującego — bez arbitralnego limitu na zbiór dozwolonych).
+        const trainingUserIds = await getTrainingUserIds();
         const telemetry = await prisma.ai_telemetry_logs.findMany({
             where: { id: { in: telemetryIds } },
             select: {
                 id: true,
+                userId: true,
                 dn: true,
                 warehouse: true,
                 wellType: true,
@@ -538,6 +551,8 @@ export class FeatureExtractor {
         for (const f of features) {
             const t = f.telemetryId ? byId.get(f.telemetryId) : undefined;
             if (!t) continue;
+            if (trainingUserIds !== null && !isTelemetryAllowed(t.userId, trainingUserIds))
+                continue;
             const fv = this.extract(t as TelemetryRecordWithDetails);
             // Selektywny UPDATE (K5): pomiń wiersze, których cechy się nie zmieniły
             // (np. legalnie 0 kręgów / 0 uszczelek) — bez tego resyncFeatures
