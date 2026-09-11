@@ -497,22 +497,19 @@ function buildCandidateLayouts(dennicaItem, ringItems, well, availProducts) {
     const alreadyNeedsOT = new Set();
 
     for (const pr of well.przejscia) {
-        const pel = parseFloat(pr.rzednaWlaczenia);
-        if (isNaN(pel)) continue;
-        const mmFromBottom = (pel - rzDna) * 1000;
         const pprod =
             typeof getStudnieProductById === 'function'
                 ? getStudnieProductById(pr.productId)
                 : studnieProducts.find((x) => x.id === pr.productId);
         if (!pprod) continue;
 
-        let dnVal = 160;
-        if (pprod.dn && typeof pprod.dn === 'string' && pprod.dn.includes('/'))
-            dnVal = parseFloat(pprod.dn.split('/')[1]) || 160;
-        else if (pprod.dn) dnVal = parseFloat(pprod.dn) || 160;
-
-        const holeCenter = mmFromBottom + dnVal / 2;
-        const pipeTop = mmFromBottom + dnVal;
+        // Geometria SSoT (transitionZones.js): OT wymaga całego korpusu w segmencie.
+        const dnVal = getTransitionDn(pprod);
+        const body = getTransitionBody(pr.rzednaWlaczenia, rzDna, dnVal);
+        if (!body) continue;
+        const mmFromBottom = body.bottomMm;
+        const holeCenter = body.centerMm;
+        const pipeTop = body.topMm;
 
         // Przejście przez połączenie dennica-krąg?
         const crossesJoint = denH > 0 && mmFromBottom < denH && pipeTop > denH;
@@ -523,12 +520,13 @@ function buildCandidateLayouts(dennicaItem, ringItems, well, availProducts) {
         // Środek w dennicy → OT niepotrzebny (chyba że rura przechodzi przez złącze)
         if (denH > 0 && holeCenter < denH && !crossesJoint) continue;
 
-        // Znajdź krąg zawierający środek otworu (lub pierwszy krąg gdy rura przechodzi przez złącze)
+        // Znajdź krąg zawierający CAŁY korpus otworu (lub pierwszy krąg gdy rura
+        // przechodzi przez złącze dennica-krąg)
         for (let si = 1; si < flatItems.length; si++) {
             const fi = flatItems[si];
             if (fi.isDennica) continue;
             if (
-                ((holeCenter >= fi.start && holeCenter < fi.end) ||
+                (segmentContainsBody(fi, body) ||
                     (crossesJoint && si === 1 && holeCenter < fi.start)) &&
                 !alreadyNeedsOT.has(si)
             ) {

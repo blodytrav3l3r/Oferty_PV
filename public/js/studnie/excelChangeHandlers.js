@@ -161,8 +161,16 @@ function excelOnPrzejscieChange(wIdx, trIdx, field, value) {
     if (!_excelGuardWellLocked(wIdx)) return;
     if (typeof _excelPasteInProgress === 'undefined' || !_excelPasteInProgress)
         _excelSaveUndoSnapshot(wIdx);
-    _excelMarkAsManual(wIdx);
-    if (!wells[wIdx].przejscia) wells[wIdx].przejscia = [];
+    const well = wells[wIdx];
+    if (!well) return;
+    // P2: zmiana geometrii unieważnia auto-stos, ale MANUAL nie uruchamia solvera.
+    // (Wcześniej _excelMarkAsManual zawsze pierwsze → _excelAutoSelectForWell
+    // wycofywał się na guardzie autoSelect===false i stary stos zostawał.)
+    const isGeometryField = field === 'rzednaWlaczenia' || field === 'productId';
+    const autoEnabled = typeof _excelAutoSelectEnabled === 'undefined' || _excelAutoSelectEnabled;
+    const isAuto = autoEnabled && well.autoSelect !== false && !well.autoLocked;
+    if (!isGeometryField || !isAuto) _excelMarkAsManual(wIdx);
+    if (!well.przejscia) well.przejscia = [];
     const hasExisting = trIdx < wells[wIdx].przejscia.length;
     if (!hasExisting && (!value || value === '')) return;
     while (wells[wIdx].przejscia.length <= trIdx) {
@@ -186,6 +194,18 @@ function excelOnPrzejscieChange(wIdx, trIdx, field, value) {
         p.displayIndex = i;
     });
     if (_excelPasteQuiet()) return; /* model gotowy; preview/refresh raz w doneCallback */
+    // P2 invariant: po zmianie geometrii w AUTO config musi pochodzić z bieżących
+    // parametrów — pełny re-solve (wzór: excelOnRzednaChange). MANUAL: tylko refresh.
+    if (
+        isGeometryField &&
+        isAuto &&
+        well.rzednaWlazu != null &&
+        well.rzednaDna != null &&
+        typeof autoSelectComponents === 'function'
+    ) {
+        _excelAutoSelectForWell(wIdx);
+        return;
+    }
     _excelUpdateLeftPreview(wIdx);
     if (typeof _excelImmediatePreview === 'function') _excelImmediatePreview(wIdx);
     _excelDebouncedRefresh(wIdx);
@@ -212,6 +232,24 @@ function excelOnPrzejscieTypeChange(wIdx, trIdx, value) {
         if (!currProduct || currProduct.category !== value) {
             wells[wIdx].przejscia[trIdx].productId = '';
         }
+    }
+    // P2: zmiana rodzaju/DN to zmiana geometrii — w AUTO z kompletnym przejściem
+    // pełny re-solve (niekompletne = sam refresh, jak dotąd; ta ścieżka nie markuje MANUAL).
+    const typeWell = wells[wIdx];
+    const typeAutoEnabled =
+        typeof _excelAutoSelectEnabled === 'undefined' || _excelAutoSelectEnabled;
+    if (
+        typeAutoEnabled &&
+        typeWell.autoSelect !== false &&
+        !typeWell.autoLocked &&
+        wells[wIdx].przejscia[trIdx].productId &&
+        typeWell.rzednaWlazu != null &&
+        typeWell.rzednaDna != null &&
+        typeof autoSelectComponents === 'function' &&
+        !_excelPasteQuiet()
+    ) {
+        _excelAutoSelectForWell(wIdx);
+        return;
     }
     const savedIdx = typeof currentWellIndex !== 'undefined' ? currentWellIndex : -1;
     currentWellIndex = -1;

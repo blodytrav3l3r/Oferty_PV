@@ -15,6 +15,13 @@
  * fallback, fallbackReason, aiUsed. Kolejnosc kandydatow nie jest zwracana
  * przez runJsAutoSelection (zwyciezca = candidates[0]), wiec goleny obejmuja
  * finalny wybor sciezki technicznej.
+ *
+ * UWAGA (2026-09-11, plan auto-dobor-przejscia-na-laczeniach): goldeny dla
+ * przypadkow z przejsciami (2prz/3prz/5prz) ZMIENIONO SWIADOMIE — fixture
+ * uzywa GRP-1000 (DN1000, niedostepny w magazynie), a solver od P1 liczy
+ * geometrie globalnie i odmawia jointa w strefie minimalnej twardym ERROR
+ * ("Kolizja otworu Z=... (strefa minimalna)") zamiast zwracac pozorne OT.
+ * Przypadki bez przejsc (0prz) bez zmian.
  */
 import fs from 'fs';
 import path from 'path';
@@ -93,6 +100,7 @@ function makeCtx(catalog: any[]) {
     vm.createContext(sb);
     for (const f of [
         'globals.js',
+        'transitionZones.js',
         'ruleEngine.js',
         'wellConfigRules.js',
         'ringOptimizer.js',

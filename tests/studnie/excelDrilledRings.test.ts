@@ -55,10 +55,15 @@ describe('enforceOtRings and excelOnCompChange ring selection', () => {
             path.join(__dirname, '../../public/js/studnie/globals.js'),
             'utf8'
         );
+        const codeZones = fs.readFileSync(
+            path.join(__dirname, '../../public/js/studnie/transitionZones.js'),
+            'utf8'
+        );
         vm.createContext(context);
         vm.runInContext(codeGlobals, context);
         // globals.js ma własny let studnieProducts — wstrzyknij przez setter (Map SSoT)
         context.window.studnieProducts = studnieProducts;
+        vm.runInContext(codeZones, context); // SSoT geometrii (przed diagramOtRings.js)
         vm.runInContext(code, context);
         return context;
     }

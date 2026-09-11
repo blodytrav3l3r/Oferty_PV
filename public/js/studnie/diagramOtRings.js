@@ -114,25 +114,16 @@ function checkSegmentHasHole(seg, well, rzDna) {
     if (!well.przejscia || well.przejscia.length === 0) return false;
 
     for (const pr of well.przejscia) {
-        const pel = parseFloat(pr.rzednaWlaczenia);
-        if (isNaN(pel)) continue;
-
-        const mmFromBottom = (pel - rzDna) * 1000;
         const pprod =
             typeof getStudnieProductById === 'function'
                 ? getStudnieProductById(pr.productId)
                 : studnieProducts.find((x) => x.id === pr.productId);
         if (!pprod) continue;
 
-        let prDN = 160;
-        if (pprod.dn && typeof pprod.dn === 'string' && pprod.dn.includes('/')) {
-            prDN = parseFloat(pprod.dn.split('/')[1]) || 160;
-        } else if (pprod.dn) {
-            prDN = parseFloat(pprod.dn) || 160;
-        }
-
-        const holeCenter = mmFromBottom + prDN / 2;
-        if (holeCenter >= seg.start && holeCenter < seg.end) {
+        // OT wymaga całego korpusu w segmencie (transitionZones.js), nie samego środka.
+        const body = getTransitionBody(pr.rzednaWlaczenia, rzDna, getTransitionDn(pprod));
+        if (!body) continue;
+        if (segmentContainsBody(seg, body)) {
             return true;
         }
     }

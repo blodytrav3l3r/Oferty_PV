@@ -59,14 +59,18 @@ function applyDrilledRings(kregItems, segments, well, availProducts) {
     const usedSegIndices = new Set();
 
     for (const pr of well.przejscia) {
-        const pel = parseFloat(pr.rzednaWlaczenia);
-        if (isNaN(pel)) continue;
-        const mmFromBottom = (pel - rzDna) * 1000;
         const pprod =
             typeof getStudnieProductById === 'function'
                 ? getStudnieProductById(pr.productId)
                 : studnieProducts.find((x) => x.id === pr.productId);
         if (!pprod) continue;
+
+        // Geometria SSoT (transitionZones.js): OT wymaga całego korpusu w segmencie.
+        const prDN = getTransitionDn(pprod);
+        const body = getTransitionBody(pr.rzednaWlaczenia, rzDna, prDN);
+        if (!body) continue;
+        const mmFromBottom = body.bottomMm;
+        const holeCenter = body.centerMm;
 
         let currentDennicaEnd = 0;
         let cy = 0;
@@ -90,13 +94,6 @@ function applyDrilledRings(kregItems, segments, well, availProducts) {
             if (p.componentType !== 'uszczelka') belowType = p.componentType;
         }
 
-        const prDN =
-            typeof pprod.dn === 'string' && pprod.dn.includes('/')
-                ? parseFloat(pprod.dn.split('/')[1]) || 160
-                : parseFloat(pprod.dn) || 160;
-
-        const holeCenter = mmFromBottom + prDN / 2;
-
         if (
             currentDennicaEnd > 0 &&
             mmFromBottom < currentDennicaEnd &&
@@ -110,7 +107,7 @@ function applyDrilledRings(kregItems, segments, well, availProducts) {
         for (let si = 1; si < segments.length; si++) {
             const seg = segments[si];
             if (seg.type !== 'krag' && seg.type !== 'krag_ot') continue;
-            if (holeCenter >= seg.start && holeCenter < seg.end && !usedSegIndices.has(si)) {
+            if (segmentContainsBody(seg, body) && !usedSegIndices.has(si)) {
                 usedSegIndices.add(si);
 
                 let segCount = 0;

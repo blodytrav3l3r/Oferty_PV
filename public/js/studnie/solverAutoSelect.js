@@ -434,17 +434,19 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
         }
     }
 
-    // KROK 3: Przejścia — oblicz minimalne wymagania
+    // KROK 3: Przejścia — oblicz minimalne wymagania (geometria SSoT: transitionZones.js)
+    // Produkt resolve'owany globalnie (jak OT i ścieżka redukcyjna), nie tylko
+    // z avail — DN rury to fizyczna właściwość wybranego przejścia, niezależna
+    // od dostępności magazynowej. Dla produktów dostępnych identyczne jak dawniej.
     const holes = (well.przejscia || []).map((p) => {
-        const pel = parseFloat(p.rzednaWlaczenia);
-        let prDN = 160;
-        const prod = availProducts.find((x) => x.id === p.productId);
-        if (prod && typeof prod.dn === 'string' && prod.dn.includes('/'))
-            prDN = parseFloat(prod.dn.split('/')[1]) || 160;
-        else if (prod && prod.dn != null) prDN = parseFloat(prod.dn) || 160;
+        const prod =
+            (typeof getStudnieProductById === 'function'
+                ? getStudnieProductById(p.productId)
+                : null) || availProducts.find((x) => x.id === p.productId);
+        const prDN = getTransitionDn(prod || null);
+        const body = getTransitionBody(p.rzednaWlaczenia, well.rzednaDna, prDN);
 
-        const bottomEdge = isNaN(pel) ? 0 : Math.round((pel - (well.rzednaDna || 0)) * 1000);
-        const center = bottomEdge + prDN / 2;
+        const bottomEdge = body ? body.bottomMm : 0;
 
         const parseHoleClearance = (val, fallback = 300) => {
             if (val === undefined || val === null || val === '') return fallback;
@@ -453,7 +455,7 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
         };
 
         return {
-            z: center - prDN / 2,
+            z: bottomEdge,
             ruraDz: prDN,
             zdD: prod ? parseHoleClearance(prod.zapasDol, 300) : 0,
             zdDM: prod ? parseHoleClearance(prod.zapasDolMin, 150) : 0,
@@ -821,32 +823,26 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
         holes.forEach((h) => {
             const hTop = h.z + h.ruraDz;
             const hBot = h.z;
-            const effZdD = h.z === 0 ? 0 : h.zdD;
-            const resTop = hTop + h.zdG;
-            const resBot = hBot - effZdD;
-            const resTopMin = hTop + h.zdGM;
-            const effZdDM = h.z === 0 ? 0 : h.zdDM;
-            const resBotMin = hBot - effZdDM;
+            // Strefy SSoT (transitionZones.js): krag_ot NIE jest wyjątkiem —
+            // joint w korpusie to zawsze kolizja (korpus musi leżeć w jednym kręgu).
+            const zone = getTransitionZone(
+                { bottomMm: hBot, topMm: hTop },
+                {
+                    dolStd: h.z === 0 ? 0 : h.zdD,
+                    goraStd: h.zdG,
+                    dolMin: h.z === 0 ? 0 : h.zdDM,
+                    goraMin: h.zdGM
+                }
+            );
 
             let strictValid = true;
             let minValid = true;
 
-            const SAFETY_MARGIN = 15; // mm — spójne z validator.py:85
             for (let i = 0; i < segs.length; i++) {
                 const s = segs[i];
-                const nextSeg = segs[i + 1];
-                const jointInBody = hBot < s.end && s.end <= hTop;
-                const hasOTAbove = nextSeg && nextSeg.type === 'krag_ot';
 
-                // Joint na dole krag_ot + rura przechodzi przez to połączenie → OK (ring wiercony)
-                if (hasOTAbove && jointInBody) {
-                    // Pomijamy walidację — rura przechodzi przez krag_ot
-                } else {
-                    if (s.end >= resBot - SAFETY_MARGIN && s.end <= resTop + SAFETY_MARGIN)
-                        strictValid = false;
-                    if (s.end >= resBotMin - SAFETY_MARGIN && s.end <= resTopMin + SAFETY_MARGIN)
-                        minValid = false;
-                }
+                if (jointInZone(s.end, zone.std)) strictValid = false;
+                if (jointInZone(s.end, zone.min)) minValid = false;
 
                 const isForbidden = [
                     'konus',
@@ -877,7 +873,7 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
                     isMinimal = true;
                 } else {
                     valid = false;
-                    errors.push(`Kolizja otworu Z=${h.z} ze złączami`);
+                    errors.push(`Kolizja otworu Z=${h.z} ze złączami (strefa minimalna)`);
                 }
             }
         });
@@ -886,8 +882,14 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
     }
 
     // KROK 7: Solver — szuka najlepszej kombinacji
+    // P1.3: przyczyna odrzuceń przez strefę minimalną ląduje w zmiennych
+    // ostatniego stage'a — finalny ERROR z przyczyną zamiast generycznego.
+    let lastHoleRejectMsg = null;
     function solve(tolBelow, tolAbove, maxAvr, skipHolesValid) {
         const candidates = [];
+        // P1.3: licznik i pierwszy komunikat odrzuceń przez strefę minimalną
+        // (do finalnego ERROR, gdy żaden kandydat nie przejdzie).
+        let holeRejectMsg = null;
 
         for (const topCfg of topConfigs) {
             for (const dennicaItem of dennicy) {
@@ -919,7 +921,15 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
                 const isOutOfBounds = diff < -90 || diff > 20;
 
                 const conf = checkConflicts(otKItems, dennicaItem.height, 0, topCfg.items);
-                if (!conf.valid && !skipHolesValid) continue;
+                if (!conf.valid && !skipHolesValid) {
+                    // P1.3: przyczyna odrzucenia (kolizja w strefie minimalnej)
+                    // musi dotrzeć do użytkownika, nie zginąć w `continue`.
+                    if (holeRejectMsg === null) {
+                        const mz = conf.errors.find((e) => e.indexOf('strefa minimalna') !== -1);
+                        if (mz) holeRejectMsg = mz;
+                    }
+                    continue;
+                }
 
                 const otCount = otKItems.filter(
                     (ki) => ki.productId && String(ki.productId).endsWith('_OT')
@@ -1122,6 +1132,12 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
                     const conf = checkConflicts(redOtItems, dennicaItem.height, bSec, topRedItems);
 
                     if (!conf.valid && !skipHolesValid) {
+                        if (holeRejectMsg === null) {
+                            const mz = conf.errors.find(
+                                (e) => e.indexOf('strefa minimalna') !== -1
+                            );
+                            if (mz) holeRejectMsg = mz;
+                        }
                         if (
                             conf.errors.some(
                                 (e) => e.includes('redukcyjnej') || e.includes('konus')
@@ -1193,6 +1209,7 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
             return a.technicalScore - b.technicalScore;
         });
 
+        lastHoleRejectMsg = holeRejectMsg;
         return candidates;
     }
 
@@ -1235,8 +1252,12 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
     }
 
     if (!candidates || candidates.length === 0) {
+        // P1.3: joint w strefie minimalnej → twardy ERROR z przyczyną,
+        // nie generyczne "nie znaleziono" (dotyczy ostatniego stage'a).
         return {
-            error: `Nie znaleziono pasującej kombinacji elementów dla tej wysokości (max. ± dozwolona odchyłka, max ${well.magazyn || 'Kluczbork'} avr 26cm).`
+            error:
+                lastHoleRejectMsg ||
+                `Nie znaleziono pasującej kombinacji elementów dla tej wysokości (max. ± dozwolona odchyłka, max ${well.magazyn || 'Kluczbork'} avr 26cm).`
         };
     }
 

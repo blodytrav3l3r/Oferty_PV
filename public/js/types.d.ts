@@ -241,6 +241,13 @@ declare var ConfigSegment: any;
 declare var currentOrder: any;
 declare var global: typeof globalThis;
 declare function autoSelectComponents(...args: any[]): any;
+/* ===== Strefy przejść (transitionZones.js — SSoT geometrii) ===== */
+declare function getTransitionDn(pprod: any): number;
+declare function getTransitionBody(rzednaWlaczenia: any, rzDna: any, dnMm: number): any;
+declare function parseTransitionReserve(val: any, fallbackMm: number): number;
+declare function getTransitionZone(body: any, reserves: any, marginMm?: number): any;
+declare function segmentContainsBody(seg: any, body: any): boolean;
+declare function jointInZone(jointMm: number, zone: any): boolean;
 declare function autoUpdateWellName(...args: any[]): any;
 declare function calcTransportCount(...args: any[]): any;
 declare function ensureReliefRingPair(...args: any[]): any;
