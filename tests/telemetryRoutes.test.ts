@@ -643,12 +643,41 @@ describe('RecommendationEngine', () => {
 
 describe('LearningEngine - pipeline', () => {
     let le: LearningEngine;
-    beforeEach(() => {
+    // Izolacja od współdzielonego dev-DB: ustawiona allowlista
+    // (ai_training_user_ids) wykluczałaby fixture bez autora (userId null).
+    // Zapisujemy klucz, czyścimy na czas suity, potem przywracamy.
+    let savedTrainingUsers: string | null = null;
+    let hadTrainingUsersKey = false;
+    beforeEach(async () => {
         le = new LearningEngine();
+        try {
+            const row = await prisma.settings.findUnique({
+                where: { key: 'ai_training_user_ids' }
+            });
+            hadTrainingUsersKey = !!row;
+            savedTrainingUsers = row?.value ?? null;
+            if (row) await prisma.settings.delete({ where: { key: 'ai_training_user_ids' } });
+        } catch {
+            hadTrainingUsersKey = false;
+            savedTrainingUsers = null;
+        }
     });
 
     afterEach(async () => {
         await prisma.ai_telemetry_logs.deleteMany({ where: { override_reason: 'test' } });
+        try {
+            if (!hadTrainingUsersKey) {
+                await prisma.settings.delete({ where: { key: 'ai_training_user_ids' } });
+            } else if (savedTrainingUsers != null) {
+                await prisma.settings.upsert({
+                    where: { key: 'ai_training_user_ids' },
+                    update: { value: savedTrainingUsers },
+                    create: { key: 'ai_training_user_ids', value: savedTrainingUsers }
+                });
+            }
+        } catch {
+            /* best-effort restore */
+        }
     });
 
     it('runFullCycle bez danych → processed=0', async () => {
