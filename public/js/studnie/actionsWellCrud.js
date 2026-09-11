@@ -234,6 +234,29 @@ async function removeWell(index) {
         }))
     )
         return;
+    // A (§8a): telemetryczny event well_deleted — wyłącznie pomiar skali gubionych
+    // negatywów. reason zawsze 'unknown' (brak wymuszonego wyboru w UI — nie zgadujemy,
+    // usunięcie NIGDY nie jest domyślnie bad_suggestion). Event NIGDY nie zmienia
+    // AiFeature.label (granica telemetria vs dane treningowe). Wysyłamy tylko dla
+    // studni z sugestią AUTO (_lastAutoTelemetryId) — usunięcie czystego MANUAL
+    // nie niesie sygnału o sugestii.
+    var removedWellForTelemetry = wells[index];
+    if (
+        removedWellForTelemetry &&
+        removedWellForTelemetry._lastAutoTelemetryId &&
+        typeof window.telemetryRecordEvent === 'function'
+    ) {
+        try {
+            window.telemetryRecordEvent({
+                eventType: 'well_deleted',
+                telemetryId: removedWellForTelemetry._lastAutoTelemetryId,
+                wellId: removedWellForTelemetry.id,
+                changeReason: 'unknown'
+            });
+        } catch (_telemetryErr) {
+            /* pasywne — usunięcie studni nie może paść przez telemetrię */
+        }
+    }
     wells.splice(index, 1);
     if (currentWellIndex >= wells.length) currentWellIndex = Math.max(0, wells.length - 1);
     refreshAll();

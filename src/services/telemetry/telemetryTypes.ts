@@ -27,7 +27,8 @@ export type TelemetryEventType =
     | 'component_remove'
     | 'component_qty_change'
     | 'ai_rank_decision'
-    | 'reduction_swap';
+    | 'reduction_swap'
+    | 'well_deleted';
 
 /** Komponent studni (pojedynczy element w config) */
 export interface WellComponentSnapshot {

@@ -160,6 +160,16 @@ describe('telemetryEventSchema', () => {
         expect(r.success).toBe(false);
     });
 
+    it('akceptuje well_deleted z reason unknown (§8a, pomiar bez etykietowania)', () => {
+        const r = telemetryEventSchema.safeParse({
+            eventType: 'well_deleted',
+            telemetryId: 'tel-1',
+            wellId: 'w1',
+            changeReason: 'unknown'
+        });
+        expect(r.success).toBe(true);
+    });
+
     it('akceptuje wszystkie 9 event types', () => {
         const events = [
             'auto_run',

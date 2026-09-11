@@ -168,7 +168,8 @@ export const telemetryEventSchema = z.object({
         'component_remove',
         'component_qty_change',
         'ai_rank_decision',
-        'reduction_swap'
+        'reduction_swap',
+        'well_deleted'
     ]),
     wellId: z.string().optional(),
     componentId: z.string().optional(),

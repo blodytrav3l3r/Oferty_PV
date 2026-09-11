@@ -64,7 +64,8 @@ describe('telemetryRoutes E2E - schema walidacja', () => {
             'create_order',
             'telemetry_reason',
             'rule_violation',
-            'fallback_triggered'
+            'fallback_triggered',
+            'well_deleted'
         ];
         types.forEach((t) => {
             expect(telemetryEventSchema.safeParse({ eventType: t }).success).toBe(true);
@@ -889,6 +890,41 @@ describe('Integralność danych', () => {
         // 2 upserty powinny dodać 2 wpisy do historii
         expect(history.length).toBeGreaterThanOrEqual(1);
         await prisma.ai_knowledge_base.deleteMany({ where: { patternKey: key } });
+    });
+
+    it('well_deleted (§8a): event nie zmienia labeli ani flag (granica telemetria vs trening)', async () => {
+        const telId = 'wd_' + crypto.randomUUID().slice(0, 8);
+        await prisma.ai_telemetry_logs.create({
+            data: {
+                id: telId,
+                dn: '1200',
+                wellType: 'standard',
+                solverSource: 'AUTO_JS',
+                wellId: 'well_wd'
+            }
+        });
+        const res = await telemetryService.recordEvent(
+            {
+                eventType: 'well_deleted',
+                telemetryId: telId,
+                wellId: 'well_wd',
+                changeReason: 'unknown'
+            },
+            'tester_wd'
+        );
+        expect(res.success).toBe(true);
+        const ev = await prisma.ai_telemetry_events.findUnique({ where: { id: res.eventId } });
+        expect(ev?.eventType).toBe('well_deleted');
+        expect(ev?.changeReason).toBe('unknown');
+        // Invariant: zero wpływu na dane treningowe.
+        const log = await prisma.ai_telemetry_logs.findUnique({ where: { id: telId } });
+        expect(log?.wasAccepted).toBe(false);
+        expect(log?.wasRejected).toBe(false);
+        expect(log?.wasModified).toBe(false);
+        const feat = await prisma.aiFeature.findMany({ where: { telemetryId: telId } });
+        expect(feat).toHaveLength(0);
+        await prisma.ai_telemetry_events.deleteMany({ where: { id: res.eventId } });
+        await prisma.ai_telemetry_logs.deleteMany({ where: { id: telId } });
     });
 
     it('JSON deserializacja w records eventów', async () => {
