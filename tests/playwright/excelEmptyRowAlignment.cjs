@@ -46,7 +46,7 @@ const { chromium } = resolvePlaywright();
 /* ── Chromium executable ── */
 const CHROME_PATH =
     process.env.CHROME_PATH ||
-    'C:\\Users\\blody\\AppData\\Local\\ms-playwright\\chromium_headless_shell-1228\\chrome-headless-shell-win64\\chrome-headless-shell.exe';
+    'C:\\Users\\blody\\AppData\\Local\\ms-playwright\\chromium_headless_shell-1234\\chrome-headless-shell-win64\\chrome-headless-shell.exe';
 
 /* ── Mock wells (identical to diagnosed scenario) ── */
 const MOCK_WELLS = [
@@ -327,33 +327,92 @@ function sleep(ms) {
 
                 const dataRow = dataRows[0]; // compare against first data row
 
-                // Guard: column count must match
-                if (dataRow.children.length !== empty.children.length) {
-                    return {
-                        tab: t,
-                        error: 'column count mismatch',
-                        dataCols: dataRow.children.length,
-                        emptyCols: empty.children.length
-                    };
-                }
-
                 // Compare left + width for every column
-                const cols = dataRow.children.length;
                 const diffs = [];
-                for (let i = 0; i < cols; i++) {
-                    const dr = dataRow.children[i].getBoundingClientRect();
-                    const er = empty.children[i].getBoundingClientRect();
+                const pushDiff = (col, dr, er) => {
                     const diffL = +(dr.left - er.left).toFixed(1);
                     const diffW = +(dr.width - er.width).toFixed(1);
                     if (Math.abs(diffL) > 1 || Math.abs(diffW) > 1) {
                         diffs.push({
-                            col: i,
+                            col,
                             dataLeft: +dr.left.toFixed(1),
                             emptyLeft: +er.left.toFixed(1),
                             diffL,
                             dataW: +dr.width.toFixed(1),
                             emptyW: +er.width.toFixed(1),
                             diffW
+                        });
+                    }
+                };
+                let cols;
+                if (dataRow.children.length === empty.children.length) {
+                    // Full empty row (legacy / virtual OFF): 1:1 per column
+                    cols = dataRow.children.length;
+                    for (let i = 0; i < cols; i++) {
+                        pushDiff(
+                            i,
+                            dataRow.children[i].getBoundingClientRect(),
+                            empty.children[i].getBoundingClientRect()
+                        );
+                    }
+                } else {
+                    /* Virtual ON: simplified empty row (7 sticky cells + one
+                       colspan cell covering the rest). Intent preserved:
+                       sticky cells align 1:1, colspan cell spans cols 7..end
+                       aligned with the data row. */
+                    cols = dataRow.children.length;
+                    const lastEmpty = empty.children[empty.children.length - 1];
+                    const span = lastEmpty
+                        ? parseInt(lastEmpty.getAttribute('colspan') || '1', 10)
+                        : 1;
+                    if (empty.children.length + span - 1 !== cols) {
+                        return {
+                            tab: t,
+                            error: 'column count mismatch',
+                            dataCols: dataRow.children.length,
+                            emptyCols: empty.children.length,
+                            emptySpan: span
+                        };
+                    }
+                    for (let i = 0; i < empty.children.length - 1; i++) {
+                        pushDiff(
+                            i,
+                            dataRow.children[i].getBoundingClientRect(),
+                            empty.children[i].getBoundingClientRect()
+                        );
+                    }
+                    // Colspan cell: left == data col 7 left, right == data last col right
+                    const er = lastEmpty.getBoundingClientRect();
+                    const firstRect =
+                        dataRow.children[empty.children.length - 1].getBoundingClientRect();
+                    const lastRect = dataRow.children[cols - 1].getBoundingClientRect();
+                    // left edge only — width differs by design (span vs single col)
+                    const spanLeftDiff = +(firstRect.left - er.left).toFixed(1);
+                    if (Math.abs(spanLeftDiff) > 1) {
+                        diffs.push({
+                            col: 'span-left',
+                            dataLeft: +firstRect.left.toFixed(1),
+                            emptyLeft: +er.left.toFixed(1),
+                            diffL: spanLeftDiff,
+                            dataW: +firstRect.width.toFixed(1),
+                            emptyW: +er.width.toFixed(1),
+                            diffW: 0
+                        });
+                    }
+                    const rightDiff = +(
+                        lastRect.left +
+                        lastRect.width -
+                        (er.left + er.width)
+                    ).toFixed(1);
+                    if (Math.abs(rightDiff) > 1) {
+                        diffs.push({
+                            col: 'span-right',
+                            dataLeft: +(lastRect.left + lastRect.width).toFixed(1),
+                            emptyLeft: +(er.left + er.width).toFixed(1),
+                            diffL: rightDiff,
+                            dataW: +lastRect.width.toFixed(1),
+                            emptyW: +er.width.toFixed(1),
+                            diffW: +(lastRect.width - er.width || 0).toFixed(1)
                         });
                     }
                 }

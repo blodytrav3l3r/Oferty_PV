@@ -9,7 +9,10 @@
  */
 
 const EXCEL_ROW_HEIGHT = 32;
-const EXCEL_OVERSCAN = 15;
+/* F1: 15→10 — slice ~58→~48 wierszy przy 1000px viewportu. Overscan jest
+   z definicji niewidzialny (bufor poza viewportem), więc brak zmian wizualnych;
+   layout skaluje się z liczbą komórek. Kill-switch ?virtual=0 bez zmian. */
+const EXCEL_OVERSCAN = 10;
 const EXCEL_VIEWPORT_ROWS = 35;
 
 let _excelVirtualEnabled = false;
@@ -563,9 +566,12 @@ function _excelVirtualRenderBody() {
         bodyHtml = bodyHtml.replace(/<tr id="excel-empty-state"[\s\S]*?<\/tr>/, '');
         const topH = start * EXCEL_ROW_HEIGHT;
         const bottomH = (total - end) * EXCEL_ROW_HEIGHT;
+        /* Kanoniczny wiersz nagłówka to h1 (drugi tr): wiersz h3 ma colspan=4
+           na grupę PRZ i zaniża liczbę kolumn (ta sama zasada co w
+           _excelApplyColWidths). */
         const colCount =
             (
-                document.querySelector('#excel-table-container table thead tr') || {
+                document.querySelector('#excel-table-container table thead tr:nth-child(2)') || {
                     children: { length: 30 }
                 }
             ).children.length || 30;

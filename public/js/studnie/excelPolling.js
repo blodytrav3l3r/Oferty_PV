@@ -13,8 +13,11 @@ function _excelStartPolling() {
     let lastSnapshot = '';
     _excelPollInterval = setInterval(function () {
         if (_excelUserEditing) return;
+        /* F1: ukryta karta = zero pracy (żaden wiersz i tak nie jest widoczny) */
+        if (typeof document !== 'undefined' && document.hidden) return;
         if (!document.getElementById('excel-table-overlay')) return;
         // ponytail: 200→500ms, dirty jako watchdog—snapshot budowany zawsze, dirty wskazuje oczekiwany mut
+        // F1: 500→1000ms — steady-state to sam snapshot (~0,3 ms/1200), watchdog toleruje 1 s.
         const snap = _excelBuildWellsSnapshot();
         if (snap !== lastSnapshot) {
             lastSnapshot = snap;
@@ -27,7 +30,7 @@ function _excelStartPolling() {
             // brak zmian mimo dirty—wyczyszcz flagę (watchdog)
             _excelDirty = false;
         }
-    }, 500);
+    }, 1000);
     /* Inicjalny snapshot */
     lastSnapshot = _excelBuildWellsSnapshot();
 }

@@ -164,12 +164,26 @@ function _excelUnregisterExcelListeners() {
 }
 
 function openExcelTableModal() {
+    /* F0 perf: stage open-* tylko gdy ?perf=1 (zero overhead bez flagi).
+       Guardy typeof — excelVirtual.js ładuje się po tym pliku (studnie.html). */
+    const _perf = typeof _excelPerfOn === 'function' ? _excelPerfOn() : false;
+    const _perfNow = typeof _excelPerfNow === 'function' ? _excelPerfNow : null;
+    const _perfPush = _perf && typeof _excelPerfPush === 'function' ? _excelPerfPush : null;
+    const _tOpen0 = _perfPush && _perfNow ? _perfNow() : 0;
+    let _tPhase0 = _tOpen0;
+    const _perfMark = function (stage) {
+        if (!_perfPush || !_perfNow) return;
+        const t = _perfNow();
+        _perfPush(stage, t - _tPhase0);
+        _tPhase0 = t;
+    };
     if (typeof wells === 'undefined' || !Array.isArray(wells)) {
         window.wells = [];
     }
 
     /* Snapshot wells — "Zamknij bez zapisu" przywraca ten stan */
     _excelOpenSnapshot = structuredClone(wells);
+    _perfMark('open-clone');
 
     /* Każda sesja modala zaczyna czysty stack undo/redo — inaczej Ctrl+Z
        w nowej sesji przywraca przestarzałe wells z poprzedniej. */
@@ -255,6 +269,7 @@ function openExcelTableModal() {
         }
     }
 
+    _perfMark('open-prep');
     /* Inicjalizuj _excelMaxTransitions dla WSZYSTKICH zakładek */
     const _allTabs = ['1000', '1200', '1500', '2000', '2500', 'styczne'];
     _allTabs.forEach(function (t) {
@@ -269,6 +284,7 @@ function openExcelTableModal() {
         }, 0);
         _excelMaxTransitions[t] = Math.max(1, _tm);
     });
+    _perfMark('open-maxtr');
 
     /* Zainicjuj stan — brak zmian */
     _excelDirty = false;
@@ -415,8 +431,10 @@ function openExcelTableModal() {
 
     _excelLoadColumnVisibility();
     _excelLoadColWidths();
+    _perfMark('open-overlay');
     /* Aktualne statusy konfiguracji przed renderem (podświetlenie wierszy F4) */
     if (typeof refreshAllWellErrors === 'function') refreshAllWellErrors();
+    _perfMark('open-errors');
     _excelActiveTab = DN_TABS[0];
     if (typeof _excelInvalidateFilteredIndexes === 'function') _excelInvalidateFilteredIndexes();
     /* Rebuild indeksu id->wIdx PRZED pierwszym renderem — mutacje panelu głównego
@@ -425,7 +443,10 @@ function openExcelTableModal() {
     /* Nie zaznaczaj żadnego wiersza przy otwarciu — currentWellIndex=-1 PRZED renderem */
     if (typeof currentWellIndex !== 'undefined') currentWellIndex = -1;
     _excelRenderTabs();
+    _perfMark('open-tabs');
     _excelRenderTable(_excelActiveTab);
+    _perfMark('open-render');
+    if (_perfPush && _perfNow) _perfPush('open-total', _perfNow() - _tOpen0);
     _excelStopPolling();
     _excelStartPolling();
     _excelUpdateWellCount();
