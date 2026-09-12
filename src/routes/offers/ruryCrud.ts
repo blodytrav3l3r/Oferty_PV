@@ -670,43 +670,52 @@ router.post('/:id/duplicate', requireAuth, writeOffersLimiter, async (req, res) 
             logger.warn('Offers', 'Uszkodzony JSON data przy kopiowaniu oferty rur', id);
         }
 
-        await prisma.offers_rel.create({
-            data: {
-                id: newId,
-                userId: resolved.effectiveUserId,
-                offer_number: source.offer_number ? `${source.offer_number}-KOPIA` : '',
-                state: 'draft',
-                clientName: dupClientName,
-                investName: dupInvestName,
-                clientNumber: dupClientNumber,
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString(),
-                transportCost: source.transportCost ?? 0,
-                history: '[]',
-                data: source.data || '{}',
-                version: 1
+        // P0 atomowość: nagłówek + pozycje w jednej transakcji — pad createMany
+        // po create nie zostawia sieroty (rollback całości).
+        await prisma.$transaction(async (tx) => {
+            await tx.offers_rel.create({
+                data: {
+                    id: newId,
+                    userId: resolved.effectiveUserId,
+                    offer_number: source.offer_number ? `${source.offer_number}-KOPIA` : '',
+                    state: 'draft',
+                    clientName: dupClientName,
+                    investName: dupInvestName,
+                    clientNumber: dupClientNumber,
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString(),
+                    transportCost: source.transportCost ?? 0,
+                    history: '[]',
+                    data: source.data || '{}',
+                    version: 1
+                }
+            });
+
+            if (sourceItems.length > 0) {
+                await tx.offer_items_rel.createMany({
+                    data: sourceItems.map((item) => ({
+                        id: uuidv4(),
+                        offerId: newId,
+                        productId: item.productId,
+                        quantity: item.quantity,
+                        discount: item.discount,
+                        price: item.price
+                    }))
+                });
             }
         });
 
-        await syncFts5('rury', {
-            id: newId,
-            offer_number: source.offer_number ? `${source.offer_number}-KOPIA` : '',
-            clientName: dupClientName,
-            investName: dupInvestName,
-            clientNumber: dupClientNumber
-        });
-
-        if (sourceItems.length > 0) {
-            await prisma.offer_items_rel.createMany({
-                data: sourceItems.map((item) => ({
-                    id: uuidv4(),
-                    offerId: newId,
-                    productId: item.productId,
-                    quantity: item.quantity,
-                    discount: item.discount,
-                    price: item.price
-                }))
-            });
+        // FTS poza transakcją, warn-only (wzorzec z reszty pliku) — dryf łata cron.
+        if (
+            !(await syncFts5('rury', {
+                id: newId,
+                offer_number: source.offer_number ? `${source.offer_number}-KOPIA` : '',
+                clientName: dupClientName,
+                investName: dupInvestName,
+                clientNumber: dupClientNumber
+            }))
+        ) {
+            logger.warn('Offers', 'Dryf FTS po duplikacji oferty rur', newId);
         }
 
         logAudit('offer', newId, authReq.user?.id || '', 'duplicate', null, { sourceId: id });

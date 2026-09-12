@@ -458,5 +458,27 @@ describe('Rury Offers CRUD — warstwa zapisu', () => {
 
             expect(res.statusCode).toBe(403);
         });
+
+        it('P0: nagłówek i pozycje w jednej transakcji (pad createMany → 500)', async () => {
+            (prisma.offers_rel.findUnique as jest.Mock).mockResolvedValue({
+                ...mockOfferRury,
+                data: JSON.stringify({ clientName: 'ACME' })
+            });
+            (prisma.offer_items_rel.findMany as jest.Mock).mockResolvedValue([
+                { productId: 'p-1', quantity: 2, discount: 0, price: 10 }
+            ]);
+            // tx mock przekazuje prismaMock jako tx — create/createMany idą tym samym
+            // kanałem; wymuszony błąd createMany musi wycofać całość (500).
+            (prisma.offer_items_rel.createMany as jest.Mock).mockRejectedValue(
+                new Error('boom-items')
+            );
+
+            const res = await request(app)
+                .post('/api/offers/o-1/duplicate')
+                .set('x-user-id', 'user-id');
+
+            expect(res.statusCode).toBe(500);
+            expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+        });
     });
 });
