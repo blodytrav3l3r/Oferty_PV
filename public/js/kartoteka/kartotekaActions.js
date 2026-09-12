@@ -648,13 +648,18 @@ export default {
                             ? `/api/orders-studnie/${linkedOrder.id}`
                             : `/api/orders-rury/${linkedOrder.id}`;
                     try {
+                        // P1 PATCH: version tylko gdy number (linkedOrder może go nie mieć).
+                        const opiekunBody = {
+                            userId: currentOffer.userId,
+                            userName: currentOffer.userName
+                        };
+                        if (typeof linkedOrder.version === 'number') {
+                            opiekunBody.version = linkedOrder.version;
+                        }
                         const patchResp = await fetch(orderEndpoint, {
                             method: 'PATCH',
                             headers,
-                            body: JSON.stringify({
-                                userId: currentOffer.userId,
-                                userName: currentOffer.userName
-                            })
+                            body: JSON.stringify(opiekunBody)
                         });
                         if (!patchResp.ok) {
                             logger.warn(

@@ -242,7 +242,12 @@ async function putSingleOrderStudnie(order) {
 async function patchSingleOrderStudnie(order, fields) {
     try {
         if (!order || !order.id) throw new Error('Brak ID zamówienia');
-        const body = JSON.stringify({ ...fields, baseUpdatedAt: getOrderBaseUpdatedAt(order) });
+        // P1 PATCH: dopnij version TYLKO gdy number — serwerowy predykat
+        // optimistic lock; brak version = stare zachowanie (kompatybilność).
+        // Nigdy nie wysyłaj version: undefined (nie zmieniaj payloadu starych danych).
+        const patchBody = { ...fields, baseUpdatedAt: getOrderBaseUpdatedAt(order) };
+        if (typeof order.version === 'number') patchBody.version = order.version;
+        const body = JSON.stringify(patchBody);
         measureSingleOrderPayload(body, order);
         const res = await fetch(`/api/orders-studnie/${order.id}`, {
             method: 'PATCH',

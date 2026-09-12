@@ -1137,24 +1137,27 @@ async function saveCurrentOrder(options = {}) {
         if (!saved) return;
     } else {
         try {
+            // P1 PATCH: version tylko gdy number (jak w patchSingleOrderStudnie).
+            const fallbackBody = {
+                wells: order.wells,
+                wellDiscounts: order.wellDiscounts,
+                kartaBudowy: order.kartaBudowy,
+                updatedAt: order.updatedAt,
+                wellsExport: order.wellsExport,
+                totalWeight: order.totalWeight,
+                totalNetto: order.totalNetto,
+                totalBrutto: order.totalBrutto,
+                transportKm: order.transportKm,
+                transportRate: order.transportRate,
+                transportMode: order.transportMode,
+                paymentTerms: order.paymentTerms,
+                validity: order.validity
+            };
+            if (typeof order.version === 'number') fallbackBody.version = order.version;
             await fetch(`/api/orders-studnie/${order.id}`, {
                 method: 'PATCH',
                 headers: authHeaders(),
-                body: JSON.stringify({
-                    wells: order.wells,
-                    wellDiscounts: order.wellDiscounts,
-                    kartaBudowy: order.kartaBudowy,
-                    updatedAt: order.updatedAt,
-                    wellsExport: order.wellsExport,
-                    totalWeight: order.totalWeight,
-                    totalNetto: order.totalNetto,
-                    totalBrutto: order.totalBrutto,
-                    transportKm: order.transportKm,
-                    transportRate: order.transportRate,
-                    transportMode: order.transportMode,
-                    paymentTerms: order.paymentTerms,
-                    validity: order.validity
-                })
+                body: JSON.stringify(fallbackBody)
             });
         } catch (err) {
             logger.error('orderManager', 'Błąd zapisu zamówienia:', err);

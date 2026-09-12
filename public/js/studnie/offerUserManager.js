@@ -38,13 +38,18 @@ async function changeOfferUser() {
                     if (linkedOrder) {
                         linkedOrder.userId = editingOfferAssignedUserId;
                         linkedOrder.userName = editingOfferAssignedUserName;
+                        // P1 PATCH: version tylko gdy number.
+                        const opiekunBody = {
+                            userId: linkedOrder.userId,
+                            userName: linkedOrder.userName
+                        };
+                        if (typeof linkedOrder.version === 'number') {
+                            opiekunBody.version = linkedOrder.version;
+                        }
                         fetch(`/api/orders-studnie/${linkedOrder.id}`, {
                             method: 'PATCH',
                             headers: authHeaders(),
-                            body: JSON.stringify({
-                                userId: linkedOrder.userId,
-                                userName: linkedOrder.userName
-                            })
+                            body: JSON.stringify(opiekunBody)
                         }).catch((e) =>
                             logger.error(
                                 'offerManager',
@@ -101,13 +106,18 @@ async function changeOfferUserFromListStudnie(offerId) {
                 if (linkedOrder) {
                     linkedOrder.userId = offer.userId;
                     linkedOrder.userName = offer.userName;
+                    // P1 PATCH: version tylko gdy number.
+                    const opiekunBody = {
+                        userId: linkedOrder.userId,
+                        userName: linkedOrder.userName
+                    };
+                    if (typeof linkedOrder.version === 'number') {
+                        opiekunBody.version = linkedOrder.version;
+                    }
                     fetch(`/api/orders-studnie/${linkedOrder.id}`, {
                         method: 'PATCH',
                         headers: authHeaders(),
-                        body: JSON.stringify({
-                            userId: linkedOrder.userId,
-                            userName: linkedOrder.userName
-                        })
+                        body: JSON.stringify(opiekunBody)
                     }).catch((e) =>
                         logger.error('offerManager', 'Błąd aktualizacji opiekuna w zamówieniu:', e)
                     );

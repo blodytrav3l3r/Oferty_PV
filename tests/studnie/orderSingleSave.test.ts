@@ -68,6 +68,36 @@ describe('P1 HIGH — saveSingleOrderStudnie (frontend)', () => {
         expect(JSON.parse(calls[0].opts.body).baseUpdatedAt).toBe('t-base');
     });
 
+    test('P1 PATCH: helper dokłada version gdy number', async () => {
+        const calls: any[] = [];
+        const { w } = loadOrderHelpers(async (url: string, opts: any) => {
+            calls.push({ url, opts });
+            return okRes();
+        });
+        const order = {
+            id: 'o1',
+            wells: [],
+            updatedAt: 't-new',
+            _baseUpdatedAt: 't-base',
+            version: 7
+        };
+        const saved = await w.patchSingleOrderStudnie(order, { wells: [] });
+        expect(saved).toBe(true);
+        expect(JSON.parse(calls[0].opts.body).version).toBe(7);
+    });
+
+    test('P1 PATCH: brak version w obiekcie → payload bez pola version (kompatybilność)', async () => {
+        const calls: any[] = [];
+        const { w } = loadOrderHelpers(async (url: string, opts: any) => {
+            calls.push({ url, opts });
+            return okRes();
+        });
+        const order = { id: 'o1', wells: [], updatedAt: 't-new', _baseUpdatedAt: 't-base' };
+        const saved = await w.patchSingleOrderStudnie(order, { wells: [] });
+        expect(saved).toBe(true);
+        expect(JSON.parse(calls[0].opts.body)).not.toHaveProperty('version');
+    });
+
     test('409 → handleOrderConflict scala kopię serwerową i zwraca false', async () => {
         const serverOrder = { id: 'o1', wells: [{ id: 'w9' }], updatedAt: 'srv-new' };
         const { w, toasts, context } = loadOrderHelpers(async () => ({

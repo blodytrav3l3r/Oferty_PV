@@ -210,6 +210,44 @@ describe('P1 HIGH — single-order save + optimistic concurrency', () => {
         expect(mockedPrisma.orders_studnie_rel.update).not.toHaveBeenCalled();
     });
 
+    test('P1 lost-update: PATCH#1 v1 → 200, PATCH#2 v1 → 409, dane z #1 zachowane', async () => {
+        mockedPrisma.orders_studnie_rel.findUnique.mockResolvedValue({
+            id: 'o1',
+            userId: 'user-id',
+            status: 'new',
+            version: 1,
+            data: JSON.stringify({ updatedAt: 'srv-t', wells: [{ id: 'w0' }] })
+        });
+        let predicateCalls = 0;
+        mockedPrisma.orders_studnie_rel.updateMany.mockImplementation(async (args: any) => {
+            predicateCalls++;
+            // Serwerowy licznik: tylko pierwsze trafienie v1 przechodzi.
+            return { count: predicateCalls === 1 && args.where.version === 1 ? 1 : 0 };
+        });
+        const body1 = {
+            wells: [{ id: 'w1' }],
+            updatedAt: 't1',
+            version: 1,
+            baseUpdatedAt: 'srv-t'
+        };
+        const r1 = await request(createApp()).patch('/api/orders-studnie/o1').send(body1);
+        expect(r1.status).toBe(200);
+        const body2 = {
+            wells: [{ id: 'w2' }],
+            updatedAt: 't2',
+            version: 1,
+            baseUpdatedAt: 'srv-t'
+        };
+        const r2 = await request(createApp()).patch('/api/orders-studnie/o1').send(body2);
+        expect(r2.status).toBe(409);
+        expect(r2.body.code).toBe('VERSION_CONFLICT');
+        // Drugi zapis nie przeszedł: dane = po PATCH#1, ślepy update nie wołany.
+        const written = mockedPrisma.orders_studnie_rel.updateMany.mock.calls;
+        expect(written).toHaveLength(2);
+        expect(JSON.parse(written[0][0].data.data).wells).toEqual([{ id: 'w1' }]);
+        expect(mockedPrisma.orders_studnie_rel.update).not.toHaveBeenCalled();
+    });
+
     test('PUT create loguje SLIM audit (bez wells) a upsert zapisuje pełne dane', async () => {
         mockedPrisma.orders_studnie_rel.findUnique.mockResolvedValue(null);
         const wells = [

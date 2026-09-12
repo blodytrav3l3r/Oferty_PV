@@ -450,6 +450,39 @@ describe('Rury Orders CRUD', () => {
             expect(res.body.code).toBe('VERSION_CONFLICT');
             expect(res.body.serverVersion).toBe(2);
         });
+
+        it('P1 lost-update: PATCH#1 v1 → 200, PATCH#2 v1 → 409, dane z #1 zachowane', async () => {
+            (prisma.orders_rury_rel.findUnique as jest.Mock).mockResolvedValue({
+                id: 'or-1',
+                userId: 'user-id',
+                status: 'new',
+                version: 1,
+                data: JSON.stringify({ note: 'orig' })
+            });
+            let predicateCalls = 0;
+            (prisma.orders_rury_rel.updateMany as jest.Mock).mockImplementation(
+                async (args: any) => {
+                    predicateCalls++;
+                    return { count: predicateCalls === 1 && args.where.version === 1 ? 1 : 0 };
+                }
+            );
+
+            const r1 = await request(app)
+                .patch('/api/orders-rury/or-1')
+                .set('x-user-id', 'user-id')
+                .send({ note: 'first', version: 1 });
+            expect(r1.statusCode).toBe(200);
+            const r2 = await request(app)
+                .patch('/api/orders-rury/or-1')
+                .set('x-user-id', 'user-id')
+                .send({ note: 'second', version: 1 });
+            expect(r2.statusCode).toBe(409);
+            expect(r2.body.code).toBe('VERSION_CONFLICT');
+            const written = (prisma.orders_rury_rel.updateMany as jest.Mock).mock.calls;
+            expect(written).toHaveLength(2);
+            expect(JSON.parse(written[0][0].data.data).note).toBe('first');
+            expect(prisma.orders_rury_rel.update).not.toHaveBeenCalled();
+        });
     });
 
     describe('DELETE /:id', () => {
