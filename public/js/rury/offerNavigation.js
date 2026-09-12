@@ -1,6 +1,28 @@
 // @ts-check
 /* ===== NAWIGACJA SEKCJI (RURY) ===== */
 
+// SSoT widoczności paska podsumowania: pasek (Zapisz ofertę / Utwórz zamówienie)
+// widoczny wyłącznie w zakładce Oferta. Jedyny mechanizm: klasa `hidden`
+// (display:none !important) — zakaz style.display (desync z wizard.js).
+function updateRurySummaryBarVisibility() {
+    const summaryBar = document.getElementById('rury-summary-bar');
+    if (!summaryBar) return;
+    const offerActive = !!document.getElementById('section-offer')?.classList.contains('active');
+    // ponytail: czyści legacy inline display ze starego sterowania style.display
+    summaryBar.style.removeProperty('display');
+    summaryBar.classList.toggle('hidden', !offerActive);
+    if (!offerActive) return;
+    const saveBtn = document.getElementById('btn-save-offer-order');
+    if (saveBtn) {
+        const isOrderMode = window.orderEditMode && window.editingRuryOrderId;
+        saveBtn.innerHTML = isOrderMode
+            ? '<i data-lucide="save"></i> Zapisz zamówienie'
+            : '<i data-lucide="save"></i> Zapisz ofertę';
+    }
+    if (typeof updateOfferSummary === 'function') updateOfferSummary();
+    if (window.lucide) lucide.createIcons();
+}
+
 function showSectionRury(id) {
     document.querySelectorAll('.section').forEach((s) => s.classList.remove('active'));
     document.querySelectorAll('.nav-btn').forEach((b) => b.classList.remove('active'));
@@ -13,11 +35,9 @@ function showSectionRury(id) {
 
     if (id === 'pricelist') renderPriceList();
 
-    const summaryBar = document.getElementById('rury-summary-bar');
-    if (id === 'offer') {
-        if (summaryBar) summaryBar.style.display = 'block';
-        if (typeof updateOfferSummary === 'function') updateOfferSummary();
+    updateRurySummaryBarVisibility();
 
+    if (id === 'offer') {
         const ctxBanner = document.getElementById('offer-context-banner');
         const ctxBadge = document.getElementById('offer-context-badge');
         const ctxText = document.getElementById('offer-context-text');
@@ -40,12 +60,6 @@ function showSectionRury(id) {
             }
             if (window.lucide) lucide.createIcons();
         }
-    } else if (id === 'builder') {
-        const activeStep = document.querySelector('.wizard-step.active');
-        const step = activeStep ? parseInt(activeStep.id.replace('wizard-step-', '')) : 1;
-        if (summaryBar) summaryBar.style.display = step === 3 || step === 5 ? 'block' : 'none';
-    } else {
-        if (summaryBar) summaryBar.style.display = 'none';
     }
 
     const urlParams = new URLSearchParams(window.location.search);

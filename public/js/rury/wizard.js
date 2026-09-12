@@ -83,23 +83,9 @@ function goToPhase(step) {
 
     if (step === 1) updateStep1NextState();
 
-    // Pokaż/ukryj fixed pasek podsumowania (zawsze nad paskiem nawigacji)
-    const summaryBar = document.getElementById('rury-summary-bar');
-    if (summaryBar) {
-        summaryBar.classList.toggle('hidden', !(step === 3 || step === 5));
-    }
-
-    // Aktualizuj etykietę przycisku zapisu w pasku podsumowania
-    if (step === 3 || step === 5) {
-        const saveBtn = document.getElementById('btn-save-offer-order');
-        if (saveBtn) {
-            const isOrderMode = window.orderEditMode && window.editingRuryOrderId;
-            saveBtn.innerHTML = isOrderMode
-                ? '<i data-lucide="save"></i> Zapisz zamówienie'
-                : '<i data-lucide="save"></i> Zapisz ofertę';
-        }
-        if (window.lucide) lucide.createIcons();
-    }
+    // Widoczność paska podsumowania: wyłącznie zakładka Oferta,
+    // steruje updateRurySummaryBarVisibility() (offerNavigation.js).
+    // goToPhase celowo nie dotyka paska (wcześniej desync hidden <-> style.display).
 
     // Inicjalizacja karty budowy przy wejściu w krok 4
     if (step === 4 && typeof initKartaBudowyStep4 === 'function') {
