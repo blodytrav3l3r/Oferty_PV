@@ -768,6 +768,39 @@ describe('TrainingPipeline.run() — guardy (K6)', () => {
         expect(res.reason).toMatch(/insufficient_label_diversity:train=1/);
     });
 
+    it('P0 run-level: okno treningowe zawiera tylko A (B odcięte join-filtrem)', async () => {
+        const { trainingPipeline, prisma } = await setupRun();
+        // Allowlista [userA]: połowa rekordów należy do B.
+        (prisma as any).settings = {
+            findUnique: jest.fn<any>().mockResolvedValue({ value: JSON.stringify(['userA']) })
+        };
+        const mixed = Array.from({ length: 400 }, (_, i) => {
+            const f = makeFeature('ACCEPTED', i);
+            f.telemetryId = i % 2 === 0 ? `tel-a-${i}` : `tel-b-${i}`;
+            return f;
+        });
+        mockFindMany.mockResolvedValue([...mixed].reverse());
+        const origTelemetryFindMany = (prisma.ai_telemetry_logs as any).findMany;
+        (prisma.ai_telemetry_logs as any).findMany = jest.fn<any>(async (args: any) => {
+            const ids: string[] = args?.where?.id?.in || [];
+            return ids.map((id) => ({
+                id,
+                userId: id.startsWith('tel-a-') ? 'userA' : 'userB'
+            }));
+        });
+        try {
+            const res = await trainingPipeline.run();
+
+            expect(res.trained).toBe(false);
+            // 400 rekordów, ale po filtrze 200 (tylko A) → split_guard liczy 200.
+            // Bez filtra byłoby dataset=400.
+            expect(res.reason).toMatch(/split_guard:dataset=200,/);
+        } finally {
+            (prisma.ai_telemetry_logs as any).findMany = origTelemetryFindMany;
+            delete (prisma as any).settings;
+        }
+    });
+
     it('pierwszy model z AUC=0.5 (gorzej niż losowe) → deploy_abs_insufficient (gate minAuc>0.55)', async () => {
         const { trainingPipeline } = await setupRun();
         const mixed = Array.from({ length: 400 }, (_, i) =>
