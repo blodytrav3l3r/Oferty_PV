@@ -1,6 +1,6 @@
 # Synthetic validation harness — plan (read-only audit, bez implementacji)
 
-**Status:** v1 zaimplementowana (`scripts/synth-harness.mjs`), 27/27 zielonych. Bez commita.
+**Status:** CLOSED. v1 zacommitowana (`5cde312`), 27/27 zielonych. Solver-JS/oracle = ewentualne v2.
 **Precyzyjna nazwa:** HTTP backend telemetry/reward validation harness (NIE pełny „1:1 synthetic offer generator").
 **Granica v1:** prawdziwe endpointy + prawdziwy pipeline backendu, ale BEZ wykonania solvera JS i deterministycznego oracle; oferty w raporcie liczone rozłącznie (`offersCreated` / `wellsInOffers` / `telemetryConfigs`, pętla ofert capped do 10 z capu 50 jak frontend). Auth sesyjny = admin (izolacja z osobnego pliku DB, nie z allowlisty — asercje S-id to potwierdzają). Solver-JS w przeglądarce (Playwright) = ewentualne v2.
 **Znaleziska v1 (kontrakty potwierdzone testem):** `allComponentIds` to tablica stringów (nie JSON-string); `trainingEligible` wymaga `featureSnapshot.totalPrice>0`; zod odrzuca jawne nulle w optional; MODIFY bez parent oznacza pierwszą sugestię AUTO studni (nigdy REJECT).
@@ -11,7 +11,7 @@
 
 - Oferta: `POST /api/offers-rury/studnie` body `{data:[offerDoc]}` (`studnieCrud.ts:480-506`, schema `offerSchemas.ts:156-158`); frontend flow `offerSave.js:26-227` (pricing → save → `_sendAcceptanceTelemetry` → ACCEPT batch → `acceptance-full`).
 - Telemetria: `POST /api/telemetry/ai/config` wymaga tylko `solverSource` (`telemetrySchemas.ts:103`); `trainingEligible=false` gdy `parentConfigId` lub pusty config (`telemetryService.ts:483-493`).
-- Solver: `configSource` z jednego miejsca (`solverAutoSelect.js:150`); `AUTO_AI` tylko gdy `shouldMarkAiSelection` (m.in. `aiWinner!==aiWinner`-referencja `technicalWinner`, `solverAutoSelect.js:1480-1498`); eksploracja jedyne `Math.random()` na ścieżce (`mlDualRanking.js:885-891`); determinizm = `aiInfluencePct=0` (hierarchia `mlDualRanking.js:137-167`).
+- Solver: `configSource` z jednego miejsca (`solverAutoSelect.js:150`); `AUTO_AI` tylko gdy `shouldMarkAiSelection` (m.in. `aiWinner !== technicalWinner` — porównanie referencji, `solverAutoSelect.js:1480-1498`); eksploracja jedyne `Math.random()` na ścieżce (`mlDualRanking.js:885-891`); determinizm = `aiInfluencePct=0` (hierarchia `mlDualRanking.js:137-167`).
 - Oracle (deterministyczny, niezależny od AI): `recalculateWellErrors` (`solverValidation.js:12-218`, rzędne/luzy 300/300 i 150/150), `checkConflicts` (`solverAutoSelect.js:741-882`, kolizje otworów, strefy z `transitionZones.js`), `validatePrzejsciaForSave` (`solverValidation.js:242-287`). Wersje: `SOLVER_VERSION 1.0.0`, `RULES_VERSION 2026-06-30.1`, `FEATURE_VERSION v7`.
 - Reward: batch cap 500, filtr `_lastAutoTelemetryId`, dedup `uq_reward_well_action` (`telemetryAiMl.ts:228-374`); linkage sugestii przez `parentConfigId` (`telemetryBridge.js:539-550`).
 - Etykiety: `deriveLabel` SSoT dla extract/resync (`FeatureExtractor.ts:165-192`); `NO_FEEDBACK` odpada w treningu.

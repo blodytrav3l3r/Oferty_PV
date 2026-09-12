@@ -1,6 +1,6 @@
 # §8a — plan pozyskiwania wiarygodnych negatywów (read-only, bez implementacji)
 
-**Status:** plan do oceny. Implementacji nie rozpoczęto — nie wykonywać bez jawnego polecenia.
+**Status:** CLOSED. A (event `well_deleted`) zaimplementowane (`4cb3497`); B niepotwierdzone (nie implementować); C odrzucone (NO-GO); progi i `wasAiRanked` nietknięte. Review: GO.
 **Input:** `docs/plans/2026-09-11-ml-label-audit.md` (fakty) + audyt kodu ścieżki `user action → label`.
 **Twarda zasada:** wiarygodne negatywy bez sztucznych REJECT-ów. Nie pompujemy liczności kosztem jakości.
 **Poza zakresem:** progi 50/100/300, relabeling historycznych danych, backfill, zmiany w Learning Engine.

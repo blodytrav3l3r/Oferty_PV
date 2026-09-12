@@ -1,6 +1,6 @@
 # Bramka treningu ML: `shouldTrain()` + retencja `AiTrainingRun` (F1+F2, F3 osobno)
 
-**Status:** Zaimplementowane (F1+F2). Testy: 49/49 w `TrainingPipeline` + `trainingGate`, 102/102 w pokrewnych suitach ML/telemetrii, typecheck + lint czyste.
+**Status:** CLOSED. F1+F2 (`cb6223b`) + F3 status bramki (`02b378b`). Testy: 49/49 w `TrainingPipeline` + `trainingGate`, 102/102 w pokrewnych suitach ML/telemetrii, typecheck + lint czyste, pełne `test:quick` zielone.
 **Lekcja z implementacji:** gate w `run()` MUSI leżeć wewnątrz `try` — early return przed `try` omijał `finally` (martwy mutex, kaskada `already_running`); wykryte przez testy.
 Zakres zamknięty — nie rozszerzać o Learning Engine ani jakościowe gate'y ML.
 
