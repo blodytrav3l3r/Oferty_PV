@@ -42,12 +42,17 @@ const OPTS = {
     seed: parseInt(arg('seed', '42'), 10),
     build: !flag('no-build'),
     keep: flag('keep'),
-    scale: flag('scale')
+    scale: flag('scale'),
+    serverUrl: arg('server-url', null),
+    adminPass: arg('admin-pass', null)
 };
 const DB_FILE = resolve(ROOT, OPTS.db);
 const DB_URL = 'file:' + DB_FILE.replace(/\\/g, '/') + '?connection_limit=1&busy_timeout=30000';
-const ADMIN_PASSWORD = 'synth-admin-' + OPTS.seed;
-const BASE = 'http://localhost:' + OPTS.port;
+const ADMIN_PASSWORD = OPTS.adminPass || 'synth-admin-' + OPTS.seed;
+// --server-url: tryb przeciw obcemu serwerowi (diagnostyka, staging).
+// Bez setupu DB/spawnu/teardownu serwera; teardown DB tylko gdy ją utworzyliśmy.
+const BASE = OPTS.serverUrl || 'http://localhost:' + OPTS.port;
+const EXTERNAL_SERVER = !!OPTS.serverUrl;
 
 // Mulberry32 — deterministyczny RNG (reprodukowalność).
 function rng32(seed) {
@@ -94,16 +99,32 @@ function clean(obj) {
     return obj;
 }
 async function api(method, path, body, attempt = 0) {
-    const res = await fetch(BASE + path, {
-        method,
-        headers: {
-            'Content-Type': 'application/json',
-            'x-auth-token': TOKEN
-        },
-        body: body === undefined ? undefined : JSON.stringify(clean(body))
-    });
-    if (res.status === 429 && attempt < 3) {
-        await new Promise((r) => setTimeout(r, 2000 * (attempt + 1)));
+    // Twardy timeout: zawieszony fetch NIGDY nie blokuje harnessu w nieskończoność.
+    const ctl = new AbortController();
+    const killer = setTimeout(() => ctl.abort('api-timeout-30s'), 30000);
+    let res;
+    try {
+        res = await fetch(BASE + path, {
+            method,
+            headers: {
+                'Content-Type': 'application/json',
+                'x-auth-token': TOKEN
+            },
+            body: body === undefined ? undefined : JSON.stringify(clean(body)),
+            signal: ctl.signal
+        });
+    } finally {
+        clearTimeout(killer);
+    }
+    // Skala: respektuj retryAfter serwera (telemetry 1200/min), ale z capem —
+    // nielimitowane retry przy zduszonym limiterze zawiesza run na godziny.
+    if (res.status === 429 && attempt < 5) {
+        let waitMs = 2000 * (attempt + 1);
+        try {
+            const bj = await res.clone().json();
+            if (Number.isFinite(bj?.retryAfter)) waitMs = Math.min(bj.retryAfter * 1000, 10000);
+        } catch {}
+        await new Promise((r) => setTimeout(r, waitMs));
         return api(method, path, body, attempt + 1);
     }
     let json = null;
@@ -160,9 +181,14 @@ function spawnServer() {
             DEFAULT_ADMIN_PASSWORD: ADMIN_PASSWORD,
             NODE_ENV: 'development'
         },
-        stdio: 'pipe'
+        // stdout 'ignore': nieczytany pipe (~64KB) blokuje dziecko przy skali
+        // (twardy hang harnessu). stderr forwardujemy (tam idą logi serwera).
+        stdio: ['ignore', 'ignore', 'pipe']
     });
     server.stderr.on('data', (d) => process.stderr.write('[srv-err] ' + d));
+    // Diagnostyka zgonów childa (exit code/sygnał mówi KTO zabił: null+SIGTERM = zewnątrz).
+    server.on('exit', (code, signal) => console.log(`[srv-exit] code=${code} signal=${signal}`));
+    server.on('error', (e) => console.log('[srv-error] ' + String((e && e.message) || e)));
     return server;
 }
 async function pollHealth(url, tries = 40) {
@@ -194,8 +220,13 @@ const WELLTYPES = ['standard', 'standard', 'standard', 'psia_buda', 'styczna'];
 async function main() {
     guards();
     const t0 = Date.now();
-    setup();
-    const server = spawnServer();
+    let server = null;
+    if (!EXTERNAL_SERVER) {
+        setup();
+        server = spawnServer();
+    } else {
+        console.log('▶ tryb --server-url: ' + BASE + ' (bez setupu/spawnu)');
+    }
     const timings = {};
     let offersCreated = 0;
     let wellsInOffers = 0;
@@ -210,7 +241,7 @@ async function main() {
     }
     try {
         if (!(await pollHealth(BASE + '/health'))) {
-            server.kill();
+            if (server) server.kill();
             failClosed('serwer testowy nie wstał (health check)');
         }
         // Login admin (ensureAdminExists tworzy konto przy starcie).
@@ -271,6 +302,63 @@ async function main() {
                 (offerGet.json?.totalCount >= 1 || (offerGet.json?.data || []).length >= 1),
             'status=' + offerGet.status
         );
+
+        // Kolejność jak w produkcji: najpierw wolumen (stare wiersze), potem
+        // scenariusze S (feedback na ŚWIEŻYCH danych). extractAndStore bierze
+        // zawsze 500 najnowszych bez kursora wstecz — feedback na wierszach
+        // starszych niż okno przepada (osobny finding produkcyjny, nie fix harnessu).
+        async function runScaleBlock() {
+            const n = OPTS.scale ? 10000 : OPTS.offers;
+            console.log(`▶ skala: ${n} recordConfig...`);
+            const tS = Date.now();
+            const SCALE_BUDGET_MS = 20 * 60 * 1000;
+            let netErrors = 0;
+            let status429 = 0;
+            for (let i = 0; i < n; i++) {
+                if (Date.now() - tS > SCALE_BUDGET_MS) {
+                    throw new Error(`skala przerwana: budżet 20 min przekroczony (i=${i}/${n})`);
+                }
+                const w = synthWell(20000 + i);
+                try {
+                    const r = await api('POST', '/api/telemetry/ai/config', {
+                        solverSource: i % 10 === 0 ? 'MANUAL' : 'AUTO_JS',
+                        dn: w.dn,
+                        wellType: w.wellType,
+                        wellId: w.id,
+                        totalPrice: 2000 + (i % 500),
+                        featureSnapshot: { totalPrice: 2000 + (i % 500) },
+                        allComponentIds: ['KDB-1000-1000']
+                    });
+                    if (r.status === 429) status429++;
+                    else netErrors = 0;
+                } catch (e) {
+                    // Diagnostyka zamiast cichego padu całego runu: indeks, czas, probe.
+                    let probe = 'unknown';
+                    try {
+                        const pr = await fetch(BASE + '/health');
+                        probe = 'health=' + pr.status;
+                    } catch (pe) {
+                        probe = 'health-FAIL:' + String(pe.message || pe).slice(0, 80);
+                    }
+                    console.log(
+                        `  SKALA-NET-ERR i=${i} err=${String((e && e.message) || e).slice(0, 80)} ${probe}`
+                    );
+                    if (++netErrors >= 10) {
+                        throw new Error(`skala przerwana: 10 błędów sieci z rzędu (i=${i})`);
+                    }
+                }
+                if (i % 500 === 499)
+                    console.log(
+                        `  skala ${i + 1}/${n} 429x${status429} w ${((Date.now() - tS) / 1000).toFixed(0)}s`
+                    );
+            }
+            console.log(
+                `  skala ${n} w ${((Date.now() - tS) / 1000).toFixed(1)}s (429x${status429})`
+            );
+        }
+        if (OPTS.scale || OPTS.offers > 50) {
+            await runScaleBlock();
+        }
 
         // S1: poprawna AUTO_JS + acceptance-full → ACCEPTED.
         const w1 = synthWell(1001);
@@ -448,31 +536,34 @@ async function main() {
         });
         check('S10 well_deleted 200', ev.status === 200, 'status=' + ev.status);
 
-        // Skala: N recordConfig (szybka ścieżka objętości).
-        if (OPTS.scale || OPTS.offers > 50) {
-            const n = OPTS.scale ? 10000 : OPTS.offers;
-            console.log(`▶ skala: ${n} recordConfig...`);
-            const tS = Date.now();
-            for (let i = 0; i < n; i++) {
-                const w = synthWell(20000 + i);
-                await api('POST', '/api/telemetry/ai/config', {
-                    solverSource: i % 10 === 0 ? 'MANUAL' : 'AUTO_JS',
-                    dn: w.dn,
-                    wellType: w.wellType,
-                    wellId: w.id,
-                    totalPrice: 2000 + (i % 500),
-                    featureSnapshot: { totalPrice: 2000 + (i % 500) },
-                    allComponentIds: ['KDB-1000-1000']
-                });
-                if (i % 500 === 499) process.stdout.write(`  ${i + 1}/${n}\r`);
+        // S12: pętla konwergencji ekstrakcji (okno 500/run, jak produkcja cyklicznie).
+        // Jeden trening pokrywa tylko 500 najnowszych wierszy — starsze (np. S1-S6)
+        // wymagają kolejnych przebiegów. Trenuj aż AiFeature przestanie rosnąć.
+        // Endpoint = run(true)/force, więc extractAndStore ZAWSZE się wykona.
+        let train = { status: 0, json: null };
+        let prevFeat = -1;
+        let throttled = 0;
+        for (let t = 0; t < 10; t++) {
+            train = await timed('train', () => api('POST', '/api/telemetry/ai/train', {}));
+            if (train.status === 429) {
+                if (++throttled > 5) break;
+                const waitMs = Math.min(Number(train.json?.retryAfterMs) || 61000, 65000);
+                console.log(`  train throttled, czekam ${Math.round(waitMs / 1000)}s...`);
+                await new Promise((r) => setTimeout(r, waitMs));
+                t--;
+                continue;
             }
-            console.log(`  skala ${n} w ${((Date.now() - tS) / 1000).toFixed(1)}s`);
+            if (train.status !== 200) break;
+            const dbProbe = openDb();
+            let featNow = 0;
+            try {
+                featNow = dbProbe.prepare('SELECT COUNT(*) AS n FROM AiFeature').get().n;
+            } finally {
+                dbProbe.close();
+            }
+            if (featNow === prevFeat) break;
+            prevFeat = featNow;
         }
-
-        // S12: trening end-to-end na syntetyku (endpoint = run(true)/force, więc
-        // extractAndStore ZAWSZE się wykona — cechy muszą istnieć PRZED asercjami
-        // labeli). Oczekiwany SKIPPED na guardach (malutki dataset).
-        const train = await timed('train', () => api('POST', '/api/telemetry/ai/train', {}));
         check(
             'S12 train odpowiada (guard, nie crash)',
             train.status === 200 && typeof train.json?.trained === 'boolean',
@@ -594,9 +685,12 @@ async function main() {
             );
         }
     } finally {
-        server.kill();
-        await new Promise((r) => setTimeout(r, 3000));
-        if (!OPTS.keep) {
+        if (server) {
+            server.kill();
+            await new Promise((r) => setTimeout(r, 3000));
+        }
+        // Tryb zewnętrzny: pliku DB nie tworzyliśmy — nigdy go nie kasujemy.
+        if (!OPTS.keep && !EXTERNAL_SERVER) {
             for (let attempt = 0; attempt < 5; attempt++) {
                 try {
                     for (const f of [
@@ -613,6 +707,8 @@ async function main() {
                 }
             }
             console.log('▶ teardown: usunięto syntetyczną DB');
+        } else if (EXTERNAL_SERVER) {
+            console.log('▶ teardown: tryb zewnętrzny, DB zostaje (nie nasza): ' + DB_FILE);
         } else {
             console.log('▶ teardown: --keep, zostawiam ' + DB_FILE);
         }
