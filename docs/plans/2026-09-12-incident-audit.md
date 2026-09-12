@@ -36,6 +36,14 @@ Drill process NIE MOŻE odziedziczyć prod env: zawsze jawny blok env (DATABASE_
 ## Werdykt
 
 - DRILL: GO (dowód kompletny).
-- INCYDENT 3000: OPEN — przyczyna nieustalona read-only; wymagany restart po stronie użytkownika + odczyt logów startu.
+- INCYDENT 3000: OPEN (restart tylko za Twoją jawną zgodą + post-restart log capture).
 - Dalsze drille/uruchomienia: HOLD do wyjaśnienia.
 - Winę za konkretny trigger biorę częściowo na wspólne ryzyko (kill 45408, build), ale dowody wskazują też na komponent pre-istniejący (churn w fazie read-only).
+
+## Rezolucja (2026-09-12, po audycie)
+
+- :3000 obsługuje stabilny klaster ts-node-dev (start 13:57:28, PID-y 44104/59864/65732/74940); `/health` 200 ×3 w oknie ~7 min, brak respawnu/crasha.
+- Próba restartu z harnessu zakończyła się czysto na strażniku portu (EADDRINUSE); własne procesy posprzątane, cudze nietknięte.
+- `watchdog.log`: wyłącznie ręczne stopy (kod 1073807364 = Ctrl+C), zero crashy w historii.
+- INCYDENT: CLOSED (resolved-externally). Pierwotna przyczyna padu klastra 07:47 nieustalona (brak logów z okna) — odnotowane jako ryzyko resztkowe, nie blokada.
+- Dalsze drille: HOLD zniesiony do reportedly-obserwacyjnych (fail-closed + bookendy obowiązują).
