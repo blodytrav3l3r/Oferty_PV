@@ -45,3 +45,9 @@ Rekomendacja autora: **A jako osobny minimalny krok telemetryczny, potem obserwa
 ## 4. Weryfikacja przyszłej implementacji
 
 `typecheck` + `lint` + `lint:frontend` + `node -c` dla plików `public/js` + testy ML + `format`. Bez zmian wersji.
+
+## 5. Review read-only a46b893 — APPROVE PLAN (GO warunkowe, bez implementacji)
+
+- SSoT etykiet czysty: jedna `deriveLabel` (`FeatureExtractor.ts:165`), frontend bez literałów. Hazard nazewniczy (nie bug): `reject` (event) vs `REJECT` (akcja) vs `REJECTED` (label).
+- Invariant P0 trzyma się na wszystkich ścieżkach odczytu (extract/resyncLabels/resyncFeatures/okno+count/LearningEngine) — pokryte testami w `trainingUsersAllowlist.test.ts`.
+- **Residual R1 (zaakceptowane, nie blokuje):** ścieżka ZAPISU bez gate'a — `updateLabelByTelemetry` (`FeatureExtractor.ts:384`) ślepe `updateMany`, flagi w reward/propagacji/`recordAcceptance` też. Skutek: telemetria spoza allowlisty gromadzi gotowe flagi, aktywne dopiero przy poszerzeniu allowlisty. Trening bezpieczny (filtry po joinie). Ewentualny gate w `updateLabelByTelemetry` = osobny mały krok w przyszłości, NIE teraz.
