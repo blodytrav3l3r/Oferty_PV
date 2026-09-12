@@ -9,6 +9,7 @@ import { ML_CONFIG } from '../services/ml/trainingConfig';
 import { logger } from '../utils/logger';
 import { READ_LIMITER, TELEMETRY_WRITE_LIMITER, WRITE_LIMITER } from '../middleware/rateLimiters';
 import { requireAuth, requireAdmin, AuthenticatedRequest } from '../middleware/auth';
+import { canWriteDoc } from '../utils/ownership';
 import { requireAiMlEnabled, isAiMlEnabled } from '../middleware/aiMlGuard';
 import { logAudit } from '../services/auditService';
 import { z } from 'zod';
@@ -197,7 +198,7 @@ router.post(
                 return;
             }
 
-            const result = await processRewardItem(parsed.data, req.user?.id || 'unknown');
+            const result = await processRewardItem(parsed.data, req.user);
             if (result.status === 'invalid') {
                 res.status(400).json({
                     error: 'Invalid reward payload',
@@ -207,6 +208,10 @@ router.post(
             }
             if (result.status === 'well-not-found') {
                 res.status(400).json({ error: 'WELL_NOT_FOUND' });
+                return;
+            }
+            if (result.status === 'forbidden') {
+                res.status(403).json({ error: 'FORBIDDEN' });
                 return;
             }
             if (result.status === 'duplicate') {
@@ -240,10 +245,11 @@ type RewardItemInput = z.infer<typeof rewardSchema>;
  */
 async function processRewardItem(
     data: RewardItemInput,
-    userId: string
+    user: AuthenticatedRequest['user']
 ): Promise<
     | { status: 'invalid'; details: unknown }
     | { status: 'well-not-found' }
+    | { status: 'forbidden' }
     | { status: 'duplicate' }
     | { status: 'applied' }
 > {
@@ -256,7 +262,32 @@ async function processRewardItem(
         return { status: 'well-not-found' };
     }
 
-    return applyRewardItem(data, userId);
+    return applyRewardItem(data, user);
+}
+
+/**
+ * Wyznacza sugestię etykietowaną przez MODIFY/REJECT — DOKŁADNIE ten rekord,
+ * który `updateLabelByTelemetry` później zmodyfikuje (invariant testowany).
+ */
+async function resolveRewardTarget(
+    data: RewardItemInput
+): Promise<{ id: string; userId: string | null } | null> {
+    if (data.parentConfigId) {
+        const parent = await prisma.ai_telemetry_logs.findFirst({
+            where: { id: data.parentConfigId, wellId: data.wellId },
+            select: { id: true, userId: true }
+        });
+        if (parent) return parent;
+    }
+    const suggestion = await prisma.ai_telemetry_logs.findFirst({
+        where: {
+            wellId: data.wellId,
+            solverSource: { in: ['AUTO_JS', 'AI_SUGGEST'] }
+        },
+        orderBy: { createdAt: 'asc' },
+        select: { id: true, userId: true }
+    });
+    return suggestion;
 }
 
 /**
@@ -265,11 +296,21 @@ async function processRewardItem(
  */
 async function applyRewardItem(
     data: RewardItemInput,
-    userId: string
-): Promise<{ status: 'duplicate' } | { status: 'applied' }> {
+    user: AuthenticatedRequest['user']
+): Promise<{ status: 'duplicate' } | { status: 'applied' } | { status: 'forbidden' }> {
+    // P1 reward ownership: silny negatyw (REJECT, −1.0) tylko z prawem zapisu
+    // do właściciela ETYKIETOWANEJ sugestii. Gate PRZED jakimkolwiek zapisem
+    // (także przed aiRewardLog). ACCEPT/MODIFY bez zmian.
+    if (data.action === 'REJECT') {
+        const target = await resolveRewardTarget(data);
+        if (target && !canWriteDoc(user, target.userId)) {
+            return { status: 'forbidden' };
+        }
+    }
+
     // P2 dedup: unikalny indeks uq_reward_well_action + P2002 (atomowo).
     const applied = await rewardCalculator.processAction({
-        userId,
+        userId: user?.id || 'unknown',
         action: data.action,
         wellId: data.wellId,
         dn: data.dn,
@@ -286,25 +327,8 @@ async function applyRewardItem(
         const flags = data.action === 'MODIFY' ? { wasModified: true } : { wasRejected: true };
         const label = data.action === 'MODIFY' ? 'MODIFIED' : 'REJECTED';
 
-        let targetId: string | null = null;
-        if (data.parentConfigId) {
-            const parent = await prisma.ai_telemetry_logs.findFirst({
-                where: { id: data.parentConfigId, wellId: data.wellId },
-                select: { id: true }
-            });
-            if (parent) targetId = parent.id;
-        }
-        if (!targetId) {
-            const suggestion = await prisma.ai_telemetry_logs.findFirst({
-                where: {
-                    wellId: data.wellId,
-                    solverSource: { in: ['AUTO_JS', 'AI_SUGGEST'] }
-                },
-                orderBy: { createdAt: 'asc' },
-                select: { id: true }
-            });
-            if (suggestion) targetId = suggestion.id;
-        }
+        const target = await resolveRewardTarget(data);
+        const targetId = target?.id ?? null;
         if (targetId) {
             await prisma.ai_telemetry_logs.update({
                 where: { id: targetId },
@@ -341,7 +365,7 @@ router.post(
             }
 
             const items = parsed.data.items;
-            const userId = req.user?.id || 'unknown';
+            const user = req.user;
 
             // Jeden lookup telemetry dla całego batcha zamiast N findFirst.
             const wellIds = [...new Set(items.map((i) => i.wellId))];
@@ -363,8 +387,10 @@ router.post(
                         rejected.push({ wellId: item.wellId, reason: 'WELL_NOT_FOUND' });
                         continue;
                     }
-                    const result = await applyRewardItem(item, userId);
+                    const result = await applyRewardItem(item, user);
                     if (result.status === 'applied') applied.push(item.wellId);
+                    else if (result.status === 'forbidden')
+                        rejected.push({ wellId: item.wellId, reason: 'FORBIDDEN' });
                     else duplicates.push(item.wellId);
                 } catch {
                     rejected.push({ wellId: item.wellId, reason: 'ERROR' });

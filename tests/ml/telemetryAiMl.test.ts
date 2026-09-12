@@ -2,6 +2,7 @@ import { describe, expect, it, jest, beforeEach } from '@jest/globals';
 import request from 'supertest';
 import express from 'express';
 import { setWellScore, clearPredictionCache } from '../../src/services/ml/predictionCache';
+import prisma from '../../src/prismaClient';
 
 jest.mock('../../src/utils/logger', () => ({
     logger: {
@@ -12,7 +13,19 @@ jest.mock('../../src/utils/logger', () => ({
 }));
 
 jest.mock('../../src/middleware/auth', () => ({
-    requireAuth: (_req: any, _res: any, next: any) => next(),
+    // Harness tożsamości dla testów ownership: nagłówki x-test-userid /
+    // x-test-role ustawiają req.user; bez nich zachowanie jak dotąd (brak usera).
+    requireAuth: (req: any, _res: any, next: any) => {
+        const testId = req.headers?.['x-test-userid'];
+        if (testId) {
+            req.user = {
+                id: String(testId),
+                role: String(req.headers?.['x-test-role'] || 'user'),
+                subUsers: []
+            };
+        }
+        next();
+    },
     requireAdmin: (_req: any, _res: any, next: any) => next()
 }));
 
@@ -506,19 +519,27 @@ describe('POST /api/telemetry/ai/reward', () => {
     });
 
     it('REJECT synchronizuje etykiete REJECTED i rejestruje predykcje negatywna', async () => {
-        mockTelemetryLogsFindFirst
-            .mockResolvedValueOnce({ id: 'log-1' }) // telemetryWell
-            .mockResolvedValueOnce({ id: 'latest-log' }); // najnowszy rekord studni
+        // Routing zamiast Once-queue (clearAllMocks nie czyści bazowych
+        // mockResolvedValue z wcześniejszych testów — Once by się rozjechał).
+        mockTelemetryLogsFindFirst.mockImplementation(async (args: any) => {
+            if (args?.where?.id || args?.where?.solverSource) {
+                return { id: 'latest-log', userId: 'userA' };
+            }
+            return { id: 'log-1' };
+        });
         mockProcessAction.mockResolvedValue({ applied: true });
         clearPredictionCache();
         setWellScore('well-1', 0.95);
 
-        const res = await request(app).post('/api/telemetry/ai/reward').send({
-            action: 'REJECT',
-            wellId: 'well-1',
-            scoreBefore: 0.95,
-            wasAiRanked: true
-        });
+        const res = await request(app)
+            .post('/api/telemetry/ai/reward')
+            .set({ 'x-test-userid': 'userA' })
+            .send({
+                action: 'REJECT',
+                wellId: 'well-1',
+                scoreBefore: 0.95,
+                wasAiRanked: true
+            });
 
         expect(res.status).toBe(200);
         expect(mockUpdateLabelByTelemetry).toHaveBeenCalledWith('latest-log', 'REJECTED');
@@ -536,5 +557,117 @@ describe('POST /api/telemetry/ai/reward', () => {
 
         expect(res.status).toBe(200);
         expect(mockRecordPredictionResult).not.toHaveBeenCalled();
+    });
+});
+
+describe('POST /ai/reward ownership (P1 gate na ownerze targetu)', () => {
+    let app: express.Application;
+
+    beforeEach(async () => {
+        jest.clearAllMocks();
+        mockProcessAction.mockResolvedValue({ applied: true });
+        const { default: router } = await import('../../src/routes/telemetryAiMl');
+        app = express();
+        app.use(express.json());
+        app.use('/api/telemetry', router);
+    });
+
+    function asUser(userId: string, role = 'user') {
+        return { 'x-test-userid': userId, 'x-test-role': role };
+    }
+
+    // well-exists (where.wellId bez where.id/solverSource) vs target — routing jak w route.
+    function mockTarget(target: { id: string; userId: string | null } | null) {
+        mockTelemetryLogsFindFirst.mockImplementation(async (args: any) => {
+            if (args?.where?.id || args?.where?.solverSource) return target;
+            return { id: 'log-w' };
+        });
+    }
+
+    const telemetryUpdate = () => (prisma.ai_telemetry_logs as any).update as jest.Mock;
+
+    it('obcy REJECT na cudza sugestie → 403 FORBIDDEN, zero zapisow', async () => {
+        mockTarget({ id: 'tel-b', userId: 'userB' });
+
+        const res = await request(app)
+            .post('/api/telemetry/ai/reward')
+            .set(asUser('userA'))
+            .send({ action: 'REJECT', wellId: 'well-1' });
+
+        expect(res.status).toBe(403);
+        expect(res.body).toEqual({ error: 'FORBIDDEN' });
+        expect(mockProcessAction).not.toHaveBeenCalled();
+        expect(telemetryUpdate()).not.toHaveBeenCalled();
+        expect(mockUpdateLabelByTelemetry).not.toHaveBeenCalled();
+    });
+
+    it('target-owner, nie wellId: cel B przy wlasnej sugestii A → 403', async () => {
+        // parentConfigId wskazuje wprost sugestie B (A ma tez wlasna — gate patrzy na target).
+        mockTarget({ id: 'tel-b', userId: 'userB' });
+
+        const res = await request(app)
+            .post('/api/telemetry/ai/reward')
+            .set(asUser('userA'))
+            .send({ action: 'REJECT', wellId: 'well-mixed', parentConfigId: 'tel-b' });
+
+        expect(res.status).toBe(403);
+        expect(telemetryUpdate()).not.toHaveBeenCalled();
+        expect(mockUpdateLabelByTelemetry).not.toHaveBeenCalled();
+    });
+
+    it('wlasny REJECT → 200 jak dotad (flaga + label na wlasnej sugestii)', async () => {
+        mockTarget({ id: 'tel-a', userId: 'userA' });
+
+        const res = await request(app)
+            .post('/api/telemetry/ai/reward')
+            .set(asUser('userA'))
+            .send({ action: 'REJECT', wellId: 'well-1' });
+
+        expect(res.status).toBe(200);
+        expect(res.body).toEqual({ status: 'ok' });
+        expect(mockProcessAction).toHaveBeenCalled();
+        expect(telemetryUpdate()).toHaveBeenCalledWith(
+            expect.objectContaining({ where: { id: 'tel-a' } })
+        );
+        expect(mockUpdateLabelByTelemetry).toHaveBeenCalledWith('tel-a', 'REJECTED');
+    });
+
+    it('obcy MODIFY bez zmian → 200 (zakres: tylko REJECT gateowany)', async () => {
+        mockTarget({ id: 'tel-b', userId: 'userB' });
+
+        const res = await request(app)
+            .post('/api/telemetry/ai/reward')
+            .set(asUser('userA'))
+            .send({ action: 'MODIFY', wellId: 'well-1' });
+
+        expect(res.status).toBe(200);
+        expect(mockProcessAction).toHaveBeenCalled();
+    });
+
+    it('batch mieszany: wlasny applied, cudzy FORBIDDEN', async () => {
+        mockTelemetryLogsFindMany.mockResolvedValue([
+            { wellId: 'well-own' },
+            { wellId: 'well-alien' }
+        ]);
+        mockTelemetryLogsFindFirst.mockImplementation(async (args: any) => {
+            // resolveRewardTarget pyta po where.id (= parentConfigId z itemu).
+            if (args?.where?.id === 'tel-b') return { id: 'tel-b', userId: 'userB' };
+            if (args?.where?.id) return { id: 'tel-a', userId: 'userA' };
+            return { id: 'log-w' };
+        });
+
+        const res = await request(app)
+            .post('/api/telemetry/ai/reward-batch')
+            .set(asUser('userA'))
+            .send({
+                items: [
+                    { action: 'REJECT', wellId: 'well-own', parentConfigId: 'tel-a' },
+                    { action: 'REJECT', wellId: 'well-alien', parentConfigId: 'tel-b' }
+                ]
+            });
+
+        expect(res.status).toBe(200);
+        expect(res.body.applied).toEqual(['well-own']);
+        expect(res.body.rejected).toEqual([{ wellId: 'well-alien', reason: 'FORBIDDEN' }]);
     });
 });
