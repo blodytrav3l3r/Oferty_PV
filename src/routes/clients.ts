@@ -60,14 +60,33 @@ router.put(
         try {
             const arr = req.body.data || [];
             const userId = authReq.user?.id;
+            const isAdmin = authReq.user?.role === 'admin';
+
+            // P0: destrukcyjny full-wipe (pusta tablica = skasuj wszystko) tylko
+            // dla admina. Kontrakt UI nigdy nie czyści całości (dodawanie/edycja/
+            // pojedyncze usuwanie), więc zwykły handlowiec traci tu wyłącznie
+            // operację, której legalnie nie wykonuje.
+            if (arr.length === 0 && !isAdmin) {
+                return res
+                    .status(403)
+                    .json({ error: 'Brak uprawnień do czyszczenia bazy klientów' });
+            }
 
             const now = new Date().toISOString();
             const upserted: { id: string }[] = [];
 
-            // Wspólna baza klientów — wszyscy widzą i edytują wszystkich (Wariant A)
+            // Wspólna baza klientów — wszyscy widzą i edytują wszystkich (Wariant A).
+            // P0: upsert NIE przepisuje właściciela istniejących wierszy (userId
+            // z DB zostaje); userId edytującego dostają wyłącznie NOWE wiersze.
             await prisma.$transaction(async (tx) => {
-                const existingClients = await tx.$queryRaw`SELECT id FROM clients_rel`;
-                const existingIds = (existingClients as { id: string }[]).map((c) => c.id);
+                const existingClients = await tx.$queryRaw`SELECT id, "userId" FROM clients_rel`;
+                const existingOwners = new Map(
+                    (existingClients as { id: string; userId: string | null }[]).map((c) => [
+                        c.id,
+                        c.userId ?? null
+                    ])
+                );
+                const existingIds = [...existingOwners.keys()];
                 const incomingIds = arr.map((c: { id?: string }) => c.id).filter(Boolean);
                 const toDelete = existingIds.filter((id) => !incomingIds.includes(id));
 
@@ -83,6 +102,9 @@ router.put(
                         docId =
                             Date.now().toString() + '_' + Math.random().toString(36).substr(2, 5);
                     }
+                    // P0: właściciel z DB dla istniejących (w tym null = bezpański
+                    // zostaje bezpański); edytujący — tylko dla nowych wierszy.
+                    const ownerId = existingOwners.has(docId) ? existingOwners.get(docId) : userId;
 
                     // Zawsze normalizuj createdAt do stringa ISO 8601
                     let parsedDate = now;
@@ -100,9 +122,9 @@ router.put(
 
                     await tx.$queryRaw`
                     INSERT INTO clients_rel (id, userId, name, nip, address, contact, clientNumber, phone, email, createdAt, updatedAt)
-                    VALUES (${docId}, ${userId}, ${c.name || ''}, ${c.nip || ''}, ${c.address || ''}, ${c.contact || ''}, ${c.clientNumber || ''}, ${c.phone || ''}, ${c.email || ''}, ${parsedDate}, ${now})
+                    VALUES (${docId}, ${ownerId}, ${c.name || ''}, ${c.nip || ''}, ${c.address || ''}, ${c.contact || ''}, ${c.clientNumber || ''}, ${c.phone || ''}, ${c.email || ''}, ${parsedDate}, ${now})
                     ON CONFLICT(id) DO UPDATE SET
-                        userId = ${userId},
+                        userId = ${ownerId},
                         name = ${c.name || ''},
                         nip = ${c.nip || ''},
                         address = ${c.address || ''},

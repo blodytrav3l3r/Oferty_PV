@@ -120,5 +120,81 @@ describe('Clients CRUD — wspólna baza (Wariant A, globalny dostęp)', () => {
             expect(res.statusCode).toBe(200);
             expect(res.body.ok).toBe(true);
         });
+
+        it('P0: pusta tablica od nie-admina → 403, zero zapisów', async () => {
+            const res = await request(app).put('/api/clients').send({ data: [] });
+
+            expect(res.statusCode).toBe(403);
+            expect(prisma.$transaction).not.toHaveBeenCalled();
+        });
+
+        it('P0: pusta tablica od admina → 200 (ścieżka uprzywilejowana)', async () => {
+            mockUser.role = 'admin';
+            const txMock = {
+                $queryRaw: jest.fn().mockResolvedValue([]),
+                $executeRaw: jest.fn().mockResolvedValue(1)
+            };
+            (prisma.$transaction as jest.Mock).mockImplementation(async (fn: (tx: any) => any) =>
+                fn(txMock)
+            );
+
+            const res = await request(app).put('/api/clients').send({ data: [] });
+
+            expect(res.statusCode).toBe(200);
+            expect(res.body.ok).toBe(true);
+        });
+
+        it('P0: update cudzego wiersza zachowuje userId właściciela', async () => {
+            const upserts: Array<{ sql: string; values: unknown[] }> = [];
+            const txMock = {
+                $queryRaw: jest.fn().mockImplementation(async (strings: any, ...values: any[]) => {
+                    const sql = Array.isArray(strings) ? strings.join(' ') : String(strings);
+                    if (sql.includes('SELECT id')) return [{ id: 'c1', userId: 'userB' }];
+                    upserts.push({ sql, values });
+                    return [{ id: 'c1' }];
+                }),
+                $executeRaw: jest.fn().mockResolvedValue(1)
+            };
+            (prisma.$transaction as jest.Mock).mockImplementation(async (fn: (tx: any) => any) =>
+                fn(txMock)
+            );
+
+            const res = await request(app)
+                .put('/api/clients')
+                .send({ data: [{ id: 'c1', name: 'Cudzy klient' }] });
+
+            expect(res.statusCode).toBe(200);
+            const upsert = upserts.find((u) => u.sql.includes('ON CONFLICT'));
+            expect(upsert).toBeTruthy();
+            // Treść można nadpisać (Wariant A), własności nie.
+            expect(upsert!.values).toContain('Cudzy klient');
+            expect(upsert!.values).toContain('userB');
+            expect(upsert!.values).not.toContain('user-id');
+        });
+
+        it('P0: nowy wiersz dostaje userId edytującego', async () => {
+            const upserts: Array<{ sql: string; values: unknown[] }> = [];
+            const txMock = {
+                $queryRaw: jest.fn().mockImplementation(async (strings: any, ...values: any[]) => {
+                    const sql = Array.isArray(strings) ? strings.join(' ') : String(strings);
+                    if (sql.includes('SELECT id')) return [];
+                    upserts.push({ sql, values });
+                    return [{ id: 'c-new' }];
+                }),
+                $executeRaw: jest.fn().mockResolvedValue(1)
+            };
+            (prisma.$transaction as jest.Mock).mockImplementation(async (fn: (tx: any) => any) =>
+                fn(txMock)
+            );
+
+            const res = await request(app)
+                .put('/api/clients')
+                .send({ data: [{ name: 'Nowy klient' }] });
+
+            expect(res.statusCode).toBe(200);
+            const upsert = upserts.find((u) => u.sql.includes('ON CONFLICT'));
+            expect(upsert).toBeTruthy();
+            expect(upsert!.values).toContain('user-id');
+        });
     });
 });
