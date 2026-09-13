@@ -33,6 +33,14 @@ function excelOnRzednaChange(wIdx) {
 
     well.rzednaWlazu = rzWlazu;
     well.rzednaDna = rzDna;
+    // Dno powyżej istniejących przejść: jeden toast z listą (bez auto-clampa
+    // przejść — decyduje użytkownik; wiersz i tak dostaje ERROR przez refresh).
+    // W trybie quiet (paste) cicho — wynika z tła wiersza.
+    if (rzDna !== null && typeof listPrzejsciaBelowDna === 'function' && !_excelPasteQuiet()) {
+        const _below = listPrzejsciaBelowDna(well);
+        if (_below.length > 0)
+            showToast('Rzędna dna powyżej przejść: ' + _below.join(', '), 'error');
+    }
     _excelMarkDirty();
     // podczas bulk paste nie odpalaj solvera ani preview per komórka — zrobi to batch na końcu (Faza3)
     if (_excelPasteQuiet()) {
@@ -185,6 +193,26 @@ function excelOnPrzejscieChange(wIdx, trIdx, field, value) {
                   ? parseFloat(String(value).replace(',', '.'))
                   : null
               : value || null;
+    // Clamp rzędnej do zakresu dno–właz (jak quick-edit w konfiguratorze).
+    // null przechodzi bez zmian; fill/paste (quiet) clampuje cicho, bez powiadomień.
+    if (
+        field === 'rzednaWlaczenia' &&
+        typeof prz[field] === 'number' &&
+        typeof clampRzednaWlaczenia === 'function'
+    ) {
+        const _c = clampRzednaWlaczenia(prz[field], well);
+        if ((_c.clampedLow || _c.clampedHigh) && !_excelPasteQuiet()) {
+            if (typeof announceRzednaClamp === 'function') announceRzednaClamp(_c);
+            else
+                showToast(
+                    _c.clampedLow
+                        ? 'Rzędna nie może być niższa niż rzędna dna!'
+                        : 'Rzędna nie może być wyższa niż rzędna włazu!',
+                    'error'
+                );
+        }
+        prz[field] = _c.value;
+    }
     if (field === 'angle') {
         prz.angleExecution = parseFloat(prz.angle) || 0;
         prz.angleGony = (parseFloat(prz.angle) || 0).toFixed(2);

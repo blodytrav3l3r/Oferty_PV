@@ -217,6 +217,114 @@ function recalculateWellErrors(well) {
           : well.configStatus || '';
 }
 
+/* ===== CLAMP RZĘDNEJ WŁĄCZENIA DO ZAKRESU DNO–WŁAZ ===== */
+// Czyste funkcje (bez toastów — komunikat pokazuje wołający, z guardem quiet-mode
+// w Excelu). SSoT clampowania dla: saveQuickEdit, inlineFinish (konfigurator),
+// excelOnPrzejscieChange (Excel). null/NaN/brak rzędnych przechodzą bez zmian.
+function clampRzednaWlaczenia(numVal, well) {
+    if (numVal === null || numVal === undefined || isNaN(numVal))
+        return { value: numVal, clampedLow: false, clampedHigh: false };
+    let value = numVal;
+    let clampedLow = false;
+    let clampedHigh = false;
+    if (well) {
+        const rzDna = parseFloat(well.rzednaDna);
+        const rzWlazu = parseFloat(well.rzednaWlazu);
+        if (!isNaN(rzDna) && value < rzDna) {
+            value = rzDna;
+            clampedLow = true;
+        }
+        if (!isNaN(rzWlazu) && value > rzWlazu) {
+            value = rzWlazu;
+            clampedHigh = true;
+        }
+    }
+    return { value: value, clampedLow: clampedLow, clampedHigh: clampedHigh };
+}
+
+/* Format rzędnej do komunikatów: 1,200 (polski przecinek, jak heightIndicator). */
+function formatRzednaShort(val) {
+    const n = parseFloat(val);
+    if (isNaN(n)) return String(val);
+    return n.toFixed(3).replace('.', ',');
+}
+
+/* Lista przejść poniżej dna: ['nr 2 (1,200 m < dno 1,500 m)'] lub [].
+   Używają: excelOnRzednaChange, updateElevations — jeden toast ze wszystkimi. */
+function listPrzejsciaBelowDna(well) {
+    if (!well || !well.przejscia || well.przejscia.length === 0) return [];
+    const rzDna = well.rzednaDna != null ? parseFloat(well.rzednaDna) : NaN;
+    if (isNaN(rzDna)) return [];
+    const out = [];
+    well.przejscia.forEach((pr, idx) => {
+        const pel = parseFloat(pr.rzednaWlaczenia);
+        if (isNaN(pel) || pel >= rzDna) return;
+        out.push(
+            'nr ' +
+                (idx + 1) +
+                ' (' +
+                formatRzednaShort(pel) +
+                ' m < dno ' +
+                formatRzednaShort(rzDna) +
+                ' m)'
+        );
+    });
+    return out;
+}
+/* ===== CENTRALNY MODAL CLAMPA RZĘDNEJ ===== */
+// Dodatkowy (obok toastu) komunikat na środku ekranu, gdy wpisana rzędna
+// ląduje poza zakresem dno–właz i zostaje automatycznie poprawiona.
+// Stałe id: szybkie clampy pod rząd podmieniają modal zamiast stosu okien.
+// Auto-close po 2 s (guard generacji: starszy timer nie zamyka nowszego modala).
+const RZEDNA_CLAMP_AUTOCLOSE_MS = 2000;
+let _rzednaClampGen = 0;
+function showRzednaClampPopup(msg, correctedVal) {
+    const safeMsg = typeof escapeHtml === 'function' ? escapeHtml(String(msg)) : String(msg);
+    const safeVal =
+        typeof escapeHtml === 'function'
+            ? escapeHtml(formatRzednaShort(correctedVal) + ' m')
+            : formatRzednaShort(correctedVal) + ' m';
+    if (typeof window === 'undefined' || typeof window.showModal !== 'function') {
+        if (typeof showToast === 'function') showToast(String(msg), 'error');
+        return;
+    }
+    const gen = ++_rzednaClampGen;
+    const html = `<div class="modal" style="max-width:560px; width:92vw; max-height:85vh; overflow-y:auto;">
+        <div class="modal-header"><h3 style="display:flex; align-items:center; gap:0.5rem;"><i data-lucide="alert-triangle" style="color:var(--warn);"></i> Nieprawidłowa rzędna</h3><button class="btn-icon" aria-label="Zamknij" onclick="closeModal('rzedna-clamp-popup')"><i data-lucide="x"></i></button></div>
+        <div style="font-size:var(--fs-sm); color:var(--text-secondary); margin-bottom:0.8rem;">${safeMsg}<br>Wartość poprawiono do <strong>${safeVal}</strong>.<br><span style="font-size:var(--fs-xs); color:var(--text-muted);">Okno zamknie się automatycznie.</span></div>
+        <div class="modal-footer"><button class="btn btn-primary" onclick="closeModal('rzedna-clamp-popup')">Rozumiem</button></div>
+    </div>`;
+    window.showModal({
+        id: 'rzedna-clamp-popup',
+        title: 'Nieprawidłowa rzędna',
+        html: html
+    });
+    if (typeof lucide !== 'undefined' && lucide.createIcons)
+        lucide.createIcons({ root: document.getElementById('rzedna-clamp-popup') });
+    setTimeout(() => {
+        if (gen !== _rzednaClampGen) return;
+        if (
+            typeof document !== 'undefined' &&
+            document.getElementById('rzedna-clamp-popup') &&
+            typeof closeModal === 'function'
+        )
+            closeModal('rzedna-clamp-popup');
+    }, RZEDNA_CLAMP_AUTOCLOSE_MS);
+}
+
+/* Podwójna notyfikacja clampu: toast + centralny modal (równocześnie).
+   Wołają 3 miejsca clampujące (saveQuickEdit, inlineFinish, excelOnPrzejscieChange
+   poza quiet). Zwraca msg lub null, gdy brak clampowania. */
+function announceRzednaClamp(c) {
+    if (!c || (!c.clampedLow && !c.clampedHigh)) return null;
+    const msg = c.clampedLow
+        ? 'Rzędna nie może być niższa niż rzędna dna!'
+        : 'Rzędna nie może być wyższa niż rzędna włazu!';
+    if (typeof showToast === 'function') showToast(msg, 'error');
+    if (typeof showRzednaClampPopup === 'function') showRzednaClampPopup(msg, c.value);
+    return msg;
+}
+
 /* ===== RENDER BANNERA BŁĘDÓW BIECĄCEJ STUDNI ===== */
 function renderWellConfigErrors(well) {
     if (well) recalculateWellErrors(well);
@@ -268,6 +376,16 @@ function validatePrzejsciaForSave(wellsArr) {
                     ? isEmptyPrzejscie(p)
                     : !hasCategory && !hasProduct && !hasRzedna && !hasAngle;
             if (_isEmpty) return;
+            // Twardy gate zapisu: rzędna poniżej dna blokuje zapis (dane legacy/import
+            // wcześniej zapisywały się mimo ERROR z recalculateWellErrors).
+            const _pel = parseFloat(p.rzednaWlaczenia);
+            const _rzDna =
+                well.rzednaDna != null && well.rzednaDna !== '' ? parseFloat(well.rzednaDna) : NaN;
+            if (!isNaN(_pel) && !isNaN(_rzDna) && _pel < _rzDna) {
+                errors.push(
+                    `Studnia "${wellName}" przejście #${idx + 1}: rzędna włączenia (${formatRzednaShort(_pel)} m) poniżej rzędnej dna (${formatRzednaShort(_rzDna)} m) — popraw rzędną`
+                );
+            }
             if (hasCategory && !hasProduct) {
                 errors.push(
                     `Studnia "${wellName}" przejście #${idx + 1}: wybrano rodzaj "${effCategory}" bez średnicy — uzupełnij średnicę (DN)`
@@ -327,4 +445,8 @@ if (typeof window !== 'undefined') {
     window.refreshAllWellErrors = refreshAllWellErrors;
     window.validatePrzejsciaForSave = validatePrzejsciaForSave;
     window.showPrzejsciaValidationPopup = showPrzejsciaValidationPopup;
+    window.clampRzednaWlaczenia = clampRzednaWlaczenia;
+    window.listPrzejsciaBelowDna = listPrzejsciaBelowDna;
+    window.showRzednaClampPopup = showRzednaClampPopup;
+    window.announceRzednaClamp = announceRzednaClamp;
 }

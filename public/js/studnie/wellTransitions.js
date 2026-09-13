@@ -356,15 +356,31 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
                     if (isNaN(numVal)) {
                         well.przejscia[index].rzednaWlaczenia = '';
                     } else {
-                        const rzWlazu = parseFloat(well.rzednaWlazu);
-                        const rzDna = parseFloat(well.rzednaDna);
-                        if (!isNaN(rzDna) && numVal < rzDna) {
-                            showToast('Rzędna nie może być niższa niż rzędna dna!', 'error');
-                            numVal = rzDna;
-                        }
-                        if (!isNaN(rzWlazu) && numVal > rzWlazu) {
-                            showToast('Rzędna nie może być wyższa niż rzędna włazu!', 'error');
-                            numVal = rzWlazu;
+                        if (
+                            typeof clampRzednaWlaczenia === 'function' &&
+                            typeof announceRzednaClamp === 'function'
+                        ) {
+                            const _c = clampRzednaWlaczenia(numVal, well);
+                            announceRzednaClamp(_c);
+                            numVal = _c.value;
+                        } else if (typeof clampRzednaWlaczenia === 'function') {
+                            const _c = clampRzednaWlaczenia(numVal, well);
+                            if (_c.clampedLow)
+                                showToast('Rzędna nie może być niższa niż rzędna dna!', 'error');
+                            if (_c.clampedHigh)
+                                showToast('Rzędna nie może być wyższa niż rzędna włazu!', 'error');
+                            numVal = _c.value;
+                        } else {
+                            const rzWlazu = parseFloat(well.rzednaWlazu);
+                            const rzDna = parseFloat(well.rzednaDna);
+                            if (!isNaN(rzDna) && numVal < rzDna) {
+                                showToast('Rzędna nie może być niższa niż rzędna dna!', 'error');
+                                numVal = rzDna;
+                            }
+                            if (!isNaN(rzWlazu) && numVal > rzWlazu) {
+                                showToast('Rzędna nie może być wyższa niż rzędna włazu!', 'error');
+                                numVal = rzWlazu;
+                            }
                         }
                         well.przejscia[index].rzednaWlaczenia = numVal.toFixed(3);
                     }

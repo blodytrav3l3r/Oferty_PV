@@ -2490,7 +2490,13 @@ function _excelSetModelCellValue(wIdx, effLogical, val, ctx, targetElement) {
             const prz = well.przejscia[trIdx];
             if (subType === 0) {
                 const num = parseFloat(valStr.replace(',', '.'));
-                prz.rzednaWlaczenia = !isNaN(num) ? num : null;
+                // Cichy clamp do zakresu dno–właz (ścieżka quiet: batch bez toastów
+                // i modali; jak excelOnPrzejscieChange w _excelPasteQuiet).
+                if (!isNaN(num) && typeof clampRzednaWlaczenia === 'function') {
+                    prz.rzednaWlaczenia = clampRzednaWlaczenia(num, well).value;
+                } else {
+                    prz.rzednaWlaczenia = !isNaN(num) ? num : null;
+                }
             } else if (subType === 1) {
                 const num = parseFloat(valStr.replace(',', '.'));
                 if (!isNaN(num)) {

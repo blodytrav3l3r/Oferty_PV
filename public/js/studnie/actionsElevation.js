@@ -41,6 +41,14 @@ function updateElevations() {
     well.rzednaWlazu = wlazVal;
     well.rzednaDna = dnaVal;
 
+    // Dno powyżej istniejących przejść: jeden toast z listą (bez auto-clampa
+    // przejść — decyduje użytkownik; banner ERROR renderuje się poniżej).
+    if (typeof listPrzejsciaBelowDna === 'function') {
+        const _below = listPrzejsciaBelowDna(well);
+        if (_below.length > 0)
+            showToast('Rzędna dna powyżej przejść: ' + _below.join(', '), 'error');
+    }
+
     updateHeightIndicator();
     _debouncedRefreshWells();
 

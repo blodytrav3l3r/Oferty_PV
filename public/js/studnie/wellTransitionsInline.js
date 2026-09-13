@@ -100,15 +100,33 @@ window.inlineFinish = (contextId = 'main', containerId = '') => {
     const isFirst = well.przejscia ? well.przejscia.length === 0 : true;
     const flowType = isFirst && angle === 0 ? FLOW_TYPES.WYLOT : FLOW_TYPES.WLOT;
 
+    let rzednaVal = null;
+    if (rzedna !== null && rzedna !== undefined && rzedna !== '') {
+        const parsed = parseCalcExpression(rzedna);
+        if (parsed !== null && !isNaN(parsed)) {
+            rzednaVal = parsed;
+            if (
+                typeof clampRzednaWlaczenia === 'function' &&
+                typeof announceRzednaClamp === 'function'
+            ) {
+                const _c = clampRzednaWlaczenia(parsed, well);
+                announceRzednaClamp(_c);
+                rzednaVal = _c.value;
+            } else if (typeof clampRzednaWlaczenia === 'function') {
+                const _c = clampRzednaWlaczenia(parsed, well);
+                if (_c.clampedLow) showToast('Rzędna nie może być niższa niż rzędna dna!', 'error');
+                if (_c.clampedHigh)
+                    showToast('Rzędna nie może być wyższa niż rzędna włazu!', 'error');
+                rzednaVal = _c.value;
+            }
+            rzednaVal = rzednaVal.toFixed(3);
+        }
+    }
+
     well.przejscia.push({
         id: 'prz-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
         productId: id,
-        rzednaWlaczenia:
-            rzedna !== null && rzedna !== undefined && rzedna !== ''
-                ? parseCalcExpression(rzedna) !== null
-                    ? parseCalcExpression(rzedna).toFixed(3)
-                    : null
-                : null,
+        rzednaWlaczenia: rzednaVal,
         angle: angle,
         angleExecution: exec,
         angleGony: gons,
