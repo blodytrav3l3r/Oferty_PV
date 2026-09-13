@@ -28,6 +28,11 @@ let _excelAutoSelectEnabled = true;
 /* F2c: lista spod modala odłożona na zamknięcie (niewidoczna pod overlayem).
    Stawia _excelDebouncedRefresh, konsumuje _excelCloseOverlay. */
 let _excelListStale = false;
+/* G1 quiet-render: depth>0 tłumi wyłącznie RENDERY w autoSelectComponents
+   (LOADING-refresh, toast+render przy błędzie, 4 rendery finałowe).
+   INVARIANT: nigdy wyniku solvera, stanu well, telemetry, AI, błędów ani
+   kolejności operacji. Wrappery Excel pilnują bilansu 0→1→0 w finally. */
+let _excelQuietDepth = 0;
 /* wellIndexById — canonical index SSoT (I3): wells[] + Map nie dwie kopie, sort nie rebuild */
 let _excelWellIndexById = new Map();
 /* filteredIndexes — SSoT widoku (C1). DOM = tylko widok. Invalidacja centralna. */

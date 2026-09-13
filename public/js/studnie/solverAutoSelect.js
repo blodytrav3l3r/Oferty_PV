@@ -87,9 +87,10 @@ window.autoSelectComponents = async function autoSelectComponents(autoTriggered 
                 : null;
         // --- Pokaż loading w UI ---
         well.configStatus = 'LOADING';
+        const __excelQuiet = typeof _excelQuietDepth !== 'undefined' && _excelQuietDepth > 0;
         if (__bulkQuiet) {
             if (__bulkStats) __bulkStats.rendersSkipped++;
-        } else if (typeof refreshAll === 'function') {
+        } else if (!__excelQuiet && typeof refreshAll === 'function') {
             refreshAll();
         }
 
@@ -105,10 +106,12 @@ window.autoSelectComponents = async function autoSelectComponents(autoTriggered 
             if (__bulkQuiet) {
                 // Bulk liczy błędy sam (fail++); toast i render na końcu.
                 if (__bulkStats) __bulkStats.rendersSkipped += 2;
-            } else {
+            } else if (!__excelQuiet) {
                 showToast(jsResult.error, 'error');
                 refreshAll();
             }
+            /* __excelQuiet: błąd zostaje w configErrors → Excel pokaże tint
+               przy własnym renderze; toast pominięty jak zbędny render. */
             return;
         }
         logger.info(
@@ -161,12 +164,14 @@ window.autoSelectComponents = async function autoSelectComponents(autoTriggered 
             );
             if (__bulkQuiet) {
                 if (__bulkStats) __bulkStats.rendersSkipped += 4;
-            } else {
+            } else if (!__excelQuiet) {
                 renderWellConfig();
                 renderWellDiagram();
                 updateSummary();
                 refreshAll();
             }
+            /* __excelQuiet: stan (config/status/uszczelki/kineta) policzony
+               wyżej bez zmian; maluje wyłącznie caller Excel po zejściu flagi. */
             logger.info('wellSolver', '[AutoSelect] Render OK.');
         } catch (renderErr) {
             logger.error('wellSolver', '[AutoSelect] Błąd renderowania:', renderErr);

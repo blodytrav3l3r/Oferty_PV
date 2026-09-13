@@ -1,6 +1,12 @@
 // @ts-check
 /* ===== EXCEL AUTO-SELECT — Auto-dobór komponentów dla studni ===== */
 
+/* G3 chain-coalesce: szybkie edycje AUTO kolejkują jeden re-run zamiast
+   mijać się z guardem solvera (odrzucony przebieg = config vs aktualne
+   rzędne + ryzyko cap 10 przy serii). Przebiegi sekwencyjne (await), więc
+   starszy nigdy nie nadpisuje nowszego — ostatni re-run widzi finalne dane.
+   Solver i konfigurator główny nietknięte. */
+const _excelAutoChain = {};
 async function _excelAutoSelectForWell(wIdx) {
     const well = wells[wIdx];
     if (!well) return;
@@ -8,70 +14,94 @@ async function _excelAutoSelectForWell(wIdx) {
     if (well.rzednaWlazu == null || well.rzednaDna == null) return;
     if (well.autoSelect === false) return; /* Manual skip */
     if (typeof autoSelectComponents !== 'function') return;
-    const savedIdx = typeof currentWellIndex !== 'undefined' ? currentWellIndex : -1;
-    const container = document.getElementById('excel-table-container');
-    const savedScrollTop = container ? container.scrollTop : null;
-    const savedScrollLeft = container ? container.scrollLeft : null;
-    let savedActive = null;
+    let _chain = _excelAutoChain[wIdx];
+    if (!_chain) _chain = _excelAutoChain[wIdx] = { running: false, queued: false };
+    if (_chain.running) {
+        _chain.queued = true;
+        return;
+    }
+    _chain.running = true;
     try {
-        if (
-            typeof window !== 'undefined' &&
-            typeof window._excelVirtualGetActiveCell === 'function'
-        )
-            savedActive = window._excelVirtualGetActiveCell();
-        else if (typeof _excelVirtualActiveCell !== 'undefined' && _excelVirtualActiveCell)
-            savedActive = {
-                logicalRow: _excelVirtualActiveCell.logicalRow,
-                logicalColId: _excelVirtualActiveCell.logicalColId
-            };
-    } catch (_e) {}
-    try {
-        currentWellIndex = wIdx;
-        _excelMarkDirty();
-        await autoSelectComponents(true);
-        _excelClearResCache(well);
-        _excelRenderTable(_excelActiveTab);
-        _excelUpdateHeaderProdCodes();
-        // restore scroll + logical focus — nie wracaj na początek
-        if (container && savedScrollTop !== null) {
-            container.scrollTop = savedScrollTop;
-            if (savedScrollLeft !== null) container.scrollLeft = savedScrollLeft;
-            // virtual: scrollTop change wymaga re-render slice w nowej pozycji
+        do {
+            _chain.queued = false;
+            const savedIdx = typeof currentWellIndex !== 'undefined' ? currentWellIndex : -1;
+            const container = document.getElementById('excel-table-container');
+            const savedScrollTop = container ? container.scrollTop : null;
+            const savedScrollLeft = container ? container.scrollLeft : null;
+            let savedActive = null;
             try {
                 if (
                     typeof window !== 'undefined' &&
-                    typeof window._excelVirtualIsEnabled === 'function' &&
-                    window._excelVirtualIsEnabled() &&
-                    typeof _excelVirtualRenderBody === 'function'
-                ) {
-                    _excelVirtualRenderBody();
-                }
-            } catch (_e2) {}
-        }
-        if (savedActive) {
-            try {
-                if (
-                    typeof window !== 'undefined' &&
-                    typeof window._excelVirtualSetActiveCell === 'function'
+                    typeof window._excelVirtualGetActiveCell === 'function'
                 )
-                    window._excelVirtualSetActiveCell(savedActive);
-                else if (typeof _excelVirtualActiveCell !== 'undefined')
-                    _excelVirtualActiveCell = {
-                        logicalRow: savedActive.logicalRow,
-                        logicalColId: savedActive.logicalColId
+                    savedActive = window._excelVirtualGetActiveCell();
+                else if (typeof _excelVirtualActiveCell !== 'undefined' && _excelVirtualActiveCell)
+                    savedActive = {
+                        logicalRow: _excelVirtualActiveCell.logicalRow,
+                        logicalColId: _excelVirtualActiveCell.logicalColId
                     };
-                if (typeof _excelVirtualFocusCell === 'function')
-                    _excelVirtualFocusCell(savedActive);
-            } catch (_e3) {}
-        }
+            } catch (_e) {}
+            /* G1: quiet-depth 0→1; finally wraca do 0 (invariant: brak wycieku). */
+            if (typeof _excelQuietDepth !== 'undefined') _excelQuietDepth++;
+            try {
+                currentWellIndex = wIdx;
+                _excelMarkDirty();
+                await autoSelectComponents(true);
+                _excelClearResCache(well);
+                _excelRenderTable(_excelActiveTab);
+                _excelUpdateHeaderProdCodes();
+                // restore scroll + logical focus — nie wracaj na początek
+                if (container && savedScrollTop !== null) {
+                    container.scrollTop = savedScrollTop;
+                    if (savedScrollLeft !== null) container.scrollLeft = savedScrollLeft;
+                    // virtual: scrollTop change wymaga re-render slice w nowej pozycji
+                    try {
+                        if (
+                            typeof window !== 'undefined' &&
+                            typeof window._excelVirtualIsEnabled === 'function' &&
+                            window._excelVirtualIsEnabled() &&
+                            typeof _excelVirtualRenderBody === 'function'
+                        ) {
+                            _excelVirtualRenderBody();
+                        }
+                    } catch (_e2) {}
+                }
+                if (savedActive) {
+                    try {
+                        if (
+                            typeof window !== 'undefined' &&
+                            typeof window._excelVirtualSetActiveCell === 'function'
+                        )
+                            window._excelVirtualSetActiveCell(savedActive);
+                        else if (typeof _excelVirtualActiveCell !== 'undefined')
+                            _excelVirtualActiveCell = {
+                                logicalRow: savedActive.logicalRow,
+                                logicalColId: savedActive.logicalColId
+                            };
+                        if (typeof _excelVirtualFocusCell === 'function')
+                            _excelVirtualFocusCell(savedActive);
+                    } catch (_e3) {}
+                }
+            } finally {
+                if (typeof _excelQuietDepth !== 'undefined') {
+                    _excelQuietDepth--;
+                    if (_excelQuietDepth !== 0) {
+                        if (typeof logger !== 'undefined')
+                            logger.error('excelAutoSelect', 'quietDepth leak — reset do 0');
+                        _excelQuietDepth = 0;
+                    }
+                }
+                if (savedIdx >= 0) currentWellIndex = savedIdx;
+                /* Solver pracował na wIdx — po przywróceniu zaznaczenia preview
+                 * (kafelki + diagram) musi wrócić na zaznaczony wiersz. */
+                try {
+                    if (typeof _excelSyncMainPreview === 'function')
+                        _excelSyncMainPreview(currentWellIndex);
+                } catch (_e) {}
+            }
+        } while (_chain.queued);
     } finally {
-        if (savedIdx >= 0) currentWellIndex = savedIdx;
-        /* Solver pracował na wIdx — po przywróceniu zaznaczenia preview
-         * (kafelki + diagram) musi wrócić na zaznaczony wiersz. */
-        try {
-            if (typeof _excelSyncMainPreview === 'function')
-                _excelSyncMainPreview(currentWellIndex);
-        } catch (_e) {}
+        _chain.running = false;
     }
 }
 
@@ -163,6 +193,8 @@ async function _excelRunAutoSelectForWell(wIdx) {
             };
     } catch (_e) {}
     if (runBtn) runBtn.textContent = '...';
+    /* G1: quiet-depth 0→1; finally wraca do 0 (invariant: brak wycieku). */
+    if (typeof _excelQuietDepth !== 'undefined') _excelQuietDepth++;
     try {
         currentWellIndex = wIdx;
         _excelMarkDirty();
@@ -209,6 +241,14 @@ async function _excelRunAutoSelectForWell(wIdx) {
         console.error('Auto-dobór fail:', e);
         showToast('Błąd auto-doboru: ' + (e?.message || e), 'error');
     } finally {
+        if (typeof _excelQuietDepth !== 'undefined') {
+            _excelQuietDepth--;
+            if (_excelQuietDepth !== 0) {
+                if (typeof logger !== 'undefined')
+                    logger.error('excelAutoSelect', 'quietDepth leak — reset do 0');
+                _excelQuietDepth = 0;
+            }
+        }
         currentWellIndex = savedIdx >= 0 ? savedIdx : currentWellIndex;
         /* Jw. — preview wraca na zaznaczony wiersz, nie na przeliczony. */
         try {

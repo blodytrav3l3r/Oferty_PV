@@ -97,6 +97,8 @@ async function measureRun(frame, fixture) {
             await wait(400);
         }
         o.scrollStages = __excelPerfReport();
+        /* G2 split: editMs = AUTO (pierwszy wiersz fixture ma autoSelect,
+           legacy seria do historii); editManualMs = MANUAL (debounced-path). */
         const row = document.querySelector('#excel-table-container tbody tr[data-widx]');
         const wIdx = row ? parseInt(row.getAttribute('data-widx'), 10) : -1;
         const inp = row ? row.querySelector('input[data-field="rzednaWlazu"]') : null;
@@ -105,6 +107,23 @@ async function measureRun(frame, fixture) {
         excelOnRzednaChange(wIdx);
         await wait(1200);
         o.editMs = Math.round(performance.now() - k0);
+        const mRow = [
+            ...document.querySelectorAll('#excel-table-container tbody tr[data-widx]')
+        ].find((r) => {
+            const i = parseInt(r.getAttribute('data-widx'), 10);
+            return wells[i] && wells[i].autoSelect === false;
+        });
+        if (mRow) {
+            const mIdx = parseInt(mRow.getAttribute('data-widx'), 10);
+            const mInp = mRow.querySelector('input[data-field="rzednaWlazu"]');
+            if (mInp) mInp.value = '8.8';
+            const m0 = performance.now();
+            excelOnRzednaChange(mIdx);
+            await wait(1200);
+            o.editManualMs = Math.round(performance.now() - m0);
+        } else {
+            o.editManualMs = null;
+        }
         const s0 = performance.now();
         _excelBuildWellsSnapshot();
         o.pollSnapMs = Math.round((performance.now() - s0) * 10) / 10;
@@ -173,7 +192,9 @@ async function openFrame(browser, token) {
         for (let r = 0; r < RUNS_COLD; r++) {
             const { context, frame } = await openFrame(browser, token);
             const m = await measureRun(frame, fixture);
-            console.log(`COLD ${r + 1}: openMs=${m.openMs} rows=${m.rows} editMs=${m.editMs}`);
+            console.log(
+                `COLD ${r + 1}: openMs=${m.openMs} rows=${m.rows} editMs=${m.editMs} editManualMs=${m.editManualMs}`
+            );
             console.log(`  tabMs=${JSON.stringify(m.tabMs)}`);
             console.log(`  pollSnapMs=${m.pollSnapMs} pollSyncMs=${m.pollSyncMs}`);
             cold.push(m);
@@ -235,6 +256,10 @@ async function openFrame(browser, token) {
                 ),
                 scrollStages: stageMed(cold, 'scrollStages'),
                 editMs: med(cold, (r) => r.editMs),
+                editManualMs: med(
+                    cold.filter((r) => r.editManualMs != null),
+                    (r) => r.editManualMs
+                ),
                 pollSnapMs: med(cold, (r) => r.pollSnapMs),
                 pollSyncMs: med(cold, (r) => r.pollSyncMs)
             },
