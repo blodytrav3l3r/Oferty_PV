@@ -805,6 +805,7 @@ async function enterOrderEditMode(orderId) {
             if (el) el.value = val;
         };
         setVal('offer-number', order.number || '');
+        if (typeof setOrderNumberField === 'function') setOrderNumberField(order.orderNumber || '');
         setVal('offer-date', order.date || new Date().toISOString().slice(0, 10));
         setVal('client-name', order.clientName || '');
         setVal('client-nip', order.clientNip || '');
@@ -848,7 +849,7 @@ async function enterOrderEditMode(orderId) {
         renderOrderModeBanner();
         if (typeof renderOfferLockBanner === 'function') renderOfferLockBanner();
 
-        document.title = `📦 Zamówienie: ${order.number || orderId}`;
+        document.title = `📦 Zamówienie: ${order.orderNumber || order.number || orderId}`;
 
         logger.info('orderManager', '[enterOrderEditMode] DONE');
         showToast('<i data-lucide="package"></i> Zamówienie wczytane do edycji', 'success');
@@ -949,6 +950,7 @@ async function loadOrderSnapshot(rebuiltData, orderId) {
             if (el) el.value = val;
         };
         setVal('offer-number', order.number || '');
+        if (typeof setOrderNumberField === 'function') setOrderNumberField(order.orderNumber || '');
         setVal('offer-date', order.date || new Date().toISOString().slice(0, 10));
         setVal('client-name', order.clientName || '');
         setVal('client-nip', order.clientNip || '');
@@ -964,7 +966,7 @@ async function loadOrderSnapshot(rebuiltData, orderId) {
         if (typeof refreshAll === 'function') refreshAll();
 
         renderOrderModeBanner();
-        document.title = `👁️ PODGLĄD Zamówienia: ${order.number || orderId}`;
+        document.title = `👁️ PODGLĄD Zamówienia: ${order.orderNumber || order.number || orderId}`;
 
         window.applyPreviewLockUI();
     } catch (err) {

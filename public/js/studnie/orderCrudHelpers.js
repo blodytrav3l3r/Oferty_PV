@@ -52,9 +52,10 @@ function renderOrderModeBanner() {
         <div class="flex-gap-5-wrap2">
             <div>
                 <div style="font-size: var(--fs-md); font-weight: var(--fw-extrabold); color:${hasChanges ? 'var(--danger-hover)' : 'var(--success-hover)'}; display:flex; align-items:center; gap:0.4rem;">
-                    <i data-lucide="package" style="width:18px; height:18px;"></i> TRYB ZAMÓWIENIA — ${escapeHtml(order.number || '')}
+                    <i data-lucide="package" style="width:18px; height:18px;"></i> TRYB ZAMÓWIENIA — ${escapeHtml(order.orderNumber || order.number || '')}
                 </div>
                 <div class="fs-xs-muted">
+                    Oferta: ${escapeHtml(order.offerNumber || '—')} •
                     ${hasChanges ? `<i data-lucide="alert-triangle" style="width:14px; height:14px;"></i> ${changeCount > 0 ? `${changeCount} studni zmienionych od oryginału` : ''}${changeCount > 0 && transportChanged ? ' • ' : ''}${transportChanged ? 'zmieniono transport' : ''}` : '<i data-lucide="check-circle-2" style="width:14px; height:14px;"></i> Bez zmian od oryginału'}
                     • Utworzono: ${new Date(order.createdAt).toLocaleString('pl-PL')}
                 </div>

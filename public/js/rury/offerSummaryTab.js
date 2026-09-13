@@ -16,6 +16,18 @@ function renderOfferSummaryTab() {
     const dispNumber = document.getElementById('offer-disp-number');
     if (dispNumber) dispNumber.textContent = document.getElementById('offer-number')?.value || '—';
 
+    let ruryOrderNum = '—';
+    try {
+        if (typeof getCurrentRuryOrder === 'function') {
+            const ro = getCurrentRuryOrder();
+            if (ro && ro.orderNumber) ruryOrderNum = ro.orderNumber;
+        }
+    } catch (_e) {
+        // pasywnie — span pokaże pauzę
+    }
+    const dispOrderNumber = document.getElementById('offer-disp-order-number');
+    if (dispOrderNumber) dispOrderNumber.textContent = ruryOrderNum;
+
     const dispDate = document.getElementById('offer-disp-date');
     if (dispDate) dispDate.textContent = document.getElementById('offer-date')?.value || '—';
 

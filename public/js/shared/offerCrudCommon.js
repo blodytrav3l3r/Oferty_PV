@@ -214,6 +214,30 @@ function normalizeValidityValue(val) {
 }
 
 /**
+ * Pole "Nr zamówienia" (osobne, read-only, poza formularzem oferty).
+ * Trzymane poza get/setOfferFormFields celowo — zapis oferty nie może
+ * nadpisać numeru oferty numerem zamówienia ani odwrotnie.
+ * Wspólne dla rur i studni — pola mają identyczne ID.
+ * @param {string} num numer zamówienia (pusty = ukryj pole)
+ */
+function setOrderNumberField(num) {
+    const input = document.getElementById('order-number');
+    if (input) input.value = num || '';
+    const group = document.getElementById('order-number-group');
+    if (group) group.style.display = num ? '' : 'none';
+}
+
+/**
+ * Czyści i ukrywa pole "Nr zamówienia" (wyjście z trybu zamówienia,
+ * nowa oferta, ładowanie oferty).
+ */
+function clearOrderNumberField() {
+    const input = document.getElementById('order-number');
+    if (input) input.value = '';
+    const group = document.getElementById('order-number-group');
+    if (group) group.style.display = 'none';
+}
+/**
  * Pull-sync: kopiuje Warunki płatności i Data ważności z kroku 1
  * do pól zakładki "Oferta" (offer-tab-*). Wołane przy otwarciu zakładki
  * oraz po załadowaniu partiali (offer-tab-* powstają asynchronicznie).
@@ -284,9 +308,27 @@ document.addEventListener('DOMContentLoaded', function () {
 
 // Re-pull po załadowaniu partiali — pokrywa przypadek, gdy zakładka Oferta
 // została otwarta zanim offer-tab-* powstały w DOM (partialLoader race).
+// Dociąga też pole Nr zamówienia, gdy wejście w tryb zamówienia (?order=)
+// nastąpiło przed wstrzyknięciem partiali kroku 1.
 document.addEventListener('partials:loaded', function () {
     syncOfferTabFields();
+    try {
+        let num = null;
+        if (typeof getCurrentOfferOrder === 'function') {
+            const o = getCurrentOfferOrder();
+            if (o) num = o.orderNumber || null;
+        } else if (typeof getCurrentRuryOrder === 'function') {
+            const ro = getCurrentRuryOrder();
+            if (ro) num = ro.orderNumber || null;
+        }
+        if (num) setOrderNumberField(num);
+    } catch (_e) {
+        // pasywnie — pole dociągnie się przy następnym renderze
+    }
 });
+
+window.setOrderNumberField = setOrderNumberField;
+window.clearOrderNumberField = clearOrderNumberField;
 
 window.getOfferFormFields = getOfferFormFields;
 window.setOfferFormFields = setOfferFormFields;

@@ -389,6 +389,16 @@ function syncOfferClientSummary() {
     s('offer-disp-nip', v('client-nip'));
     s('offer-disp-client-number', v('client-number'));
     s('offer-disp-number', v('offer-number'));
+    let orderNum = '—';
+    try {
+        if (typeof getCurrentOfferOrder === 'function') {
+            const o = getCurrentOfferOrder();
+            if (o && o.orderNumber) orderNum = o.orderNumber;
+        }
+    } catch (_e) {
+        // pasywnie — span pokaże pauzę
+    }
+    s('offer-disp-order-number', orderNum);
     s('offer-disp-date', v('offer-date'));
     s('offer-disp-invest', v('invest-name'));
 }

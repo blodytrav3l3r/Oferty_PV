@@ -51,6 +51,8 @@ async function enterRuryOrderEditMode(orderId) {
         setVal('invest-address', orderData.investAddress);
         setVal('invest-contractor', orderData.investContractor);
         setVal('offer-number', orderData.offerNumber);
+        if (typeof setOrderNumberField === 'function')
+            setOrderNumberField(orderData.orderNumber || '');
         setVal('offer-notes', orderData.notes);
         setVal('transport-km', orderData.transportKm);
         setVal('transport-rate', orderData.transportRate);
@@ -298,6 +300,7 @@ function clearOrderEditState() {
     orderCurrentItems = [];
     window.orderCurrentItems = orderCurrentItems;
     window.pendingOrderCreationData = null;
+    if (typeof clearOrderNumberField === 'function') clearOrderNumberField();
     if (typeof hideOrderModeBanner === 'function') hideOrderModeBanner();
 }
 window.clearOrderEditState = clearOrderEditState;

@@ -12,6 +12,7 @@ function clearOfferForm() {
     editingOfferCreatedByUserId = null;
     editingOfferCreatedByUserName = '';
     clearOfferFormFields(generateOfferNumberStudnie);
+    if (typeof clearOrderNumberField === 'function') clearOrderNumberField();
     wells = [];
     wellCounter = 1;
     currentWellIndex = 0;
@@ -101,6 +102,7 @@ async function loadSavedOfferStudnie(id_or_doc, optionalId, targetSection, preve
     const normalized = normalizeOfferData(offer);
 
     orderEditMode = null; // wyjdz z trybu zamowienia, jesli jest aktywny
+    if (typeof clearOrderNumberField === 'function') clearOrderNumberField();
     editingOfferIdStudnie = normalized.id || '';
     editingOfferAssignedUserId = normalized.userId || null;
     editingOfferAssignedUserName = normalized.userName || '';

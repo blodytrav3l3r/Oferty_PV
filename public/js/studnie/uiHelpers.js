@@ -148,6 +148,7 @@ function enterWizardOrderMode() {
  */
 async function exitWizardOrderMode(targetStep = 3) {
     orderEditMode = null;
+    if (typeof clearOrderNumberField === 'function') clearOrderNumberField();
     if (typeof renderOrderModeBanner === 'function') renderOrderModeBanner();
 
     if (typeof editingOfferIdStudnie !== 'undefined' && editingOfferIdStudnie) {
@@ -457,12 +458,27 @@ function updateWizardSummaryBar() {
 
     const wsbClient = document.getElementById('wsb-client');
     const wsbOffer = document.getElementById('wsb-offer');
+    const wsbOrderItem = document.getElementById('wsb-order-item');
+    const wsbOrderDivider = document.getElementById('wsb-order-divider');
+    const wsbOrderNumber = document.getElementById('wsb-order-number');
     const wsbInvest = document.getElementById('wsb-invest');
     const wsbAddress = document.getElementById('wsb-address');
     const wsbParams = document.getElementById('wsb-params');
 
     if (wsbClient) wsbClient.textContent = client || '—';
     if (wsbOffer) wsbOffer.textContent = offer || '—';
+    let orderNum = '';
+    try {
+        if (typeof getCurrentOfferOrder === 'function') {
+            const o = getCurrentOfferOrder();
+            if (o && o.orderNumber) orderNum = o.orderNumber;
+        }
+    } catch (_e) {
+        // pasywnie — pasek pokaże samą ofertę
+    }
+    if (wsbOrderNumber) wsbOrderNumber.textContent = orderNum || '—';
+    if (wsbOrderItem) wsbOrderItem.style.display = orderNum ? '' : 'none';
+    if (wsbOrderDivider) wsbOrderDivider.style.display = orderNum ? '' : 'none';
     if (wsbInvest) wsbInvest.textContent = investName || '—';
     if (wsbAddress) wsbAddress.textContent = investAddress || '—';
 
