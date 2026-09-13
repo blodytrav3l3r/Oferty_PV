@@ -4,6 +4,41 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.26.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.25.0...v1.26.0) (2026-09-13)
+
+### Features
+
+- **studnie:** f2 excel 1000+ hoist memo lazy-errors ([8672b82](https://github.com/blodytrav3l3r/Oferty_PV/commit/8672b82fe501c18ccf4b6258215259caa5b1279b))
+- **studnie:** f2c lista spod modala odroczona ([1818bac](https://github.com/blodytrav3l3r/Oferty_PV/commit/1818bacb2f988585f767ea105756954be0b4e2a0))
+- **studnie:** szybszy excel 1000+ i gates f1a ([69dfd0a](https://github.com/blodytrav3l3r/Oferty_PV/commit/69dfd0abff7ba89d779623b308096e65859999b7))
+- **telemetry:** allowlista uzytkownikow zasilajacych trening ai ([083bd33](https://github.com/blodytrav3l3r/Oferty_PV/commit/083bd338e70413fa9a5c2c72962233c95c5ce82e))
+- **telemetry:** bramka treningu ml i retencja historii runow ([cb6223b](https://github.com/blodytrav3l3r/Oferty_PV/commit/cb6223ba1a07fee6669834f45ef80534d4a7e0e8))
+- **telemetry:** event well_deleted do pomiaru usuwanych sugestii ([4cb3497](https://github.com/blodytrav3l3r/Oferty_PV/commit/4cb349712b5eb2a87eded1c22aba15c918598a8a))
+- **telemetry:** harness walidacji telemetrii ml na izolowanej db ([5cde312](https://github.com/blodytrav3l3r/Oferty_PV/commit/5cde312181900132a86d1d39c5996f982bc4d658))
+- **telemetry:** status bramki treningu w dashboardzie ai ([02b378b](https://github.com/blodytrav3l3r/Oferty_PV/commit/02b378bff3b9bdb7537c547374c05dd398339188))
+- **telemetry:** tryb zewnetrznego serwera w synth-harness ([6b7dec6](https://github.com/blodytrav3l3r/Oferty_PV/commit/6b7dec62cb2102b5fafc9c6c1101bd1bcc611548))
+
+### Bug Fixes
+
+- **api:** limiter odczytu statusu blokad i test 429 ([16a19f6](https://github.com/blodytrav3l3r/Oferty_PV/commit/16a19f64b1b95e3137d3cb33b38f2a399f9d58c4))
+- **clients:** enforce ownership on full-replace sync ([80b10ec](https://github.com/blodytrav3l3r/Oferty_PV/commit/80b10ecca86a728fae06353ab4020f4d86370d76))
+- **offers:** atomowy duplicate oferty rur w jednej transakcji ([129b2fa](https://github.com/blodytrav3l3r/Oferty_PV/commit/129b2fa4ad29674523a1f8f41f85da5af42d77f6))
+- **orders:** version w sciezkach patch przeciw lost-update ([e7170c6](https://github.com/blodytrav3l3r/Oferty_PV/commit/e7170c68f15376fcaba67181e009359e0f7ab8df))
+- **orders:** zapis zmiany opiekuna i wip blokad edycji ([503c599](https://github.com/blodytrav3l3r/Oferty_PV/commit/503c59951bc1157d037d3ec6340201c3d53ce7a9))
+- **rury:** pasek oferty tylko w zakladce oferta ([afc167b](https://github.com/blodytrav3l3r/Oferty_PV/commit/afc167bc5ecfb54e173738abe6032f0c5466468b))
+- **rury:** zapis kosztow transportu i zabezpieczenia w ofertach ([e92922d](https://github.com/blodytrav3l3r/Oferty_PV/commit/e92922d3750f77a8a9c51611f231460289891117))
+- **seed:** sync seed studnie z cennikiem live i regeneracja goldenow ([14d4b76](https://github.com/blodytrav3l3r/Oferty_PV/commit/14d4b764b2eebe46c827343de9afb2303998562a))
+- **studnie:** krag kdz dn1500 h250 widoczny przy nadbudowie betonowej ([1fd796e](https://github.com/blodytrav3l3r/Oferty_PV/commit/1fd796efcfef374d530d2de66ceb1be7b33a7c4d))
+- **studnie:** odswiezanie bledow konfiguracji w excelu per wiersz ([f220aa2](https://github.com/blodytrav3l3r/Oferty_PV/commit/f220aa2ea2b2b62a7ad1f2c5c99adee10322bd60))
+- **studnie:** osobny resize podkolumn przejsc w excelu ([0882c31](https://github.com/blodytrav3l3r/Oferty_PV/commit/0882c317b498061a569b79be2a5b5a50004f55ac))
+- **studnie:** podgląd za wierszem excela i fokus przy swapie ot ([4b63c33](https://github.com/blodytrav3l3r/Oferty_PV/commit/4b63c337985f738c0fd1dc09401cd3ef4f325ec3))
+- **studnie:** przejscia na laczeniach kregow (ot, jointy, excel) ([4241075](https://github.com/blodytrav3l3r/Oferty_PV/commit/4241075647b687ba0ba65cda4fae4bb073acbd14))
+- **studnie:** sync kineta do spocznik w kolumnie excel ([f7afac1](https://github.com/blodytrav3l3r/Oferty_PV/commit/f7afac163da6396f88bcf9e4e0461325e807bd9e))
+- **telemetry:** enforce ownership for reward rejects ([2b9f9fe](https://github.com/blodytrav3l3r/Oferty_PV/commit/2b9f9fee7743c09f933bf51e7b7fe6d93b355c00))
+- **test:** izolacja allowlisty w telemetryroutes ([cb70bcf](https://github.com/blodytrav3l3r/Oferty_PV/commit/cb70bcf01ce3b32c6408a1d64cd2fcd1dfeeb268))
+- **ui:** modal blokady dokumentu do wzorca modalcore ([8590bb1](https://github.com/blodytrav3l3r/Oferty_PV/commit/8590bb1fd5eb805ee5f572b7766d4e3e1c4508de))
+- **ui:** scroll i limit 3 linii listy numerow do odzysku ([7ac0faa](https://github.com/blodytrav3l3r/Oferty_PV/commit/7ac0faabb13ae55a929a61488d203b1c55808de8))
+
 ## [1.25.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.24.0...v1.25.0) (2026-09-09)
 
 ### Features

@@ -1,6 +1,6 @@
 # API — dokumentacja endpointów
 
-**Wersja:** 1.25.0  
+**Wersja:** 1.26.0  
 **Ostatnia aktualizacja:** 2026-09-09  
 **Dokumentacja Swagger/OpenAPI:** `/api/docs` (po uruchomieniu serwera) — źródło autorytatywne (surowy JSON: `GET /api/docs.json`)
 
@@ -23,7 +23,7 @@ Sprawdzenie statusu serwera. Używany przez Docker HEALTHCHECK i Render health c
   "timestamp": "2026-06-30T12:00:00.000Z",
   "uptime": 123.45,
   "memory": { ... },
-  "version": "1.25.0"
+  "version": "1.26.0"
 }
 ```
 
@@ -51,12 +51,12 @@ Publiczny endpoint raportów CSP (`Content-Type: application/csp-report`, odpowi
 
 ```json
 {
-    "version": "1.25.0",
+    "version": "1.26.0",
     "commitHash": "389dd6e",
     "branch": "main",
     "buildDate": "2026-08-09T00:00:00.000Z",
     "environment": "development",
-    "dbVersion": "1.25.0"
+    "dbVersion": "1.26.0"
 }
 ```
 
