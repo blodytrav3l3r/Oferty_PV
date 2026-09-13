@@ -432,10 +432,13 @@ function openExcelTableModal() {
     _excelLoadColumnVisibility();
     _excelLoadColWidths();
     _perfMark('open-overlay');
-    /* Aktualne statusy konfiguracji przed renderem (podświetlenie wierszy F4) */
-    if (typeof refreshAllWellErrors === 'function') refreshAllWellErrors();
-    _perfMark('open-errors');
     _excelActiveTab = DN_TABS[0];
+    /* F2b: błędy tylko aktywnego taba (reszta przy excelSwitchTab).
+       Globalni czytelnicy (oferta/lista) i tak wołają refreshAllWellErrors()
+       przed własnym renderem — stan końcowy identyczny. */
+    if (typeof _excelRecalcTabWellErrors === 'function') _excelRecalcTabWellErrors(_excelActiveTab);
+    else if (typeof refreshAllWellErrors === 'function') refreshAllWellErrors();
+    _perfMark('open-errors');
     if (typeof _excelInvalidateFilteredIndexes === 'function') _excelInvalidateFilteredIndexes();
     /* Rebuild indeksu id->wIdx PRZED pierwszym renderem — mutacje panelu głównego
        (add/duplicate/delete/wczytanie oferty) nie rebuildują mapy excela */

@@ -36,12 +36,16 @@ function _excelUpdateWellCount() {
 
 function excelSwitchTab(tab) {
     _excelActiveTab = tab;
+    /* F2b: wchodząca zakładka dostaje świeże błędy PRZED renderem (open liczy
+       tylko pierwszy tab). Bez tego wiersze miałyby stale tinty. */
+    if (typeof _excelRecalcTabWellErrors === 'function') _excelRecalcTabWellErrors(tab);
     if (typeof _excelInvalidateFilteredIndexes === 'function') _excelInvalidateFilteredIndexes();
     _excelResetLayoutDependentState(); /* reset selekcji zależnych od układu */
     if (typeof _excelResetSort === 'function') _excelResetSort();
     _excelRenderTabs();
     _excelRenderTable(tab);
-    _excelUpdateHeaderProdCodes();
+    /* F2a: _excelRenderTable kończy się _excelUpdateHeaderProdCodes() —
+       drugie wywołanie nadpisywało tym samym. */
     /* Auto-focus na empty row gdy zakładka pusta */
     if (typeof wells !== 'undefined' && wells.length > 0) {
         let hasWellsInTab = false;

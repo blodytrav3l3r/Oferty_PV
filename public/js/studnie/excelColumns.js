@@ -4,26 +4,42 @@
 // ponytail: memo per DN+params, cache key zawiera wszystkie wejścia determinujące wynik
 const _excelColsCache = new Map();
 const _EXCEL_COLS_CACHE_LIMIT = 50;
+/* F2a: fingerprint cennika raz per tożsamość tablicy (WeakMap) + walidacja
+   długością. Poprawny przy wymianie przez setter i direct-assignment bypass
+   (nowa tablica = nowy klucz) oraz push/pop (długość); klasa staleness jak
+   __availCache dla in-place edycji tej samej długości (w praktyce nie występuje
+   — load podmienia tablicę). */
+const _excelProdFpCache = typeof WeakMap !== 'undefined' ? new WeakMap() : null;
+function _excelProdFp() {
+    try {
+        if (typeof studnieProducts === 'undefined' || !Array.isArray(studnieProducts)) return '0';
+        if (_excelProdFpCache) {
+            const hit = _excelProdFpCache.get(studnieProducts);
+            if (hit && hit.len === studnieProducts.length) return hit.fp;
+        }
+        const fp =
+            String(studnieProducts.length) +
+            '|' +
+            studnieProducts
+                .map(function (p) {
+                    return p.id;
+                })
+                .sort()
+                .join(',')
+                .slice(0, 200);
+        if (_excelProdFpCache)
+            _excelProdFpCache.set(studnieProducts, { len: studnieProducts.length, fp: fp });
+        return fp;
+    } catch (_e) {
+        return '0';
+    }
+}
 function _excelColsCacheKey(dn, well) {
     const mag =
         well && well.magazyn
             ? well.magazyn
             : (typeof wells !== 'undefined' && wells[0] && wells[0].magazyn) || 'Kluczbork';
-    let prodFp = '0';
-    try {
-        if (typeof studnieProducts !== 'undefined' && Array.isArray(studnieProducts)) {
-            prodFp =
-                String(studnieProducts.length) +
-                '|' +
-                studnieProducts
-                    .map(function (p) {
-                        return p.id;
-                    })
-                    .sort()
-                    .join(',')
-                    .slice(0, 200);
-        }
-    } catch (_e) {}
+    const prodFp = _excelProdFp();
     return [
         String(dn),
         String(mag),

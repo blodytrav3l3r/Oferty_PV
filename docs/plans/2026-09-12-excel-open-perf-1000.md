@@ -1,8 +1,9 @@
 # Plan: przyśpieszenie Excela studni przy 1000+ (open + polling + cache)
 
 Data: 2026-09-12
-Status: F1 dowieziona, gates F1a zielone (`2026-09-12-excel-gates-f1a.md`).
-Decyzja o F2: osobna, po tym dokumencie.
+Status: ZAMKNIĘTE — F1/F1a/F2 dowiezione i zacommitowane
+(`2026-09-12-excel-f2.md` z rozstrzygnięciem contractu). Następny krok:
+F2c (osobny RFC).
 Dotyczy: `public/js/studnie/excelModal.js`, `excelPolling.js`, `excelTableBody.js`,
 `excelTableRenderer.js`, `excelHelpers.js`, `excelColumns.js`, `excelState.js`,
 `excelTabs.js`, `excelVirtual.js`, `tests/playwright/excelPerfFixture.cjs`,

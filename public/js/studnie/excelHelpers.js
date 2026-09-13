@@ -310,8 +310,55 @@ function _excelGetAvailForWell(well) {
 }
 
 /* ===== Dynamiczny kod produktu w h3 — pobrany z configu zaznaczonej studni ===== */
+/* F2a memo: wynik zależy wyłącznie od (well.config, parametrów studni, cennika).
+   Sygnatura = config + availKey + products.length (klasa staleness jak
+   __availCache: edycja cennika przy otwartym modalu wymaga akcji z well). */
+const _excelHeadCodeCache = new Map();
+const _EXCEL_HEAD_CACHE_LIMIT = 500;
+function _excelHeadSig(well) {
+    let cfg = '';
+    if (well && Array.isArray(well.config)) {
+        const parts = [];
+        for (let i = 0; i < well.config.length; i++) {
+            const it = well.config[i];
+            parts.push(((it && it.productId) || '') + ':' + ((it && it.quantity) || 0));
+        }
+        cfg = well.config.length + '|' + parts.join(',');
+    }
+    let avail = '';
+    try {
+        avail = typeof _excelAvailKey === 'function' && well ? _excelAvailKey(well) : '';
+    } catch (_e) {}
+    let plen = 0;
+    try {
+        plen =
+            typeof studnieProducts !== 'undefined' && Array.isArray(studnieProducts)
+                ? studnieProducts.length
+                : 0;
+    } catch (_e2) {}
+    return cfg + '|' + avail + '|' + plen;
+}
 function _excelGetWellProdCode(well, ct, height, targetDn) {
     if (!well || !well.config || !ct) return null;
+    const _key =
+        (well.id || '') +
+        '|' +
+        ct +
+        '|' +
+        (height == null ? '' : height) +
+        '|' +
+        (targetDn == null ? '' : targetDn);
+    const _sig = _excelHeadSig(well);
+    const _hit = _excelHeadCodeCache.get(_key);
+    if (_hit && _hit.sig === _sig) return _hit.pid;
+    function _headStore(pid) {
+        if (_excelHeadCodeCache.size >= _EXCEL_HEAD_CACHE_LIMIT) {
+            const first = _excelHeadCodeCache.keys().next().value;
+            _excelHeadCodeCache.delete(first);
+        }
+        _excelHeadCodeCache.set(_key, { sig: _sig, pid: pid });
+        return pid;
+    }
 
     /* 1. Szukaj w configu z resolveEffectiveProduct — to samo co "Wybór elementów" */
     for (let i = 0; i < well.config.length; i++) {
@@ -334,7 +381,7 @@ function _excelGetWellProdCode(well, ct, height, targetDn) {
             /* Main column: preferuj produkt dla DN studni */
             if (resolved.dn !== null && parseInt(resolved.dn) !== parseInt(well.dn)) continue;
         }
-        return resolved.id;
+        return _headStore(resolved.id);
     }
 
     /* 2. FALLBACK: pierwszy dostępny produkt dla tego ct+height — zgodnie z filtrami studni */
@@ -353,24 +400,24 @@ function _excelGetWellProdCode(well, ct, height, targetDn) {
             const dnMatch = fallback.filter(function (p) {
                 return p.dn !== null && parseInt(p.dn) === parseInt(targetDn);
             });
-            if (dnMatch.length > 0) return dnMatch[0].id;
+            if (dnMatch.length > 0) return _headStore(dnMatch[0].id);
             const univ = fallback.filter(function (p) {
                 return p.dn === null;
             });
-            if (univ.length > 0) return univ[0].id;
-            return null;
+            if (univ.length > 0) return _headStore(univ[0].id);
+            return _headStore(null);
         }
         /* Main column: preferuj produkty dla DN studni, potem uniwersalne */
         const mainMatch = fallback.filter(function (p) {
             return p.dn !== null && parseInt(p.dn) === parseInt(well.dn);
         });
-        if (mainMatch.length > 0) return mainMatch[0].id;
+        if (mainMatch.length > 0) return _headStore(mainMatch[0].id);
         const mainUniv = fallback.filter(function (p) {
             return p.dn === null;
         });
-        return mainUniv.length > 0 ? mainUniv[0].id : null;
+        return _headStore(mainUniv.length > 0 ? mainUniv[0].id : null);
     }
-    return null;
+    return _headStore(null);
 }
 
 /* ===== Cena elementu w h3 — per sztuka, zgodnie z getItemAssessedPrice ===== */

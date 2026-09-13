@@ -150,6 +150,26 @@ function _excelRecalcPendingWellErrors() {
     return targets.length > 0;
 }
 
+/* F2b: przeliczenie błędów studni jednej zakładki (open/switch). Reszta tabów
+   przy własnym switchu; globalni czytelnicy (oferta/lista) wołają
+   refreshAllWellErrors() przed renderem, więc stan końcowy identyczny.
+   Banner jak w refreshAllWellErrors (renderWellConfigErrors(currentWell)). */
+function _excelRecalcTabWellErrors(tab) {
+    if (typeof wells === 'undefined' || !Array.isArray(wells)) return;
+    if (typeof recalculateWellErrors !== 'function') return;
+    for (let i = 0; i < wells.length; i++) {
+        try {
+            if (typeof _excelWellMatchesTab === 'function' && !_excelWellMatchesTab(wells[i], tab))
+                continue;
+            recalculateWellErrors(wells[i]);
+        } catch (_e) {}
+    }
+    try {
+        if (typeof getCurrentWell === 'function' && typeof renderWellConfigErrors === 'function')
+            renderWellConfigErrors(getCurrentWell());
+    } catch (_e2) {}
+}
+
 function _excelDebouncedRefresh(editedWIdx) {
     _excelMarkDirty();
     if (typeof editedWIdx === 'number' && !isNaN(editedWIdx)) {

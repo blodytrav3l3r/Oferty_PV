@@ -81,6 +81,54 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             return nameCounts[n] > 1;
         })
     );
+    /* F2a hoist: lista przejść/kategorie zależą tylko od DN zakładki
+       (nie od wiersza) — raz per render zamiast per wiersz per slot.
+       DN z pierwszej studni taba (oryginał wołał getMaxPipeDn(well.dn)). */
+    const _przDn =
+        tabWells.length > 0 && tabWells[0] ? tabWells[0].dn : dn === 'styczne' ? 'styczna' : dn;
+    const _przProducts =
+        typeof studnieProducts !== 'undefined' && typeof getMaxPipeDn === 'function'
+            ? studnieProducts.filter(function (p) {
+                  return (
+                      p.componentType === 'przejscie' &&
+                      p.active !== 0 &&
+                      parseInt(p.dn) <= getMaxPipeDn(_przDn)
+                  );
+              })
+            : [];
+    const _przById = new Map();
+    _przProducts.forEach(function (p) {
+        if (!_przById.has(p.id)) _przById.set(p.id, p);
+    });
+    const _przCategories = [
+        ...new Set(
+            _przProducts.map(function (p) {
+                return p.category;
+            })
+        )
+    ]
+        .filter(function (c) {
+            return typeof visiblePrzejsciaTypes !== 'undefined' && visiblePrzejsciaTypes.has(c);
+        })
+        .sort();
+    /* Avail-DN per kategoria — memo per render (kategorii kilka, slotów wiele). */
+    const _przAvailByCat = {};
+    function _przAvail(cat) {
+        if (!_przAvailByCat[cat]) {
+            _przAvailByCat[cat] = _przProducts
+                .filter(function (p) {
+                    return p.category === cat;
+                })
+                .sort(function (a, b) {
+                    return parseFloat(a.dn) - parseFloat(b.dn);
+                });
+        }
+        return _przAvailByCat[cat];
+    }
+    /* Kolumna właza ta sama dla całego renderu (visibleCols stałe). */
+    const _wlazCol = visibleCols.find(function (c) {
+        return c.componentType === 'wlaz';
+    });
     // SSoT: wellIndexById — nie buduj per-render; sort nie rebuild, add/delete → rebuild
     tabWells.forEach(function (well, idx) {
         const wIdx =
@@ -300,32 +348,8 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
                 !hasExplicitRzWl && well.rzednaDna != null
                     ? 'auto (' + well.rzednaDna.toFixed(3) + ')'
                     : '';
-            const przProducts =
-                typeof studnieProducts !== 'undefined' && typeof getMaxPipeDn === 'function'
-                    ? studnieProducts.filter(function (p) {
-                          return (
-                              p.componentType === 'przejscie' &&
-                              p.active !== 0 &&
-                              parseInt(p.dn) <= getMaxPipeDn(well.dn)
-                          );
-                      })
-                    : [];
-            const currProduct = przProducts.find(function (p) {
-                return p.id === prz.productId;
-            });
-            const categories = [
-                ...new Set(
-                    przProducts.map(function (p) {
-                        return p.category;
-                    })
-                )
-            ]
-                .filter(function (c) {
-                    return (
-                        typeof visiblePrzejsciaTypes !== 'undefined' && visiblePrzejsciaTypes.has(c)
-                    );
-                })
-                .sort();
+            const currProduct = _przById.get(prz.productId);
+            const categories = _przCategories.slice();
             const activeCategory = currProduct ? currProduct.category : prz.tempCategory || '';
             if (activeCategory && categories.indexOf(activeCategory) < 0) {
                 categories.push(activeCategory);
@@ -340,15 +364,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
                 'excelOnPrzejscieTypeChange(' + wIdx + ',' + _i + ',this.value)',
                 120
             );
-            const availDns = activeCategory
-                ? [
-                      ...przProducts.filter(function (p) {
-                          return p.category === activeCategory;
-                      })
-                  ].sort(function (a, b) {
-                      return parseFloat(a.dn) - parseFloat(b.dn);
-                  })
-                : [];
+            const availDns = activeCategory ? _przAvail(activeCategory) : [];
             const dnOpts = [['', '\u2014']];
             availDns.forEach(function (p) {
                 const dnLabel =
@@ -405,9 +421,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
         /* Gap */
         html += '<td class="code-cell-center"></td><td class="code-cell-center"></td>';
         /* Wlaz */
-        const wlazCol = visibleCols.find(function (c) {
-            return c.componentType === 'wlaz';
-        });
+        const wlazCol = _wlazCol;
         const wlazProducts = wlazCol
             ? wlazCol.products.filter(function (p) {
                   return typeof filterByWellParams !== 'function' || filterByWellParams(p, well);
