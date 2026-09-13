@@ -483,6 +483,15 @@ function _excelCloseOverlay() {
         if (typeof window.restoreBodyScroll === 'function') window.restoreBodyScroll();
         else if (!document.querySelector('.js-modal-overlay')) document.body.style.overflow = '';
     }
+    /* F2c-B: lista odłożona w czasie sesji (niewidoczna pod overlayem) —
+       domaluj raz przy zamknięciu. Ścieżki close i tak wołają refreshAll
+       (idempotentny, ten sam wynik), więc to twarda gwarancja świeżej listy. */
+    if (typeof _excelListStale !== 'undefined' && _excelListStale) {
+        _excelListStale = false;
+        try {
+            if (typeof window.renderWellsList === 'function') window.renderWellsList();
+        } catch (_eList) {}
+    }
     _excelDirty = false;
     _excelClosing = false;
     _excelOpenSnapshot = null;

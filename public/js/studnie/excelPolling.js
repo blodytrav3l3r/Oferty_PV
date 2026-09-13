@@ -189,9 +189,25 @@ function _excelDebouncedRefresh(editedWIdx) {
         _excelUpdateHeaderProdCodes();
         /* Przelicz błędy edytowanych studni (kolejka) i odśwież tła */
         _excelRecalcPendingWellErrors();
-        /* Odśwież główny panel gdy Excel jest otwarty */
-        if (typeof window.updateSummary === 'function') window.updateSummary();
+        /* Odśwież główny panel gdy Excel jest otwarty.
+           F2c-A: guard tłumi wewnętrzny render listy w updateSummary
+           (wzór z _excelSyncMainPreview) — jawny render niżej i tak następował.
+           F2c-B: lista pod overlayem jest niewidoczna — odłóż na zamknięcie. */
+        let _prevListGuard = false;
+        try {
+            if (typeof window !== 'undefined' && window._renderingWellsList) _prevListGuard = true;
+            else if (typeof window !== 'undefined') window._renderingWellsList = true;
+            if (typeof window.updateSummary === 'function') window.updateSummary();
+        } catch (_eSum) {
+        } finally {
+            try {
+                if (typeof window !== 'undefined' && !_prevListGuard)
+                    window._renderingWellsList = false;
+            } catch (_eSum2) {}
+        }
         if (typeof window.renderWellDiagram === 'function') window.renderWellDiagram();
-        if (typeof window.renderWellsList === 'function') window.renderWellsList();
+        if (typeof document !== 'undefined' && document.getElementById('excel-table-overlay')) {
+            if (typeof _excelListStale !== 'undefined') _excelListStale = true;
+        } else if (typeof window.renderWellsList === 'function') window.renderWellsList();
     }, 800);
 }

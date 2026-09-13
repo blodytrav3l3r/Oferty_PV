@@ -104,8 +104,21 @@ function _excelToggleWellAutoMode(wIdx) {
             ? 'Uruchom auto-dobor elementow dla tej studni'
             : 'Przelacz na Auto aby uruchomic';
     }
-    /* Odswiez glowny panel (configSource zmieniony przez nas) */
-    if (typeof window.updateSummary === 'function') window.updateSummary();
+    /* Odswiez glowny panel (configSource zmieniony przez nas).
+       F2c-A: guard tłumi wewnętrzny render listy w updateSummary (ten sam
+       wzorzec co _excelDebouncedRefresh) — jawny render niżej wystarcza. */
+    let _prevListGuard = false;
+    try {
+        if (typeof window !== 'undefined' && window._renderingWellsList) _prevListGuard = true;
+        else if (typeof window !== 'undefined') window._renderingWellsList = true;
+        if (typeof window.updateSummary === 'function') window.updateSummary();
+    } catch (_eSum) {
+    } finally {
+        try {
+            if (typeof window !== 'undefined' && !_prevListGuard)
+                window._renderingWellsList = false;
+        } catch (_eSum2) {}
+    }
     if (typeof window.renderWellsList === 'function') window.renderWellsList();
     if (typeof window.updateAutoLockUI === 'function') window.updateAutoLockUI();
     showToast(nowAuto ? 'Auto wl.' : 'Manual wl.', 'info');

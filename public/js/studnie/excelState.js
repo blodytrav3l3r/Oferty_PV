@@ -25,6 +25,9 @@ let _excelColWidths = {};
 let _excelAddingReliefPair = false;
 let _excelUserEditing = false;
 let _excelAutoSelectEnabled = true;
+/* F2c: lista spod modala odłożona na zamknięcie (niewidoczna pod overlayem).
+   Stawia _excelDebouncedRefresh, konsumuje _excelCloseOverlay. */
+let _excelListStale = false;
 /* wellIndexById — canonical index SSoT (I3): wells[] + Map nie dwie kopie, sort nie rebuild */
 let _excelWellIndexById = new Map();
 /* filteredIndexes — SSoT widoku (C1). DOM = tylko widok. Invalidacja centralna. */
