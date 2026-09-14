@@ -147,5 +147,43 @@ describe('excelVirtual oracle — legacy vs virtual', () => {
         expect(
             ctx.window._excelVirtualSelectionRange.r2 - ctx.window._excelVirtualSelectionRange.r1
         ).toBe(9999);
+        ctx.window._excelVirtualSelectionRange = undefined;
+    });
+
+    test('XL-01: virtual copy pomija wiersze ukryte filtrem', () => {
+        ctx.wells = [
+            { id: 'well-0', name: 'Alfa', dn: '1000', config: [], przejscia: [] },
+            { id: 'well-1', name: 'Beta', dn: '1000', config: [], przejscia: [] },
+            { id: 'well-2', name: 'Alfa2', dn: '1000', config: [], przejscia: [] }
+        ];
+        ctx._excelActiveTab = '1000';
+        const origGet = ctx.document.getElementById;
+        ctx.document.getElementById = (id: string) => {
+            if (id === 'excel-search-input') return { value: 'alfa' };
+            if (id === 'excel-table-overlay') return {};
+            return null;
+        };
+        ctx._excelVirtualBuildFiltered();
+        expect(ctx.window._excelVirtualFiltered).toEqual([0, 2]);
+        // selekcja obejmuje też ukryty wiersz 1 (stale selection)
+        vm.runInContext(
+            '_excelVirtualEnabled = true; _excelSelectedCells = [{wIdx:0,colIdx:3},{wIdx:1,colIdx:3},{wIdx:2,colIdx:3}]; _excelSelectedCols = []; window._excelVirtualSelectionRange = undefined;',
+            ctx
+        );
+        const store: any = { data: '' };
+        const fakeEvent = {
+            clipboardData: { setData: (_t: string, v: string) => (store.data = v) },
+            preventDefault: () => {}
+        };
+        ctx._excelVirtualHandleCopy(fakeEvent);
+        expect(store.data).toContain('Alfa');
+        expect(store.data).toContain('Alfa2');
+        expect(store.data).not.toContain('Beta');
+        ctx.document.getElementById = origGet;
+        vm.runInContext(
+            '_excelVirtualEnabled = false; _excelSelectedCells = []; _excelSelectedCols = [];',
+            ctx
+        );
+        ctx._excelVirtualBuildFiltered();
     });
 });

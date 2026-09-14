@@ -810,7 +810,7 @@ function _excelVirtualRenderBody() {
         // nadpisz search aby rebuildował filtered
         const origFilter = window.excelFilterWells;
         if (origFilter && !origFilter._virtualPatched) {
-            const wrapped = function (v) {
+            const wrapped = function () {
                 _excelVirtualBuildFiltered();
                 _excelVirtualRenderBody();
             };
@@ -927,10 +927,15 @@ function _excelVirtualHandleCopy(e) {
             if (c.colIdx < minC) minC = c.colIdx;
             if (c.colIdx > maxC) maxC = c.colIdx;
         });
-        // minR/maxR to wIdx (global), nie logical — map via filtered
-        const filtered = _excelVirtualFiltered || [];
+        // XL-01: kopiuj tylko wiersze widoczne w filtrze (jak Ctrl+A i nawigacja
+        // pomijają ukryte: _excelGetVisibleRows / range po filtered powyżej).
+        // _excelSelectedCells trzymają globalne wIdx — bez tego kopia ciągnęłaby
+        // wiersze ukryte filtrem (stale selection). Guard: bez filtra zachowaj legacy.
+        const _copyVisible = new Set(_excelVirtualFiltered || []);
+        const _copyFilterBuilt = (_excelVirtualFiltered || []).length > 0;
         // znajdź logical range odpowiadający wIdx
         for (let r = minR; r <= maxR; r++) {
+            if (_copyFilterBuilt && !_copyVisible.has(r)) continue;
             const line = [];
             for (let c = minC; c <= maxC; c++) {
                 let val = '';

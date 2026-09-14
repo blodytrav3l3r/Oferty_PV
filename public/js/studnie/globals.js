@@ -208,6 +208,9 @@ function getWellIndexById(id) {
 let currentWellIndex = 0;
 let wellCounter = 1;
 let wellDiscounts = {}; // Rabaty na DN: { 1000: { dennica, nadbudowa, preco, pehd, dennicaE600, nadbudowaE600, zwienczenieE600, dennicaF900, nadbudowaF900, zwienczenieF900 }, ... }
+// G4: jawna deklaracja + binding (jak wellDiscounts) zamiast implicit window.*
+// (kolizja offer*/order* — jedna zmienna, nie rozjazd; ADR-011: edycja otwarta, delete właścicielskie).
+let isPreviewMode = false;
 let precoPricing = {}; // Cennik wkładek PRECO: { 1000: { kinety: [...], ... }, ... }
 
 // Globalne domyślne parametry oferty (utrzymują się do czasu ręcznej zmiany)
@@ -456,6 +459,7 @@ const _GLOBAL_BINDINGS = {
     editingOfferCreatedByUserName: () => editingOfferCreatedByUserName,
     isSavingOffer: () => isSavingOffer,
     orderEditMode: () => orderEditMode,
+    isPreviewMode: () => isPreviewMode,
     expandedWellIndices: () => expandedWellIndices,
     currentWizardStep: () => currentWizardStep,
     wizardConfirmedParams: () => wizardConfirmedParams,
@@ -524,6 +528,9 @@ const _GLOBAL_SETTERS = {
     },
     orderEditMode: (v) => {
         orderEditMode = v;
+    },
+    isPreviewMode: (v) => {
+        isPreviewMode = v;
     },
     currentWizardStep: (v) => {
         currentWizardStep = v;

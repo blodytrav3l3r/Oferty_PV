@@ -287,7 +287,8 @@ async function addStudnieProduct() {
         else if (n.includes('STYCZNA')) newProduct.dn = 'styczna';
     }
 
-    studnieProducts.push(newProduct);
+    // G3: przez setter (purge + rebuild Map) — push omijał setter (baza #46).
+    window.studnieProducts = [...studnieProducts, newProduct];
     _studniePricelistDirty = true;
     updateStudnieSaveBtn();
     closeModal();

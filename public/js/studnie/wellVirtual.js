@@ -446,7 +446,12 @@ function _wellVirtualRenderBody() {
     _wellVirtualEnabled = _wellVirtualIsEnabled();
     if (!_wellVirtualEnabled) return;
 
+    // G2: jeden delegat — virtual gdy włączony, inaczej legacy z wellUI.js.
+    // IIFE instaluje dispatcher tylko gdy enabled (early-return wyżej zostawia legacy).
     window.renderWellsList = function () {
+        if (!_wellVirtualEnabled && typeof window.renderWellsListLegacy === 'function') {
+            return window.renderWellsListLegacy.apply(this, arguments);
+        }
         if (typeof refreshAllWellErrors === 'function') {
             try {
                 refreshAllWellErrors();

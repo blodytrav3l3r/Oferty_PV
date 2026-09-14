@@ -795,8 +795,10 @@ window.bindEnter = bindEnter;
 
 /* ===== Rejestracja globali ===== */
 window.getUserDisplayName = getUserDisplayName;
-window.toggleCard = toggleCard;
-window.showSection = showSection;
+// G5: guardy — winner to studnie/globals.js (transition+cleanup, ładowany po shared).
+// Bez guarda przyszła zmiana kolejności <script> cicho nadpisałaby underscorową wersję.
+if (!window.toggleCard) window.toggleCard = toggleCard;
+if (!window.showSection) window.showSection = showSection;
 window.showUserSelectionPopup = showUserSelectionPopup;
 
 /* ===== Rejestracja globali ===== */

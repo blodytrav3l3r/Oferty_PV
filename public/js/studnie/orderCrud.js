@@ -863,6 +863,10 @@ async function enterOrderEditMode(orderId) {
 window.isPreviewMode = false;
 
 window.applyPreviewLockUI = function () {
+    // G1 re-entrancy guard (kolizja saveOfferStudnie): powtórne wywołanie owijałoby
+    // już owinięty wrapper (oryginał tracony w łańcuchu). exitPreviewMode reloaduje stronę.
+    if (window.applyPreviewLockUI.__previewGuard) return;
+    window.applyPreviewLockUI.__previewGuard = true;
     let banner = document.getElementById('preview-lock-banner');
     if (!banner) {
         banner = document.createElement('div');

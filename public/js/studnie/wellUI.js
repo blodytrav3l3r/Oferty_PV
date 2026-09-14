@@ -6,7 +6,9 @@
 // Debounce + per-tick cache (Faza 0 visual-safe): nie zmienia wyglądu, tylko koszt renderu.
 let _wellSearchDebounce = null;
 let _wellStatsCache = null;
-window.renderWellsList = function renderWellsList() {
+// G2: legacy pod dwoma nazwami — window.renderWellsList przejmuje wellVirtual.js
+// (jeden delegat, dispatcher z fallbackiem); bezpośrednie wołania legacy używają renderWellsListLegacy.
+window.renderWellsListLegacy = window.renderWellsList = function renderWellsList() {
     const container = document.getElementById('wells-list');
     if (!container) return;
 

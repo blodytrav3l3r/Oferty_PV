@@ -34,10 +34,6 @@ function markAllDirty() {
     for (let i = 0; i < wells.length; i++) _calcDirtySet.add(i);
 }
 
-function clearDirtySet() {
-    _calcDirtySet.clear();
-}
-
 async function processDirtySet() {
     if (_calcRunning) return;
     if (_calcDirtySet.size === 0) return;
@@ -102,26 +98,10 @@ function scheduleCalc() {
     });
 }
 
-// Worker gate — pomiar P95, decide later
-const _calcP95Samples = [];
-function recordCalcSample(ms) {
-    _calcP95Samples.push(ms);
-    if (_calcP95Samples.length > 200) _calcP95Samples.shift();
-}
-function getCalcP95() {
-    if (_calcP95Samples.length === 0) return 0;
-    const sorted = _calcP95Samples.slice().sort(function (a, b) {
-        return a - b;
-    });
-    const idx = Math.floor(sorted.length * 0.95);
-    return sorted[idx] || 0;
-}
-
 if (typeof window !== 'undefined') {
     window.markWellDirty = markWellDirty;
     window.markAllDirty = markAllDirty;
     window.processDirtySet = processDirtySet;
     window.scheduleCalc = scheduleCalc;
-    window.getCalcP95 = getCalcP95;
     window._calcDirtySet = _calcDirtySet;
 }

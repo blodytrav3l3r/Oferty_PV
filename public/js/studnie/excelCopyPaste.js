@@ -20,6 +20,8 @@ function _excelIsPrzejscieSrednicaCol(colIdx) {
     return colIdx < 7 + maxTr * 4;
 }
 function _excelBuildVisibleSeq() {
+    // SSoT layoutu TD (baza #47, kotwica XL-02): vis tylko dla renderowanych
+    // (widoczne minus select/auto), logical po all[] bez zmian. Para: _excelGetCellByLogical.
     const maxTr =
         typeof _excelMaxTransitions !== 'undefined' && _excelMaxTransitions[_excelActiveTab]
             ? _excelMaxTransitions[_excelActiveTab]
@@ -201,6 +203,8 @@ function _excelGetComponentPrefixLen() {
     return 10 + maxTr * 4; // 7 stałych + maxTr*4 przejścia +2 gap +1 właz
 }
 function _excelGetCellByLogical(row, logicalIdx) {
+    // SSoT layoutu TD (baza #47, kotwica XL-02): ta sama reguła co _excelBuildVisibleSeq
+    // (tail korygowany o ukryte + select/auto). Nie zmieniać jednej bez drugiej.
     if (!row || logicalIdx < 0) return null;
     const maxTr =
         typeof _excelMaxTransitions !== 'undefined' && _excelMaxTransitions[_excelActiveTab]

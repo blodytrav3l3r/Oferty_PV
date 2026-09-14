@@ -11,24 +11,25 @@ async function addPrzejsciaCategory() {
     }
 
     const defaultSizes = [110, 160, 200, 250, 315, 400];
-    defaultSizes.forEach((dn) => {
-        studnieProducts.push({
-            id: `${catName.replace(/ /g, '-')}-${dn}`,
-            name: `${catName}`,
-            category: catName,
-            dn: dn,
-            componentType: 'przejscie',
-            zapasDol: 300,
-            zapasGora: 300,
-            zapasDolMin: 150,
-            zapasGoraMin: 150,
-            price: 0,
-            weight: -1 * Math.round(dn / 15),
-            area: null,
-            areaExt: null,
-            transport: null
-        });
-    });
+    // G3: zapis przez setter window.studnieProducts (purge + rebuild Map, baza #46).
+    // Bezpośredni push omijał setter i zostawiał studnieProductsById nieaktualne.
+    const added = defaultSizes.map((dn) => ({
+        id: `${catName.replace(/ /g, '-')}-${dn}`,
+        name: `${catName}`,
+        category: catName,
+        dn: dn,
+        componentType: 'przejscie',
+        zapasDol: 300,
+        zapasGora: 300,
+        zapasDolMin: 150,
+        zapasGoraMin: 150,
+        price: 0,
+        weight: -1 * Math.round(dn / 15),
+        area: null,
+        areaExt: null,
+        transport: null
+    }));
+    window.studnieProducts = [...studnieProducts, ...added];
 
     _studniePricelistDirty = true;
     updateStudnieSaveBtn();
@@ -97,7 +98,8 @@ async function addStudnieCategory() {
         formaStandardowaKLB: 1
     };
 
-    studnieProducts.push(newProduct);
+    // G3: przez setter (purge + rebuild Map) — push omijał setter (baza #46).
+    window.studnieProducts = [...studnieProducts, newProduct];
     _studniePricelistDirty = true;
     updateStudnieSaveBtn();
     renderStudniePriceList();
@@ -169,7 +171,8 @@ async function addStudnieElement(groupKey) {
         if (dnStr) newProduct.dn = isNaN(Number(dnStr)) ? dnStr : Number(dnStr);
     }
 
-    studnieProducts.push(newProduct);
+    // G3: przez setter (purge + rebuild Map) — push omijał setter (baza #46).
+    window.studnieProducts = [...studnieProducts, newProduct];
     _studniePricelistDirty = true;
     updateStudnieSaveBtn();
     renderStudniePriceList();
