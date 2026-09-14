@@ -20,6 +20,39 @@ const PRISMA_CLI = path.join(ROOT, 'node_modules', 'prisma', 'build', 'index.js'
 const SCHEMA_SRC = path.join(ROOT, 'prisma', 'schema.prisma');
 const MIGRATIONS_SRC = path.join(ROOT, 'prisma', 'migrations');
 
+/** Katalog zastępczy dla cleanup rename-away (DX-01). */
+function deadDir(dir: string): string {
+    return dir + '.dead';
+}
+
+/** Blokujące odczekanie ms (bez event loop — helper testowy, nie prod). */
+function sleepSync(ms: number): void {
+    try {
+        Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+    } catch {
+        /* brak SharedArrayBuffer — bez czekania */
+    }
+}
+
+/**
+ * Best-effort rmSync z retry — zwraca true gdy katalog nie istnieje (usunięty).
+ * Na Windows proces wnuk Prisma CLI potrafi trzymać uchwyt jeszcze ~1-2 s
+ * po wyjściu execFileSync (EPERM/EBUSY przy pierwszej próbie), więc przed
+ * rename-away ponawiamy z odczekaniem. Koszt tylko na ścieżce błędu.
+ */
+function removeDirBestEffort(dir: string, retries = 5): boolean {
+    for (let attempt = 0; attempt <= retries; attempt++) {
+        try {
+            fs.rmSync(dir, { recursive: true, force: true, maxRetries: 30, retryDelay: 250 });
+        } catch {
+            /* flaky EPERM/EBUSY na Windows — retry poniżej */
+        }
+        if (!fs.existsSync(dir)) return true;
+        if (attempt < retries) sleepSync(1000);
+    }
+    return !fs.existsSync(dir);
+}
+
 export interface IsolatedProject {
     dir: string;
     dbPath: string;
@@ -37,7 +70,8 @@ export interface IsolatedProject {
  */
 export function createIsolatedProject(name: string, migrations: string[]): IsolatedProject {
     const dir = path.join(TMP_ROOT, name);
-    fs.rmSync(dir, { recursive: true, force: true, maxRetries: 30, retryDelay: 250 });
+    removeDirBestEffort(dir);
+    removeDirBestEffort(deadDir(dir));
     fs.mkdirSync(path.join(dir, 'prisma', 'migrations'), { recursive: true });
 
     const schemaPath = path.join(dir, 'prisma', 'schema.prisma');
@@ -72,12 +106,19 @@ export function createIsolatedProject(name: string, migrations: string[]): Isola
     }
 
     function cleanup() {
-        // Best-effort: na Windows silnik Prisma (proces wnuk CLI) potrafi
-        // trzymac uchwyt katalogu dlugo po wyjsciu execFileSync — flaky
-        // EPERM nie moze wyrzucac poprawnego testu. Pozostaly katalog
-        // usuwa createIsolatedProject przy nastepnym runie.
+        // DX-01: na Windows silnik Prisma (proces wnuk CLI) potrafi trzymać
+        // uchwyt katalogu długo po wyjściu execFileSync — flaky EPERM nie może
+        // wyrzucać poprawnego testu. Strategia: rename-away (przeniesienie
+        // katalogu zwykle udaje się mimo uchwytu) + rmSync celu zastępczego.
+        // Resztka .dead jest sprzątana przy następnym createIsolatedProject.
+        if (removeDirBestEffort(dir)) return;
         try {
-            fs.rmSync(dir, { recursive: true, force: true, maxRetries: 30, retryDelay: 250 });
+            const dead = deadDir(dir);
+            removeDirBestEffort(dead);
+            fs.renameSync(dir, dead);
+            if (!removeDirBestEffort(dead)) {
+                console.warn(`[migrations-helpers] cleanup deferred for ${dir} (dead: ${dead})`);
+            }
         } catch (err) {
             console.warn(
                 `[migrations-helpers] cleanup failed for ${dir}: ${(err as Error)?.message ?? String(err)}`
