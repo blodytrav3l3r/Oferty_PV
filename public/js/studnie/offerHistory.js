@@ -64,13 +64,13 @@ function renderAuditLogEntry(log) {
     const restoreBtnHtml =
         !isDelete && !isDiff
             ? `
-        <button class="btn btn-sm btn-secondary restore-btn" onclick="restoreHistorySnapshot('${escapeHtml(log.id)}')"><i data-lucide="refresh-cw" aria-hidden="true"></i> Przywróć</button>
+        <button class="btn btn-sm btn-secondary restore-btn" onclick="restoreHistorySnapshot('${escapeJsStr(log.id)}')"><i data-lucide="refresh-cw" aria-hidden="true"></i> Przywróć</button>
     `
             : '';
 
     const buttonsHtml = `
         <div class="flex-gap-4">
-            <button class="btn btn-sm btn-secondary preview-btn" onclick="viewHistorySnapshot('${escapeHtml(log.id)}')"><i data-lucide="eye" aria-hidden="true"></i> Podgląd</button>
+            <button class="btn btn-sm btn-secondary preview-btn" onclick="viewHistorySnapshot('${escapeJsStr(log.id)}')"><i data-lucide="eye" aria-hidden="true"></i> Podgląd</button>
             ${restoreBtnHtml}
         </div>
     `;
@@ -118,7 +118,7 @@ async function showOfferHistoryStudnie(id) {
         const loadMoreHtml =
             logs.length < total
                 ? `<div id="audit-load-more-wrap" class="text-center">
-                   <button class="load-more-btn" onclick="loadMoreAuditLogs('studnia_oferta', '${escapeHtml(id)}', 20)"><i data-lucide="scroll-text"></i> Załaduj starsze zmiany (${total - logs.length} pozostało)</button>
+                   <button class="load-more-btn" onclick="loadMoreAuditLogs('studnia_oferta', '${escapeJsStr(id)}', 20)"><i data-lucide="scroll-text"></i> Załaduj starsze zmiany (${total - logs.length} pozostało)</button>
                </div>`
                 : '';
 
@@ -245,7 +245,7 @@ async function loadMoreAuditLogs(entityType, entityId, limit) {
                 'beforeend',
                 `
                 <div id="audit-load-more-wrap" class="text-center">
-                    <button class="load-more-btn" onclick="loadMoreAuditLogs('${escapeHtml(entityType)}', '${escapeHtml(entityId)}', ${limit})"><i data-lucide="scroll-text"></i> Załaduj starsze zmiany (${remaining} pozostało)</button>
+                    <button class="load-more-btn" onclick="loadMoreAuditLogs('${escapeJsStr(entityType)}', '${escapeJsStr(entityId)}', ${limit})"><i data-lucide="scroll-text"></i> Załaduj starsze zmiany (${remaining} pozostało)</button>
                 </div>
             `
             );

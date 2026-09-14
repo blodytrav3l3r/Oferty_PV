@@ -92,25 +92,25 @@ function renderSavedOffers() {
         }
       </div>
       <div class="offer-actions" style="display:flex; flex-wrap:wrap; gap:0.4rem; justify-content:flex-end; align-content:center;">
-        <button class="btn btn-sm btn-primary" data-action="loadOffer" data-id="${escapeHtml(o.id)}" title="Edytuj" ${canEdit ? '' : 'disabled'}><i data-lucide="pencil" aria-hidden="true"></i> Edytuj</button>
-        <button class="btn btn-sm btn-secondary" data-action="duplicateOffer" data-id="${escapeHtml(o.id)}" title="Duplikuj"><i data-lucide="clipboard-list" aria-hidden="true"></i> Duplikuj</button>
-        ${o.history && o.history.length > 0 ? `<button class="btn btn-sm btn-secondary" data-action="showOfferHistory" data-id="${escapeHtml(o.id)}" title="Historia zmian"><i data-lucide="hourglass" aria-hidden="true"></i> Historia</button>` : ''}
-        <button class="btn btn-sm btn-secondary" data-action="downloadExistingOffer" data-id="${escapeHtml(o.id)}" title="Pobierz plik JSON"><i data-lucide="save" aria-hidden="true"></i> JSON</button>
-        <button class="btn btn-sm btn-secondary" data-action="exportOfferXlsx" data-id="${escapeHtml(o.id)}" title="Pobierz plik XLSX"><i data-lucide="bar-chart-2" aria-hidden="true"></i> XLSX</button>
-        <button class="btn btn-sm btn-success" data-action="exportOfferPDF" data-id="${escapeHtml(o.id)}" title="PDF"><i data-lucide="file-text" aria-hidden="true"></i> PDF</button>
-        <button class="btn btn-sm btn-secondary" data-action="shareOffer" data-id="${escapeHtml(o.id)}" title="Udostępnij" aria-label="Udostępnij"><i data-lucide="share-2" aria-hidden="true"></i> Udostępnij</button>
+        <button class="btn btn-sm btn-primary" data-action="loadOffer" data-id="${escapeHtmlAttr(o.id)}" title="Edytuj" ${canEdit ? '' : 'disabled'}><i data-lucide="pencil" aria-hidden="true"></i> Edytuj</button>
+        <button class="btn btn-sm btn-secondary" data-action="duplicateOffer" data-id="${escapeHtmlAttr(o.id)}" title="Duplikuj"><i data-lucide="clipboard-list" aria-hidden="true"></i> Duplikuj</button>
+        ${o.history && o.history.length > 0 ? `<button class="btn btn-sm btn-secondary" data-action="showOfferHistory" data-id="${escapeHtmlAttr(o.id)}" title="Historia zmian"><i data-lucide="hourglass" aria-hidden="true"></i> Historia</button>` : ''}
+        <button class="btn btn-sm btn-secondary" data-action="downloadExistingOffer" data-id="${escapeHtmlAttr(o.id)}" title="Pobierz plik JSON"><i data-lucide="save" aria-hidden="true"></i> JSON</button>
+        <button class="btn btn-sm btn-secondary" data-action="exportOfferXlsx" data-id="${escapeHtmlAttr(o.id)}" title="Pobierz plik XLSX"><i data-lucide="bar-chart-2" aria-hidden="true"></i> XLSX</button>
+        <button class="btn btn-sm btn-success" data-action="exportOfferPDF" data-id="${escapeHtmlAttr(o.id)}" title="PDF"><i data-lucide="file-text" aria-hidden="true"></i> PDF</button>
+        <button class="btn btn-sm btn-secondary" data-action="shareOffer" data-id="${escapeHtmlAttr(o.id)}" title="Udostępnij" aria-label="Udostępnij"><i data-lucide="share-2" aria-hidden="true"></i> Udostępnij</button>
         ${
             _hasOrder
                 ? _orderList
                       .map(
                           (ord) => `
-            <button class="btn btn-sm" data-action="openOrderRury" data-id="${escapeHtml(ord.id)}" style="background:rgba(var(--success-rgb), 0.15); border:1px solid rgba(var(--success-rgb), 0.3); color:var(--success-hover); font-size: var(--fs-sm); padding:0.3rem 0.6rem; font-weight: var(--fw-bold);" title="Edytuj zamówienie">
+            <button class="btn btn-sm" data-action="openOrderRury" data-id="${escapeHtmlAttr(ord.id)}" style="background:rgba(var(--success-rgb), 0.15); border:1px solid rgba(var(--success-rgb), 0.3); color:var(--success-hover); font-size: var(--fs-sm); padding:0.3rem 0.6rem; font-weight: var(--fw-bold);" title="Edytuj zamówienie">
                 <i data-lucide="package"></i> Zam. ${escapeHtml(ord.orderNumber || ord.offerNumber || ord.id.substring(0, 8))}
             </button>
-            <button class="btn btn-sm" data-action="exportKartaDirectRury" data-id="${escapeHtml(ord.id)}" data-fmt="pdf" style="background:rgba(var(--danger-rgb), 0.15); border:1px solid rgba(var(--danger-rgb), 0.3); color:var(--danger-hover); font-size: var(--fs-sm); padding:0.3rem 0.6rem; font-weight: var(--fw-bold);" title="Karta budowy PDF">
+            <button class="btn btn-sm" data-action="exportKartaDirectRury" data-id="${escapeHtmlAttr(ord.id)}" data-fmt="pdf" style="background:rgba(var(--danger-rgb), 0.15); border:1px solid rgba(var(--danger-rgb), 0.3); color:var(--danger-hover); font-size: var(--fs-sm); padding:0.3rem 0.6rem; font-weight: var(--fw-bold);" title="Karta budowy PDF">
                 <i data-lucide="file-text"></i> Karta PDF
             </button>
-            <button class="btn btn-sm" data-action="exportKartaDirectRury" data-id="${escapeHtml(ord.id)}" data-fmt="docx" style="background:rgba(var(--blue-rgb), 0.15); border:1px solid rgba(var(--blue-rgb), 0.3); color:var(--blue-hover); font-size: var(--fs-sm); padding:0.3rem 0.6rem; font-weight: var(--fw-bold);" title="Karta budowy Word">
+            <button class="btn btn-sm" data-action="exportKartaDirectRury" data-id="${escapeHtmlAttr(ord.id)}" data-fmt="docx" style="background:rgba(var(--blue-rgb), 0.15); border:1px solid rgba(var(--blue-rgb), 0.3); color:var(--blue-hover); font-size: var(--fs-sm); padding:0.3rem 0.6rem; font-weight: var(--fw-bold);" title="Karta budowy Word">
                 <i data-lucide="edit"></i> Karta Word
             </button>
         `
@@ -118,7 +118,7 @@ function renderSavedOffers() {
                       .join('')
                 : ''
         }
-        <button class="btn btn-sm btn-danger" data-action="deleteOffer" data-id="${escapeHtml(o.id)}" title="Usuń" ${canEdit ? '' : 'disabled'}><i data-lucide="trash-2" aria-hidden="true"></i> Usuń</button>
+        <button class="btn btn-sm btn-danger" data-action="deleteOffer" data-id="${escapeHtmlAttr(o.id)}" title="Usuń" ${canEdit ? '' : 'disabled'}><i data-lucide="trash-2" aria-hidden="true"></i> Usuń</button>
       </div>
     </div>
   `;
@@ -175,7 +175,7 @@ function showOfferHistory(id) {
             <div style="font-size: var(--fs-md); color:var(--text-muted); margin-bottom:0.2rem;">Różnica do kolejnej wersji:</div>
             ${diffHtml}
             <div style="margin-top:0.6rem;">
-              <button class="btn btn-sm btn-secondary" data-action="restoreOfferVersion" data-id="${escapeHtml(id)}" data-i="${i}">Pobierz do edycji</button>
+              <button class="btn btn-sm btn-secondary" data-action="restoreOfferVersion" data-id="${escapeHtmlAttr(id)}" data-i="${i}">Pobierz do edycji</button>
             </div>
           </div>
         </div>

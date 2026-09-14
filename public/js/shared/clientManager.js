@@ -248,7 +248,7 @@ function renderClientsDbList(query) {
             const actionTd = document.createElement('td');
             actionTd.style.cssText =
                 'padding:0.4rem 0.6rem; text-align:center; white-space:nowrap;';
-            actionTd.innerHTML = `<button class="btn-icon" onclick="event.stopPropagation(); saveEditedClientInDb('${escapeHtml(c.id)}')" title="Zapisz" aria-label="Zapisz" style="color:var(--accent); font-size: var(--fs-2xl);"><i data-lucide="save" aria-hidden="true"></i></button>
+            actionTd.innerHTML = `<button class="btn-icon" onclick="event.stopPropagation(); saveEditedClientInDb('${escapeJsStr(c.id)}')" title="Zapisz" aria-label="Zapisz" style="color:var(--accent); font-size: var(--fs-2xl);"><i data-lucide="save" aria-hidden="true"></i></button>
                 <button class="btn-icon" onclick="event.stopPropagation(); cancelEditClient()" title="Anuluj" aria-label="Anuluj" style="color:var(--text-muted); font-size: var(--fs-lg);"><i data-lucide="x" aria-hidden="true"></i></button>`;
             tr.appendChild(actionTd);
         } else {
@@ -285,8 +285,8 @@ function renderClientsDbList(query) {
             const actionTd = document.createElement('td');
             actionTd.style.cssText =
                 'padding:0.6rem 0.8rem; text-align:center; white-space:nowrap;';
-            actionTd.innerHTML = `<button class="btn-icon" onclick="event.stopPropagation(); editClientInDb('${escapeHtml(c.id)}')" title="Edytuj" aria-label="Edytuj" style="color:var(--text-secondary); font-size: var(--fs-lg); opacity:0.8;"><i data-lucide="pencil" aria-hidden="true"></i></button>
-                <button class="btn-icon" onclick="event.stopPropagation(); deleteClientFromDb('${escapeHtml(c.id)}')" title="Usuń z bazy" aria-label="Usuń z bazy" style="color:var(--danger); font-size: var(--fs-lg); opacity:0.6;" onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='0.6'"><i data-lucide="x" aria-hidden="true"></i></button>`;
+            actionTd.innerHTML = `<button class="btn-icon" onclick="event.stopPropagation(); editClientInDb('${escapeJsStr(c.id)}')" title="Edytuj" aria-label="Edytuj" style="color:var(--text-secondary); font-size: var(--fs-lg); opacity:0.8;"><i data-lucide="pencil" aria-hidden="true"></i></button>
+                <button class="btn-icon" onclick="event.stopPropagation(); deleteClientFromDb('${escapeJsStr(c.id)}')" title="Usuń z bazy" aria-label="Usuń z bazy" style="color:var(--danger); font-size: var(--fs-lg); opacity:0.6;" onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='0.6'"><i data-lucide="x" aria-hidden="true"></i></button>`;
             tr.appendChild(actionTd);
 
             tr.onclick = () => selectClientFromDb(c.id);

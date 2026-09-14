@@ -10,7 +10,7 @@ import { logger } from '../../utils/logger';
 import { validateData } from '../../validators/authSchema';
 import { WRITE_LIMITER } from '../../middleware/rateLimiters';
 import { buildRoleWhereConditionWithShares } from '../../utils/roleFilter';
-import { canEditDoc, resolveEditUserId, canReadWithShare } from '../../utils/ownership';
+import { resolveWriteUserId, resolveAssignUserId, canReadWithShare } from '../../utils/ownership';
 import { versionedWrite, mapVersionConflict } from '../../utils/versionWrite';
 import { assertDocLockForWrite, mapDocLockConflict } from '../../utils/docLocks';
 import { mapPrismaError } from '../../utils/prismaErrors';
@@ -572,18 +572,24 @@ router.post(
                 let effectiveUserId: string;
                 const old = oldMap.get(docId) || null;
                 if (old) {
-                    if (!canEditDoc(authReq.user)) {
+                    // P0.1: zapis wymaga prawa względem STAREGO właściciela,
+                    // zmiana opiekuna — dodatkowo względem NOWEGO.
+                    const requestedUserId =
+                        typeof o.userId === 'string' && o.userId ? o.userId : '';
+                    const assigned = resolveAssignUserId(
+                        authReq.user,
+                        old.userId,
+                        requestedUserId || undefined
+                    );
+                    if (!assigned.allowed) {
                         return res
                             .status(403)
                             .json({ error: 'Brak uprawnień do modyfikacji tej oferty' });
                     }
-                    // Model współpracy: update honoruje zmianę opiekuna
-                    // (incoming.userId), fallback: stara kolumna, potem self.
-                    const requestedUserId =
-                        typeof o.userId === 'string' && o.userId ? o.userId : '';
-                    effectiveUserId = requestedUserId || old.userId || authReq.user?.id || '';
+                    effectiveUserId = assigned.effectiveUserId;
                 } else {
-                    const resolved = resolveEditUserId(authReq.user, o.userId);
+                    // P0.1: create tylko dla siebie / subUsera (pro) / dowolnie (admin).
+                    const resolved = resolveWriteUserId(authReq.user, o.userId);
                     if (!resolved.allowed) {
                         return res.status(403).json({
                             error: 'Brak uprawnień do utworzenia oferty dla tego użytkownika'
@@ -832,11 +838,20 @@ router.put(
             const existingById = new Map(existingDocs.map((d) => [d.id, d]));
             // P4-P0: guard + dane jednym zapytaniem (nie per oferta w pętli).
             const orderedGuardMapPut = await getOrderedWellIdsForOffers(incomingIds);
-            const forbidden = !canEditDoc(authReq.user) && existingDocs.length > 0;
-            if (forbidden) {
-                return res.status(403).json({
-                    error: 'Forbidden — nie masz uprawnień do modyfikacji jednej z ofert'
-                });
+            // P0.1: każdy modyfikowany dokument musi spełniać
+            // canWriteDoc względem właściciela (edycja + zmiana opiekuna).
+            for (const d of existingDocs) {
+                const reqUser = incoming.find((o: { id?: unknown }) => o.id === d.id)?.userId;
+                const assigned = resolveAssignUserId(
+                    authReq.user,
+                    d.userId,
+                    typeof reqUser === 'string' ? reqUser : undefined
+                );
+                if (!assigned.allowed) {
+                    return res.status(403).json({
+                        error: 'Forbidden — nie masz uprawnień do modyfikacji jednej z ofert'
+                    });
+                }
             }
 
             // P1.1: walidacja + kolekcja, potem atomowy zapis batch
@@ -918,10 +933,33 @@ router.put(
                 // P0-D2: version to kolumna (top-level o.version), nie blob o.data.
                 const putClientVersion = typeof o.version === 'number' ? o.version : null;
                 const putOld = existingById.get(docId);
-                // Model współpracy: żądana zmiana opiekuna wygrywa,
-                // fallback: stara kolumna, potem self (nigdy ślepo edytujący).
+                // P0.1: opiekun rozstrzygany PRZED zapisem (403 zamiast cichego przejęcia).
                 const putRequestedUserId = typeof o.userId === 'string' && o.userId ? o.userId : '';
-                const putUserId = putRequestedUserId || putOld?.userId || authReq.user?.id || '';
+                let putUserId: string;
+                if (putOld) {
+                    const assigned = resolveAssignUserId(
+                        authReq.user,
+                        putOld.userId,
+                        putRequestedUserId || undefined
+                    );
+                    if (!assigned.allowed) {
+                        return res.status(403).json({
+                            error: 'Forbidden — nie masz uprawnień do modyfikacji jednej z ofert'
+                        });
+                    }
+                    putUserId = assigned.effectiveUserId;
+                } else {
+                    const created = resolveWriteUserId(
+                        authReq.user,
+                        putRequestedUserId || undefined
+                    );
+                    if (!created.allowed) {
+                        return res.status(403).json({
+                            error: 'Forbidden — nie masz uprawnień do utworzenia oferty dla tego użytkownika'
+                        });
+                    }
+                    putUserId = created.effectiveUserId;
+                }
                 pendingPut.push({
                     docId,
                     exists: !!putOld,

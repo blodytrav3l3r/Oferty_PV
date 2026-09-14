@@ -105,6 +105,13 @@ let mockTelemetryLogsFindFirst = jest.fn<any>().mockResolvedValue(null);
 jest.mock('../../src/prismaClient', () => ({
     __esModule: true,
     default: {
+        // P0.5 fail-closed: guard czyta settings; testy logiki pracuja przy fladze ON ('"1"').
+        settings: {
+            findUnique: jest.fn<any>().mockResolvedValue({
+                key: 'feature_ai_ml_enabled',
+                value: '"1"'
+            })
+        },
         aiFeature: {
             findMany: jest.fn<any>().mockResolvedValue([]),
             count: jest.fn<any>().mockResolvedValue(0)
@@ -212,6 +219,17 @@ describe('POST /api/telemetry/ai/predict/batch', () => {
         expect(second.status).toBe(200);
         expect(second.body.scores[0]).toHaveProperty('cached', true);
         expect(second.body.scores[0].score).toBe(0.42);
+    });
+
+    it('P0.5 guard: brak flagi (null) → 503 OFF fail-closed', async () => {
+        const prismaMock = (await import('../../src/prismaClient')).default as any;
+        (prismaMock.settings.findUnique as jest.Mock<any>).mockResolvedValueOnce(null);
+        const res = await request(app)
+            .post('/api/telemetry/ai/predict/batch')
+            .send({
+                candidates: [{ id: 1, features: new Array(29).fill(0.5) }]
+            });
+        expect(res.status).toBe(503);
     });
 });
 

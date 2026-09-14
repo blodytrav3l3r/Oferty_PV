@@ -127,7 +127,7 @@ describe('Production Orders (PZ) routes', () => {
             expect(res.statusCode).toBe(400);
         });
 
-        it('pozwala zapisać PZ dla innego użytkownika (model współpracy)', async () => {
+        it('blokuje zapis PZ dla innego użytkownika (P0.1)', async () => {
             (prisma.production_orders_rel.findUnique as jest.Mock).mockResolvedValue(null);
             (prisma.production_orders_rel.create as jest.Mock).mockResolvedValue({});
 
@@ -136,8 +136,8 @@ describe('Production Orders (PZ) routes', () => {
                 .set('x-user-id', 'user-id')
                 .send({ wellId: 'w-1', userId: 'other-user' });
 
-            expect(res.statusCode).toBe(200);
-            expect(prisma.production_orders_rel.create).toHaveBeenCalled();
+            expect(res.statusCode).toBe(403);
+            expect(prisma.production_orders_rel.create).not.toHaveBeenCalled();
         });
 
         it('P1-A: retry z tym samym Idempotency-Key → ta sama odpowiedź, 1 dokument', async () => {
@@ -239,7 +239,7 @@ describe('Production Orders (PZ) routes', () => {
             expect(prisma.production_orders_rel.create).toHaveBeenCalledTimes(2);
         });
 
-        it('pozwala edytować cudze PZ (model współpracy)', async () => {
+        it('blokuje edycję cudzego PZ (P0.1)', async () => {
             (prisma.production_orders_rel.findUnique as jest.Mock).mockResolvedValue({
                 id: 'pz-1',
                 userId: 'other-user',
@@ -254,10 +254,13 @@ describe('Production Orders (PZ) routes', () => {
                 .set('x-user-id', 'user-id')
                 .send({ data: [{ id: 'pz-1', wellId: 'w-1', status: 'draft' }] });
 
-            expect(res.statusCode).toBe(200);
+            expect(res.statusCode).toBe(403);
+            expect(res.body.saved).toEqual([]);
+            expect(prisma.production_orders_rel.updateMany).not.toHaveBeenCalled();
+            expect(prisma.production_orders_rel.create).not.toHaveBeenCalled();
         });
 
-        it('PUT PZ honoruje zmianę opiekuna, bez userId zostawia starą kolumnę', async () => {
+        it('blokuje zmianę opiekuna cudzego PZ (P0.1)', async () => {
             (prisma.production_orders_rel.findUnique as jest.Mock).mockResolvedValue({
                 id: 'pz-1',
                 userId: 'other-user',
@@ -272,9 +275,9 @@ describe('Production Orders (PZ) routes', () => {
                     data: [{ id: 'pz-1', wellId: 'w-1', userId: 'third-user', status: 'draft' }]
                 });
 
-            expect(res.statusCode).toBe(200);
-            const updateCall = (prisma.production_orders_rel.update as jest.Mock).mock.calls[0][0];
-            expect(updateCall.data.userId).toBe('third-user');
+            expect(res.statusCode).toBe(403);
+            expect(res.body.saved).toEqual([]);
+            expect(prisma.production_orders_rel.update).not.toHaveBeenCalled();
         });
     });
 

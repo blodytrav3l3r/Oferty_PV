@@ -57,11 +57,57 @@ export function resolveWriteUserId(
 }
 
 /**
- * Model uprawnień dokumentów biznesowych (oferty/zlecenia):
- * Read ownership ≠ Write ownership.
+ * Centralny gate zapisu dokumentu biznesowego (P0.1):
+ * zapis (create/update/assign) wymaga canWriteDoc względem właściciela.
+ * Zwraca true jeśli zapis dozwolony, false = odpowiedz 403.
+ */
+export function assertWriteAccess(
+    user: User | undefined,
+    docUserId: string | null | undefined
+): boolean {
+    return canWriteDoc(user, docUserId);
+}
+
+/**
+ * Rozstrzygnięcie opiekuna przy aktualizacji istniejącego dokumentu (P0.1):
+ * - edycja wymaga canWriteDoc względem STAREGO właściciela,
+ * - zmiana opiekuna (requested !== old) wymaga dodatkowo canWriteDoc
+ *   względem NOWEGO userId (nie-admin nie podrzuci dokumentu obcemu).
+ * Zwraca: { allowed: boolean, effectiveUserId: string }
+ */
+export function resolveAssignUserId(
+    user: User | undefined,
+    oldUserId: string | null | undefined,
+    requestedUserId: string | null | undefined
+): { allowed: boolean; effectiveUserId: string } {
+    if (!user) return { allowed: false, effectiveUserId: '' };
+    if (!canWriteDoc(user, oldUserId)) return { allowed: false, effectiveUserId: '' };
+    if (typeof requestedUserId === 'string' && requestedUserId && requestedUserId !== oldUserId) {
+        if (!canWriteDoc(user, requestedUserId)) return { allowed: false, effectiveUserId: '' };
+        return { allowed: true, effectiveUserId: requestedUserId };
+    }
+    return { allowed: true, effectiveUserId: oldUserId || user.id };
+}
+
+/**
+ * P0.2: claim/podgląd/recycle numeru — tylko własny licznik,
+ * podwładnego (pro) albo dowolny (admin). Zapobiega drainowi
+ * i lukom numeracji cudzego userId.
+ */
+export function canClaimNumber(
+    user: User | undefined,
+    targetUserId: string | null | undefined
+): boolean {
+    return canWriteDoc(user, targetUserId);
+}
+/**
+ * Model uprawnień dokumentów biznesowych (oferty/zlecenia) — P0.1:
  * - Odczyt: canReadDoc (owner / pro-parent / admin) + udostępnienia (share).
- * - Edycja i zmiana opiekuna: każdy zalogowany (canEditDoc / canAssignDoc).
- * - Usuwanie: stara reguła właścicielska (canDeleteDoc = canWriteDoc).
+ * - Zapis i zmiana opiekuna: assertWriteAccess / resolveAssignUserId
+ *   (owner / pro-parent / admin względem STAREGO i NOWEGO właściciela).
+ * - Usuwanie: canDeleteDoc = canWriteDoc.
+ * Poniższe canEditDoc / canAssignDoc / resolveEditUserId to DEPRECATED shimy
+ * (zostawione dla locków/numberingu do P0.2/P1.5) — nie używać w zapisach dokumentów.
  */
 export function canEditDoc(user: User | undefined): boolean {
     return !!user;

@@ -94,7 +94,7 @@ describe('Rury Orders CRUD', () => {
     });
 
     describe('POST /claim-rury-number/:userId', () => {
-        it('pozwala claimować numer cudzego użytkownika (model współpracy)', async () => {
+        it('blokuje claim numeru cudzego użytkownika (P0.2)', async () => {
             (prisma.users.findUnique as jest.Mock).mockResolvedValue({
                 id: 'other-user',
                 symbol: 'CD'
@@ -105,7 +105,8 @@ describe('Rury Orders CRUD', () => {
             const res = await request(app)
                 .post('/api/orders-rury/claim-rury-number/other-user')
                 .set('x-user-id', 'user-id');
-            expect(res.statusCode).toBe(200);
+            expect(res.statusCode).toBe(403);
+            expect(prisma.order_counters_rury.upsert).not.toHaveBeenCalled();
         });
 
         it('zwraca 404 gdy użytkownik nie istnieje', async () => {
@@ -235,7 +236,7 @@ describe('Rury Orders CRUD', () => {
             expect(res.body.ok).toBe(true);
         });
 
-        it('pozwala edytować cudze zamówienie (model współpracy)', async () => {
+        it('blokuje edycję cudzego zamówienia (P0.1)', async () => {
             (prisma.orders_rury_rel.findUnique as jest.Mock).mockResolvedValue({
                 id: 'or-1',
                 userId: 'other-user',
@@ -248,10 +249,12 @@ describe('Rury Orders CRUD', () => {
                 .set('x-user-id', 'user-id')
                 .send({ data: [{ id: 'or-1', status: 'accepted' }] });
 
-            expect(res.statusCode).toBe(200);
+            expect(res.statusCode).toBe(403);
+            expect(prisma.orders_rury_rel.updateMany).not.toHaveBeenCalled();
+            expect(prisma.orders_rury_rel.create).not.toHaveBeenCalled();
         });
 
-        it('PUT honoruje zmianę opiekuna, bez userId zostawia starą kolumnę', async () => {
+        it('blokuje zmianę opiekuna cudzego zamówienia (P0.1)', async () => {
             (prisma.orders_rury_rel.findUnique as jest.Mock).mockResolvedValue({
                 id: 'or-1',
                 userId: 'other-user',
@@ -266,9 +269,8 @@ describe('Rury Orders CRUD', () => {
                     data: [{ id: 'or-1', userId: 'third-user', status: 'accepted', version: 1 }]
                 });
 
-            expect(res.statusCode).toBe(200);
-            const updateCall = (prisma.orders_rury_rel.updateMany as jest.Mock).mock.calls[0][0];
-            expect(updateCall.data.userId).toBe('third-user');
+            expect(res.statusCode).toBe(403);
+            expect(prisma.orders_rury_rel.updateMany).not.toHaveBeenCalled();
         });
 
         it('stale version → 409 VERSION_CONFLICT (P0-D2)', async () => {
@@ -376,7 +378,7 @@ describe('Rury Orders CRUD', () => {
             });
         });
 
-        it('pozwala zmienić opiekuna bez roli admin (model współpracy)', async () => {
+        it('blokuje zmianę opiekuna na obcego bez prawa (P0.1)', async () => {
             (prisma.orders_rury_rel.findUnique as jest.Mock).mockResolvedValue({
                 id: 'or-1',
                 userId: 'user-id',
@@ -390,11 +392,12 @@ describe('Rury Orders CRUD', () => {
                 .set('x-user-id', 'user-id')
                 .send({ userId: 'someone-else' });
 
-            expect(res.statusCode).toBe(200);
-            expect(prisma.orders_rury_rel.update).toHaveBeenCalled();
+            expect(res.statusCode).toBe(403);
+            expect(prisma.orders_rury_rel.update).not.toHaveBeenCalled();
+            expect(prisma.orders_rury_rel.updateMany).not.toHaveBeenCalled();
         });
 
-        it('zmiana opiekuna ze starą wersją → 409 (assign nie omija optimistic lock)', async () => {
+        it('blokuje zmianę opiekuna na obcego mimo starej wersji (P0.1 przed 409)', async () => {
             (prisma.orders_rury_rel.findUnique as jest.Mock).mockResolvedValue({
                 id: 'or-1',
                 userId: 'user-id',
@@ -409,12 +412,13 @@ describe('Rury Orders CRUD', () => {
                 .set('x-user-id', 'user-id')
                 .send({ userId: 'someone-else', version: 1 });
 
-            expect(res.statusCode).toBe(409);
-            expect(res.body.code).toBe('VERSION_CONFLICT');
-            expect(res.body.serverVersion).toBe(2);
+            // P0.1: guard opiekuna przed predykatem wersji — brak prawa = 403.
+            expect(res.statusCode).toBe(403);
+            expect(prisma.orders_rury_rel.updateMany).not.toHaveBeenCalled();
+            expect(prisma.orders_rury_rel.update).not.toHaveBeenCalled();
         });
 
-        it('pozwala PATCH na cudzym zamówieniu (model współpracy)', async () => {
+        it('blokuje PATCH na cudzym zamówieniu (P0.1)', async () => {
             (prisma.orders_rury_rel.findUnique as jest.Mock).mockResolvedValue({
                 id: 'or-1',
                 userId: 'other-user',
@@ -428,7 +432,10 @@ describe('Rury Orders CRUD', () => {
                 .set('x-user-id', 'user-id')
                 .send({ status: 'accepted' });
 
-            expect(res.statusCode).toBe(200);
+            // P0.1: PATCH maskuje brak prawa jako 404 (nie zdradza istnienia).
+            expect(res.statusCode).toBe(404);
+            expect(prisma.orders_rury_rel.update).not.toHaveBeenCalled();
+            expect(prisma.orders_rury_rel.updateMany).not.toHaveBeenCalled();
         });
 
         it('stale version w PATCH → 409 VERSION_CONFLICT (P0-D2)', async () => {

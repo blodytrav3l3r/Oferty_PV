@@ -8,7 +8,13 @@ import { WRITE_LIMITER } from '../../middleware/rateLimiters';
 import { searchCache } from '../../utils/searchCache';
 import { ruryOrdersBatchSchema, ruryOrderUpdateSchema } from '../../validators/offerSchemas';
 import { logger } from '../../utils/logger';
-import { canEditDoc, canAssignDoc, canReadWithShare } from '../../utils/ownership';
+import {
+    canWriteDoc,
+    canClaimNumber,
+    resolveWriteUserId,
+    resolveAssignUserId,
+    canReadWithShare
+} from '../../utils/ownership';
 import { buildRoleWhereConditionWithShares } from '../../utils/roleFilter';
 import { versionedWrite, mapVersionConflict } from '../../utils/versionWrite';
 import { assertDocLockForWrite, mapDocLockConflict } from '../../utils/docLocks';
@@ -86,7 +92,8 @@ router.post('/claim-rury-number/:userId', requireAuth, async (req, res) => {
     try {
         const userId = req.params.userId;
         if (!userId) return res.status(400).json({ error: 'Brak userId' });
-        if (!canEditDoc(authReq.user)) {
+        // P0.2: claim numeru rur tylko własny / podwładny / admin.
+        if (!canClaimNumber(authReq.user, userId)) {
             return res.status(403).json({ error: 'Brak uprawnień do numeru tego użytkownika' });
         }
 
@@ -155,18 +162,23 @@ router.put(
                         select: { data: true, userId: true, version: true }
                     });
 
-                    if (old && !canEditDoc(authReq.user)) {
-                        throw { status: 403, message: 'Brak uprawnień do tego zamówienia' };
-                    }
-                    // Model współpracy: żądana zmiana opiekuna wygrywa,
-                    // fallback: stara kolumna, potem self.
-                    const targetUserId =
-                        (typeof incomingUserId === 'string' && incomingUserId) ||
-                        old?.userId ||
-                        authReq.user?.id ||
-                        '';
-                    if (!canAssignDoc(authReq.user)) {
-                        throw { status: 403, message: 'Brak uprawnień do tego zamówienia' };
+                    // P0.1: zapis wymaga prawa względem STAREGO właściciela,
+                    // zmiana opiekuna — dodatkowo względem NOWEGO.
+                    // Create (brak old): tylko dla siebie / subUsera / admin.
+                    const reqUser = typeof incomingUserId === 'string' ? incomingUserId : undefined;
+                    let targetUserId: string;
+                    if (old) {
+                        const assigned = resolveAssignUserId(authReq.user, old.userId, reqUser);
+                        if (!assigned.allowed) {
+                            throw { status: 403, message: 'Brak uprawnień do tego zamówienia' };
+                        }
+                        targetUserId = assigned.effectiveUserId;
+                    } else {
+                        const created = resolveWriteUserId(authReq.user, reqUser);
+                        if (!created.allowed) {
+                            throw { status: 403, message: 'Brak uprawnień do tego zamówienia' };
+                        }
+                        targetUserId = created.effectiveUserId;
                     }
                     const newData = { ...rest };
 
@@ -278,7 +290,8 @@ router.patch(
                 where: { id: docId },
                 select: { id: true, userId: true, status: true, data: true, version: true }
             });
-            const isEditAllowed = canEditDoc(authReq.user);
+            // P0.1: PATCH wymaga prawa względem właściciela (404 aby nie zdradzać istnienia).
+            const isEditAllowed = canWriteDoc(authReq.user, o?.userId);
             if (!o || !isEditAllowed) {
                 return res.status(404).json({ error: 'Zamówienie nie znalezione' });
             }
@@ -303,12 +316,15 @@ router.patch(
             delete updatedData.version;
 
             const newStatus = req.body.status || o.status;
-            const newUserId = req.body.userId || o.userId;
-
-            if (req.body.userId && req.body.userId !== o.userId && !canAssignDoc(authReq.user)) {
-                return res
-                    .status(403)
-                    .json({ error: 'Brak uprawnień do zmiany opiekuna zamówienia' });
+            // P0.1: zmiana opiekuna wymaga prawa względem NOWEGO userId.
+            let newUserId = o.userId;
+            if (req.body.userId && req.body.userId !== o.userId) {
+                if (!canWriteDoc(authReq.user, req.body.userId)) {
+                    return res
+                        .status(403)
+                        .json({ error: 'Brak uprawnień do zmiany opiekuna zamówienia' });
+                }
+                newUserId = req.body.userId;
             }
 
             const dataStr = JSON.stringify(updatedData);

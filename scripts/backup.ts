@@ -9,6 +9,33 @@ const backupDir = path.resolve(__dirname, '../data/backups');
 
 const MAX_BACKUPS = 30;
 
+/**
+ * P0.6: czysta selekcja retencji — liczy WYŁĄCZNIE pliki .sqlite
+ * (sidecary .sha256 nie są kopiami). Zwraca nazwy do usunięcia
+ * (najstarsze), posortowane od najstarszej.
+ */
+export function selectBackupsForRetention(
+    files: Array<{ name: string; mtimeMs: number }>,
+    maxBackups: number = MAX_BACKUPS
+): string[] {
+    const backups = files
+        .filter((f) => f.name.startsWith('backup_') && f.name.endsWith('.sqlite'))
+        .sort((a, b) => a.mtimeMs - b.mtimeMs)
+        .map((x) => x.name);
+    return backups.slice(0, Math.max(0, backups.length - maxBackups));
+}
+
+/** Sidecary .sha256 bez pary .sqlite (sieroty do posprzątania). */
+export function findOrphanSidecars(files: string[]): string[] {
+    const set = new Set(files);
+    return files.filter(
+        (f) =>
+            f.startsWith('backup_') &&
+            f.endsWith('.sha256') &&
+            !set.has(f.slice(0, -'.sha256'.length))
+    );
+}
+
 async function main() {
     if (!fs.existsSync(backupDir)) {
         fs.mkdirSync(backupDir, { recursive: true });
@@ -57,25 +84,39 @@ async function main() {
             }
         }
 
+        // P0.6: retencja liczy WYŁĄCZNIE pliki .sqlite (sidecary .sha256
+        // nie są kopiami — wcześniej 30 plików ≈ 15 backupów).
         const files = fs.readdirSync(backupDir);
-        const backups = files
-            .filter((f) => f.startsWith('backup_'))
-            .map((f) => ({ name: f, mtime: fs.statSync(path.join(backupDir, f)).mtimeMs }))
-            .sort((a, b) => a.mtime - b.mtime)
-            .map((x) => x.name);
+        const withMtime = files.map((f) => ({
+            name: f,
+            mtimeMs: fs.statSync(path.join(backupDir, f)).mtimeMs
+        }));
+        const toDeleteList = selectBackupsForRetention(withMtime);
 
-        while (backups.length > MAX_BACKUPS) {
-            const toDelete = backups.shift();
-            if (toDelete) {
-                fs.unlinkSync(path.join(backupDir, toDelete));
-                try {
-                    fs.unlinkSync(path.join(backupDir, toDelete + '.sha256'));
-                } catch {}
-                console.log(`[Backup] Usunięto starą kopię: ${toDelete}`);
-            }
+        // P0.6: sprzątanie sierot — sidecar bez pary .sqlite.
+        for (const f of findOrphanSidecars(files)) {
+            try {
+                fs.unlinkSync(path.join(backupDir, f));
+                console.log(`[Backup] Usunięto sierocy sidecar: ${f}`);
+            } catch {}
         }
 
-        console.log(`[Backup] Zachowano ${backups.length}/${MAX_BACKUPS} kopii`);
+        for (const toDelete of toDeleteList) {
+            fs.unlinkSync(path.join(backupDir, toDelete));
+            // P0.6: kasowanie pary sqlite+sha256 atomowo (względem retencji).
+            try {
+                fs.unlinkSync(path.join(backupDir, toDelete + '.sha256'));
+            } catch {}
+            console.log(`[Backup] Usunięto starą kopię: ${toDelete}`);
+        }
+
+        const kept = withMtime.filter(
+            (f) => f.name.startsWith('backup_') && f.name.endsWith('.sqlite')
+        ).length;
+
+        const keptCount = Math.min(kept, MAX_BACKUPS);
+
+        console.log(`[Backup] Zachowano ${keptCount}/${MAX_BACKUPS} kopii`);
     } catch (error: any) {
         console.error('[Backup] Błąd:', error.message);
         process.exit(1);
@@ -84,4 +125,7 @@ async function main() {
     }
 }
 
-main();
+// P0.6: guard importu — testy mogą importować selekcję retencji bez startu backupu.
+if (require.main === module) {
+    main();
+}

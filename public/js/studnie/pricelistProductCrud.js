@@ -31,6 +31,8 @@ async function copyStudnieProduct(id) {
     copied.name = copied.name + ' (Kopia)';
     const index = studnieProducts.findIndex((p) => p.id === id);
     studnieProducts.splice(index + 1, 0, copied);
+    // P0.4: mutacja in-place — unieważnij cache Map.
+    if (typeof invalidateStudnieProductsMap === 'function') invalidateStudnieProductsMap();
     _studniePricelistDirty = true;
     updateStudnieSaveBtn();
     renderStudniePriceList();
@@ -47,7 +49,7 @@ function showAddStudnieProductModal() {
     <div class="modal">
       <div class="modal-header"><h3><i data-lucide="plus" aria-hidden="true"></i> Dodaj element</h3><button class="btn-icon" aria-label="Zamknij" onclick="closeModal()"><i data-lucide="x" aria-hidden="true"></i></button></div>
       <div class="form-group"><label class="form-label">Kategoria</label>
-        <select class="form-select" id="np-category" onchange="togglePrzejsciaFields()">${CATEGORIES_STUDNIE.map((c) => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('')}</select>
+        <select class="form-select" id="np-category" onchange="togglePrzejsciaFields()">${CATEGORIES_STUDNIE.map((c) => `<option value="${escapeHtmlAttr(c)}">${escapeHtml(c)}</option>`).join('')}</select>
         <input type="text" class="form-input" id="np-custom-category" placeholder="Nazwa nowej kategorii (np. W + PVC)" style="display:none; margin-top:0.5rem;" list="przejscia-cats-list">
         <datalist id="przejscia-cats-list">
             ${[
@@ -58,7 +60,7 @@ function showAddStudnieProductModal() {
                 )
             ]
                 .filter(Boolean)
-                .map((c) => `<option value="${escapeHtml(c)}">`)
+                .map((c) => `<option value="${escapeHtmlAttr(c)}">`)
                 .join('')}
         </datalist>
       </div>

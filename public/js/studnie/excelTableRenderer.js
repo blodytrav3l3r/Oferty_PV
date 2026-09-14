@@ -167,7 +167,7 @@ function _excelRenderTable(dn) {
         const perProdAttr = isPerProduct ? ' data-per-product="1"' : '';
         const fallbackAttr = isPerProduct
             ? ''
-            : ` data-fallback="${escapeHtml((c.products && c.products[0] && c.products[0].id) || '')}"`;
+            : ` data-fallback="${escapeHtmlAttr((c.products && c.products[0] && c.products[0].id) || '')}"`;
 
         const colCode = codeDisp
             ? (function () {
@@ -225,9 +225,9 @@ function _excelRenderTable(dn) {
                   (wells[currentWellIndex] && wells[currentWellIndex].redukcjaTargetDN) ||
                   1000)
             : dnTh3(ct);
-        h1 += `<th scope="col" data-col-id="${escapeHtml(c.id)}" data-excel-col="comp-${escapeHtml(c.id)}" style="${thBase}background:var(--slate-950);color:${hc};min-width:95px;text-align:center;">${colLabel}</th>`;
-        h2 += `<th scope="col" data-col-id="${escapeHtml(c.id)}" style="${th2Base}background:var(--slate-950);color:${hc};min-width:95px;text-align:center;">${colDetail}</th>`;
-        h3 += `<th scope="col" data-col-id="${escapeHtml(c.id)}" style="padding:${h3Pad};font-size: var(--fs-3xs);font-weight: var(--fw-medium);color:var(--slate-500);text-align:center;white-space:nowrap;background:var(--slate-950);color:${hc};min-width:95px;text-align:center;">${colDnLabel}${colCode}</th>`;
+        h1 += `<th scope="col" data-col-id="${escapeHtmlAttr(c.id)}" data-excel-col="comp-${escapeHtmlAttr(c.id)}" style="${thBase}background:var(--slate-950);color:${hc};min-width:95px;text-align:center;">${colLabel}</th>`;
+        h2 += `<th scope="col" data-col-id="${escapeHtmlAttr(c.id)}" style="${th2Base}background:var(--slate-950);color:${hc};min-width:95px;text-align:center;">${colDetail}</th>`;
+        h3 += `<th scope="col" data-col-id="${escapeHtmlAttr(c.id)}" style="padding:${h3Pad};font-size: var(--fs-3xs);font-weight: var(--fw-medium);color:var(--slate-500);text-align:center;white-space:nowrap;background:var(--slate-950);color:${hc};min-width:95px;text-align:center;">${colDnLabel}${colCode}</th>`;
     });
 
     h1 += `<th scope="col" data-excel-col="h-denn" style="${thBase}background:var(--bg-primary);color:var(--warn-hover);min-width:60px;text-align:center;">H denn</th>`;

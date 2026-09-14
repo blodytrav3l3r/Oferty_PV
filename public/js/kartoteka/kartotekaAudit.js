@@ -177,9 +177,9 @@ export function auditRenderEntry(self, log, id, type) {
     const canRestore =
         log.action !== 'delete' && !isDiff && type !== 'order' && type !== 'production_order';
     const restoreBtn = canRestore
-        ? `<button class="btn btn-sm btn-secondary restore-btn" onclick="window.kartotekaUI.restoreOfferVersionUnified('${escapeHtml(id)}', '${escapeHtml(log.id)}', '${escapeHtml(type)}')"><i data-lucide="refresh-cw"></i> Przywróć</button>`
+        ? `<button class="btn btn-sm btn-secondary restore-btn" onclick="window.kartotekaUI.restoreOfferVersionUnified('${escapeJsStr(id)}', '${escapeJsStr(log.id)}', '${escapeJsStr(type)}')"><i data-lucide="refresh-cw"></i> Przywróć</button>`
         : '';
-    const previewBtn = `<button class="btn btn-sm btn-secondary preview-btn" onclick="window.kartotekaUI.viewHistorySnapshotUnified('${escapeHtml(id)}', '${escapeHtml(log.id)}', '${escapeHtml(type)}')"><i data-lucide="eye"></i> Podgląd</button>`;
+    const previewBtn = `<button class="btn btn-sm btn-secondary preview-btn" onclick="window.kartotekaUI.viewHistorySnapshotUnified('${escapeJsStr(id)}', '${escapeJsStr(log.id)}', '${escapeJsStr(type)}')"><i data-lucide="eye"></i> Podgląd</button>`;
 
     return `
         <div class="audit-card ${meta.className}">
@@ -223,7 +223,7 @@ export async function auditShowHistory(self, id, type = 'studnia_oferta') {
         const loadMoreHtml =
             logs.length < total
                 ? `<div id="audit-load-more-wrap-kartoteka" class="audit-load-more-wrap">
-                <button class="btn btn-sm btn-secondary" onclick="window.kartotekaUI.loadMoreAuditLogs('${escapeHtml(type)}', '${escapeHtml(id)}', 20)"><i data-lucide="scroll-text"></i> Pokaż starsze zmiany (${total - logs.length})</button>
+                <button class="btn btn-sm btn-secondary" onclick="window.kartotekaUI.loadMoreAuditLogs('${escapeJsStr(type)}', '${escapeJsStr(id)}', 20)"><i data-lucide="scroll-text"></i> Pokaż starsze zmiany (${total - logs.length})</button>
             </div>`
                 : '';
 
@@ -290,7 +290,7 @@ export async function auditLoadMore(self, entityType, entityId, limit) {
                 'beforeend',
                 `
                 <div id="audit-load-more-wrap-kartoteka" class="audit-load-more-wrap">
-                    <button class="btn btn-sm btn-secondary" onclick="window.kartotekaUI.loadMoreAuditLogs('${escapeHtml(entityType)}', '${escapeHtml(entityId)}', ${limit})"><i data-lucide="scroll-text"></i> Pokaż starsze zmiany (${remaining})</button>
+                    <button class="btn btn-sm btn-secondary" onclick="window.kartotekaUI.loadMoreAuditLogs('${escapeJsStr(entityType)}', '${escapeJsStr(entityId)}', ${limit})"><i data-lucide="scroll-text"></i> Pokaż starsze zmiany (${remaining})</button>
                 </div>`
             );
         }

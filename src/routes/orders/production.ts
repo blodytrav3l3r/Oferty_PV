@@ -6,10 +6,10 @@ import { parseJsonField, normalizeDate } from '../../helpers';
 import { logger } from '../../utils/logger';
 import {
     canReadDoc,
-    canEditDoc,
-    canAssignDoc,
+    canClaimNumber,
     canDeleteDoc,
-    resolveEditUserId
+    resolveWriteUserId,
+    resolveAssignUserId
 } from '../../utils/ownership';
 import { buildRoleWhereCondition } from '../../utils/roleFilter';
 import crypto from 'crypto';
@@ -227,20 +227,27 @@ router.put(
 
                     // P0-C: guard W transakcji — return zamieniony na throw, żeby
                     // cofnąć cały batch (wcześniej: 403 w połowie = partial write).
-                    if (old && !canEditDoc(authReq.user)) {
-                        throw {
-                            status: 403,
-                            message: 'Brak uprawnień do zapisu dla tego użytkownika'
-                        };
-                    }
-
-                    const targetUserId =
-                        (typeof incomingUserId === 'string' && incomingUserId) ||
-                        old?.userId ||
-                        authReq.user?.id ||
-                        '';
-                    if (!canAssignDoc(authReq.user)) {
-                        throw { status: 403, message: 'Brak uprawnień do tego zlecenia' };
+                    // P0.1: zapis wymaga prawa względem właściciela (create: self/sub/admin).
+                    const reqUser = typeof incomingUserId === 'string' ? incomingUserId : undefined;
+                    let targetUserId: string;
+                    if (old) {
+                        const assigned = resolveAssignUserId(authReq.user, old.userId, reqUser);
+                        if (!assigned.allowed) {
+                            throw {
+                                status: 403,
+                                message: 'Brak uprawnień do zapisu dla tego użytkownika'
+                            };
+                        }
+                        targetUserId = assigned.effectiveUserId;
+                    } else {
+                        const created = resolveWriteUserId(authReq.user, reqUser);
+                        if (!created.allowed) {
+                            throw {
+                                status: 403,
+                                message: 'Brak uprawnień do zapisu dla tego użytkownika'
+                            };
+                        }
+                        targetUserId = created.effectiveUserId;
                     }
 
                     if (old) {
@@ -429,22 +436,26 @@ router.post(
                 select: { data: true, userId: true, version: true }
             });
 
-            if (old && !canEditDoc(authReq.user)) {
-                return res
-                    .status(403)
-                    .json({ error: 'Brak uprawnień do zapisu dla tego użytkownika' });
+            // P0.1: zapis wymaga prawa względem właściciela (create: self/sub/admin).
+            const reqUser = typeof incomingUserId === 'string' ? incomingUserId : undefined;
+            let targetUserId: string;
+            if (old) {
+                const assigned = resolveAssignUserId(authReq.user, old.userId, reqUser);
+                if (!assigned.allowed) {
+                    return res
+                        .status(403)
+                        .json({ error: 'Brak uprawnień do zapisu dla tego użytkownika' });
+                }
+                targetUserId = assigned.effectiveUserId;
+            } else {
+                const created = resolveWriteUserId(authReq.user, reqUser);
+                if (!created.allowed) {
+                    return res
+                        .status(403)
+                        .json({ error: 'Brak uprawnień do zapisu dla tego użytkownika' });
+                }
+                targetUserId = created.effectiveUserId;
             }
-
-            const writeResult = resolveEditUserId(
-                authReq.user,
-                (typeof incomingUserId === 'string' && incomingUserId) || old?.userId
-            );
-            if (!writeResult.allowed) {
-                return res
-                    .status(403)
-                    .json({ error: 'Brak uprawnień do zapisu dla tego użytkownika' });
-            }
-            const targetUserId = writeResult.effectiveUserId;
 
             if (old) {
                 logAudit(
@@ -653,7 +664,7 @@ router.post('/recycle-numbers', requireAuth, writeProductionLimiter, async (req,
         if (typeof userId !== 'string' || userId.length === 0) {
             return res.status(400).json({ error: 'Brak userId' });
         }
-        if (!canEditDoc(authReq.user)) {
+        if (!canClaimNumber(authReq.user, userId)) {
             return res.status(403).json({ error: 'Brak uprawnień do numerów tego użytkownika' });
         }
         if (!Array.isArray(seqNumbers) || seqNumbers.length === 0) {

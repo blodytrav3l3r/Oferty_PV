@@ -1,5 +1,6 @@
 import type { Request, Response, NextFunction } from 'express';
 import prisma from '../prismaClient';
+import { logger } from '../utils/logger';
 
 /**
  * Execution kill-switch modułu AI/ML (flaga `feature_ai_ml_enabled` w settings).
@@ -9,7 +10,8 @@ import prisma from '../prismaClient';
 export const AI_ML_FLAG_KEY = 'feature_ai_ml_enabled';
 
 export function isAiMlFlagOn(v: { value: string | null } | null | undefined): boolean {
-    if (!v) return true;
+    // P0.5 FAIL-CLOSED: brak flagi = OFF (stan bezpieczeństwa niepotwierdzony = AI OFF).
+    if (!v) return false;
     return v.value !== '"0"' && v.value !== '0';
 }
 
@@ -19,8 +21,14 @@ export async function isAiMlEnabled(): Promise<boolean> {
             where: { key: AI_ML_FLAG_KEY }
         });
         return isAiMlFlagOn(s);
-    } catch {
-        return true;
+    } catch (e) {
+        // P0.5 FAIL-CLOSED: błąd DB = AI OFF + alarm w logu.
+        logger.error(
+            'AiMlGuard',
+            'Nie można potwierdzić kill-switch AI/ML — wymuszam OFF',
+            e instanceof Error ? e.message : 'Unknown error'
+        );
+        return false;
     }
 }
 

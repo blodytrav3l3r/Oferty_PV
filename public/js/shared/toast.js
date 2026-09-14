@@ -41,7 +41,8 @@ export function showToast(msg, type = 'info') {
     text.innerHTML = escapeHtml(safe).replace(
         /* eslint-disable-next-line no-control-regex */
         /\x00ICON(\d+)\x00/g,
-        (_, i) => `<i data-lucide="${escapeHtml(icons[parseInt(i)] || '')}" aria-hidden="true"></i>`
+        (_, i) =>
+            `<i data-lucide="${escapeHtmlAttr(icons[parseInt(i)] || '')}" aria-hidden="true"></i>`
     );
     if (window.lucide) lucide.createIcons();
     text.style.flex = '1';

@@ -62,7 +62,7 @@ function showPipeLengthModal(productId, editIndex = null) {
       </div>
       <div class="modal-footer" style="margin-top:1.5rem; border-top: 1px solid var(--border); padding-top: 1.5rem; display: flex; justify-content: flex-end; gap: 1rem;">
         <button class="btn btn-secondary p-075-15" onclick="closeModal()" >Anuluj</button>
-        <button class="btn btn-primary" onclick="confirmPipeLength('${escapeHtml(productId)}', ${editIndex})" style="padding: 0.75rem 2rem; font-size: var(--fs-2xl); font-weight: var(--fw-semibold); box-shadow: 0 4px 6px -1px var(--shadow-navy);">Zatwierdź <i data-lucide="arrow-right" aria-hidden="true"></i></button>
+        <button class="btn btn-primary" onclick="confirmPipeLength('${escapeJsStr(productId)}', ${editIndex})" style="padding: 0.75rem 2rem; font-size: var(--fs-2xl); font-weight: var(--fw-semibold); box-shadow: 0 4px 6px -1px var(--shadow-navy);">Zatwierdź <i data-lucide="arrow-right" aria-hidden="true"></i></button>
       </div>
     </div>`
     });

@@ -271,7 +271,7 @@ function renderWellParams() {
         const currentVal = well[def.key] || '';
 
         html += `<div style="display:flex; align-items:center; gap:0.2rem; ${isGreyedOut ? 'opacity: 0.5;' : ''}">`;
-        html += `<span class="well-param-label" title="${escapeHtml(def.label)}">${escapeHtml(def.label)}</span>`;
+        html += `<span class="well-param-label" title="${escapeHtmlAttr(def.label)}">${escapeHtml(def.label)}</span>`;
         html += `<div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(100px, 1fr)); gap:0.35rem; flex:1;">`;
         def.options.forEach(([val, lbl]) => {
             const isActive = val === currentVal;
@@ -295,7 +295,7 @@ function renderWellParams() {
             const dis = isSoftLocked ? ' disabled' : '';
             html += `<div class="well-param-row">`;
             html += `<span class="well-param-label">Nazwa p. wew.</span>`;
-            html += `<input${dis} type="text" value="${escapeHtml(well.powlokaNameW || '')}" onclick="this.select()" onchange="updateWellParam('powlokaNameW', this.value)" placeholder="Nazwa powłoki..." style="flex:1; height:34px; background:rgba(var(--black-rgb), 0.2); border:1px solid rgba(var(--white-rgb), 0.1); color:var(--text-primary); padding:0 0.7rem; font-size: var(--fs-lg); border-radius: var(--radius-sm);">`;
+            html += `<input${dis} type="text" value="${escapeHtmlAttr(well.powlokaNameW || '')}" onclick="this.select()" onchange="updateWellParam('powlokaNameW', this.value)" placeholder="Nazwa powłoki..." style="flex:1; height:34px; background:rgba(var(--black-rgb), 0.2); border:1px solid rgba(var(--white-rgb), 0.1); color:var(--text-primary); padding:0 0.7rem; font-size: var(--fs-lg); border-radius: var(--radius-sm);">`;
             html += `</div>`;
             html += `<div class="well-param-row">`;
             html += `<span class="well-param-label">Koszt p. wew.</span>`;
@@ -307,7 +307,7 @@ function renderWellParams() {
             const dis = isSoftLocked ? ' disabled' : '';
             html += `<div class="well-param-row">`;
             html += `<span class="well-param-label">Nazwa p. zew.</span>`;
-            html += `<input${dis} type="text" value="${escapeHtml(well.powlokaNameZ || '')}" onclick="this.select()" onchange="updateWellParam('powlokaNameZ', this.value)" placeholder="Nazwa powłoki..." style="flex:1; height:34px; background:rgba(var(--black-rgb), 0.2); border:1px solid rgba(var(--white-rgb), 0.1); color:var(--text-primary); padding:0 0.7rem; font-size: var(--fs-lg); border-radius: var(--radius-sm);">`;
+            html += `<input${dis} type="text" value="${escapeHtmlAttr(well.powlokaNameZ || '')}" onclick="this.select()" onchange="updateWellParam('powlokaNameZ', this.value)" placeholder="Nazwa powłoki..." style="flex:1; height:34px; background:rgba(var(--black-rgb), 0.2); border:1px solid rgba(var(--white-rgb), 0.1); color:var(--text-primary); padding:0 0.7rem; font-size: var(--fs-lg); border-radius: var(--radius-sm);">`;
             html += `</div>`;
             html += `<div class="well-param-row">`;
             html += `<span class="well-param-label">Koszt p. zew.</span>`;

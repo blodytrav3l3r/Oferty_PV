@@ -143,7 +143,7 @@ describe('P1 HIGH — single-order save + optimistic concurrency', () => {
         });
     });
 
-    test('PUT honoruje zmianę opiekuna, bez userId zostawia starą kolumnę', async () => {
+    test('blokuje PUT cudzego ze zmianą opiekuna (P0.1)', async () => {
         mockedPrisma.orders_studnie_rel.findUnique.mockResolvedValue({
             data: JSON.stringify({ updatedAt: 'srv-t' }),
             userId: 'other-user',
@@ -153,14 +153,12 @@ describe('P1 HIGH — single-order save + optimistic concurrency', () => {
         const res = await request(createApp())
             .put('/api/orders-studnie')
             .send({ data: [{ id: 'o1', userId: 'third-user', wells: [], version: 1 }] });
-        expect(res.status).toBe(200);
-        expect(mockedPrisma.orders_studnie_rel.updateMany).toHaveBeenCalledWith({
-            where: { id: 'o1', version: 1 },
-            data: expect.objectContaining({ userId: 'third-user' })
-        });
+        expect(res.status).toBe(403);
+        expect(mockedPrisma.orders_studnie_rel.updateMany).not.toHaveBeenCalled();
+        expect(mockedPrisma.orders_studnie_rel.create).not.toHaveBeenCalled();
     });
 
-    test('PUT cudzego bez userId nie przepisuje kolumny na edytującego', async () => {
+    test('blokuje PUT cudzego bez userId (P0.1)', async () => {
         mockedPrisma.orders_studnie_rel.findUnique.mockResolvedValue({
             data: JSON.stringify({ updatedAt: 'srv-t' }),
             userId: 'other-user',
@@ -170,11 +168,9 @@ describe('P1 HIGH — single-order save + optimistic concurrency', () => {
         const res = await request(createApp())
             .put('/api/orders-studnie')
             .send({ data: [{ id: 'o1', wells: [], version: 1 }] });
-        expect(res.status).toBe(200);
-        expect(mockedPrisma.orders_studnie_rel.updateMany).toHaveBeenCalledWith({
-            where: { id: 'o1', version: 1 },
-            data: expect.objectContaining({ userId: 'other-user' })
-        });
+        expect(res.status).toBe(403);
+        expect(mockedPrisma.orders_studnie_rel.updateMany).not.toHaveBeenCalled();
+        expect(mockedPrisma.orders_studnie_rel.create).not.toHaveBeenCalled();
     });
 
     test('PATCH ze zgodnym baseUpdatedAt scala i NIE zapisuje baseUpdatedAt', async () => {

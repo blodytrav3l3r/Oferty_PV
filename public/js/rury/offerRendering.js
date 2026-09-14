@@ -124,7 +124,7 @@ function renderOfferItems() {
                 cat === 'Duże Żelbetowe II';
             const lengthEditor =
                 isEditableLength && hasLength && !isLocked
-                    ? `<div class="length-editor" data-action="showPipeLengthModal" data-pid="${escapeHtml(item.productId)}" data-i="${i}" title="Zmień długość rury i automatycznie przelicz wagę oraz transport">
+                    ? `<div class="length-editor" data-action="showPipeLengthModal" data-pid="${escapeHtmlAttr(item.productId)}" data-i="${i}" title="Zmień długość rury i automatycznie przelicz wagę oraz transport">
                             <i data-lucide="ruler" style="width:11px;height:11px"></i>
                             <span>Dł:</span>
                             <span class="length-value">${fmt(item.customLengthM || item.lengthM)}m</span>
@@ -194,7 +194,7 @@ function renderOfferItems() {
           <td class="text-right"><span class="text-center-block"><input type="number" class="edit-input w-75-c"  min="0" step="0.01" value="${item.surcharge || 0}" onclick="this.select()" onchange="updateItem(${i},'surcharge',this.value)"${lockAttr}></span></td>
           <td class="rury-col-num" style="text-align:right;color:var(--warn)"><span class="text-center-block">${transportPerUnit > 0 ? fmt(transportPerUnit) : '—'}</span></td>
           <td class="rury-col-num" style="text-align:right;font-weight: var(--fw-semibold)"><span class="text-center-block">${fmt(netto)}</span></td>
-          <td class="text-right"><span class="text-center-block"><input type="text" class="edit-input" style="width:200px;text-align:center" value="${escapeHtml(item.commercialVersion || '')}" onchange="updateItemText(${i},'commercialVersion',this.value)" placeholder="Notatki"${lockAttr}></span></td>
+          <td class="text-right"><span class="text-center-block"><input type="text" class="edit-input" style="width:200px;text-align:center" value="${escapeHtmlAttr(item.commercialVersion || '')}" onchange="updateItemText(${i},'commercialVersion',this.value)" placeholder="Notatki"${lockAttr}></span></td>
           <td style="text-align:right;white-space:nowrap;">
             <div style="display: inline-flex; align-items: center; gap: 0.5rem; justify-content: center;">
               ${

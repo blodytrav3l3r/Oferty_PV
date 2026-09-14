@@ -396,7 +396,7 @@ function _wellBuildCardHtml(w, i, logicalRow, transportVal, stats) {
                 : null;
         if (wellOrder && wellOrder.orderNumber) {
             wellLockBadge = `<span title="Studnia na zamówieniu ${typeof escapeHtml === 'function' ? escapeHtml(wellOrder.orderNumber).replace(/"/g, '&quot;') : String(wellOrder.orderNumber)} — kliknij aby otworzyć"
-                onclick="event.stopPropagation(); window.location.href='studnie.html?order=${typeof escapeHtml === 'function' ? escapeHtml(wellOrder.id) : String(wellOrder.id)}'"
+                onclick="event.stopPropagation(); window.location.href='studnie.html?order=${typeof escapeJsStr === 'function' ? escapeJsStr(wellOrder.id) : String(wellOrder.id)}'"
                 style="font-size: var(--fs-3xs); background:rgba(var(--success-rgb), 0.15); color:var(--success-hover); border:1px solid rgba(var(--success-rgb), 0.5); padding:1px 5px; border-radius: var(--radius-2xs); font-weight: var(--fw-extrabold); margin-left:0.3rem; cursor:pointer; display:inline-flex; align-items:center; gap:2px; vertical-align:middle;">
                 <i data-lucide="package" style="width:10px; height:10px;"></i>${typeof escapeHtml === 'function' ? escapeHtml(wellOrder.orderNumber) : String(wellOrder.orderNumber)}
             </span>`;

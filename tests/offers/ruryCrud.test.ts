@@ -233,7 +233,7 @@ describe('Rury Offers CRUD — warstwa zapisu', () => {
             expect(res.body.serverVersion).toBe(2);
         });
 
-        it('pozwala edytować cudzą ofertę (model współpracy: edycja dla każdego)', async () => {
+        it('blokuje edycję cudzej oferty (P0.1)', async () => {
             (prisma.offers_rel.findMany as jest.Mock).mockResolvedValue([
                 { ...mockOfferRury, userId: 'other-user' }
             ]);
@@ -247,14 +247,12 @@ describe('Rury Offers CRUD — warstwa zapisu', () => {
                 .set('x-user-id', 'user-id')
                 .send({ data: [{ id: 'o-1', status: 'draft', items: [] }] });
 
-            expect(res.statusCode).toBe(200);
-            expect(
-                (prisma.offers_rel.upsert as jest.Mock).mock.calls.length +
-                    (prisma.$transaction as jest.Mock).mock.calls.length
-            ).toBeGreaterThan(0);
+            expect(res.statusCode).toBe(403);
+            expect(prisma.offers_rel.upsert).not.toHaveBeenCalled();
+            expect(prisma.$transaction).not.toHaveBeenCalled();
         });
 
-        it('update honoruje zmianę opiekuna (kolumna = incoming.userId)', async () => {
+        it('blokuje zmianę opiekuna na obcego użytkownika (P0.1)', async () => {
             (prisma.offers_rel.findMany as jest.Mock).mockResolvedValue([
                 { ...mockOfferRury, userId: 'user-id' }
             ]);
@@ -268,9 +266,8 @@ describe('Rury Offers CRUD — warstwa zapisu', () => {
                 .set('x-user-id', 'user-id')
                 .send({ data: [{ id: 'o-1', userId: 'other-user', status: 'draft', items: [] }] });
 
-            expect(res.statusCode).toBe(200);
-            const updateCall = (prisma.offers_rel.updateMany as jest.Mock).mock.calls[0][0];
-            expect(updateCall.data.userId).toBe('other-user');
+            expect(res.statusCode).toBe(403);
+            expect(prisma.offers_rel.updateMany).not.toHaveBeenCalled();
         });
 
         it('update bez userId zostawia starą kolumnę (nie przepisuje na edytującego)', async () => {
@@ -292,7 +289,7 @@ describe('Rury Offers CRUD — warstwa zapisu', () => {
             expect(updateCall.data.userId).toBe('user-id');
         });
 
-        it('pozwala utworzyć ofertę dla innego użytkownika (wspólna baza handlowców)', async () => {
+        it('blokuje utworzenie oferty dla innego użytkownika (P0.1)', async () => {
             (prisma.offers_rel.findMany as jest.Mock).mockResolvedValue([]);
             (prisma.offer_items_rel.findMany as jest.Mock).mockResolvedValue([]);
             (prisma.offers_rel.upsert as jest.Mock).mockResolvedValue({});
@@ -304,11 +301,9 @@ describe('Rury Offers CRUD — warstwa zapisu', () => {
                 .set('x-user-id', 'user-id')
                 .send({ data: [{ userId: 'other-user', status: 'draft', items: [] }] });
 
-            expect(res.statusCode).toBe(200);
-            expect(
-                (prisma.offers_rel.upsert as jest.Mock).mock.calls.length +
-                    (prisma.$transaction as jest.Mock).mock.calls.length
-            ).toBeGreaterThan(0);
+            expect(res.statusCode).toBe(403);
+            expect(prisma.offers_rel.upsert).not.toHaveBeenCalled();
+            expect(prisma.$transaction).not.toHaveBeenCalled();
         });
 
         it('przepuszcza status active jako state final', async () => {
@@ -337,7 +332,7 @@ describe('Rury Offers CRUD — warstwa zapisu', () => {
     });
 
     describe('PUT /api/offers (batch)', () => {
-        it('pozwala na batch z cudzą ofertą (model współpracy)', async () => {
+        it('blokuje batch z cudzą ofertą (P0.1)', async () => {
             (prisma.offers_rel.findMany as jest.Mock).mockResolvedValue([
                 { id: 'o-1', userId: 'other-user' }
             ]);
@@ -350,7 +345,8 @@ describe('Rury Offers CRUD — warstwa zapisu', () => {
                 .set('x-user-id', 'user-id')
                 .send({ data: [{ id: 'o-1', status: 'draft', items: [] }] });
 
-            expect(res.statusCode).toBe(200);
+            expect(res.statusCode).toBe(403);
+            expect(prisma.offers_rel.upsert).not.toHaveBeenCalled();
         });
 
         it('przepuszcza batch gdy wszystkie oferty należą do usera', async () => {
@@ -370,7 +366,7 @@ describe('Rury Offers CRUD — warstwa zapisu', () => {
             expect(res.body.ok).toBe(true);
         });
 
-        it('PUT honoruje zmianę opiekuna (kolumna = incoming.userId)', async () => {
+        it('PUT blokuje zmianę opiekuna na obcego (P0.1)', async () => {
             (prisma.offers_rel.findMany as jest.Mock).mockResolvedValue([
                 { id: 'o-1', userId: 'user-id', version: 1 }
             ]);
@@ -387,12 +383,11 @@ describe('Rury Offers CRUD — warstwa zapisu', () => {
                     ]
                 });
 
-            expect(res.statusCode).toBe(200);
-            const updateCall = (prisma.offers_rel.updateMany as jest.Mock).mock.calls[0][0];
-            expect(updateCall.data.userId).toBe('other-user');
+            expect(res.statusCode).toBe(403);
+            expect(prisma.offers_rel.updateMany).not.toHaveBeenCalled();
         });
 
-        it('PUT bez userId nie przepisuje kolumny na edytującego', async () => {
+        it('PUT blokuje edycję cudzej oferty bez userId (P0.1)', async () => {
             (prisma.offers_rel.findMany as jest.Mock).mockResolvedValue([
                 { id: 'o-1', userId: 'other-user', version: 1 }
             ]);
@@ -405,9 +400,8 @@ describe('Rury Offers CRUD — warstwa zapisu', () => {
                 .set('x-user-id', 'user-id')
                 .send({ data: [{ id: 'o-1', status: 'draft', version: 1, items: [] }] });
 
-            expect(res.statusCode).toBe(200);
-            const updateCall = (prisma.offers_rel.updateMany as jest.Mock).mock.calls[0][0];
-            expect(updateCall.data.userId).toBe('other-user');
+            expect(res.statusCode).toBe(403);
+            expect(prisma.offers_rel.updateMany).not.toHaveBeenCalled();
         });
     });
 

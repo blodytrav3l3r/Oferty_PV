@@ -40,14 +40,14 @@ function renderPrzejsciaDetailsTable(_existingData) {
             <td>
                 ${
                     isCustom
-                        ? `<input type="text" class="form-input fs-sm-024" value="${escapeHtml(row.rodzaj || '')}"  data-field="rodzaj" data-source="${row.source}" data-idx="${row._idx}" onchange="_syncCustomRow(this)" />`
+                        ? `<input type="text" class="form-input fs-sm-024" value="${escapeHtmlAttr(row.rodzaj || '')}"  data-field="rodzaj" data-source="${row.source}" data-idx="${row._idx}" onchange="_syncCustomRow(this)" />`
                         : `<span class="fw-600">${escapeHtml(row.rodzaj || '\u2014')}</span>`
                 }
             </td>
-            <td><input type="text" class="form-input fs-sm-024" value="${escapeHtml(row.dnOd || '')}"  data-field="dnOd" data-source="${row.source}" data-idx="${row._idx}" onchange="_syncCustomRow(this)" /></td>
-            <td><input type="text" class="form-input fs-sm-024" value="${escapeHtml(row.dnDo || '')}"  data-field="dnDo" data-source="${row.source}" data-idx="${row._idx}" onchange="_syncCustomRow(this)" /></td>
-            <td><input type="number" class="form-input fs-sm-024" value="${escapeHtml(row.ilosc || '')}"  data-field="ilosc" data-source="${row.source}" data-idx="${row._idx}" onchange="_syncCustomRow(this)" /></td>
-            <td><input type="text" class="form-input fs-sm-024" value="${escapeHtml(row.uwagi || '')}"  data-field="uwagi" data-source="${row.source}" data-idx="${row._idx}" onchange="_syncCustomRow(this)" /></td>
+            <td><input type="text" class="form-input fs-sm-024" value="${escapeHtmlAttr(row.dnOd || '')}"  data-field="dnOd" data-source="${row.source}" data-idx="${row._idx}" onchange="_syncCustomRow(this)" /></td>
+            <td><input type="text" class="form-input fs-sm-024" value="${escapeHtmlAttr(row.dnDo || '')}"  data-field="dnDo" data-source="${row.source}" data-idx="${row._idx}" onchange="_syncCustomRow(this)" /></td>
+            <td><input type="number" class="form-input fs-sm-024" value="${escapeHtmlAttr(row.ilosc || '')}"  data-field="ilosc" data-source="${row.source}" data-idx="${row._idx}" onchange="_syncCustomRow(this)" /></td>
+            <td><input type="text" class="form-input fs-sm-024" value="${escapeHtmlAttr(row.uwagi || '')}"  data-field="uwagi" data-source="${row.source}" data-idx="${row._idx}" onchange="_syncCustomRow(this)" /></td>
             <td>
                 <select class="form-input" style="width:100%;font-size: var(--fs-sm);padding:0.2rem;" data-field="czyPrzejscie" data-source="${row.source}" data-idx="${row._idx}" onchange="_syncCustomRow(this)">
                     <option value="TAK" ${row.czyPrzejscie === 'TAK' ? 'selected' : ''}>TAK</option>

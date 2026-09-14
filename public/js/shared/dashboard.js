@@ -19,7 +19,7 @@ function toggleSubUsersList() {
                 .map(
                     (u) => `
                         <label class="sub-user-checkbox">
-                            <input type="checkbox" value="${escapeHtml(u.id)}" ${selectedSubUsers.includes(u.id) ? 'checked' : ''} onchange="updateSubUsers(this)">
+                            <input type="checkbox" value="${escapeHtmlAttr(u.id)}" ${selectedSubUsers.includes(u.id) ? 'checked' : ''} onchange="updateSubUsers(this)">
                             ${u.firstName && u.lastName ? escapeHtml(u.firstName + ' ' + u.lastName) : escapeHtml(u.username)}
                         </label>
                     `
@@ -260,8 +260,8 @@ async function loadUsers() {
         <td class="cell-num">${escapeHtml(String(u.productionOrderStartNumber || 1))}</td>
         <td>
           <div class="admin-actions-cell">
-            <button class="admin-action-btn edit-btn" aria-label="Edytuj użytkownika" onclick="startEditUser('${escapeHtml(u.id)}')"><i data-lucide="pencil"></i></button>
-            ${u.username !== 'admin' ? `<button class="admin-action-btn delete-btn" aria-label="Usuń użytkownika" onclick="deleteUser('${escapeHtml(u.id)}')"><i data-lucide="trash-2"></i></button>` : ''}
+            <button class="admin-action-btn edit-btn" aria-label="Edytuj użytkownika" onclick="startEditUser('${escapeJsStr(u.id)}')"><i data-lucide="pencil"></i></button>
+            ${u.username !== 'admin' ? `<button class="admin-action-btn delete-btn" aria-label="Usuń użytkownika" onclick="deleteUser('${escapeJsStr(u.id)}')"><i data-lucide="trash-2"></i></button>` : ''}
           </div>
         </td>
       </tr>`;

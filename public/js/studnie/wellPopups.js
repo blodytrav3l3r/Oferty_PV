@@ -76,7 +76,7 @@ function openZakonczeniePopup() {
         }
 
         return `
-        <button type="button" class="${classList.join(' ')}" style="--tile-accent:${accent};" aria-pressed="${isActive}" data-action="selectZakonczenie" data-id="${escapeHtml(p.id)}">
+        <button type="button" class="${classList.join(' ')}" style="--tile-accent:${accent};" aria-pressed="${isActive}" data-action="selectZakonczenie" data-id="${escapeHtmlAttr(p.id)}">
             <span class="zak-tile-type"><i data-lucide="${icon}" aria-hidden="true"></i> ${escapeHtml(typeLabel)}</span>
             <span class="zak-tile-name">${escapeHtml(p.name)}</span>
             <span class="zak-tile-meta">
@@ -227,7 +227,7 @@ function openRedukcjaZakonczeniePopup() {
         }
 
         return `
-        <button type="button" class="${classList.join(' ')}" style="--tile-accent:${accent};" aria-pressed="${isActive}" data-action="selectRedukcjaZakonczenie" data-id="${escapeHtml(p.id)}">
+        <button type="button" class="${classList.join(' ')}" style="--tile-accent:${accent};" aria-pressed="${isActive}" data-action="selectRedukcjaZakonczenie" data-id="${escapeHtmlAttr(p.id)}">
             <span class="zak-tile-type"><i data-lucide="${icon}" aria-hidden="true"></i> ${escapeHtml(typeLabel)}</span>
             <span class="zak-tile-name">${escapeHtml(p.name)}</span>
             <span class="zak-tile-meta">

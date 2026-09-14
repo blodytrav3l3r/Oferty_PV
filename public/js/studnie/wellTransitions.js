@@ -122,7 +122,7 @@ function renderInlinePrzejsciaApp(containerId) {
                                 ${isActive ? 'box-shadow:0 0 10px rgba(var(--accent-rgb), 0.3);' : ''}"
                          onmouseenter="if(!${isActive}){this.style.background='rgba(var(--accent-rgb), 0.1)';this.style.borderColor='rgba(var(--accent-rgb), 0.3)'}"
                          onmouseleave="if(!${isActive}){this.style.background='rgba(var(--white-rgb), 0.05)';this.style.borderColor='rgba(var(--white-rgb), 0.05)'}"
-                         data-action="inlineSetDN" data-id="${escapeHtml(p.id)}" data-container="${escapeHtml(containerId || '')}">
+                         data-action="inlineSetDN" data-id="${escapeHtmlAttr(p.id)}" data-container="${escapeHtmlAttr(containerId || '')}">
                           <div class="${isActive ? 'color-accent' : ''}" style="font-size: var(--fs-xs); font-weight: var(--fw-extrabold); text-align:center; line-height:1.25; letter-spacing:0.3px; overflow-wrap:anywhere;">${dnLabel}</div>
                     </div>
                 `;

@@ -1,7 +1,7 @@
 import express from 'express';
 import prisma from '../../prismaClient';
 import { requireAuth, AuthenticatedRequest } from '../../middleware/auth';
-import { canEditDoc } from '../../utils/ownership';
+import { canClaimNumber } from '../../utils/ownership';
 import { logger } from '../../utils/logger';
 import { HOT_TX_OPTS } from '../../utils/hotTx';
 
@@ -113,7 +113,8 @@ router.get('/next-number/:userId', requireAuth, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
         const userId = req.params.userId;
-        if (!canEditDoc(authReq.user)) {
+        // P0.2: podgląd numeru tylko własnego / podwładnego / admin.
+        if (!canClaimNumber(authReq.user, userId)) {
             return res.status(403).json({ error: 'Brak uprawnień do numeru tego użytkownika' });
         }
         const year = new Date().getFullYear();
@@ -144,7 +145,8 @@ router.post('/claim-number/:userId', requireAuth, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
         const userId = req.params.userId;
-        if (!canEditDoc(authReq.user)) {
+        // P0.2: claim numeru tylko własnego / podwładnego / admin.
+        if (!canClaimNumber(authReq.user, userId)) {
             return res.status(403).json({ error: 'Brak uprawnień do numeru tego użytkownika' });
         }
         const year = new Date().getFullYear();
@@ -179,7 +181,8 @@ router.post('/claim-production-number/:userId', requireAuth, async (req, res) =>
     const authReq = req as AuthenticatedRequest;
     try {
         const userId = req.params.userId;
-        if (!canEditDoc(authReq.user)) {
+        // P0.2: claim numeru produkcyjnego tylko własnego / podwładnego / admin.
+        if (!canClaimNumber(authReq.user, userId)) {
             return res.status(403).json({ error: 'Brak uprawnień do numeru tego użytkownika' });
         }
         const year = new Date().getFullYear();
@@ -224,7 +227,8 @@ router.post('/claim-production-numbers/:userId', requireAuth, async (req, res) =
     const authReq = req as AuthenticatedRequest;
     try {
         const userId = req.params.userId;
-        if (!canEditDoc(authReq.user)) {
+        // P0.2: hurtowy claim tylko własny / podwładny / admin.
+        if (!canClaimNumber(authReq.user, userId)) {
             return res.status(403).json({ error: 'Brak uprawnień do numeru tego użytkownika' });
         }
         const count = (req.body || {}).count;

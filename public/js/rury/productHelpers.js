@@ -121,22 +121,37 @@ function getSortedRuryItems(items) {
 window.getSortedRuryItems = getSortedRuryItems;
 
 /**
- * O(1) lookup produktu rur po id.
- * Buduje Map przy pierwszym wywołaniu (lub gdy products zmienił rozmiar).
- * ponytail: lazy Map — nie wymaga zmiany miejsca ładowania products
+ * O(1) lookup produktu rur po id — P0.4 version-stamp.
+ * Detektor: referencja tablicy + jawna wersja (nie sam length —
+ * podmiana 1:1 bez zmiany długości też przebudowuje).
+ * Mutacje in-place (push/splice) muszą wołać invalidateRuryProductsMap().
  */
 let _ruryProductsMap = null;
-let _ruryProductsMapSize = 0;
+let _ruryProductsRef = null;
+let _ruryProductsVersion = 0;
+let _ruryProductsBuiltVersion = -1;
+
+/** Unieważnia cache Map — wołać po każdej mutacji products in-place. */
+function invalidateRuryProductsMap() {
+    _ruryProductsMap = null;
+    _ruryProductsVersion++;
+}
 
 function getRuryProductById(id) {
-    if (!_ruryProductsMap || _ruryProductsMapSize !== products.length) {
+    if (
+        !_ruryProductsMap ||
+        _ruryProductsRef !== products ||
+        _ruryProductsBuiltVersion !== _ruryProductsVersion
+    ) {
         _ruryProductsMap = new Map(products.map((p) => [p.id, p]));
-        _ruryProductsMapSize = products.length;
+        _ruryProductsRef = products;
+        _ruryProductsBuiltVersion = _ruryProductsVersion;
     }
     return _ruryProductsMap.get(id) || null;
 }
 
 window.getRuryProductById = getRuryProductById;
+window.invalidateRuryProductsMap = invalidateRuryProductsMap;
 
 /**
  * O(1) lookup oferty rur po id.

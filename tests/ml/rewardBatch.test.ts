@@ -45,6 +45,13 @@ let mockLogsFindFirst = jest.fn<any>().mockResolvedValue(null);
 jest.mock('../../src/prismaClient', () => ({
     __esModule: true,
     default: {
+        // P0.5 fail-closed: guard czyta settings; testy logiki pracuja przy fladze ON ('"1"').
+        settings: {
+            findUnique: jest.fn<any>().mockResolvedValue({
+                key: 'feature_ai_ml_enabled',
+                value: '"1"'
+            })
+        },
         aiFeature: { findMany: jest.fn<any>().mockResolvedValue([]) },
         ai_telemetry_logs: {
             findMany: (...args: any[]) => mockLogsFindMany(...args),
@@ -117,5 +124,14 @@ describe('POST /api/telemetry/ai/reward-batch', () => {
     it('pusty batch → 400 (min 1 item)', async () => {
         const res = await request(app).post('/api/telemetry/ai/reward-batch').send({ items: [] });
         expect(res.status).toBe(400);
+    });
+
+    it('P0.5 guard: brak flagi (null) → 503 OFF fail-closed', async () => {
+        const prismaMock = (await import('../../src/prismaClient')).default as any;
+        (prismaMock.settings.findUnique as jest.Mock<any>).mockResolvedValueOnce(null);
+        const res = await request(app)
+            .post('/api/telemetry/ai/reward-batch')
+            .send({ items: [item('w1')] });
+        expect(res.status).toBe(503);
     });
 });

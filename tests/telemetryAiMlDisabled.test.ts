@@ -124,9 +124,9 @@ describe('aiMlGuard — semantyka flagi', () => {
         jest.clearAllMocks();
     });
 
-    it('brak rekordu = ON (backward compatible)', () => {
-        expect(isAiMlFlagOn(null)).toBe(true);
-        expect(isAiMlFlagOn(undefined)).toBe(true);
+    it('P0.5 FAIL-CLOSED: brak rekordu = OFF (stan niepotwierdzony = AI OFF)', () => {
+        expect(isAiMlFlagOn(null)).toBe(false);
+        expect(isAiMlFlagOn(undefined)).toBe(false);
     });
 
     it('OFF tylko dla "0"/cytowanego "0"', () => {
@@ -162,6 +162,38 @@ describe('aiMlGuard — semantyka flagi', () => {
         const res: any = { status: jest.fn() };
         await (requireAiMlEnabled as any)({}, res, next);
         expect(next).toHaveBeenCalled();
+    });
+
+    it('P0.5 FAIL-CLOSED: błąd DB -> 503, next nie wołane', async () => {
+        (mockFindUnique as any).mockRejectedValue(new Error('SQLITE_BUSY'));
+        const next = jest.fn();
+        let status = 0;
+        let body: unknown = null;
+        const res: any = {
+            status: (c: number) => {
+                status = c;
+                return { json: (b: unknown) => (body = b) };
+            }
+        };
+        await (requireAiMlEnabled as any)({}, res, next);
+        expect(status).toBe(503);
+        expect(body).toEqual({ error: 'disabled' });
+        expect(next).not.toHaveBeenCalled();
+    });
+
+    it('P0.5 FAIL-CLOSED: brak rekordu -> 503, next nie wołane', async () => {
+        (mockFindUnique as any).mockResolvedValue(null);
+        const next = jest.fn();
+        let status = 0;
+        const res: any = {
+            status: (c: number) => {
+                status = c;
+                return { json: () => {} };
+            }
+        };
+        await (requireAiMlEnabled as any)({}, res, next);
+        expect(status).toBe(503);
+        expect(next).not.toHaveBeenCalled();
     });
 });
 

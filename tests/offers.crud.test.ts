@@ -419,7 +419,7 @@ describe('Offers CRUD Routes', () => {
             expect(res.statusCode).toBe(200);
         });
 
-        it('T5.1: pozwala edytować cudzą ofertę rury w batchu (model współpracy)', async () => {
+        it('T5.1: blokuje edycję cudzej oferty rury w batchu (P0.1)', async () => {
             (prisma.offers_rel.findUnique as jest.Mock).mockResolvedValue(null);
             (prisma.offers_rel.findMany as jest.Mock).mockResolvedValue([
                 { id: 'o-1', userId: 'other-user' }
@@ -431,10 +431,11 @@ describe('Offers CRUD Routes', () => {
                 .put('/api/offers')
                 .set('x-user-id', 'user-id')
                 .send({ data: [{ id: 'o-1', status: 'draft', items: [] }] });
-            expect(res.statusCode).toBe(200);
+            expect(res.statusCode).toBe(403);
+            expect(prisma.offers_rel.upsert).not.toHaveBeenCalled();
         });
 
-        it('T5.5: przepuszcza batch studni z cudzą ofertą (model współpracy)', async () => {
+        it('T5.5: blokuje batch studni z cudzą ofertą (P0.1)', async () => {
             (prisma.offers_studnie_rel.findMany as jest.Mock).mockResolvedValue([
                 { id: 's-1', userId: 'other-user' }
             ]);
@@ -444,10 +445,11 @@ describe('Offers CRUD Routes', () => {
                 .put('/api/offers/studnie')
                 .set('x-user-id', 'user-id')
                 .send({ data: [{ id: 's-1', status: 'draft' }] });
-            expect(res.statusCode).toBe(200);
+            expect(res.statusCode).toBe(403);
+            expect(prisma.offers_studnie_rel.updateMany).not.toHaveBeenCalled();
         });
 
-        it('PUT /studnie honoruje zmianę opiekuna, bez userId zostawia starą kolumnę', async () => {
+        it('PUT /studnie blokuje zmianę opiekuna cudzej oferty (P0.1)', async () => {
             (prisma.offers_studnie_rel.findMany as jest.Mock).mockResolvedValue([
                 { id: 's-1', userId: 'other-user', version: 1, data: '{}' }
             ]);
@@ -457,9 +459,8 @@ describe('Offers CRUD Routes', () => {
                 .put('/api/offers/studnie')
                 .set('x-user-id', 'user-id')
                 .send({ data: [{ id: 's-1', userId: 'third-user', status: 'draft', version: 1 }] });
-            expect(res.statusCode).toBe(200);
-            const updateCall = (prisma.offers_studnie_rel.updateMany as jest.Mock).mock.calls[0][0];
-            expect(updateCall.data.userId).toBe('third-user');
+            expect(res.statusCode).toBe(403);
+            expect(prisma.offers_studnie_rel.updateMany).not.toHaveBeenCalled();
         });
 
         it('T5.5: powinien przepuścić batch gdy wszystkie oferty należą do użytkownika', async () => {

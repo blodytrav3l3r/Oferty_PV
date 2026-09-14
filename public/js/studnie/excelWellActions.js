@@ -187,7 +187,7 @@ function excelOpenWellParams(wIdx) {
 
             const currentVal = well[def.key] || '';
             bodyHtml += `<div style="display:flex;align-items:center;gap:0.2rem;${isGreyedOut ? 'opacity:0.5;' : ''}">`;
-            bodyHtml += `<span class="well-param-label" title="${escapeHtml(def.label)}">${escapeHtml(def.label)}</span>`;
+            bodyHtml += `<span class="well-param-label" title="${escapeHtmlAttr(def.label)}">${escapeHtml(def.label)}</span>`;
             const cols = def.options.length;
             bodyHtml += `<div style="display:grid;grid-template-columns:repeat(${cols}, ${TILE_W}px);gap:0.35rem;flex:1;">`;
             def.options.forEach(([val, lbl]) => {
@@ -199,7 +199,7 @@ function excelOpenWellParams(wIdx) {
             if (def.key === 'malowanieW' && well.malowanieW && well.malowanieW !== 'brak') {
                 bodyHtml += `<div class="well-param-row">`;
                 bodyHtml += `<span class="well-param-label">Nazwa p. wew.</span>`;
-                bodyHtml += `<input type="text" value="${escapeHtml(well.powlokaNameW || '')}" onclick="this.select()" onchange="_excelUpdateWellParam(${wIdx},'powlokaNameW',this.value);excelRefreshParamsPopup(${wIdx})" placeholder="Nazwa powłoki..." style="flex:1;height:34px;background:rgba(var(--black-rgb), 0.2);border:1px solid rgba(var(--white-rgb), 0.1);color:var(--text-primary);padding:0 0.7rem;font-size: var(--fs-lg);border-radius: var(--radius-sm);">`;
+                bodyHtml += `<input type="text" value="${escapeHtmlAttr(well.powlokaNameW || '')}" onclick="this.select()" onchange="_excelUpdateWellParam(${wIdx},'powlokaNameW',this.value);excelRefreshParamsPopup(${wIdx})" placeholder="Nazwa powłoki..." style="flex:1;height:34px;background:rgba(var(--black-rgb), 0.2);border:1px solid rgba(var(--white-rgb), 0.1);color:var(--text-primary);padding:0 0.7rem;font-size: var(--fs-lg);border-radius: var(--radius-sm);">`;
                 bodyHtml += `</div>`;
                 bodyHtml += `<div class="well-param-row">`;
                 bodyHtml += `<span class="well-param-label">Koszt p. wew.</span>`;
@@ -209,7 +209,7 @@ function excelOpenWellParams(wIdx) {
             if (def.key === 'malowanieZ' && well.malowanieZ && well.malowanieZ !== 'brak') {
                 bodyHtml += `<div class="well-param-row">`;
                 bodyHtml += `<span class="well-param-label">Nazwa p. zew.</span>`;
-                bodyHtml += `<input type="text" value="${escapeHtml(well.powlokaNameZ || '')}" onclick="this.select()" onchange="_excelUpdateWellParam(${wIdx},'powlokaNameZ',this.value);excelRefreshParamsPopup(${wIdx})" placeholder="Nazwa powłoki..." style="flex:1;height:34px;background:rgba(var(--black-rgb), 0.2);border:1px solid rgba(var(--white-rgb), 0.1);color:var(--text-primary);padding:0 0.7rem;font-size: var(--fs-lg);border-radius: var(--radius-sm);">`;
+                bodyHtml += `<input type="text" value="${escapeHtmlAttr(well.powlokaNameZ || '')}" onclick="this.select()" onchange="_excelUpdateWellParam(${wIdx},'powlokaNameZ',this.value);excelRefreshParamsPopup(${wIdx})" placeholder="Nazwa powłoki..." style="flex:1;height:34px;background:rgba(var(--black-rgb), 0.2);border:1px solid rgba(var(--white-rgb), 0.1);color:var(--text-primary);padding:0 0.7rem;font-size: var(--fs-lg);border-radius: var(--radius-sm);">`;
                 bodyHtml += `</div>`;
                 bodyHtml += `<div class="well-param-row">`;
                 bodyHtml += `<span class="well-param-label">Koszt p. zew.</span>`;

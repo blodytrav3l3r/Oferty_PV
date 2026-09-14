@@ -139,8 +139,8 @@ describe('Ownership E2E — offers routes', () => {
         });
     });
 
-    describe('POST /api/offers — zapis dla cudzego userId (model współpracy)', () => {
-        it('regular user CAN create offer for another userId via body', async () => {
+    describe('POST /api/offers — zapis dla cudzego userId (P0.1: zapis wymaga canWriteDoc)', () => {
+        it('regular user CANNOT create offer for another userId (403, brak zapisu)', async () => {
             (prisma.offers_rel.findUnique as jest.Mock).mockResolvedValue(null);
             (prisma.offers_rel.upsert as jest.Mock).mockResolvedValue({});
             (prisma.offer_items_rel.deleteMany as jest.Mock).mockResolvedValue({});
@@ -160,11 +160,10 @@ describe('Ownership E2E — offers routes', () => {
                     ]
                 });
 
-            expect(res.statusCode).toBe(200);
-            expect(
-                (prisma.offers_rel.upsert as jest.Mock).mock.calls.length +
-                    (prisma.$transaction as jest.Mock).mock.calls.length
-            ).toBeGreaterThan(0);
+            expect(res.statusCode).toBe(403);
+            expect(prisma.offers_rel.upsert).not.toHaveBeenCalled();
+            expect(prisma.offers_rel.create).not.toHaveBeenCalled();
+            expect(prisma.$transaction).not.toHaveBeenCalled();
         });
 
         it('owner CAN create own offer (200)', async () => {
@@ -245,7 +244,7 @@ describe('Ownership E2E — offers routes', () => {
             expect(createCall.data.userId).toBe('sub-user');
         });
 
-        it('pro CAN create offer for unrelated user (model współpracy)', async () => {
+        it('pro CANNOT create offer for unrelated user (403, brak zapisu)', async () => {
             currentUser = { id: 'pro1', role: 'pro', subUsers: ['sub-user'] };
             (prisma.offers_rel.findUnique as jest.Mock).mockResolvedValue(null);
             (prisma.offers_rel.upsert as jest.Mock).mockResolvedValue({});
@@ -265,11 +264,10 @@ describe('Ownership E2E — offers routes', () => {
                     ]
                 });
 
-            expect(res.statusCode).toBe(200);
-            expect(
-                (prisma.offers_rel.upsert as jest.Mock).mock.calls.length +
-                    (prisma.$transaction as jest.Mock).mock.calls.length
-            ).toBeGreaterThan(0);
+            expect(res.statusCode).toBe(403);
+            expect(prisma.offers_rel.upsert).not.toHaveBeenCalled();
+            expect(prisma.offers_rel.create).not.toHaveBeenCalled();
+            expect(prisma.$transaction).not.toHaveBeenCalled();
         });
     });
 

@@ -50,6 +50,8 @@ let app: express.Application;
 beforeEach(async () => {
     jest.clearAllMocks();
     settingsStore.clear();
+    // P0.5 fail-closed: PUT wymaga flagi ON; testy logiki pracuja przy ON.
+    settingsStore.set('feature_ai_ml_enabled', '"1"');
     const { default: router } = await import('../../src/routes/telemetryAiMl');
     app = express();
     app.use(express.json());
@@ -98,6 +100,14 @@ describe('PUT /ai/training-users', () => {
 
     it('kill-switch OFF → 503', async () => {
         settingsStore.set('feature_ai_ml_enabled', '"0"');
+        const res = await request(app)
+            .put('/api/telemetry/ai/training-users')
+            .send({ userIds: ['A'] });
+        expect(res.status).toBe(503);
+    });
+
+    it('P0.5 guard: brak flagi → 503 OFF fail-closed', async () => {
+        settingsStore.delete('feature_ai_ml_enabled');
         const res = await request(app)
             .put('/api/telemetry/ai/training-users')
             .send({ userIds: ['A'] });

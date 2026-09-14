@@ -86,7 +86,25 @@ describe('featureFlags POST /audit — A-17 requireAdmin', () => {
         expect(res.body).toEqual({
             import_export_enabled: false,
             pz_stable_id: true,
-            ai_ml_enabled: true
+            // P0.5 fail-closed: brak rekordu (mock findUnique -> null) = OFF.
+            ai_ml_enabled: false
         });
+    });
+
+    it('GET / zwraca ai_ml_enabled:true gdy seed/start zapisal "1" (app.ts)', async () => {
+        userRole.role = 'user';
+        const prismaMock = (await import('../src/prismaClient')).default as any;
+        (prismaMock.settings.findUnique as jest.Mock<any>).mockImplementation(
+            async ({ where }: any) =>
+                where.key === 'feature_ai_ml_enabled' ? { key: where.key, value: '"1"' } : null
+        );
+        try {
+            const app = buildApp();
+            const res = await request(app).get('/api/feature-flags');
+            expect(res.status).toBe(200);
+            expect(res.body.ai_ml_enabled).toBe(true);
+        } finally {
+            (prismaMock.settings.findUnique as jest.Mock<any>).mockResolvedValue(null);
+        }
     });
 });

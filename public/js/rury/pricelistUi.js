@@ -159,6 +159,8 @@ function copyProduct(id) {
 
     const index = products.findIndex((p) => p.id === id);
     products.splice(index + 1, 0, copied);
+    // P0.4: mutacja in-place — unieważnij cache Map.
+    if (typeof invalidateRuryProductsMap === 'function') invalidateRuryProductsMap();
 
     _pricelistDirty = true;
     updateSaveBtn();
@@ -318,6 +320,8 @@ function addProduct() {
     }
 
     products.push({ id, name, price, area, transport, weight, category });
+    // P0.4: mutacja in-place — unieważnij cache Map.
+    if (typeof invalidateRuryProductsMap === 'function') invalidateRuryProductsMap();
     _pricelistDirty = true;
     updateSaveBtn();
     closeModal();

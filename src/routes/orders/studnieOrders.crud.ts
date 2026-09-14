@@ -8,7 +8,13 @@ import { WRITE_LIMITER } from '../../middleware/rateLimiters';
 import { searchCache } from '../../utils/searchCache';
 import { studnieOrdersBatchSchema, studnieOrderUpdateSchema } from '../../validators/offerSchemas';
 import { observeStudnieOrderDto } from '../../validators/orderSchemas';
-import { canEditDoc, canAssignDoc, canDeleteDoc, canReadWithShare } from '../../utils/ownership';
+import {
+    canWriteDoc,
+    resolveWriteUserId,
+    resolveAssignUserId,
+    canDeleteDoc,
+    canReadWithShare
+} from '../../utils/ownership';
 import { buildRoleWhereConditionWithShares } from '../../utils/roleFilter';
 import { countProductionOrdersForOrder } from '../../utils/productionOrderGuard';
 import { versionedWrite, mapVersionConflict } from '../../utils/versionWrite';
@@ -193,8 +199,22 @@ router.put(
                         select: { data: true, userId: true, version: true }
                     });
 
-                    if (old && !canEditDoc(authReq.user)) {
-                        throw { status: 403, message: 'Brak uprawnień do tego zamówienia' };
+                    // P0.1: zapis wymaga prawa względem właściciela.
+                    // Create (brak old): tylko dla siebie / subUsera / admin.
+                    const reqUser = typeof incomingUserId === 'string' ? incomingUserId : undefined;
+                    let targetUserId: string;
+                    if (old) {
+                        const assigned = resolveAssignUserId(authReq.user, old.userId, reqUser);
+                        if (!assigned.allowed) {
+                            throw { status: 403, message: 'Brak uprawnień do tego zamówienia' };
+                        }
+                        targetUserId = assigned.effectiveUserId;
+                    } else {
+                        const created = resolveWriteUserId(authReq.user, reqUser);
+                        if (!created.allowed) {
+                            throw { status: 403, message: 'Brak uprawnień do tego zamówienia' };
+                        }
+                        targetUserId = created.effectiveUserId;
                     }
                     // P1 HIGH: optimistic concurrency dla single-save (data.length === 1).
                     // baseUpdatedAt == null (create) albo zgodny → zapis; rozjazd → 409.
@@ -222,16 +242,6 @@ router.put(
                                 }
                             };
                         }
-                    }
-                    // Model współpracy: żądana zmiana opiekuna wygrywa,
-                    // fallback: stara kolumna, potem self.
-                    const targetUserId =
-                        (typeof incomingUserId === 'string' && incomingUserId) ||
-                        old?.userId ||
-                        authReq.user?.id ||
-                        '';
-                    if (!canAssignDoc(authReq.user)) {
-                        throw { status: 403, message: 'Brak uprawnień do tego zamówienia' };
                     }
                     const newData = { ...rest };
                     const resolvedOfferId =
@@ -375,7 +385,8 @@ router.patch(
                     version: true
                 }
             });
-            if (!o || !canEditDoc(authReq.user)) {
+            // P0.1: PATCH wymaga prawa względem właściciela (404 aby nie zdradzać istnienia).
+            if (!o || !canWriteDoc(authReq.user, o.userId)) {
                 return res.status(404).json({ error: 'Zamówienie nie znalezione' });
             }
 
@@ -422,11 +433,15 @@ router.patch(
             delete updatedData.version;
 
             const newStatus = req.body.status || o.status;
-            const newUserId = req.body.userId || o.userId;
-            if (!canAssignDoc(authReq.user)) {
-                return res
-                    .status(403)
-                    .json({ error: 'Brak uprawnień do zapisu dla tego użytkownika' });
+            // P0.1: zmiana opiekuna wymaga prawa względem NOWEGO userId.
+            let newUserId = o.userId;
+            if (req.body.userId && req.body.userId !== o.userId) {
+                if (!canWriteDoc(authReq.user, req.body.userId)) {
+                    return res
+                        .status(403)
+                        .json({ error: 'Brak uprawnień do zapisu dla tego użytkownika' });
+                }
+                newUserId = req.body.userId;
             }
             const dataStr = JSON.stringify(updatedData);
 

@@ -40,6 +40,8 @@ window._purgeOrphanOtProducts = _purgeOrphanOtProducts;
 
 // Map<productId, Product> — O(1) lookup zamiast find() 40M porównań przy 10k (P0 C)
 // Klucz canonical: String(product.id) — jeden SSoT dla lookupu
+// P0.4 version-stamp: detektor to referencja tablicy + jawna wersja
+// (nie sam size — podmiana 1:1 bez zmiany długości też przebudowuje).
 /** @type {Map<string, any>} */
 let studnieProductsById = new Map();
 /** @type {Map<string, any[]>} przejscie category -> active products (sorted by dn) */
@@ -48,6 +50,23 @@ let przejsciaByCategory = new Map();
 let przejsciaByCatDn = new Map();
 /** @type {string[]} sorted przejscie categories */
 let przejsciaCategoriesSorted = [];
+/** @type {any[]|null} referencja tablicy, z której zbudowano Map */
+let _studnieProductsRef = null;
+/** @type {number} jawna wersja — bump przy mutacji in-place */
+let _studnieProductsVersion = 0;
+/** @type {number} wersja, dla której zbudowano Map */
+let _studnieProductsBuiltVersion = -1;
+function _isStudnieMapStale() {
+    return (
+        _studnieProductsRef !== studnieProducts ||
+        _studnieProductsBuiltVersion !== _studnieProductsVersion ||
+        studnieProductsById.size !== studnieProducts.length
+    );
+}
+/** Unieważnia cache Map — wołać po mutacji studnieProducts in-place. */
+function invalidateStudnieProductsMap() {
+    _studnieProductsVersion++;
+}
 function _rebuildStudnieProductsById() {
     studnieProductsById = new Map();
     przejsciaByCategory = new Map();
@@ -72,6 +91,8 @@ function _rebuildStudnieProductsById() {
         });
     });
     przejsciaCategoriesSorted = [...przejsciaByCategory.keys()].sort();
+    _studnieProductsRef = studnieProducts;
+    _studnieProductsBuiltVersion = _studnieProductsVersion;
 }
 /**
  * O(1) lookup produktu studni — String canonical.
@@ -82,8 +103,8 @@ function _rebuildStudnieProductsById() {
 function getStudnieProductById(id) {
     if (id == null) return null;
     const k = String(id);
-    // cheap stale detector — nie proof, tylko sygnał dla bypassów (push/filter bez window.*)
-    if (studnieProductsById.size !== studnieProducts.length) {
+    // P0.4: detektor referencja+wersja (nie sam size).
+    if (_isStudnieMapStale()) {
         _rebuildStudnieProductsById();
     }
     const v = studnieProductsById.get(k);
@@ -116,22 +137,22 @@ function __assertStudnieMapFresh() {
 }
 function getPrzejsciaCategories() {
     if (przejsciaByCategory.size !== przejsciaCategoriesSorted.length) {
-        // stale check — size mismatch after push bypass (rare)
-        if (studnieProductsById.size !== studnieProducts.length) _rebuildStudnieProductsById();
+        // P0.4: detektor referencja+wersja (nie sam size).
+        if (_isStudnieMapStale()) _rebuildStudnieProductsById();
     }
     return przejsciaCategoriesSorted;
 }
 function getPrzejsciaForCategory(cat) {
-    if (studnieProductsById.size !== studnieProducts.length) _rebuildStudnieProductsById();
+    if (_isStudnieMapStale()) _rebuildStudnieProductsById();
     const arr = przejsciaByCategory.get(String(cat));
     return arr ? [...arr] : [];
 }
 function getPrzejscieByCategoryAndDn(cat, dn) {
-    if (studnieProductsById.size !== studnieProducts.length) _rebuildStudnieProductsById();
+    if (_isStudnieMapStale()) _rebuildStudnieProductsById();
     return przejsciaByCatDn.get(String(cat) + '|' + String(dn)) || null;
 }
 function getAllPrzejsciaActive() {
-    if (studnieProductsById.size !== studnieProducts.length) _rebuildStudnieProductsById();
+    if (_isStudnieMapStale()) _rebuildStudnieProductsById();
     const out = [];
     przejsciaByCategory.forEach((arr) => {
         for (let i = 0; i < arr.length; i++) out.push(arr[i]);
@@ -139,6 +160,7 @@ function getAllPrzejsciaActive() {
     return out;
 }
 window._rebuildStudnieProductsById = _rebuildStudnieProductsById;
+window.invalidateStudnieProductsMap = invalidateStudnieProductsMap;
 window.getStudnieProductById = getStudnieProductById;
 window.__assertStudnieMapFresh = __assertStudnieMapFresh;
 window.getPrzejsciaCategories = getPrzejsciaCategories;

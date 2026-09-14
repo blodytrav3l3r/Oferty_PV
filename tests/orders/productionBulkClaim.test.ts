@@ -461,21 +461,22 @@ describe('PUT /production atomowy (P0-C: całość albo nic)', () => {
         expect(store.orders).toEqual({});
     });
 
-    test('cudze PZ w batchu → 200, wszystko zapisane (model współpracy)', async () => {
+    test('blokuje cudze PZ w batchu (P0.1): 403, saved=[] i nic nie zapisane', async () => {
         mockUser.id = 'intruz';
         mockUser.role = 'user';
         try {
             const app = createApp();
-            // 'cudze' PZ: właściciel 'obcy' — intruz może edytować (edycja dla każdego).
+            // 'cudze' PZ: właściciel 'obcy' — intruz nie ma prawa zapisu.
             store.orders['cudze'] = { id: 'cudze', userId: 'obcy' };
             const data = [
                 { id: 'a', wellId: 'w1' },
                 { id: 'cudze', wellId: 'w1' }
             ];
             const res = await request(app).put('/api/orders-studnie/production').send({ data });
-            expect(res.status).toBe(200);
-            expect(res.body.saved).toEqual(['a', 'cudze']);
-            expect(store.orders['a']).toBeDefined();
+            expect(res.status).toBe(403);
+            expect(res.body.saved).toEqual([]);
+            expect(store.orders['a']).toBeUndefined();
+            expect(store.orders['cudze']).toEqual({ id: 'cudze', userId: 'obcy' });
         } finally {
             mockUser.id = 'admin-1';
             mockUser.role = 'admin';
