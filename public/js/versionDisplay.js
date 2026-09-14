@@ -28,16 +28,16 @@
                 return response.json();
             })
             .then(function (data) {
-                // Wstrzykujemy wersję do elementu — format "vX.Y.Z"
+                // Wstrzykujemy wersję do elementu — format "vX.Y.Z" (textContent: brak HTML, P2 hardening SEC-01)
                 if (data && data.version) {
-                    versionEl.innerHTML = 'v' + data.version;
+                    versionEl.textContent = 'v' + data.version;
                 } else {
-                    versionEl.innerHTML = 'v—';
+                    versionEl.textContent = 'v—';
                 }
             })
             .catch(function () {
                 // W przypadku błędu (np. serwer nie odpowiada) wyświetlamy "v—"
-                versionEl.innerHTML = 'v—';
+                versionEl.textContent = 'v—';
             });
     }
 

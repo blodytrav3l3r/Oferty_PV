@@ -101,6 +101,8 @@
                       (d.modelAccuracy ? ' (acc: ' + d.modelAccuracy + ')' : '')
                     : 'Brak';
                 const modelOk = !!d.mlOnline;
+                // Kotwica SEC-03: modelTooltip jest SUROWY celowo — escape następuje w callerze
+                // healthCard('Model', ..., window.escapeHtml(modelTooltip)) poniżej. Nie escapować tutaj.
                 const modelTooltip = d.modelVersion
                     ? d.modelVersion + (d.modelAccuracy ? ' (acc: ' + d.modelAccuracy + ')' : '')
                     : 'Brak';

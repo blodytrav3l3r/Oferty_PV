@@ -326,3 +326,8 @@ Fala napraw z audytu v1.15.1 (A-01…A-60) — plan i status w `docs/plans/archi
 
 **Zasady frontendu** (baza błędów #39, #40-44 w `AGENTS.md`): interpolacja do `innerHTML`
 zawsze przez `escapeHtml(str)`; do atrybutów (`aria-label`, `title`, `onclick`) — `escapeHtmlAttr`/`escapeJsStr`, nigdy `escapeHtml` (nie escapuje `"`).
+
+**Polityka CSP SEC-02** (plan modernizacji F0, `unsafe-inline` zostaje): nowy kod NIE dodaje
+atrybutów `onclick`/inline handlerów — zamiast tego `addEventListener` (delegacja) albo
+istniejący wzorzec `dataset`. Raporty z `/api/csp-report` (Report-Only) przeglądane przy zmianach
+w Helmet. Pełna migracja nonce odłożona (366 handlerów w 77 plikach — koszt XL).
