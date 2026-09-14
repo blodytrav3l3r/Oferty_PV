@@ -13,13 +13,24 @@
             return v != null && Number.isFinite(Number(v)) ? Number(v).toFixed(1) + 'h' : 'brak';
         };
         const last = g.lastAttempt || null;
-        const lastHtml = last
-            ? window.escapeHtml(last.status || '—') +
-              (last.reason ? ' (' + window.escapeHtml(last.reason) + ')' : '') +
-              '<br><span style="color:var(--text-muted)">' +
-              window.escapeHtml((last.startedAt || '').slice(0, 16)) +
-              '</span>'
-            : 'brak prób';
+        const lastValue = last ? window.escapeHtml(last.status || '—') : 'brak prób';
+        const lastStatus = last ? last.status || '' : '';
+        const lastColor = !last
+            ? 'var(--text-muted)'
+            : lastStatus === 'SUCCESS'
+              ? 'var(--success)'
+              : lastStatus === 'RUNNING' || lastStatus === 'SKIPPED'
+                ? 'var(--warn)'
+                : lastStatus.indexOf('FAILED') === 0
+                  ? 'var(--danger)'
+                  : 'var(--text-muted)';
+        const lastTooltip = last
+            ? [last.reason || '', (last.startedAt || '').slice(0, 16)]
+                  .filter(function (s) {
+                      return Boolean(s);
+                  })
+                  .join(' / ') || 'Brak szczegółów ostatniej próby'
+            : 'Brak zapisanych przebiegów treningu';
         return [
             window.aiStatCard(
                 'Gotowy do treningu',
@@ -55,10 +66,11 @@
             ),
             window.aiStatCard(
                 'Ostatnia próba',
-                lastHtml,
-                'var(--text-muted)',
+                lastValue,
+                lastColor,
                 'Ostatnia RZECZYWISTA próba treningu (AiTrainingRun) — osobna informacja historyczna, nie decyzja bramki. ' +
-                    'Pokazuje m.in. split_guard, gdy bramka przepuściła, a trening zatrzymał się na guardach.'
+                    'Pokazuje m.in. split_guard, gdy bramka przepuściła, a trening zatrzymał się na guardach.',
+                lastTooltip
             )
         ];
     }
