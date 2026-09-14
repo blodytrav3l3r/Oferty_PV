@@ -32,7 +32,6 @@ import { cleanupAuditLogs } from './services/auditService';
 import { modelRegistry } from './services/ml/ModelRegistry';
 import { priceOverrideService } from './services/priceOverrideService';
 import { requestLogger } from './middleware/requestLogger';
-import { errorHandler } from './middleware/errorHandler';
 import { getVersion } from './version';
 import { APP_NAME } from './constants/appMeta';
 import prisma from './prismaClient';
@@ -305,82 +304,11 @@ const apiLimiter = createRateLimiter({
     message: 'Zbyt wiele żądań. Odczekaj chwilę.'
 });
 
-/* ===== ŚCIEŻKI (ROUTES) ===== */
-import authRoutes from './routes/auth';
-import userRoutes from './routes/users';
-import productRoutes from './routes/productsV2';
-import productStudnieRoutes from './routes/productsStudnieV2';
-import precoPricingRoutes from './routes/precoPricingV2';
-import offerRoutes from './routes/offers/index';
-import orderRoutes from './routes/orders/index';
-import ruryOrdersRoutes from './routes/orders/ruryOrders';
-import clientRoutes from './routes/clients';
-import auditRoutes from './routes/audit';
-import settingsRoutes from './routes/settings';
-import telemetryRoutes from './routes/telemetry';
-import telemetryAiRoutes from './routes/telemetryAi';
-import telemetryAiDashboardRoutes from './routes/telemetryAiDashboard';
-import featureFlagsRoutes from './routes/featureFlags';
-import aiMlRoutes from './routes/telemetryAiMl';
-import searchRoutes from './routes/offers/search';
-import productionSearchRoutes from './routes/orders/productionSearch';
-import priceOverridesRoutes from './routes/priceOverrides';
-import exportCombinedRoutes from './routes/exportCombined';
-import sharesRoutes from './routes/shares';
-import adminRoutes from './routes/admin';
-import locksRoutes from './routes/locks';
+/* ===== ŚCIEŻKI (ROUTES) — BE-01: montowanie w src/mountRoutes.ts ===== */
+import { mountRoutes } from './mountRoutes';
+import { initDatabasePragmas, ensureDatabaseIndexes } from './initDatabase';
 
-app.use('/api/auth', apiLimiter, authRoutes);
-app.use('/api/users', apiLimiter, userRoutes);
-app.use('/api/users-for-assignment', (req, res, next) => {
-    req.url = '/for-assignment' + (req.url === '/' ? '' : req.url);
-    userRoutes(req, res, next);
-});
-
-app.use('/api/products', productRoutes);
-app.use('/api/products-studnie', productStudnieRoutes);
-app.use('/api/offers/search', apiLimiter, searchRoutes);
-app.use('/api/offers-rury', offerRoutes);
-app.use('/api/offers-studnie', (req, res, next) => {
-    req.url = '/studnie' + req.url;
-    offerRoutes(req, res, next);
-});
-
-app.use('/api/orders-studnie/production/search', apiLimiter, productionSearchRoutes);
-app.use('/api/orders-studnie', apiLimiter, orderRoutes);
-app.use('/api/orders-rury', apiLimiter, ruryOrdersRoutes);
-app.use('/api/clients', apiLimiter, express.json({ limit: '1mb' }), clientRoutes);
-app.use('/api/audit', apiLimiter, auditRoutes);
-app.use('/api/settings', apiLimiter, settingsRoutes);
-app.use('/api/telemetry', telemetryRoutes);
-// Nowy moduł telemetry AI - pasywny zapis konfiguracji, zdarzeń i wersji
-app.use('/api/telemetry', telemetryAiRoutes);
-// Dashboard AI (Knowledge Base, Learning Engine, Recommender) - admin only
-app.use('/api/telemetry', telemetryAiDashboardRoutes);
-app.use('/api/preco-pricing', apiLimiter, precoPricingRoutes);
-app.use('/api/feature-flags', featureFlagsRoutes);
-app.use('/api/telemetry', aiMlRoutes); // ML prediction API
-app.use('/api/price-overrides', apiLimiter, priceOverridesRoutes);
-app.use('/api/export-combined', exportCombinedRoutes);
-app.use('/api/shares', apiLimiter, sharesRoutes);
-app.use('/api/admin', apiLimiter, adminRoutes);
-app.use('/api/locks', apiLimiter, locksRoutes);
-
-/* ===== RAPORTY VIOLACJI CSP (Faza 1 planu CSP — monitoring) ===== */
-app.post('/api/csp-report', express.text({ type: 'application/csp-report' }), (req, res) => {
-    if (req.body) {
-        logger.warn('CSP', 'Violacja polityki bezpieczeństwa:', String(req.body).slice(0, 2000));
-    }
-    res.status(204).end();
-});
-
-/* ===== GLOBALNA OBSŁUGA BŁĘDÓW ===== */
-app.use(errorHandler);
-
-/* ===== SENTRY — error handler (po wszystkich route'ach) ===== */
-if (process.env.SENTRY_DSN) {
-    Sentry.setupExpressErrorHandler(app);
-}
+mountRoutes(app, apiLimiter);
 
 /**
  * Inicjalizacja aplikacji — administracja i PRAGMA user_version.
@@ -400,38 +328,8 @@ export async function initApp(): Promise<void> {
         throw err;
     }
 
-    // WAL + synchronous=NORMAL + busy_timeout — parallel batch (P1-4) — niezależne PRAGMA
-    // P1-E: foreign_keys=ON — bez tego FK (offer_items_rel.offerId) jest uśpione.
-    // connection_limit=1: pula ma jedno połączenie, pragma trzyma się go na stałe.
-    try {
-        await Promise.all([
-            prisma.$queryRawUnsafe('PRAGMA journal_mode=WAL'),
-            prisma.$queryRawUnsafe('PRAGMA synchronous=NORMAL'),
-            prisma.$queryRawUnsafe('PRAGMA busy_timeout=30000'),
-            prisma.$executeRawUnsafe('PRAGMA user_version = 20000'),
-            prisma.$executeRawUnsafe('PRAGMA foreign_keys = ON')
-        ]);
-        logger.info(
-            'Server',
-            'PRAGMA WAL/synchronous/busy_timeout/user_version/foreign_keys ustawione'
-        );
-        // P1-E self-check: FK musi być realnie egzekwowane na połączeniu aplikacji.
-        const fkOn = (await prisma.$queryRawUnsafe('PRAGMA foreign_keys')) as Array<{
-            foreign_keys: number;
-        }>;
-        if (!fkOn?.[0]?.foreign_keys) {
-            logger.warn(
-                'Server',
-                'PRAGMA foreign_keys=OFF na połączeniu — FK uśpione, działa tylko straż kodowa'
-            );
-        }
-    } catch (err) {
-        logger.warn(
-            'Server',
-            'Nie udało się ustawić PRAGMA WAL/synchronous/busy_timeout/user_version/foreign_keys:',
-            err instanceof Error ? err.message : err
-        );
-    }
+    // WAL + synchronous=NORMAL + busy_timeout — BE-01: szczegóły w src/initDatabase.ts
+    await initDatabasePragmas();
 
     // Admin — błąd nie może crashować serwera (ts-node-dev --respawn pętliłby się w nieskończoność).
     try {
@@ -455,32 +353,8 @@ export async function initApp(): Promise<void> {
         );
     }
 
-    // Indeks na createdAt dla audit_logs (jeśli nie istnieje)
-    try {
-        await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS idx_audit_created_at ON audit_logs(createdAt)`;
-    } catch (err) {
-        logger.warn(
-            'Server',
-            'Nie udało się utworzyć indeksu idx_audit_created_at:',
-            err instanceof Error ? err.message : String(err)
-        );
-    }
-
-    // Indeksy deduplikacji telemetrii AI (auto-heal: na instalacjach bez migracji
-    // prisma db push nie tworzy nowych indeksów, a check-db.js sprawdza tylko tabele)
-    // UWAGA: auto-heal można wyciąć po pełnym przejściu na migracje (A8) —
-    // baseline zawiera te indeksy (20260815000000_baseline), a ścieżki startowe
-    // (ensure-db.bat, install.*, docker-entrypoint.sh) używają już migrate deploy.
-    try {
-        await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "idx_logs_well" ON "ai_telemetry_logs"("wellId")`;
-        await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "idx_logs_source_well" ON "ai_telemetry_logs"("solverSource", "wellId")`;
-    } catch (err) {
-        logger.warn(
-            'Server',
-            'Nie udało się utworzyć indeksów deduplikacji telemetrii AI:',
-            err instanceof Error ? err.message : String(err)
-        );
-    }
+    // Auto-heal schematu (indeksy, shares, FTS5) — BE-01: szczegóły w src/initDatabase.ts
+    await ensureDatabaseIndexes();
     // Model ML — auto-heal: upewnij się, że w bazie istnieje aktywny model ML dla bieżącej wersji cech
     try {
         await modelRegistry.ensureStarterModelExists();
@@ -526,34 +400,7 @@ export async function initApp(): Promise<void> {
         );
     }
 
-    // Auto-heal: tabela shares (instalacje bez migrate deploy — legacy db push)
-    try {
-        await prisma.$executeRaw`CREATE TABLE IF NOT EXISTS "document_shares" ("id" TEXT NOT NULL PRIMARY KEY, "documentType" TEXT NOT NULL, "documentId" TEXT NOT NULL, "ownerId" TEXT NOT NULL, "sharedWithUserId" TEXT NOT NULL, "permission" TEXT NOT NULL DEFAULT 'read', "createdAt" TEXT NOT NULL, "createdBy" TEXT NOT NULL)`;
-        await prisma.$executeRaw`CREATE UNIQUE INDEX IF NOT EXISTS "uq_share_doc_user" ON "document_shares"("documentType", "documentId", "sharedWithUserId")`;
-        await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "idx_shares_sharedwith" ON "document_shares"("sharedWithUserId")`;
-        await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "idx_shares_docid" ON "document_shares"("documentId")`;
-        await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "idx_shares_doctype_docid" ON "document_shares"("documentType", "documentId")`;
-        await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "idx_shares_owner" ON "document_shares"("ownerId")`;
-    } catch (e) {
-        logger.warn(
-            'Server',
-            'Nie udało się upewnić schematu document_shares:',
-            e instanceof Error ? e.message : String(e)
-        );
-    }
-
-    // Zapewnij pełny schemat FTS5 (m.in. kolumna clientNumber) — idempotentne
-    try {
-        const { ensureFts5Schema } = await import('./utils/fts5Sync');
-        await ensureFts5Schema();
-    } catch (e) {
-        logger.warn(
-            'Server',
-            'Nie udało się upewnić schematu FTS5:',
-            e instanceof Error ? e.message : String(e)
-        );
-    }
-
+    // Auto-heal: tabela shares + FTS5 — BE-01: w ensureDatabaseIndexes() powyżej.
     // Czyszczenie starych logów audytowych (sekwencyjnie — unikamy równoległych zapisów do SQLite;
     // funkcja sama łapie błędy wewnątrz, więc nie zablokuje startu)
     await cleanupAuditLogs();
