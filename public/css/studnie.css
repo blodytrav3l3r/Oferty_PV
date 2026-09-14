@@ -4942,3 +4942,248 @@ td.excel-tint--plyta_redukcyjna input {
         opacity: 1;
     }
 }
+
+/* ── Cennik PRECO — wygląd tabel (scoped, tylko wygląd) ── */
+.preco-toolbar {
+    padding: 0.5rem;
+    display: flex;
+    gap: 0.5rem;
+    justify-content: flex-end;
+}
+
+.preco-accordion {
+    margin-bottom: 0.5rem;
+    border: 1px solid var(--border-glass);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    background: var(--bg-card);
+}
+
+.preco-accordion-head {
+    cursor: pointer;
+    padding: 0.6rem 0.8rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: var(--fw-bold);
+    font-size: var(--fs-lg);
+    color: var(--text-primary);
+    background: linear-gradient(90deg, rgba(var(--danger-rgb), 0.12), transparent);
+    border-left: 3px solid var(--danger);
+}
+
+.preco-accordion-title {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.preco-accordion-count {
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-medium);
+    color: var(--text-muted);
+}
+
+.preco-accordion-body {
+    padding: 0.5rem 0.8rem 0.8rem;
+}
+
+.preco-section-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0.9rem 0 0.35rem;
+}
+
+.preco-section-head:first-of-type {
+    margin-top: 0.2rem;
+}
+
+.preco-section-title {
+    font-size: var(--fs-base);
+    font-weight: var(--fw-semibold);
+    color: var(--text-secondary);
+}
+
+.preco-wrap {
+    margin-bottom: 0.8rem;
+    overflow-x: visible;
+}
+
+.preco-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+    font-size: var(--fs-md);
+}
+
+.preco-table thead th {
+    padding: 0.3rem 0.35rem;
+    font-size: var(--fs-xs);
+    font-weight: var(--fw-semibold);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    background: var(--bg-tertiary);
+    border-bottom: 1px solid var(--border-glass);
+}
+
+.preco-table tbody td {
+    padding: 0.15rem 0.3rem;
+    border-bottom: 1px solid var(--bg-tertiary);
+    vertical-align: middle;
+    font-variant-numeric: tabular-nums;
+}
+
+.preco-table tbody tr {
+    transition: var(--transition);
+}
+
+.preco-table tbody tr:hover {
+    background: var(--bg-hover);
+}
+
+.preco-col-id {
+    width: 17%;
+    text-align: left;
+}
+
+.preco-col-num {
+    text-align: right;
+}
+
+.preco-col-range {
+    width: 170px;
+    text-align: left;
+}
+
+.preco-col-group {
+    text-align: right;
+}
+
+.preco-col-actions {
+    width: 48px;
+    text-align: center;
+}
+
+.preco-cell-num {
+    text-align: right;
+}
+
+.preco-cell-actions {
+    text-align: center;
+}
+
+.preco-table .preco-input {
+    width: 100%;
+    max-width: 84px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    padding: 0.15rem 0.35rem;
+    font-size: var(--fs-sm);
+}
+
+.preco-table .preco-input--id {
+    max-width: 64px;
+    text-align: left;
+}
+
+.preco-cell-num .preco-input {
+    margin-left: auto;
+}
+
+.preco-range-pair {
+    display: flex;
+    gap: 0.35rem;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+.preco-range-pair .preco-input {
+    max-width: 56px;
+}
+
+.preco-range-dash {
+    color: var(--text-muted);
+}
+
+.preco-group-head {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.preco-group-prefix {
+    font-size: var(--fs-sm);
+    color: var(--text-muted);
+}
+
+.preco-group-head .preco-group-input {
+    width: 60px;
+    text-align: center;
+    font-weight: var(--fw-bold);
+    padding: 0.15rem 0.25rem;
+    font-size: var(--fs-sm);
+}
+
+.preco-actions-head {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.preco-mini-btn {
+    padding: 0.1rem 0.3rem;
+}
+
+.preco-empty {
+    text-align: center;
+    color: var(--text-muted);
+    padding: 1rem;
+}
+
+.preco-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 0.75rem;
+    margin-top: 0.9rem;
+}
+
+.preco-meta-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border-glass);
+    border-radius: var(--radius-sm);
+    padding: 0.45rem 0.7rem;
+}
+
+.preco-meta-label {
+    font-size: var(--fs-base);
+    font-weight: var(--fw-semibold);
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+
+.preco-meta-item .preco-input {
+    max-width: 80px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    padding: 0.15rem 0.35rem;
+    font-size: var(--fs-sm);
+}
+
+.preco-meta-unit {
+    color: var(--text-muted);
+    font-size: var(--fs-sm);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .preco-table tbody tr {
+        transition: none;
+    }
+}

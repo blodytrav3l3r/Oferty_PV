@@ -26,7 +26,7 @@ function renderPrecoPriceList() {
         .sort((a, b) => a - b);
 
     let html = `
-    <div style="padding:0.5rem; display:flex; gap:0.5rem; justify-content:flex-end;">
+    <div class="preco-toolbar">
         <button class="btn btn-secondary pill-sm" data-action="loadPrecoDefaults" title="Przywróć domyślne wartości PRECO">
             <i data-lucide="refresh-cw" aria-hidden="true"></i> Reset
         </button>
@@ -44,33 +44,33 @@ function renderPrecoPriceList() {
         const displayStyle = isOpen ? 'block' : 'none';
         const iconName = isOpen ? 'chevron-down' : 'chevron-right';
 
-        html += `<div class="preco-accordion" style="margin-bottom:0.5rem; border:1px solid var(--border-glass); border-radius: var(--radius-sm); overflow:hidden;">`;
-        html += `<div data-action="togglePrecoAccordion" data-dn="${dn}" style="cursor:pointer; padding:0.6rem 0.8rem; background:rgba(var(--danger-rgb), 0.1); display:flex; justify-content:space-between; align-items:center; font-weight: var(--fw-bold); font-size: var(--fs-lg); color:var(--danger);">`;
-        html += `<span><i data-lucide="${iconName}" class="icon-xs"></i> DN${dn}</span>`;
-        html += `<span class="fs-sm-muted">${data.kinety.length} pozycji</span>`;
+        html += `<div class="preco-accordion">`;
+        html += `<div class="preco-accordion-head" data-action="togglePrecoAccordion" data-dn="${dn}">`;
+        html += `<span class="preco-accordion-title"><i data-lucide="${iconName}" class="icon-xs"></i> DN${dn}</span>`;
+        html += `<span class="preco-accordion-count">${data.kinety.length} pozycji</span>`;
         html += `</div>`;
-        html += `<div class="preco-accordion-body" style="display:${displayStyle}; padding:0.5rem 0.8rem;">`;
+        html += `<div class="preco-accordion-body" style="display:${displayStyle};">`;
 
         // Tabela kinet
-        html += `<div class="flex-space-between">`;
-        html += `<div class="fs-base-sec">Kinety — cena prosta / dod. wlot</div>`;
-        html += `<button class="btn btn-secondary btn-sm fs-sm-025" data-action="addPrecoKinetaRow" data-dn="${dn}" ><i data-lucide="plus" class="icon-xxs" aria-hidden="true"></i> Dodaj Kinetę</button>`;
+        html += `<div class="preco-section-head">`;
+        html += `<div class="preco-section-title">Kinety — cena prosta / dod. wlot</div>`;
+        html += `<button class="btn btn-secondary btn-sm" data-action="addPrecoKinetaRow" data-dn="${dn}" ><i data-lucide="plus" class="icon-xxs" aria-hidden="true"></i> Dodaj Kinetę</button>`;
         html += `</div>`;
-        html += `<table class="w-100p-base-mb8"><thead><tr>
-            <th scope="col" style="width:20%;">DN rury</th>
-            <th scope="col" class="text-right w-35pct" >Cena prosta (PLN)</th>
-            <th scope="col" class="text-right w-35pct" >Dod. wlot (PLN)</th>
-            <th scope="col" class="text-center w-10pct" >Akcje</th>
+        html += `<div class="table-wrap preco-wrap"><table class="preco-table preco-table--kinety"><thead><tr>
+            <th scope="col" class="preco-col-id">DN rury</th>
+            <th scope="col" class="preco-col-num" >Cena prosta (PLN)</th>
+            <th scope="col" class="preco-col-num" >Dod. wlot (PLN)</th>
+            <th scope="col" class="preco-col-actions" >Akcje</th>
         </tr></thead><tbody>`;
         data.kinety.forEach((k, i) => {
             html += `<tr>
-                <td style="font-weight: var(--fw-semibold); color:var(--accent-hover);"><input type="number" class="edit-input w-100px"  value="${k.dn}" data-preco-field="kinety.${i}.dn" data-preco-dn="${dn}"></td>
-                <td class="text-right"><input type="number" class="edit-input w-110-r"  value="${k.prosta}" data-preco-field="kinety.${i}.prosta" data-preco-dn="${dn}"></td>
-                <td class="text-right"><input type="number" class="edit-input w-110-r"  value="${k.dodWlot}" data-preco-field="kinety.${i}.dodWlot" data-preco-dn="${dn}"></td>
-                <td class="text-center"><button class="btn-icon del p-02" data-action="removePrecoKinetaRow" data-dn="${dn}" data-i="${i}" title="Usuń" aria-label="Usuń" ><i data-lucide="trash-2" class="icon-xs" aria-hidden="true"></i></button></td>
+                <td class="preco-cell-id"><input type="number" class="edit-input preco-input preco-input--id"  value="${k.dn}" data-preco-field="kinety.${i}.dn" data-preco-dn="${dn}" aria-label="DN rury"></td>
+                <td class="preco-cell-num"><input type="number" class="edit-input preco-input preco-input--num"  value="${k.prosta}" data-preco-field="kinety.${i}.prosta" data-preco-dn="${dn}" aria-label="Cena prosta"></td>
+                <td class="preco-cell-num"><input type="number" class="edit-input preco-input preco-input--num"  value="${k.dodWlot}" data-preco-field="kinety.${i}.dodWlot" data-preco-dn="${dn}" aria-label="Dodatkowy wlot"></td>
+                <td class="preco-cell-actions"><button class="btn-icon del p-02" data-action="removePrecoKinetaRow" data-dn="${dn}" data-i="${i}" title="Usuń" aria-label="Usuń" ><i data-lucide="trash-2" class="icon-xs" aria-hidden="true"></i></button></td>
             </tr>`;
         });
-        html += `</tbody></table>`;
+        html += `</tbody></table></div>`;
 
         html += renderPrecoRangeTable(
             'Spadek w kinecie (%)',
@@ -82,25 +82,24 @@ function renderPrecoPriceList() {
         html += renderPrecoRangeTable('Uniesienie kinety (mm)', data.uniesienie, dn, 'uniesienie');
         html += renderPrecoRangeTable('Redukcja kinety (mm)', data.redukcja, dn, 'redukcja');
 
-        html += `<div class="fs-base-sec-mt2">Skrzynka włazowa</div>`;
-        html += `<div class="flex-gap-5-center">`;
-        html += `<span>Cena/szt:</span>`;
-        html += `<input type="number" class="edit-input w-110-r"  value="${data.skrzynkaWlazowa || 0}" data-preco-field="skrzynkaWlazowa" data-preco-dn="${dn}">`;
-        html += `<span class="text-muted">PLN</span>`;
+        html += `<div class="preco-meta">`;
+        html += `<div class="preco-meta-item">`;
+        html += `<span class="preco-meta-label">Skrzynka włazowa · cena/szt:</span>`;
+        html += `<input type="number" class="edit-input preco-input preco-input--num"  value="${data.skrzynkaWlazowa || 0}" data-preco-field="skrzynkaWlazowa" data-preco-dn="${dn}" aria-label="Skrzynka włazowa cena za sztukę">`;
+        html += `<span class="preco-meta-unit">PLN</span>`;
         html += `</div>`;
 
-        html += `<div class="fs-base-sec-mt2">Wkładka na całej wysokości dennicy (uzupełnienie)</div>`;
-        html += `<div class="flex-gap-5-center">`;
-        html += `<span>Cena/mb:</span>`;
-        html += `<input type="number" class="edit-input w-110-r"  value="${data.cenaPelnaWysMB || 0}" data-preco-field="cenaPelnaWysMB" data-preco-dn="${dn}">`;
-        html += `<span class="text-muted">PLN</span>`;
+        html += `<div class="preco-meta-item">`;
+        html += `<span class="preco-meta-label">Wkładka na całej wysokości · cena/mb:</span>`;
+        html += `<input type="number" class="edit-input preco-input preco-input--num"  value="${data.cenaPelnaWysMB || 0}" data-preco-field="cenaPelnaWysMB" data-preco-dn="${dn}" aria-label="Wkładka na całej wysokości cena za metr">`;
+        html += `<span class="preco-meta-unit">PLN</span>`;
         html += `</div>`;
 
-        html += `<div class="fs-base-sec-mt2">Wkładka dna osadnika</div>`;
-        html += `<div class="flex-gap-5-center">`;
-        html += `<span>Cena dna:</span>`;
-        html += `<input type="number" class="edit-input w-110-r"  value="${data.cenaDnoOsadnika || 0}" data-preco-field="cenaDnoOsadnika" data-preco-dn="${dn}">`;
-        html += `<span class="text-muted">PLN</span>`;
+        html += `<div class="preco-meta-item">`;
+        html += `<span class="preco-meta-label">Wkładka dna osadnika · cena dna:</span>`;
+        html += `<input type="number" class="edit-input preco-input preco-input--num"  value="${data.cenaDnoOsadnika || 0}" data-preco-field="cenaDnoOsadnika" data-preco-dn="${dn}" aria-label="Wkładka dna osadnika cena">`;
+        html += `<span class="preco-meta-unit">PLN</span>`;
+        html += `</div>`;
         html += `</div>`;
 
         html += `</div></div>`;
@@ -127,27 +126,27 @@ function renderPrecoRangeTable(title, table, dn, fieldBase) {
         else grupyKeys = ['150-300', '400-600'];
     }
 
-    let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin:0.5rem 0 0.3rem;">`;
-    html += `<div class="fs-base-sec">${title}</div>`;
-    html += `<button class="btn btn-secondary btn-sm fs-sm-025" data-action="addPrecoRangeRow" data-dn="${dn}" data-fb="${fieldBase}" ><i data-lucide="plus" class="icon-xxs" aria-hidden="true"></i> Dodaj Zakres</button>`;
+    let html = `<div class="preco-section-head">`;
+    html += `<div class="preco-section-title">${title}</div>`;
+    html += `<button class="btn btn-secondary btn-sm" data-action="addPrecoRangeRow" data-dn="${dn}" data-fb="${fieldBase}" ><i data-lucide="plus" class="icon-xxs" aria-hidden="true"></i> Dodaj Zakres</button>`;
     html += `</div>`;
 
-    html += `<table class="w-100p-base-mb8"><th scope="col"ead><tr>`;
-    html += `<th scope="col" style="width:25%; padding-left:0.5rem;">Zakres min-max</th>`;
+    html += `<div class="table-wrap preco-wrap"><table class="preco-table preco-table--range"><thead><tr>`;
+    html += `<th scope="col" class="preco-col-range">Zakres min-max</th>`;
     grupyKeys.forEach((g) => {
         const sg = window.escapeHtml(g);
         const sgJs = encodeURIComponent(g);
-        html += `<th scope="col" class="fs-base-025">
-            <div style="display:flex; justify-content:flex-end; align-items:center; gap:0.3rem;">
-                <span class="fs-sm-muted">DN</span>
-                <input type="text" class="edit-input" style="width:75px; text-align:center; font-weight:bold; background:rgba(var(--black-rgb), 0.15); border:1px solid rgba(var(--white-rgb), 0.1); border-radius: var(--radius-2xs); padding:0.2rem;" value="${sg}" onchange="updatePrecoGrupaKey(${dn}, '${fieldBase}', decodeURIComponent('${sgJs}'), this.value)" title="Edytuj nazwę grupy">
-                <button class="btn-icon del" data-action="removePrecoGrupaCol" data-dn="${dn}" data-fb="${fieldBase}" data-sg="${sgJs}" title="Usuń grupę" aria-label="Usuń grupę" style="padding:0.15rem; margin:0;"><i data-lucide="x" class="icon-xxs" aria-hidden="true"></i></button>
+        html += `<th scope="col" class="preco-col-group">
+            <div class="preco-group-head">
+                <span class="preco-group-prefix">DN</span>
+                <input type="text" class="edit-input preco-group-input" value="${sg}" onchange="updatePrecoGrupaKey(${dn}, '${fieldBase}', decodeURIComponent('${sgJs}'), this.value)" title="Edytuj nazwę grupy" aria-label="Nazwa grupy DN">
+                <button class="btn-icon del" data-action="removePrecoGrupaCol" data-dn="${dn}" data-fb="${fieldBase}" data-sg="${sgJs}" title="Usuń grupę" aria-label="Usuń grupę"><i data-lucide="x" class="icon-xxs" aria-hidden="true"></i></button>
             </div>
         </th>`;
     });
-    html += `<th scope="col" class="text-center w-15pct" >
-        <div style="display:flex; justify-content:center; align-items:center; gap:0.3rem;">
-            <button class="btn btn-secondary btn-sm" data-action="addPrecoGrupaCol" data-dn="${dn}" data-fb="${fieldBase}" style="padding:0.1rem 0.3rem;" title="Dodaj grupę DN"><i data-lucide="plus" class="icon-xxs" aria-hidden="true"></i></button>
+    html += `<th scope="col" class="preco-col-actions" >
+        <div class="preco-actions-head">
+            <button class="btn btn-secondary btn-sm preco-mini-btn" data-action="addPrecoGrupaCol" data-dn="${dn}" data-fb="${fieldBase}" title="Dodaj grupę DN" aria-label="Dodaj grupę DN"><i data-lucide="plus" class="icon-xxs" aria-hidden="true"></i></button>
             <span>Akcje</span>
         </div>
     </th>`;
@@ -155,25 +154,25 @@ function renderPrecoRangeTable(title, table, dn, fieldBase) {
 
     if (table && table.length > 0) {
         table.forEach((row, ri) => {
-            html += `<tr><td style="font-weight: var(--fw-semibold); color:var(--accent-hover); padding-left:0.5rem;">
-                <div style="display:flex; gap:0.5rem; align-items:center; justify-content:flex-start;">
-                    <input type="number" class="edit-input w-70c-02"  value="${row.min}" data-preco-field="${fieldBase}.${ri}.min" data-preco-dn="${dn}">
-                    <span style="color:var(--text-muted); font-weight:normal;">–</span> 
-                    <input type="number" class="edit-input w-70c-02"  value="${row.max}" data-preco-field="${fieldBase}.${ri}.max" data-preco-dn="${dn}">
+            html += `<tr><td class="preco-cell-range">
+                <div class="preco-range-pair">
+                    <input type="number" class="edit-input preco-input preco-input--num"  value="${row.min}" data-preco-field="${fieldBase}.${ri}.min" data-preco-dn="${dn}" aria-label="Zakres od">
+                    <span class="preco-range-dash">–</span> 
+                    <input type="number" class="edit-input preco-input preco-input--num"  value="${row.max}" data-preco-field="${fieldBase}.${ri}.max" data-preco-dn="${dn}" aria-label="Zakres do">
                 </div>
             </td>`;
             grupyKeys.forEach((g) => {
                 const sg = window.escapeHtmlAttr(g);
-                html += `<td class="text-right fs-base-025" ><input type="number" class="edit-input" style="width:100%; max-width:90px; text-align:right; float:right;" value="${row.grupy[g] || 0}" data-preco-field="${fieldBase}.${ri}.grupy.${sg}" data-preco-dn="${dn}"></td>`;
+                html += `<td class="preco-cell-num" ><input type="number" class="edit-input preco-input preco-input--num" value="${row.grupy[g] || 0}" data-preco-field="${fieldBase}.${ri}.grupy.${sg}" data-preco-dn="${dn}" aria-label="Cena zakresu"></td>`;
             });
-            html += `<td class="text-center"><button class="btn-icon del p-02" data-action="removePrecoRangeRow" data-dn="${dn}" data-fb="${fieldBase}" data-ri="${ri}" title="Usuń" aria-label="Usuń" ><i data-lucide="trash-2" class="icon-xs" aria-hidden="true"></i></button></td>`;
+            html += `<td class="preco-cell-actions"><button class="btn-icon del p-02" data-action="removePrecoRangeRow" data-dn="${dn}" data-fb="${fieldBase}" data-ri="${ri}" title="Usuń" aria-label="Usuń" ><i data-lucide="trash-2" class="icon-xs" aria-hidden="true"></i></button></td>`;
             html += `</tr>`;
         });
     } else {
-        html += `<tr><td colspan="${grupyKeys.length + 2}" class="text-center" style="color:var(--text-muted); padding:1rem;">Brak zakresów</td></tr>`;
+        html += `<tr><td colspan="${grupyKeys.length + 2}" class="preco-empty">Brak zakresów</td></tr>`;
     }
 
-    html += `</tbody></table>`;
+    html += `</tbody></table></div>`;
     return html;
 }
 
