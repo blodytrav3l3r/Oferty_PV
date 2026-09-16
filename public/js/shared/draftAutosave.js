@@ -422,10 +422,25 @@ function _draftStripEphemeralWell(well) {
 }
 
 /**
+ * Fallbacki pól nagłówka — 1:1 z getOfferFormFields/setOfferFormFields
+ * (offerCrudCommon.js) i enterOrderEditMode (orderCrud.js:829-835).
+ * Dokumenty legacy/z kreacji (zamówienie bez validity...) nie niosą kluczy,
+ * a live zawsze — bez normalizacji braki to wieczny ghost.
+ */
+var _DRAFT_FIELD_FALLBACKS = {
+    transportKm: 100,
+    transportRate: 10,
+    validity: '7 dni',
+    paymentTerms: 'Do uzgodnienia lub według indywidualnych warunków handlowych.'
+};
+
+/**
  * Payload w przestrzeni porównywalnej (obie strony tą samą projekcją).
  * order_studnie: DTO (allowlist SSoT) + strip _elemId w pozycjach (PZ-id to nie
  * tresc zmiany); offer_studnie: strip efemerycznych (DTO nie obowiazuje ofert);
  * transportMode undefined traktuj jak 'full' (default load, legacy SAVED).
+ * Zamówienia: wizard to szum (tiles z oferty, step wymuszony 5, restore go nie
+ * czyta) — obie strony bez kluczy wizarda. Pola: brak klucza = fallback UI.
  * @param {string} kind
  * @param {*} payload
  * @returns {object}
@@ -437,6 +452,28 @@ function _draftComparablePayload(kind, payload) {
         out[k] = src[k];
     });
     if (out.transportMode === undefined) out.transportMode = 'full';
+    if (kind === 'order_studnie' || kind === 'order_rury') {
+        delete out.wizardGlobalParams;
+        delete out.wizardStep;
+    }
+    if (out.fields && typeof out.fields === 'object') {
+        var fields = {};
+        Object.keys(out.fields).forEach(function (k) {
+            fields[k] = out.fields[k];
+        });
+        Object.keys(_DRAFT_FIELD_FALLBACKS).forEach(function (k) {
+            if (fields[k] === undefined || fields[k] === null)
+                fields[k] = _DRAFT_FIELD_FALLBACKS[k];
+        });
+        // Puste stringi: brak klucza w legacy = '' w live (collect zwraca ''
+        // dla pustych inputów). Liczby/daty/numeru to nie dotyczy.
+        window.draftStore.FIELD_KEYS.forEach(function (k) {
+            if (k === 'transportKm' || k === 'transportRate' || k === 'date' || k === 'number')
+                return;
+            if (fields[k] === undefined || fields[k] === null) fields[k] = '';
+        });
+        out.fields = fields;
+    }
     if (!Array.isArray(src.wells)) return out;
     if (kind === 'order_studnie') {
         var dto = _draftProjectWells(kind, src.wells);
@@ -470,15 +507,28 @@ function _draftEquivalent(kind, draftPayload, savedPayload, isNewDoc) {
     if (!draftPayload) return true;
     if (!savedPayload) return false;
     var opts = isNewDoc ? { ignoreVolatile: true, ignoreWizard: true } : undefined;
-    var a = window.draftStore.canonicalPayloadJson(
-        _draftComparablePayload(kind, draftPayload),
-        opts
-    );
-    var b = window.draftStore.canonicalPayloadJson(
-        _draftComparablePayload(kind, savedPayload),
-        opts
-    );
-    return !!a && a === b;
+    var a = _draftComparablePayload(kind, draftPayload);
+    var b = _draftComparablePayload(kind, savedPayload);
+    // date/number: brak po którejkolwiek stronie (legacy, kreacja) = drop obu.
+    // Bez tego live (dzisiejsza data z inputa) dryfuje codziennie vs brak.
+    ['date', 'number'].forEach(function (k) {
+        if (
+            a.fields &&
+            b.fields &&
+            (a.fields[k] === undefined ||
+                a.fields[k] === null ||
+                a.fields[k] === '' ||
+                b.fields[k] === undefined ||
+                b.fields[k] === null ||
+                b.fields[k] === '')
+        ) {
+            delete a.fields[k];
+            delete b.fields[k];
+        }
+    });
+    var ca = window.draftStore.canonicalPayloadJson(a, opts);
+    var cb = window.draftStore.canonicalPayloadJson(b, opts);
+    return !!ca && ca === cb;
 }
 
 /**
