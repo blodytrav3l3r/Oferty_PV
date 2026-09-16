@@ -544,6 +544,8 @@ async function saveOrderStudnie() {
         await saveOrdersDataStudnie(ordersStudnie);
     }
     showToast('<i data-lucide="package"></i> Zamówienie zaktualizowane', 'success');
+    // P1.1b: sukces SAVED kasuje draft zamówienia.
+    if (window.draftAutosave) window.draftAutosave.clearContext('order_studnie', order.id);
     if (window.kartotekaUI) {
         window.kartotekaUI.notifyOrderMutation();
     }
@@ -618,6 +620,8 @@ async function deleteOrderStudnie(orderId) {
         ordersStudnie = ordersStudnie.filter((o) => o.id !== orderId);
         // P1 HIGH: DELETE już usunął rekord po stronie serwera — bez re-save całości.
     }
+    // P1.1b: DELETE dokumentu sprząta jego draft.
+    if (window.draftAutosave) window.draftAutosave.clearContext('order_studnie', orderId);
     // Jawna invalidacja — push mutuje tablicę w miejscu, a cache w orderHelpers
     // oparty jest na tożsamości referencji (patrz _ensureOrdersLookupCache).
     if (typeof _invalidateOrdersLookupCache === 'function') _invalidateOrdersLookupCache();
@@ -853,6 +857,8 @@ async function enterOrderEditMode(orderId) {
 
         logger.info('orderManager', '[enterOrderEditMode] DONE');
         showToast('<i data-lucide="package"></i> Zamówienie wczytane do edycji', 'success');
+        // P1.1b: banner recovery tylko gdy draft istnieje i różni się od SAVED.
+        if (window.draftAutosave) window.draftAutosave.checkRecovery('order_studnie');
     } catch (err) {
         logger.error('orderManager', 'Błąd ładowania zamówienia:', err);
         logger.error('orderManager', 'Stack:', err.stack);
@@ -1172,6 +1178,8 @@ async function saveCurrentOrder(options = {}) {
         }
     }
     showToast('<i data-lucide="package"></i> Zamówienie zapisane', 'success');
+    // P1.1b: sukces SAVED kasuje draft zamówienia.
+    if (window.draftAutosave) window.draftAutosave.clearContext('order_studnie', order.id);
     renderOrderModeBanner();
     if (typeof renderOfferSummary === 'function') renderOfferSummary();
     if (window.kartotekaUI) {
@@ -1208,3 +1216,9 @@ async function syncSourceData(options = {}) {
 }
 window.syncSourceData = syncSourceData;
 window.pendingOrderCreationData = pendingOrderCreationData;
+
+// P1.1b: draft lokalny (odrębna warstwa obok SAVED) — rejestracja na końcu modułu.
+if (window.draftAutosave) {
+    window.draftAutosave.initKind('offer_studnie');
+    window.draftAutosave.initKind('order_studnie');
+}

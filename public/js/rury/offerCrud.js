@@ -136,6 +136,9 @@ async function saveOffer() {
         if (typeof _rebuildRuryOffersMap === 'function') _rebuildRuryOffersMap();
 
         renderSavedOffers();
+        // P1.1b: sukces SAVED kasuje draft (zapis draftu ≠ zapis SAVED).
+        if (window.draftAutosave)
+            window.draftAutosave.clearContext('offer_rury', 'new', editingOfferId);
     } catch (err) {
         logger.error('offerCrud', '[App] Save error:', err);
         // 423: zapis odrzucony — ktos inny trzyma blokade. Formularza NIE
@@ -185,6 +188,9 @@ async function saveOffer() {
 
 function clearOfferForm() {
     if (window.lockService) window.lockService.release();
+    // P1.1b: nowa oferta = nowy kontekst — sprzątnij draft poprzedniego.
+    if (window.draftAutosave)
+        window.draftAutosave.clearContext('offer_rury', editingOfferId || 'new');
     editingOfferId = null;
     editingOfferAssignedUserId = null;
     editingOfferAssignedUserName = '';
@@ -360,6 +366,8 @@ async function loadOffer(id) {
     showSection('builder');
     if (typeof goToPhase === 'function') goToPhase(3);
     showToast('Wczytano ofertę: ' + (normalized.number || 'bez numeru'), 'info');
+    // P1.1b: banner recovery tylko gdy draft istnieje i różni się od SAVED.
+    if (window.draftAutosave) window.draftAutosave.checkRecovery('offer_rury');
 }
 
 // Kompatybilność z PVSalesUI
@@ -415,6 +423,8 @@ async function deleteOffer(id) {
             return;
         }
         offers = offers.filter((o) => o.id !== id);
+        // P1.1b: DELETE dokumentu sprząta jego draft (bez omijania blokad).
+        if (window.draftAutosave) window.draftAutosave.clearContext('offer_rury', id);
         if (window.lockService) window.lockService.releaseOf('offer', id);
         renderSavedOffers();
         showToast('Oferta usunięta', 'info');

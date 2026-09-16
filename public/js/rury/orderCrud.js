@@ -305,6 +305,9 @@ async function saveRuryOrder() {
     try {
         await saveOrdersDataRury(ordersRury);
         showToast('Zamówienie zaktualizowane', 'success');
+        // P1.1b: sukces SAVED kasuje draft zamówienia.
+        if (window.draftAutosave)
+            window.draftAutosave.clearContext('order_rury', editingRuryOrderId);
         if (window.kartotekaUI) {
             window.kartotekaUI.notifyOrderMutation();
         }

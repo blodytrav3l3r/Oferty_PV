@@ -6,6 +6,9 @@
 
 function clearOfferForm() {
     if (typeof window !== 'undefined' && window.lockService) window.lockService.release();
+    // P1.1b: nowa oferta = nowy kontekst — sprzątnij draft poprzedniego.
+    if (window.draftAutosave)
+        window.draftAutosave.clearContext('offer_studnie', editingOfferIdStudnie || 'new');
     editingOfferIdStudnie = null;
     editingOfferAssignedUserId = null;
     editingOfferAssignedUserName = '';
@@ -179,6 +182,8 @@ async function loadSavedOfferStudnie(id_or_doc, optionalId, targetSection, preve
     showToast('Wczytano oferte: ' + (normalized.number || offer.id), 'info');
 
     updateOfferFormHeader(normalized.number || offer.id, offer.id);
+    // P1.1b: banner recovery tylko gdy draft istnieje i różni się od SAVED.
+    if (window.draftAutosave) window.draftAutosave.checkRecovery('offer_studnie');
 }
 
 // Globalne udostepnienie

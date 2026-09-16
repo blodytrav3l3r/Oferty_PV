@@ -87,6 +87,8 @@ async function enterRuryOrderEditMode(orderId) {
         if (window.lucide) lucide.createIcons();
 
         document.title = `Zamówienie: ${orderData.orderNumber || orderData.offerNumber || orderId}`;
+        // P1.1b: banner recovery tylko gdy draft istnieje i różni się od SAVED.
+        if (window.draftAutosave) window.draftAutosave.checkRecovery('order_rury');
     } catch (err) {
         logger.error('orderEditMode', 'Błąd ładowania zamówienia:', err);
         showToast('Błąd ładowania zamówienia', 'error');
@@ -294,6 +296,9 @@ function getRuryOrderChanges(order) {
 window.getRuryOrderChanges = getRuryOrderChanges;
 
 function clearOrderEditState() {
+    // P1.1b: wyjście z trybu zamówienia sprząta draft poprzedniego kontekstu.
+    if (window.draftAutosave)
+        window.draftAutosave.clearContext('order_rury', window.editingRuryOrderId || 'new');
     window.orderEditMode = false;
     editingRuryOrderId = null;
     window.editingRuryOrderId = null;
@@ -315,3 +320,9 @@ function syncOrderTableIfNeeded() {
     updateRuryOrderSummary(order);
 }
 window.syncOrderTableIfNeeded = syncOrderTableIfNeeded;
+
+// P1.1b: draft lokalny (odrębna warstwa obok SAVED) — rejestracja na końcu modułu.
+if (window.draftAutosave) {
+    window.draftAutosave.initKind('offer_rury');
+    window.draftAutosave.initKind('order_rury');
+}

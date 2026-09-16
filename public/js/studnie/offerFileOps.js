@@ -27,6 +27,8 @@ async function deleteOfferStudnie(id) {
             return;
         }
         offersStudnie = offersStudnie.filter((o) => o.id !== id);
+        // P1.1b: DELETE dokumentu sprząta jego draft (bez omijania blokad).
+        if (window.draftAutosave) window.draftAutosave.clearContext('offer_studnie', id);
         if (window.lockService) window.lockService.releaseOf('offer_studnie', id);
         if (typeof _rebuildOffersStudnieById === 'function') _rebuildOffersStudnieById();
         renderSavedOffersStudnie();

@@ -140,6 +140,9 @@ async function saveOfferStudnie() {
         showToast('Oferta zapisana <i data-lucide="check"></i>', 'success');
         const savedId = result.id || offerDoc.id;
         editingOfferIdStudnie = savedId;
+        // P1.1b: sukces SAVED kasuje draft (zapis draftu ≠ zapis SAVED).
+        if (window.draftAutosave)
+            window.draftAutosave.clearContext('offer_studnie', 'new', savedId);
 
         // Aktualizuj lokalną tablicę dla natychmiastowego renderowania przy użyciu potwierdzonego ID
         const idx = offersStudnie.findIndex((o) => o.id === editingOfferIdStudnie);

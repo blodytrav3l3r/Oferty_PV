@@ -109,6 +109,13 @@ async function appLogout() {
     try {
         sessionStorage.removeItem('user');
     } catch {}
+    // P1.1b: wylogowanie kasuje WSZYSTKIE drafty użytkownika (namespace per-user, RODO).
+    try {
+        if (window.draftStore && window.draftAutosave) {
+            const _draftUser = window.draftAutosave.currentUserId();
+            if (_draftUser) window.draftStore.removeUserDrafts(window.localStorage, _draftUser);
+        }
+    } catch {}
     window.location.href = 'index.html';
 }
 

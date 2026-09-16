@@ -446,6 +446,11 @@
 
         // Renderuj nawigację sekcji tylko przy przełączaniu modułów
         if (currentModule !== module) {
+            // P1.1b: synchroniczny flush draftu opuszczanego modułu (hash nie woła beforeunload).
+            try {
+                const _prevWin = iframes[currentModule] && iframes[currentModule].contentWindow;
+                if (_prevWin && _prevWin.draftAutosave) _prevWin.draftAutosave.flushAll();
+            } catch (_e) {}
             renderSectionNav(module);
         }
 
