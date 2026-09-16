@@ -11,13 +11,13 @@ import { logger } from './utils/logger';
  */
 export async function initDatabasePragmas(): Promise<void> {
     try {
-        await Promise.all([
-            prisma.$queryRawUnsafe('PRAGMA journal_mode=WAL'),
-            prisma.$queryRawUnsafe('PRAGMA synchronous=NORMAL'),
-            prisma.$queryRawUnsafe('PRAGMA busy_timeout=30000'),
-            prisma.$executeRawUnsafe('PRAGMA user_version = 20000'),
-            prisma.$executeRawUnsafe('PRAGMA foreign_keys = ON')
-        ]);
+        // Sekwencyjnie na jednym połączeniu (connection_limit=1) — Promise.all
+        // na współdzielonym połączeniu SQLite dawał SQLITE_BUSY / race.
+        await prisma.$queryRawUnsafe('PRAGMA journal_mode=WAL');
+        await prisma.$queryRawUnsafe('PRAGMA synchronous=NORMAL');
+        await prisma.$queryRawUnsafe('PRAGMA busy_timeout=30000');
+        await prisma.$executeRawUnsafe('PRAGMA user_version = 20000');
+        await prisma.$executeRawUnsafe('PRAGMA foreign_keys = ON');
         logger.info(
             'Server',
             'PRAGMA WAL/synchronous/busy_timeout/user_version/foreign_keys ustawione'

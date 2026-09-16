@@ -33,7 +33,9 @@ RUN rm -rf /app/dist/generated && ln -sf /app/generated /app/dist/generated
 # sa potrzebne w runtime do seedowania (prisma/seed.ts) i migrate deploy (docker-entrypoint.sh).
 
 # Tworzymy katalog danych dla trwałego wolumenu Docker (/var/data)
-RUN mkdir -p /var/data && \
+# chown na node: seed/migrate/zapis DB działają jako USER node
+RUN mkdir -p /var/data /app/data && \
+    chown -R node:node /app /var/data && \
     chmod -R 755 /var/data
 
 # Skrypt startowy (naprawa znaków końca linii i uprawnienia)
@@ -48,8 +50,12 @@ ENV COOKIE_SECURE=true
 
 EXPOSE 10000
 
+# Uruchomienie jako nie-root (node z obrazu node:22-slim).
+# Wszystkie kroki zapisu (migrate/seed/start) w entrypoint działają jako node.
+USER node
+
 HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
-    CMD node -e "require('http').get('http://localhost:10000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
+    CMD node -e "require('http').get('http://localhost:10000/health/ready', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
 
 ENTRYPOINT ["/app/scripts/docker-entrypoint.sh"]
 
