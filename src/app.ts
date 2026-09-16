@@ -204,8 +204,10 @@ app.use(cspNonceMiddleware);
 app.use(cspReportOnly);
 
 /* ===== KOMPONENTY POŚREDNICZĄCE (MIDDLEWARE) ===== */
-// Zapis dużych ofert/zamówień (do ~3000 studni z snapshotami) wymaga wyższego limitu payloadu
-app.use(express.json({ limit: '50mb' }));
+// P1.3: brak globalnego express.json — limity rozmiaru JSON są per-route
+// w src/mountRoutes.ts. Globalny parser wykonywałby się przed routerami,
+// więc mniejszy limit per-route byłby martwy (ciało już sparsowane),
+// a większy — nieosiągalny (globalny odrzuciłby payload wcześniej).
 app.use(cookieParser());
 
 /* ===== NAZWA APLIKACJI (branding) — konfigurowalna przez env =====

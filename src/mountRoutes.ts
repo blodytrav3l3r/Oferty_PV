@@ -35,43 +35,59 @@ import locksRoutes from './routes/locks';
  * Montuje wszystkie trasy API + raport CSP + globalny error handler.
  * MUSI być wołane po middleware (security/static/limiter), a errorHandler
  * MUSI zostać ostatni — nie przestawiać kolejności wewnątrz.
+ *
+ * P1.3: limity rozmiaru JSON per-route (celowo brak globalnego express.json
+ * w app.ts — globalny unieważniałby limity per-route: mniejszy byłby martwy,
+ * większy nieosiągalny; poprzedni per-route 1mb na /api/clients był martwy
+ * wobec globalnego 50mb — teraz realnie działa).
+ * Mały (1mb): auth, użytkownicy, klienci, audyt, ustawienia, telemetria,
+ * flagi, eksporty (tylko ID ofert), udostępnienia, admin, locki, wyszukiwarki —
+ * żadna nie przyjmuje tablic rekordów (małe obiekty/zapytania).
+ * Duży (50mb): oferty/zamówienia rury+studnie (tablice items/wells z pełnymi
+ * configami i snapshotami, do ~3000 studni; XLSX importowany jest w przeglądarce
+ * i wysyłany jako JSON na te same trasy ofert/zamówień) oraz bulk PUT cenników
+ * (products/products-studnie ~824 pozycje, preco-pricing pełna struktura).
  */
 export function mountRoutes(app: express.Express, apiLimiter: express.RequestHandler): void {
-    app.use('/api/auth', apiLimiter, authRoutes);
-    app.use('/api/users', apiLimiter, userRoutes);
-    app.use('/api/users-for-assignment', (req, res, next) => {
+    // P1.3: parser JSON per-route zamiast globalnego (patrz komentarz wyżej).
+    const smallJson = express.json({ limit: '1mb' });
+    const largeJson = express.json({ limit: '50mb' });
+
+    app.use('/api/auth', apiLimiter, smallJson, authRoutes);
+    app.use('/api/users', apiLimiter, smallJson, userRoutes);
+    app.use('/api/users-for-assignment', smallJson, (req, res, next) => {
         req.url = '/for-assignment' + (req.url === '/' ? '' : req.url);
         userRoutes(req, res, next);
     });
 
-    app.use('/api/products', productRoutes);
-    app.use('/api/products-studnie', productStudnieRoutes);
-    app.use('/api/offers/search', apiLimiter, searchRoutes);
-    app.use('/api/offers-rury', offerRoutes);
-    app.use('/api/offers-studnie', (req, res, next) => {
+    app.use('/api/products', largeJson, productRoutes);
+    app.use('/api/products-studnie', largeJson, productStudnieRoutes);
+    app.use('/api/offers/search', apiLimiter, smallJson, searchRoutes);
+    app.use('/api/offers-rury', largeJson, offerRoutes);
+    app.use('/api/offers-studnie', largeJson, (req, res, next) => {
         req.url = '/studnie' + req.url;
         offerRoutes(req, res, next);
     });
 
-    app.use('/api/orders-studnie/production/search', apiLimiter, productionSearchRoutes);
-    app.use('/api/orders-studnie', apiLimiter, orderRoutes);
-    app.use('/api/orders-rury', apiLimiter, ruryOrdersRoutes);
-    app.use('/api/clients', apiLimiter, express.json({ limit: '1mb' }), clientRoutes);
-    app.use('/api/audit', apiLimiter, auditRoutes);
-    app.use('/api/settings', apiLimiter, settingsRoutes);
-    app.use('/api/telemetry', telemetryRoutes);
+    app.use('/api/orders-studnie/production/search', apiLimiter, smallJson, productionSearchRoutes);
+    app.use('/api/orders-studnie', apiLimiter, largeJson, orderRoutes);
+    app.use('/api/orders-rury', apiLimiter, largeJson, ruryOrdersRoutes);
+    app.use('/api/clients', apiLimiter, smallJson, clientRoutes);
+    app.use('/api/audit', apiLimiter, smallJson, auditRoutes);
+    app.use('/api/settings', apiLimiter, smallJson, settingsRoutes);
+    app.use('/api/telemetry', smallJson, telemetryRoutes);
     // Nowy moduł telemetry AI - pasywny zapis konfiguracji, zdarzeń i wersji
-    app.use('/api/telemetry', telemetryAiRoutes);
+    app.use('/api/telemetry', smallJson, telemetryAiRoutes);
     // Dashboard AI (Knowledge Base, Learning Engine, Recommender) - admin only
-    app.use('/api/telemetry', telemetryAiDashboardRoutes);
-    app.use('/api/preco-pricing', apiLimiter, precoPricingRoutes);
-    app.use('/api/feature-flags', featureFlagsRoutes);
-    app.use('/api/telemetry', aiMlRoutes); // ML prediction API
-    app.use('/api/price-overrides', apiLimiter, priceOverridesRoutes);
-    app.use('/api/export-combined', exportCombinedRoutes);
-    app.use('/api/shares', apiLimiter, sharesRoutes);
-    app.use('/api/admin', apiLimiter, adminRoutes);
-    app.use('/api/locks', apiLimiter, locksRoutes);
+    app.use('/api/telemetry', smallJson, telemetryAiDashboardRoutes);
+    app.use('/api/preco-pricing', apiLimiter, largeJson, precoPricingRoutes);
+    app.use('/api/feature-flags', smallJson, featureFlagsRoutes);
+    app.use('/api/telemetry', smallJson, aiMlRoutes); // ML prediction API
+    app.use('/api/price-overrides', apiLimiter, smallJson, priceOverridesRoutes);
+    app.use('/api/export-combined', smallJson, exportCombinedRoutes);
+    app.use('/api/shares', apiLimiter, smallJson, sharesRoutes);
+    app.use('/api/admin', apiLimiter, smallJson, adminRoutes);
+    app.use('/api/locks', apiLimiter, smallJson, locksRoutes);
 
     /* ===== RAPORTY VIOLACJI CSP (Faza 1 planu CSP — monitoring) ===== */
     app.post('/api/csp-report', express.text({ type: 'application/csp-report' }), (req, res) => {

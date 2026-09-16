@@ -7,6 +7,8 @@ import { recordRequest } from '../utils/metrics';
 export function requestLogger(req: Request, res: Response, next: NextFunction) {
     runWithDbCounter(() => {
         const requestId = randomUUID().slice(0, 8);
+        // Podepnij requestId na obiekcie żądania — czyta je errorHandler.
+        (req as unknown as { id?: string }).id = requestId;
         res.setHeader('X-Request-Id', requestId);
         const start = Date.now();
         res.on('finish', () => {
