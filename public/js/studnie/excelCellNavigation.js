@@ -1,12 +1,21 @@
 // @ts-check
 /* ===== EXCEL CELL NAVIGATION — Focus, Tab, Arrows, Keyboard Shortcuts ===== */
 
+/* Liczba sticky kolumn z lewej (odpowiednik selektora nth-child(-n+7)); wartość bez zmian. */
+const EXCEL_STICKY_COLS = 7;
+
+/* Kursor na koniec wartości zamiast select() — reguła #33 (select-all zastępował
+   całą wartość przy kolejnym klawiszu). */
+function _excelCursorToEnd(el) {
+    try {
+        el.setSelectionRange(el.value.length, el.value.length);
+    } catch (_e) {}
+}
+
 /* ===== CELL FOCUS (Excel highlight) ===== */
 function excelCellFocus(el) {
     if (el.tagName === 'INPUT' && el.type !== 'number' && el.type !== 'range') {
-        try {
-            el.select();
-        } catch (_e) {}
+        _excelCursorToEnd(el);
     }
     _excelUserEditing = true; /* blokuje polling */
     /* Wybór wiersza obsługuje delegowany focusin na container — nie dubluj logiki */
@@ -443,7 +452,7 @@ function _excelGetStickyColumnsWidth() {
     const firstRow = table ? table.querySelector('thead tr') : null;
     if (!firstRow) return 0;
     let w = 0;
-    for (let i = 0; i < 7 && i < firstRow.children.length; i++) {
+    for (let i = 0; i < EXCEL_STICKY_COLS && i < firstRow.children.length; i++) {
         w += /** @type {HTMLElement} */ (firstRow.children[i]).offsetWidth;
     }
     return w;
@@ -510,11 +519,9 @@ function _excelFocusNavEl(el, rowEls, dir, opts) {
                 !cur.disabled &&
                 cur.type !== 'number' &&
                 cur.type !== 'range' &&
-                cur.select
+                cur.setSelectionRange
             )
-                try {
-                    cur.select();
-                } catch (_e) {}
+                _excelCursorToEnd(cur);
             const tr = cur.closest('tr[data-widx]');
             if (tr) {
                 const wIdx = parseInt(tr.getAttribute('data-widx'), 10);
@@ -546,7 +553,7 @@ function _excelHandleKeydown(e) {
         const input = document.getElementById('excel-search-input');
         if (input) {
             input.focus();
-            input.select();
+            _excelCursorToEnd(input);
         }
         return;
     }

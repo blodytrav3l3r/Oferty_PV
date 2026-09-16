@@ -7,6 +7,9 @@
 let _excelBulkAbort = null;
 let _excelBulkRaf = null;
 
+/* Fallback z-index gdy warstwy LAYERS niedostępne; wartość bez zmian. */
+const EXCEL_BULK_ZINDEX_FALLBACK = 9999;
+
 function _excelBulkIsAborted(signal) {
     return signal && signal.aborted;
 }
@@ -24,7 +27,7 @@ function _excelBulkShowProgress(label, done, total, onCancel) {
         el.id = 'excel-paste-progress';
         el.style.cssText =
             'position:fixed;bottom:1rem;right:1rem;z-index:' +
-            (typeof LAYERS !== 'undefined' ? LAYERS.TOAST : 9999) +
+            (typeof LAYERS !== 'undefined' ? LAYERS.TOAST : EXCEL_BULK_ZINDEX_FALLBACK) +
             ';background:var(--bg-card, #1e293b);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:0.75rem 1rem;min-width:280px;box-shadow:0 4px 20px rgba(0,0,0,0.5);';
         document.body.appendChild(el);
     }

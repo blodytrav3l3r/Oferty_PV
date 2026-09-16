@@ -1,6 +1,9 @@
 // @ts-check
 /* ===== EXCEL MODAL — Otwarzanie/zamykanie tabeli konfiguracyjnej studni ===== */
 
+/* Selektor komórek sticky (Lp, nazwa, rzędne — pierwsze 7 kolumn); wartość bez zmian. */
+const EXCEL_STICKY_CELL_SELECTOR = 'td:nth-child(-n+7)';
+
 function _excelOnFocusInRow(e) {
     if (e.target.closest('.excel-mode-btn, .excel-run-btn')) return;
     const row = e.target.closest('tr[data-widx]');
@@ -597,7 +600,7 @@ function excelSelectRow(wIdx) {
                 prevRow.setAttribute('data-orig-bg', base);
             }
             /* Przywróć tło sticky kolumn do base-bg */
-            const prevStickyTds = prevRow.querySelectorAll('td:nth-child(-n+7)');
+            const prevStickyTds = prevRow.querySelectorAll(EXCEL_STICKY_CELL_SELECTOR);
             const baseBg = prevRow.getAttribute('data-base-bg') || 'var(--bg-primary)';
             const prevSolid = prevRow.getAttribute('data-solid-bg') || 'var(--bg-primary)';
             prevStickyTds.forEach(function (td) {
@@ -614,7 +617,7 @@ function excelSelectRow(wIdx) {
             newRow.style.background = activeBg;
             newRow.setAttribute('data-orig-bg', activeBg);
             /* Zaktualizuj tło sticky kolumn (Lp, NrStudni, RzWlazu, RzDna, Wys) */
-            const stickyTds = newRow.querySelectorAll('td:nth-child(-n+7)');
+            const stickyTds = newRow.querySelectorAll(EXCEL_STICKY_CELL_SELECTOR);
             const solidBg = newRow.getAttribute('data-solid-bg') || 'var(--bg-primary)';
             stickyTds.forEach(function (td) {
                 td.style.background = _excelStickyCellBg(activeBg, solidBg);
