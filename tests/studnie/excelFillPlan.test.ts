@@ -4,17 +4,19 @@ import path from 'path';
 import vm from 'vm';
 
 describe('_excelBuildFillPlan — plan wypełnienia Ctrl+Enter (F1)', () => {
-    /* Wzorzec runChangeContext z excelDrilledRings.test.ts — ładuje tylko excelCopyPaste.js */
+    /* Wzorzec runChangeContext z excelDrilledRings.test.ts — ładuje excelPasteSeq.js + excelPasteMismatch.js + excelCopyPaste.js */
     function runFillPlanContext() {
         const context: any = {
             window: {}
         };
-        const code = fs.readFileSync(
-            path.join(__dirname, '../../public/js/studnie/excelCopyPaste.js'),
-            'utf8'
-        );
         vm.createContext(context);
-        vm.runInContext(code, context);
+        for (const f of ['excelPasteSeq.js', 'excelPasteMismatch.js', 'excelCopyPaste.js']) {
+            const code = fs.readFileSync(
+                path.join(__dirname, '../../public/js/studnie', f),
+                'utf8'
+            );
+            vm.runInContext(code, context);
+        }
         return context;
     }
 

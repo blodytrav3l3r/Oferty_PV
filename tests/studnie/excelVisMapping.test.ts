@@ -46,6 +46,8 @@ describe('excel vis->TD mapping pomija select/auto (baza #47)', () => {
             'excelColumns.js',
             'excelReductionColumns.js',
             'excelHelpers.js',
+            'excelPasteSeq.js',
+            'excelPasteMismatch.js',
             'excelCopyPaste.js'
         ]) {
             vm.runInContext(

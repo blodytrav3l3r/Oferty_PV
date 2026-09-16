@@ -46,10 +46,7 @@ function enforceOtRings(targetWell) {
     let belowType = null;
     let psiaSeed = !!well.psiaBuda;
     for (const item of configReversed) {
-        const p =
-            typeof getStudnieProductById === 'function'
-                ? getStudnieProductById(item.productId)
-                : studnieProducts.find((pr) => pr.id === item.productId);
+        const p = resolveStudnieProduct(item.productId);
         if (!p || !p.height) continue;
         const qty = item.quantity || 1;
         const isDennicaLike = isDennicaLikeProduct(p);
@@ -114,10 +111,7 @@ function checkSegmentHasHole(seg, well, rzDna) {
     if (!well.przejscia || well.przejscia.length === 0) return false;
 
     for (const pr of well.przejscia) {
-        const pprod =
-            typeof getStudnieProductById === 'function'
-                ? getStudnieProductById(pr.productId)
-                : studnieProducts.find((x) => x.id === pr.productId);
+        const pprod = resolveStudnieProduct(pr.productId);
         if (!pprod) continue;
 
         // OT wymaga całego korpusu w segmencie (transitionZones.js), nie samego środka.
@@ -211,10 +205,7 @@ function degradeFromOtRing(seg, currentProd, currentId, well) {
         targetId = stdProd.id;
     } else {
         const baseStripped = currentId.replace(/[_-]OT$/i, '');
-        const baseProduct =
-            typeof getStudnieProductById === 'function'
-                ? getStudnieProductById(baseStripped)
-                : studnieProducts.find((p) => p.id === baseStripped);
+        const baseProduct = resolveStudnieProduct(baseStripped);
         if (baseProduct) {
             targetId = baseProduct.id;
         }

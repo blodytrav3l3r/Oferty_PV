@@ -49,6 +49,8 @@ describe('excel bulk paste — brak gubienia komórek i kolejność (GO)', () =>
             'excelColumns.js',
             'excelReductionColumns.js',
             'excelChangeHandlers.js',
+            'excelPasteSeq.js',
+            'excelPasteMismatch.js',
             'excelCopyPaste.js'
         ];
         for (const f of files) {

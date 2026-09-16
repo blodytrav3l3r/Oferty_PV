@@ -189,10 +189,42 @@ function isDennicaLikeProduct(p) {
 function dennicaHeightPenalty(p, belowType) {
     return isDennicaLikeProduct(p) && SOCKET_TYPES.has(belowType) ? DENNICA_OVERLAP_MM : 0;
 }
+/**
+ * Kara psiej budy dla dennicy — dokładny odpowiednik rozproszonego `psiaBuda ? -100`.
+ * Semantyka identyczna: 100 gdy psiaBuda, inaczej 0 (bez sprawdzania typu produktu).
+ * @param {any} psiaBuda flaga psiej budy ze studni
+ * @returns {number} 100 albo 0
+ */
+function dennicaPsiaBudaPenalty(psiaBuda) {
+    return psiaBuda ? DENNICA_OVERLAP_MM : 0;
+}
+/**
+ * Lookup produktu studni z fallbackiem — dokładny odpowiednik rozproszonego
+ * `typeof getStudnieProductById === 'function' ? getStudnieProductById(id) : studnieProducts.find(...)`.
+ * Semantyka identyczna w każdym środowisku (ta sama kolejność, ten sam wynik).
+ * @param {string} id identyfikator produktu
+ * @returns {any} produkt albo null/undefined jak w wywołaniu bezpośrednim
+ */
+function resolveStudnieProduct(id) {
+    if (typeof getStudnieProductById === 'function') return getStudnieProductById(id);
+    return studnieProducts.find((p) => p.id === id);
+}
+/**
+ * Domyślny właz WLAZ-150 jako pozycja configu — dokładny odpowiednik rozproszonego
+ * bloku `if (!wlazItem) { const wlaz150 = ...; if (wlaz150) wlazItem = {...} }`.
+ * @returns {{productId: string, quantity: number}|null} pozycja albo null gdy brak WLAZ-150 w katalogu
+ */
+function resolveDefaultWlazItem() {
+    const wlaz150 = resolveStudnieProduct('WLAZ-150');
+    return wlaz150 ? { productId: wlaz150.id, quantity: 1 } : null;
+}
 window.DENNICA_OVERLAP_MM = DENNICA_OVERLAP_MM;
 window.SOCKET_TYPES = SOCKET_TYPES;
 window.isDennicaLikeProduct = isDennicaLikeProduct;
 window.dennicaHeightPenalty = dennicaHeightPenalty;
+window.dennicaPsiaBudaPenalty = dennicaPsiaBudaPenalty;
+window.resolveStudnieProduct = resolveStudnieProduct;
+window.resolveDefaultWlazItem = resolveDefaultWlazItem;
 Object.defineProperty(window, 'studnieProductsById', {
     configurable: true,
     get: () => studnieProductsById

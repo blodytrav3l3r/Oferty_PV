@@ -463,6 +463,8 @@ describe('_excelSetModelCellValue (paste F1: cichy clamp)', () => {
         };
         vm.createContext(context);
         vm.runInContext(readStudnie('solverValidation.js'), context);
+        vm.runInContext(readStudnie('excelPasteSeq.js'), context);
+        vm.runInContext(readStudnie('excelPasteMismatch.js'), context);
         vm.runInContext(readStudnie('excelCopyPaste.js'), context);
         return { context, wells };
     }

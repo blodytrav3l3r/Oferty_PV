@@ -62,12 +62,17 @@ describe('phantom przejscie — Opcja A', () => {
         };
         ctx.window = ctx;
         vm.createContext(ctx);
-        ['excelState.js', 'excelHelpers.js', 'excelChangeHandlers.js', 'excelCopyPaste.js'].forEach(
-            (f) => {
-                const code = fs.readFileSync(path.join(base, f), 'utf8');
-                vm.runInContext(code, ctx);
-            }
-        );
+        [
+            'excelState.js',
+            'excelHelpers.js',
+            'excelChangeHandlers.js',
+            'excelPasteSeq.js',
+            'excelPasteMismatch.js',
+            'excelCopyPaste.js'
+        ].forEach((f) => {
+            const code = fs.readFileSync(path.join(base, f), 'utf8');
+            vm.runInContext(code, ctx);
+        });
         vm.runInContext(
             `if(typeof Event==='undefined') globalThis.Event=class Event{constructor(t,o){this.type=t}}; if(typeof requestAnimationFrame==='undefined') globalThis.requestAnimationFrame=cb=>cb();`,
             ctx

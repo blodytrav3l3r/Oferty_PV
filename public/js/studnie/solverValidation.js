@@ -68,10 +68,7 @@ function recalculateWellErrors(well) {
             let psiaSeed = !!well.psiaBuda;
             const configReversed = [...well.config].reverse();
             for (const item of configReversed) {
-                const p =
-                    typeof getStudnieProductById === 'function'
-                        ? getStudnieProductById(item.productId)
-                        : studnieProducts.find((pr) => pr.id === item.productId);
+                const p = resolveStudnieProduct(item.productId);
                 if (!p || !p.height) continue;
                 const qty = item.quantity || 1;
                 const isDennicaLike = isDennicaLikeProduct(p);
@@ -107,10 +104,7 @@ function recalculateWellErrors(well) {
                 const pel = parseFloat(pr.rzednaWlaczenia);
                 if (isNaN(pel)) return;
 
-                const pprod =
-                    typeof getStudnieProductById === 'function'
-                        ? getStudnieProductById(pr.productId)
-                        : studnieProducts.find((x) => x.id === pr.productId);
+                const pprod = resolveStudnieProduct(pr.productId);
                 if (!pprod) return;
 
                 let dn_val = 160;
@@ -180,10 +174,7 @@ function recalculateWellErrors(well) {
     // wycena nie dolicza nic — zgłoś ostrzeżenie WARNING (nie twardy błąd).
     if (typeof getPehdTypeForComponent === 'function' && well.config && well.config.length > 0) {
         for (const item of well.config) {
-            const p =
-                typeof getStudnieProductById === 'function'
-                    ? getStudnieProductById(item.productId)
-                    : studnieProducts.find((pr) => pr.id === item.productId);
+            const p = resolveStudnieProduct(item.productId);
             if (!p) continue;
             const pehdType = getPehdTypeForComponent(well, p.componentType);
             const pehdVal = parseFloat(String(p.doplataPEHD || '').replace(',', '.'));

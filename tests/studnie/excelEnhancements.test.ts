@@ -17,6 +17,8 @@ describe('Excel — sortowanie, suma zaznaczenia (pure helpers)', () => {
         vm.createContext(context);
         for (const file of [
             'excelState.js',
+            'excelPasteSeq.js',
+            'excelPasteMismatch.js',
             'excelCopyPaste.js',
             'excelCellSelection.js',
             'excelSort.js'

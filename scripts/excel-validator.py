@@ -33,7 +33,8 @@ check_in('_excelBuildFillPlan zdefiniowana', 'excelCopyPaste.js', r'function _ex
 check_in('_excelHandleFillDown zdefiniowana', 'excelCopyPaste.js', r'function _excelHandleFillDown')
 check_in('fill guard _excelPasteInProgress (jeden snapshot)', 'excelCopyPaste.js', r'_excelPasteInProgress = true')
 check_in('fill pomija nazwe (colIdx 3)', 'excelCopyPaste.js', r'colIdx\s*[<>]=\s*3')
-check_in('fill pomija wiersze ukryte filtrem', 'excelCopyPaste.js', r'display\s*!==\s*[\'"]none[\'"]')
+# E4: _excelGetVisibleRows przeniesione do excelPasteSeq.js (split bajtowo identyczny)
+check_in('fill pomija wiersze ukryte filtrem', 'excelPasteSeq.js', r'display\s*!==\s*[\'"]none[\'"]')
 check_in('galaz Ctrl+Enter w nawigacji', 'excelCellNavigation.js', r'_excelHandleFillDown')
 check_in('guard !ctrlKey na Enter selecta', 'excelHelpers.js', r'!event\.ctrlKey')
 

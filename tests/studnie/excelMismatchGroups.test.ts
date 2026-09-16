@@ -32,8 +32,10 @@ describe('excel mismatch — grupowanie weryfikacji (soft-cap, zero auto-accept)
         };
         context.window = context;
         vm.createContext(context);
-        const code = fs.readFileSync(path.join(base, 'excelCopyPaste.js'), 'utf8');
-        vm.runInContext(code, context);
+        for (const f of ['excelPasteSeq.js', 'excelPasteMismatch.js', 'excelCopyPaste.js']) {
+            const code = fs.readFileSync(path.join(base, f), 'utf8');
+            vm.runInContext(code, context);
+        }
         ctx = context;
     });
 

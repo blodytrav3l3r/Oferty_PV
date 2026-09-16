@@ -33,6 +33,8 @@ describe('excel multi-column paste — visible semantics (A) with hidden columns
             'excelHelpers.js',
             'excelColumns.js',
             'excelReductionColumns.js',
+            'excelPasteSeq.js',
+            'excelPasteMismatch.js',
             'excelCopyPaste.js'
         ];
         for (const f of files) {

@@ -52,6 +52,8 @@ describe('excel paste invariants — copy→map→paste→model (P0)', () => {
             'excelHelpers.js',
             'excelColumns.js',
             'excelReductionColumns.js',
+            'excelPasteSeq.js',
+            'excelPasteMismatch.js',
             'excelCopyPaste.js'
         ];
         for (const f of files) {
