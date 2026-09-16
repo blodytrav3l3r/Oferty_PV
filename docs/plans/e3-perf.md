@@ -90,3 +90,89 @@
 
 `node -c` ×3 PASS, `eslint` ×3 czysto, `npx jest tests/frontend tests/studnie`:
 **102 suity / 1398 testów PASS**. Worktree: 3 pliki Excel + ten raport, bez commita.
+
+## 7. Domknięcie load-testów (Agent E3) — 2026-09-16, bez commita
+
+Starej tabeli baseline (§3) NIE nadpisano — poniżej nowe, niezależne pomiary.
+
+### 7.1 Warianty (jak odróżnić quick od sustained)
+
+- **quick** (`--quick`, steady 60 s + burst N×): job CI `load-quick`
+  (`.github/workflows/ci.yml`) — tylko push na main, po jobie `test`.
+  Deterministyczny, szybki, zapisy self-cleaning (PUT+DELETE, claim+recycle),
+  wynik DoD daje jasny PASS/FAIL. Odporny na brak środowiska: jeśli serwer
+  nie wstanie w 60 s, job kończy się SKIP z wyraźnym powodem (nie FAIL).
+- **sustained** (`--sustained`, steady ~15 min + burst N×): job CI
+  `load-sustained` — TYLKO `workflow_dispatch` (input `users`, domyślnie 100)
+  i nightly (`schedule` cron `0 2 * * *`). Nigdy przy pushu/PR.
+- **`--users N`** (formy `--users 50` i `--users=50`): skala workerów steady
+  i burstów w proporcjach historycznych; dla N=100 podział bitowo identyczny
+  jak dotąd (80/15/3 + claim + PDF; burst 55/20/10/5 + 5 health + 2 PDF + 3 fill).
+  Brak flagi = 100 (wsteczna kompatybilność); `--quick` bez `--users` bez zmian.
+- Skrypty npm: `load` (domyślne 100 userów / 300 s), `load:quick`, `load:sustained`.
+
+### 7.2 Pomiary lokalne (REALNE liczby)
+
+- Serwer: `node dist/server.js` (build z 2026-09-16 17:55, bez przebudowy)
+  na porcie **3210** (3000 zajęty przez instancję dev, nietknięta).
+- Baza: **świeża** `data/loadtest_e3.sqlite` (push + `prisma:seed`: 94 rury,
+  689 studnie) — prod `app_database.sqlite` nietknięta (rozmiar ten sam).
+  Po pomiarach serwer zabity, `loadtest_e3.sqlite*` usunięte.
+- Świeży seed NIE zawiera oferty studni → brak `pdfId`: worker PDF idle,
+  `pdfB=0`, wiersz pdf pusty (N/A) we wszystkich przebiegach.
+
+| Przebieg             | users | steady | req steady | błędy (5xx/fail) | p50/p95/p99 write | p95 CRUD | burst wall/p95 | throughput steady | DoD  |
+| -------------------- | ----: | -----: | ---------: | ---------------: | ----------------- | -------: | -------------- | ----------------- | ---- |
+| `--quick`            |   100 |   60 s |        802 |            0 / 0 | 17,6/230,7/236,7  | 230,7 ms | 262 ms / 218,1 | ~13,4 req/s       | PASS |
+| `--users 25 --quick` |    25 |   60 s |        196 |            0 / 0 | 18,1/64,7/93,0    |  64,7 ms | 61 ms / 43,1   | ~3,3 req/s        | PASS |
+| `--users 50 --quick` |    50 |   60 s |        394 |            0 / 0 | 16,9/85,8/93,7    |  85,8 ms | 92 ms / 70,7   | ~6,6 req/s        | PASS |
+
+Szczegóły (wszystkie statusy 200, throttled 0, busyDelta 0):
+
+- `--quick` (100): read n=520 p50 19 / p95 148,2 / p99 225,7; write n=204
+  p50 17,6 / p95 230,7 / p99 236,7; batch n=66 p50 13,7 / p95 149,3 / p99 294,9;
+  claim n=12 p50 15,4 / p95 222; burst 100× wall 262 ms p50 111,4 / p95 218,1;
+  metryki: dbQueries 5605, dbAvg 0,21 ms, loopLag 16 ms, rss 170 MB.
+- `--users 25 --quick`: read n=122 (18,8/46,5/71,4); write n=40 (18,1/64,7/93);
+  batch n=22 (15,9/32,3/80,8); claim n=12 (15,2/62); burst 25× wall 61 ms
+  p50 32,6 / p95 43,1; dbQueries 1430, dbAvg 0,18 ms, loopLag 16 ms, rss 168 MB.
+- `--users 50 --quick`: read n=264 (18,6/60,9/73,1); write n=96 (16,9/85,8/93,7);
+  batch n=22 (15,4/87,7/106,9); claim n=12 (14,2/81,3); burst 50× wall 92 ms
+  p50 54,6 / p95 70,7; dbQueries 2649, dbAvg 0,15 ms, loopLag 16 ms, rss 170 MB.
+
+Wniosek: p95 CRUD rośnie z liczbą piszących (64,7 → 85,8 → 230,7 ms),
+ale przy świeżej bazie i limicie 60 s próg 500 ms spełniony we wszystkich
+przebiegach (PASS). Różnica względem FAIL z §3.2 to inny stan bazy
+(świeży seed, brak PDF, mniejsza kolejka single-writera) — nie regresja kodu.
+
+### 7.3 Testy po zmianie (E3)
+
+- `node --check scripts/load-100.mjs` PASS.
+- `--help` (działa bez serwera) PASS — wypisuje użycie i exit 0.
+- `--users abc` → exit 2 z komunikatem; `--users=0` → exit 2 (walidacja obu form).
+- Matematyka podziału zweryfikowana: N=100 → dokładnie 80/15/3/1/1
+  (burst 55/20/10/5/2/8); sumy workerów == N dla 1/5/9/10/25/50/100.
+- `ci.yml` poprawny YAML (js-yaml parsuje); joby wzorowane na `e2e-smoke`
+  (te same kroki setup + seed + build, env `test-ci.sqlite`).
+- `npx prettier --check` na 4 edytowanych plikach (wynik poniżej w §7.5).
+
+### 7.4 NIE wykonano (z powodem)
+
+- Pełny steady 300 s (`load-100.mjs` bez flag) i `--sustained` (~15 min)
+  lokalnie: NIE WYKONANO — koszt czasu (5–15 min + analiza) przy determinacji
+  quick; wariant sustained pokrywa job `load-sustained` (dispatch/nightly).
+- Przebieg `--users 100` bez `--quick`: NIE WYKONANO osobno — równoważny
+  wariant to `--quick` przy N=100 (ten sam kod podziału, krótszy steady).
+- Pomiar PDF/export-pdf: N/A — świeży seed nie zawiera oferty studni
+  (worker idle zgodnie z projektem, burst bez PDF).
+
+### 7.5 Prettier
+
+- `npx prettier --check scripts/load-100.mjs docs/plans/e3-perf.md package.json`
+  → PASS (wszystkie czyste; `.mjs` nie wchodzi w CI-owy `format:check`, ale
+  wyrównano do `.prettierrc` — baseline `load-100.mjs` był czysty, więc
+  `--write` dotknął tylko nowych linii).
+- `.github/workflows/ci.yml` → WARN, ale **zastany**: cały plik ma CRLF
+  (koniec linii), a `.prettierrc` wymaga LF — baseline z HEAD też WARN.
+  Treściowo nowe joby są prettier-czyste (diff sformatowanej kopii to wyłącznie
+  `\r`); konwersji całego pliku na LF nie robiono (szum poza zakresem).

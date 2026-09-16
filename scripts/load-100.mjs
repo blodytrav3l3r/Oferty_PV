@@ -5,16 +5,53 @@
 // Tempo realistyczne: odczyty co 5-15 s, zapisy co 5-15 s (limity: api 300/15min,
 // write 60/min, export 20/min na IP). Spike mierzy faza burst (100× one-shot).
 // Wszystkie zapisy samosprzątające (PUT+DELETE, claim+recycle).
-// Użycie: node scripts/load-100.mjs [--quick] [--base URL]
+// Użycie: node scripts/load-100.mjs [--quick] [--sustained] [--users N] [--base URL]
 // Wynik: JSON na stdout + tabela na stderr; exit 0 = DoD PASS, 1 = FAIL.
+// Warianty: --quick do CI przy każdym pushu; --sustained tylko
+// workflow_dispatch/nightly (opis w docs/plans/e3-perf.md).
 import { readFileSync } from 'node:fs';
 
-const BASE =
-    process.env.BENCH_BASE_URL ||
-    process.argv.find((a) => a.startsWith('--base='))?.slice(7) ||
-    'http://localhost:3000';
+// Pobiera wartość flagi w formach --flaga=wartosc i --flaga wartosc.
+function argValue(name) {
+    const eq = process.argv.find((a) => a.startsWith(name + '='));
+    if (eq) return eq.slice(name.length + 1);
+    const i = process.argv.indexOf(name);
+    if (i !== -1 && i + 1 < process.argv.length && !process.argv[i + 1].startsWith('--'))
+        return process.argv[i + 1];
+    return null;
+}
+
+if (process.argv.includes('--help') || process.argv.includes('-h')) {
+    console.log(
+        [
+            'Użycie: node scripts/load-100.mjs [--quick] [--sustained] [--users N] [--base URL]',
+            '  --quick      faza steady 60 s (domyślnie 300 s); wariant do CI przy pushu',
+            '  --sustained  faza steady ~15 min (900 s); TYLKO workflow_dispatch/nightly',
+            '  --users N    liczba wirtualnych userów (domyślnie 100); dla 100 podział',
+            '               workerów identyczny jak historycznie (80/15/3 + claim + PDF)',
+            '  --base URL   bazowy URL serwera (też BENCH_BASE_URL); formy --base=URL i --base URL',
+            '  --help, -h   ta pomoc (działa bez serwera)'
+        ].join('\n')
+    );
+    process.exit(0);
+}
+
+const BASE = process.env.BENCH_BASE_URL || argValue('--base') || 'http://localhost:3000';
 const QUICK = process.argv.includes('--quick');
-const STEADY_MS = QUICK ? 60_000 : 300_000;
+const SUSTAINED = process.argv.includes('--sustained');
+const USERS_RAW = argValue('--users');
+let USERS = 100;
+if (USERS_RAW !== null) {
+    USERS = parseInt(USERS_RAW, 10);
+    if (!Number.isInteger(USERS) || USERS < 1) {
+        console.error(
+            `[load-100] Błąd: --users wymaga liczby całkowitej >= 1 (dano: ${USERS_RAW})`
+        );
+        process.exit(2);
+    }
+}
+// --sustained wygrywa z --quick (celowo dłuższy pomiar ma pierwszeństwo).
+const STEADY_MS = SUSTAINED ? 900_000 : QUICK ? 60_000 : 300_000;
 const ADMIN_PASSWORD = (process.env.DEFAULT_ADMIN_PASSWORD || 'anim123456').trim();
 
 function parseEnv(path) {
@@ -42,6 +79,38 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const rnd = (a, b) => a + Math.random() * (b - a);
 const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
 const ipOf = (i) => `10.99.${Math.floor(i / 250) + 1}.${(i % 250) + 1}`;
+
+// Podział workerów fazy steady w proporcjach historycznych dla 100 userów:
+// 80 czytelników / 15 piszących / 3 batchujące + 1 claim + 1 PDF.
+// Dla total=100 wynik to dokładnie {80, 15, 3, 1, 1} (wsteczna kompatybilność);
+// mniejsze N skaluje proporcjonalnie (reszta z dzieleń trafia do czytelników).
+function splitUsers(total) {
+    if (total <= 1) return { readers: total, writers: 0, batchers: 0, claim: 0, pdf: 0 };
+    if (total < 10) return { readers: total - 1, writers: 0, batchers: 0, claim: 1, pdf: 0 };
+    const rest = total - 2; // slot claim + slot PDF
+    let readers = Math.floor((rest * 80) / 98);
+    let writers = Math.floor((rest * 15) / 98);
+    let batchers = Math.floor((rest * 3) / 98);
+    if (total >= 25 && batchers === 0) {
+        batchers = 1;
+        readers -= 1;
+    }
+    let remainder = rest - readers - writers - batchers;
+    while (remainder-- > 0) readers++;
+    return { readers, writers, batchers, claim: 1, pdf: 1 };
+}
+
+// Podział burstów: historycznie 55 search / 20 production-index / 10 write /
+// 5 claim / 5 health + 2 PDF + dopełnienie health do N.
+function splitBurst(total, hasPdf) {
+    const readB = Math.round(total * 0.55);
+    const prodB = Math.round(total * 0.2);
+    const writeB = Math.round(total * 0.1);
+    const claimB = Math.round(total * 0.05);
+    const pdfB = !hasPdf ? 0 : total >= 50 ? 2 : total >= 10 ? 1 : 0;
+    const healthB = Math.max(0, total - readB - prodB - writeB - claimB - pdfB);
+    return { readB, prodB, writeB, claimB, pdfB, healthB };
+}
 
 async function timeFetch(url, opts, timeoutMs = 30000) {
     const ctrl = new AbortController();
@@ -135,8 +204,14 @@ async function main() {
 
     const q = ['studnia', 'oferta', 'ACME', 'DN1000', ''];
     const workers = [];
-    // 80 czytelników: ~4-12 req/min na IP (limit api 300/15min = śr. 20/min).
-    for (let i = 0; i < 80; i++) {
+    // Podział workerów wg --users (dla 100: 80/15/3 + claim + PDF jak dotąd).
+    const grp = splitUsers(USERS);
+    const W0 = grp.readers;
+    const B0 = grp.readers + grp.writers;
+    const C0 = grp.readers + grp.writers + grp.batchers;
+    const P0 = C0 + grp.claim;
+    // Czytelnicy: ~4-12 req/min na IP (limit api 300/15min = śr. 20/min).
+    for (let i = 0; i < grp.readers; i++) {
         workers.push(
             (async () => {
                 const end = Date.now() + STEADY_MS;
@@ -162,8 +237,8 @@ async function main() {
             })()
         );
     }
-    // 15 piszących: PUT+DELETE co 5-15 s (limit write 60/min na IP).
-    for (let i = 80; i < 95; i++) {
+    // Piszący: PUT+DELETE co 5-15 s (limit write 60/min na IP).
+    for (let i = W0; i < W0 + grp.writers; i++) {
         workers.push(
             (async () => {
                 const end = Date.now() + STEADY_MS;
@@ -190,8 +265,8 @@ async function main() {
             })()
         );
     }
-    // 3 batchujące: batch 10 co 30-60 s.
-    for (let i = 95; i < 98; i++) {
+    // Batchujące: batch 10 co 30-60 s.
+    for (let i = B0; i < B0 + grp.batchers; i++) {
         workers.push(
             (async () => {
                 const end = Date.now() + STEADY_MS;
@@ -227,67 +302,81 @@ async function main() {
         );
     }
     // 1 numerujący: claim+recycle co 10 s. 1 PDF: sekwencyjnie.
-    workers.push(
-        (async () => {
-            const end = Date.now() + STEADY_MS;
-            while (Date.now() < end) {
-                const c = await withBackoff(() =>
-                    timeFetch(`/api/orders-studnie/claim-production-number/${adminId}`, {
-                        method: 'POST',
-                        headers: H(98)
-                    })
-                );
-                rec('claim', c);
-                try {
-                    const seq = JSON.parse(c.body)?.nextSeq;
-                    if (c.status === 200 && seq) {
-                        const rc = await withBackoff(() =>
-                            timeFetch('/api/orders-studnie/production/recycle-numbers', {
-                                method: 'POST',
-                                headers: H(98),
-                                body: JSON.stringify({ userId: adminId, seqNumbers: [seq] })
-                            })
-                        );
-                        rec('claim', rc);
+    if (grp.claim) {
+        const ci = C0;
+        workers.push(
+            (async () => {
+                const end = Date.now() + STEADY_MS;
+                while (Date.now() < end) {
+                    const c = await withBackoff(() =>
+                        timeFetch(`/api/orders-studnie/claim-production-number/${adminId}`, {
+                            method: 'POST',
+                            headers: H(ci)
+                        })
+                    );
+                    rec('claim', c);
+                    try {
+                        const seq = JSON.parse(c.body)?.nextSeq;
+                        if (c.status === 200 && seq) {
+                            const rc = await withBackoff(() =>
+                                timeFetch('/api/orders-studnie/production/recycle-numbers', {
+                                    method: 'POST',
+                                    headers: H(ci),
+                                    body: JSON.stringify({ userId: adminId, seqNumbers: [seq] })
+                                })
+                            );
+                            rec('claim', rc);
+                        }
+                    } catch {
+                        /* ignore */
                     }
-                } catch {
-                    /* ignore */
+                    await sleep(10000);
                 }
-                await sleep(10000);
-            }
-        })()
-    );
-    workers.push(
-        (async () => {
-            if (!pdfId) return;
-            const end = Date.now() + STEADY_MS;
-            while (Date.now() < end) {
-                const r = await withBackoff(() =>
-                    timeFetch(
-                        `/api/offers-rury/studnie/${pdfId}/export-pdf`,
-                        { headers: H(99) },
-                        90000
-                    )
-                );
-                rec('pdf', r);
-                await sleep(15000);
-            }
-        })()
-    );
+            })()
+        );
+    }
+    if (grp.pdf) {
+        const pi = P0;
+        workers.push(
+            (async () => {
+                if (!pdfId) return;
+                const end = Date.now() + STEADY_MS;
+                while (Date.now() < end) {
+                    const r = await withBackoff(() =>
+                        timeFetch(
+                            `/api/offers-rury/studnie/${pdfId}/export-pdf`,
+                            { headers: H(pi) },
+                            90000
+                        )
+                    );
+                    rec('pdf', r);
+                    await sleep(15000);
+                }
+            })()
+        );
+    }
 
     await Promise.all(workers);
 
-    // Burst: 100 jednoczesnych one-shotów (po 1 hicie na kubełek) + 2 PDF.
+    // Burst: N jednoczesnych one-shotów (po 1 hicie na kubełek) + PDF.
+    // Dla N=100 podział identyczny jak historycznie (55/20/10/5 + 5 health + 2 PDF + 3 fill).
     const burstFns = [];
-    for (let i = 0; i < 55; i++)
+    const bb = splitBurst(USERS, !!pdfId);
+    let bi = 0;
+    for (let k = 0; k < bb.readB; k++) {
+        const i = bi++;
         burstFns.push(() =>
             timeFetch(`/api/offers/search?q=${encodeURIComponent(pick(q))}&limit=20`, {
                 headers: H(i)
             })
         );
-    for (let i = 55; i < 75; i++)
+    }
+    for (let k = 0; k < bb.prodB; k++) {
+        const i = bi++;
         burstFns.push(() => timeFetch('/api/orders-studnie/production/index', { headers: H(i) }));
-    for (let i = 75; i < 85; i++) {
+    }
+    for (let k = 0; k < bb.writeB; k++) {
+        const i = bi++;
         burstFns.push(async () => {
             const id = `load100x_${Date.now()}_${i}`;
             const put = await timeFetch('/api/offers-rury', {
@@ -302,7 +391,8 @@ async function main() {
             return put;
         });
     }
-    for (let i = 85; i < 90; i++)
+    for (let k = 0; k < bb.claimB; k++) {
+        const i = bi++;
         burstFns.push(() =>
             timeFetch(`/api/orders-studnie/claim-production-number/${adminId}`, {
                 method: 'POST',
@@ -322,15 +412,20 @@ async function main() {
                 return c;
             })
         );
-    for (let i = 90; i < 95; i++)
+    }
+    for (let k = 0; k < bb.healthB; k++) {
+        const i = bi++;
         burstFns.push(() => timeFetch('/health/ready', { headers: H(i) }));
+    }
     if (pdfId)
-        for (let i = 95; i < 97; i++)
+        for (let k = 0; k < bb.pdfB; k++) {
+            const i = bi++;
             burstFns.push(() =>
                 timeFetch(`/api/offers-rury/studnie/${pdfId}/export-pdf`, { headers: H(i) }, 90000)
             );
-    while (burstFns.length < 100)
-        burstFns.push(() => timeFetch('/health/ready', { headers: H(99) }));
+        }
+    while (burstFns.length < USERS)
+        burstFns.push(() => timeFetch('/health/ready', { headers: H(USERS - 1) }));
     const bStart = process.hrtime.bigint();
     const bRes = await Promise.all(burstFns.map((fn) => fn()));
     const wallMs = Number(process.hrtime.bigint() - bStart) / 1e6;
@@ -344,7 +439,16 @@ async function main() {
 
     const byOp = {};
     for (const s of stats) (byOp[s.op] = byOp[s.op] || []).push(s);
-    const report = { quick: QUICK, ops: {}, burst: null, metrics: null, dod: null };
+    const report = {
+        quick: QUICK,
+        sustained: SUSTAINED,
+        users: USERS,
+        steadyMs: STEADY_MS,
+        ops: {},
+        burst: null,
+        metrics: null,
+        dod: null
+    };
     for (const [op, arr] of Object.entries(byOp)) {
         if (op === 'burst') continue;
         const times = arr.map((s) => s.ms).sort((a, b) => a - b);
