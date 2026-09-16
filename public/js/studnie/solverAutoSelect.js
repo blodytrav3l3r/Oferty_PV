@@ -25,6 +25,38 @@ const __MAX_AUTO_SELECT_CALLS = 10;
 // a pomiędzy kręgiem a płytą jest dylatacja 50mm (wliczana w wysokość i podgląd).
 const RELIEF_DYLATACJA_MM = 50;
 window.RELIEF_DYLATACJA_MM = RELIEF_DYLATACJA_MM;
+// P1.6: nazwane stałe domenowe solvera (wszystkie wartości w mm, bez zmian liczbowych).
+// tolBelow = dopuszczalny NIEDOBÓR korpusu (ile mm może brakować do wymaganej wysokości;
+// niedobór dobierany pierścieniami wyrównawczymi AVR), tolAbove = dopuszczalny NADMIAR
+// korpusu ponad wymaganą wysokość.
+const SOLVER_TOL_BELOW_STANDARD_MM = 60;
+const SOLVER_TOL_BELOW_OPTIMAL_MM = 200;
+const SOLVER_TOL_BELOW_RESCUE_MM = 260;
+const SOLVER_TOL_ABOVE_STANDARD_MM = 20;
+const SOLVER_TOL_ABOVE_WIDE_MM = 500;
+const SOLVER_TOL_ABOVE_EXTREME_MM = 1000;
+// Maksymalna suma wysokości pierścieni wyrównawczych AVR (26 cm) — kandydat
+// z większym niedoborem odpada (deficit > maxAvr → continue).
+const SOLVER_MAX_AVR_MM = 260;
+// Kara w score za każdy mm dennicy wyższej od najniższej dostępnej — premiuje
+// niskie dennice (mnożnik tak duży, że 1 mm dennicy przebija typowe różnice punktowe layoutu).
+const SOLVER_DENNICA_HEIGHT_PENALTY = 2000;
+// Luz nadmiaru przy doborze dolnej sekcji pod płytą redukcyjną (+60 mm) — dolna sekcja
+// może być wyższa, bo nadmiar zjada górna sekcja DN1000.
+const SOLVER_BOTTOM_SLACK_MM = 60;
+// Przeszukiwanie wysokości dolnej sekcji przy redukcji: maks. 40 podniesień progu
+// minimalnej wysokości dołu o krok 250 mm — ogranicza pętlę while (lift).
+const SOLVER_LIFT_MAX = 40;
+const SOLVER_LIFT_STEP_MM = 250;
+// Granice odchyłki końcowej diff oznaczanej jako wymuszona tolerancja (isOutOfBounds):
+// poniżej -90 mm (za nisko) lub powyżej +20 mm (za wysoko).
+const SOLVER_DIFF_MIN_MM = -90;
+const SOLVER_DIFF_MAX_MM = 20;
+// P1.6: deterministyczny limit rozmiaru memo DP (wpisów) w obrębie jednego runu.
+// Zastępuje guard czasu DP_MEMO_MAX_MS (125 ms), który różnicował wynik od obciążenia
+// maszyny: wolniejszy run cachował mniej, więc powtarzalne zapytania DP w tym samym runie
+// częściej trafiały w loterię timeoutu DP. Cap wpisów zależy tylko od danych wejściowych.
+const DP_MEMO_MAX_ENTRIES = 5000;
 window.autoSelectComponents = async function autoSelectComponents(autoTriggered = false) {
     if (isAutoSelectRunning) {
         if (autoTriggered) logger.debug('wellSolver', '[AutoSelect] Pomijam — już trwa auto-dobór');
@@ -589,14 +621,13 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
         })
         .filter((t) => t.height_from_bottom_mm > 0);
 
-    // P0-1/F2: memo współdzielonego DP w obrębie jednego runJsAutoSelection.
+    // P0-1/F2/P1.6: memo współdzielonego DP w obrębie jednego runJsAutoSelection.
     // Klucz = PEŁNY fingerprint wejść (lista po referencji + target + tolerancje
     // + fixedBelowHeight + liczba przejść); productId dennicy NIE wchodzi do klucza,
     // bo DP zależy tylko od liczb. Zwracane klony (brak aliasingu między kandydatami).
-    // Guard czasu: wynik wolniejszy niż połowa DP_TIMEOUT_MS nie jest cachowany,
-    // bo timeout zależy od obciążenia maszyny (niedeterminizm).
+    // P1.6: cachowanie zależy wyłącznie od klucza i limitu rozmiaru (DP_MEMO_MAX_ENTRIES),
+    // NIE od czasu — ten sam input daje ten sam output niezależnie od obciążenia maszyny.
     const dpMemo = new Map();
-    const DP_MEMO_MAX_MS = 125;
     function fillKregiDP(target, kList, tolBelow, tolAbove, fixedBelowHeight = 0) {
         if (target <= 0) return { kItems: [], filled: 0 };
 
@@ -618,7 +649,6 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
         if (memoHit) {
             return { kItems: memoHit.kItems.map((k) => ({ ...k })), filled: memoHit.filled };
         }
-        const memoStart = Date.now();
 
         logger.info(
             'wellSolver',
@@ -660,7 +690,7 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
                 _h: parseFloat(ring.height)
             }));
             const filled = kItems.reduce((sum, k) => sum + k._h, 0);
-            if (memoKey !== null && Date.now() - memoStart < DP_MEMO_MAX_MS) {
+            if (memoKey !== null && dpMemo.size < DP_MEMO_MAX_ENTRIES) {
                 dpMemo.set(memoKey, {
                     kItems: kItems.map((k) => ({ ...k })),
                     filled
@@ -670,7 +700,7 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
         }
 
         const greedy = fillKregiGreedy(target, kList);
-        if (memoKey !== null && Date.now() - memoStart < DP_MEMO_MAX_MS) {
+        if (memoKey !== null && dpMemo.size < DP_MEMO_MAX_ENTRIES) {
             dpMemo.set(memoKey, {
                 kItems: greedy.kItems.map((k) => ({ ...k })),
                 filled: greedy.filled
@@ -923,7 +953,7 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
 
                 const { avrItems, avrH } = findBestAvrFill(deficit, maxAvr);
                 const diff = effDenH + topCfg.height + filled + avrH - requiredMm;
-                const isOutOfBounds = diff < -90 || diff > 20;
+                const isOutOfBounds = diff < SOLVER_DIFF_MIN_MM || diff > SOLVER_DIFF_MAX_MM;
 
                 const conf = checkConflicts(otKItems, dennicaItem.height, 0, topCfg.items);
                 if (!conf.valid && !skipHolesValid) {
@@ -951,7 +981,7 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
                     otCount
                 });
                 let score = scoreResult.score;
-                score += (parseFloat(dennicaItem.height) - minDenH) * 2000;
+                score += (parseFloat(dennicaItem.height) - minDenH) * SOLVER_DENNICA_HEIGHT_PENALTY;
 
                 const runErrors = [...conf.errors];
                 if (isOutOfBounds)
@@ -1087,7 +1117,7 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
             const minLowerTotal = Math.max(well.redukcjaMinH || 0, maxHoleTop);
             let dynamicMinBottom = minLowerTotal;
             let lift = 0;
-            while (lift < 40) {
+            while (lift < SOLVER_LIFT_MAX) {
                 for (const dennicaItem of dennicy) {
                     // Psia buda: dennica efektywna -100mm (kielich zajęty) — bSec i deficit na eff.
                     const effDenHRed = well.psiaBuda
@@ -1095,7 +1125,13 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
                         : dennicaItem.height;
                     const bottomNeed = Math.max(dynamicMinBottom - effDenHRed, 0);
 
-                    const bKregi = fillKregiDP(bottomNeed, kregi, 0, tolAbove + 60, effDenHRed);
+                    const bKregi = fillKregiDP(
+                        bottomNeed,
+                        kregi,
+                        0,
+                        tolAbove + SOLVER_BOTTOM_SLACK_MM,
+                        effDenHRed
+                    );
                     const bSec = effDenHRed + bKregi.filled;
 
                     const targetBodyNeed = requiredMm - bSec - reductionPlate.height - topRedH;
@@ -1115,7 +1151,7 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
                     const { avrItems, avrH } = findBestAvrFill(deficit, maxAvr);
 
                     const diff = currentTotal + avrH - requiredMm;
-                    const isOutOfBounds = diff < -90 || diff > 20;
+                    const isOutOfBounds = diff < SOLVER_DIFF_MIN_MM || diff > SOLVER_DIFF_MAX_MM;
 
                     const redKItems = [];
                     bKregi.kItems.forEach((k) => redKItems.push(k));
@@ -1170,7 +1206,8 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
                         otCount: redOtCount
                     });
                     let score = scoreResult.score;
-                    score += (parseFloat(dennicaItem.height) - minDenH) * 2000;
+                    score +=
+                        (parseFloat(dennicaItem.height) - minDenH) * SOLVER_DENNICA_HEIGHT_PENALTY;
 
                     const runErrors = [...conf.errors];
                     if (isOutOfBounds)
@@ -1205,7 +1242,7 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
                         technicalScore: score
                     });
                 }
-                dynamicMinBottom += 250;
+                dynamicMinBottom += SOLVER_LIFT_STEP_MM;
                 lift++;
             }
         }
@@ -1219,11 +1256,41 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
     }
 
     const STAGES = [
-        { tolBelow: 60, tolAbove: 20, maxAvr: 260, skip: false, name: 'Standard' },
-        { tolBelow: 200, tolAbove: 20, maxAvr: 260, skip: false, name: 'Optymalny' },
-        { tolBelow: 260, tolAbove: 20, maxAvr: 260, skip: false, name: 'Ratunkowy' },
-        { tolBelow: 260, tolAbove: 500, maxAvr: 260, skip: false, name: 'Poszerzony (+500mm)' },
-        { tolBelow: 260, tolAbove: 1000, maxAvr: 260, skip: false, name: 'Ekstremalny (+1000mm)' }
+        {
+            tolBelow: SOLVER_TOL_BELOW_STANDARD_MM,
+            tolAbove: SOLVER_TOL_ABOVE_STANDARD_MM,
+            maxAvr: SOLVER_MAX_AVR_MM,
+            skip: false,
+            name: 'Standard'
+        },
+        {
+            tolBelow: SOLVER_TOL_BELOW_OPTIMAL_MM,
+            tolAbove: SOLVER_TOL_ABOVE_STANDARD_MM,
+            maxAvr: SOLVER_MAX_AVR_MM,
+            skip: false,
+            name: 'Optymalny'
+        },
+        {
+            tolBelow: SOLVER_TOL_BELOW_RESCUE_MM,
+            tolAbove: SOLVER_TOL_ABOVE_STANDARD_MM,
+            maxAvr: SOLVER_MAX_AVR_MM,
+            skip: false,
+            name: 'Ratunkowy'
+        },
+        {
+            tolBelow: SOLVER_TOL_BELOW_RESCUE_MM,
+            tolAbove: SOLVER_TOL_ABOVE_WIDE_MM,
+            maxAvr: SOLVER_MAX_AVR_MM,
+            skip: false,
+            name: 'Poszerzony (+500mm)'
+        },
+        {
+            tolBelow: SOLVER_TOL_BELOW_RESCUE_MM,
+            tolAbove: SOLVER_TOL_ABOVE_EXTREME_MM,
+            maxAvr: SOLVER_MAX_AVR_MM,
+            skip: false,
+            name: 'Ekstremalny (+1000mm)'
+        }
     ];
 
     let candidates = null;
