@@ -9,25 +9,36 @@
 const BASE = 'http://localhost:3000';
 
 function resolvePlaywright() {
-    try { return require('playwright'); } catch (_) {}
+    try {
+        return require('playwright');
+    } catch (_) {}
     const { readdirSync } = require('fs');
     const { join } = require('path');
     const cr = process.env.LOCALAPPDATA + '\\npm-cache\\_npx';
     try {
-        for (const h of readdirSync(cr, { withFileTypes: true }).filter(d => d.isDirectory()).map(d => d.name)) {
-            try { return require(join(cr, h, 'node_modules', 'playwright')); } catch (_) {}
+        for (const h of readdirSync(cr, { withFileTypes: true })
+            .filter((d) => d.isDirectory())
+            .map((d) => d.name)) {
+            try {
+                return require(join(cr, h, 'node_modules', 'playwright'));
+            } catch (_) {}
         }
     } catch (_) {}
     throw new Error('playwright not found');
 }
 
 const { chromium } = resolvePlaywright();
-const CHROME_PATH = process.env.CHROME_PATH ||
+const CHROME_PATH =
+    process.env.CHROME_PATH ||
     'C:\\Users\\blody\\AppData\\Local\\ms-playwright\\chromium_headless_shell-1228\\chrome-headless-shell-win64\\chrome-headless-shell.exe';
-const sleep = ms => new Promise(r => setTimeout(r, ms));
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 (async () => {
-    const browser = await chromium.launch({ headless: true, executablePath: CHROME_PATH, args: ['--no-sandbox'] });
+    const browser = await chromium.launch({
+        headless: true,
+        executablePath: CHROME_PATH,
+        args: ['--no-sandbox']
+    });
     const ctx = await browser.newContext({ viewport: { width: 1600, height: 1000 } });
     const page = await ctx.newPage();
     let failed = false;
@@ -35,9 +46,13 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 
     try {
         // Login
-        const r = await page.request.post(`${BASE}/api/auth/login`, { data: { username: 'admin', password: process.env.TEST_ADMIN_PASSWORD || 'anim123456' } });
+        const r = await page.request.post(`${BASE}/api/auth/login`, {
+            data: { username: 'admin', password: process.env.TEST_ADMIN_PASSWORD || 'anim123456' }
+        });
         const token = (await r.json()).token;
-        await page.addInitScript(t => localStorage.setItem('authToken', t), token);
+        if (!token) throw new Error('Login failed — no token');
+        // Wariant A: cookie httpOnly z logowania siedzi w jarze kontekstu —
+        // page.request dzieli cookie z page, wstrzykiwanie localStorage zbędne.
 
         // Load rury module
         await page.goto(`${BASE}/app.html#/rury`, { waitUntil: 'networkidle', timeout: 30000 });
@@ -45,12 +60,18 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
         const iframeEl = await page.waitForSelector('#spa-iframe-rury', { timeout: 15000 });
         await sleep(2000);
         let frame = await iframeEl.contentFrame();
-        if (!frame) frame = page.frames().find(f => f.url().includes('rury'));
+        if (!frame) frame = page.frames().find((f) => f.url().includes('rury'));
         if (!frame) throw new Error('no rury iframe');
 
         // Wait for products
         for (let i = 0; i < 20; i++) {
-            const ok = await frame.evaluate(() => { try { return Array.isArray(products) && products.length > 50; } catch (_) { return false; } });
+            const ok = await frame.evaluate(() => {
+                try {
+                    return Array.isArray(products) && products.length > 50;
+                } catch (_) {
+                    return false;
+                }
+            });
             if (ok) break;
             await sleep(1500);
         }
@@ -80,7 +101,9 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
                 // We need to make section-offer the active one temporarily
                 const sections = document.querySelectorAll('.section');
                 let sectionOffer = null;
-                sections.forEach(s => { if (s.id === 'section-offer') sectionOffer = s; });
+                sections.forEach((s) => {
+                    if (s.id === 'section-offer') sectionOffer = s;
+                });
 
                 if (!sectionOffer) return { error: 'section-offer not found' };
 
@@ -100,29 +123,37 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
         });
         console.log('   Section-scoped read:', JSON.stringify(t1));
 
-        if (t1.error) { errors.push(t1.error); failed = true; }
-        else if (t1.summaryResult === '10') console.log('   ✅ section-scoped read works');
-        else { errors.push(`section-scoped read returned ${t1.summaryResult}, expected '10'`); failed = true; }
+        if (t1.error) {
+            errors.push(t1.error);
+            failed = true;
+        } else if (t1.summaryResult === '10') console.log('   ✅ section-scoped read works');
+        else {
+            errors.push(`section-scoped read returned ${t1.summaryResult}, expected '10'`);
+            failed = true;
+        }
 
         // ─── Test 2: ZT items get quantity from selected pipe qty ───
         console.log('T2: ZT quantity from pipe order...');
         const t2 = await frame.evaluate(() => {
             try {
-                window.currentOfferItems = [{
-                    uid: 'pipe-1',
-                    productId: 'RTB-0-03-25-K00',
-                    quantity: 100,
-                    autoAdded: false,
-                    customLengthM: null,
-                    pehdType: ''
-                }, {
-                    uid: 'zt-1',
-                    productId: 'ZT-0300',
-                    quantity: 100,
-                    autoAdded: true,
-                    customLengthM: null,
-                    pehdType: ''
-                }];
+                window.currentOfferItems = [
+                    {
+                        uid: 'pipe-1',
+                        productId: 'RTB-0-03-25-K00',
+                        quantity: 100,
+                        autoAdded: false,
+                        customLengthM: null,
+                        pehdType: ''
+                    },
+                    {
+                        uid: 'zt-1',
+                        productId: 'ZT-0300',
+                        quantity: 100,
+                        autoAdded: true,
+                        customLengthM: null,
+                        pehdType: ''
+                    }
+                ];
 
                 // Simulate collectSelectedItemsForOrder logic
                 const selected = [];
@@ -137,7 +168,7 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 
                 // Sum pipe order qty per diameter
                 const byDiam = {};
-                selected.forEach(it => {
+                selected.forEach((it) => {
                     if (it.autoAdded) return;
                     const d = 300; // DN300
                     const oq = it.orderedQuantity || it.quantity;
@@ -146,7 +177,7 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 
                 // Process auto items
                 const autoResults = [];
-                items.forEach(it => {
+                items.forEach((it) => {
                     if (!it.autoAdded) return;
                     if (seen.has(it.uid)) return;
                     const d = 300;
@@ -155,7 +186,11 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
                         if (cloned.productId.startsWith('ZT-')) {
                             cloned.quantity = byDiam[d];
                         }
-                        autoResults.push({ pid: cloned.productId, qty: cloned.quantity, orderedQty: cloned.orderedQuantity });
+                        autoResults.push({
+                            pid: cloned.productId,
+                            qty: cloned.quantity,
+                            orderedQty: cloned.orderedQuantity
+                        });
                     }
                 });
 
@@ -165,8 +200,10 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
             }
         });
         console.log('   ZT qty matching:', JSON.stringify(t2));
-        if (t2.error) { errors.push(t2.error); failed = true; }
-        else if (t2.autoResults && t2.autoResults[0] && t2.autoResults[0].qty === 10) {
+        if (t2.error) {
+            errors.push(t2.error);
+            failed = true;
+        } else if (t2.autoResults && t2.autoResults[0] && t2.autoResults[0].qty === 10) {
             console.log('   ✅ ZT gets qty=10 from pipe sum');
         } else {
             errors.push(`ZT qty mismatch: ${JSON.stringify(t2.autoResults)}`);
@@ -190,17 +227,30 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
                 pipeCb.checked = true;
                 // Simulate onPipeCheckboxChange
                 const diameter = parseInt(pipeCb.dataset.diameter);
-                document.querySelectorAll(`.item-order-auto[data-diameter="${diameter}"]:not(:disabled)`).forEach(cb => { cb.checked = pipeCb.checked; });
+                document
+                    .querySelectorAll(
+                        `.item-order-auto[data-diameter="${diameter}"]:not(:disabled)`
+                    )
+                    .forEach((cb) => {
+                        cb.checked = pipeCb.checked;
+                    });
 
                 const result = { pipeChecked: pipeCb.checked, ztChecked: ztCb.checked };
                 div.remove();
                 return result;
-            } catch (e) { return { error: e.message }; }
+            } catch (e) {
+                return { error: e.message };
+            }
         });
         console.log('   ZT auto-check:', JSON.stringify(t3));
-        if (t3.error) { errors.push(t3.error); failed = true; }
-        else if (t3.ztChecked) console.log('   ✅ ZT auto-checks with pipe');
-        else { errors.push('ZT not auto-checked'); failed = true; }
+        if (t3.error) {
+            errors.push(t3.error);
+            failed = true;
+        } else if (t3.ztChecked) console.log('   ✅ ZT auto-checks with pipe');
+        else {
+            errors.push('ZT not auto-checked');
+            failed = true;
+        }
 
         // ─── Test 4-6: quantity tracking (in one scope to share ordersRury) ───
         console.log('T4-6: quantity tracking...');
@@ -208,13 +258,27 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
             try {
                 window.editingOfferId = 'test-offer-1';
                 // Direct assignment to global let ordersRury
-                ordersRury = [{
-                    offerId: 'test-offer-1',
-                    items: [
-                        { productId: 'RTB-0-03-25-K00', orderedQuantity: 10, quantity: 10, customLengthM: null, pehdType: '' },
-                        { productId: 'ZT-0300', orderedQuantity: 10, quantity: 10, customLengthM: null, pehdType: '' }
-                    ]
-                }];
+                ordersRury = [
+                    {
+                        offerId: 'test-offer-1',
+                        items: [
+                            {
+                                productId: 'RTB-0-03-25-K00',
+                                orderedQuantity: 10,
+                                quantity: 10,
+                                customLengthM: null,
+                                pehdType: ''
+                            },
+                            {
+                                productId: 'ZT-0300',
+                                orderedQuantity: 10,
+                                quantity: 10,
+                                customLengthM: null,
+                                pehdType: ''
+                            }
+                        ]
+                    }
+                ];
 
                 // T4: computeOrderedQuantities
                 let map = {};
@@ -230,7 +294,10 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
                 let remaining100 = -1;
                 if (typeof window.getRemainingQuantity === 'function') {
                     remaining100 = window.getRemainingQuantity({
-                        productId: 'RTB-0-03-25-K00', quantity: 100, customLengthM: null, pehdType: ''
+                        productId: 'RTB-0-03-25-K00',
+                        quantity: 100,
+                        customLengthM: null,
+                        pehdType: ''
                     });
                 }
 
@@ -238,30 +305,51 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
                 let remaining10 = -1;
                 if (typeof window.getRemainingQuantity === 'function') {
                     remaining10 = window.getRemainingQuantity({
-                        productId: 'RTB-0-03-25-K00', quantity: 10, customLengthM: null, pehdType: ''
+                        productId: 'RTB-0-03-25-K00',
+                        quantity: 10,
+                        customLengthM: null,
+                        pehdType: ''
                     });
                 }
 
                 return {
-                    pipeOrdered, ztOrdered,
-                    remaining100, remaining10,
+                    pipeOrdered,
+                    ztOrdered,
+                    remaining100,
+                    remaining10,
                     expected: { pipeOrdered: 10, ztOrdered: 10, remaining100: 90, remaining10: 0 }
                 };
-            } catch (e) { return { error: e.message }; }
+            } catch (e) {
+                return { error: e.message };
+            }
         });
         console.log('   Quantity tracking:', JSON.stringify(t456));
-        if (t456.error) { errors.push(t456.error); failed = true; }
-        else {
+        if (t456.error) {
+            errors.push(t456.error);
+            failed = true;
+        } else {
             const e = t456.expected;
             let ok = true;
             if (t456.pipeOrdered === e.pipeOrdered) console.log('   ✅ pipe ordered = 10');
-            else { errors.push(`pipe ordered ${t456.pipeOrdered}, expected ${e.pipeOrdered}`); ok = false; }
+            else {
+                errors.push(`pipe ordered ${t456.pipeOrdered}, expected ${e.pipeOrdered}`);
+                ok = false;
+            }
             if (t456.ztOrdered === e.ztOrdered) console.log('   ✅ ZT ordered = 10');
-            else { errors.push(`ZT ordered ${t456.ztOrdered}, expected ${e.ztOrdered}`); ok = false; }
+            else {
+                errors.push(`ZT ordered ${t456.ztOrdered}, expected ${e.ztOrdered}`);
+                ok = false;
+            }
             if (t456.remaining100 === e.remaining100) console.log('   ✅ remaining (100-10) = 90');
-            else { errors.push(`remaining100=${t456.remaining100}, expected ${e.remaining100}`); ok = false; }
+            else {
+                errors.push(`remaining100=${t456.remaining100}, expected ${e.remaining100}`);
+                ok = false;
+            }
             if (t456.remaining10 === e.remaining10) console.log('   ✅ remaining (10-10) = 0');
-            else { errors.push(`remaining10=${t456.remaining10}, expected ${e.remaining10}`); ok = false; }
+            else {
+                errors.push(`remaining10=${t456.remaining10}, expected ${e.remaining10}`);
+                ok = false;
+            }
             if (!ok) failed = true;
         }
 
@@ -270,16 +358,20 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
         // Reset orders so remaining = 100
         await frame.evaluate(() => {
             ordersRury = []; // eslint-disable-line no-global-assign
-            window.currentOfferItems = [{
-                uid: 'pipe-vis-1',
-                productId: 'RTB-0-03-25-K00',
-                quantity: 100,
-                autoAdded: false,
-                customLengthM: null,
-                pehdType: ''
-            }];
+            window.currentOfferItems = [
+                {
+                    uid: 'pipe-vis-1',
+                    productId: 'RTB-0-03-25-K00',
+                    quantity: 100,
+                    autoAdded: false,
+                    customLengthM: null,
+                    pehdType: ''
+                }
+            ];
         });
-        await frame.evaluate(() => { if (typeof window.renderOfferItems === 'function') window.renderOfferItems(); });
+        await frame.evaluate(() => {
+            if (typeof window.renderOfferItems === 'function') window.renderOfferItems();
+        });
         await sleep(1000);
 
         const t7 = await frame.evaluate(() => {
@@ -302,7 +394,7 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
         // ─── Report ───
         if (failed) {
             console.error('\n❌ FAILED:');
-            errors.forEach(e => console.error('  ' + e));
+            errors.forEach((e) => console.error('  ' + e));
             process.exitCode = 1;
         } else {
             console.log('\n✅ ALL CHECKS PASSED (7/7)');

@@ -111,9 +111,10 @@ async function diffPx(page, refBuf, curBuf) {
                 reducedMotion: 'reduce'
             });
             const page = await context.newPage();
-            await page.addInitScript((t) => {
-                localStorage.setItem('authToken', t);
-            }, token);
+            // Wariant A: cookie httpOnly do jara kontekstu (localStorage nieużywany).
+            await context.addCookies([
+                { name: 'authToken', value: token, domain: 'localhost', path: '/' }
+            ]);
             await page.goto(`${BASE}/app.html#/studnie`, { waitUntil: 'load', timeout: 60000 });
             await page.waitForTimeout(2500);
             const iframeEl = await page.waitForSelector('#spa-iframe-studnie', {

@@ -23,7 +23,9 @@ const BASE = SPAWN ? 'http://localhost:3177' : 'http://localhost:3000';
 
 /* ── Playwright resolution (wzorzec excelEmptyRowAlignment.cjs) ── */
 function resolvePlaywright() {
-    try { return require('playwright'); } catch (_) {}
+    try {
+        return require('playwright');
+    } catch (_) {}
     const { readdirSync } = require('fs');
     const { join: j } = require('path');
     const roots = [];
@@ -37,7 +39,9 @@ function resolvePlaywright() {
                 .map((d) => d.name);
             for (const h of hashes) {
                 const p = j(root, h, 'node_modules', 'playwright');
-                try { return require(p); } catch (_) {}
+                try {
+                    return require(p);
+                } catch (_) {}
             }
         } catch (_) {}
     }
@@ -59,7 +63,9 @@ function escRe(s) {
 }
 const APP_NAME_RE = new RegExp(escRe(APP_NAME));
 
-function sleep(ms) { return new Promise((r) => setTimeout(r, ms)); }
+function sleep(ms) {
+    return new Promise((r) => setTimeout(r, ms));
+}
 
 async function pollHealth(url, tries = 30) {
     for (let i = 0; i < tries; i++) {
@@ -84,11 +90,21 @@ async function startServer() {
     if (!existsSync(distGen)) {
         symlinkSync(join(ROOT, 'generated'), distGen, 'junction');
     }
-    execFileSync(process.execPath, [require.resolve('prisma/build/index.js'), 'db', 'push', '--skip-generate', '--accept-data-loss'], {
-        cwd: ROOT,
-        env: { ...process.env, DATABASE_URL: dbUrl },
-        stdio: 'pipe'
-    });
+    execFileSync(
+        process.execPath,
+        [
+            require.resolve('prisma/build/index.js'),
+            'db',
+            'push',
+            '--skip-generate',
+            '--accept-data-loss'
+        ],
+        {
+            cwd: ROOT,
+            env: { ...process.env, DATABASE_URL: dbUrl },
+            stdio: 'pipe'
+        }
+    );
     execFileSync(process.execPath, [require.resolve('prisma/build/index.js'), 'db', 'seed'], {
         cwd: ROOT,
         env: { ...process.env, DATABASE_URL: dbUrl },
@@ -105,8 +121,12 @@ async function startServer() {
         },
         stdio: 'pipe'
     });
-    server.stderr.on('data', (d) => { if (SPAWN_VERBOSE) process.stderr.write(d); });
-    server.stdout.on('data', (d) => { if (SPAWN_VERBOSE) process.stdout.write(d); });
+    server.stderr.on('data', (d) => {
+        if (SPAWN_VERBOSE) process.stderr.write(d);
+    });
+    server.stdout.on('data', (d) => {
+        if (SPAWN_VERBOSE) process.stdout.write(d);
+    });
     const ok = await pollHealth(`${BASE}/health`);
     if (!ok) {
         server.kill();
@@ -175,21 +195,39 @@ async function startServer() {
         const loginJson = await loginResp.json();
         const authToken = loginJson.token || loginJson.authToken;
         if (!authToken) throw new Error('Login failed — no token');
-        await page.addInitScript((t) => localStorage.setItem('authToken', t), authToken);
+        // Wariant A: cookie httpOnly z logowania siedzi w jarze kontekstu
+        // (page.request dzieli cookie z page) — bez localStorage.
 
         // T4 — login + Pulpit
         await page.goto(`${BASE}/index.html`, { waitUntil: 'domcontentloaded', timeout: 30000 });
         await page.waitForTimeout(1200);
         const t4title = await page.title();
         const t4logoCount = await page.locator('img.index-logo-sok').count();
-        const t4logoAlt = t4logoCount ? await page.locator('img.index-logo-sok').first().getAttribute('alt') : null;
-        const t4sub = await page.locator('.subtitle').first().textContent().catch(() => '');
-        check('T4 Pulpit title', new RegExp(escRe(APP_NAME) + ' — Generator Ofert').test(t4title), `title="${t4title}"`);
-        check('T4 logo', t4logoCount === 1 && t4logoAlt === APP_NAME, `img.index-logo-sok count=${t4logoCount} alt="${t4logoAlt}"`);
+        const t4logoAlt = t4logoCount
+            ? await page.locator('img.index-logo-sok').first().getAttribute('alt')
+            : null;
+        const t4sub = await page
+            .locator('.subtitle')
+            .first()
+            .textContent()
+            .catch(() => '');
+        check(
+            'T4 Pulpit title',
+            new RegExp(escRe(APP_NAME) + ' — Generator Ofert').test(t4title),
+            `title="${t4title}"`
+        );
+        check(
+            'T4 logo',
+            t4logoCount === 1 && t4logoAlt === APP_NAME,
+            `img.index-logo-sok count=${t4logoCount} alt="${t4logoAlt}"`
+        );
         check('T4 subtitle', (t4sub || '').includes(APP_SUBTITLE), `subtitle="${t4sub}"`);
 
         // T3 — nagłówek SPA w app.html
-        await page.goto(`${BASE}/app.html#/studnie`, { waitUntil: 'domcontentloaded', timeout: 30000 });
+        await page.goto(`${BASE}/app.html#/studnie`, {
+            waitUntil: 'domcontentloaded',
+            timeout: 30000
+        });
         await page.waitForTimeout(1500);
         const iframeEl = await page.waitForSelector('#spa-iframe-studnie', { timeout: 15000 });
         let frame = await iframeEl.contentFrame();
@@ -211,13 +249,22 @@ async function startServer() {
         await frame.waitForTimeout(2000);
         let pw = -1;
         for (let i = 0; i < 15; i++) {
-            pw = await frame.evaluate(() => { try { return (typeof studnieProducts !== 'undefined') ? studnieProducts.length : 0; } catch (_) { return 0; } });
+            pw = await frame.evaluate(() => {
+                try {
+                    return typeof studnieProducts !== 'undefined' ? studnieProducts.length : 0;
+                } catch (_) {
+                    return 0;
+                }
+            });
             if (pw > 0) break;
             await frame.waitForTimeout(1000);
         }
 
         // Przejdź do modułu rur
-        await page.goto(`${BASE}/app.html#/rury`, { waitUntil: 'domcontentloaded', timeout: 30000 });
+        await page.goto(`${BASE}/app.html#/rury`, {
+            waitUntil: 'domcontentloaded',
+            timeout: 30000
+        });
         await page.waitForTimeout(1500);
         const ruryFrameEl = await page.waitForSelector('#spa-iframe-rury', { timeout: 15000 });
         let ruryFrame = await ruryFrameEl.contentFrame();
@@ -227,27 +274,29 @@ async function startServer() {
         // Mock zamówienia (ordersRury to let globalny)
         await ruryFrame.evaluate(() => {
             // eslint-disable-next-line no-global-assign
-            ordersRury = [{
-                id: 'e2e-order-1',
-                clientName: 'E2E Klient',
-                clientNip: '',
-                clientNumber: 'E2E/1',
-                clientAddress: '',
-                clientContact: '',
-                investName: 'E2E',
-                investAddress: '',
-                investContractor: '',
-                offerNumber: 'OF/2026/001',
-                notes: '',
-                transportKm: 0,
-                transportRate: 0,
-                transportMode: 'fractional',
-                date: '2026-08-09',
-                validity: '30',
-                paymentTerms: '',
-                items: [],
-                orderNumber: 'ZAM/2026/001'
-            }];
+            ordersRury = [
+                {
+                    id: 'e2e-order-1',
+                    clientName: 'E2E Klient',
+                    clientNip: '',
+                    clientNumber: 'E2E/1',
+                    clientAddress: '',
+                    clientContact: '',
+                    investName: 'E2E',
+                    investAddress: '',
+                    investContractor: '',
+                    offerNumber: 'OF/2026/001',
+                    notes: '',
+                    transportKm: 0,
+                    transportRate: 0,
+                    transportMode: 'fractional',
+                    date: '2026-08-09',
+                    validity: '30',
+                    paymentTerms: '',
+                    items: [],
+                    orderNumber: 'ZAM/2026/001'
+                }
+            ];
         });
 
         let enterTitle = '';
@@ -278,13 +327,25 @@ async function startServer() {
         exitTitle = t5res.exitTitle;
         exitError = t5res.error;
 
-        check('T5 enter title', /Zamówienie:/.test(enterTitle) && !/WITROS/i.test(enterTitle), `title="${enterTitle}"`);
+        check(
+            'T5 enter title',
+            /Zamówienie:/.test(enterTitle) && !/WITROS/i.test(enterTitle),
+            `title="${enterTitle}"`
+        );
         if (!exitError) {
-            check('T5 exit title', exitTitle === APP_NAME + ' — Generator Ofert', `title="${exitTitle}"`);
+            check(
+                'T5 exit title',
+                exitTitle === APP_NAME + ' — Generator Ofert',
+                `title="${exitTitle}"`
+            );
         } else {
             console.log(`  ⚠ T5 exitError (soft): ${exitError}`);
         }
-        check('T5 no WITROS', !/WITROS/i.test(enterTitle + ' ' + exitTitle), `enter="${enterTitle}" exit="${exitTitle}"`);
+        check(
+            'T5 no WITROS',
+            !/WITROS/i.test(enterTitle + ' ' + exitTitle),
+            `enter="${enterTitle}" exit="${exitTitle}"`
+        );
 
         // T6 — wydruk (soft-check, SKIP przy braku danych)
         // Modal wydruku wymaga danych ofert/zamówień w bazie; bez nich renderuje toast.
@@ -302,7 +363,9 @@ async function startServer() {
             errors.forEach((e) => console.error('  ' + e));
             process.exitCode = 1;
         } else {
-            console.log(`\n✅ PASS: nazwa aplikacji spójna (${APP_NAME}) we wszystkich testach T1–T6`);
+            console.log(
+                `\n✅ PASS: nazwa aplikacji spójna (${APP_NAME}) we wszystkich testach T1–T6`
+            );
         }
     }
 })();

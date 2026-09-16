@@ -83,7 +83,8 @@ function sleep(ms) {
         const loginJson = await loginResp.json();
         const authToken = loginJson.token || loginJson.authToken;
         if (!authToken) throw new Error('Login failed — no token');
-        await page.addInitScript((t) => localStorage.setItem('authToken', t), authToken);
+        // Wariant A: cookie httpOnly z logowania siedzi w jarze kontekstu
+        // (page.request dzieli cookie z page) — bez localStorage.
         await page.goto(`${BASE}/app.html#/studnie`, { waitUntil: 'networkidle', timeout: 30000 });
         await page.waitForTimeout(2000);
         const iframeEl = await page.waitForSelector('#spa-iframe-studnie', { timeout: 15000 });

@@ -187,7 +187,11 @@ window.fetchWithTimeout = async function (url, options, timeoutMs) {
         controller.abort();
     }, timeoutMs);
     try {
-        return await fetch(url, Object.assign({}, options, { signal: controller.signal }));
+        // Wariant A: cookie httpOnly niesie sesję — credentials jak w fetchJson
+        // (default 'same-origin', jawne 'include' callera ma pierwszeństwo).
+        const opts = Object.assign({}, options, { signal: controller.signal });
+        opts.credentials = options && options.credentials === 'include' ? 'include' : 'same-origin';
+        return await fetch(url, opts);
     } finally {
         clearTimeout(timer);
     }
@@ -198,6 +202,8 @@ window.fetchWithTimeout = async function (url, options, timeoutMs) {
  */
 async function fetchGlobalUsers() {
     try {
+        // Wariant A: authHeaders() to tokenless shim; sesję niesie cookie
+        // (credentials dokłada fetchWithTimeout).
         const headers =
             typeof authHeaders === 'function'
                 ? authHeaders()

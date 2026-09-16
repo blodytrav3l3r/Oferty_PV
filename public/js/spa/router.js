@@ -516,15 +516,10 @@
     }
 
     async function init() {
-        // Sprawdzenie autoryzacji
-        const token = getAuthToken();
-        if (!token) {
-            window.location.href = 'index.html';
-            return;
-        }
-
+        // Wariant A: jedyny test sesji to GET /api/auth/me na cookie httpOnly
+        // (redirect na index.html tylko gdy brak authData.user lub 401).
         try {
-            const authRes = await fetch('/api/auth/me', { headers: authHeaders() });
+            const authRes = await fetch('/api/auth/me', { credentials: 'same-origin' });
             const authData = await authRes.json();
             if (!authData.user) {
                 window.location.href = 'index.html';

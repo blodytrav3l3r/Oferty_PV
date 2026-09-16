@@ -259,8 +259,8 @@ function sleep(ms) {
             throw new Error('Login failed — no token');
         }
 
-        // 2. Set auth token before page scripts
-        await page.addInitScript((t) => localStorage.setItem('authToken', t), authToken);
+        // 2. Wariant A: cookie httpOnly z logowania siedzi w jarze kontekstu
+        // (page.request dzieli cookie z page) — bez localStorage.
 
         // 3. Navigate to studnie module
         await page.goto(`${BASE}/app.html#/studnie`, { waitUntil: 'networkidle', timeout: 30000 });

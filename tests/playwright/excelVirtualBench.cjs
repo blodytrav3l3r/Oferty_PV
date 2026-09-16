@@ -125,12 +125,16 @@ async function measure(frame, n) {
                     viewport: { width: 1600, height: 1000 }
                 });
                 const page = await context.newPage();
+                // Wariant A: cookie httpOnly do jara kontekstu; flaga virtual
+                // zostaje w localStorage (nie-auth, bez zmian).
+                await context.addCookies([
+                    { name: 'authToken', value: token, domain: 'localhost', path: '/' }
+                ]);
                 await page.addInitScript(
-                    ({ t, m }) => {
-                        localStorage.setItem('authToken', t);
+                    ({ m }) => {
                         if (m === 'OFF') localStorage.setItem('sok_excel_virtual', '0');
                     },
-                    { t: token, m: mode }
+                    { m: mode }
                 );
                 const hash = mode === 'OFF' ? '#/studnie?virtual=0' : '#/studnie';
                 await page.goto(`${BASE}/app.html${hash}`, { waitUntil: 'load', timeout: 60000 });

@@ -29,7 +29,9 @@ const VIEWPORTS = [
 ];
 
 function resolvePlaywright() {
-    try { return require('playwright'); } catch (_) {}
+    try {
+        return require('playwright');
+    } catch (_) {}
     const { readdirSync } = require('fs');
     const { join: j } = require('path');
     const roots = [];
@@ -43,7 +45,9 @@ function resolvePlaywright() {
                 .map((d) => d.name);
             for (const h of hashes) {
                 const p = j(root, h, 'node_modules', 'playwright');
-                try { return require(p); } catch (_) {}
+                try {
+                    return require(p);
+                } catch (_) {}
             }
         } catch (_) {}
     }
@@ -56,7 +60,9 @@ const { chromium } = resolvePlaywright();
 const CHROME_PATH = process.env.CHROME_PATH;
 const ADMIN_PASSWORD = process.env.TEST_ADMIN_PASSWORD || 'anim123456';
 
-function sleep(ms) { return new Promise((r) => setTimeout(r, ms)); }
+function sleep(ms) {
+    return new Promise((r) => setTimeout(r, ms));
+}
 
 async function pollHealth(url, tries = 30) {
     for (let i = 0; i < tries; i++) {
@@ -80,14 +86,32 @@ async function startServer() {
     if (!existsSync(distGen)) {
         symlinkSync(join(ROOT, 'generated'), distGen, 'junction');
     }
-    execFileSync(process.execPath, [require.resolve('prisma/build/index.js'), 'db', 'push', '--skip-generate', '--accept-data-loss'], {
-        cwd: ROOT,
-        env: { ...process.env, DATABASE_URL: dbUrl, PATH: join(ROOT, 'node_modules', '.bin') + ';' + process.env.PATH },
-        stdio: 'pipe'
-    });
+    execFileSync(
+        process.execPath,
+        [
+            require.resolve('prisma/build/index.js'),
+            'db',
+            'push',
+            '--skip-generate',
+            '--accept-data-loss'
+        ],
+        {
+            cwd: ROOT,
+            env: {
+                ...process.env,
+                DATABASE_URL: dbUrl,
+                PATH: join(ROOT, 'node_modules', '.bin') + ';' + process.env.PATH
+            },
+            stdio: 'pipe'
+        }
+    );
     execFileSync(process.execPath, [require.resolve('prisma/build/index.js'), 'db', 'seed'], {
         cwd: ROOT,
-        env: { ...process.env, DATABASE_URL: dbUrl, PATH: join(ROOT, 'node_modules', '.bin') + ';' + process.env.PATH },
+        env: {
+            ...process.env,
+            DATABASE_URL: dbUrl,
+            PATH: join(ROOT, 'node_modules', '.bin') + ';' + process.env.PATH
+        },
         stdio: 'pipe'
     });
     const server = spawn(process.execPath, [join(ROOT, 'dist', 'server.js')], {
@@ -101,8 +125,12 @@ async function startServer() {
         },
         stdio: 'pipe'
     });
-    server.stderr.on('data', (d) => { if (SPAWN_VERBOSE) process.stderr.write(d); });
-    server.stdout.on('data', (d) => { if (SPAWN_VERBOSE) process.stdout.write(d); });
+    server.stderr.on('data', (d) => {
+        if (SPAWN_VERBOSE) process.stderr.write(d);
+    });
+    server.stdout.on('data', (d) => {
+        if (SPAWN_VERBOSE) process.stdout.write(d);
+    });
     const ok = await pollHealth(`${BASE}/health`);
     if (!ok) {
         server.kill();
@@ -144,12 +172,21 @@ async function startServer() {
                     viewport: { width: vp.width, height: vp.height }
                 });
                 const page = await context.newPage();
-                await page.addInitScript((t) => localStorage.setItem('authToken', t), authToken);
+                // Wariant A: login przez Node fetch (osobny jar) — cookie do
+                // kontekstu przez addCookies; localStorage nieużywany.
+                await context.addCookies([
+                    { name: 'authToken', value: authToken, domain: 'localhost', path: '/' }
+                ]);
 
-                await page.goto(`${BASE}/app.html#/${mod}`, { waitUntil: 'domcontentloaded', timeout: 30000 });
+                await page.goto(`${BASE}/app.html#/${mod}`, {
+                    waitUntil: 'domcontentloaded',
+                    timeout: 30000
+                });
                 await page.waitForTimeout(2500);
 
-                const iframe = await page.waitForSelector(`#spa-iframe-${mod}`, { timeout: 15000 }).catch(() => null);
+                const iframe = await page
+                    .waitForSelector(`#spa-iframe-${mod}`, { timeout: 15000 })
+                    .catch(() => null);
                 if (!iframe) {
                     failed = true;
                     errors.push(`${mod}/${vp.name}: brak iframe #spa-iframe-${mod}`);
@@ -157,7 +194,9 @@ async function startServer() {
                     await context.close();
                     continue;
                 }
-                const frame = await iframe.contentFrame() || page.frames().find((f) => f.url().includes(mod));
+                const frame =
+                    (await iframe.contentFrame()) ||
+                    page.frames().find((f) => f.url().includes(mod));
                 if (!frame) {
                     failed = true;
                     errors.push(`${mod}/${vp.name}: iframe bez contentFrame`);
@@ -166,7 +205,9 @@ async function startServer() {
                 }
                 // Czekaj na załadowanie danych modułu (wizualnie kompletna strona)
                 for (let i = 0; i < 10; i++) {
-                    const ready = await frame.evaluate(() => document.readyState === 'complete').catch(() => false);
+                    const ready = await frame
+                        .evaluate(() => document.readyState === 'complete')
+                        .catch(() => false);
                     if (ready) break;
                     await page.waitForTimeout(1000);
                 }

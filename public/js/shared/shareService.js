@@ -4,29 +4,22 @@
  * Używa StorageService.getHeaders() dla auth.
  */
 class ShareService {
+    // Wariant A: share API wyłącznie na cookie httpOnly. Bez tokenu w JS,
+    // bez fallbacków localStorage/document.cookie (martwe dla httpOnly).
     getHeaders() {
-        if (
-            typeof window !== 'undefined' &&
-            window.storageService &&
-            typeof window.storageService.getHeaders === 'function'
-        ) {
-            return window.storageService.getHeaders();
-        }
-        const h = { 'Content-Type': 'application/json' };
-        let token = null;
-        if (typeof window !== 'undefined' && typeof window.getAuthToken === 'function')
-            token = window.getAuthToken();
-        if (!token) {
-            const m = document.cookie.match(/(?:^|;\s*)authToken=([^;]*)/);
-            if (m && m[1]) token = m[1];
-            else if (typeof localStorage !== 'undefined') token = localStorage.getItem('authToken');
-        }
-        if (token) h['X-Auth-Token'] = token;
-        return h;
+        return { 'Content-Type': 'application/json' };
+    }
+
+    // Każdy request dokłada credentials — sesję niesie cookie.
+    _opts(extra) {
+        return Object.assign(
+            { headers: this.getHeaders(), credentials: 'same-origin' },
+            extra || {}
+        );
     }
 
     async getShareableUsers() {
-        const res = await fetch('/api/users/shareable', { headers: this.getHeaders() });
+        const res = await fetch('/api/users/shareable', this._opts());
         const data = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(data.error || 'Błąd pobierania użytkowników');
         return data.data || [];
@@ -34,39 +27,43 @@ class ShareService {
 
     async getShares(documentType, documentId) {
         const url = `/api/shares?documentType=${encodeURIComponent(documentType)}&documentId=${encodeURIComponent(documentId)}`;
-        const res = await fetch(url, { headers: this.getHeaders() });
+        const res = await fetch(url, this._opts());
         const data = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(data.error || 'Błąd pobierania udostępnień');
         return data;
     }
 
     async createShares(documentType, documentId, userIds) {
-        const res = await fetch('/api/shares', {
-            method: 'POST',
-            headers: this.getHeaders(),
-            body: JSON.stringify({ documentType, documentId, userIds })
-        });
+        const res = await fetch(
+            '/api/shares',
+            this._opts({
+                method: 'POST',
+                body: JSON.stringify({ documentType, documentId, userIds })
+            })
+        );
         const data = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(data.error || 'Błąd udostępniania');
         return data;
     }
 
     async revokeShare(shareId) {
-        const res = await fetch(`/api/shares/${encodeURIComponent(shareId)}`, {
-            method: 'DELETE',
-            headers: this.getHeaders()
-        });
+        const res = await fetch(
+            `/api/shares/${encodeURIComponent(shareId)}`,
+            this._opts({ method: 'DELETE' })
+        );
         const data = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(data.error || 'Błąd cofania udostępnienia');
         return data;
     }
 
     async revokeByUsers(documentType, documentId, userIds) {
-        const res = await fetch('/api/shares/revoke', {
-            method: 'POST',
-            headers: this.getHeaders(),
-            body: JSON.stringify({ documentType, documentId, userIds })
-        });
+        const res = await fetch(
+            '/api/shares/revoke',
+            this._opts({
+                method: 'POST',
+                body: JSON.stringify({ documentType, documentId, userIds })
+            })
+        );
         const data = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(data.error || 'Błąd cofania udostępnień');
         return data;

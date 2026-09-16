@@ -19,32 +19,14 @@ class StorageService {
     }
 
     /**
-     * Zwraca nagłówki autoryzacji do fetch().
+     * Nagłówki do fetch() — wariant A: wyłącznie Content-Type, sesję niesie
+     * cookie httpOnly (każdy request dokłada credentials: 'same-origin').
+     * Martwe fallbacki (localStorage/document.cookie) usunięte — cookie
+     * httpOnly i tak niewidoczne dla JS.
      * @returns {object}
      */
     getHeaders() {
-        const headers = { 'Content-Type': 'application/json' };
-        let token = null;
-
-        // Priorytet 1: funkcja globalna authHeaders() (jeśli dostępna z auth.js)
-        if (typeof window !== 'undefined' && typeof window.getAuthToken === 'function') {
-            token = window.getAuthToken();
-        }
-
-        // Priorytet 2: manualne sprawdzenie cookie/localStorage (jeśli auth.js nie załadowane)
-        if (!token) {
-            const match = document.cookie.match(/(?:^|;\s*)authToken=([^;]*)/);
-            if (match && match[1]) {
-                token = match[1];
-            } else if (typeof localStorage !== 'undefined') {
-                token = localStorage.getItem('authToken');
-            }
-        }
-
-        if (token) {
-            headers['X-Auth-Token'] = token;
-        }
-        return headers;
+        return { 'Content-Type': 'application/json' };
     }
 
     /**
@@ -69,6 +51,7 @@ class StorageService {
             const resp = await fetch(endpoint, {
                 method: 'POST',
                 headers: headers,
+                credentials: 'same-origin',
                 body: JSON.stringify({ data: [offerData] })
             });
 
@@ -120,14 +103,20 @@ class StorageService {
             const headers = this.getHeaders();
 
             if (types.includes('offer')) {
-                const res = await fetch(`/api/offers-rury?t=${timestamp}`, { headers });
+                const res = await fetch(`/api/offers-rury?t=${timestamp}`, {
+                    headers,
+                    credentials: 'same-origin'
+                });
                 if (res.ok) {
                     const json = await res.json();
                     results = results.concat(json.data || []);
                 }
             }
             if (types.includes('studnia_oferta')) {
-                const res = await fetch(`/api/offers-rury/studnie?t=${timestamp}`, { headers });
+                const res = await fetch(`/api/offers-rury/studnie?t=${timestamp}`, {
+                    headers,
+                    credentials: 'same-origin'
+                });
                 if (res.ok) {
                     const json = await res.json();
                     results = results.concat(json.data || []);
@@ -172,7 +161,7 @@ class StorageService {
             const url = endpoints[i];
             let res;
             try {
-                res = await fetch(url, { method: 'DELETE', headers });
+                res = await fetch(url, { method: 'DELETE', headers, credentials: 'same-origin' });
             } catch {
                 continue;
             }
@@ -232,7 +221,7 @@ class StorageService {
 
         for (const url of endpoints) {
             try {
-                const res = await fetch(url, { headers });
+                const res = await fetch(url, { headers, credentials: 'same-origin' });
                 if (res.ok) {
                     const json = await res.json();
                     return this.normalizeOffer(json.data);

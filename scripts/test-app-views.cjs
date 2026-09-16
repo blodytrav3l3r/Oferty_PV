@@ -53,7 +53,8 @@ const { chromium } = require('playwright');
     const token = loginJson.token || loginJson.authToken;
     console.log('Got token:', token ? token.substring(0, 10) + '...' : 'NONE');
 
-    await page.addInitScript((t) => localStorage.setItem('authToken', t), token);
+    // Wariant A: cookie httpOnly z logowania siedzi w jarze kontekstu
+    // (page.request dzieli cookie z page) — bez localStorage.
 
     const routes = ['/studnie', '/rury', '/kartoteka', '/zlecenia', '/settings'];
     for (const route of routes) {
@@ -61,10 +62,12 @@ const { chromium } = require('playwright');
         console.log('\n==================================================');
         console.log('Testing route:', route);
         console.log('==================================================');
-        await page.goto('http://localhost:3005/app.html#' + route, {
-            waitUntil: 'networkidle',
-            timeout: 15000
-        }).catch((e) => console.log('goto err:', e.message));
+        await page
+            .goto('http://localhost:3005/app.html#' + route, {
+                waitUntil: 'networkidle',
+                timeout: 15000
+            })
+            .catch((e) => console.log('goto err:', e.message));
         await page.waitForTimeout(2000);
 
         // main page title/module
@@ -95,17 +98,33 @@ const { chromium } = require('playwright');
                 if (route === '/studnie') {
                     console.log('--- Testing tabs inside Studnie iframe ---');
                     const tabSelectors = [
-                        { name: 'Konfiguracja', sel: '#wizard-step-1-btn, button[onclick*="showStep(1)"]' },
-                        { name: 'Oferta', sel: '#wizard-step-2-btn, button[onclick*="showStep(2)"]' },
-                        { name: 'Cennik', sel: '#wizard-step-3-btn, button[onclick*="showStep(3)"]' }
+                        {
+                            name: 'Konfiguracja',
+                            sel: '#wizard-step-1-btn, button[onclick*="showStep(1)"]'
+                        },
+                        {
+                            name: 'Oferta',
+                            sel: '#wizard-step-2-btn, button[onclick*="showStep(2)"]'
+                        },
+                        {
+                            name: 'Cennik',
+                            sel: '#wizard-step-3-btn, button[onclick*="showStep(3)"]'
+                        }
                     ];
                     for (const t of tabSelectors) {
                         const tabBtn = await frame.$(t.sel);
                         if (tabBtn) {
                             await tabBtn.click().catch(() => {});
                             await page.waitForTimeout(500);
-                            const activeText = await frame.evaluate(() => document.body.innerText).catch(() => '');
-                            console.log(`Tab [${t.name}] text len:`, activeText.length, 'sample:', activeText.substring(0, 150).replace(/\s+/g, ' '));
+                            const activeText = await frame
+                                .evaluate(() => document.body.innerText)
+                                .catch(() => '');
+                            console.log(
+                                `Tab [${t.name}] text len:`,
+                                activeText.length,
+                                'sample:',
+                                activeText.substring(0, 150).replace(/\s+/g, ' ')
+                            );
                         } else {
                             console.log(`Tab button [${t.name}] not found`);
                         }
@@ -114,9 +133,7 @@ const { chromium } = require('playwright');
             }
         }
 
-        const errors = consoleLogs.filter(
-            (l) => l.type === 'error' || l.type === 'pageerror'
-        );
+        const errors = consoleLogs.filter((l) => l.type === 'error' || l.type === 'pageerror');
         if (errors.length > 0) {
             console.log('ERRORS count:', errors.length);
             errors.forEach((e) => {

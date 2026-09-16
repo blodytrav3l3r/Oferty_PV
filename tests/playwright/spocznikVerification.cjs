@@ -46,13 +46,13 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
             data: { username: 'admin', password: process.env.TEST_ADMIN_PASSWORD || 'anim123456' }
         });
         if (!r.ok()) throw new Error(`login failed ${r.status()}`);
-        const token = (await r.json()).token;
-        await page.addInitScript((t) => localStorage.setItem('authToken', t), token);
+        if (!(await r.json()).token) throw new Error('Login failed — no token');
+        // Wariant A: cookie httpOnly z logowania siedzi w jarze kontekstu
+        // (page.request dzieli cookie z page) — bez localStorage.
 
         // Pobierz studnię SS1 z API (taki sam obiekt jak w przeglądarce)
-        const of = await page.request.get(`${BASE}/api/offers-studnie/${OFFER_ID}`, {
-            headers: { Authorization: 'Bearer ' + token }
-        });
+        // Wariant A: uwierzytelnienie przez cookie kontekstu, bez nagłówka.
+        const of = await page.request.get(`${BASE}/api/offers-studnie/${OFFER_ID}`);
         if (!of.ok()) throw new Error(`offer fetch failed ${of.status()}`);
         const offerJson = await of.json();
         let offer = offerJson.data || offerJson;

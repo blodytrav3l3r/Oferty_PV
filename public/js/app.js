@@ -99,14 +99,9 @@ function setupNavigation() {
 /* ===== INICJALIZACJA DOM ===== */
 
 document.addEventListener('DOMContentLoaded', async () => {
-    // Sprawdź autoryzację
-    const token = getAuthToken();
-    if (!token) {
-        window.location.href = 'index.html';
-        return;
-    }
+    // Wariant A: sesję potwierdza wyłącznie GET /api/auth/me na cookie httpOnly.
     try {
-        const authRes = await fetch('/api/auth/me', { headers: authHeaders() });
+        const authRes = await fetch('/api/auth/me', { credentials: 'same-origin' });
         const authData = await authRes.json();
         if (!authData.user) {
             window.location.href = 'index.html';

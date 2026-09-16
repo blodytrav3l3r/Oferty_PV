@@ -1,37 +1,47 @@
 // @ts-check
 /**
- * Shared Auth Module — wspólna logika autoryzacji.
+ * Shared Auth Module — wspólna logika autoryzacji (wariant A: httpOnly-first).
  *
- * WAŻNE: Token przechowywany jest w localStorage (JavaScript-accessible).
- * Cookie httpOnly jest ustawiane przez serwer ale NIE jest czytalne przez JS.
- * Sesja po stronie serwera weryfikowana jest przez cookie + X-Auth-Token header.
+ * Sesja niesiona wyłącznie przez cookie `authToken` (httpOnly, SameSite=lax),
+ * stawiane/czyszczone serwerowo. Frontend NIGDY nie zapisuje ani nie odczytuje
+ * surowego tokenu — localStorage.authToken nie istnieje (pozostałości po
+ * migracji kasowane przy wylogowaniu). Guardy wejścia sprawdzają sesję przez
+ * GET /api/auth/me na cookie, nie przez localStorage.
+ *
+ * TODO (osobny task, nie ten krok): refresh / sliding expiration — sesja ma
+ * dziś sztywne 7 dni od createdAt (src/middleware/auth.ts). Bez zmian tutaj.
  */
 
 /**
- * Pobiera token autoryzacji z localStorage.
- * @returns {string|null}
+ * DEPRECATED (wariant A): token nie jest przechowywany w JS.
+ * Zostawione jako shim, żeby niemigrowane call sites nie rzucały
+ * ReferenceError — zawsze zwraca null.
+ * @returns {null}
  */
 function getAuthToken() {
-    return localStorage.getItem('authToken') || null;
+    return null;
 }
 
 /**
- * Ustawia token autoryzacji w localStorage.
- * @param {string} token
+ * DEPRECATED (wariant A): no-op. Zapisów tokenu do localStorage nie ma;
+ * przy okazji kasuje ewentualną pozostałość po migracji.
+ * @param {string} _token
  */
-function setAuthToken(token) {
-    localStorage.setItem('authToken', token);
+function setAuthToken(_token) {
+    try {
+        localStorage.removeItem('authToken');
+    } catch {}
 }
 
 /**
- * Zwraca nagłówki autoryzacji do fetch().
+ * Nagłówki autoryzacji — wariant A: wyłącznie Content-Type.
+ * X-Auth-Token celowo NIE dokładany (cookie niesie sesję; shim serwerowy
+ * istnieje tylko wstecznie). Zostawione pod starą nazwą, bo ~100 call sites
+ * i test statyczny telemetryAuthHeaders.test.ts wciąż ją wołają.
  * @returns {object}
  */
 function authHeaders() {
-    const token = getAuthToken();
-    const headers = { 'Content-Type': 'application/json' };
-    if (token) headers['X-Auth-Token'] = token;
-    return headers;
+    return { 'Content-Type': 'application/json' };
 }
 
 /**
@@ -80,16 +90,25 @@ async function appLogout() {
         }
     } catch {}
     try {
+        // Jedyny logout: sesję i cookie czyści serwer (clearCookie).
+        // credentials:include — musowe, inaczej cookie nie dotrze i serwer
+        // nie będzie wiedział, którą sesję skasować.
         await fetch('/api/auth/logout', {
             method: 'POST',
-            headers: authHeaders(),
+            headers: { 'Content-Type': 'application/json' },
             credentials: 'include'
         });
     } catch (e) {
         logger.error('auth', 'Logout request failed:', e);
     }
-    localStorage.removeItem('authToken');
-    document.cookie = 'authToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+    // Migracyjne sprzątanie: skasuj ewentualny token sprzed wariantu A.
+    // Linii document.cookie NIE MA celowo — cookie httpOnly i tak niewidoczne dla JS.
+    try {
+        localStorage.removeItem('authToken');
+    } catch {}
+    try {
+        sessionStorage.removeItem('user');
+    } catch {}
     window.location.href = 'index.html';
 }
 

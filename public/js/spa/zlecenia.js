@@ -45,8 +45,16 @@ const AppZlecenia = (() => {
     /* ===== INIT ===== */
 
     async function init() {
-        const token = getAuthToken();
-        if (!token) {
+        // Wariant A: sesję potwierdza wyłącznie GET /api/auth/me na cookie
+        // httpOnly (dotąd był tu tylko pre-check localStorage bez weryfikacji).
+        try {
+            const authRes = await fetch('/api/auth/me', { credentials: 'same-origin' });
+            const authData = await authRes.json().catch(() => ({}));
+            if (!authData.user) {
+                window.location.href = 'index.html';
+                return;
+            }
+        } catch (_e) {
             window.location.href = 'index.html';
             return;
         }

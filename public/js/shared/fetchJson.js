@@ -18,13 +18,26 @@
 export async function fetchJson(url, options) {
     if (!window.fetch) return null;
     try {
-        const opts = Object.assign({ credentials: 'same-origin' }, options || {});
+        // Wariant A: sesja wyłącznie przez cookie httpOnly. credentials domyślnie
+        // 'same-origin' (wystarcza dla same-origin API); jawne 'include' od
+        // callera ma pierwszeństwo; downgrade do 'omit' zablokowany.
+        // TODO (osobny task): refresh / sliding expiration — bez zmian tutaj.
+        const requested = options && options.credentials;
+        const opts = Object.assign({}, options || {}, {
+            credentials: requested === 'include' ? 'include' : 'same-origin'
+        });
+        // authHeaders() to dziś tokenless shim (tylko Content-Type) — merge
+        // zostaje dla kompatybilności niemigrowanych call sites; ewentualny
+        // X-Auth-Token podany ręcznie przez callera jest celowo odcinany.
         const defaultHeaders = typeof authHeaders === 'function' ? authHeaders() : {};
         opts.headers = Object.assign(
             {},
             defaultHeaders,
             options && options.headers ? options.headers : {}
         );
+        if (opts.headers && opts.headers['X-Auth-Token']) {
+            delete opts.headers['X-Auth-Token'];
+        }
         const resp = await fetch(url, opts);
         if (resp.status === 401) return { error: 'unauthorized' };
         if (resp.status === 403) return { error: 'forbidden' };

@@ -373,12 +373,16 @@ async function runMode(frame, page, virtualOn, wellsData) {
                 });
                 const page = await context.newPage();
                 try {
+                    // Wariant A: cookie httpOnly do jara kontekstu; flaga
+                    // virtual zostaje w localStorage (nie-auth, bez zmian).
+                    await context.addCookies([
+                        { name: 'authToken', value: authToken, domain: 'localhost', path: '/' }
+                    ]);
                     await page.addInitScript(
-                        ({ t, m }) => {
-                            localStorage.setItem('authToken', t);
+                        ({ m }) => {
                             if (m === 'OFF') localStorage.setItem('sok_excel_virtual', '0');
                         },
-                        { t: authToken, m: mode }
+                        { m: mode }
                     );
                     const hash = mode === 'OFF' ? '#/studnie?virtual=0' : '#/studnie';
                     await page.goto(`${BASE}/app.html${hash}`, {

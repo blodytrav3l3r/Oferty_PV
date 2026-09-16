@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
 // @ts-nocheck
 /**
  * smokeOfferFlow.spec.ts — blokujący smoke flow (Faza P2-1 planu optymalizacji).
@@ -33,7 +32,12 @@ test.describe('smoke: oferta studni — start modułu', () => {
     test.beforeEach(async ({ page }) => {
         pageErrors = [];
         page.on('pageerror', (err) => pageErrors.push(String(err)));
-        await page.addInitScript((t) => localStorage.setItem('authToken', t), authToken);
+        // Wariant A: login przez page.request — cookie httpOnly ląduje w jarze
+        // kontekstu strony (localStorage nieużywany).
+        const resp = await page.request.post(`${BASE}/api/auth/login`, {
+            data: { username: 'admin', password: ADMIN_PASSWORD }
+        });
+        expect(resp.ok(), 'Login failed - no cookie').toBeTruthy();
     });
 
     test('SPA router ładuje moduł studnie i wizard krok 1 jest aktywny', async ({ page }) => {
@@ -81,9 +85,14 @@ test.describe('smoke: oferta studni — start modułu', () => {
     });
 
     test('API produktów studni zwraca dane solvera', async ({ request }) => {
-        const resp = await request.get(`${BASE}/api/products-studnie`, {
-            headers: { 'X-Auth-Token': authToken }
+        // Wariant A: login w tym samym kontekście request — cookie niesie
+        // sesję, bez nagłówka X-Auth-Token. (Fixture request z beforeAll to
+        // osobna instancja — login powtórzony tutaj.)
+        const login = await request.post(`${BASE}/api/auth/login`, {
+            data: { username: 'admin', password: ADMIN_PASSWORD }
         });
+        expect(login.ok(), 'Login failed').toBeTruthy();
+        const resp = await request.get(`${BASE}/api/products-studnie`);
         expect(resp.ok()).toBeTruthy();
         const body = await resp.json();
         const items = Array.isArray(body) ? body : body.data || body.products || [];

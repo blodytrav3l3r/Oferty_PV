@@ -11,14 +11,9 @@ window.__STUDNIE_APP_ORCHESTRATOR__ = true;
  * UWAGA: Logika i główne zmienne znajdują się teraz w osobnych plikach w `public/js/studnie/`
  */
 document.addEventListener('DOMContentLoaded', async () => {
-    // Sprawdzenie autoryzacji
-    const token = getAuthToken();
-    if (!token) {
-        window.location.href = 'index.html';
-        return;
-    }
+    // Wariant A: sesję potwierdza wyłącznie GET /api/auth/me na cookie httpOnly.
     try {
-        const authRes = await fetchWithTimeout('/api/auth/me', { headers: authHeaders() });
+        const authRes = await fetchWithTimeout('/api/auth/me', { credentials: 'same-origin' });
         const authData = await authRes.json();
         if (!authData.user) {
             window.location.href = 'index.html';

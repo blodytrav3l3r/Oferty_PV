@@ -138,10 +138,11 @@ async function measureRun(frame, fixture) {
 async function openFrame(browser, token) {
     const context = await browser.newContext({ viewport: { width: 1600, height: 1000 } });
     const page = await context.newPage();
-    await page.addInitScript((t) => {
-        localStorage.setItem('authToken', t);
+    // Wariant A: cookie httpOnly do jara kontekstu (localStorage nieużywany).
+    await context.addCookies([{ name: 'authToken', value: token, domain: 'localhost', path: '/' }]);
+    await page.addInitScript(() => {
         window.__EXCEL_PERF__ = true;
-    }, token);
+    });
     await page.goto(`${BASE}/app.html#/studnie`, { waitUntil: 'load', timeout: 60000 });
     await sleep(2500);
     const iframeEl = await page.waitForSelector('#spa-iframe-studnie', {

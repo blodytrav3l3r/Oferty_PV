@@ -57,13 +57,10 @@ window.addEventListener('DOMContentLoaded', async () => {
         html.classList.remove('auth-pending');
         showLogin();
     }, 1500);
-    const token = getAuthToken();
-    if (!token) {
-        finish(showLogin);
-        return;
-    }
+    // Wariant A: jedyny test sesji to GET /api/auth/me na cookie httpOnly.
+    // Brak pre-checku localStorage — cookie jest niewidoczne dla JS.
     try {
-        const res = await fetch('/api/auth/me', { headers: authHeaders() });
+        const res = await fetch('/api/auth/me', { credentials: 'same-origin' });
         const data = await res.json();
         if (data.user) finish(showLoggedIn, data.user);
         else finish(showLogin);
@@ -77,7 +74,7 @@ async function loadRecycledNumbers(user) {
     if (!u) return;
     try {
         const res = await fetch('/api/orders-studnie/recycled', {
-            headers: authHeaders()
+            credentials: 'same-origin'
         });
         const data = await res.json();
         const container = document.getElementById('recycled-numbers-list');
@@ -200,6 +197,7 @@ async function doLogin(event) {
         const res = await fetch('/api/auth/login', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
             body: JSON.stringify({ username, password })
         });
         const data = await res.json();
@@ -207,7 +205,9 @@ async function doLogin(event) {
             errorEl.textContent = data.error || 'Błąd logowania';
             return;
         }
-        localStorage.setItem('authToken', data.token);
+        // Wariant A: tokenu NIE zapisujemy (sesja w cookie httpOnly stawianym
+        // przez serwer). Odpowiedź może jeszcze zawierać data.token (shim
+        // wsteczny backendu) — celowo ignorowane.
         sessionStorage.setItem('user', JSON.stringify(data.user));
         showLoggedIn(data.user);
     } catch (_e) {
@@ -216,18 +216,29 @@ async function doLogin(event) {
 }
 
 async function doLogout() {
+    // Cienki wrapper nad jednym logoutem (appLogout z shared/auth.js) —
+    // sesję i cookie czyści serwer. Pola czyszczone PRZED delegacją, bo
+    // appLogout kończy nawigacją do index.html.
     try {
-        await fetch('/api/auth/logout', { method: 'POST', headers: authHeaders() });
+        document.getElementById('login-username').value = '';
+        document.getElementById('login-password').value = '';
+    } catch {}
+    if (typeof window.appLogout === 'function') {
+        await window.appLogout();
+        return;
+    }
+    try {
+        await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
     } catch (_e) {}
-    localStorage.removeItem('authToken');
+    try {
+        localStorage.removeItem('authToken');
+    } catch {}
     showLogin();
-    document.getElementById('login-username').value = '';
-    document.getElementById('login-password').value = '';
 }
 
 async function loadUsers() {
     try {
-        const res = await fetch('/api/users', { headers: authHeaders() });
+        const res = await fetch('/api/users', { credentials: 'same-origin' });
         const data = await res.json();
         adminUsers = data.data || [];
 
@@ -438,7 +449,8 @@ async function createUser() {
 
         const res = await fetch(url, {
             method: method,
-            headers: authHeaders(),
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
             body: JSON.stringify(payload)
         });
         const data = await res.json();
@@ -457,7 +469,7 @@ async function createUser() {
 async function deleteUser(id) {
     if (!(await appConfirm('Czy na pewno usunąć tego użytkownika?', { type: 'danger' }))) return;
     try {
-        await fetch('/api/users/' + id, { method: 'DELETE', headers: authHeaders() });
+        await fetch('/api/users/' + id, { method: 'DELETE', credentials: 'same-origin' });
         loadUsers();
     } catch (e) {
         logger.error('dashboard', 'deleteUser error:', e);
@@ -483,7 +495,8 @@ async function showChangePassword() {
     try {
         const r = await fetch('/api/auth/change-password', {
             method: 'POST',
-            headers: authHeaders(),
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
             body: JSON.stringify({ oldPassword: oldPw, newPassword: newPw })
         });
         const data = await r.json();
@@ -575,7 +588,7 @@ function initAiMlToggle() {
 async function loadYearLetter() {
     try {
         const res = await fetch('/api/settings/year-letter', {
-            headers: authHeaders()
+            credentials: 'same-origin'
         });
         const data = await res.json();
         const input = document.getElementById('year-letter-input');
@@ -598,7 +611,8 @@ async function saveYearLetter() {
     try {
         const res = await fetch('/api/settings/year-letter', {
             method: 'PUT',
-            headers: authHeaders(),
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
             body: JSON.stringify({ letter })
         });
         const data = await res.json();
