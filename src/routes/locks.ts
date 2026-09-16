@@ -16,8 +16,12 @@ import {
     releaseDocLock,
     forceAcquireDocLock,
     mapDocLockConflict,
+    isLockFresh,
+    resolveDocOwnerUserId,
+    DOC_LOCK_TTL_MS,
     DocLockType
 } from '../utils/docLocks';
+import { canReadWithShare } from '../utils/ownership';
 
 const router = express.Router();
 const limiter = WRITE_LIMITER;
@@ -30,6 +34,16 @@ router.post('/acquire', requireAuth, limiter, validateData(docLockBodySchema), a
     const authReq = req as AuthenticatedRequest;
     try {
         const { docType, docId } = req.body as { docType: DocLockType; docId: string };
+        // P1.5: guard read-access PRZED acquire — blokuje lock-squatting
+        // (obcy docId = DoS edycji az do 180 s). 404 jak PATCH zamowien
+        // (ruryOrders.crud.ts: PATCH zwraca 404 by nie zdradzac istnienia) —
+        // brak dokumentu i brak uprawnien sa nierozroznialne.
+        const ownerId = await resolveDocOwnerUserId(prisma, docType, docId);
+        if (ownerId !== undefined) {
+            const allowed =
+                ownerId !== null && (await canReadWithShare(authReq.user, ownerId, docType, docId));
+            if (!allowed) return res.status(404).json({ error: 'Dokument nie znaleziony' });
+        }
         const { lock } = await acquireDocLock(prisma, { docType, docId, user: authReq.user! });
         res.json({ ok: true, lock: holderOf(lock) });
     } catch (e: unknown) {
@@ -111,6 +125,23 @@ router.get('/:docType/:docId', requireAuth, READ_LIMITER, async (req, res) => {
             where: { docType_docId: { docType, docId } }
         });
         if (!lock) return res.json({ ok: true, locked: false });
+        // P1.5: wygasly lock to brak blokady — leniwe czyszczenie wiersza
+        // (best-effort: blad kasowania nie daje 500; predykat cutoff chroni
+        // przed skasowaniem swiezego locka po ewentualnym race).
+        if (!isLockFresh((lock as unknown as { heartbeatAt: string }).heartbeatAt)) {
+            try {
+                await prisma.doc_locks.deleteMany({
+                    where: {
+                        docType,
+                        docId,
+                        heartbeatAt: { lt: new Date(Date.now() - DOC_LOCK_TTL_MS).toISOString() }
+                    }
+                });
+            } catch {
+                /* best-effort — wygasly lock i tak raportujemy jako locked:false */
+            }
+            return res.json({ ok: true, locked: false });
+        }
         res.json({
             ok: true,
             locked: true,

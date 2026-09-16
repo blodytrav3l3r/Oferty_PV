@@ -75,6 +75,49 @@ function isUniqueViolation(e: unknown): boolean {
     return (e as { code?: string }).code === 'P2002';
 }
 
+/** Mapowanie docType -> tabela wlasciciela (do guardu read-access P1.5). */
+const DOC_OWNER_DELEGATES: Record<DocLockType, string> = {
+    offer: 'offers_rel',
+    offer_studnie: 'offers_studnie_rel',
+    order_rury: 'orders_rury_rel',
+    order_studnie: 'orders_studnie_rel'
+};
+
+/** Minimalny klient do odczytu wlasciciela (delegaty opcjonalne — brak = nie weryfikowalne). */
+export interface DocOwnerClient {
+    offers_rel?: { findUnique(args: any): Promise<any> };
+    offers_studnie_rel?: { findUnique(args: any): Promise<any> };
+    orders_rury_rel?: { findUnique(args: any): Promise<any> };
+    orders_studnie_rel?: { findUnique(args: any): Promise<any> };
+}
+
+/**
+ * Zwraca userId wlasciciela dokumentu (P1.5, do guardu read-access przed acquire).
+ * - string = wlasciciel (do sprawdzenia przez canReadWithShare),
+ * - null = dokument nie istnieje,
+ * - undefined = brak delegata tabeli (stare mocki/baza legacy) = nie weryfikowalne.
+ */
+export async function resolveDocOwnerUserId(
+    client: DocOwnerClient,
+    docType: DocLockType,
+    docId: string
+): Promise<string | null | undefined> {
+    const delegate = (client as Record<string, DocOwnerClient[keyof DocOwnerClient]>)[
+        DOC_OWNER_DELEGATES[docType]
+    ];
+    if (!delegate || typeof delegate.findUnique !== 'function') return undefined;
+    const row = await delegate.findUnique({ where: { id: docId }, select: { userId: true } });
+    return row?.userId ?? null;
+}
+
+/** Strukturalny blad 404 braku blokady (wspolny dla heartbeat i wygaslych). */
+function docLockMissing(): Error & { status: number; code: string } {
+    const err = new Error('Blokada nie istnieje') as Error & { status: number; code: string };
+    err.status = 404;
+    err.code = 'DOC_LOCK_MISSING';
+    return err;
+}
+
 /**
  * Acquire atomowy wzorcem UPDATE-predykat (jak versionedWrite):
  * 1. updateMany WHERE wlasny-lub-wygasly -> count 1 = przejecie/odswiezenie.
@@ -196,10 +239,12 @@ export async function heartbeatDocLock(
         where: { docType_docId: { docType: args.docType, docId: args.docId } }
     })) as unknown as DocLockRow | null;
     if (!existing) {
-        const err = new Error('Blokada nie istnieje') as Error & { status: number; code: string };
-        err.status = 404;
-        err.code = 'DOC_LOCK_MISSING';
-        throw err;
+        throw docLockMissing();
+    }
+    // P1.5: wygasla blokada zachowuje sie jak brak blokady (GET czysci leniwie,
+    // acquire przejmuje) — obcy heartbeat na wygaslej dostaje 404, nie 423.
+    if (!isLockFresh(existing.heartbeatAt)) {
+        throw docLockMissing();
     }
     throw docLockConflict(existing);
 }
