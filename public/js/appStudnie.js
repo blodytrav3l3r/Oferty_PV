@@ -201,6 +201,9 @@ async function loadDataInBackground() {
     } else {
         logger.error('appStudnie', '[AppStudnie] Błąd produktów:', productsP.reason);
     }
+    try {
+        window.__studnieProductsSettled = true;
+    } catch (_) {}
 
     if (offersP.status === 'fulfilled') {
         offersStudnie = offersP.value;

@@ -707,6 +707,12 @@ async function enterOrderEditMode(orderId) {
         return;
     try {
         logger.info('orderManager', '[enterOrderEditMode] START orderId=', orderId);
+        // Deterministyczne wejście: VPT/notatki liczone są z cennika.
+        if (typeof ensureStudnieCatalogReady === 'function') {
+            await ensureStudnieCatalogReady();
+        } else if (typeof window.ensureStudnieCatalogReady === 'function') {
+            await window.ensureStudnieCatalogReady();
+        }
         const res = await fetchWithTimeout(
             `/api/orders-studnie/${orderId}`,
             { headers: authHeaders() },

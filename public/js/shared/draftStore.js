@@ -5,7 +5,7 @@
  * - allowlista pól (bez runtime, bez wellsExport), cap 4 000 000 B, TTL 14 dni sliding,
  * - SAVED zawsze wygrywa: ten moduł nigdy nie czyta draftu przy zapisie ani go nie wysyła.
  * Wszystkie funkcje przyjmują storage (localStorage lub zamiennik) — testowalne w izolacji.
- * Efekty uboczne (toast, banner, debounce) należą do draftAutosave.js, nie tutaj.
+ * Efekty uboczne (toast, popup recovery, debounce) należą do draftAutosave.js, nie tutaj.
  */
 
 /** Wersja schematu draftu. Niezgodne v odrzucane cicho (bez migracji w locie). */

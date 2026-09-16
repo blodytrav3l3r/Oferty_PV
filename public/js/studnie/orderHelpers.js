@@ -4,6 +4,43 @@
 let _lastPayloadWarnAt = 0;
 const PAYLOAD_WARN_THRESHOLD_BYTES = 10 * 1024 * 1024;
 const PAYLOAD_WARN_COOLDOWN_MS = 5 * 60 * 1000;
+
+/**
+ * Czeka na gotowość klienckiego cennika studni (deterministyczne wejście).
+ * VPT/notatki/uszczelki liczone są z katalogu — wejście przed cennikiem daje
+ * niekompletny live (draft/SAVED rozjazd + gubienie VPT przy zapisie).
+ * Best-effort: po timeout flaga settled albo brak cennika → false, caller idzie dalej.
+ * @param {number} [timeoutMs]
+ * @returns {Promise<boolean>} true = cennik gotowy
+ */
+async function ensureStudnieCatalogReady(timeoutMs) {
+    var budget = typeof timeoutMs === 'number' ? timeoutMs : 15000;
+    var start = Date.now();
+    for (;;) {
+        try {
+            var prods = undefined;
+            try {
+                prods = typeof studnieProducts !== 'undefined' ? studnieProducts : undefined;
+            } catch (_tdz) {}
+            if (prods === undefined) prods = window.studnieProducts;
+            if (Array.isArray(prods) && prods.length > 0) return true;
+            if (window.__studnieProductsSettled) return false;
+        } catch (_e) {}
+        if (Date.now() - start >= budget) break;
+        await new Promise(function (r) {
+            setTimeout(r, 200);
+        });
+    }
+    try {
+        if (window.logger && typeof window.logger.warn === 'function')
+            window.logger.warn(
+                'orderManager',
+                'Wejście bez cennika (timeout) — live może być niekompletny.'
+            );
+    } catch (_e2) {}
+    return false;
+}
+window.ensureStudnieCatalogReady = ensureStudnieCatalogReady;
 async function loadOrdersStudnie() {
     try {
         const res = await fetchWithTimeout('/api/orders-studnie', { headers: authHeaders() });
@@ -143,12 +180,14 @@ async function handleOrderConflict(order, serverBody, extra) {
         if (extra && extra.lockHolder && window.lockService) {
             const info = window.lockService.describeHolder(extra.lockHolder);
             showToast(
-                'Zapis odrzucony — dokument edytuje ' + info.name + '. Skopiuj swoje zmiany.',
+                'Zapis odrzucony — dokument edytuje ' +
+                    info.name +
+                    '. Skopiuj swoje zmiany. Niezapisane zmiany zachowane w drafcie.',
                 'warning'
             );
         } else {
             showToast(
-                'Zamówienie zmieniono w międzyczasie — wczytano aktualną wersję. Sprawdź i zapisz ponownie.',
+                'Zamówienie zmieniono w międzyczasie — wczytano aktualną wersję. Sprawdź i zapisz ponownie. Niezapisane zmiany zachowane w drafcie.',
                 'warning'
             );
         }

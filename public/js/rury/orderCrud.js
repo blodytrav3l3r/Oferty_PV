@@ -43,7 +43,7 @@ async function saveOrdersDataRury(data) {
                 }
                 if (typeof showToast === 'function')
                     showToast(
-                        'Zamówienie zmieniono w międzyczasie — wczytano aktualną wersję',
+                        'Zamówienie zmieniono w międzyczasie — wczytano aktualną wersję. Niezapisane zmiany zachowane w drafcie.',
                         'warning'
                     );
                 throw err;
@@ -69,7 +69,7 @@ async function saveOrdersDataRury(data) {
                     showToast(
                         'Zapis odrzucony — dokument edytuje ' +
                             holderName +
-                            '. Skopiuj swoje zmiany.',
+                            '. Skopiuj swoje zmiany. Niezapisane zmiany zachowane w drafcie.',
                         'warning'
                     );
                 throw err;

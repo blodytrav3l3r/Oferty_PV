@@ -108,6 +108,11 @@ function renderTransitionTileHTML(item, globalIndex, product, opts = {}) {
 
     classifyFlowType(item, globalIndex);
 
+    // Stabilny identyfikator kafelka wyłącznie do renderu (data-qe-id).
+    // Render NIGDY nie mutuje live: brak zapisu do item (losowe id generowały
+    // wieczne drafty — draft/live/SAVED rozjeżdżały się co sesję).
+    const tileId = item.id || 'prz-legacy-' + globalIndex;
+
     const flow = getFlowVisuals(item.flowType);
     const angleColor = getAngleColor(item.angle);
     const heightMm = opts.heightMm != null ? opts.heightMm : 0;
@@ -174,13 +179,13 @@ function renderTransitionTileHTML(item, globalIndex, product, opts = {}) {
         ? `<div class="prz-col prz-col--price" title="Pole nie rabatowane">
              <div class="prz-col-header ellipsis-center">Dopłata</div>
              <div class="prz-col-body" style="justify-content:center; align-items:center; min-width:0;">
-               <div data-qe-id="${escapeHtmlAttr(item.id)}" data-qe-field="doplata" data-action="activateQuickEdit" data-i="${globalIndex}" data-field="doplata" class="prz-field-doplata" style="font-size: ${doplataFont}; font-weight: var(--fw-extrabold); color:${doplataColor}; font-family:'Inter'; text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; font-variant-numeric:tabular-nums; display:inline-flex; align-items:center; justify-content:center; gap:0.2rem;" title="${escapeHtmlAttr(doplataStr)} PLN"><span>${doplataStr}</span><span class="fs-2xs">PLN</span></div>
+               <div data-qe-id="${escapeHtmlAttr(tileId)}" data-qe-field="doplata" data-action="activateQuickEdit" data-i="${globalIndex}" data-field="doplata" class="prz-field-doplata" style="font-size: ${doplataFont}; font-weight: var(--fw-extrabold); color:${doplataColor}; font-family:'Inter'; text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; font-variant-numeric:tabular-nums; display:inline-flex; align-items:center; justify-content:center; gap:0.2rem;" title="${escapeHtmlAttr(doplataStr)} PLN"><span>${doplataStr}</span><span class="fs-2xs">PLN</span></div>
              </div>
            </div>`
         : '';
 
     // Zapewnij stabilny identyfikator dla QE (Quick Edit)
-    if (!item.id) item.id = 'prz-legacy-' + globalIndex + '-' + Math.floor(Math.random() * 1000);
+    // (lokalny tileId — bez mutacji live, patrz wyżej).
 
     const clockIdx = getClockIndex(item, opts);
     const numDisplay =
@@ -208,25 +213,25 @@ function renderTransitionTileHTML(item, globalIndex, product, opts = {}) {
           <div class="prz-col">
             <div class="prz-col-header" title="${spadekKLabel} [mm]">Spadek kin. [%]</div>
             <div class="prz-col-body">
-              <div data-qe-id="${item.id}" data-qe-field="spadekKineta" data-action="activateQuickEdit" data-i="${globalIndex}" data-field="spadekKineta" title="Kliknij aby edytować" class="prz-field fs-2xl-bold-primary-shadow" >${item.spadekKineta != null && item.spadekKineta !== '' && parseFloat(item.spadekKineta) !== 0 ? Math.round(parseFloat(item.spadekKineta)) + ' %' : '—'}</div>
+              <div data-qe-id="${escapeHtmlAttr(tileId)}" data-qe-field="spadekKineta" data-action="activateQuickEdit" data-i="${globalIndex}" data-field="spadekKineta" title="Kliknij aby edytować" class="prz-field fs-2xl-bold-primary-shadow" >${item.spadekKineta != null && item.spadekKineta !== '' && parseFloat(item.spadekKineta) !== 0 ? Math.round(parseFloat(item.spadekKineta)) + ' %' : '—'}</div>
             </div>
           </div>
           <div class="prz-col">
             <div class="prz-col-header" title="${spadekMLabel} [mm]">Spadek mufy [%]</div>
             <div class="prz-col-body">
-              <div data-qe-id="${item.id}" data-qe-field="spadekMufa" data-action="activateQuickEdit" data-i="${globalIndex}" data-field="spadekMufa" title="Kliknij aby edytować" class="prz-field fs-2xl-bold-primary-shadow" >${item.spadekMufa != null && item.spadekMufa !== '' && parseFloat(item.spadekMufa) !== 0 ? Math.round(parseFloat(item.spadekMufa)) + ' %' : '—'}</div>
+              <div data-qe-id="${escapeHtmlAttr(tileId)}" data-qe-field="spadekMufa" data-action="activateQuickEdit" data-i="${globalIndex}" data-field="spadekMufa" title="Kliknij aby edytować" class="prz-field fs-2xl-bold-primary-shadow" >${item.spadekMufa != null && item.spadekMufa !== '' && parseFloat(item.spadekMufa) !== 0 ? Math.round(parseFloat(item.spadekMufa)) + ' %' : '—'}</div>
             </div>
           </div>
           <div class="prz-col">
             <div class="prz-col-header">Kąt</div>
             <div class="prz-col-body">
-              <div data-qe-id="${item.id}" data-qe-field="angle" data-action="activateQuickEdit" data-i="${globalIndex}" data-field="angle" title="Kliknij aby edytować wpisując liczbę" class="prz-field-angle" style="font-size: var(--fs-xl); font-weight: var(--fw-extrabold); color:${angleColor}; text-shadow:0 1px 2px rgba(var(--black-rgb), 0.3);">${item.angle}°</div>
+              <div data-qe-id="${escapeHtmlAttr(tileId)}" data-qe-field="angle" data-action="activateQuickEdit" data-i="${globalIndex}" data-field="angle" title="Kliknij aby edytować wpisując liczbę" class="prz-field-angle" style="font-size: var(--fs-xl); font-weight: var(--fw-extrabold); color:${angleColor}; text-shadow:0 1px 2px rgba(var(--black-rgb), 0.3);">${item.angle}°</div>
             </div>
           </div>
           <div class="prz-col">
             <div class="prz-col-header" title="Wysokość [mm]">Wysokość [mm]</div>
             <div class="prz-col-body">
-              <div data-qe-id="${item.id}" data-qe-field="heightMm" data-action="activateQuickEdit" data-i="${globalIndex}" data-field="heightMm" title="Wysokość od dolnej krawędzi elementu" class="prz-field-height" style="font-size: var(--fs-xl); font-weight: var(--fw-extrabold); color:var(--warn); text-shadow:0 1px 2px rgba(var(--black-rgb), 0.3);">${heightMm} mm</div>
+              <div data-qe-id="${escapeHtmlAttr(tileId)}" data-qe-field="heightMm" data-action="activateQuickEdit" data-i="${globalIndex}" data-field="heightMm" title="Wysokość od dolnej krawędzi elementu" class="prz-field-height" style="font-size: var(--fs-xl); font-weight: var(--fw-extrabold); color:var(--warn); text-shadow:0 1px 2px rgba(var(--black-rgb), 0.3);">${heightMm} mm</div>
             </div>
           </div>
           <div class="prz-col">
@@ -244,7 +249,7 @@ function renderTransitionTileHTML(item, globalIndex, product, opts = {}) {
           <div class="prz-col">
             <div class="prz-col-header">Rzędna</div>
             <div class="prz-col-body">
-              <div data-qe-id="${item.id}" data-qe-field="rzednaWlaczenia" data-action="activateQuickEdit" data-i="${globalIndex}" data-field="rzednaWlaczenia" title="Kliknij aby edytować wpisując liczbę" class="prz-field-rzedna" style="font-size: var(--fs-xl); font-weight: var(--fw-extrabold); color:var(--text-primary); text-shadow:0 1px 2px rgba(var(--black-rgb), 0.3);">${item.rzednaWlaczenia || '—'}</div>
+              <div data-qe-id="${escapeHtmlAttr(tileId)}" data-qe-field="rzednaWlaczenia" data-action="activateQuickEdit" data-i="${globalIndex}" data-field="rzednaWlaczenia" title="Kliknij aby edytować wpisując liczbę" class="prz-field-rzedna" style="font-size: var(--fs-xl); font-weight: var(--fw-extrabold); color:var(--text-primary); text-shadow:0 1px 2px rgba(var(--black-rgb), 0.3);">${item.rzednaWlaczenia || '—'}</div>
             </div>
           </div>
           ${priceHTML}

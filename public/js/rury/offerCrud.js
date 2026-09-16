@@ -146,7 +146,9 @@ async function saveOffer() {
         if (window.lockService && window.lockService.isLocked(err)) {
             const info = window.lockService.describeHolder(err.holder);
             showToast(
-                'Zapis odrzucony — dokument edytuje ' + info.name + '. Skopiuj swoje zmiany.',
+                'Zapis odrzucony — dokument edytuje ' +
+                    info.name +
+                    '. Skopiuj swoje zmiany. Niezapisane zmiany zachowane w drafcie.',
                 'warning'
             );
             return;
@@ -160,7 +162,7 @@ async function saveOffer() {
                 : err?.status === 409 || err?.code === 'VERSION_CONFLICT';
         if (conflict) {
             showToast(
-                'Oferta zmieniona przez innego użytkownika — wczytano aktualną wersję',
+                'Oferta zmieniona przez innego użytkownika — wczytano aktualną wersję. Niezapisane zmiany zachowane w drafcie.',
                 'warning'
             );
             try {

@@ -4,6 +4,29 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+### [1.26.1](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.26.0...v1.26.1) (2026-09-16)
+
+### Features
+
+- **api:** p1.2 requestid w bledach i p1.3 limity json per-route ([83dcc55](https://github.com/blodytrav3l3r/Oferty_PV/commit/83dcc554394468670cac9ffd5b72afe0f489b371))
+- **security:** hardening f0 i adr-011 modelu uprawnień ([b0ffbe7](https://github.com/blodytrav3l3r/Oferty_PV/commit/b0ffbe7807a086568dd9befe5319a4d04e441819))
+- **studnie:** clamp rzędnej przejścia z centralnym powiadomieniem ([418b04e](https://github.com/blodytrav3l3r/Oferty_PV/commit/418b04e056c04b3eeee7c13e91c88b2775ef8a2d))
+- **studnie:** e3 stale excel i raport pomiarow ([5b05994](https://github.com/blodytrav3l3r/Oferty_PV/commit/5b059941f49c506d89eac93d8c5be8801b7f2470))
+- **studnie:** pakiet excel 10 quiet auto chain ([535872c](https://github.com/blodytrav3l3r/Oferty_PV/commit/535872c91904536a04abd09555eea4925348c653))
+- **ui:** p1.1b draft autosave wedlug protokolu ([b84d142](https://github.com/blodytrav3l3r/Oferty_PV/commit/b84d142448e4cc5895120dca918f10838911d683))
+
+### Bug Fixes
+
+- **api:** p1.5 read-check przed acquire i swiezy status locka ([199ab48](https://github.com/blodytrav3l3r/Oferty_PV/commit/199ab4822b136a39f629d5dc8482320dded7a26b))
+- **auth:** p1.4 cookie-first z audytem i decyzja ([71d1cf2](https://github.com/blodytrav3l3r/Oferty_PV/commit/71d1cf218b1feb7892b8cbcc61cda8104354f725))
+- **orders:** osobne pole nr zamówienia w konfiguratorze i ofercie ([514ab7a](https://github.com/blodytrav3l3r/Oferty_PV/commit/514ab7add52120c0158bf2c5ac9a655549f1a752))
+- **preco:** zwarty wygląd tabel cennika wkładek ([00f7176](https://github.com/blodytrav3l3r/Oferty_PV/commit/00f717600aea4e92af9c96ec69fd7dacf00523d1))
+- **security:** domkniecie e1 p0.1-p0.6 z testami regresji ([5aad320](https://github.com/blodytrav3l3r/Oferty_PV/commit/5aad32090303ef75ab7610d8482fbae8f9b90699))
+- **studnie:** copy po filtrze i 5 grup kolizji z gate k-03 ([360ca0f](https://github.com/blodytrav3l3r/Oferty_PV/commit/360ca0fe37b8d8cd1e41f57c256890456b425e2d))
+- **studnie:** ghost-draft oferty po wejsciu mimo zapisanych zmian ([c143c9d](https://github.com/blodytrav3l3r/Oferty_PV/commit/c143c9d2003135200338309f8f7f8af37236dd81)), closes [#51](https://github.com/blodytrav3l3r/Oferty_PV/issues/51)
+- **studnie:** p1.6 stale solvera i deterministyczne memo ([bcc9211](https://github.com/blodytrav3l3r/Oferty_PV/commit/bcc9211c9f721af383165a5e7f616c6b7eb19bdc))
+- **ui:** kafelek ostatniej proby treningu jak reszta ([53eb2bf](https://github.com/blodytrav3l3r/Oferty_PV/commit/53eb2bf1b5cbb3448625a25c013cd6cdb2c410c5))
+
 ## [1.26.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.25.0...v1.26.0) (2026-09-13)
 
 ### Features

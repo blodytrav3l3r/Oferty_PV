@@ -198,11 +198,35 @@ Draft żyje wyłącznie w `localStorage` pod kluczem
 ## 11. Recovery po crashu — rozstrzygnięcie
 
 Wejście do modułu → jeśli istnieje klucz draftu dla `(userId, kind, docIdOrNew)` i jego
-zawartość różni się od świeżo pobranego SAVED → nieblokujący banner: „Znaleziono
-niezapisany draft z <updatedAt>. [Przywróć] [Odrzuć] [Pobierz JSON]”. Brak
+zawartość różni się od świeżo pobranego SAVED → blokujący popup w stylu projektu
+(`window.showModal` + `.modal`, przyciski `.btn`: „Znaleziono
+niezapisany draft z <updatedAt>. [Przywróć] [Odrzuć] [Pobierz JSON]”). Brak
 auto-restore (zakaz cichego nadpisywania formularza). „Pobierz JSON” = awaryjny eksport
-draftu do pliku (obrona przed `QuotaExceeded`/uszkodzeniem klucza). Uszkodzony JSON
-w kluczu → klucz usunięty + log, formularz = SAVED.
+draftu do pliku (obrona przed `QuotaExceeded`/uszkodzeniem klucza). Escape /
+click-outside / ✕ zamyka popup bez usuwania draftu (draft żyje do TTL albo jawnego
+„Odrzuć”). Uszkodzony JSON w kluczu → klucz usunięty + log, formularz = SAVED.
+
+> Implementacja (`public/js/shared/draftAutosave.js`): recovery i autosave-write
+> używają jednego komparatora `_draftEquivalent` (SSoT) — draft istnieje ⟺
+> canonical(live) ≠ canonical(SAVED). `order_studnie` rzutuje live wells przez
+> `toOrderWellsDTO` (SAVED to DTO, nie full). Slim z listy (bez wells/items)
+> = brak decyzji + `logger.warn`, nie modal. Zapis przy live==SAVED pomijany
+> (idempotency), `clearContext` anuluje pending debounce. `order_studnie`
+> bierze SAVED ze świeżego `orderEditMode.order` (detail z wejścia), nie ze
+> stale `ordersStudnie` (save mutuje detail + PATCH, tablicy nie odświeża).
+> Wariant (v): modal tylko gdy draft różni się ZARÓWNO od serwera, JAK i od
+> live-at-entry (live po solverze deterministycznie różni się od serwera —
+> ghost solvera nie triggeruje). Odrzuć anuluje pending debounce.
+> P0 (root cause wiecznego modala): `transitionRenderer.js` mutował live
+> losowym `przejscie.id` (`prz-legacy-<idx>-<random>`) przy renderze kafelków;
+> dla order_studnie `id` nie ma w DTO, więc re-losowanie co sesję drafciło
+> wiecznie. Fix: lokalny deterministyczny `tileId`, zero zapisu do live.
+> P0b (deterministyczne wejście): VPT/notatki liczone są z cennika, a SPA
+> ładuje cennik w tle — entry przed cennikiem dawało niekompletny live.
+> `enterOrderEditMode`/`loadSavedOfferStudnie` czekają na
+> `ensureStudnieCatalogReady` (best-effort, timeout + flaga settled).
+> P1a (fallback nested DTO) ODROCZONE na gate: ścieżka niepotwierdzona
+> (recovery działa tylko tam gdzie orderDto.js zawsze ładowany).
 
 ## Decyzja
 

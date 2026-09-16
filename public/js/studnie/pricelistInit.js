@@ -35,6 +35,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     try {
         window.studnieProducts = await loadStudnieProducts();
+        try {
+            window.__studnieProductsSettled = true;
+        } catch (_) {}
 
         if (!studnieProducts.some((p) => p.componentType === 'kineta')) {
             logger.warn('pricelistManager', '[Studnie] Brak kinet w cenniku');
@@ -70,6 +73,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     } catch (err) {
         logger.error('pricelistManager', 'Błąd podczas inicjalizacji danych:', err);
+        try {
+            window.__studnieProductsSettled = true;
+        } catch (_) {}
         showToast('Wystąpił błąd podczas ładowania danych. Nawigacja jest dostępna.', 'error');
         if (!orderEditMode) {
             document.getElementById('offer-number').value = generateOfferNumberStudnie();
