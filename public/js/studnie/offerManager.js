@@ -77,6 +77,12 @@ async function loadSavedOfferStudnie(id_or_doc, optionalId, targetSection, preve
             return;
     }
     const sectionToShow = targetSection || 'offer';
+    // Deterministyczne wejście: VPT/notatki liczone są z cennika.
+    if (typeof ensureStudnieCatalogReady === 'function') {
+        await ensureStudnieCatalogReady();
+    } else if (typeof window.ensureStudnieCatalogReady === 'function') {
+        await window.ensureStudnieCatalogReady();
+    }
     let offer;
     if (typeof id_or_doc === 'object') {
         offer = id_or_doc;
@@ -100,6 +106,22 @@ async function loadSavedOfferStudnie(id_or_doc, optionalId, targetSection, preve
     }
 
     if (!offer) return;
+
+    // P1.1b-fix: getSavedDoc (draft recovery) czyta cache offersStudnie.
+    // Bez podmiany cache trzyma slim/stale, a decyzja recovery zapada na
+    // niepełnych danych. Podmiana tylko gdy dociągnięto świeży detail
+    // (obiekt wejściowy bez wells); snapshot historii ma wells — nietknięty.
+    const _hadWellsBefore =
+        typeof id_or_doc === 'object' && id_or_doc && Array.isArray(id_or_doc.wells);
+    if (!_hadWellsBefore && offer.id && Array.isArray(offer.wells)) {
+        const _resolvedId = typeof id_or_doc === 'object' ? optionalId || id_or_doc.id : id_or_doc;
+        if (_resolvedId && String(offer.id) === String(_resolvedId)) {
+            const _ci = offersStudnie.findIndex((o) => o && String(o.id) === String(offer.id));
+            if (_ci >= 0) offersStudnie[_ci] = offer;
+            else offersStudnie.push(offer);
+            if (typeof _rebuildOffersStudnieById === 'function') _rebuildOffersStudnieById();
+        }
+    }
 
     // Normalizacja inline — storageService jest tylko ESM i nie jest dostepny w zasięgu globalnym
     const normalized = normalizeOfferData(offer);

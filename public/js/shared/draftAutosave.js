@@ -9,7 +9,7 @@
  */
 
 var DRAFT_AUTOSAVE_DEBOUNCE_MS = 2000;
-var DRAFT_BANNER_ID = 'sok-draft-banner';
+var DRAFT_MODAL_ID = 'sok-draft-modal';
 
 /** Zarejestrowane rodzaje w tym module/iframe (np. studnie: offer+order). */
 var _draftInitedKinds = [];
@@ -130,6 +130,18 @@ var _draftKindConfig = {
             return null;
         },
         getSavedDoc: function (docId) {
+            // Świeży detail z bieżącej edycji wygrywa z tablicą listy (stale full:
+            // saveCurrentOrder/saveOrderStudnie mutują orderEditMode.order i PATCHują,
+            // a ordersStudnie nie jest odświeżana). Porównanie ze stale = wieczny popup.
+            var oe2 = undefined;
+            try {
+                oe2 = typeof orderEditMode !== 'undefined' ? orderEditMode : undefined;
+            } catch (_e0) {}
+            if (oe2 === undefined) oe2 = _draftG('orderEditMode');
+            try {
+                if (oe2 && oe2.order && (oe2.orderId === docId || oe2.order.id === docId))
+                    return oe2.order;
+            } catch (_e1) {}
             try {
                 if (typeof ordersStudnie !== 'undefined' && Array.isArray(ordersStudnie))
                     return (
@@ -307,12 +319,210 @@ function _draftEmptySavedPayload(kind) {
 }
 
 /**
- * Bramka dirty dla studni: zapis tylko gdy _excelDirty/_wizardDirty lub zmiana
- * względem ostatniego zapisu (wizard nie ma jawnej flagi — diff ją zastępuje).
- * Rury nie mają flag dirty — sama bramka diff.
- * @param {string} kind
- * @returns {boolean}
+ * Klucze live studni nigdy niezapisywane w zamówieniu (DTO allowlist, nie denylist).
+ * Fallback gdy orderDto.js niedostępny — pełna lista w orderDto.js (ORDER_WELL_FIELDS
+ * + ORDER_CONFIG_ITEM_FIELDS + ORDER_PRZEJSCIE_FIELDS + komentarz o pominiętych).
  */
+var _DRAFT_ORDER_WELL_DROP = [
+    '_lastAutoConfig',
+    '_lastAutoTelemetryId',
+    '_aiRankInfo',
+    '_lastSolveInputHash',
+    '__resCache',
+    '_psiaBudaBackup',
+    'configErrors',
+    'configStatus',
+    'wellHeight',
+    'warehouse'
+];
+
+/**
+ * Rzutuje wells live do przestrzeni SAVED dla zamówień studni.
+ * SAVED order.wells to DTO (toOrderWellsDTO, SSoT w orderDto.js) — porównanie
+ * full↔DTO zawsze widziałoby różnicę (solver dopisuje configStatus/configErrors).
+ * @param {string} kind
+ * @param {*} wells
+ * @returns {*}
+ */
+function _draftProjectWells(kind, wells) {
+    if (kind !== 'order_studnie' || !Array.isArray(wells)) return wells;
+    var proj = _draftG('toOrderWellsDTO');
+    if (typeof toOrderWellsDTO === 'function') proj = toOrderWellsDTO;
+    if (typeof proj === 'function') {
+        try {
+            var dto = proj(wells);
+            if (Array.isArray(dto)) return dto;
+        } catch (_e) {}
+    }
+    return wells.map(function (w) {
+        if (!w || typeof w !== 'object') return w;
+        var copy = {};
+        Object.keys(w).forEach(function (k) {
+            if (_DRAFT_ORDER_WELL_DROP.indexOf(k) === -1) copy[k] = w[k];
+        });
+        return copy;
+    });
+}
+
+/**
+ * Pola efemeryczne studni (load/solver/derived) — nigdy tresc uzytkownika.
+ * Load dokleja je po odczycie (ensureElemIds/recalc/sync), wiec live po wejsciu
+ * zawsze roznilby sie od SAVED. Payload draftu ich NIE traci (restore w calosci),
+ * czysci je tylko warstwa porownywalna.
+ */
+var _DRAFT_WELL_EPHEMERAL = [
+    '_lastAutoConfig',
+    '_lastAutoTelemetryId',
+    '_aiRankInfo',
+    '_lastSolveInputHash',
+    '__resCache',
+    '_psiaBudaBackup',
+    'configErrors',
+    'configStatus',
+    'wellHeight'
+];
+
+/**
+ * Pola efemeryczne pozycji config/przejscia (_elemId to tozsamosc PZ, nie tresc;
+ * reszta to cache/solver). Czyszczone tylko w porownaniu, nie w payladzie.
+ */
+var _DRAFT_ITEM_EPHEMERAL = ['_elemId', '__resCache', '_addedAt', '_xp', 'isPlaceholder'];
+
+/**
+ * Czyści kopię pozycji config/przejscia z pól efemerycznych (nie mutuje wejścia).
+ * @param {*} item
+ * @returns {*}
+ */
+function _draftStripEphemeralItem(item) {
+    if (!item || typeof item !== 'object' || Array.isArray(item)) return item;
+    var copy = {};
+    Object.keys(item).forEach(function (k) {
+        if (_DRAFT_ITEM_EPHEMERAL.indexOf(k) === -1) copy[k] = item[k];
+    });
+    return copy;
+}
+
+/**
+ * Czyści kopię studni z pól efemerycznych well-level + item-level (nie mutuje).
+ * @param {*} well
+ * @returns {*}
+ */
+function _draftStripEphemeralWell(well) {
+    if (!well || typeof well !== 'object') return well;
+    var copy = {};
+    Object.keys(well).forEach(function (k) {
+        if (_DRAFT_WELL_EPHEMERAL.indexOf(k) !== -1) return;
+        if (k === 'config' && Array.isArray(well.config))
+            copy.config = well.config.map(_draftStripEphemeralItem);
+        else if (k === 'przejscia' && Array.isArray(well.przejscia))
+            copy.przejscia = well.przejscia.map(_draftStripEphemeralItem);
+        else copy[k] = well[k];
+    });
+    return copy;
+}
+
+/**
+ * Payload w przestrzeni porównywalnej (obie strony tą samą projekcją).
+ * order_studnie: DTO (allowlist SSoT) + strip _elemId w pozycjach (PZ-id to nie
+ * tresc zmiany); offer_studnie: strip efemerycznych (DTO nie obowiazuje ofert);
+ * transportMode undefined traktuj jak 'full' (default load, legacy SAVED).
+ * @param {string} kind
+ * @param {*} payload
+ * @returns {object}
+ */
+function _draftComparablePayload(kind, payload) {
+    var src = payload && typeof payload === 'object' ? payload : {};
+    var out = {};
+    Object.keys(src).forEach(function (k) {
+        out[k] = src[k];
+    });
+    if (out.transportMode === undefined) out.transportMode = 'full';
+    if (!Array.isArray(src.wells)) return out;
+    if (kind === 'order_studnie') {
+        var dto = _draftProjectWells(kind, src.wells);
+        out.wells = dto.map(function (w) {
+            if (!w || typeof w !== 'object') return w;
+            var copy = {};
+            Object.keys(w).forEach(function (k) {
+                if (k === 'config' && Array.isArray(w.config))
+                    copy.config = w.config.map(_draftStripEphemeralItem);
+                else if (k === 'przejscia' && Array.isArray(w.przejscia))
+                    copy.przejscia = w.przejscia.map(_draftStripEphemeralItem);
+                else copy[k] = w[k];
+            });
+            return copy;
+        });
+        return out;
+    }
+    out.wells = src.wells.map(_draftStripEphemeralWell);
+    return out;
+}
+
+/**
+ * Jedyny komparator draft↔SAVED (SSoT recovery i autosave-write).
+ * @param {string} kind
+ * @param {*} draftPayload
+ * @param {*} savedPayload
+ * @param {boolean} isNewDoc
+ * @returns {boolean} true = równoważne (brak recovery, brak zapisu)
+ */
+function _draftEquivalent(kind, draftPayload, savedPayload, isNewDoc) {
+    if (!draftPayload) return true;
+    if (!savedPayload) return false;
+    var opts = isNewDoc ? { ignoreVolatile: true, ignoreWizard: true } : undefined;
+    var a = window.draftStore.canonicalPayloadJson(
+        _draftComparablePayload(kind, draftPayload),
+        opts
+    );
+    var b = window.draftStore.canonicalPayloadJson(
+        _draftComparablePayload(kind, savedPayload),
+        opts
+    );
+    return !!a && a === b;
+}
+
+/**
+ * Bieżący SAVED w przestrzeni porównywalnej dla rodzaju i docId.
+ * Zwraca null (defensive, z logiem) gdy istniejący dokument jest slim
+ * (lista bez wells/items — brak danych = brak decyzji recovery).
+ * @param {string} kind
+ * @param {object} cfg
+ * @param {string} docId
+ * @returns {{payload: object|null, savedDoc: object|null, isNew: boolean, slim: boolean}}
+ */
+function _draftCurrentSaved(kind, cfg, docId) {
+    var savedDoc = null;
+    try {
+        savedDoc = docId === 'new' ? null : cfg.getSavedDoc(docId);
+    } catch (_e) {}
+    var isNew = docId === 'new' || savedDoc === null;
+    if (isNew)
+        return {
+            payload: _draftEmptySavedPayload(kind),
+            savedDoc: savedDoc,
+            isNew: true,
+            slim: false
+        };
+    var hasRows = Array.isArray(savedDoc.wells) || Array.isArray(savedDoc.items);
+    if (!hasRows) {
+        try {
+            var log = _draftG('logger');
+            if (log && typeof log.warn === 'function')
+                log.warn('draft', 'SAVED slim — pomijam decyzję recovery', {
+                    kind: kind,
+                    docId: docId
+                });
+        } catch (_e2) {}
+        return { payload: null, savedDoc: savedDoc, isNew: false, slim: true };
+    }
+    return {
+        payload: _draftSavedPayload(kind, savedDoc),
+        savedDoc: savedDoc,
+        isNew: false,
+        slim: false
+    };
+}
+/** Early-hint dirty (nie źródło prawdy — rozstrzyga _draftEquivalent w _draftWriteKind). */
 function _draftIsDirty(kind) {
     if (kind === 'offer_rury' || kind === 'order_rury') return true;
     try {
@@ -321,6 +531,30 @@ function _draftIsDirty(kind) {
     if (_draftG('_excelDirty')) return true;
     if (_draftG('_wizardDirty')) return true;
     return true; // diff poniżej i tak odrzuci brak zmian
+}
+
+/**
+ * Self-heal martwego ghosta: klucz istnieje, ale jego draft jest równoważny
+ * SAVED (duch po mutacjach load / wycofanej edycji). Kasuje TYLKO wtedy —
+ * draft z obcą treścią (porzucona edycja) zostaje i czeka na Odrzuć.
+ * @param {string} key
+ * @param {string} kind
+ * @param {{payload: object|null, isNew: boolean, slim: boolean}} cur
+ * @returns {boolean} true = skasowano martwy klucz
+ */
+function _draftRemoveIfDead(key, kind, cur) {
+    try {
+        if (!key || !window.draftStore || !cur || cur.slim || !cur.payload) return false;
+        var loaded = window.draftStore.loadDraft(window.localStorage, key);
+        if (loaded.status !== 'ok' || !loaded.draft) return false;
+        if (!_draftEquivalent(kind, loaded.draft.payload, cur.payload, cur.isNew)) return false;
+        window.draftStore.removeDraft(window.localStorage, key);
+        delete _draftLastWritten[key];
+        delete _draftOversizeNoted[key];
+        return true;
+    } catch (_e) {
+        return false;
+    }
 }
 
 /**
@@ -357,11 +591,17 @@ function _draftWriteKind(kind, isFlush) {
     var canon = window.draftStore.canonicalPayloadJson(payload);
     if (!canon) return false;
     if (_draftLastWritten[key] === canon) return false;
+    // Idempotency guard (SSoT z recovery): live równoważny SAVED → brak zapisu.
+    // Bez tego flush po czystym SAVED wskrzeszał draft-ducha (slim/DTO robiły resztę).
+    // Slim (payload null): brak podstaw do bramki — zapis według _draftLastWritten.
+    var cur = _draftCurrentSaved(kind, cfg, docId);
+    if (cur && !cur.slim && _draftEquivalent(kind, payload, cur.payload, cur.isNew)) {
+        // Self-heal: live czysty, a pod kluczem lezy martwy ghost → sprzatnij.
+        _draftRemoveIfDead(key, kind, cur);
+        return false;
+    }
     _draftMaybeSweep(userId);
-    var savedDoc = null;
-    try {
-        savedDoc = cfg.getSavedDoc(docId);
-    } catch (_e) {}
+    var savedDoc = cur ? cur.savedDoc : null;
     var baseVersion = savedDoc && typeof savedDoc.version === 'number' ? savedDoc.version : null;
     var draft = window.draftStore.buildDraft({
         userId: userId,
@@ -423,6 +663,18 @@ function _draftFlushAll() {
 }
 
 /**
+ * Anuluje pending debounce (wyścig save/discard → timer sprzed operacji).
+ */
+function _draftCancelPending() {
+    try {
+        if (_draftDebounceTimer) {
+            clearTimeout(_draftDebounceTimer);
+            _draftDebounceTimer = null;
+        }
+    } catch (_e0) {}
+}
+
+/**
  * Kasuje draft kontekstu (sukces SAVED / nowa oferta / DELETE). Kasowanie TYLKO
  * po potwierdzonym sukcesie woła caller — ta funkcja sama nie ocenia wyniku.
  * @param {string} kind
@@ -430,6 +682,8 @@ function _draftFlushAll() {
  * @param {*} [newDocId]
  */
 function _draftClearContext(kind, oldDocId, newDocId) {
+    // Wyścig save→debounce: timer sprzed zapisu nie może pisać po sukcesie SAVED.
+    _draftCancelPending();
     var userId = _draftUserId();
     if (!userId) return;
     [oldDocId, newDocId].forEach(function (d) {
@@ -442,12 +696,12 @@ function _draftClearContext(kind, oldDocId, newDocId) {
         }
     });
     try {
-        _draftHideBanner();
+        _draftHideDraftModal();
     } catch (_e) {}
 }
 
 /**
- * Format daty draftu do bannera (pl-PL, nigdy nie rzuca).
+ * Format daty draftu do popupa (pl-PL, nigdy nie rzuca).
  * @param {string} iso
  * @returns {string}
  */
@@ -477,13 +731,26 @@ function _draftEscaper(name) {
 }
 
 /**
- * Usuwa banner recovery z DOM.
+ * Zamyka popup recovery (modalCore.closeModal gdy dostępny, inaczej usuwa overlay).
+ * Escape / click-outside modalCore zamyka sam — draft zostaje do TTL / jawnego Odrzuć.
  */
-function _draftHideBanner() {
+function _draftHideDraftModal() {
     try {
-        var el = document.getElementById(DRAFT_BANNER_ID);
+        var closer = _draftG('closeModal');
+        if (typeof closeModal === 'function') closer = closeModal;
+        if (typeof closer === 'function') {
+            try {
+                closer(DRAFT_MODAL_ID);
+            } catch (_e2) {}
+        }
+        var el = document.getElementById(DRAFT_MODAL_ID);
         if (el && el.parentNode) el.parentNode.removeChild(el);
     } catch (_e) {}
+}
+
+/** Alias wstecznej kompatybilności (eksport window.draftAutosave.hideBanner). */
+function _draftHideBanner() {
+    _draftHideDraftModal();
 }
 
 /**
@@ -639,45 +906,36 @@ function _draftApply(kind, draft) {
 }
 
 /**
- * Pokazuje nieblokujący banner recovery (Przywróć / Odrzuć / Pobierz JSON).
+ * Pokazuje popup recovery (Przywróć / Pobierz JSON / Odrzuć) w stylu projektu
+ * (window.showModal + .modal, jak reszta popupów — patrz docs/UI_GUIDELINES.md §6).
+ * Escape / click-outside zamyka bez usuwania draftu (draft żyje do TTL / Odrzuć).
  * @param {string} kind
  * @param {object} draft
  * @param {object|null} savedDoc
  */
-function _draftShowBanner(kind, draft, savedDoc) {
-    _draftHideBanner();
+function _draftShowDraftModal(kind, draft, savedDoc) {
+    _draftHideDraftModal();
     var escapeHtml = _draftEscaper('escapeHtml');
     var escapeHtmlAttr = _draftEscaper('escapeHtmlAttr');
-    var host = null;
-    try {
-        host = document.querySelector('main') || document.querySelector('.main') || document.body;
-    } catch (_e) {
+    var showModalFn = _draftG('showModal');
+    if (typeof showModal === 'function') showModalFn = showModal;
+    if (typeof showModalFn !== 'function') {
+        _draftToast('Znaleziono niezapisany draft — otwórz moduł ponownie', 'warning');
         return;
     }
-    if (!host) return;
     var counts = window.draftStore.summarizeDraftCounts(draft.payload);
     var n =
         kind === 'offer_rury' || kind === 'order_rury'
             ? counts.items + ' poz.'
             : counts.wells + ' stud.';
-    var banner = document.createElement('div');
-    banner.id = DRAFT_BANNER_ID;
-    banner.className = 'card border-warn-subtle bg-accent-subtle';
-    banner.setAttribute('role', 'status');
-    try {
-        banner.style.position = 'sticky';
-        banner.style.top = '0';
-        var layers = _draftG('LAYERS');
-        banner.style.zIndex = String((layers && layers.BANNER) || 5100);
-        banner.style.marginBottom = 'var(--section-gap)';
-    } catch (_e2) {}
     // Tekst przez escapeHtml, atrybuty przez escapeHtmlAttr (reguła P0.3).
-    banner.innerHTML =
-        '<div class="flex-between flex-gap-3 flex-wrap-start">' +
-        '<div class="flex-1-240">' +
-        '<div class="card-title-sm"><i data-lucide="history" aria-hidden="true"></i> ' +
+    var html =
+        '<div class="modal">' +
+        '<div class="modal-header"><h3 id="sok-draft-modal-title"><i data-lucide="history" aria-hidden="true"></i> ' +
         escapeHtml('Znaleziono niezapisany draft') +
-        '</div>' +
+        '</h3><button type="button" class="btn-icon" data-draft-act="close" aria-label="' +
+        escapeHtmlAttr('Zamknij') +
+        '"><i data-lucide="x" aria-hidden="true"></i></button></div>' +
         '<div class="text-muted fs-xs-muted" title="' +
         escapeHtmlAttr(draft.updatedAt || '') +
         '">' +
@@ -689,22 +947,33 @@ function _draftShowBanner(kind, draft, savedDoc) {
                 ') różni się od zapisanej wersji. Przywrócenie nie zapisuje — wymagany jawny zapis.'
         ) +
         '</div>' +
-        '</div>' +
-        '<div class="flex-gap-2 flex-wrap-start">' +
+        '<div class="modal-footer">' +
         '<button type="button" class="btn btn-primary btn-sm" data-draft-act="restore"><i data-lucide="history" aria-hidden="true"></i> ' +
         escapeHtml('Przywróć') +
         '</button>' +
         '<button type="button" class="btn btn-secondary btn-sm" data-draft-act="download"><i data-lucide="download" aria-hidden="true"></i> ' +
         escapeHtml('Pobierz JSON') +
         '</button>' +
-        '<button type="button" class="btn btn-secondary btn-sm" data-draft-act="discard" aria-label="' +
-        escapeHtmlAttr('Odrzuć draft') +
-        '"><i data-lucide="x" aria-hidden="true"></i> ' +
+        '<button type="button" class="btn btn-secondary btn-sm" data-draft-act="discard"><i data-lucide="x" aria-hidden="true"></i> ' +
         escapeHtml('Odrzuć') +
         '</button>' +
         '</div>' +
         '</div>';
-    banner.addEventListener('click', function (ev) {
+    var overlay = null;
+    try {
+        overlay = showModalFn({
+            id: DRAFT_MODAL_ID,
+            titleId: 'sok-draft-modal-title',
+            html: html,
+            onClose: function () {
+                _draftHideDraftModal();
+            }
+        });
+    } catch (_e) {
+        return;
+    }
+    if (!overlay) return;
+    overlay.addEventListener('click', function (ev) {
         var t = ev.target;
         var btn = null;
         try {
@@ -715,26 +984,39 @@ function _draftShowBanner(kind, draft, savedDoc) {
         if (act === 'download') {
             _draftDownloadJson(draft, kind);
         } else if (act === 'discard') {
+            // Odrzuć = pełny reset stanu draftu: kasuj klucz i zabij pending
+            // debounce sprzed kliknięcia (inaczej timer wskrzesza draft po Odśwież).
+            _draftCancelPending();
+            var discarded = false;
             var userId = _draftUserId();
             if (userId) {
                 var key = window.draftStore.buildDraftKey(userId, kind, draft.docId);
-                if (key) window.draftStore.removeDraft(window.localStorage, key);
+                if (key) {
+                    window.draftStore.removeDraft(window.localStorage, key);
+                    discarded = true;
+                }
             }
-            _draftHideBanner();
-            _draftToast('Draft odrzucony (zapisana wersja nietknięta)', 'info');
+            _draftHideDraftModal();
+            if (discarded) _draftToast('Draft odrzucony (zapisana wersja nietknięta)', 'info');
+            else _draftToast('Nie udało się odrzucić draftu (brak użytkownika)', 'error');
         } else if (act === 'restore') {
+            _draftHideDraftModal();
             _draftRestoreFlow(kind, draft, savedDoc);
+        } else if (act === 'close') {
+            _draftHideDraftModal();
         }
     });
     try {
-        if (host === document.body) document.body.insertBefore(banner, document.body.firstChild);
-        else host.insertBefore(banner, host.firstChild);
-    } catch (_e4) {
-        return;
-    }
-    try {
-        if (typeof lucide !== 'undefined') lucide.createIcons({ root: banner });
+        var lucideG = _draftG('lucide');
+        if (typeof lucide !== 'undefined' && lucide.createIcons)
+            lucide.createIcons({ root: overlay });
+        else if (lucideG && lucideG.createIcons) lucideG.createIcons({ root: overlay });
     } catch (_e5) {}
+}
+
+/** Alias wstecznej kompatybilności. */
+function _draftShowBanner(kind, draft, savedDoc) {
+    _draftShowDraftModal(kind, draft, savedDoc);
 }
 
 /**
@@ -803,12 +1085,54 @@ function _draftRestoreFlow(kind, draft, savedDoc) {
 }
 
 /**
- * Sprawdza recovery dla rodzaju: banner tylko gdy draft istnieje i różni się od SAVED.
+ * Sekcje różniące draft od SAVED (diagnostyka wiecznego popupa — tylko nazwy
+ * sekcji i długości tablic, nigdy treść). Wołane przed pokazaniem modala.
+ * @param {string} kind
+ * @param {*} draftPayload
+ * @param {*} savedPayload
+ * @param {boolean} isNewDoc
+ */
+function _draftLogRecoveryDiff(kind, draftPayload, savedPayload, isNewDoc) {
+    try {
+        var log = _draftG('logger');
+        if (!log || typeof log.warn !== 'function') return;
+        var opts = isNewDoc ? { ignoreVolatile: true, ignoreWizard: true } : undefined;
+        var a = _draftComparablePayload(kind, draftPayload);
+        var b = _draftComparablePayload(kind, savedPayload);
+        var keys = {};
+        Object.keys(a).forEach(function (k) {
+            keys[k] = 1;
+        });
+        Object.keys(b).forEach(function (k) {
+            keys[k] = 1;
+        });
+        var diffs = [];
+        Object.keys(keys).forEach(function (k) {
+            var x = window.draftStore.canonicalPayloadJson({ v: a[k] }, opts);
+            var y = window.draftStore.canonicalPayloadJson({ v: b[k] }, opts);
+            if (x !== y) {
+                var extra = '';
+                if (Array.isArray(a[k]) || Array.isArray(b[k]))
+                    extra =
+                        ' len ' + ((a[k] || []).length || 0) + ' vs ' + ((b[k] || []).length || 0);
+                diffs.push(k + extra);
+            }
+        });
+        log.warn('draft', 'recovery modal — rozniące sekcje', {
+            kind: kind,
+            diff: diffs.join(', ') || '(puste)'
+        });
+    } catch (_e) {}
+}
+
+/**
+ * Sprawdza recovery dla rodzaju: popup tylko gdy draft istnieje i NIE jest
+ * równoważny SAVED (ten sam komparator co bramka zapisu — _draftEquivalent).
  * @param {string} kind
  */
 function _draftCheckRecovery(kind) {
     try {
-        _draftHideBanner();
+        _draftHideDraftModal();
         var cfg = _draftKindConfig[kind];
         if (!cfg) return;
         var userId = _draftUserId();
@@ -818,18 +1142,30 @@ function _draftCheckRecovery(kind) {
         if (!key) return;
         var loaded = window.draftStore.loadDraft(window.localStorage, key);
         if (loaded.status !== 'ok' || !loaded.draft) return;
-        var savedDoc = null;
-        try {
-            savedDoc = docId === 'new' ? null : cfg.getSavedDoc(docId);
-        } catch (_e) {}
-        var savedPayload =
-            savedDoc !== null && savedDoc !== undefined
-                ? _draftSavedPayload(kind, savedDoc)
-                : _draftEmptySavedPayload(kind);
-        var isNew = docId === 'new' || savedDoc === null;
-        if (!window.draftStore.draftDiffersFromSaved(loaded.draft.payload, savedPayload, isNew))
+        var cur = _draftCurrentSaved(kind, cfg, docId);
+        if (!cur || cur.slim) return;
+        if (_draftEquivalent(kind, loaded.draft.payload, cur.payload, cur.isNew)) {
+            // Martwy ghost (payload jak SAVED) — ciche sprzatniecie, bez modala.
+            try {
+                window.draftStore.removeDraft(window.localStorage, key);
+                delete _draftLastWritten[key];
+            } catch (_e4) {}
             return;
-        _draftShowBanner(kind, loaded.draft, savedDoc);
+        }
+        // Wariant (v): live po solverze deterministycznie różni się od serwera
+        // (domyślne kinety/uszczelki, auto-dobór) — draft równy temu, co formularz
+        // już pokazuje, nie ma nic do odzyskania. Modal tylko gdy draft różni się
+        // ZARÓWNO od serwera, JAK i od live-at-entry.
+        var livePayload = null;
+        try {
+            livePayload = _draftCollectLive(kind);
+        } catch (_e3) {
+            livePayload = null;
+        }
+        if (livePayload && _draftEquivalent(kind, loaded.draft.payload, livePayload, cur.isNew))
+            return;
+        _draftLogRecoveryDiff(kind, loaded.draft.payload, cur.payload, cur.isNew);
+        _draftShowDraftModal(kind, loaded.draft, cur.savedDoc);
     } catch (_e2) {}
 }
 
@@ -879,11 +1215,16 @@ function _draftInitKind(kind) {
 
 window.draftAutosave = {
     DEBOUNCE_MS: DRAFT_AUTOSAVE_DEBOUNCE_MS,
+    MODAL_ID: DRAFT_MODAL_ID,
     initKind: _draftInitKind,
     scheduleSave: _draftScheduleSave,
     flushAll: _draftFlushAll,
     clearContext: _draftClearContext,
     checkRecovery: _draftCheckRecovery,
     hideBanner: _draftHideBanner,
+    hideModal: _draftHideDraftModal,
+    showModal: _draftShowDraftModal,
+    areEquivalent: _draftEquivalent,
+    currentSaved: _draftCurrentSaved,
     currentUserId: _draftUserId
 };
