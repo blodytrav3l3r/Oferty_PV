@@ -100,30 +100,32 @@
                 </div>
             </div>
             <div class="tp-mode-row">
-                <label class="tp-field-label" style="margin-bottom: 0">Tryb transportu:</label>
-                <button
-                    type="button"
-                    id="transport-mode-btn"
-                    class="tp-mode-btn"
-                    onclick="toggleTransportMode()"
-                >
-                    <i data-lucide="truck" style="width: 12px; height: 12px"></i>
-                    <span id="transport-mode-label">Pełne</span>
-                </button>
-            </div>
-            <div class="tp-mode-row">
-                <label class="tp-field-label" style="margin-bottom: 0"
-                    >Rozliczenie transportu:</label
-                >
-                <button
-                    type="button"
-                    id="transport-separate-btn"
-                    class="tp-mode-btn"
-                    onclick="toggleTransportSeparate()"
-                >
-                    <i data-lucide="package" style="width: 12px; height: 12px"></i>
-                    <span id="transport-separate-label">W cenie elementów</span>
-                </button>
+                <div class="tp-mode-item">
+                    <label class="tp-field-label" style="margin-bottom: 0">Tryb transportu:</label>
+                    <button
+                        type="button"
+                        id="transport-mode-btn"
+                        class="tp-mode-btn"
+                        onclick="toggleTransportMode()"
+                    >
+                        <i data-lucide="truck" style="width: 16px; height: 16px"></i>
+                        <span id="transport-mode-label">Pełne</span>
+                    </button>
+                </div>
+                <div class="tp-mode-item">
+                    <label class="tp-field-label" style="margin-bottom: 0"
+                        >Rozliczenie transportu:</label
+                    >
+                    <button
+                        type="button"
+                        id="transport-separate-btn"
+                        class="tp-mode-btn"
+                        onclick="toggleTransportSeparate()"
+                    >
+                        <i data-lucide="package" style="width: 16px; height: 16px"></i>
+                        <span id="transport-separate-label">W cenie elementów</span>
+                    </button>
+                </div>
             </div>
             <div
                 id="transport-modal-trips-info"
