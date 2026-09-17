@@ -64,7 +64,6 @@ function renderOfferSummaryTable(order, orderChanges, totals) {
 
     let runningTotalPrice = 0;
     let runningTotalWeight = 0;
-    let sumFrozenShares = 0;
     const dnGroups = {};
 
     const sortedWells = wells
@@ -149,7 +148,6 @@ function renderOfferSummaryTable(order, orderChanges, totals) {
                 : null;
         const share = separateTransport ? 0 : frozenShare != null ? frozenShare : wellTransportCost;
         stats.price += share;
-        sumFrozenShares += share;
 
         const comparable =
             typeof calcComparableWellPrice === 'function'
@@ -251,13 +249,16 @@ function renderOfferSummaryTable(order, orderChanges, totals) {
 
     const theoreticalTransport = (totals && totals.totalTransportCost) || 0;
     let transportInfo = null;
+    // Wiersz transportu tylko jako osobna pozycja: przy cenie wliczonej koszt
+    // siedzi w cenach studni, więc brak wiersza "Transport bez rozładunku".
     if (showPriceComparison) {
-        transportInfo = {
-            origTotal: origTransportTotal,
-            // Osobna pozycja: udzialy 0, w kolumnie zamowienia koszt teoretyczny.
-            sumFrozen: separateTransport ? theoreticalTransport : sumFrozenShares,
-            theoretical: theoreticalTransport
-        };
+        if (separateTransport) {
+            transportInfo = {
+                origTotal: origTransportTotal,
+                sumFrozen: theoreticalTransport,
+                theoretical: theoreticalTransport
+            };
+        }
     } else if (separateTransport && theoreticalTransport > 0) {
         transportInfo = {
             separate: true,
@@ -382,31 +383,6 @@ function renderOfferSummaryFooter(
         html += `<tr id="offer-transport-row">
           <td colspan="${baseColspan}" style="font-size: var(--fs-md); color:var(--text-muted); padding:0.5rem 0.5rem; white-space:nowrap;" title="${escapeHtmlAttr(String(sepTrips))} × ${fmt(sepPerTrip)} PLN/kurs">Transport bez rozładunku</td>
           <td class="text-right" style="font-size: var(--fs-md); font-weight: var(--fw-bold); color:var(--success); white-space:nowrap; padding:0.5rem 0.75rem;">${fmt(sepTotal)} PLN</td>
-          <td class="text-right pad-sm"></td>
-        </tr>`;
-    }
-
-    // Wiersz rozliczenia transportu ZAWSZE przed RAZEM (oferta i zamówienie).
-    if (showPriceComparison && transportInfo && !transportInfo.separate) {
-        const tOrig = Number(transportInfo.origTotal) || 0;
-        const tSum = Number(transportInfo.sumFrozen) || 0;
-        const tTheo = Number(transportInfo.theoretical) || 0;
-        const tDelta = tTheo - tSum;
-        const deltaColor =
-            Math.abs(tDelta) < 0.005
-                ? 'var(--success-hover)'
-                : 'var(--warn-hover, var(--warning, #e0a100))';
-        const deltaSign = tDelta > 0 ? '+' : '';
-        // Jednolita etykieta w ofercie i zamówieniu (pozycja cennikowa TR-STUDNIE).
-        const transportLabel = 'Transport bez rozładunku';
-        const transportTitle = separateTransport
-            ? 'Koszt teoretyczny przy bieżącej masie'
-            : 'Udziały zamrożone na studniach vs koszt teoretyczny przy bieżącej masie';
-        html += `<tr id="offer-transport-row">
-          <td colspan="${baseColspan}" style="font-size: var(--fs-md); color:var(--text-muted); padding:0.5rem 0.5rem; white-space:nowrap;" title="${transportTitle}">${transportLabel}</td>
-          <td class="text-right" style="font-size: var(--fs-md); color:var(--text-secondary); white-space:nowrap; padding:0.5rem 0.75rem;">${fmt(tOrig)} PLN</td>
-          <td class="text-right" style="font-size: var(--fs-md); font-weight: var(--fw-bold); color:var(--success); white-space:nowrap; padding:0.5rem 0.75rem;">${fmt(tSum)} PLN</td>
-          <td class="text-right" style="font-size: var(--fs-md); color:${deltaColor}; white-space:nowrap; padding:0.5rem 0.75rem;" title="Różnica: koszt teoretyczny − suma udziałów">${deltaSign}${fmt(tDelta)} PLN</td>
           <td class="text-right pad-sm"></td>
         </tr>`;
     }
