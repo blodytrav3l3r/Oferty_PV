@@ -170,6 +170,9 @@ router.put(
             }
 
             // P0-C/D2: cały batch w jednej transakcji + predykat wersji.
+            // P2: dla single-save zapamiętaj nową wersję do odpowiedzi (serwer SSoT).
+            let singleVersion: number | null = null;
+            let singleUpdatedAt: string | undefined;
             await prisma.$transaction(async (tx) => {
                 for (const o of incoming) {
                     let docId = o.id;
@@ -231,13 +234,18 @@ router.put(
                             serverUpdatedAt !== singleBase
                         ) {
                             // P0-C: w tx nie ma return res — throw cofa batch.
+                            // P1-409: serverOrder niesie version (kolumna, nie blob) + serverVersion,
+                            // żeby retry klienta nie zapętlał VERSION_CONFLICT starą wersją.
                             throw {
                                 status: 409,
                                 message: 'Zamówienie zmieniono w międzyczasie',
+                                code: 'BASE_CONFLICT',
+                                serverVersion: old.version ?? 1,
                                 serverOrder: {
                                     id: docId,
                                     type: 'order',
                                     userId: old.userId,
+                                    version: old.version ?? 1,
                                     ...oldData
                                 }
                             };
@@ -295,11 +303,20 @@ router.put(
                         },
                         conflictMessage: 'Zamówienie zmieniono w międzyczasie'
                     });
+                    if (incoming.length === 1) {
+                        singleVersion = old ? (old.version ?? 1) + 1 : 1;
+                        const ru = (rest as Record<string, unknown>)['updatedAt'];
+                        if (typeof ru === 'string') singleUpdatedAt = ru;
+                    }
                 }
             }, HOT_TX_OPTS);
 
             searchCache.invalidateAll();
-            res.json({ ok: true });
+            if (incoming.length === 1 && singleVersion != null) {
+                res.json({ ok: true, version: singleVersion, updatedAt: singleUpdatedAt });
+            } else {
+                res.json({ ok: true });
+            }
         } catch (e: unknown) {
             // P0-C: baseUpdatedAt-throw niesie gotowy serverOrder (przed generyką).
             if (
@@ -410,12 +427,15 @@ router.patch(
             ) {
                 return res.status(409).json({
                     error: 'Zamówienie zmieniono w międzyczasie',
+                    code: 'BASE_CONFLICT',
+                    serverVersion: o.version ?? 1,
                     serverOrder: {
                         id: o.id,
                         type: 'order',
                         userId: o.userId,
                         offerStudnieId: o.offerStudnieId,
                         status: o.status,
+                        version: o.version ?? 1,
                         ...oldData
                     }
                 });
@@ -467,6 +487,7 @@ router.patch(
                             userId: o.userId,
                             offerStudnieId: o.offerStudnieId,
                             status: o.status,
+                            version: o.version ?? 1,
                             ...oldData
                         }
                     });
@@ -486,7 +507,16 @@ router.patch(
             logAudit('order', docId, authReq.user?.id || '', 'update', updatedData, oldData);
 
             searchCache.invalidateAll();
-            res.json({ ok: true });
+            // P2: serwer źródłem prawdy dla version — klient przyjmuje zwróconą
+            // wartość zamiast optymistycznego +1 (rozjazd przy retry/legacy).
+            res.json({
+                ok: true,
+                version: (o.version ?? 1) + 1,
+                updatedAt:
+                    typeof updatedData['updatedAt'] === 'string'
+                        ? (updatedData['updatedAt'] as string)
+                        : undefined
+            });
         } catch (e: unknown) {
             if (mapDocLockConflict(res, e)) return;
             if (mapPrismaError(res, e)) return;

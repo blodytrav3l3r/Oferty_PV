@@ -136,10 +136,36 @@ function getOrderBaseUpdatedAt(order) {
     return order._baseUpdatedAt || order.updatedAt || null;
 }
 
-function markOrderSaved(order, updatedAt) {
+function markOrderSaved(order, updatedAt, version) {
     if (!order) return;
     if (updatedAt) order.updatedAt = updatedAt;
+    // P3: version wyłącznie z serwera (SSoT) — nigdy optymistyczne +1.
+    // Brak version w odpowiedzi (stary kontrakt) = zostaw dotychczasową.
+    if (typeof version === 'number') order.version = version;
     order._baseUpdatedAt = order.updatedAt || null;
+}
+
+/**
+ * P3: kanoniczna synchronizacja wpisu listy po zapisie/sukcesie.
+ * Serwer → order (markOrderSaved) → ordersStudnie[idx] (tylko pola
+ * blokady: version/updatedAt/_baseUpdatedAt; wells synchronizuje caller
+ * przed PATCH z globalnych wells, lista odświeżana jest przez kartotekę).
+ * @param {Object} order
+ */
+function syncOrdersStudnieEntry(order) {
+    try {
+        if (!order || !order.id) return;
+        if (typeof ordersStudnie === 'undefined' || !Array.isArray(ordersStudnie)) return;
+        const idx = ordersStudnie.findIndex((o) => o && o.id === order.id);
+        if (idx < 0) return;
+        const entry = ordersStudnie[idx];
+        if (!entry || typeof entry !== 'object') return;
+        if (order.updatedAt) entry.updatedAt = order.updatedAt;
+        if (typeof order.version === 'number') entry.version = order.version;
+        entry._baseUpdatedAt = order._baseUpdatedAt || order.updatedAt || null;
+    } catch (_e) {
+        // synchronizacja listy nigdy nie blokuje zapisu
+    }
 }
 
 /**
@@ -156,8 +182,15 @@ async function handleOrderConflict(order, serverBody, extra) {
         if (serverOrder && serverOrder.id) {
             if (typeof ordersStudnie !== 'undefined' && Array.isArray(ordersStudnie)) {
                 const idx = ordersStudnie.findIndex((o) => o && o.id === serverOrder.id);
-                if (idx >= 0) ordersStudnie[idx] = { ...ordersStudnie[idx], ...serverOrder };
-                else ordersStudnie.push(serverOrder);
+                if (idx >= 0) {
+                    ordersStudnie[idx] = { ...ordersStudnie[idx], ...serverOrder };
+                    // Spread nie niesie _baseUpdatedAt — baza konfliktu to updatedAt serwera.
+                    ordersStudnie[idx]._baseUpdatedAt = serverOrder.updatedAt || null;
+                } else {
+                    const pushed = { ...serverOrder };
+                    pushed._baseUpdatedAt = serverOrder.updatedAt || null;
+                    ordersStudnie.push(pushed);
+                }
             }
             if (
                 typeof orderEditMode !== 'undefined' &&
@@ -165,12 +198,15 @@ async function handleOrderConflict(order, serverBody, extra) {
                 orderEditMode.orderId === serverOrder.id
             ) {
                 orderEditMode.order = { ...orderEditMode.order, ...serverOrder };
+                if (orderEditMode.order && serverOrder.updatedAt) {
+                    orderEditMode.order._baseUpdatedAt = serverOrder.updatedAt;
+                }
             }
             if (order) {
                 for (const k of Object.keys(serverOrder)) {
                     if (k !== '_baseUpdatedAt') order[k] = serverOrder[k];
                 }
-                markOrderSaved(order, serverOrder.updatedAt);
+                markOrderSaved(order, serverOrder.updatedAt, serverOrder.version);
             }
         }
     } catch (_e) {
@@ -263,7 +299,14 @@ async function putSingleOrderStudnie(order) {
             return handleOrderConflict(order, conflictBody, extra);
         }
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        markOrderSaved(order, order.updatedAt);
+        // P2/P3: version/updatedAt z odpowiedzi serwera (SSoT); brak pól = legacy.
+        const okPutBody = await res.json().catch(() => ({}));
+        markOrderSaved(
+            order,
+            (okPutBody && okPutBody.updatedAt) || order.updatedAt,
+            okPutBody && typeof okPutBody.version === 'number' ? okPutBody.version : undefined
+        );
+        syncOrdersStudnieEntry(order);
         return true;
     } catch (err) {
         logger.error('orderManager', 'Błąd zapisu zamówienia studni:', err);
@@ -302,7 +345,14 @@ async function patchSingleOrderStudnie(order, fields) {
             return handleOrderConflict(order, conflictBody, extra);
         }
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        markOrderSaved(order, order.updatedAt);
+        // P2/P3: version/updatedAt z odpowiedzi serwera (SSoT); brak pól = legacy.
+        const okPatchBody = await res.json().catch(() => ({}));
+        markOrderSaved(
+            order,
+            (okPatchBody && okPatchBody.updatedAt) || order.updatedAt,
+            okPatchBody && typeof okPatchBody.version === 'number' ? okPatchBody.version : undefined
+        );
+        syncOrdersStudnieEntry(order);
         return true;
     } catch (err) {
         logger.error('orderManager', 'Błąd zapisu zamówienia studni:', err);
@@ -974,4 +1024,5 @@ window.putSingleOrderStudnie = putSingleOrderStudnie;
 window.patchSingleOrderStudnie = patchSingleOrderStudnie;
 window.handleOrderConflict = handleOrderConflict;
 window.markOrderSaved = markOrderSaved;
+window.syncOrdersStudnieEntry = syncOrdersStudnieEntry;
 window.getOrderBaseUpdatedAt = getOrderBaseUpdatedAt;

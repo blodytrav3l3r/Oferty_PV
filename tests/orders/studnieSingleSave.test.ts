@@ -82,7 +82,7 @@ describe('P1 HIGH — single-order save + optimistic concurrency', () => {
             .put('/api/orders-studnie')
             .send({ data: [{ id: 'o-new', wells: [], updatedAt: 't1' }] });
         expect(res.status).toBe(200);
-        expect(res.body).toEqual({ ok: true });
+        expect(res.body).toMatchObject({ ok: true, version: 1, updatedAt: 't1' });
         expect(mockedPrisma.orders_studnie_rel.create).toHaveBeenCalledTimes(1);
     });
 
@@ -178,12 +178,14 @@ describe('P1 HIGH — single-order save + optimistic concurrency', () => {
             id: 'o1',
             userId: 'user-id',
             status: 'new',
+            version: 3,
             data: JSON.stringify({ updatedAt: 'srv-t', wells: [] })
         });
         const res = await request(createApp())
             .patch('/api/orders-studnie/o1')
             .send({ wells: [{ id: 'w1' }], updatedAt: 'new-t', baseUpdatedAt: 'srv-t' });
         expect(res.status).toBe(200);
+        expect(res.body).toMatchObject({ ok: true, version: 4, updatedAt: 'new-t' });
         const savedData = JSON.parse(
             mockedPrisma.orders_studnie_rel.update.mock.calls[0][0].data.data
         );
@@ -204,6 +206,76 @@ describe('P1 HIGH — single-order save + optimistic concurrency', () => {
         expect(res.status).toBe(409);
         expect(res.body.serverOrder.wells).toEqual([{ id: 'w1' }]);
         expect(mockedPrisma.orders_studnie_rel.update).not.toHaveBeenCalled();
+    });
+
+    test('P1-409: PATCH base-mismatch niesie version w serverOrder', async () => {
+        mockedPrisma.orders_studnie_rel.findUnique.mockResolvedValue({
+            id: 'o1',
+            userId: 'user-id',
+            status: 'new',
+            version: 5,
+            data: JSON.stringify({ updatedAt: 'srv-t', wells: [{ id: 'w1' }] })
+        });
+        const res = await request(createApp())
+            .patch('/api/orders-studnie/o1')
+            .send({ wells: [], updatedAt: 'old-t', baseUpdatedAt: 'old-t' });
+        expect(res.status).toBe(409);
+        expect(res.body.serverOrder.version).toBe(5);
+        expect(res.body.serverVersion).toBe(5);
+    });
+
+    test('P1-409: PATCH version-conflict niesie version w serverOrder', async () => {
+        mockedPrisma.orders_studnie_rel.findUnique.mockResolvedValue({
+            id: 'o1',
+            userId: 'user-id',
+            status: 'new',
+            version: 7,
+            data: JSON.stringify({ updatedAt: 'srv-t', wells: [{ id: 'w1' }] })
+        });
+        mockedPrisma.orders_studnie_rel.updateMany.mockResolvedValue({ count: 0 });
+        const res = await request(createApp())
+            .patch('/api/orders-studnie/o1')
+            .send({ wells: [], updatedAt: 't2', version: 6, baseUpdatedAt: 'srv-t' });
+        expect(res.status).toBe(409);
+        expect(res.body.code).toBe('VERSION_CONFLICT');
+        expect(res.body.serverOrder.version).toBe(7);
+        expect(res.body.serverVersion).toBe(7);
+    });
+
+    test('P1-409: retry z version z serwera → 200 (brak pętli konfliktu)', async () => {
+        mockedPrisma.orders_studnie_rel.findUnique.mockResolvedValue({
+            id: 'o1',
+            userId: 'user-id',
+            status: 'new',
+            version: 7,
+            data: JSON.stringify({ updatedAt: 'srv-t', wells: [{ id: 'w1' }] })
+        });
+        mockedPrisma.orders_studnie_rel.updateMany.mockResolvedValue({ count: 0 });
+        const conflict = await request(createApp())
+            .patch('/api/orders-studnie/o1')
+            .send({ wells: [], updatedAt: 't2', version: 6, baseUpdatedAt: 'srv-t' });
+        expect(conflict.status).toBe(409);
+        const serverVersion = conflict.body.serverOrder.version;
+        expect(serverVersion).toBe(7);
+        mockedPrisma.orders_studnie_rel.updateMany.mockResolvedValue({ count: 1 });
+        const retry = await request(createApp())
+            .patch('/api/orders-studnie/o1')
+            .send({ wells: [], updatedAt: 't3', version: serverVersion, baseUpdatedAt: 'srv-t' });
+        expect(retry.status).toBe(200);
+    });
+
+    test('P1-409: PUT single base-mismatch niesie version w serverOrder', async () => {
+        mockedPrisma.orders_studnie_rel.findUnique.mockResolvedValue({
+            data: JSON.stringify({ updatedAt: 'srv-t', wells: [{ id: 'w1' }] }),
+            userId: 'user-id',
+            version: 4
+        });
+        const res = await request(createApp())
+            .put('/api/orders-studnie')
+            .send({ data: [{ id: 'o1', wells: [], updatedAt: 'old-t' }], baseUpdatedAt: 'old-t' });
+        expect(res.status).toBe(409);
+        expect(res.body.serverOrder.version).toBe(4);
+        expect(res.body.serverVersion).toBe(4);
     });
 
     test('P1 lost-update: PATCH#1 v1 → 200, PATCH#2 v1 → 409, dane z #1 zachowane', async () => {

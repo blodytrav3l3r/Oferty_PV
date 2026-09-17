@@ -18,6 +18,14 @@ function buildWellsExportEntry(well, stats, wellTransportCost, zwienczenie) {
 }
 if (typeof window !== 'undefined') window.buildWellsExportEntry = buildWellsExportEntry;
 
+/* P5: serializacja zapisu zamówienia (wzorzec isSavingOffer).
+ * Dwuklik / fire-and-forget callerzy (offerTransport, offerRendering) dawały
+ * 2 równoległe PATCH-e z tym samym baseUpdatedAt → drugi kończył fałszywym 409.
+ * Guard na funkcji (nie await u callerów): drugie wejście zwraca natychmiast,
+ * finally zawsze odblokowuje (wyjątek nie klinuje kolejnych zapisów). */
+let isSavingCurrentOrder = false;
+let isSavingOrderStudnie = false;
+
 async function createOrderFromOffer() {
     try {
         if (typeof orderEditMode !== 'undefined' && orderEditMode) {
@@ -395,6 +403,11 @@ async function finalizeOrderFromOffer(offer, selectedWells, kartaBudowyData) {
         if (!saved) return;
     } else {
         await saveOrdersDataStudnie(ordersStudnie);
+        // P4: create przez batch — serwer nadaje version 1; bez sync kolejny
+        // zapis wysyła starą bazę. Best-effort, jak w ścieżce głównej.
+        if (typeof order.version !== 'number') order.version = 1;
+        if (typeof markOrderSaved === 'function') markOrderSaved(order, order.updatedAt);
+        if (typeof syncOrdersStudnieEntry === 'function') syncOrdersStudnieEntry(order);
     }
 
     await saveOfferStudnie();
@@ -458,6 +471,16 @@ function collectSelectedWellsForOrder() {
 }
 
 async function saveOrderStudnie() {
+    if (isSavingOrderStudnie) return;
+    isSavingOrderStudnie = true;
+    try {
+        await saveOrderStudnieUnsafe();
+    } finally {
+        isSavingOrderStudnie = false;
+    }
+}
+
+async function saveOrderStudnieUnsafe() {
     if (!editingOfferIdStudnie) return;
     const offer =
         typeof getOfferStudnieById === 'function'
@@ -543,7 +566,11 @@ async function saveOrderStudnie() {
         });
         if (!saved) return;
     } else {
+        // P4: fallback bez helpera — batch nie niesie baseUpdatedAt, więc po
+        // sukcesie odśwież bazę konfliktu, żeby kolejny PATCH nie był fałszywym 409.
         await saveOrdersDataStudnie(ordersStudnie);
+        if (typeof markOrderSaved === 'function') markOrderSaved(order, order.updatedAt);
+        if (typeof syncOrdersStudnieEntry === 'function') syncOrdersStudnieEntry(order);
     }
     showToast('<i data-lucide="package"></i> Zamówienie zaktualizowane', 'success');
     // P1.1b: sukces SAVED kasuje draft zamówienia.
@@ -1001,6 +1028,20 @@ async function saveCurrentOrder(options = {}) {
         showToast('Brak trybu zamówienia', 'error');
         return;
     }
+    if (isSavingCurrentOrder) return;
+    isSavingCurrentOrder = true;
+    try {
+        await saveCurrentOrderUnsafe(options);
+    } finally {
+        isSavingCurrentOrder = false;
+    }
+}
+
+async function saveCurrentOrderUnsafe(options = {}) {
+    if (!orderEditMode) {
+        showToast('Brak trybu zamówienia', 'error');
+        return;
+    }
 
     const order = orderEditMode.order;
 
@@ -1159,8 +1200,9 @@ async function saveCurrentOrder(options = {}) {
         });
         if (!saved) return;
     } else {
+        // P4: fallback na tym samym standardzie co patchSingleOrderStudnie —
+        // baseUpdatedAt + version + obsługa 409 + sync z odpowiedzi serwera.
         try {
-            // P1 PATCH: version tylko gdy number (jak w patchSingleOrderStudnie).
             const fallbackBody = {
                 wells: order.wells,
                 wellDiscounts: order.wellDiscounts,
@@ -1175,14 +1217,41 @@ async function saveCurrentOrder(options = {}) {
                 transportMode: order.transportMode,
                 transportSeparate: !!order.transportSeparate,
                 paymentTerms: order.paymentTerms,
-                validity: order.validity
+                validity: order.validity,
+                baseUpdatedAt:
+                    typeof getOrderBaseUpdatedAt === 'function'
+                        ? getOrderBaseUpdatedAt(order)
+                        : order._baseUpdatedAt || order.updatedAt || null
             };
             if (typeof order.version === 'number') fallbackBody.version = order.version;
-            await fetch(`/api/orders-studnie/${order.id}`, {
+            const fallbackRes = await fetch(`/api/orders-studnie/${order.id}`, {
                 method: 'PATCH',
                 headers: authHeaders(),
                 body: JSON.stringify(fallbackBody)
             });
+            if (fallbackRes.status === 409 || fallbackRes.status === 423) {
+                const conflictBody = await fallbackRes.json().catch(() => ({}));
+                if (typeof handleOrderConflict === 'function') {
+                    const extra =
+                        fallbackRes.status === 423 && conflictBody.holder
+                            ? { lockHolder: conflictBody.holder }
+                            : undefined;
+                    await handleOrderConflict(order, conflictBody, extra);
+                }
+                return;
+            }
+            if (!fallbackRes.ok) throw new Error(`HTTP ${fallbackRes.status}`);
+            const fallbackOk = await fallbackRes.json().catch(() => ({}));
+            if (typeof markOrderSaved === 'function') {
+                markOrderSaved(
+                    order,
+                    (fallbackOk && fallbackOk.updatedAt) || order.updatedAt,
+                    fallbackOk && typeof fallbackOk.version === 'number'
+                        ? fallbackOk.version
+                        : undefined
+                );
+            }
+            if (typeof syncOrdersStudnieEntry === 'function') syncOrdersStudnieEntry(order);
         } catch (err) {
             logger.error('orderManager', 'Błąd zapisu zamówienia:', err);
             showToast('Błąd zapisu zamówienia', 'error');
