@@ -381,7 +381,7 @@ function renderOfferSummaryFooter(
         price += sepTotal;
         html += `<tr id="offer-transport-row">
           <td colspan="${baseColspan}" style="font-size: var(--fs-md); color:var(--text-muted); padding:0.5rem 0.5rem; white-space:nowrap;" title="${escapeHtmlAttr(String(sepTrips))} × ${fmt(sepPerTrip)} PLN/kurs">Transport bez rozładunku</td>
-          <td class="text-right" style="font-size: var(--fs-md); font-weight: var(--fw-bold); color:var(--text-secondary); white-space:nowrap; padding:0.5rem 0.75rem;">${fmt(sepTotal)} PLN</td>
+          <td class="text-right" style="font-size: var(--fs-md); font-weight: var(--fw-bold); color:var(--success); white-space:nowrap; padding:0.5rem 0.75rem;">${fmt(sepTotal)} PLN</td>
           <td class="text-right pad-sm"></td>
         </tr>`;
     }
@@ -405,7 +405,7 @@ function renderOfferSummaryFooter(
         html += `<tr id="offer-transport-row">
           <td colspan="${baseColspan}" style="font-size: var(--fs-md); color:var(--text-muted); padding:0.5rem 0.5rem; white-space:nowrap;" title="${transportTitle}">${transportLabel}</td>
           <td class="text-right" style="font-size: var(--fs-md); color:var(--text-secondary); white-space:nowrap; padding:0.5rem 0.75rem;">${fmt(tOrig)} PLN</td>
-          <td class="text-right" style="font-size: var(--fs-md); color:var(--text-secondary); white-space:nowrap; padding:0.5rem 0.75rem;">${fmt(tSum)} PLN</td>
+          <td class="text-right" style="font-size: var(--fs-md); font-weight: var(--fw-bold); color:var(--success); white-space:nowrap; padding:0.5rem 0.75rem;">${fmt(tSum)} PLN</td>
           <td class="text-right" style="font-size: var(--fs-md); color:${deltaColor}; white-space:nowrap; padding:0.5rem 0.75rem;" title="Różnica: koszt teoretyczny − suma udziałów">${deltaSign}${fmt(tDelta)} PLN</td>
           <td class="text-right pad-sm"></td>
         </tr>`;
