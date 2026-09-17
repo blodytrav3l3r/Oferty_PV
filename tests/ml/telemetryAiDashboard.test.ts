@@ -28,6 +28,34 @@ jest.mock('../../src/middleware/rateLimiters', () => ({
     READ_LIMITER: (_req: any, _res: any, next: any) => next()
 }));
 
+// P0.5 fail-closed: guard czyta flage z DB; bez mocka test zalezy od tego,
+// czy deweloperska baza ma flage ON (lokalnie tak, na CI pusta baza = 503).
+// Mock jak w telemetryAiMl.test.ts — determinystycznie ON, puste dane.
+jest.mock('../../src/prismaClient', () => ({
+    __esModule: true,
+    default: {
+        settings: {
+            findUnique: jest.fn<any>(async ({ where }: any) =>
+                where?.key === 'feature_ai_ml_enabled'
+                    ? { key: 'feature_ai_ml_enabled', value: '"1"' }
+                    : null
+            ),
+            upsert: jest.fn<any>(async () => ({}))
+        },
+        ai_telemetry_logs: {
+            findMany: jest.fn<any>().mockResolvedValue([]),
+            count: jest.fn<any>().mockResolvedValue(0)
+        },
+        ai_transition_snapshots: {
+            findMany: jest.fn<any>().mockResolvedValue([])
+        },
+        ai_knowledge_base: {
+            findMany: jest.fn<any>().mockResolvedValue([]),
+            count: jest.fn<any>().mockResolvedValue(0)
+        }
+    }
+}));
+
 let app: express.Application;
 
 beforeEach(async () => {
