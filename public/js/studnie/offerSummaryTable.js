@@ -387,6 +387,28 @@ function renderOfferSummaryFooter(
         </tr>`;
     }
 
+    // Osobna pozycja w porównaniu zamówienia: wiersz transportu przed RAZEM.
+    // Przy cenie wliczonej transport siedzi w cenach studni — brak wiersza.
+    if (showPriceComparison && separateTransport && transportInfo) {
+        const tOrig = Number(transportInfo.origTotal) || 0;
+        const tSum = Number(transportInfo.sumFrozen) || 0;
+        const tDelta = tSum - tOrig;
+        const deltaColor =
+            Math.abs(tDelta) < 0.005
+                ? 'var(--text-muted)'
+                : tDelta > 0
+                  ? 'var(--success-hover)'
+                  : 'var(--danger-hover)';
+        const deltaSign = tDelta > 0 ? '+' : '';
+        html += `<tr id="offer-transport-row">
+          <td colspan="${baseColspan}" style="font-size: var(--fs-md); color:var(--text-muted); padding:0.5rem 0.5rem; white-space:nowrap;" title="Koszt teoretyczny przy bieżącej masie">Transport bez rozładunku</td>
+          <td class="text-right" style="font-size: var(--fs-md); color:var(--text-secondary); white-space:nowrap; padding:0.5rem 0.75rem;">${fmt(tOrig)} PLN</td>
+          <td class="text-right" style="font-size: var(--fs-md); font-weight: var(--fw-bold); color:var(--success); white-space:nowrap; padding:0.5rem 0.75rem;">${fmt(tSum)} PLN</td>
+          <td class="text-right" style="font-size: var(--fs-md); color:${deltaColor}; white-space:nowrap; padding:0.5rem 0.75rem;">${deltaSign}${fmt(tDelta)} PLN</td>
+          <td class="text-right pad-sm"></td>
+        </tr>`;
+    }
+
     html += `<tr class="border-top-glass2" id="offer-total-row">
           <td colspan="${baseColspan}" style="font-weight: var(--fw-bold); font-size: var(--fs-xl); color:var(--text-primary); padding:1rem 0.5rem; white-space:nowrap;">RAZEM (${count} studni)</td>
           ${totalOfferPriceCell}

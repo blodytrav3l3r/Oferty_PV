@@ -61,13 +61,14 @@ describe('offerTransportRow — brak wiersza przy transporcie wliczonym', () => 
         expect(html).toContain('RAZEM');
     });
 
-    test('porównanie zamówienia, osobna pozycja: brak wiersza, transport w RAZEM', () => {
+    test('porównanie zamówienia, osobna pozycja: wiersz widoczny, transport w RAZEM', () => {
         const html = renderFooter(ctx, {
             showPriceComparison: true,
             transportInfo: { origTotal: 1000, sumFrozen: 3000, theoretical: 3000 },
             separateTransport: true
         });
-        expect(html).not.toContain('offer-transport-row');
+        expect(html).toContain('offer-transport-row');
+        expect(html).toContain('Transport bez rozładunku');
         // dnGroups puste: RAZEM oferty = sam transport oferty, różnica = zam - oferty.
         expect(html).toContain('1 000,00');
         expect(html).toContain('+2 000,00');
