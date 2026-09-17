@@ -4,6 +4,16 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.27.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.26.1...v1.27.0) (2026-09-17)
+
+### Features
+
+- **offers:** transport jako osobna pozycja w rurach i studniach ([05630ea](https://github.com/blodytrav3l3r/Oferty_PV/commit/05630ea9780011f392106f36194e1d6a49e86e9a))
+
+### Bug Fixes
+
+- **studnie:** ghost-draft zamowienia po dodaniu do oferty ([5277fa7](https://github.com/blodytrav3l3r/Oferty_PV/commit/5277fa7f0b9e7671fa864ac295065a61da1f1101)), closes [#52](https://github.com/blodytrav3l3r/Oferty_PV/issues/52)
+
 ### [1.26.1](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.26.0...v1.26.1) (2026-09-16)
 
 ### Features
