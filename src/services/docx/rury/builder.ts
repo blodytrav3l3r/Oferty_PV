@@ -12,6 +12,7 @@ import {
     buildContactSection
 } from './sections';
 import { buildItemsTable, resolveRuryTransport } from './tables';
+import { isRuryTransportSeparateFlag, resolveRuryTransportTotal } from '../../ruryTransport';
 import { buildStaticTerms } from './content';
 
 export function buildRuryDocument(
@@ -138,10 +139,14 @@ export function buildRurySectionChildren(
     // Spacer między infobox a tabelami pozycji
     children.push(new Paragraph({ children: [], spacing: { before: 60, after: 60 } }));
 
-    // 4. Tabele pozycji per kategoria (+ wiersz TR-RURY gdy transport > 0)
+    // 4. Tabele pozycji per kategoria (+ wiersz TR-RURY tylko przy osobnej pozycji)
     const { paragraphs: catParagraphs, grandTotal } = buildItemsTable(
         items,
-        resolveRuryTransport(offerData, items)
+        resolveRuryTransport(offerData, items),
+        {
+            separate: isRuryTransportSeparateFlag(offerData.transportSeparate),
+            distributeTotal: resolveRuryTransportTotal(offerData, items)
+        }
     );
     children.push(...catParagraphs);
 

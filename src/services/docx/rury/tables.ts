@@ -17,6 +17,11 @@ const SZ_RURY_TH = 14; // 7pt
 const SZ_RURY_TB = 16; // 8pt
 const SZ_RURY_PID = 14; // 7pt
 import { fmtCurrency, fmtInt, textCell } from '../helpers';
+import {
+    distributeRuryTransportCost,
+    isRuryTransportSeparateFlag,
+    resolveRuryTransportTotal
+} from '../../ruryTransport';
 
 const CATEGORY_ORDER = [
     'Rury Betonowe',
@@ -47,32 +52,21 @@ function isBosy(item: Record<string, unknown>): boolean {
 
 /**
  * Transport do wiersza TR-RURY: z zapisanych pól oferty, fallback z wagi
- * pozycji (zamówienia nie trzymają licznika). Per-pozycja backend nigdy
- * nie wliczał transportu, więc wiersz nie dubluje.
+ * pozycji (zamówienia nie trzymają licznika). Zwraca zero, gdy transport
+ * jest wliczony w ceny pozycji (wtedy koszt dzieli `distributeTotal`
+ * w `buildItemsTable`, a wiersza brak).
  */
 export function resolveRuryTransport(
     offerData: Record<string, unknown>,
     items: Record<string, unknown>[]
 ): { total: number; trips: number } {
+    if (!isRuryTransportSeparateFlag(offerData.transportSeparate)) return { total: 0, trips: 0 };
+    const total = resolveRuryTransportTotal(offerData, items);
+    if (!(total > 0)) return { total: 0, trips: 0 };
+    const storedTrips = Number(offerData.transportCount ?? 0);
+    if (storedTrips > 0) return { total, trips: Math.round(storedTrips * 100) / 100 };
     const perTrip = Number(offerData.transportCostPerTrip ?? 0);
-    const trips = Number(offerData.transportCount ?? 0);
-    const total = Number(offerData.transportCost ?? 0);
-    if (!(total > 0) && perTrip > 0) {
-        let weight = 0;
-        for (const it of items) {
-            if (it.autoAdded) continue;
-            const w = Number(it.weight ?? 0);
-            const q = Number(it.quantity ?? 0);
-            if (w > 0 && q > 0) weight += w * q;
-        }
-        const mode = String(offerData.transportMode ?? 'full');
-        const fallbackTrips =
-            weight > 0 ? (mode === 'fractional' ? weight / 24000 : Math.ceil(weight / 24000)) : 0;
-        return {
-            total: fallbackTrips * perTrip,
-            trips: Math.round(fallbackTrips * 100) / 100
-        };
-    }
+    const trips = perTrip > 0 ? total / perTrip : 0;
     return { total, trips: Math.round(trips * 100) / 100 };
 }
 
@@ -82,7 +76,8 @@ function getCategory(item: Record<string, unknown>): string {
 
 export function buildItemsTable(
     items: Record<string, unknown>[],
-    transport?: { total: number; trips: number }
+    transport?: { total: number; trips: number },
+    opts?: { separate?: boolean; distributeTotal?: number }
 ): {
     paragraphs: (Paragraph | Table)[];
     grandTotal: number;
@@ -90,6 +85,19 @@ export function buildItemsTable(
     const paragraphs: (Paragraph | Table)[] = [];
     let grandTotal = 0;
     let globalLp = 1;
+
+    // Cena wliczona: koszt dzielony wagowo na pozycje (lustro frontendu),
+    // wiersza TR-RURY brak. Osobna pozycja: koszt tylko wierszem.
+    const separate = !!opts?.separate;
+    const distributeTotal = !separate ? Number(opts?.distributeTotal ?? 0) || 0 : 0;
+    const transportShares =
+        distributeTotal > 0
+            ? distributeRuryTransportCost(items, distributeTotal)
+            : items.map(() => 0);
+    const transportDistributed = transportShares.some((s) => s > 0);
+    const shareByItem = new Map<Record<string, unknown>, number>(
+        items.map((it, i) => [it, transportShares[i] ?? 0])
+    );
 
     // Group by category → diameter
     const groupedByCat: Record<string, Record<string, Record<string, unknown>[]>> = {};
@@ -182,7 +190,11 @@ export function buildItemsTable(
                 const pehdType = String(item.pehdType ?? '');
                 const pehdCost = Number(item.pehdCostPerUnit ?? 0);
                 const surcharge = Number(item.surcharge ?? 0);
-                const itemPrice = unitPrice * (1 - discount / 100) + pehdCost + surcharge;
+                const transportShare = shareByItem.get(item) ?? 0;
+                const transportPerUnit =
+                    transportShare > 0 && quantity > 0 ? transportShare / quantity : 0;
+                const itemPrice =
+                    unitPrice * (1 - discount / 100) + pehdCost + surcharge + transportPerUnit;
                 const netto = itemPrice * quantity;
                 const rowFill = globalLp % 2 !== 0 ? undefined : DOCX_COLORS.rowAlt;
 
@@ -298,13 +310,17 @@ export function buildItemsTable(
         paragraphs.push(new Table({ rows, width: { size: 100, type: WidthType.PERCENTAGE } }));
     }
 
-    // Osobna pozycja transportu (TR-RURY). Per-pozycja backend nigdy nie
-    // wliczał transportu, więc brak ryzyka podwójnego liczenia.
-    const transportTotal = Number(transport?.total ?? 0);
-    if (transportTotal > 0) {
+    // Wiersz TR-RURY tylko przy osobnej pozycji. Przy cenie wliczonej koszt
+    // siedzi w pozycjach; fallback (brak wagi do podziału) pokazuje wiersz,
+    // żeby koszt nie zniknął z dokumentu.
+    let rowTransportTotal = Number(transport?.total ?? 0);
+    if (!(rowTransportTotal > 0) && !separate && distributeTotal > 0 && !transportDistributed) {
+        rowTransportTotal = distributeTotal;
+    }
+    if (rowTransportTotal > 0) {
         const trips = Number(transport?.trips ?? 0);
         const tripsLabel = trips > 0 ? `${trips} kurs.` : `${items.length} poz.`;
-        grandTotal += transportTotal;
+        grandTotal += rowTransportTotal;
         const trRows: TableRow[] = [
             new TableRow({
                 children: [
@@ -317,7 +333,7 @@ export function buildItemsTable(
                         size: SZ_RURY_TB,
                         alignment: AlignmentType.CENTER
                     }),
-                    textCell(`${fmtCurrency(transportTotal)} PLN`, {
+                    textCell(`${fmtCurrency(rowTransportTotal)} PLN`, {
                         bold: true,
                         size: SZ_RURY_TB,
                         alignment: AlignmentType.CENTER

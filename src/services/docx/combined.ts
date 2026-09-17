@@ -24,6 +24,7 @@ import {
 import { buildStaticTerms } from './studnie/content';
 import { buildWellTables } from './studnie/tables';
 import { buildItemsTable, resolveRuryTransport } from './rury/tables';
+import { isRuryTransportSeparateFlag, resolveRuryTransportTotal } from '../ruryTransport';
 import { buildSummarySection as buildRurySummarySection } from './rury/sections';
 import { loadRuryOfferData } from './rury';
 import { loadStudnieOfferData } from './studnie';
@@ -90,12 +91,17 @@ export async function buildCombinedDocument(
         });
         studnieTotal += studnieTransportTotal;
     }
+    const ruryOfferData = rury.offerData as Record<string, unknown>;
     const { paragraphs: ruryParagraphs, grandTotal: ruryTotal } = buildItemsTable(
         ruryCtx.items as Record<string, unknown>[],
-        resolveRuryTransport(
-            rury.offerData as Record<string, unknown>,
-            ruryCtx.items as Record<string, unknown>[]
-        )
+        resolveRuryTransport(ruryOfferData, ruryCtx.items as Record<string, unknown>[]),
+        {
+            separate: isRuryTransportSeparateFlag(ruryOfferData.transportSeparate),
+            distributeTotal: resolveRuryTransportTotal(
+                ruryOfferData,
+                ruryCtx.items as Record<string, unknown>[]
+            )
+        }
     );
 
     const children: (Paragraph | Table)[] = [];

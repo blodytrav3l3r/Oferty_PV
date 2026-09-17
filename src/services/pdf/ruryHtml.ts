@@ -1,6 +1,7 @@
 import path from 'path';
 import { DOCX_COLORS } from '../docx/colors';
 import { escapeHtml, formatDatePL } from './helpers';
+import { distributeRuryTransportCost, isRuryTransportSeparateFlag } from '../ruryTransport';
 import { buildContactSectionHTML } from './offerUsers';
 import type { RuryOfferData } from './types';
 import { loadPdfTemplate } from './templateCache';
@@ -55,6 +56,17 @@ export function buildRurySectionHTML(data: RuryOfferData): {
     };
 
     const items = data.items as Record<string, unknown>[];
+    // Rozliczenie transportu jak na frontendzie: osobna pozycja → wiersz
+    // TR-RURY; cena wliczona → koszt dzielony wagowo na pozycje (brak wiersza).
+    const separateTransport = isRuryTransportSeparateFlag(data.transportSeparate);
+    const transportTotal = Number(data.transportCost ?? 0);
+    const transportShares = separateTransport
+        ? items.map(() => 0)
+        : distributeRuryTransportCost(items, transportTotal);
+    const transportDistributed = transportShares.some((s) => s > 0);
+    const shareByItem = new Map<Record<string, unknown>, number>(
+        items.map((it, i) => [it, transportShares[i] ?? 0])
+    );
     const groupedByCat: Record<string, Record<string, Record<string, unknown>[]>> = {};
     for (const item of items) {
         const cat = getProductCategory(item);
@@ -123,7 +135,11 @@ export function buildRurySectionHTML(data: RuryOfferData): {
                 const pehdType = String(item.pehdType ?? '');
                 const pehdCost = Number(item.pehdCostPerUnit ?? 0);
                 const surcharge = Number(item.surcharge ?? 0);
-                const itemPrice = unitPrice * (1 - discount / 100) + pehdCost + surcharge;
+                const transportShare = shareByItem.get(item) ?? 0;
+                const transportPerUnit =
+                    transportShare > 0 && quantity > 0 ? transportShare / quantity : 0;
+                const itemPrice =
+                    unitPrice * (1 - discount / 100) + pehdCost + surcharge + transportPerUnit;
                 const netto = itemPrice * quantity;
 
                 catTotal += netto;
@@ -154,12 +170,13 @@ export function buildRurySectionHTML(data: RuryOfferData): {
         tabelaPozycji += '</tbody></table></div>';
     }
 
-    // Osobna pozycja transportu (TR-RURY) przed SUMA NETTO.
-    // Per-pozycja backend nigdy nie wliczał transportu, więc brak ryzyka podwójnego liczenia.
-    const transportTotal = Number(data.transportCost ?? 0);
+    // Osobna pozycja transportu (TR-RURY) przed SUMA NETTO. Przy cenie
+    // wliczonej koszt siedzi już w pozycjach (dystrybucja wagowa wyżej),
+    // więc wiersza brak. Fallback (brak wagi do podziału) pokazuje wiersz,
+    // żeby koszt nie zniknął z dokumentu.
     const transportTrips = Number(data.transportCount ?? 0);
     let transportSummaryRow = '';
-    if (transportTotal > 0) {
+    if (transportTotal > 0 && (separateTransport || !transportDistributed)) {
         const tripsLabel = transportTrips > 0 ? `${transportTrips} kurs.` : `${items.length} poz.`;
         transportSummaryRow = `<tr>
         <td class="text-center" style="width:60%;">Transport bez rozładunku — ${tripsLabel}</td>
