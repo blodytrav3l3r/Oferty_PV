@@ -185,7 +185,10 @@ function updateOfferDiscountsPopupPrices() {
             .forEach((w) => {
                 const stats = calcWellStats(w);
                 let transportCost = 0;
-                if (globalWeightForTransport > 0) {
+                // Osobna pozycja: transport poza cenami w popupie rabatów.
+                const separateTransport =
+                    typeof isTransportSeparateRow === 'function' && isTransportSeparateRow(null);
+                if (globalWeightForTransport > 0 && !separateTransport) {
                     transportCost =
                         totalTransportCostForOffer * (stats.weight / globalWeightForTransport);
                 }
@@ -279,7 +282,10 @@ function renderOfferDiscountsPopupContent() {
             .forEach((w) => {
                 const stats = calcWellStats(w);
                 let transportCost = 0;
-                if (globalWeightForTransport > 0) {
+                // Osobna pozycja: transport poza cenami w popupie rabatów.
+                const separateTransport =
+                    typeof isTransportSeparateRow === 'function' && isTransportSeparateRow(null);
+                if (globalWeightForTransport > 0 && !separateTransport) {
                     transportCost =
                         totalTransportCostForOffer * (stats.weight / globalWeightForTransport);
                 }

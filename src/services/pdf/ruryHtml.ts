@@ -154,8 +154,23 @@ export function buildRurySectionHTML(data: RuryOfferData): {
         tabelaPozycji += '</tbody></table></div>';
     }
 
+    // Osobna pozycja transportu (TR-RURY) przed SUMA NETTO.
+    // Per-pozycja backend nigdy nie wliczał transportu, więc brak ryzyka podwójnego liczenia.
+    const transportTotal = Number(data.transportCost ?? 0);
+    const transportTrips = Number(data.transportCount ?? 0);
+    let transportSummaryRow = '';
+    if (transportTotal > 0) {
+        const tripsLabel = transportTrips > 0 ? `${transportTrips} kurs.` : `${items.length} poz.`;
+        transportSummaryRow = `<tr>
+        <td class="text-center" style="width:60%;">Transport bez rozładunku — ${tripsLabel}</td>
+        <td class="text-center" style="width:40%;">${formatCurrency(transportTotal)} PLN</td>
+      </tr>`;
+        grandTotalNet += transportTotal;
+    }
+
     const podsumowanie = `<div class="summary-section">
     <table class="summary-table">
+      ${transportSummaryRow}
       <tr class="grand-total">
         <td class="text-center" style="width:60%;">SUMA NETTO</td>
         <td class="text-center" style="width:40%;">${formatCurrency(grandTotalNet)} PLN</td>

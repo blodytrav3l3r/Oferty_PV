@@ -9,7 +9,8 @@ const CENNIK_TAB_FILTERS = {
     dennicy: (p) => p.componentType === 'dennica',
     akcesoria: (p) => p.category === 'Akcesoria studni' || p.category === 'Uszczelki studni',
     przejscia: (p) => p.componentType === 'przejscie',
-    kinety: (p) => p.componentType === 'kineta' || (p.category && p.category.startsWith('Kinety'))
+    kinety: (p) => p.componentType === 'kineta' || (p.category && p.category.startsWith('Kinety')),
+    transport: (p) => p.category === 'Transport'
 };
 
 let _studniePricelistDirty = false; // eslint-disable-line prefer-const -- mutowany cross-file (pricelistCellEdit, pricelistCategory itd.)

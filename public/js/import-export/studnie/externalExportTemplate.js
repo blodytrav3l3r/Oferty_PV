@@ -66,6 +66,35 @@ window.StudnieExternalExportTemplate = {
         return rows;
     },
 
+    /**
+     * Wiersz osobnej pozycji transportu (TR-STUDNIE) — tylko gdy flaga
+     * transportSeparate na ofercie/zamówieniu. Suma z transportCost wpisów
+     * eksportowych (ceny _xp transportu nie zawierają).
+     */
+    _transportRow(data, offerNumber, lp) {
+        const wells = data.wellsExport || data.wells || [];
+        const total = wells.reduce((s, w) => s + (Number(w.transportCost) || 0), 0);
+        if (!data.transportSeparate || !(total > 0)) return null;
+        const km = Number(data.transportKm) || 0;
+        const rate = Number(data.transportRate) || 0;
+        const perTrip = km * rate;
+        const trips = perTrip > 0 ? Math.round((total / perTrip) * 100) / 100 : 0;
+        return {
+            NUMER_OFERTY: offerNumber,
+            NR_STUDNI: '',
+            GLEBOKOSC: '',
+            INDEKS_CZESCI: 'TR-STUDNIE',
+            ILOSC: trips,
+            CENA_JEDNOSTKOWA: perTrip,
+            WERSJA: 1,
+            RABAT: '',
+            SREDNICA: '',
+            ZAKONCZENIE: '',
+            MAGAZYN: '',
+            LP: lp
+        };
+    },
+
     async _ensureProductCatalog() {
         if (typeof studnieProducts === 'undefined') {
             try {
@@ -111,7 +140,10 @@ window.StudnieExternalExportTemplate = {
             if (offer.type !== 'studnia_oferta') continue;
             const data = offer.data || offer;
             const offerNumber = offer.offer_number || offer.number || '';
+            const before = rows.length;
             rows.push(...this._wellRows(data, offerNumber));
+            const trRow = this._transportRow(data, offerNumber, rows.length - before + 1);
+            if (trRow) rows.push(trRow);
         }
 
         if (!rows.length) {
@@ -136,6 +168,8 @@ window.StudnieExternalExportTemplate = {
         const offerNumber =
             orderData.orderNumber || orderData.offer_number || orderData.number || '';
         const rows = this._wellRows(data, offerNumber);
+        const trRow = this._transportRow(data, offerNumber, rows.length + 1);
+        if (trRow) rows.push(trRow);
 
         if (!rows.length) {
             await appAlert('Brak pozycji do eksportu dla wybranego zamówienia.', {

@@ -11,7 +11,8 @@ const CATEGORIES = [
     'Rury Jajowe Betonowe',
     'Rury Jajowe Żelbetowe',
     'Uszczelki',
-    'Zabezpieczenie transportu'
+    'Zabezpieczenie transportu',
+    'Transport'
 ];
 
 const GASKET_MAP = {

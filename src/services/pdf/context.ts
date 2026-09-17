@@ -79,6 +79,13 @@ export async function buildRuryOfferContextFromOfferId(offerId: string): Promise
         investAddress: String(offerData.investAddress ?? ''),
         investContractor: String(offerData.investContractor ?? ''),
         items: withCategories,
+        transportSeparate: !!offerData.transportSeparate,
+        transportMode: String(offerData.transportMode ?? 'full'),
+        transportKm: Number(offerData.transportKm ?? 0),
+        transportRate: Number(offerData.transportRate ?? 0),
+        transportCount: Number(offerData.transportCount ?? 0),
+        transportCostPerTrip: Number(offerData.transportCostPerTrip ?? 0),
+        transportCost: Number(offerData.transportCost ?? 0),
         createdAt: String(offerData.date ?? offer.createdAt ?? new Date().toISOString()),
         validityDays: Number(offerData.validityDays ?? 30),
         notes: String(offerData.notes ?? ''),
@@ -122,6 +129,27 @@ export async function buildRuryOrderContextFromOrderId(orderId: string): Promise
     const { authorUser, guardianUser } = await lookupOfferUsers(orderData, order.userId);
 
     const orderNumber = String(orderData.orderNumber ?? orderId.substring(0, 8));
+    // Transport zamówienia rur: fallback z wagi pozycji (zamówienia nie trzymają licznika).
+    const orderKm = Number(orderData.transportKm ?? 0);
+    const orderRate = Number(orderData.transportRate ?? 0);
+    const orderMode = String(orderData.transportMode ?? 'full');
+    const orderPerTrip = orderKm * orderRate;
+    let orderWeight = 0;
+    if (orderPerTrip > 0) {
+        for (const it of items) {
+            const r = it as Record<string, unknown>;
+            if (r.autoAdded) continue;
+            const w = Number(r.weight ?? 0);
+            const q = Number(r.quantity ?? 0);
+            if (w > 0 && q > 0) orderWeight += w * q;
+        }
+    }
+    const orderTrips =
+        orderPerTrip > 0 && orderWeight > 0
+            ? orderMode === 'fractional'
+                ? orderWeight / MAX_TRANSPORT_WEIGHT
+                : Math.ceil(orderWeight / MAX_TRANSPORT_WEIGHT)
+            : 0;
     return {
         documentType: 'order',
         offerNumber: orderNumber,
@@ -142,6 +170,13 @@ export async function buildRuryOrderContextFromOrderId(orderId: string): Promise
         investAddress: String(orderData.investAddress ?? ''),
         investContractor: String(orderData.investContractor ?? ''),
         items,
+        transportSeparate: !!orderData.transportSeparate,
+        transportMode: orderMode,
+        transportKm: orderKm,
+        transportRate: orderRate,
+        transportCount: orderTrips,
+        transportCostPerTrip: orderPerTrip,
+        transportCost: orderTrips * orderPerTrip,
         createdAt: String(orderData.date ?? order.createdAt ?? new Date().toISOString()),
         validityDays: 0,
         notes: String(orderData.notes ?? ''),
@@ -193,7 +228,11 @@ export async function buildStudnieOfferContextFromOfferId(
         totalTransportCost = totalTransports * transportKm * transportRate;
     }
 
-    const { items, grandTotal } = mapWellsToItems(wells);
+    const separateTransport =
+        offerData.transportSeparate === true ||
+        offerData.transportSeparate === 1 ||
+        offerData.transportSeparate === '1';
+    const { items, grandTotal } = mapWellsToItems(wells, separateTransport);
 
     logger.debug('PdfStudnie', `Przygotowano ${items.length} items, grandTotal: ${grandTotal}`);
 
@@ -228,6 +267,9 @@ export async function buildStudnieOfferContextFromOfferId(
         investContractor: String(offerData.investContractor ?? ''),
         items: items as StudnieOfferData['items'],
         transportCost: totalTransportCost,
+        transportSeparate: separateTransport,
+        transportKm,
+        transportRate,
         createdAt: String(offerData.date ?? offer.createdAt ?? new Date().toISOString()),
         validityDays: Number(offerData.validityDays ?? 30),
         notes: String(offerData.notes ?? ''),
@@ -279,7 +321,11 @@ export async function buildStudnieOrderContextFromOrderId(
             ? Math.ceil(totalWeight / MAX_TRANSPORT_WEIGHT) * transportKm * transportRate
             : 0;
 
-    const { items } = mapWellsToItems(wells);
+    const separateTransport =
+        orderData.transportSeparate === true ||
+        orderData.transportSeparate === 1 ||
+        orderData.transportSeparate === '1';
+    const { items } = mapWellsToItems(wells, separateTransport);
     const wellUwagi = (wells as Array<Record<string, unknown>>)
         .filter((w) => w.uwagi && String(w.uwagi).trim())
         .map((w) => ({
@@ -316,6 +362,9 @@ export async function buildStudnieOrderContextFromOrderId(
         investContractor: String(orderData.investContractor ?? ''),
         items: items as StudnieOfferData['items'],
         transportCost: totalTransportCost,
+        transportSeparate: separateTransport,
+        transportKm,
+        transportRate,
         createdAt: String(orderData.date ?? order.createdAt ?? new Date().toISOString()),
         validityDays: 0,
         notes: String(orderData.notes ?? ''),

@@ -153,11 +153,35 @@ export function buildStudnieSectionChildren(
     );
 
     // 4. Tabele studni per DN
-    const { paragraphs: dnParagraphs, summaries, grandTotal } = buildWellTables(wells);
+    const separateTransport =
+        offerData.transportSeparate === true ||
+        offerData.transportSeparate === 1 ||
+        offerData.transportSeparate === '1';
+    const {
+        paragraphs: dnParagraphs,
+        summaries,
+        grandTotal,
+        transportTotal
+    } = buildWellTables(wells, separateTransport);
     children.push(...dnParagraphs);
 
+    // 4b. Osobna pozycja transportu (TR-STUDNIE) przed podsumowaniem
+    let grand = grandTotal;
+    if (separateTransport && transportTotal > 0) {
+        const km = Number(offerData.transportKm) || 0;
+        const rate = Number(offerData.transportRate) || 0;
+        const perTrip = km * rate;
+        const trips = perTrip > 0 ? Math.round((transportTotal / perTrip) * 100) / 100 : 0;
+        summaries.push({
+            label: 'Transport bez rozładunku',
+            count: trips,
+            totalPrice: transportTotal
+        });
+        grand += transportTotal;
+    }
+
     // 5. Podsumowanie
-    children.push(...buildSummarySection(summaries, grandTotal));
+    children.push(...buildSummarySection(summaries, grand));
 
     // 6. Uwagi
     if (notes) {

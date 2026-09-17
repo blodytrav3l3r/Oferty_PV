@@ -167,6 +167,46 @@
                 </button>
             </div>
             <div
+                style="
+                    margin-top: 0.6rem;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 0.6rem;
+                "
+            >
+                <label
+                    style="
+                        font-size: var(--fs-xs);
+                        color: var(--text-muted);
+                        font-weight: var(--fw-semibold);
+                    "
+                    >Rozliczenie transportu:</label
+                >
+                <button
+                    type="button"
+                    id="rury-transport-separate-btn"
+                    onclick="toggleRuryTransportSeparate()"
+                    style="
+                        display: inline-flex;
+                        align-items: center;
+                        gap: 0.35rem;
+                        padding: 0.3rem 0.7rem;
+                        border-radius: var(--radius-sm);
+                        border: 1px solid var(--border-glass);
+                        background: rgba(var(--black-rgb), 0.2);
+                        color: var(--text-heading);
+                        font-size: var(--fs-sm);
+                        font-weight: var(--fw-bold);
+                        cursor: pointer;
+                        transition: all 0.15s;
+                    "
+                >
+                    <i data-lucide="package" style="width: 12px; height: 12px"></i>
+                    <span id="rury-transport-separate-label">W cenie elementów</span>
+                </button>
+            </div>
+            <div
                 id="rury-transport-modal-trips-info"
                 style="
                     margin-top: 1rem;

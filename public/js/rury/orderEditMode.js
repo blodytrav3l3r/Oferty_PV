@@ -57,6 +57,7 @@ async function enterRuryOrderEditMode(orderId) {
         setVal('transport-km', orderData.transportKm);
         setVal('transport-rate', orderData.transportRate);
         currentRuryTransportMode = orderData.transportMode || 'fractional';
+        currentRuryTransportSeparate = !!orderData.transportSeparate;
         window.zabezpieczenieTransportuEnabled =
             orderData.zabezpieczenieTransportuEnabled !== undefined
                 ? !!orderData.zabezpieczenieTransportuEnabled
@@ -122,7 +123,8 @@ function renderOrderModeBanner(orderData) {
         items: orderCurrentItems || orderData.items,
         transportKm: Number(document.getElementById('transport-km')?.value || 0),
         transportRate: Number(document.getElementById('transport-rate')?.value || 0),
-        transportMode: currentRuryTransportMode || 'full'
+        transportMode: currentRuryTransportMode || 'full',
+        transportSeparate: !!currentRuryTransportSeparate
     });
     const changeCount = Object.keys(changes.items).filter(
         (k) => changes.items[k].type === 'modified'
@@ -224,22 +226,28 @@ function getRuryOrderChanges(order) {
     const curKm = Number(document.getElementById('transport-km')?.value || 0);
     const curRate = Number(document.getElementById('transport-rate')?.value || 0);
     const curMode = currentRuryTransportMode || 'full';
+    const curSeparate = !!currentRuryTransportSeparate;
 
     const origKm = snap.transportKm;
     const origRate = snap.transportRate;
     const origMode = snap.transportMode || 'full';
+    const origSeparate = !!snap.transportSeparate;
     result.transportChanged =
         Math.abs((curKm || 0) - (origKm || 0)) > 0.01 ||
         Math.abs((curRate || 0) - (origRate || 0)) > 0.01 ||
-        curMode !== origMode;
+        curMode !== origMode ||
+        curSeparate !== origSeparate;
 
     let origTransportDist = {};
     if (typeof calculateTransportDistribution === 'function' && snapItems.length > 0) {
         const savedMode = currentRuryTransportMode;
+        const savedSeparate = currentRuryTransportSeparate;
         currentRuryTransportMode = origMode;
+        currentRuryTransportSeparate = origSeparate;
         const origCostPerTrip = (origKm || 0) * (origRate || 0);
         origTransportDist = calculateTransportDistribution(snapItems, origCostPerTrip);
         currentRuryTransportMode = savedMode;
+        currentRuryTransportSeparate = savedSeparate;
     }
     const curTransportDist =
         typeof calculateTransportDistribution === 'function' && curItems.length > 0

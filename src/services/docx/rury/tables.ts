@@ -45,11 +45,45 @@ function isBosy(item: Record<string, unknown>): boolean {
     return name.includes('bosy') || id.endsWith('-B00');
 }
 
+/**
+ * Transport do wiersza TR-RURY: z zapisanych pól oferty, fallback z wagi
+ * pozycji (zamówienia nie trzymają licznika). Per-pozycja backend nigdy
+ * nie wliczał transportu, więc wiersz nie dubluje.
+ */
+export function resolveRuryTransport(
+    offerData: Record<string, unknown>,
+    items: Record<string, unknown>[]
+): { total: number; trips: number } {
+    const perTrip = Number(offerData.transportCostPerTrip ?? 0);
+    const trips = Number(offerData.transportCount ?? 0);
+    const total = Number(offerData.transportCost ?? 0);
+    if (!(total > 0) && perTrip > 0) {
+        let weight = 0;
+        for (const it of items) {
+            if (it.autoAdded) continue;
+            const w = Number(it.weight ?? 0);
+            const q = Number(it.quantity ?? 0);
+            if (w > 0 && q > 0) weight += w * q;
+        }
+        const mode = String(offerData.transportMode ?? 'full');
+        const fallbackTrips =
+            weight > 0 ? (mode === 'fractional' ? weight / 24000 : Math.ceil(weight / 24000)) : 0;
+        return {
+            total: fallbackTrips * perTrip,
+            trips: Math.round(fallbackTrips * 100) / 100
+        };
+    }
+    return { total, trips: Math.round(trips * 100) / 100 };
+}
+
 function getCategory(item: Record<string, unknown>): string {
     return String(item.category ?? 'Inne');
 }
 
-export function buildItemsTable(items: Record<string, unknown>[]): {
+export function buildItemsTable(
+    items: Record<string, unknown>[],
+    transport?: { total: number; trips: number }
+): {
     paragraphs: (Paragraph | Table)[];
     grandTotal: number;
 } {
@@ -262,6 +296,38 @@ export function buildItemsTable(items: Record<string, unknown>[]): {
         );
 
         paragraphs.push(new Table({ rows, width: { size: 100, type: WidthType.PERCENTAGE } }));
+    }
+
+    // Osobna pozycja transportu (TR-RURY). Per-pozycja backend nigdy nie
+    // wliczał transportu, więc brak ryzyka podwójnego liczenia.
+    const transportTotal = Number(transport?.total ?? 0);
+    if (transportTotal > 0) {
+        const trips = Number(transport?.trips ?? 0);
+        const tripsLabel = trips > 0 ? `${trips} kurs.` : `${items.length} poz.`;
+        grandTotal += transportTotal;
+        const trRows: TableRow[] = [
+            new TableRow({
+                children: [
+                    textCell('Transport bez rozładunku', {
+                        bold: true,
+                        size: SZ_RURY_TB,
+                        alignment: AlignmentType.CENTER
+                    }),
+                    textCell(tripsLabel, {
+                        size: SZ_RURY_TB,
+                        alignment: AlignmentType.CENTER
+                    }),
+                    textCell(`${fmtCurrency(transportTotal)} PLN`, {
+                        bold: true,
+                        size: SZ_RURY_TB,
+                        alignment: AlignmentType.CENTER
+                    })
+                ]
+            })
+        ];
+        paragraphs.push(
+            new Table({ rows: trRows, width: { size: 100, type: WidthType.PERCENTAGE } })
+        );
     }
 
     return { paragraphs, grandTotal };

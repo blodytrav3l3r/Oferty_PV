@@ -155,6 +155,13 @@ export async function generateRuryOrderDOCX(orderId: string): Promise<Buffer> {
             notes: ctx.notes,
             paymentTerms: ctx.paymentTerms,
             orderNumber: ctx.orderNumber,
+            transportSeparate: ctx.transportSeparate,
+            transportMode: ctx.transportMode,
+            transportKm: ctx.transportKm,
+            transportRate: ctx.transportRate,
+            transportCount: ctx.transportCount,
+            transportCostPerTrip: ctx.transportCostPerTrip,
+            transportCost: ctx.transportCost,
             productionOrderNumber: ctx.productionOrderNumber
         },
         client,

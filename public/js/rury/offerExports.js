@@ -81,7 +81,12 @@ function exportOfferPDF(id) {
                   .reduce((s, i) => s + i.weight * i.quantity, 0) / MAX_TRANSPORT_WEIGHT
             : transportResult.totalTransports;
     const transportCost = exportTransports * costPerTrip;
-    const transportDist = calculateTransportDistributionStandalone(offer.items, costPerTrip);
+    const transportDist =
+        typeof withOfferTransportFlags === 'function'
+            ? withOfferTransportFlags(offer, () =>
+                  calculateTransportDistributionStandalone(offer.items, costPerTrip)
+              )
+            : calculateTransportDistributionStandalone(offer.items, costPerTrip);
 
     offer.items.forEach((item) => {
         const priceAfterDiscount = item.unitPrice * (1 - item.discount / 100);
@@ -89,6 +94,8 @@ function exportOfferPDF(id) {
         totalNetto += (priceAfterDiscount + transportPerUnit) * item.quantity;
         totalWeight += (item.weight || 0) * item.quantity;
     });
+    // Osobna pozycja: koszt nie siedzi w cenach jednostkowych — dolicz raz do sumy.
+    if (offer.transportSeparate) totalNetto += transportCost;
 
     const totalVat = totalNetto * 0.23;
     const totalBrutto = totalNetto + totalVat;
@@ -435,7 +442,12 @@ async function exportOfferXlsx(id) {
 
     const costPerTrip = offer.transportCostPerTrip || 0;
     const transportResult = calculateTransports(offer.items);
-    const transportDist = calculateTransportDistributionStandalone(offer.items, costPerTrip);
+    const transportDist =
+        typeof withOfferTransportFlags === 'function'
+            ? withOfferTransportFlags(offer, () =>
+                  calculateTransportDistributionStandalone(offer.items, costPerTrip)
+              )
+            : calculateTransportDistributionStandalone(offer.items, costPerTrip);
     const xlsxMode = offer.transportMode || 'full';
     const xlsxTransports =
         xlsxMode === 'fractional'
@@ -590,10 +602,19 @@ function importOfferFromXlsx() {
                     const transportRate = parseFloat(meta.transportRate) || 0;
                     const transportCostPerTrip = transportKm * transportRate;
                     const transportResult = calculateTransports(items);
-                    const transportDist = calculateTransportDistributionStandalone(
-                        items,
-                        transportCostPerTrip
-                    );
+                    const importFlags = {
+                        transportMode: meta.transportMode || 'full',
+                        transportSeparate: String(meta.transportSeparate) === '1'
+                    };
+                    const transportDist =
+                        typeof withOfferTransportFlags === 'function'
+                            ? withOfferTransportFlags(importFlags, () =>
+                                  calculateTransportDistributionStandalone(
+                                      items,
+                                      transportCostPerTrip
+                                  )
+                              )
+                            : calculateTransportDistributionStandalone(items, transportCostPerTrip);
 
                     let totalNetto = 0;
                     items.forEach((item) => {
@@ -601,6 +622,9 @@ function importOfferFromXlsx() {
                         const tpu = transportDist[item.productId] || 0;
                         totalNetto += (priceAfterDiscount + tpu) * item.quantity;
                     });
+                    // Osobna pozycja: koszt nie siedzi w cenach jednostkowych.
+                    if (importFlags.transportSeparate)
+                        totalNetto += transportResult.totalTransports * transportCostPerTrip;
 
                     const offer = {
                         id: meta.offerId || 'offer_' + Date.now(),
@@ -620,6 +644,8 @@ function importOfferFromXlsx() {
                         items,
                         transportKm,
                         transportRate,
+                        transportMode: importFlags.transportMode,
+                        transportSeparate: importFlags.transportSeparate,
                         transportCostPerTrip,
                         transportCount: transportResult.totalTransports,
                         transportCost: transportResult.totalTransports * transportCostPerTrip,

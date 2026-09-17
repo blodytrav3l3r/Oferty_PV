@@ -58,6 +58,8 @@ async function saveOffer() {
         const transportPerUnit = transportDist[item.productId] || 0;
         totalNetto += (priceAfterDiscount + transportPerUnit) * item.quantity;
     });
+    // Osobna pozycja: koszt nie siedzi w cenach jednostkowych — dolicz raz do sumy.
+    if (currentRuryTransportSeparate) totalNetto += transportCost;
 
     const assignedUserRes = await assignOfferSupervisor(
         currentUser,
@@ -112,6 +114,7 @@ async function saveOffer() {
         items: structuredClone(currentOfferItems),
         transportCostPerTrip: transportCostPerTrip,
         transportMode: currentRuryTransportMode || 'full',
+        transportSeparate: !!currentRuryTransportSeparate,
         transportCount: transportResult.totalTransports,
         transportCost: transportCost,
         zabezpieczenieTransportuEnabled: !!window.zabezpieczenieTransportuEnabled,
@@ -307,6 +310,7 @@ async function loadOffer(id) {
         transportRate: normalized.transportRate
     });
     currentRuryTransportMode = normalized.transportMode || 'full';
+    currentRuryTransportSeparate = !!normalized.transportSeparate;
     currentOfferItems = structuredClone(normalized.items || []);
 
     // Backfill uid dla starych itemów (flagi 'ordered' nie przechowujemy — obliczamy z ordersRury)

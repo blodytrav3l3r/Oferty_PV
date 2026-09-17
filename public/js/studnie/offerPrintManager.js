@@ -73,7 +73,12 @@ function calculateWellTransportMap(wellsList) {
     wellsList.forEach((w) => {
         const wWeight = calcWellStats(w).weight;
         let share = globalWeight > 0 ? totalTransportCost * (wWeight / globalWeight) : 0;
-        if (
+        // Osobna pozycja: koszt nie wchodzi w ceny studni (wiersz TR-STUDNIE).
+        const separate =
+            typeof isTransportSeparateRow === 'function' && isTransportSeparateRow(null);
+        if (separate) {
+            share = 0;
+        } else if (
             typeof orderEditMode !== 'undefined' &&
             orderEditMode &&
             w &&
@@ -118,7 +123,7 @@ async function generateOfferHtml() {
         '';
 
     // Transport
-    const { map: transportMap } = calculateWellTransportMap(wells);
+    const { map: transportMap, totalTransportCost } = calculateWellTransportMap(wells);
 
     // Grupy po średnicach
     const groups = groupWellsByDiameter(wells);
@@ -138,8 +143,14 @@ async function generateOfferHtml() {
     // Suma netto (produkty + transport wliczony do cen studni)
     const totalNettoAll = summaries.reduce((s, x) => s + x.totalPrice, 0);
 
-    // Podsumowanie
-    const summaryHtml = buildOfferSummaryHtml(summaries, totalNettoAll);
+    // Podsumowanie (osobna pozycja transportu jako wiersz przed RAZEM)
+    const separatePrint =
+        typeof isTransportSeparateRow === 'function' && isTransportSeparateRow(null);
+    const summaryHtml = buildOfferSummaryHtml(
+        summaries,
+        totalNettoAll,
+        separatePrint && totalTransportCost > 0 ? { total: totalTransportCost } : null
+    );
 
     // Uwagi / warunki
     const notesHtml = buildOfferNotesHtml(notes, paymentTerms, validity, wells);

@@ -35,8 +35,10 @@ window.updateTransportCostSummary = function () {
 };
 
 // Eksport dla UI HTML - Modal Transportowy (studnie.html)
-const initialTransportSnapshot = { km: 0, rate: 0 };
+const initialTransportSnapshot = { km: 0, rate: 0, separate: false };
 let currentTransportMode = 'full';
+// Rozliczenie transportu: false = wliczony w ceny pozycji, true = osobna pozycja (TR-STUDNIE).
+let currentTransportSeparate = false;
 
 window.toggleTransportMode = function () {
     currentTransportMode = currentTransportMode === 'full' ? 'fractional' : 'full';
@@ -45,6 +47,30 @@ window.toggleTransportMode = function () {
     if (typeof window.updateModalTransportDetails === 'function')
         window.updateModalTransportDetails();
 };
+
+/** Przełącznik rozliczenia transportu: w cenie elementów / osobna pozycja. */
+window.toggleTransportSeparate = function () {
+    currentTransportSeparate = !currentTransportSeparate;
+    const label = document.getElementById('transport-separate-label');
+    if (label)
+        label.textContent = currentTransportSeparate ? 'Osobna pozycja' : 'W cenie elementów';
+    if (typeof window.updateModalTransportDetails === 'function')
+        window.updateModalTransportDetails();
+    if (typeof renderOfferSummary === 'function') renderOfferSummary();
+};
+
+/** Czy transport rozliczany jest jako osobna pozycja (TR-STUDNIE). */
+function isTransportSeparateRow(order) {
+    if (order && order.transportSeparate != null) return !!order.transportSeparate;
+    if (
+        typeof orderEditMode !== 'undefined' &&
+        orderEditMode &&
+        /** @type {any} */ (orderEditMode).order &&
+        /** @type {any} */ (orderEditMode).order.transportSeparate != null
+    )
+        return !!(/** @type {any} */ (orderEditMode).order.transportSeparate);
+    return !!currentTransportSeparate;
+}
 
 window.updateModalTransportDetails = function () {
     const modalKm = parseFloat(document.getElementById('transport-modal-km')?.value) || 0;
@@ -117,6 +143,10 @@ window.openTransportPopup = function () {
     ) {
         currentTransportMode =
             /** @type {any} */ (orderEditMode).order.transportMode || 'fractional';
+        if (/** @type {any} */ (orderEditMode).order.transportSeparate != null)
+            currentTransportSeparate = !!(
+                /** @type {any} */ (orderEditMode).order.transportSeparate
+            );
     } else if (typeof editingOfferIdStudnie !== 'undefined' && editingOfferIdStudnie) {
         const offer =
             typeof offersStudnie !== 'undefined'
@@ -125,14 +155,22 @@ window.openTransportPopup = function () {
                     : offersStudnie.find((o) => o.id === editingOfferIdStudnie)
                 : null;
         currentTransportMode = (offer && offer.transportMode) || 'full';
+        if (offer && offer.transportSeparate != null)
+            currentTransportSeparate = !!offer.transportSeparate;
     }
     const modeLabel = document.getElementById('transport-mode-label');
     if (modeLabel)
         modeLabel.textContent = currentTransportMode === 'full' ? 'Pełne' : 'Rzeczywiste';
+    const separateLabel = document.getElementById('transport-separate-label');
+    if (separateLabel)
+        separateLabel.textContent = currentTransportSeparate
+            ? 'Osobna pozycja'
+            : 'W cenie elementów';
 
     // Zapisujemy migawkę (snapshot) by umożliwić wyjście bez ewentualnej zmiany
     initialTransportSnapshot.km = parseFloat(kmInput?.value) || 0;
     initialTransportSnapshot.rate = parseFloat(rateInput?.value) || 0;
+    initialTransportSnapshot.separate = !!currentTransportSeparate;
 
     if (kmInput && modalKm) modalKm.value = kmInput.value || '0';
     if (rateInput && modalRate) modalRate.value = rateInput.value || '0';
@@ -152,8 +190,13 @@ window.handleOfferTransportCancel = async function () {
     };
     const modalKm = parseFloat(document.getElementById('transport-modal-km')?.value) || 0;
     const modalRate = parseFloat(document.getElementById('transport-modal-rate')?.value) || 0;
+    const separateChanged = !!currentTransportSeparate !== !!initialTransportSnapshot.separate;
 
-    if (modalKm !== initialTransportSnapshot.km || modalRate !== initialTransportSnapshot.rate) {
+    if (
+        modalKm !== initialTransportSnapshot.km ||
+        modalRate !== initialTransportSnapshot.rate ||
+        separateChanged
+    ) {
         if (typeof window.appConfirm === 'function') {
             const confirmed = await window.appConfirm(
                 `<div class="fs-3xl-eb">Wyjdź bez zapisywania</div>
@@ -166,6 +209,7 @@ window.handleOfferTransportCancel = async function () {
                 const rateInput = document.getElementById('transport-rate');
                 if (kmInput) kmInput.value = String(initialTransportSnapshot.km);
                 if (rateInput) rateInput.value = String(initialTransportSnapshot.rate);
+                currentTransportSeparate = !!initialTransportSnapshot.separate;
 
                 const inOrderMode = typeof orderEditMode !== 'undefined' && orderEditMode;
                 if (inOrderMode) {
@@ -241,3 +285,6 @@ window.syncTransportFromModal = function () {
     if (typeof window.updateModalTransportDetails === 'function')
         window.updateModalTransportDetails();
 };
+
+/* ===== Rejestracja globali ===== */
+window.isTransportSeparateRow = isTransportSeparateRow;

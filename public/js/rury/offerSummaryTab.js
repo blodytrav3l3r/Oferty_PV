@@ -99,9 +99,12 @@ function renderOfferSummaryTableTab(transportResult, costPerTrip) {
             typeof calculateTransportDistribution === 'function'
         ) {
             const savedMode = currentRuryTransportMode;
+            const savedSeparate = currentRuryTransportSeparate;
             currentRuryTransportMode = snapMode;
+            currentRuryTransportSeparate = !!snap.transportSeparate;
             snapTransportDist = calculateTransportDistribution(snapItems, snapCostPerTrip);
             currentRuryTransportMode = savedMode;
+            currentRuryTransportSeparate = savedSeparate;
         }
     }
 
@@ -299,6 +302,51 @@ function renderOfferSummaryTableTab(transportResult, costPerTrip) {
     });
 
     html += `</tbody>`;
+
+    // Osobna pozycja transportu (TR-RURY): koszt nie siedzi w cenach jednostkowych.
+    const separateTransport =
+        typeof window.isRuryTransportSeparate === 'function' && window.isRuryTransportSeparate();
+    if (separateTransport) {
+        const sepTrips = transportResult.totalTransports || 0;
+        const sepTotal = sepTrips * (costPerTrip || 0);
+        if (sepTotal > 0) {
+            const tripsLabel =
+                typeof formatTransportCount === 'function'
+                    ? formatTransportCount(sepTrips, currentRuryTransportMode)
+                    : sepTrips;
+            let sepOfferCell = '';
+            let sepDiffCell = '';
+            if (showPriceComparison) {
+                const snapTransport = Number(orderData.originalSnapshot.transportCost) || 0;
+                const sepDiff = sepTotal - snapTransport;
+                const sepDiffSign = sepDiff >= 0 ? '+' : '';
+                const sepDiffColor =
+                    sepDiff > 0
+                        ? 'var(--danger-hover)'
+                        : sepDiff < 0
+                          ? 'var(--success-hover)'
+                          : 'var(--text-muted)';
+                sepOfferCell = `<td style="text-align:right;font-weight: var(--fw-semibold);color:var(--text-secondary);white-space:nowrap;padding:0.5rem 0.75rem;">${fmt(snapTransport)} PLN</td>`;
+                sepDiffCell = `<td style="text-align:right;font-weight: var(--fw-bold);color:${sepDiffColor};white-space:nowrap;padding:0.5rem 0.75rem;">${sepDiffSign}${fmt(sepDiff)} PLN</td>`;
+                totalOffer += snapTransport;
+            }
+            totalNetto += sepTotal;
+            html += `<tbody><tr style="border-bottom:1px solid var(--border-glass); background:rgba(var(--warn-rgb), 0.05);">
+                <td></td>
+                <td style="text-align:center; color:var(--text-muted); font-weight: var(--fw-semibold); white-space:nowrap;">—</td>
+                <td style="font-weight: var(--fw-semibold); color:var(--text-primary); max-width: 320px; overflow-wrap:break-word;">Transport bez rozładunku <span class="tag-warn-solid">${escapeHtml(String(tripsLabel))} × ${fmt(costPerTrip)} PLN</span></td>
+                <td class="text-secondary-nowrap">${fmt(costPerTrip)}</td>
+                <td class="text-secondary-nowrap">—</td>
+                <td class="text-secondary-nowrap">${fmt(costPerTrip)}</td>
+                <td style="text-align:right; color:var(--warn); white-space:nowrap;">—</td>
+                <td style="text-align:right; color:var(--text-primary); font-weight: var(--fw-semibold); white-space:nowrap;">${fmt(costPerTrip)}</td>
+                <td style="text-align:center; font-weight: var(--fw-semibold); white-space:nowrap;">${escapeHtml(String(tripsLabel))}</td>
+                <td class="text-center"><span class="order-qty-all">&mdash;</span></td>
+                <td style="text-align:right; font-weight: var(--fw-bold); color:var(--success); white-space:nowrap;">${fmt(sepTotal)} PLN</td>
+                ${sepOfferCell}${sepDiffCell}
+            </tr></tbody>`;
+        }
+    }
 
     if (showPriceComparison && Object.keys(catGroups).length > 0) {
         const sortedCats = Object.keys(catGroups).sort((a, b) => {

@@ -27,7 +27,7 @@ function toggleCatalog() {
 
 function renderCatalogTabs() {
     const container = document.getElementById('catalog-tabs');
-    const hiddenCategories = ['Akcesoria PEHD', 'Zabezpieczenie transportu'];
+    const hiddenCategories = ['Akcesoria PEHD', 'Zabezpieczenie transportu', 'Transport'];
     container.innerHTML = CATEGORIES.filter((cat) => !hiddenCategories.includes(cat))
         .map((cat) => {
             const count = products.filter((p) => p.category === cat).length;

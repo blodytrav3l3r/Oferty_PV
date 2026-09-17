@@ -24,6 +24,8 @@ function normalizeOfferData(doc) {
             'validity',
             'transportKm',
             'transportRate',
+            'transportMode',
+            'transportSeparate',
             'wellDiscounts',
             'visiblePrzejsciaTypes',
             'date',

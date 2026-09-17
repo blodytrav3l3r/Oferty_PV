@@ -108,6 +108,23 @@ export function buildStudnieSectionHTML(data: StudnieOfferData): {
       <td class="text-center bold">${formatCurrency(s.totalPrice)} PLN</td>
     </tr>`;
     }
+    // Osobna pozycja transportu (TR-STUDNIE) przed RAZEM.
+    const separateTransport = !!data.transportSeparate;
+    const transportTotal = separateTransport
+        ? data.items.reduce((s, it) => s + Number(it.transportCost ?? 0), 0)
+        : 0;
+    if (transportTotal > 0) {
+        const km = Number(data.transportKm) || 0;
+        const rate = Number(data.transportRate) || 0;
+        const perTrip = km * rate;
+        const trips = perTrip > 0 ? Math.round((transportTotal / perTrip) * 100) / 100 : 0;
+        summaryRows += `<tr>
+      <td class="text-center">Transport bez rozładunku</td>
+      <td class="text-center">${trips} kurs.</td>
+      <td class="text-center bold">${formatCurrency(transportTotal)} PLN</td>
+    </tr>`;
+        grandTotal += transportTotal;
+    }
     summaryRows += `<tr class="grand-total">
     <td class="text-center">RAZEM NETTO</td>
     <td class="text-center">${summariesForTotal.reduce((s, x) => s + x.count, 0)} szt.</td>

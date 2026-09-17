@@ -31,6 +31,29 @@ window.RuryExternalExportTemplate = {
                     LP: i + 1
                 });
             }
+            // Osobna pozycja transportu (TR-RURY) — tylko gdy flaga na ofercie.
+            const offerData = offer.data || offer;
+            if (offerData.transportSeparate) {
+                const sepTrips = Number(offerData.transportCount) || 0;
+                const sepPerTrip = Number(offerData.transportCostPerTrip) || 0;
+                const sepTotal = Number(offerData.transportCost) || sepTrips * sepPerTrip;
+                if (sepTotal > 0) {
+                    rows.push({
+                        NUMER_OFERTY: offer.offer_number || offer.number || '',
+                        NR_STUDNI: '',
+                        GLEBOKOSC: '',
+                        INDEKS_CZESCI: 'TR-RURY',
+                        ILOSC: Math.round(sepTrips * 100) / 100,
+                        CENA_JEDNOSTKOWA: sepPerTrip,
+                        WERSJA: 1,
+                        RABAT: '',
+                        SREDNICA: '',
+                        ZAKONCZENIE: '',
+                        MAGAZYN: '',
+                        LP: items.length + 1
+                    });
+                }
+            }
         }
 
         if (!rows.length) {
@@ -64,6 +87,29 @@ window.RuryExternalExportTemplate = {
             MAGAZYN: '',
             LP: i + 1
         }));
+
+        // Osobna pozycja transportu (TR-RURY) — tylko gdy flaga na zamówieniu.
+        if (orderData.transportSeparate) {
+            const sepTrips = Number(orderData.transportCount) || 0;
+            const sepPerTrip = Number(orderData.transportCostPerTrip) || 0;
+            const sepTotal = Number(orderData.transportCost) || sepTrips * sepPerTrip;
+            if (sepTotal > 0) {
+                rows.push({
+                    NUMER_OFERTY: orderData.orderNumber || offerNumber,
+                    NR_STUDNI: '',
+                    GLEBOKOSC: '',
+                    INDEKS_CZESCI: 'TR-RURY',
+                    ILOSC: Math.round(sepTrips * 100) / 100,
+                    CENA_JEDNOSTKOWA: sepPerTrip,
+                    WERSJA: 1,
+                    RABAT: '',
+                    SREDNICA: '',
+                    ZAKONCZENIE: '',
+                    MAGAZYN: '',
+                    LP: items.length + 1
+                });
+            }
+        }
 
         const wb = await XlsxImportShared.generateExternalXlsx('rury', rows);
         const safeNumber = (orderData.orderNumber || 'zamowienie').replace(/[^a-zA-Z0-9_-]/g, '_');

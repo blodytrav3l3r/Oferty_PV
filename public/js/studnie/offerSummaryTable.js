@@ -40,6 +40,8 @@ function renderOfferSummaryTable(order, orderChanges, totals) {
             ? getOrderedWellIds(editingOfferIdStudnie)
             : new Set();
     const showPriceComparison = orderEditMode && order && order.originalSnapshot;
+    const separateTransport =
+        typeof isTransportSeparateRow === 'function' ? isTransportSeparateRow(order) : false;
 
     let html = `<div class="table-wrap"><table class="w-100">
       <thead>
@@ -137,6 +139,7 @@ function renderOfferSummaryTable(order, orderChanges, totals) {
                 ? totals.totalTransportCost * (stats.weight / totals.globalWeight)
                 : 0;
         // Tryb zamowienia: zamrozony udzial zamiast proporcji na zywo.
+        // Osobna pozycja: udzial 0, transport idzie wierszem TR-STUDNIE w stopce.
         const frozenShare =
             showPriceComparison &&
             well &&
@@ -144,7 +147,7 @@ function renderOfferSummaryTable(order, orderChanges, totals) {
             isFinite(Number(well.frozenTransportCost))
                 ? Number(well.frozenTransportCost)
                 : null;
-        const share = frozenShare != null ? frozenShare : wellTransportCost;
+        const share = separateTransport ? 0 : frozenShare != null ? frozenShare : wellTransportCost;
         stats.price += share;
         sumFrozenShares += share;
 
@@ -213,13 +216,14 @@ function renderOfferSummaryTable(order, orderChanges, totals) {
                 }
                 // Cena z oferty Z transportem: zamrozony udzial ze snapshotu,
                 // fallback do proporcji dla starych snapshotow bez pola transport.
+                // Osobna pozycja: sama cena bez transportu (wiersz TR-STUDNIE w stopce).
                 const snapShare =
                     origLookup.slim &&
                     origWell.transport != null &&
                     isFinite(Number(origWell.transport))
                         ? Number(origWell.transport)
                         : calcTransportShare(origTransportTotal, origWeightTotal, origW);
-                offerPrice = offerBase + snapShare;
+                offerPrice = separateTransport ? offerBase : offerBase + snapShare;
                 dnGroups[dnKey].sumOfferPrice += offerPrice;
             }
         }
@@ -245,6 +249,23 @@ function renderOfferSummaryTable(order, orderChanges, totals) {
         );
     });
 
+    const theoreticalTransport = (totals && totals.totalTransportCost) || 0;
+    let transportInfo = null;
+    if (showPriceComparison) {
+        transportInfo = {
+            origTotal: origTransportTotal,
+            // Osobna pozycja: udzialy 0, w kolumnie zamowienia koszt teoretyczny.
+            sumFrozen: separateTransport ? theoreticalTransport : sumFrozenShares,
+            theoretical: theoreticalTransport
+        };
+    } else if (separateTransport && theoreticalTransport > 0) {
+        transportInfo = {
+            separate: true,
+            total: theoreticalTransport,
+            trips: (totals && totals.totalTransports) || 0,
+            perTrip: (totals && totals.transportCostPerTrip) || 0
+        };
+    }
     html += renderOfferSummaryFooter(
         wells.length,
         runningTotalWeight,
@@ -252,13 +273,8 @@ function renderOfferSummaryTable(order, orderChanges, totals) {
         showOrderSelection,
         dnGroups,
         showPriceComparison,
-        showPriceComparison
-            ? {
-                  origTotal: origTransportTotal,
-                  sumFrozen: sumFrozenShares,
-                  theoretical: (totals && totals.totalTransportCost) || 0
-              }
-            : null
+        transportInfo,
+        separateTransport
     );
     html += '</tbody></table></div>';
     return html;
@@ -271,7 +287,8 @@ function renderOfferSummaryFooter(
     showOrderSelection,
     dnGroups,
     showPriceComparison,
-    transportInfo
+    transportInfo,
+    separateTransport
 ) {
     let baseColspan = 7;
     if (showOrderSelection) baseColspan += 1;
@@ -323,11 +340,22 @@ function renderOfferSummaryFooter(
     let totalComparable = 0;
     let totalPriceDiffCell = '';
     let totalOfferPriceCell = '';
+    // Osobna pozycja: RAZEM obejmuje transport (osobno od cen studni).
+    const separateOrderTransport =
+        separateTransport && showPriceComparison && transportInfo
+            ? Number(transportInfo.sumFrozen) || 0
+            : 0;
+    const separateOfferTransport =
+        separateTransport && showPriceComparison && transportInfo
+            ? Number(transportInfo.origTotal) || 0
+            : 0;
     if (showPriceComparison) {
         Object.values(dnGroups).forEach((g) => {
             totalOfferPrice += g.sumOfferPrice || 0;
             totalComparable += g.sumComparable || 0;
         });
+        totalOfferPrice += separateOfferTransport;
+        totalComparable += separateOrderTransport;
         if (totalOfferPrice > 0) {
             const totalDiff = totalComparable - totalOfferPrice;
             const diffColor =
@@ -345,14 +373,21 @@ function renderOfferSummaryFooter(
         }
     }
 
-    html += `<tr class="border-top-glass2" id="offer-total-row">
-          <td colspan="${baseColspan}" style="font-weight: var(--fw-bold); font-size: var(--fs-xl); color:var(--text-primary); padding:1rem 0.5rem; white-space:nowrap;">RAZEM (${count} studni)</td>
-          ${totalOfferPriceCell}
-          <td class="text-right" style="font-weight: var(--fw-extrabold); font-size: var(--fs-2xl); color:var(--success); white-space:nowrap; padding:0.5rem 0.75rem;">${fmt(price)} PLN</td>
-          ${totalPriceDiffCell}
-          <td class="text-right" style="font-weight: var(--fw-bold); font-size: var(--fs-lg); color:var(--text-muted); white-space:nowrap; padding:0.5rem 0.75rem;">${fmtInt(weight)} kg</td>
+    // Osobna pozycja w widoku oferty: wiersz transportu przed RAZEM.
+    if (transportInfo && transportInfo.separate) {
+        const sepTotal = Number(transportInfo.total) || 0;
+        const sepTrips = Number(transportInfo.trips) || 0;
+        const sepPerTrip = Number(transportInfo.perTrip) || 0;
+        price += sepTotal;
+        html += `<tr id="offer-transport-row">
+          <td colspan="${baseColspan}" style="font-size: var(--fs-md); color:var(--text-muted); padding:0.5rem 0.5rem; white-space:nowrap;" title="${escapeHtmlAttr(String(sepTrips))} × ${fmt(sepPerTrip)} PLN/kurs">Transport bez rozładunku</td>
+          <td class="text-right" style="font-size: var(--fs-md); font-weight: var(--fw-bold); color:var(--text-secondary); white-space:nowrap; padding:0.5rem 0.75rem;">${fmt(sepTotal)} PLN</td>
+          <td class="text-right pad-sm"></td>
         </tr>`;
-    if (showPriceComparison && transportInfo) {
+    }
+
+    // Wiersz rozliczenia transportu ZAWSZE przed RAZEM (oferta i zamówienie).
+    if (showPriceComparison && transportInfo && !transportInfo.separate) {
         const tOrig = Number(transportInfo.origTotal) || 0;
         const tSum = Number(transportInfo.sumFrozen) || 0;
         const tTheo = Number(transportInfo.theoretical) || 0;
@@ -362,14 +397,27 @@ function renderOfferSummaryFooter(
                 ? 'var(--success-hover)'
                 : 'var(--warn-hover, var(--warning, #e0a100))';
         const deltaSign = tDelta > 0 ? '+' : '';
+        // Jednolita etykieta w ofercie i zamówieniu (pozycja cennikowa TR-STUDNIE).
+        const transportLabel = 'Transport bez rozładunku';
+        const transportTitle = separateTransport
+            ? 'Koszt teoretyczny przy bieżącej masie'
+            : 'Udziały zamrożone na studniach vs koszt teoretyczny przy bieżącej masie';
         html += `<tr id="offer-transport-row">
-          <td colspan="${baseColspan}" style="font-size: var(--fs-md); color:var(--text-muted); padding:0.5rem 0.5rem; white-space:nowrap;" title="Udziały zamrożone na studniach vs koszt teoretyczny przy bieżącej masie">Transport (suma udziałów / koszt)</td>
+          <td colspan="${baseColspan}" style="font-size: var(--fs-md); color:var(--text-muted); padding:0.5rem 0.5rem; white-space:nowrap;" title="${transportTitle}">${transportLabel}</td>
           <td class="text-right" style="font-size: var(--fs-md); color:var(--text-secondary); white-space:nowrap; padding:0.5rem 0.75rem;">${fmt(tOrig)} PLN</td>
           <td class="text-right" style="font-size: var(--fs-md); color:var(--text-secondary); white-space:nowrap; padding:0.5rem 0.75rem;">${fmt(tSum)} PLN</td>
           <td class="text-right" style="font-size: var(--fs-md); color:${deltaColor}; white-space:nowrap; padding:0.5rem 0.75rem;" title="Różnica: koszt teoretyczny − suma udziałów">${deltaSign}${fmt(tDelta)} PLN</td>
           <td class="text-right pad-sm"></td>
         </tr>`;
     }
+
+    html += `<tr class="border-top-glass2" id="offer-total-row">
+          <td colspan="${baseColspan}" style="font-weight: var(--fw-bold); font-size: var(--fs-xl); color:var(--text-primary); padding:1rem 0.5rem; white-space:nowrap;">RAZEM (${count} studni)</td>
+          ${totalOfferPriceCell}
+          <td class="text-right" style="font-weight: var(--fw-extrabold); font-size: var(--fs-2xl); color:var(--success); white-space:nowrap; padding:0.5rem 0.75rem;">${fmt(price)} PLN</td>
+          ${totalPriceDiffCell}
+          <td class="text-right" style="font-weight: var(--fw-bold); font-size: var(--fs-lg); color:var(--text-muted); white-space:nowrap; padding:0.5rem 0.75rem;">${fmtInt(weight)} kg</td>
+        </tr>`;
     html += '</tfoot>';
     return html;
 }

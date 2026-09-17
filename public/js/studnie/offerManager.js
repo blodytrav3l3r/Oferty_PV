@@ -151,6 +151,7 @@ async function loadSavedOfferStudnie(id_or_doc, optionalId, targetSection, preve
         transportRate: normalized.transportRate
     });
     currentTransportMode = normalized.transportMode || 'full';
+    currentTransportSeparate = !!normalized.transportSeparate;
 
     wellDiscounts = normalized.wellDiscounts ? structuredClone(normalized.wellDiscounts) : {};
     visiblePrzejsciaTypes = new Set(normalized.visiblePrzejsciaTypes || []);

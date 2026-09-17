@@ -88,6 +88,9 @@ function buildOfferXlsxRows(offer, transportDist, costPerTrip, xlsxTransports) {
         ]);
     });
 
+    // Osobna pozycja: koszt nie siedzi w cenach jednostkowych — dolicz raz do sumy.
+    if (offer.transportSeparate) totalNetto += transportCost;
+
     const totalVat = totalNetto * 0.23;
     const totalBrutto = totalNetto + totalVat;
 
@@ -131,6 +134,8 @@ function buildOfferXlsxMetaRows(offer) {
     metaRows.push(['validity', offer.validity || '7 dni']);
     metaRows.push(['transportKm', offer.transportKm || 0]);
     metaRows.push(['transportRate', offer.transportRate || 0]);
+    metaRows.push(['transportMode', offer.transportMode || 'full']);
+    metaRows.push(['transportSeparate', offer.transportSeparate ? '1' : '0']);
     metaRows.push(['itemCount', offer.items.length]);
 
     offer.items.forEach((item, i) => {

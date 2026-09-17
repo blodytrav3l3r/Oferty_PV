@@ -23,7 +23,7 @@ import {
 } from './studnie/sections';
 import { buildStaticTerms } from './studnie/content';
 import { buildWellTables } from './studnie/tables';
-import { buildItemsTable } from './rury/tables';
+import { buildItemsTable, resolveRuryTransport } from './rury/tables';
 import { buildSummarySection as buildRurySummarySection } from './rury/sections';
 import { loadRuryOfferData } from './rury';
 import { loadStudnieOfferData } from './studnie';
@@ -67,13 +67,35 @@ export async function buildCombinedDocument(
             'Do uzgodnienia lub według indywidualnych warunków handlowych.'
     );
 
+    const separateStudnieTransport =
+        studnieData.transportSeparate === true ||
+        studnieData.transportSeparate === 1 ||
+        studnieData.transportSeparate === '1';
     const {
         paragraphs: dnParagraphs,
         summaries,
-        grandTotal: studnieTotal
-    } = buildWellTables(studnie.wells);
+        grandTotal: studnieProductsTotal,
+        transportTotal: studnieTransportTotal
+    } = buildWellTables(studnie.wells, separateStudnieTransport);
+    let studnieTotal = studnieProductsTotal;
+    if (separateStudnieTransport && studnieTransportTotal > 0) {
+        const km = Number(studnieData.transportKm) || 0;
+        const rate = Number(studnieData.transportRate) || 0;
+        const perTrip = km * rate;
+        const trips = perTrip > 0 ? Math.round((studnieTransportTotal / perTrip) * 100) / 100 : 0;
+        summaries.push({
+            label: 'Transport bez rozładunku',
+            count: trips,
+            totalPrice: studnieTransportTotal
+        });
+        studnieTotal += studnieTransportTotal;
+    }
     const { paragraphs: ruryParagraphs, grandTotal: ruryTotal } = buildItemsTable(
-        ruryCtx.items as Record<string, unknown>[]
+        ruryCtx.items as Record<string, unknown>[],
+        resolveRuryTransport(
+            rury.offerData as Record<string, unknown>,
+            ruryCtx.items as Record<string, unknown>[]
+        )
     );
 
     const children: (Paragraph | Table)[] = [];

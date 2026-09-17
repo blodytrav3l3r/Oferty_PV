@@ -844,5 +844,14 @@
         "transport": null,
         "weight": null,
         "area": null
+    },
+    {
+        "id": "TR-RURY",
+        "name": "Transport rur (kurs)",
+        "category": "Transport",
+        "price": 0,
+        "transport": null,
+        "weight": 0,
+        "area": null
     }
 ]

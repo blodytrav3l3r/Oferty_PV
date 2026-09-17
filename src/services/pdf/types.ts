@@ -19,6 +19,13 @@ export interface RuryOfferData {
     investAddress: string;
     investContractor: string;
     items: unknown[];
+    transportSeparate?: boolean;
+    transportMode?: string;
+    transportKm?: number;
+    transportRate?: number;
+    transportCount?: number;
+    transportCostPerTrip?: number;
+    transportCost?: number;
     createdAt: string;
     validityDays: number;
     notes: string;
@@ -52,8 +59,12 @@ export interface StudnieOfferData {
         DN?: string | null;
         height?: number;
         zwienczenie?: string;
+        transportCost?: number | null;
     }>;
     transportCost: number;
+    transportSeparate?: boolean;
+    transportKm?: number;
+    transportRate?: number;
     createdAt: string;
     validityDays: number;
     notes: string;

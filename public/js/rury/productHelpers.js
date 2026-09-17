@@ -73,6 +73,8 @@ function isOneMetrePipe(id) {
 function getSortedRuryItems(items) {
     const grouped = {};
     items.forEach((item, i) => {
+        // Pozycja techniczna transportu (TR-RURY) nigdy nie jest pozycją oferty.
+        if (item.productId === 'TR-RURY') return;
         const product = getRuryProductById(item.productId);
         const category = product ? product.category : 'Inne';
         if (!grouped[category]) grouped[category] = {};

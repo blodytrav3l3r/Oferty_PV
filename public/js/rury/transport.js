@@ -5,6 +5,8 @@
 /* fmt(), fmtInt() z shared/formatters.js */
 
 let currentRuryTransportMode = 'full';
+// Rozliczenie transportu: false = wliczony w ceny pozycji, true = osobna pozycja (TR-RURY).
+let currentRuryTransportSeparate = false;
 
 window.toggleRuryTransportMode = function () {
     currentRuryTransportMode = currentRuryTransportMode === 'full' ? 'fractional' : 'full';
@@ -13,6 +15,21 @@ window.toggleRuryTransportMode = function () {
     if (typeof window.updateRuryModalTransportDetails === 'function')
         window.updateRuryModalTransportDetails();
     if (typeof updateOfferSummary === 'function') updateOfferSummary();
+};
+
+window.toggleRuryTransportSeparate = function () {
+    currentRuryTransportSeparate = !currentRuryTransportSeparate;
+    const label = document.getElementById('rury-transport-separate-label');
+    if (label)
+        label.textContent = currentRuryTransportSeparate ? 'Osobna pozycja' : 'W cenie elementów';
+    if (typeof window.updateRuryModalTransportDetails === 'function')
+        window.updateRuryModalTransportDetails();
+    if (typeof updateOfferSummary === 'function') updateOfferSummary();
+};
+
+/** Czy transport rozliczany jest jako osobna pozycja (TR-RURY). */
+window.isRuryTransportSeparate = function () {
+    return !!currentRuryTransportSeparate;
 };
 
 /** Zwraca liczbę transportów w zależności od trybu */
@@ -68,6 +85,8 @@ function getCostPerTrip() {
  * Jeśli costPerTrip <= 0 → zwraca pusty obiekt (brak transportu).
  */
 function calculateTransportDistribution(items, costPerTripOverride) {
+    // Osobna pozycja: koszt nie wchodzi w ceny jednostkowe (wiersz TR-RURY w tabeli).
+    if (currentRuryTransportSeparate) return {};
     const costPerTrip = costPerTripOverride != null ? costPerTripOverride : getCostPerTrip();
     const distribution = {};
     if (costPerTrip <= 0) return distribution;
@@ -110,6 +129,26 @@ function calculateTransportDistribution(items, costPerTripOverride) {
 /** Samodzielny pomocnik dla kontekstów zapisu/eksportu (bez DOM) */
 function calculateTransportDistributionStandalone(items, costPerTrip) {
     return calculateTransportDistribution(items, costPerTrip);
+}
+
+/**
+ * Wykonuje fn z flagami transportu danej oferty (tryb + osobna pozycja),
+ * odtwarzając poprzedni runtime po zakończeniu. Do wydruków/eksportów,
+ * gdzie liczona oferta nie musi być aktualnie otwarta.
+ */
+function withOfferTransportFlags(offer, fn) {
+    const savedMode = currentRuryTransportMode;
+    const savedSeparate = currentRuryTransportSeparate;
+    if (offer) {
+        if (offer.transportMode) currentRuryTransportMode = offer.transportMode;
+        currentRuryTransportSeparate = !!offer.transportSeparate;
+    }
+    try {
+        return fn();
+    } finally {
+        currentRuryTransportMode = savedMode;
+        currentRuryTransportSeparate = savedSeparate;
+    }
 }
 
 /* ===== PODSUMOWANIE OFERTY ===== */
@@ -456,7 +495,7 @@ window.updateTransportCostSummary = function () {
 
 /* ===== MODAL EDYCJI TRANSPORTU (Kliknięcie w kartę "Koszt transportu" na dolnym pasku) ===== */
 
-const ruryTransportSnapshot = { km: 0, rate: 0, mode: 'full' };
+const ruryTransportSnapshot = { km: 0, rate: 0, mode: 'full', separate: false };
 
 window.onRuryTransportFormChange = function () {
     const modal = document.getElementById('rury-transport-modal');
@@ -518,6 +557,7 @@ window.openRuryTransportPopup = function () {
     ruryTransportSnapshot.km = parseFloat(kmInput?.value) || 0;
     ruryTransportSnapshot.rate = parseFloat(rateInput?.value) || 0;
     ruryTransportSnapshot.mode = currentRuryTransportMode || 'full';
+    ruryTransportSnapshot.separate = !!currentRuryTransportSeparate;
 
     if (kmInput && modalKm) modalKm.value = kmInput.value || '0';
     if (rateInput && modalRate) modalRate.value = rateInput.value || '0';
@@ -533,6 +573,8 @@ window.openRuryTransportPopup = function () {
     if (window.orderEditMode && typeof getCurrentRuryOrder === 'function') {
         const cur = getCurrentRuryOrder();
         if (cur && cur.transportMode) currentRuryTransportMode = cur.transportMode;
+        if (cur && cur.transportSeparate != null)
+            currentRuryTransportSeparate = !!cur.transportSeparate;
     } else if (
         typeof window.currentOfferData !== 'undefined' &&
         window.currentOfferData &&
@@ -540,9 +582,21 @@ window.openRuryTransportPopup = function () {
     ) {
         currentRuryTransportMode = window.currentOfferData.transportMode;
     }
+    if (
+        typeof window.currentOfferData !== 'undefined' &&
+        window.currentOfferData &&
+        window.currentOfferData.transportSeparate != null
+    ) {
+        currentRuryTransportSeparate = !!window.currentOfferData.transportSeparate;
+    }
     const modeLabel = document.getElementById('rury-transport-mode-label');
     if (modeLabel)
         modeLabel.textContent = currentRuryTransportMode === 'full' ? 'Pełne' : 'Rzeczywiste';
+    const separateLabel = document.getElementById('rury-transport-separate-label');
+    if (separateLabel)
+        separateLabel.textContent = currentRuryTransportSeparate
+            ? 'Osobna pozycja'
+            : 'W cenie elementów';
 
     // Pokaż NAJPIERW — błąd w podglądzie kalkulacji nie może blokować otwarcia.
     modal.style.display = 'flex';
@@ -564,11 +618,13 @@ window.handleRuryTransportCancel = async function () {
     const modalRate = parseFloat(document.getElementById('rury-transport-modal-rate')?.value) || 0;
     const modeChanged =
         (currentRuryTransportMode || 'full') !== (ruryTransportSnapshot.mode || 'full');
+    const separateChanged = !!currentRuryTransportSeparate !== !!ruryTransportSnapshot.separate;
 
     if (
         modalKm !== ruryTransportSnapshot.km ||
         modalRate !== ruryTransportSnapshot.rate ||
-        modeChanged
+        modeChanged ||
+        separateChanged
     ) {
         if (typeof window.appConfirm === 'function') {
             const confirmed = await window.appConfirm(
@@ -587,6 +643,12 @@ window.handleRuryTransportCancel = async function () {
                 if (modeLabel)
                     modeLabel.textContent =
                         currentRuryTransportMode === 'full' ? 'Pełne' : 'Rzeczywiste';
+                currentRuryTransportSeparate = !!ruryTransportSnapshot.separate;
+                const separateLabel = document.getElementById('rury-transport-separate-label');
+                if (separateLabel)
+                    separateLabel.textContent = currentRuryTransportSeparate
+                        ? 'Osobna pozycja'
+                        : 'W cenie elementów';
                 if (typeof updateOfferSummary === 'function') updateOfferSummary();
 
                 hide();
@@ -757,3 +819,4 @@ window.toggleOrderTransportBreakdown = function () {
 
 /* ===== Rejestracja globali ===== */
 window.calculateTransportDistributionStandalone = calculateTransportDistributionStandalone;
+window.withOfferTransportFlags = withOfferTransportFlags;

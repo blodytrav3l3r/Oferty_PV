@@ -19,7 +19,7 @@ function setupOfferForm() {
                 dropdown.classList.remove('show');
                 return;
             }
-            const excludedCategories = ['Akcesoria PEHD', 'Zabezpieczenie transportu'];
+            const excludedCategories = ['Akcesoria PEHD', 'Zabezpieczenie transportu', 'Transport'];
             const matches = products
                 .filter(
                     (p) =>
@@ -68,7 +68,7 @@ function setupOfferForm() {
     setVal('offer-date', new Date().toISOString().slice(0, 10));
     setVal('offer-number', generateOfferNumber());
 
-    const hiddenCategories = ['Akcesoria PEHD', 'Zabezpieczenie transportu'];
+    const hiddenCategories = ['Akcesoria PEHD', 'Zabezpieczenie transportu', 'Transport'];
     if (!window.activeCatalogCategory || hiddenCategories.includes(window.activeCatalogCategory)) {
         window.activeCatalogCategory = CATEGORIES.filter((c) => !hiddenCategories.includes(c))[0];
     }

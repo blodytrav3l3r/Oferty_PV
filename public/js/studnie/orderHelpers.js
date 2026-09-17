@@ -945,7 +945,8 @@ function getOrderChanges(order) {
             (Math.abs((order.transportKm || 0) - (origTransportKm || 0)) > 0.01 ||
                 Math.abs((order.transportRate || 0) - (origTransportRate || 0)) > 0.01 ||
                 normalizeTransportMode(order.transportMode) !==
-                    normalizeTransportMode(origTransportMode));
+                    normalizeTransportMode(origTransportMode) ||
+                !!order.transportSeparate !== !!originalSnapshotData.transportSeparate);
     } finally {
         window.isPreviewMode = savedTransportPreviewMode;
     }

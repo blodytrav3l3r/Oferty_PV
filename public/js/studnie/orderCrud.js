@@ -269,11 +269,13 @@ async function finalizeOrderFromOffer(offer, selectedWells, kartaBudowyData) {
             wellDiscounts: structuredClone(effectiveDiscounts),
             transportKm: offer.transportKm,
             transportRate: offer.transportRate,
-            transportMode: normalizeTransportMode(offer.transportMode)
+            transportMode: normalizeTransportMode(offer.transportMode),
+            transportSeparate: !!offer.transportSeparate
         },
         transportKm: offer.transportKm,
         transportRate: offer.transportRate,
         transportMode: normalizeTransportMode(offer.transportMode),
+        transportSeparate: !!offer.transportSeparate,
         kartaBudowy: kartaBudowyData,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -829,6 +831,7 @@ async function enterOrderEditMode(orderId) {
         setVal('transport-km', order.transportKm ?? 100);
         setVal('transport-rate', order.transportRate ?? 10);
         currentTransportMode = order.transportMode || 'full';
+        currentTransportSeparate = !!order.transportSeparate;
         setVal('offer-validity', order.validity || order.offerValidity || '');
         setVal('offer-tab-validity', order.validity || order.offerValidity || '');
         setVal('offer-payment-terms', order.paymentTerms || '');
@@ -1081,6 +1084,7 @@ async function saveCurrentOrder(options = {}) {
     order.transportKm = transportKmVal;
     order.transportRate = transportRateVal;
     order.transportMode = currentTransportMode;
+    order.transportSeparate = !!currentTransportSeparate;
     order.paymentTerms =
         document.getElementById('offer-tab-payment-terms')?.value ||
         document.getElementById('offer-payment-terms')?.value ||
@@ -1149,6 +1153,7 @@ async function saveCurrentOrder(options = {}) {
             transportKm: order.transportKm,
             transportRate: order.transportRate,
             transportMode: order.transportMode,
+            transportSeparate: !!order.transportSeparate,
             paymentTerms: order.paymentTerms,
             validity: order.validity
         });
@@ -1168,6 +1173,7 @@ async function saveCurrentOrder(options = {}) {
                 transportKm: order.transportKm,
                 transportRate: order.transportRate,
                 transportMode: order.transportMode,
+                transportSeparate: !!order.transportSeparate,
                 paymentTerms: order.paymentTerms,
                 validity: order.validity
             };

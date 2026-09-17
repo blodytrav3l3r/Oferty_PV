@@ -9,7 +9,11 @@ window.StudnieExternalImport = {
 
     async import(offerGroup) {
         const number = offerGroup.number;
-        const rows = offerGroup.rows;
+        // Wiersz osobnej pozycji transportu (TR-STUDNIE) nie jest elementem studni.
+        const rows = (offerGroup.rows || []).filter(
+            (r) => (r['INDEKS_CZESCI'] || '').trim().toUpperCase() !== 'TR-STUDNIE'
+        );
+        const hasTransportRow = (offerGroup.rows || []).length !== rows.length;
 
         const wellMap = {};
         for (const r of rows) {
@@ -58,6 +62,7 @@ window.StudnieExternalImport = {
             number: number,
             status: 'draft',
             transportCost: 0,
+            transportSeparate: hasTransportRow,
             wells: wells,
             clientName: '',
             investName: ''

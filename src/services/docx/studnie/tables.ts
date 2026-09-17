@@ -21,18 +21,27 @@ import { DnSummary } from './sections';
 
 // ─── Główny budowniczy tabel (Main Table Builder) ───────────────────
 
-export function buildWellTables(wells: unknown[]): {
+export function buildWellTables(
+    wells: unknown[],
+    separateTransport = false
+): {
     paragraphs: (Paragraph | Table)[];
     summaries: DnSummary[];
     grandTotal: number;
+    transportTotal: number;
 } {
     const dnOrder = ['1000', '1200', '1500', '2000', '2500', 'styczna', 'Inne'];
-    const itemsByDN = groupWellsByDn(wells);
+    const itemsByDN = groupWellsByDn(wells, separateTransport);
     let grandTotal = 0;
+    let transportTotal = 0;
 
     wells.forEach((w) => {
         const well = w as Record<string, unknown>;
-        grandTotal += Number(well.totalPrice ?? well.price ?? 0);
+        const share = separateTransport ? Number(well.transportCost ?? 0) : 0;
+        transportTotal += share;
+        grandTotal += separateTransport
+            ? Number(well.price ?? Number(well.totalPrice ?? 0) - share)
+            : Number(well.totalPrice ?? well.price ?? 0);
     });
 
     const paragraphs: (Paragraph | Table)[] = [];
@@ -68,18 +77,24 @@ export function buildWellTables(wells: unknown[]): {
         globalLp += dnItems.length;
     }
 
-    return { paragraphs, summaries, grandTotal };
+    return { paragraphs, summaries, grandTotal, transportTotal };
 }
 
 // ─── Funkcje pomocnicze (Helpers) ───────────────────────────────────
 
-export function groupWellsByDn(wells: unknown[]): Record<string, Record<string, unknown>[]> {
+export function groupWellsByDn(
+    wells: unknown[],
+    separateTransport = false
+): Record<string, Record<string, unknown>[]> {
     const itemsByDN: Record<string, Record<string, unknown>[]> = {};
 
     wells.forEach((w) => {
         const well = w as Record<string, unknown>;
         const dn = String(well.DN ?? well.dn ?? 'Inne');
-        const wellPrice = Number(well.totalPrice ?? well.price ?? 0);
+        const share = separateTransport ? Number(well.transportCost ?? 0) : 0;
+        const wellPrice = separateTransport
+            ? Number(well.price ?? Number(well.totalPrice ?? 0) - share)
+            : Number(well.totalPrice ?? well.price ?? 0);
         const cleanZwienczenie = String(well.zwienczenie ?? '\u2014')
             .replace(/\s*\(?[hH]\s*=?\s*\d+([.,]\d+)?\s*(mm|cm|m)?\)?\s*/gi, ' ')
             .replace(/\s*(bez\s+stopni|z\s+drabinką|drabinka|ze\s+stopniami|-B|-D|-N)/gi, '')

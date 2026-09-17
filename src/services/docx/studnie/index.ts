@@ -154,6 +154,7 @@ export async function generateStudnieOrderDOCX(orderId: string): Promise<Buffer>
             notes: ctx.notes,
             paymentTerms: ctx.paymentTerms,
             orderNumber: ctx.orderNumber,
+            transportSeparate: !!orderData.transportSeparate,
             productionOrderNumber: ctx.productionOrderNumber
         },
         client,

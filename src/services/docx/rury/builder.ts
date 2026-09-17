@@ -11,7 +11,7 @@ import {
     buildSummarySection,
     buildContactSection
 } from './sections';
-import { buildItemsTable } from './tables';
+import { buildItemsTable, resolveRuryTransport } from './tables';
 import { buildStaticTerms } from './content';
 
 export function buildRuryDocument(
@@ -138,8 +138,11 @@ export function buildRurySectionChildren(
     // Spacer między infobox a tabelami pozycji
     children.push(new Paragraph({ children: [], spacing: { before: 60, after: 60 } }));
 
-    // 4. Tabele pozycji per kategoria
-    const { paragraphs: catParagraphs, grandTotal } = buildItemsTable(items);
+    // 4. Tabele pozycji per kategoria (+ wiersz TR-RURY gdy transport > 0)
+    const { paragraphs: catParagraphs, grandTotal } = buildItemsTable(
+        items,
+        resolveRuryTransport(offerData, items)
+    );
     children.push(...catParagraphs);
 
     // Spacer między tabelami pozycji a podsumowaniem

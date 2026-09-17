@@ -9,7 +9,11 @@ window.RuryExternalImport = {
 
     async import(offerGroup) {
         const number = offerGroup.number;
-        const rows = offerGroup.rows;
+        // Wiersz osobnej pozycji transportu (TR-RURY) nie jest pozycją oferty.
+        const rows = (offerGroup.rows || []).filter(
+            (r) => (r['INDEKS_CZESCI'] || '').trim().toUpperCase() !== 'TR-RURY'
+        );
+        const hasTransportRow = (offerGroup.rows || []).length !== rows.length;
 
         const items = rows.map((r, _i) => {
             const unitPrice = parseFloat(r['CENA_JEDNOSTKOWA']) || 0;
@@ -47,7 +51,8 @@ window.RuryExternalImport = {
             number: number,
             status: 'draft',
             items: items,
-            transportCost: 0
+            transportCost: 0,
+            transportSeparate: hasTransportRow
         };
 
         if (action === 'clone') {

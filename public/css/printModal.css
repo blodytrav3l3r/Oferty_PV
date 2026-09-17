@@ -34,7 +34,7 @@
     background: linear-gradient(180deg, var(--slate-800) 0%, var(--slate-950) 100%);
     border: 1px solid var(--upm-border);
     border-radius: var(--radius-md);
-    width: 560px;
+    width: 700px;
     max-width: 95vw;
     max-height: 85vh;
     padding: 1.75rem 2rem 1.5rem;

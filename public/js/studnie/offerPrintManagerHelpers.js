@@ -109,7 +109,7 @@ function buildDiameterTableHtml(dn, wellsGroup, globalLpOffset, transportCostMap
     return { html, count: wellsGroup.length, totalPrice: groupTotal, nextLp: lp };
 }
 
-function buildOfferSummaryHtml(summaries, totalNettoAll) {
+function buildOfferSummaryHtml(summaries, totalNettoAll, transportExtra) {
     let html = `<div class="summary-section">
         <h3>Podsumowanie oferty</h3>
         <table class="summary-table">`;
@@ -122,10 +122,21 @@ function buildOfferSummaryHtml(summaries, totalNettoAll) {
         </tr>`;
     });
 
+    let grandNetto = totalNettoAll;
+    const sepTotal = transportExtra ? Number(transportExtra.total) || 0 : 0;
+    if (sepTotal > 0) {
+        grandNetto += sepTotal;
+        html += `<tr>
+            <td class="text-center">Transport bez rozładunku</td>
+            <td class="text-center">—</td>
+            <td class="text-center bold">${fmt(sepTotal)} PLN</td>
+        </tr>`;
+    }
+
     html += `<tr class="grand-total">
             <td class="text-center">RAZEM NETTO</td>
             <td class="text-center">${summaries.reduce((s, x) => s + x.count, 0)} szt.</td>
-            <td class="text-center">${fmt(totalNettoAll)} PLN</td>
+            <td class="text-center">${fmt(grandNetto)} PLN</td>
         </tr>`;
 
     html += `</table></div>`;

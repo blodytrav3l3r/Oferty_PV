@@ -22,18 +22,27 @@ export function escapeHtml(input: unknown): string {
         .replace(/'/g, '&#39;');
 }
 
-export function mapWellsToItems(wells: unknown[]): {
+export function mapWellsToItems(
+    wells: unknown[],
+    separateTransport = false
+): {
     items: Record<string, unknown>[];
     grandTotal: number;
+    transportTotal: number;
 } {
     const itemsByDN: Record<string, Record<string, unknown>[]> = {};
     let grandTotal = 0;
+    let transportTotal = 0;
 
     for (const w of wells) {
         const well = w as Record<string, unknown>;
         const dn = String(well.dn ?? 'Inne');
-        const wellPrice = Number(well.totalPrice ?? well.price ?? 0);
+        const share = separateTransport ? Number(well.transportCost ?? 0) : 0;
+        const wellPrice = separateTransport
+            ? Number(well.price ?? Number(well.totalPrice ?? 0) - share)
+            : Number(well.totalPrice ?? well.price ?? 0);
         grandTotal += wellPrice;
+        transportTotal += share;
 
         if (!itemsByDN[dn]) itemsByDN[dn] = [];
         itemsByDN[dn].push({
@@ -48,5 +57,5 @@ export function mapWellsToItems(wells: unknown[]): {
     }
 
     const items = Object.values(itemsByDN).flat();
-    return { items, grandTotal };
+    return { items, grandTotal, transportTotal };
 }
