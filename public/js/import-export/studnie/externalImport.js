@@ -7,6 +7,24 @@ window.StudnieExternalImport = {
         );
     },
 
+    // Katalog produktów do rozpoznania części (dennica/nadbudowa) po INDEKS_CZESCI.
+    // Musi być gotowy PRZED mapowaniem MAGAZYN (bez zgadywania typu).
+    async _ensureTypeMap() {
+        try {
+            const headers =
+                typeof authHeaders === 'function'
+                    ? authHeaders()
+                    : { 'Content-Type': 'application/json' };
+            const res = await fetch('/api/products-studnie', { headers });
+            if (!res.ok) return new Map();
+            const json = await res.json();
+            const list = json.data || [];
+            return new Map(list.map((p) => [p.id, p.componentType]));
+        } catch (_e) {
+            return new Map();
+        }
+    },
+
     async import(offerGroup) {
         const number = offerGroup.number;
         // Wiersz osobnej pozycji transportu (TR-STUDNIE) nie jest elementem studni.
@@ -14,6 +32,18 @@ window.StudnieExternalImport = {
             (r) => (r['INDEKS_CZESCI'] || '').trim().toUpperCase() !== 'TR-STUDNIE'
         );
         const hasTransportRow = (offerGroup.rows || []).length !== rows.length;
+
+        const MC = window.MagazynCodes;
+        const codes = MC && typeof MC.get === 'function' ? await MC.get() : null;
+        const typeMap = await this._ensureTypeMap();
+        const partOf = (indeks) => {
+            const ct = typeMap.get((indeks || '').trim());
+            if (ct && MC && typeof MC.isDennicaType === 'function' && MC.isDennicaType(ct))
+                return 'dennica';
+            // Typ nieznany (produkt spoza katalogu): null — kod idzie tylko w legacy magazyn.
+            if (!ct) return null;
+            return 'nadbudowa';
+        };
 
         const wellMap = {};
         for (const r of rows) {
@@ -23,11 +53,25 @@ window.StudnieExternalImport = {
                     dn: r['SREDNICA'] || '',
                     depth: parseInt(r['GLEBOKOSC']) || 0,
                     name: wellName,
-                    magazyn: r['MAGAZYN'] === 'WL' ? 'Włocławek' : 'Kluczbork',
+                    magazyn: 'Kluczbork',
+                    magazynDennica: null,
+                    magazynNadbudowa: null,
                     lp: parseInt(r['LP']) || Object.keys(wellMap).length + 1,
                     components: []
                 };
             }
+            const well = wellMap[wellName];
+            const part = partOf(r['INDEKS_CZESCI']);
+            const wh =
+                MC && typeof MC.warehouseForCode === 'function'
+                    ? MC.warehouseForCode(r['MAGAZYN'], part || 'nadbudowa', codes)
+                    : r['MAGAZYN'] === 'WL'
+                      ? 'Włocławek'
+                      : 'Kluczbork';
+            if (part === 'dennica') well.magazynDennica = wh;
+            else if (part === 'nadbudowa') well.magazynNadbudowa = wh;
+            else if (well.magazynDennica == null && well.magazynNadbudowa == null)
+                well.magazyn = wh;
             const unitPrice = parseFloat(r['CENA_JEDNOSTKOWA']) || 0;
             const qty = parseInt(r['ILOSC']) || 0;
             const hasDiscount = r['RABAT'] !== '';
@@ -42,7 +86,16 @@ window.StudnieExternalImport = {
             });
         }
 
-        const wells = Object.values(wellMap).sort((a, b) => (a.lp || 0) - (b.lp || 0));
+        const wells = Object.values(wellMap)
+            .map((w) => {
+                // Domknięcie: brakujące części dziedziczą legacy magazyn.
+                // Legacy magazyn = magazyn nadbudowy (jedno źródło, nigdy trzecia wartość).
+                if (w.magazynDennica == null) w.magazynDennica = w.magazyn;
+                if (w.magazynNadbudowa == null) w.magazynNadbudowa = w.magazyn;
+                w.magazyn = w.magazynNadbudowa;
+                return w;
+            })
+            .sort((a, b) => (a.lp || 0) - (b.lp || 0));
 
         const existing = await this.findOfferByNumber(number);
         let action = 'create';

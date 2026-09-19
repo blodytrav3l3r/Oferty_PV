@@ -1,5 +1,28 @@
 window.StudnieExternalExportTemplate = {
-    _wellRows(data, offerNumber) {
+    _partForComp(comp) {
+        const MC = window.MagazynCodes;
+        let ct = comp.componentType;
+        if (!ct && this._productMap) {
+            const p = this._productMap.get(comp.productId || comp.indeks || '');
+            ct = p && p.componentType;
+        }
+        if (ct && MC && typeof MC.isDennicaType === 'function' && MC.isDennicaType(ct))
+            return 'dennica';
+        // Typ nieznany (produkt spoza katalogu): fallback nadbudowa — nigdy zgadywanie dennicy.
+        return 'nadbudowa';
+    },
+
+    _magCodeFor(well, comp, wMagDen, wMagNad, codes) {
+        const MC = window.MagazynCodes;
+        if (MC && typeof MC.codeForPart === 'function') {
+            const part = this._partForComp(comp);
+            return MC.codeForPart(part, part === 'dennica' ? wMagDen : wMagNad, codes);
+        }
+        // Fallback bez słownika: historyczne twarde WL/M0 z magazynu nadbudowy.
+        return wMagNad === 'Włocławek' ? 'WL' : 'M0';
+    },
+
+    _wellRows(data, offerNumber, codes) {
         const wellsExport = data.wellsExport || [];
         const hasEnriched =
             wellsExport.length > 0 && wellsExport[0].config?.some((c) => c._xp !== undefined);
@@ -12,7 +35,9 @@ window.StudnieExternalExportTemplate = {
             const config = well.config || well.components || [];
             if (!config.length) continue;
 
-            const magCode = well.magazyn === 'Włocławek' ? 'WL' : 'M0';
+            // Kod MAGAZYN per wiersz: dennica z magazynu dennicy, reszta z nadbudowy.
+            const wMagDen = well.magazynDennica || well.magazyn || 'Kluczbork';
+            const wMagNad = well.magazynNadbudowa || well.magazyn || 'Kluczbork';
             const rzednaWlazu = well.rzednaWlazu || 0;
             const rzednaDna = well.rzednaDna || 0;
             const glebokosc = (rzednaWlazu - rzednaDna).toFixed(2).replace('.', ',');
@@ -56,7 +81,7 @@ window.StudnieExternalExportTemplate = {
                     RABAT: rabat,
                     SREDNICA: srednica,
                     ZAKONCZENIE: zakonczenie,
-                    MAGAZYN: magCode,
+                    MAGAZYN: this._magCodeFor(well, comp, wMagDen, wMagNad, codes),
                     LP: lp
                 });
             }
@@ -109,6 +134,20 @@ window.StudnieExternalExportTemplate = {
         }
     },
 
+    async _resolveCodes() {
+        if (window.MagazynCodes && typeof window.MagazynCodes.get === 'function') {
+            return window.MagazynCodes.get();
+        }
+        return null;
+    },
+
+    async _ensureProductMap() {
+        await this._ensureProductCatalog();
+        if (typeof studnieProducts !== 'undefined' && Array.isArray(studnieProducts)) {
+            this._productMap = new Map(studnieProducts.map((p) => [p.id, p]));
+        }
+    },
+
     async generateAndDownload(offerId) {
         const offers = XlsxImportShared.getLoadedOffers();
         if (!offers.length) {
@@ -117,22 +156,8 @@ window.StudnieExternalExportTemplate = {
         }
 
         this._productMap = null;
-        let needsCatalog = false;
-        for (const offer of offers) {
-            if (offerId && offer.id !== offerId) continue;
-            if (offer.type !== 'studnia_oferta') continue;
-            const data = offer.data || offer;
-            const wells = data.wellsExport || data.wells || [];
-            if (wells.length && !wells[0].config?.some((c) => c._xp !== undefined)) {
-                needsCatalog = true;
-                break;
-            }
-        }
-
-        if (needsCatalog) {
-            await this._ensureProductCatalog();
-            this._productMap = new Map(studnieProducts.map((p) => [p.id, p]));
-        }
+        await this._ensureProductMap();
+        const codes = await this._resolveCodes();
 
         const rows = [];
         for (const offer of offers) {
@@ -141,7 +166,7 @@ window.StudnieExternalExportTemplate = {
             const data = offer.data || offer;
             const offerNumber = offer.offer_number || offer.number || '';
             const before = rows.length;
-            rows.push(...this._wellRows(data, offerNumber));
+            rows.push(...this._wellRows(data, offerNumber, codes));
             const trRow = this._transportRow(data, offerNumber, rows.length - before + 1);
             if (trRow) rows.push(trRow);
         }
@@ -157,17 +182,13 @@ window.StudnieExternalExportTemplate = {
 
     async generateAndDownloadOrder(orderData) {
         this._productMap = null;
+        await this._ensureProductMap();
+        const codes = await this._resolveCodes();
 
         const data = orderData;
-        const wells = data.wellsExport || data.wells || [];
-        if (wells.length && !wells[0].config?.some((c) => c._xp !== undefined)) {
-            await this._ensureProductCatalog();
-            this._productMap = new Map(studnieProducts.map((p) => [p.id, p]));
-        }
-
         const offerNumber =
             orderData.orderNumber || orderData.offer_number || orderData.number || '';
-        const rows = this._wellRows(data, offerNumber);
+        const rows = this._wellRows(data, offerNumber, codes);
         const trRow = this._transportRow(data, offerNumber, rows.length + 1);
         if (trRow) rows.push(trRow);
 

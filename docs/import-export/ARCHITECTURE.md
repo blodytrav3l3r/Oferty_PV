@@ -86,7 +86,13 @@ Kolumny:
 - `RABAT` (opcjonalny) — rabat w % (wartość 0–100); w generowanym XLSX stała liczba 2 miejsca po przecinku
 - `SREDNICA` (opcjonalny) — średnica (tylko studnie)
 - `ZAKONCZENIE` (opcjonalny) — typ zakończenia (tylko studnie)
-- `MAGAZYN` (opcjonalny) — lokalizacja magazynowa (tylko studnie)
+- `MAGAZYN` (opcjonalny) — kod magazynu **per wiersz** (tylko studnie).
+  Wiersze dennicy (`dennica/kineta/styczna`) używają kodu magazynu dennicy,
+  pozostałe wiersze — kodu magazynu nadbudowy. Słownik kodów: `GET/PUT
+  /api/settings/magazyn-codes` (edycja na Pulpicie → Konfiguracja Systemu →
+  Kody magazynów; domyślnie `WL`/`M0` dla obu części). Nieznany/pusty kod
+  w imporcie → `Kluczbork`. Studnia trzyma `magazynDennica`/`magazynNadbudowa`
+  z fallbackiem `magazyn` (= nadbudowa).
 - `LP` (opcjonalny) — kolejność sortowania
 
 Kolumny specyficzne dla studni (`GLEBOKOSC`, `SREDNICA`, `ZAKONCZENIE`, `MAGAZYN`) pozostają puste w eksporcie rur. Kolumna `NR_STUDNI` ma odmienne znaczenie w zależności od modułu: dla studni to nazwa studni (grupowanie komponentów), dla rur to typ PEHD (wkładka polietylenowa).
