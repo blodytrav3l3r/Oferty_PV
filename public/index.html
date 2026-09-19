@@ -360,84 +360,69 @@
                         </div>
                     </div>
 
-                    <div class="card system-card sysconfig-card sysconfig-card--codes">
-                        <div class="sysconfig-header">
-                            <div class="sysconfig-current">
-                                <span class="sysconfig-icon"><i data-lucide="warehouse"></i></span>
-                                <div class="sysconfig-info">
-                                    <span class="sysconfig-label">Kody magazynów</span>
-                                    <span
-                                        id="mag-codes-preview"
-                                        class="token-badge sysconfig-preview"
-                                        >-</span
-                                    >
-                                </div>
+                    <div class="card system-card sysconfig-card">
+                        <div class="sysconfig-current">
+                            <span class="sysconfig-icon"><i data-lucide="warehouse"></i></span>
+                            <div class="sysconfig-info">
+                                <span class="sysconfig-label">Kody magazynów</span>
+                                <span id="mag-codes-preview" class="token-badge sysconfig-preview"
+                                    >-</span
+                                >
                             </div>
                         </div>
-                        <div class="sysconfig-grid">
-                            <div class="sysconfig-grid-col-header">
-                                <span class="sysconfig-col-empty"></span>
-                                <span class="sysconfig-col-title"
-                                    ><i data-lucide="map-pin"></i> Włocławek</span
-                                >
-                                <span class="sysconfig-col-title"
-                                    ><i data-lucide="map-pin"></i> Kluczbork</span
-                                >
-                            </div>
-                            <div class="sysconfig-grid-row">
-                                <span class="sysconfig-row-label">Dennica</span>
-                                <div class="sysconfig-field">
+                        <div class="sysconfig-edit sysconfig-codes-compact">
+                            <div class="sysconfig-code-group">
+                                <span class="sysconfig-section-tag">Dennica</span>
+                                <div class="sysconfig-code-pair">
+                                    <span class="sysconfig-mini-label">WŁ</span>
                                     <input
                                         type="text"
                                         id="mag-den-wl"
                                         maxlength="20"
-                                        class="sysconfig-input sysconfig-input--code"
-                                        placeholder="np. WL"
+                                        class="sysconfig-code-input"
+                                        placeholder="WL"
                                         aria-label="Kod Włocławek dla dennicy"
                                     />
-                                </div>
-                                <div class="sysconfig-field">
+                                    <span class="sysconfig-mini-label">KLB</span>
                                     <input
                                         type="text"
                                         id="mag-den-klb"
                                         maxlength="20"
-                                        class="sysconfig-input sysconfig-input--code"
-                                        placeholder="np. M0"
+                                        class="sysconfig-code-input"
+                                        placeholder="M0"
                                         aria-label="Kod Kluczbork dla dennicy"
                                     />
                                 </div>
                             </div>
-                            <div class="sysconfig-grid-row">
-                                <span class="sysconfig-row-label">Nadbudowa</span>
-                                <div class="sysconfig-field">
+                            <div class="sysconfig-code-group">
+                                <span class="sysconfig-section-tag">Nadbudowa</span>
+                                <div class="sysconfig-code-pair">
+                                    <span class="sysconfig-mini-label">WŁ</span>
                                     <input
                                         type="text"
                                         id="mag-nad-wl"
                                         maxlength="20"
-                                        class="sysconfig-input sysconfig-input--code"
-                                        placeholder="np. WL"
+                                        class="sysconfig-code-input"
+                                        placeholder="WL"
                                         aria-label="Kod Włocławek dla nadbudowy"
                                     />
-                                </div>
-                                <div class="sysconfig-field">
+                                    <span class="sysconfig-mini-label">KLB</span>
                                     <input
                                         type="text"
                                         id="mag-nad-klb"
                                         maxlength="20"
-                                        class="sysconfig-input sysconfig-input--code"
-                                        placeholder="np. M0"
+                                        class="sysconfig-code-input"
+                                        placeholder="M0"
                                         aria-label="Kod Kluczbork dla nadbudowy"
                                     />
                                 </div>
                             </div>
-                        </div>
-                        <div class="sysconfig-actions">
                             <button
                                 type="button"
                                 class="btn btn-primary btn-sm"
                                 onclick="saveMagazynCodes()"
                             >
-                                Zapisz kody
+                                Zapisz
                             </button>
                         </div>
                     </div>
