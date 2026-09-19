@@ -102,9 +102,10 @@ Starej tabeli baseline (§3) NIE nadpisano — poniżej nowe, niezależne pomiar
   Deterministyczny, szybki, zapisy self-cleaning (PUT+DELETE, claim+recycle),
   wynik DoD daje jasny PASS/FAIL. Odporny na brak środowiska: jeśli serwer
   nie wstanie w 60 s, job kończy się SKIP z wyraźnym powodem (nie FAIL).
-- **sustained** (`--sustained`, steady ~15 min + burst N×): job CI
-  `load-sustained` — TYLKO `workflow_dispatch` (input `users`, domyślnie 100)
-  i nightly (`schedule` cron `0 2 * * *`). Nigdy przy pushu/PR.
+- **sustained** (`--sustained`, steady ~15 min + burst N×): job
+  `load-sustained` w osobnym `.github/workflows/load-nightly.yml` — TYLKO
+  `workflow_dispatch` (input `users`, domyślnie 100) i nightly (`schedule`
+  cron `0 2 * * *`). Nigdy przy pushu/PR (brak wiersza Skipped w CI).
 - **`--users N`** (formy `--users 50` i `--users=50`): skala workerów steady
   i burstów w proporcjach historycznych; dla N=100 podział bitowo identyczny
   jak dotąd (80/15/3 + claim + PDF; burst 55/20/10/5 + 5 health + 2 PDF + 3 fill).
@@ -160,7 +161,8 @@ przebiegach (PASS). Różnica względem FAIL z §3.2 to inny stan bazy
 
 - Pełny steady 300 s (`load-100.mjs` bez flag) i `--sustained` (~15 min)
   lokalnie: NIE WYKONANO — koszt czasu (5–15 min + analiza) przy determinacji
-  quick; wariant sustained pokrywa job `load-sustained` (dispatch/nightly).
+  quick; wariant sustained pokrywa job `load-sustained`
+  (`.github/workflows/load-nightly.yml`, dispatch/nightly).
 - Przebieg `--users 100` bez `--quick`: NIE WYKONANO osobno — równoważny
   wariant to `--quick` przy N=100 (ten sam kod podziału, krótszy steady).
 - Pomiar PDF/export-pdf: N/A — świeży seed nie zawiera oferty studni

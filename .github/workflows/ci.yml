@@ -1,6 +1,8 @@
 # CI/CD Pipeline dla S.O.K.
 # - push na main → lint + typecheck + testy + Docker build + weryfikacja + deploy na produkcję
 # - PR na main → lint + typecheck + testy
+# - Load sustained (~15 min) mieszka w osobnym load-nightly.yml (cron + dispatch),
+#   żeby nie wyświetlać wiecznego Skipped w widoku pushy/PR.
 
 name: CI/CD Pipeline
 
@@ -9,15 +11,6 @@ on:
         branches: [main]
     pull_request:
         branches: [main]
-    # Sustained (~15 min) tylko ręcznie lub nocą — nigdy przy pushu (E3).
-    workflow_dispatch:
-        inputs:
-            users:
-                description: 'Liczba wirtualnych userów (sustained)'
-                required: false
-                default: '100'
-    schedule:
-        - cron: '0 2 * * *'
 
 jobs:
     lint:
@@ -342,66 +335,6 @@ jobs:
             - name: Load quick (self-cleaning zapisy, DoD PASS/FAIL)
               if: env.LOAD_SKIP != 'true'
               run: node scripts/load-100.mjs --quick
-
-            - name: Zatrzymaj serwer
-              if: always()
-              run: kill "$(cat /tmp/sok-load.pid)" || true
-
-    load-sustained:
-        name: Load — sustained (~15 min, ręcznie/nightly)
-        runs-on: ubuntu-latest
-        timeout-minutes: 30
-        if: github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
-        env:
-            DATABASE_URL: 'file:./test-ci.sqlite?connection_limit=1&busy_timeout=30000'
-            DEFAULT_ADMIN_PASSWORD: test-admin-pass
-            PORT: '3000'
-        steps:
-            - uses: actions/checkout@v7
-
-            - name: Setup Node.js
-              uses: actions/setup-node@v7
-              with:
-                  node-version: '22'
-                  cache: 'npm'
-
-            - name: Install dependencies
-              run: npm ci
-
-            - name: Generate Prisma client
-              run: npx prisma generate
-
-            - name: Przygotuj testową bazę SQLite
-              run: npx prisma db push --skip-generate
-
-            - name: Seed bazy (produkty + preco)
-              run: npm run prisma:seed
-
-            - name: Start serwera w tle
-              run: |
-                  npm run build
-                  nohup node dist/server.js > /tmp/sok-load.log 2>&1 &
-                  echo $! > /tmp/sok-load.pid
-
-            - name: Czekaj na /health (skip gdy brak środowiska)
-              run: |
-                  for i in $(seq 1 30); do
-                    if curl -sf http://localhost:3000/health >/dev/null 2>&1; then
-                      echo "[OK] Serwer gotowy (proba $i)"
-                      exit 0
-                    fi
-                    sleep 2
-                  done
-                  echo "[SKIP] Brak serwera po 60 s — pomijam load-sustained (nie FAIL)."
-                  tail -n 50 /tmp/sok-load.log || true
-                  echo "LOAD_SKIP=true" >> "$GITHUB_ENV"
-
-            - name: Load sustained (self-cleaning zapisy, DoD PASS/FAIL)
-              if: env.LOAD_SKIP != 'true'
-              run: |
-                  USERS="${{ github.event.inputs.users }}"
-                  if [ -z "$USERS" ]; then USERS="100"; fi
-                  node scripts/load-100.mjs --sustained --users "$USERS"
 
             - name: Zatrzymaj serwer
               if: always()
