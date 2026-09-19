@@ -397,7 +397,9 @@ function _draftStripEphemeralItem(item) {
     if (!item || typeof item !== 'object' || Array.isArray(item)) return item;
     var copy = {};
     Object.keys(item).forEach(function (k) {
-        if (_DRAFT_ITEM_EPHEMERAL.indexOf(k) === -1) copy[k] = item[k];
+        if (_DRAFT_ITEM_EPHEMERAL.indexOf(k) !== -1) return;
+        // B1: quantity number ↔ numeric string (inputy vs SAVED).
+        copy[k] = k === 'quantity' ? _draftNumOrKeep(item[k]) : item[k];
     });
     return copy;
 }
@@ -435,12 +437,48 @@ var _DRAFT_FIELD_FALLBACKS = {
 };
 
 /**
+ * Liczby w warstwie porównywalnej — jawna allowlista (B1). Kod dopuszcza
+ * number ↔ numeric string (inputy vs SAVED); identyfikatory typu "00123"
+ * NIGDY nie normalizowane (inna wartość semantycznie).
+ */
+var _DRAFT_NUMERIC_FIELD_KEYS = ['transportKm', 'transportRate'];
+
+/**
+ * Number gdy numeric string, inaczej bez zmian (NaN/puste zostają).
+ * @param {*} v
+ * @returns {*}
+ */
+function _draftNumOrKeep(v) {
+    if (typeof v !== 'string' || v.trim() === '') return v;
+    var n = Number(v);
+    return isNaN(n) ? v : n;
+}
+
+/**
+ * Klucz sortowania pozycji (B2: items insensitive). Wells celowo BEZ sortowania
+ * (kolejność studni niesie znaczenie: numeracja/nazwy W1/W2).
+ */
+function _draftItemSortKey(it) {
+    if (!it || typeof it !== 'object') return '#' + String(it);
+    return (
+        String(it.uid || '') +
+        '|' +
+        String(it.productId || it.name || '') +
+        '|' +
+        String(it.lengthM !== undefined ? it.lengthM : it.length !== undefined ? it.length : '')
+    );
+}
+
+/**
  * Payload w przestrzeni porównywalnej (obie strony tą samą projekcją).
  * order_studnie: DTO (allowlist SSoT) + strip _elemId w pozycjach (PZ-id to nie
  * tresc zmiany); offer_studnie: strip efemerycznych (DTO nie obowiazuje ofert);
  * transportMode undefined traktuj jak 'full' (default load, legacy SAVED).
  * Zamówienia: wizard to szum (tiles z oferty, step wymuszony 5, restore go nie
  * czyta) — obie strony bez kluczy wizarda. Pola: brak klucza = fallback UI.
+ * B1: liczby z allowlisty (number ↔ numeric string). B2: items sortowane
+ * (kolejność pozycji nie jest semantyką — render rur i tak sortuje).
+ * B3: brak wellDiscounts/visiblePrzejsciaTypes = {}/[] (szum w diffie).
  * @param {string} kind
  * @param {*} payload
  * @returns {object}
@@ -452,6 +490,8 @@ function _draftComparablePayload(kind, payload) {
         out[k] = src[k];
     });
     if (out.transportMode === undefined) out.transportMode = 'full';
+    if (out.wellDiscounts === undefined) out.wellDiscounts = {};
+    if (out.visiblePrzejsciaTypes === undefined) out.visiblePrzejsciaTypes = [];
     if (kind === 'order_studnie' || kind === 'order_rury') {
         delete out.wizardGlobalParams;
         delete out.wizardStep;
@@ -472,7 +512,26 @@ function _draftComparablePayload(kind, payload) {
                 return;
             if (fields[k] === undefined || fields[k] === null) fields[k] = '';
         });
+        _DRAFT_NUMERIC_FIELD_KEYS.forEach(function (k) {
+            if (fields[k] !== undefined) fields[k] = _draftNumOrKeep(fields[k]);
+        });
         out.fields = fields;
+    }
+    if (Array.isArray(out.items)) {
+        out.items = out.items.map(function (it) {
+            if (!it || typeof it !== 'object') return it;
+            if (it.quantity === undefined) return it;
+            var copy = {};
+            Object.keys(it).forEach(function (k) {
+                copy[k] = k === 'quantity' ? _draftNumOrKeep(it[k]) : it[k];
+            });
+            return copy;
+        });
+        out.items = out.items.slice().sort(function (x, y) {
+            var kx = _draftItemSortKey(x);
+            var ky = _draftItemSortKey(y);
+            return kx < ky ? -1 : kx > ky ? 1 : 0;
+        });
     }
     if (!Array.isArray(src.wells)) return out;
     if (kind === 'order_studnie') {
@@ -978,6 +1037,22 @@ function _draftShowDraftModal(kind, draft, savedDoc) {
         kind === 'offer_rury' || kind === 'order_rury'
             ? counts.items + ' poz.'
             : counts.wells + ' stud.';
+    // Szczegóły zmian: czyste string[] z _draftDescribeDiff, escapuje renderer.
+    var diffLines = _draftDiffLinesForModal(kind, draft);
+    var diffHtml = '';
+    if (diffLines.length) {
+        var items = diffLines
+            .map(function (l) {
+                return '<li>' + escapeHtml(l) + '</li>';
+            })
+            .join('');
+        diffHtml =
+            '<details class="text-muted fs-xs-muted"><summary>' +
+            escapeHtml('Szczegóły zmian (' + diffLines.length + ')') +
+            '</summary><ul>' +
+            items +
+            '</ul></details>';
+    }
     // Tekst przez escapeHtml, atrybuty przez escapeHtmlAttr (reguła P0.3).
     var html =
         '<div class="modal">' +
@@ -997,6 +1072,7 @@ function _draftShowDraftModal(kind, draft, savedDoc) {
                 ') różni się od zapisanej wersji. Przywrócenie nie zapisuje — wymagany jawny zapis.'
         ) +
         '</div>' +
+        diffHtml +
         '<div class="modal-footer">' +
         '<button type="button" class="btn btn-primary btn-sm" data-draft-act="restore"><i data-lucide="history" aria-hidden="true"></i> ' +
         escapeHtml('Przywróć') +
@@ -1176,6 +1252,173 @@ function _draftLogRecoveryDiff(kind, draftPayload, savedPayload, isNewDoc) {
 }
 
 /**
+ * Opis różnic draft↔SAVED jako czyste dane (bez HTML — escapuje renderer).
+ * Ta sama projekcja co _draftEquivalent (SSoT): równoważne → [].
+ * Default bez stara→nowa: sekcje + nazwy (Pola: a, b / Studnie: 2 → 3 / + ~/−).
+ * @param {string} kind
+ * @param {*} draftPayload
+ * @param {*} savedPayload
+ * @param {boolean} isNewDoc
+ * @returns {string[]}
+ */
+function _draftDescribeDiff(kind, draftPayload, savedPayload, isNewDoc) {
+    try {
+        if (_draftEquivalent(kind, draftPayload, savedPayload, isNewDoc)) return [];
+        var a = _draftComparablePayload(kind, draftPayload);
+        var b = _draftComparablePayload(kind, savedPayload);
+        // Ten sam drop date/number co _draftEquivalent (legacy/kreacja dryf).
+        ['date', 'number'].forEach(function (k) {
+            if (
+                a.fields &&
+                b.fields &&
+                (a.fields[k] === undefined ||
+                    a.fields[k] === null ||
+                    a.fields[k] === '' ||
+                    b.fields[k] === undefined ||
+                    b.fields[k] === null ||
+                    b.fields[k] === '')
+            ) {
+                delete a.fields[k];
+                delete b.fields[k];
+            }
+        });
+        var lines = [];
+        var canon = function (v, opts) {
+            try {
+                return window.draftStore.canonicalPayloadJson({ v: v }, opts);
+            } catch (_e) {
+                return null;
+            }
+        };
+        var opts = isNewDoc ? { ignoreVolatile: true, ignoreWizard: true } : undefined;
+        // Pola nagłówka: lista kluczy (bez wartości — pełne wartości w Pobierz JSON).
+        if (canon(a.fields, opts) !== canon(b.fields, opts)) {
+            var changed = [];
+            window.draftStore.FIELD_KEYS.forEach(function (k) {
+                var av = a.fields ? a.fields[k] : undefined;
+                var bv = b.fields ? b.fields[k] : undefined;
+                if (canon(av) !== canon(bv)) changed.push(k);
+            });
+            if (changed.length) lines.push('Pola: ' + changed.join(', '));
+            else lines.push('Pola: zmienione');
+        }
+        var short = function (s, n) {
+            s = String(s === null || s === undefined ? '' : s);
+            var lim = n || 40;
+            return s.length > lim ? s.slice(0, lim - 1) + '…' : s;
+        };
+        var wellLabel = function (w, i) {
+            if (!w || typeof w !== 'object') return '#' + (i + 1);
+            return short(w.name || w.numer || (w.dn ? 'DN' + w.dn : null) || w.id || '#' + (i + 1));
+        };
+        var wellKey = function (w, i) {
+            if (w && typeof w === 'object') {
+                if (w.id !== undefined && w.id !== null && String(w.id) !== '')
+                    return 'id:' + String(w.id);
+                var nm = w.name || w.numer;
+                if (nm !== undefined && nm !== null && String(nm) !== '') return 'nm:' + String(nm);
+            }
+            return '#' + i;
+        };
+        // Studnie: N vs M + per-wiersz +/~/− (klucz id → nazwa → index fallback).
+        if (Array.isArray(a.wells) || Array.isArray(b.wells)) {
+            var aw = Array.isArray(a.wells) ? a.wells : [];
+            var bw = Array.isArray(b.wells) ? b.wells : [];
+            if (canon(aw, opts) !== canon(bw, opts)) {
+                lines.push('Studnie: ' + bw.length + ' → ' + aw.length);
+                var bMap = {};
+                bw.forEach(function (w, i) {
+                    bMap[wellKey(w, i)] = { w: w, i: i };
+                });
+                var aKeys = {};
+                aw.forEach(function (w, i) {
+                    var k = wellKey(w, i);
+                    aKeys[k] = 1;
+                    if (!bMap[k]) lines.push('+ „' + wellLabel(w, i) + '"');
+                    else if (canon(w) !== canon(bMap[k].w))
+                        lines.push('~ „' + wellLabel(w, i) + '"');
+                });
+                bw.forEach(function (w, i) {
+                    if (!aKeys[wellKey(w, i)]) lines.push('− „' + wellLabel(w, i) + '"');
+                });
+            }
+        }
+        // Pozycje rur: N vs M + per-pozycja (klucz uid → productId → index fallback).
+        if (Array.isArray(a.items) || Array.isArray(b.items)) {
+            var ai = Array.isArray(a.items) ? a.items : [];
+            var bi = Array.isArray(b.items) ? b.items : [];
+            if (canon(ai, opts) !== canon(bi, opts)) {
+                lines.push('Pozycje: ' + bi.length + ' → ' + ai.length);
+                var itemKey = function (it, i) {
+                    if (it && typeof it === 'object') {
+                        if (it.uid) return 'u:' + String(it.uid);
+                        if (it.productId)
+                            return (
+                                'p:' + String(it.productId) + '#' + (it.lengthM || it.length || '')
+                            );
+                    }
+                    return '#' + i;
+                };
+                var itemLabel = function (it, i) {
+                    if (!it || typeof it !== 'object') return '#' + (i + 1);
+                    var q = it.quantity !== undefined ? ' ×' + it.quantity : '';
+                    return short(it.productId || it.name || '#' + (i + 1)) + q;
+                };
+                var biMap = {};
+                bi.forEach(function (it, i) {
+                    biMap[itemKey(it, i)] = { it: it, i: i };
+                });
+                var aiKeys = {};
+                ai.forEach(function (it, i) {
+                    var k = itemKey(it, i);
+                    aiKeys[k] = 1;
+                    if (!biMap[k]) lines.push('+ „' + itemLabel(it, i) + '"');
+                    else if (canon(it) !== canon(biMap[k].it))
+                        lines.push('~ „' + itemLabel(it, i) + '"');
+                });
+                bi.forEach(function (it, i) {
+                    if (!aiKeys[itemKey(it, i)]) lines.push('− „' + itemLabel(it, i) + '"');
+                });
+            }
+        }
+        if (canon(a.transportMode, opts) !== canon(b.transportMode, opts))
+            lines.push(
+                'Transport: ' +
+                    short((b.transportMode ?? '—') + ' → ' + (a.transportMode ?? '—'), 60)
+            );
+        if (canon(a.wellDiscounts, opts) !== canon(b.wellDiscounts, opts))
+            lines.push('Rabaty: zmienione');
+        if (canon(a.visiblePrzejsciaTypes, opts) !== canon(b.visiblePrzejsciaTypes, opts))
+            lines.push('Widoczne przejścia: zmienione');
+        // Limit modalu: pierwsze 20 + ogon (ponytail: summary, nie diff-viewer).
+        if (lines.length > 20)
+            return lines.slice(0, 20).concat(['i ' + (lines.length - 20) + ' więcej…']);
+        return lines;
+    } catch (_e) {
+        return [];
+    }
+}
+
+/**
+ * Linie diffu dla otwartego kontekstu (modal liczy sam — zgodny z checkRecovery).
+ * @param {string} kind
+ * @param {object} draft
+ * @returns {string[]}
+ */
+function _draftDiffLinesForModal(kind, draft) {
+    try {
+        var cfg = _draftKindConfig[kind];
+        if (!cfg || !draft) return [];
+        var docId = (draft && draft.docId) || cfg.getDocId() || 'new';
+        var cur = _draftCurrentSaved(kind, cfg, docId);
+        if (!cur || cur.slim || !cur.payload) return [];
+        return _draftDescribeDiff(kind, draft.payload, cur.payload, cur.isNew);
+    } catch (_e) {
+        return [];
+    }
+}
+
+/**
  * Sprawdza recovery dla rodzaju: popup tylko gdy draft istnieje i NIE jest
  * równoważny SAVED (ten sam komparator co bramka zapisu — _draftEquivalent).
  * @param {string} kind
@@ -1276,5 +1519,6 @@ window.draftAutosave = {
     showModal: _draftShowDraftModal,
     areEquivalent: _draftEquivalent,
     currentSaved: _draftCurrentSaved,
-    currentUserId: _draftUserId
+    currentUserId: _draftUserId,
+    describeDiff: _draftDescribeDiff
 };
