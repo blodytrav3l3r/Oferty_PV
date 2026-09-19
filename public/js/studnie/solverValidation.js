@@ -8,14 +8,124 @@
  * Zależności globalne: studnieProducts, FLOW_TYPES
  */
 
+/* ===== LIVE WALIDACJA KOLIZJI GEOMETRYCZNYCH ===== */
+// Read-only mirror geometrycznej części checkConflicts() z solverAutoSelect.js:
+// ręczna edycja zmienia geometrię bez uruchamiania solvera, więc stare
+// "Kolizja otworu..." musi być re-walidowane na aktualnych segmentach.
+// Świadoma duplikacja (nie refaktor checkConflicts — closure solvera);
+// oba mechanizmy korzystają ze wspólnego SSoT transitionZones.js
+// (getTransitionDn/getTransitionBody/getTransitionZone/jointInZone).
+// Nie mutuje config ani configSource. Brak kręgu wierconego (asortyment,
+// diagramOtRings) celowo poza zakresem.
+function validateCollisionsLive(well, segments) {
+    if (!well || !segments || !well.przejscia || well.przejscia.length === 0) return [];
+    const rzDnaRaw = well.rzednaDna != null ? well.rzednaDna : 0;
+    const rzDna = parseFloat(rzDnaRaw);
+    if (isNaN(rzDna)) return [];
+    const out = [];
+    const hasZoneFn = typeof getTransitionZone === 'function' && typeof jointInZone === 'function';
+    for (const pr of well.przejscia) {
+        const pel = parseFloat(pr.rzednaWlaczenia);
+        if (isNaN(pel)) continue;
+        const pprod =
+            typeof resolveStudnieProduct === 'function'
+                ? resolveStudnieProduct(pr.productId)
+                : null;
+        let dnVal;
+        let body;
+        if (typeof getTransitionDn === 'function' && typeof getTransitionBody === 'function') {
+            dnVal = getTransitionDn(pprod || null);
+            body = getTransitionBody(pr.rzednaWlaczenia, well.rzednaDna, dnVal);
+        } else {
+            if (pprod && pprod.dn && typeof pprod.dn === 'string' && pprod.dn.includes('/'))
+                dnVal = parseFloat(pprod.dn.split('/')[1]) || 160;
+            else if (pprod && pprod.dn) dnVal = parseFloat(pprod.dn) || 160;
+            else dnVal = 160;
+            const bottomMm = Math.round((pel - rzDna) * 1000);
+            body = { bottomMm: bottomMm, topMm: bottomMm + dnVal };
+        }
+        if (!body) continue;
+        const hBot = body.bottomMm;
+        const hTop = body.topMm;
+        const parseRes = (val, fallback) => {
+            if (val === undefined || val === null || val === '') return fallback;
+            const n = parseFloat(val);
+            return isNaN(n) ? fallback : n;
+        };
+        // Jak w solverze: brak produktu → zapasy 0 (tylko margines strefy).
+        const zdD = pprod ? parseRes(pprod.zapasDol, 300) : 0;
+        const zdDM = pprod ? parseRes(pprod.zapasDolMin, 150) : 0;
+        const zdG = pprod ? parseRes(pprod.zapasGora, 300) : 0;
+        const zdGM = pprod ? parseRes(pprod.zapasGoraMin, 150) : 0;
+        let zone;
+        if (hasZoneFn) {
+            zone = getTransitionZone(
+                { bottomMm: hBot, topMm: hTop },
+                {
+                    dolStd: hBot === 0 ? 0 : zdD,
+                    goraStd: zdG,
+                    dolMin: hBot === 0 ? 0 : zdDM,
+                    goraMin: zdGM
+                }
+            );
+        } else {
+            const m = 15;
+            zone = {
+                std: { bottomMm: hBot - (hBot === 0 ? 0 : zdD) - m, topMm: hTop + zdG + m },
+                min: { bottomMm: hBot - (hBot === 0 ? 0 : zdDM) - m, topMm: hTop + zdGM + m }
+            };
+        }
+        const inZone = (jointMm, z) =>
+            hasZoneFn ? jointInZone(jointMm, z) : jointMm >= z.bottomMm && jointMm <= z.topMm;
+        let strictValid = true;
+        let minValid = true;
+        for (const s of segments) {
+            if (!s) continue;
+            if (inZone(s.end, zone.std)) strictValid = false;
+            if (inZone(s.end, zone.min)) minValid = false;
+            const isForbidden =
+                s.type === 'konus' ||
+                s.type === 'plyta_din' ||
+                s.type === 'plyta_redukcyjna' ||
+                s.type === 'pierscien_odciazajacy';
+            if (isForbidden && hTop > s.start && hBot < s.end) {
+                strictValid = false;
+                minValid = false;
+                const errStr = `Kolizja otworu z elementem ${s.type}`;
+                if (!out.includes(errStr)) out.push(errStr);
+            }
+            if (s.type === 'plyta_redukcyjna') {
+                const holeCenter = hBot + dnVal / 2;
+                if (holeCenter >= s.start) {
+                    strictValid = false;
+                    minValid = false;
+                    const errStr = 'Przejście nie może być powyżej płyty redukcyjnej';
+                    if (!out.includes(errStr)) out.push(errStr);
+                }
+            }
+        }
+        if (!strictValid && !minValid) {
+            const errStr = `Kolizja otworu Z=${hBot} ze złączami (strefa minimalna)`;
+            if (!out.includes(errStr)) out.push(errStr);
+        }
+    }
+    return out;
+}
+
 /* ===== WALIDACJA LUZÓW PRZEJŚĆ ===== */
 function recalculateWellErrors(well) {
     if (!well || well.configStatus === 'LOADING') return;
 
-    // Wyczyść błędy dotyczące luzów z poprzedniego wywołania; przy pustym configu
-    // kasuj też pozostałe błędy solvera (nieaktualne po clearWellConfig/doSelectDN).
+    // Wyczyść błędy dotyczące luzów i kolizji geometrycznych z poprzedniego
+    // wywołania; przy pustym configu kasuj też pozostałe błędy solvera
+    // (nieaktualne po clearWellConfig/doSelectDN).
     // Notki luzów ("zastosowano luzy minimalne") są regenerowane poniżej — stare
     // (np. po zamianie kręgu) nie mogą zostać w configErrors.
+    // Błędy geometryczne ("Kolizja otworu", "powyżej płyty redukcyjnej") są
+    // re-walidowane live przez validateCollisionsLive() — stare (np. po ręcznym
+    // przesunięciu przejścia poza joint) nie mogą zostać w configErrors.
+    // "Brak kręgu wierconego" to błąd asortymentu (diagramOtRings), nie geometrii —
+    // celowo zachowywany, produkuje go właściciel.
     const liveErrors =
         well.config && well.config.length > 0 && well.configErrors
             ? well.configErrors.filter(
@@ -25,7 +135,9 @@ function recalculateWellErrors(well) {
                       !e.includes('zastosowano luzy minimalne') &&
                       !e.includes('Rzędna włączenia przejścia') &&
                       !e.includes('Rzędna dna') &&
-                      !e.includes('brak dopłaty PEHD')
+                      !e.includes('brak dopłaty PEHD') &&
+                      !e.includes('Kolizja otworu') &&
+                      !e.includes('powyżej płyty redukcyjnej')
               )
             : [];
 
@@ -167,6 +279,9 @@ function recalculateWellErrors(well) {
                     }
                 }
             });
+            // --- LIVE KOLIZJE GEOMETRYCZNE (reuse segmentów, bez solvera) ---
+            const liveCollisions = validateCollisionsLive(well, segments);
+            for (const e of liveCollisions) if (!liveErrors.includes(e)) liveErrors.push(e);
         }
     }
     // --- WALIDACJA DOPŁATY PEHD (wkładka wybrana, ale brak dopłaty w cenniku) ---

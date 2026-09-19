@@ -20,6 +20,20 @@ describe('recalculateWellErrors — czyszczenie błędów przy pustym configu', 
                 componentType: 'przejscie',
                 dn: '160',
                 name: 'Przejście 160'
+            },
+            {
+                id: 'krag-1000-2000',
+                componentType: 'krag',
+                dn: '1000',
+                height: 2000,
+                name: 'Krąg DN1000 H=2000'
+            },
+            {
+                id: 'konus-1000-500',
+                componentType: 'konus',
+                dn: '1000',
+                height: 500,
+                name: 'Konus DN1000 H=500'
             }
         ];
         (global as any).studnieProducts = studnieProducts;
@@ -76,7 +90,7 @@ describe('recalculateWellErrors — czyszczenie błędów przy pustym configu', 
         expect(well.configErrors).toEqual([]);
     });
 
-    test('niepusty config: błędy nie-luzowe są zachowywane', () => {
+    test('niepusty config bez przejść: stale kolizje geometryczne są czyszczone', () => {
         const ctx = loadSolver();
         const well = {
             config: [{ productId: 'krag-1000-500', quantity: 1 }],
@@ -86,7 +100,23 @@ describe('recalculateWellErrors — czyszczenie błędów przy pustym configu', 
             przejscia: []
         };
         ctx.recalculateWellErrors(well);
-        expect(well.configErrors).toEqual(['Kolizja otworu przejścia z elementem konstrukcyjnym']);
+        expect(well.configErrors).toEqual([]);
+        expect(well.configStatus).toBe('OK');
+    });
+
+    test('niepusty config: błąd asortymentu (Brak kręgu) jest zachowywany', () => {
+        const ctx = loadSolver();
+        const well = {
+            config: [{ productId: 'krag-1000-500', quantity: 1 }],
+            configSource: 'MANUAL',
+            configErrors: ['Brak kręgu wierconego DN1000 w cenniku — dodaj ręcznie'],
+            configStatus: 'ERROR',
+            przejscia: []
+        };
+        ctx.recalculateWellErrors(well);
+        expect(well.configErrors).toEqual([
+            'Brak kręgu wierconego DN1000 w cenniku — dodaj ręcznie'
+        ]);
         expect(well.configStatus).toBe('ERROR');
     });
 
@@ -118,7 +148,7 @@ describe('recalculateWellErrors — czyszczenie błędów przy pustym configu', 
         expect(well.configStatus).toBe('WARNING');
     });
 
-    test('twardy błąd (kolizja) obok notki: status ERROR', () => {
+    test('stale kolizja bez przejść obok notki: zostaje sama notka (WARNING)', () => {
         const ctx = loadSolver();
         const well = {
             config: [{ productId: 'krag-1000-500', quantity: 1 }],
@@ -131,8 +161,8 @@ describe('recalculateWellErrors — czyszczenie błędów przy pustym configu', 
             przejscia: []
         };
         ctx.recalculateWellErrors(well);
-        expect(well.configErrors).toHaveLength(2);
-        expect(well.configStatus).toBe('ERROR');
+        expect(well.configErrors).toEqual(['Zastosowana rozszerzona tolerancja - tryb Ratunkowy']);
+        expect(well.configStatus).toBe('WARNING');
     });
 
     test('stale notki luzów (zamiana kręgu) są usuwane przy przeliczeniu', () => {
@@ -343,5 +373,82 @@ describe('recalculateWellErrors — czyszczenie błędów przy pustym configu', 
         well.rzednaDna = 80;
         ctx.recalculateWellErrors(well);
         expect(well.configErrors.some((e) => e.includes('Rzędna dna'))).toBe(false);
+    });
+
+    test('stale Kolizja Z=2000 znika po ręcznym odsunięciu przejścia od jointa', () => {
+        const ctx = loadSolver();
+        const well = {
+            config: [{ productId: 'krag-1000-2000', quantity: 1 }],
+            configSource: 'MANUAL',
+            configErrors: ['Kolizja otworu Z=2000 ze złączami (strefa minimalna)'],
+            configStatus: 'ERROR',
+            rzednaDna: 0,
+            przejscia: [
+                { productId: 'prz-160', rzednaWlaczenia: '0.8', flowType: 'wylot', angle: 0 }
+            ]
+        };
+        ctx.recalculateWellErrors(well);
+        expect(well.configErrors.some((e) => e.includes('Kolizja otworu'))).toBe(false);
+        expect(well.configStatus).toBe('OK');
+    });
+
+    test('realna kolizja ze złączami jest wykrywana live (joint w strefie minimalnej)', () => {
+        const ctx = loadSolver();
+        const well = {
+            config: [{ productId: 'krag-1000-2000', quantity: 1 }],
+            configSource: 'MANUAL',
+            configErrors: [],
+            configStatus: 'OK',
+            rzednaDna: 0,
+            przejscia: [
+                { productId: 'prz-160', rzednaWlaczenia: '1.9', flowType: 'wylot', angle: 0 }
+            ]
+        };
+        ctx.recalculateWellErrors(well);
+        expect(well.configErrors.some((e) => e.includes('strefa minimalna'))).toBe(true);
+        expect(well.configStatus).toBe('ERROR');
+    });
+
+    test('kolizja z elementem zakazanym (konus) jest wykrywana live', () => {
+        const ctx = loadSolver();
+        const well = {
+            // config top-down: konus na górze, krąg na dole
+            config: [
+                { productId: 'konus-1000-500', quantity: 1 },
+                { productId: 'krag-1000-2000', quantity: 1 }
+            ],
+            configSource: 'MANUAL',
+            configErrors: [],
+            configStatus: 'OK',
+            rzednaDna: 0,
+            przejscia: [
+                { productId: 'prz-160', rzednaWlaczenia: '2.1', flowType: 'wylot', angle: 0 }
+            ]
+        };
+        ctx.recalculateWellErrors(well);
+        expect(well.configErrors.some((e) => e.includes('Kolizja otworu z elementem konus'))).toBe(
+            true
+        );
+        expect(well.configStatus).toBe('ERROR');
+    });
+
+    test('naprawa geometrii usuwa live kolizję przy kolejnym przeliczeniu', () => {
+        const ctx = loadSolver();
+        const well = {
+            config: [{ productId: 'krag-1000-2000', quantity: 1 }],
+            configSource: 'MANUAL',
+            configErrors: [],
+            configStatus: 'OK',
+            rzednaDna: 0,
+            przejscia: [
+                { productId: 'prz-160', rzednaWlaczenia: '1.9', flowType: 'wylot', angle: 0 }
+            ]
+        };
+        ctx.recalculateWellErrors(well);
+        expect(well.configErrors.some((e) => e.includes('strefa minimalna'))).toBe(true);
+        well.przejscia[0].rzednaWlaczenia = '0.8';
+        ctx.recalculateWellErrors(well);
+        expect(well.configErrors.some((e) => e.includes('strefa minimalna'))).toBe(false);
+        expect(well.configStatus).toBe('OK');
     });
 });
