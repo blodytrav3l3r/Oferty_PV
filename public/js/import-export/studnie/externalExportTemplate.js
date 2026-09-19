@@ -149,15 +149,43 @@ window.StudnieExternalExportTemplate = {
     },
 
     async generateAndDownload(offerId) {
+        this._productMap = null;
+        await this._ensureProductMap();
+        const codes = await this._resolveCodes();
+
+        // Lazy-load: pełny dokument oferty dopiero w chwili eksportu.
+        // Lista kartoteki (getLoadedOffers) to projekcja slim bez wells/wellsExport.
+        if (
+            offerId &&
+            typeof JsonOfferTransfer !== 'undefined' &&
+            typeof JsonOfferTransfer.fetchOffer === 'function'
+        ) {
+            try {
+                const full = await JsonOfferTransfer.fetchOffer('studnie', offerId);
+                const data = Object.assign({}, full, (full && full.data) || {});
+                const offerNumber = (full && (full.offer_number || full.number)) || '';
+                const rows = this._wellRows(data, offerNumber, codes);
+                const trRow = this._transportRow(data, offerNumber, rows.length + 1);
+                if (trRow) rows.push(trRow);
+                if (!rows.length) {
+                    await appAlert('Brak pozycji do eksportu dla wybranej oferty.', {
+                        type: 'warning'
+                    });
+                    return;
+                }
+                const wb = await XlsxImportShared.generateExternalXlsx('studnie', rows);
+                XLSX.writeFile(wb, 'eksport_studnie_zewn.xlsx');
+                return;
+            } catch (_fetchErr) {
+                // Fallback na cache kartoteki poniżej.
+            }
+        }
+
         const offers = XlsxImportShared.getLoadedOffers();
         if (!offers.length) {
             await appAlert('Brak zaladowanych ofert. Otworz kartoteke.', { type: 'warning' });
             return;
         }
-
-        this._productMap = null;
-        await this._ensureProductMap();
-        const codes = await this._resolveCodes();
 
         const rows = [];
         for (const offer of offers) {
@@ -185,9 +213,23 @@ window.StudnieExternalExportTemplate = {
         await this._ensureProductMap();
         const codes = await this._resolveCodes();
 
-        const data = orderData;
-        const offerNumber =
-            orderData.orderNumber || orderData.offer_number || orderData.number || '';
+        // Lazy-load: gdy przekazane zamówienie nie niesie pozycji (slim), dociągnij pełne z API.
+        let data = orderData;
+        if (
+            (!data.wellsExport || !data.wellsExport.length) &&
+            (!data.wells || !data.wells.length) &&
+            data.id &&
+            typeof JsonOfferTransfer !== 'undefined' &&
+            typeof JsonOfferTransfer.fetchOrder === 'function'
+        ) {
+            try {
+                const full = await JsonOfferTransfer.fetchOrder('studnie', data.id);
+                data = Object.assign({}, data, full, (full && full.data) || {});
+            } catch (_fetchErr) {
+                // Zostań przy przekazanym obiekcie — poniżej komunikat o braku pozycji.
+            }
+        }
+        const offerNumber = data.orderNumber || data.offer_number || data.number || '';
         const rows = this._wellRows(data, offerNumber, codes);
         const trRow = this._transportRow(data, offerNumber, rows.length + 1);
         if (trRow) rows.push(trRow);
@@ -200,7 +242,7 @@ window.StudnieExternalExportTemplate = {
         }
 
         const wb = await XlsxImportShared.generateExternalXlsx('studnie', rows);
-        const safeNumber = (orderData.orderNumber || 'zamowienie').replace(/[^a-zA-Z0-9_-]/g, '_');
+        const safeNumber = (data.orderNumber || 'zamowienie').replace(/[^a-zA-Z0-9_-]/g, '_');
         XLSX.writeFile(wb, 'eksport_zamowienie_studnie_' + safeNumber + '.xlsx');
     }
 };
