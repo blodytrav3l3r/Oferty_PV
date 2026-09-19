@@ -360,6 +360,73 @@
                         </div>
                     </div>
 
+                    <div class="card system-card sysconfig-card">
+                        <div class="sysconfig-current">
+                            <span class="sysconfig-icon"><i data-lucide="warehouse"></i></span>
+                            <div class="sysconfig-info">
+                                <span class="sysconfig-label">Kody magazynów</span>
+                                <span id="mag-codes-preview" class="token-badge sysconfig-preview"
+                                    >-</span
+                                >
+                            </div>
+                        </div>
+                        <div class="sysconfig-codes">
+                            <div class="sysconfig-codes-row">
+                                <span class="sysconfig-year">Dennica</span>
+                                <label class="sysconfig-code-label" for="mag-den-wl"
+                                    >Włocławek</label
+                                >
+                                <input
+                                    type="text"
+                                    id="mag-den-wl"
+                                    maxlength="10"
+                                    class="sysconfig-input sysconfig-input--code"
+                                    aria-label="Kod Włocławek dla dennicy"
+                                />
+                                <label class="sysconfig-code-label" for="mag-den-klb"
+                                    >Kluczbork</label
+                                >
+                                <input
+                                    type="text"
+                                    id="mag-den-klb"
+                                    maxlength="10"
+                                    class="sysconfig-input sysconfig-input--code"
+                                    aria-label="Kod Kluczbork dla dennicy"
+                                />
+                            </div>
+                            <div class="sysconfig-codes-row">
+                                <span class="sysconfig-year">Nadbudowa</span>
+                                <label class="sysconfig-code-label" for="mag-nad-wl"
+                                    >Włocławek</label
+                                >
+                                <input
+                                    type="text"
+                                    id="mag-nad-wl"
+                                    maxlength="10"
+                                    class="sysconfig-input sysconfig-input--code"
+                                    aria-label="Kod Włocławek dla nadbudowy"
+                                />
+                                <label class="sysconfig-code-label" for="mag-nad-klb"
+                                    >Kluczbork</label
+                                >
+                                <input
+                                    type="text"
+                                    id="mag-nad-klb"
+                                    maxlength="10"
+                                    class="sysconfig-input sysconfig-input--code"
+                                    aria-label="Kod Kluczbork dla nadbudowy"
+                                />
+                            </div>
+                            <button
+                                type="button"
+                                class="btn btn-primary btn-sm"
+                                onclick="saveMagazynCodes()"
+                            >
+                                Zapisz
+                            </button>
+                        </div>
+                    </div>
+
                     <!-- User Management Widget -->
                     <div class="admin-section-title">
                         <div class="admin-title-group">

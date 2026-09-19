@@ -161,6 +161,7 @@ function showLoggedIn(user) {
         document.getElementById('admin-panel').classList.remove('hidden');
         loadUsers();
         loadYearLetter();
+        loadMagazynCodes();
         initAiMlToggle();
         if (typeof window.mlHealthRender === 'function') {
             setTimeout(function () {
@@ -628,6 +629,81 @@ async function saveYearLetter() {
     }
 }
 
+/* ===== KODY MAGAZYNÓW (słownik MAGAZYN dennica/nadbudowa) ===== */
+const MAGAZYN_CODE_IDS = ['mag-den-wl', 'mag-den-klb', 'mag-nad-wl', 'mag-nad-klb'];
+
+function readMagazynCodes() {
+    const get = (id) => (document.getElementById(id).value || '').trim().toUpperCase();
+    return {
+        dennicaWl: get('mag-den-wl'),
+        dennicaKlb: get('mag-den-klb'),
+        nadbudowaWl: get('mag-nad-wl'),
+        nadbudowaKlb: get('mag-nad-klb')
+    };
+}
+
+function fillMagazynCodes(codes) {
+    const map = {
+        'mag-den-wl': codes.dennicaWl,
+        'mag-den-klb': codes.dennicaKlb,
+        'mag-nad-wl': codes.nadbudowaWl,
+        'mag-nad-klb': codes.nadbudowaKlb
+    };
+    for (const id of MAGAZYN_CODE_IDS) {
+        const el = document.getElementById(id);
+        if (el) el.value = map[id] || '';
+    }
+    const preview = document.getElementById('mag-codes-preview');
+    if (preview)
+        preview.textContent =
+            'D: ' +
+            (codes.dennicaWl || '?') +
+            '/' +
+            (codes.dennicaKlb || '?') +
+            ' N: ' +
+            (codes.nadbudowaWl || '?') +
+            '/' +
+            (codes.nadbudowaKlb || '?');
+}
+
+async function loadMagazynCodes() {
+    try {
+        const res = await fetch('/api/settings/magazyn-codes', {
+            credentials: 'same-origin'
+        });
+        const data = await res.json();
+        fillMagazynCodes(data);
+    } catch (e) {
+        logger.error('dashboard', 'loadMagazynCodes:', e);
+    }
+}
+
+async function saveMagazynCodes() {
+    const codes = readMagazynCodes();
+    const valid = Object.values(codes).every((c) => /^[A-Z0-9]{1,10}$/.test(c));
+    if (!valid) {
+        await appAlert('Kody: 1-10 znaków, tylko A-Z i 0-9', { type: 'warning' });
+        return;
+    }
+    try {
+        const res = await fetch('/api/settings/magazyn-codes', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify(codes)
+        });
+        const data = await res.json();
+        if (res.ok && data.dennicaWl) {
+            fillMagazynCodes(data);
+            await appAlert('Kody magazynów zapisane', { type: 'info' });
+        } else {
+            await appAlert(data.error || 'Błąd zapisu', { type: 'warning' });
+        }
+    } catch (_e) {
+        await appAlert('Błąd połączenia', { type: 'warning' });
+    }
+}
+
 /* ===== Enter → akcja (P0/P1) — używa bindEnter z shared/ui.js ===== */
 (function _bindDashboardEnter() {
     function tryBind() {
@@ -637,6 +713,9 @@ async function saveYearLetter() {
         window.bindEnter(
             'year-letter-input',
             () => window.saveYearLetter && window.saveYearLetter()
+        );
+        MAGAZYN_CODE_IDS.forEach((id) =>
+            window.bindEnter(id, () => window.saveMagazynCodes && window.saveMagazynCodes())
         );
         [
             'new-user-firstname',
@@ -671,3 +750,4 @@ window.createUser = createUser;
 window.deleteUser = deleteUser;
 window.showChangePassword = showChangePassword;
 window.saveYearLetter = saveYearLetter;
+window.saveMagazynCodes = saveMagazynCodes;

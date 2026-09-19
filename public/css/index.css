@@ -792,6 +792,31 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
     gap: 0.6rem;
 }
 
+.sysconfig-input--code {
+    width: 72px;
+    height: 32px;
+    font-size: var(--fs-lg);
+}
+
+.sysconfig-codes {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.sysconfig-codes-row {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+}
+
+.sysconfig-code-label {
+    font-size: var(--fs-sm);
+    color: var(--text-muted);
+    font-weight: var(--fw-bold);
+}
+
 .sysconfig-icon {
     display: flex;
     align-items: center;
