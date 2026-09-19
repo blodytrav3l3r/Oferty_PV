@@ -107,8 +107,10 @@ describe('Etap 7 — katastroficzny recovery', () => {
         const beforeStatus = execSync('git status --porcelain', { cwd: ROOT, encoding: 'utf8' });
         expect(beforeStatus).toMatch(/tmp_cata/);
 
+        // Snapshot scope'owany do plików fixture — hermetyczny na brudnym worktree
+        // (pełny snapshot łapał niezwiązane dirty pliki i restore padał na git apply).
         const id = runNode(
-            `import {getWorktreeState,createSnapshot} from './scripts/git-safety/snapshot.mjs'; import {parseOperation} from './scripts/git-safety/operations.mjs'; const s=getWorktreeState(); const op=parseOperation(['restore','.']); const {id,verification}=createSnapshot(op,s); if(!verification.ok) { console.error(JSON.stringify(verification)); process.exit(1); } console.log(id)`
+            `import {getWorktreeState,createSnapshot} from './scripts/git-safety/snapshot.mjs'; import {parseOperation} from './scripts/git-safety/operations.mjs'; const fx=Array.from({length:10},(_,i)=>"tmp_cata_"+i+".txt").concat(["tmp_cata_large.txt"]); const s=getWorktreeState(fx); const op=parseOperation(['restore','.']); const {id,verification}=createSnapshot(op,s); if(!verification.ok) { console.error(JSON.stringify(verification)); process.exit(1); } console.log(id)`
         )
             .split('\n')
             .pop()!

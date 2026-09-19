@@ -8,7 +8,12 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '../..');
 const SNAPSHOTS_DIR = path.join(ROOT, '.git', 'safety', 'snapshots');
 
-export function getWorktreeState() {
+export function getWorktreeState(paths = []) {
+    // Opcjonalny scope: tylko podane ścieżki (testy hermetyczne na brudnym worktree).
+    // Pusty = cały worktree (guard przed destrukcją, zachowanie bez zmian).
+    const scope = Array.isArray(paths) ? paths.filter(Boolean).map(String) : [];
+    const scopeSuffix =
+        scope.length > 0 ? ' -- ' + scope.map((p) => `"${p.replace(/"/g, '')}"`).join(' ') : '';
     let branch = 'unknown';
     let head = 'unknown';
     try {
@@ -22,14 +27,14 @@ export function getWorktreeState() {
     } catch {}
     let statusText = '';
     try {
-        statusText = execSync('git status --porcelain --ignored -uall', {
+        statusText = execSync(`git status --porcelain --ignored -uall${scopeSuffix}`, {
             cwd: ROOT,
             encoding: 'utf8',
             maxBuffer: 10 * 1024 * 1024
         });
     } catch {
         try {
-            statusText = execSync('git status --porcelain -uall', {
+            statusText = execSync(`git status --porcelain -uall${scopeSuffix}`, {
                 cwd: ROOT,
                 encoding: 'utf8',
                 maxBuffer: 10 * 1024 * 1024
@@ -53,7 +58,7 @@ export function getWorktreeState() {
         }
     }
     const dirty = staged.length + unstaged.length + untracked.length > 0;
-    return { branch, head, staged, unstaged, untracked, ignored, statusText, dirty };
+    return { branch, head, staged, unstaged, untracked, ignored, statusText, dirty, scope };
 }
 
 function genId() {
@@ -91,10 +96,15 @@ export function createSnapshot(operation, state) {
     // metadata.json
     fs.writeFileSync(path.join(dir, 'metadata.json'), JSON.stringify(metadata, null, 2), 'utf8');
 
-    // diff.patch — binary diff HEAD (staged+unstaged)
+    // diff.patch — binary diff HEAD (staged+unstaged, w scope gdy podany)
     const patchPath = path.join(dir, 'diff.patch');
+    const diffScope =
+        Array.isArray(state.scope) && state.scope.length > 0
+            ? ' -- ' + state.scope.map((p) => `"${String(p).replace(/"/g, '')}"`).join(' ')
+            : '';
+    if (Array.isArray(state.scope)) metadata.scope = state.scope;
     try {
-        const diff = execSync('git diff --binary HEAD', {
+        const diff = execSync(`git diff --binary HEAD${diffScope}`, {
             cwd: ROOT,
             encoding: 'utf8',
             maxBuffer: 100 * 1024 * 1024
