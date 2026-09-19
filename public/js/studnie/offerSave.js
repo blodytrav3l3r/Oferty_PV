@@ -381,6 +381,8 @@ function _wellSnapshot(well) {
         rzednaDna: well.rzednaDna,
         rzednaWlazu: well.rzednaWlazu,
         magazyn: well.magazyn,
+        magazynDennica: well.magazynDennica,
+        magazynNadbudowa: well.magazynNadbudowa,
         psiaBuda: !!well.psiaBuda,
         stycznaNadbudowa1200: !!well.stycznaNadbudowa1200,
         zakonczenie: well.zakonczenie,

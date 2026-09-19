@@ -67,12 +67,22 @@ window.resolveKonusPehd = async function (wellIndex, type) {
     let dn = well.dn === 'styczna' ? 1000 : well.dn;
     if (well.redukcjaDN1000) dn = well.redukcjaTargetDN || 1000;
 
-    const mag = well.magazyn === 'Włocławek' ? 'WL' : 'KLB';
+    // Konus to zawsze nadbudowa (deterministyczne) — filtr przez SSoT gdy dostępny.
+    const konusMag =
+        typeof resolveWellMagazyn === 'function'
+            ? resolveWellMagazyn(well, 'nadbudowa')
+            : well.magazynNadbudowa || well.magazyn || 'Kluczbork';
+    const magField =
+        typeof magFieldFor === 'function'
+            ? magFieldFor(konusMag)
+            : konusMag === 'Włocławek'
+              ? 'magazynWL'
+              : 'magazynKLB';
     const avail = studnieProducts.filter(
         (p) =>
             p.dn === dn &&
             p.componentType === type &&
-            ((mag === 'WL' && p.magazynWL === 1) || (mag !== 'WL' && p.magazynKLB === 1))
+            (p[magField] === 1 || p[magField] === undefined)
     );
 
     if (avail.length > 0) {

@@ -435,21 +435,20 @@ function _excelCompModelUpdate(wIdx, componentType, height, value, productId, re
     });
 
     if (newQty > 0) {
+        // Suma obu magazynów: kandydat znaleziony gdy jest w puli SWOJEJ części.
+        const _excelPool =
+            typeof getAvailableProducts === 'function'
+                ? getAvailableProducts(well, 'dennica').concat(
+                      getAvailableProducts(well, 'nadbudowa')
+                  )
+                : studnieProducts;
         let candidates;
         if (productId) {
-            candidates = (
-                typeof getAvailableProducts === 'function'
-                    ? getAvailableProducts(well)
-                    : studnieProducts
-            ).filter((p) => p.id === productId);
+            candidates = _excelPool.filter((p) => p.id === productId);
             if (typeof filterByWellParams === 'function')
                 candidates = candidates.filter((p) => filterByWellParams(p, well));
         } else {
-            candidates = (
-                typeof getAvailableProducts === 'function'
-                    ? getAvailableProducts(well)
-                    : studnieProducts
-            ).filter(
+            candidates = _excelPool.filter(
                 (p) =>
                     p.componentType === componentType &&
                     (p.dn === null || parseInt(p.dn) === filterDn)

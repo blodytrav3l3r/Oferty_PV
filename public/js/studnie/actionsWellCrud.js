@@ -111,6 +111,8 @@ function createNewWell(name, dn = 1000) {
         usytuowanie: gp.usytuowanie,
         uszczelka: gp.uszczelka,
         magazyn: gp.magazyn,
+        magazynDennica: gp.magazyn,
+        magazynNadbudowa: gp.magazyn,
         precoFullHeight: gp.precoFullHeight,
         uwagi: ''
     };

@@ -85,9 +85,10 @@ function _recalcBuildClosureTile({ dn, id, name, componentType, height, isAuto, 
 function _recalcClosureCandidates(products, dn, exampleMag, groupWells) {
     // Współdzielimy logikę dostępności magazynu z solwerem/Excelem (SSoT: getAvailableProducts
     // toleruje 1 | '1' | undefined — AGENTS.md DRY, unikamy duplikacji filtra magazynu).
+    // Zakończenia to zawsze nadbudowa (deterministyczne).
     const byWarehouse =
         typeof getAvailableProducts === 'function'
-            ? getAvailableProducts({ magazyn: exampleMag })
+            ? getAvailableProducts({ magazyn: exampleMag }, 'nadbudowa')
             : products;
     return _recalcSortClosures(
         products.filter(
@@ -268,7 +269,8 @@ window.openGlobalRecalcModal = function () {
         return;
     }
     // ponytail: przyjęto jeden magazyn dla całej oferty (jak w excelColumns.js)
-    const exampleMag = wells[0]?.magazyn || 'Kluczbork';
+    // Zakończenia liczone z magazynu nadbudowy przykładowej studni.
+    const exampleMag = wells[0]?.magazynNadbudowa || wells[0]?.magazyn || 'Kluczbork';
 
     const rawDns = [...new Set(wells.map((w) => w.dn))];
     const numericDns = rawDns
@@ -402,7 +404,7 @@ window.recalcRedTargetChanged = function (dn) {
     const targetDn = [1000, 1200].includes(parseInt(select.value, 10))
         ? parseInt(select.value, 10)
         : RECALC_DEFAULT_RED_TARGET_DN;
-    const exampleMag = wells[0]?.magazyn || 'Kluczbork';
+    const exampleMag = wells[0]?.magazynNadbudowa || wells[0]?.magazyn || 'Kluczbork';
     const groupWells = wells.filter((w) => String(w.dn) === String(dn));
     tilesBox.innerHTML = _recalcRedTilesHtml(dn, targetDn, exampleMag, groupWells);
     tilesBox.setAttribute('role', 'group');
@@ -421,7 +423,7 @@ window.recalcStycznaDnChanged = function (dn) {
     const effDn = [1000, 1200].includes(parseInt(select.value, 10))
         ? parseInt(select.value, 10)
         : RECALC_DEFAULT_RED_TARGET_DN;
-    const exampleMag = wells[0]?.magazyn || 'Kluczbork';
+    const exampleMag = wells[0]?.magazynNadbudowa || wells[0]?.magazyn || 'Kluczbork';
     const groupWells = wells.filter((w) => String(w.dn) === String(dn));
     const availForDn = _recalcClosureCandidates(studnieProducts, effDn, exampleMag, groupWells);
     const emptyState =

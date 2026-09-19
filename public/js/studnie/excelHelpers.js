@@ -12,6 +12,8 @@ function _excelGetReferenceWell(dn) {
     if (typeof wells === 'undefined' || !wells || wells.length === 0) {
         return {
             magazyn: 'Kluczbork',
+            magazynDennica: 'Kluczbork',
+            magazynNadbudowa: 'Kluczbork',
             dn: dn,
             nadbudowa: 'betonowa',
             dennicaMaterial: 'betonowa',
@@ -286,7 +288,15 @@ function _excelClearResCache(well) {
    nadbudowa/stopnie/redukcja), więc zmiana parametrów bez mutacji configu
    też trafia w świeżą listę. */
 function _excelAvailKey(well) {
-    return [well.dn, well.magazyn, well.nadbudowa, well.stopnie, well.redukcjaDN1000].join('|');
+    return [
+        well.dn,
+        well.magazyn,
+        well.magazynDennica,
+        well.magazynNadbudowa,
+        well.nadbudowa,
+        well.stopnie,
+        well.redukcjaDN1000
+    ].join('|');
 }
 function _excelGetAvailForWell(well) {
     if (!well) return [];
@@ -297,13 +307,16 @@ function _excelGetAvailForWell(well) {
     if (!well.__availCache || well.__availCache.key !== key) {
         well.__availCache = {
             key,
-            list: getAvailableProducts(well).filter(function (p) {
-                try {
-                    return filterByWellParams(p, well);
-                } catch (_e) {
-                    return true;
-                }
-            })
+            // Suma obu magazynów: produkt widoczny gdy jest w puli SWOJEJ części.
+            list: getAvailableProducts(well, 'dennica')
+                .concat(getAvailableProducts(well, 'nadbudowa'))
+                .filter(function (p) {
+                    try {
+                        return filterByWellParams(p, well);
+                    } catch (_e) {
+                        return true;
+                    }
+                })
         };
     }
     return well.__availCache.list;

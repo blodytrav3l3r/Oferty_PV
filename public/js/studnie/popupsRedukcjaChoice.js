@@ -112,7 +112,12 @@ function trySwapReductionComponents(well, oldTarget, newTarget) {
     if (!well.config || well.config.length === 0) return false;
 
     const newConfig = [];
-    const availProducts = getAvailableProducts(well).filter((p) => filterByWellParams(p, well));
+    // Pula per element: zamiennik w magazynie właściwym dla TYPU produktu.
+    const poolFor = (prod) =>
+        getAvailableProducts(
+            well,
+            typeof partForProduct === 'function' ? partForProduct(prod) : undefined
+        ).filter((p) => filterByWellParams(p, well));
 
     for (const item of well.config) {
         const prod =
@@ -125,14 +130,14 @@ function trySwapReductionComponents(well, oldTarget, newTarget) {
         }
 
         if (prod.componentType === 'plyta_redukcyjna') {
-            const newPlate = getReductionPlate(availProducts, well.dn, true, newTarget);
+            const newPlate = getReductionPlate(poolFor(prod), well.dn, true, newTarget);
             if (!newPlate) return false;
             newConfig.push({ productId: newPlate.id, quantity: item.quantity });
             continue;
         }
 
         if (parseInt(prod.dn) === oldTarget) {
-            const match = availProducts.find(
+            const match = poolFor(prod).find(
                 (p) =>
                     parseInt(p.dn) === newTarget &&
                     p.componentType === prod.componentType &&

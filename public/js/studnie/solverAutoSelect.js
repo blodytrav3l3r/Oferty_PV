@@ -126,7 +126,9 @@ window.autoSelectComponents = async function autoSelectComponents(autoTriggered 
             refreshAll();
         }
 
-        const availProducts = getAvailableProducts(well).filter((p) => filterByWellParams(p, well));
+        const availProducts = getAvailableProducts(well, 'dennica')
+            .concat(getAvailableProducts(well, 'nadbudowa'))
+            .filter((p) => filterByWellParams(p, well));
 
         // === KROK 1: JS Solver ===
         const jsMsStart =
@@ -284,6 +286,8 @@ function computeSolveInputHash(well, requiredMm) {
         String(well.dn || ''),
         String(well.type || ''),
         String(well.magazyn || ''),
+        String(well.magazynDennica || ''),
+        String(well.magazynNadbudowa || ''),
         String(well.nadbudowa || ''),
         String(well.stopnie || ''),
         String(well.dennicaMaterial || ''),
@@ -324,19 +328,36 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
     const dn = well.dn;
     const targetDn = well.redukcjaTargetDN || 1000;
     const effectiveDn = dn === 'styczna' ? (well.stycznaNadbudowa1200 ? 1200 : 1000) : dn;
-    const mag = well.magazyn || 'Kluczbork';
+    // Magazyn per element: dennica z magazynDennica, cała reszta (kręgi, OT,
+    // zamknięcie, redukcja, AVR) z magazynNadbudowa. Fallback: well.magazyn.
+    const magDen =
+        typeof resolveWellMagazyn === 'function'
+            ? resolveWellMagazyn(well, 'dennica')
+            : well.magazyn || 'Kluczbork';
+    const mag =
+        typeof resolveWellMagazyn === 'function'
+            ? resolveWellMagazyn(well, 'nadbudowa')
+            : well.magazyn || 'Kluczbork';
     const ff = mag === 'Włocławek' ? 'formaStandardowa' : 'formaStandardowaKLB';
 
-    const allProducts = availProducts;
     // P0-1: jednorazowy filtr dostępności — filterByWellParams jest czysta
     // (czyta tylko p i well), a well nie jest mutowany przed KROKIEM 7,
     // więc 5× .filter() na tych samych danych dawało identyczne wyniki.
-    const availFiltered = availProducts.filter((p) => filterByWellParams(p, well));
+    // Pula dzielona per element (deterministycznie po typie produktu):
+    // dennica/kineta/styczna z magazynu dennicy, reszta z magazynu nadbudowy.
+    const isDenPart = (p) =>
+        typeof partForProduct === 'function'
+            ? partForProduct(p) === 'dennica'
+            : p.componentType === 'dennica' ||
+              p.componentType === 'kineta' ||
+              p.componentType === 'styczna';
+    const availDen = availProducts.filter((p) => isDenPart(p) && filterByWellParams(p, well));
+    const availNad = availProducts.filter((p) => !isDenPart(p) && filterByWellParams(p, well));
     // KROK 1: Dennica
     const dnResult = getLowestDennicaHybrid(
-        availFiltered,
+        availDen,
         dn,
-        mag,
+        magDen,
         well.przejscia,
         well.rzednaDna,
         well.stycznaDn
@@ -347,7 +368,7 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
     // KROK 2: Zakończenie
     const forcedZak = well.zakonczenie || null;
     const isWkladkaZwienczenie = well.wkladkaZwienczenie && well.wkladkaZwienczenie !== 'brak';
-    let topProd = getTopClosure(availFiltered, effectiveDn, forcedZak, isWkladkaZwienczenie, mag);
+    let topProd = getTopClosure(availNad, effectiveDn, forcedZak, isWkladkaZwienczenie, mag);
 
     // Jeśli getTopClosure zwrócił coś innego niż konus (np. Płyta DIN),
     // a konus jest dostępny w katalogu i nie ma PEHD → nadpisz konusem
@@ -453,7 +474,7 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
         topProd.componentType
     );
     if (isRelief || topProd.componentType === 'konus') {
-        const dinProd = getTopClosure(availFiltered, effectiveDn, null, true, mag);
+        const dinProd = getTopClosure(availNad, effectiveDn, null, true, mag);
         if (dinProd && dinProd.id !== topProd.id) {
             const fbCfg = buildTopConfig(dinProd);
             fbCfg.label += ' (zamiennik)';
@@ -507,9 +528,9 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
         };
     }
 
-    // KROK 4: Listy kręgów i redukcja (P0-1: baza availFiltered — well-filtr
+    // KROK 4: Listy kręgów i redukcja (P0-1: baza availDen/availNad — well-filtr
     // już spełniony dla każdego elementu, więc pomijamy powtórne sprawdzenie).
-    let dennicy = availFiltered
+    let dennicy = availDen
         .filter((p) => {
             if (dn === 'styczna') {
                 const isStyczna = p.componentType === 'styczna' || p.category === 'Studnie styczne';
@@ -536,7 +557,7 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
         }
     }
 
-    const avrRings = allProducts
+    const avrRings = availNad
         .filter((p) => p.componentType === 'avr')
         .sort((a, b) => b.height - a.height);
 
@@ -546,7 +567,7 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
         (p.name && String(p.name).toLowerCase().includes('z otworem'));
 
     const kregiFromEngine = getKregiList(
-        availFiltered.filter((p) => p.componentType === 'krag' && !isDrilledRing(p)),
+        availNad.filter((p) => p.componentType === 'krag' && !isDrilledRing(p)),
         effectiveDn,
         mag
     );
@@ -563,7 +584,7 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
                   .sort((a, b) => b.height - a.height);
 
     const targetDnKregiEngine = getKregiList(
-        availFiltered.filter((p) => p.componentType === 'krag' && !isDrilledRing(p)),
+        availNad.filter((p) => p.componentType === 'krag' && !isDrilledRing(p)),
         targetDn,
         mag
     );
@@ -579,7 +600,7 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
                   )
                   .sort((a, b) => b.height - a.height);
 
-    let reductionPlate = getReductionPlate(availProducts, dn, well.redukcjaDN1000, targetDn);
+    let reductionPlate = getReductionPlate(availNad, dn, well.redukcjaDN1000, targetDn);
     if (!reductionPlate) {
         reductionPlate = studnieProducts.find(
             (p) =>
@@ -593,9 +614,7 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
     // P0-1: jw. — redTargetProducts.filter(filterByWellParams) w solve()
     // liczone na tych samych danych; jedna stala (redTargetProducts bez filtra
     // zostaje nietknieta — wymuszone zakonczenie szuka tez poza filtrem).
-    const redTargetFiltered = canReduce
-        ? availProducts.filter((p) => parseInt(p.dn) === targetDn && filterByWellParams(p, well))
-        : [];
+    const redTargetFiltered = canReduce ? availNad.filter((p) => parseInt(p.dn) === targetDn) : [];
 
     // KROK 5: DP Ring Optimizer
     const transitionsForDP = (well.przejscia || [])
@@ -662,7 +681,7 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
             tolBelow,
             tolAbove,
             transitionsForDP,
-            availProducts,
+            availNad,
             fixedBelowHeight
         );
         logger.info(
@@ -925,7 +944,7 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
                 );
 
                 // Phase 3: Osadź OT warianty w layoutach
-                const otLayout = buildCandidateLayouts(dennicaItem, kItems, well, availProducts);
+                const otLayout = buildCandidateLayouts(dennicaItem, kItems, well, availNad);
                 const otKItems = otLayout.rings;
 
                 const deficit = requiredMm - (effDenH + topCfg.height + filled);
@@ -995,7 +1014,7 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
         if (canReduce) {
             const topRedItems = [];
             let topRedH = 0;
-            const redTargetProducts = availProducts.filter((p) => parseInt(p.dn) === targetDn);
+            const redTargetProducts = availNad.filter((p) => parseInt(p.dn) === targetDn);
             const redTopProducts = redTargetProducts.filter((p) =>
                 [
                     'konus',
@@ -1127,12 +1146,7 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
                     });
                     tTarget.kItems.forEach((k) => redKItems.push(k));
 
-                    const redOt = buildCandidateLayouts(
-                        dennicaItem,
-                        redKItems,
-                        well,
-                        availProducts
-                    );
+                    const redOt = buildCandidateLayouts(dennicaItem, redKItems, well, availNad);
                     const redOtItems = redOt.rings;
 
                     const conf = checkConflicts(redOtItems, dennicaItem.height, bSec, topRedItems);
@@ -1291,10 +1305,11 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
     if (!candidates || candidates.length === 0) {
         // P1.3: joint w strefie minimalnej → twardy ERROR z przyczyną,
         // nie generyczne "nie znaleziono" (dotyczy ostatniego stage'a).
+        const magLabel = magDen === mag ? mag : magDen + '/' + mag;
         return {
             error:
                 lastHoleRejectMsg ||
-                `Nie znaleziono pasującej kombinacji elementów dla tej wysokości (max. ± dozwolona odchyłka, max ${well.magazyn || 'Kluczbork'} avr 26cm).`
+                `Nie znaleziono pasującej kombinacji elementów dla tej wysokości (max. ± dozwolona odchyłka, max ${magLabel} avr 26cm).`
         };
     }
 
@@ -1443,7 +1458,7 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
                 const prodKrag = resolveStudnieProduct(itemKrag.productId);
 
                 if (prodKrag && prodKrag.height === 250 && prodKrag.componentType === 'krag') {
-                    const konusPlus = availProducts.find(
+                    const konusPlus = availNad.find(
                         (p) =>
                             p.componentType === 'konus' &&
                             p.dn === prodKonus.dn &&

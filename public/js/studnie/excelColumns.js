@@ -34,15 +34,22 @@ function _excelProdFp() {
         return '0';
     }
 }
+function _excelMagOf(well) {
+    if (well && well.magazyn) return well.magazyn;
+    if (typeof wells !== 'undefined' && wells[0] && wells[0].magazyn) return wells[0].magazyn;
+    return 'Kluczbork';
+}
+
 function _excelColsCacheKey(dn, well) {
-    const mag =
-        well && well.magazyn
-            ? well.magazyn
-            : (typeof wells !== 'undefined' && wells[0] && wells[0].magazyn) || 'Kluczbork';
+    const mag = _excelMagOf(well);
+    const magDen = (well && well.magazynDennica) || mag;
+    const magNad = (well && well.magazynNadbudowa) || mag;
     const prodFp = _excelProdFp();
     return [
         String(dn),
         String(mag),
+        String(magDen),
+        String(magNad),
         String((well && well.nadbudowa) || ''),
         String((well && well.stopnie) || ''),
         String(!!(well && well.redukcjaDN1000)),
@@ -64,16 +71,23 @@ function _excelColsCacheSet(key, val) {
 
 function _excelGetComponentsForDn(dn, well) {
     if (typeof studnieProducts === 'undefined' || !studnieProducts) return {};
-    const mag =
-        well && well.magazyn
-            ? well.magazyn
-            : typeof wells !== 'undefined' && wells.length > 0
-              ? wells[0].magazyn || 'Kluczbork'
-              : 'Kluczbork';
-    const isWl = mag.includes('oc') || mag.includes('Włoc');
-    const field = isWl ? 'magazynWL' : 'magazynKLB';
+    const mag = _excelMagOf(well);
+    const magDen = (well && well.magazynDennica) || mag;
+    const magNad = (well && well.magazynNadbudowa) || mag;
+    // Suma obu magazynów: opcja widoczna gdy jest w puli SWOJEJ części.
+    const fieldFor = (m) => {
+        const isWl = m.includes('oc') || m.includes('Włoc');
+        return isWl ? 'magazynWL' : 'magazynKLB';
+    };
+    const fieldDen = fieldFor(magDen);
+    const fieldNad = fieldFor(magNad);
+    const isDenPart = (p) =>
+        p.componentType === 'dennica' ||
+        p.componentType === 'kineta' ||
+        p.componentType === 'styczna';
 
     let products = studnieProducts.filter((p) => {
+        const field = isDenPart(p) ? fieldDen : fieldNad;
         const val = p[field];
         return val === 1 || val === '1' || val === undefined;
     });

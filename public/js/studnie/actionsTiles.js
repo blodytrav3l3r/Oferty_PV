@@ -137,7 +137,10 @@ function renderTiles() {
         html += `</div></div>`;
     };
 
-    const availProducts = getAvailableProducts(well);
+    // Kafelki mieszają typy obu części — pula to suma magazynu dennicy i nadbudowy.
+    const availProducts = getAvailableProducts(well, 'dennica').concat(
+        getAvailableProducts(well, 'nadbudowa')
+    );
     const primaryProducts = availProducts
         .filter((p) => {
             if (dn === 'styczna') {

@@ -201,11 +201,55 @@ function filterSealsByWellType(sealItems, well) {
     });
 }
 
-function getAvailableProducts(well) {
-    if (!well || !studnieProducts) return [];
-    const mag = well.magazyn || 'Kluczbork';
+/**
+ * Rozstrzyga magazyn studni dla danej części.
+ * SSoT fallbacku (warunek: `magazyn` pozostaje kompatybilnościowym fallbackiem,
+ * nigdy nie jest nadpisywany z magazynDennica/magazynNadbudowa).
+ *
+ * @param {Object} well - studnia
+ * @param {string} [part] - 'dennica' | 'nadbudowa' | undefined (cała studnia)
+ * @returns {string} 'Kluczbork' | 'Włocławek'
+ */
+function resolveWellMagazyn(well, part) {
+    if (!well) return 'Kluczbork';
+    if (part === 'dennica') return well.magazynDennica || well.magazyn || 'Kluczbork';
+    if (part === 'nadbudowa') return well.magazynNadbudowa || well.magazyn || 'Kluczbork';
+    return well.magazyn || 'Kluczbork';
+}
+
+/**
+ * Nazwa pola dostępności magazynowej produktu dla danego magazynu.
+ * @param {string} magazyn - 'Kluczbork' | 'Włocławek'
+ * @returns {string} 'magazynKLB' | 'magazynWL'
+ */
+function magFieldFor(magazyn) {
+    const mag = magazyn || 'Kluczbork';
     const isWl = mag.includes('oc') || mag.includes('Włoc');
-    const field = isWl ? 'magazynWL' : 'magazynKLB';
+    return isWl ? 'magazynWL' : 'magazynKLB';
+}
+
+/**
+ * Część studni dla produktu — JEDYNE źródło podziału dennica/nadbudowa.
+ * Szeroki zbiór spodu (dennica/kineta/styczna), spójny z rabatami eksportu.
+ * `part` w getAvailableProducts MUSI wynikać z typu produktu, nigdy z call-site.
+ *
+ * @param {Object} p - produkt
+ * @returns {string} 'dennica' | 'nadbudowa'
+ */
+function partForProduct(p) {
+    if (
+        p &&
+        (p.componentType === 'dennica' ||
+            p.componentType === 'kineta' ||
+            p.componentType === 'styczna')
+    )
+        return 'dennica';
+    return 'nadbudowa';
+}
+
+function getAvailableProducts(well, part) {
+    if (!well || !studnieProducts) return [];
+    const field = magFieldFor(resolveWellMagazyn(well, part));
 
     return studnieProducts.filter((p) => {
         // Luźne porównanie: akceptuje zarówno 1 (number) jak i "1" (string)
@@ -244,7 +288,9 @@ function getSortedConfig(config) {
 
 window.updateConfigToMatchParams = function (well) {
     if (!well || !well.config || well.config.length === 0) return;
-    const availProducts = getAvailableProducts(well).filter((p) => filterByWellParams(p, well));
+    // Pula per element: zamiennik szukany w magazynie właściwym dla TYPU produktu.
+    const poolFor = (prod) =>
+        getAvailableProducts(well, partForProduct(prod)).filter((p) => filterByWellParams(p, well));
     let anyChanged = false;
 
     well.config.forEach((item) => {
@@ -259,7 +305,7 @@ window.updateConfigToMatchParams = function (well) {
 
         if (!filterByWellParams(p, well)) {
             // Znajdź zamiennik — użyj String() dla porównania DN (może być number lub string)
-            const substitute = availProducts.find(
+            const substitute = poolFor(p).find(
                 (cand) =>
                     cand.componentType === p.componentType &&
                     String(cand.dn) === String(p.dn) &&
@@ -281,7 +327,7 @@ window.updateConfigToMatchParams = function (well) {
                 if (baseH > 0 && baseH < MIN_OT_HEIGHT) {
                     // OT <500 nie wspierane — zostaw oryginał
                 } else if (baseProd) {
-                    const baseSub = availProducts.find(
+                    const baseSub = poolFor(p).find(
                         (cand) =>
                             cand.componentType === 'krag_ot' &&
                             String(cand.dn) === String(baseProd.dn) &&
@@ -336,8 +382,9 @@ window.ensureReliefRingPair = function (well) {
     if (isNaN(targetDn)) targetDn = 1000;
 
     // 1. Jeśli jest pierścień a nie ma płyty -> dodaj płytę
+    // Para odciążająca to zawsze nadbudowa (deterministyczne — typy nigdy nie są dennicą).
     if (hasReliefRing && !hasReliefPlate) {
-        const plate = getAvailableProducts(well).find(
+        const plate = getAvailableProducts(well, 'nadbudowa').find(
             (p) =>
                 (p.componentType === 'plyta_zamykajaca' || p.componentType === 'plyta_najazdowa') &&
                 parseInt(p.dn) === targetDn
@@ -350,7 +397,7 @@ window.ensureReliefRingPair = function (well) {
 
     // 2. Jeśli jest płyta a nie ma pierścienia -> dodaj pierścień
     if (hasReliefPlate && !hasReliefRing) {
-        const ring = getAvailableProducts(well).find(
+        const ring = getAvailableProducts(well, 'nadbudowa').find(
             (p) => p.componentType === 'pierscien_odciazajacy' && parseInt(p.dn) === targetDn
         );
         if (ring) {
@@ -384,8 +431,10 @@ window.resolveEffectiveProduct = function (well, productId, configItem) {
     // Produkt pasuje do parametrów — zwróć bez zmian
     if (filterByWellParams(p, well)) return p;
 
-    // Znajdź poprawny zamiennik
-    const availProducts = getAvailableProducts(well).filter((ap) => filterByWellParams(ap, well));
+    // Znajdź poprawny zamiennik w magazynie właściwym dla TYPU produktu.
+    const availProducts = getAvailableProducts(well, partForProduct(p)).filter((ap) =>
+        filterByWellParams(ap, well)
+    );
     const isDrilled = p.componentType === 'krag_ot' || p.id.endsWith('_OT');
 
     // Szukaj bezpośredniego zamiennika (ten sam typ, DN, wysokość)
@@ -690,6 +739,9 @@ function scoreLayout(opts = /** @type {Object} */ ({})) {
 // Eksportuj do window
 window.filterByWellParams = filterByWellParams;
 window.getAvailableProducts = getAvailableProducts;
+window.partForProduct = partForProduct;
+window.resolveWellMagazyn = resolveWellMagazyn;
+window.magFieldFor = magFieldFor;
 window.getSortedConfig = getSortedConfig;
 window.filterSealsByWellType = filterSealsByWellType;
 window.buildConfigSegmentMap = buildConfigSegmentMap;

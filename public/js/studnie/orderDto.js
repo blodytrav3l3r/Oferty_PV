@@ -70,6 +70,8 @@ const ORDER_WELL_FIELDS = [
     'rzednaDna',
     'rzednaWlazu',
     'magazyn',
+    'magazynDennica',
+    'magazynNadbudowa',
     'usytuowanie',
     'psiaBuda',
     'stycznaNadbudowa1200',

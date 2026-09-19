@@ -58,7 +58,8 @@ function _excelFindReliefCandidate(well, wantRing, targetDn) {
         if (typeof _excelGetAvailForWell === 'function' && well) {
             pool = _excelGetAvailForWell(well) || [];
         } else if (typeof getAvailableProducts === 'function' && well) {
-            pool = getAvailableProducts(well) || [];
+            // Para odciążająca to zawsze nadbudowa (deterministyczne).
+            pool = getAvailableProducts(well, 'nadbudowa') || [];
             if (typeof filterByWellParams === 'function') {
                 pool = pool.filter(function (p) {
                     try {

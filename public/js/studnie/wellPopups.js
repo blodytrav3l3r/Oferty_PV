@@ -18,7 +18,7 @@ function openZakonczeniePopup() {
         'pierscien_odciazajacy'
     ];
 
-    const candidates = getAvailableProducts(well).filter(
+    const candidates = getAvailableProducts(well, 'nadbudowa').filter(
         (p) =>
             topClosureTypes.includes(p.componentType) &&
             (parseInt(p.dn) === parseInt(effectiveDn) || p.dn === null) &&
@@ -161,7 +161,7 @@ function openRedukcjaZakonczeniePopup() {
         return;
     }
 
-    const availProducts = getAvailableProducts(well);
+    const availProducts = getAvailableProducts(well, 'nadbudowa');
     const topClosureTypes = [
         'konus',
         'plyta_din',
