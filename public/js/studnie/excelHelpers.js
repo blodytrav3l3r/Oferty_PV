@@ -308,15 +308,18 @@ function _excelGetAvailForWell(well) {
         well.__availCache = {
             key,
             // Suma obu magazynów: produkt widoczny gdy jest w puli SWOJEJ części.
-            list: getAvailableProducts(well, 'dennica')
-                .concat(getAvailableProducts(well, 'nadbudowa'))
-                .filter(function (p) {
-                    try {
-                        return filterByWellParams(p, well);
-                    } catch (_e) {
-                        return true;
-                    }
-                })
+            list: (typeof getAvailableProductsUnion === 'function'
+                ? getAvailableProductsUnion(well)
+                : getAvailableProducts(well, 'dennica').concat(
+                      getAvailableProducts(well, 'nadbudowa')
+                  )
+            ).filter(function (p) {
+                try {
+                    return filterByWellParams(p, well);
+                } catch (_e) {
+                    return true;
+                }
+            })
         };
     }
     return well.__availCache.list;

@@ -25,19 +25,12 @@ window.StudnieExternalImport = {
         }
     },
 
-    async import(offerGroup) {
-        const number = offerGroup.number;
-        // Wiersz osobnej pozycji transportu (TR-STUDNIE) nie jest elementem studni.
-        const rows = (offerGroup.rows || []).filter(
-            (r) => (r['INDEKS_CZESCI'] || '').trim().toUpperCase() !== 'TR-STUDNIE'
-        );
-        const hasTransportRow = (offerGroup.rows || []).length !== rows.length;
-
+    // Czyste grupowanie wierszy XLSX w studnie (bez I/O — testowalne).
+    // Wejście: wiersze po odfiltrowaniu TR-STUDNIE, słownik kodów, mapa indeks→typ.
+    _groupRows(rows, codes, typeMap) {
         const MC = window.MagazynCodes;
-        const codes = MC && typeof MC.get === 'function' ? await MC.get() : null;
-        const typeMap = await this._ensureTypeMap();
         const partOf = (indeks) => {
-            const ct = typeMap.get((indeks || '').trim());
+            const ct = typeMap ? typeMap.get((indeks || '').trim()) : undefined;
             if (ct && MC && typeof MC.isDennicaType === 'function' && MC.isDennicaType(ct))
                 return 'dennica';
             // Typ nieznany (produkt spoza katalogu): null — kod idzie tylko w legacy magazyn.
@@ -86,7 +79,7 @@ window.StudnieExternalImport = {
             });
         }
 
-        const wells = Object.values(wellMap)
+        return Object.values(wellMap)
             .map((w) => {
                 // Domknięcie: brakujące części dziedziczą legacy magazyn.
                 // Legacy magazyn = magazyn nadbudowy (jedno źródło, nigdy trzecia wartość).
@@ -96,6 +89,21 @@ window.StudnieExternalImport = {
                 return w;
             })
             .sort((a, b) => (a.lp || 0) - (b.lp || 0));
+    },
+
+    async import(offerGroup) {
+        const number = offerGroup.number;
+        // Wiersz osobnej pozycji transportu (TR-STUDNIE) nie jest elementem studni.
+        const rows = (offerGroup.rows || []).filter(
+            (r) => (r['INDEKS_CZESCI'] || '').trim().toUpperCase() !== 'TR-STUDNIE'
+        );
+        const hasTransportRow = (offerGroup.rows || []).length !== rows.length;
+
+        const MC = window.MagazynCodes;
+        const codes = MC && typeof MC.get === 'function' ? await MC.get() : null;
+        const typeMap = await this._ensureTypeMap();
+
+        const wells = this._groupRows(rows, codes, typeMap);
 
         const existing = await this.findOfferByNumber(number);
         let action = 'create';

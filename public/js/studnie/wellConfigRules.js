@@ -259,6 +259,26 @@ function getAvailableProducts(well, part) {
     });
 }
 
+/**
+ * Suma pul dennicy i nadbudowy BEZ duplikatów (przy równych magazynach
+ * obie pule są identyczne — concat dałby każdy produkt 2× i spowolnił DP).
+ * Produkt widoczny gdy jest w puli SWOJEJ części.
+ */
+function getAvailableProductsUnion(well) {
+    const seen = new Set();
+    const out = [];
+    const both = getAvailableProducts(well, 'dennica').concat(
+        getAvailableProducts(well, 'nadbudowa')
+    );
+    for (const p of both) {
+        const id = p && p.id;
+        if (seen.has(id)) continue;
+        seen.add(id);
+        out.push(p);
+    }
+    return out;
+}
+
 function getSortedConfig(config) {
     if (!config) return [];
     return [...config].sort((a, b) => {
@@ -739,6 +759,7 @@ function scoreLayout(opts = /** @type {Object} */ ({})) {
 // Eksportuj do window
 window.filterByWellParams = filterByWellParams;
 window.getAvailableProducts = getAvailableProducts;
+window.getAvailableProductsUnion = getAvailableProductsUnion;
 window.partForProduct = partForProduct;
 window.resolveWellMagazyn = resolveWellMagazyn;
 window.magFieldFor = magFieldFor;

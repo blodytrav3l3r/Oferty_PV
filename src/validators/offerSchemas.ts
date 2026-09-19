@@ -232,11 +232,14 @@ export type YearLetterInput = z.infer<typeof yearLetterSchema>;
 
 const magazynCodeField = z
     .string()
-    .trim()
-    .min(1, 'Kod magazynu jest wymagany')
-    .max(10, 'Kod magazynu max 10 znaków')
-    .regex(/^[A-Z0-9]+$/, 'Kod magazynu: tylko A-Z i 0-9')
-    .transform((s) => s.toUpperCase());
+    .transform((s) => s.trim().toUpperCase())
+    .pipe(
+        z
+            .string()
+            .min(1, 'Kod magazynu jest wymagany')
+            .max(10, 'Kod magazynu max 10 znaków')
+            .regex(/^[A-Z0-9]+$/, 'Kod magazynu: tylko A-Z i 0-9')
+    );
 
 export const magazynCodesSchema = z.object({
     dennicaWl: magazynCodeField,

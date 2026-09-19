@@ -126,9 +126,12 @@ window.autoSelectComponents = async function autoSelectComponents(autoTriggered 
             refreshAll();
         }
 
-        const availProducts = getAvailableProducts(well, 'dennica')
-            .concat(getAvailableProducts(well, 'nadbudowa'))
-            .filter((p) => filterByWellParams(p, well));
+        const availProducts =
+            typeof getAvailableProductsUnion === 'function'
+                ? getAvailableProductsUnion(well).filter((p) => filterByWellParams(p, well))
+                : getAvailableProducts(well, 'dennica')
+                      .concat(getAvailableProducts(well, 'nadbudowa'))
+                      .filter((p) => filterByWellParams(p, well));
 
         // === KROK 1: JS Solver ===
         const jsMsStart =

@@ -437,11 +437,13 @@ function _excelCompModelUpdate(wIdx, componentType, height, value, productId, re
     if (newQty > 0) {
         // Suma obu magazynów: kandydat znaleziony gdy jest w puli SWOJEJ części.
         const _excelPool =
-            typeof getAvailableProducts === 'function'
-                ? getAvailableProducts(well, 'dennica').concat(
-                      getAvailableProducts(well, 'nadbudowa')
-                  )
-                : studnieProducts;
+            typeof getAvailableProductsUnion === 'function'
+                ? getAvailableProductsUnion(well)
+                : typeof getAvailableProducts === 'function'
+                  ? getAvailableProducts(well, 'dennica').concat(
+                        getAvailableProducts(well, 'nadbudowa')
+                    )
+                  : studnieProducts;
         let candidates;
         if (productId) {
             candidates = _excelPool.filter((p) => p.id === productId);
