@@ -230,6 +230,30 @@ export const yearLetterSchema = z.object({
 
 export type YearLetterInput = z.infer<typeof yearLetterSchema>;
 
+const magazynCodeField = z
+    .string()
+    .trim()
+    .min(1, 'Kod magazynu jest wymagany')
+    .max(10, 'Kod magazynu max 10 znaków')
+    .regex(/^[A-Z0-9]+$/, 'Kod magazynu: tylko A-Z i 0-9')
+    .transform((s) => s.toUpperCase());
+
+export const magazynCodesSchema = z.object({
+    dennicaWl: magazynCodeField,
+    dennicaKlb: magazynCodeField,
+    nadbudowaWl: magazynCodeField,
+    nadbudowaKlb: magazynCodeField
+});
+
+export type MagazynCodesInput = z.infer<typeof magazynCodesSchema>;
+
+export const DEFAULT_MAGAZYN_CODES = {
+    dennicaWl: 'WL',
+    dennicaKlb: 'M0',
+    nadbudowaWl: 'WL',
+    nadbudowaKlb: 'M0'
+} as const;
+
 // =============================================================================
 // TELEMETRIA
 // =============================================================================

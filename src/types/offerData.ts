@@ -95,6 +95,8 @@ export interface StudnieWell {
     weight?: number;
     price?: number;
     magazyn?: string;
+    magazynDennica?: string;
+    magazynNadbudowa?: string;
     rzednaWlazu?: string;
     rzednaDna?: string;
     config?: unknown[];
@@ -115,6 +117,8 @@ export interface StudnieWellExport {
     rzednaWlazu?: string;
     rzednaDna?: string;
     magazyn?: string;
+    magazynDennica?: string;
+    magazynNadbudowa?: string;
     config?: unknown[];
     przejscia?: unknown[];
     [key: string]: unknown;

@@ -90,6 +90,8 @@ const LOCKED_WELL_FIELDS = new Set<string>([
     'usytuowanie',
     'uszczelka',
     'magazyn',
+    'magazynDennica',
+    'magazynNadbudowa',
     'wkladkaOsadnikPreco',
     'wkladkaOsadnikH'
 ]);
