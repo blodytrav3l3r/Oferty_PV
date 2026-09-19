@@ -783,6 +783,70 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
 .sysconfig-card {
     flex-wrap: wrap;
     gap: 0.75rem 1.25rem;
+    align-items: center;
+}
+
+.sysconfig-current {
+    flex: 1 1 240px;
+}
+
+.sysconfig-input--code {
+    width: 100%;
+    max-width: 180px;
+    height: 34px;
+    font-size: var(--fs-base);
+    font-weight: var(--fw-bold);
+    text-align: left;
+    padding: 0 0.6rem;
+}
+
+.sysconfig-codes {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+    flex: 1 1 520px;
+    min-width: min(100%, 380px);
+}
+
+.sysconfig-codes-row {
+    display: grid;
+    grid-template-columns: 92px 1fr 1fr;
+    gap: 0.5rem 0.8rem;
+    align-items: center;
+}
+
+.sysconfig-code-field {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 0;
+}
+
+.sysconfig-code-label {
+    flex: 0 0 auto;
+    min-width: 64px;
+    text-align: right;
+    font-size: var(--fs-sm);
+    color: var(--text-muted);
+    font-weight: var(--fw-bold);
+}
+
+.sysconfig-codes > .btn {
+    align-self: flex-start;
+}
+
+@media (max-width: 640px) {
+    .sysconfig-codes-row {
+        grid-template-columns: 1fr;
+        gap: 0.4rem;
+    }
+    .sysconfig-code-label {
+        min-width: 0;
+        text-align: left;
+    }
+    .sysconfig-input--code {
+        max-width: none;
+    }
 }
 
 .sysconfig-current,
@@ -790,33 +854,6 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
     display: flex;
     align-items: center;
     gap: 0.6rem;
-}
-
-.sysconfig-input--code {
-    width: 150px;
-    height: 32px;
-    font-size: var(--fs-lg);
-    text-align: left;
-    padding: 0 0.5rem;
-}
-
-.sysconfig-codes {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-}
-
-.sysconfig-codes-row {
-    display: flex;
-    align-items: center;
-    gap: 0.6rem;
-    flex-wrap: wrap;
-}
-
-.sysconfig-code-label {
-    font-size: var(--fs-sm);
-    color: var(--text-muted);
-    font-weight: var(--fw-bold);
 }
 
 .sysconfig-icon {
