@@ -89,7 +89,7 @@ Kolumny:
 - `MAGAZYN` (opcjonalny) — kod magazynu **per wiersz** (tylko studnie).
   Wiersze dennicy (`dennica/kineta/styczna`) używają kodu magazynu dennicy,
   pozostałe wiersze — kodu magazynu nadbudowy. Słownik kodów: `GET/PUT
-  /api/settings/magazyn-codes` (edycja na Pulpicie → Konfiguracja Systemu →
+/api/settings/magazyn-codes` (edycja na Pulpicie → Konfiguracja Systemu →
   Kody magazynów; domyślnie `WL`/`M0` dla obu części). Nieznany/pusty kod
   w imporcie → `Kluczbork`. Studnia trzyma `magazynDennica`/`magazynNadbudowa`
   z fallbackiem `magazyn` (= nadbudowa).
@@ -118,6 +118,19 @@ Przy imporcie oferty o numerze który już istnieje w systemie:
 1. **Pomiń** — nie importuj
 2. **Nadpisz** — zaktualizuj istniejącą ofertę
 3. **Utwórz kopię** — zmień numer na `{numer}-2`
+
+## Auto-detekcja typu dokumentu (bez wyboru radio)
+
+- **Eksport XLSX / JSON**: jedno pole numeru (`toolbar.js:_confirmExportByNumber`).
+  Moduł i typ z formatu (`_detectFromNumber`: `OF/` → rury/oferta, `OS/` → studnie/oferta,
+  `/ZR/` → rury/zamówienie, `/ZS/` → studnie/zamówienie); custom numery po ręcznej edycji
+  dają search-all po ofertach i zamówieniach. Kolizja (ten sam numer w kilku miejscach)
+  → lista przycisków do wyboru. Import JSON 1:1 nie wymaga zmian — moduł czytany
+  z `preview.module` / `preview.kind` pliku.
+- **Import XLSX**: moduł per grupa ofert z zawartości (`_detectImportModule`):
+  wiersz `TR-RURY` / `TR-STUDNIE` rozstrzyga, potem głosowanie większościowe `INDEKS_CZESCI`
+  przeciw `/api/products` + `/api/products-studnie` (cache `_ensureProductIdSets`).
+  Remis / obce indeksy → grupa pominięta z wypisanym numerem w raporcie.
 
 ## Audyt
 

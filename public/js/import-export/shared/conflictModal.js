@@ -8,16 +8,19 @@ window.ConflictModal = {
                 resolve(result);
             };
             const html =
-                '<div class="modal" role="document">' +
-                '<div class="modal-header"><h3 id="ie-conflict-title" style="display:flex;align-items:center;gap:0.5rem;font:var(--fw-bold) var(--fs-2xl) \'Inter\',sans-serif;color:var(--text-primary);"><i data-lucide="alert-triangle" class="icon-sm" style="color:var(--warn);"></i>Konflikt numeru oferty</h3><button type="button" class="btn-icon" aria-label="Zamknij" data-cm-close><i data-lucide="x" class="icon-14"></i></button></div>' +
-                '<p style="margin:0 0 1.2rem 0;color:var(--text-secondary);font:var(--fw-normal) var(--fs-lg) \'Inter\',sans-serif;line-height:1.55;">Oferta o numerze <strong style="color:var(--text-primary);font-weight:var(--fw-semibold);">' +
+                '<div class="modal modal--ie" role="document">' +
+                '<div class="modal-header"><h3 id="ie-conflict-title"><span class="modal-title-icon modal-title-icon--warn"><i data-lucide="alert-triangle" class="icon-sm"></i></span>Konflikt numeru oferty</h3><button type="button" class="btn-icon" aria-label="Zamknij" data-cm-close><i data-lucide="x" class="icon-14"></i></button></div>' +
+                '<div class="modal-body">' +
+                '<p style="margin:0;">Oferta o numerze <strong style="color:var(--text-primary);font-weight:var(--fw-semibold);">' +
                 window.escapeHtml(offerNumber) +
                 '</strong> już istnieje w systemie. Wybierz akcję:</p>' +
-                '<div class="modal-footer" style="justify-content:stretch;flex-wrap:wrap;gap:0.5rem;">' +
+                '</div>' +
+                '<div class="modal-footer" style="gap:0.5rem;flex-wrap:wrap;">' +
                 '<button type="button" class="btn btn-sm btn-secondary" data-cm-skip style="flex:1;justify-content:center;"><i data-lucide="skip-forward" class="icon-14"></i>Pomiń</button>' +
-                '<button type="button" class="btn btn-sm btn-secondary" data-cm-overwrite style="flex:1;justify-content:center;border-color:var(--warn);"><i data-lucide="refresh-cw" class="icon-14"></i>Nadpisz</button>' +
-                '<button type="button" class="btn btn-sm btn-primary" data-cm-clone style="flex:1;justify-content:center;"><i data-lucide="copy" class="icon-14"></i>Utwórz kopię (-2)</button>' +
-                '</div></div>';
+                '<button type="button" class="btn btn-sm btn-secondary" data-cm-overwrite style="flex:1;justify-content:center;border-color:var(--warn-border);color:var(--warn);"><i data-lucide="refresh-cw" class="icon-14"></i>Nadpisz</button>' +
+                '<button type="button" class="btn btn-sm btn-primary" data-cm-clone style="flex:1;justify-content:center;"><i data-lucide="copy" class="icon-14"></i>Sklonuj</button>' +
+                '</div>' +
+                '</div>';
             window.showModal({
                 id: 'ie-conflict-modal',
                 titleId: 'ie-conflict-title',

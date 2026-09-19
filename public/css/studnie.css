@@ -3331,6 +3331,7 @@ td.excel-tint--plyta_redukcyjna input {
     padding: 0 0.75rem;
     font-size: var(--fs-xs);
     white-space: nowrap;
+    margin-left: auto;
 }
 
 /* ===== Edycja wariantu — modifier panelu + layout (UI_GUIDELINES §6) ===== */
