@@ -274,6 +274,14 @@ async function saveOfferStudnie() {
             }
             return false;
         }
+        // A1: offline/network — draft zachowany (clearContext tylko po sukcesie),
+        // użytkownik dostaje jasny komunikat zamiast generyka.
+        var _kind = typeof saveErrorKind === 'function' ? saveErrorKind(err) : 'unknown';
+        var _off = typeof saveOfflineMessage === 'function' ? saveOfflineMessage(_kind) : null;
+        if (_off) {
+            showToast(_off, 'warning');
+            return false;
+        }
         showToast('Błąd zapisu oferty', 'error');
         return false;
     } finally {

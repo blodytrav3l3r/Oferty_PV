@@ -198,6 +198,44 @@ window.fetchWithTimeout = async function (url, options, timeoutMs) {
 };
 
 /**
+ * Klasyfikacja błędu zapisu/odczytu (A1): 'offline' | 'network' | 'conflict'
+ * | 'locked' | 'server' | 'unknown'. TypeError z fetch to 'network', nie
+ * 'offline' (warstwa sieciowa ≠ brak sieci u użytkownika). UX łączy
+ * offline+network we wspólny komunikat (draft i tak zachowany).
+ * Deklaracja + mostek window.* (wzorzec toast.js) dla typecheck:frontend.
+ * @param {*} err
+ * @returns {string}
+ */
+function saveErrorKind(err) {
+    try {
+        if (typeof navigator !== 'undefined' && navigator.onLine === false) return 'offline';
+    } catch (_e) {}
+    if (!err || typeof err !== 'object') return 'unknown';
+    if (err.status === 409 || err.code === 'VERSION_CONFLICT') return 'conflict';
+    try {
+        var ls = typeof window !== 'undefined' && window ? window.lockService : undefined;
+        if (ls && typeof ls.isLocked === 'function' && ls.isLocked(err)) return 'locked';
+    } catch (_e2) {}
+    if (err.status !== undefined && err.status !== null) return 'server';
+    if (err.name === 'AbortError') return 'network';
+    if (typeof TypeError !== 'undefined' && err instanceof TypeError) return 'network';
+    return 'unknown';
+}
+window.saveErrorKind = saveErrorKind;
+
+/**
+ * Wspólny komunikat offline/network (draft zachowany — jawny retry wystarczy).
+ * @param {string} kind wynik saveErrorKind
+ * @returns {string|null} tekst albo null gdy inny rodzaj
+ */
+function saveOfflineMessage(kind) {
+    if (kind === 'offline' || kind === 'network')
+        return 'Brak połączenia — zmiany zachowane w drafcie, spróbuj ponownie.';
+    return null;
+}
+window.saveOfflineMessage = saveOfflineMessage;
+
+/**
  * Pobiera listę użytkowników i wypełnia globalUsersMap.
  */
 async function fetchGlobalUsers() {

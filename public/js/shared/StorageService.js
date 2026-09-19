@@ -48,12 +48,22 @@ class StorageService {
 
         try {
             const headers = this.getHeaders();
-            const resp = await fetch(endpoint, {
-                method: 'POST',
-                headers: headers,
-                credentials: 'same-origin',
-                body: JSON.stringify({ data: [offerData] })
-            });
+            // A2: timeout jak fetchWithTimeout (10 s) — half-open connection nie
+            // wiesza zapisu w nieskończoność; AbortError → saveErrorKind 'network'.
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), 10000);
+            let resp;
+            try {
+                resp = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: headers,
+                    credentials: 'same-origin',
+                    body: JSON.stringify({ data: [offerData] }),
+                    signal: controller.signal
+                });
+            } finally {
+                clearTimeout(timer);
+            }
 
             const data = await resp.json();
             // P0-D2: propagacja 409/423 w formie strukturalnej (status/code/...).

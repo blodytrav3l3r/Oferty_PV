@@ -183,6 +183,13 @@ async function saveOffer() {
             }
             return;
         }
+        // A1: offline/network — draft zachowany, jasny komunikat.
+        var _kind = typeof saveErrorKind === 'function' ? saveErrorKind(err) : 'unknown';
+        var _off = typeof saveOfflineMessage === 'function' ? saveOfflineMessage(_kind) : null;
+        if (_off) {
+            showToast(_off, 'warning');
+            return;
+        }
         showToast('Błąd zapisu oferty', 'error');
     } finally {
         window.isSavingOffer = false;

@@ -274,7 +274,11 @@ async function finalizeOrderFromOffer(offer, kartaBudowyData) {
         }
     } catch (err) {
         logger.error('orderCrud', 'Błąd tworzenia zamówienia:', err);
-        if (
+        // A1: offline/network — draft zachowany, jasny komunikat.
+        var _kindC = typeof saveErrorKind === 'function' ? saveErrorKind(err) : 'unknown';
+        var _offC = typeof saveOfflineMessage === 'function' ? saveOfflineMessage(_kindC) : null;
+        if (_offC) showToast(_offC, 'warning');
+        else if (
             err?.status !== 409 &&
             err?.code !== 'VERSION_CONFLICT' &&
             err?.status !== 423 &&
@@ -319,7 +323,11 @@ async function saveRuryOrder() {
         if (typeof updateRuryOrderSummary === 'function') updateRuryOrderSummary(savedOrder);
     } catch (err) {
         logger.error('orderCrud', 'Błąd zapisu zamówienia:', err);
-        if (
+        // A1: offline/network — draft zachowany, jasny komunikat.
+        var _kindS = typeof saveErrorKind === 'function' ? saveErrorKind(err) : 'unknown';
+        var _offS = typeof saveOfflineMessage === 'function' ? saveOfflineMessage(_kindS) : null;
+        if (_offS) showToast(_offS, 'warning');
+        else if (
             err?.status !== 409 &&
             err?.code !== 'VERSION_CONFLICT' &&
             err?.status !== 423 &&

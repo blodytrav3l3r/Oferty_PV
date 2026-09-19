@@ -120,6 +120,25 @@ async function appLogout() {
 }
 
 /**
+ * Ostatni znany stan sieci (A3: toast tylko na przejściu online→offline,
+ * kolejny dopiero po powrocie online — bez spamu przy każdym evencie).
+ */
+var _lastOnlineState = null;
+
+function _notifyOfflineOnce() {
+    if (_lastOnlineState === false) return;
+    _lastOnlineState = false;
+    try {
+        if (typeof showToast === 'function')
+            showToast('Pracujesz offline — edycja zapisywana lokalnie w drafcie.', 'warning');
+    } catch (_e) {}
+}
+
+function _notifyOnlineSilent() {
+    _lastOnlineState = true;
+}
+
+/**
  * Aktualizuje status kropki połączenia w headerze.
  * Sprawdza czy serwer jest osiągalny przez /health.
  */
@@ -138,6 +157,7 @@ function updateConnectionDot() {
             if (res.ok || res.status === 401) {
                 dot.className = 'connection-dot is-online';
                 dot.title = 'Połączenie z serwerem OK';
+                _notifyOnlineSilent();
             } else {
                 dot.className = 'connection-dot is-offline';
                 dot.title = 'Serwer zwrócił błąd';
@@ -147,6 +167,7 @@ function updateConnectionDot() {
             clearTimeout(timeoutId);
             dot.className = 'connection-dot is-offline';
             dot.title = 'Brak połączenia z serwerem';
+            _notifyOfflineOnce();
         });
 }
 
@@ -160,13 +181,17 @@ if (typeof window !== 'undefined') {
         updateConnectionDot();
         setInterval(updateConnectionDot, 30000);
     }
-    window.addEventListener('online', updateConnectionDot);
+    window.addEventListener('online', function () {
+        _notifyOnlineSilent();
+        updateConnectionDot();
+    });
     window.addEventListener('offline', function () {
         const dot = document.getElementById('connection-dot');
         if (dot) {
             dot.className = 'connection-dot is-offline';
             dot.title = 'Brak połączenia sieciowego';
         }
+        _notifyOfflineOnce();
     });
 }
 

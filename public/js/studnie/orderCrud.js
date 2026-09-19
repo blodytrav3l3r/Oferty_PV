@@ -1254,7 +1254,10 @@ async function saveCurrentOrderUnsafe(options = {}) {
             if (typeof syncOrdersStudnieEntry === 'function') syncOrdersStudnieEntry(order);
         } catch (err) {
             logger.error('orderManager', 'Błąd zapisu zamówienia:', err);
-            showToast('Błąd zapisu zamówienia', 'error');
+            // A1: offline/network — draft zachowany, jasny komunikat.
+            var _kind = typeof saveErrorKind === 'function' ? saveErrorKind(err) : 'unknown';
+            var _off = typeof saveOfflineMessage === 'function' ? saveOfflineMessage(_kind) : null;
+            showToast(_off || 'Błąd zapisu zamówienia', _off ? 'warning' : 'error');
             return;
         }
     }
