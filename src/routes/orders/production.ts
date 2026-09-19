@@ -212,7 +212,6 @@ router.put(
                     } = o;
                     const clientVersion =
                         typeof clientVersionRaw === 'number' ? clientVersionRaw : null;
-                    const dataStr = JSON.stringify(rest);
                     // P0-A: finalny numer produkcyjny do kolumny pod UNIQUE.
                     // Update z undefined nie nadpisuje (Prisma pomija undefined).
                     const prodNum =
@@ -262,6 +261,15 @@ router.put(
                     } else {
                         logAudit('production_order', docId, authReq.user?.id || '', 'create', rest);
                     }
+
+                    // Liczniki wydruków: chude obiekty (modal, accept-flow) nie
+                    // mają pól print* — donieś ze starego bloba, żeby PUT ich
+                    // nie zerował. Wynik helpera jest finalny (bez spreadu za nim).
+                    const oldData = old
+                        ? parseJsonField<Record<string, unknown>>(old.data, {})
+                        : null;
+                    const mergedRest = oldData ? preservePrintCounts(rest, oldData) : rest;
+                    const dataStr = JSON.stringify(mergedRest);
 
                     if (!old) {
                         await tx.production_orders_rel.create({
@@ -693,6 +701,182 @@ router.post('/recycle-numbers', requireAuth, writeProductionLimiter, async (req,
     }
 });
 
+/* ===== LICZNIKI WYDRUKÓW (liczba uruchomień wydruku) =====
+ * Liczniki żyją w blobie JSON `data` (bez migracji): printCountZlecenia,
+ * printCountEtykieta, printLastZleceniaAt, printLastEtykietaAt.
+ * Inkrementacja odporna na lost update: predykat WHERE id+version
+ * (jak PUT batch, P0-D) + retry. MUSI być przed `/:id`.
+ */
+type PrintCountKind = 'zlecenie' | 'etykieta';
+
+function isPrintCountKind(v: unknown): v is PrintCountKind {
+    return v === 'zlecenie' || v === 'etykieta';
+}
+
+interface PrintCounts {
+    printCountZlecenia: number;
+    printCountEtykieta: number;
+    printLastZleceniaAt: string | null;
+    printLastEtykietaAt: string | null;
+}
+
+function readPrintCounts(data: Record<string, unknown>): PrintCounts {
+    const z = data.printCountZlecenia;
+    const e = data.printCountEtykieta;
+    const lz = data.printLastZleceniaAt;
+    const le = data.printLastEtykietaAt;
+    return {
+        printCountZlecenia: typeof z === 'number' && z >= 0 ? Math.floor(z) : 0,
+        printCountEtykieta: typeof e === 'number' && e >= 0 ? Math.floor(e) : 0,
+        printLastZleceniaAt: typeof lz === 'string' ? lz : null,
+        printLastEtykietaAt: typeof le === 'string' ? le : null
+    };
+}
+
+/**
+ * Ochrona liczników wydruków przed whole-array PUT z chudymi obiektami
+ * (np. modal zlecenia, accept-flow — obiekty z `/index` bez pól print*).
+ * Zwraca FINALNY obiekt do JSON.stringify — bez drugiego spreadu za nim.
+ * Reguła per pole: jawna poprawna wartość (liczba w tym 0 / string daty)
+ * wygrywa, brak lub zły typ → zachowaj starą.
+ */
+function preservePrintCounts(
+    rest: Record<string, unknown>,
+    oldData: Record<string, unknown>
+): Record<string, unknown> {
+    const kept = readPrintCounts(oldData);
+    const merged: Record<string, unknown> = { ...rest };
+    const z = rest.printCountZlecenia;
+    merged.printCountZlecenia =
+        typeof z === 'number' && z >= 0 ? Math.floor(z) : kept.printCountZlecenia;
+    const e = rest.printCountEtykieta;
+    merged.printCountEtykieta =
+        typeof e === 'number' && e >= 0 ? Math.floor(e) : kept.printCountEtykieta;
+    const lz = rest.printLastZleceniaAt;
+    merged.printLastZleceniaAt = typeof lz === 'string' ? lz : kept.printLastZleceniaAt;
+    const le = rest.printLastEtykietaAt;
+    merged.printLastEtykietaAt = typeof le === 'string' ? le : kept.printLastEtykietaAt;
+    return merged;
+}
+
+/**
+ * Atomowa inkrementacja licznika wydruku (optimistic locking + retry).
+ * Zwraca świeże liczniki albo rzuca { status }.
+ */
+async function incrementPrintCount(
+    docId: string,
+    kind: PrintCountKind,
+    user: AuthenticatedRequest['user']
+): Promise<PrintCounts> {
+    const now = new Date().toISOString();
+    for (let attempt = 0; attempt < 3; attempt++) {
+        const row = await prisma.production_orders_rel.findUnique({
+            where: { id: docId },
+            select: { data: true, userId: true, version: true }
+        });
+        if (!row || !canReadDoc(user, row.userId)) {
+            throw { status: 404, message: 'Zlecenie nie znalezione' };
+        }
+        const data = parseJsonField<Record<string, unknown>>(row.data, {});
+        const counts = readPrintCounts(data);
+        if (kind === 'zlecenie') {
+            counts.printCountZlecenia += 1;
+            counts.printLastZleceniaAt = now;
+        } else {
+            counts.printCountEtykieta += 1;
+            counts.printLastEtykietaAt = now;
+        }
+        const nextData = JSON.stringify({
+            ...data,
+            printCountZlecenia: counts.printCountZlecenia,
+            printCountEtykieta: counts.printCountEtykieta,
+            printLastZleceniaAt: counts.printLastZleceniaAt,
+            printLastEtykietaAt: counts.printLastEtykietaAt
+        });
+        const upd = await prisma.production_orders_rel.updateMany({
+            where: { id: docId, version: row.version ?? 1 },
+            data: { data: nextData, updatedAt: now, version: { increment: 1 } }
+        });
+        if (upd.count === 1) return counts;
+        // version zmieniona równolegle — ponów odczyt
+    }
+    throw {
+        status: 409,
+        code: 'VERSION_CONFLICT',
+        message: 'Zlecenie zmienione przez innego użytkownika — spróbuj ponownie'
+    };
+}
+
+router.post('/print-count-batch', requireAuth, writeProductionLimiter, async (req, res) => {
+    const authReq = req as AuthenticatedRequest;
+    try {
+        const { ids, kind } = req.body || {};
+        if (!isPrintCountKind(kind)) {
+            return res
+                .status(400)
+                .json({ error: 'Nieprawidłowy rodzaj wydruku (zlecenie|etykieta)' });
+        }
+        if (!Array.isArray(ids) || ids.length === 0) {
+            return res.status(400).json({ error: 'Brak identyfikatorów zleceń' });
+        }
+        if (ids.length > 200) {
+            return res.status(400).json({ error: 'Zbyt wiele zleceń w jednym żądaniu (max 200)' });
+        }
+        const uniqueIds = [...new Set(ids.filter((id) => typeof id === 'string' && id.length > 0))];
+        if (uniqueIds.length === 0) {
+            return res.status(400).json({ error: 'Brak identyfikatorów zleceń' });
+        }
+        const counts: Record<string, PrintCounts> = {};
+        const failed: Array<{ id: string; error: string }> = [];
+        for (const id of uniqueIds) {
+            try {
+                counts[id] = await incrementPrintCount(id, kind, authReq.user);
+            } catch (e: unknown) {
+                failed.push({
+                    id,
+                    error: (e as { message?: string }).message || 'Błąd zapisu licznika'
+                });
+            }
+        }
+        if (Object.keys(counts).length > 0) searchCache.invalidateNamespace('production');
+        res.json({ counts, failed });
+    } catch (e: unknown) {
+        if (mapPrismaError(res, e)) return;
+        const message = e instanceof Error ? e.message : 'Unknown error';
+        logger.error('Production', 'Błąd serwera', message);
+        res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
+    }
+});
+
+router.post('/:id/print-count', requireAuth, writeProductionLimiter, async (req, res) => {
+    const authReq = req as AuthenticatedRequest;
+    try {
+        const { kind } = req.body || {};
+        if (!isPrintCountKind(kind)) {
+            return res
+                .status(400)
+                .json({ error: 'Nieprawidłowy rodzaj wydruku (zlecenie|etykieta)' });
+        }
+        const counts = await incrementPrintCount(req.params.id, kind, authReq.user);
+        searchCache.invalidateNamespace('production');
+        res.json({ ok: true, id: req.params.id, ...counts });
+    } catch (e: unknown) {
+        if ((e as { status?: number }).status === 404) {
+            return res.status(404).json({ error: 'Zlecenie nie znalezione' });
+        }
+        if ((e as { status?: number }).status === 409) {
+            return res.status(409).json({
+                error: (e as { message?: string }).message || 'Konflikt wersji',
+                code: (e as { code?: string }).code || 'VERSION_CONFLICT'
+            });
+        }
+        if (mapPrismaError(res, e)) return;
+        const message = e instanceof Error ? e.message : 'Unknown error';
+        logger.error('Production', 'Błąd serwera', message);
+        res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
+    }
+});
+
 router.get('/:id', requireAuth, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
@@ -720,7 +904,26 @@ router.get('/:id', requireAuth, async (req, res) => {
                 updatedAt: order.updatedAt,
                 ...parsedData,
                 // P0-D: kolumna wygrywa z blobem — baza optimistic lockingu.
-                version: order.version ?? 1
+                version: order.version ?? 1,
+                // Liczniki wydruków: jawny kontrakt, brak pola = 0.
+                printCountZlecenia:
+                    typeof parsedData.printCountZlecenia === 'number' &&
+                    (parsedData.printCountZlecenia as number) >= 0
+                        ? Math.floor(parsedData.printCountZlecenia as number)
+                        : 0,
+                printCountEtykieta:
+                    typeof parsedData.printCountEtykieta === 'number' &&
+                    (parsedData.printCountEtykieta as number) >= 0
+                        ? Math.floor(parsedData.printCountEtykieta as number)
+                        : 0,
+                printLastZleceniaAt:
+                    typeof parsedData.printLastZleceniaAt === 'string'
+                        ? (parsedData.printLastZleceniaAt as string)
+                        : null,
+                printLastEtykietaAt:
+                    typeof parsedData.printLastEtykietaAt === 'string'
+                        ? (parsedData.printLastEtykietaAt as string)
+                        : null
             }
         });
     } catch (e: unknown) {

@@ -519,6 +519,136 @@ const AppZlecenia = (() => {
         return searchResults.items.find((o) => o.id === orderId) || null;
     }
 
+    /* ===== LICZNIKI WYDRUKÓW (liczba uruchomień wydruku) ===== */
+
+    function snapshotPrintCounts(o) {
+        return {
+            printCountZlecenia: typeof o.printCountZlecenia === 'number' ? o.printCountZlecenia : 0,
+            printCountEtykieta: typeof o.printCountEtykieta === 'number' ? o.printCountEtykieta : 0,
+            printLastZleceniaAt: o.printLastZleceniaAt || null,
+            printLastEtykietaAt: o.printLastEtykietaAt || null
+        };
+    }
+
+    function restorePrintCounts(o, snap) {
+        o.printCountZlecenia = snap.printCountZlecenia;
+        o.printCountEtykieta = snap.printCountEtykieta;
+        o.printLastZleceniaAt = snap.printLastZleceniaAt;
+        o.printLastEtykietaAt = snap.printLastEtykietaAt;
+    }
+
+    function applyServerPrintCounts(counts) {
+        if (!counts || !searchResults) return;
+        Object.keys(counts).forEach((id) => {
+            const o = findOrderById(id);
+            const c = counts[id];
+            if (o && c) {
+                if (typeof c.printCountZlecenia === 'number') {
+                    o.printCountZlecenia = c.printCountZlecenia;
+                }
+                if (typeof c.printCountEtykieta === 'number') {
+                    o.printCountEtykieta = c.printCountEtykieta;
+                }
+                if (c.printLastZleceniaAt !== undefined) {
+                    o.printLastZleceniaAt = c.printLastZleceniaAt;
+                }
+                if (c.printLastEtykietaAt !== undefined) {
+                    o.printLastEtykietaAt = c.printLastEtykietaAt;
+                }
+            }
+        });
+    }
+
+    function refreshPrintCells(ids) {
+        if (!window.zleceniaRender || !searchResults) return;
+        window.zleceniaRender.updatePrintCells(ids.map((id) => findOrderById(id)).filter((o) => o));
+    }
+
+    /**
+     * Rejestruje potwierdzone uruchomienie wydruku (wołane dopiero po kliku
+     * [Drukuj] w modalu potwierdzenia). Fire-and-forget: UI dostaje
+     * optymistyczny +1, serwer rozstrzyga (reconciliacja, rollback przy błędzie).
+     */
+    async function recordPrint(ids, kind) {
+        if (!ids || ids.length === 0) return;
+        const prev = new Map();
+        ids.forEach((id) => {
+            const o = findOrderById(id);
+            if (!o) return;
+            prev.set(id, snapshotPrintCounts(o));
+            if (kind === 'zlecenie') {
+                o.printCountZlecenia = snapshotPrintCounts(o).printCountZlecenia + 1;
+            } else {
+                o.printCountEtykieta = snapshotPrintCounts(o).printCountEtykieta + 1;
+            }
+        });
+        refreshPrintCells(ids);
+        try {
+            const headers = authHeaders?.() || { 'Content-Type': 'application/json' };
+            if (ids.length === 1) {
+                const res = await fetch(
+                    '/api/orders-studnie/production/' + encodeURIComponent(ids[0]) + '/print-count',
+                    { method: 'POST', headers, body: JSON.stringify({ kind }) }
+                );
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                const json = await res.json();
+                applyServerPrintCounts({ [ids[0]]: json });
+            } else {
+                // Chunk ≤200 — serwer limituje 200 ids/request (jak batch-delete)
+                const CHUNK_SIZE = 200;
+                for (let i = 0; i < ids.length; i += CHUNK_SIZE) {
+                    const chunk = ids.slice(i, i + CHUNK_SIZE);
+                    const res = await fetch('/api/orders-studnie/production/print-count-batch', {
+                        method: 'POST',
+                        headers,
+                        body: JSON.stringify({ ids: chunk, kind })
+                    });
+                    if (!res.ok) throw new Error('HTTP ' + res.status);
+                    const json = await res.json();
+                    applyServerPrintCounts(json.counts || {});
+                    (json.failed || []).forEach((f) => {
+                        const o = findOrderById(f.id);
+                        const snap = prev.get(f.id);
+                        if (o && snap) restorePrintCounts(o, snap);
+                    });
+                }
+            }
+            refreshPrintCells(ids);
+        } catch (error) {
+            logger.error('zlecenia', 'recordPrint error:', error);
+            prev.forEach((snap, id) => {
+                const o = findOrderById(id);
+                if (o) restorePrintCounts(o, snap);
+            });
+            refreshPrintCells(ids);
+        }
+    }
+
+    /* ===== POTWIERDZENIE WYDRUKU =====
+     * Licznik rośnie dopiero na świadomy klik [Drukuj] w naszym modalu,
+     * nie na otwarcie dialogu systemowego. appConfirm ma once-guard
+     * (podwójny klik liczy raz), a Esc/overlay/Anuluj dają false = brak liczenia.
+     * Wiadomość plain-text — appConfirm sam escapuje (XSS-safe).
+     */
+
+    function describeOrder(po) {
+        const num = po.productionOrderNumber || po.id || '—';
+        const parts = [num, po.wellName || po.snr || '', po.elementName || po.productName || '']
+            .map((p) => String(p || '').trim())
+            .filter((p) => p);
+        return parts.join(' — ');
+    }
+
+    async function confirmPrintRun(title, message, okText) {
+        if (typeof appConfirm !== 'function') return false;
+        return appConfirm(message, {
+            title,
+            okText,
+            cancelText: 'Anuluj',
+            type: 'info'
+        });
+    }
+
     async function printSingleZlecenie(orderId) {
         const po = findOrderById(orderId);
         if (!po) {
@@ -532,7 +662,16 @@ const AppZlecenia = (() => {
         if (!template) return;
 
         const html = buildZlecenieFromPO(template, po);
+        const ok = await confirmPrintRun(
+            'Wydruk zlecenia',
+            'Wydrukować zlecenie?\n' +
+                describeOrder(po) +
+                '\n\nLicznik: potwierdzone uruchomienie wydruku.',
+            'Drukuj'
+        );
+        if (!ok) return;
         silentPrint(html);
+        recordPrint([orderId], 'zlecenie');
     }
 
     async function printSingleEtykieta(orderId) {
@@ -548,7 +687,16 @@ const AppZlecenia = (() => {
         if (!template) return;
 
         const html = buildEtykietaFromPO(template, po);
+        const ok = await confirmPrintRun(
+            'Wydruk etykiety',
+            'Wydrukować etykietę?\n' +
+                describeOrder(po) +
+                '\n\nLicznik: potwierdzone uruchomienie wydruku.',
+            'Drukuj'
+        );
+        if (!ok) return;
         silentPrint(html);
+        recordPrint([orderId], 'etykieta');
     }
 
     function getSelectedOrders() {
@@ -603,9 +751,23 @@ const AppZlecenia = (() => {
 
         const finalHTML =
             headSection + batchPageStyle + '</head>\n<body>\n' + allPages + '</body></html>';
+        const preview = orders.map((po) => describeOrder(po)).join('\n');
+        const ok = await confirmPrintRun(
+            'Wydruk zleceń',
+            'Wydrukować ' +
+                orders.length +
+                ' zleceń?\n' +
+                preview +
+                '\n\nLicznik: potwierdzone uruchomienie wydruku.',
+            'Drukuj wszystkie (' + orders.length + ')'
+        );
+        if (!ok) return;
         silentPrint(finalHTML);
+        recordPrint(
+            orders.map((po) => po.id),
+            'zlecenie'
+        );
     }
-
     async function printBatchEtykiety() {
         const orders = getSelectedOrders();
         if (!orders) return;
@@ -653,9 +815,23 @@ const AppZlecenia = (() => {
             allPages +
             fitScript +
             '\n</body></html>';
+        const preview = orders.map((po) => describeOrder(po)).join('\n');
+        const ok = await confirmPrintRun(
+            'Wydruk etykiet',
+            'Wydrukować ' +
+                orders.length +
+                ' etykiet?\n' +
+                preview +
+                '\n\nLicznik: potwierdzone uruchomienie wydruku.',
+            'Drukuj wszystkie (' + orders.length + ')'
+        );
+        if (!ok) return;
         silentPrint(finalHTML);
+        recordPrint(
+            orders.map((po) => po.id),
+            'etykieta'
+        );
     }
-
     /* ===== USUWANIE ===== */
 
     async function deleteOrder(id) {

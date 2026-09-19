@@ -286,6 +286,8 @@ declare var zleceniaRender: {
     renderStats(state: Record<string, unknown>): void;
     renderTable(state: Record<string, unknown>): number;
     renderOrderRow(o: Record<string, unknown>, selectedIds: Set<string>): string;
+    renderPrintCounts(o: Record<string, unknown>): string;
+    updatePrintCells(items: Array<Record<string, unknown>>): void;
     updateSentinel(state: Record<string, unknown>): void;
     updateChips(activeFilter: string): void;
     updateAnimationGate(items: Array<Record<string, unknown>>): void;
@@ -293,6 +295,11 @@ declare var zleceniaRender: {
     updateBatchBar(selectState: number, loaded: number, selected: number): void;
     updateSelectAllButton(selectState: number): void;
 };
+
+interface Window {
+    /** Warstwa renderowania zleceń (zleceniaRender.js) */
+    zleceniaRender: typeof zleceniaRender;
+}
 
 /* ===== Typy dla Print Modal ===== */
 interface PrintModalSection {

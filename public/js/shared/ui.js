@@ -481,6 +481,7 @@ function _ensureConfirmStyles() {
         .app-confirm-message {
             font-size: var(--fs-lg); color:var(--text-secondary);
             margin-bottom:1.5rem; line-height:1.55;
+            max-height:min(40vh, 320px); overflow-y:auto; scrollbar-width:thin;
         }
         .app-confirm-actions {
             display:flex; gap:0.75rem; justify-content:center;

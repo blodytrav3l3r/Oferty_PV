@@ -34,17 +34,73 @@ const ZleceniaRender = (() => {
         const tbody = document.getElementById('zlecenia-table-body');
         if (!tbody) return;
         tbody.innerHTML =
-            '<tr class="zlecenia-empty"><td colspan="10">Ładowanie danych z serwera...</td></tr>';
+            '<tr class="zlecenia-empty"><td colspan="11">Ładowanie danych z serwera...</td></tr>';
     }
 
     function showError(message) {
         const tbody = document.getElementById('zlecenia-table-body');
         if (tbody) {
             tbody.innerHTML =
-                '<tr class="zlecenia-empty"><td class="is-error" colspan="10">Wystąpił błąd: ' +
+                '<tr class="zlecenia-empty"><td class="is-error" colspan="11">Wystąpił błąd: ' +
                 escHtml(message) +
                 '</td></tr>';
         }
+    }
+
+    /* ===== LICZNIKI WYDRUKÓW (liczba uruchomień wydruku) ===== */
+
+    function getPrintCount(o, field) {
+        const v = o ? o[field] : 0;
+        return typeof v === 'number' && v >= 0 ? Math.floor(v) : 0;
+    }
+
+    function renderPrintCounts(o) {
+        const z = getPrintCount(o, 'printCountZlecenia');
+        const e = getPrintCount(o, 'printCountEtykieta');
+        const zTitle =
+            'Potwierdzone uruchomienia wydruku zlecenia: ' +
+            z +
+            (o && o.printLastZleceniaAt
+                ? ' — ostatnie potwierdzenie: ' + formatDate(o.printLastZleceniaAt)
+                : ' — brak potwierdzeń');
+        const eTitle =
+            'Potwierdzone uruchomienia wydruku etykiety: ' +
+            e +
+            (o && o.printLastEtykietaAt
+                ? ' — ostatnie potwierdzenie: ' + formatDate(o.printLastEtykietaAt)
+                : ' — brak potwierdzeń');
+        return (
+            '<span class="print-badge ' +
+            (z > 0 ? 'print-badge-z' : 'print-badge-zero') +
+            '" title="' +
+            escHtml(zTitle) +
+            '"><i data-lucide="printer" aria-hidden="true"></i> ' +
+            z +
+            'x</span>' +
+            '<span class="print-badge ' +
+            (e > 0 ? 'print-badge-e' : 'print-badge-zero') +
+            '" title="' +
+            escHtml(eTitle) +
+            '"><i data-lucide="tag" aria-hidden="true"></i> ' +
+            e +
+            'x</span>'
+        );
+    }
+
+    /* Odświeża wyłącznie komórki liczników (bez pełnego renderTable — scroll/selekcja zostają) */
+    function updatePrintCells(items) {
+        if (!Array.isArray(items)) return;
+        items.forEach((o) => {
+            if (!o || !o.id) return;
+            const cell = /** @type {HTMLElement | null} */ (
+                document.querySelector('td[data-print-for="' + escJs(o.id) + '"]')
+            );
+            if (!cell) return;
+            cell.innerHTML = renderPrintCounts(o);
+            if (typeof lucide !== 'undefined' && lucide.createIcons) {
+                lucide.createIcons({ root: cell });
+            }
+        });
     }
 
     /* ===== STATYSTYKI ===== */
@@ -127,7 +183,7 @@ const ZleceniaRender = (() => {
 
         if (items.length === 0) {
             tbody.innerHTML =
-                '<tr class="zlecenia-empty"><td colspan="10">Brak zlece\u0144 spe\u0142niaj\u0105cych kryteria.</td></tr>';
+                '<tr class="zlecenia-empty"><td colspan="11">Brak zlece\u0144 spe\u0142niaj\u0105cych kryteria.</td></tr>';
             updateSentinel(state);
             const emptyState = updateSelectAllState(0, selectedIds.size);
             updateBatchBar(emptyState, 0, selectedIds.size);
@@ -254,6 +310,11 @@ const ZleceniaRender = (() => {
             ' ' +
             escHtml(statusConfig.label) +
             '</span></td>\n' +
+            '<td class="print-cell" data-print-for="' +
+            escJs(o.id) +
+            '">' +
+            renderPrintCounts(o) +
+            '</td>\n' +
             '<td class="text-right">\n' +
             '<div style="display:flex; gap:0.25rem; justify-content:flex-end;">\n' +
             actions +
@@ -383,6 +444,8 @@ const ZleceniaRender = (() => {
         renderStats,
         renderTable,
         renderOrderRow,
+        renderPrintCounts,
+        updatePrintCells,
         updateSentinel,
         updateChips,
         updateAnimationGate,

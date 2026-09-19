@@ -228,6 +228,25 @@ export function mapProductionOrderRow(row: Record<string, unknown>) {
         ...parsedData,
         // P0-D: kolumna wygrywa z blobem — baza optimistic lockingu.
         version: typeof row.version === 'number' ? row.version : 1,
+        // Liczniki wydruków: jawny kontrakt, brak pola = 0 (kompatybilność wsteczna).
+        printCountZlecenia:
+            typeof parsedData.printCountZlecenia === 'number' &&
+            (parsedData.printCountZlecenia as number) >= 0
+                ? Math.floor(parsedData.printCountZlecenia as number)
+                : 0,
+        printCountEtykieta:
+            typeof parsedData.printCountEtykieta === 'number' &&
+            (parsedData.printCountEtykieta as number) >= 0
+                ? Math.floor(parsedData.printCountEtykieta as number)
+                : 0,
+        printLastZleceniaAt:
+            typeof parsedData.printLastZleceniaAt === 'string'
+                ? (parsedData.printLastZleceniaAt as string)
+                : null,
+        printLastEtykietaAt:
+            typeof parsedData.printLastEtykietaAt === 'string'
+                ? (parsedData.printLastEtykietaAt as string)
+                : null,
         dbSalesOrderNumber: dbSalesOrderNumber || undefined,
         dbSalesOrderId: row.dbSalesOrderId || undefined
     };
