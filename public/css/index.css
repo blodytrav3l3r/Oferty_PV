@@ -745,6 +745,78 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
 }
 
 /* ── System config inline ── */
+.sysconfig-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.75rem 1.25rem;
+}
+
+.sysconfig-card--codes {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+}
+
+.sysconfig-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.sysconfig-current,
+.sysconfig-edit {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+.sysconfig-grid {
+    display: grid;
+    grid-template-columns: 100px minmax(130px, 1fr) minmax(130px, 1fr);
+    gap: 0.75rem 1rem;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--border-glass, rgba(255, 255, 255, 0.08));
+    border-radius: var(--radius-md, 8px);
+    padding: 1rem 1.25rem;
+}
+
+.sysconfig-grid-col-header,
+.sysconfig-grid-row {
+    display: contents;
+}
+
+.sysconfig-col-title {
+    font-size: var(--fs-xs, 0.75rem);
+    font-weight: var(--fw-bold, 700);
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.sysconfig-col-title svg,
+.sysconfig-col-title i {
+    width: 14px;
+    height: 14px;
+    color: var(--accent);
+}
+
+.sysconfig-row-label {
+    font-size: var(--fs-sm, 0.875rem);
+    font-weight: var(--fw-bold, 700);
+    color: var(--text-primary);
+}
+
+.sysconfig-field {
+    width: 100%;
+}
+
 .sysconfig-input {
     width: 45px;
     height: 36px;
@@ -770,6 +842,23 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
     box-shadow: 0 0 0 2px var(--accent-bg);
 }
 
+.sysconfig-input--code {
+    width: 100%;
+    height: 36px;
+    font-size: var(--fs-base, 0.95rem);
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: var(--fw-bold, 700);
+    text-align: left;
+    padding: 0 0.75rem;
+    color: var(--text-primary);
+}
+
+.sysconfig-actions {
+    display: flex;
+    justify-content: flex-end;
+    width: 100%;
+}
+
 .sysconfig-year {
     font-size: var(--fs-base);
     color: var(--text-muted);
@@ -778,82 +867,6 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
 
 .sysconfig-preview {
     margin-left: 0;
-}
-
-.sysconfig-card {
-    flex-wrap: wrap;
-    gap: 0.75rem 1.25rem;
-    align-items: center;
-}
-
-.sysconfig-current {
-    flex: 1 1 240px;
-}
-
-.sysconfig-input--code {
-    width: 100%;
-    max-width: 180px;
-    height: 34px;
-    font-size: var(--fs-base);
-    font-weight: var(--fw-bold);
-    text-align: left;
-    padding: 0 0.6rem;
-}
-
-.sysconfig-codes {
-    display: flex;
-    flex-direction: column;
-    gap: 0.55rem;
-    flex: 1 1 520px;
-    min-width: min(100%, 380px);
-}
-
-.sysconfig-codes-row {
-    display: grid;
-    grid-template-columns: 92px 1fr 1fr;
-    gap: 0.5rem 0.8rem;
-    align-items: center;
-}
-
-.sysconfig-code-field {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    min-width: 0;
-}
-
-.sysconfig-code-label {
-    flex: 0 0 auto;
-    min-width: 64px;
-    text-align: right;
-    font-size: var(--fs-sm);
-    color: var(--text-muted);
-    font-weight: var(--fw-bold);
-}
-
-.sysconfig-codes > .btn {
-    align-self: flex-start;
-}
-
-@media (max-width: 640px) {
-    .sysconfig-codes-row {
-        grid-template-columns: 1fr;
-        gap: 0.4rem;
-    }
-    .sysconfig-code-label {
-        min-width: 0;
-        text-align: left;
-    }
-    .sysconfig-input--code {
-        max-width: none;
-    }
-}
-
-.sysconfig-current,
-.sysconfig-edit {
-    display: flex;
-    align-items: center;
-    gap: 0.6rem;
 }
 
 .sysconfig-icon {
