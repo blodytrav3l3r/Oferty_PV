@@ -14,9 +14,10 @@ class KartotekaUI {
         this.currentTypeFilter = 'all';
         this.filters = {
             user: '',
+            // Domyślnie pokazuj oferty z bieżącego dnia (spójnie z #/zlecenia).
             date: {
-                mode: 'none',
-                preset: '',
+                mode: 'preset',
+                preset: 'today',
                 from: '',
                 to: ''
             }

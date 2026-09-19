@@ -43,12 +43,24 @@ export default {
         });
         const sel = document.getElementById('ka-user-filter');
         if (sel) sel.value = this.filters.user;
+        // Przy statusie „Z zamówieniem" filtr dat jest ignorowany —
+        // presety pokazuj jako nieaktywne z wyjaśnieniem w tooltipie.
+        const dateIgnored = this.currentFilter === 'with_order';
         document.querySelectorAll('.ka-date-preset-btn').forEach((btn) => {
             const isActive =
+                !dateIgnored &&
                 this.filters.date.mode === 'preset' &&
                 btn.dataset.dateRange === this.filters.date.preset;
             btn.classList.toggle('active', isActive);
             btn.classList.toggle('btn-secondary', !isActive);
+            btn.classList.toggle('ka-date-ignored', dateIgnored);
+            if (dateIgnored) {
+                btn.dataset.origTitle = btn.dataset.origTitle || btn.getAttribute('title') || '';
+                btn.setAttribute('title', 'Zakres dat nie dotyczy ofert z zamówieniami');
+            } else if (btn.dataset.origTitle !== undefined) {
+                btn.setAttribute('title', btn.dataset.origTitle);
+                delete btn.dataset.origTitle;
+            }
         });
         this.updateFilterCount();
     },
@@ -60,7 +72,8 @@ export default {
         const input = document.getElementById('ka-local-search-input');
         const q = input ? input.value.trim() : '';
         const dateActive =
-            this.filters.date.mode === 'preset' || this.filters.date.mode === 'range';
+            this.currentFilter !== 'with_order' &&
+            (this.filters.date.mode === 'preset' || this.filters.date.mode === 'range');
         const count =
             (q ? 1 : 0) +
             (this.currentTypeFilter !== 'all' ? 1 : 0) +
@@ -72,13 +85,14 @@ export default {
     },
 
     /**
-     * Zeruje wszystkie filtry kartoteki (typ, status, opiekun, data, szukaj).
+     * Zeruje wszystkie filtry kartoteki (typ, status, opiekun, szukaj).
+     * Data wraca do dziś — spójnie z widokiem domyślnym (jak w #/zlecenia).
      */
     clearAllFilters() {
         this.currentFilter = 'all';
         this.currentTypeFilter = 'all';
         this.filters.user = '';
-        this.filters.date = { mode: 'none', preset: '', from: '', to: '' };
+        this.filters.date = { mode: 'preset', preset: 'today', from: '', to: '' };
 
         const searchInput = document.getElementById('ka-local-search-input');
         if (searchInput) searchInput.value = '';

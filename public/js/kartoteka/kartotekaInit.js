@@ -118,6 +118,9 @@ function initAdvancedFilterEvents(ui) {
         dateTo.addEventListener('change', () =>
             ui.onDateRangeChange(dateFrom?.value || '', dateTo.value)
         );
+
+    // Synchronizuj stan UI po starcie (m.in. podświetlenie presetu „Dzisiaj" i licznik filtrów).
+    if (typeof ui._syncFilterUI === 'function') ui._syncFilterUI();
 }
 
 window.initAdvancedFilterEvents = initAdvancedFilterEvents;

@@ -44,6 +44,21 @@ const AppZlecenia = (() => {
 
     /* ===== INIT ===== */
 
+    function isoLocalDate(d) {
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return y + '-' + m + '-' + day;
+    }
+
+    function applyTodayFilter() {
+        const today = isoLocalDate(new Date());
+        const dateFromInput = document.getElementById('zlecenia-date-from');
+        const dateToInput = document.getElementById('zlecenia-date-to');
+        if (dateFromInput) dateFromInput.value = today;
+        if (dateToInput) dateToInput.value = today;
+    }
+
     async function init() {
         // Wariant A: sesję potwierdza wyłącznie GET /api/auth/me na cookie
         // httpOnly (dotąd był tu tylko pre-check localStorage bez weryfikacji).
@@ -63,6 +78,7 @@ const AppZlecenia = (() => {
         setupTableEvents();
         setupSentinel();
         await populateUserFilter();
+        applyTodayFilter();
         await searchOffers(buildSearchParams());
     }
 
@@ -171,12 +187,9 @@ const AppZlecenia = (() => {
             if (dateToInput) dateToInput.value = toVal;
             searchOffers(buildSearchParams());
         }
-        function isoDate(d) {
-            return d.toISOString().slice(0, 10);
-        }
         if (presetToday) {
             presetToday.addEventListener('click', () => {
-                const today = isoDate(new Date());
+                const today = isoLocalDate(new Date());
                 applyDatePreset(today, today);
             });
         }
@@ -185,7 +198,7 @@ const AppZlecenia = (() => {
                 const to = new Date();
                 const from = new Date();
                 from.setDate(from.getDate() - 6);
-                applyDatePreset(isoDate(from), isoDate(to));
+                applyDatePreset(isoLocalDate(from), isoLocalDate(to));
             });
         }
         if (preset30d) {
@@ -193,7 +206,7 @@ const AppZlecenia = (() => {
                 const to = new Date();
                 const from = new Date();
                 from.setDate(from.getDate() - 29);
-                applyDatePreset(isoDate(from), isoDate(to));
+                applyDatePreset(isoLocalDate(from), isoLocalDate(to));
             });
         }
     }
@@ -408,14 +421,11 @@ const AppZlecenia = (() => {
         }
     }
 
-    /* Wyzerowanie wszystkich filtrów naraz */
+    /* Wyzerowanie wszystkich filtrów naraz (daty wracają do dziś — spójnie z widokiem domyślnym) */
     function clearAllFilters() {
         const qInput = document.getElementById('zlecenia-search-input');
         if (qInput) qInput.value = '';
-        const from = document.getElementById('zlecenia-date-from');
-        const to = document.getElementById('zlecenia-date-to');
-        if (from) from.value = '';
-        if (to) to.value = '';
+        applyTodayFilter();
         const select = document.getElementById('zlecenia-user-filter');
         if (select) select.value = '';
         const prodInput = document.getElementById('zlecenia-prod-number-input');

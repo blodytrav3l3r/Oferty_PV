@@ -78,13 +78,17 @@ export default {
 
         let dateFrom = '';
         let dateTo = '';
-        if (this.filters.date.mode === 'preset') {
-            const resolved = window.resolveDatePreset(this.filters.date.preset);
-            dateFrom = resolved.from;
-            dateTo = resolved.to;
-        } else if (this.filters.date.mode === 'range') {
-            dateFrom = this.filters.date.from;
-            dateTo = this.filters.date.to;
+        // Status „Z zamówieniem" pokazuje wszystkie oferty z zamówieniami
+        // bez względu na datę — filtr dat go nie dotyczy.
+        if (this.currentFilter !== 'with_order') {
+            if (this.filters.date.mode === 'preset') {
+                const resolved = window.resolveDatePreset(this.filters.date.preset);
+                dateFrom = resolved.from;
+                dateTo = resolved.to;
+            } else if (this.filters.date.mode === 'range') {
+                dateFrom = this.filters.date.from;
+                dateTo = this.filters.date.to;
+            }
         }
 
         const userId = this.filters.user;

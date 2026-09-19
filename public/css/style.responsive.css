@@ -294,6 +294,11 @@
     box-shadow: 0 2px 8px rgba(var(--accent-rgb), 0.5);
 }
 
+/* Preset dat ignorowany przy statusie „Z zamówieniem" — przygaszony */
+.kartoteka-filter-bar .ka-date-preset-btn.ka-date-ignored {
+    opacity: 0.55;
+}
+
 /* Kontrolki paska filtrów — spójne z toolbar zleceń (32px, prostokątne) */
 .kartoteka-filter-bar button,
 .kartoteka-filter-bar select {

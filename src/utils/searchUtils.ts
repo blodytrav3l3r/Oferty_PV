@@ -47,6 +47,15 @@ export function parseSearchParams(query: Record<string, unknown>): SearchParams 
     };
 }
 
+export interface OrderRef {
+    /** Tabela zamówień, np. 'orders_rury_rel'. */
+    table: string;
+    /** Kolumna FK do oferty, np. '"offerId"'. */
+    column: string;
+    /** Alias tabeli ofert w gałęzi UNION, np. 'o'. */
+    alias: string;
+}
+
 interface BuildWherePartsInput {
     q: string;
     dateFrom: string;
@@ -56,10 +65,15 @@ interface BuildWherePartsInput {
     cursorId: string;
     sort: string;
     order: string;
+    /** Status zamówień — przy 'all' daty obejmują też daty zamówień (OR). */
+    orderStatus?: SearchParams['orderStatus'];
+    /** Odniesienie do tabeli zamówień gałęzi UNION (wymagane dla OR EXISTS). */
+    orderRef?: OrderRef;
 }
 
-export function normalizedCreatedAtSql(): Prisma.Sql {
-    return Prisma.sql`CASE WHEN "createdAt" GLOB '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]' THEN datetime(CAST("createdAt" AS INTEGER)/1000, 'unixepoch') ELSE "createdAt" END`;
+export function normalizedCreatedAtSql(col = '"createdAt"'): Prisma.Sql {
+    const c = Prisma.raw(col);
+    return Prisma.sql`CASE WHEN ${c} GLOB '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]' THEN datetime(CAST(${c} AS INTEGER)/1000, 'unixepoch') ELSE ${c} END`;
 }
 
 export function buildWhereParts(input: BuildWherePartsInput): Prisma.Sql[] {
@@ -126,16 +140,39 @@ export function buildWhereParts(input: BuildWherePartsInput): Prisma.Sql[] {
         }
     }
 
+    // Filtr dat: oferta przechodzi gdy sama jest z zakresu LUB ma zamówienie
+    // z zakresu (daty zamówień też się liczą). Przy explicitly wybranym
+    // with_order/without_order daty działają ściśle (tylko data oferty).
+    const dateClauses: Prisma.Sql[] = [];
+    const orderDateClauses: Prisma.Sql[] = [];
+    const orderNorm = normalizedCreatedAtSql('"createdAt"');
     if (input.dateFrom) {
-        parts.push(Prisma.sql`${normalizedCreatedAtSql()} >= ${input.dateFrom}`);
+        dateClauses.push(Prisma.sql`${normalizedCreatedAtSql()} >= ${input.dateFrom}`);
+        orderDateClauses.push(Prisma.sql`${orderNorm} >= ${input.dateFrom}`);
     }
     if (input.dateTo) {
         // Pełny ISO (preset) to już górna granica półotwarta [from, to);
         // goła data (zakres) = koniec dnia UTC.
         const isFullIso = input.dateTo.includes('T');
         const toBound = isFullIso ? input.dateTo : input.dateTo + 'T23:59:59.999Z';
-        const op = isFullIso ? '<' : '<=';
-        parts.push(Prisma.sql`${normalizedCreatedAtSql()} ${Prisma.raw(op)} ${toBound}`);
+        const toOp = isFullIso ? '<' : '<=';
+        dateClauses.push(Prisma.sql`${normalizedCreatedAtSql()} ${Prisma.raw(toOp)} ${toBound}`);
+        orderDateClauses.push(Prisma.sql`${orderNorm} ${Prisma.raw(toOp)} ${toBound}`);
+    }
+    if (dateClauses.length > 0) {
+        const ref = input.orderRef;
+        if ((!input.orderStatus || input.orderStatus === 'all') && ref) {
+            parts.push(Prisma.sql`(
+                (${Prisma.join(dateClauses, ' AND ')})
+                OR EXISTS (
+                    SELECT 1 FROM ${Prisma.raw(ref.table)}
+                    WHERE ${Prisma.raw(ref.column)} = ${Prisma.raw(ref.alias)}.id
+                      AND (${Prisma.join(orderDateClauses, ' AND ')})
+                )
+            )`);
+        } else {
+            parts.push(...dateClauses);
+        }
     }
 
     if (input.userId) {

@@ -113,3 +113,66 @@ describe('buildWhereParts — klauzule createdAt', () => {
         expect(sql).toContain('offerNotes');
     });
 });
+
+describe('buildWhereParts — daty ofert LUB daty zamówień (wariant A)', () => {
+    const base = {
+        q: '',
+        dateFrom: '2026-09-19T00:00:00.000Z',
+        dateTo: '2026-09-20T00:00:00.000Z',
+        userId: '',
+        cursor: '',
+        cursorId: '',
+        sort: 'createdAt',
+        order: 'desc'
+    };
+    const ruryRef = { table: 'orders_rury_rel', column: '"offerId"', alias: 'o' };
+
+    it('status all + orderRef: daty oferty w OR z EXISTS po dacie zamówienia', () => {
+        const parts = buildWhereParts({ ...base, orderStatus: 'all', orderRef: ruryRef });
+        const sql = renderParts(parts);
+        expect(sql).toContain('OR EXISTS');
+        expect(sql).toContain('orders_rury_rel');
+        expect(sql).toContain('"offerId" = o.id');
+        // Granice zakresu po obu stronach OR (oferta i zamówienie).
+        expect(sql.match(/>= 2026-09-19T00:00:00\.000Z/g)?.length).toBe(2);
+        expect(sql.match(/< 2026-09-20T00:00:00\.000Z/g)?.length).toBe(2);
+    });
+
+    it('samo dateFrom: OR EXISTS z jedną granicą', () => {
+        const parts = buildWhereParts({
+            ...base,
+            dateTo: '',
+            orderStatus: 'all',
+            orderRef: ruryRef
+        });
+        const sql = renderParts(parts);
+        expect(sql).toContain('OR EXISTS');
+        expect(sql.match(/>= 2026-09-19T00:00:00\.000Z/g)?.length).toBe(2);
+        expect(sql).not.toContain('2026-09-20');
+    });
+
+    it('with_order: daty ścisłe, bez OR EXISTS (jawne zawężenie)', () => {
+        const parts = buildWhereParts({ ...base, orderStatus: 'with_order', orderRef: ruryRef });
+        const sql = renderParts(parts);
+        expect(sql).not.toContain('OR EXISTS');
+        expect(sql).toContain('>= 2026-09-19T00:00:00.000Z');
+    });
+
+    it('without_order: daty ścisłe, bez OR EXISTS', () => {
+        const parts = buildWhereParts({
+            ...base,
+            orderStatus: 'without_order',
+            orderRef: ruryRef
+        });
+        const sql = renderParts(parts);
+        expect(sql).not.toContain('OR EXISTS');
+        expect(sql).toContain('>= 2026-09-19T00:00:00.000Z');
+    });
+
+    it('status all bez orderRef: stare zachowanie (kompatybilność)', () => {
+        const parts = buildWhereParts({ ...base, orderStatus: 'all' });
+        const sql = renderParts(parts);
+        expect(sql).not.toContain('OR EXISTS');
+        expect(sql).toContain('>= 2026-09-19T00:00:00.000Z');
+    });
+});

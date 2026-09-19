@@ -32,19 +32,23 @@ router.get('/', requireAuth, async (req, res) => {
             return res.json(cached);
         }
 
-        const whereParts = buildWhereParts({
-            q: params.q,
-            dateFrom: params.dateFrom,
-            dateTo: params.dateTo,
-            userId: params.userId,
-            cursor: params.cursor,
-            cursorId: params.cursorId,
-            sort: params.sort,
-            order: params.order
-        });
+        // Filtr dat obejmuje też daty zamówień (OR EXISTS per gałąź UNION).
+        const buildBranchParts = (orderRef: { table: string; column: string; alias: string }) =>
+            buildWhereParts({
+                q: params.q,
+                dateFrom: params.dateFrom,
+                dateTo: params.dateTo,
+                userId: params.userId,
+                cursor: params.cursor,
+                cursorId: params.cursorId,
+                sort: params.sort,
+                order: params.order,
+                orderStatus: params.orderStatus,
+                orderRef
+            });
         const roleSqlRury = buildRoleWhereConditionWithShares(user, 'offer');
         const roleSqlStudnie = buildRoleWhereConditionWithShares(user, 'offer_studnie');
-        const buildWhereSql = (roleSql: Prisma.Sql) =>
+        const buildWhereSql = (roleSql: Prisma.Sql, whereParts: Prisma.Sql[]) =>
             roleSql !== Prisma.empty
                 ? Prisma.sql`${roleSql}${
                       whereParts.length > 0
@@ -54,8 +58,18 @@ router.get('/', requireAuth, async (req, res) => {
                 : whereParts.length > 0
                   ? Prisma.sql`WHERE ${Prisma.join(whereParts, ' AND ')}`
                   : Prisma.empty;
-        const whereSqlRury = buildWhereSql(roleSqlRury);
-        const whereSqlStudnie = buildWhereSql(roleSqlStudnie);
+        const whereSqlRury = buildWhereSql(
+            roleSqlRury,
+            buildBranchParts({ table: 'orders_rury_rel', column: '"offerId"', alias: 'o' })
+        );
+        const whereSqlStudnie = buildWhereSql(
+            roleSqlStudnie,
+            buildBranchParts({
+                table: 'orders_studnie_rel',
+                column: '"offerStudnieId"',
+                alias: 's'
+            })
+        );
 
         const { whereSql: orderStatusWhere } = buildOrderStatusSql(params.orderStatus);
 
@@ -207,11 +221,12 @@ router.get('/', requireAuth, async (req, res) => {
 
         let totalCount: number | null = null;
         if (!params.cursor) {
+            // Aliasy o/s jak w głównym SELECT — wymaga ich OR EXISTS z filtra dat.
             const countSql = Prisma.sql`
                 SELECT COUNT(*) as cnt FROM (
-                    SELECT id, 'rury' AS "_type" FROM offers_rel ${whereSqlRury}
+                    SELECT id, 'rury' AS "_type" FROM offers_rel o ${whereSqlRury}
                     UNION ALL
-                    SELECT id, 'studnie' AS "_type" FROM offers_studnie_rel ${whereSqlStudnie}
+                    SELECT id, 'studnie' AS "_type" FROM offers_studnie_rel s ${whereSqlStudnie}
                 ) AS combined
                 ${combinedWhere}
             `;
