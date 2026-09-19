@@ -4,7 +4,7 @@
 export default {
     filterLocalOffers() {
         this._syncFilterUI();
-        this.searchOffers(this.buildSearchParams());
+        this.loadLocalOffers();
     },
 
     setFilterLocalOffers(filterType) {
@@ -20,13 +20,13 @@ export default {
         });
 
         this.updateFilterCount();
-        this.searchOffers(this.buildSearchParams());
+        this.loadLocalOffers();
     },
 
     setTypeFilter(typeFilter) {
         this.currentTypeFilter = typeFilter;
         this.updateFilterCount();
-        this.searchOffers(this.buildSearchParams());
+        this.loadLocalOffers();
     },
 
     _syncFilterUI() {
@@ -88,13 +88,13 @@ export default {
         if (dateTo) dateTo.value = '';
 
         this._syncFilterUI();
-        this.searchOffers(this.buildSearchParams());
+        this.loadLocalOffers();
     },
 
     setUserFilter(userId) {
         this.filters.user = userId || '';
         this._syncFilterUI();
-        this.searchOffers(this.buildSearchParams());
+        this.loadLocalOffers();
     },
 
     setDatePreset(preset) {
@@ -108,7 +108,7 @@ export default {
         this.filters.date.from = '';
         this.filters.date.to = '';
         this._syncFilterUI();
-        this.searchOffers(this.buildSearchParams());
+        this.loadLocalOffers();
     },
 
     onDateRangeChange(from, to) {
@@ -123,7 +123,7 @@ export default {
         this.filters.date.from = this._toIsoBound(from, false);
         this.filters.date.to = this._toIsoBound(to, true);
         this._syncFilterUI();
-        this.searchOffers(this.buildSearchParams());
+        this.loadLocalOffers();
     },
 
     /**

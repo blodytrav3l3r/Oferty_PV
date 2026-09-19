@@ -17,67 +17,89 @@ export default {
         return { offerId: '', order: null };
     },
 
-    async loadOrdersMap(offerIds) {
+    async loadOrdersMap(offerIds, retry = true) {
+        const headers =
+            typeof authHeaders === 'function'
+                ? authHeaders()
+                : { 'Content-Type': 'application/json' };
+        const timestamp = Date.now();
+
+        const idList = Array.isArray(offerIds)
+            ? offerIds.map((id) => this.normalizeId(id)).filter(Boolean)
+            : [];
+        const idsParam = idList.length ? '&ids=' + encodeURIComponent(idList.join(',')) : '';
+
+        // Mapa budowana lokalnie, podmiana atomowa po sukcesie — padnięty fetch
+        // nie czyści dobrych danych (objaw: zamówienie znikało do ręcznego odświeżenia).
+        const nextMap = new Map();
+        let totalOrders = 0;
+        const failures = [];
+
+        const collect = (rows, getOffId) => {
+            (rows || []).forEach((order) => {
+                const offId = getOffId(order);
+                if (!offId) return;
+                const key = this.normalizeId(offId);
+                const list = nextMap.get(key) || [];
+                list.push(order);
+                nextMap.set(key, list);
+                totalOrders++;
+            });
+        };
+
         try {
-            const headers =
-                typeof authHeaders === 'function'
-                    ? authHeaders()
-                    : { 'Content-Type': 'application/json' };
-            const timestamp = Date.now();
-
-            const idList = Array.isArray(offerIds)
-                ? offerIds.map((id) => this.normalizeId(id)).filter(Boolean)
-                : [];
-            const idsParam = idList.length ? '&ids=' + encodeURIComponent(idList.join(',')) : '';
-
-            this.ordersMap.clear();
-            let totalOrders = 0;
-
             // Studnie
             const studnieResp = await fetch(`/api/orders-studnie?t=${timestamp}${idsParam}`, {
                 headers
             });
             if (studnieResp.ok) {
                 const json = await studnieResp.json();
-                (json.data || []).forEach((order) => {
-                    const offId = order.offerId || order.offerStudnieId || order.offer_id;
-                    if (!offId) return;
-                    const key = this.normalizeId(offId);
-                    const list = this.ordersMap.get(key) || [];
-                    list.push(order);
-                    this.ordersMap.set(key, list);
-                    totalOrders++;
-                });
+                collect(
+                    json.data,
+                    (order) => order.offerId || order.offerStudnieId || order.offer_id
+                );
+            } else {
+                failures.push(`studnie:${studnieResp.status}`);
             }
 
             // Rury
-            const ruryResp = await fetch(`/api/orders-rury?t=${timestamp}${idsParam}`, { headers });
+            const ruryResp = await fetch(`/api/orders-rury?t=${timestamp}${idsParam}`, {
+                headers
+            });
             if (ruryResp.ok) {
                 const json = await ruryResp.json();
-                (json.data || []).forEach((order) => {
-                    const offId = order.offerId;
-                    if (!offId) return;
-                    const key = this.normalizeId(offId);
-                    const list = this.ordersMap.get(key) || [];
-                    list.push(order);
-                    this.ordersMap.set(key, list);
-                    totalOrders++;
-                });
+                collect(json.data, (order) => order.offerId);
+            } else {
+                failures.push(`rury:${ruryResp.status}`);
             }
-
-            logger.info(
-                'kartotekaUi',
-                `[KartotekaUI] Załadowano ${totalOrders} zamówień (studnie+rury) powiązanych z ${this.ordersMap.size} ofertami.`
-            );
         } catch (error) {
-            logger.warn('kartotekaUi', 'Nie udało się pobrać zamówień:', error.message);
+            failures.push(`siec:${(error && error.message) || 'fetch'}`);
+        }
+
+        if (failures.length > 0) {
+            logger.warn('kartotekaUi', 'Nie udało się pobrać zamówień:', failures.join(', '));
+            if (retry) {
+                // Jednorazowy retry z krótkim backoff (transient: restart serwera).
+                await new Promise((resolve) => setTimeout(resolve, this._ordersRetryDelay ?? 1500));
+                return this.loadOrdersMap(offerIds, false);
+            }
             if (typeof window.showToast === 'function') {
                 window.showToast(
                     'Nie udało się pobrać zamówień — oferty mogą być niekompletne',
                     'warning'
                 );
             }
+            return false;
         }
+
+        this.ordersMap.clear();
+        for (const [key, list] of nextMap) this.ordersMap.set(key, list);
+
+        logger.info(
+            'kartotekaUi',
+            `[KartotekaUI] Załadowano ${totalOrders} zamówień (studnie+rury) powiązanych z ${this.ordersMap.size} ofertami.`
+        );
+        return true;
     },
 
     /**
@@ -143,7 +165,10 @@ export default {
                 if (resp.ok) {
                     const json = await resp.json();
                     orders = json.data || [];
-                    this.ordersMap.set(offerKey, orders);
+                    // Pustej listy nie zapisuj — skasowałaby dobry wpis mapy.
+                    if (orders.length > 0) this.ordersMap.set(offerKey, orders);
+                } else {
+                    logger.warn('kartotekaUi', 'Błąd pobierania zamówień:', resp.status);
                 }
             } catch (e) {
                 logger.warn('kartotekaUi', 'Błąd pobierania zamówień:', e);

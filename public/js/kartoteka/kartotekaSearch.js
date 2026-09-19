@@ -65,7 +65,7 @@ export default {
         this._syncFilterUI();
         clearTimeout(this.searchDebounceTimer);
         this.searchDebounceTimer = setTimeout(() => {
-            this.searchOffers(this.buildSearchParams());
+            this.loadLocalOffers();
         }, 300);
     },
 
@@ -326,7 +326,7 @@ export default {
 
         const retryBtn = listDiv.querySelector('[data-action="retry-search"]');
         if (retryBtn) {
-            retryBtn.addEventListener('click', () => this.searchOffers(this.buildSearchParams()));
+            retryBtn.addEventListener('click', () => this.loadLocalOffers());
             if (hasCountdown) retryBtn.disabled = true;
         }
 

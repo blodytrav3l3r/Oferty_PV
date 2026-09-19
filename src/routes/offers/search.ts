@@ -274,7 +274,19 @@ router.get('/orders', requireAuth, async (req, res) => {
 
         const mapped = ((rows as Array<Record<string, unknown>>) || []).map((r) => {
             const parsed = parseJsonField<Record<string, unknown>>(r.data as string, {});
-            return { ...r, data: parsed, ...parsed };
+            // Kolumna FK (offerId/offerStudnieId) to SSoT powiązania z ofertą —
+            // stare klucze w blobie potrafią wskazywać inną ofertę (rozjazd
+            // COUNT vs ordersMap w kartotece), więc kolumna wygrywa, blob to fallback.
+            const fkFromBlob = parsed['offerId'] ?? parsed['offerStudnieId'] ?? parsed['offer_id'];
+            delete parsed['offerId'];
+            delete parsed['offerStudnieId'];
+            delete parsed['offer_id'];
+            return {
+                ...parsed,
+                ...r,
+                data: parsed,
+                [idCol]: (r[idCol] as string) ?? (fkFromBlob as string) ?? null
+            };
         });
 
         res.json({ data: mapped });

@@ -263,7 +263,10 @@ function buildOrderModalHtml(orders, offerKey, resolvedType, offerLabel) {
 
 function buildOfferCardHtml(offer, hasOrder, orders, order, role, isLocalList) {
     const orderList = orders && orders.length > 0 ? orders : [];
-    const orderCount = orderList.length;
+    // Licznik z search API (_orderCount), gdy ordersMap jeszcze pusta (tło dogrywa
+    // szczegóły) — badge nigdy nie pokazuje gołego „Zamówienia" przy hasOrder.
+    const orderCount =
+        orderList.length > 0 ? orderList.length : Number(offer && offer._orderCount) || 0;
 
     let orderBadge = '';
     let orderItemsHtml = '';
@@ -344,7 +347,7 @@ function buildOfferCardHtml(offer, hasOrder, orders, order, role, isLocalList) {
                                 <div class="offer-meta">${dateStr} • ${itemCount} ${isWell ? 'studni' : 'poz.'}</div>
                             </div>
                         </div>
-                        ${hasOrder ? `<div class="offer-orders-panel">${orderItemsHtml}</div>` : ''}
+                        ${orderList.length > 0 ? `<div class="offer-orders-panel">${orderItemsHtml}</div>` : ''}
                         <div class="offer-actions-row">
                             <div class="order-status-badge">
                                 ${orderBadge}

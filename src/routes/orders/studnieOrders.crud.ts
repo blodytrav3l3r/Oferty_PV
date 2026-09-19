@@ -112,14 +112,23 @@ router.get('/', requireAuth, async (req, res) => {
 
         const mapped = orders.map((o) => {
             const parsedData = parseJsonField<Record<string, unknown>>(o.data, {});
+            // Kolumna offerStudnieId to SSoT powiązania z ofertą. Stare klucze FK
+            // w blobie (offerId/offerStudnieId/offer_id) potrafiły wskazywać inną
+            // ofertę niż kolumna i rozjeżdżały grupowanie zamówień w kartotece
+            // (COUNT po kolumnie = 1, ordersMap pusta) — stąd fallback, nie nadpisanie.
+            const fkFromBlob =
+                parsedData['offerStudnieId'] ?? parsedData['offerId'] ?? parsedData['offer_id'];
+            delete parsedData['offerId'];
+            delete parsedData['offerStudnieId'];
+            delete parsedData['offer_id'];
             return {
+                ...parsedData,
                 id: o.id,
                 type: 'order',
                 userId: o.userId,
-                offerStudnieId: o.offerStudnieId,
+                offerStudnieId: o.offerStudnieId ?? fkFromBlob ?? null,
                 status: o.status,
                 createdAt: o.createdAt,
-                ...parsedData,
                 // P0-D2: kolumna wygrywa z blobem.
                 version: o.version ?? 1
             };
