@@ -23,7 +23,7 @@
         "test:e2e-appname:spawn": "npm run build && node tests/playwright/appNameConsistency.cjs --spawn",
         "test:e2e": "playwright test",
         "test:axe": "playwright test tests/playwright/a11yAxe.spec.ts",
-        "test:frontend": "jest --testPathPattern=tests/frontend --no-coverage",
+        "test:frontend": "jest --testPathPatterns=tests/frontend --no-coverage",
         "validate": "npm run typecheck && npm run typecheck:frontend && npm run lint && npm run lint:frontend && npm run appname:check && npm run licenses:check && npm run test:quick && npm run collisions:check",
         "lint": "eslint src/**/*.{js,ts}",
         "lint:fix": "eslint src/**/*.{js,ts} --fix",
