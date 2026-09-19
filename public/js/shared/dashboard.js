@@ -680,9 +680,18 @@ async function loadMagazynCodes() {
 
 async function saveMagazynCodes() {
     const codes = readMagazynCodes();
-    const valid = Object.values(codes).every((c) => /^[A-Z0-9]{1,10}$/.test(c));
-    if (!valid) {
-        await appAlert('Kody: 1-10 znaków, tylko A-Z i 0-9', { type: 'warning' });
+    // Mirror walidacji backendu (offerSchemas: max 20, brak znaków kontrolnych).
+    // eslint-disable-next-line no-control-regex
+    const hasControl = (c) => /[\u0000-\u001f\u007f-\u009f]/.test(c);
+    const validShape = Object.values(codes).every((c) => c.length >= 1 && c.length <= 20);
+    if (!validShape || Object.values(codes).some(hasControl)) {
+        await appAlert('Kody: 1-20 znaków, bez znaków kontrolnych', { type: 'warning' });
+        return;
+    }
+    if (codes.dennicaWl === codes.dennicaKlb || codes.nadbudowaWl === codes.nadbudowaKlb) {
+        await appAlert('Włocławek i Kluczbork muszą mieć różne kody (osobno dennica i nadbudowa)', {
+            type: 'warning'
+        });
         return;
     }
     try {

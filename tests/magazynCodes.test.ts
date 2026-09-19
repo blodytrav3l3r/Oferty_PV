@@ -122,11 +122,51 @@ describe('magazyn-codes', () => {
         expect(prismaMock.settings.upsert).not.toHaveBeenCalled();
     });
 
+    test('PUT dowolne znaki (spacja, PL, myślnik) → 200', async () => {
+        prismaMock.settings.upsert.mockResolvedValue({});
+        const res = await request(app).put('/api/settings/magazyn-codes').send({
+            dennicaWl: 'W Ł',
+            dennicaKlb: 'łódź-1',
+            nadbudowaWl: 'wl/2',
+            nadbudowaKlb: 'M0'
+        });
+        expect(res.status).toBe(200);
+        expect(res.body).toEqual({
+            dennicaWl: 'W Ł',
+            dennicaKlb: 'ŁÓDŹ-1',
+            nadbudowaWl: 'WL/2',
+            nadbudowaKlb: 'M0'
+        });
+    });
+
+    test('PUT kolizja WL=KLB w części → 400', async () => {
+        for (const bad of [
+            { ...CODES, dennicaKlb: 'wl' },
+            { ...CODES, nadbudowaWl: 'm0' }
+        ]) {
+            const res = await request(app).put('/api/settings/magazyn-codes').send(bad);
+            expect(res.status).toBe(400);
+        }
+        expect(prismaMock.settings.upsert).not.toHaveBeenCalled();
+    });
+
+    test('PUT ten sam kod w obu częściach → 200 (kolizja tylko w obrębie części)', async () => {
+        prismaMock.settings.upsert.mockResolvedValue({});
+        const res = await request(app).put('/api/settings/magazyn-codes').send({
+            dennicaWl: 'A',
+            dennicaKlb: 'B',
+            nadbudowaWl: 'A',
+            nadbudowaKlb: 'B'
+        });
+        expect(res.status).toBe(200);
+    });
+
     test('PUT niepoprawne kody → 400', async () => {
         for (const bad of [
             { ...CODES, dennicaWl: '' },
-            { ...CODES, nadbudowaKlb: 'W L' },
-            { ...CODES, dennicaKlb: 'za-długi-kod-123' }
+            { ...CODES, nadbudowaKlb: '   ' },
+            { ...CODES, dennicaKlb: 'x'.repeat(21) },
+            { ...CODES, dennicaWl: 'A\nB' }
         ]) {
             const res = await request(app).put('/api/settings/magazyn-codes').send(bad);
             expect(res.status).toBe(400);

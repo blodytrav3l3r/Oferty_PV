@@ -793,9 +793,11 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
 }
 
 .sysconfig-input--code {
-    width: 72px;
+    width: 150px;
     height: 32px;
     font-size: var(--fs-lg);
+    text-align: left;
+    padding: 0 0.5rem;
 }
 
 .sysconfig-codes {

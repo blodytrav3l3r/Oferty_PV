@@ -301,6 +301,43 @@ describe('eksport per wiersz', () => {
         const rows = sb.StudnieExternalExportTemplate._wellRows(data, 'OF/1', null);
         expect(rows[0].MAGAZYN).toBe('WL');
     });
+
+    test('roundtrip z kodem ze spacją: eksport → _groupRows', () => {
+        const codes = {
+            dennicaWl: 'W Ł',
+            dennicaKlb: 'K1',
+            nadbudowaWl: 'W2',
+            nadbudowaKlb: 'K2'
+        };
+        const data = {
+            wells: [
+                {
+                    name: 'S1',
+                    dn: 1000,
+                    rzednaWlazu: 3,
+                    rzednaDna: 0,
+                    magazynDennica: 'Włocławek',
+                    magazynNadbudowa: 'Kluczbork',
+                    magazyn: 'Kluczbork',
+                    config: [
+                        { productId: 'DEN-1', quantity: 1 },
+                        { productId: 'KR-1', quantity: 2 }
+                    ]
+                }
+            ]
+        };
+        const exp = sb.StudnieExternalExportTemplate;
+        const rows = exp._wellRows(data, 'OF/1', codes);
+        expect(rows[0].MAGAZYN).toBe('W Ł');
+        expect(rows[1].MAGAZYN).toBe('K2');
+        const typeMap = new Map([
+            ['DEN-1', 'dennica'],
+            ['KR-1', 'krag']
+        ]);
+        const wells = sb.StudnieExternalImport._groupRows(rows, codes, typeMap);
+        expect(wells[0].magazynDennica).toBe('Włocławek');
+        expect(wells[0].magazynNadbudowa).toBe('Kluczbork');
+    });
 });
 
 describe('import _groupRows', () => {

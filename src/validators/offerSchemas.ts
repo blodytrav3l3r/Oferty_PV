@@ -237,16 +237,25 @@ const magazynCodeField = z
         z
             .string()
             .min(1, 'Kod magazynu jest wymagany')
-            .max(10, 'Kod magazynu max 10 znaków')
-            .regex(/^[A-Z0-9]+$/, 'Kod magazynu: tylko A-Z i 0-9')
+            .max(20, 'Kod magazynu max 20 znaków')
+            .regex(/^[^\p{Cc}\p{Cf}]+$/u, 'Kod magazynu nie może zawierać znaków kontrolnych')
     );
 
-export const magazynCodesSchema = z.object({
-    dennicaWl: magazynCodeField,
-    dennicaKlb: magazynCodeField,
-    nadbudowaWl: magazynCodeField,
-    nadbudowaKlb: magazynCodeField
-});
+export const magazynCodesSchema = z
+    .object({
+        dennicaWl: magazynCodeField,
+        dennicaKlb: magazynCodeField,
+        nadbudowaWl: magazynCodeField,
+        nadbudowaKlb: magazynCodeField
+    })
+    .refine((c) => c.dennicaWl !== c.dennicaKlb, {
+        message: 'Kody dennicy: Włocławek i Kluczbork muszą się różnić',
+        path: ['dennicaKlb']
+    })
+    .refine((c) => c.nadbudowaWl !== c.nadbudowaKlb, {
+        message: 'Kody nadbudowy: Włocławek i Kluczbork muszą się różnić',
+        path: ['nadbudowaKlb']
+    });
 
 export type MagazynCodesInput = z.infer<typeof magazynCodesSchema>;
 
