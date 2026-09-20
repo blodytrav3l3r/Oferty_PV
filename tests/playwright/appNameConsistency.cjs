@@ -80,9 +80,13 @@ async function pollHealth(url, tries = 30) {
 
 /* ── Spawn serwera (izolowany, port 3177, e2e.sqlite) ── */
 async function startServer() {
-    const dbUrl = 'file:./data/e2e.sqlite';
-    const { rmSync, existsSync, symlinkSync } = require('fs');
-    const dbFile = join(ROOT, 'prisma', 'data', 'e2e.sqlite');
+    const { rmSync, existsSync, symlinkSync, mkdirSync } = require('fs');
+    const { delimiter } = require('path');
+    // ponytail: absolutny file: URL — względne ścieżki SQLite CLI i runtime
+    // resolvują różnie (prisma/ vs cwd), stąd rozjazd bazy na CI.
+    const dbFile = join(ROOT, 'data', 'e2e.sqlite');
+    const dbUrl = 'file:' + dbFile.replace(/\\/g, '/');
+    mkdirSync(join(ROOT, 'data'), { recursive: true });
     for (const f of [dbFile, dbFile + '-wal', dbFile + '-shm']) {
         if (existsSync(f)) rmSync(f);
     }
@@ -90,6 +94,13 @@ async function startServer() {
     if (!existsSync(distGen)) {
         symlinkSync(join(ROOT, 'generated'), distGen, 'junction');
     }
+    // ponytail: ts-node z `prisma db seed` wymaga node_modules/.bin na PATH;
+    // delimiter zamiast twardego ';' (Linux ':' vs Windows ';').
+    const withBin = (extra) => ({
+        ...process.env,
+        PATH: join(ROOT, 'node_modules', '.bin') + delimiter + (process.env.PATH || ''),
+        ...extra
+    });
     execFileSync(
         process.execPath,
         [
@@ -101,24 +112,23 @@ async function startServer() {
         ],
         {
             cwd: ROOT,
-            env: { ...process.env, DATABASE_URL: dbUrl },
+            env: withBin({ DATABASE_URL: dbUrl }),
             stdio: 'pipe'
         }
     );
     execFileSync(process.execPath, [require.resolve('prisma/build/index.js'), 'db', 'seed'], {
         cwd: ROOT,
-        env: { ...process.env, DATABASE_URL: dbUrl },
+        env: withBin({ DATABASE_URL: dbUrl }),
         stdio: 'pipe'
     });
     const server = spawn(process.execPath, [join(ROOT, 'dist', 'server.js')], {
         cwd: ROOT,
-        env: {
-            ...process.env,
+        env: withBin({
             PORT: '3177',
             DATABASE_URL: dbUrl,
             DEFAULT_ADMIN_PASSWORD: ADMIN_PASSWORD,
             NODE_ENV: 'development'
-        },
+        }),
         stdio: 'pipe'
     });
     server.stderr.on('data', (d) => {
@@ -264,9 +274,7 @@ async function startServer() {
             .waitForFunction(
                 () => {
                     try {
-                        return (
-                            typeof studnieProducts !== 'undefined' && studnieProducts.length > 0
-                        );
+                        return typeof studnieProducts !== 'undefined' && studnieProducts.length > 0;
                     } catch (_) {
                         return false;
                     }
@@ -296,6 +304,14 @@ async function startServer() {
         let ruryFrame = await ruryFrameEl.contentFrame();
         if (!ruryFrame) ruryFrame = page.frames().find((f) => f.url().includes('rury'));
         if (!ruryFrame) throw new Error('Cannot find rury iframe');
+
+        // przyczyna: DOM — ~50 defer-skryptów rury ładuje się po podpięciu
+        // iframe; bez warunku evaluate trafia przed orderEditMode.js (T5 flaky).
+        await ruryFrame
+            .waitForFunction(() => typeof enterRuryOrderEditMode === 'function', null, {
+                timeout: 30000
+            })
+            .catch(() => {});
 
         // Mock zamówienia (ordersRury to let globalny)
         await ruryFrame.evaluate(() => {
