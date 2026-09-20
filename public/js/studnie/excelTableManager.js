@@ -731,6 +731,29 @@ function _excelEvictUndoIfNeeded() {
 }
 
 /* ===== UNDO / REDO — patch-based dla 10k, fallback full snapshot dla splice ===== */
+/* E5: gate'y undo odrzucały snapshot po cichu (N>100 / cap 1 MB) — użytkownik
+   widział tylko martwy Ctrl+Z. Helper loguje powód (logger) + throttled toast
+   (max 1/10 s, bez spamu przy operacjach seryjnych). Bez zmian semantyki undo. */
+let _excelUndoWarnLastTs = 0;
+function _excelNotifyUndoRejected(reason) {
+    try {
+        if (typeof logger !== 'undefined' && logger && typeof logger.warn === 'function')
+            logger.warn('excelUndo', reason);
+        else if (
+            typeof window !== 'undefined' &&
+            window.logger &&
+            typeof window.logger.warn === 'function'
+        )
+            window.logger.warn('excelUndo', reason);
+    } catch (_eWarn) {}
+    try {
+        const now = Date.now();
+        if (now - _excelUndoWarnLastTs < 10000) return;
+        _excelUndoWarnLastTs = now;
+        if (typeof showToast === 'function')
+            showToast('Cofnij (Ctrl+Z) niedostępne dla tej zmiany: ' + reason, 'warning');
+    } catch (_eToast) {}
+}
 function _excelSaveUndoSnapshot() {
     if (typeof wells === 'undefined') return;
     const args = Array.prototype.slice.call(arguments);
@@ -749,6 +772,7 @@ function _excelSaveUndoSnapshot() {
     if (n > 100 && idxs.length === 0) {
         // bulk op without idxs at >100: use bulk-add pattern, not full — caller should use _excelPushBulkAddUndo
         // compact fallback: store ids only if possible, else single patch of last well
+        _excelNotifyUndoRejected('za dużo studni (>100) — operacja zbiorcza bez Ctrl+Z');
         return;
     }
     // patch dla 1..N wells, full dla braku args (np. bulk add) lub dużych zmian
@@ -767,11 +791,15 @@ function _excelSaveUndoSnapshot() {
                 ? _EXCEL_UNDO_MAX_BYTES_PER_ENTRY
                 : 1024 * 1024)
         ) {
+            _excelNotifyUndoRejected('wpis undo >1 MB — pominięto snapshot (Ctrl+Z niedostępne)');
             return;
         }
         _excelUndoStack.push(patch);
     } else {
-        if (n > 100) return; // hard gate — never full snapshot at >100
+        if (n > 100) {
+            _excelNotifyUndoRejected('za dużo studni (>100) — pełny snapshot zablokowany');
+            return; // hard gate — never full snapshot at >100
+        }
         // fallback full snapshot (np. add/delete, duże paste) only when N<=100
         _excelUndoStack.push({ type: 'full', data: structuredClone(wells) });
     }

@@ -1,5 +1,12 @@
 // @ts-check
 /* ===== EXCEL TABLE MANAGER — Stan + Stałe ===== */
+/* KONTRAKT KOLEJNOŚCI ŁADOWANIA excel*.js (SSoT: studnie.html, skrypty defer):
+   excelState → excelHelpers → excelPolling → excelModal → … → excelTableManager
+   → excelBulkJob → excelVirtual. Invarianty: excelState PIERWSZY (współdzielone
+   `let`), excelPolling PRZED excelTableManager (wrapper przechwytuje oryginał
+   _excelSyncAutoManualUI — błąd #30), excelTableManager PRZED excelVirtual
+   (guardy typeof na _excelPerf*). Nie przestawiać bez aktualizacji testu
+   excelUndoLifecycle + docs/errors-known.md #30. */
 
 /* eslint-disable prefer-const -- świadomie współdzielony stan, mutowany cross-file (excelModal, excelTabs, excelPolling, excelSelection itd.) */
 let _excelMaxTransitions = {};
