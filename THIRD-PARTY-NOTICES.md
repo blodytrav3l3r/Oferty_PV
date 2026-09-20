@@ -227,7 +227,7 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - @types/mime@1.3.5
 - @types/minimist@1.2.5
 - @types/node@25.9.4
-- @types/node@26.2.0
+- @types/node@26.6.2
 - @types/normalize-package-data@2.4.4
 - @types/qs@6.15.1
 - @types/range-parser@1.2.7
@@ -947,7 +947,7 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - typedarray@0.0.6
 - typescript-eslint@8.67.0
 - undici-types@7.24.6
-- undici-types@8.3.0
+- undici-types@8.9.0
 - unpipe@1.0.0
 - unrs-resolver@1.12.2
 - update-browserslist-db@1.2.3
