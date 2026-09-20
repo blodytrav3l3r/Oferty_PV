@@ -25,7 +25,11 @@ import {
     idempotencyKeyFrom
 } from '../../utils/idempotency';
 import { OfferMapped } from '../../types/models';
-import { offersBatchSchema, paginationQuerySchema } from '../../validators/offerSchemas';
+import {
+    offersBatchSchema,
+    paginationQuerySchema,
+    idUuidParamSchema
+} from '../../validators/offerSchemas';
 import { recordDbBusy } from '../../utils/metrics';
 import { HOT_TX_OPTS } from '../../utils/hotTx';
 
@@ -683,7 +687,12 @@ router.put(
 router.post('/:id/duplicate', requireAuth, writeOffersLimiter, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
-        const { id } = req.params;
+        // E3c: malformed :id → 400 przed bazą (bez 404-oracle).
+        const parsed = idUuidParamSchema.safeParse(req.params);
+        if (!parsed.success) {
+            return res.status(400).json({ error: 'Nieprawidłowy format ID' });
+        }
+        const { id } = parsed.data;
 
         const source = await prisma.offers_rel.findUnique({ where: { id } });
         if (!source) {

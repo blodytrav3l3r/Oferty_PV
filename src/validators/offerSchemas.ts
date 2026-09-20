@@ -324,6 +324,18 @@ export const shareRevokeSchema = z.object({
 export type ShareCreateInput = z.infer<typeof shareCreateSchema>;
 export type ShareRevokeInput = z.infer<typeof shareRevokeSchema>;
 
+// =============================================================================
+// PARAMETR :id — FORMAT UUID (E3c: 400 przy malformed zamiast 404-oracle)
+// ID dokumentów i share'y to crypto.randomUUID — sonda enumeracyjna
+// (losowy string) dostaje 400 przed dotknięciem bazy.
+// =============================================================================
+
+export const idUuidParamSchema = z.object({
+    id: z.string().uuid('Nieprawidłowy format ID')
+});
+
+export type IdUuidParam = z.infer<typeof idUuidParamSchema>;
+
 export const paginationQuerySchema = z.object({
     skip: z.coerce.number().int().min(0).default(0),
     limit: z.coerce.number().int().min(1).max(200).default(50),

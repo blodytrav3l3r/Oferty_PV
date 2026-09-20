@@ -313,6 +313,11 @@ describe('Ownership E2E — offers routes', () => {
     });
 
     describe('POST /api/offers/:id/duplicate', () => {
+        // E3c: :id walidowane jako UUID — w URL format UUID (mock prisma
+        // zwraca fixture niezależnie od id).
+        const DUP_MINE_ID = '22222222-2222-4222-8222-222222222222';
+        const DUP_OTHER_ID = '33333333-3333-4333-8333-333333333333';
+        const DUP_MISSING_ID = '44444444-4444-4444-8444-444444444444';
         const sourceOfferWithItems = {
             ...myOffer,
             offer_number: 'R1',
@@ -333,11 +338,11 @@ describe('Ownership E2E — offers routes', () => {
             (prisma.offers_rel.create as jest.Mock).mockResolvedValue({});
             (prisma.offer_items_rel.create as jest.Mock).mockResolvedValue({});
 
-            const res = await request(app).post('/api/offers/o-mine/duplicate');
+            const res = await request(app).post(`/api/offers/${DUP_MINE_ID}/duplicate`);
             expect(res.statusCode).toBe(200);
             expect(res.body.ok).toBe(true);
             expect(res.body.data.id).toBeDefined();
-            expect(res.body.data.id).not.toBe('o-mine');
+            expect(res.body.data.id).not.toBe(DUP_MINE_ID);
 
             const createCall = (prisma.offers_rel.create as jest.Mock).mock.calls[0][0];
             expect(createCall.data.userId).toBe('user1');
@@ -355,14 +360,14 @@ describe('Ownership E2E — offers routes', () => {
             (prisma.offers_rel.create as jest.Mock).mockResolvedValue({});
             (prisma.offer_items_rel.create as jest.Mock).mockResolvedValue({});
 
-            await request(app).post('/api/offers/o-mine/duplicate');
+            await request(app).post(`/api/offers/${DUP_MINE_ID}/duplicate`);
             expect(prisma.offer_items_rel.createMany).toHaveBeenCalledTimes(1);
         });
 
         it('regular user CANNOT duplicate another user offer (403)', async () => {
             (prisma.offers_rel.findUnique as jest.Mock).mockResolvedValue(otherUsersOffer);
 
-            const res = await request(app).post('/api/offers/o-other/duplicate');
+            const res = await request(app).post(`/api/offers/${DUP_OTHER_ID}/duplicate`);
             expect(res.statusCode).toBe(403);
             expect(prisma.offers_rel.create).not.toHaveBeenCalled();
         });
@@ -373,14 +378,14 @@ describe('Ownership E2E — offers routes', () => {
             (prisma.offer_items_rel.findMany as jest.Mock).mockResolvedValue([]);
             (prisma.offers_rel.create as jest.Mock).mockResolvedValue({});
 
-            const res = await request(app).post('/api/offers/o-other/duplicate');
+            const res = await request(app).post(`/api/offers/${DUP_OTHER_ID}/duplicate`);
             expect(res.statusCode).toBe(200);
         });
 
         it('returns 404 for nonexistent source offer', async () => {
             (prisma.offers_rel.findUnique as jest.Mock).mockResolvedValue(null);
 
-            const res = await request(app).post('/api/offers/nonexistent/duplicate');
+            const res = await request(app).post(`/api/offers/${DUP_MISSING_ID}/duplicate`);
             expect(res.statusCode).toBe(404);
         });
     });

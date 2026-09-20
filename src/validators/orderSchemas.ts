@@ -162,13 +162,16 @@ function unknownKeysOf(
     known: readonly string[],
     cap: string[],
     capSize: number
-): void {
-    if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return;
+): number {
+    if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return 0;
+    let found = 0;
     for (const k of Object.keys(obj as Record<string, unknown>)) {
-        if (!(known as readonly string[]).includes(k) && !cap.includes(k)) {
-            if (cap.length < capSize) cap.push(k);
+        if (!(known as readonly string[]).includes(k)) {
+            found++;
+            if (!cap.includes(k) && cap.length < capSize) cap.push(k);
         }
     }
+    return found;
 }
 
 export interface StudnieOrderDtoObservation {
@@ -177,6 +180,8 @@ export interface StudnieOrderDtoObservation {
     unknownConfigKeys: string[];
     unknownPrzejscieKeys: string[];
     runtimeLeaked: string[];
+    /** Suma wszystkich kluczy spoza kontraktu (bez capa 20; runtime to ich podzbiór). */
+    unknownKeysTotal: number;
 }
 
 /**
@@ -189,14 +194,20 @@ export function observeStudnieOrderDto(order: unknown): StudnieOrderDtoObservati
         unknownWellKeys: [],
         unknownConfigKeys: [],
         unknownPrzejscieKeys: [],
-        runtimeLeaked: []
+        runtimeLeaked: [],
+        unknownKeysTotal: 0
     };
     try {
         const o = order as { wells?: unknown } | null;
         const wells = o && Array.isArray(o.wells) ? o.wells : [];
         result.wellsChecked = wells.length;
         for (const w of wells) {
-            unknownKeysOf(w, ORDER_WELL_DTO_FIELDS, result.unknownWellKeys, 20);
+            result.unknownKeysTotal += unknownKeysOf(
+                w,
+                ORDER_WELL_DTO_FIELDS,
+                result.unknownWellKeys,
+                20
+            );
             const well = w as {
                 config?: unknown;
                 przejscia?: unknown;
@@ -204,7 +215,7 @@ export function observeStudnieOrderDto(order: unknown): StudnieOrderDtoObservati
             if (well && typeof well === 'object') {
                 if (Array.isArray(well.config)) {
                     for (const item of well.config) {
-                        unknownKeysOf(
+                        result.unknownKeysTotal += unknownKeysOf(
                             item,
                             ORDER_CONFIG_ITEM_DTO_FIELDS,
                             result.unknownConfigKeys,
@@ -214,7 +225,7 @@ export function observeStudnieOrderDto(order: unknown): StudnieOrderDtoObservati
                 }
                 if (Array.isArray(well.przejscia)) {
                     for (const pr of well.przejscia) {
-                        unknownKeysOf(
+                        result.unknownKeysTotal += unknownKeysOf(
                             pr,
                             ORDER_PRZEJSCIE_DTO_FIELDS,
                             result.unknownPrzejscieKeys,
@@ -223,14 +234,17 @@ export function observeStudnieOrderDto(order: unknown): StudnieOrderDtoObservati
                     }
                 }
             }
-            // wyciek runtime: klucze z denylist obecne w payloadzie
+            // wyciek runtime: klucze z denylist obecne w payloadzie.
+            // Podzbiór unknown (denylist ∩ kontrakt = ∅) — liczone już wyżej,
+            // tu tylko flaga do decyzji o .strict().
             if (w && typeof w === 'object' && !Array.isArray(w)) {
                 for (const k of ORDER_WELL_RUNTIME_FIELDS) {
                     if (
                         (w as Record<string, unknown>)[k] !== undefined &&
-                        !result.runtimeLeaked.includes(k)
+                        !result.runtimeLeaked.includes(k) &&
+                        result.runtimeLeaked.length < 20
                     ) {
-                        if (result.runtimeLeaked.length < 20) result.runtimeLeaked.push(k);
+                        result.runtimeLeaked.push(k);
                     }
                 }
             }

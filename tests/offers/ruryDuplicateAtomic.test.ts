@@ -47,7 +47,8 @@ app.use(express.json());
 app.use('/api/offers', offerRoutes);
 
 describe('POST /:id/duplicate — atomowość (prawdziwa DB)', () => {
-    const srcId = 'dup-src-' + crypto.randomUUID().slice(0, 8);
+    // E3c: :id walidowane jako UUID — źródło z prawdziwym crypto.randomUUID.
+    const srcId = crypto.randomUUID();
     const srcNumber = 'DUP-' + crypto.randomUUID().slice(0, 6);
 
     beforeAll(async () => {

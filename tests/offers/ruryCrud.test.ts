@@ -406,11 +406,15 @@ describe('Rury Offers CRUD — warstwa zapisu', () => {
     });
 
     describe('POST /:id/duplicate', () => {
+        // E3c: :id walidowane jako UUID — fixture'y URL muszą mieć format UUID
+        // (mock prisma zwraca dane niezależnie od id).
+        const UUID_MISSING = '00000000-0000-4000-8000-000000000000';
+        const UUID_SRC = '11111111-1111-4111-8111-111111111111';
         it('zwraca 404 gdy oferta źródłowa nie istnieje', async () => {
             (prisma.offers_rel.findUnique as jest.Mock).mockResolvedValue(null);
 
             const res = await request(app)
-                .post('/api/offers/o-missing/duplicate')
+                .post(`/api/offers/${UUID_MISSING}/duplicate`)
                 .set('x-user-id', 'user-id');
 
             expect(res.statusCode).toBe(404);
@@ -428,7 +432,7 @@ describe('Rury Offers CRUD — warstwa zapisu', () => {
             (prisma.offer_items_rel.createMany as jest.Mock).mockResolvedValue({});
 
             const res = await request(app)
-                .post('/api/offers/o-1/duplicate')
+                .post(`/api/offers/${UUID_SRC}/duplicate`)
                 .set('x-user-id', 'user-id');
 
             expect(res.statusCode).toBe(200);
@@ -447,7 +451,7 @@ describe('Rury Offers CRUD — warstwa zapisu', () => {
             });
 
             const res = await request(app)
-                .post('/api/offers/o-1/duplicate')
+                .post(`/api/offers/${UUID_SRC}/duplicate`)
                 .set('x-user-id', 'user-id');
 
             expect(res.statusCode).toBe(403);
@@ -468,7 +472,7 @@ describe('Rury Offers CRUD — warstwa zapisu', () => {
             );
 
             const res = await request(app)
-                .post('/api/offers/o-1/duplicate')
+                .post(`/api/offers/${UUID_SRC}/duplicate`)
                 .set('x-user-id', 'user-id');
 
             expect(res.statusCode).toBe(500);

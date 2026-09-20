@@ -4,7 +4,11 @@ import prisma from '../prismaClient';
 import { requireAuth, AuthenticatedRequest } from '../middleware/auth';
 import { WRITE_LIMITER } from '../middleware/rateLimiters';
 import { validateData } from '../validators/authSchema';
-import { shareCreateSchema, shareRevokeSchema } from '../validators/offerSchemas';
+import {
+    shareCreateSchema,
+    shareRevokeSchema,
+    idUuidParamSchema
+} from '../validators/offerSchemas';
 import { canWriteDoc, isValidShareDocumentType, hasShare } from '../utils/ownership';
 import { logger } from '../utils/logger';
 import { logAudit } from '../services/auditService';
@@ -244,7 +248,12 @@ router.post(
 // DELETE /api/shares/:id — revoke pojedynczy share
 router.delete('/:id', requireAuth, WRITE_LIMITER, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
-    const { id } = req.params;
+    // E3c: malformed :id → 400 przed bazą (bez 404-oracle).
+    const parsed = idUuidParamSchema.safeParse(req.params);
+    if (!parsed.success) {
+        return res.status(400).json({ error: 'Nieprawidłowy format ID' });
+    }
+    const { id } = parsed.data;
     const share = await prisma.document_shares.findUnique({ where: { id } });
     if (!share) return res.status(404).json({ error: 'Udostępnienie nie istnieje' });
 

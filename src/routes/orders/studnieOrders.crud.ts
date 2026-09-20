@@ -167,6 +167,7 @@ router.put(
                         logger.warn('StudnieOrders', '[DTO-observe] klucz spoza kontraktu', {
                             orderId: (o as { id?: unknown }).id,
                             wellsChecked: obs.wellsChecked,
+                            unknownKeysTotal: obs.unknownKeysTotal,
                             unknownWellKeys: obs.unknownWellKeys,
                             unknownConfigKeys: obs.unknownConfigKeys,
                             unknownPrzejscieKeys: obs.unknownPrzejscieKeys,
