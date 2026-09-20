@@ -1,10 +1,24 @@
 # Znane błędy — Oferty_PV
 
-> Mapowanie numeracji ↔ `AGENTS.md` (tabela bazy błędów): sekwencje rozeszły się po #22
-> (osobne dopiski w obu plikach, bez przenumerowania — odnośniki `#3/#24/#39` w kodzie muszą zostać stabilne).
-> Odpowiedniki: errors-known #46/#47/#48 = AGENTS #24/#26/#46; errors-known #23 = AGENTS #25;
-> errors-known #24 (dedup AUTO_JS) / #25 (indeksy dedup) / #26 (FTS5) nie mają wierszy w AGENTS
-> (dedup opisany w `ARCHITECTURE.md`); AGENTS #47 = errors-known #49.
+> Mapowanie numeracji ↔ `AGENTS.md` §5 (tabela bazy błędów): sekwencje rozeszły się
+> po #22 (osobne dopiski w obu plikach, bez przenumerowania — odnośniki `#3/#24/#39`
+> w kodzie muszą zostać stabilne, nie przenumerowuj żadnej ze stron).
+>
+> | errors-known                     | AGENTS.md | Uwaga                                                      |
+> | -------------------------------- | --------- | ---------------------------------------------------------- |
+> | #1–#22                           | #1–#22    | 1:1, te same tytuły                                        |
+> | #23 (podwójne zamknięcie modala) | #25       | AGENTS #23 to inny błąd (reindeksacja PZ, bez wpisu tutaj) |
+> | #24 (dedup AUTO_JS)              | —         | brak wiersza w AGENTS; opis w `ARCHITECTURE.md`            |
+> | #25 (indeksy dedup)              | —         | brak wiersza w AGENTS; opis w `ARCHITECTURE.md`            |
+> | #26 (FTS5)                       | —         | brak wiersza w AGENTS                                      |
+> | #27–#45                          | #27–#45   | 1:1, te same tytuły                                        |
+> | #46 (XSS nazw produktów)         | #24       | dopisane później po obu stronach                           |
+> | #47 (walidacja dat)              | #26       | dopisane później po obu stronach                           |
+> | #48 (Map stale)                  | #46       | dopisane później po obu stronach                           |
+> | #49 (offset Właza)               | #47       | dopisane później po obu stronach                           |
+> | #50 (przejścia na łączeniach)    | —         | brak wiersza w AGENTS (DOC_GAP)                            |
+> | #51 (ghost-draft oferty)         | —         | brak wiersza w AGENTS (DOC_GAP)                            |
+> | #52 (ghost-draft zamówienia)     | —         | brak wiersza w AGENTS (DOC_GAP)                            |
 
 ## 1. Seed timeout na Render (productsStudnie)
 
