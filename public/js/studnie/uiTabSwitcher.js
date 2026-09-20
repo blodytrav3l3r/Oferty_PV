@@ -39,7 +39,8 @@ function switchBuilderTab(tab) {
 
     if (tab === 'transitions') {
         if (typeof renderInlinePrzejsciaApp === 'function') renderInlinePrzejsciaApp();
-        if (typeof renderWellPrzejscia === 'function') renderWellPrzejscia();
+        if (typeof window.refreshPrzejsciaViews === 'function') window.refreshPrzejsciaViews();
+        else if (typeof renderWellPrzejscia === 'function') renderWellPrzejscia();
         const przejsciaContainer = document.getElementById('inline-przejscia-app-container');
         const przejsciaIcon = document.getElementById('przejscia-app-icon');
         if (przejsciaContainer && przejsciaContainer.style.display === 'none') {

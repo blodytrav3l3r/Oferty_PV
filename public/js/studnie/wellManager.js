@@ -49,7 +49,8 @@ function refreshAll(skipSummary = false) {
     renderWellsList();
     renderTiles();
     renderWellConfig();
-    renderWellPrzejscia();
+    if (typeof window.refreshPrzejsciaViews === 'function') window.refreshPrzejsciaViews();
+    else renderWellPrzejscia();
     renderWellDiagram();
     updateSummary();
     updateDNButtons();
@@ -91,7 +92,8 @@ function refreshAll(skipSummary = false) {
 // NIE: renderWellsList, renderTiles, renderOfferSummary, updateDNButtons
 function refreshActiveWell() {
     // invariant: tylko 4 rendery aktywnej studni + ikony scoped
-    renderWellPrzejscia();
+    if (typeof window.refreshPrzejsciaViews === 'function') window.refreshPrzejsciaViews();
+    else renderWellPrzejscia();
     renderWellDiagram();
     renderWellConfig();
     updateSummary();

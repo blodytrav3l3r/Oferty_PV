@@ -17,7 +17,8 @@ function movePrzejscie(index, direction) {
     const temp = well.przejscia[index];
     well.przejscia[index] = well.przejscia[newIndex];
     well.przejscia[newIndex] = temp;
-    renderWellPrzejscia();
+    if (typeof window.refreshPrzejsciaViews === 'function') window.refreshPrzejsciaViews();
+    else renderWellPrzejscia();
     updateSummary();
     window.refreshZleceniaModalIfActive();
 }
@@ -66,7 +67,9 @@ function editPrzejscie(index) {
         spadekKineta: item.spadekKineta || '',
         spadekMufa: item.spadekMufa || ''
     };
-    renderWellPrzejscia();
+    if (typeof window.refreshPrzejsciaViews === 'function') window.refreshPrzejsciaViews();
+    else renderWellPrzejscia();
+    window.refreshZleceniaModalIfActive();
 }
 
 function savePrzejscieEdit(index) {
@@ -147,7 +150,8 @@ function savePrzejscieEdit(index) {
     else refreshAll();
     autoSelectComponents(true);
     showToast('Zapisano zmiany przejścia', 'success');
-    renderWellPrzejscia();
+    if (typeof window.refreshPrzejsciaViews === 'function') window.refreshPrzejsciaViews();
+    else renderWellPrzejscia();
     window.refreshZleceniaModalIfActive();
 }
 
@@ -156,7 +160,8 @@ function cancelPrzejscieEdit() {
     try {
         editPrzejscieId = null;
     } catch (_e) {}
-    renderWellPrzejscia();
+    if (typeof window.refreshPrzejsciaViews === 'function') window.refreshPrzejsciaViews();
+    else renderWellPrzejscia();
     window.refreshZleceniaModalIfActive();
 }
 

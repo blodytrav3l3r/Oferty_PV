@@ -207,6 +207,37 @@ function renderInlinePrzejsciaApp(containerId) {
     }
 }
 
+/**
+ * Odświeża WSZYSTKIE widoczne listy przejść: konfigurator (well-przejscia-tiles)
+ * oraz formularz zlecenia (zl-przejscia-list, z filtrem elementu).
+ * Gołe renderWellPrzejscia() rysuje tylko konfigurator — w trybie zlecenia
+ * edycja (ołówek / quick-edit) wyglądała na martwą. Używaj tego helpera
+ * w każdym miejscu mutującym przejścia zamiast gołego renderWellPrzejscia().
+ */
+window.refreshPrzejsciaViews = function refreshPrzejsciaViews() {
+    renderWellPrzejscia();
+    if (typeof document === 'undefined' || !document.getElementById('zl-przejscia-list')) return;
+    let elIdx = null;
+    try {
+        if (
+            typeof zleceniaSelectedIdx !== 'undefined' &&
+            typeof zleceniaElementsList !== 'undefined' &&
+            zleceniaSelectedIdx >= 0 &&
+            zleceniaElementsList[zleceniaSelectedIdx]
+        ) {
+            elIdx = zleceniaElementsList[zleceniaSelectedIdx].elementIndex;
+        }
+    } catch (_e) {
+        elIdx = null;
+    }
+    if (elIdx === null || elIdx === undefined) return;
+    renderWellPrzejscia({
+        containerId: 'zl-przejscia-list',
+        countElId: 'zl-przejscia-count',
+        filterElementIndex: elIdx
+    });
+};
+
 window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
     const _opts = opts || {};
     const container = document.getElementById(_opts.containerId || 'well-przejscia-tiles');
@@ -255,7 +286,9 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
                     ? 'zl-przejscia-list'
                     : 'well-przejscia-tiles';
 
-                renderWellPrzejscia();
+                if (typeof window.refreshPrzejsciaViews === 'function')
+                    window.refreshPrzejsciaViews();
+                else renderWellPrzejscia();
                 if (typeof window.refreshZleceniaModalIfActive === 'function')
                     window.refreshZleceniaModalIfActive();
 
@@ -331,7 +364,9 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
 
             const applyChanges = () => {
                 if (value.trim() === '') {
-                    renderWellPrzejscia();
+                    if (typeof window.refreshPrzejsciaViews === 'function')
+                        window.refreshPrzejsciaViews();
+                    else renderWellPrzejscia();
                     if (typeof window.refreshZleceniaModalIfActive === 'function') {
                         window.refreshZleceniaModalIfActive();
                     }
@@ -421,7 +456,9 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
                     }
                 }
 
-                renderWellPrzejscia();
+                if (typeof window.refreshPrzejsciaViews === 'function')
+                    window.refreshPrzejsciaViews();
+                else renderWellPrzejscia();
                 renderWellDiagram();
                 updateSummary();
                 if (typeof renderWellConfig === 'function') renderWellConfig();
@@ -829,7 +866,8 @@ window.handlePrzDrop = function (e) {
         // Wstaw w nowej pozycji
         well.przejscia.splice(dropIndex, 0, draggedItem);
 
-        renderWellPrzejscia();
+        if (typeof window.refreshPrzejsciaViews === 'function') window.refreshPrzejsciaViews();
+        else renderWellPrzejscia();
         updateSummary();
     }
 };

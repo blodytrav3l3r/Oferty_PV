@@ -230,7 +230,8 @@ window.confirmPrzejscieFlow = function (index, flow) {
     well.przejscia[index].flowType = flow;
     well.przejscia[index].flowTypeManual = true;
     closeModal();
-    renderWellPrzejscia();
+    if (typeof window.refreshPrzejsciaViews === 'function') window.refreshPrzejsciaViews();
+    else renderWellPrzejscia();
     window.refreshZleceniaModalIfActive();
 };
 

@@ -39,13 +39,15 @@ window.editInlineSetType = function (type) {
     if (dns.length === 0) dns = [...allForType].sort((a, b) => a.dn - b.dn);
     if (dns.length > 0) editPrzejscieState.dnId = dns[0].id;
     else editPrzejscieState.dnId = null;
-    renderWellPrzejscia();
+    if (typeof window.refreshPrzejsciaViews === 'function') window.refreshPrzejsciaViews();
+    else renderWellPrzejscia();
 };
 
 window.editInlineSetDN = function (dnId) {
     syncEditState();
     editPrzejscieState.dnId = dnId;
-    renderWellPrzejscia();
+    if (typeof window.refreshPrzejsciaViews === 'function') window.refreshPrzejsciaViews();
+    else renderWellPrzejscia();
 };
 
 /* ===== INLINE HELPERS DLA PRZEJŚĆ ===== */
