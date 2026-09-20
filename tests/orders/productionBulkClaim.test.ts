@@ -573,9 +573,35 @@ describe('POST /production/recycle-numbers', () => {
         const app = createApp();
         const res = await request(app)
             .post('/api/orders-studnie/production/recycle-numbers')
-            .send({ userId: 'u1', seqNumbers: [5, 6, 5, -1, 'x'] });
+            .send({ userId: 'u1', seqNumbers: [5, 6, 5] });
         expect(res.status).toBe(200);
         expect(res.body).toEqual({ ok: true, returned: 2 });
         expect(prisma.$executeRaw).toHaveBeenCalled();
+    });
+
+    test('E3a strict: śmieć w seqNumbers / year → 400 z details', async () => {
+        const app = createApp();
+        for (const body of [
+            { userId: 'u1', seqNumbers: [5, -1, 'x'] },
+            { userId: 'u1', seqNumbers: [5], year: 'abc' },
+            { userId: 'u1', seqNumbers: [5], year: 1999 },
+            { userId: 'u1', seqNumbers: [5], year: 2100 },
+            { userId: 'u1', seqNumbers: [1.5] }
+        ]) {
+            const res = await request(app)
+                .post('/api/orders-studnie/production/recycle-numbers')
+                .send(body);
+            expect(res.status).toBe(400);
+            expect(res.body.details).toBeDefined();
+        }
+    });
+
+    test('E3a: jawny poprawny year przechodzi', async () => {
+        const app = createApp();
+        const res = await request(app)
+            .post('/api/orders-studnie/production/recycle-numbers')
+            .send({ userId: 'u1', seqNumbers: [7], year: 2026 });
+        expect(res.status).toBe(200);
+        expect(res.body).toEqual({ ok: true, returned: 1 });
     });
 });

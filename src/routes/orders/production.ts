@@ -13,6 +13,7 @@ import {
 } from '../../utils/ownership';
 import { buildRoleWhereCondition } from '../../utils/roleFilter';
 import crypto from 'crypto';
+import { z } from 'zod';
 import { validateData } from '../../validators/authSchema';
 import { WRITE_LIMITER } from '../../middleware/rateLimiters';
 import { searchCache } from '../../utils/searchCache';
@@ -56,6 +57,34 @@ async function recycleProductionNumber(
 }
 
 const writeProductionLimiter = WRITE_LIMITER;
+
+/* ===== E3a: lokalne schematy zod (luźne kontrakty — NIE validateData) =====
+ * Identyfikatory PZ to opaque stringi ('pz-1', 'prodorder_...'), NIE UUID —
+ * z.string().uuid() odrzucałoby legalne payloady z frontendu (orderBulk.js,
+ * zlecenia.js chunk 200). Dlatego min(1)/max(256) zamiast uuid().
+ */
+const productionIdListSchema = z.array(z.string().min(1).max(256)).min(1).max(200);
+
+const batchDeleteSchema = z.object({
+    ids: productionIdListSchema
+});
+
+const recycleNumbersSchema = z.object({
+    userId: z.string().min(1).max(256),
+    seqNumbers: z.array(z.number().int().positive()).min(1).max(200),
+    year: z.number().int().min(2001).max(2099).optional()
+});
+
+const printCountKindSchema = z.enum(['zlecenie', 'etykieta']);
+
+const printCountBatchSchema = z.object({
+    ids: productionIdListSchema,
+    kind: printCountKindSchema
+});
+
+const printCountSingleSchema = z.object({
+    kind: printCountKindSchema
+});
 
 /* ===== PRODUCTION ORDERS (Zlecenia Produkcyjne) ===== */
 
@@ -575,17 +604,14 @@ router.post(
 router.post('/batch-delete', requireAuth, writeProductionLimiter, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
-        const { ids } = req.body || {};
-        if (!Array.isArray(ids) || ids.length === 0) {
-            return res.status(400).json({ error: 'Brak identyfikatorów zleceń do usunięcia' });
+        const parsed = batchDeleteSchema.safeParse(req.body || {});
+        if (!parsed.success) {
+            return res.status(400).json({
+                error: 'Brak identyfikatorów zleceń do usunięcia',
+                details: parsed.error.issues
+            });
         }
-        if (ids.length > 200) {
-            return res.status(400).json({ error: 'Zbyt wiele zleceń w jednym żądaniu (max 200)' });
-        }
-        const uniqueIds = [...new Set(ids.filter((id) => typeof id === 'string' && id.length > 0))];
-        if (uniqueIds.length === 0) {
-            return res.status(400).json({ error: 'Brak identyfikatorów zleceń do usunięcia' });
-        }
+        const uniqueIds = [...new Set(parsed.data.ids)];
 
         const existing = await prisma.production_orders_rel.findMany({
             where: { id: { in: uniqueIds } },
@@ -668,25 +694,18 @@ router.post('/batch-delete', requireAuth, writeProductionLimiter, async (req, re
 router.post('/recycle-numbers', requireAuth, writeProductionLimiter, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
-        const { userId, seqNumbers, year } = req.body || {};
-        if (typeof userId !== 'string' || userId.length === 0) {
-            return res.status(400).json({ error: 'Brak userId' });
+        const parsed = recycleNumbersSchema.safeParse(req.body || {});
+        if (!parsed.success) {
+            return res
+                .status(400)
+                .json({ error: 'Nieprawidłowe dane zwrotu numerów', details: parsed.error.issues });
         }
+        const { userId } = parsed.data;
         if (!canClaimNumber(authReq.user, userId)) {
             return res.status(403).json({ error: 'Brak uprawnień do numerów tego użytkownika' });
         }
-        if (!Array.isArray(seqNumbers) || seqNumbers.length === 0) {
-            return res.status(400).json({ error: 'Brak numerów do zwrotu' });
-        }
-        if (seqNumbers.length > 200) {
-            return res.status(400).json({ error: 'Zbyt wiele numerów w jednym żądaniu (max 200)' });
-        }
-        const seqs = [...new Set(seqNumbers.filter((s) => Number.isInteger(s) && s > 0))];
-        if (seqs.length === 0) {
-            return res.status(400).json({ error: 'Brak numerów do zwrotu' });
-        }
-        const targetYear =
-            Number.isInteger(year) && year > 2000 && year < 2100 ? year : new Date().getFullYear();
+        const seqs = [...new Set(parsed.data.seqNumbers)];
+        const targetYear = parsed.data.year ?? new Date().getFullYear();
         const rows = seqs.map((seq) => Prisma.sql`(${userId}, ${targetYear}, ${seq})`);
         await prisma.$executeRaw`
             INSERT INTO recycled_production_numbers ("userId", year, seqNumber)
@@ -708,10 +727,6 @@ router.post('/recycle-numbers', requireAuth, writeProductionLimiter, async (req,
  * (jak PUT batch, P0-D) + retry. MUSI być przed `/:id`.
  */
 type PrintCountKind = 'zlecenie' | 'etykieta';
-
-function isPrintCountKind(v: unknown): v is PrintCountKind {
-    return v === 'zlecenie' || v === 'etykieta';
-}
 
 interface PrintCounts {
     printCountZlecenia: number;
@@ -810,22 +825,15 @@ async function incrementPrintCount(
 router.post('/print-count-batch', requireAuth, writeProductionLimiter, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
-        const { ids, kind } = req.body || {};
-        if (!isPrintCountKind(kind)) {
-            return res
-                .status(400)
-                .json({ error: 'Nieprawidłowy rodzaj wydruku (zlecenie|etykieta)' });
+        const parsed = printCountBatchSchema.safeParse(req.body || {});
+        if (!parsed.success) {
+            return res.status(400).json({
+                error: 'Nieprawidłowe dane licznika wydruków',
+                details: parsed.error.issues
+            });
         }
-        if (!Array.isArray(ids) || ids.length === 0) {
-            return res.status(400).json({ error: 'Brak identyfikatorów zleceń' });
-        }
-        if (ids.length > 200) {
-            return res.status(400).json({ error: 'Zbyt wiele zleceń w jednym żądaniu (max 200)' });
-        }
-        const uniqueIds = [...new Set(ids.filter((id) => typeof id === 'string' && id.length > 0))];
-        if (uniqueIds.length === 0) {
-            return res.status(400).json({ error: 'Brak identyfikatorów zleceń' });
-        }
+        const { ids: batchIds, kind } = parsed.data;
+        const uniqueIds = [...new Set(batchIds)];
         const counts: Record<string, PrintCounts> = {};
         const failed: Array<{ id: string; error: string }> = [];
         for (const id of uniqueIds) {
@@ -851,12 +859,14 @@ router.post('/print-count-batch', requireAuth, writeProductionLimiter, async (re
 router.post('/:id/print-count', requireAuth, writeProductionLimiter, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
-        const { kind } = req.body || {};
-        if (!isPrintCountKind(kind)) {
-            return res
-                .status(400)
-                .json({ error: 'Nieprawidłowy rodzaj wydruku (zlecenie|etykieta)' });
+        const parsed = printCountSingleSchema.safeParse(req.body || {});
+        if (!parsed.success) {
+            return res.status(400).json({
+                error: 'Nieprawidłowy rodzaj wydruku (zlecenie|etykieta)',
+                details: parsed.error.issues
+            });
         }
+        const { kind } = parsed.data;
         const counts = await incrementPrintCount(req.params.id, kind, authReq.user);
         searchCache.invalidateNamespace('production');
         res.json({ ok: true, id: req.params.id, ...counts });
