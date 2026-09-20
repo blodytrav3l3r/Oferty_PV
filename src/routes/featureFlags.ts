@@ -22,7 +22,8 @@ router.get('/', requireAuth, async (_req, res) => {
             pz_stable_id: pzStableId ? flagOn(pzStableId) : true,
             ai_ml_enabled: isAiMlFlagOn(aiMl)
         });
-    } catch {
+    } catch (e) {
+        logger.warn('FeatureFlags', 'Błąd GET / (ciche flagi domyślne)', String(e));
         res.json({ import_export_enabled: false, pz_stable_id: true, ai_ml_enabled: true });
     }
 });

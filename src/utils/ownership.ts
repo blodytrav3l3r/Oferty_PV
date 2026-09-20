@@ -1,5 +1,6 @@
 import { User } from '../helpers';
 import prisma from '../prismaClient';
+import { logger } from './logger';
 
 /**
  * Sprawdza czy user może odczytać dokument (owner / pro parent / admin).
@@ -170,7 +171,8 @@ export async function hasShare(
             select: { id: true }
         });
         return !!row;
-    } catch {
+    } catch (e) {
+        logger.warn('Ownership', 'Błąd hasShare (fail-closed)', String(e));
         return false;
     }
 }
@@ -184,7 +186,8 @@ export async function getSharedIdsForUser(userId: string, documentType: string):
         });
         if (!rows) return [];
         return rows.map((r: any) => r.documentId);
-    } catch {
+    } catch (e) {
+        logger.warn('Ownership', 'Błąd getSharedIdsForUser (fail-closed)', String(e));
         return [];
     }
 }
