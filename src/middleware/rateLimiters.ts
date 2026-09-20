@@ -58,7 +58,15 @@ export const EXPORT_LIMITER = createRateLimiter({
 export const LOGIN_LIMITER = createRateLimiter({
     windowMs: 60 * 1000,
     maxHits: 10,
-    message: 'Zbyt wiele prób logowania. Odczekaj minutę.'
+    message: 'Zbyt wiele prób logowania. Odczekaj minutę.',
+    // E4b: bucket per IP + znormalizowany login (user ID nieznane przed auth).
+    // Brak/malformed loginu → sam IP, żeby nie tworzyć bucketa na śmieć.
+    keyGenerator: (req: any) => {
+        const ip = req.ip || req.connection?.remoteAddress || 'unknown';
+        const raw = req.body?.username;
+        const login = typeof raw === 'string' ? raw.trim().toLowerCase() : '';
+        return login ? `${ip}|${login}` : ip;
+    }
 });
 
 /**

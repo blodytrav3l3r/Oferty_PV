@@ -71,4 +71,49 @@ describe('createRateLimiter', () => {
         expect(res.statusCode).toBe(200);
         expect(res.headers['x-ratelimit-limit']).toBe('15');
     });
+
+    describe('keyGenerator (E4b: IP + login)', () => {
+        const loginKey = (req: any) => {
+            const ip = req.ip || 'unknown';
+            const raw = req.body?.username;
+            const login = typeof raw === 'string' ? raw.trim().toLowerCase() : '';
+            return login ? `${ip}|${login}` : ip;
+        };
+        const buildApp = () => {
+            const app = express();
+            app.use(express.json());
+            app.use(createRateLimiter({ maxHits: 2, windowMs: 60000, keyGenerator: loginKey }));
+            app.post('/login', (_req, res) => res.json({ ok: true }));
+            return app;
+        };
+
+        it('ten sam IP + różne konta to osobne buckety', async () => {
+            const app = buildApp();
+            await request(app).post('/login').send({ username: 'ala' });
+            await request(app).post('/login').send({ username: 'ala' });
+            expect((await request(app).post('/login').send({ username: 'ala' })).statusCode).toBe(
+                429
+            );
+            // Ola na tym samym IP ma świeży bucket
+            expect((await request(app).post('/login').send({ username: 'ola' })).statusCode).toBe(
+                200
+            );
+        });
+
+        it('normalizuje case i białe znaki loginu', async () => {
+            const app = buildApp();
+            await request(app).post('/login').send({ username: 'Ala' });
+            await request(app).post('/login').send({ username: ' ala ' });
+            expect((await request(app).post('/login').send({ username: 'ALA' })).statusCode).toBe(
+                429
+            );
+        });
+
+        it('brak i malformed loginu spada na sam IP', async () => {
+            const app = buildApp();
+            await request(app).post('/login').send({});
+            await request(app).post('/login').send({ username: 123 });
+            expect((await request(app).post('/login').send({})).statusCode).toBe(429);
+        });
+    });
 });

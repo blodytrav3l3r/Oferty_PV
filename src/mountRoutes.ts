@@ -55,16 +55,18 @@ export function mountRoutes(app: express.Express, apiLimiter: express.RequestHan
 
     app.use('/api/auth', apiLimiter, smallJson, authRoutes);
     app.use('/api/users', apiLimiter, smallJson, userRoutes);
-    app.use('/api/users-for-assignment', smallJson, (req, res, next) => {
+    app.use('/api/users-for-assignment', apiLimiter, smallJson, (req, res, next) => {
         req.url = '/for-assignment' + (req.url === '/' ? '' : req.url);
         userRoutes(req, res, next);
     });
 
-    app.use('/api/products', largeJson, productRoutes);
-    app.use('/api/products-studnie', largeJson, productStudnieRoutes);
+    // E4b: apiLimiter także na cennikach/ofertach/exportach (rzadkie, kosztowne GET-y).
+    // Telemetry celowo BEZ apiLimiter — własne TELEMETRY_WRITE/READ (polling dashboardu).
+    app.use('/api/products', apiLimiter, largeJson, productRoutes);
+    app.use('/api/products-studnie', apiLimiter, largeJson, productStudnieRoutes);
     app.use('/api/offers/search', apiLimiter, smallJson, searchRoutes);
-    app.use('/api/offers-rury', largeJson, offerRoutes);
-    app.use('/api/offers-studnie', largeJson, (req, res, next) => {
+    app.use('/api/offers-rury', apiLimiter, largeJson, offerRoutes);
+    app.use('/api/offers-studnie', apiLimiter, largeJson, (req, res, next) => {
         req.url = '/studnie' + req.url;
         offerRoutes(req, res, next);
     });
@@ -84,7 +86,7 @@ export function mountRoutes(app: express.Express, apiLimiter: express.RequestHan
     app.use('/api/feature-flags', smallJson, featureFlagsRoutes);
     app.use('/api/telemetry', smallJson, aiMlRoutes); // ML prediction API
     app.use('/api/price-overrides', apiLimiter, smallJson, priceOverridesRoutes);
-    app.use('/api/export-combined', smallJson, exportCombinedRoutes);
+    app.use('/api/export-combined', apiLimiter, smallJson, exportCombinedRoutes);
     app.use('/api/shares', apiLimiter, smallJson, sharesRoutes);
     app.use('/api/admin', apiLimiter, smallJson, adminRoutes);
     app.use('/api/locks', apiLimiter, smallJson, locksRoutes);

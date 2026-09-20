@@ -4,6 +4,11 @@ interface RateLimiterOpts {
     windowMs?: number;
     maxHits?: number;
     message?: string;
+    /**
+     * E4b: własny klucz bucketa. Domyślnie IP. Dla logowania: IP + login,
+     * bo user ID nie istnieje przed uwierzytelnieniem.
+     */
+    keyGenerator?: (req: Request) => string;
 }
 
 interface HitRecord {
@@ -18,7 +23,8 @@ interface HitRecord {
 export function createRateLimiter({
     windowMs = 15 * 60 * 1000,
     maxHits = 15,
-    message = 'Zbyt wiele prób. Spróbuj ponownie później.'
+    message = 'Zbyt wiele prób. Spróbuj ponownie później.',
+    keyGenerator
 }: RateLimiterOpts = {}): (req: Request, res: Response, next: () => void) => void {
     const hits = new Map<string, HitRecord>();
 
@@ -37,12 +43,13 @@ export function createRateLimiter({
 
     return (req: Request, res: Response, next: () => void): void => {
         const ip = (req.ip as string) || (req.connection?.remoteAddress as string) || 'unknown';
+        const key = keyGenerator ? keyGenerator(req) : ip;
         const now = Date.now();
-        let record = hits.get(ip);
+        let record = hits.get(key);
 
         if (!record || now > record.resetAt) {
             record = { count: 0, resetAt: now + windowMs };
-            hits.set(ip, record);
+            hits.set(key, record);
         }
 
         record.count++;
