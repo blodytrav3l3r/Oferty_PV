@@ -613,6 +613,10 @@
                                 trainBtn.disabled = false;
                                 trainBtn.innerHTML =
                                     '<i data-lucide="play"></i> Uruchom trening ML';
+                                window.aiUiAlert('Błąd uruchamiania treningu ML.', {
+                                    title: 'Trening ML',
+                                    type: 'warning'
+                                });
                             });
                         } else {
                             trainBtn.disabled = false;
@@ -656,6 +660,10 @@
                                         rollbackBtn.disabled = false;
                                         rollbackBtn.innerHTML =
                                             '<i data-lucide="undo-2"></i> Rollback modelu';
+                                        window.aiUiAlert('Błąd rollbacku modelu ML.', {
+                                            title: 'Rollback modelu',
+                                            type: 'warning'
+                                        });
                                     });
                                 } else {
                                     rollbackBtn.disabled = false;
