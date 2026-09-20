@@ -876,7 +876,13 @@ function _draftDownloadJson(draft, kind) {
         var a = document.createElement('a');
         a.href = url;
         a.download =
-            'draft_' + String(kind) + '_' + String(docId).replace(/[^A-Za-z0-9_-]/g, '_') + '.json';
+            typeof window !== 'undefined' && window.ExportFilenames
+                ? window.ExportFilenames.filename('draft', [[kind], [docId]], 'json')
+                : 'draft_' +
+                  String(kind) +
+                  '_' +
+                  String(docId).replace(/[^A-Za-z0-9_-]/g, '_') +
+                  '.json';
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);

@@ -178,13 +178,81 @@ describe('Export Combined (Wydruk łączny) — POST /api/export-combined', () =
 
             expect(prisma.offers_rel.findUnique).toHaveBeenCalledWith({
                 where: { id: RURY_UUID },
-                select: { userId: true }
+                select: { userId: true, offer_number: true }
             });
             expect(prisma.offers_studnie_rel.findUnique).toHaveBeenCalledWith({
                 where: { id: STUDNIE_UUID },
-                select: { userId: true }
+                select: { userId: true, offer_number: true }
             });
             expect(canReadDoc).toHaveBeenCalled();
+        });
+    });
+
+    describe('legacy ID ofert (nie-UUID) — regresja 400 z wydruku łącznego', () => {
+        const LEGACY_RURY = 'offer_1789903931590';
+        const LEGACY_STUDNIE = 'offer_studnie_1789827260384';
+
+        it('POST /pdf: legacy ID przechodzą walidację (200, nie 400)', async () => {
+            const res = await request(app)
+                .post('/api/export-combined/pdf')
+                .send({ offerRuryId: LEGACY_RURY, offerStudnieId: LEGACY_STUDNIE });
+
+            expect(res.statusCode).toBe(200);
+            expect(generateCombinedOfferPDF).toHaveBeenCalledWith(LEGACY_RURY, LEGACY_STUDNIE);
+        });
+
+        it('POST /docx: legacy ID przechodzą walidację (200, nie 400)', async () => {
+            const res = await request(app)
+                .post('/api/export-combined/docx')
+                .send({ offerRuryId: LEGACY_RURY, offerStudnieId: LEGACY_STUDNIE });
+
+            expect(res.statusCode).toBe(200);
+            expect(generateCombinedOfferDOCX).toHaveBeenCalledWith(LEGACY_RURY, LEGACY_STUDNIE);
+        });
+
+        it('wstrzyknięte znaki (ścieżka/spacja) dalej -> 400 bez dotykania generatora', async () => {
+            const res = await request(app)
+                .post('/api/export-combined/pdf')
+                .send({ offerRuryId: '../../etc/passwd', offerStudnieId: 'id ze spacją' });
+
+            expect(res.statusCode).toBe(400);
+            expect(generateCombinedOfferPDF).not.toHaveBeenCalled();
+        });
+
+        it('puste ID po trim dalej -> 400', async () => {
+            const res = await request(app)
+                .post('/api/export-combined/pdf')
+                .send({ offerRuryId: '   ', offerStudnieId: STUDNIE_UUID });
+
+            expect(res.statusCode).toBe(400);
+            expect(generateCombinedOfferPDF).not.toHaveBeenCalled();
+        });
+
+        it('nagłówek filename z numerów ofert (nie z ID)', async () => {
+            (prisma.offers_rel.findUnique as jest.Mock).mockResolvedValue({
+                ...mockRuryOffer,
+                offer_number: 'OF/000001/SA/2026'
+            });
+            (prisma.offers_studnie_rel.findUnique as jest.Mock).mockResolvedValue({
+                ...mockStudnieOffer,
+                offer_number: 'OS/000001/SA/2026'
+            });
+
+            const res = await request(app).post('/api/export-combined/pdf').send(validBody);
+
+            expect(res.statusCode).toBe(200);
+            expect(res.headers['content-disposition']).toContain(
+                'oferta_laczna_OF-000001-SA-2026_OS-000001-SA-2026.pdf'
+            );
+        });
+
+        it('nagłówek filename fallback do ID gdy brak numerów', async () => {
+            const res = await request(app).post('/api/export-combined/pdf').send(validBody);
+
+            expect(res.statusCode).toBe(200);
+            expect(res.headers['content-disposition']).toContain(
+                'oferta_laczna_123e4567-e89b-12d3-a456-426614174001_123e4567-e89b-12d3-a456-426614174002.pdf'
+            );
         });
     });
 });

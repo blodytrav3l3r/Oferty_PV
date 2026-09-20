@@ -1,6 +1,7 @@
 /**
  * E3b: walidacja zod na 4 endpointach (wzorzec telemetryAiMl.ts — safeParse → 400).
- * - POST /api/export-combined/{pdf,docx}: UUID + maxLength
+ * - POST /api/export-combined/{pdf,docx}: kształt ID (min/max + allow-list),
+ *   BEZ wymogu UUID — bazy z historią mają legacy ID (offer_*, offer_studnie_*)
  * - PUT /api/feature-flags/import-export: strict { enabled: boolean }
  * - POST /api/feature-flags/audit: limit rozmiaru/kształtu details
  * - POST claim-production-numbers: count int + ignore-unknown
@@ -86,7 +87,10 @@ jest.mock('../src/prismaClient', () => ({
     }
 }));
 
-import { generateCombinedOfferPDF } from '../src/services/combinedExport';
+import {
+    generateCombinedOfferPDF,
+    generateCombinedOfferDOCX
+} from '../src/services/combinedExport';
 
 function buildApp() {
     const app = express();
@@ -97,21 +101,25 @@ function buildApp() {
     return app;
 }
 
-describe('E3b: export-combined UUID', () => {
+describe('E3b: export-combined kształt ID (UUID i legacy)', () => {
     beforeEach(() => {
         jest.clearAllMocks();
         currentRole = 'admin';
     });
 
     it.each(['/api/export-combined/pdf', '/api/export-combined/docx'])(
-        '%s: nie-UUID -> 400',
+        '%s: legacy ID (nie-UUID) przechodzą walidację -> 200',
         async (url) => {
             const app = buildApp();
             const res = await request(app)
                 .post(url)
                 .send({ offerRuryId: 'offer_rury_1', offerStudnieId: 'offer_studnie_1' });
-            expect(res.status).toBe(400);
-            expect(generateCombinedOfferPDF).not.toHaveBeenCalled();
+            expect(res.status).toBe(200);
+            if (url.endsWith('/pdf')) {
+                expect(generateCombinedOfferPDF).toHaveBeenCalled();
+            } else {
+                expect(generateCombinedOfferDOCX).toHaveBeenCalled();
+            }
         }
     );
 

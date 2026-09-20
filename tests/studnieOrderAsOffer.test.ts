@@ -422,6 +422,11 @@ describe('Studnie Order As Offer — frontend exportStudnieOrderAsOffer_action (
             path.join(PROJECT_ROOT, 'public', 'js', 'studnie', 'offerPrintManagerHelpers.js'),
             'utf8'
         );
+        // Kolejność jak w studnie.html: exportFilenames.js PRZED managerami wydruku.
+        const exportFilenamesSource = fs.readFileSync(
+            path.join(PROJECT_ROOT, 'public', 'js', 'shared', 'exportFilenames.js'),
+            'utf8'
+        );
         const mockFetch = jest.fn();
         const sandbox: Record<string, unknown> = {
             URL: {
@@ -477,6 +482,7 @@ describe('Studnie Order As Offer — frontend exportStudnieOrderAsOffer_action (
         };
         (sandbox.window as any) = sandbox;
         const context = vm.createContext(sandbox);
+        vm.runInContext(exportFilenamesSource, context, { filename: 'exportFilenames.js' });
         vm.runInContext(helpersSource, context, { filename: 'offerPrintManagerHelpers.js' });
         return { context };
     }

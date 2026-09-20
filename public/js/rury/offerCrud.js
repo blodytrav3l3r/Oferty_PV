@@ -19,7 +19,9 @@ function downloadOfferFile(offer) {
     const a = document.createElement('a');
     const safeNumber = offer.number.replace(/[/\\:*?"<>|]/g, '_');
     a.href = url;
-    a.download = `Oferta_${safeNumber}_${offer.date}.json`;
+    a.download = window.ExportFilenames
+        ? window.ExportFilenames.filename('oferta', [[offer.number], [offer.date]], 'json')
+        : `Oferta_${safeNumber}_${offer.date}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);

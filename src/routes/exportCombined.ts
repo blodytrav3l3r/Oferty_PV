@@ -7,6 +7,7 @@ import { mapPdfError } from '../services/pdf/pdfEngine';
 import { logger } from '../utils/logger';
 import { canReadDoc } from '../utils/ownership';
 import { EXPORT_LIMITER } from '../middleware/rateLimiters';
+import { exportFilename } from '../utils/exportFilenames';
 
 const router = express.Router();
 
@@ -16,36 +17,55 @@ const DOCX_CONTENT_TYPE = 'application/vnd.openxmlformats-officedocument.wordpro
 
 /**
  * Weryfikuje istnienie obu ofert i uprawnienia do ich odczytu.
- * Zwraca true tylko gdy obie oferty istnieją i użytkownik ma do nich dostęp.
+ * Zwraca rekordy (z numerami do nazw plików) lub null.
  */
 async function canExportBothOffers(
     authReq: AuthenticatedRequest,
     offerRuryId: string,
     offerStudnieId: string
-): Promise<boolean> {
+): Promise<{ ruryOfferNumber: string | null; studnieOfferNumber: string | null } | null> {
     const [ruryOffer, studnieOffer] = await Promise.all([
         prisma.offers_rel.findUnique({
             where: { id: offerRuryId },
-            select: { userId: true }
+            select: { userId: true, offer_number: true }
         }),
         prisma.offers_studnie_rel.findUnique({
             where: { id: offerStudnieId },
-            select: { userId: true }
+            select: { userId: true, offer_number: true }
         })
     ]);
 
-    if (!ruryOffer || !studnieOffer) return false;
-    return (
-        canReadDoc(authReq.user, ruryOffer.userId) && canReadDoc(authReq.user, studnieOffer.userId)
-    );
+    if (!ruryOffer || !studnieOffer) return null;
+    const allowed =
+        canReadDoc(authReq.user, ruryOffer.userId) && canReadDoc(authReq.user, studnieOffer.userId);
+    if (!allowed) return null;
+    return {
+        ruryOfferNumber: ruryOffer.offer_number,
+        studnieOfferNumber: studnieOffer.offer_number
+    };
 }
 
-// E3b: twarda walidacja identyfikatorów (UUID + maxLength), wzorzec telemetryAiMl.ts.
-// ID ofert powstają przez crypto.randomUUID (ruryCrud/studnieCrud), więc poprawne
-// dane zawsze są UUID; reszta (IDOR-probe, wklejone śmieci) dostaje 400 z detalami.
+// E3b: walidacja identyfikatorów — kształt, nie UUID. ID ofert w realnych bazach
+// to nie tylko crypto.randomUUID (ruryCrud/studnieCrud): bazy z historią zawierają
+// legacy ID sprzed migracji UUID (np. "offer_1789903931590",
+// "offer_studnie_1789827260384") — .uuid() odrzucało je twardym 400 i cały eksport
+// łączny był dla takich baz martwy. Bezpieczeństwo (IDOR) zapewnia
+// canExportBothOffers (findUnique + canReadDoc), nie kształt stringa — wzorzec
+// jak production.ts (min/max zamiast uuid() dla legalnych payloadów frontendu).
+const OFFER_ID_RE = /^[\w.-]+$/;
 const combinedExportSchema = z.object({
-    offerRuryId: z.string().trim().min(1).max(64).uuid(),
-    offerStudnieId: z.string().trim().min(1).max(64).uuid()
+    offerRuryId: z
+        .string()
+        .trim()
+        .min(1, 'Wybierz ofertę rur')
+        .max(64)
+        .regex(OFFER_ID_RE, 'Nieprawidłowy identyfikator oferty rur'),
+    offerStudnieId: z
+        .string()
+        .trim()
+        .min(1, 'Wybierz ofertę studni')
+        .max(64)
+        .regex(OFFER_ID_RE, 'Nieprawidłowy identyfikator oferty studni')
 });
 
 type CombinedIds = z.infer<typeof combinedExportSchema>;
@@ -59,12 +79,6 @@ function parseBody(body: unknown): { ids: CombinedIds } | { issues: unknown } {
     return { ids: parsed.data };
 }
 
-function makeSafeId(id: string): string {
-    return String(id)
-        .replace(/[^a-z0-9_-]/gi, '_')
-        .slice(0, 8);
-}
-
 // POST /api/export-combined/pdf
 router.post('/pdf', requireAuth, EXPORT_LIMITER, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
@@ -72,13 +86,14 @@ router.post('/pdf', requireAuth, EXPORT_LIMITER, async (req, res) => {
         const result = parseBody(req.body);
         if ('issues' in result) {
             return res.status(400).json({
-                error: 'Wymagane są identyfikatory obu ofert (offerRuryId, offerStudnieId)',
+                error: 'Nieprawidłowe identyfikatory ofert (offerRuryId, offerStudnieId)',
                 details: result.issues
             });
         }
         const ids = result.ids;
 
-        if (!(await canExportBothOffers(authReq, ids.offerRuryId, ids.offerStudnieId))) {
+        const offers = await canExportBothOffers(authReq, ids.offerRuryId, ids.offerStudnieId);
+        if (!offers) {
             return res.status(404).json({ error: 'Not found' });
         }
 
@@ -86,7 +101,14 @@ router.post('/pdf', requireAuth, EXPORT_LIMITER, async (req, res) => {
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader(
             'Content-Disposition',
-            `attachment; filename="oferta_laczna_${makeSafeId(ids.offerRuryId)}_${makeSafeId(ids.offerStudnieId)}.pdf"`
+            `attachment; filename="${exportFilename(
+                'oferta_laczna',
+                [
+                    [offers.ruryOfferNumber, ids.offerRuryId],
+                    [offers.studnieOfferNumber, ids.offerStudnieId]
+                ],
+                'pdf'
+            )}"`
         );
         res.send(pdfBuffer);
     } catch (e: unknown) {
@@ -104,13 +126,14 @@ router.post('/docx', requireAuth, EXPORT_LIMITER, async (req, res) => {
         const result = parseBody(req.body);
         if ('issues' in result) {
             return res.status(400).json({
-                error: 'Wymagane są identyfikatory obu ofert (offerRuryId, offerStudnieId)',
+                error: 'Nieprawidłowe identyfikatory ofert (offerRuryId, offerStudnieId)',
                 details: result.issues
             });
         }
         const ids = result.ids;
 
-        if (!(await canExportBothOffers(authReq, ids.offerRuryId, ids.offerStudnieId))) {
+        const offers = await canExportBothOffers(authReq, ids.offerRuryId, ids.offerStudnieId);
+        if (!offers) {
             return res.status(404).json({ error: 'Not found' });
         }
 
@@ -118,7 +141,14 @@ router.post('/docx', requireAuth, EXPORT_LIMITER, async (req, res) => {
         res.setHeader('Content-Type', DOCX_CONTENT_TYPE);
         res.setHeader(
             'Content-Disposition',
-            `attachment; filename="oferta_laczna_${makeSafeId(ids.offerRuryId)}_${makeSafeId(ids.offerStudnieId)}.docx"`
+            `attachment; filename="${exportFilename(
+                'oferta_laczna',
+                [
+                    [offers.ruryOfferNumber, ids.offerRuryId],
+                    [offers.studnieOfferNumber, ids.offerStudnieId]
+                ],
+                'docx'
+            )}"`
         );
         res.send(docxBuffer);
     } catch (e: unknown) {

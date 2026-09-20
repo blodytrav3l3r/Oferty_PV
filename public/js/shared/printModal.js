@@ -364,13 +364,16 @@
             });
             if (!res.ok) {
                 const errText = await res.text().catch(() => res.statusText);
-                throw new Error(`Eksport łączny (${res.status}): ${errText.slice(0, 200)}`);
+                throw new Error(describeCombinedError(res.status, errText));
             }
             const blob = await res.blob();
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `oferta_laczna_${ruryId.substring(0, 8)}_${studnieId.substring(0, 8)}.${format}`;
+            a.download = window.ExportFilenames.serverFilename(
+                res,
+                `oferta_laczna_${ruryId.substring(0, 8)}_${studnieId.substring(0, 8)}.${format}`
+            );
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
@@ -388,6 +391,40 @@
             }
         }
     }
+    // Mapuje odpowiedź błędu eksportu łącznego na czytelny komunikat.
+    // Serwer zwraca { error, details: [{ path: ['offerRuryId'|'offerStudnieId'], ... }] }
+    // — wskazujemy które pole poprawić zamiast wylewać surowy JSON do toasta.
+    function describeCombinedError(status, errText) {
+        let parsed = null;
+        try {
+            parsed = JSON.parse(errText);
+        } catch {
+            parsed = null;
+        }
+        if (parsed && Array.isArray(parsed.details)) {
+            const bad = new Set();
+            for (const issue of parsed.details) {
+                const p = Array.isArray(issue.path) ? issue.path.join('.') : '';
+                if (p.includes('offerRuryId')) bad.add('rur');
+                if (p.includes('offerStudnieId')) bad.add('studni');
+            }
+            if (bad.size > 0) {
+                const which =
+                    bad.size === 2
+                        ? 'ofert rur i studni'
+                        : bad.has('rur')
+                          ? 'oferty rur'
+                          : 'oferty studni';
+                return `Nieprawidłowy wybór ${which} — wybierz ofertę z listy`;
+            }
+        }
+        if (status === 404) return 'Nie znaleziono wybranych ofert (mogły zostać usunięte)';
+        if (parsed && typeof parsed.error === 'string' && parsed.error) {
+            return parsed.error.slice(0, 160);
+        }
+        return `Eksport łączny (${status}): ${String(errText).slice(0, 120)}`;
+    }
+
     window.combinedExport_action = combinedExport_action;
 
     function handleClick(ev) {

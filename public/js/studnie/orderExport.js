@@ -28,13 +28,20 @@ window.exportKartaToPDF_action = async function (orderId) {
     })
         .then((res) => {
             if (!res.ok) throw new Error('Nie udało się wyeksportować karty budowy');
-            return res.blob();
+            const fileName = window.ExportFilenames.serverFilename(
+                res,
+                `karta_budowy_${orderId.substring(0, 8)}.pdf`
+            );
+            return res.blob().then(function (blob) {
+                return { blob: blob, fileName: fileName };
+            });
         })
-        .then((blob) => {
+        .then((result) => {
+            const blob = result.blob;
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `karta_budowy_${orderId.substring(0, 8)}.pdf`;
+            a.download = result.fileName;
             document.body.appendChild(a);
             a.click();
             window.URL.revokeObjectURL(url);
@@ -59,13 +66,20 @@ window.exportKartaToWord_action = async function (orderId) {
     })
         .then((res) => {
             if (!res.ok) throw new Error('Nie udało się wyeksportować karty budowy');
-            return res.blob();
+            const fileName = window.ExportFilenames.serverFilename(
+                res,
+                `karta_budowy_${orderId.substring(0, 8)}.docx`
+            );
+            return res.blob().then(function (blob) {
+                return { blob: blob, fileName: fileName };
+            });
         })
-        .then((blob) => {
+        .then((result) => {
+            const blob = result.blob;
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `karta_budowy_${orderId.substring(0, 8)}.docx`;
+            a.download = result.fileName;
             document.body.appendChild(a);
             a.click();
             window.URL.revokeObjectURL(url);

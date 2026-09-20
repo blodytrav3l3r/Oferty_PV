@@ -23,6 +23,7 @@ const RURY_PM = path.join(PUBLIC, 'js', 'rury', 'offerPrintManager.js');
 const KARTOTEKA_UI = path.join(PUBLIC, 'js', 'kartoteka', 'kartotekaUi.js');
 const KARTOTEKA_HELPERS = path.join(PUBLIC, 'js', 'kartoteka', 'kartotekaHelpers.js');
 const KARTOTEKA_ACTIONS = path.join(PUBLIC, 'js', 'kartoteka', 'kartotekaActions.js');
+const EXPORT_FILENAMES = path.join(PUBLIC, 'js', 'shared', 'exportFilenames.js');
 
 function readFile(p: string): string {
     return fs.readFileSync(p, 'utf-8');
@@ -49,6 +50,19 @@ describe('Print dispatch — regression (kartoteka rury offers)', () => {
             expect(ruryIdx).toBeGreaterThan(-1);
             expect(kartotekaIdx).toBeGreaterThan(-1);
             expect(ruryIdx).toBeLessThan(kartotekaIdx);
+        });
+
+        it.each([
+            ['kartoteka.html', path.join(PUBLIC, 'kartoteka.html'), 'js/shared/printModal.js'],
+            ['rury.html', path.join(PUBLIC, 'rury.html'), 'js/rury/offerPrintManager.js'],
+            ['studnie.html', path.join(PUBLIC, 'studnie.html'), 'js/studnie/offerFileOps.js']
+        ])('%s ładuje exportFilenames.js PRZED %s', (_label, htmlPath, consumer) => {
+            const page = readFile(htmlPath as string);
+            const efIdx = page.search(/js\/shared\/exportFilenames\.js\?v=/);
+            const consumerIdx = page.search(new RegExp(consumer.replace(/\//g, '\\/')));
+            expect(efIdx).toBeGreaterThan(-1);
+            expect(consumerIdx).toBeGreaterThan(-1);
+            expect(efIdx).toBeLessThan(consumerIdx);
         });
     });
 
@@ -393,6 +407,8 @@ describe('Print dispatch — regression (kartoteka rury offers)', () => {
             sandbox.globalThis = sandbox;
 
             const context = vm.createContext(sandbox);
+            // Kolejność jak w HTML: exportFilenames.js PRZED managerami wydruku.
+            vm.runInContext(readFile(EXPORT_FILENAMES), context, { filename: EXPORT_FILENAMES });
             const code = readFile(file);
             vm.runInContext(code, context, { filename: file });
 

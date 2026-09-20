@@ -1,0 +1,51 @@
+{
+    "_comment": "Wspólne wektory parzystości: src/utils/exportFilenames.ts (BE) i public/js/shared/exportFilenames.js (FE). Ten sam plik w obu testach.",
+    "safePart": [
+        { "in": "OF/000001/SA/2026", "out": "OF-000001-SA-2026" },
+        { "in": "OS/000001/SA/2026", "out": "OS-000001-SA-2026" },
+        { "in": "offer_1789903931590", "out": "offer_1789903931590" },
+        { "in": "offer_studnie_1789827260384", "out": "offer_studnie_1789827260384" },
+        { "in": "ZAM-001", "out": "ZAM-001" },
+        { "in": "Zażółć gęślą jaźń", "out": "Zazolc_gesla_jazn" },
+        { "in": "  a//b  ", "out": "a-b" },
+        { "in": "a___b", "out": "a_b" },
+        { "in": "", "out": "dokument" },
+        { "in": null, "out": "dokument" },
+        { "in": "___", "out": "dokument" },
+        {
+            "in": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+            "out": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+        }
+    ],
+    "pickPart": [
+        { "in": ["OF/1", "fallback-id"], "out": "OF-1" },
+        { "in": [null, "", "offer_123"], "out": "offer_123" },
+        { "in": [null, ""], "out": "dokument" }
+    ],
+    "filename": [
+        {
+            "kind": "oferta_laczna",
+            "parts": [["OF/000001/SA/2026"], ["OS/000001/SA/2026"]],
+            "ext": "pdf",
+            "out": "oferta_laczna_OF-000001-SA-2026_OS-000001-SA-2026.pdf"
+        },
+        {
+            "kind": "oferta_rury",
+            "parts": [[null, "offer_1789903931590"]],
+            "ext": "pdf",
+            "out": "oferta_rury_offer_1789903931590.pdf"
+        },
+        {
+            "kind": "oferta_studnie_zamowienie",
+            "parts": [["ZAM-001", "ord-9"]],
+            "ext": "docx",
+            "out": "oferta_studnie_zamowienie_ZAM-001.docx"
+        },
+        {
+            "kind": "oferta",
+            "parts": [["OF/5"], ["2026-09-21"]],
+            "ext": "XLSX",
+            "out": "oferta_OF-5_2026-09-21.xlsx"
+        }
+    ]
+}

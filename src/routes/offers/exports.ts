@@ -7,6 +7,7 @@ import { generateOfferRuryDOCX, generateOfferStudnieDOCX } from '../../services/
 import { logger } from '../../utils/logger';
 import { canReadDoc } from '../../utils/ownership';
 import { EXPORT_LIMITER } from '../../middleware/rateLimiters';
+import { exportFilename } from '../../utils/exportFilenames';
 
 const router = express.Router();
 
@@ -19,17 +20,17 @@ router.get('/:id/export-pdf', requireAuth, EXPORT_LIMITER, async (req, res) => {
         const { id } = req.params;
         const offer = await prisma.offers_rel.findUnique({
             where: { id },
-            select: { userId: true }
+            select: { userId: true, offer_number: true }
         });
         if (!offer || !canReadDoc(authReq.user, offer.userId)) {
             return res.status(404).json({ error: 'Not found' });
         }
-        const safeId = String(id)
-            .replace(/[^a-z0-9_-]/gi, '_')
-            .slice(0, 100);
         const pdfBuffer = await generateOfferRuryPDF(id);
         res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', `attachment; filename="oferta_rury_${safeId}.pdf"`);
+        res.setHeader(
+            'Content-Disposition',
+            `attachment; filename="${exportFilename('oferta_rury', [[offer.offer_number, id]], 'pdf')}"`
+        );
         res.send(pdfBuffer);
     } catch (e: unknown) {
         if (mapPdfError(res, e, 'offers-rury')) return;
@@ -46,17 +47,17 @@ router.get('/studnie/:id/export-pdf', requireAuth, EXPORT_LIMITER, async (req, r
         const { id } = req.params;
         const offer = await prisma.offers_studnie_rel.findUnique({
             where: { id },
-            select: { userId: true }
+            select: { userId: true, offer_number: true }
         });
         if (!offer || !canReadDoc(authReq.user, offer.userId)) {
             return res.status(404).json({ error: 'Not found' });
         }
-        const safeId = String(id)
-            .replace(/[^a-z0-9_-]/gi, '_')
-            .slice(0, 100);
         const pdfBuffer = await generateOfferStudniePDF(id);
         res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', `attachment; filename="oferta_studnie_${safeId}.pdf"`);
+        res.setHeader(
+            'Content-Disposition',
+            `attachment; filename="${exportFilename('oferta_studnie', [[offer.offer_number, id]], 'pdf')}"`
+        );
         res.send(pdfBuffer);
     } catch (e: unknown) {
         if (mapPdfError(res, e, 'offers-studnie')) return;
@@ -73,20 +74,20 @@ router.get('/:id/export-docx', requireAuth, EXPORT_LIMITER, async (req, res) => 
         const { id } = req.params;
         const offer = await prisma.offers_rel.findUnique({
             where: { id },
-            select: { userId: true }
+            select: { userId: true, offer_number: true }
         });
         if (!offer || !canReadDoc(authReq.user, offer.userId)) {
             return res.status(404).json({ error: 'Not found' });
         }
-        const safeId = String(id)
-            .replace(/[^a-z0-9_-]/gi, '_')
-            .slice(0, 100);
         const docxBuffer = await generateOfferRuryDOCX(id);
         res.setHeader(
             'Content-Type',
             'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
         );
-        res.setHeader('Content-Disposition', `attachment; filename="oferta_rury_${safeId}.docx"`);
+        res.setHeader(
+            'Content-Disposition',
+            `attachment; filename="${exportFilename('oferta_rury', [[offer.offer_number, id]], 'docx')}"`
+        );
         res.send(docxBuffer);
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error';
@@ -102,14 +103,11 @@ router.get('/studnie/:id/export-docx', requireAuth, EXPORT_LIMITER, async (req, 
         const { id } = req.params;
         const offer = await prisma.offers_studnie_rel.findUnique({
             where: { id },
-            select: { userId: true }
+            select: { userId: true, offer_number: true }
         });
         if (!offer || !canReadDoc(authReq.user, offer.userId)) {
             return res.status(404).json({ error: 'Not found' });
         }
-        const safeId = String(id)
-            .replace(/[^a-z0-9_-]/gi, '_')
-            .slice(0, 100);
         const docxBuffer = await generateOfferStudnieDOCX(id);
         res.setHeader(
             'Content-Type',
@@ -117,7 +115,7 @@ router.get('/studnie/:id/export-docx', requireAuth, EXPORT_LIMITER, async (req, 
         );
         res.setHeader(
             'Content-Disposition',
-            `attachment; filename="oferta_studnie_${safeId}.docx"`
+            `attachment; filename="${exportFilename('oferta_studnie', [[offer.offer_number, id]], 'docx')}"`
         );
         res.send(docxBuffer);
     } catch (e: unknown) {

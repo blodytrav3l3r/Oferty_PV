@@ -50,7 +50,9 @@ function exportJSONStudnie(id) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `STUDNIE_OFERTA_${offer.number.replace(/[^A-Za-z0-9]/g, '_')}.json`;
+    a.download = window.ExportFilenames
+        ? window.ExportFilenames.filename('studnie_oferta', [[offer.number]], 'json')
+        : `STUDNIE_OFERTA_${offer.number.replace(/[^A-Za-z0-9]/g, '_')}.json`;
     a.click();
     URL.revokeObjectURL(url);
 }

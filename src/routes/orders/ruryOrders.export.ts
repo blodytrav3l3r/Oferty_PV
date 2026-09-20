@@ -12,6 +12,7 @@ import {
 } from '../../services/pdfGenerator';
 import type { RuryOfferData, UserContactInfo } from '../../services/pdfGenerator';
 import { mapPdfError } from '../../services/pdf/pdfEngine';
+import { exportFilename } from '../../utils/exportFilenames';
 import {
     generateRuryDOCXFromContext,
     generateRuryOrderDOCX,
@@ -33,12 +34,12 @@ router.get('/:id/export-karta-pdf', requireAuth, exportOrdersLimiter, async (req
         if (!order || !canReadDoc(authReq.user, order.userId)) {
             return res.status(404).json({ error: 'Not found' });
         }
-        const safeId = String(id)
-            .replace(/[^a-z0-9_-]/gi, '_')
-            .slice(0, 100);
         const pdfBuffer = await generateKartaBudowyRuryPDF(id);
         res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', `attachment; filename="karta_budowy_${safeId}.pdf"`);
+        res.setHeader(
+            'Content-Disposition',
+            `attachment; filename="${exportFilename('karta_budowy', [[id]], 'pdf')}"`
+        );
         res.send(pdfBuffer);
     } catch (e: unknown) {
         if (mapPdfError(res, e, 'karta-budowy-rury')) return;
@@ -60,15 +61,15 @@ router.get('/:id/export-karta-docx', requireAuth, exportOrdersLimiter, async (re
         if (!order || !canReadDoc(authReq.user, order.userId)) {
             return res.status(404).json({ error: 'Not found' });
         }
-        const safeId = String(id)
-            .replace(/[^a-z0-9_-]/gi, '_')
-            .slice(0, 100);
         const docxBuffer = await generateKartaBudowyRuryDOCX(id);
         res.setHeader(
             'Content-Type',
             'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
         );
-        res.setHeader('Content-Disposition', `attachment; filename="karta_budowy_${safeId}.docx"`);
+        res.setHeader(
+            'Content-Disposition',
+            `attachment; filename="${exportFilename('karta_budowy', [[id]], 'docx')}"`
+        );
         res.send(docxBuffer);
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error';
@@ -92,11 +93,10 @@ router.get('/:id/export-pdf', requireAuth, exportOrdersLimiter, async (req, res)
             return res.status(404).json({ error: 'Zamówienie nie znalezione' });
         }
         const pdfBuffer = await generateRuryOrderPDF(docId);
-        const safeId = docId.replace(/[^a-zA-Z0-9_-]/g, '_');
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader(
             'Content-Disposition',
-            `attachment; filename="zamowienie_rury_${safeId}.pdf"`
+            `attachment; filename="${exportFilename('zamowienie_rury', [[docId]], 'pdf')}"`
         );
         res.send(pdfBuffer);
     } catch (e: unknown) {
@@ -120,14 +120,13 @@ router.get('/:id/export-docx', requireAuth, exportOrdersLimiter, async (req, res
             return res.status(404).json({ error: 'Zamówienie nie znalezione' });
         }
         const docxBuffer = await generateRuryOrderDOCX(docId);
-        const safeId = docId.replace(/[^a-zA-Z0-9_-]/g, '_');
         res.setHeader(
             'Content-Type',
             'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
         );
         res.setHeader(
             'Content-Disposition',
-            `attachment; filename="zamowienie_rury_${safeId}.docx"`
+            `attachment; filename="${exportFilename('zamowienie_rury', [[docId]], 'docx')}"`
         );
         res.send(docxBuffer);
     } catch (e: unknown) {
@@ -200,11 +199,10 @@ router.post('/:id/export-offer-pdf', requireAuth, exportOrdersLimiter, async (re
         };
 
         const pdfBuffer = await generateRuryPDFFromContext(ctx);
-        const safeOrder = String(ctx.offerNumber || docId).replace(/[^a-zA-Z0-9_-]/g, '_');
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader(
             'Content-Disposition',
-            `attachment; filename="oferta_rury_zamowienie_${safeOrder}.pdf"`
+            `attachment; filename="${exportFilename('oferta_rury_zamowienie', [[ctx.offerNumber, docId]], 'pdf')}"`
         );
         res.send(pdfBuffer);
     } catch (e: unknown) {
@@ -278,14 +276,13 @@ router.post('/:id/export-offer-docx', requireAuth, exportOrdersLimiter, async (r
         };
 
         const docxBuffer = await generateRuryDOCXFromContext(ctx);
-        const safeOrder = String(ctx.offerNumber || docId).replace(/[^a-zA-Z0-9_-]/g, '_');
         res.setHeader(
             'Content-Type',
             'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
         );
         res.setHeader(
             'Content-Disposition',
-            `attachment; filename="oferta_rury_zamowienie_${safeOrder}.docx"`
+            `attachment; filename="${exportFilename('oferta_rury_zamowienie', [[ctx.offerNumber, docId]], 'docx')}"`
         );
         res.send(docxBuffer);
     } catch (e: unknown) {

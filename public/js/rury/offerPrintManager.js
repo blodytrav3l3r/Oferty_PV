@@ -137,7 +137,10 @@ async function exportOfferDirectRury_action(offerId, format) {
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `oferta_rury_${offerId.substring(0, 8)}.pdf`;
+            a.download = window.ExportFilenames.serverFilename(
+                res,
+                `oferta_rury_${offerId.substring(0, 8)}.pdf`
+            );
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
@@ -154,7 +157,10 @@ async function exportOfferDirectRury_action(offerId, format) {
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `oferta_rury_${offerId.substring(0, 8)}.docx`;
+            a.download = window.ExportFilenames.serverFilename(
+                res,
+                `oferta_rury_${offerId.substring(0, 8)}.docx`
+            );
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
@@ -189,7 +195,10 @@ async function exportKartaDirectRury_action(orderId, format) {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `karta_budowy_rury_${orderId.substring(0, 8)}.${format}`;
+        a.download = window.ExportFilenames.serverFilename(
+            res,
+            `karta_budowy_rury_${orderId.substring(0, 8)}.${format}`
+        );
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -239,7 +248,10 @@ async function exportOrderDirectRury_action(orderId, format) {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `zamowienie_rury_${orderId.substring(0, 8)}.${format}`;
+        a.download = window.ExportFilenames.serverFilename(
+            res,
+            `zamowienie_rury_${orderId.substring(0, 8)}.${format}`
+        );
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(url);
@@ -317,7 +329,10 @@ async function exportRuryOrderAsOffer_action(orderId, format) {
         const a = document.createElement('a');
         a.href = url;
         const safeNumber = String(orderNumber).replace(/[^a-zA-Z0-9_-]/g, '_');
-        a.download = `oferta_rury_zamowienie_${safeNumber}.${format}`;
+        a.download = window.ExportFilenames.serverFilename(
+            res,
+            `oferta_rury_zamowienie_${safeNumber}.${format}`
+        );
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);

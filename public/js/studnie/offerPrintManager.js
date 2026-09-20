@@ -279,7 +279,9 @@ async function exportOfferToWord() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `OFERTA_STUDNIE_${offerNumber.replace(/[^A-Za-z0-9]/g, '_')}.doc`;
+    link.download = window.ExportFilenames
+        ? window.ExportFilenames.filename('oferta_studnie', [[offerNumber]], 'doc')
+        : `OFERTA_STUDNIE_${offerNumber.replace(/[^A-Za-z0-9]/g, '_')}.doc`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -462,13 +464,18 @@ window.exportOfferDirect_action = async function (offerId, format) {
                     `Eksport ${format.toUpperCase()} (${res.status}): ${errText.slice(0, 200)}`
                 );
             }
-            return res.blob();
+            const fileName = window.ExportFilenames.serverFilename(
+                res,
+                `oferta_studnie_${offerId}.${format}`
+            );
+            const blob = await res.blob();
+            return { blob, fileName };
         })
-        .then((blob) => {
+        .then(({ blob, fileName }) => {
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `oferta_studnie_${offerId}.${format}`;
+            a.download = fileName;
             document.body.appendChild(a);
             a.click();
             window.URL.revokeObjectURL(url);
@@ -522,13 +529,18 @@ window.exportOrderDirect_action = async function (orderId, format) {
                     `Eksport ${format.toUpperCase()} (${res.status}): ${errText.slice(0, 200)}`
                 );
             }
-            return res.blob();
+            const fileName = window.ExportFilenames.serverFilename(
+                res,
+                `zamowienie_studnie_${orderId.substring(0, 8)}.${format}`
+            );
+            const blob = await res.blob();
+            return { blob, fileName };
         })
-        .then((blob) => {
+        .then(({ blob, fileName }) => {
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `zamowienie_studnie_${orderId.substring(0, 8)}.${format}`;
+            a.download = fileName;
             document.body.appendChild(a);
             a.click();
             window.URL.revokeObjectURL(url);
@@ -567,13 +579,18 @@ window.exportKartaDirect_action = async function (orderId, format) {
                     `Eksport ${format.toUpperCase()} (${res.status}): ${errText.slice(0, 200)}`
                 );
             }
-            return res.blob();
+            const fileName = window.ExportFilenames.serverFilename(
+                res,
+                `karta_budowy_${orderId.substring(0, 8)}.${format}`
+            );
+            const blob = await res.blob();
+            return { blob, fileName };
         })
-        .then((blob) => {
+        .then(({ blob, fileName }) => {
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `karta_budowy_${orderId.substring(0, 8)}.${format}`;
+            a.download = fileName;
             document.body.appendChild(a);
             a.click();
             window.URL.revokeObjectURL(url);
@@ -691,7 +708,10 @@ async function exportStudnieOrderAsOffer_action(orderId, format) {
         const a = document.createElement('a');
         a.href = url;
         const safeNumber = String(orderNumber).replace(/[^a-zA-Z0-9_-]/g, '_');
-        a.download = `oferta_studnie_zamowienie_${safeNumber}.${format}`;
+        a.download = window.ExportFilenames.serverFilename(
+            res,
+            `oferta_studnie_zamowienie_${safeNumber}.${format}`
+        );
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);

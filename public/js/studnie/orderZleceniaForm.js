@@ -649,6 +649,22 @@ async function populateZleceniaForm(el) {
     }
 }
 
+/* Ustawia hidden input + klase active w grupie kafli PZ (selektory data-field,
+   nie onclick — kafelki PZ nie mają atrybutu onclick). */
+function setZlTile(fieldId, val) {
+    const input = document.getElementById(fieldId);
+    if (input) input.value = val;
+    const tile = document.querySelector(
+        `.zl-param-group [data-action="selectZleceniaTile"][data-field="${fieldId}"][data-value="${val}"]`
+    );
+    if (tile) {
+        const group = tile.closest('.zl-param-group');
+        if (group)
+            group.querySelectorAll('.param-tile').forEach((b) => b.classList.remove('active'));
+        tile.classList.add('active');
+    }
+}
+
 async function selectZleceniaTile(btn, targetId, val) {
     const group = btn.closest('.zl-param-group');
     if (group) {
@@ -706,6 +722,18 @@ async function selectZleceniaTile(btn, targetId, val) {
                     if (el.well.psiaBuda) {
                         val = 'brak';
                     }
+                    // PRECO / PrecoTop / UnoLith → spocznikH zablokowany na 1/1 (jak w konfiguratorze)
+                    if (
+                        (el.well.kineta === 'preco' ||
+                            el.well.kineta === 'precotop' ||
+                            el.well.kineta === 'unolith') &&
+                        val !== '1/1'
+                    ) {
+                        val = '1/1';
+                        if (typeof showToast === 'function')
+                            showToast('Przy wkładce PRECO spocznik musi być 1/1', 'warning');
+                        setZlTile('zl-spocznik-h', val);
+                    }
                     el.well.spocznikH = val;
                     if (existing) existing.spocznikH = val;
                 } else if (targetId === 'zl-usytuowanie') {
@@ -731,35 +759,27 @@ async function selectZleceniaTile(btn, targetId, val) {
                         'brak'
                     ];
                     if (syncValues.includes(val)) {
-                        const spocznikInput = document.getElementById('zl-spocznik');
-                        if (spocznikInput) {
-                            const group = spocznikInput.closest('.form-group-sm');
-                            if (group) {
-                                const targetBtn = group.querySelector(
-                                    `.param-tile[onclick*="'zl-spocznik', '${val}'"]`
-                                );
-                                if (targetBtn && !targetBtn.classList.contains('active')) {
-                                    targetBtn.click();
-                                }
-                            }
-                        }
+                        el.well.spocznik = val;
+                        if (existing) existing.spocznik = val;
+                        setZlTile('zl-spocznik', val);
                     }
 
                     // PRECO / PrecoTop / UnoLith → wymuszenie spocznikH = '1/1'
                     if (val === 'preco' || val === 'precotop' || val === 'unolith') {
-                        const spocznikHInput = document.getElementById('zl-spocznik-h');
-                        if (spocznikHInput) {
-                            const hGroup = spocznikHInput.closest('.form-group-sm');
-                            if (hGroup) {
-                                const hBtn = hGroup.querySelector(
-                                    `.param-tile[onclick*="'zl-spocznik-h', '1/1'"]`
-                                );
-                                if (hBtn && !hBtn.classList.contains('active')) {
-                                    hBtn.click();
-                                }
-                            }
-                        }
+                        el.well.spocznikH = '1/1';
+                        if (existing) existing.spocznikH = '1/1';
+                        setZlTile('zl-spocznik-h', '1/1');
                     }
+
+                    // Przebudowa pozycji kinety w config (jak refreshAll w konfiguratorze —
+                    // tam syncKineta idzie po current well, tu trzeba jawnie po el.well).
+                    if (typeof syncKineta === 'function') syncKineta(el.well);
+                    if (existing) {
+                        existing.spocznik = el.well.spocznik;
+                        existing.spocznikH = el.well.spocznikH;
+                    }
+                    setZlTile('zl-spocznik', el.well.spocznik);
+                    setZlTile('zl-spocznik-h', el.well.spocznikH);
                 } else if (targetId === 'zl-spocznik') {
                     // Psia buda → dennica bez dna: spocznik zawsze 'brak'
                     if (el.well.psiaBuda) {

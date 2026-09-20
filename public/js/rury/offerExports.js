@@ -509,7 +509,12 @@ async function exportOfferXlsx(id) {
 
     // Download
     const safeNumber = offer.number.replace(/[/\\:*?"<>|]/g, '_');
-    XLSX.writeFile(wb, `Oferta_${safeNumber}_${offer.date}.xlsx`);
+    XLSX.writeFile(
+        wb,
+        window.ExportFilenames
+            ? window.ExportFilenames.filename('oferta', [[offer.number], [offer.date]], 'xlsx')
+            : `Oferta_${safeNumber}_${offer.date}.xlsx`
+    );
     showToast('Pobrano plik XLSX', 'success');
 }
 
