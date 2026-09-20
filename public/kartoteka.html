@@ -415,7 +415,7 @@
         <script defer src="js/import-export/studnie/transferJson.js?v=1.28.0"></script>
         <script defer src="js/import-export/toolbar.js?v=1.28.0"></script>
 
-        <!-- Wymuszenie jedynego punktu wejścia: app.html#/<module> -->
+        <!-- Wymuszenie jedynego punktu wejścia: app.html#/<module> (+ query) -->
         <script>
             if (window.top === window.self) {
                 const module =
@@ -423,7 +423,7 @@
                         .split('/')
                         .pop()
                         .replace(/\.html?$/, '') || 'kartoteka';
-                window.location.replace('/app.html#/' + module);
+                window.location.replace('/app.html#/' + module + location.search);
             }
         </script>
         <script>
