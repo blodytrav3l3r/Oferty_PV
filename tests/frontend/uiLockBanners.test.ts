@@ -1,3 +1,7 @@
+/**
+ * @jest-environment jsdom
+ */
+
 // @ts-nocheck
 /**
  * A1: baner blokady oferty escapuje wellOrder.id w onclick (kontekst JS-string).
