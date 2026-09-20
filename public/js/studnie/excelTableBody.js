@@ -46,6 +46,17 @@ function _excelGetRowStatus(well) {
 /* ===== TBODY RENDER ===== */
 function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
     let html = '</thead><tbody>';
+    // Legacy dedup: stare klony studni mogą dzielić pr.id między wierszami
+    // (hover SVG podświetlałby wtedy kilka wierszy naraz). Idempotentny —
+    // unikalnych id nie zmienia, więc wielokrotne rendery to no-op.
+    // Zakres: pełne wells (nie slice tabWells — virtual tnie wiersze).
+    if (
+        typeof ensureUniquePrzejsciaIdsAcrossWells === 'function' &&
+        typeof wells !== 'undefined' &&
+        Array.isArray(wells)
+    ) {
+        ensureUniquePrzejsciaIdsAcrossWells(wells);
+    }
     const dnLabel = dn === 'styczne' ? 'Styczne' : 'DN' + dn;
     const dnColor = (DN_COLORS[dn === 'styczne' ? 'styczne' : dn] || DN_COLORS['1000']).border;
     const nameCounts = {};
@@ -343,6 +354,11 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
         /* Przejscia */
         for (let _i = 0; _i < maxTr; _i++) {
             const prz = przejscia[_i] || {};
+            // Stabilne id przejścia — cel hoveru z podglądu SVG (klasa .excel-tr-hover).
+            const przIdAttr =
+                prz.id != null && String(prz.id) !== ''
+                    ? ' data-prz-id="' + escapeHtmlAttr(String(prz.id)) + '"'
+                    : '';
             const hasExplicitRzWl = prz.rzednaWlaczenia != null && prz.rzednaWlaczenia !== '';
             const rzWlPlaceholder =
                 !hasExplicitRzWl && well.rzednaDna != null
@@ -380,6 +396,8 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             html +=
                 '<td class="excel-td excel-td-right excel-tr-first' +
                 (_i % 2 === 1 ? ' excel-tr-alt' : '') +
+                '"' +
+                przIdAttr +
                 '"><input type="number" step="0.01" value="' +
                 (hasExplicitRzWl ? prz.rzednaWlaczenia : '') +
                 '" placeholder="' +
@@ -395,6 +413,8 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             html +=
                 '<td class="excel-td excel-td-center' +
                 (_i % 2 === 1 ? ' excel-tr-alt' : '') +
+                '"' +
+                przIdAttr +
                 '"><input type="number" step="1" value="' +
                 (prz.angle != null ? prz.angle : '') +
                 '" onchange="excelOnPrzejscieChange(' +
@@ -408,13 +428,17 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             html +=
                 '<td class="excel-td excel-td-left' +
                 (_i % 2 === 1 ? ' excel-tr-alt' : '') +
-                '">' +
+                '"' +
+                przIdAttr +
+                '>' +
                 typeHtml +
                 '</td>';
             html +=
                 '<td class="excel-td excel-td-left excel-tr-last' +
                 (_i % 2 === 1 ? ' excel-tr-alt' : '') +
-                '">' +
+                '"' +
+                przIdAttr +
+                '>' +
                 dnHtml +
                 '</td>';
         }

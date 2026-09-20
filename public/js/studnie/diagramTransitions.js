@@ -61,6 +61,7 @@ function drawTransitions(well, canvas, dimLinesY) {
 
         items.push({
             idx,
+            przId: pr && pr.id != null ? String(pr.id) : '',
             px,
             prY,
             radiusW,
@@ -102,6 +103,7 @@ function drawTransitions(well, canvas, dimLinesY) {
     items.forEach((it) => {
         svgOut += drawTransitionShape(
             it.idx,
+            it.przId,
             it.px,
             it.prY,
             it.radiusW,
@@ -235,13 +237,16 @@ function parseTransitionGeometry(pr, bottomElev) {
 
 /**
  * Generuje kształt SVG przejścia (kółko / elipsa / prostokąt).
+ * Identyfikacja po stabilnym pr.id (data-prz-id) — SSoT mapowania
+ * SVG → kafelek / Excel, odporna na sortowanie i filtrowanie.
  */
-function drawTransitionShape(idx, px, prY, radiusW, radiusH, isRect, isEgg, isBack) {
+function drawTransitionShape(idx, przId, px, prY, radiusW, radiusH, isRect, isEgg, isBack) {
     const pColor = isBack ? SVG_COLORS.transitionBack : SVG_COLORS.transitionActive;
     const sColor = isBack ? SVG_COLORS.transitionBackStroke : SVG_COLORS.transitionStroke;
     const sDash = isBack ? 'stroke-dasharray="2,2"' : '';
+    const safeId = String(przId == null ? '' : przId).replace(/'/g, '');
 
-    const gOpen = `<g class="svg-prz-${idx}" style="transition:all 0.2s;" onmouseenter="window.svgPrzPointerEnter(event, ${idx})" onmouseleave="window.svgPrzPointerLeave(event, ${idx})">`;
+    const gOpen = `<g class="svg-prz-${idx}" data-prz-id="${safeId}" style="transition:all 0.2s;" onmouseenter="window.svgPrzPointerEnter(event, '${safeId}')" onmouseleave="window.svgPrzPointerLeave(event, '${safeId}')">`;
     const gClose = '</g>';
 
     if (isRect) {

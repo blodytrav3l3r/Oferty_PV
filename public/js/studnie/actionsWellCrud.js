@@ -207,6 +207,9 @@ function duplicateWell(index) {
     const copy = structuredClone(src);
     copy.id = 'well-' + Date.now() + '-' + wellCounter;
     copy.name = src.name + ' (kopia)';
+    // Kopia dostaje nową tożsamość przejść — inaczej dzieliłaby pr.id
+    // z oryginałem i hover SVG podświetlałby oba wiersze.
+    if (typeof resetPrzejsciaIds === 'function') resetPrzejsciaIds(copy.przejscia);
     wells.splice(index + 1, 0, copy);
     currentWellIndex = index + 1;
     refreshAll();

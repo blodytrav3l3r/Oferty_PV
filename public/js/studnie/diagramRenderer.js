@@ -23,7 +23,122 @@
  */
 
 /* ===== PODŚWIETLANIE SVG ===== */
+
+/**
+ * Rozwiązuje cel podświetlenia przejścia.
+ * Preferuje stabilne pr.id (string, globalnie unikalne — niezależne od
+ * sortowania/filtrowania); legacy indeks liczbowy mapuje na id przez
+ * bieżącą studnię z fallbackiem na data-prz-idx.
+ * @param {string|number} arg id przejścia lub legacy indeks
+ * @returns {{ przId: string|null, legacyIdx: number|null }}
+ */
+function resolvePrzTarget(arg) {
+    if (typeof arg === 'string' && arg !== '') {
+        if (!/^-?\d+$/.test(arg.trim())) return { przId: arg, legacyIdx: null };
+        arg = parseInt(arg, 10);
+    }
+    if (typeof arg === 'number' && !isNaN(arg)) {
+        let list = [];
+        try {
+            const w = typeof getCurrentWell === 'function' ? getCurrentWell() : null;
+            if (w && Array.isArray(w.przejscia)) list = w.przejscia;
+        } catch (_e) {}
+        const found = list[arg] && list[arg].id != null ? String(list[arg].id) : null;
+        return { przId: found, legacyIdx: arg };
+    }
+    return { przId: null, legacyIdx: null };
+}
+
+/**
+ * Przełącza podświetlenie przejścia na wszystkich listach: kafelki
+ * konfiguratora, kafelki zlecenia (zl-przejscia-list) oraz 4 komórki
+ * Excela. Bez scrollowania — hover to akcja chwilowa. JS tylko
+ * przełącza klasy CSS, bez inline stylingu.
+ */
+function setPrzHighlight(arg, on) {
+    if (typeof document === 'undefined') return;
+    const target = resolvePrzTarget(arg);
+    if (!target.przId && target.legacyIdx === null) return;
+    document.querySelectorAll('.prz-tile[data-prz-id]').forEach((el) => {
+        let match = false;
+        if (target.przId) {
+            match = el.getAttribute('data-prz-id') === target.przId;
+        } else {
+            match = el.getAttribute('data-prz-idx') === String(target.legacyIdx);
+        }
+        if (match) el.classList.toggle('prz-tile--svg-hover', on);
+    });
+    const overlay =
+        typeof document.getElementById === 'function'
+            ? document.getElementById('excel-table-overlay')
+            : null;
+    if (overlay && target.przId) {
+        let matched = 0;
+        let candidates = 0;
+        overlay.querySelectorAll('td[data-prz-id]').forEach((td) => {
+            candidates++;
+            if (td.getAttribute('data-prz-id') === target.przId) {
+                td.classList.toggle('excel-tr-hover', on);
+                matched++;
+            }
+        });
+        // Diagnostyka rozjazdu ID (tylko za flagą — zero szumu produkcyjnie).
+        if (matched === 0 && on && typeof window !== 'undefined' && window.__SOK_DEBUG) {
+            let wellId = null;
+            try {
+                const w = typeof getCurrentWell === 'function' ? getCurrentWell() : null;
+                wellId = w && w.id != null ? w.id : null;
+            } catch (_e) {}
+            let gCount = 0;
+            try {
+                document.querySelectorAll('g[data-prz-id]').forEach((el) => {
+                    if (el.getAttribute('data-prz-id') === target.przId) gCount++;
+                });
+            } catch (_e2) {}
+            if (typeof console !== 'undefined' && typeof console.debug === 'function') {
+                console.debug('[SOK Excel Hover] brak dopasowania TD', {
+                    przejscieId: target.przId,
+                    wellId,
+                    tdCandidates: candidates,
+                    gCount,
+                    currentWellIndex:
+                        typeof currentWellIndex !== 'undefined' ? currentWellIndex : null
+                });
+            }
+        }
+    }
+}
+
+/**
+ * Ustawia filtr podświetlenia na samym kształcie SVG przejścia (<g>).
+ * Dopasowanie po data-prz-id (porównanie atrybutu — brak ryzyka iniekcji
+ * selektora); legacy indeks liczbowy po klasie .svg-prz-N.
+ */
+function setPrzSvgFilter(arg, value) {
+    if (typeof document === 'undefined') return;
+    const target = resolvePrzTarget(arg);
+    if (!target.przId && target.legacyIdx === null) return;
+    if (target.przId) {
+        document.querySelectorAll('g[data-prz-id]').forEach((el) => {
+            if (el.getAttribute('data-prz-id') === target.przId) el.style.filter = value;
+        });
+    } else {
+        document.querySelectorAll('.svg-prz-' + target.legacyIdx).forEach((el) => {
+            el.style.filter = value;
+        });
+    }
+}
+
 window.highlightSvg = function (type, index) {
+    if (type === 'prz') {
+        // Sam kształt na podglądzie + odpowiednik na liście.
+        setPrzSvgFilter(
+            index,
+            'drop-shadow(0px 0px 8px rgba(var(--blue-hover-rgb), 0.9)) brightness(1.3)'
+        );
+        setPrzHighlight(index, true);
+        return;
+    }
     document.querySelectorAll('.svg-' + type + '-' + index).forEach((el) => {
         el.style.filter =
             'drop-shadow(0px 0px 8px rgba(var(--blue-hover-rgb), 0.9)) brightness(1.3)';
@@ -33,21 +148,20 @@ window.highlightSvg = function (type, index) {
     if (type === 'cfg') {
         const tile = document.querySelector('.config-tile[data-cfg-idx="' + index + '"]');
         if (tile) tile.style.filter = 'brightness(1.1)';
-    } else if (type === 'prz') {
-        const tile = document.querySelector('div[data-prz-idx="' + index + '"]');
-        if (tile) tile.style.filter = 'brightness(1.1)';
     }
 };
 window.unhighlightSvg = function (type, index) {
+    if (type === 'prz') {
+        setPrzSvgFilter(index, '');
+        setPrzHighlight(index, false);
+        return;
+    }
     document.querySelectorAll('.svg-' + type + '-' + index).forEach((el) => {
         el.style.filter = '';
     });
 
     if (type === 'cfg') {
         const tile = document.querySelector('.config-tile[data-cfg-idx="' + index + '"]');
-        if (tile) tile.style.filter = 'brightness(1)';
-    } else if (type === 'prz') {
-        const tile = document.querySelector('div[data-prz-idx="' + index + '"]');
         if (tile) tile.style.filter = 'brightness(1)';
     }
 };
@@ -61,13 +175,13 @@ window.svgPointerLeave = function (ev, idx) {
     window.unhighlightSvg('cfg', idx);
 };
 
-window.svgPrzPointerEnter = function (ev, idx) {
+window.svgPrzPointerEnter = function (ev, idOrIdx) {
     if (window.svgDragStartIndex >= 0) return;
-    window.highlightSvg('prz', idx);
+    window.highlightSvg('prz', idOrIdx);
 };
 
-window.svgPrzPointerLeave = function (ev, idx) {
-    window.unhighlightSvg('prz', idx);
+window.svgPrzPointerLeave = function (ev, idOrIdx) {
+    window.unhighlightSvg('prz', idOrIdx);
 };
 
 /* ===== GŁÓWNA FUNKCJA RENDEROWANIA SCHEMATU ===== */

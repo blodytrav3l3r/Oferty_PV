@@ -298,6 +298,9 @@ function excelDuplicateWell(wIdx) {
     const copy = structuredClone(src);
     copy.id = 'well_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
     copy.name = src.name + ' (kopia)';
+    // Kopia dostaje nową tożsamość przejść — inaczej dzieliłaby pr.id
+    // z oryginałem i hover SVG podświetlałby oba wiersze Excela.
+    if (typeof resetPrzejsciaIds === 'function') resetPrzejsciaIds(copy.przejscia);
     /* Kopia nie dziedziczy cache resolution (wskazywałby nieaktualne produkty) */
     delete copy.__resCache;
     wells.splice(wIdx + 1, 0, copy);

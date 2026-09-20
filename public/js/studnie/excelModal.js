@@ -198,6 +198,19 @@ function openExcelTableModal() {
         for (let _rwo = 0; _rwo < wells.length; _rwo++) {
             _excelCleanEmptyPrzejscia(wells[_rwo]);
         }
+        // Tożsamość przejść PRZED pierwszym renderem: backfill braków + dedup
+        // kolizji między studiami (stare klony). Diagram i tabela muszą dostać
+        // te same ID z tego samego znormalizowanego źródła (hover SVG → TD).
+        if (typeof ensurePrzejsciaIds === 'function') {
+            for (let _rwo = 0; _rwo < wells.length; _rwo++) {
+                if (wells[_rwo] && Array.isArray(wells[_rwo].przejscia)) {
+                    ensurePrzejsciaIds(wells[_rwo].przejscia);
+                }
+            }
+        }
+        if (typeof ensureUniquePrzejsciaIdsAcrossWells === 'function') {
+            ensureUniquePrzejsciaIdsAcrossWells(wells);
+        }
         // Normalizacja: uszczelki AUTO (jak w konfiguratorze) + rozbicie legacy qty>1 na N x qty1
         for (let _rwo = 0; _rwo < wells.length; _rwo++) {
             const _w = wells[_rwo];
@@ -452,6 +465,11 @@ function openExcelTableModal() {
     _perfMark('open-tabs');
     _excelRenderTable(_excelActiveTab);
     _perfMark('open-render');
+    /* Diagram z tego samego znormalizowanego źródła co tabela (post-dedup ID).
+       Bez tego <g> niosłoby ID sprzed otwarcia, a TD już nowe → hover bez matchu. */
+    try {
+        if (typeof renderWellDiagram === 'function') renderWellDiagram();
+    } catch (_eDiagram) {}
     if (_perfPush && _perfNow) _perfPush('open-total', _perfNow() - _tOpen0);
     _excelStopPolling();
     _excelStartPolling();

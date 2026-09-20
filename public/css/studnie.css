@@ -3531,10 +3531,22 @@ td.excel-tint--plyta_redukcyjna input {
         transform 0.18s;
 }
 
-.prz-tile:hover {
-    border-color: rgba(var(--accent-rgb), 0.22);
-    box-shadow: 0 4px 14px rgba(var(--black-rgb), 0.28);
-    transform: translateY(-1px);
+/* Aktywne przejście — jeden wspólny wygląd niezależnie od źródła hoveru
+   (wariant A): hover na kafelku (.prz-tile:hover) i hover na kształt w podglądzie
+   SVG (.prz-tile--svg-hover, diagramRenderer.js). Pierścień wewnątrz kafelka
+   (inset) — efekty zewnętrzne ucinałby scroll-kontener #zl-przejscia-list
+   (overflow:auto); inset respektuje też border-radius. Bez zmiany layoutu. */
+.prz-tile:hover,
+.prz-tile--svg-hover {
+    background: rgba(var(--accent-rgb), 0.12);
+    box-shadow: inset 0 0 0 2px var(--accent);
+}
+
+/* Podświetlenie 4 komórek przejścia w Excelu przy hoverze na podglądzie SVG.
+   inset box-shadow zamiast outline (obramowanie TD przytnęłoby się w tabeli). */
+.excel-tr-hover {
+    background: rgba(var(--accent-rgb), 0.18) !important;
+    box-shadow: inset 0 0 0 2px var(--accent) !important;
 }
 
 .prz-tile > div:nth-child(2) {

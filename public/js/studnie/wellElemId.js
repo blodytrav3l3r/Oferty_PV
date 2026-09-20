@@ -31,6 +31,14 @@ function newElemId() {
 }
 
 /**
+ * Generuje nowe id przejścia (format zgodny z ensurePrzejsciaIds).
+ * @returns {string}
+ */
+function newPrzejscieId() {
+    return 'prz-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
+}
+
+/**
  * Nadaje stabilne id każdemu przejściu, które go nie posiada.
  * Idempotentna: istniejące id nie są zmieniane (stabilność data-prz-id).
  * @param {Array<{ id?: string }>} przejscia
@@ -41,11 +49,57 @@ function ensurePrzejsciaIds(przejscia) {
     for (const item of przejscia) {
         if (!item || typeof item !== 'object') continue;
         if (!item.id) {
-            item.id =
-                'prz-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
+            item.id = newPrzejscieId();
         }
     }
     return przejscia;
+}
+
+/**
+ * Regeneruje WSZYSTKIE id przejść w przekazanej liście (nowa tożsamość).
+ * Kontrakt: każde klonowanie studni (structuredClone kopiuje id 1:1) musi
+ * wołać tę funkcję na kopii — inaczej oryginał i kopia dzielą id i hover
+ * SVG podświetla komórki w obu wierszach Excela.
+ * @param {Array<{ id?: string }>} przejscia
+ * @returns {Array<{ id?: string }>}
+ */
+function resetPrzejsciaIds(przejscia) {
+    if (!Array.isArray(przejscia)) return przejscia;
+    const seen = new Set();
+    for (const item of przejscia) {
+        if (!item || typeof item !== 'object') continue;
+        do {
+            item.id = newPrzejscieId();
+        } while (seen.has(item.id));
+        seen.add(item.id);
+    }
+    return przejscia;
+}
+
+/**
+ * Dedup legacy: zapewnia globalną unikalność pr.id w obrębie wszystkich
+ * studni (kolizje między różnymi studiami po starych klonowaniach).
+ * Deterministyczny: pierwsze wystąpienie id zostaje, kolejne dostają nowe.
+ * Idempotentny: unikalnych id nie zmienia — ponowne uruchomienie to no-op.
+ * @param {Array<{ przejscia?: Array }>} wells
+ * @returns {Array}
+ */
+function ensureUniquePrzejsciaIdsAcrossWells(wells) {
+    if (!Array.isArray(wells)) return wells;
+    const seen = new Set();
+    for (const well of wells) {
+        if (!well || typeof well !== 'object' || !Array.isArray(well.przejscia)) continue;
+        for (const pr of well.przejscia) {
+            if (!pr || typeof pr !== 'object') continue;
+            if (!pr.id || seen.has(pr.id)) {
+                do {
+                    pr.id = newPrzejscieId();
+                } while (seen.has(pr.id));
+            }
+            seen.add(pr.id);
+        }
+    }
+    return wells;
 }
 
 /**
@@ -81,4 +135,6 @@ function carryOverConfigElemIds(oldConfig, newConfig) {
 window.ensureElemIds = ensureElemIds;
 window.newElemId = newElemId;
 window.ensurePrzejsciaIds = ensurePrzejsciaIds;
+window.resetPrzejsciaIds = resetPrzejsciaIds;
+window.ensureUniquePrzejsciaIdsAcrossWells = ensureUniquePrzejsciaIdsAcrossWells;
 window.carryOverConfigElemIds = carryOverConfigElemIds;
