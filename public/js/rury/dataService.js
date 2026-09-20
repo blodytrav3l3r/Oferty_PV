@@ -4,12 +4,19 @@
 /* Zależności: authHeaders() z shared/auth.js, showToast() z shared/ui.js */
 
 /* Helper HTTP z auth + timeout, dostępny globalnie dla pricelistUi itp. */
+/* Kontrakt: null = błąd (HTTP lub sieciowy), callerzy traktują null jako fail. */
+/* E2d: warn-only w logach; zmiana na throw wymaga decyzji po mapie callerów. */
+function _apiWarn(method, url, info) {
+    logger.warn('api', method + ' ' + url + ' — ' + info);
+}
 window.api = {
     async get(url) {
         try {
             const res = await fetchWithTimeout(url, { headers: authHeaders() });
+            if (!res.ok) _apiWarn('GET', url, 'HTTP ' + res.status);
             return res.ok ? res.json() : null;
-        } catch {
+        } catch (e) {
+            _apiWarn('GET', url, 'błąd sieci');
             return null;
         }
     },
@@ -20,8 +27,10 @@ window.api = {
                 headers: { ...authHeaders(), 'Content-Type': 'application/json' },
                 body: JSON.stringify(body)
             });
+            if (!res.ok) _apiWarn('PUT', url, 'HTTP ' + res.status);
             return res.ok ? res.json() : null;
-        } catch {
+        } catch (e) {
+            _apiWarn('PUT', url, 'błąd sieci');
             return null;
         }
     },
@@ -32,8 +41,10 @@ window.api = {
                 headers: { ...authHeaders(), 'Content-Type': 'application/json' },
                 body: JSON.stringify(body)
             });
+            if (!res.ok) _apiWarn('POST', url, 'HTTP ' + res.status);
             return res.ok ? res.json() : null;
-        } catch {
+        } catch (e) {
+            _apiWarn('POST', url, 'błąd sieci');
             return null;
         }
     },
@@ -44,16 +55,20 @@ window.api = {
                 headers: { ...authHeaders(), 'Content-Type': 'application/json' },
                 body: JSON.stringify(body)
             });
+            if (!res.ok) _apiWarn('PATCH', url, 'HTTP ' + res.status);
             return res.ok ? res.json() : null;
-        } catch {
+        } catch (e) {
+            _apiWarn('PATCH', url, 'błąd sieci');
             return null;
         }
     },
     async del(url) {
         try {
             const res = await fetchWithTimeout(url, { method: 'DELETE', headers: authHeaders() });
+            if (!res.ok) _apiWarn('DELETE', url, 'HTTP ' + res.status);
             return res.ok ? res.json() : null;
-        } catch {
+        } catch (e) {
+            _apiWarn('DELETE', url, 'błąd sieci');
             return null;
         }
     }
