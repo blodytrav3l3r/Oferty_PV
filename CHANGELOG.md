@@ -4,6 +4,47 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+### [1.27.1](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.27.0...v1.27.1) (2026-09-20)
+
+### Features
+
+- **api:** dowolne litery kodow magazynow ([c77c17f](https://github.com/blodytrav3l3r/Oferty_PV/commit/c77c17f393d102a1acb896ee83673272fa641228))
+- **api:** slownik kodow magazynow dennica nadbudowa ([2916678](https://github.com/blodytrav3l3r/Oferty_PV/commit/291667814589ca43d47b4ed340de4e540fb38b46))
+- **orders:** licznik potwierdzonych wydruków zleceń i etykiet ([832c0ae](https://github.com/blodytrav3l3r/Oferty_PV/commit/832c0aef4d7b0eb560d13cc2912becb035d031ca))
+- **studnie:** magazyn per element dennica nadbudowa ([c56d45c](https://github.com/blodytrav3l3r/Oferty_PV/commit/c56d45c86244cbf1fd789f39d711676da905054c))
+- **studnie:** magazyn per wiersz w imporcie i eksporcie ([6de8dda](https://github.com/blodytrav3l3r/Oferty_PV/commit/6de8dda035291d9fda6019a97874d5db65eec9d1))
+- **ui:** auto-detekcja typu dokumentu w import-export ([4c42ac5](https://github.com/blodytrav3l3r/Oferty_PV/commit/4c42ac560d3e4b1853c600043a8a1ed98f697907))
+- **ui:** edytor kodow magazynow na pulpicie ([8874146](https://github.com/blodytrav3l3r/Oferty_PV/commit/8874146ae9e5cfad133b5b7754976267a646b1b3))
+- **ui:** odpornosc zapisow na rozlaczenie z serwerem ([7fdff08](https://github.com/blodytrav3l3r/Oferty_PV/commit/7fdff08eddfeb952c8600c6839bcc94c69e12162))
+
+### Bug Fixes
+
+- **api:** format uuid w params i licznik observe dto ([3f4bc3e](https://github.com/blodytrav3l3r/Oferty_PV/commit/3f4bc3e7faa8eac7f0dd5e66913422b4ad78b357))
+- **api:** logowanie cichych fallbackow ownership i flag ([aeb6f87](https://github.com/blodytrav3l3r/Oferty_PV/commit/aeb6f8762f09970fde6ed901c7d8a24bc9cf70b5))
+- **api:** walidacja zod endpointow produkcji ([e412b5c](https://github.com/blodytrav3l3r/Oferty_PV/commit/e412b5ca98e13c19db0cd1cc3959f47fe9abd507))
+- **api:** walidacja zod exportow, flag i numeracji ([abedabc](https://github.com/blodytrav3l3r/Oferty_PV/commit/abedabcdcd303bad03f8f138850ba2f7c00656a9))
+- **clients:** preset dat ignorowany przy ofertach z zamówieniem ([1b57b6b](https://github.com/blodytrav3l3r/Oferty_PV/commit/1b57b6bfc4ccde7b2664af7a6f03bc9c4175bbb9))
+- **offers:** lazy-load pozycji w eksporcie xlsx ([6f4d852](https://github.com/blodytrav3l3r/Oferty_PV/commit/6f4d85285f1da03606983dac990cf8e6447b6254))
+- **offers:** logowanie korrupt offer.data ([1c2a2b8](https://github.com/blodytrav3l3r/Oferty_PV/commit/1c2a2b8cc94615b0d06e8bf495ee9ecaf67c0901))
+- **orders:** widoczne zamówienia po zmianie filtra w kartotece ([b0d5aa9](https://github.com/blodytrav3l3r/Oferty_PV/commit/b0d5aa9949f770ab2357ad0e47d8b990e542172c))
+- **rury:** diagnoza kontraktu window.api ([a57cb7a](https://github.com/blodytrav3l3r/Oferty_PV/commit/a57cb7a529e469defce986ce99651c4e6f18e5cd))
+- **rury:** wiersz transportu w pdf i docx tylko dla osobnej pozycji ([be41a58](https://github.com/blodytrav3l3r/Oferty_PV/commit/be41a58c505d042f695267154407a5532dd13279))
+- **security:** limiter loginu ip plus login i limit na mountach ([7f45859](https://github.com/blodytrav3l3r/Oferty_PV/commit/7f4585901cfb88b0df82fea01a14f169a4d2adae))
+- **studnie:** escapowanie id zamowienia w banerze blokady ([c27ebc1](https://github.com/blodytrav3l3r/Oferty_PV/commit/c27ebc1fb0ebcc9b2ceb616eac6a8afb3f5a3b69))
+- **studnie:** kolor cen transportu jak pozostalych cen w ofercie ([3f1f2af](https://github.com/blodytrav3l3r/Oferty_PV/commit/3f1f2af6ed52d90ecad1062ca6d612b7a41e4154))
+- **studnie:** live rewalidacja kolizji geometrycznych ([e420858](https://github.com/blodytrav3l3r/Oferty_PV/commit/e420858161016e2a3b020edd279cbbc511860735))
+- **studnie:** serwer ssot wersji i mutex zapisu zamowienia ([47352e3](https://github.com/blodytrav3l3r/Oferty_PV/commit/47352e37f8506626df646dfee5aaf650b4c98bea))
+- **studnie:** sygnal odrzutu snapshotu undo ([6540f6e](https://github.com/blodytrav3l3r/Oferty_PV/commit/6540f6e5a0e4052aa59ded67c64e0fffbb4529c3))
+- **studnie:** szczegóły zmian w modalu draftu i twarde normalizacje ([cbe491d](https://github.com/blodytrav3l3r/Oferty_PV/commit/cbe491d65448b98152463a929709ca01e38cb29a))
+- **studnie:** ukrycie wiersza transportu przy cenie wliczonej w elementy ([f144346](https://github.com/blodytrav3l3r/Oferty_PV/commit/f144346303a94d1f60fa580c404428e98decbb86))
+- **studnie:** wiersz transportu w porównaniu tylko dla osobnej pozycji ([5db05eb](https://github.com/blodytrav3l3r/Oferty_PV/commit/5db05eba313205c2a7064ca9d7e52cbff3b25003))
+- **test:** flaga test:frontend i datownik licencji ([0923574](https://github.com/blodytrav3l3r/Oferty_PV/commit/09235743a11d1000df35c0d4dc79c31acf7b2063))
+- **test:** hermetyczny snapshot w tescie catastrophic ([ad29caa](https://github.com/blodytrav3l3r/Oferty_PV/commit/ad29caa473f8aef048b56d7bde0a56e9def9cbe3))
+- **test:** mock flagi ai-ml w telemetryaidashboard ([281c12e](https://github.com/blodytrav3l3r/Oferty_PV/commit/281c12edb9dfefbfbf823898b5f1f361e19a2807))
+- **ui:** cleanup timerow polling ([19f73ec](https://github.com/blodytrav3l3r/Oferty_PV/commit/19f73ec219703f961901f299bc3a1670070bfaba))
+- **ui:** estetyka karty kodow magazynow ([e6b8533](https://github.com/blodytrav3l3r/Oferty_PV/commit/e6b853398d1bd7e2b0126d7ebbd82ccd305a71c6))
+- **ui:** widoczne bledy dashboardu ml ([4834cc9](https://github.com/blodytrav3l3r/Oferty_PV/commit/4834cc955e60314bf1c6e4fe269c8706a7373d4b))
+
 ## [1.27.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.26.1...v1.27.0) (2026-09-17)
 
 ### Features

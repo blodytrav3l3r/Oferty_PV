@@ -1,6 +1,6 @@
 # S.O.K. — Instrukcja uruchomienia serwera przez Internet
 
-**Wersja:** 1.27.0
+**Wersja:** 1.27.1
 
 ## Spis treści
 
