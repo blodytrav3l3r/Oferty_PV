@@ -2,6 +2,7 @@
 /* ===== Stan globalny dla przejść ===== */
 
 let editPrzejscieIdx = -1;
+let editPrzejscieId = null;
 let editPrzejscieState = {
     type: null,
     dnId: null,
@@ -27,6 +28,13 @@ Object.defineProperty(window, 'editPrzejscieState', {
     get: () => editPrzejscieState,
     set: (v) => {
         editPrzejscieState = v;
+    }
+});
+Object.defineProperty(window, 'editPrzejscieId', {
+    configurable: true,
+    get: () => editPrzejscieId,
+    set: (v) => {
+        editPrzejscieId = v;
     }
 });
 Object.defineProperty(window, 'inlinePrzejsciaState', {

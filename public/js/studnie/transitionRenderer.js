@@ -77,6 +77,26 @@ function classifyFlowType(item, globalIndex) {
     }
 }
 
+/**
+ * Rozwiązuje globalny indeks przejścia w well.przejscia.
+ * Preferuje stabilne id (data-prz-id) — odporne na re-sort/filtr;
+ * fallback na indeks numeryczny (legacy / brak id).
+ * @param {Object} well
+ * @param {Element|null} el element z data-prz-id / data-i
+ * @param {number} fallbackIdx indeks numeryczny z data-i
+ * @returns {number}
+ */
+function resolvePrzejscieIndex(well, el, fallbackIdx) {
+    if (well && Array.isArray(well.przejscia) && el) {
+        const przId = el.getAttribute && el.getAttribute('data-prz-id');
+        if (przId) {
+            const byId = well.przejscia.findIndex((p) => p && p.id === przId);
+            if (byId !== -1) return byId;
+        }
+    }
+    return fallbackIdx;
+}
+
 // ──────────────────────────────────────
 // Główny renderer kafelków
 // ──────────────────────────────────────
@@ -143,10 +163,10 @@ function renderTransitionTileHTML(item, globalIndex, product, opts = {}) {
     if (showEdit || showDelete) {
         actionsHTML = `<div class="prz-actions-col">`;
         if (showEdit) {
-            actionsHTML += `<button data-action="editPrzejscie" data-i="${globalIndex}" title="Edytuj" class="prz-btn-edit"><i data-lucide="pencil"></i></button>`;
+            actionsHTML += `<button data-action="editPrzejscie" data-i="${globalIndex}" data-prz-id="${escapeHtmlAttr(tileId)}" title="Edytuj" class="prz-btn-edit"><i data-lucide="pencil"></i></button>`;
         }
         if (showDelete) {
-            actionsHTML += `<button data-action="removePrzejscieFromWell" data-i="${globalIndex}" title="Usuń" class="prz-btn-delete"><i data-lucide="x"></i></button>`;
+            actionsHTML += `<button data-action="removePrzejscieFromWell" data-i="${globalIndex}" data-prz-id="${escapeHtmlAttr(tileId)}" title="Usuń" class="prz-btn-delete"><i data-lucide="x"></i></button>`;
         }
         actionsHTML += `</div>`;
     }
@@ -179,7 +199,7 @@ function renderTransitionTileHTML(item, globalIndex, product, opts = {}) {
         ? `<div class="prz-col prz-col--price" title="Pole nie rabatowane">
              <div class="prz-col-header ellipsis-center">Dopłata</div>
              <div class="prz-col-body" style="justify-content:center; align-items:center; min-width:0;">
-               <div data-qe-id="${escapeHtmlAttr(tileId)}" data-qe-field="doplata" data-action="activateQuickEdit" data-i="${globalIndex}" data-field="doplata" class="prz-field-doplata" style="font-size: ${doplataFont}; font-weight: var(--fw-extrabold); color:${doplataColor}; font-family:'Inter'; text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; font-variant-numeric:tabular-nums; display:inline-flex; align-items:center; justify-content:center; gap:0.2rem;" title="${escapeHtmlAttr(doplataStr)} PLN"><span>${doplataStr}</span><span class="fs-2xs">PLN</span></div>
+               <div data-qe-id="${escapeHtmlAttr(tileId)}" data-qe-field="doplata" data-action="activateQuickEdit" data-i="${globalIndex}" data-prz-id="${escapeHtmlAttr(tileId)}" data-field="doplata" class="prz-field-doplata" style="font-size: ${doplataFont}; font-weight: var(--fw-extrabold); color:${doplataColor}; font-family:'Inter'; text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; font-variant-numeric:tabular-nums; display:inline-flex; align-items:center; justify-content:center; gap:0.2rem;" title="${escapeHtmlAttr(doplataStr)} PLN"><span>${doplataStr}</span><span class="fs-2xs">PLN</span></div>
              </div>
            </div>`
         : '';
@@ -194,9 +214,9 @@ function renderTransitionTileHTML(item, globalIndex, product, opts = {}) {
             : '';
 
     const extraPadding = opts.drillingBasePrice > 0 && opts.drillingProd ? '0.75rem' : '0.35rem';
-    return `<div ${dragAttrs} class="prz-tile" style="border-left-color:${flow.border}; padding-bottom:${extraPadding}; ${cursorStyle}" ${highlightAttrs}>
+    return `<div ${dragAttrs} data-prz-id="${escapeHtmlAttr(tileId)}" class="prz-tile" style="border-left-color:${flow.border}; padding-bottom:${extraPadding}; ${cursorStyle}" ${highlightAttrs}>
        <!-- FLOW TYPE BUTTON -->
-      <button data-action="openFlowTypePopup" data-i="${globalIndex}" title="Kliknij by zmienić na Wlot/Wylot" style="position:relative; background:${flow.bg}; color:${flow.color}; border:1px solid ${flow.border}; border-radius: var(--radius-2xs); padding:0.08rem 0.22rem; display:flex; flex-direction:column; align-items:center; cursor:pointer; width:38px; min-width:38px; transition:all 0.2s;">
+      <button data-action="openFlowTypePopup" data-i="${globalIndex}" data-prz-id="${escapeHtmlAttr(tileId)}" title="Kliknij by zmienić na Wlot/Wylot" style="position:relative; background:${flow.bg}; color:${flow.color}; border:1px solid ${flow.border}; border-radius: var(--radius-2xs); padding:0.08rem 0.22rem; display:flex; flex-direction:column; align-items:center; cursor:pointer; width:38px; min-width:38px; transition:all 0.2s;">
         ${numDisplay}
         <span style="font-size: var(--fs-lg); line-height:1; margin-bottom:0px; display:inline-flex;">${flow.icon}</span>
         <span style="font-size: 0.48rem; font-weight: var(--fw-extrabold); text-transform:uppercase; letter-spacing:0.2px; margin-top:1px; line-height:1;">${flow.label}</span>
@@ -205,33 +225,33 @@ function renderTransitionTileHTML(item, globalIndex, product, opts = {}) {
       <!-- SZCZEGÓŁY -->
       <div class="prz-main">
         <div class="prz-name-wrap" title="${escapeHtmlAttr(przName + ' ' + dnLabel)}">
-          <span data-action="openChangePrzejscieTypePopup" data-i="${globalIndex}" title="${escapeHtmlAttr(przName)} — kliknij, aby zmienić typ" class="prz-field-color">${escapeHtml(przName)}</span>
-          <span data-action="openChangePrzejscieDnPopup" data-i="${globalIndex}" title="${escapeHtmlAttr(dnLabel)} — kliknij, aby zmienić średnicę" class="prz-field-dn">${escapeHtml(dnLabel)}</span>
+          <span data-action="openChangePrzejscieTypePopup" data-i="${globalIndex}" data-prz-id="${escapeHtmlAttr(tileId)}" title="${escapeHtmlAttr(przName)} — kliknij, aby zmienić typ" class="prz-field-color">${escapeHtml(przName)}</span>
+          <span data-action="openChangePrzejscieDnPopup" data-i="${globalIndex}" data-prz-id="${escapeHtmlAttr(tileId)}" title="${escapeHtmlAttr(dnLabel)} — kliknij, aby zmienić średnicę" class="prz-field-dn">${escapeHtml(dnLabel)}</span>
         </div>
 
         <div class="prz-cols">
           <div class="prz-col">
             <div class="prz-col-header" title="${spadekKLabel} [mm]">Spadek kin. [%]</div>
             <div class="prz-col-body">
-              <div data-qe-id="${escapeHtmlAttr(tileId)}" data-qe-field="spadekKineta" data-action="activateQuickEdit" data-i="${globalIndex}" data-field="spadekKineta" title="Kliknij aby edytować" class="prz-field fs-2xl-bold-primary-shadow" >${item.spadekKineta != null && item.spadekKineta !== '' && parseFloat(item.spadekKineta) !== 0 ? Math.round(parseFloat(item.spadekKineta)) + ' %' : '—'}</div>
+              <div data-qe-id="${escapeHtmlAttr(tileId)}" data-qe-field="spadekKineta" data-action="activateQuickEdit" data-i="${globalIndex}" data-prz-id="${escapeHtmlAttr(tileId)}" data-field="spadekKineta" title="Kliknij aby edytować" class="prz-field fs-2xl-bold-primary-shadow" >${item.spadekKineta != null && item.spadekKineta !== '' && parseFloat(item.spadekKineta) !== 0 ? Math.round(parseFloat(item.spadekKineta)) + ' %' : '—'}</div>
             </div>
           </div>
           <div class="prz-col">
             <div class="prz-col-header" title="${spadekMLabel} [mm]">Spadek mufy [%]</div>
             <div class="prz-col-body">
-              <div data-qe-id="${escapeHtmlAttr(tileId)}" data-qe-field="spadekMufa" data-action="activateQuickEdit" data-i="${globalIndex}" data-field="spadekMufa" title="Kliknij aby edytować" class="prz-field fs-2xl-bold-primary-shadow" >${item.spadekMufa != null && item.spadekMufa !== '' && parseFloat(item.spadekMufa) !== 0 ? Math.round(parseFloat(item.spadekMufa)) + ' %' : '—'}</div>
+              <div data-qe-id="${escapeHtmlAttr(tileId)}" data-qe-field="spadekMufa" data-action="activateQuickEdit" data-i="${globalIndex}" data-prz-id="${escapeHtmlAttr(tileId)}" data-field="spadekMufa" title="Kliknij aby edytować" class="prz-field fs-2xl-bold-primary-shadow" >${item.spadekMufa != null && item.spadekMufa !== '' && parseFloat(item.spadekMufa) !== 0 ? Math.round(parseFloat(item.spadekMufa)) + ' %' : '—'}</div>
             </div>
           </div>
           <div class="prz-col">
             <div class="prz-col-header">Kąt</div>
             <div class="prz-col-body">
-              <div data-qe-id="${escapeHtmlAttr(tileId)}" data-qe-field="angle" data-action="activateQuickEdit" data-i="${globalIndex}" data-field="angle" title="Kliknij aby edytować wpisując liczbę" class="prz-field-angle" style="font-size: var(--fs-xl); font-weight: var(--fw-extrabold); color:${angleColor}; text-shadow:0 1px 2px rgba(var(--black-rgb), 0.3);">${item.angle}°</div>
+              <div data-qe-id="${escapeHtmlAttr(tileId)}" data-qe-field="angle" data-action="activateQuickEdit" data-i="${globalIndex}" data-prz-id="${escapeHtmlAttr(tileId)}" data-field="angle" title="Kliknij aby edytować wpisując liczbę" class="prz-field-angle" style="font-size: var(--fs-xl); font-weight: var(--fw-extrabold); color:${angleColor}; text-shadow:0 1px 2px rgba(var(--black-rgb), 0.3);">${item.angle}°</div>
             </div>
           </div>
           <div class="prz-col">
             <div class="prz-col-header" title="Wysokość [mm]">Wysokość [mm]</div>
             <div class="prz-col-body">
-              <div data-qe-id="${escapeHtmlAttr(tileId)}" data-qe-field="heightMm" data-action="activateQuickEdit" data-i="${globalIndex}" data-field="heightMm" title="Wysokość od dolnej krawędzi elementu" class="prz-field-height" style="font-size: var(--fs-xl); font-weight: var(--fw-extrabold); color:var(--warn); text-shadow:0 1px 2px rgba(var(--black-rgb), 0.3);">${heightMm} mm</div>
+              <div data-qe-id="${escapeHtmlAttr(tileId)}" data-qe-field="heightMm" data-action="activateQuickEdit" data-i="${globalIndex}" data-prz-id="${escapeHtmlAttr(tileId)}" data-field="heightMm" title="Wysokość od dolnej krawędzi elementu" class="prz-field-height" style="font-size: var(--fs-xl); font-weight: var(--fw-extrabold); color:var(--warn); text-shadow:0 1px 2px rgba(var(--black-rgb), 0.3);">${heightMm} mm</div>
             </div>
           </div>
           <div class="prz-col">
@@ -249,7 +269,7 @@ function renderTransitionTileHTML(item, globalIndex, product, opts = {}) {
           <div class="prz-col">
             <div class="prz-col-header">Rzędna</div>
             <div class="prz-col-body">
-              <div data-qe-id="${escapeHtmlAttr(tileId)}" data-qe-field="rzednaWlaczenia" data-action="activateQuickEdit" data-i="${globalIndex}" data-field="rzednaWlaczenia" title="Kliknij aby edytować wpisując liczbę" class="prz-field-rzedna" style="font-size: var(--fs-xl); font-weight: var(--fw-extrabold); color:var(--text-primary); text-shadow:0 1px 2px rgba(var(--black-rgb), 0.3);">${item.rzednaWlaczenia || '—'}</div>
+              <div data-qe-id="${escapeHtmlAttr(tileId)}" data-qe-field="rzednaWlaczenia" data-action="activateQuickEdit" data-i="${globalIndex}" data-prz-id="${escapeHtmlAttr(tileId)}" data-field="rzednaWlaczenia" title="Kliknij aby edytować wpisując liczbę" class="prz-field-rzedna" style="font-size: var(--fs-xl); font-weight: var(--fw-extrabold); color:var(--text-primary); text-shadow:0 1px 2px rgba(var(--black-rgb), 0.3);">${item.rzednaWlaczenia || '—'}</div>
             </div>
           </div>
           ${priceHTML}
@@ -413,7 +433,12 @@ if (typeof document !== 'undefined' && !window.__trDelegated) {
         const active = document.activeElement;
         if (active && active.tagName === 'INPUT' && active.closest('[data-qe-id]')) {
             e.preventDefault();
-            window.activateQuickEdit(el, parseInt(i, 10), field);
+            const w = typeof window.getCurrentWell === 'function' ? window.getCurrentWell() : null;
+            const rIdx =
+                typeof resolvePrzejscieIndex === 'function'
+                    ? resolvePrzejscieIndex(w, el, parseInt(i, 10))
+                    : parseInt(i, 10);
+            window.activateQuickEdit(el, rIdx, field);
             el.setAttribute('data-qe-handled', '1');
             setTimeout(() => el.removeAttribute('data-qe-handled'), 300);
         }
@@ -424,27 +449,34 @@ if (typeof document !== 'undefined' && !window.__trDelegated) {
         const action = el.getAttribute('data-action') || '';
         const i = el.getAttribute('data-i');
         const field = el.getAttribute('data-field');
+        // Stabilny indeks: data-prz-id (odporny na re-sort/filtr), fallback data-i.
+        const well = typeof window.getCurrentWell === 'function' ? window.getCurrentWell() : null;
+        const idx =
+            typeof resolvePrzejscieIndex === 'function'
+                ? resolvePrzejscieIndex(well, el, parseInt(i, 10))
+                : parseInt(i, 10);
         if (action === 'editPrzejscie') {
-            window.editPrzejscie(parseInt(i, 10));
+            window.editPrzejscie(idx);
         } else if (action === 'removePrzejscieFromWell') {
-            window.removePrzejscieFromWell(parseInt(i, 10));
+            window.removePrzejscieFromWell(idx);
         } else if (action === 'openFlowTypePopup') {
-            window.openFlowTypePopup(parseInt(i, 10));
+            window.openFlowTypePopup(idx);
         } else if (action === 'openChangePrzejscieTypePopup') {
-            window.openChangePrzejscieTypePopup(parseInt(i, 10));
+            window.openChangePrzejscieTypePopup(idx);
         } else if (action === 'openChangePrzejscieDnPopup') {
-            window.openChangePrzejscieDnPopup(parseInt(i, 10));
+            window.openChangePrzejscieDnPopup(idx);
         } else if (action === 'activateQuickEdit') {
             if (el.getAttribute('data-qe-handled') === '1') {
                 el.removeAttribute('data-qe-handled');
                 return;
             }
-            window.activateQuickEdit(el, parseInt(i, 10), field);
+            window.activateQuickEdit(el, idx, field);
         }
     });
 }
 
 window.renderTransitionTileHTML = renderTransitionTileHTML;
+window.resolvePrzejscieIndex = resolvePrzejscieIndex;
 window.buildConfigMap = buildConfigMap;
 window.findAssignedElement = findAssignedElement;
 window.computeHeightFromElement = computeHeightFromElement;

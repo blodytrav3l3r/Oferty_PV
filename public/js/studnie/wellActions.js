@@ -13,12 +13,26 @@ window.refreshZleceniaModalIfActive = async function () {
     ) {
         let oldWellIdx = -1;
         let oldElIdx = -1;
+        let oldWellId = null;
+        let oldElemKey = null;
 
         if (typeof zleceniaSelectedIdx !== 'undefined' && zleceniaSelectedIdx >= 0) {
             const oldEl = zleceniaElementsList[zleceniaSelectedIdx];
             if (oldEl) {
                 oldWellIdx = oldEl.wellIndex;
                 oldElIdx = oldEl.elementIndex;
+                oldWellId = oldEl.well ? oldEl.well.id : null;
+                try {
+                    oldElemKey =
+                        (oldEl.configItem && oldEl.configItem._elemId) ||
+                        (oldEl.well &&
+                            oldEl.well.config &&
+                            oldEl.well.config[oldEl.elementIndex] &&
+                            oldEl.well.config[oldEl.elementIndex]._elemId) ||
+                        null;
+                } catch (_e) {
+                    oldElemKey = null;
+                }
             }
         }
 
@@ -26,10 +40,12 @@ window.refreshZleceniaModalIfActive = async function () {
         if (typeof buildZleceniaWellList === 'function') {
             buildZleceniaWellList();
 
-            // Znajdź na nowo index
-            if (oldWellIdx !== -1) {
+            // Znajdź na nowo index — najpierw po stabilnym _elemId (solver może
+            // przebudować config i przesunąć elementIndex; numer PZ musi zostać).
+            if (oldWellIdx !== -1 || oldElemKey) {
                 let fallbackIdx = -1;
                 let foundExact = -1;
+                let foundByKey = -1;
                 for (let i = 0; i < zleceniaElementsList.length; i++) {
                     const el = zleceniaElementsList[i];
                     if (el.wellIndex === oldWellIdx) {
@@ -39,8 +55,18 @@ window.refreshZleceniaModalIfActive = async function () {
                             break;
                         }
                     }
+                    if (
+                        foundByKey === -1 &&
+                        oldElemKey &&
+                        el.configItem &&
+                        el.configItem._elemId === oldElemKey &&
+                        (oldWellId == null || (el.well && String(el.well.id) === String(oldWellId)))
+                    ) {
+                        foundByKey = i;
+                    }
                 }
-                zleceniaSelectedIdx = foundExact !== -1 ? foundExact : fallbackIdx;
+                zleceniaSelectedIdx =
+                    foundByKey !== -1 ? foundByKey : foundExact !== -1 ? foundExact : fallbackIdx;
             }
         }
 

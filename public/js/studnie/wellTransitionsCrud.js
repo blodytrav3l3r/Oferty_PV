@@ -52,6 +52,11 @@ function editPrzejscie(index) {
             : studnieProducts.find((pr) => pr.id === item.productId);
 
     editPrzejscieIdx = index;
+    try {
+        editPrzejscieId = item.id || null;
+    } catch (_e) {
+        editPrzejscieId = null;
+    }
     editPrzejscieState = {
         type: p ? p.category : null,
         dnId: item.productId,
@@ -118,17 +123,26 @@ function savePrzejscieEdit(index) {
     }
 
     well.przejscia[index] = {
+        id: well.przejscia[index].id,
         productId: newProductId,
         rzednaWlaczenia: rzednaVal,
         angle: angle,
         angleExecution: exec,
         angleGony: gons,
+        flowType: well.przejscia[index].flowType,
+        flowTypeManual: well.przejscia[index].flowTypeManual,
 
         spadekKineta: spadekKineta ? Math.round(parseFloat(spadekKineta)) : null,
         spadekMufa: spadekMufa ? Math.round(parseFloat(spadekMufa)) : null
     };
+    if (!well.przejscia[index].id && typeof ensurePrzejsciaIds === 'function') {
+        ensurePrzejsciaIds(well.przejscia);
+    }
 
     editPrzejscieIdx = -1;
+    try {
+        editPrzejscieId = null;
+    } catch (_e) {}
     if (typeof refreshActiveWell === 'function') refreshActiveWell();
     else refreshAll();
     autoSelectComponents(true);
@@ -139,6 +153,9 @@ function savePrzejscieEdit(index) {
 
 function cancelPrzejscieEdit() {
     editPrzejscieIdx = -1;
+    try {
+        editPrzejscieId = null;
+    } catch (_e) {}
     renderWellPrzejscia();
     window.refreshZleceniaModalIfActive();
 }

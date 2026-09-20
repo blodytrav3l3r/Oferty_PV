@@ -136,6 +136,17 @@ window.autoSelectComponents = async function autoSelectComponents(autoTriggered 
         // === KROK 1: JS Solver ===
         const jsMsStart =
             window.performance && window.performance.now ? window.performance.now() : Date.now();
+        // Snapshot do carryOverConfigElemIds — runJsAutoSelection nie mutuje well.config,
+        // ale zachowaj referencję na wypadek współbieżnych mutacji przed przypisaniem wyniku.
+        try {
+            well._preAutoConfig = (well.config || []).map((it) => ({
+                productId: it.productId,
+                quantity: it.quantity,
+                _elemId: it._elemId
+            }));
+        } catch (_e) {
+            well._preAutoConfig = [];
+        }
         const jsResult = await runJsAutoSelection(well, requiredMm, availProducts);
         if (jsResult.error) {
             well.configStatus = 'ERROR';
@@ -172,6 +183,16 @@ window.autoSelectComponents = async function autoSelectComponents(autoTriggered 
             );
 
         well.config = jsResult.config;
+        // Stabilność wskazań PZ: solver buduje świeże obiekty bez _elemId.
+        // Przenieś _elemId ze starego configu (match productId+quantity), reszcie nadaj nowe.
+        if (typeof carryOverConfigElemIds === 'function') {
+            carryOverConfigElemIds(well._preAutoConfig || [], well.config);
+        } else if (typeof ensureElemIds === 'function') {
+            ensureElemIds(well.config);
+        }
+        try {
+            delete well._preAutoConfig;
+        } catch (_e) {}
         const errors = [...(jsResult.errors || [])];
         if (jsResult.fallback)
             errors.push(

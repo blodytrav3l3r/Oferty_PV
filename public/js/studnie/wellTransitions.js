@@ -449,6 +449,11 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
 
     if (!container) return;
 
+    // Stabilne id przejść — backfill dla danych legacy (idempotentny).
+    if (typeof ensurePrzejsciaIds === 'function' && well && Array.isArray(well.przejscia)) {
+        ensurePrzejsciaIds(well.przejscia);
+    }
+
     if (!well || !well.przejscia || well.przejscia.length === 0) {
         container.innerHTML =
             '<div class="empty-state"><i data-lucide="droplets"></i><h3>Brak przejść</h3><p>Dodaj przejście z formularza powyżej</p></div>';
@@ -533,6 +538,12 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
     ensureDisplayIndices(_visiblePrzejscia);
 
     _visiblePrzejscia.forEach((item, index) => {
+        // Globalny indeks w well.przejscia — NIE filtrowany. Przy filtrze elementu
+        // (zlecenia) indeks filtrowany ≠ globalny i edycja trafiała w złe przejście.
+        // data-i / data-index / editPrzejscieIdx zawsze globalne; data-prz-id jako SSoT.
+        let globalIndex = well.przejscia.indexOf(item);
+        if (globalIndex === -1) globalIndex = _srcList.indexOf(item);
+        if (globalIndex === -1) globalIndex = index;
         let pel = parseFloat(item.rzednaWlaczenia);
         if (isNaN(pel)) pel = rzDna;
         const mmFromBottom = (pel - rzDna) * 1000;
@@ -592,7 +603,7 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
             : 'rgba(var(--black-rgb), 0.3)';
 
         if (filterElementIndex == null && assignedIndex !== prevAssignedIndex) {
-            if (index > 0) html += '<div style="height:0.5rem;"></div>';
+            if (globalIndex > 0) html += '<div style="height:0.5rem;"></div>';
             html += `<div style="display:flex; align-items:center; gap:0.4rem; padding:0.3rem 0.5rem; margin-top:0.4rem; margin-bottom:0.4rem; background:linear-gradient(90deg, ${assignedBg} 0%, rgba(var(--slate-800-rgb), 0.8) 100%); border-left:3px solid ${assignedBg}; border-radius: var(--radius-sm); color:var(--text-muted); font-size: var(--fs-xs); font-weight: var(--fw-bold); text-transform:uppercase; letter-spacing:0.5px; box-shadow:0 1px 3px rgba(var(--black-rgb), 0.3);">
                 <span style="font-size: var(--fs-xl); filter:grayscale(0.4);"><i data-lucide="map-pin"></i></span> 
                 <span>Dotyczy:</span> 
@@ -606,8 +617,18 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
 
         const heightMm = computeHeightFromElement(mmFromBottom, configMap);
 
-        // Tryb edycji dla tego kafelka
-        if (editPrzejscieIdx === index) {
+        // Tryb edycji dla tego kafelka (globalIndex — stabilny przy filtrze elementu).
+        // editPrzejscieId przeżywa re-sort well.przejscia; indeks jest healowany.
+        let isEditingThis = editPrzejscieIdx === globalIndex;
+        try {
+            if (typeof editPrzejscieId !== 'undefined' && editPrzejscieId) {
+                isEditingThis = item.id === editPrzejscieId;
+                if (isEditingThis && editPrzejscieIdx !== globalIndex) {
+                    editPrzejscieIdx = globalIndex;
+                }
+            }
+        } catch (_e) {}
+        if (isEditingThis) {
             const typeName = p ? p.category : '—';
             const allTypes =
                 typeof getPrzejsciaCategories === 'function'
@@ -669,7 +690,7 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
             html += `<div class="wt-edit-panel">
               <div class="wt-edit-head">
                 <div class="flex-gap-4">
-                  <span class="wt-edit-index">${index + 1}</span>
+                  <span class="wt-edit-index">${globalIndex + 1}</span>
                   <span class="wt-edit-title">Edycja wariantu</span>
                 </div>
                 <button type="button" class="btn-icon" data-action="cancelPrzejscieEdit" aria-label="Zamknij"><i data-lucide="x" aria-hidden="true"></i></button>
@@ -699,39 +720,39 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
 
               <div class="wt-edit-form">
                 <div class="form-group m-0">
-                  <label class="fs-3xs-muted-block" for="edit-rzedna-${index}">Rzędna [m]</label>
-                  <input type="text" inputmode="decimal" class="form-input fs-base-rc" id="edit-rzedna-${index}" step="0.001" value="${editPrzejscieState.rzedna}" placeholder="142.500" onchange="window.syncEditState()" onkeydown="if(event.key==='Enter') this.blur();">
+                  <label class="fs-3xs-muted-block" for="edit-rzedna-${globalIndex}">Rzędna [m]</label>
+                  <input type="text" inputmode="decimal" class="form-input fs-base-rc" id="edit-rzedna-${globalIndex}" step="0.001" value="${editPrzejscieState.rzedna}" placeholder="142.500" onchange="window.syncEditState()" onkeydown="if(event.key==='Enter') this.blur();">
                 </div>
                 <div class="form-group m-0">
-                  <label class="fs-3xs-muted-block" for="edit-angle-${index}">Kąt [°]</label>
-                  <input type="number" class="form-input color-link fs-base-rc" id="edit-angle-${index}" value="${editPrzejscieState.angle}" min="0" max="360" oninput="editUpdateAngles(${index}); window.syncEditState()" onkeydown="if(event.key==='Enter') this.blur();">
+                  <label class="fs-3xs-muted-block" for="edit-angle-${globalIndex}">Kąt [°]</label>
+                  <input type="number" class="form-input color-link fs-base-rc" id="edit-angle-${globalIndex}" value="${editPrzejscieState.angle}" min="0" max="360" oninput="editUpdateAngles(${globalIndex}); window.syncEditState()" onkeydown="if(event.key==='Enter') this.blur();">
                 </div>
                 <div class="form-group m-0">
-                  <label class="fs-3xs-muted-block" for="edit-spadek-kineta-${index}">Spadek w kinecie [%]</label>
-                  <input type="number" class="form-input fs-base-rc" id="edit-spadek-kineta-${index}" step="1" value="${editPrzejscieState.spadekKineta}" onchange="window.syncEditState()" onkeydown="if(event.key==='Enter') this.blur();">
+                  <label class="fs-3xs-muted-block" for="edit-spadek-kineta-${globalIndex}">Spadek w kinecie [%]</label>
+                  <input type="number" class="form-input fs-base-rc" id="edit-spadek-kineta-${globalIndex}" step="1" value="${editPrzejscieState.spadekKineta}" onchange="window.syncEditState()" onkeydown="if(event.key==='Enter') this.blur();">
                 </div>
                 <div class="form-group m-0">
-                  <label class="fs-3xs-muted-block" for="edit-spadek-mufa-${index}">Spadek w mufie [%]</label>
-                  <input type="number" class="form-input fs-base-rc" id="edit-spadek-mufa-${index}" step="1" value="${editPrzejscieState.spadekMufa}" onchange="window.syncEditState()" onkeydown="if(event.key==='Enter') this.blur();">
+                  <label class="fs-3xs-muted-block" for="edit-spadek-mufa-${globalIndex}">Spadek w mufie [%]</label>
+                  <input type="number" class="form-input fs-base-rc" id="edit-spadek-mufa-${globalIndex}" step="1" value="${editPrzejscieState.spadekMufa}" onchange="window.syncEditState()" onkeydown="if(event.key==='Enter') this.blur();">
                 </div>
               </div>
 
               <div class="wt-edit-footer">
                 <div class="wt-edit-meta">
-                  <span>Wyk: <strong id="edit-exec-${index}" class="text-primary">${execAngle}°</strong></span>
-                  <span>Gony: <strong id="edit-gony-${index}" class="color-success">${gons}<sup>g</sup></strong></span>
+                  <span>Wyk: <strong id="edit-exec-${globalIndex}" class="text-primary">${execAngle}°</strong></span>
+                  <span>Gony: <strong id="edit-gony-${globalIndex}" class="color-success">${gons}<sup>g</sup></strong></span>
                 </div>
                 <div class="wt-edit-actions">
                   <button type="button" class="btn btn-secondary btn-sm" data-action="cancelPrzejscieEdit">Anuluj</button>
-                  <button type="button" data-action="savePrzejscieEdit" data-index="${index}" class="btn btn-primary btn-sm"><i data-lucide="save" aria-hidden="true"></i> Zapisz</button>
+                  <button type="button" data-action="savePrzejscieEdit" data-index="${globalIndex}" data-prz-id="${escapeHtmlAttr(item.id || '')}" class="btn btn-primary btn-sm"><i data-lucide="save" aria-hidden="true"></i> Zapisz</button>
                 </div>
               </div>
             </div>`;
             return;
         }
 
-        // Uzyj wspolnego renderera kafelkow przejsc
-        html += renderTransitionTileHTML(item, index, p, {
+        // Uzyj wspolnego renderera kafelkow przejsc (globalIndex — stabilny przy filtrze)
+        html += renderTransitionTileHTML(item, globalIndex, p, {
             heightMm,
             showEditBtn: true,
             showDeleteBtn: true,
@@ -842,7 +863,12 @@ if (typeof document !== 'undefined' && !window.__wtDelegated) {
         } else if (action === 'cancelPrzejscieEdit') {
             window.cancelPrzejscieEdit();
         } else if (action === 'savePrzejscieEdit') {
-            window.savePrzejscieEdit(parseInt(index, 10));
+            const well = typeof getCurrentWell === 'function' ? getCurrentWell() : null;
+            const rIdx =
+                typeof resolvePrzejscieIndex === 'function'
+                    ? resolvePrzejscieIndex(well, el, parseInt(index, 10))
+                    : parseInt(index, 10);
+            window.savePrzejscieEdit(rIdx);
         } else if (action === 'editInlineSetType') {
             window.editInlineSetType(t);
         } else if (action === 'editInlineSetDN') {
