@@ -14,12 +14,12 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 
 | Licencja                | Liczba pakietów |
 | ----------------------- | --------------: |
-| MIT                     |             944 |
-| ISC                     |              99 |
+| MIT                     |            1049 |
+| ISC                     |             102 |
 | Apache-2.0              |              63 |
-| BSD-3-Clause            |              20 |
+| BSD-3-Clause            |              25 |
 | BSD-2-Clause            |              20 |
-| BlueOak-1.0.0           |              16 |
+| BlueOak-1.0.0           |              14 |
 | MIT OR CC0-1.0          |              14 |
 | MPL-2.0                 |               2 |
 | MIT-0                   |               1 |
@@ -35,7 +35,7 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 
 ## Oprogramowanie firm trzecich
 
-### MIT (944)
+### MIT (1049)
 
 - @apidevtools/json-schema-ref-parser@14.0.1
 - @apidevtools/openapi-schemas@2.1.0
@@ -46,10 +46,7 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - @babel/code-frame@7.29.7
 - @babel/compat-data@7.29.7
 - @babel/core@7.29.7
-- @babel/generator@7.29.7
-- @babel/generator@7.29.7
-- @babel/generator@7.29.7
-- @babel/generator@7.29.7
+- @babel/generator@7.29.8
 - @babel/helper-compilation-targets@7.29.7
 - @babel/helper-globals@7.29.7
 - @babel/helper-module-imports@7.29.7
@@ -59,7 +56,7 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - @babel/helper-validator-identifier@7.29.7
 - @babel/helper-validator-option@7.29.7
 - @babel/helpers@7.29.7
-- @babel/parser@7.29.7
+- @babel/parser@7.29.9
 - @babel/plugin-syntax-async-generators@7.8.4
 - @babel/plugin-syntax-bigint@7.8.3
 - @babel/plugin-syntax-class-properties@7.12.13
@@ -81,16 +78,7 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - @babel/traverse@7.29.7
 - @babel/traverse@7.29.7
 - @babel/traverse@7.29.7
-- @babel/types@7.29.7
-- @babel/types@7.29.7
-- @babel/types@7.29.7
-- @babel/types@7.29.7
-- @babel/types@7.29.7
-- @babel/types@7.29.7
-- @babel/types@7.29.7
-- @babel/types@7.29.7
-- @babel/types@7.29.7
-- @babel/types@7.29.7
+- @babel/types@7.29.8
 - @bcoe/v8-coverage@0.2.3
 - @commitlint/cli@21.2.3
 - @commitlint/config-conventional@21.2.3
@@ -152,28 +140,114 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - @jest/console@30.4.1
 - @jest/core@30.4.2
 - @jest/diff-sequences@30.4.0
+- @jest/diff-sequences@30.4.0
+- @jest/diff-sequences@30.4.0
+- @jest/diff-sequences@30.5.0
 - @jest/environment-jsdom-abstract@30.4.1
 - @jest/environment@30.4.1
 - @jest/expect-utils@30.4.1
+- @jest/expect-utils@30.4.1
+- @jest/expect-utils@30.5.2
 - @jest/expect@30.4.1
 - @jest/fake-timers@30.4.1
 - @jest/get-type@30.1.0
+- @jest/get-type@30.1.0
+- @jest/get-type@30.1.0
+- @jest/get-type@30.1.0
+- @jest/get-type@30.1.0
+- @jest/get-type@30.1.0
+- @jest/get-type@30.1.0
+- @jest/get-type@30.5.0
 - @jest/globals@30.4.1
 - @jest/pattern@30.4.0
 - @jest/pattern@30.4.0
 - @jest/pattern@30.4.0
+- @jest/pattern@30.4.0
+- @jest/pattern@30.4.0
+- @jest/pattern@30.4.0
+- @jest/pattern@30.4.0
+- @jest/pattern@30.4.0
+- @jest/pattern@30.4.0
+- @jest/pattern@30.4.0
+- @jest/pattern@30.4.0
+- @jest/pattern@30.4.0
+- @jest/pattern@30.4.0
+- @jest/pattern@30.4.0
+- @jest/pattern@30.4.0
+- @jest/pattern@30.4.0
+- @jest/pattern@30.4.0
+- @jest/pattern@30.4.0
+- @jest/pattern@30.4.0
+- @jest/pattern@30.4.0
+- @jest/pattern@30.4.0
+- @jest/pattern@30.4.0
+- @jest/pattern@30.4.0
+- @jest/pattern@30.4.0
+- @jest/pattern@30.5.0
+- @jest/react-is-18@18.3.1
+- @jest/react-is-19@19.3.0
 - @jest/reporters@30.4.1
 - @jest/schemas@30.4.1
+- @jest/schemas@30.4.1
+- @jest/schemas@30.4.1
+- @jest/schemas@30.4.1
+- @jest/schemas@30.4.1
+- @jest/schemas@30.4.1
+- @jest/schemas@30.4.1
+- @jest/schemas@30.4.1
+- @jest/schemas@30.4.1
+- @jest/schemas@30.4.1
+- @jest/schemas@30.4.1
+- @jest/schemas@30.4.1
+- @jest/schemas@30.4.1
+- @jest/schemas@30.4.1
+- @jest/schemas@30.4.1
+- @jest/schemas@30.4.1
+- @jest/schemas@30.4.1
+- @jest/schemas@30.4.1
+- @jest/schemas@30.4.1
+- @jest/schemas@30.4.1
+- @jest/schemas@30.4.1
+- @jest/schemas@30.4.1
+- @jest/schemas@30.4.1
+- @jest/schemas@30.4.1
+- @jest/schemas@30.4.1
+- @jest/schemas@30.5.0
 - @jest/snapshot-utils@30.4.1
 - @jest/source-map@30.0.1
 - @jest/test-result@30.4.1
 - @jest/test-sequencer@30.4.1
 - @jest/transform@30.4.1
+- @jest/transform@30.4.1
+- @jest/transform@30.4.1
+- @jest/transform@30.4.1
+- @jest/transform@30.4.1
+- @jest/transform@30.4.1
 - @jest/types@30.4.1
-- @jridgewell/gen-mapping@0.3.13
-- @jridgewell/gen-mapping@0.3.13
-- @jridgewell/gen-mapping@0.3.13
-- @jridgewell/gen-mapping@0.3.13
+- @jest/types@30.4.1
+- @jest/types@30.4.1
+- @jest/types@30.4.1
+- @jest/types@30.4.1
+- @jest/types@30.4.1
+- @jest/types@30.4.1
+- @jest/types@30.4.1
+- @jest/types@30.4.1
+- @jest/types@30.4.1
+- @jest/types@30.4.1
+- @jest/types@30.4.1
+- @jest/types@30.4.1
+- @jest/types@30.4.1
+- @jest/types@30.4.1
+- @jest/types@30.4.1
+- @jest/types@30.4.1
+- @jest/types@30.4.1
+- @jest/types@30.4.1
+- @jest/types@30.4.1
+- @jest/types@30.4.1
+- @jest/types@30.4.1
+- @jest/types@30.4.1
+- @jest/types@30.4.1
+- @jest/types@30.5.1
 - @jridgewell/gen-mapping@0.3.13
 - @jridgewell/remapping@2.3.5
 - @jridgewell/resolve-uri@3.1.2
@@ -181,7 +255,7 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - @jridgewell/sourcemap-codec@1.5.5
 - @jridgewell/trace-mapping@0.3.31
 - @jridgewell/trace-mapping@0.3.9
-- @napi-rs/wasm-runtime@1.1.5
+- @napi-rs/wasm-runtime@1.2.4
 - @noble/hashes@1.8.0
 - @paralleldrive/cuid2@2.3.1
 - @pkgjs/parseargs@0.11.0
@@ -194,14 +268,14 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - @sentry/server-utils@10.59.0
 - @simple-libs/child-process-utils@2.0.0
 - @simple-libs/stream-utils@2.0.0
-- @sinclair/typebox@0.34.49
+- @sinclair/typebox@0.34.52
 - @standard-schema/spec@1.1.0
 - @tootallnate/quickjs-emscripten@0.23.0
 - @tsconfig/node10@1.0.12
 - @tsconfig/node12@1.0.11
 - @tsconfig/node14@1.0.3
 - @tsconfig/node16@1.0.4
-- @tybys/wasm-util@0.10.2
+- @tybys/wasm-util@0.10.4
 - @types/babel__core@7.20.5
 - @types/babel__generator@7.27.0
 - @types/babel__template@7.4.4
@@ -297,28 +371,10 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - ansi-regex@5.0.1
 - ansi-regex@5.0.1
 - ansi-regex@5.0.1
+- ansi-regex@5.0.1
+- ansi-regex@5.0.1
 - ansi-regex@6.2.2
 - ansi-styles@3.2.1
-- ansi-styles@4.3.0
-- ansi-styles@4.3.0
-- ansi-styles@4.3.0
-- ansi-styles@4.3.0
-- ansi-styles@4.3.0
-- ansi-styles@4.3.0
-- ansi-styles@4.3.0
-- ansi-styles@4.3.0
-- ansi-styles@4.3.0
-- ansi-styles@4.3.0
-- ansi-styles@4.3.0
-- ansi-styles@4.3.0
-- ansi-styles@4.3.0
-- ansi-styles@4.3.0
-- ansi-styles@4.3.0
-- ansi-styles@4.3.0
-- ansi-styles@4.3.0
-- ansi-styles@4.3.0
-- ansi-styles@4.3.0
-- ansi-styles@4.3.0
 - ansi-styles@4.3.0
 - ansi-styles@4.3.0
 - ansi-styles@4.3.0
@@ -348,9 +404,7 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - binary-extensions@2.3.0
 - body-parser@1.20.6
 - brace-expansion@1.1.18
-- brace-expansion@2.1.4
-- brace-expansion@2.1.4
-- brace-expansion@2.1.4
+- brace-expansion@2.1.7
 - brace-expansion@5.0.9
 - brace-expansion@5.0.9
 - brace-expansion@5.0.9
@@ -368,28 +422,8 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - callsites@3.1.0
 - camelcase-keys@6.2.2
 - camelcase@5.3.1
-- camelcase@5.3.1
 - camelcase@6.3.0
 - chalk@2.4.2
-- chalk@4.1.2
-- chalk@4.1.2
-- chalk@4.1.2
-- chalk@4.1.2
-- chalk@4.1.2
-- chalk@4.1.2
-- chalk@4.1.2
-- chalk@4.1.2
-- chalk@4.1.2
-- chalk@4.1.2
-- chalk@4.1.2
-- chalk@4.1.2
-- chalk@4.1.2
-- chalk@4.1.2
-- chalk@4.1.2
-- chalk@4.1.2
-- chalk@4.1.2
-- chalk@4.1.2
-- chalk@4.1.2
 - chalk@4.1.2
 - char-regex@1.0.2
 - chokidar@3.6.0
@@ -491,10 +525,6 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - emoji-regex@10.6.0
 - emoji-regex@8.0.0
 - emoji-regex@8.0.0
-- emoji-regex@8.0.0
-- emoji-regex@8.0.0
-- emoji-regex@8.0.0
-- emoji-regex@8.0.0
 - emoji-regex@9.2.2
 - empathic@2.0.0
 - encodeurl@2.0.0
@@ -520,6 +550,8 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - execa@5.1.1
 - exit-x@0.2.2
 - expect@30.4.1
+- expect@30.4.1
+- expect@30.5.2
 - express@4.22.2
 - exsolve@1.1.0
 - fast-check@3.23.2
@@ -599,10 +631,6 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - is-core-module@2.16.2
 - is-extglob@2.1.1
 - is-fullwidth-code-point@3.0.0
-- is-fullwidth-code-point@3.0.0
-- is-fullwidth-code-point@3.0.0
-- is-fullwidth-code-point@3.0.0
-- is-fullwidth-code-point@3.0.0
 - is-generator-fn@2.1.0
 - is-glob@4.0.3
 - is-number@7.0.0
@@ -618,30 +646,112 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - jest-cli@30.4.2
 - jest-config@30.4.2
 - jest-diff@30.4.1
+- jest-diff@30.4.1
+- jest-diff@30.4.1
+- jest-diff@30.5.2
 - jest-docblock@30.4.0
 - jest-each@30.4.1
 - jest-environment-jsdom@30.4.1
 - jest-environment-node@30.4.1
 - jest-haste-map@30.4.1
+- jest-haste-map@30.4.1
+- jest-haste-map@30.4.1
+- jest-haste-map@30.4.1
+- jest-haste-map@30.4.1
+- jest-haste-map@30.4.1
+- jest-haste-map@30.4.1
+- jest-haste-map@30.4.1
 - jest-leak-detector@30.4.1
 - jest-matcher-utils@30.4.1
+- jest-matcher-utils@30.4.1
+- jest-matcher-utils@30.4.1
+- jest-matcher-utils@30.5.2
 - jest-message-util@30.4.1
+- jest-message-util@30.4.1
+- jest-message-util@30.4.1
+- jest-message-util@30.4.1
+- jest-message-util@30.4.1
+- jest-message-util@30.4.1
+- jest-message-util@30.4.1
+- jest-message-util@30.4.1
+- jest-message-util@30.4.1
+- jest-message-util@30.5.1
 - jest-mock@30.4.1
+- jest-mock@30.4.1
+- jest-mock@30.4.1
+- jest-mock@30.4.1
+- jest-mock@30.4.1
+- jest-mock@30.4.1
+- jest-mock@30.4.1
+- jest-mock@30.4.1
+- jest-mock@30.5.2
 - jest-pnp-resolver@1.2.3
 - jest-regex-util@30.4.0
+- jest-regex-util@30.4.0
+- jest-regex-util@30.4.0
+- jest-regex-util@30.4.0
+- jest-regex-util@30.4.0
+- jest-regex-util@30.4.0
+- jest-regex-util@30.4.0
+- jest-regex-util@30.4.0
+- jest-regex-util@30.4.0
+- jest-regex-util@30.4.0
+- jest-regex-util@30.4.0
+- jest-regex-util@30.4.0
+- jest-regex-util@30.4.0
+- jest-regex-util@30.4.0
+- jest-regex-util@30.4.0
+- jest-regex-util@30.4.0
+- jest-regex-util@30.4.0
+- jest-regex-util@30.4.0
+- jest-regex-util@30.4.0
+- jest-regex-util@30.4.0
+- jest-regex-util@30.4.0
+- jest-regex-util@30.4.0
+- jest-regex-util@30.4.0
+- jest-regex-util@30.4.0
+- jest-regex-util@30.4.0
+- jest-regex-util@30.5.0
 - jest-resolve-dependencies@30.4.2
 - jest-resolve@30.4.1
 - jest-runner@30.4.2
 - jest-runtime@30.4.2
 - jest-snapshot@30.4.1
 - jest-util@30.4.1
+- jest-util@30.4.1
+- jest-util@30.4.1
+- jest-util@30.4.1
+- jest-util@30.4.1
+- jest-util@30.4.1
+- jest-util@30.4.1
+- jest-util@30.4.1
+- jest-util@30.4.1
+- jest-util@30.4.1
+- jest-util@30.4.1
+- jest-util@30.4.1
+- jest-util@30.4.1
+- jest-util@30.4.1
+- jest-util@30.4.1
+- jest-util@30.4.1
+- jest-util@30.4.1
+- jest-util@30.4.1
+- jest-util@30.4.1
+- jest-util@30.4.1
+- jest-util@30.5.1
 - jest-validate@30.4.1
 - jest-watcher@30.4.1
+- jest-worker@30.4.1
+- jest-worker@30.4.1
+- jest-worker@30.4.1
+- jest-worker@30.4.1
+- jest-worker@30.4.1
+- jest-worker@30.4.1
+- jest-worker@30.4.1
 - jest-worker@30.4.1
 - jest@30.4.2
 - jiti@2.6.1
 - js-tokens@4.0.0
-- js-yaml@3.15.1
+- js-yaml@3.15.2
 - js-yaml@4.3.2
 - jsdom@26.1.0
 - jsesc@3.1.0
@@ -737,7 +847,7 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - node-releases@2.0.48
 - normalize-path@3.0.0
 - npm-run-path@4.0.1
-- nwsapi@2.2.24
+- nwsapi@2.2.28
 - nypm@0.6.7
 - object-inspect@1.13.4
 - ohash@2.0.11
@@ -796,6 +906,19 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - prelude-ls@1.2.1
 - prettier@3.9.4
 - pretty-format@30.4.1
+- pretty-format@30.4.1
+- pretty-format@30.4.1
+- pretty-format@30.4.1
+- pretty-format@30.4.1
+- pretty-format@30.4.1
+- pretty-format@30.4.1
+- pretty-format@30.4.1
+- pretty-format@30.4.1
+- pretty-format@30.4.1
+- pretty-format@30.4.1
+- pretty-format@30.4.1
+- pretty-format@30.4.1
+- pretty-format@30.5.1
 - process-nextick-args@2.0.1
 - progress@2.0.3
 - proxy-addr@2.0.7
@@ -811,7 +934,7 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - raw-body@2.5.3
 - rc9@2.1.2
 - react-is-18@18.3.1
-- react-is-19@19.2.7
+- react-is-19@19.3.0
 - read-pkg-up@3.0.0
 - read-pkg-up@7.0.1
 - read-pkg-up@7.0.1
@@ -867,13 +990,10 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - string-length@4.0.2
 - string-width-cjs@4.2.3
 - string-width@4.2.3
-- string-width@4.2.3
-- string-width@4.2.3
-- string-width@4.2.3
-- string-width@4.2.3
 - string-width@5.1.2
 - string-width@7.2.0
 - strip-ansi-cjs@6.0.1
+- strip-ansi@6.0.1
 - strip-ansi@6.0.1
 - strip-ansi@6.0.1
 - strip-ansi@6.0.1
@@ -893,26 +1013,13 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - supertest@7.2.2
 - supports-color@5.5.0
 - supports-color@7.2.0
-- supports-color@7.2.0
-- supports-color@7.2.0
-- supports-color@7.2.0
-- supports-color@7.2.0
-- supports-color@7.2.0
-- supports-color@7.2.0
-- supports-color@7.2.0
-- supports-color@7.2.0
-- supports-color@7.2.0
-- supports-color@7.2.0
-- supports-color@7.2.0
-- supports-color@7.2.0
-- supports-color@7.2.0
-- supports-color@7.2.0
-- supports-color@7.2.0
-- supports-color@7.2.0
-- supports-color@7.2.0
-- supports-color@7.2.0
-- supports-color@7.2.0
-- supports-color@7.2.0
+- supports-color@8.1.1
+- supports-color@8.1.1
+- supports-color@8.1.1
+- supports-color@8.1.1
+- supports-color@8.1.1
+- supports-color@8.1.1
+- supports-color@8.1.1
 - supports-color@8.1.1
 - supports-preserve-symlinks-flag@1.0.0
 - swagger-jsdoc@6.3.0
@@ -963,8 +1070,6 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - wordwrap@1.0.0
 - wrap-ansi-cjs@7.0.0
 - wrap-ansi@7.0.0
-- wrap-ansi@7.0.0
-- wrap-ansi@7.0.0
 - wrap-ansi@8.1.0
 - wrap-ansi@9.0.2
 - ws@8.21.3
@@ -982,12 +1087,11 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - zod@3.25.76
 - zod@4.4.3
 
-### ISC (99)
+### ISC (102)
 
 - @isaacs/cliui@8.0.2
 - @istanbuljs/load-nyc-config@1.1.0
-- @ungap/structured-clone@1.3.1
-- anymatch@3.1.3
+- @ungap/structured-clone@1.4.0
 - anymatch@3.1.3
 - cliui@7.0.4
 - cliui@8.0.1
@@ -1015,8 +1119,11 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - glob-parent@5.1.2
 - glob-parent@6.0.2
 - glob@10.5.0
-- glob@10.5.0
-- glob@10.5.0
+- glob@7.2.3
+- glob@7.2.3
+- glob@7.2.3
+- glob@7.2.3
+- glob@7.2.3
 - glob@7.2.3
 - glob@7.2.3
 - graceful-fs@4.2.11
@@ -1034,8 +1141,6 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - json-stringify-safe@5.0.1
 - lru-cache@10.4.3
 - lru-cache@10.4.3
-- lru-cache@10.4.3
-- lru-cache@10.4.3
 - lru-cache@5.1.1
 - lru-cache@6.0.0
 - lru-cache@7.18.3
@@ -1043,8 +1148,6 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - meriyah@6.1.4
 - minimalistic-assert@1.0.1
 - minimatch@3.1.5
-- minimatch@9.0.9
-- minimatch@9.0.9
 - minimatch@9.0.9
 - once@1.11.0
 - picocolors@1.1.1
@@ -1066,6 +1169,11 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - split2@3.2.2
 - standard-version@9.5.0
 - stringify-package@1.0.1
+- test-exclude@6.0.0
+- test-exclude@6.0.0
+- test-exclude@6.0.0
+- test-exclude@6.0.0
+- test-exclude@6.0.0
 - test-exclude@6.0.0
 - v8-to-istanbul@9.3.0
 - which@2.0.2
@@ -1150,10 +1258,15 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - webdriver-bidi-protocol@0.4.1
 - xml-name-validator@5.0.0
 
-### BSD-3-Clause (20)
+### BSD-3-Clause (25)
 
 - @sinonjs/commons@3.0.1
 - @sinonjs/fake-timers@15.4.0
+- babel-plugin-istanbul@7.0.1
+- babel-plugin-istanbul@7.0.1
+- babel-plugin-istanbul@7.0.1
+- babel-plugin-istanbul@7.0.1
+- babel-plugin-istanbul@7.0.1
 - babel-plugin-istanbul@7.0.1
 - bcryptjs@3.0.3
 - deepmerge-ts@7.1.5
@@ -1196,21 +1309,19 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - uri-js@4.4.1
 - webidl-conversions@7.0.0
 
-### BlueOak-1.0.0 (16)
+### BlueOak-1.0.0 (14)
 
 - @isaacs/cliui@9.0.0
 - glob@11.1.0
 - jackspeak@3.4.3
 - jackspeak@4.2.3
-- lru-cache@11.5.1
+- lru-cache@11.5.3
 - minimatch@10.2.5
 - minimatch@10.2.5
 - minimatch@10.2.5
 - minimatch@10.2.6
 - minipass@7.1.3
 - package-json-from-dist@1.0.1
-- path-scurry@1.11.1
-- path-scurry@1.11.1
 - path-scurry@1.11.1
 - path-scurry@2.0.2
 - sax@1.6.0
