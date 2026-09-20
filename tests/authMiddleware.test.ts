@@ -243,6 +243,14 @@ describe('ensureAdminExists', () => {
         expect(mockPrisma.users.create).toHaveBeenCalledTimes(1);
     });
 
+    it('rzuca błąd, gdy DEFAULT_ADMIN_PASSWORD nie jest ustawione', async () => {
+        delete process.env.DEFAULT_ADMIN_PASSWORD;
+        mockPrisma.users.findUnique.mockResolvedValue(null);
+
+        await expect(ensureAdminExists()).rejects.toThrow(/must be set/);
+        expect(mockPrisma.users.create).not.toHaveBeenCalled();
+    });
+
     it('w produkcji rzuca błąd przy hasle domyslnym', async () => {
         process.env.NODE_ENV = 'production';
         process.env.DEFAULT_ADMIN_PASSWORD = 'anim123456';
