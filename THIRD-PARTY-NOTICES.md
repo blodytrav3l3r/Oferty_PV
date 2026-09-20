@@ -7,7 +7,7 @@ używanym w projekcie **S.O.K. — System Ofert i Kalkulacji**.
 > przez `npm run licenses:generate`. Nie edytuj jej ręcznie —
 > aktualizacja wymaga ponownego wygenerowania.
 
-Dane na dzień: **2026-09-19**. Pełne teksty licencji znajdują się
+Dane na dzień: **2026-09-20**. Pełne teksty licencji znajdują się
 w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 
 ## Licencje użyte w projekcie
@@ -92,24 +92,25 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - @babel/types@7.29.7
 - @babel/types@7.29.7
 - @bcoe/v8-coverage@0.2.3
-- @commitlint/cli@21.1.0
-- @commitlint/config-conventional@21.1.0
-- @commitlint/config-validator@21.1.0
-- @commitlint/ensure@21.1.0
+- @commitlint/cli@21.2.3
+- @commitlint/config-conventional@21.2.3
+- @commitlint/config-validator@21.2.3
+- @commitlint/ensure@21.2.3
 - @commitlint/execute-rule@21.0.1
-- @commitlint/format@21.1.0
-- @commitlint/is-ignored@21.1.0
-- @commitlint/lint@21.1.0
-- @commitlint/load@21.1.0
-- @commitlint/message@21.0.2
-- @commitlint/parse@21.1.0
-- @commitlint/read@21.1.0
-- @commitlint/resolve-extends@21.1.0
-- @commitlint/rules@21.1.0
+- @commitlint/format@21.2.3
+- @commitlint/is-ignored@21.2.3
+- @commitlint/lint@21.2.3
+- @commitlint/load@21.2.3
+- @commitlint/message@21.2.0
+- @commitlint/parse@21.2.3
+- @commitlint/read@21.2.3
+- @commitlint/resolve-extends@21.2.3
+- @commitlint/rules@21.2.3
 - @commitlint/to-lines@21.0.1
-- @commitlint/top-level@21.0.2
-- @commitlint/types@21.1.0
-- @conventional-changelog/git-client@2.7.0
+- @commitlint/top-level@21.2.0
+- @commitlint/types@21.2.3
+- @conventional-changelog/git-client@3.1.2
+- @conventional-changelog/template@1.4.0
 - @cspotcode/source-map-support@0.8.1
 - @csstools/css-calc@2.1.4
 - @csstools/css-color-parser@3.1.0
@@ -191,8 +192,8 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - @sentry/node@10.59.0
 - @sentry/opentelemetry@10.59.0
 - @sentry/server-utils@10.59.0
-- @simple-libs/child-process-utils@1.0.2
-- @simple-libs/stream-utils@1.2.0
+- @simple-libs/child-process-utils@2.0.0
+- @simple-libs/stream-utils@2.0.0
 - @sinclair/typebox@0.34.49
 - @standard-schema/spec@1.1.0
 - @tootallnate/quickjs-emscripten@0.23.0
@@ -330,6 +331,7 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - ansi-styles@6.2.3
 - arg@4.1.3
 - argparse@1.0.10
+- argue-cli@3.2.0
 - array-flatten@1.1.1
 - array-ify@1.0.0
 - arrify@1.0.1
@@ -429,7 +431,7 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - conventional-commits-filter@2.0.7
 - conventional-commits-parser@3.2.4
 - conventional-commits-parser@3.2.4
-- conventional-commits-parser@6.4.0
+- conventional-commits-parser@7.1.2
 - conventional-recommended-bump@6.1.0
 - convert-source-map@2.0.0
 - cookie-parser@1.4.7
@@ -511,7 +513,7 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - es-module-lexer@2.1.0
 - es-object-atoms@1.1.2
 - es-set-tostringtag@2.1.0
-- es-toolkit@1.49.0
+- es-toolkit@1.52.0
 - esbuild@0.28.2
 - escalade@3.2.0
 - escape-html@1.0.3
@@ -569,7 +571,6 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - giget@2.0.0
 - git-raw-commits@2.0.11
 - git-raw-commits@2.0.11
-- git-raw-commits@5.0.1
 - git-remote-origin-url@2.0.0
 - git-semver-tags@4.1.1
 - global-directory@5.0.0
@@ -691,7 +692,6 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - map-obj@4.3.0
 - math-intrinsics@1.1.0
 - media-typer@0.3.0
-- meow@13.2.0
 - meow@8.1.2
 - meow@8.1.2
 - meow@8.1.2
@@ -1015,12 +1015,12 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - cliui@8.0.1
 - cliui@9.0.1
 - conventional-changelog-angular@5.0.13
-- conventional-changelog-angular@8.3.1
+- conventional-changelog-angular@9.4.0
 - conventional-changelog-atom@2.0.8
 - conventional-changelog-codemirror@2.0.8
+- conventional-changelog-conventionalcommits@10.4.0
 - conventional-changelog-conventionalcommits@4.6.3
 - conventional-changelog-conventionalcommits@4.6.3
-- conventional-changelog-conventionalcommits@9.3.1
 - conventional-changelog-ember@2.0.9
 - conventional-changelog-eslint@3.0.9
 - conventional-changelog-express@2.0.6
