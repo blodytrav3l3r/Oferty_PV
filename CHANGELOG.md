@@ -4,6 +4,16 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.28.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.27.1...v1.28.0) (2026-09-20)
+
+### Features
+
+- **api:** ujednolicone nazwy plikow exportu be-fe ([c39cddb](https://github.com/blodytrav3l3r/Oferty_PV/commit/c39cddb3bfc18021e3d2efac9bfa59aeb4374f21))
+
+### Bug Fixes
+
+- **studnie:** stabilne id przejść i elemid w zleceniach ([9b30d58](https://github.com/blodytrav3l3r/Oferty_PV/commit/9b30d582a34ff7257f42514e0c95dc262116b909))
+
 ### [1.27.1](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.27.0...v1.27.1) (2026-09-20)
 
 ### Features

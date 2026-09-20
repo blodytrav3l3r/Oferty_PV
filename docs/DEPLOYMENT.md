@@ -1,6 +1,6 @@
 # Wdrożenie — S.O.K. — System Ofert i Kalkulacji
 
-**Wersja:** 1.27.1  
+**Wersja:** 1.28.0  
 **Stack:** Express + Prisma + SQLite + VanillaJS SPA + ML Pipeline  
 **Ostatnia aktualizacja:** 2026-08-24
 

@@ -1,7 +1,7 @@
 # Instrukcja instalacji S.O.K. — System Ofert i Kalkulacji — krok po kroku dla laika
 
 > **Plik:** docs/instalacja-krok-po-kroku-dla-laika.md
-> **Wersja:** 1.27.1
+> **Wersja:** 1.28.0
 > **Dla kogo:** Osób bez doświadczenia technicznego
 
 ---
