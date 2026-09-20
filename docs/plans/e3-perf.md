@@ -1,5 +1,7 @@
 # E3 — Performance: BASELINE → poprawki Excel → POMIAR
 
+> **Status: COMPLETED.** Pomiar dowieziony; plik zostaje w root, bo `scripts/load-100.mjs` się do niego odwołuje.
+
 **Wersja:** 1.26.0 · Data: 2026-09-16 · Bez commita (roboczo)
 
 ## 1. Metodyka

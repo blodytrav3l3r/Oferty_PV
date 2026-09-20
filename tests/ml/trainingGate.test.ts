@@ -1,6 +1,6 @@
 /**
  * Testy bramki treningu ML (F1/F2): shouldTrain(), pre-flight w run(),
- * retencja AiTrainingRun. Plan: docs/plans/2026-09-11-ml-training-gate.md
+ * retencja AiTrainingRun. Plan: docs/plans/archive/2026-09-11-ml-training-gate.md
  */
 
 import { describe, expect, it, jest, beforeEach } from '@jest/globals';

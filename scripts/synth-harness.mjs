@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /*
- * Synthetic validation harness (v1, HTTP-level) — plan docs/plans/2026-09-12-synth-harness.md
+ * Synthetic validation harness (v1, HTTP-level) — plan docs/plans/archive/2026-09-12-synth-harness.md
  * Steruje RZECZYWISTYM backendem przez HTTP na IZOLOWANEJ bazie i weryfikuje
  * pipeline ML: telemetry -> feature -> reward -> label -> training guards.
  * NIGDY nie dotyka prod/dev DB ani nie trenuje modelu produkcyjnego.

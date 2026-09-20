@@ -1,5 +1,7 @@
 # E5 — Decyzja skalowania (na liczbach z E3)
 
+> **Status: COMPLETED.** Decyzja wiążąca (wariant A); plik zostaje w root, bo `.github/workflows/load-nightly.yml` się do niego odwołuje.
+
 Baza: `docs/plans/e3-perf.md` (baseline → po, 25/50/100 boundary).
 Single-writer SQLite trzyma poprawność (busy=0, 5xx=0) kosztem latencji zapisów
 (write p95 ~1 s, batch-10 p95 1,4–2,5 s). Odczyty zdrowe. DoD `P95 CRUD<500` FAIL
