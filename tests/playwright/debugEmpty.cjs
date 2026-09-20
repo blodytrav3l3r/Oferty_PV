@@ -117,6 +117,8 @@ async function pollHealth(url, tries = 30) {
     if (!token) throw new Error('Login failed — no token');
     await context.addCookies([{ name: 'authToken', value: token, domain: 'localhost', path: '/' }]);
     await page.goto(`${BASE}/app.html#/studnie`, { waitUntil: 'domcontentloaded', timeout: 30000 });
+    // przyczyna: stabilizacja/backend — diagnostyczny odczyt stanu SPA po pełnym
+    // loadzie (router + auth); skrypt debug, nie asercja — bez warunku.
     await page.waitForTimeout(5000);
 
     console.log('final URL:', page.url());
@@ -134,6 +136,8 @@ async function pollHealth(url, tries = 30) {
 
     // 3. Bezpośrednio moduł poza SPA
     await page.goto(`${BASE}/studnie.html`, { waitUntil: 'domcontentloaded', timeout: 30000 });
+    // przyczyna: stabilizacja/backend — diagnostyczny odczyt modułu poza SPA po pełnym
+    // loadzie; skrypt debug, nie asercja — bez warunku.
     await page.waitForTimeout(5000);
     console.log('\n--- studnie.html bezpośrednio ---');
     console.log('URL:', page.url());

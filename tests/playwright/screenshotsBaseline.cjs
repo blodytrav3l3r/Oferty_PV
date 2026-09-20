@@ -182,7 +182,8 @@ async function startServer() {
                     waitUntil: 'domcontentloaded',
                     timeout: 30000
                 });
-                await page.waitForTimeout(2500);
+                // przyczyna: DOM — iframe modułu wpinany asynchronicznie; warunkiem jest
+                // waitForSelector poniżej (sztywny sen przed nim zbędny).
 
                 const iframe = await page
                     .waitForSelector(`#spa-iframe-${mod}`, { timeout: 15000 })
@@ -209,8 +210,12 @@ async function startServer() {
                         .evaluate(() => document.readyState === 'complete')
                         .catch(() => false);
                     if (ready) break;
+                    // przyczyna: polling — document.readyState iframe; pętla z warunkiem,
+                    // sen jest interwałem pollingu, nie czekaniem na ślepo.
                     await page.waitForTimeout(1000);
                 }
+                // przyczyna: stabilizacja — fonty/obrazki/layout przed screenshotem;
+                // brak deterministycznego warunku DOM (malowanie).
                 await page.waitForTimeout(1500);
 
                 const file = join(OUT_DIR, `${mod}-${vp.name}.png`);

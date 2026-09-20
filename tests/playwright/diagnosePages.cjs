@@ -151,6 +151,8 @@ const MODULES = ['studnie', 'rury', 'kartoteka', 'zlecenia'];
             waitUntil: 'domcontentloaded',
             timeout: 30000
         });
+        // przyczyna: kolejka/stabilizacja — stałe okno obserwacji console/pageerror/
+        // requestfailed przed odczytem; diagnostyka zbiera eventy, nie czeka na DOM.
         await page.waitForTimeout(4000);
 
         const frameEl = await page

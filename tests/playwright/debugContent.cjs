@@ -56,6 +56,8 @@ fs.mkdirSync(OUT, { recursive: true });
             waitUntil: 'domcontentloaded',
             timeout: 30000
         });
+        // przyczyna: stabilizacja/backend — diagnostyczny zrzut po pełnym loadzie SPA
+        // (router + iframe + dane modułu); skrypt debug, nie asercja — bez warunku.
         await page.waitForTimeout(5000);
 
         const frameEl = await page.$(`#spa-iframe-${mod}`);

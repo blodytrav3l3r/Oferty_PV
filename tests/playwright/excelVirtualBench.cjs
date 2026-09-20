@@ -138,29 +138,37 @@ async function measure(frame, n) {
                 );
                 const hash = mode === 'OFF' ? '#/studnie?virtual=0' : '#/studnie';
                 await page.goto(`${BASE}/app.html${hash}`, { waitUntil: 'load', timeout: 60000 });
-                await page.waitForTimeout(2500);
+                // przyczyna: DOM — iframe SPA wpinany asynchronicznie; warunkiem jest
+                // waitForSelector poniżej (sztywny sen przed nim zbędny).
                 const iframeEl = await page.waitForSelector('#spa-iframe-studnie', {
                     timeout: 60000,
                     state: 'attached'
                 });
-                await page.waitForTimeout(2500);
+                // przyczyna: DOM — kontekst JS iframe gotowy, gdy produkty załadowane;
+                // warunkiem jest waitForFunction poniżej (sen po selektorze zbędny).
                 let frame = await iframeEl.contentFrame();
                 for (let i = 0; i < 20 && !frame; i++) {
+                    // przyczyna: polling — contentFrame podpina się asynchronicznie po
+                    // attach iframe; brak selektora na gotowy kontekst.
                     await page.waitForTimeout(1000);
                     frame = await iframeEl.contentFrame();
                 }
                 if (!frame) throw new Error('No frame ' + mode + ' n=' + n);
-                for (let i = 0; i < 15; i++) {
-                    const c = await frame.evaluate(() => {
-                        try {
-                            return studnieProducts.length;
-                        } catch (_) {
-                            return -1;
-                        }
-                    });
-                    if (c > 0) break;
-                    await page.waitForTimeout(2000);
-                }
+                // przyczyna: backend — produkty/cennik ładowane asynchronicznie; polling
+                // pętlą zastąpiony jednym warunkiem (timeout jak suma pętli: 15×~2 s).
+                await frame
+                    .waitForFunction(
+                        () => {
+                            try {
+                                return studnieProducts.length > 0;
+                            } catch (_) {
+                                return false;
+                            }
+                        },
+                        null,
+                        { timeout: 30000 }
+                    )
+                    .catch(() => {});
                 await frame.evaluate((d) => {
                     // eslint-disable-next-line no-global-assign
                     wells = d;

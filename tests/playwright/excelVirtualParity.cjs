@@ -57,9 +57,41 @@ function buildWells(n) {
 async function runSelectionPhase(frame, page) {
     const sel = (w, c) => `tr[data-widx="${w}"] td:nth-child(${c + 1})`;
     await frame.click(sel(0, 3));
-    await page.waitForTimeout(300);
+    // przyczyna: DOM — stan selekcji (_excelSelectedCells) po clicku; warunek zamiast snu.
+    await frame
+        .waitForFunction(
+            () => {
+                try {
+                    return (
+                        typeof _excelSelectedCells !== 'undefined' &&
+                        _excelSelectedCells.length === 1
+                    );
+                } catch (_) {
+                    return false;
+                }
+            },
+            null,
+            { timeout: 10000 }
+        )
+        .catch(() => {});
     await frame.click(sel(3, 3), { modifiers: ['Shift'] });
-    await page.waitForTimeout(300);
+    // przyczyna: DOM — zakres Shift-click (4 komórki) zamiast snu.
+    await frame
+        .waitForFunction(
+            () => {
+                try {
+                    return (
+                        typeof _excelSelectedCells !== 'undefined' &&
+                        _excelSelectedCells.length === 4
+                    );
+                } catch (_) {
+                    return false;
+                }
+            },
+            null,
+            { timeout: 10000 }
+        )
+        .catch(() => {});
     const selState = await frame.evaluate(() => ({
         count: typeof _excelSelectedCells !== 'undefined' ? _excelSelectedCells.length : -1,
         cells: (typeof _excelSelectedCells !== 'undefined' ? _excelSelectedCells : [])
@@ -69,13 +101,33 @@ async function runSelectionPhase(frame, page) {
     }));
     // Esc zamyka ewentualne menu — nie uzywane; Ctrl+C na dokumencie
     await page.keyboard.press('Control+c');
+    // przyczyna: kolejka — asynchroniczny zapis schowka (headless-shell, permissions);
+    // brak warunku DOM/odpowiedzi do zastąpienia.
     await page.waitForTimeout(300);
     // readText niedostepny w headless-shell (permissions) — payload copy
     // dowodzony przez paste: wiersze-docelowe musza dostac kopiowane nazwy.
     const copyText = 'via-paste';
     await frame.click(sel(10, 3));
-    await page.waitForTimeout(300);
+    // przyczyna: DOM — nowa kotwica selekcji przed paste; warunek zamiast snu.
+    await frame
+        .waitForFunction(
+            () => {
+                try {
+                    return (
+                        typeof _excelSelectedCells !== 'undefined' &&
+                        _excelSelectedCells.length === 1
+                    );
+                } catch (_) {
+                    return false;
+                }
+            },
+            null,
+            { timeout: 10000 }
+        )
+        .catch(() => {});
     await page.keyboard.press('Control+v');
+    // przyczyna: debounce/zapis — wklejanie + odroczony refresh tabeli;
+    // brak pojedynczego warunku DOM (wiele komórek + re-render).
     await page.waitForTimeout(1200);
     const after = await frame.evaluate(() => {
         const djb2 = (s) => {
@@ -90,6 +142,8 @@ async function runSelectionPhase(frame, page) {
         };
     });
     await frame.evaluate(() => _excelUndo());
+    // przyczyna: stabilizacja — re-render po undo przed odczytem hash; brak
+    // deterministycznego warunku (undo synchroniczne + malowanie).
     await page.waitForTimeout(600);
     const undone = await frame.evaluate(() => {
         const djb2 = (s) => {
@@ -212,9 +266,41 @@ async function runFilterSortInteract(frame, page) {
             .map((r) => r.getAttribute('data-widx'))
     );
     await frame.click(sel(vis[0], 3));
-    await page.waitForTimeout(300);
+    // przyczyna: DOM — kotwica selekcji po filtrze; warunek zamiast snu.
+    await frame
+        .waitForFunction(
+            () => {
+                try {
+                    return (
+                        typeof _excelSelectedCells !== 'undefined' &&
+                        _excelSelectedCells.length === 1
+                    );
+                } catch (_) {
+                    return false;
+                }
+            },
+            null,
+            { timeout: 10000 }
+        )
+        .catch(() => {});
     await frame.click(sel(vis[2], 3), { modifiers: ['Shift'] });
-    await page.waitForTimeout(300);
+    // przyczyna: DOM — zakres Shift-click po filtrze (3 komórki); warunek zamiast snu.
+    await frame
+        .waitForFunction(
+            () => {
+                try {
+                    return (
+                        typeof _excelSelectedCells !== 'undefined' &&
+                        _excelSelectedCells.length === 3
+                    );
+                } catch (_) {
+                    return false;
+                }
+            },
+            null,
+            { timeout: 10000 }
+        )
+        .catch(() => {});
     const fin = await frame.evaluate(() => {
         const djb2 = (s) => {
             let h = 5381;
@@ -232,6 +318,8 @@ async function runFilterSortInteract(frame, page) {
         excelOnRzednaChange(parseInt(firstW, 10));
         return { editWidx: firstW, wellsHash: null, _w: firstW };
     });
+    // przyczyna: debounce — excelOnRzednaChange z odroczonym refreshem;
+    // brak pojedynczego warunku DOM (re-render + przeliczenie błędów).
     await page.waitForTimeout(1200);
     const hash = await frame.evaluate(() => {
         const djb2 = (s) => {
@@ -389,31 +477,39 @@ async function runMode(frame, page, virtualOn, wellsData) {
                         waitUntil: 'load',
                         timeout: 30000
                     });
-                    await page.waitForTimeout(2500);
+                    // przyczyna: DOM — iframe SPA wpinany asynchronicznie; warunkiem jest
+                    // waitForSelector poniżej (sztywny sen przed nim zbędny).
                     const iframeEl = await page.waitForSelector('#spa-iframe-studnie', {
                         timeout: 30000,
                         state: 'attached'
                     });
-                    await page.waitForTimeout(2500);
+                    // przyczyna: DOM — kontekst JS iframe gotowy, gdy produkty załadowane;
+                    // warunkiem jest waitForFunction poniżej (sen po selektorze zbędny).
                     let frame = await iframeEl.contentFrame();
                     for (let i = 0; i < 20 && !frame; i++) {
+                        // przyczyna: polling — contentFrame podpina się asynchronicznie po
+                        // attach iframe; brak selektora na gotowy kontekst.
                         await page.waitForTimeout(1000);
                         frame = await iframeEl.contentFrame();
                         if (!frame) frame = page.frames().find((f) => f.url().includes('studnie'));
                     }
                     if (!frame) frame = page.frames().find((f) => f.url().includes('studnie'));
                     if (!frame) throw new Error('Cannot find studnie iframe');
-                    for (let i = 0; i < 15; i++) {
-                        const n = await frame.evaluate(() => {
-                            try {
-                                return studnieProducts.length;
-                            } catch (_) {
-                                return -1;
-                            }
-                        });
-                        if (n > 0) break;
-                        await page.waitForTimeout(2000);
-                    }
+                    // przyczyna: backend — produkty/cennik ładowane asynchronicznie; polling
+                    // pętlą zastąpiony jednym warunkiem (timeout jak suma pętli: 15×~2 s).
+                    await frame
+                        .waitForFunction(
+                            () => {
+                                try {
+                                    return studnieProducts.length > 0;
+                                } catch (_) {
+                                    return false;
+                                }
+                            },
+                            null,
+                            { timeout: 30000 }
+                        )
+                        .catch(() => {});
                     results[mode] = await runMode(frame, page, mode === 'ON', buildWells(N));
                     results[mode].phase2 = await runSelectionPhase(frame, page);
                     results[mode].phase3 = await runFilterSortPhase(frame);

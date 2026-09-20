@@ -169,7 +169,12 @@ async function startServer() {
     try {
         // T1 — top-level app.html title
         await page.goto(`${BASE}/app.html`, { waitUntil: 'domcontentloaded', timeout: 30000 });
-        await page.waitForTimeout(1000);
+        // przyczyna: DOM — SPA router ustawia document.title asynchronicznie po load.
+        await page
+            .waitForFunction(() => document.title && document.title.length > 0, null, {
+                timeout: 10000
+            })
+            .catch(() => {});
         const t1 = await page.title();
         check('T1 app.html title', APP_NAME_RE.test(t1) && !/WITROS/i.test(t1), `title="${t1}"`);
 
@@ -200,7 +205,12 @@ async function startServer() {
 
         // T4 — login + Pulpit
         await page.goto(`${BASE}/index.html`, { waitUntil: 'domcontentloaded', timeout: 30000 });
-        await page.waitForTimeout(1200);
+        // przyczyna: DOM — logo Pulpitu renderowane przez JS po load; warunek zamiast snu.
+        await page
+            .locator('img.index-logo-sok')
+            .first()
+            .waitFor({ timeout: 15000 })
+            .catch(() => {});
         const t4title = await page.title();
         const t4logoCount = await page.locator('img.index-logo-sok').count();
         const t4logoAlt = t4logoCount
@@ -228,7 +238,8 @@ async function startServer() {
             waitUntil: 'domcontentloaded',
             timeout: 30000
         });
-        await page.waitForTimeout(1500);
+        // przyczyna: DOM — router SPA podpina iframe asynchronicznie; warunkiem jest
+        // waitForSelector poniżej (sztywny sen przed nim zbędny).
         const iframeEl = await page.waitForSelector('#spa-iframe-studnie', { timeout: 15000 });
         let frame = await iframeEl.contentFrame();
         if (!frame) frame = page.frames().find((f) => f.url().includes('studnie'));
@@ -246,26 +257,41 @@ async function startServer() {
         check('T3 no WITROS', !/WITROS/i.test(t3.text), `text="${t3.text}"`);
 
         // T5 — REGRESJA #92: document.title po wejściu/wyjściu trybu edycji zamówienia
-        await frame.waitForTimeout(2000);
+        // przyczyna: backend — produkty/cennik ładowane asynchronicznie; polling pętlą
+        // zastąpiony jednym warunkiem (timeout jak suma pętli: 15×~2 s).
         let pw = -1;
-        for (let i = 0; i < 15; i++) {
-            pw = await frame.evaluate(() => {
+        await frame
+            .waitForFunction(
+                () => {
+                    try {
+                        return (
+                            typeof studnieProducts !== 'undefined' && studnieProducts.length > 0
+                        );
+                    } catch (_) {
+                        return false;
+                    }
+                },
+                null,
+                { timeout: 30000 }
+            )
+            .catch(() => {});
+        pw = await frame
+            .evaluate(() => {
                 try {
                     return typeof studnieProducts !== 'undefined' ? studnieProducts.length : 0;
                 } catch (_) {
                     return 0;
                 }
-            });
-            if (pw > 0) break;
-            await frame.waitForTimeout(1000);
-        }
+            })
+            .catch(() => 0);
 
         // Przejdź do modułu rur
         await page.goto(`${BASE}/app.html#/rury`, {
             waitUntil: 'domcontentloaded',
             timeout: 30000
         });
-        await page.waitForTimeout(1500);
+        // przyczyna: DOM — router SPA podpina iframe rur asynchronicznie; warunkiem jest
+        // waitForSelector poniżej (sztywny sen przed nim zbędny).
         const ruryFrameEl = await page.waitForSelector('#spa-iframe-rury', { timeout: 15000 });
         let ruryFrame = await ruryFrameEl.contentFrame();
         if (!ruryFrame) ruryFrame = page.frames().find((f) => f.url().includes('rury'));

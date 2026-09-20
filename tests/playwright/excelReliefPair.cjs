@@ -86,31 +86,38 @@ function sleep(ms) {
         // Wariant A: cookie httpOnly z logowania siedzi w jarze kontekstu
         // (page.request dzieli cookie z page) — bez localStorage.
         await page.goto(`${BASE}/app.html#/studnie`, { waitUntil: 'networkidle', timeout: 30000 });
-        await page.waitForTimeout(2000);
+        // przyczyna: DOM — iframe SPA wpinany asynchronicznie; warunkiem jest
+        // waitForSelector poniżej (sztywny sen przed nim zbędny).
         const iframeEl = await page.waitForSelector('#spa-iframe-studnie', { timeout: 15000 });
-        await page.waitForTimeout(2000);
+        // przyczyna: DOM — kontekst JS iframe gotowy, gdy produkty załadowane;
+        // warunkiem jest waitForFunction poniżej (sen po selektorze zbędny).
         let frame = await iframeEl.contentFrame();
         if (!frame) frame = page.frames().find((f) => f.url().includes('studnie'));
         if (!frame) throw new Error('Cannot find studnie iframe');
 
-        for (let i = 0; i < 15; i++) {
-            const n = await frame.evaluate(() => {
-                try {
-                    return studnieProducts.length;
-                } catch (_) {
-                    return -1;
-                }
-            });
-            if (n > 0) break;
-            await page.waitForTimeout(2000);
-        }
+        // przyczyna: backend — produkty/cennik ładowane asynchronicznie; polling pętlą
+        // zastąpiony jednym warunkiem (timeout jak suma pętli: 15×~2 s).
+        await frame
+            .waitForFunction(
+                () => {
+                    try {
+                        return studnieProducts.length > 0;
+                    } catch (_) {
+                        return false;
+                    }
+                },
+                null,
+                { timeout: 30000 }
+            )
+            .catch(() => {});
 
         await frame.evaluate((data) => {
             wells = JSON.parse(JSON.stringify(data));
             if (typeof _excelRebuildWellIndex === 'function') _excelRebuildWellIndex();
         }, EMPTY_WELLS);
         await frame.evaluate(() => openExcelTableModal());
-        await page.waitForTimeout(1500);
+        // przyczyna: DOM — overlay modala renderowany synchronicznie przez openExcelTableModal.
+        await frame.waitForSelector('#excel-table-overlay', { timeout: 15000 });
 
         // 1. Naglowek <-> input per kolumna, wszystkie zakladki
         for (const tab of TABS) {
@@ -159,6 +166,8 @@ function sleep(ms) {
             }, tab);
             if (!res.ok) fail(`[${tab}] header<->input mismatch: ${res.detail}`);
             else console.log(`  PASS [${tab}] header<->input aligned`);
+            // przyczyna: stabilizacja — synchroniczny re-render zakładki przed kolejną
+            // iteracją; brak warunku DOM/odpowiedzi do zastąpienia.
             await page.waitForTimeout(300);
         }
 
@@ -166,7 +175,10 @@ function sleep(ms) {
         await frame.evaluate(() => {
             if (typeof excelSwitchTab === 'function') excelSwitchTab('1000');
         });
-        await page.waitForTimeout(800);
+        // przyczyna: DOM — wiersz DN1000 po przełączeniu zakładki.
+        await frame.waitForSelector('#excel-table-container tr[data-widx="0"] input[type="number"]', {
+            timeout: 10000
+        });
 
         const cellVal = (ct) =>
             frame.evaluate((c) => {
@@ -190,7 +202,24 @@ function sleep(ms) {
             const el = h.asElement();
             if (!el) throw new Error(`no input for ${ct}`);
             await el.fill('1');
-            await page.waitForTimeout(600);
+            // przyczyna: DOM/model — handler oninput + konwersja pary relief synchronicznie
+            // dopisują PZE-/PO- do wells[0].config; czekamy na ten stan zamiast snu.
+            await frame
+                .waitForFunction(
+                    () => {
+                        try {
+                            return (
+                                wells[0].config.some((c) => c.productId.indexOf('PZE-') === 0) &&
+                                wells[0].config.some((c) => c.productId.indexOf('PO-') === 0)
+                            );
+                        } catch (_) {
+                            return false;
+                        }
+                    },
+                    null,
+                    { timeout: 10000 }
+                )
+                .catch(() => {});
         };
 
         await typeIn('pierscien_odciazajacy');
@@ -210,7 +239,10 @@ function sleep(ms) {
             if (typeof _excelClearResCache === 'function') _excelClearResCache(wells[0]);
             _excelRenderTable('1000');
         });
-        await page.waitForTimeout(800);
+        // przyczyna: DOM — wiersz po re-renderze tabeli (poprzedni selektor wygasa).
+        await frame.waitForSelector('#excel-table-container tr[data-widx="0"] input[type="number"]', {
+            timeout: 10000
+        });
         await typeIn('plyta_zamykajaca');
         config = await cfg();
         const ring = await cellVal('pierscien_odciazajacy');

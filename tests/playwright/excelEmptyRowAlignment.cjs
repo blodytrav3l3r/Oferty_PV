@@ -264,28 +264,43 @@ function sleep(ms) {
 
         // 3. Navigate to studnie module
         await page.goto(`${BASE}/app.html#/studnie`, { waitUntil: 'networkidle', timeout: 30000 });
-        await page.waitForTimeout(2000);
+        // przyczyna: DOM — iframe SPA wpinany asynchronicznie; warunkiem jest
+        // waitForSelector poniżej (sztywny sen przed nim zbędny).
 
         // 4. Locate iframe
         const iframeEl = await page.waitForSelector('#spa-iframe-studnie', { timeout: 15000 });
-        await page.waitForTimeout(2000);
+        // przyczyna: DOM — kontekst JS iframe gotowy, gdy produkty załadowane;
+        // warunkiem jest waitForFunction poniżej (sen po selektorze zbędny).
         let frame = await iframeEl.contentFrame();
         if (!frame) frame = page.frames().find((f) => f.url().includes('studnie'));
         if (!frame) throw new Error('Cannot find studnie iframe');
 
         // 5. Wait for studnieProducts to load
+        // przyczyna: backend — produkty/cennik ładowane asynchronicznie; polling pętlą
+        // zastąpiony jednym warunkiem (timeout jak suma pętli: 15×~2 s).
         let spLen = -1;
-        for (let i = 0; i < 15; i++) {
-            spLen = await frame.evaluate(() => {
+        await frame
+            .waitForFunction(
+                () => {
+                    try {
+                        return studnieProducts.length > 0;
+                    } catch (_) {
+                        return false;
+                    }
+                },
+                null,
+                { timeout: 30000 }
+            )
+            .catch(() => {});
+        spLen = await frame
+            .evaluate(() => {
                 try {
                     return studnieProducts.length;
                 } catch (_) {
                     return -1;
                 }
-            });
-            if (spLen > 0) break;
-            await page.waitForTimeout(2000);
-        }
+            })
+            .catch(() => -1);
         if (spLen <= 0) throw new Error('studnieProducts did not load');
 
         // 6. Inject mock wells (bare name, NOT window.wells — wells is let)
@@ -297,7 +312,8 @@ function sleep(ms) {
 
         // 7. Open Excel Configuration Table
         await frame.evaluate(() => openExcelTableModal());
-        await page.waitForTimeout(2000);
+        // przyczyna: DOM — overlay modala renderowany przez openExcelTableModal.
+        await frame.waitForSelector('#excel-table-overlay', { timeout: 15000 });
 
         // 8. For each tab, compare data row vs empty row
         for (const tab of TABS) {
@@ -441,6 +457,8 @@ function sleep(ms) {
                 );
             }
 
+            // przyczyna: stabilizacja — reflow/layout po przełączeniu zakładki przed
+            // pomiarem getBoundingClientRect w kolejnej iteracji; brak warunku DOM.
             await page.waitForTimeout(500);
         }
     } catch (e) {
