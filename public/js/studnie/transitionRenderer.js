@@ -151,10 +151,16 @@ function renderTransitionTileHTML(item, globalIndex, product, opts = {}) {
     const cursorStyle = enableDrag ? 'cursor:grab;' : '';
 
     const assignedCfgIdx = opts.assignedCfgIndex != null ? opts.assignedCfgIndex : -1;
-    const highlightAttrs =
-        enableDrag && assignedCfgIdx >= 0
-            ? `onmouseenter="this.style.filter='brightness(1.1)'; window.highlightSvg('prz', ${globalIndex}); window.highlightSvg('cfg', ${assignedCfgIdx});" onmouseleave="this.style.filter='brightness(1)'; window.unhighlightSvg('prz', ${globalIndex}); window.unhighlightSvg('cfg', ${assignedCfgIdx});"`
-            : '';
+    /* Hover kafelka → podgląd SVG (+ Excel/kafelki zwrotnie przez setPrzHighlight).
+       Prz-część zawsze (też bez drag i bez przypisania — np. lista zlecenia);
+       cfg-część tylko gdy przypisano element. Id po tileId (== item.id po
+       ensurePrzejsciaIds w renderWellPrzejscia), nie globalIndex — odporne
+       na re-sort/filtr. */
+    const safeTileId = String(tileId).replace(/'/g, '');
+    const cfgHoverOn = assignedCfgIdx >= 0 ? ` window.highlightSvg('cfg', ${assignedCfgIdx});` : '';
+    const cfgHoverOff =
+        assignedCfgIdx >= 0 ? ` window.unhighlightSvg('cfg', ${assignedCfgIdx});` : '';
+    const highlightAttrs = `onmouseenter="this.style.filter='brightness(1.1)'; window.highlightSvg('prz', '${safeTileId}');${cfgHoverOn}" onmouseleave="this.style.filter='brightness(1)'; window.unhighlightSvg('prz', '${safeTileId}');${cfgHoverOff}"`;
 
     const dnLabel = typeof dn === 'string' && dn.includes('/') ? dn : 'DN ' + dn;
 

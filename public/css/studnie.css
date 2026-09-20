@@ -3549,6 +3549,20 @@ td.excel-tint--plyta_redukcyjna input {
     box-shadow: inset 0 0 0 2px var(--accent) !important;
 }
 
+/* Trwała selekcja przejścia po kliku w kształt SVG (svgPrzPointerClick,
+   diagramRenderer.js) — mocniejszy ring niż hover, przygasa hoverowa poświata.
+   Hover (excel-tr-hover) i selekcja mogą współistnieć na różnych przejściach. */
+.excel-tr-selected {
+    background: rgba(var(--accent-rgb), 0.28) !important;
+    box-shadow: inset 0 0 0 3px var(--accent-hover, var(--accent)) !important;
+}
+
+/* Trwale wybrany kafelek przejścia (klik w SVG) — odpowiednik selekcji komórek. */
+.prz-tile--svg-selected {
+    background: rgba(var(--accent-rgb), 0.16);
+    box-shadow: inset 0 0 0 2px var(--accent-hover, var(--accent));
+}
+
 .prz-tile > div:nth-child(2) {
     min-width: 0;
     flex: 1;

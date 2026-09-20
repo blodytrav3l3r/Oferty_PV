@@ -398,7 +398,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
                 (_i % 2 === 1 ? ' excel-tr-alt' : '') +
                 '"' +
                 przIdAttr +
-                '"><input type="number" step="0.01" value="' +
+                '><input type="number" step="0.01" value="' +
                 (hasExplicitRzWl ? prz.rzednaWlaczenia : '') +
                 '" placeholder="' +
                 rzWlPlaceholder +
@@ -415,7 +415,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
                 (_i % 2 === 1 ? ' excel-tr-alt' : '') +
                 '"' +
                 przIdAttr +
-                '"><input type="number" step="1" value="' +
+                '><input type="number" step="1" value="' +
                 (prz.angle != null ? prz.angle : '') +
                 '" onchange="excelOnPrzejscieChange(' +
                 wIdx +

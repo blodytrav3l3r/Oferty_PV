@@ -38,7 +38,11 @@ function loadRenderer(well: any, tiles: any[], excelTds: any[], svgShapes: any[]
             ? null
             : {
                   querySelectorAll: (sel: string) =>
-                      String(sel).includes('td[data-prz-id]') ? excelTds : []
+                      String(sel).includes('td[data-prz-id]') ? excelTds : [],
+                  querySelector: (sel: string) =>
+                      String(sel).includes('td[data-prz-id]')
+                          ? excelTds.find((t: any) => t._classes.has('excel-tr-selected')) || null
+                          : null
               };
     const context: any = {
         window: { svgDragStartIndex: -1 },
@@ -48,6 +52,12 @@ function loadRenderer(well: any, tiles: any[], excelTds: any[], svgShapes: any[]
                 if (String(sel).includes('g[data-prz-id]')) return svgShapes;
                 if (String(sel).includes('.svg-prz-'))
                     return svgShapes.filter((s) => s._cls === String(sel).slice(1));
+                if (String(sel).includes('.prz-tile--svg-selected'))
+                    return tiles.filter((t) => t._classes.has('prz-tile--svg-selected'));
+                if (String(sel).includes('td.excel-tr-selected'))
+                    return (overlay ? excelTds : []).filter((t: any) =>
+                        t._classes.has('excel-tr-selected')
+                    );
                 return [];
             },
             getElementById: (id: string) => (id === 'excel-table-overlay' ? overlay : null)
@@ -59,9 +69,20 @@ function loadRenderer(well: any, tiles: any[], excelTds: any[], svgShapes: any[]
     // diagramRenderer rejestruje na window.* — udostępnij bezpośrednio dla wygody.
     context.svgPrzPointerEnter = context.window.svgPrzPointerEnter;
     context.svgPrzPointerLeave = context.window.svgPrzPointerLeave;
+    context.svgPrzPointerClick = context.window.svgPrzPointerClick;
     context.highlightSvg = context.window.highlightSvg;
     context.unhighlightSvg = context.window.unhighlightSvg;
     return context;
+}
+
+function fakeTd(przId: string) {
+    const el: any = fakeEl({ 'data-prz-id': przId });
+    el.scrolled = false;
+    el.scrollIntoView = () => {
+        el.scrolled = true;
+    };
+    el.querySelector = () => null;
+    return el;
 }
 
 const WELL = {
@@ -148,6 +169,78 @@ describe('svgPrzPointerEnter/Leave → klasy (bez inline filter)', () => {
     });
 });
 
+describe('svgPrzPointerClick → trwała selekcja', () => {
+    it('klik zakłada selekcję: kafelek + 4 TD + kształt; drugi klik zdejmuje', () => {
+        const tile = fakeEl({ 'data-prz-id': 'prz-aaa', 'data-prz-idx': '0' });
+        const cells = [0, 1, 2, 3].map(() => fakeTd('prz-aaa'));
+        const shape = fakeSvgShape('prz-aaa', 'svg-prz-0');
+        const ctx = loadRenderer(WELL, [tile], cells, [shape]);
+
+        ctx.svgPrzPointerClick({}, 'prz-aaa');
+        expect(tile.classList.contains('prz-tile--svg-selected')).toBe(true);
+        cells.forEach((c) => expect(c.classList.contains('excel-tr-selected')).toBe(true));
+        expect(shape.style.filter).toContain('drop-shadow');
+        expect(cells[0].scrolled).toBe(true);
+
+        ctx.svgPrzPointerClick({}, 'prz-aaa');
+        expect(tile.classList.contains('prz-tile--svg-selected')).toBe(false);
+        cells.forEach((c) => expect(c.classList.contains('excel-tr-selected')).toBe(false));
+        expect(shape.style.filter).toBe('');
+    });
+
+    it('hover-leave nie rusza trwałej selekcji (osobne klasy)', () => {
+        const tile = fakeEl({ 'data-prz-id': 'prz-aaa', 'data-prz-idx': '0' });
+        const cells = [0, 1, 2, 3].map(() => fakeTd('prz-aaa'));
+        const ctx = loadRenderer(WELL, [tile], cells, []);
+        ctx.svgPrzPointerClick({}, 'prz-aaa');
+        ctx.svgPrzPointerEnter({}, 'prz-bbb');
+        ctx.svgPrzPointerLeave({}, 'prz-bbb');
+        expect(tile.classList.contains('prz-tile--svg-selected')).toBe(true);
+        cells.forEach((c) => expect(c.classList.contains('excel-tr-selected')).toBe(true));
+    });
+
+    it('klik przy zamkniętym Excelu selekcjonuje kafelek i kształt (bez crasha)', () => {
+        const tile = fakeEl({ 'data-prz-id': 'prz-aaa', 'data-prz-idx': '0' });
+        const shape = fakeSvgShape('prz-aaa', 'svg-prz-0');
+        const ctx = loadRenderer(WELL, [tile], null, [shape]);
+        expect(() => ctx.svgPrzPointerClick({}, 'prz-aaa')).not.toThrow();
+        expect(tile.classList.contains('prz-tile--svg-selected')).toBe(true);
+        expect(shape.style.filter).toContain('drop-shadow');
+    });
+
+    it('brak dopasowanych TD → przełącza tab DN studni-właściciela i scrolluje', () => {
+        const tds: any[] = [];
+        const switched: string[] = [];
+        const tile = fakeEl({ 'data-prz-id': 'prz-bbb', 'data-prz-idx': '1' });
+        const ctx = loadRenderer(WELL, [tile], tds, []);
+        ctx.wells = [{ dn: 1000, przejscia: WELL.przejscia }];
+        ctx.excelSwitchTab = (tab: string) => {
+            switched.push(tab);
+            // Po przełączeniu wiersz studni jest w DOM — symuluj 4 komórki.
+            for (let i = 0; i < 4; i++) tds.push(fakeTd('prz-bbb'));
+        };
+        ctx.svgPrzPointerClick({}, 'prz-bbb');
+        expect(switched).toEqual(['1000']);
+        expect(tds.length).toBe(4);
+        tds.forEach((c) => expect(c.classList.contains('excel-tr-selected')).toBe(true));
+        expect(tds[0].scrolled).toBe(true);
+    });
+
+    it('nieznane id → brak crasha, brak selekcji', () => {
+        const tile = fakeEl({ 'data-prz-id': 'prz-aaa', 'data-prz-idx': '0' });
+        const ctx = loadRenderer(WELL, [tile], [], []);
+        expect(() => ctx.svgPrzPointerClick({}, 'prz-nie-istnieje')).not.toThrow();
+        expect(tile.classList.contains('prz-tile--svg-selected')).toBe(false);
+    });
+});
+
+describe('renderWellDiagram → backfill id legacy (SA/ZS/000050/2026)', () => {
+    it('wejście renderu nadaje ensurePrzejsciaIds (hover nie martwy na starych danych)', () => {
+        const src = readStudnie('diagramRenderer.js');
+        expect(src).toContain('ensurePrzejsciaIds(well.przejscia)');
+    });
+});
+
 describe('drawTransitions → data-prz-id w SVG', () => {
     it('generuje <g> z data-prz-id i handlerem po id', () => {
         const context: any = {
@@ -184,6 +277,7 @@ describe('drawTransitions → data-prz-id w SVG', () => {
         const out = context.drawTransitions(well, canvas, []);
         expect(out).toContain('data-prz-id="prz-test-1"');
         expect(out).toContain("svgPrzPointerEnter(event, 'prz-test-1')");
+        expect(out).toContain("svgPrzPointerClick(event, 'prz-test-1')");
     });
 });
 

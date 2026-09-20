@@ -13,6 +13,7 @@
  *   window.svgPointerLeave()   — koniec hovera konfiguracji
  *   window.svgPrzPointerEnter() — hover na przejściu
  *   window.svgPrzPointerLeave() — koniec hovera przejścia
+ *   window.svgPrzPointerClick() — trwała selekcja przejścia (klik)
  *
  * Zależności globalne:
  *   SVG_COLORS (diagramTheme.js)
@@ -184,10 +185,141 @@ window.svgPrzPointerLeave = function (ev, idOrIdx) {
     window.unhighlightSvg('prz', idOrIdx);
 };
 
+/* ===== TRWAŁA SELEKCJA PRZEJŚCIA (klik w podglądzie) =====
+ * Hover jest chwilowy (znika przy mouseleave) i działa tylko przy otwartym
+ * Excelu — klik daje trwałą selekcję: kształt + kafelek + 4 komórki Excela
+ * (klasa .excel-tr-selected) + scroll do pierwszej komórki. Drugi klik
+ * na to samo przejście zdejmuje selekcję. Osobne klasy niż hover, więc
+ * svgPrzPointerLeave selekcji nie rusza. */
+
+if (typeof window !== 'undefined' && window.__przSelectedId === undefined) {
+    window.__przSelectedId = null;
+}
+
+/**
+ * Przełącza trwałą selekcję przejścia na wszystkich listach.
+ * @param {string|null} przId id przejścia lub null (zdjęcie selekcji)
+ * @returns {number} liczba dopasowanych komórek TD w Excelu
+ */
+function setPrzSelected(przId) {
+    if (typeof document === 'undefined') return 0;
+    const prev = typeof window !== 'undefined' ? window.__przSelectedId : null;
+    if (typeof window !== 'undefined') window.__przSelectedId = przId;
+    // Zdejmij starą selekcję.
+    document.querySelectorAll('.prz-tile--svg-selected').forEach((el) => {
+        el.classList.remove('prz-tile--svg-selected');
+    });
+    document.querySelectorAll('td.excel-tr-selected').forEach((td) => {
+        td.classList.remove('excel-tr-selected');
+    });
+    if (prev) setPrzSvgFilter(prev, '');
+    if (!przId) return 0;
+    // Załóż nową.
+    document.querySelectorAll('.prz-tile[data-prz-id]').forEach((el) => {
+        if (el.getAttribute('data-prz-id') === przId) el.classList.add('prz-tile--svg-selected');
+    });
+    setPrzSvgFilter(
+        przId,
+        'drop-shadow(0px 0px 8px rgba(var(--blue-hover-rgb), 0.9)) brightness(1.3)'
+    );
+    let matched = 0;
+    const overlay =
+        typeof document.getElementById === 'function'
+            ? document.getElementById('excel-table-overlay')
+            : null;
+    if (overlay) {
+        overlay.querySelectorAll('td[data-prz-id]').forEach((td) => {
+            if (td.getAttribute('data-prz-id') === przId) {
+                td.classList.add('excel-tr-selected');
+                matched++;
+            }
+        });
+    }
+    return matched;
+}
+
+/**
+ * Szuka studni (indeks w wells) zawierającej przejście o danym id.
+ * @param {string} przId
+ * @returns {number} indeks w wells lub -1
+ */
+function findWellIndexByPrzId(przId) {
+    if (typeof wells === 'undefined' || !Array.isArray(wells)) return -1;
+    for (let i = 0; i < wells.length; i++) {
+        const w = wells[i];
+        if (
+            w &&
+            Array.isArray(w.przejscia) &&
+            w.przejscia.some((p) => p && String(p.id) === String(przId))
+        ) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+window.svgPrzPointerClick = function (ev, idOrIdx) {
+    if (typeof window !== 'undefined' && window.svgDragStartIndex >= 0) return;
+    const target = resolvePrzTarget(idOrIdx);
+    if (!target.przId) return;
+    const przId = target.przId;
+    // Toggle: drugi klik zdejmuje selekcję.
+    if (typeof window !== 'undefined' && window.__przSelectedId === przId) {
+        setPrzSelected(null);
+        return;
+    }
+    let matched = setPrzSelected(przId);
+    const overlay =
+        typeof document !== 'undefined' && typeof document.getElementById === 'function'
+            ? document.getElementById('excel-table-overlay')
+            : null;
+    if (!overlay) return;
+    if (matched === 0) {
+        /* Wiersz studni niewidoczny — zwykle inny tab DN (modal otwiera się
+           zawsze na DN_TABS[0], a s1 może być na innym). Przełącz na tab
+           studni-właściciela i załóż selekcję ponownie. */
+        const wIdx = findWellIndexByPrzId(przId);
+        if (wIdx >= 0 && typeof excelSwitchTab === 'function') {
+            const w = wells[wIdx];
+            const tab = w.dn === 'styczna' ? 'styczne' : String(w.dn);
+            excelSwitchTab(tab);
+            matched = setPrzSelected(przId);
+        }
+    }
+    if (matched > 0) {
+        const first = overlay.querySelector('td[data-prz-id].excel-tr-selected');
+        if (first) {
+            if (typeof first.scrollIntoView === 'function') {
+                try {
+                    first.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+                } catch (_e) {}
+            }
+            const inp = first.querySelector('input, select');
+            if (inp && typeof inp.focus === 'function') {
+                try {
+                    inp.focus({ preventScroll: true });
+                } catch (_e2) {}
+            }
+        }
+    }
+};
+
 /* ===== GŁÓWNA FUNKCJA RENDEROWANIA SCHEMATU ===== */
 
 function renderWellDiagram(targetSvg, targetWell) {
     const well = targetWell || (typeof getCurrentWell === 'function' ? getCurrentWell() : null);
+
+    /* Backfill stabilnych id przejść dla danych legacy (np. zamówienia
+       zapisane przed ensurePrzejsciaIds — SA/ZS/000050/2026 ma wszystkie
+       pr.id === undefined). Bez id <g> dostaje puste data-prz-id i hover
+       SVG → Excel/kafelki jest martwy (resolvePrzTarget('') → null).
+       Idempotentne — jeden guard tutaj naprawia wszystkie ~38 callerów
+       (konfigurator, zlecenia, Excel), zamiast łatać każde miejsce. */
+    if (well && Array.isArray(well.przejscia) && typeof ensurePrzejsciaIds === 'function') {
+        try {
+            ensurePrzejsciaIds(well.przejscia);
+        } catch (_e) {}
+    }
 
     // BEZWZGLĘDNA REGUŁA: zamień zwykłe kręgi na wiercone i na odwrót w zależności od przejść
     if (well && typeof enforceOtRings === 'function') {
@@ -264,6 +396,17 @@ function renderWellDiagram(targetSvg, targetWell) {
 
     svg.innerHTML =
         componentsSvg + transitionsSvg + precoLineSvg + segmentDimSvg + totalHeightSvg + dnLabelSvg;
+
+    /* Re-render czyści style inline kształtów — odtwórz trwałą selekcję
+       (klasy kafelków/TD też mogły zniknąć przy ich własnych renderach).
+       Nieistniejące już id (usunięte przejście) czyści selekcję. */
+    if (typeof window !== 'undefined' && window.__przSelectedId) {
+        const stillThere =
+            well &&
+            Array.isArray(well.przejscia) &&
+            well.przejscia.some((p) => p && String(p.id) === String(window.__przSelectedId));
+        setPrzSelected(stillThere ? window.__przSelectedId : null);
+    }
 }
 
 /* ===== Rejestracja globali ===== */

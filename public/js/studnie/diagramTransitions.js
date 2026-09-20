@@ -246,7 +246,7 @@ function drawTransitionShape(idx, przId, px, prY, radiusW, radiusH, isRect, isEg
     const sDash = isBack ? 'stroke-dasharray="2,2"' : '';
     const safeId = String(przId == null ? '' : przId).replace(/'/g, '');
 
-    const gOpen = `<g class="svg-prz-${idx}" data-prz-id="${safeId}" style="transition:all 0.2s;" onmouseenter="window.svgPrzPointerEnter(event, '${safeId}')" onmouseleave="window.svgPrzPointerLeave(event, '${safeId}')">`;
+    const gOpen = `<g class="svg-prz-${idx}" data-prz-id="${safeId}" style="cursor:pointer;transition:all 0.2s;" onmouseenter="window.svgPrzPointerEnter(event, '${safeId}')" onmouseleave="window.svgPrzPointerLeave(event, '${safeId}')" onclick="window.svgPrzPointerClick(event, '${safeId}')">`;
     const gClose = '</g>';
 
     if (isRect) {
