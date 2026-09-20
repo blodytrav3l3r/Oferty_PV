@@ -651,7 +651,7 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - jiti@2.6.1
 - js-tokens@4.0.0
 - js-yaml@3.15.1
-- js-yaml@4.3.1
+- js-yaml@4.3.2
 - jsdom@26.1.0
 - jsesc@3.1.0
 - json-buffer@3.0.1
