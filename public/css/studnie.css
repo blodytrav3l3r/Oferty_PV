@@ -3550,8 +3550,8 @@ td.excel-tint--plyta_redukcyjna input {
 }
 
 /* Trwała selekcja przejścia po kliku w kształt SVG (svgPrzPointerClick,
-   diagramRenderer.js) — mocniejszy ring niż hover, przygasa hoverowa poświata.
-   Hover (excel-tr-hover) i selekcja mogą współistnieć na różnych przejściach. */
+   diagramRenderer.js) — mocniejszy pierścień niż przy najechaniu.
+   Najechanie (excel-tr-hover) i selekcja mogą współistnieć na różnych przejściach. */
 .excel-tr-selected {
     background: rgba(var(--accent-rgb), 0.28) !important;
     box-shadow: inset 0 0 0 3px var(--accent-hover, var(--accent)) !important;
