@@ -448,7 +448,9 @@ router.get('/studnie/:id', requireAuth, async (req, res) => {
         let parsedData: Record<string, unknown> = {};
         try {
             if (offer.data) parsedData = JSON.parse(offer.data);
-        } catch (_e) {}
+        } catch (_e) {
+            logger.warn('Offers', 'Uszkodzony JSON data w ofercie studni (GET)', id);
+        }
 
         let studnieDetailHistory: unknown[] = [];
         try {
