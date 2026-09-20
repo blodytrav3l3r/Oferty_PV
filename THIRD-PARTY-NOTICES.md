@@ -415,7 +415,7 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - compare-func@2.0.0
 - component-emitter@1.3.1
 - compressible@2.0.18
-- compression@1.8.1
+- compression@1.8.2
 - concat-map@0.0.1
 - concat-stream@2.0.0
 - confbox@0.2.4
