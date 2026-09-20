@@ -172,15 +172,29 @@ function updateConnectionDot() {
 }
 
 if (typeof window !== 'undefined') {
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', function () {
-            updateConnectionDot();
-            setInterval(updateConnectionDot, 30000);
-        });
-    } else {
+    // X11: guard pojedynczego timera + cleanup (częstotliwość 30 s bez zmian).
+    // Ponowna ewaluacja skryptu (SPA/iframe) nie dokłada kolejnego interwału,
+    // a pagehide/beforeunload sprząta timer przy odmontowaniu/nawigacji.
+    var _startConnectionPoll = function () {
         updateConnectionDot();
-        setInterval(updateConnectionDot, 30000);
+        if (!window._connectionDotInterval) {
+            window._connectionDotInterval = setInterval(updateConnectionDot, 30000);
+        }
+    };
+    var _stopConnectionPoll = function () {
+        if (window._connectionDotInterval) {
+            clearInterval(window._connectionDotInterval);
+            window._connectionDotInterval = null;
+        }
+    };
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', _startConnectionPoll, { once: true });
+    } else {
+        _startConnectionPoll();
     }
+    window.addEventListener('pagehide', _stopConnectionPoll);
+    window.addEventListener('beforeunload', _stopConnectionPoll);
+    window._stopConnectionPoll = _stopConnectionPoll;
     window.addEventListener('online', function () {
         _notifyOnlineSilent();
         updateConnectionDot();

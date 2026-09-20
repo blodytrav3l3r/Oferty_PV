@@ -18,6 +18,8 @@
     let text = null;
     let _lastFetch = 0;
     let _lastKnowledgeFetch = 0;
+    // X11: uchwyt pojedynczego timera pollingu (częstotliwość bez zmian).
+    let _pollTimer = null;
 
     function getElements() {
         if (badge && dot && text) return true;
@@ -145,8 +147,21 @@
     function init() {
         if (!getElements()) return;
         poll();
-        setInterval(poll, POLL_INTERVAL_MS);
+        // X11: guard pojedynczego timera — ponowny init nie dokłada interwału.
+        if (_pollTimer) return;
+        _pollTimer = setInterval(poll, POLL_INTERVAL_MS);
     }
+
+    // X11: cleanup przy odmontowaniu/nawigacji SPA (częstotliwość bez zmian).
+    function stopPolling() {
+        if (_pollTimer) {
+            clearInterval(_pollTimer);
+            _pollTimer = null;
+        }
+    }
+    window.addEventListener('pagehide', stopPolling);
+    window.addEventListener('beforeunload', stopPolling);
+    window.__aiStatusStop = stopPolling;
 
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', init);

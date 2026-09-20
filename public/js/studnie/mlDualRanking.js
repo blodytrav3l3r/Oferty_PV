@@ -64,6 +64,7 @@
     }
 
     // Okresowe czyszczenie przedawnionych wpisów cache co 5 min
+    // (częstotliwość bez zmian).
     const _cacheCleanInterval = setInterval(
         function () {
             const now = Date.now();
@@ -73,6 +74,25 @@
         },
         5 * 60 * 1000
     );
+
+    // X11: cleanup interwału przy odmontowaniu/nawigacji SPA + guard
+    // pojedynczego timera przy ponownej ewaluacji skryptu w tym samym window.
+    function _stopCacheClean() {
+        clearInterval(_cacheCleanInterval);
+    }
+    if (typeof window !== 'undefined') {
+        if (window._mlDualRankingCacheClean) {
+            try {
+                clearInterval(window._mlDualRankingCacheClean);
+            } catch (_e) {
+                /* ignoruj */
+            }
+        }
+        window._mlDualRankingCacheClean = _cacheCleanInterval;
+        window.addEventListener('pagehide', _stopCacheClean);
+        window.addEventListener('beforeunload', _stopCacheClean);
+        window.__mlDualRankingStopCacheClean = _stopCacheClean;
+    }
 
     /** @type {boolean} */
     let mlOnline = false;
