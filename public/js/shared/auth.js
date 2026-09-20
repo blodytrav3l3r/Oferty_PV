@@ -192,8 +192,11 @@ if (typeof window !== 'undefined') {
     } else {
         _startConnectionPoll();
     }
-    window.addEventListener('pagehide', _stopConnectionPoll);
-    window.addEventListener('beforeunload', _stopConnectionPoll);
+    // Guard: sandboxy testowe (vm) mają window bez addEventListener.
+    if (typeof window.addEventListener === 'function') {
+        window.addEventListener('pagehide', _stopConnectionPoll);
+        window.addEventListener('beforeunload', _stopConnectionPoll);
+    }
     window._stopConnectionPoll = _stopConnectionPoll;
     window.addEventListener('online', function () {
         _notifyOnlineSilent();

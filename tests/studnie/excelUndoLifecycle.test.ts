@@ -79,7 +79,13 @@ function makeCtx(extra: any = {}) {
     };
     context.window = context;
     vm.createContext(context);
-    for (const f of ['excelState.js', 'excelPolling.js', 'excelTableManager.js', 'excelModal.js']) {
+    for (const f of [
+        'excelState.js',
+        'excelUndo.js',
+        'excelPolling.js',
+        'excelTableManager.js',
+        'excelModal.js'
+    ]) {
         const code = fs.readFileSync(path.join(JS_DIR, f), 'utf8');
         vm.runInContext(code, context, { filename: f });
     }

@@ -38,7 +38,7 @@ describe('excel patch undo — B+ fuzz oracle', () => {
         };
         context.window = context;
         vm.createContext(context);
-        for (const f of ['excelState.js', 'excelTableManager.js']) {
+        for (const f of ['excelState.js', 'excelUndo.js', 'excelTableManager.js']) {
             const code = fs.readFileSync(path.join(base, f), 'utf8');
             try {
                 vm.runInContext(code, context);

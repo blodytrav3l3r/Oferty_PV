@@ -89,8 +89,11 @@
             }
         }
         window._mlDualRankingCacheClean = _cacheCleanInterval;
-        window.addEventListener('pagehide', _stopCacheClean);
-        window.addEventListener('beforeunload', _stopCacheClean);
+        // Guard: sandboxy testowe (vm) mają window bez addEventListener.
+        if (typeof window.addEventListener === 'function') {
+            window.addEventListener('pagehide', _stopCacheClean);
+            window.addEventListener('beforeunload', _stopCacheClean);
+        }
         window.__mlDualRankingStopCacheClean = _stopCacheClean;
     }
 

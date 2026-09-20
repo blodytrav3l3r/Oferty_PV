@@ -22,6 +22,11 @@ function loadBulkCtx(productionOrders: any[]) {
         'utf8'
     );
     vm.runInContext(pzCode, context);
+    const modelCode = fs.readFileSync(
+        path.join(__dirname, '../../public/js/studnie/orderBulkModel.js'),
+        'utf8'
+    );
+    vm.runInContext(modelCode, context);
     const bulkCode = fs.readFileSync(
         path.join(__dirname, '../../public/js/studnie/orderBulk.js'),
         'utf8'

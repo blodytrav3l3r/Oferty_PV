@@ -53,7 +53,7 @@ function loadCtx(fetchImpl: any) {
     };
     context.window = { debounce: undefined };
     vm.createContext(context);
-    for (const f of ['excelBulkJob.js', 'orderBulk.js']) {
+    for (const f of ['excelBulkJob.js', 'orderBulkModel.js', 'orderBulk.js']) {
         vm.runInContext(
             fs.readFileSync(path.join(__dirname, '../../public/js/studnie', f), 'utf8'),
             context

@@ -159,8 +159,11 @@
             _pollTimer = null;
         }
     }
-    window.addEventListener('pagehide', stopPolling);
-    window.addEventListener('beforeunload', stopPolling);
+    // Guard: sandboxy testowe (vm) mają window bez addEventListener.
+    if (typeof window.addEventListener === 'function') {
+        window.addEventListener('pagehide', stopPolling);
+        window.addEventListener('beforeunload', stopPolling);
+    }
     window.__aiStatusStop = stopPolling;
 
     if (document.readyState === 'loading') {

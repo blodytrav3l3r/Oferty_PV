@@ -19,10 +19,15 @@ function loadCtx() {
         console
     };
     vm.createContext(context);
+    const modelCode = fs.readFileSync(
+        path.join(__dirname, '../../public/js/studnie/orderBulkModel.js'),
+        'utf8'
+    );
     const bulkCode = fs.readFileSync(
         path.join(__dirname, '../../public/js/studnie/orderBulk.js'),
         'utf8'
     );
+    vm.runInContext(modelCode, context);
     vm.runInContext(bulkCode, context);
     return context;
 }
