@@ -14,8 +14,8 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 
 | Licencja                | Liczba pakietów |
 | ----------------------- | --------------: |
-| MIT                     |             965 |
-| ISC                     |             100 |
+| MIT                     |             944 |
+| ISC                     |              99 |
 | Apache-2.0              |              63 |
 | BSD-3-Clause            |              20 |
 | BSD-2-Clause            |              20 |
@@ -35,7 +35,7 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 
 ## Oprogramowanie firm trzecich
 
-### MIT (965)
+### MIT (944)
 
 - @apidevtools/json-schema-ref-parser@14.0.1
 - @apidevtools/openapi-schemas@2.1.0
@@ -290,7 +290,6 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - ajv@8.20.0
 - ajv@8.20.0
 - ansi-escapes@4.3.2
-- ansi-escapes@7.3.0
 - ansi-regex@5.0.1
 - ansi-regex@5.0.1
 - ansi-regex@5.0.1
@@ -324,9 +323,6 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - ansi-styles@4.3.0
 - ansi-styles@4.3.0
 - ansi-styles@5.2.0
-- ansi-styles@6.2.3
-- ansi-styles@6.2.3
-- ansi-styles@6.2.3
 - ansi-styles@6.2.3
 - ansi-styles@6.2.3
 - arg@4.1.3
@@ -402,8 +398,6 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - citty@0.1.6
 - citty@0.2.2
 - cjs-module-lexer@2.2.0
-- cli-cursor@5.0.0
-- cli-truncate@5.2.0
 - co@4.6.0
 - collect-v8-coverage@1.0.3
 - color-convert@1.9.3
@@ -506,7 +500,6 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - encodeurl@2.0.0
 - end-of-stream@1.4.5
 - env-paths@2.2.1
-- environment@1.1.0
 - error-ex@1.3.4
 - es-define-property@1.0.1
 - es-errors@1.3.0
@@ -524,7 +517,6 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - eslint-config-prettier@10.1.8
 - eslint@10.8.1
 - etag@1.8.1
-- eventemitter3@5.0.4
 - execa@5.1.1
 - exit-x@0.2.2
 - expect@30.4.1
@@ -611,7 +603,6 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - is-fullwidth-code-point@3.0.0
 - is-fullwidth-code-point@3.0.0
 - is-fullwidth-code-point@3.0.0
-- is-fullwidth-code-point@5.1.0
 - is-generator-fn@2.1.0
 - is-glob@4.0.3
 - is-number@7.0.0
@@ -669,8 +660,7 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - levn@0.4.1
 - lie@3.3.0
 - lines-and-columns@1.2.4
-- lint-staged@17.0.8
-- listr2@10.2.1
+- lint-staged@17.5.1
 - load-json-file@4.0.0
 - locate-path@2.0.0
 - locate-path@3.0.0
@@ -685,7 +675,6 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - lodash.memoize@4.1.2
 - lodash.mergewith@4.6.2
 - lodash@4.18.1
-- log-update@6.1.0
 - magic-string@0.30.21
 - make-dir@4.0.0
 - map-obj@1.0.1
@@ -705,7 +694,6 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - mime@1.6.0
 - mime@2.6.0
 - mimic-fn@2.1.0
-- mimic-function@5.0.1
 - min-indent@1.0.1
 - minimist-options@4.1.0
 - minimist@1.2.8
@@ -756,7 +744,6 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - on-finished@2.4.1
 - on-headers@1.1.0
 - onetime@5.1.2
-- onetime@7.0.0
 - openapi-types@12.1.3
 - optionator@0.9.4
 - p-limit@1.3.0
@@ -799,7 +786,7 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - perfect-debounce@1.0.0
 - picomatch@2.3.2
 - picomatch@2.3.2
-- picomatch@4.0.4
+- picomatch@4.0.7
 - pify@2.3.0
 - pify@3.0.0
 - pify@3.0.0
@@ -850,8 +837,6 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - resolve-from@5.0.0
 - resolve-from@5.0.0
 - resolve@1.22.12
-- restore-cursor@5.1.0
-- rfdc@1.4.1
 - rrweb-cssom@0.8.0
 - safe-buffer@5.1.2
 - safe-buffer@5.1.2
@@ -868,8 +853,6 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - side-channel-weakmap@1.0.2
 - side-channel@1.1.1
 - slash@3.0.0
-- slice-ansi@7.1.2
-- slice-ansi@8.0.0
 - smart-buffer@4.2.0
 - socks-proxy-agent@8.0.5
 - socks@2.8.9
@@ -890,8 +873,6 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - string-width@4.2.3
 - string-width@5.1.2
 - string-width@7.2.0
-- string-width@7.2.0
-- string-width@8.2.1
 - strip-ansi-cjs@6.0.1
 - strip-ansi@6.0.1
 - strip-ansi@6.0.1
@@ -945,7 +926,7 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - through@2.3.8
 - through2@2.0.5
 - through2@4.0.2
-- tinyexec@1.2.4
+- tinyexec@1.3.1
 - tinyglobby@0.2.17
 - tldts-core@6.1.86
 - tldts@6.1.86
@@ -981,12 +962,10 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - word-wrap@1.2.5
 - wordwrap@1.0.0
 - wrap-ansi-cjs@7.0.0
-- wrap-ansi@10.0.0
 - wrap-ansi@7.0.0
 - wrap-ansi@7.0.0
 - wrap-ansi@7.0.0
 - wrap-ansi@8.1.0
-- wrap-ansi@9.0.2
 - wrap-ansi@9.0.2
 - ws@8.21.3
 - xml-js@1.6.11
@@ -1003,7 +982,7 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - zod@3.25.76
 - zod@4.4.3
 
-### ISC (100)
+### ISC (99)
 
 - @isaacs/cliui@8.0.2
 - @istanbuljs/load-nyc-config@1.1.0
@@ -1082,7 +1061,6 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - semver@7.8.5
 - setprototypeof@1.2.0
 - signal-exit@3.0.7
-- signal-exit@4.1.0
 - signal-exit@4.1.0
 - signal-exit@4.1.0
 - split2@3.2.2
