@@ -69,8 +69,10 @@ import {
     generateCombinedOfferDOCX
 } from '../src/services/combinedExport';
 
-const mockRuryOffer = { id: 'offer_rury_1', userId: 'user1' };
-const mockStudnieOffer = { id: 'offer_studnie_1', userId: 'user1' };
+const RURY_UUID = '123e4567-e89b-12d3-a456-426614174001';
+const STUDNIE_UUID = '123e4567-e89b-12d3-a456-426614174002';
+const mockRuryOffer = { id: RURY_UUID, userId: 'user1' };
+const mockStudnieOffer = { id: STUDNIE_UUID, userId: 'user1' };
 
 function createApp() {
     const app = express();
@@ -90,7 +92,7 @@ describe('Export Combined (Wydruk łączny) — POST /api/export-combined', () =
         app = createApp();
     });
 
-    const validBody = { offerRuryId: 'offer_rury_1', offerStudnieId: 'offer_studnie_1' };
+    const validBody = { offerRuryId: RURY_UUID, offerStudnieId: STUDNIE_UUID };
 
     describe('POST /pdf', () => {
         it('owner CAN export combined PDF (200 + application/pdf + niepusty buffer)', async () => {
@@ -102,10 +104,7 @@ describe('Export Combined (Wydruk łączny) — POST /api/export-combined', () =
             expect(res.headers['content-disposition']).toMatch(/oferta_laczna_/);
             expect(res.headers['content-disposition']).toMatch(/\.pdf/);
             expect(Number(res.headers['content-length'])).toBeGreaterThan(0);
-            expect(generateCombinedOfferPDF).toHaveBeenCalledWith(
-                'offer_rury_1',
-                'offer_studnie_1'
-            );
+            expect(generateCombinedOfferPDF).toHaveBeenCalledWith(RURY_UUID, STUDNIE_UUID);
         });
 
         it('walidacja: brak obu ID -> 400', async () => {
@@ -153,10 +152,7 @@ describe('Export Combined (Wydruk łączny) — POST /api/export-combined', () =
             expect(res.headers['content-disposition']).toMatch(/oferta_laczna_/);
             expect(res.headers['content-disposition']).toMatch(/\.docx/);
             expect(Number(res.headers['content-length'])).toBeGreaterThan(0);
-            expect(generateCombinedOfferDOCX).toHaveBeenCalledWith(
-                'offer_rury_1',
-                'offer_studnie_1'
-            );
+            expect(generateCombinedOfferDOCX).toHaveBeenCalledWith(RURY_UUID, STUDNIE_UUID);
         });
 
         it('walidacja: brak obu ID -> 400', async () => {
@@ -181,11 +177,11 @@ describe('Export Combined (Wydruk łączny) — POST /api/export-combined', () =
             await request(app).post('/api/export-combined/pdf').send(validBody);
 
             expect(prisma.offers_rel.findUnique).toHaveBeenCalledWith({
-                where: { id: 'offer_rury_1' },
+                where: { id: RURY_UUID },
                 select: { userId: true }
             });
             expect(prisma.offers_studnie_rel.findUnique).toHaveBeenCalledWith({
-                where: { id: 'offer_studnie_1' },
+                where: { id: STUDNIE_UUID },
                 select: { userId: true }
             });
             expect(canReadDoc).toHaveBeenCalled();

@@ -1,4 +1,5 @@
 import express from 'express';
+import { z } from 'zod';
 import prisma from '../../prismaClient';
 import { requireAuth, AuthenticatedRequest } from '../../middleware/auth';
 import { canClaimNumber } from '../../utils/ownership';
@@ -9,6 +10,12 @@ const router = express.Router();
 
 /** Maks. liczb w jednym claim-zakresu — jak limit batch-delete (production.ts). */
 const CLAIM_RANGE_MAX = 200;
+
+// E3b: zod zamiast ręcznego typeof — unknown keys ignorowane (strip, default z.object),
+// count musi być int 1..200. Komunikaty bez zmian (testy + frontend orderBulk.js).
+const claimProductionNumbersSchema = z.object({
+    count: z.number().int().min(1).max(CLAIM_RANGE_MAX)
+});
 
 /**
  * P0-B: atomowa rezerwacja numerów produkcyjnych.
@@ -231,15 +238,17 @@ router.post('/claim-production-numbers/:userId', requireAuth, async (req, res) =
         if (!canClaimNumber(authReq.user, userId)) {
             return res.status(403).json({ error: 'Brak uprawnień do numeru tego użytkownika' });
         }
-        const count = (req.body || {}).count;
-        if (typeof count !== 'number' || !Number.isInteger(count) || count < 1) {
+        const parsed = claimProductionNumbersSchema.safeParse(req.body ?? {});
+        if (!parsed.success) {
+            const tooBig = parsed.error.issues.some((i) => i.code === 'too_big');
+            if (tooBig) {
+                return res.status(400).json({
+                    error: `Zbyt wiele numerów w jednym żądaniu (max ${CLAIM_RANGE_MAX})`
+                });
+            }
             return res.status(400).json({ error: 'Pole count musi być liczbą całkowitą >= 1' });
         }
-        if (count > CLAIM_RANGE_MAX) {
-            return res
-                .status(400)
-                .json({ error: `Zbyt wiele numerów w jednym żądaniu (max ${CLAIM_RANGE_MAX})` });
-        }
+        const count = parsed.data.count;
         const year = new Date().getFullYear();
         const yearShort = String(year).slice(-2);
 

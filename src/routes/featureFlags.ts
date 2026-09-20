@@ -30,7 +30,17 @@ router.get('/', requireAuth, async (_req, res) => {
 
 router.put('/import-export', requireAuth, requireAdmin, async (req, res) => {
     try {
-        const enabled = req.body.enabled === true;
+        // E3b: strict { enabled: boolean } zamiast koercji — "true"/1 nie są legalne
+        // (koercja `=== true` cicho wyłączała flagę przy "true"). Wzorzec z PUT /ai-ml.
+        const parsed = z.object({ enabled: z.boolean() }).strict().safeParse(req.body);
+        if (!parsed.success) {
+            res.status(400).json({
+                error: 'Pole enabled musi byc typem boolean',
+                details: parsed.error.issues
+            });
+            return;
+        }
+        const enabled = parsed.data.enabled;
         await prisma.settings.upsert({
             where: { key: 'feature_import_export_enabled' },
             create: { key: 'feature_import_export_enabled', value: enabled ? '"1"' : '"0"' },
@@ -96,16 +106,33 @@ router.put('/ai-ml', requireAuth, requireAdmin, async (req, res) => {
     }
 });
 
+// E3b: limit rozmiaru/kształtu details — ochrona przed audit poisoning (A-17).
+// Frontend wysyła małe obiekty ({ module, offerNumber, ordersCount }), limit 2 KB JSON.
+const AUDIT_DETAILS_MAX_JSON = 2000;
+
+const auditEntrySchema = z.object({
+    entityType: z.string().min(1).max(64),
+    entityId: z.string().min(1).max(64),
+    action: z.string().min(1).max(128),
+    details: z.record(z.string(), z.unknown()).optional()
+});
+
 router.post('/audit', requireAuth, requireAdmin, async (req, res) => {
     try {
         const authReq = req as AuthenticatedRequest;
-        const { entityType, entityId, action, details } = req.body;
-        if (!entityType || !entityId || !action) {
-            return res
-                .status(400)
-                .json({ error: 'Brak wymaganych pól: entityType, entityId, action' });
+        const parsed = auditEntrySchema.safeParse(req.body);
+        if (!parsed.success) {
+            return res.status(400).json({
+                error: 'Brak wymaganych pól: entityType, entityId, action',
+                details: parsed.error.issues
+            });
         }
-        await logAudit(entityType, entityId, authReq.user?.id || '', action, details || {});
+        const { entityType, entityId, action, details } = parsed.data;
+        const detailsObj: Record<string, unknown> = details ?? {};
+        if (JSON.stringify(detailsObj).length > AUDIT_DETAILS_MAX_JSON) {
+            return res.status(400).json({ error: 'Pole details przekracza limit rozmiaru' });
+        }
+        await logAudit(entityType, entityId, authReq.user?.id || '', action, detailsObj);
         res.json({ ok: true });
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error';

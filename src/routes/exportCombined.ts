@@ -1,4 +1,5 @@
 import express from 'express';
+import { z } from 'zod';
 import prisma from '../prismaClient';
 import { requireAuth, AuthenticatedRequest } from '../middleware/auth';
 import { generateCombinedOfferPDF, generateCombinedOfferDOCX } from '../services/combinedExport';
@@ -39,15 +40,23 @@ async function canExportBothOffers(
     );
 }
 
+// E3b: twarda walidacja identyfikatorów (UUID + maxLength), wzorzec telemetryAiMl.ts.
+// ID ofert powstają przez crypto.randomUUID (ruryCrud/studnieCrud), więc poprawne
+// dane zawsze są UUID; reszta (IDOR-probe, wklejone śmieci) dostaje 400 z detalami.
+const combinedExportSchema = z.object({
+    offerRuryId: z.string().trim().min(1).max(64).uuid(),
+    offerStudnieId: z.string().trim().min(1).max(64).uuid()
+});
+
+type CombinedIds = z.infer<typeof combinedExportSchema>;
+
 /**
- * Waliduje body żądania. Zwraca oba identyfikatory lub null (gdy któregoś brakuje).
+ * Waliduje body żądania. Zwraca oba identyfikatory lub issues (brak/zły format).
  */
-function parseBody(body: unknown): { offerRuryId: string; offerStudnieId: string } | null {
-    const b = (body || {}) as Record<string, unknown>;
-    const offerRuryId = typeof b.offerRuryId === 'string' ? b.offerRuryId.trim() : '';
-    const offerStudnieId = typeof b.offerStudnieId === 'string' ? b.offerStudnieId.trim() : '';
-    if (!offerRuryId || !offerStudnieId) return null;
-    return { offerRuryId, offerStudnieId };
+function parseBody(body: unknown): { ids: CombinedIds } | { issues: unknown } {
+    const parsed = combinedExportSchema.safeParse(body);
+    if (!parsed.success) return { issues: parsed.error.issues };
+    return { ids: parsed.data };
 }
 
 function makeSafeId(id: string): string {
@@ -60,12 +69,14 @@ function makeSafeId(id: string): string {
 router.post('/pdf', requireAuth, EXPORT_LIMITER, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
-        const ids = parseBody(req.body);
-        if (!ids) {
+        const result = parseBody(req.body);
+        if ('issues' in result) {
             return res.status(400).json({
-                error: 'Wymagane są identyfikatory obu ofert (offerRuryId, offerStudnieId)'
+                error: 'Wymagane są identyfikatory obu ofert (offerRuryId, offerStudnieId)',
+                details: result.issues
             });
         }
+        const ids = result.ids;
 
         if (!(await canExportBothOffers(authReq, ids.offerRuryId, ids.offerStudnieId))) {
             return res.status(404).json({ error: 'Not found' });
@@ -90,12 +101,14 @@ router.post('/pdf', requireAuth, EXPORT_LIMITER, async (req, res) => {
 router.post('/docx', requireAuth, EXPORT_LIMITER, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
-        const ids = parseBody(req.body);
-        if (!ids) {
+        const result = parseBody(req.body);
+        if ('issues' in result) {
             return res.status(400).json({
-                error: 'Wymagane są identyfikatory obu ofert (offerRuryId, offerStudnieId)'
+                error: 'Wymagane są identyfikatory obu ofert (offerRuryId, offerStudnieId)',
+                details: result.issues
             });
         }
+        const ids = result.ids;
 
         if (!(await canExportBothOffers(authReq, ids.offerRuryId, ids.offerStudnieId))) {
             return res.status(404).json({ error: 'Not found' });
