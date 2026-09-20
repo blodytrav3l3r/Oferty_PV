@@ -1281,7 +1281,7 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 
 ### MIT OR GPL-3.0-or-later (1)
 
-- jszip@3.10.1
+- jszip@3.10.2
 
 ### MIT AND Zlib (1)
 
