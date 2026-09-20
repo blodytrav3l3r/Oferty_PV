@@ -574,7 +574,7 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - git-remote-origin-url@2.0.0
 - git-semver-tags@4.1.1
 - global-directory@5.0.0
-- globals@17.9.0
+- globals@17.12.0
 - gopd@1.2.0
 - handlebars@4.7.9
 - hard-rejection@2.1.0
