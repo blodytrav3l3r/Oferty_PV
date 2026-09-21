@@ -8,7 +8,7 @@
 // Użycie: node scripts/load-100.mjs [--quick] [--sustained] [--users N] [--base URL]
 // Wynik: JSON na stdout + tabela na stderr; exit 0 = DoD PASS, 1 = FAIL.
 // Warianty: --quick do CI przy każdym pushu; --sustained tylko
-// workflow_dispatch/nightly (opis w docs/plans/e3-perf.md).
+// workflow_dispatch/nightly (opis w docs/plans/archive/e3-perf.md).
 import { readFileSync } from 'node:fs';
 
 // Pobiera wartość flagi w formach --flaga=wartosc i --flaga wartosc.

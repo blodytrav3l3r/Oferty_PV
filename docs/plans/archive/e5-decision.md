@@ -2,7 +2,7 @@
 
 > **Status: COMPLETED.** Decyzja wiążąca (wariant A); plik zostaje w root, bo `.github/workflows/load-nightly.yml` się do niego odwołuje.
 
-Baza: `docs/plans/e3-perf.md` (baseline → po, 25/50/100 boundary).
+Baza: `docs/plans/archive/e3-perf.md` (baseline → po, 25/50/100 boundary).
 Single-writer SQLite trzyma poprawność (busy=0, 5xx=0) kosztem latencji zapisów
 (write p95 ~1 s, batch-10 p95 1,4–2,5 s). Odczyty zdrowe. DoD `P95 CRUD<500` FAIL
 przed i po E3 — próg dotyczy mieszanego CRUD, nie samego writer-a.
@@ -31,7 +31,7 @@ nietknięte) — wpływ perf ~nil z konstrukcji. Brak podstaw do atrybucji
 jakiejkolwiek zmiany liczb do E4; re-pomiar potwierdza jedynie brak regresji,
 nie poprawę.
 
-### Oba zbiory liczb (źródło: `docs/plans/e3-perf.md`)
+### Oba zbiory liczb (źródło: `docs/plans/archive/e3-perf.md`)
 
 - Stare (§3, duża DB ~1,3 GB, `--quick` mix 100 userów): write p95 ~0,9–1,1 s,
   batch-10 p95 1,4–2,5 s, DoD `P95 CRUD<500` FAIL, busyΔ 0, 5xx 0.

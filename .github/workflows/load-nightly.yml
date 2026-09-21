@@ -1,7 +1,7 @@
 # Load — sustained (~15 min) — osobny workflow (nie część CI/CD Pipeline).
 # Celowo poza ci.yml: na pushu/PR job byłby wiecznie Skipped i zaciemniał widok.
 # Uruchomienia: nightly (cron) + ręcznie (workflow_dispatch, input users).
-# Wynik domyka warunkowe werdykty E5 (docs/plans/e5-decision.md).
+# Wynik domyka warunkowe werdykty E5 (docs/plans/archive/e5-decision.md).
 
 name: Load — sustained nightly
 

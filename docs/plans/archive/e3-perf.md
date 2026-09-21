@@ -172,7 +172,7 @@ przebiegach (PASS). Różnica względem FAIL z §3.2 to inny stan bazy
 
 ### 7.5 Prettier
 
-- `npx prettier --check scripts/load-100.mjs docs/plans/e3-perf.md package.json`
+- `npx prettier --check scripts/load-100.mjs docs/plans/archive/e3-perf.md package.json`
   → PASS (wszystkie czyste; `.mjs` nie wchodzi w CI-owy `format:check`, ale
   wyrównano do `.prettierrc` — baseline `load-100.mjs` był czysty, więc
   `--write` dotknął tylko nowych linii).

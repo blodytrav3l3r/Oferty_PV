@@ -43,7 +43,6 @@ const MD_FILES = [
     'docs/AUDIT.md',
     'docs/DEPLOYMENT.md',
     'docs/DEPLOY_UPDATE.md',
-    'docs/INSTRUKCJA_SERWER.md',
     'docs/RELEASE_PROCESS.md',
     'docs/SECURITY.md',
     'docs/DATABASE.md',
