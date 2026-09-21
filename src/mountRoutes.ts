@@ -9,6 +9,7 @@ import { errorHandler } from './middleware/errorHandler';
 
 import authRoutes from './routes/auth';
 import userRoutes from './routes/users';
+import userPreferencesRoutes from './routes/userPreferences';
 import productRoutes from './routes/productsV2';
 import productStudnieRoutes from './routes/productsStudnieV2';
 import precoPricingRoutes from './routes/precoPricingV2';
@@ -54,6 +55,8 @@ export function mountRoutes(app: express.Express, apiLimiter: express.RequestHan
     const largeJson = express.json({ limit: '50mb' });
 
     app.use('/api/auth', apiLimiter, smallJson, authRoutes);
+    // Preferencje własne przed /api/users — inaczej ':id' połknęłoby 'me'.
+    app.use('/api/users/me', apiLimiter, smallJson, userPreferencesRoutes);
     app.use('/api/users', apiLimiter, smallJson, userRoutes);
     app.use('/api/users-for-assignment', apiLimiter, smallJson, (req, res, next) => {
         req.url = '/for-assignment' + (req.url === '/' ? '' : req.url);

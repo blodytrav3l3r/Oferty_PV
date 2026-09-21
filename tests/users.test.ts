@@ -43,6 +43,9 @@ jest.mock('../src/prismaClient', () => ({
         sessions: {
             deleteMany: jest.fn()
         },
+        user_preferences: {
+            deleteMany: jest.fn()
+        },
         offers_rel: { count: jest.fn() },
         offers_studnie_rel: { count: jest.fn() },
         orders_studnie_rel: { count: jest.fn() },

@@ -28,23 +28,23 @@ function _excelBulkShowProgress(label, done, total, onCancel) {
         el.style.cssText =
             'position:fixed;bottom:1rem;right:1rem;z-index:' +
             (typeof LAYERS !== 'undefined' ? LAYERS.TOAST : EXCEL_BULK_ZINDEX_FALLBACK) +
-            ';background:var(--bg-card, #1e293b);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:0.75rem 1rem;min-width:280px;box-shadow:0 4px 20px rgba(0,0,0,0.5);';
+            ';background:var(--bg-card);border:1px solid var(--border-glass);border-radius:8px;padding:0.75rem 1rem;min-width:280px;box-shadow:var(--shadow-md);';
         document.body.appendChild(el);
     }
     el.innerHTML =
-        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.4rem;"><span style="font-size:12px;color:#94a3b8;">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.4rem;"><span style="font-size:12px;color:var(--text-muted);">' +
         safeLabel +
         ' <span id="excel-paste-pct">' +
         pct +
-        '%</span></span><span style="font-size:12px;color:#94a3b8;" id="excel-paste-count">' +
+        '%</span></span><span style="font-size:12px;color:var(--text-muted);" id="excel-paste-count">' +
         done +
         ' / ' +
         total +
-        '</span></div><div style="height:4px;background:#0f172a;border-radius:2px;overflow:hidden;margin-bottom:0.5rem;"><div id="excel-paste-bar" style="height:100%;width:' +
+        '</span></div><div style="height:4px;background:var(--bg-deep);border-radius:2px;overflow:hidden;margin-bottom:0.5rem;"><div id="excel-paste-bar" style="height:100%;width:' +
         pct +
-        '%;background:linear-gradient(90deg,var(--accent, #3b82f6),var(--success, #22c55e));transition:width 0.15s;"></div></div>' +
+        '%;background:linear-gradient(90deg,var(--accent),var(--success));transition:width 0.15s;"></div></div>' +
         (onCancel
-            ? '<button id="excel-bulk-cancel" style="font-size:11px;padding:0.25rem 0.6rem;border-radius:4px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.06);color:#e2e8f0;cursor:pointer;">Anuluj</button>'
+            ? '<button id="excel-bulk-cancel" style="font-size:11px;padding:0.25rem 0.6rem;border-radius:4px;border:1px solid var(--border);background:var(--bg-tertiary);color:var(--text-primary);cursor:pointer;">Anuluj</button>'
             : '');
     const cancelBtn = document.getElementById('excel-bulk-cancel');
     if (cancelBtn && onCancel) cancelBtn.onclick = onCancel;

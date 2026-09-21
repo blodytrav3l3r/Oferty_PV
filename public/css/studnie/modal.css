@@ -493,6 +493,18 @@
     scrollbar-color: rgba(var(--accent-rgb), 0.5) transparent;
 }
 
+/* Tryb jasny — legenda skrótów: chipy code na białym wash (zamiast
+   niewidzialnego white 0.06), mikrocopy slate na czytelnym.
+   Remap palety tylko w scope legendy, nie globalnie. */
+html[data-theme='light'] .modal--excel-shortcuts .excel-shortcuts-body {
+    --slate-400: #475569;
+    --slate-500: #475569;
+}
+
+html[data-theme='light'] .modal--excel-shortcuts .excel-shortcuts-body code {
+    background: rgba(15, 23, 42, 0.06);
+}
+
 .recalc-modal {
     width: min(980px, 96vw);
     max-width: 96vw;

@@ -393,3 +393,40 @@
     background: rgba(var(--accent-rgb), 0.4);
     border-radius: var(--radius-2xs);
 }
+
+/* ===== Tryb jasny — tabela Excel =====
+   Reguły focus-within pisane pod dark (jasny tekst na ciemnym wierszu);
+   w light wiersz jest biały/pastelowy, więc tekst wraca do ciemnego.
+   Prefix html[data-theme] + !important przebija reguły bazowe. */
+html[data-theme='light'] #excel-table-container tbody tr:focus-within td {
+    color: var(--text-primary) !important;
+}
+
+html[data-theme='light'] #excel-table-container tbody tr:focus-within td:first-child {
+    color: var(--accent-text) !important;
+}
+
+html[data-theme='light'] #excel-table-container tbody tr:focus-within td[data-cell^='height-'] {
+    color: var(--text-primary) !important;
+}
+
+/* Selekcja i drag na białym tle — mocniejszy wash zamiast slate-100 */
+html[data-theme='light'] .cell-selected {
+    background: #dbeafe;
+}
+
+html[data-theme='light'] .drag-preview {
+    background: #e2e8f0;
+}
+
+/* Dropdowny komórek: twardy slate-800 w bazie — w light białe.
+   Prefix html[data-theme] przebija reguły z !important. */
+html[data-theme='light'] #excel-table-container select {
+    background: #ffffff !important;
+    color: var(--text-primary) !important;
+    border-color: var(--border);
+}
+html[data-theme='light'] #excel-table-container select option {
+    background: #ffffff;
+    color: var(--text-primary);
+}

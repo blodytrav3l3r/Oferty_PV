@@ -1047,6 +1047,24 @@
     border: 1px solid var(--warn-border);
 }
 
+/* Tryb jasny — toasty: biały tekst na pastelach nieczytelny.
+   Ciemny tekst semantyczny + border dla definicji krawędzi. */
+html[data-theme='light'] .toast-success {
+    color: var(--success-strong);
+    border: 1px solid var(--success-border);
+}
+
+html[data-theme='light'] .toast-error {
+    color: var(--danger-strong);
+    border: 1px solid var(--danger-border);
+}
+
+html[data-theme='light'] .toast-info {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+}
+
 @keyframes slideIn {
     from {
         transform: translateX(100%);

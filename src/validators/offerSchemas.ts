@@ -298,6 +298,14 @@ export const userUpdateSchema = z.object({
 
 export type UserUpdateInput = z.infer<typeof userUpdateSchema>;
 
+// Preferencje użytkownika (motyw i przyszłe) — PUT /api/users/me/preferences.
+export const userPreferenceSchema = z.object({
+    key: z.enum(['theme']),
+    value: z.enum(['light', 'dark'])
+});
+
+export type UserPreferenceInput = z.infer<typeof userPreferenceSchema>;
+
 // =============================================================================
 // PAGINACJA
 // =============================================================================

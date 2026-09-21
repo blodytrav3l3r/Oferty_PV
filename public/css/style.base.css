@@ -192,6 +192,15 @@
     /* Pink accent (zlecenia module) — merged with Colors section above */
     --pink-hover: #f472b6;
 
+    /* Jasne washe akcentów pod nav-glow w trybie jasnym */
+    --accent2-bg-soft: #f5f3ff;
+    --blue-bg-soft: #eff6ff;
+
+    /* Ciemne warianty do tekstu na jasnym tle (dark = vivid jak dotąd) */
+    --blue-strong: #60a5fa;
+    --cyan-strong: #22d3ee;
+    --purple-strong: #c084fc;
+
     /* Paleta identyfikacyjna komponentów (fill) */
     --cmp-plyta-din: #be185d;
     --cmp-plyta-najazdowa: #9d174d;
@@ -236,6 +245,11 @@
 
     /* Excel Virtual — stały row height SSoT (I1), 32px = obecna zmierzona wysokość wiersza */
     --excel-row-height: 32px;
+
+    /* Diagram studni (SVG) — wartości dla ciemnego motywu, nadpisane w [data-theme='light'] */
+    --diagram-dim-text: var(--slate-300);
+    --diagram-circle: rgba(var(--slate-950-rgb), 0.7);
+    --diagram-shadow: rgba(var(--black-rgb), 0.8);
 }
 
 /* ========================================
@@ -1974,4 +1988,347 @@ input[type='number'] {
     border-color: var(--accent);
     box-shadow: 0 4px 16px rgba(var(--accent-rgb), 0.15);
     transform: translateY(-2px);
+}
+
+/* ========================================
+    Tryb jasny — nadpisanie tokenów przez [data-theme="light"] na <html>.
+    Ciemny motyw to brak atrybutu (status quo, zero regresji).
+    Paleta neutralna (GitHub-like): szarości na powierzchniach, akcent
+    tylko na akcjach; tekstowe vivid (--*-hover) przyciemnione do AA.
+   ======================================== */
+:root {
+    color-scheme: dark;
+}
+
+html[data-theme='light'] {
+    color-scheme: light;
+
+    /* Tła — neutralne szarości (GitHub-like), akcent tylko na akcjach */
+    --bg-primary: #f6f8fa;
+    --bg-secondary: #ffffff;
+    --bg-glass: #ffffff;
+    --bg-tertiary: #eaeef2;
+    --bg-deep: #eaeef2;
+    --bg-hover: #f1f5f9;
+    --bg-tile: #f8fafc;
+    --bg-input: #ffffff;
+    --bg-hover-deep: #f1f5f9;
+    --bg-dark-alt: #f1f5f9;
+    --bg-tab-active: #eaeef2;
+    --bg-active-deep: #f6f8fa;
+    --bg-tertiary-alt: #d7dde3;
+    --bg-tertiary-alt-2: #eaeef2;
+    --bg-confirmed: #dcfce7;
+    --bg-needs-selection: #fee2e2;
+
+    /* Tekst */
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --text-heading: #0f172a;
+
+    /* Bordury — neutralna szarość, jeden stopień ciemniejsza od tła */
+    --border: #d0d7de;
+    --border-glass: #d0d7de;
+    --border-table-subtle: #e2e8f0;
+    --danger-border-deep: #fecaca;
+
+    /* Akcent — subtelne tła i tekst (inwersja jasnego na ciemny dla kontrastu) */
+    --accent-text: #4338ca;
+    --accent-bg: #eef2ff;
+    --accent-bg-hover: #e0e7ff;
+    --accent-border: #c7d2fe;
+    --accent-border-dim: #e0e7ff;
+    --accent-border-medium: #a5b4fc;
+    --accent-text-light: #4338ca;
+    --accent-text-rgb: 67, 56, 202;
+
+    /* Statusy — ciemne tła na jasne pastele */
+    --success-bg: #dcfce7;
+    --success-bg-hover: #bbf7d0;
+    --success-border: #86efac;
+    --danger-bg: #fee2e2;
+    --danger-bg-hover: #fecaca;
+    --danger-border: #fca5a5;
+    --warn-bg: #fef3c7;
+    --warn-border: #fcd34d;
+
+    /* Vivid hover jako kolor tekstu/grafiki — w light ciemne warianty.
+       Naprawia naraz dziesiątki inline styli w JS (offerSavedList,
+       popupy, bannery): pastel na białym nie przechodzi AA. */
+    --accent-hover: #4f46e5;
+    --accent2-hover: #7c3aed;
+    --success-hover: #047857;
+    --danger-hover: #b91c1c;
+    --warn-hover: #b45309;
+    --blue-hover: #1d4ed8;
+    --blue-alt-hover: #0369a1;
+    --purple-hover: #7e22ce;
+    --pink-hover: #be185d;
+
+    /* Bazowe hue jako kolor tekstu/grafiki — w light ciemniejsze warianty
+       tej samej rodziny (ten sam kolor na przeciwnym tle). Naprawia ~60
+       miejsc: podsumowania ofert, kafle, ikony, mikrocopy we modułach.
+       Washe rgba(*-rgb) nietknięte — pary wash + ciemny tekst grają. */
+    --accent: #4f46e5;
+    --accent2: #7c3aed;
+    --success: #047857;
+    --danger: #dc2626;
+    --warn: #b45309;
+    --blue: #2563eb;
+    --cyan: #0e7490;
+    --pink: #db2777;
+    --purple: #7e22ce;
+
+    /* Jasne szarości jako tekst — kompresja skali w light.
+       slate-50/100/200 nietknięte (szarości wydruku @media print). */
+    --slate-400: #64748b;
+    --slate-300: #475569;
+
+    /* Nowe tokeny semantyczne (używane tylko w regułach light) */
+    --accent-strong: #4338ca;
+    --border-muted: #e2e8f0;
+    --text-disabled: #94a3b8;
+
+    /* Bazowe hue jako kolor tekstu/grafiki — w light ciemniejsze warianty
+       tej samej rodziny (ten sam kolor na przeciwnym tle). Naprawia ~60
+       miejsc: podsumowania ofert, kafle, ikony, mikrocopy we modułach.
+       Washe rgba(*-rgb) nietknięte — pary wash + ciemny tekst grają. */
+    --accent: #4f46e5;
+    --accent2: #7c3aed;
+    --success: #047857;
+    --danger: #dc2626;
+    --warn: #b45309;
+    --blue: #2563eb;
+    --cyan: #0e7490;
+    --pink: #db2777;
+    --purple: #7e22ce;
+
+    /* Jasne szarości jako tekst — kompresja skali w light.
+       slate-50/100/200 nietknięte (szarości wydruku @media print). */
+    --slate-400: #64748b;
+    --slate-300: #475569;
+
+    /* Nawigacja */
+    --nav-glow-custom: #eaeef2;
+
+    /* Efekty — elewacja cieniem zamiast przyciemniania */
+    --glass: rgba(255, 255, 255, 0.85);
+    --glass-border: rgba(15, 23, 42, 0.1);
+    --highlight-bg: #fef9c3;
+    --shadow-color: rgba(15, 23, 42, 0.12);
+    --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.08);
+    --shadow-md: 0 4px 16px rgba(15, 23, 42, 0.12);
+    --shadow-lg: 0 8px 32px rgba(15, 23, 42, 0.16);
+
+    /* Scrollbar */
+    --scrollbar-track: #e2e8f0;
+
+    /* Diagram studni — czytelność na jasnym tle */
+    --diagram-dim-text: #475569;
+    --diagram-circle: rgba(255, 255, 255, 0.85);
+    --diagram-shadow: rgba(15, 23, 42, 0.35);
+
+    /* Tekst na jasnym tle — ciemne warianty (kontrast AA) */
+    --blue-strong: #1d4ed8;
+    --cyan-strong: #0e7490;
+    --purple-strong: #7e22ce;
+}
+
+/* Kontrast tekstu wierszy błędów Excel w trybie jasnym — pastelowe
+   --danger-hover/--warn-hover nieczytelne na białym, stąd ciemne -strong.
+   Selektor html[data-theme] przebija wstrzykiwane reguły z excelModal.js. */
+html[data-theme='light'] #excel-table-container tr.excel-row-error,
+html[data-theme='light'] #excel-table-container tr.excel-row-error input,
+html[data-theme='light'] #excel-table-container tr.excel-row-error select,
+html[data-theme='light'] #excel-table-container tr.excel-row-error .excel-sel-wrap div,
+html[data-theme='light'] #excel-table-container tr.excel-row-error td[data-cell^='height'],
+html[data-theme='light'] #excel-table-container tr.excel-row-error td[data-cell^='denn'],
+html[data-theme='light'] #excel-table-container tr.excel-row-error td[data-cell^='uszcz'] {
+    color: var(--danger-strong) !important;
+}
+
+html[data-theme='light'] #excel-table-container tr.excel-row-warning,
+html[data-theme='light'] #excel-table-container tr.excel-row-warning input,
+html[data-theme='light'] #excel-table-container tr.excel-row-warning select,
+html[data-theme='light'] #excel-table-container tr.excel-row-warning .excel-sel-wrap div {
+    color: var(--warn-strong) !important;
+}
+
+/* Tryb jasny — komponenty: białe powierzchnie zamiast szarych płyt.
+   Token --border-glass pełni w dark podwójną rolę (tło + border),
+   w light tła interaktywne muszą być białe z osobnym hoverem. */
+html[data-theme='light'] .nav-tile,
+html[data-theme='light'] .header-chip,
+html[data-theme='light'] .header-logout,
+html[data-theme='light'] .btn-secondary {
+    background: #ffffff;
+}
+
+html[data-theme='light'] .nav-tile:hover,
+html[data-theme='light'] .header-chip:hover,
+html[data-theme='light'] .btn-secondary:hover {
+    background: var(--bg-hover);
+    border-color: var(--border);
+}
+
+/* Aktywny kafelek: ciemny fallback zamiast pastelowego --accent-hover,
+   washe per moduł zamiast granitowego --slate-800. Podkreślenie ::after
+   zostaje — kolor nie jest jedynym wskaźnikiem stanu. */
+html[data-theme='light'] .nav-tile.active {
+    color: var(--nav-accent, var(--accent-text));
+}
+
+html[data-theme='light'] .nav-tile--studnie {
+    --nav-glow: var(--success-bg-soft);
+}
+
+html[data-theme='light'] .nav-tile--kartoteka {
+    --nav-glow: var(--warn-bg-soft);
+}
+
+html[data-theme='light'] .nav-tile--oferta {
+    --nav-glow: var(--blue-bg-soft);
+}
+
+html[data-theme='light'] .nav-tile--cennik {
+    --nav-glow: var(--accent2-bg-soft);
+}
+
+/* Przyciski statusowe: ciemny tekst na jasnym washu (AA ≥ 4.5:1).
+   Vivid --danger/--success na pastelach nie przechodzą kontrastu. */
+html[data-theme='light'] .btn-danger {
+    color: var(--danger-strong);
+}
+
+html[data-theme='light'] .btn-success {
+    color: var(--success-strong);
+}
+
+html[data-theme='light'] button.btn-order-save {
+    background: var(--success-bg-soft);
+    color: var(--success-strong);
+    border-color: var(--success-border);
+}
+
+html[data-theme='light'] button.btn-order-save:hover {
+    background: var(--success-bg-soft);
+    color: var(--success-strong);
+    border-color: var(--success-border);
+}
+
+html[data-theme='light'] .header-logout:hover {
+    color: var(--danger-strong);
+    border-color: var(--border);
+}
+
+/* Primary CTA: gradient accent→accent2 z białym tekstem ma 4.47:1,
+   pod normą AA — w light ciemniejszy gradient tej samej rodziny. */
+html[data-theme='light'] .btn-primary,
+html[data-theme='light'] .kartoteka-filter-bar .ka-type-filter-btn.active,
+html[data-theme='light'] .kartoteka-filter-bar .ka-filter-btn.active,
+html[data-theme='light'] .kartoteka-filter-bar .ka-date-preset-btn.active {
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+}
+
+/* Tryb jasny — klasy tekstowe i badge: vivid pastele nie przechodzą
+   kontrastu na białym, stąd mapowanie na ciemne warianty tej samej
+   rodziny (teoria: status rozpoznawalny po hues, czytelny po jasności). */
+html[data-theme='light'] .text-accent,
+html[data-theme='light'] .text-accent-hover,
+html[data-theme='light'] .color-accent {
+    color: var(--accent-text);
+}
+
+html[data-theme='light'] .text-accent2,
+html[data-theme='light'] .text-accent2-hover,
+html[data-theme='light'] .color-purple-alt {
+    color: var(--purple-strong);
+}
+
+html[data-theme='light'] .text-success,
+html[data-theme='light'] .text-success-hover,
+html[data-theme='light'] .color-success,
+html[data-theme='light'] .badge-ok,
+html[data-theme='light'] .role-user {
+    color: var(--success-strong);
+}
+
+html[data-theme='light'] .text-danger,
+html[data-theme='light'] .text-danger-hover,
+html[data-theme='light'] .color-danger {
+    color: var(--danger-strong);
+}
+
+html[data-theme='light'] .badge-info {
+    color: var(--blue-strong);
+}
+
+html[data-theme='light'] .text-warn,
+html[data-theme='light'] .text-warn-hover,
+html[data-theme='light'] .color-warn,
+html[data-theme='light'] .role-admin {
+    color: var(--warn-strong);
+}
+
+html[data-theme='light'] .text-blue,
+html[data-theme='light'] .text-blue-hover,
+html[data-theme='light'] .color-info,
+html[data-theme='light'] .color-link {
+    color: var(--blue-strong);
+}
+
+html[data-theme='light'] .color-cyan {
+    color: var(--cyan-strong);
+}
+
+html[data-theme='light'] .color-blue-alt {
+    color: var(--blue-strong);
+}
+
+html[data-theme='light'] .role-pro {
+    color: var(--accent-text);
+}
+
+html[data-theme='light'] .badge-muted {
+    color: var(--text-secondary);
+}
+
+/* Białe washe utility znikają na białym — neutralne odpowiedniki */
+html[data-theme='light'] .bg-glass-subtle,
+html[data-theme='light'] .bg-glass-hover {
+    background: rgba(15, 23, 42, 0.04);
+}
+
+html[data-theme='light'] .bg-glass-strong {
+    background: rgba(15, 23, 42, 0.08);
+}
+
+/* Natywne kontrolki (dropdowny, daty) — jasny color-scheme w light.
+   Pokrywa zlecenia date-inputy i selecty bez klas. */
+html[data-theme='light'] input,
+html[data-theme='light'] select,
+html[data-theme='light'] textarea {
+    color-scheme: light;
+}
+
+html[data-theme='light'] option {
+    background: #ffffff;
+    color: var(--text-primary);
+}
+
+/* Hover biały-na-białym: tekst wraca do ciemnego w light */
+html[data-theme='light'] .tp-mode-btn:hover {
+    color: var(--text-primary);
+}
+
+html[data-theme='light'] .fs-type-btn.active {
+    color: var(--text-primary);
+}
+
+html[data-theme='light'] .app-confirm-btn-cancel:hover {
+    color: var(--text-primary);
+}
+
+html[data-theme='light'] .zlecenia-table tbody tr:hover td {
+    color: var(--text-primary);
 }

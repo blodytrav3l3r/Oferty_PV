@@ -3127,6 +3127,9 @@ td.excel-tint--plyta_redukcyjna input {
     width: 4px !important;
     background: rgba(var(--white-rgb), 0.1);
 }
+html[data-theme='light'] #excel-table-container .excel-resize-handle {
+    background: rgba(15, 23, 42, 0.15);
+}
 #excel-table-container .excel-resize-handle:hover {
     background: rgba(var(--accent-rgb), 0.5) !important;
 }
@@ -5226,4 +5229,47 @@ td.excel-tr-selected .excel-sel-wrap > div {
     .preco-table tbody tr {
         transition: none;
     }
+}
+
+/* ===== Tryb jasny — twarde ciemne plamy i białe washe ===== */
+html[data-theme='light'] .tm-edit-popup {
+    background: #ffffff;
+    box-shadow: 0 20px 60px rgba(15, 23, 42, 0.25);
+}
+
+html[data-theme='light'] .well-list-action:hover {
+    background: var(--bg-hover);
+}
+
+html[data-theme='light'] .pehd-card {
+    background: #ffffff;
+    border-color: var(--border);
+}
+
+html[data-theme='light'] .pehd-card-title {
+    color: var(--text-primary);
+}
+
+html[data-theme='light'] .pehd-btn-cancel {
+    border-color: var(--border);
+    color: var(--text-secondary);
+}
+
+html[data-theme='light'] .pehd-btn-cancel:hover {
+    background: var(--bg-tertiary) !important;
+    color: var(--text-primary) !important;
+    border-color: var(--border);
+}
+
+html[data-theme='light'] .excel-icon-btn:hover {
+    color: var(--text-primary);
+    background: rgba(15, 23, 42, 0.06);
+}
+
+html[data-theme='light'] .excel-icon-btn.is-plus:hover {
+    color: var(--text-primary) !important;
+}
+
+html[data-theme='light'] .excel-colcheck:hover {
+    background: rgba(15, 23, 42, 0.04);
 }

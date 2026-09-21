@@ -64,6 +64,15 @@
             </style></noscript
         >
         <script defer src="js/studnie/headInit.js?v=1.28.0"></script>
+        <script>
+            // Anti-FOUC motywu: maluj zapisany motyw zanim CSS się załaduje.
+            (function () {
+                try {
+                    if (localStorage.getItem('sok-theme') === 'light')
+                        document.documentElement.setAttribute('data-theme', 'light');
+                } catch (e) {}
+            })();
+        </script>
         <link rel="stylesheet" href="css/style.base.css?v=1.28.0" />
         <link rel="stylesheet" href="css/style.cards.css?v=1.28.0" />
         <link rel="stylesheet" href="css/style.responsive.css?v=1.28.0" />
@@ -323,6 +332,7 @@
         <script type="module" src="js/shared/fetchJson.js?v=1.28.0"></script>
         <script type="module" src="js/shared/debounce.js?v=1.28.0"></script>
         <script defer src="js/shared/ui.js?v=1.28.0"></script>
+        <script defer src="js/shared/theme.js?v=1.28.0"></script>
         <script defer src="js/shared/headerUser.js?v=1.28.0"></script>
         <script type="module" src="js/shared/shareService.js?v=1.28.0"></script>
         <script type="module" src="js/shared/shareModal.js?v=1.28.0"></script>

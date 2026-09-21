@@ -24,6 +24,7 @@ const DOC_VERSIONS = '20260907000002_doc_versions';
 const IDEMPOTENCY_KEYS = '20260907000003_idempotency_keys';
 const FK_ITEMS_OFFER = '20260907000004_fk_items_offer';
 const DOC_LOCKS = '20260908000000_doc_locks';
+const USER_PREFS = '20260921000000_user_preferences';
 
 describe('A3 baseline migracji', () => {
     it('deploy na czystej bazie tworzy pelny schemat zgodny z schema.prisma', () => {
@@ -41,7 +42,8 @@ describe('A3 baseline migracji', () => {
             DOC_VERSIONS,
             IDEMPOTENCY_KEYS,
             FK_ITEMS_OFFER,
-            DOC_LOCKS
+            DOC_LOCKS,
+            USER_PREFS
         ]);
         try {
             const out = project.runPrisma(['migrate', 'deploy']);

@@ -821,3 +821,14 @@ model users {
 
   @@index([role], map: "idx_users_role")
 }
+
+// Preferencje użytkownika (motyw light/dark i przyszłe) — klucz per user,
+// backend jest źródłem prawdy, localStorage na froncie to tylko cache.
+model user_preferences {
+  userId String
+  key    String
+  value  String?
+
+  @@id([userId, key])
+  @@index([userId], map: "idx_userprefs_user")
+}

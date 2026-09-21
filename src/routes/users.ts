@@ -178,6 +178,7 @@ router.delete('/:id', requireAuth, requireAdmin, adminUsersLimiter, async (req, 
         await prisma.$transaction(async (tx) => {
             // Sesje w tej samej tx — brak okna martwy-user-z-żywą-sesją.
             await tx.sessions.deleteMany({ where: { userId: req.params.id } });
+            await tx.user_preferences.deleteMany({ where: { userId: req.params.id } });
             await tx.users.delete({ where: { id: req.params.id } });
         });
         res.json({ ok: true });

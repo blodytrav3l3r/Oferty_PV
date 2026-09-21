@@ -48,14 +48,16 @@ const SVG_COLORS = {
 
     // Misc drawing colors
     dimLine: 'var(--slate-400)',
-    dimText: 'var(--slate-300)',
+    // ponytail: tokeny --diagram-* zamiast slate — slate-300 i cień black
+    // nieczytelne na jasnym tle, nadpisane w [data-theme='light']
+    dimText: 'var(--diagram-dim-text)',
     dnLabel: 'var(--slate-500)',
     emptyState: 'var(--cmp-avr)',
     labelWhite: 'var(--white)',
     precoDash: 'var(--danger)',
     fillHeight: 'var(--warn)',
-    transitionCircle: 'rgba(var(--slate-950-rgb), 0.7)',
-    textShadow: 'rgba(var(--black-rgb), 0.8)',
+    transitionCircle: 'var(--diagram-circle)',
+    textShadow: 'var(--diagram-shadow)',
     transitionActive: 'var(--blue-alt)',
     transitionStroke: 'var(--sky-500)',
     transitionBack: 'rgba(var(--slate-600-rgb), 0.4)',
