@@ -331,6 +331,10 @@ function openExcelTableModal() {
     const excelInnerHtml = `
         <div id="excel-modal-inner" style="${modalStyle}">
         <style>
+            /* Kontrakt wstrzykiwanego CSS Excela (S-03): kolory wyłącznie
+               przez var(--...), zero literalnych kolorów, zero selektora
+               html[data-theme] — nadpisania light żyją w arkuszach CSS
+               z prefixem i wygrywają specyficznością. */
             #excel-table-overlay .excel-toolbar-btn { flex:0 0 auto; justify-content:center; white-space:nowrap; text-align:center; }
             #excel-table-overlay .excel-toolbar-btn i { flex-shrink:0; }
             #excel-table-overlay ::-webkit-scrollbar { width:8px; height:10px; }
