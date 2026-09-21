@@ -345,7 +345,7 @@ Usunięto też nieużywane importy/instancje: `RecommendationEngine`, `Authentic
 
 ### Content Sync (docs vs kod)
 
-- ADR-001/002/006: `WITROS Oferty` → `S.O.K.` (nazwa SSoT).
+- ADR-001/002/006: stara nazwa aplikacji → `S.O.K.` (nazwa SSoT).
 - ADR-009: numery linii `globals.js` (`:42` → `:46`, `:55` → `:124`).
 - ADR-011: rewizja — zapis właścicielski P0.1 (`canWriteDoc`), `canEditDoc/canAssignDoc` = DEPRECATED shimy.
 - `docs/API.md` + `docs/SECURITY.md`: auth cookie-first, `x-auth-token` = tymczasowy shim (e2-auth-decision wariant A).
