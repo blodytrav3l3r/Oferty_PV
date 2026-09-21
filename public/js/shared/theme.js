@@ -195,6 +195,11 @@ try {
     });
     window.addEventListener('message', function (ev) {
         if (!ev || !ev.data || ev.data.type !== SOK_THEME_MSG) return;
+        try {
+            if (ev.origin !== window.location.origin) return;
+        } catch (_e) {
+            return;
+        }
         var mode = _sokThemeValid(ev.data.theme);
         if (mode) {
             _sokThemeSaveCache(mode);
