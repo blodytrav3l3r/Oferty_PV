@@ -87,13 +87,14 @@ Impact: brak zmian w Fazach 1–3; light-print = ewentualny S-09 poza GO.
 - Diagramy: NIE RUSZAĆ (`--cmp-*` w light to osobny temat redesignu, nie naprawy kontraktu). Bez pomiaru czytelności zero zmian.
 - Po fazie: `npm run test:quick`, `npm run lint:frontend`, `npm run format`.
 
-## Faza 3 — REGRESSION SAFETY (testy)
+## Faza 3 — REGRESSION SAFETY (testy) — WYKONANA 2026-09-22 (GO Faza 3)
 
-- Rozszerzyć `excelThemeTokens`: BANNED o `--bg-*`/`--blue-rgb` w scope Excel (lub allowlista z decyzją D0.1), test kompletności konsumentów.
-- Rozszerzyć `iconsCoverage` jako test kontraktu (non-blocking dla fixów dark/light): skan `shared` + `excel` + `spa` + `rury` + `kartoteka`, grupowanie per plik. Rozszerzenie nie blokuje Fazy 1–2.
-- Gate dynamicznego Excela (S-03): wstrzykiwany CSS może używać tokenów `var(--...)` i właściwości strukturalnych, zakaz literalnych kolorów i alternatywnego systemu theme.
-- Nowe: parytet frontend-valid === backend-valid; flip `data-theme` zmienia computed `var(--excel-bg)` bez re-renderu; storage event aplikuje w drugim kontekście; debounced PUT jako kontrakt obserwowalny: sekwencja `dark → light → dark → light` daje dokładnie 1 PUT z `value = light` (nie asercja implementacji debounce); oba pliki logo istnieją i różnią się kontenerem/typografią.
-- Po fazie: pełne `npm run validate` + `npm run version:check`.
+- `excelThemeTokens` +1 test: ban `--bg-*` w scope tabeli (chrome modali w allowliście); konsumenci `offer.css`/`modal.css` w parzystości.
+- `iconsCoverage` +2 testy: 5 katalogów, KNOWN_GAPS (16 plików, braki sprzed planu), fail na nowe luki i na trupy.
+- `excelDynamicCss` (nowy, 3 testy): brak `html[`-prefixu, brak hex i numerycznych rgb/hsl poza komentarzami.
+- `themeContract` (nowy, 6 testów): parytet valid + warianty logo. `themeSync` (nowy, 5 testów): toggle, 1 PUT, guard S-07, storage, origin K-03.
+- Ujawnione w gate: backend odpala pliki frontend (quirk backslash w ignore) + wielolinijkowy docblock zjadł pragmę env — naprawione docblockiem per wzorzec repo; zero zmian implementacyjnych z tego tytułu.
+- Gate: `test:quick` 289/3146 ✓, `version:check` ✓. Commity testowe lokalne, bez pusha.
 
 ## Kolejność egzekucji
 
@@ -108,4 +109,4 @@ Impact: brak zmian w Fazach 1–3; light-print = ewentualny S-09 poza GO.
 ↓ pełny validate → GO do kolejnego etapu
 ```
 
-Commit per faza (`node scripts/commit.mjs`), push tylko za zgodą (🔴). Plan nie był wykonywany — czeka na GO wyłącznie na Fazę 0.
+Commit per faza (`node scripts/commit.mjs`), push tylko za zgodą (🔴). Fazy 0–3 wykonane; wynik Fazy 3 czeka na ocenę (STOP, bez automatycznych kolejnych zmian).
