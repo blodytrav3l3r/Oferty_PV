@@ -8,6 +8,9 @@ var SOK_THEME_KEY = 'sok-theme';
 var SOK_THEME_MSG = 'sok-theme-changed';
 /* Wskaźnik ostatniego użytkownika — head czyta sok-theme_<id> zanim zna userId. */
 var SOK_THEME_LAST_USER = 'sok-last-user';
+/* Generacja intencji (S-07): każdy setSokTheme/init podbija licznik —
+   spóźniona odpowiedź serwera nie kasuje nowszego wyboru użytkownika. */
+var _sokThemeGen = 0;
 var _sokThemeUserId = '';
 var _sokThemePushTimer = null;
 
@@ -149,6 +152,7 @@ function getSokTheme() {
 function setSokTheme(mode) {
     var clean = _sokThemeValid(mode);
     if (!clean) return;
+    _sokThemeGen++;
     _sokThemeSaveCache(clean);
     _sokThemeApply(clean);
     _sokThemePushBackend(clean);
@@ -167,6 +171,8 @@ function initSokTheme(user) {
         }
     } catch (_e) {}
     // Natychmiast cache (bez FOUC), potem synchronizacja z backendu.
+    // Serwer wygrywa tylko gdy brak nowszej lokalnej intencji (guard generacji).
+    var bootGen = ++_sokThemeGen;
     _sokThemeApply(_sokThemeReadCache());
     try {
         fetch('/api/users/me/preferences', { credentials: 'same-origin' })
@@ -175,6 +181,7 @@ function initSokTheme(user) {
                 return res.json();
             })
             .then(function (data) {
+                if (bootGen !== _sokThemeGen) return;
                 if (!data || !data.preferences) return;
                 var server = _sokThemeValid(data.preferences.theme);
                 if (server && server !== _sokThemeReadCache()) {
