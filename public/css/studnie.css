@@ -3543,10 +3543,18 @@ td.excel-tint--plyta_redukcyjna input {
 }
 
 /* Podświetlenie 4 komórek przejścia w Excelu przy hoverze na podglądzie SVG.
-   inset box-shadow zamiast outline (obramowanie TD przytnęłoby się w tabeli). */
+   inset box-shadow zamiast outline (obramowanie TD przytnęłoby się w tabeli).
+   Reguły potomne: TD jest w całości zakryte dziećmi (input/select z własnym
+   nieprzezroczystym tłem), więc samo tło TD i jego inset-ring są niewidoczne.
+   Bez tego parzyste PRZ (bez excel-tr-alt) nie pokazują hovera wcale. */
 .excel-tr-hover {
     background: rgba(var(--accent-rgb), 0.18) !important;
     box-shadow: inset 0 0 0 2px var(--accent) !important;
+}
+td.excel-tr-hover input,
+td.excel-tr-hover .excel-sel-wrap > div {
+    background: rgba(var(--accent-rgb), 0.28) !important;
+    border-color: rgba(var(--accent-rgb), 0.65) !important;
 }
 
 /* Trwała selekcja przejścia po kliku w kształt SVG (svgPrzPointerClick,
@@ -3555,6 +3563,11 @@ td.excel-tint--plyta_redukcyjna input {
 .excel-tr-selected {
     background: rgba(var(--accent-rgb), 0.28) !important;
     box-shadow: inset 0 0 0 3px var(--accent-hover, var(--accent)) !important;
+}
+td.excel-tr-selected input,
+td.excel-tr-selected .excel-sel-wrap > div {
+    background: rgba(var(--accent-rgb), 0.38) !important;
+    border-color: var(--accent-hover, var(--accent)) !important;
 }
 
 /* Trwale wybrany kafelek przejścia (klik w SVG) — odpowiednik selekcji komórek. */
