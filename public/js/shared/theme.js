@@ -89,13 +89,15 @@ function _sokLogoSwap(mode) {
     try {
         var imgs = document.querySelectorAll('img.logo-sok, img.index-logo-sok');
         for (var i = 0; i < imgs.length; i++) {
-            var src = imgs[i].getAttribute('src') || '';
+            var img = imgs[i];
+            if (!(img instanceof HTMLImageElement)) continue;
+            var src = img.getAttribute('src') || '';
             if (mode === 'light') {
                 if (src.indexOf('logo-sok.svg') >= 0 && src.indexOf('logo-sok-light.svg') < 0)
-                    imgs[i].src = src.replace('logo-sok.svg', 'logo-sok-light.svg');
+                    img.src = src.replace('logo-sok.svg', 'logo-sok-light.svg');
             } else {
                 if (src.indexOf('logo-sok-light.svg') >= 0)
-                    imgs[i].src = src.replace('logo-sok-light.svg', 'logo-sok.svg');
+                    img.src = src.replace('logo-sok-light.svg', 'logo-sok.svg');
             }
         }
     } catch (_e) {}
