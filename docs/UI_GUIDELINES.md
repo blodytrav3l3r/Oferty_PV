@@ -23,21 +23,22 @@ Kolejność ładowania w każdej wejściówce (index, app, rury, studnie, kartot
 > **Zasada:** wspólne klasy NIE mogą być nadpisywane per moduł. Warianty modułowe
 > tworzymy przez klasy modyfikatorów (np. `.nav-tile--studnie`), nie przez nadpisania bazowych.
 
-## 2. Design Tokens (SSoT: `public/css/style.base.css:3-239`)
+## 2. Design Tokens (SSoT: `public/css/style.base.css:3-273`)
 
 Wszystkie wartości (kolory, fonty, rozmiary, radius, shadow, z-index) wyłącznie przez
 zmienne `var(--...)`. **Zakaz gołych hexów/kolorów poza `:root`** (wyjątek: pliki vendor).
 
 ### Kolory (kluczowe)
 
-| Token                                                                            | Wartość                                                   | Użycie                                                     |
-| -------------------------------------------------------------------------------- | --------------------------------------------------------- | ---------------------------------------------------------- |
-| `--bg-primary` / `--bg-secondary` / `--bg-card` / `--bg-glass` / `--bg-tertiary` | `#0a0e1a` / `#111827` / …                                 | Tła: strona, header, karty, glass                          |
-| `--text-primary` / `--text-secondary` / `--text-muted`                           | `--slate-100` / `--slate-400` / `--slate-500`             | Hierarchia tekstu                                          |
-| `--accent` / `--accent2`                                                         | `#6366f1` / `#8b5cf6`                                     | Główny akcent (indigo)                                     |
-| `--success` / `--danger` / `--warn` / `--blue` / `--pink`                        | `#10b981` / `#ef4444` / `#f59e0b` / `#3b82f6` / `#ec4899` | Statusy i akcenty modułów                                  |
-| `--*-rgb` (np. `--accent-rgb: 99,102,241`)                                       | —                                                         | `rgba(var(--danger-rgb), 0.1)` do tintów                   |
-| `--cmp-*`                                                                        | —                                                         | Paleta identyfikacyjna komponentów studni (fill diagramów) |
+| Token                                                                                                                                                     | Wartość                                                   | Użycie                                                                                                                                                                                                  |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--bg-primary` / `--bg-secondary` / `--bg-card` / `--bg-glass` / `--bg-tertiary`                                                                          | `#0a0e1a` / `#111827` / …                                 | Tła: strona, header, karty, glass                                                                                                                                                                       |
+| `--text-primary` / `--text-secondary` / `--text-muted`                                                                                                    | `--slate-100` / `--slate-400` / `--slate-500`             | Hierarchia tekstu                                                                                                                                                                                       |
+| `--accent` / `--accent2`                                                                                                                                  | `#6366f1` / `#8b5cf6`                                     | Główny akcent (indigo)                                                                                                                                                                                  |
+| `--success` / `--danger` / `--warn` / `--blue` / `--pink`                                                                                                 | `#10b981` / `#ef4444` / `#f59e0b` / `#3b82f6` / `#ec4899` | Statusy i akcenty modułów                                                                                                                                                                               |
+| `--*-rgb` (np. `--accent-rgb: 99,102,241`)                                                                                                                | —                                                         | `rgba(var(--danger-rgb), 0.1)` do tintów                                                                                                                                                                |
+| `--cmp-*`                                                                                                                                                 | —                                                         | Paleta identyfikacyjna komponentów studni (fill diagramów)                                                                                                                                              |
+| `--excel-*` (`bg/bg-alt/header-bg/border/border-subtle/text/text-dim/text-faint/input-bg/input-border/cell-selected/row-hover/tint-base/backdrop/shadow`) | dark w `:root`, light w `html[data-theme='light']`        | **Kontrakt motywu Excela:** powierzchnie Excela (JS+CSS) wyłącznie przez te tokeny, nigdy `slate-*`/`white-rgb` literalnie. Nowy motyw MUSI zdefiniować pełny zestaw — pilnuje test `excelThemeTokens`. |
 
 ### Kolory akcentów per moduł
 

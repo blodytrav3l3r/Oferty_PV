@@ -2560,12 +2560,12 @@ select.form-input option {
     width: 100% !important;
     box-sizing: border-box !important;
     padding: 0.3rem 0.45rem;
-    background: var(--slate-800) !important;
-    color: var(--slate-200) !important;
+    background: var(--excel-input-bg) !important;
+    color: var(--excel-text) !important;
 }
 #excel-table-container select option {
-    background: var(--slate-800);
-    color: var(--slate-200);
+    background: var(--excel-input-bg);
+    color: var(--excel-text);
 }
 
 #excel-table-container tr.excel-row-locked {
@@ -2648,7 +2648,7 @@ select.form-input option {
 
 /* Poprawa kolorystyki tekstu w aktywnym wierszu dla lepszego kontrastu */
 #excel-table-container tbody tr:focus-within td {
-    color: var(--slate-200) !important;
+    color: var(--excel-text) !important;
 }
 
 /* Kolumna Lp. — lepszy kontrast w aktywnym wierszu */
@@ -2658,7 +2658,7 @@ select.form-input option {
 
 /* Kolumna Wys. — stonowany niebieski, a w aktywnym wierszu jasny */
 #excel-table-container tbody tr:focus-within td[data-cell^='height-'] {
-    color: var(--slate-50) !important;
+    color: var(--excel-text) !important;
 }
 
 #excel-table-container td[data-cell] {
@@ -2726,38 +2726,50 @@ th.excel-tr-alt {
    Tło inputu = color-mix z tokenem koloru elementu (SSoT: --cmp-*), więc
    kolumna od razu mówi, jaki element kryje. Samo tło — tekst/ramki/focus bez zmian. */
 td.excel-tint--avr input {
-    background: color-mix(in srgb, var(--slate-400) 13%, var(--slate-950)) !important;
+    background: color-mix(in srgb, var(--excel-text-dim) 13%, var(--excel-tint-base)) !important;
 }
 td.excel-tint--konus input {
-    background: color-mix(in srgb, var(--cmp-konus) 13%, var(--slate-950)) !important;
+    background: color-mix(in srgb, var(--cmp-konus) 13%, var(--excel-tint-base)) !important;
 }
 td.excel-tint--krag input,
 td.excel-tint--krag_ot input {
-    background: color-mix(in srgb, var(--cmp-krag) 13%, var(--slate-950)) !important;
+    background: color-mix(in srgb, var(--cmp-krag) 13%, var(--excel-tint-base)) !important;
 }
 td.excel-tint--dennica input {
-    background: color-mix(in srgb, var(--cmp-dennica) 13%, var(--slate-950)) !important;
+    background: color-mix(in srgb, var(--cmp-dennica) 13%, var(--excel-tint-base)) !important;
 }
 td.excel-tint--styczna input {
-    background: color-mix(in srgb, var(--cmp-styczna) 13%, var(--slate-950)) !important;
+    background: color-mix(in srgb, var(--cmp-styczna) 13%, var(--excel-tint-base)) !important;
 }
 td.excel-tint--osadnik input {
-    background: color-mix(in srgb, var(--cmp-osadnik) 13%, var(--slate-950)) !important;
+    background: color-mix(in srgb, var(--cmp-osadnik) 13%, var(--excel-tint-base)) !important;
 }
 td.excel-tint--plyta_din input {
-    background: color-mix(in srgb, var(--cmp-plyta-din) 13%, var(--slate-950)) !important;
+    background: color-mix(in srgb, var(--cmp-plyta-din) 13%, var(--excel-tint-base)) !important;
 }
 td.excel-tint--plyta_najazdowa input {
-    background: color-mix(in srgb, var(--cmp-plyta-najazdowa) 13%, var(--slate-950)) !important;
+    background: color-mix(
+        in srgb,
+        var(--cmp-plyta-najazdowa) 13%,
+        var(--excel-tint-base)
+    ) !important;
 }
 td.excel-tint--plyta_zamykajaca input {
-    background: color-mix(in srgb, var(--cmp-plyta-zamykajaca) 13%, var(--slate-950)) !important;
+    background: color-mix(
+        in srgb,
+        var(--cmp-plyta-zamykajaca) 13%,
+        var(--excel-tint-base)
+    ) !important;
 }
 td.excel-tint--pierscien_odciazajacy input {
-    background: color-mix(in srgb, var(--cmp-pierscien) 13%, var(--slate-950)) !important;
+    background: color-mix(in srgb, var(--cmp-pierscien) 13%, var(--excel-tint-base)) !important;
 }
 td.excel-tint--plyta_redukcyjna input {
-    background: color-mix(in srgb, var(--cmp-plyta-redukcyjna) 13%, var(--slate-950)) !important;
+    background: color-mix(
+        in srgb,
+        var(--cmp-plyta-redukcyjna) 13%,
+        var(--excel-tint-base)
+    ) !important;
 }
 .well-param-label {
     min-width: 172px;
@@ -3105,7 +3117,7 @@ td.excel-tint--plyta_redukcyjna input {
 #excel-table-container .h3-prodcode {
     font-size: var(--fs-3xs);
     font-weight: var(--fw-semibold);
-    color: var(--slate-400);
+    color: var(--excel-text-dim);
     line-height: 1.45;
 }
 #excel-table-container .h3-prodprice {
@@ -3121,14 +3133,14 @@ td.excel-tint--plyta_redukcyjna input {
     display: inline-block;
 }
 #excel-table-container tbody tr:hover {
-    background: rgba(var(--white-rgb), 0.05);
+    background: var(--excel-row-hover);
 }
 #excel-table-container .excel-resize-handle {
     width: 4px !important;
-    background: rgba(var(--white-rgb), 0.1);
+    background: var(--excel-border);
 }
 html[data-theme='light'] #excel-table-container .excel-resize-handle {
-    background: rgba(15, 23, 42, 0.15);
+    background: var(--excel-border);
 }
 #excel-table-container .excel-resize-handle:hover {
     background: rgba(var(--accent-rgb), 0.5) !important;
@@ -3817,7 +3829,7 @@ td.excel-tr-selected .excel-sel-wrap > div {
     background: none;
     border: none;
     border-radius: var(--radius-2xs);
-    color: var(--slate-400);
+    color: var(--excel-text-dim);
     cursor: pointer;
     line-height: 1;
     transition:
@@ -3825,14 +3837,14 @@ td.excel-tr-selected .excel-sel-wrap > div {
         background-color 0.12s;
 }
 .excel-icon-btn:hover {
-    color: var(--slate-200);
-    background: rgba(var(--white-rgb), 0.08);
+    color: var(--excel-text);
+    background: var(--excel-row-hover);
 }
 .excel-icon-btn.is-plus {
-    color: var(--slate-300);
+    color: var(--excel-text-dim);
 }
 .excel-icon-btn.is-plus:hover {
-    color: var(--slate-100);
+    color: var(--excel-text);
 }
 .excel-icon-btn.is-danger,
 .excel-icon-btn.is-danger:hover {
@@ -3864,7 +3876,7 @@ td.excel-tr-selected .excel-sel-wrap > div {
     height: 26px;
     padding: 0;
     background: transparent;
-    border: 1px solid rgba(var(--white-rgb), 0.08);
+    border: 1px solid var(--excel-border-subtle);
     border-radius: var(--radius-2xs);
     color: var(--text-secondary);
     cursor: pointer;
@@ -3874,8 +3886,8 @@ td.excel-tr-selected .excel-sel-wrap > div {
         border-color 0.12s;
 }
 #excel-table-container .excel-action-btn:hover {
-    background: rgba(var(--white-rgb), 0.06);
-    border-color: rgba(var(--white-rgb), 0.18);
+    background: var(--excel-border-subtle);
+    border-color: var(--excel-border);
     color: var(--text-primary);
 }
 #excel-table-container .excel-action-btn.is-accent {
@@ -4034,9 +4046,9 @@ td.excel-tr-selected .excel-sel-wrap > div {
 
 /* Neutralny przycisk tekstowy popupów Excela (stopka "Zamknij") */
 .excel-neutral-btn {
-    background: rgba(var(--white-rgb), 0.05);
+    background: var(--excel-border-subtle);
     color: var(--text-secondary);
-    border: 1px solid rgba(var(--white-rgb), 0.1);
+    border: 1px solid var(--excel-border);
     padding: 0.4rem 1.2rem;
     border-radius: var(--radius-sm);
     font-size: var(--fs-md);
@@ -4047,7 +4059,7 @@ td.excel-tr-selected .excel-sel-wrap > div {
         color 0.12s;
 }
 .excel-neutral-btn:hover {
-    background: rgba(var(--white-rgb), 0.1);
+    background: var(--excel-border);
     color: var(--text-primary);
 }
 
@@ -4058,14 +4070,14 @@ td.excel-tr-selected .excel-sel-wrap > div {
     gap: 0.4rem;
     padding: 0.15rem 0.2rem;
     font-size: var(--fs-2xs);
-    color: var(--slate-400);
+    color: var(--excel-text-dim);
     cursor: pointer;
     white-space: nowrap;
     border-radius: var(--radius-2xs);
     transition: background-color 0.12s;
 }
 .excel-colcheck:hover {
-    background: rgba(var(--white-rgb), 0.05);
+    background: var(--excel-border-subtle);
 }
 
 /* Menu kontekstowe kolumny (prawy klik na nagłówku) */
@@ -4078,7 +4090,7 @@ td.excel-tr-selected .excel-sel-wrap > div {
     transition: background-color 0.12s;
 }
 .excel-ctx-item:not(.is-disabled):hover {
-    background: rgba(var(--white-rgb), 0.08);
+    background: var(--excel-border-subtle);
 }
 
 /* ===== MENEDŻER PRZEJŚĆ — wariant modala + layout (UI_GUIDELINES §6) ===== */

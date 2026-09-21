@@ -71,7 +71,7 @@ function _excelToggleColumnPopup() {
         h +=
             escapeHtml(colName) +
             (detail
-                ? ' <span style="color:var(--slate-500);font-size: var(--fs-3xs);">' +
+                ? ' <span style="color:var(--excel-text-dim);font-size: var(--fs-3xs);">' +
                   escapeHtml(detail) +
                   '</span>'
                 : '');
@@ -84,23 +84,23 @@ function _excelToggleColumnPopup() {
         html +=
             '<div id="excel-col-vis-grid" style="display:grid;grid-template-columns:auto repeat(' +
             gridCols.length +
-            ',minmax(max-content,1fr));border:1px solid rgba(var(--white-rgb), 0.05);border-radius: var(--radius-2xs);overflow:hidden;width:max-content;min-width:100%;">';
+            ',minmax(max-content,1fr));border:1px solid var(--excel-border-subtle);border-radius: var(--radius-2xs);overflow:hidden;width:max-content;min-width:100%;">';
 
         /* Nagłówek — wiersz 1: DN */
         html +=
-            '<div style="padding:0.25rem 0.3rem;background:rgba(var(--white-rgb), 0.05);font-size: var(--fs-3xs);font-weight: var(--fw-medium);color:var(--slate-500);border-bottom:1px solid rgba(var(--white-rgb), 0.05);"></div>';
+            '<div style="padding:0.25rem 0.3rem;background:var(--excel-border-subtle);font-size: var(--fs-3xs);font-weight: var(--fw-medium);color:var(--excel-text-dim);border-bottom:1px solid var(--excel-border-subtle);"></div>';
         gridCols.forEach(function (col, cIdx) {
             const sepStyle =
                 cIdx < gridCols.length - 1
-                    ? 'border-right:1px solid rgba(var(--white-rgb), 0.05);'
+                    ? 'border-right:1px solid var(--excel-border-subtle);'
                     : '';
             const bg = col.isBase
                 ? 'background:rgba(var(--accent2-rgb), 0.05);'
-                : 'background:rgba(var(--white-rgb), 0.05);';
+                : 'background:var(--excel-border-subtle);';
             html +=
                 '<div style="padding:0.25rem 0.3rem;' +
                 bg +
-                'font-size: var(--fs-3xs);font-weight: var(--fw-semibold);color:var(--accent2-hover);text-align:center;border-bottom:1px solid rgba(var(--white-rgb), 0.05);' +
+                'font-size: var(--fs-3xs);font-weight: var(--fw-semibold);color:var(--accent2-hover);text-align:center;border-bottom:1px solid var(--excel-border-subtle);' +
                 sepStyle +
                 '">' +
                 escapeHtml(col.label) +
@@ -109,15 +109,15 @@ function _excelToggleColumnPopup() {
 
         /* Nagłówek — wiersz 2: checkbox "Wszystkie" per kolumna */
         html +=
-            '<div style="padding:0.2rem 0.3rem;background:rgba(var(--white-rgb), 0.05);font-size: var(--fs-3xs);color:var(--slate-500);border-bottom:1px solid rgba(var(--white-rgb), 0.05);"></div>';
+            '<div style="padding:0.2rem 0.3rem;background:var(--excel-border-subtle);font-size: var(--fs-3xs);color:var(--excel-text-dim);border-bottom:1px solid var(--excel-border-subtle);"></div>';
         gridCols.forEach(function (col, cIdx) {
             const sepStyle =
                 cIdx < gridCols.length - 1
-                    ? 'border-right:1px solid rgba(var(--white-rgb), 0.05);'
+                    ? 'border-right:1px solid var(--excel-border-subtle);'
                     : '';
             const bg = col.isBase
                 ? 'background:rgba(var(--accent2-rgb), 0.05);'
-                : 'background:rgba(var(--white-rgb), 0.05);';
+                : 'background:var(--excel-border-subtle);';
             const allIds = [];
             Object.keys(col.groups).forEach(function (ct) {
                 col.groups[ct].forEach(function (c) {
@@ -130,11 +130,11 @@ function _excelToggleColumnPopup() {
             html +=
                 '<div style="padding:0.15rem 0.2rem;text-align:center;' +
                 bg +
-                'border-bottom:1px solid rgba(var(--white-rgb), 0.05);' +
+                'border-bottom:1px solid var(--excel-border-subtle);' +
                 sepStyle +
                 '">';
             html +=
-                '<label style="display:inline-flex;align-items:center;gap:0.25rem;font-size: var(--fs-3xs);color:var(--slate-400);cursor:pointer;white-space:nowrap;">';
+                '<label style="display:inline-flex;align-items:center;gap:0.25rem;font-size: var(--fs-3xs);color:var(--excel-text-dim);cursor:pointer;white-space:nowrap;">';
             html += '<input type="checkbox"';
             if (allVis) html += ' checked';
             html +=
@@ -149,10 +149,10 @@ function _excelToggleColumnPopup() {
         allCts.forEach(function (ct, rIdx) {
             const ctLabel = groupLabels[ct] || ct;
             const lastRow = rIdx === allCts.length - 1;
-            const rowStyle = lastRow ? '' : 'border-bottom:1px solid rgba(var(--white-rgb), 0.05);';
+            const rowStyle = lastRow ? '' : 'border-bottom:1px solid var(--excel-border-subtle);';
 
             html +=
-                '<div style="padding:0.25rem 0.3rem;font-size: var(--fs-3xs);font-weight: var(--fw-medium);color:var(--slate-400);background:rgba(var(--white-rgb), 0.05);' +
+                '<div style="padding:0.25rem 0.3rem;font-size: var(--fs-3xs);font-weight: var(--fw-medium);color:var(--excel-text-dim);background:var(--excel-border-subtle);' +
                 rowStyle +
                 '">' +
                 escapeHtml(ctLabel) +
@@ -161,7 +161,7 @@ function _excelToggleColumnPopup() {
             gridCols.forEach(function (col, cIdx) {
                 let cellStyle = rowStyle;
                 if (cIdx < gridCols.length - 1)
-                    cellStyle += 'border-right:1px solid rgba(var(--white-rgb), 0.05);';
+                    cellStyle += 'border-right:1px solid var(--excel-border-subtle);';
                 cellStyle += 'padding:0.15rem 0.2rem;';
                 if (col.isBase) cellStyle += 'background:rgba(var(--accent2-rgb), 0.05);';
 
@@ -169,7 +169,7 @@ function _excelToggleColumnPopup() {
                 html += '<div style="' + cellStyle + '">';
                 if (cols.length === 0) {
                     html +=
-                        '<span style="color:var(--slate-700);font-size: var(--fs-3xs);">—</span>';
+                        '<span style="color:var(--excel-text-faint);font-size: var(--fs-3xs);">—</span>';
                 } else {
                     if (cols.length > 1) {
                         const cellIds = cols.map(function (c) {
@@ -186,7 +186,7 @@ function _excelToggleColumnPopup() {
                             return id.replace(/'/g, "\\'");
                         });
                         html +=
-                            '<label style="display:inline-flex;align-items:center;gap:0.2rem;margin-right:0.2rem;font-size: var(--fs-3xs);color:var(--slate-500);cursor:pointer;white-space:nowrap;">';
+                            '<label style="display:inline-flex;align-items:center;gap:0.2rem;margin-right:0.2rem;font-size: var(--fs-3xs);color:var(--excel-text-dim);cursor:pointer;white-space:nowrap;">';
                         html +=
                             '<input type="checkbox"' +
                             (cellAllVis ? ' checked' : '') +
@@ -194,7 +194,7 @@ function _excelToggleColumnPopup() {
                             ' onchange="_excelOnCellToggleAll([\'' +
                             escapedIds.join("','") +
                             '\'],this.checked)" style="accent-color:var(--accent2);cursor:pointer;width:8px;height:8px;" />';
-                        html += '<span style="color:var(--slate-600);">wsz.</span></label>';
+                        html += '<span style="color:var(--excel-text-faint);">wsz.</span></label>';
                     }
                     cols.forEach(function (c) {
                         html += _excelColCheckboxHtml(c, '0.2rem');

@@ -246,6 +246,26 @@
     /* Excel Virtual — stały row height SSoT (I1), 32px = obecna zmierzona wysokość wiersza */
     --excel-row-height: 32px;
 
+    /* Excel — kontrakt motywu: WSZYSTKIE powierzchnie Excela tylko przez te
+       tokeny (nigdy twarde slate ani white-rgb w excel JS ani scopie excel
+       w CSS). :root = dark (status quo), każdy blok html[data-theme] MUSI
+       zdefiniować pełny zestaw — inaczej test excelThemeTokens pada. */
+    --excel-bg: var(--slate-950);
+    --excel-bg-alt: var(--slate-950);
+    --excel-header-bg: var(--slate-950);
+    --excel-border: rgba(var(--white-rgb), 0.1);
+    --excel-border-subtle: rgba(var(--white-rgb), 0.05);
+    --excel-text: var(--slate-200);
+    --excel-text-dim: var(--slate-400);
+    --excel-text-faint: var(--slate-700);
+    --excel-input-bg: var(--slate-950);
+    --excel-input-border: rgba(var(--white-rgb), 0.1);
+    --excel-cell-selected: rgba(var(--accent-rgb), 0.05);
+    --excel-row-hover: rgba(var(--white-rgb), 0.05);
+    --excel-tint-base: var(--slate-950);
+    --excel-backdrop: rgba(var(--black-rgb), 0.8);
+    --excel-shadow: 0 20px 60px rgba(var(--black-rgb), 0.8);
+
     /* Diagram studni (SVG) — wartości dla ciemnego motywu, nadpisane w [data-theme='light'] */
     --diagram-dim-text: var(--slate-300);
     --diagram-circle: rgba(var(--slate-950-rgb), 0.7);
@@ -2029,7 +2049,9 @@ html[data-theme='light'] {
     /* Bordury — neutralna szarość, jeden stopień ciemniejsza od tła */
     --border: #d0d7de;
     --border-glass: #d0d7de;
+    --border-subtle: #e2e8f0;
     --border-table-subtle: #e2e8f0;
+    --danger-text: #b91c1c;
     --danger-border-deep: #fecaca;
 
     /* Akcent — subtelne tła i tekst (inwersja jasnego na ciemny dla kontrastu) */
@@ -2055,7 +2077,7 @@ html[data-theme='light'] {
     /* Vivid hover jako kolor tekstu/grafiki — w light ciemne warianty.
        Naprawia naraz dziesiątki inline styli w JS (offerSavedList,
        popupy, bannery): pastel na białym nie przechodzi AA. */
-    --accent-hover: #4f46e5;
+    --accent-hover: #4338ca;
     --accent2-hover: #7c3aed;
     --success-hover: #047857;
     --danger-hover: #b91c1c;
@@ -2089,25 +2111,6 @@ html[data-theme='light'] {
     --border-muted: #e2e8f0;
     --text-disabled: #94a3b8;
 
-    /* Bazowe hue jako kolor tekstu/grafiki — w light ciemniejsze warianty
-       tej samej rodziny (ten sam kolor na przeciwnym tle). Naprawia ~60
-       miejsc: podsumowania ofert, kafle, ikony, mikrocopy we modułach.
-       Washe rgba(*-rgb) nietknięte — pary wash + ciemny tekst grają. */
-    --accent: #4f46e5;
-    --accent2: #7c3aed;
-    --success: #047857;
-    --danger: #dc2626;
-    --warn: #b45309;
-    --blue: #2563eb;
-    --cyan: #0e7490;
-    --pink: #db2777;
-    --purple: #7e22ce;
-
-    /* Jasne szarości jako tekst — kompresja skali w light.
-       slate-50/100/200 nietknięte (szarości wydruku @media print). */
-    --slate-400: #64748b;
-    --slate-300: #475569;
-
     /* Nawigacja */
     --nav-glow-custom: #eaeef2;
 
@@ -2132,6 +2135,25 @@ html[data-theme='light'] {
     --blue-strong: #1d4ed8;
     --cyan-strong: #0e7490;
     --purple-strong: #7e22ce;
+
+    /* Excel w light v1 — jasny toolbar, thead, selekcja komórki.
+       Pełny zestaw kontraktu (patrz :root): zmiana/nowy motyw = ten blok. */
+    --excel-bg: #ffffff;
+    --excel-bg-alt: #ffffff;
+    --excel-header-bg: #eaeef2;
+    --excel-border: #d0d7de;
+    --excel-border-subtle: #e2e8f0;
+    --excel-text: #0f172a;
+    --excel-text-dim: #475569;
+    --excel-text-faint: #64748b;
+    --excel-input-bg: #ffffff;
+    --excel-input-border: #d0d7de;
+    --excel-cell-selected: #eef2ff;
+    --excel-row-hover: #f1f5f9;
+    --excel-tint-base: #ffffff;
+    --excel-backdrop: rgba(15, 23, 42, 0.45);
+    --excel-shadow: 0 8px 32px rgba(15, 23, 42, 0.16);
+    --excel-row-height: 32px;
 }
 
 /* Kontrast tekstu wierszy błędów Excel w trybie jasnym — pastelowe

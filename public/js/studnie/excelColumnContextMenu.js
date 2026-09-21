@@ -42,7 +42,7 @@ function _excelColMenuActionHtml(action) {
     else if (action.id === 'showAll') onclick = '_excelShowAllColumnsFromMenu()';
     else if (action.id === 'manage') onclick = '_excelManageColumnsFromMenu()';
     const cursor = action.disabled ? 'default' : 'pointer';
-    const color = action.disabled ? 'var(--slate-600)' : 'var(--slate-200)';
+    const color = action.disabled ? 'var(--excel-text-faint)' : 'var(--excel-text)';
     return (
         '<div class="excel-ctx-item' +
         (action.disabled ? ' is-disabled' : '') +
@@ -102,10 +102,10 @@ function _excelOpenColContextMenu(th, x, y) {
     menu.style.cssText =
         'position:fixed;z-index:' +
         LAYERS.EXCEL_POPUP_CONTENT +
-        ';min-width:185px;background:var(--slate-800);border:1px solid rgba(var(--white-rgb),0.12);border-radius: var(--radius-2xs);padding:2px;box-shadow:0 8px 24px rgba(var(--black-rgb),0.5);';
+        ';min-width:185px;background:var(--excel-bg);border:1px solid var(--excel-border);border-radius: var(--radius-2xs);padding:2px;box-shadow:var(--excel-shadow);';
     if (col) {
         menu.innerHTML =
-            '<div style="padding:0.3rem 0.6rem;font-size: var(--fs-3xs);color:var(--slate-400);text-transform:uppercase;letter-spacing:0.4px;border-bottom:1px solid rgba(var(--white-rgb),0.06);">' +
+            '<div style="padding:0.3rem 0.6rem;font-size: var(--fs-3xs);color:var(--excel-text-dim);text-transform:uppercase;letter-spacing:0.4px;border-bottom:1px solid var(--excel-border-subtle);">' +
             escapeHtml(col.shortLabel || col.label || col.id) +
             '</div>';
     }

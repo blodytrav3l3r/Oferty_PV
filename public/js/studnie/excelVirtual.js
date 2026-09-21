@@ -599,38 +599,38 @@ function _excelVirtualRenderBody() {
         // pusty wiersz tylko gdy na końcu
         let emptyRow = '';
         if (end === total) {
-            const emptyBg = 'var(--slate-950)';
+            const emptyBg = 'var(--excel-bg)';
             const stickyZ = typeof LAYERS_EXCEL !== 'undefined' ? LAYERS_EXCEL.STICKY_COLUMN : 5;
             emptyRow =
                 '<tr id="excel-empty-row" style="background:' +
                 emptyBg +
                 ';"><td class="excel-td excel-td-empty" style="background:' +
                 emptyBg +
-                ';text-align:center;padding:2px;border-right:1px solid rgba(var(--white-rgb), 0.05);width:28px;"><input type="checkbox" disabled tabindex="-1" style="cursor:default;accent-color:rgba(var(--accent-rgb), 0.8);opacity:0.3;" /></td><td class="excel-td excel-td-empty" style="background:' +
+                ';text-align:center;padding:2px;border-right:1px solid var(--excel-border-subtle);width:28px;"><input type="checkbox" disabled tabindex="-1" style="cursor:default;accent-color:rgba(var(--accent-rgb), 0.8);opacity:0.3;" /></td><td class="excel-td excel-td-empty" style="background:' +
                 emptyBg +
-                ';text-align:center;padding:2px;border-right:1px solid rgba(var(--white-rgb), 0.05);width:70px;min-width:70px;"><button type="button" disabled class="excel-mode-btn is-manual" style="opacity:0.3;cursor:default;">\u2014</button><button type="button" disabled class="excel-run-btn is-manual" style="opacity:0.3;"><i data-lucide="play" class="icon-xs" aria-hidden="true"></i></button></td><td class="excel-td excel-td-empty" style="position:sticky;left:0;z-index:' +
+                ';text-align:center;padding:2px;border-right:1px solid var(--excel-border-subtle);width:70px;min-width:70px;"><button type="button" disabled class="excel-mode-btn is-manual" style="opacity:0.3;cursor:default;">\u2014</button><button type="button" disabled class="excel-run-btn is-manual" style="opacity:0.3;"><i data-lucide="play" class="icon-xs" aria-hidden="true"></i></button></td><td class="excel-td excel-td-empty" style="position:sticky;left:0;z-index:' +
                 stickyZ +
                 ';background:' +
                 emptyBg +
-                ';text-align:center;color:var(--accent);font-size:var(--fs-xs);font-weight:var(--fw-bold);border-right:1px solid rgba(var(--white-rgb), 0.1);min-width:32px;">+</td><td class="excel-td excel-td-empty" style="position:sticky;left:32px;z-index:' +
+                ';text-align:center;color:var(--accent);font-size:var(--fs-xs);font-weight:var(--fw-bold);border-right:1px solid var(--excel-border);min-width:32px;">+</td><td class="excel-td excel-td-empty" style="position:sticky;left:32px;z-index:' +
                 stickyZ +
                 ';background:' +
                 emptyBg +
-                ';border-right:1px solid rgba(var(--white-rgb), 0.1);"><input type="text" placeholder="Wpisz nazwę (Enter)" title="Wpisz nazwę nowej studni i wciśnij Enter" id="excel-empty-name" onkeydown="if(event.key===\'Enter\')excelCreateFromEmpty()" onblur="excelCreateFromEmpty(event)" onfocus="excelCellFocus(this);_excelSelWrapFocus(this)" style="background:var(--slate-950);border:1px dashed rgba(var(--accent-rgb),0.4);border-radius:2px;color:var(--accent);font-size:var(--fs-sm);outline:none;text-align:left;width:118px;box-sizing:border-box;" /></td><td class="excel-td excel-td-empty" style="position:sticky;left:162px;z-index:' +
+                ';border-right:1px solid var(--excel-border);"><input type="text" placeholder="Wpisz nazwę (Enter)" title="Wpisz nazwę nowej studni i wciśnij Enter" id="excel-empty-name" onkeydown="if(event.key===\'Enter\')excelCreateFromEmpty()" onblur="excelCreateFromEmpty(event)" onfocus="excelCellFocus(this);_excelSelWrapFocus(this)" style="background:var(--excel-input-bg);border:1px dashed rgba(var(--accent-rgb),0.4);border-radius:2px;color:var(--accent);font-size:var(--fs-sm);outline:none;text-align:left;width:118px;box-sizing:border-box;" /></td><td class="excel-td excel-td-empty" style="position:sticky;left:162px;z-index:' +
                 stickyZ +
                 ';background:' +
                 emptyBg +
-                ';text-align:right;"><input type="number" step="0.01" placeholder="\u2014" id="excel-empty-rzw" onfocus="excelCellFocus(this);_excelSelWrapFocus(this)" style="background:var(--slate-950);border:1px solid rgba(var(--white-rgb), 0.1);border-radius:2px;color:var(--text-primary);font-size:var(--fs-sm);outline:none;text-align:right;width:72px;" /></td><td class="excel-td excel-td-empty" style="position:sticky;left:240px;z-index:' +
+                ';text-align:right;"><input type="number" step="0.01" placeholder="\u2014" id="excel-empty-rzw" onfocus="excelCellFocus(this);_excelSelWrapFocus(this)" style="background:var(--excel-input-bg);border:1px solid var(--excel-input-border);border-radius:2px;color:var(--text-primary);font-size:var(--fs-sm);outline:none;text-align:right;width:72px;" /></td><td class="excel-td excel-td-empty" style="position:sticky;left:240px;z-index:' +
                 stickyZ +
                 ';background:' +
                 emptyBg +
-                ';text-align:right;"><input type="number" step="0.01" placeholder="\u2014" id="excel-empty-rzd" onfocus="excelCellFocus(this);_excelSelWrapFocus(this)" style="background:var(--slate-950);border:1px solid rgba(var(--white-rgb), 0.1);border-radius:2px;color:var(--text-primary);font-size:var(--fs-sm);outline:none;text-align:right;width:72px;" /></td><td class="excel-td excel-td-empty" style="position:sticky;left:318px;z-index:' +
+                ';text-align:right;"><input type="number" step="0.01" placeholder="\u2014" id="excel-empty-rzd" onfocus="excelCellFocus(this);_excelSelWrapFocus(this)" style="background:var(--excel-input-bg);border:1px solid var(--excel-input-border);border-radius:2px;color:var(--text-primary);font-size:var(--fs-sm);outline:none;text-align:right;width:72px;" /></td><td class="excel-td excel-td-empty" style="position:sticky;left:318px;z-index:' +
                 stickyZ +
                 ';background:' +
                 emptyBg +
-                ';text-align:center;color:var(--slate-800);" data-cell="height-empty">\u2014</td><td colspan="' +
+                ';text-align:center;color:var(--excel-text-faint);" data-cell="height-empty">\u2014</td><td colspan="' +
                 (colCount - 7) +
-                '" style="text-align:center;color:var(--slate-700);">\u2014</td></tr>';
+                '" style="text-align:center;color:var(--excel-text-faint);">\u2014</td></tr>';
         }
         bodyHtml = topSpacer + bodyHtml + bottomSpacer + emptyRow;
         if (_perf) _excelPerfPush('tbody', _excelPerfNow() - _tTbodyStart);
