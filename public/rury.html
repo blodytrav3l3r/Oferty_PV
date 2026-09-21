@@ -68,10 +68,13 @@
         >
         <script>
             // Anti-FOUC motywu: maluj zapisany motyw zanim CSS się załaduje.
+            // Najpierw klucz ostatniego użytkownika, potem globalny fallback.
             (function () {
                 try {
-                    if (localStorage.getItem('sok-theme') === 'light')
-                        document.documentElement.setAttribute('data-theme', 'light');
+                    var u = localStorage.getItem('sok-last-user');
+                    var k = u ? localStorage.getItem('sok-theme_' + u) : null;
+                    if (k !== 'light' && k !== 'dark') k = localStorage.getItem('sok-theme');
+                    if (k === 'light') document.documentElement.setAttribute('data-theme', 'light');
                 } catch (e) {}
             })();
         </script>

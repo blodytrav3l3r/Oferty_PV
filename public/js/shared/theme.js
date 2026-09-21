@@ -6,6 +6,8 @@
    Ciemny motyw to brak atrybutu data-theme (status quo). */
 var SOK_THEME_KEY = 'sok-theme';
 var SOK_THEME_MSG = 'sok-theme-changed';
+/* Wskaźnik ostatniego użytkownika — head czyta sok-theme_<id> zanim zna userId. */
+var SOK_THEME_LAST_USER = 'sok-last-user';
 var _sokThemeUserId = '';
 var _sokThemePushTimer = null;
 
@@ -44,7 +46,10 @@ function _sokThemeSaveCache(mode) {
     try {
         localStorage.setItem(SOK_THEME_KEY, mode);
         var suffix = _sokThemeSuffix();
-        if (suffix) localStorage.setItem(SOK_THEME_KEY + suffix, mode);
+        if (suffix) {
+            localStorage.setItem(SOK_THEME_KEY + suffix, mode);
+            localStorage.setItem(SOK_THEME_LAST_USER, suffix.slice(1));
+        }
     } catch (_e) {}
 }
 
@@ -156,7 +161,10 @@ function toggleSokTheme() {
 
 function initSokTheme(user) {
     try {
-        if (user && user.id) _sokThemeUserId = String(user.id);
+        if (user && user.id) {
+            _sokThemeUserId = String(user.id);
+            localStorage.setItem(SOK_THEME_LAST_USER, String(user.id));
+        }
     } catch (_e) {}
     // Natychmiast cache (bez FOUC), potem synchronizacja z backendu.
     _sokThemeApply(_sokThemeReadCache());
@@ -206,8 +214,10 @@ try {
             _sokThemeApply(mode);
         }
     });
-    /* Sync ładowany w <head> widzi DOM przed <img> — doswapuj logo po parsowaniu. */
+    /* Sync ładowany w <head> widzi DOM przed <img> — doswapuj logo po parsowaniu.
+       Samodzielny bootstrap (K-01): motyw działa też bez renderHeaderUser —
+       init(user) dopina potem użytkownika i synchronizację z backendu. */
     window.addEventListener('DOMContentLoaded', function () {
-        _sokLogoSwap(_sokThemeReadCache());
+        _sokThemeApply(_sokThemeReadCache());
     });
 } catch (_e) {}
