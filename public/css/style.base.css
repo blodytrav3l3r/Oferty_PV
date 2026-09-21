@@ -32,6 +32,9 @@
     --accent-bg-hover: #22225a;
     --accent-border: #4d4da0;
     --accent-border-dim: #2e2e75;
+    /* Głębszy koniec gradientu akcentu (np. .well-ctrl-btn--primary);
+       w light nadpisany ciemniejszym wariantem tej samej rodziny. */
+    --accent-strong: #4f46e5;
 
     /* Status — success */
     --success: #10b981;
@@ -2125,8 +2128,6 @@ html[data-theme='light'] {
 
     /* Nowe tokeny semantyczne (używane tylko w regułach light) */
     --accent-strong: #4338ca;
-    --border-muted: #e2e8f0;
-    --text-disabled: #94a3b8;
 
     /* Nawigacja */
     --nav-glow-custom: #eaeef2;
