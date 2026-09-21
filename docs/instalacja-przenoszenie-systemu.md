@@ -3,9 +3,10 @@
 > **Plik:** docs/instalacja-przenoszenie-systemu.md
 > **Wersja:** 1.28.0
 > **Cel:** Kompleksowa instrukcja instalacji, przenoszenia i backupu systemu
-> **Status:** dokument odzwierciedla **aktualny, wdrożony stan** systemu (1.19.4) —
+> **Status:** dokument odzwierciedla **aktualny, wdrożony stan** systemu (1.28.0) —
 > sekcje instalacji/aktualizacji opisują działające mechanizmy
 > (`install.bat` z `migrate deploy` + fallback `db push` dla baz legacy), nie plany przyszłe.
+> Dla laika: `docs/instalacja-krok-po-kroku-dla-laika.md` (ten plik to wersja ops).
 
 ---
 
@@ -22,6 +23,8 @@
 9. [Zmienne środowiskowe](#9-zmienne-środowiskowe)
 10. [Rozwiązywanie problemów](#10-rozwiązywanie-problemów)
 11. [Ściągawka](#11-ściągawka)
+12. [Praca zdalna — serwer przez Internet](#12-praca-zdalna--serwer-przez-internet)
+13. [Drzewko decyzyjne](#13-drzewko-decyzyjne)
 
 ---
 
@@ -32,7 +35,7 @@
 │           S.O.K. — System Ofert i Kalkulacji            │
 ├─────────────────┬───────────────────┬───────────────────┤
 │   Backend        │   Frontend         │   Baza danych     │
-│   Express 4.21   │   Vanilla JS SPA   │   SQLite          │
+│   Express 4.22   │   Vanilla JS SPA   │   SQLite          │
 │   TypeScript     │   serwowany z public/ │   (1 plik)    │
 │   Port 3000      │   przez Express    │   data/*.sqlite   │
 │                  │   (dev i prod)     │                   │
@@ -46,7 +49,7 @@
 
 | Komponent       | Technologia                       | Rola                                                        |
 | --------------- | --------------------------------- | ----------------------------------------------------------- |
-| **Backend**     | TypeScript + Express 4.21         | API, logika biznesowa, generowanie PDF/DOCX                 |
+| **Backend**     | TypeScript + Express 4.22         | API, logika biznesowa, generowanie PDF/DOCX                 |
 | **Frontend**    | Vanilla JS (ES2020), bez bundlera | UI w iframe'ach, serwowany wprost przez Express z `public/` |
 | **Baza danych** | SQLite przez Prisma 6             | Jeden plik `data/app_database.sqlite`                       |
 | **ORM**         | Prisma 6                          | Migracje, seed, zapytania                                   |
@@ -662,3 +665,94 @@ git -c core.hooksPath=/dev/null commit -m "opis"
 > **Dokumentacja wygenerowana na podstawie analizy kodu źródłowego i skryptów instalacyjnych**
 > Ostatnia aktualizacja: 2026-08-24
 > Projekt: https://github.com/blodytrav3l3r/Oferty_PV
+
+---
+
+## 12. Praca zdalna — serwer przez Internet
+
+> Wchłonięte z `docs/INSTRUKCJA_SERWER.md` (plik usunięty 2026-09-21, treść scalona tutaj).
+
+Do pracy zdalnej **HTTPS jest wymagane** — bez niego funkcje przeglądarek (clipboard, `window.open()`) mogą być blokowane na HTTP (patrz ADR-006). W `.env` ustaw `COOKIE_SECURE=true`.
+
+### Opcja A: VPS w chmurze (ZALECANA, 24/7)
+
+| Usługa           | Cena od                 |
+| ---------------- | ----------------------- |
+| **Mikr.us** 🇵🇱   | ~30 PLN/rok             |
+| **OVH** 🇵🇱       | ~20 PLN/mies.           |
+| **Hetzner**      | ~€4/mies.               |
+| **DigitalOcean** | $6/mies.                |
+| **Oracle Cloud** | **DARMOWY** (free tier) |
+
+```bash
+ssh root@TWOJ_ADRES_IP
+curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
+sudo apt-get install -y nodejs git
+# skopiuj projekt (scp / WinSCP) do /home/sok-oferty, potem:
+cd /home/sok-oferty
+npm ci && cp .env.example .env  # + ustaw DEFAULT_ADMIN_PASSWORD
+npx prisma generate && npx prisma migrate deploy
+npm run build && npm run prisma:seed  # albo: npm run restore -- data/backups/backup_*.sqlite
+npm start  # → http://TWOJ_ADRES_IP:3000
+```
+
+### Opcja B: Tunel (szybko, bez VPS-a)
+
+```powershell
+.\start.bat
+ngrok http 3000  # → https://abc123.ngrok-free.app
+# albo: cloudflared tunnel --url http://localhost:3000
+```
+
+### Opcja C: Przekierowanie portów na routerze
+
+Wymaga stałego IP lub Dynamic DNS. Router → Port Forwarding: TCP `3000` → `192.168.1.X:3000`.
+
+### HTTPS: Nginx + Let's Encrypt lub Caddy
+
+```bash
+sudo apt install -y nginx certbot python3-certbot-nginx
+# /etc/nginx/sites-available/sok-oferty → proxy_pass http://127.0.0.1:3000
+# (+ proxy_set_header X-Forwarded-Proto $scheme; X-Forwarded-For $proxy_add_x_forwarded_for)
+sudo certbot --nginx -d twojadomena.pl
+# albo Caddy (automatyczny certyfikat): caddy run --config Caddyfile
+```
+
+### Firewall
+
+```powershell
+New-NetFirewallRule -DisplayName "S.O.K." -Direction Inbound -LocalPort 3000 -Protocol TCP -Action Allow  # Windows
+```
+
+```bash
+sudo ufw allow 3000/tcp  # Linux
+```
+
+### Automatyczny restart serwera
+
+- Windows: Harmonogram zadań (`taskschd.msc`) → przy starcie → `start.bat` w katalogu projektu.
+- Linux (VPS): `npm install -g pm2` → `pm2 start dist/server.js --name "sok-oferty"` → `pm2 save` → `pm2 startup`.
+
+> Najszybszy start: **instalator (.bat) + ngrok** (5 minut). Na stałe: **VPS + PM2 + Nginx + HTTPS**.
+
+---
+
+## 13. Drzewko decyzyjne
+
+> Wchłonięte z `docs/INSTALACJA_REFERENCJA.md` (plik usunięty 2026-09-21, treść scalona tutaj).
+
+```
+Nowe urządzenie?
+├── Nie → istniejącą bazę masz?
+│   ├── Nie → FRESH INSTALL: Node.js → git clone → .env (hasło) → install.bat → start.bat
+│   └── Tak → MIGRACJA: install.bat --skip-seed → skopiuj backup → npm run restore → start.bat
+└── Istniejąca instalacja → co chcesz zrobić?
+    ├── Uruchomić? → start.bat (dev) / start.bat --prod / docker compose up -d
+    ├── Zaktualizować? → npm run backup → git pull → npm ci → migrate deploy (legacy: db push) → start.bat
+    ├── Backup? → npm run backup (auto: backup:install-cron jako Admin)
+    ├── Release? → npm run release:patch → git push --follow-tags
+    └── Przenieść? → MIGRACJA (patrz wyżej)
+
+Docker czy natywnie? Docker Desktop jest → docker compose up --build -d; brak → dev.bat / prod.bat.
+Dev czy prod? Kodowanie → start.bat; użytkowanie → build.bat + start.bat --prod; zdalnie → VPS + §12.
+```

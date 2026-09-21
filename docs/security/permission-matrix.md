@@ -6,6 +6,8 @@ Dokument, zero zmian kodu. SSoT reguł: `src/utils/ownership.ts`
 Stan po E1: zapis wymaga `canWriteDoc` (owner / pro-parent / admin);
 PATCH zwraca 404 zamiast 403 (nie zdradza istnienia); lock force = admin.
 
+> Opis mechanizmów (sesje, hasła, Helmet, XSS): `docs/SECURITY.md`.
+
 Legenda kolumn:
 
 - **route** — metoda + ścieżka kanoniczna (montowanie: `src/mountRoutes.ts`,

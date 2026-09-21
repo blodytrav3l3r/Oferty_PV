@@ -3,6 +3,7 @@
 > **Plik:** docs/instalacja-krok-po-kroku-dla-laika.md
 > **Wersja:** 1.28.0
 > **Dla kogo:** Osób bez doświadczenia technicznego
+> Wersja ops (Docker, VPS, praca zdalna, migracje): `docs/instalacja-przenoszenie-systemu.md`.
 
 ---
 

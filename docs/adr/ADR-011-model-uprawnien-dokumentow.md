@@ -1,22 +1,21 @@
-# ADR-011: Model uprawnień dokumentów — edycja i opiekun dla każdego zalogowanego
+# ADR-011: Model uprawnień dokumentów — zapis właścicielski (P0.1)
 
 Data: 2026-09-14
-Status: zaakceptowana (polityka istniejaca, udokumentowana w ramach planu modernizacji F0 POL-01)
-Powiązane: `src/utils/ownership.ts` (`canEditDoc`, `canAssignDoc`, `canDeleteDoc`), baza błędów #40
+Status: zrewidowana 2026-09-21 — pierwotna polityka „edycja dla każdego zalogowanego" zastąpiona P0.1
+Powiązane: `src/utils/ownership.ts` (`canWriteDoc`, `assertWriteAccess`, `resolveAssignUserId`), baza błędów #40
 
 ## Kontekst
 
-Oferty i zlecenia w S.O.K. pracują na wspólnej bazie handlowców. Powstalo pytanie, czy `canEditDoc` / `canAssignDoc` zwracające `true` dla każdego zalogowanego użytkownika to błąd, czy świadoma decyzja.
+Oferty i zlecenia w S.O.K. pracują na wspólnej bazie handlowców. Pierwotnie `canEditDoc` / `canAssignDoc` zwracały `true` dla każdego zalogowanego użytkownika. W ramach P0.1 zapis zawężono do właścicielskiego.
 
 ## Decyzja
 
-To **świadoma polityka**, nie błąd:
-
 - **Odczyt**: właścicielski (`canReadDoc`: owner / pro-parent / admin) + udostępnienia (share).
-- **Edycja i zmiana opiekuna**: każdy zalogowany (`canEditDoc` / `canAssignDoc` → `!!user`). Zapis przechodzi przez ten sam `versionedWrite` (409 przy konflikcie) — brak ścieżki bypass.
-- **Usuwanie**: wyłącznie właścicielskie (`canDeleteDoc` = `canWriteDoc`) — operacja nieodwracalna, świadomie NIE otwierana dla wszystkich.
+- **Zapis i zmiana opiekuna**: właścicielskie (`canWriteDoc` / `assertWriteAccess` / `resolveAssignUserId` względem STAREGO i NOWEGO właściciela) — nie-admin nie podrzuci dokumentu obcemu.
+- **Usuwanie**: wyłącznie właścicielskie (`canDeleteDoc` = `canWriteDoc`) — operacja nieodwracalna.
 - **Legacy NULL**: `canWriteDoc` / `canReadDoc` zwracają `false` dla `docUserId = null` u nie-admina (baza błędów #40) — nie-admin nie nadpisze rekordu bez właściciela.
+- `canEditDoc` / `canAssignDoc` / `resolveEditUserId` to **DEPRECATED** shimy (locki/numbering) — nie używać w zapisach dokumentów (`ownership.ts:110–146`).
 
 ## Konsekwencje
 
-Zmiana tej polityki (np. edycja tylko dla właściciela) wymagałaby osobnej decyzji ADR i migracji procesu sprzedaży. Do tego czasu: nie „naprawiać" `canEditDoc` — testy regresyjne mają chronić obecne zachowanie.
+Zmiana tej polityki wymaga osobnej decyzji ADR. Nie „naprawiać" `canWriteDoc` w stronę otwierania — testy regresyjne chronią obecne zachowanie.

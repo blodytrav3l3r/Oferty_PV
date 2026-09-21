@@ -41,3 +41,4 @@ Wniosek: DOM w ON stały (~12k z chromem strony) niezależnie od N; legacy nie d
 - P0: search PZ 18 MB × 60 (1,1 GB result set, napi fail) → `json_extract(orderNumber)`.
 - P0: claim numerów 1× `count=N` → chunki 200 (2920 → 15 claimów).
 - P1-C: `chunkedCreateMany` 25 (seed + priceOverrideService).
+- Bramy load/E5: `docs/plans/archive/e3-perf.md`, werdykty E5: `docs/plans/archive/e5-decision.md`.

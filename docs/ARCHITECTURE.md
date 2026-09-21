@@ -528,7 +528,7 @@ Oferty_PV/
 ├── docs/                            # Dokumentacja
 │   ├── ARCHITECTURE.md              # Ten dokument
 │   ├── DELETION_LOG.md              # Log usuniętego kodu
-│   ├── INSTRUKCJA_SERWER.md
+│   ├── instalacja-przenoszenie-systemu.md  # Instalacja + ops (VPS/Docker)
 │   └── ...
 │
 ├── .github/workflows/               # CI/CD

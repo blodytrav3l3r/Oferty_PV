@@ -3,6 +3,8 @@
 **Wersja:** 1.28.0  
 **Ostatnia aktualizacja:** 2026-08-24
 
+> Szczegółowa macierz uprawnień per trasa: `docs/security/permission-matrix.md` (uzupełnienie tego dokumentu, nie drugi SSoT).
+
 ---
 
 ## 1. Autoryzacja i uwierzytelnianie
@@ -11,12 +13,12 @@
 
 System używa tokenów sesji do uwierzytelniania użytkowników.
 
-| Parametr       | Wartość                                                |
-| -------------- | ------------------------------------------------------ |
-| Długość tokena | 64 znaki hex (32 bajty)                                |
-| Generator      | `crypto.randomBytes(32)`                               |
-| Czas życia     | 7 dni (`SESSION_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000`) |
-| Przechowywanie | Baza danych (`sessions`), HttpOnly cookie + nagłówek   |
+| Parametr       | Wartość                                                              |
+| -------------- | -------------------------------------------------------------------- |
+| Długość tokena | 64 znaki hex (32 bajty)                                              |
+| Generator      | `crypto.randomBytes(32)`                                             |
+| Czas życia     | 7 dni (`SESSION_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000`)               |
+| Przechowywanie | Baza danych (`sessions`), HttpOnly cookie (główne) + nagłówek (shim) |
 
 ```typescript
 // src/middleware/auth.ts
@@ -33,10 +35,9 @@ res.cookie('authToken', token, {
 
 ### Przekazywanie tokena
 
-Token można przekazać na dwa sposoby:
+Podstawowy mechanizm to ciasteczko `authToken` (HttpOnly, Secure w produkcji, SameSite=Lax) — frontend nie przechowuje tokenu (decyzja `e2-auth-decision`, wariant A httpOnly-first).
 
-1. **Ciasteczko `authToken`** (HttpOnly, Secure w produkcji, SameSite=Lax)
-2. **Nagłówek `x-auth-token`** — dla zapytań AJAX
+Nagłówek `x-auth-token` działa wyłącznie jako tymczasowy shim wstecznej kompatybilności API (nie drugi mechanizm docelowy).
 
 ### Role
 

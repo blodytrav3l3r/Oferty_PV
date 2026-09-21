@@ -138,7 +138,7 @@
 | AGENTS.md             | ✔      | Dla AI agentów                              |
 | CLAUDE.md             | ✔      | Dla Claude Code                             |
 | Swagger API docs      | ✔      | Interaktywna dokumentacja na `/api/docs`    |
-| Instrukcja serwera    | ✔      | docs/INSTRUKCJA_SERWER.md                   |
+| Instrukcja serwera    | ✔      | docs/instalacja-przenoszenie-systemu.md §12 |
 | PLAN_OPTYMALIZACJI.md | ❌     | Plan został zrealizowany, dokument usunięty |
 | COMPONENTS.md         | ✔      | W docs/                                     |
 

@@ -6,7 +6,7 @@
 
 ## Kontekst
 
-Aplikacja WITROS Oferty PV działała dotychczas na czystym HTTP. Nowoczesne przeglądarki
+Aplikacja S.O.K. działała dotychczas na czystym HTTP. Nowoczesne przeglądarki
 (Chrome, Edge, Firefox, Safari, Opera, Brave) stopniowo blokują funkcje wymagające
 **secure context** (HTTPS) na niebezpiecznych originach — m.in. dostęp do schowka
 (clipboard), `window.open()` z iframe oraz szereg API przeglądarki. Skutkowało to

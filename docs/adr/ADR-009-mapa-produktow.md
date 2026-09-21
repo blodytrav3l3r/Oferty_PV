@@ -2,7 +2,7 @@
 
 Data: 2026-09-02
 Status: zaakceptowana
-Powiązane: ADR-008 (modularyzacja), baza błędów #46, `public/js/studnie/globals.js:42`
+Powiązane: ADR-008 (modularyzacja), baza błędów #46, `public/js/studnie/globals.js:46`
 
 ## Kontekst
 
@@ -14,7 +14,7 @@ Powiązane: ADR-008 (modularyzacja), baza błędów #46, `public/js/studnie/glob
 - Klucz canonical: `String(product.id)` — jeden SSoT dla lookupu.
 - Zapis: `window.studnieProducts =` jako jawny kontrakt grep-owalny (setter `Object.defineProperty window.studnieProducts` `globals.js:31` robi `_purgeOrphanOtProducts` + `_rebuildStudnieProductsById()`).
 - Odczyt: `getStudnieProductById(id)` — `Map.get(String(id))`, lazy cheap detector `size !== length` + fallback `find(String(p.id)===k)` jako self-healing (hybrid: explicit setter + lazy guard).
-- Formalny invariant dev/CI: `__assertStudnieMapFresh()` `every p=>Map.get(String(p.id))===p && Set size` `globals.js:55` — wykrywa podmianę elementu bez zmiany length oraz duplikaty ID (`Map last-write-wins` vs `find first-match-wins`).
+- Formalny invariant dev/CI: `__assertStudnieMapFresh()` `every p=>Map.get(String(p.id))===p && Set size` `globals.js:124` — wykrywa podmianę elementu bez zmiany length oraz duplikaty ID (`Map last-write-wins` vs `find first-match-wins`).
 - Precedence: `(resolveProduct(c.productId)?.componentType==='wlaz')` — nawiasy obowiązkowe (88e2868 regresja).
 
 ## Odrzucone alternatywy

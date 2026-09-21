@@ -64,7 +64,7 @@ Publiczny endpoint raportów CSP (`Content-Type: application/csp-report`, odpowi
 
 ## Autoryzacja (`/api/auth`)
 
-Wszystkie endpointy auth (oprócz login) wymagają autoryzacji przez nagłówek `x-auth-token` lub ciasteczko `authToken`.
+Wszystkie endpointy auth (oprócz login) wymagają autoryzacji przez ciasteczko `authToken` (HttpOnly, podstawowy mechanizm). Nagłówek `x-auth-token` działa jako tymczasowy shim kompatybilności API (decyzja `e2-auth-decision`: docelowo cookie-first).
 
 ### `POST /api/auth/login`
 
@@ -493,6 +493,6 @@ Wymaga autoryzacji (administrator). FTS to dane pochodne — status i rebuild wy
 ## Uwagi
 
 - Wszystkie endpointy (oprócz `/health` i `/api/auth/login`) zwracają `401` przy braku autoryzacji.
-- Token autoryzacyjny można przekazać przez nagłówek `x-auth-token` lub ciasteczko `authToken`.
+- Token: ciasteczko `authToken` (podstawowe); nagłówek `x-auth-token` to tymczasowy shim (nie drugi mechanizm docelowy).
 - W produkcji ciasteczko `authToken` ma flagę `Secure` (wymaga HTTPS).
 - Pełną dokumentację OpenAPI ze schematami i przykładami znajdziesz pod `/api/docs`.

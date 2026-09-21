@@ -6,7 +6,7 @@
 
 ## Kontekst
 
-System WITROS Oferty wymaga bazy danych dla ofert, produktów, klientów i użytkowników.
+System S.O.K. wymaga bazy danych dla ofert, produktów, klientów i użytkowników.
 Rozważano: PostgreSQL (standard dla web apps), SQLite, MySQL.
 
 ## Decyzja

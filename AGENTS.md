@@ -343,6 +343,8 @@ Zawsze sprawdzaj kod pod kątem występowania poniższych znanych problemów:
 
 ---
 
+> Pełna baza błędów: `docs/errors-known.md` (#1–#53, w tym #24–#26 i #50–#53 spoza tej tabeli; mapowanie numeracji w nagłówku tamtego pliku).
+
 ## 6. Przydatne Polecenia Konsolowe
 
 Podczas pracy z projektem korzystaj z poniższych komend:
@@ -533,3 +535,15 @@ Rules:
 - If graphify-out/wiki/index.md exists, use it for broad navigation instead of raw source browsing.
 - Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
 - After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).
+
+## Kontrakt autonomii agenta (wchłonięty z `docs/AUTONOMY_CONTRACT.md` 2026-09-21)
+
+Obowiązuje od 2026-09-12. Zmiana kontraktu wyłącznie za jawną zgodą użytkownika.
+
+| Tier         | Zakres                                                                                                    | Tryb                                  |
+| ------------ | --------------------------------------------------------------------------------------------------------- | ------------------------------------- |
+| 🟢 Autonomia | read-only audyty, testy, docs, małe fixy z zielonym `test:quick`, re-run pomiarów, commity docs/test-only | działanie + raport ex post, bez pusha |
+| 🟡 Batch GO  | implementacje P1/P2, nowe plany, commity kodu                                                             | jedno GO na paczkę                    |
+| 🔴 Osobne GO | push, restart/migracje/seed, progi ML, prod DB, operacje destrukcyjne w gicie                             | zawsze jawna zgoda                    |
+
+Twarde invarianty: GO na plan ≠ GO na kod (raport przed commitem kodu); brak operacji na live DB poza zatwierdzonym drillem; progi ML tylko na danych; żadnego fallbacku do domyślnego `DATABASE_URL`; kryterium STOP przerywa paczkę natychmiast. Mały fix (🟢): jeden obszar, istniejący mechanizm, testy pokrywają zmianę, pełne `test:quick` zielone.

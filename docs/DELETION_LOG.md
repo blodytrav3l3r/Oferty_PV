@@ -324,3 +324,30 @@ Usunięto też nieużywane importy/instancje: `RecommendationEngine`, `Authentic
 - [x] `npm run lint:frontend` - 1204 warnings (0 errors), spadek z 1206
 - [x] `npm test` - 69 suites, 1426 tests passed
 - [x] `npm run version:check` - 1.11.1 spójna
+
+## [2026-09-21] Audyt dokumentacji — konsolidacja docs
+
+### Files Consolidated (docs)
+
+| Pliki                                       | Operacja                                                                                                  | Uzasadnienie                                                        |
+| ------------------------------------------- | --------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| `docs/INSTRUKCJA_SERWER.md` (349 linii)     | Treść §3–§5 (VPS/tunel/HTTPS/PM2) scalona do `docs/instalacja-przenoszenie-systemu.md` §12; plik usunięty | Duplikat instalacji; unikalna tylko praca zdalna                    |
+| `docs/INSTALACJA_REFERENCJA.md` (416 linii) | Drzewko decyzyjne scalone do `docs/instalacja-przenoszenie-systemu.md` §13; plik usunięty                 | Auto-vs-ręczne i cheat sheet już w przenoszenie §8/§11 i laik §9–10 |
+| `docs/GIT_COMMIT_FLOW.md`                   | Usunięty bez scalania (duplikat AGENTS.md §3 i CONTRIBUTING)                                              | Zero referencji w repo                                              |
+| `docs/AUTONOMY_CONTRACT.md` (25 linii)      | Wchłonięty do AGENTS.md (sekcja „Kontrakt autonomii agenta"); plik usunięty                               | Kontrakt dotyczy agentów — właściwy dom to AGENTS.md                |
+
+### Files Archived (docs/plans)
+
+| Plik                        | Operacja                                                                                                      | Uzasadnienie                |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------- | --------------------------- |
+| `docs/plans/e3-perf.md`     | `git mv` do `docs/plans/archive/` + aktualizacja referencji (`scripts/load-100.mjs`, `docs/PERF_BASELINE.md`) | Status COMPLETED            |
+| `docs/plans/e5-decision.md` | `git mv` do `docs/plans/archive/` + aktualizacja referencji (`.github/workflows/load-nightly.yml`)            | Status COMPLETED, wariant A |
+
+### Content Sync (docs vs kod)
+
+- ADR-001/002/006: `WITROS Oferty` → `S.O.K.` (nazwa SSoT).
+- ADR-009: numery linii `globals.js` (`:42` → `:46`, `:55` → `:124`).
+- ADR-011: rewizja — zapis właścicielski P0.1 (`canWriteDoc`), `canEditDoc/canAssignDoc` = DEPRECATED shimy.
+- `docs/API.md` + `docs/SECURITY.md`: auth cookie-first, `x-auth-token` = tymczasowy shim (e2-auth-decision wariant A).
+- AGENTS.md §5: odsyłacz do pełnej bazy `docs/errors-known.md` (#1–#53).
+- `docs/security/permission-matrix.md` ↔ `docs/SECURITY.md`: linki dwukierunkowe (jeden SSoT pojęciowy).

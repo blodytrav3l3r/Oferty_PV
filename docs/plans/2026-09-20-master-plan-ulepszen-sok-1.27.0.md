@@ -2,9 +2,11 @@
 
 **Wersja:** 1.27.0 (HEAD `58c1bfe`, tag `v1.27.0`, 2026-09-20)
 **Status:** PLAN WYKONAWCZY (zweryfikowany w kodzie, bez wdrożenia)
-**Zakres:** 237 plików JS frontend (~71,5k linii), 145 plików backend TS, 140 handlerów API, 250 testów, 151 md
-**Zasady:** mały diff, zero zmian funkcjonalnych bez uzasadnienia, 1 problem = 1 commit, każdy krok testowalny i odwracalny
-**Rewizja R1 (2026-09-20):** uwagi review (ocena 9,2/10) — E2→E2a-d, E4→E4a-d, klucz limitera IP+login, pomiar przed zmianą TELEMETRY_WRITE, E7 na koniec, E1 reference-check, MASTER DONE gate, kontrola wizualna przed push
+
+> Historyczny: repo jest na wersji 1.28.0; ten plan opisuje stan v1.27.0 (E1+E6) i nie jest planem wykonawczym bieżącej wersji.
+> **Zakres:** 237 plików JS frontend (~71,5k linii), 145 plików backend TS, 140 handlerów API, 250 testów, 151 md
+> **Zasady:** mały diff, zero zmian funkcjonalnych bez uzasadnienia, 1 problem = 1 commit, każdy krok testowalny i odwracalny
+> **Rewizja R1 (2026-09-20):** uwagi review (ocena 9,2/10) — E2→E2a-d, E4→E4a-d, klucz limitera IP+login, pomiar przed zmianą TELEMETRY_WRITE, E7 na koniec, E1 reference-check, MASTER DONE gate, kontrola wizualna przed push
 
 ---
 

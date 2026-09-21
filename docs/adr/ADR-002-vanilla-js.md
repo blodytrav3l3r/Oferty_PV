@@ -6,7 +6,7 @@
 
 ## Kontekst
 
-Frontend aplikacji WITROS Oferty wymaga interaktywnego UI (kreator studni w 5 krokach,
+Frontend aplikacji S.O.K. wymaga interaktywnego UI (kreator studni w 5 krokach,
 kalkulator rur, tabela konfiguracyjna, generowanie PDF/DOCX). Rozważano frameworki
 (React, Vue, Svelte) vs czysty Vanilla JS.
 
