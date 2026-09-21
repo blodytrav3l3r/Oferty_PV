@@ -101,8 +101,8 @@
                       (d.modelAccuracy ? ' (acc: ' + d.modelAccuracy + ')' : '')
                     : 'Brak';
                 const modelOk = !!d.mlOnline;
-                // Kotwica SEC-03: modelTooltip jest SUROWY celowo — escape następuje w callerze
-                // healthCard('Model', ..., window.escapeHtml(modelTooltip)) poniżej. Nie escapować tutaj.
+                // Kotwica SEC-03: modelTooltip jest SUROWY celowo — escape atrybutu następuje w callerze
+                // healthCard('Model', ..., window.escapeHtmlAttr(modelTooltip)) poniżej. Nie escapować tutaj.
                 const modelTooltip = d.modelVersion
                     ? d.modelVersion + (d.modelAccuracy ? ' (acc: ' + d.modelAccuracy + ')' : '')
                     : 'Brak';
@@ -130,7 +130,13 @@
                         !!d.lastTrainingAt,
                         d.trainingRunning ? 'W trakcie...' : '—'
                     ) +
-                    healthCard('Model', modelStr, modelOk, null, window.escapeHtml(modelTooltip)) +
+                    healthCard(
+                        'Model',
+                        modelStr,
+                        modelOk,
+                        null,
+                        window.escapeHtmlAttr(modelTooltip)
+                    ) +
                     healthCard(
                         'Predict',
                         d.mlOnline ? 'Online' : 'Offline',

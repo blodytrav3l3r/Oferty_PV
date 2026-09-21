@@ -80,10 +80,10 @@
     function statCard(title, value, color, desc, tooltip) {
         return (
             '<div class="ai-stat-card" ' +
-            (desc ? 'title="' + window.escapeHtml(desc) + '"' : '') +
+            (desc ? 'title="' + window.escapeHtmlAttr(desc) + '"' : '') +
             '>' +
             '<div' +
-            (tooltip ? ' title="' + window.escapeHtml(tooltip) + '"' : '') +
+            (tooltip ? ' title="' + window.escapeHtmlAttr(tooltip) + '"' : '') +
             ' style="color:' +
             (color || 'var(--accent)') +
             '">' +
