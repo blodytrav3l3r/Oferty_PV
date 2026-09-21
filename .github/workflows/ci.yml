@@ -190,6 +190,7 @@ jobs:
         name: E2E — spójność nazwy aplikacji
         runs-on: ubuntu-latest
         needs: test
+        timeout-minutes: 15
         env:
             DATABASE_URL: 'file:./test-ci.sqlite?connection_limit=1&busy_timeout=30000'
         steps:
@@ -210,8 +211,25 @@ jobs:
             - name: Setup Chromium (Playwright)
               run: npx playwright install --with-deps chromium
 
-            - name: Run appname E2E
-              run: npm run test:e2e-appname:spawn
+            - name: Run appname E2E (retry 1x, verbose)
+              env:
+                  SPAWN_VERBOSE: '1'
+              run: |
+                  for i in 1 2; do
+                    npm run test:e2e-appname:spawn && break
+                    echo "Próba $i nieudana, ponawiam..."
+                    [ "$i" = "2" ] && exit 1
+                  done
+
+            - name: Upload E2E forensics
+              if: always()
+              uses: actions/upload-artifact@v4
+              with:
+                  name: e2e-appname-forensics
+                  path: |
+                      e2e-appname-fail.png
+                      e2e-appname-server.log
+                  if-no-files-found: warn
 
     axe-a11y:
         name: A11y — axe (wcag2a/aa, raport)

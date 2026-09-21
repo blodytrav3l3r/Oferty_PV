@@ -159,3 +159,7 @@ sok-audit-*.tar.gz
 
 playwright-report/
 test-results/
+
+# Forensics E2E appname (generowane przy FAIL — tests/playwright/appNameConsistency.cjs)
+e2e-appname-fail.png
+e2e-appname-server.log

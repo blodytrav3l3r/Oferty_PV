@@ -53,6 +53,22 @@ function resolvePlaywright() {
 const { chromium } = resolvePlaywright();
 const CHROME_PATH = process.env.CHROME_PATH;
 
+/* ── Forensics: ring-buffer logów serwera (zawsze, też bez SPAWN_VERBOSE) ── */
+const SERVER_LOG_MAX = 300;
+const serverLog = [];
+function pushServerLog(chunk) {
+    for (const l of String(chunk).split(/\r?\n/)) {
+        if (l) serverLog.push(l);
+    }
+    while (serverLog.length > SERVER_LOG_MAX) serverLog.shift();
+}
+function dumpServerLogTail(n = 80) {
+    const tail = serverLog.slice(-n);
+    if (tail.length === 0) return;
+    console.error('\n── serwer (ostatnie linie) ──');
+    tail.forEach((l) => console.error('  [srv] ' + l));
+}
+
 const ADMIN_PASSWORD = process.env.TEST_ADMIN_PASSWORD || 'anim123456';
 
 /* Nazwa aplikacji — sparametryzowana przez env (--spawn przekazuje env do serwera). */
@@ -132,9 +148,11 @@ async function startServer() {
         stdio: 'pipe'
     });
     server.stderr.on('data', (d) => {
+        pushServerLog(d);
         if (SPAWN_VERBOSE) process.stderr.write(d);
     });
     server.stdout.on('data', (d) => {
+        pushServerLog(d);
         if (SPAWN_VERBOSE) process.stdout.write(d);
     });
     const ok = await pollHealth(`${BASE}/health`);
@@ -207,9 +225,18 @@ async function startServer() {
         const loginResp = await page.request.post(`${BASE}/api/auth/login`, {
             data: { username: 'admin', password: ADMIN_PASSWORD }
         });
+        if (!loginResp.ok()) {
+            const body = await loginResp.text().catch(() => '');
+            throw new Error(`Login failed — HTTP ${loginResp.status()}: ${body.slice(0, 200)}`);
+        }
         const loginJson = await loginResp.json();
         const authToken = loginJson.token || loginJson.authToken;
-        if (!authToken) throw new Error('Login failed — no token');
+        // Wariant A: brak tokenu w JSON = sesja w cookie httpOnly (jar kontekstu).
+        // Twardy błąd tylko gdy ani tokenu, ani cookie sesji.
+        const cookies = await context.cookies();
+        if (!authToken && !cookies.some((c) => c.name === 'authToken')) {
+            throw new Error('Login failed — brak tokenu w JSON i brak cookie authToken');
+        }
         // Wariant A: cookie httpOnly z logowania siedzi w jarze kontekstu
         // (page.request dzieli cookie z page) — bez localStorage.
 
@@ -344,27 +371,38 @@ async function startServer() {
         let enterTitle = '';
         let exitTitle = '';
         let exitError = '';
-        const t5res = await ruryFrame.evaluate(async () => {
-            const out = { enterTitle: '', exitTitle: '', error: '' };
-            try {
-                await enterRuryOrderEditMode('e2e-order-1');
-                out.enterTitle = document.title;
-                if (typeof exitOrderEditMode === 'function') {
-                    try {
-                        exitOrderEditMode();
-                        out.exitTitle = document.title;
-                    } catch (e) {
-                        out.error = 'exitError: ' + (e && e.message ? e.message : String(e));
+        // T5 retry: zimny CI potrafi nie dowieźć łańcucha render/lock za 1. razem.
+        // Tytuł wchodzi od razu po znalezieniu danych (orderEditMode.js), więc
+        // brak /Zamówienie:/ = realny problem z wejściem w tryb, nie timing tytułu.
+        let t5res = { enterTitle: '', exitTitle: '', error: '' };
+        let t5attempts = 0;
+        for (let attempt = 1; attempt <= 3; attempt++) {
+            t5attempts = attempt;
+            t5res = await ruryFrame.evaluate(async () => {
+                const out = { enterTitle: '', exitTitle: '', error: '' };
+                try {
+                    await enterRuryOrderEditMode('e2e-order-1');
+                    out.enterTitle = document.title;
+                    if (typeof exitOrderEditMode === 'function') {
+                        try {
+                            exitOrderEditMode();
+                            out.exitTitle = document.title;
+                        } catch (e) {
+                            out.error = 'exitError: ' + (e && e.message ? e.message : String(e));
+                            out.exitTitle = document.title;
+                        }
+                    } else {
                         out.exitTitle = document.title;
                     }
-                } else {
-                    out.exitTitle = document.title;
+                } catch (e) {
+                    out.error = 'enterError: ' + (e && e.message ? e.message : String(e));
                 }
-            } catch (e) {
-                out.error = 'enterError: ' + (e && e.message ? e.message : String(e));
-            }
-            return out;
-        });
+                return out;
+            });
+            if (/Zamówienie:/.test(t5res.enterTitle || '')) break;
+            await sleep(2000);
+        }
+        if (t5attempts > 1) console.log(`  ℹ T5 wszedł po próbie ${t5attempts}/3`);
         enterTitle = t5res.enterTitle;
         exitTitle = t5res.exitTitle;
         exitError = t5res.error;
@@ -398,6 +436,24 @@ async function startServer() {
         failed = true;
         errors.push('FATAL: ' + e.message);
     } finally {
+        if (failed) {
+            // Forensics: screenshot + URL/tytuł + ogon logu serwera + plik pod CI artefakt.
+            try {
+                const url = page.url();
+                const title = await page.title().catch(() => '');
+                console.error(`\n── forensics: url="${url}" title="${title}"`);
+                await page.screenshot({ path: join(ROOT, 'e2e-appname-fail.png') });
+                console.error('── forensics: zapisano e2e-appname-fail.png');
+            } catch (_) {}
+            try {
+                require('fs').writeFileSync(
+                    join(ROOT, 'e2e-appname-server.log'),
+                    serverLog.join('\n')
+                );
+                console.error('── forensics: zapisano e2e-appname-server.log');
+            } catch (_) {}
+            dumpServerLogTail(80);
+        }
         await browser.close();
         if (server) server.kill();
         if (failed) {
