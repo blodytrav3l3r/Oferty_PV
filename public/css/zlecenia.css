@@ -776,3 +776,12 @@
 .zlecenia-batch-bar .batch-count {
     background: rgba(var(--pink-rgb), 0.2);
 }
+
+/* Tryb jasny — natywne kontrolki muszą mieć jasny color-scheme.
+   Reguły dark z tego pliku (specyficzność klasy + atrybutu) wygrywają
+   z globalnym `html[data-theme='light'] input/select` ze style.base.css. */
+html[data-theme='light'] .zlecenia-date-filter input[type='date'],
+html[data-theme='light'] .zlecenia-virtual-toolbar .form-select.zlecenia-select-sm,
+html[data-theme='light'] .zlecenia-virtual-toolbar .zlecenia-date-filter input[type='date'] {
+    color-scheme: light;
+}
