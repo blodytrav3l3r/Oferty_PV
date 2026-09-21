@@ -15,7 +15,7 @@ window.api = {
             const res = await fetchWithTimeout(url, { headers: authHeaders() });
             if (!res.ok) _apiWarn('GET', url, 'HTTP ' + res.status);
             return res.ok ? res.json() : null;
-        } catch (e) {
+        } catch {
             _apiWarn('GET', url, 'błąd sieci');
             return null;
         }
@@ -29,7 +29,7 @@ window.api = {
             });
             if (!res.ok) _apiWarn('PUT', url, 'HTTP ' + res.status);
             return res.ok ? res.json() : null;
-        } catch (e) {
+        } catch {
             _apiWarn('PUT', url, 'błąd sieci');
             return null;
         }
@@ -43,7 +43,7 @@ window.api = {
             });
             if (!res.ok) _apiWarn('POST', url, 'HTTP ' + res.status);
             return res.ok ? res.json() : null;
-        } catch (e) {
+        } catch {
             _apiWarn('POST', url, 'błąd sieci');
             return null;
         }
@@ -57,7 +57,7 @@ window.api = {
             });
             if (!res.ok) _apiWarn('PATCH', url, 'HTTP ' + res.status);
             return res.ok ? res.json() : null;
-        } catch (e) {
+        } catch {
             _apiWarn('PATCH', url, 'błąd sieci');
             return null;
         }
@@ -67,7 +67,7 @@ window.api = {
             const res = await fetchWithTimeout(url, { method: 'DELETE', headers: authHeaders() });
             if (!res.ok) _apiWarn('DELETE', url, 'HTTP ' + res.status);
             return res.ok ? res.json() : null;
-        } catch (e) {
+        } catch {
             _apiWarn('DELETE', url, 'błąd sieci');
             return null;
         }

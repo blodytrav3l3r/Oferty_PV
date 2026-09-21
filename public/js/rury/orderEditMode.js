@@ -31,6 +31,9 @@ async function enterRuryOrderEditMode(orderId) {
             showToast('Nie znaleziono zamówienia', 'error');
             return;
         }
+        // Tytuł od razu po znalezieniu danych — łańcuch renderu poniżej może
+        // rzucić wyjątek (łapany w catch z toastem), a tytuł musi się zmienić (T5).
+        document.title = `Zamówienie: ${orderData.orderNumber || orderData.offerNumber || orderId}`;
 
         window.orderEditMode = true;
         editingRuryOrderId = orderId;
@@ -87,7 +90,6 @@ async function enterRuryOrderEditMode(orderId) {
 
         if (window.lucide) lucide.createIcons();
 
-        document.title = `Zamówienie: ${orderData.orderNumber || orderData.offerNumber || orderId}`;
         // P1.1b: banner recovery tylko gdy draft istnieje i różni się od SAVED.
         if (window.draftAutosave) window.draftAutosave.checkRecovery('order_rury');
     } catch (err) {
