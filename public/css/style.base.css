@@ -730,6 +730,23 @@ body::before {
     border-color: var(--slate-800);
 }
 
+/* Przełącznik motywu: para ikon sun/moon, aktywna pełna, nieaktywna wygaszona */
+#theme-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+#theme-toggle svg {
+    width: 15px;
+    height: 15px;
+}
+#theme-toggle .theme-icon-on {
+    color: var(--warn-hover);
+}
+#theme-toggle .theme-icon-off {
+    opacity: 0.35;
+}
+
 .nav-tile:hover {
     background: var(--bg-hover);
     border-color: var(--bg-hover);

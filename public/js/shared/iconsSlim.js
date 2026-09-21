@@ -1,6 +1,6 @@
 // @ts-check
 /**
- * icons-slim.js — Lekka biblioteka ikon SVG (tylko 76 używanych ikon).
+ * icons-slim.js — Lekka biblioteka ikon SVG (tylko 78 używanych ikon).
  * Zastępuje lucide.min.js (388KB) — ten plik waży ~15KB.
  * API kompatybilne z lucide: window.lucide.createIcons()
  *
@@ -358,6 +358,17 @@
             '<path d="M22 5h-4"/>'
         ],
         square: ['<rect width="18" height="18" x="3" y="3" rx="2"/>'],
+        sun: [
+            '<circle cx="12" cy="12" r="4"/>',
+            '<path d="M12 2v2"/>',
+            '<path d="M12 20v2"/>',
+            '<path d="m4.93 4.93 1.41 1.41"/>',
+            '<path d="m17.66 17.66 1.41 1.41"/>',
+            '<path d="M2 12h2"/>',
+            '<path d="M20 12h2"/>',
+            '<path d="m6.34 17.66-1.41 1.41"/>',
+            '<path d="m19.07 4.93-1.41 1.41"/>'
+        ],
         tag: [
             '<path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"/>',
             '<circle cx="7.5" cy="7.5" r=".5" fill="currentColor"/>'
@@ -438,6 +449,7 @@
             '<path d="M4 14h6v6"/>'
         ],
         minus: ['<path d="M5 12h14"/>'],
+        moon: ['<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>'],
         play: [
             '<path d="M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z"/>'
         ],

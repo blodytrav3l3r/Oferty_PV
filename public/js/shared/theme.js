@@ -48,8 +48,16 @@ function _sokThemeSaveCache(mode) {
     } catch (_e) {}
 }
 
-function _sokThemeIcon(mode) {
-    return mode === 'light' ? 'moon' : 'sun';
+function _sokThemeToggleHtml(mode) {
+    var sunCls = mode === 'light' ? 'theme-icon-off' : 'theme-icon-on';
+    var moonCls = mode === 'light' ? 'theme-icon-on' : 'theme-icon-off';
+    return (
+        '<i data-lucide="sun" class="' +
+        sunCls +
+        '" aria-hidden="true"></i><i data-lucide="moon" class="' +
+        moonCls +
+        '" aria-hidden="true"></i>'
+    );
 }
 
 function _sokThemeRefreshToggle(mode) {
@@ -61,7 +69,7 @@ function _sokThemeRefreshToggle(mode) {
         btn.setAttribute('aria-pressed', current === 'light' ? 'true' : 'false');
         btn.setAttribute('title', 'Przełącz na motyw ' + next);
         btn.setAttribute('aria-label', 'Przełącz na motyw ' + next);
-        btn.innerHTML = '<i data-lucide="' + _sokThemeIcon(current) + '"></i>';
+        btn.innerHTML = _sokThemeToggleHtml(current);
         if (typeof lucide !== 'undefined' && lucide.createIcons) lucide.createIcons({ root: btn });
     } catch (_e) {}
 }
@@ -71,7 +79,26 @@ function _sokThemeApply(mode) {
         if (mode === 'light') document.documentElement.setAttribute('data-theme', 'light');
         else document.documentElement.removeAttribute('data-theme');
     } catch (_e) {}
+    _sokLogoSwap(mode);
     _sokThemeRefreshToggle(mode);
+}
+
+/* Logo to <img> (izolowany dokument SVG) — var() strony nie sięga do
+   środka, więc wariant light to osobny plik podmieniany po src (?v= zostaje). */
+function _sokLogoSwap(mode) {
+    try {
+        var imgs = document.querySelectorAll('img.logo-sok, img.index-logo-sok');
+        for (var i = 0; i < imgs.length; i++) {
+            var src = imgs[i].getAttribute('src') || '';
+            if (mode === 'light') {
+                if (src.indexOf('logo-sok.svg') >= 0 && src.indexOf('logo-sok-light.svg') < 0)
+                    imgs[i].src = src.replace('logo-sok.svg', 'logo-sok-light.svg');
+            } else {
+                if (src.indexOf('logo-sok-light.svg') >= 0)
+                    imgs[i].src = src.replace('logo-sok-light.svg', 'logo-sok.svg');
+            }
+        }
+    } catch (_e) {}
 }
 
 function _sokThemePushBackend(mode) {
@@ -171,5 +198,9 @@ try {
             _sokThemeSaveCache(mode);
             _sokThemeApply(mode);
         }
+    });
+    /* Sync ładowany w <head> widzi DOM przed <img> — doswapuj logo po parsowaniu. */
+    window.addEventListener('DOMContentLoaded', function () {
+        _sokLogoSwap(_sokThemeReadCache());
     });
 } catch (_e) {}
