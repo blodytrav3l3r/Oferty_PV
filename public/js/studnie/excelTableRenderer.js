@@ -231,12 +231,12 @@ function _excelRenderTable(dn) {
         h3 += `<th scope="col" data-col-id="${escapeHtmlAttr(c.id)}" style="padding:${h3Pad};font-size: var(--fs-3xs);font-weight: var(--fw-medium);color:var(--excel-text-dim);text-align:center;white-space:nowrap;background:var(--excel-header-bg);color:${hc};min-width:95px;text-align:center;">${colDnLabel}${colCode}</th>`;
     });
 
-    h1 += `<th scope="col" data-excel-col="h-denn" style="${thBase}background:var(--bg-primary);color:var(--warn-hover);min-width:60px;text-align:center;">H denn</th>`;
-    h2 += `<th scope="col" style="${th2Base}background:var(--bg-primary);color:var(--warn-hover);min-width:60px;text-align:center;">auto</th>`;
-    h3 += `<th scope="col" style="${th3Base}background:var(--bg-primary);color:var(--warn-hover);min-width:60px;text-align:center;">·</th>`;
-    h1 += `<th scope="col" data-excel-col="uszcz" style="${thBase}background:var(--bg-primary);color:var(--warn-hover);min-width:50px;text-align:center;">Uszcz</th>`;
-    h2 += `<th scope="col" style="${th2Base}background:var(--bg-primary);color:var(--warn-hover);min-width:50px;text-align:center;">auto</th>`;
-    h3 += `<th scope="col" style="${th3Base}background:var(--bg-primary);color:var(--warn-hover);min-width:50px;text-align:center;">·</th>`;
+    h1 += `<th scope="col" data-excel-col="h-denn" style="${thBase}background:var(--excel-header-bg);color:var(--warn-hover);min-width:60px;text-align:center;">H denn</th>`;
+    h2 += `<th scope="col" style="${th2Base}background:var(--excel-header-bg);color:var(--warn-hover);min-width:60px;text-align:center;">auto</th>`;
+    h3 += `<th scope="col" style="${th3Base}background:var(--excel-header-bg);color:var(--warn-hover);min-width:60px;text-align:center;">·</th>`;
+    h1 += `<th scope="col" data-excel-col="uszcz" style="${thBase}background:var(--excel-header-bg);color:var(--warn-hover);min-width:50px;text-align:center;">Uszcz</th>`;
+    h2 += `<th scope="col" style="${th2Base}background:var(--excel-header-bg);color:var(--warn-hover);min-width:50px;text-align:center;">auto</th>`;
+    h3 += `<th scope="col" style="${th3Base}background:var(--excel-header-bg);color:var(--warn-hover);min-width:50px;text-align:center;">·</th>`;
 
     if (hasReduction) {
         /* Redukcja — pojedynczy select: Brak / DN1000 / DN1200 */

@@ -619,8 +619,8 @@ function excelSelectRow(wIdx) {
             }
             /* Przywróć tło sticky kolumn do base-bg */
             const prevStickyTds = prevRow.querySelectorAll(EXCEL_STICKY_CELL_SELECTOR);
-            const baseBg = prevRow.getAttribute('data-base-bg') || 'var(--bg-primary)';
-            const prevSolid = prevRow.getAttribute('data-solid-bg') || 'var(--bg-primary)';
+            const baseBg = prevRow.getAttribute('data-base-bg') || 'var(--excel-row-even)';
+            const prevSolid = prevRow.getAttribute('data-solid-bg') || 'var(--excel-row-even)';
             prevStickyTds.forEach(function (td) {
                 td.style.background = _excelStickyCellBg(baseBg, prevSolid);
             });
@@ -636,7 +636,7 @@ function excelSelectRow(wIdx) {
             newRow.setAttribute('data-orig-bg', activeBg);
             /* Zaktualizuj tło sticky kolumn (Lp, NrStudni, RzWlazu, RzDna, Wys) */
             const stickyTds = newRow.querySelectorAll(EXCEL_STICKY_CELL_SELECTOR);
-            const solidBg = newRow.getAttribute('data-solid-bg') || 'var(--bg-primary)';
+            const solidBg = newRow.getAttribute('data-solid-bg') || 'var(--excel-row-even)';
             stickyTds.forEach(function (td) {
                 td.style.background = _excelStickyCellBg(activeBg, solidBg);
             });

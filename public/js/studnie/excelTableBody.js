@@ -179,16 +179,16 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
                 2500: 'var(--danger-rgb)',
                 styczne: 'var(--pink-rgb)'
             }[dupColorKey] || 'var(--blue-rgb)';
-        const baseBg = isEven ? 'var(--bg-primary)' : 'var(--bg-secondary)';
+        const baseBg = isEven ? 'var(--excel-row-even)' : 'var(--excel-row-odd)';
         const rowDupSolid = 'rgba(' + dupRgb + ', 0.2)';
         const rowActiveDupSolid = 'rgba(' + dupRgb + ', 0.3)';
         const hoverDupSolid = 'rgba(' + dupRgb + ', 0.25)';
         const hoverActiveDupSolid = 'rgba(' + dupRgb + ', 0.35)';
         /* Kolejność: base/active → status (ERROR/WARNING) → duplikat na wierzchu */
         const wellStatus = _excelGetRowStatus(well);
-        let rowBg = isActive ? 'rgba(var(--blue-rgb), 0.18)' : baseBg;
-        let hoverBg = isActive ? 'rgba(var(--blue-rgb), 0.28)' : 'var(--bg-tertiary)';
-        let activeBg = 'rgba(var(--blue-rgb), 0.18)';
+        let rowBg = isActive ? 'var(--excel-row-active)' : baseBg;
+        let hoverBg = isActive ? 'rgba(var(--blue-rgb), 0.28)' : 'var(--excel-row-hover)';
+        let activeBg = 'var(--excel-row-active)';
         if (wellStatus) {
             rowBg = isActive ? wellStatus.active : wellStatus.base;
             hoverBg = wellStatus.hover;
@@ -215,7 +215,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
         const _errTitle = _excelErrorTitle(well);
         const statusTitle = _errTitle ? ' title="' + _errTitle + '"' : '';
         const przejscia = well.przejscia || [];
-        const solidBase = isEven ? 'var(--bg-primary)' : 'var(--bg-secondary)';
+        const solidBase = isEven ? 'var(--excel-row-even)' : 'var(--excel-row-odd)';
         const stickyBg = _excelStickyCellBg(rowBg, solidBase);
         const rowStyleExtra = rowTextColor
             ? ';color:' + rowTextColor + ';font-weight:var(--fw-semibold)'
@@ -848,12 +848,12 @@ function _excelRefreshDupColors() {
         const nameDnList = nameDnMap[nameKey] || [];
         const otherDns = nameDnList.filter((d) => d.dn !== dnKey);
         const dupColorKey = isDup && otherDns.length > 0 ? otherDns[0].dn : dnKey;
-        const baseBg = isEven ? 'var(--bg-primary)' : 'var(--bg-secondary)';
+        const baseBg = isEven ? 'var(--excel-row-even)' : 'var(--excel-row-odd)';
 
         const wellStatus = _excelGetRowStatus(well);
-        let effRowBg = isActive ? 'rgba(var(--blue-rgb), 0.18)' : baseBg;
-        let effHoverBg = isActive ? 'rgba(var(--blue-rgb), 0.28)' : 'var(--bg-tertiary)';
-        let effActiveBg = 'rgba(var(--blue-rgb), 0.18)';
+        let effRowBg = isActive ? 'var(--excel-row-active)' : baseBg;
+        let effHoverBg = isActive ? 'rgba(var(--blue-rgb), 0.28)' : 'var(--excel-row-hover)';
+        let effActiveBg = 'var(--excel-row-active)';
         if (wellStatus) {
             effRowBg = isActive ? wellStatus.active : wellStatus.base;
             effHoverBg = wellStatus.hover;
@@ -903,7 +903,7 @@ function _excelRefreshDupColors() {
         }
         /* Zaktualizuj tła kolumn sticky — inaczej część wiersza (Lp, nazwa,
            rzędne) ma inną barwę niż reszta (bug S4). */
-        const solidBg = row.getAttribute('data-solid-bg') || 'var(--bg-primary)';
+        const solidBg = row.getAttribute('data-solid-bg') || 'var(--excel-row-even)';
         row.querySelectorAll('td:nth-child(-n+7)').forEach(function (td) {
             td.style.background = _excelStickyCellBg(effRowBg, solidBg);
         });

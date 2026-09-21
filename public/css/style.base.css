@@ -265,6 +265,11 @@
     --excel-input-border: rgba(var(--white-rgb), 0.1);
     --excel-cell-selected: rgba(var(--accent-rgb), 0.05);
     --excel-row-hover: rgba(var(--white-rgb), 0.05);
+    /* Zebra wierszy i wiersz aktywny — powierzchnie excelowe (S-02, wariant A).
+       Wartości startowe = dotychczasowe: even/odd jak --bg-primary/secondary. */
+    --excel-row-even: #0a0e1a;
+    --excel-row-odd: #111827;
+    --excel-row-active: rgba(var(--blue-rgb), 0.18);
     --excel-tint-base: var(--slate-950);
     --excel-backdrop: rgba(var(--black-rgb), 0.8);
     --excel-shadow: 0 20px 60px rgba(var(--black-rgb), 0.8);
@@ -2168,6 +2173,9 @@ html[data-theme='light'] {
     --excel-input-border: #d0d7de;
     --excel-cell-selected: #eef2ff;
     --excel-row-hover: #f1f5f9;
+    --excel-row-even: #f6f8fa;
+    --excel-row-odd: #ffffff;
+    --excel-row-active: rgba(var(--blue-rgb), 0.18);
     --excel-tint-base: #ffffff;
     --excel-backdrop: rgba(15, 23, 42, 0.45);
     --excel-shadow: 0 8px 32px rgba(15, 23, 42, 0.16);
