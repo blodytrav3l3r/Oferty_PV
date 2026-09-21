@@ -11,6 +11,9 @@ import path from 'path';
 const ROOT = path.join(__dirname, '../..');
 const BASE_CSS = fs.readFileSync(path.join(ROOT, 'public/css/style.base.css'), 'utf8');
 const STUDNIE_CSS = fs.readFileSync(path.join(ROOT, 'public/css/studnie.css'), 'utf8');
+/* Scope excel w modułowych arkuszach też konsumują kontrakt. */
+const OFFER_CSS = fs.readFileSync(path.join(ROOT, 'public/css/studnie/offer.css'), 'utf8');
+const MODAL_CSS = fs.readFileSync(path.join(ROOT, 'public/css/studnie/modal.css'), 'utf8');
 const EXCEL_DIR = path.join(ROOT, 'public/js/studnie');
 const EXCEL_FILES = fs
     .readdirSync(EXCEL_DIR)
@@ -36,6 +39,13 @@ const BANNED = [
     'slate-100',
     'slate-50'
 ];
+
+/* Powierzchnie globalne (S-02, wariant A): scope tabeli Excela nie używa
+ * --bg-*, tylko tokeny --excel-row-*. Wyjątek: chrome modali (nie tabela) —
+ * excelBulkJob (przycisk anulowania), excelPasteMismatch i excelWellActions
+ * (powłoki popupów w globalnym theme modali). */
+const BG_SURFACE_BANNED = ['bg-primary', 'bg-secondary', 'bg-tertiary'];
+const BG_CHROME_FILES = ['excelBulkJob.js', 'excelPasteMismatch.js', 'excelWellActions.js'];
 
 function getRootBlock(css) {
     const m = css.match(/:root\s*\{([\s\S]*?)\n\}/);
@@ -67,8 +77,10 @@ function usedExcelTokens() {
         let m;
         while ((m = re.exec(f.code)) !== null) used.add(m[1]);
     }
-    let m;
-    while ((m = re.exec(STUDNIE_CSS)) !== null) used.add(m[1]);
+    for (const css of [STUDNIE_CSS, OFFER_CSS, MODAL_CSS]) {
+        let m;
+        while ((m = re.exec(css)) !== null) used.add(m[1]);
+    }
     return used;
 }
 
@@ -104,6 +116,20 @@ describe('excelThemeTokens kontrakt motywu', () => {
                         (a) => a.file === f.name && line.includes(a.pattern)
                     );
                     if (!allowed) violations.push(`${f.name}:${i + 1}: ${b}`);
+                }
+            });
+        }
+        expect(violations).toEqual([]);
+    });
+
+    test('scope tabeli excela bez globalnych powierzchni --bg-* (S-02)', () => {
+        const violations = [];
+        for (const f of EXCEL_FILES) {
+            if (BG_CHROME_FILES.includes(f.name)) continue;
+            const lines = f.code.split('\n');
+            lines.forEach((line, i) => {
+                for (const b of BG_SURFACE_BANNED) {
+                    if (line.includes(b)) violations.push(`${f.name}:${i + 1}: ${b}`);
                 }
             });
         }
