@@ -63,9 +63,17 @@ fi
 
 command -v docker >/dev/null 2>&1 || die "brak dockera w PATH"
 
+# Deterministyczny odczyt ID: `docker compose build -q` na niektorych
+# wersjach Compose konczy sie kodem 0 bez ID na stdout (CI 35762836155).
+# `docker build -q` gwarantuje samo ID na stdout; Dockerfile i kontekst
+# sa te same, ktorych uzywa pozniej `docker compose up --build`.
 log "Buduje obraz app (cache)..."
-IMG="$(docker compose build -q app)"
-[ -n "$IMG" ] || die "nie zbudowano obrazu app"
+IMG="$(docker build -q -f Dockerfile .)"
+case "$IMG" in
+    sha256:[0-9a-f][0-9a-f]*) ;;
+    *) die "nie ustalono ID obrazu app (pusty/nieprawidlowy stdout budowania)" ;;
+esac
+log "Obraz app: ${IMG:0:19}..."
 
 log "Odczytuje UID/GID node z obrazu $IMG..."
 PUID="$(docker run --rm --entrypoint sh "$IMG" -c 'id -u node')"
