@@ -62,6 +62,7 @@
         "deploy": "node scripts/deploy.mjs",
         "rollback": "node scripts/rollback.mjs",
         "deploy:check": "node scripts/post-deploy-check.mjs",
+        "deploy:check:pdf": "node scripts/check-pdf.mjs",
         "skills:build": "node scripts/skill-cli.mjs build-cost",
         "skills:stats": "node scripts/skill-cli.mjs stats",
         "skills:validate": "node scripts/skill-cli.mjs validate",

@@ -55,7 +55,7 @@ describe('deploy-core', () => {
 
     describe('resolveSteps', () => {
         it('kolejnosc krokow: backup -> checkout -> ci -> generate -> migrate -> build -> wersja -> start -> health', () => {
-            for (const t of ['windows', 'linux', 'docker']) {
+            for (const t of ['windows', 'linux']) {
                 const names = core.resolveSteps(t, 'v1.16.0').map((s: any) => s.name);
                 expect(names[0]).toMatch(/Backup/);
                 expect(names).toContain('Migracja schematu (addytywna)');
@@ -94,10 +94,16 @@ describe('deploy-core', () => {
         });
 
         it('wszystkie targety koncza sie weryfikacja health', () => {
-            for (const t of ['windows', 'linux', 'docker']) {
+            for (const t of ['windows', 'linux']) {
                 const steps = core.resolveSteps(t, 'v1.16.0');
                 expect(steps[steps.length - 1].cmd).toMatch(/deploy:check/);
             }
+        });
+
+        it('docker po health weryfikuje jeszcze PDF (chromium+shm+smoke)', () => {
+            const steps = core.resolveSteps('docker', 'v1.16.0');
+            expect(steps.some((s: any) => s.cmd === 'npm run deploy:check')).toBe(true);
+            expect(steps[steps.length - 1].cmd).toBe('npm run deploy:check:pdf');
         });
     });
 

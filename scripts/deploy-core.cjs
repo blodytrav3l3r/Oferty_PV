@@ -62,6 +62,13 @@ function resolveSteps(target, tag) {
         { name: 'Uruchomienie aplikacji', cmd: startCmd(target) },
         { name: 'Weryfikacja po starcie (health)', cmd: 'npm run deploy:check' }
     );
+    if (target === 'docker') {
+        // Chromium w kontenerze (cache USER node, /dev/shm) — regresja = wszystkie PDF 500.
+        steps.push({
+            name: 'Weryfikacja PDF (chromium+shm+smoke)',
+            cmd: 'npm run deploy:check:pdf'
+        });
+    }
     return steps;
 }
 
@@ -86,7 +93,7 @@ function planRollback(dir = BACKUP_DIR) {
 function rollbackSteps(target, previousTag, backupPath) {
     validateTag(previousTag);
     resolveTarget(target);
-    return [
+    const steps = [
         {
             name: `Przywrocenie bazy z backupu: ${backupPath}`,
             cmd: `npm run restore "${backupPath}" -- --yes`
@@ -96,6 +103,13 @@ function rollbackSteps(target, previousTag, backupPath) {
         { name: 'Uruchomienie aplikacji', cmd: startCmd(target) },
         { name: 'Weryfikacja po starcie (health)', cmd: 'npm run deploy:check' }
     ];
+    if (target === 'docker') {
+        steps.push({
+            name: 'Weryfikacja PDF (chromium+shm+smoke)',
+            cmd: 'npm run deploy:check:pdf'
+        });
+    }
+    return steps;
 }
 
 async function runSequential(steps, runFn) {
