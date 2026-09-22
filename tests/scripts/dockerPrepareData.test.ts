@@ -38,6 +38,13 @@ function bashId(): { uid: string; gid: string } {
     return { uid: String(u.stdout).trim(), gid: String(g.stdout).trim() };
 }
 
+// Sciezka roota w formie, w jakiej widzi ja skrypt (git-bash/MSYS tlumaczy
+// C:\... na /c/... lub /tmp/... — path.join z Node daj inny zapis).
+function bashPosixPath(p: string): string {
+    const r = spawnSync('bash', ['-c', `cd "${p}" && pwd -P`], { encoding: 'utf8' });
+    return String(r.stdout || '').trim();
+}
+
 interface StubOpts {
     buildOut?: string;
     buildExit?: number;
@@ -47,11 +54,13 @@ interface StubOpts {
     preExistingDb?: boolean;
 }
 
-function setupIsolatedRoot(opts: StubOpts = {}): { root: string; bin: string; chownLog: string } {
+function setupIsolatedRoot(opts: StubOpts = {}): {
+    root: string;
+    posixRoot: string;
+    chownLog: string;
+} {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), 'sok-prepare-'));
-    const bin = path.join(root, 'bin');
     const scriptsDir = path.join(root, 'scripts');
-    fs.mkdirSync(bin, { recursive: true });
     fs.mkdirSync(scriptsDir, { recursive: true });
 
     // Prawdziwy skrypt (normalizacja LF), falszywe repo wokol niego.
@@ -75,47 +84,51 @@ function setupIsolatedRoot(opts: StubOpts = {}): { root: string; bin: string; ch
         fs.writeFileSync(path.join(root, 'data', 'backups', 'keep.txt'), 'x', 'utf8');
     }
 
-    const dockerStub = [
-        '#!/bin/sh',
-        'if [ "$1" = "build" ]; then',
-        '  printf "%s" "$STUB_BUILD_OUT"',
-        '  exit "$STUB_BUILD_EXIT"',
-        'fi',
-        'if [ "$1" = "run" ]; then',
-        '  last=""',
-        '  for a in "$@"; do last="$a"; done',
-        '  case "$last" in',
-        '    "id -u node") printf "%s" "$STUB_UID" ;;',
-        '    "id -g node") printf "%s" "$STUB_GID" ;;',
-        '  esac',
-        '  exit 0',
-        'fi',
-        'exit 0',
+    // Stuby jako FUNKCJE przez BASH_ENV (deterministyczne: funkcje wygrywaja
+    // z PATH bez skanowania katalogow; shadowing PATH jest niewiarygodny przy
+    // kolizji z binarka systemowa — np. chown vs /usr/bin/chown w msys).
+    // UWAGA: `exit` w funkcji zabilby skrypt — stad `return`.
+    const posixRoot = bashPosixPath(root);
+    const chownLog = `${posixRoot}/chown.log`;
+    const envSh = [
+        'docker() {',
+        '  if [ "$1" = "build" ]; then',
+        '    printf "%s" "$STUB_BUILD_OUT"',
+        '    return "$STUB_BUILD_EXIT"',
+        '  fi',
+        '  if [ "$1" = "run" ]; then',
+        '    last=""',
+        '    for a in "$@"; do last="$a"; done',
+        '    case "$last" in',
+        '      "id -u node") printf "%s" "$STUB_UID" ;;',
+        '      "id -g node") printf "%s" "$STUB_GID" ;;',
+        '    esac',
+        '    return 0',
+        '  fi',
+        '  return 0',
+        '}',
+        'chown() {',
+        '  for a in "$@"; do',
+        '    printf "%s\\n" "$a" >> "$CHOWN_LOG"',
+        '  done',
+        '  return 0',
+        '}',
         ''
     ].join('\n');
-    fs.writeFileSync(path.join(bin, 'docker'), dockerStub, 'utf8');
-    fs.chmodSync(path.join(bin, 'docker'), 0o755);
+    fs.writeFileSync(path.join(root, 'env.sh'), envSh, 'utf8');
 
-    const chownLog = path.join(root, 'chown.log');
-    fs.writeFileSync(
-        path.join(bin, 'chown'),
-        '#!/bin/sh\necho "$@" >> "$CHOWN_LOG"\nexit 0\n',
-        'utf8'
-    );
-    fs.chmodSync(path.join(bin, 'chown'), 0o755);
-
-    return { root, bin, chownLog };
+    return { root, posixRoot, chownLog };
 }
 
 function runPrepare(
     root: string,
-    bin: string,
+    posixRoot: string,
     chownLog: string,
     opts: StubOpts = {}
 ): { status: number | null; stdout: string; stderr: string; chownCalls: string[] } {
     const env: NodeJS.ProcessEnv = { ...process.env };
     delete env.SUDO_USER;
-    env.PATH = bin + path.delimiter + (process.env.PATH || '');
+    env.BASH_ENV = `${posixRoot}/env.sh`;
     env.STUB_BUILD_OUT = opts.buildOut ?? FAKE_SHA;
     env.STUB_BUILD_EXIT = String(opts.buildExit ?? 0);
     env.STUB_UID = opts.stubUid ?? '1000';
@@ -127,9 +140,11 @@ function runPrepare(
     });
     let chownCalls: string[] = [];
     try {
-        if (fs.existsSync(chownLog)) {
+        // Odczyt sciezka Windows (ten sam plik co posixowy CHOWN_LOG w bashu).
+        const winLog = path.join(root, 'chown.log');
+        if (fs.existsSync(winLog)) {
             chownCalls = fs
-                .readFileSync(chownLog, 'utf8')
+                .readFileSync(winLog, 'utf8')
                 .split('\n')
                 .map((l) => l.trim())
                 .filter((l) => l.length > 0);
@@ -149,39 +164,44 @@ function cleanup(root: string): void {
     fs.rmSync(root, { recursive: true, force: true });
 }
 
-describe('docker-prepare-data.sh (stub docker)', () => {
-    it('build exit 0 BEZ image ID -> jasny blad o ID, zero chown (regresja CI 35762836155)', () => {
-        if (!bashAvailable()) return;
-        const { root, bin, chownLog } = setupIsolatedRoot({ buildOut: '', buildExit: 0 });
-        try {
-            const r = runPrepare(root, bin, chownLog, { buildOut: '', buildExit: 0 });
-            expect(r.status).not.toBe(0);
-            expect(r.stderr).toMatch(/nie ustalono ID obrazu/);
-            expect(r.chownCalls).toEqual([]);
-        } finally {
-            cleanup(root);
-        }
-    });
+// Widoczny skip zamiast cichego pass: bez basha testy sa OMINIETE (○),
+// nie zaliczone — cichy `return` dal kiedys falszywie zielony run.
+const testBash = bashAvailable() ? it : it.skip;
 
-    it('happy path: sha256 ID -> chown katalogu + sqlite, BEZ -R, backups nietkniete', () => {
-        if (!bashAvailable()) return;
+describe('docker-prepare-data.sh (stub docker)', () => {
+    testBash(
+        'build exit 0 BEZ image ID -> jasny blad o ID, zero chown (regresja CI 35762836155)',
+        () => {
+            const { root, posixRoot, chownLog } = setupIsolatedRoot({ buildOut: '', buildExit: 0 });
+            try {
+                const r = runPrepare(root, posixRoot, chownLog, { buildOut: '', buildExit: 0 });
+                expect(r.status).not.toBe(0);
+                expect(r.stderr).toMatch(/nie ustalono ID obrazu/);
+                expect(r.chownCalls).toEqual([]);
+            } finally {
+                cleanup(root);
+            }
+        }
+    );
+
+    testBash('happy path: sha256 ID -> chown katalogu + sqlite, BEZ -R, backups nietkniete', () => {
         const caller = bashId();
-        const { root, bin, chownLog } = setupIsolatedRoot({
+        const { root, posixRoot, chownLog } = setupIsolatedRoot({
             preExistingDb: true,
             preExistingBackups: true
         });
         try {
-            const r = runPrepare(root, bin, chownLog, {});
+            const r = runPrepare(root, posixRoot, chownLog, {});
             expect(r.status).toBe(0);
             expect(r.stdout).toMatch(/\[OK\]/);
-            // Chirurgiczny chown: dokladnie 2 wywolania (katalog + plik DB)...
-            expect(r.chownCalls).toHaveLength(2);
-            expect(r.chownCalls[0]).toBe(`1000:1000 ${path.join(root, 'data')}`);
-            expect(r.chownCalls[1]).toBe(
-                `1000:1000 ${path.join(root, 'data', 'app_database.sqlite')}`
-            );
+            expect(posixRoot.length).toBeGreaterThan(0);
+            // Chirurgiczny chown: [spec, katalog, plik DB] - jedno wywolanie...
+            expect(r.chownCalls).toHaveLength(3);
+            expect(r.chownCalls[0]).toBe('1000:1000');
+            expect(r.chownCalls[1]).toBe(`${posixRoot}/data`);
+            expect(r.chownCalls[2]).toBe(`${posixRoot}/data/app_database.sqlite`);
             // ...bez rekurencji i bez dotykania backups/*.
-            expect(r.chownCalls.join('\n')).not.toMatch(/(^|\s)-R(\s|$)/);
+            expect(r.chownCalls).not.toContain('-R');
             expect(r.chownCalls.join('\n')).not.toContain('backups');
             // Istniejacy backups/ zostaje (flaga NIETKNIETY = brak chown na nim).
             expect(fs.existsSync(path.join(root, 'data', 'backups', 'keep.txt'))).toBe(true);
@@ -191,27 +211,24 @@ describe('docker-prepare-data.sh (stub docker)', () => {
         }
     });
 
-    it('nowy backups/ dostaje wlasciciela wywolujacego, nie node', () => {
-        if (!bashAvailable()) return;
+    testBash('nowy backups/ dostaje wlasciciela wywolujacego, nie node', () => {
         const caller = bashId();
-        const { root, bin, chownLog } = setupIsolatedRoot({});
+        const { root, posixRoot, chownLog } = setupIsolatedRoot({});
         try {
-            const r = runPrepare(root, bin, chownLog, {});
+            const r = runPrepare(root, posixRoot, chownLog, {});
             expect(r.status).toBe(0);
             expect(fs.existsSync(path.join(root, 'data', 'backups'))).toBe(true);
-            expect(r.chownCalls).toContain(
-                `${caller.uid}:${caller.gid} ${path.join(root, 'data', 'backups')}`
-            );
+            expect(r.chownCalls).toContain(`${caller.uid}:${caller.gid}`);
+            expect(r.chownCalls).toContain(`${posixRoot}/data/backups`);
         } finally {
             cleanup(root);
         }
     });
 
-    it('garbage UID z obrazu -> blad przed chown', () => {
-        if (!bashAvailable()) return;
-        const { root, bin, chownLog } = setupIsolatedRoot({});
+    testBash('garbage UID z obrazu -> blad przed chown', () => {
+        const { root, posixRoot, chownLog } = setupIsolatedRoot({});
         try {
-            const r = runPrepare(root, bin, chownLog, { stubUid: 'abc', stubGid: '1000' });
+            const r = runPrepare(root, posixRoot, chownLog, { stubUid: 'abc', stubGid: '1000' });
             expect(r.status).not.toBe(0);
             expect(r.stderr).toMatch(/nieprawidlowy UID\/GID/);
             expect(r.chownCalls).toEqual([]);
@@ -220,11 +237,10 @@ describe('docker-prepare-data.sh (stub docker)', () => {
         }
     });
 
-    it('blad budowania -> fail-fast, zero chown', () => {
-        if (!bashAvailable()) return;
-        const { root, bin, chownLog } = setupIsolatedRoot({ buildExit: 1 });
+    testBash('blad budowania -> fail-fast, zero chown', () => {
+        const { root, posixRoot, chownLog } = setupIsolatedRoot({ buildExit: 1 });
         try {
-            const r = runPrepare(root, bin, chownLog, { buildExit: 1 });
+            const r = runPrepare(root, posixRoot, chownLog, { buildExit: 1 });
             expect(r.status).not.toBe(0);
             expect(r.chownCalls).toEqual([]);
         } finally {
