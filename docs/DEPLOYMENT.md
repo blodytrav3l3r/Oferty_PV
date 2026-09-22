@@ -130,9 +130,26 @@ networks:
 
 ### Uruchomienie
 
-```bash
-docker compose up --build -d
-```
+> **Prerequisite (P0.3-B):** kontener działa jako `USER node`, a `chown`
+> z Dockerfile jest pod bind mountem nieskuteczny. Przed pierwszym startem
+> (i po każdym klonowaniu bez `./data`) przygotuj katalog hosta:
+>
+> ```bash
+> sudo bash scripts/docker-prepare-data.sh
+> docker compose up --build -d
+> ```
+>
+> Skrypt wykrywa UID/GID `node` z budowanego obrazu i ustawia ownership
+> wyłącznie na `./data` + `app_database.sqlite*` (bez `chown -R`: seedy
+> i `backups/*` zostają przy dotychczasowym właścicielu). Podgląd bez zmian:
+> `bash scripts/docker-prepare-data.sh --dry-run`. Deploy dockerowy wykonuje
+> ten krok automatycznie (`node scripts/deploy.mjs docker vX.Y.Z`).
+>
+> **Backup a ownership:** backup/restore działają na hoście jako użytkownik
+> hosta (`npm run backup`, cron). Gdy host-UID różni się od UID kontenera,
+> użytkownik crona musi mieć zapis do `./data/backups/` (ten sam UID albo
+> członkostwo w grupie GID kontenera) — inaczej backup padnie mimo działającej
+> aplikacji. Nowo utworzony `backups/` skrypt przypisuje wywołującemu.
 
 Aplikacja dostępna pod: `http://localhost:3000`
 

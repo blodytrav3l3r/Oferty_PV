@@ -53,9 +53,23 @@ jobs:
             - name: KROK 4 - fakty host vs kontener
               run: |
                   echo "HOST_RUNNER=$(id -u):$(id -g)"
-                  docker run --rm --entrypoint sh -v "$PWD/data:/var/data" "$P03_IMAGE" -c 'touch /var/data/.p03-probe && rm /var/data/.p03-probe && echo PROBE_MOUNT_OK'
+                  docker run --rm --entrypoint stat -v "$PWD/data:/var/data" "$P03_IMAGE" -c 'owner=%U(%u) group=%G(%g) mode=%a' /var/data
                   echo "HOST_DATA=$(stat -c 'owner=%U(%u) group=%G(%g) mode=%a' ./data)"
-                  docker run --rm --entrypoint sh -v "$PWD/data:/var/data" "$P03_IMAGE" -c 'id; id node; stat -c "cuid=%u cgid=%g cmode=%a cowner=%U cgroup=%G cn=%n" /var/data; ls -ld /var/data; getent passwd node'
+                  docker run --rm --entrypoint sh -v "$PWD/data:/var/data" "$P03_IMAGE" -c 'id; id node; ls -ld /var/data; getent passwd node'
+
+            - name: KROK 4b - kontrola repro (oczekiwany EACCES bez prepare)
+              run: |
+                  if docker run --rm --entrypoint sh -v "$PWD/data:/var/data" "$P03_IMAGE" -c 'touch /var/data/.p03-probe && rm /var/data/.p03-probe'; then
+                    echo "REPRO_MISSING - srodowisko nie odtwarza bledu P0.3 (zapis dziala bez prepare)"
+                    exit 1
+                  else
+                    echo "REPRO_OK - EACCES bez prepare potwierdzony"
+                  fi
+
+            - name: KROK 4c - prepare ownership
+              run: |
+                  sudo bash scripts/docker-prepare-data.sh
+                  echo "HOST_DATA_AFTER=$(stat -c 'owner=%U(%u) group=%G(%g) mode=%a' ./data)"
 
             - name: KROK 5 - write test jako node
               run: |

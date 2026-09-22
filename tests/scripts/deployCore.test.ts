@@ -94,6 +94,25 @@ describe('deploy-core', () => {
             expect(startOf('docker')).toBe('docker compose up -d --build');
         });
 
+        it('docker ma krok prepare-data przed startem (P0.3-B)', () => {
+            const steps = core.resolveSteps('docker', 'v1.16.0');
+            const names = steps.map((s: any) => s.name);
+            const prep = names.findIndex((n: string) => /Przygotowanie katalogu danych/.test(n));
+            const start = names.findIndex((n: string) => /Uruchomienie/.test(n));
+            expect(prep).toBeGreaterThanOrEqual(0);
+            expect(prep).toBeLessThan(start);
+            expect(steps[prep].cmd).toBe('bash scripts/docker-prepare-data.sh');
+        });
+
+        it('windows i linux NIE maja kroku prepare-data', () => {
+            for (const t of ['windows', 'linux']) {
+                const steps = core.resolveSteps(t, 'v1.16.0');
+                expect(steps.some((s: any) => /Przygotowanie katalogu danych/.test(s.name))).toBe(
+                    false
+                );
+            }
+        });
+
         it('wszystkie targety koncza sie weryfikacja health', () => {
             for (const t of ['windows', 'linux']) {
                 const steps = core.resolveSteps(t, 'v1.16.0');

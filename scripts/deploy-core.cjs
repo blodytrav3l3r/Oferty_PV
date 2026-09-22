@@ -70,8 +70,17 @@ function resolveSteps(target, tag) {
             cmd: 'mkdir -p dist/generated && cp -r generated/prisma dist/generated/'
         });
     }
+    steps.push({ name: 'Kontrola spojnosci wersji', cmd: 'npm run version:check' });
+    if (target === 'docker') {
+        // P0.3-B: host-side ownership ./data pod UID kontenera (build-time
+        // chown z Dockerfile jest pod bind mountem nieskuteczny). Bez tego
+        // migrate pada "unable to open database file" jako node.
+        steps.push({
+            name: 'Przygotowanie katalogu danych (ownership)',
+            cmd: 'bash scripts/docker-prepare-data.sh'
+        });
+    }
     steps.push(
-        { name: 'Kontrola spojnosci wersji', cmd: 'npm run version:check' },
         { name: 'Uruchomienie aplikacji', cmd: startCmd(target) },
         { name: 'Weryfikacja po starcie (health)', cmd: 'npm run deploy:check' }
     );
