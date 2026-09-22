@@ -160,6 +160,7 @@ jobs:
             - name: KROK 10 - npm ci plus prisma generate
               run: |
                   npm ci --no-audit --no-fund
+                  export DATABASE_URL="file:$PWD/data/app_database.sqlite?connection_limit=1&busy_timeout=30000"
                   npx prisma generate
 
             - name: KROK 10 - backup jako host runner
