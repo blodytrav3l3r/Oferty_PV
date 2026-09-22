@@ -6,6 +6,7 @@
  * fail-fast, dobór backupu do rollback, health check, bind mount w
  * docker-compose.yml.
  */
+import { execFileSync, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -89,7 +90,7 @@ describe('deploy-core', () => {
             const startOf = (t: string) =>
                 core.resolveSteps(t, 'v1.16.0').find((s: any) => /Uruchomienie/.test(s.name)).cmd;
             expect(startOf('windows')).toBe('start "" start.bat --prod');
-            expect(startOf('linux')).toBe('pm2 restart sok-oferty');
+            expect(startOf('linux')).toBe(core.linuxStartCmd());
             expect(startOf('docker')).toBe('docker compose up -d --build');
         });
 
@@ -104,6 +105,113 @@ describe('deploy-core', () => {
             const steps = core.resolveSteps('docker', 'v1.16.0');
             expect(steps.some((s: any) => s.cmd === 'npm run deploy:check')).toBe(true);
             expect(steps[steps.length - 1].cmd).toBe('npm run deploy:check:pdf');
+        });
+    });
+
+    describe('P0.2 linux PM2 start-or-restart', () => {
+        it('jawny check: describe -> restart (istnieje) albo start (swiezy profil) -> save', () => {
+            const cmd: string = core.linuxStartCmd();
+            expect(cmd).toContain('pm2 describe sok-oferty');
+            expect(cmd).toContain('pm2 restart sok-oferty');
+            expect(cmd).toContain('pm2 start dist/server.js --name sok-oferty');
+            expect(cmd).toContain('pm2 save');
+            // kolejnosc: najpierw check, save na samym koncu
+            expect(cmd.indexOf('pm2 describe')).toBeLessThan(cmd.indexOf('pm2 restart'));
+            expect(cmd.indexOf('pm2 restart')).toBeLessThan(cmd.indexOf('pm2 start dist'));
+            expect(cmd.lastIndexOf('pm2 save')).toBeGreaterThan(cmd.indexOf('pm2 start dist'));
+        });
+
+        it('bez slepego fallbacku: blad restartu nie moze odpalic startu ani zamaskowac exit code', () => {
+            const cmd: string = core.linuxStartCmd();
+            expect(cmd).not.toMatch(/\|\|\s*pm2 start/);
+            // blad galezi if/else przerywa przed save (fail-fast, brak maskowania kodu)
+            expect(cmd).toMatch(/fi\s*&&\s*pm2 save/);
+        });
+
+        it('deploy i rollback linux uzywaja tej samej komendy start', () => {
+            const deployStart = core
+                .resolveSteps('linux', 'v1.16.0')
+                .find((s: any) => /Uruchomienie/.test(s.name)).cmd;
+            const rollbackStart = core
+                .rollbackSteps('linux', 'v1.15.1', '/data/backups/x.sqlite')
+                .find((s: any) => /Uruchomienie/.test(s.name)).cmd;
+            expect(deployStart).toBe(core.linuxStartCmd());
+            expect(rollbackStart).toBe(core.linuxStartCmd());
+        });
+
+        describe('scenariusze powloki (stub pm2, tylko gdy dostepny sh)', () => {
+            function shAvailable(): boolean {
+                try {
+                    const r = spawnSync('sh', ['-c', 'exit 0'], { stdio: 'ignore' });
+                    return !r.error && r.status === 0;
+                } catch {
+                    return false;
+                }
+            }
+
+            // Stub pm2: zachowanie sterowane zmiennymi PM2STUB_DESCRIBE (0/1)
+            // i PM2STUB_RESTART (0/1); kazde wywolanie dopisuje sie do CALLS_LOG.
+            function runWithStub(describeCode: number, restartCode: number) {
+                const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'sok-pm2stub-'));
+                try {
+                    const log = path.join(dir, 'calls.log');
+                    const stub =
+                        `#!/bin/sh\n` +
+                        `echo "$@" >> "${log}"\n` +
+                        `case "$1" in\n` +
+                        `  describe) exit ${describeCode};;\n` +
+                        `  restart) exit ${restartCode};;\n` +
+                        `  *) exit 0;;\n` +
+                        `esac\n`;
+                    const bin = path.join(dir, 'pm2');
+                    fs.writeFileSync(bin, stub, 'utf8');
+                    fs.chmodSync(bin, 0o755);
+                    const env = { ...process.env, PATH: dir + path.delimiter + process.env.PATH };
+                    let status: number | null = null;
+                    try {
+                        execFileSync('sh', ['-c', core.linuxStartCmd()], {
+                            env,
+                            stdio: 'pipe'
+                        });
+                        status = 0;
+                    } catch (e: any) {
+                        status = typeof e?.status === 'number' ? e.status : 1;
+                    }
+                    const calls = fs.existsSync(log)
+                        ? fs.readFileSync(log, 'utf8').trim().split('\n')
+                        : [];
+                    return { status, calls };
+                } finally {
+                    fs.rmSync(dir, { recursive: true, force: true });
+                }
+            }
+
+            it('proces NIE istnieje -> start + save, exit 0', () => {
+                if (!shAvailable()) return;
+                const { status, calls } = runWithStub(1, 0);
+                expect(status).toBe(0);
+                expect(calls.some((c: string) => c.includes('start'))).toBe(true);
+                expect(calls.some((c: string) => c.includes('restart'))).toBe(false);
+                expect(calls.some((c: string) => c === 'save')).toBe(true);
+            });
+
+            it('proces ISTNIEJE -> restart + save, exit 0', () => {
+                if (!shAvailable()) return;
+                const { status, calls } = runWithStub(0, 0);
+                expect(status).toBe(0);
+                expect(calls.some((c: string) => c.includes('restart'))).toBe(true);
+                expect(calls.some((c: string) => c.includes('start dist'))).toBe(false);
+                expect(calls.some((c: string) => c === 'save')).toBe(true);
+            });
+
+            it('blad restartu -> exit != 0 i BRAK save (fail-fast, bez maskowania)', () => {
+                if (!shAvailable()) return;
+                const { status, calls } = runWithStub(0, 1);
+                expect(status).not.toBe(0);
+                expect(calls.some((c: string) => c === 'save')).toBe(false);
+                // start NIE moze odpalic po nieudanym restarcie
+                expect(calls.some((c: string) => c.includes('start dist'))).toBe(false);
+            });
         });
     });
 

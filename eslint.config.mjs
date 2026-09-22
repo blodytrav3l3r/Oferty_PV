@@ -38,6 +38,26 @@ export default tseslint.config(
         }
     },
     {
+        // P0.2: skrypty CommonJS nie lapaly sie do zadnego bloku z globals.node
+        // (no-undef na __dirname/setTimeout) i blokowaly kazdy commit je tykajacy.
+        files: ['scripts/**/*.cjs'],
+        languageOptions: {
+            ecmaVersion: 'latest',
+            sourceType: 'commonjs',
+            globals: {
+                ...globals.node
+            }
+        },
+        rules: {
+            'no-unused-vars': 'off',
+            'no-console': 'off',
+            semi: ['error', 'always'],
+            quotes: ['error', 'single', { avoidEscape: true }],
+            'no-empty': 'off',
+            'prefer-const': 'off'
+        }
+    },
+    {
         files: ['scripts/**/*.mjs'],
         languageOptions: {
             ecmaVersion: 'latest',
