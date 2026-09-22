@@ -68,7 +68,7 @@ jobs:
 
             - name: KROK 4c - prepare ownership
               run: |
-                  sudo bash scripts/docker-prepare-data.sh
+                  sudo -E bash scripts/docker-prepare-data.sh
                   echo "HOST_DATA_AFTER=$(stat -c 'owner=%U(%u) group=%G(%g) mode=%a' ./data)"
 
             - name: KROK 5 - write test jako node
@@ -129,6 +129,38 @@ jobs:
             - name: KROK 8 - stop bez minus v
               if: always()
               run: docker compose stop || true
+
+            # ---- faza C: hostowy backup/restore jako runner (nie root) ----
+            - name: KROK 10 - toolchain hosta dla backupu
+              uses: actions/setup-node@v7
+              with:
+                  node-version: '22'
+                  cache: 'npm'
+
+            - name: KROK 10 - npm ci plus prisma generate
+              run: |
+                  npm ci --no-audit --no-fund
+                  npx prisma generate
+
+            - name: KROK 10 - backup jako host runner
+              run: |
+                  echo "BACKUP_RUNNER=$(id -u):$(id -g)"
+                  stat -c 'backups przed: owner=%U(%u) mode=%a' ./data/backups || true
+                  touch ./data/backups/.p03-del && rm ./data/backups/.p03-del && echo "BACKUPS_DELETE_OK"
+                  export DATABASE_URL="file:$PWD/data/app_database.sqlite?connection_limit=1&busy_timeout=30000"
+                  npm run backup
+                  BACKUP_FILE="$(ls -t ./data/backups/backup_*.sqlite | head -1)"
+                  test -n "$BACKUP_FILE" && test -f "$BACKUP_FILE.sha256" && echo "BACKUP_HOST_OK plik=$BACKUP_FILE"
+                  echo "$BACKUP_FILE" > /tmp/p03-backup-file.txt
+
+            - name: KROK 11 - restore jako host runner
+              run: |
+                  echo "RESTORE_RUNNER=$(id -u):$(id -g)"
+                  stat -c 'db przed: owner=%U(%u) group=%G(%g) mode=%a' ./data/app_database.sqlite
+                  export DATABASE_URL="file:$PWD/data/app_database.sqlite?connection_limit=1&busy_timeout=30000"
+                  npm run restore -- "$(cat /tmp/p03-backup-file.txt)" --yes
+                  echo "RESTORE_HOST_OK"
+                  stat -c 'db po: owner=%U(%u) group=%G(%g) mode=%a' ./data/app_database.sqlite
 
             - name: KROK 9 - klasyfikacja A B C
               if: always()
