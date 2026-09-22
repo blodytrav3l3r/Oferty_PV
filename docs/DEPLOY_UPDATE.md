@@ -1,6 +1,6 @@
 # Aktualizacja (Deploy) — S.O.K.
 
-**Wersja:** 1.28.0
+**Wersja:** 1.29.0
 **Stack:** Express + Prisma + SQLite + VanillaJS SPA
 **Ostatnia aktualizacja:** 2026-08-24
 

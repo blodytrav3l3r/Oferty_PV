@@ -4,6 +4,34 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.29.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.28.0...v1.29.0) (2026-09-22)
+
+### Features
+
+- **studnie:** hover i klik przejscia z podgladu do komorek excela ([974b02c](https://github.com/blodytrav3l3r/Oferty_PV/commit/974b02c0e82d788a224423d5e855f51786306572))
+- **studnie:** hover przejscia z podgladu podswietla liste i excel ([8416efa](https://github.com/blodytrav3l3r/Oferty_PV/commit/8416efa9e22d28557b44a147161f2145ddbc7c87))
+- **studnie:** kontrakt motywu excela na tokenach ([effa35c](https://github.com/blodytrav3l3r/Oferty_PV/commit/effa35c9114635667edaf02b8a90dadb454a85a9))
+- **studnie:** tokeny --excel-row-* i przepiecie wierszy excela ([c3c0407](https://github.com/blodytrav3l3r/Oferty_PV/commit/c3c040720ce739bdc978ab24cd7234fbb00b0ffd))
+- **ui:** guard generacji sync motywu ([0c80c3a](https://github.com/blodytrav3l3r/Oferty_PV/commit/0c80c3a4b906b1f13fa14d6054c4635045bc4e67))
+- **ui:** motyw jasny-ciemny z zapisem w backendzie ([f0dcfde](https://github.com/blodytrav3l3r/Oferty_PV/commit/f0dcfdeef3ecc709ce9e16fa81c9937e0ab1ad10))
+- **ui:** per-user bootstrap motywu i samodzielny init ([3e20b45](https://github.com/blodytrav3l3r/Oferty_PV/commit/3e20b4513ecd54bc2e6defb395a463090e1f4032))
+- **ui:** widoczne logo i toggle w trybie jasnym ([3c8fa0b](https://github.com/blodytrav3l3r/Oferty_PV/commit/3c8fa0b1cab76e055128d177e55e7f7c1439808f))
+
+### Bug Fixes
+
+- **rury:** tytul zamowienia przed lancuchem renderu i czyste catch ([3e5db83](https://github.com/blodytrav3l3r/Oferty_PV/commit/3e5db831263450b758ed0d974a736b8eb260ac28))
+- **security:** escape atrybutu title w dashboardach admin ([398a3d4](https://github.com/blodytrav3l3r/Oferty_PV/commit/398a3d44d16653210c7f5d4b382f9aefc516ad87))
+- **security:** weryfikacja origin w sync motywu ([dd68ce1](https://github.com/blodytrav3l3r/Oferty_PV/commit/dd68ce16f3aad41ce33acdb854cdc5bd1d378847))
+- **studnie:** hover przejscia widoczny w parzystych kolumnach ([554e594](https://github.com/blodytrav3l3r/Oferty_PV/commit/554e594de37cb5e1e2ac25ce8d1c45c76390c54f))
+- **studnie:** komentarz css po polsku (i18n) ([ebd2804](https://github.com/blodytrav3l3r/Oferty_PV/commit/ebd280495b2e224fcb2fc89875f38442464138ca))
+- **studnie:** odswiezanie listy przejsc w zleceniach po edycji ([9025adf](https://github.com/blodytrav3l3r/Oferty_PV/commit/9025adf61eef7ac345f9ffbcd682b2a24f22fbfc))
+- **test:** forensics i stabilizacja e2e nazwy aplikacji ([ca803c3](https://github.com/blodytrav3l3r/Oferty_PV/commit/ca803c3b967910efb5cd915a9b7f9f0ae12e1703))
+- **test:** stabilny spawn e2e nazwy aplikacji ([23a59af](https://github.com/blodytrav3l3r/Oferty_PV/commit/23a59af9eaef08656335948dc016bb56d53ac8c4))
+- **ui:** --accent-strong w :root, usuniecie martwych tokenow ([8f2f9ca](https://github.com/blodytrav3l3r/Oferty_PV/commit/8f2f9ca7dd405ef3d2c2ff1a8aca5c8698ff03ce))
+- **ui:** color-scheme light dla kontrolek zlecen ([fd2ad0b](https://github.com/blodytrav3l3r/Oferty_PV/commit/fd2ad0b9455498860c5d6d9cf921ed2511de56aa))
+- **ui:** guard typu img w swapie logo ([fbbb6a4](https://github.com/blodytrav3l3r/Oferty_PV/commit/fbbb6a4798ecb015e5099131d7fb7465ddb2e737))
+- **ui:** redirect spa zachowuje query (?order/?edit) ([46f9408](https://github.com/blodytrav3l3r/Oferty_PV/commit/46f9408f5fa832c63dacab2d40e374b761f1c0bb))
+
 ## [1.28.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.27.1...v1.28.0) (2026-09-20)
 
 ### Features
