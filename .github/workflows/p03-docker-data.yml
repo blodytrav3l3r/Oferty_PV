@@ -1,0 +1,126 @@
+# P0.3 — walidacja permissions Linux + Docker dla /var/data.
+#
+# Odpowiada na pytanie: czy USER node + ./data:/var/data dziala na swiezym
+# deployment, szczegolnie gdy ./data jeszcze nie istnieje (Docker utworzy go
+# wtedy jako root:root, a build-time chown z Dockerfile jest pod bind mountem
+# nieskuteczny)?
+#
+# Kolejnosc faz jest celowa:
+#   faza B (pelny start) NAJPIERW na stanie fresh-clone (data/seed_*.json
+#     trackowane w gicie, brak sqlite) — dokladnie stan swiezego VPS;
+#   faza A (repro uprawnien) POTEM na rm -rf data — przypadek brakujacego
+#     katalogu, bez zaleznosci od seeda aplikacji.
+#
+# Workflow NIE zmienia runtime ani danych — tworzy tylko pliki .p03-*,
+# usuwane w tych samych krokach. Nigdy `docker compose down -v`.
+# Decyzja A/B/C na podstawie raportu — implementacja naprawy osobnym GO.
+
+name: P0.3 docker data permissions
+
+'on':
+    workflow_dispatch:
+    push:
+        paths:
+            - Dockerfile
+            - docker-compose.yml
+            - scripts/docker-entrypoint.sh
+            - .github/workflows/p03-docker-data.yml
+
+jobs:
+    docker-data:
+        name: P0.3 UID plus bind mount plus SQLite WAL plus start
+        runs-on: ubuntu-latest
+        timeout-minutes: 30
+        env:
+            P03_IMAGE: sok-p03:ci
+            DEFAULT_ADMIN_PASSWORD: p03-ci-dummy-password
+        steps:
+            - uses: actions/checkout@v7
+
+            - name: Build image
+              run: docker build -t "$P03_IMAGE" .
+
+            - name: KROK 1 - UID GID node w obrazie
+              run: |
+                  docker run --rm "$P03_IMAGE" id node
+                  docker run --rm --entrypoint id "$P03_IMAGE"
+
+            - name: KROK 8 - fakt stan fresh-clone przed startem
+              run: |
+                  ls -la ./data
+                  test ! -e ./data/app_database.sqlite && echo "FRESH_CLONE_OK"
+
+            - name: KROK 8 - start aplikacji compose
+              run: docker compose up -d --build
+
+            - name: KROK 8 - czekaj na health ready
+              run: |
+                  for i in $(seq 1 48); do
+                    if curl -sf http://localhost:3000/health/ready >/dev/null 2>&1; then
+                      echo "HEALTH_READY_OK proba $i"
+                      curl -s http://localhost:3000/health/ready
+                      echo
+                      exit 0
+                    fi
+                    sleep 5
+                  done
+                  echo "HEALTH_READY_FAIL"
+                  docker compose logs --tail=100 app || true
+                  exit 1
+
+            - name: KROK 8 - WAL aktywny na zywym kontenerze
+              run: |
+                  docker compose exec -T app sh -c 'ls -la /var/data/*.sqlite*'
+                  docker compose exec -T app node -e "const{DatabaseSync}=require('node:sqlite');const db=new DatabaseSync('/var/data/app_database.sqlite',{readOnly:true});console.log('LIVE_JOURNAL_MODE='+db.prepare('PRAGMA journal_mode').get().journal_mode);db.close()"
+
+            - name: KROK 8 - stop bez minus v
+              if: always()
+              run: docker compose stop || true
+
+            - name: KROK 3 - usun data w izolowanym CI workspace
+              run: rm -rf ./data && ls -la
+
+            - name: KROK 4 - fakty host vs kontener
+              run: |
+                  echo "HOST_RUNNER=$(id -u):$(id -g)"
+                  docker run --rm --entrypoint sh -v "$PWD/data:/var/data" "$P03_IMAGE" -c 'touch /var/data/.p03-probe && rm /var/data/.p03-probe && echo PROBE_MOUNT_OK'
+                  echo "HOST_DATA=$(stat -c 'owner=%U(%u) group=%G(%g) mode=%a' ./data)"
+                  echo "CONTAINER_DATA=$(docker run --rm --entrypoint stat -v "$PWD/data:/var/data" "$P03_IMAGE" -c 'owner=%U(%u) group=%G(%g) mode=%a' /var/data)"
+
+            - name: KROK 5 - write test jako node
+              run: |
+                  if docker run --rm --entrypoint sh -v "$PWD/data:/var/data" "$P03_IMAGE" -c 'touch /var/data/.p03-write && rm /var/data/.p03-write'; then
+                    echo "WRITE_OK"
+                  else
+                    echo "WRITE_FAIL"
+                    exit 1
+                  fi
+
+            - name: KROK 6 - SQLite WAL test tylko pliki p03
+              run: |
+                  docker run --rm --entrypoint node -v "$PWD/data:/var/data" "$P03_IMAGE" -e "const{DatabaseSync}=require('node:sqlite');const db=new DatabaseSync('/var/data/.p03-test.sqlite');db.exec('PRAGMA journal_mode=WAL;CREATE TABLE t(a);INSERT INTO t VALUES(1);');const c=db.prepare('SELECT count(*) c FROM t').get().c;db.close();if(c!==1)throw new Error('count');console.log('SQLITE_OK')"
+                  rm -f ./data/.p03-test.sqlite ./data/.p03-test.sqlite-wal ./data/.p03-test.sqlite-shm
+                  echo "P03_CLEANUP_OK"
+
+            - name: KROK 7 - backups write test
+              run: |
+                  if docker run --rm --entrypoint sh -v "$PWD/data:/var/data" "$P03_IMAGE" -c 'mkdir -p /var/data/backups && touch /var/data/backups/.p03-write && rm /var/data/backups/.p03-write'; then
+                    echo "BACKUPS_OK"
+                  else
+                    echo "BACKUPS_FAIL"
+                    exit 1
+                  fi
+
+            - name: KROK 9 - klasyfikacja A B C
+              if: always()
+              run: |
+                  echo "P0.3-CLASSIFY A gdy WRITE_OK plus SQLITE_OK plus BACKUPS_OK plus HEALTH_READY_OK - bez zmian runtime."
+                  echo "P0.3-CLASSIFY B gdy WRITE_FAIL EACCES z winy wlasciciela hosta - host-side prep, UID dynamicznie z obrazu."
+                  echo "P0.3-CLASSIFY C gdy B niewystarczajace - model user UID, projekt osobny, bez auto-implementacji."
+
+            - name: Sprzatanie bez minus v
+              if: always()
+              run: |
+                  docker compose down || true
+                  docker rm -f sok-oferty || true
+                  rm -rf ./data
