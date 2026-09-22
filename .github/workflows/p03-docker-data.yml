@@ -111,12 +111,17 @@ jobs:
                   echo "BACKUPS_DIR_OK"
 
             # ---- faza B: pelny start na odtworzonym fresh-clone ----
+            # Faza B testuje RZECZYWISTY przeplyw deploymentu (deploy-core krok 9):
+            # prepare PRZED compose up. Bez tego fresh-clone (runner 1001) pada
+            # na migrate dokladnie jak run bazowy 35751272651.
             - name: KROK 8 - odtworz fresh-clone po fazie A
               run: |
                   sudo rm -rf ./data
                   git checkout -- data/
                   ls -la ./data
                   test ! -e ./data/app_database.sqlite && echo "FRESH_CLONE_OK"
+                  sudo -E bash scripts/docker-prepare-data.sh
+                  echo "HOST_DATA_PHASEB=$(stat -c 'owner=%U(%u) group=%G(%g) mode=%a' ./data)"
 
             - name: KROK 8 - start aplikacji compose
               run: docker compose up -d --build
