@@ -42,7 +42,7 @@ jobs:
 
             - name: KROK 1 - UID GID node w obrazie
               run: |
-                  docker run --rm "$P03_IMAGE" id node
+                  docker run --rm --entrypoint id "$P03_IMAGE" node
                   docker run --rm --entrypoint id "$P03_IMAGE"
 
             - name: KROK 8 - fakt stan fresh-clone przed startem
