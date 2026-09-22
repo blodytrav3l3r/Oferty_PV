@@ -4,6 +4,21 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+### [1.29.1](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.29.0...v1.29.1) (2026-09-22)
+
+### Features
+
+- **deploy:** automatyczna weryfikacja pdf po deployu ([5b7685e](https://github.com/blodytrav3l3r/Oferty_PV/commit/5b7685ef251ba10050453a653b4d532a40ded913))
+- **deploy:** restore i rollback przez sudo ([91f3eeb](https://github.com/blodytrav3l3r/Oferty_PV/commit/91f3eeba9a42fd5acbd723bb197ec545c6fdd523))
+
+### Bug Fixes
+
+- **deploy:** host-side ownership danych dockera ([55a85dd](https://github.com/blodytrav3l3r/Oferty_PV/commit/55a85dda0d4807455c7bfc71ae531ff9c1db0be2))
+- **deploy:** linux start-or-restart pm2 z jawnego checku ([6df9ee8](https://github.com/blodytrav3l3r/Oferty_PV/commit/6df9ee8161480dbca0a27d2b52ce36d5749ea36f))
+- **deploy:** resolve docker image id after compose build ([c080b1a](https://github.com/blodytrav3l3r/Oferty_PV/commit/c080b1a8a1fc8aac4572d439666d314c69033d29))
+- **docker:** pdf w kontenerze (cache chromium, shm, flagi) ([583859c](https://github.com/blodytrav3l3r/Oferty_PV/commit/583859c3e280850157bdc7041157af843043ff86))
+- **orders:** backup zawsze do data/backups (kontrakt sciezki) ([94a5536](https://github.com/blodytrav3l3r/Oferty_PV/commit/94a55369d5f50261192bde701a2a807ac00ddd11))
+
 ## [1.29.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.28.0...v1.29.0) (2026-09-22)
 
 ### Features
