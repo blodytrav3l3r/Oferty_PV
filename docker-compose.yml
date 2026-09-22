@@ -17,6 +17,9 @@ services:
             - 'DEFAULT_ADMIN_PASSWORD=${DEFAULT_ADMIN_PASSWORD:?Wymagane: ustaw DEFAULT_ADMIN_PASSWORD w .env}'
             # Snapshot cen domyslnych z ./data (price_defaults.json) - przywracany przy starcie
             - 'PRICE_DEFAULTS_PATH=/var/data/price_defaults.json'
+        # /dev/shm dla Chromium (generowanie PDF) — domyślne 64 MB
+        # wywala duże dokumenty (oferta łączna); 512 MB z zapasem.
+        shm_size: '512m'
         volumes:
             # Bind mount zamiast named volume: baza i backupy widoczne na hoscie,
             # dzieki czemu backup/restore dziala identycznie jak na bare-metal

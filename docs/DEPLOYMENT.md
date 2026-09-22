@@ -175,6 +175,19 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
 
 Uwaga: `docker-compose.yml` używa `start_period: 30s` w sekcji `healthcheck` — dłuższy okres startu pod compose niż wbudowany w obraz.
 
+### Diagnostyka PDF w kontenerze
+
+Generowanie PDF wymaga Chromium Puppeteera. Obraz ustawia `PUPPETEER_CACHE_DIR=/app/.cache/puppeteer`, żeby binarka pobrana przez `npm ci` (jako root w buildzie) była widoczna dla runtime'owego `USER node`, a compose dokłada `shm_size: 512m` (domyślne 64 MB wywala duże dokumenty, np. ofertę łączną).
+
+Po starcie sprawdź:
+
+```
+curl localhost:3000/health/pdf            # 200 = Chromium gotowy
+curl localhost:3000/health/pdf?smoke=1    # 200 + smoke.ok = próbny render działa
+```
+
+`503 {status: "degraded", found: false}` = binarka niewidoczna (sprawdź `PUPPETEER_CACHE_DIR`, `HOME`, `docker exec` → `ls ~/.cache/puppeteer`). Deploy dockerowy (`node scripts/deploy.mjs docker vX.Y.Z`) wykonuje te kontrole automatycznie jako krok `deploy:check:pdf` — nieudany smoke przerywa deploy.
+
 ## 4. VPS (Linux)
 
 > **HTTPS jest wymagane w produkcji.** Bez reverse proxy z TLS funkcje przeglądarki

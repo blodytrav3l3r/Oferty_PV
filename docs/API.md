@@ -39,6 +39,12 @@ Liveness — czy proces Express odpowiada (publiczny). Odpowiedź: `{status: "ok
 
 Readiness — czy baza gotowa (publiczny, `SELECT 1`). Odpowiedź `200 {status: "ready", db: "ok"}` lub `503 {status: "not_ready", db: "error"}`.
 
+### `GET /health/pdf`
+
+Diagnostyka generowania PDF / Chromium (publiczny, bez auth). Tryb lekki nie launchuje przeglądarki — sprawdza obecność binarki (`PUPPETEER_CACHE_DIR`), użytkownika/`HOME` i rozmiar `/dev/shm`. Odpowiedź `200 {status: "ok", found: true, ...}` lub `503 {status: "degraded", found: false, ...}` (klasyczny objaw: cache Puppeteera w `/root/.cache` niewidoczny dla `USER node`).
+
+Z `?smoke=1` renderuje jedną stronę testową end-to-end: `200 {smoke: {ok: true, bytes}}` lub `503 {smoke: {ok: false, error}}`. Deploy dockerowy weryfikuje ten endpoint automatycznie (`npm run deploy:check:pdf`).
+
 ### `GET /metrics`
 
 Metryki in-process (tylko admin) — P50/P95 per endpoint, DB, loop-lag, PDF.

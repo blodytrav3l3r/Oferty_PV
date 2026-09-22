@@ -12,6 +12,10 @@ WORKDIR /app
 
 COPY package*.json ./
 
+# Cache Puppeteera pod /app (nie w HOME roota) — runtime działa jako USER node
+# i inaczej nie widzi binarki Chromium pobranej przez npm ci (PDF 500).
+ENV PUPPETEER_CACHE_DIR=/app/.cache/puppeteer
+
 # Instalujemy wszystkie zależności
 RUN npm ci --no-audit --no-fund
 

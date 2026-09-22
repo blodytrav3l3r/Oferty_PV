@@ -1,3 +1,6 @@
+import fs from 'fs';
+import os from 'os';
+import path from 'path';
 import puppeteer from 'puppeteer';
 import { logger } from '../../utils/logger';
 
@@ -40,11 +43,57 @@ export function getPdfMetrics() {
 export class PdfError extends Error {
     status: number;
     code: string;
-    constructor(status: number, code: string, message: string) {
+    constructor(status: number, code: string, message: string, cause?: unknown) {
         super(message);
         this.status = status;
         this.code = code;
+        // Lib ES2021 nie zna opcji { cause } konstruktora Error (ES2022) — dopinamy pole.
+        if (cause !== undefined) (this as { cause?: unknown }).cause = cause;
     }
+}
+
+export interface ChromiumStatus {
+    status: 'ok' | 'degraded';
+    found: boolean;
+    executableName: string | null;
+    cacheDir: string;
+    user: string;
+    home: string;
+    shmMb: number | null;
+}
+
+/**
+ * Lekka diagnostyka Chromium bez launchowania przeglądarki (na potrzeby GET /health/pdf).
+ * Zwraca tylko basename binarki — pełna ścieżka nie wycieka do odpowiedzi HTTP.
+ */
+export function getChromiumStatus(): ChromiumStatus {
+    const cacheDir =
+        process.env.PUPPETEER_CACHE_DIR || path.join(os.homedir(), '.cache', 'puppeteer');
+    let executableName: string | null = null;
+    let found = false;
+    try {
+        const execPath = puppeteer.executablePath();
+        executableName = path.basename(execPath);
+        found = fs.existsSync(execPath);
+    } catch {
+        found = false;
+    }
+    let shmMb: number | null = null;
+    try {
+        const st = fs.statfsSync('/dev/shm');
+        shmMb = Math.round((st.bsize * st.blocks) / 1024 / 1024);
+    } catch {
+        shmMb = null;
+    }
+    return {
+        status: found ? 'ok' : 'degraded',
+        found,
+        executableName,
+        cacheDir,
+        user: os.userInfo().username,
+        home: os.homedir(),
+        shmMb
+    };
 }
 
 function pump() {
@@ -77,9 +126,9 @@ async function runJob(job: PdfJob) {
         if (job.settled) return;
         job.settled = true;
         pdfMetrics.failed500++;
-        const message = e instanceof Error ? e.message : String(e);
-        logger.error('Pdf', 'Błąd generowania PDF (Chromium)', message);
-        job.reject(new PdfError(500, 'PDF_FAILED', 'Nie udało się wygenerować PDF'));
+        const detail = e instanceof Error ? e.stack || e.message : String(e);
+        logger.error('Pdf', 'Błąd generowania PDF (Chromium)', detail);
+        job.reject(new PdfError(500, 'PDF_FAILED', 'Nie udało się wygenerować PDF', e));
     }
 }
 
@@ -90,7 +139,11 @@ async function renderPdf(html: string): Promise<Buffer> {
             // ponytail: --no-sandbox niezbędny w kontenerze Docker (proces jako root;
             // slim obrazy nie maja user namespaces, ktorych Chromium uzywa dla sandboxa).
             '--no-sandbox',
-            '--disable-setuid-sandbox'
+            '--disable-setuid-sandbox',
+            // Domyślne /dev/shm w Dockerze to 64 MB — duże PDF (oferta łączna)
+            // wywalają Chromium bez tej flagi (compose dokłada też shm_size).
+            '--disable-dev-shm-usage',
+            '--disable-gpu'
         ]
     });
 
@@ -150,7 +203,8 @@ export function mapPdfError(
     const status = (e as { status?: number }).status;
     if (status === 429 || status === 504 || status === 500) {
         const message = e instanceof Error ? e.message : 'Błąd generowania PDF';
-        logger.error('Pdf', `Błąd eksportu PDF (${context})`, message);
+        const detail = e instanceof Error ? e.stack || e.message : message;
+        logger.error('Pdf', `Błąd eksportu PDF (${context})`, detail);
         res.status(status).json({
             error: message,
             code: (e as { code?: string }).code || 'PDF_FAILED'

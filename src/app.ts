@@ -19,6 +19,7 @@ import { ensureAdminExists } from './middleware/auth';
 import { requireAuth, requireAdmin } from './middleware/auth';
 import { getMetricsSnapshot } from './utils/metrics';
 import { getPdfMetrics } from './services/pdf/pdfEngine';
+import healthPdfRouter from './routes/healthPdf';
 import {
     httpsRedirect,
     securityHeaders,
@@ -136,6 +137,9 @@ app.get('/health/ready', async (_req, res) => {
         res.status(503).json({ status: 'not_ready', db: 'error', error: msg.slice(0, 200) });
     }
 });
+
+// Diagnostyka PDF (Chromium) — publiczna jak reszta /health, bez auth.
+app.use('/health/pdf', healthPdfRouter);
 
 /**
  * @openapi
