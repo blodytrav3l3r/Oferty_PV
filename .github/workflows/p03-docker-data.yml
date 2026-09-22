@@ -83,7 +83,7 @@ jobs:
             - name: KROK 6 - SQLite WAL test tylko pliki p03
               run: |
                   docker run --rm --entrypoint node -v "$PWD/data:/var/data" "$P03_IMAGE" -e "const{DatabaseSync}=require('node:sqlite');const db=new DatabaseSync('/var/data/.p03-test.sqlite');const jm=db.prepare('PRAGMA journal_mode=WAL').get().journal_mode;console.log('journal_mode='+jm);db.exec('CREATE TABLE p03_test(id INTEGER PRIMARY KEY,value TEXT)');db.prepare('INSERT INTO p03_test(value) VALUES (?)').run(jm);console.log('SQLITE_OK rows='+JSON.stringify(db.prepare('SELECT * FROM p03_test').all()));db.close()"
-                  rm -f ./data/.p03-test.sqlite ./data/.p03-test.sqlite-wal ./data/.p03-test.sqlite-shm
+                  docker run --rm --entrypoint sh -v "$PWD/data:/var/data" "$P03_IMAGE" -c 'rm -f /var/data/.p03-test.sqlite /var/data/.p03-test.sqlite-wal /var/data/.p03-test.sqlite-shm'
                   echo "P03_CLEANUP_OK"
 
             - name: KROK 7 - backups write test
