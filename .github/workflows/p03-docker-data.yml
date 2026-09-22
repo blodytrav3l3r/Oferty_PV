@@ -86,14 +86,29 @@ jobs:
                   docker run --rm --entrypoint sh -v "$PWD/data:/var/data" "$P03_IMAGE" -c 'rm -f /var/data/.p03-test.sqlite /var/data/.p03-test.sqlite-wal /var/data/.p03-test.sqlite-shm'
                   echo "P03_CLEANUP_OK"
 
-            - name: KROK 7 - backups write test
+            # Model A: backups/ nalezy do hosta (backup dziala host-side),
+            # kontenerowy node ma miec tam ODMOWIONY zapis. Rzeczywisty zapis
+            # do backupow sprawdza faza C (BACKUPS_DELETE_OK, BACKUP_HOST_OK).
+            - name: KROK 7 - backups ownership (host owner, node write denied)
               run: |
-                  if docker run --rm --entrypoint sh -v "$PWD/data:/var/data" "$P03_IMAGE" -c 'mkdir -p /var/data/backups && touch /var/data/backups/.p03-write && rm /var/data/backups/.p03-write'; then
-                    echo "BACKUPS_OK"
+                  echo "HOST_BACKUPS=$(stat -c 'owner=%U(%u) group=%G(%g) mode=%a' ./data/backups)"
+                  echo "CONTAINER_BACKUPS=$(docker run --rm --entrypoint stat -v "$PWD/data:/var/data" "$P03_IMAGE" -c 'owner=%U(%u) group=%G(%g) mode=%a' /var/data/backups)"
+                  HOST_UID="$(id -u)"
+                  BACKUPS_UID="$(stat -c '%u' ./data/backups)"
+                  if [ "$BACKUPS_UID" = "$HOST_UID" ]; then
+                    echo "BACKUPS_OWNER_OK (host caller)"
                   else
-                    echo "BACKUPS_FAIL"
+                    echo "BACKUPS_OWNER_MISMATCH backup=$BACKUPS_UID host=$HOST_UID"
                     exit 1
                   fi
+                  if docker run --rm --entrypoint sh -v "$PWD/data:/var/data" "$P03_IMAGE" -c 'touch /var/data/backups/.p03-write'; then
+                    echo "NODE_BACKUPS_WRITE_UNEXPECTED - node nie powinien pisac do hostowych backups"
+                    docker run --rm --entrypoint sh -v "$PWD/data:/var/data" "$P03_IMAGE" -c 'rm -f /var/data/backups/.p03-write' || true
+                    exit 1
+                  else
+                    echo "NODE_BACKUPS_WRITE_DENIED (oczekiwane)"
+                  fi
+                  echo "BACKUPS_DIR_OK"
 
             # ---- faza B: pelny start na odtworzonym fresh-clone ----
             - name: KROK 8 - odtworz fresh-clone po fazie A
@@ -165,7 +180,7 @@ jobs:
             - name: KROK 9 - klasyfikacja A B C
               if: always()
               run: |
-                  echo "P0.3-CLASSIFY A gdy WRITE_OK plus SQLITE_OK plus BACKUPS_OK plus HEALTH_READY_OK - bez zmian runtime."
+                  echo "P0.3-CLASSIFY A gdy WRITE_OK plus SQLITE_OK plus BACKUPS_DIR_OK plus NODE_BACKUPS_WRITE_DENIED plus HEALTH_READY_OK plus BACKUP_HOST_OK plus RESTORE_HOST_OK - bez zmian runtime."
                   echo "P0.3-CLASSIFY B gdy WRITE_FAIL EACCES z winy wlasciciela hosta - host-side prep, UID dynamicznie z obrazu."
                   echo "P0.3-CLASSIFY C gdy B niewystarczajace - model user UID, projekt osobny, bez auto-implementacji."
 
