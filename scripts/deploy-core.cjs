@@ -112,13 +112,22 @@ function planRollback(dir = BACKUP_DIR) {
     return path.join(dir, list[list.length - 1]);
 }
 
+function restoreCmd(target, backupPath) {
+    // P0.3: restore/rollback to operacja uprzywilejowana — DB jest wlasnoscia
+    // uzytkownika kontenera (linux/docker), wiec zwykly host user dostaje
+    // EACCES. Warstwa wywolujaca zapewnia uprawnienia (sudo); sam restore-db.js
+    // bez zmian. Windows: brak sudo, natywny model bez kontenera.
+    const base = `npm run restore "${backupPath}" -- --yes`;
+    return target === 'windows' ? base : `sudo -E ${base}`;
+}
+
 function rollbackSteps(target, previousTag, backupPath) {
     validateTag(previousTag);
     resolveTarget(target);
     const steps = [
         {
             name: `Przywrocenie bazy z backupu: ${backupPath}`,
-            cmd: `npm run restore "${backupPath}" -- --yes`
+            cmd: restoreCmd(target, backupPath)
         },
         { name: `Powrot na tag ${previousTag}`, cmd: `git checkout ${previousTag}` },
         { name: 'Budowa projektu', cmd: 'npm run build' },
@@ -177,6 +186,7 @@ module.exports = {
     validateTag,
     resolveTarget,
     linuxStartCmd,
+    restoreCmd,
     startCmd,
     resolveSteps,
     findBackups,

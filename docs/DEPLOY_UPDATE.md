@@ -83,6 +83,11 @@ a baza pozostała nietknięta (backup powstał przed jakąkolwiek zmianą).
 Rollback przywraca dokładnie ten stan (wersja + dane), który był przed nieudanym deploy.
 Poprzedni tag odczytasz z logu: `data/deploy-log.log`.
 
+> **Uprawnienia:** krok restore nadpisuje plik bazy. Na Linux/Docker baza
+> należy do użytkownika kontenera (`node`), więc rollback wymaga roota —
+> skrypt robi to sam (`sudo -E npm run restore ...`); uruchom rollback
+> z konta z prawem sudo. Backup pozostaje bez sudo.
+
 ## 6. Specyfika środowiska
 
 ### 6.1 Windows

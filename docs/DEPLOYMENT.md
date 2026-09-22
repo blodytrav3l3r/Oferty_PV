@@ -455,6 +455,10 @@ Baza SQLite to pojedynczy plik — przeniesienie jej na nowe urządzenie jest pr
     ```bash
     cp data/backups/backup_*.sqlite data/app_database.sqlite
     ```
+    > **Docker/Linux:** baza jest własnością użytkownika kontenera (`node`),
+    > więc restore wymaga uprawnień administratora:
+    > `sudo -E npm run restore -- data/backups/backup_*.sqlite`.
+    > Backup (`npm run backup`, bez sudo) działa jako zwykły użytkownik.
 4. **Zsynchronizuj schemat bazy** (wymagane — backup zawiera tylko dane, a nowsza
    wersja aplikacji może wymagać nowych tabel/indeksów):
     ```bash

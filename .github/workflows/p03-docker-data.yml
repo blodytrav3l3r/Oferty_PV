@@ -174,12 +174,24 @@ jobs:
                   test -n "$BACKUP_FILE" && test -f "$BACKUP_FILE.sha256" && echo "BACKUP_HOST_OK plik=$BACKUP_FILE"
                   echo "$BACKUP_FILE" > /tmp/p03-backup-file.txt
 
-            - name: KROK 11 - restore jako host runner
+            # Kontrakt: restore to operacja uprzywilejowana. Zwykly host user MA
+            # dostac EACCES na node-owned DB (dowod granicy), sudo MA przejsc.
+            - name: KROK 11 - restore jako host runner (oczekiwany EACCES)
               run: |
                   echo "RESTORE_RUNNER=$(id -u):$(id -g)"
                   stat -c 'db przed: owner=%U(%u) group=%G(%g) mode=%a' ./data/app_database.sqlite
                   export DATABASE_URL="file:$PWD/data/app_database.sqlite?connection_limit=1&busy_timeout=30000"
-                  npm run restore -- "$(cat /tmp/p03-backup-file.txt)" --yes
+                  if npm run restore -- "$(cat /tmp/p03-backup-file.txt)" --yes; then
+                    echo "RESTORE_DENIED_MISSING - zwykly user nie powinien nadpisac node-owned DB"
+                    exit 1
+                  else
+                    echo "RESTORE_DENIED_OK - granica ownership potwierdzona"
+                  fi
+
+            - name: KROK 11b - restore przez sudo (kontrakt)
+              run: |
+                  export DATABASE_URL="file:$PWD/data/app_database.sqlite?connection_limit=1&busy_timeout=30000"
+                  sudo -E npm run restore -- "$(cat /tmp/p03-backup-file.txt)" --yes
                   echo "RESTORE_HOST_OK"
                   stat -c 'db po: owner=%U(%u) group=%G(%g) mode=%a' ./data/app_database.sqlite
 

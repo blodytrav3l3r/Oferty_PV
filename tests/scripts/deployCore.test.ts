@@ -252,6 +252,20 @@ describe('deploy-core', () => {
             expect(steps[0].cmd).toContain('npm run restore "/data/backups/x.sqlite" -- --yes');
         });
 
+        it('P0.3: restore/rollback linux+docker przez sudo (DB wlasnoscia node)', () => {
+            for (const t of ['linux', 'docker']) {
+                const steps = core.rollbackSteps(t, 'v1.15.1', '/data/backups/x.sqlite');
+                expect(steps[0].cmd).toBe(
+                    'sudo -E npm run restore "/data/backups/x.sqlite" -- --yes'
+                );
+            }
+        });
+
+        it('P0.3: restore windows bez sudo (natywny model)', () => {
+            const steps = core.rollbackSteps('windows', 'v1.15.1', '/data/backups/x.sqlite');
+            expect(steps[0].cmd).toBe('npm run restore "/data/backups/x.sqlite" -- --yes');
+        });
+
         it('waliduje poprzedni tag', () => {
             expect(() => core.rollbackSteps('linux', 'main', '/tmp/x.sqlite')).toThrow(
                 /Niepoprawny tag/
