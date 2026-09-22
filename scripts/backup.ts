@@ -2,10 +2,21 @@ import { PrismaClient } from '../generated/prisma';
 import * as crypto from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
+import { resolveDataDir } from '../src/utils/paths';
 
 const prisma = new PrismaClient();
 
-const backupDir = path.resolve(__dirname, '../data/backups');
+/**
+ * Kontrakt ścieżki backupu: zawsze `<root>/data/backups`, niezależnie od tego,
+ * czy kod działa z `scripts/` (ts-node), czy z `dist/scripts/` (tsc prod).
+ * Poprzednie `path.resolve(__dirname, '../data/backups')` po kompilacji
+ * wskazywało `dist/data/backups` (cicha rozbieżność z planRollback/restore).
+ */
+export function getBackupDir(): string {
+    return path.join(resolveDataDir(), 'backups');
+}
+
+const backupDir = getBackupDir();
 
 const MAX_BACKUPS = 30;
 

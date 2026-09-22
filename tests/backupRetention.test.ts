@@ -1,4 +1,6 @@
-import { selectBackupsForRetention, findOrphanSidecars } from '../scripts/backup';
+import * as path from 'path';
+import { selectBackupsForRetention, findOrphanSidecars, getBackupDir } from '../scripts/backup';
+import { resolveDataDir, resolveProjectRoot } from '../src/utils/paths';
 
 function files(nSqlite: number, nSha: number) {
     const out: Array<{ name: string; mtimeMs: number }> = [];
@@ -35,5 +37,23 @@ describe('P0.6 retencja backupu', () => {
                 'backup_b.sqlite.sha256'
             ])
         ).toEqual(['backup_b.sqlite.sha256']);
+    });
+});
+
+describe('P0.1 kontrakt ścieżki backupu', () => {
+    // Regresja: path.resolve(__dirname, '../data/backups') po tsc wskazywał
+    // dist/data/backups (mkdir -p tworzył zły katalog po cichu), podczas gdy
+    // planRollback/restore szukały w data/backups. Test pinuje kontrakt:
+    // backupDir == <root>/data/backups, nigdy pod dist/.
+    it('getBackupDir() to <root>/data/backups (ten sam root co reszta aplikacji)', () => {
+        expect(getBackupDir()).toBe(path.join(resolveDataDir(), 'backups'));
+        expect(getBackupDir()).toBe(path.join(resolveProjectRoot(), 'data', 'backups'));
+    });
+
+    it('getBackupDir() jest absolutny i nigdy nie prowadzi przez dist/', () => {
+        const dir = getBackupDir();
+        expect(path.isAbsolute(dir)).toBe(true);
+        expect(dir.split(path.sep)).not.toContain('dist');
+        expect(dir.endsWith(`data${path.sep}backups`)).toBe(true);
     });
 });
