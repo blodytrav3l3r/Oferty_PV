@@ -550,19 +550,6 @@
     color: var(--excel-text);
     line-height: 1.4;
 }
-.legend-swatch {
-    width: 16px;
-    height: 12px;
-    border-radius: 2px;
-    background: var(--sw-bg);
-    border: 1px solid var(--sw-border);
-    display: inline-block;
-    margin-top: 2px;
-}
-.legend-swatch--sm {
-    width: 14px;
-    height: 10px;
-}
 .sc-legend-note {
     margin: 0.45rem 0 0;
     font-size: var(--fs-3xs);
