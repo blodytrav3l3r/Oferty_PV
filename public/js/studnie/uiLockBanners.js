@@ -61,7 +61,7 @@ function renderOfferLockBanner() {
             <div class="flex-gap-5-wrap2">
                 <div>
                     <div style="font-size: var(--fs-md); font-weight: var(--fw-extrabold); color:var(--danger-hover); display:flex; align-items:center; gap:0.4rem;">
-                        <i data-lucide="lock" style="width:18px; height:18px;"></i> STUDNIA ZABLOKOWANA
+                        <i data-lucide="lock" class="icon-md"></i> STUDNIA ZABLOKOWANA
                     </div>
                     <div class="fs-xs-muted">
                         „${escapeHtml(well.name)}" jest częścią zamówienia${wellOrder ? ' ' + escapeHtml(wellOrder.orderNumber || '') : ''}.

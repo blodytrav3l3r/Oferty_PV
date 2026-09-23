@@ -268,7 +268,7 @@
                     mlGroup('Bramka treningu', 'ai-ml-col-5', gateCards(status.trainingGate)) +
                     '<div class="ai-influence-widget">' +
                     '<label style="display:flex;align-items:center;gap:10px;cursor:pointer" title="Procentowy wp\u0142yw AI na ranking produkt\u00f3w (0% = tylko ludzkie preferencje, 100% = w pe\u0142ni automatyczny)">' +
-                    '<i data-lucide="sliders-horizontal" style="width:16px;height:16px;color:var(--accent);flex-shrink:0"></i>' +
+                    '<i data-lucide="sliders-horizontal" class="icon-sm" style="color:var(--accent);flex-shrink:0"></i>' +
                     '<span style="font-size: var(--fs-md);color:var(--text-primary);white-space:nowrap">Wp\u0142yw AI: <strong id="ai-influence-value">' +
                     inf +
                     '%</strong></span>' +

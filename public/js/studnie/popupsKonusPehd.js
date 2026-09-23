@@ -24,9 +24,9 @@ window.showKonusPehdResolverModal = function (wellIndex, callback) {
     <div class="modal" style="max-width:620px;border-color:rgba(var(--danger-rgb),0.35);">
         <div class="modal-header">
             <h3 id="pehd-konus-title" style="color:var(--danger-hover);display:flex;align-items:center;gap:0.6rem;margin:0;">
-                <i data-lucide="alert-circle" style="width:22px;height:22px;" aria-hidden="true"></i> Niezgodność technologiczna: Konus + PEHD
+                <i data-lucide="alert-circle" class="icon-lg" aria-hidden="true"></i> Niezgodność technologiczna: Konus + PEHD
             </h3>
-            <button type="button" onclick="window.konusResolverCancel()" class="btn-icon btn-icon-danger btn-icon-sm" aria-label="Zamknij">✕</button>
+            <button type="button" onclick="window.konusResolverCancel()" class="btn-icon btn-icon-danger btn-icon-sm" aria-label="Zamknij"><i data-lucide="x" class="icon-xs" aria-hidden="true"></i></button>
         </div>
         <p style="color:var(--text-secondary);font-size:var(--fs-md);line-height:1.6;margin:0 0 1.2rem;">
             <b>Konus</b> nie może być zakończeniem studni, jeśli zastosowano w nim wkładkę <b>PEHD</b>.<br>

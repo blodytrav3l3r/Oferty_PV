@@ -169,10 +169,10 @@ function renderTransitionTileHTML(item, globalIndex, product, opts = {}) {
     if (showEdit || showDelete) {
         actionsHTML = `<div class="prz-actions-col">`;
         if (showEdit) {
-            actionsHTML += `<button data-action="editPrzejscie" data-i="${globalIndex}" data-prz-id="${escapeHtmlAttr(tileId)}" title="Edytuj" class="prz-btn-edit"><i data-lucide="pencil"></i></button>`;
+            actionsHTML += `<button data-action="editPrzejscie" data-i="${globalIndex}" data-prz-id="${escapeHtmlAttr(tileId)}" title="Edytuj" aria-label="Edytuj" class="prz-btn-edit"><i data-lucide="pencil" class="icon-xs" aria-hidden="true"></i></button>`;
         }
         if (showDelete) {
-            actionsHTML += `<button data-action="removePrzejscieFromWell" data-i="${globalIndex}" data-prz-id="${escapeHtmlAttr(tileId)}" title="Usuń" class="prz-btn-delete"><i data-lucide="x"></i></button>`;
+            actionsHTML += `<button data-action="removePrzejscieFromWell" data-i="${globalIndex}" data-prz-id="${escapeHtmlAttr(tileId)}" title="Usuń" aria-label="Usuń" class="prz-btn-delete"><i data-lucide="x" class="icon-xs" aria-hidden="true"></i></button>`;
         }
         actionsHTML += `</div>`;
     }

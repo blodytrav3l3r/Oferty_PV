@@ -590,7 +590,7 @@ function createSaveIndicator(parent, opts = {}) {
         el.style.color = color;
         const icon =
             state === 'saving'
-                ? '<i data-lucide="loader" style="width:14px;height:14px;animation:saveSpin 0.8s linear infinite"></i>'
+                ? '<i data-lucide="loader" class="icon-xs" style="animation:saveSpin 0.8s linear infinite"></i>'
                 : state === 'saved'
                   ? '<i data-lucide="check" class="icon-14"></i>'
                   : state === 'error'

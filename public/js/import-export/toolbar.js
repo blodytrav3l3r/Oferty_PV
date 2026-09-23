@@ -38,7 +38,7 @@ window.importExportToolbar = /** @type {any} */ ({
 
         host.innerHTML =
             '<div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;padding:0.8rem 1rem;margin-bottom:0.8rem;background:var(--bg-glass);border:1px solid var(--border-glass);border-radius:var(--radius-sm);">' +
-            '<span style="font-size: var(--fs-base);color:var(--text-muted);font-weight: var(--fw-semibold);text-transform:uppercase;letter-spacing:0.3px;white-space:nowrap;"><i data-lucide="file-up" style="width:14px;height:14px;margin-right:4px;"></i>Import / Eksport</span>' +
+            '<span style="font-size: var(--fs-base);color:var(--text-muted);font-weight: var(--fw-semibold);text-transform:uppercase;letter-spacing:0.3px;white-space:nowrap;"><i data-lucide="file-up" class="icon-14-mr4"></i>Import / Eksport</span>' +
             '<button class="btn btn-sm btn-secondary" id="ie-btn-export-xlsx"><i data-lucide="download" class="icon-14"></i>Eksport XLSX (zewn.)</button>' +
             '<button class="btn btn-sm btn-secondary" id="ie-btn-export-json"><i data-lucide="file-down" class="icon-14"></i>Eksport 1:1 (JSON)</button>' +
             '<button class="btn btn-sm btn-secondary" id="ie-btn-import-xlsx"><i data-lucide="upload" class="icon-14"></i>Import XLSX (zewn.)</button>' +

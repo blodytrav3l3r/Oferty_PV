@@ -18,8 +18,8 @@
 
     function healthCard(title, value, ok, subtitle, tooltip) {
         const icon = ok
-            ? '<i data-lucide="check-circle" style="width:18px;height:18px;color:var(--success)"></i>'
-            : '<i data-lucide="alert-circle" style="width:18px;height:18px;color:var(--warn)"></i>';
+            ? '<i data-lucide="check-circle" class="icon-md" style="color:var(--success)"></i>'
+            : '<i data-lucide="alert-circle" class="icon-md" style="color:var(--warn)"></i>';
         const sub = subtitle
             ? '<div style="font-size: var(--fs-sm);color:var(--text-secondary);margin-top:2px">' +
               subtitle +

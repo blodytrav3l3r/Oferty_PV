@@ -68,7 +68,7 @@ function renderWellHeaderRow(
     let checkbox = '';
     if (showOrderSelection) {
         checkbox = isOrdered
-            ? '<td class="text-center"><i data-lucide="package-check" style="width:16px; height:16px; color:var(--accent-text);"></i></td>'
+            ? '<td class="text-center"><i data-lucide="package-check" class="icon-sm" style="color:var(--accent-text);"></i></td>'
             : `<td class="text-center" onclick="event.stopPropagation()"><input type="checkbox" class="well-order-checkbox cursor-icon-16" data-well-index="${i}" onchange="updateOrderSelectionCount()" ></td>`;
     }
 
@@ -106,7 +106,7 @@ function renderWellHeaderRow(
         ${priceDiffCell}
         <td class="text-right" onclick="event.stopPropagation()" style="white-space:nowrap; padding:0.5rem 0.75rem;">
             <button class="btn btn-sm" onclick="showSection('builder'); selectWell(${i})" title="Edytuj studnię" style="font-size: var(--fs-sm); padding:0.25rem 0.6rem; display:inline-flex; align-items:center; gap:0.3rem;">
-                <i data-lucide="edit-3" style="width:12px; height:12px;"></i> Edytuj
+                <i data-lucide="pencil" class="icon-xxs"></i> Edytuj
             </button>
         </td>
     </tr>`;

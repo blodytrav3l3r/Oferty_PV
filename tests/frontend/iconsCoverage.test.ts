@@ -10,12 +10,19 @@ const ROOT = path.join(__dirname, '../..');
 const SHARED_DIR = path.join(ROOT, 'public/js/shared');
 const ICONS_SLIM = fs.readFileSync(path.join(SHARED_DIR, 'iconsSlim.js'), 'utf8');
 
-/* Dokładna lista kluczy (klucze jednolinijkowe typu `moon: ['...'] też liczą). */
+/* Dokładna lista kluczy (klucze jednolinijkowe typu `moon: ['...'] też liczą)
+ * + ALIASES z iconsSlim.js (P6 ICON CONTRACT — stara nazwa == kanoniczna). */
 function iconKeys() {
     const keys = new Set();
     const re = /^\s*'?([a-z0-9-]+)'?: \[/gm;
     let m;
     while ((m = re.exec(ICONS_SLIM)) !== null) keys.add(m[1]);
+    const aliasRe = /^\s*'?(?:([a-z0-9-]+))'?: '([a-z0-9-]+)',?\s*$/gm;
+    const aliasBlock = ICONS_SLIM.slice(ICONS_SLIM.indexOf('const ALIASES'));
+    let a;
+    while ((a = aliasRe.exec(aliasBlock)) !== null) {
+        if (keys.has(a[2])) keys.add(a[1]);
+    }
     return keys;
 }
 
@@ -55,31 +62,10 @@ const SCAN_DIRS = [
     'public/js/kartoteka'
 ];
 
-const KNOWN_GAPS = {
-    'public/js/kartoteka/kartotekaAudit.js': ['history'],
-    'public/js/kartoteka/kartotekaHelpers.js': ['package-check'],
-    'public/js/rury/offerSummaryTab.js': ['package-check'],
-    'public/js/rury/orderSummary.js': ['package-check'],
-    'public/js/shared/draftAutosave.js': ['history'],
-    'public/js/shared/lockService.js': ['arrow-left', 'shield-alert'],
-    'public/js/shared/printModal.js': ['files'],
-    'public/js/shared/ui.js': ['info', 'loader'],
-    'public/js/studnie/offerSummaryUI.js': ['paintbrush'],
-    'public/js/studnie/offerWellComponents.js': ['package-check', 'edit-3'],
-    'public/js/studnie/orderBulk.js': ['list-ordered'],
-    'public/js/studnie/popupsGlobalRecalc.js': ['info'],
-    'public/js/studnie/popupsTransitionManager.js': [
-        'list',
-        'arrow-up-down',
-        'info',
-        'check-square',
-        'check-circle',
-        'arrow-left'
-    ],
-    'public/js/studnie/pricelistManager.js': ['info'],
-    'public/js/studnie/uiLockBanners.js': ['info'],
-    'public/js/studnie/wellUIHelpers.js': ['paintbrush']
-};
+/* P6 ICON CONTRACT: wszystkie luki domknięte (SVG dopisane do iconsSlim.js
+ * albo aliasy w ALIASES; edit-3 wymienione na pencil w plikach).
+ * Pusta lista = każda data-lucide w 5 katalogach musi istnieć w ICONS. */
+const KNOWN_GAPS = {};
 
 function jsFiles(dir) {
     const out = [];

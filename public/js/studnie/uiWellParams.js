@@ -231,7 +231,7 @@ function renderWellParams() {
         typeof isOrderedWellSoftLocked === 'function' && isOrderedWellSoftLocked(well);
     let html = `<div style="display:flex; flex-direction:column; gap:0.55rem; ${isSoftLocked ? 'opacity:0.6; pointer-events:none;' : ''}">`;
     if (isSoftLocked) {
-        html += `<div style="display:flex; align-items:center; gap:0.4rem; padding:0.35rem 0.6rem; background:rgba(var(--danger-rgb),0.08); border:1px solid rgba(var(--danger-rgb),0.25); border-radius:var(--radius-sm); color:var(--danger); font-size:var(--fs-sm); font-weight:var(--fw-bold);"><i data-lucide="lock" style="width:14px;height:14px;"></i> Studnia na zamówieniu — parametry zablokowane</div>`;
+        html += `<div style="display:flex; align-items:center; gap:0.4rem; padding:0.35rem 0.6rem; background:rgba(var(--danger-rgb),0.08); border:1px solid rgba(var(--danger-rgb),0.25); border-radius:var(--radius-sm); color:var(--danger); font-size:var(--fs-sm); font-weight:var(--fw-bold);"><i data-lucide="lock" class="icon-xs"></i> Studnia na zamówieniu — parametry zablokowane</div>`;
     }
 
     const isOsadnik = typeof isSettlingWell === 'function' && isSettlingWell(well);

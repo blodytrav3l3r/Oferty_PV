@@ -304,7 +304,7 @@ function _renderUnitPopupContent(container, prefs) {
         esc(formatHeightValue(1500, 'm')) +
         ' m';
     container.innerHTML =
-        '<div class="unit-popup-header"><span><i data-lucide="ruler" class="icon-xs"></i> Jednostki wysokości</span><button type="button" class="unit-popup-close" onclick="closeUnitSettingsPopup()" aria-label="Zamknij">✕</button></div>' +
+        '<div class="unit-popup-header"><span><i data-lucide="ruler" class="icon-xs"></i> Jednostki wysokości</span><button type="button" class="unit-popup-close" onclick="closeUnitSettingsPopup()" aria-label="Zamknij"><i data-lucide="x" class="icon-xs" aria-hidden="true"></i></button></div>' +
         '<div class="unit-popup-section"><div class="unit-popup-label">Jednostka</div><div class="unit-popup-row" role="group" aria-label="Jednostka">' +
         VALID_UNITS.map(function (u) {
             return (

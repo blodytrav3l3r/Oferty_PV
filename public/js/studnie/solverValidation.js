@@ -396,7 +396,7 @@ function showRzednaClampPopup(msg, correctedVal) {
     }
     const gen = ++_rzednaClampGen;
     const html = `<div class="modal" style="max-width:560px; width:92vw; max-height:85vh; overflow-y:auto;">
-        <div class="modal-header"><h3 style="display:flex; align-items:center; gap:0.5rem;"><i data-lucide="alert-triangle" style="color:var(--warn);"></i> Nieprawidłowa rzędna</h3><button class="btn-icon" aria-label="Zamknij" onclick="closeModal('rzedna-clamp-popup')"><i data-lucide="x"></i></button></div>
+        <div class="modal-header"><h3 style="display:flex; align-items:center; gap:0.5rem;"><i data-lucide="alert-triangle" class="icon-sm" style="color:var(--warn);" aria-hidden="true"></i> Nieprawidłowa rzędna</h3><button class="btn-icon" aria-label="Zamknij" onclick="closeModal('rzedna-clamp-popup')"><i data-lucide="x" class="icon-xs" aria-hidden="true"></i></button></div>
         <div style="font-size:var(--fs-sm); color:var(--text-secondary); margin-bottom:0.8rem;">${safeMsg}<br>Wartość poprawiono do <strong>${safeVal}</strong>.<br><span style="font-size:var(--fs-xs); color:var(--text-muted);">Okno zamknie się automatycznie.</span></div>
         <div class="modal-footer"><button class="btn btn-primary" onclick="closeModal('rzedna-clamp-popup')">Rozumiem</button></div>
     </div>`;
@@ -519,7 +519,7 @@ function showPrzejsciaValidationPopup(errors) {
         )
         .join('');
     const html = `<div class="modal" style="max-width:560px; width:92vw; max-height:85vh; overflow-y:auto;">
-        <div class="modal-header"><h3 style="display:flex; align-items:center; gap:0.5rem;"><i data-lucide="alert-triangle" style="color:var(--warn);"></i> Brak danych przejścia</h3><button class="btn-icon" aria-label="Zamknij" onclick="closeModal('przejscia-validation-popup')"><i data-lucide="x"></i></button></div>
+        <div class="modal-header"><h3 style="display:flex; align-items:center; gap:0.5rem;"><i data-lucide="alert-triangle" class="icon-sm" style="color:var(--warn);" aria-hidden="true"></i> Brak danych przejścia</h3><button class="btn-icon" aria-label="Zamknij" onclick="closeModal('przejscia-validation-popup')"><i data-lucide="x" class="icon-xs" aria-hidden="true"></i></button></div>
         <div style="font-size:var(--fs-sm); color:var(--text-secondary); margin-bottom:0.8rem;">Uzupełnij brakujące dane przed zapisem — fizycznie musi być wybrany rodzaj i średnica:</div>
         <ul style="margin:0 0 1rem 1.2rem; padding:0; font-size:var(--fs-sm);">${listHtml}</ul>
         <div class="modal-footer"><button class="btn btn-primary" onclick="closeModal('przejscia-validation-popup')">Rozumiem</button></div>

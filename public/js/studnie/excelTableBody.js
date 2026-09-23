@@ -728,7 +728,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
     if (tabWells.length === 0) {
         html +=
             '<tr id="excel-empty-state"><td colspan="99" style="padding:0;border:none;"><div class="empty-state" style="padding:1.2rem 1rem;">' +
-            '<i data-lucide="table" style="width:28px;height:28px;opacity:0.4;margin-bottom:0.6rem;"></i>' +
+            '<i data-lucide="table" class="icon-lg" style="opacity:0.4;margin-bottom:0.6rem;"></i>' +
             '<h3 style="font-size:var(--fs-lg);color:var(--text-secondary);margin:0 0 0.2rem;">Brak studni w zakładce ' +
             escapeHtml(dnLabel) +
             '</h3>' +

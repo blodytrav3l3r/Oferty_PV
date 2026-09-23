@@ -175,7 +175,7 @@ function renderZleceniaList() {
                     <div style="font-size: var(--fs-base); font-weight: var(--fw-bold); color:var(--text-primary);">${escapeHtml(el.product.name)}</div>
                     <div style="display:flex; align-items:center; gap:0.3rem;">
                         ${prodOrderNum ? `<div style="font-size: var(--fs-2xs); font-weight: var(--fw-extrabold); color:var(--accent-hover); background:rgba(var(--accent-rgb), 0.2); padding:0.1rem 0.4rem; border-radius: var(--radius-2xs); border:1px solid rgba(var(--accent-rgb), 0.3);">${escapeHtml(prodOrderNum)}</div>` : ''}
-                        ${isSaved && !isAccepted ? `<button class="btn-icon-danger btn-icon-xs" onclick="event.stopPropagation(); deleteProductionOrder('${escapeJsStr(savedOrder.id)}')" title="Usuń zlecenie"><i data-lucide="trash-2"></i></button>` : ''}
+                        ${isSaved && !isAccepted ? `<button class="btn-icon-danger btn-icon-xs" onclick="event.stopPropagation(); deleteProductionOrder('${escapeJsStr(savedOrder.id)}')" title="Usuń zlecenie" aria-label="Usuń zlecenie"><i data-lucide="trash-2" class="icon-xs" aria-hidden="true"></i></button>` : ''}
                     </div>
                 </div>
                 ${isAccepted ? '<div style="font-size: var(--fs-3xs); color:var(--success-hover); margin-top:0.2rem; font-weight: var(--fw-bold);">Zaakceptowane — studnia zablokowana</div>' : isSaved ? '<div style="font-size: var(--fs-3xs); color:var(--warn-hover); margin-top:0.2rem; font-weight: var(--fw-bold);">Wersja robocza</div>' : ''}
@@ -262,9 +262,9 @@ function renderZleceniaWellConfig() {
           <div class="flex-between">
             <div class="flex-gap-4">
                 <div style="display:flex; flex-direction:column; gap:1px; align-items:center; background:rgba(var(--black-rgb), 0.2); padding:0.1rem; border-radius: var(--radius-2xs);">
-                  <button onclick="event.stopPropagation(); moveZleceniaComponent(${index}, -1)" style="background:none; border:none; color:var(--text-muted); cursor:pointer; padding:0; display:${isLocked || index === 0 ? 'none' : 'block'};"><i data-lucide="chevron-up" class="text-xs"></i></button>
+                  <button onclick="event.stopPropagation(); moveZleceniaComponent(${index}, -1)" title="W górę" aria-label="W górę" style="background:none; border:none; color:var(--text-muted); cursor:pointer; padding:0; display:${isLocked || index === 0 ? 'none' : 'block'};"><i data-lucide="chevron-up" class="icon-xs" aria-hidden="true"></i></button>
                   <span style="font-size: var(--fs-3xs); color:var(--text-primary); font-weight: var(--fw-bold);">${index + 1}</span>
-                  <button onclick="event.stopPropagation(); moveZleceniaComponent(${index}, 1)" style="background:none; border:none; color:var(--text-muted); cursor:pointer; padding:0; display:${isLocked || index === well.config.length - 1 ? 'none' : 'block'};"><i data-lucide="chevron-down" class="text-xs"></i></button>
+                  <button onclick="event.stopPropagation(); moveZleceniaComponent(${index}, 1)" title="W dół" aria-label="W dół" style="background:none; border:none; color:var(--text-muted); cursor:pointer; padding:0; display:${isLocked || index === well.config.length - 1 ? 'none' : 'block'};"><i data-lucide="chevron-down" class="icon-xs" aria-hidden="true"></i></button>
                 </div>
                 <div style="display:flex; flex-direction:column;">
                   <div style="font-weight: var(--fw-bold); color:var(--text-primary); font-size: var(--fs-xs); line-height:1.1;">${escapeHtml(p.name)}${item.quantity > 1 ? ` (x${item.quantity})` : ''}</div>

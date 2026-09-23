@@ -141,7 +141,7 @@ function renderStudniePriceList() {
           <th scope="col" class="text-right ui-col-5" title="Powierzchnia wewnętrzna [m2]">P.wew</th>
           <th scope="col" class="text-right ui-col-5" title="Powierzchnia zewnętrzna [m2]">P.zew</th>
           <th scope="col" class="text-right w-4pct"  title="Maksymalna ilość sztuk na naczepie 24t">Szt</th>
-          <th scope="col" class="text-right ui-col-6" title="Dopłata do wkładki PEHD [PLN] — elementy płytowe (płyty, pierścienie) doliczane z kwadratowego wykroju (×4/π ≈ +27%)">PEHD <i data-lucide="info" style="width:10px;height:10px;opacity:0.5;cursor:help;" aria-hidden="true"></i></th>
+          <th scope="col" class="text-right ui-col-6" title="Dopłata do wkładki PEHD [PLN] — elementy płytowe (płyty, pierścienie) doliczane z kwadratowego wykroju (×4/π ≈ +27%)">PEHD <i data-lucide="info" class="icon-xxs" style="opacity:0.5;cursor:help;" aria-hidden="true"></i></th>
           <th scope="col" class="text-right ui-col-5" title="Dopłata za malowanie wewnątrz [PLN]">Mal W.</th>
           <th scope="col" class="text-right ui-col-5" title="Dopłata za malowanie zewnątrz [PLN]">Mal Z.</th>
           <th scope="col" class="text-right ui-col-5" title="Dopłata dla dennicy za Żelbet [PLN]">Żelbet</th>

@@ -99,8 +99,8 @@
 
     function statusBadge(ok) {
         return ok
-            ? '<span class="fs-xl-success-bold">✓ Online</span>'
-            : '<span class="fs-xl-danger-bold">✗ Offline</span>';
+            ? '<span class="fs-xl-success-bold"><i data-lucide="check" class="icon-sm" aria-hidden="true"></i> Online</span>'
+            : '<span class="fs-xl-danger-bold"><i data-lucide="x" class="icon-sm" aria-hidden="true"></i> Offline</span>';
     }
     window.aiStatusBadge = statusBadge;
 
@@ -273,7 +273,7 @@
             '<div style="display:flex;align-items:flex-start;gap:10px;color:var(--text-muted);background:var(--bg-tertiary);border:1px solid var(--border-glass);border-radius:var(--radius-sm);padding:14px">' +
             '<i data-lucide="' +
             icon +
-            '" style="width:18px;height:18px;flex-shrink:0;margin-top:2px"></i>' +
+            '" class="icon-md" style="flex-shrink:0;margin-top:2px"></i>' +
             '<div style="font-size: var(--fs-md);line-height:1.45">' +
             msg +
             '</div></div>'
