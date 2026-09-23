@@ -323,13 +323,8 @@ function openExcelTableModal() {
         existing.remove();
     }
 
-    const diagramPanel = document.querySelector('.well-diagram-panel');
-    const isDiagramVisible = diagramPanel && diagramPanel.offsetParent !== null;
-    const modalStyle = isDiagramVisible
-        ? 'width:100%;height:100%;min-height:0;background:var(--excel-bg);border:1px solid var(--excel-border-subtle);border-radius: var(--radius-2xs);display:flex;flex-direction:column;overflow:hidden;box-shadow:var(--excel-shadow);box-sizing:border-box;'
-        : 'width:100%;height:100%;min-height:0;background:var(--excel-bg);border:1px solid var(--excel-border-subtle);border-radius: var(--radius-2xs);display:flex;flex-direction:column;overflow:hidden;box-shadow:var(--excel-shadow);box-sizing:border-box;';
     const excelInnerHtml = `
-        <div id="excel-modal-inner" style="${modalStyle}">
+        <div id="excel-modal-inner" class="excel-modal-inner">
         <style>
             /* Kontrakt wstrzykiwanego CSS Excela (S-03): kolory wyłącznie
                przez var(--...), zero literalnych kolorów, zero selektora
@@ -367,23 +362,23 @@ function openExcelTableModal() {
                wiec jawny ring accentem (!important tylko by przebic inline). */
             #excel-search-input:focus-visible { outline:2px solid var(--accent) !important; outline-offset:-1px; }
         </style>
-        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.4rem;padding:0.45rem 0.8rem;background:var(--excel-bg-alt);border-bottom:1px solid var(--excel-border-subtle);flex-shrink:0;">
-            <div style="display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;">
-                <i data-lucide="table" class="icon-sm" style="color:var(--success);"></i>
-                <span style="font-size: var(--fs-base);font-weight: var(--fw-bold);color:var(--excel-text);letter-spacing:0.3px;">Tabela konfiguracyjna</span>
-                <span id="excel-well-count" style="font-size: var(--fs-2xs);color:var(--excel-text-dim);padding:0.1rem 0.5rem;background:var(--excel-border-subtle);border-radius: var(--radius-2xs);"></span>
-                <span id="excel-selection-summary" style="display:none;font-size: var(--fs-2xs);color:var(--accent-text);padding:0.1rem 0.5rem;background:var(--excel-border-subtle);border-radius: var(--radius-2xs);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
+        <div class="excel-topbar">
+            <div class="excel-topbar-left">
+                <i data-lucide="table" class="icon-sm excel-topbar-icon"></i>
+                <span class="excel-topbar-title">Tabela konfiguracyjna</span>
+                <span id="excel-well-count" class="excel-count-pill"></span>
+                <span id="excel-selection-summary" class="excel-count-pill" style="display:none;"></span>
             </div>
-            <div style="display:flex;gap:0.4rem;align-items:center;flex-wrap:wrap;justify-content:flex-end;flex:1 1 320px;min-width:280px;">
+            <div class="excel-topbar-actions">
 
-                <div style="position:relative;display:flex;align-items:center;flex:0 0 auto;">
-                    <input type="text" id="excel-search-input" placeholder="Szukaj studni..." oninput="excelFilterWells(this.value)" aria-label="Szukaj studni" style="background:var(--excel-input-bg);border:1px solid var(--excel-input-border);border-radius: var(--radius-2xs);padding:0.25rem 1.4rem 0.25rem 0.4rem;font-size: var(--fs-2xs);color:var(--excel-text);outline:none;width:220px;" />
-                    <button type="button" id="excel-search-clear" onclick="excelClearSearch()" title="Wyczyść filtr" aria-label="Wyczyść filtr" class="excel-icon-btn" style="display:none;position:absolute;right:2px;"><i data-lucide="x" class="icon-xs" aria-hidden="true"></i></button>
+                <div class="excel-search-wrap">
+                    <input type="text" id="excel-search-input" class="excel-search-input" placeholder="Szukaj studni..." oninput="excelFilterWells(this.value)" aria-label="Szukaj studni" style="width:220px;" />
+                    <button type="button" id="excel-search-clear" onclick="excelClearSearch()" title="Wyczyść filtr" aria-label="Wyczyść filtr" class="excel-icon-btn excel-search-clear" style="display:none;"><i data-lucide="x" class="icon-xs" aria-hidden="true"></i></button>
                 </div>
                 <button onclick="_excelToggleColumnPopup()" id="excel-col-vis-btn" class="excel-toolbar-btn" title="Pokaż/ukryj kolumny"><i data-lucide="table-properties" class="icon-xs" aria-hidden="true"></i>Kolumny</button>
                 <button onclick="openPrzejsciaVisibilityPopup('excel')" class="excel-toolbar-btn" title="Pokaż/ukryj typy przejść"><i data-lucide="arrow-right-left" class="icon-xs" aria-hidden="true"></i>Przejścia</button>
-                <button onclick="_excelBulkRunAutoSelect()" id="excel-bulk-recalc" class="excel-toolbar-btn" style="background:rgba(var(--success-rgb),0.15);border-color:rgba(var(--success-rgb),0.3);color:var(--success-hover);" title="Auto-dobór dla zaznaczonych (checkbox)"><i data-lucide="refresh-cw" class="icon-xs" aria-hidden="true"></i>Auto-dobór zaznaczonych</button>
-                <button onclick="_excelBulkDeleteSelected()" id="excel-bulk-delete" class="excel-toolbar-btn excel-toolbar-btn--danger" style="background:rgba(var(--danger-rgb),0.12);border-color:rgba(var(--danger-rgb),0.25);color:var(--danger-hover);" title="Usuń zaznaczone studnie (checkbox)"><i data-lucide="trash-2" class="icon-xs" aria-hidden="true"></i>Usuń zaznaczone</button>
+                <button onclick="_excelBulkRunAutoSelect()" id="excel-bulk-recalc" class="excel-toolbar-btn excel-toolbar-btn--success" title="Auto-dobór dla zaznaczonych (checkbox)"><i data-lucide="refresh-cw" class="icon-xs" aria-hidden="true"></i>Auto-dobór zaznaczonych</button>
+                <button onclick="_excelBulkDeleteSelected()" id="excel-bulk-delete" class="excel-toolbar-btn excel-toolbar-btn--danger" title="Usuń zaznaczone studnie (checkbox)"><i data-lucide="trash-2" class="icon-xs" aria-hidden="true"></i>Usuń zaznaczone</button>
                 <button onclick="openWellNotesForExcelSelection()" class="excel-toolbar-btn" title="Uwagi do zaznaczonej studni"><i data-lucide="file-text" class="icon-xs" aria-hidden="true"></i>Uwagi</button>
                 <button onclick="openExcelShortcutsPopup()" class="excel-toolbar-btn" title="Skróty klawiszowe"><i data-lucide="keyboard" class="icon-xs" aria-hidden="true"></i>Skróty</button>
                 <button onclick="excelToggleFullscreen()" id="excel-fs-btn" class="excel-toolbar-btn" title="Pełny ekran / okno"><i data-lucide="maximize-2" class="icon-xs" aria-hidden="true"></i><span id="excel-fs-btn-label">Pełny</span></button>
@@ -391,8 +386,8 @@ function openExcelTableModal() {
                 <button onclick="closeExcelTableModal()" class="excel-toolbar-btn excel-toolbar-btn--danger" title="Zamknij bez zapisywania" aria-label="Zamknij bez zapisywania"><i data-lucide="x" class="icon-xs" aria-hidden="true"></i></button>
             </div>
         </div>
-        <div id="excel-tabs" style="display:flex;gap:0;padding:0;background:var(--excel-header-bg);border-bottom:1px solid var(--excel-border-subtle);flex-shrink:0;"></div>
-        <div id="excel-table-container" style="flex:1 1 auto;min-height:0;overflow:auto;background:var(--excel-bg);"></div>
+        <div id="excel-tabs" class="excel-tabs-bar"></div>
+        <div id="excel-table-container" class="excel-table-holder"></div>
         </div>
     `;
     // SSoT: Excel używa modalCore.js — overlay tworzony przez showModal, pozycjonowanie dalej via LAYERS

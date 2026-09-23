@@ -321,6 +321,71 @@ body.rury-page > .main:has(#section-builder.active) {
     font-variant-numeric: tabular-nums;
 }
 
+/* Modal długości rury (offerAddItems.js) */
+.modal--pipe-length {
+    max-width: 450px;
+    border-radius: var(--radius);
+    box-shadow:
+        0 20px 25px -5px rgba(var(--black-rgb), 0.1),
+        var(--shadow-md);
+}
+.pipe-length-info {
+    font-size: var(--fs-xl);
+    color: var(--text-muted);
+    margin-bottom: 1.5rem;
+    line-height: 1.5;
+    background: var(--bg-hover);
+    padding: 1rem;
+    border-radius: var(--radius-sm);
+}
+.pipe-length-info strong {
+    color: var(--text-primary);
+    font-size: var(--fs-2xl);
+}
+.pipe-length-stepper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+}
+.pipe-length-input {
+    font-size: var(--fs-8xl);
+    padding: 1rem;
+    width: 140px;
+    text-align: center;
+    font-weight: var(--fw-extrabold);
+    border: 2px solid var(--accent);
+    border-radius: var(--radius);
+    color: var(--accent);
+    background: transparent;
+}
+.pipe-length-hints {
+    margin-top: 1rem;
+    font-size: var(--fs-xl);
+    color: var(--text-muted);
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+}
+.pipe-length-footer {
+    margin-top: 1.5rem;
+    border-top: 1px solid var(--border);
+    padding-top: 1.5rem;
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+}
+.pipe-length-form {
+    margin-bottom: 2rem;
+}
+.pipe-length-label {
+    display: block;
+    font-size: var(--fs-3xl);
+    font-weight: var(--fw-semibold);
+    margin-bottom: 1rem;
+    color: var(--text-primary);
+}
+
 .rury-table tbody tr:not(.offer-cat-header):not(.offer-diam-header) td:first-child {
     text-align: center;
     vertical-align: middle;

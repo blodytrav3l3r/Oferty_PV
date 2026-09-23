@@ -410,7 +410,69 @@ html[data-theme='light'] #excel-table-container tbody tr:focus-within td[data-ce
     color: var(--text-primary) !important;
 }
 
-/* Selekcja i drag na białym tle — mocniejszy wash zamiast slate-100 */
+/* Popup rabatów DN (offerDiscountsPopup.js) — kolory per DN przez --disc-* */
+.disc-popup-desc {
+    color: var(--text-muted);
+    margin: 0 0 0.5rem 0;
+    font-size: var(--fs-sm);
+    line-height: 1.4;
+}
+.disc-inputs-col {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+.disc-input-block {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    flex: 1;
+    min-width: 100px;
+}
+.disc-input-label {
+    font-size: var(--fs-3xs);
+    font-weight: var(--fw-bold);
+    color: var(--disc-accent);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+.disc-input-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 30px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--disc-border);
+    background: rgba(var(--black-rgb), 0.3);
+    overflow: hidden;
+    transition:
+        border-color 0.2s,
+        box-shadow 0.2s;
+}
+.disc-input-wrap:focus-within {
+    border-color: var(--disc-accent);
+    box-shadow: 0 0 10px var(--disc-border);
+}
+.disc-input {
+    min-width: 0;
+    flex: 1;
+    font-size: var(--fs-xl);
+    font-weight: var(--fw-black);
+    color: var(--disc-accent);
+    background: transparent;
+    border: none;
+    outline: none;
+    box-shadow: none;
+    text-align: center;
+}
+.disc-pct {
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-extrabold);
+    color: var(--disc-border);
+    padding-right: 0.4rem;
+    pointer-events: none;
+}
+/* Selekcja i drag na białym tle — wash z tokenów excel */
 html[data-theme='light'] .cell-selected {
     background: var(--excel-cell-selected);
 }

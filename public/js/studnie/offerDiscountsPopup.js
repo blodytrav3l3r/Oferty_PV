@@ -240,8 +240,8 @@ function renderOfferDiscountsPopupContent() {
             -moz-appearance: textfield;
         }
     </style>
-    <p style="color: var(--text-muted); margin: 0 0 0.5rem 0; font-size: var(--fs-sm); line-height: 1.4;">Ustaw procentowe rabaty dla poszczególnych średnic. Zmiany widoczne na żywo.</p>
-    <div style="display: flex; flex-direction: column; gap: 0.35rem;">`;
+    <p class="disc-popup-desc">Ustaw procentowe rabaty dla poszczególnych średnic. Zmiany widoczne na żywo.</p>
+    <div class="disc-inputs-col">`;
 
     let totalOverallNetto = 0;
 
@@ -260,16 +260,15 @@ function renderOfferDiscountsPopupContent() {
     }
 
     const buildInputBlock = (dn, label, type, value, accentColor, borderColor) => `
-        <div style="display: flex; flex-direction: column; gap: 0.15rem; flex: 1; min-width: 100px;">
-            <span style="font-size: var(--fs-3xs); font-weight: var(--fw-bold); color: ${accentColor}; text-transform: uppercase; letter-spacing: 0.4px;">${label}</span>
-            <div style="display: flex; align-items: center; justify-content: center; height: 30px; border-radius: var(--radius-sm); border: 1px solid ${borderColor}; background: rgba(var(--black-rgb), 0.3); overflow: hidden; transition: border-color 0.2s, box-shadow 0.2s;" onfocusin="this.style.borderColor='${accentColor}'; this.style.boxShadow='0 0 10px ${borderColor}'" onfocusout="this.style.borderColor='${borderColor}'; this.style.boxShadow='none'">
-                <input type="number" class="text-center offer-discount-input" 
-                       value="${value}" 
+        <div class="disc-input-block" style="--disc-accent:${accentColor}; --disc-border:${borderColor};">
+            <span class="disc-input-label">${label}</span>
+            <div class="disc-input-wrap">
+                <input type="number" class="text-center offer-discount-input disc-input"
+                       value="${value}"
                        onfocus="this.dataset.oldValue=this.value; this.value='';"
                        onblur="if(this.value===''){this.value=this.dataset.oldValue;}else{handleOfferDiscountChange('${dn}', '${type}', this.value);}"
-                       onkeydown="if(event.key==='Enter') this.blur();"
-                       style="min-width:0; flex:1; font-size: var(--fs-xl); font-weight: var(--fw-black); color: ${accentColor}; background: transparent; border: none; outline: none; box-shadow: none; text-align: center;">
-                <span style="font-size: var(--fs-sm); font-weight: var(--fw-extrabold); color: ${borderColor}; padding-right: 0.4rem; pointer-events: none;">%</span>
+                       onkeydown="if(event.key==='Enter') this.blur();">
+                <span class="disc-pct">%</span>
             </div>
         </div>`;
 

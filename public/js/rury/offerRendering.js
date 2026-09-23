@@ -5,7 +5,7 @@ function renderOfferItems() {
     const _items = getActiveItemsArray();
     const tbody = document.getElementById('offer-items-body');
     if (_items.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="14" class="text-center" style="padding:2rem;color:var(--text-muted)">
+        tbody.innerHTML = `<tr><td colspan="14" class="empty-state">
       Wróć do kroku 2 aby dodać produkty</td></tr>`;
         updateOfferSummary();
         return;
@@ -100,9 +100,8 @@ function renderOfferItems() {
             if (item.pehdType === 'PEHD-4MM') pName += ' <span class="warn-bold">+ PEHD 4mm</span>';
 
             let rowClass = '';
-            let rowStyle = '';
             if (item.autoAdded) {
-                rowStyle = 'background:rgba(var(--warn-rgb), 0.05)';
+                rowClass = 'row-autoadded';
             } else if (is1m) {
                 rowClass = 'row-1m';
             }
@@ -177,7 +176,7 @@ function renderOfferItems() {
                 : '';
             const lockAttr = isLocked ? ' disabled' : '';
 
-            html += `<tr class="${rowClass}" data-uid="${item.uid}" ${rowStyle ? `style="${rowStyle}${orderedRowStyle}"` : `style="${orderedRowStyle}"`}>
+            html += `<tr class="${rowClass}" data-uid="${item.uid}" ${orderedRowStyle ? `style="${orderedRowStyle}"` : ''}>
           ${checkboxCell}
           <td class="rury-col-num" style="text-align:left">${lp++}</td>
           <td style="max-width:400px;text-align:left">${pName}${autoTag}${lengthEditor}</td>

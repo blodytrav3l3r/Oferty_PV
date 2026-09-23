@@ -492,6 +492,89 @@
     scrollbar-width: thin;
     scrollbar-color: rgba(var(--accent-rgb), 0.5) transparent;
 }
+/* Tabela skrótów + legenda (excelShortcuts.js) */
+.excel-shortcuts-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--fs-base);
+}
+.th-l-pad25-bb {
+    text-align: left;
+    padding: 0.25rem 0.5rem;
+    border-bottom: 1px solid var(--excel-border-subtle);
+}
+.sc-key-cell {
+    padding: 0.25rem 0.5rem;
+    white-space: nowrap;
+    vertical-align: top;
+}
+.sc-key-cell kbd {
+    font-family: var(--font-mono, monospace);
+    font-size: var(--fs-sm);
+    background: var(--excel-border-subtle);
+    color: var(--excel-text);
+    padding: 1px 5px;
+    border-radius: var(--radius-2xs);
+}
+.sc-desc-cell {
+    padding: 0.25rem 0.5rem;
+    vertical-align: top;
+    color: var(--excel-text);
+}
+.sc-section-cell {
+    padding: 0.45rem 0.5rem 0.2rem;
+    border-top: 1px solid var(--excel-border-subtle);
+    color: var(--accent-text);
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-bold);
+    letter-spacing: 0.3px;
+}
+.sc-legend {
+    margin: 0.5rem 0 0;
+    padding: 0.5rem;
+    border-top: 1px solid var(--excel-border-subtle);
+}
+.sc-legend-title {
+    margin: 0 0 0.35rem;
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-bold);
+    color: var(--excel-text);
+    letter-spacing: 0.3px;
+}
+.sc-legend-grid {
+    display: grid;
+    grid-template-columns: 16px 1fr;
+    gap: 0.35rem 0.5rem;
+    align-items: start;
+    font-size: var(--fs-xs);
+    color: var(--excel-text);
+    line-height: 1.4;
+}
+.legend-swatch {
+    width: 16px;
+    height: 12px;
+    border-radius: 2px;
+    background: var(--sw-bg);
+    border: 1px solid var(--sw-border);
+    display: inline-block;
+    margin-top: 2px;
+}
+.legend-swatch--sm {
+    width: 14px;
+    height: 10px;
+}
+.sc-legend-note {
+    margin: 0.45rem 0 0;
+    font-size: var(--fs-3xs);
+    color: var(--excel-text-dim);
+    line-height: 1.4;
+}
+.sc-legend-foot {
+    margin: 0;
+    padding: 0.5rem;
+    font-size: var(--fs-xs);
+    color: var(--excel-text-dim);
+}
 
 /* Tryb jasny — legenda skrótów: chipy code na białym wash (zamiast
    niewidzialnego white 0.06), mikrocopy slate na czytelnym.

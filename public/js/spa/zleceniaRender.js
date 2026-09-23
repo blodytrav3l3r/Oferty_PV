@@ -268,7 +268,7 @@ const ZleceniaRender = (() => {
 
         return (
             '<tr>\n' +
-            '<td style="width:40px; text-align:center;">\n' +
+            '<td class="zlecenia-cb-cell">\n' +
             '<input type="checkbox" class="zlecenia-row-cb" data-id="' +
             escJs(o.id) +
             '" ' +
@@ -315,8 +315,8 @@ const ZleceniaRender = (() => {
             '">' +
             renderPrintCounts(o) +
             '</td>\n' +
-            '<td class="text-right">\n' +
-            '<div style="display:flex; gap:0.25rem; justify-content:flex-end;">\n' +
+            '<td class="text-right zlecenia-actions-cell">\n' +
+            '<div>\n' +
             actions +
             '\n</div>\n</td>\n</tr>'
         );

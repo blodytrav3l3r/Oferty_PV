@@ -4013,6 +4013,103 @@ td.excel-tr-selected .excel-sel-wrap > div {
     background: rgba(var(--danger-rgb), 0.2);
     border-color: rgba(var(--danger-rgb), 0.45);
 }
+/* Topbar modala (excelModal.js) — layout z klas */
+#excel-table-overlay .excel-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    padding: 0.45rem 0.8rem;
+    background: var(--excel-bg-alt);
+    border-bottom: 1px solid var(--excel-border-subtle);
+    flex-shrink: 0;
+}
+#excel-table-overlay .excel-topbar-left {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+}
+#excel-table-overlay .excel-topbar-icon {
+    color: var(--success);
+}
+#excel-table-overlay .excel-topbar-title {
+    font-size: var(--fs-base);
+    font-weight: var(--fw-bold);
+    color: var(--excel-text);
+    letter-spacing: 0.3px;
+}
+#excel-table-overlay .excel-count-pill {
+    font-size: var(--fs-2xs);
+    color: var(--excel-text-dim);
+    padding: 0.1rem 0.5rem;
+    background: var(--excel-border-subtle);
+    border-radius: var(--radius-2xs);
+}
+#excel-table-overlay #excel-selection-summary {
+    color: var(--accent-text);
+    max-width: 140px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+#excel-table-overlay .excel-topbar-actions {
+    display: flex;
+    gap: 0.4rem;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    flex: 1 1 320px;
+    min-width: 280px;
+}
+#excel-table-overlay .excel-search-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    flex: 0 0 auto;
+}
+#excel-table-overlay .excel-search-input {
+    background: var(--excel-input-bg);
+    border: 1px solid var(--excel-input-border);
+    border-radius: var(--radius-2xs);
+    padding: 0.25rem 1.4rem 0.25rem 0.4rem;
+    font-size: var(--fs-2xs);
+    color: var(--excel-text);
+    outline: none;
+    width: 220px;
+}
+#excel-table-overlay .excel-search-clear {
+    position: absolute;
+    right: 2px;
+}
+#excel-table-overlay .excel-tabs-bar {
+    display: flex;
+    gap: 0;
+    padding: 0;
+    background: var(--excel-header-bg);
+    border-bottom: 1px solid var(--excel-border-subtle);
+    flex-shrink: 0;
+}
+#excel-table-overlay .excel-table-holder {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+    background: var(--excel-bg);
+}
+#excel-table-overlay .excel-modal-inner {
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    background: var(--excel-bg);
+    border: 1px solid var(--excel-border-subtle);
+    border-radius: var(--radius-2xs);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: var(--excel-shadow);
+    box-sizing: border-box;
+}
 
 /* Fokus — wspólny focus ring dla przycisków Excela */
 #excel-table-overlay button:focus-visible,

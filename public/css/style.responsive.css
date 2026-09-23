@@ -721,6 +721,41 @@
     color: var(--text-muted);
     line-height: 1.45;
 }
+/* Host paska Import/Eksport (toolbar.js) */
+.ie-toolbar-host {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    padding: 0.8rem 1rem;
+    margin-bottom: 0.8rem;
+    background: var(--bg-glass);
+    border: 1px solid var(--border-glass);
+    border-radius: var(--radius-sm);
+}
+.ie-toolbar-title {
+    font-size: var(--fs-base);
+    color: var(--text-muted);
+    font-weight: var(--fw-semibold);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+}
+.ie-hint {
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-medium);
+    color: var(--text-secondary);
+    margin-bottom: 0.4rem;
+}
+.ie-modal-lead {
+    margin: 0;
+}
+.form-input--full {
+    width: 100%;
+}
+.ie-progress-spinner {
+    animation: spin 0.8s linear infinite;
+}
 
 .ie-info-box i[data-lucide],
 .ie-info-box svg {
@@ -1154,6 +1189,11 @@ html[data-theme='light'] .toast-warning {
 
 .row-1m td:first-child {
     border-left: 2px solid var(--highlight-bg);
+}
+
+/* Pozycje dodane automatycznie — subtelny bursztynowy tint */
+.row-autoadded {
+    background: rgba(var(--warn-rgb), 0.05);
 }
 
 /* Toolbar */

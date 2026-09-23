@@ -37,8 +37,8 @@ window.importExportToolbar = /** @type {any} */ ({
         host.dataset.ieInitialized = '1';
 
         host.innerHTML =
-            '<div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;padding:0.8rem 1rem;margin-bottom:0.8rem;background:var(--bg-glass);border:1px solid var(--border-glass);border-radius:var(--radius-sm);">' +
-            '<span style="font-size: var(--fs-base);color:var(--text-muted);font-weight: var(--fw-semibold);text-transform:uppercase;letter-spacing:0.3px;white-space:nowrap;"><i data-lucide="file-up" class="icon-14-mr4"></i>Import / Eksport</span>' +
+            '<div class="ie-toolbar-host">' +
+            '<span class="ie-toolbar-title"><i data-lucide="file-up" class="icon-14-mr4"></i>Import / Eksport</span>' +
             '<button class="btn btn-sm btn-secondary" id="ie-btn-export-xlsx"><i data-lucide="download" class="icon-14"></i>Eksport XLSX (zewn.)</button>' +
             '<button class="btn btn-sm btn-secondary" id="ie-btn-export-json"><i data-lucide="file-down" class="icon-14"></i>Eksport 1:1 (JSON)</button>' +
             '<button class="btn btn-sm btn-secondary" id="ie-btn-import-xlsx"><i data-lucide="upload" class="icon-14"></i>Import XLSX (zewn.)</button>' +
@@ -193,7 +193,7 @@ window.importExportToolbar = /** @type {any} */ ({
         if (candidates.length > 1) {
             if (resultEl) {
                 resultEl.innerHTML =
-                    '<div style="font-size:var(--fs-sm);font-weight:var(--fw-medium);color:var(--text-secondary);margin-bottom:0.4rem;">Znaleziono kilka dokumentów — wybierz właściwy:</div>';
+                    '<div class="ie-hint">Znaleziono kilka dokumentów — wybierz właściwy:</div>';
                 const box = document.createElement('div');
                 box.className = 'ie-candidate-box';
                 for (const c of candidates) {
@@ -355,7 +355,7 @@ window.importExportToolbar = /** @type {any} */ ({
         const titleId = 'ie-export-xlsx-title';
         const title = 'Eksport XLSX (zewn. system)';
         const body =
-            '<p style="margin:0;">Podaj numer dokumentu do wyeksportowania arkusza XLSX:</p>' +
+            '<p class="ie-modal-lead">Podaj numer dokumentu do wyeksportowania arkusza XLSX:</p>' +
             '<div id="ie-' +
             uid +
             '-detected"></div>' +
@@ -363,7 +363,7 @@ window.importExportToolbar = /** @type {any} */ ({
             uid +
             '-number">Numer oferty lub zamówienia</label><input type="text" id="ie-' +
             uid +
-            '-number" placeholder="np. OF/000001/XX/2026 lub ZS/..." class="form-input" style="width:100%"></div>' +
+            '-number" placeholder="np. OF/000001/XX/2026 lub ZS/..." class="form-input form-input--full"></div>' +
             '<div id="ie-' +
             uid +
             '-search-result"></div>';
@@ -393,7 +393,7 @@ window.importExportToolbar = /** @type {any} */ ({
         const titleId = 'ie-export-json-title';
         const title = 'Eksport 1:1 (JSON)';
         const body =
-            '<p style="margin:0;">Podaj numer dokumentu do wyeksportowania pliku JSON:</p>' +
+            '<p class="ie-modal-lead">Podaj numer dokumentu do wyeksportowania pliku JSON:</p>' +
             '<div id="ie-' +
             uid +
             '-detected"></div>' +
@@ -401,7 +401,7 @@ window.importExportToolbar = /** @type {any} */ ({
             uid +
             '-number">Numer oferty lub zamówienia</label><input type="text" id="ie-' +
             uid +
-            '-number" placeholder="np. OF/000001/XX/2026 lub ZS/..." class="form-input" style="width:100%"></div>' +
+            '-number" placeholder="np. OF/000001/XX/2026 lub ZS/..." class="form-input form-input--full"></div>' +
             '<div id="ie-' +
             uid +
             '-search-result"></div>' +
@@ -431,10 +431,10 @@ window.importExportToolbar = /** @type {any} */ ({
         const titleId = 'ie-import-json-title';
         const title = 'Import 1:1 (JSON)';
         const body =
-            '<p style="margin:0;">Wybierz plik JSON wyeksportowany z innego urządzenia:</p>' +
+            '<p class="ie-modal-lead">Wybierz plik JSON wyeksportowany z innego urządzenia:</p>' +
             '<div class="ie-info-box"><i data-lucide="file-check" class="icon-14"></i><span>Automatycznie obsługuje transfer pojedynczego zamówienia oraz pełnej oferty z zamówieniami.</span></div>' +
-            '<div class="form-group"><label class="form-label-sm" for="ie-json-file-input">Plik JSON</label><input type="file" id="ie-json-file-input" accept=".json" class="form-input" style="width:100%"></div>' +
-            '<div id="ie-json-progress" class="ie-detected-badge" style="display:none;"><i data-lucide="loader" class="icon-14" style="animation:spin 0.8s linear infinite;"></i><span>Trwa importowanie danych...</span></div>';
+            '<div class="form-group"><label class="form-label-sm" for="ie-json-file-input">Plik JSON</label><input type="file" id="ie-json-file-input" accept=".json" class="form-input form-input--full"></div>' +
+            '<div id="ie-json-progress" class="ie-detected-badge" style="display:none;"><i data-lucide="loader" class="icon-14 ie-progress-spinner"></i><span>Trwa importowanie danych...</span></div>';
         const footer =
             '<button type="button" class="btn btn-sm btn-secondary" data-ie-cancel>Anuluj</button>' +
             '<button type="button" class="btn btn-sm btn-primary" data-ie-confirm><i data-lucide="upload" class="icon-14"></i>Importuj</button>';
@@ -511,16 +511,16 @@ window.importExportToolbar = /** @type {any} */ ({
         const titleId = 'ie-import-xlsx-title';
         const title = 'Import XLSX (zewn. system)';
         const body =
-            '<p style="margin:0;">Wybierz plik XLSX wyeksportowany z zewnętrznego systemu:</p>' +
+            '<p class="ie-modal-lead">Wybierz plik XLSX wyeksportowany z zewnętrznego systemu:</p>' +
             '<div class="ie-info-box"><i data-lucide="sparkles" class="icon-14"></i><span>Moduł (Rury / Studnie) rozpoznawany automatycznie na podstawie wierszy transportowych TR-* lub indeksów produktów.</span></div>' +
             '<div class="form-group"><label class="form-label-sm" for="ie-' +
             uid +
             '-file-input">Plik XLSX</label><input type="file" id="ie-' +
             uid +
-            '-file-input" accept=".xlsx,.xls" class="form-input" style="width:100%"></div>' +
+            '-file-input" accept=".xlsx,.xls" class="form-input form-input--full"></div>' +
             '<div id="ie-' +
             uid +
-            '-progress" class="ie-detected-badge" style="display:none;"><i data-lucide="loader" class="icon-14" style="animation:spin 0.8s linear infinite;"></i><span>Trwa przetwarzanie arkusza...</span></div>';
+            '-progress" class="ie-detected-badge" style="display:none;"><i data-lucide="loader" class="icon-14 ie-progress-spinner"></i><span>Trwa przetwarzanie arkusza...</span></div>';
         const footer =
             '<button type="button" class="btn btn-sm btn-secondary" data-ie-cancel>Anuluj</button>' +
             '<button type="button" class="btn btn-sm btn-primary" data-ie-confirm><i data-lucide="upload" class="icon-14"></i>Importuj</button>';

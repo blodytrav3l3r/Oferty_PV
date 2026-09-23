@@ -39,30 +39,29 @@ function showPipeLengthModal(productId, editIndex = null) {
         id: 'add-pipe-length-modal',
         titleId: 'pipe-length-title',
         html: `
-    <div class="modal" style="max-width: 450px; border-radius: var(--radius); box-shadow: 0 20px 25px -5px rgba(var(--black-rgb), 0.1);">
-      <div class="modal-header" style="border-bottom: 1px solid var(--border); padding-bottom: 1rem; margin-bottom: 1.5rem;">
+    <div class="modal modal--pipe-length">
+      <div class="modal-header">
         <h3 id="pipe-length-title" class="fs-4xl-bold-primary"><i data-lucide="ruler" aria-hidden="true"></i> ${editIndex !== null ? 'Zmień' : 'Dostosuj'} długość rury</h3>
         <button class="btn-icon" aria-label="Zamknij" onclick="closeModal()"><i data-lucide="x" aria-hidden="true"></i></button>
       </div>
-      <div style="font-size: var(--fs-xl); color: var(--text-muted); margin-bottom: 1.5rem; line-height: 1.5; background: var(--bg-hover); padding: 1rem; border-radius: var(--radius-sm);">
-        Wybrany produkt:<br><strong style="color:var(--text-primary); font-size: var(--fs-2xl);">${escapeHtml(product.name)}</strong>
+      <div class="pipe-length-info">
+        Wybrany produkt:<br><strong>${escapeHtml(product.name)}</strong>
       </div>
-      <div class="form-group" style="text-align: center; margin-bottom: 2rem;">
-        <label class="form-label" style="font-size: var(--fs-3xl); font-weight: var(--fw-semibold); margin-bottom:1rem; color: var(--text-primary);">Wprowadź długość rury (m)</label>
-        <div style="display:flex; justify-content:center; align-items:center; gap:1rem">
-          <button class="btn btn-secondary btn-round-44"  onclick="document.getElementById('pipe-custom-length').stepDown()">-</button>
-          <input class="form-input" id="pipe-custom-length" type="number" step="0.1" min="1" max="${maxL}" value="${currentVal}" 
-            style="font-size: var(--fs-8xl); padding:1rem; width:140px; text-align:center; font-weight: var(--fw-extrabold); border: 2px solid var(--accent); border-radius: var(--radius); color: var(--accent); background: transparent;">
-          <button class="btn btn-secondary btn-round-44"  onclick="document.getElementById('pipe-custom-length').stepUp()">+</button>
+      <div class="form-group text-center pipe-length-form">
+        <label class="form-label pipe-length-label" for="pipe-custom-length">Wprowadź długość rury (m)</label>
+        <div class="pipe-length-stepper">
+          <button class="btn btn-secondary btn-round-44" onclick="document.getElementById('pipe-custom-length').stepDown()" aria-label="Zmniejsz">-</button>
+          <input class="form-input pipe-length-input" id="pipe-custom-length" type="number" step="0.1" min="1" max="${maxL}" value="${currentVal}">
+          <button class="btn btn-secondary btn-round-44" onclick="document.getElementById('pipe-custom-length').stepUp()" aria-label="Zwiększ">+</button>
         </div>
-        <div style="margin-top:1rem; font-size: var(--fs-xl); color:var(--text-muted); display: flex; justify-content: center; gap: 1rem;">
+        <div class="pipe-length-hints">
           <span class="bg-hover-025">Min: <strong>1.0m</strong></span>
           <span class="bg-hover-025">Max: <strong>${maxL}m</strong></span>
         </div>
       </div>
-      <div class="modal-footer" style="margin-top:1.5rem; border-top: 1px solid var(--border); padding-top: 1.5rem; display: flex; justify-content: flex-end; gap: 1rem;">
-        <button class="btn btn-secondary p-075-15" onclick="closeModal()" >Anuluj</button>
-        <button class="btn btn-primary" onclick="confirmPipeLength('${escapeJsStr(productId)}', ${editIndex})" style="padding: 0.75rem 2rem; font-size: var(--fs-2xl); font-weight: var(--fw-semibold); box-shadow: 0 4px 6px -1px var(--shadow-navy);">Zatwierdź <i data-lucide="arrow-right" aria-hidden="true"></i></button>
+      <div class="modal-footer pipe-length-footer">
+        <button class="btn btn-secondary p-075-15" onclick="closeModal()">Anuluj</button>
+        <button class="btn btn-primary p-075-15" onclick="confirmPipeLength('${escapeJsStr(productId)}', ${editIndex})">Zatwierdź <i data-lucide="arrow-right" aria-hidden="true"></i></button>
       </div>
     </div>`
     });

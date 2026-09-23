@@ -155,6 +155,20 @@
     border-collapse: collapse;
     font-size: var(--fs-lg);
 }
+/* Komórka checkboxa + komórka akcji (zleceniaRender.js) */
+.zlecenia-cb-cell {
+    width: 40px;
+    text-align: center;
+}
+.zlecenia-actions-cell > div {
+    display: flex;
+    gap: 0.25rem;
+    justify-content: flex-end;
+}
+.zl-dash {
+    color: var(--text-muted);
+    font-size: var(--fs-base);
+}
 .zlecenia-table th {
     text-align: left;
     padding: 0.7rem 1rem;

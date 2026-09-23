@@ -68,26 +68,26 @@ function openExcelShortcutsPopup() {
             .map(
                 (s) =>
                     '<tr>' +
-                    '<td style="padding:0.25rem 0.5rem;white-space:nowrap;vertical-align:top;">' +
-                    '<kbd style="font-family:monospace;font-size: var(--fs-sm);background:var(--excel-border-subtle);color:var(--excel-text);padding:1px 5px;border-radius: var(--radius-2xs);">' +
+                    '<td class="sc-key-cell">' +
+                    '<kbd>' +
                     escapeHtml(s.keys) +
                     '</kbd></td>' +
-                    '<td style="padding:0.25rem 0.5rem;vertical-align:top;color:var(--excel-text);">' +
+                    '<td class="sc-desc-cell">' +
                     escapeHtml(s.description) +
                     '</td></tr>'
             )
             .join('');
         return (
-            '<tr><td colspan="2" style="padding:0.45rem 0.5rem 0.2rem;border-top:1px solid var(--excel-border-subtle);color:var(--accent-text);font-size: var(--fs-sm);font-weight: var(--fw-bold);letter-spacing:0.3px;">' +
+            '<tr><td colspan="2" class="sc-section-cell">' +
             escapeHtml(group.section) +
             '</td></tr>' +
             itemRows
         );
     });
     const legend =
-        '<div style="margin:0.5rem 0 0;padding:0.5rem;border-top:1px solid var(--excel-border-subtle);">' +
-        '<h4 style="margin:0 0 0.35rem;font-size:var(--fs-sm);font-weight:var(--fw-bold);color:var(--excel-text);letter-spacing:0.3px;">Legenda kolorów — co oznacza</h4>' +
-        '<div style="display:grid;grid-template-columns:16px 1fr;gap:0.35rem 0.5rem;align-items:start;font-size:var(--fs-xs);color:var(--excel-text);line-height:1.4;">' +
+        '<div class="sc-legend">' +
+        '<h4 class="sc-legend-title">Legenda kolorów — co oznacza</h4>' +
+        '<div class="sc-legend-grid">' +
         '<span style="width:16px;height:12px;border-radius:2px;background:rgba(var(--danger-rgb), 0.12);border:1px solid rgba(var(--danger-rgb), 0.3);display:inline-block;margin-top:2px;"></span><span><b style="color:var(--danger-hover);">Błąd — ERROR</b> <span style="color:var(--excel-text-dim);">tło rgba(danger 0.12), czcionka czerwona var(--danger-hover)</span><br><span style="color:var(--excel-text-dim);">Kiedy:</span> <code style="font-size:var(--fs-3xs);background:var(--excel-border-subtle);padding:1px 3px;border-radius:2px;">well.configStatus === \'ERROR\'</code> — twardy błąd walidacji <code style="font-size:var(--fs-3xs);">recalculateWellErrors()</code>:<br>• <code>Błąd zapasu w "…" dla przejścia nr …</code> (zapas dół/góra &lt; wymagany, <code>zapasGora/zapasDol</code> z produktu)<br>• <code>Rzędna włączenia przejścia nr … jest niższa niż rzędna dna</code><br>• <code>Rzędna dna … nie może być ≥ rzędnej włazu</code><br>• kolizja otworu / brak wymaganego elementu. <span style="color:var(--excel-text-dim);">Tooltip na wierszu = pierwszy wpis z <code>well.configErrors</code>.</span></span>' +
         '<span style="width:16px;height:12px;border-radius:2px;background:rgba(var(--warn-rgb), 0.1);border:1px solid rgba(var(--warn-rgb), 0.3);display:inline-block;margin-top:2px;"></span><span><b style="color:var(--warn-hover);">Ostrzeżenie — WARNING</b> <span style="color:var(--excel-text-dim);">tło rgba(warn 0.1), czcionka bursztynowa var(--warn-hover)</span><br><span style="color:var(--excel-text-dim);">Kiedy:</span> <code>configStatus === \'WARNING\'</code> — tylko miękkie notki (brak twardych błędów):<br>• <code>zastosowano luzy minimalne (dół=… góra=…)</code><br>• <code>Zastosowana rozszerzona tolerancja - tryb Ratunkowy</code><br>• <code>brak dopłaty PEHD</code> (wkładka wybrana, <code>doplataPEHD=0</code>)</span>' +
         '<span style="width:16px;height:12px;border-radius:2px;background:rgba(var(--blue-rgb), 0.2);border:1px solid rgba(var(--blue-rgb), 0.3);display:inline-block;margin-top:2px;"></span><span><b style="color:var(--excel-text);">Duplikat nazwy</b> <span style="color:var(--excel-text-dim);">tło rgba(… 0.2) w kolorze DN, nad błędem</span><br><span style="color:var(--excel-text-dim);">Kiedy:</span> dwie studnie mają identyczną <code>name.trim().toLowerCase()</code> — liczone globalnie po wszystkich <code>wells</code>, niezależnie od zakładki. Kolor = kolor DN duplikatu (jeśli duplikat w innym DN — kolor tamtego DN, inaczej kolor bieżącej zakładki):' +
@@ -103,21 +103,21 @@ function openExcelShortcutsPopup() {
         '<span style="width:16px;height:12px;border-radius:2px;background:var(--excel-row-odd);border:1px solid var(--excel-border-subtle);display:inline-block;margin-top:2px;"></span><span><b>Naprzemienne tło</b> <span style="color:var(--excel-text-dim);">var(--excel-row-even) / var(--excel-row-odd)</span><br><span style="color:var(--excel-text-dim);">Kiedy:</span> brak ERROR/WARNING/duplikatu/aktywnego — co drugi wiersz jaśniejszy dla czytelności. Sticky kolumny (Lp, Nazwa, Rzędne, Wys) mają nieprzezroczyste tło <code>_excelStickyCellBg(tint, solidBase)</code>.</span>' +
         '<span style="width:16px;height:12px;border-radius:2px;background:var(--excel-bg);border:1px dashed var(--excel-border);display:inline-block;margin-top:2px;"></span><span><b>Zablokowany (kłódka)</b> <span style="color:var(--excel-text-dim);">ikona <i data-lucide="lock" class="icon-xxs" style="vertical-align:middle;"></i> + disabled</span><br><span style="color:var(--excel-text-dim);">Kiedy:</span> <code>isWellLocked(wIdx)</code> — studnia ma zaakceptowane PZ lub jest w zamówieniu; edycja zablokowana, toast przy próbie.</span>' +
         '</div>' +
-        '<p style="margin:0.45rem 0 0;font-size:var(--fs-3xs);color:var(--excel-text-dim);line-height:1.4;">Kolory liczone w <code>excelTableBody.js:_excelRenderTbody</code> i odświeżane bez re-renderu w <code>_excelRefreshDupColors</code>; statusy z <code>solverValidation.js:recalculateWellErrors()</code> przez polling. Priorytet tła: <b>duplikat &gt; ERROR (0.12) &gt; WARNING (0.1) &gt; aktywny (0.18) &gt; naprzemienny</b>.</p>' +
+        '<p class="sc-legend-note">Kolory liczone w <code>excelTableBody.js:_excelRenderTbody</code> i odświeżane bez re-renderu w <code>_excelRefreshDupColors</code>; statusy z <code>solverValidation.js:recalculateWellErrors()</code> przez polling. Priorytet tła: <b>duplikat &gt; ERROR (0.12) &gt; WARNING (0.1) &gt; aktywny (0.18) &gt; naprzemienny</b>.</p>' +
         '</div>';
     const html =
         '<div class="modal modal--excel-shortcuts">' +
         '<div class="modal-header"><h3>Skróty klawiszowe Excel</h3>' +
         '<button type="button" onclick="this.closest(\'.modal-overlay\').remove()" class="btn-icon" aria-label="Zamknij"><i data-lucide="x" aria-hidden="true"></i></button></div>' +
         '<div class="excel-shortcuts-body">' +
-        '<table style="width:100%;border-collapse:collapse;font-size: var(--fs-base);">' +
+        '<table class="excel-shortcuts-table">' +
         '<thead><tr><th scope="col" class="th-l-pad25-bb">Skrót</th>' +
         '<th scope="col" class="th-l-pad25-bb">Opis</th></tr></thead>' +
         '<tbody>' +
         rows.join('') +
         '</tbody></table>' +
         legend +
-        '<p style="margin:0;padding:0.5rem;font-size: var(--fs-xs);color:var(--excel-text-dim);">Skróty działają, gdy fokus znajduje się w tabeli konfiguracyjnej. Escape najpierw anuluje edycję komórki lub zaznaczenie, a dopiero ponownie zamyka tabelę.</p>' +
+        '<p class="sc-legend-foot">Skróty działają, gdy fokus znajduje się w tabeli konfiguracyjnej. Escape najpierw anuluje edycję komórki lub zaznaczenie, a dopiero ponownie zamyka tabelę.</p>' +
         '</div></div>';
 
     const overlay = window.showModal({
