@@ -236,12 +236,12 @@ function buildOrderModalHtml(orders, offerKey, resolvedType, offerLabel) {
         );
 
         html += `
-                <div class="order-modal-row" style="display:flex; align-items:center; justify-content:space-between; gap:0.75rem; padding:0.85rem 0.8rem; border-radius: var(--radius-sm);">
+                <div class="order-modal-row">
                     <div class="min-w-0">
-                        <div class="btn-open-order" data-order-id="${window.escapeHtml(ord.id)}" data-offer-type="${window.escapeHtml(resolvedType)}" style="font-weight: var(--fw-bold); color:var(--blue-alt); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:260px; cursor:pointer; transition:all 0.2s ease;" title="Kliknij, aby otworzyć zamówienie w trybie edycji" onmouseenter="this.style.color='var(--blue-alt-hover)'; this.style.textDecoration='underline';" onmouseleave="this.style.color='var(--blue-alt)'; this.style.textDecoration='none';">${orderLabel}</div>
-                        <div style="font-size: var(--fs-base); color:var(--text-muted); margin-top:0.25rem;">Utworzono: ${createdAt}${ord.clientNumber ? ` • Nr klienta: ${window.escapeHtml(ord.clientNumber)}` : ''}</div>
+                        <div class="btn-open-order order-link" data-order-id="${window.escapeHtml(ord.id)}" data-offer-type="${window.escapeHtml(resolvedType)}" title="Kliknij, aby otworzyć zamówienie w trybie edycji">${orderLabel}</div>
+                        <div class="text-muted fs-base mt-3">Utworzono: ${createdAt}${ord.clientNumber ? ` • Nr klienta: ${window.escapeHtml(ord.clientNumber)}` : ''}</div>
                     </div>
-                    <div style="display:flex; gap:0.4rem; flex-wrap:wrap; justify-content:flex-end;">
+                    <div class="order-modal-row-actions">
                         <button class="btn btn-sm btn-primary btn-open-order fs-base-035" data-order-id="${window.escapeHtml(ord.id)}" data-offer-type="${window.escapeHtml(resolvedType)}" >Otwórz</button>
                         <button class="btn btn-sm btn-secondary btn-print-order fs-base-035" data-order-id="${window.escapeHtml(ord.id)}" data-offer-id="${window.escapeHtml(offerKey)}" data-offer-type="${window.escapeHtml(resolvedType)}" >Karta</button>
                         <button class="btn btn-sm btn-secondary btn-modal-history-order fs-base-035" data-order-id="${window.escapeHtml(ord.id)}" >Historia</button>

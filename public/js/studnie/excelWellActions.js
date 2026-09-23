@@ -186,20 +186,20 @@ function excelOpenWellParams(wIdx) {
                 isGreyedOut = true;
 
             const currentVal = well[def.key] || '';
-            bodyHtml += `<div style="display:flex;align-items:center;gap:0.2rem;${isGreyedOut ? 'opacity:0.5;' : ''}">`;
+            bodyHtml += `<div class="dn-tile-grid${isGreyedOut ? ' dn-tile-grid--dim' : ''}">`;
             bodyHtml += `<span class="well-param-label" title="${escapeHtmlAttr(def.label)}">${escapeHtml(def.label)}</span>`;
             const cols = def.options.length;
-            bodyHtml += `<div style="display:grid;grid-template-columns:repeat(${cols}, ${TILE_W}px);gap:0.35rem;flex:1;">`;
+            bodyHtml += `<div class="dn-tile-opts" style="grid-template-columns:repeat(${cols}, ${TILE_W}px);">`;
             def.options.forEach(([val, lbl]) => {
                 const active = val === currentVal;
-                bodyHtml += `<button onclick="_excelUpdateWellParam(${wIdx},'${def.key}','${val}')" style="height:34px;border-radius: var(--radius-sm);cursor:pointer;font-size: var(--fs-lg);font-weight:${active ? '800' : '600'};border:1px solid ${active ? 'rgba(var(--accent-rgb), 0.8)' : 'var(--excel-border)'};background:${active ? 'rgba(var(--accent-rgb), 0.3)' : 'var(--excel-border-subtle)'};color:${active ? 'var(--accent-text)' : 'var(--text-secondary)'};transition:all 0.15s ease;display:flex;align-items:center;justify-content:center;${active ? 'box-shadow:0 0 10px rgba(var(--accent-rgb), 0.2);' : ''}" onmouseenter="if(!${active}){this.style.borderColor='rgba(var(--accent-rgb), 0.3)';this.style.background='var(--excel-border)'}" onmouseleave="if(!${active}){this.style.borderColor='var(--excel-border)';this.style.background='var(--excel-border-subtle)'}">${escapeHtml(lbl)}</button>`;
+                bodyHtml += `<button class="dn-tile${active ? ' dn-tile--active' : ''}" onclick="_excelUpdateWellParam(${wIdx},'${def.key}','${val}')">${escapeHtml(lbl)}</button>`;
             });
             bodyHtml += `</div></div>`;
 
             if (def.key === 'malowanieW' && well.malowanieW && well.malowanieW !== 'brak') {
                 bodyHtml += `<div class="well-param-row">`;
                 bodyHtml += `<span class="well-param-label">Nazwa p. wew.</span>`;
-                bodyHtml += `<input type="text" value="${escapeHtmlAttr(well.powlokaNameW || '')}" onclick="this.select()" onchange="_excelUpdateWellParam(${wIdx},'powlokaNameW',this.value);excelRefreshParamsPopup(${wIdx})" placeholder="Nazwa powłoki..." style="flex:1;height:34px;background:var(--excel-input-bg);border:1px solid var(--excel-input-border);color:var(--text-primary);padding:0 0.7rem;font-size: var(--fs-lg);border-radius: var(--radius-sm);">`;
+                bodyHtml += `<input type="text" class="well-param-input" value="${escapeHtmlAttr(well.powlokaNameW || '')}" onclick="this.select()" onchange="_excelUpdateWellParam(${wIdx},'powlokaNameW',this.value);excelRefreshParamsPopup(${wIdx})" placeholder="Nazwa powłoki...">`;
                 bodyHtml += `</div>`;
                 bodyHtml += `<div class="well-param-row">`;
                 bodyHtml += `<span class="well-param-label">Koszt p. wew.</span>`;

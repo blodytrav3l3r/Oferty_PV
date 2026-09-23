@@ -150,6 +150,16 @@
 .text-xs {
     font-size: var(--fs-base);
 }
+/* Skala fs-* dowiązana do tokenów (klasy używane w szablonach JS) */
+.fs-md {
+    font-size: var(--fs-md);
+}
+.fs-3xl {
+    font-size: var(--fs-3xl);
+}
+.fs-4xl {
+    font-size: var(--fs-4xl);
+}
 .text-center {
     text-align: center;
 }
@@ -554,6 +564,12 @@
 }
 .mt-3 {
     margin-top: 0.3rem;
+}
+.min-w-0 {
+    min-width: 0;
+}
+.fs-base {
+    font-size: var(--fs-base);
 }
 .divider-v {
     width: 1px;

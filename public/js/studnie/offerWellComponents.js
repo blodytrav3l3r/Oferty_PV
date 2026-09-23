@@ -400,7 +400,7 @@ function renderComponentSubItems(well, p, item, itemPrzejscia, disc, wellTranspo
                 if (pr._drillingBasePrice > 0 && pr._drillingProd) {
                     const drillPrice = pr._drillingBasePrice * prMult;
                     html += `<tr class="included-row-warn">
-                        <td colspan="3" class="pl-lg">↳ + ${escapeHtml(pr._drillingProd.name)} ${pr._drillingProd.dn || ''}${prBadge}</td>
+                        <td colspan="3" class="pl-lg">↳ + ${escapeHtml(pr._drillingProd.name)} ${escapeHtml(String(pr._drillingProd.dn ?? ''))}${prBadge}</td>
                         <td class="text-right">${fmt(drillPrice)} PLN</td>
                     </tr>`;
                 }

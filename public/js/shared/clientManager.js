@@ -203,16 +203,16 @@ function renderClientsDbList(query) {
     }
 
     const table = document.createElement('table');
-    table.style.cssText = 'width:100%; border-collapse:collapse; font-size: var(--fs-lg);';
+    table.className = 'clients-table';
 
     const thead = document.createElement('thead');
-    thead.innerHTML = `<tr style="border-bottom:2px solid var(--border); color:var(--text-muted); font-size: var(--fs-base); text-transform:uppercase; letter-spacing:0.5px;">
-        <th scope="col" style="padding:0.5rem 0.8rem; text-align:left; font-weight: var(--fw-semibold); width:100px;">Nr klienta</th>
-        <th scope="col" class="th-l-fw600">Firma</th>
-        <th scope="col" style="padding:0.5rem 0.8rem; text-align:left; font-weight: var(--fw-semibold); width:130px;">NIP</th>
-        <th scope="col" class="th-l-fw600">Adres</th>
-        <th scope="col" class="th-l-fw600">Kontakt</th>
-        <th scope="col" style="padding:0.5rem 0.8rem; text-align:center; font-weight: var(--fw-semibold); width:100px;">Akcje</th>
+    thead.innerHTML = `<tr>
+        <th scope="col" style="width:100px;">Nr klienta</th>
+        <th scope="col">Firma</th>
+        <th scope="col" style="width:130px;">NIP</th>
+        <th scope="col">Adres</th>
+        <th scope="col">Kontakt</th>
+        <th scope="col" class="td-center" style="width:100px;">Akcje</th>
     </tr>`;
     table.appendChild(thead);
 
@@ -220,73 +220,58 @@ function renderClientsDbList(query) {
 
     sorted.forEach((c) => {
         const tr = document.createElement('tr');
-        tr.style.cssText =
-            'border-bottom:1px solid var(--border-glass); cursor:pointer; transition:background 0.15s;';
-        tr.onmouseenter = () => {
-            tr.style.background = 'rgba(var(--accent-rgb), 0.05)';
-        };
-        tr.onmouseleave = () => {
-            tr.style.background = 'transparent';
-        };
+        tr.className =
+            editingClientId === c.id ? 'clients-row clients-row--editing' : 'clients-row';
 
         if (editingClientId === c.id) {
-            tr.style.background = 'rgba(var(--accent-rgb), 0.05)';
             const fields = ['clientNumber', 'name', 'nip', 'address', 'contact'];
             fields.forEach((field) => {
                 const td = document.createElement('td');
-                td.style.padding = '0.4rem 0.6rem';
+                td.className = 'td-edit';
                 const input = document.createElement('input');
                 input.type = 'text';
                 input.id = 'edit-client-' + field;
                 input.className = 'form-input form-input-sm';
                 input.value = c[field] || '';
-                input.style.width = '100%';
                 input.onclick = (e) => e.stopPropagation();
                 td.appendChild(input);
                 tr.appendChild(td);
             });
             const actionTd = document.createElement('td');
-            actionTd.style.cssText =
-                'padding:0.4rem 0.6rem; text-align:center; white-space:nowrap;';
-            actionTd.innerHTML = `<button class="btn-icon" onclick="event.stopPropagation(); saveEditedClientInDb('${escapeJsStr(c.id)}')" title="Zapisz" aria-label="Zapisz" style="color:var(--accent); font-size: var(--fs-2xl);"><i data-lucide="save" aria-hidden="true"></i></button>
-                <button class="btn-icon" onclick="event.stopPropagation(); cancelEditClient()" title="Anuluj" aria-label="Anuluj" style="color:var(--text-muted); font-size: var(--fs-lg);"><i data-lucide="x" aria-hidden="true"></i></button>`;
+            actionTd.className = 'td-edit td-actions';
+            actionTd.innerHTML = `<button class="btn-icon btn-icon--accent" onclick="event.stopPropagation(); saveEditedClientInDb('${escapeJsStr(c.id)}')" title="Zapisz" aria-label="Zapisz"><i data-lucide="save" aria-hidden="true"></i></button>
+                <button class="btn-icon btn-icon--muted" onclick="event.stopPropagation(); cancelEditClient()" title="Anuluj" aria-label="Anuluj"><i data-lucide="x" aria-hidden="true"></i></button>`;
             tr.appendChild(actionTd);
         } else {
             const clientNumberTd = document.createElement('td');
-            clientNumberTd.style.cssText =
-                'padding:0.6rem 0.8rem; color:var(--text-muted); font-size: var(--fs-md);';
+            clientNumberTd.className = 'td-muted';
             clientNumberTd.textContent = c.clientNumber || '—';
             tr.appendChild(clientNumberTd);
 
             const nameTd = document.createElement('td');
-            nameTd.style.cssText =
-                'padding:0.6rem 0.8rem; font-weight: var(--fw-semibold); color:var(--text-primary);';
+            nameTd.className = 'td-name';
             nameTd.textContent = c.name;
             tr.appendChild(nameTd);
 
             const nipTd = document.createElement('td');
-            nipTd.style.cssText =
-                'padding:0.6rem 0.8rem; font-family:monospace; font-size: var(--fs-md); color:var(--text-secondary);';
+            nipTd.className = 'td-mono';
             nipTd.textContent = c.nip || '—';
             tr.appendChild(nipTd);
 
             const addrTd = document.createElement('td');
-            addrTd.style.cssText =
-                'padding:0.6rem 0.8rem; color:var(--text-muted); font-size: var(--fs-md);';
+            addrTd.className = 'td-muted';
             addrTd.textContent = c.address || '—';
             tr.appendChild(addrTd);
 
             const contactTd = document.createElement('td');
-            contactTd.style.cssText =
-                'padding:0.6rem 0.8rem; color:var(--text-muted); font-size: var(--fs-md);';
+            contactTd.className = 'td-muted';
             contactTd.textContent = c.contact || '—';
             tr.appendChild(contactTd);
 
             const actionTd = document.createElement('td');
-            actionTd.style.cssText =
-                'padding:0.6rem 0.8rem; text-align:center; white-space:nowrap;';
-            actionTd.innerHTML = `<button class="btn-icon" onclick="event.stopPropagation(); editClientInDb('${escapeJsStr(c.id)}')" title="Edytuj" aria-label="Edytuj" style="color:var(--text-secondary); font-size: var(--fs-lg); opacity:0.8;"><i data-lucide="pencil" aria-hidden="true"></i></button>
-                <button class="btn-icon" onclick="event.stopPropagation(); deleteClientFromDb('${escapeJsStr(c.id)}')" title="Usuń z bazy" aria-label="Usuń z bazy" style="color:var(--danger); font-size: var(--fs-lg); opacity:0.6;" onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='0.6'"><i data-lucide="x" aria-hidden="true"></i></button>`;
+            actionTd.className = 'td-actions';
+            actionTd.innerHTML = `<button class="btn-icon btn-icon--dim" onclick="event.stopPropagation(); editClientInDb('${escapeJsStr(c.id)}')" title="Edytuj" aria-label="Edytuj"><i data-lucide="pencil" aria-hidden="true"></i></button>
+                <button class="btn-icon btn-icon--danger" onclick="event.stopPropagation(); deleteClientFromDb('${escapeJsStr(c.id)}')" title="Usuń z bazy" aria-label="Usuń z bazy"><i data-lucide="x" aria-hidden="true"></i></button>`;
             tr.appendChild(actionTd);
 
             tr.onclick = () => selectClientFromDb(c.id);

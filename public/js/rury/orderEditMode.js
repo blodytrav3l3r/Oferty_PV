@@ -132,19 +132,14 @@ function renderOrderModeBanner(orderData) {
         (k) => changes.items[k].type === 'modified'
     ).length;
     const hasChanges = changeCount > 0 || changes.transportChanged;
-    const borderColor = hasChanges
-        ? 'rgba(var(--danger-rgb), 0.3)'
-        : 'rgba(var(--success-rgb), 0.3)';
-    const bgColor = hasChanges ? 'rgba(var(--danger-rgb), 0.1)' : 'rgba(var(--success-rgb), 0.1)';
-    const textColor = hasChanges ? 'var(--danger-hover)' : 'var(--success-hover)';
-    banner.style.cssText = `border-radius: var(--radius-sm);padding:0.6rem 1rem;margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between;border-width:2px;border-style:solid;border-color:${borderColor};background:${bgColor};`;
+    banner.className = hasChanges
+        ? 'order-banner order-banner--danger'
+        : 'order-banner order-banner--success';
     banner.innerHTML =
-        '<div style="display:flex;align-items:center;gap:0.75rem;">' +
+        '<div class="flex-gap-4">' +
         '<span class="fs-4xl"><i data-lucide="package"></i></span>' +
         '<div>' +
-        '<span style="font-size: var(--fs-md);font-weight: var(--fw-extrabold);color:' +
-        textColor +
-        ';">TRYB ZAMÓWIENIA — ' +
+        '<span class="order-banner-title">TRYB ZAMÓWIENIA — ' +
         escapeHtml(orderData.orderNumber || orderData.offerNumber || orderData.id || '') +
         '</span>' +
         '<div class="fs-xs-muted">' +
@@ -177,19 +172,18 @@ function renderStep2OrderBanner(orderData) {
     const banner = document.createElement('div');
     banner.id = 'step2-order-banner';
     banner.classList.add('badge-ok');
-    banner.style.cssText =
-        'border-radius: var(--radius-sm);padding:0.7rem 1rem;margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;';
+    banner.className = 'order-banner order-banner--success';
     banner.innerHTML =
-        '<div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">' +
-        '<span class="fs-4xl">📦</span>' +
+        '<div class="flex-gap-4">' +
+        '<span class="fs-4xl"><i data-lucide="package"></i></span>' +
         '<span class="color-success fw-700">Dodajesz produkty do istniejącego zamówienia</span>' +
         '<span class="text-muted">|</span>' +
-        '<span style="color:var(--text-muted);font-size: var(--fs-lg);">Zamówienie: <strong class="text-primary">' +
-        escapeHtml(orderData.orderNumber || orderData.offerNumber || orderData.id || '\u2014') +
+        '<span class="text-muted fs-md">Zamówienie: <strong class="text-primary">' +
+        escapeHtml(orderData.orderNumber || orderData.offerNumber || orderData.id || '—') +
         '</strong></span>' +
-        '<span style="color:var(--text-muted);font-size: var(--fs-md);">Po dodaniu produktów kliknij <strong class="text-primary">Dalej</strong> aby przejść do podsumowania.</span>' +
+        '<span class="text-muted fs-md">Po dodaniu produktów kliknij <strong class="text-primary">Dalej</strong> aby przejść do podsumowania.</span>' +
         '</div>' +
-        '<button class="btn btn-sm badge-ok" onclick="goToPhase(5)" style="padding:0.4rem 0.8rem;font-size: var(--fs-base);font-weight: var(--fw-semibold);border-radius: var(--radius-sm);cursor:pointer;">Powrót do zamówienia</button>';
+        '<button class="btn btn-sm badge-ok" onclick="goToPhase(5)">Powrót do zamówienia</button>';
     const step2 = document.getElementById('wizard-step-2');
     if (step2 && step2.firstChild) {
         step2.insertBefore(banner, step2.firstChild);

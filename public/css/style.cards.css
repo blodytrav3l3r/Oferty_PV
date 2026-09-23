@@ -627,6 +627,33 @@
     background: var(--bg-secondary);
     border: 1px solid var(--border);
     box-shadow: var(--shadow-sm);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.85rem 0.8rem;
+    border-radius: var(--radius-sm);
+}
+.order-modal-row-actions {
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+/* Link otwierający zamówienie (kartotekaHelpers.js) */
+.order-link {
+    font-weight: var(--fw-bold);
+    color: var(--blue-alt);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 260px;
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+.order-link:hover {
+    color: var(--blue-alt-hover);
+    text-decoration: underline;
 }
 
 /* ===== Tryb jasny — wiersze zamówień (audyt light L3) ===== */

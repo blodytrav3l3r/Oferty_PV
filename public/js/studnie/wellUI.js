@@ -65,7 +65,7 @@ window.renderWellsListLegacy = window.renderWellsList = function renderWellsList
         if (groupWells.length === 0) return;
 
         const groupTitle = dnGroup === 'styczna' ? 'Studnie Styczne' : `Studnie DN${dnGroup}`;
-        html += `<div style="font-size: var(--fs-xs); color:var(--text-muted); text-transform:uppercase; margin: 0.8rem 0 0.35rem 0.3rem; letter-spacing:0.8px; font-weight: var(--fw-extrabold); opacity:0.7;">${groupTitle}</div>`;
+        html += `<div class="well-group-title">${groupTitle}</div>`;
 
         groupWells.forEach(({ w, i }) => {
             const stats =

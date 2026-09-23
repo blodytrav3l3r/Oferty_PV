@@ -412,21 +412,21 @@ html[data-theme='light'] #excel-table-container tbody tr:focus-within td[data-ce
 
 /* Selekcja i drag na białym tle — mocniejszy wash zamiast slate-100 */
 html[data-theme='light'] .cell-selected {
-    background: #dbeafe;
+    background: var(--excel-cell-selected);
 }
 
 html[data-theme='light'] .drag-preview {
-    background: #e2e8f0;
+    background: var(--excel-row-hover);
 }
 
 /* Dropdowny komórek: twardy slate-800 w bazie — w light białe.
    Prefix html[data-theme] przebija reguły z !important. */
 html[data-theme='light'] #excel-table-container select {
-    background: #ffffff !important;
+    background: var(--excel-input-bg) !important;
     color: var(--text-primary) !important;
     border-color: var(--border);
 }
 html[data-theme='light'] #excel-table-container select option {
-    background: #ffffff;
+    background: var(--excel-input-bg);
     color: var(--text-primary);
 }

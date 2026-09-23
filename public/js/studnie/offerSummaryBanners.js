@@ -17,12 +17,12 @@ function renderOrderBanners(order, orderChanges) {
                 : '— zmieniono transport';
         const orderNum = escapeHtml(order.orderNumber || order.number || '—');
         const offerNum = escapeHtml(order.offerNumber || '—');
-        html += `<div style="display:flex; align-items:center; justify-content:space-between; padding:0.5rem 0.8rem; margin-bottom:0.5rem; background:${hasChanges ? 'rgba(var(--danger-rgb), 0.1)' : 'rgba(var(--success-rgb), 0.1)'}; border:1px solid ${hasChanges ? 'rgba(var(--danger-rgb), 0.3)' : 'rgba(var(--success-rgb), 0.3)'}; border-radius: var(--radius-sm);">
+        html += `<div class="order-banner ${hasChanges ? 'order-banner--danger' : 'order-banner--success'}">
             <div class="flex-gap-4">
                 <span class="fs-3xl"><i data-lucide="package"></i></span>
-                <span style="font-size: var(--fs-base); font-weight: var(--fw-bold); color:${hasChanges ? 'var(--danger-hover)' : 'var(--success-hover)'};">ZAMÓWIENIE ${orderNum} • Oferta ${offerNum} ${statusText}</span>
+                <span class="order-banner-title">ZAMÓWIENIE ${orderNum} • Oferta ${offerNum} ${statusText}</span>
             </div>
-            <button class="btn btn-sm" style="background:rgba(var(--success-rgb), 0.15); border:1px solid rgba(var(--success-rgb), 0.3); color:var(--success-hover); font-size: var(--fs-xs); padding:0.15rem 0.4rem;" onclick="orderEditMode ? saveCurrentOrder() : saveOrderStudnie()"><i data-lucide="package" aria-hidden="true"></i> Zapisz zamówienie</button>
+            <button class="btn btn-sm" onclick="orderEditMode ? saveCurrentOrder() : saveOrderStudnie()"><i data-lucide="package" aria-hidden="true"></i> Zapisz zamówienie</button>
         </div>`;
     }
 

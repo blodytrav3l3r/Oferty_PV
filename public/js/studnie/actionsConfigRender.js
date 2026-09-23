@@ -153,19 +153,19 @@ function renderWellConfig() {
             : `this.style.filter='brightness(1)'; this.style.borderColor='rgba(var(--white-rgb), 0.05)'; this.style.boxShadow='none'; window.unhighlightSvg('cfg', ${index})`;
         html += `<div data-cfg-idx="${index}" class="config-tile" draggable="true" ondragstart="handleCfgDragStart(event)" ondragover="handleCfgDragOver(event)" ondrop="handleCfgDrop(event)" ondragend="handleCfgDragEnd(event)" style="background:${tileBg}; border:1px solid ${isLightTheme ? 'var(--border-glass)' : 'rgba(var(--white-rgb), 0.05)'}; border-left:4px solid ${badge.bg}; border-radius: var(--radius-sm); padding:0.25rem 0.4rem; position:relative; transition:all 0.2s ease; margin-bottom:0.25rem; cursor:grab; ${plStyle}"
                       onmouseenter="if(!${isPlaceholder}){${hoverOn}}" onmouseleave="if(!${isPlaceholder}){${hoverOff}}">
-          <div style="display:flex; align-items:center; justify-content:space-between; gap:1rem;">
-            
-            <div style="display:flex; align-items:center; gap:0.5rem; flex:1; min-width:0;">
-                <div class="cfg-idx-box" style="display:flex; flex-direction:column; gap:0; align-items:center; background:${isLightTheme ? 'var(--bg-tertiary)' : 'rgba(var(--black-rgb), 0.3)'}; padding:2px 4px; border-radius: var(--radius-2xs); min-width:24px;">
-                  <button class="cfg-move-btn" ${!canMoveUp ? 'disabled' : ''} onclick="moveWellComponent(${index}, -1)" title="W górę" aria-label="W górę" style="background:none; border:none; color:var(--text-muted); padding:0; margin:0; height:12px; display:${item.autoAdded ? 'none' : 'flex'}; align-items:center; justify-content:center; cursor:${canMoveUp ? 'pointer' : 'default'};"><i data-lucide="chevron-up" class="icon-xs" aria-hidden="true"></i></button>
-                  <span style="font-size: var(--fs-xs); line-height:1; color:var(--text-primary); font-weight: var(--fw-extrabold); margin:2px 0;">${index + 1}</span>
-                  <button class="cfg-move-btn" ${!canMoveDown ? 'disabled' : ''} onclick="moveWellComponent(${index}, 1)" title="W dół" aria-label="W dół" style="background:none; border:none; color:var(--text-muted); padding:0; margin:0; height:12px; display:${item.autoAdded ? 'none' : 'flex'}; align-items:center; justify-content:center; cursor:${canMoveDown ? 'pointer' : 'default'};"><i data-lucide="chevron-down" class="icon-xs" aria-hidden="true"></i></button>
+          <div class="cfg-row-main">
+
+            <div class="cfg-col-left">
+                <div class="cfg-idx-box">
+                  <button class="cfg-move-btn cfg-move-btn--plain" ${!canMoveUp ? 'disabled' : ''} onclick="moveWellComponent(${index}, -1)" title="W górę" aria-label="W górę" style="display:${item.autoAdded ? 'none' : 'flex'}; align-items:center; justify-content:center; cursor:${canMoveUp ? 'pointer' : 'default'};"><i data-lucide="chevron-up" class="icon-xs" aria-hidden="true"></i></button>
+                  <span class="cfg-idx-num">${index + 1}</span>
+                  <button class="cfg-move-btn cfg-move-btn--plain" ${!canMoveDown ? 'disabled' : ''} onclick="moveWellComponent(${index}, 1)" title="W dół" aria-label="W dół" style="display:${item.autoAdded ? 'none' : 'flex'}; align-items:center; justify-content:center; cursor:${canMoveDown ? 'pointer' : 'default'};"><i data-lucide="chevron-down" class="icon-xs" aria-hidden="true"></i></button>
                 </div>
 
-                <div style="display:flex; flex-direction:column; gap:0.1rem; min-width:0;">
-                  <div style="display:flex; align-items:center; gap:0.4rem; flex-wrap:wrap;">
-                    <span style="background:${badge.bg}; color:var(--white); font-size: var(--fs-3xs); padding:1px 5px; border-radius: var(--radius-2xs); font-weight: var(--fw-black); text-transform:uppercase; letter-spacing:0.5px; opacity:0.9;">${badge.label.split(' ')[1] || badge.label}</span>
-                    <div style="font-weight: var(--fw-bold); color:var(--text-primary); font-size: var(--fs-lg); line-height:1.1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(item.isPsiaBuda ? 'Psia buda' : p.name)}${p.componentType === 'uszczelka' && item.quantity > 1 ? ` (x${item.quantity} szt.)` : p.componentType === 'uszczelka' ? ` (1 szt.)` : ''}</div>
+                <div class="cfg-col-text">
+                  <div class="cfg-title-row">
+                    <span class="cfg-type-badge" style="background:${badge.bg};">${badge.label.split(' ')[1] || badge.label}</span>
+                    <div class="cfg-item-name">${escapeHtml(item.isPsiaBuda ? 'Psia buda' : p.name)}${p.componentType === 'uszczelka' && item.quantity > 1 ? ` (x${item.quantity} szt.)` : p.componentType === 'uszczelka' ? ` (1 szt.)` : ''}</div>
                     ${(() => {
                         let badgesHtml = '';
 
@@ -248,28 +248,28 @@ function renderWellConfig() {
                                 p.componentType === 'dennica')
                         ) {
                             badgesHtml +=
-                                ' <span class="color-accent" style="font-size: var(--fs-3xs); border:1px solid rgba(var(--accent2-rgb), 0.5); padding:1px 4px; border-radius: var(--radius-2xs); background:rgba(var(--accent2-rgb), 0.1); margin-left:4px; font-weight: var(--fw-bold);">NIERDZ.</span>';
+                                ' <span class="color-accent cfg-badge-nierdz">NIERDZ.</span>';
                         }
 
                         return badgesHtml;
                     })()}
                   </div>
-                  <div style="font-size: var(--fs-xs); color:var(--text-muted); opacity:0.6; padding-left:2px; line-height:1;">${escapeHtml(p.id)}${p.height ? ' | H=' + p.height + 'mm' : ''}</div>
+                  <div class="cfg-id-line">${escapeHtml(p.id)}${p.height ? ' | H=' + p.height + 'mm' : ''}</div>
                 </div>
             </div>
 
-            <div style="display:flex; align-items:center; justify-content:flex-end; gap:0.6rem; flex-shrink:0; min-width:340px;">
-              <div style="display:grid; grid-template-columns:36px 65px 60px 48px 120px; gap:0 0.5rem; align-items:center;">
+            <div class="cfg-row-side">
+              <div class="cfg-values-grid">
                 <span class="fs-xs-muted">WAGA:</span>
-                <span class="cfg-weight-val" style="color:${isLightTheme ? 'var(--text-primary)' : 'rgba(var(--white-rgb), 0.8)'}; font-weight: var(--fw-bold); font-size: var(--fs-md); white-space:nowrap; text-align:right;">${p.weight || totalWeight > 0 ? fmtInt(totalWeight) + ' kg' : '—'}</span>
-                
-                <div style="width:60px;"></div>
-                
+                <span class="cfg-weight-val">${p.weight || totalWeight > 0 ? fmtInt(totalWeight) + ' kg' : '—'}</span>
+
+                <div class="cfg-spacer-60"></div>
+
                 <span class="fs-xs-muted">CENA:</span>
-                <span style="font-size: var(--fs-2xl); font-weight: var(--fw-extrabold); color:var(--success); white-space:nowrap; letter-spacing:0.3px; text-align:right; width:100%; display:block; line-height:1;">${fmtInt(totalPrice)} PLN</span>
+                <span class="cfg-price-val">${fmtInt(totalPrice)} PLN</span>
               </div>
-              <div style="width:26px; display:flex; justify-content:center;">
-                <button onclick="removeWellComponent(${index})" title="Usuń" aria-label="Usuń" style="width:26px; height:26px; background:rgba(var(--danger-rgb), 0.05); border:1px solid rgba(var(--danger-rgb), 0.2); border-radius: var(--radius-sm); cursor:pointer; color:var(--danger); display:${item.autoAdded ? 'none' : 'flex'}; align-items:center; justify-content:center; transition:all 0.2s;" onmouseenter="this.style.background='rgba(var(--danger-rgb), 0.15)'; this.style.borderColor='rgba(var(--danger-rgb), 0.5)';" onmouseleave="this.style.background='rgba(var(--danger-rgb), 0.05)'; this.style.borderColor='rgba(var(--danger-rgb), 0.2)';"><i data-lucide="x" class="icon-xs" aria-hidden="true"></i></button>
+              <div class="cfg-remove-cell">
+                <button class="btn-icon btn-icon--danger" onclick="removeWellComponent(${index})" title="Usuń" aria-label="Usuń" style="width:26px; height:26px; display:${item.autoAdded ? 'none' : 'flex'};"><i data-lucide="x" class="icon-xs" aria-hidden="true"></i></button>
               </div>
             </div>
 
