@@ -15,7 +15,8 @@
     /* Text */
     --text-primary: var(--slate-100);
     --text-secondary: var(--slate-400);
-    --text-muted: var(--slate-500);
+    /* muted rozjaśniony dla AA na ciemnych tłach (label 3,73/th 3,24 → ≥4,5; faza1-inwentaryzacja §5). */
+    --text-muted: #8a9cae;
     --text-heading: var(--slate-50);
 
     /* Borders */
@@ -24,7 +25,8 @@
     /* Włosowe dividery — ciemna mgiełka na dark, szarość w light. */
     --border-subtle: rgba(var(--white-rgb), 0.05);
 
-    /* Accent — indigo */
+    /* Accent — indigo (wartość zablokowana kontraktem print DOCX_COLORS;
+       biały tekst na nim 4,47:1 — znany wyjątek, large text ≥3:1 PASS). */
     --accent: #6366f1;
     --accent-hover: #818cf8;
     --accent2: #8b5cf6;
@@ -37,6 +39,8 @@
     /* Głębszy koniec gradientu akcentu (np. .well-ctrl-btn--primary);
        w light nadpisany ciemniejszym wariantem tej samej rodziny. */
     --accent-strong: #4f46e5;
+    /* Focus — widoczny ring w obu motywach (P0 GATE focus token, == accent w obu). */
+    --focus-ring: var(--accent);
 
     /* Status — success */
     --success: #10b981;
@@ -61,7 +65,7 @@
     --warn-hover: #fbbf24;
     --warn-bg: #2d1a08;
     --warn-border: #5a3010;
-    --warn-strong: #996600;
+    --warn-strong: #8a5c00;
     --warn-bg-soft: #fff3e0;
     --warn-bg-light: #fffbeb;
 
@@ -431,7 +435,7 @@
     outline: none;
 }
 *:focus-visible {
-    outline: 2px solid var(--accent);
+    outline: 2px solid var(--focus-ring);
     outline-offset: 2px;
 }
 
@@ -1163,7 +1167,7 @@ body::before {
 }
 
 /* Utility semantic colors for JS dynamic styling */
-/* Przyciski */
+/* Przyciski — ujednolicony system P1 (Geometry Lock, subtle hover/active, stany kompletne) */
 .btn {
     display: inline-flex;
     align-items: center;
@@ -1173,14 +1177,23 @@ body::before {
     font:
         var(--fw-medium) var(--fs-md) 'Inter',
         sans-serif;
-    border: none;
+    border: 1px solid transparent;
     cursor: pointer;
     transition:
-        background-color 0.25s,
-        border-color 0.25s,
-        box-shadow 0.25s,
-        transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        background-color 0.15s ease-in-out,
+        border-color 0.15s ease-in-out,
+        box-shadow 0.15s ease-in-out,
+        color 0.15s ease-in-out;
     text-decoration: none;
+    user-select: none;
+}
+
+.btn:hover {
+    transition-duration: 0.1s;
+}
+
+.btn:active {
+    transform: translateY(1px);
 }
 
 .btn:disabled,
@@ -1189,52 +1202,110 @@ body::before {
     cursor: not-allowed;
     filter: grayscale(1);
     pointer-events: none;
+    transform: none;
+    box-shadow: none;
 }
 
 .btn svg {
     width: 16px;
     height: 16px;
+    flex-shrink: 0;
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    background: var(--accent);
     color: var(--white);
-    box-shadow: 0 4px 15px var(--shadow-navy);
+    border-color: var(--accent);
+    box-shadow: var(--shadow-sm);
 }
 
 .btn-primary:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 6px 20px var(--shadow-navy);
+    background: var(--accent-hover);
+    border-color: var(--accent-hover);
+    box-shadow: var(--shadow-md);
+}
+
+.btn-primary:active {
+    background: var(--accent-strong);
+    border-color: var(--accent-strong);
 }
 
 .btn-secondary {
-    background: var(--bg-glass);
-    color: var(--text-secondary);
-    border: 1px solid var(--border-glass);
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border: 1px solid var(--border);
 }
 
 .btn-secondary:hover {
     color: var(--text-primary);
-    border-color: var(--bg-tertiary);
+    border-color: var(--accent-border-medium);
+    background: var(--bg-hover);
+}
+
+.btn-secondary:active {
     background: var(--bg-tertiary);
 }
 
 .btn-danger {
     background: var(--danger-bg);
-    color: var(--danger);
+    color: var(--danger-hover);
+    border: 1px solid var(--danger-border);
 }
 
 .btn-danger:hover {
+    background: var(--danger-bg-hover);
+    border-color: var(--danger);
+    color: var(--danger-hover);
+}
+
+.btn-danger:active {
     background: var(--danger-bg);
 }
 
 .btn-success {
     background: var(--success-bg);
-    color: var(--success);
+    color: var(--success-hover);
+    border: 1px solid var(--success-border);
 }
 
 .btn-success:hover {
+    background: var(--success-bg-hover);
+    border-color: var(--success);
+    color: var(--success-hover);
+}
+
+.btn-success:active {
     background: var(--success-bg);
+}
+
+.btn-warn,
+.btn-warning {
+    background: var(--warn-bg);
+    color: var(--warn-hover);
+    border: 1px solid var(--warn-border);
+}
+
+.btn-warn:hover,
+.btn-warning:hover {
+    background: var(--warn-bg);
+    border-color: var(--warn);
+    color: var(--warn-hover);
+}
+
+.btn-ghost {
+    background: transparent;
+    color: var(--text-secondary);
+    border: 1px solid transparent;
+}
+
+.btn-ghost:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+    border-color: var(--border-subtle);
+}
+
+.btn-ghost:active {
+    background: var(--bg-tertiary);
 }
 
 #section-pricelist .toolbar .btn,
@@ -1274,22 +1345,41 @@ button.btn-order-save:hover {
 }
 
 .btn-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     padding: 0.4rem;
     border-radius: var(--radius-sm);
-    background: var(--bg-glass);
-    border: 1px solid var(--border-glass);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
     color: var(--text-secondary);
     cursor: pointer;
     transition:
-        background-color 0.15s,
-        border-color 0.15s,
-        box-shadow 0.15s,
-        transform 0.15s;
+        background-color 0.15s ease-in-out,
+        border-color 0.15s ease-in-out,
+        box-shadow 0.15s ease-in-out,
+        color 0.15s ease-in-out;
+    text-decoration: none;
+    line-height: 1;
 }
 
 .btn-icon:hover {
     color: var(--text-primary);
+    background: var(--bg-hover);
+    border-color: var(--accent-border-medium);
+}
+
+.btn-icon:active {
     background: var(--bg-tertiary);
+    transform: translateY(1px);
+}
+
+.btn-icon:disabled,
+.btn-icon.disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    pointer-events: none;
+    transform: none;
 }
 
 .btn-icon:focus-visible {
@@ -1378,24 +1468,32 @@ button.btn-order-save:hover {
 .form-textarea {
     width: 100%;
     padding: 0.55rem 0.8rem;
-    background: var(--bg-tertiary);
-    border: 1px solid var(--border-glass);
+    background: var(--bg-input);
+    border: 1px solid var(--border);
     border-radius: var(--radius-sm);
     color: var(--text-primary);
     font:
         var(--fw-normal) var(--fs-lg) 'Inter',
         sans-serif;
     transition:
-        border-color 0.25s,
-        box-shadow 0.25s;
+        border-color 0.15s ease-in-out,
+        box-shadow 0.15s ease-in-out,
+        background-color 0.15s ease-in-out;
     outline: none;
+    box-sizing: border-box;
+}
+
+.form-input:hover,
+.form-select:hover,
+.form-textarea:hover {
+    border-color: var(--accent-border-medium);
 }
 
 .form-input:focus,
 .form-select:focus,
 .form-textarea:focus {
     border-color: var(--accent);
-    box-shadow: 0 0 0 3px var(--shadow-navy);
+    box-shadow: 0 0 0 3px var(--accent-bg);
 }
 
 .form-input:focus-visible,
@@ -1405,7 +1503,17 @@ button.btn-order-save:hover {
     outline-offset: 0;
 }
 
-.form-input::placeholder {
+.form-input:disabled,
+.form-select:disabled,
+.form-textarea:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: var(--bg-tertiary);
+    border-color: var(--border-subtle);
+}
+
+.form-input::placeholder,
+.form-textarea::placeholder {
     color: var(--text-muted);
 }
 
@@ -1488,7 +1596,7 @@ thead th {
     text-transform: uppercase;
     letter-spacing: 0.5px;
     background: var(--bg-tertiary);
-    border-bottom: 1px solid var(--border-glass);
+    border-bottom: 1px solid var(--border);
     position: sticky;
     top: 0;
     z-index: 5;
@@ -1497,13 +1605,14 @@ thead th {
 
 tbody td {
     padding: 0.2rem 0.4rem;
-    border-bottom: 1px solid var(--bg-tertiary);
+    border-bottom: 1px solid var(--border-subtle);
     vertical-align: middle;
     font-size: var(--fs-base);
+    color: var(--text-primary);
 }
 
 tbody tr {
-    transition: background-color 0.25s;
+    transition: background-color 0.15s ease-in-out;
 }
 
 tbody tr:hover {
@@ -1636,7 +1745,7 @@ tbody tr:hover {
 
 .edit-input {
     background: var(--bg-input);
-    border: 1px solid var(--border-glass);
+    border: 1px solid var(--border);
     border-radius: var(--radius-sm);
     padding: 0.35rem 0.55rem;
     color: var(--text-primary);
@@ -1645,20 +1754,28 @@ tbody tr:hover {
         sans-serif;
     width: 100%;
     outline: none;
+    box-sizing: border-box;
     transition:
-        border-color 0.2s,
-        box-shadow 0.2s,
-        background 0.2s;
+        border-color 0.15s ease-in-out,
+        box-shadow 0.15s ease-in-out,
+        background-color 0.15s ease-in-out;
 }
 
 .edit-input:hover {
-    border-color: var(--accent-border-dim);
+    border-color: var(--accent-border-medium);
 }
 
 .edit-input:focus {
     border-color: var(--accent);
+    background: var(--bg-input);
+    box-shadow: 0 0 0 2px var(--accent-bg);
+}
+
+.edit-input:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
     background: var(--bg-tertiary);
-    box-shadow: 0 0 0 3px var(--accent-bg);
+    border-color: var(--border-subtle);
 }
 
 .edit-input::placeholder {
@@ -1771,12 +1888,12 @@ input[type='number'] {
     left: 0;
     right: 0;
     background: var(--bg-secondary);
-    border: 1px solid var(--border-glass);
+    border: 1px solid var(--border);
     border-radius: var(--radius-sm);
     max-height: 250px;
     overflow-y: auto;
-    z-index: var(--z-sticky-dropdown);
-    box-shadow: var(--shadow);
+    z-index: var(--z-dropdown);
+    box-shadow: var(--shadow-lg);
     display: none;
 }
 
@@ -1787,11 +1904,16 @@ input[type='number'] {
 .product-dropdown-item {
     padding: 0.5rem 0.8rem;
     cursor: pointer;
-    transition: background-color 0.25s;
+    transition: background-color 0.15s ease-in-out;
     font-size: var(--fs-md);
     display: flex;
     justify-content: space-between;
-    border-bottom: 1px solid var(--bg-tertiary);
+    border-bottom: 1px solid var(--border-subtle);
+    color: var(--text-primary);
+}
+
+.product-dropdown-item:last-child {
+    border-bottom: none;
 }
 
 .product-dropdown-item:hover {
@@ -1799,8 +1921,8 @@ input[type='number'] {
 }
 
 .product-dropdown-item .price {
-    color: var(--accent-hover);
-    font-weight: var(--fw-semibold);
+    color: var(--success-hover);
+    font-weight: var(--fw-bold);
 }
 
 /* Katalog produktów */
@@ -2074,6 +2196,8 @@ html[data-theme='light'] {
     /* Tekst */
     --text-primary: #0f172a;
     --text-secondary: #475569;
+    /* muted przyciemniony dla AA na jasnych tłach (th 4,08 → ≥4,5; faza1-inwentaryzacja §5). */
+    --text-muted: #52616f;
     --text-heading: #0f172a;
 
     /* Bordury — neutralna szarość, jeden stopień ciemniejsza od tła */
@@ -2251,10 +2375,28 @@ html[data-theme='light'] .nav-tile--cennik {
    Vivid --danger/--success na pastelach nie przechodzą kontrastu. */
 html[data-theme='light'] .btn-danger {
     color: var(--danger-strong);
+    border-color: var(--danger-border);
+}
+
+html[data-theme='light'] .btn-danger:hover {
+    color: var(--danger-strong);
+    border-color: var(--danger);
 }
 
 html[data-theme='light'] .btn-success {
     color: var(--success-strong);
+    border-color: var(--success-border);
+}
+
+html[data-theme='light'] .btn-success:hover {
+    color: var(--success-strong);
+    border-color: var(--success);
+}
+
+html[data-theme='light'] .btn-warn,
+html[data-theme='light'] .btn-warning {
+    color: var(--warn-strong);
+    border-color: var(--warn-border);
 }
 
 html[data-theme='light'] button.btn-order-save {
@@ -2274,13 +2416,19 @@ html[data-theme='light'] .header-logout:hover {
     border-color: var(--border);
 }
 
-/* Primary CTA: gradient accent→accent2 z białym tekstem ma 4.47:1,
-   pod normą AA — w light ciemniejszy gradient tej samej rodziny. */
+/* Primary CTA: jednolity akcent z białym tekstem (WCAG 6.29:1) */
 html[data-theme='light'] .btn-primary,
 html[data-theme='light'] .kartoteka-filter-bar .ka-type-filter-btn.active,
 html[data-theme='light'] .kartoteka-filter-bar .ka-filter-btn.active,
 html[data-theme='light'] .kartoteka-filter-bar .ka-date-preset-btn.active {
-    background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--white);
+}
+
+html[data-theme='light'] .btn-primary:hover {
+    background: var(--accent-hover);
+    border-color: var(--accent-hover);
 }
 
 /* Tryb jasny — klasy tekstowe i badge: vivid pastele nie przechodzą

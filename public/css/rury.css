@@ -17,7 +17,7 @@ body.rury-page > .main:has(#section-builder.active) {
 /* ── Karty ── */
 .rury-card {
     background: var(--bg-card);
-    border: 1px solid var(--border-glass);
+    border: 1px solid var(--border);
     border-radius: var(--radius-md);
     padding: 1.2rem 1.5rem;
     box-shadow: var(--shadow-lg);
@@ -39,7 +39,7 @@ body.rury-page > .main:has(#section-builder.active) {
     gap: 1rem;
     margin-bottom: 0.8rem;
     padding-bottom: 0.8rem;
-    border-bottom: 1px solid var(--border-glass);
+    border-bottom: 1px solid var(--border);
 }
 
 .rury-card-title {
@@ -103,7 +103,7 @@ body.rury-page > .main:has(#section-builder.active) {
     width: 100%;
     padding: 0.45rem 0.65rem;
     background: var(--bg-input);
-    border: 1px solid var(--border-glass);
+    border: 1px solid var(--border);
     border-radius: var(--radius-sm);
     color: var(--text-primary);
     font:
@@ -127,7 +127,7 @@ body.rury-page > .main:has(#section-builder.active) {
     width: 100%;
     padding: 0.45rem 0.65rem;
     background: var(--bg-input);
-    border: 1px solid var(--border-glass);
+    border: 1px solid var(--border);
     border-radius: var(--radius-sm);
     color: var(--text-primary);
     font:
@@ -154,32 +154,35 @@ body.rury-page > .main:has(#section-builder.active) {
 
 .rury-section-btn {
     padding: 0.45rem 1rem;
-    border: 1px solid var(--border-glass);
+    border: 1px solid var(--border);
     border-radius: var(--radius-sm);
-    background: var(--bg-tile);
-    color: var(--text-muted);
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
     font:
         var(--fw-semibold) var(--fs-md) 'Inter',
         sans-serif;
     cursor: pointer;
     transition:
-        border-color 0.25s,
-        color 0.25s;
+        background-color 0.15s ease-in-out,
+        border-color 0.15s ease-in-out,
+        color 0.15s ease-in-out;
     display: flex;
     align-items: center;
     gap: 0.4rem;
+    user-select: none;
 }
 
 .rury-section-btn:hover {
-    border-color: var(--bg-tertiary-alt);
-    color: var(--text-secondary);
+    background: var(--bg-hover);
+    border-color: var(--accent-border-medium);
+    color: var(--text-primary);
 }
 
 .rury-section-btn.active {
-    background: var(--bg-tab-active);
-    border-color: var(--accent-border-medium);
-    color: var(--accent-text-light);
-    box-shadow: 0 0 12px var(--bg-active-deep);
+    background: var(--accent-bg);
+    border-color: var(--accent);
+    color: var(--accent-text);
+    box-shadow: var(--shadow-sm);
 }
 
 /* ── Tabela ofert (wzorowana na .well-config-table) ── */
@@ -210,8 +213,8 @@ body.rury-page > .main:has(#section-builder.active) {
     text-transform: uppercase;
     letter-spacing: 0.5px;
     background: var(--bg-tertiary);
-    border-bottom: 1px solid var(--border-glass);
-    border-right: 1px solid var(--border-glass);
+    border-bottom: 1px solid var(--border);
+    border-right: 1px solid var(--border);
     position: sticky;
     top: var(--header-h);
     z-index: var(--z-sticky-dropdown);
@@ -256,7 +259,7 @@ body.rury-page > .main:has(#section-builder.active) {
     font-size: var(--fs-base);
     padding: 2px 4px;
     text-align: center;
-    border: 1px solid var(--border-glass);
+    border: 1px solid var(--border);
     border-radius: var(--radius-2xs);
     background: rgba(var(--warn-rgb), 0.05);
     color: var(--warn);
@@ -337,19 +340,29 @@ body.rury-page > .main:has(#section-builder.active) {
     white-space: nowrap;
     border-radius: var(--radius-2xs);
     font-weight: var(--fw-semibold);
-    transition: all 0.2s ease;
+    transition:
+        background-color 0.15s ease-in-out,
+        color 0.15s ease-in-out,
+        border-color 0.15s ease-in-out;
+    cursor: pointer;
+    user-select: none;
 }
 .rury-table .pehd-btn-active {
     background: var(--warn);
     color: var(--slate-950);
-    border: none;
+    border: 1px solid var(--warn);
     font-weight: var(--fw-bold);
-    box-shadow: 0 0 12px rgba(var(--warn-rgb), 0.5);
+    box-shadow: 0 0 10px rgba(var(--warn-rgb), 0.3);
 }
 .rury-table .pehd-btn-inactive {
-    background: var(--bg-hover);
+    background: var(--bg-secondary);
     color: var(--text-muted);
     border: 1px solid var(--border);
+}
+.rury-table .pehd-btn-inactive:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+    border-color: var(--accent-border-medium);
 }
 
 .rury-table .length-editor {
@@ -398,7 +411,7 @@ body.rury-page > .main:has(#section-builder.active) {
 
 /* Nagłówki kategorii w tabeli */
 .rury-row-category td {
-    background: linear-gradient(90deg, var(--bg-hover), var(--nav-glow-custom));
+    background: var(--bg-hover);
     font-weight: var(--fw-bold);
     font-size: var(--fs-base);
     padding: 0.2rem 0.5rem !important;
@@ -409,7 +422,7 @@ body.rury-page > .main:has(#section-builder.active) {
 }
 
 .rury-row-category:hover {
-    background: linear-gradient(90deg, var(--bg-hover), var(--nav-glow-custom)) !important;
+    background: var(--bg-hover) !important;
 }
 
 .rury-row-diameter td {
@@ -458,7 +471,7 @@ body.rury-page > .main:has(#section-builder.active) {
     position: sticky;
     bottom: 0;
     background: var(--bg-card, var(--bg-secondary));
-    border-top: 1px solid var(--border-glass);
+    border-top: 1px solid var(--border);
     margin: 0;
     width: 100%;
     padding: 1.2rem 1.5rem;
@@ -477,8 +490,8 @@ body.rury-page > .main:has(#section-builder.active) {
 }
 
 .rury-summary-card {
-    background: var(--bg-glass);
-    border: 1px solid var(--border-glass);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
     border-radius: var(--radius-sm);
     padding: 1rem;
     height: 100%;
@@ -488,8 +501,8 @@ body.rury-page > .main:has(#section-builder.active) {
 }
 
 .rury-summary-card.has-borders {
-    border-left: 1px solid var(--border-glass);
-    border-right: 1px solid var(--border-glass);
+    border-left: 1px solid var(--border);
+    border-right: 1px solid var(--border);
 }
 
 .rury-summary-label {
@@ -540,7 +553,7 @@ body.rury-page > .main:has(#section-builder.active) {
     left: 0;
     right: 0;
     background: var(--bg-card, var(--bg-secondary));
-    border-top: 1px solid var(--border-glass);
+    border-top: 1px solid var(--border);
     padding: 0.8rem 2rem;
     padding-bottom: calc(0.8rem + env(safe-area-inset-bottom, 0px));
     z-index: var(--z-header);
@@ -887,7 +900,7 @@ body.rury-page > .main:has(#section-builder.active) {
     right: 0;
     z-index: var(--z-header);
     background: var(--bg-card, var(--bg-secondary));
-    border-top: 1px solid var(--border-glass);
+    border-top: 1px solid var(--border);
     border-bottom: 1px solid transparent;
     padding: 0.8rem 1.5rem;
     padding-bottom: calc(0.8rem + env(safe-area-inset-bottom, 0px));
@@ -1082,25 +1095,26 @@ body.rury-page > .main:has(#section-builder.active) {
     font:
         var(--fw-semibold) var(--fs-base) 'Inter',
         sans-serif;
-    border: 1px solid var(--border-glass);
+    border: 1px solid var(--danger-border);
     border-radius: var(--radius-2xs);
-    background: rgba(var(--danger-rgb), 0.1);
-    color: rgba(var(--danger-rgb), 0.8);
+    background: var(--danger-bg);
+    color: var(--danger-hover);
     cursor: pointer;
     transition:
-        background-color 0.2s,
-        color 0.2s,
-        border-color 0.2s;
+        background-color 0.15s ease-in-out,
+        color 0.15s ease-in-out,
+        border-color 0.15s ease-in-out;
     line-height: 1.4;
+    user-select: none;
 }
 .zt-toggle-btn.active {
-    background: rgba(var(--success-rgb), 0.2);
-    color: var(--success);
-    border-color: rgba(var(--success-rgb), 0.5);
+    background: var(--success-bg);
+    color: var(--success-hover);
+    border-color: var(--success-border);
 }
 .zt-toggle-btn:hover:not(.active) {
-    background: rgba(var(--danger-rgb), 0.2);
-    border-color: rgba(var(--danger-rgb), 0.3);
+    background: var(--danger-bg-hover);
+    border-color: var(--danger);
 }
 
 /* Checkbox w ofercie */

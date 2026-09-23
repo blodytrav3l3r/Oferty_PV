@@ -2,26 +2,26 @@
 .modern-offer-card {
     position: relative;
     background: var(--bg-card);
-    border: 1px solid rgba(var(--accent-rgb), 0.15);
+    border: 1px solid var(--border);
     border-radius: var(--radius);
     padding: 0;
     margin-bottom: 0.7rem;
     overflow: hidden;
     transition:
-        border-color 0.2s ease,
-        box-shadow 0.2s ease;
+        border-color 0.15s ease-in-out,
+        background-color 0.15s ease-in-out,
+        box-shadow 0.15s ease-in-out;
     box-shadow: var(--shadow-sm);
 }
 
 .modern-offer-card:hover {
-    border-color: rgba(var(--accent-rgb), 0.3);
-    box-shadow:
-        0 8px 16px rgba(var(--accent-rgb), 0.1),
-        0 2px 4px rgba(var(--black-rgb), 0.1);
+    border-color: var(--accent-border-medium);
+    background: var(--bg-hover);
+    box-shadow: var(--shadow-md);
 }
 
 .modern-offer-card:hover .offer-icon-wrapper {
-    box-shadow: 0 3px 8px rgba(var(--accent-rgb), 0.2);
+    box-shadow: var(--shadow-sm);
 }
 
 .offer-status-indicator {
@@ -31,15 +31,14 @@
     bottom: 0;
     width: 3px;
     background: var(--text-muted);
-    transition: background 0.3s ease;
 }
 
 .offer-status-indicator.has-order {
-    background: linear-gradient(180deg, var(--success) 0%, var(--success-border) 100%);
+    background: var(--success);
 }
 
 .offer-status-indicator.no-order {
-    background: linear-gradient(180deg, var(--text-muted) 0%, var(--text-muted) 100%);
+    background: var(--text-muted);
 }
 
 .connection-dot {
@@ -97,12 +96,8 @@
     width: 36px;
     height: 36px;
     border-radius: var(--radius-sm);
-    background: linear-gradient(
-        135deg,
-        rgba(var(--accent-rgb), 0.15) 0%,
-        rgba(var(--accent2-rgb), 0.1) 100%
-    );
-    border: 1px solid rgba(var(--accent-rgb), 0.2);
+    background: var(--accent-bg);
+    border: 1px solid var(--accent-border-dim);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -354,24 +349,33 @@
     width: 34px;
     height: 34px;
     border-radius: var(--radius-sm);
-    border: none;
-    background: rgba(var(--accent-rgb), 0.1);
-    border: 1px solid rgba(var(--accent-rgb), 0.15);
-    color: var(--accent-text);
+    border: 1px solid var(--border);
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     transition:
-        background-color 0.15s,
-        border-color 0.15s,
-        box-shadow 0.15s;
+        background-color 0.15s ease-in-out,
+        border-color 0.15s ease-in-out,
+        box-shadow 0.15s ease-in-out,
+        color 0.15s ease-in-out;
     text-decoration: none;
     flex-shrink: 0;
+    user-select: none;
 }
 
 .action-btn:hover {
-    box-shadow: 0 3px 8px rgba(var(--accent-rgb), 0.2);
+    color: var(--text-primary);
+    background: var(--bg-hover);
+    border-color: var(--accent-border-medium);
+    box-shadow: var(--shadow-sm);
+}
+
+.action-btn:active {
+    transform: translateY(1px);
+    background: var(--bg-tertiary);
 }
 
 .action-btn:focus-visible {
@@ -383,40 +387,57 @@
     opacity: 0.4;
     cursor: not-allowed;
     transform: none;
+    pointer-events: none;
 }
 
 .action-btn.primary {
-    background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
-    border-color: transparent;
+    background: var(--accent);
+    border-color: var(--accent);
     color: var(--white);
-    box-shadow: 0 2px 6px rgba(var(--accent-rgb), 0.3);
+    box-shadow: var(--shadow-sm);
 }
 
 .action-btn.primary:hover {
-    box-shadow: 0 3px 10px rgba(var(--accent-rgb), 0.3);
+    background: var(--accent-hover);
+    border-color: var(--accent-hover);
+    box-shadow: var(--shadow-md);
+}
+
+.action-btn.primary:active {
+    background: var(--accent-strong);
+    border-color: var(--accent-strong);
 }
 
 .action-btn.secondary {
-    background: rgba(var(--accent-rgb), 0.1);
-    border-color: rgba(var(--accent-rgb), 0.2);
-    color: var(--accent-text);
+    background: var(--bg-secondary);
+    border-color: var(--border);
+    color: var(--text-secondary);
 }
 
 .action-btn.secondary:hover {
-    background: rgba(var(--accent-rgb), 0.15);
-    border-color: rgba(var(--accent-rgb), 0.3);
+    background: var(--bg-hover);
+    border-color: var(--accent-border-medium);
+    color: var(--text-primary);
+}
+
+.action-btn.secondary:active {
+    background: var(--bg-tertiary);
 }
 
 .action-btn.success {
     background: var(--success-bg);
-    border-color: rgba(var(--success-rgb), 0.3);
-    color: var(--success);
+    border-color: var(--success-border);
+    color: var(--success-hover);
 }
 
 .action-btn.success:hover {
     background: var(--success-bg-hover);
-    border-color: rgba(var(--success-rgb), 0.5);
-    box-shadow: 0 4px 12px var(--success-bg);
+    border-color: var(--success);
+    color: var(--success-hover);
+}
+
+.action-btn.success:active {
+    background: var(--success-bg);
 }
 
 .action-btn.danger {
@@ -427,20 +448,28 @@
 
 .action-btn.danger:hover:not(:disabled) {
     background: var(--danger-bg-hover);
-    border-color: var(--danger-border);
-    box-shadow: 0 3px 8px var(--danger-bg);
+    border-color: var(--danger);
+    color: var(--danger-hover);
+}
+
+.action-btn.danger:active {
+    background: var(--danger-bg);
 }
 
 .action-btn.phone {
     background: var(--success-bg);
-    border-color: var(--success-bg);
-    color: var(--success);
+    border-color: var(--success-border);
+    color: var(--success-hover);
 }
 
 .action-btn.phone:hover {
     background: var(--success-bg-hover);
-    border-color: var(--success-bg);
-    box-shadow: 0 3px 8px var(--success-bg);
+    border-color: var(--success);
+    color: var(--success-hover);
+}
+
+.action-btn.phone:active {
+    background: var(--success-bg);
 }
 
 .action-btn svg,
@@ -590,4 +619,30 @@
 .compact-mode .btn-order-badge svg {
     width: 14px;
     height: 14px;
+}
+
+/* Baza wiersza modala zamówień (L3): tło/obramowanie z klasy, nie z inline.
+   Szerokość ramki 1px jak w usuwanym inline — zero zmiany geometrii. */
+.order-modal-row {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-sm);
+}
+
+/* ===== Tryb jasny — wiersze zamówień (audyt light L3) ===== */
+/* L3: granatowe belki na białym tle były nieczytelne — jasne powierzchnie. */
+html[data-theme='light'] .offer-orders-panel {
+    background: var(--bg-secondary);
+    border-color: var(--success-border);
+}
+
+html[data-theme='light'] .offer-order-row {
+    background: var(--bg-secondary);
+    border-color: var(--border);
+}
+
+html[data-theme='light'] .order-modal-row {
+    background: var(--bg-secondary);
+    border-color: var(--border);
+    box-shadow: var(--shadow-sm);
 }

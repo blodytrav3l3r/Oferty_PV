@@ -575,12 +575,13 @@
 
 .modal {
     background: var(--bg-secondary);
-    border: 1px solid var(--border-glass);
-    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
     padding: 1.5rem;
     width: 90%;
     max-width: 550px;
-    box-shadow: var(--shadow);
+    box-shadow: var(--shadow-lg);
+    box-sizing: border-box;
 }
 
 /* Modale Import/Eksport (toolbar.js & conflictModal.js) */
@@ -590,18 +591,16 @@
     padding: 0;
     overflow: hidden;
     background: var(--bg-secondary);
-    border: 1px solid var(--border-glass);
-    border-radius: var(--radius);
-    box-shadow:
-        0 20px 25px -5px rgba(0, 0, 0, 0.4),
-        0 8px 10px -6px rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
 }
 
 .modal--ie .modal-header {
     padding: 1.1rem 1.4rem;
     margin-bottom: 0;
-    border-bottom: 1px solid var(--border-glass);
-    background: var(--bg-glass);
+    border-bottom: 1px solid var(--border-subtle);
+    background: var(--bg-secondary);
 }
 
 .modal--ie .modal-header h3 {
@@ -629,7 +628,7 @@
 
 .modal--ie .modal-title-icon--warn {
     background: var(--warn-bg);
-    color: var(--warn);
+    color: var(--warn-hover);
     border-color: var(--warn-border);
 }
 
@@ -646,7 +645,7 @@
 .modal--ie .modal-footer {
     padding: 1rem 1.4rem;
     margin-top: 0;
-    border-top: 1px solid var(--border-glass);
+    border-top: 1px solid var(--border-subtle);
     background: var(--bg-tertiary);
     display: flex;
     justify-content: flex-end;
@@ -1010,59 +1009,70 @@
     font-size: var(--fs-2xl);
     padding: 0 0 0 0.5rem;
     opacity: 0.7;
+    line-height: 1;
 }
+
 .toast-close:hover {
     opacity: 1;
 }
+
 .toast {
     padding: 0.7rem 1.2rem;
     border-radius: var(--radius-sm);
     font-size: var(--fs-md);
     font-weight: var(--fw-medium);
-    animation: slideIn 0.3s ease;
+    animation: slideIn 0.2s ease;
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    box-shadow: 0 4px 20px var(--shadow-color);
+    box-shadow: var(--shadow-lg);
+    border: 1px solid transparent;
 }
 
 .toast-success {
     background: var(--success-bg);
-    color: var(--white);
+    color: var(--success-hover);
+    border-color: var(--success-border);
 }
 
 .toast-error {
     background: var(--danger-bg);
-    color: var(--white);
+    color: var(--danger-hover);
+    border-color: var(--danger-border);
 }
 
 .toast-info {
-    background: var(--bg-hover);
-    color: var(--white);
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border-color: var(--border);
 }
 
 .toast-warning {
     background: var(--warn-bg);
-    color: var(--warn);
-    border: 1px solid var(--warn-border);
+    color: var(--warn-hover);
+    border-color: var(--warn-border);
 }
 
-/* Tryb jasny — toasty: biały tekst na pastelach nieczytelny.
-   Ciemny tekst semantyczny + border dla definicji krawędzi. */
+/* Tryb jasny — toasty: ciemny tekst semantyczny + wyraźny border */
 html[data-theme='light'] .toast-success {
     color: var(--success-strong);
-    border: 1px solid var(--success-border);
+    border-color: var(--success-border);
 }
 
 html[data-theme='light'] .toast-error {
     color: var(--danger-strong);
-    border: 1px solid var(--danger-border);
+    border-color: var(--danger-border);
 }
 
 html[data-theme='light'] .toast-info {
     background: var(--bg-secondary);
     color: var(--text-primary);
-    border: 1px solid var(--border);
+    border-color: var(--border);
+}
+
+html[data-theme='light'] .toast-warning {
+    color: var(--warn-strong);
+    border-color: var(--warn-border);
 }
 
 @keyframes slideIn {
@@ -1758,29 +1768,40 @@ svg.lucide {
 
 .wizard-btn {
     padding: 0.35rem 1.2rem;
-    border: none;
+    border: 1px solid transparent;
     border-radius: var(--radius-sm);
     font:
         var(--fw-semibold) var(--fs-md) 'Inter',
         sans-serif;
     cursor: pointer;
     transition:
-        transform 0.25s cubic-bezier(0.4, 0, 0.2, 1),
-        box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        background-color 0.15s ease-in-out,
+        border-color 0.15s ease-in-out,
+        box-shadow 0.15s ease-in-out,
+        color 0.15s ease-in-out;
     display: flex;
     align-items: center;
     gap: 0.4rem;
+    user-select: none;
 }
 
 .wizard-btn-next {
-    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    background: var(--accent);
+    border-color: var(--accent);
     color: var(--white);
-    box-shadow: 0 4px 15px var(--accent-border-dim);
+    box-shadow: var(--shadow-sm);
 }
 
 .wizard-btn-next:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px var(--accent-border);
+    background: var(--accent-hover);
+    border-color: var(--accent-hover);
+    box-shadow: var(--shadow-md);
+}
+
+.wizard-btn-next:active:not(:disabled) {
+    background: var(--accent-strong);
+    border-color: var(--accent-strong);
+    transform: translateY(1px);
 }
 
 .wizard-btn-next:disabled {
@@ -1791,15 +1812,20 @@ svg.lucide {
 }
 
 .wizard-btn-prev {
-    background: var(--bg-input);
-    color: var(--text-secondary);
-    border: 1px solid var(--border-glass);
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border: 1px solid var(--border);
 }
 
 .wizard-btn-prev:hover:not(:disabled) {
-    background: var(--border-glass);
+    background: var(--bg-hover);
     color: var(--text-primary);
-    border-color: var(--accent-border-dim);
+    border-color: var(--accent-border-medium);
+}
+
+.wizard-btn-prev:active:not(:disabled) {
+    background: var(--bg-tertiary);
+    transform: translateY(1px);
 }
 
 .wizard-btn-prev:disabled {
@@ -1809,14 +1835,18 @@ svg.lucide {
 }
 
 .wizard-btn-apply {
-    background: rgba(var(--warn-rgb), 0.15);
-    border: 1px solid rgba(var(--warn-rgb), 0.3);
+    background: var(--warn-bg);
+    border: 1px solid var(--warn-border);
     color: var(--warn-hover);
 }
 
 .wizard-btn-apply:hover {
-    background: rgba(var(--warn-rgb), 0.3);
-    border-color: rgba(var(--warn-rgb), 0.5);
+    background: var(--warn-bg);
+    border-color: var(--warn);
+}
+
+.wizard-btn-apply:active {
+    transform: translateY(1px);
 }
 
 .wizard-nav-fixed {
