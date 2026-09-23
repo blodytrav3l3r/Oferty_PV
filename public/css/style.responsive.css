@@ -750,6 +750,22 @@
 .ie-modal-lead {
     margin: 0;
 }
+.ie-modal-strong {
+    color: var(--text-primary);
+    font-weight: var(--fw-semibold);
+}
+.ie-conflict-actions {
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+.btn-flex-1 {
+    flex: 1;
+    justify-content: center;
+}
+.btn-warn-outline {
+    border-color: var(--warn-border);
+    color: var(--warn);
+}
 .form-input--full {
     width: 100%;
 }

@@ -472,6 +472,68 @@ html[data-theme='light'] #excel-table-container tbody tr:focus-within td[data-ce
     padding-right: 0.4rem;
     pointer-events: none;
 }
+/* Kafelki rabatów w stopce oferty (offerSummaryUI.js) */
+.disc-tile {
+    padding: 2px 4px;
+    border-radius: var(--radius-2xs);
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+    background: var(--tile-bg);
+    color: var(--tile-fg, var(--text-primary));
+    border: 1px solid var(--tile-border);
+}
+.disc-tile-label {
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-extrabold);
+    line-height: 1.15;
+    color: var(--text-primary);
+    max-width: 100%;
+}
+.disc-tile-detail {
+    font-size: var(--fs-2xs);
+    font-weight: var(--fw-semibold);
+    line-height: 1.2;
+    color: rgba(var(--white-rgb), 0.8);
+    white-space: normal;
+    overflow-wrap: anywhere;
+    max-width: 100%;
+}
+.disc-tile--disabled {
+    --tile-bg: rgba(var(--white-rgb), 0.05);
+    --tile-fg: rgba(var(--slate-500-rgb), 0.5);
+    --tile-border: rgba(var(--white-rgb), 0.05);
+}
+.disc-tile--accent {
+    --tile-bg: rgba(var(--accent-rgb), 0.1);
+    --tile-fg: var(--accent-text);
+    --tile-border: rgba(var(--accent-rgb), 0.3);
+}
+.disc-tile--accent-dim {
+    --tile-bg: rgba(var(--accent-rgb), 0.05);
+    --tile-fg: rgba(var(--accent-rgb), 0.5);
+    --tile-border: rgba(var(--accent-rgb), 0.1);
+}
+.disc-tile--blue {
+    --tile-bg: rgba(var(--blue-alt-rgb), 0.1);
+    --tile-fg: var(--blue-alt);
+    --tile-border: rgba(var(--blue-alt-rgb), 0.3);
+}
+.disc-tile--purple {
+    --tile-bg: rgba(var(--accent2-rgb), 0.1);
+    --tile-fg: var(--purple-alt);
+    --tile-border: rgba(var(--accent2-rgb), 0.3);
+}
+.disc-tile--dim {
+    opacity: 0.5;
+    color: rgba(var(--white-rgb), 0.8);
+}
+
 /* Selekcja i drag na białym tle — wash z tokenów excel */
 html[data-theme='light'] .cell-selected {
     background: var(--excel-cell-selected);

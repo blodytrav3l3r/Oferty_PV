@@ -11,14 +11,14 @@ window.ConflictModal = {
                 '<div class="modal modal--ie" role="document">' +
                 '<div class="modal-header"><h3 id="ie-conflict-title"><span class="modal-title-icon modal-title-icon--warn"><i data-lucide="alert-triangle" class="icon-sm"></i></span>Konflikt numeru oferty</h3><button type="button" class="btn-icon" aria-label="Zamknij" data-cm-close><i data-lucide="x" class="icon-14"></i></button></div>' +
                 '<div class="modal-body">' +
-                '<p style="margin:0;">Oferta o numerze <strong style="color:var(--text-primary);font-weight:var(--fw-semibold);">' +
+                '<p class="ie-modal-lead">Oferta o numerze <strong class="ie-modal-strong">' +
                 window.escapeHtml(offerNumber) +
                 '</strong> już istnieje w systemie. Wybierz akcję:</p>' +
                 '</div>' +
-                '<div class="modal-footer" style="gap:0.5rem;flex-wrap:wrap;">' +
-                '<button type="button" class="btn btn-sm btn-secondary" data-cm-skip style="flex:1;justify-content:center;"><i data-lucide="skip-forward" class="icon-14"></i>Pomiń</button>' +
-                '<button type="button" class="btn btn-sm btn-secondary" data-cm-overwrite style="flex:1;justify-content:center;border-color:var(--warn-border);color:var(--warn);"><i data-lucide="refresh-cw" class="icon-14"></i>Nadpisz</button>' +
-                '<button type="button" class="btn btn-sm btn-primary" data-cm-clone style="flex:1;justify-content:center;"><i data-lucide="copy" class="icon-14"></i>Sklonuj</button>' +
+                '<div class="modal-footer ie-conflict-actions">' +
+                '<button type="button" class="btn btn-sm btn-secondary btn-flex-1" data-cm-skip><i data-lucide="skip-forward" class="icon-14"></i>Pomiń</button>' +
+                '<button type="button" class="btn btn-sm btn-secondary btn-flex-1 btn-warn-outline" data-cm-overwrite><i data-lucide="refresh-cw" class="icon-14"></i>Nadpisz</button>' +
+                '<button type="button" class="btn btn-sm btn-primary btn-flex-1" data-cm-clone><i data-lucide="copy" class="icon-14"></i>Sklonuj</button>' +
                 '</div>' +
                 '</div>';
             window.showModal({

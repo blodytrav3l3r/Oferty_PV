@@ -107,22 +107,13 @@ function updateOfferSummaryUI(totals) {
         const activeDiscounts = typeof wellDiscounts !== 'undefined' ? wellDiscounts : {};
         const wellsList = typeof wells !== 'undefined' ? wells : [];
 
-        const tileBase =
-            'padding:2px 4px; border-radius: var(--radius-2xs); text-align:center; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:0; min-width:0; max-width:100%; overflow:hidden;';
-        const labelStyle =
-            'font-size: var(--fs-sm); font-weight: var(--fw-extrabold); line-height:1.15; color:var(--text-primary); max-width:100%;';
-        const detailStyle =
-            'font-size: var(--fs-2xs); font-weight: var(--fw-semibold); line-height:1.2; color:rgba(var(--white-rgb), 0.8); white-space:normal; overflow-wrap:anywhere; max-width:100%;';
-        const dimVal = 'opacity:0.5; color:rgba(var(--white-rgb), 0.8);';
-        const disabledTile = `${tileBase} background:rgba(var(--white-rgb), 0.05); color:rgba(var(--slate-500-rgb), 0.5); border:1px solid rgba(var(--white-rgb), 0.05);`;
-
         const fmtDisc = (prefix, val, color) => {
             const v = Number(val || 0).toFixed(2);
             if (val > 0)
                 return color
                     ? `<span style="color:${color};">${prefix}${v}%</span>`
                     : `${prefix}${v}%`;
-            return `<span style="${dimVal}">${prefix}${v}%</span>`;
+            return `<span class="disc-tile--dim">${prefix}${v}%</span>`;
         };
 
         const buildDnTile = (dn) => {
@@ -131,7 +122,7 @@ function updateOfferSummaryUI(totals) {
                 dn === 'styczne' ? w.type === 'styczna' || w.dn === 'styczna' : w.dn == dn
             );
             if (!hasWells)
-                return `<div style="${disabledTile}"><span style="${labelStyle}">${label}</span></div>`;
+                return `<div class="disc-tile disc-tile--disabled"><span class="disc-tile-label">${label}</span></div>`;
 
             const d = activeDiscounts[dn] || {};
             const classHas = ['E600', 'F900'].some(
@@ -141,9 +132,7 @@ function updateOfferSummaryUI(totals) {
                     (d['zwienczenie' + cls] || 0) > 0
             );
             const hasDisc = d.dennica > 0 || d.nadbudowa > 0 || d.preco > 0 || classHas;
-            const bg = hasDisc
-                ? 'background:rgba(var(--accent-rgb), 0.1); color:var(--accent-text); border:1px solid rgba(var(--accent-rgb), 0.3);'
-                : 'background:rgba(var(--accent-rgb), 0.05); color:rgba(var(--accent-rgb), 0.5); border:1px solid rgba(var(--accent-rgb), 0.1);';
+            const tileMod = hasDisc ? 'disc-tile--accent' : 'disc-tile--accent-dim';
             const details = `${fmtDisc('D:', d.dennica)} ${fmtDisc('N:', d.nadbudowa)} ${fmtDisc('P:', d.preco, d.preco > 0 ? 'var(--danger-hover)' : null)}`;
 
             let classRows = '';
@@ -157,10 +146,10 @@ function updateOfferSummaryUI(totals) {
                 if (!used) return;
                 if (!classHas) return;
                 const color = cls === 'E600' ? 'var(--accent2-hover)' : 'var(--warn-hover)';
-                classRows += `<span style="${detailStyle}; color:${color};">${fmtDisc(cls + ' D:', d['dennica' + cls], null)} ${fmtDisc('N:', d['nadbudowa' + cls], null)} ${fmtDisc('Z:', d['zwienczenie' + cls], null)}</span>`;
+                classRows += `<span class="disc-tile-detail" style="color:${color};">${fmtDisc(cls + ' D:', d['dennica' + cls], null)} ${fmtDisc('N:', d['nadbudowa' + cls], null)} ${fmtDisc('Z:', d['zwienczenie' + cls], null)}</span>`;
             });
 
-            return `<div style="${tileBase} ${bg}"><span style="${labelStyle}">${label}</span><span style="${detailStyle}">${details}</span>${classRows}</div>`;
+            return `<div class="disc-tile ${tileMod}"><span class="disc-tile-label">${label}</span><span class="disc-tile-detail">${details}</span>${classRows}</div>`;
         };
 
         const buildPehdTile = () => {
@@ -171,7 +160,7 @@ function updateOfferSummaryUI(totals) {
                     (w.wkladkaZwienczenie && w.wkladkaZwienczenie !== 'brak')
             );
             if (!anyPehd)
-                return `<div style="${disabledTile}"><span style="${labelStyle}">PEHD</span></div>`;
+                return `<div class="disc-tile disc-tile--disabled"><span class="disc-tile-label">PEHD</span></div>`;
 
             const pehdDisc =
                 wellsList[0] && wellsList[0].pehdDiscount ? wellsList[0].pehdDiscount : 0;
@@ -195,20 +184,20 @@ function updateOfferSummaryUI(totals) {
                 pehdDisc > 0
                     ? `${afterPrice.toFixed(0)} zł/m² (-${Number(pehdDisc).toFixed(2)}%)`
                     : `${afterPrice.toFixed(0)} zł/m²`;
-            return `<div style="${tileBase} background:rgba(var(--blue-alt-rgb), 0.1); color:var(--blue-alt); border:1px solid rgba(var(--blue-alt-rgb), 0.3);"><span style="${labelStyle}">PEHD</span><span style="${detailStyle}">${discDetail}</span></div>`;
+            return `<div class="disc-tile disc-tile--blue"><span class="disc-tile-label">PEHD</span><span class="disc-tile-detail">${discDetail}</span></div>`;
         };
 
         const buildMalTile = () => {
             const anyW = wellsList.some((w) => w.malowanieW && w.malowanieW !== 'brak');
             const anyZ = wellsList.some((w) => w.malowanieZ && w.malowanieZ !== 'brak');
             if (!anyW && !anyZ)
-                return `<div style="${disabledTile}"><span style="${labelStyle}">Malowanie</span></div>`;
+                return `<div class="disc-tile disc-tile--disabled"><span class="disc-tile-label">Malowanie</span></div>`;
 
             const ref = wellsList[0] || {};
             const parts = [];
             if (anyW) parts.push(`W:${ref.malowanieWewCena || 0}`);
             if (anyZ) parts.push(`Z:${ref.malowanieZewCena || 0}`);
-            return `<div style="${tileBase} background:rgba(var(--accent2-rgb), 0.1); color:var(--purple-alt); border:1px solid rgba(var(--accent2-rgb), 0.3);"><span style="${labelStyle}"><i data-lucide="paintbrush" class="icon-xxs"></i>Malowanie</span><span style="${detailStyle}">${parts.join(' ')} zł/m²</span></div>`;
+            return `<div class="disc-tile disc-tile--purple"><span class="disc-tile-label"><i data-lucide="paintbrush" class="icon-xxs"></i>Malowanie</span><span class="disc-tile-detail">${parts.join(' ')} zł/m²</span></div>`;
         };
 
         discountsInfoEl.innerHTML = `

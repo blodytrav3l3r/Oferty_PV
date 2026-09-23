@@ -189,7 +189,7 @@ async function showOfferHistoryStudnie(id) {
             <div class="modal audit-modal-inner">
                 <div class="modal-header" style="border-bottom:1px solid rgba(var(--white-rgb), 0.1); padding:1.2rem 1.5rem; background: rgba(var(--white-rgb), 0.05); border-radius: var(--radius-lg) 20px 0 0;">
                     <h3 style="font-weight: var(--fw-extrabold); color:var(--white); margin:0; display:flex; align-items:center; gap:0.5rem;">
-                        <span style="font-size: var(--fs-5xl);">⌛</span> Oś Czasu Zmian (${total} wpisów)
+                        <span class="fs-5xl"><i data-lucide="history" aria-hidden="true"></i></span> Oś Czasu Zmian (${total} wpisów)
                     </h3>
                     <button class="btn-icon" aria-label="Zamknij" style="background:rgba(var(--white-rgb), 0.1); color:var(--white); border-radius:50%; width:32px; height:32px; display:flex; align-items:center; justify-content:center;" onclick="closeModal()"><i data-lucide="x" aria-hidden="true"></i></button>
                 </div>
