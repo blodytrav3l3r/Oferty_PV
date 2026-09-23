@@ -111,7 +111,7 @@ function renderSavedOffers() {
                 <i data-lucide="file-text"></i> Karta PDF
             </button>
             <button class="btn btn-sm" data-action="exportKartaDirectRury" data-id="${escapeHtmlAttr(ord.id)}" data-fmt="docx" style="background:rgba(var(--blue-rgb), 0.15); border:1px solid rgba(var(--blue-rgb), 0.3); color:var(--blue-hover); font-size: var(--fs-sm); padding:0.3rem 0.6rem; font-weight: var(--fw-bold);" title="Karta budowy Word">
-                <i data-lucide="edit"></i> Karta Word
+                <i data-lucide="pencil"></i> Karta Word
             </button>
         `
                       )

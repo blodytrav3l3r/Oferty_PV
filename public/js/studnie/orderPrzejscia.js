@@ -365,7 +365,7 @@ function buildPrzejscieRowHTML(row, idx, source) {
             </select>
         </td>
         <td style="padding:0.4rem 0.2rem; text-align:center; vertical-align:top;">
-            <button type="button" class="btn-icon-danger btn-icon-sm" onclick="removePrzejscieRow('${source}', ${idx})" title="Usuń"><i data-lucide="trash-2" style="width:13px;height:13px;"></i></button>
+            <button type="button" class="btn-icon-danger btn-icon-sm" onclick="removePrzejscieRow('${source}', ${idx})" title="Usuń"><i data-lucide="trash-2" class="icon-xs"></i></button>
         </td>
     </tr>`;
 }

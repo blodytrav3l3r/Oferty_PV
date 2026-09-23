@@ -125,10 +125,10 @@ function renderOfferItems() {
             const lengthEditor =
                 isEditableLength && hasLength && !isLocked
                     ? `<div class="length-editor" data-action="showPipeLengthModal" data-pid="${escapeHtmlAttr(item.productId)}" data-i="${i}" title="Zmień długość rury i automatycznie przelicz wagę oraz transport">
-                            <i data-lucide="ruler" style="width:11px;height:11px"></i>
+                            <i data-lucide="ruler" class="icon-xxs"></i>
                             <span>Dł:</span>
                             <span class="length-value">${fmt(item.customLengthM || item.lengthM)}m</span>
-                            <i data-lucide="pencil" style="width:10px;height:10px;opacity:0.5"></i>
+                            <i data-lucide="pencil" class="icon-xxs" style="opacity:0.65"></i>
                         </div>`
                     : '';
 

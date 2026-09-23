@@ -105,7 +105,7 @@
             sections: [
                 {
                     id: 'builder',
-                    icon: '<i data-lucide="edit"></i>',
+                    icon: '<i data-lucide="pencil"></i>',
                     label: 'Konfiguracja'
                 },
                 { id: 'offer', icon: '<i data-lucide="bar-chart-2"></i>', label: 'Oferta' },

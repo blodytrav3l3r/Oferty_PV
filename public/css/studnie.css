@@ -5246,7 +5246,28 @@ td.excel-tr-selected .excel-sel-wrap > div {
 /* ===== Tryb jasny — twarde ciemne plamy i białe washe ===== */
 html[data-theme='light'] .tm-edit-popup {
     background: #ffffff;
+    border-color: var(--border);
     box-shadow: 0 20px 60px rgba(15, 23, 42, 0.25);
+}
+
+html[data-theme='light'] .tm-edit-head {
+    border-bottom-color: var(--border);
+}
+
+/* discount-input: ciemne washe rgba(black/white) znikają na białym —
+   w light białe tło + neutralny border z tokenów. */
+html[data-theme='light'] .discount-input {
+    background: #ffffff;
+    border-color: var(--border);
+}
+
+html[data-theme='light'] .discount-input:hover {
+    border-color: var(--slate-300);
+}
+
+html[data-theme='light'] .discount-input:focus {
+    background: #ffffff;
+    border-color: var(--accent-border);
 }
 
 html[data-theme='light'] .well-list-action:hover {

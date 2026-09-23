@@ -131,9 +131,20 @@ function _excelRenderTable(dn) {
         // Kolor nagłówka = kolor elementu w konfiguratorze (SSoT: COMPONENT_THEME).
         // Wyjątki: avr → stroke (fill #475569 nieczytelny na ciemnym tle),
         // właz nie trafia tu (kolumna select, nagłówek zostaje zielony).
+        // Dark: stroke (jasny wariant tej samej rodziny — ciemne fille
+        // #9d174d/#a16207/#047857/#4338ca nieczytelne na --excel-header-bg).
+        // Light: fill (ciemny na jasnym tle; jedyny jasny fill — uszczelka —
+        // nie trafia tu, ma fallback --blue-hover).
         const theme = typeof COMPONENT_THEME !== 'undefined' ? COMPONENT_THEME[ct] : null;
+        const isLight =
+            typeof document !== 'undefined' &&
+            document.documentElement.getAttribute('data-theme') === 'light';
         const hc =
-            ct === 'avr' ? 'var(--excel-text-dim)' : (theme && theme.fill) || 'var(--blue-hover)';
+            ct === 'avr'
+                ? 'var(--excel-text-dim)'
+                : (isLight ? theme && theme.fill : theme && theme.stroke) ||
+                  (theme && theme.fill) ||
+                  'var(--blue-hover)';
         const colLabel = escapeHtml(c.shortLabel || c.label);
         /* escape przed wrapem — _excelWrapDetail dodaje <br>, które nie może być ucieczone */
         const colDetail = _excelWrapDetail(escapeHtml(c.detailLabel)) || '·';

@@ -222,6 +222,35 @@
     width: 20px;
     height: 20px;
 }
+.icon-lg {
+    width: 24px;
+    height: 24px;
+}
+/* Aliasy historycznych klas używanych w JS — mapowanie na skalę,
+   inaczej Lucide renderuje domyślne 24px (widma bez definicji). */
+.icon-14 {
+    width: 14px;
+    height: 14px;
+}
+.icon-14-mr4 {
+    width: 14px;
+    height: 14px;
+    margin-right: 4px;
+}
+.icon-16-accent {
+    width: 16px;
+    height: 16px;
+    color: var(--accent-text);
+}
+.icon-12 {
+    width: 12px;
+    height: 12px;
+}
+.icon-32-danger {
+    width: 32px;
+    height: 32px;
+    color: var(--danger-hover);
+}
 
 /* Klasy pomocnicze przycisków */
 .pad-sm {

@@ -2156,6 +2156,7 @@ html[data-theme='light'] {
 
     /* Tekst na jasnym tle — ciemne warianty (kontrast AA) */
     --blue-strong: #1d4ed8;
+    --blue-alt: #0369a1;
     --cyan-strong: #0e7490;
     --purple-strong: #7e22ce;
 

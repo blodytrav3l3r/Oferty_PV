@@ -51,7 +51,7 @@
                         <span class="upm-btn-icon"><i data-lucide="file-text"></i></span> PDF
                     </button>
                     <button class="upm-btn upm-btn-docx" data-action="${docxAction}" data-id="${idEsc}" data-format="docx">
-                        <span class="upm-btn-icon"><i data-lucide="edit"></i></span> Word
+                        <span class="upm-btn-icon"><i data-lucide="pencil"></i></span> Word
                     </button>
                 </div>
             </div>`;
@@ -78,7 +78,7 @@
                         <span class="upm-btn-icon"><i data-lucide="file-text"></i></span> PDF
                     </button>
                     <button class="upm-btn upm-btn-docx" data-action="${docxAction}" data-id="${idEsc}" data-format="docx">
-                        <span class="upm-btn-icon"><i data-lucide="edit"></i></span> Word
+                        <span class="upm-btn-icon"><i data-lucide="pencil"></i></span> Word
                     </button>
                 </div>
             </div>`;

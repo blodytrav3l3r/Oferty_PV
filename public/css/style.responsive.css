@@ -1898,7 +1898,7 @@ svg.lucide {
 .wizard-nav-fixed .wizard-btn svg.lucide {
     width: 14px;
     height: 14px;
-    stroke-width: 2.2;
+    stroke-width: 2;
     flex-shrink: 0;
     align-self: center;
 }

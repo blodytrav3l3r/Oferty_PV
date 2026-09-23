@@ -473,7 +473,7 @@ async function populateZleceniaForm(el) {
     </div>
 
     <div class="card card-compact" style="margin-bottom:0.5rem; display:flex; flex-direction:column;">
-        <div class="card-title-sm"><i data-lucide="edit"></i> Uwagi</div>
+        <div class="card-title-sm"><i data-lucide="pencil"></i> Uwagi</div>
         <div class="form-group-sm" style="flex:1; display:flex; flex-direction:column; margin-bottom:0;">
             <textarea id="zl-uwagi" class="form-textarea" placeholder="Uwagi do zlecenia..." style="min-height:80px; resize:vertical;">${escapeHtml(finalUwagi)}</textarea>
         </div>

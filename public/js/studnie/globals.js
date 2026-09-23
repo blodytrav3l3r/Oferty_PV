@@ -423,7 +423,7 @@ function showSectionStudnie(id) {
                 ctxText.textContent =
                     'Podgląd zamówienia — dane pochodzą z zatwierdzonego zamówienia.';
             } else if (editingOfferIdStudnie) {
-                ctxBadge.innerHTML = '<i data-lucide="edit" class="icon-xs"></i> Oferta (krok 3)';
+                ctxBadge.innerHTML = '<i data-lucide="pencil" class="icon-xs"></i> Oferta (krok 3)';
                 ctxBadge.classList.add('badge-info');
                 ctxText.textContent = 'Podgląd oferty — edytuj pozycje w zakładce Konfiguracja.';
             } else {

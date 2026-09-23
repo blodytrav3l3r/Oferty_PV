@@ -27,7 +27,7 @@ function renderAuditLogEntry(log) {
     } else if (isDiff) {
         cardClass = 'action-diff';
         actionBadge =
-            '<span style="background:rgba(var(--warn-rgb), 0.15); color:var(--warn-hover); padding:4px 10px; border-radius: var(--radius-sm); font-size: var(--fs-base); font-weight: var(--fw-extrabold); letter-spacing:0.5px;"><i data-lucide="edit"></i> EDYCJA (DIFF)</span>';
+            '<span style="background:rgba(var(--warn-rgb), 0.15); color:var(--warn-hover); padding:4px 10px; border-radius: var(--radius-sm); font-size: var(--fs-base); font-weight: var(--fw-extrabold); letter-spacing:0.5px;"><i data-lucide="pencil"></i> EDYCJA (DIFF)</span>';
         const changedKeys = Object.keys(data).filter((k) => k !== '_diffMode');
         const changesHtml = changedKeys
             .map((k) => {
