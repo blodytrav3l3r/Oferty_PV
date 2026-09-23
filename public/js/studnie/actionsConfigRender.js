@@ -136,12 +136,27 @@ function renderWellConfig() {
             ? 'opacity:0.7; box-shadow: 0 0 15px rgba(var(--blue-alt-rgb), 0.5); pointer-events: none;'
             : '';
 
-        html += `<div data-cfg-idx="${index}" class="config-tile" draggable="true" ondragstart="handleCfgDragStart(event)" ondragover="handleCfgDragOver(event)" ondrop="handleCfgDrop(event)" ondragend="handleCfgDragEnd(event)" style="background:linear-gradient(90deg, ${badge.bg} 0%, rgba(var(--slate-800-rgb), 0.8) 100%); border:1px solid rgba(var(--white-rgb), 0.05); border-left:4px solid ${badge.bg}; border-radius: var(--radius-sm); padding:0.25rem 0.4rem; position:relative; transition:all 0.2s ease; margin-bottom:0.25rem; cursor:grab; ${plStyle}"
-                      onmouseenter="if(!${isPlaceholder}){this.style.filter='brightness(1.5)'; this.style.borderColor='rgba(var(--white-rgb), 0.3)'; this.style.boxShadow='0 0 12px rgba(var(--accent-rgb), 0.5)'; window.highlightSvg('cfg', ${index})}" onmouseleave="if(!${isPlaceholder}){this.style.filter='brightness(1)'; this.style.borderColor='rgba(var(--white-rgb), 0.05)'; this.style.boxShadow='none'; window.unhighlightSvg('cfg', ${index})}">
+        // L7: w light biała karta (kolor komponentu zostaje na lewej krawędzi),
+        // gradient slate tylko w dark — inaczej niewidoczny biały tekst.
+        const isLightTheme =
+            typeof document !== 'undefined' &&
+            document.documentElement.getAttribute('data-theme') === 'light';
+        const tileBg = isLightTheme
+            ? 'var(--bg-secondary)'
+            : `linear-gradient(90deg, ${badge.bg} 0%, rgba(var(--slate-800-rgb), 0.8) 100%)`;
+        // Hover JS (brightness/border) ma sens tylko w dark — w light reguły CSS z klas.
+        const hoverOn = isLightTheme
+            ? `window.highlightSvg('cfg', ${index})`
+            : `this.style.filter='brightness(1.5)'; this.style.borderColor='rgba(var(--white-rgb), 0.3)'; this.style.boxShadow='0 0 12px rgba(var(--accent-rgb), 0.5)'; window.highlightSvg('cfg', ${index})`;
+        const hoverOff = isLightTheme
+            ? `window.unhighlightSvg('cfg', ${index})`
+            : `this.style.filter='brightness(1)'; this.style.borderColor='rgba(var(--white-rgb), 0.05)'; this.style.boxShadow='none'; window.unhighlightSvg('cfg', ${index})`;
+        html += `<div data-cfg-idx="${index}" class="config-tile" draggable="true" ondragstart="handleCfgDragStart(event)" ondragover="handleCfgDragOver(event)" ondrop="handleCfgDrop(event)" ondragend="handleCfgDragEnd(event)" style="background:${tileBg}; border:1px solid ${isLightTheme ? 'var(--border-glass)' : 'rgba(var(--white-rgb), 0.05)'}; border-left:4px solid ${badge.bg}; border-radius: var(--radius-sm); padding:0.25rem 0.4rem; position:relative; transition:all 0.2s ease; margin-bottom:0.25rem; cursor:grab; ${plStyle}"
+                      onmouseenter="if(!${isPlaceholder}){${hoverOn}}" onmouseleave="if(!${isPlaceholder}){${hoverOff}}">
           <div style="display:flex; align-items:center; justify-content:space-between; gap:1rem;">
             
             <div style="display:flex; align-items:center; gap:0.5rem; flex:1; min-width:0;">
-                <div style="display:flex; flex-direction:column; gap:0; align-items:center; background:rgba(var(--black-rgb), 0.3); padding:2px 4px; border-radius: var(--radius-2xs); min-width:24px;">
+                <div class="cfg-idx-box" style="display:flex; flex-direction:column; gap:0; align-items:center; background:${isLightTheme ? 'var(--bg-tertiary)' : 'rgba(var(--black-rgb), 0.3)'}; padding:2px 4px; border-radius: var(--radius-2xs); min-width:24px;">
                   <button class="cfg-move-btn" ${!canMoveUp ? 'disabled' : ''} onclick="moveWellComponent(${index}, -1)" title="W górę" aria-label="W górę" style="background:none; border:none; color:var(--text-muted); padding:0; margin:0; height:12px; display:${item.autoAdded ? 'none' : 'flex'}; align-items:center; justify-content:center; cursor:${canMoveUp ? 'pointer' : 'default'};"><i data-lucide="chevron-up" class="icon-xs" aria-hidden="true"></i></button>
                   <span style="font-size: var(--fs-xs); line-height:1; color:var(--text-primary); font-weight: var(--fw-extrabold); margin:2px 0;">${index + 1}</span>
                   <button class="cfg-move-btn" ${!canMoveDown ? 'disabled' : ''} onclick="moveWellComponent(${index}, 1)" title="W dół" aria-label="W dół" style="background:none; border:none; color:var(--text-muted); padding:0; margin:0; height:12px; display:${item.autoAdded ? 'none' : 'flex'}; align-items:center; justify-content:center; cursor:${canMoveDown ? 'pointer' : 'default'};"><i data-lucide="chevron-down" class="icon-xs" aria-hidden="true"></i></button>
@@ -246,7 +261,7 @@ function renderWellConfig() {
             <div style="display:flex; align-items:center; justify-content:flex-end; gap:0.6rem; flex-shrink:0; min-width:340px;">
               <div style="display:grid; grid-template-columns:36px 65px 60px 48px 120px; gap:0 0.5rem; align-items:center;">
                 <span class="fs-xs-muted">WAGA:</span>
-                <span style="color:rgba(var(--white-rgb), 0.8); font-weight: var(--fw-bold); font-size: var(--fs-md); white-space:nowrap; text-align:right;">${p.weight || totalWeight > 0 ? fmtInt(totalWeight) + ' kg' : '—'}</span>
+                <span class="cfg-weight-val" style="color:${isLightTheme ? 'var(--text-primary)' : 'rgba(var(--white-rgb), 0.8)'}; font-weight: var(--fw-bold); font-size: var(--fs-md); white-space:nowrap; text-align:right;">${p.weight || totalWeight > 0 ? fmtInt(totalWeight) + ' kg' : '—'}</span>
                 
                 <div style="width:60px;"></div>
                 
@@ -281,7 +296,7 @@ function renderWellConfig() {
 
             if (precoCalc.error) {
                 html += `<div style="margin-top:0.5rem; padding:0.6rem 0.7rem; background:rgba(var(--danger-rgb), 0.15); border:1px solid var(--danger); border-radius: var(--radius-sm); color:var(--danger); font-weight: var(--fw-bold); font-size: var(--fs-lg); line-height:1.4;">`;
-                html += `⚠️ ${precoCalc.error}`;
+                html += `<i data-lucide="alert-triangle" class="icon-sm" aria-hidden="true"></i> ${precoCalc.error}`;
                 html += `</div>`;
             } else {
                 const precoMult = 1 - discPreco / 100;
@@ -289,7 +304,7 @@ function renderWellConfig() {
 
                 html += `<div style="margin-top:0.5rem; padding:0.6rem 0.7rem; background:linear-gradient(135deg, rgba(var(--danger-rgb), 0.1), rgba(var(--accent2-rgb), 0.1)); border:1px solid rgba(var(--danger-rgb), 0.3); border-radius: var(--radius-sm);">`;
                 html += `<div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.4rem;">`;
-                html += `<span style="font-weight: var(--fw-extrabold); font-size: var(--fs-lg); color:var(--danger);">🔧 Wkładka ${kinetaLabel}</span>`;
+                html += `<span style="font-weight: var(--fw-extrabold); font-size: var(--fs-lg); color:var(--danger);"><i data-lucide="settings" class="icon-xs" style="vertical-align:-1px; margin-right:2px;"></i> Wkładka ${kinetaLabel}</span>`;
                 html += `<span style="font-weight: var(--fw-extrabold); font-size: var(--fs-2xl); color:var(--success);">${fmtInt(precoFinal)} PLN</span>`;
                 html += `</div>`;
                 html += `<div style="display:grid; grid-template-columns:1fr auto; gap:0.15rem 0.8rem; font-size: var(--fs-base); color:var(--text-secondary);">`;

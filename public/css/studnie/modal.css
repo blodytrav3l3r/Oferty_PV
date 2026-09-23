@@ -1302,3 +1302,10 @@ html[data-theme='light'] .modal--excel-shortcuts .excel-shortcuts-body code {
 .prz-flow-btn--wylot:hover {
     background: rgba(var(--danger-rgb), 0.5);
 }
+
+/* ===== Tryb jasny — grupy przeliczeń (audyt light L4) ===== */
+/* L4: szare bloki slate na białym tle — jasna powierzchnia, puste DN pokazują .recalc-empty. */
+html[data-theme='light'] .recalc-group {
+    background: var(--bg-secondary);
+    border-color: var(--border);
+}

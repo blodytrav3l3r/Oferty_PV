@@ -16,38 +16,24 @@
 .zlecenia-stat-card {
     flex: 1;
     min-width: 160px;
-    background: linear-gradient(135deg, rgba(var(--slate-800-rgb), 0.5) 0%, var(--glass) 100%);
-    border: 1px solid rgba(var(--white-rgb), 0.05);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
     border-radius: var(--radius-sm);
     padding: 0.55rem 0.9rem;
     display: flex;
     align-items: center;
     gap: 0.6rem;
     transition:
-        border-color 0.3s,
-        transform 0.3s,
-        box-shadow 0.3s;
+        border-color 0.15s ease-in-out,
+        box-shadow 0.15s ease-in-out;
     cursor: default;
-    -webkit-backdrop-filter: blur(10px);
-    backdrop-filter: blur(10px);
     position: relative;
     overflow: hidden;
 }
-.zlecenia-stat-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(var(--white-rgb), 0.1), transparent);
-}
+
 .zlecenia-stat-card:hover {
-    border-color: rgba(var(--accent-rgb), 0.3);
-    transform: translateY(-1px);
-    box-shadow:
-        0 6px 20px -5px rgba(var(--black-rgb), 0.3),
-        0 0 12px rgba(var(--accent-rgb), 0.1);
+    border-color: var(--accent-border-medium);
+    box-shadow: var(--shadow-sm);
 }
 .zlecenia-stat-icon {
     font-size: var(--fs-3xl);
@@ -96,7 +82,7 @@
     height: 34px;
     padding: 0 0.9rem;
     border-radius: var(--radius-sm);
-    border: 1px solid var(--border-glass);
+    border: 1px solid var(--border);
     background: var(--bg-tertiary);
     color: var(--text-secondary);
     font-size: var(--fs-md);
@@ -114,15 +100,15 @@
     gap: 0.3rem;
 }
 .zlecenia-filter-tab:hover {
-    background: var(--bg-glass);
+    background: var(--bg-hover);
     color: var(--text-primary);
     border-color: var(--bg-tertiary);
 }
 .zlecenia-filter-tab.active {
-    background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
-    border-color: transparent;
+    background: var(--accent);
+    border-color: var(--accent);
     color: var(--white);
-    box-shadow: 0 2px 8px rgba(var(--accent-rgb), 0.5);
+    box-shadow: var(--shadow-sm);
 }
 .zlecenia-filter-tab:focus-visible {
     outline: 2px solid var(--accent);
@@ -159,11 +145,9 @@
 .zlecenia-table-container {
     overflow-x: auto;
     border-radius: var(--radius-md);
-    border: 1px solid rgba(var(--white-rgb), 0.05);
-    background: rgba(var(--slate-950-rgb), 0.5);
-    -webkit-backdrop-filter: blur(8px);
-    backdrop-filter: blur(8px);
-    box-shadow: 0 10px 30px -10px rgba(var(--black-rgb), 0.5);
+    border: 1px solid var(--border);
+    background: var(--bg-secondary);
+    box-shadow: var(--shadow-sm);
     scrollbar-width: thin;
 }
 .zlecenia-table {
@@ -181,7 +165,7 @@
     font-size: var(--fs-sm);
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    border-bottom: 1px solid var(--border-glass);
+    border-bottom: 1px solid var(--border);
     position: sticky;
     top: 0;
     z-index: 2;
@@ -230,11 +214,8 @@
     height: 14px;
 }
 .status-draft {
-    background: linear-gradient(
-        135deg,
-        rgba(var(--warn-rgb), 0.15) 0%,
-        rgba(var(--warn-rgb), 0.05) 100%
-    );
+    /* P3: płaski tint zamiast gradientu; puls sygnalizuje stan — zostaje. */
+    background: rgba(var(--warn-rgb), 0.1);
     color: var(--warn-hover);
     border: 1px solid rgba(var(--warn-rgb), 0.5);
     box-shadow: 0 0 15px rgba(var(--warn-rgb), 0.1);
@@ -256,11 +237,8 @@
     animation: none;
 }
 .status-accepted {
-    background: linear-gradient(
-        135deg,
-        rgba(var(--success-rgb), 0.15) 0%,
-        rgba(var(--success-rgb), 0.05) 100%
-    );
+    /* P3: płaski tint zamiast gradientu (semantyka koloru bez zmian). */
+    background: rgba(var(--success-rgb), 0.1);
     color: var(--success-hover);
     border: 1px solid rgba(var(--success-rgb), 0.5);
     box-shadow: 0 0 15px rgba(var(--success-rgb), 0.1);
@@ -401,14 +379,10 @@
     border: 1px solid rgba(var(--pink-rgb), 0.5);
     border-radius: var(--radius-md);
     margin-bottom: var(--section-gap);
-    background: linear-gradient(
-        135deg,
-        rgba(var(--pink-rgb), 0.28) 0%,
-        rgba(var(--pink-rgb), 0.12) 100%
-    );
-    box-shadow:
-        0 8px 32px rgba(var(--black-rgb), 0.5),
-        0 0 20px rgba(var(--pink-rgb), 0.15);
+    /* P3: płaski tint zamiast gradientu; blur zostaje — czytelność paska
+       nad przewijaną treścią (sticky), nie dekoracja. */
+    background: rgba(var(--pink-rgb), 0.15);
+    box-shadow: var(--shadow-md);
     -webkit-backdrop-filter: blur(12px);
     backdrop-filter: blur(12px);
     animation: batchBarIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -456,7 +430,7 @@
 .batch-btn {
     padding: 0.4rem 0.8rem;
     border-radius: var(--radius-sm);
-    border: 1px solid var(--border-glass);
+    border: 1px solid var(--border);
     background: rgba(var(--white-rgb), 0.05);
     color: var(--text-primary);
     font-size: var(--fs-base);
@@ -471,7 +445,7 @@
     gap: 0.3rem;
 }
 .batch-btn:hover {
-    background: var(--glass-border);
+    background: var(--bg-hover);
     border-color: rgba(var(--white-rgb), 0.15);
 }
 .batch-btn-print {
@@ -651,7 +625,7 @@
     padding: 0 0.7rem;
     font-size: var(--fs-md);
     background: var(--bg-tertiary);
-    border: 1px solid var(--border-glass);
+    border: 1px solid var(--border);
     border-radius: var(--radius-sm);
     color: var(--text-secondary);
     transition:
@@ -668,7 +642,7 @@
 .zlecenia-virtual-toolbar .form-select.zlecenia-select-sm:hover,
 .zlecenia-virtual-toolbar .zlecenia-date-filter input[type='date']:hover,
 .zlecenia-virtual-toolbar .btn-secondary.btn-sm:hover {
-    background: var(--bg-glass);
+    background: var(--bg-hover);
     border-color: var(--bg-tertiary);
     color: var(--text-primary);
 }
@@ -786,17 +760,8 @@ html[data-theme='light'] .zlecenia-virtual-toolbar .zlecenia-date-filter input[t
     color-scheme: light;
 }
 
-/* Tryb jasny — karty statystyk i kontener tabeli: gradienty slate/white
-   z bazy dawały szare plamy na białym. Białe powierzchnie + neutralny border. */
-html[data-theme='light'] .zlecenia-stat-card {
-    background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-hover) 100%);
-    border-color: var(--border);
-}
-
-html[data-theme='light'] .zlecenia-stat-card::before {
-    background: linear-gradient(90deg, transparent, rgba(var(--slate-950-rgb), 0.08), transparent);
-}
-
+/* Tryb jasny — płaskie powierzchnie (gradienty usunięte w P3).
+   Kontener tabeli dziedziczy bazę; cień md celowo mocniejszy w light. */
 html[data-theme='light'] .zlecenia-table-container {
     background: var(--bg-secondary);
     border-color: var(--border);

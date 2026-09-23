@@ -236,7 +236,7 @@ function buildOrderModalHtml(orders, offerKey, resolvedType, offerLabel) {
         );
 
         html += `
-                <div style="display:flex; align-items:center; justify-content:space-between; gap:0.75rem; padding:0.85rem 0.8rem; border:1px solid rgba(var(--slate-400-rgb), 0.15); border-radius: var(--radius-sm); background:rgba(var(--slate-950-rgb), 0.8); box-shadow: 0 4px 12px rgba(var(--black-rgb), 0.15);">
+                <div class="order-modal-row" style="display:flex; align-items:center; justify-content:space-between; gap:0.75rem; padding:0.85rem 0.8rem; border-radius: var(--radius-sm);">
                     <div class="min-w-0">
                         <div class="btn-open-order" data-order-id="${window.escapeHtml(ord.id)}" data-offer-type="${window.escapeHtml(resolvedType)}" style="font-weight: var(--fw-bold); color:var(--blue-alt); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:260px; cursor:pointer; transition:all 0.2s ease;" title="Kliknij, aby otworzyć zamówienie w trybie edycji" onmouseenter="this.style.color='var(--blue-alt-hover)'; this.style.textDecoration='underline';" onmouseleave="this.style.color='var(--blue-alt)'; this.style.textDecoration='none';">${orderLabel}</div>
                         <div style="font-size: var(--fs-base); color:var(--text-muted); margin-top:0.25rem;">Utworzono: ${createdAt}${ord.clientNumber ? ` • Nr klienta: ${window.escapeHtml(ord.clientNumber)}` : ''}</div>

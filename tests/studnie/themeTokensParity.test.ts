@@ -123,7 +123,6 @@ const SHARED = new Set([
         'accent-text-rgb',
         'warn-bg-soft',
         'warn-bg-light',
-        'text-muted',
         'text-danger',
         'purple-alt',
         'shadow',
@@ -133,7 +132,8 @@ const SHARED = new Set([
         'danger-strong',
         'warn-strong',
         'accent2-bg-soft',
-        'blue-bg-soft'
+        'blue-bg-soft',
+        'focus-ring'
     ].map((n) => `--${n}`)
 ]);
 

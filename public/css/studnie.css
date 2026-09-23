@@ -893,51 +893,48 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
 }
 
 .well-list-item {
-    background: rgba(var(--slate-800-rgb), 0.5);
-    border: 1px solid rgba(var(--white-rgb), 0.05);
-    -webkit-backdrop-filter: blur(4px);
-    backdrop-filter: blur(4px);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
     border-radius: var(--radius-sm);
     padding: 0.4rem 0.6rem;
     margin-bottom: 0.25rem;
     cursor: pointer;
     transition:
-        border-color 0.15s ease-out,
-        background-color 0.15s ease-out,
-        transform 0.15s ease-out;
+        border-color 0.15s ease-in-out,
+        background-color 0.15s ease-in-out,
+        box-shadow 0.15s ease-in-out;
     position: relative;
+    user-select: none;
 }
 
 .well-list-item:hover {
-    border-color: rgba(var(--accent-rgb), 0.3);
-    background: rgba(var(--slate-800-rgb), 0.8);
-    transform: translateX(2px);
+    border-color: var(--accent-border-medium);
+    background: var(--bg-hover);
+    box-shadow: var(--shadow-sm);
+}
+
+/* Zablokowana studnia (zamówienie/PZ): przyciemniona, ale czytelna w obu motywach. */
+.well-list-item.is-locked {
+    opacity: 0.7;
 }
 
 .well-list-item.active {
-    border-color: rgba(var(--warn-rgb), 0.8);
-    border-width: 2px;
-    background: linear-gradient(
-        180deg,
-        transparent 0%,
-        rgba(var(--warn-rgb), 0.05) 50%,
-        rgba(var(--warn-rgb), 0.1) 100%
-    );
-    box-shadow: 0 0 16px rgba(var(--warn-rgb), 0.1);
-    transform: translateX(2px);
+    border-color: var(--warn);
+    border-width: 1px;
+    background: var(--warn-bg);
+    box-shadow: 0 0 0 1px var(--warn);
 }
 
 .well-list-item.active::before {
     content: '';
     position: absolute;
-    bottom: 0;
     left: 0;
-    right: 0;
-    height: 60%;
-    background: linear-gradient(to top, rgba(var(--warn-rgb), 0.2), transparent);
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: var(--warn);
+    border-radius: var(--radius-2xs) 0 0 var(--radius-2xs);
     pointer-events: none;
-    border-radius: 0 0 8px 8px;
-    animation: wellActivePulse 2s ease-in-out infinite;
 }
 
 @keyframes wellActivePulse {
@@ -1099,15 +1096,15 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
 }
 
 .tile {
-    background: var(--bg-input);
-    border: 1px solid var(--border-glass);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
     border-radius: var(--radius-sm);
     padding: 0.4rem 0.5rem;
     cursor: pointer;
     transition:
-        border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1),
-        transform 0.2s cubic-bezier(0.4, 0, 0.2, 1),
-        box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        border-color 0.15s ease-in-out,
+        background-color 0.15s ease-in-out,
+        box-shadow 0.15s ease-in-out;
     display: flex;
     flex-direction: column;
     gap: 0.15rem;
@@ -1115,6 +1112,7 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
     overflow: hidden;
     min-height: 4.2rem;
     height: 100%;
+    user-select: none;
 }
 
 .tile::before {
@@ -1125,14 +1123,14 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
     right: 0;
     height: 3px;
     background: var(--tile-accent, var(--accent));
-    opacity: 0;
-    transition: opacity 0.2s;
+    opacity: 0.8;
+    transition: opacity 0.15s;
 }
 
 .tile:hover {
-    border-color: var(--tile-accent, var(--accent-border-dim));
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
+    border-color: var(--tile-accent, var(--accent-border-medium));
+    background: var(--bg-hover);
+    box-shadow: var(--shadow-sm);
 }
 
 .tile:hover::before {
@@ -1140,7 +1138,20 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
 }
 
 .tile:active {
-    transform: translateY(0);
+    transform: translateY(1px);
+}
+
+/* Zablokowany kafelek (oferta zamknięta): przyciemniony, ale czytelny.
+   Szczegółowa wartość krycia per motyw w sekcji light na końcu pliku. */
+.tile.is-locked {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.tile.is-locked:hover {
+    box-shadow: none;
+    background: var(--bg-secondary);
 }
 
 .tile-name {
@@ -1559,28 +1570,31 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
 .param-tile {
     padding: 0.35rem 0.8rem;
     border-radius: var(--radius-sm);
-    background: var(--bg-tile);
-    border: 1px solid var(--border-glass);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
     color: var(--text-secondary);
     font-size: var(--fs-sm);
     font-weight: var(--fw-medium);
     cursor: pointer;
     transition:
+        background-color 0.15s ease-in-out,
         border-color 0.15s ease-in-out,
         color 0.15s ease-in-out;
     white-space: nowrap;
+    user-select: none;
 }
 
 .param-tile:hover {
-    border-color: var(--warn-border);
+    background: var(--bg-hover);
+    border-color: var(--warn);
     color: var(--text-primary);
 }
 
 .param-tile.active {
     background: var(--warn-bg);
     border-color: var(--warn);
-    color: var(--slate-100);
-    box-shadow: 0 0 10px var(--warn-bg);
+    color: var(--warn-hover);
+    box-shadow: 0 0 0 1px var(--warn);
 }
 
 /* Style aplikacji Inline Transitions wykorzystujące nazwy fs-* ale zlokalizowane */
@@ -3137,9 +3151,6 @@ td.excel-tint--plyta_redukcyjna input {
 }
 #excel-table-container .excel-resize-handle {
     width: 4px !important;
-    background: var(--excel-border);
-}
-html[data-theme='light'] #excel-table-container .excel-resize-handle {
     background: var(--excel-border);
 }
 #excel-table-container .excel-resize-handle:hover {
@@ -5305,4 +5316,45 @@ html[data-theme='light'] .excel-icon-btn.is-plus:hover {
 
 html[data-theme='light'] .excel-colcheck:hover {
     background: rgba(var(--slate-950-rgb), 0.04);
+}
+
+/* Stan najechania menu kontekstowego kolumny — ten sam subtelny odcień
+   co .excel-colcheck (baza --excel-border-subtle w light kryje mocniej
+   niż zamierzony subtelny). */
+html[data-theme='light'] .excel-ctx-item:not(.is-disabled):hover {
+    background: rgba(var(--slate-950-rgb), 0.04);
+}
+
+/* ===== Tryb jasny — czytelność kafli wybranych, list i wierszy (audyt light) ===== */
+/* L1: biały tekst na pastelowym tle był niewidoczny — ciemny tekst statusu. */
+html[data-theme='light'] .param-tile.active {
+    color: var(--warn-strong);
+    box-shadow: 0 0 10px rgba(var(--warn-rgb), 0.25);
+}
+
+/* L2: etykiety grup na miętowym tle — stopień ciemniej niż muted. */
+html[data-theme='light'] .wizard-param-group .wizard-param-label {
+    color: var(--text-secondary);
+}
+
+/* L5: zablokowane kafle na białym tle potrzebują wyższego krycia niż w dark. */
+html[data-theme='light'] .tile.is-locked {
+    opacity: 0.72;
+}
+
+/* L6: karty studni — białe powierzchnie zamiast szarych płyt. */
+html[data-theme='light'] .well-list-item {
+    background: var(--bg-secondary);
+    border-color: var(--border);
+}
+
+html[data-theme='light'] .well-list-item:hover {
+    background: var(--bg-hover);
+}
+
+/* L7: wiersze konfiguracji — tło i ramka dobierane w JS per motyw
+   (actionsConfigRender: tileBg), hover tylko w CSS dla light. */
+html[data-theme='light'] .config-tile:hover {
+    border-color: var(--accent-border);
+    box-shadow: var(--shadow-sm);
 }

@@ -47,13 +47,10 @@ body.spa-view-loading .spa-module-iframe.spa-iframe-visible {
     pointer-events: none;
     opacity: 0;
     visibility: hidden;
-    background:
-        radial-gradient(circle at 50% 26%, rgba(var(--accent-rgb), 0.15), transparent 34%),
-        rgba(var(--slate-950-rgb), 0.8);
-    backdrop-filter: blur(10px);
+    background: var(--bg-primary);
     transition:
-        opacity 0.2s ease,
-        visibility 0.2s ease;
+        opacity 0.15s ease-out,
+        visibility 0.15s ease-out;
 }
 
 .spa-transition-layer.is-visible {

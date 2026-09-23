@@ -1058,3 +1058,21 @@
         transition: none;
     }
 }
+
+/* ===== P5: system rozmiarów modali S/M/L (opt-in, nowe klasy) =====
+   Wartości = istniejące szerokości w codebase (zero nowych wymiarów):
+   S 380px ← .modal--prz-flow (studnie/modal.css),
+   M 550px ← bazowy .modal (style.responsive.css),
+   L 900px ← #offer-orders-modal / .audit-modal-inner (style.responsive.css).
+   Tylko max-width: żadna istniejąca reguła nie ruszona (Geometry Lock).
+   Overlay: jeden token --shadow-color (dark/light w style.base.css).
+   Focus: globalny *:focus-visible --accent (style.base.css). */
+.modal--sm {
+    max-width: 380px;
+}
+.modal--md {
+    max-width: 550px;
+}
+.modal--lg {
+    max-width: 900px;
+}

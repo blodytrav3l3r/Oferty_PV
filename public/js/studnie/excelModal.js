@@ -345,7 +345,7 @@ function openExcelTableModal() {
             #excel-table-container td:focus-within { box-shadow:inset 0 0 0 1px rgba(var(--accent-rgb), 0.3) !important; }
             #excel-table-container td.excel-col-selected { outline:2px solid rgba(var(--accent-rgb), 0.3); outline-offset:-2px; }
             #excel-table-container td.excel-col-selected .excel-sel-wrap { outline:inherit; outline-offset:-2px; }
-            #excel-table-container td.cell-selected { outline:2px solid rgba(var(--accent-rgb), 0.5); outline-offset:-2px; background:rgba(var(--accent-rgb), 0.05); }
+            #excel-table-container td.cell-selected { outline:2px solid rgba(var(--accent-rgb), 0.5); outline-offset:-2px; background:var(--excel-cell-selected); }
             #excel-table-container td.cell-selected .excel-sel-wrap { outline:inherit; outline-offset:-2px; }
             #excel-table-container td.drag-preview { outline:2px dashed rgba(var(--accent-rgb), 0.5); outline-offset:-2px; background:rgba(var(--accent-rgb), 0.05); }
             #excel-table-container td.drag-preview .excel-sel-wrap { outline:inherit; outline-offset:-2px; }
@@ -363,6 +363,9 @@ function openExcelTableModal() {
             #excel-table-container tr.excel-row-error input, #excel-table-container tr.excel-row-error select, #excel-table-container tr.excel-row-error .excel-sel-wrap div { color:var(--danger-hover) !important; font-weight:var(--fw-semibold); }
             #excel-table-container tr.excel-row-warning input, #excel-table-container tr.excel-row-warning select, #excel-table-container tr.excel-row-warning .excel-sel-wrap div { color:var(--warn-hover) !important; font-weight:var(--fw-semibold); }
             #excel-table-container tr.excel-row-error td[data-cell^="height"], #excel-table-container tr.excel-row-error td[data-cell^="denn"], #excel-table-container tr.excel-row-error td[data-cell^="uszcz"] { color:var(--danger-hover) !important; }
+            /* Focus searcha w toolbarze: inline outline:none gasi globalny ring,
+               wiec jawny ring accentem (!important tylko by przebic inline). */
+            #excel-search-input:focus-visible { outline:2px solid var(--accent) !important; outline-offset:-1px; }
         </style>
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.4rem;padding:0.45rem 0.8rem;background:var(--excel-bg-alt);border-bottom:1px solid var(--excel-border-subtle);flex-shrink:0;">
             <div style="display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;">

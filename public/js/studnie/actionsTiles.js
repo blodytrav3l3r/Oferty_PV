@@ -106,9 +106,8 @@ function renderTiles() {
             const isInConfig = (well.config || []).some((c) => c.productId === p.id);
             const activeClass = isTopClosure && isInConfig ? 'active-top-closure' : '';
             const isLocked = isWellLocked();
-            const lockedStyle = isLocked
-                ? 'opacity: 0.5; cursor: not-allowed; pointer-events: none;'
-                : '';
+            const lockedStyle = isLocked ? 'pointer-events:none;' : '';
+            const lockedClass = isLocked ? ' is-locked' : '';
 
             let displayPrice = p.price || 0;
             if (
@@ -126,7 +125,7 @@ function renderTiles() {
                 displayPrice += parseFloat(p.doplataZelbet);
             }
 
-            html += `<div class="tile ${activeClass}" data-type="${p.componentType}" style="${lockedStyle}" onclick="addWellComponent('${escapeJsStr(p.id)}')" draggable="${!isLocked}" ondragstart="${isLocked ? 'return false;' : `dragWellComponent(event, '${escapeJsStr(p.id)}')`}" ondragend="dragEndWellComponent(event)">
+            html += `<div class="tile ${activeClass}${lockedClass}" data-type="${p.componentType}" style="${lockedStyle}" onclick="addWellComponent('${escapeJsStr(p.id)}')" draggable="${!isLocked}" ondragstart="${isLocked ? 'return false;' : `dragWellComponent(event, '${escapeJsStr(p.id)}')`}" ondragend="dragEndWellComponent(event)">
         <div class="tile-name">${escapeHtml(p.name)}</div>
         <div class="tile-meta">
           <span>${p.weight ? fmtInt(p.weight) + ' kg' : ''}</span>
@@ -185,11 +184,10 @@ function renderTiles() {
                 html += `<div class="tiles-section"><div class="tiles-section-title">${g.title}</div><div class="tiles-grid">`;
                 items.forEach((p) => {
                     const isLocked = isWellLocked();
-                    const lockedStyle = isLocked
-                        ? 'opacity: 0.5; cursor: not-allowed; pointer-events: none;'
-                        : '';
+                    const lockedStyle = isLocked ? 'pointer-events:none;' : '';
+                    const lockedClass = isLocked ? ' is-locked' : '';
 
-                    html += `<div class="tile" data-type="${p.componentType}" style="${lockedStyle}" onclick="addWellComponent('${escapeJsStr(p.id)}')" draggable="${!isLocked}" ondragstart="${isLocked ? 'return false;' : `dragWellComponent(event, '${escapeJsStr(p.id)}')`}" ondragend="dragEndWellComponent(event)">
+                    html += `<div class="tile${lockedClass}" data-type="${p.componentType}" style="${lockedStyle}" onclick="addWellComponent('${escapeJsStr(p.id)}')" draggable="${!isLocked}" ondragstart="${isLocked ? 'return false;' : `dragWellComponent(event, '${escapeJsStr(p.id)}')`}" ondragend="dragEndWellComponent(event)">
                         <div class="tile-name">${escapeHtml(p.name)}</div>
                         <div class="tile-meta">
                           <span>${p.weight ? fmtInt(p.weight) + ' kg' : ''}</span>
@@ -286,16 +284,15 @@ function renderTiles() {
 
                     items.forEach((p) => {
                         const isLocked = isWellLocked();
-                        const lockedStyle = isLocked
-                            ? 'opacity: 0.5; cursor: not-allowed; pointer-events: none;'
-                            : '';
+                        const lockedStyle = isLocked ? 'pointer-events:none;' : '';
+                        const lockedClass = isLocked ? ' is-locked' : '';
 
                         let displayPrice = p.price || 0;
                         if (well.stopnie === 'nierdzewna' && p.doplataDrabNierdzewna) {
                             displayPrice += parseFloat(p.doplataDrabNierdzewna);
                         }
 
-                        html += `<div class="tile" data-type="${p.componentType}" style="${lockedStyle}" onclick="addWellComponent('${escapeJsStr(p.id)}')" draggable="${!isLocked}" ondragstart="${isLocked ? 'return false;' : `dragWellComponent(event, '${escapeJsStr(p.id)}')`}" ondragend="dragEndWellComponent(event)">
+                        html += `<div class="tile${lockedClass}" data-type="${p.componentType}" style="${lockedStyle}" onclick="addWellComponent('${escapeJsStr(p.id)}')" draggable="${!isLocked}" ondragstart="${isLocked ? 'return false;' : `dragWellComponent(event, '${escapeJsStr(p.id)}')`}" ondragend="dragEndWellComponent(event)">
                             <div class="tile-name">${escapeHtml(p.name)}</div>
                             <div class="tile-meta">
                               <span>${p.weight ? fmtInt(p.weight) + ' kg' : ''}</span>

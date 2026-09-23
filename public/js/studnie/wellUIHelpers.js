@@ -39,7 +39,7 @@ function renderDiscountPanel() {
 
     if (activeDNs.length === 0) {
         panel.innerHTML =
-            '<div class="discount-empty"><i data-lucide="banknote" style="width:20px;height:20px;opacity:0.5;display:block;margin:0 auto 0.4rem;"></i>Brak studni.<br>Dodaj studnię aby ustawić rabaty.</div>';
+            '<div class="discount-empty"><i data-lucide="banknote" class="icon-md" style="opacity:0.5;display:block;margin:0 auto 0.4rem;"></i>Brak studni.<br>Dodaj studnię aby ustawić rabaty.</div>';
         if (typeof lucide !== 'undefined' && lucide.createIcons)
             lucide.createIcons({ root: panel });
         return;
@@ -49,7 +49,7 @@ function renderDiscountPanel() {
     let grandDiscounted = 0;
 
     let html =
-        '<div class="discount-header"><i data-lucide="banknote" style="width:14px;height:14px;"></i> Rabaty i podsumowanie</div>';
+        '<div class="discount-header"><i data-lucide="banknote" class="icon-xs"></i> Rabaty i podsumowanie</div>';
 
     activeDNs.forEach((dn) => {
         const groupWells = wells.filter((w) => w.dn === dn);
@@ -255,7 +255,7 @@ function renderDiscountPanel() {
 
         html += '<div class="discount-card discount-card--pehd">';
         html +=
-            '<div class="discount-card-head"><span class="discount-card-title discount-card-title--pehd"><i data-lucide="shield" style="width:14px;height:14px;"></i> Wk\u0142adka PEHD</span><span class="discount-pehd-price">Bazowo: ' +
+            '<div class="discount-card-head"><span class="discount-card-title discount-card-title--pehd"><i data-lucide="shield" class="icon-xs"></i> Wk\u0142adka PEHD</span><span class="discount-pehd-price">Bazowo: ' +
             currentPehdPrice +
             ' PLN/m²</span></div>';
         html +=
@@ -280,7 +280,7 @@ function renderDiscountPanel() {
 
         html += '<div class="discount-card discount-card--paint">';
         html +=
-            '<div class="discount-card-head"><span class="discount-card-title discount-card-title--paint"><i data-lucide="paintbrush" style="width:14px;height:14px;"></i> Koszt malowania</span><span class="discount-pehd-price">PLN / m²</span></div>';
+            '<div class="discount-card-head"><span class="discount-card-title discount-card-title--paint"><i data-lucide="paintbrush" class="icon-xs"></i> Koszt malowania</span><span class="discount-pehd-price">PLN / m²</span></div>';
         html += '<div class="discount-grid">';
 
         if (anyMalowanieW) {
@@ -398,7 +398,7 @@ function _wellBuildCardHtml(w, i, logicalRow, transportVal, stats) {
             wellLockBadge = `<span title="Studnia na zamówieniu ${typeof escapeHtml === 'function' ? escapeHtml(wellOrder.orderNumber).replace(/"/g, '&quot;') : String(wellOrder.orderNumber)} — kliknij aby otworzyć"
                 onclick="event.stopPropagation(); window.location.href='studnie.html?order=${typeof escapeJsStr === 'function' ? escapeJsStr(wellOrder.id) : String(wellOrder.id)}'"
                 style="font-size: var(--fs-3xs); background:rgba(var(--success-rgb), 0.15); color:var(--success-hover); border:1px solid rgba(var(--success-rgb), 0.5); padding:1px 5px; border-radius: var(--radius-2xs); font-weight: var(--fw-extrabold); margin-left:0.3rem; cursor:pointer; display:inline-flex; align-items:center; gap:2px; vertical-align:middle;">
-                <i data-lucide="package" style="width:10px; height:10px;"></i>${typeof escapeHtml === 'function' ? escapeHtml(wellOrder.orderNumber) : String(wellOrder.orderNumber)}
+                <i data-lucide="package" class="icon-xxs"></i>${typeof escapeHtml === 'function' ? escapeHtml(wellOrder.orderNumber) : String(wellOrder.orderNumber)}
             </span>`;
         } else {
             wellLockBadge =
@@ -476,7 +476,7 @@ function _wellBuildCardHtml(w, i, logicalRow, transportVal, stats) {
         logicalRow !== undefined && logicalRow !== null ? ` data-logical-row="${logicalRow}"` : '';
 
     const minH = hasElevations ? 104 : 76;
-    let html = `<div class="well-list-item ${isActive ? 'active' : ''}" data-widx="${i}" data-well-idx="${i}"${logRowAttr} style="min-height:${minH}px;box-sizing:border-box;${changeStyling}${isLocked ? ' opacity:0.7;' : ''}${errorStyling}" onclick="selectWell(${i})">
+    let html = `<div class="well-list-item${isActive ? ' active' : ''}${isLocked ? ' is-locked' : ''}" data-widx="${i}" data-well-idx="${i}"${logRowAttr} style="min-height:${minH}px;box-sizing:border-box;${changeStyling}${errorStyling}" onclick="selectWell(${i})">
       <div class="well-list-header" style="display:flex; align-items:center; gap:0.4rem; ${hasBadges ? 'margin-bottom:0.2rem;' : ''}">
         <div class="well-list-name" style="flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; ${errorNameStyle}" title="${escFn(w.name || '').replace(/"/g, '&quot;')}">${escFn(w.name || '')}</div>
         <div class="well-list-actions">

@@ -26,20 +26,17 @@ body.index-page {
 body.index-page::before {
     content: '';
     position: fixed;
-    top: -20%;
-    left: -10%;
-    width: 60%;
-    height: 60%;
-    background: radial-gradient(circle, rgba(var(--accent-rgb), 0.05) 0%, transparent 70%);
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--bg-primary);
     pointer-events: none;
     z-index: 0;
-    transition: opacity 0.6s;
 }
 
 body.index-page.logged-in::before {
-    background:
-        radial-gradient(circle at 30% 20%, rgba(var(--accent-rgb), 0.1) 0%, transparent 60%),
-        radial-gradient(circle at 70% 80%, rgba(var(--success-rgb), 0.05) 0%, transparent 50%);
+    background: var(--bg-primary);
 }
 
 /* ── Niestandardowy pasek przewijania ── */
@@ -89,13 +86,9 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
     font-size: var(--fs-8xl);
     font-weight: var(--fw-black);
     letter-spacing: -2px;
-    background: linear-gradient(135deg, var(--accent), var(--accent2), var(--success));
-    background-size: 200% 200%;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    /* P3: płaski kolor zamiast gradientu tekstowego (decyzja 1 planu). */
+    color: var(--accent);
     margin-bottom: 0.2rem;
-    animation: logoShimmer 6s ease-in-out infinite;
     transition: font-size 0.3s;
 }
 
@@ -111,15 +104,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
     width: min(300px, 70vw);
 }
 
-@keyframes logoShimmer {
-    0%,
-    100% {
-        background-position: 0% 50%;
-    }
-    50% {
-        background-position: 100% 50%;
-    }
-}
+/* logoShimmer usunięty w P3 razem z gradientem tekstowym .index-logo. */
 
 .subtitle {
     font-size: var(--fs-2xl);
@@ -136,14 +121,12 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
     margin: 2rem auto 2.5rem;
     padding: 2rem;
     border-radius: var(--radius);
-    background: var(--glass);
-    -webkit-backdrop-filter: blur(var(--blur-glass)) saturate(1.2);
-    backdrop-filter: blur(var(--blur-glass)) saturate(1.2);
-    border: 1px solid var(--glass-border);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
     box-shadow: var(--shadow-lg);
     transition:
-        border-color 0.3s,
-        box-shadow 0.3s;
+        border-color 0.2s ease-in-out,
+        box-shadow 0.2s ease-in-out;
     animation: loginFadeIn 0.5s ease-out;
 }
 
@@ -208,12 +191,10 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
     margin-bottom: var(--section-gap-lg);
     width: 100%;
     max-width: var(--section-max-width);
-    background: var(--glass);
+    background: var(--bg-card);
     padding: 0.75rem 1.5rem;
     border-radius: var(--radius);
-    -webkit-backdrop-filter: blur(var(--blur-glass));
-    backdrop-filter: blur(var(--blur-glass));
-    border: 1px solid var(--glass-border);
+    border: 1px solid var(--border);
 }
 
 .user-profile-card {
@@ -225,7 +206,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
 .user-avatar {
     width: 36px;
     height: 36px;
-    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    background: var(--accent);
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -233,7 +214,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
     font-size: var(--fs-2xl);
     font-weight: var(--fw-extrabold);
     color: var(--white);
-    box-shadow: 0 0 20px rgba(var(--accent-rgb), 0.3);
+    box-shadow: var(--shadow-sm);
 }
 
 .user-info-text {
@@ -276,16 +257,18 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
     align-items: center;
     padding: 1.5rem 2rem;
     background: var(--bg-card);
-    border: 1px solid var(--border-glass);
+    border: 1px solid var(--border);
     border-radius: var(--radius);
     text-decoration: none;
     color: var(--text-primary);
     transition:
-        transform 0.4s,
-        box-shadow 0.4s;
+        border-color 0.2s ease-in-out,
+        background-color 0.2s ease-in-out,
+        box-shadow 0.2s ease-in-out;
     overflow: hidden;
     gap: 1.5rem;
     text-align: left;
+    user-select: none;
 }
 
 .launch-card::before {
@@ -296,31 +279,24 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
     right: 0;
     height: 3px;
     border-radius: var(--radius-md) var(--radius-md) 0 0;
-    transition: height 0.3s ease;
 }
 
 .launch-card.rury::before {
-    background: linear-gradient(90deg, var(--accent), var(--accent-hover));
+    background: var(--accent);
 }
 
 .launch-card.studnie::before {
-    background: linear-gradient(90deg, var(--success), var(--success-hover));
+    background: var(--success);
 }
 
 .launch-card.kartoteka::before {
-    background: linear-gradient(90deg, var(--warn), var(--warn-hover));
-}
-
-.launch-card:hover::before {
-    height: 4px;
+    background: var(--warn);
 }
 
 .launch-card:hover {
-    transform: translateY(-2px);
-    border-color: var(--accent-border-dim);
-    box-shadow:
-        0 8px 16px rgba(var(--accent-rgb), 0.1),
-        0 2px 4px rgba(var(--black-rgb), 0.1);
+    border-color: var(--accent-border-medium);
+    background: var(--bg-hover);
+    box-shadow: var(--shadow-md);
 }
 
 .launch-icon {
@@ -414,7 +390,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: linear-gradient(to right, var(--accent-bg), var(--bg-card));
+    background: var(--bg-card);
 }
 
 /* ── Recycled Numbers Widget ── */
@@ -485,10 +461,8 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
 .admin-stat-card {
     flex: 1;
     min-width: 140px;
-    background: var(--glass);
-    -webkit-backdrop-filter: blur(10px);
-    backdrop-filter: blur(10px);
-    border: 1px solid var(--glass-border);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
     border-radius: var(--radius-sm);
     padding: 0.55rem 0.9rem;
     display: flex;
@@ -497,27 +471,15 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
     position: relative;
     overflow: hidden;
     transition:
-        border-color 0.3s,
-        transform 0.3s,
-        box-shadow 0.3s;
+        border-color 0.15s ease-in-out,
+        box-shadow 0.15s ease-in-out;
 }
 
-.admin-stat-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(var(--white-rgb), 0.05), transparent);
-}
+/* P3: górna linia-glow usunięta razem z gradientem (por. .zlecenia-stat-card). */
 
 .admin-stat-card:hover {
-    border-color: var(--accent-border-dim);
-    transform: translateY(-1px);
-    box-shadow:
-        var(--shadow-sm),
-        0 0 16px rgba(var(--accent-rgb), 0.1);
+    border-color: var(--accent-border-medium);
+    box-shadow: var(--shadow-sm);
 }
 
 .admin-stat-icon {
@@ -573,7 +535,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
     overflow-x: auto;
     border-radius: var(--radius-md);
     background: var(--bg-card);
-    border: 1px solid var(--border-glass);
+    border: 1px solid var(--border);
     box-shadow: var(--shadow-lg);
 }
 
@@ -591,7 +553,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
     text-transform: uppercase;
     letter-spacing: 0.5px;
     background: var(--bg-tertiary);
-    border-bottom: 1px solid var(--border-glass);
+    border-bottom: 1px solid var(--border);
     text-align: center;
     position: sticky;
     top: 0;
@@ -673,8 +635,8 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
 }
 
 .admin-action-btn:hover {
-    background: rgba(var(--white-rgb), 0.05);
-    border-color: rgba(var(--white-rgb), 0.15);
+    background: var(--bg-hover);
+    border-color: var(--border);
 }
 
 .admin-action-btn svg,
@@ -729,13 +691,13 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
 .badge-role.user {
     background: var(--success-bg);
     color: var(--success-hover);
-    border: 1px solid var(--success-bg);
+    border: 1px solid var(--success-border);
 }
 
 .token-badge {
     display: inline-block;
-    background: rgba(var(--white-rgb), 0.05);
-    border: 1px solid var(--border-glass);
+    background: var(--bg-hover);
+    border: 1px solid var(--border);
     padding: 0.15rem 0.5rem;
     border-radius: var(--radius-2xs);
     font-family: 'JetBrains Mono', 'Fira Code', monospace;
@@ -772,7 +734,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
     align-items: center;
     gap: 0.5rem;
     background: var(--bg-secondary);
-    border: 1px solid var(--border-glass);
+    border: 1px solid var(--border);
     border-radius: var(--radius-sm);
     padding: 0.25rem 0.6rem;
 }
@@ -784,7 +746,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
     text-transform: uppercase;
     letter-spacing: 0.04em;
     padding-right: 0.4rem;
-    border-right: 1px solid var(--border-glass);
+    border-right: 1px solid var(--border);
     line-height: 1;
 }
 
@@ -809,7 +771,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
     text-align: center;
     color: var(--text-primary);
     background: var(--bg-primary);
-    border: 1px solid var(--border-glass);
+    border: 1px solid var(--border);
     border-radius: var(--radius-2xs);
     outline: none;
     transition:
@@ -835,7 +797,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
     font-weight: var(--fw-black);
     color: var(--accent-hover);
     background: var(--bg-secondary);
-    border: 1px solid var(--border-glass);
+    border: 1px solid var(--border);
     border-radius: var(--radius-sm);
     outline: none;
     transition:
@@ -959,7 +921,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
     gap: 0.55rem;
     padding: 0.75rem 0.85rem;
     background: var(--bg-card);
-    border: 1px solid var(--border-glass);
+    border: 1px solid var(--border);
     border-radius: var(--radius-md);
 }
 
@@ -1010,7 +972,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
     align-items: center;
     gap: 0.5rem;
     padding: 0.7rem 1.1rem;
-    border-top: 1px solid var(--border-glass);
+    border-top: 1px solid var(--border);
     background: var(--bg-tertiary);
 }
 
@@ -1045,7 +1007,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
     padding: 0.5rem 0.7rem;
     background: var(--bg-tertiary);
     border-radius: var(--radius-sm);
-    border: 1px solid var(--border-glass);
+    border: 1px solid var(--border);
     margin-top: 0.35rem;
 }
 
@@ -1081,7 +1043,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
     padding: 0.2rem 0.45rem;
     border-radius: var(--radius-sm);
     cursor: pointer;
-    border: 1px solid var(--border-glass);
+    border: 1px solid var(--border);
     font-size: var(--fs-sm);
     color: var(--text-secondary);
     transition:
@@ -1102,7 +1064,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
     padding: 0.2rem 0.5rem;
     border-radius: var(--radius-2xs);
     cursor: pointer;
-    border: 1px solid var(--border-glass);
+    border: 1px solid var(--border);
     font-size: var(--fs-sm);
     color: var(--text-secondary);
     transition:
@@ -1193,7 +1155,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
     width: 12%;
 }
 
-/* ── Admin section header z subtelnym glow ── */
+/* ── Nagłówek sekcji admina ── */
 .admin-section-title {
     display: flex;
     align-items: center;
@@ -1201,7 +1163,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
     gap: 0.6rem;
     padding: 0.6rem 1rem;
     margin: 0.8rem 0;
-    background: linear-gradient(90deg, transparent, var(--accent-bg), transparent);
+    background: var(--accent-bg);
     border-radius: var(--radius-sm);
 }
 
@@ -1242,7 +1204,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
 /* ── Karta health ── */
 .ai-health-card {
     background: var(--bg-card);
-    border: 1px solid var(--border-glass);
+    border: 1px solid var(--border);
     border-radius: var(--radius-md);
     padding: 12px;
     display: flex;
@@ -1293,7 +1255,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
 /* ── Karta statystyk AI ── */
 .ai-stat-card {
     background: var(--bg-card);
-    border: 1px solid var(--border-glass);
+    border: 1px solid var(--border);
     border-radius: var(--radius-md);
     padding: 12px;
     text-align: center;
@@ -1377,7 +1339,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
 
 .ai-filter-input {
     background: var(--bg-input);
-    border: 1px solid var(--border-glass);
+    border: 1px solid var(--border);
     color: var(--text-primary);
     padding: 6px 12px;
     border-radius: var(--radius-sm);
@@ -1406,7 +1368,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
     gap: 0.4rem;
     border-radius: var(--radius-sm);
     background: var(--bg-deep);
-    border: 1px solid var(--border-glass);
+    border: 1px solid var(--border);
     color: var(--text-secondary);
     cursor: pointer;
     font-family: 'Inter', sans-serif;
@@ -1418,14 +1380,14 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
 }
 
 .ai-btn:hover {
-    background: var(--glass-border);
+    background: var(--bg-hover);
     border-color: rgba(var(--white-rgb), 0.15);
     color: var(--text-primary);
     transform: translateY(-1px);
 }
 
 .ai-btn-primary {
-    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    background: var(--accent);
     border: none;
     color: var(--white);
 }
@@ -1489,7 +1451,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
 
 /* ── Jakość danych (Data Quality) ── */
 .ai-dq-section {
-    border-top: 1px solid var(--border-glass);
+    border-top: 1px solid var(--border);
     padding-top: 12px;
     margin-bottom: 6px;
 }
@@ -1529,7 +1491,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
 
 .ai-dq-bar {
     background: var(--bg-card);
-    border: 1px solid var(--border-glass);
+    border: 1px solid var(--border);
     border-radius: var(--radius-sm);
     padding: 12px;
     transition: border-color 0.2s;
@@ -1558,7 +1520,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
 }
 
 .ai-dq-bar-track {
-    background: var(--border-glass);
+    background: var(--bg-tertiary);
     border-radius: var(--radius-2xs);
     height: 8px;
     overflow: hidden;
@@ -1584,7 +1546,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
 .ai-table-wrap {
     overflow-x: auto;
     border-radius: var(--radius-sm);
-    border: 1px solid var(--border-glass);
+    border: 1px solid var(--border);
     margin-bottom: 16px;
 }
 
@@ -1612,7 +1574,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
 
 .ai-table tbody td {
     padding: 8px;
-    border-bottom: 1px solid var(--border-glass);
+    border-bottom: 1px solid var(--border);
     vertical-align: middle;
 }
 
@@ -1622,13 +1584,13 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
     border-radius: var(--radius-md);
     padding: 12px;
     margin-bottom: 16px;
-    border: 1px solid var(--border-glass);
+    border: 1px solid var(--border);
 }
 
 .ai-pattern-row {
     display: flex;
     justify-content: space-between;
-    border-bottom: 1px solid var(--border-glass);
+    border-bottom: 1px solid var(--border);
     padding: 8px 0;
     font-size: var(--fs-md);
 }
@@ -1728,7 +1690,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
 
 .ai-drift-card {
     background: var(--bg-card);
-    border: 1px solid var(--border-glass);
+    border: 1px solid var(--border);
     border-radius: var(--radius-md);
     padding: 12px;
     transition:
@@ -1767,7 +1729,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
     gap: 0.5rem;
     flex-wrap: wrap;
     background: var(--bg-card);
-    border: 1px solid var(--border-glass);
+    border: 1px solid var(--border);
     border-radius: var(--radius-sm);
     padding: 10px 12px;
     margin-top: 8px;
@@ -1784,7 +1746,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
 /* Pusty stan gdy brak danych (zamiast białej linii) */
 .card-note {
     background: var(--bg-tertiary);
-    border: 1px solid var(--border-glass);
+    border: 1px solid var(--border);
     border-radius: var(--radius-sm);
     padding: 16px;
     color: var(--text-muted);
@@ -1812,7 +1774,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
 hr.border-top-glass-m4,
 .ai-divider {
     border: none;
-    border-top: 1px solid var(--border-glass);
+    border-top: 1px solid var(--border);
     margin: 24px 0;
     height: 0;
     background: transparent;
@@ -1833,7 +1795,7 @@ hr.border-top-glass-m4,
 
 .ai-influence-widget {
     background: var(--bg-card);
-    border: 1px solid var(--border-glass);
+    border: 1px solid var(--border);
     border-radius: var(--radius-md);
     padding: 12px;
     margin-bottom: 16px;
@@ -1844,7 +1806,7 @@ hr.border-top-glass-m4,
     display: inline-flex;
     align-items: center;
     gap: 0.4rem;
-    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    background: var(--accent);
     border: none;
     border-radius: var(--radius-sm);
     color: var(--white);
@@ -1859,7 +1821,7 @@ hr.border-top-glass-m4,
 
 .ai-ml-train-btn:hover {
     transform: translateY(-1px);
-    box-shadow: 0 4px 15px rgba(var(--accent-rgb), 0.3);
+    box-shadow: var(--shadow-sm);
 }
 
 .ai-ml-train-btn:disabled {
@@ -1902,7 +1864,7 @@ hr.border-top-glass-m4,
 .ai-model-table-wrap {
     overflow-x: auto;
     border-radius: var(--radius-sm);
-    border: 1px solid var(--border-glass);
+    border: 1px solid var(--border);
 }
 
 .ai-model-table {
@@ -1933,7 +1895,7 @@ hr.border-top-glass-m4,
 
 .ai-model-table tbody td {
     padding: 6px 8px;
-    border-bottom: 1px solid var(--border-glass);
+    border-bottom: 1px solid var(--border);
     vertical-align: middle;
 }
 
@@ -1996,7 +1958,7 @@ hr.border-top-glass-m4,
     width: 26px;
     height: 26px;
     padding: 0;
-    border: 1px solid var(--border-glass);
+    border: 1px solid var(--border);
     border-radius: var(--radius-sm);
     background: transparent;
     cursor: pointer;
@@ -2032,7 +1994,7 @@ hr.border-top-glass-m4,
     font-size: var(--fs-base);
     text-align: center;
     padding: 12px;
-    border: 1px dashed var(--border-glass);
+    border: 1px dashed var(--border);
     border-radius: var(--radius-sm);
 }
 
@@ -2175,15 +2137,13 @@ body.index-page .header.visible {
     }
 }
 
-/* Tryb jasny — mocniejszy ambient glow, na białym 0.05 znika */
+/* Tryb jasny — płaskie tło (ambient glow usunięty w P3). */
 html[data-theme='light'] body.index-page::before {
-    background: radial-gradient(circle, rgba(var(--accent-rgb), 0.12) 0%, transparent 70%);
+    background: var(--bg-primary);
 }
 
 html[data-theme='light'] body.index-page.logged-in::before {
-    background:
-        radial-gradient(circle at 30% 20%, rgba(var(--accent-rgb), 0.14) 0%, transparent 60%),
-        radial-gradient(circle at 70% 80%, rgba(var(--success-rgb), 0.1) 0%, transparent 50%);
+    background: var(--bg-primary);
 }
 
 /* prefers-reduced-motion */
