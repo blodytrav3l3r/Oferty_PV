@@ -498,7 +498,7 @@ function _ensureConfirmStyles() {
     style.id = 'app-confirm-styles';
     style.textContent = `
         .app-confirm-modal {
-            background:var(--slate-950);
+            background:var(--bg-secondary);
             border:1px solid var(--accent-border-dim);
             border-radius: var(--radius-md);
             width:100%; max-width:800px;
@@ -513,7 +513,7 @@ function _ensureConfirmStyles() {
         }
         .app-confirm-icon { font-size: var(--fs-7xl); margin-bottom:0.6rem; }
         .app-confirm-title {
-            font-size: var(--fs-2xl); font-weight: var(--fw-bold); color:var(--white);
+            font-size: var(--fs-2xl); font-weight: var(--fw-bold); color:var(--text-primary);
             margin-bottom:0.6rem;
         }
         .app-confirm-message {
@@ -533,14 +533,14 @@ function _ensureConfirmStyles() {
         #app-confirm-ok { background:var(--accent); color:var(--white); }
         #app-confirm-ok:hover { filter:brightness(1.15); transform:translateY(-1px); }
         #app-confirm-cancel {
-            background:var(--slate-800); color:var(--text-secondary);
-            border:1px solid rgba(var(--white-rgb), 0.1);
+            background:var(--bg-tertiary); color:var(--text-secondary);
+            border:1px solid var(--border-glass);
         }
-        #app-confirm-cancel:hover { color:var(--white); background:var(--slate-700); }
+        #app-confirm-cancel:hover { color:var(--text-primary); background:var(--bg-hover); }
         .app-prompt-input {
             width:100%; padding:0.6rem 0.8rem; margin-bottom:1.25rem;
-            border-radius: var(--radius-sm); border:1px solid rgba(var(--white-rgb), 0.15);
-            background:var(--slate-900); color:var(--white);
+            border-radius: var(--radius-sm); border:1px solid var(--border-glass);
+            background:var(--bg-input); color:var(--text-primary);
             font:var(--fw-medium) var(--fs-xl) 'Inter',sans-serif; text-align:center;
             box-sizing:border-box; outline:none;
         }

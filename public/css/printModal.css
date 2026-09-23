@@ -535,28 +535,28 @@
    Nakładki rgba(white) byłyby niewidzialne na białym tle. */
 html[data-theme='light'] {
     --upm-bg: var(--bg-secondary);
-    --upm-bg-section: rgba(15, 23, 42, 0.03);
+    --upm-bg-section: rgba(var(--slate-950-rgb), 0.03);
     --upm-border: var(--border);
-    --upm-border-subtle: rgba(15, 23, 42, 0.12);
+    --upm-border-subtle: rgba(var(--slate-950-rgb), 0.12);
     --upm-text: var(--text-primary);
     --upm-text-muted: var(--text-secondary);
     --upm-text-dim: var(--text-muted);
 }
 
 html[data-theme='light'] .upm-modal {
-    background: linear-gradient(180deg, #ffffff 0%, #f1f5f9 100%);
+    background: linear-gradient(180deg, var(--bg-secondary) 0%, var(--bg-hover) 100%);
     box-shadow:
-        0 20px 50px rgba(15, 23, 42, 0.25),
-        0 0 0 1px rgba(15, 23, 42, 0.05) inset;
+        0 20px 50px rgba(var(--slate-950-rgb), 0.25),
+        0 0 0 1px rgba(var(--slate-950-rgb), 0.05) inset;
 }
 
 html[data-theme='light'] .upm-section:hover {
-    border-color: rgba(15, 23, 42, 0.2);
+    border-color: rgba(var(--slate-950-rgb), 0.2);
 }
 
 html[data-theme='light'] .upm-combined-filters,
 html[data-theme='light'] .upm-combined-select {
-    background: rgba(15, 23, 42, 0.03);
+    background: rgba(var(--slate-950-rgb), 0.03);
 }
 
 html[data-theme='light'] .upm-combined-select {
@@ -564,8 +564,8 @@ html[data-theme='light'] .upm-combined-select {
 }
 
 html[data-theme='light'] .upm-combined-select option {
-    background-color: #ffffff;
-    color: #0f172a;
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
 }
 
 /* Pastelowy tekst statusów nieczytelny na jasnym tle — ciemne warianty */
@@ -588,12 +588,12 @@ html[data-theme='light'] .upm-status-ordered {
 /* Drugorzędny przycisk: biały wash + slate-300 w bazie — w light wash
    z tła i czytelny tekst (teoria: border o stopień ciemniejszy od tła). */
 html[data-theme='light'] .upm-btn-secondary {
-    background: rgba(15, 23, 42, 0.04);
+    background: rgba(var(--slate-950-rgb), 0.04);
     border-color: var(--border);
     color: var(--text-secondary);
 }
 
 html[data-theme='light'] .upm-btn-secondary:hover {
-    background: rgba(15, 23, 42, 0.08);
+    background: rgba(var(--slate-950-rgb), 0.08);
     color: var(--text-primary);
 }

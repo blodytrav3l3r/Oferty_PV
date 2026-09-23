@@ -327,7 +327,7 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
     border-radius: var(--radius-sm);
     box-shadow: 0 12px 32px rgba(var(--black-rgb), 0.5);
     padding: 0.6rem;
-    z-index: var(--z-dropdown, 1000);
+    z-index: var(--z-dropdown);
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
@@ -3686,7 +3686,7 @@ td.excel-tr-selected .excel-sel-wrap > div {
     max-width: 100%;
     height: 30px;
     padding: 0 0.25rem;
-    border-radius: var(--radius-xs);
+    border-radius: var(--radius-2xs);
     text-align: center;
     white-space: nowrap;
     overflow: hidden;
@@ -4951,7 +4951,7 @@ td.excel-tr-selected .excel-sel-wrap > div {
     left: 0.2rem;
     right: 0.2rem;
     height: 4px;
-    border-radius: var(--radius-xs);
+    border-radius: var(--radius-2xs);
     background: var(--accent2-hover);
     box-shadow:
         0 0 10px rgba(var(--accent2-rgb), 0.9),
@@ -5245,9 +5245,9 @@ td.excel-tr-selected .excel-sel-wrap > div {
 
 /* ===== Tryb jasny — twarde ciemne plamy i białe washe ===== */
 html[data-theme='light'] .tm-edit-popup {
-    background: #ffffff;
+    background: var(--bg-secondary);
     border-color: var(--border);
-    box-shadow: 0 20px 60px rgba(15, 23, 42, 0.25);
+    box-shadow: 0 20px 60px rgba(var(--slate-950-rgb), 0.25);
 }
 
 html[data-theme='light'] .tm-edit-head {
@@ -5257,7 +5257,7 @@ html[data-theme='light'] .tm-edit-head {
 /* discount-input: ciemne washe rgba(black/white) znikają na białym —
    w light białe tło + neutralny border z tokenów. */
 html[data-theme='light'] .discount-input {
-    background: #ffffff;
+    background: var(--bg-secondary);
     border-color: var(--border);
 }
 
@@ -5266,7 +5266,7 @@ html[data-theme='light'] .discount-input:hover {
 }
 
 html[data-theme='light'] .discount-input:focus {
-    background: #ffffff;
+    background: var(--bg-secondary);
     border-color: var(--accent-border);
 }
 
@@ -5275,7 +5275,7 @@ html[data-theme='light'] .well-list-action:hover {
 }
 
 html[data-theme='light'] .pehd-card {
-    background: #ffffff;
+    background: var(--bg-secondary);
     border-color: var(--border);
 }
 
@@ -5296,7 +5296,7 @@ html[data-theme='light'] .pehd-btn-cancel:hover {
 
 html[data-theme='light'] .excel-icon-btn:hover {
     color: var(--text-primary);
-    background: rgba(15, 23, 42, 0.06);
+    background: rgba(var(--slate-950-rgb), 0.06);
 }
 
 html[data-theme='light'] .excel-icon-btn.is-plus:hover {
@@ -5304,5 +5304,5 @@ html[data-theme='light'] .excel-icon-btn.is-plus:hover {
 }
 
 html[data-theme='light'] .excel-colcheck:hover {
-    background: rgba(15, 23, 42, 0.04);
+    background: rgba(var(--slate-950-rgb), 0.04);
 }

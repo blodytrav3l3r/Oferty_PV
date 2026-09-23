@@ -251,6 +251,16 @@
     height: 32px;
     color: var(--danger-hover);
 }
+.icon-32-accent {
+    width: 32px;
+    height: 32px;
+    color: var(--accent-text);
+}
+.icon-32-warn {
+    width: 32px;
+    height: 32px;
+    color: var(--warn-hover);
+}
 
 /* Klasy pomocnicze przycisków */
 .pad-sm {

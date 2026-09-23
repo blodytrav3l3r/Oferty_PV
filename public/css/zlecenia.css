@@ -785,3 +785,24 @@ html[data-theme='light'] .zlecenia-virtual-toolbar .form-select.zlecenia-select-
 html[data-theme='light'] .zlecenia-virtual-toolbar .zlecenia-date-filter input[type='date'] {
     color-scheme: light;
 }
+
+/* Tryb jasny — karty statystyk i kontener tabeli: gradienty slate/white
+   z bazy dawały szare plamy na białym. Białe powierzchnie + neutralny border. */
+html[data-theme='light'] .zlecenia-stat-card {
+    background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-hover) 100%);
+    border-color: var(--border);
+}
+
+html[data-theme='light'] .zlecenia-stat-card::before {
+    background: linear-gradient(90deg, transparent, rgba(var(--slate-950-rgb), 0.08), transparent);
+}
+
+html[data-theme='light'] .zlecenia-table-container {
+    background: var(--bg-secondary);
+    border-color: var(--border);
+    box-shadow: var(--shadow-md);
+}
+
+html[data-theme='light'] .zlecenia-table td {
+    border-bottom-color: var(--border-subtle);
+}

@@ -21,6 +21,8 @@
     /* Borders */
     --border: var(--slate-800);
     --border-glass: var(--slate-800);
+    /* Włosowe dividery — ciemna mgiełka na dark, szarość w light. */
+    --border-subtle: rgba(var(--white-rgb), 0.05);
 
     /* Accent — indigo */
     --accent: #6366f1;
@@ -94,6 +96,7 @@
     --slate-800: #1e293b;
     --slate-800-rgb: 30, 41, 59;
     --slate-700: #334155;
+    --slate-700-rgb: 51, 65, 85;
     --slate-600: #475569;
     --slate-600-rgb: 71, 85, 105;
     --slate-500: #64748b;
@@ -230,6 +233,7 @@
     --z-header: 100;
     --z-sticky-th: 5;
     --z-sticky-dropdown: 50;
+    --z-dropdown: 1000;
     --z-overlay: 2000;
     --z-toast: 5000;
 
@@ -2051,6 +2055,7 @@ html[data-theme='light'] {
     /* Tła — neutralne szarości (GitHub-like), akcent tylko na akcjach */
     --bg-primary: #f6f8fa;
     --bg-secondary: #ffffff;
+    --bg-card: var(--bg-secondary);
     --bg-glass: #ffffff;
     --bg-tertiary: #eaeef2;
     --bg-deep: #eaeef2;
@@ -2076,7 +2081,6 @@ html[data-theme='light'] {
     --border-glass: #d0d7de;
     --border-subtle: #e2e8f0;
     --border-table-subtle: #e2e8f0;
-    --danger-text: #b91c1c;
     --danger-border-deep: #fecaca;
 
     /* Akcent — subtelne tła i tekst (inwersja jasnego na ciemny dla kontrastu) */
@@ -2210,7 +2214,7 @@ html[data-theme='light'] .nav-tile,
 html[data-theme='light'] .header-chip,
 html[data-theme='light'] .header-logout,
 html[data-theme='light'] .btn-secondary {
-    background: #ffffff;
+    background: var(--bg-secondary);
 }
 
 html[data-theme='light'] .nav-tile:hover,
@@ -2276,7 +2280,7 @@ html[data-theme='light'] .btn-primary,
 html[data-theme='light'] .kartoteka-filter-bar .ka-type-filter-btn.active,
 html[data-theme='light'] .kartoteka-filter-bar .ka-filter-btn.active,
 html[data-theme='light'] .kartoteka-filter-bar .ka-date-preset-btn.active {
-    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
 }
 
 /* Tryb jasny — klasy tekstowe i badge: vivid pastele nie przechodzą
@@ -2345,11 +2349,11 @@ html[data-theme='light'] .badge-muted {
 /* Białe washe utility znikają na białym — neutralne odpowiedniki */
 html[data-theme='light'] .bg-glass-subtle,
 html[data-theme='light'] .bg-glass-hover {
-    background: rgba(15, 23, 42, 0.04);
+    background: rgba(var(--slate-950-rgb), 0.04);
 }
 
 html[data-theme='light'] .bg-glass-strong {
-    background: rgba(15, 23, 42, 0.08);
+    background: rgba(var(--slate-950-rgb), 0.08);
 }
 
 /* Natywne kontrolki (dropdowny, daty) — jasny color-scheme w light.
@@ -2361,7 +2365,7 @@ html[data-theme='light'] textarea {
 }
 
 html[data-theme='light'] option {
-    background: #ffffff;
+    background: var(--bg-secondary);
     color: var(--text-primary);
 }
 
