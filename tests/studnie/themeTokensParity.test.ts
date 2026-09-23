@@ -38,6 +38,8 @@ const SHARED = new Set([
         'fw-extrabold',
         'fw-black',
         'fw-light',
+        'font-sans',
+        'font-mono',
         'radius-2xs',
         'radius-sm',
         'radius',
