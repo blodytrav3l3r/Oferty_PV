@@ -18,6 +18,7 @@ function openPrzejsciaVisibilityPopup(containerId) {
 
     overlay = document.createElement('div');
     overlay.id = 'przejscia-visibility-overlay';
+    overlay.classList.add('js-modal-overlay');
     overlay.setAttribute('role', 'dialog');
     overlay.setAttribute('aria-modal', 'true');
     overlay.setAttribute('aria-label', 'Widoczność typów przejść');
@@ -30,6 +31,9 @@ function openPrzejsciaVisibilityPopup(containerId) {
     overlay.onclick = (e) => {
         if (e.target === overlay) closePrzejsciaVisibilityPopup(containerId);
     };
+    overlay.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closePrzejsciaVisibilityPopup(containerId);
+    });
 
     const visibleCount = allTypes.filter((t) => visiblePrzejsciaTypes.has(t)).length;
 
@@ -84,6 +88,7 @@ function closePrzejsciaVisibilityPopup(containerId) {
     if (overlay) {
         if (typeof untrapFocus === 'function') untrapFocus(overlay);
         overlay.remove();
+        if (typeof restoreBodyScroll === 'function') restoreBodyScroll();
     }
     if (containerId === 'excel') {
         if (typeof _excelRenderTable === 'function') _excelRenderTable(_excelActiveTab);

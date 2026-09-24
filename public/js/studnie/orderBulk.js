@@ -484,6 +484,16 @@ function openBulkOrderSequencePopup() {
         </div>
     `;
     document.body.appendChild(overlay);
+    overlay.classList.add('js-modal-overlay');
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-modal', 'true');
+    overlay.setAttribute('aria-label', 'Kolejność generowania');
+    document.body.style.overflow = 'hidden';
+    /** @type {any} */ (overlay)._previousFocus = document.activeElement;
+    if (typeof trapFocus === 'function') trapFocus(overlay);
+    overlay.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeBulkOrderPopup();
+    });
 
     if (_bulkSeqVirtual) {
         _bulkSeqRenderSlice();
@@ -739,7 +749,11 @@ function toggleBulkSeqItem(btn) {
 function closeBulkOrderPopup() {
     _bulkSeqResetState();
     const overlay = document.getElementById('bulk-seq-overlay');
-    if (overlay) overlay.remove();
+    if (overlay) {
+        if (typeof untrapFocus === 'function') untrapFocus(overlay);
+        overlay.remove();
+        if (typeof restoreBodyScroll === 'function') restoreBodyScroll();
+    }
 }
 
 /**

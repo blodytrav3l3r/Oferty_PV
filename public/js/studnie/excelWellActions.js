@@ -124,8 +124,17 @@ function _excelUpdateWellParam(wIdx, paramKey, value) {
     _excelRenderTable(_excelActiveTab);
     const existing = document.getElementById('excel-params-popup');
     if (existing) {
-        existing.remove();
+        closeExcelParamsPopup();
         excelOpenWellParams(wIdx);
+    }
+}
+
+function closeExcelParamsPopup() {
+    const existing = document.getElementById('excel-params-popup');
+    if (existing) {
+        if (typeof untrapFocus === 'function') untrapFocus(existing);
+        existing.remove();
+        if (typeof restoreBodyScroll === 'function') restoreBodyScroll();
     }
 }
 
@@ -133,17 +142,23 @@ function excelOpenWellParams(wIdx) {
     const well = wells[wIdx];
     if (!well) return;
 
-    const existing = document.getElementById('excel-params-popup');
-    if (existing) existing.remove();
+    closeExcelParamsPopup();
 
     const overlay = document.createElement('div');
     overlay.id = 'excel-params-popup';
+    overlay.classList.add('js-modal-overlay');
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-modal', 'true');
+    overlay.setAttribute('aria-label', 'Parametry studni');
     overlay.style.cssText =
         'position:fixed;inset:0;z-index:' +
         LAYERS.EXCEL_POPUP_BACKDROP +
         ';background:var(--excel-backdrop);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;';
     overlay.addEventListener('click', (e) => {
-        if (e.target === overlay) overlay.remove();
+        if (e.target === overlay) closeExcelParamsPopup();
+    });
+    overlay.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeExcelParamsPopup();
     });
 
     const maxOptions = Math.max(...WELL_PARAM_DEFS.map((d) => d.options.length));
@@ -223,18 +238,21 @@ function excelOpenWellParams(wIdx) {
     modal.innerHTML = `
         <div style="display:flex;align-items:center;justify-content:space-between;padding:0.5rem 0.8rem;background:var(--excel-bg-alt);border-bottom:1px solid var(--excel-border-subtle);flex-shrink:0;">
             <span style="font-size: var(--fs-lg);font-weight: var(--fw-bold);color:var(--text-primary);">Parametry tej studni Excel</span>
-            <button type="button" onclick="document.getElementById('excel-params-popup').remove()" class="btn-icon" aria-label="Zamknij"><i data-lucide="x" aria-hidden="true"></i></button>
+            <button type="button" onclick="closeExcelParamsPopup()" class="btn-icon" aria-label="Zamknij"><i data-lucide="x" aria-hidden="true"></i></button>
         </div>
         <div style="flex:1;overflow-y:auto;padding:0.8rem;">
             ${bodyHtml}
         </div>
         <div style="display:flex;gap:0.5rem;justify-content:flex-end;padding:0.5rem 0.8rem;background:var(--excel-bg-alt);border-top:1px solid var(--excel-border-subtle);flex-shrink:0;">
-            <button type="button" onclick="document.getElementById('excel-params-popup').remove()" class="excel-neutral-btn">Zamknij</button>
+            <button type="button" onclick="closeExcelParamsPopup()" class="excel-neutral-btn">Zamknij</button>
         </div>
     `;
 
     overlay.appendChild(modal);
     document.body.appendChild(overlay);
+    document.body.style.overflow = 'hidden';
+    /** @type {any} */ (overlay)._previousFocus = document.activeElement;
+    if (typeof trapFocus === 'function') trapFocus(overlay);
     if (typeof lucide !== 'undefined' && lucide.createIcons) {
         try {
             lucide.createIcons({ root: overlay });
@@ -256,7 +274,7 @@ function excelRefreshParamsPopup(wIdx) {
     _excelRenderTable(_excelActiveTab);
     const existing = document.getElementById('excel-params-popup');
     if (existing) {
-        existing.remove();
+        closeExcelParamsPopup();
         excelOpenWellParams(wIdx);
     }
 }

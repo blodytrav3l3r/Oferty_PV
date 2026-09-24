@@ -224,6 +224,7 @@ declare var showUniversalPrintModal: (...args: any[]) => void;
 declare function closeModal(id?: string): void;
 declare function trapFocus(container: HTMLElement | Element): void;
 declare function untrapFocus(container: HTMLElement | Element): void;
+declare function restoreBodyScroll(): void;
 declare function escapeHtmlAttr(str: string): string;
 declare function escapeJsStr(str: string): string;
 declare function generateOfferNotes(onlyIfEmpty?: boolean): void;

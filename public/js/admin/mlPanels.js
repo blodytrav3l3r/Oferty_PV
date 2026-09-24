@@ -65,8 +65,8 @@
                         const iconName = role === 'ADMIN' ? 'shield-check' : 'user';
                         const roleBadge =
                             role === 'ADMIN'
-                                ? '<span style="display:inline-block;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:700;background:rgba(var(--accent-rgb),0.2);color:var(--accent-text);border:1px solid rgba(var(--accent-rgb),0.3)">ADMIN</span>'
-                                : '<span style="display:inline-block;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:600;background:var(--bg-subtle);color:var(--text-secondary)">' +
+                                ? '<span style="display:inline-block;padding:1px 6px;border-radius:4px;font-size:var(--fs-3xs);font-weight:var(--fw-bold);background:rgba(var(--accent-rgb),0.2);color:var(--accent-text);border:1px solid rgba(var(--accent-rgb),0.3)">ADMIN</span>'
+                                : '<span style="display:inline-block;padding:1px 6px;border-radius:4px;font-size:var(--fs-3xs);font-weight:var(--fw-semibold);background:var(--bg-subtle);color:var(--text-secondary)">' +
                                   window.escapeHtml(role) +
                                   '</span>';
                         const tileStyle = isChecked

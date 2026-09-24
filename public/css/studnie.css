@@ -361,7 +361,7 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 12px;
+    font-size: var(--fs-base);
 }
 
 .unit-popup-close:hover {
@@ -2774,47 +2774,7 @@ select[id$='-czy'] option {
     margin: 0.3rem auto;
 }
 
-#excel-table-container tbody tr:focus-within td {
-    position: relative;
-}
-
-/* Górna linia podświetlenia wiersza na wierzchu */
-#excel-table-container tbody tr:focus-within td::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 2px;
-    border-top: 2px solid rgba(var(--accent-rgb), 0.8);
-    z-index: 55; /* LAYERS_EXCEL.FOCUS_BORDER */
-    pointer-events: none;
-}
-
-/* Dolna linia podświetlenia wiersza na wierzchu */
-#excel-table-container tbody tr:focus-within td::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 2px;
-    border-bottom: 2px solid rgba(var(--accent-rgb), 0.8);
-    z-index: 55; /* LAYERS_EXCEL.FOCUS_BORDER */
-    pointer-events: none;
-}
-
-/* Lewa krawędź na pierwszej komórce */
-#excel-table-container tbody tr:focus-within td:first-child::before {
-    height: 100%;
-    border-left: 2px solid rgba(var(--accent-rgb), 0.8);
-}
-
-/* Prawa krawędź na ostatniej komórce */
-#excel-table-container tbody tr:focus-within td:last-child::after {
-    height: 100%;
-    border-right: 2px solid rgba(var(--accent-rgb), 0.8);
-}
+/* SSoT: przeniesione do css/studnie/offer.css (later stylesheet wygrywa) */
 
 /* Poprawa kolorystyki tekstu w aktywnym wierszu dla lepszego kontrastu */
 #excel-table-container tbody tr:focus-within td {
@@ -3098,66 +3058,6 @@ td.excel-tint--plyta_redukcyjna input {
     padding: 0.5rem 0.8rem;
 }
 
-/* ── Pozycja fixed stopki oferty: siedzi NAD paskiem nawigacji ── */
-.offer-summary-footer-fixed {
-    position: fixed;
-    bottom: var(--bottom-bar-h);
-    left: 0;
-    right: 0;
-    background: var(--bg-secondary);
-    border-top: 1px solid var(--border-glass);
-    padding: 0.8rem 1.5rem;
-    padding-bottom: calc(0.8rem + env(safe-area-inset-bottom, 0px));
-    z-index: 99;
-    box-shadow: 0 -8px 30px var(--shadow-color);
-    box-sizing: border-box;
-}
-@media (max-width: 768px) {
-    .offer-summary-footer-fixed {
-        bottom: var(--bottom-bar-h-mobile);
-        padding: 0.6rem 0.8rem;
-        padding-bottom: calc(0.6rem + env(safe-area-inset-bottom, 0px));
-    }
-}
-
-/* ── Klasy kart w stopce (mirror .rury-summary-*) ── */
-.studnie-summary-label {
-    font-size: var(--fs-base);
-    text-transform: uppercase;
-    letter-spacing: 0.4px;
-    color: var(--text-muted);
-    margin-bottom: 0.2rem;
-}
-.studnie-summary-value {
-    font-size: var(--fs-5xl);
-    font-weight: var(--fw-bold);
-    color: var(--text-primary);
-    margin: 0;
-}
-.studnie-summary-value.accent {
-    color: var(--accent-hover);
-}
-.studnie-summary-value.success {
-    color: var(--success);
-    font-weight: var(--fw-extrabold);
-    font-size: var(--fs-6xl);
-}
-.studnie-summary-value.warn {
-    color: var(--warn);
-}
-.studnie-summary-sub {
-    font-size: var(--fs-base);
-    color: var(--text-muted);
-    margin-top: 0.2rem;
-}
-
-@media (max-width: 768px) {
-    .offer-summary-footer-fixed {
-        bottom: 56px;
-        padding: 0.8rem 1rem;
-    }
-}
-
 /* ── Transition Renderer hover classes ── */
 .prz-field {
     background: rgba(var(--white-rgb), 0.05);
@@ -3373,23 +3273,6 @@ td.excel-tint--plyta_redukcyjna input {
 }
 #excel-table-container table {
     border-collapse: collapse;
-}
-
-/* Sticky header rows — klasy dla position:sticky (opcjonalnie) */
-.excel-th-h3 {
-    position: sticky;
-    top: 0;
-    z-index: 20;
-}
-.excel-th-h1 {
-    position: sticky;
-    top: 1.4rem;
-    z-index: 20;
-}
-.excel-th-h2 {
-    position: sticky;
-    top: 3.2rem;
-    z-index: 20;
 }
 
 /* Wcięcia dla sub-elementów w tabeli oferty studni */
@@ -5149,7 +5032,7 @@ td.excel-tr-selected .excel-sel-wrap > div {
 
 .tm-edit-popup {
     position: fixed;
-    z-index: 100100;
+    /* z-index z LAYERS.TRANSITION_EDIT (kanon warstw: layers.js) */
     background: var(--slate-800);
     border: 1px solid rgba(var(--success-rgb), 0.3);
     border-radius: var(--radius-sm);

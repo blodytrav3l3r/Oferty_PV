@@ -23,7 +23,7 @@ Kolejność ładowania w każdej wejściówce (index, app, rury, studnie, kartot
 > **Zasada:** wspólne klasy NIE mogą być nadpisywane per moduł. Warianty modułowe
 > tworzymy przez klasy modyfikatorów (np. `.nav-tile--studnie`), nie przez nadpisania bazowych.
 
-## 2. Design Tokens (SSoT: `public/css/style.base.css:3-273`)
+## 2. Design Tokens (SSoT: `public/css/style.base.css:3-300`)
 
 Wszystkie wartości (kolory, fonty, rozmiary, radius, shadow, z-index) wyłącznie przez
 zmienne `var(--...)`. **Zakaz gołych hexów/kolorów poza `:root`** (wyjątek: pliki vendor).
@@ -34,7 +34,7 @@ zmienne `var(--...)`. **Zakaz gołych hexów/kolorów poza `:root`** (wyjątek: 
 | --------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `--bg-primary` / `--bg-secondary` / `--bg-card` / `--bg-glass` / `--bg-tertiary`                                                                          | `#0a0e1a` / `#111827` / …                                 | Tła: strona, header, karty, glass                                                                                                                                                                       |
 | `--text-primary` / `--text-secondary` / `--text-muted`                                                                                                    | `--slate-100` / `--slate-400` / `--slate-500`             | Hierarchia tekstu                                                                                                                                                                                       |
-| `--accent` / `--accent2`                                                                                                                                  | `#6366f1` / `#8b5cf6`                                     | Główny akcent (indigo)                                                                                                                                                                                  |
+| `--accent` / `--accent2`                                                                                                                                  | `#5b5fec` / `#8b5cf6`                                     | Główny akcent (indigo, accent przyciemniony pod kontrast AA 4.5:1)                                                                                                                                      |
 | `--success` / `--danger` / `--warn` / `--blue` / `--pink`                                                                                                 | `#10b981` / `#ef4444` / `#f59e0b` / `#3b82f6` / `#ec4899` | Statusy i akcenty modułów                                                                                                                                                                               |
 | `--*-rgb` (np. `--accent-rgb: 99,102,241`)                                                                                                                | —                                                         | `rgba(var(--danger-rgb), 0.1)` do tintów                                                                                                                                                                |
 | `--cmp-*`                                                                                                                                                 | —                                                         | Paleta identyfikacyjna komponentów studni (fill diagramów)                                                                                                                                              |
@@ -73,7 +73,7 @@ zmienne `var(--...)`. **Zakaz gołych hexów/kolorów poza `:root`** (wyjątek: 
 
 **Kanonem warstw jest `LAYERS` / `LAYERS_EXCEL` w `public/js/studnie/layers.js`.**
 Popupy, modale i nakładki tworzone w JS MUSZĄ używać stałych `LAYERS.*` — zakaz twardych
-liczb. Klasy CSS używają zmiennych `--z-*` z `style.base.css:218-222` (`--z-header: 100`, `--z-sticky-th: 5`, `--z-sticky-dropdown: 50`, `--z-overlay: 2000`, `--z-toast: 5000`).
+liczb. Klasy CSS używają zmiennych `--z-*` z `style.base.css:248-253` (`--z-header: 100`, `--z-sticky-th: 5`, `--z-sticky-dropdown: 50`, `--z-overlay: 2000`, `--z-toast: 5000`).
 
 | Warstwa                                     | Źródło (JS)                          | CSS var                                          |
 | ------------------------------------------- | ------------------------------------ | ------------------------------------------------ |

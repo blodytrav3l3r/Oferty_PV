@@ -267,7 +267,7 @@ async function loadUsers() {
         <td><span class="token-badge text-warn">${escapeHtml(u.symbol || '??')}</span></td>
         <td class="cell-mono">${escapeHtml(u.username)}</td>
         <td class="cell-phone">${escapeHtml(u.phone || '—')}</td>
-        <td><span class="badge-role ${escapeHtml(u.role)}">${escapeHtml(u.role.toUpperCase())}</span></td>
+        <td><span class="badge-role role-${escapeHtml(String(u.role || 'user').toLowerCase())}">${escapeHtml(String(u.role || 'user').toUpperCase())}</span></td>
         <td class="cell-num">${escapeHtml(String(u.orderStartNumber || 1))}</td>
         <td class="cell-num">${escapeHtml(String(u.productionOrderStartNumber || 1))}</td>
         <td>

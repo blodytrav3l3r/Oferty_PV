@@ -12,7 +12,7 @@ function setupOfferForm() {
     const searchInput = document.getElementById('product-search');
     const dropdown = document.getElementById('product-dropdown');
 
-    if (searchInput) {
+    if (searchInput && dropdown) {
         const doSearch = () => {
             const val = searchInput.value.toLowerCase().trim();
             if (val.length < 2) {

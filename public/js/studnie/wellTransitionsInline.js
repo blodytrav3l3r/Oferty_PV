@@ -126,7 +126,10 @@ window.inlineFinish = (contextId = 'main', containerId = '') => {
     }
 
     well.przejscia.push({
-        id: 'prz-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
+        id:
+            typeof newPrzejscieId === 'function'
+                ? newPrzejscieId()
+                : 'prz-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
         productId: id,
         rzednaWlaczenia: rzednaVal,
         angle: angle,

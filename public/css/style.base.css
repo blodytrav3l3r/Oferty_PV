@@ -2460,7 +2460,7 @@ html[data-theme='light'] {
     --excel-row-hover: #f1f5f9;
     --excel-row-even: #f6f8fa;
     --excel-row-odd: #ffffff;
-    --excel-row-active: rgba(var(--blue-rgb), 0.18);
+    --excel-row-active: rgba(var(--blue-rgb), 0.24);
     --excel-tint-base: #ffffff;
     --excel-backdrop: rgba(15, 23, 42, 0.45);
     --excel-shadow: 0 8px 32px rgba(15, 23, 42, 0.16);

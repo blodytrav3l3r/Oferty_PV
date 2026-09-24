@@ -238,14 +238,14 @@ function buildOrderModalHtml(orders, offerKey, resolvedType, offerLabel) {
         html += `
                 <div class="order-modal-row">
                     <div class="min-w-0">
-                        <div class="btn-open-order order-link" data-order-id="${window.escapeHtml(ord.id)}" data-offer-type="${window.escapeHtml(resolvedType)}" title="Kliknij, aby otworzyć zamówienie w trybie edycji">${orderLabel}</div>
+                        <div class="btn-open-order order-link" data-order-id="${escapeHtmlAttr(ord.id)}" data-offer-type="${escapeHtmlAttr(resolvedType)}" title="Kliknij, aby otworzyć zamówienie w trybie edycji">${orderLabel}</div>
                         <div class="text-muted fs-base mt-3">Utworzono: ${createdAt}${ord.clientNumber ? ` • Nr klienta: ${window.escapeHtml(ord.clientNumber)}` : ''}</div>
                     </div>
                     <div class="order-modal-row-actions">
-                        <button class="btn btn-sm btn-primary btn-open-order fs-base-035" data-order-id="${window.escapeHtml(ord.id)}" data-offer-type="${window.escapeHtml(resolvedType)}" >Otwórz</button>
-                        <button class="btn btn-sm btn-secondary btn-print-order fs-base-035" data-order-id="${window.escapeHtml(ord.id)}" data-offer-id="${window.escapeHtml(offerKey)}" data-offer-type="${window.escapeHtml(resolvedType)}" >Karta</button>
-                        <button class="btn btn-sm btn-secondary btn-modal-history-order fs-base-035" data-order-id="${window.escapeHtml(ord.id)}" >Historia</button>
-                        <button class="btn btn-sm btn-danger btn-modal-delete-order fs-base-035" data-order-id="${window.escapeHtml(ord.id)}" data-offer-type="${window.escapeHtml(resolvedType)}" >Usuń</button>
+                        <button class="btn btn-sm btn-primary btn-open-order fs-base-035" data-order-id="${escapeHtmlAttr(ord.id)}" data-offer-type="${escapeHtmlAttr(resolvedType)}" >Otwórz</button>
+                        <button class="btn btn-sm btn-secondary btn-print-order fs-base-035" data-order-id="${escapeHtmlAttr(ord.id)}" data-offer-id="${escapeHtmlAttr(offerKey)}" data-offer-type="${escapeHtmlAttr(resolvedType)}" >Karta</button>
+                        <button class="btn btn-sm btn-secondary btn-modal-history-order fs-base-035" data-order-id="${escapeHtmlAttr(ord.id)}" >Historia</button>
+                        <button class="btn btn-sm btn-danger btn-modal-delete-order fs-base-035" data-order-id="${escapeHtmlAttr(ord.id)}" data-offer-type="${escapeHtmlAttr(resolvedType)}" >Usuń</button>
                     </div>
                 </div>
             `;
@@ -277,17 +277,18 @@ function buildOfferCardHtml(offer, hasOrder, orders, order, role, isLocalList) {
         const badgeStateClass = hasModifiedOrder ? 'btn-order-badge modified' : 'btn-order-badge';
         const countLabel = orderCount > 0 ? ` (${orderCount})` : '';
 
-        orderBadge = `<a href="javascript:void(0)" class="btn btn-sm ${badgeStateClass}" data-order-id="${window.escapeHtml(order?.id || '')}" data-offer-id="${window.escapeHtml(offer.id)}" data-offer-type="${window.escapeHtml(offer.type)}" title="Kliknij aby zobaczyć listę zamówień powiązanych z tą ofertą${hasModifiedOrder ? ' (wykryto zmiany)' : ''}">
+        orderBadge = `<a href="javascript:void(0)" class="btn btn-sm ${badgeStateClass}" data-order-id="${escapeHtmlAttr(order?.id || '')}" data-offer-id="${escapeHtmlAttr(offer.id)}" data-offer-type="${escapeHtmlAttr(offer.type)}" title="Kliknij aby zobaczyć listę zamówień powiązanych z tą ofertą${hasModifiedOrder ? ' (wykryto zmiany)' : ''}">
                     <i data-lucide="package" aria-hidden="true"></i> Zamówienia${countLabel}${hasModifiedOrder ? ' • zmiany' : ''}
                    </a>`;
 
         orderItemsHtml = orderList
             .map((ord) => {
-                const label = window.escapeHtml(
+                const rawLabel =
                     ord?.orderNumber ||
-                        ord?.offerNumber ||
-                        (ord?.id ? String(ord.id).substring(0, 8) : 'Zamówienie')
-                );
+                    ord?.offerNumber ||
+                    (ord?.id ? String(ord.id).substring(0, 8) : 'Zamówienie');
+                const label = window.escapeHtml(rawLabel);
+                const labelAttr = escapeHtmlAttr(rawLabel);
                 const createdAt = ord.createdAt
                     ? new Date(ord.createdAt).toLocaleDateString('pl-PL')
                     : 'brak daty';
@@ -295,7 +296,7 @@ function buildOfferCardHtml(offer, hasOrder, orders, order, role, isLocalList) {
                 const changeInfo = window.getOrderChangeInfo(ord);
                 return `
                                 <div class="offer-order-row">
-                                    <button class="offer-order-main btn-edit-order" data-order-id="${window.escapeHtml(ord.id)}" data-offer-type="${window.escapeHtml(offer.type)}" title="Edytuj zamówienie ${label}">
+                                    <button class="offer-order-main btn-edit-order" data-order-id="${escapeHtmlAttr(ord.id)}" data-offer-type="${escapeHtmlAttr(offer.type)}" title="Edytuj zamówienie ${labelAttr}">
                                         <span class="offer-order-icon"><i data-lucide="package-check"></i></span>
                                         <span class="offer-order-text">
                                             <strong>${label} <span style="color: var(--success-hover); font-weight: var(--fw-semibold);">• ${orderValue.toFixed(2)} PLN</span></strong>
@@ -303,9 +304,9 @@ function buildOfferCardHtml(offer, hasOrder, orders, order, role, isLocalList) {
                                         </span>
                                     </button>
                                     <div class="offer-order-actions">
-                                        <button class="action-btn success btn-karta-budowy" data-id="${window.escapeHtml(offer.id)}" data-type="${window.escapeHtml(offer.type)}" data-order-id="${window.escapeHtml(ord.id)}" data-offer-id="${window.escapeHtml(offer.id)}" data-offer-type="${window.escapeHtml(offer.type)}" title="Karta budowy ${label}" aria-label="Karta budowy ${label}"><i data-lucide="clipboard-list" aria-hidden="true"></i></button>
-                                        <button class="action-btn secondary btn-history-order" data-order-id="${window.escapeHtml(ord.id)}" title="Historia zmian zamówienia ${label}" aria-label="Historia zmian zamówienia ${label}"><i data-lucide="clock" aria-hidden="true"></i></button>
-                                        <button class="action-btn danger btn-delete-order" data-order-id="${window.escapeHtml(ord.id)}" data-offer-type="${window.escapeHtml(offer.type)}" title="Usuń zamówienie ${label}" aria-label="Usuń zamówienie ${label}"><i data-lucide="trash-2" aria-hidden="true"></i></button>
+                                        <button class="action-btn success btn-karta-budowy" data-id="${escapeHtmlAttr(offer.id)}" data-type="${escapeHtmlAttr(offer.type)}" data-order-id="${escapeHtmlAttr(ord.id)}" data-offer-id="${escapeHtmlAttr(offer.id)}" data-offer-type="${escapeHtmlAttr(offer.type)}" title="Karta budowy ${labelAttr}" aria-label="Karta budowy ${labelAttr}"><i data-lucide="clipboard-list" aria-hidden="true"></i></button>
+                                        <button class="action-btn secondary btn-history-order" data-order-id="${escapeHtmlAttr(ord.id)}" title="Historia zmian zamówienia ${labelAttr}" aria-label="Historia zmian zamówienia ${labelAttr}"><i data-lucide="clock" aria-hidden="true"></i></button>
+                                        <button class="action-btn danger btn-delete-order" data-order-id="${escapeHtmlAttr(ord.id)}" data-offer-type="${escapeHtmlAttr(offer.type)}" title="Usuń zamówienie ${labelAttr}" aria-label="Usuń zamówienie ${labelAttr}"><i data-lucide="trash-2" aria-hidden="true"></i></button>
                                     </div>
                                 </div>`;
             })

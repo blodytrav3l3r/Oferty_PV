@@ -15,6 +15,10 @@ const ZleceniaRender = (() => {
     function escJs(v) {
         return typeof window.escapeJsStr === 'function' ? window.escapeJsStr(v) : String(v ?? '');
     }
+    function escAttr(v) {
+        if (typeof window.escapeHtmlAttr === 'function') return window.escapeHtmlAttr(v);
+        return escHtml(v).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
 
     const statusMap = {
         draft: {
@@ -270,11 +274,11 @@ const ZleceniaRender = (() => {
             '<tr>\n' +
             '<td class="zlecenia-cb-cell">\n' +
             '<input type="checkbox" class="zlecenia-row-cb" data-id="' +
-            escJs(o.id) +
+            escAttr(o.id) +
             '" ' +
             (isChecked ? 'checked' : '') +
             ' aria-label="Zaznacz zlecenie ' +
-            escJs(o.productionOrderNumber || o.id) +
+            escAttr(o.productionOrderNumber || o.id) +
             '">\n' +
             '</td>\n' +
             '<td>' +

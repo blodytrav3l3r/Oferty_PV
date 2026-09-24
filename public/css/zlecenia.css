@@ -169,6 +169,30 @@
     color: var(--text-muted);
     font-size: var(--fs-base);
 }
+/* Szerokości kolumn nagłówka (SSoT zamiast inline style w zlecenia.html) */
+.zlecenia-col-cb {
+    width: 40px;
+    text-align: center;
+}
+.zlecenia-col-num {
+    width: 140px;
+}
+.zlecenia-col-date {
+    width: 130px;
+}
+.zlecenia-col-order {
+    width: 150px;
+}
+.zlecenia-col-status {
+    width: 105px;
+}
+.zlecenia-col-prints {
+    width: 110px;
+}
+.zlecenia-col-actions {
+    width: 150px;
+    text-align: right;
+}
 .zlecenia-table th {
     text-align: left;
     padding: 0.7rem 1rem;

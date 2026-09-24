@@ -49,7 +49,10 @@ function _excelGetMaxTransitions() {
 
 function _excelCreatePrzejscie() {
     return {
-        id: 'prz-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
+        id:
+            typeof newPrzejscieId === 'function'
+                ? newPrzejscieId()
+                : 'prz-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
         productId: '',
         rzednaWlaczenia: null,
         angle: 0,

@@ -666,7 +666,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
     border-color: var(--danger-border);
 }
 
-/* ── Role Badges ── */
+/* ── Role Badges: kształt lokalny, kolory z SSoT .role-* (style.utilities.css) ── */
 .badge-role {
     display: inline-block;
     font-size: var(--fs-2xs);
@@ -675,24 +675,6 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
     border-radius: var(--radius-lg);
     text-transform: uppercase;
     letter-spacing: 0.5px;
-}
-
-.badge-role.admin {
-    background: var(--warn-bg);
-    color: var(--warn-hover);
-    border: 1px solid var(--warn-border);
-}
-
-.badge-role.pro {
-    background: var(--accent-bg);
-    color: var(--accent2-hover);
-    border: 1px solid var(--accent-border-dim);
-}
-
-.badge-role.user {
-    background: var(--success-bg);
-    color: var(--success-hover);
-    border: 1px solid var(--success-border);
 }
 
 .token-badge {

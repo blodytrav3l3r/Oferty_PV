@@ -552,6 +552,9 @@ window.tmOpenEditTransitionPopup = function (wellIdx, trIdx, event) {
     popup.id = 'tm-edit-popup';
     popup.className = 'tm-edit-popup';
     popup.style.cssText = `top:${top}px;left:${left}px;width:${popupW}px;`;
+    if (typeof LAYERS !== 'undefined' && LAYERS.TRANSITION_EDIT) {
+        popup.style.zIndex = String(LAYERS.TRANSITION_EDIT);
+    }
     if (maxH > 120) {
         popup.style.maxHeight = maxH + 'px';
         popup.style.overflowY = 'auto';

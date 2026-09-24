@@ -118,6 +118,7 @@ function renderOfferItems() {
             );
             const isLocked = window.orderEditMode ? false : remaining <= 0;
             const isOrdered = remaining <= 0 && orderedUidSet.has(item.uid);
+            const uidAttr = escapeHtmlAttr(item.uid);
 
             const isEditableLength =
                 cat === 'Rury Jajowe Betonowe' ||
@@ -149,11 +150,11 @@ function renderOfferItems() {
 
             let checkboxCell = '';
             if (isOrdered) {
-                checkboxCell = `<td class="text-center" onclick="event.stopPropagation()"><input type="checkbox" class="item-order-checkbox" data-uid="${item.uid}" checked disabled style="cursor:not-allowed;width:16px;height:16px;opacity:0.5" title="Wszystkie sztuki zamówione" aria-label="Wszystkie sztuki zamówione"></td>`;
+                checkboxCell = `<td class="text-center" onclick="event.stopPropagation()"><input type="checkbox" class="item-order-checkbox" data-uid="${uidAttr}" checked disabled style="cursor:not-allowed;width:16px;height:16px;opacity:0.5" title="Wszystkie sztuki zamówione" aria-label="Wszystkie sztuki zamówione"></td>`;
             } else if (isAuto) {
-                checkboxCell = `<td class="text-center" onclick="event.stopPropagation()"><input type="checkbox" class="item-order-checkbox item-order-auto" data-uid="${item.uid}" ${itemDiamAttr} onchange="updateOrderSelectionCount()" style="cursor:pointer;width:16px;height:16px;opacity:0.7" title="Dodawane automatycznie razem z rurą — odznacz aby pominąć" aria-label="Wybierz pozycję automatyczną"></td>`;
+                checkboxCell = `<td class="text-center" onclick="event.stopPropagation()"><input type="checkbox" class="item-order-checkbox item-order-auto" data-uid="${uidAttr}" ${itemDiamAttr} onchange="updateOrderSelectionCount()" style="cursor:pointer;width:16px;height:16px;opacity:0.7" title="Dodawane automatycznie razem z rurą — odznacz aby pominąć" aria-label="Wybierz pozycję automatyczną"></td>`;
             } else {
-                checkboxCell = `<td class="text-center" onclick="event.stopPropagation()"><input type="checkbox" class="item-order-checkbox item-order-pipe cursor-pointer icon-sm" data-uid="${item.uid}" ${itemDiamAttr} onchange="updateOrderSelectionCount();onPipeCheckboxChange(this)" aria-label="Wybierz pozycję do zamówienia"></td>`;
+                checkboxCell = `<td class="text-center" onclick="event.stopPropagation()"><input type="checkbox" class="item-order-checkbox item-order-pipe cursor-pointer icon-sm" data-uid="${uidAttr}" ${itemDiamAttr} onchange="updateOrderSelectionCount();onPipeCheckboxChange(this)" aria-label="Wybierz pozycję do zamówienia"></td>`;
             }
 
             let orderCell = '';
@@ -178,7 +179,7 @@ function renderOfferItems() {
                 : '';
             const lockAttr = isLocked ? ' disabled' : '';
 
-            html += `<tr class="${rowClass}" data-uid="${item.uid}" ${orderedRowStyle ? `style="${orderedRowStyle}"` : ''}>
+            html += `<tr class="${rowClass}" data-uid="${uidAttr}" ${orderedRowStyle ? `style="${orderedRowStyle}"` : ''}>
           ${checkboxCell}
           <td class="rury-col-num" style="text-align:left">${lp++}</td>
           <td style="max-width:400px;text-align:left">${pName}${autoTag}${lengthEditor}</td>

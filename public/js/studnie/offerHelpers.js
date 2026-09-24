@@ -26,9 +26,13 @@ function getWellErrorCell(well) {
     const isError = well.configStatus === 'ERROR';
     const isWarning = well.configStatus === 'WARNING';
     if (!isError && !isWarning) return '';
-    const title = (well.configErrors || [])
-        .map((e) => escapeHtml(e).replace(/"/g, '&quot;'))
-        .join('; ');
+    const escAttr =
+        typeof escapeHtmlAttr === 'function'
+            ? escapeHtmlAttr
+            : typeof window !== 'undefined' && typeof window.escapeHtmlAttr === 'function'
+              ? window.escapeHtmlAttr
+              : escapeHtml;
+    const title = (well.configErrors || []).map((e) => escAttr(e)).join('; ');
     const color = isError ? 'var(--danger-hover)' : 'var(--warn-hover)';
     const rgb = isError ? 'var(--danger-rgb)' : 'var(--warn-rgb)';
     const icon = isError ? 'x-circle' : 'alert-triangle';
