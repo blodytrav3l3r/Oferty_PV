@@ -148,9 +148,9 @@ function renderWellConfig() {
 
         const isPlaceholder = item.isPlaceholder;
 
-        // Motyw sterowany CSS (.config-tile + html[data-theme] rules).
+        // Pelne tlo koloru typu + fg z pary AA (typeBadge) — CSS dziedziczy.
         const tileMod = isPlaceholder ? ' config-tile--placeholder' : '';
-        html += `<div data-cfg-idx="${index}" class="config-tile${tileMod}" draggable="true" ondragstart="handleCfgDragStart(event)" ondragover="handleCfgDragOver(event)" ondrop="handleCfgDrop(event)" ondragend="handleCfgDragEnd(event)" style="--tile-accent:${badge.bg};"
+        html += `<div data-cfg-idx="${index}" class="config-tile${tileMod}" draggable="true" ondragstart="handleCfgDragStart(event)" ondragover="handleCfgDragOver(event)" ondrop="handleCfgDrop(event)" ondragend="handleCfgDragEnd(event)" style="--tile-accent:${badge.bg};--tile-fg:${badge.fg};"
                       onmouseenter="if(!${isPlaceholder}){window.highlightSvg('cfg', ${index})}" onmouseleave="if(!${isPlaceholder}){window.unhighlightSvg('cfg', ${index})}">
           <div class="cfg-row-main">
 

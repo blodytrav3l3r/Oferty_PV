@@ -3293,6 +3293,10 @@ td.excel-tint--plyta_redukcyjna input {
     min-height: 0;
 }
 
+/* Kafelki wierszy konfiguracji — pełne tło koloru typu (JS podaje
+   --tile-accent/--tile-fg z typeBadge, para AA z themeTextContrast).
+   Tekst wiersza dziedziczy fg kafelka; własne tła zachowują tylko
+   mini-badże (PRECO/PEHD) i przycisk usuwania. */
 .config-tile {
     cursor: grab;
     position: relative;
@@ -3300,17 +3304,12 @@ td.excel-tint--plyta_redukcyjna input {
     padding: 0.25rem 0.4rem;
     margin-bottom: 0.25rem;
     transition: all 0.2s ease;
-    border: 1px solid rgba(var(--white-rgb), 0.05);
-    border-left: 4px solid var(--tile-accent, var(--slate-700));
-    background: linear-gradient(
-        90deg,
-        var(--tile-accent, transparent) 0%,
-        rgba(var(--slate-800-rgb), 0.8) 100%
-    );
+    border: 1px solid transparent;
+    background: var(--tile-accent, var(--slate-700));
+    color: var(--tile-fg, var(--text-primary));
 }
 .config-tile:hover {
-    filter: brightness(1.5);
-    border-color: rgba(var(--white-rgb), 0.3);
+    filter: brightness(1.08);
     box-shadow: 0 0 12px rgba(var(--accent-rgb), 0.5);
 }
 .config-tile--placeholder {
@@ -3318,9 +3317,41 @@ td.excel-tint--plyta_redukcyjna input {
     box-shadow: 0 0 15px rgba(var(--blue-alt-rgb), 0.5);
     pointer-events: none;
 }
+/* Tekst na kolorowym tle — dziedziczy fg kafelka (para AA z badge). */
+.config-tile .cfg-item-name,
+.config-tile .cfg-idx-num,
+.config-tile .cfg-weight-val,
+.config-tile .cfg-price-val {
+    color: inherit;
+}
+.config-tile .cfg-id-line,
+.config-tile .fs-xs-muted {
+    color: inherit;
+    opacity: 0.75;
+}
+.config-tile .cfg-move-btn {
+    color: inherit;
+    opacity: 0.75;
+    border-color: transparent;
+}
+.config-tile .cfg-move-btn:hover:not(:disabled) {
+    opacity: 1;
+    color: inherit;
+    background: rgba(0, 0, 0, 0.15);
+    border-color: transparent;
+}
+.config-tile .cfg-idx-box {
+    background: rgba(0, 0, 0, 0.18);
+}
+/* Znacznik typu na tle tego samego koloru: outline w kolorze fg. */
+.config-tile .cfg-type-badge {
+    background: transparent;
+    color: inherit;
+    border: 1px solid currentColor;
+    opacity: 1;
+}
 html[data-theme='light'] .config-tile {
-    background: var(--bg-secondary);
-    border-color: var(--border-glass);
+    border-color: transparent;
 }
 /* Kafelki elementów w modalu zleceń (orderZleceniaRender.js) — ten sam
    kontrakt: motyw sterowany CSS, JS podaje tylko --tile-accent. */

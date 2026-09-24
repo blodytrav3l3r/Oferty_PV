@@ -39,7 +39,8 @@ Kafelki konfiguracji (`actionsConfigRender.js`) branchowały motyw w JS w czasie
 renderu (`isLightTheme` z `data-theme`). Przy cache `light` + synchronizacji
 `dark` z backendu (bez re-renderu) strona była ciemna, a kafle neutralne —
 „raz kolorowe, raz nie”. Reguła: motyw sterowany wyłącznie CSS
-(`.config-tile` + `html[data-theme='light']`), JS podaje tylko `--tile-accent`.
+(`.config-tile` + `html[data-theme='light']`), JS podaje `--tile-accent`
+i `--tile-fg` z pary AA typeBadge (pełne tło koloru typu, tekst dziedziczy fg).
 Ten sam wzorzec zastosowano w `orderZleceniaRender.js` (`.zl-config-tile`)
 i nagłówkach Excela (`excelTableRenderer.js`, `.excel-hdr-themed`).
 Zakaz `getAttribute('data-theme')` w kodzie renderującym (public/js).
