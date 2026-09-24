@@ -40,7 +40,11 @@ function renderPrecoPriceList() {
         if (!data) return;
 
         window.openPrecoAccordions = window.openPrecoAccordions || new Set();
-        const isOpen = window.openPrecoAccordions.has(dn);
+        // Stan zwinięcia: pamięć sesji (Set) jako default, localStorage per-user wygrywa.
+        let isOpen = window.openPrecoAccordions.has(dn);
+        try {
+            if (typeof collapseGet === 'function') isOpen = collapseGet('preco:' + dn, isOpen);
+        } catch (_e) {}
         const displayStyle = isOpen ? 'block' : 'none';
         const iconName = isOpen ? 'chevron-down' : 'chevron-right';
 
@@ -284,6 +288,9 @@ function togglePrecoAccordion(headerEl, dn) {
     if (dn) {
         if (isOpen) window.openPrecoAccordions.delete(dn);
         else window.openPrecoAccordions.add(dn);
+        try {
+            if (typeof collapseSet === 'function') collapseSet('preco:' + dn, !isOpen);
+        } catch (_e) {}
     }
 
     const icon = headerEl.querySelector('[data-lucide]');

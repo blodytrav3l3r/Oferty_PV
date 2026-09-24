@@ -32,6 +32,21 @@ function renderZleceniaSvgPreview(well) {
     }
 }
 
+/* ===== Persystencja zwinięć (collapseState.js, SSoT dla całego S.O.K.) =====
+ * Odczyt z typeof-guardem — formularz działa też bez collapseState (testy vm). */
+function _zlCollapse(id, def) {
+    try {
+        if (typeof collapseGet === 'function') return collapseGet(id, def);
+    } catch (_e) {}
+    return def;
+}
+
+function _zlPersist(id, isOpen) {
+    try {
+        if (typeof collapseSet === 'function') collapseSet(id, isOpen);
+    } catch (_e) {}
+}
+
 async function populateZleceniaForm(el) {
     // Lazy detail: indeks PZ ma tylko lekkie pola — pełne data dociągnij przed renderem.
     // Wołający nie muszą awaitować (fire-and-forget); loader współdzieli lot (_fullPromise).
@@ -343,25 +358,34 @@ async function populateZleceniaForm(el) {
         `;
     }
 
-    let daneZleceniaVisible = false;
+    // Stan zwinięć: ciągłość sesji (istniejący DOM) wygrywa, inaczej localStorage per-user.
+    let daneZleceniaVisible = _zlCollapse('zl-dane-zlecenia-container', false);
     const existingDaneZlecenia = document.getElementById('zl-dane-zlecenia-container');
-    if (existingDaneZlecenia && existingDaneZlecenia.style.display !== 'none') {
-        daneZleceniaVisible = true;
+    if (existingDaneZlecenia) {
+        daneZleceniaVisible = existingDaneZlecenia.style.display !== 'none';
+        _zlPersist('zl-dane-zlecenia-container', daneZleceniaVisible);
     }
 
-    let daneElementuVisible = true;
+    let daneElementuVisible = _zlCollapse('zl-dane-elementu', true);
     const existingDaneElementu = document.getElementById('zl-dane-elementu-content');
     if (existingDaneElementu) {
         daneElementuVisible = existingDaneElementu.style.display !== 'none';
+        _zlPersist('zl-dane-elementu', daneElementuVisible);
     }
+
+    // Pozostałe sekcje: wyłącznie localStorage (renderowane od nowa).
+    const inlinePrzejsciaOpen = _zlCollapse('zl-inline-przejscia-app-container', true);
+    const listaPrzejscOpen = _zlCollapse('zl-przejscia-list', true);
+    const uwagiOpen = _zlCollapse('zl-uwagi-container', true);
+    const parametryOpen = _zlCollapse('zl-parametry-container', true);
 
     container.innerHTML = `
     ${bannerHtml}
     ${errorsHtml}
     <div class="card card-compact mb-5" >
-        <div class="card-title-sm" onclick="const b=this.nextElementSibling; b.style.display=b.style.display==='none'?'grid':'none'; this.querySelector('.zl-toggle').innerHTML=b.style.display==='none'?'<i data-lucide=\\'chevron-down\\'></i>':'<i data-lucide=\\'chevron-up\\'></i>'; if(window.lucide) window.lucide.createIcons();" style="cursor:pointer; user-select:none; display:flex; justify-content:space-between; align-items:center;">
+        <div class="card-title-sm" data-action="toggleZlDaneZlecenia" style="cursor:pointer; user-select:none; display:flex; justify-content:space-between; align-items:center;">
             <span><i data-lucide="clipboard-list"></i> Dane zlecenia <span style="margin-left:8px; color:var(--accent-hover); font-weight: var(--fw-extrabold);">${escapeHtml(existing?.productionOrderNumber || '— nowy —')}</span></span>
-            <span class="zl-toggle text-xs" >${daneZleceniaVisible ? '<i data-lucide="chevron-up"></i>' : '<i data-lucide="chevron-down"></i>'}</span>
+            <span id="zl-dane-zlecenia-icon" class="zl-toggle text-xs" >${daneZleceniaVisible ? '<i data-lucide="chevron-up"></i>' : '<i data-lucide="chevron-down"></i>'}</span>
         </div>
         <div id="zl-dane-zlecenia-container" style="display:${daneZleceniaVisible ? 'grid' : 'none'}; grid-template-columns:1fr 1fr; gap:0.5rem; padding:0.2rem 0;">
             <div class="form-group-sm m-0" >
@@ -454,35 +478,35 @@ async function populateZleceniaForm(el) {
             <div class="card card-compact" style="padding:0.5rem 0.6rem;">
                 <div class="card-title-sm" style="display:flex; align-items:center; justify-content:space-between; cursor:pointer; margin-bottom:0; font-size: var(--fs-base); padding:0.15rem 0;" data-action="toggleCard" data-id="zl-inline-przejscia-app-container" data-icon="zl-przejscia-app-icon">
                     <span><i data-lucide="plus"></i> Dodaj Przejście Szczelne</span>
-                    <span id="zl-przejscia-app-icon" class="text-xs"><i data-lucide="chevron-up"></i></span>
+                    <span id="zl-przejscia-app-icon" class="text-xs">${inlinePrzejsciaOpen ? '<i data-lucide="chevron-up"></i>' : '<i data-lucide="chevron-down"></i>'}</span>
                 </div>
-                <div id="zl-inline-przejscia-app-container" class="card-content" style="margin-top:0.5rem; display:block;">
+                <div id="zl-inline-przejscia-app-container" class="card-content" style="margin-top:0.5rem; display:${inlinePrzejsciaOpen ? 'block' : 'none'};">
                     <div id="zl-inline-przejscia-app"></div>
                 </div>
             </div>
 
             <div class="card card-compact" style="display:flex; flex-direction:column; box-sizing:border-box; overflow-x:auto; padding:0.5rem 0.6rem; flex:1;">
-                <div class="card-title-sm" style="display:flex; justify-content:space-between; margin-bottom:0.5rem;">
+                <div class="card-title-sm" data-action="toggleCard" data-id="zl-przejscia-list" data-icon="zl-przejscia-icon" style="display:flex; justify-content:space-between; margin-bottom:0.5rem; cursor:pointer; user-select:none;">
                     <span><i data-lucide="link"></i> Lista przejść</span>
-                    <span id="zl-przejscia-count" class="fs-sm-muted">(${przejsciaCount})</span>
+                    <span style="display:flex; align-items:center; gap:0.5rem;"><span id="zl-przejscia-count" class="fs-sm-muted">(${przejsciaCount})</span><span id="zl-przejscia-icon" class="text-xs">${listaPrzejscOpen ? '<i data-lucide="chevron-up"></i>' : '<i data-lucide="chevron-down"></i>'}</span></span>
                 </div>
-                <div id="zl-przejscia-list" style="flex:1; border-radius:var(--radius-sm); font-size: var(--fs-sm); color:var(--text-secondary); display:flex; flex-direction:column; overflow-y:auto; overflow-x:auto; min-width:100%;">
+                <div id="zl-przejscia-list" data-open-display="flex" style="flex:1; border-radius:var(--radius-sm); font-size: var(--fs-sm); color:var(--text-secondary); display:${listaPrzejscOpen ? 'flex' : 'none'}; flex-direction:column; overflow-y:auto; overflow-x:auto; min-width:100%;">
                 </div>
             </div>
         </div>
     </div>
 
     <div class="card card-compact" style="margin-bottom:0.5rem; display:flex; flex-direction:column;">
-        <div class="card-title-sm"><i data-lucide="pencil"></i> Uwagi</div>
-        <div class="form-group-sm" style="flex:1; display:flex; flex-direction:column; margin-bottom:0;">
+        <div class="card-title-sm" data-action="toggleCard" data-id="zl-uwagi-container" data-icon="zl-uwagi-icon" style="cursor:pointer; user-select:none; display:flex; justify-content:space-between; align-items:center;"><span><i data-lucide="pencil"></i> Uwagi</span><span id="zl-uwagi-icon" class="text-xs">${uwagiOpen ? '<i data-lucide="chevron-up"></i>' : '<i data-lucide="chevron-down"></i>'}</span></div>
+        <div id="zl-uwagi-container" class="form-group-sm" style="flex:1; display:${uwagiOpen ? 'flex' : 'none'}; flex-direction:column; margin-bottom:0;">
             <textarea id="zl-uwagi" class="form-textarea" placeholder="Uwagi do zlecenia..." style="min-height:80px; resize:vertical;">${escapeHtml(finalUwagi)}</textarea>
         </div>
     </div>
 
     <div class="card card-compact mb-5" >
-        <div class="card-title-sm"><i data-lucide="settings"></i> Parametry studni</div>
+        <div class="card-title-sm" data-action="toggleCard" data-id="zl-parametry-container" data-icon="zl-parametry-icon" style="cursor:pointer; user-select:none; display:flex; justify-content:space-between; align-items:center;"><span><i data-lucide="settings"></i> Parametry studni</span><span id="zl-parametry-icon" class="text-xs">${parametryOpen ? '<i data-lucide="chevron-up"></i>' : '<i data-lucide="chevron-down"></i>'}</span></div>
 
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; align-items:start;">
+        <div id="zl-parametry-container" style="display:${parametryOpen ? 'grid' : 'none'}; grid-template-columns:1fr 1fr; gap:0.5rem; align-items:start;" data-open-display="grid">
             <div class="col-gap-5">
                 <div class="form-group-sm" ${isAnyKrag ? 'class="disabled-fade"' : ''}>
                     <label class="form-label-sm">Redukcja kinety</label>
@@ -891,6 +915,22 @@ window.toggleDaneElementu = function () {
         if (headerCollapsed) headerCollapsed.style.display = 'none';
         grid.style.gridTemplateColumns = '230px 1fr';
     }
+    _zlPersist('zl-dane-elementu', !isVisible);
+};
+
+window.toggleZlDaneZlecenia = function () {
+    const container = document.getElementById('zl-dane-zlecenia-container');
+    const icon = document.getElementById('zl-dane-zlecenia-icon');
+    if (!container) return;
+    const isOpen = container.style.display !== 'none';
+    container.style.display = isOpen ? 'none' : 'grid';
+    if (icon) {
+        icon.innerHTML = isOpen
+            ? '<i data-lucide="chevron-down"></i>'
+            : '<i data-lucide="chevron-up"></i>';
+        if (window.lucide) window.lucide.createIcons({ root: icon });
+    }
+    _zlPersist('zl-dane-zlecenia-container', !isOpen);
 };
 
 function onZleceniaStopnieChange() {
@@ -930,6 +970,8 @@ if (typeof document !== 'undefined' && !window.__ozfDelegated) {
         const icon = el.getAttribute('data-icon');
         if (action === 'toggleDaneElementu') {
             window.toggleDaneElementu();
+        } else if (action === 'toggleZlDaneZlecenia') {
+            window.toggleZlDaneZlecenia();
         } else if (action === 'selectZleceniaTile') {
             window.selectZleceniaTile(el, field, value);
         } else if (action === 'toggleCard') {

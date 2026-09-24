@@ -426,6 +426,88 @@ function ensureDisplayIndices(przejscia) {
     });
 }
 /* ===== Delegacja kliknięć (data-action) — TASK-036 ===== */
+/* ===== Marquee uciętych podpisów (.prz-col-header) — auto-loop =====
+ * przMarqueeScan wykrywa nagłówki z overflow, zawija tekst w span.prz-marquee
+ * i dokleja animację ping-pong (keyframes prz-marquee w studnie.css).
+ * Skan odpalany automatycznie po każdym renderze (MutationObserver) i przy
+ * resize — hover niepotrzebny. Bez overflow brak animacji.
+ * prefers-reduced-motion → tylko title tooltip. */
+function _przMarqueeReduced() {
+    try {
+        return (
+            typeof window.matchMedia === 'function' &&
+            window.matchMedia('(prefers-reduced-motion: reduce)').matches
+        );
+    } catch (_e) {
+        return false;
+    }
+}
+
+function _przMarqueeWrap(header) {
+    let inner = header.querySelector('.prz-marquee');
+    if (inner) return inner;
+    inner = document.createElement('span');
+    inner.className = 'prz-marquee';
+    while (header.firstChild) inner.appendChild(header.firstChild);
+    header.appendChild(inner);
+    return inner;
+}
+
+function przMarqueeStart(header, index) {
+    if (!header || header.dataset.mq) return false;
+    header.dataset.mq = '1';
+    if (_przMarqueeReduced()) return false;
+    const inner = _przMarqueeWrap(header);
+    const shift = inner.scrollWidth - header.clientWidth;
+    if (shift <= 2) return false;
+    inner.style.setProperty('--mq-shift', shift + 'px');
+    inner.style.setProperty('--mq-dur', Math.min(6, Math.max(2, shift / 30)) + 's');
+    inner.style.setProperty('--mq-delay', -(((index || 0) % 5) * 7) / 10 + 's');
+    inner.classList.add('prz-marquee--anim');
+    return true;
+}
+
+function przMarqueeStop(header) {
+    if (!header) return;
+    delete header.dataset.mq;
+    const inner = header.querySelector('.prz-marquee');
+    if (inner) inner.classList.remove('prz-marquee--anim');
+}
+
+/** Skanuje nowe nagłówki w poddrzewie (default cały dokument). */
+function przMarqueeScan(root) {
+    if (_przMarqueeReduced()) return 0;
+    const scope =
+        root && root.querySelectorAll ? root : typeof document !== 'undefined' ? document : null;
+    if (!scope) return 0;
+    let n = 0;
+    scope.querySelectorAll('.prz-col-header:not([data-mq])').forEach((h, i) => {
+        if (przMarqueeStart(h, i)) n++;
+    });
+    return n;
+}
+
+let _mqScheduled = false;
+function _mqScheduleScan() {
+    if (_mqScheduled) return;
+    _mqScheduled = true;
+    const run = () => {
+        _mqScheduled = false;
+        try {
+            przMarqueeScan(document);
+        } catch (_e) {}
+    };
+    if (typeof requestAnimationFrame === 'function') requestAnimationFrame(run);
+    else run();
+}
+
+let _mqResizeTimer = null;
+function _mqRescanAll() {
+    if (typeof document === 'undefined') return;
+    document.querySelectorAll('.prz-col-header[data-mq]').forEach((h) => przMarqueeStop(h));
+    _mqScheduleScan();
+}
+
 if (typeof document !== 'undefined' && !window.__trDelegated) {
     window.__trDelegated = true;
     // mousedown dla szybkiego przełączania między polami — naprawia 2-kliki
@@ -449,6 +531,27 @@ if (typeof document !== 'undefined' && !window.__trDelegated) {
             setTimeout(() => el.removeAttribute('data-qe-handled'), 300);
         }
     });
+    // Marquee uciętych podpisów — auto-skan po renderach + resize (bez hover).
+    // Guard na funkcję: testy vm dają stub document bez addEventListener.
+    if (
+        !window.__trMarquee &&
+        typeof MutationObserver !== 'undefined' &&
+        typeof document.addEventListener === 'function' &&
+        document.documentElement
+    ) {
+        window.__trMarquee = true;
+        try {
+            new MutationObserver(_mqScheduleScan).observe(document.documentElement, {
+                childList: true,
+                subtree: true
+            });
+        } catch (_e) {}
+        window.addEventListener('resize', () => {
+            window.clearTimeout(_mqResizeTimer);
+            _mqResizeTimer = window.setTimeout(_mqRescanAll, 250);
+        });
+        _mqScheduleScan();
+    }
     document.addEventListener('click', (e) => {
         const el = e.target.closest('[data-action]');
         if (!el) return;
@@ -482,6 +585,9 @@ if (typeof document !== 'undefined' && !window.__trDelegated) {
 }
 
 window.renderTransitionTileHTML = renderTransitionTileHTML;
+window.przMarqueeStart = przMarqueeStart;
+window.przMarqueeStop = przMarqueeStop;
+window.przMarqueeScan = przMarqueeScan;
 window.resolvePrzejscieIndex = resolvePrzejscieIndex;
 window.buildConfigMap = buildConfigMap;
 window.findAssignedElement = findAssignedElement;

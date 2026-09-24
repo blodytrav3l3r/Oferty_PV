@@ -4042,10 +4042,39 @@ td.excel-tr-selected .excel-sel-wrap > div {
     text-align: center;
     white-space: nowrap;
     overflow: hidden;
-    text-overflow: clip;
+    text-overflow: ellipsis;
     padding: 0 0.15rem;
     box-sizing: border-box;
     opacity: 0.9;
+}
+
+/* Marquee uciętych podpisów (Lista przejść) — auto-loop ping-pong.
+   JS (przMarqueeScan) wykrywa overflow, ustawia --mq-shift/--mq-dur/--mq-delay
+   i dokleja .prz-marquee--anim. Bez overflow brak animacji;
+   prefers-reduced-motion wyłącza (zostaje title). */
+.prz-col-header > .prz-marquee {
+    display: inline-block;
+    white-space: nowrap;
+    will-change: transform;
+}
+.prz-marquee--anim {
+    animation: prz-marquee var(--mq-dur, 4s) linear infinite alternate;
+    animation-delay: var(--mq-delay, 0s);
+}
+@keyframes prz-marquee {
+    0%,
+    12% {
+        transform: translateX(0);
+    }
+    88%,
+    100% {
+        transform: translateX(calc(-1 * var(--mq-shift, 0px)));
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    .prz-marquee--anim {
+        animation: none;
+    }
 }
 .prz-col-body {
     min-height: 34px;

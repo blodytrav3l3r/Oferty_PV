@@ -364,17 +364,37 @@ const WIZARD_REQUIRED_PARAMS = [
 /* ===== TOASTY ===== */
 // showToast() — dostępne z shared/ui.js
 
-/* ===== PRZEŁĄCZANIE KART ===== */
+/* ===== PRZEŁĄCZANIE KART =====
+ * Zapis stanu w collapseState (SSoT persystencji zwinięć, per-user).
+ * data-open-display na kontenerze (np. "flex"/"grid") chroni layout
+ * inny niż block przy ponownym otwarciu. */
 function toggleCard(contentId, iconId) {
     const content = document.getElementById(contentId);
     const icon = document.getElementById(iconId);
     if (!content) return;
     const isOpen = content.style.display !== 'none';
-    content.style.display = isOpen ? 'none' : 'block';
+    content.style.display = isOpen ? 'none' : content.dataset.openDisplay || 'block';
     if (icon)
         icon.innerHTML = isOpen
             ? '<span class="text-xs"><i data-lucide="chevron-down"></i></span>'
             : '<span class="text-xs"><i data-lucide="chevron-up"></i></span>';
+    try {
+        if (typeof collapseSet === 'function') collapseSet(contentId, !isOpen);
+    } catch (_e) {}
+}
+
+/* ===== ZAPISANE ZWINIĘCIA KONFIGURATORA (step3) =====
+ * Statyczny HTML nie zna localStorage — aplikuj przy pokazaniu sekcji
+ * i raz przy starcie. Defaulty = dzisiejszy wygląd (params/przejścia
+ * zamknięte, kafle/konfiguracja otwarte). Brak collapseState → no-op. */
+function applyBuilderCollapse() {
+    try {
+        if (typeof collapseApply !== 'function') return;
+        collapseApply('well-params-content', 'well-params-icon', false);
+        collapseApply('tiles-content', 'tiles-icon', true);
+        collapseApply('well-config-wrap', 'well-config-icon', true);
+        collapseApply('inline-przejscia-app-container', 'przejscia-app-icon', false);
+    } catch (_e) {}
 }
 
 /* ===== NAWIGACJA ===== */
@@ -401,6 +421,7 @@ function showSectionStudnie(id) {
     }
 
     if (id === 'pricelist') renderStudniePriceList();
+    if (id === 'builder' && typeof applyBuilderCollapse === 'function') applyBuilderCollapse();
     if (id === 'offer') {
         syncOfferClientSummary();
         if (typeof syncOfferTabFields === 'function') syncOfferTabFields();
@@ -634,5 +655,11 @@ window.getWellIndexById = getWellIndexById;
 Object.defineProperty(window, 'wellsById', { configurable: true, get: () => wellsById });
 _rebuildWellsById();
 window.toggleCard = toggleCard;
+window.applyBuilderCollapse = applyBuilderCollapse;
+// Guard na funkcję (nie tylko typeof document): testy vm dają stub document
+// bez addEventListener (baza: rzednaClamp/excelDrilledRings).
+if (typeof document !== 'undefined' && typeof document.addEventListener === 'function') {
+    document.addEventListener('DOMContentLoaded', applyBuilderCollapse);
+}
 window.generateOfferNumberStudnie = generateOfferNumberStudnie;
 window.normalizeId = normalizeId;

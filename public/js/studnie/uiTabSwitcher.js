@@ -49,6 +49,11 @@ function switchBuilderTab(tab) {
                 przejsciaIcon.innerHTML =
                     '<span class="text-xs"><i data-lucide="chevron-up"></i></span>';
             if (window.lucide) window.lucide.createIcons({ root: przejsciaIcon });
+            // Jawne otwarcie przez użytkownika (zakładka) też zapisz.
+            try {
+                if (typeof collapseSet === 'function')
+                    collapseSet('inline-przejscia-app-container', true);
+            } catch (_e) {}
         }
     }
 }
