@@ -4,6 +4,28 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+### [1.29.2](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.29.1...v1.29.2) (2026-09-24)
+
+### Features
+
+- **studnie:** pelne kolory kafli konfiguracji ([309015c](https://github.com/blodytrav3l3r/Oferty_PV/commit/309015c1fb5ac7ff654c3b9d570b9bdab9d92d2c))
+- **ui:** klasy zamiast inline styles p2 ([8273d88](https://github.com/blodytrav3l3r/Oferty_PV/commit/8273d88fe18b7503bff2afec704152cfb9910ea5))
+- **ui:** klasy zamiast inline styles p3 ([6f06051](https://github.com/blodytrav3l3r/Oferty_PV/commit/6f06051f9214f09ffc457e027fa2a79fd3c4969d))
+
+### Bug Fixes
+
+- **security:** xss atrybutow i audyt frontendu ([58d2944](https://github.com/blodytrav3l3r/Oferty_PV/commit/58d29444f52ffbd34d8f8c84ad00f9e45bf87ddc))
+- **studnie:** desync motywu kafli konfiguracji ([4bb0b7c](https://github.com/blodytrav3l3r/Oferty_PV/commit/4bb0b7c52716aade7865a946c3373fe2307281b6))
+- **test:** polski komentarz w gate i18n ([6c58ecc](https://github.com/blodytrav3l3r/Oferty_PV/commit/6c58ecc5038029cb6ec9f65d943c8f391295563a))
+- **ui:** domkniecie systemu tokenow dark/light ([f7188a4](https://github.com/blodytrav3l3r/Oferty_PV/commit/f7188a4b61ed80ef5a7abfd08385cda04bbb88f2))
+- **ui:** jasny dolny pasek nawigacji w light ([74eed7c](https://github.com/blodytrav3l3r/Oferty_PV/commit/74eed7cec96b6dc31c32bc0e030b895ef22b6f28))
+- **ui:** kontrakt ikon p6 - brakujace svg i skala rozmiarow ([1b204d8](https://github.com/blodytrav3l3r/Oferty_PV/commit/1b204d8526c7bf1c6e06ce728192257a9be140d5))
+- **ui:** kontrast motywow light/dark i tokenizacja palety ([e842d1b](https://github.com/blodytrav3l3r/Oferty_PV/commit/e842d1b859d2f182fb3e83ead65a2c7097603ca5))
+- **ui:** paczki p1 p4 i p5 - przyciski tabele modale ([9cc7923](https://github.com/blodytrav3l3r/Oferty_PV/commit/9cc7923941ab35f54061e4d10cc87b8c6e65e122))
+- **ui:** paczki p2 p3 p7 p8 i problemy l1-l7 ([472f587](https://github.com/blodytrav3l3r/Oferty_PV/commit/472f58782e2b0242e742bcfdbe188ca240f605db))
+- **ui:** ujednolicenie kolorow light/dark i ikon ([182e156](https://github.com/blodytrav3l3r/Oferty_PV/commit/182e1567010164c21ce9080189460557471dbc66)), closes [#0369a1](https://github.com/blodytrav3l3r/Oferty_PV/issues/0369a1)
+- **ui:** widoczne kafelki opiekuna w light ([f593f25](https://github.com/blodytrav3l3r/Oferty_PV/commit/f593f25721b1da4bac498a599db5e39b3cf31e67))
+
 ### [1.29.1](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.29.0...v1.29.1) (2026-09-22)
 
 ### Features
