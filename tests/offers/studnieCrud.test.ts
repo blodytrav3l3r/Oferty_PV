@@ -250,4 +250,54 @@ describe('Studnie Offers CRUD — autoryzacja (IDOR)', () => {
             );
         });
     });
+
+    describe('PUT /api/offers/studnie (batch)', () => {
+        const oldBlob = JSON.stringify({ wells: [{ id: 'w1' }, { id: 'w2' }] });
+
+        it('slim-PUT bez wells/data nie wycina studni (chora dane ze starego)', async () => {
+            (prisma.offers_studnie_rel.findMany as jest.Mock).mockResolvedValue([
+                {
+                    id: 's-1',
+                    userId: 'user-id',
+                    data: oldBlob,
+                    wellCount: 2,
+                    totalPrice: 500,
+                    version: 1
+                }
+            ]);
+            (prisma.offers_studnie_rel.updateMany as jest.Mock).mockResolvedValue({ count: 1 });
+
+            const res = await request(app)
+                .put('/api/offers/studnie')
+                .send({ data: [{ id: 's-1', state: 'draft' }] });
+
+            expect(res.statusCode).toBe(200);
+            const updateCall = (prisma.offers_studnie_rel.updateMany as jest.Mock).mock.calls[0][0];
+            expect(JSON.parse(updateCall.data.data as string)).toEqual(JSON.parse(oldBlob));
+            expect(updateCall.data.wellCount).toBe(2);
+            expect(updateCall.data.totalPrice).toBe(500);
+        });
+
+        it('jawne wells: [] kasuje studnie (zamierzony zapis)', async () => {
+            (prisma.offers_studnie_rel.findMany as jest.Mock).mockResolvedValue([
+                {
+                    id: 's-1',
+                    userId: 'user-id',
+                    data: oldBlob,
+                    wellCount: 2,
+                    totalPrice: 500,
+                    version: 1
+                }
+            ]);
+            (prisma.offers_studnie_rel.updateMany as jest.Mock).mockResolvedValue({ count: 1 });
+
+            const res = await request(app)
+                .put('/api/offers/studnie')
+                .send({ data: [{ id: 's-1', state: 'draft', wells: [] }] });
+
+            expect(res.statusCode).toBe(200);
+            const updateCall = (prisma.offers_studnie_rel.updateMany as jest.Mock).mock.calls[0][0];
+            expect(updateCall.data.wellCount).toBe(0);
+        });
+    });
 });

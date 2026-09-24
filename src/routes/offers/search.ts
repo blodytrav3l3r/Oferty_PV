@@ -134,7 +134,10 @@ router.get('/', requireAuth, async (req, res) => {
                           FROM json_each(o.data, '$.wellsExport'))
                     END AS "d_wellsExportTotal",
                     json_array_length(o.data, '$.wells') AS "d_wellsCount",
-                    json_array_length(o.data, '$.items') AS "d_itemsCount",
+                    -- Licznik pozycji rur z tabeli relacyjnej (SSoT wyceny) —
+                    -- blob miewa wycięte items po zapisach slim (karta: "0 poz."
+                    -- mimo ceny i zamówienia), fallback na blob dla legacy/importów.
+                    COALESCE(i_rel.item_count, json_array_length(o.data, '$.items')) AS "d_itemsCount",
                     json_extract(o.data, '$.userName') AS "d_userName",
                     json_extract(o.data, '$.creatorName') AS "d_creatorName",
                     json_extract(o.data, '$.createdByUserName') AS "d_createdByUserName",
@@ -148,6 +151,11 @@ router.get('/', requireAuth, async (req, res) => {
                     FROM orders_rury_rel
                     GROUP BY "offerId"
                 ) o_rury ON o_rury."offerId" = o.id
+                LEFT JOIN (
+                    SELECT "offerId", COUNT(*) as item_count
+                    FROM offer_items_rel
+                    GROUP BY "offerId"
+                ) i_rel ON i_rel."offerId" = o.id
                 ${whereSqlRury}
 
                 UNION ALL
@@ -184,7 +192,9 @@ router.get('/', requireAuth, async (req, res) => {
                     ELSE (SELECT CAST(ROUND(COALESCE(SUM(value->>'totalPrice'), 0), 2) AS REAL)
                           FROM json_each(s.data, '$.wellsExport'))
                     END AS "d_wellsExportTotal",
-                    json_array_length(s.data, '$.wells') AS "d_wellsCount",
+                    -- Licznik studni z kolumny (metadane utrzymywane przy zapisie),
+                    -- fallback na blob dla wierszy legacy bez kolumny.
+                    COALESCE(s."wellCount", json_array_length(s.data, '$.wells')) AS "d_wellsCount",
                     json_array_length(s.data, '$.items') AS "d_itemsCount",
                     json_extract(s.data, '$.userName') AS "d_userName",
                     json_extract(s.data, '$.creatorName') AS "d_creatorName",

@@ -294,4 +294,69 @@ describe('P1-C slim LIST parity', () => {
         // Wynik serializuje się (żaden BigInt nie dociera do res.json).
         expect(() => JSON.stringify(mapped)).not.toThrow();
     });
+
+    test('licznik rur z offer_items_rel (SSoT), fallback na blob', () => {
+        // Karta "0 poz." mimo ceny: blob po zapisie slim bez items, rel pełny.
+        const db = new DatabaseSync(':memory:');
+        db.exec('CREATE TABLE o (id TEXT, data TEXT)');
+        db.exec('CREATE TABLE offer_items_rel (id TEXT, offerId TEXT)');
+        db.prepare('INSERT INTO o VALUES (?, ?)').run(
+            'wiped',
+            JSON.stringify({ totalNetto: 5850 })
+        );
+        db.prepare('INSERT INTO o VALUES (?, ?)').run(
+            'legacy',
+            JSON.stringify({ items: [{ productId: 'p1' }, { productId: 'p2' }] })
+        );
+        db.prepare('INSERT INTO o VALUES (?, ?)').run(
+            'both',
+            JSON.stringify({ items: [{ productId: 'p1' }] })
+        );
+        const ins = db.prepare('INSERT INTO offer_items_rel VALUES (?, ?)');
+        for (let i = 0; i < 4; i++) ins.run(`w${i}`, 'wiped');
+        for (let i = 0; i < 4; i++) ins.run(`b${i}`, 'both');
+        const rows = db
+            .prepare(
+                `SELECT o.id,
+                    COALESCE(i_rel.item_count, json_array_length(o.data, '$.items')) AS "d_itemsCount"
+                 FROM o
+                 LEFT JOIN (
+                     SELECT "offerId", COUNT(*) as item_count
+                     FROM offer_items_rel
+                     GROUP BY "offerId"
+                 ) i_rel ON i_rel."offerId" = o.id`
+            )
+            .all() as any[];
+        db.close();
+        const byId = Object.fromEntries(rows.map((r) => [r.id, r.d_itemsCount]));
+        expect(byId.wiped).toBe(4);
+        expect(byId.legacy).toBe(2);
+        expect(byId.both).toBe(4);
+    });
+
+    test('licznik studni z kolumny wellCount, fallback na blob', () => {
+        const db = new DatabaseSync(':memory:');
+        db.exec('CREATE TABLE s (id TEXT, wellCount INTEGER, data TEXT)');
+        db.prepare('INSERT INTO s VALUES (?, ?, ?)').run(
+            'col',
+            4,
+            JSON.stringify({ wells: [{ id: 'w1' }] })
+        );
+        db.prepare('INSERT INTO s VALUES (?, ?, ?)').run(
+            'legacy',
+            null,
+            JSON.stringify({ wells: [{ id: 'w1' }, { id: 'w2' }, { id: 'w3' }] })
+        );
+        const rows = db
+            .prepare(
+                `SELECT id,
+                    COALESCE("wellCount", json_array_length(data, '$.wells')) AS "d_wellsCount"
+                 FROM s`
+            )
+            .all() as any[];
+        db.close();
+        const byId = Object.fromEntries(rows.map((r) => [r.id, r.d_wellsCount]));
+        expect(byId.col).toBe(4);
+        expect(byId.legacy).toBe(3);
+    });
 });

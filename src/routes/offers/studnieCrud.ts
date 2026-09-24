@@ -831,12 +831,21 @@ router.put(
                 id: string;
                 userId: string | null;
                 data: string | null;
+                wellCount: number | null;
+                totalPrice: number | null;
                 version: number | null;
             }> =
                 incomingIds.length > 0
                     ? (await prisma.offers_studnie_rel.findMany({
                           where: { id: { in: incomingIds } },
-                          select: { id: true, userId: true, data: true, version: true }
+                          select: {
+                              id: true,
+                              userId: true,
+                              data: true,
+                              wellCount: true,
+                              totalPrice: true,
+                              version: true
+                          }
                       })) || []
                     : [];
             const existingById = new Map(existingDocs.map((d) => [d.id, d]));
@@ -937,6 +946,28 @@ router.put(
                 // P0-D2: version to kolumna (top-level o.version), nie blob o.data.
                 const putClientVersion = typeof o.version === 'number' ? o.version : null;
                 const putOld = existingById.get(docId);
+                // Slim-PUT (np. sama zmiana opiekuna, bez wells i bez data)
+                // nie może wycinać studni: chore dane ze starego wiersza.
+                // Jawne wells (także puste []) lub jawne data = zamierzony zapis.
+                let putDataStr = o.data ? JSON.stringify(o.data) : '{}';
+                let putWellCount = wellCountPut;
+                let putTotalPrice = totalPricePut;
+                if (
+                    (o as Record<string, unknown>).wells === undefined &&
+                    (o as Record<string, unknown>).data === undefined &&
+                    putOld?.data
+                ) {
+                    const keepWells = extractWellsFromOfferData(putOld.data);
+                    if (keepWells.length > 0) {
+                        putDataStr = putOld.data;
+                        putWellCount =
+                            typeof putOld.wellCount === 'number'
+                                ? putOld.wellCount
+                                : keepWells.length;
+                        if (typeof putOld.totalPrice === 'number')
+                            putTotalPrice = putOld.totalPrice;
+                    }
+                }
                 // P0.1: opiekun rozstrzygany PRZED zapisem (403 zamiast cichego przejęcia).
                 const putRequestedUserId = typeof o.userId === 'string' && o.userId ? o.userId : '';
                 let putUserId: string;
@@ -978,9 +1009,9 @@ router.put(
                         clientNip,
                         clientNumber,
                         createdAt: created,
-                        data: o.data ? JSON.stringify(o.data) : '{}',
-                        wellCount: wellCountPut,
-                        totalPrice: totalPricePut
+                        data: putDataStr,
+                        wellCount: putWellCount,
+                        totalPrice: putTotalPrice
                     },
                     update: {
                         userId: putUserId,
@@ -990,9 +1021,9 @@ router.put(
                         clientNip,
                         clientNumber,
                         createdAt: created,
-                        data: o.data ? JSON.stringify(o.data) : '{}',
-                        wellCount: wellCountPut,
-                        totalPrice: totalPricePut
+                        data: putDataStr,
+                        wellCount: putWellCount,
+                        totalPrice: putTotalPrice
                     },
                     fts: {
                         id: docId,
