@@ -3610,7 +3610,7 @@ html[data-theme='light'] .zl-idx-box {
     outline: none;
 }
 
-/* Focus inputa w light: ciemne slate-950 na jasnej karcie daje
+/* Fokus inputa w light: ciemne slate-950 na jasnej karcie daje
    granatowa plame z niewidocznym tekstem — biale tlo + akcent. */
 html[data-theme='light'] .wt-add-cell .form-input {
     background: var(--bg-secondary);
