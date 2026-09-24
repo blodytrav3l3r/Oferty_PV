@@ -1223,66 +1223,53 @@ html[data-theme='light'] .unit-popup-preview {
     color: var(--accent-text);
 }
 
-/* Kolory DN jak w Excelu (tożsamość DN: niebieski/zielony/bursztyn/fiolet/czerwony/różowy) */
-.dn-btn--1000 {
-    background: rgba(var(--blue-rgb), 0.12);
-    border-color: rgba(var(--blue-rgb), 0.35);
-    color: color-mix(in srgb, var(--blue) 70%, var(--text-primary));
-}
-.dn-btn--1200 {
-    background: rgba(var(--success-rgb), 0.12);
-    border-color: rgba(var(--success-rgb), 0.35);
-    color: color-mix(in srgb, var(--success) 70%, var(--text-primary));
-}
-.dn-btn--1500 {
-    background: rgba(var(--warn-rgb), 0.12);
-    border-color: rgba(var(--warn-rgb), 0.35);
-    color: color-mix(in srgb, var(--warn) 70%, var(--text-primary));
-}
-.dn-btn--2000 {
-    background: rgba(var(--purple-rgb), 0.12);
-    border-color: rgba(var(--purple-rgb), 0.35);
-    color: color-mix(in srgb, var(--purple) 70%, var(--text-primary));
-}
-.dn-btn--2500 {
-    background: rgba(var(--danger-rgb), 0.12);
-    border-color: rgba(var(--danger-rgb), 0.35);
-    color: color-mix(in srgb, var(--danger) 70%, var(--text-primary));
-}
+/* Kolory DN jak w Excelu (tożsamość DN: niebieski/zielony/bursztyn/fiolet/czerwony/różowy).
+   Spoczynek wyszarzony — pełny kolor tylko na aktywnym, widać na pierwszy rzut oka. */
+.dn-btn--1000,
+.dn-btn--1200,
+.dn-btn--1500,
+.dn-btn--2000,
+.dn-btn--2500,
 .dn-btn--styczne {
-    background: rgba(var(--pink-rgb), 0.12);
-    border-color: rgba(var(--pink-rgb), 0.35);
-    color: color-mix(in srgb, var(--pink) 70%, var(--text-primary));
+    background: var(--bg-tile);
+    border-color: var(--border-glass);
+    color: var(--text-muted);
 }
 .dn-btn--1000.active {
-    background: rgba(var(--blue-rgb), 0.25);
+    background: rgba(var(--blue-rgb), 0.35);
     border-color: var(--blue);
-    color: color-mix(in srgb, var(--blue) 85%, var(--text-primary));
+    color: var(--blue);
+    box-shadow: 0 0 10px rgba(var(--blue-rgb), 0.35);
 }
 .dn-btn--1200.active {
-    background: rgba(var(--success-rgb), 0.25);
+    background: rgba(var(--success-rgb), 0.35);
     border-color: var(--success);
-    color: color-mix(in srgb, var(--success) 85%, var(--text-primary));
+    color: var(--success);
+    box-shadow: 0 0 10px rgba(var(--success-rgb), 0.35);
 }
 .dn-btn--1500.active {
-    background: rgba(var(--warn-rgb), 0.25);
+    background: rgba(var(--warn-rgb), 0.35);
     border-color: var(--warn);
-    color: color-mix(in srgb, var(--warn) 85%, var(--text-primary));
+    color: var(--warn);
+    box-shadow: 0 0 10px rgba(var(--warn-rgb), 0.35);
 }
 .dn-btn--2000.active {
-    background: rgba(var(--purple-rgb), 0.25);
+    background: rgba(var(--purple-rgb), 0.35);
     border-color: var(--purple);
     color: color-mix(in srgb, var(--purple) 85%, var(--text-primary));
+    box-shadow: 0 0 10px rgba(var(--purple-rgb), 0.35);
 }
 .dn-btn--2500.active {
-    background: rgba(var(--danger-rgb), 0.25);
+    background: rgba(var(--danger-rgb), 0.35);
     border-color: var(--danger);
-    color: color-mix(in srgb, var(--danger) 85%, var(--text-primary));
+    color: var(--danger);
+    box-shadow: 0 0 10px rgba(var(--danger-rgb), 0.35);
 }
 .dn-btn--styczne.active {
-    background: rgba(var(--pink-rgb), 0.25);
+    background: rgba(var(--pink-rgb), 0.35);
     border-color: var(--pink);
-    color: color-mix(in srgb, var(--pink) 85%, var(--text-primary));
+    color: var(--pink);
+    box-shadow: 0 0 10px rgba(var(--pink-rgb), 0.35);
 }
 
 /* Tabela konfiguracji */
