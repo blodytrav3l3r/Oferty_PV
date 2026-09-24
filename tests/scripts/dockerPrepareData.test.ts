@@ -167,6 +167,10 @@ function cleanup(root: string): void {
 // Widoczny skip zamiast cichego pass: bez basha testy sa OMINIETE (○),
 // nie zaliczone — cichy `return` dal kiedys falszywie zielony run.
 const testBash = bashAvailable() ? it : it.skip;
+// Asercje UID wlasciciela (id -u / chown) maja sens tylko na POSIX:
+// Git Bash pod Windows zwraca mapowany SID (np. 197609), wiec oczekiwane
+// '1000:1000' nigdy sie nie spina. Na Linux CI testy dalej sie wykonuja.
+const testPosixIds = process.platform !== 'win32' ? it : it.skip;
 
 describe('docker-prepare-data.sh (stub docker)', () => {
     testBash(
@@ -184,34 +188,37 @@ describe('docker-prepare-data.sh (stub docker)', () => {
         }
     );
 
-    testBash('happy path: sha256 ID -> chown katalogu + sqlite, BEZ -R, backups nietkniete', () => {
-        const caller = bashId();
-        const { root, posixRoot, chownLog } = setupIsolatedRoot({
-            preExistingDb: true,
-            preExistingBackups: true
-        });
-        try {
-            const r = runPrepare(root, posixRoot, chownLog, {});
-            expect(r.status).toBe(0);
-            expect(r.stdout).toMatch(/\[OK\]/);
-            expect(posixRoot.length).toBeGreaterThan(0);
-            // Chirurgiczny chown: [spec, katalog, plik DB] - jedno wywolanie...
-            expect(r.chownCalls).toHaveLength(3);
-            expect(r.chownCalls[0]).toBe('1000:1000');
-            expect(r.chownCalls[1]).toBe(`${posixRoot}/data`);
-            expect(r.chownCalls[2]).toBe(`${posixRoot}/data/app_database.sqlite`);
-            // ...bez rekurencji i bez dotykania backups/*.
-            expect(r.chownCalls).not.toContain('-R');
-            expect(r.chownCalls.join('\n')).not.toContain('backups');
-            // Istniejacy backups/ zostaje (flaga NIETKNIETY = brak chown na nim).
-            expect(fs.existsSync(path.join(root, 'data', 'backups', 'keep.txt'))).toBe(true);
-            expect(caller.uid.length).toBeGreaterThan(0);
-        } finally {
-            cleanup(root);
+    testPosixIds(
+        'happy path: sha256 ID -> chown katalogu + sqlite, BEZ -R, backups nietkniete',
+        () => {
+            const caller = bashId();
+            const { root, posixRoot, chownLog } = setupIsolatedRoot({
+                preExistingDb: true,
+                preExistingBackups: true
+            });
+            try {
+                const r = runPrepare(root, posixRoot, chownLog, {});
+                expect(r.status).toBe(0);
+                expect(r.stdout).toMatch(/\[OK\]/);
+                expect(posixRoot.length).toBeGreaterThan(0);
+                // Chirurgiczny chown: [spec, katalog, plik DB] - jedno wywolanie...
+                expect(r.chownCalls).toHaveLength(3);
+                expect(r.chownCalls[0]).toBe('1000:1000');
+                expect(r.chownCalls[1]).toBe(`${posixRoot}/data`);
+                expect(r.chownCalls[2]).toBe(`${posixRoot}/data/app_database.sqlite`);
+                // ...bez rekurencji i bez dotykania backups/*.
+                expect(r.chownCalls).not.toContain('-R');
+                expect(r.chownCalls.join('\n')).not.toContain('backups');
+                // Istniejacy backups/ zostaje (flaga NIETKNIETY = brak chown na nim).
+                expect(fs.existsSync(path.join(root, 'data', 'backups', 'keep.txt'))).toBe(true);
+                expect(caller.uid.length).toBeGreaterThan(0);
+            } finally {
+                cleanup(root);
+            }
         }
-    });
+    );
 
-    testBash('nowy backups/ dostaje wlasciciela wywolujacego, nie node', () => {
+    testPosixIds('nowy backups/ dostaje wlasciciela wywolujacego, nie node', () => {
         const caller = bashId();
         const { root, posixRoot, chownLog } = setupIsolatedRoot({});
         try {
