@@ -178,7 +178,7 @@ async function saveProductionOrder() {
             (typeof editingOfferAssignedUserId !== 'undefined' && editingOfferAssignedUserId) ||
             (currentUser ? currentUser.id : null),
         wellId: well.id,
-        wellName: well.name,
+        wellName: well.name || well.numer || '',
         offerId: typeof editingOfferIdStudnie !== 'undefined' ? editingOfferIdStudnie : '',
         orderId:
             (typeof orderEditMode !== 'undefined' && orderEditMode && orderEditMode.orderId) || '',

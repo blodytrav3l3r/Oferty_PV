@@ -279,6 +279,46 @@ describe('Production Orders (PZ) routes', () => {
             expect(res.body.saved).toEqual([]);
             expect(prisma.production_orders_rel.update).not.toHaveBeenCalled();
         });
+
+        it('błąd #48: chudy PUT z `/index` nie wycina wellName/productName (merge)', async () => {
+            (prisma.production_orders_rel.findUnique as jest.Mock).mockResolvedValue({
+                id: 'pz-1',
+                userId: 'user-id',
+                version: 1,
+                data: JSON.stringify({
+                    status: 'draft',
+                    productionOrderNumber: 'SA/N/00001/26',
+                    wellName: 'S1',
+                    productName: 'Dennica DN1000 H=650/500',
+                    productId: 'DDD-10-065'
+                })
+            });
+            (prisma.production_orders_rel.update as jest.Mock).mockResolvedValue({});
+
+            const res = await request(app)
+                .put('/api/orders/production')
+                .set('x-user-id', 'user-id')
+                .send({
+                    data: [
+                        {
+                            id: 'pz-1',
+                            wellId: 'w-1',
+                            status: 'accepted',
+                            productionOrderNumber: 'SA/N/00001/26'
+                        }
+                    ]
+                });
+
+            expect(res.statusCode).toBe(200);
+            const savedData = JSON.parse(
+                (prisma.production_orders_rel.update as jest.Mock).mock.calls[0][0].data
+                    .data as string
+            );
+            expect(savedData.status).toBe('accepted');
+            expect(savedData.wellName).toBe('S1');
+            expect(savedData.productName).toBe('Dennica DN1000 H=650/500');
+            expect(savedData.productId).toBe('DDD-10-065');
+        });
     });
 
     describe('GET /:id', () => {

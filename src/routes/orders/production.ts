@@ -294,10 +294,16 @@ router.put(
                     // Liczniki wydruków: chude obiekty (modal, accept-flow) nie
                     // mają pól print* — donieś ze starego bloba, żeby PUT ich
                     // nie zerował. Wynik helpera jest finalny (bez spreadu za nim).
+                    // Błąd #48: PUT whole-array z lekkimi obiektami z `/index`
+                    // (accept/revoke/modal-save) NADPISYWAŁ pełny blob szkieletem
+                    // (tabela Zlecenia: "—" + "Element #N"). Dlatego merge:
+                    // jawne pola z requestu wygrywają, reszta zostaje ze starego.
                     const oldData = old
                         ? parseJsonField<Record<string, unknown>>(old.data, {})
                         : null;
-                    const mergedRest = oldData ? preservePrintCounts(rest, oldData) : rest;
+                    const mergedRest = oldData
+                        ? preservePrintCounts({ ...oldData, ...rest }, oldData)
+                        : rest;
                     const dataStr = JSON.stringify(mergedRest);
 
                     if (!old) {
@@ -458,7 +464,8 @@ router.post(
                 ...rest
             } = o;
             const clientVersion = typeof clientVersionRaw === 'number' ? clientVersionRaw : null;
-            const dataStr = JSON.stringify(rest);
+            // Błąd #48: update chudym obiektem nadpisywał pełny blob (jak w PUT
+            // wyżej) — dataStr dopiero po odczycie starego, z merge.
             // P0-A: finalny numer produkcyjny do kolumny pod UNIQUE.
             const prodNum =
                 typeof (rest as Record<string, unknown>).productionOrderNumber === 'string'
@@ -506,6 +513,13 @@ router.post(
             } else {
                 logAudit('production_order', docId, authReq.user?.id || '', 'create', rest);
             }
+
+            // Błąd #48 (POST): merge ze starym blobem jak w PUT — chudy update
+            // nie może wycinać wellName/productName. Create zapisuje rest wprost.
+            const oldPostData = old ? parseJsonField<Record<string, unknown>>(old.data, {}) : null;
+            const dataStr = JSON.stringify(
+                oldPostData ? preservePrintCounts({ ...oldPostData, ...rest }, oldPostData) : rest
+            );
 
             if (!old) {
                 await prisma.production_orders_rel.create({
