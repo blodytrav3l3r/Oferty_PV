@@ -17,12 +17,13 @@ function updateZakonczenieButton() {
                 : p.name
             : well.zakonczenie;
         btn.innerHTML =
-            '<span class="text-xs"><i data-lucide="chevron-down"></i></span> ' + shortName;
+            '<span class="text-xs"><i data-lucide="chevron-down" class="icon-xs"></i></span> ' +
+            shortName;
         btn.style.borderColor = 'rgba(var(--accent-rgb), 0.5)';
         btn.style.color = 'var(--accent2-hover)';
     } else {
         btn.innerHTML =
-            '<span class="text-xs"><i data-lucide="chevron-down"></i></span> Zako\u0144czenie';
+            '<span class="text-xs"><i data-lucide="chevron-down" class="icon-xs"></i></span> Zako\u0144czenie';
         btn.style.borderColor = 'var(--border-glass)';
         btn.style.color = '';
     }
@@ -45,14 +46,15 @@ function updateRedukcjaButton() {
     const targetDn = well.redukcjaTargetDN || 1000;
 
     if (well.redukcjaDN1000) {
-        btn.innerHTML = `<span class="text-xs"><i data-lucide="chevrons-down"></i></span> Redukcja DN${targetDn} <span class="text-xs"><i data-lucide="check"></i></span>`;
+        btn.innerHTML = `<span class="text-xs"><i data-lucide="chevrons-down" class="icon-xs"></i></span> Redukcja DN${targetDn} <span class="text-xs"><i data-lucide="check" class="icon-xs"></i></span>`;
         btn.style.borderColor = 'rgba(var(--accent2-rgb), 0.5)';
         btn.style.color = 'var(--accent2-hover)';
         btn.style.background = 'rgba(var(--accent2-rgb), 0.15)';
         if (minWrap) minWrap.style.display = 'flex';
         if (minInput) minInput.value = ((well.redukcjaMinH || 2500) / 1000).toFixed(1);
     } else {
-        btn.innerHTML = '<span class="text-xs"><i data-lucide="chevrons-down"></i></span> Redukcja';
+        btn.innerHTML =
+            '<span class="text-xs"><i data-lucide="chevrons-down" class="icon-xs"></i></span> Redukcja';
         btn.style.borderColor = 'var(--border-glass)';
         btn.style.color = '';
         btn.style.background = '';
@@ -95,12 +97,14 @@ function updateRedukcjaZakButton() {
             ? p.name.replace(/^.*?(Konus|P\u0142yta|Pier\u015bcie\u0144)/i, '$1').substring(0, 18)
             : 'Zak. DN' + targetDn;
         btn.innerHTML =
-            '<span class="text-xs"><i data-lucide="chevron-down"></i></span> ' + shortName;
+            '<span class="text-xs"><i data-lucide="chevron-down" class="icon-xs"></i></span> ' +
+            shortName;
         btn.style.borderColor = 'rgba(var(--accent-rgb), 0.5)';
         btn.style.color = 'var(--accent2-hover)';
     } else {
         btn.innerHTML =
-            '<span class="text-xs"><i data-lucide="chevron-down"></i></span> Zak. DN' + targetDn;
+            '<span class="text-xs"><i data-lucide="chevron-down" class="icon-xs"></i></span> Zak. DN' +
+            targetDn;
         btn.style.borderColor = 'var(--border-glass)';
         btn.style.color = '';
     }
@@ -120,7 +124,7 @@ function updatePsiaBudaButton() {
 
     if (well && well.psiaBuda) {
         btn.innerHTML =
-            '<i data-lucide="dog" class="icon-14-mr4"></i> Psia buda <span style="font-size: var(--fs-base); margin-left:4px;"><i data-lucide="check"></i></span>';
+            '<i data-lucide="dog" class="icon-14-mr4"></i> Psia buda <span style="margin-left:4px;"><i data-lucide="check" class="icon-xs"></i></span>';
         btn.style.borderColor = 'rgba(var(--success-rgb), 0.5)';
         btn.style.color = 'var(--success-hover)';
         btn.style.background = 'rgba(var(--success-rgb), 0.15)';

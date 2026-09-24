@@ -281,78 +281,22 @@
             >
                 <button
                     type="button"
-                    class="btn btn-primary btn-sm"
+                    class="btn btn-sm"
                     style="
                         height: 46px;
                         padding: 0;
-                        font-size: var(--fs-xs);
+                        font-size: var(--fs-2xs);
+                        background: rgba(var(--blue-rgb), 0.18);
+                        border: 1px solid rgba(var(--blue-rgb), 0.45);
+                        color: color-mix(in srgb, var(--blue) 70%, var(--text-primary));
                         display: flex;
                         align-items: center;
                         justify-content: center;
+                        white-space: nowrap;
                     "
                     onclick="addNewWell(1000)"
                 >
-                    +1000
-                </button>
-                <button
-                    type="button"
-                    class="btn btn-primary btn-sm"
-                    style="
-                        height: 46px;
-                        padding: 0;
-                        font-size: var(--fs-xs);
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                    "
-                    onclick="addNewWell(1200)"
-                >
-                    +1200
-                </button>
-                <button
-                    type="button"
-                    class="btn btn-primary btn-sm"
-                    style="
-                        height: 46px;
-                        padding: 0;
-                        font-size: var(--fs-xs);
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                    "
-                    onclick="addNewWell(1500)"
-                >
-                    +1500
-                </button>
-                <button
-                    type="button"
-                    class="btn btn-primary btn-sm"
-                    style="
-                        height: 46px;
-                        padding: 0;
-                        font-size: var(--fs-xs);
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                    "
-                    onclick="addNewWell(2000)"
-                >
-                    +2000
-                </button>
-                <button
-                    type="button"
-                    class="btn btn-primary btn-sm"
-                    style="
-                        height: 46px;
-                        padding: 0;
-                        font-size: var(--fs-xs);
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                    "
-                    onclick="addNewWell(2500)"
-                >
-                    +2500
+                    DN1000
                 </button>
                 <button
                     type="button"
@@ -361,16 +305,93 @@
                         height: 46px;
                         padding: 0;
                         font-size: var(--fs-2xs);
-                        background: rgba(var(--warn-rgb), 0.15);
-                        border: 1px solid rgba(var(--warn-rgb), 0.3);
-                        color: var(--warn);
+                        background: rgba(var(--success-rgb), 0.18);
+                        border: 1px solid rgba(var(--success-rgb), 0.45);
+                        color: color-mix(in srgb, var(--success) 70%, var(--text-primary));
                         display: flex;
                         align-items: center;
                         justify-content: center;
+                        white-space: nowrap;
+                    "
+                    onclick="addNewWell(1200)"
+                >
+                    DN1200
+                </button>
+                <button
+                    type="button"
+                    class="btn btn-sm"
+                    style="
+                        height: 46px;
+                        padding: 0;
+                        font-size: var(--fs-2xs);
+                        background: rgba(var(--warn-rgb), 0.18);
+                        border: 1px solid rgba(var(--warn-rgb), 0.45);
+                        color: color-mix(in srgb, var(--warn) 70%, var(--text-primary));
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        white-space: nowrap;
+                    "
+                    onclick="addNewWell(1500)"
+                >
+                    DN1500
+                </button>
+                <button
+                    type="button"
+                    class="btn btn-sm"
+                    style="
+                        height: 46px;
+                        padding: 0;
+                        font-size: var(--fs-2xs);
+                        background: rgba(var(--purple-rgb), 0.18);
+                        border: 1px solid rgba(var(--purple-rgb), 0.45);
+                        color: color-mix(in srgb, var(--purple) 70%, var(--text-primary));
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        white-space: nowrap;
+                    "
+                    onclick="addNewWell(2000)"
+                >
+                    DN2000
+                </button>
+                <button
+                    type="button"
+                    class="btn btn-sm"
+                    style="
+                        height: 46px;
+                        padding: 0;
+                        font-size: var(--fs-2xs);
+                        background: rgba(var(--danger-rgb), 0.18);
+                        border: 1px solid rgba(var(--danger-rgb), 0.45);
+                        color: color-mix(in srgb, var(--danger) 70%, var(--text-primary));
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        white-space: nowrap;
+                    "
+                    onclick="addNewWell(2500)"
+                >
+                    DN2500
+                </button>
+                <button
+                    type="button"
+                    class="btn btn-sm"
+                    style="
+                        height: 46px;
+                        padding: 0;
+                        font-size: var(--fs-2xs);
+                        background: rgba(var(--pink-rgb), 0.18);
+                        border: 1px solid rgba(var(--pink-rgb), 0.45);
+                        color: color-mix(in srgb, var(--pink) 70%, var(--text-primary));
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        white-space: nowrap;
                     "
                     onclick="addNewWell('styczna')"
                 >
-                    +Styczeń
+                    Styczne
                 </button>
             </div>
 

@@ -111,7 +111,7 @@ function updateAutoLockUI() {
     const btnAuto = document.getElementById('btn-auto-select');
     if (!btnLock || !btnAuto) return;
     if (!well) {
-        btnLock.innerHTML = '<i data-lucide="unlock"></i> Ręczny';
+        btnLock.innerHTML = '<i data-lucide="unlock" class="icon-xs"></i> Ręczny';
         btnLock.style.backgroundColor = 'var(--bg-glass)';
         btnLock.style.borderColor = 'var(--border-glass)';
         btnAuto.disabled = true;
@@ -120,14 +120,14 @@ function updateAutoLockUI() {
     }
 
     if (well.autoLocked) {
-        btnLock.innerHTML = '<i data-lucide="lock"></i> Tryb ręczny (Włączony)';
+        btnLock.innerHTML = '<i data-lucide="lock" class="icon-xs"></i> Tryb ręczny (Włączony)';
         btnLock.style.backgroundColor = 'rgba(var(--danger-rgb), 0.2)';
         btnLock.style.borderColor = 'rgba(var(--danger-rgb), 0.5)';
         btnAuto.disabled = true;
         btnAuto.style.opacity = '0.4';
         btnAuto.style.cursor = 'not-allowed';
     } else {
-        btnLock.innerHTML = '<i data-lucide="unlock"></i> Tryb ręczny (Wyłączony)';
+        btnLock.innerHTML = '<i data-lucide="unlock" class="icon-xs"></i> Tryb ręczny (Wyłączony)';
         btnLock.style.backgroundColor = 'var(--bg-glass)';
         btnLock.style.borderColor = 'var(--border-glass)';
         btnAuto.disabled = false;

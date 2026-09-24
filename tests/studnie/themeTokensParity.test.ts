@@ -116,6 +116,7 @@ const SHARED = new Set([
         'success-hover-rgb',
         'danger-rgb',
         'warn-rgb',
+        'warn-row-rgb',
         'warn-hover-rgb',
         'blue-rgb',
         'blue-hover-rgb',

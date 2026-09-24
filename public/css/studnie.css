@@ -1223,6 +1223,68 @@ html[data-theme='light'] .unit-popup-preview {
     color: var(--accent-text);
 }
 
+/* Kolory DN jak w Excelu (tożsamość DN: niebieski/zielony/bursztyn/fiolet/czerwony/różowy) */
+.dn-btn--1000 {
+    background: rgba(var(--blue-rgb), 0.12);
+    border-color: rgba(var(--blue-rgb), 0.35);
+    color: color-mix(in srgb, var(--blue) 70%, var(--text-primary));
+}
+.dn-btn--1200 {
+    background: rgba(var(--success-rgb), 0.12);
+    border-color: rgba(var(--success-rgb), 0.35);
+    color: color-mix(in srgb, var(--success) 70%, var(--text-primary));
+}
+.dn-btn--1500 {
+    background: rgba(var(--warn-rgb), 0.12);
+    border-color: rgba(var(--warn-rgb), 0.35);
+    color: color-mix(in srgb, var(--warn) 70%, var(--text-primary));
+}
+.dn-btn--2000 {
+    background: rgba(var(--purple-rgb), 0.12);
+    border-color: rgba(var(--purple-rgb), 0.35);
+    color: color-mix(in srgb, var(--purple) 70%, var(--text-primary));
+}
+.dn-btn--2500 {
+    background: rgba(var(--danger-rgb), 0.12);
+    border-color: rgba(var(--danger-rgb), 0.35);
+    color: color-mix(in srgb, var(--danger) 70%, var(--text-primary));
+}
+.dn-btn--styczne {
+    background: rgba(var(--pink-rgb), 0.12);
+    border-color: rgba(var(--pink-rgb), 0.35);
+    color: color-mix(in srgb, var(--pink) 70%, var(--text-primary));
+}
+.dn-btn--1000.active {
+    background: rgba(var(--blue-rgb), 0.25);
+    border-color: var(--blue);
+    color: color-mix(in srgb, var(--blue) 85%, var(--text-primary));
+}
+.dn-btn--1200.active {
+    background: rgba(var(--success-rgb), 0.25);
+    border-color: var(--success);
+    color: color-mix(in srgb, var(--success) 85%, var(--text-primary));
+}
+.dn-btn--1500.active {
+    background: rgba(var(--warn-rgb), 0.25);
+    border-color: var(--warn);
+    color: color-mix(in srgb, var(--warn) 85%, var(--text-primary));
+}
+.dn-btn--2000.active {
+    background: rgba(var(--purple-rgb), 0.25);
+    border-color: var(--purple);
+    color: color-mix(in srgb, var(--purple) 85%, var(--text-primary));
+}
+.dn-btn--2500.active {
+    background: rgba(var(--danger-rgb), 0.25);
+    border-color: var(--danger);
+    color: color-mix(in srgb, var(--danger) 85%, var(--text-primary));
+}
+.dn-btn--styczne.active {
+    background: rgba(var(--pink-rgb), 0.25);
+    border-color: var(--pink);
+    color: color-mix(in srgb, var(--pink) 85%, var(--text-primary));
+}
+
 /* Tabela konfiguracji */
 .well-config-table {
     width: 100%;
@@ -1323,9 +1385,6 @@ html[data-theme='light'] .unit-popup-preview {
     min-width: 24px;
     background: rgba(var(--black-rgb), 0.3);
 }
-html[data-theme='light'] .cfg-idx-box {
-    background: var(--bg-tertiary);
-}
 .cfg-idx-num {
     font-size: var(--fs-xs);
     line-height: 1;
@@ -1381,14 +1440,11 @@ html[data-theme='light'] .cfg-idx-box {
     align-items: center;
 }
 .cfg-weight-val {
-    color: rgba(var(--white-rgb), 0.8);
+    color: inherit;
     font-weight: var(--fw-bold);
     font-size: var(--fs-md);
     white-space: nowrap;
     text-align: right;
-}
-html[data-theme='light'] .cfg-weight-val {
-    color: var(--text-primary);
 }
 .cfg-price-val {
     font-size: var(--fs-2xl);
@@ -1673,7 +1729,7 @@ html[data-theme='light'] .cfg-weight-val {
     display: inline-flex;
     align-items: center;
     gap: 0.35rem;
-    padding: 0.12rem 0.32rem 0.12rem 0.1rem;
+    padding: 0.12rem 0.4rem;
     border: 1px solid rgba(var(--accent2-rgb), 0.18);
     background: rgba(var(--accent2-rgb), 0.06);
     border-radius: var(--radius-sm);
@@ -2956,6 +3012,28 @@ td.excel-tint--plyta_redukcyjna input {
         var(--cmp-plyta-redukcyjna) 13%,
         var(--excel-tint-base)
     ) !important;
+}
+/* Aktywny wiersz / duplikat / status: pola przezroczyste, tint wiersza (TR) prześwituje.
+   Edytowane pole wraca do var(--excel-input-bg) (focus). */
+#excel-table-container tbody tr[data-widx]:focus-within input[type='text'],
+#excel-table-container tbody tr[data-widx]:focus-within input[type='number'],
+#excel-table-container tbody tr[data-widx]:focus-within .excel-sel-wrap > div,
+#excel-table-container tbody tr[data-widx].excel-row-dup input[type='text'],
+#excel-table-container tbody tr[data-widx].excel-row-dup input[type='number'],
+#excel-table-container tbody tr[data-widx].excel-row-dup .excel-sel-wrap > div,
+#excel-table-container tbody tr[data-widx].excel-row-error input[type='text'],
+#excel-table-container tbody tr[data-widx].excel-row-error input[type='number'],
+#excel-table-container tbody tr[data-widx].excel-row-error .excel-sel-wrap > div,
+#excel-table-container tbody tr[data-widx].excel-row-warning input[type='text'],
+#excel-table-container tbody tr[data-widx].excel-row-warning input[type='number'],
+#excel-table-container tbody tr[data-widx].excel-row-warning .excel-sel-wrap > div {
+    background: transparent !important;
+}
+#excel-table-container tbody tr[data-widx] input[type='text']:focus,
+#excel-table-container tbody tr[data-widx] input[type='number']:focus,
+#excel-table-container tbody tr[data-widx] .excel-sel-wrap:focus > div,
+#excel-table-container tbody tr[data-widx] .excel-sel-wrap:focus-within > div {
+    background: var(--excel-input-bg) !important;
 }
 .well-param-label {
     min-width: 172px;

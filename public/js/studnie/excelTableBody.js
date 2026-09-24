@@ -51,9 +51,9 @@ function _excelGetRowStatus(well) {
     }
     if (s === 'WARNING') {
         return {
-            base: 'rgba(var(--warn-rgb), ' + _excelAlpha('0.1', '0.18') + ')',
-            active: 'rgba(var(--warn-rgb), ' + _excelAlpha('0.2', '0.28') + ')',
-            hover: 'rgba(var(--warn-rgb), ' + _excelAlpha('0.16', '0.22') + ')'
+            base: 'rgba(var(--warn-row-rgb), ' + _excelAlpha('0.1', '0.18') + ')',
+            active: 'rgba(var(--warn-row-rgb), ' + _excelAlpha('0.2', '0.28') + ')',
+            hover: 'rgba(var(--warn-row-rgb), ' + _excelAlpha('0.16', '0.22') + ')'
         };
     }
     return null;
@@ -223,11 +223,11 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
                   ? 'var(--warn-hover)'
                   : '';
         const rowClass =
-            statusKey === 'ERROR'
+            (statusKey === 'ERROR'
                 ? ' excel-row-error'
                 : statusKey === 'WARNING'
                   ? ' excel-row-warning'
-                  : '';
+                  : '') + (isDup ? ' excel-row-dup' : '');
         const _errTitle = _excelErrorTitle(well);
         const statusTitle = _errTitle ? ' title="' + _errTitle + '"' : '';
         const przejscia = well.przejscia || [];
@@ -899,6 +899,8 @@ function _excelRefreshDupColors() {
             row.style.color = '';
             row.classList.remove('excel-row-error', 'excel-row-warning');
         }
+        if (isDup) row.classList.add('excel-row-dup');
+        else row.classList.remove('excel-row-dup');
         /* Zaktualizuj tła kolumn sticky — inaczej część wiersza (Lp, nazwa,
            rzędne) ma inną barwę niż reszta (bug S4). */
         const solidBg = row.getAttribute('data-solid-bg') || 'var(--excel-row-even)';

@@ -266,22 +266,29 @@
                         >DN</span
                     >
                     <div class="dn-selector mb-0">
-                        <button type="button" class="dn-btn active" onclick="selectDN(1000)">
-                            1000
-                        </button>
-                        <button type="button" class="dn-btn" onclick="selectDN(1200)">1200</button>
-                        <button type="button" class="dn-btn" onclick="selectDN(1500)">1500</button>
-                        <button type="button" class="dn-btn" onclick="selectDN(2000)">2000</button>
-                        <button type="button" class="dn-btn" onclick="selectDN(2500)">2500</button>
                         <button
                             type="button"
-                            class="dn-btn"
+                            class="dn-btn dn-btn--1000 active"
+                            onclick="selectDN(1000)"
+                        >
+                            1000
+                        </button>
+                        <button type="button" class="dn-btn dn-btn--1200" onclick="selectDN(1200)">
+                            1200
+                        </button>
+                        <button type="button" class="dn-btn dn-btn--1500" onclick="selectDN(1500)">
+                            1500
+                        </button>
+                        <button type="button" class="dn-btn dn-btn--2000" onclick="selectDN(2000)">
+                            2000
+                        </button>
+                        <button type="button" class="dn-btn dn-btn--2500" onclick="selectDN(2500)">
+                            2500
+                        </button>
+                        <button
+                            type="button"
+                            class="dn-btn dn-btn--styczne"
                             onclick="selectDN('styczna')"
-                            style="
-                                background: rgba(var(--warn-rgb), 0.15);
-                                border-color: rgba(var(--warn-rgb), 0.3);
-                                color: var(--warn);
-                            "
                         >
                             Styczna
                         </button>
@@ -351,8 +358,8 @@
                             onchange="onRedukcjaMinChange(this.value)"
                             style="
                                 width: 3.2rem;
-                                font-size: var(--fs-base);
-                                padding: 0.2rem 0.3rem;
+                                font-size: var(--fs-xs);
+                                padding: 0.22rem 0.3rem;
                                 background: rgba(var(--white-rgb), 0.05);
                                 border: 1px solid var(--border-glass);
                                 border-radius: var(--radius-2xs);

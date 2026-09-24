@@ -17,13 +17,21 @@ function _excelRenderTabs() {
         const c = DN_COLORS[tab] || DN_COLORS['1000'];
         const isActive = tab === _excelActiveTab;
         const tabLabel = tab === 'styczne' ? 'Styczne' : 'DN' + tab;
+        /* Czytelność: tekst to mix koloru DN z tekstem motywu (kontrast w light i dark),
+           zamiast półprzezroczystego textDim / jasnego -hover na jasnym tle. */
+        const tabText =
+            'color-mix(in srgb, ' +
+            c.border +
+            ' ' +
+            (isActive ? '80' : '60') +
+            '%, var(--excel-text))';
         html += `<button onclick="excelSwitchTab('${tab}')" style="
-            padding:0.4rem 1rem;border:none;cursor:pointer;font-size: var(--fs-xs);font-weight: var(--fw-semibold);
+            padding:0.4rem 1rem;border:none;cursor:pointer;font-size: var(--fs-sm);font-weight: var(--fw-semibold);
             border-bottom:2px solid ${isActive ? c.border : c.borderDim};
             background:${isActive ? c.activeBg : c.bg};
-            color:${isActive ? c.text : c.textDim};
+            color:${tabText};
             transition:all 0.12s;letter-spacing:0.2px;">
-            ${tabLabel}<span style="opacity:0.5;margin-left:0.3rem;font-size: var(--fs-2xs);">${count}</span>
+            ${tabLabel}<span style="opacity:0.7;margin-left:0.3rem;font-size: var(--fs-2xs);">${count}</span>
         </button>`;
     });
     container.innerHTML = html;

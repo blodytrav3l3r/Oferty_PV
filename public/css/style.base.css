@@ -87,6 +87,8 @@
     --success-rgb: 16, 185, 129;
     --danger-rgb: 239, 68, 68;
     --warn-rgb: 245, 158, 11;
+    /* Odrębny odcień tła wierszy WARNING w Excelu — bursztyn jest zajęty przez DN1500 */
+    --warn-row-rgb: 234, 88, 12;
     --blue-rgb: 59, 130, 246;
     --purple-rgb: 168, 85, 247;
     --pink-rgb: 236, 72, 153;
