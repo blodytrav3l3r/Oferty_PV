@@ -115,7 +115,6 @@ function updateAutoLockUI() {
         btnLock.style.backgroundColor = 'var(--bg-glass)';
         btnLock.style.borderColor = 'var(--border-glass)';
         btnAuto.disabled = true;
-        btnAuto.style.opacity = '0.4';
         return;
     }
 
@@ -124,14 +123,12 @@ function updateAutoLockUI() {
         btnLock.style.backgroundColor = 'rgba(var(--danger-rgb), 0.2)';
         btnLock.style.borderColor = 'rgba(var(--danger-rgb), 0.5)';
         btnAuto.disabled = true;
-        btnAuto.style.opacity = '0.4';
         btnAuto.style.cursor = 'not-allowed';
     } else {
         btnLock.innerHTML = '<i data-lucide="unlock" class="icon-xs"></i> Tryb ręczny (Wyłączony)';
         btnLock.style.backgroundColor = 'var(--bg-glass)';
         btnLock.style.borderColor = 'var(--border-glass)';
         btnAuto.disabled = false;
-        btnAuto.style.opacity = '1';
         btnAuto.style.cursor = 'pointer';
     }
 }

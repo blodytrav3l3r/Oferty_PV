@@ -359,13 +359,22 @@ const ZleceniaRender = (() => {
         const q = qInput ? qInput.value.trim() : '';
         const dateFrom = fromInput ? fromInput.value : '';
         const dateTo = toInput ? toInput.value : '';
+        // Domyślny widok to dziś–dziś: taki zakres nie liczy się jako aktywny filtr.
+        const d = new Date();
+        const todayLocal =
+            d.getFullYear() +
+            '-' +
+            String(d.getMonth() + 1).padStart(2, '0') +
+            '-' +
+            String(d.getDate()).padStart(2, '0');
+        const isDefaultTodayRange = dateFrom === todayLocal && dateTo === todayLocal;
         const userId = userSelect ? userSelect.value : '';
         const prodNum = prodInput ? prodInput.value.trim() : '';
         const salesNum = salesInput ? salesInput.value.trim() : '';
         const sortVal = sortSelect ? sortSelect.value : 'createdAt-desc';
 
         const count =
-            (dateFrom || dateTo ? 1 : 0) +
+            (dateFrom || dateTo ? (isDefaultTodayRange ? 0 : 1) : 0) +
             (userId ? 1 : 0) +
             (q ? 1 : 0) +
             (prodNum ? 1 : 0) +

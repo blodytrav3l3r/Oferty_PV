@@ -392,6 +392,7 @@ function applyBuilderCollapse() {
         if (typeof collapseApply !== 'function') return;
         collapseApply('well-params-content', 'well-params-icon', false);
         collapseApply('tiles-content', 'tiles-icon', true);
+        collapseApply('wizard-summary-content', 'wizard-summary-icon', true, 'flex');
         collapseApply('well-config-wrap', 'well-config-icon', true);
         collapseApply('inline-przejscia-app-container', 'przejscia-app-icon', false);
     } catch (_e) {}

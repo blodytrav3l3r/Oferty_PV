@@ -41,10 +41,10 @@ function showStycznaPopup(mode = 'select') {
         return `
         <button class="styczna-product-btn${isCurrent ? ' styczna-product-btn--active' : ''}"${isCurrent ? ' aria-current="true"' : ''} onclick="handleStycznaProductChoice('${escapeJsStr(p.id)}', '${escapeJsStr(mode)}')" style="
             display:grid; grid-template-columns:1fr auto auto; align-items:center; gap:0.6rem;
-            padding:0.55rem 0.8rem; background:rgba(var(--white-rgb), 0.05); border:1px solid rgba(var(--white-rgb), 0.1);
+            padding:0.55rem 0.8rem; background:var(--bg-tile); border:1px solid var(--border-glass);
             border-radius: var(--radius-sm); cursor:pointer; transition:all 0.15s; text-align:left; color:inherit; width:100%;
-        " onmouseenter="if(!this.classList.contains('styczna-product-btn--active')){this.style.borderColor='rgba(var(--warn-rgb), 0.5)'; this.style.background='rgba(var(--warn-rgb), 0.1)'}"
-            onmouseleave="if(!this.classList.contains('styczna-product-btn--active')){this.style.borderColor='rgba(var(--white-rgb), 0.1)'; this.style.background='rgba(var(--white-rgb), 0.05)'}">
+        " onmouseenter="if(!this.classList.contains('styczna-product-btn--active')){this.style.borderColor='var(--accent-border-medium)'; this.style.background='var(--bg-hover)'}"
+            onmouseleave="if(!this.classList.contains('styczna-product-btn--active')){this.style.borderColor='var(--border-glass)'; this.style.background='var(--bg-tile)'}">
             <div>
                 <div style="font-size: var(--fs-md); font-weight: var(--fw-bold); color:var(--text-primary);">DN${p.dn}</div>
                 <div style="font-size: var(--fs-xs); color:var(--text-muted); margin-top:1px;">${escapeHtml(p.name)}</div>
@@ -71,13 +71,15 @@ function showStycznaPopup(mode = 'select') {
         id: 'styczna-modal',
         titleId: 'styczna-title',
         html: `
-      <div style="background:var(--bg-secondary); border:1px solid rgba(var(--warn-rgb), 0.3); border-radius: var(--radius-md); padding:1.2rem 1.5rem; width:520px; max-width:92vw; max-height:85vh; overflow-y:auto; box-shadow:0 20px 60px rgba(var(--black-rgb), 0.5);">
-        <div class="modal-header" style="position:sticky; top:0; background:var(--bg-secondary); z-index:1; padding-bottom:0.6rem; margin-bottom:0.8rem; border-bottom:1px solid var(--border-glass);">
+      <div style="background:var(--bg-secondary); border:1px solid rgba(var(--warn-rgb), 0.3); border-radius: var(--radius-md); width:520px; max-width:92vw; max-height:85vh; display:flex; flex-direction:column; overflow:hidden; box-shadow:0 20px 60px rgba(var(--black-rgb), 0.5);">
+        <div class="modal-header" style="flex-shrink:0; padding:1.2rem 1.5rem 0.6rem; border-bottom:1px solid var(--border-glass);">
           <div id="styczna-title" style="font-size: var(--fs-2xl); font-weight: var(--fw-extrabold); color:var(--warn); display:flex; align-items:center; gap:0.4rem;"><i data-lucide="cylinder" aria-hidden="true"></i> Wybierz studnię styczną</div>
           <button class="btn-icon" aria-label="Zamknij" onclick="closeModal()" style="flex-shrink:0;"><i data-lucide="x" aria-hidden="true"></i></button>
         </div>
+        <div style="overflow-y:auto; padding:0.8rem 1.5rem 1.2rem;">
         ${renderSection('Studnie Styczne', '<i data-lucide="cylinder"></i>', standardProducts)}
         ${renderSection('Studnie Styczne z korkiem', '<i data-lucide="plug"></i>', korekProducts)}
+        </div>
       </div>
     `
     });

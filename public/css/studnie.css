@@ -1700,6 +1700,26 @@ html[data-theme='light'] .unit-popup-preview {
     transform: translateY(-1px);
 }
 
+/* Auto (disabled w trybie ręcznym): globalne .btn:disabled (opacity 0.5 +
+   grayscale + inline 0.4 z JS) gasiło przycisk prawie do zera.
+   Zachowana sygnalizacja "off", ale odcień i kontur czytelne. */
+#btn-auto-select:disabled {
+    opacity: 0.78;
+    filter: saturate(0.5);
+    box-shadow: none;
+}
+
+/* Jasny motyw: Auto pełnym akcentem (spójnie z Primary CTA), wyłączony z konturem. */
+html[data-theme='light'] #btn-auto-select:not(:disabled) {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--white);
+}
+
+html[data-theme='light'] #btn-auto-select:disabled {
+    border-color: var(--accent-border-medium);
+}
+
 .well-ctrl-btn--icon {
     padding: 0.34rem 0.5rem;
 }
