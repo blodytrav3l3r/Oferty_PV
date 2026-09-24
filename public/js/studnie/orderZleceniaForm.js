@@ -411,7 +411,7 @@ async function populateZleceniaForm(el) {
                     <span style="font-weight:bold; color:var(--accent-hover); font-size: var(--fs-lg);">${escapeHtml(well.name || '')}</span>
                 </div>
 
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; margin-top:0.2rem; background:var(--slate-950); padding:0.6rem; border-radius:var(--radius-sm); border:1px solid var(--border-glass);">
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; margin-top:0.2rem; background:var(--bg-tertiary); padding:0.6rem; border-radius:var(--radius-sm); border:1px solid var(--border-glass);">
                     <div class="flex-gap-2-col">
                         <span class="fs-xs-muted">Średnica</span>
                         <span class="fw-700 text-primary">${displayDN}</span>

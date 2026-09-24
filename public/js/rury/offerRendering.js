@@ -96,8 +96,10 @@ function renderOfferItems() {
             const is1m = isOneMetrePipe(item.productId);
 
             let pName = escapeHtml(item.name);
-            if (item.pehdType === 'PEHD-3MM') pName += ' <span class="warn-bold">+ PEHD 3mm</span>';
-            if (item.pehdType === 'PEHD-4MM') pName += ' <span class="warn-bold">+ PEHD 4mm</span>';
+            if (item.pehdType === 'PEHD-3MM')
+                pName += ' <span class="pehd-badge">+ PEHD 3mm</span>';
+            if (item.pehdType === 'PEHD-4MM')
+                pName += ' <span class="pehd-badge">+ PEHD 4mm</span>';
 
             let rowClass = '';
             if (item.autoAdded) {
@@ -181,14 +183,14 @@ function renderOfferItems() {
           <td class="rury-col-num" style="text-align:left">${lp++}</td>
           <td style="max-width:400px;text-align:left">${pName}${autoTag}${lengthEditor}</td>
           <td class="rury-col-num text-right" ><span class="text-center-block">${fmt(item.unitPrice)}</span></td>
-          <td class="text-right"><span class="text-center-block">${
+          <td class="text-right qty-cell"><span class="text-center-block">${
               hasLength
                   ? `<input type="number" class="edit-input w-75-c"  min="0" step="0.1" value="${metersVal}" onclick="this.select()" onchange="updateItemMeters(${i},this.value)" title="Metry bieżące"${lockAttr}> m`
                   : '—'
           }</span></td>
-          <td class="text-right"><span class="text-center-block"><input type="number" class="edit-input w-75-c"  min="1" value="${item.quantity}" onclick="this.select()" onchange="updateItem(${i},'quantity',this.value)"${lockAttr}> szt.</span></td>
+          <td class="text-right qty-cell"><span class="text-center-block"><input type="number" class="edit-input w-75-c"  min="1" value="${item.quantity}" onclick="this.select()" onchange="updateItem(${i},'quantity',this.value)"${lockAttr}> szt.</span></td>
           ${orderCell}
-          <td class="text-right"><span class="text-center-block"><input type="number" class="edit-input w-75-c"  min="0" max="100" step="0.5" value="${item.discount}" onclick="this.select()" onchange="updateItem(${i},'discount',this.value)"${lockAttr}>%</span></td>
+          <td class="text-right qty-cell"><span class="text-center-block"><input type="number" class="edit-input w-75-c"  min="0" max="100" step="0.5" value="${item.discount}" onclick="this.select()" onchange="updateItem(${i},'discount',this.value)"${lockAttr}>%</span></td>
           <td class="rury-col-num text-right" ><span class="text-center-block">${fmt(unitTotal)}</span></td>
           <td class="text-right"><span class="text-center-block"><input type="number" class="edit-input w-75-c"  min="0" step="0.01" value="${item.surcharge || 0}" onclick="this.select()" onchange="updateItem(${i},'surcharge',this.value)"${lockAttr}></span></td>
           <td class="rury-col-num" style="text-align:right;color:var(--warn)"><span class="text-center-block">${transportPerUnit > 0 ? fmt(transportPerUnit) : '—'}</span></td>

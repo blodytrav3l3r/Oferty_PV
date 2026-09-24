@@ -314,12 +314,8 @@ function renderDiscountModalItems() {
         totalNetto += netto;
 
         let pName = escapeHtml(item.name);
-        if (item.pehdType === 'PEHD-3MM')
-            pName +=
-                ' <span style="display:inline-block; font-size: var(--fs-xs); padding:0.15rem 0.4rem; background:var(--success); color:var(--white); border-radius: var(--radius-2xs); font-weight: var(--fw-bold); box-shadow:0 0 8px rgba(var(--success-rgb), 0.3); vertical-align:middle;">+ PEHD 3mm</span>';
-        if (item.pehdType === 'PEHD-4MM')
-            pName +=
-                ' <span style="display:inline-block; font-size: var(--fs-xs); padding:0.15rem 0.4rem; background:var(--success); color:var(--white); border-radius: var(--radius-2xs); font-weight: var(--fw-bold); box-shadow:0 0 8px rgba(var(--success-rgb), 0.3); vertical-align:middle;">+ PEHD 4mm</span>';
+        if (item.pehdType === 'PEHD-3MM') pName += ' <span class="pehd-badge">+ PEHD 3mm</span>';
+        if (item.pehdType === 'PEHD-4MM') pName += ' <span class="pehd-badge">+ PEHD 4mm</span>';
         if (item.autoAdded) pName += ' <span class="fs-xs-warn80">(dodane automatycznie)</span>';
 
         const isGasket =
@@ -341,7 +337,7 @@ function renderDiscountModalItems() {
             onclick="this.select()"
             oninput="updateTempDiscount(${index}, this)"
             onchange="checkGasketDiscount(${index}, this)"
-            style="width:65px; padding:0.3rem; text-align:center; border:1px solid var(--border); border-radius: var(--radius-2xs); font-weight: var(--fw-bold); color:var(--accent); background:var(--bg-input);">
+            style="width:65px; padding:0.3rem; text-align:center; border:1px solid var(--border); border-radius: var(--radius-2xs); font-weight: var(--fw-bold); color:var(--accent-text); background:var(--bg-input);">
           ${warningText}
         </td>
         <td id="modal-price-${index}" style="padding:0.4rem; text-align:right; font-size: var(--fs-md);">${fmt(priceAfterDiscount)} PLN</td>

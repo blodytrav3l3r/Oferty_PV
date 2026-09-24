@@ -49,22 +49,33 @@ function renderWellConfig() {
         return;
     }
 
+    /* Badge typu: bg z palety cmp i slate (SHARED, identyczne w dark/light).
+       fg dobrany do kontrastu AA >= 4.5 (gate: themeTextContrast.test.ts):
+       jasne wypelnienia (pierscien/konus/styczna/uszczelka) maja ciemny tekst. */
     const typeBadge = {
-        wlaz: { bg: 'var(--slate-800)', label: 'Właz' },
-        plyta_din: { bg: 'var(--cmp-plyta-din)', label: 'Płyta' },
-        plyta_najazdowa: { bg: 'var(--cmp-plyta-najazdowa)', label: 'Płyta' },
-        plyta_zamykajaca: { bg: 'var(--cmp-plyta-zamykajaca)', label: 'Płyta' },
-        pierscien_odciazajacy: { bg: 'var(--cmp-pierscien)', label: 'Pierścień' },
-        konus: { bg: 'var(--cmp-konus)', label: 'Konus' },
-        avr: { bg: 'var(--cmp-avr)', label: 'AVR' },
-        plyta_redukcyjna: { bg: 'var(--cmp-plyta-redukcyjna)', label: 'Redukcja' },
-        krag: { bg: 'var(--cmp-krag)', label: 'Krąg' },
-        krag_ot: { bg: 'var(--cmp-krag)', label: 'Krąg OT' },
-        dennica: { bg: 'var(--cmp-dennica)', label: 'Dennica' },
-        kineta: { bg: 'var(--cmp-kineta)', label: 'Kineta' },
-        uszczelka: { bg: 'var(--slate-700)', label: 'Uszczelka' },
-        styczna: { bg: 'var(--cmp-styczna)', label: 'Styczna' },
-        osadnik: { bg: 'var(--cmp-osadnik)', label: 'Osadnik' }
+        wlaz: { bg: 'var(--slate-800)', fg: 'var(--white)', label: 'Właz' },
+        plyta_din: { bg: 'var(--cmp-plyta-din)', fg: 'var(--white)', label: 'Płyta' },
+        plyta_najazdowa: { bg: 'var(--cmp-plyta-najazdowa)', fg: 'var(--white)', label: 'Płyta' },
+        plyta_zamykajaca: { bg: 'var(--cmp-plyta-zamykajaca)', fg: 'var(--white)', label: 'Płyta' },
+        pierscien_odciazajacy: {
+            bg: 'var(--cmp-pierscien)',
+            fg: 'var(--slate-950)',
+            label: 'Pierścień'
+        },
+        konus: { bg: 'var(--cmp-konus)', fg: 'var(--slate-950)', label: 'Konus' },
+        avr: { bg: 'var(--cmp-avr)', fg: 'var(--white)', label: 'AVR' },
+        plyta_redukcyjna: {
+            bg: 'var(--cmp-plyta-redukcyjna)',
+            fg: 'var(--white)',
+            label: 'Redukcja'
+        },
+        krag: { bg: 'var(--cmp-krag)', fg: 'var(--white)', label: 'Krąg' },
+        krag_ot: { bg: 'var(--cmp-krag)', fg: 'var(--white)', label: 'Krąg OT' },
+        dennica: { bg: 'var(--cmp-dennica)', fg: 'var(--white)', label: 'Dennica' },
+        kineta: { bg: 'var(--cmp-kineta)', fg: 'var(--white)', label: 'Kineta' },
+        uszczelka: { bg: 'var(--slate-700)', fg: 'var(--white)', label: 'Uszczelka' },
+        styczna: { bg: 'var(--cmp-styczna)', fg: 'var(--slate-950)', label: 'Styczna' },
+        osadnik: { bg: 'var(--cmp-osadnik)', fg: 'var(--white)', label: 'Osadnik' }
     };
 
     let html = '';
@@ -126,7 +137,11 @@ function renderWellConfig() {
             }
         }
         const totalWeight = (p.weight || 0) * item.quantity;
-        const badge = typeBadge[p.componentType] || { bg: 'var(--slate-700)', label: '?' };
+        const badge = typeBadge[p.componentType] || {
+            bg: 'var(--slate-700)',
+            fg: 'var(--white)',
+            label: '?'
+        };
 
         const canMoveUp = index > 0;
         const canMoveDown = index < well.config.length - 1;
@@ -148,7 +163,7 @@ function renderWellConfig() {
 
                 <div class="cfg-col-text">
                   <div class="cfg-title-row">
-                    <span class="cfg-type-badge" style="background:${badge.bg};">${badge.label.split(' ')[1] || badge.label}</span>
+                    <span class="cfg-type-badge" style="background:${badge.bg};color:${badge.fg};">${badge.label.split(' ')[1] || badge.label}</span>
                     <div class="cfg-item-name">${escapeHtml(item.isPsiaBuda ? 'Psia buda' : p.name)}${p.componentType === 'uszczelka' && item.quantity > 1 ? ` (x${item.quantity} szt.)` : p.componentType === 'uszczelka' ? ` (1 szt.)` : ''}</div>
                     ${(() => {
                         let badgesHtml = '';

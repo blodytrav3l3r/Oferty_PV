@@ -110,7 +110,7 @@ function _excelRenderSortIndicator() {
     const mark = document.createElement('span');
     mark.className = 'excel-sort-mark';
     mark.textContent = _excelSortState.dir === 'asc' ? ' ▲' : ' ▼';
-    mark.style.cssText = 'color:var(--accent);font-size: var(--fs-3xs);';
+    mark.style.cssText = 'color:var(--accent-text);font-size: var(--fs-3xs);';
     th.title = 'Prawy przycisk na nagłówku → zmiana/wyłączenie sortowania';
     th.appendChild(mark);
 }

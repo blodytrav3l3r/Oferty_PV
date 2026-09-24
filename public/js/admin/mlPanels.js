@@ -65,18 +65,18 @@
                         const iconName = role === 'ADMIN' ? 'shield-check' : 'user';
                         const roleBadge =
                             role === 'ADMIN'
-                                ? '<span style="display:inline-block;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:700;background:rgba(var(--accent-rgb,59,130,246),0.2);color:var(--accent);border:1px solid rgba(var(--accent-rgb,59,130,246),0.3)">ADMIN</span>'
-                                : '<span style="display:inline-block;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:600;background:var(--bg-subtle,rgba(255,255,255,0.08));color:var(--text-secondary)">' +
+                                ? '<span style="display:inline-block;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:700;background:rgba(var(--accent-rgb),0.2);color:var(--accent-text);border:1px solid rgba(var(--accent-rgb),0.3)">ADMIN</span>'
+                                : '<span style="display:inline-block;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:600;background:var(--bg-subtle);color:var(--text-secondary)">' +
                                   window.escapeHtml(role) +
                                   '</span>';
                         const tileStyle = isChecked
-                            ? 'border-color:var(--accent);background:rgba(var(--accent-rgb, 59, 130, 246), 0.14);box-shadow:0 0 0 1px var(--accent);'
-                            : 'border-color:var(--border-color, #334155);background:var(--bg-card, #1e293b);box-shadow:none;';
+                            ? 'border-color:var(--accent);background:rgba(var(--accent-rgb),0.14);box-shadow:0 0 0 1px var(--accent);'
+                            : 'border-color:var(--border-color);background:var(--bg-card);box-shadow:none;';
 
                         return (
                             '<label class="ai-user-tile' +
                             (isChecked ? ' selected' : '') +
-                            '" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--radius-md, 8px);border:1px solid;cursor:pointer;transition:all 0.15s ease;user-select:none;' +
+                            '" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--radius-md);border:1px solid;cursor:pointer;transition:all 0.15s ease;user-select:none;' +
                             tileStyle +
                             '">' +
                             '<input type="checkbox" class="ai-source-user" value="' +
@@ -84,7 +84,7 @@
                             '"' +
                             (isChecked ? ' checked' : '') +
                             ' style="accent-color:var(--accent);width:16px;height:16px;flex-shrink:0;cursor:pointer">' +
-                            '<div class="ai-user-tile-avatar" style="width:34px;height:34px;border-radius:50%;background:rgba(var(--accent-rgb,59,130,246),0.12);border:1px solid rgba(var(--accent-rgb,59,130,246),0.25);display:flex;align-items:center;justify-content:center;color:var(--accent);flex-shrink:0">' +
+                            '<div class="ai-user-tile-avatar" style="width:34px;height:34px;border-radius:50%;background:rgba(var(--accent-rgb),0.12);border:1px solid rgba(var(--accent-rgb),0.25);display:flex;align-items:center;justify-content:center;color:var(--accent-text);flex-shrink:0">' +
                             '<i data-lucide="' +
                             iconName +
                             '"></i>' +
@@ -111,10 +111,10 @@
                     '</div>' +
                     '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:16px;margin-bottom:8px;flex-wrap:wrap">' +
                     '<div style="display:flex;align-items:center;gap:10px">' +
-                    '<button type="button" id="ai-sources-select-all" class="btn btn-sm" style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;font-size:var(--fs-xs);font-weight:600;cursor:pointer;border-radius:var(--radius-sm);background:rgba(var(--accent-rgb,59,130,246),0.16);border:1px solid var(--accent);color:var(--accent);transition:all 0.15s ease" title="Zaznacz wszystkich użytkowników"><i data-lucide="check-square" class="icon-xs"></i> Zaznacz wszystkich</button>' +
-                    '<button type="button" id="ai-sources-select-none" class="btn btn-sm" style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;font-size:var(--fs-xs);font-weight:600;cursor:pointer;border-radius:var(--radius-sm);background:rgba(var(--warn-rgb,245,158,11),0.12);border:1px solid var(--warn-border,rgba(245,158,11,0.4));color:var(--warn,#f59e0b);transition:all 0.15s ease" title="Odznacz wszystkich (wyłącza zbieranie od wszystkich)"><i data-lucide="square" class="icon-xs"></i> Odznacz wszystkich</button>' +
+                    '<button type="button" id="ai-sources-select-all" class="btn btn-sm" style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;font-size:var(--fs-xs);font-weight:600;cursor:pointer;border-radius:var(--radius-sm);background:rgba(var(--accent-rgb),0.16);border:1px solid var(--accent);color:var(--accent-text);transition:all 0.15s ease" title="Zaznacz wszystkich użytkowników"><i data-lucide="check-square" class="icon-xs"></i> Zaznacz wszystkich</button>' +
+                    '<button type="button" id="ai-sources-select-none" class="btn btn-sm" style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;font-size:var(--fs-xs);font-weight:600;cursor:pointer;border-radius:var(--radius-sm);background:rgba(var(--warn-rgb),0.12);border:1px solid var(--warn-border);color:var(--warn);transition:all 0.15s ease" title="Odznacz wszystkich (wyłącza zbieranie od wszystkich)"><i data-lucide="square" class="icon-xs"></i> Odznacz wszystkich</button>' +
                     '</div>' +
-                    '<div class="ai-sources-hint" style="display:inline-flex;align-items:center;gap:6px;font-size:var(--fs-xs);color:var(--text-secondary);background:var(--bg-subtle,rgba(255,255,255,0.06));padding:6px 12px;border-radius:var(--radius-sm, 6px);border:1px solid var(--border-color,rgba(255,255,255,0.1));margin-left:auto">' +
+                    '<div class="ai-sources-hint" style="display:inline-flex;align-items:center;gap:6px;font-size:var(--fs-xs);color:var(--text-secondary);background:var(--bg-subtle);padding:6px 12px;border-radius:var(--radius-sm);border:1px solid var(--border-color);margin-left:auto">' +
                     '<i data-lucide="check-circle-2" class="icon-xs" style="color:var(--success)"></i> <span style="font-weight:500">Zmiana zapisuje się automatycznie</span>' +
                     '</div>' +
                     '</div>';
@@ -127,12 +127,12 @@
                     if (cb.checked) {
                         tile.classList.add('selected');
                         tile.style.borderColor = 'var(--accent)';
-                        tile.style.background = 'rgba(var(--accent-rgb, 59, 130, 246), 0.12)';
+                        tile.style.background = 'rgba(var(--accent-rgb),0.12)';
                         tile.style.boxShadow = '0 0 0 1px var(--accent)';
                     } else {
                         tile.classList.remove('selected');
-                        tile.style.borderColor = 'var(--border-color, #334155)';
-                        tile.style.background = 'var(--bg-card, #1e293b)';
+                        tile.style.borderColor = 'var(--border-color)';
+                        tile.style.background = 'var(--bg-card)';
                         tile.style.boxShadow = 'none';
                     }
                 }

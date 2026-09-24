@@ -278,7 +278,7 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--white);
+    color: var(--text-secondary);
     cursor: pointer;
     transition:
         background-color 0.15s,
@@ -286,8 +286,8 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
 }
 
 .preview-tile__btn:hover {
-    background: rgba(var(--white-rgb), 0.08);
-    color: var(--white);
+    background: var(--bg-hover);
+    color: var(--text-primary);
 }
 
 .preview-tile__btn--danger {
@@ -308,7 +308,7 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
 .preview-tile__label {
     font-size: var(--fs-base);
     font-weight: var(--fw-semibold);
-    color: var(--white);
+    color: var(--text-secondary);
     white-space: nowrap;
 }
 
@@ -436,6 +436,12 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
     padding: 0.3rem 0.4rem;
     text-align: center;
     word-break: break-all;
+}
+
+/* Podglad jednostek w light: szara mgielka i niewidzialna ramka. */
+html[data-theme='light'] .unit-popup-preview {
+    background: var(--bg-secondary);
+    border-color: var(--border);
 }
 
 /* ── Prawo: Panel boczny studni ── */
@@ -878,7 +884,7 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
 .discount-total-main {
     font-size: var(--fs-2xl);
     font-weight: var(--fw-bold);
-    color: var(--accent);
+    color: var(--accent-text);
 }
 .discount-pehd-price {
     font-size: var(--fs-xs);
@@ -1006,7 +1012,7 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
     justify-content: space-between;
     align-items: center;
     font-size: var(--fs-xs);
-    color: rgba(var(--white-rgb), 0.5);
+    color: var(--text-secondary);
     margin-top: 0.2rem;
 }
 
@@ -1018,16 +1024,16 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
 
 .well-list-elevations {
     font-size: var(--fs-2xs);
-    color: rgba(var(--white-rgb), 0.3);
+    color: var(--text-muted);
     margin-top: 0.1rem;
     display: flex;
     gap: 0.4rem;
-    border-top: 1px solid rgba(var(--white-rgb), 0.05);
+    border-top: 1px solid var(--border);
     padding-top: 0.15rem;
 }
 
 .well-list-elevations strong {
-    color: rgba(var(--white-rgb), 0.8);
+    color: var(--text-secondary);
     font-weight: var(--fw-semibold);
 }
 
@@ -2177,7 +2183,7 @@ html[data-theme='light'] .cfg-weight-val {
 .app-confirm-title {
     font-size: var(--fs-3xl);
     font-weight: var(--fw-bold);
-    color: var(--white);
+    color: var(--text-primary);
     margin-bottom: 0.8rem;
 }
 
@@ -2533,6 +2539,13 @@ html[data-theme='light'] .cfg-weight-val {
 select.form-input option {
     background-color: var(--slate-800);
     color: var(--white);
+}
+
+/* Selecty TAK/NIE (krok 4, id *-czy): wysrodkowany tekst opcji w obu
+   motywach (zamkniety select centruje inline). Uwaga: popup Chrome/Windows
+   ignoruje text-align na option (limit platformy) — dziala w Firefox. */
+select[id$='-czy'] option {
+    text-align: center;
 }
 
 /* ─── Klasy narzędziowe do migracji stylów inline ─── */
@@ -3595,6 +3608,18 @@ html[data-theme='light'] .zl-idx-box {
     border-color: var(--accent);
     box-shadow: 0 0 0 2px rgba(var(--accent-rgb), 0.25);
     outline: none;
+}
+
+/* Focus inputa w light: ciemne slate-950 na jasnej karcie daje
+   granatowa plame z niewidocznym tekstem — biale tlo + akcent. */
+html[data-theme='light'] .wt-add-cell .form-input {
+    background: var(--bg-secondary);
+}
+
+html[data-theme='light'] .wt-add-cell .form-input:focus {
+    background: var(--bg-secondary);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px rgba(var(--accent-rgb), 0.15);
 }
 .wt-add-cell .form-input::placeholder {
     color: var(--text-muted);
@@ -4659,7 +4684,7 @@ td.excel-tr-selected .excel-sel-wrap > div {
 
 .tm-search-wrap:focus-within > i,
 .tm-search-wrap:focus-within > svg {
-    color: var(--accent);
+    color: var(--accent-text);
     opacity: 1;
 }
 
@@ -5734,4 +5759,110 @@ html[data-theme='light'] .config-tile:hover {
     filter: none;
     border-color: var(--accent-border);
     box-shadow: var(--shadow-sm);
+}
+
+/* L8: podgląd studni — label „Cena:" i ikona jednostki były białe
+   (var(--white)) na jasnym washu success w light. Baza używa już
+   tokenów tekstowych; tu twarda gwarancja na wypadek regresji. */
+html[data-theme='light'] .preview-tile__label,
+html[data-theme='light'] .preview-tile__btn {
+    color: var(--text-secondary);
+}
+
+html[data-theme='light'] .preview-tile__btn:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+/* L9: lista studni — meta i rzędne były półprzezroczystą bielą
+   (rgba(white-rgb)) niewidoczną na białej karcie w light. */
+html[data-theme='light'] .well-list-meta {
+    color: var(--text-secondary);
+}
+
+html[data-theme='light'] .well-list-elevations {
+    color: var(--text-muted);
+    border-top-color: var(--border);
+}
+
+html[data-theme='light'] .well-list-elevations strong {
+    color: var(--text-secondary);
+}
+
+/* L10: modal potwierdzeń — tytuł był biały na jasnym --bg-deep w light,
+   a hover przycisku anulowania dawał biały tekst na jasnym tle. */
+html[data-theme='light'] .app-confirm-title {
+    color: var(--text-primary);
+}
+
+html[data-theme='light'] .app-confirm-btn-cancel:hover {
+    color: var(--text-primary);
+    background: var(--bg-hover);
+}
+
+/* L11: przyciski sterujące studni — washe white-rgb niewidzialne na białym.
+   W light ciemny wash slate-950 (precedens: excel-colcheck). */
+html[data-theme='light'] .well-ctrl-btn {
+    border-color: rgba(var(--slate-950-rgb), 0.12);
+    background: rgba(var(--slate-950-rgb), 0.04);
+}
+
+html[data-theme='light'] .well-ctrl-btn:hover {
+    background: rgba(var(--slate-950-rgb), 0.08);
+    border-color: rgba(var(--slate-950-rgb), 0.18);
+}
+
+html[data-theme='light'] .well-ctrl-sep {
+    background: rgba(var(--slate-950-rgb), 0.12);
+}
+
+/* L12: aktywny typ przejścia — biały tekst na pastelowym gradiencie w light. */
+html[data-theme='light'] .fs-type-btn.active {
+    color: var(--text-primary);
+}
+
+/* L13: hover zakładki bocznej — wash white-rgb bez feedbacku w light. */
+html[data-theme='light'] .s-tab-btn:hover {
+    background: var(--bg-hover);
+}
+
+/* L14: wlosowe biale ramki/dividerki znikaja na bieli — mapowanie na
+   --border-subtle (audyt tokenizacji: unit-popup, discount, summary-edit,
+   prz-actions, wt-edit, tm-*, spinner). Bez zmian tla i typografii. */
+html[data-theme='light'] .unit-popup-header,
+html[data-theme='light'] .discount-header,
+html[data-theme='light'] .discount-card,
+html[data-theme='light'] .wizard-summary-edit--params,
+html[data-theme='light'] .wizard-summary-edit--params:hover,
+html[data-theme='light'] .prz-actions-col,
+html[data-theme='light'] .wt-edit-head,
+html[data-theme='light'] .wt-edit-footer,
+html[data-theme='light'] .tm-filter-label-count,
+html[data-theme='light'] .tm-search-input:hover,
+html[data-theme='light'] .tm-toolbar,
+html[data-theme='light'] .tm-well-card,
+html[data-theme='light'] .tm-well-head,
+html[data-theme='light'] .tm-well-badge,
+html[data-theme='light'] .tm-tr-tile,
+html[data-theme='light'] .tm-tr-tile.is-locked:hover,
+html[data-theme='light'] .tm-edit-head,
+html[data-theme='light'] .tm-edit-opt {
+    border-color: var(--border-subtle);
+}
+
+html[data-theme='light'] .loading-spinner-inline {
+    border-color: var(--border-subtle);
+    border-top-color: var(--blue-hover);
+}
+
+/* L15: przycisk edycji parametrow — ciemny wash slate + ciemny tekst w light
+   (1.7:1). Jasny wariant spojny z .wizard-summary-edit. */
+html[data-theme='light'] .wizard-summary-edit--params {
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+}
+
+html[data-theme='light'] .wizard-summary-edit--params:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
 }

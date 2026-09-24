@@ -98,7 +98,7 @@ function openWellNotesModal(idx) {
         overlay.style.alignItems = 'center';
         overlay.style.justifyContent = 'center';
         overlay.style.zIndex = '11000';
-        overlay.style.background = 'rgba(0, 0, 0, 0.7)';
+        overlay.style.background = 'rgba(var(--black-rgb), 0.7)';
         if (window.lucide) window.lucide.createIcons({ root: overlay });
         // Delegacja close dla data-action="closeModal" gdy fallback (showModal robi to sam)
         overlay.addEventListener('click', function (ev) {

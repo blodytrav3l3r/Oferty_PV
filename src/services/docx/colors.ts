@@ -42,7 +42,7 @@ export const DOCX_COLORS = {
     dangerHover: 'F87171',
     warn: 'F59E0B',
     warnHover: 'FBBF24',
-    accent: '6366F1',
+    accent: '5B5FEC',
     accentHover: '818CF8',
     accent2: '8B5CF6'
 } as const;

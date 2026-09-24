@@ -270,6 +270,23 @@
         0 2px 4px rgba(var(--black-rgb), 0.1);
 }
 
+/* Tryb jasny — pasek filtrow: zamiast szarej plamy slate-800 jasna
+   powierzchnia z subtelnym akcentem (slate-800-rgb to kotwica dark). */
+html[data-theme='light'] .kartoteka-filter-bar {
+    background: linear-gradient(135deg, var(--bg-secondary), rgba(var(--accent-rgb), 0.07));
+    border-color: rgba(var(--accent-rgb), 0.25);
+    box-shadow:
+        0 4px 12px rgba(var(--slate-950-rgb), 0.08),
+        0 1px 3px rgba(var(--slate-950-rgb), 0.06);
+}
+
+html[data-theme='light'] .kartoteka-filter-bar:hover {
+    border-color: rgba(var(--accent-rgb), 0.35);
+    box-shadow:
+        0 6px 16px rgba(var(--accent-rgb), 0.12),
+        0 2px 4px rgba(var(--slate-950-rgb), 0.08);
+}
+
 .kartoteka-filter-bar .ka-type-filter-btn,
 .kartoteka-filter-bar .ka-filter-btn,
 .kartoteka-filter-bar .ka-date-preset-btn {
@@ -775,7 +792,7 @@
 
 .ie-info-box i[data-lucide],
 .ie-info-box svg {
-    color: var(--accent);
+    color: var(--accent-text);
     margin-top: 0.1rem;
     flex-shrink: 0;
 }
@@ -1231,17 +1248,19 @@ html[data-theme='light'] .toast-warning {
     height: 6px;
 }
 
+/* Pasek przewijania — kolory wylacznie z tokenow scrollbar (SSoT w base),
+   inaczej nadpisuja dedykowane reguly (tertiary znika w light). */
 ::-webkit-scrollbar-track {
-    background: transparent;
+    background: var(--scrollbar-track);
 }
 
 ::-webkit-scrollbar-thumb {
-    background: var(--bg-tertiary);
+    background: var(--scrollbar-thumb);
     border-radius: var(--radius-2xs);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: var(--bg-tertiary);
+    background: var(--scrollbar-thumb-hover);
 }
 
 /* Widok responsywny */
@@ -1849,8 +1868,8 @@ svg.lucide {
 }
 
 .wizard-btn-next:hover:not(:disabled) {
-    background: var(--accent-hover);
-    border-color: var(--accent-hover);
+    background: var(--accent-strong);
+    border-color: var(--accent-strong);
     box-shadow: var(--shadow-md);
 }
 

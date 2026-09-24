@@ -122,6 +122,20 @@
     line-height: 1.3;
 }
 
+/* Tryb jasny — ukryte kafle: zamiast szarej plamy z tekstem 45% czytelny
+   bialy kafel z obramowaniem (ukrycie sygnalizuje brak podswietlenia). */
+html[data-theme='light'] .przejscia-vis-tile.hidden-type {
+    background: var(--bg-secondary);
+    border-color: var(--border);
+    opacity: 0.8;
+}
+
+html[data-theme='light'] .przejscia-vis-tile.hidden-type:hover {
+    background: var(--bg-hover);
+    border-color: var(--accent-border);
+    opacity: 1;
+}
+
 .app-confirm-overlay {
     position: fixed;
     top: 0;
@@ -152,7 +166,7 @@
 .app-confirm-title {
     font-size: var(--fs-3xl);
     font-weight: var(--fw-bold);
-    color: var(--white);
+    color: var(--text-primary);
     margin-bottom: 0.8rem;
 }
 
@@ -704,7 +718,7 @@ html[data-theme='light'] .modal--excel-shortcuts .excel-shortcuts-body code {
 
 .recalc-group-title {
     margin: 0;
-    color: var(--accent);
+    color: var(--accent-text);
     font-size: var(--fs-xl);
     font-weight: var(--fw-bold);
 }
@@ -944,7 +958,7 @@ html[data-theme='light'] .modal--excel-shortcuts .excel-shortcuts-body code {
     padding: 0.5rem 1rem;
     border-top: 1px solid var(--border);
     font-size: var(--fs-sm);
-    color: var(--accent);
+    color: var(--accent-text);
     background: rgba(var(--black-rgb), 0.2);
     text-align: center;
 }
@@ -976,7 +990,7 @@ html[data-theme='light'] .modal--excel-shortcuts .excel-shortcuts-body code {
 }
 
 .zak-modal-badge {
-    color: var(--accent);
+    color: var(--accent-text);
     font-size: var(--fs-base);
     font-weight: var(--fw-bold);
     margin-left: 0.3rem;
@@ -1153,6 +1167,11 @@ html[data-theme='light'] .modal--excel-shortcuts .excel-shortcuts-body code {
 .om-footer .btn-primary {
     padding: 0.4rem 1.2rem;
     font-weight: var(--fw-extrabold);
+}
+
+/* Stopka modali ofertowych — w light jasny pasek zamiast szarej mgielki. */
+html[data-theme='light'] .om-footer {
+    background: var(--bg-hover);
 }
 
 /* Transport modal — pola i karty kosztów */
@@ -1378,4 +1397,34 @@ html[data-theme='light'] .modal--excel-shortcuts .excel-shortcuts-body code {
 html[data-theme='light'] .recalc-group {
     background: var(--bg-secondary);
     border-color: var(--border);
+}
+
+/* L11: modal potwierdzeń — tło --bg-deep jest jasne w light, tytuł i hover
+   anulowania muszą używać tokenów tekstowych (modal.css ładuje się po
+   studnie.css, więc reguła bazowa też tokenowa). */
+html[data-theme='light'] .app-confirm-title {
+    color: var(--text-primary);
+}
+
+html[data-theme='light'] .app-confirm-btn-cancel:hover {
+    color: var(--text-primary);
+    background: var(--bg-hover);
+}
+
+/* L12: kafle wyboru rodzaju/DN przejscia — bialy wash znika na bieli.
+   Jasne karty z szara ramka; aktywny i hover z akcentem jak w dark.
+   (Selektor 0,2,1 musi pokryc tez --active, inaczej light zjada wypelnienie.) */
+html[data-theme='light'] .prz-grid-btn {
+    background: var(--bg-secondary);
+    border-color: var(--border);
+}
+
+html[data-theme='light'] .prz-grid-btn:hover {
+    background: rgba(var(--accent-rgb), 0.1);
+    border-color: rgba(var(--accent-rgb), 0.4);
+}
+
+html[data-theme='light'] .prz-grid-btn--active {
+    background: rgba(var(--accent-rgb), 0.15);
+    border-color: rgba(var(--accent-rgb), 0.5);
 }

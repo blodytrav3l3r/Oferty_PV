@@ -453,7 +453,7 @@
 .included-row-accent {
     opacity: 0.5;
     font-size: var(--fs-xs);
-    color: var(--accent2);
+    color: var(--accent2-hover);
 }
 .included-row-danger {
     opacity: 0.5;
@@ -506,7 +506,7 @@
 }
 .pill-tag-nierdz {
     font-size: var(--fs-3xs);
-    color: var(--accent2);
+    color: var(--accent2-hover);
     border: 1px solid rgba(var(--accent2-rgb), 0.5);
     padding: 1px 4px;
     border-radius: var(--radius-2xs);
@@ -663,7 +663,7 @@
 }
 .share-modal-header h3 svg,
 .share-modal-header h3 i svg {
-    color: var(--accent);
+    color: var(--accent-text);
     width: 16px;
     height: 16px;
 }
@@ -709,7 +709,7 @@
 }
 .share-modal-header .btn-close-x:hover {
     background: rgba(var(--accent-rgb), 0.1);
-    color: var(--accent);
+    color: var(--accent-text);
 }
 .share-already {
     font-size: var(--fs-sm);

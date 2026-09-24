@@ -23,21 +23,37 @@ function _excelErrorTitle(well) {
     );
 }
 
+function _excelIsLightTheme() {
+    try {
+        if (typeof document === 'undefined' || !document.documentElement) return false;
+        return document.documentElement.getAttribute('data-theme') === 'light';
+    } catch (_e) {
+        return false;
+    }
+}
+
+/* Alfa tintu per motyw — na bialym tle light ta sama alfa jest percepcyjnie
+   slabsza, wiec light dostaje wzmocnienie (dark bez zmian). Wartosci liczone
+   w momencie renderu wiersza (patrz _excelRenderTbody). */
+function _excelAlpha(dark, light) {
+    return _excelIsLightTheme() ? light : dark;
+}
+
 function _excelGetRowStatus(well) {
     if (!well) return null;
     const s = well.configStatus;
     if (s === 'ERROR') {
         return {
-            base: 'rgba(var(--danger-rgb), 0.12)',
-            active: 'rgba(var(--danger-rgb), 0.22)',
-            hover: 'rgba(var(--danger-rgb), 0.18)'
+            base: 'rgba(var(--danger-rgb), ' + _excelAlpha('0.12', '0.2') + ')',
+            active: 'rgba(var(--danger-rgb), ' + _excelAlpha('0.22', '0.3') + ')',
+            hover: 'rgba(var(--danger-rgb), ' + _excelAlpha('0.18', '0.24') + ')'
         };
     }
     if (s === 'WARNING') {
         return {
-            base: 'rgba(var(--warn-rgb), 0.1)',
-            active: 'rgba(var(--warn-rgb), 0.2)',
-            hover: 'rgba(var(--warn-rgb), 0.16)'
+            base: 'rgba(var(--warn-rgb), ' + _excelAlpha('0.1', '0.18') + ')',
+            active: 'rgba(var(--warn-rgb), ' + _excelAlpha('0.2', '0.28') + ')',
+            hover: 'rgba(var(--warn-rgb), ' + _excelAlpha('0.16', '0.22') + ')'
         };
     }
     return null;
@@ -180,10 +196,10 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
                 styczne: 'var(--pink-rgb)'
             }[dupColorKey] || 'var(--blue-rgb)';
         const baseBg = isEven ? 'var(--excel-row-even)' : 'var(--excel-row-odd)';
-        const rowDupSolid = 'rgba(' + dupRgb + ', 0.2)';
-        const rowActiveDupSolid = 'rgba(' + dupRgb + ', 0.3)';
-        const hoverDupSolid = 'rgba(' + dupRgb + ', 0.25)';
-        const hoverActiveDupSolid = 'rgba(' + dupRgb + ', 0.35)';
+        const rowDupSolid = 'rgba(' + dupRgb + ', ' + _excelAlpha('0.2', '0.28') + ')';
+        const rowActiveDupSolid = 'rgba(' + dupRgb + ', ' + _excelAlpha('0.3', '0.36') + ')';
+        const hoverDupSolid = 'rgba(' + dupRgb + ', ' + _excelAlpha('0.25', '0.32') + ')';
+        const hoverActiveDupSolid = 'rgba(' + dupRgb + ', ' + _excelAlpha('0.35', '0.4') + ')';
         /* Kolejność: base/active → status (ERROR/WARNING) → duplikat na wierzchu */
         const wellStatus = _excelGetRowStatus(well);
         let rowBg = isActive ? 'var(--excel-row-active)' : baseBg;
@@ -620,7 +636,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
         LAYERS_EXCEL.STICKY_COLUMN +
         ';background:' +
         emptyRowBg +
-        ';text-align:center;color:var(--accent);font-size: var(--fs-xs);font-weight:var(--fw-bold);border-right:1px solid var(--excel-border);min-width:32px;">+</td>';
+        ';text-align:center;color:var(--accent-text);font-size: var(--fs-xs);font-weight:var(--fw-bold);border-right:1px solid var(--excel-border);min-width:32px;">+</td>';
     html +=
         '<td class="excel-td excel-td-empty" style="' +
         'position:sticky;left:32px;z-index:' +
@@ -629,7 +645,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
         emptyRowBg +
         ';border-right:1px solid var(--excel-border);"><input type="text" placeholder="Wpisz nazwę (Enter)" title="Wpisz nazwę nowej studni i wciśnij Enter" id="excel-empty-name" onkeydown="if(event.key===\'Enter\')excelCreateFromEmpty()" onblur="excelCreateFromEmpty(event)" onfocus="excelCellFocus(this);_excelSelWrapFocus(this)" style="' +
         _excelCellInp(120) +
-        'text-align:left;width:118px;color:var(--accent);background:rgba(var(--accent-rgb),0.06);border:1px dashed rgba(var(--accent-rgb),0.4);box-sizing:border-box;" /></td>';
+        'text-align:left;width:118px;color:var(--accent-text);background:rgba(var(--accent-rgb),0.06);border:1px dashed rgba(var(--accent-rgb),0.4);box-sizing:border-box;" /></td>';
     html +=
         '<td class="excel-td excel-td-empty" style="' +
         'position:sticky;left:162px;z-index:' +
@@ -786,38 +802,20 @@ function _excelRefreshDupColors() {
     });
     const dupNames = new Set(Object.keys(nameCounts).filter((n) => nameCounts[n] > 1));
 
-    const rowDupSolid = {
-        1000: 'rgba(var(--blue-rgb), 0.2)',
-        1200: 'rgba(var(--success-rgb), 0.2)',
-        1500: 'rgba(var(--warn-rgb), 0.2)',
-        2000: 'rgba(var(--purple-rgb), 0.2)',
-        2500: 'rgba(var(--danger-rgb), 0.2)',
-        styczne: 'rgba(var(--pink-rgb), 0.2)'
-    };
-    const rowActiveDupSolid = {
-        1000: 'rgba(var(--blue-rgb), 0.3)',
-        1200: 'rgba(var(--success-rgb), 0.3)',
-        1500: 'rgba(var(--warn-rgb), 0.3)',
-        2000: 'rgba(var(--purple-rgb), 0.3)',
-        2500: 'rgba(var(--danger-rgb), 0.3)',
-        styczne: 'rgba(var(--pink-rgb), 0.3)'
-    };
-    const hoverDupSolid = {
-        1000: 'rgba(var(--blue-rgb), 0.25)',
-        1200: 'rgba(var(--success-rgb), 0.25)',
-        1500: 'rgba(var(--warn-rgb), 0.25)',
-        2000: 'rgba(var(--purple-rgb), 0.25)',
-        2500: 'rgba(var(--danger-rgb), 0.25)',
-        styczne: 'rgba(var(--pink-rgb), 0.25)'
-    };
-    const hoverActiveDupSolid = {
-        1000: 'rgba(var(--blue-rgb), 0.35)',
-        1200: 'rgba(var(--success-rgb), 0.35)',
-        1500: 'rgba(var(--warn-rgb), 0.35)',
-        2000: 'rgba(var(--purple-rgb), 0.35)',
-        2500: 'rgba(var(--danger-rgb), 0.35)',
-        styczne: 'rgba(var(--pink-rgb), 0.35)'
-    };
+    /* Tinty duplikatów per motyw (DRY z renderem TBODY powyżej) — klucze rgb
+       identyczne, alfa wzmocniona w light (patrz _excelAlpha). */
+    const _dupMap = (darkAlpha, lightAlpha) => ({
+        1000: 'rgba(var(--blue-rgb), ' + _excelAlpha(darkAlpha, lightAlpha) + ')',
+        1200: 'rgba(var(--success-rgb), ' + _excelAlpha(darkAlpha, lightAlpha) + ')',
+        1500: 'rgba(var(--warn-rgb), ' + _excelAlpha(darkAlpha, lightAlpha) + ')',
+        2000: 'rgba(var(--purple-rgb), ' + _excelAlpha(darkAlpha, lightAlpha) + ')',
+        2500: 'rgba(var(--danger-rgb), ' + _excelAlpha(darkAlpha, lightAlpha) + ')',
+        styczne: 'rgba(var(--pink-rgb), ' + _excelAlpha(darkAlpha, lightAlpha) + ')'
+    });
+    const rowDupSolid = _dupMap('0.2', '0.28');
+    const rowActiveDupSolid = _dupMap('0.3', '0.36');
+    const hoverDupSolid = _dupMap('0.25', '0.32');
+    const hoverActiveDupSolid = _dupMap('0.35', '0.4');
 
     const tabWells = wells.filter((w) => _excelWellMatchesTab(w, dn));
     tabWells.forEach((well, idx) => {

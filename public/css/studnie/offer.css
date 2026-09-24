@@ -472,6 +472,35 @@ html[data-theme='light'] #excel-table-container tbody tr:focus-within td[data-ce
     padding-right: 0.4rem;
     pointer-events: none;
 }
+
+/* Pasek sumy modala rabatow — baza ciemna mgielka, w light biala karta. */
+.disc-total-bar {
+    margin-top: 0.5rem;
+    background: rgba(var(--black-rgb), 0.3);
+    border: 1px dashed rgba(var(--white-rgb), 0.1);
+    padding: 0.5rem 0.9rem;
+    border-radius: var(--radius-sm);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+html[data-theme='light'] .disc-total-bar {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-sm);
+}
+
+/* Pola procentow w light: domyslne biale obramowanie (D400) znika na bieli,
+   wiec przyciemniamy hue akcentu DN (color-mix zachowuje kodowanie kolorem). */
+html[data-theme='light'] .disc-input-wrap {
+    background: color-mix(in srgb, var(--disc-border) 10%, white);
+    border-color: color-mix(in srgb, var(--disc-border) 55%, var(--border));
+}
+
+html[data-theme='light'] .disc-input-wrap:focus-within {
+    border-color: var(--disc-accent);
+}
 /* Kafelki rabatów w stopce oferty (offerSummaryUI.js) */
 .disc-tile {
     padding: 2px 4px;
@@ -499,7 +528,7 @@ html[data-theme='light'] #excel-table-container tbody tr:focus-within td[data-ce
     font-size: var(--fs-2xs);
     font-weight: var(--fw-semibold);
     line-height: 1.2;
-    color: rgba(var(--white-rgb), 0.8);
+    color: var(--tile-fg, var(--text-primary));
     white-space: normal;
     overflow-wrap: anywhere;
     max-width: 100%;
@@ -531,7 +560,6 @@ html[data-theme='light'] #excel-table-container tbody tr:focus-within td[data-ce
 }
 .disc-tile--dim {
     opacity: 0.5;
-    color: rgba(var(--white-rgb), 0.8);
 }
 
 /* Selekcja i drag na białym tle — wash z tokenów excel */

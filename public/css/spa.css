@@ -99,3 +99,11 @@ body.spa-view-loading .spa-module-iframe.spa-iframe-visible {
         animation: none;
     }
 }
+
+/* Tryb jasny — box ladowania widoku: ciemna wyspa na jasnym tle (slate-950
+   z niebieskim tekstem 2.8:1). Jasna karta + niebieski z tokenu (5.17:1). */
+html[data-theme='light'] .spa-transition-box {
+    background: var(--bg-secondary);
+    border-color: rgba(var(--accent-rgb), 0.3);
+    box-shadow: 0 18px 48px rgba(var(--slate-950-rgb), 0.16);
+}

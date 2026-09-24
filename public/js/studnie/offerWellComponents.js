@@ -95,7 +95,7 @@ function renderWellHeaderRow(
     return `<tr class="well-row-header${errorClass}" style="${rowStyle}" onclick="toggleWellExpansion(${i}, event)">
         ${checkbox}
         <td style="text-align:center; color:var(--text-muted); font-weight: var(--fw-semibold);">${displayLp}</td>
-        <td style="text-align:center; color:var(--accent);"><i data-lucide="${isExpanded ? 'chevron-down' : 'chevron-right'}" class="icon-sm"></i></td>
+        <td style="text-align:center; color:var(--accent-text);"><i data-lucide="${isExpanded ? 'chevron-down' : 'chevron-right'}" class="icon-sm"></i></td>
         <td style="text-align:left; font-weight: var(--fw-bold); color:${well.doplata < 0 ? 'var(--danger)' : well.doplata > 0 ? 'var(--success)' : 'var(--text-primary)'};">${escapeHtml(well.name)}</td>
         <td style="text-align:right; white-space:nowrap; padding:0.5rem 0.5rem;">${featureBadges}</td>
         <td style="text-align:right; white-space:nowrap; padding:0.5rem 0.5rem;">${badges}</td>
@@ -615,7 +615,7 @@ function renderComponentSubItems(well, p, item, itemPrzejscia, disc, wellTranspo
 
     if (isBase) {
         if (wellTransportCost > 0) {
-            html += `<tr style="opacity:0.6; font-size: var(--fs-sm); color:var(--accent2);">
+            html += `<tr style="opacity:0.6; font-size: var(--fs-sm); color:var(--accent2-hover);">
                 <td colspan="3" class="pl-lg">↳ <i data-lucide="truck" aria-hidden="true"></i> Udział w transporcie</td>
                 <td class="text-right">${fmt(wellTransportCost)} PLN</td>
             </tr>`;

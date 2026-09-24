@@ -46,11 +46,11 @@ function showStycznaPopup(mode = 'select') {
         " onmouseenter="if(!this.classList.contains('styczna-product-btn--active')){this.style.borderColor='rgba(var(--warn-rgb), 0.5)'; this.style.background='rgba(var(--warn-rgb), 0.1)'}"
             onmouseleave="if(!this.classList.contains('styczna-product-btn--active')){this.style.borderColor='rgba(var(--white-rgb), 0.1)'; this.style.background='rgba(var(--white-rgb), 0.05)'}">
             <div>
-                <div style="font-size: var(--fs-md); font-weight: var(--fw-bold); color:var(--text-primary, var(--white));">DN${p.dn}</div>
-                <div style="font-size: var(--fs-xs); color:var(--text-muted, var(--slate-500)); margin-top:1px;">${escapeHtml(p.name)}</div>
+                <div style="font-size: var(--fs-md); font-weight: var(--fw-bold); color:var(--text-primary);">DN${p.dn}</div>
+                <div style="font-size: var(--fs-xs); color:var(--text-muted); margin-top:1px;">${escapeHtml(p.name)}</div>
             </div>
             <div class="fs-sm-muted">${p.weight ? fmtInt(p.weight) + ' kg' : ''}</div>
-            <div style="font-size: var(--fs-lg); font-weight: var(--fw-extrabold); color:var(--success, var(--success));">${fmtInt(p.price)} PLN</div>
+            <div style="font-size: var(--fs-lg); font-weight: var(--fw-extrabold); color:var(--success);">${fmtInt(p.price)} PLN</div>
         </button>`;
     };
 
@@ -71,8 +71,8 @@ function showStycznaPopup(mode = 'select') {
         id: 'styczna-modal',
         titleId: 'styczna-title',
         html: `
-      <div style="background:var(--bg-secondary, var(--slate-800)); border:1px solid rgba(var(--warn-rgb), 0.3); border-radius: var(--radius-md); padding:1.2rem 1.5rem; width:520px; max-width:92vw; max-height:85vh; overflow-y:auto; box-shadow:0 20px 60px rgba(var(--black-rgb), 0.5);">
-        <div class="modal-header" style="position:sticky; top:0; background:var(--bg-secondary, var(--slate-800)); z-index:1; padding-bottom:0.6rem; margin-bottom:0.8rem; border-bottom:1px solid var(--border-glass);">
+      <div style="background:var(--bg-secondary); border:1px solid rgba(var(--warn-rgb), 0.3); border-radius: var(--radius-md); padding:1.2rem 1.5rem; width:520px; max-width:92vw; max-height:85vh; overflow-y:auto; box-shadow:0 20px 60px rgba(var(--black-rgb), 0.5);">
+        <div class="modal-header" style="position:sticky; top:0; background:var(--bg-secondary); z-index:1; padding-bottom:0.6rem; margin-bottom:0.8rem; border-bottom:1px solid var(--border-glass);">
           <div id="styczna-title" style="font-size: var(--fs-2xl); font-weight: var(--fw-extrabold); color:var(--warn); display:flex; align-items:center; gap:0.4rem;"><i data-lucide="cylinder" aria-hidden="true"></i> Wybierz studnię styczną</div>
           <button class="btn-icon" aria-label="Zamknij" onclick="closeModal()" style="flex-shrink:0;"><i data-lucide="x" aria-hidden="true"></i></button>
         </div>

@@ -398,8 +398,8 @@
 }
 
 .action-btn.primary:hover {
-    background: var(--accent-hover);
-    border-color: var(--accent-hover);
+    background: var(--accent-strong);
+    border-color: var(--accent-strong);
     box-shadow: var(--shadow-md);
 }
 

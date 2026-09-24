@@ -218,10 +218,8 @@ function renderOfferSummaryTableTab(transportResult, costPerTrip) {
         }
 
         let pName = escapeHtml(item.name);
-        if (item.pehdType === 'PEHD-3MM')
-            pName += ' <span class="tag-warn-solid">+ PEHD 3mm</span>';
-        if (item.pehdType === 'PEHD-4MM')
-            pName += ' <span class="tag-warn-solid">+ PEHD 4mm</span>';
+        if (item.pehdType === 'PEHD-3MM') pName += ' <span class="pehd-badge">+ PEHD 3mm</span>';
+        if (item.pehdType === 'PEHD-4MM') pName += ' <span class="pehd-badge">+ PEHD 4mm</span>';
         if (item.autoAdded) pName += ' <span class="fs-xs-warn80">(dodane automatycznie)</span>';
         if (item.surcharge) {
             const isPos = item.surcharge > 0;
@@ -334,7 +332,7 @@ function renderOfferSummaryTableTab(transportResult, costPerTrip) {
             html += `<tbody><tr style="border-bottom:1px solid var(--border-glass); background:rgba(var(--warn-rgb), 0.05);">
                 <td></td>
                 <td style="text-align:center; color:var(--text-muted); font-weight: var(--fw-semibold); white-space:nowrap;">—</td>
-                <td style="font-weight: var(--fw-semibold); color:var(--text-primary); max-width: 320px; overflow-wrap:break-word;">Transport bez rozładunku <span class="tag-warn-solid">${escapeHtml(String(tripsLabel))} × ${fmt(costPerTrip)} PLN</span></td>
+                <td style="font-weight: var(--fw-semibold); color:var(--text-primary); max-width: 320px; overflow-wrap:break-word;">Transport bez rozładunku ${escapeHtml(String(tripsLabel))} × ${fmt(costPerTrip)} PLN</td>
                 <td class="text-secondary-nowrap">${fmt(costPerTrip)}</td>
                 <td class="text-secondary-nowrap">—</td>
                 <td class="text-secondary-nowrap">${fmt(costPerTrip)}</td>

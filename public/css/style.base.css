@@ -11,6 +11,8 @@
     --bg-hover: #1e1e4a;
     --bg-tile: #1a2536;
     --bg-input: #1e2d42;
+    /* Subtelne wypelnienie paneli admin (mlPanels) — tokenizowane, z para light. */
+    --bg-subtle: rgba(255, 255, 255, 0.08);
 
     /* Text */
     --text-primary: var(--slate-100);
@@ -22,12 +24,17 @@
     /* Borders */
     --border: var(--slate-800);
     --border-glass: var(--slate-800);
+    /* Obramowanie paneli admin (mlPanels) — tokenizowane, z para light. */
+    --border-color: rgba(255, 255, 255, 0.1);
     /* Włosowe dividery — ciemna mgiełka na dark, szarość w light. */
     --border-subtle: rgba(var(--white-rgb), 0.05);
 
-    /* Accent — indigo (wartość zablokowana kontraktem print DOCX_COLORS;
-       biały tekst na nim 4,47:1 — znany wyjątek, large text ≥3:1 PASS). */
-    --accent: #6366f1;
+    /* Accent — indigo. Wartosc dobrana do WCAG AA 4.5:1 dla bialego tekstu
+       na pelnym wypelnieniu (5b5fec = 4.89:1; poprzednie 6366f1 dawalo 4.47).
+       Sync z DOCX_COLORS.accent (gate: printTokensConsistency.test.ts).
+       Tekst na powierzchniach: WYLCZNIE --accent-text (accent jako tekst
+       na dark daje 3.97 — gate: themeTextContrast.test.ts). */
+    --accent: #5b5fec;
     --accent-hover: #818cf8;
     --accent2: #8b5cf6;
     --accent2-hover: #a78bfa;
@@ -74,7 +81,7 @@
     --blue-hover: #60a5fa;
 
     /* RGB values for rgba() use */
-    --accent-rgb: 99, 102, 241;
+    --accent-rgb: 91, 95, 236;
     --accent-hover-rgb: 129, 140, 248;
     --accent2-rgb: 139, 92, 246;
     --success-rgb: 16, 185, 129;
@@ -321,15 +328,16 @@
 /* ========================================
    Color utility classes
    ======================================== */
-/* Text */
+/* Text — warianty -text/-hover do tekstu na powierzchniach (vivid baza
+   nie przechodzi AA na dark: accent 3.97, accent2 ~3.0). */
 .text-accent {
-    color: var(--accent);
+    color: var(--accent-text);
 }
 .text-accent-hover {
     color: var(--accent-hover);
 }
 .text-accent2 {
-    color: var(--accent2);
+    color: var(--accent2-hover);
 }
 .text-accent2-hover {
     color: var(--accent2-hover);
@@ -708,7 +716,7 @@ body::before {
 .header-username svg {
     width: 14px;
     height: 14px;
-    color: var(--accent);
+    color: var(--accent-text);
 }
 
 .header-role-badge {
@@ -1224,8 +1232,8 @@ body::before {
 }
 
 .btn-primary:hover {
-    background: var(--accent-hover);
-    border-color: var(--accent-hover);
+    background: var(--accent-strong);
+    border-color: var(--accent-strong);
     box-shadow: var(--shadow-md);
 }
 
@@ -1393,7 +1401,7 @@ button.btn-order-save:hover {
 
 /* Modyfikatory koloru przycisków ikonowych (zamiast inline style) */
 .btn-icon--accent {
-    color: var(--accent);
+    color: var(--accent-text);
 }
 .btn-icon--muted {
     color: var(--text-muted);
@@ -2113,7 +2121,7 @@ input[type='number'] {
 
 .catalog-tab.active {
     background: var(--accent);
-    color: var(--text-primary);
+    color: var(--white);
     border-color: var(--accent);
 }
 
@@ -2336,6 +2344,7 @@ html[data-theme='light'] {
     --bg-tertiary-alt-2: #eaeef2;
     --bg-confirmed: #dcfce7;
     --bg-needs-selection: #fee2e2;
+    --bg-subtle: rgba(15, 23, 42, 0.04);
 
     /* Tekst */
     --text-primary: #0f172a;
@@ -2347,6 +2356,7 @@ html[data-theme='light'] {
     /* Bordury — neutralna szarość, jeden stopień ciemniejsza od tła */
     --border: #d0d7de;
     --border-glass: #d0d7de;
+    --border-color: #d0d7de;
     --border-subtle: #e2e8f0;
     --border-table-subtle: #e2e8f0;
     --danger-border-deep: #fecaca;
@@ -2418,8 +2428,10 @@ html[data-theme='light'] {
     --shadow-md: 0 4px 16px rgba(15, 23, 42, 0.12);
     --shadow-lg: 0 8px 32px rgba(15, 23, 42, 0.16);
 
-    /* Scrollbar */
+    /* Scrollbar — jasny tor i neutralny suwak (w dark indygo). */
     --scrollbar-track: #e2e8f0;
+    --scrollbar-thumb: #cbd5e1;
+    --scrollbar-thumb-hover: #94a3b8;
 
     /* Diagram studni — czytelność na jasnym tle */
     --diagram-dim-text: #475569;
@@ -2658,6 +2670,14 @@ html[data-theme='light'] textarea {
 
 html[data-theme='light'] option {
     background: var(--bg-secondary);
+    color: var(--text-primary);
+}
+
+/* Wariant modułowy (studnie.css: select.form-input option, 0,1,2) przebija
+   powyzsza latke — jawny wariant light o wyzszej specyficznosci (0,2,2).
+   Bez tego natywna lista rozwijana (np. TAK/NIE w kroku 4) zostaje ciemna. */
+html[data-theme='light'] select.form-input option {
+    background-color: var(--bg-secondary);
     color: var(--text-primary);
 }
 

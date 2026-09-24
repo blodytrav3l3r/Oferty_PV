@@ -83,7 +83,7 @@ function renderSavedOffersStudnie() {
                             html += `<span style="color:var(--accent-hover)${isClickable ? '; cursor:pointer' : ''}" ${isClickable ? `data-action="changeOfferUserFromListStudnie" data-id="${escapeJsStr(oId)}"` : ''}><i data-lucide="user" aria-hidden="true"></i> Autor i Opiekun: <strong>${escapeHtml(creatorName)}</strong></span>`;
                         } else {
                             if (creatorName)
-                                html += `<span style="display:inline-block; margin-right:10px; color:var(--slate-500);"><i data-lucide="pen-tool" aria-hidden="true"></i> Autor: <strong>${escapeHtml(creatorName)}</strong></span>`;
+                                html += `<span style="display:inline-block; margin-right:10px; color:var(--text-muted);"><i data-lucide="pen-tool" aria-hidden="true"></i> Autor: <strong>${escapeHtml(creatorName)}</strong></span>`;
                             if (assignedName)
                                 html += `<span style="color:var(--accent-hover)${isClickable ? '; cursor:pointer' : ''}" ${isClickable ? `data-action="changeOfferUserFromListStudnie" data-id="${escapeJsStr(oId)}"` : ''}><i data-lucide="user" aria-hidden="true"></i> Opiekun: <strong>${escapeHtml(assignedName)}</strong></span>`;
                         }

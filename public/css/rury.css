@@ -247,11 +247,28 @@ body.rury-page > .main:has(#section-builder.active) {
     text-align: center;
 }
 
+/* Waskie inputy liczbowe (metry/ilosc/rabat): stala szerokosc zamiast 100%,
+   inaczej rozpychaja kolumny i tekst jednostek nachodzi na sasiednie pola. */
+.rury-table .edit-input.w-75-c {
+    width: 75px;
+    flex: 0 0 auto;
+}
+
+.rury-table td.qty-cell {
+    white-space: nowrap;
+}
+
 .rury-table tbody td input.edit-input:disabled,
 .rury-table tbody td input[disabled] {
     opacity: 0.5;
     cursor: not-allowed;
     background: rgba(var(--black-rgb), 0.2);
+}
+
+/* Wylaczone inputy w light: czysta szarosc zamiast brudnej mgielki. */
+html[data-theme='light'] .rury-table tbody td input.edit-input:disabled,
+html[data-theme='light'] .rury-table tbody td input[disabled] {
+    background: var(--bg-tertiary);
 }
 
 .order-partial-qty {
@@ -356,7 +373,7 @@ body.rury-page > .main:has(#section-builder.active) {
     font-weight: var(--fw-extrabold);
     border: 2px solid var(--accent);
     border-radius: var(--radius);
-    color: var(--accent);
+    color: var(--accent-text);
     background: transparent;
 }
 .pipe-length-hints {
@@ -412,7 +429,7 @@ body.rury-page > .main:has(#section-builder.active) {
     cursor: pointer;
     user-select: none;
 }
-.rury-table .pehd-btn-active {
+.rury-table .pehd-btn.pehd-btn-active {
     background: var(--warn);
     color: var(--slate-950);
     border: 1px solid var(--warn);
@@ -428,6 +445,25 @@ body.rury-page > .main:has(#section-builder.active) {
     background: var(--bg-hover);
     color: var(--text-primary);
     border-color: var(--accent-border-medium);
+}
+
+/* Badge PEHD — JEDYNY wzorzec oznaczenia wkladki we wszystkich widokach
+   (konfigurator, modal rabatow, zakladka Oferta). Bursztyn jak aktywny
+   przycisk: dark #0f172a na #f59e0b (8.31), light #fff na #b45309 (5.02). */
+.pehd-badge {
+    display: inline-block;
+    font-size: var(--fs-xs);
+    padding: 0.15rem 0.4rem;
+    background: var(--warn);
+    color: var(--slate-950);
+    border-radius: var(--radius-2xs);
+    font-weight: var(--fw-bold);
+    vertical-align: middle;
+    white-space: nowrap;
+}
+
+html[data-theme='light'] .pehd-badge {
+    color: var(--white);
 }
 
 .rury-table .length-editor {
@@ -454,7 +490,7 @@ body.rury-page > .main:has(#section-builder.active) {
 }
 
 .rury-table .length-editor .length-value {
-    color: var(--accent);
+    color: var(--accent-text);
     font-weight: var(--fw-semibold);
 }
 
@@ -1192,4 +1228,19 @@ body.rury-page > .main:has(#section-builder.active) {
     width: 16px;
     height: 16px;
     cursor: pointer;
+}
+
+/* Tryb jasny — aktywny przycisk PEHD: selektor .pehd-btn.pehd-btn-active
+   (0,4,1) musi przebic html[light] .btn-secondary (0,2,1), ktory czyscil
+   bursztynowe tlo na bialo. Tlo + tekst jawnie w obu wariantach. */
+html[data-theme='light'] .rury-table .pehd-btn.pehd-btn-active {
+    background: var(--warn);
+    color: var(--white);
+    border-color: var(--warn);
+}
+
+html[data-theme='light'] .rury-table .pehd-btn.pehd-btn-inactive:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+    border-color: var(--accent-border-medium);
 }

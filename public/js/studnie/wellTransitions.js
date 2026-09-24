@@ -91,11 +91,11 @@ function renderInlinePrzejsciaApp(containerId) {
                             return `
                         <div data-action="inlineSetType" data-t="${escapeJsStr(t)}" data-container="${escapeJsStr(containerId || '')}" 
                              style="padding:0.2rem 0.4rem; border-radius: var(--radius-sm); cursor:pointer; transition:all 0.15s ease; height:44px; display:flex; align-items:center; justify-content:center;
-                                    background:${isActive ? 'rgba(var(--accent-rgb), 0.2)' : 'rgba(var(--white-rgb), 0.05)'};
-                                    border:1px solid ${isActive ? 'rgba(var(--accent-rgb), 0.5)' : 'rgba(var(--white-rgb), 0.05)'};
+                                    background:${isActive ? 'rgba(var(--accent-rgb), 0.2)' : 'var(--bg-secondary)'};
+                                    border:1px solid ${isActive ? 'rgba(var(--accent-rgb), 0.5)' : 'var(--border)'};
                                     ${isActive ? 'box-shadow:0 0 8px rgba(var(--accent-rgb), 0.15);' : ''}"
                              onmouseenter="if(!${isActive})this.style.background='rgba(var(--accent-rgb), 0.1)';this.style.borderColor='rgba(var(--accent-rgb), 0.3)'"
-                             onmouseleave="if(!${isActive})this.style.background='rgba(var(--white-rgb), 0.05)';this.style.borderColor='rgba(var(--white-rgb), 0.05)'"
+                             onmouseleave="if(!${isActive})this.style.background='var(--bg-secondary)';this.style.borderColor='var(--border)'"
                              title="${escapeHtmlAttr(t)}">
                               <div class="${isActive ? 'color-accent' : ''}" style="font-size: var(--fs-xs); font-weight: var(--fw-bold); text-align:center; line-height:1.25; word-break:break-word; overflow-wrap:anywhere;">${escapeHtml(t)}</div>
                         </div>`;
@@ -117,11 +117,11 @@ function renderInlinePrzejsciaApp(containerId) {
                         return `
                     <div class="fs-dn-tile ${isActive ? 'active' : ''}" 
                          style="padding:0.2rem 0.4rem; text-align:center; cursor:pointer; border-radius: var(--radius-sm); height:44px; display:flex; align-items:center; justify-content:center; transition:all 0.15s ease;
-                                background:${isActive ? 'rgba(var(--accent-rgb), 0.2)' : 'rgba(var(--white-rgb), 0.05)'};
-                                border:1px solid ${isActive ? 'rgba(var(--accent-rgb), 0.5)' : 'rgba(var(--white-rgb), 0.05)'};
+                                background:${isActive ? 'rgba(var(--accent-rgb), 0.2)' : 'var(--bg-secondary)'};
+                                border:1px solid ${isActive ? 'rgba(var(--accent-rgb), 0.5)' : 'var(--border)'};
                                 ${isActive ? 'box-shadow:0 0 10px rgba(var(--accent-rgb), 0.3);' : ''}"
                          onmouseenter="if(!${isActive}){this.style.background='rgba(var(--accent-rgb), 0.1)';this.style.borderColor='rgba(var(--accent-rgb), 0.3)'}"
-                         onmouseleave="if(!${isActive}){this.style.background='rgba(var(--white-rgb), 0.05)';this.style.borderColor='rgba(var(--white-rgb), 0.05)'}"
+                         onmouseleave="if(!${isActive}){this.style.background='var(--bg-secondary)';this.style.borderColor='var(--border)'}"
                          data-action="inlineSetDN" data-id="${escapeHtmlAttr(p.id)}" data-container="${escapeHtmlAttr(containerId || '')}">
                           <div class="${isActive ? 'color-accent' : ''}" style="font-size: var(--fs-xs); font-weight: var(--fw-extrabold); text-align:center; line-height:1.25; letter-spacing:0.3px; overflow-wrap:anywhere;">${dnLabel}</div>
                     </div>
@@ -188,7 +188,7 @@ function renderInlinePrzejsciaApp(containerId) {
         </div>
         `
                 : `
-        <div style="text-align:center; padding:0.8rem; color:var(--text-muted); border:1px dashed rgba(var(--white-rgb), 0.05); border-radius: var(--radius-sm); font-size: var(--fs-sm); margin-top:0.3rem;">
+        <div style="text-align:center; padding:0.8rem; color:var(--text-muted); border:1px dashed var(--border); border-radius: var(--radius-sm); font-size: var(--fs-sm); margin-top:0.3rem;">
             Wybierz średnicę (DN) aby skonfigurować przejście
         </div>
         `

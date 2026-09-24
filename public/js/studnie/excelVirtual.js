@@ -612,11 +612,11 @@ function _excelVirtualRenderBody() {
                 stickyZ +
                 ';background:' +
                 emptyBg +
-                ';text-align:center;color:var(--accent);font-size:var(--fs-xs);font-weight:var(--fw-bold);border-right:1px solid var(--excel-border);min-width:32px;">+</td><td class="excel-td excel-td-empty" style="position:sticky;left:32px;z-index:' +
+                ';text-align:center;color:var(--accent-text);font-size:var(--fs-xs);font-weight:var(--fw-bold);border-right:1px solid var(--excel-border);min-width:32px;">+</td><td class="excel-td excel-td-empty" style="position:sticky;left:32px;z-index:' +
                 stickyZ +
                 ';background:' +
                 emptyBg +
-                ';border-right:1px solid var(--excel-border);"><input type="text" placeholder="Wpisz nazwę (Enter)" title="Wpisz nazwę nowej studni i wciśnij Enter" id="excel-empty-name" onkeydown="if(event.key===\'Enter\')excelCreateFromEmpty()" onblur="excelCreateFromEmpty(event)" onfocus="excelCellFocus(this);_excelSelWrapFocus(this)" style="background:var(--excel-input-bg);border:1px dashed rgba(var(--accent-rgb),0.4);border-radius:2px;color:var(--accent);font-size:var(--fs-sm);outline:none;text-align:left;width:118px;box-sizing:border-box;" /></td><td class="excel-td excel-td-empty" style="position:sticky;left:162px;z-index:' +
+                ';border-right:1px solid var(--excel-border);"><input type="text" placeholder="Wpisz nazwę (Enter)" title="Wpisz nazwę nowej studni i wciśnij Enter" id="excel-empty-name" onkeydown="if(event.key===\'Enter\')excelCreateFromEmpty()" onblur="excelCreateFromEmpty(event)" onfocus="excelCellFocus(this);_excelSelWrapFocus(this)" style="background:var(--excel-input-bg);border:1px dashed rgba(var(--accent-rgb),0.4);border-radius:2px;color:var(--accent-text);font-size:var(--fs-sm);outline:none;text-align:left;width:118px;box-sizing:border-box;" /></td><td class="excel-td excel-td-empty" style="position:sticky;left:162px;z-index:' +
                 stickyZ +
                 ';background:' +
                 emptyBg +
