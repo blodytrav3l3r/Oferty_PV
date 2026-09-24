@@ -2029,6 +2029,20 @@ svg.lucide {
     text-transform: uppercase;
 }
 
+/* Tryb jasny — dolny pasek jak reszta powierzchni (biały, nie grafitowy). */
+html[data-theme='light'] .wizard-nav-fixed {
+    background: var(--bg-secondary);
+    border-top-color: var(--border);
+    box-shadow: 0 -4px 20px rgba(15, 23, 42, 0.08);
+}
+
+html[data-theme='light'] .wizard-nav-fixed .wizard-step-info {
+    background: var(--bg-tertiary);
+    border-color: var(--border);
+    color: var(--text-secondary);
+    box-shadow: none;
+}
+
 .wizard-toolbar {
     display: flex;
     gap: 0.5rem;
