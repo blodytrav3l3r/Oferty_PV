@@ -160,7 +160,12 @@ export default {
             const json = await resp.json();
 
             if (isLoadMore) {
-                this.searchResults.items = [...this.searchResults.items, ...(json.data || [])];
+                // Dedupe po id: kursor na rosnącej tabeli przepuszcza wiersze między
+                // stronami (świeży wiersz doklejony na końcu + stary odpowiednik
+                // na poprzedniej stronie) — nowszy (świeższy fetch) wygrywa.
+                const seen = new Set((json.data || []).map((o) => o && o.id));
+                const kept = (this.searchResults.items || []).filter((o) => !o || !seen.has(o.id));
+                this.searchResults.items = [...kept, ...(json.data || [])];
                 this.searchResults.hasMore = json.hasMore;
                 this.searchResults.nextCursor = json.nextCursor;
                 this.searchResults.nextCursorId = json.nextCursorId;
@@ -214,6 +219,8 @@ export default {
     /**
      * Lekka sygnatura listy do wykrywania zmian przy cichym odświeżaniu.
      * Bez pełnego JSON — wystarczą pola zmieniające kartę oferty.
+     * Liczniki wellsCount/itemsCount CELOWO włączone: cichy refresh przynoszący
+     * samą zmianę licznika (ten sam updatedAt) też musi prze-renderować kartę.
      */
     _offerListSignature(items) {
         if (!Array.isArray(items)) return '';
@@ -226,7 +233,9 @@ export default {
                     '|' +
                     (o && o.state) +
                     '|' +
-                    (o && o._orderCount)
+                    (o && o._orderCount) +
+                    '|' +
+                    ((o && o.data && (o.data.wellsCount ?? o.data.itemsCount)) ?? '')
             )
             .join(';');
     },

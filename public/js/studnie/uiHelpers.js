@@ -267,16 +267,18 @@ function validateWizardStep2() {
         malCenaZValid = !!(mcZ && mcZ.value.trim() !== '' && !isNaN(parseFloat(mcZ.value)));
     }
 
-    // Pokaż/ukryj pola nazwy powłoki na podstawie aktualnego wyboru kafelka
+    // Pokaż/ukryj pola nazwy powłoki na podstawie aktualnego wyboru kafelka.
+    // 'flex' (nie 'block') — .wizard-form-group to flex-column; block łamał
+    // układ i input lądował obok labelki zamiast pod nią.
     const powlokaWGroup = document.getElementById('powloka-name-w-group');
-    if (powlokaWGroup) powlokaWGroup.style.display = malowanieWVal !== 'brak' ? 'block' : 'none';
+    if (powlokaWGroup) powlokaWGroup.style.display = malowanieWVal !== 'brak' ? 'flex' : 'none';
     const malCenaWGroup = document.getElementById('malowanie-wew-cena-group');
-    if (malCenaWGroup) malCenaWGroup.style.display = malowanieWVal !== 'brak' ? 'block' : 'none';
+    if (malCenaWGroup) malCenaWGroup.style.display = malowanieWVal !== 'brak' ? 'flex' : 'none';
 
     const powlokaZGroup = document.getElementById('powloka-name-z-group');
-    if (powlokaZGroup) powlokaZGroup.style.display = malowanieZVal !== 'brak' ? 'block' : 'none';
+    if (powlokaZGroup) powlokaZGroup.style.display = malowanieZVal !== 'brak' ? 'flex' : 'none';
     const malCenaZGroup = document.getElementById('malowanie-zew-cena-group');
-    if (malCenaZGroup) malCenaZGroup.style.display = malowanieZVal !== 'brak' ? 'block' : 'none';
+    if (malCenaZGroup) malCenaZGroup.style.display = malowanieZVal !== 'brak' ? 'flex' : 'none';
 
     // Wyczyść ukryte pola
     if (malowanieWVal === 'brak') {

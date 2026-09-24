@@ -103,10 +103,11 @@ function updateParamTilesUI() {
     const malowanieZVal = getActiveTileValue('malowanieZ');
     const kinetaVal = getActiveTileValue('kineta');
 
+    // 'flex' (nie 'block') — patrz komentarz w uiHelpers.js (validateWizardStep2).
     const powlokaWGroup = document.getElementById('powloka-name-w-group');
-    if (powlokaWGroup) powlokaWGroup.style.display = malowanieWVal !== 'brak' ? 'block' : 'none';
+    if (powlokaWGroup) powlokaWGroup.style.display = malowanieWVal !== 'brak' ? 'flex' : 'none';
     const powlokaZGroup = document.getElementById('powloka-name-z-group');
-    if (powlokaZGroup) powlokaZGroup.style.display = malowanieZVal !== 'brak' ? 'block' : 'none';
+    if (powlokaZGroup) powlokaZGroup.style.display = malowanieZVal !== 'brak' ? 'flex' : 'none';
 
     // Pokaz/ukryj grupe parametrow precoFullHeight na podstawie kinety
     const precoGroupWizard = document.getElementById('preco-full-height-wizard-group');

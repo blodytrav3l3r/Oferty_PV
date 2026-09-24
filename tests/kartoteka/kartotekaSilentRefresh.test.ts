@@ -128,4 +128,34 @@ describe('kartotekaSearch silent refresh (P0)', () => {
         expect(calls.render).toBe(0);
         expect(mod.searchResults.items).toHaveLength(1);
     });
+
+    test('„Pokaż więcej": duplikat id z nowej strony zastępuje stary (świeższy wygrywa)', async () => {
+        const stale = { ...row('a', 't1'), data: {} };
+        mod.searchResults = {
+            items: [stale, row('b', 't1')],
+            totalCount: 3,
+            hasMore: true,
+            nextCursor: 't1',
+            nextCursorId: 'b'
+        };
+        mod.filters = { date: { mode: 'preset', preset: 'all' }, user: '' };
+        mod.currentTypeFilter = 'all';
+        mod.currentFilter = 'all';
+        const freshA = { ...row('a', 't2'), data: { wellsCount: 4 } };
+        setFetchResponse({ data: [freshA, row('c', 't2')], hasMore: false });
+        await mod.loadMore();
+        const ids = mod.searchResults.items.map((o: any) => o.id);
+        expect(ids).toEqual(['b', 'a', 'c']);
+        expect(mod.searchResults.items.find((o: any) => o.id === 'a')).toBe(freshA);
+    });
+
+    test('sygnatura widzi samą zmianę licznika (ten sam updatedAt)', async () => {
+        const before = [{ ...row('a', 't1'), data: {} }];
+        const after = [{ ...row('a', 't1'), data: { wellsCount: 4 } }];
+        mod.searchResults = { items: before, totalCount: 1, hasMore: false };
+        mod._lastOfferSignature = mod._offerListSignature(before);
+        setFetchResponse({ data: after, totalCount: 1, hasMore: false });
+        await mod.searchOffers({}, false, { silent: true });
+        expect(calls.render).toBe(1);
+    });
 });

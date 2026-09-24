@@ -14,6 +14,7 @@
             aria-controls="wizard-summary-content"
             onclick="toggleCard('wizard-summary-content', 'wizard-summary-icon')"
             onkeydown="
+                if (event.target.closest('button')) return;
                 if (event.key === 'Enter' || event.key === ' ') {
                     event.preventDefault();
                     toggleCard('wizard-summary-content', 'wizard-summary-icon');
@@ -27,7 +28,6 @@
                 user-select: none;
             "
         >
-            <span id="wizard-summary-icon" class="fs-075"><i data-lucide="chevron-up"></i></span>
             <span class="wizard-summary-item"
                 ><i data-lucide="file-text"></i> <strong id="wsb-offer">—</strong></span
             >
@@ -39,39 +39,52 @@
             <span class="wizard-summary-item" id="wsb-order-item" style="display: none"
                 ><i data-lucide="package"></i> <strong id="wsb-order-number">—</strong></span
             >
-        </div>
-        <div
-            id="wizard-summary-content"
-            data-open-display="flex"
-            style="display: flex; align-items: center; gap: 0.8rem; flex-wrap: wrap"
-        >
-            <span class="wizard-summary-divider"></span>
-            <span class="wizard-summary-item"
-                ><i data-lucide="clipboard-list"></i> <strong id="wsb-client">—</strong></span
+            <span style="flex: 1"></span>
+            <button
+                type="button"
+                class="wizard-summary-edit"
+                onclick="
+                    event.stopPropagation();
+                    goToWizardStep(1);
+                "
             >
-            <span class="wizard-summary-divider"></span>
-            <span class="wizard-summary-item"
-                ><i data-lucide="hard-hat"></i> <strong id="wsb-invest">—</strong></span
-            >
-            <span class="wizard-summary-divider"></span>
-            <span class="wizard-summary-item"
-                ><i data-lucide="map-pin"></i> <strong id="wsb-address">—</strong></span
-            >
-            <span class="wizard-summary-divider"></span>
-            <span class="wizard-summary-item"
-                ><i data-lucide="settings"></i> <strong id="wsb-params">—</strong></span
-            >
-
-            <button type="button" class="wizard-summary-edit" onclick="goToWizardStep(1)">
                 <i data-lucide="pencil" class="icon-xs"></i> Edytuj dane
             </button>
             <button
                 type="button"
                 class="wizard-summary-edit wizard-summary-edit--params"
-                onclick="goToWizardStep(2)"
+                onclick="
+                    event.stopPropagation();
+                    goToWizardStep(2);
+                "
             >
                 <i data-lucide="sliders-horizontal" class="icon-xs"></i> Edytuj parametry
             </button>
+            <span id="wizard-summary-icon" class="fs-075"><i data-lucide="chevron-up"></i></span>
+        </div>
+        <div
+            id="wizard-summary-content"
+            data-open-display="flex"
+            style="display: flex; flex-direction: column; gap: 0.35rem"
+        >
+            <div style="display: flex; align-items: center; gap: 0.8rem; flex-wrap: wrap">
+                <span class="wizard-summary-item"
+                    ><i data-lucide="clipboard-list"></i> <strong id="wsb-client">—</strong></span
+                >
+                <span class="wizard-summary-divider"></span>
+                <span class="wizard-summary-item"
+                    ><i data-lucide="hard-hat"></i> <strong id="wsb-invest">—</strong></span
+                >
+                <span class="wizard-summary-divider"></span>
+                <span class="wizard-summary-item"
+                    ><i data-lucide="map-pin"></i> <strong id="wsb-address">—</strong></span
+                >
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.8rem; flex-wrap: wrap">
+                <span class="wizard-summary-item"
+                    ><i data-lucide="settings"></i> <strong id="wsb-params">—</strong></span
+                >
+            </div>
         </div>
     </div>
 
@@ -95,8 +108,8 @@
         ></div>
         <!-- Toolbar: DN + Elevations + Height + Controls -->
         <div class="well-info-card" style="padding: 0.6rem 0.8rem">
-            <!-- Row 1: Title -->
-            <div style="margin-bottom: 0.35rem">
+            <!-- Row 1: Title + height indicators -->
+            <div style="display: flex; align-items: center; margin-bottom: 0.35rem">
                 <span
                     style="
                         font-size: var(--fs-base);
@@ -105,8 +118,33 @@
                     "
                     ><i data-lucide="settings"></i> Konfiguracja studni</span
                 >
+                <div style="flex: 1"></div>
+                <div
+                    class="gap-2"
+                    style="
+                        display: flex;
+                        align-items: center;
+                        font-size: var(--fs-base);
+                        color: var(--text-muted);
+                        white-space: nowrap;
+                    "
+                >
+                    <span
+                        >Wym:
+                        <strong id="well-required-height" style="color: var(--accent-hover)"
+                            >— m</strong
+                        ></span
+                    >
+                    <span
+                        >Konf:
+                        <strong id="well-configured-height" style="color: var(--success)"
+                            >0 m</strong
+                        ></span
+                    >
+                    <span id="height-diff-indicator"></span>
+                </div>
             </div>
-            <!-- Row 2: Nr + Rz fields + indicators -->
+            <!-- Row 2: Nr + Rz fields + DN + Dopłata -->
             <div class="gap-1" style="display: flex; align-items: center; margin-bottom: 0.4rem">
                 <div class="flex-center-gap-2">
                     <label
@@ -222,29 +260,44 @@
                     />
                 </div>
                 <div style="width: 1px; height: 24px; background: var(--border-glass)"></div>
-                <div
-                    class="gap-2"
-                    style="
-                        display: flex;
-                        align-items: center;
-                        font-size: var(--fs-base);
-                        color: var(--text-muted);
-                        white-space: nowrap;
-                    "
-                >
+                <div class="gap-1" style="display: flex; align-items: center">
                     <span
-                        >Wym:
-                        <strong id="well-required-height" style="color: var(--accent-hover)"
-                            >— m</strong
-                        ></span
+                        style="
+                            font-size: var(--fs-lg);
+                            color: var(--text-muted);
+                            text-transform: uppercase;
+                            font-weight: var(--fw-bold);
+                        "
+                        >DN</span
                     >
-                    <span
-                        >Konf:
-                        <strong id="well-configured-height" style="color: var(--success)"
-                            >0 m</strong
-                        ></span
-                    >
-                    <span id="height-diff-indicator"></span>
+                    <div class="dn-selector mb-0">
+                        <button
+                            type="button"
+                            class="dn-btn dn-btn--1000 active"
+                            onclick="selectDN(1000)"
+                        >
+                            1000
+                        </button>
+                        <button type="button" class="dn-btn dn-btn--1200" onclick="selectDN(1200)">
+                            1200
+                        </button>
+                        <button type="button" class="dn-btn dn-btn--1500" onclick="selectDN(1500)">
+                            1500
+                        </button>
+                        <button type="button" class="dn-btn dn-btn--2000" onclick="selectDN(2000)">
+                            2000
+                        </button>
+                        <button type="button" class="dn-btn dn-btn--2500" onclick="selectDN(2500)">
+                            2500
+                        </button>
+                        <button
+                            type="button"
+                            class="dn-btn dn-btn--styczne"
+                            onclick="selectDN('styczna')"
+                        >
+                            Styczna
+                        </button>
+                    </div>
                 </div>
                 <div style="flex: 1"></div>
                 <div class="flex-center-gap-2">
@@ -289,48 +342,8 @@
                 </div>
             </div>
 
-            <!-- Row 2: DN selector + controls -->
+            <!-- Row 3: controls (left) + zakończenie/Auto (right) -->
             <div class="gap-2" style="display: flex; align-items: center; flex-wrap: wrap">
-                <div class="gap-1" style="display: flex; align-items: center">
-                    <span
-                        style="
-                            font-size: var(--fs-lg);
-                            color: var(--text-muted);
-                            text-transform: uppercase;
-                            font-weight: var(--fw-bold);
-                        "
-                        >DN</span
-                    >
-                    <div class="dn-selector mb-0">
-                        <button
-                            type="button"
-                            class="dn-btn dn-btn--1000 active"
-                            onclick="selectDN(1000)"
-                        >
-                            1000
-                        </button>
-                        <button type="button" class="dn-btn dn-btn--1200" onclick="selectDN(1200)">
-                            1200
-                        </button>
-                        <button type="button" class="dn-btn dn-btn--1500" onclick="selectDN(1500)">
-                            1500
-                        </button>
-                        <button type="button" class="dn-btn dn-btn--2000" onclick="selectDN(2000)">
-                            2000
-                        </button>
-                        <button type="button" class="dn-btn dn-btn--2500" onclick="selectDN(2500)">
-                            2500
-                        </button>
-                        <button
-                            type="button"
-                            class="dn-btn dn-btn--styczne"
-                            onclick="selectDN('styczna')"
-                        >
-                            Styczna
-                        </button>
-                    </div>
-                </div>
-                <div style="flex: 1"></div>
                 <div
                     class="well-controls gap-1"
                     style="display: flex; align-items: center; flex-wrap: wrap"
@@ -414,7 +427,12 @@
                             Zak. DN1000
                         </button>
                     </div>
-                    <span class="well-ctrl-sep"></span>
+                </div>
+                <div style="flex: 1"></div>
+                <div
+                    class="well-controls gap-1"
+                    style="display: flex; align-items: center; flex-wrap: wrap"
+                >
                     <button
                         type="button"
                         class="btn btn-secondary btn-sm well-ctrl-btn"
