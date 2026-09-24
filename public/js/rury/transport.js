@@ -8,6 +8,15 @@ let currentRuryTransportMode = 'full';
 // Rozliczenie transportu: false = wliczony w ceny pozycji, true = osobna pozycja (TR-RURY).
 let currentRuryTransportSeparate = false;
 
+// Stan zwinięcia kalkulacji transportu (collapseState, per-user; brak → zwinięta jak dziś).
+try {
+    if (
+        typeof collapseGet === 'function' &&
+        typeof window.isTransportBreakdownExpanded === 'undefined'
+    )
+        window.isTransportBreakdownExpanded = collapseGet('rury-transport-breakdown', false);
+} catch (_e) {}
+
 window.toggleRuryTransportMode = function () {
     currentRuryTransportMode = currentRuryTransportMode === 'full' ? 'fractional' : 'full';
     const label = document.getElementById('rury-transport-mode-label');
@@ -798,6 +807,9 @@ window.updateRuryModalTransportDetails = function () {
 window.toggleTransportBreakdown = function () {
     const expanded = !window.isTransportBreakdownExpanded;
     window.isTransportBreakdownExpanded = expanded;
+    try {
+        if (typeof collapseSet === 'function') collapseSet('rury-transport-breakdown', expanded);
+    } catch (_e) {}
     const contents = document.querySelectorAll(
         '#transport-breakdown-content, #order-transport-breakdown-content'
     );
