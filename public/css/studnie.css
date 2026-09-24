@@ -2906,6 +2906,13 @@ select.form-input option {
 .excel-td-left {
     text-align: left;
 }
+/* Nagłówki kolumn per-typ (excelTableRenderer.js) — kolor z motywu */
+#excel-table-container .excel-hdr-themed {
+    color: var(--hc-stroke);
+}
+html[data-theme='light'] #excel-table-container .excel-hdr-themed {
+    color: var(--hc-fill);
+}
 /* ── Grupy kolumn przejść (PRZ i): separator początku/końca czwórki ── */
 .excel-tr-first {
     border-left: 1px solid rgba(var(--accent-rgb), 0.35) !important;
@@ -3391,11 +3398,91 @@ td.excel-tint--plyta_redukcyjna input {
 }
 
 .config-tile {
-    cursor: pointer;
-    transition: all 0.2s;
+    cursor: grab;
+    position: relative;
+    border-radius: var(--radius-sm);
+    padding: 0.25rem 0.4rem;
+    margin-bottom: 0.25rem;
+    transition: all 0.2s ease;
+    border: 1px solid rgba(var(--white-rgb), 0.05);
+    border-left: 4px solid var(--tile-accent, var(--slate-700));
+    background: linear-gradient(
+        90deg,
+        var(--tile-accent, transparent) 0%,
+        rgba(var(--slate-800-rgb), 0.8) 100%
+    );
 }
 .config-tile:hover {
-    background: var(--slate-100);
+    filter: brightness(1.5);
+    border-color: rgba(var(--white-rgb), 0.3);
+    box-shadow: 0 0 12px rgba(var(--accent-rgb), 0.5);
+}
+.config-tile--placeholder {
+    opacity: 0.7;
+    box-shadow: 0 0 15px rgba(var(--blue-alt-rgb), 0.5);
+    pointer-events: none;
+}
+html[data-theme='light'] .config-tile {
+    background: var(--bg-secondary);
+    border-color: var(--border-glass);
+}
+/* Kafelki elementów w modalu zleceń (orderZleceniaRender.js) — ten sam
+   kontrakt: motyw sterowany CSS, JS podaje tylko --tile-accent. */
+.zl-config-tile {
+    border-radius: var(--radius-sm);
+    padding: 0.35rem 0.5rem;
+    margin-bottom: 0.25rem;
+    cursor: grab;
+    transition: all 0.15s;
+    border: 1px solid rgba(var(--white-rgb), 0.05);
+    border-left: 4px solid var(--tile-accent, var(--slate-700));
+    background: rgba(var(--slate-800-rgb), 0.8);
+}
+.zl-config-tile--locked {
+    cursor: default;
+}
+.zl-config-tile--edited {
+    border-color: var(--accent);
+    border-left-color: var(--tile-accent, var(--slate-700));
+    box-shadow: 0 0 10px rgba(var(--accent-rgb), 0.2);
+}
+html[data-theme='light'] .zl-config-tile {
+    background: var(--bg-secondary);
+    border-color: var(--border-glass);
+}
+html[data-theme='light'] .zl-config-tile--edited {
+    border-color: var(--accent);
+}
+.zl-idx-box {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    align-items: center;
+    background: rgba(var(--black-rgb), 0.2);
+    padding: 0.1rem;
+    border-radius: var(--radius-2xs);
+}
+html[data-theme='light'] .zl-idx-box {
+    background: var(--bg-tertiary);
+}
+.zl-idx-num {
+    font-size: var(--fs-3xs);
+    color: var(--text-primary);
+    font-weight: var(--fw-bold);
+}
+.zl-item-name {
+    font-weight: var(--fw-bold);
+    color: var(--text-primary);
+    font-size: var(--fs-xs);
+    line-height: 1.1;
+}
+.zl-item-sub {
+    font-size: var(--fs-3xs);
+    color: var(--text-muted);
+}
+.zl-edited-ico {
+    font-size: var(--fs-2xs);
+    color: var(--accent-hover);
 }
 
 /* === FEATY 08-20/21: port na bazę 1.17.1 (panel dodawania przejść szczelnych (9c8426a)) === */
@@ -5641,9 +5728,10 @@ html[data-theme='light'] .well-list-item:hover {
     background: var(--bg-hover);
 }
 
-/* L7: wiersze konfiguracji — tło i ramka dobierane w JS per motyw
-   (actionsConfigRender: tileBg), hover tylko w CSS dla light. */
+/* L7: wiersze konfiguracji — motyw sterowany CSS (.config-tile +
+   html[data-theme='light']), JS podaje tylko --tile-accent. Najechanie w CSS. */
 html[data-theme='light'] .config-tile:hover {
+    filter: none;
     border-color: var(--accent-border);
     box-shadow: var(--shadow-sm);
 }

@@ -132,27 +132,11 @@ function renderWellConfig() {
         const canMoveDown = index < well.config.length - 1;
 
         const isPlaceholder = item.isPlaceholder;
-        const plStyle = isPlaceholder
-            ? 'opacity:0.7; box-shadow: 0 0 15px rgba(var(--blue-alt-rgb), 0.5); pointer-events: none;'
-            : '';
 
-        // L7: w light biała karta (kolor komponentu zostaje na lewej krawędzi),
-        // gradient slate tylko w dark — inaczej niewidoczny biały tekst.
-        const isLightTheme =
-            typeof document !== 'undefined' &&
-            document.documentElement.getAttribute('data-theme') === 'light';
-        const tileBg = isLightTheme
-            ? 'var(--bg-secondary)'
-            : `linear-gradient(90deg, ${badge.bg} 0%, rgba(var(--slate-800-rgb), 0.8) 100%)`;
-        // Hover JS (brightness/border) ma sens tylko w dark — w light reguły CSS z klas.
-        const hoverOn = isLightTheme
-            ? `window.highlightSvg('cfg', ${index})`
-            : `this.style.filter='brightness(1.5)'; this.style.borderColor='rgba(var(--white-rgb), 0.3)'; this.style.boxShadow='0 0 12px rgba(var(--accent-rgb), 0.5)'; window.highlightSvg('cfg', ${index})`;
-        const hoverOff = isLightTheme
-            ? `window.unhighlightSvg('cfg', ${index})`
-            : `this.style.filter='brightness(1)'; this.style.borderColor='rgba(var(--white-rgb), 0.05)'; this.style.boxShadow='none'; window.unhighlightSvg('cfg', ${index})`;
-        html += `<div data-cfg-idx="${index}" class="config-tile" draggable="true" ondragstart="handleCfgDragStart(event)" ondragover="handleCfgDragOver(event)" ondrop="handleCfgDrop(event)" ondragend="handleCfgDragEnd(event)" style="background:${tileBg}; border:1px solid ${isLightTheme ? 'var(--border-glass)' : 'rgba(var(--white-rgb), 0.05)'}; border-left:4px solid ${badge.bg}; border-radius: var(--radius-sm); padding:0.25rem 0.4rem; position:relative; transition:all 0.2s ease; margin-bottom:0.25rem; cursor:grab; ${plStyle}"
-                      onmouseenter="if(!${isPlaceholder}){${hoverOn}}" onmouseleave="if(!${isPlaceholder}){${hoverOff}}">
+        // Motyw sterowany CSS (.config-tile + html[data-theme] rules).
+        const tileMod = isPlaceholder ? ' config-tile--placeholder' : '';
+        html += `<div data-cfg-idx="${index}" class="config-tile${tileMod}" draggable="true" ondragstart="handleCfgDragStart(event)" ondragover="handleCfgDragOver(event)" ondrop="handleCfgDrop(event)" ondragend="handleCfgDragEnd(event)" style="--tile-accent:${badge.bg};"
+                      onmouseenter="if(!${isPlaceholder}){window.highlightSvg('cfg', ${index})}" onmouseleave="if(!${isPlaceholder}){window.unhighlightSvg('cfg', ${index})}">
           <div class="cfg-row-main">
 
             <div class="cfg-col-left">

@@ -136,15 +136,14 @@ function _excelRenderTable(dn) {
         // Light: fill (ciemny na jasnym tle; jedyny jasny fill — uszczelka —
         // nie trafia tu, ma fallback --blue-hover).
         const theme = typeof COMPONENT_THEME !== 'undefined' ? COMPONENT_THEME[ct] : null;
-        const isLight =
-            typeof document !== 'undefined' &&
-            document.documentElement.getAttribute('data-theme') === 'light';
-        const hc =
+        // Motyw sterowany CSS (.excel-hdr-themed): JS podaje oba warianty,
+        // desync przy zmianie motywu bez re-renderu znika.
+        const hcFill =
+            ct === 'avr' ? 'var(--excel-text-dim)' : (theme && theme.fill) || 'var(--blue-hover)';
+        const hcStroke =
             ct === 'avr'
                 ? 'var(--excel-text-dim)'
-                : (isLight ? theme && theme.fill : theme && theme.stroke) ||
-                  (theme && theme.fill) ||
-                  'var(--blue-hover)';
+                : (theme && theme.stroke) || (theme && theme.fill) || 'var(--blue-hover)';
         const colLabel = escapeHtml(c.shortLabel || c.label);
         /* escape przed wrapem — _excelWrapDetail dodaje <br>, które nie może być ucieczone */
         const colDetail = _excelWrapDetail(escapeHtml(c.detailLabel)) || '·';
@@ -237,9 +236,9 @@ function _excelRenderTable(dn) {
                   (wells[currentWellIndex] && wells[currentWellIndex].redukcjaTargetDN) ||
                   1000)
             : dnTh3(ct);
-        h1 += `<th scope="col" data-col-id="${escapeHtmlAttr(c.id)}" data-excel-col="comp-${escapeHtmlAttr(c.id)}" style="${thBase}background:var(--excel-header-bg);color:${hc};min-width:95px;text-align:center;">${colLabel}</th>`;
-        h2 += `<th scope="col" data-col-id="${escapeHtmlAttr(c.id)}" style="${th2Base}background:var(--excel-header-bg);color:${hc};min-width:95px;text-align:center;">${colDetail}</th>`;
-        h3 += `<th scope="col" data-col-id="${escapeHtmlAttr(c.id)}" style="padding:${h3Pad};font-size: var(--fs-3xs);font-weight: var(--fw-medium);color:var(--excel-text-dim);text-align:center;white-space:nowrap;background:var(--excel-header-bg);color:${hc};min-width:95px;text-align:center;">${colDnLabel}${colCode}</th>`;
+        h1 += `<th scope="col" data-col-id="${escapeHtmlAttr(c.id)}" data-excel-col="comp-${escapeHtmlAttr(c.id)}" class="excel-hdr-themed" style="${thBase}background:var(--excel-header-bg);--hc-fill:${hcFill};--hc-stroke:${hcStroke};min-width:95px;text-align:center;">${colLabel}</th>`;
+        h2 += `<th scope="col" data-col-id="${escapeHtmlAttr(c.id)}" class="excel-hdr-themed" style="${th2Base}background:var(--excel-header-bg);--hc-fill:${hcFill};--hc-stroke:${hcStroke};min-width:95px;text-align:center;">${colDetail}</th>`;
+        h3 += `<th scope="col" data-col-id="${escapeHtmlAttr(c.id)}" class="excel-hdr-themed" style="padding:${h3Pad};font-size: var(--fs-3xs);font-weight: var(--fw-medium);color:var(--excel-text-dim);text-align:center;white-space:nowrap;background:var(--excel-header-bg);--hc-fill:${hcFill};--hc-stroke:${hcStroke};min-width:95px;text-align:center;">${colDnLabel}${colCode}</th>`;
     });
 
     h1 += `<th scope="col" data-excel-col="h-denn" style="${thBase}background:var(--excel-header-bg);color:var(--warn-hover);min-width:60px;text-align:center;">H denn</th>`;

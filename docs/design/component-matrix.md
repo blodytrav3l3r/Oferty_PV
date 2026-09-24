@@ -32,3 +32,14 @@ SSoT `shared/modalCore.js`: `showModal({id,titleId,html,onOpen,onClose})`, focus
 4. Duplikaty utility: `.flex-between` + `.flex-space-between` + `.flex-between-4` (używane 2 pierwsze — NIE ruszać nazw, kontrakt).
 5. `.text-xs` = `var(--fs-base)` — nazwa myląca, ale używana w ~15 miejscach — NIE ruszać.
 6. Luki escape: offerWellComponents.js:403, offerSummaryBanners.js:23, actionsWellCrud.js:193,236, excelWellActions.js:356, offerUserManager.js:126.
+
+## Desync motywu (2026-09-24, naprawione)
+
+Kafelki konfiguracji (`actionsConfigRender.js`) branchowały motyw w JS w czasie
+renderu (`isLightTheme` z `data-theme`). Przy cache `light` + synchronizacji
+`dark` z backendu (bez re-renderu) strona była ciemna, a kafle neutralne —
+„raz kolorowe, raz nie”. Reguła: motyw sterowany wyłącznie CSS
+(`.config-tile` + `html[data-theme='light']`), JS podaje tylko `--tile-accent`.
+Ten sam wzorzec zastosowano w `orderZleceniaRender.js` (`.zl-config-tile`)
+i nagłówkach Excela (`excelTableRenderer.js`, `.excel-hdr-themed`).
+Zakaz `getAttribute('data-theme')` w kodzie renderującym (public/js).

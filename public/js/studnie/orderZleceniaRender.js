@@ -257,21 +257,21 @@ function renderZleceniaWellConfig() {
             zleceniaElementsList[zleceniaSelectedIdx] &&
             zleceniaElementsList[zleceniaSelectedIdx].elementIndex === index;
 
-        html += `<div data-zl-idx="${index}" class="config-tile" draggable="${!isLocked}" ondragstart="handleZlCfgDragStart(event)" ondragover="handleZlCfgDragOver(event)" ondrop="handleZlCfgDrop(event)" ondragend="handleZlCfgDragEnd(event)"
-                      style="background:rgba(var(--slate-800-rgb), 0.8); border:1px solid ${isCurrentlyEdited ? 'var(--accent)' : 'rgba(var(--white-rgb), 0.05)'}; border-left:4px solid ${badge.bg}; border-radius: var(--radius-sm); padding:0.35rem 0.5rem; margin-bottom:0.25rem; cursor:${isLocked ? 'default' : 'grab'}; transition:all 0.15s; ${isCurrentlyEdited ? 'box-shadow: 0 0 10px rgba(var(--accent-rgb), 0.2); border-color:var(--accent-hover);' : ''}">
+        html += `<div data-zl-idx="${index}" class="zl-config-tile${isLocked ? ' zl-config-tile--locked' : ''}${isCurrentlyEdited ? ' zl-config-tile--edited' : ''}" draggable="${!isLocked}" ondragstart="handleZlCfgDragStart(event)" ondragover="handleZlCfgDragOver(event)" ondrop="handleZlCfgDrop(event)" ondragend="handleZlCfgDragEnd(event)"
+                      style="--tile-accent:${badge.bg};">
           <div class="flex-between">
             <div class="flex-gap-4">
-                <div style="display:flex; flex-direction:column; gap:1px; align-items:center; background:rgba(var(--black-rgb), 0.2); padding:0.1rem; border-radius: var(--radius-2xs);">
-                  <button onclick="event.stopPropagation(); moveZleceniaComponent(${index}, -1)" title="W górę" aria-label="W górę" style="background:none; border:none; color:var(--text-muted); cursor:pointer; padding:0; display:${isLocked || index === 0 ? 'none' : 'block'};"><i data-lucide="chevron-up" class="icon-xs" aria-hidden="true"></i></button>
-                  <span style="font-size: var(--fs-3xs); color:var(--text-primary); font-weight: var(--fw-bold);">${index + 1}</span>
-                  <button onclick="event.stopPropagation(); moveZleceniaComponent(${index}, 1)" title="W dół" aria-label="W dół" style="background:none; border:none; color:var(--text-muted); cursor:pointer; padding:0; display:${isLocked || index === well.config.length - 1 ? 'none' : 'block'};"><i data-lucide="chevron-down" class="icon-xs" aria-hidden="true"></i></button>
+                <div class="zl-idx-box">
+                  <button onclick="event.stopPropagation(); moveZleceniaComponent(${index}, -1)" title="W górę" aria-label="W górę" class="cfg-move-btn cfg-move-btn--plain" style="display:${isLocked || index === 0 ? 'none' : 'block'};"><i data-lucide="chevron-up" class="icon-xs" aria-hidden="true"></i></button>
+                  <span class="zl-idx-num">${index + 1}</span>
+                  <button onclick="event.stopPropagation(); moveZleceniaComponent(${index}, 1)" title="W dół" aria-label="W dół" class="cfg-move-btn cfg-move-btn--plain" style="display:${isLocked || index === well.config.length - 1 ? 'none' : 'block'};"><i data-lucide="chevron-down" class="icon-xs" aria-hidden="true"></i></button>
                 </div>
                 <div style="display:flex; flex-direction:column;">
-                  <div style="font-weight: var(--fw-bold); color:var(--text-primary); font-size: var(--fs-xs); line-height:1.1;">${escapeHtml(p.name)}${item.quantity > 1 ? ` (x${item.quantity})` : ''}</div>
-                  <div style="font-size: var(--fs-3xs); color:var(--text-muted);">${p.height ? 'H=' + p.height + 'mm' : '—'}</div>
+                  <div class="zl-item-name">${escapeHtml(p.name)}${item.quantity > 1 ? ` (x${item.quantity})` : ''}</div>
+                  <div class="zl-item-sub">${p.height ? 'H=' + p.height + 'mm' : '—'}</div>
                 </div>
             </div>
-            ${isCurrentlyEdited ? '<span style="font-size: var(--fs-2xs); color:var(--accent-hover);"><i data-lucide="pencil"></i></span>' : ''}
+            ${isCurrentlyEdited ? '<span class="zl-edited-ico"><i data-lucide="pencil"></i></span>' : ''}
           </div>
         </div>`;
     });
