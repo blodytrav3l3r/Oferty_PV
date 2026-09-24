@@ -4,6 +4,25 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+### [1.29.4](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.29.3...v1.29.4) (2026-09-24)
+
+### Features
+
+- **rury:** pamiec zwiniecia kalkulacji transportu ([affe738](https://github.com/blodytrav3l3r/Oferty_PV/commit/affe738d48b7f30116e27c7f526eea4d6315800b))
+- **studnie:** pamiec zwiniec zlecenia i konfiguratora oraz marquee ([736ce1f](https://github.com/blodytrav3l3r/Oferty_PV/commit/736ce1f9f21d8960b19b3bf136000a18f63a71fb))
+- **ui:** ssot persystencji zwiniec sekcji per-user ([0b4f14a](https://github.com/blodytrav3l3r/Oferty_PV/commit/0b4f14a76d63973f8894593ba90ba6da30f326ca))
+
+### Bug Fixes
+
+- **orders:** liczniki kartoteki ze źródeł ssot ([a592bc3](https://github.com/blodytrav3l3r/Oferty_PV/commit/a592bc39e458bc16e24304c39d8a005189eefbb1))
+- **orders:** merge bloba pz w put/post zamiast nadpisania ([11e8f35](https://github.com/blodytrav3l3r/Oferty_PV/commit/11e8f35471c3976796ec7c1417aafa1636e8aef3))
+- **studnie:** backdrop light i pelna wysokosc zlecen ([aa55f58](https://github.com/blodytrav3l3r/Oferty_PV/commit/aa55f58c09901f9890b615be53f6155641237d29))
+- **studnie:** kolory excel i konfiguratora ([9448ea1](https://github.com/blodytrav3l3r/Oferty_PV/commit/9448ea110ebd653127699a62c08cc3b202f309c3))
+- **studnie:** nav w no-buttons po wejsciu w edycje ([9045d69](https://github.com/blodytrav3l3r/Oferty_PV/commit/9045d697a354cd33b34f4c8d2de8ce28d0686409))
+- **studnie:** tylko aktywne dn w kolorze ([ac6a080](https://github.com/blodytrav3l3r/Oferty_PV/commit/ac6a080c307d50a68772449b6572f7912b2b5e4d))
+- **studnie:** zwijany pasek oferty i widocznosc kafli ([d93461a](https://github.com/blodytrav3l3r/Oferty_PV/commit/d93461acc37a3847885cbf1ebb860f6d188975b3))
+- **ui:** zwijany pasek oferty i stabilna kartoteka ([5404caa](https://github.com/blodytrav3l3r/Oferty_PV/commit/5404caaadd85eef484491470eca9117d4d463326))
+
 ### [1.29.3](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.29.2...v1.29.3) (2026-09-24)
 
 ### [1.29.2](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.29.1...v1.29.2) (2026-09-24)
