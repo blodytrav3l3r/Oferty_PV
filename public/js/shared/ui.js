@@ -116,14 +116,14 @@ function showUserSelectionPopup(users, defaultUserId) {
                       ? '⭐'
                       : '<i data-lucide="user"></i>';
 
-            html += `<button class="user-select-btn" data-user-id="${u.id}" style="
+            html += `<button class="user-select-btn" data-user-id="${escapeHtmlAttr(u.id)}" style="
                 display:flex; align-items:center; gap:0.8rem; padding:0.7rem 1rem;
-                background:${isDefault ? 'rgba(var(--accent-rgb), 0.15)' : 'rgba(var(--white-rgb), 0.05)'};
-                border:1px solid ${isDefault ? 'rgba(var(--accent-rgb), 0.5)' : 'rgba(var(--white-rgb), 0.05)'};
+                background:${isDefault ? 'rgba(var(--accent-rgb), 0.15)' : 'var(--bg-subtle)'};
+                border:1px solid ${isDefault ? 'rgba(var(--accent-rgb), 0.5)' : 'var(--border-color)'};
                 border-radius: var(--radius-sm); cursor:pointer; color:var(--text-primary); font:var(--fw-medium) var(--fs-lg) Inter,sans-serif;
                 transition:all 0.15s; text-align:left; width:100%;
             " onmouseenter="this.style.borderColor='rgba(var(--accent-rgb), 0.5)';this.style.background='rgba(var(--accent-rgb), 0.1)'"
-               onmouseleave="if(!this.classList.contains('selected')){this.style.borderColor='rgba(var(--white-rgb), 0.05)';this.style.background='rgba(var(--white-rgb), 0.05)'}">
+               onmouseleave="if(!this.classList.contains('selected')){this.style.borderColor='${isDefault ? 'rgba(var(--accent-rgb), 0.5)' : 'var(--border-color)'}';this.style.background='${isDefault ? 'rgba(var(--accent-rgb), 0.15)' : 'var(--bg-subtle)'}'}">
                 <span class="fs-3xl">${roleBadge}</span>
                 <div class="flex-1">
                     <div class="fw-bold">${escapeHtml(displayName)}</div>
@@ -135,7 +135,7 @@ function showUserSelectionPopup(users, defaultUserId) {
 
         html += `</div>`;
         html += `<div style="display:flex; justify-content:flex-end; gap:0.5rem; margin-top:1.2rem;">`;
-        html += `<button id="user-select-cancel" style="padding:0.5rem 1rem; border:1px solid rgba(var(--white-rgb), 0.1); border-radius: var(--radius-sm); background:transparent; color:var(--text-secondary); cursor:pointer; font:var(--fw-medium) var(--fs-md) Inter,sans-serif;">Anuluj</button>`;
+        html += `<button id="user-select-cancel" style="padding:0.5rem 1rem; border:1px solid var(--border-color); border-radius: var(--radius-sm); background:var(--bg-subtle); color:var(--text-secondary); cursor:pointer; font:var(--fw-medium) var(--fs-md) Inter,sans-serif;">Anuluj</button>`;
         html += `</div>`;
 
         const overlay = showModal({
