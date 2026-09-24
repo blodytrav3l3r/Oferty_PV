@@ -233,12 +233,18 @@ html[data-theme='light'] .przejscia-vis-tile.hidden-type:hover {
     display: flex;
 }
 
+/* Backdrop w light — przyciemnienie jak excel, nie pełna czerń. */
+html[data-theme='light'] .zlecenia-overlay {
+    background: rgba(var(--slate-950-rgb), 0.45);
+}
+
 .zlecenia-container {
     width: 100%;
     display: grid;
     grid-template-columns: 350px 1fr 350px;
     background: var(--bg-primary);
-    height: calc(100vh - 57px);
+    height: 100vh;
+    height: 100dvh;
 }
 
 .zlecenia-left {
@@ -250,7 +256,8 @@ html[data-theme='light'] .przejscia-vis-tile.hidden-type:hover {
     position: sticky;
     top: 0;
     z-index: 10;
-    height: calc(100vh - 57px);
+    height: 100vh;
+    height: 100dvh;
 }
 
 .zlecenia-center {
@@ -258,7 +265,8 @@ html[data-theme='light'] .przejscia-vis-tile.hidden-type:hover {
     flex-direction: column;
     overflow-y: auto;
     background: var(--bg-primary);
-    height: calc(100vh - 57px);
+    height: 100vh;
+    height: 100dvh;
 }
 
 .zlecenia-right {
@@ -267,7 +275,8 @@ html[data-theme='light'] .przejscia-vis-tile.hidden-type:hover {
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    height: calc(100vh - 57px);
+    height: 100vh;
+    height: 100dvh;
 }
 
 .zlecenia-left,
