@@ -81,6 +81,9 @@ window.toggleCard = function (contentId, iconId) {
             if (isHidden) el.classList.add('hidden');
             else el.classList.remove('hidden');
         });
+        try {
+            if (typeof collapseSet === 'function') collapseSet(contentId, !isHidden);
+        } catch (_e) {}
     }
 };
 

@@ -174,6 +174,12 @@ Zamiast inline style używaj istniejących utility. Najczęściej używane:
   (`nav-tile--studnie`); warianty stanu: `.active`, `.selected`, `.hidden`, `.disabled`.
 - Globalne helpery JS: `window.nazwa = funkcja;`.
 - Nie twórz klas per strona dla rzeczy wspólnych (nagłówek, logo, przyciski, formularze).
+- Zwijane sekcje: **wyłącznie przez `collapseState.js`** (`collapseGet`/`collapseSet`/
+  `collapseApply`, klucz `sok-collapse:<userId>` w localStorage, per-user jak theme).
+  Każda nowa zwijana sekcja dostaje stabilne `id` kontenera; toggler woła `collapseSet`,
+  render woła `collapseGet` (default = dzisiejszy wygląd). Kontener z layoutem innym
+  niż `block` dostaje `data-open-display="flex|grid"` (honoruje `toggleCard`).
+  Bez przycisku resetu (YAGNI) — czyszczenie z konsoli.
 
 ### Scoped variant vs modifier (Faza 3 — SSoT §6)
 

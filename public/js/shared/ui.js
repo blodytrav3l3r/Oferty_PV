@@ -59,12 +59,15 @@ function toggleCard(contentIdOrHeader, iconId) {
         const icon = iconId ? document.getElementById(iconId) : null;
         if (content) {
             content.classList.toggle('hidden');
+            const isHidden = content.classList.contains('hidden');
             if (icon) {
-                const isHidden = content.classList.contains('hidden');
                 icon.innerHTML = isHidden
                     ? '<i data-lucide="chevron-down"></i>'
                     : '<i data-lucide="chevron-up"></i>';
             }
+            try {
+                if (typeof collapseSet === 'function') collapseSet(contentIdOrHeader, !isHidden);
+            } catch (_e) {}
         }
     }
 }
