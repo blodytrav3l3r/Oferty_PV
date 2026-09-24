@@ -884,6 +884,8 @@ async function enterOrderEditMode(orderId) {
 
         logger.info('orderManager', '[enterOrderEditMode] calling refreshAll...');
         refreshAll();
+        // Krok 5 (tryb edycji) chowa przyciski kreatora — sam napis „Zamówienie".
+        if (typeof updateStudnieBottomNav === 'function') updateStudnieBottomNav();
 
         logger.info('orderManager', '[enterOrderEditMode] calling renderOrderModeBanner...');
         renderOrderModeBanner();
