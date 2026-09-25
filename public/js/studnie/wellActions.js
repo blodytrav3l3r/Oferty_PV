@@ -4,7 +4,22 @@
 /* ===== Resztówka — odświeżanie modala zleceń ===== */
 
 /* ===== ODŚWIEŻANIE MODALA ZLECEŃ ===== */
-window.refreshZleceniaModalIfActive = async function () {
+// Współdzielony lot: równoległe refreshe (blur-save + quick-edit switch)
+// czekałyby na siebie i każdy przebudowywał formularz — ostatni wygrywa
+// i niszczy świeży input. Jeden lot = jeden rebuild.
+window.refreshZleceniaModalIfActive = function () {
+    if (window.__zlRefreshInFlight) return window.__zlRefreshInFlight;
+    window.__zlRefreshInFlight = (async () => {
+        try {
+            await refreshZleceniaModalInner();
+        } finally {
+            window.__zlRefreshInFlight = null;
+        }
+    })();
+    return window.__zlRefreshInFlight;
+};
+
+async function refreshZleceniaModalInner() {
     const zlModal = document.getElementById('zlecenia-modal');
     if (
         zlModal &&
@@ -83,4 +98,4 @@ window.refreshZleceniaModalIfActive = async function () {
             }
         }
     }
-};
+}

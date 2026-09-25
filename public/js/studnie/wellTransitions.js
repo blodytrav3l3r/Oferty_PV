@@ -321,6 +321,18 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
                 if (typeof window.__pendingPrzejsciaApply === 'function') {
                     window.__pendingPrzejsciaApply();
                     window.__pendingPrzejsciaApply = null;
+                    // Stempel PO udanym apply: blur tego inputa za chwilę i tak
+                    // nastąpi (focus przechodzi na nowy input), a ponowny zapis
+                    // + pełny rebuild 100ms później zniszczyłby świeży input.
+                    // Przy wyjątku z apply stempla brak — blur zapisze normalnie.
+                    const _focusedInput = document.activeElement;
+                    if (
+                        _focusedInput &&
+                        _focusedInput.tagName === 'INPUT' &&
+                        _focusedInput.closest('[data-qe-id]')
+                    ) {
+                        _focusedInput.dataset.qeApplied = '1';
+                    }
                 }
 
                 (async () => {
@@ -372,7 +384,7 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
                 const inpType = useCalc ? 'text' : 'number';
                 const inpMode = useCalc ? ' inputmode="decimal"' : '';
 
-                element.innerHTML = `<input type="${inpType}"${inpMode} step="${step}" placeholder="${escapeHtmlAttr(String(val))}" value="${escapeHtmlAttr(String(val))}" style="width:100%; min-width:0; max-width:100%; height:30px; margin:0; box-sizing:border-box; background: var(--bg-tertiary); color: var(--text-primary); border:1px solid var(--accent); border-radius: var(--radius-xs); font-size: var(--fs-base); font-weight: var(--fw-bold); text-align:center; padding:0 0.25rem; outline:none;" onclick="this.select()" onfocus="this.select()" onblur="window.saveQuickEdit(${index}, '${field}', this.value)" onkeydown="if(event.key==='Enter') this.blur();">`;
+                element.innerHTML = `<input type="${inpType}"${inpMode} step="${step}" placeholder="${escapeHtmlAttr(String(val))}" value="${escapeHtmlAttr(String(val))}" style="width:100%; min-width:0; max-width:100%; height:30px; margin:0; box-sizing:border-box; background: var(--bg-tertiary); color: var(--text-primary); border:1px solid var(--accent); border-radius: var(--radius-xs); font-size: var(--fs-base); font-weight: var(--fw-bold); text-align:center; padding:0 0.25rem; outline:none;" onclick="this.select()" onfocus="this.select()" onblur="window.saveQuickEdit(${index}, '${field}', this.value, this)" onkeydown="if(event.key==='Enter') this.blur();">`;
                 const inp = element.querySelector('input');
                 inp.focus();
                 try {
@@ -389,7 +401,13 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
         };
 
         window.__pendingPrzejsciaRefresh = null;
-        window.saveQuickEdit = function (index, field, value) {
+        window.saveQuickEdit = function (index, field, value, inputEl) {
+            // Input rozliczony synchronicznie przy przełączeniu pól —
+            // ponowny zapis byłby no-opem z pełnym rebuildem niszczącym input.
+            if (inputEl && inputEl.dataset && inputEl.dataset.qeApplied === '1') {
+                delete inputEl.dataset.qeApplied;
+                return;
+            }
             if (isWellLocked()) {
                 showToast(WELL_LOCKED_MSG, 'error');
                 return;
