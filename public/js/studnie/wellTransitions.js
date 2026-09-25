@@ -424,29 +424,23 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
                     return;
                 }
 
-                let val, step;
+                let val;
                 if (field === 'angle') {
                     val = well.przejscia[index].angle;
-                    step = '1';
                 } else if (field === 'spadekKineta') {
                     val = well.przejscia[index].spadekKineta || '';
-                    step = '1';
                 } else if (field === 'spadekMufa') {
                     val = well.przejscia[index].spadekMufa || '';
-                    step = '1';
                 } else if (field === 'heightMm') {
                     val = '';
-                    step = '1';
                 } else if (field === 'doplata') {
                     val = well.przejscia[index].doplata || '0';
-                    step = '1';
                 } else {
                     val =
                         well.przejscia[index].rzednaWlaczenia !== null &&
                         well.przejscia[index].rzednaWlaczenia !== undefined
                             ? well.przejscia[index].rzednaWlaczenia
                             : '';
-                    step = '0.001';
                 }
                 void element.offsetWidth;
                 // type=number nie pozwala niezawodnie zaznaczyć wartości po
@@ -456,7 +450,7 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
                 const inpType = 'text';
                 const inpMode = ' inputmode="decimal"';
 
-                element.innerHTML = `<input type="${inpType}"${inpMode} step="${step}" placeholder="${escapeHtmlAttr(String(val))}" value="${escapeHtmlAttr(String(val))}" style="width:100%; min-width:0; max-width:100%; height:30px; margin:0; box-sizing:border-box; background: var(--bg-tertiary); color: var(--text-primary); border:1px solid var(--accent); border-radius: var(--radius-xs); font-size: var(--fs-base); font-weight: var(--fw-bold); text-align:center; padding:0 0.25rem; outline:none;" onclick="this.select()" onfocus="this.select()" onblur="window.saveQuickEdit(${index}, '${field}', this.value, this)" onkeydown="if(event.key==='Enter') this.blur();">`;
+                element.innerHTML = `<input type="${inpType}"${inpMode} placeholder="${escapeHtmlAttr(String(val))}" value="${escapeHtmlAttr(String(val))}" style="width:100%; min-width:0; max-width:100%; height:30px; margin:0; box-sizing:border-box; background: var(--bg-tertiary); color: var(--text-primary); border:1px solid var(--accent); border-radius: var(--radius-xs); font-size: var(--fs-base); font-weight: var(--fw-bold); text-align:center; padding:0 0.25rem; outline:none;" onclick="this.select()" onfocus="this.select()" onblur="window.saveQuickEdit(${index}, '${field}', this.value, this)" onkeydown="if(event.key==='Enter') this.blur();">`;
                 const inp = element.querySelector('input');
                 inp.focus();
                 try {
@@ -552,6 +546,21 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
                 // oferty — zapis po locku nadpisałby zatwierdzony stan (F2).
                 if (isWellLocked()) return;
                 if (isOfferLocked()) return;
+                // Odrzuć śmieci w polu kąta zamiast cichego zerowania:
+                // NaN→0 przestawiałby WLOT/WYLOT bez wiedzy użytkownika.
+                if (field === 'angle' && isNaN(parseCalcExpression(value))) {
+                    if (typeof showToast === 'function')
+                        showToast('Nieprawidłowy kąt — zachowano poprzednią wartość.', 'error');
+                    if (!window.__qeNoRender) {
+                        if (typeof window.refreshPrzejsciaViews === 'function')
+                            window.refreshPrzejsciaViews();
+                        else renderWellPrzejscia();
+                        if (typeof window.refreshZleceniaModalIfActive === 'function') {
+                            window.refreshZleceniaModalIfActive();
+                        }
+                    }
+                    return;
+                }
                 if (value.trim() === '') {
                     if (!window.__qeNoRender) {
                         if (typeof window.refreshPrzejsciaViews === 'function')
