@@ -270,6 +270,48 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
                 }
             }
 
+            // Tworzenie inputa po rozliczeniu ASYNC refresha modala PZ.
+            // populateZleceniaForm (await fetch) ląduje PO utworzeniu inputa
+            // i go niszczy — stąd konieczność 2. kliknięcia. Czekamy, aż
+            // modal się rozliczy, i dopiero wtedy wstawiamy input.
+            const rebuildInput = () => {
+                // Do którego kontenera należy ten element?
+                const containerId = element.closest('#zl-przejscia-list')
+                    ? 'zl-przejscia-list'
+                    : 'well-przejscia-tiles';
+
+                if (typeof window.refreshPrzejsciaViews === 'function')
+                    window.refreshPrzejsciaViews();
+                else renderWellPrzejscia();
+
+                const newList = document.getElementById(containerId);
+                if (newList) {
+                    const stableId = element.getAttribute('data-qe-id');
+                    const newEl = newList.querySelector(
+                        `[data-qe-id="${stableId}"][data-qe-field="${field}"]`
+                    );
+                    if (newEl) element = newEl;
+                }
+                // Komórka wypadła z DOM (np. filtr) — nie wstawiaj w próżnię.
+                if (!element.isConnected) {
+                    window.__qeKey = null;
+                    return;
+                }
+                // Użytkownik zdążył przejść dalej — nie kradnij fokusu.
+                const _ae = document.activeElement;
+                if (
+                    _ae &&
+                    _ae.tagName === 'INPUT' &&
+                    _ae.closest('[data-qe-id]') &&
+                    !element.contains(_ae)
+                ) {
+                    window.__qeKey = null;
+                    return;
+                }
+                buildInput();
+                window.__qeKey = null;
+            };
+
             // Anuluj wszelkie oczekujące odświeżania po utracie fokusu (blur) przez inne pole
             if (window.__pendingPrzejsciaRefresh) {
                 clearTimeout(window.__pendingPrzejsciaRefresh);
@@ -281,72 +323,67 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
                     window.__pendingPrzejsciaApply = null;
                 }
 
-                // Do którego kontenera należy ten element?
-                const containerId = element.closest('#zl-przejscia-list')
-                    ? 'zl-przejscia-list'
-                    : 'well-przejscia-tiles';
+                (async () => {
+                    try {
+                        if (typeof window.refreshZleceniaModalIfActive === 'function')
+                            await window.refreshZleceniaModalIfActive();
+                    } catch (_e) {}
+                    rebuildInput();
+                })();
+                return;
+            }
 
-                if (typeof window.refreshPrzejsciaViews === 'function')
-                    window.refreshPrzejsciaViews();
-                else renderWellPrzejscia();
-                if (typeof window.refreshZleceniaModalIfActive === 'function')
-                    window.refreshZleceniaModalIfActive();
-
-                const newList = document.getElementById(containerId);
-                if (newList) {
-                    const stableId = element.getAttribute('data-qe-id');
-                    const newEl = newList.querySelector(
-                        `[data-qe-id="${stableId}"][data-qe-field="${field}"]`
-                    );
-                    if (newEl) element = newEl;
+            const buildInput = () => {
+                const well = getCurrentWell();
+                if (!well || !well.przejscia || !well.przejscia[index]) {
+                    window.__qeKey = null;
+                    return;
                 }
-            }
 
-            const well = getCurrentWell();
-            if (!well || !well.przejscia || !well.przejscia[index]) return;
+                let val, step;
+                if (field === 'angle') {
+                    val = well.przejscia[index].angle;
+                    step = '1';
+                } else if (field === 'spadekKineta') {
+                    val = well.przejscia[index].spadekKineta || '';
+                    step = '1';
+                } else if (field === 'spadekMufa') {
+                    val = well.przejscia[index].spadekMufa || '';
+                    step = '1';
+                } else if (field === 'heightMm') {
+                    val = '';
+                    step = '1';
+                } else if (field === 'doplata') {
+                    val = well.przejscia[index].doplata || '0';
+                    step = '1';
+                } else {
+                    val =
+                        well.przejscia[index].rzednaWlaczenia !== null &&
+                        well.przejscia[index].rzednaWlaczenia !== undefined
+                            ? well.przejscia[index].rzednaWlaczenia
+                            : '';
+                    step = '0.001';
+                }
+                void element.offsetWidth;
+                const useCalc =
+                    field === 'rzednaWlaczenia' || field === 'heightMm' || field === 'doplata';
+                const inpType = useCalc ? 'text' : 'number';
+                const inpMode = useCalc ? ' inputmode="decimal"' : '';
 
-            let val, step;
-            if (field === 'angle') {
-                val = well.przejscia[index].angle;
-                step = '1';
-            } else if (field === 'spadekKineta') {
-                val = well.przejscia[index].spadekKineta || '';
-                step = '1';
-            } else if (field === 'spadekMufa') {
-                val = well.przejscia[index].spadekMufa || '';
-                step = '1';
-            } else if (field === 'heightMm') {
-                val = '';
-                step = '1';
-            } else if (field === 'doplata') {
-                val = well.przejscia[index].doplata || '0';
-                step = '1';
-            } else {
-                val =
-                    well.przejscia[index].rzednaWlaczenia !== null &&
-                    well.przejscia[index].rzednaWlaczenia !== undefined
-                        ? well.przejscia[index].rzednaWlaczenia
-                        : '';
-                step = '0.001';
-            }
-            void element.offsetWidth;
-            const useCalc =
-                field === 'rzednaWlaczenia' || field === 'heightMm' || field === 'doplata';
-            const inpType = useCalc ? 'text' : 'number';
-            const inpMode = useCalc ? ' inputmode="decimal"' : '';
-
-            element.innerHTML = `<input type="${inpType}"${inpMode} step="${step}" placeholder="${escapeHtmlAttr(String(val))}" value="${escapeHtmlAttr(String(val))}" style="width:100%; min-width:0; max-width:100%; height:30px; margin:0; box-sizing:border-box; background: var(--bg-tertiary); color: var(--text-primary); border:1px solid var(--accent); border-radius: var(--radius-xs); font-size: var(--fs-base); font-weight: var(--fw-bold); text-align:center; padding:0 0.25rem; outline:none;" onclick="this.select()" onfocus="this.select()" onblur="window.saveQuickEdit(${index}, '${field}', this.value)" onkeydown="if(event.key==='Enter') this.blur();">`;
-            const inp = element.querySelector('input');
-            inp.focus();
-            try {
-                inp.select();
-            } catch {}
-            // dla type=number select() bywa blokowany — fallback: timeout
-            setTimeout(() => {
+                element.innerHTML = `<input type="${inpType}"${inpMode} step="${step}" placeholder="${escapeHtmlAttr(String(val))}" value="${escapeHtmlAttr(String(val))}" style="width:100%; min-width:0; max-width:100%; height:30px; margin:0; box-sizing:border-box; background: var(--bg-tertiary); color: var(--text-primary); border:1px solid var(--accent); border-radius: var(--radius-xs); font-size: var(--fs-base); font-weight: var(--fw-bold); text-align:center; padding:0 0.25rem; outline:none;" onclick="this.select()" onfocus="this.select()" onblur="window.saveQuickEdit(${index}, '${field}', this.value)" onkeydown="if(event.key==='Enter') this.blur();">`;
+                const inp = element.querySelector('input');
+                inp.focus();
                 try {
-                    if (document.activeElement === inp) inp.select();
+                    inp.select();
                 } catch {}
-            }, 0);
+                // dla type=number select() bywa blokowany — fallback: timeout
+                setTimeout(() => {
+                    try {
+                        if (document.activeElement === inp) inp.select();
+                    } catch {}
+                }, 0);
+            };
+            rebuildInput();
         };
 
         window.__pendingPrzejsciaRefresh = null;

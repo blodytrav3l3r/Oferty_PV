@@ -527,8 +527,11 @@ if (typeof document !== 'undefined' && !window.__trDelegated) {
                     ? resolvePrzejscieIndex(w, el, parseInt(i, 10))
                     : parseInt(i, 10);
             window.activateQuickEdit(el, rIdx, field);
-            el.setAttribute('data-qe-handled', '1');
-            setTimeout(() => el.removeAttribute('data-qe-handled'), 300);
+            // Klucz tekstowy zamiast flagi na nodzie — re-render wymiany nody.
+            window.__qeKey = el.getAttribute('data-qe-id') + '|' + el.getAttribute('data-field');
+            setTimeout(() => {
+                window.__qeKey = null;
+            }, 2000);
         }
     });
     // Marquee uciętych podpisów — auto-skan po renderach + resize (bez hover).
@@ -575,8 +578,9 @@ if (typeof document !== 'undefined' && !window.__trDelegated) {
         } else if (action === 'openChangePrzejscieDnPopup') {
             window.openChangePrzejscieDnPopup(idx);
         } else if (action === 'activateQuickEdit') {
-            if (el.getAttribute('data-qe-handled') === '1') {
-                el.removeAttribute('data-qe-handled');
+            const _key = el.getAttribute('data-qe-id') + '|' + el.getAttribute('data-field');
+            if (window.__qeKey && window.__qeKey === _key) {
+                window.__qeKey = null;
                 return;
             }
             window.activateQuickEdit(el, idx, field);
