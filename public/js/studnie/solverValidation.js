@@ -435,8 +435,22 @@ function announceRzednaClamp(c) {
 function renderWellConfigErrors(well) {
     if (well) recalculateWellErrors(well);
     // Zlecenie Produkcyjne ma własny banner w populateZleceniaForm — odśwież go live
-    // przed early return (errContainer może nie istnieć w niektórych widokach)
-    if (typeof window.refreshZleceniaModalIfActive === 'function')
+    // przed early return (errContainer może nie istnieć w niektórych widokach).
+    // PZ 1-klik: przy fokusie w polu quick-edit pomiń refresh modala —
+    // populateZleceniaForm (pełny innerHTML) zniszczyłby edytowany input
+    // (E2E: focusout po deferred heavy-refresh). Banner PZ synchronizuje się
+    // przy wyjściu z edycji pełnym refreshem.
+    let _qeFocused = false;
+    try {
+        const _ae = typeof document !== 'undefined' ? document.activeElement : null;
+        _qeFocused = !!(
+            _ae &&
+            _ae.tagName === 'INPUT' &&
+            _ae.closest &&
+            _ae.closest('[data-qe-id]')
+        );
+    } catch (_e) {}
+    if (!_qeFocused && typeof window.refreshZleceniaModalIfActive === 'function')
         window.refreshZleceniaModalIfActive();
     const errContainer = document.getElementById('well-config-errors-container');
     if (!errContainer) return;

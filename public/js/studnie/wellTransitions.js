@@ -1,6 +1,58 @@
 // @ts-check
 /* ===== Główny moduł przejść ===== */
 
+// Stały zbiór pól quick-edit (SSoT renderera transitionRenderer.js).
+// `field` trafia do selektora i inline onblur — obce wartości odrzucane
+// w buildInput (F1: brak zdalnego XSS, co najwyżej self-XSS przez devtools).
+const QE_FIELD_ALLOWLIST = Object.freeze([
+    'angle',
+    'rzednaWlaczenia',
+    'spadekKineta',
+    'spadekMufa',
+    'heightMm',
+    'doplata'
+]);
+
+// Bezpieczne składanie selektora atrybutu (CSS.escape z fallbackiem).
+function qeAttrEscape(s) {
+    try {
+        if (typeof CSS !== 'undefined' && CSS.escape) return CSS.escape(String(s));
+    } catch (_e) {}
+    return String(s).replace(/["\\]/g, '\\$&');
+}
+
+// Domknięcie lifecycle quick-edit przy zamykaniu modala PZ: zaległy zapis
+// aplikuj synchronicznie do modelu (potem save/decyzja użytkownika i tak
+// czyta wells albo odtwarza snapshot), timery i flagi wyczyść — callback
+// nie może odpalić na zamkniętym DOM (F3).
+function flushQePendingState() {
+    try {
+        if (typeof window.__pendingPrzejsciaApply === 'function') {
+            window.__qeNoRender = true;
+            window.__qeDeferHeavy = true;
+            try {
+                window.__pendingPrzejsciaApply();
+            } finally {
+                window.__qeNoRender = false;
+                window.__qeDeferHeavy = false;
+            }
+            window.__pendingPrzejsciaApply = null;
+        }
+        if (window.__pendingPrzejsciaRefresh) {
+            clearTimeout(window.__pendingPrzejsciaRefresh);
+            window.__pendingPrzejsciaRefresh = null;
+        }
+        if (window.__qeHeavyTimer) {
+            clearTimeout(window.__qeHeavyTimer);
+            window.__qeHeavyTimer = null;
+        }
+        window.__qeNoRender = false;
+        window.__qeDeferHeavy = false;
+    } catch (_e) {}
+}
+
+window.flushQePendingState = flushQePendingState;
+
 function renderInlinePrzejsciaApp(containerId) {
     const well = getCurrentWell();
     const allTypes =
@@ -270,15 +322,20 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
                 }
             }
 
+            // Kontener zapamiętaj NA WEJŚCIU: po przerwie asynchronicznej
+            // (gałąź pending) element może być odłączony, a closest() na
+            // martwym drzewie myli — input lądowałby w ukrytym konfiguratorze
+            // zamiast w liście PZ (E2E: wieczny 2-klik mimo fokusu).
+            const entryContainerId = element.closest('#zl-przejscia-list')
+                ? 'zl-przejscia-list'
+                : 'well-przejscia-tiles';
+
             // Tworzenie inputa po rozliczeniu ASYNC refresha modala PZ.
             // populateZleceniaForm (await fetch) ląduje PO utworzeniu inputa
             // i go niszczy — stąd konieczność 2. kliknięcia. Czekamy, aż
             // modal się rozliczy, i dopiero wtedy wstawiamy input.
             const rebuildInput = () => {
-                // Do którego kontenera należy ten element?
-                const containerId = element.closest('#zl-przejscia-list')
-                    ? 'zl-przejscia-list'
-                    : 'well-przejscia-tiles';
+                const containerId = entryContainerId;
 
                 if (typeof window.refreshPrzejsciaViews === 'function')
                     window.refreshPrzejsciaViews();
@@ -288,7 +345,7 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
                 if (newList) {
                     const stableId = element.getAttribute('data-qe-id');
                     const newEl = newList.querySelector(
-                        `[data-qe-id="${stableId}"][data-qe-field="${field}"]`
+                        `[data-qe-id="${qeAttrEscape(stableId)}"][data-qe-field="${qeAttrEscape(field)}"]`
                     );
                     if (newEl) element = newEl;
                 }
@@ -301,28 +358,28 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
                 }
                 // Komórka wypadła z DOM (np. filtr) — nie wstawiaj w próżnię.
                 if (!element.isConnected) {
-                    window.__qeKey = null;
                     return;
                 }
                 // Użytkownik zdążył przejść dalej — nie kradnij fokusu.
+                // Odłączony activeElement (stary input zniszczony refreshem
+                // powyżej — przeglądarka trzyma go do async blur) to NIE
+                // nowsze pole, tylko martwy node (E2E: brak focusin nowego).
                 const _ae = document.activeElement;
                 if (
                     _ae &&
                     _ae.tagName === 'INPUT' &&
+                    _ae.isConnected !== false &&
                     _ae.closest('[data-qe-id]') &&
                     !element.contains(_ae)
                 ) {
-                    window.__qeKey = null;
                     return;
                 }
                 // Spóźniony rebuild (drugi klik utworzył input synchronicznie):
                 // nie nadpisuj wpisywanego tekstu pustym inputem.
                 if (element.querySelector('input')) {
-                    window.__qeKey = null;
                     return;
                 }
                 buildInput();
-                window.__qeKey = null;
             };
 
             // Anuluj wszelkie oczekujące odświeżania po utracie fokusu (blur) przez inne pole
@@ -330,40 +387,36 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
                 clearTimeout(window.__pendingPrzejsciaRefresh);
                 window.__pendingPrzejsciaRefresh = null;
 
-                // Natychmiast zapisz oczekujące zmiany!
+                // Natychmiast zapisz oczekujące zmiany — w trybie cichym:
+                // pełny refresh (zwłaszcza async populate modala PZ z fetchem)
+                // lądowałby PO wstawieniu nowego inputa i go niszczył (2-klik).
+                // Pełne odświeżenie nastąpi przy wyjściu z edycji; ciężkie
+                // rendery nadrobi scheduleQeHeavyRefresh poza taskiem clicka.
+                // BEZ stempla qeApplied na activeElement: stempel lądowałby
+                // na przypadkowym aktualnie sfokusowanym inpucie (F4 — późniejszy
+                // blur NOWEGO pola byłby cicho pomijany = utrata edycji).
+                // Ponowny blur starego pola i tak trafia w cichą ścieżkę
+                // (isQeInputFocused), a zapis jest idempotentny.
                 if (typeof window.__pendingPrzejsciaApply === 'function') {
-                    window.__pendingPrzejsciaApply();
+                    runQeSilent(window.__pendingPrzejsciaApply);
                     window.__pendingPrzejsciaApply = null;
-                    // Stempel PO udanym apply: blur tego inputa za chwilę i tak
-                    // nastąpi (focus przechodzi na nowy input), a ponowny zapis
-                    // + pełny rebuild 100ms później zniszczyłby świeży input.
-                    // Przy wyjątku z apply stempla brak — blur zapisze normalnie.
-                    const _focusedInput = document.activeElement;
-                    if (
-                        _focusedInput &&
-                        _focusedInput.tagName === 'INPUT' &&
-                        _focusedInput.closest('[data-qe-id]')
-                    ) {
-                        _focusedInput.dataset.qeApplied = '1';
-                    }
                 }
 
-                (async () => {
-                    try {
-                        if (typeof window.refreshZleceniaModalIfActive === 'function')
-                            await window.refreshZleceniaModalIfActive();
-                    } catch (_e) {}
-                    rebuildInput();
-                })();
+                // Input twórz SYNCHRONICZNIE w tym samym tasku clicka:
+                // async kreacja lądowała już po mouseup/click i przeglądarka
+                // kradła fokus 1–2 ms po focusin albo konkurencyjny rebuild
+                // niszczył świeży input (E2E focus-log). rebuildInput robi
+                // własny sync refresh listy, więc await light jest zbędny.
+                rebuildInput();
                 return;
             }
 
             // function (nie const): hoisting — gałąź pending woła rebuildInput
             // po wcześniejszym return, definicja musi istnieć zawczasu (TDZ).
             function buildInput() {
+                if (!QE_FIELD_ALLOWLIST.includes(field)) return;
                 const well = getCurrentWell();
                 if (!well || !well.przejscia || !well.przejscia[index]) {
-                    window.__qeKey = null;
                     return;
                 }
 
@@ -414,13 +467,61 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
         };
 
         window.__pendingPrzejsciaRefresh = null;
-        window.saveQuickEdit = function (index, field, value, inputEl) {
-            // Input rozliczony synchronicznie przy przełączeniu pól —
-            // ponowny zapis byłby no-opem z pełnym rebuildem niszczącym input.
-            if (inputEl && inputEl.dataset && inputEl.dataset.qeApplied === '1') {
-                delete inputEl.dataset.qeApplied;
-                return;
+        // Fokus w DOWOLNYM polu quick-edit (ta sama lub inna komórka):
+        // zapis ma być synchroniczny i cichy (bez renderów niszczących input).
+        // Ta sama komórka też: klik z powrotem we własne pole przy uzbrojonym
+        // timerze nie może go detonować pełnym refreshem w trakcie pisania.
+        function isQeInputFocused() {
+            try {
+                if (typeof document === 'undefined') return false;
+                const ae = document.activeElement;
+                if (!ae || ae.tagName !== 'INPUT' || !ae.closest) return false;
+                return !!ae.closest('[data-qe-id]');
+            } catch (_e) {
+                return false;
             }
+        }
+        // Ciężkie rendery (diagram/summary/config) PO rozliczeniu clicka.
+        // W tasku clicka wolno ruszać tylko listę: podmiana geometrii modala
+        // psuje hit-test domyślnej akcji fokusu przeglądarki (E2E: focusout
+        // 1–2 ms po focusin). Odpalane tylko gdy fokus dalej w polu QE —
+        // inaczej i tak leci pełny refresh ścieżki wyjścia. Koalescencja
+        // przez __qeHeavyTimer (szybki hopping pól = jeden przebieg).
+        function scheduleQeHeavyRefresh() {
+            try {
+                if (typeof setTimeout === 'undefined') return;
+                if (window.__qeHeavyTimer) clearTimeout(window.__qeHeavyTimer);
+                window.__qeHeavyTimer = setTimeout(() => {
+                    window.__qeHeavyTimer = null;
+                    try {
+                        if (typeof document === 'undefined') return;
+                        const ae = document.activeElement;
+                        if (!ae || ae.tagName !== 'INPUT' || !ae.closest) return;
+                        if (!ae.closest('[data-qe-id]')) return;
+                        renderWellDiagram();
+                        updateSummary();
+                        if (typeof renderWellConfig === 'function') renderWellConfig();
+                        if (typeof renderWellParams === 'function') renderWellParams();
+                    } catch (_e) {}
+                }, 0);
+            } catch (_e) {}
+        }
+        // Cichy zapis: bez refresha listy/modala i bez ciężkich renderów
+        // w tasku. Ciężkie rendery nadrabia scheduleQeHeavyRefresh poza
+        // taskiem clicka. Flagi zawsze sprzątane w finally (brak wycieku
+        // trybu cichego przy wyjątku z apply).
+        function runQeSilent(applyFn) {
+            window.__qeNoRender = true;
+            window.__qeDeferHeavy = true;
+            try {
+                applyFn();
+            } finally {
+                window.__qeNoRender = false;
+                window.__qeDeferHeavy = false;
+            }
+            scheduleQeHeavyRefresh();
+        }
+        window.saveQuickEdit = function (index, field, value, inputEl) {
             if (isWellLocked()) {
                 showToast(WELL_LOCKED_MSG, 'error');
                 return;
@@ -440,12 +541,19 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
             if (!well || !well.przejscia || !well.przejscia[index]) return;
 
             const applyChanges = () => {
+                // Recheck locka w momencie WYKONANIA (nie uzbrojenia): timer
+                // 100 ms / pending mógł przeczekać akceptację PZ lub lock
+                // oferty — zapis po locku nadpisałby zatwierdzony stan (F2).
+                if (isWellLocked()) return;
+                if (isOfferLocked()) return;
                 if (value.trim() === '') {
-                    if (typeof window.refreshPrzejsciaViews === 'function')
-                        window.refreshPrzejsciaViews();
-                    else renderWellPrzejscia();
-                    if (typeof window.refreshZleceniaModalIfActive === 'function') {
-                        window.refreshZleceniaModalIfActive();
+                    if (!window.__qeNoRender) {
+                        if (typeof window.refreshPrzejsciaViews === 'function')
+                            window.refreshPrzejsciaViews();
+                        else renderWellPrzejscia();
+                        if (typeof window.refreshZleceniaModalIfActive === 'function') {
+                            window.refreshZleceniaModalIfActive();
+                        }
                     }
                     return;
                 }
@@ -533,27 +641,59 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
                     }
                 }
 
-                if (typeof window.refreshPrzejsciaViews === 'function')
-                    window.refreshPrzejsciaViews();
-                else renderWellPrzejscia();
-                renderWellDiagram();
-                updateSummary();
-                if (typeof renderWellConfig === 'function') renderWellConfig();
-                if (typeof renderWellParams === 'function') renderWellParams();
-                if (typeof window.refreshZleceniaModalIfActive === 'function') {
-                    window.refreshZleceniaModalIfActive();
+                // Listę + modal PZ pomijaj w trakcie przełączania pól
+                // (__qeNoRender): ich rebuild niszczyłby świeży input (PZ 2-klik).
+                if (!window.__qeNoRender) {
+                    if (typeof window.refreshPrzejsciaViews === 'function')
+                        window.refreshPrzejsciaViews();
+                    else renderWellPrzejscia();
+                }
+                // Ciężkie rendery pomijaj też, gdy odroczone (__qeDeferHeavy):
+                // w tasku clicka przesuwają geometrię i psują domyślny fokus
+                // (E2E) — nadrobi je scheduleQeHeavyRefresh po rozliczeniu clicka.
+                // Diagram/podsumowanie renderują inne kontenery — bezpieczne async.
+                if (!window.__qeDeferHeavy) {
+                    renderWellDiagram();
+                    updateSummary();
+                    if (typeof renderWellConfig === 'function') renderWellConfig();
+                    if (typeof renderWellParams === 'function') renderWellParams();
+                }
+                if (!window.__qeNoRender) {
+                    if (typeof window.refreshZleceniaModalIfActive === 'function') {
+                        window.refreshZleceniaModalIfActive();
+                    }
                 }
             };
 
-            // Ujmij krótkie opóźnienie do odświeżenia, aby pozwolić na wcześniejsze wywołanie kliknięcia na następnym elemencie
+            // Ujmij krótkie opóźnienie do odświeżenia, aby pozwolić na wcześniejsze wywołanie kliknięcia na następnym elemencie.
+            // Przestarzały zapis aplikuj po cichu (flagi jak wyżej) — pełny
+            // refresh należy do świeżego timera planowanego poniżej albo do
+            // ścieżki switcha; inaczej async populate PZ niszczy nowy input.
             if (window.__pendingPrzejsciaRefresh) {
                 clearTimeout(window.__pendingPrzejsciaRefresh);
                 if (typeof window.__pendingPrzejsciaApply === 'function') {
-                    window.__pendingPrzejsciaApply();
+                    runQeSilent(window.__pendingPrzejsciaApply);
                 }
+            }
+            // Przełączanie pól: zapisz synchronicznie bez renderów; pełny
+            // refresh nastąpi przy wyjściu z edycji (blur poza pola QE),
+            // a ciężkie rendery — w scheduleQeHeavyRefresh po rozliczeniu clicka.
+            if (isQeInputFocused()) {
+                runQeSilent(applyChanges);
+                window.__pendingPrzejsciaRefresh = null;
+                window.__pendingPrzejsciaApply = null;
+                return;
             }
             window.__pendingPrzejsciaApply = applyChanges;
             window.__pendingPrzejsciaRefresh = setTimeout(() => {
+                // Spóźniony timer, a fokus jest już w polu QE (przebudowa
+                // zniszczyła stary input i powstał nowy) — zapisz po cichu.
+                if (isQeInputFocused()) {
+                    runQeSilent(applyChanges);
+                    window.__pendingPrzejsciaRefresh = null;
+                    window.__pendingPrzejsciaApply = null;
+                    return;
+                }
                 applyChanges();
                 window.__pendingPrzejsciaRefresh = null;
                 window.__pendingPrzejsciaApply = null;

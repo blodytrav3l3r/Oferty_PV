@@ -510,30 +510,13 @@ function _mqRescanAll() {
 
 if (typeof document !== 'undefined' && !window.__trDelegated) {
     window.__trDelegated = true;
-    // mousedown dla szybkiego przełączania między polami — naprawia 2-kliki
-    document.addEventListener('mousedown', (e) => {
-        const el = e.target.closest('[data-action="activateQuickEdit"]');
-        if (!el) return;
-        if (el.querySelector('input')) return;
-        const i = el.getAttribute('data-i');
-        const field = el.getAttribute('data-field');
-        // Jeśli inne pole jest w edycji, aktywuj na mousedown (przed blur niszczącym click)
-        const active = document.activeElement;
-        if (active && active.tagName === 'INPUT' && active.closest('[data-qe-id]')) {
-            e.preventDefault();
-            const w = typeof window.getCurrentWell === 'function' ? window.getCurrentWell() : null;
-            const rIdx =
-                typeof resolvePrzejscieIndex === 'function'
-                    ? resolvePrzejscieIndex(w, el, parseInt(i, 10))
-                    : parseInt(i, 10);
-            window.activateQuickEdit(el, rIdx, field);
-            // Klucz tekstowy zamiast flagi na nodzie — re-render wymiany nody.
-            window.__qeKey = el.getAttribute('data-qe-id') + '|' + el.getAttribute('data-field');
-            setTimeout(() => {
-                window.__qeKey = null;
-            }, 2000);
-        }
-    });
+    // BEZ handlera mousedown (celowo usunięty): preventDefault() + sync focus()
+    // w tasku mousedown walczył z focus-fixupem Chromium — focusout 1–2 ms po
+    // focusin, re-render podmieniał target i click w ogóle nie docierał (E2E).
+    // Tor naturalny mousedown→blur→click wystarcza: blur uzbraja timer 100 ms,
+    // click buduje input synchronicznie (jak przechodzące 3a), a timer przy
+    // focusie w polu QE zapisuje po cichu (isQeInputFocused + __qeNoRender
+    // w wellTransitions.js) zamiast niszczyć input pełnym refreshem.
     // Marquee uciętych podpisów — auto-skan po renderach + resize (bez hover).
     // Guard na funkcję: testy vm dają stub document bez addEventListener.
     if (
@@ -578,15 +561,6 @@ if (typeof document !== 'undefined' && !window.__trDelegated) {
         } else if (action === 'openChangePrzejscieDnPopup') {
             window.openChangePrzejscieDnPopup(idx);
         } else if (action === 'activateQuickEdit') {
-            const _key = el.getAttribute('data-qe-id') + '|' + el.getAttribute('data-field');
-            if (window.__qeKey && window.__qeKey === _key) {
-                window.__qeKey = null;
-                // Rebuild w locie (wolny refresh sieciowy): komórka wciąż bez
-                // inputa, a użytkownik kliknął z nawyku drugi raz. Ponów próbę
-                // natychmiast — activateQuickEdit sam wychodzi, gdy input jest.
-                if (!el.querySelector('input')) window.activateQuickEdit(el, idx, field);
-                return;
-            }
             window.activateQuickEdit(el, idx, field);
         }
     });

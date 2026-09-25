@@ -62,6 +62,9 @@ function openZleceniaProdukcyjne(targetWellId = null, targetElementIndex = null)
 }
 
 async function closeZleceniaModal() {
+    // Spłucz zaległy quick-edit do modelu i wyczyść timery, zanim dialog
+    // zapyta o zapis — callback nie może odpalić na zamykanym DOM (F3).
+    if (typeof flushQePendingState === 'function') flushQePendingState();
     let savedNow = false;
     if (zleceniaElementsList.length > 0) {
         const shouldSave = await appConfirm(

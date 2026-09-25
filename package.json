@@ -21,6 +21,8 @@
         "test:bench": "node tests/playwright/excelVirtualBench.cjs",
         "test:e2e-appname": "node tests/playwright/appNameConsistency.cjs",
         "test:e2e-appname:spawn": "npm run build && node tests/playwright/appNameConsistency.cjs --spawn",
+        "test:e2e-qe-switch": "node tests/playwright/qeQuickEditSwitch.cjs",
+        "test:e2e-qe-switch:spawn": "npm run build && node tests/playwright/qeQuickEditSwitch.cjs --spawn",
         "test:e2e": "playwright test",
         "test:axe": "playwright test tests/playwright/a11yAxe.spec.ts",
         "test:frontend": "jest --testPathPatterns=tests/frontend --no-coverage",
