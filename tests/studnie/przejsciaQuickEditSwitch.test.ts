@@ -17,7 +17,8 @@ function loadQE() {
         diagram: 0,
         summary: 0,
         blurOld: 0,
-        focusNew: 0
+        focusNew: 0,
+        toast: [] as any[]
     };
     const timers: Array<{ id: number; fn: () => void; delay: number }> = [];
     let timerSeq = 0;
@@ -49,7 +50,9 @@ function loadQE() {
         },
         escapeHtml: (s: string) => String(s),
         escapeHtmlAttr: (s: string) => String(s),
-        showToast: () => {},
+        showToast: (msg: string) => {
+            calls.toast.push(msg);
+        },
         WELL_LOCKED_MSG: 'well',
         OFFER_LOCKED_MSG: 'offer',
         FLOW_TYPES: Object.freeze({ WYLOT: 'wylot', WLOT: 'wlot' }),
@@ -444,6 +447,20 @@ describe('F2: lock recheck w momencie wykonania', () => {
         expect(calls.list).toBe(0);
         expect(calls.modal).toEqual([]);
         expect(calls.diagram).toBe(0);
+    });
+});
+
+describe('P3-3: śmieci w polu kąta nie zerują modelu', () => {
+    it('abc odrzucone: toast, model nietknięty, widok odtworzony', () => {
+        const { context, calls, timers, well, bodyEl, cellA, mkInput } = loadQE();
+        well.przejscia[0].angle = 90;
+        context.document.activeElement = bodyEl;
+        context.window.saveQuickEdit(0, 'angle', 'abc', mkInput(cellA));
+        expect(timers.length).toBe(1); // odrzucenie w leniwej ścieżce wyjścia
+        timers[0].fn();
+        expect(calls.toast.length).toBe(1); // feedback zamiast cichego 0
+        expect(well.przejscia[0].angle).toBe(90); // nie 0
+        expect(calls.list).toBe(1); // input ze śmieciem zastąpiony wartością z modelu
     });
 });
 
