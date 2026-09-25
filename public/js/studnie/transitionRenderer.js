@@ -581,6 +581,10 @@ if (typeof document !== 'undefined' && !window.__trDelegated) {
             const _key = el.getAttribute('data-qe-id') + '|' + el.getAttribute('data-field');
             if (window.__qeKey && window.__qeKey === _key) {
                 window.__qeKey = null;
+                // Rebuild w locie (wolny refresh sieciowy): komórka wciąż bez
+                // inputa, a użytkownik kliknął z nawyku drugi raz. Ponów próbę
+                // natychmiast — activateQuickEdit sam wychodzi, gdy input jest.
+                if (!el.querySelector('input')) window.activateQuickEdit(el, idx, field);
                 return;
             }
             window.activateQuickEdit(el, idx, field);

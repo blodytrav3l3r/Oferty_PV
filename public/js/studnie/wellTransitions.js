@@ -315,6 +315,12 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
                     window.__qeKey = null;
                     return;
                 }
+                // Spóźniony rebuild (drugi klik utworzył input synchronicznie):
+                // nie nadpisuj wpisywanego tekstu pustym inputem.
+                if (element.querySelector('input')) {
+                    window.__qeKey = null;
+                    return;
+                }
                 buildInput();
                 window.__qeKey = null;
             };
