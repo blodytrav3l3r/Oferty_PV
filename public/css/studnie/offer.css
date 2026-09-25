@@ -561,6 +561,21 @@ html[data-theme='light'] .disc-input-wrap:focus-within {
 .disc-tile--dim {
     opacity: 0.5;
 }
+/* Kafelki rabatów w light: washe rgba stroją dark (biel na bieli) —
+   pełne tokeny zamiast półprzezroczystości. */
+html[data-theme='light'] .disc-tile--disabled {
+    --tile-bg: var(--bg-tertiary);
+    --tile-fg: var(--text-muted);
+    --tile-border: var(--border);
+}
+html[data-theme='light'] .disc-tile--accent-dim {
+    --tile-bg: rgba(var(--accent-rgb), 0.12);
+    --tile-fg: var(--accent-text);
+    --tile-border: rgba(var(--accent-rgb), 0.35);
+}
+html[data-theme='light'] .disc-tile--blue {
+    --tile-fg: var(--blue-alt-hover);
+}
 
 /* Selekcja i drag na białym tle — wash z tokenów excel */
 html[data-theme='light'] .cell-selected {
