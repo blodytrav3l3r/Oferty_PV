@@ -65,75 +65,60 @@
 .przejscia-vis-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(var(--tile-min-w, 160px), 1fr));
-    gap: 0.3rem;
+    gap: var(--tile-gap-2xs);
 }
 
+/* Kształt 1:1 jak kafelki DN w „Dodaj Przejście Szczelne”
+   (wellTransitions.js: typ + .fs-dn-tile): 44px, radius-sm,
+   aktywny = wash accent + ramka accent + tekst accent. */
 .przejscia-vis-tile {
-    padding: 0.4rem 0.5rem;
+    min-height: 44px;
+    padding: 0.2rem 0.4rem;
     border-radius: var(--radius-sm);
     cursor: pointer;
-    transition:
-        background-color 0.18s ease,
-        border-color 0.18s ease,
-        box-shadow 0.18s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     text-align: center;
     user-select: none;
+    transition:
+        background-color 0.15s ease,
+        border-color 0.15s ease,
+        box-shadow 0.15s ease;
 }
 
 .przejscia-vis-tile.visible {
-    background: var(--success-bg-hover);
-    border: 1.5px solid var(--success-bg);
-    box-shadow:
-        0 0 10px var(--success-bg),
-        inset 0 0 12px var(--success-bg);
+    background: rgba(var(--accent-rgb), 0.2);
+    border: 1px solid rgba(var(--accent-rgb), 0.5);
+    box-shadow: 0 0 10px rgba(var(--accent-rgb), 0.3);
 }
 
 .przejscia-vis-tile.visible .przejscia-vis-tile-name {
-    color: var(--success-hover);
+    color: var(--accent-text);
 }
 
 .przejscia-vis-tile.visible:hover {
-    background: var(--success-bg);
-    border-color: var(--success-bg);
-    box-shadow:
-        0 0 16px var(--success-bg),
-        inset 0 0 16px var(--success-bg);
-    transform: translateY(-1px);
+    background: rgba(var(--accent-rgb), 0.25);
+    border-color: rgba(var(--accent-rgb), 0.6);
 }
 
 .przejscia-vis-tile.hidden-type {
-    background: var(--bg-tertiary);
-    border: 1.5px solid var(--bg-tertiary);
-    opacity: 0.45;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
 }
 
 .przejscia-vis-tile.hidden-type:hover {
-    background: var(--bg-tertiary);
-    border-color: var(--bg-tertiary);
-    opacity: 0.8;
-    transform: translateY(-1px);
+    background: rgba(var(--accent-rgb), 0.1);
+    border-color: rgba(var(--accent-rgb), 0.3);
 }
 
 .przejscia-vis-tile-name {
-    font-size: var(--fs-lg);
-    font-weight: var(--fw-bold);
+    font-size: var(--fs-xs);
+    font-weight: var(--fw-extrabold);
     color: var(--text-primary);
     white-space: nowrap;
-    line-height: 1.3;
-}
-
-/* Tryb jasny — ukryte kafle: zamiast szarej plamy z tekstem 45% czytelny
-   bialy kafel z obramowaniem (ukrycie sygnalizuje brak podswietlenia). */
-html[data-theme='light'] .przejscia-vis-tile.hidden-type {
-    background: var(--bg-secondary);
-    border-color: var(--border);
-    opacity: 0.8;
-}
-
-html[data-theme='light'] .przejscia-vis-tile.hidden-type:hover {
-    background: var(--bg-hover);
-    border-color: var(--accent-border);
-    opacity: 1;
+    line-height: 1.25;
+    letter-spacing: 0.3px;
 }
 
 .app-confirm-overlay {
