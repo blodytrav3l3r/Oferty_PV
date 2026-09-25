@@ -333,7 +333,9 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
                 return;
             }
 
-            const buildInput = () => {
+            // function (nie const): hoisting — gałąź pending woła rebuildInput
+            // po wcześniejszym return, definicja musi istnieć zawczasu (TDZ).
+            function buildInput() {
                 const well = getCurrentWell();
                 if (!well || !well.przejscia || !well.przejscia[index]) {
                     window.__qeKey = null;
@@ -382,7 +384,7 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
                         if (document.activeElement === inp) inp.select();
                     } catch {}
                 }, 0);
-            };
+            }
             rebuildInput();
         };
 
