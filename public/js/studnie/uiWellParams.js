@@ -278,14 +278,14 @@ function renderWellParams() {
             const disabledAttr = isSoftLocked ? ' disabled' : '';
             html += `<button${disabledAttr} onclick="updateWellParam('${def.key}','${val}')" style="
                 height: 34px; border-radius: var(--radius-sm); cursor:pointer; font-size: var(--fs-lg); font-weight:${isActive ? '800' : '600'};
-                border:1px solid ${isActive ? 'rgba(var(--accent-rgb), 0.8)' : 'rgba(var(--white-rgb), 0.1)'};
-                background:${isActive ? 'rgba(var(--accent-rgb), 0.3)' : 'rgba(var(--white-rgb), 0.05)'};
+                border:1px solid ${isActive ? 'rgba(var(--accent-rgb), 0.8)' : 'var(--border)'};
+                background:${isActive ? 'rgba(var(--accent-rgb), 0.3)' : 'var(--bg-tertiary)'};
                 color:${isActive ? 'var(--accent-text)' : 'var(--text-secondary)'};
                 transition:all 0.15s ease;
                 display:flex; align-items:center; justify-content:center;
                 ${isActive ? 'box-shadow:0 0 10px rgba(var(--accent-rgb), 0.2);' : ''}
-            " onmouseenter="if(!${isActive}){this.style.borderColor='rgba(var(--accent-rgb), 0.3)';this.style.background='rgba(var(--white-rgb), 0.1)'}"
-               onmouseleave="if(!${isActive}){this.style.borderColor='rgba(var(--white-rgb), 0.1)';this.style.background='rgba(var(--white-rgb), 0.05)'}"
+            " onmouseenter="if(!${isActive}){this.style.borderColor='var(--accent-border)';this.style.background='var(--bg-hover)'}"
+               onmouseleave="if(!${isActive}){this.style.borderColor='var(--border)';this.style.background='var(--bg-tertiary)'}"
             >${escapeHtml(lbl)}</button>`;
         });
         html += `</div></div>`;
