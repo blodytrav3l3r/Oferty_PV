@@ -4,6 +4,22 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+### [1.29.5](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.29.4...v1.29.5) (2026-09-25)
+
+### Bug Fixes
+
+- **rury:** szare powierzchnie popupa transportu w light ([7cb4b96](https://github.com/blodytrav3l3r/Oferty_PV/commit/7cb4b965f2564788871dac53e0312ce3a978d3c2))
+- **studnie:** drugi klik pomaga zamiast szkodzic przy wolnym rebuildzie ([d41fa25](https://github.com/blodytrav3l3r/Oferty_PV/commit/d41fa25aeb606fb24c7a547207c19e84a9c7e795))
+- **studnie:** jeden klik edycji przejsc w zleceniu ([c7e6ac8](https://github.com/blodytrav3l3r/Oferty_PV/commit/c7e6ac856da20b6d3934471299b2e8f44f466f73))
+- **studnie:** jeden rebuild i brak re-save przy przelaczaniu pol ([34f869b](https://github.com/blodytrav3l3r/Oferty_PV/commit/34f869b70a35e3e90168cbb4bcc84784af658352))
+- **studnie:** kontrast kafelkow parametrow w motywie light ([9bd49fa](https://github.com/blodytrav3l3r/Oferty_PV/commit/9bd49fa57a05923a5de532a4595204476087903a))
+- **studnie:** kontrast kafli rabatow w motywie light ([36560a1](https://github.com/blodytrav3l3r/Oferty_PV/commit/36560a1b68f0954550eb615f6422ffa584a7fab2))
+- **studnie:** ksztalt kafli widocznosci przejsc jak kafelki dn ([fb08ef9](https://github.com/blodytrav3l3r/Oferty_PV/commit/fb08ef9ecc610486582491d5f17b453c0b160148))
+- **studnie:** popup transportu na wzor popupa z rur ([0546668](https://github.com/blodytrav3l3r/Oferty_PV/commit/054666899204e08e12786d565f13bb76b4e5c4c4))
+- **studnie:** re-resolve indeksu przejscia po re-sorcie ([478b0bd](https://github.com/blodytrav3l3r/Oferty_PV/commit/478b0bd6f33021fe2e308c0b0b85106eabd3cc58))
+- **studnie:** sync wersji pz po zapisie likwiduje falszywy 409 ([3c200cd](https://github.com/blodytrav3l3r/Oferty_PV/commit/3c200cd73d01b63a075c4cba9f36184ca3fe7ce0))
+- **studnie:** tdz buildinput na sciezce pending quick-edit ([22b1ed2](https://github.com/blodytrav3l3r/Oferty_PV/commit/22b1ed20e02ac4692d0dc731608b4d112dea8f31))
+
 ### [1.29.4](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.29.3...v1.29.4) (2026-09-24)
 
 ### Features
