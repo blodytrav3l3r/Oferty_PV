@@ -1194,7 +1194,7 @@ html[data-theme='light'] .om-footer {
     text-align: center;
     border-radius: var(--radius);
     border: 1px solid var(--border-glass);
-    background: rgba(var(--black-rgb), 0.2);
+    background: var(--bg-input);
     color: var(--text-heading);
 }
 
@@ -1205,7 +1205,7 @@ html[data-theme='light'] .om-footer {
 }
 
 .tp-cost-card {
-    background: rgba(var(--black-rgb), 0.2);
+    background: var(--bg-tertiary);
     border: 1px solid var(--border-glass);
     padding: 0.75rem;
     border-radius: var(--radius-sm);
@@ -1229,10 +1229,27 @@ html[data-theme='light'] .om-footer {
 .tp-total-box {
     margin-top: 1rem;
     text-align: center;
-    background: rgba(var(--black-rgb), 0.3);
-    border: 1px dashed var(--border-glass);
+    background: rgba(var(--success-rgb), 0.08);
+    border: 1px dashed var(--success-border);
     padding: 1rem;
     border-radius: var(--radius);
+}
+
+/* Transport studni na wzór popupa rur (partials/rury/transport-modal.html):
+   scoped, żeby nie ruszać modala rabatów (wspólne .om-*). */
+#offer-transport-modal .om-header {
+    background: var(--bg-deep);
+    padding: 1rem 1.5rem;
+}
+#offer-transport-modal .om-title {
+    color: var(--warn);
+}
+#offer-transport-modal .om-body {
+    padding: 2rem 1.5rem;
+}
+#offer-transport-modal .om-footer {
+    background: var(--bg-deep);
+    padding: 1rem 1.5rem;
 }
 
 .tp-total-label {
