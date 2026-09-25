@@ -61,11 +61,11 @@ function saveClientToDb() {
     if (_saveBtn) _saveBtn.disabled = true;
     // ponytail: btn disabled guard, enable in finally via helper
 
-    const name = document.getElementById('client-name').value.trim();
-    const nip = document.getElementById('client-nip').value.trim();
-    const address = document.getElementById('client-address').value.trim();
-    const contact = document.getElementById('client-contact').value.trim();
-    const clientNumber = document.getElementById('client-number').value.trim();
+    const name = document.getElementById('client-name')?.value.trim() ?? '';
+    const nip = document.getElementById('client-nip')?.value.trim() ?? '';
+    const address = document.getElementById('client-address')?.value.trim() ?? '';
+    const contact = document.getElementById('client-contact')?.value.trim() ?? '';
+    const clientNumber = document.getElementById('client-number')?.value.trim() ?? '';
 
     if (!name) {
         showToast('Wprowadź nazwę firmy, aby zapisać klienta', 'error');
@@ -293,11 +293,11 @@ function editClientInDb(id) {
 }
 
 function saveEditedClientInDb(id) {
-    const name = document.getElementById('edit-client-name').value.trim();
-    const nip = document.getElementById('edit-client-nip').value.trim();
-    const address = document.getElementById('edit-client-address').value.trim();
-    const contact = document.getElementById('edit-client-contact').value.trim();
-    const clientNumber = document.getElementById('edit-client-clientNumber').value.trim();
+    const name = document.getElementById('edit-client-name')?.value.trim() ?? '';
+    const nip = document.getElementById('edit-client-nip')?.value.trim() ?? '';
+    const address = document.getElementById('edit-client-address')?.value.trim() ?? '';
+    const contact = document.getElementById('edit-client-contact')?.value.trim() ?? '';
+    const clientNumber = document.getElementById('edit-client-clientNumber')?.value.trim() ?? '';
 
     if (!name) {
         showToast('Wprowadź nazwę firmy', 'error');
@@ -330,11 +330,16 @@ function cancelEditClient() {
 function selectClientFromDb(id) {
     const c = clientsDb.find((client) => client.id === id);
     if (c) {
-        document.getElementById('client-name').value = c.name || '';
-        document.getElementById('client-nip').value = c.nip || '';
-        document.getElementById('client-address').value = c.address || '';
-        document.getElementById('client-contact').value = c.contact || '';
-        document.getElementById('client-number').value = c.clientNumber || '';
+        const nameEl = document.getElementById('client-name');
+        const nipEl = document.getElementById('client-nip');
+        const addrEl = document.getElementById('client-address');
+        const contactEl = document.getElementById('client-contact');
+        const numEl = document.getElementById('client-number');
+        if (nameEl) nameEl.value = c.name || '';
+        if (nipEl) nipEl.value = c.nip || '';
+        if (addrEl) addrEl.value = c.address || '';
+        if (contactEl) contactEl.value = c.contact || '';
+        if (numEl) numEl.value = c.clientNumber || '';
         if (typeof updateStep1NextState === 'function') updateStep1NextState();
         showToast('Wczytano dane klienta', 'success');
         closeModal();
