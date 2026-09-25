@@ -311,6 +311,7 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
 
             // Jeśli inne pole jest w edycji, wymuś blur by zapisać — inaczej potrzebne 2 kliknięcia
             const _active = document.activeElement;
+            let blurredInput = null;
             if (
                 _active instanceof HTMLElement &&
                 _active.tagName === 'INPUT' &&
@@ -318,6 +319,7 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
             ) {
                 const _parent = _active.closest('[data-qe-id]');
                 if (_parent && _parent !== element) {
+                    blurredInput = _active;
                     _active.blur();
                 }
             }
@@ -360,7 +362,8 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
                 if (!element.isConnected) {
                     return;
                 }
-                // Użytkownik zdążył przejść dalej — nie kradnij fokusu.
+                // Zachowaj fokus nowszego pola, jeśli użytkownik zdążył
+                // przejść dalej podczas odświeżenia.
                 // Odłączony activeElement (stary input zniszczony refreshem
                 // powyżej — przeglądarka trzyma go do async blur) to NIE
                 // nowsze pole, tylko martwy node (E2E: brak focusin nowego).
@@ -370,6 +373,7 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
                     _ae.tagName === 'INPUT' &&
                     _ae.isConnected !== false &&
                     _ae.closest('[data-qe-id]') &&
+                    _ae !== blurredInput &&
                     !element.contains(_ae)
                 ) {
                     return;
@@ -445,10 +449,12 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
                     step = '0.001';
                 }
                 void element.offsetWidth;
-                const useCalc =
-                    field === 'rzednaWlaczenia' || field === 'heightMm' || field === 'doplata';
-                const inpType = useCalc ? 'text' : 'number';
-                const inpMode = useCalc ? ' inputmode="decimal"' : '';
+                // type=number nie pozwala niezawodnie zaznaczyć wartości po
+                // focus() w Chromium. Pole tekstowe z klawiaturą numeryczną
+                // zachowuje edycję obliczeń i daje przewidywalny wybór tekstu
+                // po pierwszym kliknięciu, także przy szybkim przejściu między polami.
+                const inpType = 'text';
+                const inpMode = ' inputmode="decimal"';
 
                 element.innerHTML = `<input type="${inpType}"${inpMode} step="${step}" placeholder="${escapeHtmlAttr(String(val))}" value="${escapeHtmlAttr(String(val))}" style="width:100%; min-width:0; max-width:100%; height:30px; margin:0; box-sizing:border-box; background: var(--bg-tertiary); color: var(--text-primary); border:1px solid var(--accent); border-radius: var(--radius-xs); font-size: var(--fs-base); font-weight: var(--fw-bold); text-align:center; padding:0 0.25rem; outline:none;" onclick="this.select()" onfocus="this.select()" onblur="window.saveQuickEdit(${index}, '${field}', this.value, this)" onkeydown="if(event.key==='Enter') this.blur();">`;
                 const inp = element.querySelector('input');

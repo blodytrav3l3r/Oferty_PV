@@ -175,6 +175,47 @@ describe('quick-edit switch A→B (PZ 1-klik)', () => {
         expect(well.przejscia).toHaveLength(1);
     });
 
+    it('nie pomija nowego pola, gdy przeglądarka trzyma blurnięty input jako activeElement', () => {
+        const { context, calls, cellA, mkInput } = loadQE();
+        let built = false;
+        const nextInput = {
+            focus: () => {
+                calls.focusNew++;
+            },
+            select: () => {}
+        };
+        const nextCell: any = {
+            querySelector: () => (built ? nextInput : null),
+            closest: () => null,
+            contains: () => false,
+            getAttribute: (name: string) => (name === 'data-qe-id' ? 'prz-2' : 'angle'),
+            isConnected: true,
+            offsetWidth: 0
+        };
+        Object.defineProperty(nextCell, 'innerHTML', {
+            set() {
+                built = true;
+            },
+            get() {
+                return '';
+            }
+        });
+        const oldInput = mkInput(cellA);
+        oldInput.isConnected = true;
+        oldInput.blur = () => {
+            calls.blurOld++;
+            // W Chromium activeElement może przez moment nadal wskazywać
+            // poprzednie pole, mimo że kliknięto już nowe.
+        };
+        context.document.activeElement = oldInput;
+
+        context.window.activateQuickEdit(nextCell, 0, 'angle');
+
+        expect(calls.blurOld).toBe(1);
+        expect(built).toBe(true);
+        expect(calls.focusNew).toBe(1);
+    });
+
     it('rebuildInput bierze kontener z wejścia, nie z odłączonego elementu', async () => {
         const { context, calls, cellA, mkInput } = loadQE();
         context.window.__pendingPrzejsciaRefresh = 7;
