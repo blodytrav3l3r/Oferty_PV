@@ -60,6 +60,7 @@ zmienne `var(--...)`. **Zakaz gołych hexów/kolorów poza `:root`** (wyjątek: 
 
 - `--section-gap: 1.5rem` (rytm wewnętrzny), `--section-gap-lg: 2rem` (główny odstęp sekcji).
 - `--section-max-width: 1900px`, `--section-pad-x: 0.5rem`.
+- Skala kafelków: `--tile-gap-micro: 0.15rem` (mikro-rytm wewnętrzny, tylko `.tile`), `--tile-gap-2xs: 0.3rem` (ciasne rzędy), `--tile-gap-xs: 0.35rem` (nav, tiles-grid), `--tile-gap-xs-plus: 0.5rem` (rzędy akcji), `--tile-gap-sm: 0.6rem` (share, statystyki zwarte), `--tile-gap-sm-plus: 0.8rem` (karty, profile, headery sekcji), `--tile-gap-md: 1rem` (siatki kart, listy ofert), `--tile-gap-lg/xl` = aliasy `section-gap/section-gap-lg`. Gołe `gap/margin` z tych przedziałów mapuj na tokeny; mikro-gapów wewnętrznych (`0.15rem` w `.tile`, `8px` w `.share-tile`) nie ruszaj.
 - Skala gap: `.gap-1`…`.gap-4` (`0.25rem`…`1rem`).
 - Marginesy: `.mb-0`/`.mb-1`; `--header-h: 57px`.
 

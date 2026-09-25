@@ -221,8 +221,8 @@ function buildOrderModalHtml(orders, offerKey, resolvedType, offerLabel) {
                 <h3 id="offer-orders-title">Zamówienia oferty ${window.escapeHtml(offerLabel)}</h3>
                 <button class="btn-icon btn-close-x" aria-label="Zamknij" onclick="closeModal()"><i data-lucide="x" aria-hidden="true"></i></button>
             </div>
-            <div style="margin-bottom:1rem; color:var(--text-muted); font-size: var(--fs-xl);">Lista wszystkich zamówień przypisanych do tej oferty.</div>
-            <div style="display:flex; flex-direction:column; gap:0.75rem; max-height:55vh; overflow-y:auto; padding-right:0.25rem;">
+            <div style="margin-bottom:var(--tile-gap-md); color:var(--text-muted); font-size: var(--fs-xl);">Lista wszystkich zamówień przypisanych do tej oferty.</div>
+            <div style="display:flex; flex-direction:column; gap:var(--tile-gap-sm-plus); max-height:55vh; overflow-y:auto; padding-right:0.25rem;">
         `;
 
     orders.forEach((ord) => {

@@ -261,11 +261,24 @@
     --bottom-bar-h-mobile: 56px;
 
     /* Szerokość sekcji i rytm pionowy — --section-gap (1.5rem): rytm wewnętrzny;
-       --section-gap-lg (2rem): główny odstęp między sekcjami (pulpit, kartoteka, zlecenia) */
+       --section-gap-lg (2rem): główny odstęp między sekcjami (pulpit, kartoteka, zlecenia).
+       Skala kafelków: micro (0.15rem) = wewnętrzny mikro-rytm kafelka;
+       2xs (0.3rem) = ciasne rzędy (tytuły sekcji, taby); xs (0.35rem) = nav, tiles-grid;
+       xs-plus (0.5rem) = rzędy akcji/search; sm (0.6rem) = share, statystyki zwarte;
+       sm-plus (0.8rem) = karty/statystyki; md (1rem) = siatki kart; lg/xl to aliasy section-gap. */
     --section-max-width: 1900px;
     --section-pad-x: 0.5rem;
     --section-gap: 1.5rem;
     --section-gap-lg: 2rem;
+    --tile-gap-micro: 0.15rem;
+    --tile-gap-2xs: 0.3rem;
+    --tile-gap-xs: 0.35rem;
+    --tile-gap-xs-plus: 0.5rem;
+    --tile-gap-sm: 0.6rem;
+    --tile-gap-sm-plus: 0.8rem;
+    --tile-gap-md: 1rem;
+    --tile-gap-lg: var(--section-gap);
+    --tile-gap-xl: var(--section-gap-lg);
 
     /* Excel Virtual — stały row height SSoT (I1), 32px = obecna zmierzona wysokość wiersza */
     --excel-row-height: 32px;
@@ -629,9 +642,9 @@ body::before {
 
 .nav-apps {
     display: flex;
-    gap: 0.35rem;
+    gap: var(--tile-gap-xs);
     padding-left: 0.75rem;
-    margin-left: 0.6rem;
+    margin-left: var(--tile-gap-sm);
     border-left: 1px solid var(--bg-tertiary);
     flex: 0 1 auto;
     min-width: 0;
@@ -644,8 +657,8 @@ body::before {
     flex-direction: row;
     align-items: center;
     justify-content: center;
-    gap: 0.35rem;
-    padding: 0.32rem 0.6rem;
+    gap: var(--tile-gap-xs);
+    padding: 0.32rem var(--tile-gap-sm);
     height: 2.25rem;
     min-width: 0;
     flex: 0 0 auto;
@@ -857,15 +870,15 @@ body::before {
     .nav-tile {
         padding: 0.3rem 0.55rem;
         font-size: var(--fs-sm);
-        gap: 0.35rem;
+        gap: var(--tile-gap-xs);
         max-width: none;
         flex: 0 0 auto;
     }
 
     .nav-apps {
-        gap: 0.35rem;
+        gap: var(--tile-gap-xs);
         padding-left: 0.75rem;
-        margin-left: 0.6rem;
+        margin-left: var(--tile-gap-sm);
     }
 }
 
@@ -880,13 +893,13 @@ body::before {
     }
 
     .nav-apps {
-        gap: 0.35rem;
+        gap: var(--tile-gap-xs);
     }
 
     .nav-tile {
         flex: 0 0 auto;
         max-width: none;
-        padding: 0.32rem 0.6rem;
+        padding: 0.32rem var(--tile-gap-sm);
     }
 }
 
@@ -914,7 +927,7 @@ body::before {
     }
     .nav-apps {
         flex-wrap: wrap;
-        gap: 0.35rem;
+        gap: var(--tile-gap-xs);
     }
 }
 
@@ -953,7 +966,7 @@ body::before {
         font-size: var(--fs-sm);
         flex-wrap: wrap;
         justify-content: flex-end;
-        gap: 0.35rem;
+        gap: var(--tile-gap-xs);
         width: 100%;
     }
     .logo {
@@ -1076,8 +1089,8 @@ body::before {
 .offer-header-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 0.8rem;
-    margin-bottom: 1rem;
+    gap: var(--tile-gap-sm-plus);
+    margin-bottom: var(--tile-gap-md);
 }
 
 .card-compact {
@@ -2151,7 +2164,7 @@ input[type='number'] {
 .catalog-item-row {
     display: flex;
     align-items: center;
-    gap: 0.8rem;
+    gap: var(--tile-gap-sm-plus);
     padding: 0.55rem 0.8rem 0.55rem 1.6rem;
     border-bottom: 1px solid var(--bg-tertiary);
     cursor: pointer;

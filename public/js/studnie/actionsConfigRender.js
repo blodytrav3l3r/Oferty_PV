@@ -306,7 +306,7 @@ function renderWellConfig() {
                 html += `<span style="font-weight: var(--fw-extrabold); font-size: var(--fs-lg); color:var(--danger);"><i data-lucide="settings" class="icon-xs" style="vertical-align:-1px; margin-right:2px;"></i> Wkładka ${kinetaLabel}</span>`;
                 html += `<span style="font-weight: var(--fw-extrabold); font-size: var(--fs-2xl); color:var(--success);">${fmtInt(precoFinal)} PLN</span>`;
                 html += `</div>`;
-                html += `<div style="display:grid; grid-template-columns:1fr auto; gap:0.15rem 0.8rem; font-size: var(--fs-base); color:var(--text-secondary);">`;
+                html += `<div style="display:grid; grid-template-columns:1fr auto; gap:0.15rem var(--tile-gap-sm-plus); font-size: var(--fs-base); color:var(--text-secondary);">`;
 
                 const etykietyBaza =
                     precoCalc.bazowaEtykiety && precoCalc.bazowaEtykiety.length > 0

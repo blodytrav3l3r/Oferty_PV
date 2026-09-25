@@ -29,16 +29,16 @@ body.rury-page > .main:has(#section-builder.active) {
 }
 
 .rury-card + .rury-card {
-    margin-top: 1rem;
+    margin-top: var(--tile-gap-md);
 }
 
 .rury-card-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 1rem;
-    margin-bottom: 0.8rem;
-    padding-bottom: 0.8rem;
+    gap: var(--tile-gap-md);
+    margin-bottom: var(--tile-gap-sm-plus);
+    padding-bottom: var(--tile-gap-sm-plus);
     border-bottom: 1px solid var(--border);
 }
 
@@ -48,14 +48,14 @@ body.rury-page > .main:has(#section-builder.active) {
     color: var(--text-primary);
     display: flex;
     align-items: center;
-    gap: 0.4rem;
+    gap: var(--tile-gap-xs);
     margin-bottom: 0;
 }
 
 .rury-card-actions {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: var(--tile-gap-xs-plus);
 }
 
 .rury-card-body {
@@ -69,8 +69,8 @@ body.rury-page > .main:has(#section-builder.active) {
 /* ── Formularze (wzorowane na .wizard-form-* z studnie.css) ── */
 .rury-form-grid {
     display: grid;
-    gap: 0.7rem;
-    margin-bottom: 0.5rem;
+    gap: var(--tile-gap-sm-plus);
+    margin-bottom: var(--tile-gap-xs-plus);
 }
 
 .rury-form-grid-2 {
@@ -148,8 +148,8 @@ body.rury-page > .main:has(#section-builder.active) {
 /* ── Pasek nawigacji sekcji (wzorowany na .cennik-tab) ── */
 .rury-section-nav {
     display: flex;
-    gap: 0.4rem;
-    margin-bottom: 1rem;
+    gap: var(--tile-gap-xs);
+    margin-bottom: var(--tile-gap-md);
 }
 
 .rury-section-btn {
@@ -585,7 +585,7 @@ html[data-theme='light'] .pehd-badge {
 .rury-summary-grid {
     display: grid;
     grid-template-columns: repeat(6, 1fr);
-    gap: 1rem;
+    gap: var(--tile-gap-md);
     align-items: stretch;
     text-align: center;
 }
@@ -594,7 +594,7 @@ html[data-theme='light'] .pehd-badge {
     background: var(--bg-secondary);
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
-    padding: 1rem;
+    padding: var(--tile-gap-md);
     height: 100%;
     display: flex;
     flex-direction: column;
@@ -726,7 +726,7 @@ html[data-theme='light'] .pehd-badge {
     display: grid;
     grid-template-columns: 1fr 1fr;
     grid-template-rows: 1fr 1fr;
-    gap: 0.4rem;
+    gap: var(--tile-gap-xs);
     padding: 0.5rem 0.8rem;
     height: 100%;
 }
@@ -900,21 +900,21 @@ html[data-theme='light'] .pehd-badge {
 }
 
 .rury-flex-gap-5 {
-    gap: 0.5rem;
+    gap: var(--tile-gap-xs-plus);
 }
 
 .rury-flex-gap-8 {
-    gap: 0.8rem;
+    gap: var(--tile-gap-sm-plus);
 }
 
 .rury-flex-gap-10 {
-    gap: 1rem;
+    gap: var(--tile-gap-md);
 }
 
 .rury-grid-2 {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 1rem;
+    gap: var(--tile-gap-md);
 }
 
 /* ── Transport breakdown ── */
@@ -1003,7 +1003,7 @@ html[data-theme='light'] .pehd-badge {
     background: var(--bg-card, var(--bg-secondary));
     border-top: 1px solid var(--border);
     border-bottom: 1px solid transparent;
-    padding: 0.8rem 1.5rem;
+    padding: var(--tile-gap-sm-plus) var(--tile-gap-lg);
     padding-bottom: calc(0.8rem + env(safe-area-inset-bottom, 0px));
     box-shadow: 0 -8px 30px var(--shadow-color);
     box-sizing: border-box;

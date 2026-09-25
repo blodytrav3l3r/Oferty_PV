@@ -1090,7 +1090,7 @@ html[data-theme='light'] .unit-popup-preview {
 
 /* ── Tiles & Config ── */
 .tiles-section {
-    margin-bottom: 0.6rem;
+    margin-bottom: var(--tile-gap-sm);
 }
 
 .tiles-section-title {
@@ -1099,23 +1099,23 @@ html[data-theme='light'] .unit-popup-preview {
     text-transform: uppercase;
     letter-spacing: 0.4px;
     color: var(--text-secondary);
-    margin-bottom: 0.35rem;
+    margin-bottom: var(--tile-gap-xs);
     display: flex;
     align-items: center;
-    gap: 0.3rem;
+    gap: var(--tile-gap-2xs);
 }
 
 .tiles-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, 160px);
-    gap: 0.35rem;
+    gap: var(--tile-gap-xs);
 }
 
 .tile {
     background: var(--bg-secondary);
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
-    padding: 0.4rem 0.5rem;
+    padding: var(--tile-gap-xs) var(--tile-gap-xs-plus);
     cursor: pointer;
     transition:
         border-color 0.15s ease-in-out,
@@ -1123,7 +1123,7 @@ html[data-theme='light'] .unit-popup-preview {
         box-shadow 0.15s ease-in-out;
     display: flex;
     flex-direction: column;
-    gap: 0.15rem;
+    gap: var(--tile-gap-micro);
     position: relative;
     overflow: hidden;
     min-height: 4.2rem;
@@ -1780,7 +1780,7 @@ html[data-theme='light'] #btn-auto-select:disabled {
 }
 
 .param-tile {
-    padding: 0.35rem 0.8rem;
+    padding: var(--tile-gap-xs) var(--tile-gap-sm-plus);
     border-radius: var(--radius-sm);
     background: var(--bg-secondary);
     border: 1px solid var(--border);
@@ -1969,7 +1969,7 @@ html[data-theme='light'] #btn-auto-select:disabled {
 .wizard-summary-bar {
     display: flex;
     align-items: center;
-    gap: 0.8rem;
+    gap: var(--tile-gap-sm-plus);
     padding: 0.45rem 0.75rem;
     background: var(--bg-deep);
     border: 1px solid var(--border-glass);

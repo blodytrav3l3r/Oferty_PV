@@ -188,7 +188,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 1.5rem;
+    gap: var(--tile-gap-lg);
     margin-bottom: var(--section-gap-lg);
     width: 100%;
     max-width: var(--section-max-width);
@@ -201,7 +201,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
 .user-profile-card {
     display: flex;
     align-items: center;
-    gap: 0.8rem;
+    gap: var(--tile-gap-sm-plus);
 }
 
 .user-avatar {
@@ -240,14 +240,14 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
 
 .user-actions {
     display: flex;
-    gap: 0.5rem;
+    gap: var(--tile-gap-xs-plus);
 }
 
 /* ── Karty uruchamiania (launch-grid) ── */
 .launch-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: var(--section-gap);
+    gap: var(--tile-gap-lg);
     width: 100%;
     max-width: var(--section-max-width);
 }
@@ -256,7 +256,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
     position: relative;
     display: flex;
     align-items: center;
-    padding: 1.5rem 2rem;
+    padding: var(--tile-gap-lg) 2rem;
     background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: var(--radius);
@@ -267,7 +267,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
         background-color 0.2s ease-in-out,
         box-shadow 0.2s ease-in-out;
     overflow: hidden;
-    gap: 1.5rem;
+    gap: var(--tile-gap-lg);
     text-align: left;
     user-select: none;
 }
@@ -358,7 +358,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
 .admin-container {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: var(--tile-gap-md);
     width: 100%;
     max-width: var(--section-max-width);
     margin-top: var(--section-gap-lg);
@@ -2029,7 +2029,7 @@ body.index-page .header.visible {
 /* Tablet (700-900px) */
 @media (max-width: 900px) {
     .launch-grid {
-        gap: 1rem;
+        gap: var(--tile-gap-md);
     }
     .launch-card {
         padding: 1.2rem 1.5rem;
@@ -2041,14 +2041,14 @@ body.index-page .header.visible {
 
 @media (max-width: 768px) {
     .launch-grid {
-        gap: 0.8rem;
+        gap: var(--tile-gap-sm-plus);
     }
     .launch-icon {
         font-size: var(--fs-7xl);
     }
     .launch-card {
         padding: 1rem 1.2rem;
-        gap: 1rem;
+        gap: var(--tile-gap-md);
     }
     .uf-grid,
     .uf-grid.cols-2 {
@@ -2073,7 +2073,7 @@ body.index-page .header.visible {
     .user-hero {
         flex-direction: column;
         text-align: center;
-        gap: 0.8rem;
+        gap: var(--tile-gap-sm-plus);
         border-radius: var(--radius);
         padding: 0.8rem;
     }

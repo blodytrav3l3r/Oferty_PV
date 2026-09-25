@@ -428,7 +428,7 @@
 .grid-auto-120 {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-    gap: 11px;
+    gap: var(--tile-gap-sm);
 }
 .w-100 {
     width: 100%;
@@ -599,13 +599,13 @@
 }
 .ka-filter-row {
     display: flex;
-    gap: 1rem;
+    gap: var(--tile-gap-md);
     align-items: center;
     flex-wrap: wrap;
 }
 .ka-filter-group {
     display: flex;
-    gap: 0.5rem;
+    gap: var(--tile-gap-xs-plus);
     align-items: center;
     flex-wrap: wrap;
 }
@@ -789,7 +789,7 @@
 .share-grid {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 0.6rem;
+    gap: var(--tile-gap-sm);
 }
 .share-tile {
     position: relative;
@@ -801,7 +801,7 @@
     background: var(--bg-glass);
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: var(--tile-gap-xs-plus);
     transition:
         border-color 0.18s ease,
         background 0.18s ease,
@@ -866,7 +866,7 @@
 .share-tile-right {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: var(--tile-gap-xs-plus);
     margin-left: auto;
     flex-shrink: 0;
 }

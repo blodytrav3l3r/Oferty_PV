@@ -75,14 +75,14 @@ function renderSavedOffers() {
         }
         ${
             _hasOrder
-                ? `<div style="margin-top:0.5rem; display:flex; gap:0.4rem; flex-wrap:wrap;">
+                ? `<div style="margin-top:var(--tile-gap-xs-plus); display:flex; gap:var(--tile-gap-2xs); flex-wrap:wrap;">
             ${_orderList
                 .map((ord) => {
                     const label =
                         ord.orderNumber ||
                         ord.offerNumber ||
                         (ord.id ? ord.id.substring(0, 8) : '—');
-                    return `<span style="display:inline-flex; align-items:center; gap:0.3rem; padding:0.2rem 0.5rem; background:rgba(var(--success-rgb), 0.15); border:1px solid rgba(var(--success-rgb), 0.5); border-radius: var(--radius-sm); font-size: var(--fs-xs); font-weight: var(--fw-extrabold); color:var(--success-hover);">
+                    return `<span style="display:inline-flex; align-items:center; gap:var(--tile-gap-2xs); padding:0.2rem 0.5rem; background:rgba(var(--success-rgb), 0.15); border:1px solid rgba(var(--success-rgb), 0.5); border-radius: var(--radius-sm); font-size: var(--fs-xs); font-weight: var(--fw-extrabold); color:var(--success-hover);">
                     <i data-lucide="package" class="icon-xxs"></i> Zamówienie ${escapeHtml(label)}
                 </span>`;
                 })
@@ -91,7 +91,7 @@ function renderSavedOffers() {
                 : ''
         }
       </div>
-      <div class="offer-actions" style="display:flex; flex-wrap:wrap; gap:0.4rem; justify-content:flex-end; align-content:center;">
+      <div class="offer-actions" style="display:flex; flex-wrap:wrap; gap:var(--tile-gap-xs); justify-content:flex-end; align-content:center;">
         <button class="btn btn-sm btn-primary" data-action="loadOffer" data-id="${escapeHtmlAttr(o.id)}" title="Edytuj" ${canEdit ? '' : 'disabled'}><i data-lucide="pencil" aria-hidden="true"></i> Edytuj</button>
         <button class="btn btn-sm btn-secondary" data-action="duplicateOffer" data-id="${escapeHtmlAttr(o.id)}" title="Duplikuj"><i data-lucide="clipboard-list" aria-hidden="true"></i> Duplikuj</button>
         ${o.history && o.history.length > 0 ? `<button class="btn btn-sm btn-secondary" data-action="showOfferHistory" data-id="${escapeHtmlAttr(o.id)}" title="Historia zmian"><i data-lucide="hourglass" aria-hidden="true"></i> Historia</button>` : ''}

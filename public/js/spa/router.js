@@ -370,7 +370,7 @@
                 // Dopasuj główną treść, aby nie miała przesunięcia nagłówka
                 const main = iframeDoc.querySelector('main.main');
                 if (main) {
-                    main.style.paddingTop = '0.5rem';
+                    main.style.paddingTop = 'var(--tile-gap-xs-plus)';
                     main.style.marginTop = '0';
                 }
 

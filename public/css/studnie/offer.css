@@ -2,8 +2,8 @@
 .offer-stats-bar {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 1rem;
-    margin-bottom: 1rem;
+    gap: var(--tile-gap-md);
+    margin-bottom: var(--tile-gap-md);
 }
 
 .offer-stat-card {
@@ -167,7 +167,7 @@
 
 /* —— Akcje w dolnym pasku podsumowania —— */
 .summary-card-actions {
-    padding: 0.5rem 0.8rem !important;
+    padding: var(--tile-gap-xs-plus) var(--tile-gap-sm-plus) !important;
     display: flex;
     align-items: stretch;
 }
@@ -175,7 +175,7 @@
     display: grid;
     grid-template-columns: 1fr 1fr;
     grid-template-rows: 1fr 1fr;
-    gap: 0.3rem;
+    gap: var(--tile-gap-2xs);
     width: 100%;
     height: 100%;
 }
@@ -189,7 +189,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.3rem;
+    gap: var(--tile-gap-2xs);
     transition:
         background 0.2s,
         border-color 0.2s,
@@ -244,14 +244,14 @@
     background: var(--bg-glass);
     border: 1px solid var(--border-glass);
     border-radius: var(--radius-sm);
-    padding: 1rem;
+    padding: var(--tile-gap-md);
     height: 100%;
     display: flex;
     flex-direction: column;
     justify-content: center;
 }
 #offer-summary-footer-fixed .summary-card-actions {
-    padding: 0.5rem 0.8rem;
+    padding: var(--tile-gap-xs-plus) var(--tile-gap-sm-plus);
 }
 /* —— Pozycja fixed stopki oferty: siedzi NAD paskiem nawigacji — SSoT var(--bottom-bar-h) —— */
 .offer-summary-footer-fixed {
@@ -261,8 +261,8 @@
     right: 0;
     background: var(--bg-secondary);
     border-top: 1px solid var(--border-glass);
-    padding: 0.8rem 1.5rem;
-    padding-bottom: calc(0.8rem + env(safe-area-inset-bottom, 0px));
+    padding: var(--tile-gap-sm-plus) var(--tile-gap-lg);
+    padding-bottom: calc(var(--tile-gap-sm-plus) + env(safe-area-inset-bottom, 0px));
     z-index: 99;
     box-shadow: 0 -8px 30px var(--shadow-color);
     box-sizing: border-box;
@@ -302,8 +302,8 @@
 @media (max-width: 768px) {
     .offer-summary-footer-fixed {
         bottom: var(--bottom-bar-h-mobile);
-        padding: 0.8rem 1rem;
-        padding-bottom: calc(0.8rem + env(safe-area-inset-bottom, 0px));
+        padding: var(--tile-gap-sm-plus) var(--tile-gap-md);
+        padding-bottom: calc(var(--tile-gap-sm-plus) + env(safe-area-inset-bottom, 0px));
     }
 }
 /* —— Excel table header aesthetic improvements —— */

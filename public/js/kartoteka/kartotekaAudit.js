@@ -366,7 +366,7 @@ export function auditShowSnapshotModal(self, data, type) {
                 </div>
                 <button class="btn-icon" aria-label="Zamknij" onclick="closeModal()"><i data-lucide="x" aria-hidden="true"></i></button>
             </div>
-            <div class="audit-list" style="display:flex; flex-direction:column; gap:0.45rem;">
+            <div class="audit-list" style="display:flex; flex-direction:column; gap:var(--tile-gap-xs-plus);">
                 ${rows || '<div class="audit-muted">Brak danych do pokazania.</div>'}
             </div>
         </div>`
