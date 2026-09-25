@@ -292,6 +292,13 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
                     );
                     if (newEl) element = newEl;
                 }
+                // Re-sort (well.przejscia mutowane przy renderze) unieważnia
+                // indeks policzony przed zapisem — przelicz po stabilnym id,
+                // inaczej wartość czytamy ze złego wiersza (2. klik).
+                if (typeof resolvePrzejscieIndex === 'function') {
+                    const _w = typeof getCurrentWell === 'function' ? getCurrentWell() : null;
+                    index = resolvePrzejscieIndex(_w, element, index);
+                }
                 // Komórka wypadła z DOM (np. filtr) — nie wstawiaj w próżnię.
                 if (!element.isConnected) {
                     window.__qeKey = null;
@@ -417,6 +424,13 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
                 return;
             }
             const well = getCurrentWell();
+            // Blur niesie indeks sprzed ewentualnego re-sortu (mutacja
+            // well.przejscia przy renderze) — przelicz po stabilnym id,
+            // inaczej zapis trafi w zły wiersz.
+            if (inputEl && inputEl.closest && typeof resolvePrzejscieIndex === 'function') {
+                const _cell = inputEl.closest('[data-qe-id]');
+                if (_cell) index = resolvePrzejscieIndex(well, _cell, index);
+            }
             if (!well || !well.przejscia || !well.przejscia[index]) return;
 
             const applyChanges = () => {
