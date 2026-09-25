@@ -7,16 +7,7 @@
 // Współdzielony lot: równoległe refreshe (blur-save + quick-edit switch)
 // czekałyby na siebie i każdy przebudowywał formularz — ostatni wygrywa
 // i niszczy świeży input. Jeden lot = jeden rebuild.
-window.refreshZleceniaModalIfActive = function (opts) {
-    // Tryb light: tylko lista przejść (bez buildZleceniaWellList/populateZleceniaForm
-    // z async fetch) — do przełączania pól quick-edit, gdzie pełny rebuild
-    // niszczyłby świeżo wstawiony input (2-klik w PZ).
-    if (opts && opts.light) {
-        try {
-            if (typeof window.refreshPrzejsciaViews === 'function') window.refreshPrzejsciaViews();
-        } catch (_e) {}
-        return Promise.resolve();
-    }
+window.refreshZleceniaModalIfActive = function () {
     if (window.__zlRefreshInFlight) return window.__zlRefreshInFlight;
     window.__zlRefreshInFlight = (async () => {
         try {
