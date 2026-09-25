@@ -268,6 +268,13 @@ async function saveProductionOrder() {
         status: existingIdx >= 0 ? productionOrders[existingIdx].status || 'draft' : 'draft'
     };
 
+    // P0-V: rebuild nie gubi version istniejącego rekordu (predykat lockingu).
+    // Tylko number — nowy rekord jedzie bez version (create, semantyka bez zmian).
+    // Nigdy version: undefined w payloadzie.
+    if (existingIdx >= 0 && typeof productionOrders[existingIdx].version === 'number') {
+        order.version = productionOrders[existingIdx].version;
+    }
+
     if (existingIdx >= 0) {
         productionOrders[existingIdx] = order;
     } else {

@@ -445,7 +445,10 @@ describe('PUT /production atomowy (P0-C: całość albo nic)', () => {
         ];
         const res = await request(app).put('/api/orders-studnie/production').send({ data });
         expect(res.status).toBe(200);
-        expect(res.body.saved).toEqual(['a', 'b']);
+        expect(res.body.saved).toEqual([
+            { id: 'a', version: 1 },
+            { id: 'b', version: 1 }
+        ]);
     });
 
     test('pad drugiego upsertu → 500, saved=[] i NIC nie zapisane (rollback)', async () => {

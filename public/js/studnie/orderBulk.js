@@ -980,6 +980,7 @@ async function executeBulkGeneration(elements) {
 
     // Faza 2: PUT chunkami 200 z jednym retry po 429 (Retry-After).
     const savedIds = new Set();
+    const savedVersions = new Map();
     let putErrors = 0;
     if (!stopped && !isAborted()) {
         for (let start = 0; start < built.length; start += _BULK_CHUNK) {
@@ -1022,7 +1023,14 @@ async function executeBulkGeneration(elements) {
             const saved =
                 resp && resp.body && Array.isArray(resp.body.saved) ? resp.body.saved : [];
             if (!resp || !resp.ok) putErrors++;
-            for (const id of saved) savedIds.add(id);
+            // P0-V: wpis to {id, version} (lub string w starym kontrakcie).
+            for (const entry of saved) {
+                const id = typeof entry === 'string' ? entry : entry && entry.id;
+                if (!id) continue;
+                savedIds.add(id);
+                const ver = entry && typeof entry.version === 'number' ? entry.version : undefined;
+                if (ver !== undefined) savedVersions.set(id, ver);
+            }
             showBulkProgress(Math.min(start + _BULK_CHUNK, built.length));
         }
     } else {
@@ -1035,6 +1043,10 @@ async function executeBulkGeneration(elements) {
     const newOrders = [];
     for (let i = 0; i < built.length; i++) {
         if (savedIds.has(built[i].order.id)) {
+            // P0-V: wersja z serwera (create → 1), żeby późniejszy zapis nie 409.
+            if (savedVersions.has(built[i].order.id)) {
+                built[i].order.version = savedVersions.get(built[i].order.id);
+            }
             productionOrders.push(built[i].order);
             newOrders.push(built[i].order);
         } else if (i < claimed.length) {

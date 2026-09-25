@@ -214,7 +214,9 @@ router.put(
         const authReq = req as AuthenticatedRequest;
         // P0-C: całość albo nic. Zod (validateData) sprawdza kształt całego
         // batcha PRZED transakcją; ownership sprawdzany W transakcji (TOCTOU).
-        const saved: string[] = [];
+        // P0-V: saved niesie wersje faktycznie zapisane (po inkrementacji) —
+        // API jest źródłem prawdy dla version, frontend merguje do RAM.
+        const saved: Array<{ id: string; version: number }> = [];
         try {
             const incoming = req.body.data || [];
 
@@ -323,6 +325,7 @@ router.put(
                                 version: 1
                             }
                         });
+                        saved.push({ id: docId, version: 1 });
                     } else if (clientVersion != null) {
                         // P0-D: predykat w JEDNYM SQL (SET version+1 WHERE
                         // id+version). 0 wierszy = ktoś zapisał wcześniej.
@@ -351,6 +354,7 @@ router.put(
                                 serverVersion: old.version ?? 1
                             };
                         }
+                        saved.push({ id: docId, version: clientVersion + 1 });
                     } else {
                         await tx.production_orders_rel.update({
                             where: { id: docId },
@@ -368,8 +372,10 @@ router.put(
                                 version: { increment: 1 }
                             }
                         });
+                        // Gałąź bez predykatu (legacy, brak version w requeście):
+                        // nowa wersja = stara + 1.
+                        saved.push({ id: docId, version: (old.version ?? 1) + 1 });
                     }
-                    saved.push(docId);
                 }
             }, HOT_TX_OPTS);
 

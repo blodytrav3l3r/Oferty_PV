@@ -298,7 +298,20 @@ async function _saveProductionChunk(chunk, noRetry) {
         logger.error('orderManager', 'saveProductionOrdersData error:', err);
         throw err;
     }
-    return Array.isArray(body.saved) ? body.saved : [];
+    const rawSaved = Array.isArray(body.saved) ? body.saved : [];
+    // P0-V: odpowiedź serwera autorytatywna dla version (SSoT) — merguj do
+    // RAM, żeby kolejny zapis nie niósł starej wersji (fałszywy 409).
+    // Wpis string (stary kontrakt) = brak wersji, pomijany. Nigdy +1 z palca.
+    if (typeof productionOrders !== 'undefined' && Array.isArray(productionOrders)) {
+        for (const entry of rawSaved) {
+            const id = typeof entry === 'string' ? entry : entry && entry.id;
+            const ver = entry && typeof entry.version === 'number' ? entry.version : undefined;
+            if (!id || ver === undefined) continue;
+            const po = productionOrders.find((p) => p && p.id === id);
+            if (po) po.version = ver;
+        }
+    }
+    return rawSaved;
 }
 
 async function deleteProductionOrder(id) {

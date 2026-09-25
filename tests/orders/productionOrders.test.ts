@@ -319,6 +319,119 @@ describe('Production Orders (PZ) routes', () => {
             expect(savedData.productName).toBe('Dennica DN1000 H=650/500');
             expect(savedData.productId).toBe('DDD-10-065');
         });
+
+        it('P0-V: create zwraca version=1', async () => {
+            (prisma.production_orders_rel.findUnique as jest.Mock).mockResolvedValue(null);
+            (prisma.production_orders_rel.create as jest.Mock).mockResolvedValue({});
+
+            const res = await request(app)
+                .put('/api/orders/production')
+                .set('x-user-id', 'user-id')
+                .send({ data: [{ wellId: 'w-1', elementIndex: 0, status: 'draft' }] });
+
+            expect(res.statusCode).toBe(200);
+            expect(res.body.saved).toEqual([{ id: expect.any(String), version: 1 }]);
+        });
+
+        it('P0-V: update v6 → sukces z version=7 (echo serwera)', async () => {
+            (prisma.production_orders_rel.findUnique as jest.Mock).mockResolvedValue({
+                id: 'pz-1',
+                userId: 'user-id',
+                version: 6,
+                data: '{}'
+            });
+            (prisma.production_orders_rel.updateMany as jest.Mock).mockResolvedValue({
+                count: 1
+            });
+
+            const res = await request(app)
+                .put('/api/orders/production')
+                .set('x-user-id', 'user-id')
+                .send({ data: [{ id: 'pz-1', wellId: 'w-1', version: 6, status: 'draft' }] });
+
+            expect(res.statusCode).toBe(200);
+            expect(res.body.saved).toEqual([{ id: 'pz-1', version: 7 }]);
+            expect(
+                (prisma.production_orders_rel.updateMany as jest.Mock).mock.calls[0][0].where
+            ).toEqual({ id: 'pz-1', version: 6 });
+        });
+
+        it('P0-V: łańcuch save→save bez fałszywego 409 (scenariusz zgłoszenia)', async () => {
+            // Serwer na v6. Klient zapisuje z v6 → dostaje v7 → zapisuje z v7 → v8.
+            (prisma.production_orders_rel.findUnique as jest.Mock).mockResolvedValue({
+                id: 'pz-1',
+                userId: 'user-id',
+                version: 6,
+                data: '{}'
+            });
+            (prisma.production_orders_rel.updateMany as jest.Mock).mockResolvedValue({
+                count: 1
+            });
+
+            const first = await request(app)
+                .put('/api/orders/production')
+                .set('x-user-id', 'user-id')
+                .send({ data: [{ id: 'pz-1', wellId: 'w-1', version: 6, status: 'draft' }] });
+            expect(first.statusCode).toBe(200);
+            const echoed = first.body.saved[0].version;
+
+            (prisma.production_orders_rel.findUnique as jest.Mock).mockResolvedValue({
+                id: 'pz-1',
+                userId: 'user-id',
+                version: echoed,
+                data: '{}'
+            });
+            const second = await request(app)
+                .put('/api/orders/production')
+                .set('x-user-id', 'user-id')
+                .send({
+                    data: [{ id: 'pz-1', wellId: 'w-1', version: echoed, status: 'draft' }]
+                });
+            expect(second.statusCode).toBe(200);
+            expect(second.body.saved).toEqual([{ id: 'pz-1', version: echoed + 1 }]);
+        });
+
+        it('P0-V: zapis ze starą wersją → prawdziwy 409 (ochrona działa)', async () => {
+            // Serwer na v7, klient wysyła v6 → 409 z serverVersion.
+            (prisma.production_orders_rel.findUnique as jest.Mock).mockResolvedValue({
+                id: 'pz-1',
+                userId: 'user-id',
+                version: 7,
+                data: '{}'
+            });
+            (prisma.production_orders_rel.updateMany as jest.Mock).mockResolvedValue({
+                count: 0
+            });
+
+            const res = await request(app)
+                .put('/api/orders/production')
+                .set('x-user-id', 'user-id')
+                .send({ data: [{ id: 'pz-1', wellId: 'w-1', version: 6, status: 'draft' }] });
+
+            expect(res.statusCode).toBe(409);
+            expect(res.body.code).toBe('VERSION_CONFLICT');
+            expect(res.body.serverVersion).toBe(7);
+            expect(res.body.saved).toEqual([]);
+        });
+
+        it('P0-V: zapis bez version → legacy, sukces z version=old+1', async () => {
+            (prisma.production_orders_rel.findUnique as jest.Mock).mockResolvedValue({
+                id: 'pz-1',
+                userId: 'user-id',
+                version: 4,
+                data: '{}'
+            });
+            (prisma.production_orders_rel.update as jest.Mock).mockResolvedValue({});
+
+            const res = await request(app)
+                .put('/api/orders/production')
+                .set('x-user-id', 'user-id')
+                .send({ data: [{ id: 'pz-1', wellId: 'w-1', status: 'draft' }] });
+
+            expect(res.statusCode).toBe(200);
+            expect(res.body.saved).toEqual([{ id: 'pz-1', version: 5 }]);
+            expect(prisma.production_orders_rel.update).toHaveBeenCalled();
+        });
     });
 
     describe('GET /:id', () => {
