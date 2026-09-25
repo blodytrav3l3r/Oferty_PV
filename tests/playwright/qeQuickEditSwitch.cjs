@@ -416,7 +416,7 @@ async function waitModuleFrame(page, mod) {
         } catch (_) {}
         check(
             '3b',
-            bFocus && bSave && bGone && prodHits === 0,
+            bFocus && bSave && bGone && prodHits === 0 && clicks - bBefore === 1,
             `kliki=${clicks - bBefore} fokus=${bFocus} zapis33=${bSave} prodHits=${prodHits}`
         );
 
@@ -497,7 +497,7 @@ async function waitModuleFrame(page, mod) {
         const overlapped = routeHit && Date.now() - kT0 >= 1400;
         check(
             'killer',
-            kF1 && kF2 && kSave && overlapped,
+            kF1 && kF2 && kSave && overlapped && clicks - kBefore === 2,
             `kliki=${clicks - kBefore} f1=${kF1} zapis7=${kSave} f2=${kF2} overlap=${overlapped}`
         );
 
