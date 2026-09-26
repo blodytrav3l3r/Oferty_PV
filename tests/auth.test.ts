@@ -127,7 +127,9 @@ describe('Auth Routes - Z-70', () => {
 
     describe('GET /api/auth/me', () => {
         it('powinien zwrócić user gdy autoryzowany', async () => {
-            const res = await request(app).get('/api/auth/me').set('x-auth-token', 'test-token');
+            const res = await request(app)
+                .get('/api/auth/me')
+                .set('Cookie', 'authToken=test-token');
             expect(res.statusCode).toBe(200);
             expect(res.body.user).toBeDefined();
         });
@@ -199,7 +201,7 @@ describe('Auth Routes - Z-70', () => {
             const res = await request(app)
                 .post('/api/auth/change-password')
                 .set('x-test-user', JSON.stringify({ id: 'user-id', role: 'admin' }))
-                .set('x-auth-token', current)
+                .set('Cookie', `authToken=${current}`)
                 .send({ oldPassword: 'oldPass', newPassword: 'NewPass123!' });
 
             expect(res.statusCode).toBe(200);

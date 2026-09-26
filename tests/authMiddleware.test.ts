@@ -109,9 +109,10 @@ describe('requireAuth', () => {
 
         const app = express();
         app.use(express.json());
+        app.use(cookieParser());
         app.get('/protected', requireAuth, (_req, res) => res.json({ ok: true }));
 
-        const res = await request(app).get('/protected').set('x-auth-token', 'invalid-token');
+        const res = await request(app).get('/protected').set('Cookie', 'authToken=invalid-token');
 
         expect(res.statusCode).toBe(401);
     });
@@ -135,18 +136,19 @@ describe('requireAuth', () => {
 
         const app = express();
         app.use(express.json());
+        app.use(cookieParser());
         app.get('/protected', requireAuth, (req, res) => {
             res.json({ user: req.user });
         });
 
-        const res = await request(app).get('/protected').set('x-auth-token', 'valid-token');
+        const res = await request(app).get('/protected').set('Cookie', 'authToken=valid-token');
 
         expect(res.statusCode).toBe(200);
         expect(res.body.user.username).toBe('testuser');
         expect(res.body.user).not.toHaveProperty('password');
     });
 
-    it('cookie wygrywa z nagłówkiem: obcy x-auth-token nie nadpisuje sesji cookie', async () => {
+    it('nagłówek x-auth-token ignorowany (sunset): liczy się tylko cookie', async () => {
         const now = BigInt(Date.now());
         const seenTokens: string[] = [];
         mockPrisma.sessions.findUnique.mockImplementation(async (args: any) => {
@@ -193,9 +195,10 @@ describe('requireAuth', () => {
         mockPrisma.users.findUnique.mockResolvedValue(null);
 
         const app = express();
+        app.use(cookieParser());
         app.get('/protected', requireAuth, (_req, res) => res.json({ ok: true }));
 
-        const res = await request(app).get('/protected').set('x-auth-token', 'valid-token');
+        const res = await request(app).get('/protected').set('Cookie', 'authToken=valid-token');
 
         expect(res.statusCode).toBe(401);
         expect(res.body.error).toContain('Użytkownik nie istnieje');
