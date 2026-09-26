@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
 // @ts-nocheck
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
@@ -6,6 +5,16 @@ import AxeBuilder from '@axe-core/playwright';
 test.describe('a11y axe', () => {
     test('index.html ma 0 poważnych naruszeń', async ({ page }) => {
         await page.goto('/');
+        // Determinizm: loginFadeIn (0.5 s) blenduje kolory w trakcie —
+        // axe mierzyłby mid-animacji (~4.2 zamiast 4.9 steady-state).
+        await page.waitForFunction(
+            () => {
+                const b = document.querySelector('.login-box');
+                return !!b && getComputedStyle(b).opacity === '1';
+            },
+            null,
+            { timeout: 10000 }
+        );
         const results = await new AxeBuilder({ page })
             .withTags(['wcag2a', 'wcag2aa'])
             .exclude('#toast-container')
@@ -31,21 +40,27 @@ test.describe('a11y axe', () => {
         if (frame) {
             // Sprawdź bezpośrednio atrybuty w iframe (bardziej stabilne niż Axe include na page)
             await frame.waitForSelector('#ka-user-filter', { timeout: 10000 });
-            const userFilterLabel = await frame.getAttribute('#ka-user-filter', 'aria-label');
-            const dateFromLabel = await frame.getAttribute('#ka-date-from', 'aria-label');
-            // Alternatywnie: label for — jeśli aria-label brak, sprawdź <label>
+            const userFilterLabel = (
+                (await frame.getAttribute('#ka-user-filter', 'aria-label')) || ''
+            ).trim();
+            const dateFromLabel = (
+                (await frame.getAttribute('#ka-date-from', 'aria-label')) || ''
+            ).trim();
+            // Alternatywnie: label for — liczy się tylko niepusty tekst etykiety.
             expect(
                 userFilterLabel ||
-                    (await frame
-                        .locator('#ka-user-filter')
-                        .evaluate((el) => !!document.querySelector(`label[for="${el.id}"]`))),
+                    (await frame.locator('#ka-user-filter').evaluate((el) => {
+                        const l = document.querySelector(`label[for="${el.id}"]`);
+                        return !!(l && (l.textContent || '').trim());
+                    })),
                 'Brak etykiety dla #ka-user-filter'
             ).toBeTruthy();
             expect(
                 dateFromLabel ||
-                    (await frame
-                        .locator('#ka-date-from')
-                        .evaluate((el) => !!document.querySelector(`label[for="${el.id}"]`))),
+                    (await frame.locator('#ka-date-from').evaluate((el) => {
+                        const l = document.querySelector(`label[for="${el.id}"]`);
+                        return !!(l && (l.textContent || '').trim());
+                    })),
                 'Brak etykiety dla #ka-date-from'
             ).toBeTruthy();
             // Dodatkowo uruchom axe na całym frame (bez include — unika błędu No elements for include)
