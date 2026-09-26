@@ -10,6 +10,11 @@
  * na zapełnionej bazie — sam dopisek do data/seed_*.json nie wystarczy
  * na istniejacych instalacjach.
  *
+ * UWAGA: ten skrypt omija priceOverrideService.saveDefaults(), wiec po nim
+ * snapshot data/price_defaults.json jest nieaktualny. Koniecznie wykonaj:
+ *   npm run prices:export   # odswieza plik + tabele *_Default + timestamp
+ *   npm run prices:verify   # potwierdza spojnosc LIVE = Default = plik
+ *
  * Uzycie:
  *   node scripts/add-transport-products.mjs
  */
@@ -92,6 +97,9 @@ async function main() {
         });
     }
     console.log('TR-STUDNIE: upsert w ProductsStudnie + ProductsStudnieDefault');
+    console.log(
+        'PRZYPOMNIENIE: snapshot nieaktualny — wykonaj npm run prices:export && npm run prices:verify'
+    );
 }
 
 main()

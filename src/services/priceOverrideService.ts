@@ -92,6 +92,28 @@ export interface RestoreSummary {
     schemaVersion: number;
 }
 
+export interface SnapshotVerifyResult {
+    ok: boolean;
+    skipped: boolean;
+    skipReason?: string;
+    issues: string[];
+    live: {
+        rury: number;
+        studnie: number;
+        precoKonfig: number;
+        precoKinety: number;
+        precoZakresy: number;
+    };
+    file?: {
+        exportedAt?: string;
+        rury: number;
+        studnie: number;
+        precoKonfig: number;
+        precoKinety: number;
+        precoZakresy: number;
+    };
+}
+
 /** Kanoniczny stringify (rekurencyjne sortowanie kluczy) — stabilny SHA dla JSON. */
 function canonicalStringify(value: unknown): string {
     if (Array.isArray(value)) {
@@ -540,6 +562,128 @@ class PriceOverrideService {
             diff,
             skippedGuard: false,
             schemaVersion
+        };
+    }
+
+    /**
+     * Weryfikuje spójność trzech warstw cenników (LIVE vs *_Default vs plik).
+     * Read-only — niczego nie zapisuje. Wykrywa zapisy omijające saveDefaults()
+     * (np. jednorazowe skrypty prosto do DB): każda taka zmiana bez snapshotu
+     * kończy się tu issue z podpowiedzią naprawy (npm run prices:export).
+     *
+     * Brak pliku = SKIP (świeża instalacja / CI), nie błąd.
+     */
+    async verifySnapshot(): Promise<SnapshotVerifyResult> {
+        const target = this.defaultsPath;
+        const emptyLive = { rury: 0, studnie: 0, precoKonfig: 0, precoKinety: 0, precoZakresy: 0 };
+
+        if (!fs.existsSync(target)) {
+            logger.debug('PriceOverride', 'Brak price_defaults.json — verify pomijam');
+            return {
+                ok: true,
+                skipped: true,
+                skipReason: 'brak pliku price_defaults.json',
+                issues: [],
+                live: emptyLive
+            };
+        }
+
+        let parsed: unknown;
+        try {
+            parsed = JSON.parse(fs.readFileSync(target, 'utf-8'));
+        } catch (err) {
+            return {
+                ok: false,
+                skipped: false,
+                issues: [`nieparsowalny JSON snapshotu: ${String(err)}`],
+                live: emptyLive
+            };
+        }
+
+        const data = parsed as Partial<LegacyPriceDefaultsJson> & Partial<PriceDefaultsJson>;
+        if (
+            !Array.isArray(data.rury) ||
+            !Array.isArray(data.studnie) ||
+            !isPlainRecord(data.preco) ||
+            !Array.isArray(data.preco.konfig) ||
+            !Array.isArray(data.preco.kinety) ||
+            !Array.isArray(data.preco.zakresy)
+        ) {
+            return {
+                ok: false,
+                skipped: false,
+                issues: ['nieprawidłowa struktura price_defaults.json'],
+                live: emptyLive
+            };
+        }
+
+        const pkg = await this.buildPricePackage();
+        const issues: string[] = [];
+        const hint = 'uruchom npm run prices:export aby odświeżyć snapshot';
+        const liveSections: Array<[string, unknown[], unknown[]]> = [
+            ['rury', pkg.rury, data.rury],
+            ['studnie', pkg.studnie, data.studnie],
+            ['precoKonfig', pkg.preco.konfig, data.preco.konfig],
+            ['precoKinety', pkg.preco.kinety, data.preco.kinety],
+            ['precoZakresy', pkg.preco.zakresy, data.preco.zakresy]
+        ];
+        for (const [name, liveRows, fileRows] of liveSections) {
+            if (liveRows.length !== fileRows.length) {
+                issues.push(
+                    `${name}: live ${liveRows.length} vs plik ${fileRows.length} — ${hint}`
+                );
+            } else if (sha256Canonical(liveRows) !== sha256Canonical(fileRows)) {
+                issues.push(`${name}: ta sama liczba wierszy, inna treść — ${hint}`);
+            }
+        }
+
+        const [defRury, defStudnie, defKonfig, defKinety, defZakresy] = await Promise.all([
+            prisma.productsRuryDefault.findMany({ orderBy: { id: 'asc' } }),
+            prisma.productsStudnieDefault.findMany({ orderBy: { id: 'asc' } }),
+            prisma.precoKonfigDefault.findMany({ orderBy: { key: 'asc' } }),
+            prisma.precoKinetyDefault.findMany({ orderBy: [{ wellDn: 'asc' }, { order: 'asc' }] }),
+            prisma.precoZakresyDefault.findMany({ orderBy: [{ wellDn: 'asc' }, { order: 'asc' }] })
+        ]);
+        const defaultSections: Array<[string, unknown[], unknown[]]> = [
+            ['rury', pkg.rury, defRury],
+            ['studnie', pkg.studnie, defStudnie],
+            ['precoKonfig', pkg.preco.konfig, defKonfig],
+            ['precoKinety', pkg.preco.kinety, defKinety],
+            ['precoZakresy', pkg.preco.zakresy, defZakresy]
+        ];
+        for (const [name, liveRows, defRows] of defaultSections) {
+            if (sha256Canonical(liveRows) !== sha256Canonical(defRows)) {
+                issues.push(
+                    `${name}: LIVE vs *_Default rozjechane (bezpośredni zapis do DB?) — ${hint}`
+                );
+            }
+        }
+
+        if (issues.length > 0) {
+            logger.warn('PriceOverride', `Dryf snapshotu cenników: ${issues.join('; ')}`);
+        } else {
+            logger.info('PriceOverride', 'Snapshot cenników zgodny (LIVE = Default = plik)');
+        }
+
+        return {
+            ok: issues.length === 0,
+            skipped: false,
+            issues,
+            live: {
+                rury: pkg.rury.length,
+                studnie: pkg.studnie.length,
+                precoKonfig: pkg.preco.konfig.length,
+                precoKinety: pkg.preco.kinety.length,
+                precoZakresy: pkg.preco.zakresy.length
+            },
+            file: {
+                exportedAt: data.exportedAt,
+                rury: data.rury.length,
+                studnie: data.studnie.length,
+                precoKonfig: data.preco.konfig.length,
+                precoKinety: data.preco.kinety.length,
+                precoZakresy: data.preco.zakresy.length
+            }
         };
     }
 }

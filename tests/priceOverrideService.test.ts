@@ -8,6 +8,8 @@
  *   force (CLI prices:import) pomija guard.
  * - saveDefaults(): manifest v2 (schemaVersion, sekcje, hashe), brak zapisu
  *   do seed_*.json (ceny nie trafiają do publicznego repo).
+ * - verifySnapshot(): read-only detekcja dryfu LIVE vs *_Default vs plik
+ *   (scenariusz TR-RURY/TR-STUDNIE: zapis do DB z pominięciem saveDefaults).
  */
 
 import fs from 'fs';
@@ -82,6 +84,21 @@ jest.mock('../src/prismaClient', () => ({
                 ])
         },
         precoZakresy: {
+            findMany: jest.fn().mockResolvedValue([])
+        },
+        productsRuryDefault: {
+            findMany: jest.fn().mockResolvedValue([])
+        },
+        productsStudnieDefault: {
+            findMany: jest.fn().mockResolvedValue([])
+        },
+        precoKonfigDefault: {
+            findMany: jest.fn().mockResolvedValue([])
+        },
+        precoKinetyDefault: {
+            findMany: jest.fn().mockResolvedValue([])
+        },
+        precoZakresyDefault: {
             findMany: jest.fn().mockResolvedValue([])
         },
         $transaction: jest.fn(async (arg: any) => {
@@ -393,5 +410,128 @@ describe('priceOverrideService.saveDefaults', () => {
 
         expect(txMock.productsRuryDefault.deleteMany).not.toHaveBeenCalled();
         expect(txMock.settings.upsert).not.toHaveBeenCalled();
+    });
+});
+
+describe('priceOverrideService.verifySnapshot', () => {
+    const liveRury = [{ id: 'r1', name: 'Rura', category: 'Rury Betonowe', price: 100 }];
+    const liveStudnie = [
+        { id: 's1', name: 'Studnia', category: 'Studnie', componentType: 'dennica', price: 200 }
+    ];
+    const liveKonfig = [{ id: 'k1', key: '1000', value: '{}' }];
+    const liveKinety = [{ id: 'kt1', order: 1, dn: 300, wellDn: 1000, height: 1, cena: 100 }];
+    const liveZakresy = [
+        { id: 'z1', order: 1, label: 'A', min: 0, max: 100, grupy: '{}', wellDn: 1000 }
+    ];
+
+    function mockSyncedDb() {
+        (prisma.productsRury.findMany as jest.Mock).mockResolvedValue(liveRury);
+        (prisma.productsStudnie.findMany as jest.Mock).mockResolvedValue(liveStudnie);
+        (prisma.precoKonfig.findMany as jest.Mock).mockResolvedValue(liveKonfig);
+        (prisma.precoKinety.findMany as jest.Mock).mockResolvedValue(liveKinety);
+        (prisma.precoZakresy.findMany as jest.Mock).mockResolvedValue(liveZakresy);
+        (prisma.productsRuryDefault.findMany as jest.Mock).mockResolvedValue(liveRury);
+        (prisma.productsStudnieDefault.findMany as jest.Mock).mockResolvedValue(liveStudnie);
+        (prisma.precoKonfigDefault.findMany as jest.Mock).mockResolvedValue(liveKonfig);
+        (prisma.precoKinetyDefault.findMany as jest.Mock).mockResolvedValue(liveKinety);
+        (prisma.precoZakresyDefault.findMany as jest.Mock).mockResolvedValue(liveZakresy);
+    }
+
+    function syncedFileContent() {
+        return JSON.stringify({
+            schemaVersion: 2,
+            exportedAt: '2026-09-26T14:00:00.000Z',
+            rury: liveRury,
+            studnie: liveStudnie,
+            preco: { konfig: liveKonfig, kinety: liveKinety, zakresy: liveZakresy },
+            sections: {
+                rury: { count: 1, sha256: sha256Canonical(liveRury) },
+                studnie: { count: 1, sha256: sha256Canonical(liveStudnie) },
+                precoKonfig: { count: 1, sha256: sha256Canonical(liveKonfig) },
+                precoKinety: { count: 1, sha256: sha256Canonical(liveKinety) },
+                precoZakresy: { count: 1, sha256: sha256Canonical(liveZakresy) }
+            }
+        });
+    }
+
+    beforeEach(() => {
+        jest.clearAllMocks();
+        fileContent = syncedFileContent();
+        fileExists = true;
+        mockSyncedDb();
+    });
+
+    it('zwraca OK gdy LIVE = Default = plik', async () => {
+        const result = await priceOverrideService.verifySnapshot();
+
+        expect(result.ok).toBe(true);
+        expect(result.skipped).toBe(false);
+        expect(result.issues).toEqual([]);
+        expect(result.live).toEqual({
+            rury: 1,
+            studnie: 1,
+            precoKonfig: 1,
+            precoKinety: 1,
+            precoZakresy: 1
+        });
+    });
+
+    it('SKIP (nie błąd) gdy brak pliku — świeża instalacja / CI', async () => {
+        fileExists = false;
+
+        const result = await priceOverrideService.verifySnapshot();
+
+        expect(result.ok).toBe(true);
+        expect(result.skipped).toBe(true);
+        expect(prisma.productsRury.findMany).not.toHaveBeenCalled();
+    });
+
+    it('wykrywa scenariusz TR-*: wiersz w DB spoza snapshotu (plik starszy)', async () => {
+        // Bypass saveDefaults: upsert prosto do DB (live + Default), plik nietknięty.
+        const withTransport = [
+            ...liveRury,
+            { id: 'TR-RURY', name: 'Transport rur (kurs)', category: 'Transport', price: 0 }
+        ];
+        (prisma.productsRury.findMany as jest.Mock).mockResolvedValue(withTransport);
+        (prisma.productsRuryDefault.findMany as jest.Mock).mockResolvedValue(withTransport);
+
+        const result = await priceOverrideService.verifySnapshot();
+
+        expect(result.ok).toBe(false);
+        expect(result.issues).toHaveLength(1);
+        expect(result.issues[0]).toContain('rury: live 2 vs plik 1');
+        expect(result.issues[0]).toContain('prices:export');
+    });
+
+    it('wykrywa rozjazd LIVE vs *_Default (zapis tylko do live)', async () => {
+        (prisma.productsRuryDefault.findMany as jest.Mock).mockResolvedValue([]);
+
+        const result = await priceOverrideService.verifySnapshot();
+
+        expect(result.ok).toBe(false);
+        expect(result.issues).toEqual([expect.stringContaining('rury: LIVE vs *_Default')]);
+    });
+
+    it('wykrywa zmianę ceny przy tej samej liczbie wierszy (sha)', async () => {
+        (prisma.productsRury.findMany as jest.Mock).mockResolvedValue([
+            { id: 'r1', name: 'Rura', category: 'Rury Betonowe', price: 999 }
+        ]);
+        (prisma.productsRuryDefault.findMany as jest.Mock).mockResolvedValue([
+            { id: 'r1', name: 'Rura', category: 'Rury Betonowe', price: 999 }
+        ]);
+
+        const result = await priceOverrideService.verifySnapshot();
+
+        expect(result.ok).toBe(false);
+        expect(result.issues).toEqual([expect.stringContaining('rury: ta sama liczba')]);
+    });
+
+    it('zgłasza issue (nie throw) przy uszkodzonym JSON', async () => {
+        fileContent = '{broken';
+
+        const result = await priceOverrideService.verifySnapshot();
+
+        expect(result.ok).toBe(false);
+        expect(result.issues).toEqual([expect.stringContaining('nieparsowalny JSON')]);
     });
 });
