@@ -402,12 +402,7 @@ jobs:
               run: npx prisma validate
 
             - name: Generowanie SQL z pustej bazy (kontrola błędów schematu)
-              run: |
-                  npx prisma migrate diff \
-                    --from-empty \
-                    --to-schema-datamodel prisma/schema.prisma \
-                    --script > /dev/null
-                  echo "Schema OK — SQL wygenerowany bez błędów."
+              run: node scripts/migrate-diff-check.mjs --from-empty
 
     migrate-deploy-verify:
         name: DB migrate deploy verify (raport, nie blokuje)
