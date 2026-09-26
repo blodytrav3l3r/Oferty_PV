@@ -36,8 +36,8 @@ function setAuthToken(_token) {
 /**
  * Nagłówki autoryzacji — wariant A: wyłącznie Content-Type.
  * X-Auth-Token celowo NIE dokładany (cookie niesie sesję; shim serwerowy
- * istnieje tylko wstecznie). Zostawione pod starą nazwą, bo ~100 call sites
- * i test statyczny telemetryAuthHeaders.test.ts wciąż ją wołają.
+ * usunięty — nagłówek ignorowany). Zostawione pod starą nazwą, bo ~100 call
+ * sites i test statyczny telemetryAuthHeaders.test.ts wciąż ją wołają.
  * @returns {object}
  */
 function authHeaders() {
