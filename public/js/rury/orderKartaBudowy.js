@@ -51,6 +51,19 @@ function collectKartaBudowyDataStep4() {
     return kartaBudowy;
 }
 
+/**
+ * Buduje prefill pola "Osoba do kontaktu" z kroku 1 (dane klienta):
+ * "Zamawiający: <kontakt>, Budowa: <wykonawca>" (puste części pomijane).
+ */
+function _buildKontaktPrefill(kontakt, wykonawca) {
+    const parts = [];
+    const k = (kontakt || '').trim();
+    const w = (wykonawca || '').trim();
+    if (k) parts.push('Zamawiający: ' + k);
+    if (w) parts.push('Budowa: ' + w);
+    return parts.join(', ');
+}
+
 function initKartaBudowyStep4(primaryOfferNumber) {
     const offerInput = document.getElementById('step4-offer-nr-input');
     const adresWysylkiInput = document.getElementById('step4-adres-wysylki');
@@ -66,7 +79,18 @@ function initKartaBudowyStep4(primaryOfferNumber) {
         adresWysylkiInput.value = clientAddress;
     }
     if (osobaKontaktInput && !osobaKontaktInput.value) {
-        osobaKontaktInput.value = clientContact;
+        const offer = window.pendingOrderCreationData?.offer;
+        const order =
+            window.orderEditMode && typeof getCurrentRuryOrder === 'function'
+                ? getCurrentRuryOrder()
+                : null;
+        osobaKontaktInput.value = _buildKontaktPrefill(
+            clientContact || offer?.clientContact || order?.clientContact || '',
+            document.getElementById('invest-contractor')?.value?.trim() ||
+                offer?.investContractor ||
+                order?.investContractor ||
+                ''
+        );
     }
 
     if (typeof window.updateTransportCostSummary === 'function') {

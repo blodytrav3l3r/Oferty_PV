@@ -72,6 +72,17 @@ describe('rury karta budowy: offerNumbers jako tablica (F2)', () => {
         expect(kb.offerNumbers).toEqual([]);
     });
 
+    test('kontakt prefill: Zamawiajacy + Budowa z przedrostkami', () => {
+        const ctx = runCtx({});
+        expect(ctx._buildKontaktPrefill('Jan 123', 'Firma X')).toBe(
+            'Zamawiający: Jan 123, Budowa: Firma X'
+        );
+        expect(ctx._buildKontaktPrefill('Jan 123', '')).toBe('Zamawiający: Jan 123');
+        expect(ctx._buildKontaktPrefill('', 'Firma X')).toBe('Budowa: Firma X');
+        expect(ctx._buildKontaktPrefill('', '')).toBe('');
+        expect(ctx._buildKontaktPrefill(null, undefined)).toBe('');
+    });
+
     test('copy odtwarza tablice jako tekst rozdzielony przecinkiem', () => {
         const ctx = runCtx({});
         ctx.applyCopiedKartaBudowyData({ offerNumbers: ['OF/1', 'OF/2'] });
