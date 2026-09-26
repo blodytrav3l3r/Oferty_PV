@@ -32,7 +32,23 @@ const db = {
             Object.assign(row, data);
             return { count: 1 };
         }),
-        deleteMany: jest.fn(async () => ({ count: 0 }))
+        deleteMany: jest.fn(async ({ where }: any) => {
+            let n = 0;
+            for (const k of Object.keys(store)) {
+                const row = store[k];
+                const match =
+                    !where ||
+                    Object.entries(where).every(([f, v]: [string, any]) => {
+                        if (v && typeof v === 'object' && 'lt' in v) return row[f] < v.lt;
+                        return row[f] === v;
+                    });
+                if (match) {
+                    delete store[k];
+                    n++;
+                }
+            }
+            return { count: n };
+        })
     }
 };
 
@@ -86,5 +102,29 @@ describe('P1-A idempotency', () => {
         await claimIdempotencyKey('u1', 'E', 'k1', { a: 1 }, D());
         await completeIdempotencyKey('u1', 'E', 'k1', 500, { error: 'x' }, D());
         expect(store['u1|E|k1'].status).toBe('PENDING');
+    });
+
+    test('przeterminowany DONE (>24 h) → zapomnij klucz, claim od nowa', async () => {
+        await claimIdempotencyKey('u1', 'E', 'k1', { a: 1 }, D());
+        await completeIdempotencyKey('u1', 'E', 'k1', 200, { ok: true }, D());
+        store['u1|E|k1'].createdAt = new Date(Date.now() - 25 * 3600 * 1000).toISOString();
+        const r = await claimIdempotencyKey('u1', 'E', 'k1', { a: 1 }, D());
+        expect(r).toEqual({ action: 'proceed' });
+    });
+
+    test('sprzątanie przeterminowanych także na ścieżce P2002', async () => {
+        store['u1|E|old'] = {
+            userId: 'u1',
+            endpoint: 'E',
+            key: 'old',
+            requestHash: 'x',
+            status: 'DONE',
+            responseStatus: 200,
+            responseBody: null,
+            createdAt: new Date(Date.now() - 25 * 3600 * 1000).toISOString(),
+            expiresAt: new Date(Date.now() - 3600 * 1000).toISOString()
+        };
+        await claimIdempotencyKey('u1', 'E', 'k2', { a: 1 }, D());
+        expect(store['u1|E|old']).toBeUndefined();
     });
 });

@@ -60,6 +60,15 @@ function model(db?: { idempotency_keys: KeyModel }): KeyModel {
     return db ? db.idempotency_keys : (prisma.idempotency_keys as unknown as KeyModel);
 }
 
+/** Best-effort sprzątanie przeterminowanych (nie blokuje claimu). */
+async function cleanupExpired(m: KeyModel, now: string): Promise<void> {
+    try {
+        await m.deleteMany({ where: { expiresAt: { lt: now } } });
+    } catch (e) {
+        logger.debug('Idempotency', 'cleanup ignore', e instanceof Error ? e.message : String(e));
+    }
+}
+
 /**
  * Atomowy claim klucza. Jedno create = wygrywa; P2002 = odczyt i decyzja.
  * Zwraca akcję dla wołającego. Nie rzuca (poza awarią DB).
@@ -94,6 +103,17 @@ export async function claimIdempotencyKey(
             where: { userId_endpoint_key: { userId, endpoint, key } }
         });
         if (!row) return { action: 'proceed' };
+        // Przeterminowany wiersz (>24 h): zapomnij klucz, claim od nowa.
+        // Bez tego DONE replayowałby w nieskończoność (brak egzekucji TTL).
+        if (Date.now() - Date.parse(row.createdAt) > REPLAY_TTL_MS) {
+            try {
+                await m.deleteMany({ where: { userId, endpoint, key } });
+            } catch {
+                /* best-effort */
+            }
+            return claimIdempotencyKey(userId, endpoint, key, body, db);
+        }
+        await cleanupExpired(m, now);
         if (row.status === 'DONE') {
             if (row.requestHash !== hash) return { action: 'reuse' };
             let parsed: unknown = null;
@@ -115,11 +135,7 @@ export async function claimIdempotencyKey(
         return reclaimed.count === 1 ? { action: 'proceed' } : { action: 'in-progress' };
     }
     // Leniwe sprzątanie przeterminowanych (best-effort, jeden statement).
-    try {
-        await m.deleteMany({ where: { expiresAt: { lt: now } } });
-    } catch (e) {
-        logger.debug('Idempotency', 'cleanup ignore', e instanceof Error ? e.message : String(e));
-    }
+    await cleanupExpired(m, now);
     return { action: 'proceed' };
 }
 
