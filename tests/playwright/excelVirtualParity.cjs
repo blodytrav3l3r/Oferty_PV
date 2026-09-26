@@ -444,8 +444,9 @@ async function runMode(frame, page, virtualOn, wellsData) {
         const loginResp = await loginPage.request.post(`${BASE}/api/auth/login`, {
             data: { username: 'admin', password: process.env.TEST_ADMIN_PASSWORD || 'anim123456' }
         });
-        const loginJson = await loginResp.json();
-        const authToken = loginJson.token || loginJson.authToken;
+        const loginSetCookie = loginResp.headers()['set-cookie'] || '';
+        const loginCookieMatch = /authToken=([^;]+)/.exec(loginSetCookie);
+        const authToken = loginCookieMatch ? loginCookieMatch[1] : null;
         if (!authToken) throw new Error('Login failed');
         await loginCtx.close();
 

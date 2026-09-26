@@ -46,7 +46,9 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
             data: { username: 'admin', password: process.env.TEST_ADMIN_PASSWORD || 'anim123456' }
         });
         if (!r.ok()) throw new Error(`login failed ${r.status()}`);
-        if (!(await r.json()).token) throw new Error('Login failed — no token');
+        const spocznikSetCookie = r.headers()['set-cookie'] || '';
+        if (!/authToken=[^;]+/.test(spocznikSetCookie))
+            throw new Error('Login failed — no cookie');
         // Wariant A: cookie httpOnly z logowania siedzi w jarze kontekstu
         // (page.request dzieli cookie z page) — bez localStorage.
 

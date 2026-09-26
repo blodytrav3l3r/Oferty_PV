@@ -229,9 +229,10 @@ async function startServer() {
             const body = await loginResp.text().catch(() => '');
             throw new Error(`Login failed — HTTP ${loginResp.status()}: ${body.slice(0, 200)}`);
         }
-        const loginJson = await loginResp.json();
-        const authToken = loginJson.token || loginJson.authToken;
-        // Wariant A: brak tokenu w JSON = sesja w cookie httpOnly (jar kontekstu).
+        const loginSetCookie = loginResp.headers()['set-cookie'] || '';
+        const loginCookieMatch = /authToken=([^;]+)/.exec(loginSetCookie);
+        const authToken = loginCookieMatch ? loginCookieMatch[1] : null;
+        // Wariant A: sesja w cookie httpOnly (jar kontekstu), ciało JSON bez tokenu.
         // Twardy błąd tylko gdy ani tokenu, ani cookie sesji.
         const cookies = await context.cookies();
         if (!authToken && !cookies.some((c) => c.name === 'authToken')) {

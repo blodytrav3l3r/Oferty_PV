@@ -39,7 +39,9 @@ fs.mkdirSync(OUT, { recursive: true });
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username: 'admin', password: ADMIN_PASSWORD })
     });
-    const token = (await lr.json()).token;
+    const dbgSetCookie = lr.headers.get('set-cookie') || '';
+    const dbgCookieMatch = /authToken=([^;]+)/.exec(dbgSetCookie);
+    const token = dbgCookieMatch ? dbgCookieMatch[1] : null;
     const browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
 
     for (const mod of ['studnie', 'rury', 'kartoteka', 'zlecenia']) {

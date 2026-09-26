@@ -196,8 +196,9 @@ async function waitModuleFrame(page, mod) {
         const loginResp = await page.request.post(`${BASE}/api/auth/login`, {
             data: { username: 'admin', password: ADMIN_PASSWORD }
         });
-        const loginJson = await loginResp.json();
-        check('login', !!(loginJson.token || loginJson.authToken), `status=${loginResp.status()}`);
+        const qeSetCookie = loginResp.headers()['set-cookie'] || '';
+        const qeCookieMatch = /authToken=([^;]+)/.exec(qeSetCookie);
+        check('login', !!qeCookieMatch, `status=${loginResp.status()}`);
 
         await page.goto(`${BASE}/app.html#/studnie`, {
             waitUntil: 'domcontentloaded',

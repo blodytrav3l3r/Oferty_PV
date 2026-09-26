@@ -57,8 +57,10 @@ function ratio(a, b) {
         const r = await page.request.post(`${BASE}/api/auth/login`, {
             data: { username: 'admin', password: process.env.TEST_ADMIN_PASSWORD || 'anim123456' }
         });
-        const token = (await r.json()).token;
-        if (!token) throw new Error('Login failed - no token');
+        const loginSetCookie = r.headers()['set-cookie'] || '';
+        const loginCookieMatch = /authToken=([^;]+)/.exec(loginSetCookie);
+        const token = loginCookieMatch ? loginCookieMatch[1] : null;
+        if (!token) throw new Error('Login failed - no cookie');
 
         await page.goto(`${BASE}/app.html#/rury`, { waitUntil: 'networkidle', timeout: 30000 });
         await sleep(3000);

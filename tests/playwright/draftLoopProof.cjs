@@ -227,8 +227,9 @@ async function enterOrder(frame, orderId) {
         const loginResp = await page.request.post(`${BASE}/api/auth/login`, {
             data: { username: 'admin', password: ADMIN_PASSWORD }
         });
-        const loginJson = await loginResp.json();
-        const authToken = loginJson.token || loginJson.authToken;
+        const loginSetCookie = loginResp.headers()['set-cookie'] || '';
+        const loginCookieMatch = /authToken=([^;]+)/.exec(loginSetCookie);
+        const authToken = loginCookieMatch ? loginCookieMatch[1] : null;
         check('LOGIN admin', !!authToken, `status=${loginResp.status()}`);
 
         let frame = await enterModule(page, 'studnie');

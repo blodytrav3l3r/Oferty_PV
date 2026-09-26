@@ -95,18 +95,16 @@ async function pollHealth(url, tries = 30) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username: 'admin', password: ADMIN_PASSWORD })
     });
-    const lj = await lr.json();
-    console.log(
-        'login status:',
-        lr.status,
-        'token:',
-        lj.token ? 'OK' : JSON.stringify(lj).slice(0, 120)
-    );
-    const token = lj.token || lj.authToken;
+    const dbgSetCookie = lr.headers.get('set-cookie') || '';
+    const dbgCookieMatch = /authToken=([^;]+)/.exec(dbgSetCookie);
+    const token = dbgCookieMatch ? dbgCookieMatch[1] : null;
+    console.log('login status:', lr.status, 'cookie:', token ? 'OK' : dbgSetCookie.slice(0, 120));
 
-    // 2. auth/me z tokenem
-    const me = await fetch(`${BASE}/api/auth/me`, { headers: { 'x-auth-token': token } });
-    console.log('auth/me (x-auth-token):', me.status);
+    // 2. auth/me z cookie (wariant A — bez x-auth-token)
+    const me = await fetch(`${BASE}/api/auth/me`, {
+        headers: { Cookie: `authToken=${token}` }
+    });
+    console.log('auth/me (Cookie):', me.status);
 
     const browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
     const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });

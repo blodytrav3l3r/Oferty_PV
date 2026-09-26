@@ -97,8 +97,9 @@ async function diffPx(page, refBuf, curBuf) {
         const loginResp = await loginPage.request.post(`${BASE}/api/auth/login`, {
             data: { username: 'admin', password: process.env.TEST_ADMIN_PASSWORD || 'anim123456' }
         });
-        const lj = await loginResp.json();
-        const token = lj.token || lj.authToken;
+        const loginSetCookie = loginResp.headers()['set-cookie'] || '';
+        const loginCookieMatch = /authToken=([^;]+)/.exec(loginSetCookie);
+        const token = loginCookieMatch ? loginCookieMatch[1] : null;
         if (!token) throw new Error('Login failed');
         await loginCtx.close();
 

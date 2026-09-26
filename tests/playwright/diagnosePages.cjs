@@ -138,8 +138,9 @@ const MODULES = ['studnie', 'rury', 'kartoteka', 'zlecenia'];
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username: 'admin', password: ADMIN_PASSWORD })
         });
-        const lj = await loginResp.json();
-        const token = lj.token || lj.authToken;
+        const diagSetCookie = loginResp.headers.get('set-cookie') || '';
+        const diagCookieMatch = /authToken=([^;]+)/.exec(diagSetCookie);
+        const token = diagCookieMatch ? diagCookieMatch[1] : null;
         // Wariant A: login przez Node fetch (osobny jar) — cookie przenosimy
         // do kontekstu przeglądarki przez addCookies; localStorage nieużywany.
         if (!token) throw new Error('Login failed — no token');

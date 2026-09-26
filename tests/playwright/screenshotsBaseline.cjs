@@ -162,9 +162,10 @@ async function startServer() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username: 'admin', password: ADMIN_PASSWORD })
         });
-        const loginJson = await loginResp.json();
-        const authToken = loginJson.token || loginJson.authToken;
-        if (!authToken) throw new Error('Login failed — no token');
+        const baseSetCookie = loginResp.headers.get('set-cookie') || '';
+        const baseCookieMatch = /authToken=([^;]+)/.exec(baseSetCookie);
+        const authToken = baseCookieMatch ? baseCookieMatch[1] : null;
+        if (!authToken) throw new Error('Login failed — no cookie');
 
         for (const mod of MODULES) {
             for (const vp of VIEWPORTS) {

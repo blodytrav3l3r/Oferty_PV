@@ -50,9 +50,10 @@ const { chromium } = resolvePlaywright();
         const loginResp = await page.request.post(`${BASE}/api/auth/login`, {
             data: { username: 'admin', password: process.env.TEST_ADMIN_PASSWORD || 'anim123456' }
         });
-        const loginJson = await loginResp.json();
-        const authToken = loginJson.token || loginJson.authToken;
-        if (!authToken) throw new Error('Login failed — no token');
+        const loginSetCookie = loginResp.headers()['set-cookie'] || '';
+        const loginCookieMatch = /authToken=([^;]+)/.exec(loginSetCookie);
+        const authToken = loginCookieMatch ? loginCookieMatch[1] : null;
+        if (!authToken) throw new Error('Login failed — no cookie');
 
         // Znajdz zamowienie po numerze (read-only).
         const listResp = await page.request.get(`${BASE}/api/orders-studnie/`);
