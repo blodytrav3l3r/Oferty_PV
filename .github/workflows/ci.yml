@@ -301,6 +301,65 @@ jobs:
             - name: Run smoke E2E (playwright.config webServer)
               run: npx playwright test tests/playwright/smokeOfferFlow.spec.ts --project=chromium
 
+    e2e-extended:
+        name: E2E — extended regressions (raport, nie blokuje)
+        runs-on: ubuntu-latest
+        needs: test
+        continue-on-error: true
+        env:
+            DATABASE_URL: 'file:./test-ci.sqlite?connection_limit=1&busy_timeout=30000'
+            TEST_ADMIN_PASSWORD: test-admin-pass
+            DEFAULT_ADMIN_PASSWORD: test-admin-pass
+        steps:
+            - uses: actions/checkout@v7
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v7
+              with:
+                  node-version: '22'
+                  cache: 'npm'
+
+            - name: Install dependencies
+              run: npm ci
+
+            - name: Generate Prisma client
+              run: npx prisma generate
+
+            - name: Przygotuj testową bazę SQLite
+              run: npx prisma db push --skip-generate
+
+            - name: Seed bazy (produkty + preco)
+              run: npm run prisma:seed
+
+            - name: Setup Chromium (Playwright)
+              run: npx playwright install --with-deps chromium
+
+            - name: Draft recovery + loop (izolowane serwery :3177)
+              run: |
+                  node tests/playwright/draftRecovery.cjs --spawn
+                  node tests/playwright/draftLoopProof.cjs --spawn
+
+            - name: Start serwera :3000 w tle
+              run: |
+                  npm run build
+                  PORT=3000 NODE_ENV=test nohup node dist/server.js > e2e-extended-server.log 2>&1 &
+                  echo $! > e2e-extended-server.pid
+                  for i in $(seq 1 30); do
+                    curl -sf http://localhost:3000/health && break
+                    sleep 2
+                  done
+                  curl -sf http://localhost:3000/health
+
+            - name: Excel relief/empty-row + partial order (BASE :3000)
+              run: |
+                  node tests/playwright/excelReliefPair.cjs
+                  node tests/playwright/excelEmptyRowAlignment.cjs
+                  node tests/playwright/partialOrderRury.cjs
+
+            - name: Stop serwera
+              if: always()
+              run: kill $(cat e2e-extended-server.pid) || true
+
     load-quick:
         name: Load — quick (60 s, 100 userów)
         runs-on: ubuntu-latest

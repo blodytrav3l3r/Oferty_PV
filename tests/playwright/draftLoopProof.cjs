@@ -309,47 +309,62 @@ async function enterOrder(frame, orderId) {
         check('B enterOrderEditMode', true, '');
 
         // Render kafelkow przejsc dokladnie sciezka produkcyjna (renderTransitionTileHTML).
+        // Inwariant po ficie stabilnych id (9b30d58): render DODAJE id/displayIndex
+        // (backfill), ale jest IDEMPOTENTNY — drugi przebieg nie zmienia kluczy.
         const renderRes = await frame.evaluate(() => {
-            const out = { rendered: 0, keysBefore: [], keysAfter: [], hasIdAfter: null };
+            const out = {
+                rendered: 0,
+                keysBefore: [],
+                keysAfter: [],
+                keysAfter2: [],
+                hasIdAfter: null
+            };
             try {
                 const w = typeof getCurrentWell === 'function' ? getCurrentWell() : window.wells[0];
                 if (!w || !Array.isArray(w.przejscia) || w.przejscia.length === 0)
                     return { error: 'brak przejsc w live' };
                 out.keysBefore = w.przejscia.map((p) => Object.keys(p).sort());
-                w.przejscia.forEach((pr, idx) => {
-                    let prod = null;
+                const doRender = () => {
+                    w.przejscia.forEach((pr, idx) => {
+                        let prod = null;
+                        try {
+                            prod =
+                                typeof getStudnieProductById === 'function'
+                                    ? getStudnieProductById(pr.productId)
+                                    : null;
+                        } catch (_) {}
+                        if (typeof renderTransitionTileHTML === 'function')
+                            renderTransitionTileHTML(pr, idx, prod, {});
+                        out.rendered++;
+                    });
+                    // Pelny inline-configurator, jesli kontener istnieje.
                     try {
-                        prod =
-                            typeof getStudnieProductById === 'function'
-                                ? getStudnieProductById(pr.productId)
-                                : null;
+                        if (document.getElementById('inline-przejscia-app'))
+                            renderInlinePrzejsciaApp('inline-przejscia-app');
                     } catch (_) {}
-                    if (typeof renderTransitionTileHTML === 'function')
-                        renderTransitionTileHTML(pr, idx, prod, {});
-                    out.rendered++;
-                });
-                // Pelny inline-configurator, jesli kontener istnieje (druga sciezka renderu).
-                try {
-                    if (document.getElementById('inline-przejscia-app'))
-                        renderInlinePrzejsciaApp('inline-przejscia-app');
-                } catch (_) {}
+                };
+                doRender();
                 out.keysAfter = w.przejscia.map((p) => Object.keys(p).sort());
                 out.hasIdAfter = w.przejscia.map((p) =>
                     Object.prototype.hasOwnProperty.call(p, 'id')
                 );
+                doRender();
+                out.keysAfter2 = w.przejscia.map((p) => Object.keys(p).sort());
             } catch (e) {
                 return { error: String((e && e.message) || e) };
             }
             return out;
         });
         check(
-            'B render kafelkow (1 przejscie)',
-            renderRes.rendered === 1,
+            'B render kafelkow (1 przejscie × 2 przebiegi)',
+            renderRes.rendered === 2,
             JSON.stringify(renderRes).slice(0, 200)
         );
         check(
-            'B live przejscia BEZ id po renderze (dowod braku mutacji)',
-            Array.isArray(renderRes.hasIdAfter) && renderRes.hasIdAfter.every((h) => h === false),
+            'B render idempotentny (2. przebieg nie zmienia kluczy, id stabilne)',
+            Array.isArray(renderRes.hasIdAfter) &&
+                renderRes.hasIdAfter.every((h) => h === true) &&
+                JSON.stringify(renderRes.keysAfter) === JSON.stringify(renderRes.keysAfter2),
             `keysAfter=${JSON.stringify(renderRes.keysAfter).slice(0, 200)}`
         );
 
@@ -402,8 +417,11 @@ async function enterOrder(frame, orderId) {
             JSON.stringify(draftInfo).slice(0, 160)
         );
         check(
-            'B draft przejscia BEZ id',
-            Array.isArray(draftInfo.przHasId) && draftInfo.przHasId.every((h) => h === false),
+            'B draft przejscia zgodne z live (te same id, petla domknieta)',
+            Array.isArray(draftInfo.przHasId) &&
+                draftInfo.przHasId.every((h) => h === true) &&
+                JSON.stringify(draftInfo.przKeys) ===
+                    JSON.stringify((renderRes.keysAfter[0] || []).slice().sort()),
             `keys=${JSON.stringify(draftInfo.przKeys).slice(0, 160)}`
         );
 
