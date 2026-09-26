@@ -58,7 +58,7 @@ router.post('/login', loginLimiter, validateData(loginSchema), async (req, res) 
             path: '/'
         });
         res.json({
-            token,
+            // Sesja wyłącznie w cookie httpOnly — surowy token NIE wraca w body.
             user: {
                 id: user.id,
                 username: user.username,

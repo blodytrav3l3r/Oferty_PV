@@ -83,7 +83,7 @@ describe('Auth Routes - Z-70', () => {
                 .send({ username: 'admin', password: 'pass' });
 
             expect(res.statusCode).toBe(200);
-            expect(res.body.token).toBe('test-token');
+            expect(res.body.token).toBeUndefined();
             expect(res.headers['set-cookie']).toBeDefined();
             const cookie = res.headers['set-cookie'][0];
             expect(cookie).toMatch(/HttpOnly/i);
