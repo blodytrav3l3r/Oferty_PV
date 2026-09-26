@@ -44,9 +44,9 @@ const { chromium } = require('playwright');
         consoleLogs.push({ type: 'pageerror', text: err.message, stack: err.stack })
     );
 
-    // login
+    // login (hasło ze zmiennej, fallback dev — nie prod)
     const loginRes = await page.request.post('http://localhost:3005/api/auth/login', {
-        data: { username: 'admin', password: 'anim123456' }
+        data: { username: 'admin', password: process.env.TEST_ADMIN_PASSWORD || 'anim123456' }
     });
     console.log('Login status:', loginRes.status());
     const viewsSetCookie = loginRes.headers()['set-cookie'] || '';
