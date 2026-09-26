@@ -28,7 +28,13 @@
                     id="step4-copy-toggle-btn"
                     class="wizard-btn wizard-btn-prev"
                     onclick="copyKartaBudowyFromOrder()"
-                    style="flex: 0 0 auto; white-space: nowrap; margin-top: 0"
+                    style="
+                        flex: 0 0 auto;
+                        white-space: nowrap;
+                        margin-top: 0;
+                        font-size: var(--fs-lg);
+                        padding: 0.55rem 0.8rem;
+                    "
                 >
                     Kopiuj Kartę Budowy z zamówienia
                 </button>
@@ -366,24 +372,91 @@
                     </select>
                 </div>
 
-                <!-- Uszczelka do studni -->
-                <div class="flex-1-180">
-                    <label
+                <!-- Uszczelka do studni: jedno pole, przełącznik Auto/Ręcznie -->
+                <div class="flex-1-180" id="step4-uszczelka-wrap">
+                    <div
                         style="
-                            display: block;
-                            font-size: var(--fs-base);
-                            font-weight: var(--fw-bold);
-                            color: var(--cyan);
+                            display: flex;
+                            align-items: center;
+                            justify-content: space-between;
+                            gap: 0.6rem;
                             margin-bottom: 0.4rem;
-                            text-transform: uppercase;
-                            letter-spacing: 0.3px;
                         "
                     >
-                        Uszczelka do studni
-                    </label>
+                        <label
+                            style="
+                                font-size: var(--fs-base);
+                                font-weight: var(--fw-bold);
+                                color: var(--cyan);
+                                text-transform: uppercase;
+                                letter-spacing: 0.3px;
+                            "
+                        >
+                            Uszczelka do studni
+                        </label>
+                        <div
+                            class="gap-3"
+                            style="
+                                display: flex;
+                                align-items: center;
+                                font-size: var(--fs-sm);
+                                color: var(--text-secondary);
+                            "
+                        >
+                            <label
+                                style="
+                                    display: flex;
+                                    align-items: center;
+                                    gap: 0.3rem;
+                                    cursor: pointer;
+                                "
+                            >
+                                <input
+                                    type="radio"
+                                    name="step4-uszczelka-mode"
+                                    value="auto"
+                                    checked
+                                    onchange="handleUszczelkaModeChange()"
+                                />
+                                Auto
+                            </label>
+                            <label
+                                style="
+                                    display: flex;
+                                    align-items: center;
+                                    gap: 0.3rem;
+                                    cursor: pointer;
+                                "
+                            >
+                                <input
+                                    type="radio"
+                                    name="step4-uszczelka-mode"
+                                    value="manual"
+                                    onchange="handleUszczelkaModeChange()"
+                                />
+                                Ręcznie
+                            </label>
+                        </div>
+                    </div>
+                    <input
+                        type="text"
+                        id="step4-uszczelka-studni-auto"
+                        class="form-input"
+                        placeholder="Brak"
+                        readonly
+                        title="Wykryte typy uszczelek per DN na podstawie konfiguracji studni."
+                        style="
+                            width: 100%;
+                            font-size: var(--fs-lg);
+                            padding: 0.6rem 0.8rem;
+                            background: var(--bg-input);
+                            color: var(--text-primary);
+                        "
+                    />
                     <select
                         id="step4-uszczelka-studni"
                         class="form-input form-input-wide"
+                        style="display: none"
                         onchange="
                             document.getElementById(
                                 'step4-uszczelka-studni-inne-wrap'
@@ -398,28 +471,18 @@
                         <option value="NBR">NBR</option>
                         <option value="Inne">Inne</option>
                     </select>
-                </div>
-                <div class="flex-1-180-hidden" id="step4-uszczelka-studni-inne-wrap">
-                    <label
-                        style="
-                            display: block;
-                            font-size: var(--fs-base);
-                            font-weight: var(--fw-bold);
-                            color: var(--cyan);
-                            margin-bottom: 0.4rem;
-                            text-transform: uppercase;
-                            letter-spacing: 0.3px;
-                        "
+                    <div
+                        id="step4-uszczelka-studni-inne-wrap"
+                        style="display: none; margin-top: 0.4rem"
                     >
-                        Jakie (Inne)
-                    </label>
-                    <input
-                        type="text"
-                        id="step4-uszczelka-studni-inne"
-                        class="form-input"
-                        placeholder="Wpisz uszczelkę..."
-                        style="width: 100%; font-size: var(--fs-lg); padding: 0.6rem 0.8rem"
-                    />
+                        <input
+                            type="text"
+                            id="step4-uszczelka-studni-inne"
+                            class="form-input"
+                            placeholder="Wpisz uszczelkę..."
+                            style="width: 100%; font-size: var(--fs-lg); padding: 0.6rem 0.8rem"
+                        />
+                    </div>
                 </div>
 
                 <!-- Rodzaj stopni -->
@@ -888,9 +951,9 @@
                                 background: rgba(var(--accent2-rgb), 0.1);
                                 border: 1px solid rgba(var(--accent2-rgb), 0.3);
                                 color: var(--accent2-hover);
-                                font-size: var(--fs-xs);
+                                font-size: var(--fs-lg);
                                 font-weight: var(--fw-bold);
-                                padding: 0.3rem 0.6rem;
+                                padding: 0.55rem 0.8rem;
                                 border-radius: var(--radius-sm);
                                 cursor: pointer;
                                 transition: all 0.15s;
@@ -906,7 +969,7 @@
                                 this.style.borderColor = 'rgba(var(--accent2-rgb), 0.3)';
                             "
                         >
-                            <i data-lucide="plus" style="width: 12px; height: 12px"></i>
+                            <i data-lucide="plus" style="width: 16px; height: 16px"></i>
                             Dodaj niestandardowe
                         </button>
                     </div>

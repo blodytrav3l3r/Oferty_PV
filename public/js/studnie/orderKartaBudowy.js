@@ -24,6 +24,7 @@ function _resetKartaBudowyForm() {
         'step4-rodzaj-stopni': 'Nie dotyczy',
         'step4-rodzaj-studni': 'Nie dotyczy',
         'step4-uszczelka-studni': 'Brak',
+        'step4-uszczelka-studni-auto': 'Brak',
         'step4-kineta': 'Brak',
         'step4-wysokosc-spocznika': 'Nie dotyczy',
         'step4-usytuowanie': 'Linia dolna',
@@ -48,6 +49,8 @@ function _resetKartaBudowyForm() {
             if (wrap) wrap.style.display = 'none';
         }
     );
+
+    setUszczelkaMode('auto');
 }
 
 function _calcTransportCosts() {
@@ -115,10 +118,116 @@ function _displayTransportCost(tCost, costPerTrip) {
     }
 }
 
+/**
+ * Wykrywa typ uszczelki per DN na podstawie studni w zamówieniu.
+ * Typ z well.uszczelka (GASKET_TYPES), fallback inferUszczelkaType z configu
+ * dla legacy zamówień bez pola well.uszczelka. Jawny 'brak'/nieznany typ
+ * danego DN = brak wpisu (nie blokuje typów z innych studni tego DN).
+ * @param {Array} wells studnie (order.wells albo pendingOrderCreationData.selectedWells)
+ * @returns {string} np. "DN800: GSG, DN1000: SDV" albo "Brak"
+ */
+function detectUszczelkaPerDn(wells) {
+    if (!Array.isArray(wells) || wells.length === 0) return 'Brak';
+    const known =
+        typeof GASKET_TYPES !== 'undefined' && Array.isArray(GASKET_TYPES)
+            ? GASKET_TYPES
+            : ['GSG', 'SDV', 'SDV PO', 'NBR'];
+    const byDn = new Map();
+    wells.forEach((w) => {
+        if (!w) return;
+        const dn = w.dn == null || w.dn === '' ? null : String(w.dn);
+        if (!dn) return;
+        let uType = null;
+        if (typeof w.uszczelka === 'string' && known.includes(w.uszczelka)) {
+            uType = w.uszczelka;
+        } else if (typeof inferUszczelkaType === 'function') {
+            try {
+                uType = inferUszczelkaType(w);
+            } catch (_e) {
+                uType = null;
+            }
+        }
+        if (!uType) return;
+        if (!byDn.has(dn)) byDn.set(dn, new Set());
+        byDn.get(dn).add(uType);
+    });
+    if (byDn.size === 0) return 'Brak';
+    const sorted = [...byDn.keys()].sort((a, b) => {
+        if (a === 'styczna') return 1;
+        if (b === 'styczna') return -1;
+        const na = parseFloat(a);
+        const nb = parseFloat(b);
+        if (!isNaN(na) && !isNaN(nb)) return na - nb;
+        return String(a).localeCompare(String(b));
+    });
+    return sorted.map((dn) => `DN${dn}: ${[...byDn.get(dn)].join('/')}`).join(', ');
+}
+
+/**
+ * Tryb pola uszczelki: 'auto' (per DN z konfiguracji) albo 'manual' (select).
+ * @returns {string}
+ */
+function getUszczelkaMode() {
+    const checked = document.querySelector('input[name="step4-uszczelka-mode"]:checked');
+    return checked && checked.value === 'manual' ? 'manual' : 'auto';
+}
+
+function syncUszczelkaModeUI() {
+    const isManual = getUszczelkaMode() === 'manual';
+    const autoInput = document.getElementById('step4-uszczelka-studni-auto');
+    const select = document.getElementById('step4-uszczelka-studni');
+    const inneWrap = document.getElementById('step4-uszczelka-studni-inne-wrap');
+    // Widoczne zawsze tylko jedno pole: auto-tekst albo select.
+    if (autoInput) autoInput.style.display = isManual ? 'none' : '';
+    if (select) select.style.display = isManual ? '' : 'none';
+    if (inneWrap && (!isManual || (select && select.value !== 'Inne'))) {
+        inneWrap.style.display = 'none';
+    }
+}
+
+function setUszczelkaMode(mode) {
+    const radios = document.querySelectorAll('input[name="step4-uszczelka-mode"]');
+    radios.forEach((r) => {
+        r.checked = r.value === mode;
+    });
+    syncUszczelkaModeUI();
+}
+
+function handleUszczelkaModeChange() {
+    syncUszczelkaModeUI();
+}
+
+/**
+ * Ustawia wartość uszczelki wraz z trybem. Zapisana wartość równa bieżącej
+ * auto-detekcji → tryb auto; w przeciwnym razie manual (wartość spoza listy
+ * opcji, np. per-DN sprzed edycji studni, ląduje w polu "Inne").
+ */
+function _applyUszczelkaValueWithMode(savedVal) {
+    const select = document.getElementById('step4-uszczelka-studni');
+    if (!select || savedVal === undefined || savedVal === null || savedVal === '') return;
+    const autoText = (document.getElementById('step4-uszczelka-studni-auto')?.value || '').trim();
+    if (savedVal === autoText) {
+        setUszczelkaMode('auto');
+        return;
+    }
+    setUszczelkaMode('manual');
+    const opts = [...select.options].map((o) => o.value);
+    if (opts.includes(savedVal)) {
+        select.value = savedVal;
+    } else {
+        select.value = 'Inne';
+        const inneInput = document.getElementById('step4-uszczelka-studni-inne');
+        if (inneInput) inneInput.value = savedVal;
+    }
+    const wrap = document.getElementById('step4-uszczelka-studni-inne-wrap');
+    if (wrap) wrap.style.display = select.value === 'Inne' ? 'block' : 'none';
+}
+
 function _detectWellParams() {
     const result = {
         stopnie: 'Nie dotyczy',
         rodzajStudni: 'Nie dotyczy',
+        uszczelkaPerDn: 'Brak',
         kineta: 'Brak',
         wysokoscSpocznika: 'Nie dotyczy',
         pozostale: []
@@ -196,6 +305,8 @@ function _detectWellParams() {
 
     if (spocznikHFound) result.wysokoscSpocznika = spocznikHFound;
 
+    result.uszczelkaPerDn = detectUszczelkaPerDn(wellsToDetect);
+
     return result;
 }
 
@@ -206,7 +317,11 @@ function _applyDetectedParams(detected) {
     };
     setVal('step4-rodzaj-stopni', detected.stopnie);
     setVal('step4-rodzaj-studni', detected.rodzajStudni);
-    setVal('step4-uszczelka-studni', 'Brak');
+    const uszczelkaAutoEl = document.getElementById('step4-uszczelka-studni-auto');
+    if (uszczelkaAutoEl) uszczelkaAutoEl.value = detected.uszczelkaPerDn || 'Brak';
+    const uszczelkaSelect = document.getElementById('step4-uszczelka-studni');
+    if (uszczelkaSelect) uszczelkaSelect.value = 'Brak';
+    setUszczelkaMode('auto');
     setVal('step4-kineta', detected.kineta);
     setVal('step4-wysokosc-spocznika', detected.wysokoscSpocznika);
     setVal('step4-usytuowanie', 'Linia dolna');
@@ -294,6 +409,11 @@ function _applyExistingKartaBudowyData(existingData, primaryOfferNumber) {
         const inputId = 'step4-' + field.replace(/([A-Z])/g, '-$1').toLowerCase();
         const el = document.getElementById(inputId);
         if (el && existingData[field]) {
+            // Uszczelka ma własny tryb Auto/Ręcznie — restore przez helper.
+            if (field === 'uszczelkaStudni') {
+                _applyUszczelkaValueWithMode(existingData[field]);
+                return;
+            }
             el.value = existingData[field];
             if (existingData[field] === 'Inne') {
                 const wrap = document.getElementById(inputId + '-inne-wrap');
@@ -401,6 +521,9 @@ function initKartaBudowyStep4(primaryOfferNumber) {
 
     const existingData = _getExistingKartaBudowyData();
     _applyExistingKartaBudowyData(existingData, primaryOfferNumber);
+
+    // Przełącznik Auto/Ręcznie działa przez inline onchange → handleUszczelkaModeChange.
+    syncUszczelkaModeUI();
 
     if (typeof renderKartaBudowyCopyOptions === 'function') {
         renderKartaBudowyCopyOptions();
@@ -583,7 +706,7 @@ function applyCopiedKartaBudowyData(sourceData) {
     setSelect('step4-rodzaj-stopni', sourceData.rodzajStopni);
     setValue('step4-rodzaj-stopni-inne', sourceData.rodzajStopniInne || '');
     setSelect('step4-rodzaj-studni', sourceData.rodzajStudni);
-    setSelect('step4-uszczelka-studni', sourceData.uszczelkaStudni);
+    _applyUszczelkaValueWithMode(sourceData.uszczelkaStudni);
     setValue('step4-uszczelka-studni-inne', sourceData.uszczelkaStudniInne || '');
     setSelect('step4-kineta', sourceData.kineta);
     setValue('step4-kineta-inne', sourceData.kinetaInne || '');
@@ -671,9 +794,15 @@ function collectKartaBudowyDataStep4() {
     const rodzajStudni = (
         document.getElementById('step4-rodzaj-studni')?.value || 'Nie dotyczy'
     ).trim();
-    const uszczelkaStudni = (
-        document.getElementById('step4-uszczelka-studni')?.value || 'Brak'
+    const uszczelkaSelectEl = document.getElementById('step4-uszczelka-studni');
+    const uszczelkaAutoText = (
+        document.getElementById('step4-uszczelka-studni-auto')?.value || ''
     ).trim();
+    // Tryb Ręcznie: wybór z selecta; tryb Auto: detekcja per DN.
+    const uszczelkaStudni =
+        getUszczelkaMode() === 'manual'
+            ? (uszczelkaSelectEl?.value || 'Brak').trim()
+            : uszczelkaAutoText || 'Brak';
     const uszczelkaStudniInne = (
         document.getElementById('step4-uszczelka-studni-inne')?.value || ''
     ).trim();
@@ -760,6 +889,8 @@ function collectKartaBudowyDataStep4() {
 }
 
 /* ===== Rejestracja globali ===== */
+window.detectUszczelkaPerDn = detectUszczelkaPerDn;
+window.handleUszczelkaModeChange = handleUszczelkaModeChange;
 window.initKartaBudowyStep4 = initKartaBudowyStep4;
 window.copyKartaBudowyFromOrder = copyKartaBudowyFromOrder;
 
