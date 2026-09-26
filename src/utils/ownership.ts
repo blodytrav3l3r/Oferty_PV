@@ -107,42 +107,14 @@ export function canClaimNumber(
  * - Zapis i zmiana opiekuna: assertWriteAccess / resolveAssignUserId
  *   (owner / pro-parent / admin względem STAREGO i NOWEGO właściciela).
  * - Usuwanie: canDeleteDoc = canWriteDoc.
- * Poniższe canEditDoc / canAssignDoc / resolveEditUserId to DEPRECATED shimy
- * (zostawione dla locków/numberingu do P0.2/P1.5) — nie używać w zapisach dokumentów.
- */
-export function canEditDoc(user: User | undefined): boolean {
-    return !!user;
-}
-
-/**
- * Zmiana opiekuna (userId) dokumentu — każdy zalogowany.
- * Zapis przechodzi przez ten sam versionedWrite (brak ścieżki bypass).
- */
-export function canAssignDoc(user: User | undefined): boolean {
-    return !!user;
-}
-
-/**
- * Usuwanie — status quo ante: owner / pro-parent / admin.
- * Świadomie NIE otwierane dla wszystkich (operacja nieodwracalna).
+ * Shimy canEditDoc / canAssignDoc / resolveEditUserId usunięte (0 callerów
+ * w src, zastąpione twardym canWriteDoc) — nie przywracać bez audytu.
  */
 export function canDeleteDoc(
     user: User | undefined,
     docUserId: string | null | undefined
 ): boolean {
     return canWriteDoc(user, docUserId);
-}
-
-/**
- * Rozstrzygnięcie userId przy tworzeniu/edycji dokumentu biznesowego:
- * każdy zalogowany może zapisać dla dowolnego userId (wspólna baza handlowców).
- */
-export function resolveEditUserId(
-    user: User | undefined,
-    requestedUserId: string | null | undefined
-): { allowed: boolean; effectiveUserId: string } {
-    if (!user) return { allowed: false, effectiveUserId: '' };
-    return { allowed: true, effectiveUserId: requestedUserId || user.id };
 }
 
 // --- Sharing helpers (Zasada 2: documentType + documentId) ---

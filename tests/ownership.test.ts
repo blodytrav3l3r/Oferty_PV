@@ -1,12 +1,11 @@
 import {
     canReadDoc,
     canWriteDoc,
-    canEditDoc,
-    canAssignDoc,
     canDeleteDoc,
     resolveWriteUserId,
-    resolveEditUserId
+    resolveAssignUserId
 } from '../src/utils/ownership';
+import * as ownership from '../src/utils/ownership';
 import { User } from '../src/helpers';
 
 const admin: User = {
@@ -172,20 +171,21 @@ describe('resolveWriteUserId', () => {
     });
 });
 
-describe('model współpracy: canEditDoc / canAssignDoc / canDeleteDoc', () => {
-    it('canEditDoc: każdy zalogowany może edytować (admin/pro/user), gość nie', () => {
-        expect(canEditDoc(admin)).toBe(true);
-        expect(canEditDoc(pro)).toBe(true);
-        expect(canEditDoc(regularUser)).toBe(true);
-        expect(canEditDoc(otherUser)).toBe(true);
-        expect(canEditDoc(undefined)).toBe(false);
+describe('shimy współpracy usunięte (canEditDoc / canAssignDoc / resolveEditUserId)', () => {
+    it('nie istnieją w module (zastąpione twardym canWriteDoc)', () => {
+        expect((ownership as any).canEditDoc).toBeUndefined();
+        expect((ownership as any).canAssignDoc).toBeUndefined();
+        expect((ownership as any).resolveEditUserId).toBeUndefined();
     });
 
-    it('canAssignDoc: każdy zalogowany może zmienić opiekuna, gość nie', () => {
-        expect(canAssignDoc(admin)).toBe(true);
-        expect(canAssignDoc(pro)).toBe(true);
-        expect(canAssignDoc(regularUser)).toBe(true);
-        expect(canAssignDoc(undefined)).toBe(false);
+    it('canWriteDoc: owner → allowed, obcy → forbidden, admin → allowed', () => {
+        expect(canWriteDoc(regularUser, 'user1')).toBe(true);
+        expect(canWriteDoc(regularUser, 'user2')).toBe(false);
+        expect(canWriteDoc(otherUser, 'user1')).toBe(false);
+        expect(canWriteDoc(admin, 'user2')).toBe(true);
+        expect(canWriteDoc(pro, 'subA')).toBe(true);
+        expect(canWriteDoc(pro, 'user2')).toBe(false);
+        expect(canWriteDoc(undefined, 'user1')).toBe(false);
     });
 
     it('canDeleteDoc: status quo — owner + pro-parent + admin, obcy nie', () => {
@@ -198,30 +198,15 @@ describe('model współpracy: canEditDoc / canAssignDoc / canDeleteDoc', () => {
         expect(canDeleteDoc(undefined, 'user1')).toBe(false);
     });
 
-    it('resolveEditUserId: każdy zalogowany dla dowolnego userId', () => {
-        expect(resolveEditUserId(regularUser, 'user2')).toEqual({
-            allowed: true,
-            effectiveUserId: 'user2'
-        });
-        expect(resolveEditUserId(regularUser, null)).toEqual({
+    it('resolveAssignUserId: podrzucenie dokumentu obcemu zablokowane', () => {
+        expect(resolveAssignUserId(regularUser, 'user1', 'user2').allowed).toBe(false);
+        expect(resolveAssignUserId(regularUser, 'user1', 'user1')).toEqual({
             allowed: true,
             effectiveUserId: 'user1'
         });
-        expect(resolveEditUserId(undefined, 'user2')).toEqual({
-            allowed: false,
-            effectiveUserId: ''
+        expect(resolveAssignUserId(admin, 'user1', 'user2')).toEqual({
+            allowed: true,
+            effectiveUserId: 'user2'
         });
-    });
-
-    it('macierz: odczyt po staremu, zapis/assign otwarte, delete po staremu', () => {
-        // READ — bez zmian
-        expect(canReadDoc(regularUser, 'user2')).toBe(false);
-        expect(canReadDoc(pro, 'subA')).toBe(true);
-        // EDIT + ASSIGN — otwarte
-        expect(canEditDoc(regularUser)).toBe(true);
-        expect(canAssignDoc(regularUser)).toBe(true);
-        // DELETE — stara reguła
-        expect(canDeleteDoc(regularUser, 'user2')).toBe(false);
-        expect(canDeleteDoc(regularUser, 'user1')).toBe(true);
     });
 });
