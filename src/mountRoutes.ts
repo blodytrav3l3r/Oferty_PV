@@ -49,6 +49,16 @@ import locksRoutes from './routes/locks';
  * i wysyłany jako JSON na te same trasy ofert/zamówień) oraz bulk PUT cenników
  * (products/products-studnie ~824 pozycje, preco-pricing pełna struktura).
  */
+/**
+ * Handler raportu CSP — wydzielony dla testowalności (bez montowania całej aplikacji).
+ */
+export function handleCspReport(req: express.Request, res: express.Response): void {
+    if (req.body) {
+        logger.warn('CSP', 'Violacja polityki bezpieczeństwa:', String(req.body).slice(0, 2000));
+    }
+    res.status(204).end();
+}
+
 export function mountRoutes(app: express.Express, apiLimiter: express.RequestHandler): void {
     // P1.3: parser JSON per-route zamiast globalnego (patrz komentarz wyżej).
     const smallJson = express.json({ limit: '1mb' });
@@ -95,16 +105,14 @@ export function mountRoutes(app: express.Express, apiLimiter: express.RequestHan
     app.use('/api/locks', apiLimiter, smallJson, locksRoutes);
 
     /* ===== RAPORTY VIOLACJI CSP (Faza 1 planu CSP — monitoring) ===== */
-    app.post('/api/csp-report', express.text({ type: 'application/csp-report' }), (req, res) => {
-        if (req.body) {
-            logger.warn(
-                'CSP',
-                'Violacja polityki bezpieczeństwa:',
-                String(req.body).slice(0, 2000)
-            );
-        }
-        res.status(204).end();
-    });
+    // apiLimiter: endpoint anonimowy, bez niego curl w pętli = log-spam/dysk.
+    // limit 10kb: raporty przeglądarek to ~1kb, większe = śmieci.
+    app.post(
+        '/api/csp-report',
+        apiLimiter,
+        express.text({ type: 'application/csp-report', limit: '10kb' }),
+        handleCspReport
+    );
 
     /* ===== GLOBALNA OBSŁUGA BŁĘDÓW (zawsze ostatnia) ===== */
     app.use(errorHandler);
