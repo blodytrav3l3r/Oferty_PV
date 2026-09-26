@@ -146,15 +146,23 @@ function renderPrzejsciaDetailsTable(existingData) {
     }
 
     let html = `<div style="overflow-x:auto;">
-        <table style="width:100%; border-collapse:collapse; font-size: var(--fs-base);">
+        <table style="width:100%; border-collapse:collapse; font-size: var(--fs-base); table-layout:fixed;">
+            <colgroup>
+                <col style="width:27%;">
+                <col style="width:11%;">
+                <col style="width:11%;">
+                <col>
+                <col style="width:92px;">
+                <col style="width:44px;">
+            </colgroup>
             <thead>
                 <tr style="border-bottom:1px solid rgba(var(--accent2-rgb), 0.2);">
                     <th scope="col" class="th-l-nowrap">Rodzaj</th>
                     <th scope="col" class="th-c-accent">DN od</th>
                     <th scope="col" class="th-c-accent">DN do</th>
                     <th scope="col" class="th-l-nowrap">Uwagi</th>
-                    <th scope="col" class="th-c-accent" style="text-align:right;">Czy przejście?</th>
-                    <th scope="col" style="width:36px;"></th>
+                    <th scope="col" class="th-c-accent" style="text-align:center;">Czy przejście?</th>
+                    <th scope="col" style="width:44px;"></th>
                 </tr>
             </thead>
             <tbody>`;
@@ -312,8 +320,8 @@ function buildPrzejscieRowHTML(row, idx, source) {
             : '';
 
     const rodzajCell = `
-        <div class="flex-gap-4-col">
-            <select id="${prefix}-rodzaj-select" class="form-input form-input-inline"  onchange="${warnScript} document.getElementById('${prefix}-rodzaj').style.display = this.value === 'Inne' ? 'block' : 'none'; if(this.value !== 'Inne') document.getElementById('${prefix}-rodzaj').value = this.value; updatePrzejscieDnOptions('${prefix}', this.value);">
+        <div class="flex-gap-4-col" style="display:flex; align-items:center;">
+            <select id="${prefix}-rodzaj-select" class="form-input form-input-inline" style="box-sizing:border-box;" onchange="${warnScript} document.getElementById('${prefix}-rodzaj').style.display = this.value === 'Inne' ? 'block' : 'none'; if(this.value !== 'Inne') document.getElementById('${prefix}-rodzaj').value = this.value; updatePrzejscieDnOptions('${prefix}', this.value);">
                 <option value="" disabled ${!row.rodzaj ? 'selected' : ''}>Wybierz rodzaj...</option>
                 ${catOptions.map((c) => `<option value="${escapeHtmlAttr(c)}" ${row.rodzaj === c ? 'selected' : ''}>${escapeHtml(c)}</option>`).join('')}
                 <option value="Inne" ${isRodzajInne ? 'selected' : ''}>Inne</option>
@@ -323,46 +331,46 @@ function buildPrzejscieRowHTML(row, idx, source) {
 
     const dnOdCell = rowHasStringDn
         ? `
-        <div class="flex-gap-4-col">
-            <input type="text" id="${prefix}-dnod" class="form-input form-input-bold70" value="${escapeHtmlAttr(row.dnOd || '')}" readonly >
+        <div class="flex-gap-4-col" style="display:flex; align-items:center;">
+            <input type="text" id="${prefix}-dnod" class="form-input form-input-bold70" value="${escapeHtmlAttr(row.dnOd || '')}" readonly style="box-sizing:border-box;">
         </div>`
         : `
-        <div class="flex-gap-4-col">
-            <select id="${prefix}-dnod-select" class="form-input form-input-inline"  onchange="${warnScript} document.getElementById('${prefix}-dnod').style.display = this.value === 'Inne' ? 'block' : 'none'; if(this.value !== 'Inne') document.getElementById('${prefix}-dnod').value = this.value;">
+        <div class="flex-gap-4-col" style="display:flex; align-items:center;">
+            <select id="${prefix}-dnod-select" class="form-input form-input-inline" style="box-sizing:border-box;" onchange="${warnScript} document.getElementById('${prefix}-dnod').style.display = this.value === 'Inne' ? 'block' : 'none'; if(this.value !== 'Inne') document.getElementById('${prefix}-dnod').value = this.value;">
                 <option value="" ${!row.dnOd ? 'selected' : ''}>—</option>
                 ${dnOptions.map((d) => `<option value="${d}" ${parseFloat(row.dnOd) === d ? 'selected' : ''}>${d}</option>`).join('')}
                 <option value="Inne" ${isDnOdInne ? 'selected' : ''}>Inne</option>
             </select>
-            <input type="number" id="${prefix}-dnod" class="form-input" value="${row.dnOd || ''}" placeholder="DN od" min="0" style="width:100%; min-width:72px; font-size: var(--fs-base); padding:0.3rem; text-align:center; background:rgba(var(--white-rgb), 0.05); border:1px solid rgba(var(--white-rgb), 0.1); border-radius: var(--radius-2xs); color:var(--text-primary); font-weight: var(--fw-bold); display:${isDnOdInne ? 'block' : 'none'};" onchange="${warnScript}">
+            <input type="number" id="${prefix}-dnod" class="form-input" value="${row.dnOd || ''}" placeholder="DN od" min="0" style="width:100%; min-width:0; font-size: var(--fs-base); text-align:center; background:rgba(var(--white-rgb), 0.05); border:1px solid rgba(var(--white-rgb), 0.1); border-radius: var(--radius-2xs); color:var(--text-primary); font-weight: var(--fw-bold); box-sizing:border-box; display:${isDnOdInne ? 'block' : 'none'};" onchange="${warnScript}">
         </div>`;
 
     const dnDoCell = rowHasStringDn
         ? `
-        <div class="flex-gap-4-col">
-            <input type="text" id="${prefix}-dndo" class="form-input form-input-bold70" value="${escapeHtmlAttr(row.dnDo || '')}" readonly >
+        <div class="flex-gap-4-col" style="display:flex; align-items:center;">
+            <input type="text" id="${prefix}-dndo" class="form-input form-input-bold70" value="${escapeHtmlAttr(row.dnDo || '')}" readonly style="box-sizing:border-box;">
         </div>`
         : `
-        <div class="flex-gap-4-col">
-            <select id="${prefix}-dndo-select" class="form-input form-input-inline"  onchange="${warnScript} document.getElementById('${prefix}-dndo').style.display = this.value === 'Inne' ? 'block' : 'none'; if(this.value !== 'Inne') document.getElementById('${prefix}-dndo').value = this.value;">
+        <div class="flex-gap-4-col" style="display:flex; align-items:center;">
+            <select id="${prefix}-dndo-select" class="form-input form-input-inline" style="box-sizing:border-box;" onchange="${warnScript} document.getElementById('${prefix}-dndo').style.display = this.value === 'Inne' ? 'block' : 'none'; if(this.value !== 'Inne') document.getElementById('${prefix}-dndo').value = this.value;">
                 <option value="" ${!row.dnDo ? 'selected' : ''}>—</option>
                 ${dnOptions.map((d) => `<option value="${d}" ${parseFloat(row.dnDo) === d ? 'selected' : ''}>${d}</option>`).join('')}
                 <option value="Inne" ${isDnDoInne ? 'selected' : ''}>Inne</option>
             </select>
-            <input type="number" id="${prefix}-dndo" class="form-input" value="${row.dnDo || ''}" placeholder="DN do" min="0" style="width:100%; min-width:72px; font-size: var(--fs-base); padding:0.3rem; text-align:center; background:rgba(var(--white-rgb), 0.05); border:1px solid rgba(var(--white-rgb), 0.1); border-radius: var(--radius-2xs); color:var(--text-primary); font-weight: var(--fw-bold); display:${isDnDoInne ? 'block' : 'none'};" onchange="${warnScript}">
+            <input type="number" id="${prefix}-dndo" class="form-input" value="${row.dnDo || ''}" placeholder="DN do" min="0" style="width:100%; min-width:0; font-size: var(--fs-base); text-align:center; background:rgba(var(--white-rgb), 0.05); border:1px solid rgba(var(--white-rgb), 0.1); border-radius: var(--radius-2xs); color:var(--text-primary); font-weight: var(--fw-bold); box-sizing:border-box; display:${isDnDoInne ? 'block' : 'none'};" onchange="${warnScript}">
         </div>`;
 
     return `<tr style="border-bottom:1px solid rgba(var(--white-rgb), 0.05); background:${rowBg}; border-left:${borderLeft};" data-psz-source="${source}" data-psz-idx="${idx}">
-        <td style="padding:0.4rem 0.5rem; white-space:nowrap; vertical-align:top;">${rodzajCell}</td>
-        <td class="th-pad-c">${dnOdCell}</td>
-        <td class="th-pad-c">${dnDoCell}</td>
-        <td style="padding:0.4rem 0 0.4rem 0.5rem; vertical-align:top;">
-            <input type="text" id="${prefix}-uwagi" class="form-input form-input-inline" value="${escapeHtmlAttr(row.uwagi || '')}" placeholder="Uwagi..." style="width:100%;" onchange="${warnScript}">
+        <td style="padding:0.4rem 0.25rem 0.4rem 0.5rem; white-space:nowrap; vertical-align:middle;">${rodzajCell}</td>
+        <td class="th-pad-c" style="padding:0.4rem 0.25rem; vertical-align:middle;">${dnOdCell}</td>
+        <td class="th-pad-c" style="padding:0.4rem 0.25rem; vertical-align:middle;">${dnDoCell}</td>
+        <td style="padding:0.4rem 0.25rem; vertical-align:middle;">
+            <input type="text" id="${prefix}-uwagi" class="form-input form-input-inline" value="${escapeHtmlAttr(row.uwagi || '')}" placeholder="Uwagi..." style="width:100%; box-sizing:border-box;" onchange="${warnScript}">
         </td>
-        <td class="th-pad-c" style="text-align:right; padding:0.4rem 0.5rem 0.4rem 0.25rem;">
-            <button type="button" id="${prefix}-czy" class="form-input" value="${row.czyPrzejscie === 'NIE' ? 'NIE' : 'TAK'}" onclick="_toggleCzyPrzejscieStudnie(this)" title="Przełącz TAK/NIE" style="width:80px; font-size: var(--fs-lg); padding:0.55rem 0.8rem; box-sizing:border-box; text-align:center; font-weight: var(--fw-bold); border-radius: var(--radius-2xs); cursor:pointer; ${row.czyPrzejscie === 'NIE' ? 'color:var(--danger-hover); background:rgba(var(--danger-rgb), 0.1); border:1px solid rgba(var(--danger-rgb), 0.3);' : 'color:var(--success-hover); background:rgba(var(--success-rgb), 0.1); border:1px solid rgba(var(--success-rgb), 0.3);'}">${row.czyPrzejscie === 'NIE' ? 'NIE' : 'TAK'}</button>
+        <td class="th-pad-c" style="text-align:center; padding:0.4rem 0.25rem; vertical-align:middle;">
+            <button type="button" id="${prefix}-czy" class="form-input" value="${row.czyPrzejscie === 'NIE' ? 'NIE' : 'TAK'}" onclick="_toggleCzyPrzejscieStudnie(this)" title="Przełącz TAK/NIE" style="width:100%; font-size: var(--fs-lg); padding:0.55rem 0.8rem; box-sizing:border-box; text-align:center; font-weight: var(--fw-bold); border-radius: var(--radius-2xs); cursor:pointer; ${row.czyPrzejscie === 'NIE' ? 'color:var(--danger-hover); background:rgba(var(--danger-rgb), 0.1); border:1px solid rgba(var(--danger-rgb), 0.3);' : 'color:var(--success-hover); background:rgba(var(--success-rgb), 0.1); border:1px solid rgba(var(--success-rgb), 0.3);'}">${row.czyPrzejscie === 'NIE' ? 'NIE' : 'TAK'}</button>
         </td>
-        <td style="padding:0.4rem 0.2rem; text-align:center; vertical-align:top;">
-            <button type="button" class="btn-icon-danger" onclick="removePrzejscieRow('${source}', ${idx})" title="Usuń" style="padding:0.73rem 0.5rem; box-sizing:border-box; border-radius: var(--radius-2xs);"><i data-lucide="trash-2" class="icon-sm"></i></button>
+        <td style="padding:0.4rem 0.2rem; text-align:center; vertical-align:middle;">
+            <button type="button" class="btn-icon-danger" onclick="removePrzejscieRow('${source}', ${idx})" title="Usuń" style="padding:0.55rem 0.5rem; box-sizing:border-box; border-radius: var(--radius-2xs);"><i data-lucide="trash-2" class="icon-sm"></i></button>
         </td>
     </tr>`;
 }
