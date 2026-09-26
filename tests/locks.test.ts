@@ -341,6 +341,16 @@ describe('Twarda blokada edycji (doc_locks)', () => {
         expect(res.body.lock.userId).toBe('user-b');
     });
 
+    test('P1.5: GET holdera obcego locka → 404 (oracle zamknięty jak acquire)', async () => {
+        const app = createApp();
+        await request(app).post('/api/locks/acquire').send({ docType: 'offer', docId: 'o1' });
+        asUser(userB);
+        (canReadWithShare as jest.Mock).mockResolvedValueOnce(false);
+        const res = await request(createApp()).get('/api/locks/offer/o1');
+        expect(res.status).toBe(404);
+        expect(res.body.lock).toBeUndefined();
+    });
+
     test('P1.5: heartbeat obcego na wygaslym locku → 404 (nie 423)', async () => {
         const app = createApp();
         await request(app).post('/api/locks/acquire').send({ docType: 'offer', docId: 'o1' });
@@ -359,8 +369,8 @@ describe('Twarda blokada edycji (doc_locks)', () => {
 
     test('GET status: 600/min przechodzi, 601. dostaje prawdziwe 429', async () => {
         const app = createApp();
-        // P1.5: 2 GET-y z testow powyzej zuzywaja budzet okna — petla 598, by suma dala 600.
-        for (let i = 0; i < 598; i++) {
+        // P1.5: 3 GET-y z testow powyzej zuzywaja budzet okna — petla 597, by suma dala 600.
+        for (let i = 0; i < 597; i++) {
             const r = await request(app).get('/api/locks/offer/rate-probe');
             expect(r.status).toBe(200);
         }

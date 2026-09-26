@@ -117,10 +117,19 @@ router.post(
 );
 
 router.get('/:docType/:docId', requireAuth, READ_LIMITER, async (req, res) => {
+    const authReq = req as AuthenticatedRequest;
     try {
         const parsed = docLockParamsSchema.safeParse(req.params);
         if (!parsed.success) return res.status(400).json({ error: 'Bledny typ lub ID dokumentu' });
         const { docType, docId } = parsed.data;
+        // Guard read-access jak w acquire: holder obcego dokumentu to oracle
+        // (404 nierozróżnialne: brak dokumentu vs brak uprawnień).
+        const ownerId = await resolveDocOwnerUserId(prisma, docType, docId);
+        if (ownerId !== undefined) {
+            const allowed =
+                ownerId !== null && (await canReadWithShare(authReq.user, ownerId, docType, docId));
+            if (!allowed) return res.status(404).json({ error: 'Dokument nie znaleziony' });
+        }
         const lock = await prisma.doc_locks.findUnique({
             where: { docType_docId: { docType, docId } }
         });
