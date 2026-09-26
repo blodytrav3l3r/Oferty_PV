@@ -8,43 +8,31 @@
  *   3. migrate diff -> puste (baza == schemat po deploy)
  */
 import { DatabaseSync } from 'node:sqlite';
+import fs from 'node:fs';
+import path from 'node:path';
 import { createIsolatedProject } from './helpers';
 
 const BASELINE = '20260815000000_baseline';
-const AI_TRAINING_RUN = '20260816000000_ai_training_run';
-const UQ_REWARD = '20260815000001_uq_reward_well_action';
-const SHARES = '20260828000000_add_document_shares';
-const ADD_WELLCOUNT = '20260831000000_add_wellcount';
-const ADD_TOTALPRICE = '20260902000000_add_totalprice';
-const ADD_PERF_INDEXES = '20260902000001_add_performance_indexes';
-const ADD_PROD_WELL_INDEX = '20260905000000_add_prod_well_index';
-const PROD_NUMBER_UNIQUE = '20260907000000_prod_number_unique';
-const PROD_VERSION = '20260907000001_prod_version';
-const DOC_VERSIONS = '20260907000002_doc_versions';
-const IDEMPOTENCY_KEYS = '20260907000003_idempotency_keys';
-const FK_ITEMS_OFFER = '20260907000004_fk_items_offer';
-const DOC_LOCKS = '20260908000000_doc_locks';
-const USER_PREFS = '20260921000000_user_preferences';
+
+const MIGRATIONS_DIR = path.join(__dirname, '..', '..', 'prisma', 'migrations');
+
+/**
+ * Wszystkie migracje prod (katalogi z migration.sql), chronologicznie.
+ * Dynamicznie z katalogu — nowa migracja nie wymaga edycji tego testu
+ * (wcześniej ręczna lista rozjeżdżała się ze schematem i wywalała CI).
+ */
+function prodMigrations(): string[] {
+    return fs
+        .readdirSync(MIGRATIONS_DIR, { withFileTypes: true })
+        .filter((d) => d.isDirectory())
+        .map((d) => d.name)
+        .filter((n) => fs.existsSync(path.join(MIGRATIONS_DIR, n, 'migration.sql')))
+        .sort();
+}
 
 describe('A3 baseline migracji', () => {
     it('deploy na czystej bazie tworzy pelny schemat zgodny z schema.prisma', () => {
-        const project = createIsolatedProject('baseline', [
-            BASELINE,
-            UQ_REWARD,
-            AI_TRAINING_RUN,
-            SHARES,
-            ADD_WELLCOUNT,
-            ADD_TOTALPRICE,
-            ADD_PERF_INDEXES,
-            ADD_PROD_WELL_INDEX,
-            PROD_NUMBER_UNIQUE,
-            PROD_VERSION,
-            DOC_VERSIONS,
-            IDEMPOTENCY_KEYS,
-            FK_ITEMS_OFFER,
-            DOC_LOCKS,
-            USER_PREFS
-        ]);
+        const project = createIsolatedProject('baseline', prodMigrations());
         try {
             const out = project.runPrisma(['migrate', 'deploy']);
             expect(out).toContain('All migrations have been successfully applied');
