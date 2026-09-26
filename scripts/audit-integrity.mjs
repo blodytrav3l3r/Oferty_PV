@@ -83,6 +83,28 @@ try {
         }
         fail('orphanOfferItems', orphanItems);
 
+        // 2b. Martwa tabela pozycji studni (kandydat DROP): wiersze + sieroty.
+        // Gate DROP: oba zera na kopii prod przed migracją. Licznik wierszy
+        // informacyjny (nie FAIL), sieroty FAIL jak rury.
+        let studnieItemsRows = 0;
+        let studnieItemsOrphans = 0;
+        if (has('offer_studnie_items_rel')) {
+            studnieItemsRows = db
+                .prepare('SELECT COUNT(*) AS n FROM offer_studnie_items_rel')
+                .get().n;
+            if (has('offers_studnie_rel')) {
+                studnieItemsOrphans = db
+                    .prepare(
+                        `SELECT COUNT(*) AS n FROM offer_studnie_items_rel
+                         WHERE "offerId" IS NOT NULL
+                           AND "offerId" NOT IN (SELECT id FROM offers_studnie_rel)`
+                    )
+                    .get().n;
+            }
+        }
+        checks.studnieItemsRows = studnieItemsRows;
+        fail('studnieItemsOrphans', studnieItemsOrphans);
+
         // 3. Zblokowane dane PZ: recycled kolidujący z żywym numerem + licznik cofnięty.
         const prodCols2 = db.prepare('PRAGMA table_info(production_orders_rel)').all();
         const hasProdNum = prodCols2.some((c) => c.name === 'productionNumber');
