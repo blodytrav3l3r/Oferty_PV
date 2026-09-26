@@ -165,11 +165,12 @@ function detectUszczelkaPerDn(wells) {
 
 /**
  * Tryb pola uszczelki: 'auto' (per DN z konfiguracji) albo 'manual' (select).
+ * Stan trzyma przycisk #step4-uszczelka-mode-btn (dataset.mode).
  * @returns {string}
  */
 function getUszczelkaMode() {
-    const checked = document.querySelector('input[name="step4-uszczelka-mode"]:checked');
-    return checked && checked.value === 'manual' ? 'manual' : 'auto';
+    const btn = document.getElementById('step4-uszczelka-mode-btn');
+    return btn && btn.dataset.mode === 'manual' ? 'manual' : 'auto';
 }
 
 function syncUszczelkaModeUI() {
@@ -186,15 +187,20 @@ function syncUszczelkaModeUI() {
 }
 
 function setUszczelkaMode(mode) {
-    const radios = document.querySelectorAll('input[name="step4-uszczelka-mode"]');
-    radios.forEach((r) => {
-        r.checked = r.value === mode;
-    });
+    const btn = document.getElementById('step4-uszczelka-mode-btn');
+    const isManual = mode === 'manual';
+    if (btn) {
+        btn.dataset.mode = isManual ? 'manual' : 'auto';
+        btn.textContent = isManual ? 'Ręcznie' : 'Auto';
+        btn.style.background = isManual
+            ? 'rgba(var(--accent2-rgb), 0.3)'
+            : 'rgba(var(--accent2-rgb), 0.1)';
+    }
     syncUszczelkaModeUI();
 }
 
-function handleUszczelkaModeChange() {
-    syncUszczelkaModeUI();
+function handleUszczelkaModeToggle() {
+    setUszczelkaMode(getUszczelkaMode() === 'manual' ? 'auto' : 'manual');
 }
 
 /**
@@ -509,9 +515,42 @@ function _generateDefaultUwagi() {
     }
 }
 
+/**
+ * Buduje prefill pola "Osoba do kontaktu" z kroku 1 (dane klienta):
+ * "Zamawiający: <kontakt>, Budowa: <wykonawca>" (puste części pomijane).
+ */
+function _buildKontaktPrefill(kontakt, wykonawca) {
+    const parts = [];
+    const k = (kontakt || '').trim();
+    const w = (wykonawca || '').trim();
+    if (k) parts.push('Zamawiający: ' + k);
+    if (w) parts.push('Budowa: ' + w);
+    return parts.join(', ');
+}
+
 function initKartaBudowyStep4(primaryOfferNumber) {
     _przejsciaInitialized = false;
     _resetKartaBudowyForm();
+
+    // Prefill kontaktu z kroku 1 (jak rury) — tylko gdy pole puste,
+    // żeby nie nadpisać zapisanej karty ani kopii.
+    const kontaktInput = document.getElementById('step4-osoba-kontakt');
+    if (kontaktInput && !kontaktInput.value) {
+        const pending =
+            typeof pendingOrderCreationData !== 'undefined' ? pendingOrderCreationData : null;
+        const editOrder =
+            typeof orderEditMode !== 'undefined' && orderEditMode ? orderEditMode.order : null;
+        kontaktInput.value = _buildKontaktPrefill(
+            document.getElementById('client-contact')?.value?.trim() ||
+                pending?.offer?.clientContact ||
+                editOrder?.clientContact ||
+                '',
+            document.getElementById('invest-contractor')?.value?.trim() ||
+                pending?.offer?.investContractor ||
+                editOrder?.investContractor ||
+                ''
+        );
+    }
 
     const transport = _calcTransportCosts();
     _displayTransportCost(transport.tCost, transport.costPerTrip);
@@ -522,7 +561,7 @@ function initKartaBudowyStep4(primaryOfferNumber) {
     const existingData = _getExistingKartaBudowyData();
     _applyExistingKartaBudowyData(existingData, primaryOfferNumber);
 
-    // Przełącznik Auto/Ręcznie działa przez inline onchange → handleUszczelkaModeChange.
+    // Przełącznik Auto/Ręcznie działa przez inline onclick → handleUszczelkaModeToggle.
     syncUszczelkaModeUI();
 
     if (typeof renderKartaBudowyCopyOptions === 'function') {
@@ -890,7 +929,7 @@ function collectKartaBudowyDataStep4() {
 
 /* ===== Rejestracja globali ===== */
 window.detectUszczelkaPerDn = detectUszczelkaPerDn;
-window.handleUszczelkaModeChange = handleUszczelkaModeChange;
+window.handleUszczelkaModeToggle = handleUszczelkaModeToggle;
 window.initKartaBudowyStep4 = initKartaBudowyStep4;
 window.copyKartaBudowyFromOrder = copyKartaBudowyFromOrder;
 

@@ -153,7 +153,7 @@ function renderPrzejsciaDetailsTable(existingData) {
                     <th scope="col" class="th-c-accent">DN od</th>
                     <th scope="col" class="th-c-accent">DN do</th>
                     <th scope="col" class="th-l-nowrap">Uwagi</th>
-                    <th scope="col" class="th-c-accent">Czy przejście?</th>
+                    <th scope="col" class="th-c-accent" style="text-align:right;">Czy przejście?</th>
                     <th scope="col" style="width:36px;"></th>
                 </tr>
             </thead>
@@ -355,31 +355,34 @@ function buildPrzejscieRowHTML(row, idx, source) {
         <td style="padding:0.4rem 0.5rem; white-space:nowrap; vertical-align:top;">${rodzajCell}</td>
         <td class="th-pad-c">${dnOdCell}</td>
         <td class="th-pad-c">${dnDoCell}</td>
-        <td style="padding:0.4rem 0.5rem; vertical-align:top;">
-            <input type="text" id="${prefix}-uwagi" class="form-input form-input-inline" value="${escapeHtmlAttr(row.uwagi || '')}" placeholder="Uwagi..."  onchange="${warnScript}">
+        <td style="padding:0.4rem 0 0.4rem 0.5rem; vertical-align:top;">
+            <input type="text" id="${prefix}-uwagi" class="form-input form-input-inline" value="${escapeHtmlAttr(row.uwagi || '')}" placeholder="Uwagi..." style="width:100%;" onchange="${warnScript}">
         </td>
-        <td class="th-pad-c">
-            <select id="${prefix}-czy" class="form-input" style="width:80px; font-size: var(--fs-base); padding:0.3rem; text-align:center; font-weight: var(--fw-bold); border-radius: var(--radius-2xs); ${row.czyPrzejscie === 'TAK' ? 'color:var(--success-hover); background:rgba(var(--success-rgb), 0.1); border:1px solid rgba(var(--success-rgb), 0.3);' : 'color:var(--danger-hover); background:rgba(var(--danger-rgb), 0.1); border:1px solid rgba(var(--danger-rgb), 0.3);'}" onchange="${warnScript} updatePrzejscieSelectStyle(this)">
-                <option value="TAK"${row.czyPrzejscie === 'TAK' ? ' selected' : ''}>TAK</option>
-                <option value="NIE"${row.czyPrzejscie === 'NIE' ? ' selected' : ''}>NIE</option>
-            </select>
+        <td class="th-pad-c" style="text-align:right; padding:0.4rem 0.5rem 0.4rem 0.25rem;">
+            <button type="button" id="${prefix}-czy" class="form-input" value="${row.czyPrzejscie === 'NIE' ? 'NIE' : 'TAK'}" onclick="_toggleCzyPrzejscieStudnie(this)" title="Przełącz TAK/NIE" style="width:80px; font-size: var(--fs-lg); padding:0.55rem 0.8rem; box-sizing:border-box; text-align:center; font-weight: var(--fw-bold); border-radius: var(--radius-2xs); cursor:pointer; ${row.czyPrzejscie === 'NIE' ? 'color:var(--danger-hover); background:rgba(var(--danger-rgb), 0.1); border:1px solid rgba(var(--danger-rgb), 0.3);' : 'color:var(--success-hover); background:rgba(var(--success-rgb), 0.1); border:1px solid rgba(var(--success-rgb), 0.3);'}">${row.czyPrzejscie === 'NIE' ? 'NIE' : 'TAK'}</button>
         </td>
         <td style="padding:0.4rem 0.2rem; text-align:center; vertical-align:top;">
-            <button type="button" class="btn-icon-danger btn-icon-sm" onclick="removePrzejscieRow('${source}', ${idx})" title="Usuń"><i data-lucide="trash-2" class="icon-xs"></i></button>
+            <button type="button" class="btn-icon-danger" onclick="removePrzejscieRow('${source}', ${idx})" title="Usuń" style="padding:0.73rem 0.5rem; box-sizing:border-box; border-radius: var(--radius-2xs);"><i data-lucide="trash-2" class="icon-sm"></i></button>
         </td>
     </tr>`;
 }
 
-/** Aktualizuje styl selecta TAK/NIE po zmianie wartości */
-function updatePrzejscieSelectStyle(selectEl) {
-    if (selectEl.value === 'TAK') {
-        selectEl.style.color = 'var(--success-hover)';
-        selectEl.style.background = 'rgba(var(--success-rgb), 0.1)';
-        selectEl.style.border = '1px solid rgba(var(--success-rgb), 0.3)';
-    } else {
-        selectEl.style.color = 'var(--danger-hover)';
-        selectEl.style.background = 'rgba(var(--danger-rgb), 0.1)';
-        selectEl.style.border = '1px solid rgba(var(--danger-rgb), 0.3)';
+/** Przełącza TAK/NIE w wierszu (kolor + zapis do wiersza, bez re-renderu) */
+function _toggleCzyPrzejscieStudnie(btn) {
+    const next = btn.value === 'TAK' ? 'NIE' : 'TAK';
+    const isTak = next === 'TAK';
+    btn.value = next;
+    btn.textContent = next;
+    btn.style.color = isTak ? 'var(--success-hover)' : 'var(--danger-hover)';
+    btn.style.background = isTak ? 'rgba(var(--success-rgb), 0.1)' : 'rgba(var(--danger-rgb), 0.1)';
+    btn.style.border = isTak
+        ? '1px solid rgba(var(--success-rgb), 0.3)'
+        : '1px solid rgba(var(--danger-rgb), 0.3)';
+    const m = (btn.id || '').match(/^step4-psz-(offer|custom)-(\d+)-czy$/);
+    if (m) {
+        const arr = m[1] === 'custom' ? _customPrzejscieRows : _offerPrzejscieRows;
+        const row = arr[parseInt(m[2])];
+        if (row) row.czyPrzejscie = next;
     }
 }
 
@@ -531,7 +534,6 @@ function collectPrzejsciaDetailsFromTable() {
 /* ===== Rejestracja globali ===== */
 window.handlePrzejsciaZamowioneChange = handlePrzejsciaZamowioneChange;
 window.updatePrzejscieDnOptions = updatePrzejscieDnOptions;
-window.updatePrzejscieSelectStyle = updatePrzejscieSelectStyle;
 window.addCustomPrzejscieRow = addCustomPrzejscieRow;
 window.collectPrzejsciaDetailsFromTable = collectPrzejsciaDetailsFromTable;
 

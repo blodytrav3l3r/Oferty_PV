@@ -99,11 +99,13 @@ describe('przelacznik Auto/Recznie uszczelki (karta budowy)', () => {
     const OPTION_VALUES = ['Nie dotyczy', 'Brak', 'GSG', 'SDV', 'SDV PO', 'NBR', 'Inne'];
 
     function makeDoc() {
-        const radios = [
-            { value: 'auto', checked: true },
-            { value: 'manual', checked: false }
-        ];
+        const modeBtn: any = {
+            dataset: { mode: 'auto' },
+            textContent: 'Auto',
+            style: {}
+        };
         const els: any = {
+            'step4-uszczelka-mode-btn': modeBtn,
             'step4-uszczelka-studni-auto': { value: '', style: { display: '' } },
             'step4-uszczelka-studni': {
                 value: 'Brak',
@@ -115,13 +117,9 @@ describe('przelacznik Auto/Recznie uszczelki (karta budowy)', () => {
         };
         return {
             getElementById: (id: string) => els[id] || null,
-            querySelector: (sel: string) =>
-                sel === 'input[name="step4-uszczelka-mode"]:checked'
-                    ? radios.find((r) => r.checked) || null
-                    : null,
-            querySelectorAll: (sel: string) =>
-                sel === 'input[name="step4-uszczelka-mode"]' ? radios : [],
-            _radios: radios,
+            querySelector: () => null,
+            querySelectorAll: () => [],
+            _modeBtn: modeBtn,
             _els: els
         };
     }
@@ -168,20 +166,32 @@ describe('przelacznik Auto/Recznie uszczelki (karta budowy)', () => {
         expect(ctx.document._els['step4-uszczelka-studni-inne-wrap'].style.display).toBe('block');
     });
 
-    test('setUszczelkaMode pokazuje tylko jedno pole naraz', () => {
+    test('przycisk toggluje tryb auto/recznie', () => {
         const ctx = runModeCtx('Brak');
-        ctx.setUszczelkaMode('manual');
+        expect(ctx.getUszczelkaMode()).toBe('auto');
+        ctx.handleUszczelkaModeToggle();
+        expect(ctx.getUszczelkaMode()).toBe('manual');
+        expect(ctx.document._modeBtn.textContent).toBe('Ręcznie');
         expect(ctx.document._els['step4-uszczelka-studni'].style.display).toBe('');
         expect(ctx.document._els['step4-uszczelka-studni-auto'].style.display).toBe('none');
-        ctx.setUszczelkaMode('auto');
+        ctx.handleUszczelkaModeToggle();
         expect(ctx.getUszczelkaMode()).toBe('auto');
-        expect(ctx.document._els['step4-uszczelka-studni'].style.display).toBe('none');
-        expect(ctx.document._els['step4-uszczelka-studni-auto'].style.display).toBe('');
+        expect(ctx.document._modeBtn.textContent).toBe('Auto');
     });
 
     test('pusta wartosc nie rusza trybu', () => {
         const ctx = runModeCtx('DN1000: GSG');
         ctx._applyUszczelkaValueWithMode('');
         expect(ctx.getUszczelkaMode()).toBe('auto');
+    });
+
+    test('kontakt prefill: Zamawiajacy + Budowa z przedrostkami', () => {
+        const ctx = runModeCtx('Brak');
+        expect(ctx._buildKontaktPrefill('Jan 123', 'Firma X')).toBe(
+            'Zamawiający: Jan 123, Budowa: Firma X'
+        );
+        expect(ctx._buildKontaktPrefill('Jan 123', '')).toBe('Zamawiający: Jan 123');
+        expect(ctx._buildKontaktPrefill('', 'Firma X')).toBe('Budowa: Firma X');
+        expect(ctx._buildKontaktPrefill('', '')).toBe('');
     });
 });

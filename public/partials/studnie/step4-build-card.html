@@ -394,49 +394,28 @@
                         >
                             Uszczelka do studni
                         </label>
-                        <div
-                            class="gap-3"
+                        <button
+                            type="button"
+                            id="step4-uszczelka-mode-btn"
+                            data-mode="auto"
+                            onclick="handleUszczelkaModeToggle()"
+                            title="Przełącz tryb: Auto (z konfiguracji) / Ręcznie"
                             style="
-                                display: flex;
-                                align-items: center;
                                 font-size: var(--fs-sm);
-                                color: var(--text-secondary);
+                                font-weight: var(--fw-bold);
+                                text-transform: uppercase;
+                                letter-spacing: 0.3px;
+                                color: var(--accent2-hover);
+                                background: rgba(var(--accent2-rgb), 0.1);
+                                border: 1px solid rgba(var(--accent2-rgb), 0.3);
+                                border-radius: var(--radius-sm);
+                                padding: 0.25rem 0.7rem;
+                                min-width: 5.5rem;
+                                cursor: pointer;
                             "
                         >
-                            <label
-                                style="
-                                    display: flex;
-                                    align-items: center;
-                                    gap: 0.3rem;
-                                    cursor: pointer;
-                                "
-                            >
-                                <input
-                                    type="radio"
-                                    name="step4-uszczelka-mode"
-                                    value="auto"
-                                    checked
-                                    onchange="handleUszczelkaModeChange()"
-                                />
-                                Auto
-                            </label>
-                            <label
-                                style="
-                                    display: flex;
-                                    align-items: center;
-                                    gap: 0.3rem;
-                                    cursor: pointer;
-                                "
-                            >
-                                <input
-                                    type="radio"
-                                    name="step4-uszczelka-mode"
-                                    value="manual"
-                                    onchange="handleUszczelkaModeChange()"
-                                />
-                                Ręcznie
-                            </label>
-                        </div>
+                            Auto
+                        </button>
                     </div>
                     <input
                         type="text"
