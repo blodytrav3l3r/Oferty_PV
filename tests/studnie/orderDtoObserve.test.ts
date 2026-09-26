@@ -40,6 +40,18 @@ describe('observeStudnieOrderDto — P0.3 observe (non-blocking)', () => {
         expect(obs.unknownPrzejscieKeys).toContain('weirdField');
     });
 
+    test('pola biznesowe z prod-danych nie liczone jako unknown (census dev)', () => {
+        const order = cleanOrder() as any;
+        order.wells[0].redukcjaMinH = 2500;
+        order.wells[0].redukcjaZakonczenie = 'z-1';
+        order.wells[0].uszczelka = 'GSG';
+        order.wells[0].type = 'standard';
+        order.wells[0].frozenTransportCost = 10;
+        const obs = observeStudnieOrderDto(order);
+        expect(obs.unknownKeysTotal).toBe(0);
+        expect(obs.unknownWellKeys).toEqual([]);
+    });
+
     test('odporne na śmieciowe wejście (null, brak wells)', () => {
         expect(() => observeStudnieOrderDto(null)).not.toThrow();
         expect(() => observeStudnieOrderDto({})).not.toThrow();
