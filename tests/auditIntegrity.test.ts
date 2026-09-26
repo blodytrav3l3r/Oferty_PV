@@ -107,4 +107,16 @@ describe('P0-H audit:integrity', () => {
         expect(r.json.checks.recycledCollision).toBe(1);
         expect(r.json.checks.counterRegression).toBe(1);
     });
+
+    test('pusta baza bez tabel → FAIL noRecognizedTables (nie fałszywy PASS)', () => {
+        const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'audit-'));
+        const dbPath = path.join(dir, 't.db');
+        const db = new DatabaseSync(dbPath);
+        db.exec(`CREATE TABLE t (x TEXT)`);
+        db.close();
+        const r = run(dbPath);
+        expect(r.status).toBe(1);
+        expect(r.json.status).toBe('FAIL');
+        expect(r.json.checks.noRecognizedTables).toBe(1);
+    });
 });

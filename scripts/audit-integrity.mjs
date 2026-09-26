@@ -204,6 +204,13 @@ try {
         }
     }
 
+    // Fail-safe: wszystko zagnieżdżone w if has(production_orders_rel) —
+    // sama integralność fizyczna to za mało, by ogłosić PASS.
+    const domainChecks = Object.keys(checks).filter((k) => k !== 'integrityCheck');
+    if (domainChecks.length === 0) {
+        fail('noRecognizedTables', 1, 'Brak tabel produkcyjnych — gate nie sprawdził niczego');
+    }
+
     db.close();
 } catch (e) {
     console.log(JSON.stringify({ status: 'ERROR', error: e.message, checks: {}, warnings: {} }));

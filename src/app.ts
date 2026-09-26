@@ -192,7 +192,10 @@ app.use(
                 fontSrc: ["'self'"],
                 objectSrc: ["'none'"],
                 mediaSrc: ["'self'"],
-                frameSrc: ["'self'"]
+                frameSrc: ["'self'"],
+                // Clickjacking: obce domeny nie osadzą SPA; własne iframe'y
+                // (same-origin) działają (X-Frame-Options zdjęte celowo).
+                frameAncestors: ["'self'"]
             }
         },
         crossOriginEmbedderPolicy: false

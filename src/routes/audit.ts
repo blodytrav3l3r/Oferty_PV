@@ -32,7 +32,10 @@ router.get('/:entityType/:entityId', requireAuth, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
         const { entityType, entityId } = req.params;
-        const limit = Math.min(parseInt(req.query.limit as string) || DEFAULT_LIMIT, MAX_LIMIT);
+        const limit = Math.max(
+            1,
+            Math.min(parseInt(req.query.limit as string) || DEFAULT_LIMIT, MAX_LIMIT)
+        );
         const offset = Math.max(parseInt(req.query.offset as string) || 0, 0);
 
         const userFilter = authReq.user
