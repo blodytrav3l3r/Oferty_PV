@@ -1,7 +1,7 @@
 # Instrukcja instalacji S.O.K. — System Ofert i Kalkulacji — krok po kroku dla laika
 
 > **Plik:** docs/instalacja-krok-po-kroku-dla-laika.md
-> **Wersja:** 1.30.0
+> **Wersja:** 1.31.0
 > **Dla kogo:** Osób bez doświadczenia technicznego
 > Wersja ops (Docker, VPS, praca zdalna, migracje): `docs/instalacja-przenoszenie-systemu.md`.
 

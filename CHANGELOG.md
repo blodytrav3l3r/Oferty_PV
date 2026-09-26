@@ -4,6 +4,24 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.31.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.30.0...v1.31.0) (2026-09-26)
+
+### Features
+
+- **api:** wersjonowanie cenników z datą obowiązywania ([7e55942](https://github.com/blodytrav3l3r/Oferty_PV/commit/7e5594203d669442d534769defb016bf187f3029))
+- **rury:** poprawki karty budowy i tabeli przejsc ([4fb010b](https://github.com/blodytrav3l3r/Oferty_PV/commit/4fb010b78055be08dccd0054d2641502784cc249))
+- **rury:** prefill kontaktu z przedrostkami z kroku 1 ([da6dd59](https://github.com/blodytrav3l3r/Oferty_PV/commit/da6dd5927d29af165c20961a9b294a464daf7219))
+- **settings:** straznik spojnosci snapshotu cennikow prices:verify ([6974564](https://github.com/blodytrav3l3r/Oferty_PV/commit/69745647164512107fde266c2bc62dfe1ad501ea))
+- **studnie:** auto-detekcja uszczelki per dn z trybem auto/recznie ([8f8433f](https://github.com/blodytrav3l3r/Oferty_PV/commit/8f8433f74a758900ded46239e0e1370ca5f6ef52))
+- **studnie:** przycisk trybu uszczelki i toggle czy-przejscie ([2fa3b59](https://github.com/blodytrav3l3r/Oferty_PV/commit/2fa3b59dda3ca243ccac354018156a0c08b1b748))
+- **ui:** ujednolicenie wyglądu cenników rur i studni ([e958bee](https://github.com/blodytrav3l3r/Oferty_PV/commit/e958bee9e19ff00b6d656f999d454669fffd1b28))
+
+### Bug Fixes
+
+- **studnie:** wyrownanie pol przejsc szczelnych w karcie budowy ([fbd2b32](https://github.com/blodytrav3l3r/Oferty_PV/commit/fbd2b32355e944e1d3902528b03b288b3c746a9e))
+- **test:** dynamiczna lista migracji w teście baseline ([cf8c9a3](https://github.com/blodytrav3l3r/Oferty_PV/commit/cf8c9a38764041bfa6e02debcfd7eebe4ac87fbe))
+- **ui:** wyrównanie ikon akcji i szukajki w cennikach ([d65e0f2](https://github.com/blodytrav3l3r/Oferty_PV/commit/d65e0f271cb225f304509ab4f1a3dff651a8a3d5))
+
 ## [1.30.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.29.5...v1.30.0) (2026-09-26)
 
 ### Features
