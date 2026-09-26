@@ -1341,6 +1341,68 @@ body::before {
     justify-content: center;
 }
 
+/* Cenniki (rury + studnie): ikony akcji w jednej linii, wyśrodkowane */
+.pricelist-actions {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    vertical-align: middle;
+    white-space: nowrap;
+}
+#section-pricelist td.text-center {
+    vertical-align: middle;
+}
+
+#section-pricelist .cat-header svg,
+#section-pricelist .pricelist-toolbar-title svg,
+#section-pricelist th svg {
+    vertical-align: middle;
+}
+
+/* Cenniki (rury + studnie): wspólny tytuł i searchbox toolbaru */
+.pricelist-toolbar-title {
+    font-size: var(--fs-2xl);
+    font-weight: var(--fw-bold);
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+#section-pricelist .toolbar .search-box,
+#section-pricelist .rury-toolbar .search-box {
+    margin: 0;
+    width: 100%;
+    max-width: 350px;
+}
+
+/* Cenniki: pasek narzędzi nad tabelą (PEHD, Dodaj kategorię/element) */
+.pricelist-tools {
+    padding: 0.5rem;
+    display: flex;
+    gap: 0.5rem;
+    justify-content: flex-end;
+    align-items: center;
+}
+
+.pricelist-tools .pehd-group {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    margin-right: auto;
+}
+
+.pricelist-tools .pehd-label {
+    font-size: var(--fs-md);
+    font-weight: var(--fw-semibold);
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+
+.pricelist-tools .pehd-input {
+    width: 70px;
+}
+
 button.btn-order-save {
     background: var(--success-bg-hover);
     color: var(--success-hover);

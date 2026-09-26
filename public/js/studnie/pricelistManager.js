@@ -83,6 +83,8 @@ function renderStudniePriceList() {
 
     const isPrzejscia = currentCennikTab === 'przejscia';
     const isKinety = currentCennikTab === 'kinety';
+    // Kontrakt: nagłówek grupy obejmuje wszystkie kolumny (regresja błędu #7).
+    const colCount = isPrzejscia ? 11 : isKinety ? 16 : 18;
 
     if (isPrzejscia || isKinety) {
         groupOrder = Array.from(dynamicGroups).sort();
@@ -98,8 +100,8 @@ function renderStudniePriceList() {
     const currentPehdPrice = pehdInput ? parseFloat(pehdInput.value) || 270 : 270;
 
     let html = `<div class="table-wrap">
-    <div style="padding:0.5rem; text-align:right; display:flex; gap:0.5rem; justify-content:flex-end; align-items:center;">
-        ${!isPrzejscia && !isKinety ? `<div style="display:flex; align-items:center; gap:0.3rem; margin-right:auto;"><label style="font-size: var(--fs-md); font-weight: var(--fw-semibold); color:var(--text-secondary);">Cena PEHD (PLN/m²):</label><input type="number" id="pehd-price-input" value="${currentPehdPrice}" style="width:70px; padding:0.3rem; font-size: var(--fs-md); border:1px solid var(--border); border-radius: var(--radius-2xs); background:var(--bg-input); color:var(--text-primary);"><button class="btn btn-secondary btn-sm" data-action="recalculatePEHD" style="padding:0.3rem 0.6rem; font-size: var(--fs-md); margin-left:0.3rem;">Przelicz</button></div>` : ''}
+    <div class="pricelist-tools">
+        ${!isPrzejscia && !isKinety ? `<div class="pehd-group"><label class="pehd-label" for="pehd-price-input">Cena PEHD (PLN/m²):</label><input type="number" id="pehd-price-input" class="form-input form-input-sm pehd-input" value="${currentPehdPrice}"><button class="btn btn-secondary btn-sm" data-action="recalculatePEHD">Przelicz</button></div>` : ''}
         ${isPrzejscia ? `<button class="btn btn-secondary pill-sm" data-action="addPrzejsciaCategory" ><i data-lucide="plus" aria-hidden="true"></i> Dodaj kategorię przejść</button>` : `<button class="btn btn-secondary pill-sm" data-action="addStudnieCategory" ><i data-lucide="plus" aria-hidden="true"></i> Dodaj kategorię</button>`}
         <button class="btn btn-secondary pill-sm" data-action="addStudnieElement" ><i data-lucide="plus" aria-hidden="true"></i> Dodaj element</button>
         ${isKinety ? `<button class="btn btn-secondary" disabled title="Generuje szablon 20 kinet (5 średnic × 4 wys.) z ceną domyślną 100 zł. Nie nadpisuje istniejących. Przycisk nieaktywny — kinety są dodawane automatycznie przy starcie. Użyj Resetu cennika by przywrócić domyślne." style="font-size: var(--fs-md); padding:0.4rem 0.8rem; opacity:0.5; cursor:not-allowed;"><i data-lucide="plug" aria-hidden="true"></i> Generuj puste Kinety</button>` : ''}
@@ -167,10 +169,10 @@ function renderStudniePriceList() {
 
         html += `<tbody>
       <tr>
-        <td colspan="${isPrzejscia ? '11' : isKinety ? '16' : '18'}" style="padding:0; border-bottom:1px solid var(--border);">
-          <div style="display:flex; justify-content:space-between; align-items:center; padding:0.6rem 0.5rem; background:rgba(var(--accent-rgb), 0.05); font-size: var(--fs-lg);">
-            <span style="font-weight: var(--fw-bold); color:var(--text-primary);">${label} <span style="opacity:.5">(${items.length})</span></span>
-            <div style="display:flex;gap:0.3rem;">
+        <td colspan="${colCount}" style="padding:0; border-bottom:1px solid var(--border);">
+          <div class="cat-header">
+            <span>${label} <span class="cat-count">(${items.length})</span></span>
+            <div style="display:flex;gap:0.3rem;margin-left:auto;">
               <button class="btn-icon fs-base-025" title="Dodaj element do tej kategorii" aria-label="Dodaj element" data-action="addStudnieElement" data-group="${escapeHtmlAttr(groupKey)}"
                 ><i data-lucide="plus" aria-hidden="true"></i></button>
               <button class="btn-icon del fs-base-025" title="Usuń całą kategorię" aria-label="Usuń kategorię" data-action="deleteStudnieCategory" data-group="${escapeHtmlAttr(groupKey)}"
@@ -240,9 +242,11 @@ function renderStudniePriceList() {
 
             html += `
         <td class="text-right" data-action="editStudnieCell" data-field="price" data-id="${escapeHtmlAttr(p.id)}" style="cursor:pointer; font-weight: var(--fw-bold); color:var(--success);">${fmtInt(p.price)}</td>
-        <td class="text-center text-nowrap" >
+        <td class="text-center text-nowrap">
+          <span class="pricelist-actions">
           <button class="btn-icon" title="Powiel" aria-label="Powiel" data-action="copyStudnieProduct" data-id="${escapeHtmlAttr(p.id)}"><i data-lucide="clipboard-list" aria-hidden="true"></i></button>
           <button class="btn-icon" title="Usuń" aria-label="Usuń" data-action="deleteStudnieProduct" data-id="${escapeHtmlAttr(p.id)}"><i data-lucide="x" aria-hidden="true"></i></button>
+          </span>
         </td>
       </tr>`;
         });
@@ -253,7 +257,7 @@ function renderStudniePriceList() {
     html += `</table></div>`;
 
     if (!hasAnyItems) {
-        html = `<div style="padding:2rem;text-align:center;color:var(--text-muted);">Brak wyników w tej zakładce...</div>`;
+        html = `<div class="empty-state">Brak wyników w tej zakładce...</div>`;
     }
 
     container.innerHTML = html;
@@ -294,3 +298,15 @@ if (typeof document !== 'undefined' && !window.__pricelistDelegated) {
 
 /* ===== Rejestracja globali ===== */
 window.renderStudniePriceList = renderStudniePriceList;
+
+/* ===== Wersje cennika (F3) — panel ze shared/pricelistVersions.js ===== */
+function openStudnieVersionsPanel() {
+    if (!window.pricelistVersions) {
+        if (typeof showToast === 'function') showToast('Moduł wersji cennika niedostępny', 'error');
+        return;
+    }
+    window.pricelistVersions.openVersionsPanel('studnie', function () {
+        return typeof studnieProducts !== 'undefined' ? studnieProducts : [];
+    });
+}
+window.openStudnieVersionsPanel = openStudnieVersionsPanel;

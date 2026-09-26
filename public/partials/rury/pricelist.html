@@ -1,18 +1,19 @@
 <!-- PARTIAL: pricelist.html -->
 <div class="section" id="section-pricelist">
-    <div class="rury-toolbar">
-        <h2 class="rury-toolbar-title"><i data-lucide="clipboard-list"></i> Cennik produktów</h2>
-        <div class="rury-toolbar-spacer"></div>
-        <div class="search-box" style="margin: 0; width: 100%; max-width: 350px">
+    <div class="toolbar">
+        <h2 class="pricelist-toolbar-title">
+            <i data-lucide="clipboard-list"></i> Cennik produktów
+        </h2>
+        <div class="toolbar-spacer"></div>
+        <div class="search-box">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <circle cx="11" cy="11" r="7" />
                 <path d="m21 21-4.35-4.35" />
             </svg>
             <input
-                class="rury-form-input"
+                class="form-input form-input-sm"
                 id="pricelist-search"
                 placeholder="Szukaj..."
-                style="padding-left: 2.2rem"
                 title="Szukaj produktu w cenniku"
             />
         </div>
@@ -32,6 +33,14 @@
             title="Zapisz zmiany w cenniku"
         >
             <i data-lucide="save"></i> Zapisz
+        </button>
+        <button
+            type="button"
+            class="btn btn-secondary"
+            onclick="openRuryVersionsPanel()"
+            title="Wersje cennika (zapisz jako wersję, aktywuj, diff)"
+        >
+            <i data-lucide="layers"></i> Wersje
         </button>
         <button
             type="button"

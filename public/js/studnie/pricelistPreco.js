@@ -16,7 +16,7 @@ function renderPrecoPriceList() {
 
     if (!precoPricing || Object.keys(precoPricing).length === 0) {
         container.innerHTML =
-            '<div style="padding:2rem; text-align:center; color:var(--text-muted);">Brak cennika PRECO. <button class="btn btn-secondary fs-md" data-action="loadPrecoDefaults"  title="Przywróć domyślne wartości PRECO">Reset</button></div>';
+            '<div class="empty-state">Brak cennika PRECO. <button class="btn btn-secondary fs-md" data-action="loadPrecoDefaults" title="Przywróć domyślne wartości PRECO">Reset</button></div>';
         return;
     }
 

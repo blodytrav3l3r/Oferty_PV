@@ -44,6 +44,7 @@ function renderSavedOffers() {
         <div class="meta mt-3" >
           <span><i data-lucide="calendar"></i> <strong>${escapeHtml(o.date)}</strong></span>
           <span><i data-lucide="package"></i> <strong>${o.items.length}</strong> poz.</span>
+          ${window.pricelistVersions ? window.pricelistVersions.badgeHtml(o.pricelistVersionId) : ''}
           ${
               isAdmin && o.userName
                   ? (() => {
@@ -126,6 +127,8 @@ function renderSavedOffers() {
         .join('');
     container.innerHTML = renderedList;
     if (window.lucide) lucide.createIcons();
+    // F3: badge „cennik vX" — labelki + tooltip effectiveFrom (async, bez blokowania).
+    if (window.pricelistVersions) window.pricelistVersions.hydrateBadges(container, 'rury');
 }
 
 /* ===== HISTORIA ZMIAN OFERTY ===== */

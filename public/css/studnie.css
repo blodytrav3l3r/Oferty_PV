@@ -1570,6 +1570,7 @@ html[data-theme='light'] .unit-popup-preview {
     border-radius: 50%;
     display: inline-block;
     flex-shrink: 0;
+    background: var(--pricelist-dot, var(--accent));
 }
 
 /* Oferta */

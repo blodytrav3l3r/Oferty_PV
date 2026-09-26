@@ -25,14 +25,14 @@ function renderPriceList() {
 
     let html = `<div class="table-wrap">
     <table class="table-fixed">
-      <th scope="col"ead>
+      <thead>
         <tr>
           <th scope="col" style="width: 15%;">Indeks</th>
           <th scope="col" style="width: 35%;">Nazwa produktu</th>
-          <th scope="col" class="text-right" style="width: 12%;">Cena PLN</th>
-          <th scope="col" class="text-right w-10pct" >Pole pow.<br><span style="font-size:0.7em">(m²)</span></th>
-          <th scope="col" class="text-right w-10pct" >Szt./transp.</th>
           <th scope="col" class="text-right w-10pct" >Waga (kg)</th>
+          <th scope="col" class="text-right text-nowrap w-10pct">Pole pow. (m²)</th>
+          <th scope="col" class="text-right w-10pct" >Szt./transp.</th>
+          <th scope="col" class="text-right" style="width: 12%;">Cena PLN</th>
           <th scope="col" class="text-center" style="width: 8%;">Akcje</th>
         </tr>
       </thead>`;
@@ -54,7 +54,7 @@ function renderPriceList() {
         html += `<tbody>
       <tr>
         <td colspan="7" style="padding: 0; border: none;">
-          <div class="cat-header" style="margin: 1rem 0 0.4rem 0;">
+          <div class="cat-header">
             ${cat} <span class="cat-count">(${items.length} produktów)</span>
           </div>
         </td>
@@ -64,13 +64,15 @@ function renderPriceList() {
             html += `<tr data-id="${escapeHtmlAttr(p.id)}">
         <td class="text-nowrap" style="overflow: hidden; text-overflow: ellipsis;"><code style="color:var(--accent-hover);font-size: var(--fs-base)" class="editable" data-action="editCell" data-field="id" data-id="${escapeJsStr(p.id)}">${escapeHtml(p.id)}</code></td>
         <td style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"><span class="editable" data-action="editCell" data-field="name" data-id="${escapeJsStr(p.id)}">${escapeHtml(p.name)}</span></td>
-        <td class="text-right"><span class="editable" data-action="editCell" data-field="price" data-id="${escapeJsStr(p.id)}">${fmt(p.price)}</span></td>
+        <td class="text-right"><span class="editable" data-action="editCell" data-field="weight" data-id="${escapeJsStr(p.id)}">${p.weight != null ? fmtInt(p.weight) : '—'}</span></td>
         <td class="text-right"><span class="editable" data-action="editCell" data-field="area" data-id="${escapeJsStr(p.id)}">${p.area != null ? fmt(p.area) : '—'}</span></td>
         <td class="text-right"><span class="editable" data-action="editCell" data-field="transport" data-id="${escapeJsStr(p.id)}">${p.transport != null ? fmtInt(p.transport) : '—'}</span></td>
-        <td class="text-right"><span class="editable" data-action="editCell" data-field="weight" data-id="${escapeJsStr(p.id)}">${p.weight != null ? fmtInt(p.weight) : '—'}</span></td>
-        <td class="text-center text-nowrap" >
+        <td class="text-right"><span class="editable" data-action="editCell" data-field="price" data-id="${escapeJsStr(p.id)}">${fmt(p.price)}</span></td>
+        <td class="text-center text-nowrap">
+          <span class="pricelist-actions">
           <button class="btn-icon" title="Powiel" aria-label="Powiel" data-action="copyProduct" data-id="${escapeJsStr(p.id)}"><i data-lucide="clipboard-list" aria-hidden="true"></i></button>
           <button class="btn-icon" title="Usuń" aria-label="Usuń" data-action="deleteProduct" data-id="${escapeJsStr(p.id)}"><i data-lucide="x" aria-hidden="true"></i></button>
+          </span>
         </td>
       </tr>`;
         });
@@ -81,7 +83,7 @@ function renderPriceList() {
     html += `</table></div>`;
 
     if (!hasAnyItems) {
-        html = `<div style="padding: 2rem; text-align: center; color: var(--text-muted);">Brak wyników do wyświetlenia...</div>`;
+        html = `<div class="empty-state">Brak wyników do wyświetlenia...</div>`;
     }
 
     container.innerHTML = html;
@@ -541,3 +543,15 @@ window.addProduct = addProduct;
 window.deleteProduct = deleteProduct;
 window.exportRuryToExcel = exportRuryToExcel;
 window.importRuryFromExcel = importRuryFromExcel;
+
+/* ===== Wersje cennika (F3) — panel ze shared/pricelistVersions.js ===== */
+function openRuryVersionsPanel() {
+    if (!window.pricelistVersions) {
+        showToast('Moduł wersji cennika niedostępny', 'error');
+        return;
+    }
+    window.pricelistVersions.openVersionsPanel('rury', function () {
+        return typeof products !== 'undefined' ? products : [];
+    });
+}
+window.openRuryVersionsPanel = openRuryVersionsPanel;
