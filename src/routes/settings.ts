@@ -107,11 +107,20 @@ router.put(
     }
 );
 
-/* ===== ODCZYT DOWOLNEGO USTAWIENIA PO KLUCZU ===== */
+/* ===== ODCZYT USTAWIENIA PO KLUCZU (allowlista) ===== */
+// Wildcard bez allowlisty pozwalał każdemu zalogowanemu czytać wewnętrzne
+// klucze (flagi AI/timestamps). Frontend używa tylko
+// pricelist_defaults_updated_at (priceDefaults.js) — reszta ma dedykowane trasy.
+const SETTINGS_READ_ALLOWLIST = new Set(['pricelist_defaults_updated_at']);
+const SETTINGS_READ_PATTERN = /^year_letter_\d{4}$/;
 
 router.get('/:key', requireAuth, async (req, res) => {
     try {
         const { key } = req.params;
+        if (!SETTINGS_READ_ALLOWLIST.has(key) && !SETTINGS_READ_PATTERN.test(key)) {
+            res.status(404).json({ error: 'Ustawienie nie istnieje' });
+            return;
+        }
         const row = await prisma.settings.findUnique({
             where: { key }
         });
