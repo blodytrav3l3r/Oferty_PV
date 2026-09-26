@@ -14,16 +14,14 @@ import { test, expect } from '@playwright/test';
 const ADMIN_PASSWORD = process.env.TEST_ADMIN_PASSWORD || 'anim123456';
 const BASE = process.env.BASE_URL || 'http://localhost:3000';
 
-let authToken = '';
-
 test.beforeAll(async ({ request }) => {
     const resp = await request.post(`${BASE}/api/auth/login`, {
         data: { username: 'admin', password: ADMIN_PASSWORD }
     });
-    expect(resp.ok()).toBeTruthy();
-    const json = await resp.json();
-    authToken = json.token || json.authToken;
-    expect(authToken, 'Login failed - no token').toBeTruthy();
+    expect(resp.status(), 'Login failed - status').toBe(200);
+    // Kontrakt: sesja w cookie httpOnly (ciało tokenu to legacy, nieasertowane).
+    const setCookie = resp.headers()['set-cookie'] || '';
+    expect(setCookie, 'Login failed - no authToken cookie').toMatch(/authToken=[^;]+;.*HttpOnly/i);
 });
 
 test.describe('smoke: oferta studni — start modułu', () => {
@@ -37,7 +35,7 @@ test.describe('smoke: oferta studni — start modułu', () => {
         const resp = await page.request.post(`${BASE}/api/auth/login`, {
             data: { username: 'admin', password: ADMIN_PASSWORD }
         });
-        expect(resp.ok(), 'Login failed - no cookie').toBeTruthy();
+        expect(resp.status(), 'Login failed - no cookie').toBe(200);
     });
 
     test('SPA router ładuje moduł studnie i wizard krok 1 jest aktywny', async ({ page }) => {
@@ -91,9 +89,9 @@ test.describe('smoke: oferta studni — start modułu', () => {
         const login = await request.post(`${BASE}/api/auth/login`, {
             data: { username: 'admin', password: ADMIN_PASSWORD }
         });
-        expect(login.ok(), 'Login failed').toBeTruthy();
+        expect(login.status(), 'Login failed').toBe(200);
         const resp = await request.get(`${BASE}/api/products-studnie`);
-        expect(resp.ok()).toBeTruthy();
+        expect(resp.status(), 'Products fetch failed').toBe(200);
         const body = await resp.json();
         const items = Array.isArray(body) ? body : body.data || body.products || [];
         expect(items.length, 'Brak produktów studni — solver nie zadziała').toBeGreaterThan(0);

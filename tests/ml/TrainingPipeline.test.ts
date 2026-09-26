@@ -366,7 +366,10 @@ describe('predictionCache', () => {
             await import('../../src/services/ml/predictionCache');
 
         setCache('k1', { result: [{ score: 0.9, version: 'v1' }], timestamp: Date.now() });
-        expect(getCached('k1')).toBeDefined();
+        expect(getCached('k1')).toEqual({
+            result: [{ score: 0.9, version: 'v1' }],
+            timestamp: expect.any(Number)
+        });
 
         clearPredictionCache();
         expect(getCached('k1')).toBeUndefined();

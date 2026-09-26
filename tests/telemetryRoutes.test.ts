@@ -849,12 +849,32 @@ describe('Wersjonowanie i migracja', () => {
             where: { isActive: true }
         });
         expect(Array.isArray(allVersions)).toBe(true);
+        for (const v of allVersions) {
+            expect(v.isActive).toBe(true);
+            expect(typeof v.version).toBe('string');
+            expect(v.version.length).toBeGreaterThan(0);
+        }
     });
 
     it('migracja jest idempotentna', async () => {
-        const before = await prisma.ai_knowledge_base.count();
-        const after = await prisma.ai_knowledge_base.count();
-        expect(before).toBe(after);
+        const probeId = 'test-migrate-probe-' + Date.now();
+        const before = await prisma.ai_telemetry_versions.count();
+        try {
+            await prisma.ai_telemetry_versions.create({
+                data: {
+                    id: probeId,
+                    componentType: 'solver',
+                    version: '0.0.0-test',
+                    isActive: false
+                }
+            });
+            const during = await prisma.ai_telemetry_versions.count();
+            expect(during).toBe(before + 1);
+        } finally {
+            await prisma.ai_telemetry_versions.deleteMany({ where: { id: probeId } });
+        }
+        const after = await prisma.ai_telemetry_versions.count();
+        expect(after).toBe(before);
     });
 
     it('świeży insert ar_knowledge_base nie powoduje duplikatów', async () => {

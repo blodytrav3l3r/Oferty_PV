@@ -116,5 +116,6 @@ describe('productHelpers.js — getSortedRuryItems (SSoT sortowania)', () => {
             (f: { dk: string; cat: string }) => f.dk === 'Inne' || f.cat === 'Inne'
         );
         expect(inny).toBeDefined();
+        expect([inny!.dk, inny!.cat]).toContain('Inne');
     });
 });

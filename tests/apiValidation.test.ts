@@ -5,6 +5,10 @@
 
 import request from 'supertest';
 import express from 'express';
+import prismaMockTyped from '../src/prismaClient';
+
+// Mock ma typy Prisma — testy potrzebują any (pattern require() dawał any).
+const prismaMock: any = prismaMockTyped;
 
 // Import routerów do przetestowania
 import offersRouter from '../src/routes/offers/index';
@@ -320,7 +324,6 @@ describe('API Validation Tests', () => {
 
     describe('GET /api/clients - pobieranie klientów', () => {
         it('powinien zwrócić 200 z tablicą klientów', async () => {
-            const { default: prismaMock } = require('../src/prismaClient');
             prismaMock.clients_rel.findMany.mockResolvedValue([
                 {
                     id: '1',
@@ -348,7 +351,6 @@ describe('API Validation Tests', () => {
         });
 
         it('powinien zwrócić 200 z pustą tablicą gdy brak klientów', async () => {
-            const { default: prismaMock } = require('../src/prismaClient');
             prismaMock.clients_rel.findMany.mockResolvedValue([]);
 
             const res = await request(app).get('/api/clients').set(authHeader);
@@ -358,17 +360,16 @@ describe('API Validation Tests', () => {
         });
 
         it('powinien zwrócić 500 gdy baza zwraca błąd', async () => {
-            const { default: prismaMock } = require('../src/prismaClient');
             prismaMock.clients_rel.findMany.mockRejectedValue(new Error('DB connection failed'));
 
             const res = await request(app).get('/api/clients').set(authHeader);
 
             expect(res.statusCode).toBe(500);
-            expect(res.body.error).toBeDefined();
+            expect(typeof res.body.error).toBe('string');
+            expect(res.body.error.length).toBeGreaterThan(0);
         });
 
         it('powinien normalizować timestampy do ISO', async () => {
-            const { default: prismaMock } = require('../src/prismaClient');
             prismaMock.clients_rel.findMany.mockResolvedValue([
                 {
                     id: '1',

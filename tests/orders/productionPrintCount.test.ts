@@ -110,6 +110,7 @@ describe('Liczniki wydruków (print-count)', () => {
         expect(res.body.printCountZlecenia).toBe(1);
         expect(res.body.printCountEtykieta).toBe(0);
         expect(res.body.printLastZleceniaAt).toBeTruthy();
+        expect(Number.isNaN(Date.parse(res.body.printLastZleceniaAt))).toBe(false);
         const written = JSON.parse(
             (prisma.production_orders_rel.updateMany as jest.Mock).mock.calls[0][0].data.data
         );

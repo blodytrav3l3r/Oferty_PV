@@ -114,7 +114,8 @@ describe('Production Orders (PZ) routes', () => {
 
             expect(res.statusCode).toBe(200);
             expect(res.body.ok).toBe(true);
-            expect(res.body.id).toBeTruthy();
+            expect(typeof res.body.id).toBe('string');
+            expect(res.body.id.length).toBeGreaterThan(0);
             expect(prisma.production_orders_rel.create).toHaveBeenCalled();
         });
 
