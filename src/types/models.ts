@@ -42,4 +42,6 @@ export interface OfferMapped {
     history?: unknown[];
     // P0-D2: baza optimistic lockingu.
     version?: number | null;
+    // F3 freeze: wersja cennika z chwili utworzenia (null = legacy).
+    pricelistVersionId?: string | null;
 }

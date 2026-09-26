@@ -58,7 +58,9 @@ router.get('/:id', requireAuth, async (req, res) => {
                     updatedAt: offer.updatedAt || offer.createdAt || new Date().toISOString(),
                     lastEditedBy: offer.userId,
                     data: parsedData,
-                    history: studnieHistory
+                    history: studnieHistory,
+                    // F3 freeze (null = legacy).
+                    pricelistVersionId: offer.pricelistVersionId ?? null
                 }
             });
         }
@@ -123,6 +125,8 @@ router.get('/:id', requireAuth, async (req, res) => {
             lastEditedBy: offer.userId,
             items: mergedItems,
             transportCost: offer.transportCost || 0,
+            // F3 freeze (null = legacy).
+            pricelistVersionId: offer.pricelistVersionId ?? null,
             history: ruryHistory,
             ...cleanSpread
         };

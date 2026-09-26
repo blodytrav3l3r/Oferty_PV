@@ -22,6 +22,7 @@ import {
 } from '../../utils/idempotency';
 import { offersStudnieBatchSchema, paginationQuerySchema } from '../../validators/offerSchemas';
 import { hasProductionOrdersForOffer } from '../../utils/productionOrderGuard';
+import { resolveVersionIdSafe } from '../../services/pricelistVersionService';
 
 const router = express.Router();
 const uuidv4 = crypto.randomUUID.bind(crypto);
@@ -334,8 +335,10 @@ router.get('/studnie', requireAuth, async (req, res) => {
                       createdAt: string | null;
                       updatedAt: string | null;
                       version: number | null;
+                      pricelistVersionId: string | null;
                   }>
               >`SELECT id, "userId", "offer_number", state, "wellCount", "totalPrice", version,
+                "pricelistVersionId",
                 CASE WHEN "createdAt" GLOB '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]'
                     THEN datetime(CAST("createdAt" AS INTEGER)/1000, 'unixepoch')
                     ELSE "createdAt" END as "createdAt",
@@ -356,8 +359,10 @@ router.get('/studnie', requireAuth, async (req, res) => {
                       createdAt: string | null;
                       updatedAt: string | null;
                       version: number | null;
+                      pricelistVersionId: string | null;
                   }>
               >`SELECT id, "userId", "offer_number", state, "wellCount", "totalPrice", version,
+                "pricelistVersionId",
                 CASE WHEN "createdAt" GLOB '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]'
                     THEN datetime(CAST("createdAt" AS INTEGER)/1000, 'unixepoch')
                     ELSE "createdAt" END as "createdAt",
@@ -402,6 +407,8 @@ router.get('/studnie', requireAuth, async (req, res) => {
                 lastEditedBy: offer.userId,
                 wellCount: typeof offer.wellCount === 'number' ? offer.wellCount : 0,
                 totalPrice: typeof offer.totalPrice === 'number' ? offer.totalPrice : 0,
+                // F3 freeze: wersja cennika z chwili utworzenia (null = legacy).
+                pricelistVersionId: offer.pricelistVersionId ?? null,
                 // P0-D2: baza optimistic lockingu (round-trip bez zmian frontu).
                 version: offer.version ?? 1
             };
@@ -471,7 +478,9 @@ router.get('/studnie/:id', requireAuth, async (req, res) => {
                 updatedAt: offer.updatedAt || offer.createdAt || new Date().toISOString(),
                 lastEditedBy: offer.userId,
                 data: parsedData,
-                history: studnieDetailHistory
+                history: studnieDetailHistory,
+                // F3 freeze: wersja cennika z chwili utworzenia (null = legacy).
+                pricelistVersionId: offer.pricelistVersionId ?? null
             }
         });
     } catch (e: unknown) {
@@ -508,6 +517,8 @@ router.post(
                     });
             }
             const incoming = req.body.data || [req.body];
+            // F3 freeze: jedna aktywna wersja cennika na cały batch (null-safe).
+            const frozenStudnieVersionId = await resolveVersionIdSafe('studnie');
 
             // P1.3: batch preload olds — 1 query zamiast N×findUnique
             const incomingIds = incoming
@@ -521,6 +532,7 @@ router.post(
                 userId: string | null;
                 version: number | null;
                 totalPrice: number | null;
+                pricelistVersionId: string | null;
             }> =
                 incomingIds.length > 0
                     ? (await prisma.offers_studnie_rel.findMany({
@@ -532,7 +544,8 @@ router.post(
                               state: true,
                               userId: true,
                               version: true,
-                              totalPrice: true
+                              totalPrice: true,
+                              pricelistVersionId: true
                           }
                       })) || []
                     : [];
@@ -732,7 +745,9 @@ router.post(
                         data: dataStr,
                         history: historyStr,
                         wellCount,
-                        totalPrice
+                        totalPrice,
+                        // F3 freeze: nowy dokument = aktywna wersja (null = legacy).
+                        pricelistVersionId: frozenStudnieVersionId
                     },
                     update: {
                         userId: effectiveUserId,

@@ -12,7 +12,7 @@ export const productsRuryRowSchema = z.object({
     id: z.string(),
     name: z.string(),
     category: z.string(),
-    price: z.number(),
+    price: z.number().nonnegative(),
     transport: z.number().nullable().optional(),
     weight: z.number().nullable().optional(),
     area: z.number().nullable().optional()
@@ -26,7 +26,7 @@ export const productsStudnieRowSchema = z.object({
     dn: z.string().nullable().optional(),
     height: z.number().int().nullable().optional(),
     weight: z.number().nullable().optional(),
-    price: z.number().optional(),
+    price: z.number().nonnegative().optional(),
     area: z.number().nullable().optional(),
     areaExt: z.number().nullable().optional(),
     transport: z.number().nullable().optional(),
@@ -42,13 +42,13 @@ export const productsStudnieRowSchema = z.object({
     spocznikH: z.string().nullable().optional(),
     hMin1: z.number().int().nullable().optional(),
     hMax1: z.number().int().nullable().optional(),
-    cena1: z.number().nullable().optional(),
+    cena1: z.number().nonnegative().nullable().optional(),
     hMin2: z.number().int().nullable().optional(),
     hMax2: z.number().int().nullable().optional(),
-    cena2: z.number().nullable().optional(),
+    cena2: z.number().nonnegative().nullable().optional(),
     hMin3: z.number().int().nullable().optional(),
     hMax3: z.number().int().nullable().optional(),
-    cena3: z.number().nullable().optional(),
+    cena3: z.number().nonnegative().nullable().optional(),
     doplataPEHD: z.number().nullable().optional(),
     doplataZelbet: z.number().nullable().optional(),
     doplataDrabNierdzewna: z.number().nullable().optional(),
@@ -68,7 +68,7 @@ export const precoKinetyRowSchema = z.object({
     dn: z.number().int(),
     wellDn: z.number().int(),
     height: z.number().int(),
-    cena: z.number()
+    cena: z.number().nonnegative()
 });
 
 export const precoZakresyRowSchema = z.object({

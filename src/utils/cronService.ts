@@ -51,6 +51,12 @@ class CronService {
         // P1-B: co 24h — kontrola spójności FTS (tylko liczniki + warn, bez auto-rebuildu)
         this.schedule('ftsConsistencyCheck', 24 * 60 * 60 * 1000, () => this.runFtsCheck());
 
+        // F2: co 5 min — aktywacja wymagalnych wersji cenników (tylko SCHEDULED).
+        this.schedule('pricelistDue', 5 * 60 * 1000, () => this.runPricelistDue());
+
+        // F2/R9: recovery przy starcie — wersje due z czasu przestoju.
+        void this.runPricelistDue();
+
         logger.info('CronService', 'Cron zainicjalizowany (hourly + daily + ml)');
     }
 
@@ -226,6 +232,31 @@ class CronService {
             }
         } catch (e) {
             logger.error('CronService', `[mlSelfEvaluation] failed: ${e}`);
+        }
+    }
+
+    /**
+     * F2: aktywacja wymagalnych wersji cenników (tylko SCHEDULED + due;
+     * BACKDATE nigdy auto). Guard na running:Set (reuse) — cron-wrapper też
+     * pilnuje, to pasa bezpieczeństwa dla wołania przy starcie w init().
+     */
+    async runPricelistDue(): Promise<void> {
+        if (this.running.has('pricelistDue')) return;
+        this.running.add('pricelistDue');
+        try {
+            const { activateDue } = await import('../services/pricelistVersionService');
+            const res = await activateDue();
+            if (res.activated.length > 0 || res.skipped.length > 0) {
+                logger.info(
+                    'CronService',
+                    `[pricelistDue] aktywowano=${res.activated.length}, ` +
+                        `pominięto=${res.skipped.length}`
+                );
+            }
+        } catch (e) {
+            logger.error('CronService', `[pricelistDue] failed: ${e}`);
+        } finally {
+            this.running.delete('pricelistDue');
         }
     }
 

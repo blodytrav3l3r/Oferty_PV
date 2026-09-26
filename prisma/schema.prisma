@@ -310,6 +310,8 @@ model offers_rel {
   version       Int      @default(1)
   // P1-E: back-relacja siatki FK (offer_items_rel.offerId, Restrict).
   items         offer_items_rel[]
+  // F1 wersjonowanie cenników: null = legacy v1 (sprzed wersji).
+  pricelistVersionId String?
 
   @@index([userId], map: "idx_offers_user")
   @@index([createdAt], map: "idx_offers_created")
@@ -342,6 +344,8 @@ model offers_studnie_rel {
   totalPrice    Float?   @default(0)
   // P0-D2: licznik optimistic lockingu (UPDATE ... WHERE id+version, 409).
   version       Int      @default(1)
+  // F1 wersjonowanie cenników: null = legacy v1.
+  pricelistVersionId String?
 
   @@index([userId], map: "idx_offersstud_user")
   @@index([createdAt], map: "idx_offersstud_created")
@@ -384,6 +388,8 @@ model orders_studnie_rel {
   data           String?
   // P0-D2: licznik optimistic lockingu (UPDATE ... WHERE id+version, 409).
   version       Int      @default(1)
+  // F1 wersjonowanie cenników: null = legacy v1.
+  pricelistVersionId String?
 
   @@index([userId], map: "idx_ordstud_user")
   @@index([offerStudnieId], map: "idx_ordstud_offer")
@@ -399,6 +405,8 @@ model orders_rury_rel {
   data      String?
   // P0-D2: licznik optimistic lockingu (UPDATE ... WHERE id+version, 409).
   version       Int      @default(1)
+  // F1 wersjonowanie cenników: null = legacy v1.
+  pricelistVersionId String?
   @@index([userId], map: "idx_ordrury_user")
   @@index([offerId], map: "idx_ordrury_offer")
 }
@@ -831,4 +839,116 @@ model user_preferences {
 
   @@id([userId, key])
   @@index([userId], map: "idx_userprefs_user")
+}
+
+// ─── F1: Wersjonowanie cenników (Expand & Contract) ─────────────────────
+// Stare tabele LIVE + *_Default działają do Contract (F1 ich nie rusza).
+// seq = źródło prawdy (int per type), version = labelka pochodna (v{seq}).
+// Status = lifecycle techniczny, effectiveFrom = historia biznesowa.
+model PricelistVersion {
+  id             String  @id
+  type           String
+  seq            Int
+  version        String
+  status         String
+  effectiveFrom  String
+  createdBy      String?
+  note           String?
+  sha256         String
+  createdAt      String?
+  approvedBy     String?
+  approvedAt     String?
+  approvalStatus String?
+
+  @@unique([type, seq])
+  @@unique([type, version])
+  @@index([type, status, effectiveFrom])
+}
+
+model PricelistItemRury {
+  id        String @id
+  versionId String
+  name      String
+  category  String
+  price     Float
+  transport Float?
+  weight    Float?
+  area      Float?
+
+  @@index([versionId])
+}
+
+model PricelistItemStudnie {
+  id                   String  @id
+  versionId            String
+  name                 String
+  category             String
+  componentType        String
+  dn                   String?
+  height               Int?
+  weight               Float?
+  price                Float   @default(0)
+  area                 Float?
+  areaExt              Float?
+  transport            Float?
+  magazynWL            Boolean @default(false)
+  magazynKLB           Boolean @default(false)
+  formaStandardowa     Boolean @default(false)
+  formaStandardowaKLB  Boolean @default(false)
+  active               Boolean @default(false)
+  zapasDol             Int?
+  zapasGora            Int?
+  zapasDolMin          Int?
+  zapasGoraMin         Int?
+  spocznikH            String?
+  hMin1                Int?
+  hMax1                Int?
+  cena1                Float?
+  hMin2                Int?
+  hMax2                Int?
+  cena2                Float?
+  hMin3                Int?
+  hMax3                Int?
+  cena3                Float?
+  doplataPEHD          Float?
+  doplataZelbet        Float?
+  doplataDrabNierdzewna Float?
+  malowanieWewnetrzne  Float?
+  malowanieZewnetrzne  Float?
+
+  @@index([versionId])
+}
+
+model PricelistItemPrecoKonfig {
+  id        String @id
+  versionId String
+  key       String
+  value     String
+
+  @@index([versionId])
+}
+
+model PricelistItemPrecoKinety {
+  id        String @id
+  versionId String
+  order     Int
+  dn        Int
+  wellDn    Int
+  height    Int
+  cena      Float
+
+  @@index([versionId])
+}
+
+model PricelistItemPrecoZakresy {
+  id        String @id
+  versionId String
+  order     Int
+  label     String
+  min       Int
+  max       Int
+  grupy     String
+  wellDn    Int
+
+  @@index([versionId])
 }

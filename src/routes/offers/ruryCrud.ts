@@ -32,6 +32,7 @@ import {
 } from '../../validators/offerSchemas';
 import { recordDbBusy } from '../../utils/metrics';
 import { HOT_TX_OPTS } from '../../utils/hotTx';
+import { resolveVersionIdSafe } from '../../services/pricelistVersionService';
 
 const router = express.Router();
 const uuidv4 = crypto.randomUUID.bind(crypto);
@@ -63,7 +64,8 @@ router.get('/', requireAuth, async (req, res) => {
                     clientName: true,
                     investName: true,
                     clientNumber: true,
-                    version: true
+                    version: true,
+                    pricelistVersionId: true
                 }
             }),
             prisma.offers_rel.count({ where: roleClause })
@@ -108,6 +110,8 @@ router.get('/', requireAuth, async (req, res) => {
                 clientNumber: offer.clientNumber,
                 items: items,
                 transportCost: offer.transportCost || 0,
+                // F3 freeze: wersja cennika z chwili utworzenia (null = legacy).
+                pricelistVersionId: offer.pricelistVersionId ?? null,
                 // P0-D2: baza optimistic lockingu (round-trip bez zmian frontu).
                 version: offer.version ?? 1
             });
@@ -148,6 +152,8 @@ router.post(
                     });
             }
             const incoming = req.body.data || [req.body];
+            // F3 freeze: jedna aktywna wersja cennika na cały batch (null-safe).
+            const frozenRuryVersionId = await resolveVersionIdSafe('rury');
 
             // P4-P0: prefetch jednym findMany zamiast N+1 findUnique/findMany w pętli.
             const incomingIds: string[] = incoming
@@ -195,6 +201,8 @@ router.post(
                 exists: boolean;
                 serverVersion: number | null;
                 clientVersion: number | null;
+                // F3 freeze: tylko create dostaje wersję; update zachowuje starą.
+                pricelistVersionId: string | null;
                 fts: {
                     id: string;
                     offer_number: string;
@@ -325,6 +333,10 @@ router.post(
                     exists: !!old,
                     serverVersion: (old?.version as number | null | undefined) ?? null,
                     clientVersion,
+                    // F3 freeze: nowy dokument = aktywna wersja; update = stara.
+                    pricelistVersionId: old
+                        ? ((old.pricelistVersionId as string | null | undefined) ?? null)
+                        : frozenRuryVersionId,
                     fts: {
                         id: docId,
                         offer_number: offerNumber,
@@ -362,7 +374,9 @@ router.post(
                             updatedAt: w.updated,
                             transportCost: w.transportCost,
                             history: w.historyStr,
-                            data: w.dataStr
+                            data: w.dataStr,
+                            // F3 freeze (tylko create — updateData bez zmian).
+                            pricelistVersionId: w.pricelistVersionId
                         },
                         updateData: {
                             userId: w.effectiveUserId,
@@ -754,6 +768,8 @@ router.post('/:id/duplicate', requireAuth, writeOffersLimiter, async (req, res) 
                     transportCost: source.transportCost ?? 0,
                     history: '[]',
                     data: source.data || '{}',
+                    // F3 freeze: duplikat dziedziczy wersję źródła (snapshot w JSON).
+                    pricelistVersionId: source.pricelistVersionId ?? null,
                     version: 1
                 }
             });
