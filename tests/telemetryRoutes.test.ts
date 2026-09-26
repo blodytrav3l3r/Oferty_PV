@@ -624,7 +624,7 @@ describe('RecommendationEngine', () => {
 
     it('recommendForTelemetry z pustą bazą → []', async () => {
         const out = await re.recommendForTelemetry('t' + crypto.randomUUID(), 'XXXXX');
-        expect(Array.isArray(out)).toBe(true);
+        expect(out).toEqual([]);
     });
 
     it('recommendForDn - top N', async () => {
@@ -636,7 +636,7 @@ describe('RecommendationEngine', () => {
             extractedAt: NOW()
         };
         const out = await re.recommendForDn(fv, 10);
-        expect(Array.isArray(out)).toBe(true);
+        expect(out).toEqual([]);
     });
 });
 
@@ -683,7 +683,7 @@ describe('LearningEngine - pipeline', () => {
 
     it('runFullCycle bez danych → processed=0', async () => {
         const summary = await le.runFullCycle();
-        expect(summary.processed).toBeGreaterThanOrEqual(0);
+        expect(Number.isInteger(summary.processed)).toBe(true);
         expect(summary.durationMs).toBeGreaterThanOrEqual(0);
     });
 
@@ -926,8 +926,10 @@ describe('Integralność danych', () => {
         });
         expect(row?.hitCount).toBe(8); // 1 + 7 — akumulacja hitów (nie nadpisanie)
         const history = row?.changeHistory ? JSON.parse(row.changeHistory) : [];
-        // 2 upserty powinny dodać 2 wpisy do historii
-        expect(history.length).toBeGreaterThanOrEqual(1);
+        // Historia dopisywana przy update (create startuje pusto): 1 wpis
+        // ze skumulowanym hitCount 1+7.
+        expect(history.length).toBe(1);
+        expect(history[0].hitCount).toBe(8);
         await prisma.ai_knowledge_base.deleteMany({ where: { patternKey: key } });
     });
 
