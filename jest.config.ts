@@ -20,7 +20,10 @@ const config: Config.InitialOptions = {
             testEnvironment: 'node',
             roots: ['<rootDir>/tests'],
             testMatch: ['**/*.test.ts'],
-            testPathIgnorePatterns: ['/frontend/', 'git-safety']
+            testPathIgnorePatterns: ['/frontend/', 'git-safety'],
+            // Izolacja SQLite per worker (setupDbIsolation) — koniec flaków
+            // SQLITE_BUSY ze współdzielonego pliku DB.
+            setupFiles: ['<rootDir>/tests/setupDbIsolation.ts']
         },
         {
             displayName: 'frontend',

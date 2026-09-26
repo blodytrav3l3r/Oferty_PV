@@ -14,6 +14,11 @@
  */
 
 import { describe, expect, it, beforeEach, afterEach } from '@jest/globals';
+
+// Testy ML/telemetrii mierzą 2–5 s solo (obliczenia confidence/dedup);
+// pod obciążeniem 15 workerów przekraczają domyślne 10 s (flake timeout,
+// nie asercja). TimeoutSuite 30 s — nie maskuje błędów logiki.
+jest.setTimeout(30000);
 import prisma from '../src/prismaClient';
 import crypto from 'crypto';
 import {
