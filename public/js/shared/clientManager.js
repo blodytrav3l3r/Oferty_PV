@@ -59,7 +59,10 @@ async function saveClientsDbData(data) {
 function saveClientToDb() {
     const _saveBtn = document.querySelector('button[onclick="saveClientToDb()"]');
     if (_saveBtn) _saveBtn.disabled = true;
-    // ponytail: btn disabled guard, enable in finally via helper
+    // Odblokuj na KAŻDYM wyjściu — inaczej przycisk martwy po błędzie walidacji.
+    const _unlockSaveBtn = () => {
+        if (_saveBtn) _saveBtn.disabled = false;
+    };
 
     const name = document.getElementById('client-name')?.value.trim() ?? '';
     const nip = document.getElementById('client-nip')?.value.trim() ?? '';
@@ -77,6 +80,7 @@ function saveClientToDb() {
             errEl.hidden = false;
         }
         nameEl?.focus();
+        _unlockSaveBtn();
         return;
     } else {
         document.getElementById('client-name')?.removeAttribute('aria-invalid');
@@ -88,6 +92,7 @@ function saveClientToDb() {
         const existingByNip = clientsDb.find((c) => c.nip === nip);
         if (existingByNip && existingByNip.name.toLowerCase() !== name.toLowerCase()) {
             showToast(`Firma z NIP ${nip} już istnieje w bazie danych`, 'error');
+            _unlockSaveBtn();
             return;
         }
     }
@@ -112,8 +117,12 @@ function saveClientToDb() {
                     saveClientsDbData(clientsDb);
                     showToast('Zaktualizowano dane klienta', 'success');
                 }
+                _unlockSaveBtn();
             })
-            .catch((e) => logger.error('clientManager', e));
+            .catch((e) => {
+                _unlockSaveBtn();
+                logger.error('clientManager', e);
+            });
     } else {
         clientsDb.push({
             id: Date.now().toString(),
