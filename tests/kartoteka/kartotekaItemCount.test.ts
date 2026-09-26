@@ -4,6 +4,7 @@ import vm from 'vm';
 import { DatabaseSync } from 'node:sqlite';
 // @ts-ignore - skrypt .cjs bez deklaracji typow
 import { backfillOfferCounts } from '../../scripts/backfill-offer-counts.cjs';
+import { mapOfferRow, toNum } from '../../src/utils/searchUtils';
 
 // Regresja: kartoteka pokazywala "0 poz. / 0 studni" mimo zywych pozycji.
 // Dwa zrodla: (1) search.ts bral stale wellCount=0 znad bloba (COALESCE widzi
@@ -81,6 +82,82 @@ describe('search.ts d_wellsCount: kolumna 0/NULL nie maskuje bloba', () => {
         );
         expect(src).not.toContain('COALESCE(s."wellCount"');
         expect(src).toContain('"wellCount" = 0');
+    });
+});
+
+describe('UNION ALL: INTEGER jako string nie gubi licznika (mapOfferRow)', () => {
+    const baseRow = {
+        id: 'o1',
+        userId: 'u1',
+        clientId: null,
+        state: 'draft',
+        createdAt: '2026-01-01',
+        updatedAt: '2026-01-01',
+        offer_number: 'OF/1',
+        clientName: 'C',
+        investName: '',
+        investAddress: null,
+        clientNip: '',
+        clientNumber: '',
+        transportCost: 0,
+        _orderCount: 0,
+        history: '[]',
+        d_clientName: null,
+        d_investName: null,
+        d_investAddress: null,
+        d_clientNip: null,
+        d_clientNumber: null,
+        d_totalNetto: null,
+        d_totalBrutto: null,
+        d_summary: null,
+        d_costSummary: null,
+        d_wellsExportTotal: null,
+        d_wellsCount: null,
+        d_itemsCount: null,
+        d_userName: null,
+        d_creatorName: null,
+        d_createdByUserName: null,
+        d_budowa: null,
+        d_number: null,
+        d_offerNumber: null,
+        d_transportSeparate: null
+    };
+
+    test('toNum: bigint, number i string numeryczny', () => {
+        expect(toNum(BigInt(6))).toBe(6);
+        expect(toNum(10)).toBe(10);
+        expect(toNum('6')).toBe(6);
+        expect(toNum(' 10 ')).toBe(10);
+        expect(toNum(null)).toBeUndefined();
+        expect(toNum('abc')).toBeUndefined();
+        expect(toNum('')).toBeUndefined();
+    });
+
+    test('rury z UNION: d_itemsCount "6" (string) -> data.itemsCount 6', () => {
+        const mapped = mapOfferRow({
+            ...baseRow,
+            _type: 'rury',
+            d_wellsCount: null,
+            d_itemsCount: '6'
+        } as any);
+        expect(mapped.data.itemsCount).toBe(6);
+        expect(mapped.type).toBe('offer');
+    });
+
+    test('studnie z UNION: d_wellsCount "4" (string) -> data.wellsCount 4', () => {
+        const mapped = mapOfferRow({
+            ...baseRow,
+            _type: 'studnie',
+            d_wellsCount: '4',
+            d_itemsCount: null
+        } as any);
+        expect(mapped.data.wellsCount).toBe(4);
+        expect(mapped.type).toBe('studnia_oferta');
+    });
+
+    test('smiec stringowy nie trafia do data', () => {
+        const mapped = mapOfferRow({ ...baseRow, _type: 'rury', d_itemsCount: 'abc' } as any);
+        expect(mapped.data.itemsCount).toBeUndefined();
     });
 });
 

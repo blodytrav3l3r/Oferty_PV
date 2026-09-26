@@ -224,13 +224,15 @@ export interface RawOfferRow {
     d_investAddress: string | null;
     d_clientNip: string | null;
     d_clientNumber: string | null;
-    d_totalNetto: number | null;
-    d_totalBrutto: number | null;
+    d_totalNetto: number | string | null;
+    d_totalBrutto: number | string | null;
     d_summary: string | null;
     d_costSummary: string | null;
-    d_wellsExportTotal: number | bigint | null;
-    d_wellsCount: number | bigint | null;
-    d_itemsCount: number | bigint | null;
+    // UNION ALL potrafi zwrocic INTEGER/REAL jako string (inferencja typu
+    // z 1. wiersza) — toNum je normalizuje, wiec string jest legalny.
+    d_wellsExportTotal: number | bigint | string | null;
+    d_wellsCount: number | bigint | string | null;
+    d_itemsCount: number | bigint | string | null;
     d_userName: string | null;
     d_creatorName: string | null;
     d_createdByUserName: string | null;
@@ -269,10 +271,15 @@ export interface SearchOfferRowMapped {
     [key: string]: unknown;
 }
 
-/** Prisma zwraca INTEGER z funkcji JSON jako BigInt — konwersja do number. */
-function toNum(v: number | bigint | null | undefined): number | undefined {
+/**
+ * Prisma zwraca INTEGER z funkcji JSON jako BigInt — konwersja do number.
+ * W UNION ALL kolumna NULL w 1. wierszu wraca w kolejnych jako string
+ * (np. d_itemsCount "6") — takie tez normalizuj, inaczej LIST gubi licznik.
+ */
+export function toNum(v: number | bigint | string | null | undefined): number | undefined {
     if (typeof v === 'number') return v;
     if (typeof v === 'bigint') return Number(v);
+    if (typeof v === 'string' && v.trim() !== '' && !isNaN(Number(v))) return Number(v);
     return undefined;
 }
 
@@ -291,12 +298,12 @@ export function mapOfferRow(row: RawOfferRow): SearchOfferRowMapped {
     // P1-C: data to projekcja (nie pełny blob). Małe JSON parsowane lokalnie.
     const data: Record<string, unknown> = {};
     const str = (v: string | null) => (typeof v === 'string' && v !== '' ? v : undefined);
-    const num = (v: number | null) => (typeof v === 'number' ? v : undefined);
+    const num = (v: number | string | null) => toNum(v);
     const setStr = (k: string, v: string | null) => {
         const s = str(v);
         if (s !== undefined) data[k] = s;
     };
-    const setNum = (k: string, v: number | null) => {
+    const setNum = (k: string, v: number | string | null) => {
         const n = num(v);
         if (n !== undefined) data[k] = n;
     };
