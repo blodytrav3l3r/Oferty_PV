@@ -698,7 +698,9 @@ router.post(
                 const { version: _postVersion, ...blobSrc } = o as Record<string, unknown>;
                 const dataStr = JSON.stringify(blobSrc);
                 const historyStr = JSON.stringify(newHistory);
-                const wellCount = extractWellsFromIncoming(o as Record<string, unknown>).length;
+                // Kolumna liczy to, co faktycznie lezy w blobie (nie ksztalt
+                // incoming) — inaczej LIST pokazywal "0 studni" przy zywych danych.
+                const wellCount = extractWellsFromOfferData(dataStr).length;
                 // E-2: derived persisted metadata — klient nie ustawia autorytatywnie
                 const rawPrice =
                     (o as Record<string, unknown>).totalPrice ??
@@ -933,7 +935,6 @@ router.put(
                 const clientNumber =
                     (o.clientNumber as string) || (dataPayload.clientNumber as string) || null;
                 const created = normalizeDate(o.createdAt, { exactMs: true });
-                const wellCountPut = extractWellsFromIncoming(o as Record<string, unknown>).length;
                 const rawPricePut =
                     (o as Record<string, unknown>).totalPrice ??
                     (o as Record<string, unknown>).price ??
@@ -950,7 +951,6 @@ router.put(
                 // nie może wycinać studni: chore dane ze starego wiersza.
                 // Jawne wells (także puste []) lub jawne data = zamierzony zapis.
                 let putDataStr = o.data ? JSON.stringify(o.data) : '{}';
-                let putWellCount = wellCountPut;
                 let putTotalPrice = totalPricePut;
                 if (
                     (o as Record<string, unknown>).wells === undefined &&
@@ -960,14 +960,12 @@ router.put(
                     const keepWells = extractWellsFromOfferData(putOld.data);
                     if (keepWells.length > 0) {
                         putDataStr = putOld.data;
-                        putWellCount =
-                            typeof putOld.wellCount === 'number'
-                                ? putOld.wellCount
-                                : keepWells.length;
                         if (typeof putOld.totalPrice === 'number')
                             putTotalPrice = putOld.totalPrice;
                     }
                 }
+                // Kolumna liczy finalny blob (po sciezce keep) — nigdy stale 0.
+                const putWellCount = extractWellsFromOfferData(putDataStr).length;
                 // P0.1: opiekun rozstrzygany PRZED zapisem (403 zamiast cichego przejęcia).
                 const putRequestedUserId = typeof o.userId === 'string' && o.userId ? o.userId : '';
                 let putUserId: string;

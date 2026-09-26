@@ -188,7 +188,9 @@ router.post(
                 historyStr: string;
                 dataStr: string;
                 transportCost: number;
-                items: unknown[];
+                // undefined = zapis slim (np. sama zmiana opiekuna) — relacji
+                // offer_items_rel nie ruszac; [] = jawne wyczyszczenie pozycji.
+                items?: unknown[];
                 // P0-D2: optimistic locking.
                 exists: boolean;
                 serverVersion: number | null;
@@ -319,7 +321,7 @@ router.post(
                     historyStr: JSON.stringify(newHistory),
                     dataStr,
                     transportCost: o.transportCost || 0,
-                    items: o.items || [],
+                    items: o.items,
                     exists: !!old,
                     serverVersion: (old?.version as number | null | undefined) ?? null,
                     clientVersion,
@@ -378,30 +380,36 @@ router.post(
                         conflictMessage: 'Oferta zmieniona przez innego użytkownika'
                     });
 
-                    await tx.offer_items_rel.deleteMany({
-                        where: { offerId: w.docId }
-                    });
-                    if (w.items.length > 0) {
-                        await tx.offer_items_rel.createMany({
-                            data: (
-                                w.items as Array<{
-                                    id?: string;
-                                    unitPrice?: number;
-                                    price?: number;
-                                    productId: string;
-                                    quantity: number;
-                                    discount: number;
-                                }>
-                            ).map((item) => ({
-                                id: item.id || uuidv4(),
-                                offerId: w.docId,
-                                productId: item.productId,
-                                quantity: item.quantity || 0,
-                                discount: item.discount || 0,
-                                price:
-                                    item.unitPrice !== undefined ? item.unitPrice : item.price || 0
-                            }))
+                    // Slim-write (items === undefined) nie rusza relacji — inaczej
+                    // LIST liczylyby "0 poz." mimo pozycji w blobie/detailu.
+                    if (w.items !== undefined) {
+                        await tx.offer_items_rel.deleteMany({
+                            where: { offerId: w.docId }
                         });
+                        if (w.items.length > 0) {
+                            await tx.offer_items_rel.createMany({
+                                data: (
+                                    w.items as Array<{
+                                        id?: string;
+                                        unitPrice?: number;
+                                        price?: number;
+                                        productId: string;
+                                        quantity: number;
+                                        discount: number;
+                                    }>
+                                ).map((item) => ({
+                                    id: item.id || uuidv4(),
+                                    offerId: w.docId,
+                                    productId: item.productId,
+                                    quantity: item.quantity || 0,
+                                    discount: item.discount || 0,
+                                    price:
+                                        item.unitPrice !== undefined
+                                            ? item.unitPrice
+                                            : item.price || 0
+                                }))
+                            });
+                        }
                     }
                 }
             }, HOT_TX_OPTS);
@@ -504,7 +512,8 @@ router.put(
                 created: string | null;
                 dataStr: string;
                 transportCost: number;
-                items: unknown[];
+                // undefined = zapis slim — relacji offer_items_rel nie ruszac.
+                items?: unknown[];
                 // Model współpracy: żądana zmiana opiekuna (puste = bez zmiany).
                 requestedUserId: string;
                 // P0.1: opiekun zwalidowany przed transakcją.
@@ -575,7 +584,7 @@ router.put(
                     created,
                     dataStr,
                     transportCost: o.transportCost || 0,
-                    items: o.items || [],
+                    items: o.items,
                     requestedUserId: putRequested,
                     exists,
                     effectiveUserId,
@@ -632,30 +641,35 @@ router.put(
                         conflictMessage: 'Oferta zmieniona przez innego użytkownika'
                     });
 
-                    await tx.offer_items_rel.deleteMany({
-                        where: { offerId: w.docId }
-                    });
-                    if (w.items.length > 0) {
-                        await tx.offer_items_rel.createMany({
-                            data: (
-                                w.items as Array<{
-                                    id?: string;
-                                    unitPrice?: number;
-                                    price?: number;
-                                    productId: string;
-                                    quantity: number;
-                                    discount: number;
-                                }>
-                            ).map((item) => ({
-                                id: item.id || uuidv4(),
-                                offerId: w.docId,
-                                productId: item.productId,
-                                quantity: item.quantity || 0,
-                                discount: item.discount || 0,
-                                price:
-                                    item.unitPrice !== undefined ? item.unitPrice : item.price || 0
-                            }))
+                    // Slim-write (items === undefined) nie rusza relacji (jak w POST).
+                    if (w.items !== undefined) {
+                        await tx.offer_items_rel.deleteMany({
+                            where: { offerId: w.docId }
                         });
+                        if (w.items.length > 0) {
+                            await tx.offer_items_rel.createMany({
+                                data: (
+                                    w.items as Array<{
+                                        id?: string;
+                                        unitPrice?: number;
+                                        price?: number;
+                                        productId: string;
+                                        quantity: number;
+                                        discount: number;
+                                    }>
+                                ).map((item) => ({
+                                    id: item.id || uuidv4(),
+                                    offerId: w.docId,
+                                    productId: item.productId,
+                                    quantity: item.quantity || 0,
+                                    discount: item.discount || 0,
+                                    price:
+                                        item.unitPrice !== undefined
+                                            ? item.unitPrice
+                                            : item.price || 0
+                                }))
+                            });
+                        }
                     }
                 }
             }, HOT_TX_OPTS);

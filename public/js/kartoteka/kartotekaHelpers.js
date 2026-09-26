@@ -198,9 +198,22 @@ function getOfferPrice(offer) {
 function getOfferItemCount(offer) {
     const isWell = offer.type === 'studnia_oferta' || !!offer.wells?.length;
     // P1-C: LIST niesie wellsCount/itemsCount zamiast pełnych tablic (DETAIL ma pełne).
+    // Top-level wellsCount/itemsCount dla ksztaltow light (GET /studnie bez data).
     if (isWell)
-        return offer.wells?.length || offer.data?.wells?.length || offer.data?.wellsCount || 0;
-    return offer.items?.length || offer.data?.items?.length || offer.data?.itemsCount || 0;
+        return (
+            offer.wells?.length ||
+            offer.data?.wells?.length ||
+            offer.data?.wellsCount ||
+            offer.wellsCount ||
+            0
+        );
+    return (
+        offer.items?.length ||
+        offer.data?.items?.length ||
+        offer.data?.itemsCount ||
+        offer.itemsCount ||
+        0
+    );
 }
 
 function resolveUserName(raw) {

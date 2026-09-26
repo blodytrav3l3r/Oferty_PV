@@ -193,8 +193,11 @@ router.get('/', requireAuth, async (req, res) => {
                           FROM json_each(s.data, '$.wellsExport'))
                     END AS "d_wellsExportTotal",
                     -- Licznik studni z kolumny (metadane utrzymywane przy zapisie),
-                    -- fallback na blob dla wierszy legacy bez kolumny.
-                    COALESCE(s."wellCount", json_array_length(s.data, '$.wells')) AS "d_wellsCount",
+                    -- fallback na blob dla wierszy legacy/stale (kolumna 0, a blob
+                    -- pelny — COALESCE(0, N) dalby 0, bo 0 nie jest NULL).
+                    CASE WHEN s."wellCount" IS NULL OR s."wellCount" = 0
+                        THEN json_array_length(s.data, '$.wells')
+                        ELSE s."wellCount" END AS "d_wellsCount",
                     json_array_length(s.data, '$.items') AS "d_itemsCount",
                     json_extract(s.data, '$.userName') AS "d_userName",
                     json_extract(s.data, '$.creatorName') AS "d_creatorName",
