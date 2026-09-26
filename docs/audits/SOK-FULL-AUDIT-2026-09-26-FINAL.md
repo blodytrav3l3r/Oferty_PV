@@ -1,7 +1,7 @@
 # S.O.K. Full Application Audit — FINAL (po wykonaniu planu)
 
 Date: 2026-09-26 (drugie przejście tego samego dnia)
-Commit: zakres 41bc566..HEAD (22 commity: 6 Faza A + plan + 15 wykonawczych)
+Commit: zakres 41bc566..HEAD (31 commitów: 5 Faza A + 23 wykonawcze + 3 docs/plan/raport)
 Poprzedni raport: docs/audits/SOK-FULL-AUDIT-2026-09-26.md (7.3/10)
 Metoda: plan 9.7/10 → 7 agentów specjalistów → evidence-reconcile → fazy 0-10 →
 re-audit 4 agentami → weryfikacja każdego HIGHa przed fixem.
@@ -52,11 +52,12 @@ Zakres zmian: 22 commity, +~1200/-~200 linii, 0 destrukcji, 0 pushy.
 
 ## Changes Performed (skrót commitów)
 
-Faza A: light-branch, angle-reject+step, test P3-3, asercje klików, docs #54.
-Plan: shimy ownership, cookie-first, csp-report, settings-allowlist, flake,
-TOP10, cookie-jar E2E+skrypty, a11y, CI-verify, census+integrity, daty-testy,
-idempotencja claimów, token-body, null-normalize, przycisk, locki, shares-tx,
+Faza A (5): light-branch, angle-reject+step, test P3-3, asercje klików, docs #54.
+Wykonawcze (23): shimy, cookie-first, csp-report, settings-allowlist, flake,
+TOP10, cookie-jar E2E+skrypty, token-body, a11y, CI-verify, census+integrity,
+daty-testy, idempotencja claimów, null-normalize, przycisk, locki, shares-tx,
 audit-clamp, frame-ancestors, failsafe, idempotency-TTL, hasło skryptu.
+Docs/raporty (3): raport 7.3, plan 9.7, ten raport. Razem 31.
 
 ## Resolved Findings (re-audit)
 
@@ -105,9 +106,10 @@ Docs: plan 9.7, #54 sync, ten raport.
 
 ## Regression Analysis
 
-Każdy fix: test celowany przed commitem; pełny test:quick po pętli (2× zero
-faili); E2E krytyczne po zmianach auth/backend (3× zielono). Jeden test
-wymagał korekty budżetu limitera (598→597, udokumentowane). Brak regresji.
+Każdy fix: test celowany przed commitem; pełny test:quick po pętli (3× zero
+faili, w tym świeży przebieg 3284/0 w ramach consistency check); E2E krytyczne
+po zmianach auth/backend (3× zielono). Jeden test wymagał korekty budżetu
+limitera (598→597, udokumentowane). Brak regresji.
 
 ## Re-Audit Results
 
@@ -121,13 +123,56 @@ Prod-census (FK/DROP, daty) poza zasięgiem tej sesji. E2E Firefox/WebKit
 nieuruchomione (Chromium-only udokumentowane). Upgrade-DB CI niekryty
 (scenariusz B fazy switch). Brak push (decyzja użytkownika).
 
-## Manual Review Required
+## Manual Review Required (właściciel: maintainer; next: staging + backup)
 
 P2-2 (census logów → strict), P2-5 (prod-census → DROP/FK), P2-7 (projekt
-dat), switch CI (gate + E2E-promocja), sunset x-auth-token.
+dat; nie blokuje maintenance, blokuje decyzję release migracji danych),
+switch CI (gate + E2E-promocja + scenariusz B upgrade-DB), sunset x-auth-token.
+
+## Consistency Check (niezależna weryfikacja raportu, read-only)
+
+1. Commity: 31 w 41bc566..HEAD (5 Faza A + 23 wykonawcze + 3 docs) — wcześniejsze
+   liczby 22/23 w tym raporcie SKORYGOWANE.
+2. Testy: świeży test:quick 3284 pass / 0 fail / 5 skip — zgodne.
+3. Resolved↔commit: null-normalize d5c4e53, przycisk ad167f3, locki 3fe64bc,
+   shares-tx b1592cf, TTL 8967f86 — wszystkie istnieją.
+4. Resztki P2/P3 istnieją na HEAD: passthrough ×14, FK brak, daty String,
+   fallback x-auth, Swagger publiczny — zweryfikowane grepem.
+5. Overlap: locks-GET (resolved) vs heartbeat/release-oracle (remaining LOW):
+   rozłączne — GET ujawniał holdera (PII), heartbeat/release tylko istnienie
+   wiersza przy znanym UUID + hot-path koszt guardu. Świadomy podział.
+6. Bramy wykonane: version/typecheck×2/lint×2/encoding/format/test:quick/E2E/
+   migrate-lokalnie/diff--check/worktree — zielone. Docelowe (switch CI,
+   E2E-promocja, upgrade-DB) NIE wykonane — patrz Final Verdict.
+7. Score: 1.6+1.7+1.2+0.7+0.75+0.85+0.375+0.35+0.21+0.14 = 7.875 → 7.9. Zgadza się.
+8. Brak claimów prod-validation: censusy opisane jako dev-kopie, migracje jako lokalne.
+9. Defery mają next actions powyżej; prod-census wymaga dostępu do prod (poza sesją).
 
 ## Final Verdict
 
-Aplikacja zdrowa, bramy zielone, raport zapisany. Gotowe do release MINOR
-po decyzji P2-5/P2-7 na staging (nie blokują zwykłych poprawek).
+Stan techniczny po wykonaniu planu jest stabilny: brak potwierdzonych P0/P1,
+wszystkie wykonane bramy walidacyjne są zielone, a pozostałe P2/P3 zostały
+jawnie sklasyfikowane.
+
+Confirmed:
+
+- P0 = 0, P1 = 0
+- test:quick: 3284 PASS / 0 FAIL (świeży przebieg)
+- critical E2E PASS (qe 9/9, smoke 3/3, a11y 2/2)
+- typecheck/lint/version/encoding/format/diff--check PASS
+- worktree clean, 31 commitów celowych
+- fresh full re-audit completed, brak nowych P0/P1/P2
+
+Remaining ( jawnie nierozwiązane ):
+
+- P2-2: passthrough — wymaga census logów
+- P2-5: FK/DROP — prod-census niekompletny (dev: 0 wierszy)
+- P2-7: daty — osobny projekt migracyjny (nie blokuje maintenance,
+  blokuje decyzję release migracji danych)
+- CI gate switch + E2E-promocja + upgrade-DB — nieodpalone
+- x-auth-token sunset — wymaga finalnej weryfikacji callerów
+
+Stan nadaje się do dalszego developmentu i przygotowania release candidate.
+Zatwierdzenie release produkcyjnego dopiero po decyzjach P2/migracyjnych
+i bramie CI — jawnie zaakceptowanych lub wykonanych.
 DoD planu spełnione z jawnymi wyjątkami powyżej.
