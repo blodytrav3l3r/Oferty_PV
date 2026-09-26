@@ -803,16 +803,20 @@ describe('Równoległe zapisy telemetry', () => {
         const time = Date.now();
         const prefix = 'par_' + time + '_';
         // SQLite single-connection: równoległe $transaction mogą dostać
-        // SQLITE_BUSY — retry z backoffem, nie osłabianie równoległości.
-        const upsertBusyRetry = async (args: any, tries = 4): Promise<any> => {
+        // SQLITE_BUSY albo P2028 (głodzenie startu transakcji przy
+        // obciążonej maszynie) — retry z backoffem, nie osłabianie
+        // równoległości. Matcher obejmuje kody i komunikaty silnika.
+        const upsertBusyRetry = async (args: any, tries = 6): Promise<any> => {
             let lastErr: unknown;
             for (let a = 0; a < tries; a++) {
                 try {
                     return await kb().upsertPattern(args);
                 } catch (e) {
                     lastErr = e;
-                    if (!/busy|timeout|locked/i.test(String(e))) throw e;
-                    await new Promise((r) => setTimeout(r, 25 * (a + 1)));
+                    const msg = String((e as any)?.code || '') + ' ' + String(e);
+                    if (!/busy|timeout|locked|P2028|P2034|Unable to start a transaction/i.test(msg))
+                        throw e;
+                    await new Promise((r) => setTimeout(r, 50 * (a + 1)));
                 }
             }
             throw lastErr;
