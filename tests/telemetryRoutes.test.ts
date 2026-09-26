@@ -796,25 +796,44 @@ describe('Bezpieczeństwo API - role', () => {
 describe('Równoległe zapisy telemetry', () => {
     it('5 równoległych upsertów sukces', async () => {
         const time = Date.now();
-        const promises = Array(5)
-            .fill(0)
-            .map((_, i) => {
-                const key = 'par_' + time + '_' + i;
-                return kb().upsertPattern({
-                    patternType: 'dennica_swap',
-                    patternKey: key,
-                    hitCount: i,
-                    confidence: i * 0.1,
-                    successCount: i,
-                    rejectionCount: 0,
-                    dn: 'PAR_DN'
+        const prefix = 'par_' + time + '_';
+        // SQLite single-connection: równoległe $transaction mogą dostać
+        // SQLITE_BUSY — retry z backoffem, nie osłabianie równoległości.
+        const upsertBusyRetry = async (args: any, tries = 4): Promise<any> => {
+            let lastErr: unknown;
+            for (let a = 0; a < tries; a++) {
+                try {
+                    return await kb().upsertPattern(args);
+                } catch (e) {
+                    lastErr = e;
+                    if (!/busy|timeout|locked/i.test(String(e))) throw e;
+                    await new Promise((r) => setTimeout(r, 25 * (a + 1)));
+                }
+            }
+            throw lastErr;
+        };
+        try {
+            const promises = Array(5)
+                .fill(0)
+                .map((_, i) => {
+                    const key = prefix + i;
+                    return upsertBusyRetry({
+                        patternType: 'dennica_swap',
+                        patternKey: key,
+                        hitCount: i,
+                        confidence: i * 0.1,
+                        successCount: i,
+                        rejectionCount: 0,
+                        dn: 'PAR_DN'
+                    });
                 });
+            const result = await Promise.all(promises);
+            expect(result.length).toBe(5);
+        } finally {
+            await prisma.ai_knowledge_base.deleteMany({
+                where: { patternKey: { startsWith: prefix } }
             });
-        const result = await Promise.all(promises);
-        expect(result.length).toBe(5);
-        await prisma.ai_knowledge_base.deleteMany({
-            where: { patternKey: { startsWith: 'par_' + time + '_' } }
-        });
+        }
     });
 });
 
