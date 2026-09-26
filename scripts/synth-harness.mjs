@@ -108,7 +108,7 @@ async function api(method, path, body, attempt = 0) {
             method,
             headers: {
                 'Content-Type': 'application/json',
-                'x-auth-token': TOKEN
+                Cookie: `authToken=${TOKEN}`
             },
             body: body === undefined ? undefined : JSON.stringify(clean(body)),
             signal: ctl.signal
@@ -128,12 +128,18 @@ async function api(method, path, body, attempt = 0) {
         return api(method, path, body, attempt + 1);
     }
     let json = null;
+    let setCookie = null;
     try {
         json = await res.json();
     } catch {
         /* nie-JSON */
     }
-    return { status: res.status, json };
+    try {
+        setCookie = res.headers.get('set-cookie');
+    } catch {
+        /* brak nagłówków */
+    }
+    return { status: res.status, json, setCookie };
 }
 
 // ─── Setup: build + migracje + seed admina (przez start serwera) ───
@@ -248,7 +254,11 @@ async function main() {
         const login = await timed('login', () =>
             api('POST', '/api/auth/login', { username: ADMIN_USER, password: ADMIN_PASSWORD })
         );
-        TOKEN = login.json?.token || login.json?.data?.token || '';
+        TOKEN = '';
+        {
+            const m = /authToken=([^;]+)/.exec(login.setCookie || '');
+            TOKEN = m ? m[1] : login.json?.token || login.json?.data?.token || '';
+        }
         check('S0 login admin', login.status === 200 && !!TOKEN, 'status=' + login.status);
 
         const rand = rng32(OPTS.seed);

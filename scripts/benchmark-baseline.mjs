@@ -43,7 +43,8 @@ async function timeFetch(url, opts, timeoutMs = 30000) {
             ms: Number(process.hrtime.bigint() - start) / 1e6,
             status: res.status,
             bytes: body.length,
-            body
+            body,
+            setCookie: res.headers.get('set-cookie')
         };
     } catch (e) {
         return {
@@ -78,7 +79,8 @@ async function main() {
     });
     let token = '';
     try {
-        token = JSON.parse(login.body).token || '';
+        const m = /authToken=([^;]+)/.exec(login.setCookie || '');
+        token = m ? m[1] : '';
     } catch {
         /* ignore */
     }
@@ -86,7 +88,7 @@ async function main() {
         console.error(`[baseline] login HTTP ${login.status} — uruchom serwer`);
         process.exit(1);
     }
-    const H = { 'Content-Type': 'application/json', 'X-Auth-Token': token };
+    const H = { 'Content-Type': 'application/json', Cookie: `authToken=${token}` };
     const out = { base: BASE, samples: SAMPLES, writes: WITH_WRITES, steady: [], burst: null };
 
     const steadyJobs = [

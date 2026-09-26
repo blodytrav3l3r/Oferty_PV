@@ -124,6 +124,7 @@ async function timeFetch(url, opts, timeoutMs = 30000) {
             status: res.status,
             bytes: body.length,
             body,
+            setCookie: res.headers.get('set-cookie'),
             url: `${opts?.method || 'GET'} ${url}`,
             retryAfter: res.headers.get('retry-after')
         };
@@ -173,7 +174,8 @@ async function main() {
     });
     let token = '';
     try {
-        token = JSON.parse(login.body).token || '';
+        const m = /authToken=([^;]+)/.exec(login.setCookie || '');
+        token = m ? m[1] : '';
     } catch {
         /* ignore */
     }
@@ -183,7 +185,7 @@ async function main() {
     }
     const H = (i) => ({
         'Content-Type': 'application/json',
-        'X-Auth-Token': token,
+        Cookie: `authToken=${token}`,
         'X-Forwarded-For': ipOf(i)
     });
     const me = await timeFetch('/api/auth/me', { headers: H(0) });

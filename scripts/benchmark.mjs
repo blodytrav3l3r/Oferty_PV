@@ -34,7 +34,13 @@ async function timeFetch(url, opts) {
     const res = await fetch(BASE + url, opts);
     const body = await res.text();
     const ms = Number(process.hrtime.bigint() - start) / 1e6;
-    return { ms, status: res.status, body, bytes: body.length };
+    return {
+        ms,
+        status: res.status,
+        body,
+        bytes: body.length,
+        setCookie: res.headers.get('set-cookie')
+    };
 }
 
 function summarize(label, times) {
@@ -57,7 +63,8 @@ async function main() {
     });
     let token = '';
     try {
-        token = JSON.parse(login.body).token || JSON.parse(login.body).data?.token || '';
+        const m = /authToken=([^;]+)/.exec(login.setCookie || '');
+        token = m ? m[1] : '';
     } catch {
         /* niepoprawna odpowiedź */
     }
@@ -67,7 +74,7 @@ async function main() {
         );
         process.exit(1);
     }
-    const H = { 'Content-Type': 'application/json', 'X-Auth-Token': token };
+    const H = { 'Content-Type': 'application/json', Cookie: `authToken=${token}` };
     const loginTime = [login.ms];
     const results = { login: loginTime };
 

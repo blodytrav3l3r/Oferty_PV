@@ -49,9 +49,10 @@ const { chromium } = require('playwright');
         data: { username: 'admin', password: 'anim123456' }
     });
     console.log('Login status:', loginRes.status());
-    const loginJson = await loginRes.json();
-    const token = loginJson.token || loginJson.authToken;
-    console.log('Got token:', token ? token.substring(0, 10) + '...' : 'NONE');
+    const viewsSetCookie = loginRes.headers()['set-cookie'] || '';
+    const viewsCookieMatch = /authToken=([^;]+)/.exec(viewsSetCookie);
+    const token = viewsCookieMatch ? viewsCookieMatch[1] : null;
+    console.log('Got cookie:', token ? token.substring(0, 10) + '...' : 'NONE');
 
     // Wariant A: cookie httpOnly z logowania siedzi w jarze kontekstu
     // (page.request dzieli cookie z page) — bez localStorage.
