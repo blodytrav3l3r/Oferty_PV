@@ -128,7 +128,7 @@
         "@commitlint/cli": "^21.2.3",
         "@commitlint/config-conventional": "^21.2.3",
         "@eslint/js": "^9.39.4",
-        "@playwright/test": "^1.62.1",
+        "@playwright/test": "^1.63.0",
         "@types/bcryptjs": "^2.4.6",
         "@types/compression": "^1.8.1",
         "@types/cookie-parser": "^1.4.10",
