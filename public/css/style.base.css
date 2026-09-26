@@ -1350,6 +1350,21 @@ body::before {
     vertical-align: middle;
     white-space: nowrap;
 }
+
+.pricelist-actions .btn-icon {
+    flex-shrink: 0;
+}
+
+/* Cenniki: akcje kategorii we własnej komórce kolumny AKCJE — ta sama
+   szerokość i padding co wiersze danych, więc ikony są w jednej linii.
+   (colspan labelki + 1 komórka akcji = liczba kolumn; błąd #7). */
+.cat-header-actions-cell {
+    padding: 0.2rem 0.4rem;
+    border-bottom: 1px solid var(--border);
+    text-align: center;
+    vertical-align: middle;
+    white-space: nowrap;
+}
 #section-pricelist td.text-center {
     vertical-align: middle;
 }
@@ -1374,6 +1389,12 @@ body::before {
     margin: 0;
     width: 100%;
     max-width: 350px;
+}
+
+/* Wzorzec z kartoteki (.ka-search-input): input sm + lupka wymaga wcięcia
+   przebijającego padding .form-input-sm (!important). */
+#section-pricelist .search-box .form-input-sm {
+    padding-left: 2.2rem !important;
 }
 
 /* Cenniki: pasek narzędzi nad tabelą (PEHD, Dodaj kategorię/element) */

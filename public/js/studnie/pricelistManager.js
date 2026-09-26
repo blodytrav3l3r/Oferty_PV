@@ -169,16 +169,18 @@ function renderStudniePriceList() {
 
         html += `<tbody>
       <tr>
-        <td colspan="${colCount}" style="padding:0; border-bottom:1px solid var(--border);">
+        <td colspan="${colCount - 1}" style="padding:0; border-bottom:1px solid var(--border);">
           <div class="cat-header">
             <span>${label} <span class="cat-count">(${items.length})</span></span>
-            <div style="display:flex;gap:0.3rem;margin-left:auto;">
-              <button class="btn-icon fs-base-025" title="Dodaj element do tej kategorii" aria-label="Dodaj element" data-action="addStudnieElement" data-group="${escapeHtmlAttr(groupKey)}"
-                ><i data-lucide="plus" aria-hidden="true"></i></button>
-              <button class="btn-icon del fs-base-025" title="Usuń całą kategorię" aria-label="Usuń kategorię" data-action="deleteStudnieCategory" data-group="${escapeHtmlAttr(groupKey)}"
-                ><i data-lucide="trash-2" aria-hidden="true"></i></button>
-            </div>
           </div>
+        </td>
+        <td class="cat-header-actions-cell">
+          <span class="pricelist-actions">
+            <button class="btn-icon fs-base-025" title="Dodaj element do tej kategorii" aria-label="Dodaj element" data-action="addStudnieElement" data-group="${escapeHtmlAttr(groupKey)}"
+              ><i data-lucide="plus" aria-hidden="true"></i></button>
+            <button class="btn-icon del fs-base-025" title="Usuń całą kategorię" aria-label="Usuń kategorię" data-action="deleteStudnieCategory" data-group="${escapeHtmlAttr(groupKey)}"
+              ><i data-lucide="trash-2" aria-hidden="true"></i></button>
+          </span>
         </td>
       </tr>`;
 

@@ -8,8 +8,9 @@ const studnie = fs.readFileSync(
 );
 
 describe('frontend: kontrakt colspan nagłówków grup (błąd #7)', () => {
-    it('studnie: colspan grupowy płynie ze zmiennej, nie ze sztywnych literałów', () => {
-        expect(studnie).toMatch('colspan="${colCount}"');
+    it('studnie: nagłówek grupy to labelka (colspan - 1) plus komórka akcji', () => {
+        expect(studnie).toMatch('colspan="${colCount - 1}"');
+        expect(studnie).toContain('cat-header-actions-cell');
         expect(studnie).not.toMatch("colspan=\"${isPrzejscia ? '11'");
     });
     it('rury: colspan grupowy zgadza się z liczbą kolumn nagłówka', () => {
