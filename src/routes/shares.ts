@@ -144,40 +144,56 @@ router.post('/', requireAuth, WRITE_LIMITER, validateData(shareCreateSchema), as
         }
     }
 
-    // Zasada 1: limit 50 aktywnych na dokument — atomowo
-    const currentCount = await prisma.document_shares.count({
-        where: { documentType, documentId }
-    });
-    const existing = await prisma.document_shares.findMany({
-        where: { documentType, documentId, sharedWithUserId: { in: uniqueIds } },
-        select: { sharedWithUserId: true }
-    });
-    const already = new Set(existing.map((e) => e.sharedWithUserId));
-    const newIds = uniqueIds.filter((id) => !already.has(id));
-    if (currentCount + newIds.length > SHARE_LIMIT) {
-        return res.status(400).json({
-            error: `Limit ${SHARE_LIMIT} udostępnień na dokument przekroczony (${currentCount}/${SHARE_LIMIT}, próba +${newIds.length})`
-        });
-    }
-    if (newIds.length === 0) {
-        const shares = await prisma.document_shares.findMany({
+    // Zasada 1: limit 50 aktywnych na dokument — atomowo w transakcji
+    // (bez niej równoległe POST-y mijały się przy checku i przekraczały limit).
+    const result = await prisma.$transaction(async (tx) => {
+        const currentCount = await tx.document_shares.count({
             where: { documentType, documentId }
         });
-        return res.json({ ok: true, data: shares, added: 0 });
-    }
+        const existing = await tx.document_shares.findMany({
+            where: { documentType, documentId, sharedWithUserId: { in: uniqueIds } },
+            select: { sharedWithUserId: true }
+        });
+        const already = new Set(existing.map((e) => e.sharedWithUserId));
+        const newIds = uniqueIds.filter((id) => !already.has(id));
+        if (currentCount + newIds.length > SHARE_LIMIT) {
+            return {
+                overLimit: true as boolean,
+                currentCount,
+                tryAdd: newIds.length,
+                newIds: [] as string[]
+            };
+        }
+        if (newIds.length === 0) {
+            const shares = await tx.document_shares.findMany({
+                where: { documentType, documentId }
+            });
+            return { overLimit: false as boolean, shares, newIds };
+        }
 
-    const now = new Date().toISOString();
-    const toCreate = newIds.map((uid) => ({
-        id: crypto.randomUUID(),
-        documentType,
-        documentId,
-        ownerId: doc.userId!,
-        sharedWithUserId: uid,
-        permission: 'read',
-        createdAt: now,
-        createdBy: authReq.user!.id
-    }));
-    await prisma.document_shares.createMany({ data: toCreate });
+        const now = new Date().toISOString();
+        const toCreate = newIds.map((uid) => ({
+            id: crypto.randomUUID(),
+            documentType,
+            documentId,
+            ownerId: doc.userId!,
+            sharedWithUserId: uid,
+            permission: 'read',
+            createdAt: now,
+            createdBy: authReq.user!.id
+        }));
+        await tx.document_shares.createMany({ data: toCreate });
+        return { overLimit: false as boolean, newIds };
+    });
+    if (result.overLimit) {
+        return res.status(400).json({
+            error: `Limit ${SHARE_LIMIT} udostępnień na dokument przekroczony (${result.currentCount}/${SHARE_LIMIT}, próba +${result.tryAdd})`
+        });
+    }
+    const { newIds } = result;
+    if (newIds.length === 0 && 'shares' in result) {
+        return res.json({ ok: true, data: result.shares, added: 0 });
+    }
 
     logAudit('document_share', documentId, authReq.user!.id, 'create', {
         documentType,
