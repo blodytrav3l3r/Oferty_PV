@@ -3,6 +3,11 @@ import { z } from 'zod';
 import prisma from '../../prismaClient';
 import { requireAuth, AuthenticatedRequest } from '../../middleware/auth';
 import { canClaimNumber } from '../../utils/ownership';
+import {
+    claimIdempotencyKey,
+    completeIdempotencyKey,
+    idempotencyKeyFrom
+} from '../../utils/idempotency';
 import { logger } from '../../utils/logger';
 import { HOT_TX_OPTS } from '../../utils/hotTx';
 
@@ -156,6 +161,24 @@ router.post('/claim-number/:userId', requireAuth, async (req, res) => {
         if (!canClaimNumber(authReq.user, userId)) {
             return res.status(403).json({ error: 'Brak uprawnień do numeru tego użytkownika' });
         }
+        // Idempotency-Key (opcjonalny): retry nie robi luki w numeracji.
+        const idemEndpoint = 'POST /api/orders-studnie/claim-number';
+        const idemKey = idempotencyKeyFrom(req);
+        const idemUser = authReq.user?.id || '';
+        if (idemKey) {
+            const claim = await claimIdempotencyKey(idemUser, idemEndpoint, idemKey, req.body);
+            if (claim.action === 'replay') return res.status(claim.status).json(claim.body);
+            if (claim.action === 'reuse')
+                return res.status(409).json({
+                    error: 'Klucz idempotencji użyty z innym payloadem',
+                    code: 'IDEMPOTENCY_KEY_REUSE'
+                });
+            if (claim.action === 'in-progress')
+                return res.status(409).json({
+                    error: 'Żądanie w trakcie przetwarzania — spróbuj ponownie',
+                    code: 'IDEMPOTENCY_IN_PROGRESS'
+                });
+        }
         const year = new Date().getFullYear();
 
         const user = await prisma.users.findUnique({
@@ -174,7 +197,9 @@ router.post('/claim-number/:userId', requireAuth, async (req, res) => {
         const nextNumber = counter.lastNumber;
 
         const formatted = `${symbol}/ZS/${String(nextNumber).padStart(6, '0')}/${year}`;
-        res.json({ number: formatted, nextSeq: nextNumber, symbol, year });
+        const payload = { number: formatted, nextSeq: nextNumber, symbol, year };
+        if (idemKey) await completeIdempotencyKey(idemUser, idemEndpoint, idemKey, 200, payload);
+        res.json(payload);
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error';
         logger.error('Numbering', 'Błąd serwera', message);
@@ -191,6 +216,29 @@ router.post('/claim-production-number/:userId', requireAuth, async (req, res) =>
         // P0.2: claim numeru produkcyjnego tylko własnego / podwładnego / admin.
         if (!canClaimNumber(authReq.user, userId)) {
             return res.status(403).json({ error: 'Brak uprawnień do numeru tego użytkownika' });
+        }
+        // Idempotency-Key (opcjonalny): retry nie robi luki w numeracji.
+        const idemProdEndpoint = 'POST /api/orders-studnie/claim-production-number';
+        const idemProdKey = idempotencyKeyFrom(req);
+        const idemProdUser = authReq.user?.id || '';
+        if (idemProdKey) {
+            const claim = await claimIdempotencyKey(
+                idemProdUser,
+                idemProdEndpoint,
+                idemProdKey,
+                req.body
+            );
+            if (claim.action === 'replay') return res.status(claim.status).json(claim.body);
+            if (claim.action === 'reuse')
+                return res.status(409).json({
+                    error: 'Klucz idempotencji użyty z innym payloadem',
+                    code: 'IDEMPOTENCY_KEY_REUSE'
+                });
+            if (claim.action === 'in-progress')
+                return res.status(409).json({
+                    error: 'Żądanie w trakcie przetwarzania — spróbuj ponownie',
+                    code: 'IDEMPOTENCY_IN_PROGRESS'
+                });
         }
         const year = new Date().getFullYear();
         const yearShort = String(year).slice(-2);
@@ -217,7 +265,16 @@ router.post('/claim-production-number/:userId', requireAuth, async (req, res) =>
         const [nextNumber] = await claimProductionSeqs(userId, year, startNum, 1);
 
         const formatted = `${symbol}/${yearLetter}/${String(nextNumber).padStart(5, '0')}/${yearShort}`;
-        res.json({ number: formatted, nextSeq: nextNumber, symbol, yearLetter, year });
+        const prodPayload = { number: formatted, nextSeq: nextNumber, symbol, yearLetter, year };
+        if (idemProdKey)
+            await completeIdempotencyKey(
+                idemProdUser,
+                idemProdEndpoint,
+                idemProdKey,
+                200,
+                prodPayload
+            );
+        res.json(prodPayload);
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error';
         logger.error('Numbering', 'Błąd serwera', message);
@@ -237,6 +294,29 @@ router.post('/claim-production-numbers/:userId', requireAuth, async (req, res) =
         // P0.2: hurtowy claim tylko własny / podwładny / admin.
         if (!canClaimNumber(authReq.user, userId)) {
             return res.status(403).json({ error: 'Brak uprawnień do numeru tego użytkownika' });
+        }
+        // Idempotency-Key (opcjonalny): retry nie rezerwuje kolejnego zakresu.
+        const idemBulkEndpoint = 'POST /api/orders-studnie/claim-production-numbers';
+        const idemBulkKey = idempotencyKeyFrom(req);
+        const idemBulkUser = authReq.user?.id || '';
+        if (idemBulkKey) {
+            const claim = await claimIdempotencyKey(
+                idemBulkUser,
+                idemBulkEndpoint,
+                idemBulkKey,
+                req.body
+            );
+            if (claim.action === 'replay') return res.status(claim.status).json(claim.body);
+            if (claim.action === 'reuse')
+                return res.status(409).json({
+                    error: 'Klucz idempotencji użyty z innym payloadem',
+                    code: 'IDEMPOTENCY_KEY_REUSE'
+                });
+            if (claim.action === 'in-progress')
+                return res.status(409).json({
+                    error: 'Żądanie w trakcie przetwarzania — spróbuj ponownie',
+                    code: 'IDEMPOTENCY_IN_PROGRESS'
+                });
         }
         const parsed = claimProductionNumbersSchema.safeParse(req.body ?? {});
         if (!parsed.success) {
@@ -271,7 +351,16 @@ router.post('/claim-production-numbers/:userId', requireAuth, async (req, res) =
         const numbers = seqs.map(
             (seq) => `${symbol}/${yearLetter}/${String(seq).padStart(5, '0')}/${yearShort}`
         );
-        res.json({ numbers, seqs, symbol, yearLetter, year });
+        const bulkPayload = { numbers, seqs, symbol, yearLetter, year };
+        if (idemBulkKey)
+            await completeIdempotencyKey(
+                idemBulkUser,
+                idemBulkEndpoint,
+                idemBulkKey,
+                200,
+                bulkPayload
+            );
+        res.json(bulkPayload);
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error';
         logger.error('Numbering', 'Błąd serwera', message);

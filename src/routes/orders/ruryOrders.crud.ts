@@ -19,6 +19,11 @@ import { buildRoleWhereConditionWithShares } from '../../utils/roleFilter';
 import { versionedWrite, mapVersionConflict } from '../../utils/versionWrite';
 import { assertDocLockForWrite, mapDocLockConflict } from '../../utils/docLocks';
 import { mapPrismaError } from '../../utils/prismaErrors';
+import {
+    claimIdempotencyKey,
+    completeIdempotencyKey,
+    idempotencyKeyFrom
+} from '../../utils/idempotency';
 import { HOT_TX_OPTS } from '../../utils/hotTx';
 import crypto from 'crypto';
 
@@ -105,6 +110,24 @@ router.post('/claim-rury-number/:userId', requireAuth, async (req, res) => {
         if (!canClaimNumber(authReq.user, userId)) {
             return res.status(403).json({ error: 'Brak uprawnień do numeru tego użytkownika' });
         }
+        // Idempotency-Key (opcjonalny): retry nie robi luki w numeracji.
+        const idemEndpoint = 'POST /api/orders-rury/rury/claim-rury-number';
+        const idemKey = idempotencyKeyFrom(req);
+        const idemUser = authReq.user?.id || '';
+        if (idemKey) {
+            const claim = await claimIdempotencyKey(idemUser, idemEndpoint, idemKey, req.body);
+            if (claim.action === 'replay') return res.status(claim.status).json(claim.body);
+            if (claim.action === 'reuse')
+                return res.status(409).json({
+                    error: 'Klucz idempotencji użyty z innym payloadem',
+                    code: 'IDEMPOTENCY_KEY_REUSE'
+                });
+            if (claim.action === 'in-progress')
+                return res.status(409).json({
+                    error: 'Żądanie w trakcie przetwarzania — spróbuj ponownie',
+                    code: 'IDEMPOTENCY_IN_PROGRESS'
+                });
+        }
 
         const year = new Date().getFullYear();
 
@@ -123,7 +146,9 @@ router.post('/claim-rury-number/:userId', requireAuth, async (req, res) => {
         const nextNumber = counter.lastNumber;
 
         const formatted = `${symbol}/ZR/${String(nextNumber).padStart(6, '0')}/${year}`;
-        res.json({ number: formatted, nextSeq: nextNumber, symbol, year });
+        const payload = { number: formatted, nextSeq: nextNumber, symbol, year };
+        if (idemKey) await completeIdempotencyKey(idemUser, idemEndpoint, idemKey, 200, payload);
+        res.json(payload);
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error';
         logger.error('Offers', 'Błąd serwera', message);
