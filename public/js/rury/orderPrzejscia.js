@@ -20,7 +20,7 @@ function renderPrzejsciaDetailsTable(_existingData) {
         return;
     }
 
-    let html = `<table class="rury-table text-xs" >
+    let html = `<table class="rury-table text-xs" style="white-space:nowrap;" >
         <th scope="col"ead>
             <tr>
                 <th scope="col" class="w-22pct">Rodzaj przej\u015Bcia</th>
@@ -49,15 +49,12 @@ function renderPrzejsciaDetailsTable(_existingData) {
             <td><input type="number" class="form-input fs-sm-024" value="${escapeHtmlAttr(row.ilosc || '')}"  data-field="ilosc" data-source="${row.source}" data-idx="${row._idx}" onchange="_syncCustomRow(this)" /></td>
             <td><input type="text" class="form-input fs-sm-024" value="${escapeHtmlAttr(row.uwagi || '')}"  data-field="uwagi" data-source="${row.source}" data-idx="${row._idx}" onchange="_syncCustomRow(this)" /></td>
             <td>
-                <select class="form-input" style="width:100%;font-size: var(--fs-sm);padding:0.2rem;" data-field="czyPrzejscie" data-source="${row.source}" data-idx="${row._idx}" onchange="_syncCustomRow(this)">
-                    <option value="TAK" ${row.czyPrzejscie === 'TAK' ? 'selected' : ''}>TAK</option>
-                    <option value="NIE" ${row.czyPrzejscie === 'NIE' ? 'selected' : ''}>NIE</option>
-                </select>
+                <button type="button" class="form-input" value="${row.czyPrzejscie === 'NIE' ? 'NIE' : 'TAK'}" data-field="czyPrzejscie" data-source="${row.source}" data-idx="${row._idx}" onclick="_toggleCzyPrzejscie(this)" style="width:100%;font-size: var(--fs-lg);padding:0.55rem 0.8rem;box-sizing:border-box;font-weight:var(--fw-bold);cursor:pointer;${row.czyPrzejscie === 'NIE' ? 'color:var(--danger-hover);background:rgba(var(--danger-rgb), 0.1);border:1px solid rgba(var(--danger-rgb), 0.3);' : 'color:var(--success-hover);background:rgba(var(--success-rgb), 0.1);border:1px solid rgba(var(--success-rgb), 0.3);'}">${row.czyPrzejscie === 'NIE' ? 'NIE' : 'TAK'}</button>
             </td>
             <td>
                 ${
                     isCustom
-                        ? `<button class="btn btn-sm btn-danger" onclick="removePrzejscieRow('custom', ${row._idx})" style="font-size: var(--fs-xs);padding:0.15rem 0.4rem;"><i data-lucide="x" class="icon-12"></i></button>`
+                        ? `<button class="btn btn-sm btn-danger" onclick="removePrzejscieRow('custom', ${row._idx})" style="font-size: var(--fs-lg);padding:0.73rem 0.5rem;box-sizing:border-box;"><i data-lucide="x" class="icon-12"></i></button>`
                         : '<span style="color:var(--text-muted);font-size: var(--fs-xs);">z oferty</span>'
                 }
             </td>
@@ -104,10 +101,24 @@ function _syncCustomRow(input) {
     }
 }
 
+function _toggleCzyPrzejscie(btn) {
+    const next = btn.value === 'TAK' ? 'NIE' : 'TAK';
+    const isTak = next === 'TAK';
+    btn.value = next;
+    btn.textContent = next;
+    btn.style.color = isTak ? 'var(--success-hover)' : 'var(--danger-hover)';
+    btn.style.background = isTak ? 'rgba(var(--success-rgb), 0.1)' : 'rgba(var(--danger-rgb), 0.1)';
+    btn.style.border = isTak
+        ? '1px solid rgba(var(--success-rgb), 0.3)'
+        : '1px solid rgba(var(--danger-rgb), 0.3)';
+    _syncCustomRow(btn);
+}
+window._toggleCzyPrzejscie = _toggleCzyPrzejscie;
+
 function _syncCustomRowsFromDOM() {
     document
         .querySelectorAll(
-            '#step4-przejscia-details-table input, #step4-przejscia-details-table select'
+            '#step4-przejscia-details-table input, #step4-przejscia-details-table button[data-field]'
         )
         .forEach((input) => {
             if (input.dataset.field && input.dataset.source && input.dataset.idx !== undefined) {

@@ -28,7 +28,13 @@
                     id="step4-copy-toggle-btn"
                     class="wizard-btn wizard-btn-secondary"
                     onclick="copyKartaBudowyFromOrder()"
-                    style="flex: 0 0 auto; white-space: nowrap; margin-top: 0"
+                    style="
+                        flex: 0 0 auto;
+                        white-space: nowrap;
+                        margin-top: 0;
+                        font-size: var(--fs-lg);
+                        padding: 0.55rem 0.8rem;
+                    "
                 >
                     Kopiuj Kartę Budowy z zamówienia
                 </button>
@@ -853,9 +859,9 @@
                                 background: rgba(var(--accent2-rgb), 0.1);
                                 border: 1px solid rgba(var(--accent2-rgb), 0.3);
                                 color: var(--accent2-hover);
-                                font-size: var(--fs-xs);
+                                font-size: var(--fs-lg);
                                 font-weight: var(--fw-bold);
-                                padding: 0.3rem 0.6rem;
+                                padding: 0.55rem 0.8rem;
                                 border-radius: var(--radius-sm);
                                 cursor: pointer;
                                 transition: all 0.15s;
@@ -871,7 +877,7 @@
                                 this.style.borderColor = 'rgba(var(--accent2-rgb), 0.3)';
                             "
                         >
-                            <i data-lucide="plus" style="width: 12px; height: 12px"></i>
+                            <i data-lucide="plus" style="width: 16px; height: 16px"></i>
                             Dodaj niestandardowe
                         </button>
                     </div>

@@ -36,10 +36,13 @@ export interface KartaBudowyMeta {
 
 export interface PrzejscieDetail {
     rodzaj?: string;
-    dnOd?: string;
-    dnDo?: string;
+    // Studnie zapisują liczby (parseFloat w collect), rury surowe stringi z inputów.
+    dnOd?: string | number;
+    dnDo?: string | number;
+    ilosc?: number;
     uwagi?: string;
     czyPrzejscie?: string;
+    source?: string;
 }
 
 export interface ConfigItem {

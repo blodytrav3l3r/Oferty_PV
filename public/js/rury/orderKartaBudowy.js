@@ -5,10 +5,16 @@ function collectKartaBudowyDataStep4() {
     const getVal = (id) => document.getElementById(id)?.value?.trim() || '';
     const getSelectVal = (id) => document.getElementById(id)?.value || '';
 
+    const offerInputRaw = getVal('step4-offer-nr-input');
+    const offerNumbers = offerInputRaw
+        .split(',')
+        .map((n) => n.trim())
+        .filter((n) => n);
+
     const kartaBudowy = {
         emailFaktura: getVal('step4-email-faktura'),
         emailEfaktura: getVal('step4-email-efaktura'),
-        offerNumbers: getVal('step4-offer-nr-input'),
+        offerNumbers,
         adresWysylki: getVal('step4-adres-wysylki'),
         warunkiPlatnosci: getSelectVal('step4-warunki-platnosci'),
         iloscDni: getVal('step4-ilosc-dni'),
@@ -231,6 +237,16 @@ function initKartaBudowyStep4(primaryOfferNumber) {
         window._przejsciaInitialized = true;
     }
 
+    // Edycja istniejącego zamówienia — odtwórz zapisane dane karty
+    // (wzorzec _applyExistingKartaBudowyData ze studni). Zapisane wygrywają
+    // z prefillami powyżej; puste wartości pomijane w applyCopiedKartaBudowyData.
+    if (window.orderEditMode && typeof getCurrentRuryOrder === 'function') {
+        const currentOrder = getCurrentRuryOrder();
+        if (currentOrder && currentOrder.kartaBudowy) {
+            applyCopiedKartaBudowyData(currentOrder.kartaBudowy);
+        }
+    }
+
     renderKartaBudowyCopyOptions();
 
     const copySelect = document.getElementById('step4-copy-order-select');
@@ -330,7 +346,12 @@ function applyCopiedKartaBudowyData(sourceData) {
     for (const [elId, field] of Object.entries(map)) {
         const el = document.getElementById(elId);
         if (el && sourceData[field] !== undefined && sourceData[field] !== null) {
-            el.value = sourceData[field];
+            const val = Array.isArray(sourceData[field])
+                ? sourceData[field].join(', ')
+                : sourceData[field];
+            // Puste wartości nie nadpisują prefilli (adres/klient) ani restore.
+            if (val === '') continue;
+            el.value = val;
         }
     }
 
@@ -355,12 +376,28 @@ function applyCopiedKartaBudowyData(sourceData) {
 
     for (const [elId, field] of Object.entries(selectMap)) {
         const el = document.getElementById(elId);
-        if (el && sourceData[field] !== undefined && sourceData[field] !== null) {
+        if (
+            el &&
+            sourceData[field] !== undefined &&
+            sourceData[field] !== null &&
+            sourceData[field] !== ''
+        ) {
             el.value = sourceData[field];
             const event = new Event('change', { bubbles: true });
             el.dispatchEvent(event);
         }
     }
+
+    // Jawne pokazanie wrapów "Inne" — nie polegamy wyłącznie na listenerach change.
+    [
+        ['step4-rodzaj-stopni', 'step4-rodzaj-stopni-inne-wrap'],
+        ['step4-uszczelka-studni', 'step4-uszczelka-studni-inne-wrap'],
+        ['step4-kineta', 'step4-kineta-inne-wrap']
+    ].forEach(([selectId, wrapId]) => {
+        const select = document.getElementById(selectId);
+        const wrap = document.getElementById(wrapId);
+        if (select && wrap) wrap.style.display = select.value === 'Inne' ? 'block' : 'none';
+    });
 
     if (Array.isArray(sourceData.przejsciaDetails)) {
         window._customPrzejscieRows = sourceData.przejsciaDetails.filter(
