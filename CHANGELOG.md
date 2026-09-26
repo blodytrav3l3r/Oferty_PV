@@ -4,6 +4,35 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.30.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.29.5...v1.30.0) (2026-09-26)
+
+### Features
+
+- **api:** idempotencja claimow numerow ([492fe72](https://github.com/blodytrav3l3r/Oferty_PV/commit/492fe729683f82ccd2ff35d4286b324d4b724f9e))
+- **audit:** census martwej tabeli pozycji studni ([2121402](https://github.com/blodytrav3l3r/Oferty_PV/commit/2121402ece27dafe8ed305419876d4bd35a8908e))
+
+### Bug Fixes
+
+- **api:** egzekucja ttl replay idempotencji ([8967f86](https://github.com/blodytrav3l3r/Oferty_PV/commit/8967f863b830de6d865826846696f70fa8b659d7))
+- **api:** kontrakt dto o pola z prod-danych ([232f8be](https://github.com/blodytrav3l3r/Oferty_PV/commit/232f8be2995c8ba98a41f2437ebf20201f8a31fb))
+- **api:** liczniki ofert w liscie mieszanej rury+studnie ([68f3dbb](https://github.com/blodytrav3l3r/Oferty_PV/commit/68f3dbbb146ade482162926fd79bc954badf20c4))
+- **api:** limit udostepnien atomowo w transakcji ([b1592cf](https://github.com/blodytrav3l3r/Oferty_PV/commit/b1592cfda272ad69b0c0dcd4125802018e340e7d))
+- **audit:** clamp limitu i fail-safe pustego gate ([ffac286](https://github.com/blodytrav3l3r/Oferty_PV/commit/ffac2860132bef14e639530a9c389ede5005a444))
+- **offers:** zerowe liczniki pozycji na liscie kartoteki ([d8010c0](https://github.com/blodytrav3l3r/Oferty_PV/commit/d8010c0e606baeb746c71b4b64cbd087a348acc4))
+- **security:** cookie-first przed x-auth-token ([45a29fe](https://github.com/blodytrav3l3r/Oferty_PV/commit/45a29fe120344b4d74c3e38c267d717f4f47b73c))
+- **security:** guard odczytu w statusie locka ([3fe64bc](https://github.com/blodytrav3l3r/Oferty_PV/commit/3fe64bc063c7dbe6d7cc80e53d2fa1b825dd0ce2))
+- **security:** limiter i limit body dla csp-report ([b786419](https://github.com/blodytrav3l3r/Oferty_PV/commit/b7864197d62b5011b338f35f89cf6883b303474c))
+- **security:** login bez tokenu w body ([865206d](https://github.com/blodytrav3l3r/Oferty_PV/commit/865206dd5438178795c8a5960fd6eb364ca949e3))
+- **security:** sunset naglowka x-auth-token ([8c5cbe1](https://github.com/blodytrav3l3r/Oferty_PV/commit/8c5cbe1357f9a9257a45a8474a54b5bf47020c75))
+- **settings:** allowlista kluczy w get po kluczu ([41acd8f](https://github.com/blodytrav3l3r/Oferty_PV/commit/41acd8fa1885f7e42b482bdaffc7b82750c33848))
+- **studnie:** jednoklikowy quick-edit przejść w zleceniach ([3d83b11](https://github.com/blodytrav3l3r/Oferty_PV/commit/3d83b112144035cad69cc06541052d7a2f135847))
+- **studnie:** null formuly do nan w quick-edit ([d5c4e53](https://github.com/blodytrav3l3r/Oferty_PV/commit/d5c4e53af505b6fe39b91bf26fdd67be6be793e7))
+- **studnie:** odrzucanie blednego kata i usuniecie martwego step ([4f453fa](https://github.com/blodytrav3l3r/Oferty_PV/commit/4f453fadd3c368645302038754c393b3a5b01149))
+- **studnie:** stabilny fokus i selekcja tekstu w quick-edit ([c692b01](https://github.com/blodytrav3l3r/Oferty_PV/commit/c692b01ee46be3c334002804396467720dea3e9c))
+- **studnie:** usuniecie martwej galezi light w refreszu modala ([99bb25d](https://github.com/blodytrav3l3r/Oferty_PV/commit/99bb25d54cb4039f163eefaad8c793bab65beeef))
+- **ui:** guardy null-dom w clientmanager ([b81789f](https://github.com/blodytrav3l3r/Oferty_PV/commit/b81789f09b8d7313c1badbbd02583d5c3f6b40eb))
+- **ui:** odblokowanie przycisku po bledzie klienta ([ad167f3](https://github.com/blodytrav3l3r/Oferty_PV/commit/ad167f3992750a5452ccb1891bf30d9c91f188c9))
+
 ### [1.29.5](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.29.4...v1.29.5) (2026-09-25)
 
 ### Bug Fixes

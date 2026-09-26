@@ -7,7 +7,7 @@
 
 **Data:** 2026-07-24
 **Cel:** Punkt odniesienia przed/po migracji HTTP → HTTPS.
-**Wersja aplikacji:** 1.29.5
+**Wersja aplikacji:** 1.30.0
 
 ---
 
