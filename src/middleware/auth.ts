@@ -142,7 +142,9 @@ export async function deleteUserSessions(userId: string, exceptToken?: string): 
  * Middleware: wymaga autoryzacji (ważna sesja).
  */
 export async function requireAuth(req: Request, res: Response, next: NextFunction): Promise<void> {
-    const token = (req.headers['x-auth-token'] as string) || req.cookies?.authToken;
+    // Cookie-first: nagłówek x-auth-token to legacy shim (wsteczna kompatybilność),
+    // nie może nadpisać sesji cookie (SameSite/httpOnly).
+    const token = req.cookies?.authToken || (req.headers['x-auth-token'] as string);
     const session = await getSession(token);
     if (!session) {
         res.status(401).json({ error: 'Nieautoryzowany — zaloguj się' });

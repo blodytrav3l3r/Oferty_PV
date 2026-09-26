@@ -158,7 +158,7 @@ router.post(
 // POST /api/auth/logout
 router.post('/logout', async (req, res) => {
     try {
-        const token = (req.headers['x-auth-token'] as string) || req.cookies?.authToken;
+        const token = req.cookies?.authToken || (req.headers['x-auth-token'] as string);
         if (token) await deleteSession(token);
         res.clearCookie('authToken', {
             httpOnly: true,
@@ -207,7 +207,7 @@ router.post(
             });
 
             // P1-D: zmiana hasła unieważnia wszystkie inne sesje (bieżąca zostaje).
-            const currentToken = (req.headers['x-auth-token'] as string) || req.cookies?.authToken;
+            const currentToken = req.cookies?.authToken || (req.headers['x-auth-token'] as string);
             const revoked = await deleteUserSessions(authReq.user!.id, currentToken);
 
             res.json({ ok: true, sessionsRevoked: revoked });

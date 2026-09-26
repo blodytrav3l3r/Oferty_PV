@@ -22,6 +22,7 @@ jest.mock('../src/prismaClient', () => ({
 }));
 
 import express from 'express';
+import cookieParser from 'cookie-parser';
 import request from 'supertest';
 import {
     requireAuth,
@@ -143,6 +144,43 @@ describe('requireAuth', () => {
         expect(res.statusCode).toBe(200);
         expect(res.body.user.username).toBe('testuser');
         expect(res.body.user).not.toHaveProperty('password');
+    });
+
+    it('cookie wygrywa z nagłówkiem: obcy x-auth-token nie nadpisuje sesji cookie', async () => {
+        const now = BigInt(Date.now());
+        const seenTokens: string[] = [];
+        mockPrisma.sessions.findUnique.mockImplementation(async (args: any) => {
+            seenTokens.push(args?.where?.token);
+            if (args?.where?.token === hashToken('cookie-token')) {
+                return { token: hashToken('cookie-token'), userId: 'user1', createdAt: now };
+            }
+            return null;
+        });
+        mockPrisma.users.findUnique.mockResolvedValue({
+            id: 'user1',
+            username: 'testuser',
+            password: 'hashed',
+            role: 'user',
+            firstName: 'Test',
+            lastName: 'User',
+            subUsers: null
+        });
+
+        const app = express();
+        app.use(express.json());
+        app.use(cookieParser());
+        app.get('/protected', requireAuth, (req, res) => {
+            res.json({ user: req.user });
+        });
+
+        const res = await request(app)
+            .get('/protected')
+            .set('Cookie', 'authToken=cookie-token')
+            .set('x-auth-token', 'attacker-token');
+
+        expect(res.statusCode).toBe(200);
+        expect(res.body.user.username).toBe('testuser');
+        expect(seenTokens).toEqual([hashToken('cookie-token')]);
     });
 
     it('powinien zwrócić 401, jeśli użytkownik nie został znaleziony w bazie danych', async () => {
