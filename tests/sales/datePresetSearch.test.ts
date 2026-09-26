@@ -62,6 +62,16 @@ describe('parseSearchParams — walidacja dat', () => {
         expect(parseSearchParams({ dateFrom: '2026/08/07' }).dateFrom).toBe('');
         expect(parseSearchParams({ dateTo: '2026-08-07T22:00:00.000Z extra' }).dateTo).toBe('');
     });
+
+    it('brzegi: epoch i offset strefy odrzucone, kalendarz na poziomie regex', () => {
+        expect(parseSearchParams({ dateFrom: '1756675200000' }).dateFrom).toBe('');
+        expect(parseSearchParams({ dateFrom: '2026-08-07T22:00:00+02:00' }).dateFrom).toBe('');
+        // Regex nie sprawdza kalendarza (2026-02-29 nie istnieje, 13 miesiąc
+        // też przejdzie) — nieszkodliwe: brak dopasowań w DB. Zmiana kodu
+        // wymagałaby walidacji kalendarzowej w parseSearchParams (DEFER).
+        expect(parseSearchParams({ dateFrom: '2024-02-29' }).dateFrom).toBe('2024-02-29');
+        expect(parseSearchParams({ dateFrom: '2026-02-29' }).dateFrom).toBe('2026-02-29');
+    });
 });
 
 describe('buildWhereParts — klauzule createdAt', () => {
