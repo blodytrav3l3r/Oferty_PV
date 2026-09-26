@@ -41,7 +41,11 @@ function loadQE() {
         isWellLocked: () => locks.well,
         isOfferLocked: () => locks.offer,
         resolvePrzejscieIndex: (_w: any, _el: any, fb: number) => fb,
-        parseCalcExpression: (v: string) => parseFloat(String(v).replace(',', '.')),
+        parseCalcExpression: (v: string) => {
+            const s = String(v);
+            if (s.startsWith('=')) return null; // zła formuła jak prawdziwy parser
+            return parseFloat(s.replace(',', '.'));
+        },
         renderWellDiagram: () => {
             calls.diagram++;
         },
@@ -461,6 +465,27 @@ describe('P3-3: śmieci w polu kąta nie zerują modelu', () => {
         expect(calls.toast.length).toBe(1); // feedback zamiast cichego 0
         expect(well.przejscia[0].angle).toBe(90); // nie 0
         expect(calls.list).toBe(1); // input ze śmieciem zastąpiony wartością z modelu
+    });
+
+    it('zła formuła =foo nie zapisuje null w kącie', () => {
+        const { context, calls, timers, well, bodyEl, cellA, mkInput } = loadQE();
+        well.przejscia[0].angle = 90;
+        context.document.activeElement = bodyEl;
+        context.window.saveQuickEdit(0, 'angle', '=foo', mkInput(cellA));
+        timers[0].fn();
+        expect(calls.toast.length).toBe(1);
+        expect(well.przejscia[0].angle).toBe(90); // nie null
+    });
+
+    it('zła formuła =foo w rzędnej nie wywala toFixed, czyści pole', () => {
+        const { context, calls, timers, well, bodyEl, cellA, mkInput } = loadQE();
+        context.document.activeElement = bodyEl;
+        expect(() => {
+            context.window.saveQuickEdit(0, 'rzednaWlaczenia', '=foo', mkInput(cellA));
+            timers[0].fn();
+        }).not.toThrow();
+        expect(well.przejscia[0].rzednaWlaczenia).toBe('');
+        expect(calls.list).toBe(1);
     });
 });
 

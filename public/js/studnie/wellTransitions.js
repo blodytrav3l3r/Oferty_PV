@@ -546,9 +546,17 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
                 // oferty — zapis po locku nadpisałby zatwierdzony stan (F2).
                 if (isWellLocked()) return;
                 if (isOfferLocked()) return;
+                // parseCalcExpression zwraca number|null (null = zła formuła
+                // '=...'). isNaN(null) to false, więc goły null przechodził
+                // obok wszystkich strażników: kąt lądował w modelu jako null,
+                // a rzędna wywalała się na null.toFixed(3). Normalizuj do NaN —
+                // każda gałąź pola ma istniejącą ścieżkę isNaN (kąt: odrzut,
+                // rzędna: pustka, spadki: null, reszta: 0).
+                let numVal = parseCalcExpression(value);
+                if (numVal === null) numVal = NaN;
                 // Odrzuć śmieci w polu kąta zamiast cichego zerowania:
                 // NaN→0 przestawiałby WLOT/WYLOT bez wiedzy użytkownika.
-                if (field === 'angle' && isNaN(parseCalcExpression(value))) {
+                if (field === 'angle' && isNaN(numVal)) {
                     if (typeof showToast === 'function')
                         showToast('Nieprawidłowy kąt — zachowano poprzednią wartość.', 'error');
                     if (!window.__qeNoRender) {
@@ -573,9 +581,7 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
                     return;
                 }
 
-                let numVal = parseCalcExpression(value);
                 if (field === 'angle') {
-                    if (isNaN(numVal)) numVal = 0;
                     if (numVal < 0) numVal = 0;
                     if (numVal > 360) numVal = 360;
                     well.przejscia[index].angle = numVal;
