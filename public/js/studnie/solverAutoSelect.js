@@ -1413,10 +1413,27 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
                     timestamp: Date.now()
                 };
 
+                // P1.3: twardy invariant — ML output nigdy nie staje się
+                // konfiguracją bez walidacji domenowej. Zwycięzca MUSI być
+                // jednym ze zwalidowanych kandydatów solvera (referencja);
+                // obcy obiekt = odrzucenie, techniczny winner zostaje.
+                const winnerValid = window.isValidatedMlSolution
+                    ? window.isValidatedMlSolution(candidates, winner)
+                    : candidates.some(function (c) {
+                          return c.solution === winner;
+                      });
+                if (!winnerValid) {
+                    logger.warn(
+                        'wellSolver',
+                        '[AiRank] Odrzucono wybór spoza kandydatów solvera — zostaje wariant techniczny.'
+                    );
+                }
+
                 // AUTO_AI tylko gdy AI realnie zmieniło wybór (aiWinner !== technicalWinner)
                 // i wybór nie pochodzi z eksploracji. aiInfluencePct>0 to ustawienie, nie
                 // gwarancja działania modelu — przy ML offline wszystkie aiScore=-1.
                 if (
+                    winnerValid &&
                     window.shouldMarkAiSelection(
                         rankResult,
                         aiWinner,
@@ -1425,7 +1442,7 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
                 ) {
                     solution = winner;
                     aiUsed = true;
-                } else if (explored.explorationTriggered) {
+                } else if (winnerValid && explored.explorationTriggered) {
                     // Eksploracja używa losowej próbki z top-puli — bez oznaczenia AI.
                     solution = winner;
                 }
@@ -1525,6 +1542,20 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
         aiUsed
     };
 }
+
+/**
+ * P1.3: brama walidacji ML — zwycięzca MUSI być jednym ze zwalidowanych
+ * kandydatów solvera (równość referencji, nie kształtu). Obcy obiekt —
+ * nawet głęboko równy — oznacza obejście walidacji domenowej i jest odrzucany.
+ * Czysta funkcja testowalna (wzorzec shouldMarkAiSelection).
+ */
+window.isValidatedMlSolution = function isValidatedMlSolution(candidates, winner) {
+    if (!winner || !Array.isArray(candidates) || candidates.length === 0) return false;
+    for (let i = 0; i < candidates.length; i++) {
+        if (candidates[i] && candidates[i].solution === winner) return true;
+    }
+    return false;
+};
 
 /**
  * Decyzja: czy oznaczyć wynik auto-doboru jako wybór AI (AUTO_AI).
