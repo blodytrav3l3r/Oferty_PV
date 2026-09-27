@@ -17,6 +17,7 @@ jobs:
             contents: write
         env:
             DATABASE_URL: 'file:./test-ci.sqlite?connection_limit=1&busy_timeout=30000'
+            DEFAULT_ADMIN_PASSWORD: test-admin-pass
         steps:
             - name: Checkout repository
               uses: actions/checkout@v7
@@ -38,8 +39,20 @@ jobs:
             - name: Typecheck
               run: npm run typecheck
 
-            - name: Przygotuj testową bazę SQLite
-              run: npx prisma db push --skip-generate
+            # P0.5: parity ze ścieżką produkcyjną — release testuje MIGRACJE,
+            # nie db push. Legacy/schema-compat (db push) zostaje w jobach
+            # test/flaky/axe/e2e/load w ci.yml oraz drift-check + migrate-deploy-verify.
+            - name: Fresh DB — migrate deploy (ścieżka produkcyjna)
+              run: |
+                  rm -f test-ci.sqlite test-ci.sqlite-wal test-ci.sqlite-shm
+                  npx prisma migrate deploy
+                  npx prisma migrate status
+
+            - name: Seed na schemacie z migracji
+              run: npm run prisma:seed
+
+            - name: Status migracji po seedzie
+              run: npx prisma migrate status
 
             - name: Run tests
               run: npm run test:quick
