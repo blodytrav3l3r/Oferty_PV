@@ -28,17 +28,18 @@ function resolvePlaywright() {
 }
 
 const { chromium } = resolvePlaywright();
-const CHROME_PATH =
-    process.env.CHROME_PATH ||
-    'C:\\Users\\blody\\AppData\\Local\\ms-playwright\\chromium_headless_shell-1228\\chrome-headless-shell-win64\\chrome-headless-shell.exe';
+// Jawny override ze zmiennej; bez CHROME_PATH playwright sam wybiera
+// przeglądarkę z rejestru (twarda ścieżka Windows psuła CI na Linuksie).
+const CHROME_PATH = process.env.CHROME_PATH;
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 (async () => {
-    const browser = await chromium.launch({
+    const launchOptions = {
         headless: true,
-        executablePath: CHROME_PATH,
         args: ['--no-sandbox']
-    });
+    };
+    if (CHROME_PATH) launchOptions.executablePath = CHROME_PATH;
+    const browser = await chromium.launch(launchOptions);
     const ctx = await browser.newContext({ viewport: { width: 1600, height: 1000 } });
     const page = await ctx.newPage();
     let failed = false;
