@@ -89,6 +89,7 @@
         "licenses:check": "node scripts/check-licenses.mjs",
         "benchmark": "node scripts/benchmark.mjs",
         "benchmark:quick": "node scripts/benchmark.mjs 10",
+        "measure:telemetry": "node scripts/telemetry-measure.mjs",
         "load": "node scripts/load-100.mjs",
         "load:quick": "node scripts/load-100.mjs --quick",
         "load:sustained": "node scripts/load-100.mjs --sustained",
