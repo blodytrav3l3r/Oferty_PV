@@ -113,17 +113,20 @@ describe('themeResztka gate fazy D', () => {
         expect(BASE + RESP + ZLEC + STUD + UPM).not.toMatch(/#996600/i);
     });
 
-    test('L15: strip Lista/Rabaty na klasie, light plaski na tokenach', () => {
+    test('L15: strip Lista/Rabaty bez tacki, osobne przyciski z ramką', () => {
         const strip = selectorBlocks(STUD, '.s-tabs-strip');
-        expect(strip).toMatch(/background:/);
+        expect(strip).toMatch(/background:\s*transparent/);
+        expect(strip).not.toMatch(/rgba\(var\(--black-rgb\)/);
+        const btn = selectorBlocks(STUD, '.s-tab-btn');
+        expect(btn).toMatch(/border:\s*1px solid var\(--border\)/);
         // lightBlocks ucina selektory — asercje na surowym CSS
         expect(STUD).toMatch(
-            /html\[data-theme='light'\] \.s-tabs-strip\s*\{[^}]*background:\s*var\(--bg-secondary\)/
+            /html\[data-theme='light'\] \.s-tab-btn\s*\{[^}]*background:\s*var\(--bg-card\)/
         );
         expect(STUD).toMatch(
             /html\[data-theme='light'\] \.s-tab-btn\.active\s*\{[^}]*background:\s*var\(--bg-card\)/
         );
-        expect(strip + lightBlocks(STUD)).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
+        expect(strip + btn + lightBlocks(STUD)).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
         // sidebar bez dark-inline na glownej sciezce (strip, szukajka, input)
         const html = readRel('public/partials/studnie/sidebar.html');
         expect(html).not.toMatch(/rgba\(var\(--black-rgb\), 0\.[23]\)/);

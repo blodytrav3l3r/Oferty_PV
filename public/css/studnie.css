@@ -1753,19 +1753,20 @@ html[data-theme='light'] #btn-auto-select:disabled {
     border-color: rgba(var(--warn-rgb), 0.55);
 }
 
-/* Zakładki panelu bocznego */
+/* Zakładki panelu bocznego — osobne przyciski, bez wspólnej tacki */
 .s-tab-btn {
     flex: 1;
-    padding: 0.4rem;
+    padding: 0.5rem 0.4rem;
     border-radius: var(--radius-sm);
-    border: 1px solid transparent;
+    border: 1px solid var(--border);
     background: transparent;
     color: var(--text-muted);
     font-weight: var(--fw-bold);
     cursor: pointer;
     transition:
         color 0.2s,
-        background-color 0.2s;
+        background-color 0.2s,
+        border-color 0.2s;
     font-size: var(--fs-sm);
     display: flex;
     align-items: center;
@@ -1785,19 +1786,15 @@ html[data-theme='light'] #btn-auto-select:disabled {
     box-shadow: var(--shadow-sm);
 }
 
-/* Prawy pasek: strip zakładek Lista/Rabaty + szukajka (wyjęte z inline dark-only w sidebar.html) */
+/* Prawy pasek: pasek zakładek Lista/Rabaty to przezroczysty rząd osobnych
+   przycisków (bez wspólnej tacki) + szukajka na klasach */
 .s-tabs-strip {
     display: flex;
+    gap: 0.4rem;
     margin-top: 0.4rem;
-    padding: 0.2rem;
-    background: rgba(var(--black-rgb), 0.3);
-    border-radius: var(--radius-sm);
-    border: 1px solid rgba(var(--white-rgb), 0.05);
-}
-
-.s-tabs-strip .s-tab-btn {
-    font-size: var(--fs-xs);
-    padding: 0.35rem 0.2rem;
+    padding: 0;
+    background: transparent;
+    border: none;
 }
 
 .s-search-wrap {
@@ -1810,7 +1807,7 @@ html[data-theme='light'] #btn-auto-select:disabled {
     width: 100%;
     padding: 0.4rem 0.6rem;
     background: rgba(var(--black-rgb), 0.2);
-    border: 1px solid rgba(var(--white-rgb), 0.1);
+    border: 1px solid var(--border);
     border-radius: var(--radius-sm);
     color: var(--text-primary);
     font-size: var(--fs-base);
@@ -5794,10 +5791,14 @@ html[data-theme='light'] .s-tab-btn:hover {
     background: var(--bg-hover);
 }
 
-/* L15: strip Lista/Rabaty + szukajka — szary wash z dark-inline bez odpowiednika w light. */
+/* L15: strip Lista/Rabaty bez tacki w obu motywach; szukajka na tokenach. */
 html[data-theme='light'] .s-tabs-strip {
-    background: var(--bg-secondary);
-    border-color: var(--border);
+    background: transparent;
+    border: none;
+}
+
+html[data-theme='light'] .s-tab-btn {
+    background: var(--bg-card);
 }
 
 html[data-theme='light'] .s-tab-btn.active {
