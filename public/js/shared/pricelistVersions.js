@@ -161,15 +161,34 @@
         return 'v' + seq + '-' + y + m + day;
     }
 
+    /** Etykiety statusów po polsku (klasy badge bez zmian). */
+    var STATUS_LABELS = {
+        ACTIVE: 'Aktywna',
+        SCHEDULED: 'Zaplanowana',
+        BACKDATE: 'Wsteczna',
+        BACKDATE_REQUESTED: 'Do zatwierdzenia',
+        DRAFT: 'Robocza',
+        ARCHIVED: 'Archiwalna'
+    };
+
     function statusBadge(status) {
         // Osobny badge BACKDATE (szary) vs ACTIVE (zielony) / SCHEDULED (niebieski).
+        var label = STATUS_LABELS[status] || status;
         if (status === 'ACTIVE')
-            return '<span class="badge-ok text-nowrap">' + esc(status) + '</span>';
+            return '<span class="badge-ok text-nowrap">' + esc(label) + '</span>';
         if (status === 'SCHEDULED')
-            return '<span class="badge-info text-nowrap">' + esc(status) + '</span>';
+            return '<span class="badge-info text-nowrap">' + esc(label) + '</span>';
         if (status === 'BACKDATE' || status === 'BACKDATE_REQUESTED')
-            return '<span class="badge-muted text-nowrap">' + esc(status) + '</span>';
-        return '<span class="text-muted">' + esc(status) + '</span>';
+            return '<span class="badge-muted text-nowrap">' + esc(label) + '</span>';
+        return '<span class="text-muted">' + esc(label) + '</span>';
+    }
+
+    /** Nazwa typu cennika wielką literą do tytułu panelu. */
+    function typeLabel(type) {
+        if (type === 'studnie') return 'Studnie';
+        if (type === 'rury') return 'Rury';
+        if (type === 'preco') return 'Preco';
+        return type;
     }
 
     function fmtEff(iso) {
@@ -182,16 +201,21 @@
         return esc(iso) + '<br><span class="text-muted">' + esc(local) + '</span>';
     }
 
+    /** Wersję można usunąć tylko zanim zacznie żyć (nigdy nie była aktywna). */
+    function isDeletable(status) {
+        return status === 'DRAFT' || status === 'SCHEDULED' || status === 'BACKDATE_REQUESTED';
+    }
+
     function renderRows(versions, manageable) {
         if (versions.length === 0) {
-            return '<tr><td colspan="8" class="text-center text-muted">Brak wersji — zapisz pierwszą powyżej.</td></tr>';
+            return '<tr><td colspan="7" class="text-center text-muted">Brak wersji — zapisz pierwszą powyżej.</td></tr>';
         }
         return versions
             .map(function (v) {
                 var eff = v.effectiveFrom
                     ? fmtEff(v.effectiveFrom)
                     : '<span class="text-muted">—</span>';
-                var action =
+                var activation =
                     v.status === 'SCHEDULED'
                         ? '<button class="btn btn-sm btn-primary" data-pv-act="activate" data-pv-id="' +
                           escAttr(v.id) +
@@ -199,16 +223,36 @@
                         : v.status === 'BACKDATE_REQUESTED'
                           ? '<button class="btn btn-sm btn-primary" data-pv-act="backdate" data-pv-id="' +
                             escAttr(v.id) +
-                            '">Zastosuj wstecz</button>'
-                          : '<span class="text-muted">—</span>';
-                // Rollback (Faza B): klon dowolnej wersji do nowego DRAFTu.
+                            '">Zatwierdź wstecz</button>'
+                          : '';
+                // Rollback (Faza B): klon dowolnej wersji do nowej roboczej.
                 var cloneBtn =
                     '<button class="btn btn-sm btn-secondary" data-pv-act="clone" data-pv-id="' +
                     escAttr(v.id) +
-                    '" title="Utwórz nowy draft jako kopię wersji ' +
+                    '" title="Utwórz nową wersję roboczą jako kopię wersji ' +
                     escAttr(v.version || '') +
                     ' (aktywna wersja nie zmieni się)">' +
-                    '<i data-lucide="history"></i> Przywróć jako draft</button>';
+                    '<i data-lucide="history"></i> Przywróć jako roboczą</button>';
+                var deleteBtn = isDeletable(v.status)
+                    ? '<button class="btn btn-sm btn-danger" data-pv-act="delete" data-pv-id="' +
+                      escAttr(v.id) +
+                      '" data-pv-version="' +
+                      escAttr(v.version || '') +
+                      '" title="Usuwa wersję i jej pozycje (tylko wersje nigdy nieaktywne)">Usuń</button>'
+                    : '';
+                var actions = manageable
+                    ? '<div class="pv-actions">' +
+                      '<button class="btn btn-sm btn-secondary" data-pv-act="diff" data-pv-id="' +
+                      escAttr(v.id) +
+                      '">Porównaj</button>' +
+                      '<button class="btn btn-sm btn-secondary" data-pv-act="export" data-pv-id="' +
+                      escAttr(v.id) +
+                      '">Eksport</button>' +
+                      activation +
+                      cloneBtn +
+                      deleteBtn +
+                      '</div>'
+                    : '<span class="text-muted">—</span>';
                 return (
                     '<tr>' +
                     '<td><strong>' +
@@ -229,16 +273,8 @@
                     '<td>' +
                     esc(v.note || '—') +
                     '</td>' +
-                    '<td class="text-nowrap">' +
-                    '<button class="btn btn-sm btn-secondary" data-pv-act="diff" data-pv-id="' +
-                    escAttr(v.id) +
-                    '">Diff</button> ' +
-                    '<button class="btn btn-sm btn-secondary" data-pv-act="export" data-pv-id="' +
-                    escAttr(v.id) +
-                    '">Eksport</button>' +
-                    '</td>' +
                     '<td>' +
-                    (manageable ? action + ' ' + cloneBtn : '<span class="text-muted">—</span>') +
+                    actions +
                     '</td>' +
                     '</tr>'
                 );
@@ -249,28 +285,28 @@
     function panelHtml(type, next, manageable) {
         var saveForm = manageable
             ? '<form id="pv-save-form">' +
-              '<div class="form-group"><label>Nowa wersja (read-only)</label>' +
+              '<div class="form-group"><label>Nowa wersja (tylko podgląd)</label>' +
               '<input class="form-input" id="pv-next-label" value="' +
-              escAttr(versionLabel(next, new Date()) + ' (seq ' + next + ')') +
+              escAttr(versionLabel(next, new Date()) + ' (nr ' + next + ')') +
               '" readonly></div>' +
               '<div class="form-group"><label for="pv-note">Nota</label>' +
               '<input class="form-input" id="pv-note" maxlength="500" placeholder="Opis zmiany (dla daty wstecznej: min. 10 znaków)"></div>' +
               '<div class="form-group"><label for="pv-eff">Obowiązuje od (czas lokalny → UTC)</label>' +
               '<input class="form-input" type="datetime-local" id="pv-eff"></div>' +
-              '<div id="pv-past-warn" class="color-warn" style="display:none">Data w przeszłości — zapis pójdzie ścieżką BACKDATE (nota min. 10 znaków, bez auto-aktywacji).</div>' +
-              '<div class="form-group"><button type="submit" class="btn btn-primary w-100" title="Zapisuje bieżący stan cennika jako nową wersję (kopia wszystkich pozycji). Nie zmienia cen w ofertach ani cennika LIVE — nowa wersja czeka na aktywację (data przyszła) albo idzie ścieżką BACKDATE (data przeszła, wymagana nota min. 10 znaków)."><i data-lucide="save"></i> Zapisz jako wersję</button></div>' +
+              '<div id="pv-past-warn" class="color-warn" style="display:none">Data w przeszłości — zapis jako wersja wsteczna (nota min. 10 znaków, bez auto-aktywacji).</div>' +
+              '<div class="form-group"><button type="submit" class="btn btn-primary w-100" title="Zapisuje bieżący stan cennika jako nową wersję (kopia wszystkich pozycji). Nie zmienia cen w ofertach ani cennika na żywo — nowa wersja czeka na aktywację (data przyszła) albo zapisuje się jako wsteczna (data przeszła, wymagana nota min. 10 znaków)."><i data-lucide="save"></i> Zapisz jako wersję</button></div>' +
               '</form>'
             : '<p class="text-muted">Podgląd wersji (zarządzanie wymaga roli admin).</p>';
         return (
             '<div class="modal modal--pv"><div class="modal-header"><h3 id="pv-panel-title"><i data-lucide="layers"></i> Wersje cennika (' +
-            esc(type) +
+            esc(typeLabel(type)) +
             ')</h3>' +
             '<button class="btn-icon" aria-label="Zamknij" data-pv-act="close"><i data-lucide="x"></i></button></div>' +
             '<div class="modal-body">' +
             saveForm +
             '<div class="table-wrap"><table><thead><tr>' +
-            '<th scope="col">Wersja</th><th scope="col">Seq</th><th scope="col">Status</th><th scope="col">Obowiązuje od (UTC + lokalnie)</th>' +
-            '<th scope="col">Autor</th><th scope="col">Nota</th><th scope="col">Diff/Eksport</th><th scope="col">Akcja</th>' +
+            '<th scope="col">Wersja</th><th scope="col">Nr</th><th scope="col">Status</th><th scope="col">Obowiązuje od (UTC + lokalnie)</th>' +
+            '<th scope="col">Autor</th><th scope="col">Nota</th><th scope="col">Akcje</th>' +
             '</tr></thead><tbody id="pv-versions-body"></tbody></table></div>' +
             '</div></div>'
         );
@@ -322,15 +358,22 @@
         try {
             diff = await apiJson(API + '/' + encodeURIComponent(id) + '/diff', authed('GET'));
         } catch (e) {
-            toast('Błąd diff: ' + e.message, 'error');
+            toast('Błąd porównania: ' + e.message, 'error');
             return;
         }
+        var SECTION_LABELS = {
+            rury: 'Rury',
+            studnie: 'Studnie',
+            konfig: 'Konfiguracja',
+            kinety: 'Kinety',
+            zakresy: 'Zakresy'
+        };
         var rows = Object.keys(diff.sections || {})
             .map(function (k) {
                 var s = diff.sections[k];
                 return (
                     '<tr><td>' +
-                    esc(k) +
+                    esc(SECTION_LABELS[k] || k) +
                     '</td><td class="text-right">' +
                     s.added +
                     '</td><td class="text-right">' +
@@ -345,7 +388,7 @@
             id: 'pv-diff-modal',
             titleId: 'pv-diff-title',
             html:
-                '<div class="modal"><div class="modal-header"><h3 id="pv-diff-title">Diff ' +
+                '<div class="modal"><div class="modal-header"><h3 id="pv-diff-title">Porównanie ' +
                 esc(diff.version) +
                 ' ← ' +
                 esc(diff.previousVersion || '∅') +
@@ -423,7 +466,7 @@
                                     : 'none';
                             if (nextLabel && eff.value) {
                                 nextLabel.value =
-                                    versionLabel(next, eff.value) + ' (seq ' + next + ')';
+                                    versionLabel(next, eff.value) + ' (nr ' + next + ')';
                             }
                         } catch (_e) {
                             warn.style.display = 'none';
@@ -463,7 +506,7 @@
                     });
             } else if (act === 'backdate' && id) {
                 openNoteModal(
-                    'Zastosuj wstecz (BACKDATE)',
+                    'Zatwierdź wstecz',
                     'Uzasadnienie zmiany historycznej…',
                     function (note) {
                         apiJson(
@@ -472,11 +515,11 @@
                         )
                             .then(function () {
                                 window.closeModal('pv-note-modal');
-                                toast('Backdate zastosowany', 'success');
+                                toast('Wersja wsteczna zatwierdzona', 'success');
                                 refreshTable(type, true);
                             })
                             .catch(function (err) {
-                                toast('Błąd backdate: ' + err.message, 'error');
+                                toast('Błąd zatwierdzenia wstecz: ' + err.message, 'error');
                             });
                     }
                 );
@@ -486,7 +529,9 @@
                         .then(function (json) {
                             var v = json.version || {};
                             toast(
-                                'Utworzono draft ' + (v.version || '') + ' jako kopię wersji',
+                                'Utworzono wersję roboczą ' +
+                                    (v.version || '') +
+                                    ' jako kopię wersji',
                                 'success'
                             );
                             refreshTable(type, true);
@@ -496,11 +541,11 @@
                         });
                 };
                 var cloneMsg =
-                    'Utworzyć nowy draft jako kopię tej wersji? Aktywna wersja nie zmieni się.';
+                    'Utworzyć nową wersję roboczą jako kopię tej wersji? Aktywna wersja nie zmieni się.';
                 if (typeof window.appConfirm === 'function') {
                     window
                         .appConfirm(cloneMsg, {
-                            title: 'Przywróć jako draft',
+                            title: 'Przywróć jako roboczą',
                             okText: 'Klonuj',
                             type: 'warning'
                         })
@@ -509,6 +554,35 @@
                         });
                 } else if (window.confirm(cloneMsg)) {
                     doClone();
+                }
+            } else if (act === 'delete' && id) {
+                var versionName = btn.getAttribute('data-pv-version') || id;
+                var doDelete = function () {
+                    apiJson(API + '/' + encodeURIComponent(id), authed('DELETE'))
+                        .then(function () {
+                            toast('Wersja ' + versionName + ' usunięta', 'success');
+                            refreshTable(type, true);
+                        })
+                        .catch(function (err) {
+                            toast('Błąd usuwania: ' + err.message, 'error');
+                        });
+                };
+                var deleteMsg =
+                    'Usunąć wersję ' +
+                    versionName +
+                    ' wraz z jej pozycjami? Usunięcie jest trwałe.';
+                if (typeof window.appConfirm === 'function') {
+                    window
+                        .appConfirm(deleteMsg, {
+                            title: 'Usuń wersję',
+                            okText: 'Usuń',
+                            type: 'danger'
+                        })
+                        .then(function (ok) {
+                            if (ok) doDelete();
+                        });
+                } else if (window.confirm(deleteMsg)) {
+                    doDelete();
                 }
             }
         });
@@ -539,11 +613,14 @@
                         authed('POST', { note: backNote })
                     )
                         .then(function () {
-                            toast('Wersja zapisana ścieżką BACKDATE', 'success');
+                            toast('Wersja wsteczna zapisana', 'success');
                             refreshTable(type, true);
                         })
                         .catch(function (err) {
-                            toast('Draft zapisany, backdate nie: ' + err.message, 'warning');
+                            toast(
+                                'Wersja zapisana, zatwierdzenie wstecz nie: ' + err.message,
+                                'warning'
+                            );
                             refreshTable(type, true);
                         });
                 };
@@ -562,7 +639,7 @@
                                 var bn = finalNote || '';
                                 if (bn.trim().length < 10) {
                                     openNoteModal(
-                                        'Ścieżka BACKDATE — wymagana nota',
+                                        'Wersja wsteczna — wymagana nota',
                                         'Min. 10 znaków uzasadnienia…',
                                         function (n2) {
                                             doBackdate(v.id, n2);
@@ -590,7 +667,7 @@
                 };
                 if (isPast && note.trim().length < 10) {
                     openNoteModal(
-                        'Data w przeszłości — ścieżka BACKDATE',
+                        'Data w przeszłości — zapis jako wersja wsteczna',
                         'Min. 10 znaków uzasadnienia…',
                         function (n) {
                             submitDraft(n);

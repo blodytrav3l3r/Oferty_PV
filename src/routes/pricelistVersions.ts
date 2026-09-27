@@ -20,6 +20,7 @@ import {
     applyBackdate,
     cloneAsDraft,
     createDraft,
+    deleteVersion,
     getVersionDiff,
     getVersionExport,
     updateDraft
@@ -143,6 +144,16 @@ router.post(
         }
     }
 );
+
+/** Usunięcie wersji nigdy nieaktywnej (DRAFT/SCHEDULED/BACKDATE_REQUESTED) + pozycje. */
+router.delete('/:id', requireAuth, requireAdmin, PRICELIST_WRITE_LIMITER, async (req, res) => {
+    try {
+        const result = await deleteVersion(req.params.id, { userId: userIdOf(req) });
+        res.json(result);
+    } catch (err) {
+        sendVersionError(res, err);
+    }
+});
 
 /** Podmiana wierszy (tylko DRAFT/SCHEDULED/BACKDATE_REQUESTED). */
 router.put('/:id', requireAuth, requireAdmin, PRICELIST_WRITE_LIMITER, async (req, res) => {

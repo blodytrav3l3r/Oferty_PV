@@ -844,10 +844,10 @@ html[data-theme='light'] .kartoteka-filter-bar:hover {
     overflow-wrap: anywhere;
 }
 
-/* Wersje cennika — szeroki modal z tabelą 8-kolumnową (jak modal--clients) */
+/* Wersje cennika — szeroki modal z tabelą 7-kolumnową (jak modal--clients) */
 .modal--pv {
     width: 95%;
-    max-width: 1000px;
+    max-width: 1500px;
     max-height: 90vh;
     padding: 0;
     display: flex;
@@ -883,11 +883,22 @@ html[data-theme='light'] .kartoteka-filter-bar:hover {
     overflow-x: auto;
 }
 .modal--pv table {
-    min-width: 860px;
+    min-width: 1200px;
 }
 .modal--pv td,
 .modal--pv th {
     overflow-wrap: anywhere;
+}
+/* Jedna kolumna akcji: przyciski w równej, zawijanej grupie flex */
+.modal--pv .pv-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    align-items: center;
+}
+.modal--pv .pv-actions .btn {
+    margin: 0;
+    white-space: nowrap;
 }
 
 /* Okno historii (audit) — spójne z resztą modalów */

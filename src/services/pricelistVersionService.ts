@@ -873,6 +873,70 @@ export async function cloneAsDraft(
     return res.value;
 }
 
+// ─── Usuwanie wersji nigdy nieaktywnych ──────────────────────────────
+
+/** Statusy usuwalne: wersja nigdy nie była widoczna dla ofert ani resolveActive. */
+const DELETABLE_STATUSES: readonly string[] = ['DRAFT', 'SCHEDULED', 'BACKDATE_REQUESTED'];
+
+/**
+ * Usuwa wersję wraz z pozycjami (tx) + audit DELETE. Tylko statusy nigdy
+ * nieaktywne — ACTIVE/BACKDATE/ARCHIVED trzymają pieczątki ofert
+ * (pricelistVersionId) i kasowanie groziłoby historią → 409.
+ */
+export async function deleteVersion(
+    id: string,
+    opts: { userId?: string } = {}
+): Promise<{ id: string }> {
+    const current = await prisma.pricelistVersion.findUnique({ where: { id } });
+    if (!current) {
+        throw new PricelistVersionError(404, 'NOT_FOUND', `Wersja ${id} nie istnieje`);
+    }
+    if (!isPricelistType(current.type)) {
+        throw new PricelistVersionError(422, 'INVALID_TYPE', `Wersja ${id} ma nieznany typ`);
+    }
+    if (!DELETABLE_STATUSES.includes(current.status)) {
+        throw new PricelistVersionError(
+            409,
+            'NOT_DELETABLE',
+            `Wersji ${id} o statusie ${current.status} nie można usunąć (trzyma historię ofert)`
+        );
+    }
+    const type = current.type;
+    const lock = lockFor(type);
+    const res = await lock.runWithLock(() =>
+        prisma.$transaction(async (tx) => {
+            const fresh = await tx.pricelistVersion.findUnique({ where: { id } });
+            if (!fresh) {
+                throw new PricelistVersionError(404, 'NOT_FOUND', `Wersja ${id} nie istnieje`);
+            }
+            if (!DELETABLE_STATUSES.includes(fresh.status)) {
+                throw new PricelistVersionError(
+                    409,
+                    'NOT_DELETABLE',
+                    `Wersji ${id} o statusie ${fresh.status} nie można usunąć (trzyma historię ofert)`
+                );
+            }
+            await deleteVersionItems(tx, type, id);
+            await writeAudit(tx, {
+                entityId: id,
+                userId: opts.userId,
+                action: 'DELETE',
+                oldData: { wersja: fresh.version, status: fresh.status, seq: fresh.seq }
+            });
+            await tx.pricelistVersion.delete({ where: { id } });
+            return { id };
+        })
+    );
+    if (!res.acquired) {
+        throw new PricelistVersionError(
+            503,
+            'LOCK_BUSY',
+            `Usunięcie wersji ${type} chwilowo zablokowane`
+        );
+    }
+    return res.value;
+}
+
 // ─── F3: freeze ofert ────────────────────────────────────────────────
 // Dopiski F3 — F1/F2 powyżej nietknięte.
 
