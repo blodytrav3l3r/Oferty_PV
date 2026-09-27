@@ -6,6 +6,13 @@ import { PRICELIST_WRITE_LIMITER } from '../middleware/rateLimiters';
 import { pricelistDataSchema, productStudniePatchSchema } from '../validators/offerSchemas';
 import { createModuleLock } from '../middleware/writeLock';
 import prisma from '../prismaClient';
+import { buildXlsx } from '../utils/minimalXlsx';
+import {
+    PricelistVersionError,
+    liveSheetsToXlsxSheets,
+    projectVersionToLiveShape,
+    requireExportSource
+} from '../services/pricelistVersionService';
 
 const router = express.Router();
 const writeLimiter = PRICELIST_WRITE_LIMITER;
@@ -340,6 +347,42 @@ router.delete('/:id', requireAuth, requireAdmin, writeLimiter, async (req, res) 
     } catch (err: unknown) {
         const message = err instanceof Error ? err.message : 'Unknown error';
         logger.error('ProductsStudnieV2', 'DELETE error', message);
+        res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
+    }
+});
+
+// ──────────────────────────────────────────
+// GET /export.xlsx?source=live|default — XLSX z serwera (Etap C),
+// wiersze w shape GET (legacy 1/0, dn liczbowe), shape 1:1 z eksportem FE
+router.get('/export.xlsx', requireAuth, async (req, res) => {
+    try {
+        const source = requireExportSource(req.query.source);
+        const rows =
+            source === 'live'
+                ? await prisma.productsStudnie.findMany({
+                      orderBy: [{ category: 'asc' }, { componentType: 'asc' }, { id: 'asc' }]
+                  })
+                : await prisma.productsStudnieDefault.findMany({
+                      orderBy: [{ category: 'asc' }, { componentType: 'asc' }, { id: 'asc' }]
+                  });
+        const legacy = (rows as unknown as StudnieProductRaw[]).map(toLegacy);
+        const live = projectVersionToLiveShape('studnie', {
+            studnie: legacy as unknown as Array<Record<string, unknown>>
+        });
+        const xlsx = await buildXlsx(liveSheetsToXlsxSheets(live, 'Cennik'));
+        res.setHeader(
+            'Content-Type',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        );
+        res.setHeader('Content-Disposition', 'attachment; filename="Cennik_Studni_Export.xlsx"');
+        res.send(xlsx);
+    } catch (err: unknown) {
+        if (err instanceof PricelistVersionError) {
+            res.status(err.statusCode).json({ error: err.message, code: err.code });
+            return;
+        }
+        const message = err instanceof Error ? err.message : 'Unknown error';
+        logger.error('ProductsStudnieV2', 'GET /export.xlsx error', message);
         res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
     }
 });

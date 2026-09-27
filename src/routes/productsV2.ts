@@ -6,6 +6,14 @@ import { PRICELIST_WRITE_LIMITER } from '../middleware/rateLimiters';
 import { pricelistDataSchema, productPatchSchema } from '../validators/offerSchemas';
 import { createModuleLock } from '../middleware/writeLock';
 import prisma from '../prismaClient';
+import { buildXlsx } from '../utils/minimalXlsx';
+import {
+    PricelistVersionError,
+    RURY_LIVE_SHEET,
+    liveSheetsToXlsxSheets,
+    projectVersionToLiveShape,
+    requireExportSource
+} from '../services/pricelistVersionService';
 
 const router = express.Router();
 const writeLimiter = PRICELIST_WRITE_LIMITER;
@@ -131,6 +139,41 @@ router.delete('/:id', requireAuth, requireAdmin, writeLimiter, async (req, res) 
     } catch (err: unknown) {
         const message = err instanceof Error ? err.message : 'Unknown error';
         logger.error('ProductsV2', 'DELETE error', message);
+        res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
+    }
+});
+
+// ──────────────────────────────────────────
+// GET /export.xlsx?source=live|default — XLSX z serwera (Etap C),
+// shape 1:1 z eksportem FE (jak GET /:id/export wersji)
+router.get('/export.xlsx', requireAuth, async (req, res) => {
+    try {
+        const source = requireExportSource(req.query.source);
+        const rows =
+            source === 'live'
+                ? await prisma.productsRury.findMany({
+                      orderBy: [{ category: 'asc' }, { id: 'asc' }]
+                  })
+                : await prisma.productsRuryDefault.findMany({
+                      orderBy: [{ category: 'asc' }, { id: 'asc' }]
+                  });
+        const live = projectVersionToLiveShape('rury', {
+            rury: rows as unknown as Array<Record<string, unknown>>
+        });
+        const xlsx = await buildXlsx(liveSheetsToXlsxSheets(live, RURY_LIVE_SHEET));
+        res.setHeader(
+            'Content-Type',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        );
+        res.setHeader('Content-Disposition', 'attachment; filename="Cennik_Rury_Export.xlsx"');
+        res.send(xlsx);
+    } catch (err: unknown) {
+        if (err instanceof PricelistVersionError) {
+            res.status(err.statusCode).json({ error: err.message, code: err.code });
+            return;
+        }
+        const message = err instanceof Error ? err.message : 'Unknown error';
+        logger.error('ProductsV2', 'GET /export.xlsx error', message);
         res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
     }
 });

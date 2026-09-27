@@ -13,6 +13,7 @@ import prisma, { Prisma } from '../prismaClient';
 import { createModuleLock } from '../middleware/writeLock';
 import { chunkedCreateMany } from '../utils/prismaBatch';
 import { diffById, sha256Canonical } from './priceOverrideService';
+import type { XlsxSheet } from '../utils/minimalXlsx';
 import {
     precoKinetyRowSchema,
     precoKonfigRowSchema,
@@ -1023,6 +1024,112 @@ export function projectVersionToLiveShape(
     if (type === 'rury') return projectRury(sections.rury ?? []);
     if (type === 'studnie') return projectStudnie(sections.studnie ?? []);
     return projectPreco(sections);
+}
+
+// ─── Etap C: eksport XLSX cenników LIVE i DEFAULT ───
+// SSoT kształtu = frontend (jak Etap A). Kolumny tabel *Default == LIVE
+// (prisma/schema.prisma: ProductsRury == ProductsRuryDefault, ProductsStudnie
+// == ProductsStudnieDefault, PrecoKonfig/Kinety/Zakresy == odpowiedniki
+// *Default), więc rury/studnie jadą tą samą projekcją na wierszach w shape
+// GET (legacy 1/0, dn liczbowe — bez normalizacji, tylko `?? ''` jak FE).
+// PRECO live w FE to kształt ZAGNIEŻDŻONY po DN (formatPrecoResponse), więc
+// projekcja z tego kształtu 1:1 z pricelistImportExport.js:78-147.
+
+/** Źródło eksportu Etapu C: tabele LIVE albo *Default. */
+export type PricelistExportSource = 'live' | 'default';
+
+/** Walidacja ?source=live|default — zły → 422 (jak INVALID_TYPE). */
+export function requireExportSource(value: unknown): PricelistExportSource {
+    if (value === 'live' || value === 'default') return value;
+    throw new PricelistVersionError(
+        422,
+        'INVALID_SOURCE',
+        `Nieprawidłowe źródło eksportu: ${String(value)} (dozwolone: live, default)`
+    );
+}
+
+/** Typy zakresów PRECO (SSoT FE pricelistImportExport.js:98, kolejność arkusza). */
+const PRECO_RANGE_TYPES = ['spadekKineta', 'spadekMufa', 'uniesienie', 'redukcja'] as const;
+
+/**
+ * Projekcja kształtu zagnieżdżonego PRECO (formatPrecoResponse: entry
+ * { DN: { scalar, kinety, spadekKineta... } }) na 3 arkusze 1:1 z FE
+ * (pricelistImportExport.js:78-147). Puste sekcje → brak arkusza (jak FE).
+ */
+export function projectPrecoNestedToSheets(
+    entry: Record<string, unknown> | null | undefined
+): LiveSheetRows {
+    const out: LiveSheetRows = {};
+    const kinetyRows: Array<Record<string, unknown>> = [];
+    const zakresyRows: Array<Record<string, unknown>> = [];
+    const dodatkiRows: Array<Record<string, unknown>> = [];
+    for (const dn of Object.keys(entry ?? {})) {
+        const data = (entry as Record<string, unknown>)[dn];
+        if (data === null || typeof data !== 'object' || Array.isArray(data)) continue;
+        const rec = data as Record<string, unknown>;
+        if (Array.isArray(rec.kinety)) {
+            for (const k of rec.kinety as Array<Record<string, unknown>>) {
+                kinetyRows.push({
+                    'DN Studni': Number(dn),
+                    'DN Rury': k.dn,
+                    'Cena prosta (PLN)': k.prosta,
+                    'Dod. wlot (PLN)': k.dodWlot
+                });
+            }
+        }
+        for (const typ of PRECO_RANGE_TYPES) {
+            const arr = rec[typ];
+            if (!Array.isArray(arr)) continue;
+            for (const row of arr as Array<Record<string, unknown>>) {
+                const grupy = row.grupy;
+                if (grupy === null || typeof grupy !== 'object' || Array.isArray(grupy)) continue;
+                for (const g of Object.keys(grupy as Record<string, unknown>)) {
+                    zakresyRows.push({
+                        Typ: typ,
+                        'DN Studni': Number(dn),
+                        Min: row.min,
+                        Max: row.max,
+                        'Grupa DN': g,
+                        'Cena (PLN)': (grupy as Record<string, unknown>)[g]
+                    });
+                }
+            }
+        }
+        dodatkiRows.push({
+            'DN Studni': Number(dn),
+            'Skrzynka włazowa': rec.skrzynkaWlazowa || 0,
+            'Cena dna osadnika': rec.cenaDnoOsadnika || 0,
+            'Cena pełna wys MB': rec.cenaPelnaWysMB || 0
+        });
+    }
+    if (kinetyRows.length > 0) out.PRECO_Kinety = kinetyRows;
+    if (zakresyRows.length > 0) out.PRECO_Zakresy = zakresyRows;
+    if (dodatkiRows.length > 0) out.PRECO_Dodatki = dodatkiRows;
+    return out;
+}
+
+function toXlsxCell(value: unknown): string | number | boolean | null {
+    if (value === null || value === undefined) return null;
+    if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+        return value;
+    }
+    return String(value);
+}
+
+/**
+ * Arkusze LIVE → wiersze buildXlsx (nagłówki z pierwszego wiersza).
+ * Pusto → 1 pusty arkusz fallback (jak GET /:id/export wersji).
+ */
+export function liveSheetsToXlsxSheets(live: LiveSheetRows, fallbackName: string): XlsxSheet[] {
+    const sheets: XlsxSheet[] = Object.entries(live).map(([name, rows]) => {
+        const headers = rows.length > 0 ? Object.keys(rows[0]) : ['id'];
+        return {
+            name,
+            headers,
+            rows: rows.map((row) => headers.map((h) => toXlsxCell(row[h])))
+        };
+    });
+    return sheets.length > 0 ? sheets : [{ name: fallbackName, headers: ['id'], rows: [] }];
 }
 
 /** Wiersze wersji z biznesowymi id (bez prefiksu versionId:) — pod diff/eksport. */

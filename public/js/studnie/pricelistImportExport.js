@@ -5,156 +5,26 @@ async function exportStudnieToExcel() {
     }
 
     try {
-        await ensureXlsx();
-        const wb = XLSX.utils.book_new();
-
-        function getSheetName(p) {
-            const c = (p.category || '').toLowerCase();
-            const ct = (p.componentType || '').toLowerCase();
-
-            if (
-                c.includes('akcesoria') ||
-                c.includes('chemia') ||
-                c.includes('stopnie') ||
-                c.includes('uszczelki') ||
-                ct === 'wlaz' ||
-                ct === 'osadnik'
-            )
-                return 'Akcesoria';
-            if (
-                c.includes('przejścia') ||
-                c.includes('przejscia') ||
-                c.includes('otwór') ||
-                c.includes('otwor') ||
-                ct === 'przejscie'
-            )
-                return 'Przejścia';
-            if (c.includes('kinet') || ct === 'kineta') return 'Kinety';
-            if (c.includes('dennic') || ct === 'dennica') return 'Dennicy';
-
-            if (p.dn) {
-                return 'DN' + p.dn;
-            }
-
-            return 'Inne';
-        }
-
-        const categories = {};
-        studnieProducts.forEach((p) => {
-            const cat = getSheetName(p);
-            if (!categories[cat]) categories[cat] = [];
-            categories[cat].push(p);
+        // Etap C: plik buduje serwer — pobranie zamiast budowania SheetJS (import dalej używa XLSX).
+        const exportRes = await fetch('/api/products-studnie/export.xlsx?source=live', {
+            headers: typeof authHeaders === 'function' ? authHeaders() : {}
         });
-
-        Object.keys(categories).forEach((cat) => {
-            if (cat === 'Przejścia') {
-                categories[cat] = [...categories[cat]].sort((a, b) => {
-                    if (a.category !== b.category)
-                        return (a.category || '').localeCompare(b.category || '');
-                    const dnA = typeof a.dn === 'string' ? parseInt(a.dn) || 0 : a.dn || 0;
-                    const dnB = typeof b.dn === 'string' ? parseInt(b.dn) || 0 : b.dn || 0;
-                    return dnA - dnB;
-                });
-            }
-
-            const rows = categories[cat].map((p) => {
-                const row = {};
-                EXPORT_COLUMNS.forEach((col) => {
-                    row[col.header] = p[col.key] ?? '';
-                });
-                return row;
-            });
-
-            const ws = XLSX.utils.json_to_sheet(rows);
-
-            ws['!cols'] = EXPORT_COLUMNS.map((col) => ({
-                wch: Math.max(col.header.length + 2, 15)
-            }));
-
-            const sheetName = cat.replace(/[[\]*/\\?:]/g, '_').substring(0, 31);
-            XLSX.utils.book_append_sheet(wb, ws, sheetName);
-        });
-
-        if (precoPricing && Object.keys(precoPricing).length > 0) {
-            const precoKinetyRows = [];
-            const precoZakresyRows = [];
-            const precoDodatkiRows = [];
-
-            Object.keys(precoPricing).forEach((dn) => {
-                const data = precoPricing[dn];
-                if (!data) return;
-
-                if (data.kinety) {
-                    data.kinety.forEach((k) => {
-                        precoKinetyRows.push({
-                            'DN Studni': Number(dn),
-                            'DN Rury': k.dn,
-                            'Cena prosta (PLN)': k.prosta,
-                            'Dod. wlot (PLN)': k.dodWlot
-                        });
-                    });
-                }
-
-                ['spadekKineta', 'spadekMufa', 'uniesienie', 'redukcja'].forEach((typ) => {
-                    if (data[typ]) {
-                        data[typ].forEach((row) => {
-                            if (row.grupy) {
-                                Object.keys(row.grupy).forEach((g) => {
-                                    precoZakresyRows.push({
-                                        Typ: typ,
-                                        'DN Studni': Number(dn),
-                                        Min: row.min,
-                                        Max: row.max,
-                                        'Grupa DN': g,
-                                        'Cena (PLN)': row.grupy[g]
-                                    });
-                                });
-                            }
-                        });
-                    }
-                });
-
-                precoDodatkiRows.push({
-                    'DN Studni': Number(dn),
-                    'Skrzynka włazowa': data.skrzynkaWlazowa || 0,
-                    'Cena dna osadnika': data.cenaDnoOsadnika || 0,
-                    'Cena pełna wys MB': data.cenaPelnaWysMB || 0
-                });
-            });
-
-            if (precoKinetyRows.length > 0) {
-                const ws = XLSX.utils.json_to_sheet(precoKinetyRows);
-                ws['!cols'] = [{ wch: 12 }, { wch: 12 }, { wch: 18 }, { wch: 18 }];
-                XLSX.utils.book_append_sheet(wb, ws, 'PRECO_Kinety');
-            }
-            if (precoZakresyRows.length > 0) {
-                const ws = XLSX.utils.json_to_sheet(precoZakresyRows);
-                ws['!cols'] = [
-                    { wch: 15 },
-                    { wch: 12 },
-                    { wch: 8 },
-                    { wch: 8 },
-                    { wch: 12 },
-                    { wch: 15 }
-                ];
-                XLSX.utils.book_append_sheet(wb, ws, 'PRECO_Zakresy');
-            }
-            if (precoDodatkiRows.length > 0) {
-                const ws = XLSX.utils.json_to_sheet(precoDodatkiRows);
-                ws['!cols'] = [{ wch: 12 }, { wch: 18 }, { wch: 18 }, { wch: 18 }];
-                XLSX.utils.book_append_sheet(wb, ws, 'PRECO_Dodatki');
-            }
-        }
-
-        XLSX.writeFile(wb, 'Cennik_Studni_Export.xlsx');
+        if (!exportRes.ok) throw new Error('Błąd HTTP ' + exportRes.status);
+        const exportBlob = await exportRes.blob();
+        const exportLink = document.createElement('a');
+        exportLink.href = URL.createObjectURL(exportBlob);
+        exportLink.download = 'Cennik_Studni_Export.xlsx';
+        document.body.appendChild(exportLink);
+        exportLink.click();
+        setTimeout(() => {
+            URL.revokeObjectURL(exportLink.href);
+            exportLink.remove();
+        }, 1000);
         showToast(
-            'Wyeksportowano cennik do Excela (' +
-                studnieProducts.length +
-                ' pozycji w ' +
-                Object.keys(categories).length +
-                ' zakładkach)',
+            'Wyeksportowano cennik do Excela (' + studnieProducts.length + ' pozycji)',
             'success'
         );
+        return;
     } catch (err) {
         logger.error('pricelistManager', 'Export error:', err);
         showToast('Błąd podczas eksportu do Excela', 'error');
@@ -187,7 +57,7 @@ async function importStudnieFromExcel(event) {
             const data = new Uint8Array(/** @type {ArrayBuffer} */ (e.target.result));
             const workbook = XLSX.read(data, { type: 'array' });
 
-            const parsed = pricelistXlsx.parseWorkbookToJson(XLSX, workbook, {
+            const parsed = window.pricelistXlsx.parseWorkbookToJson(XLSX, workbook, {
                 includePreco: true
             });
             const allJson = parsed.rows;
@@ -233,7 +103,7 @@ async function importStudnieFromExcel(event) {
             ];
 
             const dnColKey = HEADER_TO_KEY['dn'] || 'dn';
-            const normalized = pricelistXlsx.normalizeRows(allJson, {
+            const normalized = window.pricelistXlsx.normalizeRows(allJson, {
                 headerToKey: HEADER_TO_KEY,
                 numericFields,
                 emptyDefaults: {

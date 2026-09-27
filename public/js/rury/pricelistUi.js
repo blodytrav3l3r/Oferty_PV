@@ -354,24 +354,20 @@ async function exportRuryToExcel() {
         return;
     }
     try {
-        await ensureXlsx();
-        const wb = XLSX.utils.book_new();
-
-        const rows = products.map((p) => {
-            const row = {};
-            RURY_EXPORT_COLUMNS.forEach((col) => {
-                row[col.header] = p[col.key] ?? '';
-            });
-            return row;
-        });
-
-        const ws = XLSX.utils.json_to_sheet(rows);
-        ws['!cols'] = RURY_EXPORT_COLUMNS.map((col) => ({
-            wch: Math.max(col.header.length + 2, 15)
-        }));
-
-        XLSX.utils.book_append_sheet(wb, ws, 'Cennik Rury');
-        XLSX.writeFile(wb, 'Cennik_Rury_Export.xlsx');
+        // Etap C: plik buduje serwer (GET /api/products/export.xlsx), tu tylko pobranie.
+        const headers = typeof authHeaders === 'function' ? authHeaders() : {};
+        const res = await fetch('/api/products/export.xlsx?source=live', { headers });
+        if (!res.ok) throw new Error('Błąd HTTP ' + res.status);
+        const blob = await res.blob();
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'Cennik_Rury_Export.xlsx';
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => {
+            URL.revokeObjectURL(a.href);
+            a.remove();
+        }, 1000);
         showToast(
             'Wyeksportowano cennik rur do Excela (' + products.length + ' pozycji)',
             'success'
@@ -407,7 +403,7 @@ async function importRuryFromExcel(event) {
             await ensureXlsx();
             const data = new Uint8Array(/** @type {ArrayBuffer} */ (e.target.result));
             const workbook = XLSX.read(data, { type: 'array' });
-            const parsed = pricelistXlsx.parseWorkbookToJson(XLSX, workbook, {
+            const parsed = window.pricelistXlsx.parseWorkbookToJson(XLSX, workbook, {
                 firstSheetOnly: true
             });
             const json = parsed.rows;
@@ -418,7 +414,7 @@ async function importRuryFromExcel(event) {
             }
 
             const numericFields = ['price', 'weight', 'transport', 'area'];
-            const normalized = pricelistXlsx.normalizeRows(json, {
+            const normalized = window.pricelistXlsx.normalizeRows(json, {
                 headerToKey: RURY_HEADER_TO_KEY,
                 numericFields,
                 preValidate: (product) => {

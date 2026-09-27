@@ -6,6 +6,13 @@ import { validateData } from '../validators/authSchema';
 import { precoPricingUpdateSchema, precoPricingPatchSchema } from '../validators/offerSchemas';
 import { createModuleLock } from '../middleware/writeLock';
 import prisma from '../prismaClient';
+import { buildXlsx } from '../utils/minimalXlsx';
+import {
+    PricelistVersionError,
+    liveSheetsToXlsxSheets,
+    projectPrecoNestedToSheets,
+    requireExportSource
+} from '../services/pricelistVersionService';
 
 const router = express.Router();
 const writeLimiter = PRECO_PRICING_LIMITER;
@@ -264,6 +271,44 @@ router.patch(
         }
     }
 );
+
+// ──────────────────────────────────────────
+// GET /export.xlsx?source=live|default — sama część PRECO (Etap C),
+// projekcja kształtu zagnieżdżonego 1:1 z eksportem FE
+router.get('/export.xlsx', requireAuth, async (req, res) => {
+    try {
+        const source = requireExportSource(req.query.source);
+        const result =
+            source === 'live'
+                ? await formatPrecoResponse(
+                      prisma.precoKonfig,
+                      prisma.precoKinety,
+                      prisma.precoZakresy
+                  )
+                : await formatPrecoResponse(
+                      prisma.precoKonfigDefault,
+                      prisma.precoKinetyDefault,
+                      prisma.precoZakresyDefault
+                  );
+        const entry = (result.data[0] ?? {}) as Record<string, unknown>;
+        const live = projectPrecoNestedToSheets(entry);
+        const xlsx = await buildXlsx(liveSheetsToXlsxSheets(live, 'PRECO_Kinety'));
+        res.setHeader(
+            'Content-Type',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        );
+        res.setHeader('Content-Disposition', 'attachment; filename="Cennik_Preco_Export.xlsx"');
+        res.send(xlsx);
+    } catch (err: unknown) {
+        if (err instanceof PricelistVersionError) {
+            res.status(err.statusCode).json({ error: err.message, code: err.code });
+            return;
+        }
+        const message = err instanceof Error ? err.message : 'Unknown error';
+        logger.error('PrecoPricingV2', 'GET /export.xlsx error', message);
+        res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
+    }
+});
 
 // ──────────────────────────────────────────
 // GET /default — fabryczne wartości PRECO z Preco*Default tables
