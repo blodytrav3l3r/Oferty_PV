@@ -66,7 +66,11 @@
                     ' | ranking: ' +
                     (status.rankingVersion || '?') +
                     ' | feat: ' +
-                    (status.featureVersion || '?');
+                    (status.featureVersion || '?') +
+                    (status.trainingRows != null ? ' | wiersze: ' + status.trainingRows : '') +
+                    (status.lastTrainingRun && status.lastTrainingRun.id
+                        ? ' | run: ' + String(status.lastTrainingRun.id).slice(0, 8)
+                        : '');
             } else {
                 dot.style.background = 'var(--slate-400)';
                 dot.style.boxShadow = 'none';

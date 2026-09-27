@@ -624,6 +624,13 @@ router.get('/ai/ml-status', requireAuth, READ_LIMITER, async (_req: Request, res
             modelVersion: activeModel?.version || null,
             activeModelAuc: activeModel?.metrics?.rocAuc ?? null,
             baselineAccuracy,
+            // P3.3: lineage minimum — wiersze treningowe, seed i ostatni run
+            // (bez zmiany schematu; dataset fingerprint dopiero z migracją).
+            trainingRows: activeModel?.trainingRows ?? null,
+            trainingSeed: activeModel?.seed ?? null,
+            lastTrainingRun: lastSuccessRun
+                ? { id: lastSuccessRun.id, startedAt: lastSuccessRun.startedAt }
+                : null,
             activeModelMetrics: {
                 rocAuc: activeMetrics.rocAuc ?? null,
                 prAuc: activeMetrics.prAuc ?? null,
