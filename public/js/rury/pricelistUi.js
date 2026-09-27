@@ -382,12 +382,18 @@ async function importRuryFromExcel(event, opts) {
     const file = event.target.files[0];
     if (!file) return;
     // Etap D: cel importu — 'live' (default, zachowanie jak dziś) albo 'draft'
-    // (POST /api/pricelist-versions/rury/drafts). Wybór z UI dopiero w Etapie E.
-    const target = (opts && opts.target) || 'live';
-    const note = (opts && opts.note) || '';
+    // (POST /api/pricelist-versions/rury/drafts). Etap E: bez jawnego
+    // opts.target cel wybiera użytkownik w modalu po parsowaniu.
+    const explicitTarget = (opts && opts.target) || null;
+    const explicitNote = (opts && opts.note) || '';
 
     const btns = document.querySelectorAll('[onclick*="importRuryFromExcel"]');
     btns.forEach((b) => b.setAttribute('disabled', 'true'));
+
+    const resetImportInput = () => {
+        btns.forEach((b) => b.removeAttribute('disabled'));
+        event.target.value = '';
+    };
 
     if (_pricelistDirty) {
         const proceed = await appConfirm(
@@ -401,6 +407,7 @@ async function importRuryFromExcel(event, opts) {
         }
     }
 
+    let modalShown = false;
     const reader = new FileReader();
     reader.onload = async function (e) {
         try {
@@ -444,66 +451,86 @@ async function importRuryFromExcel(event, opts) {
                 return;
             }
 
-            const confirmImport = await appConfirm(
-                target === 'draft'
-                    ? `Zapisać ${normalized.length} pozycji jako wersję roboczą? Cennik na żywo nie zmieni się.`
-                    : `Zaimportować ${normalized.length} pozycji? Aktualny cennik zostanie zastąpiony.`,
-                { title: 'Import cennika', type: 'warning' }
-            );
-            if (!confirmImport) return;
-
-            if (target === 'draft') {
+            // Etap E: kontynuacja po parsowaniu — cel z modala (UI) albo jawny opts.
+            const finishImport = async (data, target, note) => {
                 try {
-                    const payload = window.pricelistXlsx.buildDraftPayload(normalized, note);
-                    const draftHeaders = Object.assign(
-                        {},
-                        typeof authHeaders === 'function' ? authHeaders() : {},
-                        { 'Content-Type': 'application/json' }
+                    const confirmImport = await appConfirm(
+                        target === 'draft'
+                            ? `Zapisać ${data.length} pozycji jako wersję roboczą? Cennik na żywo nie zmieni się.`
+                            : `Zaimportować ${data.length} pozycji? Aktualny cennik zostanie zastąpiony.`,
+                        { title: 'Import cennika', type: 'warning' }
                     );
-                    const draftRes = await fetch('/api/pricelist-versions/rury/drafts', {
-                        method: 'POST',
-                        headers: draftHeaders,
-                        body: JSON.stringify(payload)
-                    });
-                    let draftBody = null;
-                    try {
-                        draftBody = await draftRes.json();
-                    } catch (_e) {
-                        draftBody = null;
+                    if (!confirmImport) return;
+
+                    if (target === 'draft') {
+                        try {
+                            const payload = window.pricelistXlsx.buildDraftPayload(data, note);
+                            const draftHeaders = Object.assign(
+                                {},
+                                typeof authHeaders === 'function' ? authHeaders() : {},
+                                { 'Content-Type': 'application/json' }
+                            );
+                            const draftRes = await fetch('/api/pricelist-versions/rury/drafts', {
+                                method: 'POST',
+                                headers: draftHeaders,
+                                body: JSON.stringify(payload)
+                            });
+                            let draftBody = null;
+                            try {
+                                draftBody = await draftRes.json();
+                            } catch (_e) {
+                                draftBody = null;
+                            }
+                            if (!draftRes.ok)
+                                throw new Error(
+                                    (draftBody && draftBody.error) || 'Błąd HTTP ' + draftRes.status
+                                );
+                            const v = (draftBody && draftBody.version) || {};
+                            showToast(
+                                'Wersja robocza zapisana' +
+                                    (v.version ? ' (' + v.version + ')' : ''),
+                                'success'
+                            );
+                        } catch (err) {
+                            logger.error('pricelistUi', 'Draft import error:', err);
+                            showToast('Błąd zapisu wersji roboczej: ' + err.message, 'error');
+                        }
+                        return;
                     }
-                    if (!draftRes.ok)
-                        throw new Error(
-                            (draftBody && draftBody.error) || 'Błąd HTTP ' + draftRes.status
-                        );
-                    const v = (draftBody && draftBody.version) || {};
+
+                    products = data;
+                    _pricelistDirty = true;
+                    updateSaveBtn();
+                    renderPriceList();
                     showToast(
-                        'Wersja robocza zapisana' + (v.version ? ' (' + v.version + ')' : ''),
+                        'Pomyślnie zaimportowano ' +
+                            data.length +
+                            ' pozycji — kliknij Zapisz by zachować',
                         'success'
                     );
                 } catch (err) {
-                    logger.error('pricelistUi', 'Draft import error:', err);
-                    showToast('Błąd zapisu wersji roboczej: ' + err.message, 'error');
+                    logger.error('pricelistUi', 'Import error:', err);
+                    showToast('Błąd podczas importu pliku Excel', 'error');
+                } finally {
+                    resetImportInput();
                 }
+            };
+
+            if (explicitTarget) {
+                await finishImport(normalized, explicitTarget, explicitNote);
                 return;
             }
-
-            products = normalized;
-            _pricelistDirty = true;
-            updateSaveBtn();
-            renderPriceList();
-            showToast(
-                'Pomyślnie zaimportowano ' +
-                    normalized.length +
-                    ' pozycji — kliknij Zapisz by zachować',
-                'success'
-            );
+            modalShown = true;
+            window.pricelistXlsx.openImportTargetModal({
+                onPick: (target, note) => finishImport(normalized, target, note),
+                onCancel: resetImportInput
+            });
         } catch (err) {
             logger.error('pricelistUi', 'Import error:', err);
             showToast('Błąd podczas importu pliku Excel', 'error');
         } finally {
-            btns.forEach((b) => b.removeAttribute('disabled'));
+            if (!modalShown) resetImportInput();
         }
-        event.target.value = ''; // Reset input
     };
     reader.onerror = () => {
         btns.forEach((b) => b.removeAttribute('disabled'));

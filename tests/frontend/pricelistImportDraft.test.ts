@@ -103,9 +103,9 @@ describe('Etap D: rury import target', () => {
         return { sb, PX };
     }
 
-    test('live (default, bez opts): brak POST drafts, produkty lokalnie jak dziś', async () => {
+    test('live jawny (Etap E: default bez opts to modal — patrz pricelistImportTarget)', async () => {
         const { sb } = loadRury();
-        await sb.importRuryFromExcel(xlsxEvent());
+        await sb.importRuryFromExcel(xlsxEvent(), { target: 'live' });
         await flush();
         expect(sb.fetch).not.toHaveBeenCalled();
         expect(sb.products).toHaveLength(2);
@@ -174,9 +174,9 @@ describe('Etap D: studnie import target', () => {
         return sb;
     }
 
-    test('live: brak POST drafts, produkty+PRECO lokalnie jak dziś', async () => {
+    test('live jawny (Etap E: bez opts pokazuje modal — patrz pricelistImportTarget)', async () => {
         const sb = loadStudnie(undefined, true);
-        await sb.importStudnieFromExcel(xlsxEvent());
+        await sb.importStudnieFromExcel(xlsxEvent(), { target: 'live' });
         await flush();
         expect(sb.fetch).not.toHaveBeenCalled();
         expect(sb.window.studnieProducts).toHaveLength(1);

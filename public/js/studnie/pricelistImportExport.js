@@ -37,12 +37,18 @@ async function importStudnieFromExcel(event, opts) {
     // Etap D: cel importu — 'live' (default, zachowanie jak dziś) albo 'draft'
     // (POST /api/pricelist-versions/studnie/drafts, tylko produkty; PRECO
     // pomijane — kształt zagnieżdżony po DN vs płaskie {konfig,kinety,zakresy}
-    // w POST /preco/drafts to osobny temat). Wybór z UI dopiero w Etapie E.
-    const target = (opts && opts.target) || 'live';
-    const note = (opts && opts.note) || '';
+    // w POST /preco/drafts to osobny temat). Etap E: bez jawnego opts.target
+    // cel wybiera użytkownik w modalu po parsowaniu.
+    const explicitTarget = (opts && opts.target) || null;
+    const explicitNote = (opts && opts.note) || '';
 
     const btns = document.querySelectorAll('[onclick*="importStudnieFromExcel"]');
     btns.forEach((b) => b.setAttribute('disabled', 'true'));
+
+    const resetImportInput = () => {
+        btns.forEach((b) => b.removeAttribute('disabled'));
+        event.target.value = '';
+    };
 
     if (_studniePricelistDirty) {
         const proceed = await appConfirm(
@@ -56,6 +62,7 @@ async function importStudnieFromExcel(event, opts) {
         }
     }
 
+    let modalShown = false;
     const reader = new FileReader();
     reader.onload = async function (e) {
         try {
@@ -159,76 +166,104 @@ async function importStudnieFromExcel(event, opts) {
                 return;
             }
 
-            const confirmImport = await appConfirm(
-                target === 'draft'
-                    ? `Zapisać dane jako wersję roboczą? Cennik na żywo nie zmieni się.`
-                    : `Zaimportować dane? Aktualny cennik zostanie zastąpiony.`,
-                { title: 'Import cennika', type: 'warning' }
-            );
-            if (!confirmImport) return;
-
-            if (target === 'draft') {
+            // Etap E: kontynuacja po parsowaniu — cel z modala (UI) albo jawny opts.
+            const finishImport = async (data, target, note) => {
                 try {
-                    const payload = window.pricelistXlsx.buildDraftPayload(normalized, note);
-                    const draftHeaders = Object.assign(
-                        {},
-                        typeof authHeaders === 'function' ? authHeaders() : {},
-                        { 'Content-Type': 'application/json' }
+                    const confirmImport = await appConfirm(
+                        target === 'draft'
+                            ? `Zapisać dane jako wersję roboczą? Cennik na żywo nie zmieni się.`
+                            : `Zaimportować dane? Aktualny cennik zostanie zastąpiony.`,
+                        { title: 'Import cennika', type: 'warning' }
                     );
-                    const draftRes = await fetch('/api/pricelist-versions/studnie/drafts', {
-                        method: 'POST',
-                        headers: draftHeaders,
-                        body: JSON.stringify(payload)
-                    });
-                    let draftBody = null;
-                    try {
-                        draftBody = await draftRes.json();
-                    } catch (_e) {
-                        draftBody = null;
+                    if (!confirmImport) return;
+
+                    if (target === 'draft') {
+                        try {
+                            const payload = window.pricelistXlsx.buildDraftPayload(
+                                data.normalized,
+                                note
+                            );
+                            const draftHeaders = Object.assign(
+                                {},
+                                typeof authHeaders === 'function' ? authHeaders() : {},
+                                { 'Content-Type': 'application/json' }
+                            );
+                            const draftRes = await fetch('/api/pricelist-versions/studnie/drafts', {
+                                method: 'POST',
+                                headers: draftHeaders,
+                                body: JSON.stringify(payload)
+                            });
+                            let draftBody = null;
+                            try {
+                                draftBody = await draftRes.json();
+                            } catch (_e) {
+                                draftBody = null;
+                            }
+                            if (!draftRes.ok)
+                                throw new Error(
+                                    (draftBody && draftBody.error) || 'Błąd HTTP ' + draftRes.status
+                                );
+                            const v = (draftBody && draftBody.version) || {};
+                            showToast(
+                                'Wersja robocza zapisana' +
+                                    (v.version ? ' (' + v.version + ')' : ''),
+                                'success'
+                            );
+                            if (data.hasPrecoData)
+                                showToast(
+                                    'Dane PRECO pominięto — draft obejmuje produkty studni',
+                                    'warning'
+                                );
+                        } catch (err) {
+                            logger.error('pricelistManager', 'Draft import error:', err);
+                            showToast('Błąd zapisu wersji roboczej: ' + err.message, 'error');
+                        }
+                        return;
                     }
-                    if (!draftRes.ok)
-                        throw new Error(
-                            (draftBody && draftBody.error) || 'Błąd HTTP ' + draftRes.status
-                        );
-                    const v = (draftBody && draftBody.version) || {};
-                    showToast(
-                        'Wersja robocza zapisana' + (v.version ? ' (' + v.version + ')' : ''),
-                        'success'
-                    );
-                    if (hasPrecoData)
-                        showToast(
-                            'Dane PRECO pominięto — draft obejmuje produkty studni',
-                            'warning'
-                        );
+
+                    if (data.normalized.length > 0) {
+                        window.studnieProducts = data.normalized;
+                        _studniePricelistDirty = true;
+                        updateStudnieSaveBtn();
+                    }
+
+                    if (data.hasPrecoData) {
+                        precoPricing = data.precoDataMap;
+                        _precoDirty = true;
+                        updatePrecoSaveBtn();
+                    }
+
+                    renderStudniePriceList();
+                    renderTiles();
+                    showToast(`Pomyślnie zaimportowano cennik z Excela`, 'success');
                 } catch (err) {
-                    logger.error('pricelistManager', 'Draft import error:', err);
-                    showToast('Błąd zapisu wersji roboczej: ' + err.message, 'error');
+                    logger.error('pricelistManager', 'Import error:', err);
+                    showToast('Błąd podczas importu pliku Excel', 'error');
+                } finally {
+                    resetImportInput();
                 }
+            };
+
+            if (explicitTarget) {
+                await finishImport(
+                    { normalized, hasPrecoData, precoDataMap },
+                    explicitTarget,
+                    explicitNote
+                );
                 return;
             }
-
-            if (normalized.length > 0) {
-                window.studnieProducts = normalized;
-                _studniePricelistDirty = true;
-                updateStudnieSaveBtn();
-            }
-
-            if (hasPrecoData) {
-                precoPricing = precoDataMap;
-                _precoDirty = true;
-                updatePrecoSaveBtn();
-            }
-
-            renderStudniePriceList();
-            renderTiles();
-            showToast(`Pomyślnie zaimportowano cennik z Excela`, 'success');
+            modalShown = true;
+            window.pricelistXlsx.openImportTargetModal({
+                onPick: (target, note) =>
+                    finishImport({ normalized, hasPrecoData, precoDataMap }, target, note),
+                onCancel: resetImportInput
+            });
         } catch (err) {
             logger.error('pricelistManager', 'Import error:', err);
             showToast('Błąd podczas importu pliku Excel', 'error');
         } finally {
-            btns.forEach((b) => b.removeAttribute('disabled'));
+            if (!modalShown) resetImportInput();
         }
-        event.target.value = '';
     };
     reader.onerror = () => {
         btns.forEach((b) => b.removeAttribute('disabled'));
