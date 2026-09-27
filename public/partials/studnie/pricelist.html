@@ -40,7 +40,7 @@
                 type="button"
                 class="btn btn-secondary"
                 onclick="openStudnieVersionsPanel()"
-                title="Wersje cennika (zapisz jako wersję, aktywuj, diff)"
+                title="Wersje cennika (zapisz, aktywuj, porównaj, usuń)"
             >
                 <i data-lucide="layers"></i> Wersje
             </button>
@@ -59,19 +59,19 @@
                 onclick="exportStudnieToExcel()"
                 title="Eksportuj cennik do pliku Excel"
             >
-                <i data-lucide="upload"></i> Eksportuj Excel
+                <i data-lucide="download"></i> Eksportuj Excel
             </button>
             <button
                 type="button"
                 class="btn btn-secondary"
-                onclick="document.getElementById('import-studnie-excel').click()"
-                title="Importuj cennik z pliku Excel"
+                onclick="document.getElementById('import-pricelist-excel').click()"
+                title="Importuj cennik z pliku Excel (zawiera arkusze PRECO)"
             >
-                <i data-lucide="download"></i> Importuj Excel
+                <i data-lucide="upload"></i> Importuj Excel
             </button>
             <input
                 type="file"
-                id="import-studnie-excel"
+                id="import-pricelist-excel"
                 style="display: none"
                 accept=".xlsx,.xls"
                 onchange="importStudnieFromExcel(event)"

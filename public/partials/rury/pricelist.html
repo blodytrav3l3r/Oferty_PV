@@ -39,7 +39,7 @@
             type="button"
             class="btn btn-secondary"
             onclick="openRuryVersionsPanel()"
-            title="Wersje cennika (zapisz jako wersję, aktywuj, diff)"
+            title="Wersje cennika (zapisz, aktywuj, porównaj, usuń)"
         >
             <i data-lucide="layers"></i> Wersje
         </button>
@@ -58,15 +58,15 @@
             onclick="exportRuryToExcel()"
             title="Eksportuj cennik do pliku Excel"
         >
-            <i data-lucide="upload"></i> Eksportuj Excel
+            <i data-lucide="download"></i> Eksportuj Excel
         </button>
         <button
             type="button"
             class="btn btn-secondary"
-            onclick="document.getElementById('import-rury-excel').click()"
+            onclick="document.getElementById('import-pricelist-excel').click()"
             title="Importuj cennik z pliku Excel"
         >
-            <i data-lucide="download"></i> Importuj Excel
+            <i data-lucide="upload"></i> Importuj Excel
         </button>
         <button
             type="button"
@@ -78,7 +78,7 @@
         </button>
         <input
             type="file"
-            id="import-rury-excel"
+            id="import-pricelist-excel"
             style="display: none"
             accept=".xlsx,.xls"
             onchange="importRuryFromExcel(event)"
