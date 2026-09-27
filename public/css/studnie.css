@@ -1785,6 +1785,50 @@ html[data-theme='light'] #btn-auto-select:disabled {
     box-shadow: var(--shadow-sm);
 }
 
+/* Prawy pasek: strip zakładek Lista/Rabaty + szukajka (wyjęte z inline dark-only w sidebar.html) */
+.s-tabs-strip {
+    display: flex;
+    margin-top: 0.4rem;
+    padding: 0.2rem;
+    background: rgba(var(--black-rgb), 0.3);
+    border-radius: var(--radius-sm);
+    border: 1px solid rgba(var(--white-rgb), 0.05);
+}
+
+.s-tabs-strip .s-tab-btn {
+    font-size: var(--fs-xs);
+    padding: 0.35rem 0.2rem;
+}
+
+.s-search-wrap {
+    padding: 0.4rem;
+    border-bottom: 1px solid rgba(var(--white-rgb), 0.05);
+    background: rgba(var(--white-rgb), 0.05);
+}
+
+.s-search-input {
+    width: 100%;
+    padding: 0.4rem 0.6rem;
+    background: rgba(var(--black-rgb), 0.2);
+    border: 1px solid rgba(var(--white-rgb), 0.1);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-size: var(--fs-base);
+    outline: none;
+    transition:
+        border-color 0.2s,
+        background-color 0.2s;
+}
+
+.s-search-input:focus {
+    border-color: rgba(var(--accent-rgb), 0.5);
+    background: rgba(var(--black-rgb), 0.3);
+}
+
+.s-search-input::placeholder {
+    color: var(--text-muted);
+}
+
 .param-tile {
     padding: var(--tile-gap-xs) var(--tile-gap-sm-plus);
     border-radius: var(--radius-sm);
@@ -5748,6 +5792,31 @@ html[data-theme='light'] .fs-type-btn.active {
 /* L13: hover zakładki bocznej — wash white-rgb bez feedbacku w light. */
 html[data-theme='light'] .s-tab-btn:hover {
     background: var(--bg-hover);
+}
+
+/* L15: strip Lista/Rabaty + szukajka — szary wash z dark-inline bez odpowiednika w light. */
+html[data-theme='light'] .s-tabs-strip {
+    background: var(--bg-secondary);
+    border-color: var(--border);
+}
+
+html[data-theme='light'] .s-tab-btn.active {
+    background: var(--bg-card);
+}
+
+html[data-theme='light'] .s-search-wrap {
+    background: var(--bg-secondary);
+    border-bottom-color: var(--border);
+}
+
+html[data-theme='light'] .s-search-input {
+    background: var(--bg-card);
+    border-color: var(--border);
+}
+
+html[data-theme='light'] .s-search-input:focus {
+    border-color: var(--accent-border);
+    background: var(--bg-card);
 }
 
 /* L14: wlosowe biale ramki/dividerki znikaja na bieli — mapowanie na
