@@ -335,3 +335,90 @@ describe('Etap E: kontrakt (bez parsowania/endpointów/DB/kształtów)', () => {
         expect(studnie).not.toContain('Do cennika na żywo');
     });
 });
+
+describe('F3: rury — ostrzeżenie o wielu arkuszach (bez zmian parsowania)', () => {
+    const RURY_ROWS = [
+        { Indeks: 'R1', 'Nazwa produktu': 'Rura A', 'Cena PLN (netto)': '100,5' },
+        { Indeks: 'R2', 'Nazwa produktu': 'Rura B', 'Cena PLN (netto)': 200 }
+    ];
+
+    function loadRury(rowsBySheet) {
+        const sb = baseSandbox();
+        loadShared(sb);
+        stubCommon(sb, { rowsBySheet });
+        const doc = makeDoc();
+        stubModal(sb, doc);
+        sb.CATEGORIES = [];
+        sb.products = [];
+        vm.runInContext(readPub('rury/pricelistUi.js'), sb, { filename: 'pricelistUi.js' });
+        return { sb, doc };
+    }
+
+    test('parseWorkbookToJson zwraca sheetCount i sheetName', () => {
+        const sb = baseSandbox();
+        const PX = loadShared(sb);
+        const wb = {
+            SheetNames: ['Pierwszy', 'Drugi', 'Trzeci'],
+            Sheets: { Pierwszy: RURY_ROWS, Drugi: RURY_ROWS, Trzeci: RURY_ROWS }
+        };
+        const out = PX.parseWorkbookToJson({ utils: { sheet_to_json: (ws) => ws } }, wb, {
+            firstSheetOnly: true
+        });
+        expect(out.sheetCount).toBe(3);
+        expect(out.sheetName).toBe('Pierwszy');
+        expect(out.rows).toHaveLength(2);
+    });
+
+    test('1 arkusz → brak warningu, import jak dziś', async () => {
+        const { sb, doc } = loadRury({ Jedyny: RURY_ROWS });
+        const ev = xlsxEvent();
+        await sb.importRuryFromExcel(ev);
+        await flush();
+        doc.handlers['px-import-target-live'].click();
+        await flush();
+        expect(sb.products).toHaveLength(2);
+        expect(sb.showToast.mock.calls.filter((c) => c[1] === 'warning')).toHaveLength(0);
+        const ok = sb.showToast.mock.calls.find((c) => c[1] === 'success');
+        expect(ok[0]).toContain('2 pozycji');
+    });
+
+    test('3 arkusze → warning z N i nazwą + import jak dziś (live)', async () => {
+        const { sb, doc } = loadRury({
+            Pierwszy: RURY_ROWS,
+            Drugi: [{ Indeks: 'X1', 'Nazwa produktu': 'Inna' }],
+            Trzeci: [{ Indeks: 'X2', 'Nazwa produktu': 'Jeszcze inna' }]
+        });
+        const ev = xlsxEvent();
+        await sb.importRuryFromExcel(ev);
+        await flush();
+        doc.handlers['px-import-target-live'].click();
+        await flush();
+        expect(sb.products).toHaveLength(2);
+        expect(sb.products[0]).toMatchObject({ id: 'R1', price: 100.5 });
+        const warn = sb.showToast.mock.calls.find((c) => c[1] === 'warning');
+        expect(warn).toBeDefined();
+        expect(warn[0]).toContain('3 arkuszy');
+        expect(warn[0]).toContain('Pierwszy');
+        const ok = sb.showToast.mock.calls.find((c) => c[1] === 'success');
+        expect(ok[0]).toContain('2 pozycji');
+    });
+
+    test('3 arkusze → warning także dla draft (jawny target)', async () => {
+        const { sb } = loadRury({
+            Pierwszy: RURY_ROWS,
+            Drugi: [{ Indeks: 'X1', 'Nazwa produktu': 'Inna' }],
+            Trzeci: [{ Indeks: 'X2', 'Nazwa produktu': 'Jeszcze inna' }]
+        });
+        sb.fetch = jest.fn(async () => ({
+            ok: true,
+            json: async () => ({ version: { id: 'd1', version: 'v3' } })
+        }));
+        await sb.importRuryFromExcel(xlsxEvent(), { target: 'draft', note: 'x' });
+        await flush();
+        expect(sb.fetch).toHaveBeenCalledTimes(1);
+        const warn = sb.showToast.mock.calls.find((c) => c[1] === 'warning');
+        expect(warn).toBeDefined();
+        expect(warn[0]).toContain('3 arkuszy');
+        expect(warn[0]).toContain('Pierwszy');
+    });
+});

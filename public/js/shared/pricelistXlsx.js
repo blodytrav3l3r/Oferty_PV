@@ -157,7 +157,8 @@
         var o = opts || {};
         var rows = [];
         var precoDataMap = {};
-        var names = workbook.SheetNames || [];
+        var allNames = workbook.SheetNames || [];
+        var names = allNames;
         if (o.firstSheetOnly === true) names = names.slice(0, 1);
         names.forEach(function (sheetName) {
             var worksheet = workbook.Sheets[sheetName];
@@ -169,7 +170,12 @@
             }
             rows = rows.concat(sheetJson);
         });
-        return { rows: rows, precoDataMap: precoDataMap };
+        return {
+            rows: rows,
+            precoDataMap: precoDataMap,
+            sheetCount: allNames.length,
+            sheetName: allNames[0] || ''
+        };
     }
 
     /**

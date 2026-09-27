@@ -454,6 +454,12 @@ async function importRuryFromExcel(event, opts) {
             // Etap E: kontynuacja po parsowaniu — cel z modala (UI) albo jawny opts.
             const finishImport = async (data, target, note) => {
                 try {
+                    if (parsed.sheetCount > 1) {
+                        showToast(
+                            `Plik ma ${parsed.sheetCount} arkuszy — wczytano pierwszy (${parsed.sheetName})`,
+                            'warning'
+                        );
+                    }
                     const confirmImport = await appConfirm(
                         target === 'draft'
                             ? `Zapisać ${data.length} pozycji jako wersję roboczą? Cennik na żywo nie zmieni się.`
