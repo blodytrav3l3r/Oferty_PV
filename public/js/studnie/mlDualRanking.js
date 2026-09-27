@@ -172,8 +172,18 @@
         if (urlMatch) return parseInt(urlMatch[1], 10);
 
         // 2. localStorage override
-        const local = window.localStorage.getItem('wells_ai_influence');
-        if (local !== null) {
+        let local = null;
+        try {
+            local =
+                typeof window !== 'undefined' &&
+                typeof window.localStorage !== 'undefined' &&
+                window.localStorage
+                    ? window.localStorage.getItem('wells_ai_influence')
+                    : null;
+        } catch (_e) {
+            local = null;
+        }
+        if (typeof local === 'string' && local !== null) {
             const p = parseInt(local, 10);
             if (!isNaN(p) && p >= 0 && p <= 100) return p;
         }

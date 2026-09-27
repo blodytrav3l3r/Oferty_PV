@@ -55,7 +55,7 @@ window.handleCfgDragStart = function (e) {
         e.currentTarget.getAttribute('data-cfg-idx') || e.currentTarget.getAttribute('data-zl-idx');
     draggedCfgIndex = parseInt(attr);
     e.dataTransfer.effectAllowed = 'move';
-    e.currentTarget.style.opacity = '0.4';
+    e.currentTarget.classList.add('is-dragging');
 
     if (well && well.config[draggedCfgIndex]) {
         well.config[draggedCfgIndex].isPlaceholder = true;
@@ -72,7 +72,7 @@ window.handleCfgDragOver = function (e) {
 
     if (draggedCfgIndex !== null) {
         if (tile) {
-            tile.style.borderTop = '2px solid var(--accent)';
+            tile.classList.add('is-drop-target');
             const dropIndex = parseInt(
                 tile.getAttribute('data-cfg-idx') || tile.getAttribute('data-zl-idx')
             );
@@ -145,7 +145,7 @@ window.handleCfgDrop = function (e) {
         if (!well) return;
 
         if (draggedCfgIndex !== null) {
-            tile.style.borderTop = '';
+            tile.classList.remove('is-drop-target');
 
             well.config.forEach((c) => (c.isPlaceholder = false));
 
@@ -217,8 +217,12 @@ window.handleCfgDrop = function (e) {
 };
 
 window.handleCfgDragEnd = function (e) {
-    e.currentTarget.style.opacity = '1';
-    document.querySelectorAll('.config-tile').forEach((t) => (t.style.borderTop = ''));
+    e.currentTarget.classList.remove('is-dragging');
+    document
+        .querySelectorAll(
+            '.config-tile.is-drop-target, .zl-config-tile.is-drop-target, .config-tile.is-dragging, .zl-config-tile.is-dragging'
+        )
+        .forEach((t) => t.classList.remove('is-drop-target', 'is-dragging'));
     draggedCfgIndex = null;
 
     const well = getCurrentWell();

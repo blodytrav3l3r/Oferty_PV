@@ -55,7 +55,7 @@ function renderOfferSummary() {
             saveBtn.style.background = '';
             saveBtn.style.borderColor = '';
 
-            if (createOrderBtn) createOrderBtn.style.display = 'none';
+            if (createOrderBtn) createOrderBtn.classList.add('hidden');
         } else {
             saveBtn.innerHTML = '<i data-lucide="save" aria-hidden="true"></i> Zapisz ofertę';
             saveBtn.onclick = () => {
@@ -66,7 +66,7 @@ function renderOfferSummary() {
             saveBtn.style.background = '';
             saveBtn.style.borderColor = '';
 
-            if (createOrderBtn) createOrderBtn.style.display = 'flex';
+            if (createOrderBtn) createOrderBtn.classList.remove('hidden');
         }
         if (window.lucide) window.lucide.createIcons({ root: saveBtn });
     }

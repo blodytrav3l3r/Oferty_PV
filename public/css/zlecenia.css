@@ -417,12 +417,9 @@
     border: 1px solid rgba(var(--pink-rgb), 0.5);
     border-radius: var(--radius-md);
     margin-bottom: var(--tile-gap-lg);
-    /* P3: płaski tint zamiast gradientu; blur zostaje — czytelność paska
-       nad przewijaną treścią (sticky), nie dekoracja. */
+    /* P3: plaski tint + cien --shadow-md zamiast gradientu i blur. */
     background: rgba(var(--pink-rgb), 0.15);
     box-shadow: var(--shadow-md);
-    -webkit-backdrop-filter: blur(12px);
-    backdrop-filter: blur(12px);
     animation: batchBarIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 @keyframes batchBarIn {

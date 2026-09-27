@@ -56,7 +56,8 @@
     --success-bg-hover: #0f3328;
     --success-border: #145d3a;
     --success-strong: #006600;
-    --success-bg-soft: #e6f7e6;
+    /* Ciemne washe w dark (:root = dark SSoT); jasne pastele w light ponizej. */
+    --success-bg-soft: #0d2a20;
 
     /* Status — danger */
     --danger: #ef4444;
@@ -65,7 +66,7 @@
     --danger-bg-hover: #251010;
     --danger-border: #7a3030;
     --danger-strong: #cc0000;
-    --danger-bg-soft: #fce8e8;
+    --danger-bg-soft: #3a1515;
 
     /* Status — warn */
     --warn: #f59e0b;
@@ -73,7 +74,7 @@
     --warn-bg: #2d1a08;
     --warn-border: #5a3010;
     --warn-strong: #8a5c00;
-    --warn-bg-soft: #fff3e0;
+    --warn-bg-soft: #2d1a08;
     --warn-bg-light: #fffbeb;
 
     /* Blue accent (sub-module nav) */
@@ -2478,6 +2479,12 @@ html[data-theme='light'] {
     --danger-border: #fca5a5;
     --warn-bg: #fef3c7;
     --warn-border: #fcd34d;
+    /* Jasne pastele soft w light (w :root ciemne washe dark). */
+    --success-bg-soft: #e6f7e6;
+    --danger-bg-soft: #fce8e8;
+    --warn-bg-soft: #fff3e0;
+    /* Focus per motyw — w light rozwiazuje sie do jasnego akcentu. */
+    --focus-ring: var(--accent);
 
     /* Vivid hover jako kolor tekstu/grafiki — w light ciemne warianty.
        Naprawia naraz dziesiątki inline styli w JS (offerSavedList,

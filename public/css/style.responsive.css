@@ -171,17 +171,12 @@
     box-sizing: border-box;
     margin-bottom: var(--tile-gap-sm-plus);
     padding: var(--tile-gap-sm-plus) var(--tile-gap-md);
-    background: linear-gradient(
-        135deg,
-        rgba(var(--slate-800-rgb), 0.8),
-        rgba(var(--accent-rgb), 0.1)
-    );
-    border: 1px solid rgba(var(--accent-rgb), 0.2);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
     border-radius: var(--radius-sm);
     box-shadow:
         0 4px 12px rgba(var(--black-rgb), 0.15),
         0 1px 3px rgba(var(--black-rgb), 0.1);
-    backdrop-filter: blur(10px);
     transition:
         border-color 0.3s,
         box-shadow 0.3s;
@@ -273,8 +268,8 @@
 /* Tryb jasny — pasek filtrow: zamiast szarej plamy slate-800 jasna
    powierzchnia z subtelnym akcentem (slate-800-rgb to kotwica dark). */
 html[data-theme='light'] .kartoteka-filter-bar {
-    background: linear-gradient(135deg, var(--bg-secondary), rgba(var(--accent-rgb), 0.07));
-    border-color: rgba(var(--accent-rgb), 0.25);
+    background: var(--bg-secondary);
+    border-color: var(--border);
     box-shadow:
         0 4px 12px rgba(var(--slate-950-rgb), 0.08),
         0 1px 3px rgba(var(--slate-950-rgb), 0.06);
@@ -1374,6 +1369,10 @@ html[data-theme='light'] .toast-warning {
         --success: var(--success-strong);
         --danger: var(--danger-strong);
         --warn: var(--warn-strong);
+        /* Druk na bialym — jasne pastele (w :root ciemne washe dark). */
+        --success-bg-soft: #e6f7e6;
+        --danger-bg-soft: #fce8e8;
+        --warn-bg-soft: #fff3e0;
         --success-bg: var(--success-bg-soft);
         --success-bg-hover: var(--success-bg-soft);
         --danger-bg: var(--danger-bg-soft);

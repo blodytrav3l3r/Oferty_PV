@@ -38,7 +38,14 @@ function filterByType(type) {
     }
 }
 
-let compactModeEnabled = localStorage.getItem('kartoteka-compact-mode') === 'true';
+let compactModeEnabled = false;
+try {
+    const _compactRaw =
+        typeof localStorage !== 'undefined' ? localStorage.getItem('kartoteka-compact-mode') : null;
+    compactModeEnabled = typeof _compactRaw === 'string' && _compactRaw === 'true';
+} catch (_e) {
+    compactModeEnabled = false;
+}
 
 function applyCompactMode() {
     const grid = document.getElementById('ka-offers-list');
@@ -63,7 +70,9 @@ function applyCompactMode() {
 
 window.toggleCompactMode = function () {
     compactModeEnabled = !compactModeEnabled;
-    localStorage.setItem('kartoteka-compact-mode', String(compactModeEnabled));
+    try {
+        localStorage.setItem('kartoteka-compact-mode', String(compactModeEnabled));
+    } catch (_e) {}
     applyCompactMode();
 };
 

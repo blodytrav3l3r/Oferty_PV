@@ -624,6 +624,11 @@ html[data-theme='light'] .unit-popup-preview {
     border-radius: var(--radius-sm);
     background: rgba(var(--white-rgb), 0.02);
 }
+.discount-empty-icon {
+    opacity: 0.5;
+    display: block;
+    margin: 0 auto 0.4rem;
+}
 
 .discount-header {
     display: flex;
@@ -1948,8 +1953,6 @@ html[data-theme='light'] #btn-auto-select:disabled {
     z-index: 60;
     pointer-events: none;
     background: rgba(var(--slate-950-rgb), 0.2);
-    -webkit-backdrop-filter: blur(3px);
-    backdrop-filter: blur(3px);
     animation: studnieTransitionFade 0.18s ease both;
 }
 
@@ -2104,8 +2107,6 @@ html[data-theme='light'] #btn-auto-select:disabled {
     right: 0;
     bottom: 0;
     background: rgba(var(--black-rgb), 0.8);
-    -webkit-backdrop-filter: blur(4px);
-    backdrop-filter: blur(4px);
     z-index: var(--z-overlay);
     display: none;
     align-items: center;
@@ -3282,6 +3283,20 @@ td.excel-tint--plyta_redukcyjna input {
     opacity: 0.7;
     box-shadow: 0 0 15px rgba(var(--blue-alt-rgb), 0.5);
     pointer-events: none;
+}
+/* Stan przeciągania (klasa zamiast style.opacity w actionsConfigDrag.js) */
+.config-tile.is-dragging,
+.zl-config-tile.is-dragging {
+    opacity: 0.4;
+}
+html[data-theme='light'] .config-tile.is-dragging,
+html[data-theme='light'] .zl-config-tile.is-dragging {
+    opacity: 0.55;
+}
+/* Cel upuszczenia (klasa zamiast style.borderTop w actionsConfigDrag.js) */
+.config-tile.is-drop-target,
+.zl-config-tile.is-drop-target {
+    border-top: 2px solid var(--accent);
 }
 /* Tekst na kolorowym tle — dziedziczy fg kafelka (para AA z badge). */
 .config-tile .cfg-item-name,

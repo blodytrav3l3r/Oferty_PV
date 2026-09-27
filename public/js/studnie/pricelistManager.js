@@ -104,7 +104,7 @@ function renderStudniePriceList() {
         ${!isPrzejscia && !isKinety ? `<div class="pehd-group"><label class="pehd-label" for="pehd-price-input">Cena PEHD (PLN/m²):</label><input type="number" id="pehd-price-input" class="form-input form-input-sm pehd-input" value="${currentPehdPrice}"><button class="btn btn-secondary btn-sm" data-action="recalculatePEHD">Przelicz</button></div>` : ''}
         ${isPrzejscia ? `<button class="btn btn-secondary pill-sm" data-action="addPrzejsciaCategory" ><i data-lucide="plus" aria-hidden="true"></i> Dodaj kategorię przejść</button>` : `<button class="btn btn-secondary pill-sm" data-action="addStudnieCategory" ><i data-lucide="plus" aria-hidden="true"></i> Dodaj kategorię</button>`}
         <button class="btn btn-secondary pill-sm" data-action="addStudnieElement" ><i data-lucide="plus" aria-hidden="true"></i> Dodaj element</button>
-        ${isKinety ? `<button class="btn btn-secondary" disabled title="Generuje szablon 20 kinet (5 średnic × 4 wys.) z ceną domyślną 100 zł. Nie nadpisuje istniejących. Przycisk nieaktywny — kinety są dodawane automatycznie przy starcie. Użyj Resetu cennika by przywrócić domyślne." style="font-size: var(--fs-md); padding:0.4rem 0.8rem; opacity:0.5; cursor:not-allowed;"><i data-lucide="plug" aria-hidden="true"></i> Generuj puste Kinety</button>` : ''}
+        ${isKinety ? `<button class="btn btn-secondary pill-sm" disabled title="Generuje szablon 20 kinet (5 średnic × 4 wys.) z ceną domyślną 100 zł. Nie nadpisuje istniejących. Przycisk nieaktywny — kinety są dodawane automatycznie przy starcie. Użyj Resetu cennika by przywrócić domyślne."><i data-lucide="plug" aria-hidden="true"></i> Generuj puste Kinety</button>` : ''}
     </div>
     <table class="table-fixed">
       <thead>

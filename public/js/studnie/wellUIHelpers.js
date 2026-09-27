@@ -39,7 +39,7 @@ function renderDiscountPanel() {
 
     if (activeDNs.length === 0) {
         panel.innerHTML =
-            '<div class="discount-empty"><i data-lucide="banknote" class="icon-md" style="opacity:0.5;display:block;margin:0 auto 0.4rem;"></i>Brak studni.<br>Dodaj studnię aby ustawić rabaty.</div>';
+            '<div class="discount-empty"><i data-lucide="banknote" class="icon-md discount-empty-icon"></i>Brak studni.<br>Dodaj studnię aby ustawić rabaty.</div>';
         if (typeof lucide !== 'undefined' && lucide.createIcons)
             lucide.createIcons({ root: panel });
         return;
