@@ -98,9 +98,11 @@
 
 ## I-010 — Mutacje wymagają same-origin (CSRF)
 
-- **Invariant:** POST/PUT/PATCH/DELETE z obcym lub brakującym Origin/Referer
-  → 403. GET/HEAD/OPTIONS nietknięte; `/api/csp-report` zwolniony (bez stanu).
-  Klienci nie-przeglądarkowi (benchmark/load) wysyłają `Origin: BASE`.
+- **Invariant:** POST/PUT/PATCH/DELETE z obcym Origin/Referer → 403;
+  mutacja z cookie, ale bez obu nagłówków → 403 (anomalia). Brak obu
+  nagłówków BEZ ciasteczek → dozwolone (klient nie-przeglądarkowy bez sesji:
+  login, skrypty, E2E; brak ambient authority = brak CSRF). GET/HEAD/OPTIONS
+  nietknięte; `/api/csp-report` zwolniony (bez stanu).
 - **Owner:** backend (`src/middleware/csrf.ts`).
 - **Enforcement:** globalny middleware przed `mountRoutes`; cookie
   `HttpOnly + SameSite=Lax` jako druga warstwa.

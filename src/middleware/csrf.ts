@@ -6,13 +6,19 @@ import { Request, Response, NextFunction } from 'express';
  *
  * Aplikacja serwuje backend i frontend z tego samego serwera (brak CORS),
  * więc każda przeglądarkowa mutacja niesie Origin (fetch/form) albo Referer.
- * Żądanie mutujące bez żadnego z nich albo z niezgodnym originem to
- * cross-site forgery albo błędny klient — odrzucamy 403.
+ * Żądanie mutujące z niezgodnym originem to cross-site forgery — 403.
+ *
+ * Brak obu nagłówków = klient nie-przeglądarkowy (curl, skrypty, Playwright
+ * APIRequestContext, supertest). Taki klient nie niesie ambient authority
+ * przeglądarki ofiary, więc CSRF nie istnieje — DOZWOLONE tylko gdy żądanie
+ * nie niesie ciasteczek (w tym authToken). Mutacja z cookie, ale bez
+ * Origin/Referer, to anomalia (przeglądarka zawsze je wysyła) — 403.
  *
  * Kontrakt:
  * - Origin istnieje → musi dokładnie odpowiadać trusted origin (Host).
  * - Origin brak + Referer istnieje → Referer musi pochodzić z trusted origin.
- * - Oba brak → 403.
+ * - Oba brak + brak Cookie → pass (non-browser, bez sesji).
+ * - Oba brak + Cookie istnieje → 403.
  * - GET/HEAD/OPTIONS → middleware nie ingeruje.
  *
  * Trusted origin = Host żądania (same-origin; za reverse proxy Host jest
@@ -38,7 +44,9 @@ export function isSameOriginRequest(req: Request): boolean {
     if (origin) return hostOf(origin) === expected;
     const referer = req.get('referer');
     if (referer) return hostOf(referer) === expected;
-    return false;
+    // Brak obu: dozwolone wyłącznie bez ciasteczek (brak sesji do podrobienia).
+    const cookie = req.get('cookie');
+    return !cookie;
 }
 
 export function csrfProtection(req: Request, res: Response, next: NextFunction): void {

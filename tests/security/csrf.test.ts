@@ -10,7 +10,8 @@ import { csrfProtection } from '../../src/middleware/csrf';
  * 2. Zły Origin -> 403
  * 3. Brak Origin + dobry Referer -> pass
  * 4. Brak Origin + zły Referer -> 403
- * 5. Brak obu -> 403
+ * 5. Brak obu bez cookie -> pass (non-browser, brak sesji do podrobienia)
+ * 5b. Brak obu z cookie -> 403 (przeglądarka zawsze wysyła Origin/Referer)
  * 6. Origin dobry + zły Referer -> pass (Origin wygrywa)
  * 7. GET bez nagłówków -> untouched
  */
@@ -60,8 +61,16 @@ describe('P0.1 CSRF same-origin', () => {
         expect(res.status).toBe(403);
     });
 
-    it('missing both -> 403', async () => {
+    it('missing both bez cookie -> 2xx (non-browser, brak sesji do podrobienia)', async () => {
         const res = await request(buildApp()).post('/api/mut').set('Host', HOST);
+        expect(res.status).toBe(200);
+    });
+
+    it('missing both Z cookie -> 403 (anomalia: przeglądarka zawsze wysyła Origin/Referer)', async () => {
+        const res = await request(buildApp())
+            .post('/api/mut')
+            .set('Host', HOST)
+            .set('Cookie', 'authToken=abc');
         expect(res.status).toBe(403);
     });
 
@@ -74,7 +83,7 @@ describe('P0.1 CSRF same-origin', () => {
         expect(res.status).toBe(200);
     });
 
-    it('PUT/DELETE zły Origin lub brak -> 403', async () => {
+    it('PUT/DELETE zły Origin lub brak z cookie -> 403', async () => {
         const app = buildApp();
         expect(
             (
@@ -84,7 +93,10 @@ describe('P0.1 CSRF same-origin', () => {
                     .set('Origin', 'https://evil.test')
             ).status
         ).toBe(403);
-        expect((await request(app).delete('/api/mut').set('Host', HOST)).status).toBe(403);
+        expect(
+            (await request(app).delete('/api/mut').set('Host', HOST).set('Cookie', 'authToken=abc'))
+                .status
+        ).toBe(403);
     });
 
     it('GET bez nagłówków -> untouched', async () => {
