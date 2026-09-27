@@ -7,7 +7,9 @@ import {
     recordRequest,
     recordDbQuery,
     recordDbBusy,
+    recordAuditFailure,
     getMetricsSnapshot,
+    getStorageSnapshot,
     resetMetrics
 } from '../src/utils/metrics';
 
@@ -58,5 +60,17 @@ describe('M metrics', () => {
         for (let i = 0; i < 400; i++) recordRequest('GET', `/api/ep${i}`, 200, 1);
         const snap = getMetricsSnapshot();
         expect(Object.keys(snap.endpoints).length).toBeLessThanOrEqual(300);
+    });
+
+    test('P0.4+P3: audit.failures i storage w snapshocie (nigdy throw)', () => {
+        recordAuditFailure();
+        recordAuditFailure();
+        const snap = getMetricsSnapshot();
+        expect(snap.audit.failures).toBe(2);
+        expect(snap.storage).toHaveProperty('dbBytes');
+        expect(snap.storage).toHaveProperty('backups');
+        expect(snap.storage).toHaveProperty('lastBackupAt');
+        const direct = getStorageSnapshot();
+        expect(typeof direct.backups).toBe('number');
     });
 });

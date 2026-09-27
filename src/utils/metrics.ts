@@ -105,6 +105,13 @@ export function recordAuditFailure(): void {
     auditFailures++;
 }
 
+export interface StorageSnapshot {
+    dbBytes: number | null;
+    walBytes: number | null;
+    backups: number;
+    lastBackupAt: string | null;
+}
+
 export interface MetricsSnapshot {
     uptimeSec: number;
     rssMB: number;
@@ -112,6 +119,7 @@ export interface MetricsSnapshot {
     loopLagMaxMs: number;
     db: { queries: number; msTotal: number; avgMs: number; busy: number };
     audit: { failures: number };
+    storage: StorageSnapshot;
     endpoints: Record<
         string,
         { n: number; p50: number; p95: number; errors: number; lastMs: number }
@@ -143,9 +151,102 @@ export function getMetricsSnapshot(pdf: Record<string, unknown> = {}): MetricsSn
             busy: busyCount
         },
         audit: { failures: auditFailures },
+        storage: getStorageSnapshot(),
         endpoints: eps,
         pdf
     };
+}
+
+/**
+ * P3: storage do dashboardu operacyjnego — synchroniczny odczyt fs
+ * (/metrics jest admin-only i wołany rzadko; brak I/O na gorącej ścieżce).
+ * Przy każdym błędzie zwraca nulle/0 zamiast rzucać.
+ */
+export function getStorageSnapshot(): StorageSnapshot {
+    const empty: StorageSnapshot = {
+        dbBytes: null,
+        walBytes: null,
+        backups: 0,
+        lastBackupAt: null
+    };
+    try {
+        // Lazy importy: metrics.ts nie może ciągnąć paths na starcie testów.
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        const fs = require('fs') as typeof import('fs');
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        const path = require('path') as typeof import('path');
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        const { resolveDataDir } = require('./paths') as typeof import('./paths');
+        const dataDir: string = resolveDataDir();
+        const dbFile = resolveDbFile(fs, path, dataDir);
+        const out: StorageSnapshot = { ...empty };
+        if (dbFile) {
+            out.dbBytes = sizeOf(fs, dbFile);
+            // WAL albo SHM — bierzemy istniejący; brak obu to null.
+            const wal = sizeOf(fs, dbFile + '-wal');
+            const shm = sizeOf(fs, dbFile + '-shm');
+            out.walBytes = wal ?? shm ?? null;
+        }
+        const backupDir = path.join(dataDir, 'backups');
+        try {
+            const files: string[] = fs
+                .readdirSync(backupDir)
+                .filter((f: string) => f.endsWith('.sqlite'));
+            out.backups = files.length;
+            let latest = 0;
+            for (const f of files) {
+                try {
+                    const mt = fs.statSync(path.join(backupDir, f)).mtimeMs;
+                    if (mt > latest) latest = mt;
+                } catch {
+                    // pojedynczy uszkodzony wpis nie psuje całości
+                }
+            }
+            if (latest > 0) out.lastBackupAt = new Date(latest).toISOString();
+        } catch {
+            // brak katalogu backupów — zostają zera
+        }
+        return out;
+    } catch {
+        return empty;
+    }
+}
+
+function sizeOf(fs: { statSync(p: string): { size: number } }, p: string): number | null {
+    try {
+        return fs.statSync(p).size;
+    } catch {
+        return null;
+    }
+}
+
+function resolveDbFile(
+    fs: { readdirSync(p: string): string[]; existsSync(p: string): boolean },
+    path: {
+        join(...p: string[]): string;
+        basename(p: string): string;
+        isAbsolute(p: string): boolean;
+    },
+    dataDir: string
+): string | null {
+    try {
+        const url = process.env.DATABASE_URL || '';
+        const m = /^file:(.+?)(\?.*)?$/.exec(url);
+        if (m) {
+            const p = m[1];
+            if (path.isAbsolute(p) && fs.existsSync(p)) return p;
+            const base = path.basename(p);
+            const cand = path.join(dataDir, base);
+            if (fs.existsSync(cand)) return cand;
+        }
+        const Fallback = fs
+            .readdirSync(dataDir)
+            .filter((f: string) => f.endsWith('.sqlite') && !f.endsWith('.bak-ml-labels'));
+        if (Fallback.length > 0) return path.join(dataDir, Fallback[0]);
+        return null;
+    } catch {
+        return null;
+    }
 }
 
 /** Reset do testów. */
