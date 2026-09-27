@@ -187,67 +187,11 @@ async function importStudnieFromExcel(event) {
             const data = new Uint8Array(/** @type {ArrayBuffer} */ (e.target.result));
             const workbook = XLSX.read(data, { type: 'array' });
 
-            let allJson = [];
-            const precoDataMap = {};
-
-            workbook.SheetNames.forEach((sheetName) => {
-                const worksheet = workbook.Sheets[sheetName];
-                const sheetJson = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
-                if (sheetJson && sheetJson.length > 0) {
-                    if (sheetName.startsWith('PRECO_')) {
-                        sheetJson.forEach((row) => {
-                            const dn = row['DN Studni'];
-                            if (dn) {
-                                if (!precoDataMap[dn]) {
-                                    precoDataMap[dn] = {
-                                        kinety: [],
-                                        spadekKineta: [],
-                                        spadekMufa: [],
-                                        uniesienie: [],
-                                        redukcja: [],
-                                        skrzynkaWlazowa: null,
-                                        cenaPelnaWysMB: 0,
-                                        cenaDnoOsadnika: 0
-                                    };
-                                }
-
-                                if (sheetName === 'PRECO_Kinety') {
-                                    precoDataMap[dn].kinety.push({
-                                        dn: row['DN Rury'] || 0,
-                                        prosta: row['Cena prosta (PLN)'] || 0,
-                                        dodWlot: row['Dod. wlot (PLN)'] || 0
-                                    });
-                                } else if (sheetName === 'PRECO_Dodatki') {
-                                    precoDataMap[dn].skrzynkaWlazowa = row['Skrzynka włazowa'] || 0;
-                                    precoDataMap[dn].cenaPelnaWysMB = row['Cena pełna wys MB'] || 0;
-                                    precoDataMap[dn].cenaDnoOsadnika =
-                                        row['Cena dna osadnika'] || 0;
-                                } else if (sheetName === 'PRECO_Zakresy') {
-                                    const typ = row['Typ'];
-                                    if (typ && precoDataMap[dn][typ]) {
-                                        const min = row['Min'] || 0;
-                                        const max = row['Max'] || 0;
-                                        const g = row['Grupa DN'];
-                                        const cena = row['Cena (PLN)'] || 0;
-
-                                        const table = precoDataMap[dn][typ];
-                                        let existingRow = table.find(
-                                            (r) => r.min === min && r.max === max
-                                        );
-                                        if (!existingRow) {
-                                            existingRow = { min, max, grupy: {} };
-                                            table.push(existingRow);
-                                        }
-                                        if (g) existingRow.grupy[g] = cena;
-                                    }
-                                }
-                            }
-                        });
-                    } else {
-                        allJson = allJson.concat(sheetJson);
-                    }
-                }
+            const parsed = pricelistXlsx.parseWorkbookToJson(XLSX, workbook, {
+                includePreco: true
             });
+            const allJson = parsed.rows;
+            const precoDataMap = parsed.precoDataMap;
 
             const hasPrecoData = Object.keys(precoDataMap).length > 0;
 
@@ -288,74 +232,37 @@ async function importStudnieFromExcel(event) {
                 'cena3'
             ];
 
-            const seenIds = new Set();
-            const normalized = allJson
-                .map((raw, index) => {
-                    const product = {};
-
-                    Object.keys(raw).forEach((col) => {
-                        const key = HEADER_TO_KEY[col] || col;
-                        product[key] = raw[col];
-                    });
-
-                    product.id = String(product.id || '').trim();
-                    product.name = String(product.name || '').trim();
-
-                    if (!product.id || !product.name) {
-                        logger.warn(
-                            'pricelistManager',
-                            `[Import Studnie] Row ${index + 2} skipped: missing ID or Name`
-                        );
-                        return null;
-                    }
-
-                    if (seenIds.has(product.id)) {
+            const dnColKey = HEADER_TO_KEY['dn'] || 'dn';
+            const normalized = pricelistXlsx.normalizeRows(allJson, {
+                headerToKey: HEADER_TO_KEY,
+                numericFields,
+                emptyDefaults: {
+                    magazynWL: 1,
+                    magazynKLB: 1,
+                    formaStandardowa: 1,
+                    formaStandardowaKLB: 1
+                },
+                onSkip: (index, reason, product) => {
+                    if (reason === 'duplicate-id') {
                         logger.warn(
                             'pricelistManager',
                             `[Import Studnie] Row ${index + 2} skipped: duplicate ID ${product.id}`
                         );
-                        return null;
+                    } else {
+                        logger.warn(
+                            'pricelistManager',
+                            `[Import Studnie] Row ${index + 2} skipped: missing ID or Name`
+                        );
                     }
-                    seenIds.add(product.id);
-
+                },
+                postCoerce: (product, raw) => {
                     product.category = String(product.category || '').trim() || 'Inne';
                     product.componentType = String(product.componentType || '').trim();
                     if (product.category.startsWith('Kinety') && !product.componentType) {
                         product.componentType = 'kineta';
                     }
 
-                    numericFields.forEach((f) => {
-                        let valValue = product[f];
-                        if (
-                            valValue === '' ||
-                            valValue === undefined ||
-                            valValue === null ||
-                            valValue === '—' ||
-                            valValue === '-'
-                        ) {
-                            if (
-                                [
-                                    'magazynWL',
-                                    'magazynKLB',
-                                    'formaStandardowa',
-                                    'formaStandardowaKLB'
-                                ].includes(f)
-                            ) {
-                                product[f] = 1;
-                            } else {
-                                product[f] = null;
-                            }
-                        } else if (typeof valValue === 'string') {
-                            valValue = valValue.replace(/\s/g, '').replace(',', '.');
-                            const num = parseFloat(valValue);
-                            product[f] = isNaN(num) ? null : num;
-                        } else {
-                            const num = parseFloat(valValue);
-                            product[f] = isNaN(num) ? null : num;
-                        }
-                    });
-
-                    const rawDn = raw[HEADER_TO_KEY['dn'] || 'dn'];
+                    const rawDn = raw[dnColKey];
                     if (product.dn !== null && typeof rawDn === 'string' && rawDn.includes('/')) {
                         product.dn = rawDn;
                     }
@@ -368,10 +275,8 @@ async function importStudnieFromExcel(event) {
                     if (typeof renamePłyty === 'function') {
                         renamePłyty(product);
                     }
-
-                    return product;
-                })
-                .filter((p) => p !== null);
+                }
+            });
 
             if (normalized.length === 0 && !hasPrecoData) {
                 showToast('Brak prawidłowych wierszy do importu (sprawdź Indeks i Nazwę)', 'error');

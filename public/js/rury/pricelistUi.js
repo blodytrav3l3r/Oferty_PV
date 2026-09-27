@@ -407,9 +407,10 @@ async function importRuryFromExcel(event) {
             await ensureXlsx();
             const data = new Uint8Array(/** @type {ArrayBuffer} */ (e.target.result));
             const workbook = XLSX.read(data, { type: 'array' });
-            const firstSheetName = workbook.SheetNames[0];
-            const worksheet = workbook.Sheets[firstSheetName];
-            const json = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+            const parsed = pricelistXlsx.parseWorkbookToJson(XLSX, workbook, {
+                firstSheetOnly: true
+            });
+            const json = parsed.rows;
 
             if (!json || json.length === 0) {
                 showToast('Skoroszyt jest pusty lub ma zły format', 'error');
@@ -417,59 +418,26 @@ async function importRuryFromExcel(event) {
             }
 
             const numericFields = ['price', 'weight', 'transport', 'area'];
-            const seenIds = new Set();
-            const normalized = json
-                .map((raw, index) => {
-                    const product = {};
-
-                    // Mapuj kolumny - obsługuj zarówno polskie nagłówki, jak i surowe klucze
-                    Object.keys(raw).forEach((col) => {
-                        const key = RURY_HEADER_TO_KEY[col] || col;
-                        product[key] = raw[col];
-                    });
-
-                    // Podstawowa normalizacja
-                    product.id = String(product.id || '').trim();
-                    product.name = String(product.name || '').trim();
+            const normalized = pricelistXlsx.normalizeRows(json, {
+                headerToKey: RURY_HEADER_TO_KEY,
+                numericFields,
+                preValidate: (product) => {
                     product.category = String(product.category || '').trim() || 'Inne';
-
-                    // Sprawdź wymagane pola
-                    if (!product.id || !product.name) {
-                        logger.warn(
-                            'pricelistUi',
-                            `[Import] Wiersz ${index + 2} pominięty: brak ID lub Nazwy`
-                        );
-                        return null;
-                    }
-
-                    // Sprawdź duplikaty w pliku importu
-                    if (seenIds.has(product.id)) {
+                },
+                onSkip: (index, reason, product) => {
+                    if (reason === 'duplicate-id') {
                         logger.warn(
                             'pricelistUi',
                             `[Import] Wiersz ${index + 2} pominięty: duplikat ID ${product.id}`
                         );
-                        return null;
+                    } else {
+                        logger.warn(
+                            'pricelistUi',
+                            `[Import] Wiersz ${index + 2} pominięty: brak ID lub Nazwy`
+                        );
                     }
-                    seenIds.add(product.id);
-
-                    // Solidne parsowanie liczb
-                    numericFields.forEach((f) => {
-                        let val = product[f];
-                        if (val === '' || val === undefined || val === null || val === '-') {
-                            product[f] = null;
-                        } else if (typeof val === 'string') {
-                            val = val.replace(/\s/g, '').replace(',', '.');
-                            const num = parseFloat(val);
-                            product[f] = isNaN(num) ? null : num;
-                        } else {
-                            const num = parseFloat(val);
-                            product[f] = isNaN(num) ? null : num;
-                        }
-                    });
-
-                    return product;
-                })
-                .filter((p) => p !== null);
+                }
+            });
 
             if (normalized.length === 0) {
                 showToast('Brak prawidłowych wierszy do importu (sprawdź Indeks i Nazwę)', 'error');
