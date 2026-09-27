@@ -2,6 +2,7 @@ import express from 'express';
 import prisma from '../prismaClient';
 import { requireAuth, AuthenticatedRequest } from '../middleware/auth';
 import { logger } from '../utils/logger';
+import { deserializeSnapshot } from '../utils/snapshots';
 
 const router = express.Router();
 
@@ -67,15 +68,17 @@ router.get('/:entityType/:entityId', requireAuth, async (req, res) => {
         );
 
         const mapped = logs.map((l) => {
+            // P1.5: odczyt przez kopertę wersjonowaną (legacy JSON bez koperty
+            // przechodzi bez zmian; ścieżka rebuild celowo na surowym parse).
             let oldData: unknown = null;
             let newData: unknown = null;
             try {
-                if (l.oldData) oldData = JSON.parse(l.oldData);
+                if (l.oldData) oldData = deserializeSnapshot(l.oldData);
             } catch (_e) {
                 oldData = { _parseError: true, raw: l.oldData };
             }
             try {
-                if (l.newData) newData = JSON.parse(l.newData);
+                if (l.newData) newData = deserializeSnapshot(l.newData);
             } catch (_e) {
                 newData = { _parseError: true, raw: l.newData };
             }
