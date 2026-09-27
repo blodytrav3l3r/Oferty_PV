@@ -4,6 +4,41 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.32.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.31.0...v1.32.0) (2026-09-27)
+
+### Features
+
+- **api:** clone-draft cennikow i batch produkcji ([0554a6a](https://github.com/blodytrav3l3r/Oferty_PV/commit/0554a6aa7a6333fe761f1373154afdd120dc23ee))
+- **api:** storage w metrykach ([036b932](https://github.com/blodytrav3l3r/Oferty_PV/commit/036b93281445bc4cadf93886596629c4f11b2098))
+- **api:** wersjonowane snapshoty json ([d4b6a48](https://github.com/blodytrav3l3r/Oferty_PV/commit/d4b6a4866bdd75ab73b5764fb031f0b6b114b858))
+- **telemetry:** fingerprint datasetu ([616fb5b](https://github.com/blodytrav3l3r/Oferty_PV/commit/616fb5b65558cfe34f2f114ce2b76dd5956461cd))
+- **telemetry:** lineage w statusie ml ([124c8f3](https://github.com/blodytrav3l3r/Oferty_PV/commit/124c8f34201611b0c43cab06f5305b23ac9a0abc))
+- **telemetry:** pomiar wzrostu tabel i progi ([c862d61](https://github.com/blodytrav3l3r/Oferty_PV/commit/c862d61c70f600d9ae3b901c2849f3192fb02945))
+- **telemetry:** writer lineage i fingerprint ([366063c](https://github.com/blodytrav3l3r/Oferty_PV/commit/366063c38c24576a477be191005046dab8b13a42))
+- **ui:** dashboard operacyjny admin ([fe8344e](https://github.com/blodytrav3l3r/Oferty_PV/commit/fe8344effc6ca61302952b01df337a60098dc461))
+
+### Bug Fixes
+
+- **api:** cookieparser przed trasami systemowymi ([0ab39b6](https://github.com/blodytrav3l3r/Oferty_PV/commit/0ab39b66dce233a44267a0185eee74b59bb88c53))
+- **api:** jawny 409 dla slepego zapisu w pustke ([c49bab1](https://github.com/blodytrav3l3r/Oferty_PV/commit/c49bab1de6bb4263dd8e0b24a8202e51b5a4acc9))
+- **audit:** widocznosc bledow i scalanie debounce ([16f0763](https://github.com/blodytrav3l3r/Oferty_PV/commit/16f0763d4c9c48c505dfbcda34107320a1112651))
+- **ci:** axe critical blocking ([5dfeb60](https://github.com/blodytrav3l3r/Oferty_PV/commit/5dfeb60745bb97273c91c1846b5561bcc1502770))
+- **ci:** guard executablepath w e2e bez twardej sciezki ([ad2087e](https://github.com/blodytrav3l3r/Oferty_PV/commit/ad2087ed04cb9019e4f80a4a5a541259b06cf806))
+- **ci:** przenosny spawn w draft e2e na linux ([c5bd930](https://github.com/blodytrav3l3r/Oferty_PV/commit/c5bd930959e30d961534f54c1c2c4c1cad60b2c2))
+- **ci:** release na migrate deploy ([12091eb](https://github.com/blodytrav3l3r/Oferty_PV/commit/12091eba188ff8bdaa34e657ff4b13f0cd5e4e4e))
+- **rury:** pasek podsumowania widoczny w kroku 3 ([4d10640](https://github.com/blodytrav3l3r/Oferty_PV/commit/4d1064083a5f0b3a77c52d9a7f2bc8d11167c59b))
+- **security:** csrf przepuszcza bezsesyjne mutacje ([4aee6d4](https://github.com/blodytrav3l3r/Oferty_PV/commit/4aee6d4d544108e8f7c6bbef5d35ebb74dcdd6f8))
+- **security:** klasyfikacja zod i test bramy ([ed3719c](https://github.com/blodytrav3l3r/Oferty_PV/commit/ed3719cec2c7666e63018075ac6927ad72bc2a77))
+- **security:** same-origin csrf dla mutacji ([89f4e7a](https://github.com/blodytrav3l3r/Oferty_PV/commit/89f4e7a787e45931fef4d3426aad209b94de79a4))
+- **security:** sanitizacja health i version ([3db735f](https://github.com/blodytrav3l3r/Oferty_PV/commit/3db735f682ad97ba5e593a255e721b019926bc23))
+- **studnie:** brama walidacji wyboru ml ([7dbac0e](https://github.com/blodytrav3l3r/Oferty_PV/commit/7dbac0ee855dc552c897c383db547a417da2f0c0))
+- **studnie:** guardy edycji excel ([67d782f](https://github.com/blodytrav3l3r/Oferty_PV/commit/67d782f1e4f5dac568969df7e41825fd3971c49b))
+- **studnie:** guardy pol w ctrl-a ctrl-f ([59e368f](https://github.com/blodytrav3l3r/Oferty_PV/commit/59e368fd8a397253b0b8108ac7446e15de9abf53))
+- **studnie:** klasy zamiast inline style i guardy ls ([584bb8f](https://github.com/blodytrav3l3r/Oferty_PV/commit/584bb8f686d0a21063f743fdd6b361c0ff0e5389))
+- **studnie:** zakres sticky i podsumowanie ([f43ab14](https://github.com/blodytrav3l3r/Oferty_PV/commit/f43ab14147f7d512058644cc4925d45b900bff1e))
+- **ui:** jasny pasek listy studni i szukajki w light ([3f53983](https://github.com/blodytrav3l3r/Oferty_PV/commit/3f5398377864211d624b10384e5d016f544d606f))
+- **ui:** osobne przyciski listy-rabatow bez tacki ([011078c](https://github.com/blodytrav3l3r/Oferty_PV/commit/011078cc4fd12d4c4a3674a69754072b104271d0))
+
 ## [1.31.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.30.0...v1.31.0) (2026-09-26)
 
 ### Features
