@@ -295,6 +295,7 @@ function _excelSelectRange(startW, startC, endW, endC, additive) {
     const rMax = Math.max(startW, endW);
     const cMin = Math.min(startC, endC);
     const cMax = Math.max(startC, endC);
+    let added = 0;
     for (let r = rMin; r <= rMax; r++) {
         for (let c = cMin; c <= cMax; c++) {
             const row = document.querySelector('tr[data-widx="' + r + '"]');
@@ -302,7 +303,17 @@ function _excelSelectRange(startW, startC, endW, endC, additive) {
             const existing = _excelSelectedCells.find(function (cl) {
                 return cl.wIdx === r && cl.colIdx === c;
             });
-            if (!existing) _excelSelectCell(r, c, false, false);
+            // P4-A8: to samo co _excelSelectCell(r, c, false, false), ale bez
+            // podsumowania per komórka — jedno na końcu (stan końcowy identyczny).
+            if (!existing) {
+                _excelSelectedCells.push({ wIdx: r, colIdx: c });
+                _excelToggleCellClass(r, c, true);
+                added++;
+            }
         }
+    }
+    if (added > 0) {
+        _excelLastClickedCell = { wIdx: endW, colIdx: endC };
+        _excelUpdateSelectionSummary();
     }
 }

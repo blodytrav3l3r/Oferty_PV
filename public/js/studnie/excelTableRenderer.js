@@ -386,24 +386,27 @@ function _excelApplyColWidths(dn) {
 if (typeof window !== 'undefined') window._excelApplyColWidths = _excelApplyColWidths;
 
 /** Wymuś poprawne sticky left — dopasowuje do rzeczywistej szerokości kolumn */
-function _excelApplyStickyColumns() {
+function _excelApplyStickyColumns(retry) {
+    retry = retry || 0;
     const container = document.getElementById('excel-table-container');
     if (!container) return;
     const table = container.querySelector('table');
     if (!table) return;
-    /* Zmierz rzeczywiste szerokości pierwszych 7 kolumn (checkbox, tryb, Lp, NrStudni, RzWlazu, RzDna, Wys) */
-    const firstRow = table.querySelector('thead tr');
-    if (!firstRow) return;
-    const stickyThs = firstRow.querySelectorAll('th:nth-child(-n+7)');
+    /* P4-A7: mierz wiersz kanoniczny h1 (thead tr:nth-child(2) — komórki per
+       kolumna z data-excel-col), nie h3 (grupowane, colspan). */
+    const headRow = table.querySelector('thead tr:nth-child(2)') || table.querySelector('thead tr');
+    if (!headRow) return;
+    const stickyThs = headRow.querySelectorAll('th:nth-child(-n+7)');
     if (stickyThs.length < 2) return;
-    // rAF retry gdy layout jeszcze 0 (fonty/webview nie przeliczone)
+    // rAF retry gdy layout jeszcze 0 (fonty/webview nie przeliczone) — max 5.
     let zeroCount = 0;
     for (let _z = 0; _z < stickyThs.length; _z++) {
         if (/** @type {HTMLElement} */ (stickyThs[_z]).offsetWidth === 0) zeroCount++;
     }
     if (zeroCount > 0) {
+        if (retry >= 5) return;
         requestAnimationFrame(function () {
-            _excelApplyStickyColumns();
+            _excelApplyStickyColumns(retry + 1);
         });
         return;
     }
