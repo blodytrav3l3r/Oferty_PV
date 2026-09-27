@@ -74,13 +74,13 @@ app.use(requestLogger);
  * /api/version:
  *   get:
  *     tags: [System]
- *     summary: Informacje o wersji aplikacji
+ *     summary: Publiczna wersja aplikacji (tylko numer wersji)
  *     responses:
  *       200:
- *         description: Szczegóły wersji (git commit, branch, build date, env)
+ *         description: Numer wersji (szczegóły w /api/admin/system-info dla admina)
  */
 app.get('/api/version', (_req, res) => {
-    res.json(getVersion());
+    res.json({ version: getVersion().version });
 });
 
 /**
@@ -89,7 +89,7 @@ app.get('/api/version', (_req, res) => {
  *   get:
  *     tags: [System]
  *     summary: Sprawdzenie statusu serwera
- *     description: Endpoint używany przez Docker do healthcheck. Zwraca status, uptime i wersję.
+ *     description: Endpoint używany przez Docker do healthcheck. Zwraca wyłącznie status (bez diagnostyki).
  *     responses:
  *       200:
  *         description: Serwer działa
@@ -101,10 +101,7 @@ app.get('/api/version', (_req, res) => {
 app.get('/health', (_req, res) => {
     res.json({
         status: 'ok',
-        timestamp: new Date().toISOString(),
-        uptime: process.uptime(),
-        memory: process.memoryUsage(),
-        version: getVersion().version
+        timestamp: new Date().toISOString()
     });
 });
 
@@ -138,14 +135,41 @@ app.get('/health/ready', async (_req, res) => {
     try {
         await prisma.$queryRawUnsafe('SELECT 1');
         res.json({ status: 'ready', db: 'ok', timestamp: new Date().toISOString() });
-    } catch (e) {
-        const msg = e instanceof Error ? e.message : String(e);
-        res.status(503).json({ status: 'not_ready', db: 'error', error: msg.slice(0, 200) });
+    } catch {
+        // P0.2: zero szczegółów błędu DB na publicznym endpoincie (było error: msg.slice(0,200)).
+        res.status(503).json({
+            status: 'not_ready',
+            db: 'error',
+            timestamp: new Date().toISOString()
+        });
     }
 });
 
 // Diagnostyka PDF (Chromium) — publiczna jak reszta /health, bez auth.
 app.use('/health/pdf', healthPdfRouter);
+
+/**
+ * @openapi
+ * /api/admin/system-info:
+ *   get:
+ *     tags: [System]
+ *     summary: Diagnostyka systemowa (admin) — wersja, commit, env, uptime, memory
+ *     responses:
+ *       200:
+ *         description: Pełne informacje diagnostyczne
+ *       401:
+ *         description: Brak autoryzacji
+ *       403:
+ *         description: Wymagana rola admin
+ */
+// P0.2: szczegóły diagnostyczne (commit/branch/env/memory) tylko dla admina.
+app.get('/api/admin/system-info', requireAuth, requireAdmin, (_req, res) => {
+    res.json({
+        ...getVersion(),
+        uptime: process.uptime(),
+        memory: process.memoryUsage()
+    });
+});
 
 /**
  * @openapi
