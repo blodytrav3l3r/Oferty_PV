@@ -3,6 +3,11 @@
  *
  * Używamy czystego setInterval zamiast node-cron (zero nowych zależności).
  * Trial jest pasywny - żadne cykliczne zadanie nie wpływa na solver JS.
+ *
+ * P2.8: single-instance BY DESIGN — `running:Set` chroni tylko w obrębie
+ * procesu. Przy 2+ instancjach (cluster/PM2 scale-out) zadania (mlTraining,
+ * SelfEvaluation, pricelistDue) dublowałyby się. Wtedy dopiero: job_locks
+ * w SQLite (jobName/owner/startedAt/expiresAt + lease). Bez Redisa.
  */
 
 import { logger } from './logger';
