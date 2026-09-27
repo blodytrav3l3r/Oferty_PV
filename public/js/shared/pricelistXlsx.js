@@ -170,10 +170,33 @@
         return { rows: rows, precoDataMap: precoDataMap };
     }
 
+    /**
+     * Payload POST /api/pricelist-versions/{rury|studnie}/drafts (Etap D).
+     * Nota: pusta/biała → pominięta (serwer i tak przyjmie brak).
+     * Zwraca NOWY obiekt, nie mutuje rows.
+     */
+    function buildDraftPayload(rows, note) {
+        var payload = { rows: rows };
+        var n = note == null ? '' : String(note).trim();
+        if (n) payload.note = n;
+        return payload;
+    }
+
+    /**
+     * Rozbija wynik parseWorkbookToJson na produkty + precoDataMap (Etap D,
+     * testowalny alias kształtu { rows, precoDataMap }).
+     */
+    function splitStudnieImport(parsed) {
+        var p = parsed || {};
+        return { products: p.rows || [], precoDataMap: p.precoDataMap || {} };
+    }
+
     window.pricelistXlsx = window.pricelistXlsx || {};
     window.pricelistXlsx.mapHeaders = mapHeaders;
     window.pricelistXlsx.coerceNumerics = coerceNumerics;
     window.pricelistXlsx.validateProductIdName = validateProductIdName;
     window.pricelistXlsx.normalizeRows = normalizeRows;
     window.pricelistXlsx.parseWorkbookToJson = parseWorkbookToJson;
+    window.pricelistXlsx.buildDraftPayload = buildDraftPayload;
+    window.pricelistXlsx.splitStudnieImport = splitStudnieImport;
 })();

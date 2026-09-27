@@ -378,9 +378,13 @@ async function exportRuryToExcel() {
     }
 }
 
-async function importRuryFromExcel(event) {
+async function importRuryFromExcel(event, opts) {
     const file = event.target.files[0];
     if (!file) return;
+    // Etap D: cel importu — 'live' (default, zachowanie jak dziś) albo 'draft'
+    // (POST /api/pricelist-versions/rury/drafts). Wybór z UI dopiero w Etapie E.
+    const target = (opts && opts.target) || 'live';
+    const note = (opts && opts.note) || '';
 
     const btns = document.querySelectorAll('[onclick*="importRuryFromExcel"]');
     btns.forEach((b) => b.setAttribute('disabled', 'true'));
@@ -441,10 +445,47 @@ async function importRuryFromExcel(event) {
             }
 
             const confirmImport = await appConfirm(
-                `Zaimportować ${normalized.length} pozycji? Aktualny cennik zostanie zastąpiony.`,
+                target === 'draft'
+                    ? `Zapisać ${normalized.length} pozycji jako wersję roboczą? Cennik na żywo nie zmieni się.`
+                    : `Zaimportować ${normalized.length} pozycji? Aktualny cennik zostanie zastąpiony.`,
                 { title: 'Import cennika', type: 'warning' }
             );
             if (!confirmImport) return;
+
+            if (target === 'draft') {
+                try {
+                    const payload = window.pricelistXlsx.buildDraftPayload(normalized, note);
+                    const draftHeaders = Object.assign(
+                        {},
+                        typeof authHeaders === 'function' ? authHeaders() : {},
+                        { 'Content-Type': 'application/json' }
+                    );
+                    const draftRes = await fetch('/api/pricelist-versions/rury/drafts', {
+                        method: 'POST',
+                        headers: draftHeaders,
+                        body: JSON.stringify(payload)
+                    });
+                    let draftBody = null;
+                    try {
+                        draftBody = await draftRes.json();
+                    } catch (_e) {
+                        draftBody = null;
+                    }
+                    if (!draftRes.ok)
+                        throw new Error(
+                            (draftBody && draftBody.error) || 'Błąd HTTP ' + draftRes.status
+                        );
+                    const v = (draftBody && draftBody.version) || {};
+                    showToast(
+                        'Wersja robocza zapisana' + (v.version ? ' (' + v.version + ')' : ''),
+                        'success'
+                    );
+                } catch (err) {
+                    logger.error('pricelistUi', 'Draft import error:', err);
+                    showToast('Błąd zapisu wersji roboczej: ' + err.message, 'error');
+                }
+                return;
+            }
 
             products = normalized;
             _pricelistDirty = true;
