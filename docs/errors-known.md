@@ -19,6 +19,8 @@
 > | #50 (przejścia na łączeniach)    | —         | brak wiersza w AGENTS (DOC_GAP)                            |
 > | #51 (ghost-draft oferty)         | —         | brak wiersza w AGENTS (DOC_GAP)                            |
 > | #52 (ghost-draft zamówienia)     | —         | brak wiersza w AGENTS (DOC_GAP)                            |
+> | #53 (hover przejścia legacy)     | —         | brak wiersza w AGENTS (DOC_GAP)                            |
+> | #54 (wyścig fokusu quick-edit)   | —         | brak wiersza w AGENTS (DOC_GAP)                            |
 
 ## 1. Seed timeout na Render (productsStudnie)
 

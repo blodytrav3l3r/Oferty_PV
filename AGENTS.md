@@ -343,7 +343,7 @@ Zawsze sprawdzaj kod pod kątem występowania poniższych znanych problemów:
 
 ---
 
-> Pełna baza błędów: `docs/errors-known.md` (#1–#53, w tym #24–#26 i #50–#53 spoza tej tabeli; mapowanie numeracji w nagłówku tamtego pliku).
+> Pełna baza błędów: `docs/errors-known.md` (#1–#54, w tym #24–#26 i #50–#54 spoza tej tabeli; mapowanie numeracji w nagłówku tamtego pliku).
 
 ## 6. Przydatne Polecenia Konsolowe
 
