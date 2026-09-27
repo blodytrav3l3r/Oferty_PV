@@ -758,6 +758,89 @@ export async function getVersionExport(id: string): Promise<VersionExport> {
     return { version, sections };
 }
 
+// ─── Faza B: clone-as-draft (rollback „przywróć starą jako nowy draft") ───
+// Dopiski Fazy B — F1/F2/F3 powyżej nietknięte.
+
+export interface CloneDraftOptions {
+    userId?: string;
+    note?: string;
+}
+
+/**
+ * Klonuje wiersze dowolnej wersji (ACTIVE/BACKDATE/SCHEDULED/DRAFT — bez
+ * ograniczeń statusu źródła) do nowej wersji DRAFT z seq = MAX+1.
+ * Aktywna wersja nietknięta; nowy draft czeka na edycję/aktywację.
+ * Lock per-type + audit CLONE (wzorzec activate/applyBackdate).
+ */
+export async function cloneAsDraft(
+    id: string,
+    opts: CloneDraftOptions = {}
+): Promise<PricelistVersion> {
+    const source = await prisma.pricelistVersion.findUnique({ where: { id } });
+    if (!source) {
+        throw new PricelistVersionError(404, 'NOT_FOUND', `Wersja ${id} nie istnieje`);
+    }
+    if (!isPricelistType(source.type)) {
+        throw new PricelistVersionError(422, 'INVALID_TYPE', `Wersja ${id} ma nieznany typ`);
+    }
+    const type = source.type;
+    const { sections } = await getVersionExport(id);
+    const rowsInput: unknown =
+        type === 'preco'
+            ? {
+                  konfig: sections.konfig ?? [],
+                  kinety: sections.kinety ?? [],
+                  zakresy: sections.zakresy ?? []
+              }
+            : ((sections[type] ?? []) as unknown);
+    const validated = validateRows(type, rowsInput);
+    const sha256 = sha256Canonical(validated);
+
+    const lock = lockFor(type);
+    const res = await lock.runWithLock(() =>
+        prisma.$transaction(async (tx) => {
+            const agg = await tx.pricelistVersion.aggregate({
+                _max: { seq: true },
+                where: { type }
+            });
+            const seq = (agg._max.seq ?? 0) + 1;
+            const nowIso = new Date().toISOString();
+            const newId = randomUUID();
+            const version = await tx.pricelistVersion.create({
+                data: {
+                    id: newId,
+                    type,
+                    seq,
+                    version: versionLabel(seq, nowIso),
+                    status: 'DRAFT',
+                    effectiveFrom: nowIso,
+                    createdBy: opts.userId,
+                    note: opts.note ?? `Klon wersji ${source.version}`,
+                    sha256,
+                    createdAt: nowIso
+                }
+            });
+            await insertVersionItems(tx, type, newId, validated);
+            await writeAudit(tx, {
+                entityId: newId,
+                userId: opts.userId,
+                action: 'CLONE',
+                oldData: { z: source.id, wersja: source.version, status: source.status },
+                newData: { seq, wersja: version.version }
+            });
+            return version;
+        })
+    );
+    if (!res.acquired) {
+        throw new PricelistVersionError(
+            503,
+            'LOCK_BUSY',
+            `Zapis wersji ${type} chwilowo zablokowany`
+        );
+    }
+    return res.value;
+}
+
 // ─── F3: freeze ofert ────────────────────────────────────────────────
 // Dopiski F3 — F1/F2 powyżej nietknięte.
 

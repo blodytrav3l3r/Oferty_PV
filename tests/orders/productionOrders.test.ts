@@ -222,7 +222,8 @@ describe('Production Orders (PZ) routes', () => {
 
     describe('PUT / (batch)', () => {
         it('tworzy/aktualizuje batch PZ', async () => {
-            (prisma.production_orders_rel.findUnique as jest.Mock).mockResolvedValue(null);
+            // P0.3: batch-read jednym findMany (brak rekordów → same create).
+            (prisma.production_orders_rel.findMany as jest.Mock).mockResolvedValue([]);
             (prisma.production_orders_rel.create as jest.Mock).mockResolvedValue({});
 
             const res = await request(app)
@@ -241,11 +242,13 @@ describe('Production Orders (PZ) routes', () => {
         });
 
         it('blokuje edycję cudzego PZ (P0.1)', async () => {
-            (prisma.production_orders_rel.findUnique as jest.Mock).mockResolvedValue({
-                id: 'pz-1',
-                userId: 'other-user',
-                data: '{}'
-            });
+            (prisma.production_orders_rel.findMany as jest.Mock).mockResolvedValue([
+                {
+                    id: 'pz-1',
+                    userId: 'other-user',
+                    data: '{}'
+                }
+            ]);
             (prisma.production_orders_rel.updateMany as jest.Mock).mockResolvedValue({
                 count: 1
             });
@@ -262,11 +265,13 @@ describe('Production Orders (PZ) routes', () => {
         });
 
         it('blokuje zmianę opiekuna cudzego PZ (P0.1)', async () => {
-            (prisma.production_orders_rel.findUnique as jest.Mock).mockResolvedValue({
-                id: 'pz-1',
-                userId: 'other-user',
-                data: '{}'
-            });
+            (prisma.production_orders_rel.findMany as jest.Mock).mockResolvedValue([
+                {
+                    id: 'pz-1',
+                    userId: 'other-user',
+                    data: '{}'
+                }
+            ]);
             (prisma.production_orders_rel.update as jest.Mock).mockResolvedValue({});
 
             const res = await request(app)
@@ -282,18 +287,20 @@ describe('Production Orders (PZ) routes', () => {
         });
 
         it('błąd #48: chudy PUT z `/index` nie wycina wellName/productName (merge)', async () => {
-            (prisma.production_orders_rel.findUnique as jest.Mock).mockResolvedValue({
-                id: 'pz-1',
-                userId: 'user-id',
-                version: 1,
-                data: JSON.stringify({
-                    status: 'draft',
-                    productionOrderNumber: 'SA/N/00001/26',
-                    wellName: 'S1',
-                    productName: 'Dennica DN1000 H=650/500',
-                    productId: 'DDD-10-065'
-                })
-            });
+            (prisma.production_orders_rel.findMany as jest.Mock).mockResolvedValue([
+                {
+                    id: 'pz-1',
+                    userId: 'user-id',
+                    version: 1,
+                    data: JSON.stringify({
+                        status: 'draft',
+                        productionOrderNumber: 'SA/N/00001/26',
+                        wellName: 'S1',
+                        productName: 'Dennica DN1000 H=650/500',
+                        productId: 'DDD-10-065'
+                    })
+                }
+            ]);
             (prisma.production_orders_rel.update as jest.Mock).mockResolvedValue({});
 
             const res = await request(app)
@@ -322,7 +329,7 @@ describe('Production Orders (PZ) routes', () => {
         });
 
         it('P0-V: create zwraca version=1', async () => {
-            (prisma.production_orders_rel.findUnique as jest.Mock).mockResolvedValue(null);
+            (prisma.production_orders_rel.findMany as jest.Mock).mockResolvedValue([]);
             (prisma.production_orders_rel.create as jest.Mock).mockResolvedValue({});
 
             const res = await request(app)
@@ -335,12 +342,14 @@ describe('Production Orders (PZ) routes', () => {
         });
 
         it('P0-V: update v6 → sukces z version=7 (echo serwera)', async () => {
-            (prisma.production_orders_rel.findUnique as jest.Mock).mockResolvedValue({
-                id: 'pz-1',
-                userId: 'user-id',
-                version: 6,
-                data: '{}'
-            });
+            (prisma.production_orders_rel.findMany as jest.Mock).mockResolvedValue([
+                {
+                    id: 'pz-1',
+                    userId: 'user-id',
+                    version: 6,
+                    data: '{}'
+                }
+            ]);
             (prisma.production_orders_rel.updateMany as jest.Mock).mockResolvedValue({
                 count: 1
             });
@@ -359,12 +368,14 @@ describe('Production Orders (PZ) routes', () => {
 
         it('P0-V: łańcuch save→save bez fałszywego 409 (scenariusz zgłoszenia)', async () => {
             // Serwer na v6. Klient zapisuje z v6 → dostaje v7 → zapisuje z v7 → v8.
-            (prisma.production_orders_rel.findUnique as jest.Mock).mockResolvedValue({
-                id: 'pz-1',
-                userId: 'user-id',
-                version: 6,
-                data: '{}'
-            });
+            (prisma.production_orders_rel.findMany as jest.Mock).mockResolvedValue([
+                {
+                    id: 'pz-1',
+                    userId: 'user-id',
+                    version: 6,
+                    data: '{}'
+                }
+            ]);
             (prisma.production_orders_rel.updateMany as jest.Mock).mockResolvedValue({
                 count: 1
             });
@@ -376,12 +387,14 @@ describe('Production Orders (PZ) routes', () => {
             expect(first.statusCode).toBe(200);
             const echoed = first.body.saved[0].version;
 
-            (prisma.production_orders_rel.findUnique as jest.Mock).mockResolvedValue({
-                id: 'pz-1',
-                userId: 'user-id',
-                version: echoed,
-                data: '{}'
-            });
+            (prisma.production_orders_rel.findMany as jest.Mock).mockResolvedValue([
+                {
+                    id: 'pz-1',
+                    userId: 'user-id',
+                    version: echoed,
+                    data: '{}'
+                }
+            ]);
             const second = await request(app)
                 .put('/api/orders/production')
                 .set('x-user-id', 'user-id')
@@ -394,12 +407,14 @@ describe('Production Orders (PZ) routes', () => {
 
         it('P0-V: zapis ze starą wersją → prawdziwy 409 (ochrona działa)', async () => {
             // Serwer na v7, klient wysyła v6 → 409 z serverVersion.
-            (prisma.production_orders_rel.findUnique as jest.Mock).mockResolvedValue({
-                id: 'pz-1',
-                userId: 'user-id',
-                version: 7,
-                data: '{}'
-            });
+            (prisma.production_orders_rel.findMany as jest.Mock).mockResolvedValue([
+                {
+                    id: 'pz-1',
+                    userId: 'user-id',
+                    version: 7,
+                    data: '{}'
+                }
+            ]);
             (prisma.production_orders_rel.updateMany as jest.Mock).mockResolvedValue({
                 count: 0
             });
@@ -416,12 +431,14 @@ describe('Production Orders (PZ) routes', () => {
         });
 
         it('P0-V: zapis bez version → legacy, sukces z version=old+1', async () => {
-            (prisma.production_orders_rel.findUnique as jest.Mock).mockResolvedValue({
-                id: 'pz-1',
-                userId: 'user-id',
-                version: 4,
-                data: '{}'
-            });
+            (prisma.production_orders_rel.findMany as jest.Mock).mockResolvedValue([
+                {
+                    id: 'pz-1',
+                    userId: 'user-id',
+                    version: 4,
+                    data: '{}'
+                }
+            ]);
             (prisma.production_orders_rel.update as jest.Mock).mockResolvedValue({});
 
             const res = await request(app)

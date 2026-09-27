@@ -165,6 +165,14 @@ jest.mock('../../src/prismaClient', () => ({
                 // P0-C/D: PUT batch działa na tx.production_orders_rel.
                 production_orders_rel: {
                     findUnique: jest.fn(async ({ where }: any) => store.orders[where.id] || null),
+                    // P0.3: batch-read jednym findMany id IN (filtr po store).
+                    findMany: jest.fn(async ({ where }: any) => {
+                        const ids: string[] = where?.id?.in ?? Object.keys(store.orders);
+                        return ids
+                            .map((id) => store.orders[id])
+                            .filter(Boolean)
+                            .map((o: any) => ({ ...o }));
+                    }),
                     upsert: jest.fn(async ({ where, create, update }: any) => {
                         store.upsertCalls++;
                         if (

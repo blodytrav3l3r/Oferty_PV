@@ -264,11 +264,15 @@ describe('PUT preservePrintCounts (chude obiekty nie zerują liczników)', () =>
 
     beforeEach(() => {
         app = createApp();
-        (prisma.production_orders_rel.findUnique as jest.Mock).mockResolvedValue({
-            data: OLD_BLOB,
-            userId: 'user-id',
-            version: 3
-        });
+        // P0.3: PUT batch czyta jednym findMany (wiersz niesie id do mapy).
+        (prisma.production_orders_rel.findMany as jest.Mock).mockResolvedValue([
+            {
+                id: 'pz-1',
+                data: OLD_BLOB,
+                userId: 'user-id',
+                version: 3
+            }
+        ]);
         (prisma.production_orders_rel.update as jest.Mock).mockResolvedValue({});
         (prisma.production_orders_rel.updateMany as jest.Mock).mockResolvedValue({ count: 1 });
         (prisma.$transaction as jest.Mock).mockImplementation(async (fn: any) => fn(prisma));
@@ -317,11 +321,14 @@ describe('PUT preservePrintCounts (chude obiekty nie zerują liczników)', () =>
         expect(writtenBlob().printCountZlecenia).toBe(7);
 
         jest.resetAllMocks();
-        (prisma.production_orders_rel.findUnique as jest.Mock).mockResolvedValue({
-            data: OLD_BLOB,
-            userId: 'user-id',
-            version: 3
-        });
+        (prisma.production_orders_rel.findMany as jest.Mock).mockResolvedValue([
+            {
+                id: 'pz-1',
+                data: OLD_BLOB,
+                userId: 'user-id',
+                version: 3
+            }
+        ]);
         (prisma.production_orders_rel.update as jest.Mock).mockResolvedValue({});
         (prisma.$transaction as jest.Mock).mockImplementation(async (fn: any) => fn(prisma));
 
@@ -342,13 +349,14 @@ describe('PUT preservePrintCounts (chude obiekty nie zerują liczników)', () =>
     });
 
     it('batch mieszany: chudy zachowuje, pełny nadpisuje', async () => {
-        (prisma.production_orders_rel.findUnique as jest.Mock).mockImplementation(
-            async ({ where }: any) => ({
-                data: OLD_BLOB,
-                userId: 'user-id',
-                version: 3,
-                ...(where.id === 'pz-2' ? { data: '{}' } : {})
-            })
+        (prisma.production_orders_rel.findMany as jest.Mock).mockImplementation(
+            async ({ where }: any) =>
+                (where?.id?.in ?? ['pz-1']).map((id: string) => ({
+                    id,
+                    data: id === 'pz-2' ? '{}' : OLD_BLOB,
+                    userId: 'user-id',
+                    version: 3
+                }))
         );
 
         const res = await request(app)

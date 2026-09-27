@@ -7,6 +7,7 @@
  */
 
 import express from 'express';
+import { z } from 'zod';
 import { requireAuth, requireAdmin } from '../middleware/auth';
 import { createModuleLock } from '../middleware/writeLock';
 import { PRICELIST_WRITE_LIMITER } from '../middleware/rateLimiters';
@@ -17,6 +18,7 @@ import {
     activate,
     activateDue,
     applyBackdate,
+    cloneAsDraft,
     createDraft,
     getVersionDiff,
     getVersionExport,
@@ -182,6 +184,32 @@ router.post(
                 userId: userIdOf(req)
             });
             res.json({ version });
+        } catch (err) {
+            sendVersionError(res, err);
+        }
+    }
+);
+
+/** Faza B: rollback — kopia wierszy dowolnej wersji → nowy DRAFT (seq auto). */
+const cloneDraftParamsSchema = z.object({ id: z.string().min(1) });
+
+router.post(
+    '/:id/clone-draft',
+    requireAuth,
+    requireAdmin,
+    PRICELIST_WRITE_LIMITER,
+    async (req, res) => {
+        try {
+            const parsed = cloneDraftParamsSchema.safeParse(req.params);
+            if (!parsed.success) {
+                res.status(400).json({
+                    error: 'Nieprawidłowy identyfikator wersji',
+                    code: 'INVALID_ID'
+                });
+                return;
+            }
+            const version = await cloneAsDraft(parsed.data.id, { userId: userIdOf(req) });
+            res.status(201).json({ version });
         } catch (err) {
             sendVersionError(res, err);
         }

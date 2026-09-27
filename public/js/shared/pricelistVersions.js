@@ -201,6 +201,14 @@
                             escAttr(v.id) +
                             '">Zastosuj wstecz</button>'
                           : '<span class="text-muted">—</span>';
+                // Rollback (Faza B): klon dowolnej wersji do nowego DRAFTu.
+                var cloneBtn =
+                    '<button class="btn btn-sm btn-secondary" data-pv-act="clone" data-pv-id="' +
+                    escAttr(v.id) +
+                    '" title="Utwórz nowy draft jako kopię wersji ' +
+                    escAttr(v.version || '') +
+                    ' (aktywna wersja nie zmieni się)">' +
+                    '<i data-lucide="history"></i> Przywróć jako draft</button>';
                 return (
                     '<tr>' +
                     '<td><strong>' +
@@ -230,7 +238,7 @@
                     '">Eksport</button>' +
                     '</td>' +
                     '<td>' +
-                    (manageable ? action : '<span class="text-muted">—</span>') +
+                    (manageable ? action + ' ' + cloneBtn : '<span class="text-muted">—</span>') +
                     '</td>' +
                     '</tr>'
                 );
@@ -472,6 +480,36 @@
                             });
                     }
                 );
+            } else if (act === 'clone' && id) {
+                var doClone = function () {
+                    apiJson(API + '/' + encodeURIComponent(id) + '/clone-draft', authed('POST'))
+                        .then(function (json) {
+                            var v = json.version || {};
+                            toast(
+                                'Utworzono draft ' + (v.version || '') + ' jako kopię wersji',
+                                'success'
+                            );
+                            refreshTable(type, true);
+                        })
+                        .catch(function (err) {
+                            toast('Błąd klonowania: ' + err.message, 'error');
+                        });
+                };
+                var cloneMsg =
+                    'Utworzyć nowy draft jako kopię tej wersji? Aktywna wersja nie zmieni się.';
+                if (typeof window.appConfirm === 'function') {
+                    window
+                        .appConfirm(cloneMsg, {
+                            title: 'Przywróć jako draft',
+                            okText: 'Klonuj',
+                            type: 'warning'
+                        })
+                        .then(function (ok) {
+                            if (ok) doClone();
+                        });
+                } else if (window.confirm(cloneMsg)) {
+                    doClone();
+                }
             }
         });
         var form = overlay.querySelector('#pv-save-form');

@@ -56,6 +56,39 @@ async function recycleProductionNumber(
     }
 }
 
+function parseRecycleEntry(
+    userId: string,
+    oldData: Record<string, unknown>
+): { userId: string; year: number; seq: number } | null {
+    const prodNum =
+        typeof oldData.productionOrderNumber === 'string' ? oldData.productionOrderNumber : '';
+    if (!prodNum) return null;
+    const parts = prodNum.split('/');
+    if (parts.length < 4) return null;
+    const seqNumber = parseInt(parts[2], 10);
+    const yearShort = parseInt(parts[3], 10);
+    const fullYear = 2000 + yearShort;
+    if (!(seqNumber > 0)) return null;
+    return { userId, year: fullYear, seq: seqNumber };
+}
+
+/**
+ * P0.3: hurtowy zwrot numerów — JEDEN INSERT zamiast N w pętli.
+ * Semantyka 1:1 z recycleProductionNumber (ON CONFLICT DO NOTHING).
+ */
+async function recycleProductionNumbersBulk(
+    entries: Array<{ userId: string; year: number; seq: number }>,
+    db: RawDb = prisma
+) {
+    if (entries.length === 0) return;
+    const rows = entries.map((e) => Prisma.sql`(${e.userId}, ${e.year}, ${e.seq})`);
+    await db.$executeRaw`
+        INSERT INTO recycled_production_numbers ("userId", year, seqNumber)
+        VALUES ${Prisma.join(rows)}
+        ON CONFLICT ("userId", year, seqNumber) DO NOTHING
+    `;
+}
+
 const writeProductionLimiter = WRITE_LIMITER;
 
 /* ===== E3a: lokalne schematy zod (luźne kontrakty — NIE validateData) =====
@@ -219,13 +252,38 @@ router.put(
         const saved: Array<{ id: string; version: number }> = [];
         try {
             const incoming = req.body.data || [];
+            // P0.3: docId przypisane Z GÓRY (1:1 z dotychczasową semantyką —
+            // brak id = crypto.randomUUID), żeby pre-fetch findMany objął cały batch.
+            const withIds: Array<{ o: any; docId: string }> = (incoming as any[]).map((o: any) => ({
+                o,
+                docId: (o.id as string | undefined) || crypto.randomUUID()
+            }));
+            const batchIds: string[] = [...new Set(withIds.map((x) => x.docId))];
 
             await prisma.$transaction(async (tx) => {
-                for (const o of incoming) {
-                    let docId = o.id;
-                    if (!docId) {
-                        docId = crypto.randomUUID();
+                // P0.3: JEDEN batch-read zamiast findUnique-per-element (N+1).
+                // Zapis pozostaje sekwencyjny w kolejności wejścia (efekty uboczne
+                // logAudit + kolejność saved bez zmian); mapa odświeżana po
+                // każdym zapisie, więc duplikat id w batchu widzi własny zapis
+                // (jak read-your-own-write w starej pętli).
+                const oldById = new Map<
+                    string,
+                    {
+                        id: string;
+                        data: string | null;
+                        userId: string | null;
+                        version: number | null;
                     }
+                >();
+                if (batchIds.length > 0) {
+                    const rows = await tx.production_orders_rel.findMany({
+                        where: { id: { in: batchIds } },
+                        select: { id: true, data: true, userId: true, version: true }
+                    });
+                    for (const r of rows) oldById.set(r.id, r);
+                }
+                for (const { o, docId } of withIds) {
+                    const old = oldById.get(docId) ?? null;
 
                     const {
                         id: _id,
@@ -249,11 +307,6 @@ router.put(
                         typeof (rest as Record<string, unknown>).productionOrderNumber === 'string'
                             ? ((rest as Record<string, unknown>).productionOrderNumber as string)
                             : undefined;
-
-                    const old = await tx.production_orders_rel.findUnique({
-                        where: { id: docId },
-                        select: { data: true, userId: true, version: true }
-                    });
 
                     // P0-C: guard W transakcji — return zamieniony na throw, żeby
                     // cofnąć cały batch (wcześniej: 403 w połowie = partial write).
@@ -326,6 +379,12 @@ router.put(
                             }
                         });
                         saved.push({ id: docId, version: 1 });
+                        oldById.set(docId, {
+                            id: docId,
+                            data: dataStr,
+                            userId: targetUserId,
+                            version: 1
+                        });
                     } else if (clientVersion != null) {
                         // P0-D: predykat w JEDNYM SQL (SET version+1 WHERE
                         // id+version). 0 wierszy = ktoś zapisał wcześniej.
@@ -355,6 +414,12 @@ router.put(
                             };
                         }
                         saved.push({ id: docId, version: clientVersion + 1 });
+                        oldById.set(docId, {
+                            id: docId,
+                            data: dataStr,
+                            userId: targetUserId,
+                            version: clientVersion + 1
+                        });
                     } else {
                         await tx.production_orders_rel.update({
                             where: { id: docId },
@@ -374,7 +439,14 @@ router.put(
                         });
                         // Gałąź bez predykatu (legacy, brak version w requeście):
                         // nowa wersja = stara + 1.
-                        saved.push({ id: docId, version: (old.version ?? 1) + 1 });
+                        const legacyNext = (old.version ?? 1) + 1;
+                        saved.push({ id: docId, version: legacyNext });
+                        oldById.set(docId, {
+                            id: docId,
+                            data: dataStr,
+                            userId: targetUserId,
+                            version: legacyNext
+                        });
                     }
                 }
             }, HOT_TX_OPTS);
@@ -685,12 +757,18 @@ router.post('/batch-delete', requireAuth, writeProductionLimiter, async (req, re
                 });
                 deletedCount = del.count;
             }
+            const finalIdSet = new Set(finalIds);
+            // P0.3: audyt sekwencyjnie w kolejności wejścia (efekt uboczny bez
+            // zmian), recycle jednym INSERT-em zamiast N w pętli — ta sama tx.
+            const recycleEntries: Array<{ userId: string; year: number; seq: number }> = [];
             for (const order of deletable) {
-                if (!finalIds.includes(order.id)) continue;
+                if (!finalIdSet.has(order.id)) continue;
                 const oldData = parseJsonField<Record<string, unknown>>(order.data, {});
                 logAudit('production_order', order.id, order.userId || '', 'delete', null, oldData);
-                await recycleProductionNumber(order.userId || '', oldData, tx);
+                const entry = parseRecycleEntry(order.userId || '', oldData);
+                if (entry) recycleEntries.push(entry);
             }
+            await recycleProductionNumbersBulk(recycleEntries, tx);
         }, HOT_TX_OPTS);
         searchCache.invalidateNamespace('production');
         res.json({ deleted: deletedCount, skipped });
