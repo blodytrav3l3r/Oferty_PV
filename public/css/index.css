@@ -1181,6 +1181,52 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
 }
 
 /* ═══════════════════════════════════════════════════════════
+   P6: Operacje (read-only dashboard) — statusy OK/WARNING/ERROR/UNKNOWN
+   ══════════════════════════════════════════════════════════ */
+.ops-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.3rem 0;
+    border-bottom: 1px solid var(--border);
+}
+.ops-row:last-child {
+    border-bottom: none;
+}
+.ops-name {
+    min-width: 11rem;
+    color: var(--text-muted);
+}
+.ops-value {
+    flex: 1;
+}
+.ops-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: var(--fs-xs);
+    font-weight: var(--fw-semibold);
+    padding: 0.1rem 0.5rem;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+}
+.ops-ok {
+    color: var(--success);
+}
+.ops-warn {
+    color: var(--warn-hover);
+}
+.ops-err {
+    color: var(--danger-hover);
+}
+.ops-unknown {
+    color: var(--text-muted);
+}
+.ops-error {
+    color: var(--danger-hover);
+}
+
+/* ═══════════════════════════════════════════════════════════
    AI / ML Dashboard — style dla dynamicznie generowanego HTML
    ══════════════════════════════════════════════════════════ */
 
