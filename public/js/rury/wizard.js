@@ -83,9 +83,9 @@ function goToPhase(step) {
 
     if (step === 1) updateStep1NextState();
 
-    // Widoczność paska podsumowania: wyłącznie zakładka Oferta,
+    // Widoczność paska podsumowania: zakładka Oferta + krok 3 Konfiguracji,
     // steruje updateRurySummaryBarVisibility() (offerNavigation.js).
-    // goToPhase celowo nie dotyka paska (wcześniej desync hidden <-> style.display).
+    if (typeof updateRurySummaryBarVisibility === 'function') updateRurySummaryBarVisibility();
 
     // Inicjalizacja karty budowy przy wejściu w krok 4
     if (step === 4 && typeof initKartaBudowyStep4 === 'function') {

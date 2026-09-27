@@ -2,16 +2,21 @@
 /* ===== NAWIGACJA SEKCJI (RURY) ===== */
 
 // SSoT widoczności paska podsumowania: pasek (Zapisz ofertę / Utwórz zamówienie)
-// widoczny wyłącznie w zakładce Oferta. Jedyny mechanizm: klasa `hidden`
-// (display:none !important) — zakaz style.display (desync z wizard.js).
+// widoczny w zakładce Oferta oraz w kroku 3 Konfiguracji (Pozycje oferty).
+// Jedyny mechanizm: klasa `hidden` (display:none !important) — zakaz style.display
+// (desync z wizard.js).
 function updateRurySummaryBarVisibility() {
     const summaryBar = document.getElementById('rury-summary-bar');
     if (!summaryBar) return;
     const offerActive = !!document.getElementById('section-offer')?.classList.contains('active');
+    const step3Active =
+        !!document.getElementById('section-builder')?.classList.contains('active') &&
+        !!document.getElementById('wizard-step-3')?.classList.contains('active');
+    const barVisible = offerActive || step3Active;
     // ponytail: czyści legacy inline display ze starego sterowania style.display
     summaryBar.style.removeProperty('display');
-    summaryBar.classList.toggle('hidden', !offerActive);
-    if (!offerActive) return;
+    summaryBar.classList.toggle('hidden', !barVisible);
+    if (!barVisible) return;
     const saveBtn = document.getElementById('btn-save-offer-order');
     if (saveBtn) {
         const isOrderMode = window.orderEditMode && window.editingRuryOrderId;

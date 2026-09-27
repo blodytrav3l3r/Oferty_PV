@@ -1,8 +1,9 @@
 // @ts-nocheck
 /**
  * Regresja: pasek podsumowania rur (Zapisz ofertę / Utwórz zamówienie)
- * widoczny wyłącznie w zakładce Oferta. Powrót Oferta → Konfiguracja
- * musi pasek ukrywać (jeden mechanizm: klasa `hidden`, bez style.display).
+ * widoczny w zakładce Oferta oraz w kroku 3 Konfiguracji (Pozycje oferty).
+ * Powrót Oferta → Konfiguracja (krok ≠ 3) musi pasek ukrywać
+ * (jeden mechanizm: klasa `hidden`, bez style.display).
  */
 import fs from 'fs';
 import path from 'path';
@@ -48,7 +49,8 @@ function loadNav() {
     const sections = {
         'section-builder': { id: 'section-builder', classList: new Cl(true) },
         'section-offer': { id: 'section-offer', classList: new Cl() },
-        'section-pricelist': { id: 'section-pricelist', classList: new Cl() }
+        'section-pricelist': { id: 'section-pricelist', classList: new Cl() },
+        'wizard-step-3': { id: 'wizard-step-3', classList: new Cl() }
     };
     const els = { ...sections, 'rury-summary-bar': bar };
     const context = {
@@ -68,7 +70,7 @@ function loadNav() {
     return { ctx: context, bar, sections, removed };
 }
 
-describe('frontend: pasek rur tylko w zakładce Oferta', () => {
+describe('frontend: pasek rur w zakładce Oferta i kroku 3', () => {
     it('powrót Oferta → Konfiguracja ukrywa pasek (scenariusz zgłoszenia)', () => {
         const { ctx, bar, sections } = loadNav();
         vm.runInContext("showSectionRury('builder')", ctx);
@@ -97,9 +99,27 @@ describe('frontend: pasek rur tylko w zakładce Oferta', () => {
         expect(content).toMatch(/updateRurySummaryBarVisibility/);
     });
 
-    it('goToPhase nie steruje paskiem (brak desync z nawigacją)', () => {
+    it('krok 3 Konfiguracji pokazuje pasek, inne kroki go ukrywają', () => {
+        const { ctx, bar, sections } = loadNav();
+        vm.runInContext("showSectionRury('builder')", ctx);
+        expect(bar.classList.contains('hidden')).toBe(true);
+        sections['wizard-step-3'].classList.add('active');
+        vm.runInContext(
+            "updateRurySummaryBarVisibility ? updateRurySummaryBarVisibility() : showSectionRury('builder')",
+            ctx
+        );
+        expect(bar.classList.contains('hidden')).toBe(false);
+        expect('display' in bar.style).toBe(false);
+        sections['wizard-step-3'].classList.remove('active');
+        vm.runInContext("showSectionRury('builder')", ctx);
+        expect(bar.classList.contains('hidden')).toBe(true);
+    });
+
+    it('goToPhase deleguje widoczność paska (bez bezpośredniego DOM)', () => {
         const file = path.join(process.cwd(), 'public/js/rury/wizard.js');
         const content = fs.readFileSync(file, 'utf-8');
+        expect(content).toMatch(/updateRurySummaryBarVisibility/);
         expect(content).not.toMatch(/rury-summary-bar/);
+        expect(content).not.toMatch(/summaryBar[^;]*style\.display/);
     });
 });
