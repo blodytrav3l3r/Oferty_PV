@@ -6,7 +6,8 @@
  * SSoT kształtu (przepisane 1:1 z FE):
  * - RURY: public/js/rury/pricelistUi.js:336 RURY_EXPORT_COLUMNS
  * - STUDNIE: public/js/studnie/pricelistState.js:42 EXPORT_COLUMNS
- * - arkusze/sort/sanitize: public/js/studnie/pricelistImportExport.js:11-40, 51-58, 74
+ * - arkusze/sort/sanitize: liveStudnieSheetName w src/services/pricelistVersionService.ts
+ *   (eksport studni buduje serwer, Etap C — brak getSheetName w FE)
  * - PRECO: public/js/studnie/pricelistImportExport.js:78-147
  */
 
@@ -130,11 +131,22 @@ describe('Etap A: projectVersionToLiveShape — STUDNIE', () => {
         expect(STUDNIE_LIVE_COLUMNS).toHaveLength(34);
     });
 
-    it('getSheetName 1:1 z LIVE (Akcesoria/Przejścia/Kinety/Dennicy/DN/Inne)', () => {
+    it('getSheetName 1:1 z LIVE (Akcesoria/Przejścia/Styczna/Kinety/Dennicy/DN/Inne)', () => {
         expect(liveStudnieSheetName({ category: 'Akcesoria studni' })).toBe('Akcesoria');
         expect(liveStudnieSheetName({ componentType: 'wlaz' })).toBe('Akcesoria');
         expect(liveStudnieSheetName({ category: 'Przejścia szczelne' })).toBe('Przejścia');
         expect(liveStudnieSheetName({ componentType: 'przejscie' })).toBe('Przejścia');
+        expect(liveStudnieSheetName({ componentType: 'styczna' })).toBe('Styczna');
+        expect(liveStudnieSheetName({ componentType: ' Styczna ' })).toBe('Styczna');
+        expect(liveStudnieSheetName({ componentType: 'STYCZNA' })).toBe('Styczna');
+        // Styczna wygrywa z DN (seed: dn numeryczne, np. '1000').
+        expect(
+            liveStudnieSheetName({
+                category: 'Studnie styczne',
+                componentType: 'styczna',
+                dn: '1000'
+            })
+        ).toBe('Styczna');
         expect(liveStudnieSheetName({ category: 'Kinety XYZ' })).toBe('Kinety');
         expect(liveStudnieSheetName({ componentType: 'kineta' })).toBe('Kinety');
         expect(liveStudnieSheetName({ category: 'Dennice', componentType: 'x' })).toBe('Dennicy');
@@ -143,7 +155,7 @@ describe('Etap A: projectVersionToLiveShape — STUDNIE', () => {
         expect(liveStudnieSheetName({})).toBe('Inne');
     });
 
-    it('sanitize nazwy arkusza jak LIVE (linia 74)', () => {
+    it('sanitize nazwy arkusza (jak LIVE)', () => {
         expect(liveSanitizeSheetName('A/B:C*D?E[F]G')).toBe('A_B_C_D_E_F_G');
         expect(liveSanitizeSheetName('x'.repeat(40))).toHaveLength(31);
     });
@@ -166,6 +178,32 @@ describe('Etap A: projectVersionToLiveShape — STUDNIE', () => {
             }
         }
         expect(out['Akcesoria'][0]['DN']).toBe('');
+    });
+
+    it('styczna ląduje w arkuszu Styczna, nie w DN/Inne (bez sortowania)', () => {
+        const out = projectVersionToLiveShape('studnie', {
+            studnie: [
+                {
+                    id: 'DDD-10-STYCZNA',
+                    category: 'Studnie styczne',
+                    componentType: 'styczna',
+                    dn: '1000'
+                },
+                {
+                    id: 'DDD-12-STYCZNA+KOREK',
+                    category: 'Studnie styczne',
+                    componentType: 'styczna',
+                    dn: '1200'
+                },
+                { id: 'K-1000', category: 'Kręgi', componentType: 'krag', dn: '1000' }
+            ]
+        });
+        expect(Object.keys(out)).toEqual(['Styczna', 'DN1000']);
+        expect(out['Styczna'].map((r) => r['Indeks'])).toEqual([
+            'DDD-10-STYCZNA',
+            'DDD-12-STYCZNA+KOREK'
+        ]);
+        expect(Object.keys(out['Styczna'][0])).toEqual(EXPECTED_STUDNIE_HEADERS);
     });
 
     it('pusta sekcja → brak arkuszy', () => {

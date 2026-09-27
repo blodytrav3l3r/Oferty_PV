@@ -775,10 +775,11 @@ export interface VersionExport {
 }
 
 // ─── Etap A: projekcja wersji → shape LIVE (eksport XLSX 1:1 z FE) ───
-// SSoT kształtu = frontend (przepisane 1:1, nie interpretowane):
+// SSoT kształtu:
 // - RURY: public/js/rury/pricelistUi.js RURY_EXPORT_COLUMNS (linia 336)
 // - STUDNIE: public/js/studnie/pricelistState.js EXPORT_COLUMNS (linia 42)
-// - arkusze + sort Przejścia + sanitize: public/js/studnie/pricelistImportExport.js (linie 11-40, 51-58, 74)
+// - arkusze + sort Przejścia + sanitize: liveStudnieSheetName / projectStudnie
+//   poniżej (eksport studni buduje serwer, Etap C — brak getSheetName w FE)
 // - PRECO: public/js/studnie/pricelistImportExport.js (linie 78-147)
 // Zero zmian DB/importu/UI — tylko projekcja wierszy w eksporcie wersji.
 
@@ -863,7 +864,7 @@ export const PRECO_DODATKI_LIVE_COLUMNS = [
 
 export const PRECO_LIVE_SHEETS = ['PRECO_Kinety', 'PRECO_Zakresy', 'PRECO_Dodatki'] as const;
 
-/** SSoT FE: public/js/studnie/pricelistImportExport.js:11-40 getSheetName. */
+/** SSoT FE: eksport studni buduje serwer (Etap C); grupowanie arkuszy tutaj. */
 export function liveStudnieSheetName(p: Record<string, unknown>): string {
     const c = String(p.category ?? '').toLowerCase();
     const ct = String(p.componentType ?? '').toLowerCase();
@@ -884,6 +885,12 @@ export function liveStudnieSheetName(p: Record<string, unknown>): string {
         ct === 'przejscie'
     )
         return 'Przejścia';
+    if (
+        String(p.componentType ?? '')
+            .trim()
+            .toLowerCase() === 'styczna'
+    )
+        return 'Styczna';
     if (c.includes('kinet') || ct === 'kineta') return 'Kinety';
     if (c.includes('dennic') || ct === 'dennica') return 'Dennicy';
     if (p.dn !== null && p.dn !== undefined && String(p.dn) !== '') {
@@ -945,7 +952,7 @@ function projectStudnie(rows: Array<Record<string, unknown>>): LiveSheetRows {
     }
     const out: LiveSheetRows = {};
     for (const cat of Object.keys(groups)) {
-        // SSoT FE pricelistImportExport.js:51-58 — sort tylko Przejścia.
+        // Sort tylko Przejścia (Styczna i reszta bez sortowania).
         const items =
             cat === 'Przejścia'
                 ? [...groups[cat]].sort((a, b) => {

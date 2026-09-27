@@ -131,6 +131,23 @@ describe('pricelistXlsx: parseWorkbookToJson', () => {
         expect(preco.cenaPelnaWysMB).toBe(300);
     });
 
+    test('studnie: arkusz Styczna łączony jak reszta (nie PRECO_*)', () => {
+        const { PX } = loadPX();
+        const wb = workbook({
+            DN1000: [{ Indeks: 'S1', Nazwa: 'Krąg' }],
+            Styczna: [
+                {
+                    Indeks: 'DDD-10-STYCZNA',
+                    Nazwa: 'Studnia styczna DN1000',
+                    'Typ komponentu': 'styczna'
+                }
+            ]
+        });
+        const out = PX.parseWorkbookToJson(fakeXlsx(), wb, { includePreco: true });
+        expect(out.rows.map((r) => r.Indeks).sort()).toEqual(['DDD-10-STYCZNA', 'S1']);
+        expect(out.precoDataMap).toEqual({});
+    });
+
     test('puste arkusze pomijane, nieznany PRECO_Zakresy Typ nie wywala', () => {
         const { PX } = loadPX();
         const wb = workbook({
