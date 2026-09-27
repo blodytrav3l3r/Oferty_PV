@@ -17,7 +17,7 @@ export const productionOrderItemSchema = z
         elementIndex: z.number().int().optional(),
         elementKey: z.string().optional()
     })
-    .passthrough();
+    .passthrough(); // P0.3(A): celowy passthrough — payload niesie pola domenowe/serwerowe (uid/id/version), walidacja bramkuje rdzeń
 
 export const productionOrdersBatchSchema = z.object({
     data: z.array(productionOrderItemSchema)
@@ -31,7 +31,7 @@ export const productionOrderCreateSchema = z
         elementIndex: z.number().int().optional(),
         elementKey: z.string().optional()
     })
-    .passthrough();
+    .passthrough(); // P0.3(A): celowy passthrough — payload niesie pola domenowe/serwerowe (uid/id/version), walidacja bramkuje rdzeń
 
 export const studnieOrderItemSchema = z
     .object({
@@ -39,7 +39,7 @@ export const studnieOrderItemSchema = z
         offerStudnieId: z.string().optional(),
         status: z.string().optional()
     })
-    .passthrough();
+    .passthrough(); // P0.3(A): celowy passthrough — payload niesie pola domenowe/serwerowe (uid/id/version), walidacja bramkuje rdzeń
 
 export const studnieOrdersBatchSchema = z.object({
     data: z.array(studnieOrderItemSchema),
@@ -54,7 +54,7 @@ export const studnieOrderUpdateSchema = z
         userId: z.string().optional(),
         data: z.record(z.string(), z.unknown()).optional()
     })
-    .passthrough();
+    .passthrough(); // P0.3(A): celowy passthrough — payload niesie pola domenowe/serwerowe (uid/id/version), walidacja bramkuje rdzeń
 
 // =============================================================================
 // P0.3 — KONTRAKT DTO STUDNI W ZAMÓWIENIU (observe → strict)
@@ -273,7 +273,7 @@ export const ruryOrderItemSchema = z
         offerId: z.string().optional(),
         status: z.string().optional()
     })
-    .passthrough();
+    .passthrough(); // P0.3(A): celowy passthrough — payload niesie pola domenowe/serwerowe (uid/id/version), walidacja bramkuje rdzeń
 
 export const ruryOrdersBatchSchema = z.object({
     data: z.array(ruryOrderItemSchema)
@@ -285,7 +285,7 @@ export const ruryOrderUpdateSchema = z
         userId: z.string().optional(),
         data: z.record(z.string(), z.unknown()).optional()
     })
-    .passthrough();
+    .passthrough(); // P0.3(A): celowy passthrough — payload niesie pola domenowe/serwerowe (uid/id/version), walidacja bramkuje rdzeń
 
 export type RuryOrderItemInput = z.infer<typeof ruryOrderItemSchema>;
 export type RuryOrdersBatchInput = z.infer<typeof ruryOrdersBatchSchema>;

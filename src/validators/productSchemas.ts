@@ -17,7 +17,7 @@ export const productPatchSchema = z
         weight: z.number().nullable().optional(),
         area: z.number().nullable().optional()
     })
-    .passthrough();
+    .passthrough(); // P0.3(A): celowy passthrough — PATCH czyta ALLOWED_FIELDS z req.body, walidacja bramkuje rdzeń
 
 export const productStudniePatchSchema = z
     .object({
@@ -56,7 +56,7 @@ export const productStudniePatchSchema = z
         malowanieWewnetrzne: z.number().nullable().optional(),
         malowanieZewnetrzne: z.number().nullable().optional()
     })
-    .passthrough();
+    .passthrough(); // P0.3(A): celowy passthrough — PATCH czyta ALLOWED_FIELDS z req.body, walidacja bramkuje rdzeń
 
 export const precoPricingUpdateSchema = z.object({
     data: z.union([z.record(z.string(), z.unknown()), z.array(z.record(z.string(), z.unknown()))])

@@ -62,7 +62,7 @@ export const offerItemSchema = z
         discount: z.number().min(0).max(100).optional(),
         price: z.number().nonnegative('Cena nie może być ujemna').optional()
     })
-    .passthrough();
+    .passthrough(); // P0.3(A): celowy passthrough — payload niesie pola domenowe/serwerowe (uid/id/version), walidacja bramkuje rdzeń
 
 export const offerCreateSchema = z
     .object({
@@ -74,7 +74,7 @@ export const offerCreateSchema = z
         items: z.array(offerItemSchema),
         data: z.record(z.string(), z.unknown()).optional()
     })
-    .passthrough();
+    .passthrough(); // P0.3(A): celowy passthrough — payload niesie pola domenowe/serwerowe (uid/id/version), walidacja bramkuje rdzeń
 
 export const offerUpdateSchema = offerCreateSchema.partial();
 
@@ -105,7 +105,7 @@ export const wellComponentSchema = z
         isOverwritten: z.boolean().optional(),
         overwrittenCost: z.number().nonnegative().optional()
     })
-    .passthrough();
+    .passthrough(); // P0.3(A): celowy passthrough — payload niesie pola domenowe/serwerowe (uid/id/version), walidacja bramkuje rdzeń
 
 export const passageConfigSchema = z
     .object({
@@ -121,7 +121,7 @@ export const passageConfigSchema = z
         zapasDolMin: z.number().nonnegative().optional(),
         zapasGoraMin: z.number().nonnegative().optional()
     })
-    .passthrough();
+    .passthrough(); // P0.3(A): celowy passthrough — payload niesie pola domenowe/serwerowe (uid/id/version), walidacja bramkuje rdzeń
 
 export const wellDataSchema = z
     .object({
@@ -136,7 +136,7 @@ export const wellDataSchema = z
         height: z.number().positive('Wysokość studni jest wymagana').optional(),
         depth: z.number().nonnegative().optional()
     })
-    .passthrough();
+    .passthrough(); // P0.3(A): celowy passthrough — payload niesie pola domenowe/serwerowe (uid/id/version), walidacja bramkuje rdzeń
 
 export const offerStudnieCreateSchema = z
     .object({
@@ -149,7 +149,7 @@ export const offerStudnieCreateSchema = z
         totalPrice: z.number().nonnegative().optional(),
         data: z.record(z.string(), z.unknown()).optional()
     })
-    .passthrough();
+    .passthrough(); // P0.3(A): celowy passthrough — payload niesie pola domenowe/serwerowe (uid/id/version), walidacja bramkuje rdzeń
 
 export const offerStudnieUpdateSchema = offerStudnieCreateSchema.partial();
 
