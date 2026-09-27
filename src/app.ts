@@ -58,6 +58,11 @@ if (process.env.SENTRY_DSN) {
 // Domyślnie 1 — nie ufaj niepotrzebnym hopom.
 app.set('trust proxy', parseInt(process.env.TRUST_PROXY || '1', 10));
 
+// cookieParser globalnie i WCZEŚNIE (przed /metrics i innymi trasami z requireAuth):
+// trasy systemowe rejestrowane są przed middleware bezpieczeństwa, więc parser
+// musi już działać — inaczej cookie-only auth dostaje puste req.cookies (401).
+app.use(cookieParser());
+
 /* ===== LOGOWANIE ŻĄDAŃ ===== */
 app.use(requestLogger);
 
@@ -215,7 +220,7 @@ app.use(cspReportOnly);
 // w src/mountRoutes.ts. Globalny parser wykonywałby się przed routerami,
 // więc mniejszy limit per-route byłby martwy (ciało już sparsowane),
 // a większy — nieosiągalny (globalny odrzuciłby payload wcześniej).
-app.use(cookieParser());
+// (cookieParser jest wyżej — musi działać już dla tras systemowych.)
 
 /* ===== NAZWA APLIKACJI (branding) — konfigurowalna przez env =====
  * Statyczne HTML zawierają tokeny {{APP_NAME}}/{{APP_SUBTITLE}} zamiast twardej
