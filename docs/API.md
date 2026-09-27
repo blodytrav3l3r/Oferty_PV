@@ -376,6 +376,21 @@ Wymaga autoryzacji (administrator). Zapisuje bieżący stan wszystkich cenników
 | ------ | ------------------------------------ | -------------------------------------- |
 | POST   | `/api/price-overrides/save-defaults` | Zapis bieżących cenników jako domyślne |
 
+## Eksport XLSX cenników
+
+Wymaga autoryzacji. Jeden kształt pliku dla warstw LIVE / VERSION / DEFAULT
+(arkusze i kolumny 1:1; plik studni zawiera też arkusze PRECO).
+
+| Metoda | Ścieżka                                                  | Opis                                                                   |
+| ------ | -------------------------------------------------------- | ---------------------------------------------------------------------- |
+| GET    | `/api/products/export.xlsx?source=live\|default`         | Cennik rur (`Cennik_Rury_Export.xlsx`)                                 |
+| GET    | `/api/products-studnie/export.xlsx?source=live\|default` | Cennik studni + PRECO (`Cennik_Studni_Export.xlsx`)                    |
+| GET    | `/api/preco-pricing/export.xlsx?source=live\|default`    | Samo PRECO (`Cennik_Preco_Export.xlsx`)                                |
+| GET    | `/api/pricelist-versions/:id/export` (administrator)     | Zamrożona wersja (`Cennik_{Rury,Studnie,Preco}_{version}_Export.xlsx`) |
+
+`source=default` zwraca cennik domyślny (bazowy pod Reset) — w UI dostępny
+wyłącznie przez dopisanie parametru do URL; przyciski eksportują `live`.
+
 ## Łączny eksport (`/api/export-combined`)
 
 Wymaga autoryzacji. Łączy oferty rur i studni w jeden dokument.
