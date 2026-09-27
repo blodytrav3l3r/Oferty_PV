@@ -28,6 +28,7 @@ import {
     cspReportOnly
 } from './middleware/security';
 import { createRateLimiter } from './middleware/rateLimiter';
+import { csrfProtection } from './middleware/csrf';
 import { logger } from './utils/logger';
 import { cleanupAuditLogs } from './services/auditService';
 import { modelRegistry } from './services/ml/ModelRegistry';
@@ -210,6 +211,11 @@ app.use(securityHeaders);
 app.use(charsetMiddleware);
 app.use(httpsRedirect);
 app.use(compression());
+
+/* ===== CSRF — same-origin dla mutacji (P0.1) ===== */
+// Za limitami nagłówkowymi, przed trasami API (mountRoutes). GET/HEAD/OPTIONS
+// oraz /health i /metrics nie są dotknięte (middleware przepuszcza nie-mutacje).
+app.use(csrfProtection);
 
 /* ===== CSP NONCE + REPORT-ONLY (Faza 1 planu CSP) ===== */
 app.use(cspNonceMiddleware);

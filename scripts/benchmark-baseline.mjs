@@ -74,7 +74,7 @@ async function main() {
     const password = (env.DEFAULT_ADMIN_PASSWORD || ADMIN_PASSWORD).trim();
     const login = await timeFetch('/api/auth/login', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', Origin: BASE },
         body: JSON.stringify({ username: 'admin', password })
     });
     let token = '';
@@ -88,7 +88,7 @@ async function main() {
         console.error(`[baseline] login HTTP ${login.status} — uruchom serwer`);
         process.exit(1);
     }
-    const H = { 'Content-Type': 'application/json', Cookie: `authToken=${token}` };
+    const H = { 'Content-Type': 'application/json', Origin: BASE, Cookie: `authToken=${token}` };
     const out = { base: BASE, samples: SAMPLES, writes: WITH_WRITES, steady: [], burst: null };
 
     const steadyJobs = [

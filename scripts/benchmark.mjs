@@ -58,7 +58,7 @@ async function main() {
 
     const login = await timeFetch('/api/auth/login', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', Origin: BASE },
         body: JSON.stringify({ username: 'admin', password })
     });
     let token = '';
@@ -74,7 +74,7 @@ async function main() {
         );
         process.exit(1);
     }
-    const H = { 'Content-Type': 'application/json', Cookie: `authToken=${token}` };
+    const H = { 'Content-Type': 'application/json', Origin: BASE, Cookie: `authToken=${token}` };
     const loginTime = [login.ms];
     const results = { login: loginTime };
 

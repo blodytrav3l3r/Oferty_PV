@@ -169,7 +169,11 @@ async function main() {
     const password = (env.DEFAULT_ADMIN_PASSWORD || ADMIN_PASSWORD).trim();
     const login = await timeFetch('/api/auth/login', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-Forwarded-For': '10.99.0.1' },
+        headers: {
+            'Content-Type': 'application/json',
+            Origin: BASE,
+            'X-Forwarded-For': '10.99.0.1'
+        },
         body: JSON.stringify({ username: 'admin', password })
     });
     let token = '';
@@ -185,6 +189,7 @@ async function main() {
     }
     const H = (i) => ({
         'Content-Type': 'application/json',
+        Origin: BASE,
         Cookie: `authToken=${token}`,
         'X-Forwarded-For': ipOf(i)
     });
