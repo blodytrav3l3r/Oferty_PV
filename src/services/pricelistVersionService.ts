@@ -114,6 +114,38 @@ function toUtcIso(value: unknown, field: string): string {
     return new Date(value).toISOString();
 }
 
+/** Pola boolean w PricelistItemStudnie (legacy FE przysyła 1/0). */
+const STUDNIE_BOOL_FIELDS = [
+    'magazynWL',
+    'magazynKLB',
+    'formaStandardowa',
+    'formaStandardowaKLB',
+    'active'
+] as const;
+
+/**
+ * Normalizuje legacy shape z GET /api/products-studnie (toLegacy:
+ * booleany jako 1/0, dn liczbowe, price null) do canonical zod/Prisma
+ * (boolean, dn string, brak klucza = default). Nie-array przepuszcza dalej
+ * by zod zwrócił standardowy 422.
+ */
+function normalizeStudnieRows(rows: unknown): unknown {
+    if (!Array.isArray(rows)) return rows;
+    return rows.map((row) => {
+        if (row === null || typeof row !== 'object') return row;
+        const rec = { ...(row as Record<string, unknown>) };
+        for (const field of STUDNIE_BOOL_FIELDS) {
+            const value = rec[field];
+            if (value === 1 || value === true) rec[field] = true;
+            else if (value === 0 || value === false) rec[field] = false;
+            else if (value === null || value === undefined) delete rec[field];
+        }
+        if (typeof rec.dn === 'number') rec.dn = String(rec.dn);
+        if (rec.price === null || rec.price === undefined) delete rec.price;
+        return rec;
+    });
+}
+
 /** Waliduje wiersze zod per typ (schematy + .nonnegative()); błąd → 422. */
 function validateRows(type: PricelistType, rows: unknown): VersionRows {
     if (type === 'rury') {
@@ -122,7 +154,7 @@ function validateRows(type: PricelistType, rows: unknown): VersionRows {
         return parsed.data;
     }
     if (type === 'studnie') {
-        const parsed = productsStudnieRowSchema.array().safeParse(rows);
+        const parsed = productsStudnieRowSchema.array().safeParse(normalizeStudnieRows(rows));
         if (!parsed.success) throwRowsError('studnie', parsed.error.issues);
         return parsed.data;
     }
