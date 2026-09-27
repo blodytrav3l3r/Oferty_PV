@@ -70,10 +70,41 @@ export async function versionedWrite(
         }
         return;
     }
-    await model.updateMany({
+    await blindWrite(model, {
+        id: args.id,
+        updateData: args.updateData,
+        conflictMessage: args.conflictMessage
+    });
+}
+
+/**
+ * P1.2: ślepy zapis (stary klient bez version) na nieistniejącym wierszu.
+ * updateMany z count 0 to cichy no-op = udana mutacja bez bumpa wersji.
+ * Jawny 409 zamiast udawanego sukcesu: mutation_success ⇒ version_after > version_before.
+ */
+export async function blindWrite(
+    model: VersionedWriteModel,
+    args: {
+        id: string;
+        updateData: Record<string, unknown>;
+        conflictMessage: string;
+    }
+): Promise<void> {
+    const upd = await model.updateMany({
         where: { id: args.id },
         data: { ...args.updateData, version: { increment: 1 } }
     });
+    if (upd.count === 0) {
+        const err = new Error(args.conflictMessage) as Error & {
+            status: number;
+            code: string;
+            serverVersion: number;
+        };
+        err.status = 409;
+        err.code = 'VERSION_CONFLICT';
+        err.serverVersion = 1;
+        throw err;
+    }
 }
 
 /** Mapuje błąd wersji na odpowiedź 409. Zwraca true gdy obsłużony. */

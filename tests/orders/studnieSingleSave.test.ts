@@ -72,6 +72,8 @@ function createApp() {
 
 beforeEach(() => {
     jest.resetAllMocks();
+    // P1.2: wierny domyśl Prisma po resecie (updateMany zawsze zwraca {count}).
+    mockedPrisma.orders_studnie_rel.updateMany.mockResolvedValue({ count: 1 });
     mockedPrisma.$transaction.mockImplementation(async (fn: any) => fn(prisma));
 });
 

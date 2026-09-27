@@ -78,6 +78,8 @@ beforeEach(() => {
     mockUser.id = 'user-id';
     mockUser.role = 'user';
     mockUser.subUsers = [];
+    // P1.2: wierny domyśl Prisma po resecie (updateMany zawsze zwraca {count}).
+    (prisma.orders_rury_rel.updateMany as jest.Mock).mockResolvedValue({ count: 1 });
     (prisma.$transaction as jest.Mock).mockImplementation(async (fn: any) => fn(prisma));
 });
 
@@ -89,6 +91,8 @@ describe('Rury Orders CRUD', () => {
         mockUser.id = 'user-id';
         mockUser.role = 'user';
         mockUser.subUsers = [];
+        // P1.2: wierny domyśl Prisma po resecie (updateMany zawsze zwraca {count}).
+        (prisma.orders_rury_rel.updateMany as jest.Mock).mockResolvedValue({ count: 1 });
         (prisma.$transaction as jest.Mock).mockImplementation(async (fn: any) => fn(prisma));
         app = createApp();
     });
