@@ -631,6 +631,10 @@ router.get('/ai/ml-status', requireAuth, READ_LIMITER, async (_req: Request, res
             lastTrainingRun: lastSuccessRun
                 ? { id: lastSuccessRun.id, startedAt: lastSuccessRun.startedAt }
                 : null,
+            // P5.2: lineage treningu — fingerprint datasetu + wersja kandydata
+            // (kolumny AiTrainingRun, bez zmiany schematu).
+            lastDatasetFingerprint: lastSuccessRun?.datasetFingerprint ?? null,
+            lastCandidateVersion: lastSuccessRun?.candidateModelVersion ?? null,
             activeModelMetrics: {
                 rocAuc: activeMetrics.rocAuc ?? null,
                 prAuc: activeMetrics.prAuc ?? null,

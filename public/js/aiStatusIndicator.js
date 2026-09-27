@@ -70,6 +70,9 @@
                     (status.trainingRows != null ? ' | wiersze: ' + status.trainingRows : '') +
                     (status.lastTrainingRun && status.lastTrainingRun.id
                         ? ' | run: ' + String(status.lastTrainingRun.id).slice(0, 8)
+                        : '') +
+                    (status.lastDatasetFingerprint
+                        ? ' | dataset: ' + String(status.lastDatasetFingerprint).slice(0, 12)
                         : '');
             } else {
                 dot.style.background = 'var(--slate-400)';
