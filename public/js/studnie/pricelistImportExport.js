@@ -35,10 +35,10 @@ async function importStudnieFromExcel(event, opts) {
     const file = event.target.files[0];
     if (!file) return;
     // Etap D: cel importu — 'live' (default, zachowanie jak dziś) albo 'draft'
-    // (POST /api/pricelist-versions/studnie/drafts, tylko produkty; PRECO
-    // pomijane — kształt zagnieżdżony po DN vs płaskie {konfig,kinety,zakresy}
-    // w POST /preco/drafts to osobny temat). Etap E: bez jawnego opts.target
-    // cel wybiera użytkownik w modalu po parsowaniu.
+    // (POST /api/pricelist-versions/studnie/drafts dla produktów + POST
+    // /api/pricelist-versions/preco/drafts dla arkuszy PRECO_* po konwersji
+    // window.pricelistXlsx.precoNestedToFlat 1:1 z flattenAndSave).
+    // Etap E: bez jawnego opts.target cel wybiera użytkownik w modalu po parsowaniu.
     const explicitTarget = (opts && opts.target) || null;
     const explicitNote = (opts && opts.note) || '';
 
@@ -209,11 +209,56 @@ async function importStudnieFromExcel(event, opts) {
                                     (v.version ? ' (' + v.version + ')' : ''),
                                 'success'
                             );
-                            if (data.hasPrecoData)
-                                showToast(
-                                    'Dane PRECO pominięto — draft obejmuje produkty studni',
-                                    'warning'
-                                );
+                            if (
+                                data.hasPrecoData &&
+                                data.precoDataMap &&
+                                Object.keys(data.precoDataMap).length > 0
+                            ) {
+                                try {
+                                    const flat = window.pricelistXlsx.precoNestedToFlat(
+                                        data.precoDataMap
+                                    );
+                                    const precoPayload = window.pricelistXlsx.buildDraftPayload(
+                                        flat,
+                                        note
+                                    );
+                                    const precoRes = await fetch(
+                                        '/api/pricelist-versions/preco/drafts',
+                                        {
+                                            method: 'POST',
+                                            headers: draftHeaders,
+                                            body: JSON.stringify(precoPayload)
+                                        }
+                                    );
+                                    let precoBody = null;
+                                    try {
+                                        precoBody = await precoRes.json();
+                                    } catch (_e) {
+                                        precoBody = null;
+                                    }
+                                    if (!precoRes.ok)
+                                        throw new Error(
+                                            (precoBody && precoBody.error) ||
+                                                'Błąd HTTP ' + precoRes.status
+                                        );
+                                    const pv = (precoBody && precoBody.version) || {};
+                                    showToast(
+                                        'Draft PRECO zapisany' +
+                                            (pv.version ? ' (' + pv.version + ')' : ''),
+                                        'success'
+                                    );
+                                } catch (precoErr) {
+                                    logger.error(
+                                        'pricelistManager',
+                                        'Preco draft import error:',
+                                        precoErr
+                                    );
+                                    showToast(
+                                        'Błąd zapisu draftu PRECO: ' + precoErr.message,
+                                        'error'
+                                    );
+                                }
+                            }
                         } catch (err) {
                             logger.error('pricelistManager', 'Draft import error:', err);
                             showToast('Błąd zapisu wersji roboczej: ' + err.message, 'error');

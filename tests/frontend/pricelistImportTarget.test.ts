@@ -286,7 +286,7 @@ describe('Etap E: studnie — modal po parsowaniu', () => {
         expect(sb.precoPricing[1000].kinety).toEqual([{ dn: 160, prosta: 500, dodWlot: 50 }]);
     });
 
-    test('bez opts: draft z notą → POST tylko produkty, PRECO pominięte + warning', async () => {
+    test('bez opts: draft z notą → POST produktów + POST PRECO, ta sama nota', async () => {
         const { sb, doc } = loadStudnie(async (url, opts) => ({
             ok: true,
             json: async () => ({ version: { id: 'd2', version: 'v5' } })
@@ -297,16 +297,19 @@ describe('Etap E: studnie — modal po parsowaniu', () => {
         doc.values['px-import-target-note'] = 'xls';
         doc.handlers['px-import-target-draft'].click();
         await flush();
-        expect(sb.fetch).toHaveBeenCalledTimes(1);
+        expect(sb.fetch).toHaveBeenCalledTimes(2);
         const [url, opts] = sb.fetch.mock.calls[0];
         expect(url).toBe('/api/pricelist-versions/studnie/drafts');
         const body = JSON.parse(opts.body);
         expect(body.rows).toHaveLength(1);
         expect(body.note).toBe('xls');
-        expect(JSON.stringify(body)).not.toContain('kinety');
+        const [precoUrl, precoOpts] = sb.fetch.mock.calls[1];
+        expect(precoUrl).toBe('/api/pricelist-versions/preco/drafts');
+        expect(JSON.parse(precoOpts.body).note).toBe('xls');
         expect(sb.precoPricing).toBeUndefined();
-        const warn = sb.showToast.mock.calls.find((c) => c[1] === 'warning');
-        expect(warn[0]).toContain('PRECO pominięto');
+        expect(sb.showToast.mock.calls.find((c) => c[1] === 'warning')).toBeUndefined();
+        const precoOk = sb.showToast.mock.calls.find((c) => c[0].includes('Draft PRECO zapisany'));
+        expect(precoOk[1]).toBe('success');
         expect(ev.target.value).toBe('');
     });
 });

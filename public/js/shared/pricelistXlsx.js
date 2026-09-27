@@ -185,6 +185,75 @@
     }
 
     /**
+     * PRECO nested→flat 1:1 z flattenAndSave (src/routes/precoPricingV2.ts).
+     * Wejście: precoDataMap {DN: {kinety:[{dn,prosta,dodWlot}], <label>:[{min,max,grupy}],
+     *   skrzynkaWlazowa, cenaPelnaWysMB, cenaDnoOsadnika}}.
+     * Wyjście: {konfig:[{id,key,value}], kinety:[{id,order,dn,wellDn,height,cena}],
+     *   zakresy:[{id,order,label,min,max,grupy,wellDn}]} (grupy = JSON-string).
+     * Czysta funkcja: zero DOM/fetch, nie mutuje wejścia.
+     */
+    function precoNestedToFlat(precoDataMap) {
+        var RANGE_TYPES = ['spadekKineta', 'spadekMufa', 'uniesienie', 'redukcja'];
+        var konfigRows = [];
+        var kinetyRows = [];
+        var zakresyRows = [];
+        var kinetyIdx = 0;
+        var zakresIdx = 0;
+        var input = precoDataMap || {};
+        Object.keys(input).forEach(function (key) {
+            var value = input[key];
+            var dn = Number(key);
+            if (isNaN(dn) || typeof value !== 'object' || value === null || Array.isArray(value)) {
+                return;
+            }
+            var kinety = value.kinety;
+            var scalarFields = {};
+            Object.keys(value).forEach(function (k) {
+                if (k !== 'kinety') scalarFields[k] = value[k];
+            });
+            konfigRows.push({
+                id: 'preco_konfig_' + key,
+                key: key,
+                value: JSON.stringify(scalarFields)
+            });
+            if (Array.isArray(kinety)) {
+                kinety.forEach(function (k) {
+                    var kin = k || {};
+                    kinetyRows.push({
+                        id: 'preco_kinety_' + key + '_' + kinetyIdx,
+                        order: kin.order != null ? kin.order : kinetyIdx,
+                        dn: kin.dn != null ? kin.dn : 0,
+                        wellDn: dn,
+                        height: kin.prosta != null ? kin.prosta : kin.height,
+                        cena: kin.dodWlot != null ? kin.dodWlot : kin.cena
+                    });
+                    kinetyIdx++;
+                });
+            }
+            RANGE_TYPES.forEach(function (label) {
+                var arr = value[label];
+                if (Array.isArray(arr)) {
+                    arr.forEach(function (item) {
+                        var it = item || {};
+                        var grupy = it.grupy != null ? it.grupy : {};
+                        zakresyRows.push({
+                            id: 'preco_zakres_' + label + '_' + zakresIdx,
+                            order: it.order != null ? it.order : zakresIdx,
+                            label: label,
+                            min: it.min,
+                            max: it.max,
+                            grupy: JSON.stringify(grupy),
+                            wellDn: dn
+                        });
+                        zakresIdx++;
+                    });
+                }
+            });
+        });
+        return { konfig: konfigRows, kinety: kinetyRows, zakresy: zakresyRows };
+    }
+
+    /**
      * Rozbija wynik parseWorkbookToJson na produkty + precoDataMap (Etap D,
      * testowalny alias kształtu { rows, precoDataMap }).
      */
@@ -225,7 +294,7 @@
             titleId: 'px-import-target-title',
             html:
                 '<div class="modal"><div class="modal-header"><h3 id="px-import-target-title">' +
-                '<i data-lucide="file-input" aria-hidden="true"></i> Import cennika — wybierz cel</h3>' +
+                '<i data-lucide="upload" aria-hidden="true"></i> Import cennika — wybierz cel</h3>' +
                 '<button class="btn-icon" id="px-import-target-close" aria-label="Zamknij">' +
                 '<i data-lucide="x" aria-hidden="true"></i></button></div>' +
                 '<div class="modal-body"><div class="form-group">' +
@@ -269,6 +338,7 @@
     window.pricelistXlsx.normalizeRows = normalizeRows;
     window.pricelistXlsx.parseWorkbookToJson = parseWorkbookToJson;
     window.pricelistXlsx.buildDraftPayload = buildDraftPayload;
+    window.pricelistXlsx.precoNestedToFlat = precoNestedToFlat;
     window.pricelistXlsx.splitStudnieImport = splitStudnieImport;
     window.pricelistXlsx.openImportTargetModal = openImportTargetModal;
 })();

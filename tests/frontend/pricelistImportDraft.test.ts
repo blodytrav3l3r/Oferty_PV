@@ -183,7 +183,7 @@ describe('Etap D: studnie import target', () => {
         expect(sb.precoPricing[1000].kinety).toEqual([{ dn: 160, prosta: 500, dodWlot: 50 }]);
     });
 
-    test('draft: POST studnie/drafts tylko z produktami, PRECO pominięte + warning', async () => {
+    test('draft: POST studnie/drafts + PRECO/drafts, ta sama nota', async () => {
         const sb = loadStudnie(
             async (url, opts) => ({
                 ok: true,
@@ -193,20 +193,25 @@ describe('Etap D: studnie import target', () => {
         );
         await sb.importStudnieFromExcel(xlsxEvent(), { target: 'draft', note: 'xls' });
         await flush();
-        expect(sb.fetch).toHaveBeenCalledTimes(1);
+        expect(sb.fetch).toHaveBeenCalledTimes(2);
         const [url, opts] = sb.fetch.mock.calls[0];
         expect(url).toBe('/api/pricelist-versions/studnie/drafts');
         expect(opts.method).toBe('POST');
         const body = JSON.parse(opts.body);
         expect(body.rows).toHaveLength(1);
         expect(body.rows[0].id).toBe('S1');
-        expect(JSON.stringify(body)).not.toContain('kinety');
+        const [precoUrl, precoOpts] = sb.fetch.mock.calls[1];
+        expect(precoUrl).toBe('/api/pricelist-versions/preco/drafts');
+        const precoBody = JSON.parse(precoOpts.body);
+        expect(precoBody.note).toBe('xls');
+        expect(precoBody.rows.kinety).toHaveLength(1);
         expect(sb.precoPricing).toBeUndefined();
-        const warn = sb.showToast.mock.calls.find((c) => c[1] === 'warning');
-        expect(warn[0]).toContain('PRECO pominięto');
+        expect(sb.showToast.mock.calls.find((c) => c[1] === 'warning')).toBeUndefined();
         const ok = sb.showToast.mock.calls.find((c) => c[1] === 'success');
         expect(ok[0]).toContain('Wersja robocza zapisana');
         expect(ok[0]).toContain('v5');
+        const precoOk = sb.showToast.mock.calls.find((c) => c[0].includes('Draft PRECO zapisany'));
+        expect(precoOk[1]).toBe('success');
     });
 });
 
@@ -224,8 +229,11 @@ describe('Etap D: kontrakt (bez UI / DB / endpointów / kształtów plików)', (
         }
         expect(shared).toContain('window.pricelistXlsx.buildDraftPayload');
         expect(shared).toContain('window.pricelistXlsx.splitStudnieImport');
+        expect(shared).toContain('window.pricelistXlsx.precoNestedToFlat');
         expect(rury).toContain('/api/pricelist-versions/rury/drafts');
         expect(studnie).toContain('/api/pricelist-versions/studnie/drafts');
-        expect(studnie).toContain('Dane PRECO pominięto — draft obejmuje produkty studni');
+        expect(studnie).toContain('/api/pricelist-versions/preco/drafts');
+        expect(studnie).toContain('Draft PRECO zapisany');
+        expect(studnie).not.toContain('Dane PRECO pominięto');
     });
 });
