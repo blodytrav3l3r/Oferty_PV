@@ -13,6 +13,7 @@
 
 import crypto from 'crypto';
 import { logger } from '../../utils/logger';
+import { canonicalizeJson } from '../../utils/datasetFingerprint';
 import { APP_NAME } from '../../constants/appMeta';
 import { createModuleLock } from '../../middleware/writeLock';
 import prisma from '../../prismaClient';
@@ -509,34 +510,14 @@ class TelemetryService {
     }
 
     /**
-     * Rekurencyjny kanoniczny serializer JSON (deterministyczny):
-     * - obiekty: klucze sortowane na KAŻDYM poziomie zagnieżdżenia,
-     * - tablice obiektów: elementy sortowane wg kanonicznego JSON (kolejność
-     *   elementów-obiektów nie wpływa na wynik porównania),
-     * - tablice prymitywów: kolejność zachowana (ma znaczenie, np. ringHeights),
-     * - prymitywy/null zachowywane bez zmian.
+     * Rekurencyjny kanoniczny serializer JSON (deterministyczny).
+     * P5.1: deleguje do SSoT w src/utils/datasetFingerprint.ts (reguły
+     * identyczne: sort kluczy, sort tablic obiektów, kolejność prymitywów).
      * Zwraca '' przy błędzie (pusty string = brak porównania).
      */
     private _canonicalize(value: unknown): string {
         try {
-            if (value === null || typeof value !== 'object') {
-                return JSON.stringify(value);
-            }
-            if (Array.isArray(value)) {
-                const items = value.map((el) => this._canonicalize(el));
-                const allObjects = value.every(
-                    (el) => el !== null && typeof el === 'object' && !Array.isArray(el)
-                );
-                if (allObjects) {
-                    items.sort();
-                }
-                return '[' + items.join(',') + ']';
-            }
-            const record = value as Record<string, unknown>;
-            const parts = Object.keys(record)
-                .sort()
-                .map((k) => JSON.stringify(k) + ':' + this._canonicalize(record[k]));
-            return '{' + parts.join(',') + '}';
+            return canonicalizeJson(value);
         } catch {
             return '';
         }
