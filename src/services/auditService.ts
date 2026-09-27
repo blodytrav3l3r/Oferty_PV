@@ -7,6 +7,7 @@
 
 import prisma from '../prismaClient';
 import { logger } from '../utils/logger';
+import { recordAuditFailure } from '../utils/metrics';
 
 const DEBOUNCE_SECONDS = 30;
 const MAX_AUDIT_AGE_DAYS = 180;
@@ -81,14 +82,24 @@ export async function logAudit(
             VALUES (${auditId}, ${entityType}, ${entityId}, ${userId}, ${action}, ${oldDataStr}, ${newDataStr}, ${now})
         `;
     } catch (e: unknown) {
+        // P0.4: audit failure nie blokuje operacji biznesowej (void), ale nigdy
+        // nie znika — strukturalny log z kontekstem + licznik w /metrics.
         const message = e instanceof Error ? e.message : 'Unknown error';
-        logger.error('AuditLog', 'Błąd zapisu logu', message);
+        recordAuditFailure();
+        logger.error('AuditLog', 'Błąd zapisu logu', {
+            entityType,
+            entityId,
+            userId,
+            action,
+            error: message
+        });
     }
 }
 
 /**
  * Loguje aktualizację z obliczeniem różnic i debouncingiem.
- * Jeśli aktualizacja dla tej samej encji została zalogowana w ciągu DEBOUNCE_SECONDS, nadpisuje ją.
+ * Jeśli aktualizacja dla tej samej encji została zalogowana w ciągu DEBOUNCE_SECONDS,
+ * scala diff z istniejącym wpisem (P0.4: brak utraty wcześniejszych kluczy).
  */
 async function logUpdateWithDebounce(
     entityType: string,
@@ -104,17 +115,24 @@ async function logUpdateWithDebounce(
     const cutoff = new Date(new Date(now).getTime() - DEBOUNCE_SECONDS * 1000).toISOString();
 
     // Użyj raw query dla find (obsługa błędnych dat w bazie)
-    const recentRows = await prisma.$queryRaw<Array<{ id: string }>>`
-        SELECT id FROM audit_logs WHERE entityType = ${entityType} AND entityId = ${entityId}
+    const recentRows = await prisma.$queryRaw<Array<{ id: string; newData: string | null }>>`
+        SELECT id, newData FROM audit_logs WHERE entityType = ${entityType} AND entityId = ${entityId}
         AND userId = ${userId} AND action = 'update' AND createdAt > ${cutoff}
         ORDER BY createdAt DESC LIMIT 1
     `;
     const recent = recentRows[0];
 
-    const newDataStr = JSON.stringify({ ...diff.changed, _diffMode: true });
-
     if (recent) {
-        // Nadpisz istniejący wpis
+        // P0.4: debounce scala zamiast nadpisywać — wcześniejsze klucze diffu
+        // (np. key1 z poprzedniego zapisu w oknie) nie mogą zniknąć.
+        let merged: Record<string, unknown> = {};
+        try {
+            const prev = recent.newData ? JSON.parse(recent.newData) : {};
+            if (prev && typeof prev === 'object' && !Array.isArray(prev)) merged = prev;
+        } catch {
+            // uszkodzony poprzedni wpis — bierzemy tylko bieżący diff
+        }
+        const newDataStr = JSON.stringify({ ...merged, ...diff.changed, _diffMode: true });
         await prisma.$executeRaw`
             UPDATE audit_logs SET newData = ${newDataStr}, createdAt = ${now} WHERE id = ${recent.id}
         `;
@@ -122,6 +140,7 @@ async function logUpdateWithDebounce(
     }
 
     // Nowy wpis z diffem
+    const newDataStr = JSON.stringify({ ...diff.changed, _diffMode: true });
     const auditId = generateAuditId();
     const oldDataStr = JSON.stringify({ ...diff.old, _diffMode: true });
     await prisma.$executeRaw`

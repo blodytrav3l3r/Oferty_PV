@@ -23,6 +23,8 @@ const endpoints = new Map<string, EndpointStats>();
 let dbQueries = 0;
 let dbMsTotal = 0;
 let busyCount = 0;
+// P0.4: licznik utraconych zapisów audytu (audit failure != business failure).
+let auditFailures = 0;
 let loopLagMs = 0;
 let loopLagMax = 0;
 let samplerStarted = false;
@@ -98,12 +100,18 @@ export function recordDbBusy(): void {
     busyCount++;
 }
 
+/** Wołane z auditService przy nieudanym zapisie logu audytu. */
+export function recordAuditFailure(): void {
+    auditFailures++;
+}
+
 export interface MetricsSnapshot {
     uptimeSec: number;
     rssMB: number;
     loopLagMs: number;
     loopLagMaxMs: number;
     db: { queries: number; msTotal: number; avgMs: number; busy: number };
+    audit: { failures: number };
     endpoints: Record<
         string,
         { n: number; p50: number; p95: number; errors: number; lastMs: number }
@@ -134,6 +142,7 @@ export function getMetricsSnapshot(pdf: Record<string, unknown> = {}): MetricsSn
             avgMs: dbQueries > 0 ? +(dbMsTotal / dbQueries).toFixed(2) : 0,
             busy: busyCount
         },
+        audit: { failures: auditFailures },
         endpoints: eps,
         pdf
     };
@@ -145,6 +154,7 @@ export function resetMetrics(): void {
     dbQueries = 0;
     dbMsTotal = 0;
     busyCount = 0;
+    auditFailures = 0;
     loopLagMs = 0;
     loopLagMax = 0;
 }
