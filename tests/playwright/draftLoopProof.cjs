@@ -66,9 +66,13 @@ const ORDER_ID = 'e2e-loop-proof-1';
 
 /* ── Spawn serwera (izolowany, port 3177, e2e.sqlite) ── */
 async function startServer() {
-    const dbUrl = 'file:./data/e2e.sqlite';
-    const { rmSync, existsSync, symlinkSync } = require('fs');
-    const dbFile = join(ROOT, 'prisma', 'data', 'e2e.sqlite');
+    const { rmSync, existsSync, symlinkSync, mkdirSync } = require('fs');
+    const { delimiter } = require('path');
+    // Absolutny file: URL — względne ścieżki SQLite CLI i runtime resolvują
+    // różnie (prisma/ vs cwd), stąd rozjazd bazy na CI (wzorzec appNameConsistency).
+    const dbFile = join(ROOT, 'data', 'e2e.sqlite');
+    const dbUrl = 'file:' + dbFile.replace(/\\/g, '/');
+    mkdirSync(join(ROOT, 'data'), { recursive: true });
     for (const f of [dbFile, dbFile + '-wal', dbFile + '-shm']) {
         if (existsSync(f)) rmSync(f);
     }
@@ -76,6 +80,13 @@ async function startServer() {
     if (!existsSync(distGen)) {
         symlinkSync(join(ROOT, 'generated'), distGen, 'junction');
     }
+    // ts-node z `prisma db seed` wymaga node_modules/.bin na PATH;
+    // delimiter zamiast twardego ';' (Linux ':' vs Windows ';').
+    const withBin = (extra) => ({
+        ...process.env,
+        PATH: join(ROOT, 'node_modules', '.bin') + delimiter + (process.env.PATH || ''),
+        ...extra
+    });
     execFileSync(
         process.execPath,
         [
@@ -85,15 +96,11 @@ async function startServer() {
             '--skip-generate',
             '--accept-data-loss'
         ],
-        { cwd: ROOT, env: { ...process.env, DATABASE_URL: dbUrl }, stdio: 'pipe' }
+        { cwd: ROOT, env: withBin({ DATABASE_URL: dbUrl }), stdio: 'pipe' }
     );
     execFileSync(process.execPath, [require.resolve('prisma/build/index.js'), 'db', 'seed'], {
         cwd: ROOT,
-        env: {
-            ...process.env,
-            DATABASE_URL: dbUrl,
-            PATH: join(ROOT, 'node_modules', '.bin') + ';' + process.env.PATH
-        },
+        env: withBin({ DATABASE_URL: dbUrl }),
         stdio: 'pipe'
     });
     const server = spawn(process.execPath, [join(ROOT, 'dist', 'server.js')], {
