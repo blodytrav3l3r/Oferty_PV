@@ -549,6 +549,8 @@ function _excelHandleKeydown(e) {
 
     /* Ctrl+F = focus wyszukiwarki */
     if (isCtrl && (e.key === 'f' || e.key === 'F')) {
+        // P4-A2: fokus już w wyszukiwarce → natywny find przeglądarki.
+        if (e.target && e.target.id === 'excel-search-input') return;
         e.preventDefault();
         const input = document.getElementById('excel-search-input');
         if (input) {
@@ -631,6 +633,8 @@ function _excelHandleKeydown(e) {
 
     /* Ctrl+A = zaznacz wszystko (bez Shift — Ctrl+Shift+A to auto-dobór) */
     if (isCtrl && !e.shiftKey && (e.key === 'a' || e.key === 'A')) {
+        // P4-A1: w edytowanym polu natywne select-all tekstu (jak Ctrl+Z/Del).
+        if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
         e.preventDefault();
         /* Tylko wiersze widoczne (filtr wyszukiwarki) — ukryte pomijamy,
            inaczej Delete/Ctrl+X po Ctrl+A wyczyściłby ukryte studnie. */
