@@ -28,6 +28,7 @@ import {
 } from '../services/pricelistVersionService';
 import prisma from '../prismaClient';
 import { buildXlsx, type XlsxSheet } from '../utils/minimalXlsx';
+import { versionExportFilename } from '../utils/exportFilenames';
 
 const router = express.Router();
 
@@ -279,7 +280,7 @@ router.get('/:id/export', requireAuth, requireAdmin, async (req, res) => {
         );
         res.setHeader(
             'Content-Disposition',
-            `attachment; filename="cennik-${version.type}-${version.version}.xlsx"`
+            `attachment; filename="${versionExportFilename(version.type, version.version)}"`
         );
         res.send(xlsx);
     } catch (err) {

@@ -404,6 +404,19 @@
         icons(document.getElementById('pv-diff-modal'));
     }
 
+    /* Formuła 1:1 z BE versionExportFilename (src/utils/exportFilenames.ts). */
+    function versionExportFilename(type, version) {
+        var label =
+            type === 'rury'
+                ? 'Rury'
+                : type === 'studnie'
+                  ? 'Studnie'
+                  : type === 'preco'
+                    ? 'Preco'
+                    : type;
+        return 'Cennik_' + label + '_' + version + '_Export.xlsx';
+    }
+
     async function exportVersion(id, type, version) {
         try {
             var headers = typeof window.authHeaders === 'function' ? window.authHeaders() : {};
@@ -414,7 +427,7 @@
             var blob = await res.blob();
             var a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
-            a.download = 'cennik-' + type + '-' + (version || id) + '.xlsx';
+            a.download = versionExportFilename(type, version || id);
             document.body.appendChild(a);
             a.click();
             setTimeout(function () {

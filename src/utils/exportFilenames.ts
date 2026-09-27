@@ -58,3 +58,21 @@ export function exportFilename(kind: string, parts: unknown[][], ext: string): s
     );
     return safeExt ? `${name}.${safeExt}` : name;
 }
+
+/**
+ * Nazwa pliku eksportu wersji cennika, konwencja LIVE:
+ * `Cennik_${Type}_${version}_Export.xlsx` (Type: Rury/Studnie/Preco;
+ * nieznany typ przechodzi jak jest). FE kopiuje formułę 1:1
+ * (public/js/shared/pricelistVersions.js).
+ */
+export function versionExportFilename(type: string, version: string): string {
+    const label =
+        type === 'rury'
+            ? 'Rury'
+            : type === 'studnie'
+              ? 'Studnie'
+              : type === 'preco'
+                ? 'Preco'
+                : type;
+    return `Cennik_${label}_${version}_Export.xlsx`;
+}

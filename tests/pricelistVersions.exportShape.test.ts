@@ -26,6 +26,7 @@ import {
     liveStudnieSheetName,
     projectVersionToLiveShape
 } from '../src/services/pricelistVersionService';
+import { versionExportFilename } from '../src/utils/exportFilenames';
 
 // Oczekiwane nagłówki 1:1 z FE (RURY_EXPORT_COLUMNS z pricelistUi.js:336).
 const EXPECTED_RURY_HEADERS = [
@@ -297,5 +298,23 @@ describe('Etap A: projectVersionToLiveShape — PRECO', () => {
         expect(projectVersionToLiveShape('preco', { konfig: [], kinety: [], zakresy: [] })).toEqual(
             {}
         );
+    });
+});
+
+describe('Nazwa pliku eksportu wersji (konwencja LIVE)', () => {
+    it('3 typy → Cennik_{Type}_{version}_Export.xlsx', () => {
+        expect(versionExportFilename('rury', 'v1')).toBe('Cennik_Rury_v1_Export.xlsx');
+        expect(versionExportFilename('studnie', 'v2')).toBe('Cennik_Studnie_v2_Export.xlsx');
+        expect(versionExportFilename('preco', 'v3')).toBe('Cennik_Preco_v3_Export.xlsx');
+    });
+
+    it('version z myślnikami przechodzi bez zmian', () => {
+        expect(versionExportFilename('studnie', 'v1-20260927')).toBe(
+            'Cennik_Studnie_v1-20260927_Export.xlsx'
+        );
+    });
+
+    it('nieznany typ przechodzi jak jest', () => {
+        expect(versionExportFilename('xyz', 'v1')).toBe('Cennik_xyz_v1_Export.xlsx');
     });
 });
