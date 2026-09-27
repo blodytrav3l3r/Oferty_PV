@@ -10,9 +10,11 @@ import { buildXlsx } from '../utils/minimalXlsx';
 import {
     PricelistVersionError,
     liveSheetsToXlsxSheets,
+    projectPrecoNestedToSheets,
     projectVersionToLiveShape,
     requireExportSource
 } from '../services/pricelistVersionService';
+import { formatPrecoResponse } from './precoPricingV2';
 
 const router = express.Router();
 const writeLimiter = PRICELIST_WRITE_LIMITER;
@@ -369,7 +371,23 @@ router.get('/export.xlsx', requireAuth, async (req, res) => {
         const live = projectVersionToLiveShape('studnie', {
             studnie: legacy as unknown as Array<Record<string, unknown>>
         });
-        const xlsx = await buildXlsx(liveSheetsToXlsxSheets(live, 'Cennik'));
+        // F1: lustrzaność z importem — doklej PRECO z tego samego źródła
+        // (live → tabele LIVE, default → *Default), kolejność jak stary eksport FE.
+        const precoResult =
+            source === 'live'
+                ? await formatPrecoResponse(
+                      prisma.precoKonfig,
+                      prisma.precoKinety,
+                      prisma.precoZakresy
+                  )
+                : await formatPrecoResponse(
+                      prisma.precoKonfigDefault,
+                      prisma.precoKinetyDefault,
+                      prisma.precoZakresyDefault
+                  );
+        const precoEntry = (precoResult.data[0] ?? {}) as Record<string, unknown>;
+        const merged = { ...live, ...projectPrecoNestedToSheets(precoEntry) };
+        const xlsx = await buildXlsx(liveSheetsToXlsxSheets(merged, 'Cennik'));
         res.setHeader(
             'Content-Type',
             'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'

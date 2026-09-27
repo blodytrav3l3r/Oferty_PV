@@ -26,7 +26,7 @@ const { runWithLock } = createModuleLock();
 // Frontend oczekuje: { data: [{ "1000": { skrzynkaWlazowa, cenaPelnaWysMB,
 //   cenaDnoOsadnika, kinety: [...] }, "spadekKineta": [...], ... }] }
 // ──────────────────────────────────────────
-async function formatPrecoResponse(konfigTable: any, kinetyTable: any, zakresyTable: any) {
+export async function formatPrecoResponse(konfigTable: any, kinetyTable: any, zakresyTable: any) {
     const [konfigRows, kinetyRows, zakresyRows] = await Promise.all([
         konfigTable.findMany(),
         kinetyTable.findMany({ orderBy: [{ dn: 'asc' }, { height: 'asc' }] }),
