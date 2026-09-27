@@ -23,6 +23,14 @@ function _excelErrorTitle(well) {
     );
 }
 
+/* P4-A3: jeden atrybut title wiersza — błąd + blokada scalone (duplikat
+   atrybutu = martwy atrybut). Czysta funkcja testowalna. */
+function _excelRowTitle(errTitle, isLocked) {
+    const lockTitle = 'Studnia zablokowana — zaakceptowane PZ / część zamówienia';
+    if (errTitle) return errTitle + (isLocked ? ' — ' + lockTitle : '');
+    return isLocked ? lockTitle : '';
+}
+
 function _excelIsLightTheme() {
     try {
         if (typeof document === 'undefined' || !document.documentElement) return false;
@@ -229,7 +237,8 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
                   ? ' excel-row-warning'
                   : '') + (isDup ? ' excel-row-dup' : '');
         const _errTitle = _excelErrorTitle(well);
-        const statusTitle = _errTitle ? ' title="' + _errTitle + '"' : '';
+        const _rowTitle = _excelRowTitle(_errTitle, isLockedRow);
+        const statusTitle = _rowTitle ? ' title="' + _rowTitle + '"' : '';
         const przejscia = well.przejscia || [];
         const solidBase = isEven ? 'var(--excel-row-even)' : 'var(--excel-row-odd)';
         const stickyBg = _excelStickyCellBg(rowBg, solidBase);
@@ -256,9 +265,6 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             rowStyleExtra +
             ';transition:background 0.15s,color 0.15s;"' +
             statusTitle +
-            (isLockedRow
-                ? ' title="Studnia zablokowana — zaakceptowane PZ / część zamówienia"'
-                : '') +
             ' onmouseenter="this.style.background=this.getAttribute(\'data-hover-bg\')" onmouseleave="this.style.background=this.getAttribute(\'data-orig-bg\')">';
         /* Checkbox */
         const cbChecked = _excelRowSelectStates[wIdx] ? ' checked' : '';

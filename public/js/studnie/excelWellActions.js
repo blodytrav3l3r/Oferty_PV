@@ -282,10 +282,11 @@ function excelRefreshParamsPopup(wIdx) {
 /* ===== EDYCJA NAZWY STUDNI ===== */
 function excelOnNameChange(wIdx, value) {
     if (!_excelGuardWellLocked(wIdx)) return;
+    const name = (value || '').trim();
+    // P4-A5: pusta nazwa wraca przed snapshot/dirty — brak wpisu w undo.
+    if (!name) return;
     _excelSaveUndoSnapshot();
     _excelMarkAsManual(wIdx);
-    const name = (value || '').trim();
-    if (!name) return;
     wells[wIdx].name = name;
     wells[wIdx].numer = name.replace(/ (PRE|UTH)$/i, '').trim();
     if (typeof autoUpdateWellName === 'function') {

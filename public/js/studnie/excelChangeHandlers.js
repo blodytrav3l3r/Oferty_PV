@@ -12,8 +12,6 @@ function excelOnRzednaChange(wIdx) {
     const well = wells[wIdx];
     if (!well) return;
     if (!_excelGuardWellLocked(wIdx)) return;
-    if (typeof _excelPasteInProgress === 'undefined' || !_excelPasteInProgress)
-        _excelSaveUndoSnapshot(wIdx);
     _excelClearResCache(well);
     const rzWlazuInput = row.querySelector('input[data-field="rzednaWlazu"]');
     const rzDnaInput = row.querySelector('input[data-field="rzednaDna"]');
@@ -31,6 +29,9 @@ function excelOnRzednaChange(wIdx) {
     if (rzWlazuInput) rzWlazuInput.classList.remove('inp-error');
     if (rzDnaInput) rzDnaInput.classList.remove('inp-error');
 
+    // P4-A4: snapshot dopiero po walidacji — odrzucona wartość nie brudzi undo.
+    if (typeof _excelPasteInProgress === 'undefined' || !_excelPasteInProgress)
+        _excelSaveUndoSnapshot(wIdx);
     well.rzednaWlazu = rzWlazu;
     well.rzednaDna = rzDna;
     // Dno powyżej istniejących przejść: jeden toast z listą (bez auto-clampa
