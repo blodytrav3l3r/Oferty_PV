@@ -1156,6 +1156,34 @@ export async function getVersionExport(id: string): Promise<VersionExport> {
     return { version, sections };
 }
 
+/**
+ * Arkusze eksportu wersji (shape LIVE) — domknięcie asymetrii LIVE vs VERSION.
+ * LIVE (GET /api/products-studnie/export.xlsx, F1) dokleja PRECO po arkuszach
+ * studni; eksport zamrożonej wersji studni robi to samo: PRECO o tym samym
+ * seq (dowolny status — snapshot, liczy się seq), arkusze PO studni
+ * (merge {...studnie, ...preco} jak w F1). Brak PRECO same-seq → tylko
+ * studnie (bez błędu). Rury i preco bez zmian.
+ */
+export async function getVersionExportSheets(
+    id: string
+): Promise<{ version: PricelistVersion; sheets: LiveSheetRows }> {
+    const { version, sections } = await getVersionExport(id);
+    if (!isPricelistType(version.type)) {
+        throw new PricelistVersionError(422, 'INVALID_TYPE', `Wersja ${id} ma nieznany typ`);
+    }
+    const sheets = projectVersionToLiveShape(version.type, sections);
+    if (version.type !== 'studnie') return { version, sheets };
+    const precoVersion = await prisma.pricelistVersion.findFirst({
+        where: { type: 'preco', seq: version.seq }
+    });
+    if (!precoVersion) return { version, sheets };
+    const preco = await getVersionExport(precoVersion.id);
+    return {
+        version,
+        sheets: { ...sheets, ...projectVersionToLiveShape('preco', preco.sections) }
+    };
+}
+
 // ─── Faza B: clone-as-draft (rollback „przywróć starą jako nowy draft") ───
 // Dopiski Fazy B — F1/F2/F3 powyżej nietknięte.
 

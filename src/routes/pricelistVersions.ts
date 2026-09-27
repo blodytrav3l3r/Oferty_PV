@@ -22,8 +22,7 @@ import {
     createDraft,
     deleteVersion,
     getVersionDiff,
-    getVersionExport,
-    projectVersionToLiveShape,
+    getVersionExportSheets,
     updateDraft
 } from '../services/pricelistVersionService';
 import prisma from '../prismaClient';
@@ -254,15 +253,14 @@ router.get('/:id/diff', requireAuth, requireAdmin, async (req, res) => {
     }
 });
 
-/** Eksport wersji do XLSX — shape 1:1 z eksportem LIVE z przeglądarki (projekcja). */
+/** Eksport wersji do XLSX — shape 1:1 z eksportem LIVE (studnie + PRECO same-seq jak F1). */
 router.get('/:id/export', requireAuth, requireAdmin, async (req, res) => {
     try {
-        const { version, sections } = await getVersionExport(req.params.id);
+        const { version, sheets: live } = await getVersionExportSheets(req.params.id);
         if (!isKnownType(version.type)) {
             res.status(422).json({ error: 'Wersja ma nieznany typ', code: 'INVALID_TYPE' });
             return;
         }
-        const live = projectVersionToLiveShape(version.type, sections);
         const sheets: XlsxSheet[] = Object.entries(live).map(([name, rows]) => {
             const headers = rows.length > 0 ? Object.keys(rows[0]) : ['id'];
             return {
