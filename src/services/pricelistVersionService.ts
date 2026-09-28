@@ -1159,10 +1159,11 @@ export async function getVersionExport(id: string): Promise<VersionExport> {
 /**
  * Arkusze eksportu wersji (shape LIVE) — domknięcie asymetrii LIVE vs VERSION.
  * LIVE (GET /api/products-studnie/export.xlsx, F1) dokleja PRECO po arkuszach
- * studni; eksport zamrożonej wersji studni robi to samo: PRECO o tym samym
- * seq (dowolny status — snapshot, liczy się seq), arkusze PO studni
- * (merge {...studnie, ...preco} jak w F1). Brak PRECO same-seq → tylko
- * studnie (bez błędu). Rury i preco bez zmian.
+ * studni; eksport zamrożonej wersji studni robi to samo: najnowsza wersja
+ * PRECO nie nowsza niż eksportowana (seq <=, dowolny status — snapshot),
+ * arkusze PO studni (merge {...studnie, ...preco} jak w F1). Brak starszej
+ * lub równej PRECO → tylko studnie (bez błędu, flaga precoIncluded=false).
+ * Rury i preco bez zmian.
  */
 export async function getVersionExportSheets(
     id: string
@@ -1173,8 +1174,11 @@ export async function getVersionExportSheets(
     }
     const sheets = projectVersionToLiveShape(version.type, sections);
     if (version.type !== 'studnie') return { version, sheets, precoIncluded: true };
+    // PRECO: najnowsza wersja nie nowsza niż eksportowana (seq <=) — parowanie
+    // po equal-seq gubiło PRECO zawsze gdy typy miały rozjechane seq.
     const precoVersion = await prisma.pricelistVersion.findFirst({
-        where: { type: 'preco', seq: version.seq }
+        where: { type: 'preco', seq: { lte: version.seq } },
+        orderBy: { seq: 'desc' }
     });
     if (!precoVersion) return { version, sheets, precoIncluded: false };
     const preco = await getVersionExport(precoVersion.id);

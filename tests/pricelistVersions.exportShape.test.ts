@@ -26,15 +26,28 @@ jest.mock('../src/prismaClient', () => ({
             findUnique: jest.fn(async ({ where }: { where: { id: string } }) => {
                 return versions.find((v) => v.id === where.id) ?? null;
             }),
-            findFirst: jest.fn(async ({ where }: { where: { type?: string; seq?: number } }) => {
-                return (
-                    versions.find(
-                        (v) =>
-                            (where.type === undefined || v.type === where.type) &&
-                            (where.seq === undefined || v.seq === where.seq)
-                    ) ?? null
-                );
-            })
+            findFirst: jest.fn(
+                async ({
+                    where,
+                    orderBy
+                }: {
+                    where: { type?: string; seq?: number | { lte?: number } };
+                    orderBy?: { seq?: 'asc' | 'desc' };
+                }) => {
+                    const maxSeq =
+                        typeof where.seq === 'object' && where.seq !== null
+                            ? (where.seq.lte ?? Number.POSITIVE_INFINITY)
+                            : (where.seq ?? Number.POSITIVE_INFINITY);
+                    const hit = versions
+                        .filter(
+                            (v) =>
+                                (where.type === undefined || v.type === where.type) &&
+                                v.seq <= maxSeq
+                        )
+                        .sort((a, b) => (orderBy?.seq === 'desc' ? b.seq - a.seq : a.seq - b.seq));
+                    return hit[0] ?? null;
+                }
+            )
         },
         pricelistItemRury: {
             findMany: jest.fn(async ({ where }: { where: { versionId: string } }) => {
@@ -388,7 +401,7 @@ describe('Etap A: projectVersionToLiveShape — PRECO', () => {
     });
 });
 
-describe('Eksport wersji studni dokleja PRECO same-seq (jak LIVE F1)', () => {
+describe('Eksport wersji studni dokleja PRECO (najwyższy seq <=, jak LIVE F1)', () => {
     beforeEach(() => {
         versions.length = 0;
         itemsRury.length = 0;
@@ -456,14 +469,39 @@ describe('Eksport wersji studni dokleja PRECO same-seq (jak LIVE F1)', () => {
         expect(Object.keys(sheets)).toEqual(['DN1000']);
     });
 
-    it('inny seq ignorowany (p9 nie doklejane do s1)', async () => {
+    it('nowsza PRECO ignorowana (p9 nie doklejane do s1)', async () => {
         versions.splice(
             versions.findIndex((v) => v.id === 'p5'),
             1
         );
-        const { sheets } = await getVersionExportSheets('s1');
+        const { sheets, precoIncluded } = await getVersionExportSheets('s1');
+        expect(precoIncluded).toBe(false);
         expect(sheets['PRECO_Kinety']).toBeUndefined();
         expect(Object.keys(sheets)).toEqual(['DN1000']);
+    });
+
+    it('starsza PRECO doklejana (najwyższy seq <= eksportowanego)', async () => {
+        versions.push({ id: 'p3', type: 'preco', seq: 3, version: 'v3', status: 'ACTIVE' });
+        itemsKinety.push({
+            id: 'p3:k3',
+            versionId: 'p3',
+            order: 0,
+            dn: 150,
+            wellDn: 1000,
+            height: 400,
+            cena: 9
+        });
+        const { sheets, precoIncluded } = await getVersionExportSheets('s1');
+        expect(precoIncluded).toBe(true);
+        // p5 (seq 5) wygrywa z p3 (seq 3): najwyższy <= 5.
+        expect(sheets['PRECO_Kinety']).toEqual([
+            {
+                'DN Studni': 1000,
+                'DN Rury': 160,
+                'Cena prosta (PLN)': 500,
+                'Dod. wlot (PLN)': 11
+            }
+        ]);
     });
 
     it('rury bez zmian (preco same-seq nie doklejane)', async () => {
