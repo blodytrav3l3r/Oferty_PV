@@ -256,11 +256,18 @@ router.get('/:id/diff', requireAuth, requireAdmin, async (req, res) => {
 /** Eksport wersji do XLSX — shape 1:1 z eksportem LIVE (studnie + PRECO same-seq jak F1). */
 router.get('/:id/export', requireAuth, requireAdmin, async (req, res) => {
     try {
-        const { version, sheets: live } = await getVersionExportSheets(req.params.id);
+        const {
+            version,
+            sheets: live,
+            precoIncluded
+        } = await getVersionExportSheets(req.params.id);
         if (!isKnownType(version.type)) {
             res.status(422).json({ error: 'Wersja ma nieznany typ', code: 'INVALID_TYPE' });
             return;
         }
+        // Flaga dla UI: studnie bez PRECO same-seq eksportują same studnie (ciche
+        // pominięcie zamienione na toast po stronie FE).
+        res.setHeader('X-Preco-Included', precoIncluded ? '1' : '0');
         const sheets: XlsxSheet[] = Object.entries(live).map(([name, rows]) => {
             const headers = rows.length > 0 ? Object.keys(rows[0]) : ['id'];
             return {

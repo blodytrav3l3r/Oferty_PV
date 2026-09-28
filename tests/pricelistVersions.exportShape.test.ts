@@ -433,7 +433,8 @@ describe('Eksport wersji studni dokleja PRECO same-seq (jak LIVE F1)', () => {
     });
 
     it('preco same-seq doklejone w kolejności po studni', async () => {
-        const { sheets } = await getVersionExportSheets('s1');
+        const { sheets, precoIncluded } = await getVersionExportSheets('s1');
+        expect(precoIncluded).toBe(true);
         expect(Object.keys(sheets)).toEqual(['DN1000', 'PRECO_Kinety']);
         expect(sheets['PRECO_Kinety']).toEqual([
             {
@@ -450,7 +451,8 @@ describe('Eksport wersji studni dokleja PRECO same-seq (jak LIVE F1)', () => {
             versions.findIndex((v) => v.id === 'p5'),
             1
         );
-        const { sheets } = await getVersionExportSheets('s1');
+        const { sheets, precoIncluded } = await getVersionExportSheets('s1');
+        expect(precoIncluded).toBe(false);
         expect(Object.keys(sheets)).toEqual(['DN1000']);
     });
 
@@ -465,7 +467,8 @@ describe('Eksport wersji studni dokleja PRECO same-seq (jak LIVE F1)', () => {
     });
 
     it('rury bez zmian (preco same-seq nie doklejane)', async () => {
-        const { sheets } = await getVersionExportSheets('r5');
+        const { sheets, precoIncluded } = await getVersionExportSheets('r5');
+        expect(precoIncluded).toBe(true);
         expect(Object.keys(sheets)).toEqual(['Cennik Rury']);
     });
 });

@@ -558,6 +558,12 @@
                 headers: headers
             });
             if (!res.ok) throw new Error('Błąd HTTP ' + res.status);
+            var precoIncluded = true;
+            try {
+                precoIncluded = res.headers.get('X-Preco-Included') !== '0';
+            } catch (_h) {
+                /* brak nagłówka = stare API, cisza */
+            }
             var blob = await res.blob();
             var a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
@@ -568,6 +574,12 @@
                 URL.revokeObjectURL(a.href);
                 a.remove();
             }, 1000);
+            if (!precoIncluded && type === 'studnie') {
+                toast(
+                    'Wersja PRECO o tym samym numerze nie istnieje — wyeksportowano same studnie',
+                    'warning'
+                );
+            }
         } catch (e) {
             toast('Błąd eksportu: ' + e.message, 'error');
         }

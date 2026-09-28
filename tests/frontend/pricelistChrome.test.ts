@@ -160,6 +160,10 @@ describe('frontend: panel Zarządzanie cennikiem (3 przyciski + 3 sekcje)', () =
         expect(saveDefaultsCount).toBe(1);
         expect(panel).toContain('obejmuje wszystkie cenniki (rury, studnie, PRECO)');
     });
+    it('panel: eksport ostrzega o braku PRECO same-seq', () => {
+        expect(panel).toContain('X-Preco-Included');
+        expect(panel).toContain('Wersja PRECO o tym samym numerze nie istnieje');
+    });
     it('panel: otwarcia preselektują tab; getRows per typ (mapa + getRowsOther)', () => {
         expect(panel).toContain('getRowsByType');
         expect(panel).toContain('getRowsOther');

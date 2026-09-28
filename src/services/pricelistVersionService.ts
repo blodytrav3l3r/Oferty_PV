@@ -1166,21 +1166,22 @@ export async function getVersionExport(id: string): Promise<VersionExport> {
  */
 export async function getVersionExportSheets(
     id: string
-): Promise<{ version: PricelistVersion; sheets: LiveSheetRows }> {
+): Promise<{ version: PricelistVersion; sheets: LiveSheetRows; precoIncluded: boolean }> {
     const { version, sections } = await getVersionExport(id);
     if (!isPricelistType(version.type)) {
         throw new PricelistVersionError(422, 'INVALID_TYPE', `Wersja ${id} ma nieznany typ`);
     }
     const sheets = projectVersionToLiveShape(version.type, sections);
-    if (version.type !== 'studnie') return { version, sheets };
+    if (version.type !== 'studnie') return { version, sheets, precoIncluded: true };
     const precoVersion = await prisma.pricelistVersion.findFirst({
         where: { type: 'preco', seq: version.seq }
     });
-    if (!precoVersion) return { version, sheets };
+    if (!precoVersion) return { version, sheets, precoIncluded: false };
     const preco = await getVersionExport(precoVersion.id);
     return {
         version,
-        sheets: { ...sheets, ...projectVersionToLiveShape('preco', preco.sections) }
+        sheets: { ...sheets, ...projectVersionToLiveShape('preco', preco.sections) },
+        precoIncluded: true
     };
 }
 
