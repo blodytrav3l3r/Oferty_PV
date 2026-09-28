@@ -5564,7 +5564,7 @@ td.excel-tr-selected .excel-sel-wrap > div {
 }
 
 .preco-group-head .preco-group-input {
-    width: 10ch;
+    width: 13ch;
     min-width: 72px;
     text-align: center;
     font-weight: var(--fw-bold);
