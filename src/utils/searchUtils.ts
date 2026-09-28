@@ -239,6 +239,7 @@ export interface RawOfferRow {
     d_budowa: string | null;
     d_number: string | null;
     d_offerNumber: string | null;
+    pricelistVersionId: string | null;
     history: string | null;
     _type: string;
     transportCost: number | null;
@@ -268,6 +269,7 @@ export interface SearchOfferRowMapped {
     _orderCount: number;
     transportCost: number | null;
     number: string;
+    pricelistVersionId: string | null;
     [key: string]: unknown;
 }
 

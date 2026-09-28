@@ -144,7 +144,8 @@ router.get('/', requireAuth, async (req, res) => {
                     json_extract(o.data, '$.budowa') AS "d_budowa",
                     json_extract(o.data, '$.number') AS "d_number",
                     json_extract(o.data, '$.offerNumber') AS "d_offerNumber",
-                    json_extract(o.data, '$.transportSeparate') AS "d_transportSeparate"
+                    json_extract(o.data, '$.transportSeparate') AS "d_transportSeparate",
+                    o."pricelistVersionId" AS "pricelistVersionId"
                 FROM offers_rel o
                 LEFT JOIN (
                     SELECT "offerId", COUNT(*) as order_count
@@ -205,7 +206,8 @@ router.get('/', requireAuth, async (req, res) => {
                     json_extract(s.data, '$.budowa') AS "d_budowa",
                     json_extract(s.data, '$.number') AS "d_number",
                     json_extract(s.data, '$.offerNumber') AS "d_offerNumber",
-                    json_extract(s.data, '$.transportSeparate') AS "d_transportSeparate"
+                    json_extract(s.data, '$.transportSeparate') AS "d_transportSeparate",
+                    s."pricelistVersionId" AS "pricelistVersionId"
                 FROM offers_studnie_rel s
                 LEFT JOIN (
                     SELECT "offerStudnieId", COUNT(*) as order_count
