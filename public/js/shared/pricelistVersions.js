@@ -362,17 +362,18 @@
         return status === 'DRAFT' || status === 'SCHEDULED' || status === 'BACKDATE_REQUESTED';
     }
 
-    /** Komórka noty: tekst + ołówek (tylko edytowalne, tylko admin). */
+    /** Komórka notatek: tekst + ołówek (tylko edytowalne, tylko admin). */
     function noteCell(v, manageable) {
         var text = esc(v.note || '—');
         if (!manageable || !isEditableStatus(v.status)) return text;
         return (
+            '<span class="pv-note-cell"><span class="pv-note-text">' +
             text +
-            ' <button class="btn-icon" data-pv-act="edit-note" data-pv-id="' +
+            '</span> <button class="btn-icon btn-icon-sm btn-icon--dim" data-pv-act="edit-note" data-pv-id="' +
             escAttr(v.id) +
             '" data-pv-note="' +
             escAttr(v.note || '') +
-            '" title="Edytuj notę" aria-label="Edytuj notę"><i data-lucide="pencil"></i></button>'
+            '" title="Edytuj notatki" aria-label="Edytuj notatki"><i data-lucide="pencil" aria-hidden="true"></i></button></span>'
         );
     }
 
@@ -570,7 +571,7 @@
             '<input class="form-input" id="pv-next-label" value="' +
             escAttr(versionLabel(next, new Date()) + ' (nr ' + next + ')') +
             '" readonly></div>' +
-            '<div class="form-group"><label for="pv-note">Nota</label>' +
+            '<div class="form-group"><label for="pv-note">Notatki</label>' +
             '<input class="form-input" id="pv-note" maxlength="500" placeholder="Opis zmiany (dla daty wstecznej: min. 10 znaków)"></div>' +
             '<div class="form-group"><label for="pv-eff">Obowiązuje od (czas lokalny → UTC)</label>' +
             '<input class="form-input" type="datetime-local" id="pv-eff"></div>' +
@@ -594,7 +595,7 @@
             '</div>' +
             '<div class="table-wrap"><table><thead><tr>' +
             '<th scope="col">Wersja</th><th scope="col">Nr</th><th scope="col">Status</th><th scope="col">Obowiązuje od</th>' +
-            '<th scope="col">Autor</th><th scope="col">Nota</th><th scope="col">Akcje</th>' +
+            '<th scope="col">Autor</th><th scope="col">Notatki</th><th scope="col">Akcje</th>' +
             '</tr></thead><tbody id="pv-versions-body"></tbody></table></div>' +
             '<h4 class="pv-section">Transfer plików</h4>' +
             '<div id="pv-transfer">' +
@@ -626,7 +627,7 @@
     }
 
     /**
-     * Modal noty (wspólny): backdate (wymagana, min. 10), edycja noty
+     * Modal notatek (wspólny): backdate (wymagana, min. 10), edycja notatek
      * i aktywacja (opcjonalne). opts: { required?: boolean (domyślnie true),
      * initial?: string, okText?: string }.
      */
@@ -643,7 +644,7 @@
                 esc(title) +
                 '</h3>' +
                 '<button class="btn-icon" aria-label="Zamknij" onclick="window.closeModal(\'pv-note-modal\')"><i data-lucide="x"></i></button></div>' +
-                '<div class="modal-body"><div class="form-group"><label for="pv-note-input">Nota ' +
+                '<div class="modal-body"><div class="form-group"><label for="pv-note-input">Notatki ' +
                 (required ? '(min. 10 znaków)' : '(opcjonalna)') +
                 '</label>' +
                 '<input class="form-input" id="pv-note-input" maxlength="500" placeholder="' +
@@ -898,7 +899,7 @@
             } else if (act === 'activate' && id) {
                 openNoteModal(
                     'Aktywuj wersję',
-                    'Opcjonalna nota do aktywacji…',
+                    'Opcjonalne notatki do aktywacji…',
                     function (note) {
                         var trimmed = (note || '').trim();
                         apiJson(
@@ -918,17 +919,17 @@
                 );
             } else if (act === 'edit-note' && id) {
                 openNoteModal(
-                    'Edytuj notę',
-                    'Nota (max 500 znaków, pustka czyści)…',
+                    'Edytuj notatki',
+                    'Notatki (max 500 znaków, pustka czyści)…',
                     function (note) {
                         apiJson(API + '/' + encodeURIComponent(id), authed('PUT', { note: note }))
                             .then(function () {
                                 window.closeModal('pv-note-modal');
-                                toast('Nota zapisana', 'success');
+                                toast('Notatki zapisane', 'success');
                                 refreshTable(type, true);
                             })
                             .catch(function (err) {
-                                toast('Błąd zapisu noty: ' + err.message, 'error');
+                                toast('Błąd zapisu notatek: ' + err.message, 'error');
                             });
                     },
                     {

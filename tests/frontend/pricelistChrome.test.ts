@@ -321,16 +321,17 @@ describe('frontend: badge archiwalnej pieczątki (nie fałszywe legacy)', () => 
     });
 });
 
-describe('frontend: edycja noty + nota przy aktywacji (źródło)', () => {
+describe('frontend: edycja notatek + notatki przy aktywacji (źródło)', () => {
     const panel = fs.readFileSync(
         path.join(process.cwd(), 'public/js/shared/pricelistVersions.js'),
         'utf-8'
     );
 
-    it('kolumna Nota: ołówek pencil tylko dla edytowalnych (DRAFT/SCHEDULED/BACKDATE_REQUESTED)', () => {
+    it('kolumna Notatki: ołówek pencil tylko dla edytowalnych (DRAFT/SCHEDULED/BACKDATE_REQUESTED)', () => {
         expect(panel).toContain('data-pv-act="edit-note"');
         expect(panel).toContain('data-lucide="pencil"');
-        expect(panel).toContain('title="Edytuj notę"');
+        expect(panel).toContain('title="Edytuj notatki"');
+        expect(panel).toContain('pv-note-cell');
         expect(panel).toContain('function isEditableStatus(status)');
         expect(panel).toContain('data-pv-note="');
     });
@@ -340,15 +341,15 @@ describe('frontend: edycja noty + nota przy aktywacji (źródło)', () => {
         expect(panel).toContain('o.initial');
         expect(panel).toContain('o.okText');
     });
-    it('aktywacja pyta o opcjonalną notę (tylko SCHEDULED), pustka = bez noty', () => {
+    it('aktywacja pyta o opcjonalne notatki (tylko SCHEDULED), pustka = bez notatek', () => {
         expect(panel).toContain("'Aktywuj wersję'");
-        expect(panel).toContain('Opcjonalna nota do aktywacji');
+        expect(panel).toContain('Opcjonalne notatki do aktywacji');
         expect(panel).toContain("required: false, okText: 'Aktywuj'");
         expect(panel).toContain('trimmed ? { note: note } : undefined');
     });
-    it('edycja noty woła PUT samą notą (bez rows)', () => {
-        expect(panel).toContain("'Edytuj notę'");
+    it('edycja notatek woła PUT samymi notatkami (bez rows)', () => {
+        expect(panel).toContain("'Edytuj notatki'");
         expect(panel).toContain("authed('PUT', { note: note })");
-        expect(panel).toContain('Nota zapisana');
+        expect(panel).toContain('Notatki zapisane');
     });
 });

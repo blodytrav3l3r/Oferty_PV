@@ -920,6 +920,22 @@ html[data-theme='light'] .kartoteka-filter-bar:hover {
     white-space: nowrap;
     color: var(--text-muted);
 }
+/* Komórka notatek: tekst z ellipsis + mały przygaszony ołówek w jednej linii */
+.modal--pv .pv-note-cell {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    max-width: 100%;
+    vertical-align: middle;
+}
+.modal--pv .pv-note-cell .pv-note-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.modal--pv .pv-note-cell .btn-icon {
+    flex: none;
+}
 .modal--pv thead th:last-child,
 .modal--pv tbody td:last-child {
     text-align: right;
