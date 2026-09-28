@@ -12,6 +12,10 @@ on:
                 description: 'Liczba wirtualnych userów (sustained)'
                 required: false
                 default: '100'
+            skip:
+                description: 'Świadome pominięcie load (true = SKIPPED, nie PASS)'
+                required: false
+                default: 'false'
     schedule:
         - cron: '0 2 * * *'
 
@@ -51,21 +55,31 @@ jobs:
                   nohup node dist/server.js > /tmp/sok-load.log 2>&1 &
                   echo $! > /tmp/sok-load.pid
 
-            - name: Czekaj na /health (skip gdy brak środowiska)
+            - name: Świadome pominięcie (jawne SKIPPED)
+              run: |
+                  if [ "${{ github.event.inputs.skip }}" = "true" ]; then
+                    echo "LOAD_STATUS=SKIPPED (swiadome pominiecie przez operatora)" >> "$GITHUB_STEP_SUMMARY"
+                    echo "LOAD_SKIP_CONSCIOUS=true" >> "$GITHUB_ENV"
+                  fi
+
+            - name: Czekaj na /health (brak serwera = FAIL)
+              if: env.LOAD_SKIP_CONSCIOUS != 'true'
               run: |
                   for i in $(seq 1 30); do
                     if curl -sf http://localhost:3000/health >/dev/null 2>&1; then
                       echo "[OK] Serwer gotowy (proba $i)"
+                      echo "LOAD_STATUS=PASS (serwer gotowy)" >> "$GITHUB_STEP_SUMMARY"
                       exit 0
                     fi
                     sleep 2
                   done
-                  echo "[SKIP] Brak serwera po 60 s — pomijam load-sustained (nie FAIL)."
+                  echo "[BLOCKED] Serwer nie wystartowal po 60 s — load-sustained FAIL (nie SKIP)."
                   tail -n 50 /tmp/sok-load.log || true
-                  echo "LOAD_SKIP=true" >> "$GITHUB_ENV"
+                  echo "LOAD_STATUS=BLOCKED (serwer nie wystartowal)" >> "$GITHUB_STEP_SUMMARY"
+                  exit 1
 
             - name: Load sustained (self-cleaning zapisy, DoD PASS/FAIL)
-              if: env.LOAD_SKIP != 'true'
+              if: env.LOAD_SKIP_CONSCIOUS != 'true'
               run: |
                   USERS="${{ github.event.inputs.users }}"
                   if [ -z "$USERS" ]; then USERS="100"; fi
