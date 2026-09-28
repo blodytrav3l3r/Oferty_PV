@@ -34,7 +34,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     goToWizardStep(1);
 
     try {
-        window.studnieProducts = await loadStudnieProducts();
+        window.studnieProducts = await loadStudnieProducts({ source: 'active' });
         try {
             window.__studnieProductsSettled = true;
         } catch (_) {}

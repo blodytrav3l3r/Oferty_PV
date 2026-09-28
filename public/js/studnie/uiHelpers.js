@@ -511,19 +511,38 @@ function skipWizardToStep3() {
 
 /* ===== PRZECHOWYWANIE (REST API) ===== */
 
-async function loadStudnieProducts() {
+/* P1: oferty liczą z wersji ACTIVE (?source=active), cennik-admin zostaje na LIVE.
+   Fallback BE (brak ACTIVE → LIVE + X-Pricelist-Fallback: live) sygnalizujemy
+   jednym toastem na załadowanie strony (flaga window.__activePricingFallbackToastShown). */
+function _notifyActiveFallback(res) {
+    let fallback = false;
+    try {
+        fallback = !!(res && res.headers && res.headers.get('X-Pricelist-Fallback') === 'live');
+    } catch (_e) {
+        fallback = false;
+    }
+    if (fallback && typeof showToast === 'function') {
+        if (typeof window === 'undefined' || !window.__activePricingFallbackToastShown) {
+            if (typeof window !== 'undefined') window.__activePricingFallbackToastShown = true;
+            showToast('Brak aktywnej wersji — oferta liczy z cennika roboczego (LIVE)', 'warning');
+        }
+    }
+    return fallback;
+}
+
+async function loadStudnieProducts(options) {
+    const useActive = !!(options && options.source === 'active');
+    const url = useActive ? '/api/products-studnie?source=active' : '/api/products-studnie';
     let saved = null;
+    let fellBack = false;
     for (let attempt = 0; attempt < 3; attempt++) {
         try {
-            const res = await fetchWithTimeout(
-                '/api/products-studnie',
-                { headers: authHeaders() },
-                1000
-            );
+            const res = await fetchWithTimeout(url, { headers: authHeaders() }, 1000);
             if (res.ok) {
                 const json = await res.json();
                 if (json && Array.isArray(json.data)) {
                     saved = json.data;
+                    if (useActive) fellBack = _notifyActiveFallback(res);
                     break;
                 }
             }
@@ -550,6 +569,7 @@ async function loadStudnieProducts() {
         saveStudnieProducts(saved).catch(() => {});
     }
 
+    window.__studniePricingSource = useActive ? (fellBack ? 'live-fallback' : 'active') : 'live';
     return saved;
 }
 
@@ -574,13 +594,18 @@ async function saveStudnieProducts(data) {
 
 /**
  * Ładuje cennik PRECO z backendu.
+ * @param {{source?: string}} [options] - source:'active' → ceny z wersji ACTIVE (ekrany ofert);
+ *   brak → cennik roboczy LIVE (cennik-admin).
  */
-async function loadPrecoPricing() {
+async function loadPrecoPricing(options) {
+    const useActive = !!(options && options.source === 'active');
+    const url = useActive ? '/api/preco-pricing?source=active' : '/api/preco-pricing';
     try {
-        const res = await fetchWithTimeout('/api/preco-pricing');
+        const res = await fetchWithTimeout(url);
         const json = await res.json();
         if (json.data && Array.isArray(json.data) && json.data.length > 0) {
             precoPricing = json.data[0];
+            if (useActive) _notifyActiveFallback(res);
             logger.info('uiHelpers', '[PRECO] Załadowano cennik z bazy');
             return;
         }

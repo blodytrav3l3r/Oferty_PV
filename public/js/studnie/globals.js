@@ -409,7 +409,7 @@ function startStudnieViewTransition(duration = 180) {
     }, duration);
 }
 
-function showSectionStudnie(id) {
+async function showSectionStudnie(id) {
     startStudnieViewTransition();
     document.querySelectorAll('.section').forEach((s) => s.classList.remove('active'));
     document.querySelectorAll('.nav-btn').forEach((b) => b.classList.remove('active'));
@@ -421,7 +421,22 @@ function showSectionStudnie(id) {
         window.cleanupWellDragListeners();
     }
 
-    if (id === 'pricelist') renderStudniePriceList();
+    // P1: cennik-admin zawsze na LIVE, ekrany ofert na ACTIVE.
+    // Przypisanie przez window.studnieProducts (kontrakt ADR-009: rebuild mapy).
+    if (id === 'pricelist') {
+        window.studnieProducts = await loadStudnieProducts();
+        await loadPrecoPricing();
+        renderStudniePriceList();
+    } else if (
+        (window.__studniePricingSource === 'live' ||
+            window.__studniePricingSource === 'live-fallback') &&
+        (typeof _studniePricelistDirty === 'undefined' || !_studniePricelistDirty) &&
+        (typeof _precoDirty === 'undefined' || !_precoDirty)
+    ) {
+        // Powrót z cennika LIVE (bez niezapisanych edycji) — oferty liczą z ACTIVE.
+        window.studnieProducts = await loadStudnieProducts({ source: 'active' });
+        await loadPrecoPricing({ source: 'active' });
+    }
     if (id === 'builder' && typeof applyBuilderCollapse === 'function') applyBuilderCollapse();
     if (id === 'offer') {
         syncOfferClientSummary();

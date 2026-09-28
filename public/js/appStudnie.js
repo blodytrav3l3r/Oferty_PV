@@ -188,12 +188,12 @@ function waitForWellsAndOpen(targetWellId, targetElementIndex) {
  */
 async function loadDataInBackground() {
     const [productsP, offersP, ordersP, prodOrdersP, clientsP, precoP] = await Promise.allSettled([
-        loadStudnieProducts(),
+        loadStudnieProducts({ source: 'active' }),
         loadOffersStudnie(),
         loadOrdersStudnie(),
         loadProductionOrders(),
         loadClientsDb(),
-        loadPrecoPricing()
+        loadPrecoPricing({ source: 'active' })
     ]);
 
     if (productsP.status === 'fulfilled') {

@@ -28,7 +28,7 @@ function updateRurySummaryBarVisibility() {
     if (window.lucide) lucide.createIcons();
 }
 
-function showSectionRury(id) {
+async function showSectionRury(id) {
     document.querySelectorAll('.section').forEach((s) => s.classList.remove('active'));
     document.querySelectorAll('.nav-btn').forEach((b) => b.classList.remove('active'));
 
@@ -38,7 +38,17 @@ function showSectionRury(id) {
     const targetBtn = document.querySelector(`.nav-btn[data-section="${id}"]`);
     if (targetBtn) targetBtn.classList.add('active');
 
-    if (id === 'pricelist') renderPriceList();
+    // P1: cennik-admin zawsze na LIVE, ekrany ofert na ACTIVE.
+    if (id === 'pricelist') {
+        products = await loadProducts();
+        renderPriceList();
+    } else if (
+        (window.__ruryPricingSource === 'live' || window.__ruryPricingSource === 'live-fallback') &&
+        (typeof _pricelistDirty === 'undefined' || !_pricelistDirty)
+    ) {
+        // Powrót z cennika LIVE (bez niezapisanych edycji) — oferty liczą z ACTIVE.
+        products = await loadProducts({ source: 'active' });
+    }
 
     updateRurySummaryBarVisibility();
 

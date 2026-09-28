@@ -74,17 +74,46 @@ window.api = {
     }
 };
 
+/* P1: oferty liczą z wersji ACTIVE (?source=active), cennik-admin zostaje na LIVE.
+   Fallback BE (brak ACTIVE → LIVE + X-Pricelist-Fallback: live) sygnalizujemy
+   jednym toastem na załadowanie strony (flaga window.__activePricingFallbackToastShown). */
+function _notifyActiveFallback(res) {
+    let fallback = false;
+    try {
+        fallback = !!(res && res.headers && res.headers.get('X-Pricelist-Fallback') === 'live');
+    } catch (_e) {
+        fallback = false;
+    }
+    if (fallback && typeof showToast === 'function') {
+        if (typeof window === 'undefined' || !window.__activePricingFallbackToastShown) {
+            if (typeof window !== 'undefined') window.__activePricingFallbackToastShown = true;
+            showToast('Brak aktywnej wersji — oferta liczy z cennika roboczego (LIVE)', 'warning');
+        }
+    }
+    return fallback;
+}
+
 /**
  * Pobiera produkty z serwera. W przypadku błędu zwraca pustą tablicę.
+ * @param {{source?: string}} [options] - source:'active' → ceny z wersji ACTIVE (ekrany ofert);
+ *   brak → cennik roboczy LIVE (cennik-admin).
  * @returns {Promise<Array>} Tablica produktów
  */
-async function loadProducts() {
+async function loadProducts(options) {
+    const useActive = !!(options && options.source === 'active');
+    const url = useActive ? '/api/products?source=active' : '/api/products';
     for (let attempt = 0; attempt < 3; attempt++) {
         try {
-            const res = await fetchWithTimeout('/api/products', {}, 1000);
+            const res = await fetchWithTimeout(url, {}, 1000);
             if (res.ok) {
                 const json = await res.json();
                 if (json && Array.isArray(json.data)) {
+                    const fellBack = useActive ? _notifyActiveFallback(res) : false;
+                    window.__ruryPricingSource = useActive
+                        ? fellBack
+                            ? 'live-fallback'
+                            : 'active'
+                        : 'live';
                     return json.data;
                 }
             }

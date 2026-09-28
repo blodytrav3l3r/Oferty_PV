@@ -136,7 +136,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         btnChangeUser.style.display = 'inline-block';
     }
 
-    products = await loadProducts();
+    products = await loadProducts({ source: 'active' });
     offers = await loadOffers();
     clientsDb = await loadClientsDb();
     if (typeof loadOrdersRury === 'function') await loadOrdersRury();
