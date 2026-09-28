@@ -347,6 +347,7 @@
             '<button class="btn btn-sm btn-secondary" id="btn-save-defaults" onclick="window.parent.saveAllDefaults()" title="Zapisz bieżący stan cenników (rury, studnie, PRECO) jako domyślne"><i data-lucide="bookmark"></i> Zapisz domyślne</button>' +
             '<button class="btn btn-sm btn-secondary" onclick="resetPriceList()" title="Przywróć domyślne wartości cennika rur (pyta o potwierdzenie)"><i data-lucide="rotate-ccw"></i> Przywróć domyślne (Rury)</button>' +
             '<button class="btn btn-sm btn-secondary" onclick="resetStudniePriceList()" title="Przywróć domyślne wartości cennika studni (pyta o potwierdzenie)"><i data-lucide="rotate-ccw"></i> Przywróć domyślne (Studnie)</button>' +
+            '<button class="btn btn-sm btn-secondary" data-pv-reset="preco" onclick="window.loadPrecoDefaults()" title="Przywróć domyślne wartości cennika PRECO (pyta o potwierdzenie)"><i data-lucide="rotate-ccw"></i> Przywróć domyślne (PRECO)</button>' +
             '</div>' +
             '<p class="text-muted">Zapisz domyślne obejmuje wszystkie cenniki (rury, studnie, PRECO); przywrócenie dotyczy wybranego cennika.</p>'
         );
@@ -651,6 +652,12 @@
 
     function wirePanel(overlay, initialType) {
         var state = { current: initialType };
+        // Reset PRECO działa tylko tam, gdzie załadowany jest moduł PRECO (cennik
+        // studni); spod rur przycisk chowamy zamiast wołać w próżnię.
+        var precoReset = overlay.querySelector('[data-pv-reset="preco"]');
+        if (precoReset && typeof window.loadPrecoDefaults !== 'function') {
+            precoReset.style.display = 'none';
+        }
         overlay.addEventListener('click', function (e) {
             var tab = e.target && e.target.closest ? e.target.closest('[data-pv-tab]') : null;
             if (tab) {

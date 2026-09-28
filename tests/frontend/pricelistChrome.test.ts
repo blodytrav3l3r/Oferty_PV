@@ -130,6 +130,12 @@ describe('frontend: panel Zarządzanie cennikiem (3 przyciski + 3 sekcje)', () =
         expect(preco).not.toContain('import-preco-excel');
         expect(preco).toContain('window.exportPrecoToExcel = exportPrecoToExcel');
     });
+    it('panel: domyślne z resetem PRECO (chowany spod rur)', () => {
+        expect(panel).toContain('data-pv-reset="preco"');
+        expect(panel).toContain('window.loadPrecoDefaults()');
+        expect(panel).toContain('> Przywróć domyślne (PRECO)');
+        expect(panel).toContain("typeof window.loadPrecoDefaults !== 'function'");
+    });
     it('panel: transfer woła istniejące eksporty/importy; domyślne globalne raz', () => {
         expect(panel).toContain('onclick="exportRuryToExcel()"');
         expect(panel).toContain('onclick="exportStudnieToExcel()"');
