@@ -19,6 +19,25 @@
 
 ---
 
+## Remediation 2026-09-28 (cykl P0–P2, 10 commitów na `main`)
+
+Nowa warstwa powyżej historycznego raportu — nie zmienia ocen z 2026-07-09.
+
+| Etap                                                                            | Status              | Commit               | Weryfikacja                                                                                          |
+| ------------------------------------------------------------------------------- | ------------------- | -------------------- | ---------------------------------------------------------------------------------------------------- |
+| P0.1–P0.3 `/health/pdf` minimalny + smoke admin-only + błędy generyczne (I-011) | DONE                | `c02fa5d`            | `healthPdf` 7/7, `informationDisclosure` 6/6, security 91/91                                         |
+| P1.1 load: brak serwera = FAIL (koniec `LOAD_SKIP`)                             | DONE                | `efe8d32`            | `workflowStatus` + live CI                                                                           |
+| P1.2 deploy: DEPLOYED vs NOT_CONFIGURED w summary                               | DONE                | `eab80f1`            | `workflowStatus` 8/8                                                                                 |
+| P1.3 harness `draftLoopProof` Origin/Referer (CSRF bez zmian)                   | DONE                | `26ec0fc`            | live E2E 16/16 PASS                                                                                  |
+| CSP-A inventory (17/40/25) + sufit testowy                                      | DONE                | `750dd52`            | `cspInventory` 5/5                                                                                   |
+| P2.1 rate-limit: tabela zgodna z kodem + limit in-memory                        | DONE                | `858da51`            | `rateLimiter` + `rateLimit` matrix zielone                                                           |
+| P2.2 auth fallback: KEEP (prod throw + instalator losuje)                       | DONE                | `7309dc9`            | `authMiddleware` 18/18                                                                               |
+| P2.3 E2E blocking/advisory jawne                                                | DONE                | `0783aed`            | `workflowStatus` 10/10                                                                               |
+| P2.4 notices + express 4.22.3 / helmet 8.3.0                                    | DONE                | `cc34c3e`, `78dee32` | `test:quick` 3832 pass, audit: qs/fast-uri transitivne (akceptowane, fix tylko przez breaking major) |
+| CSP-B…E, Redis limiter, multi-instance                                          | TODO (osobne cykle) | —                    | plany: `docs/plans/csp-hardening.md`, `auth-bootstrap.md`, `e2e-classification.md`                   |
+
+---
+
 ## 1. Struktura katalogów
 
 | Element                            | Status | Uwagi                                                                                                |
