@@ -755,6 +755,13 @@ body::before {
     font-feature-settings: 'tnum';
 }
 
+/* Aktywne cenniki w pasku: jeden typ pod drugim. */
+.header-versions-stack {
+    display: inline-flex;
+    flex-direction: column;
+    line-height: 1.25;
+}
+
 .header-logout {
     height: 2.25rem;
     padding: 0.35rem 0.8rem;

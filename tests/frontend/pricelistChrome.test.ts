@@ -259,9 +259,10 @@ describe('frontend: widoczność wersji cennika (dopisek typu, pasek, kartoteka)
         expect(topbar).toContain("versionEl.textContent = 'v' + data.version");
         expect(topbar).toContain('app-pricelists-toolbar');
         expect(topbar).toContain('/api/pricelist-versions/labels?type=');
-        expect(topbar).toContain("parts.join(' · ')");
+        expect(topbar).toContain('header-versions-stack');
+        expect(topbar).toContain('line.textContent = parts[j]');
         expect(topbar).toContain('brak aktywnego cennika');
-        expect(topbar).toContain('header-version text-muted');
+        expect(topbar).toContain('header-version header-versions-stack text-muted');
         // textContent, nie innerHTML (kontrakt SEC-01 jak wersja aplikacji).
         expect(topbar).not.toMatch(/pricelists-toolbar['"]?\)\.innerHTML/);
         expect(appHtml).toContain('id="app-version-toolbar"');

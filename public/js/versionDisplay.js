@@ -90,7 +90,7 @@
         if (!anchor || document.getElementById('app-pricelists-toolbar')) return;
         var el = document.createElement('span');
         el.id = 'app-pricelists-toolbar';
-        el.className = 'header-version text-muted';
+        el.className = 'header-version header-versions-stack text-muted';
         anchor.insertAdjacentElement('afterend', el);
         var parts = [];
         try {
@@ -106,9 +106,17 @@
             el.remove();
             return;
         }
-        // textContent: brak HTML (jak wersja aplikacji wyżej).
-        el.textContent = parts.length > 0 ? parts.join(' · ') : 'brak aktywnego cennika';
+        // textContent per linia: brak HTML (jak wersja aplikacji wyżej).
         el.title = 'Aktywne cenniki';
+        if (parts.length === 0) {
+            el.textContent = 'brak aktywnego cennika';
+            return;
+        }
+        for (var j = 0; j < parts.length; j++) {
+            var line = document.createElement('span');
+            line.textContent = parts[j];
+            el.appendChild(line);
+        }
     }
 
     if (document.readyState === 'loading') {
