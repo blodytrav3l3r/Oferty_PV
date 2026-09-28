@@ -334,6 +334,7 @@
             '</span></div>' +
             '<div class="pv-row"><span class="pv-row-label">PRECO</span><span class="pv-actions">' +
             '<button class="btn btn-sm btn-secondary" onclick="exportPrecoToExcel()" title="Eksportuj cennik PRECO do pliku Excel"><i data-lucide="download"></i> Eksportuj</button>' +
+            '<button class="btn btn-sm btn-secondary" onclick="document.getElementById(\'pv-import-excel\').click()" title="Importuj cennik PRECO z pliku Excel"><i data-lucide="upload"></i> Importuj</button>' +
             '</span></div>' +
             importInput
         );
