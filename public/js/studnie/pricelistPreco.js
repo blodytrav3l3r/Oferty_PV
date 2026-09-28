@@ -27,10 +27,6 @@ function renderPrecoPriceList() {
 
     let html = `
     <div class="preco-toolbar">
-        <button class="btn btn-secondary pill-sm" data-action="loadPrecoDefaults" title="Przywróć domyślne wartości PRECO">
-            <i data-lucide="refresh-cw" aria-hidden="true"></i> Przywróć domyślne
-        </button>
-
         <button class="btn btn-primary pill-sm" id="btn-save-preco" data-action="savePrecoFromUI" disabled title="Zapisz zmiany w cenniku PRECO">
             <i data-lucide="save" aria-hidden="true"></i> Zapisz cennik PRECO
         </button>
