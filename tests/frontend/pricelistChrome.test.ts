@@ -139,7 +139,8 @@ describe('frontend: panel Zarządzanie cennikiem (3 przyciski + 3 sekcje)', () =
     it('panel: transfer woła istniejące eksporty/importy; domyślne globalne raz', () => {
         expect(panel).toContain('onclick="exportRuryToExcel()"');
         expect(panel).toContain('onclick="exportStudnieToExcel()"');
-        expect(panel).toContain('onclick="exportPrecoToExcel()"');
+        expect(panel).not.toContain('pv-row-label">PRECO<');
+        expect(panel).not.toContain('onclick="exportPrecoToExcel()"');
         expect(panel).toContain('id="pv-import-excel"');
         expect(panel).toContain('onchange="');
         expect(panel).toContain('importRuryFromExcel(event)');
