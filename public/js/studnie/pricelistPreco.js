@@ -33,6 +33,10 @@ function renderPrecoPriceList() {
         <button class="btn btn-secondary pill-sm" data-action="exportPrecoToExcel" title="Eksportuj cennik PRECO do pliku Excel">
             <i data-lucide="download" aria-hidden="true"></i> Eksportuj PRECO
         </button>
+        <button class="btn btn-secondary pill-sm" data-action="importPrecoFromExcel" title="Importuj cennik PRECO z pliku Excel (ten sam plik co import studni)">
+            <i data-lucide="upload" aria-hidden="true"></i> Importuj PRECO
+        </button>
+        <input type="file" id="import-preco-excel" style="display: none" accept=".xlsx,.xls" onchange="importStudnieFromExcel(event)">
         <button class="btn btn-primary pill-sm" id="btn-save-preco" data-action="savePrecoFromUI" disabled title="Zapisz zmiany w cenniku PRECO">
             <i data-lucide="save" aria-hidden="true"></i> Zapisz cennik PRECO
         </button>
@@ -434,6 +438,9 @@ if (typeof document !== 'undefined' && !window.__precoDelegated) {
             window.loadPrecoDefaults();
         } else if (action === 'exportPrecoToExcel') {
             window.exportPrecoToExcel();
+        } else if (action === 'importPrecoFromExcel') {
+            var imp = document.getElementById('import-preco-excel');
+            if (imp) imp.click();
         } else if (action === 'savePrecoFromUI') {
             window.savePrecoFromUI();
         } else if (action === 'togglePrecoAccordion') {

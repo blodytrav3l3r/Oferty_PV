@@ -109,6 +109,17 @@ describe('frontend: panel Zarządzanie cennikiem (3 przyciski + 3 sekcje)', () =
             panel.indexOf('>Cenniki domyślne</h4>')
         );
     });
+    it('PRECO toolbar: Importuj obok Eksportuj (ten sam import studni)', () => {
+        const preco = fs.readFileSync(
+            path.join(process.cwd(), 'public/js/studnie/pricelistPreco.js'),
+            'utf-8'
+        );
+        expect(preco).toContain('data-action="importPrecoFromExcel"');
+        expect(preco).toContain('> Importuj PRECO');
+        expect(preco).toContain('id="import-preco-excel"');
+        expect(preco).toContain('onchange="importStudnieFromExcel(event)"');
+        expect(preco).toContain("getElementById('import-preco-excel')");
+    });
     it('panel: transfer woła istniejące eksporty/importy; domyślne istniejące funkcje', () => {
         expect(panel).toContain('onclick="exportRuryToExcel()"');
         expect(panel).toContain('onclick="exportStudnieToExcel()"');
