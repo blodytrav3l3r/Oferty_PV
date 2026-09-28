@@ -40,50 +40,9 @@
                 type="button"
                 class="btn btn-secondary"
                 onclick="openStudnieVersionsPanel()"
-                title="Wersje cennika (zapisz, aktywuj, porównaj, usuń)"
+                title="Zarządzanie cennikiem: wersje, pliki, domyślne"
             >
-                <i data-lucide="layers"></i> Wersje
-            </button>
-            <button
-                type="button"
-                id="btn-save-defaults"
-                class="btn btn-secondary"
-                onclick="window.parent.saveAllDefaults()"
-                title="Zapisz bieżący stan cenników (rury, studnie, PRECO) jako domyślne"
-            >
-                <i data-lucide="bookmark"></i> Zapisz domyślne
-            </button>
-            <button
-                type="button"
-                class="btn btn-secondary"
-                onclick="exportStudnieToExcel()"
-                title="Eksportuj cennik do pliku Excel"
-            >
-                <i data-lucide="download"></i> Eksportuj Excel
-            </button>
-            <button
-                type="button"
-                class="btn btn-secondary"
-                onclick="document.getElementById('import-pricelist-excel').click()"
-                title="Importuj cennik z pliku Excel (zawiera arkusze PRECO)"
-            >
-                <i data-lucide="upload"></i> Importuj Excel
-            </button>
-            <input
-                type="file"
-                id="import-pricelist-excel"
-                style="display: none"
-                accept=".xlsx,.xls"
-                onchange="importStudnieFromExcel(event)"
-            />
-
-            <button
-                type="button"
-                class="btn btn-danger"
-                onclick="resetStudniePriceList()"
-                title="Przywróć domyślne wartości cennika"
-            >
-                <i data-lucide="rotate-ccw"></i> Przywróć domyślne
+                <i data-lucide="sliders-horizontal"></i> Zarządzaj
             </button>
         </div>
     </div>

@@ -28,7 +28,10 @@ function renderPrecoPriceList() {
     let html = `
     <div class="preco-toolbar">
         <button class="btn btn-secondary pill-sm" data-action="loadPrecoDefaults" title="Przywróć domyślne wartości PRECO">
-            <i data-lucide="refresh-cw" aria-hidden="true"></i> Reset
+            <i data-lucide="refresh-cw" aria-hidden="true"></i> Przywróć domyślne
+        </button>
+        <button class="btn btn-secondary pill-sm" data-action="exportPrecoToExcel" title="Eksportuj cennik PRECO do pliku Excel">
+            <i data-lucide="download" aria-hidden="true"></i> Eksportuj PRECO
         </button>
         <button class="btn btn-primary pill-sm" id="btn-save-preco" data-action="savePrecoFromUI" disabled title="Zapisz zmiany w cenniku PRECO">
             <i data-lucide="save" aria-hidden="true"></i> Zapisz cennik PRECO
@@ -375,7 +378,35 @@ async function loadPrecoDefaults() {
     }
 }
 
+async function exportPrecoToExcel() {
+    if (!precoPricing || Object.keys(precoPricing).length === 0) {
+        showToast('Brak danych do eksportu', 'error');
+        return;
+    }
+    try {
+        const res = await fetch('/api/preco-pricing/export.xlsx?source=live', {
+            headers: typeof authHeaders === 'function' ? authHeaders() : {}
+        });
+        if (!res.ok) throw new Error('Błąd HTTP ' + res.status);
+        const blob = await res.blob();
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'Cennik_Preco_Export.xlsx';
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(function () {
+            URL.revokeObjectURL(a.href);
+            a.remove();
+        }, 1000);
+        showToast('Wyeksportowano cennik PRECO do Excela', 'success');
+    } catch (e) {
+        logger.error('pricelistManager', 'Export PRECO error:', e);
+        showToast('Błąd podczas eksportu do Excela', 'error');
+    }
+}
+
 window.renderPrecoPriceList = renderPrecoPriceList;
+window.exportPrecoToExcel = exportPrecoToExcel;
 window.savePrecoFromUI = savePrecoFromUI;
 window.loadPrecoDefaults = loadPrecoDefaults;
 window.togglePrecoAccordion = togglePrecoAccordion;
@@ -401,6 +432,8 @@ if (typeof document !== 'undefined' && !window.__precoDelegated) {
         const ri = el.getAttribute('data-ri');
         if (action === 'loadPrecoDefaults') {
             window.loadPrecoDefaults();
+        } else if (action === 'exportPrecoToExcel') {
+            window.exportPrecoToExcel();
         } else if (action === 'savePrecoFromUI') {
             window.savePrecoFromUI();
         } else if (action === 'togglePrecoAccordion') {

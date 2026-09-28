@@ -39,50 +39,10 @@
             type="button"
             class="btn btn-secondary"
             onclick="openRuryVersionsPanel()"
-            title="Wersje cennika (zapisz, aktywuj, porównaj, usuń)"
+            title="Zarządzanie cennikiem: wersje, pliki, domyślne"
         >
-            <i data-lucide="layers"></i> Wersje
+            <i data-lucide="sliders-horizontal"></i> Zarządzaj
         </button>
-        <button
-            type="button"
-            id="btn-save-defaults"
-            class="btn btn-secondary"
-            onclick="window.parent.saveAllDefaults()"
-            title="Zapisz bieżący stan cenników (rury, studnie, PRECO) jako domyślne"
-        >
-            <i data-lucide="bookmark"></i> Zapisz domyślne
-        </button>
-        <button
-            type="button"
-            class="btn btn-secondary"
-            onclick="exportRuryToExcel()"
-            title="Eksportuj cennik do pliku Excel"
-        >
-            <i data-lucide="download"></i> Eksportuj Excel
-        </button>
-        <button
-            type="button"
-            class="btn btn-secondary"
-            onclick="document.getElementById('import-pricelist-excel').click()"
-            title="Importuj cennik z pliku Excel"
-        >
-            <i data-lucide="upload"></i> Importuj Excel
-        </button>
-        <button
-            type="button"
-            class="btn btn-danger"
-            onclick="resetPriceList()"
-            title="Przywróć domyślne wartości cennika"
-        >
-            <i data-lucide="rotate-ccw"></i> Przywróć domyślne
-        </button>
-        <input
-            type="file"
-            id="import-pricelist-excel"
-            style="display: none"
-            accept=".xlsx,.xls"
-            onchange="importRuryFromExcel(event)"
-        />
     </div>
 
     <div id="pricelist-body" style="margin-top: 1rem"></div>

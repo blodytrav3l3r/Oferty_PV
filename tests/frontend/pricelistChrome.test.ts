@@ -40,22 +40,87 @@ describe('frontend: unifikacja chrome cenników (Faza A/B)', () => {
         expect(ruryPartial).toContain('id="pricelist-search"');
         expect(studniePartial).toContain('id="studnie-pricelist-search"');
     });
-    it('reset ma tę samą ikonę w obu cennikach', () => {
-        const ruryPartial = fs.readFileSync(
-            path.join(process.cwd(), 'public/partials/rury/pricelist.html'),
+    it('reset ma tę samą ikonę w obu panelach (Zarządzanie cennikiem)', () => {
+        const panel = fs.readFileSync(
+            path.join(process.cwd(), 'public/js/shared/pricelistVersions.js'),
             'utf-8'
         );
-        const studniePartial = fs.readFileSync(
-            path.join(process.cwd(), 'public/partials/studnie/pricelist.html'),
-            'utf-8'
-        );
-        expect(ruryPartial).toContain('data-lucide="rotate-ccw"');
-        expect(studniePartial).toContain('data-lucide="rotate-ccw"');
-        expect(studniePartial).not.toContain('data-lucide="refresh-cw"');
+        expect(panel).toContain('data-lucide="rotate-ccw"');
+        expect(panel).not.toContain('data-lucide="refresh-cw"');
     });
     it('studnie: nagłówek grupy używa wspólnego .cat-header', () => {
         expect(studnie).toContain('<div class="cat-header">');
         expect(studnie).toContain('cat-count');
         expect(studnie).not.toContain('rgba(var(--accent-rgb), 0.05)');
+    });
+});
+
+describe('frontend: panel Zarządzanie cennikiem (3 przyciski + 3 sekcje)', () => {
+    const ruryPartial = fs.readFileSync(
+        path.join(process.cwd(), 'public/partials/rury/pricelist.html'),
+        'utf-8'
+    );
+    const studniePartial = fs.readFileSync(
+        path.join(process.cwd(), 'public/partials/studnie/pricelist.html'),
+        'utf-8'
+    );
+    const panel = fs.readFileSync(
+        path.join(process.cwd(), 'public/js/shared/pricelistVersions.js'),
+        'utf-8'
+    );
+
+    it('toolbar: Dodaj, Zapisz, Zarządzaj w tej kolejności (rury)', () => {
+        const order = ['> Dodaj', '> Zapisz', '> Zarządzaj'].map((l) => ruryPartial.indexOf(l));
+        expect(order.every((i) => i > -1)).toBe(true);
+        expect(order).toEqual([...order].sort((a, b) => a - b));
+        expect(ruryPartial).toContain('id="btn-save-pricelist"');
+        expect(ruryPartial).toContain('onclick="openRuryVersionsPanel()"');
+        expect(ruryPartial).toContain('title="Zarządzanie cennikiem: wersje, pliki, domyślne"');
+    });
+    it('toolbar: Dodaj, Zapisz, Zarządzaj w tej kolejności (studnie)', () => {
+        const order = ['> Dodaj', '> Zapisz', '> Zarządzaj'].map((l) => studniePartial.indexOf(l));
+        expect(order.every((i) => i > -1)).toBe(true);
+        expect(order).toEqual([...order].sort((a, b) => a - b));
+        expect(studniePartial).toContain('id="btn-save-studnie-pricelist"');
+        expect(studniePartial).toContain('onclick="openStudnieVersionsPanel()"');
+        expect(studniePartial).toContain('title="Zarządzanie cennikiem: wersje, pliki, domyślne"');
+    });
+    it('toolbar: brak Wersje/Zapisz domyślne/Eksportuj/Importuj/Przywróć + brak hidden inputów', () => {
+        for (const content of [ruryPartial, studniePartial]) {
+            expect(content).not.toContain('> Wersje');
+            expect(content).not.toContain('Zapisz domyślne');
+            expect(content).not.toContain('Eksportuj');
+            expect(content).not.toContain('Importuj');
+            expect(content).not.toContain('Przywróć domyślne');
+            expect(content).not.toContain('import-pricelist-excel');
+        }
+    });
+    it('panel: tytuł + 3 sekcje h4', () => {
+        expect(panel).toContain('Zarządzanie cennikiem (');
+        for (const h of [
+            '<h4>Wersje</h4>',
+            '<h4>Transfer plików</h4>',
+            '<h4>Cenniki domyślne</h4>'
+        ]) {
+            expect(panel).toContain(h);
+        }
+        expect(panel.indexOf('<h4>Wersje</h4>')).toBeLessThan(
+            panel.indexOf('<h4>Transfer plików</h4>')
+        );
+        expect(panel.indexOf('<h4>Transfer plików</h4>')).toBeLessThan(
+            panel.indexOf('<h4>Cenniki domyślne</h4>')
+        );
+    });
+    it('panel: transfer woła istniejące eksporty/importy; domyślne istniejące funkcje', () => {
+        expect(panel).toContain('onclick="exportRuryToExcel()"');
+        expect(panel).toContain('onclick="exportStudnieToExcel()"');
+        expect(panel).toContain('onclick="exportPrecoToExcel()"');
+        expect(panel).toContain('id="pv-import-excel"');
+        expect(panel).toContain('onchange="');
+        expect(panel).toContain('importRuryFromExcel(event)');
+        expect(panel).toContain('importStudnieFromExcel(event)');
+        expect(panel).toContain('onclick="window.parent.saveAllDefaults()"');
+        expect(panel).toContain('resetPriceList()');
+        expect(panel).toContain('resetStudniePriceList()');
     });
 });
