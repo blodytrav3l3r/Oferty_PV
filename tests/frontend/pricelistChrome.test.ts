@@ -212,3 +212,35 @@ describe('frontend: przycisk Usuń zawsze widoczny (wyszarzony gdy nie wolno)', 
         expect(route).toContain('usedBy');
     });
 });
+
+describe('frontend: edycja noty + nota przy aktywacji (źródło)', () => {
+    const panel = fs.readFileSync(
+        path.join(process.cwd(), 'public/js/shared/pricelistVersions.js'),
+        'utf-8'
+    );
+
+    it('kolumna Nota: ołówek pencil tylko dla edytowalnych (DRAFT/SCHEDULED/BACKDATE_REQUESTED)', () => {
+        expect(panel).toContain('data-pv-act="edit-note"');
+        expect(panel).toContain('data-lucide="pencil"');
+        expect(panel).toContain('title="Edytuj notę"');
+        expect(panel).toContain('function isEditableStatus(status)');
+        expect(panel).toContain('data-pv-note="');
+    });
+    it('openNoteModal reuse: tryb opcjonalny (required:false, initial, okText)', () => {
+        expect(panel).toContain('o.required !== false');
+        expect(panel).toContain('(opcjonalna)');
+        expect(panel).toContain('o.initial');
+        expect(panel).toContain('o.okText');
+    });
+    it('aktywacja pyta o opcjonalną notę (tylko SCHEDULED), pustka = bez noty', () => {
+        expect(panel).toContain("'Aktywuj wersję'");
+        expect(panel).toContain('Opcjonalna nota do aktywacji');
+        expect(panel).toContain("required: false, okText: 'Aktywuj'");
+        expect(panel).toContain('trimmed ? { note: note } : undefined');
+    });
+    it('edycja noty woła PUT samą notą (bez rows)', () => {
+        expect(panel).toContain("'Edytuj notę'");
+        expect(panel).toContain("authed('PUT', { note: note })");
+        expect(panel).toContain('Nota zapisana');
+    });
+});

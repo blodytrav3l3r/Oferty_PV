@@ -236,6 +236,25 @@
         return status === 'DRAFT' || status === 'SCHEDULED' || status === 'BACKDATE_REQUESTED';
     }
 
+    /** Statusy z edytowalną treścią i notą (jak EDITABLE_STATUSES w BE). */
+    function isEditableStatus(status) {
+        return status === 'DRAFT' || status === 'SCHEDULED' || status === 'BACKDATE_REQUESTED';
+    }
+
+    /** Komórka noty: tekst + ołówek (tylko edytowalne, tylko admin). */
+    function noteCell(v, manageable) {
+        var text = esc(v.note || '—');
+        if (!manageable || !isEditableStatus(v.status)) return text;
+        return (
+            text +
+            ' <button class="btn-icon" data-pv-act="edit-note" data-pv-id="' +
+            escAttr(v.id) +
+            '" data-pv-note="' +
+            escAttr(v.note || '') +
+            '" title="Edytuj notę" aria-label="Edytuj notę"><i data-lucide="pencil"></i></button>'
+        );
+    }
+
     /** Powód blokady „Usuń" (null = wolno): ACTIVE/BACKDATE zawsze, reszta tylko z użyciem. */
     function deleteReason(v) {
         if (isDeletable(v.status)) return null;
@@ -316,7 +335,7 @@
                     esc(v.createdBy || '—') +
                     '</td>' +
                     '<td>' +
-                    esc(v.note || '—') +
+                    noteCell(v, manageable) +
                     '</td>' +
                     '<td>' +
                     actions +
@@ -480,7 +499,16 @@
         return versions;
     }
 
-    function openNoteModal(title, placeholder, onSubmit) {
+    /**
+     * Modal noty (wspólny): backdate (wymagana, min. 10), edycja noty
+     * i aktywacja (opcjonalne). opts: { required?: boolean (domyślnie true),
+     * initial?: string, okText?: string }.
+     */
+    function openNoteModal(title, placeholder, onSubmit, opts) {
+        var o = opts || {};
+        var required = o.required !== false;
+        var initial = typeof o.initial === 'string' ? o.initial : '';
+        var okText = o.okText || 'Zatwierdź';
         window.showModal({
             id: 'pv-note-modal',
             titleId: 'pv-note-title',
@@ -489,11 +517,17 @@
                 esc(title) +
                 '</h3>' +
                 '<button class="btn-icon" aria-label="Zamknij" onclick="window.closeModal(\'pv-note-modal\')"><i data-lucide="x"></i></button></div>' +
-                '<div class="modal-body"><div class="form-group"><label for="pv-note-input">Nota (min. 10 znaków)</label>' +
+                '<div class="modal-body"><div class="form-group"><label for="pv-note-input">Nota ' +
+                (required ? '(min. 10 znaków)' : '(opcjonalna)') +
+                '</label>' +
                 '<input class="form-input" id="pv-note-input" maxlength="500" placeholder="' +
                 escAttr(placeholder) +
+                '" value="' +
+                escAttr(initial) +
                 '"></div>' +
-                '<div class="form-group"><button class="btn btn-primary" id="pv-note-ok">Zatwierdź</button></div></div></div>'
+                '<div class="form-group"><button class="btn btn-primary" id="pv-note-ok">' +
+                esc(okText) +
+                '</button></div></div></div>'
         });
         icons(document.getElementById('pv-note-modal'));
         document.getElementById('pv-note-ok').addEventListener('click', function () {
@@ -736,14 +770,47 @@
             else if (act === 'export' && id) {
                 exportVersion(id, type, null);
             } else if (act === 'activate' && id) {
-                apiJson(API + '/' + encodeURIComponent(id) + '/activate', authed('POST'))
-                    .then(function () {
-                        toast('Wersja aktywowana', 'success');
-                        refreshTable(type, true);
-                    })
-                    .catch(function (err) {
-                        toast('Błąd aktywacji: ' + err.message, 'error');
-                    });
+                openNoteModal(
+                    'Aktywuj wersję',
+                    'Opcjonalna nota do aktywacji…',
+                    function (note) {
+                        var trimmed = (note || '').trim();
+                        apiJson(
+                            API + '/' + encodeURIComponent(id) + '/activate',
+                            authed('POST', trimmed ? { note: note } : undefined)
+                        )
+                            .then(function () {
+                                window.closeModal('pv-note-modal');
+                                toast('Wersja aktywowana', 'success');
+                                refreshTable(type, true);
+                            })
+                            .catch(function (err) {
+                                toast('Błąd aktywacji: ' + err.message, 'error');
+                            });
+                    },
+                    { required: false, okText: 'Aktywuj' }
+                );
+            } else if (act === 'edit-note' && id) {
+                openNoteModal(
+                    'Edytuj notę',
+                    'Nota (max 500 znaków, pustka czyści)…',
+                    function (note) {
+                        apiJson(API + '/' + encodeURIComponent(id), authed('PUT', { note: note }))
+                            .then(function () {
+                                window.closeModal('pv-note-modal');
+                                toast('Nota zapisana', 'success');
+                                refreshTable(type, true);
+                            })
+                            .catch(function (err) {
+                                toast('Błąd zapisu noty: ' + err.message, 'error');
+                            });
+                    },
+                    {
+                        required: false,
+                        initial: btn.getAttribute('data-pv-note') || '',
+                        okText: 'Zapisz'
+                    }
+                );
             } else if (act === 'backdate' && id) {
                 openNoteModal(
                     'Zatwierdź wstecz',

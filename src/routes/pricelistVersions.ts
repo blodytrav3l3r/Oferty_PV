@@ -165,18 +165,23 @@ router.delete('/:id', requireAuth, requireAdmin, PRICELIST_WRITE_LIMITER, async 
     }
 });
 
-/** Podmiana wierszy (tylko DRAFT/SCHEDULED/BACKDATE_REQUESTED). */
+/**
+ * Edycja wersji (tylko DRAFT/SCHEDULED/BACKDATE_REQUESTED): podmiana wierszy
+ * i/lub noty. rows undefined = bez podmiany wierszy (sama nota dozwolona);
+ * note undefined = nota bez zmian, pusty string czyści notę. Brak obu → 422.
+ * Labelka version niemutowalna (nigdy z inputu).
+ */
 router.put('/:id', requireAuth, requireAdmin, PRICELIST_WRITE_LIMITER, async (req, res) => {
     try {
-        const { rows } = req.body as { rows?: unknown };
-        const version = await updateDraft(req.params.id, rows);
+        const { rows, note } = req.body as { rows?: unknown; note?: unknown };
+        const version = await updateDraft(req.params.id, rows, note);
         res.json({ version });
     } catch (err) {
         sendVersionError(res, err);
     }
 });
 
-/** Aktywacja SCHEDULED (due); przeszłość → 409 PERIOD_OVERLAP. */
+/** Aktywacja SCHEDULED (due); opcjonalna nota → wpis audytu ACTIVATE. */
 router.post(
     '/:id/activate',
     requireAuth,
@@ -184,7 +189,8 @@ router.post(
     PRICELIST_WRITE_LIMITER,
     async (req, res) => {
         try {
-            const version = await activate(req.params.id, { userId: userIdOf(req) });
+            const { note } = (req.body ?? {}) as { note?: unknown };
+            const version = await activate(req.params.id, { userId: userIdOf(req), note });
             res.json({ version });
         } catch (err) {
             sendVersionError(res, err);

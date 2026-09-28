@@ -311,3 +311,82 @@ describe('F1 pricelistVersions', () => {
         });
     });
 });
+
+describe('updateDraft nota (labelka version niemutowalna)', () => {
+    test('zapis noty z wierszami (trim)', async () => {
+        const v = await createDraft('rury', [rura('r1')], {
+            effectiveFrom: '2026-09-01T00:00:00.000Z'
+        });
+        const updated = await updateDraft(v.id, [rura('r1', 120)], '  nowa nota  ');
+        expect(updated.note).toBe('nowa nota');
+        // labelka bez zmian
+        expect(updated.version).toBe(v.version);
+        expect(updated.seq).toBe(v.seq);
+    });
+
+    test('sama nota bez rows: wiersze i sha nietknięte', async () => {
+        const v = await createDraft('rury', [rura('r1')], {
+            effectiveFrom: '2026-09-01T00:00:00.000Z',
+            note: 'stara'
+        });
+        const shaBefore = v.sha256;
+        const updated = await updateDraft(v.id, undefined, 'sama nota');
+        expect(updated.note).toBe('sama nota');
+        expect(updated.sha256).toBe(shaBefore);
+        expect(itemsRury.filter((i) => i.versionId === v.id).length).toBe(1);
+    });
+
+    test('pusta nota czyści (null), undefined zostawia bez zmian', async () => {
+        const v = await createDraft('rury', [rura('r1')], {
+            effectiveFrom: '2026-09-01T00:00:00.000Z',
+            note: 'do wyczyszczenia'
+        });
+        const cleared = await updateDraft(v.id, undefined, '   ');
+        expect(cleared.note).toBeNull();
+        const kept = await updateDraft(v.id, [rura('r1', 130)], undefined);
+        expect(kept.note).toBeNull();
+    });
+
+    test('note undefined = nota bez zmian przy podmianie wierszy', async () => {
+        const v = await createDraft('rury', [rura('r1')], {
+            effectiveFrom: '2026-09-01T00:00:00.000Z',
+            note: 'trzymaj'
+        });
+        const updated = await updateDraft(v.id, [rura('r1', 140)]);
+        expect(updated.note).toBe('trzymaj');
+    });
+
+    test('brak rows i noty → 422 NO_CHANGES', async () => {
+        const v = await createDraft('rury', [rura('r1')], {
+            effectiveFrom: '2026-09-01T00:00:00.000Z'
+        });
+        await expect(updateDraft(v.id, undefined, undefined)).rejects.toMatchObject({
+            statusCode: 422,
+            code: 'NO_CHANGES'
+        });
+    });
+
+    test('nota na niemutowalnej (ACTIVE) → 403', async () => {
+        const v = await createDraft('rury', [rura('r1')], {
+            effectiveFrom: '2026-09-01T00:00:00.000Z'
+        });
+        const stored = versions.find((x) => x.id === v.id);
+        if (stored) stored.status = 'ACTIVE';
+        await expect(updateDraft(v.id, undefined, 'próba')).rejects.toMatchObject({
+            statusCode: 403,
+            code: 'IMMUTABLE_VERSION'
+        });
+    });
+
+    test('nota > 500 znaków → 422 NOTE_TOO_LONG, nic nie zapisane', async () => {
+        const v = await createDraft('rury', [rura('r1')], {
+            effectiveFrom: '2026-09-01T00:00:00.000Z',
+            note: 'oryginalna'
+        });
+        await expect(updateDraft(v.id, undefined, 'x'.repeat(501))).rejects.toMatchObject({
+            statusCode: 422,
+            code: 'NOTE_TOO_LONG'
+        });
+        expect(versions.find((x) => x.id === v.id)?.note).toBe('oryginalna');
+    });
+});

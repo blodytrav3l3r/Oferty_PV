@@ -449,3 +449,50 @@ describe('F2 UTC', () => {
         expect(v.effectiveFrom).toBe('2026-09-01T00:00:00.000Z');
     });
 });
+
+describe('activate z notą (opcjonalna, tylko audit)', () => {
+    test('nota trafia do audytu ACTIVATE, wiersz wersji nietknięty poza statusem', async () => {
+        seedVersion({ type: 'rury', status: 'ACTIVE', effectiveFrom: '2026-08-01T00:00:00.000Z' });
+        const draft = await createDraft('rury', [rura('r1', 110)], {
+            effectiveFrom: '2026-09-01T00:00:00.000Z',
+            note: 'nota draftu'
+        });
+        const active = await activate(draft.id, { userId: 'admin1', note: '  aktywacja ok  ' });
+        expect(active.status).toBe('ACTIVE');
+        expect(active.note).toBe('nota draftu');
+        expect(audits).toHaveLength(1);
+        expect(JSON.parse(String(audits[0].newData))).toMatchObject({
+            po: 'ACTIVE',
+            note: 'aktywacja ok'
+        });
+    });
+
+    test('bez noty jak dziś (brak klucza note w audycie)', async () => {
+        seedVersion({ type: 'rury', status: 'ACTIVE', effectiveFrom: '2026-08-01T00:00:00.000Z' });
+        const draft = await createDraft('rury', [rura('r1', 110)], {
+            effectiveFrom: '2026-09-01T00:00:00.000Z'
+        });
+        await activate(draft.id, { userId: 'admin1' });
+        expect(audits).toHaveLength(1);
+        const newData = JSON.parse(String(audits[0].newData)) as Record<string, unknown>;
+        expect('note' in newData).toBe(false);
+    });
+
+    test('pustka = aktywacja bez noty; za długa → 422', async () => {
+        const draft = await createDraft('rury', [rura('r1', 110)], {
+            effectiveFrom: '2026-09-01T00:00:00.000Z'
+        });
+        const active = await activate(draft.id, { note: '   ' });
+        expect(active.status).toBe('ACTIVE');
+        expect('note' in (JSON.parse(String(audits[0].newData)) as object)).toBe(false);
+
+        const draft2 = await createDraft('rury', [rura('r1', 120)], {
+            effectiveFrom: '2026-10-01T00:00:00.000Z'
+        });
+        await expect(activate(draft2.id, { note: 'x'.repeat(501) })).rejects.toMatchObject({
+            statusCode: 422,
+            code: 'NOTE_TOO_LONG'
+        });
+        expect(versions.find((v) => v.id === draft2.id)?.status).toBe('SCHEDULED');
+    });
+});

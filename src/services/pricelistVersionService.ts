@@ -368,8 +368,42 @@ async function createDraftTx(
     );
 }
 
-/** Podmienia wiersze wersji (tylko DRAFT/SCHEDULED/BACKDATE_REQUESTED) + nowe SHA. */
-export async function updateDraft(id: string, rowsInput: unknown): Promise<PricelistVersion> {
+/**
+ * Normalizuje notę wersji: undefined = brak zmiany; string po trim
+ * (pusty czyści notę → null); > 500 znaków → 422 NOTE_TOO_LONG.
+ * Labelka version niemutowalna — nota to jedyne edytowalne pole opisowe.
+ */
+function normalizeNote(noteInput: unknown): string | null | undefined {
+    if (noteInput === undefined) return undefined;
+    if (typeof noteInput !== 'string') {
+        throw new PricelistVersionError(
+            422,
+            'INVALID_NOTE',
+            'Nieprawidłowa nota: oczekiwano tekstu (max 500 znaków)'
+        );
+    }
+    const trimmed = noteInput.trim();
+    if (trimmed.length > NOTE_MAX) {
+        throw new PricelistVersionError(
+            422,
+            'NOTE_TOO_LONG',
+            `Nota za długa (max ${NOTE_MAX} znaków)`
+        );
+    }
+    return trimmed === '' ? null : trimmed;
+}
+
+/**
+ * Podmienia wiersze i/lub notę wersji (tylko DRAFT/SCHEDULED/BACKDATE_REQUESTED)
+ * + nowe SHA przy podmianie wierszy. rows undefined = bez podmiany wierszy
+ * (sama nota dozwolona); note undefined = nota bez zmian, pusty string czyści
+ * notę. Brak obu (rows i note undefined) → 422 NO_CHANGES.
+ */
+export async function updateDraft(
+    id: string,
+    rowsInput?: unknown,
+    noteInput?: unknown
+): Promise<PricelistVersion> {
     const current = await prisma.pricelistVersion.findUnique({ where: { id } });
     if (!current) {
         throw new PricelistVersionError(404, 'NOT_FOUND', `Wersja ${id} nie istnieje`);
@@ -379,8 +413,16 @@ export async function updateDraft(id: string, rowsInput: unknown): Promise<Price
         throw new PricelistVersionError(422, 'INVALID_TYPE', `Wersja ${id} ma nieznany typ`);
     }
     const type = current.type;
-    const rows = validateRows(type, rowsInput);
-    const sha256 = sha256Canonical(rows);
+    const note = normalizeNote(noteInput);
+    if (rowsInput === undefined && note === undefined) {
+        throw new PricelistVersionError(
+            422,
+            'NO_CHANGES',
+            `Brak zmian dla wersji ${id}: podaj wiersze (rows) lub notę (note)`
+        );
+    }
+    const rows = rowsInput === undefined ? null : validateRows(type, rowsInput);
+    const sha256 = rows === null ? null : sha256Canonical(rows);
 
     const lock = lockFor(type);
     const res = await lock.runWithLock(() =>
@@ -390,9 +432,14 @@ export async function updateDraft(id: string, rowsInput: unknown): Promise<Price
                 throw new PricelistVersionError(404, 'NOT_FOUND', `Wersja ${id} nie istnieje`);
             }
             assertEditable(fresh.status, id);
-            await deleteVersionItems(tx, type, id);
-            await insertVersionItems(tx, type, id, rows);
-            return tx.pricelistVersion.update({ where: { id }, data: { sha256 } });
+            const data: { sha256?: string; note?: string | null } = {};
+            if (rows !== null && sha256 !== null) {
+                await deleteVersionItems(tx, type, id);
+                await insertVersionItems(tx, type, id, rows);
+                data.sha256 = sha256;
+            }
+            if (note !== undefined) data.note = note;
+            return tx.pricelistVersion.update({ where: { id }, data });
         })
     );
     if (!res.acquired) {
@@ -518,6 +565,9 @@ const DEFAULTS_UPDATED_AT_KEY = 'pricelist_defaults_updated_at';
 /** Minimalna długość noty backdate (uzasadnienie zmiany historycznej). */
 const BACKDATE_NOTE_MIN = 10;
 
+/** Maksymalna długość noty wersji (edycja PUT + nota aktywacji). */
+const NOTE_MAX = 500;
+
 interface AuditEntry {
     entityId: string;
     userId?: string;
@@ -545,13 +595,18 @@ async function writeAudit(tx: Tx, entry: AuditEntry): Promise<void> {
 /**
  * Aktywuje wersję SCHEDULED z effectiveFrom <= now. Jedna tx: stare
  * ACTIVE→ARCHIVED + nowa ACTIVE + settings timestamp + audit ACTIVATE.
+ * Opcjonalna nota (trim, max 500, pustka = bez noty) trafia tylko do wpisu
+ * audytu (newData.note) — wiersz wersji nietknięty poza statusem.
  * effectiveFrom nie późniejsze niż istniejące ACTIVE/BACKDATE → 409
  * PERIOD_OVERLAP (wskazanie na ścieżkę backdate).
  */
 export async function activate(
     id: string,
-    opts: { userId?: string } = {}
+    opts: { userId?: string; note?: unknown } = {}
 ): Promise<PricelistVersion> {
+    const rawNote = normalizeNote(opts.note);
+    // Pustka = aktywacja bez noty (jak brak pola); zapis tylko niepustej.
+    const note = rawNote === null ? undefined : rawNote;
     const current = await prisma.pricelistVersion.findUnique({ where: { id } });
     if (!current) {
         throw new PricelistVersionError(404, 'NOT_FOUND', `Wersja ${id} nie istnieje`);
@@ -625,7 +680,8 @@ export async function activate(
                 newData: {
                     po: 'ACTIVE',
                     archivedCount: archived.count,
-                    effectiveFrom: fresh.effectiveFrom
+                    effectiveFrom: fresh.effectiveFrom,
+                    ...(note === undefined ? {} : { note })
                 }
             });
             return updated;
