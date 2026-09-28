@@ -22,7 +22,7 @@ import {
 } from '../../utils/idempotency';
 import { offersStudnieBatchSchema, paginationQuerySchema } from '../../validators/offerSchemas';
 import { hasProductionOrdersForOffer } from '../../utils/productionOrderGuard';
-import { resolveVersionIdSafe } from '../../services/pricelistVersionService';
+import { resolveActive, resolveVersionIdSafe } from '../../services/pricelistVersionService';
 
 const router = express.Router();
 const uuidv4 = crypto.randomUUID.bind(crypto);
@@ -552,6 +552,19 @@ router.post(
             const oldMap = new Map(oldsList.map((r) => [r.id, r]));
             // P4-P0: ordered-well guard jednym zapytaniem (nie per oferta w pętli).
             const orderedGuardMap = await getOrderedWellIdsForOffers(incomingIds);
+            // Pieczątka po „Przelicz do aktywnego": update może nieść żądane
+            // o.pricelistVersionId — musi równać się bieżącej ACTIVE (1 odczyt
+            // na batch; brak pola = pieczątka stoi jak dziś).
+            const stampWanted = incoming.some(
+                (o: { id?: unknown; pricelistVersionId?: unknown }) =>
+                    typeof o.id === 'string' &&
+                    oldMap.has(o.id) &&
+                    typeof o.pricelistVersionId === 'string' &&
+                    o.pricelistVersionId
+            );
+            const activeStudnieId = stampWanted
+                ? ((await resolveActive('studnie'))?.id ?? null)
+                : null;
             // P1.1: walidacja + kolekcja, potem atomowy zapis batch w jednej transakcji
             const pending: Array<{
                 docId: string;
@@ -707,8 +720,23 @@ router.post(
                 const updated = new Date().toISOString();
                 const offerNumber = o.number || o.offer_number || '';
                 // P0-D2: version to kolumna (top-level o.version), nie blob o.
+                // Pieczątka też poza blobem (kolumna pricelistVersionId).
+                const {
+                    version: _postVersion,
+                    pricelistVersionId: stampReq,
+                    ...blobSrc
+                } = o as Record<string, unknown>;
                 const postClientVersion = typeof o.version === 'number' ? o.version : null;
-                const { version: _postVersion, ...blobSrc } = o as Record<string, unknown>;
+                // Pieczątka: awans tylko dla update i tylko do bieżącej ACTIVE;
+                // rozjazd = 409 (fail całego batcha jak 403 wyżej). Create
+                // ignoruje pole (dostaje frozenStudnieVersionId).
+                const requestedStamp = old && typeof stampReq === 'string' ? stampReq : '';
+                if (requestedStamp && requestedStamp !== activeStudnieId) {
+                    return res.status(409).json({
+                        error: 'Oferta przeliczona do nieaktualnej wersji cennika — odśwież i przelicz ponownie',
+                        code: 'STALE_PRICELIST'
+                    });
+                }
                 const dataStr = JSON.stringify(blobSrc);
                 const historyStr = JSON.stringify(newHistory);
                 // Kolumna liczy to, co faktycznie lezy w blobie (nie ksztalt
@@ -761,7 +789,10 @@ router.post(
                         data: dataStr,
                         history: historyStr,
                         wellCount,
-                        totalPrice
+                        totalPrice,
+                        // Awans pieczątki po „Przelicz do aktywnego"
+                        // (tylko update ze stampem == ACTIVE).
+                        ...(requestedStamp ? { pricelistVersionId: requestedStamp } : {})
                     },
                     fts: {
                         id: docId,
@@ -868,6 +899,19 @@ router.put(
             const existingById = new Map(existingDocs.map((d) => [d.id, d]));
             // P4-P0: guard + dane jednym zapytaniem (nie per oferta w pętli).
             const orderedGuardMapPut = await getOrderedWellIdsForOffers(incomingIds);
+            // Pieczątka po „Przelicz do aktywnego" (jak w POST): update może
+            // nieść o.pricelistVersionId — tylko do bieżącej ACTIVE, inaczej
+            // 409 (fail całego batcha). Brak pola = pieczątka stoi.
+            const putStampWanted = incoming.some(
+                (o) =>
+                    typeof o.id === 'string' &&
+                    existingById.has(o.id) &&
+                    typeof o.pricelistVersionId === 'string' &&
+                    o.pricelistVersionId
+            );
+            const putActiveStudnieId = putStampWanted
+                ? ((await resolveActive('studnie'))?.id ?? null)
+                : null;
             // P0.1: każdy modyfikowany dokument musi spełniać
             // canWriteDoc względem właściciela (edycja + zmiana opiekuna).
             for (const d of existingDocs) {
@@ -962,6 +1006,18 @@ router.put(
                 // P0-D2: version to kolumna (top-level o.version), nie blob o.data.
                 const putClientVersion = typeof o.version === 'number' ? o.version : null;
                 const putOld = existingById.get(docId);
+                // Pieczątka: awans tylko dla update i tylko do bieżącej ACTIVE;
+                // rozjazd = 409 (fail całego batcha jak 403 wyżej).
+                const requestedPutStamp =
+                    putOld && typeof o.pricelistVersionId === 'string'
+                        ? (o.pricelistVersionId as string)
+                        : '';
+                if (requestedPutStamp && requestedPutStamp !== putActiveStudnieId) {
+                    return res.status(409).json({
+                        error: 'Oferta przeliczona do nieaktualnej wersji cennika — odśwież i przelicz ponownie',
+                        code: 'STALE_PRICELIST'
+                    });
+                }
                 // Slim-PUT (np. sama zmiana opiekuna, bez wells i bez data)
                 // nie może wycinać studni: chore dane ze starego wiersza.
                 // Jawne wells (także puste []) lub jawne data = zamierzony zapis.
@@ -1036,7 +1092,10 @@ router.put(
                         createdAt: created,
                         data: putDataStr,
                         wellCount: putWellCount,
-                        totalPrice: putTotalPrice
+                        totalPrice: putTotalPrice,
+                        // Awans pieczątki po „Przelicz do aktywnego"
+                        // (tylko update ze stampem == ACTIVE).
+                        ...(requestedPutStamp ? { pricelistVersionId: requestedPutStamp } : {})
                     },
                     fts: {
                         id: docId,

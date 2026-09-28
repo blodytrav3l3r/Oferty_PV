@@ -92,8 +92,9 @@ function renderWellConfig() {
                     ? getStudnieProductById(item.productId)
                     : studnieProducts.find((pr) => pr.id === item.productId);
         if (!p) return;
+        const frozenCtx = typeof isFrozenPriceCtx === 'function' && isFrozenPriceCtx();
         const itemPrice =
-            item.frozenPrice != null && window.isPreviewMode
+            item.frozenPrice != null && frozenCtx
                 ? item.frozenPrice
                 : getItemAssessedPrice(well, p, true, item);
         let totalPrice = itemPrice * item.quantity;
@@ -118,7 +119,7 @@ function renderWellConfig() {
                               : studnieProducts.find((x) => x.id === kinetaItem.productId);
                     if (kinetaProd) {
                         const rawKinetaPrice =
-                            kinetaItem.frozenPrice != null && window.isPreviewMode
+                            kinetaItem.frozenPrice != null && frozenCtx
                                 ? kinetaItem.frozenPrice
                                 : getItemAssessedPrice(well, kinetaProd, true, kinetaItem);
                         totalPrice += rawKinetaPrice * (kinetaItem.quantity || 1);

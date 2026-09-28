@@ -35,7 +35,8 @@ function normalizeOfferData(doc) {
             'lastEditedBy',
             'createdByUserId',
             'createdByUserName',
-            'userId'
+            'userId',
+            'pricelistVersionId'
         ];
         for (const key of fields) {
             const val = doc.data[key];

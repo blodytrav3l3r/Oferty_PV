@@ -421,12 +421,13 @@ function renderComponentSubItems(well, p, item, itemPrzejscia, disc, wellTranspo
                 typeof getStudnieProductById === 'function'
                     ? getStudnieProductById(kineta.productId)
                     : studnieProducts.find((x) => x.id === kineta.productId);
+            const frozenCtx = typeof isFrozenPriceCtx === 'function' && isFrozenPriceCtx();
             const kPrice =
-                (kineta.frozenPrice != null && window.isPreviewMode
+                (kineta.frozenPrice != null && frozenCtx
                     ? kineta.frozenPrice
                     : getItemAssessedPrice(well, kp, true, kineta)) * (kineta.quantity || 1);
             const kPct =
-                kineta.frozenPrice != null && window.isPreviewMode && kineta.frozenPriceBase > 0
+                kineta.frozenPrice != null && frozenCtx && kineta.frozenPriceBase > 0
                     ? (1 - kineta.frozenPrice / kineta.frozenPriceBase) * 100
                     : kp
                       ? getWellDiscountPct(well, kp, disc)

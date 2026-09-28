@@ -1004,7 +1004,18 @@ function getOrderChanges(order) {
     return { wells: changes, transportChanged };
 }
 
+/**
+ * Kontekst ceny zamrożonej: podgląd/zamówienie (isPreviewMode) albo edycja
+ * oferty ze snapshotem cen (isOfferEditFrozen). Wszystkie guardy frozen
+ * (frozenPrice, frozenPrecoSuma) MUSZĄ iść przez tę funkcję (SSoT).
+ */
+function isFrozenPriceCtx() {
+    if (typeof window === 'undefined') return false;
+    return !!window.isPreviewMode || !!window.isOfferEditFrozen;
+}
+
 window.freezeWellPrices = freezeWellPrices;
+window.isFrozenPriceCtx = isFrozenPriceCtx;
 window.getOrderChanges = getOrderChanges;
 window.normalizeTransportMode = normalizeTransportMode;
 window.DEFAULT_TRANSPORT_MODE = DEFAULT_TRANSPORT_MODE;

@@ -123,6 +123,10 @@ async function saveOfferStudnie() {
         // (500 PayloadTooLargeError). Czyścimy klon, obiekty live nietknięte
         // (telemetria po zapisie czyta właśnie z nich).
         stripWellRuntimeFields(offerDoc.wells);
+        // Pieczątka po „Przelicz do aktywnego" — tylko gdy recalc ją ustawił
+        // (serwer weryfikuje zgodność z ACTIVE, 409 w przeciwnym razie).
+        if (window.pendingStudnieStampId)
+            offerDoc.pricelistVersionId = window.pendingStudnieStampId;
 
         if (!offerDoc.wells || offerDoc.wells.length === 0) {
             showToast('Błąd: Nie można zapisać pustej oferty.', 'error');
@@ -138,6 +142,7 @@ async function saveOfferStudnie() {
             }
         }
         const result = await storageService.saveOffer(offerDoc);
+        window.pendingStudnieStampId = null;
         showToast('Oferta zapisana <i data-lucide="check"></i>', 'success');
         const savedId = result.id || offerDoc.id;
         editingOfferIdStudnie = savedId;

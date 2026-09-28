@@ -265,6 +265,10 @@ let wellDiscounts = {}; // Rabaty na DN: { 1000: { dennica, nadbudowa, preco, pe
 // G4: jawna deklaracja + binding (jak wellDiscounts) zamiast implicit window.*
 // (kolizja offer*/order* — jedna zmienna, nie rozjazd; ADR-011: edycja otwarta, delete właścicielskie).
 let isPreviewMode = false;
+// Edycja oferty studni: recalc omija zamrożone (jak isPreviewMode w
+// podglądzie/zamówieniu). Ustawiane w loadSavedOfferStudnie, czyszczone
+// przez „Przelicz do aktywnego" i clearOfferForm.
+let isOfferEditFrozen = false;
 let precoPricing = {}; // Cennik wkładek PRECO: { 1000: { kinety: [...], ... }, ... }
 
 // Globalne domyślne parametry oferty (utrzymują się do czasu ręcznej zmiany)
@@ -551,6 +555,7 @@ const _GLOBAL_BINDINGS = {
     isSavingOffer: () => isSavingOffer,
     orderEditMode: () => orderEditMode,
     isPreviewMode: () => isPreviewMode,
+    isOfferEditFrozen: () => isOfferEditFrozen,
     expandedWellIndices: () => expandedWellIndices,
     currentWizardStep: () => currentWizardStep,
     wizardConfirmedParams: () => wizardConfirmedParams,
@@ -622,6 +627,9 @@ const _GLOBAL_SETTERS = {
     },
     isPreviewMode: (v) => {
         isPreviewMode = v;
+    },
+    isOfferEditFrozen: (v) => {
+        isOfferEditFrozen = v;
     },
     currentWizardStep: (v) => {
         currentWizardStep = v;

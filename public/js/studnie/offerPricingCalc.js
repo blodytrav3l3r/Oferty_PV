@@ -178,8 +178,9 @@ function calculateLinePricing(
     precoCtx
 ) {
     const nadbudowaMult = 1 - getWellNadbudowaPct(well, disc) / 100;
+    const frozenCtx = typeof isFrozenPriceCtx === 'function' && isFrozenPriceCtx();
     const itemPrice =
-        item.frozenPrice != null && window.isPreviewMode
+        item.frozenPrice != null && frozenCtx
             ? item.frozenPrice
             : getItemAssessedPrice(well, p, true, item);
     let totalLinePrice = itemPrice * item.quantity;

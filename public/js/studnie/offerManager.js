@@ -14,6 +14,11 @@ function clearOfferForm() {
     editingOfferAssignedUserName = '';
     editingOfferCreatedByUserId = null;
     editingOfferCreatedByUserName = '';
+    isOfferEditFrozen = false;
+    // Pieczątka po „Przelicz do aktywnego" (na window — recalc i zapis
+    // żyją w różnych plikach, offerSave.js ładuje się wcześniej).
+    window.pendingStudnieStampId = null;
+    if (window.offerPricelistBanner) window.offerPricelistBanner.hide('studnie');
     clearOfferFormFields(generateOfferNumberStudnie);
     if (typeof clearOrderNumberField === 'function') clearOrderNumberField();
     wells = [];
@@ -159,6 +164,12 @@ async function loadSavedOfferStudnie(id_or_doc, optionalId, targetSection, preve
     wells = structuredClone(normalized.wells || []);
     migrateWellData(wells);
 
+    // Mrożenie cen edycji: snapshot live cennika do frozen* (reuse
+    // freezeWellPrices z zamówień); recalc omija zamrożone przez
+    // isOfferEditFrozen (isFrozenPriceCtx). Transport/ilości edytowalne.
+    isOfferEditFrozen = true;
+    if (typeof freezeWellPrices === 'function') freezeWellPrices(wells);
+
     // Przelicz uszczelki i zsynchronizuj kinete dla wszystkich studni
     wells.forEach((w) => {
         if (typeof recalcGaskets === 'function') recalcGaskets(w);
@@ -205,12 +216,57 @@ async function loadSavedOfferStudnie(id_or_doc, optionalId, targetSection, preve
     showToast('Wczytano oferte: ' + (normalized.number || offer.id), 'info');
 
     updateOfferFormHeader(normalized.number || offer.id, offer.id);
+    if (window.offerPricelistBanner) {
+        window.offerPricelistBanner.refresh({
+            type: 'studnie',
+            stampId: normalized.pricelistVersionId || null,
+            anchorId: 'offer-form-title-studnie',
+            onRecalc: function () {
+                return recalcStudnieToActive();
+            }
+        });
+    }
     // P1.1b: banner recovery tylko gdy draft istnieje i różni się od SAVED.
     if (window.draftAutosave) window.draftAutosave.checkRecovery('offer_studnie');
 }
 
+/**
+ * „Przelicz do aktywnego": czyści freeze (ceny jednostkowe wracają do live
+ * ACTIVE), gasi tryb mrożenia i przelicza widok. Transport/ilości nietknięte.
+ * activeId z bannera ląduje w window.pendingStudnieStampId — saveOfferStudnie
+ * dokleja je jako pieczątkę (serwer weryfikuje zgodność z ACTIVE).
+ * @param {string} [activeId] id aktywnej wersji cennika
+ * @returns {boolean} true = przeliczono
+ */
+function recalcStudnieToActive(activeId) {
+    if (typeof activeId === 'string' && activeId) window.pendingStudnieStampId = activeId;
+    (wells || []).forEach(function (w) {
+        if (!w) return;
+        (w.config || []).forEach(function (it) {
+            delete it.frozenPrice;
+            delete it.frozenPriceBase;
+            delete it.frozenName;
+        });
+        (w.przejscia || []).forEach(function (it) {
+            delete it.frozenPrice;
+            delete it.frozenPriceBase;
+            delete it.frozenName;
+            delete it.frozenTransitionPrice;
+            delete it.frozenDrillingPrice;
+            delete it.frozenDrillingName;
+            delete it.frozenDrillingDn;
+        });
+        delete w.frozenPrecoSuma;
+    });
+    isOfferEditFrozen = false;
+    if (typeof refreshAll === 'function') refreshAll();
+    if (typeof renderOfferSummary === 'function') renderOfferSummary();
+    return true;
+}
+
 // Globalne udostepnienie
 window.loadSavedOfferStudnie = loadSavedOfferStudnie;
+window.recalcStudnieToActive = recalcStudnieToActive;
 
 /* ===== Rejestracja globali ===== */
 window.clearOfferForm = clearOfferForm;

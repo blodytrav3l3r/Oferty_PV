@@ -32,7 +32,7 @@ import {
 } from '../../validators/offerSchemas';
 import { recordDbBusy } from '../../utils/metrics';
 import { HOT_TX_OPTS } from '../../utils/hotTx';
-import { resolveVersionIdSafe } from '../../services/pricelistVersionService';
+import { resolveActive, resolveVersionIdSafe } from '../../services/pricelistVersionService';
 
 const router = express.Router();
 const uuidv4 = crypto.randomUUID.bind(crypto);
@@ -178,6 +178,17 @@ router.post(
                 if (arr) arr.push(row);
                 else oldItemsByOffer.set(row.offerId, [row]);
             }
+            // Pieczątka po „Przelicz do aktywnego": update może nieść żądane
+            // o.pricelistVersionId — musi równać się bieżącej ACTIVE (1 odczyt
+            // na batch; brak pola = pieczątka stoi jak dziś).
+            const stampWanted = incoming.some(
+                (o: { id?: unknown; pricelistVersionId?: unknown }) =>
+                    typeof o.id === 'string' &&
+                    oldById.has(o.id) &&
+                    typeof o.pricelistVersionId === 'string' &&
+                    o.pricelistVersionId
+            );
+            const activeRuryId = stampWanted ? ((await resolveActive('rury'))?.id ?? null) : null;
 
             const results: Record<string, unknown>[] = [];
             const pendingWrites: Array<{
@@ -203,6 +214,9 @@ router.post(
                 clientVersion: number | null;
                 // F3 freeze: tylko create dostaje wersję; update zachowuje starą.
                 pricelistVersionId: string | null;
+                // Awans pieczątki po „Przelicz do aktywnego" (tylko update
+                // ze zgodnym stampem — zweryfikowany wyżej przez resolveActive).
+                advanceStamp: boolean;
                 fts: {
                     id: string;
                     offer_number: string;
@@ -309,10 +323,21 @@ router.post(
                 const created = normalizeDate(o.createdAt, { exactMs: true });
                 const updated = new Date().toISOString();
                 const offerNumber = o.offer_number || o.number || '';
-                // P0-D2: version to kolumna, nie blob.
-                const { version: clientVersionRaw, ...blobSrc } = o;
+                // P0-D2: version to kolumna, nie blob. Pieczątka też poza blobem
+                // (kolumna pricelistVersionId jest źródłem prawdy).
+                const { version: clientVersionRaw, pricelistVersionId: stampReq, ...blobSrc } = o;
                 const clientVersion =
                     typeof clientVersionRaw === 'number' ? clientVersionRaw : null;
+                // Pieczątka: awans tylko dla update i tylko do bieżącej ACTIVE;
+                // rozjazd = 409 (fail całego batcha jak 403 wyżej). Create
+                // ignoruje pole (dostaje frozenRuryVersionId).
+                const requestedStamp = old && typeof stampReq === 'string' ? stampReq : '';
+                if (requestedStamp && requestedStamp !== activeRuryId) {
+                    return res.status(409).json({
+                        error: 'Oferta przeliczona do nieaktualnej wersji cennika — odśwież i przelicz ponownie',
+                        code: 'STALE_PRICELIST'
+                    });
+                }
                 const dataStr = JSON.stringify(blobSrc);
 
                 pendingWrites.push({
@@ -333,10 +358,13 @@ router.post(
                     exists: !!old,
                     serverVersion: (old?.version as number | null | undefined) ?? null,
                     clientVersion,
-                    // F3 freeze: nowy dokument = aktywna wersja; update = stara.
+                    // F3 freeze: nowy dokument = aktywna wersja; update = stara
+                    // (albo żądany stamp po „Przelicz do aktywnego").
                     pricelistVersionId: old
-                        ? ((old.pricelistVersionId as string | null | undefined) ?? null)
+                        ? requestedStamp ||
+                          ((old.pricelistVersionId as string | null | undefined) ?? null)
                         : frozenRuryVersionId,
+                    advanceStamp: !!requestedStamp,
                     fts: {
                         id: docId,
                         offer_number: offerNumber,
@@ -389,7 +417,12 @@ router.post(
                             updatedAt: w.updated,
                             transportCost: w.transportCost,
                             history: w.historyStr,
-                            data: w.dataStr
+                            data: w.dataStr,
+                            // Awans pieczątki po „Przelicz do aktywnego"
+                            // (tylko update ze stampem == ACTIVE).
+                            ...(w.advanceStamp && w.pricelistVersionId
+                                ? { pricelistVersionId: w.pricelistVersionId }
+                                : {})
                         },
                         conflictMessage: 'Oferta zmieniona przez innego użytkownika'
                     });
@@ -515,6 +548,19 @@ router.put(
                     }
                 }
             }
+            // Pieczątka po „Przelicz do aktywnego" (jak w POST): update może
+            // nieść o.pricelistVersionId — tylko do bieżącej ACTIVE, inaczej
+            // 409 (fail całego batcha). Brak pola = pieczątka stoi.
+            const putStampWanted = incoming.some(
+                (o: { id?: unknown; pricelistVersionId?: unknown }) =>
+                    typeof o.id === 'string' &&
+                    putVersions.has(o.id) &&
+                    typeof o.pricelistVersionId === 'string' &&
+                    o.pricelistVersionId
+            );
+            const putActiveRuryId = putStampWanted
+                ? ((await resolveActive('rury'))?.id ?? null)
+                : null;
 
             const pendingPut: Array<{
                 docId: string;
@@ -536,6 +582,9 @@ router.put(
                 exists: boolean;
                 serverVersion: number | null;
                 clientVersion: number | null;
+                // Awans pieczątki po „Przelicz do aktywnego" (update + stamp
+                // == ACTIVE; null = pieczątka stoi).
+                stamp: string | null;
                 fts: {
                     id: string;
                     offer_number: string | null;
@@ -556,13 +605,23 @@ router.put(
                 const clientNip = o.clientNip || null;
                 const clientNumber = o.clientNumber || null;
                 const created = normalizeDate(o.createdAt, { exactMs: true });
-                // P0-D2: version to kolumna, nie blob.
-                const { version: clientVersionRaw, ...blobSrc } = o;
+                // P0-D2: version to kolumna, nie blob. Pieczątka też poza
+                // blobem (kolumna pricelistVersionId jest źródłem prawdy).
+                const { version: clientVersionRaw, pricelistVersionId: stampReq, ...blobSrc } = o;
                 const clientVersion =
                     typeof clientVersionRaw === 'number' ? clientVersionRaw : null;
                 const dataStr = JSON.stringify(blobSrc);
                 const serverVersion = putVersions.get(docId) ?? null;
                 const exists = serverVersion != null;
+                // Pieczątka: awans tylko dla update i tylko do bieżącej ACTIVE;
+                // rozjazd = 409 (fail całego batcha jak 403 wyżej).
+                const requestedPutStamp = exists && typeof stampReq === 'string' ? stampReq : '';
+                if (requestedPutStamp && requestedPutStamp !== putActiveRuryId) {
+                    return res.status(409).json({
+                        error: 'Oferta przeliczona do nieaktualnej wersji cennika — odśwież i przelicz ponownie',
+                        code: 'STALE_PRICELIST'
+                    });
+                }
                 // P0.1: opiekun rozstrzygany PRZED transakcją (403 zamiast 500).
                 const putRequested = typeof o.userId === 'string' ? o.userId : '';
                 let effectiveUserId: string;
@@ -604,6 +663,7 @@ router.put(
                     effectiveUserId,
                     serverVersion,
                     clientVersion,
+                    stamp: requestedPutStamp || null,
                     fts: {
                         id: docId,
                         offer_number: o.offer_number || null,
@@ -650,7 +710,10 @@ router.put(
                             clientNumber: w.clientNumber,
                             createdAt: w.created,
                             transportCost: w.transportCost,
-                            data: w.dataStr
+                            data: w.dataStr,
+                            // Awans pieczątki po „Przelicz do aktywnego"
+                            // (tylko update ze stampem == ACTIVE).
+                            ...(w.stamp ? { pricelistVersionId: w.stamp } : {})
                         },
                         conflictMessage: 'Oferta zmieniona przez innego użytkownika'
                     });

@@ -6,6 +6,9 @@
 window.editingOfferCreatedByUserId = null;
 window.editingOfferCreatedByUserName = '';
 window.isSavingOffer = false;
+/* Pieczątka po „Przelicz do aktywnego" — active.id z bannera; saveOffer
+ * dokleja do offerDoc tylko gdy ustawione, czyści po udanym zapisie. */
+let pendingRuryStampId = null;
 /* calculateTransports, calculateTransportDistributionStandalone z transport.js */
 /* renderOfferItems, generateOfferNumber z offerItems.js */
 /* showToast, appConfirm, closeModal z shared/ui.js; authHeaders z shared/auth.js; fmt z shared/formatters.js */
@@ -123,6 +126,8 @@ async function saveOffer() {
         totalNetto: totalNetto,
         totalBrutto: totalNetto * 1.23
     });
+    // Pieczątka po „Przelicz do aktywnego" — tylko gdy recalc ją ustawił.
+    if (pendingRuryStampId) offerDoc.pricelistVersionId = pendingRuryStampId;
 
     window.isSavingOffer = true;
     try {
@@ -131,6 +136,7 @@ async function saveOffer() {
             return;
         }
         const result = await storageService.saveOffer(offerDoc);
+        pendingRuryStampId = null;
         showToast('Oferta zapisana <i data-lucide="check"></i>', 'success');
         editingOfferId = result.id || offerDoc.id;
 
@@ -208,8 +214,10 @@ function clearOfferForm() {
     editingOfferId = null;
     editingOfferAssignedUserId = null;
     editingOfferAssignedUserName = '';
+    pendingRuryStampId = null;
     window.editingOfferCreatedByUserId = null;
     window.editingOfferCreatedByUserName = '';
+    if (window.offerPricelistBanner) window.offerPricelistBanner.hide('rury');
     clearOfferFormFields(generateOfferNumber);
     if (typeof clearOrderEditState === 'function') clearOrderEditState();
     currentOfferItems = [];
@@ -378,6 +386,16 @@ async function loadOffer(id) {
     if (typeof updateZabezpieczenieTransportuUI === 'function') updateZabezpieczenieTransportuUI();
     syncTransportSecurity();
     renderOfferItems();
+    if (window.offerPricelistBanner) {
+        window.offerPricelistBanner.refresh({
+            type: 'rury',
+            stampId: normalized.pricelistVersionId || null,
+            anchorId: 'offer-form-title',
+            onRecalc: function () {
+                return recalcRuryToActive();
+            }
+        });
+    }
     showSection('builder');
     if (typeof goToPhase === 'function') goToPhase(3);
     showToast('Wczytano ofertę: ' + (normalized.number || 'bez numeru'), 'info');
@@ -393,6 +411,26 @@ window.loadSavedOfferData = function (doc, id) {
 };
 
 /* ===== DUPLIKACJA ===== */
+
+/**
+ * „Przelicz do aktywnego" (rury): ceny jednostkowe z live cennika ACTIVE.
+ * Poza tym zero zmian logiki — unitPrice edycji trzyma zapis (frozen).
+ * activeId z bannera ląduje w pendingStampId — saveOffer dokleja je jako
+ * pieczątkę (serwer weryfikuje zgodność z ACTIVE, 409 w przeciwnym razie).
+ * @param {string} [activeId] id aktywnej wersji cennika
+ * @returns {boolean} true = przeliczono
+ */
+function recalcRuryToActive(activeId) {
+    if (typeof activeId === 'string' && activeId) pendingRuryStampId = activeId;
+    currentOfferItems.forEach(function (item) {
+        if (!item || !item.productId) return;
+        const product =
+            typeof getRuryProductById === 'function' ? getRuryProductById(item.productId) : null;
+        if (product && product.price != null) item.unitPrice = product.price;
+    });
+    renderOfferItems();
+    return true;
+}
 
 function duplicateOffer(id) {
     const offer =
@@ -528,3 +566,4 @@ window.restoreOfferVersion = restoreOfferVersion;
 /* ===== Rejestracja globali ===== */
 window.saveOffer = saveOffer;
 window.deleteOffer = deleteOffer;
+window.recalcRuryToActive = recalcRuryToActive;
