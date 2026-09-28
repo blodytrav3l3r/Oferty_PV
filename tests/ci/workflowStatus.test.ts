@@ -77,3 +77,25 @@ describe('P1.2 deploy status semantics', () => {
         expect(section).toMatch(/pipefail/);
     });
 });
+
+describe('P2.3 e2e classification', () => {
+    function jobSection(name: string): string {
+        const idx = CI.indexOf(`    ${name}:`);
+        expect(idx).toBeGreaterThan(-1);
+        return CI.slice(idx, idx + 800);
+    }
+
+    it('tylko e2e-extended ma continue-on-error (jawne advisory)', () => {
+        expect(jobSection('e2e-extended')).toMatch(/continue-on-error:\s*true/);
+        for (const j of ['e2e-smoke', 'e2e-appname', 'axe-a11y', 'load-quick']) {
+            expect(jobSection(j)).not.toMatch(/continue-on-error:\s*true/);
+        }
+    });
+
+    it('deploy wymaga blocking jobow (bez extended)', () => {
+        const idx = CI.indexOf('deploy-production');
+        const section = CI.slice(idx, idx + 1200);
+        expect(section).toMatch(/e2e-smoke/);
+        expect(section).not.toMatch(/e2e-extended/);
+    });
+});
