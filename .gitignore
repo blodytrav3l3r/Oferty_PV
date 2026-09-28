@@ -95,7 +95,11 @@ check_db_temp.js
 # === AI Agent configs (autogenerowane, NIE część S.O.K.) ===
 .kilo/
 .agents/
-.opencode/
+# .opencode/: lokalny tooling ignorowany, ALE rules/ to wersjonowany kontrakt
+# procesu inzynierskiego (jak AGENTS.md) — trackowane celowo (P0.0).
+.opencode/*
+!.opencode/rules/
+!.opencode/rules/**/*
 ./~/
 
 # === Temp/working files ===
