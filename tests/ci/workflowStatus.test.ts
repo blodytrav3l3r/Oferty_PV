@@ -53,3 +53,27 @@ describe('P1.1 load status semantics', () => {
         expect(section).toMatch(/exit 1/);
     });
 });
+
+describe('P1.2 deploy status semantics', () => {
+    it('deploy produkcyjny raportuje DEPLOYED przy triggerrze', () => {
+        const idx = CI.indexOf('deploy-production');
+        const section = CI.slice(idx);
+        expect(section).toMatch(/DEPLOY_STATUS=DEPLOYED/);
+        expect(section).toMatch(/GITHUB_STEP_SUMMARY/);
+    });
+
+    it('brak hooka to jawne NOT_CONFIGURED, nie DEPLOYED', () => {
+        const idx = CI.indexOf('deploy-production');
+        const section = CI.slice(idx);
+        expect(section).toMatch(/NOT_CONFIGURED/);
+        expect(section).toMatch(/nie DEPLOYED/);
+        expect(section).not.toMatch(/Pomijam deploy produkcyjny — ustaw/);
+    });
+
+    it('curl hooka z flaga -f: blad hooka to FAILED joba (nie silent success)', () => {
+        const idx = CI.indexOf('Deploy to Render');
+        const section = CI.slice(idx, idx + 1500);
+        expect(section).toMatch(/curl -sf/);
+        expect(section).toMatch(/pipefail/);
+    });
+});

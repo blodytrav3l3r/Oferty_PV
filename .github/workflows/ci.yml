@@ -516,7 +516,11 @@ jobs:
                   set -o pipefail
                   RESP=$(curl -sf -X POST "${{ secrets.RENDER_PROD_DEPLOY_HOOK }}")
                   echo "  Triggered: $RESP"
+                  echo "DEPLOY_STATUS=DEPLOYED" >> "$GITHUB_STEP_SUMMARY"
 
-            - name: Skip — brak RENDER_PROD_DEPLOY_HOOK
+            - name: Skip — brak RENDER_PROD_DEPLOY_HOOK (NOT_CONFIGURED, nie DEPLOYED)
               if: env.RENDER_PROD_DEPLOY_HOOK == ''
-              run: echo "[INFO] Pomijam deploy produkcyjny — ustaw RENDER_PROD_DEPLOY_HOOK w secrets"
+              run: |
+                  echo "[SKIP] Deploy produkcyjny pominięty — brak RENDER_PROD_DEPLOY_HOOK w secrets (NOT_CONFIGURED, nie DEPLOYED)."
+                  echo "DEPLOY_STATUS=NOT_CONFIGURED (brak RENDER_PROD_DEPLOY_HOOK — wdrożenie pominięte, nie DEPLOYED)" >> "$GITHUB_STEP_SUMMARY"
+                  echo "::notice::deploy NOT_CONFIGURED — ustaw RENDER_PROD_DEPLOY_HOOK w secrets aby wdrażać produkcję"
