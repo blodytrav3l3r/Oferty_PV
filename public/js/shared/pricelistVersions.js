@@ -12,6 +12,36 @@
     var labelCache = {};
     /** Czy bieżący użytkownik widzi pełną listę (admin) per typ. */
     var canManage = {};
+    /** Mapa getRows per typ (rury/studnie) — rejestrowana przy otwarciu panelu. */
+    var getRowsByType = {};
+
+    /** Domyślny odczyt wierszy z bieżącego window (fallback przy braku getRows). */
+    function defaultGetRows(type) {
+        if (type === 'rury' && typeof window.products !== 'undefined') return window.products;
+        if (type === 'studnie' && typeof window.studnieProducts !== 'undefined')
+            return window.studnieProducts;
+        var w = null;
+        try {
+            w = window.parent && window.parent !== window ? window.parent : null;
+        } catch (_e) {
+            w = null;
+        }
+        if (w) {
+            if (type === 'rury' && typeof w.products !== 'undefined') return w.products;
+            if (type === 'studnie' && typeof w.studnieProducts !== 'undefined')
+                return w.studnieProducts;
+        }
+        return [];
+    }
+
+    function resolveGetRows(type) {
+        if (typeof getRowsByType[type] === 'function') {
+            return getRowsByType[type];
+        }
+        return function () {
+            return defaultGetRows(type);
+        };
+    }
 
     function esc(s) {
         return typeof window.escapeHtml === 'function' ? window.escapeHtml(s) : String(s ?? '');
@@ -309,51 +339,79 @@
         );
     }
 
-    function defaultsHtml(type) {
+    /** Sekcja globalna: widoczna raz, niezależna od taba (te same funkcje). */
+    function defaultsHtml() {
         return (
             '<div class="pv-actions">' +
             '<button class="btn btn-sm btn-secondary" id="btn-save-defaults" onclick="window.parent.saveAllDefaults()" title="Zapisz bieżący stan cenników (rury, studnie, PRECO) jako domyślne"><i data-lucide="bookmark"></i> Zapisz domyślne</button>' +
-            '<button class="btn btn-sm btn-secondary" onclick="' +
-            (type === 'rury' ? 'resetPriceList()' : 'resetStudniePriceList()') +
-            '" title="Przywróć domyślne wartości cennika (pyta o potwierdzenie)"><i data-lucide="rotate-ccw"></i> Przywróć domyślne</button>' +
+            '<button class="btn btn-sm btn-secondary" onclick="resetPriceList()" title="Przywróć domyślne wartości cennika rur (pyta o potwierdzenie)"><i data-lucide="rotate-ccw"></i> Przywróć domyślne (Rury)</button>' +
+            '<button class="btn btn-sm btn-secondary" onclick="resetStudniePriceList()" title="Przywróć domyślne wartości cennika studni (pyta o potwierdzenie)"><i data-lucide="rotate-ccw"></i> Przywróć domyślne (Studnie)</button>' +
             '</div>' +
-            '<p class="text-muted">Zapisz domyślne obejmuje wszystkie cenniki (rury, studnie, PRECO); przywrócenie dotyczy cennika ' +
-            esc(typeLabel(type)) +
-            '.</p>'
+            '<p class="text-muted">Zapisz domyślne obejmuje wszystkie cenniki (rury, studnie, PRECO); przywrócenie dotyczy wybranego cennika.</p>'
+        );
+    }
+
+    /** Przełącznik typu: dwa taby, aktywny podświetlony (btn-primary), aria-pressed. */
+    function tabsHtml(activeType) {
+        var ruryActive = activeType === 'rury';
+        return (
+            '<div class="pv-actions" role="tablist" aria-label="Typ cennika">' +
+            '<button type="button" role="tab" class="btn btn-sm ' +
+            (ruryActive ? 'btn-primary' : 'btn-secondary') +
+            '" data-pv-tab="rury" aria-pressed="' +
+            (ruryActive ? 'true' : 'false') +
+            '">Rury</button>' +
+            '<button type="button" role="tab" class="btn btn-sm ' +
+            (ruryActive ? 'btn-secondary' : 'btn-primary') +
+            '" data-pv-tab="studnie" aria-pressed="' +
+            (ruryActive ? 'false' : 'true') +
+            '">Studnie</button>' +
+            '</div>'
+        );
+    }
+
+    function saveFormHtml(next, manageable) {
+        if (!manageable) {
+            return '<p class="text-muted">Podgląd wersji (zarządzanie wymaga roli admin).</p>';
+        }
+        return (
+            '<form id="pv-save-form">' +
+            '<div class="form-group"><label>Nowa wersja (tylko podgląd)</label>' +
+            '<input class="form-input" id="pv-next-label" value="' +
+            escAttr(versionLabel(next, new Date()) + ' (nr ' + next + ')') +
+            '" readonly></div>' +
+            '<div class="form-group"><label for="pv-note">Nota</label>' +
+            '<input class="form-input" id="pv-note" maxlength="500" placeholder="Opis zmiany (dla daty wstecznej: min. 10 znaków)"></div>' +
+            '<div class="form-group"><label for="pv-eff">Obowiązuje od (czas lokalny → UTC)</label>' +
+            '<input class="form-input" type="datetime-local" id="pv-eff"></div>' +
+            '<div id="pv-past-warn" class="color-warn" style="display:none">Data w przeszłości — zapis jako wersja wsteczna (nota min. 10 znaków, bez auto-aktywacji).</div>' +
+            '<div class="form-group"><button type="submit" class="btn btn-primary w-100" title="Zapisuje bieżący stan cennika jako nową wersję (kopia wszystkich pozycji). Nie zmienia cen w ofertach ani cennika na żywo — nowa wersja czeka na aktywację (data przyszła) albo zapisuje się jako wsteczna (data przeszła, wymagana nota min. 10 znaków)."><i data-lucide="save"></i> Zapisz jako wersję</button></div>' +
+            '</form>'
         );
     }
 
     function panelHtml(type, next, manageable) {
-        var saveForm = manageable
-            ? '<form id="pv-save-form">' +
-              '<div class="form-group"><label>Nowa wersja (tylko podgląd)</label>' +
-              '<input class="form-input" id="pv-next-label" value="' +
-              escAttr(versionLabel(next, new Date()) + ' (nr ' + next + ')') +
-              '" readonly></div>' +
-              '<div class="form-group"><label for="pv-note">Nota</label>' +
-              '<input class="form-input" id="pv-note" maxlength="500" placeholder="Opis zmiany (dla daty wstecznej: min. 10 znaków)"></div>' +
-              '<div class="form-group"><label for="pv-eff">Obowiązuje od (czas lokalny → UTC)</label>' +
-              '<input class="form-input" type="datetime-local" id="pv-eff"></div>' +
-              '<div id="pv-past-warn" class="color-warn" style="display:none">Data w przeszłości — zapis jako wersja wsteczna (nota min. 10 znaków, bez auto-aktywacji).</div>' +
-              '<div class="form-group"><button type="submit" class="btn btn-primary w-100" title="Zapisuje bieżący stan cennika jako nową wersję (kopia wszystkich pozycji). Nie zmienia cen w ofertach ani cennika na żywo — nowa wersja czeka na aktywację (data przyszła) albo zapisuje się jako wsteczna (data przeszła, wymagana nota min. 10 znaków)."><i data-lucide="save"></i> Zapisz jako wersję</button></div>' +
-              '</form>'
-            : '<p class="text-muted">Podgląd wersji (zarządzanie wymaga roli admin).</p>';
         return (
-            '<div class="modal modal--pv"><div class="modal-header"><h3 id="pv-panel-title"><i data-lucide="layers"></i> Zarządzanie cennikiem (' +
-            esc(typeLabel(type)) +
-            ')</h3>' +
+            '<div class="modal modal--pv"><div class="modal-header"><h3 id="pv-panel-title"><i data-lucide="layers"></i> Zarządzanie cennikami</h3>' +
             '<button class="btn-icon" aria-label="Zamknij" data-pv-act="close"><i data-lucide="x"></i></button></div>' +
             '<div class="modal-body">' +
+            '<div id="pv-type-tabs">' +
+            tabsHtml(type) +
+            '</div>' +
             '<h4 class="pv-section">Wersje</h4>' +
-            saveForm +
+            '<div id="pv-save-wrap">' +
+            saveFormHtml(next, manageable) +
+            '</div>' +
             '<div class="table-wrap"><table><thead><tr>' +
             '<th scope="col">Wersja</th><th scope="col">Nr</th><th scope="col">Status</th><th scope="col">Obowiązuje od</th>' +
             '<th scope="col">Autor</th><th scope="col">Nota</th><th scope="col">Akcje</th>' +
             '</tr></thead><tbody id="pv-versions-body"></tbody></table></div>' +
             '<h4 class="pv-section">Transfer plików</h4>' +
+            '<div id="pv-transfer">' +
             transferHtml(type) +
+            '</div>' +
             '<h4 class="pv-section">Cenniki domyślne</h4>' +
-            defaultsHtml(type) +
+            defaultsHtml() +
             '</div></div>'
         );
     }
@@ -485,12 +543,84 @@
         }
     }
 
+    function initEff(next) {
+        var eff = document.getElementById('pv-eff');
+        var warn = document.getElementById('pv-past-warn');
+        var nextLabel = document.getElementById('pv-next-label');
+        if (!eff || !warn) return;
+        var check = function () {
+            try {
+                warn.style.display =
+                    eff.value && new Date(eff.value).getTime() < Date.now() - 60000 ? '' : 'none';
+                if (nextLabel && eff.value) {
+                    nextLabel.value = versionLabel(next, eff.value) + ' (nr ' + next + ')';
+                }
+            } catch (_e) {
+                warn.style.display = 'none';
+            }
+        };
+        eff.addEventListener('change', check);
+        // Domyślnie: teraz (lokalnie).
+        try {
+            var now = new Date(Date.now() - new Date().getTimezoneOffset() * 60000);
+            eff.value = now.toISOString().slice(0, 16);
+        } catch (_e2) {
+            /* brak prefill */
+        }
+    }
+
+    /** Przeładowanie formularza (next seq) + transferu + tabeli po zmianie taba. */
+    async function switchType(newType, state) {
+        state.current = newType;
+        var tabs = document.getElementById('pv-type-tabs');
+        if (tabs) {
+            tabs.innerHTML = tabsHtml(newType);
+            icons(tabs);
+        }
+        var versions = [];
+        try {
+            versions = await fetchFullList(newType);
+        } catch (e) {
+            toast('Błąd listy wersji: ' + e.message, 'error');
+            return;
+        }
+        var manageable = canManage[newType] === true;
+        var next = nextSeq(versions);
+        var saveWrap = document.getElementById('pv-save-wrap');
+        if (saveWrap) {
+            saveWrap.innerHTML = saveFormHtml(next, manageable);
+            icons(saveWrap);
+        }
+        var transfer = document.getElementById('pv-transfer');
+        if (transfer) {
+            transfer.innerHTML = transferHtml(newType);
+            icons(transfer);
+        }
+        initEff(next);
+        try {
+            await refreshTable(newType, manageable);
+        } catch (e) {
+            toast('Błąd odświeżenia: ' + e.message, 'error');
+        }
+    }
+
     /**
-     * Panel wersji cennika: formularz „Zapisz jako wersję" + tabela.
-     * @param {string} type 'rury' | 'studnie'
-     * @param {Function} getRows funkcja zwracająca bieżące wiersze cennika
+     * Globalny panel wersji: jeden panel z tabami [Rury|Studnie].
+     * @param {string} type 'rury' | 'studnie' (preselekcja taba)
+     * @param {Function|Object} getRows funkcja wierszy aktywnego typu albo mapa {rury, studnie}
+     * @param {Function} [getRowsOther] opcjonalna funkcja wierszy drugiego typu
      */
-    async function openVersionsPanel(type, getRows) {
+    async function openVersionsPanel(type, getRows, getRowsOther) {
+        // Kompatybilność wstecz: getRows jako funkcja (pojedynczy typ) albo mapa.
+        if (getRows && typeof getRows !== 'function') {
+            if (typeof getRows.rury === 'function') getRowsByType.rury = getRows.rury;
+            if (typeof getRows.studnie === 'function') getRowsByType.studnie = getRows.studnie;
+        } else if (typeof getRows === 'function') {
+            getRowsByType[type] = getRows;
+        }
+        if (typeof getRowsOther === 'function') {
+            getRowsByType[type === 'rury' ? 'studnie' : 'rury'] = getRowsOther;
+        }
         var versions = [];
         try {
             versions = await fetchFullList(type);
@@ -508,46 +638,32 @@
                 var overlay = document.getElementById('pv-versions-modal');
                 if (overlay) {
                     icons(overlay);
-                    wirePanel(overlay, type, getRows);
+                    wirePanel(overlay, type);
                 }
                 refreshTable(type, manageable).catch(function (e) {
                     toast('Błąd odświeżenia: ' + e.message, 'error');
                 });
-                var eff = document.getElementById('pv-eff');
-                var warn = document.getElementById('pv-past-warn');
-                var nextLabel = document.getElementById('pv-next-label');
-                if (eff && warn) {
-                    var check = function () {
-                        try {
-                            warn.style.display =
-                                eff.value && new Date(eff.value).getTime() < Date.now() - 60000
-                                    ? ''
-                                    : 'none';
-                            if (nextLabel && eff.value) {
-                                nextLabel.value =
-                                    versionLabel(next, eff.value) + ' (nr ' + next + ')';
-                            }
-                        } catch (_e) {
-                            warn.style.display = 'none';
-                        }
-                    };
-                    eff.addEventListener('change', check);
-                    // Domyślnie: teraz (lokalnie).
-                    try {
-                        var now = new Date(Date.now() - new Date().getTimezoneOffset() * 60000);
-                        eff.value = now.toISOString().slice(0, 16);
-                    } catch (_e2) {
-                        /* brak prefill */
-                    }
-                }
+                initEff(next);
             }
         });
     }
 
-    function wirePanel(overlay, type, getRows) {
+    function wirePanel(overlay, initialType) {
+        var state = { current: initialType };
         overlay.addEventListener('click', function (e) {
+            var tab = e.target && e.target.closest ? e.target.closest('[data-pv-tab]') : null;
+            if (tab) {
+                var next = tab.getAttribute('data-pv-tab');
+                if (next && next !== state.current && (next === 'rury' || next === 'studnie')) {
+                    switchType(next, state).catch(function (err) {
+                        toast('Błąd przełączania typu: ' + err.message, 'error');
+                    });
+                }
+                return;
+            }
             var btn = e.target && e.target.closest ? e.target.closest('[data-pv-act]') : null;
             if (!btn) return;
+            var type = state.current;
             var act = btn.getAttribute('data-pv-act');
             var id = btn.getAttribute('data-pv-id');
             if (act === 'close') window.closeModal('pv-versions-modal');
@@ -645,10 +761,13 @@
                 }
             }
         });
-        var form = overlay.querySelector('#pv-save-form');
-        if (form) {
-            form.addEventListener('submit', function (ev) {
-                ev.preventDefault();
+        // Delegacja submit (formularz prze-renderowany przy zmianie taba).
+        overlay.addEventListener('submit', function (ev) {
+            var form = ev.target && ev.target.closest ? ev.target.closest('#pv-save-form') : null;
+            if (!form) return;
+            ev.preventDefault();
+            (function () {
+                var type = state.current;
                 var note = document.getElementById('pv-note').value || '';
                 var effRaw = document.getElementById('pv-eff').value || '';
                 var effectiveFrom;
@@ -660,7 +779,7 @@
                 }
                 var rows;
                 try {
-                    rows = getRows();
+                    rows = resolveGetRows(type)();
                 } catch (err) {
                     toast('Błąd odczytu cennika: ' + err.message, 'error');
                     return;
@@ -735,8 +854,8 @@
                     return;
                 }
                 submitDraft(note);
-            });
-        }
+            })();
+        });
     }
 
     window.pricelistVersions = {

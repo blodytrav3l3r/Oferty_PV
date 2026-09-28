@@ -307,8 +307,21 @@ function openStudnieVersionsPanel() {
         if (typeof showToast === 'function') showToast('Moduł wersji cennika niedostępny', 'error');
         return;
     }
-    window.pricelistVersions.openVersionsPanel('studnie', function () {
-        return typeof studnieProducts !== 'undefined' ? studnieProducts : [];
-    });
+    window.pricelistVersions.openVersionsPanel(
+        'studnie',
+        function () {
+            return typeof studnieProducts !== 'undefined' ? studnieProducts : [];
+        },
+        function () {
+            if (typeof products !== 'undefined') return products;
+            try {
+                var w = window.parent && window.parent !== window ? window.parent : null;
+                if (w && typeof w.products !== 'undefined') return w.products;
+            } catch (_e) {
+                /* brak dostępu */
+            }
+            return [];
+        }
+    );
 }
 window.openStudnieVersionsPanel = openStudnieVersionsPanel;

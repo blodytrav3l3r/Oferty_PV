@@ -95,8 +95,9 @@ describe('frontend: panel Zarządzanie cennikiem (3 przyciski + 3 sekcje)', () =
             expect(content).not.toContain('import-pricelist-excel');
         }
     });
-    it('panel: tytuł + 3 sekcje h4.pv-section', () => {
-        expect(panel).toContain('Zarządzanie cennikiem (');
+    it('panel: globalny tytuł bez typu + taby Rury/Studnie + 3 sekcje h4.pv-section', () => {
+        expect(panel).toContain('Zarządzanie cennikami');
+        expect(panel).not.toContain('Zarządzanie cennikiem (');
         for (const h of [
             '<h4 class="pv-section">Wersje</h4>',
             '<h4 class="pv-section">Transfer plików</h4>',
@@ -108,6 +109,16 @@ describe('frontend: panel Zarządzanie cennikiem (3 przyciski + 3 sekcje)', () =
         expect(panel.indexOf('>Transfer plików</h4>')).toBeLessThan(
             panel.indexOf('>Cenniki domyślne</h4>')
         );
+        for (const tab of ['data-pv-tab="rury"', 'data-pv-tab="studnie"']) {
+            expect(panel).toContain(tab);
+        }
+        expect(panel).toContain('aria-pressed');
+        expect(panel).toContain('role="tablist"');
+        expect(panel).toContain('>Rury<');
+        expect(panel).toContain('>Studnie<');
+        expect(panel).toContain('id="pv-type-tabs"');
+        expect(panel).toContain('id="pv-save-wrap"');
+        expect(panel).toContain('id="pv-transfer"');
     });
     it('PRECO toolbar: Importuj obok Eksportuj (ten sam import studni)', () => {
         const preco = fs.readFileSync(
@@ -120,7 +131,7 @@ describe('frontend: panel Zarządzanie cennikiem (3 przyciski + 3 sekcje)', () =
         expect(preco).toContain('onchange="importStudnieFromExcel(event)"');
         expect(preco).toContain("getElementById('import-preco-excel')");
     });
-    it('panel: transfer woła istniejące eksporty/importy; domyślne istniejące funkcje', () => {
+    it('panel: transfer woła istniejące eksporty/importy; domyślne globalne raz', () => {
         expect(panel).toContain('onclick="exportRuryToExcel()"');
         expect(panel).toContain('onclick="exportStudnieToExcel()"');
         expect(panel).toContain('onclick="exportPrecoToExcel()"');
@@ -131,5 +142,20 @@ describe('frontend: panel Zarządzanie cennikiem (3 przyciski + 3 sekcje)', () =
         expect(panel).toContain('onclick="window.parent.saveAllDefaults()"');
         expect(panel).toContain('resetPriceList()');
         expect(panel).toContain('resetStudniePriceList()');
+        expect(panel).toContain('Przywróć domyślne (Rury)');
+        expect(panel).toContain('Przywróć domyślne (Studnie)');
+        const saveDefaultsCount = (panel.match(/id="btn-save-defaults"/g) || []).length;
+        expect(saveDefaultsCount).toBe(1);
+        expect(panel).toContain('obejmuje wszystkie cenniki (rury, studnie, PRECO)');
+    });
+    it('panel: otwarcia preselektują tab; getRows per typ (mapa + getRowsOther)', () => {
+        expect(panel).toContain('getRowsByType');
+        expect(panel).toContain('getRowsOther');
+        expect(panel).toContain('resolveGetRows');
+        expect(panel).toContain('switchType');
+        expect(rury).toContain('openVersionsPanel(');
+        expect(studnie).toContain('openVersionsPanel(');
+        expect(rury).toContain('studnieProducts');
+        expect(studnie).toContain('products');
     });
 });
