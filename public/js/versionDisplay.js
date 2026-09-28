@@ -91,7 +91,7 @@
         var el = document.createElement('span');
         el.id = 'app-pricelists-toolbar';
         el.className = 'header-version header-versions-stack text-muted';
-        anchor.insertAdjacentElement('afterend', el);
+        anchor.insertAdjacentElement('beforebegin', el);
         var parts = [];
         try {
             for (var i = 0; i < TYPES.length; i++) {
