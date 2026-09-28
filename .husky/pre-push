@@ -1,9 +1,61 @@
-npm run version:check 2>&1 || { echo "❌ Wersja niespójna — przerwano push"; exit 1; }
-npm run encoding:check 2>&1 || { echo "❌ Błąd kodowania (mojibake/UTF-8) — uruchom npm run encoding:fix i dodaj poprawki"; exit 1; }
-npm run appname:check 2>&1 || { echo "❌ Nazwa aplikacji odbiega od S.O.K. — uruchom npm run appname:check i napraw wzorce"; exit 1; }
-npm run lint 2>&1 || { echo "❌ Lint backend — uruchom npm run lint i napraw błędy"; exit 1; }
-npm run lint:frontend 2>&1 || { echo "❌ Lint frontend — uruchom npm run lint:frontend i napraw błędy"; exit 1; }
-npm run typecheck 2>&1 || { echo "❌ Typecheck backend"; exit 1; }
-npm run typecheck:frontend 2>&1 || { echo "❌ Typecheck frontend"; exit 1; }
-npm run test:quick:lite 2>&1 || { echo "❌ Testy lite — uruchom npm run test:quick:lite"; exit 1; }
-npm run test:git-safety 2>&1 || { echo "❌ Testy git-safety — uruchom npm run test:git-safety"; exit 1; }
+#!/bin/sh
+# Pre-push S.O.K. — te same 9 bram co zawsze, ten sam fail-fast.
+# Kroki niezależne idą równolegle w grupach (A→B→C→D sekwencyjnie):
+#   A: version + encoding + appname (~10 s)
+#   B: lint BE + lint FE (~25 s)
+#   C: typecheck BE + typecheck FE (~37 s)
+#   D: test:quick:lite + test:git-safety (~225 s, najdłuższy krok)
+# Logi kroków lądują w plikach tymczasowych — wypisywane tylko przy FAIL,
+# żeby równoległe outputy się nie przeplatały. (Optymalizacja czasu hooka,
+# zero zmian zakresów: te same komendy, te same werdykty.)
+
+run_parallel() {
+    tmpdir=$(mktemp -d 2>/dev/null || mktemp -d -t prepush) || exit 1
+    idx=0
+    pids=""
+    for job in "$@"; do
+        idx=$((idx + 1))
+        # Etykieta do pliku: tokeny pid:idx nie mogą zawierać spacji z joba.
+        printf '%s' "$job" >"$tmpdir/$idx.cmd"
+        sh -c "$job" >"$tmpdir/$idx.log" 2>&1 &
+        pids="$pids $!:$idx"
+    done
+    fail=0
+    for p in $pids; do
+        pid=${p%%:*}
+        n=${p#*:}
+        job=$(cat "$tmpdir/$n.cmd")
+        if wait "$pid"; then
+            echo "✓ $job"
+        else
+            echo "❌ $job"
+            cat "$tmpdir/$n.log"
+            fail=1
+        fi
+    done
+    rm -rf "$tmpdir"
+    return $fail
+}
+
+echo "── pre-push A: wersja/kodowanie/nazwa ──"
+run_parallel \
+    "npm run version:check" \
+    "npm run encoding:check" \
+    "npm run appname:check" || { echo "❌ Grupa A — przerwano push"; exit 1; }
+
+echo "── pre-push B: lint ──"
+run_parallel \
+    "npm run lint" \
+    "npm run lint:frontend" || { echo "❌ Lint — uruchom npm run lint i napraw błędy"; exit 1; }
+
+echo "── pre-push C: typecheck ──"
+run_parallel \
+    "npm run typecheck" \
+    "npm run typecheck:frontend" || { echo "❌ Typecheck"; exit 1; }
+
+echo "── pre-push D: testy ──"
+run_parallel \
+    "npm run test:quick:lite" \
+    "npm run test:git-safety" || { echo "❌ Testy — uruchom npm run test:quick:lite"; exit 1; }
+
+echo "✓ pre-push zielony"
