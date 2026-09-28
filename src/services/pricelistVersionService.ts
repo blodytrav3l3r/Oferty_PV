@@ -1272,15 +1272,54 @@ export async function cloneAsDraft(
     return res.value;
 }
 
-// ─── Usuwanie wersji nigdy nieaktywnych ──────────────────────────────
+export interface VersionUsage {
+    offers: number;
+    orders: number;
+    total: number;
+}
+
+interface UsageCounter {
+    count(args: { where: { pricelistVersionId: string } }): Promise<number>;
+}
+
+interface UsageClient {
+    offers_rel: UsageCounter;
+    offers_studnie_rel: UsageCounter;
+    orders_rury_rel: UsageCounter;
+    orders_studnie_rel: UsageCounter;
+}
+
+/** Ile ofert/zamówień trzyma pieczątkę danej wersji (4× count po pricelistVersionId). */
+async function countUsage(client: UsageClient, id: string): Promise<VersionUsage> {
+    const where = { where: { pricelistVersionId: id } };
+    const [o1, o2, r1, r2] = await Promise.all([
+        client.offers_rel.count(where),
+        client.offers_studnie_rel.count(where),
+        client.orders_rury_rel.count(where),
+        client.orders_studnie_rel.count(where)
+    ]);
+    const offers = o1 + o2;
+    const orders = r1 + r2;
+    return { offers, orders, total: offers + orders };
+}
+
+/** Użycie wersji przez oferty/zamówienia (publiczne — pod GET / usedBy). */
+export async function countVersionUsage(id: string): Promise<VersionUsage> {
+    return countUsage(prisma as unknown as UsageClient, id);
+}
+
+// ─── Usuwanie wersji ─────────────────────────────────────────────
 
 /** Statusy usuwalne: wersja nigdy nie była widoczna dla ofert ani resolveActive. */
 const DELETABLE_STATUSES: readonly string[] = ['DRAFT', 'SCHEDULED', 'BACKDATE_REQUESTED'];
 
 /**
- * Usuwa wersję wraz z pozycjami (tx) + audit DELETE. Tylko statusy nigdy
- * nieaktywne — ACTIVE/BACKDATE/ARCHIVED trzymają pieczątki ofert
- * (pricelistVersionId) i kasowanie groziłoby historią → 409.
+ * Usuwa wersję wraz z pozycjami (tx) + audit DELETE. Allowlist
+ * (DRAFT/SCHEDULED/BACKDATE_REQUESTED) kasuje jak dziś. ACTIVE/BACKDATE
+ * ZAWSZE 409 NOT_DELETABLE — także przy zerowym użyciu, bo resolveActive
+ * rozdaje je nowym ofertom (wyścig: count=0 w tej chwili ≠ 0 za chwilę).
+ * ARCHIVED (i inne przyszłe statusy spoza allowlist) kasuje się tylko bez
+ * użycia (usage.total === 0); z użyciem → 409 USED_BY z liczbą w komunikacie.
  */
 export async function deleteVersion(
     id: string,
@@ -1293,12 +1332,23 @@ export async function deleteVersion(
     if (!isPricelistType(current.type)) {
         throw new PricelistVersionError(422, 'INVALID_TYPE', `Wersja ${id} ma nieznany typ`);
     }
-    if (!DELETABLE_STATUSES.includes(current.status)) {
+    if (current.status === 'ACTIVE' || current.status === 'BACKDATE') {
         throw new PricelistVersionError(
             409,
             'NOT_DELETABLE',
             `Wersji ${id} o statusie ${current.status} nie można usunąć (trzyma historię ofert)`
         );
+    }
+    let usage: VersionUsage | null = null;
+    if (!DELETABLE_STATUSES.includes(current.status)) {
+        usage = await countVersionUsage(id);
+        if (usage.total > 0) {
+            throw new PricelistVersionError(
+                409,
+                'USED_BY',
+                `Wersji ${id} używa ${usage.total} ofert/zamówień — historia chroniona`
+            );
+        }
     }
     const type = current.type;
     const lock = lockFor(type);
@@ -1308,19 +1358,33 @@ export async function deleteVersion(
             if (!fresh) {
                 throw new PricelistVersionError(404, 'NOT_FOUND', `Wersja ${id} nie istnieje`);
             }
-            if (!DELETABLE_STATUSES.includes(fresh.status)) {
+            if (fresh.status === 'ACTIVE' || fresh.status === 'BACKDATE') {
                 throw new PricelistVersionError(
                     409,
                     'NOT_DELETABLE',
                     `Wersji ${id} o statusie ${fresh.status} nie można usunąć (trzyma historię ofert)`
                 );
             }
+            const allowlisted = DELETABLE_STATUSES.includes(fresh.status);
+            if (!allowlisted) {
+                // Re-check w tx: pieczątka mogła przybyć po wstępnym councie.
+                const freshUsage = await countUsage(tx as unknown as UsageClient, id);
+                if (freshUsage.total > 0) {
+                    throw new PricelistVersionError(
+                        409,
+                        'USED_BY',
+                        `Wersji ${id} używa ${freshUsage.total} ofert/zamówień — historia chroniona`
+                    );
+                }
+            }
             await deleteVersionItems(tx, type, id);
             await writeAudit(tx, {
                 entityId: id,
                 userId: opts.userId,
                 action: 'DELETE',
-                oldData: { wersja: fresh.version, status: fresh.status, seq: fresh.seq }
+                oldData: allowlisted
+                    ? { wersja: fresh.version, status: fresh.status, seq: fresh.seq }
+                    : { wersja: fresh.version, status: fresh.status, seq: fresh.seq, offers: 0 }
             });
             await tx.pricelistVersion.delete({ where: { id } });
             return { id };

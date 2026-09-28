@@ -236,6 +236,16 @@
         return status === 'DRAFT' || status === 'SCHEDULED' || status === 'BACKDATE_REQUESTED';
     }
 
+    /** Powód blokady „Usuń" (null = wolno): ACTIVE/BACKDATE zawsze, reszta tylko z użyciem. */
+    function deleteReason(v) {
+        if (isDeletable(v.status)) return null;
+        if (v.status === 'ACTIVE') return 'Wersja aktywna — nieusuwalna';
+        if (v.status === 'BACKDATE') return 'Wersja wsteczna — nieusuwalna';
+        if (typeof v.usedBy !== 'number') return 'Brak danych o użyciu — nieusuwalna';
+        if (v.usedBy > 0) return 'Używana przez ' + v.usedBy + ' ofert/zamówień';
+        return null;
+    }
+
     function renderRows(versions, manageable) {
         if (versions.length === 0) {
             return '<tr><td colspan="7" class="text-center text-muted">Brak wersji — zapisz pierwszą powyżej.</td></tr>';
@@ -263,13 +273,18 @@
                     escAttr(v.version || '') +
                     ' (aktywna wersja nie zmieni się)">' +
                     '<i data-lucide="history"></i> Przywróć jako roboczą</button>';
-                var deleteBtn = isDeletable(v.status)
-                    ? '<button class="btn btn-sm btn-danger" data-pv-act="delete" data-pv-id="' +
-                      escAttr(v.id) +
-                      '" data-pv-version="' +
-                      escAttr(v.version || '') +
-                      '" title="Usuwa wersję i jej pozycje (tylko wersje nigdy nieaktywne)">Usuń</button>'
-                    : '';
+                // „Usuń" zawsze widoczny: enabled gdy wolno (allowlist albo
+                // archiwalna/nieznana-przyszła bez użycia), inaczej wyszarzony z powodem.
+                var reason = deleteReason(v);
+                var deleteBtn =
+                    '<button class="btn btn-sm btn-danger" data-pv-act="delete" data-pv-id="' +
+                    escAttr(v.id) +
+                    '" data-pv-version="' +
+                    escAttr(v.version || '') +
+                    '"' +
+                    (reason === null
+                        ? ' title="Usuwa wersję i jej pozycje (tylko wersje nigdy nieaktywne)">Usuń</button>'
+                        : ' disabled title="' + escAttr(reason) + '">Usuń</button>');
                 var actions = manageable
                     ? '<div class="pv-actions">' +
                       '<button class="btn btn-sm btn-secondary" data-pv-act="diff" data-pv-id="' +

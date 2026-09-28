@@ -20,6 +20,7 @@ import {
     applyBackdate,
     cloneAsDraft,
     createDraft,
+    countVersionUsage,
     deleteVersion,
     getVersionDiff,
     getVersionExportSheets,
@@ -77,7 +78,15 @@ router.get('/', requireAuth, requireAdmin, async (req, res) => {
             where: type === undefined ? undefined : { type },
             orderBy: [{ type: 'asc' }, { seq: 'desc' }]
         });
-        res.json({ versions });
+        // Ile ofert/zamówień trzyma pieczątkę wersji (pod wyszarzony „Usuń" w FE).
+        // Wersji jest mało, więc batch: per wersja 4 county równolegle.
+        const withUsage = await Promise.all(
+            versions.map(async (v) => ({
+                ...v,
+                usedBy: (await countVersionUsage(v.id)).total
+            }))
+        );
+        res.json({ versions: withUsage });
     } catch (err) {
         sendVersionError(res, err);
     }
@@ -146,7 +155,7 @@ router.post(
     }
 );
 
-/** Usunięcie wersji nigdy nieaktywnej (DRAFT/SCHEDULED/BACKDATE_REQUESTED) + pozycje. */
+/** Usunięcie wersji: allowlist jak dziś + archiwalne bez użycia (ACTIVE/BACKDATE zawsze 409). */
 router.delete('/:id', requireAuth, requireAdmin, PRICELIST_WRITE_LIMITER, async (req, res) => {
     try {
         const result = await deleteVersion(req.params.id, { userId: userIdOf(req) });

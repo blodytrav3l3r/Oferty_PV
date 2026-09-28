@@ -175,3 +175,40 @@ describe('frontend: panel Zarządzanie cennikiem (3 przyciski + 3 sekcje)', () =
         expect(studnie).toContain('products');
     });
 });
+
+describe('frontend: przycisk Usuń zawsze widoczny (wyszarzony gdy nie wolno)', () => {
+    const panel = fs.readFileSync(
+        path.join(process.cwd(), 'public/js/shared/pricelistVersions.js'),
+        'utf-8'
+    );
+    const route = fs.readFileSync(
+        path.join(process.cwd(), 'src/routes/pricelistVersions.ts'),
+        'utf-8'
+    );
+
+    it('renderRows: Usuń zawsze w źródle (data-pv-act="delete"), nigdy warunkowe znikanie', () => {
+        expect(panel).toContain('data-pv-act="delete"');
+        expect(panel).not.toMatch(/isDeletable\(v\.status\)\s*\?\s*'<button/);
+    });
+    it('renderRows: enabled dla allowlist albo usedBy===0 poza ACTIVE/BACKDATE; brak usedBy = blokada', () => {
+        expect(panel).toContain('usedBy');
+        expect(panel).toContain("v.status === 'ACTIVE'");
+        expect(panel).toContain("v.status === 'BACKDATE'");
+        expect(panel).toContain("typeof v.usedBy !== 'number'");
+        expect(panel).toContain('v.usedBy > 0');
+        expect(panel).toContain('deleteReason');
+        expect(panel).toContain('reason === null');
+    });
+    it('renderRows: disabled + title z powodem (aktywna / użycie / brak danych)', () => {
+        expect(panel).toContain('disabled');
+        expect(panel).toContain('Wersja aktywna — nieusuwalna');
+        expect(panel).toContain('Wersja wsteczna — nieusuwalna');
+        expect(panel).toContain('Używana przez ');
+        expect(panel).toContain('ofert/zamówień');
+        expect(panel).toContain('Brak danych o użyciu — nieusuwalna');
+    });
+    it('route GET /: dokleja usedBy per wersję (batch countVersionUsage)', () => {
+        expect(route).toContain('countVersionUsage');
+        expect(route).toContain('usedBy');
+    });
+});
