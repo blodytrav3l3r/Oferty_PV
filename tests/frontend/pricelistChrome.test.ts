@@ -254,6 +254,9 @@ describe('frontend: widoczność wersji cennika (dopisek typu, pasek, kartoteka)
         expect(panel).toContain('data-pv-active="');
         expect(panel).toContain('brak aktywnego cennika');
         expect(panel).toContain('hydrateActiveBadges');
+        // Fallback dla ofert bez pieczątki: dopisek (bieżący), nie mylić z wersją oferty.
+        expect(panel).toContain("(bieżący)'");
+        expect(panel).toContain('pokazano bieżący aktywny cennik');
     });
     it('pasek górny: aktywne cenniki obok wersji aplikacji, istniejąca logika nietknięta', () => {
         expect(topbar).toContain("versionEl.textContent = 'v' + data.version");

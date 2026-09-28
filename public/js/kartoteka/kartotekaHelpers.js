@@ -337,9 +337,9 @@ function buildOfferCardHtml(offer, hasOrder, orders, order, role, isLocalList) {
         ? '<i data-lucide="cylinder"></i>'
         : '<i data-lucide="cylinder" class="lucide-rotate-n90"></i>';
     const itemCount = window.getOfferItemCount(offer);
-    // Badge wersji cennika: pieczątka z wiersza gdy jest (detail/lokalnie),
-    // inaczej badge aktywnej wersji per typ oferty (lista search nie niesie
-    // versionId — brak fetchy per karta, 1× fetchLabels per typ z cache).
+    // Badge wersji cennika: pieczątka z wiersza search gdy jest, inaczej
+    // badge aktywnej wersji per typ z dopiskiem (bieżący) — brak fetchy per
+    // karta, 1× fetchLabels per typ z cache.
     const pvType = offer.type === 'studnia_oferta' ? 'studnie' : 'rury';
     const pvBadge = window.pricelistVersions
         ? offer.pricelistVersionId

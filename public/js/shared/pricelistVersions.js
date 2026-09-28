@@ -279,6 +279,14 @@
                         return;
                     }
                     paintVersionBadge(el, active, t);
+                    // Fallback dla ofert bez pieczątki: widać, że to bieżący
+                    // cennik, nie wersja z oferty.
+                    el.textContent += ' (bieżący)';
+                    el.setAttribute(
+                        'title',
+                        el.getAttribute('title') +
+                            ' • Oferta bez pieczątki — pokazano bieżący aktywny cennik'
+                    );
                 });
             })
         );
