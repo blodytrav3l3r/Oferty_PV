@@ -883,11 +883,31 @@ html[data-theme='light'] .kartoteka-filter-bar:hover {
     overflow-x: auto;
 }
 .modal--pv table {
+    width: 100%;
     min-width: 1200px;
 }
 .modal--pv td,
 .modal--pv th {
     overflow-wrap: anywhere;
+}
+.modal--pv thead th {
+    white-space: nowrap;
+    padding: 0.55rem 0.75rem;
+}
+.modal--pv tbody td {
+    padding: 0.55rem 0.75rem;
+    vertical-align: middle;
+}
+/* Taby Rury/Studnie: po połowie szerokości, wyższe */
+.modal--pv [role='tablist'] {
+    display: flex;
+    gap: 0.5rem;
+}
+.modal--pv [role='tablist'] .btn {
+    flex: 1 1 0;
+    padding: 0.6rem 1rem;
+    font-size: var(--fs-md);
+    justify-content: center;
 }
 /* Jedna kolumna akcji: przyciski w równej, zawijanej grupie flex */
 .modal--pv .pv-actions {
