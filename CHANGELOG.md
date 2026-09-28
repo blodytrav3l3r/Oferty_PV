@@ -4,6 +4,49 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.33.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.32.0...v1.33.0) (2026-09-28)
+
+### Features
+
+- **api:** ceny ofert z wersji active ([e8faa88](https://github.com/blodytrav3l3r/Oferty_PV/commit/e8faa88616327a7c11b624ca3d8665562b22b48c))
+- **api:** edycja noty wersji i nota aktywacji ([a0a201c](https://github.com/blodytrav3l3r/Oferty_PV/commit/a0a201c004584a2304a993e7f09a9ea09b37b3fc))
+- **api:** eksport wersji studni z preco same-seq ([cfc6b4d](https://github.com/blodytrav3l3r/Oferty_PV/commit/cfc6b4d5ba19c4cb75802ad0ebc429f7f61d1edf))
+- **api:** eksport wersji w ksztalcie live ([c7a3a0f](https://github.com/blodytrav3l3r/Oferty_PV/commit/c7a3a0f55eb1683c9e7fba906821d428ab3c3940))
+- **api:** flaga preco w eksporcie wersji ([d28bdad](https://github.com/blodytrav3l3r/Oferty_PV/commit/d28bdad3260094b71d79c075e505a8cc09fa8122))
+- **api:** nazwy plikow eksportu wersji jak live ([e7beaaa](https://github.com/blodytrav3l3r/Oferty_PV/commit/e7beaaa2fea4f96ee8f83b65c2831a810433dfd3))
+- **api:** serwerowy eksport xlsx live i default ([f6c440d](https://github.com/blodytrav3l3r/Oferty_PV/commit/f6c440d0a25654ca043e102332decbbcad04636e))
+- **api:** styczna osobna zakladka excela ([6a1f234](https://github.com/blodytrav3l3r/Oferty_PV/commit/6a1f234fc5ffa1cd8fe2b1259a96d46a69c767cf))
+- **api:** usuwanie wersji z licznikiem uzyc ([0798447](https://github.com/blodytrav3l3r/Oferty_PV/commit/079844769000fa635f02731c8a926627fb691b43))
+- **offers:** banner wersji i mrozenie cen edycji ([718b028](https://github.com/blodytrav3l3r/Oferty_PV/commit/718b02870fd176adc7c42e5f07f044538c0944f2))
+- **studnie:** polski panel wersji i usuwanie nieaktywnych ([0f287ba](https://github.com/blodytrav3l3r/Oferty_PV/commit/0f287ba655dc921db1eaccf60aa72e183da049b7))
+- **ui:** dialog wyboru celu importu cennika ([feda38a](https://github.com/blodytrav3l3r/Oferty_PV/commit/feda38a3b40ec5e9d7c083367107d4f9246be1ed))
+- **ui:** dopisek biezacy przy fallbacku wersji ([8dd50bd](https://github.com/blodytrav3l3r/Oferty_PV/commit/8dd50bd6d3a9705660f1e8145c09057e7941b38c))
+- **ui:** draft preco z importu xlsx ([9ac8061](https://github.com/blodytrav3l3r/Oferty_PV/commit/9ac8061bbb65d7ab9a04fb84f8d4d443a73e9bf5))
+- **ui:** globalny panel zarzadzanie cennikami ([01958a1](https://github.com/blodytrav3l3r/Oferty_PV/commit/01958a16f3f7c6095fd9936dec7463114b55bce4))
+- **ui:** import xlsx do live albo draft ([4e51c92](https://github.com/blodytrav3l3r/Oferty_PV/commit/4e51c92b44dbc65b707772604eddef0f1603ba47))
+- **ui:** jednolite przyciski import-eksport cennikow ([aabd74e](https://github.com/blodytrav3l3r/Oferty_PV/commit/aabd74e599766fe631a4284ef80b3fd246aecdcd))
+- **ui:** oferty licza z wersji active ([fbe5814](https://github.com/blodytrav3l3r/Oferty_PV/commit/fbe5814773b4371f43019051d1af98c57289d587))
+- **ui:** ostrzezenie o wielu arkuszach importu rur ([81eb148](https://github.com/blodytrav3l3r/Oferty_PV/commit/81eb1488fbf057e910e9029e908102567a3baaca))
+- **ui:** panel zarzadzanie cennikiem ([fcab0cb](https://github.com/blodytrav3l3r/Oferty_PV/commit/fcab0cb9bd740d8d17decac8b24bdce497d00008))
+- **ui:** przycisk importu preco ([60531fa](https://github.com/blodytrav3l3r/Oferty_PV/commit/60531fa330657f54bacf2a6edb75dec428eb4e94))
+- **ui:** reset jako przywroc domyslne ([e0583d5](https://github.com/blodytrav3l3r/Oferty_PV/commit/e0583d5454856d59e8e22b48264832f0453b9f2d))
+- **ui:** reset preco tylko w panelu ([63479ab](https://github.com/blodytrav3l3r/Oferty_PV/commit/63479ab81cc98c047f74c05d4a909f2648b646d4))
+- **ui:** reset preco w panelu zarzadzanie ([d8ed6ba](https://github.com/blodytrav3l3r/Oferty_PV/commit/d8ed6ba28dc1c426cd37f1357fb9e7febe1e962a))
+- **ui:** transfer bez osobnego wiersza preco ([f5dc4f2](https://github.com/blodytrav3l3r/Oferty_PV/commit/f5dc4f25184a805a767e6393d5a56456dc2e1999))
+- **ui:** transfer preco tylko w panelu ([8a2ee88](https://github.com/blodytrav3l3r/Oferty_PV/commit/8a2ee882480ade7359de83f3bbb03ebc4b073817))
+- **ui:** wersja cennika w pasku i kartotece ([af589c4](https://github.com/blodytrav3l3r/Oferty_PV/commit/af589c43cd5a8d15e27edd2e1e78c98efad85886))
+- **ui:** wspolny parser importu xlsx cennikow ([9ada929](https://github.com/blodytrav3l3r/Oferty_PV/commit/9ada929b0f7ea02f0ac86c726b01b96d817cc758))
+
+### Bug Fixes
+
+- **api:** arkusze preco w eksporcie studni ([2e27c5f](https://github.com/blodytrav3l3r/Oferty_PV/commit/2e27c5f20cb53c90da823b1e5ef34c2fe60c51ab))
+- **api:** pieczatka wersji w wynikach search ([1ddad71](https://github.com/blodytrav3l3r/Oferty_PV/commit/1ddad713ccaf8dcf7d1f378f75d5cd5373a4b3bc))
+- **api:** preco do eksportu wersji max seq lte ([ccdf3f7](https://github.com/blodytrav3l3r/Oferty_PV/commit/ccdf3f7cd3def678cc3e5a2fcf0753d5e4c92e82))
+- **ci:** testy pre-push szeregowo, wyscig tmp plikow ([6914b2d](https://github.com/blodytrav3l3r/Oferty_PV/commit/6914b2da4e8f2a7ea255a82f777eda1137427836))
+- **studnie:** normalizacja legacy przy zapisie wersji cennika ([eddac58](https://github.com/blodytrav3l3r/Oferty_PV/commit/eddac585cb79f882cf285d00e6fd3a1b110c512f))
+- **ui:** badge archiwalnej pieczatki wersji ([68cddf7](https://github.com/blodytrav3l3r/Oferty_PV/commit/68cddf7444a705f3e4e5f5bb4c0d03da69546ca1))
+- **ui:** taby wersji tylko dla zaladowanych modulow ([2d27c66](https://github.com/blodytrav3l3r/Oferty_PV/commit/2d27c6634c6073c9665abceb53f2aef79e6816cf))
+
 ## [1.32.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.31.0...v1.32.0) (2026-09-27)
 
 ### Features
