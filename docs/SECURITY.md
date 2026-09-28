@@ -116,16 +116,30 @@ if (process.env.NODE_ENV === 'production') {
 
 ## 4. Rate Limiting
 
-Prosty, in-memory rate limiter ogranicza liczbę żądań z jednego adresu IP.
+Prosty, in-memory rate limiter (`src/middleware/rateLimiter.ts`, konfiguracja
+`src/middleware/rateLimiters.ts`) ogranicza liczbę żądań w oknie czasowym.
+Kontrakt: burst ponad limit → `429` z `Retry-After` (testy `tests/rateLimiter.test.ts`,
+`tests/security/rateLimit.test.ts`).
 
-| Limiter                  | Okno   | Max prób | Endpointy                                                                              |
-| ------------------------ | ------ | -------- | -------------------------------------------------------------------------------------- |
-| LOGIN_LIMITER            | 15 min | 15       | `/api/auth/login`                                                                      |
-| API_LIMITER              | 15 min | 300      | Wszystkie `/api/*`                                                                     |
-| WRITE_LIMITER            | 15 min | 60       | Zapis danych (POST/PUT/DELETE)                                                         |
-| PRICELIST_WRITE_LIMITER  | 1 godz | 30       | Aktualizacja cenników (`/api/products*`, `/api/preco-pricing`, `/api/price-overrides`) |
-| EXPORT_LIMITER           | 15 min | 20       | Eksport PDF/DOCX (`/api/export-combined/*`, `/:id/export-*`)                           |
-| WRITE_PRODUCTION_LIMITER | 1 min  | 30       | Zlecenia produkcyjne (`DELETE /api/orders-studnie/production/:id`)                     |
+> Ograniczenie (świadome): liczniki są per-proces (Map w pamięci). Przy jednej
+> instancji (monolit: PM2 / 1 kontener Docker — jedyny wspierany model wdrożenia,
+> patrz `docs/DEPLOYMENT.md`) to wystarcza. Przy wielu instancjach za load
+> balancerem limity liczyłyby się osobno na instancję — migracja na shared
+> limiter (Redis) dopiero wtedy, gdy multi-instance stanie się realne. Nie
+> wprowadzamy infrastruktury na zapas.
+
+| Limiter                 | Okno   | Max  | Endpointy                                                         |
+| ----------------------- | ------ | ---- | ----------------------------------------------------------------- |
+| API (globalny)          | 15 min | 300  | Wszystkie `/api/*` (`apiLimiter` w `src/app.ts`)                  |
+| LOGIN_LIMITER           | 1 min  | 10   | `/api/auth/login` (bucket per IP + login)                         |
+| CHANGE_PASSWORD_LIMITER | 15 min | 5    | zmiana hasła                                                      |
+| WRITE_LIMITER           | 1 min  | 60   | Zapisy ofert/zamówień/klientów                                    |
+| PRICELIST_WRITE_LIMITER | 1 min  | 30   | `/api/products*`, `/api/preco-pricing`, `/api/pricelist-versions` |
+| PRECO_PRICING_LIMITER   | 1 min  | 20   | operacje preco                                                    |
+| EXPORT_LIMITER          | 1 min  | 20   | Eksport PDF/DOCX (Puppeteer — kosztowne)                          |
+| ADMIN_USERS_LIMITER     | 1 min  | 30   | operacje na użytkownikach                                         |
+| TELEMETRY_WRITE_LIMITER | 1 min  | 1200 | telemetria (paste/bulk: 15 studni × 4 endpointy)                  |
+| READ_LIMITER            | 1 min  | 600  | odczyty telemetry/dashboard (polling)                             |
 
 Rate limiter dodaje nagłówki odpowiedzi:
 
