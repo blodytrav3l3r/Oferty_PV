@@ -109,14 +109,20 @@ describe('frontend: panel Zarządzanie cennikiem (3 przyciski + 3 sekcje)', () =
         expect(panel.indexOf('>Transfer plików</h4>')).toBeLessThan(
             panel.indexOf('>Cenniki domyślne</h4>')
         );
-        for (const tab of ['data-pv-tab="rury"', 'data-pv-tab="studnie"']) {
+        for (const tab of ['data-pv-tab="', 'aria-pressed', 'role="tablist"']) {
             expect(panel).toContain(tab);
         }
-        expect(panel).toContain('aria-pressed');
-        expect(panel).toContain('role="tablist"');
-        expect(panel).toContain('>Rury<');
-        expect(panel).toContain('>Studnie<');
+        expect(panel).toContain('labels[t]');
         expect(panel).toContain('id="pv-type-tabs"');
+    });
+    it('panel: taby tylko dla załadowanych modułów (fix obcej strony)', () => {
+        expect(panel).toContain('function availableTypes()');
+        expect(panel).toContain('window.exportRuryToExcel');
+        expect(panel).toContain('window.exportStudnieToExcel');
+        expect(panel).toContain('function isAvailable(type)');
+        expect(panel).toContain('if (types.length < 2) return');
+        expect(panel).toContain('if (!isAvailable(type)) type = availableTypes()[0]');
+        expect(panel).toContain('isAvailable(next)');
         expect(panel).toContain('id="pv-save-wrap"');
         expect(panel).toContain('id="pv-transfer"');
     });

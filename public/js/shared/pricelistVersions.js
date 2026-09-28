@@ -349,21 +349,53 @@
         );
     }
 
-    /** Przełącznik typu: dwa taby, aktywny podświetlony (btn-primary), aria-pressed. */
+    /** Typy z załadowanym modułem strony (eksport+import istnieją w window).
+     *  Drugi typ chowamy zamiast wołać w próżnię (ReferenceError na obcej stronie). */
+    function availableTypes() {
+        var out = [];
+        if (
+            typeof window.exportRuryToExcel === 'function' &&
+            typeof window.importRuryFromExcel === 'function'
+        ) {
+            out.push('rury');
+        }
+        if (
+            typeof window.exportStudnieToExcel === 'function' &&
+            typeof window.importStudnieFromExcel === 'function'
+        ) {
+            out.push('studnie');
+        }
+        if (out.length === 0) out.push('rury', 'studnie');
+        return out;
+    }
+
+    function isAvailable(type) {
+        return availableTypes().indexOf(type) !== -1;
+    }
+
+    /** Przełącznik typu: taby tylko dla załadowanych modułów (btn-primary, aria-pressed). */
     function tabsHtml(activeType) {
-        var ruryActive = activeType === 'rury';
+        var types = availableTypes();
+        if (types.length < 2) return '';
+        var labels = { rury: 'Rury', studnie: 'Studnie' };
         return (
             '<div class="pv-actions" role="tablist" aria-label="Typ cennika">' +
-            '<button type="button" role="tab" class="btn btn-sm ' +
-            (ruryActive ? 'btn-primary' : 'btn-secondary') +
-            '" data-pv-tab="rury" aria-pressed="' +
-            (ruryActive ? 'true' : 'false') +
-            '">Rury</button>' +
-            '<button type="button" role="tab" class="btn btn-sm ' +
-            (ruryActive ? 'btn-secondary' : 'btn-primary') +
-            '" data-pv-tab="studnie" aria-pressed="' +
-            (ruryActive ? 'false' : 'true') +
-            '">Studnie</button>' +
+            types
+                .map(function (t) {
+                    var active = t === activeType;
+                    return (
+                        '<button type="button" role="tab" class="btn btn-sm ' +
+                        (active ? 'btn-primary' : 'btn-secondary') +
+                        '" data-pv-tab="' +
+                        t +
+                        '" aria-pressed="' +
+                        (active ? 'true' : 'false') +
+                        '">' +
+                        labels[t] +
+                        '</button>'
+                    );
+                })
+                .join('') +
             '</div>'
         );
     }
@@ -619,6 +651,8 @@
         if (typeof getRowsOther === 'function') {
             getRowsByType[type === 'rury' ? 'studnie' : 'rury'] = getRowsOther;
         }
+        // Preselekcja tylko załadowanego modułu — inaczej fallback na pierwszy dostępny.
+        if (!isAvailable(type)) type = availableTypes()[0];
         var versions = [];
         try {
             versions = await fetchFullList(type);
@@ -658,7 +692,7 @@
             var tab = e.target && e.target.closest ? e.target.closest('[data-pv-tab]') : null;
             if (tab) {
                 var next = tab.getAttribute('data-pv-tab');
-                if (next && next !== state.current && (next === 'rury' || next === 'studnie')) {
+                if (next && next !== state.current && isAvailable(next)) {
                     switchType(next, state).catch(function (err) {
                         toast('Błąd przełączania typu: ' + err.message, 'error');
                     });
