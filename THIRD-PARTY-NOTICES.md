@@ -17,7 +17,7 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 | MIT                     |            1049 |
 | ISC                     |             102 |
 | Apache-2.0              |              63 |
-| BSD-3-Clause            |              25 |
+| BSD-3-Clause            |              26 |
 | BSD-2-Clause            |              20 |
 | BlueOak-1.0.0           |              14 |
 | MIT OR CC0-1.0          |              14 |
@@ -552,7 +552,7 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - expect@30.4.1
 - expect@30.4.1
 - expect@30.5.2
-- express@4.22.2
+- express@4.22.3
 - exsolve@1.1.0
 - fast-check@3.23.2
 - fast-deep-equal@3.1.3
@@ -608,7 +608,7 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - has-tostringtag@1.0.2
 - hash.js@1.1.7
 - hasown@2.0.4
-- helmet@8.2.0
+- helmet@8.3.0
 - html-encoding-sniffer@4.0.0
 - html-escaper@2.0.2
 - http-errors@2.0.1
@@ -1258,7 +1258,7 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - webdriver-bidi-protocol@0.4.1
 - xml-name-validator@5.0.0
 
-### BSD-3-Clause (25)
+### BSD-3-Clause (26)
 
 - @sinonjs/commons@3.0.1
 - @sinonjs/fake-timers@15.4.0
@@ -1281,6 +1281,7 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - istanbul-reports@3.2.0
 - makeerror@1.0.12
 - qs@6.15.2
+- qs@6.16.0
 - source-map@0.6.1
 - sprintf-js@1.0.3
 - tmpl@1.0.5
