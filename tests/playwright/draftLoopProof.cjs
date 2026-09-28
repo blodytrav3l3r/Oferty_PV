@@ -231,7 +231,10 @@ async function enterOrder(frame, orderId) {
 
     try {
         // Login (cookie httpOnly w jarze kontekstu, dzielone z page.request).
+        // CSRF fail-closed: APIRequestContext nie wysyla Origin/Referer sam —
+        // przegladarka zawsze je wysyla, wiec harness musi je podac jawnie.
         const loginResp = await page.request.post(`${BASE}/api/auth/login`, {
+            headers: { Origin: BASE, Referer: `${BASE}/` },
             data: { username: 'admin', password: ADMIN_PASSWORD }
         });
         const loginSetCookie = loginResp.headers()['set-cookie'] || '';
@@ -295,6 +298,7 @@ async function enterOrder(frame, orderId) {
             wizard: { globalParams: {}, currentStep: 5 }
         };
         const putResp = await page.request.put(`${BASE}/api/orders-studnie`, {
+            headers: { Origin: BASE, Referer: `${BASE}/app.html#/studnie` },
             data: { data: [orderDoc] }
         });
         check('A PUT order (seed API)', putResp.ok(), `status=${putResp.status()}`);
