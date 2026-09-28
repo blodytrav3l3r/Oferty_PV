@@ -95,15 +95,44 @@ router.get('/', requireAuth, requireAdmin, async (req, res) => {
 /**
  * F3: etykiety wersji na oś czasu (bez cen) — dla badge „cennik vX" w ofertach.
  * Bez requireAdmin: tylko ACTIVE/BACKDATE, tylko id/version/seq/effectiveFrom.
+ * Z ?ids=a,b,c (max 50): te wersje BEZ filtra statusu (też archiwalne —
+ * pieczątki ofert nie kłamią „legacy"); zły format → 422.
  */
 router.get('/labels', requireAuth, async (req, res) => {
     try {
-        const { type } = req.query;
+        const { type, ids } = req.query;
         if (type !== undefined && !isKnownType(type)) {
             res.status(422).json({
                 error: 'Nieprawidłowy typ cennika (dozwolone: rury, studnie, preco)',
                 code: 'INVALID_TYPE'
             });
+            return;
+        }
+        if (ids !== undefined) {
+            if (typeof ids !== 'string') {
+                res.status(422).json({
+                    error: 'Nieprawidłowy format ids (oczekiwano a,b,c, max 50)',
+                    code: 'INVALID_IDS'
+                });
+                return;
+            }
+            const list = ids.split(',').map((s) => s.trim());
+            if (list.length === 0 || list.length > 50 || list.some((s) => s.length === 0)) {
+                res.status(422).json({
+                    error: 'Nieprawidłowy format ids (oczekiwano a,b,c, max 50)',
+                    code: 'INVALID_IDS'
+                });
+                return;
+            }
+            const versions = await prisma.pricelistVersion.findMany({
+                where: {
+                    ...(type === undefined ? {} : { type }),
+                    id: { in: [...new Set(list)] }
+                },
+                select: { id: true, type: true, seq: true, version: true, effectiveFrom: true },
+                orderBy: [{ type: 'asc' }, { seq: 'desc' }]
+            });
+            res.json({ versions });
             return;
         }
         const versions = await prisma.pricelistVersion.findMany({

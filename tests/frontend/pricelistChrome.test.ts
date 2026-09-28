@@ -293,6 +293,31 @@ describe('frontend: widoczność wersji cennika (dopisek typu, pasek, kartoteka)
     });
 });
 
+describe('frontend: badge archiwalnej pieczątki (nie fałszywe legacy)', () => {
+    const panel = fs.readFileSync(
+        path.join(process.cwd(), 'public/js/shared/pricelistVersions.js'),
+        'utf-8'
+    );
+
+    it('hydrateBadges: pieczątka spoza cache dopytana batch ?ids= (raz per typ)', () => {
+        expect(panel).toContain('function fetchLabelsByIds(');
+        expect(panel).toContain('&ids=');
+        expect(panel).toContain('missing');
+        expect(panel).toContain('fetchLabelsByIds(t, missing)');
+    });
+    it('legacy tylko dla null/nieznanego stamp (paintVersionBadge !v → cennik legacy)', () => {
+        expect(panel).toContain('function paintVersionBadge(el, v, type)');
+        expect(panel).toContain('if (!v)');
+        expect(panel).toContain('cennik legacy');
+        expect(panel).toContain('Oferta sprzed wersjonowania (legacy)');
+    });
+    it('cache dopisywany per id (archiwalna labelka trafia do labelCache)', () => {
+        expect(panel).toContain('labelCache[type]');
+        expect(panel).toContain('map[v.id] = v');
+        expect(panel).toContain('fetchLabelsByIds');
+    });
+});
+
 describe('frontend: edycja noty + nota przy aktywacji (źródło)', () => {
     const panel = fs.readFileSync(
         path.join(process.cwd(), 'public/js/shared/pricelistVersions.js'),

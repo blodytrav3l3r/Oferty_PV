@@ -102,6 +102,24 @@
         return map;
     }
 
+    /** Etykiety wersji po id (bez filtra statusu — też archiwalne);
+     *  dopisuje do cache per id. */
+    async function fetchLabelsByIds(type, ids) {
+        var json = await apiJson(
+            API +
+                '/labels?type=' +
+                encodeURIComponent(type) +
+                '&ids=' +
+                encodeURIComponent(ids.join(',')),
+            authed('GET')
+        );
+        var map = labelCache[type] || (labelCache[type] = {});
+        (json.versions || []).forEach(function (v) {
+            map[v.id] = v;
+        });
+        return map;
+    }
+
     /** Pełna lista wersji (tylko admin; 403 → fallback do etykiet). */
     async function fetchFullList(type) {
         try {
@@ -215,6 +233,20 @@
                     labels = await fetchLabels(t);
                 } catch (_e) {
                     return;
+                }
+                // Pieczątka archiwalna nie ma w cache /labels (tylko
+                // ACTIVE/BACKDATE) — dopytaj batch ?ids= raz per typ.
+                var missing = [];
+                byType[t].forEach(function (el) {
+                    var id = el.getAttribute('data-pv-id');
+                    if (id && !labels[id] && missing.indexOf(id) === -1) missing.push(id);
+                });
+                if (missing.length > 0) {
+                    try {
+                        labels = await fetchLabelsByIds(t, missing);
+                    } catch (_e2) {
+                        /* cisza — nieznane id spadnie do legacy */
+                    }
                 }
                 byType[t].forEach(function (el) {
                     paintVersionBadge(el, labels[el.getAttribute('data-pv-id')], t);
@@ -1078,6 +1110,7 @@
 
     window.pricelistVersions = {
         fetchLabels: fetchLabels,
+        fetchLabelsByIds: fetchLabelsByIds,
         fetchFullList: fetchFullList,
         badgeHtml: badgeHtml,
         activeBadgeHtml: activeBadgeHtml,
