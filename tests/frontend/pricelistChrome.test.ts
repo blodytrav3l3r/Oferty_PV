@@ -95,20 +95,18 @@ describe('frontend: panel Zarządzanie cennikiem (3 przyciski + 3 sekcje)', () =
             expect(content).not.toContain('import-pricelist-excel');
         }
     });
-    it('panel: tytuł + 3 sekcje h4', () => {
+    it('panel: tytuł + 3 sekcje h4.pv-section', () => {
         expect(panel).toContain('Zarządzanie cennikiem (');
         for (const h of [
-            '<h4>Wersje</h4>',
-            '<h4>Transfer plików</h4>',
-            '<h4>Cenniki domyślne</h4>'
+            '<h4 class="pv-section">Wersje</h4>',
+            '<h4 class="pv-section">Transfer plików</h4>',
+            '<h4 class="pv-section">Cenniki domyślne</h4>'
         ]) {
             expect(panel).toContain(h);
         }
-        expect(panel.indexOf('<h4>Wersje</h4>')).toBeLessThan(
-            panel.indexOf('<h4>Transfer plików</h4>')
-        );
-        expect(panel.indexOf('<h4>Transfer plików</h4>')).toBeLessThan(
-            panel.indexOf('<h4>Cenniki domyślne</h4>')
+        expect(panel.indexOf('>Wersje</h4>')).toBeLessThan(panel.indexOf('>Transfer plików</h4>'));
+        expect(panel.indexOf('>Transfer plików</h4>')).toBeLessThan(
+            panel.indexOf('>Cenniki domyślne</h4>')
         );
     });
     it('panel: transfer woła istniejące eksporty/importy; domyślne istniejące funkcje', () => {

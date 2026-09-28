@@ -900,6 +900,32 @@ html[data-theme='light'] .kartoteka-filter-bar:hover {
     margin: 0;
     white-space: nowrap;
 }
+/* Nagłówki sekcji panelu: akcent z lewej, odstęp od poprzedniej sekcji */
+.modal--pv .pv-section {
+    margin: 0.5rem 0 0;
+    padding-left: 0.6rem;
+    border-left: 3px solid var(--accent);
+    line-height: 1.4;
+}
+.modal--pv .pv-section:first-child {
+    margin-top: 0;
+}
+/* Wiersze transferu: wyrównana etykieta + akcje, rozdzielone linią */
+.modal--pv .pv-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+    align-items: center;
+    padding: 0.45rem 0;
+}
+.modal--pv .pv-row + .pv-row {
+    border-top: 1px solid var(--border-glass);
+}
+.modal--pv .pv-row-label {
+    min-width: 9rem;
+    font-weight: 600;
+    color: var(--text-muted);
+}
 
 /* Okno historii (audit) — spójne z resztą modalów */
 .audit-modal-inner {

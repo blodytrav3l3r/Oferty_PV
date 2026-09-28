@@ -198,7 +198,7 @@
         } catch (_e) {
             /* zostaw ISO */
         }
-        return esc(iso) + '<br><span class="text-muted">' + esc(local) + '</span>';
+        return '<span title="' + escAttr(iso) + '">' + esc(local) + '</span>';
     }
 
     /** Wersję można usunąć tylko zanim zacznie żyć (nigdy nie była aktywna). */
@@ -290,21 +290,21 @@
             '">';
         if (isRury) {
             return (
-                '<div class="pv-actions"><span>Rury</span>' +
+                '<div class="pv-row"><span class="pv-row-label">Rury</span><span class="pv-actions">' +
                 '<button class="btn btn-sm btn-secondary" onclick="exportRuryToExcel()" title="Eksportuj cennik do pliku Excel"><i data-lucide="download"></i> Eksportuj</button>' +
                 '<button class="btn btn-sm btn-secondary" onclick="document.getElementById(\'pv-import-excel\').click()" title="Importuj cennik z pliku Excel"><i data-lucide="upload"></i> Importuj</button>' +
-                '</div>' +
+                '</span></div>' +
                 importInput
             );
         }
         return (
-            '<div class="pv-actions"><span>Studnie + PRECO</span>' +
+            '<div class="pv-row"><span class="pv-row-label">Studnie + PRECO</span><span class="pv-actions">' +
             '<button class="btn btn-sm btn-secondary" onclick="exportStudnieToExcel()" title="Eksportuj cennik do pliku Excel"><i data-lucide="download"></i> Eksportuj</button>' +
             '<button class="btn btn-sm btn-secondary" onclick="document.getElementById(\'pv-import-excel\').click()" title="Importuj cennik z pliku Excel (zawiera arkusze PRECO)"><i data-lucide="upload"></i> Importuj</button>' +
-            '</div>' +
-            '<div class="pv-actions"><span>PRECO</span>' +
+            '</span></div>' +
+            '<div class="pv-row"><span class="pv-row-label">PRECO</span><span class="pv-actions">' +
             '<button class="btn btn-sm btn-secondary" onclick="exportPrecoToExcel()" title="Eksportuj cennik PRECO do pliku Excel"><i data-lucide="download"></i> Eksportuj</button>' +
-            '</div>' +
+            '</span></div>' +
             importInput
         );
     }
@@ -313,9 +313,9 @@
         return (
             '<div class="pv-actions">' +
             '<button class="btn btn-sm btn-secondary" id="btn-save-defaults" onclick="window.parent.saveAllDefaults()" title="Zapisz bieżący stan cenników (rury, studnie, PRECO) jako domyślne"><i data-lucide="bookmark"></i> Zapisz domyślne</button>' +
-            '<button class="btn btn-sm btn-danger" onclick="' +
+            '<button class="btn btn-sm btn-secondary" onclick="' +
             (type === 'rury' ? 'resetPriceList()' : 'resetStudniePriceList()') +
-            '" title="Przywróć domyślne wartości cennika"><i data-lucide="rotate-ccw"></i> Przywróć domyślne</button>' +
+            '" title="Przywróć domyślne wartości cennika (pyta o potwierdzenie)"><i data-lucide="rotate-ccw"></i> Przywróć domyślne</button>' +
             '</div>' +
             '<p class="text-muted">Zapisz domyślne obejmuje wszystkie cenniki (rury, studnie, PRECO); przywrócenie dotyczy cennika ' +
             esc(typeLabel(type)) +
@@ -344,15 +344,15 @@
             ')</h3>' +
             '<button class="btn-icon" aria-label="Zamknij" data-pv-act="close"><i data-lucide="x"></i></button></div>' +
             '<div class="modal-body">' +
-            '<h4>Wersje</h4>' +
+            '<h4 class="pv-section">Wersje</h4>' +
             saveForm +
             '<div class="table-wrap"><table><thead><tr>' +
-            '<th scope="col">Wersja</th><th scope="col">Nr</th><th scope="col">Status</th><th scope="col">Obowiązuje od (UTC + lokalnie)</th>' +
+            '<th scope="col">Wersja</th><th scope="col">Nr</th><th scope="col">Status</th><th scope="col">Obowiązuje od</th>' +
             '<th scope="col">Autor</th><th scope="col">Nota</th><th scope="col">Akcje</th>' +
             '</tr></thead><tbody id="pv-versions-body"></tbody></table></div>' +
-            '<h4>Transfer plików</h4>' +
+            '<h4 class="pv-section">Transfer plików</h4>' +
             transferHtml(type) +
-            '<h4>Cenniki domyślne</h4>' +
+            '<h4 class="pv-section">Cenniki domyślne</h4>' +
             defaultsHtml(type) +
             '</div></div>'
         );
