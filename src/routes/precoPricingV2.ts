@@ -11,7 +11,9 @@ import {
     PricelistVersionError,
     liveSheetsToXlsxSheets,
     projectPrecoNestedToSheets,
-    requireExportSource
+    requireExportSource,
+    requirePricingSource,
+    resolveActivePricing
 } from '../services/pricelistVersionService';
 
 const router = express.Router();
@@ -157,15 +159,30 @@ async function flattenAndSave(input: Record<string, unknown>, isDefault: boolean
 // ──────────────────────────────────────────
 // GET / — pełna struktura PRECO z Preco* tables
 // ──────────────────────────────────────────
-router.get('/', requireAuth, async (_req, res) => {
+router.get('/', requireAuth, async (req, res) => {
     try {
+        const source = requirePricingSource(req.query.source);
+        let fallbackHeader = false;
+        if (source === 'active') {
+            const active = await resolveActivePricing('preco');
+            if (!active.fallback) {
+                res.json({ data: active.data });
+                return;
+            }
+            fallbackHeader = true;
+        }
         const result = await formatPrecoResponse(
             prisma.precoKonfig,
             prisma.precoKinety,
             prisma.precoZakresy
         );
+        if (fallbackHeader) res.setHeader('X-Pricelist-Fallback', 'live');
         res.json(result);
     } catch (err: unknown) {
+        if (err instanceof PricelistVersionError) {
+            res.status(err.statusCode).json({ error: err.message, code: err.code });
+            return;
+        }
         const message = err instanceof Error ? err.message : 'Unknown error';
         logger.error('PrecoPricingV2', 'GET error', message);
         res.status(500).json({ error: 'Wewnętrzny błąd serwera' });

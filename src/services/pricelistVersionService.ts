@@ -1416,3 +1416,123 @@ export async function resolveVersionIdSafe(typeInput: unknown): Promise<string |
         return null;
     }
 }
+
+// ─── Paczka 1: oferty czytają ceny z wersji ACTIVE (centralny resolver) ───
+// Jeden switch per-type tutaj — trasy wołają tylko resolveActivePricing(type)
+// bez własnych ifów. Rows w kształcie LEGACY gotowym do response:
+// rury flat, studnie flat legacy (toLegacy: 1/0, dn liczba/string),
+// preco nested per DN jak formatPrecoResponse (data = zawartość pola data).
+
+/** Walidacja ?source= dla GET cenników — brak = dotychczasowy LIVE bez zmian. */
+export type PricingSource = 'active';
+
+export function requirePricingSource(value: unknown): PricingSource | undefined {
+    if (value === undefined) return undefined;
+    if (value === 'active') return 'active';
+    throw new PricelistVersionError(
+        422,
+        'INVALID_SOURCE',
+        `Nieprawidłowe źródło cennika: ${String(value)} (dozwolone: active)`
+    );
+}
+
+export interface ActivePricing {
+    /** Zawartość pola `data` w response (rury/studnie: wiersze; preco: [entry]). */
+    data: unknown;
+    /** true = brak ACTIVE, trasa czyta LIVE + stawia X-Pricelist-Fallback: live. */
+    fallback: boolean;
+    versionId: string | null;
+}
+
+/** Porównanie tekstów jak sort DB (kategoria/id w GET live). */
+function cmpText(a: unknown, b: unknown): number {
+    const sa = String(a ?? '');
+    const sb = String(b ?? '');
+    return sa < sb ? -1 : sa > sb ? 1 : 0;
+}
+
+/**
+ * Wiersz wersji studni (canonical: boolean, dn string) → legacy z GET live
+ * (kopia toLegacy z productsStudnieV2.ts: booleany 1/0, dn liczba/string).
+ */
+function studnieVersionRowToLegacy(row: Record<string, unknown>): Record<string, unknown> {
+    const out = { ...row };
+    for (const field of STUDNIE_BOOL_FIELDS) {
+        out[field] = out[field] ? 1 : 0;
+    }
+    const dn = out.dn;
+    out.dn = dn != null ? (Number.isNaN(Number(dn)) ? dn : Number(dn)) : null;
+    return out;
+}
+
+/**
+ * Sekcje wersji preco → entry zagnieżdżone per DN (kopia semantyki
+ * formatPrecoResponse z precoPricingV2.ts: konfig value JSON → scalary;
+ * kinety {dn, prosta: height, dodWlot: cena, order}; zakresy per label
+ * z grupy JSON; sort kinety dn/height, zakresy order).
+ */
+function buildPrecoEntryFromSections(
+    sections: Record<string, Array<Record<string, unknown>>>
+): Record<string, unknown> {
+    const konfig = sections.konfig ?? [];
+    const kinety = sections.kinety ?? [];
+    const zakresy = sections.zakresy ?? [];
+    const entry: Record<string, unknown> = {};
+    for (const row of konfig) {
+        const key = String(row.key);
+        const wellDn = Number(row.key);
+        const parsed = parseJsonObject(row.value);
+        const kin = [...kinety]
+            .filter((k) => Number(k.wellDn) === wellDn)
+            .sort((a, b) => Number(a.dn) - Number(b.dn) || Number(a.height) - Number(b.height))
+            .map((k) => ({ dn: k.dn, prosta: k.height, dodWlot: k.cena, order: k.order }));
+        const ranges: Record<string, unknown> = {};
+        for (const label of PRECO_RANGE_TYPES) {
+            ranges[label] = [...zakresy]
+                .filter((z) => String(z.label) === label && Number(z.wellDn) === wellDn)
+                .sort((a, b) => Number(a.order) - Number(b.order))
+                .map((z) => ({
+                    order: z.order,
+                    min: z.min,
+                    max: z.max,
+                    grupy: parseJsonObject(z.grupy)
+                }));
+        }
+        entry[key] = { ...parsed, kinety: kin, ...ranges };
+    }
+    return entry;
+}
+
+/**
+ * Ceny z wersji ACTIVE w kształcie LEGACY. Brak ACTIVE → fallback (data null,
+ * trasa czyta LIVE jak dziś). Jedyny switch per-type w paczce.
+ */
+export async function resolveActivePricing(typeInput: unknown): Promise<ActivePricing> {
+    const type = requireType(typeInput);
+    const active = await resolveActive(type);
+    if (!active) return { data: null, fallback: true, versionId: null };
+    const { sections } = await getVersionExport(active.id);
+    if (type === 'rury') {
+        const rows = [...(sections.rury ?? [])].sort(
+            (a, b) => cmpText(a.category, b.category) || cmpText(a.id, b.id)
+        );
+        return { data: rows, fallback: false, versionId: active.id };
+    }
+    if (type === 'studnie') {
+        const rows = [...(sections.studnie ?? [])]
+            .sort(
+                (a, b) =>
+                    cmpText(a.category, b.category) ||
+                    cmpText(a.componentType, b.componentType) ||
+                    cmpText(a.id, b.id)
+            )
+            .map(studnieVersionRowToLegacy);
+        return { data: rows, fallback: false, versionId: active.id };
+    }
+    const entry = buildPrecoEntryFromSections(sections);
+    return {
+        data: Object.keys(entry).length > 0 ? [entry] : [{}],
+        fallback: false,
+        versionId: active.id
+    };
+}

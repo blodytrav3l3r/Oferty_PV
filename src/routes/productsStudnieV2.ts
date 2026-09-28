@@ -12,7 +12,9 @@ import {
     liveSheetsToXlsxSheets,
     projectPrecoNestedToSheets,
     projectVersionToLiveShape,
-    requireExportSource
+    requireExportSource,
+    requirePricingSource,
+    resolveActivePricing
 } from '../services/pricelistVersionService';
 import { formatPrecoResponse } from './precoPricingV2';
 
@@ -239,13 +241,28 @@ function toLegacy(p: StudnieProductRaw): StudnieProductLegacy {
 // ──────────────────────────────────────────
 // GET / — wszystkie produkty z ProductsStudnie
 // ──────────────────────────────────────────
-router.get('/', requireAuth, async (_req, res) => {
+router.get('/', requireAuth, async (req, res) => {
     try {
+        const source = requirePricingSource(req.query.source);
+        let fallbackHeader = false;
+        if (source === 'active') {
+            const active = await resolveActivePricing('studnie');
+            if (!active.fallback) {
+                res.json({ data: active.data });
+                return;
+            }
+            fallbackHeader = true;
+        }
         const products = await prisma.productsStudnie.findMany({
             orderBy: [{ category: 'asc' }, { componentType: 'asc' }, { id: 'asc' }]
         });
+        if (fallbackHeader) res.setHeader('X-Pricelist-Fallback', 'live');
         res.json({ data: products.map(toLegacy) });
     } catch (err: unknown) {
+        if (err instanceof PricelistVersionError) {
+            res.status(err.statusCode).json({ error: err.message, code: err.code });
+            return;
+        }
         const message = err instanceof Error ? err.message : 'Unknown error';
         logger.error('ProductsStudnieV2', 'GET error', message);
         res.status(500).json({ error: 'Wewnętrzny błąd serwera' });

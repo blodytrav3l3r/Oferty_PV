@@ -210,6 +210,7 @@ import {
     createDraft,
     activateDue,
     resolveActive,
+    resolveActivePricing,
     resolveVersionIdSafe,
     getVersionExport
 } from '../src/services/pricelistVersionService';
@@ -326,6 +327,28 @@ describe('F3 freeze ofert', () => {
         expect(
             (await getVersionExport(nowa.pricelistVersionId as string)).sections.rury[0].price
         ).toBe(110);
+    });
+
+    test('Paczka 1: snapshot oferty trzyma v1 po zmianie ACTIVE (resolver daje v2)', async () => {
+        const v1 = await createDraft('rury', [rura('r1', 100)], {
+            effectiveFrom: '2020-09-01T00:00:00.000Z'
+        });
+        await activateDue();
+        const stara = await createOfferDoc('stara', [{ productId: 'r1', price: 100, quantity: 1 }]);
+        expect(stara.pricelistVersionId).toBe(v1.id);
+
+        const v2 = await createDraft('rury', [rura('r1', 110)], {
+            effectiveFrom: '2020-10-01T00:00:00.000Z'
+        });
+        await activateDue();
+
+        // Resolver widzi nowe ACTIVE, zamrożona oferta dalej wskazuje v1.
+        const pricing = await resolveActivePricing('rury');
+        expect(pricing.fallback).toBe(false);
+        expect(pricing.versionId).toBe(v2.id);
+        expect((pricing.data as Array<{ price: number }>)[0].price).toBe(110);
+        expect(stara.pricelistVersionId).toBe(v1.id);
+        expect(stara.snapshot).toEqual([{ productId: 'r1', price: 100, quantity: 1 }]);
     });
 
     test('wpięcie freeze w trasach POST /offers (rury + studnie)', () => {
