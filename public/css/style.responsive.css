@@ -898,6 +898,35 @@ html[data-theme='light'] .kartoteka-filter-bar:hover {
     padding: 0.55rem 0.75rem;
     vertical-align: middle;
 }
+/* Tabela wersji: zwarta, czytelna, akcje do prawej */
+.modal--pv tbody td:first-child {
+    white-space: nowrap;
+}
+.modal--pv tbody td:nth-child(2) {
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-muted);
+}
+.modal--pv tbody td:nth-child(3) {
+    white-space: nowrap;
+}
+.modal--pv tbody td:nth-child(5) {
+    color: var(--text-muted);
+}
+.modal--pv tbody td:nth-child(6) {
+    max-width: 16rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--text-muted);
+}
+.modal--pv thead th:last-child,
+.modal--pv tbody td:last-child {
+    text-align: right;
+}
+.modal--pv table .pv-actions {
+    justify-content: flex-end;
+}
 /* Taby Rury/Studnie: po połowie szerokości, wyższe */
 .modal--pv [role='tablist'] {
     display: flex;
