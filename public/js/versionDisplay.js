@@ -49,3 +49,71 @@
         initVersionDisplay();
     }
 })();
+
+/* ===== Aktywne cenniki w pasku górnym (obok wersji aplikacji) =====
+ * Osobny blok — nie rusza initVersionDisplay ani #app-version-toolbar.
+ * Format: „Rury vN · Studnie vM" (labelki z /labels, max seq per typ);
+ * brak wersji → „brak aktywnego cennika" (muted); niezalogowany → cisza.
+ * Zero nowego CSS: istniejące .header-version + .text-muted. */
+(function () {
+    'use strict';
+
+    var TYPES = ['rury', 'studnie'];
+    var TYPE_LABELS = { rury: 'Rury', studnie: 'Studnie' };
+
+    function pvHeaders() {
+        try {
+            return typeof window.authHeaders === 'function' ? window.authHeaders() : {};
+        } catch (_e) {
+            return {};
+        }
+    }
+
+    /* Zwraca aktywną wersję typu (max seq) albo null (brak) albo
+     * undefined (niezalogowany/brak dostępu — pasek ma zniknąć). */
+    async function fetchActiveVersion(type) {
+        var res = await fetch('/api/pricelist-versions/labels?type=' + type, {
+            headers: pvHeaders()
+        });
+        if (res.status === 401 || res.status === 403) return undefined;
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        var json = await res.json();
+        var best = null;
+        ((json && json.versions) || []).forEach(function (v) {
+            if (!best || (v.seq || 0) > (best.seq || 0)) best = v;
+        });
+        return best;
+    }
+
+    async function initPricelistTopbar() {
+        var anchor = document.getElementById('app-version-toolbar');
+        if (!anchor || document.getElementById('app-pricelists-toolbar')) return;
+        var el = document.createElement('span');
+        el.id = 'app-pricelists-toolbar';
+        el.className = 'header-version text-muted';
+        anchor.insertAdjacentElement('afterend', el);
+        var parts = [];
+        try {
+            for (var i = 0; i < TYPES.length; i++) {
+                var v = await fetchActiveVersion(TYPES[i]);
+                if (v === undefined) {
+                    el.remove();
+                    return;
+                }
+                if (v) parts.push(TYPE_LABELS[TYPES[i]] + ' ' + v.version);
+            }
+        } catch (_e) {
+            el.remove();
+            return;
+        }
+        // textContent: brak HTML (jak wersja aplikacji wyżej).
+        el.textContent = parts.length > 0 ? parts.join(' · ') : 'brak aktywnego cennika';
+        el.title = 'Aktywne cenniki';
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initPricelistTopbar);
+    } else {
+        initPricelistTopbar();
+    }
+})();

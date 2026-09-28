@@ -213,6 +213,84 @@ describe('frontend: przycisk Usuń zawsze widoczny (wyszarzony gdy nie wolno)', 
     });
 });
 
+describe('frontend: widoczność wersji cennika (dopisek typu, pasek, kartoteka)', () => {
+    const panel = fs.readFileSync(
+        path.join(process.cwd(), 'public/js/shared/pricelistVersions.js'),
+        'utf-8'
+    );
+    const topbar = fs.readFileSync(
+        path.join(process.cwd(), 'public/js/versionDisplay.js'),
+        'utf-8'
+    );
+    const appHtml = fs.readFileSync(path.join(process.cwd(), 'public/app.html'), 'utf-8');
+    const kartHtml = fs.readFileSync(path.join(process.cwd(), 'public/kartoteka.html'), 'utf-8');
+    const kartHelpers = fs.readFileSync(
+        path.join(process.cwd(), 'public/js/kartoteka/kartotekaHelpers.js'),
+        'utf-8'
+    );
+    const kartSearch = fs.readFileSync(
+        path.join(process.cwd(), 'public/js/kartoteka/kartotekaSearch.js'),
+        'utf-8'
+    );
+
+    it('badge ZAWSZE z typem (labelka + tooltip), labelki DB nietknięte', () => {
+        expect(panel).toContain('function badgeHtml(versionId, type)');
+        expect(panel).toContain('data-pv-type="');
+        expect(panel).toContain("' · ' + label");
+        expect(panel).toContain("• Typ: ' + label");
+        // Wyświetlanie tylko — brak mutacji version w źródle panelu.
+        expect(panel).not.toMatch(/v\.version\s*=[^=]/);
+    });
+    it('tabela wersji BEZ sufiksu typu (kontekst taba) + title z typem', () => {
+        expect(panel).toContain('function renderRows(versions, manageable, type)');
+        expect(panel).toContain('title="Typ cennika: ');
+        expect(panel).not.toContain("v.version + ' · '");
+    });
+    it('tankowanie per typ bez N+1 (grupowanie + cache fetchLabels)', () => {
+        expect(panel).toContain('function groupSpotsByType(');
+        expect(panel).toContain('function hydrateActiveBadges(');
+        expect(panel).toContain('function activeBadgeHtml(');
+        expect(panel).toContain('function pickActiveLabel(');
+        expect(panel).toContain('data-pv-active="');
+        expect(panel).toContain('brak aktywnego cennika');
+        expect(panel).toContain('hydrateActiveBadges');
+    });
+    it('pasek górny: aktywne cenniki obok wersji aplikacji, istniejąca logika nietknięta', () => {
+        expect(topbar).toContain("versionEl.textContent = 'v' + data.version");
+        expect(topbar).toContain('app-pricelists-toolbar');
+        expect(topbar).toContain('/api/pricelist-versions/labels?type=');
+        expect(topbar).toContain("parts.join(' · ')");
+        expect(topbar).toContain('brak aktywnego cennika');
+        expect(topbar).toContain('header-version text-muted');
+        // textContent, nie innerHTML (kontrakt SEC-01 jak wersja aplikacji).
+        expect(topbar).not.toMatch(/pricelists-toolbar['"]?\)\.innerHTML/);
+        expect(appHtml).toContain('id="app-version-toolbar"');
+        // Span paska cenników tworzony dynamicznie — brak statycznego duplikatu.
+        expect(appHtml).not.toContain('app-pricelists-toolbar');
+    });
+    it('kartoteka: badge per karta (pieczątka albo aktywna per typ) + hydratacja', () => {
+        expect(kartHtml).toContain('js/shared/pricelistVersions.js');
+        expect(kartHelpers).toContain('badgeHtml(offer.pricelistVersionId, pvType)');
+        expect(kartHelpers).toContain('activeBadgeHtml(pvType)');
+        expect(kartHelpers).toContain("offer.type === 'studnia_oferta' ? 'studnie' : 'rury'");
+        expect(kartHelpers).toContain('offer-meta');
+        expect(kartSearch).toContain('hydrateBadges(listDiv)');
+        expect(kartSearch).toContain('hydrateActiveBadges(listDiv)');
+    });
+    it('listy ofert przekazują typ do badgeHtml (studnie/rury)', () => {
+        const studnie = fs.readFileSync(
+            path.join(process.cwd(), 'public/js/studnie/offerSavedList.js'),
+            'utf-8'
+        );
+        const rury = fs.readFileSync(
+            path.join(process.cwd(), 'public/js/rury/offerCrudHelpers.js'),
+            'utf-8'
+        );
+        expect(studnie).toContain("badgeHtml(o.pricelistVersionId, 'studnie')");
+        expect(rury).toContain("badgeHtml(o.pricelistVersionId, 'rury')");
+    });
+});
+
 describe('frontend: edycja noty + nota przy aktywacji (źródło)', () => {
     const panel = fs.readFileSync(
         path.join(process.cwd(), 'public/js/shared/pricelistVersions.js'),

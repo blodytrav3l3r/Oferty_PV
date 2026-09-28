@@ -44,7 +44,7 @@ function renderSavedOffers() {
         <div class="meta mt-3" >
           <span><i data-lucide="calendar"></i> <strong>${escapeHtml(o.date)}</strong></span>
           <span><i data-lucide="package"></i> <strong>${o.items.length}</strong> poz.</span>
-          ${window.pricelistVersions ? window.pricelistVersions.badgeHtml(o.pricelistVersionId) : ''}
+          ${window.pricelistVersions ? window.pricelistVersions.badgeHtml(o.pricelistVersionId, 'rury') : ''}
           ${
               isAdmin && o.userName
                   ? (() => {

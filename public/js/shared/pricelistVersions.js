@@ -122,53 +122,134 @@
 
     /* ===== BADGE „cennik vX" ===== */
 
-    /** Placeholder badge; hydrateBadges() uzupełnia labelkę + tooltip. */
-    function badgeHtml(versionId) {
+    /** Placeholder badge; hydrateBadges() uzupełnia labelkę + tooltip.
+     *  Dopisek typu (· Studnie/Rury/Preco) TYLKO na poziomie wyświetlania —
+     *  labelki wersji w DB (PricelistVersion.version) niemutowalne. */
+    function badgeHtml(versionId, type) {
         if (!versionId) return '';
+        var typeAttr = type ? ' data-pv-type="' + escAttr(type) + '"' : '';
         return (
             '<span class="badge-info text-nowrap" data-pv-id="' +
             escAttr(versionId) +
-            '" title="Wersja cennika…">cennik…</span>'
+            '"' +
+            typeAttr +
+            ' title="Wersja cennika…">cennik…</span>'
         );
     }
 
-    /** Uzupełnia badge w danym kontenerze (labelka + tooltip effectiveFrom). */
+    /** Placeholder badge aktywnej wersji per typ (gdy wiersz nie niesie
+     *  versionId, np. lista kartoteki); hydrateActiveBadges() uzupełnia.
+     *  Bez fetchy per karta — 1× fetchLabels per typ (cache). */
+    function activeBadgeHtml(type) {
+        return (
+            '<span class="badge-info text-nowrap" data-pv-active="' +
+            escAttr(type) +
+            '" title="Aktywny cennik…">cennik…</span>'
+        );
+    }
+
+    /** Aktywna = najwyższy seq spośród ACTIVE/BACKDATE z /labels. */
+    function pickActiveLabel(labels) {
+        var best = null;
+        Object.keys(labels || {}).forEach(function (id) {
+            var v = labels[id];
+            if (!best || (v.seq || 0) > (best.seq || 0)) best = v;
+        });
+        return best;
+    }
+
+    /** Maluje pojedynczy badge: „cennik {version} · {Typ}" + tooltip z typem. */
+    function paintVersionBadge(el, v, type) {
+        var label = typeLabel(type || (v && v.type) || '');
+        if (!v) {
+            el.textContent = 'cennik legacy';
+            el.setAttribute(
+                'title',
+                'Oferta sprzed wersjonowania (legacy)' + (label ? ' • Typ: ' + label : '')
+            );
+            return;
+        }
+        el.textContent = 'cennik ' + v.version + (label ? ' · ' + label : '');
+        var local = '';
+        try {
+            local = new Date(v.effectiveFrom).toLocaleString();
+        } catch (_e2) {
+            local = v.effectiveFrom;
+        }
+        el.setAttribute(
+            'title',
+            'Wersja ' +
+                v.version +
+                ' (seq ' +
+                v.seq +
+                ')' +
+                (label ? ' • Typ: ' + label : '') +
+                ' • obowiązuje od: ' +
+                local +
+                ' • UTC: ' +
+                v.effectiveFrom
+        );
+    }
+
+    /** Grupuje spany per typ (data-pv-* albo fallback) — 1 fetch per typ. */
+    function groupSpotsByType(spots, attr, fallbackType) {
+        var byType = {};
+        spots.forEach(function (el) {
+            var t = el.getAttribute(attr) || fallbackType || 'rury';
+            (byType[t] = byType[t] || []).push(el);
+        });
+        return byType;
+    }
+
+    /** Uzupełnia badge w danym kontenerze (labelka + tooltip effectiveFrom).
+     *  Typ per badge z data-pv-type, fallback: parametr type albo v.type. */
     async function hydrateBadges(root, type) {
         var scope = root || document;
         var spots = scope.querySelectorAll ? scope.querySelectorAll('span[data-pv-id]') : [];
         if (spots.length === 0) return;
-        var labels;
-        try {
-            labels = await fetchLabels(type);
-        } catch (_e) {
-            return;
-        }
-        spots.forEach(function (el) {
-            var v = labels[el.getAttribute('data-pv-id')];
-            if (!v) {
-                el.textContent = 'cennik legacy';
-                el.setAttribute('title', 'Oferta sprzed wersjonowania (legacy)');
-                return;
-            }
-            el.textContent = 'cennik ' + v.version;
-            var local = '';
-            try {
-                local = new Date(v.effectiveFrom).toLocaleString();
-            } catch (_e2) {
-                local = v.effectiveFrom;
-            }
-            el.setAttribute(
-                'title',
-                'Wersja ' +
-                    v.version +
-                    ' (seq ' +
-                    v.seq +
-                    ') • obowiązuje od: ' +
-                    local +
-                    ' • UTC: ' +
-                    v.effectiveFrom
-            );
-        });
+        var byType = groupSpotsByType(spots, 'data-pv-type', type);
+        await Promise.all(
+            Object.keys(byType).map(async function (t) {
+                var labels;
+                try {
+                    labels = await fetchLabels(t);
+                } catch (_e) {
+                    return;
+                }
+                byType[t].forEach(function (el) {
+                    paintVersionBadge(el, labels[el.getAttribute('data-pv-id')], t);
+                });
+            })
+        );
+    }
+
+    /** Uzupełnia badge aktywnych wersji (data-pv-active); pusty typ → muted. */
+    async function hydrateActiveBadges(root) {
+        var scope = root || document;
+        var spots = scope.querySelectorAll ? scope.querySelectorAll('span[data-pv-active]') : [];
+        if (spots.length === 0) return;
+        var byType = groupSpotsByType(spots, 'data-pv-active', null);
+        await Promise.all(
+            Object.keys(byType).map(async function (t) {
+                var labels;
+                try {
+                    labels = await fetchLabels(t);
+                } catch (_e) {
+                    return;
+                }
+                var active = pickActiveLabel(labels);
+                var label = typeLabel(t);
+                byType[t].forEach(function (el) {
+                    if (!active) {
+                        el.className = 'text-muted';
+                        el.textContent = 'brak aktywnego cennika';
+                        el.setAttribute('title', 'Brak aktywnego cennika (' + label + ')');
+                        return;
+                    }
+                    paintVersionBadge(el, active, t);
+                });
+            })
+        );
     }
 
     /* ===== MODAL: ZAPISZ JAKO WERSJĘ + TABELA ===== */
@@ -265,10 +346,13 @@
         return null;
     }
 
-    function renderRows(versions, manageable) {
+    function renderRows(versions, manageable, type) {
         if (versions.length === 0) {
             return '<tr><td colspan="7" class="text-center text-muted">Brak wersji — zapisz pierwszą powyżej.</td></tr>';
         }
+        // Wiersz żyje w kontekście taba (typ znany) — bez sufiksu typu w labelce,
+        // sam title/tooltip z typem. Badge poza panelem ZAWSZE z typem.
+        var typeTitle = type ? ' title="Typ cennika: ' + escAttr(typeLabel(type)) + '"' : '';
         return versions
             .map(function (v) {
                 var eff = v.effectiveFrom
@@ -319,7 +403,9 @@
                     : '<span class="text-muted">—</span>';
                 return (
                     '<tr>' +
-                    '<td><strong>' +
+                    '<td><strong' +
+                    typeTitle +
+                    '>' +
                     esc(v.version || '—') +
                     '</strong></td>' +
                     '<td class="text-right">' +
@@ -493,7 +579,7 @@
             return (b.seq || 0) - (a.seq || 0);
         });
         var body = document.getElementById('pv-versions-body');
-        if (body) body.innerHTML = renderRows(versions, manageable);
+        if (body) body.innerHTML = renderRows(versions, manageable, type);
         var overlay = document.getElementById('pv-versions-modal');
         if (overlay) icons(overlay);
         return versions;
@@ -994,7 +1080,9 @@
         fetchLabels: fetchLabels,
         fetchFullList: fetchFullList,
         badgeHtml: badgeHtml,
+        activeBadgeHtml: activeBadgeHtml,
         hydrateBadges: hydrateBadges,
+        hydrateActiveBadges: hydrateActiveBadges,
         openVersionsPanel: openVersionsPanel,
         openDiff: openDiff
     };

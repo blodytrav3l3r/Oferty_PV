@@ -258,6 +258,11 @@ export default {
         listDiv.innerHTML = this.renderOffersList(items, true);
         this.attachActionListeners(listDiv);
         if (window.lucide) lucide.createIcons({ root: listDiv });
+        // Badge wersji cennika: pieczątki per oferta + aktywne per typ (cache, bez N+1).
+        if (window.pricelistVersions) {
+            window.pricelistVersions.hydrateBadges(listDiv);
+            window.pricelistVersions.hydrateActiveBadges(listDiv);
+        }
 
         if (this.searchResults?.hasMore) {
             listDiv.insertAdjacentHTML('beforeend', this.renderLoadMore());

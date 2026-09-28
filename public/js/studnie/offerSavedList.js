@@ -92,7 +92,7 @@ function renderSavedOffersStudnie() {
                     
                     <div style="display:inline-flex; gap:0.3rem; margin-left:0.5rem; font-size: var(--fs-xs);">
                         <span style="background: rgba(var(--success-rgb), 0.2); color: var(--success-hover); padding: 1px 5px; border-radius: var(--radius-2xs); border: 1px solid rgba(var(--success-rgb), 0.5);"><i data-lucide="save"></i> Zapisano</span>
-                        ${window.pricelistVersions ? window.pricelistVersions.badgeHtml(o.pricelistVersionId) : ''}
+                        ${window.pricelistVersions ? window.pricelistVersions.badgeHtml(o.pricelistVersionId, 'studnie') : ''}
                     </div>
                 </div>
                 ${

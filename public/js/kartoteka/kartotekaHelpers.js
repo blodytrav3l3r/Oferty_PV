@@ -337,6 +337,15 @@ function buildOfferCardHtml(offer, hasOrder, orders, order, role, isLocalList) {
         ? '<i data-lucide="cylinder"></i>'
         : '<i data-lucide="cylinder" class="lucide-rotate-n90"></i>';
     const itemCount = window.getOfferItemCount(offer);
+    // Badge wersji cennika: pieczątka z wiersza gdy jest (detail/lokalnie),
+    // inaczej badge aktywnej wersji per typ oferty (lista search nie niesie
+    // versionId — brak fetchy per karta, 1× fetchLabels per typ z cache).
+    const pvType = offer.type === 'studnia_oferta' ? 'studnie' : 'rury';
+    const pvBadge = window.pricelistVersions
+        ? offer.pricelistVersionId
+            ? window.pricelistVersions.badgeHtml(offer.pricelistVersionId, pvType)
+            : window.pricelistVersions.activeBadgeHtml(pvType)
+        : '';
 
     const dd = window.getOfferDisplayData(offer);
     const isClickable = !!role;
@@ -358,7 +367,7 @@ function buildOfferCardHtml(offer, hasOrder, orders, order, role, isLocalList) {
                             </div>
                             <div class="offer-price-section">
                                 <div class="offer-price">${typeof window.fmt === 'function' ? window.fmt(priceVal) + ' PLN' : priceVal.toFixed(2) + ' PLN'}</div>
-                                <div class="offer-meta">${dateStr} • ${itemCount} ${isWell ? 'studni' : 'poz.'}</div>
+                                <div class="offer-meta">${dateStr} • ${itemCount} ${isWell ? 'studni' : 'poz.'}${pvBadge ? ` • ${pvBadge}` : ''}</div>
                             </div>
                         </div>
                         ${orderList.length > 0 ? `<div class="offer-orders-panel">${orderItemsHtml}</div>` : ''}
