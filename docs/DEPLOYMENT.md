@@ -199,11 +199,12 @@ Generowanie PDF wymaga Chromium Puppeteera. Obraz ustawia `PUPPETEER_CACHE_DIR=/
 Po starcie sprawdź:
 
 ```
-curl localhost:3000/health/pdf            # 200 = Chromium gotowy
-curl localhost:3000/health/pdf?smoke=1    # 200 + smoke.ok = próbny render działa
+curl localhost:3000/health/pdf            # 200 {status:"ok"} = Chromium gotowy (publiczny, minimalny)
+# smoke wymaga sesji admina (cookie authToken), anonimowo 401:
+curl -b authToken=<sesja-admina> "localhost:3000/health/pdf?smoke=1"    # 200 + smoke.ok = próbny render działa
 ```
 
-`503 {status: "degraded", found: false}` = binarka niewidoczna (sprawdź `PUPPETEER_CACHE_DIR`, `HOME`, `docker exec` → `ls ~/.cache/puppeteer`). Deploy dockerowy (`node scripts/deploy.mjs docker vX.Y.Z`) wykonuje te kontrole automatycznie jako krok `deploy:check:pdf` — nieudany smoke przerywa deploy.
+`503 {status: "degraded"}` = binarka niewidoczna (sprawdź `PUPPETEER_CACHE_DIR`, `HOME`, `docker exec` → `ls ~/.cache/puppeteer`). Deploy dockerowy (`node scripts/deploy.mjs docker vX.Y.Z`) wykonuje te kontrole automatycznie jako krok `deploy:check:pdf` (`npm run deploy:check:pdf` loguje się jako admin; bez hasła w env smoke jest SKIPPED) — nieudany smoke przerywa deploy.
 
 ## 4. VPS (Linux)
 

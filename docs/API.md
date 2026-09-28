@@ -41,9 +41,9 @@ Readiness — czy baza gotowa (publiczny, `SELECT 1`). Odpowiedź `200 {status: 
 
 ### `GET /health/pdf`
 
-Diagnostyka generowania PDF / Chromium (publiczny, bez auth). Tryb lekki nie launchuje przeglądarki — sprawdza obecność binarki (`PUPPETEER_CACHE_DIR`), użytkownika/`HOME` i rozmiar `/dev/shm`. Odpowiedź `200 {status: "ok", found: true, ...}` lub `503 {status: "degraded", found: false, ...}` (klasyczny objaw: cache Puppeteera w `/root/.cache` niewidoczny dla `USER node`).
+Stan generowania PDF / Chromium (publiczny, minimalny — I-011). Tryb lekki nie launchuje przeglądarki. Odpowiedź `200 {status: "ok"}` lub `503 {status: "degraded"}` — bez diagnostyki (klasyczny objaw degraded: cache Puppeteera w `/root/.cache` niewidoczny dla `USER node`; szczegóły w logach serwera i `/api/admin/system-info` dla admina).
 
-Z `?smoke=1` renderuje jedną stronę testową end-to-end: `200 {smoke: {ok: true, bytes}}` lub `503 {smoke: {ok: false, error}}`. Deploy dockerowy weryfikuje ten endpoint automatycznie (`npm run deploy:check:pdf`).
+Z `?smoke=1` (wyłącznie sesja admina: 401 anon, 403 non-admin) renderuje jedną stronę testową end-to-end: `200 {status, smoke: {ok: true, bytes}}` lub generyczne `503 {status: "degraded", smoke: {ok: false}}` bez szczegółów błędu. Deploy dockerowy weryfikuje ten endpoint automatycznie (`npm run deploy:check:pdf`; smoke loguje się jako admin, bez hasła w env jest SKIPPED).
 
 ### `GET /metrics`
 

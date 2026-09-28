@@ -41,4 +41,20 @@ describe('P0.2 information disclosure', () => {
         const res = await request(app).get('/api/admin/system-info');
         expect(res.status).toBe(401);
     });
+
+    it('/health/pdf nie ujawnia diagnostyki (I-011)', async () => {
+        const res = await request(app).get('/health/pdf');
+        expect([200, 503]).toContain(res.status);
+        expect(Object.keys(res.body).sort()).toEqual(['status']);
+        expect(['ok', 'degraded']).toContain(res.body.status);
+        for (const k of ['user', 'home', 'cacheDir', 'executableName', 'shmMb', 'found']) {
+            expect(res.body).not.toHaveProperty(k);
+        }
+    });
+
+    it('/health/pdf?smoke=1 anonimowo nie uruchamia Chromium (401)', async () => {
+        const res = await request(app).get('/health/pdf?smoke=1');
+        expect(res.status).toBe(401);
+        expect(res.body).not.toHaveProperty('smoke');
+    });
 });

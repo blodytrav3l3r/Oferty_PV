@@ -20,18 +20,52 @@ jest.mock('../src/utils/logger', () => ({
     }
 }));
 
+// Domyslnie: brak sesji (anon). Poszczegolne testy nadpisuja implementacje.
+jest.mock('../src/middleware/auth', () => ({
+    requireAuth: jest.fn((_req: any, res: any, _next: any) => {
+        res.status(401).json({ error: 'Nieautoryzowany — zaloguj się' });
+    }),
+    requireAdmin: jest.fn((_req: any, res: any, _next: any) => {
+        res.status(403).json({ error: 'Brak uprawnień — wymagany administrator' });
+    })
+}));
+
 /* eslint-disable @typescript-eslint/no-require-imports -- mock (jest.fn) vs implementacja (requireActual) */
 const pdfEngine = require('../src/services/pdf/pdfEngine');
 const pdfEngineActual = jest.requireActual<typeof import('../src/services/pdf/pdfEngine')>(
     '../src/services/pdf/pdfEngine'
 );
+const auth = require('../src/middleware/auth');
 /* eslint-enable @typescript-eslint/no-require-imports */
+
+const LEAK_KEYS = [
+    'user',
+    'home',
+    'cacheDir',
+    'executableName',
+    'shmMb',
+    'found',
+    'stack',
+    'error'
+];
+
+function expectNoLeak(body: Record<string, unknown>): void {
+    for (const k of LEAK_KEYS) expect(body).not.toHaveProperty(k);
+    expect(Object.keys(body).sort()).toEqual(['status']);
+}
 
 describe('Diagnostyka PDF (GET /health/pdf)', () => {
     let app: express.Application;
 
     beforeEach(() => {
         jest.clearAllMocks();
+        // Po clearAllMocks mocki auth wracaja do domyslnej (anon 401 / 403).
+        auth.requireAuth.mockImplementation((_req: any, res: any) => {
+            res.status(401).json({ error: 'Nieautoryzowany — zaloguj się' });
+        });
+        auth.requireAdmin.mockImplementation((_req: any, res: any) => {
+            res.status(403).json({ error: 'Brak uprawnień — wymagany administrator' });
+        });
         app = express();
         app.use('/health/pdf', healthPdfRouter);
     });
@@ -51,8 +85,8 @@ describe('Diagnostyka PDF (GET /health/pdf)', () => {
         });
     });
 
-    describe('GET /health/pdf', () => {
-        it('200 gdy Chromium znaleziony', async () => {
+    describe('GET /health/pdf (publiczny, minimalny — I-011)', () => {
+        it('200 z wylacznie {status} gdy Chromium znaleziony', async () => {
             pdfEngine.getChromiumStatus.mockReturnValue({
                 status: 'ok',
                 found: true,
@@ -64,12 +98,12 @@ describe('Diagnostyka PDF (GET /health/pdf)', () => {
             });
             const res = await request(app).get('/health/pdf');
             expect(res.statusCode).toBe(200);
-            expect(res.body).toHaveProperty('status', 'ok');
-            expect(res.body).toHaveProperty('found', true);
+            expectNoLeak(res.body);
+            expect(res.body).toEqual({ status: 'ok' });
             expect(pdfEngine.generatePDF).not.toHaveBeenCalled();
         });
 
-        it('503 gdy Chromium niedostepny (klasyczny blad Docker USER node)', async () => {
+        it('503 z wylacznie {status} gdy Chromium niedostepny', async () => {
             pdfEngine.getChromiumStatus.mockReturnValue({
                 status: 'degraded',
                 found: false,
@@ -81,10 +115,27 @@ describe('Diagnostyka PDF (GET /health/pdf)', () => {
             });
             const res = await request(app).get('/health/pdf');
             expect(res.statusCode).toBe(503);
-            expect(res.body).toHaveProperty('status', 'degraded');
+            expectNoLeak(res.body);
+            expect(res.body).toEqual({ status: 'degraded' });
+            expect(pdfEngine.generatePDF).not.toHaveBeenCalled();
         });
 
-        it('?smoke=1 renderuje strone testowa end-to-end', async () => {
+        it('anon ?smoke=1 nie uruchamia Chromium (401)', async () => {
+            const res = await request(app).get('/health/pdf?smoke=1');
+            expect(res.statusCode).toBe(401);
+            expect(pdfEngine.generatePDF).not.toHaveBeenCalled();
+        });
+
+        it('non-admin ?smoke=1 dostaje 403 bez renderu', async () => {
+            auth.requireAuth.mockImplementation((_req: any, _res: any, next: any) => next());
+            const res = await request(app).get('/health/pdf?smoke=1');
+            expect(res.statusCode).toBe(403);
+            expect(pdfEngine.generatePDF).not.toHaveBeenCalled();
+        });
+
+        it('admin ?smoke=1 renderuje i zwraca minimalny kontrakt', async () => {
+            auth.requireAuth.mockImplementation((_req: any, _res: any, next: any) => next());
+            auth.requireAdmin.mockImplementation((_req: any, _res: any, next: any) => next());
             pdfEngine.getChromiumStatus.mockReturnValue({
                 status: 'ok',
                 found: true,
@@ -97,11 +148,16 @@ describe('Diagnostyka PDF (GET /health/pdf)', () => {
             pdfEngine.generatePDF.mockResolvedValue(Buffer.from('%PDF-smoke'));
             const res = await request(app).get('/health/pdf?smoke=1');
             expect(res.statusCode).toBe(200);
+            expect(res.body.status).toBe('ok');
             expect(res.body.smoke).toMatchObject({ ok: true });
             expect(res.body.smoke.bytes).toBeGreaterThan(0);
+            for (const k of LEAK_KEYS) expect(res.body).not.toHaveProperty(k);
+            expect(res.body.smoke).not.toHaveProperty('error');
         });
 
-        it('?smoke=1 zwraca 503 z powodem gdy render pada', async () => {
+        it('admin ?smoke=1 blad Chromium to generyczne 503 bez szczegolow', async () => {
+            auth.requireAuth.mockImplementation((_req: any, _res: any, next: any) => next());
+            auth.requireAdmin.mockImplementation((_req: any, _res: any, next: any) => next());
             pdfEngine.getChromiumStatus.mockReturnValue({
                 status: 'degraded',
                 found: false,
@@ -111,10 +167,13 @@ describe('Diagnostyka PDF (GET /health/pdf)', () => {
                 home: '/home/node',
                 shmMb: 64
             });
-            pdfEngine.generatePDF.mockRejectedValue(new Error('Could not find Chrome'));
+            pdfEngine.generatePDF.mockRejectedValue(
+                new Error('Could not find Chrome at /secret/path/chrome')
+            );
             const res = await request(app).get('/health/pdf?smoke=1');
             expect(res.statusCode).toBe(503);
-            expect(res.body.smoke).toMatchObject({ ok: false });
+            expect(res.body).toEqual({ status: 'degraded', smoke: { ok: false } });
+            for (const k of LEAK_KEYS) expect(res.body).not.toHaveProperty(k);
         });
     });
 });
