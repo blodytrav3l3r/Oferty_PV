@@ -4,7 +4,7 @@ async function resetStudniePriceList() {
     btns.forEach((b) => b.setAttribute('disabled', 'true'));
     if (
         !(await appConfirm('Przywrócić cennik studni do zapisanego cennika domyślnego?', {
-            title: 'Reset cennika',
+            title: 'Przywróć domyślne',
             type: 'warning'
         }))
     ) {

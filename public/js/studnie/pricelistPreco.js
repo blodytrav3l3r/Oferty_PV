@@ -16,7 +16,7 @@ function renderPrecoPriceList() {
 
     if (!precoPricing || Object.keys(precoPricing).length === 0) {
         container.innerHTML =
-            '<div class="empty-state">Brak cennika PRECO. <button class="btn btn-secondary fs-md" data-action="loadPrecoDefaults" title="Przywróć domyślne wartości PRECO">Reset</button></div>';
+            '<div class="empty-state">Brak cennika PRECO. <button class="btn btn-secondary fs-md" data-action="loadPrecoDefaults" title="Przywróć domyślne wartości PRECO">Przywróć domyślne</button></div>';
         return;
     }
 
@@ -348,7 +348,7 @@ async function loadPrecoDefaults() {
     btns.forEach((b) => b.setAttribute('disabled', 'true'));
     if (
         !(await appConfirm('Przywrócić cennik PRECO do wartości fabrycznych?', {
-            title: 'Reset cennika PRECO',
+            title: 'Przywróć domyślne PRECO',
             type: 'warning'
         }))
     ) {

@@ -191,7 +191,7 @@ async function resetPriceList() {
     if (
         !(await appConfirm(
             'Przywrócić cennik do Twojego zapisanego cennika domyślnego? Utracisz niezapisane i najnowsze zmiany.',
-            { title: 'Reset cennika', type: 'warning' }
+            { title: 'Przywróć domyślne', type: 'warning' }
         ))
     ) {
         btns.forEach((b) => b.removeAttribute('disabled'));
