@@ -172,5 +172,39 @@ if (result.emptyProduct.length > 0) {
     process.exit(2);
 }
 
+// Warn-only: brak wersji ACTIVE → oferty liczą z LIVE (toast). Naprawia
+// auto-ensure przy starcie albo ręcznie: npx ts-node scripts/backfill-pricelist-v1.ts
+try {
+    const sqlite = require('node:sqlite');
+    const db2 = new sqlite.DatabaseSync(DB_PATH, { readOnly: true });
+    try {
+        const hasPv = db2
+            .prepare(
+                "SELECT name FROM sqlite_master WHERE type='table' AND name='PricelistVersion'"
+            )
+            .get();
+        if (hasPv) {
+            const missing = [];
+            for (const t of ['rury', 'studnie', 'preco']) {
+                const row = db2
+                    .prepare('SELECT COUNT(*) as cnt FROM "PricelistVersion" WHERE type=?')
+                    .get(t);
+                if (!row || row.cnt === 0) missing.push(t);
+            }
+            if (missing.length > 0) {
+                console.warn(
+                    '[check-db] BRAK WERSJI CENNIKA (' +
+                        missing.join(', ') +
+                        ') — oferta liczy z LIVE. Start serwera utworzy v1 automatycznie.'
+                );
+            }
+        }
+    } finally {
+        db2.close();
+    }
+} catch (_e) {
+    /* cisza — brak node:sqlite to nie błąd wersji */
+}
+
 console.log('[check-db] OK — wszystkie tabele, dane produktow i indeksy obecne.');
 process.exit(0);

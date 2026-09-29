@@ -397,6 +397,18 @@ export async function initApp(): Promise<void> {
         );
     }
 
+    // Auto-ensure ACTIVE z LIVE (git pull na drugim PC zostawia DB bez wersji).
+    try {
+        const { ensureActivePricelistVersions } = await import('./services/ensureActiveVersions');
+        await ensureActivePricelistVersions();
+    } catch (err) {
+        logger.warn(
+            'Server',
+            'Nie udało się zapewnić aktywnych wersji cenników:',
+            err instanceof Error ? err.message : String(err)
+        );
+    }
+
     // Auto-heal schematu (indeksy, shares, FTS5) — BE-01: szczegóły w src/initDatabase.ts
     await ensureDatabaseIndexes();
     // Model ML — auto-heal: upewnij się, że w bazie istnieje aktywny model ML dla bieżącej wersji cech

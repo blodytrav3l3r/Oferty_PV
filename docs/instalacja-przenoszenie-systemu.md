@@ -233,13 +233,14 @@ npm run prices:import -- data/price_defaults.json
 
 ### ⚠️ Uwagi przy przenoszeniu:
 
-| Kwestia            | Zalecenie                                                                                                                                                                             |
-| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Wersja systemu** | Powinna być taka sama na obu komputerach (sprawdź `VERSION`)                                                                                                                          |
-| **Różne wersje**   | Po restore uruchom `install.bat --skip-seed` — zaktualizuje schemat bazy                                                                                                              |
-| **Typ bazy**       | Baza z backupu może być legacy (utworzona przez `db push`) — nie ma tabeli `_prisma_migrations`; na niej `migrate deploy` zawodzi, użyj `db push`. Nowe/świeże bazy: `migrate deploy` |
-| **Migracje**       | `migrate deploy` (domyślnie) lub `db push` (legacy) doda brakujące tabele i indeksy (w tym `idx_logs_well` / `idx_logs_source_well`), nie usunie danych                               |
-| **Bezpieczeństwo** | Po przeniesieniu zmień hasło admina w panelu użytkownika                                                                                                                              |
+| Kwestia            | Zalecenie                                                                                                                                                                                   |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Wersja systemu** | Powinna być taka sama na obu komputerach (sprawdź `VERSION`)                                                                                                                                |
+| **Różne wersje**   | Po restore uruchom `install.bat --skip-seed` — zaktualizuje schemat bazy                                                                                                                    |
+| **Typ bazy**       | Baza z backupu może być legacy (utworzona przez `db push`) — nie ma tabeli `_prisma_migrations`; na niej `migrate deploy` zawodzi, użyj `db push`. Nowe/świeże bazy: `migrate deploy`       |
+| **Migracje**       | `migrate deploy` (domyślnie) lub `db push` (legacy) doda brakujące tabele i indeksy (w tym `idx_logs_well` / `idx_logs_source_well`), nie usunie danych                                     |
+| **Bezpieczeństwo** | Po przeniesieniu zmień hasło admina w panelu użytkownika                                                                                                                                    |
+| **Brak ACTIVE**    | `git pull` nie rusza DB — stara baza ma LIVE bez wersji, oferta liczy z LIVE (toast). Start serwera tworzy v1 ACTIVE automatycznie; ręcznie: `npx ts-node scripts/backfill-pricelist-v1.ts` |
 
 ---
 
