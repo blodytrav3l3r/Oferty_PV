@@ -535,7 +535,7 @@ async function main() {
             action: 'ACCEPT',
             wellId: `${SYNTH_USER_PREFIX}ghost`
         });
-        check('S8 WELL_NOT_FOUND 400', ghost.status === 400, 'status=' + ghost.status);
+        check('S8 WELL_NOT_FOUND 404', ghost.status === 404, 'status=' + ghost.status);
 
         // S10: well_deleted → event, brak wpływu na labele.
         const ev = await api('POST', '/api/telemetry/ai/event', {

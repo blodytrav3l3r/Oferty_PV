@@ -166,8 +166,13 @@ router.get('/:docType/:docId', requireAuth, READ_LIMITER, async (req, res) => {
                         heartbeatAt: { lt: new Date(Date.now() - DOC_LOCK_TTL_MS).toISOString() }
                     }
                 });
-            } catch {
-                /* best-effort — wygasly lock i tak raportujemy jako locked:false */
+            } catch (e) {
+                // best-effort — wygasly lock i tak raportujemy jako locked:false
+                logger.warn(
+                    'Locks',
+                    'Best-effort cleanup wygaslego locka nie powiodl sie',
+                    e instanceof Error ? e.message : String(e)
+                );
             }
             return res.json({ ok: true, locked: false });
         }

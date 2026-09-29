@@ -106,7 +106,7 @@ export const telemetryConfigSchema = z.object({
     computationMs: z.number().int().optional(),
     iterationCount: z.number().int().optional(),
     checkedVariants: z.number().int().optional(),
-    rankingScore: z.number().optional(),
+    rankingScore: z.number().finite().optional(),
     selectionReason: z.string().optional(),
 
     // Boolean flagi
@@ -115,7 +115,7 @@ export const telemetryConfigSchema = z.object({
     wasRejected: z.boolean().optional(),
     wasModified: z.boolean().optional(),
     modificationCount: z.number().int().optional(),
-    confidenceScore: z.number().optional(),
+    confidenceScore: z.number().finite().optional(),
     learningWeight: z.number().optional(),
 
     // Wersjonowanie

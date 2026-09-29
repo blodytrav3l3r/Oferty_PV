@@ -55,12 +55,12 @@ const batchPredictSchema = z.object({
 
 // P1: wellId wymagany — nagroda tylko dla studni, która przeszła przez telemetrię;
 // scoreBefore/scoreAfter ograniczone do [0,1] (wynik modelu) — blokada reward farmingu.
-const rewardSchema = z.object({
+export const rewardSchema = z.object({
     action: z.enum(['ACCEPT', 'REJECT', 'MODIFY', 'ADJUST', 'SWAP']),
     wellId: z.string().min(1),
-    dn: z.number().optional(),
-    scoreBefore: z.number().min(0).max(1).optional(),
-    scoreAfter: z.number().min(0).max(1).optional(),
+    dn: z.number().finite().optional(),
+    scoreBefore: z.number().min(0).max(1).finite().optional(),
+    scoreAfter: z.number().min(0).max(1).finite().optional(),
     wasAiRanked: z.boolean().optional(),
     configSnapshot: z.record(z.string(), z.unknown()).optional(),
     // Łańcuch sugestia→decyzja: ID rekordu sugestii AUTO (frontend przechwytuje
@@ -236,7 +236,7 @@ router.post(
                 return;
             }
             if (result.status === 'well-not-found') {
-                res.status(400).json({ error: 'WELL_NOT_FOUND' });
+                res.status(404).json({ error: 'WELL_NOT_FOUND' });
                 return;
             }
             if (result.status === 'forbidden') {

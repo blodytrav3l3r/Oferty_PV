@@ -404,7 +404,7 @@ describe('POST /api/telemetry/ai/reward', () => {
         app.use('/api/telemetry', router);
     });
 
-    it('zwraca 400 WELL_NOT_FOUND gdy wellId nie ma telemetrii (blokada reward farmingu)', async () => {
+    it('zwraca 404 WELL_NOT_FOUND gdy wellId nie ma telemetrii (blokada reward farmingu)', async () => {
         mockTelemetryLogsFindFirst.mockResolvedValue(null);
 
         const res = await request(app).post('/api/telemetry/ai/reward').send({
@@ -415,8 +415,23 @@ describe('POST /api/telemetry/ai/reward', () => {
             wasAiRanked: true
         });
 
-        expect(res.status).toBe(400);
+        expect(res.status).toBe(404);
         expect(res.body).toHaveProperty('error', 'WELL_NOT_FOUND');
+    });
+
+    it('odrzuca Infinity/NaN w dn/scoreBefore/scoreAfter (finite)', async () => {
+        const { rewardSchema } = await import('../../src/routes/telemetryAiMl');
+        for (const v of [Infinity, -Infinity, NaN]) {
+            expect(rewardSchema.safeParse({ action: 'ACCEPT', wellId: 'w1', dn: v }).success).toBe(
+                false
+            );
+            expect(
+                rewardSchema.safeParse({ action: 'ACCEPT', wellId: 'w1', scoreBefore: v }).success
+            ).toBe(false);
+            expect(
+                rewardSchema.safeParse({ action: 'ACCEPT', wellId: 'w1', scoreAfter: v }).success
+            ).toBe(false);
+        }
     });
 
     it('zwraca 400 gdy scoreBefore poza zakresem [0,1]', async () => {

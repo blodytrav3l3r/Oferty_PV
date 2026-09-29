@@ -64,8 +64,13 @@ function parseMagazynCodes(raw: string | null | undefined) {
     try {
         const parsed = magazynCodesSchema.safeParse(JSON.parse(raw));
         if (parsed.success) return parsed.data;
-    } catch {
+    } catch (e) {
         // uszkodzony JSON — fallback do domyślnych
+        logger.warn(
+            'Settings',
+            'Uszkodzone magazyn_codes — fallback do domyslnych',
+            e instanceof Error ? e.message : String(e)
+        );
     }
     return { ...DEFAULT_MAGAZYN_CODES };
 }

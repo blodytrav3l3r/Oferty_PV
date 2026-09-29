@@ -120,6 +120,19 @@ describe('telemetryConfigSchema', () => {
         if (r.success) expect(r.data.rzDna).toBe(200);
     });
 
+    it('odrzuca Infinity/NaN w rankingScore i confidenceScore (finite)', () => {
+        for (const v of [Infinity, -Infinity, NaN]) {
+            expect(
+                telemetryConfigSchema.safeParse({ solverSource: 'AUTO_JS', rankingScore: v })
+                    .success
+            ).toBe(false);
+            expect(
+                telemetryConfigSchema.safeParse({ solverSource: 'AUTO_JS', confidenceScore: v })
+                    .success
+            ).toBe(false);
+        }
+    });
+
     it('dn jako number jest odrzucany (frontend normalizuje do string)', () => {
         const r = telemetryConfigSchema.safeParse({
             solverSource: 'MANUAL',
