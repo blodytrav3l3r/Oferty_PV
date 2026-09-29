@@ -197,7 +197,11 @@ function updateOfferDiscountsPopupPrices() {
                   return !!(s && s.error);
               };
     const _popBadge =
-        typeof pricingErrorBadge === 'function' ? pricingErrorBadge : function () { return ''; };
+        typeof pricingErrorBadge === 'function'
+            ? pricingErrorBadge
+            : function () {
+                  return '';
+              };
     diameters.forEach((dn) => {
         let sumNettoDN = 0;
         let dnHasError = false;
@@ -306,7 +310,11 @@ function renderOfferDiscountsPopupContent() {
                   return !!(s && s.error);
               };
     const _popBadge2 =
-        typeof pricingErrorBadge === 'function' ? pricingErrorBadge : function () { return ''; };
+        typeof pricingErrorBadge === 'function'
+            ? pricingErrorBadge
+            : function () {
+                  return '';
+              };
     diameters.forEach((dn) => {
         let sumNettoDN = 0;
         let dnHasError = false;
