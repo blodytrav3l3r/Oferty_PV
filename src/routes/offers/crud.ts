@@ -170,9 +170,8 @@ router.delete('/:id', requireAuth, writeOffersLimiter, async (req, res) => {
             } catch (_e) {
                 logger.warn('Offers', 'Uszkodzony JSON data podczas usuwania oferty studni', id);
             }
-            logAudit('studnia_oferta', id, authReq.user?.id || '', 'delete', null, oldData);
-
-            // P0-E: guard + kasowanie biznesowe w JEDNEJ transakcji.
+            // P0-E: guard + kasowanie biznesowe + audit w JEDNEJ transakcji
+            // (audit przed COMMIT = rollback cofa też audit, koniec phantom audit).
             // FTS to dane pochodne — po COMMIT, nigdy nie blokuje kasowania.
             // P1-E: także żywe zamówienia (nie tylko PZ) blokują kasowanie.
             try {
@@ -195,6 +194,15 @@ router.delete('/:id', requireAuth, writeOffersLimiter, async (req, res) => {
                         };
                     }
                     await tx.offers_studnie_rel.delete({ where: { id } });
+                    await logAudit(
+                        'studnia_oferta',
+                        id,
+                        authReq.user?.id || '',
+                        'delete',
+                        null,
+                        oldData,
+                        tx
+                    );
                     // P1-E: shares w tej samej tx (koniec okna crash→sierota).
                     // Try/catch: legacy bazy bez tabeli document_shares.
                     try {
@@ -248,9 +256,8 @@ router.delete('/:id', requireAuth, writeOffersLimiter, async (req, res) => {
                 price: i.price
             }))
         };
-        logAudit('offer', id, authReq.user?.id || '', 'delete', null, oldSnapshot);
-
-        // P0-E: kasowanie biznesowe w JEDNEJ transakcji.
+        // P0-E: kasowanie biznesowe + audit w JEDNEJ transakcji
+        // (audit przed COMMIT = rollback cofa też audit, koniec phantom audit).
         // FTS to dane pochodne — po COMMIT, nigdy nie blokuje kasowania.
         // P1-E: oferta z żywymi zamówieniami nie do usunięcia (jak PZ) —
         // re-check w tx, koniec TOCTOU i cichych sierot po offerId.
@@ -272,6 +279,15 @@ router.delete('/:id', requireAuth, writeOffersLimiter, async (req, res) => {
                 await tx.offers_rel.delete({
                     where: { id }
                 });
+                await logAudit(
+                    'offer',
+                    id,
+                    authReq.user?.id || '',
+                    'delete',
+                    null,
+                    oldSnapshot,
+                    tx
+                );
                 // P1-E: shares w tej samej tx (koniec okna crash→sierota).
                 try {
                     await (tx as any).document_shares?.deleteMany?.({

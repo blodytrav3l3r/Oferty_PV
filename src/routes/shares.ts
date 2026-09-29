@@ -195,7 +195,7 @@ router.post('/', requireAuth, WRITE_LIMITER, validateData(shareCreateSchema), as
         return res.json({ ok: true, data: result.shares, added: 0 });
     }
 
-    logAudit('document_share', documentId, authReq.user!.id, 'create', {
+    await logAudit('document_share', documentId, authReq.user!.id, 'create', {
         documentType,
         sharedWithUserIds: newIds
     });
@@ -247,15 +247,24 @@ router.post(
             }
         }
 
-        await prisma.document_shares.deleteMany({
-            where: { documentType, documentId, sharedWithUserId: { in: userIds } }
-        });
-        logAudit('document_share', documentId, authReq.user!.id, 'revoke_batch', {
-            documentType,
-            userIds
-        });
-        const shares = await prisma.document_shares.findMany({
-            where: { documentType, documentId }
+        // delete + audit + odczyt w JEDNEJ tx (koniec okna: audit/revoke_batch
+        // bez kasowania po rollbacku + odpowiedź zawsze po kasowaniu).
+        const shares = await prisma.$transaction(async (tx) => {
+            await tx.document_shares.deleteMany({
+                where: { documentType, documentId, sharedWithUserId: { in: userIds } }
+            });
+            await logAudit(
+                'document_share',
+                documentId,
+                authReq.user!.id,
+                'revoke_batch',
+                { documentType, userIds },
+                null,
+                tx
+            );
+            return tx.document_shares.findMany({
+                where: { documentType, documentId }
+            });
         });
         res.json({ ok: true, data: shares });
     }
@@ -285,11 +294,22 @@ router.delete('/:id', requireAuth, WRITE_LIMITER, async (req, res) => {
     if (!isOwner && !isSelfRevoke && !isAdmin) {
         return res.status(403).json({ error: 'Brak uprawnień do cofnięcia udostępnienia' });
     }
-    await prisma.document_shares.delete({ where: { id } });
-    logAudit('document_share', share.documentId, authReq.user!.id, 'revoke', {
-        shareId: id,
-        documentType: share.documentType,
-        sharedWithUserId: share.sharedWithUserId
+    // delete + audit w JEDNEJ tx (koniec phantom revoke po rollbacku).
+    await prisma.$transaction(async (tx) => {
+        await tx.document_shares.delete({ where: { id } });
+        await logAudit(
+            'document_share',
+            share.documentId,
+            authReq.user!.id,
+            'revoke',
+            {
+                shareId: id,
+                documentType: share.documentType,
+                sharedWithUserId: share.sharedWithUserId
+            },
+            null,
+            tx
+        );
     });
     res.json({ ok: true });
 });

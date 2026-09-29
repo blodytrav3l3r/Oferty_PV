@@ -334,16 +334,25 @@ router.put(
                     }
 
                     if (old) {
-                        logAudit(
+                        await logAudit(
                             'production_order',
                             docId,
                             authReq.user?.id || '',
                             'update',
                             rest,
-                            parseJsonField<Record<string, unknown>>(old.data, {})
+                            parseJsonField<Record<string, unknown>>(old.data, {}),
+                            tx
                         );
                     } else {
-                        logAudit('production_order', docId, authReq.user?.id || '', 'create', rest);
+                        await logAudit(
+                            'production_order',
+                            docId,
+                            authReq.user?.id || '',
+                            'create',
+                            rest,
+                            null,
+                            tx
+                        );
                     }
 
                     // Liczniki wydruków: chude obiekty (modal, accept-flow) nie
@@ -580,7 +589,7 @@ router.post(
             }
 
             if (old) {
-                logAudit(
+                await logAudit(
                     'production_order',
                     docId,
                     authReq.user?.id || '',
@@ -589,7 +598,7 @@ router.post(
                     parseJsonField<Record<string, unknown>>(old.data, {})
                 );
             } else {
-                logAudit('production_order', docId, authReq.user?.id || '', 'create', rest);
+                await logAudit('production_order', docId, authReq.user?.id || '', 'create', rest);
             }
 
             // Błąd #48 (POST): merge ze starym blobem jak w PUT — chudy update
@@ -764,7 +773,15 @@ router.post('/batch-delete', requireAuth, writeProductionLimiter, async (req, re
             for (const order of deletable) {
                 if (!finalIdSet.has(order.id)) continue;
                 const oldData = parseJsonField<Record<string, unknown>>(order.data, {});
-                logAudit('production_order', order.id, order.userId || '', 'delete', null, oldData);
+                await logAudit(
+                    'production_order',
+                    order.id,
+                    order.userId || '',
+                    'delete',
+                    null,
+                    oldData,
+                    tx
+                );
                 const entry = parseRecycleEntry(order.userId || '', oldData);
                 if (entry) recycleEntries.push(entry);
             }
@@ -1063,9 +1080,8 @@ router.delete('/:id', requireAuth, writeProductionLimiter, async (req, res) => {
                 .json({ error: 'Nie można usunąć zatwierdzonego zlecenia. Najpierw je cofnij.' });
         }
 
-        logAudit('production_order', docId, existing.userId || '', 'delete', null, oldData);
-
-        // P0-E: re-check statusu + kasowanie + recycle w JEDNEJ transakcji.
+        // P0-E: re-check statusu + kasowanie + recycle + audit w JEDNEJ transakcji
+        // (audit przed COMMIT = rollback cofa też audit, koniec phantom audit).
         try {
             await prisma.$transaction(async (tx) => {
                 const row = await tx.production_orders_rel.findUnique({
@@ -1083,6 +1099,15 @@ router.delete('/:id', requireAuth, writeProductionLimiter, async (req, res) => {
                     throw { status: 403, message: 'Brak uprawnień do usunięcia tego zlecenia' };
                 }
                 await recycleProductionNumber(existing.userId || '', oldData, tx);
+                await logAudit(
+                    'production_order',
+                    docId,
+                    existing.userId || '',
+                    'delete',
+                    null,
+                    oldData,
+                    tx
+                );
                 if (authReq.user?.role === 'admin') {
                     await tx.$executeRaw`DELETE FROM production_orders_rel WHERE id = ${docId}`;
                 } else {

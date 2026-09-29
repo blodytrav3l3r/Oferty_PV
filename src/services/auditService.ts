@@ -45,6 +45,18 @@ export function computeDiff(
 // ─── Logowanie Audytu (Audit Logging) ───────────────────────────────
 
 /**
+ * Minimalny kontrakt bazy dla audytu: globalny prisma albo klient transakcji.
+ * Przekazanie `tx` z `$transaction` wpina wpis w transakcję biznesową —
+ * rollback biznesu cofa też audit (koniec phantom audit). Bez `tx` zapis
+ * jest warn-only poza transakcją (jak dotąd).
+ */
+type RawFn = (...args: any[]) => Promise<any>;
+export interface AuditDb {
+    $executeRaw: RawFn;
+    $queryRaw: <T>(...args: any[]) => Promise<T>;
+}
+
+/**
  * Generuje unikalny identyfikator logu audytu.
  */
 function generateAuditId(): string {
@@ -55,6 +67,8 @@ function generateAuditId(): string {
  * Loguje wpis audytu dla zmian encji.
  * Dla akcji 'update': oblicza różnicę (diff) i stosuje debouncing (pomija zmiany w ciągu 30s).
  * Dla akcji 'create'/'delete': przechowuje pełną migawkę danych.
+ * @param db opcjonalny klient transakcji — wpis w tej samej tx co biznes (atomowość).
+ *   Błąd audytu NIGDY nie rzuca (warn-only): nie cofa biznesu, tylko log + metryka.
  */
 export async function logAudit(
     entityType: string,
@@ -62,13 +76,14 @@ export async function logAudit(
     userId: string,
     action: string,
     newData: Record<string, unknown> | null,
-    oldData: Record<string, unknown> | null = null
+    oldData: Record<string, unknown> | null = null,
+    db: AuditDb = prisma
 ): Promise<void> {
     try {
         const now = new Date().toISOString();
 
         if (action === 'update' && oldData && newData) {
-            await logUpdateWithDebounce(entityType, entityId, userId, oldData, newData, now);
+            await logUpdateWithDebounce(entityType, entityId, userId, oldData, newData, now, db);
             return;
         }
 
@@ -77,7 +92,7 @@ export async function logAudit(
         const auditId = generateAuditId();
         const oldDataStr = oldData ? JSON.stringify(oldData) : null;
         const newDataStr = newData ? JSON.stringify(newData) : null;
-        await prisma.$executeRaw`
+        await db.$executeRaw`
             INSERT INTO audit_logs (id, entityType, entityId, userId, action, oldData, newData, createdAt)
             VALUES (${auditId}, ${entityType}, ${entityId}, ${userId}, ${action}, ${oldDataStr}, ${newDataStr}, ${now})
         `;
@@ -107,7 +122,8 @@ async function logUpdateWithDebounce(
     userId: string,
     oldData: Record<string, unknown>,
     newData: Record<string, unknown>,
-    now: string
+    now: string,
+    db: AuditDb
 ): Promise<void> {
     const diff = computeDiff(oldData, newData);
     if (!diff) return; // Brak rzeczywistych zmian — nie loguj
@@ -115,7 +131,7 @@ async function logUpdateWithDebounce(
     const cutoff = new Date(new Date(now).getTime() - DEBOUNCE_SECONDS * 1000).toISOString();
 
     // Użyj raw query dla find (obsługa błędnych dat w bazie)
-    const recentRows = await prisma.$queryRaw<Array<{ id: string; newData: string | null }>>`
+    const recentRows = await db.$queryRaw<Array<{ id: string; newData: string | null }>>`
         SELECT id, newData FROM audit_logs WHERE entityType = ${entityType} AND entityId = ${entityId}
         AND userId = ${userId} AND action = 'update' AND createdAt > ${cutoff}
         ORDER BY createdAt DESC LIMIT 1
@@ -133,7 +149,7 @@ async function logUpdateWithDebounce(
             // uszkodzony poprzedni wpis — bierzemy tylko bieżący diff
         }
         const newDataStr = JSON.stringify({ ...merged, ...diff.changed, _diffMode: true });
-        await prisma.$executeRaw`
+        await db.$executeRaw`
             UPDATE audit_logs SET newData = ${newDataStr}, createdAt = ${now} WHERE id = ${recent.id}
         `;
         return;
@@ -143,7 +159,7 @@ async function logUpdateWithDebounce(
     const newDataStr = JSON.stringify({ ...diff.changed, _diffMode: true });
     const auditId = generateAuditId();
     const oldDataStr = JSON.stringify({ ...diff.old, _diffMode: true });
-    await prisma.$executeRaw`
+    await db.$executeRaw`
         INSERT INTO audit_logs (id, entityType, entityId, userId, action, oldData, newData, createdAt)
         VALUES (${auditId}, ${entityType}, ${entityId}, ${userId}, 'update', ${oldDataStr}, ${newDataStr}, ${now})
     `;
