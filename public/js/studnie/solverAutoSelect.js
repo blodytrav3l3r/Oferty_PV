@@ -57,6 +57,12 @@ const SOLVER_DIFF_MAX_MM = 20;
 // maszyny: wolniejszy run cachował mniej, więc powtarzalne zapytania DP w tym samym runie
 // częściej trafiały w loterię timeoutu DP. Cap wpisów zależy tylko od danych wejściowych.
 const DP_MEMO_MAX_ENTRIES = 5000;
+// Staly budzet iteracji backtrackingu AVR zamiast wall-clock (dawne
+// AVR_TIMEOUT_MS=100 ms roznicowalo wynik od obciazenia CPU). Pelne
+// przeszukanie na danych seed (3x AVR: 100/80/60, maxAvr 260) odwiedza
+// max 20 wezlow — 1000 daje 50x zapasu, pelny wynik bez zmian.
+const AVR_MAX_ITERATIONS = 1000;
+if (typeof window !== 'undefined') window.AVR_MAX_ITERATIONS = AVR_MAX_ITERATIONS;
 window.autoSelectComponents = async function autoSelectComponents(autoTriggered = false) {
     if (isAutoSelectRunning) {
         if (autoTriggered) logger.debug('wellSolver', '[AutoSelect] Pomijam — już trwa auto-dobór');
@@ -771,15 +777,15 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
      * Szuka optymalnej kombinacji pierścieni AVR (backtracking).
      * @returns {{ avrItems: Array, avrH: number }}
      */
-    const AVR_TIMEOUT_MS = 100;
+    // Budzet z poziomu modulu (AVR_MAX_ITERATIONS) — deterministyczny, bez Date.now.
     function findBestAvrFill(deficit, maxAvr) {
         let bestAvrCombo = [];
         let bestAvrDiff = deficit;
         let bestAvrH = 0;
-        const avrStartTime = Date.now();
+        let avrIterations = 0;
 
         function backtrack(combo, sum, idx) {
-            if (Date.now() - avrStartTime > AVR_TIMEOUT_MS) {
+            if (avrIterations++ >= AVR_MAX_ITERATIONS) {
                 return;
             }
             const d = Math.abs(deficit - sum);
@@ -1344,6 +1350,8 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
 
     let solution = candidates[0].solution;
     let aiUsed = false;
+    // Odtwarzalnosc eksploracji: seed decyzji losowej (null gdy AI/exploration off).
+    let explorationSeed = null;
 
     // === AI DUAL-RANKING ===
     if (
@@ -1377,8 +1385,22 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
                           solution: rankResult.ranked[0].solution,
                           aiWinner: rankResult.ranked[0].solution,
                           explorationTriggered: false,
-                          exploredFrom: null
+                          exploredFrom: null,
+                          explorationSeed: null
                       };
+                explorationSeed =
+                    explored && typeof explored.explorationSeed === 'number'
+                        ? explored.explorationSeed
+                        : null;
+                logger.info(
+                    'wellSolver',
+                    '[AiRank] exploration seed=',
+                    explorationSeed,
+                    'triggered=',
+                    explored.explorationTriggered,
+                    'from=',
+                    explored.exploredFrom
+                );
                 // aiWinner to czysty wybór modelu (ranked[0]); explored.solution może być
                 // próbką eksploracyjną (losową) — to NIE jest decyzja AI.
                 const aiWinner = explored.aiWinner;
@@ -1394,6 +1416,7 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
                     aiWinner: aiWinner,
                     explorationTriggered: explored.explorationTriggered,
                     exploredFrom: explored.exploredFrom,
+                    explorationSeed: explorationSeed,
                     aiInfluencePct: rankResult.aiInfluencePct,
                     modelVersion: rankResult.modelVersion,
                     rankingVersion: rankResult.rankingVersion,
@@ -1415,6 +1438,7 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
                     modelVersion: rankResult.modelVersion,
                     aiInfluencePct: rankResult.aiInfluencePct,
                     explorationTriggered: explored.explorationTriggered,
+                    explorationSeed: explorationSeed,
                     timestamp: Date.now()
                 };
 
@@ -1544,7 +1568,8 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
         topLabel: solution.topLabel,
         fallback,
         fallbackReason,
-        aiUsed
+        aiUsed,
+        explorationSeed
     };
 }
 

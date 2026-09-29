@@ -884,23 +884,43 @@
     /* ===== EXPLORATION ===== */
 
     /**
+     * Deterministyczny PRNG (mulberry32) — decyzje eksploracji odtwarzalne z seeda.
+     * @param {number} seed - uint32
+     * @returns {function(): number} - losowa z [0,1)
+     */
+    function mulberry32(seed) {
+        let s = seed >>> 0;
+        return function () {
+            s |= 0;
+            s = (s + 0x6d2b79f5) | 0;
+            let t = Math.imul(s ^ (s >>> 15), 1 | s);
+            t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+            return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+        };
+    }
+
+    /**
      * Confidence-based exploration.
      * Mała różnica między top-2 → większa szansa na eksplorację.
      *
      * Eksploracja to celowy losowy wybór z top-puli — NIE jest to decyzja AI.
      * Zwracamy osobno aiWinner (czysty wybór modelu: ranked[0]) i ewentualny
      * solution po eksploracji, by caller nie oznaczył próbki eksploracyjnej jako AUTO_AI.
+     * Losowość ZACHOWANA (seed losowany z Math.random), ale decyzja odtwarzalna:
+     * ten sam explorationSeed daje ten sam wynik (mulberry32).
      *
      * @param {Array<{finalScore:number, solution:Object}>} ranked
-     * @returns {{solution:Object|null, aiWinner:Object|null, explorationTriggered:boolean, exploredFrom:number|null}}
+     * @param {number} [injectedSeed] - opcjonalny seed (testy/replay); bez niego losowany
+     * @returns {{solution:Object|null, aiWinner:Object|null, explorationTriggered:boolean, exploredFrom:number|null, explorationSeed:number|null}}
      */
-    function selectWithExploration(ranked) {
+    function selectWithExploration(ranked, injectedSeed) {
         if (!ranked || ranked.length === 0) {
             return {
                 solution: null,
                 aiWinner: null,
                 explorationTriggered: false,
-                exploredFrom: null
+                exploredFrom: null,
+                explorationSeed: null
             };
         }
 
@@ -909,29 +929,55 @@
         let triggered = false;
         let exploredFrom = null;
 
+        const explorationSeed =
+            typeof injectedSeed === 'number' && Number.isFinite(injectedSeed)
+                ? injectedSeed >>> 0
+                : Math.floor(Math.random() * 4294967296);
+        const rand = mulberry32(explorationSeed);
+
         if (ranked.length > 1) {
             const gap =
                 (ranked[1].finalScore - ranked[0].finalScore) / Math.abs(ranked[0].finalScore || 1);
             const lowConfidence = gap < RELATIVE_GAP_THRESHOLD;
             const rate = lowConfidence ? EXPLORE_RATE_LOW_CONFIDENCE : EXPLORE_RATE_HIGH_CONFIDENCE;
 
-            if (Math.random() < rate) {
+            if (rand() < rate) {
                 exploredFrom = 0;
                 // Losuj z top-5 (lub top-3 gdy wysoka pewność)
                 const poolSize = lowConfidence
                     ? Math.min(5, ranked.length)
                     : Math.min(3, ranked.length);
-                const randomIdx = 1 + Math.floor(Math.random() * (poolSize - 1));
+                const randomIdx = 1 + Math.floor(rand() * (poolSize - 1));
                 winner = ranked[randomIdx];
                 triggered = true;
             }
+        }
+
+        try {
+            const log =
+                (typeof logger !== 'undefined' && logger) ||
+                (typeof window !== 'undefined' && window.logger);
+            if (log && typeof log.info === 'function') {
+                log.info(
+                    'mlRank',
+                    '[exploration] seed=',
+                    explorationSeed,
+                    'triggered=',
+                    triggered,
+                    'from=',
+                    exploredFrom
+                );
+            }
+        } catch (_e) {
+            /* log nigdy nie psuje decyzji */
         }
 
         return {
             solution: winner.solution,
             aiWinner: aiWinner,
             explorationTriggered: triggered,
-            exploredFrom: exploredFrom
+            exploredFrom: exploredFrom,
+            explorationSeed: explorationSeed
         };
     }
 
@@ -947,6 +993,7 @@
      * @param {Object|null} opts.aiWinner - zwycięzca po AI rankingu (może być == technicalWinner)
      * @param {boolean} opts.explorationTriggered
      * @param {number|null} opts.exploredFrom
+     * @param {number|null} [opts.explorationSeed]
      * @param {number} opts.aiInfluencePct
      * @param {string} opts.modelVersion
      * @param {string} opts.rankingVersion
@@ -981,6 +1028,7 @@
             featureVersion: opts.featureVersion,
             explorationTriggered: opts.explorationTriggered,
             exploredFrom: opts.exploredFrom,
+            explorationSeed: typeof opts.explorationSeed === 'number' ? opts.explorationSeed : null,
             background: !!opts.background,
             scoreGap:
                 opts.ranked && opts.ranked.length > 1

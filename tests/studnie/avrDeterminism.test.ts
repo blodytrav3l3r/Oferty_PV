@@ -4,9 +4,9 @@
  *
  * findBestAvrFill/solve sa zagniezdzone w runJsAutoSelection (nie sa dostepne
  * bezposrednio z zewnatrz), wiec test cwiczy je przez runJsAutoSelection —
- * ten sam input 2x daje IDENTYCZNY output (JSON equal), takze po busy-loop
- * dluzszym niz AVR_TIMEOUT_MS (100 ms). Wykrywa zaleznosc wyniku od czasu
- * (Date.now roznicujace backtracking AVR).
+ * ten sam input 3x daje IDENTYCZNY output (JSON equal), takze pod sztucznym
+ * load. Budzet AVR jest deterministyczny (AVR_MAX_ITERATIONS, bez Date.now):
+ * wynik nie zalezy od obciazenia CPU ani skokow zegara.
  *
  * AI celowo odpiete (brak window.rankCandidates) — sciezka deterministyczna.
  */
@@ -142,22 +142,83 @@ function busyWait(ms: number) {
 }
 
 describe('avrDeterminism', () => {
-    test('findBestAvrFill/solve 2x na tych samych danych daje identyczny wynik', async () => {
+    test('findBestAvrFill/solve 3x na tych samych danych daje identyczny wynik', async () => {
         const catalog = loadCatalog();
         const sb = makeCtx(catalog);
         const well = mkWell({});
         const first = await solveSnapshot(sb, well);
         const second = await solveSnapshot(sb, well);
+        const third = await solveSnapshot(sb, well);
         expect(second).toBe(first);
+        expect(third).toBe(first);
     });
 
-    test('wynik nie zalezy od obciazenia (run po busy-loop > AVR_TIMEOUT_MS)', async () => {
+    test('wynik 3x identyczny pod sztucznym load (busy-loop + skok zegara)', async () => {
         const catalog = loadCatalog();
         const sb = makeCtx(catalog);
         const well = mkWell({});
         const first = await solveSnapshot(sb, well);
         busyWait(400);
-        const afterLoad = await solveSnapshot(sb, well);
-        expect(afterLoad).toBe(first);
+        const second = await solveSnapshot(sb, well);
+        // Skok zegara wewnatrz sandboxu (dawna sciezka wall-clock Date.now+10s):
+        // przy budzecie iteracji wynik musi byc bez zmian.
+        try {
+            vm.runInContext(
+                'var __realNow = Date.now; Date.now = function () { return __realNow() + 10000; };',
+                sb
+            );
+            const third = await solveSnapshot(sb, well);
+            expect(third).toBe(first);
+        } finally {
+            vm.runInContext('Date.now = __realNow; delete globalThis.__realNow;', sb);
+        }
+        expect(second).toBe(first);
+    });
+
+    test('budzet iteracji deterministyczny (AVR_MAX_ITERATIONS, brak Date.now w AVR)', async () => {
+        const src = fs.readFileSync(path.join(JS_DIR, 'solverAutoSelect.js'), 'utf8');
+        // Staly budzet istnieje i jest eksportowany do testow.
+        const catalog = loadCatalog();
+        const sb = makeCtx(catalog);
+        expect(typeof sb.AVR_MAX_ITERATIONS).toBe('number');
+        expect(sb.AVR_MAX_ITERATIONS).toBeGreaterThanOrEqual(20);
+        // Pelne przeszukanie na seed (3x AVR, maxAvr 260) odwiedza max 20 wezlow,
+        // wiec budzet musi je pokryc w calosci.
+        const m = src.match(/const AVR_MAX_ITERATIONS\s*=\s*(\d+)/);
+        expect(m).not.toBeNull();
+        expect(parseInt(m![1], 10)).toBeGreaterThanOrEqual(20);
+        // Brak wall-clock w findBestAvrFill: zaden Date.now/performance.now
+        // miedzy definicja findBestAvrFill a koncem backtrack.
+        const start = src.indexOf('function findBestAvrFill');
+        expect(start).toBeGreaterThan(-1);
+        const end = src.indexOf('if (deficit >= 30) backtrack');
+        expect(end).toBeGreaterThan(start);
+        const avrBlock = src.slice(start, end);
+        expect(avrBlock).not.toMatch(/Date\.now/);
+        expect(avrBlock).not.toMatch(/performance\.now/);
+        expect(avrBlock).not.toMatch(/AVR_TIMEOUT_MS/);
+        expect(src).not.toMatch(/const AVR_TIMEOUT_MS/);
+        // DP_MEMO_MAX_ENTRIES zachowane (brak regresji limitu memo).
+        expect(src).toMatch(/const DP_MEMO_MAX_ENTRIES\s*=\s*5000/);
+    });
+
+    test('explorationSeed odtwarzalny: ten sam seed daje te sama decyzje', async () => {
+        const catalog = loadCatalog();
+        const sb = makeCtx(catalog);
+        vm.runInContext(fs.readFileSync(path.join(JS_DIR, 'mlDualRanking.js'), 'utf8'), sb, {
+            filename: 'mlDualRanking.js'
+        });
+        expect(typeof sb.selectWithExploration).toBe('function');
+        const ranked = [0, 1, 2, 3, 4].map((i) => ({
+            finalScore: i * 0.001,
+            solution: { id: 'sol-' + i }
+        }));
+        const a = sb.selectWithExploration(ranked, 123456);
+        const b = sb.selectWithExploration(ranked, 123456);
+        expect(a.explorationSeed).toBe(123456);
+        expect(canonical(a)).toBe(canonical(b));
+        // Losowosc zachowana: bez wstrzyknietego seeda kazde wywolanie losuje seed.
+        const c = sb.selectWithExploration(ranked);
+        expect(typeof c.explorationSeed).toBe('number');
     });
 });
