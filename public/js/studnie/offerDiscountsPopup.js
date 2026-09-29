@@ -189,14 +189,25 @@ function updateOfferDiscountsPopupPrices() {
         totalTransportCostForOffer = totalTransportsCount * costPerTrip;
     }
 
+    let popupHasPricingError = false;
+    const _isPopErr =
+        typeof isWellPricingError === 'function'
+            ? isWellPricingError
+            : function (_w, s) {
+                  return !!(s && s.error);
+              };
+    const _popBadge =
+        typeof pricingErrorBadge === 'function' ? pricingErrorBadge : function () { return ''; };
     diameters.forEach((dn) => {
         let sumNettoDN = 0;
+        let dnHasError = false;
         wells
             .filter((w) =>
                 dn === 'styczne' ? w.type === 'styczna' || w.dn === 'styczna' : w.dn == dn
             )
             .forEach((w) => {
                 const stats = _csPop(w);
+                if (_isPopErr(w, stats)) dnHasError = true;
                 let transportCost = 0;
                 // Osobna pozycja: transport poza cenami w popupie rabatów.
                 const separateTransport =
@@ -213,6 +224,7 @@ function updateOfferDiscountsPopupPrices() {
             dn === 'styczne' ? w.type === 'styczna' || w.dn === 'styczna' : w.dn == dn
         ).length;
         const dnAvgPrice = dnCount > 0 ? sumNettoDN / dnCount : 0;
+        if (dnHasError) popupHasPricingError = true;
 
         const countEl = document.getElementById(`offer-dn-count-${dn}`);
         if (countEl) {
@@ -225,14 +237,14 @@ function updateOfferDiscountsPopupPrices() {
 
         const el = document.getElementById(`offer-dn-price-${dn}`);
         if (el) {
-            el.innerHTML = `${typeof fmt === 'function' ? escapeHtml(fmt(sumNettoDN)) : escapeHtml(sumNettoDN)} PLN`;
+            el.innerHTML = `${typeof fmt === 'function' ? escapeHtml(fmt(sumNettoDN)) : escapeHtml(sumNettoDN)} PLN${dnHasError ? _popBadge('Błąd wyceny w grupie ' + displayDn) : ''}`;
         }
         totalOverallNetto += sumNettoDN;
     });
 
     const sumEl = document.getElementById('offer-total-popup-price');
     if (sumEl) {
-        sumEl.innerHTML = `${typeof fmt === 'function' ? escapeHtml(fmt(totalOverallNetto)) : escapeHtml(totalOverallNetto)} PLN`;
+        sumEl.innerHTML = `${typeof fmt === 'function' ? escapeHtml(fmt(totalOverallNetto)) : escapeHtml(totalOverallNetto)} PLN${popupHasPricingError ? _popBadge('Razem niepełne — studnia z błędem wyceny') : ''}`;
     }
 }
 
@@ -287,14 +299,24 @@ function renderOfferDiscountsPopupContent() {
             </div>
         </div>`;
 
+    const _isPopErr2 =
+        typeof isWellPricingError === 'function'
+            ? isWellPricingError
+            : function (_w, s) {
+                  return !!(s && s.error);
+              };
+    const _popBadge2 =
+        typeof pricingErrorBadge === 'function' ? pricingErrorBadge : function () { return ''; };
     diameters.forEach((dn) => {
         let sumNettoDN = 0;
+        let dnHasError = false;
         wells
             .filter((w) =>
                 dn === 'styczne' ? w.type === 'styczna' || w.dn === 'styczna' : w.dn == dn
             )
             .forEach((w) => {
                 const stats = _csPop(w);
+                if (_isPopErr2(w, stats)) dnHasError = true;
                 let transportCost = 0;
                 // Osobna pozycja: transport poza cenami w popupie rabatów.
                 const separateTransport =
@@ -312,7 +334,7 @@ function renderOfferDiscountsPopupContent() {
         const dnCount = dnWells.length;
         const dnAvgPrice = dnCount > 0 ? sumNettoDN / dnCount : 0;
 
-        if (sumNettoDN === 0) return;
+        if (sumNettoDN === 0 && !dnHasError) return;
 
         totalOverallNetto += sumNettoDN;
 
@@ -418,7 +440,7 @@ function renderOfferDiscountsPopupContent() {
                     <span id="offer-dn-count-${dn}" style="font-weight: var(--fw-extrabold); font-size: var(--fs-md); color: var(--text-primary);">${escapeHtml(dnCount)}× ${escapeHtml(displayDn)}</span>
                     <span id="offer-dn-avg-${dn}" style="font-size: var(--fs-sm); color: var(--text-secondary); font-weight: var(--fw-bold); opacity: 0.85;">śr. ${typeof fmt === 'function' ? escapeHtml(fmt(Math.round(dnAvgPrice))) : escapeHtml(Math.round(dnAvgPrice))} PLN</span>
                 </div>
-                <div id="offer-dn-price-${dn}" style="color: var(--success); font-weight: var(--fw-extrabold); font-size: var(--fs-md);">${typeof fmt === 'function' ? fmt(sumNettoDN) : sumNettoDN} PLN</div>
+                <div id="offer-dn-price-${dn}" style="color: var(--success); font-weight: var(--fw-extrabold); font-size: var(--fs-md);">${typeof fmt === 'function' ? fmt(sumNettoDN) : sumNettoDN} PLN${dnHasError ? _popBadge2('Błąd wyceny w grupie ' + displayDn) : ''}</div>
             </div>
             ${sectionsHtml}
         </div>`;

@@ -113,7 +113,22 @@ async function closeZleceniaModal() {
     }
 }
 
+// Wspolbiezne zapisy (double-click) wspoldziela jeden lot — bez tego kazdy
+// klik claimuje kolejny numer PZ (podwojny numer PZ, P1). Wzorzec
+// _pzSaveInFlight z orderZleceniaData.js:205-212.
+let _spoSaveInFlight = null;
+
 async function saveProductionOrder() {
+    if (_spoSaveInFlight) return _spoSaveInFlight;
+    _spoSaveInFlight = _saveProductionOrderInner();
+    try {
+        return await _spoSaveInFlight;
+    } finally {
+        _spoSaveInFlight = null;
+    }
+}
+
+async function _saveProductionOrderInner() {
     if (zleceniaSelectedIdx < 0 || !zleceniaElementsList[zleceniaSelectedIdx]) {
         showToast('Najpierw wybierz element z listy', 'error');
         return;

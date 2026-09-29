@@ -857,6 +857,50 @@ function _sanitizeDisc(disc) {
     return clean;
 }
 
+// PRECO error-state: calcWellStats zwraca price:0 + error (nie throw —
+// kontrakt throw E2 dotyczy tylko getterow rabatu). Callery biorace .price
+// bez checka sumowaly ciche 0 do totalu; ten helper + badge jawnie oznacza
+// studnie z bledem w UI. Uzywaja: pricingCalculator, offerDiscountsPopup,
+// offerTransport, offerSummaryTable.
+function isWellPricingError(well, stats) {
+    try {
+        if (stats && stats.error) return true;
+        if (well && well._pricingError) return true;
+        return false;
+    } catch (_e) {
+        return false;
+    }
+}
+
+function markWellPricingError(well, msg) {
+    try {
+        if (well && typeof well === 'object') well._pricingError = msg || true;
+    } catch (_e) {}
+}
+
+function clearWellPricingError(well) {
+    try {
+        if (well && typeof well === 'object') well._pricingError = false;
+    } catch (_e) {}
+}
+
+// Badge bledu ceny — wyglad jak discountCorruptBadge, kolor danger (nie cichy).
+function pricingErrorBadge(msg) {
+    const title = 'Błąd wyceny (PRECO): ' + String((msg && (msg.error || msg)) || 'brak ceny');
+    let safe = title;
+    try {
+        safe =
+            typeof escapeHtmlAttr === 'function'
+                ? escapeHtmlAttr(title)
+                : String(title).replace(/"/g, '&quot;');
+    } catch (_e) {}
+    return (
+        ' <span style="font-size: var(--fs-2xs); color:var(--danger); margin-left:0.3rem;" title="' +
+        safe +
+        '">(⚠ cena)</span>'
+    );
+}
+
 function _emptyWellStats(discountError) {
     return {
         price: 0,
@@ -882,6 +926,8 @@ function safeCalcWellStats(well) {
         const s = calcWellStats(well);
         if (isWellDiscountCorrupt(well)) s.discountError = true;
         else clearWellDiscountCorrupt(well);
+        if (s && s.error) markWellPricingError(well, s.error);
+        else clearWellPricingError(well);
         return s;
     } catch (e) {
         if (!(e instanceof RangeError)) throw e;
@@ -928,6 +974,10 @@ window.getTransitionHostPctSafe = getTransitionHostPctSafe;
 window.safePrecoPct = safePrecoPct;
 window.getItemAssessedPriceSafe = getItemAssessedPriceSafe;
 window.getItemPriceBreakdownSafe = getItemPriceBreakdownSafe;
+window.isWellPricingError = isWellPricingError;
+window.markWellPricingError = markWellPricingError;
+window.clearWellPricingError = clearWellPricingError;
+window.pricingErrorBadge = pricingErrorBadge;
 window.safeCalcWellStats = safeCalcWellStats;
 window.isWellDiscountCorrupt = isWellDiscountCorrupt;
 window.discountCorruptBadge = discountCorruptBadge;

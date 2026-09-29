@@ -29,6 +29,15 @@ function renderWellHeaderRow(
         if (_corr)
             badges +=
                 ' <span style="font-size: var(--fs-3xs); padding:1px 5px; border-radius: var(--radius-2xs); background:rgba(var(--danger-rgb), 0.2); color:var(--danger-hover); font-weight: var(--fw-bold); margin-left:0.3rem;" title="Nieprawidłowy zapis rabatu (legacy/draft) — cena bez rabatu">⚠ RABAT</span>';
+        // PRECO error-state: stats.error (price:0) — badge zamiast cichego 0.
+        const _perr =
+            (typeof isWellPricingError === 'function' && isWellPricingError(well, stats)) ||
+            (stats && stats.error);
+        if (_perr)
+            badges +=
+                typeof pricingErrorBadge === 'function'
+                    ? pricingErrorBadge(stats && stats.error)
+                    : ' <span style="font-size: var(--fs-2xs); color:var(--danger); margin-left:0.3rem;">(⚠ cena)</span>';
     } catch (_e) {}
     const errorCell = getWellErrorCell(well);
     const displayLp = lp !== undefined ? lp : i + 1;

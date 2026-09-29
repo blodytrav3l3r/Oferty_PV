@@ -222,3 +222,81 @@ describe('avrDeterminism', () => {
         expect(typeof c.explorationSeed).toBe('number');
     });
 });
+
+describe('dpDeterminism (wzorzec E4a: staly budzet iteracji, bez Date.now)', () => {
+    function synthRings(): any[] {
+        return [1000, 500, 250].map((h) => ({
+            id: 'K-' + h,
+            name: 'Krag ' + h,
+            componentType: 'krag',
+            dn: 1000,
+            height: h
+        }));
+    }
+
+    test('staly budzet DP_MAX_ITERATIONS pokrywa pelne przeszukanie, brak wall-clock', () => {
+        const src = fs.readFileSync(path.join(JS_DIR, 'ringOptimizer.js'), 'utf8');
+        const sb = makeCtx([]);
+        // Budzet istnieje, eksportowany, pokrywa duzy cap testowy (20020*3=60k).
+        expect(typeof sb.DP_MAX_ITERATIONS).toBe('number');
+        expect(sb.DP_MAX_ITERATIONS).toBeGreaterThanOrEqual(20020 * 3);
+        const m = src.match(/const DP_MAX_ITERATIONS\s*=\s*(\d+)/);
+        expect(m).not.toBeNull();
+        expect(parseInt(m![1], 10)).toBeGreaterThanOrEqual(20020 * 3);
+        // Brak wall-clock w solveDPRings i brak dawnego DP_TIMEOUT_MS.
+        const start = src.indexOf('function solveDPRings');
+        expect(start).toBeGreaterThan(-1);
+        const end = src.indexOf('function mapHeightsToProducts');
+        expect(end).toBeGreaterThan(start);
+        const dpBlock = src.slice(start, end);
+        expect(dpBlock).not.toMatch(/Date\.now/);
+        expect(dpBlock).not.toMatch(/performance\.now/);
+        expect(dpBlock).not.toMatch(/DP_TIMEOUT_MS/);
+        expect(src).not.toMatch(/DP_TIMEOUT_MS/);
+        // Greedy fallback istnieje i jest deterministyczny (bez zegara).
+        expect(typeof sb.solveGreedyRings).toBe('function');
+        const gStart = src.indexOf('function solveGreedyRings');
+        expect(gStart).toBeGreaterThan(-1);
+        const gEnd = src.indexOf('function solveDPRings');
+        const greedyBlock = src.slice(gStart, gEnd);
+        expect(greedyBlock).not.toMatch(/Date\.now/);
+        expect(greedyBlock).not.toMatch(/Math\.random/);
+    });
+
+    test('duzy cap + wymuszony wolny zegar daje deterministyczny wynik', () => {
+        const sb = makeCtx([]);
+        const rings = synthRings();
+        const run = () => sb.optimizeRingsForDistance(20000, rings, 50, 20);
+        const first = canonical(run());
+        expect(run().success).toBe(true);
+        busyWait(200);
+        try {
+            vm.runInContext(
+                'var __realNowDp = Date.now; Date.now = function () { return __realNowDp() + 10000; };',
+                sb
+            );
+            expect(canonical(run())).toBe(first);
+        } finally {
+            vm.runInContext('Date.now = __realNowDp; delete globalThis.__realNowDp;', sb);
+        }
+        expect(canonical(run())).toBe(first);
+    });
+
+    test('przekroczony budzet → deterministyczny greedy (nie ciche success:false)', () => {
+        const sb = makeCtx([]);
+        const rings = synthRings();
+        // cap 300020 x 3 heights = 900k iteracji > DP_MAX_ITERATIONS → greedy.
+        const run = () => sb.optimizeRingsForDistance(300000, rings, 50, 20);
+        const first = canonical(run());
+        expect(run().success).toBe(true);
+        try {
+            vm.runInContext(
+                'var __realNowDp2 = Date.now; Date.now = function () { return __realNowDp2() + 60000; };',
+                sb
+            );
+            expect(canonical(run())).toBe(first);
+        } finally {
+            vm.runInContext('Date.now = __realNowDp2; delete globalThis.__realNowDp2;', sb);
+        }
+    });
+});

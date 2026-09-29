@@ -121,14 +121,25 @@ window.updateModalTransportDetails = function () {
     const totalValEl = document.getElementById('transport-modal-total-val');
     if (totalValEl) {
         let productsNetto = 0;
+        let trHasPricingError = false;
+        const _isTrErr =
+            typeof isWellPricingError === 'function'
+                ? isWellPricingError
+                : function (_w, s) {
+                      return !!(s && s.error);
+                  };
         if (typeof wells !== 'undefined' && typeof _csTr === 'function') {
             wells.forEach((w) => {
-                productsNetto += _csTr(w).price;
+                const st = _csTr(w);
+                if (_isTrErr(w, st)) trHasPricingError = true;
+                productsNetto += st.price;
             });
         }
         totalValEl.textContent =
             (typeof fmt === 'function' ? fmt : (v) => v)(productsNetto + totalTransportCost) +
-            ' PLN';
+            ' PLN' +
+            (trHasPricingError ? ' (⚠ BŁĄD CENY)' : '');
+        totalValEl.style.color = trHasPricingError ? 'var(--danger)' : '';
     }
 };
 

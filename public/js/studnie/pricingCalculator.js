@@ -11,15 +11,27 @@
  * @param {number} transportKm
  * @param {number} transportRate
  * @param {string} transportMode
- * @returns {{totalNetto:number,totalWeight:number,totalTransportCostForOffer:number,wellsForExport:Array}}
+ * @returns {{totalNetto:number,totalWeight:number,totalTransportCostForOffer:number,wellsForExport:Array,hasPricingError:boolean,errorWells:Array}}
  */
 function calculateOfferPricing(wells, transportKm, transportRate, transportMode) {
     let totalNetto = 0;
     let totalWeight = 0;
     // Render/export: corrupt stored → safe fallback 0% (kontrakt throw nietknięty).
     const _calcStats = typeof safeCalcWellStats === 'function' ? safeCalcWellStats : calcWellStats;
+    const _isPricingErr =
+        typeof isWellPricingError === 'function'
+            ? isWellPricingError
+            : function (_w, s) {
+                  return !!(s && s.error);
+              };
+    let hasPricingError = false;
+    const errorWells = [];
     wells.forEach(function (well) {
         const stats = _calcStats(well);
+        if (_isPricingErr(well, stats)) {
+            hasPricingError = true;
+            errorWells.push(well && well.id !== undefined ? well.id : null);
+        }
         totalNetto += stats.price;
         totalWeight += stats.weight;
     });
@@ -79,6 +91,7 @@ function calculateOfferPricing(wells, transportKm, transportRate, transportMode)
             typeof computePrecoWellContext === 'function'
                 ? computePrecoWellContext(well)
                 : undefined;
+        const _wPricingErr = _isPricingErr(well, stats);
         return {
             name: well.name,
             dn: well.dn,
@@ -86,6 +99,7 @@ function calculateOfferPricing(wells, transportKm, transportRate, transportMode)
             weight: stats.weight,
             zwienczenie: zwienczenie,
             price: stats.price,
+            pricingError: _wPricingErr ? stats.error || true : false,
             transportCost: wellTransportCost,
             totalPrice: stats.price + wellTransportCost,
             rzednaWlazu: well.rzednaWlazu,
@@ -185,7 +199,9 @@ function calculateOfferPricing(wells, transportKm, transportRate, transportMode)
         totalNetto: totalNetto,
         totalWeight: totalWeight,
         totalTransportCostForOffer: totalTransportCostForOffer,
-        wellsForExport: wellsForExport
+        wellsForExport: wellsForExport,
+        hasPricingError: hasPricingError,
+        errorWells: errorWells
     };
 }
 

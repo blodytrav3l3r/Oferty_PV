@@ -133,8 +133,18 @@ function renderOfferSummaryTable(order, orderChanges, totals) {
 
     // Render: corrupt stored → fallback 0% + flaga (kontrakt throw nietknięty).
     const _csTbl = typeof safeCalcWellStats === 'function' ? safeCalcWellStats : calcWellStats;
+    const _isTblErr =
+        typeof isWellPricingError === 'function'
+            ? isWellPricingError
+            : function (_w, s) {
+                  return !!(s && s.error);
+              };
+    // PRECO error-state: stats.error (price:0) nie wchodzi cicho do RAZEM —
+    // flaga na wiersz (badge w renderWellHeaderRow) + badge w stopce.
+    let tblHasPricingError = false;
     sortedWells.forEach(({ well, originalIndex }, displayIndex) => {
         const stats = _csTbl(well);
+        if (_isTblErr(well, stats)) tblHasPricingError = true;
         const wellTransportCost =
             totals.globalWeight > 0
                 ? totals.totalTransportCost * (stats.weight / totals.globalWeight)
@@ -277,7 +287,8 @@ function renderOfferSummaryTable(order, orderChanges, totals) {
         dnGroups,
         showPriceComparison,
         transportInfo,
-        separateTransport
+        separateTransport,
+        tblHasPricingError
     );
     html += '</tbody></table></div>';
     return html;
@@ -291,7 +302,8 @@ function renderOfferSummaryFooter(
     dnGroups,
     showPriceComparison,
     transportInfo,
-    separateTransport
+    separateTransport,
+    hasPricingError
 ) {
     let baseColspan = 7;
     if (showOrderSelection) baseColspan += 1;
@@ -411,10 +423,14 @@ function renderOfferSummaryFooter(
         </tr>`;
     }
 
+    const _footBadge =
+        hasPricingError && typeof pricingErrorBadge === 'function'
+            ? pricingErrorBadge('Razem niepełne — studnia z błędem wyceny')
+            : '';
     html += `<tr class="border-top-glass2" id="offer-total-row">
           <td colspan="${baseColspan}" style="font-weight: var(--fw-bold); font-size: var(--fs-xl); color:var(--text-primary); padding:1rem 0.5rem; white-space:nowrap;">RAZEM (${count} studni)</td>
           ${totalOfferPriceCell}
-          <td class="text-right" style="font-weight: var(--fw-extrabold); font-size: var(--fs-2xl); color:var(--success); white-space:nowrap; padding:0.5rem 0.75rem;">${fmt(price)} PLN</td>
+          <td class="text-right" style="font-weight: var(--fw-extrabold); font-size: var(--fs-2xl); color:var(--success); white-space:nowrap; padding:0.5rem 0.75rem;">${fmt(price)} PLN${_footBadge}</td>
           ${totalPriceDiffCell}
           <td class="text-right" style="font-weight: var(--fw-bold); font-size: var(--fs-lg); color:var(--text-muted); white-space:nowrap; padding:0.5rem 0.75rem;">${fmtInt(weight)} kg</td>
         </tr>`;

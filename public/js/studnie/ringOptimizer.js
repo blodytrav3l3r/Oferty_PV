@@ -283,7 +283,29 @@ function findAlternativeDPSolution(
  * @param {Array} availableRings - pełna lista kręgów (do mapowania na produkty)
  * @returns {{ success: boolean, selectedRings: Array }}
  */
-const DP_TIMEOUT_MS = 250; // ponytail: global timeout, per-well timeout if DP becomes a bottleneck
+// Staly budzet iteracji zamiast wall-clock (dawny limit 250 ms roznicowal
+// wynik od obciazenia CPU). Pomiar pelnego przeszukania:
+// cap~3020 x heights~5 = ~15k iteracji — 500k daje 30x zapasu (wzorzec E4a).
+const DP_MAX_ITERATIONS = 500000;
+if (typeof window !== 'undefined') window.DP_MAX_ITERATIONS = DP_MAX_ITERATIONS;
+
+// Deterministyczny fallback greedy (bez zegara): najwieksze kregi tak dlugo,
+// jak mieszcza sie w maxAllowed; sukces gdy total w [minAllowed, maxAllowed].
+function solveGreedyRings(heights, minAllowed, maxAllowed, availableRings) {
+    const picked = [];
+    let total = 0;
+    for (const ringH of heights) {
+        while (total + ringH <= maxAllowed) {
+            picked.push(ringH);
+            total += ringH;
+        }
+        if (total >= minAllowed) break;
+    }
+    if (total < minAllowed || total > maxAllowed || picked.length === 0) {
+        return { success: false, selectedRings: [] };
+    }
+    return { success: true, selectedRings: mapHeightsToProducts(picked, availableRings) };
+}
 
 function solveDPRings(heights, minAllowed, maxAllowed, availableRings) {
     if (minAllowed <= 0) {
@@ -291,22 +313,22 @@ function solveDPRings(heights, minAllowed, maxAllowed, availableRings) {
     }
 
     const cap = maxAllowed;
-    const startTime = Date.now();
 
     const dp = new Array(cap + 1).fill(null);
     dp[0] = { score: 0, prevH: -1, addedHeight: 0 };
 
+    let dpIterations = 0;
     for (let h = 1; h <= cap; h++) {
-        if (Date.now() - startTime > DP_TIMEOUT_MS) {
-            logger.warn(
-                'ringOptimizer',
-                '[solveDPRings] Timeout po',
-                DP_TIMEOUT_MS,
-                'ms, przejscie do greedy fallback'
-            );
-            return { success: false, selectedRings: [] };
-        }
         for (const ringH of heights) {
+            if (++dpIterations > DP_MAX_ITERATIONS) {
+                logger.warn(
+                    'ringOptimizer',
+                    '[solveDPRings] Budzet iteracji',
+                    DP_MAX_ITERATIONS,
+                    'przekroczony, przejscie do greedy fallback'
+                );
+                return solveGreedyRings(heights, minAllowed, maxAllowed, availableRings);
+            }
             if (ringH > h) continue;
             const prev = dp[h - ringH];
             if (prev === null) continue;
