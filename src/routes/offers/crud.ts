@@ -4,7 +4,7 @@ import { logAudit } from '../../services/auditService';
 import { requireAuth, AuthenticatedRequest } from '../../middleware/auth';
 import { logger } from '../../utils/logger';
 import { WRITE_LIMITER } from '../../middleware/rateLimiters';
-import { canReadWithShare } from '../../utils/ownership';
+import { canReadWithShare, canWriteDoc } from '../../utils/ownership';
 import { searchCache } from '../../utils/searchCache';
 import { removeFts5 } from '../../utils/fts5Sync';
 import { hasProductionOrdersForOffer } from '../../utils/productionOrderGuard';
@@ -160,7 +160,7 @@ router.delete('/:id', requireAuth, writeOffersLimiter, async (req, res) => {
                 return res.status(404).json({ error: 'Oferta studni nie istnieje' });
             }
 
-            if (authReq.user?.role !== 'admin' && offer.userId !== authReq.user?.id) {
+            if (!canWriteDoc(authReq.user, offer.userId)) {
                 return res.status(403).json({ error: 'Brak uprawnien do usuniecia tej oferty' });
             }
 
@@ -238,7 +238,7 @@ router.delete('/:id', requireAuth, writeOffersLimiter, async (req, res) => {
         });
         if (!offer) return res.status(404).json({ error: 'Oferta nie istnieje' });
 
-        if (authReq.user?.role !== 'admin' && offer.userId !== authReq.user?.id) {
+        if (!canWriteDoc(authReq.user, offer.userId)) {
             return res.status(403).json({ error: 'Brak uprawnien do usuniecia tej oferty' });
         }
 

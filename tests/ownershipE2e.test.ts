@@ -310,6 +310,29 @@ describe('Ownership E2E — offers routes', () => {
             expect(res.statusCode).toBe(403);
             expect(prisma.offers_rel.delete).not.toHaveBeenCalled();
         });
+
+        it('pro-opiekun CAN delete sub-user offer (canWriteDoc, nie ręczny userId)', async () => {
+            currentUser = { id: 'pro1', role: 'pro', subUsers: ['sub-user'] };
+            (prisma.offers_rel.findUnique as jest.Mock).mockResolvedValue({
+                ...otherUsersOffer,
+                userId: 'sub-user'
+            });
+            (prisma.offer_items_rel.findMany as jest.Mock).mockResolvedValue([]);
+            (prisma.orders_rury_rel.count as jest.Mock).mockResolvedValue(0);
+            (prisma.offer_items_rel.deleteMany as jest.Mock).mockResolvedValue({});
+            (prisma.offers_rel.delete as jest.Mock).mockResolvedValue({});
+            const res = await request(app).delete('/api/offers/o-sub');
+            expect(res.statusCode).toBe(200);
+            expect(prisma.offers_rel.delete).toHaveBeenCalled();
+        });
+
+        it('pro CANNOT delete unrelated user offer (403, brak zapisu)', async () => {
+            currentUser = { id: 'pro1', role: 'pro', subUsers: ['sub-user'] };
+            (prisma.offers_rel.findUnique as jest.Mock).mockResolvedValue(otherUsersOffer);
+            const res = await request(app).delete('/api/offers/o-other');
+            expect(res.statusCode).toBe(403);
+            expect(prisma.offers_rel.delete).not.toHaveBeenCalled();
+        });
     });
 
     describe('POST /api/offers/:id/duplicate', () => {

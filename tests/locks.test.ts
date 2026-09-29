@@ -351,6 +351,32 @@ describe('Twarda blokada edycji (doc_locks)', () => {
         expect(res.body.lock).toBeUndefined();
     });
 
+    test('P1.5: heartbeat bez read-access → 404, holder nie wycieka', async () => {
+        const app = createApp();
+        await request(app).post('/api/locks/acquire').send({ docType: 'offer', docId: 'o1' });
+        asUser(userB);
+        (canReadWithShare as jest.Mock).mockResolvedValueOnce(false);
+        const res = await request(app)
+            .post('/api/locks/heartbeat')
+            .send({ docType: 'offer', docId: 'o1' });
+        expect(res.status).toBe(404);
+        expect(res.body.error).toBe('Dokument nie znaleziony');
+        expect(res.body.holder).toBeUndefined();
+    });
+
+    test('P1.5: release bez read-access → 404, lock zostaje', async () => {
+        const app = createApp();
+        await request(app).post('/api/locks/acquire').send({ docType: 'offer', docId: 'o1' });
+        asUser(userB);
+        (canReadWithShare as jest.Mock).mockResolvedValueOnce(false);
+        const res = await request(app)
+            .post('/api/locks/release')
+            .send({ docType: 'offer', docId: 'o1' });
+        expect(res.status).toBe(404);
+        expect(res.body.error).toBe('Dokument nie znaleziony');
+        expect(store.has(keyOf('offer', 'o1'))).toBe(true);
+    });
+
     test('P1.5: heartbeat obcego na wygaslym locku → 404 (nie 423)', async () => {
         const app = createApp();
         await request(app).post('/api/locks/acquire').send({ docType: 'offer', docId: 'o1' });

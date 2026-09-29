@@ -230,5 +230,67 @@ describe('Clients CRUD — wspólna baza (Wariant A, globalny dostęp)', () => {
                 data: { clientId: null }
             });
         });
+
+        it('P0: usuwanie cudzego klienta (pominięcie ID) przez nie-admina → 403, zero zapisów', async () => {
+            const txMock = {
+                $queryRaw: jest.fn().mockImplementation(async (strings: any) => {
+                    const sql = Array.isArray(strings) ? strings.join(' ') : String(strings);
+                    if (sql.includes('SELECT id'))
+                        return [
+                            { id: 'c-obcy', userId: 'userB' },
+                            { id: 'c-moj', userId: 'user-id' }
+                        ];
+                    return [{ id: 'c-moj' }];
+                }),
+                $executeRaw: jest.fn().mockResolvedValue(1),
+                offers_rel: { updateMany: jest.fn().mockResolvedValue({ count: 0 }) },
+                offers_studnie_rel: { updateMany: jest.fn().mockResolvedValue({ count: 0 }) }
+            };
+            (prisma.$transaction as jest.Mock).mockImplementation(async (fn: (tx: any) => any) =>
+                fn(txMock)
+            );
+
+            const res = await request(app)
+                .put('/api/clients')
+                .send({ data: [{ id: 'c-moj', name: 'Mój' }] });
+
+            expect(res.statusCode).toBe(403);
+            expect(res.body.error).toMatch(/cudzych klientów/);
+            expect(txMock.offers_rel.updateMany).not.toHaveBeenCalled();
+            expect(txMock.offers_studnie_rel.updateMany).not.toHaveBeenCalled();
+            expect(txMock.$executeRaw).not.toHaveBeenCalled();
+        });
+
+        it('P0: pro-opiekun usuwa klienta podwładnego → 200', async () => {
+            mockUser.role = 'pro';
+            mockUser.subUsers = ['userB'];
+            const txMock = {
+                $queryRaw: jest.fn().mockImplementation(async (strings: any) => {
+                    const sql = Array.isArray(strings) ? strings.join(' ') : String(strings);
+                    if (sql.includes('SELECT id'))
+                        return [
+                            { id: 'c-obcy', userId: 'userB' },
+                            { id: 'c-moj', userId: 'user-id' }
+                        ];
+                    return [{ id: 'c-moj' }];
+                }),
+                $executeRaw: jest.fn().mockResolvedValue(1),
+                offers_rel: { updateMany: jest.fn().mockResolvedValue({ count: 0 }) },
+                offers_studnie_rel: { updateMany: jest.fn().mockResolvedValue({ count: 0 }) }
+            };
+            (prisma.$transaction as jest.Mock).mockImplementation(async (fn: (tx: any) => any) =>
+                fn(txMock)
+            );
+
+            const res = await request(app)
+                .put('/api/clients')
+                .send({ data: [{ id: 'c-moj', name: 'Mój' }] });
+
+            expect(res.statusCode).toBe(200);
+            expect(txMock.offers_rel.updateMany).toHaveBeenCalledWith({
+                where: { clientId: { in: ['c-obcy'] } },
+                data: { clientId: null }
+            });
+        });
     });
 });

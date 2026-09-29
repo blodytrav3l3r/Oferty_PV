@@ -7,6 +7,7 @@ import { validateData } from '../validators/authSchema';
 import { WRITE_LIMITER } from '../middleware/rateLimiters';
 import { clientsBatchSchema } from '../validators/offerSchemas';
 import { logger } from '../utils/logger';
+import { canDeleteDoc } from '../utils/ownership';
 
 const router = express.Router();
 
@@ -79,61 +80,82 @@ router.put(
             // Wspólna baza klientów — wszyscy widzą i edytują wszystkich (Wariant A).
             // P0: upsert NIE przepisuje właściciela istniejących wierszy (userId
             // z DB zostaje); userId edytującego dostają wyłącznie NOWE wiersze.
-            await prisma.$transaction(async (tx) => {
-                const existingClients = await tx.$queryRaw`SELECT id, "userId" FROM clients_rel`;
-                const existingOwners = new Map(
-                    (existingClients as { id: string; userId: string | null }[]).map((c) => [
-                        c.id,
-                        c.userId ?? null
-                    ])
-                );
-                const existingIds = [...existingOwners.keys()];
-                const incomingIds = arr.map((c: { id?: string }) => c.id).filter(Boolean);
-                const toDelete = existingIds.filter((id) => !incomingIds.includes(id));
+            try {
+                await prisma.$transaction(async (tx) => {
+                    const existingClients =
+                        await tx.$queryRaw`SELECT id, "userId" FROM clients_rel`;
+                    const existingOwners = new Map(
+                        (existingClients as { id: string; userId: string | null }[]).map((c) => [
+                            c.id,
+                            c.userId ?? null
+                        ])
+                    );
+                    const existingIds = [...existingOwners.keys()];
+                    const incomingIds = arr.map((c: { id?: string }) => c.id).filter(Boolean);
+                    const toDelete = existingIds.filter((id) => !incomingIds.includes(id));
 
-                if (toDelete.length > 0) {
-                    // Semantyka: link clientId NULL-uj (snapshot clientName/NIP/NIP
-                    // w ofertach zostaje — historia czytelna). Bez tego offers_rel /
-                    // offers_studnie_rel.clientId wiszą (kolumna bez FK): PDF/DOCX są
-                    // null-safe (findUnique w ternary), ale dane gniją po cichu.
-                    // FK clients_rel jako rekomendacja migracyjna (poza zakresem).
-                    await tx.offers_rel.updateMany({
-                        where: { clientId: { in: toDelete } },
-                        data: { clientId: null }
-                    });
-                    await tx.offers_studnie_rel.updateMany({
-                        where: { clientId: { in: toDelete } },
-                        data: { clientId: null }
-                    });
-                    for (const id of toDelete) {
-                        await tx.$executeRaw`DELETE FROM clients_rel WHERE id = ${id}`;
+                    // P0: DELETE cudzych wierszy tylko admin/pro-opiekun (canDeleteDoc).
+                    // Decyzja: Wariant A (wspólna baza) dotyczy EDYCJI współdzielonych
+                    // danych — upsert poniżej celowo bez guardu (clientsIdor.test.ts:
+                    // "nadpisuje klienta innego użytkownika"). Usunięcie cudzego
+                    // wiersza przez pominięcie ID to IDOR → 403 fail-closed PRZED
+                    // jakimkolwiek zapisem. Bezpańskie (userId null, legacy)
+                    // fail-closed: tylko admin (spójnie z ownership.ts).
+                    const forbiddenDelete = toDelete.filter(
+                        (id) => !canDeleteDoc(authReq.user, existingOwners.get(id))
+                    );
+                    if (forbiddenDelete.length > 0) {
+                        throw {
+                            status: 403,
+                            message: 'Brak uprawnień do usuwania cudzych klientów'
+                        };
                     }
-                }
 
-                for (const c of arr) {
-                    let docId = c.id;
-                    if (!docId) {
-                        docId = crypto.randomUUID();
-                    }
-                    // P0: właściciel z DB dla istniejących (w tym null = bezpański
-                    // zostaje bezpański); edytujący — tylko dla nowych wierszy.
-                    const ownerId = existingOwners.has(docId) ? existingOwners.get(docId) : userId;
-
-                    // Zawsze normalizuj createdAt do stringa ISO 8601
-                    let parsedDate = now;
-                    if (c.createdAt != null && c.createdAt !== '') {
-                        const num = Number(c.createdAt);
-                        if (!isNaN(num) && num > 0) {
-                            // Obsłuż zarówno timestampy w sekundach, jak i milisekundach
-                            const ms = num > 1e12 ? num : num * 1000;
-                            parsedDate = new Date(ms).toISOString();
-                        } else {
-                            const d = new Date(c.createdAt);
-                            if (!isNaN(d.getTime())) parsedDate = d.toISOString();
+                    if (toDelete.length > 0) {
+                        // Semantyka: link clientId NULL-uj (snapshot clientName/NIP/NIP
+                        // w ofertach zostaje — historia czytelna). Bez tego offers_rel /
+                        // offers_studnie_rel.clientId wiszą (kolumna bez FK): PDF/DOCX są
+                        // null-safe (findUnique w ternary), ale dane gniją po cichu.
+                        // FK clients_rel jako rekomendacja migracyjna (poza zakresem).
+                        await tx.offers_rel.updateMany({
+                            where: { clientId: { in: toDelete } },
+                            data: { clientId: null }
+                        });
+                        await tx.offers_studnie_rel.updateMany({
+                            where: { clientId: { in: toDelete } },
+                            data: { clientId: null }
+                        });
+                        for (const id of toDelete) {
+                            await tx.$executeRaw`DELETE FROM clients_rel WHERE id = ${id}`;
                         }
                     }
 
-                    await tx.$queryRaw`
+                    for (const c of arr) {
+                        let docId = c.id;
+                        if (!docId) {
+                            docId = crypto.randomUUID();
+                        }
+                        // P0: właściciel z DB dla istniejących (w tym null = bezpański
+                        // zostaje bezpański); edytujący — tylko dla nowych wierszy.
+                        const ownerId = existingOwners.has(docId)
+                            ? existingOwners.get(docId)
+                            : userId;
+
+                        // Zawsze normalizuj createdAt do stringa ISO 8601
+                        let parsedDate = now;
+                        if (c.createdAt != null && c.createdAt !== '') {
+                            const num = Number(c.createdAt);
+                            if (!isNaN(num) && num > 0) {
+                                // Obsłuż zarówno timestampy w sekundach, jak i milisekundach
+                                const ms = num > 1e12 ? num : num * 1000;
+                                parsedDate = new Date(ms).toISOString();
+                            } else {
+                                const d = new Date(c.createdAt);
+                                if (!isNaN(d.getTime())) parsedDate = d.toISOString();
+                            }
+                        }
+
+                        await tx.$queryRaw`
                     INSERT INTO clients_rel (id, userId, name, nip, address, contact, clientNumber, phone, email, createdAt, updatedAt)
                     VALUES (${docId}, ${ownerId}, ${c.name || ''}, ${c.nip || ''}, ${c.address || ''}, ${c.contact || ''}, ${c.clientNumber || ''}, ${c.phone || ''}, ${c.email || ''}, ${parsedDate}, ${now})
                     ON CONFLICT(id) DO UPDATE SET
@@ -148,9 +170,17 @@ router.put(
                         updatedAt = ${now}
                     RETURNING id
                 `;
-                    upserted.push({ id: docId });
+                        upserted.push({ id: docId });
+                    }
+                });
+            } catch (e: unknown) {
+                if ((e as { status?: number }).status === 403) {
+                    return res
+                        .status(403)
+                        .json({ error: (e as { message?: string }).message || 'Brak uprawnień' });
                 }
-            });
+                throw e;
+            }
 
             res.json({ ok: true, count: upserted.length });
         } catch (e: unknown) {

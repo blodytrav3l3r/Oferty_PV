@@ -63,6 +63,18 @@ router.post(
         const authReq = req as AuthenticatedRequest;
         try {
             const { docType, docId } = req.body as { docType: DocLockType; docId: string };
+            // P1.5: ten sam guard read-access co acquire/GET — heartbeatDocLock
+            // i releaseDocLock bramkują wyłącznie tabelę doc_locks (docLocks.ts),
+            // bez odczytu właściciela: obcy heartbeat dostawał 423 z holderem
+            // (oracle: potwierdzenie istnienia locka + userId holdera).
+            // 404 nierozróżnialne jak w acquire.
+            const ownerId = await resolveDocOwnerUserId(prisma, docType, docId);
+            if (ownerId !== undefined) {
+                const allowed =
+                    ownerId !== null &&
+                    (await canReadWithShare(authReq.user, ownerId, docType, docId));
+                if (!allowed) return res.status(404).json({ error: 'Dokument nie znaleziony' });
+            }
             const { lock } = await heartbeatDocLock(prisma, {
                 docType,
                 docId,
@@ -82,6 +94,14 @@ router.post('/release', requireAuth, limiter, validateData(docLockBodySchema), a
     const authReq = req as AuthenticatedRequest;
     try {
         const { docType, docId } = req.body as { docType: DocLockType; docId: string };
+        // P1.5: guard read-access jak w heartbeat (release też bez bramki read
+        // w docLocks.ts — probing obcych docId sondował istnienie blokad).
+        const ownerId = await resolveDocOwnerUserId(prisma, docType, docId);
+        if (ownerId !== undefined) {
+            const allowed =
+                ownerId !== null && (await canReadWithShare(authReq.user, ownerId, docType, docId));
+            if (!allowed) return res.status(404).json({ error: 'Dokument nie znaleziony' });
+        }
         const { released } = await releaseDocLock(prisma, { docType, docId, user: authReq.user! });
         res.json({ ok: true, released });
     } catch (e: unknown) {
