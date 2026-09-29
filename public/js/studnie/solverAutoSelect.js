@@ -88,7 +88,12 @@ window.autoSelectComponents = async function autoSelectComponents(autoTriggered 
 
         const rzDna = well.rzednaDna != null ? well.rzednaDna : 0;
 
-        if (well.rzednaWlazu == null || well.rzednaWlazu <= rzDna) {
+        if (
+            well.rzednaWlazu == null ||
+            !Number.isFinite(well.rzednaWlazu) ||
+            !Number.isFinite(rzDna) ||
+            well.rzednaWlazu <= rzDna
+        ) {
             if (!autoTriggered)
                 showToast(
                     'Ustaw rzędną włazu, aby auto-dobrać elementy (Rzędna Dna przyjęta jako 0)',
@@ -98,7 +103,7 @@ window.autoSelectComponents = async function autoSelectComponents(autoTriggered 
         }
 
         const requiredMm = Math.round((well.rzednaWlazu - rzDna) * 1000);
-        if (requiredMm < 500) {
+        if (!Number.isFinite(requiredMm) || requiredMm < 500) {
             if (!autoTriggered) showToast('Wymagana wysokość za mała (min. 500mm)', 'error');
             return;
         }
