@@ -41,7 +41,7 @@ function sendInternalError(res: Response, scope: string, e: unknown): void {
 
 const batchCandidateSchema = z.object({
     id: z.number(),
-    features: z.array(z.number()).length(ML_CONSTANTS.FEATURE_COUNT),
+    features: z.array(z.number().finite()).length(ML_CONSTANTS.FEATURE_COUNT),
     wellType: z.string().optional(),
     warehouse: z.string().optional(),
     dn: z.number().optional(),
@@ -132,36 +132,65 @@ router.post(
                 activeModel.bias
             );
 
-            const scores = candidates.map((c) => {
+            // Faza 1 (bez efektów ubocznych): odczyt cache albo predykcja.
+            // Non-finite score (NaN/Inf z modelu) → 422 ZANIM cokolwiek
+            // trafi do predictionCache / wellScores / rankingu.
+            const resolved: Array<{
+                c: (typeof candidates)[number];
+                key: string;
+                score: number;
+                version: string;
+                cached: boolean;
+            }> = [];
+            for (const c of candidates) {
                 const key = cacheKey(c.features, c.wellType, c.warehouse, c.dn);
                 const cached = getCached(key);
-                if (cached) {
-                    // Zapamiętaj serwerowy score dla wellId — reward nie ufa klienckiemu
-                    // scoreBefore (poisoning sliding AUC przez sfałszowany payload).
-                    if (c.wellId) setWellScore(c.wellId, cached.result[0].score);
-                    return {
-                        id: c.id,
-                        score: cached.result[0].score,
+                const cachedScore = cached?.result[0]?.score;
+                if (cached && typeof cachedScore === 'number' && Number.isFinite(cachedScore)) {
+                    resolved.push({
+                        c,
+                        key,
+                        score: cachedScore,
                         version: cached.result[0].version,
-                        featureVersion: featureVersion || 'unknown',
                         cached: true
-                    };
+                    });
+                    continue;
                 }
                 const score = model.predict(
                     normalizeFeatures(c.features, activeModel.featureMins, activeModel.featureMaxs)
                 );
-                if (c.wellId) setWellScore(c.wellId, parseFloat(score.toFixed(4)));
-                const result = {
-                    id: c.id,
+                if (!Number.isFinite(score)) {
+                    res.status(422).json({ error: 'NON_FINITE_SCORE', candidateId: c.id });
+                    return;
+                }
+                resolved.push({
+                    c,
+                    key,
                     score: parseFloat(score.toFixed(4)),
                     version: activeModel.version,
-                    featureVersion: featureVersion || 'unknown'
-                };
-                setCache(key, {
-                    result: [{ score: result.score, version: result.version }],
-                    timestamp: Date.now()
+                    cached: false
                 });
-                return result;
+            }
+
+            // Faza 2: wszystkie score'y skończone — dopiero tu zapisy
+            // (wellScores = ranking serwerowy, predictionCache).
+            const scores = resolved.map((r) => {
+                // Zapamiętaj serwerowy score dla wellId — reward nie ufa klienckiemu
+                // scoreBefore (poisoning sliding AUC przez sfałszowany payload).
+                if (r.c.wellId) setWellScore(r.c.wellId, r.score);
+                if (!r.cached) {
+                    setCache(r.key, {
+                        result: [{ score: r.score, version: r.version }],
+                        timestamp: Date.now()
+                    });
+                }
+                return {
+                    id: r.c.id,
+                    score: r.score,
+                    version: r.version,
+                    featureVersion: featureVersion || 'unknown',
+                    ...(r.cached ? { cached: true } : {})
+                };
             });
 
             res.json({ scores });

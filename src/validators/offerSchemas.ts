@@ -59,7 +59,7 @@ export const offerItemSchema = z
         id: z.string().optional(),
         productId: z.string().min(1, 'ID produktu jest wymagane'),
         quantity: z.number().positive('Ilość musi być dodatnia'),
-        discount: z.number().min(0).max(100).optional(),
+        discount: z.number().min(0).max(100).finite().optional(),
         price: z.number().nonnegative('Cena nie może być ujemna').optional()
     })
     .passthrough(); // P0.3(A): celowy passthrough — payload niesie pola domenowe/serwerowe (uid/id/version), walidacja bramkuje rdzeń
@@ -102,6 +102,7 @@ export const wellComponentSchema = z
         position: z.number().int().nonnegative().optional(),
         quantity: z.number().int().positive().default(1),
         price: z.number().nonnegative().optional(),
+        discount: z.number().min(0).max(100).finite().optional(),
         isOverwritten: z.boolean().optional(),
         overwrittenCost: z.number().nonnegative().optional()
     })
@@ -130,6 +131,7 @@ export const wellDataSchema = z
         type: z.string().optional(),
         totalPrice: z.number().nonnegative().optional(),
         price: z.number().nonnegative().optional(),
+        discount: z.number().min(0).max(100).finite().optional(),
         zwienczenie: z.string().optional(),
         components: z.array(wellComponentSchema).optional(),
         passages: z.array(passageConfigSchema).optional(),

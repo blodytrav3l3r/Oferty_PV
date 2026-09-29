@@ -301,7 +301,13 @@ const nullishString = z.preprocess(
 );
 const nullishNumber = z.preprocess(
     (v) => (v === null || v === '' || (typeof v === 'number' && Number.isNaN(v)) ? undefined : v),
-    z.number().nonnegative().optional()
+    z.number().nonnegative().finite().optional()
+);
+// Rabat % — ten sam wzorzec co offerItemSchema (0-100, finite); null/''/NaN z
+// formularzy → undefined (brak rabatu), jak w nullishNumber.
+const nullishDiscount = z.preprocess(
+    (v) => (v === null || v === '' || (typeof v === 'number' && Number.isNaN(v)) ? undefined : v),
+    z.number().min(0).max(100).finite().optional()
 );
 const nullishBoolean = z.preprocess(
     (v) => (v === null || v === '' ? undefined : v),
@@ -321,7 +327,7 @@ export const ruryOfferExportItemSchema = z.object({
         (v) => (v === null || v === '' ? 0 : v),
         z.number().positive('Ilość musi być dodatnia')
     ),
-    discount: nullishNumber,
+    discount: nullishDiscount,
     weight: nullishNumber,
     category: nullishString,
     pehdType: nullishEnum(['PEHD-3MM', 'PEHD-4MM']),
@@ -365,7 +371,7 @@ export const studnieOfferExportItemSchema = z.object({
         (v) => (v === null || v === '' ? 1 : v),
         z.number().positive('Ilość musi być dodatnia')
     ),
-    discount: nullishNumber,
+    discount: nullishDiscount,
     price: z.preprocess(
         (v) => (v === null || v === '' ? 0 : v),
         z.number().nonnegative('Cena nie może być ujemna')
