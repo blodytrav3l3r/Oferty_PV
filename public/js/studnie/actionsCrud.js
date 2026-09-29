@@ -21,11 +21,11 @@ function _signalAiOverrideOrModify(prevConfigSource, well) {
 
 function addWellComponent(productId) {
     if (isOfferLocked()) {
-        showToast(OFFER_LOCKED_MSG, 'error');
+        if (typeof window.showToast === 'function') window.showToast(OFFER_LOCKED_MSG, 'error');
         return;
     }
     if (isWellLocked()) {
-        showToast(WELL_LOCKED_MSG, 'error');
+        if (typeof window.showToast === 'function') window.showToast(WELL_LOCKED_MSG, 'error');
         return;
     }
     const product =
@@ -36,7 +36,8 @@ function addWellComponent(productId) {
 
     const well = getCurrentWell();
     if (!well) {
-        showToast('Najpierw dodaj studnię', 'error');
+        if (typeof window.showToast === 'function')
+            window.showToast('Najpierw dodaj studnię', 'error');
         return;
     }
 
@@ -45,7 +46,8 @@ function addWellComponent(productId) {
     if (!well.autoLocked) {
         well.autoLocked = true;
         updateAutoLockUI();
-        showToast('Włączono tryb ręczny.', 'info');
+        if (typeof window.showToast === 'function')
+            window.showToast('Włączono tryb ręczny.', 'info');
         if (typeof window._excelSyncAutoManualUI === 'function') window._excelSyncAutoManualUI();
     }
     well.configSource = 'MANUAL';
@@ -68,10 +70,11 @@ function addWellComponent(productId) {
             if (typeof window.showKonusPehdResolverModal === 'function') {
                 window.showKonusPehdResolverModal(currentWellIndex);
             } else {
-                showToast(
-                    'Nie można dodać konusa przy aktywnej wkładce PEHD zwieńczenia.',
-                    'error'
-                );
+                if (typeof window.showToast === 'function')
+                    window.showToast(
+                        'Nie można dodać konusa przy aktywnej wkładce PEHD zwieńczenia.',
+                        'error'
+                    );
             }
             return;
         }
@@ -227,27 +230,30 @@ function addWellComponent(productId) {
     if (topClosureTypes.includes(product.componentType) && well.rzednaWlazu != null) {
         const rzDna = well.rzednaDna != null ? well.rzednaDna : 0;
         if (well.rzednaWlazu > rzDna) {
-            showToast(`Wybrano zakończenie: ${product.name}`, 'success');
+            if (typeof window.showToast === 'function')
+                window.showToast(`Wybrano zakończenie: ${product.name}`, 'success');
 
             if (!well.autoLocked) {
                 autoSelectComponents(true);
                 return;
             }
         } else {
-            showToast(`Dodano: ${product.name}`, 'success');
+            if (typeof window.showToast === 'function')
+                window.showToast(`Dodano: ${product.name}`, 'success');
         }
     } else {
-        showToast(`Dodano: ${product.name}`, 'success');
+        if (typeof window.showToast === 'function')
+            window.showToast(`Dodano: ${product.name}`, 'success');
     }
 }
 
 async function removeWellComponent(index) {
     if (isOfferLocked()) {
-        showToast(OFFER_LOCKED_MSG, 'error');
+        if (typeof window.showToast === 'function') window.showToast(OFFER_LOCKED_MSG, 'error');
         return;
     }
     if (isWellLocked()) {
-        showToast(WELL_LOCKED_MSG, 'error');
+        if (typeof window.showToast === 'function') window.showToast(WELL_LOCKED_MSG, 'error');
         return;
     }
     if (
@@ -259,10 +265,11 @@ async function removeWellComponent(index) {
         return;
     const well = getCurrentWell();
     if (well && window.pzGuard && window.pzGuard.hasPzForElementAtOrAfter(well.id, index)) {
-        showToast(
-            '<i data-lucide="x-circle"></i> Nie można usunąć elementu — ma przypisane zlecenie produkcyjne. Usuń najpierw zlecenie w zakładce „Zlecenia produkcyjne”.',
-            'error'
-        );
+        if (typeof window.showToast === 'function')
+            window.showToast(
+                '<i data-lucide="x-circle"></i> Nie można usunąć elementu — ma przypisane zlecenie produkcyjne. Usuń najpierw zlecenie w zakładce „Zlecenia produkcyjne”.',
+                'error'
+            );
         return;
     }
     const prevConfigSource = well.configSource;
@@ -285,7 +292,8 @@ async function removeWellComponent(index) {
                             : studnieProducts.find((pr) => pr.id === item.productId);
                     return !prod || !reliefTypes.includes(prod.componentType);
                 });
-                showToast('Usunięto komplet odciążający', 'info');
+                if (typeof window.showToast === 'function')
+                    window.showToast('Usunięto komplet odciążający', 'info');
             }
 
             if (p.componentType === 'redukcja') {
@@ -293,7 +301,8 @@ async function removeWellComponent(index) {
                 const redToggle = document.getElementById('well-redukcja-toggle');
                 if (redToggle) redToggle.checked = false;
                 if (typeof updateAutoLockUI === 'function') updateAutoLockUI();
-                showToast('Usunięto redukcję ze studni.', 'info');
+                if (typeof window.showToast === 'function')
+                    window.showToast('Usunięto redukcję ze studni.', 'info');
             }
         }
     }
@@ -330,11 +339,11 @@ async function removeWellComponent(index) {
 
 async function updateWellQuantity(index, value) {
     if (isOfferLocked()) {
-        showToast(OFFER_LOCKED_MSG, 'error');
+        if (typeof window.showToast === 'function') window.showToast(OFFER_LOCKED_MSG, 'error');
         return;
     }
     if (isWellLocked()) {
-        showToast(WELL_LOCKED_MSG, 'error');
+        if (typeof window.showToast === 'function') window.showToast(WELL_LOCKED_MSG, 'error');
         return;
     }
     const qty = parseInt(value);
@@ -367,11 +376,11 @@ async function updateWellQuantity(index, value) {
 
 async function clearWellConfig() {
     if (isOfferLocked()) {
-        showToast(OFFER_LOCKED_MSG, 'error');
+        if (typeof window.showToast === 'function') window.showToast(OFFER_LOCKED_MSG, 'error');
         return;
     }
     if (isWellLocked()) {
-        showToast(WELL_LOCKED_MSG, 'error');
+        if (typeof window.showToast === 'function') window.showToast(WELL_LOCKED_MSG, 'error');
         return;
     }
     const well = getCurrentWell();
@@ -384,10 +393,11 @@ async function clearWellConfig() {
     )
         return;
     if (window.pzGuard && window.pzGuard.hasPzForWell(well.id)) {
-        showToast(
-            '<i data-lucide="x-circle"></i> Nie można wyczyścić konfiguracji studni — ma przypisane zlecenia produkcyjne. Usuń najpierw zlecenia w zakładce „Zlecenia produkcyjne”.',
-            'error'
-        );
+        if (typeof window.showToast === 'function')
+            window.showToast(
+                '<i data-lucide="x-circle"></i> Nie można wyczyścić konfiguracji studni — ma przypisane zlecenia produkcyjne. Usuń najpierw zlecenia w zakładce „Zlecenia produkcyjne”.',
+                'error'
+            );
         return;
     }
     well.configSource = 'MANUAL';
@@ -396,7 +406,8 @@ async function clearWellConfig() {
     if (typeof window._excelSyncAutoManualUI === 'function') window._excelSyncAutoManualUI();
     well.config = [];
     refreshAll();
-    showToast('Wyczyszczono konfigurację studni', 'info');
+    if (typeof window.showToast === 'function')
+        window.showToast('Wyczyszczono konfigurację studni', 'info');
 }
 
 /* ===== Rejestracja globali ===== */

@@ -82,7 +82,8 @@ async function handleOfferDiscountsSave() {
             if (typeof window.renderSavedOffersStudnie === 'function')
                 window.renderSavedOffersStudnie();
         } else {
-            showToast('Zapis i odświeżanie niedostępne w tej konotacji.', 'error');
+            if (typeof window.showToast === 'function')
+                window.showToast('Zapis i odświeżanie niedostępne w tej konotacji.', 'error');
         }
     }
 }

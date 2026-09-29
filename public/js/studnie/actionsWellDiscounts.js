@@ -92,10 +92,11 @@ function updateGlobalPaintingCost(field, value) {
     const isOfferModalOpen = offerModal && offerModal.classList.contains('active');
 
     if (!isOfferModalOpen) {
-        showToast(
-            `Zaktualizowano cenę malowania (${numVal} PLN/mÂ˛) we wszystkich studniach`,
-            'info'
-        );
+        if (typeof window.showToast === 'function')
+            window.showToast(
+                `Zaktualizowano cenę malowania (${numVal} PLN/mÂ˛) we wszystkich studniach`,
+                'info'
+            );
     }
 
     if (typeof orderEditMode !== 'undefined' && orderEditMode) {
@@ -135,7 +136,11 @@ function updateGlobalPehdDiscount(value) {
     const isOfferModalOpen = offerModal && offerModal.classList.contains('active');
 
     if (!isOfferModalOpen) {
-        showToast(`Zaktualizowano rabat PEHD (${numVal}%) we wszystkich studniach`, 'info');
+        if (typeof window.showToast === 'function')
+            window.showToast(
+                `Zaktualizowano rabat PEHD (${numVal}%) we wszystkich studniach`,
+                'info'
+            );
     }
 
     if (typeof orderEditMode !== 'undefined' && orderEditMode) {
