@@ -9,6 +9,7 @@ import prisma from '../prismaClient';
 import crypto from 'crypto';
 import { logger } from '../utils/logger';
 import { recordAuditFailure } from '../utils/metrics';
+import { getRequestId } from '../utils/requestContext';
 
 const DEBOUNCE_SECONDS = 30;
 const MAX_AUDIT_AGE_DAYS = 180;
@@ -107,6 +108,7 @@ export async function logAudit(
             entityId,
             userId,
             action,
+            requestId: getRequestId(),
             error: message
         });
     }
