@@ -10,6 +10,26 @@ const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 100;
 
 /**
+ * Allowlista entityType czytanych przez GET (źródło: literały logAudit
+ * w src/routes + writeAudit w pricelistVersionService — ten sam audit_logs).
+ * Nieznany typ → 400 zanim zapytanie dotknie bazy (koniec oracle 404/200).
+ */
+const KNOWN_ENTITY_TYPES = [
+    'offer',
+    'studnia_oferta',
+    'order',
+    'production_order',
+    'document_share',
+    'settings',
+    'ai_model',
+    'pricelist_version'
+] as const;
+
+function isKnownEntityType(value: unknown): boolean {
+    return typeof value === 'string' && (KNOWN_ENTITY_TYPES as readonly string[]).includes(value);
+}
+
+/**
  * Buduje WHERE clause dla audit_logs respektujący rolę:
  *  - admin: widzi wszystko
  *  - pro:   widzi logi swoje + swoich subUsers
@@ -33,6 +53,13 @@ router.get('/:entityType/:entityId', requireAuth, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
         const { entityType, entityId } = req.params;
+        if (!isKnownEntityType(entityType)) {
+            res.status(400).json({
+                error: 'Nieznany typ encji audytu',
+                code: 'INVALID_ENTITY_TYPE'
+            });
+            return;
+        }
         const limit = Math.max(
             1,
             Math.min(parseInt(req.query.limit as string) || DEFAULT_LIMIT, MAX_LIMIT)
@@ -108,6 +135,12 @@ router.get('/rebuild/:entityType/:entityId/:logId', requireAuth, async (req, res
     const authReq = req as AuthenticatedRequest;
     try {
         const { entityType, entityId, logId } = req.params;
+        if (!isKnownEntityType(entityType)) {
+            return res.status(400).json({
+                error: 'Nieznany typ encji audytu',
+                code: 'INVALID_ENTITY_TYPE'
+            });
+        }
 
         const userFilter = authReq.user
             ? buildAuditUserFilter(authReq.user)

@@ -187,11 +187,29 @@ router.post(
 /** Usunięcie wersji: allowlist jak dziś + archiwalne bez użycia (ACTIVE/BACKDATE zawsze 409). */
 router.delete('/:id', requireAuth, requireAdmin, PRICELIST_WRITE_LIMITER, async (req, res) => {
     try {
-        const result = await deleteVersion(req.params.id, { userId: userIdOf(req) });
+        const parsed = versionIdParamsSchema.safeParse(req.params);
+        if (!parsed.success) {
+            res.status(400).json({
+                error: 'Nieprawidłowy identyfikator wersji',
+                code: 'INVALID_ID'
+            });
+            return;
+        }
+        const result = await deleteVersion(parsed.data.id, { userId: userIdOf(req) });
         res.json(result);
     } catch (err) {
         sendVersionError(res, err);
     }
+});
+
+/**
+ * Kształt body PUT: tylko typy (rows dowolne, note string). Domenę
+ * (trim/max 500/NO_CHANGES/zod wierszy per typ) zostawia serwisowi
+ * (updateDraft → 422) — bez dublowania błędów 400/422.
+ */
+const updateDraftBodySchema = z.object({
+    rows: z.unknown().optional(),
+    note: z.string().optional()
 });
 
 /**
@@ -202,8 +220,27 @@ router.delete('/:id', requireAuth, requireAdmin, PRICELIST_WRITE_LIMITER, async 
  */
 router.put('/:id', requireAuth, requireAdmin, PRICELIST_WRITE_LIMITER, async (req, res) => {
     try {
-        const { rows, note } = req.body as { rows?: unknown; note?: unknown };
-        const version = await updateDraft(req.params.id, rows, note);
+        const paramsParsed = versionIdParamsSchema.safeParse(req.params);
+        if (!paramsParsed.success) {
+            res.status(400).json({
+                error: 'Nieprawidłowy identyfikator wersji',
+                code: 'INVALID_ID'
+            });
+            return;
+        }
+        const bodyParsed = updateDraftBodySchema.safeParse(req.body ?? {});
+        if (!bodyParsed.success) {
+            res.status(400).json({
+                error: 'Nieprawidłowe dane edycji wersji (rows dowolne, note musi być tekstem)',
+                code: 'INVALID_BODY'
+            });
+            return;
+        }
+        const version = await updateDraft(
+            paramsParsed.data.id,
+            bodyParsed.data.rows,
+            bodyParsed.data.note
+        );
         res.json({ version });
     } catch (err) {
         sendVersionError(res, err);
@@ -247,7 +284,7 @@ router.post(
 );
 
 /** Faza B: rollback — kopia wierszy dowolnej wersji → nowy DRAFT (seq auto). */
-const cloneDraftParamsSchema = z.object({ id: z.string().min(1) });
+const versionIdParamsSchema = z.object({ id: z.string().min(1) });
 
 router.post(
     '/:id/clone-draft',
@@ -256,7 +293,7 @@ router.post(
     PRICELIST_WRITE_LIMITER,
     async (req, res) => {
         try {
-            const parsed = cloneDraftParamsSchema.safeParse(req.params);
+            const parsed = versionIdParamsSchema.safeParse(req.params);
             if (!parsed.success) {
                 res.status(400).json({
                     error: 'Nieprawidłowy identyfikator wersji',
