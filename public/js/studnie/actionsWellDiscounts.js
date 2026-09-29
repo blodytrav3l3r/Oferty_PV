@@ -22,7 +22,10 @@ async function confirmApp(message, callback, cancelCallback) {
 }
 
 function updateDiscount(dn, type, value) {
-    const newValue = parseFloat(value) || 0;
+    // Granica UI: input DOM daje string. Numeryczny string parsuj, resztę
+    // waliduje applyDiscount (throw, brak zapisu). '' = pusty input → 0
+    // (czyszczenie rabatu, konwencja UI — nie clamp wartości).
+    const newValue = typeof value === 'number' ? value : Number(String(value));
     const oldDisc = wellDiscounts[dn] || { dennica: 0, nadbudowa: 0, preco: 0, pehd: 0 };
     const oldValue = oldDisc[type] || 0;
 
@@ -48,6 +51,14 @@ function updateDiscount(dn, type, value) {
 }
 
 function applyDiscount(dn, type, value) {
+    // Kontrakt: discountPct ∈ [0,100] finite number, inaczej throw RangeError.
+    // Nigdy nie zapisuj invalid do wellDiscounts (typeof check odrzuca też
+    // numeryczne stringi — przez UI przechodź updateDiscount, nie tutaj).
+    if (typeof assertDiscountPct === 'function') {
+        assertDiscountPct(value, dn + '.' + type);
+    } else if (typeof value !== 'number' || !Number.isFinite(value) || value < 0 || value > 100) {
+        throw new RangeError('Invalid discountPct: ' + String(value));
+    }
     if (!wellDiscounts[dn]) wellDiscounts[dn] = { dennica: 0, nadbudowa: 0, preco: 0, pehd: 0 };
     wellDiscounts[dn][type] = value;
 

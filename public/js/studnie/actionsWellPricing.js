@@ -59,12 +59,45 @@ const ZWIENCZENIE_TYPES = [
  * Elementy E600/F900 mają wyłącznie własne rabaty klasowe: brak wpisanego
  * rabatu klasowego = 0% (nie bierzemy bazy z D400). Baza dotyczy tylko D400.
  */
+/**
+ * Kontrakt rabatu: discountPct ∈ [0,100], finite number. Brak klucza (null/
+ * undefined) = brak rabatu → 0. Obecna lecz invalid wartość (NaN, ±Inf,
+ * string, <0, >100, np. legacy/corrupt) → throw RangeError (fail-loud, nigdy
+ * cichy clamp ani NaN w cenie). Ingestia (applyDiscount/updateDiscount)
+ * blokuje zapis invalid, więc throw odpala tylko na danych sprzed kontraktu.
+ * DECYZJA throw-vs-guard: throw. Renderery (getDiscountStr, offerWellComponents
+ * kPct, pricingCalculator) nie mają try/catch — throw przy corrupt przerwie
+ * render celowo (sygnał do naprawy danych, nie cicha zła cena w ofercie).
+ */
+function assertDiscountPct(value, key) {
+    if (typeof value !== 'number' || !Number.isFinite(value) || value < 0 || value > 100) {
+        throw new RangeError(
+            'Invalid discountPct' +
+                (key ? " '" + key + "'" : '') +
+                ': ' +
+                String(value) +
+                ' (oczekiwano finite number ∈ [0,100])'
+        );
+    }
+    return value;
+}
+
+function readDiscountPct(disc, key) {
+    // Brak klucza = brak rabatu → 0 (wsteczne). Jawny klucz (nawet null/
+    // undefined) = stored → assert, invalid rzuca (matrix: null/undefined
+    // invalid; brak klucza to nie stored).
+    if (disc && Object.prototype.hasOwnProperty.call(disc, key)) {
+        return assertDiscountPct(disc[key], key);
+    }
+    return 0;
+}
+
 function getWellDiscountPct(well, p, disc) {
     if (!disc) disc = {};
     if (ZWIENCZENIE_TYPES.includes(p.componentType)) {
         const zCls = well.klasaNosnosci_zwienczenie || 'D400';
-        if (zCls !== 'D400') return disc['zwienczenie' + zCls] || 0;
-        return disc.nadbudowa || 0;
+        if (zCls !== 'D400') return readDiscountPct(disc, 'zwienczenie' + zCls);
+        return readDiscountPct(disc, 'nadbudowa');
     }
     const kCls = well.klasaNosnosci_korpus || 'D400';
     if (
@@ -72,8 +105,8 @@ function getWellDiscountPct(well, p, disc) {
         p.componentType === 'kineta' ||
         p.componentType === 'styczna'
     ) {
-        if (kCls !== 'D400') return disc['dennica' + kCls] || 0;
-        return disc.dennica || 0;
+        if (kCls !== 'D400') return readDiscountPct(disc, 'dennica' + kCls);
+        return readDiscountPct(disc, 'dennica');
     }
     return getWellNadbudowaPct(well, disc);
 }
@@ -86,8 +119,8 @@ function getWellDiscountPct(well, p, disc) {
 function getWellNadbudowaPct(well, disc) {
     if (!disc) disc = {};
     const kCls = well.klasaNosnosci_korpus || 'D400';
-    if (kCls !== 'D400') return disc['nadbudowa' + kCls] || 0;
-    return disc.nadbudowa || 0;
+    if (kCls !== 'D400') return readDiscountPct(disc, 'nadbudowa' + kCls);
+    return readDiscountPct(disc, 'nadbudowa');
 }
 
 /**
@@ -636,7 +669,7 @@ function calcWellStats(well) {
         } else {
             const discountKey = well.dn === 'styczna' ? 'styczne' : well.dn;
             const activeDiscounts = getWellActiveDiscounts(well);
-            const discPreco = (activeDiscounts[discountKey] || {}).preco || 0;
+            const discPreco = readDiscountPct(activeDiscounts[discountKey] || {}, 'preco');
             const precoMult = 1 - discPreco / 100;
             const precoCost = precoResult.suma * precoMult;
             price += precoCost;
