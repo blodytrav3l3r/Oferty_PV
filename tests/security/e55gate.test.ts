@@ -351,6 +351,8 @@ describe('E5.5 gate: role i ownership', () => {
                     ? Promise.resolve([{ id: 'c-own', userId: 'owner-db' }])
                     : Promise.resolve([{ id: 'c-own' }])
             ),
+            $queryRawUnsafe: jest.fn().mockResolvedValue([{ id: 'c-own' }]),
+            clients_rel: { deleteMany: jest.fn().mockResolvedValue({ count: 0 }) },
             offers_rel: { updateMany: jest.fn().mockResolvedValue({ count: 0 }) },
             offers_studnie_rel: { updateMany: jest.fn().mockResolvedValue({ count: 0 }) }
         };
@@ -360,7 +362,8 @@ describe('E5.5 gate: role i ownership', () => {
             .set(user)
             .send({ data: [{ id: 'c-own', name: 'Cudzy' }] });
         expect(res.status).toBe(200);
-        const seen = JSON.stringify(txMock.$queryRaw.mock.calls);
+        // Batch: owner z DB ląduje w parametrach jednego bulk UPSERT ($queryRawUnsafe).
+        const seen = JSON.stringify(txMock.$queryRawUnsafe.mock.calls);
         expect(seen).toContain('owner-db');
         expectNoLeak(res.body);
     });

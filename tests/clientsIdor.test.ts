@@ -67,8 +67,10 @@ describe('Clients CRUD — wspólna baza (Wariant A, globalny dostęp)', () => {
         it('nadpisuje własnego klienta (userId = target)', async () => {
             const txMock = {
                 $queryRaw: jest.fn().mockResolvedValue([{ id: 'c-own' }]),
+                $queryRawUnsafe: jest.fn().mockResolvedValue([{ id: 'c-own' }]),
                 $executeRaw: jest.fn().mockResolvedValue(1),
-                $queryRawAll: undefined
+                $queryRawAll: undefined,
+                clients_rel: { deleteMany: jest.fn().mockResolvedValue({ count: 0 }) }
             };
             txMock.$queryRaw = jest.fn().mockResolvedValue([{ id: 'c-own' }]);
             (prisma.$transaction as jest.Mock).mockImplementation(async (fn: (tx: any) => any) =>
@@ -87,7 +89,9 @@ describe('Clients CRUD — wspólna baza (Wariant A, globalny dostęp)', () => {
         it('nadpisuje klienta innego użytkownika — wspólna baza (Wariant A)', async () => {
             const txMock = {
                 $queryRaw: jest.fn().mockResolvedValue([{ id: 'c-other' }]),
-                $executeRaw: jest.fn().mockResolvedValue(1)
+                $queryRawUnsafe: jest.fn().mockResolvedValue([{ id: 'c-other' }]),
+                $executeRaw: jest.fn().mockResolvedValue(1),
+                clients_rel: { deleteMany: jest.fn().mockResolvedValue({ count: 0 }) }
             };
             (prisma.$transaction as jest.Mock).mockImplementation(async (fn: (tx: any) => any) =>
                 fn(txMock)
@@ -107,7 +111,9 @@ describe('Clients CRUD — wspólna baza (Wariant A, globalny dostęp)', () => {
                     .fn()
                     .mockResolvedValueOnce([])
                     .mockResolvedValueOnce([{ id: 'c-new' }]),
-                $executeRaw: jest.fn().mockResolvedValue(1)
+                $queryRawUnsafe: jest.fn().mockResolvedValue([{ id: 'c-new' }]),
+                $executeRaw: jest.fn().mockResolvedValue(1),
+                clients_rel: { deleteMany: jest.fn().mockResolvedValue({ count: 0 }) }
             };
             (prisma.$transaction as jest.Mock).mockImplementation(async (fn: (tx: any) => any) =>
                 fn(txMock)
@@ -132,7 +138,9 @@ describe('Clients CRUD — wspólna baza (Wariant A, globalny dostęp)', () => {
             mockUser.role = 'admin';
             const txMock = {
                 $queryRaw: jest.fn().mockResolvedValue([]),
-                $executeRaw: jest.fn().mockResolvedValue(1)
+                $queryRawUnsafe: jest.fn().mockResolvedValue([]),
+                $executeRaw: jest.fn().mockResolvedValue(1),
+                clients_rel: { deleteMany: jest.fn().mockResolvedValue({ count: 0 }) }
             };
             (prisma.$transaction as jest.Mock).mockImplementation(async (fn: (tx: any) => any) =>
                 fn(txMock)
@@ -147,13 +155,19 @@ describe('Clients CRUD — wspólna baza (Wariant A, globalny dostęp)', () => {
         it('P0: update cudzego wiersza zachowuje userId właściciela', async () => {
             const upserts: Array<{ sql: string; values: unknown[] }> = [];
             const txMock = {
-                $queryRaw: jest.fn().mockImplementation(async (strings: any, ...values: any[]) => {
+                $queryRaw: jest.fn().mockImplementation(async (strings: any) => {
                     const sql = Array.isArray(strings) ? strings.join(' ') : String(strings);
                     if (sql.includes('SELECT id')) return [{ id: 'c1', userId: 'userB' }];
-                    upserts.push({ sql, values });
                     return [{ id: 'c1' }];
                 }),
-                $executeRaw: jest.fn().mockResolvedValue(1)
+                $queryRawUnsafe: jest
+                    .fn()
+                    .mockImplementation(async (sql: string, ...values: any[]) => {
+                        upserts.push({ sql, values });
+                        return [{ id: 'c1' }];
+                    }),
+                $executeRaw: jest.fn().mockResolvedValue(1),
+                clients_rel: { deleteMany: jest.fn().mockResolvedValue({ count: 0 }) }
             };
             (prisma.$transaction as jest.Mock).mockImplementation(async (fn: (tx: any) => any) =>
                 fn(txMock)
@@ -175,13 +189,19 @@ describe('Clients CRUD — wspólna baza (Wariant A, globalny dostęp)', () => {
         it('P0: nowy wiersz dostaje userId edytującego', async () => {
             const upserts: Array<{ sql: string; values: unknown[] }> = [];
             const txMock = {
-                $queryRaw: jest.fn().mockImplementation(async (strings: any, ...values: any[]) => {
+                $queryRaw: jest.fn().mockImplementation(async (strings: any) => {
                     const sql = Array.isArray(strings) ? strings.join(' ') : String(strings);
                     if (sql.includes('SELECT id')) return [];
-                    upserts.push({ sql, values });
                     return [{ id: 'c-new' }];
                 }),
-                $executeRaw: jest.fn().mockResolvedValue(1)
+                $queryRawUnsafe: jest
+                    .fn()
+                    .mockImplementation(async (sql: string, ...values: any[]) => {
+                        upserts.push({ sql, values });
+                        return [{ id: 'c-new' }];
+                    }),
+                $executeRaw: jest.fn().mockResolvedValue(1),
+                clients_rel: { deleteMany: jest.fn().mockResolvedValue({ count: 0 }) }
             };
             (prisma.$transaction as jest.Mock).mockImplementation(async (fn: (tx: any) => any) =>
                 fn(txMock)
@@ -208,7 +228,9 @@ describe('Clients CRUD — wspólna baza (Wariant A, globalny dostęp)', () => {
                         ];
                     return [{ id: 'c-keep' }];
                 }),
+                $queryRawUnsafe: jest.fn().mockResolvedValue([{ id: 'c-keep' }]),
                 $executeRaw: jest.fn().mockResolvedValue(1),
+                clients_rel: { deleteMany: jest.fn().mockResolvedValue({ count: 1 }) },
                 offers_rel: { updateMany: jest.fn().mockResolvedValue({ count: 2 }) },
                 offers_studnie_rel: { updateMany: jest.fn().mockResolvedValue({ count: 1 }) }
             };
@@ -221,6 +243,9 @@ describe('Clients CRUD — wspólna baza (Wariant A, globalny dostęp)', () => {
                 .send({ data: [{ id: 'c-keep', name: 'Zostaje' }] });
 
             expect(res.statusCode).toBe(200);
+            expect(txMock.clients_rel.deleteMany).toHaveBeenCalledWith({
+                where: { id: { in: ['c-gone'] } }
+            });
             expect(txMock.offers_rel.updateMany).toHaveBeenCalledWith({
                 where: { clientId: { in: ['c-gone'] } },
                 data: { clientId: null }
@@ -242,7 +267,9 @@ describe('Clients CRUD — wspólna baza (Wariant A, globalny dostęp)', () => {
                         ];
                     return [{ id: 'c-moj' }];
                 }),
+                $queryRawUnsafe: jest.fn().mockResolvedValue([{ id: 'c-moj' }]),
                 $executeRaw: jest.fn().mockResolvedValue(1),
+                clients_rel: { deleteMany: jest.fn().mockResolvedValue({ count: 0 }) },
                 offers_rel: { updateMany: jest.fn().mockResolvedValue({ count: 0 }) },
                 offers_studnie_rel: { updateMany: jest.fn().mockResolvedValue({ count: 0 }) }
             };
@@ -259,6 +286,8 @@ describe('Clients CRUD — wspólna baza (Wariant A, globalny dostęp)', () => {
             expect(txMock.offers_rel.updateMany).not.toHaveBeenCalled();
             expect(txMock.offers_studnie_rel.updateMany).not.toHaveBeenCalled();
             expect(txMock.$executeRaw).not.toHaveBeenCalled();
+            expect(txMock.clients_rel.deleteMany).not.toHaveBeenCalled();
+            expect(txMock.$queryRawUnsafe).not.toHaveBeenCalled();
         });
 
         it('P0: pro-opiekun usuwa klienta podwładnego → 200', async () => {
@@ -274,7 +303,9 @@ describe('Clients CRUD — wspólna baza (Wariant A, globalny dostęp)', () => {
                         ];
                     return [{ id: 'c-moj' }];
                 }),
+                $queryRawUnsafe: jest.fn().mockResolvedValue([{ id: 'c-moj' }]),
                 $executeRaw: jest.fn().mockResolvedValue(1),
+                clients_rel: { deleteMany: jest.fn().mockResolvedValue({ count: 1 }) },
                 offers_rel: { updateMany: jest.fn().mockResolvedValue({ count: 0 }) },
                 offers_studnie_rel: { updateMany: jest.fn().mockResolvedValue({ count: 0 }) }
             };
@@ -291,6 +322,10 @@ describe('Clients CRUD — wspólna baza (Wariant A, globalny dostęp)', () => {
                 where: { clientId: { in: ['c-obcy'] } },
                 data: { clientId: null }
             });
+            expect(txMock.clients_rel.deleteMany).toHaveBeenCalledWith({
+                where: { id: { in: ['c-obcy'] } }
+            });
+            expect(txMock.$queryRawUnsafe).toHaveBeenCalledTimes(1);
         });
     });
 });

@@ -125,52 +125,100 @@ router.put(
                             where: { clientId: { in: toDelete } },
                             data: { clientId: null }
                         });
-                        for (const id of toDelete) {
-                            await tx.$executeRaw`DELETE FROM clients_rel WHERE id = ${id}`;
-                        }
+                        // Batch (N+1 -> 1): jeden DELETE ... WHERE id IN zamiast
+                        // per-row DELETE. Ta sama semantyka, ta sama tx.
+                        await tx.clients_rel.deleteMany({ where: { id: { in: toDelete } } });
                     }
 
-                    for (const c of arr) {
-                        let docId = c.id;
-                        if (!docId) {
-                            docId = crypto.randomUUID();
-                        }
-                        // P0: właściciel z DB dla istniejących (w tym null = bezpański
-                        // zostaje bezpański); edytujący — tylko dla nowych wierszy.
-                        const ownerId = existingOwners.has(docId)
-                            ? existingOwners.get(docId)
-                            : userId;
+                    if (arr.length > 0) {
+                        // Prep bez I/O: docId / owner / createdAt na wiersz. Owner jak
+                        // dotąd: istniejący z DB (w tym null = bezpański zostaje
+                        // bezpański), edytujący — tylko dla nowych wierszy.
+                        const rows = arr.map(
+                            (c: {
+                                id?: string;
+                                createdAt?: string | number | null;
+                                name?: string;
+                                nip?: string;
+                                address?: string;
+                                contact?: string;
+                                clientNumber?: string;
+                                phone?: string;
+                                email?: string;
+                            }) => {
+                                const docId = c.id || crypto.randomUUID();
+                                const ownerId = existingOwners.has(docId)
+                                    ? existingOwners.get(docId)
+                                    : userId;
 
-                        // Zawsze normalizuj createdAt do stringa ISO 8601
-                        let parsedDate = now;
-                        if (c.createdAt != null && c.createdAt !== '') {
-                            const num = Number(c.createdAt);
-                            if (!isNaN(num) && num > 0) {
-                                // Obsłuż zarówno timestampy w sekundach, jak i milisekundach
-                                const ms = num > 1e12 ? num : num * 1000;
-                                parsedDate = new Date(ms).toISOString();
-                            } else {
-                                const d = new Date(c.createdAt);
-                                if (!isNaN(d.getTime())) parsedDate = d.toISOString();
+                                // Zawsze normalizuj createdAt do stringa ISO 8601
+                                let parsedDate = now;
+                                if (c.createdAt != null && c.createdAt !== '') {
+                                    const num = Number(c.createdAt);
+                                    if (!isNaN(num) && num > 0) {
+                                        // Obsłuż zarówno timestampy w sekundach, jak i milisekundach
+                                        const ms = num > 1e12 ? num : num * 1000;
+                                        parsedDate = new Date(ms).toISOString();
+                                    } else {
+                                        const d = new Date(c.createdAt);
+                                        if (!isNaN(d.getTime())) parsedDate = d.toISOString();
+                                    }
+                                }
+
+                                return {
+                                    docId,
+                                    ownerId: ownerId ?? null,
+                                    name: c.name || '',
+                                    nip: c.nip || '',
+                                    address: c.address || '',
+                                    contact: c.contact || '',
+                                    clientNumber: c.clientNumber || '',
+                                    phone: c.phone || '',
+                                    email: c.email || '',
+                                    createdAt: parsedDate
+                                };
                             }
-                        }
+                        );
 
-                        await tx.$queryRaw`
-                    INSERT INTO clients_rel (id, userId, name, nip, address, contact, clientNumber, phone, email, createdAt, updatedAt)
-                    VALUES (${docId}, ${ownerId}, ${c.name || ''}, ${c.nip || ''}, ${c.address || ''}, ${c.contact || ''}, ${c.clientNumber || ''}, ${c.phone || ''}, ${c.email || ''}, ${parsedDate}, ${now})
-                    ON CONFLICT(id) DO UPDATE SET
-                        userId = ${ownerId},
-                        name = ${c.name || ''},
-                        nip = ${c.nip || ''},
-                        address = ${c.address || ''},
-                        contact = ${c.contact || ''},
-                        clientNumber = ${c.clientNumber || ''},
-                        phone = ${c.phone || ''},
-                        email = ${c.email || ''},
-                        updatedAt = ${now}
-                    RETURNING id
-                `;
-                        upserted.push({ id: docId });
+                        // Batch (N+1 -> 1): jeden multi-row INSERT ... ON CONFLICT
+                        // (SQLite wspiera od 3.24 — zweryfikowane runtime na silniku
+                        // Prisma). DO UPDATE czyta excluded.* = te same wartości co
+                        // per-row upsert, w tym owner bez przepisywania. RETURNING
+                        // zbędne — docId znamy z prepu (poprzedni kod też ignorował
+                        // wynik RETURNING, pushował docId).
+                        const placeholders = rows.map(() => '(?,?,?,?,?,?,?,?,?,?,?)').join(',');
+                        const params: unknown[] = [];
+                        for (const r of rows) {
+                            params.push(
+                                r.docId,
+                                r.ownerId,
+                                r.name,
+                                r.nip,
+                                r.address,
+                                r.contact,
+                                r.clientNumber,
+                                r.phone,
+                                r.email,
+                                r.createdAt,
+                                now
+                            );
+                        }
+                        await tx.$queryRawUnsafe(
+                            `INSERT INTO clients_rel (id, userId, name, nip, address, contact, clientNumber, phone, email, createdAt, updatedAt)` +
+                                ` VALUES ${placeholders}` +
+                                ` ON CONFLICT(id) DO UPDATE SET` +
+                                ` userId = excluded.userId,` +
+                                ` name = excluded.name,` +
+                                ` nip = excluded.nip,` +
+                                ` address = excluded.address,` +
+                                ` contact = excluded.contact,` +
+                                ` clientNumber = excluded.clientNumber,` +
+                                ` phone = excluded.phone,` +
+                                ` email = excluded.email,` +
+                                ` updatedAt = excluded.updatedAt`,
+                            ...params
+                        );
+                        for (const r of rows) upserted.push({ id: r.docId });
                     }
                 });
             } catch (e: unknown) {
