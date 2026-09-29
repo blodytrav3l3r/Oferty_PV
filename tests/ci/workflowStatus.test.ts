@@ -92,6 +92,17 @@ describe('P2.3 e2e classification', () => {
         }
     });
 
+    it('pr-gate istnieje: tylko PR, blokujący (E6)', () => {
+        const idx = CI.indexOf('    pr-gate:');
+        expect(idx).toBeGreaterThan(-1);
+        const section = CI.slice(idx, idx + 1500);
+        expect(section).toMatch(/pull_request/);
+        expect(section).toMatch(/version:check/);
+        expect(section).toMatch(/prisma validate/);
+        expect(section).toMatch(/prices:verify/);
+        expect(section).not.toMatch(/continue-on-error:\s*true/);
+    });
+
     it('deploy wymaga blocking jobow (bez extended)', () => {
         const idx = CI.indexOf('deploy-production');
         const section = CI.slice(idx, idx + 1200);

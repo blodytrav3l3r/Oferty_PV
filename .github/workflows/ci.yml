@@ -1,6 +1,7 @@
 # CI/CD Pipeline dla S.O.K.
 # - push na main → lint + typecheck + testy + Docker build + weryfikacja + deploy na produkcję
-# - PR na main → lint + typecheck + testy
+# - PR na main → lint + typecheck + testy + pr-gate (version + prisma validate + prices)
+#   Ciężkie gaty (drift, migrate-verify, load, docker) tylko push→main.
 # - Load sustained (~15 min) mieszka w osobnym load-nightly.yml (cron + dispatch),
 #   żeby nie wyświetlać wiecznego Skipped w widoku pushy/PR.
 
@@ -105,6 +106,40 @@ jobs:
                   name: coverage-report
                   path: coverage/
                   retention-days: 30
+
+    pr-gate:
+        name: PR gate (version + prisma + prices)
+        runs-on: ubuntu-latest
+        needs: [lint, typecheck]
+        if: github.event_name == 'pull_request'
+        env:
+            DATABASE_URL: 'file:./test-ci.sqlite?connection_limit=1&busy_timeout=30000'
+        steps:
+            - uses: actions/checkout@v7
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v7
+              with:
+                  node-version: '22'
+                  cache: 'npm'
+
+            - name: Install dependencies
+              run: npm ci
+
+            - name: Spójność wersji (jak pre-push)
+              run: npm run version:check
+
+            - name: Walidacja schema.prisma
+              run: npx prisma validate
+
+            - name: Generate Prisma client
+              run: npx prisma generate
+
+            - name: Seed testowej bazy (cenniki do prices:verify)
+              run: npx prisma db push --skip-generate && npx ts-node prisma/seed.ts
+
+            - name: Spójność cenników LIVE = Default = plik
+              run: npm run prices:verify
 
     flaky-detect:
         name: Flaky test detection (3x)
