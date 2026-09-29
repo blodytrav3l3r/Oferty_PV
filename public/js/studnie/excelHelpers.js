@@ -464,11 +464,16 @@ function _excelGetWellProdPrice(well, ct, height, targetDn) {
             /* Main column: preferuj produkt dla DN studni */
             if (resolved.dn !== null && parseInt(resolved.dn) !== parseInt(well.dn)) continue;
         }
-        /* Mamy dopasowany config item — pobierz cenę */
-        const price =
-            typeof getItemAssessedPrice === 'function'
-                ? getItemAssessedPrice(well, resolved, true, item)
-                : resolved.price || 0;
+        /* Mamy dopasowany config item — pobierz cenę (render: corrupt → fallback 0%) */
+        const _assessedExcel =
+            typeof getItemAssessedPriceSafe === 'function'
+                ? getItemAssessedPriceSafe
+                : typeof getItemAssessedPrice === 'function'
+                  ? getItemAssessedPrice
+                  : null;
+        const price = _assessedExcel
+            ? _assessedExcel(well, resolved, true, item)
+            : resolved.price || 0;
         const fmt =
             typeof fmtInt === 'function'
                 ? fmtInt
@@ -517,10 +522,15 @@ function _excelGetWellProdPrice(well, ct, height, targetDn) {
             }
         }
         if (matchedFallback) {
-            const price =
-                typeof getItemAssessedPrice === 'function'
-                    ? getItemAssessedPrice(well, matchedFallback, true, null)
-                    : matchedFallback.price || 0;
+            const _assessedFallback =
+                typeof getItemAssessedPriceSafe === 'function'
+                    ? getItemAssessedPriceSafe
+                    : typeof getItemAssessedPrice === 'function'
+                      ? getItemAssessedPrice
+                      : null;
+            const price = _assessedFallback
+                ? _assessedFallback(well, matchedFallback, true, null)
+                : matchedFallback.price || 0;
             const fmt =
                 typeof fmtInt === 'function'
                     ? fmtInt

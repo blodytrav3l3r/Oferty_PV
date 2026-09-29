@@ -48,10 +48,15 @@ async function processDirtySet() {
                 const wIdx = chunk[k];
                 const w = typeof wells !== 'undefined' ? wells[wIdx] : null;
                 if (!w) continue;
-                // derived cache per tick — calcWellStats + validation
-                if (typeof calcWellStats === 'function') {
+                // derived cache per tick — safe fallback 0% (corrupt nie kładzie ticka)
+                if (
+                    typeof safeCalcWellStats === 'function' ||
+                    typeof calcWellStats === 'function'
+                ) {
                     try {
-                        calcWellStats(w);
+                        (typeof safeCalcWellStats === 'function'
+                            ? safeCalcWellStats
+                            : calcWellStats)(w);
                     } catch (_e) {}
                 }
                 if (typeof recalculateWellErrors === 'function') {

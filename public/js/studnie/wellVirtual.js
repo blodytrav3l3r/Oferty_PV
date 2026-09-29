@@ -374,13 +374,17 @@ function _wellVirtualRenderBody() {
         }
     } catch (_e) {}
 
+    // Corrupt stored → safe fallback 0% per well (nie kładzie listy).
+    const _csV = typeof safeCalcWellStats === 'function' ? safeCalcWellStats : calcWellStats;
     try {
         _wellVirtualStatsMap = new Map();
         for (let s = start; s < end; s++) {
             const wIdx = _wellVirtualFiltered[s];
             const w = wells[wIdx];
-            if (w && typeof calcWellStats === 'function')
-                _wellVirtualStatsMap.set(wIdx, calcWellStats(w));
+            if (w && typeof _csV === 'function')
+                try {
+                    _wellVirtualStatsMap.set(wIdx, _csV(w));
+                } catch (_we) {}
         }
     } catch (_e) {}
 

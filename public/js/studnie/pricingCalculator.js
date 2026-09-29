@@ -16,15 +16,17 @@
 function calculateOfferPricing(wells, transportKm, transportRate, transportMode) {
     let totalNetto = 0;
     let totalWeight = 0;
+    // Render/export: corrupt stored → safe fallback 0% (kontrakt throw nietknięty).
+    const _calcStats = typeof safeCalcWellStats === 'function' ? safeCalcWellStats : calcWellStats;
     wells.forEach(function (well) {
-        const stats = calcWellStats(well);
+        const stats = _calcStats(well);
         totalNetto += stats.price;
         totalWeight += stats.weight;
     });
 
     let globalWeightForTransport = 0;
     wells.forEach(function (w) {
-        globalWeightForTransport += calcWellStats(w).weight;
+        globalWeightForTransport += _calcStats(w).weight;
     });
     let totalTransportCostForOffer = 0;
     if (transportKm > 0 && transportRate > 0) {
@@ -45,7 +47,7 @@ function calculateOfferPricing(wells, transportKm, transportRate, transportMode)
                   })
               );
     const wellsForExport = wells.map(function (well) {
-        const stats = calcWellStats(well);
+        const stats = _calcStats(well);
         const wellTransportCost =
             globalWeightForTransport > 0
                 ? totalTransportCostForOffer * (stats.weight / globalWeightForTransport)
@@ -60,8 +62,14 @@ function calculateOfferPricing(wells, transportKm, transportRate, transportMode)
                   ? wellDiscounts
                   : {};
         const disc = activeDiscounts[discountKey] || { dennica: 0, nadbudowa: 0, preco: 0 };
-        const nadbudowaMult = 1 - getWellNadbudowaPct(well, disc) / 100;
-        const precoMult = 1 - (disc.preco || 0) / 100;
+        const _nadbPct =
+            typeof getWellNadbudowaPctSafe === 'function'
+                ? getWellNadbudowaPctSafe(well, disc)
+                : getWellNadbudowaPct(well, disc);
+        const nadbudowaMult = 1 - _nadbPct / 100;
+        const precoMult =
+            1 -
+            (typeof safePrecoPct === 'function' ? safePrecoPct(well, disc) : disc.preco || 0) / 100;
         const assignedPrzejscia =
             typeof calculateAssignedPrzejscia === 'function'
                 ? calculateAssignedPrzejscia(well)
@@ -111,9 +119,13 @@ function calculateOfferPricing(wells, transportKm, transportRate, transportMode)
                     if (pa.hasPreco && pa.allocatedCost > 0) hasSurcharge = true;
                 }
                 if (hasSurcharge) {
+                    const _assessed =
+                        typeof getItemAssessedPriceSafe === 'function'
+                            ? getItemAssessedPriceSafe
+                            : getItemAssessedPrice;
                     let basePrice =
-                        typeof getItemAssessedPrice === 'function'
-                            ? getItemAssessedPrice(well, p, true, item)
+                        typeof _assessed === 'function'
+                            ? _assessed(well, p, true, item)
                             : p.price || 0;
                     if (p.componentType === 'dennica') {
                         const ki = well.config.find(function (c) {
@@ -123,9 +135,7 @@ function calculateOfferPricing(wells, transportKm, transportRate, transportMode)
                         if (ki) {
                             const kp = productMap.get(ki.productId);
                             const kPrice =
-                                typeof getItemAssessedPrice === 'function'
-                                    ? getItemAssessedPrice(well, kp, true, ki)
-                                    : 0;
+                                typeof _assessed === 'function' ? _assessed(well, kp, true, ki) : 0;
                             basePrice += kPrice;
                         }
                     }
@@ -135,9 +145,11 @@ function calculateOfferPricing(wells, transportKm, transportRate, transportMode)
                         if (!pp) continue;
                         // Rabat wg hosta przejścia: dennica/styczna -> dennicowy, reszta -> nadbudowa.
                         const przMult =
-                            typeof getTransitionHostPct === 'function'
-                                ? 1 - getTransitionHostPct(well, disc, prz._hostType) / 100
-                                : nadbudowaMult;
+                            typeof getTransitionHostPctSafe === 'function'
+                                ? 1 - getTransitionHostPctSafe(well, disc, prz._hostType) / 100
+                                : typeof getTransitionHostPct === 'function'
+                                  ? 1 - getTransitionHostPct(well, disc, prz._hostType) / 100
+                                  : nadbudowaMult;
                         basePrice +=
                             (pp.price || 0) * przMult +
                             (prz._drillingBasePrice || 0) * przMult +
@@ -151,8 +163,19 @@ function calculateOfferPricing(wells, transportKm, transportRate, transportMode)
                     }
                     return Object.assign({}, item, { _xp: basePrice });
                 }
-                const discountPct = getWellDiscountPct(well, p, disc);
-                return Object.assign({}, item, { _xp: p.price || 0, _xd: discountPct });
+                const discountPct =
+                    typeof getWellDiscountPctSafe === 'function'
+                        ? getWellDiscountPctSafe(well, p, disc)
+                        : getWellDiscountPct(well, p, disc);
+                const _dErr =
+                    typeof isWellDiscountCorrupt === 'function' && isWellDiscountCorrupt(well);
+                return Object.assign(
+                    {},
+                    item,
+                    _dErr
+                        ? { _xp: p.price || 0, _xd: 0, _discountError: true }
+                        : { _xp: p.price || 0, _xd: discountPct }
+                );
             }),
             przejscia: well.przejscia
         };

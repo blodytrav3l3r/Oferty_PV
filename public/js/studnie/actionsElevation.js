@@ -120,7 +120,9 @@ function updateHeightIndicator() {
     // Banner błędów renderowany przez renderWellConfigErrors (solverValidation.js)
     renderWellConfigErrors(well);
 
-    const stats = calcWellStats(well);
+    // Podgląd: corrupt stored → fallback 0% + flaga (kontrakt throw nietknięty).
+    const stats =
+        typeof safeCalcWellStats === 'function' ? safeCalcWellStats(well) : calcWellStats(well);
     const confM = (stats.height / 1000).toFixed(3).replace('.', ',');
     confEl.textContent = confM + ' m';
 

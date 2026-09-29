@@ -174,7 +174,9 @@ function updateOfferDiscountsPopupPrices() {
     let totalOverallNetto = 0;
 
     let globalWeightForTransport = 0;
-    wells.forEach((w) => (globalWeightForTransport += calcWellStats(w).weight));
+    // Render: corrupt stored → fallback 0% + flaga (kontrakt throw nietknięty).
+    const _csPop = typeof safeCalcWellStats === 'function' ? safeCalcWellStats : calcWellStats;
+    wells.forEach((w) => (globalWeightForTransport += _csPop(w).weight));
     const transportKmVal = parseFloat(document.getElementById('transport-km')?.value) || 0;
     const transportRateVal = parseFloat(document.getElementById('transport-rate')?.value) || 0;
     let totalTransportCostForOffer = 0;
@@ -194,7 +196,7 @@ function updateOfferDiscountsPopupPrices() {
                 dn === 'styczne' ? w.type === 'styczna' || w.dn === 'styczna' : w.dn == dn
             )
             .forEach((w) => {
-                const stats = calcWellStats(w);
+                const stats = _csPop(w);
                 let transportCost = 0;
                 // Osobna pozycja: transport poza cenami w popupie rabatów.
                 const separateTransport =
@@ -257,7 +259,9 @@ function renderOfferDiscountsPopupContent() {
     let totalOverallNetto = 0;
 
     let globalWeightForTransport = 0;
-    wells.forEach((w) => (globalWeightForTransport += calcWellStats(w).weight));
+    // Render: corrupt stored → fallback 0% + flaga (kontrakt throw nietknięty).
+    const _csPop = typeof safeCalcWellStats === 'function' ? safeCalcWellStats : calcWellStats;
+    wells.forEach((w) => (globalWeightForTransport += _csPop(w).weight));
     const transportKmVal = parseFloat(document.getElementById('transport-km')?.value) || 0;
     const transportRateVal = parseFloat(document.getElementById('transport-rate')?.value) || 0;
     let totalTransportCostForOffer = 0;
@@ -290,7 +294,7 @@ function renderOfferDiscountsPopupContent() {
                 dn === 'styczne' ? w.type === 'styczna' || w.dn === 'styczna' : w.dn == dn
             )
             .forEach((w) => {
-                const stats = calcWellStats(w);
+                const stats = _csPop(w);
                 let transportCost = 0;
                 // Osobna pozycja: transport poza cenami w popupie rabatów.
                 const separateTransport =

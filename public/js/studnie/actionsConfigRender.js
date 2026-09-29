@@ -93,10 +93,15 @@ function renderWellConfig() {
                     : studnieProducts.find((pr) => pr.id === item.productId);
         if (!p) return;
         const frozenCtx = typeof isFrozenPriceCtx === 'function' && isFrozenPriceCtx();
+        // Render: corrupt stored → fallback 0% + flaga (kontrakt throw nietknięty).
+        const _assessed =
+            typeof getItemAssessedPriceSafe === 'function'
+                ? getItemAssessedPriceSafe
+                : getItemAssessedPrice;
         const itemPrice =
             item.frozenPrice != null && frozenCtx
                 ? item.frozenPrice
-                : getItemAssessedPrice(well, p, true, item);
+                : _assessed(well, p, true, item);
         let totalPrice = itemPrice * item.quantity;
 
         if (p.componentType === 'dennica' || p.componentType === 'styczna') {
@@ -121,14 +126,19 @@ function renderWellConfig() {
                         const rawKinetaPrice =
                             kinetaItem.frozenPrice != null && frozenCtx
                                 ? kinetaItem.frozenPrice
-                                : getItemAssessedPrice(well, kinetaProd, true, kinetaItem);
+                                : _assessed(well, kinetaProd, true, kinetaItem);
                         totalPrice += rawKinetaPrice * (kinetaItem.quantity || 1);
                     }
                 }
                 if (well.kineta === 'preco' || well.kineta === 'precotop') {
                     const precoCalc = calcPrecoPricing(well);
                     const discKey = well.dn === 'styczna' ? 'styczne' : well.dn;
-                    const discPreco = (wellDiscounts[discKey] || {}).preco || 0;
+                    const _precoObj =
+                        (typeof wellDiscounts !== 'undefined' ? wellDiscounts : {})[discKey] || {};
+                    const discPreco =
+                        typeof safePrecoPct === 'function'
+                            ? safePrecoPct(well, _precoObj)
+                            : _precoObj.preco || 0;
                     const precoMult = 1 - discPreco / 100;
                     totalPrice += precoCalc.suma * precoMult;
                 }
@@ -292,7 +302,12 @@ function renderWellConfig() {
                       ? 'PrecoTop'
                       : 'Preco';
             const discKey = well.dn === 'styczna' ? 'styczne' : well.dn;
-            const discPreco = (wellDiscounts[discKey] || {}).preco || 0;
+            const _precoObj2 =
+                (typeof wellDiscounts !== 'undefined' ? wellDiscounts : {})[discKey] || {};
+            const discPreco =
+                typeof safePrecoPct === 'function'
+                    ? safePrecoPct(well, _precoObj2)
+                    : _precoObj2.preco || 0;
 
             if (precoCalc.error) {
                 html += `<div style="margin-top:0.5rem; padding:0.6rem 0.7rem; background:rgba(var(--danger-rgb), 0.15); border:1px solid var(--danger); border-radius: var(--radius-sm); color:var(--danger); font-weight: var(--fw-bold); font-size: var(--fs-lg); line-height:1.4;">`;

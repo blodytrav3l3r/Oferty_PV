@@ -42,10 +42,44 @@ function getWellErrorCell(well) {
 }
 
 function getDiscountStr(well, p, disc) {
-    const discountPct = getWellDiscountPct(well, p, disc);
-    return discountPct > 0
-        ? ` <span style="font-size: var(--fs-2xs); color:var(--success); margin-left:0.3rem;">(-${discountPct}%)</span>`
-        : '';
+    // Render: corrupt stored → fallback 0% + warn + widoczny badge (kontrakt throw zostaje).
+    if (typeof getWellDiscountPctSafe === 'function') {
+        const wasCorrupt =
+            typeof isWellDiscountCorrupt === 'function' && isWellDiscountCorrupt(well);
+        const discountPct = getWellDiscountPctSafe(well, p, disc);
+        if (
+            typeof isWellDiscountCorrupt === 'function' &&
+            isWellDiscountCorrupt(well) &&
+            !wasCorrupt
+        ) {
+            return typeof discountCorruptBadge === 'function'
+                ? discountCorruptBadge()
+                : ' <span style="font-size: var(--fs-2xs); color:var(--danger); margin-left:0.3rem;">(⚠ rabat)</span>';
+        }
+        return discountPct > 0
+            ? ` <span style="font-size: var(--fs-2xs); color:var(--success); margin-left:0.3rem;">(-${discountPct}%)</span>`
+            : '';
+    }
+    try {
+        const discountPct = getWellDiscountPct(well, p, disc);
+        return discountPct > 0
+            ? ` <span style="font-size: var(--fs-2xs); color:var(--success); margin-left:0.3rem;">(-${discountPct}%)</span>`
+            : '';
+    } catch (e) {
+        if (!(e instanceof RangeError)) throw e;
+        try {
+            if (well && typeof well === 'object') well._discountCorrupt = true;
+        } catch (_m) {}
+        try {
+            if (typeof logger !== 'undefined' && logger && typeof logger.warn === 'function')
+                logger.warn('pricing', '[discount-corrupt] getDiscountStr: fallback 0%');
+            else if (typeof console !== 'undefined' && console.warn)
+                console.warn('[discount-corrupt] getDiscountStr: fallback 0%');
+        } catch (_l) {}
+        return typeof discountCorruptBadge === 'function'
+            ? discountCorruptBadge()
+            : ' <span style="font-size: var(--fs-2xs); color:var(--danger); margin-left:0.3rem;" title="Nieprawidłowy zapis rabatu — cena bez rabatu">(⚠ rabat)</span>';
+    }
 }
 
 function migrateWellData(wellsArr) {

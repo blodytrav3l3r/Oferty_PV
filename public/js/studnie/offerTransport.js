@@ -8,8 +8,10 @@ window.updateTransportCostSummary = function () {
     const transportRate = parseFloat(document.getElementById('transport-rate')?.value) || 0;
     const costPerTrip = transportKm * transportRate;
     let totalWeight = 0;
-    if (typeof wells !== 'undefined' && typeof calcWellStats === 'function') {
-        wells.forEach((w) => (totalWeight += calcWellStats(w).weight));
+    // Render: corrupt stored → fallback 0% + flaga (kontrakt throw nietknięty).
+    const _csTr = typeof safeCalcWellStats === 'function' ? safeCalcWellStats : calcWellStats;
+    if (typeof wells !== 'undefined' && typeof _csTr === 'function') {
+        wells.forEach((w) => (totalWeight += _csTr(w).weight));
     }
     if (costPerTrip > 0 && totalWeight > 0) {
         const count =
@@ -75,9 +77,10 @@ function isTransportSeparateRow(order) {
 window.updateModalTransportDetails = function () {
     const modalKm = parseFloat(document.getElementById('transport-modal-km')?.value) || 0;
     const modalRate = parseFloat(document.getElementById('transport-modal-rate')?.value) || 0;
+    const _csTr = typeof safeCalcWellStats === 'function' ? safeCalcWellStats : calcWellStats;
     let globalWeight = 0;
-    if (typeof wells !== 'undefined' && typeof calcWellStats === 'function') {
-        wells.forEach((w) => (globalWeight += calcWellStats(w).weight));
+    if (typeof wells !== 'undefined' && typeof _csTr === 'function') {
+        wells.forEach((w) => (globalWeight += _csTr(w).weight));
     }
     const fmt = (v) =>
         v
@@ -118,9 +121,9 @@ window.updateModalTransportDetails = function () {
     const totalValEl = document.getElementById('transport-modal-total-val');
     if (totalValEl) {
         let productsNetto = 0;
-        if (typeof wells !== 'undefined' && typeof calcWellStats === 'function') {
+        if (typeof wells !== 'undefined' && typeof _csTr === 'function') {
             wells.forEach((w) => {
-                productsNetto += calcWellStats(w).price;
+                productsNetto += _csTr(w).price;
             });
         }
         totalValEl.textContent =

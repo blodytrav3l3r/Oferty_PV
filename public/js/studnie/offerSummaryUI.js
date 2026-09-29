@@ -79,8 +79,10 @@ function updateOfferSummaryUI(totals) {
 
     let finalNetto = 0;
     let finalWeight = 0;
+    // Render: corrupt stored → fallback 0% + flaga (kontrakt throw nietknięty).
+    const _csSum = typeof safeCalcWellStats === 'function' ? safeCalcWellStats : calcWellStats;
     wells.forEach((w) => {
-        const s = calcWellStats(w);
+        const s = _csSum(w);
         finalNetto +=
             s.price +
             (totals.globalWeight > 0

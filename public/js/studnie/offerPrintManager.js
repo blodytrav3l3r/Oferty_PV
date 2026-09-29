@@ -58,9 +58,11 @@ function calculateWellTransportMap(wellsList) {
         return { map, totalTransportCost: 0 };
     }
 
+    // Druk/render: corrupt stored → fallback 0% + flaga (kontrakt throw nietknięty).
+    const _csPm = typeof safeCalcWellStats === 'function' ? safeCalcWellStats : calcWellStats;
     let globalWeight = 0;
     wellsList.forEach((w) => {
-        globalWeight += calcWellStats(w).weight;
+        globalWeight += _csPm(w).weight;
     });
 
     const totalTransports =
@@ -71,7 +73,7 @@ function calculateWellTransportMap(wellsList) {
     const totalTransportCost = totalTransports * costPerTrip;
 
     wellsList.forEach((w) => {
-        const wWeight = calcWellStats(w).weight;
+        const wWeight = _csPm(w).weight;
         let share = globalWeight > 0 ? totalTransportCost * (wWeight / globalWeight) : 0;
         // Osobna pozycja: koszt nie wchodzi w ceny studni (wiersz TR-STUDNIE).
         const separate =
@@ -645,9 +647,11 @@ async function exportStudnieOrderAsOffer_action(orderId, format) {
 
     const exportItems = items.map((well) => {
         const stats =
-            typeof calcWellStats === 'function'
-                ? calcWellStats(well)
-                : { price: 0, weight: 0, height: 0 };
+            typeof safeCalcWellStats === 'function'
+                ? safeCalcWellStats(well)
+                : typeof calcWellStats === 'function'
+                  ? calcWellStats(well)
+                  : { price: 0, weight: 0, height: 0 };
         const zwienczenieName =
             typeof getWellZwienczenieName === 'function' ? getWellZwienczenieName(well) : '—';
         return {

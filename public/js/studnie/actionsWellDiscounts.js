@@ -182,9 +182,11 @@ function updateGlobalPehdDiscount(value) {
 }
 
 function getDiscountedTotal() {
+    // Render/podsumowanie: corrupt stored → fallback 0% (kontrakt throw nietknięty).
+    const _cs = typeof safeCalcWellStats === 'function' ? safeCalcWellStats : calcWellStats;
     let grandTotal = 0;
     wells.forEach((w) => {
-        const s = calcWellStats(w);
+        const s = _cs(w);
         grandTotal += s.price;
     });
     return grandTotal;

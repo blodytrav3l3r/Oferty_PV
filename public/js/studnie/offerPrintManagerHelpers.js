@@ -78,8 +78,10 @@ function buildDiameterTableHtml(dn, wellsGroup, globalLpOffset, transportCostMap
     let groupTotal = 0;
     let lp = globalLpOffset;
 
+    // Druk/render: corrupt stored → fallback 0% + flaga (kontrakt throw nietknięty).
+    const _csPr = typeof safeCalcWellStats === 'function' ? safeCalcWellStats : calcWellStats;
     wellsGroup.forEach((well) => {
-        const stats = calcWellStats(well);
+        const stats = _csPr(well);
         const transportCost = transportCostMap.get(well) || 0;
         const wellPrice = stats.price + transportCost;
         groupTotal += wellPrice;

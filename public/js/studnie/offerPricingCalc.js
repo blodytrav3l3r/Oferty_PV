@@ -2,7 +2,8 @@
 
 function calculateOfferTotals() {
     let globalWeight = 0;
-    wells.forEach((w) => (globalWeight += calcWellStats(w).weight));
+    const _cs = typeof safeCalcWellStats === 'function' ? safeCalcWellStats : calcWellStats;
+    wells.forEach((w) => (globalWeight += _cs(w).weight));
 
     const transportKm = parseFloat(document.getElementById('transport-km')?.value) || 0;
     const transportRate = parseFloat(document.getElementById('transport-rate')?.value) || 0;
@@ -177,12 +178,20 @@ function calculateLinePricing(
     itemIndex,
     precoCtx
 ) {
-    const nadbudowaMult = 1 - getWellNadbudowaPct(well, disc) / 100;
+    // Render: corrupt stored → fallback 0% + flaga (kontrakt throw nietknięty).
+    const nadbudowaMult =
+        1 -
+        (typeof getWellNadbudowaPctSafe === 'function'
+            ? getWellNadbudowaPctSafe(well, disc)
+            : getWellNadbudowaPct(well, disc)) /
+            100;
     const frozenCtx = typeof isFrozenPriceCtx === 'function' && isFrozenPriceCtx();
+    const _assessed =
+        typeof getItemAssessedPriceSafe === 'function'
+            ? getItemAssessedPriceSafe
+            : getItemAssessedPrice;
     const itemPrice =
-        item.frozenPrice != null && frozenCtx
-            ? item.frozenPrice
-            : getItemAssessedPrice(well, p, true, item);
+        item.frozenPrice != null && frozenCtx ? item.frozenPrice : _assessed(well, p, true, item);
     let totalLinePrice = itemPrice * item.quantity;
     let totalLineWeight = (p.weight || 0) * item.quantity;
 
@@ -194,7 +203,14 @@ function calculateLinePricing(
     const precoAlloc = calculatePrecoAllocationForItem(well, itemIndex, precoCtx);
     if (precoAlloc.hasPreco && precoAlloc.allocatedCost > 0) {
         const discKey = well.dn === 'styczna' ? 'styczne' : well.dn;
-        const discPreco = (wellDiscounts[discKey] || {}).preco || 0;
+        const discPreco =
+            typeof safePrecoPct === 'function'
+                ? safePrecoPct(
+                      well,
+                      (typeof wellDiscounts !== 'undefined' ? wellDiscounts : {})[discKey] || {}
+                  )
+                : ((typeof wellDiscounts !== 'undefined' ? wellDiscounts : {})[discKey] || {})
+                      .preco || 0;
         const precoMult = 1 - discPreco / 100;
         totalLinePrice += precoAlloc.allocatedCost * precoMult;
     }
@@ -208,9 +224,11 @@ function calculateLinePricing(
             if (prProd) {
                 // Rabat wg hosta przejścia: dennica/styczna -> dennicowy, reszta -> nadbudowa.
                 const prMult =
-                    typeof getTransitionHostPct === 'function'
-                        ? 1 - getTransitionHostPct(well, disc, pr._hostType) / 100
-                        : nadbudowaMult;
+                    typeof getTransitionHostPctSafe === 'function'
+                        ? 1 - getTransitionHostPctSafe(well, disc, pr._hostType) / 100
+                        : typeof getTransitionHostPct === 'function'
+                          ? 1 - getTransitionHostPct(well, disc, pr._hostType) / 100
+                          : nadbudowaMult;
                 if (pr.frozenTransitionPrice != null) {
                     totalLinePrice +=
                         pr.frozenTransitionPrice +

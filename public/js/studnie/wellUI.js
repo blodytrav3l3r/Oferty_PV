@@ -15,13 +15,17 @@ window.renderWellsListLegacy = window.renderWellsList = function renderWellsList
     // Przelicz bezwzględnie wszystkie studnie z tła, aby uzyskać aktualne błędy grubości rur / luzów
     refreshAllWellErrors();
 
-    // Per-tick cache stats — jeden calcWellStats per well na render, nie 2×
+    // Per-tick cache stats — jeden calcWellStats per well na render, nie 2×.
+    // Corrupt stored → safe fallback 0% per well (jeden zły rabat nie kładzie listy).
     _wellStatsCache = new Map();
     try {
+        const _csW = typeof safeCalcWellStats === 'function' ? safeCalcWellStats : calcWellStats;
         for (let _ci = 0; _ci < wells.length; _ci++) {
             const _w = wells[_ci];
-            if (_w && typeof calcWellStats === 'function')
-                _wellStatsCache.set(_w, calcWellStats(_w));
+            if (_w && typeof _csW === 'function')
+                try {
+                    _wellStatsCache.set(_w, _csW(_w));
+                } catch (_we) {}
         }
     } catch (_e) {}
 
@@ -68,10 +72,10 @@ window.renderWellsListLegacy = window.renderWellsList = function renderWellsList
         html += `<div class="well-group-title">${groupTitle}</div>`;
 
         groupWells.forEach(({ w, i }) => {
+            const _csW2 =
+                typeof safeCalcWellStats === 'function' ? safeCalcWellStats : calcWellStats;
             const stats =
-                _wellStatsCache && _wellStatsCache.has(w)
-                    ? _wellStatsCache.get(w)
-                    : calcWellStats(w);
+                _wellStatsCache && _wellStatsCache.has(w) ? _wellStatsCache.get(w) : _csW2(w);
             const transportVal = transportMap ? transportMap.get(w) || 0 : 0;
             if (typeof _wellBuildCardHtml === 'function') {
                 html += _wellBuildCardHtml(w, i, null, transportVal, stats);

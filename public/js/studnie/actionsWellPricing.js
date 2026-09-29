@@ -65,9 +65,12 @@ const ZWIENCZENIE_TYPES = [
  * string, <0, >100, np. legacy/corrupt) → throw RangeError (fail-loud, nigdy
  * cichy clamp ani NaN w cenie). Ingestia (applyDiscount/updateDiscount)
  * blokuje zapis invalid, więc throw odpala tylko na danych sprzed kontraktu.
- * DECYZJA throw-vs-guard: throw. Renderery (getDiscountStr, offerWellComponents
- * kPct, pricingCalculator) nie mają try/catch — throw przy corrupt przerwie
- * render celowo (sygnał do naprawy danych, nie cicha zła cena w ofercie).
+ * DECYZJA throw-vs-guard: throw na getterach/kalkulatorze (kontrakt E2).
+ * Renderery NIE łapią go wprost — używają safe-wrapperów poniżej
+ * (getWellDiscountPctSafe/getItemAssessedPriceSafe/safeCalcWellStats):
+ * fallback cena bez rabatu (0%) + logger.warn + flaga well._discountCorrupt
+ * i badge błędu w UI. Nie ciche 0 w cenie końcowej — zawsze oznaczone.
+ * Ingestia (applyDiscount/updateDiscount) i throwy nietknięte.
  */
 function assertDiscountPct(value, key) {
     if (typeof value !== 'number' || !Number.isFinite(value) || value < 0 || value > 100) {
@@ -700,10 +703,234 @@ function calcWellStats(well) {
     };
 }
 
+/* ===== SAFE-WRAPPERY RENDERU (corrupt stored → fallback 0% + flaga) ===== */
+// Getter/kalkulator powyżej MUSZĄ rzucać (kontrakt E2). Render woła tylko
+// wrappery stąd: fallback bez rabatu + logger.warn + well._discountCorrupt.
+function _warnDiscountCorrupt(where, err, extra) {
+    const msg =
+        '[discount-corrupt] ' +
+        where +
+        ': fallback 0% (' +
+        String((err && err.message) || err) +
+        ')' +
+        (extra ? ' ' + extra : '');
+    try {
+        if (typeof logger !== 'undefined' && logger && typeof logger.warn === 'function') {
+            logger.warn('pricing', msg);
+            return;
+        }
+    } catch (_e) {}
+    try {
+        if (
+            typeof window !== 'undefined' &&
+            window.logger &&
+            typeof window.logger.warn === 'function'
+        ) {
+            window.logger.warn('pricing', msg);
+            return;
+        }
+    } catch (_e2) {}
+    try {
+        if (typeof console !== 'undefined' && console.warn) console.warn(msg);
+    } catch (_e3) {}
+}
+
+function markWellDiscountCorrupt(well) {
+    try {
+        if (well && typeof well === 'object') well._discountCorrupt = true;
+    } catch (_e) {}
+}
+
+function clearWellDiscountCorrupt(well) {
+    try {
+        if (well && typeof well === 'object') well._discountCorrupt = false;
+    } catch (_e) {}
+}
+
+function isWellDiscountCorrupt(well) {
+    try {
+        return !!(well && well._discountCorrupt);
+    } catch (_e) {
+        return false;
+    }
+}
+
+// Badge błędu rabatu — wygląd jak getDiscountStr, kolor danger (nie cichy).
+function discountCorruptBadge() {
+    return ' <span style="font-size: var(--fs-2xs); color:var(--danger); margin-left:0.3rem;" title="Nieprawidłowy zapis rabatu (legacy/draft) — cena bez rabatu">(⚠ rabat)</span>';
+}
+
+function getWellDiscountPctSafe(well, p, disc) {
+    try {
+        return getWellDiscountPct(well, p, disc);
+    } catch (e) {
+        if (!(e instanceof RangeError)) throw e;
+        _warnDiscountCorrupt('getWellDiscountPct', e, 'dn=' + ((well && well.dn) || '?'));
+        markWellDiscountCorrupt(well);
+        return 0;
+    }
+}
+
+function getWellNadbudowaPctSafe(well, disc) {
+    try {
+        return getWellNadbudowaPct(well, disc);
+    } catch (e) {
+        if (!(e instanceof RangeError)) throw e;
+        _warnDiscountCorrupt('getWellNadbudowaPct', e, 'dn=' + ((well && well.dn) || '?'));
+        markWellDiscountCorrupt(well);
+        return 0;
+    }
+}
+
+function getTransitionHostPctSafe(well, disc, hostType) {
+    try {
+        return getTransitionHostPct(well, disc, hostType);
+    } catch (e) {
+        if (!(e instanceof RangeError)) throw e;
+        _warnDiscountCorrupt(
+            'getTransitionHostPct',
+            e,
+            'dn=' + ((well && well.dn) || '?') + ' host=' + String(hostType)
+        );
+        markWellDiscountCorrupt(well);
+        return 0;
+    }
+}
+
+// Bezpośrednie odczyty (disc.preco || 0) omijają assert — sanituj: invalid → 0 + flaga.
+function safePrecoPct(well, disc) {
+    try {
+        const v = disc ? disc.preco : 0;
+        if (typeof v !== 'number' || !Number.isFinite(v) || v < 0 || v > 100)
+            throw new RangeError('Invalid discountPct preco: ' + String(v));
+        return v;
+    } catch (e) {
+        if (!(e instanceof RangeError)) throw e;
+        _warnDiscountCorrupt('preco', e, 'dn=' + ((well && well.dn) || '?'));
+        markWellDiscountCorrupt(well);
+        return 0;
+    }
+}
+
+function getItemAssessedPriceSafe(well, p, applyDiscount, item) {
+    try {
+        return getItemAssessedPrice(well, p, applyDiscount, item);
+    } catch (e) {
+        if (!(e instanceof RangeError)) throw e;
+        _warnDiscountCorrupt(
+            'getItemAssessedPrice',
+            e,
+            'dn=' + ((well && well.dn) || '?') + ' prod=' + ((p && p.id) || '?')
+        );
+        markWellDiscountCorrupt(well);
+        try {
+            return getItemAssessedPrice(well, p, false, item);
+        } catch (_e2) {
+            return (p && p.price) || 0;
+        }
+    }
+}
+
+function getItemPriceBreakdownSafe(well, p, applyDiscount, item) {
+    try {
+        return getItemPriceBreakdown(well, p, applyDiscount, item);
+    } catch (e) {
+        if (!(e instanceof RangeError)) throw e;
+        _warnDiscountCorrupt(
+            'getItemPriceBreakdown',
+            e,
+            'dn=' + ((well && well.dn) || '?') + ' prod=' + ((p && p.id) || '?')
+        );
+        markWellDiscountCorrupt(well);
+        return null;
+    }
+}
+
+function _sanitizeDisc(disc) {
+    const clean = {};
+    try {
+        for (const k of Object.keys(disc || {})) {
+            const v = disc[k];
+            clean[k] = typeof v === 'number' && Number.isFinite(v) && v >= 0 && v <= 100 ? v : 0;
+        }
+    } catch (_e) {}
+    return clean;
+}
+
+function _emptyWellStats(discountError) {
+    return {
+        price: 0,
+        priceBase: 0,
+        priceDennica: 0,
+        priceDennicaBase: 0,
+        priceNadbudowa: 0,
+        priceNadbudowaBase: 0,
+        weight: 0,
+        height: 0,
+        areaInt: 0,
+        areaExt: 0,
+        malowanieZewTotal: 0,
+        error: null,
+        discountError: !!discountError
+    };
+}
+
+// Renderowy kalkulator: corrupt → retry na sanitowanych rabatach (cena 0%),
+// wynik oznaczony discountError:true + well._discountCorrupt.
+function safeCalcWellStats(well) {
+    try {
+        const s = calcWellStats(well);
+        if (isWellDiscountCorrupt(well)) s.discountError = true;
+        else clearWellDiscountCorrupt(well);
+        return s;
+    } catch (e) {
+        if (!(e instanceof RangeError)) throw e;
+        _warnDiscountCorrupt('calcWellStats', e, 'dn=' + ((well && well.dn) || '?'));
+        markWellDiscountCorrupt(well);
+        try {
+            const dk = well && (well.dn === 'styczna' ? 'styczne' : well.dn);
+            let saved;
+            let had = false;
+            const g =
+                typeof wellDiscounts !== 'undefined'
+                    ? wellDiscounts
+                    : typeof window !== 'undefined'
+                      ? window.wellDiscounts
+                      : undefined;
+            if (g && dk && g[dk]) {
+                saved = g[dk];
+                had = true;
+                g[dk] = _sanitizeDisc(saved);
+            }
+            try {
+                const s2 = calcWellStats(well);
+                s2.discountError = true;
+                return s2;
+            } finally {
+                if (had) g[dk] = saved;
+            }
+        } catch (e2) {
+            _warnDiscountCorrupt('calcWellStats-fallback', e2, '');
+            const f = _emptyWellStats(true);
+            f.error = 'Błąd rabatu — cena bez rabatu';
+            return f;
+        }
+    }
+}
+
 window.getItemPriceBreakdown = getItemPriceBreakdown;
 window.getWellDiscountPct = getWellDiscountPct;
 window.getWellNadbudowaPct = getWellNadbudowaPct;
 window.getTransitionHostPct = getTransitionHostPct;
+window.getWellDiscountPctSafe = getWellDiscountPctSafe;
+window.getWellNadbudowaPctSafe = getWellNadbudowaPctSafe;
+window.getTransitionHostPctSafe = getTransitionHostPctSafe;
+window.safePrecoPct = safePrecoPct;
+window.getItemAssessedPriceSafe = getItemAssessedPriceSafe;
+window.getItemPriceBreakdownSafe = getItemPriceBreakdownSafe;
+window.safeCalcWellStats = safeCalcWellStats;
+window.isWellDiscountCorrupt = isWellDiscountCorrupt;
+window.discountCorruptBadge = discountCorruptBadge;
 
 /* ===== Rejestracja globali ===== */
 window.calcWellStats = calcWellStats;

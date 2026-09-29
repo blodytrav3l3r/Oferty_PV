@@ -131,8 +131,10 @@ function renderOfferSummaryTable(order, orderChanges, totals) {
         }
     }
 
+    // Render: corrupt stored → fallback 0% + flaga (kontrakt throw nietknięty).
+    const _csTbl = typeof safeCalcWellStats === 'function' ? safeCalcWellStats : calcWellStats;
     sortedWells.forEach(({ well, originalIndex }, displayIndex) => {
-        const stats = calcWellStats(well);
+        const stats = _csTbl(well);
         const wellTransportCost =
             totals.globalWeight > 0
                 ? totals.totalTransportCost * (stats.weight / totals.globalWeight)

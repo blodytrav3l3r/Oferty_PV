@@ -20,7 +20,16 @@ function renderWellHeaderRow(
             : well.configStatus === 'WARNING'
               ? ' well-row-warning'
               : '';
-    const badges = getWellBadges(change, isOrdered, well);
+    // Corrupt rabat → fallback 0% w cenie; oznacz w nagłówku (nie ciche).
+    let badges = getWellBadges(change, isOrdered, well);
+    try {
+        const _corr =
+            (typeof isWellDiscountCorrupt === 'function' && isWellDiscountCorrupt(well)) ||
+            (stats && stats.discountError);
+        if (_corr)
+            badges +=
+                ' <span style="font-size: var(--fs-3xs); padding:1px 5px; border-radius: var(--radius-2xs); background:rgba(var(--danger-rgb), 0.2); color:var(--danger-hover); font-weight: var(--fw-bold); margin-left:0.3rem;" title="Nieprawidłowy zapis rabatu (legacy/draft) — cena bez rabatu">⚠ RABAT</span>';
+    } catch (_e) {}
     const errorCell = getWellErrorCell(well);
     const displayLp = lp !== undefined ? lp : i + 1;
 
@@ -144,7 +153,9 @@ function renderWellDetailsRow(well, i, change, wellTransportCost, colsCount) {
     if (!isExpanded)
         return `<tr id="well-details-${i}" class="well-details-row hidden"><td colspan="${colsCount}"></td></tr>`;
 
-    const stats = calcWellStats(well);
+    // Render: corrupt stored → fallback 0% + flaga (kontrakt throw nietknięty).
+    const stats =
+        typeof safeCalcWellStats === 'function' ? safeCalcWellStats(well) : calcWellStats(well);
     const discountKey = well.dn === 'styczna' ? 'styczne' : well.dn;
     const activeDiscounts =
         typeof getWellActiveDiscounts === 'function' ? getWellActiveDiscounts(well) : wellDiscounts;
@@ -282,9 +293,11 @@ function renderComponentSubItems(well, p, item, itemPrzejscia, disc, wellTranspo
     const isBase = p.componentType === 'dennica' || p.componentType === 'styczna';
 
     const bd =
-        typeof getItemPriceBreakdown === 'function'
-            ? getItemPriceBreakdown(well, p, true, item)
-            : null;
+        typeof getItemPriceBreakdownSafe === 'function'
+            ? getItemPriceBreakdownSafe(well, p, true, item)
+            : typeof getItemPriceBreakdown === 'function'
+              ? getItemPriceBreakdown(well, p, true, item)
+              : null;
     if (bd) {
         let pehdLabel = '';
         if (bd.pehd > 0) {
@@ -354,9 +367,11 @@ function renderComponentSubItems(well, p, item, itemPrzejscia, disc, wellTranspo
                 const frPct =
                     pr.frozenPriceBase > 0 && pr.frozenPrice != null
                         ? (1 - pr.frozenPrice / pr.frozenPriceBase) * 100
-                        : typeof getTransitionHostPct === 'function'
-                          ? getTransitionHostPct(well, disc, pr._hostType)
-                          : 0;
+                        : typeof getTransitionHostPctSafe === 'function'
+                          ? getTransitionHostPctSafe(well, disc, pr._hostType)
+                          : typeof getTransitionHostPct === 'function'
+                            ? getTransitionHostPct(well, disc, pr._hostType)
+                            : 0;
                 const frBadge = subDiscountStr(frPct);
                 html += `<tr class="opacity-6-sm-accent">
                     <td colspan="3" class="pl-lg">↳ + Przejście: ${escapeHtml(pr.frozenName || prProd.category)} ${escapeHtml(prProd.dn || '')} (${pr.angle}°)${frBadge}</td>
@@ -379,9 +394,11 @@ function renderComponentSubItems(well, p, item, itemPrzejscia, disc, wellTranspo
             } else {
                 // Rabat wg hosta przejścia: dennica/styczna -> dennicowy, reszta -> nadbudowa.
                 const prPct =
-                    typeof getTransitionHostPct === 'function'
-                        ? getTransitionHostPct(well, disc, pr._hostType)
-                        : getWellNadbudowaPct(well, disc);
+                    typeof getTransitionHostPctSafe === 'function'
+                        ? getTransitionHostPctSafe(well, disc, pr._hostType)
+                        : typeof getTransitionHostPct === 'function'
+                          ? getTransitionHostPct(well, disc, pr._hostType)
+                          : getWellNadbudowaPct(well, disc);
                 const prMult = 1 - prPct / 100;
                 const prBadge = subDiscountStr(prPct);
                 const prPrice = (prProd.price || 0) * prMult;
@@ -422,34 +439,55 @@ function renderComponentSubItems(well, p, item, itemPrzejscia, disc, wellTranspo
                     ? getStudnieProductById(kineta.productId)
                     : studnieProducts.find((x) => x.id === kineta.productId);
             const frozenCtx = typeof isFrozenPriceCtx === 'function' && isFrozenPriceCtx();
+            const _kAssessed =
+                typeof getItemAssessedPriceSafe === 'function'
+                    ? getItemAssessedPriceSafe
+                    : getItemAssessedPrice;
             const kPrice =
                 (kineta.frozenPrice != null && frozenCtx
                     ? kineta.frozenPrice
-                    : getItemAssessedPrice(well, kp, true, kineta)) * (kineta.quantity || 1);
+                    : _kAssessed(well, kp, true, kineta)) * (kineta.quantity || 1);
             const kPct =
                 kineta.frozenPrice != null && frozenCtx && kineta.frozenPriceBase > 0
                     ? (1 - kineta.frozenPrice / kineta.frozenPriceBase) * 100
                     : kp
-                      ? getWellDiscountPct(well, kp, disc)
+                      ? typeof getWellDiscountPctSafe === 'function'
+                          ? getWellDiscountPctSafe(well, kp, disc)
+                          : getWellDiscountPct(well, kp, disc)
                       : 0;
+            // Corrupt rabat → kPct fallback 0 + widoczny badge (nie ciche 0).
+            const _kBadge =
+                typeof isWellDiscountCorrupt === 'function' && isWellDiscountCorrupt(well)
+                    ? typeof discountCorruptBadge === 'function'
+                        ? discountCorruptBadge()
+                        : subDiscountStr(kPct)
+                    : subDiscountStr(kPct);
             html +=
                 '<tr style="opacity:0.6; font-size: var(--fs-sm); color:var(--pink-hover);"><td colspan="3" class="pl-lg">↳ + ' +
                 escapeHtml(kp ? kp.name : 'Kineta') +
-                subDiscountStr(kPct) +
+                _kBadge +
                 '</td><td class="text-right">' +
                 fmt(kPrice) +
                 ' PLN</td></tr>';
 
-            if (kp && typeof getItemPriceBreakdown === 'function') {
-                const kBd = getItemPriceBreakdown(well, kp, true, kineta);
+            if (
+                kp &&
+                (typeof getItemPriceBreakdownSafe === 'function' ||
+                    typeof getItemPriceBreakdown === 'function')
+            ) {
+                const kBd =
+                    typeof getItemPriceBreakdownSafe === 'function'
+                        ? getItemPriceBreakdownSafe(well, kp, true, kineta)
+                        : getItemPriceBreakdown(well, kp, true, kineta);
                 const kQ = kineta.quantity || 1;
-                if (kBd.malowanieW > 0) {
+                // Safe-wrapper zwraca null przy corrupt (flaga już ustawiona) — pomiń wiersze.
+                if (kBd && kBd.malowanieW > 0) {
                     html +=
                         '<tr class="opacity-5-xs-pink"><td colspan="3" class="pl-lg">w cenie: malowanie wewnątrz</td><td class="text-right">' +
                         fmt(kBd.malowanieW * kQ) +
                         ' PLN</td></tr>';
                 }
-                if (kBd.malowanieZ > 0) {
+                if (kBd && kBd.malowanieZ > 0) {
                     html +=
                         '<tr class="opacity-5-xs-pink"><td colspan="3" class="pl-lg">w cenie: malowanie zewnątrz</td><td class="text-right">' +
                         fmt(kBd.malowanieZ * kQ) +
@@ -463,7 +501,12 @@ function renderComponentSubItems(well, p, item, itemPrzejscia, disc, wellTranspo
     if (precoAlloc.hasPreco) {
         if (precoAlloc.allocatedCost > 0) {
             const discKey = well.dn === 'styczna' ? 'styczne' : well.dn;
-            const discPreco = (wellDiscounts[discKey] || {}).preco || 0;
+            const _discPrecoObj =
+                (typeof wellDiscounts !== 'undefined' ? wellDiscounts : {})[discKey] || {};
+            const discPreco =
+                typeof safePrecoPct === 'function'
+                    ? safePrecoPct(well, _discPrecoObj)
+                    : _discPrecoObj.preco || 0;
             const precoMult = 1 - discPreco / 100;
             const precoCost = precoAlloc.allocatedCost * precoMult;
             const fracPerc =
