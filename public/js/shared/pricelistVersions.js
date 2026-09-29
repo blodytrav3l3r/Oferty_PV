@@ -466,7 +466,7 @@
                     eff +
                     '</td>' +
                     '<td>' +
-                    esc(v.createdBy || '—') +
+                    esc(v.createdByName || v.createdBy || '—') +
                     '</td>' +
                     '<td>' +
                     noteCell(v, manageable) +

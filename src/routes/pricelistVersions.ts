@@ -86,7 +86,37 @@ router.get('/', requireAuth, requireAdmin, async (req, res) => {
                 usedBy: (await countVersionUsage(v.id)).total
             }))
         );
-        res.json({ versions: withUsage });
+        // Autor: nazwa zamiast id (kolumna Autor w panelu). Batch 1 query;
+        // nie-user (auto-ensure/backfill) i usunięci zostają słownie po id.
+        const authorIds = [
+            ...new Set(
+                withUsage
+                    .map((v) => v.createdBy)
+                    .filter((id): id is string => typeof id === 'string' && id.length > 0)
+            )
+        ];
+        const authors =
+            authorIds.length > 0
+                ? await prisma.users.findMany({
+                      where: { id: { in: authorIds } },
+                      select: { id: true, username: true, firstName: true, lastName: true }
+                  })
+                : [];
+        const authorName = new Map(
+            authors.map((u) => [
+                u.id,
+                [u.firstName, u.lastName].filter(Boolean).join(' ') || u.username
+            ])
+        );
+        res.json({
+            versions: withUsage.map((v) => ({
+                ...v,
+                createdByName:
+                    typeof v.createdBy === 'string'
+                        ? (authorName.get(v.createdBy) ?? v.createdBy)
+                        : null
+            }))
+        });
     } catch (err) {
         sendVersionError(res, err);
     }
