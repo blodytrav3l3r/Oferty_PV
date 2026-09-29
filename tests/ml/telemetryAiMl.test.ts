@@ -593,6 +593,78 @@ describe('POST /api/telemetry/ai/reward', () => {
     });
 });
 
+describe('GET /api/telemetry/ai/well-selections', () => {
+    let app: express.Application;
+
+    beforeEach(async () => {
+        jest.clearAllMocks();
+        const { default: router } = await import('../../src/routes/telemetryAiMl');
+        app = express();
+        app.use(express.json());
+        app.use('/api/telemetry', router);
+    });
+
+    it('agreguje po wellId, sortuje po lastSeenAt desc i limituje findMany do 500', async () => {
+        mockTelemetryLogsFindMany.mockResolvedValue([
+            {
+                wellId: 'well-1',
+                dn: 'DN1000',
+                warehouse: 'W1',
+                aiVersion: 'v1',
+                createdAt: '2026-09-20T10:00:00.000Z'
+            },
+            {
+                wellId: 'well-1',
+                dn: 'DN1000',
+                warehouse: 'W1',
+                aiVersion: 'v1',
+                createdAt: '2026-09-21T10:00:00.000Z'
+            },
+            {
+                wellId: 'well-2',
+                dn: 'DN800',
+                warehouse: 'W2',
+                aiVersion: 'v1',
+                createdAt: '2026-09-19T10:00:00.000Z'
+            }
+        ]);
+
+        const res = await request(app).get('/api/telemetry/ai/well-selections');
+
+        expect(res.status).toBe(200);
+        expect(mockTelemetryLogsFindMany).toHaveBeenCalledWith(
+            expect.objectContaining({
+                where: { solverSource: 'AI_SUGGEST' },
+                orderBy: { createdAt: 'desc' },
+                take: 500
+            })
+        );
+        expect(res.body).toEqual({
+            totalWells: 2,
+            totalSelections: 3,
+            items: [
+                expect.objectContaining({
+                    wellId: 'well-1',
+                    count: 2,
+                    lastSeenAt: '2026-09-21T10:00:00.000Z'
+                }),
+                expect.objectContaining({ wellId: 'well-2', count: 1 })
+            ]
+        });
+    });
+
+    it('pomija logi bez wellId', async () => {
+        mockTelemetryLogsFindMany.mockResolvedValue([
+            { wellId: null, dn: null, warehouse: null, aiVersion: null, createdAt: null }
+        ]);
+
+        const res = await request(app).get('/api/telemetry/ai/well-selections');
+
+        expect(res.status).toBe(200);
+        expect(res.body).toEqual({ totalWells: 0, totalSelections: 0, items: [] });
+    });
+});
+
 describe('POST /ai/reward ownership (P1 gate na ownerze targetu)', () => {
     let app: express.Application;
 
@@ -678,10 +750,16 @@ describe('POST /ai/reward ownership (P1 gate na ownerze targetu)', () => {
     });
 
     it('batch mieszany: wlasny applied, cudzy FORBIDDEN', async () => {
-        mockTelemetryLogsFindMany.mockResolvedValue([
-            { wellId: 'well-own' },
-            { wellId: 'well-alien' }
-        ]);
+        // Batch prefetch: findMany routowane po where (existence vs parents vs sugestie).
+        mockTelemetryLogsFindMany.mockImplementation(async (args: any) => {
+            if (args?.where?.id?.in)
+                return [
+                    { id: 'tel-a', wellId: 'well-own', userId: 'userA' },
+                    { id: 'tel-b', wellId: 'well-alien', userId: 'userB' }
+                ];
+            if (args?.where?.solverSource) return [];
+            return [{ wellId: 'well-own' }, { wellId: 'well-alien' }];
+        });
         mockTelemetryLogsFindFirst.mockImplementation(async (args: any) => {
             // resolveRewardTarget pyta po where.id (= parentConfigId z itemu).
             if (args?.where?.id === 'tel-b') return { id: 'tel-b', userId: 'userB' };
@@ -702,5 +780,7 @@ describe('POST /ai/reward ownership (P1 gate na ownerze targetu)', () => {
         expect(res.status).toBe(200);
         expect(res.body.applied).toEqual(['well-own']);
         expect(res.body.rejected).toEqual([{ wellId: 'well-alien', reason: 'FORBIDDEN' }]);
+        // Prefetch zamiast N× findFirst: zero odczytów per-item w batchu.
+        expect(mockTelemetryLogsFindFirst).not.toHaveBeenCalled();
     });
 });

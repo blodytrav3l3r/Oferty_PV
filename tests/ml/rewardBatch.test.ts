@@ -34,13 +34,14 @@ jest.mock('../../src/services/ml/SelfEvaluation', () => ({
 
 jest.mock('../../src/services/ml/FeatureExtractor', () => ({
     featureExtractor: {
-        updateLabelByTelemetry: jest.fn<any>().mockResolvedValue(undefined),
+        updateLabelByTelemetry: (...args: any[]) => mockUpdateLabel(...args),
         getFeatureCount: jest.fn<any>().mockResolvedValue(24)
     }
 }));
 
 let mockLogsFindMany = jest.fn<any>().mockResolvedValue([]);
 let mockLogsFindFirst = jest.fn<any>().mockResolvedValue(null);
+const mockUpdateLabel = jest.fn<any>().mockResolvedValue(undefined);
 
 jest.mock('../../src/prismaClient', () => ({
     __esModule: true,
@@ -133,5 +134,39 @@ describe('POST /api/telemetry/ai/reward-batch', () => {
             .post('/api/telemetry/ai/reward-batch')
             .send({ items: [item('w1')] });
         expect(res.status).toBe(503);
+    });
+
+    it('roundtripy stałe: 4-item batch (ACCEPT×2 + MODIFY + REJECT) → 3× findMany, 0× findFirst', async () => {
+        // findMany routowane po where: existence vs parents (where.id.in) vs sugestie.
+        mockLogsFindMany.mockImplementation(async (args: any) => {
+            if (args?.where?.id?.in) return [{ id: 'tel-x', wellId: 'w4', userId: 'someone-else' }];
+            if (args?.where?.solverSource) return [{ id: 'sug-3', wellId: 'w3', userId: 'u3' }];
+            return [{ wellId: 'w1' }, { wellId: 'w2' }, { wellId: 'w3' }, { wellId: 'w4' }];
+        });
+        const res = await request(app)
+            .post('/api/telemetry/ai/reward-batch')
+            .send({
+                items: [
+                    item('w1'),
+                    item('w2'),
+                    { action: 'MODIFY', wellId: 'w3' },
+                    { action: 'REJECT', wellId: 'w4', parentConfigId: 'tel-x' }
+                ]
+            });
+        expect(res.status).toBe(200);
+        // ACCEPT×2 + MODIFY applied; REJECT cudzy (brak usera w tym harnessie) → FORBIDDEN.
+        expect(res.body.applied).toEqual(['w1', 'w2', 'w3']);
+        expect(res.body.rejected).toEqual([{ wellId: 'w4', reason: 'FORBIDDEN' }]);
+        // Odczyty zgrupowane: existence + parents + sugestie; zero per-item findFirst.
+        expect(mockLogsFindMany).toHaveBeenCalledTimes(3);
+        expect(mockLogsFindFirst).not.toHaveBeenCalled();
+        // Zapis tylko dla nie-odrzuconych: FORBIDDEN gate PRZED processAction.
+        expect(mockProcessAction).toHaveBeenCalledTimes(3);
+        // MODIFY etykietuje sugestię z prefetchu (fallback, brak parentConfigId).
+        const prismaMock = (await import('../../src/prismaClient')).default as any;
+        expect(prismaMock.ai_telemetry_logs.update).toHaveBeenCalledWith(
+            expect.objectContaining({ where: { id: 'sug-3' } })
+        );
+        expect(mockUpdateLabel).toHaveBeenCalledWith('sug-3', 'MODIFIED');
     });
 });

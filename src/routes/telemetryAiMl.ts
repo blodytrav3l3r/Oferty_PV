@@ -322,16 +322,27 @@ async function resolveRewardTarget(
 /**
  * Właściwe zapisanie nagrody — caller gwarantuje istnienie wiersza telemetry
  * (single: processRewardItem, batch: zbiorczy findMany IN).
+ *
+ * @param preTarget wstępnie wyznaczony target etykietowania (batch prefetch).
+ *   `undefined` = wyznacz leniwie przez resolveRewardTarget (ścieżka single).
+ *   Ten sam obiekt służy gate'owi REJECT i etykietowaniu — invariant:
+ *   owner sprawdzany = owner rekordu modyfikowanego (bez podwójnego odczytu).
  */
+type RewardTarget = { id: string; userId: string | null } | null;
 async function applyRewardItem(
     data: RewardItemInput,
-    user: AuthenticatedRequest['user']
+    user: AuthenticatedRequest['user'],
+    preTarget?: RewardTarget
 ): Promise<{ status: 'duplicate' } | { status: 'applied' } | { status: 'forbidden' }> {
     // P1 reward ownership: silny negatyw (REJECT, −1.0) tylko z prawem zapisu
     // do właściciela ETYKIETOWANEJ sugestii. Gate PRZED jakimkolwiek zapisem
     // (także przed aiRewardLog). ACCEPT/MODIFY bez zmian.
+    // P2 dedup: unikalny indeks uq_reward_well_action + P2002 (atomowo) —
+    // zapis celowo per-item (wspólny tx dla batcha zmieniłby semantykę:
+    // drugi duplikat w batchu wycofałby cały tx zamiast statusu 'duplicate').
+    let target: RewardTarget | undefined = preTarget;
     if (data.action === 'REJECT') {
-        const target = await resolveRewardTarget(data);
+        if (target === undefined) target = await resolveRewardTarget(data);
         if (target && !canWriteDoc(user, target.userId)) {
             return { status: 'forbidden' };
         }
@@ -356,7 +367,8 @@ async function applyRewardItem(
         const flags = data.action === 'MODIFY' ? { wasModified: true } : { wasRejected: true };
         const label = data.action === 'MODIFY' ? 'MODIFIED' : 'REJECTED';
 
-        const target = await resolveRewardTarget(data);
+        // REJECT: target już wyznaczony wyżej (gate). MODIFY: leniwie albo z prefetchu.
+        if (target === undefined) target = await resolveRewardTarget(data);
         const targetId = target?.id ?? null;
         if (targetId) {
             await prisma.ai_telemetry_logs.update({
@@ -406,17 +418,70 @@ router.post(
                 rows.map((r) => r.wellId).filter((w): w is string => !!w)
             );
 
+            // Prefetch targetów etykietowania (MODIFY/REJECT): 2× findMany IN
+            // zamiast do 2× findFirst per item (parent + pierwsza sugestia AUTO).
+            // Logika wyboru identyczna jak resolveRewardTarget: parentConfigId
+            // należący do tej studni wygrywa, inaczej pierwsza sugestia AUTO.
+            const needsTarget = items.some((i) => i.action === 'MODIFY' || i.action === 'REJECT');
+            const targetByIndex = new Map<number, RewardTarget>();
+            if (needsTarget) {
+                const parentIds = [
+                    ...new Set(
+                        items.filter((i) => i.parentConfigId).map((i) => i.parentConfigId as string)
+                    )
+                ];
+                const parentsById = new Map<
+                    string,
+                    { id: string; wellId: string | null; userId: string | null }
+                >();
+                if (parentIds.length > 0) {
+                    const parentRows = await prisma.ai_telemetry_logs.findMany({
+                        where: { id: { in: parentIds } },
+                        select: { id: true, wellId: true, userId: true }
+                    });
+                    for (const p of parentRows) parentsById.set(p.id, p);
+                }
+                const suggestionRows = await prisma.ai_telemetry_logs.findMany({
+                    where: {
+                        wellId: { in: wellIds },
+                        solverSource: { in: ['AUTO_JS', 'AI_SUGGEST'] }
+                    },
+                    orderBy: { createdAt: 'asc' },
+                    select: { id: true, wellId: true, userId: true }
+                });
+                const firstSuggestionByWell = new Map<
+                    string,
+                    { id: string; userId: string | null }
+                >();
+                for (const s of suggestionRows) {
+                    if (!s.wellId || firstSuggestionByWell.has(s.wellId)) continue;
+                    firstSuggestionByWell.set(s.wellId, { id: s.id, userId: s.userId });
+                }
+                items.forEach((item, idx) => {
+                    if (item.action !== 'MODIFY' && item.action !== 'REJECT') return;
+                    const parent = item.parentConfigId
+                        ? parentsById.get(item.parentConfigId)
+                        : undefined;
+                    if (parent && parent.wellId === item.wellId) {
+                        targetByIndex.set(idx, { id: parent.id, userId: parent.userId });
+                    } else {
+                        targetByIndex.set(idx, firstSuggestionByWell.get(item.wellId) ?? null);
+                    }
+                });
+            }
+
             const applied: string[] = [];
             const duplicates: string[] = [];
             const rejected: Array<{ wellId: string; reason: string }> = [];
 
-            for (const item of items) {
+            for (let idx = 0; idx < items.length; idx++) {
+                const item = items[idx];
                 try {
                     if (!withTelemetry.has(item.wellId)) {
                         rejected.push({ wellId: item.wellId, reason: 'WELL_NOT_FOUND' });
                         continue;
                     }
-                    const result = await applyRewardItem(item, user);
+                    const result = await applyRewardItem(item, user, targetByIndex.get(idx));
                     if (result.status === 'applied') applied.push(item.wellId);
                     else if (result.status === 'forbidden')
                         rejected.push({ wellId: item.wellId, reason: 'FORBIDDEN' });
@@ -445,6 +510,8 @@ router.get(
     async (_req: Request, res: Response) => {
         try {
             // Indeks idx_logs_source_well (solverSource, wellId) — filtr po solverSource.
+            // Limit 500 najnowszych: jedyny konsument (aiDashboard.js) pokazuje
+            // slice(0, 20) po lastSeenAt desc — paginacja zbędna (YAGNI).
             const logs = await prisma.ai_telemetry_logs.findMany({
                 where: { solverSource: 'AI_SUGGEST' },
                 select: {
@@ -454,7 +521,8 @@ router.get(
                     aiVersion: true,
                     createdAt: true
                 },
-                orderBy: { createdAt: 'desc' }
+                orderBy: { createdAt: 'desc' },
+                take: 500
             });
 
             // Agregacja w pamieci — dane sa male (brak groupBy w Prisma/SQLite dla tego modelu).
