@@ -74,7 +74,7 @@ describe('frontend: panel Zarządzanie cennikiem (3 przyciski + 3 sekcje)', () =
         expect(order.every((i) => i > -1)).toBe(true);
         expect(order).toEqual([...order].sort((a, b) => a - b));
         expect(ruryPartial).toContain('id="btn-save-pricelist"');
-        expect(ruryPartial).toContain('onclick="openRuryVersionsPanel()"');
+        expect(ruryPartial).toContain('data-csp="openRuryVersionsPanel"');
         expect(ruryPartial).toContain('title="Zarządzanie cennikiem: wersje, pliki, domyślne"');
     });
     it('toolbar: Dodaj, Zapisz, Zarządzaj w tej kolejności (studnie)', () => {

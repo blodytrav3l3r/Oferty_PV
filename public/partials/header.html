@@ -47,7 +47,8 @@
                     class="nav-btn nav-tile active nav-tile--studnie"
                     data-section="builder"
                     id="nav-builder"
-                    onclick="showSection('builder')"
+                    data-csp="showSection"
+                    data-csp-args='["builder"]'
                 >
                     <span class="nav-tile-icon"><i data-lucide="hard-hat"></i></span>
                     <span class="nav-tile-text">Konfiguracja</span>
@@ -57,7 +58,8 @@
                     class="nav-btn nav-tile nav-tile--oferta"
                     data-section="offer"
                     id="nav-offer"
-                    onclick="showSection('offer')"
+                    data-csp="showSection"
+                    data-csp-args='["offer"]'
                 >
                     <span class="nav-tile-icon"><i data-lucide="bar-chart-2"></i></span>
                     <span class="nav-tile-text">Oferta</span>
@@ -67,7 +69,8 @@
                     class="nav-btn nav-tile nav-tile--cennik"
                     data-section="pricelist"
                     id="nav-pricelist"
-                    onclick="showSection('pricelist')"
+                    data-csp="showSection"
+                    data-csp-args='["pricelist"]'
                 >
                     <span class="nav-tile-icon"><i data-lucide="clipboard-list"></i></span>
                     <span class="nav-tile-text">Cennik</span>
@@ -78,7 +81,7 @@
             <div id="header-user-info" class="header-user-info">
                 <span id="header-username" class="header-username"></span>
                 <span id="header-role-badge" class="header-role-badge"></span>
-                <button type="button" onclick="appLogout()" class="header-logout">Wyloguj</button>
+                <button type="button" data-csp="appLogout" class="header-logout">Wyloguj</button>
             </div>
         </div>
     </div>

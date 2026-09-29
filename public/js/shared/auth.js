@@ -218,6 +218,8 @@ if (typeof window !== 'undefined') {
     if (typeof document === 'undefined' || typeof document.querySelectorAll !== 'function') return;
     function bind() {
         document.querySelectorAll('.header-logout').forEach((btn) => {
+            // Elementy z data-csp naleza do dyspozytora CSP-B2 (brak podwojnego logout).
+            if (btn.hasAttribute && btn.hasAttribute('data-csp')) return;
             btn.addEventListener('click', () => appLogout());
         });
     }

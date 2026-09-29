@@ -46,7 +46,7 @@
                 <button
                     type="button"
                     class="btn btn-secondary btn-sm"
-                    onclick="showClientsDb()"
+                    data-csp="showClientsDb"
                     style="padding: 0.4rem 0.8rem; font-size: var(--fs-base)"
                 >
                     <i data-lucide="folder-open"></i> Wczytaj klienta
@@ -54,7 +54,7 @@
                 <button
                     type="button"
                     class="btn btn-primary btn-sm"
-                    onclick="saveClientToDb()"
+                    data-csp="saveClientToDb"
                     style="padding: 0.4rem 0.8rem; font-size: var(--fs-base)"
                 >
                     <i data-lucide="save"></i> Zapisz klienta
@@ -160,7 +160,7 @@
                         font-weight: var(--fw-bold);
                         padding: 0.3rem 0.6rem;
                     "
-                    onclick="changeOfferUser()"
+                    data-csp="changeOfferUser"
                 >
                     <i data-lucide="user"></i> Zmień opiekuna
                 </button>
@@ -243,7 +243,7 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea>
                         class="wizard-form-input"
                         id="offer-validity"
                         value="7 dni"
-                        onclick="this.select()"
+                        data-csp="$select"
                     />
                 </div>
             </div>
@@ -253,7 +253,7 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea>
                     type="button"
                     class="wizard-btn wizard-btn-next"
                     id="wizard-next-step1"
-                    onclick="phaseNext()"
+                    data-csp="phaseNext"
                 >
                     Dalej →
                 </button>

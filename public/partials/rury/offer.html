@@ -99,7 +99,7 @@
             <button
                 type="button"
                 class="btn btn-secondary btn-sm"
-                onclick="generateOfferNotes()"
+                data-csp="generateOfferNotes"
                 style="font-size: var(--fs-sm); padding: 0.3rem 0.6rem"
             >
                 <i data-lucide="refresh-cw" style="width: 12px; height: 12px"></i>
@@ -148,7 +148,7 @@
                 id="offer-tab-validity"
                 class="wizard-form-input"
                 style="width: 100%; font-size: var(--fs-base); text-align: right"
-                onclick="this.select()"
+                data-csp="$select"
             />
         </div>
     </div>
@@ -167,7 +167,8 @@
                         type="button"
                         class="zt-toggle-btn zt-toggle-tak-btn active"
                         id="zt-toggle-tak-oferta"
-                        onclick="setZabezpieczenieTransportu(true)"
+                        data-csp="setZabezpieczenieTransportu"
+                        data-csp-args="[true]"
                     >
                         TAK
                     </button>
@@ -175,7 +176,8 @@
                         type="button"
                         class="zt-toggle-btn zt-toggle-nie-btn"
                         id="zt-toggle-nie-oferta"
-                        onclick="setZabezpieczenieTransportu(false)"
+                        data-csp="setZabezpieczenieTransportu"
+                        data-csp-args="[false]"
                     >
                         NIE
                     </button>

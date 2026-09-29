@@ -11,7 +11,8 @@
                         type="button"
                         class="zt-toggle-btn zt-toggle-tak-btn active"
                         id="zt-toggle-tak"
-                        onclick="setZabezpieczenieTransportu(true)"
+                        data-csp="setZabezpieczenieTransportu"
+                        data-csp-args="[true]"
                     >
                         TAK
                     </button>
@@ -19,7 +20,8 @@
                         type="button"
                         class="zt-toggle-btn zt-toggle-nie-btn"
                         id="zt-toggle-nie"
-                        onclick="setZabezpieczenieTransportu(false)"
+                        data-csp="setZabezpieczenieTransportu"
+                        data-csp-args="[false]"
                     >
                         NIE
                     </button>
@@ -50,7 +52,7 @@
                 type="button"
                 class="btn btn-secondary offer-catalog-btn"
                 id="toggle-catalog-btn"
-                onclick="toggleCatalog()"
+                data-csp="toggleCatalog"
             >
                 <i data-lucide="folder-open"></i> Ukryj katalog produktów
             </button>

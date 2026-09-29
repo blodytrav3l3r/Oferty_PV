@@ -38,7 +38,7 @@
             <button
                 type="button"
                 class="btn btn-icon"
-                onclick="handleRuryTransportCancel()"
+                data-csp="handleRuryTransportCancel"
                 style="color: var(--text-muted)"
             >
                 <i data-lucide="x" style="width: 16px; height: 16px"></i>
@@ -132,7 +132,7 @@
                         type="button"
                         id="rury-transport-mode-btn"
                         class="tp-mode-btn"
-                        onclick="toggleRuryTransportMode()"
+                        data-csp="toggleRuryTransportMode"
                     >
                         <i data-lucide="truck" style="width: 16px; height: 16px"></i>
                         <span id="rury-transport-mode-label">Pełne</span>
@@ -146,7 +146,7 @@
                         type="button"
                         id="rury-transport-separate-btn"
                         class="tp-mode-btn"
-                        onclick="toggleRuryTransportSeparate()"
+                        data-csp="toggleRuryTransportSeparate"
                     >
                         <i data-lucide="package" style="width: 16px; height: 16px"></i>
                         <span id="rury-transport-separate-label">W cenie elementów</span>
@@ -312,7 +312,7 @@
             <button
                 type="button"
                 class="btn btn-secondary"
-                onclick="handleRuryTransportCancel()"
+                data-csp="handleRuryTransportCancel"
                 style="font-size: var(--fs-sm); padding: 0.4rem 1rem; font-weight: var(--fw-bold)"
             >
                 Zamknij
@@ -320,7 +320,7 @@
             <button
                 type="button"
                 class="btn btn-primary"
-                onclick="handleRuryTransportSave()"
+                data-csp="handleRuryTransportSave"
                 style="
                     font-size: var(--fs-sm);
                     padding: 0.4rem 1.2rem;
