@@ -196,5 +196,39 @@ describe('Clients CRUD — wspólna baza (Wariant A, globalny dostęp)', () => {
             expect(upsert).toBeTruthy();
             expect(upsert!.values).toContain('user-id');
         });
+
+        it('NULL-uje clientId ofert przy usuwaniu klienta (brak wiszących clientId)', async () => {
+            const txMock = {
+                $queryRaw: jest.fn().mockImplementation(async (strings: any) => {
+                    const sql = Array.isArray(strings) ? strings.join(' ') : String(strings);
+                    if (sql.includes('SELECT id'))
+                        return [
+                            { id: 'c-gone', userId: 'user-id' },
+                            { id: 'c-keep', userId: 'user-id' }
+                        ];
+                    return [{ id: 'c-keep' }];
+                }),
+                $executeRaw: jest.fn().mockResolvedValue(1),
+                offers_rel: { updateMany: jest.fn().mockResolvedValue({ count: 2 }) },
+                offers_studnie_rel: { updateMany: jest.fn().mockResolvedValue({ count: 1 }) }
+            };
+            (prisma.$transaction as jest.Mock).mockImplementation(async (fn: (tx: any) => any) =>
+                fn(txMock)
+            );
+
+            const res = await request(app)
+                .put('/api/clients')
+                .send({ data: [{ id: 'c-keep', name: 'Zostaje' }] });
+
+            expect(res.statusCode).toBe(200);
+            expect(txMock.offers_rel.updateMany).toHaveBeenCalledWith({
+                where: { clientId: { in: ['c-gone'] } },
+                data: { clientId: null }
+            });
+            expect(txMock.offers_studnie_rel.updateMany).toHaveBeenCalledWith({
+                where: { clientId: { in: ['c-gone'] } },
+                data: { clientId: null }
+            });
+        });
     });
 });

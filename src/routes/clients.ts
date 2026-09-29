@@ -91,6 +91,19 @@ router.put(
                 const toDelete = existingIds.filter((id) => !incomingIds.includes(id));
 
                 if (toDelete.length > 0) {
+                    // Semantyka: link clientId NULL-uj (snapshot clientName/NIP/NIP
+                    // w ofertach zostaje — historia czytelna). Bez tego offers_rel /
+                    // offers_studnie_rel.clientId wiszą (kolumna bez FK): PDF/DOCX są
+                    // null-safe (findUnique w ternary), ale dane gniją po cichu.
+                    // FK clients_rel jako rekomendacja migracyjna (poza zakresem).
+                    await tx.offers_rel.updateMany({
+                        where: { clientId: { in: toDelete } },
+                        data: { clientId: null }
+                    });
+                    await tx.offers_studnie_rel.updateMany({
+                        where: { clientId: { in: toDelete } },
+                        data: { clientId: null }
+                    });
                     for (const id of toDelete) {
                         await tx.$executeRaw`DELETE FROM clients_rel WHERE id = ${id}`;
                     }

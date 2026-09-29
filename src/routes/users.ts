@@ -179,6 +179,20 @@ router.delete('/:id', requireAuth, requireAdmin, adminUsersLimiter, async (req, 
             // Sesje w tej samej tx — brak okna martwy-user-z-żywą-sesją.
             await tx.sessions.deleteMany({ where: { userId: req.params.id } });
             await tx.user_preferences.deleteMany({ where: { userId: req.params.id } });
+            // Semantyka shares przy kasowaniu usera: USUŃ (nie anonimizuj, nie blokuj).
+            // Dokumenty chroni blokada 403 powyżej (owned > 0), więc ownerId-sieroty są
+            // niedosiężne tą ścieżką; grantee-sieroty (sharedWithUserId) i createdBy
+            // czyścimy tu — inaczej martwe wiersze zalegają, a roleFilter/ownership
+            // (read po sharedWithUserId) nigdy ich nie dopasują. Dokumenty i audit zostają.
+            await tx.document_shares.deleteMany({
+                where: {
+                    OR: [
+                        { ownerId: req.params.id },
+                        { sharedWithUserId: req.params.id },
+                        { createdBy: req.params.id }
+                    ]
+                }
+            });
             await tx.users.delete({ where: { id: req.params.id } });
         });
         res.json({ ok: true });

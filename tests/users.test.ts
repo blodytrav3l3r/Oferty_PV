@@ -43,6 +43,9 @@ jest.mock('../src/prismaClient', () => ({
         sessions: {
             deleteMany: jest.fn()
         },
+        document_shares: {
+            deleteMany: jest.fn()
+        },
         user_preferences: {
             deleteMany: jest.fn()
         },
@@ -224,6 +227,32 @@ describe('Users Routes', () => {
                 where: { userId: 'user-id' }
             });
             expect(prisma.users.delete).toHaveBeenCalledWith({ where: { id: 'user-id' } });
+        });
+
+        it('czyści document_shares usera (owner/grantee/createdBy) w tej samej tx', async () => {
+            (prisma.offers_rel.count as jest.Mock).mockResolvedValue(0);
+            (prisma.offers_studnie_rel.count as jest.Mock).mockResolvedValue(0);
+            (prisma.orders_studnie_rel.count as jest.Mock).mockResolvedValue(0);
+            (prisma.orders_rury_rel.count as jest.Mock).mockResolvedValue(0);
+            (prisma.production_orders_rel.count as jest.Mock).mockResolvedValue(0);
+            (prisma.sessions.deleteMany as jest.Mock).mockResolvedValue({ count: 0 });
+            (prisma.document_shares.deleteMany as jest.Mock).mockResolvedValue({ count: 3 });
+            (prisma.users.delete as jest.Mock).mockResolvedValue({});
+            const res = await request(app)
+                .delete('/api/users/user-id')
+                .set('x-user-id', 'admin-id')
+                .set('x-user-role', 'admin');
+
+            expect(res.statusCode).toBe(200);
+            expect(prisma.document_shares.deleteMany).toHaveBeenCalledWith({
+                where: {
+                    OR: [
+                        { ownerId: 'user-id' },
+                        { sharedWithUserId: 'user-id' },
+                        { createdBy: 'user-id' }
+                    ]
+                }
+            });
         });
 
         it('P1-E: 403 gdy user ma dokumenty (koniec sierot userId)', async () => {
