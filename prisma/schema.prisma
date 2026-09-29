@@ -860,6 +860,14 @@ model PricelistVersion {
   approvedAt     String?
   approvalStatus String?
 
+  // FK siatka (PricelistItem* -> PricelistVersion, Restrict).
+  // Kod kasuje pozycje w tx przed wersja; FK wylapuje obejscia. Bez CASCADE.
+  itemsRury         PricelistItemRury[]
+  itemsStudnie      PricelistItemStudnie[]
+  itemsPrecoKonfig  PricelistItemPrecoKonfig[]
+  itemsPrecoKinety  PricelistItemPrecoKinety[]
+  itemsPrecoZakresy PricelistItemPrecoZakresy[]
+
   @@unique([type, seq])
   @@unique([type, version])
   @@index([type, status, effectiveFrom])
@@ -874,6 +882,8 @@ model PricelistItemRury {
   transport Float?
   weight    Float?
   area      Float?
+
+  version PricelistVersion @relation(fields: [versionId], references: [id], onDelete: Restrict)
 
   @@index([versionId])
 }
@@ -916,6 +926,8 @@ model PricelistItemStudnie {
   malowanieWewnetrzne  Float?
   malowanieZewnetrzne  Float?
 
+  version PricelistVersion @relation(fields: [versionId], references: [id], onDelete: Restrict)
+
   @@index([versionId])
 }
 
@@ -924,6 +936,8 @@ model PricelistItemPrecoKonfig {
   versionId String
   key       String
   value     String
+
+  version PricelistVersion @relation(fields: [versionId], references: [id], onDelete: Restrict)
 
   @@index([versionId])
 }
@@ -937,6 +951,8 @@ model PricelistItemPrecoKinety {
   height    Int
   cena      Float
 
+  version PricelistVersion @relation(fields: [versionId], references: [id], onDelete: Restrict)
+
   @@index([versionId])
 }
 
@@ -949,6 +965,8 @@ model PricelistItemPrecoZakresy {
   max       Int
   grupy     String
   wellDn    Int
+
+  version PricelistVersion @relation(fields: [versionId], references: [id], onDelete: Restrict)
 
   @@index([versionId])
 }
