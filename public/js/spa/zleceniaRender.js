@@ -245,29 +245,30 @@ const ZleceniaRender = (() => {
         let actions = '';
         if (o.offerId) {
             actions +=
-                '<button class="action-btn action-btn-edit" onclick="AppZlecenia.editOrder(\'' +
-                escJs(o.offerId) +
-                "', '" +
-                escJs(o.wellId || '') +
-                "', '" +
-                escJs(o.elementIndex !== undefined ? o.elementIndex : '') +
-                "', '" +
-                escJs(o.dbSalesOrderId || '') +
-                '\')" title="Edytuj" aria-label="Edytuj"><i data-lucide="pencil" aria-hidden="true"></i></button>';
+                '<button class="action-btn action-btn-edit" data-csp="editOrder" data-csp-scope="AppZlecenia" data-csp-args="' +
+                escapeHtmlAttr(
+                    JSON.stringify([
+                        o.offerId,
+                        o.wellId || '',
+                        o.elementIndex !== undefined ? o.elementIndex : '',
+                        o.dbSalesOrderId || ''
+                    ])
+                ) +
+                '" title="Edytuj" aria-label="Edytuj"><i data-lucide="pencil" aria-hidden="true"></i></button>';
         }
         actions +=
-            '<button class="action-btn" aria-label="Drukuj zlecenie" onclick="AppZlecenia.printSingleZlecenie(\'' +
-            escJs(o.id) +
-            '\')" title="Drukuj zlecenie"><i data-lucide="printer" aria-hidden="true"></i></button>';
+            '<button class="action-btn" aria-label="Drukuj zlecenie" data-csp="printSingleZlecenie" data-csp-scope="AppZlecenia" data-csp-args="' +
+            escapeHtmlAttr(JSON.stringify([o.id])) +
+            '" title="Drukuj zlecenie"><i data-lucide="printer" aria-hidden="true"></i></button>';
         actions +=
-            '<button class="action-btn" aria-label="Drukuj etykiet\u0119" onclick="AppZlecenia.printSingleEtykieta(\'' +
-            escJs(o.id) +
-            '\')" title="Drukuj etykiet\u0119"><i data-lucide="tag" aria-hidden="true"></i></button>';
+            '<button class="action-btn" aria-label="Drukuj etykiet\u0119" data-csp="printSingleEtykieta" data-csp-scope="AppZlecenia" data-csp-args="' +
+            escapeHtmlAttr(JSON.stringify([o.id])) +
+            '" title="Drukuj etykiet\u0119"><i data-lucide="tag" aria-hidden="true"></i></button>';
         if (isDraft) {
             actions +=
-                '<button class="action-btn action-btn-delete" aria-label="Usu\u0144 zlecenie" onclick="AppZlecenia.deleteOrder(\'' +
-                escJs(o.id) +
-                '\')" title="Usu\u0144 zlecenie"><i data-lucide="trash-2" aria-hidden="true"></i></button>';
+                '<button class="action-btn action-btn-delete" aria-label="Usu\u0144 zlecenie" data-csp="deleteOrder" data-csp-scope="AppZlecenia" data-csp-args="' +
+                escapeHtmlAttr(JSON.stringify([o.id])) +
+                '" title="Usu\u0144 zlecenie"><i data-lucide="trash-2" aria-hidden="true"></i></button>';
         }
 
         return (

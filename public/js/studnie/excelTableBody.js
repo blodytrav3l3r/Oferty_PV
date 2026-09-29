@@ -287,9 +287,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             wIdx +
             '" data-widx="' +
             wIdx +
-            '" onmousedown="event.preventDefault()" onclick="_excelToggleWellAutoMode(' +
-            wIdx +
-            ')" class="excel-mode-btn ' +
+            '" onmousedown="event.preventDefault()" data-csp="_excelToggleWellAutoMode" data-csp-args="[&quot; + wIdx + &quot;]" class="excel-mode-btn ' +
             (isAuto ? 'is-auto' : 'is-manual') +
             '" title="' +
             (isAuto ? 'Auto (klik = przełącz na Manual)' : 'Manual (klik = przełącz na Auto)') +
@@ -299,9 +297,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             wIdx +
             '" data-widx="' +
             wIdx +
-            '" onclick="_excelRunAutoSelectForWell(' +
-            wIdx +
-            ')"' +
+            '" data-csp="_excelRunAutoSelectForWell" data-csp-args="[&quot; + wIdx + &quot;]"' +
             (isAuto ? '' : ' disabled') +
             ' class="excel-run-btn ' +
             (isAuto ? 'is-auto' : 'is-manual') +
@@ -590,9 +586,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
                 '<span title="Studnia zablokowana — edycja niedostępna" style="color:var(--danger-hover);display:inline-flex;align-items:center;margin-right:2px;"><i data-lucide="lock" class="icon-xs" aria-hidden="true"></i></span>';
         }
         html +=
-            '<button onclick="excelOpenWellParams(' +
-            wIdx +
-            ')" title="Parametry" class="excel-action-btn is-accent"><i data-lucide="settings" class="icon-sm" aria-hidden="true"></i></button>';
+            '<button data-csp="excelOpenWellParams" data-csp-args="[&quot; + wIdx + &quot;]" title="Parametry" class="excel-action-btn is-accent"><i data-lucide="settings" class="icon-sm" aria-hidden="true"></i></button>';
         const _hasUwagi = !!(well.uwagi && String(well.uwagi).trim());
         const _uwagiPrev = _hasUwagi
             ? (typeof escapeHtmlAttr === 'function'
@@ -603,23 +597,17 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             ? 'Uwagi: ' + _uwagiPrev + ' \u2014 kliknij aby edytowa\u0107'
             : 'Dodaj uwagi';
         html +=
-            "<button onclick=\"event.stopPropagation(); if(typeof excelSelectRow==='function') excelSelectRow(" +
+            '<button data-csp="$notesRow" data-csp-stop="1" data-csp-args="[' +
             wIdx +
-            '); openWellNotesModal(' +
-            wIdx +
-            ')" title="' +
+            ']" title="' +
             _uwagiTitle +
             '" class="excel-action-btn' +
             (_hasUwagi ? ' has-uwagi' : '') +
             '"><i data-lucide="file-text" class="icon-sm" aria-hidden="true"></i></button>';
         html +=
-            '<button onclick="excelDuplicateWell(' +
-            wIdx +
-            ')" title="Duplikuj" class="excel-action-btn is-blue"><i data-lucide="copy" class="icon-sm" aria-hidden="true"></i></button>';
+            '<button data-csp="excelDuplicateWell" data-csp-args="[&quot; + wIdx + &quot;]" title="Duplikuj" class="excel-action-btn is-blue"><i data-lucide="copy" class="icon-sm" aria-hidden="true"></i></button>';
         html +=
-            '<button onclick="excelDeleteWell(' +
-            wIdx +
-            ')" title="Usu\u0144" class="excel-action-btn is-danger"><i data-lucide="trash-2" class="icon-sm" aria-hidden="true"></i></button>';
+            '<button data-csp="excelDeleteWell" data-csp-args="[&quot; + wIdx + &quot;]" title="Usu\u0144" class="excel-action-btn is-danger"><i data-lucide="trash-2" class="icon-sm" aria-hidden="true"></i></button>';
         html += '</div></td>';
         html += '</tr>';
     });
@@ -755,7 +743,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             escapeHtml(dnLabel) +
             '</h3>' +
             '<p style="font-size:var(--fs-sm);color:var(--text-muted);margin:0 0 0.6rem;">Dodaj pierwszą studnię poniżej lub wklej dane.</p>' +
-            '<button type="button" class="btn btn-primary btn-sm" onclick="document.getElementById(\'excel-empty-name\').focus()">Dodaj pierwszą studnię</button>' +
+            '<button type="button" class="btn btn-primary btn-sm" data-csp="$dom" data-csp-args="[&quot;focus&quot;, &quot;#excel-empty-name&quot;]">Dodaj pierwszą studnię</button>' +
             '</div></td></tr>';
     }
     html += '</tbody>';

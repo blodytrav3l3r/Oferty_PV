@@ -87,7 +87,7 @@ function renderWellHeaderRow(
     if (showOrderSelection) {
         checkbox = isOrdered
             ? '<td class="text-center"><i data-lucide="package-check" class="icon-sm" style="color:var(--accent-text);"></i></td>'
-            : `<td class="text-center" onclick="event.stopPropagation()"><input type="checkbox" class="well-order-checkbox cursor-icon-16" data-well-index="${i}" onchange="updateOrderSelectionCount()" ></td>`;
+            : `<td class="text-center" data-csp-stop="1"><input type="checkbox" class="well-order-checkbox cursor-icon-16" data-well-index="${i}" onchange="updateOrderSelectionCount()" ></td>`;
     }
 
     let offerPriceCell = '';
@@ -110,7 +110,7 @@ function renderWellHeaderRow(
         priceDiffCell = '<td class="text-right pad-sm" ></td>';
     }
 
-    return `<tr class="well-row-header${errorClass}" style="${rowStyle}" onclick="toggleWellExpansion(${i}, event)">
+    return `<tr class="well-row-header${errorClass}" style="${rowStyle}" data-csp="toggleWellExpansion" data-csp-args="${escapeHtmlAttr(JSON.stringify([i, '$event']))}">
         ${checkbox}
         <td style="text-align:center; color:var(--text-muted); font-weight: var(--fw-semibold);">${displayLp}</td>
         <td style="text-align:center; color:var(--accent-text);"><i data-lucide="${isExpanded ? 'chevron-down' : 'chevron-right'}" class="icon-sm"></i></td>
@@ -122,8 +122,8 @@ function renderWellHeaderRow(
         ${offerPriceCell}
         <td class="text-right" style="font-weight: var(--fw-extrabold); color:var(--success); white-space:nowrap; padding:0.5rem 0.75rem;">${fmt(stats.price)} PLN</td>
         ${priceDiffCell}
-        <td class="text-right" onclick="event.stopPropagation()" style="white-space:nowrap; padding:0.5rem 0.75rem;">
-            <button class="btn btn-sm" onclick="showSection('builder'); selectWell(${i})" title="Edytuj studnię" style="font-size: var(--fs-sm); padding:0.25rem 0.6rem; display:inline-flex; align-items:center; gap:0.3rem;">
+        <td class="text-right" data-csp-stop="1" style="white-space:nowrap; padding:0.5rem 0.75rem;">
+            <button class="btn btn-sm" data-csp="$showSectionSelect" data-csp-args="${escapeHtmlAttr(JSON.stringify([i]))}" title="Edytuj studnię" style="font-size: var(--fs-sm); padding:0.25rem 0.6rem; display:inline-flex; align-items:center; gap:0.3rem;">
                 <i data-lucide="pencil" class="icon-xxs"></i> Edytuj
             </button>
         </td>
@@ -144,7 +144,7 @@ function getWellBadges(change, isOrdered, well) {
                 ? getOrderForWellId(well.id, editingOfferIdStudnie)
                 : null;
         if (wellOrder && wellOrder.orderNumber) {
-            html += `<span onclick="event.stopPropagation(); window.location.href='studnie.html?order=${escapeJsStr(wellOrder.id)}'"
+            html += `<span data-csp="$gotoOrder" data-csp-args="${escapeHtmlAttr(JSON.stringify([wellOrder.id]))}" data-csp-stop="1"
                 title="Zamówienie ${escapeHtml(wellOrder.orderNumber).replace(/"/g, '&quot;')} — kliknij aby otworzyć"
                 style="font-size: var(--fs-3xs); padding:1px 5px; border-radius: var(--radius-2xs); background:rgba(var(--success-rgb), 0.15); color:var(--success-hover); font-weight: var(--fw-extrabold); margin-left:0.3rem; cursor:pointer; border:1px solid rgba(var(--success-rgb), 0.5); display:inline-flex; align-items:center; gap:3px;">
                 <i data-lucide="package" aria-hidden="true"></i> ${escapeHtml(wellOrder.orderNumber)}

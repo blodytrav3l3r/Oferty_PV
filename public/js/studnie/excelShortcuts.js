@@ -108,7 +108,7 @@ function openExcelShortcutsPopup() {
     const html =
         '<div class="modal modal--excel-shortcuts">' +
         '<div class="modal-header"><h3>Skróty klawiszowe Excel</h3>' +
-        '<button type="button" onclick="this.closest(\'.modal-overlay\').remove()" class="btn-icon" aria-label="Zamknij"><i data-lucide="x" aria-hidden="true"></i></button></div>' +
+        '<button type="button" data-csp="$dom" data-csp-args="[&quot;remove&quot;, &quot;.modal-overlay&quot;]" class="btn-icon" aria-label="Zamknij"><i data-lucide="x" aria-hidden="true"></i></button></div>' +
         '<div class="excel-shortcuts-body">' +
         '<table class="excel-shortcuts-table">' +
         '<thead><tr><th scope="col" class="th-l-pad25-bb">Skrót</th>' +

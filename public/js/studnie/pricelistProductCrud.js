@@ -47,7 +47,7 @@ function showAddStudnieProductModal() {
     overlay.setAttribute('aria-modal', 'true');
     overlay.innerHTML = `
     <div class="modal">
-      <div class="modal-header"><h3><i data-lucide="plus" aria-hidden="true"></i> Dodaj element</h3><button class="btn-icon" aria-label="Zamknij" onclick="closeModal()"><i data-lucide="x" aria-hidden="true"></i></button></div>
+      <div class="modal-header"><h3><i data-lucide="plus" aria-hidden="true"></i> Dodaj element</h3><button class="btn-icon" aria-label="Zamknij" data-csp="closeModal" data-csp-args="[]"><i data-lucide="x" aria-hidden="true"></i></button></div>
       <div class="form-group"><label class="form-label">Kategoria</label>
         <select class="form-select" id="np-category" onchange="togglePrzejsciaFields()">${CATEGORIES_STUDNIE.map((c) => `<option value="${escapeHtmlAttr(c)}">${escapeHtml(c)}</option>`).join('')}</select>
         <input type="text" class="form-input" id="np-custom-category" placeholder="Nazwa nowej kategorii (np. W + PVC)" style="display:none; margin-top:0.5rem;" list="przejscia-cats-list">
@@ -92,8 +92,8 @@ function showAddStudnieProductModal() {
         <div class="form-group"><label class="form-label">Zapas góra min mm</label><input class="form-input" id="np-zapasGoraMin" type="number" value="150"></div>
       </div>
       <div class="modal-footer">
-        <button class="btn btn-secondary" onclick="closeModal()">Anuluj</button>
-        <button class="btn btn-primary" onclick="addStudnieProduct()">Dodaj element</button>
+        <button class="btn btn-secondary" data-csp="closeModal" data-csp-args="[]">Anuluj</button>
+        <button class="btn btn-primary" data-csp="addStudnieProduct" data-csp-args="[]">Dodaj element</button>
       </div>
     </div>`;
     document.body.appendChild(overlay);

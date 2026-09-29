@@ -42,7 +42,7 @@ async function importStudnieFromExcel(event, opts) {
     const explicitTarget = (opts && opts.target) || null;
     const explicitNote = (opts && opts.note) || '';
 
-    const btns = document.querySelectorAll('[onclick*="importStudnieFromExcel"]');
+    const btns = document.querySelectorAll('[data-csp-args*="pv-import-excel"]');
     btns.forEach((b) => b.setAttribute('disabled', 'true'));
 
     const resetImportInput = () => {

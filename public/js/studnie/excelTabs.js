@@ -25,7 +25,7 @@ function _excelRenderTabs() {
             ' ' +
             (isActive ? '80' : '60') +
             '%, var(--excel-text))';
-        html += `<button onclick="excelSwitchTab('${tab}')" style="
+        html += `<button data-csp="excelSwitchTab" data-csp-args="${escapeHtmlAttr(JSON.stringify([tab]))}" style="
             padding:0.4rem 1rem;border:none;cursor:pointer;font-size: var(--fs-sm);font-weight: var(--fw-semibold);
             border-bottom:2px solid ${isActive ? c.border : c.borderDim};
             background:${isActive ? c.activeBg : c.bg};

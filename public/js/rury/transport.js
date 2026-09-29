@@ -373,7 +373,7 @@ function renderTransportBreakdown(result, costPerTrip) {
     const totalTransportCost = displayTransports * costPerTrip;
     const totalWeight = result.lines.reduce((s, l) => s + l.totalWeight, 0);
 
-    let html = `<div class="cat-header" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center; user-select:none;" onclick="toggleTransportBreakdown()">
+    let html = `<div class="cat-header" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center; user-select:none;" data-csp="toggleTransportBreakdown" data-csp-args="[]">
     <div><i data-lucide="truck"></i> Kalkulacja transportu <span class="cat-count">(max ${fmtInt(MAX_TRANSPORT_WEIGHT)} kg / transport)</span></div>
     <span id="transport-toggle-icon">${window.isTransportBreakdownExpanded ? '<i data-lucide="chevron-up"></i>' : '<i data-lucide="chevron-down"></i>'}</span>
   </div>`;

@@ -49,12 +49,12 @@ function renderPrzejsciaDetailsTable(_existingData) {
             <td><input type="number" class="form-input fs-sm-024" value="${escapeHtmlAttr(row.ilosc || '')}"  data-field="ilosc" data-source="${row.source}" data-idx="${row._idx}" onchange="_syncCustomRow(this)" /></td>
             <td><input type="text" class="form-input fs-sm-024" value="${escapeHtmlAttr(row.uwagi || '')}"  data-field="uwagi" data-source="${row.source}" data-idx="${row._idx}" onchange="_syncCustomRow(this)" /></td>
             <td>
-                <button type="button" class="form-input" value="${row.czyPrzejscie === 'NIE' ? 'NIE' : 'TAK'}" data-field="czyPrzejscie" data-source="${row.source}" data-idx="${row._idx}" onclick="_toggleCzyPrzejscie(this)" style="width:100%;font-size: var(--fs-lg);padding:0.55rem 0.8rem;box-sizing:border-box;font-weight:var(--fw-bold);cursor:pointer;${row.czyPrzejscie === 'NIE' ? 'color:var(--danger-hover);background:rgba(var(--danger-rgb), 0.1);border:1px solid rgba(var(--danger-rgb), 0.3);' : 'color:var(--success-hover);background:rgba(var(--success-rgb), 0.1);border:1px solid rgba(var(--success-rgb), 0.3);'}">${row.czyPrzejscie === 'NIE' ? 'NIE' : 'TAK'}</button>
+                <button type="button" class="form-input" value="${row.czyPrzejscie === 'NIE' ? 'NIE' : 'TAK'}" data-field="czyPrzejscie" data-source="${row.source}" data-idx="${row._idx}" data-csp="_toggleCzyPrzejscie" data-csp-args="[&quot;$el&quot;]" style="width:100%;font-size: var(--fs-lg);padding:0.55rem 0.8rem;box-sizing:border-box;font-weight:var(--fw-bold);cursor:pointer;${row.czyPrzejscie === 'NIE' ? 'color:var(--danger-hover);background:rgba(var(--danger-rgb), 0.1);border:1px solid rgba(var(--danger-rgb), 0.3);' : 'color:var(--success-hover);background:rgba(var(--success-rgb), 0.1);border:1px solid rgba(var(--success-rgb), 0.3);'}">${row.czyPrzejscie === 'NIE' ? 'NIE' : 'TAK'}</button>
             </td>
             <td>
                 ${
                     isCustom
-                        ? `<button class="btn btn-sm btn-danger" onclick="removePrzejscieRow('custom', ${row._idx})" style="font-size: var(--fs-lg);padding:0.73rem 0.5rem;box-sizing:border-box;"><i data-lucide="x" class="icon-12"></i></button>`
+                        ? `<button class="btn btn-sm btn-danger" data-csp="removePrzejscieRow" data-csp-args="${escapeHtmlAttr(JSON.stringify(['custom', row._idx]))}" style="font-size: var(--fs-lg);padding:0.73rem 0.5rem;box-sizing:border-box;"><i data-lucide="x" class="icon-12"></i></button>`
                         : '<span style="color:var(--text-muted);font-size: var(--fs-xs);">z oferty</span>'
                 }
             </td>

@@ -81,7 +81,7 @@ ${[...allMaterials]
             <div class="tm-search-wrap">
                <i data-lucide="search" aria-hidden="true"></i>
                 <input type="text" id="tm-filter-search" class="tm-search-input" placeholder="Nazwa, materiał, DN..." maxlength="30" oninput="tmApplyFiltersDebounced(); window.tmToggleSearchClear && window.tmToggleSearchClear()" autocomplete="off">
-               <button type="button" id="tm-search-clear" class="tm-search-clear" aria-label="Wyczyść wyszukiwanie" onclick="document.getElementById('tm-filter-search').value=''; tmApplyFilters(); tmToggleSearchClear(); document.getElementById('tm-filter-search').focus()"><i data-lucide="x" class="icon-xxs" aria-hidden="true"></i></button>
+               <button type="button" id="tm-search-clear" class="tm-search-clear" aria-label="Wyczyść wyszukiwanie" data-csp="$clearTmSearch"><i data-lucide="x" class="icon-xxs" aria-hidden="true"></i></button>
             </div>
          </div>
          <div class="tm-filter-group tm-filter-group--full">
@@ -300,11 +300,11 @@ function _tmRenderTableImmediate() {
                     tr.flowType === FLOW_TYPES.WLOT ? 'tm-tr-flow--in' : 'tm-tr-flow--out';
                 const flowLabel = tr.flowType === FLOW_TYPES.WLOT ? 'WLOT' : 'WYLOT';
                 return `
-            <div class="tm-tr-tile ${isSel ? 'is-selected' : ''} ${locked ? 'is-locked' : ''}" ${locked ? '' : `onclick="tmOpenEditTransitionPopup(${w.wellIndex}, ${tr.trIndex}, event)"`}>
+            <div class="tm-tr-tile ${isSel ? 'is-selected' : ''} ${locked ? 'is-locked' : ''}" ${locked ? '' : `data-csp="tmOpenEditTransitionPopup" data-csp-args="${escapeHtmlAttr(JSON.stringify([w.wellIndex, tr.trIndex, '$event']))}"`}>
               <div class="tm-tr-row">
                 <div class="tm-tr-main">
                   <input type="checkbox" class="tm-row-cb" value="${key}" ${isSel ? 'checked' : ''}
-                         onclick="event.stopPropagation(); tmToggleTransition('${key}', this.checked)" ${locked ? 'disabled' : ''}>
+                         data-csp="tmToggleTransition" data-csp-args="${escapeHtmlAttr(JSON.stringify([key, '$checked']))}" data-csp-stop="1" ${locked ? 'disabled' : ''}>
                   <span class="tm-tr-material" title="${safeMaterial}">${escapeHtml(tr.material)}</span>
                   <span class="tm-tr-dn">DN${tr.dnRaw}</span>
                 </div>
@@ -312,7 +312,7 @@ function _tmRenderTableImmediate() {
                     locked
                         ? ''
                         : `
-                <button type="button" class="btn-icon btn-icon-xs tm-tr-edit" aria-label="Edytuj przejście" onclick="event.stopPropagation(); tmOpenEditTransitionPopup(${w.wellIndex}, ${tr.trIndex}, event)">
+                <button type="button" class="btn-icon btn-icon-xs tm-tr-edit" aria-label="Edytuj przejście" data-csp="tmOpenEditTransitionPopup" data-csp-args="${escapeHtmlAttr(JSON.stringify([w.wellIndex, tr.trIndex, '$event']))}" data-csp-stop="1">
                   <i data-lucide="pencil" class="icon-xxs" aria-hidden="true"></i>
                 </button>`
                 }
@@ -1061,7 +1061,7 @@ function showSkippedPopup(skippedDetails, targetCat) {
             <tbody>${rowsHtml}</tbody>
         </table>
         <div style="display:flex; justify-content:space-between; align-items:center; margin-top:1rem; padding-top:0.8rem; border-top:1px solid rgba(var(--white-rgb), 0.1);">
-            <button class="btn btn-secondary" onclick="closeModal(); window.activatePreviewPanel && window.activatePreviewPanel()" style="font-size: var(--fs-md); padding:0.4rem 1rem; background:rgba(var(--success-rgb), 0.15); border:1px solid rgba(var(--success-rgb), 0.3); color:var(--success-hover);">
+            <button class="btn btn-secondary" data-csp="$closePreview" style="font-size: var(--fs-md); padding:0.4rem 1rem; background:rgba(var(--success-rgb), 0.15); border:1px solid rgba(var(--success-rgb), 0.3); color:var(--success-hover);">
                 <i data-lucide="arrow-left"></i> Wróć do menedżera
             </button>
             <button class="btn btn-secondary" data-action="tmCloseModal" style="font-size: var(--fs-md); padding:0.4rem 1.2rem;">Zamknij</button>

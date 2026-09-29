@@ -101,7 +101,7 @@ function renderDiscountPanel() {
             (disc.dennica || 0) +
             '" id="disc-' +
             discountDn +
-            '-dennica" class="discount-input" onclick="this.select()" onchange="updateDiscount(\'' +
+            '-dennica" class="discount-input" data-csp="$select" onchange="updateDiscount(\'' +
             discountDn +
             "','dennica',this.value)\" aria-label=\"Rabat dennica " +
             dnLabel +
@@ -111,7 +111,7 @@ function renderDiscountPanel() {
             (disc.nadbudowa || 0) +
             '" id="disc-' +
             discountDn +
-            '-nadbudowa" class="discount-input" onclick="this.select()" onchange="updateDiscount(\'' +
+            '-nadbudowa" class="discount-input" data-csp="$select" onchange="updateDiscount(\'' +
             discountDn +
             "','nadbudowa',this.value)\" aria-label=\"Rabat nadbudowa " +
             dnLabel +
@@ -137,7 +137,7 @@ function renderDiscountPanel() {
                 discountDn +
                 '-dennica' +
                 cls +
-                '" class="discount-input" onclick="this.select()" onchange="updateDiscount(\'' +
+                '" class="discount-input" data-csp="$select" onchange="updateDiscount(\'' +
                 discountDn +
                 "','dennica" +
                 cls +
@@ -155,7 +155,7 @@ function renderDiscountPanel() {
                 discountDn +
                 '-nadbudowa' +
                 cls +
-                '" class="discount-input" onclick="this.select()" onchange="updateDiscount(\'' +
+                '" class="discount-input" data-csp="$select" onchange="updateDiscount(\'' +
                 discountDn +
                 "','nadbudowa" +
                 cls +
@@ -194,7 +194,7 @@ function renderDiscountPanel() {
                 discountDn +
                 '-zwienczenie' +
                 cls +
-                '" class="discount-input" onclick="this.select()" onchange="updateDiscount(\'' +
+                '" class="discount-input" data-csp="$select" onchange="updateDiscount(\'' +
                 discountDn +
                 "','zwienczenie" +
                 cls +
@@ -211,7 +211,7 @@ function renderDiscountPanel() {
                 (disc.preco || 0) +
                 '" id="disc-' +
                 discountDn +
-                '-preco" class="discount-input discount-input--danger" onclick="this.select()" onchange="updateDiscount(\'' +
+                '-preco" class="discount-input discount-input--danger" data-csp="$select" onchange="updateDiscount(\'' +
                 discountDn +
                 "','preco',this.value)\" aria-label=\"Rabat PRECO " +
                 dnLabel +
@@ -265,7 +265,7 @@ function renderDiscountPanel() {
         html +=
             '<div class="discount-grid"><span class="discount-label discount-label--blue">Globalny Rabat</span><div class="discount-input-wrap"><input type="number" min="0" step="1" value="' +
             pehdDiscountValue +
-            '" id="disc-global-pehd" class="discount-input discount-input--blue" onclick="this.select()" onchange="updateGlobalPehdDiscount(this.value)" aria-label="Globalny rabat PEHD"><span class="discount-suffix discount-suffix--blue">%</span></div></div>';
+            '" id="disc-global-pehd" class="discount-input discount-input--blue" data-csp="$select" onchange="updateGlobalPehdDiscount(this.value)" aria-label="Globalny rabat PEHD"><span class="discount-suffix discount-suffix--blue">%</span></div></div>';
         html += '</div>';
     }
 
@@ -287,14 +287,14 @@ function renderDiscountPanel() {
             html +=
                 '<span class="discount-label discount-label--purple">Wewn\u0119trzne</span><div class="discount-input-wrap"><input type="number" min="0" step="0.01" value="' +
                 malWCena +
-                '" id="disc-mal-wew-cena" class="discount-input discount-input--purple" onclick="this.select()" onchange="updateGlobalPaintingCost(\'malowanieWewCena\', this.value)" aria-label="Koszt malowania wewn\u0119trznego"><span class="discount-suffix discount-suffix--purple">z\u0142</span></div>';
+                '" id="disc-mal-wew-cena" class="discount-input discount-input--purple" data-csp="$select" onchange="updateGlobalPaintingCost(\'malowanieWewCena\', this.value)" aria-label="Koszt malowania wewn\u0119trznego"><span class="discount-suffix discount-suffix--purple">z\u0142</span></div>';
         }
 
         if (anyMalowanieZ) {
             html +=
                 '<span class="discount-label discount-label--purple">Zewn\u0119trzne</span><div class="discount-input-wrap"><input type="number" min="0" step="0.01" value="' +
                 malZCena +
-                '" id="disc-mal-zew-cena" class="discount-input discount-input--purple" onclick="this.select()" onchange="updateGlobalPaintingCost(\'malowanieZewCena\', this.value)" aria-label="Koszt malowania zewn\u0119trznego"><span class="discount-suffix discount-suffix--purple">z\u0142</span></div>';
+                '" id="disc-mal-zew-cena" class="discount-input discount-input--purple" data-csp="$select" onchange="updateGlobalPaintingCost(\'malowanieZewCena\', this.value)" aria-label="Koszt malowania zewn\u0119trznego"><span class="discount-suffix discount-suffix--purple">z\u0142</span></div>';
         }
 
         html += '</div></div>';
@@ -396,7 +396,7 @@ function _wellBuildCardHtml(w, i, logicalRow, transportVal, stats) {
                 : null;
         if (wellOrder && wellOrder.orderNumber) {
             wellLockBadge = `<span title="Studnia na zamówieniu ${typeof escapeHtml === 'function' ? escapeHtml(wellOrder.orderNumber).replace(/"/g, '&quot;') : String(wellOrder.orderNumber)} — kliknij aby otworzyć"
-                onclick="event.stopPropagation(); window.location.href='studnie.html?order=${typeof escapeJsStr === 'function' ? escapeJsStr(wellOrder.id) : String(wellOrder.id)}'"
+                data-csp="$gotoOrder" data-csp-args="${escapeHtmlAttr(JSON.stringify([wellOrder.id]))}" data-csp-stop="1"
                 style="font-size: var(--fs-3xs); background:rgba(var(--success-rgb), 0.15); color:var(--success-hover); border:1px solid rgba(var(--success-rgb), 0.5); padding:1px 5px; border-radius: var(--radius-2xs); font-weight: var(--fw-extrabold); margin-left:0.3rem; cursor:pointer; display:inline-flex; align-items:center; gap:2px; vertical-align:middle;">
                 <i data-lucide="package" class="icon-xxs"></i>${typeof escapeHtml === 'function' ? escapeHtml(wellOrder.orderNumber) : String(wellOrder.orderNumber)}
             </span>`;
@@ -476,13 +476,13 @@ function _wellBuildCardHtml(w, i, logicalRow, transportVal, stats) {
         logicalRow !== undefined && logicalRow !== null ? ` data-logical-row="${logicalRow}"` : '';
 
     const minH = hasElevations ? 104 : 76;
-    let html = `<div class="well-list-item${isActive ? ' active' : ''}${isLocked ? ' is-locked' : ''}" data-widx="${i}" data-well-idx="${i}"${logRowAttr} style="min-height:${minH}px;box-sizing:border-box;${changeStyling}${errorStyling}" onclick="selectWell(${i})">
+    let html = `<div class="well-list-item${isActive ? ' active' : ''}${isLocked ? ' is-locked' : ''}" data-widx="${i}" data-well-idx="${i}"${logRowAttr} style="min-height:${minH}px;box-sizing:border-box;${changeStyling}${errorStyling}" data-csp="selectWell" data-csp-args="${escapeHtmlAttr(JSON.stringify([i]))}">
       <div class="well-list-header" style="display:flex; align-items:center; gap:0.4rem; ${hasBadges ? 'margin-bottom:0.2rem;' : ''}">
         <div class="well-list-name" style="flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; ${errorNameStyle}" title="${escFn(w.name || '').replace(/"/g, '&quot;')}">${escFn(w.name || '')}</div>
         <div class="well-list-actions">
-          <button class="well-list-action ${hasUwagi ? 'has-uwagi' : ''}" title="${uwagiTitle}" aria-label="Uwagi" onclick="event.stopPropagation(); openWellNotesModal(${i})"><i data-lucide="file-text" aria-hidden="true"></i></button>
-          <button class="well-list-action" title="Duplikuj" aria-label="Duplikuj" onclick="event.stopPropagation(); duplicateWell(${i})"><i data-lucide="clipboard-list" aria-hidden="true"></i></button>
-          <button class="well-list-action del" title="Usuń" aria-label="Usuń" onclick="event.stopPropagation(); removeWell(${i})"><i data-lucide="x" aria-hidden="true"></i></button>
+          <button class="well-list-action ${hasUwagi ? 'has-uwagi' : ''}" title="${uwagiTitle}" aria-label="Uwagi" data-csp="openWellNotesModal" data-csp-args="${escapeHtmlAttr(JSON.stringify([i]))}" data-csp-stop="1"><i data-lucide="file-text" aria-hidden="true"></i></button>
+          <button class="well-list-action" title="Duplikuj" aria-label="Duplikuj" data-csp="duplicateWell" data-csp-args="${escapeHtmlAttr(JSON.stringify([i]))}" data-csp-stop="1"><i data-lucide="clipboard-list" aria-hidden="true"></i></button>
+          <button class="well-list-action del" title="Usuń" aria-label="Usuń" data-csp="removeWell" data-csp-args="${escapeHtmlAttr(JSON.stringify([i]))}" data-csp-stop="1"><i data-lucide="x" aria-hidden="true"></i></button>
         </div>
       </div>
       ${badgesHtml}

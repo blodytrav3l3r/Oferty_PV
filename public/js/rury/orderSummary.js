@@ -9,8 +9,8 @@ function copyTransportBreakdown() {
         .replace(/id="transport-breakdown-content"/g, 'id="order-transport-breakdown-content"')
         .replace(/id="transport-toggle-icon"/g, 'id="order-transport-toggle-icon"')
         .replace(
-            /onclick="toggleTransportBreakdown\(\)"/g,
-            'onclick="toggleOrderTransportBreakdown()"'
+            /data-csp="toggleTransportBreakdown"/g,
+            'data-csp="toggleOrderTransportBreakdown"'
         );
     if (window.lucide) lucide.createIcons({ root: dst });
 }

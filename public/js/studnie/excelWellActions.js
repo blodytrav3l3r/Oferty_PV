@@ -207,28 +207,28 @@ function excelOpenWellParams(wIdx) {
             bodyHtml += `<div class="dn-tile-opts" style="grid-template-columns:repeat(${cols}, ${TILE_W}px);">`;
             def.options.forEach(([val, lbl]) => {
                 const active = val === currentVal;
-                bodyHtml += `<button class="dn-tile${active ? ' dn-tile--active' : ''}" onclick="_excelUpdateWellParam(${wIdx},'${def.key}','${val}')">${escapeHtml(lbl)}</button>`;
+                bodyHtml += `<button class="dn-tile${active ? ' dn-tile--active' : ''}" data-csp="_excelUpdateWellParam" data-csp-args="${escapeHtmlAttr(JSON.stringify([wIdx, def.key, val]))}">${escapeHtml(lbl)}</button>`;
             });
             bodyHtml += `</div></div>`;
 
             if (def.key === 'malowanieW' && well.malowanieW && well.malowanieW !== 'brak') {
                 bodyHtml += `<div class="well-param-row">`;
                 bodyHtml += `<span class="well-param-label">Nazwa p. wew.</span>`;
-                bodyHtml += `<input type="text" class="well-param-input" value="${escapeHtmlAttr(well.powlokaNameW || '')}" onclick="this.select()" onchange="_excelUpdateWellParam(${wIdx},'powlokaNameW',this.value);excelRefreshParamsPopup(${wIdx})" placeholder="Nazwa powłoki...">`;
+                bodyHtml += `<input type="text" class="well-param-input" value="${escapeHtmlAttr(well.powlokaNameW || '')}" data-csp="$select" onchange="_excelUpdateWellParam(${wIdx},'powlokaNameW',this.value);excelRefreshParamsPopup(${wIdx})" placeholder="Nazwa powłoki...">`;
                 bodyHtml += `</div>`;
                 bodyHtml += `<div class="well-param-row">`;
                 bodyHtml += `<span class="well-param-label">Koszt p. wew.</span>`;
-                bodyHtml += `<input type="number" step="0.01" value="${well.malowanieWewCena || ''}" onclick="this.select()" onchange="_excelUpdateWellParam(${wIdx},'malowanieWewCena',parseFloat(this.value)||0);excelRefreshParamsPopup(${wIdx})" placeholder="PLN / m²" style="width:120px;height:34px;background:var(--excel-input-bg);border:1px solid var(--excel-input-border);color:var(--text-primary);padding:0 0.7rem;font-size: var(--fs-lg);border-radius: var(--radius-sm);">`;
+                bodyHtml += `<input type="number" step="0.01" value="${well.malowanieWewCena || ''}" data-csp="$select" onchange="_excelUpdateWellParam(${wIdx},'malowanieWewCena',parseFloat(this.value)||0);excelRefreshParamsPopup(${wIdx})" placeholder="PLN / m²" style="width:120px;height:34px;background:var(--excel-input-bg);border:1px solid var(--excel-input-border);color:var(--text-primary);padding:0 0.7rem;font-size: var(--fs-lg);border-radius: var(--radius-sm);">`;
                 bodyHtml += `</div>`;
             }
             if (def.key === 'malowanieZ' && well.malowanieZ && well.malowanieZ !== 'brak') {
                 bodyHtml += `<div class="well-param-row">`;
                 bodyHtml += `<span class="well-param-label">Nazwa p. zew.</span>`;
-                bodyHtml += `<input type="text" value="${escapeHtmlAttr(well.powlokaNameZ || '')}" onclick="this.select()" onchange="_excelUpdateWellParam(${wIdx},'powlokaNameZ',this.value);excelRefreshParamsPopup(${wIdx})" placeholder="Nazwa powłoki..." style="flex:1;height:34px;background:var(--excel-input-bg);border:1px solid var(--excel-input-border);color:var(--text-primary);padding:0 0.7rem;font-size: var(--fs-lg);border-radius: var(--radius-sm);">`;
+                bodyHtml += `<input type="text" value="${escapeHtmlAttr(well.powlokaNameZ || '')}" data-csp="$select" onchange="_excelUpdateWellParam(${wIdx},'powlokaNameZ',this.value);excelRefreshParamsPopup(${wIdx})" placeholder="Nazwa powłoki..." style="flex:1;height:34px;background:var(--excel-input-bg);border:1px solid var(--excel-input-border);color:var(--text-primary);padding:0 0.7rem;font-size: var(--fs-lg);border-radius: var(--radius-sm);">`;
                 bodyHtml += `</div>`;
                 bodyHtml += `<div class="well-param-row">`;
                 bodyHtml += `<span class="well-param-label">Koszt p. zew.</span>`;
-                bodyHtml += `<input type="number" step="0.01" value="${well.malowanieZewCena || ''}" onclick="this.select()" onchange="_excelUpdateWellParam(${wIdx},'malowanieZewCena',parseFloat(this.value)||0);excelRefreshParamsPopup(${wIdx})" placeholder="PLN / m²" style="width:120px;height:34px;background:var(--excel-input-bg);border:1px solid var(--excel-input-border);color:var(--text-primary);padding:0 0.7rem;font-size: var(--fs-lg);border-radius: var(--radius-sm);">`;
+                bodyHtml += `<input type="number" step="0.01" value="${well.malowanieZewCena || ''}" data-csp="$select" onchange="_excelUpdateWellParam(${wIdx},'malowanieZewCena',parseFloat(this.value)||0);excelRefreshParamsPopup(${wIdx})" placeholder="PLN / m²" style="width:120px;height:34px;background:var(--excel-input-bg);border:1px solid var(--excel-input-border);color:var(--text-primary);padding:0 0.7rem;font-size: var(--fs-lg);border-radius: var(--radius-sm);">`;
                 bodyHtml += `</div>`;
             }
         });
@@ -238,13 +238,13 @@ function excelOpenWellParams(wIdx) {
     modal.innerHTML = `
         <div style="display:flex;align-items:center;justify-content:space-between;padding:0.5rem 0.8rem;background:var(--excel-bg-alt);border-bottom:1px solid var(--excel-border-subtle);flex-shrink:0;">
             <span style="font-size: var(--fs-lg);font-weight: var(--fw-bold);color:var(--text-primary);">Parametry tej studni Excel</span>
-            <button type="button" onclick="closeExcelParamsPopup()" class="btn-icon" aria-label="Zamknij"><i data-lucide="x" aria-hidden="true"></i></button>
+            <button type="button" data-csp="closeExcelParamsPopup" data-csp-args="[]" class="btn-icon" aria-label="Zamknij"><i data-lucide="x" aria-hidden="true"></i></button>
         </div>
         <div style="flex:1;overflow-y:auto;padding:0.8rem;">
             ${bodyHtml}
         </div>
         <div style="display:flex;gap:0.5rem;justify-content:flex-end;padding:0.5rem 0.8rem;background:var(--excel-bg-alt);border-top:1px solid var(--excel-border-subtle);flex-shrink:0;">
-            <button type="button" onclick="closeExcelParamsPopup()" class="excel-neutral-btn">Zamknij</button>
+            <button type="button" data-csp="closeExcelParamsPopup" data-csp-args="[]" class="excel-neutral-btn">Zamknij</button>
         </div>
     `;
 

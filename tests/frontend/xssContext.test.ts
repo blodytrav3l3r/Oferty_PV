@@ -38,6 +38,21 @@ describe('P0.3 konteksty escapowania w public/js', () => {
         expect(bad).toEqual([]);
     });
 
+    it('CSP-B2: dynamiczne data-csp-args tylko przez escapeHtmlAttr(JSON.stringify)', () => {
+        const bad: string[] = [];
+        const re = /data-csp-args="\$\{([^}]+)\}"/g;
+        for (const f of files) {
+            const content = fs.readFileSync(f, 'utf-8');
+            let m: RegExpExecArray | null;
+            while ((m = re.exec(content)) !== null) {
+                if (!m[1].includes('escapeHtmlAttr(JSON.stringify')) {
+                    bad.push(`${path.relative(process.cwd(), f)} :: ${m[1].slice(0, 60)}`);
+                }
+            }
+        }
+        expect(bad).toEqual([]);
+    });
+
     it('escapeHtmlAttr escapuje cudzysłowy (payload nie wychodzi z atrybutu)', () => {
         const file = path.join(process.cwd(), 'public/js/shared/escapeHtml.js');
         const content = fs.readFileSync(file, 'utf-8');

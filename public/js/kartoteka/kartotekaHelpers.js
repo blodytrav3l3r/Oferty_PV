@@ -232,7 +232,7 @@ function buildOrderModalHtml(orders, offerKey, resolvedType, offerLabel) {
     let html = `
             <div class="modal-header">
                 <h3 id="offer-orders-title">Zamówienia oferty ${window.escapeHtml(offerLabel)}</h3>
-                <button class="btn-icon btn-close-x" aria-label="Zamknij" onclick="closeModal()"><i data-lucide="x" aria-hidden="true"></i></button>
+                <button class="btn-icon btn-close-x" aria-label="Zamknij" data-csp="closeModal" data-csp-args="[]"><i data-lucide="x" aria-hidden="true"></i></button>
             </div>
             <div style="margin-bottom:var(--tile-gap-md); color:var(--text-muted); font-size: var(--fs-xl);">Lista wszystkich zamówień przypisanych do tej oferty.</div>
             <div style="display:flex; flex-direction:column; gap:var(--tile-gap-sm-plus); max-height:55vh; overflow-y:auto; padding-right:0.25rem;">
@@ -267,7 +267,7 @@ function buildOrderModalHtml(orders, offerKey, resolvedType, offerLabel) {
     html += `
             </div>
             <div class="modal-footer">
-                <button class="btn btn-secondary btn-close-footer" onclick="closeModal()">Zamknij</button>
+                <button class="btn btn-secondary btn-close-footer" data-csp="closeModal" data-csp-args="[]">Zamknij</button>
             </div>
         `;
 
@@ -377,7 +377,7 @@ function buildOfferCardHtml(offer, hasOrder, orders, order, role, isLocalList) {
                             </div>
                             <div class="offer-author-badges">
                                 ${dd.creatorName ? `<span class="author-badge"><i data-lucide="pen-tool" aria-hidden="true"></i> ${escapeHtml(dd.creatorName)}</span>` : ''}
-                                ${dd.userName ? `<span class="author-badge${isClickable ? ' clickable-user' : ''}" ${isClickable ? `onclick="event.stopPropagation(); window.kartotekaUI.changeOfferUserFromList('${escapeJsStr(offer.id)}')"` : ''} title="Zmień opiekuna"><i data-lucide="briefcase" aria-hidden="true"></i> ${escapeHtml(dd.userName)}</span>` : ''}
+                                ${dd.userName ? `<span class="author-badge${isClickable ? ' clickable-user' : ''}" ${isClickable ? `data-csp-stop="1" data-csp="changeOfferUserFromList" data-csp-scope="kartotekaUI" data-csp-args="${escapeHtmlAttr(JSON.stringify([offer.id]))}"` : ''} title="Zmień opiekuna"><i data-lucide="briefcase" aria-hidden="true"></i> ${escapeHtml(dd.userName)}</span>` : ''}
                             </div>
                             <div class="action-buttons">
                                 ${

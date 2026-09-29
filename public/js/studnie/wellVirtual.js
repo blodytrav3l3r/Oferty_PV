@@ -43,9 +43,7 @@ function _wellVirtualCardHtml(w, wIdx, logicalRow, transportVal, stats) {
         logicalRow +
         '" data-well-idx="' +
         wIdx +
-        '" onclick="selectWell(' +
-        wIdx +
-        ')">' +
+        '" data-csp="selectWell" data-csp-args="[&quot; + wIdx + &quot;]">' +
         esc(w ? w.name || '' : '') +
         '</div>'
     );
@@ -417,9 +415,7 @@ function _wellVirtualRenderBody() {
                 s +
                 '" data-well-idx="' +
                 wIdx +
-                '" onclick="selectWell(' +
-                wIdx +
-                ')" style="box-sizing:border-box;">' +
+                '" data-csp="selectWell" data-csp-args="[&quot; + wIdx + &quot;]" style="box-sizing:border-box;">' +
                 (typeof escapeHtml === 'function'
                     ? escapeHtml(w.name || '')
                     : String(w.name || '')) +

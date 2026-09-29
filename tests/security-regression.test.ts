@@ -205,7 +205,7 @@ describe('T5.9: Centralne escapowanie w shared/escapeHtml.js', () => {
         expect(content).toContain("typeof window.escapeJsStr === 'function'");
     });
 
-    it('konteksty onclick używają escapeJsStr zamiast escapeHtml', () => {
+    it('konteksty handlerów bez onclick: data-csp + escapeHtmlAttr(JSON)', () => {
         const files = [
             'public/js/studnie/offerSavedList.js',
             'public/js/rury/pricelistUi.js',
@@ -213,7 +213,7 @@ describe('T5.9: Centralne escapowanie w shared/escapeHtml.js', () => {
         ];
         files.forEach((file) => {
             const content = fs.readFileSync(path.resolve(__dirname, '..', file), 'utf-8');
-            expect(content).toContain('escapeJsStr');
+            expect(content).not.toMatch(/\sonclick\s*=/);
         });
     });
 });

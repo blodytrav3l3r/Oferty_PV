@@ -373,17 +373,17 @@ function openExcelTableModal() {
 
                 <div class="excel-search-wrap">
                     <input type="text" id="excel-search-input" class="excel-search-input" placeholder="Szukaj studni..." oninput="excelFilterWells(this.value)" aria-label="Szukaj studni" style="width:220px;" />
-                    <button type="button" id="excel-search-clear" onclick="excelClearSearch()" title="Wyczyść filtr" aria-label="Wyczyść filtr" class="excel-icon-btn excel-search-clear" style="display:none;"><i data-lucide="x" class="icon-xs" aria-hidden="true"></i></button>
+                    <button type="button" id="excel-search-clear" data-csp="excelClearSearch" data-csp-args="[]" title="Wyczyść filtr" aria-label="Wyczyść filtr" class="excel-icon-btn excel-search-clear" style="display:none;"><i data-lucide="x" class="icon-xs" aria-hidden="true"></i></button>
                 </div>
-                <button onclick="_excelToggleColumnPopup()" id="excel-col-vis-btn" class="excel-toolbar-btn" title="Pokaż/ukryj kolumny"><i data-lucide="table-properties" class="icon-xs" aria-hidden="true"></i>Kolumny</button>
-                <button onclick="openPrzejsciaVisibilityPopup('excel')" class="excel-toolbar-btn" title="Pokaż/ukryj typy przejść"><i data-lucide="arrow-right-left" class="icon-xs" aria-hidden="true"></i>Przejścia</button>
-                <button onclick="_excelBulkRunAutoSelect()" id="excel-bulk-recalc" class="excel-toolbar-btn excel-toolbar-btn--success" title="Auto-dobór dla zaznaczonych (checkbox)"><i data-lucide="refresh-cw" class="icon-xs" aria-hidden="true"></i>Auto-dobór zaznaczonych</button>
-                <button onclick="_excelBulkDeleteSelected()" id="excel-bulk-delete" class="excel-toolbar-btn excel-toolbar-btn--danger" title="Usuń zaznaczone studnie (checkbox)"><i data-lucide="trash-2" class="icon-xs" aria-hidden="true"></i>Usuń zaznaczone</button>
-                <button onclick="openWellNotesForExcelSelection()" class="excel-toolbar-btn" title="Uwagi do zaznaczonej studni"><i data-lucide="file-text" class="icon-xs" aria-hidden="true"></i>Uwagi</button>
-                <button onclick="openExcelShortcutsPopup()" class="excel-toolbar-btn" title="Skróty klawiszowe"><i data-lucide="keyboard" class="icon-xs" aria-hidden="true"></i>Skróty</button>
-                <button onclick="excelToggleFullscreen()" id="excel-fs-btn" class="excel-toolbar-btn" title="Pełny ekran / okno"><i data-lucide="maximize-2" class="icon-xs" aria-hidden="true"></i><span id="excel-fs-btn-label">Pełny</span></button>
-                <button onclick="excelSaveAll()" id="excel-save-btn" class="excel-toolbar-btn excel-toolbar-btn--success" title="Zapisz wszystkie zmiany i zamknij"><i data-lucide="check" class="icon-xs" aria-hidden="true"></i>Gotowe (Zapisz)</button>
-                <button onclick="closeExcelTableModal()" class="excel-toolbar-btn excel-toolbar-btn--danger" title="Zamknij bez zapisywania" aria-label="Zamknij bez zapisywania"><i data-lucide="x" class="icon-xs" aria-hidden="true"></i></button>
+                <button data-csp="_excelToggleColumnPopup" data-csp-args="[]" id="excel-col-vis-btn" class="excel-toolbar-btn" title="Pokaż/ukryj kolumny"><i data-lucide="table-properties" class="icon-xs" aria-hidden="true"></i>Kolumny</button>
+                <button data-csp="openPrzejsciaVisibilityPopup" data-csp-args="[&quot;excel&quot;]" class="excel-toolbar-btn" title="Pokaż/ukryj typy przejść"><i data-lucide="arrow-right-left" class="icon-xs" aria-hidden="true"></i>Przejścia</button>
+                <button data-csp="_excelBulkRunAutoSelect" data-csp-args="[]" id="excel-bulk-recalc" class="excel-toolbar-btn excel-toolbar-btn--success" title="Auto-dobór dla zaznaczonych (checkbox)"><i data-lucide="refresh-cw" class="icon-xs" aria-hidden="true"></i>Auto-dobór zaznaczonych</button>
+                <button data-csp="_excelBulkDeleteSelected" data-csp-args="[]" id="excel-bulk-delete" class="excel-toolbar-btn excel-toolbar-btn--danger" title="Usuń zaznaczone studnie (checkbox)"><i data-lucide="trash-2" class="icon-xs" aria-hidden="true"></i>Usuń zaznaczone</button>
+                <button data-csp="openWellNotesForExcelSelection" data-csp-args="[]" class="excel-toolbar-btn" title="Uwagi do zaznaczonej studni"><i data-lucide="file-text" class="icon-xs" aria-hidden="true"></i>Uwagi</button>
+                <button data-csp="openExcelShortcutsPopup" data-csp-args="[]" class="excel-toolbar-btn" title="Skróty klawiszowe"><i data-lucide="keyboard" class="icon-xs" aria-hidden="true"></i>Skróty</button>
+                <button data-csp="excelToggleFullscreen" data-csp-args="[]" id="excel-fs-btn" class="excel-toolbar-btn" title="Pełny ekran / okno"><i data-lucide="maximize-2" class="icon-xs" aria-hidden="true"></i><span id="excel-fs-btn-label">Pełny</span></button>
+                <button data-csp="excelSaveAll" data-csp-args="[]" id="excel-save-btn" class="excel-toolbar-btn excel-toolbar-btn--success" title="Zapisz wszystkie zmiany i zamknij"><i data-lucide="check" class="icon-xs" aria-hidden="true"></i>Gotowe (Zapisz)</button>
+                <button data-csp="closeExcelTableModal" data-csp-args="[]" class="excel-toolbar-btn excel-toolbar-btn--danger" title="Zamknij bez zapisywania" aria-label="Zamknij bez zapisywania"><i data-lucide="x" class="icon-xs" aria-hidden="true"></i></button>
             </div>
         </div>
         <div id="excel-tabs" class="excel-tabs-bar"></div>

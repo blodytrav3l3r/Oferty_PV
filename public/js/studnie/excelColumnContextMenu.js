@@ -34,20 +34,24 @@ function _excelGetColMenuActions(col) {
 }
 
 function _excelColMenuActionHtml(action) {
-    let onclick = '';
-    if (action.id === 'sortAsc') onclick = "_excelSortColumnFromMenu('asc')";
-    else if (action.id === 'sortDesc') onclick = "_excelSortColumnFromMenu('desc')";
-    else if (action.id === 'sortClear') onclick = '_excelSortColumnFromMenu(null)';
-    else if (action.id === 'hide') onclick = '_excelToggleColumnFromMenu()';
-    else if (action.id === 'showAll') onclick = '_excelShowAllColumnsFromMenu()';
-    else if (action.id === 'manage') onclick = '_excelManageColumnsFromMenu()';
+    // CSP-B2: gotowy atrybut data-csp zamiast budowanego stringa onclick.
+    let datacsp = '';
+    if (action.id === 'sortAsc')
+        datacsp = 'data-csp="_excelSortColumnFromMenu" data-csp-args=\'["asc"]\'';
+    else if (action.id === 'sortDesc')
+        datacsp = 'data-csp="_excelSortColumnFromMenu" data-csp-args=\'["desc"]\'';
+    else if (action.id === 'sortClear')
+        datacsp = 'data-csp="_excelSortColumnFromMenu" data-csp-args=\'[null]\'';
+    else if (action.id === 'hide') datacsp = 'data-csp="_excelToggleColumnFromMenu"';
+    else if (action.id === 'showAll') datacsp = 'data-csp="_excelShowAllColumnsFromMenu"';
+    else if (action.id === 'manage') datacsp = 'data-csp="_excelManageColumnsFromMenu"';
     const cursor = action.disabled ? 'default' : 'pointer';
     const color = action.disabled ? 'var(--excel-text-faint)' : 'var(--excel-text)';
     return (
         '<div class="excel-ctx-item' +
         (action.disabled ? ' is-disabled' : '') +
         '"' +
-        (onclick ? ' onclick="' + onclick + '"' : '') +
+        (datacsp ? ' ' + datacsp : '') +
         ' style="color:' +
         color +
         ';cursor:' +

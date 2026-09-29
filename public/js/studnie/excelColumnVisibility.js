@@ -268,11 +268,11 @@ function _excelToggleColumnPopup() {
     let html = '';
     html += '<div class="modal modal--excel-col-vis">';
     html +=
-        '<div class="modal-header"><h3>Wybór kolumn Excel</h3><button type="button" onclick="this.closest(\'.modal-overlay\').remove()" class="btn-icon" aria-label="Zamknij"><i data-lucide="x" aria-hidden="true"></i></button></div>';
+        '<div class="modal-header"><h3>Wybór kolumn Excel</h3><button type="button" data-csp="$dom" data-csp-args=\'["remove", ".modal-overlay"]\' class="btn-icon" aria-label="Zamknij"><i data-lucide="x" aria-hidden="true"></i></button></div>';
     html += '<div class="excel-col-vis-body">' + gridHtml + '</div>';
     html += '<div class="modal-footer">';
     html +=
-        '<button type="button" onclick="let o=this.closest(\'.modal-overlay\');_excelResetColumnVisibility();if(o)o.remove()" class="btn btn-secondary excel-reset-btn">Przywróć domyślne</button>';
+        '<button type="button" data-csp="$resetColumnsAndClose" class="btn btn-secondary excel-reset-btn">Przywróć domyślne</button>';
     html += '</div></div>';
 
     const overlay = window.showModal({

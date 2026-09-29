@@ -195,7 +195,7 @@ function renderInlinePrzejsciaApp(containerId) {
                 <div class="wt-add-header">Rzędna [m]</div>
                 <div class="wt-add-body">
                     <input type="text" inputmode="decimal" class="form-input" id="inl-rzedna-${containerId || 'main'}" step="0.001"
-                           onclick="this.select()" onkeydown="if(event.key==='Enter') window.inlineFinish('${containerId || 'main'}', '${containerId || ''}')"
+                           data-csp="$select" onkeydown="if(event.key==='Enter') window.inlineFinish('${containerId || 'main'}', '${containerId || ''}')"
                            value="${well && well.rzednaDna !== null && well.rzednaDna !== undefined ? parseFloat(well.rzednaDna).toFixed(3) : ''}"
                            placeholder="—">
                 </div>
@@ -203,19 +203,19 @@ function renderInlinePrzejsciaApp(containerId) {
             <div class="wt-add-cell">
                 <div class="wt-add-header">Kąt [°]</div>
                 <div class="wt-add-body">
-                    <input type="number" class="form-input color-link" id="inl-angle-${containerId || 'main'}" value="0" min="0" max="360" onclick="this.select()" oninput="window.inlineUpdateAngles('${containerId || 'main'}')" onkeydown="if(event.key==='Enter') window.inlineFinish('${containerId || 'main'}', '${containerId || ''}')">
+                    <input type="number" class="form-input color-link" id="inl-angle-${containerId || 'main'}" value="0" min="0" max="360" data-csp="$select" oninput="window.inlineUpdateAngles('${containerId || 'main'}')" onkeydown="if(event.key==='Enter') window.inlineFinish('${containerId || 'main'}', '${containerId || ''}')">
                 </div>
             </div>
             <div class="wt-add-cell" title="Spadek w kinecie [%]">
                 <div class="wt-add-header">Spadek kin. [%]</div>
                 <div class="wt-add-body">
-                    <input type="number" class="form-input" id="inl-spadek-kineta-${containerId || 'main'}" step="1" onclick="this.select()" onkeydown="if(event.key==='Enter') window.inlineFinish('${containerId || 'main'}', '${containerId || ''}')" placeholder="—">
+                    <input type="number" class="form-input" id="inl-spadek-kineta-${containerId || 'main'}" step="1" data-csp="$select" onkeydown="if(event.key==='Enter') window.inlineFinish('${containerId || 'main'}', '${containerId || ''}')" placeholder="—">
                 </div>
             </div>
             <div class="wt-add-cell" title="Spadek w mufie [%]">
                 <div class="wt-add-header">Spadek mufy [%]</div>
                 <div class="wt-add-body">
-                    <input type="number" class="form-input" id="inl-spadek-mufa-${containerId || 'main'}" step="1" onclick="this.select()" onkeydown="if(event.key==='Enter') window.inlineFinish('${containerId || 'main'}', '${containerId || ''}')" placeholder="—">
+                    <input type="number" class="form-input" id="inl-spadek-mufa-${containerId || 'main'}" step="1" data-csp="$select" onkeydown="if(event.key==='Enter') window.inlineFinish('${containerId || 'main'}', '${containerId || ''}')" placeholder="—">
                 </div>
             </div>
             <div class="wt-add-cell" title="Kąt wykonania">
@@ -450,7 +450,7 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
                 const inpType = 'text';
                 const inpMode = ' inputmode="decimal"';
 
-                element.innerHTML = `<input type="${inpType}"${inpMode} placeholder="${escapeHtmlAttr(String(val))}" value="${escapeHtmlAttr(String(val))}" style="width:100%; min-width:0; max-width:100%; height:30px; margin:0; box-sizing:border-box; background: var(--bg-tertiary); color: var(--text-primary); border:1px solid var(--accent); border-radius: var(--radius-xs); font-size: var(--fs-base); font-weight: var(--fw-bold); text-align:center; padding:0 0.25rem; outline:none;" onclick="this.select()" onfocus="this.select()" onblur="window.saveQuickEdit(${index}, '${field}', this.value, this)" onkeydown="if(event.key==='Enter') this.blur();">`;
+                element.innerHTML = `<input type="${inpType}"${inpMode} placeholder="${escapeHtmlAttr(String(val))}" value="${escapeHtmlAttr(String(val))}" style="width:100%; min-width:0; max-width:100%; height:30px; margin:0; box-sizing:border-box; background: var(--bg-tertiary); color: var(--text-primary); border:1px solid var(--accent); border-radius: var(--radius-xs); font-size: var(--fs-base); font-weight: var(--fw-bold); text-align:center; padding:0 0.25rem; outline:none;" data-csp="$select" onfocus="this.select()" onblur="window.saveQuickEdit(${index}, '${field}', this.value, this)" onkeydown="if(event.key==='Enter') this.blur();">`;
                 const inp = element.querySelector('input');
                 inp.focus();
                 try {

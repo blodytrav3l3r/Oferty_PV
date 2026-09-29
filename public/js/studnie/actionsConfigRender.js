@@ -167,9 +167,9 @@ function renderWellConfig() {
 
             <div class="cfg-col-left">
                 <div class="cfg-idx-box">
-                  <button class="cfg-move-btn cfg-move-btn--plain" ${!canMoveUp ? 'disabled' : ''} onclick="moveWellComponent(${index}, -1)" title="W górę" aria-label="W górę" style="display:${item.autoAdded ? 'none' : 'flex'}; align-items:center; justify-content:center; cursor:${canMoveUp ? 'pointer' : 'default'};"><i data-lucide="chevron-up" class="icon-xs" aria-hidden="true"></i></button>
+                  <button class="cfg-move-btn cfg-move-btn--plain" ${!canMoveUp ? 'disabled' : ''} data-csp="moveWellComponent" data-csp-args="${escapeHtmlAttr(JSON.stringify([index, -1]))}" title="W górę" aria-label="W górę" style="display:${item.autoAdded ? 'none' : 'flex'}; align-items:center; justify-content:center; cursor:${canMoveUp ? 'pointer' : 'default'};"><i data-lucide="chevron-up" class="icon-xs" aria-hidden="true"></i></button>
                   <span class="cfg-idx-num">${index + 1}</span>
-                  <button class="cfg-move-btn cfg-move-btn--plain" ${!canMoveDown ? 'disabled' : ''} onclick="moveWellComponent(${index}, 1)" title="W dół" aria-label="W dół" style="display:${item.autoAdded ? 'none' : 'flex'}; align-items:center; justify-content:center; cursor:${canMoveDown ? 'pointer' : 'default'};"><i data-lucide="chevron-down" class="icon-xs" aria-hidden="true"></i></button>
+                  <button class="cfg-move-btn cfg-move-btn--plain" ${!canMoveDown ? 'disabled' : ''} data-csp="moveWellComponent" data-csp-args="${escapeHtmlAttr(JSON.stringify([index, 1]))}" title="W dół" aria-label="W dół" style="display:${item.autoAdded ? 'none' : 'flex'}; align-items:center; justify-content:center; cursor:${canMoveDown ? 'pointer' : 'default'};"><i data-lucide="chevron-down" class="icon-xs" aria-hidden="true"></i></button>
                 </div>
 
                 <div class="cfg-col-text">
@@ -216,7 +216,7 @@ function renderWellConfig() {
                                 ? `<del>PRECO (${percDesc})</del>`
                                 : `PRECO (${percDesc})`;
 
-                            badgesHtml += `<span onclick="window.toggleLinerDisabled(${index}, 'preco')" style="cursor:pointer; font-size: var(--fs-3xs); color:${precoColor}; font-weight: var(--fw-extrabold); margin-left:4px; border:1px solid ${precoBorder}; padding:1px 4px; border-radius: var(--radius-2xs); background:${precoBg}; white-space:nowrap; transition:all 0.2s;" title="Kliknij, aby włączyć/wyłączyć przeliczanie PRECO dla tego elementu">${precoText}</span>`;
+                            badgesHtml += `<span data-csp="toggleLinerDisabled" data-csp-args="${escapeHtmlAttr(JSON.stringify([index, 'preco']))}" style="cursor:pointer; font-size: var(--fs-3xs); color:${precoColor}; font-weight: var(--fw-extrabold); margin-left:4px; border:1px solid ${precoBorder}; padding:1px 4px; border-radius: var(--radius-2xs); background:${precoBg}; white-space:nowrap; transition:all 0.2s;" title="Kliknij, aby włączyć/wyłączyć przeliczanie PRECO dla tego elementu">${precoText}</span>`;
                         }
 
                         const pehdType = getPehdTypeForComponent(well, p.componentType);
@@ -234,7 +234,7 @@ function renderWellConfig() {
                                 : 'rgba(var(--blue-alt-rgb), 0.5)';
                             const pehdText = isPehdDisabled ? `<del>PEHD</del>` : `PEHD`;
 
-                            badgesHtml += `<span onclick="window.toggleLinerDisabled(${index}, 'pehd')" style="cursor:pointer; font-size: var(--fs-3xs); color:${pehdColor}; font-weight: var(--fw-extrabold); margin-left:4px; border:1px solid ${pehdBorder}; padding:1px 4px; border-radius: var(--radius-2xs); background:${pehdBg}; white-space:nowrap; transition:all 0.2s;" title="Kliknij, aby włączyć/wyłączyć dopłatę PEHD dla tego elementu">${pehdText}</span>`;
+                            badgesHtml += `<span data-csp="toggleLinerDisabled" data-csp-args="${escapeHtmlAttr(JSON.stringify([index, 'pehd']))}" style="cursor:pointer; font-size: var(--fs-3xs); color:${pehdColor}; font-weight: var(--fw-extrabold); margin-left:4px; border:1px solid ${pehdBorder}; padding:1px 4px; border-radius: var(--radius-2xs); background:${pehdBg}; white-space:nowrap; transition:all 0.2s;" title="Kliknij, aby włączyć/wyłączyć dopłatę PEHD dla tego elementu">${pehdText}</span>`;
                         }
 
                         if (
@@ -279,7 +279,7 @@ function renderWellConfig() {
                 <span class="cfg-price-val">${fmtInt(totalPrice)} PLN</span>
               </div>
               <div class="cfg-remove-cell">
-                <button class="btn-icon btn-icon--danger" onclick="removeWellComponent(${index})" title="Usuń" aria-label="Usuń" style="width:26px; height:26px; display:${item.autoAdded ? 'none' : 'flex'};"><i data-lucide="x" class="icon-xs" aria-hidden="true"></i></button>
+                <button class="btn-icon btn-icon--danger" data-csp="removeWellComponent" data-csp-args="${escapeHtmlAttr(JSON.stringify([index]))}" title="Usuń" aria-label="Usuń" style="width:26px; height:26px; display:${item.autoAdded ? 'none' : 'flex'};"><i data-lucide="x" class="icon-xs" aria-hidden="true"></i></button>
               </div>
             </div>
 

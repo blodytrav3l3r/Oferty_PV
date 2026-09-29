@@ -64,13 +64,13 @@ function renderAuditLogEntry(log) {
     const restoreBtnHtml =
         !isDelete && !isDiff
             ? `
-        <button class="btn btn-sm btn-secondary restore-btn" onclick="restoreHistorySnapshot('${escapeJsStr(log.id)}')"><i data-lucide="refresh-cw" aria-hidden="true"></i> Przywróć</button>
+        <button class="btn btn-sm btn-secondary restore-btn" data-csp="restoreHistorySnapshot" data-csp-args="${escapeHtmlAttr(JSON.stringify([log.id]))}"><i data-lucide="refresh-cw" aria-hidden="true"></i> Przywróć</button>
     `
             : '';
 
     const buttonsHtml = `
         <div class="flex-gap-4">
-            <button class="btn btn-sm btn-secondary preview-btn" onclick="viewHistorySnapshot('${escapeJsStr(log.id)}')"><i data-lucide="eye" aria-hidden="true"></i> Podgląd</button>
+            <button class="btn btn-sm btn-secondary preview-btn" data-csp="viewHistorySnapshot" data-csp-args="${escapeHtmlAttr(JSON.stringify([log.id]))}"><i data-lucide="eye" aria-hidden="true"></i> Podgląd</button>
             ${restoreBtnHtml}
         </div>
     `;
@@ -118,7 +118,7 @@ async function showOfferHistoryStudnie(id) {
         const loadMoreHtml =
             logs.length < total
                 ? `<div id="audit-load-more-wrap" class="text-center">
-                   <button class="load-more-btn" onclick="loadMoreAuditLogs('studnia_oferta', '${escapeJsStr(id)}', 20)"><i data-lucide="scroll-text"></i> Załaduj starsze zmiany (${total - logs.length} pozostało)</button>
+                   <button class="load-more-btn" data-csp="loadMoreAuditLogs" data-csp-args="${escapeHtmlAttr(JSON.stringify(['studnia_oferta', id, 20]))}"><i data-lucide="scroll-text"></i> Załaduj starsze zmiany (${total - logs.length} pozostało)</button>
                </div>`
                 : '';
 
@@ -191,7 +191,7 @@ async function showOfferHistoryStudnie(id) {
                     <h3 style="font-weight: var(--fw-extrabold); color:var(--white); margin:0; display:flex; align-items:center; gap:0.5rem;">
                         <span class="fs-5xl"><i data-lucide="history" aria-hidden="true"></i></span> Oś Czasu Zmian (${total} wpisów)
                     </h3>
-                    <button class="btn-icon" aria-label="Zamknij" style="background:rgba(var(--white-rgb), 0.1); color:var(--white); border-radius:50%; width:32px; height:32px; display:flex; align-items:center; justify-content:center;" onclick="closeModal()"><i data-lucide="x" aria-hidden="true"></i></button>
+                    <button class="btn-icon" aria-label="Zamknij" style="background:rgba(var(--white-rgb), 0.1); color:var(--white); border-radius:50%; width:32px; height:32px; display:flex; align-items:center; justify-content:center;" data-csp="closeModal" data-csp-args="[]"><i data-lucide="x" aria-hidden="true"></i></button>
                 </div>
                 <div id="audit-logs-container" style="padding:1.5rem; overflow-y:auto; flex:1; scrollbar-width:thin;">
                     ${historyHtml}
@@ -245,7 +245,7 @@ async function loadMoreAuditLogs(entityType, entityId, limit) {
                 'beforeend',
                 `
                 <div id="audit-load-more-wrap" class="text-center">
-                    <button class="load-more-btn" onclick="loadMoreAuditLogs('${escapeJsStr(entityType)}', '${escapeJsStr(entityId)}', ${limit})"><i data-lucide="scroll-text"></i> Załaduj starsze zmiany (${remaining} pozostało)</button>
+                    <button class="load-more-btn" data-csp="loadMoreAuditLogs" data-csp-args="${escapeHtmlAttr(JSON.stringify([entityType, entityId, limit]))}"><i data-lucide="scroll-text"></i> Załaduj starsze zmiany (${remaining} pozostało)</button>
                 </div>
             `
             );

@@ -196,7 +196,11 @@
                 (s, i) => `
             <button class="nav-btn nav-tile${i === 0 ? ' active' : ''}"
                 data-section="${s.id}" id="nav-${s.id}"
-                onclick="${s.isLink ? `window.location.hash='${escapeHtmlAttr(s.href)}'` : `SpaRouter.showSection('${escapeHtmlAttr(s.id)}')`}">
+                ${
+                    s.isLink
+                        ? `data-csp="$hashLink" data-csp-args="${escapeHtmlAttr(JSON.stringify([s.href]))}"`
+                        : `data-csp="showSection" data-csp-scope="SpaRouter" data-csp-args="${escapeHtmlAttr(JSON.stringify([s.id]))}"`
+                }>
                 <span class="nav-tile-icon">${s.icon}</span>
                 <span class="nav-tile-text">${escapeHtml(s.label)}</span>
             </button>

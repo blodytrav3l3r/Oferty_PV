@@ -367,10 +367,10 @@ function buildPrzejscieRowHTML(row, idx, source) {
             <input type="text" id="${prefix}-uwagi" class="form-input form-input-inline" value="${escapeHtmlAttr(row.uwagi || '')}" placeholder="Uwagi..." style="width:100%; box-sizing:border-box;" onchange="${warnScript}">
         </td>
         <td class="th-pad-c" style="text-align:center; padding:0.4rem 0.25rem; vertical-align:middle;">
-            <button type="button" id="${prefix}-czy" class="form-input" value="${row.czyPrzejscie === 'NIE' ? 'NIE' : 'TAK'}" onclick="_toggleCzyPrzejscieStudnie(this)" title="Przełącz TAK/NIE" style="width:100%; font-size: var(--fs-lg); padding:0.55rem 0.8rem; box-sizing:border-box; text-align:center; font-weight: var(--fw-bold); border-radius: var(--radius-2xs); cursor:pointer; ${row.czyPrzejscie === 'NIE' ? 'color:var(--danger-hover); background:rgba(var(--danger-rgb), 0.1); border:1px solid rgba(var(--danger-rgb), 0.3);' : 'color:var(--success-hover); background:rgba(var(--success-rgb), 0.1); border:1px solid rgba(var(--success-rgb), 0.3);'}">${row.czyPrzejscie === 'NIE' ? 'NIE' : 'TAK'}</button>
+            <button type="button" id="${prefix}-czy" class="form-input" value="${row.czyPrzejscie === 'NIE' ? 'NIE' : 'TAK'}" data-csp="_toggleCzyPrzejscieStudnie" data-csp-args="[&quot;$el&quot;]" title="Przełącz TAK/NIE" style="width:100%; font-size: var(--fs-lg); padding:0.55rem 0.8rem; box-sizing:border-box; text-align:center; font-weight: var(--fw-bold); border-radius: var(--radius-2xs); cursor:pointer; ${row.czyPrzejscie === 'NIE' ? 'color:var(--danger-hover); background:rgba(var(--danger-rgb), 0.1); border:1px solid rgba(var(--danger-rgb), 0.3);' : 'color:var(--success-hover); background:rgba(var(--success-rgb), 0.1); border:1px solid rgba(var(--success-rgb), 0.3);'}">${row.czyPrzejscie === 'NIE' ? 'NIE' : 'TAK'}</button>
         </td>
         <td style="padding:0.4rem 0.2rem; text-align:center; vertical-align:middle;">
-            <button type="button" class="btn-icon-danger" onclick="removePrzejscieRow('${source}', ${idx})" title="Usuń" style="padding:0.55rem 0.5rem; box-sizing:border-box; border-radius: var(--radius-2xs);"><i data-lucide="trash-2" class="icon-sm"></i></button>
+            <button type="button" class="btn-icon-danger" data-csp="removePrzejscieRow" data-csp-args="${escapeHtmlAttr(JSON.stringify([source, idx]))}" title="Usuń" style="padding:0.55rem 0.5rem; box-sizing:border-box; border-radius: var(--radius-2xs);"><i data-lucide="trash-2" class="icon-sm"></i></button>
         </td>
     </tr>`;
 }

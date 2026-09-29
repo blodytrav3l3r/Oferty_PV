@@ -278,7 +278,12 @@ function _refreshUnitPopup() {
         el.setAttribute('aria-disabled', allowed ? 'false' : 'true');
         if (allowed) {
             el.removeAttribute('title');
-            el.setAttribute('onclick', "setDisplayDecimals('" + prefs.unit + "'," + d + ')');
+            // CSP-B2: listener zamiast atrybutu (setAttribute nadpisywal, wiec podmieniamy).
+            if (el._cspDec) el.removeEventListener('click', el._cspDec);
+            el._cspDec = function () {
+                setDisplayDecimals(prefs.unit, d);
+            };
+            el.addEventListener('click', el._cspDec);
         } else {
             el.setAttribute('title', 'Niedostępne dla ' + prefs.unit);
             el.removeAttribute('onclick');
@@ -304,7 +309,7 @@ function _renderUnitPopupContent(container, prefs) {
         esc(formatHeightValue(1500, 'm')) +
         ' m';
     container.innerHTML =
-        '<div class="unit-popup-header"><span><i data-lucide="ruler" class="icon-xs"></i> Jednostki wysokości</span><button type="button" class="unit-popup-close" onclick="closeUnitSettingsPopup()" aria-label="Zamknij"><i data-lucide="x" class="icon-xs" aria-hidden="true"></i></button></div>' +
+        '<div class="unit-popup-header"><span><i data-lucide="ruler" class="icon-xs"></i> Jednostki wysokości</span><button type="button" class="unit-popup-close" data-csp="closeUnitSettingsPopup" data-csp-args="[]" aria-label="Zamknij"><i data-lucide="x" class="icon-xs" aria-hidden="true"></i></button></div>' +
         '<div class="unit-popup-section"><div class="unit-popup-label">Jednostka</div><div class="unit-popup-row" role="group" aria-label="Jednostka">' +
         VALID_UNITS.map(function (u) {
             return (
@@ -312,9 +317,9 @@ function _renderUnitPopupContent(container, prefs) {
                 (prefs.unit === u ? ' active' : '') +
                 '" data-unit="' +
                 u +
-                '" onclick="setDisplayUnit(\'' +
-                u +
-                '\')">' +
+                '" data-csp="setDisplayUnit" data-csp-args="' +
+                escapeHtmlAttr(JSON.stringify([u])) +
+                '">' +
                 u +
                 '</button>'
             );
@@ -338,7 +343,9 @@ function _renderUnitPopupContent(container, prefs) {
                     esc(prefs.unit) +
                     '"' +
                     (allowed
-                        ? ' onclick="setDisplayDecimals(\'' + esc(prefs.unit) + "'," + d + ')\'"'
+                        ? '" data-csp="setDisplayDecimals" data-csp-args="' +
+                          escapeHtmlAttr(JSON.stringify([prefs.unit, d])) +
+                          '"'
                         : ' disabled title="Niedostępne dla ' +
                           esc(prefs.unit) +
                           '" aria-disabled="true"') +

@@ -177,9 +177,9 @@ export function auditRenderEntry(self, log, id, type) {
     const canRestore =
         log.action !== 'delete' && !isDiff && type !== 'order' && type !== 'production_order';
     const restoreBtn = canRestore
-        ? `<button class="btn btn-sm btn-secondary restore-btn" onclick="window.kartotekaUI.restoreOfferVersionUnified('${escapeJsStr(id)}', '${escapeJsStr(log.id)}', '${escapeJsStr(type)}')"><i data-lucide="refresh-cw"></i> Przywróć</button>`
+        ? `<button class="btn btn-sm btn-secondary restore-btn" data-csp="restoreOfferVersionUnified" data-csp-scope="kartotekaUI" data-csp-args="${escapeHtmlAttr(JSON.stringify([id, log.id, type]))}"><i data-lucide="refresh-cw"></i> Przywróć</button>`
         : '';
-    const previewBtn = `<button class="btn btn-sm btn-secondary preview-btn" onclick="window.kartotekaUI.viewHistorySnapshotUnified('${escapeJsStr(id)}', '${escapeJsStr(log.id)}', '${escapeJsStr(type)}')"><i data-lucide="eye"></i> Podgląd</button>`;
+    const previewBtn = `<button class="btn btn-sm btn-secondary preview-btn" data-csp="viewHistorySnapshotUnified" data-csp-scope="kartotekaUI" data-csp-args="${escapeHtmlAttr(JSON.stringify([id, log.id, type]))}"><i data-lucide="eye"></i> Podgląd</button>`;
 
     return `
         <div class="audit-card ${meta.className}">
@@ -223,7 +223,7 @@ export async function auditShowHistory(self, id, type = 'studnia_oferta') {
         const loadMoreHtml =
             logs.length < total
                 ? `<div id="audit-load-more-wrap-kartoteka" class="audit-load-more-wrap">
-                <button class="btn btn-sm btn-secondary" onclick="window.kartotekaUI.loadMoreAuditLogs('${escapeJsStr(type)}', '${escapeJsStr(id)}', 20)"><i data-lucide="scroll-text"></i> Pokaż starsze zmiany (${total - logs.length})</button>
+                <button class="btn btn-sm btn-secondary" data-csp="loadMoreAuditLogs" data-csp-scope="kartotekaUI" data-csp-args="${escapeHtmlAttr(JSON.stringify([type, id, 20]))}"><i data-lucide="scroll-text"></i> Pokaż starsze zmiany (${total - logs.length})</button>
             </div>`
                 : '';
 
@@ -234,7 +234,7 @@ export async function auditShowHistory(self, id, type = 'studnia_oferta') {
                         <h3 id="offer-history-title"><i data-lucide="history"></i> Historia ${contextLabel}</h3>
                         <div class="audit-modal-subtitle">${total} wpisów • najnowsze zmiany na górze</div>
                     </div>
-                    <button class="btn-icon" aria-label="Zamknij" onclick="document.getElementById('offer-history-modal').remove()"><i data-lucide="x" aria-hidden="true"></i></button>
+                    <button class="btn-icon" aria-label="Zamknij" data-csp="$dom" data-csp-args="[&quot;remove&quot;, &quot;#offer-history-modal&quot;]"><i data-lucide="x" aria-hidden="true"></i></button>
                 </div>
                 <div id="audit-logs-container-kartoteka" class="audit-list">
                     ${historyHtml}
@@ -290,7 +290,7 @@ export async function auditLoadMore(self, entityType, entityId, limit) {
                 'beforeend',
                 `
                 <div id="audit-load-more-wrap-kartoteka" class="audit-load-more-wrap">
-                    <button class="btn btn-sm btn-secondary" onclick="window.kartotekaUI.loadMoreAuditLogs('${escapeJsStr(entityType)}', '${escapeJsStr(entityId)}', ${limit})"><i data-lucide="scroll-text"></i> Pokaż starsze zmiany (${remaining})</button>
+                    <button class="btn btn-sm btn-secondary" data-csp="loadMoreAuditLogs" data-csp-scope="kartotekaUI" data-csp-args="${escapeHtmlAttr(JSON.stringify([entityType, entityId, limit]))}"><i data-lucide="scroll-text"></i> Pokaż starsze zmiany (${remaining})</button>
                 </div>`
             );
         }
@@ -364,7 +364,7 @@ export function auditShowSnapshotModal(self, data, type) {
                     <h3 id="audit-snapshot-title"><i data-lucide="eye"></i> Podgląd historyczny</h3>
                     <div class="audit-modal-subtitle">${escapeHtml(self.getAuditContextLabel(type))}</div>
                 </div>
-                <button class="btn-icon" aria-label="Zamknij" onclick="closeModal()"><i data-lucide="x" aria-hidden="true"></i></button>
+                <button class="btn-icon" aria-label="Zamknij" data-csp="closeModal" data-csp-args="[]"><i data-lucide="x" aria-hidden="true"></i></button>
             </div>
             <div class="audit-list" style="display:flex; flex-direction:column; gap:var(--tile-gap-xs-plus);">
                 ${rows || '<div class="audit-muted">Brak danych do pokazania.</div>'}

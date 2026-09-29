@@ -272,8 +272,8 @@ async function loadUsers() {
         <td class="cell-num">${escapeHtml(String(u.productionOrderStartNumber || 1))}</td>
         <td>
           <div class="admin-actions-cell">
-            <button class="admin-action-btn edit-btn" aria-label="Edytuj użytkownika" onclick="startEditUser('${escapeJsStr(u.id)}')"><i data-lucide="pencil"></i></button>
-            ${u.username !== 'admin' ? `<button class="admin-action-btn delete-btn" aria-label="Usuń użytkownika" onclick="deleteUser('${escapeJsStr(u.id)}')"><i data-lucide="trash-2"></i></button>` : ''}
+            <button class="admin-action-btn edit-btn" aria-label="Edytuj użytkownika" data-csp="startEditUser" data-csp-args="${escapeHtmlAttr(JSON.stringify([u.id]))}"><i data-lucide="pencil"></i></button>
+            ${u.username !== 'admin' ? `<button class="admin-action-btn delete-btn" aria-label="Usuń użytkownika" data-csp="deleteUser" data-csp-args="${escapeHtmlAttr(JSON.stringify([u.id]))}"><i data-lucide="trash-2"></i></button>` : ''}
           </div>
         </td>
       </tr>`;

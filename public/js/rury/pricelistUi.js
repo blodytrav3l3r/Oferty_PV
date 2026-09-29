@@ -186,7 +186,7 @@ async function deleteProduct(id) {
 }
 
 async function resetPriceList() {
-    const btns = document.querySelectorAll('[onclick*="resetPriceList"]');
+    const btns = document.querySelectorAll('[data-csp*="resetPriceList"]');
     btns.forEach((b) => b.setAttribute('disabled', 'true'));
     if (
         !(await appConfirm(
@@ -224,7 +224,7 @@ async function savePriceList() {
         showToast('Brak zmian do zapisania', 'info');
         return;
     }
-    const btns = document.querySelectorAll('[onclick*="savePriceList"]');
+    const btns = document.querySelectorAll('[data-csp*="savePriceList"]');
     btns.forEach((b) => b.setAttribute('disabled', 'true'));
     try {
         const ok = await saveProducts(products);
@@ -387,7 +387,7 @@ async function importRuryFromExcel(event, opts) {
     const explicitTarget = (opts && opts.target) || null;
     const explicitNote = (opts && opts.note) || '';
 
-    const btns = document.querySelectorAll('[onclick*="importRuryFromExcel"]');
+    const btns = document.querySelectorAll('[data-csp-args*="pv-import-excel"]');
     btns.forEach((b) => b.setAttribute('disabled', 'true'));
 
     const resetImportInput = () => {

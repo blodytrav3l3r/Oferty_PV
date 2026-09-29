@@ -8,6 +8,12 @@ import vm from 'vm';
 const readStudnie = (f: string) =>
     fs.readFileSync(path.join(__dirname, '../../public/js/studnie/' + f), 'utf8');
 
+// Prawdziwe helpery escapowania (produkcja ładuje escapeHtml.js na każdej stronie;
+// data-csp-args renderuje escapeHtmlAttr(JSON.stringify(...)) wprost w szablonach).
+const escSrc = fs
+    .readFileSync(path.join(__dirname, '../../public/js/shared/escapeHtml.js'), 'utf-8')
+    .replace(/^export /gm, '');
+
 function fakeEl(attrs: Record<string, string>) {
     const classes = new Set<string>();
     return {
@@ -65,6 +71,7 @@ function loadRenderer(well: any, tiles: any[], excelTds: any[], svgShapes: any[]
         getCurrentWell: () => well
     };
     vm.createContext(context);
+    vm.runInContext(escSrc, context);
     vm.runInContext(readStudnie('diagramRenderer.js'), context);
     // diagramRenderer rejestruje na window.* — udostępnij bezpośrednio dla wygody.
     context.svgPrzPointerEnter = context.window.svgPrzPointerEnter;
@@ -258,6 +265,7 @@ describe('drawTransitions → data-prz-id w SVG', () => {
             studnieProducts: []
         };
         vm.createContext(context);
+        vm.runInContext(escSrc, context);
         vm.runInContext(readStudnie('diagramTransitions.js'), context);
         const well = {
             rzednaDna: '100.000',
@@ -276,8 +284,9 @@ describe('drawTransitions → data-prz-id w SVG', () => {
         };
         const out = context.drawTransitions(well, canvas, []);
         expect(out).toContain('data-prz-id="prz-test-1"');
-        expect(out).toContain("svgPrzPointerEnter(event, 'prz-test-1')");
-        expect(out).toContain("svgPrzPointerClick(event, 'prz-test-1')");
+        expect(out).toContain('data-csp="svgPrzPointerClick"');
+        expect(out).toContain('prz-test-1');
+        expect(out).not.toContain('onclick=');
     });
 });
 

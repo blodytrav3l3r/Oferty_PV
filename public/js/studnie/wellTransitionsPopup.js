@@ -208,7 +208,7 @@ window.openFlowTypePopup = function (index) {
         <div class="modal modal--prz-flow">
             <div class="modal-header">
                 <h3 id="flow-type-title">Wybierz typ przepływu</h3>
-                <button class="btn-icon" aria-label="Zamknij" onclick="closeModal()"><i data-lucide="x" aria-hidden="true"></i></button>
+                <button class="btn-icon" aria-label="Zamknij" data-csp="closeModal" data-csp-args="[]"><i data-lucide="x" aria-hidden="true"></i></button>
             </div>
             <div style="display:flex; gap:0.8rem; justify-content:center; padding:0.4rem 0;">
                 <button id="flow-wlot-btn" class="prz-flow-btn prz-flow-btn--wlot"
@@ -221,7 +221,7 @@ window.openFlowTypePopup = function (index) {
                 </button>
             </div>
             <div class="modal-footer" style="justify-content:center;">
-                <button class="btn btn-secondary" onclick="closeModal()">Anuluj</button>
+                <button class="btn btn-secondary" data-csp="closeModal" data-csp-args="[]">Anuluj</button>
             </div>
         </div>`
     });
@@ -277,7 +277,7 @@ window.openChangePrzejscieTypePopup = function (index) {
         <div class="modal modal--prz">
             <div class="modal-header">
                 <h3 id="change-prz-type-title">Zmień rodzaj przejścia</h3>
-                <button class="btn-icon" aria-label="Zamknij" onclick="closeModal()"><i data-lucide="x" aria-hidden="true"></i></button>
+                <button class="btn-icon" aria-label="Zamknij" data-csp="closeModal" data-csp-args="[]"><i data-lucide="x" aria-hidden="true"></i></button>
             </div>
             <div class="prz-grid">
                 ${allTypes
@@ -291,7 +291,7 @@ window.openChangePrzejscieTypePopup = function (index) {
                     .join('')}
             </div>
             <div class="modal-footer" style="justify-content:center;">
-                <button class="btn btn-secondary" onclick="closeModal()">Anuluj</button>
+                <button class="btn btn-secondary" data-csp="closeModal" data-csp-args="[]">Anuluj</button>
             </div>
         </div>`
     });
@@ -389,7 +389,7 @@ window.openChangePrzejscieDnPopup = function (index) {
         <div class="modal modal--prz">
             <div class="modal-header">
                 <h3 id="change-prz-dn-title">Wybierz średnicę (DN): ${escapeHtml(currProduct.category)}</h3>
-                <button class="btn-icon" aria-label="Zamknij" onclick="closeModal()"><i data-lucide="x" aria-hidden="true"></i></button>
+                <button class="btn-icon" aria-label="Zamknij" data-csp="closeModal" data-csp-args="[]"><i data-lucide="x" aria-hidden="true"></i></button>
             </div>
             <div class="prz-grid">
                 ${available
@@ -405,7 +405,7 @@ window.openChangePrzejscieDnPopup = function (index) {
                     .join('')}
             </div>
             <div class="modal-footer" style="justify-content:center;">
-                <button class="btn btn-secondary" onclick="closeModal()">Anuluj</button>
+                <button class="btn btn-secondary" data-csp="closeModal" data-csp-args="[]">Anuluj</button>
             </div>
         </div>`
     });

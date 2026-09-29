@@ -293,7 +293,7 @@ function _bulkSeqRowHtml(g, numOrNull, excluded, fixedH) {
             </div>
             ${
                 !disabled
-                    ? `<button onclick="toggleBulkSeqItem(this)" class="btn btn-sm" style="background:transparent; border:none; color:${isExcluded ? 'var(--success-hover)' : 'var(--danger-hover)'}; padding:0.2rem; cursor:pointer;" title="${isExcluded ? 'Przywróć studnię' : 'Pomiń studnię'}">
+                    ? `<button data-csp="toggleBulkSeqItem" data-csp-args="[&quot;$el&quot;]" class="btn btn-sm" style="background:transparent; border:none; color:${isExcluded ? 'var(--success-hover)' : 'var(--danger-hover)'}; padding:0.2rem; cursor:pointer;" title="${isExcluded ? 'Przywróć studnię' : 'Pomiń studnię'}">
                 <i data-lucide="${isExcluded ? 'plus' : 'trash-2'}" class="icon-sm"></i>
             </button>`
                     : ''
@@ -473,12 +473,12 @@ function openBulkOrderSequencePopup() {
                     <div style="font-size: var(--fs-2xl); font-weight: var(--fw-extrabold); color:var(--accent2-hover);"><i data-lucide="list-ordered"></i> Kolejność generowania</div>
                     <div class="fs-sm-muted">Przeciągnij studnie, aby ustalić kolejność numerów produkcyjnych</div>
                 </div>
-                <button onclick="closeBulkOrderPopup()" class="btn btn-sm" style="background:rgba(var(--danger-rgb), 0.1); border:1px solid rgba(var(--danger-rgb), 0.3); color:var(--danger-hover); padding:0.3rem 0.6rem;">
+                <button data-csp="closeBulkOrderPopup" data-csp-args="[]" class="btn btn-sm" style="background:rgba(var(--danger-rgb), 0.1); border:1px solid rgba(var(--danger-rgb), 0.3); color:var(--danger-hover); padding:0.3rem 0.6rem;">
                     <i data-lucide="x"></i>
                 </button>
             </div>
             <div id="bulk-seq-list" style="flex:1; overflow-y:auto; padding:0.3rem 0;">${itemsHtml}</div>
-            <button onclick="executeBulkFromPopup()" class="btn btn-sm" style="margin-top:1rem; width:100%; background:rgba(var(--accent2-rgb), 0.2); border:1px solid rgba(var(--accent2-rgb), 0.5); color:var(--accent2-hover); font-weight: var(--fw-extrabold); padding:0.6rem; font-size: var(--fs-lg); border-radius: var(--radius-sm);">
+            <button data-csp="executeBulkFromPopup" data-csp-args="[]" class="btn btn-sm" style="margin-top:1rem; width:100%; background:rgba(var(--accent2-rgb), 0.2); border:1px solid rgba(var(--accent2-rgb), 0.5); color:var(--accent2-hover); font-weight: var(--fw-extrabold); padding:0.6rem; font-size: var(--fs-lg); border-radius: var(--radius-sm);">
                 <i data-lucide="zap"></i> Generuj w tej kolejności
             </button>
         </div>

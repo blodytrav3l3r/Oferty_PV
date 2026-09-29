@@ -57,7 +57,7 @@ async function saveClientsDbData(data) {
 
 /* ===== ZAPIS KLIENTA Z FORMULARZA ===== */
 function saveClientToDb() {
-    const _saveBtn = document.querySelector('button[onclick="saveClientToDb()"]');
+    const _saveBtn = document.querySelector('button[data-csp="saveClientToDb"]');
     if (_saveBtn) _saveBtn.disabled = true;
     // Odblokuj na KAŻDYM wyjściu — inaczej przycisk martwy po błędzie walidacji.
     const _unlockSaveBtn = () => {
@@ -157,7 +157,7 @@ function showClientsDb() {
     <div class="modal modal--clients">
       <div class="modal-header">
         <h3><i data-lucide="folder-open"></i> Baza klientów <span class="text-muted">(${clientsDb.length})</span></h3>
-        <button class="btn-icon" aria-label="Zamknij" onclick="closeModal()"><i data-lucide="x" aria-hidden="true"></i></button>
+        <button class="btn-icon" aria-label="Zamknij" data-csp="closeModal" data-csp-args="[]"><i data-lucide="x" aria-hidden="true"></i></button>
       </div>
       <div class="clients-search">
         <div class="clients-search-row">
@@ -248,8 +248,8 @@ function renderClientsDbList(query) {
             });
             const actionTd = document.createElement('td');
             actionTd.className = 'td-edit td-actions';
-            actionTd.innerHTML = `<button class="btn-icon btn-icon--accent" onclick="event.stopPropagation(); saveEditedClientInDb('${escapeJsStr(c.id)}')" title="Zapisz" aria-label="Zapisz"><i data-lucide="save" aria-hidden="true"></i></button>
-                <button class="btn-icon btn-icon--muted" onclick="event.stopPropagation(); cancelEditClient()" title="Anuluj" aria-label="Anuluj"><i data-lucide="x" aria-hidden="true"></i></button>`;
+            actionTd.innerHTML = `<button class="btn-icon btn-icon--accent" data-csp="saveEditedClientInDb" data-csp-args="${escapeHtmlAttr(JSON.stringify([c.id]))}" data-csp-stop="1" title="Zapisz" aria-label="Zapisz"><i data-lucide="save" aria-hidden="true"></i></button>
+                <button class="btn-icon btn-icon--muted" data-csp="cancelEditClient" data-csp-args="[]" data-csp-stop="1" title="Anuluj" aria-label="Anuluj"><i data-lucide="x" aria-hidden="true"></i></button>`;
             tr.appendChild(actionTd);
         } else {
             const clientNumberTd = document.createElement('td');
@@ -279,8 +279,8 @@ function renderClientsDbList(query) {
 
             const actionTd = document.createElement('td');
             actionTd.className = 'td-actions';
-            actionTd.innerHTML = `<button class="btn-icon btn-icon--dim" onclick="event.stopPropagation(); editClientInDb('${escapeJsStr(c.id)}')" title="Edytuj" aria-label="Edytuj"><i data-lucide="pencil" aria-hidden="true"></i></button>
-                <button class="btn-icon btn-icon--danger" onclick="event.stopPropagation(); deleteClientFromDb('${escapeJsStr(c.id)}')" title="Usuń z bazy" aria-label="Usuń z bazy"><i data-lucide="x" aria-hidden="true"></i></button>`;
+            actionTd.innerHTML = `<button class="btn-icon btn-icon--dim" data-csp="editClientInDb" data-csp-args="${escapeHtmlAttr(JSON.stringify([c.id]))}" data-csp-stop="1" title="Edytuj" aria-label="Edytuj"><i data-lucide="pencil" aria-hidden="true"></i></button>
+                <button class="btn-icon btn-icon--danger" data-csp="deleteClientFromDb" data-csp-args="${escapeHtmlAttr(JSON.stringify([c.id]))}" data-csp-stop="1" title="Usuń z bazy" aria-label="Usuń z bazy"><i data-lucide="x" aria-hidden="true"></i></button>`;
             tr.appendChild(actionTd);
 
             tr.onclick = () => selectClientFromDb(c.id);

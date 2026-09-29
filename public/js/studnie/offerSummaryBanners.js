@@ -22,7 +22,7 @@ function renderOrderBanners(order, orderChanges) {
                 <span class="fs-3xl"><i data-lucide="package"></i></span>
                 <span class="order-banner-title">ZAMÓWIENIE ${orderNum} • Oferta ${offerNum} ${statusText}</span>
             </div>
-            <button class="btn btn-sm" onclick="orderEditMode ? saveCurrentOrder() : saveOrderStudnie()"><i data-lucide="package" aria-hidden="true"></i> Zapisz zamówienie</button>
+            <button class="btn btn-sm" data-csp="$orderSave"><i data-lucide="package" aria-hidden="true"></i> Zapisz zamówienie</button>
         </div>`;
     }
 

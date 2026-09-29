@@ -458,7 +458,7 @@ function applyOrderedWellSoftLockUI() {
         if (softLocked) el.title = 'Studnia na zamówieniu — edycja zablokowana';
         else el.removeAttribute('title');
     });
-    const clearBtn = document.querySelector('button[onclick="clearWellConfig()"]');
+    const clearBtn = document.querySelector('button[data-csp="clearWellConfig"]');
     if (clearBtn) {
         clearBtn.disabled = !!softLocked;
         clearBtn.style.opacity = softLocked ? '0.5' : '';

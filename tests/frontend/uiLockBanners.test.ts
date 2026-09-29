@@ -4,10 +4,10 @@
 
 // @ts-nocheck
 /**
- * A1: baner blokady oferty escapuje wellOrder.id w onclick (kontekst JS-string).
+ * A1: baner blokady oferty escapuje wellOrder.id w data-csp-args (kontekst JSON+attr).
  * Ładuje PRAWDZIWY public/js/shared/escapeHtml.js + public/js/studnie/uiLockBanners.js,
  * renderuje baner dla studni zablokowanej zamówieniem o wrogim id i sprawdza,
- * że payload nie wyrywa się z atrybutu onclick.
+ * że payload nie wyrywa się z atrybutu data-csp-args.
  */
 import fs from 'fs';
 import path from 'path';
@@ -52,22 +52,24 @@ describe('frontend A1: uiLockBanners escapuje id zamówienia', () => {
         expect(esc.escapeJsStr("x'-alert(1)-'y")).toBe("x\\'-alert(1)-\\'y");
     });
 
-    it('baner z wrogim id nie wyrywa się z onclick', () => {
+    it('baner z wrogim id nie wyrywa się z atrybutu (CSP-B2: JSON+attr)', () => {
         stubEnv("x'-alert(1)-'y");
         render();
         const banner = document.getElementById('offer-lock-banner') as HTMLElement;
-        const html = banner.innerHTML;
-        // surowy payload nie może wystąpić w atrybucie
-        expect(html).not.toContain("order=x'-alert(1)-'y");
-        // escapowana wersja obecna
-        expect(html).toContain("order=x\\'-alert(1)-\\'y");
-        expect(html).toContain('Edytuj zamówienie');
+        const btn = banner.querySelector('button') as HTMLElement;
+        expect(btn).not.toBeNull();
+        expect(btn.hasAttribute('onclick')).toBe(false);
+        // wartosc odczytana jak w dyspozytorze: getAttribute dekoduje encje
+        const raw = btn.getAttribute('data-csp-args') as string;
+        expect(JSON.parse(raw)).toEqual(["x'-alert(1)-'y"]);
+        expect(btn.getAttribute('data-csp')).toBe('$gotoOrder');
+        expect(banner.innerHTML).toContain('Edytuj zamówienie');
     });
 
     it('zwykłe id przechodzi bez zmian', () => {
         stubEnv('ord-123');
         render();
         const banner = document.getElementById('offer-lock-banner') as HTMLElement;
-        expect(banner.innerHTML).toContain('order=ord-123');
+        expect(banner.innerHTML).toContain('[&quot;ord-123&quot;]');
     });
 });

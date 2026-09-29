@@ -183,7 +183,7 @@ function renderStep2OrderBanner(orderData) {
         '</strong></span>' +
         '<span class="text-muted fs-md">Po dodaniu produktów kliknij <strong class="text-primary">Dalej</strong> aby przejść do podsumowania.</span>' +
         '</div>' +
-        '<button class="btn btn-sm badge-ok" onclick="goToPhase(5)">Powrót do zamówienia</button>';
+        '<button class="btn btn-sm badge-ok" data-csp="goToPhase" data-csp-args="[[5]]">Powrót do zamówienia</button>';
     const step2 = document.getElementById('wizard-step-2');
     if (step2 && step2.firstChild) {
         step2.insertBefore(banner, step2.firstChild);

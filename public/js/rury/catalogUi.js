@@ -31,7 +31,7 @@ function renderCatalogTabs() {
     container.innerHTML = CATEGORIES.filter((cat) => !hiddenCategories.includes(cat))
         .map((cat) => {
             const count = products.filter((p) => p.category === cat).length;
-            return `<button class="catalog-tab${cat === window.activeCatalogCategory ? ' active' : ''}" onclick="selectCatalogCategory('${escapeJsStr(cat)}')">${escapeHtml(cat)} <span style="opacity:.6">(${count})</span></button>`;
+            return `<button class="catalog-tab${cat === window.activeCatalogCategory ? ' active' : ''}" data-csp="selectCatalogCategory" data-csp-args="${escapeHtmlAttr(JSON.stringify([cat]))}">${escapeHtml(cat)} <span style="opacity:.6">(${count})</span></button>`;
         })
         .join('');
 }
@@ -72,14 +72,14 @@ function renderCatalogProducts() {
         grouped[diamKey].forEach((p) => {
             const is1m = isOneMetrePipe(p.id);
             html += `
-      <div class="catalog-item-row${is1m ? ' catalog-item-1m' : ''}" onclick="addOfferItem('${escapeJsStr(p.id)}')">
+      <div class="catalog-item-row${is1m ? ' catalog-item-1m' : ''}" data-csp="addOfferItem" data-csp-args="${escapeHtmlAttr(JSON.stringify([p.id]))}">
         <div class="catalog-item-row-name">${escapeHtml(p.name)}</div>
         <div class="catalog-item-row-meta">
           <span class="catalog-item-row-id">${escapeHtml(p.id)}</span>
           ${p.weight ? `<span class="catalog-item-row-weight">${fmtInt(p.weight)} kg</span>` : ''}
         </div>
         <div class="catalog-item-row-price">${fmt(p.price)} PLN</div>
-        <button class="catalog-item-add" onclick="event.stopPropagation();addOfferItem('${escapeJsStr(p.id)}')">+ Dodaj</button>
+        <button class="catalog-item-add" data-csp="addOfferItem" data-csp-args="${escapeHtmlAttr(JSON.stringify([p.id]))}" data-csp-stop="1">+ Dodaj</button>
       </div>`;
         });
     });

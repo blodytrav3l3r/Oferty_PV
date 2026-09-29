@@ -226,7 +226,7 @@ function showItemDiscountModal() {
     <div class="modal" style="max-width:1200px; width:95%; border-radius: var(--radius); box-shadow: 0 20px 25px -5px rgba(var(--black-rgb), 0.1); max-height:90vh; display:flex; flex-direction:column;">
       <div class="modal-header" style="border-bottom: 1px solid var(--border); padding-bottom: 0.8rem; margin-bottom: 0.5rem;">
         <h3 id="item-discount-title" class="fs-4xl-bold-primary">% Edytuj rabaty pozycji</h3>
-        <button class="btn-icon" aria-label="Zamknij" onclick="closeModal()"><i data-lucide="x" aria-hidden="true"></i></button>
+        <button class="btn-icon" aria-label="Zamknij" data-csp="closeModal" data-csp-args="[]"><i data-lucide="x" aria-hidden="true"></i></button>
       </div>
       
       <div style="overflow-y:auto; flex:1; padding-right:0.5rem;" id="discount-modal-list">
@@ -245,8 +245,8 @@ function showItemDiscountModal() {
           </div>
         </div>
         <div style="display:flex; gap: 1rem;">
-          <button class="btn btn-secondary p-075-15" onclick="closeModal()" >Anuluj</button>
-          <button class="btn btn-primary" onclick="applyItemDiscounts()" style="padding: 0.75rem 2rem; font-size: var(--fs-2xl); font-weight: var(--fw-semibold);">Zastosuj <i data-lucide="arrow-right" aria-hidden="true"></i></button>
+          <button class="btn btn-secondary p-075-15" data-csp="closeModal" data-csp-args="[]" >Anuluj</button>
+          <button class="btn btn-primary" data-csp="applyItemDiscounts" data-csp-args="[]" style="padding: 0.75rem 2rem; font-size: var(--fs-2xl); font-weight: var(--fw-semibold);">Zastosuj <i data-lucide="arrow-right" aria-hidden="true"></i></button>
         </div>
       </div>
     </div>`
@@ -334,7 +334,7 @@ function renderDiscountModalItems() {
         </td>
         <td style="padding:0.4rem; text-align:center; vertical-align:middle;">
           <input type="number" step="0.5" min="0" max="100" value="${d}" 
-            onclick="this.select()"
+            data-csp="$select"
             oninput="updateTempDiscount(${index}, this)"
             onchange="checkGasketDiscount(${index}, this)"
             style="width:65px; padding:0.3rem; text-align:center; border:1px solid var(--border); border-radius: var(--radius-2xs); font-weight: var(--fw-bold); color:var(--accent-text); background:var(--bg-input);">

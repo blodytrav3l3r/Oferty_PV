@@ -54,7 +54,7 @@ export async function openShareModal(documentType, documentId) {
         <div class="modal modal--share">
             <div class="share-modal-header">
                 <h3 id="share-title"><span class="share-icon-avatar" aria-hidden="true"><i data-lucide="share-2"></i></span> Udostępnij</h3>
-                <button class="btn-icon btn-close-x" aria-label="Zamknij" onclick="closeModal('share-modal')"><i data-lucide="x"></i></button>
+                <button class="btn-icon btn-close-x" aria-label="Zamknij" data-csp="closeModal" data-csp-args="[&quot;share-modal&quot;]"><i data-lucide="x"></i></button>
             </div>
             <div class="share-modal-body text-center fs-sm-muted"><span class="share-icon-avatar share-icon-avatar--muted" style="margin:0 auto 0.6rem"><i data-lucide="loader-2" class="lucide-spin"></i></span> Ładowanie użytkowników...</div>
         </div>`;
@@ -82,9 +82,9 @@ export async function openShareModal(documentType, documentId) {
         const msg = e instanceof Error ? e.message : 'Błąd pobierania danych';
         overlay.innerHTML = `
             <div class="modal modal--share">
-                <div class="share-modal-header"><h3 id="share-title"><span class="share-icon-avatar" aria-hidden="true"><i data-lucide="share-2"></i></span> Udostępnij</h3><button class="btn-icon btn-close-x" aria-label="Zamknij" onclick="closeModal('share-modal')"><i data-lucide="x"></i></button></div>
+                <div class="share-modal-header"><h3 id="share-title"><span class="share-icon-avatar" aria-hidden="true"><i data-lucide="share-2"></i></span> Udostępnij</h3><button class="btn-icon btn-close-x" aria-label="Zamknij" data-csp="closeModal" data-csp-args="[&quot;share-modal&quot;]"><i data-lucide="x"></i></button></div>
                 <div class="share-modal-body color-danger">${escapeHtml(msg)}</div>
-                <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('share-modal')">Zamknij</button></div>
+                <div class="modal-footer"><button class="btn btn-secondary" data-csp="closeModal" data-csp-args="[&quot;share-modal&quot;]">Zamknij</button></div>
             </div>`;
         if (window.lucide) window.lucide.createIcons({ root: overlay });
         return;
@@ -159,7 +159,7 @@ export async function openShareModal(documentType, documentId) {
         <div class="modal modal--share">
             <div class="share-modal-header">
                 <h3 id="share-title"><span class="share-icon-avatar" aria-hidden="true"><i data-lucide="share-2"></i></span> Udostępnij</h3>
-                <button class="btn-icon btn-close-x" aria-label="Zamknij" onclick="closeModal('share-modal')"><i data-lucide="x"></i></button>
+                <button class="btn-icon btn-close-x" aria-label="Zamknij" data-csp="closeModal" data-csp-args="[&quot;share-modal&quot;]"><i data-lucide="x"></i></button>
             </div>
             ${alreadyInfo}
             <div class="share-search-row">
@@ -170,7 +170,7 @@ export async function openShareModal(documentType, documentId) {
             <div class="modal-footer">
                 <div class="share-footer-left">${revokeBtn}</div>
                 <div class="flex-gap-5">
-                    <button class="btn btn-secondary" onclick="closeModal('share-modal')">Anuluj</button>
+                    <button class="btn btn-secondary" data-csp="closeModal" data-csp-args="[&quot;share-modal&quot;]">Anuluj</button>
                     <button class="btn btn-primary" id="share-confirm" ${countSel === 0 || !canShare ? 'disabled' : ''}><i data-lucide="share-2"></i> Udostępnij${countSel ? ' (' + countSel + ')' : ''}</button>
                 </div>
             </div>

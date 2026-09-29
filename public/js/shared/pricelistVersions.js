@@ -489,16 +489,16 @@
         if (isRury) {
             return (
                 '<div class="pv-row"><span class="pv-row-label">Rury</span><span class="pv-actions">' +
-                '<button class="btn btn-sm btn-secondary" onclick="exportRuryToExcel()" title="Eksportuj cennik do pliku Excel"><i data-lucide="download"></i> Eksportuj</button>' +
-                '<button class="btn btn-sm btn-secondary" onclick="document.getElementById(\'pv-import-excel\').click()" title="Importuj cennik z pliku Excel"><i data-lucide="upload"></i> Importuj</button>' +
+                '<button class="btn btn-sm btn-secondary" data-csp="exportRuryToExcel" data-csp-args="[]" title="Eksportuj cennik do pliku Excel"><i data-lucide="download"></i> Eksportuj</button>' +
+                '<button class="btn btn-sm btn-secondary" data-csp="$dom" data-csp-args="[&quot;click&quot;, &quot;#pv-import-excel&quot;]" title="Importuj cennik z pliku Excel"><i data-lucide="upload"></i> Importuj</button>' +
                 '</span></div>' +
                 importInput
             );
         }
         return (
             '<div class="pv-row"><span class="pv-row-label">Studnie + PRECO</span><span class="pv-actions">' +
-            '<button class="btn btn-sm btn-secondary" onclick="exportStudnieToExcel()" title="Eksportuj cennik do pliku Excel"><i data-lucide="download"></i> Eksportuj</button>' +
-            '<button class="btn btn-sm btn-secondary" onclick="document.getElementById(\'pv-import-excel\').click()" title="Importuj cennik z pliku Excel (zawiera arkusze PRECO)"><i data-lucide="upload"></i> Importuj</button>' +
+            '<button class="btn btn-sm btn-secondary" data-csp="exportStudnieToExcel" data-csp-args="[]" title="Eksportuj cennik do pliku Excel"><i data-lucide="download"></i> Eksportuj</button>' +
+            '<button class="btn btn-sm btn-secondary" data-csp="$dom" data-csp-args="[&quot;click&quot;, &quot;#pv-import-excel&quot;]" title="Importuj cennik z pliku Excel (zawiera arkusze PRECO)"><i data-lucide="upload"></i> Importuj</button>' +
             '</span></div>' +
             importInput
         );
@@ -508,10 +508,10 @@
     function defaultsHtml() {
         return (
             '<div class="pv-actions">' +
-            '<button class="btn btn-sm btn-secondary" id="btn-save-defaults" onclick="window.parent.saveAllDefaults()" title="Zapisz bieżący stan cenników (rury, studnie, PRECO) jako domyślne"><i data-lucide="bookmark"></i> Zapisz domyślne</button>' +
-            '<button class="btn btn-sm btn-secondary" onclick="resetPriceList()" title="Przywróć domyślne wartości cennika rur (pyta o potwierdzenie)"><i data-lucide="rotate-ccw"></i> Przywróć domyślne (Rury)</button>' +
-            '<button class="btn btn-sm btn-secondary" onclick="resetStudniePriceList()" title="Przywróć domyślne wartości cennika studni (pyta o potwierdzenie)"><i data-lucide="rotate-ccw"></i> Przywróć domyślne (Studnie)</button>' +
-            '<button class="btn btn-sm btn-secondary" data-pv-reset="preco" onclick="window.loadPrecoDefaults()" title="Przywróć domyślne wartości cennika PRECO (pyta o potwierdzenie)"><i data-lucide="rotate-ccw"></i> Przywróć domyślne (PRECO)</button>' +
+            '<button class="btn btn-sm btn-secondary" id="btn-save-defaults" data-csp="saveAllDefaults" data-csp-scope="parent" data-csp-args="[]" title="Zapisz bieżący stan cenników (rury, studnie, PRECO) jako domyślne"><i data-lucide="bookmark"></i> Zapisz domyślne</button>' +
+            '<button class="btn btn-sm btn-secondary" data-csp="resetPriceList" data-csp-args="[]" title="Przywróć domyślne wartości cennika rur (pyta o potwierdzenie)"><i data-lucide="rotate-ccw"></i> Przywróć domyślne (Rury)</button>' +
+            '<button class="btn btn-sm btn-secondary" data-csp="resetStudniePriceList" data-csp-args="[]" title="Przywróć domyślne wartości cennika studni (pyta o potwierdzenie)"><i data-lucide="rotate-ccw"></i> Przywróć domyślne (Studnie)</button>' +
+            '<button class="btn btn-sm btn-secondary" data-pv-reset="preco" data-csp="loadPrecoDefaults" data-csp-args="[]" title="Przywróć domyślne wartości cennika PRECO (pyta o potwierdzenie)"><i data-lucide="rotate-ccw"></i> Przywróć domyślne (PRECO)</button>' +
             '</div>' +
             '<p class="text-muted">Zapisz domyślne obejmuje wszystkie cenniki (rury, studnie, PRECO); przywrócenie dotyczy wybranego cennika.</p>'
         );
@@ -650,7 +650,7 @@
                 '<div class="modal"><div class="modal-header"><h3 id="pv-note-title">' +
                 esc(title) +
                 '</h3>' +
-                '<button class="btn-icon" aria-label="Zamknij" onclick="window.closeModal(\'pv-note-modal\')"><i data-lucide="x"></i></button></div>' +
+                '<button class="btn-icon" aria-label="Zamknij" data-csp="closeModal" data-csp-args="[&quot;pv-note-modal&quot;]"><i data-lucide="x"></i></button></div>' +
                 '<div class="modal-body"><div class="form-group"><label for="pv-note-input">Notatki ' +
                 (required ? '(min. 10 znaków)' : '(opcjonalna)') +
                 '</label>' +
@@ -710,7 +710,7 @@
                 ' ← ' +
                 esc(diff.previousVersion || '∅') +
                 '</h3>' +
-                '<button class="btn-icon" aria-label="Zamknij" onclick="window.closeModal(\'pv-diff-modal\')"><i data-lucide="x"></i></button></div>' +
+                '<button class="btn-icon" aria-label="Zamknij" data-csp="closeModal" data-csp-args="[&quot;pv-diff-modal&quot;]"><i data-lucide="x"></i></button></div>' +
                 '<div class="modal-body"><div class="table-wrap"><table><thead><tr>' +
                 '<th scope="col">Sekcja</th><th scope="col">Dodane</th><th scope="col">Usunięte</th><th scope="col">Zmienione</th>' +
                 '</tr></thead><tbody>' +

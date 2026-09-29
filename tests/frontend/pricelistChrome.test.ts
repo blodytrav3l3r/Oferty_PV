@@ -138,22 +138,22 @@ describe('frontend: panel Zarządzanie cennikiem (3 przyciski + 3 sekcje)', () =
     });
     it('panel: domyślne z resetem PRECO (chowany spod rur)', () => {
         expect(panel).toContain('data-pv-reset="preco"');
-        expect(panel).toContain('window.loadPrecoDefaults()');
+        expect(panel).toContain('data-csp="loadPrecoDefaults"');
         expect(panel).toContain('> Przywróć domyślne (PRECO)');
         expect(panel).toContain("typeof window.loadPrecoDefaults !== 'function'");
     });
     it('panel: transfer woła istniejące eksporty/importy; domyślne globalne raz', () => {
-        expect(panel).toContain('onclick="exportRuryToExcel()"');
-        expect(panel).toContain('onclick="exportStudnieToExcel()"');
+        expect(panel).toContain('data-csp="exportRuryToExcel"');
+        expect(panel).toContain('data-csp="exportStudnieToExcel"');
         expect(panel).not.toContain('pv-row-label">PRECO<');
         expect(panel).not.toContain('onclick="exportPrecoToExcel()"');
         expect(panel).toContain('id="pv-import-excel"');
         expect(panel).toContain('onchange="');
         expect(panel).toContain('importRuryFromExcel(event)');
         expect(panel).toContain('importStudnieFromExcel(event)');
-        expect(panel).toContain('onclick="window.parent.saveAllDefaults()"');
-        expect(panel).toContain('resetPriceList()');
-        expect(panel).toContain('resetStudniePriceList()');
+        expect(panel).toContain('data-csp="saveAllDefaults" data-csp-scope="parent"');
+        expect(panel).toContain('data-csp="resetPriceList"');
+        expect(panel).toContain('data-csp="resetStudniePriceList"');
         expect(panel).toContain('Przywróć domyślne (Rury)');
         expect(panel).toContain('Przywróć domyślne (Studnie)');
         const saveDefaultsCount = (panel.match(/id="btn-save-defaults"/g) || []).length;

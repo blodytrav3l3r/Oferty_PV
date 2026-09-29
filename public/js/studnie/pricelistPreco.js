@@ -324,7 +324,7 @@ async function savePrecoFromUI() {
         showToast('Brak zmian do zapisania', 'info');
         return;
     }
-    const btns = document.querySelectorAll('[onclick*="savePrecoFromUI"]');
+    const btns = document.querySelectorAll('[data-action="savePrecoFromUI"]');
     btns.forEach((b) => b.setAttribute('disabled', 'true'));
     try {
         const data = collectPrecoFromUI();
@@ -341,7 +341,7 @@ async function savePrecoFromUI() {
 }
 
 async function loadPrecoDefaults() {
-    const btns = document.querySelectorAll('[onclick*="loadPrecoDefaults"]');
+    const btns = document.querySelectorAll('[data-csp*="loadPrecoDefaults"]');
     btns.forEach((b) => b.setAttribute('disabled', 'true'));
     if (
         !(await appConfirm('Przywrócić cennik PRECO do wartości fabrycznych?', {

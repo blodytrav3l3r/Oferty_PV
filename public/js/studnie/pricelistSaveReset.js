@@ -1,6 +1,6 @@
 /* ===== RESET / ZAPIS DOMYŚLNYCH ===== */
 async function resetStudniePriceList() {
-    const btns = document.querySelectorAll('[onclick*="resetStudniePriceList"]');
+    const btns = document.querySelectorAll('[data-csp*="resetStudniePriceList"]');
     btns.forEach((b) => b.setAttribute('disabled', 'true'));
     if (
         !(await appConfirm('Przywrócić cennik studni do zapisanego cennika domyślnego?', {
@@ -42,7 +42,7 @@ async function saveStudniePriceList() {
         showToast('Brak zmian do zapisania', 'info');
         return;
     }
-    const btns = document.querySelectorAll('[onclick*="saveStudniePriceList"]');
+    const btns = document.querySelectorAll('[data-csp*="saveStudniePriceList"]');
     btns.forEach((b) => b.setAttribute('disabled', 'true'));
     try {
         const ok = await saveStudnieProducts(studnieProducts);

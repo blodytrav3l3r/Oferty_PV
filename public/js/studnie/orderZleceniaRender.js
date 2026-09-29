@@ -170,12 +170,12 @@ function renderZleceniaList() {
                     ? savedProdOrder.productionOrderNumber
                     : '';
 
-            html += `<div class="zlecenia-el-item ${isActive ? 'active' : ''} ${isSaved ? 'saved' : ''} ${isAccepted ? 'accepted' : ''}" onclick="selectZleceniaElement(${i})" style="margin-bottom:0.3rem;">
+            html += `<div class="zlecenia-el-item ${isActive ? 'active' : ''} ${isSaved ? 'saved' : ''} ${isAccepted ? 'accepted' : ''}" data-csp="selectZleceniaElement" data-csp-args="${escapeHtmlAttr(JSON.stringify([i]))}" style="margin-bottom:0.3rem;">
                 <div class="flex-between">
                     <div style="font-size: var(--fs-base); font-weight: var(--fw-bold); color:var(--text-primary);">${escapeHtml(el.product.name)}</div>
                     <div style="display:flex; align-items:center; gap:0.3rem;">
                         ${prodOrderNum ? `<div style="font-size: var(--fs-2xs); font-weight: var(--fw-extrabold); color:var(--accent-hover); background:rgba(var(--accent-rgb), 0.2); padding:0.1rem 0.4rem; border-radius: var(--radius-2xs); border:1px solid rgba(var(--accent-rgb), 0.3);">${escapeHtml(prodOrderNum)}</div>` : ''}
-                        ${isSaved && !isAccepted ? `<button class="btn-icon-danger btn-icon-xs" onclick="event.stopPropagation(); deleteProductionOrder('${escapeJsStr(savedOrder.id)}')" title="Usuń zlecenie" aria-label="Usuń zlecenie"><i data-lucide="trash-2" class="icon-xs" aria-hidden="true"></i></button>` : ''}
+                        ${isSaved && !isAccepted ? `<button class="btn-icon-danger btn-icon-xs" data-csp="deleteProductionOrder" data-csp-args="${escapeHtmlAttr(JSON.stringify([savedOrder.id]))}" data-csp-stop="1" title="Usuń zlecenie" aria-label="Usuń zlecenie"><i data-lucide="trash-2" class="icon-xs" aria-hidden="true"></i></button>` : ''}
                     </div>
                 </div>
                 ${isAccepted ? '<div style="font-size: var(--fs-3xs); color:var(--success-hover); margin-top:0.2rem; font-weight: var(--fw-bold);">Zaakceptowane — studnia zablokowana</div>' : isSaved ? '<div style="font-size: var(--fs-3xs); color:var(--warn-hover); margin-top:0.2rem; font-weight: var(--fw-bold);">Wersja robocza</div>' : ''}
@@ -262,9 +262,9 @@ function renderZleceniaWellConfig() {
           <div class="flex-between">
             <div class="flex-gap-4">
                 <div class="zl-idx-box">
-                  <button onclick="event.stopPropagation(); moveZleceniaComponent(${index}, -1)" title="W górę" aria-label="W górę" class="cfg-move-btn cfg-move-btn--plain" style="display:${isLocked || index === 0 ? 'none' : 'block'};"><i data-lucide="chevron-up" class="icon-xs" aria-hidden="true"></i></button>
+                  <button data-csp="moveZleceniaComponent" data-csp-args="${escapeHtmlAttr(JSON.stringify([index, -1]))}" data-csp-stop="1" title="W górę" aria-label="W górę" class="cfg-move-btn cfg-move-btn--plain" style="display:${isLocked || index === 0 ? 'none' : 'block'};"><i data-lucide="chevron-up" class="icon-xs" aria-hidden="true"></i></button>
                   <span class="zl-idx-num">${index + 1}</span>
-                  <button onclick="event.stopPropagation(); moveZleceniaComponent(${index}, 1)" title="W dół" aria-label="W dół" class="cfg-move-btn cfg-move-btn--plain" style="display:${isLocked || index === well.config.length - 1 ? 'none' : 'block'};"><i data-lucide="chevron-down" class="icon-xs" aria-hidden="true"></i></button>
+                  <button data-csp="moveZleceniaComponent" data-csp-args="${escapeHtmlAttr(JSON.stringify([index, 1]))}" data-csp-stop="1" title="W dół" aria-label="W dół" class="cfg-move-btn cfg-move-btn--plain" style="display:${isLocked || index === well.config.length - 1 ? 'none' : 'block'};"><i data-lucide="chevron-down" class="icon-xs" aria-hidden="true"></i></button>
                 </div>
                 <div style="display:flex; flex-direction:column;">
                   <div class="zl-item-name">${escapeHtml(p.name)}${item.quantity > 1 ? ` (x${item.quantity})` : ''}</div>

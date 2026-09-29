@@ -42,7 +42,7 @@ function showPipeLengthModal(productId, editIndex = null) {
     <div class="modal modal--pipe-length">
       <div class="modal-header">
         <h3 id="pipe-length-title" class="fs-4xl-bold-primary"><i data-lucide="ruler" aria-hidden="true"></i> ${editIndex !== null ? 'Zmień' : 'Dostosuj'} długość rury</h3>
-        <button class="btn-icon" aria-label="Zamknij" onclick="closeModal()"><i data-lucide="x" aria-hidden="true"></i></button>
+        <button class="btn-icon" aria-label="Zamknij" data-csp="closeModal" data-csp-args="[]"><i data-lucide="x" aria-hidden="true"></i></button>
       </div>
       <div class="pipe-length-info">
         Wybrany produkt:<br><strong>${escapeHtml(product.name)}</strong>
@@ -50,9 +50,9 @@ function showPipeLengthModal(productId, editIndex = null) {
       <div class="form-group text-center pipe-length-form">
         <label class="form-label pipe-length-label" for="pipe-custom-length">Wprowadź długość rury (m)</label>
         <div class="pipe-length-stepper">
-          <button class="btn btn-secondary btn-round-44" onclick="document.getElementById('pipe-custom-length').stepDown()" aria-label="Zmniejsz">-</button>
+          <button class="btn btn-secondary btn-round-44" data-csp="$dom" data-csp-args="[&quot;stepDown&quot;, &quot;#pipe-custom-length&quot;]" aria-label="Zmniejsz">-</button>
           <input class="form-input pipe-length-input" id="pipe-custom-length" type="number" step="0.1" min="1" max="${maxL}" value="${currentVal}">
-          <button class="btn btn-secondary btn-round-44" onclick="document.getElementById('pipe-custom-length').stepUp()" aria-label="Zwiększ">+</button>
+          <button class="btn btn-secondary btn-round-44" data-csp="$dom" data-csp-args="[&quot;stepUp&quot;, &quot;#pipe-custom-length&quot;]" aria-label="Zwiększ">+</button>
         </div>
         <div class="pipe-length-hints">
           <span class="bg-hover-025">Min: <strong>1.0m</strong></span>
@@ -60,8 +60,8 @@ function showPipeLengthModal(productId, editIndex = null) {
         </div>
       </div>
       <div class="modal-footer pipe-length-footer">
-        <button class="btn btn-secondary p-075-15" onclick="closeModal()">Anuluj</button>
-        <button class="btn btn-primary p-075-15" onclick="confirmPipeLength('${escapeJsStr(productId)}', ${editIndex})">Zatwierdź <i data-lucide="arrow-right" aria-hidden="true"></i></button>
+        <button class="btn btn-secondary p-075-15" data-csp="closeModal" data-csp-args="[]">Anuluj</button>
+        <button class="btn btn-primary p-075-15" data-csp="confirmPipeLength" data-csp-args="${escapeHtmlAttr(JSON.stringify([productId, editIndex]))}">Zatwierdź <i data-lucide="arrow-right" aria-hidden="true"></i></button>
       </div>
     </div>`
     });

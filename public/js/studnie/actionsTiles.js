@@ -125,7 +125,7 @@ function renderTiles() {
                 displayPrice += parseFloat(p.doplataZelbet);
             }
 
-            html += `<div class="tile ${activeClass}${lockedClass}" data-type="${p.componentType}" style="${lockedStyle}" onclick="addWellComponent('${escapeJsStr(p.id)}')" draggable="${!isLocked}" ondragstart="${isLocked ? 'return false;' : `dragWellComponent(event, '${escapeJsStr(p.id)}')`}" ondragend="dragEndWellComponent(event)">
+            html += `<div class="tile ${activeClass}${lockedClass}" data-type="${p.componentType}" style="${lockedStyle}" data-csp="addWellComponent" data-csp-args="${escapeHtmlAttr(JSON.stringify([p.id]))}" draggable="${!isLocked}" ondragstart="${isLocked ? 'return false;' : `dragWellComponent(event, '${escapeJsStr(p.id)}')`}" ondragend="dragEndWellComponent(event)">
         <div class="tile-name">${escapeHtml(p.name)}</div>
         <div class="tile-meta">
           <span>${p.weight ? fmtInt(p.weight) + ' kg' : ''}</span>
@@ -187,7 +187,7 @@ function renderTiles() {
                     const lockedStyle = isLocked ? 'pointer-events:none;' : '';
                     const lockedClass = isLocked ? ' is-locked' : '';
 
-                    html += `<div class="tile${lockedClass}" data-type="${p.componentType}" style="${lockedStyle}" onclick="addWellComponent('${escapeJsStr(p.id)}')" draggable="${!isLocked}" ondragstart="${isLocked ? 'return false;' : `dragWellComponent(event, '${escapeJsStr(p.id)}')`}" ondragend="dragEndWellComponent(event)">
+                    html += `<div class="tile${lockedClass}" data-type="${p.componentType}" style="${lockedStyle}" data-csp="addWellComponent" data-csp-args="${escapeHtmlAttr(JSON.stringify([p.id]))}" draggable="${!isLocked}" ondragstart="${isLocked ? 'return false;' : `dragWellComponent(event, '${escapeJsStr(p.id)}')`}" ondragend="dragEndWellComponent(event)">
                         <div class="tile-name">${escapeHtml(p.name)}</div>
                         <div class="tile-meta">
                           <span>${p.weight ? fmtInt(p.weight) + ' kg' : ''}</span>
@@ -292,7 +292,7 @@ function renderTiles() {
                             displayPrice += parseFloat(p.doplataDrabNierdzewna);
                         }
 
-                        html += `<div class="tile${lockedClass}" data-type="${p.componentType}" style="${lockedStyle}" onclick="addWellComponent('${escapeJsStr(p.id)}')" draggable="${!isLocked}" ondragstart="${isLocked ? 'return false;' : `dragWellComponent(event, '${escapeJsStr(p.id)}')`}" ondragend="dragEndWellComponent(event)">
+                        html += `<div class="tile${lockedClass}" data-type="${p.componentType}" style="${lockedStyle}" data-csp="addWellComponent" data-csp-args="${escapeHtmlAttr(JSON.stringify([p.id]))}" draggable="${!isLocked}" ondragstart="${isLocked ? 'return false;' : `dragWellComponent(event, '${escapeJsStr(p.id)}')`}" ondragend="dragEndWellComponent(event)">
                             <div class="tile-name">${escapeHtml(p.name)}</div>
                             <div class="tile-meta">
                               <span>${p.weight ? fmtInt(p.weight) + ' kg' : ''}</span>

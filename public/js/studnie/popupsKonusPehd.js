@@ -26,7 +26,7 @@ window.showKonusPehdResolverModal = function (wellIndex, callback) {
             <h3 id="pehd-konus-title" style="color:var(--danger-hover);display:flex;align-items:center;gap:0.6rem;margin:0;">
                 <i data-lucide="alert-circle" class="icon-lg" aria-hidden="true"></i> Niezgodność technologiczna: Konus + PEHD
             </h3>
-            <button type="button" onclick="window.konusResolverCancel()" class="btn-icon btn-icon-danger btn-icon-sm" aria-label="Zamknij"><i data-lucide="x" class="icon-xs" aria-hidden="true"></i></button>
+            <button type="button" data-csp="konusResolverCancel" data-csp-args="[]" class="btn-icon btn-icon-danger btn-icon-sm" aria-label="Zamknij"><i data-lucide="x" class="icon-xs" aria-hidden="true"></i></button>
         </div>
         <p style="color:var(--text-secondary);font-size:var(--fs-md);line-height:1.6;margin:0 0 1.2rem;">
             <b>Konus</b> nie może być zakończeniem studni, jeśli zastosowano w nim wkładkę <b>PEHD</b>.<br>
@@ -34,19 +34,19 @@ window.showKonusPehdResolverModal = function (wellIndex, callback) {
         </p>
 
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
-            <button type="button" onclick="window.resolveKonusPehd(${wellIndex}, 'plyta_din')" class="pehd-card">
+            <button type="button" data-csp="resolveKonusPehd" data-csp-args="${escapeHtmlAttr(JSON.stringify([wellIndex, 'plyta_din']))}" class="pehd-card">
                 <span class="pehd-card-title">Płyta DIN</span>
                 <span class="pehd-card-desc">Standardowa płyta nastudzienna.</span>
             </button>
 
-            <button type="button" onclick="window.resolveKonusPehd(${wellIndex}, 'pierscien_odciazajacy')" class="pehd-card">
+            <button type="button" data-csp="resolveKonusPehd" data-csp-args="${escapeHtmlAttr(JSON.stringify([wellIndex, 'pierscien_odciazajacy']))}" class="pehd-card">
                 <span class="pehd-card-title">Płyta + Pierścień</span>
                 <span class="pehd-card-desc">Płyta zamykająca i pierścień odciążający.</span>
             </button>
         </div>
 
         <div class="modal-footer">
-            <button type="button" onclick="window.konusResolverCancel()" class="btn btn-secondary">Anuluj</button>
+            <button type="button" data-csp="konusResolverCancel" data-csp-args="[]" class="btn btn-secondary">Anuluj</button>
         </div>
     </div>
     `;

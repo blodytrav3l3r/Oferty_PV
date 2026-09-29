@@ -497,7 +497,7 @@ function renderOfferDiscountsPopupContent() {
                         <input type="number" min="0" step="1" value="${pehdDiscountValue}"
                             id="offer-pehd-discount"
                             class="text-center offer-discount-input"
-                            onclick="this.select()"
+                            data-csp="$select"
                             oninput="handleOfferPehdDiscountChange(this.value)"
                             onkeydown="if(event.key==='Enter') this.blur();"
                             style="min-width:0; flex:1; font-size: var(--fs-xl); font-weight: var(--fw-black); color: var(--blue-alt); background: transparent; border: none; outline: none; text-align: center;">
@@ -536,7 +536,7 @@ function renderOfferDiscountsPopupContent() {
                         <input type="number" min="0" step="0.01" value="${malWC}"
                             id="offer-mal-wew-cena"
                             class="text-center offer-discount-input"
-                            onclick="this.select()"
+                            data-csp="$select"
                             oninput="handleOfferPaintingCostChange('malowanieWewCena', this.value)"
                             onkeydown="if(event.key==='Enter') this.blur();"
                             style="min-width:0; flex:1; font-size: var(--fs-xl); font-weight: var(--fw-black); color: var(--purple-alt); background: transparent; border: none; outline: none; text-align: center;">
@@ -553,7 +553,7 @@ function renderOfferDiscountsPopupContent() {
                         <input type="number" min="0" step="0.01" value="${malZC}"
                             id="offer-mal-zew-cena"
                             class="text-center offer-discount-input"
-                            onclick="this.select()"
+                            data-csp="$select"
                             oninput="handleOfferPaintingCostChange('malowanieZewCena', this.value)"
                             onkeydown="if(event.key==='Enter') this.blur();"
                             style="min-width:0; flex:1; font-size: var(--fs-xl); font-weight: var(--fw-black); color: var(--purple-alt); background: transparent; border: none; outline: none; text-align: center;">
