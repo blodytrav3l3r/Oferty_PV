@@ -1,4 +1,5 @@
 import express from 'express';
+import crypto from 'crypto';
 import prisma from '../prismaClient';
 import { requireAuth, AuthenticatedRequest } from '../middleware/auth';
 
@@ -112,8 +113,7 @@ router.put(
                 for (const c of arr) {
                     let docId = c.id;
                     if (!docId) {
-                        docId =
-                            Date.now().toString() + '_' + Math.random().toString(36).substr(2, 5);
+                        docId = crypto.randomUUID();
                     }
                     // P0: właściciel z DB dla istniejących (w tym null = bezpański
                     // zostaje bezpański); edytujący — tylko dla nowych wierszy.

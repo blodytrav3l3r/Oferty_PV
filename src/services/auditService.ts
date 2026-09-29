@@ -6,6 +6,7 @@
  */
 
 import prisma from '../prismaClient';
+import crypto from 'crypto';
 import { logger } from '../utils/logger';
 import { recordAuditFailure } from '../utils/metrics';
 
@@ -60,7 +61,7 @@ export interface AuditDb {
  * Generuje unikalny identyfikator logu audytu.
  */
 function generateAuditId(): string {
-    return Date.now().toString() + '_' + Math.random().toString(36).substr(2, 5);
+    return crypto.randomUUID();
 }
 
 /**

@@ -948,7 +948,7 @@ router.put(
             for (const o of incoming) {
                 let docId = typeof o.id === 'string' ? o.id : '';
                 if (!docId) {
-                    docId = Date.now().toString() + '_' + Math.random().toString(36).substr(2, 5);
+                    docId = crypto.randomUUID();
                 }
 
                 // Guard PUT: pełna blokada studni na zamówieniu (tylko ordered)
