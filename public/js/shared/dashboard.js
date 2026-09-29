@@ -548,15 +548,21 @@ function initAiMlToggle() {
         const msg = next
             ? 'Włączyć moduł AI/ML (predykcje, treningi, operacje na modelach)?'
             : 'Wyłączyć moduł AI/ML? Nowe predykcje, treningi i operacje na modelach będą blokowane (503). Rozpoczęte operacje nie zostaną przerwane.';
-        const confirmed = window.aiUiConfirm
-            ? await window.aiUiConfirm(msg, {
+        const confirmed = window.appConfirm
+            ? await window.appConfirm(msg, {
                   title: 'Moduł AI/ML',
                   okText: next ? 'Włącz' : 'Wyłącz',
                   type: next ? 'info' : 'warning'
               })
-            : window.confirm
-              ? window.confirm(msg)
-              : true;
+            : window.aiUiConfirm
+              ? await window.aiUiConfirm(msg, {
+                    title: 'Moduł AI/ML',
+                    okText: next ? 'Włącz' : 'Wyłącz',
+                    type: next ? 'info' : 'warning'
+                })
+              : window.confirm
+                ? window.confirm(msg)
+                : true;
         if (!confirmed) return;
         btn.disabled = true;
         try {

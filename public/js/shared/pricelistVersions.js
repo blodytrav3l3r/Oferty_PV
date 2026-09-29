@@ -57,6 +57,13 @@
         if (typeof window.showToast === 'function') window.showToast(msg, type || 'info');
     }
 
+    /** appConfirm z natywnym fallbackiem (jedno miejsce, styl/dark-light z ui.js). */
+    function pvConfirm(msg, opts) {
+        if (typeof window.appConfirm === 'function') return window.appConfirm(msg, opts);
+        if (typeof window.confirm === 'function') return Promise.resolve(window.confirm(msg));
+        return Promise.resolve(true);
+    }
+
     function icons(root) {
         if (window.lucide) window.lucide.createIcons(root ? { root: root } : undefined);
     }
@@ -976,19 +983,13 @@
                 };
                 var cloneMsg =
                     'Utworzyć nową wersję roboczą jako kopię tej wersji? Aktywna wersja nie zmieni się.';
-                if (typeof window.appConfirm === 'function') {
-                    window
-                        .appConfirm(cloneMsg, {
-                            title: 'Przywróć jako roboczą',
-                            okText: 'Klonuj',
-                            type: 'warning'
-                        })
-                        .then(function (ok) {
-                            if (ok) doClone();
-                        });
-                } else if (window.confirm(cloneMsg)) {
-                    doClone();
-                }
+                pvConfirm(cloneMsg, {
+                    title: 'Przywróć jako roboczą',
+                    okText: 'Klonuj',
+                    type: 'warning'
+                }).then(function (ok) {
+                    if (ok) doClone();
+                });
             } else if (act === 'delete' && id) {
                 var versionName = btn.getAttribute('data-pv-version') || id;
                 var doDelete = function () {
@@ -1005,19 +1006,13 @@
                     'Usunąć wersję ' +
                     versionName +
                     ' wraz z jej pozycjami? Usunięcie jest trwałe.';
-                if (typeof window.appConfirm === 'function') {
-                    window
-                        .appConfirm(deleteMsg, {
-                            title: 'Usuń wersję',
-                            okText: 'Usuń',
-                            type: 'danger'
-                        })
-                        .then(function (ok) {
-                            if (ok) doDelete();
-                        });
-                } else if (window.confirm(deleteMsg)) {
-                    doDelete();
-                }
+                pvConfirm(deleteMsg, {
+                    title: 'Usuń wersję',
+                    okText: 'Usuń',
+                    type: 'danger'
+                }).then(function (ok) {
+                    if (ok) doDelete();
+                });
             }
         });
         // Delegacja submit (formularz prze-renderowany przy zmianie taba).

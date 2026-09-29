@@ -295,7 +295,16 @@ export async function openShareModal(documentType, documentId) {
     });
 
     overlay.querySelector('#share-revoke-all')?.addEventListener('click', async () => {
-        if (!confirm('Cofnąć wszystkie udostępnienia tego dokumentu?')) return;
+        const msg = 'Cofnąć wszystkie udostępnienia tego dokumentu?';
+        const ok =
+            typeof window.appConfirm === 'function'
+                ? await window.appConfirm(msg, {
+                      title: 'Cofnij udostępnienia',
+                      type: 'danger',
+                      okText: 'Cofnij'
+                  })
+                : window.confirm(msg);
+        if (!ok) return;
         try {
             const ids = [...sharedIds];
             await shareService.revokeByUsers(documentType, documentId, ids);
