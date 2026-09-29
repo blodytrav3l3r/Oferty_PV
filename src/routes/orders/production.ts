@@ -29,6 +29,10 @@ import {
     productionOrdersBatchSchema,
     productionOrderCreateSchema
 } from '../../validators/offerSchemas';
+import type {
+    ProductionOrderItemInput,
+    ProductionOrdersBatchInput
+} from '../../validators/offerSchemas';
 
 const router = express.Router();
 
@@ -251,13 +255,15 @@ router.put(
         // API jest źródłem prawdy dla version, frontend merguje do RAM.
         const saved: Array<{ id: string; version: number }> = [];
         try {
-            const incoming = req.body.data || [];
+            const incoming: ProductionOrdersBatchInput['data'] = req.body.data || [];
             // P0.3: docId przypisane Z GÓRY (1:1 z dotychczasową semantyką —
             // brak id = crypto.randomUUID), żeby pre-fetch findMany objął cały batch.
-            const withIds: Array<{ o: any; docId: string }> = (incoming as any[]).map((o: any) => ({
-                o,
-                docId: (o.id as string | undefined) || crypto.randomUUID()
-            }));
+            const withIds: Array<{ o: ProductionOrderItemInput; docId: string }> = incoming.map(
+                (o) => ({
+                    o,
+                    docId: o.id || crypto.randomUUID()
+                })
+            );
             const batchIds: string[] = [...new Set(withIds.map((x) => x.docId))];
 
             await prisma.$transaction(async (tx) => {
@@ -301,6 +307,10 @@ router.put(
                     } = o;
                     const clientVersion =
                         typeof clientVersionRaw === 'number' ? clientVersionRaw : null;
+                    // Passthrough Zod = pola spoza schematu są unknown; zawężenie
+                    // typem (erased, bez zmiany runtime) pod kolumny string.
+                    const createdAtStr = createdAt as string | undefined;
+                    const updatedAtStr = updatedAt as string | undefined;
                     // P0-A: finalny numer produkcyjny do kolumny pod UNIQUE.
                     // Update z undefined nie nadpisuje (Prisma pomija undefined).
                     const prodNum =
@@ -380,8 +390,8 @@ router.put(
                                 wellId: wellId || '',
                                 elementIndex: elementIndex || 0,
                                 elementKey: elementKey || '',
-                                createdAt: createdAt || new Date().toISOString(),
-                                updatedAt: updatedAt || new Date().toISOString(),
+                                createdAt: createdAtStr || new Date().toISOString(),
+                                updatedAt: updatedAtStr || new Date().toISOString(),
                                 data: dataStr,
                                 productionNumber: prodNum ?? null,
                                 version: 1
@@ -406,8 +416,8 @@ router.put(
                                 wellId: wellId || '',
                                 elementIndex: elementIndex || 0,
                                 elementKey: elementKey || '',
-                                createdAt: createdAt || new Date().toISOString(),
-                                updatedAt: updatedAt || new Date().toISOString(),
+                                createdAt: createdAtStr || new Date().toISOString(),
+                                updatedAt: updatedAtStr || new Date().toISOString(),
                                 data: dataStr,
                                 productionNumber: prodNum,
                                 version: { increment: 1 }
@@ -439,8 +449,8 @@ router.put(
                                 wellId: wellId || '',
                                 elementIndex: elementIndex || 0,
                                 elementKey: elementKey || '',
-                                createdAt: createdAt || new Date().toISOString(),
-                                updatedAt: updatedAt || new Date().toISOString(),
+                                createdAt: createdAtStr || new Date().toISOString(),
+                                updatedAt: updatedAtStr || new Date().toISOString(),
                                 data: dataStr,
                                 productionNumber: prodNum,
                                 version: { increment: 1 }

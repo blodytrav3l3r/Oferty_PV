@@ -1202,7 +1202,7 @@ router.delete('/studnie/:id', requireAuth, writeOffersLimiter, async (req, res) 
                 await tx.offers_studnie_rel.delete({ where: { id } });
                 // P1-E: shares w tej samej tx (koniec okna crash→sierota).
                 try {
-                    await (tx as any).document_shares?.deleteMany?.({
+                    await tx.document_shares.deleteMany({
                         where: { documentType: 'offer_studnie', documentId: id }
                     });
                 } catch (e: unknown) {

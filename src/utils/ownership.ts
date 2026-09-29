@@ -138,7 +138,7 @@ export async function hasShare(
 ): Promise<boolean> {
     if (!userId || !documentType || !documentId) return false;
     try {
-        const row = await (prisma as any).document_shares?.findFirst({
+        const row = await prisma.document_shares.findFirst({
             where: { sharedWithUserId: userId, documentType, documentId },
             select: { id: true }
         });
@@ -152,7 +152,7 @@ export async function hasShare(
 export async function getSharedIdsForUser(userId: string, documentType: string): Promise<string[]> {
     if (!userId || !documentType) return [];
     try {
-        const rows = await (prisma as any).document_shares?.findMany({
+        const rows = await prisma.document_shares.findMany({
             where: { sharedWithUserId: userId, documentType },
             select: { documentId: true }
         });

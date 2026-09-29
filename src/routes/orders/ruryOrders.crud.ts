@@ -433,7 +433,7 @@ router.delete('/:id', requireAuth, writeOrdersLimiter, async (req, res) => {
             }
             // P1-E: shares w tej samej tx (koniec okna crash→sierota).
             try {
-                await (tx as any).document_shares?.deleteMany?.({
+                await tx.document_shares.deleteMany({
                     where: { documentType: 'order_rury', documentId: docId }
                 });
             } catch (e: unknown) {
