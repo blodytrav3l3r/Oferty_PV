@@ -12,7 +12,7 @@ const PUB = path.resolve(__dirname, '..', '..', 'public');
 
 const CEIL = {
     inlineScript: 17,
-    onclick: 40,
+    onclick: 21,
     styleAttr: 25
 };
 

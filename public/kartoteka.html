@@ -170,7 +170,6 @@
                                     type="button"
                                     class="btn btn-sm ka-type-filter-btn active ka-pill"
                                     data-type-filter="all"
-                                    onclick="filterByType('all')"
                                 >
                                     Wszystkie
                                 </button>
@@ -178,7 +177,6 @@
                                     type="button"
                                     class="btn btn-sm btn-secondary ka-type-filter-btn ka-pill"
                                     data-type-filter="offer"
-                                    onclick="filterByType('offer')"
                                 >
                                     <i data-lucide="cylinder" class="lucide-rotate-n90"></i> Rury
                                 </button>
@@ -186,7 +184,6 @@
                                     type="button"
                                     class="btn btn-sm btn-secondary ka-type-filter-btn ka-pill"
                                     data-type-filter="studnia_oferta"
-                                    onclick="filterByType('studnia_oferta')"
                                 >
                                     <i data-lucide="cylinder"></i> Studnie
                                 </button>
@@ -202,10 +199,6 @@
                                     type="button"
                                     class="btn btn-sm ka-filter-btn active ka-pill"
                                     data-filter="all"
-                                    onclick="
-                                        window.kartotekaUI &&
-                                            window.kartotekaUI.setFilterLocalOffers('all')
-                                    "
                                 >
                                     Wszystkie
                                 </button>
@@ -213,10 +206,6 @@
                                     type="button"
                                     class="btn btn-sm btn-secondary ka-filter-btn ka-pill"
                                     data-filter="with_order"
-                                    onclick="
-                                        window.kartotekaUI &&
-                                            window.kartotekaUI.setFilterLocalOffers('with_order')
-                                    "
                                 >
                                     Z zamówieniem
                                 </button>
@@ -224,10 +213,6 @@
                                     type="button"
                                     class="btn btn-sm btn-secondary ka-filter-btn ka-pill"
                                     data-filter="without_order"
-                                    onclick="
-                                        window.kartotekaUI &&
-                                            window.kartotekaUI.setFilterLocalOffers('without_order')
-                                    "
                                 >
                                     Bez zamówienia
                                 </button>
@@ -300,9 +285,6 @@
                                     type="button"
                                     id="ka-clear-filters"
                                     class="btn btn-secondary btn-sm ka-pill"
-                                    onclick="
-                                        window.kartotekaUI && window.kartotekaUI.clearAllFilters()
-                                    "
                                     title="Wyczyść wszystkie aktywne filtry"
                                 >
                                     Wyczyść filtry (0)
@@ -344,7 +326,6 @@
                                 type="button"
                                 class="btn btn-sm btn-secondary ka-pill ka-noshrink"
                                 id="btn-compact-mode"
-                                onclick="toggleCompactMode()"
                                 title="Przełącz tryb kompaktowy"
                             >
                                 <i data-lucide="panel-right-close"></i> Kompakt
@@ -352,7 +333,7 @@
                             <button
                                 type="button"
                                 class="btn btn-secondary btn-sm ka-pill ka-noshrink"
-                                onclick="window.kartotekaUI && window.kartotekaUI.loadLocalOffers()"
+                                data-ka="reload"
                                 title="Odśwież bazę ofert"
                             >
                                 <i data-lucide="refresh-cw"></i> Odśwież

@@ -80,6 +80,7 @@ let compactObserver = null;
 
 document.addEventListener('DOMContentLoaded', () => {
     applyCompactMode();
+    bindStaticActions();
     const grid = document.getElementById('ka-offers-list');
     if (grid) {
         compactObserver = new MutationObserver(() => applyCompactMode());
@@ -97,6 +98,29 @@ window.addEventListener('pagehide', () => {
         compactObserver = null;
     }
 });
+
+/* ===== Statyczne akcje CSP-B (data-ka zamiast onclick) ===== */
+function bindStaticActions() {
+    document.querySelectorAll('.ka-type-filter-btn').forEach((btn) => {
+        btn.addEventListener('click', () => filterByType(btn.dataset.typeFilter));
+    });
+    document.querySelectorAll('.ka-filter-btn[data-filter]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+            if (window.kartotekaUI) window.kartotekaUI.setFilterLocalOffers(btn.dataset.filter);
+        });
+    });
+    document.getElementById('ka-clear-filters')?.addEventListener('click', () => {
+        if (window.kartotekaUI) window.kartotekaUI.clearAllFilters();
+    });
+    document.getElementById('btn-compact-mode')?.addEventListener('click', () => {
+        window.toggleCompactMode();
+    });
+    document.querySelectorAll('[data-ka="reload"]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+            if (window.kartotekaUI) window.kartotekaUI.loadLocalOffers();
+        });
+    });
+}
 
 function initAdvancedFilterEvents(ui) {
     if (!ui) return;

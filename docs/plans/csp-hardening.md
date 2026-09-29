@@ -26,12 +26,12 @@ JS (`public/js`, ~245 plików):
 
 - `eval(`/`new Function`/`document.write`/`insertAdjacentHTML`: 11 trafień w 7 plikach (`kartotekaAudit`, `kartotekaSearch`, `calcInput`, `printModal`, `spa/zlecenia`, `excelPasteMismatch`, `offerHistory`) — do weryfikacji 1:1 przed CSP-C (kalkulacje przez `safeEval`, reszta do eliminacji).
 - `innerHTML`: 333 użycia (XSS przez `escapeHtml`, nie CSP — poza zakresem tego planu).
-- Dynamiczne `createElement('script')`: 1 (`xlsxLoader.js` — loader CDN, wymaga `script-src` dla CDN albo bundling lokalny przed CSP-E).
+- Dynamiczne `createElement('script')`: 1 (`xlsxLoader.js` — `vendor/xlsx.full.min.js`, same-origin; dozwolone pod `script-src 'self'` także w enforce — brak akcji, zweryfikowano 2026-09-29).
 
 ## Kolejne etapy
 
-- **CSP-B:** migracja `onclick` → `addEventListener` moduł po module (najpierw `zlecenia`/`kartoteka`, 10 each), inline `<script>` boot → ESM z nonce. Każdy moduł: test regresji.
-- **CSP-C:** nonce na wszystkich skryptach first-party; `xlsxLoader` lokalnie albo hash; `eval` → `safeEval`/whitelist.
+- **CSP-B:** migracja `onclick` → `addEventListener` moduł po module — DONE `zlecenia` (10, `data-zl` + delegacja w `spa/zlecenia.js`) i `kartoteka` (9, `bindStaticActions` w `kartotekaInit.js`) 2026-09-29, sufit 40→21; inline `<script>` boot → ESM z nonce. Każdy moduł: test regresji.
+- **CSP-C:** nonce na wszystkich skryptach first-party; `xlsxLoader` — brak akcji (same-origin vendor); `eval` — brak w prod (0), `safeEval` tylko kalkulacje (`shared/calcInput.js`), `insertAdjacentHTML` poza CSP (XSS przez `escapeHtml`, osobny tor).
 - **CSP-D:** testy browser/security: Report-Only violations = 0 na smoke + extended E2E.
 - **CSP-E:** dopiero po CSP-D: usunięcie `unsafe-inline` z enforce, 1 commit, rollback = revert.
 

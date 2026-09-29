@@ -76,6 +76,7 @@ const AppZlecenia = (() => {
 
         setupSearch();
         setupTableEvents();
+        setupStaticActions();
         setupSentinel();
         await populateUserFilter();
         applyTodayFilter();
@@ -1003,6 +1004,25 @@ const AppZlecenia = (() => {
         } else {
             window.location.href = 'studnie.html?' + mainParam + extraParams;
         }
+    }
+
+    /* ===== STATYCZNE AKCJE CSP-B (data-zl zamiast onclick) ===== */
+
+    function setupStaticActions() {
+        document.addEventListener('click', (event) => {
+            const el =
+                event.target && event.target.closest ? event.target.closest('[data-zl]') : null;
+            if (!el) return;
+            const action = el.getAttribute('data-zl');
+            if (action === 'loadOrders') loadOrders();
+            else if (action === 'clearAllFilters') clearAllFilters();
+            else if (action === 'setFilter') setFilter(el.getAttribute('data-zl-arg') || 'all');
+            else if (action === 'printBatchZlecenia') printBatchZlecenia();
+            else if (action === 'printBatchEtykiety') printBatchEtykiety();
+            else if (action === 'selectAllRows') selectAllRows();
+            else if (action === 'deleteSelectedOrders') deleteSelectedOrders();
+            else if (action === 'toggleSelectAll') toggleSelectAll(el);
+        });
     }
 
     /* ===== PUBLIC API ===== */

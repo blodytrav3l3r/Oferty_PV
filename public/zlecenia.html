@@ -154,7 +154,7 @@
                             <button
                                 type="button"
                                 class="btn btn-secondary btn-sm"
-                                onclick="AppZlecenia.loadOrders()"
+                                data-zl="loadOrders"
                                 title="Odśwież bazę zleceń"
                                 style="flex-shrink: 0"
                             >
@@ -165,7 +165,7 @@
                                 type="button"
                                 id="zlecenia-clear-filters"
                                 class="btn btn-secondary btn-sm"
-                                onclick="AppZlecenia.clearAllFilters()"
+                                data-zl="clearAllFilters"
                                 title="Wyczyść wszystkie aktywne filtry"
                                 style="flex-shrink: 0"
                             >
@@ -180,7 +180,8 @@
                                     type="button"
                                     class="zlecenia-filter-tab active"
                                     data-filter="all"
-                                    onclick="AppZlecenia.setFilter('all')"
+                                    data-zl="setFilter"
+                                    data-zl-arg="all"
                                 >
                                     Wszystkie
                                 </button>
@@ -188,7 +189,8 @@
                                     type="button"
                                     class="zlecenia-filter-tab"
                                     data-filter="draft"
-                                    onclick="AppZlecenia.setFilter('draft')"
+                                    data-zl="setFilter"
+                                    data-zl-arg="draft"
                                 >
                                     <i data-lucide="hourglass-2"></i> Oczekujące
                                 </button>
@@ -196,7 +198,8 @@
                                     type="button"
                                     class="zlecenia-filter-tab"
                                     data-filter="accepted"
-                                    onclick="AppZlecenia.setFilter('accepted')"
+                                    data-zl="setFilter"
+                                    data-zl-arg="accepted"
                                 >
                                     <i data-lucide="check-check"></i> Zatwierdzone
                                 </button>
@@ -312,14 +315,14 @@
                                 <button
                                     type="button"
                                     class="batch-btn batch-btn-print"
-                                    onclick="AppZlecenia.printBatchZlecenia()"
+                                    data-zl="printBatchZlecenia"
                                 >
                                     <i data-lucide="printer"></i> Drukuj zlecenia
                                 </button>
                                 <button
                                     type="button"
                                     class="batch-btn batch-btn-label"
-                                    onclick="AppZlecenia.printBatchEtykiety()"
+                                    data-zl="printBatchEtykiety"
                                 >
                                     <i data-lucide="tag"></i> Drukuj etykiety
                                 </button>
@@ -327,14 +330,14 @@
                                     type="button"
                                     class="batch-btn batch-btn-select-all"
                                     id="zlecenia-select-all-btn"
-                                    onclick="AppZlecenia.selectAllRows()"
+                                    data-zl="selectAllRows"
                                 >
                                     <i data-lucide="check-check"></i> Zaznacz wszystkie
                                 </button>
                                 <button
                                     type="button"
                                     class="batch-btn batch-btn-delete"
-                                    onclick="AppZlecenia.deleteSelectedOrders()"
+                                    data-zl="deleteSelectedOrders"
                                 >
                                     <i data-lucide="trash-2"></i> Usuń zaznaczone
                                 </button>
@@ -351,7 +354,7 @@
                                                 type="checkbox"
                                                 id="zlecenia-select-all"
                                                 class="zlecenia-master-cb"
-                                                onclick="AppZlecenia.toggleSelectAll(this)"
+                                                data-zl="toggleSelectAll"
                                                 title="Klik: nic -> widoczne -> wszystkie spełniające filtr -> nic"
                                                 aria-label="Zaznacz wszystkie"
                                                 aria-checked="false"
