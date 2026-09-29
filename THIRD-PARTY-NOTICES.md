@@ -17,7 +17,7 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 | MIT                     |            1049 |
 | ISC                     |             102 |
 | Apache-2.0              |              63 |
-| BSD-3-Clause            |              26 |
+| BSD-3-Clause            |              25 |
 | BSD-2-Clause            |              20 |
 | BlueOak-1.0.0           |              14 |
 | MIT OR CC0-1.0          |              14 |
@@ -402,7 +402,7 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - balanced-match@4.0.4
 - basic-ftp@5.3.1
 - binary-extensions@2.3.0
-- body-parser@1.20.6
+- body-parser@1.20.8
 - brace-expansion@1.1.18
 - brace-expansion@2.1.7
 - brace-expansion@5.0.9
@@ -410,7 +410,7 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - brace-expansion@5.0.9
 - brace-expansion@5.0.9
 - braces@3.0.3
-- browserslist@4.28.4
+- browserslist@4.29.2
 - bs-logger@0.2.6
 - buffer-crc32@0.2.13
 - buffer-from@1.1.2
@@ -624,7 +624,7 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - import-local@3.2.0
 - imurmurhash@0.1.4
 - indent-string@4.0.0
-- ip-address@10.5.0
+- ip-address@10.7.2
 - ipaddr.js@1.9.1
 - is-arrayish@0.2.1
 - is-binary-path@2.1.0
@@ -844,7 +844,7 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - netmask@2.1.1
 - node-fetch-native@1.6.7
 - node-int64@0.4.0
-- node-releases@2.0.48
+- node-releases@2.0.57
 - normalize-path@3.0.0
 - npm-run-path@4.0.1
 - nwsapi@2.2.28
@@ -1057,7 +1057,7 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - undici-types@8.9.0
 - unpipe@1.0.0
 - unrs-resolver@1.12.2
-- update-browserslist-db@1.2.3
+- update-browserslist-db@1.3.3
 - util-deprecate@1.0.2
 - utils-merge@1.0.1
 - v8-compile-cache-lib@3.0.1
@@ -1111,7 +1111,7 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - conventional-changelog-jshint@2.0.9
 - dezalgo@1.0.4
 - dotgitignore@2.1.0
-- electron-to-chromium@1.5.376
+- electron-to-chromium@1.5.440
 - flatted@3.4.2
 - foreground-child@3.3.1
 - fs.realpath@1.0.0
@@ -1231,7 +1231,7 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - bare-path@3.1.1
 - bare-stream@2.13.3
 - bare-url@2.5.2
-- baseline-browser-mapping@2.10.38
+- baseline-browser-mapping@2.11.26
 - bser@2.1.1
 - chromium-bidi@14.0.0
 - doctrine@3.0.0
@@ -1258,7 +1258,7 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - webdriver-bidi-protocol@0.4.1
 - xml-name-validator@5.0.0
 
-### BSD-3-Clause (26)
+### BSD-3-Clause (25)
 
 - @sinonjs/commons@3.0.1
 - @sinonjs/fake-timers@15.4.0
@@ -1273,14 +1273,13 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - devtools-protocol@0.0.1608973
 - diff@4.0.4
 - esquery@1.7.0
-- fast-uri@3.1.5
+- fast-uri@3.1.8
 - istanbul-lib-coverage@3.2.2
 - istanbul-lib-instrument@6.0.3
 - istanbul-lib-report@3.0.1
 - istanbul-lib-source-maps@5.0.6
 - istanbul-reports@3.2.0
 - makeerror@1.0.12
-- qs@6.15.2
 - qs@6.16.0
 - source-map@0.6.1
 - sprintf-js@1.0.3
@@ -1359,7 +1358,7 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 
 ### CC-BY-4.0 (1)
 
-- caniuse-lite@1.0.30001799
+- caniuse-lite@1.0.30001813
 
 ### BSD (1)
 
