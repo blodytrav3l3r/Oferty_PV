@@ -669,9 +669,9 @@ Oferty_PV/
 │   ├── images/                # logo-sok.svg, letterhead-*.png, b-mark.png, ce-mark.png
 │   ├── partials/              # Partiale HTML (header, rury/*, studnie/*) ładowane przez partialLoader
 │   └── templates/             # 5 szablonów: ofertaRury/Studnie, kartaBudowy, zlecenie, etykieta
-├── prisma/                    # Schema + migracje Prisma (38 modeli, 651 linii)
-│   ├── schema.prisma          # Definicja schematu (SQLite, 38 modeli)
-│   └── migrations/            # 3 migracje: 20260815000000_baseline + 20260815000001_uq_reward + 20260816000000_ai_training_run
+├── prisma/                    # Schema + migracje Prisma (48 modeli, 856 linii)
+│   ├── schema.prisma          # Definicja schematu (SQLite, 48 modeli)
+│   └── migrations/            # 17 migracji: 20260815000000_baseline … 20260929000000_fk_pricelist_version (pełna lista: prisma/migrations/)
 ├── data/                      # Baza SQLite + pliki seed
 │   ├── app_database.sqlite    # Główna baza (SQLite)
 │   ├── price_defaults.json    # Snapshot domyślnych cenników (transfer między instalacjami)

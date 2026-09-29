@@ -192,7 +192,7 @@ Aplikacja S.O.K. — System Ofert i Kalkulacji to pojedyncza aplikacja webowa (m
   `pricingFingerprint` (cena/waga — totalPrice jest cechą treningową ML) + `shouldSendAutoJs`;
   `public/js/studnie/offerSave.js` — przy zapisie istniejącej oferty wysyła tylko zmienione
   studnie (`_filterChangedWells` + `_wellSnapshot` + `_wellPricingStats`).
-- **Indeksy dedup telemetrii**: migracja `20260805100000_telemetry_well_dedup` + definicje
+- **Indeksy dedup telemetrii**: migracja `20260815000000_baseline` + definicje
   w `prisma/schema.prisma` (`idx_logs_well`, `idx_logs_source_well`). Auto-heal przy starcie
   serwera (`src/app.ts`): `CREATE INDEX IF NOT EXISTS` dla obu indeksów obok
   `idx_audit_created_at` — instalacje bez historii migracji (`db push`) nie tworzą nowych indeksów.
@@ -349,7 +349,7 @@ Główne pliki rdzeniowe w `public/js/studnie/` po podziale:
 - **doc_locks** — twarda blokada edycji 1 dokument = 1 użytkownik (TTL 180 s + heartbeat 60 s, `POST/GET /api/locks`, 423 przy cudzej świeżej blokadzie)
 
 - **Indeksy telemetrii**: `idx_logs_well` (wellId) i `idx_logs_source_well` (solverSource, wellId) na
-  `ai_telemetry_logs` — migracja `20260805100000_telemetry_well_dedup`, idempotentnie odtwarzane
+  `ai_telemetry_logs` — migracja `20260815000000_baseline`, idempotentnie odtwarzane
   przy starcie serwera (`CREATE INDEX IF NOT EXISTS` w `src/app.ts`).
 
 Szczegóły: [DATABASE.md](DATABASE.md)
@@ -475,10 +475,10 @@ Oferty_PV/
 │   ├── partials/                    # Partiale HTML (header, rury/*, studnie/*) — partialLoader
 │   └── templates/                   # 5 szablonów: ofertaRury/Studnie, kartaBudowy, zlecenie, etykieta
 │
-├── prisma/                          # Prisma (41 modeli, 14 migracji)
-│   ├── schema.prisma                # Definicja schematu (808 linii)
+├── prisma/                          # Prisma (48 modeli, 17 migracji)
+│   ├── schema.prisma                # Definicja schematu (856 linii)
 │   ├── seed.ts                      # Seed danych (ProductsRury/Studnie + Preco + AiModel)
-│   └── migrations/                  # 20260815000000_baseline + 20260815000001_uq_reward_well_action + 20260816000000_ai_training_run + 20260828000000_add_document_shares + 20260831000000_add_wellcount + 20260902000000_add_totalprice + 20260902000001_add_performance_indexes + 20260905000000_add_prod_well_index + 20260907000000_prod_number_unique + 20260907000001_prod_version + 20260907000002_doc_versions + 20260907000003_idempotency_keys + 20260907000004_fk_items_offer + 20260908000000_doc_locks
+│   └── migrations/                  # 17 migracji: 20260815000000_baseline … 20260929000000_fk_pricelist_version (pełna lista: prisma/migrations/)
 │
 ├── data/                            # Baza danych
 │   ├── app_database.sqlite          # Główna baza (SQLite)
