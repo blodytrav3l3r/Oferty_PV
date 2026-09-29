@@ -15,7 +15,7 @@
             <button
                 type="button"
                 class="btn btn-icon om-close"
-                onclick="handleOfferDiscountsCancel()"
+                data-csp="handleOfferDiscountsCancel"
                 aria-label="Zamknij okno rabatów"
             >
                 <i data-lucide="x" style="width: 14px; height: 14px"></i>
@@ -25,10 +25,10 @@
             <!-- Zawartość wstrzykiwana przez JS -->
         </div>
         <div class="om-footer gap-2">
-            <button type="button" class="btn btn-secondary" onclick="handleOfferDiscountsCancel()">
+            <button type="button" class="btn btn-secondary" data-csp="handleOfferDiscountsCancel">
                 Zamknij
             </button>
-            <button type="button" class="btn btn-primary" onclick="handleOfferDiscountsSave()">
+            <button type="button" class="btn btn-primary" data-csp="handleOfferDiscountsSave">
                 <i data-lucide="check" style="width: 11px; height: 11px; margin-right: 0.25rem"></i>
                 Zastosuj
             </button>
@@ -52,7 +52,7 @@
             <button
                 type="button"
                 class="btn btn-icon om-close"
-                onclick="handleOfferTransportCancel()"
+                data-csp="handleOfferTransportCancel"
                 aria-label="Zamknij okno transportu"
             >
                 <i data-lucide="x" style="width: 14px; height: 14px"></i>
@@ -106,7 +106,7 @@
                         type="button"
                         id="transport-mode-btn"
                         class="tp-mode-btn"
-                        onclick="toggleTransportMode()"
+                        data-csp="toggleTransportMode"
                     >
                         <i data-lucide="truck" style="width: 16px; height: 16px"></i>
                         <span id="transport-mode-label">Pełne</span>
@@ -120,7 +120,7 @@
                         type="button"
                         id="transport-separate-btn"
                         class="tp-mode-btn"
-                        onclick="toggleTransportSeparate()"
+                        data-csp="toggleTransportSeparate"
                     >
                         <i data-lucide="package" style="width: 16px; height: 16px"></i>
                         <span id="transport-separate-label">W cenie elementów</span>
@@ -176,10 +176,10 @@
             </div>
         </div>
         <div class="om-footer gap-3">
-            <button type="button" class="btn btn-secondary" onclick="handleOfferTransportCancel()">
+            <button type="button" class="btn btn-secondary" data-csp="handleOfferTransportCancel">
                 Zamknij
             </button>
-            <button type="button" class="btn btn-primary" onclick="handleOfferTransportSave()">
+            <button type="button" class="btn btn-primary" data-csp="handleOfferTransportSave">
                 <i data-lucide="check" style="width: 11px; height: 11px; margin-right: 0.25rem"></i>
                 Zastosuj
             </button>
@@ -223,7 +223,7 @@
                         type="button"
                         id="zl-btn-generate-ordered"
                         class="btn btn-sm zl-btn--generate zlecenia-header-btn"
-                        onclick="openBulkOrderSequencePopup()"
+                        data-csp="openBulkOrderSequencePopup"
                     >
                         <i data-lucide="list-ordered"></i> Generuj w kolejności
                     </button>
@@ -231,7 +231,7 @@
                         type="button"
                         id="zl-btn-accept"
                         class="btn btn-sm zl-btn--accept zlecenia-header-btn"
-                        onclick="acceptProductionOrder()"
+                        data-csp="acceptProductionOrder"
                     >
                         <i data-lucide="check-circle-2"></i> Zaakceptuj
                     </button>
@@ -239,7 +239,7 @@
                         type="button"
                         id="zl-btn-revoke"
                         class="btn btn-sm zl-btn--revoke zlecenia-header-btn"
-                        onclick="revokeProductionOrder()"
+                        data-csp="revokeProductionOrder"
                         style="display: none"
                     >
                         <i data-lucide="unlock"></i> Cofnij
@@ -248,7 +248,7 @@
                         type="button"
                         id="zl-btn-delete"
                         class="btn btn-sm zl-btn--delete zlecenia-header-btn"
-                        onclick="deleteSelectedProductionOrder()"
+                        data-csp="deleteSelectedProductionOrder"
                     >
                         <i data-lucide="trash-2"></i> Usuń
                     </button>
@@ -256,7 +256,7 @@
                         type="button"
                         id="zl-btn-save"
                         class="btn btn-sm btn-success zlecenia-header-btn"
-                        onclick="saveProductionOrder()"
+                        data-csp="saveProductionOrder"
                     >
                         <i data-lucide="save"></i> Zapisz
                     </button>
@@ -264,7 +264,7 @@
                         type="button"
                         id="zl-btn-print"
                         class="btn btn-sm zl-btn--print zlecenia-header-btn"
-                        onclick="printZlecenie()"
+                        data-csp="printZlecenie"
                     >
                         <i data-lucide="printer"></i> Zlecenie
                     </button>
@@ -272,7 +272,7 @@
                         type="button"
                         id="zl-btn-label"
                         class="btn btn-sm zl-btn--label zlecenia-header-btn"
-                        onclick="printEtykieta()"
+                        data-csp="printEtykieta"
                     >
                         <i data-lucide="tag"></i> Etykieta
                     </button>
@@ -280,7 +280,7 @@
                         type="button"
                         id="zl-btn-close"
                         class="btn btn-sm btn-danger zlecenia-header-btn"
-                        onclick="closeZleceniaModal()"
+                        data-csp="closeZleceniaModal"
                     >
                         <i data-lucide="x"></i> Zamknij
                     </button>
@@ -314,7 +314,8 @@
                     type="button"
                     class="zlecenia-filter-btn active"
                     data-filter="all"
-                    onclick="setZleceniaFilter('all')"
+                    data-csp="setZleceniaFilter"
+                    data-csp-args='["all"]'
                 >
                     <i data-lucide="folder-open"></i> Otwarte
                 </button>
@@ -322,7 +323,8 @@
                     type="button"
                     class="zlecenia-filter-btn"
                     data-filter="saved"
-                    onclick="setZleceniaFilter('saved')"
+                    data-csp="setZleceniaFilter"
+                    data-csp-args='["saved"]'
                 >
                     <i data-lucide="save"></i> Zapisane
                 </button>
@@ -330,7 +332,8 @@
                     type="button"
                     class="zlecenia-filter-btn"
                     data-filter="accepted"
-                    onclick="setZleceniaFilter('accepted')"
+                    data-csp="setZleceniaFilter"
+                    data-csp-args='["accepted"]'
                 >
                     <i data-lucide="lock"></i> Zaakceptowane
                 </button>

@@ -82,7 +82,7 @@ describe('frontend: panel Zarządzanie cennikiem (3 przyciski + 3 sekcje)', () =
         expect(order.every((i) => i > -1)).toBe(true);
         expect(order).toEqual([...order].sort((a, b) => a - b));
         expect(studniePartial).toContain('id="btn-save-studnie-pricelist"');
-        expect(studniePartial).toContain('onclick="openStudnieVersionsPanel()"');
+        expect(studniePartial).toContain('data-csp="openStudnieVersionsPanel"');
         expect(studniePartial).toContain('title="Zarządzanie cennikiem: wersje, pliki, domyślne"');
     });
     it('toolbar: brak Wersje/Zapisz domyślne/Eksportuj/Importuj/Przywróć + brak hidden inputów', () => {

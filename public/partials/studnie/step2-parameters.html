@@ -759,13 +759,13 @@
             </div>
         </div>
         <div class="wizard-nav">
-            <button type="button" class="wizard-btn wizard-btn-prev" onclick="wizardPrev()">
+            <button type="button" class="wizard-btn wizard-btn-prev" data-csp="wizardPrev">
                 ← Wstecz
             </button>
             <button
                 type="button"
                 class="wizard-btn wizard-btn-apply"
-                onclick="applyGlobalParamsToAllWells()"
+                data-csp="applyGlobalParamsToAllWells"
                 id="btn-apply-global-params"
                 style="
                     background: rgba(var(--warn-rgb), 0.15);
@@ -778,7 +778,7 @@
             <button
                 type="button"
                 class="wizard-btn wizard-btn-next"
-                onclick="wizardNext()"
+                data-csp="wizardNext"
                 id="wizard-next-step2"
                 disabled
             >

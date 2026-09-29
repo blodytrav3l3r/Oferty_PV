@@ -98,7 +98,7 @@
             <button
                 type="button"
                 class="btn btn-secondary btn-sm"
-                onclick="generateOfferNotes()"
+                data-csp="generateOfferNotes"
                 style="font-size: var(--fs-sm); padding: 0.3rem 0.6rem"
             >
                 <i data-lucide="refresh-cw" style="width: 12px; height: 12px"></i>
@@ -147,7 +147,7 @@
                 id="offer-tab-validity"
                 class="wizard-form-input"
                 style="width: 100%; font-size: var(--fs-base); text-align: right"
-                onclick="this.select()"
+                data-csp="$select"
             />
         </div>
     </div>
@@ -182,7 +182,7 @@
             <!-- TRANSPORT -->
             <div
                 class="summary-card"
-                onclick="openTransportPopup()"
+                data-csp="openTransportPopup"
                 style="
                     align-items: center;
                     text-align: center;
@@ -231,7 +231,7 @@
             <!-- RABATY -->
             <div
                 class="summary-card"
-                onclick="openOfferDiscountsPopup()"
+                data-csp="openOfferDiscountsPopup"
                 style="align-items: stretch; cursor: pointer; transition: background 0.2s"
                 onmouseover="this.style.background = 'rgba(var(--white-rgb), 0.05)'"
                 onmouseout="this.style.background = 'transparent'"
@@ -252,7 +252,7 @@
                         type="button"
                         id="btn-save-studnie-offer"
                         class="summary-action-btn summary-action-btn--save"
-                        onclick="saveOfferStudnie()"
+                        data-csp="saveOfferStudnie"
                     >
                         <i data-lucide="save"></i> Zapisz ofertę
                     </button>
@@ -260,14 +260,14 @@
                         type="button"
                         id="btn-create-order-offer"
                         class="summary-action-btn summary-action-btn--order"
-                        onclick="createOrderFromOffer()"
+                        data-csp="createOrderFromOffer"
                     >
                         <i data-lucide="package"></i> Utwórz zamówienie
                     </button>
                     <button
                         type="button"
                         class="summary-action-btn summary-action-btn--print"
-                        onclick="showOfferExportChoice()"
+                        data-csp="showOfferExportChoice"
                     >
                         <i data-lucide="printer"></i> Wydruk
                     </button>

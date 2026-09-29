@@ -12,7 +12,8 @@
             tabindex="0"
             aria-expanded="true"
             aria-controls="wizard-summary-content"
-            onclick="toggleCard('wizard-summary-content', 'wizard-summary-icon')"
+            data-csp="toggleCard"
+            data-csp-args='["wizard-summary-content", "wizard-summary-icon"]'
             onkeydown="
                 if (event.target.closest('button')) return;
                 if (event.key === 'Enter' || event.key === ' ') {
@@ -43,20 +44,18 @@
             <button
                 type="button"
                 class="wizard-summary-edit"
-                onclick="
-                    event.stopPropagation();
-                    goToWizardStep(1);
-                "
+                data-csp="goToWizardStep"
+                data-csp-args="[1]"
+                data-csp-stop="1"
             >
                 <i data-lucide="pencil" class="icon-xs"></i> Edytuj dane
             </button>
             <button
                 type="button"
                 class="wizard-summary-edit wizard-summary-edit--params"
-                onclick="
-                    event.stopPropagation();
-                    goToWizardStep(2);
-                "
+                data-csp="goToWizardStep"
+                data-csp-args="[2]"
+                data-csp-stop="1"
             >
                 <i data-lucide="sliders-horizontal" class="icon-xs"></i> Edytuj parametry
             </button>
@@ -161,7 +160,7 @@
                         id="input-well-numer"
                         placeholder="Nr studni"
                         oninput="updateWellNumer()"
-                        onclick="this.select()"
+                        data-csp="$select"
                         style="
                             width: 95px;
                             padding: 0.28rem 0.4rem;
@@ -198,7 +197,7 @@
                             resolveFieldValue(this);
                             updateElevations();
                         "
-                        onclick="this.select()"
+                        data-csp="$select"
                         onkeydown="
                             if (event.key === 'Enter') {
                                 this.blur();
@@ -239,7 +238,7 @@
                             resolveFieldValue(this);
                             updateElevations();
                         "
-                        onclick="this.select()"
+                        data-csp="$select"
                         onkeydown="
                             if (event.key === 'Enter') {
                                 this.blur();
@@ -274,26 +273,48 @@
                         <button
                             type="button"
                             class="dn-btn dn-btn--1000 active"
-                            onclick="selectDN(1000)"
+                            data-csp="selectDN"
+                            data-csp-args="[1000]"
                         >
                             1000
                         </button>
-                        <button type="button" class="dn-btn dn-btn--1200" onclick="selectDN(1200)">
+                        <button
+                            type="button"
+                            class="dn-btn dn-btn--1200"
+                            data-csp="selectDN"
+                            data-csp-args="[1200]"
+                        >
                             1200
                         </button>
-                        <button type="button" class="dn-btn dn-btn--1500" onclick="selectDN(1500)">
+                        <button
+                            type="button"
+                            class="dn-btn dn-btn--1500"
+                            data-csp="selectDN"
+                            data-csp-args="[1500]"
+                        >
                             1500
                         </button>
-                        <button type="button" class="dn-btn dn-btn--2000" onclick="selectDN(2000)">
+                        <button
+                            type="button"
+                            class="dn-btn dn-btn--2000"
+                            data-csp="selectDN"
+                            data-csp-args="[2000]"
+                        >
                             2000
                         </button>
-                        <button type="button" class="dn-btn dn-btn--2500" onclick="selectDN(2500)">
+                        <button
+                            type="button"
+                            class="dn-btn dn-btn--2500"
+                            data-csp="selectDN"
+                            data-csp-args="[2500]"
+                        >
                             2500
                         </button>
                         <button
                             type="button"
                             class="dn-btn dn-btn--styczne"
-                            onclick="selectDN('styczna')"
+                            data-csp="selectDN"
+                            data-csp-args='["styczna"]'
                         >
                             Styczna
                         </button>
@@ -320,7 +341,7 @@
                             resolveFieldValue(this);
                             updateDoplata();
                         "
-                        onclick="this.select()"
+                        data-csp="$select"
                         onkeydown="
                             if (event.key === 'Enter') {
                                 this.blur();
@@ -351,7 +372,7 @@
                     <button
                         type="button"
                         class="btn btn-secondary btn-sm well-ctrl-btn"
-                        onclick="toggleAutoLock()"
+                        data-csp="toggleAutoLock"
                         id="btn-lock-auto"
                         title="Przełącz tryb ręczny"
                     >
@@ -361,7 +382,7 @@
                     <button
                         type="button"
                         class="btn btn-secondary btn-sm well-ctrl-btn"
-                        onclick="toggleRedukcja()"
+                        data-csp="toggleRedukcja"
                         id="btn-redukcja"
                     >
                         <i data-lucide="arrow-down-to-line" class="icon-xs"></i> Redukcja
@@ -369,7 +390,7 @@
                     <button
                         type="button"
                         class="btn btn-secondary btn-sm well-ctrl-btn"
-                        onclick="togglePsiaBuda()"
+                        data-csp="togglePsiaBuda"
                         id="btn-psia-buda"
                     >
                         <i data-lucide="dog" class="icon-xs"></i> Psia buda
@@ -377,7 +398,7 @@
                     <button
                         type="button"
                         class="btn btn-secondary btn-sm well-ctrl-btn"
-                        onclick="toggleStyczna1200()"
+                        data-csp="toggleStyczna1200"
                         id="btn-styczna-1200"
                         style="display: none"
                     >
@@ -420,7 +441,7 @@
                         <button
                             type="button"
                             class="btn btn-secondary btn-sm well-ctrl-btn well-ctrl-btn--sub"
-                            onclick="openRedukcjaZakonczeniePopup()"
+                            data-csp="openRedukcjaZakonczeniePopup"
                             id="btn-redukcja-zak"
                         >
                             <i data-lucide="chevron-down" class="icon-xs"></i>
@@ -436,7 +457,7 @@
                     <button
                         type="button"
                         class="btn btn-secondary btn-sm well-ctrl-btn"
-                        onclick="openZakonczeniePopup()"
+                        data-csp="openZakonczeniePopup"
                         id="btn-zakonczenie"
                     >
                         <i data-lucide="chevron-down" class="icon-xs"></i>
@@ -445,7 +466,7 @@
                     <button
                         type="button"
                         class="btn btn-primary btn-sm well-ctrl-btn well-ctrl-btn--primary"
-                        onclick="autoSelectComponents()"
+                        data-csp="autoSelectComponents"
                         id="btn-auto-select"
                     >
                         <i data-lucide="sparkles" class="icon-xs"></i> Auto
@@ -453,7 +474,7 @@
                     <button
                         type="button"
                         class="btn btn-secondary btn-sm well-ctrl-btn well-ctrl-btn--icon"
-                        onclick="clearWellConfig()"
+                        data-csp="clearWellConfig"
                         title="Wyczyść konfigurację"
                     >
                         <i data-lucide="trash-2" class="icon-xs"></i>
@@ -475,7 +496,8 @@
                     font-size: var(--fs-base);
                     padding: 0.15rem 0;
                 "
-                onclick="toggleCard('well-params-content', 'well-params-icon')"
+                data-csp="toggleCard"
+                data-csp-args='["well-params-content", "well-params-icon"]'
             >
                 <span><i data-lucide="clipboard-list"></i> Parametry tej studni</span>
                 <span id="well-params-icon" class="fs-075"><i data-lucide="chevron-down"></i></span>
@@ -503,7 +525,8 @@
             <button
                 type="button"
                 class="b-tab-btn active"
-                onclick="switchBuilderTab('concrete')"
+                data-csp="switchBuilderTab"
+                data-csp-args='["concrete"]'
                 id="btab-concrete"
             >
                 <i data-lucide="cylinder"></i> Prefabrykaty betonowe
@@ -511,7 +534,8 @@
             <button
                 type="button"
                 class="b-tab-btn"
-                onclick="switchBuilderTab('transitions')"
+                data-csp="switchBuilderTab"
+                data-csp-args='["transitions"]'
                 id="btab-transitions"
             >
                 <i data-lucide="droplets"></i> Przejścia szczelne
@@ -519,7 +543,7 @@
             <button
                 type="button"
                 class="b-tab-btn b-tab-btn--uwagi"
-                onclick="openWellNotesForCurrent()"
+                data-csp="openWellNotesForCurrent"
                 id="btab-uwagi"
                 title="Uwagi do tej studni"
                 style="flex: 0 0 auto; white-space: nowrap"
@@ -542,7 +566,8 @@
                         font-size: var(--fs-base);
                         padding: 0.15rem 0;
                     "
-                    onclick="toggleCard('tiles-content', 'tiles-icon')"
+                    data-csp="toggleCard"
+                    data-csp-args='["tiles-content", "tiles-icon"]'
                 >
                     <span><i data-lucide="brick-wall"></i> Wybór elementów</span>
                     <span id="tiles-icon" class="fs-075"><i data-lucide="chevron-up"></i></span>
@@ -564,7 +589,8 @@
                         font-size: var(--fs-base);
                         padding: 0.15rem 0;
                     "
-                    onclick="toggleCard('well-config-wrap', 'well-config-icon')"
+                    data-csp="toggleCard"
+                    data-csp-args='["well-config-wrap", "well-config-icon"]'
                 >
                     <span><i data-lucide="package"></i> Konfiguracja betonowa</span>
                     <span id="well-config-icon" class="fs-075"
@@ -606,9 +632,8 @@
                         font-size: var(--fs-base);
                         padding: 0.15rem 0;
                     "
-                    onclick="
-                        window.toggleCard('inline-przejscia-app-container', 'przejscia-app-icon')
-                    "
+                    data-csp="toggleCard"
+                    data-csp-args='["inline-przejscia-app-container", "przejscia-app-icon"]'
                 >
                     <span><i data-lucide="plus"></i> Dodaj Przejście Szczelne</span>
                     <span id="przejscia-app-icon" class="fs-075"

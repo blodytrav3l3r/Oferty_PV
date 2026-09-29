@@ -34,7 +34,7 @@
                         gap: 0.4rem;
                         line-height: 1.2;
                     "
-                    onclick="openExcelTableModal()"
+                    data-csp="openExcelTableModal"
                 >
                     <span><i data-lucide="table"></i></span>
                     <span
@@ -74,7 +74,7 @@
                         justify-content: center;
                         line-height: 1.2;
                     "
-                    onclick="window.openGlobalRecalcModal()"
+                    data-csp="openGlobalRecalcModal"
                 >
                     <span class="fs-1"><i data-lucide="settings"></i></span>
                     <span
@@ -104,7 +104,7 @@
                         justify-content: center;
                         line-height: 1.2;
                     "
-                    onclick="openTransitionManagerModal()"
+                    data-csp="openTransitionManagerModal"
                 >
                     <span class="fs-1"><i data-lucide="droplets"></i></span>
                     <span
@@ -132,7 +132,7 @@
                         justify-content: center;
                         line-height: 1.2;
                     "
-                    onclick="saveOfferStudnie()"
+                    data-csp="saveOfferStudnie"
                 >
                     <span class="fs-1"><i data-lucide="save"></i></span>
                     <span
@@ -163,7 +163,7 @@
                         justify-content: center;
                         line-height: 1.2;
                     "
-                    onclick="saveCurrentOrder()"
+                    data-csp="saveCurrentOrder"
                 >
                     <span class="fs-1"><i data-lucide="save"></i></span>
                     <span
@@ -193,7 +193,7 @@
                         justify-content: center;
                         line-height: 1.2;
                     "
-                    onclick="handlePrintClick()"
+                    data-csp="handlePrintClick"
                 >
                     <span class="fs-1"><i data-lucide="printer"></i></span>
                     <span
@@ -223,7 +223,7 @@
                         justify-content: center;
                         line-height: 1.2;
                     "
-                    onclick="createOrderFromOffer()"
+                    data-csp="createOrderFromOffer"
                 >
                     <span class="fs-1"><i data-lucide="package"></i></span>
                     <span
@@ -254,7 +254,7 @@
                         justify-content: center;
                         line-height: 1.2;
                     "
-                    onclick="openZleceniaProdukcyjne()"
+                    data-csp="openZleceniaProdukcyjne"
                 >
                     <span class="fs-1"><i data-lucide="factory"></i></span>
                     <span
@@ -294,7 +294,8 @@
                         justify-content: center;
                         white-space: nowrap;
                     "
-                    onclick="addNewWell(1000)"
+                    data-csp="addNewWell"
+                    data-csp-args="[1000]"
                 >
                     DN1000
                 </button>
@@ -313,7 +314,8 @@
                         justify-content: center;
                         white-space: nowrap;
                     "
-                    onclick="addNewWell(1200)"
+                    data-csp="addNewWell"
+                    data-csp-args="[1200]"
                 >
                     DN1200
                 </button>
@@ -332,7 +334,8 @@
                         justify-content: center;
                         white-space: nowrap;
                     "
-                    onclick="addNewWell(1500)"
+                    data-csp="addNewWell"
+                    data-csp-args="[1500]"
                 >
                     DN1500
                 </button>
@@ -351,7 +354,8 @@
                         justify-content: center;
                         white-space: nowrap;
                     "
-                    onclick="addNewWell(2000)"
+                    data-csp="addNewWell"
+                    data-csp-args="[2000]"
                 >
                     DN2000
                 </button>
@@ -370,7 +374,8 @@
                         justify-content: center;
                         white-space: nowrap;
                     "
-                    onclick="addNewWell(2500)"
+                    data-csp="addNewWell"
+                    data-csp-args="[2500]"
                 >
                     DN2500
                 </button>
@@ -389,7 +394,8 @@
                         justify-content: center;
                         white-space: nowrap;
                     "
-                    onclick="addNewWell('styczna')"
+                    data-csp="addNewWell"
+                    data-csp-args='["styczna"]'
                 >
                     Styczne
                 </button>
@@ -400,7 +406,8 @@
                 <button
                     type="button"
                     class="s-tab-btn active"
-                    onclick="switchSidebarTab('list')"
+                    data-csp="switchSidebarTab"
+                    data-csp-args='["list"]'
                     id="stab-list"
                 >
                     <i data-lucide="folder-open"></i> Lista studni
@@ -409,7 +416,8 @@
                 <button
                     type="button"
                     class="s-tab-btn"
-                    onclick="switchSidebarTab('discounts')"
+                    data-csp="switchSidebarTab"
+                    data-csp-args='["discounts"]'
                     id="stab-discounts"
                 >
                     <i data-lucide="banknote"></i> Rabaty

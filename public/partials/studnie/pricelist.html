@@ -22,7 +22,7 @@
             <button
                 type="button"
                 class="btn btn-primary"
-                onclick="showAddStudnieProductModal()"
+                data-csp="showAddStudnieProductModal"
                 title="Dodaj nowy produkt do cennika"
             >
                 <i data-lucide="plus"></i> Dodaj
@@ -31,7 +31,7 @@
                 type="button"
                 class="btn btn-secondary"
                 id="btn-save-studnie-pricelist"
-                onclick="saveStudniePriceList()"
+                data-csp="saveStudniePriceList"
                 title="Zapisz zmiany w cenniku"
             >
                 <i data-lucide="save"></i> Zapisz
@@ -39,7 +39,7 @@
             <button
                 type="button"
                 class="btn btn-secondary"
-                onclick="openStudnieVersionsPanel()"
+                data-csp="openStudnieVersionsPanel"
                 title="Zarządzanie cennikiem: wersje, pliki, domyślne"
             >
                 <i data-lucide="sliders-horizontal"></i> Zarządzaj
@@ -51,7 +51,8 @@
             type="button"
             class="cennik-tab active"
             data-tab="dn1000"
-            onclick="selectCennikTab('dn1000')"
+            data-csp="selectCennikTab"
+            data-csp-args='["dn1000"]'
         >
             <span class="cennik-tab-icon" style="--pricelist-dot: var(--accent)"></span> DN1000
         </button>
@@ -59,7 +60,8 @@
             type="button"
             class="cennik-tab"
             data-tab="dn1200"
-            onclick="selectCennikTab('dn1200')"
+            data-csp="selectCennikTab"
+            data-csp-args='["dn1200"]'
         >
             <span class="cennik-tab-icon" style="--pricelist-dot: var(--accent2)"></span> DN1200
         </button>
@@ -67,7 +69,8 @@
             type="button"
             class="cennik-tab"
             data-tab="dn1500"
-            onclick="selectCennikTab('dn1500')"
+            data-csp="selectCennikTab"
+            data-csp-args='["dn1500"]'
         >
             <span class="cennik-tab-icon" style="--pricelist-dot: var(--pink)"></span> DN1500
         </button>
@@ -75,7 +78,8 @@
             type="button"
             class="cennik-tab"
             data-tab="dn2000"
-            onclick="selectCennikTab('dn2000')"
+            data-csp="selectCennikTab"
+            data-csp-args='["dn2000"]'
         >
             <span class="cennik-tab-icon" style="--pricelist-dot: var(--warn)"></span> DN2000
         </button>
@@ -83,7 +87,8 @@
             type="button"
             class="cennik-tab"
             data-tab="dn2500"
-            onclick="selectCennikTab('dn2500')"
+            data-csp="selectCennikTab"
+            data-csp-args='["dn2500"]'
         >
             <span class="cennik-tab-icon" style="--pricelist-dot: var(--danger)"></span> DN2500
         </button>
@@ -91,7 +96,8 @@
             type="button"
             class="cennik-tab"
             data-tab="styczne"
-            onclick="selectCennikTab('styczne')"
+            data-csp="selectCennikTab"
+            data-csp-args='["styczne"]'
         >
             <span class="cennik-tab-icon" style="--pricelist-dot: var(--warn)"></span> Styczne
         </button>
@@ -99,7 +105,8 @@
             type="button"
             class="cennik-tab"
             data-tab="dennicy"
-            onclick="selectCennikTab('dennicy')"
+            data-csp="selectCennikTab"
+            data-csp-args='["dennicy"]'
         >
             <span class="cennik-tab-icon" style="--pricelist-dot: var(--success)"></span> Dennicy
         </button>
@@ -107,7 +114,8 @@
             type="button"
             class="cennik-tab"
             data-tab="akcesoria"
-            onclick="selectCennikTab('akcesoria')"
+            data-csp="selectCennikTab"
+            data-csp-args='["akcesoria"]'
         >
             <span class="cennik-tab-icon" style="--pricelist-dot: var(--slate-500)"></span>
             Akcesoria
@@ -116,7 +124,8 @@
             type="button"
             class="cennik-tab"
             data-tab="przejscia"
-            onclick="selectCennikTab('przejscia')"
+            data-csp="selectCennikTab"
+            data-csp-args='["przejscia"]'
         >
             <span class="cennik-tab-icon" style="--pricelist-dot: var(--success)"></span> Przejścia
         </button>
@@ -124,7 +133,8 @@
             type="button"
             class="cennik-tab"
             data-tab="kinety"
-            onclick="selectCennikTab('kinety')"
+            data-csp="selectCennikTab"
+            data-csp-args='["kinety"]'
         >
             <span class="cennik-tab-icon" style="--pricelist-dot: var(--accent2)"></span> Kinety
         </button>
@@ -132,7 +142,8 @@
             type="button"
             class="cennik-tab"
             data-tab="transport"
-            onclick="selectCennikTab('transport')"
+            data-csp="selectCennikTab"
+            data-csp-args='["transport"]'
         >
             <span class="cennik-tab-icon" style="--pricelist-dot: var(--warn)"></span> Transport
         </button>
@@ -140,7 +151,8 @@
             type="button"
             class="cennik-tab"
             data-tab="preco"
-            onclick="selectCennikTab('preco')"
+            data-csp="selectCennikTab"
+            data-csp-args='["preco"]'
         >
             <span class="cennik-tab-icon" style="--pricelist-dot: var(--danger)"></span> Wkładki
             PRECO
