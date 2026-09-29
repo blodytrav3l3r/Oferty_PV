@@ -241,7 +241,7 @@ function addWellComponent(productId) {
     }
 }
 
-function removeWellComponent(index) {
+async function removeWellComponent(index) {
     if (isOfferLocked()) {
         showToast(OFFER_LOCKED_MSG, 'error');
         return;
@@ -250,6 +250,13 @@ function removeWellComponent(index) {
         showToast(WELL_LOCKED_MSG, 'error');
         return;
     }
+    if (
+        !(await appConfirm('Czy na pewno usunąć ten element ze studni?', {
+            title: 'Usuwanie elementu',
+            type: 'danger'
+        }))
+    )
+        return;
     const well = getCurrentWell();
     if (well && window.pzGuard && window.pzGuard.hasPzForElementAtOrAfter(well.id, index)) {
         showToast(
@@ -321,7 +328,7 @@ function removeWellComponent(index) {
     _signalAiOverrideOrModify(prevConfigSource, well);
 }
 
-function updateWellQuantity(index, value) {
+async function updateWellQuantity(index, value) {
     if (isOfferLocked()) {
         showToast(OFFER_LOCKED_MSG, 'error');
         return;
@@ -332,7 +339,7 @@ function updateWellQuantity(index, value) {
     }
     const qty = parseInt(value);
     if (qty <= 0) {
-        removeWellComponent(index);
+        await removeWellComponent(index);
         return;
     }
     const well = getCurrentWell();
@@ -358,7 +365,7 @@ function updateWellQuantity(index, value) {
     updateHeightIndicator();
 }
 
-function clearWellConfig() {
+async function clearWellConfig() {
     if (isOfferLocked()) {
         showToast(OFFER_LOCKED_MSG, 'error');
         return;
@@ -369,6 +376,13 @@ function clearWellConfig() {
     }
     const well = getCurrentWell();
     if (!well) return;
+    if (
+        !(await appConfirm('Czy na pewno wyczyścić całą konfigurację studni?', {
+            title: 'Czyszczenie studni',
+            type: 'danger'
+        }))
+    )
+        return;
     if (window.pzGuard && window.pzGuard.hasPzForWell(well.id)) {
         showToast(
             '<i data-lucide="x-circle"></i> Nie można wyczyścić konfiguracji studni — ma przypisane zlecenia produkcyjne. Usuń najpierw zlecenia w zakładce „Zlecenia produkcyjne”.',
@@ -387,5 +401,6 @@ function clearWellConfig() {
 
 /* ===== Rejestracja globali ===== */
 window.addWellComponent = addWellComponent;
+window.removeWellComponent = removeWellComponent;
 window.updateWellQuantity = updateWellQuantity;
 window.clearWellConfig = clearWellConfig;

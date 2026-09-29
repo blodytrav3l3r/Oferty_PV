@@ -143,7 +143,17 @@ async function handleOfferDiscountsCancel() {
 
 function handleOfferDiscountChange(dn, type, value) {
     if (typeof applyDiscount === 'function') {
-        applyDiscount(dn, type, value);
+        // Kontrakt E2: discountPct ∈ [0,100] finite number. Parsuj jak
+        // updateDiscount (numeryczny string → number, '' → 0 = czyszczenie),
+        // invalid → throw → komunikat, brak zapisu.
+        const numVal = value === '' ? 0 : Number(value);
+        try {
+            applyDiscount(dn, type, numVal);
+        } catch (_e) {
+            if (typeof showToast === 'function')
+                showToast('Nieprawidłowy rabat (0–100%): ' + String(value), 'error');
+            return;
+        }
     } else {
         if (!wellDiscounts[dn]) wellDiscounts[dn] = { dennica: 0, nadbudowa: 0, preco: 0, pehd: 0 };
         wellDiscounts[dn][type] = parseFloat(value) || 0;

@@ -128,31 +128,43 @@ function openWellNotesModal(idx) {
 
     const saveBtn = document.getElementById('well-uwagi-save');
     if (saveBtn) {
-        saveBtn.addEventListener('click', function () {
-            const el = document.getElementById('well-uwagi-input');
-            const val = el ? el.value.trim() : '';
-            well.uwagi = val;
-            if (typeof window.closeModal === 'function') window.closeModal('well-uwagi-modal');
-            else if (typeof closeModal === 'function') closeModal('well-uwagi-modal');
-            if (typeof renderWellsList === 'function') renderWellsList();
+        let isSavingNotes = false;
+        saveBtn.addEventListener('click', async function () {
+            if (isSavingNotes || saveBtn.disabled) return;
+            isSavingNotes = true;
+            saveBtn.disabled = true;
             try {
-                const b = document.getElementById('btab-uwagi');
-                if (b) {
-                    const hu = !!(well.uwagi && String(well.uwagi).trim());
-                    b.classList.toggle('has-uwagi', hu);
-                    b.title = hu ? String(well.uwagi).slice(0, 80) : 'Dodaj uwagi do tej studni';
-                    if (window.lucide) window.lucide.createIcons({ root: b });
-                }
-            } catch (_e2) {}
-            // Odśwież nagłówek edytora jeśli istnieje
-            if (typeof renderWellParams === 'function') {
+                await Promise.resolve();
+                const el = document.getElementById('well-uwagi-input');
+                const val = el ? el.value.trim() : '';
+                well.uwagi = val;
+                if (typeof window.closeModal === 'function') window.closeModal('well-uwagi-modal');
+                else if (typeof closeModal === 'function') closeModal('well-uwagi-modal');
+                if (typeof renderWellsList === 'function') renderWellsList();
                 try {
-                    renderWellParams();
-                } catch (_e) {}
+                    const b = document.getElementById('btab-uwagi');
+                    if (b) {
+                        const hu = !!(well.uwagi && String(well.uwagi).trim());
+                        b.classList.toggle('has-uwagi', hu);
+                        b.title = hu
+                            ? String(well.uwagi).slice(0, 80)
+                            : 'Dodaj uwagi do tej studni';
+                        if (window.lucide) window.lucide.createIcons({ root: b });
+                    }
+                } catch (_e2) {}
+                // Odśwież nagłówek edytora jeśli istnieje
+                if (typeof renderWellParams === 'function') {
+                    try {
+                        renderWellParams();
+                    } catch (_e) {}
+                }
+                if (window.lucide) window.lucide.createIcons();
+                if (typeof showToast === 'function')
+                    showToast(val ? 'Zapisano uwagi' : 'Usunięto uwagi', 'success');
+            } finally {
+                isSavingNotes = false;
+                saveBtn.disabled = false;
             }
-            if (window.lucide) window.lucide.createIcons();
-            if (typeof showToast === 'function')
-                showToast(val ? 'Zapisano uwagi' : 'Usunięto uwagi', 'success');
         });
     }
     // Enter+Ctrl save

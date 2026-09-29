@@ -1,9 +1,9 @@
 // @ts-check
 /* --- Pomocnik Logiki Diagramu SVG --- */
-window.decDiagramWellQty = function (idx) {
+window.decDiagramWellQty = async function (idx) {
     const well = getCurrentWell();
     if (well && well.config[idx]) {
-        updateWellQuantity(idx, well.config[idx].quantity - 1);
+        await updateWellQuantity(idx, well.config[idx].quantity - 1);
     }
 };
 
@@ -47,7 +47,7 @@ window.svgPointerDown = function (ev, idx) {
     window.requestAnimationFrame(() => renderWellDiagram());
 };
 
-window.svgPointerUp = function (ev, idx) {
+window.svgPointerUp = async function (ev, idx) {
     if (window.svgDragStartIndex >= 0) return;
     if (ev.ctrlKey || ev.metaKey) {
         ev.preventDefault();
@@ -68,7 +68,7 @@ window.svgPointerUp = function (ev, idx) {
             return;
         }
         if (typeof removeWellComponent === 'function') {
-            removeWellComponent(idx);
+            await removeWellComponent(idx);
         }
     }
 };
