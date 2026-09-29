@@ -141,7 +141,6 @@
                                     type="button"
                                     id="unit-settings-btn"
                                     class="preview-tile__btn"
-                                    onclick="openUnitSettingsPopup(this)"
                                     title="Jednostki wysokości"
                                     aria-label="Ustawienia jednostek"
                                     aria-haspopup="dialog"
@@ -157,17 +156,6 @@
                                 class="preview-tile preview-tile--delete"
                                 id="svg-trash"
                                 title="Kliknij, aby usunąć studnię"
-                                onclick="removeWell(currentWellIndex)"
-                                onmouseenter="
-                                    if (window.svgDragStartIndex >= 0) {
-                                        this.style.background = 'rgba(var(--danger-rgb), 0.2)';
-                                        this.style.borderColor = 'var(--danger)';
-                                    }
-                                "
-                                onmouseleave="
-                                    this.style.background = 'rgba(var(--danger-rgb), 0.08)';
-                                    this.style.borderColor = 'rgba(var(--danger-rgb), 0.22)';
-                                "
                             >
                                 <button
                                     type="button"
@@ -191,31 +179,27 @@
                     <div class="well-center-column">
                         <!-- Wizard Step Indicator -->
                         <div class="wizard-indicator" id="wizard-indicator">
-                            <div
-                                class="wizard-step-dot active"
-                                data-step="1"
-                                onclick="wizardNavStep(1)"
-                            >
+                            <div class="wizard-step-dot active" data-step="1">
                                 <div class="wizard-dot-number">1</div>
                                 <div class="wizard-dot-label">Dane klienta</div>
                             </div>
                             <div class="wizard-step-line" id="wizard-line-1"></div>
-                            <div class="wizard-step-dot" data-step="2" onclick="wizardNavStep(2)">
+                            <div class="wizard-step-dot" data-step="2">
                                 <div class="wizard-dot-number">2</div>
                                 <div class="wizard-dot-label">Parametry studni</div>
                             </div>
                             <div class="wizard-step-line" id="wizard-line-2"></div>
-                            <div class="wizard-step-dot" data-step="3" onclick="wizardNavStep(3)">
+                            <div class="wizard-step-dot" data-step="3">
                                 <div class="wizard-dot-number">3</div>
                                 <div class="wizard-dot-label">Oferta</div>
                             </div>
                             <div class="wizard-step-line" id="wizard-line-3"></div>
-                            <div class="wizard-step-dot" data-step="4" onclick="wizardNavStep(4)">
+                            <div class="wizard-step-dot" data-step="4">
                                 <div class="wizard-dot-number">4</div>
                                 <div class="wizard-dot-label">Karta budowy</div>
                             </div>
                             <div class="wizard-step-line" id="wizard-line-4"></div>
-                            <div class="wizard-step-dot" data-step="5" onclick="wizardNavStep(5)">
+                            <div class="wizard-step-dot" data-step="5">
                                 <div class="wizard-dot-number">5</div>
                                 <div class="wizard-dot-label">Zamówienie</div>
                             </div>
@@ -298,7 +282,6 @@
                         type="button"
                         class="wizard-btn wizard-btn-prev"
                         id="studnie-nav-prev"
-                        onclick="wizardPrev()"
                         style="display: none"
                     >
                         <i data-lucide="chevron-left"></i> Wstecz
@@ -306,12 +289,7 @@
                 </div>
                 <span class="wizard-step-info" id="studnie-nav-step-info">Krok 1 z 5</span>
                 <div class="wizard-nav-right">
-                    <button
-                        type="button"
-                        class="wizard-btn wizard-btn-next"
-                        id="studnie-nav-next"
-                        onclick="wizardNext()"
-                    >
+                    <button type="button" class="wizard-btn wizard-btn-next" id="studnie-nav-next">
                         <i data-lucide="chevron-right"></i> Dalej
                     </button>
                 </div>

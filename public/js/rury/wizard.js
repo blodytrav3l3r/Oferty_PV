@@ -242,6 +242,10 @@ if (typeof document !== 'undefined') {
 function initWizard() {
     goToPhase(1);
 
+    // CSP-B: nawigacja faz bez onclick (id ze stale obecnych przyciskow).
+    document.getElementById('wizard-nav-prev')?.addEventListener('click', () => phasePrev());
+    document.getElementById('wizard-nav-next')?.addEventListener('click', () => phaseNext());
+
     if (window.editingOfferId) {
         goToPhase(3);
         renderOfferItems();

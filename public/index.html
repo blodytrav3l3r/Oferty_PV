@@ -181,9 +181,7 @@
                             id="connection-dot"
                             title="Sprawdzanie połączenia..."
                         ></span>
-                        <button type="button" onclick="appLogout()" class="header-logout">
-                            Wyloguj
-                        </button>
+                        <button type="button" class="header-logout">Wyloguj</button>
                     </div>
                 </div>
             </div>
@@ -254,7 +252,7 @@
                     autocomplete="current-password"
                     class="form-input"
                 />
-                <button type="button" class="btn btn-primary login-submit" onclick="doLogin()">
+                <button type="button" class="btn btn-primary login-submit" data-idx="doLogin">
                     Zaloguj się
                 </button>
                 <div class="login-error" id="login-error"></div>
@@ -275,11 +273,11 @@
                         <button
                             type="button"
                             class="btn btn-secondary btn-sm"
-                            onclick="showChangePassword()"
+                            data-idx="showChangePassword"
                         >
                             <i data-lucide="key"></i> Hasło
                         </button>
-                        <button type="button" class="btn btn-danger btn-sm" onclick="doLogout()">
+                        <button type="button" class="btn btn-danger btn-sm" data-idx="doLogout">
                             <i data-lucide="log-out"></i> Wyloguj
                         </button>
                     </div>
@@ -365,7 +363,7 @@
                             <button
                                 type="button"
                                 class="btn btn-primary btn-sm"
-                                onclick="saveYearLetter()"
+                                data-idx="saveYearLetter"
                             >
                                 Zapisz
                             </button>
@@ -432,7 +430,7 @@
                             <button
                                 type="button"
                                 class="btn btn-primary btn-sm"
-                                onclick="saveMagazynCodes()"
+                                data-idx="saveMagazynCodes"
                             >
                                 Zapisz
                             </button>
@@ -665,7 +663,7 @@
                                     type="button"
                                     id="add-user-btn"
                                     class="btn btn-primary btn-sm"
-                                    onclick="createUser()"
+                                    data-idx="createUser"
                                 >
                                     <i data-lucide="plus"></i> Dodaj
                                 </button>
@@ -673,7 +671,7 @@
                                     type="button"
                                     id="cancel-edit-btn"
                                     class="btn btn-danger btn-sm hidden"
-                                    onclick="cancelEditUser()"
+                                    data-idx="cancelEditUser"
                                 >
                                     Anuluj
                                 </button>

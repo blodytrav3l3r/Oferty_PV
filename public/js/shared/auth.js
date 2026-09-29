@@ -212,6 +212,22 @@ if (typeof window !== 'undefined') {
     });
 }
 
+/* ===== CSP-B: naglowek wylogowania bez onclick (klasa .header-logout) ===== */
+(function _bindHeaderLogout() {
+    // Guard: sandboxy testowe (vm) maja okrojony document lub brak document.
+    if (typeof document === 'undefined' || typeof document.querySelectorAll !== 'function') return;
+    function bind() {
+        document.querySelectorAll('.header-logout').forEach((btn) => {
+            btn.addEventListener('click', () => appLogout());
+        });
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', bind, { once: true });
+    } else {
+        bind();
+    }
+})();
+
 /* ===== Rejestracja globali ===== */
 window.getAuthToken = getAuthToken;
 window.setAuthToken = setAuthToken;

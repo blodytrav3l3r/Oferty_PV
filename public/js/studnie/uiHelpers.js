@@ -645,6 +645,35 @@ async function savePrecoPricing(data) {
 
 // DOMContentLoaded
 
+/* ===== CSP-B: nawigacja i akcje studni bez onclick/onmouse* ===== */
+// Guard: sandboxy testowe (vm) maja okrojony document lub brak document.
+if (typeof document !== 'undefined' && typeof document.addEventListener === 'function') {
+    document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('.wizard-step-dot[data-step]').forEach((dot) => {
+            dot.addEventListener('click', () => wizardNavStep(Number(dot.dataset.step)));
+        });
+        document.getElementById('studnie-nav-prev')?.addEventListener('click', () => wizardPrev());
+        document.getElementById('studnie-nav-next')?.addEventListener('click', () => wizardNext());
+        document
+            .getElementById('unit-settings-btn')
+            ?.addEventListener('click', (e) => openUnitSettingsPopup(e.currentTarget));
+        const trash = document.getElementById('svg-trash');
+        if (trash) {
+            trash.addEventListener('click', () => removeWell(currentWellIndex));
+            trash.addEventListener('mouseenter', () => {
+                if (window.svgDragStartIndex >= 0) {
+                    trash.style.background = 'rgba(var(--danger-rgb), 0.2)';
+                    trash.style.borderColor = 'var(--danger)';
+                }
+            });
+            trash.addEventListener('mouseleave', () => {
+                trash.style.background = 'rgba(var(--danger-rgb), 0.08)';
+                trash.style.borderColor = 'rgba(var(--danger-rgb), 0.22)';
+            });
+        }
+    });
+}
+
 /* ===== Rejestracja globali ===== */
 window.wizardPrev = wizardPrev;
 window.skipWizardToStep3 = skipWizardToStep3;

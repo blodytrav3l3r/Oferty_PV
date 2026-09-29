@@ -754,6 +754,25 @@ async function saveMagazynCodes() {
     }
 })();
 
+/* ===== Click → akcja (CSP-B) — delegacja data-idx zamiast onclick ===== */
+(function _bindDashboardClicks() {
+    // Guard: sandboxy testowe (vm) maja okrojony document lub brak document.
+    if (typeof document === 'undefined' || typeof document.addEventListener !== 'function') return;
+    document.addEventListener('click', (event) => {
+        const el = event.target && event.target.closest ? event.target.closest('[data-idx]') : null;
+        if (!el) return;
+        const a = el.getAttribute('data-idx');
+        if (a === 'doLogin') window.doLogin && window.doLogin();
+        else if (a === 'doLogout') window.doLogout && window.doLogout();
+        else if (a === 'showChangePassword')
+            window.showChangePassword && window.showChangePassword();
+        else if (a === 'saveYearLetter') window.saveYearLetter && window.saveYearLetter();
+        else if (a === 'saveMagazynCodes') window.saveMagazynCodes && window.saveMagazynCodes();
+        else if (a === 'createUser') window.createUser && window.createUser();
+        else if (a === 'cancelEditUser') window.cancelEditUser && window.cancelEditUser();
+    });
+})();
+
 /* ===== Rejestracja globali ===== */
 window.updateSubUsers = updateSubUsers;
 window.startEditUser = startEditUser;
