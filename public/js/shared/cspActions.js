@@ -318,6 +318,10 @@
         let scopeSrc = 'data-csp-scope';
         for (const suffix of variants) {
             const n = el.getAttribute('data-csp' + suffix);
+            // Puste sloty nie mają handlera — pomiń, aby pojedynczy
+            // data-csp-N (np. data-csp-3 z nawigacji SPA) nie był
+            // przykrywany domyślnym 'click' pustego slotu ''.
+            if (n == null) continue;
             const w =
                 el.getAttribute('data-csp' + suffix + '-on') ||
                 (suffix === '' ? el.getAttribute('data-csp-on') : null) ||

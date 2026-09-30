@@ -198,8 +198,8 @@
                 data-section="${s.id}" id="nav-${s.id}"
                 ${
                     s.isLink
-                        ? `data-csp-2="$hashLink" data-csp-2-args="${escapeHtmlAttr(JSON.stringify([s.href]))}"`
-                        : `data-csp-3="showSection" data-csp-3-scope="SpaRouter" data-csp-3-args="${escapeHtmlAttr(JSON.stringify([s.id]))}"`
+                        ? `data-csp="$hashLink" data-csp-args="${escapeHtmlAttr(JSON.stringify([s.href]))}"`
+                        : `data-csp="showSection" data-csp-scope="SpaRouter" data-csp-args="${escapeHtmlAttr(JSON.stringify([s.id]))}"`
                 }>
                 <span class="nav-tile-icon">${s.icon}</span>
                 <span class="nav-tile-text">${escapeHtml(s.label)}</span>
