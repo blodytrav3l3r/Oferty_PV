@@ -1709,7 +1709,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
     color: var(--accent-text);
 }
 
-/* ── Transfer Center (.sokml) ── */
+/* ── Centrum transferu (.sokml) ── */
 .ai-transfer-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
