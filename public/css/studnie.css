@@ -175,6 +175,7 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
     flex: 1;
     height: auto;
     min-height: 200px;
+    margin-top: 0.4rem;
     border-radius: var(--radius-sm);
     background: var(--bg-deep);
     border: 1px solid var(--accent-bg);
