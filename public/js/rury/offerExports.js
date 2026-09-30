@@ -203,7 +203,8 @@ function exportOfferPDF(id) {
         };
         printWin.document.querySelectorAll('img[data-print-img]').forEach((img) => {
             const key = img.getAttribute('data-print-img');
-            if (img.complete && img.naturalWidth > 0) mark(key);
+            const loaded = img instanceof HTMLImageElement && img.complete && img.naturalWidth > 0;
+            if (loaded) mark(key);
             else {
                 img.addEventListener('load', () => mark(key));
                 img.addEventListener('error', () => mark(key));
