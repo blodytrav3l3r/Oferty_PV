@@ -111,16 +111,12 @@
                         ? Number(v).toFixed(d == null ? 4 : d)
                         : '—';
                 };
+                // P1.4: ROC-AUC i baseline accuracy to RÓŻNE metryki — nigdy ich
+                // nie odejmujemy (odejmowanie sugerowało fałszywe "pp vs reguł").
                 const baselineAccuracy =
                     status.baselineAccuracy != null &&
                     Number.isFinite(Number(status.baselineAccuracy))
                         ? Number(status.baselineAccuracy)
-                        : null;
-                const baselineVsModel =
-                    baselineAccuracy != null &&
-                    status.activeModelAuc != null &&
-                    Number.isFinite(Number(status.activeModelAuc))
-                        ? Number(status.activeModelAuc) - baselineAccuracy
                         : null;
                 const mlGroup = function (label, gridClass, cards) {
                     return (
@@ -185,26 +181,21 @@
                     ]) +
                     mlGroup('Jakość predykcji', 'ai-ml-col-5', [
                         window.aiStatCard(
-                            'Baseline vs Model',
-                            baselineVsModel == null
-                                ? '—'
-                                : (baselineVsModel >= 0 ? '+' : '') +
-                                      baselineVsModel.toFixed(2) +
-                                      ' pp',
-                            baselineVsModel == null
-                                ? 'var(--text-muted)'
-                                : baselineVsModel >= 0
-                                  ? 'var(--success)'
-                                  : 'var(--danger)',
-                            'Różnica AUC aktywnego modelu względem baseline accuracy (majority-class, max(positiveRate, 1-positiveRate) z ostatniego treningu) w punktach procentowych',
+                            'ROC-AUC modelu',
+                            fmt(status.activeModelAuc),
+                            status.activeModelAuc != null ? 'var(--accent2)' : 'var(--text-muted)',
+                            'Pole pod krzywą ROC aktywnego modelu (0.5 = losowo, 1.0 = idealnie). Osobna metryka — nieporównywalna 1:1 z accuracy.',
+                            status.activeModelAuc != null
+                                ? 'ROC-AUC: ' + Number(status.activeModelAuc).toFixed(4)
+                                : 'Brak modelu z metryką ROC-AUC'
+                        ),
+                        window.aiStatCard(
+                            'Baseline accuracy',
+                            baselineAccuracy != null ? baselineAccuracy.toFixed(4) : '—',
                             baselineAccuracy != null
-                                ? 'Baseline accuracy: ' +
-                                      baselineAccuracy.toFixed(4) +
-                                      ' (majority-class). Model AUC: ' +
-                                      (status.activeModelAuc != null
-                                          ? Number(status.activeModelAuc).toFixed(4)
-                                          : '—')
-                                : 'Brak baseline accuracy — brak udanego treningu z metryką'
+                                ? 'var(--text-secondary)'
+                                : 'var(--text-muted)',
+                            'Dokładność majority-class (max(positiveRate, 1-positiveRate) z ostatniego treningu). Punkt odniesienia dla accuracy, nie dla ROC-AUC.'
                         ),
                         window.aiStatCard(
                             'PR-AUC',
