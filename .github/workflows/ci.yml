@@ -97,8 +97,8 @@ jobs:
             - name: Run git-safety tests (sequential, no index.lock)
               run: npx jest --selectProjects git-safety --runInBand --no-coverage
 
-            - name: Coverage summary (informacyjnie)
-              run: node scripts/coverage-check.mjs
+            - name: Coverage gate (blocking, progi scripts/coverage-check.mjs)
+              run: node scripts/coverage-check.mjs --fail
 
             - name: Upload coverage
               uses: actions/upload-artifact@v4
