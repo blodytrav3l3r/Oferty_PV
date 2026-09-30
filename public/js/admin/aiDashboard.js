@@ -122,19 +122,29 @@
             window
                 .aiMlEnabled()
                 .then(function (on) {
-                    if (!on) {
-                        container.innerHTML = window.aiMlDisabledHtml
-                            ? window.aiMlDisabledHtml()
-                            : '<div class="ai-ml-error">Moduł AI/ML jest wyłączony</div>';
-                        if (typeof lucide !== 'undefined') {
-                            lucide.createIcons({ root: container });
-                        }
+                    if (on === true) {
+                        renderDashboard(container);
                         return;
                     }
-                    renderDashboard(container);
+                    container.innerHTML =
+                        on === false
+                            ? window.aiMlDisabledHtml
+                                ? window.aiMlDisabledHtml()
+                                : '<div class="ai-ml-error">Moduł AI/ML jest wyłączony</div>'
+                            : window.aiMlUnknownHtml
+                              ? window.aiMlUnknownHtml()
+                              : '<div class="ai-ml-error">Stan modułu AI/ML niezweryfikowany</div>';
+                    if (typeof lucide !== 'undefined') {
+                        lucide.createIcons({ root: container });
+                    }
                 })
                 .catch(function () {
-                    renderDashboard(container);
+                    container.innerHTML = window.aiMlUnknownHtml
+                        ? window.aiMlUnknownHtml()
+                        : '<div class="ai-ml-error">Stan modułu AI/ML niezweryfikowany</div>';
+                    if (typeof lucide !== 'undefined') {
+                        lucide.createIcons({ root: container });
+                    }
                 });
             return;
         }

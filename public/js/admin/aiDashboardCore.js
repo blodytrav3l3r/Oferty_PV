@@ -110,26 +110,33 @@
     window.aiLoadingHtml = loadingHtml;
 
     // Execution kill-switch AI/ML — jedyne źródło stanu UI: GET /api/feature-flags.
+    // Kontrakt tri-state: true (ON) / false (OFF) / null (UNKNOWN — brak odpowiedzi,
+    // błąd sieci, brak pola). UNKNOWN nigdy nie znaczy ON (fail-closed w rendererach).
     // Endpointy statusowe (ml-status/health/settings) powtarzają aiMlEnabled dla wygody.
-    var _aiMlEnabledCache = null;
+    var _aiMlEnabledCache;
     function aiMlEnabled(forceRefresh) {
-        if (_aiMlEnabledCache !== null && !forceRefresh) {
+        if (_aiMlEnabledCache !== undefined && !forceRefresh) {
             return Promise.resolve(_aiMlEnabledCache);
         }
         var p = window.fetchJson('/api/feature-flags');
-        if (!p) return Promise.resolve(true);
+        if (!p) return Promise.resolve(null);
         return p
             .then(function (j) {
-                _aiMlEnabledCache = !j || j.ai_ml_enabled !== false;
+                if (!j || j.error || j.ai_ml_enabled === undefined || j.ai_ml_enabled === null) {
+                    _aiMlEnabledCache = undefined;
+                    return null;
+                }
+                _aiMlEnabledCache = j.ai_ml_enabled !== false;
                 return _aiMlEnabledCache;
             })
             .catch(function () {
-                return true;
+                _aiMlEnabledCache = undefined;
+                return null;
             });
     }
     window.aiMlEnabled = aiMlEnabled;
     window.aiMlInvalidateFlag = function () {
-        _aiMlEnabledCache = null;
+        _aiMlEnabledCache = undefined;
     };
 
     function aiMlDisabledHtml() {
@@ -139,6 +146,14 @@
         );
     }
     window.aiMlDisabledHtml = aiMlDisabledHtml;
+
+    function aiMlUnknownHtml() {
+        return (
+            '<div class="card-note card-note--with-icon"><i data-lucide="power"></i>' +
+            '<span>Stan modułu AI/ML niezweryfikowany (brak odpowiedzi usługi flag). Operacje zablokowane do czasu potwierdzenia — odśwież widok.</span></div>'
+        );
+    }
+    window.aiMlUnknownHtml = aiMlUnknownHtml;
 
     function renderStats(container) {
         container.innerHTML = loadingHtml();

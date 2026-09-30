@@ -23,7 +23,8 @@ function loadTransfer(overrides = {}) {
             escapeHtml: (s) =>
                 String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'),
             escapeHtmlAttr: (s) => String(s).replace(/"/g, '&quot;'),
-            aiMlEnabled: () => true,
+            // Kontrakt tri-state: Promise<true|false|null> (nigdy bool synchroniczny).
+            aiMlEnabled: () => Promise.resolve(true),
             fetchJson: (...args) => fetchJson(...args),
             showToast: jest.fn(),
             aiUiConfirm: () => Promise.resolve(true),
@@ -99,10 +100,48 @@ describe('aiTransfer', () => {
         expect(host.textContent).toContain('FEATURE_VERSION_MISMATCH');
     });
 
-    it('gate aiMlEnabled OFF renderuje blokadę zamiast panelu', () => {
-        const off = loadTransfer({ aiMlEnabled: () => false });
+    it('gate aiMlEnabled OFF (Promise false) renderuje blokadę zamiast panelu', async () => {
+        const off = loadTransfer({ aiMlEnabled: () => Promise.resolve(false) });
         const h = document.createElement('div');
         off.win.aiRenderTransfer(h);
+        await tick();
         expect(h.querySelector('#ai-tr-file')).toBeNull();
+    });
+
+    it('gate aiMlEnabled UNKNOWN (Promise null) blokuje operacje bez formularza', async () => {
+        const unk = loadTransfer({
+            aiMlEnabled: () => Promise.resolve(null),
+            aiMlUnknownHtml: () => '<div>Stan niezweryfikowany</div>'
+        });
+        const h = document.createElement('div');
+        unk.win.aiRenderTransfer(h);
+        await tick();
+        expect(h.querySelector('#ai-tr-file')).toBeNull();
+        expect(h.querySelector('#ai-tr-export-btn')).toBeNull();
+        expect(h.textContent).toContain('niezweryfikowany');
+    });
+
+    it('gate aiMlEnabled reject blokuje operacje bez formularza', async () => {
+        const unk = loadTransfer({
+            aiMlEnabled: () => Promise.reject(new Error('down')),
+            aiMlUnknownHtml: () => '<div>Stan niezweryfikowany</div>'
+        });
+        const h = document.createElement('div');
+        unk.win.aiRenderTransfer(h);
+        await tick();
+        expect(h.querySelector('#ai-tr-file')).toBeNull();
+        expect(h.textContent).toContain('niezweryfikowany');
+    });
+
+    it('przed rozstrzygnięciem flagi nie ma nic wykonywalnego (loading)', () => {
+        let resolveFlag;
+        const pending = loadTransfer({
+            aiMlEnabled: () => new Promise((res) => (resolveFlag = res))
+        });
+        const h = document.createElement('div');
+        pending.win.aiRenderTransfer(h);
+        expect(h.querySelector('#ai-tr-export-btn')).toBeNull();
+        expect(h.querySelector('#ai-tr-import-btn')).toBeNull();
+        resolveFlag(true);
     });
 });

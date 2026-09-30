@@ -484,13 +484,40 @@
         });
     }
 
+    function disabledHtml() {
+        return typeof window.aiMlDisabledHtml === 'function' ? window.aiMlDisabledHtml() : '';
+    }
+
+    function unknownHtml() {
+        return typeof window.aiMlUnknownHtml === 'function' ? window.aiMlUnknownHtml() : '';
+    }
+
+    // Bramka kill-switcha: aiMlEnabled() zwraca Promise (tri-state true/false/null).
+    // true → panel, false → blokada, null/błąd → UNKNOWN. Nigdy nic wykonywalnego
+    // przed rozstrzygnięciem (loading), nigdy zgadywania ON.
     window.aiRenderTransfer = function (host) {
         if (!host) return;
-        if (typeof window.aiMlEnabled === 'function' && !window.aiMlEnabled()) {
-            host.innerHTML =
-                typeof window.aiMlDisabledHtml === 'function' ? window.aiMlDisabledHtml() : '';
+        if (typeof window.aiMlEnabled === 'function') {
+            host.innerHTML = '<div class="ai-ml-loading">Ładowanie...</div>';
+            window
+                .aiMlEnabled()
+                .then(function (on) {
+                    if (on === true) renderTransferOpen(host);
+                    else {
+                        host.innerHTML = on === false ? disabledHtml() : unknownHtml();
+                        icons(host);
+                    }
+                })
+                .catch(function () {
+                    host.innerHTML = unknownHtml();
+                    icons(host);
+                });
             return;
         }
+        renderTransferOpen(host);
+    };
+
+    function renderTransferOpen(host) {
         host.innerHTML =
             '<h4 class="ai-section-title"><i data-lucide="arrow-left-right"></i> Centrum transferu modeli i danych (.sokml)</h4>' +
             '<div class="ai-transfer-grid">' +
@@ -531,5 +558,5 @@
         wireImport(host, historyHost);
         renderHistory(historyHost);
         icons(host);
-    };
+    }
 })();
