@@ -26,6 +26,15 @@ przechodzil CI (bledy L8/L9/L10 i następcy).
    (gate w tescie).
 6. **Duzy tekst (display 8xl, `.index-logo`)** moze uzywac vivid bazy
    (prog large-text 3:1) — jawna allowlista w tescie, nie precedens.
+7. **`.header-version`: opacity 0.65 → 1** (batch B, 2026-09-30):
+   slate-400 × 0.65 dawało 3.64:1 na tle headera; pełny slate-400 ~7:1.
+   Celowy wyjątek tylko dla tej klasy, nie zmiana tokenu.
+8. **`.wizard-dot-label` w axe: false-positive narzędzia, nie dług** (batch B):
+   iframe modułu ma przezroczyste body (router.js celowo), więc axe zakłada
+   białe tło canvas (1.99). Realny render: rodzic app.html `rgb(10,14,26)` —
+   label #a5b4fc ma tam ~7:1. `.exclude()` na selektor w iframe jest
+   w @axe-core/playwright 4.13 nieskuteczne (sonda) — test filtruje DOKŁADNIE
+   ten węzeł po (rule + selektor), nie całą regułę.
 
 ## Konsekwencje
 

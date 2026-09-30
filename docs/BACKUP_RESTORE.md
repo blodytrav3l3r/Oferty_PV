@@ -29,6 +29,17 @@ npm run restore data/backups/backup_2026-06-30_*.sqlite
 
 Skrypt pyta o potwierdzenie przed nadpisaniem bieżącej bazy.
 
+> **Guardy restore** (`isSqliteFile`/`verifyChecksum`/`integrityCheck`) są
+> importowalne (guard `require.main`) i pokryte regresją
+> `tests/restoreGuards.test.ts` — brak pliku, podmieniony bajt i brak sidecara
+> mają zdefiniowane zachowanie (exit 1 / exit 1 / WARN + kontynuacja).
+> Cel testowy: `RESTORE_DB_PATH=<plik> node scripts/restore-db.js <backup> --yes`.
+>
+> **Drill E2E (P1.3, 2026-09-30):** backup 1,36 GB + SHA-256 + integrity OK;
+> restore na czysty cel + `migrate deploy` (17 migracji, none pending);
+> 14/14 tabel identyczne (m.in. audit_logs 15785, AiFeature 6980);
+> smoke aplikacji OK. RPO = interwał crona hosta; RTO = ręczny restore (minuty).
+
 > **Synchronizacja schematu:** po skopiowaniu pliku `npm run restore` automatycznie wykonuje
 > `npx prisma migrate deploy`, co synchronizuje schemat bazy
 > z aktualnym stanem migracji — tworzy m.in. indeksy deduplikacji telemetrii AI

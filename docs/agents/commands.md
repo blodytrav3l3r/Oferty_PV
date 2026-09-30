@@ -15,7 +15,9 @@
 
 `typecheck`, `typecheck:frontend`, `lint`, `lint:frontend`, `format`, `format:check`, `appname:check`, `collisions:check`, `validate` (pełna: typechecki + linty + appname + licenses + testy + collisions + prices:verify).
 
-Testy: `npm test` (wszystkie z pokryciem), `test:quick`, `test:quick:lite` (bez migracji, pre-push), `test:git-safety`, `test:frontend`, `test:e2e` (Playwright), `test:axe`, `test:alignment`, `test:e2e-appname`, `test:watch`.
+Testy: `npm test` (wszystkie z pokryciem), `test:quick`, `test:quick:lite` (bez migracji, pre-push), `test:git-safety`, `test:frontend`, `test:e2e` (Playwright), `test:axe`, `test:alignment`, `test:e2e-appname`, `test:watch`, `perf:baseline` (initial-load SPA, spawn :3178; `PERF_ONLY=a,b` filtruje strony).
+
+E2E na izolacji: `PLAYWRIGHT_BASE_URL=http://localhost:PORT` (własny spawn z `DATABASE_URL` na plik testowy) — nigdy default :3000 (dev-serwer/prod DB).
 
 ## AI/ML, benchmark, pomiary
 

@@ -163,7 +163,10 @@ Aplikacja S.O.K. — System Ofert i Kalkulacji to pojedyncza aplikacja webowa (m
     - `productionSearchUtils.ts` — narzędzia wyszukiwania produkcji
     - `productionOrderGuard.ts` — guard PZ (blokada usuwania ofert/zamówień/elementów z przypisanymi zleceniami produkcyjnymi)
     - `roleFilter.ts` — filtrowanie po roli użytkownika
-    - `searchCache.ts` — cache wyszukiwania
+    - `searchCache.ts` — cache wyszukiwania (max 100, TTL 30 s; klucze per-user:
+      `production` z `_userId`, offers z namespace `user.id`; mutacje ofert/zamówień
+      invalidują (`invalidateAll` / `invalidateNamespace('production')`), mutacje
+      shares też (`invalidateAll` — grant/revoke zmienia role-where, F-003b))
     - `searchUtils.ts` — narzędzia wyszukiwania
 
 6. **Constants / wersja**
