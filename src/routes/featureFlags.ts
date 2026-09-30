@@ -23,8 +23,10 @@ router.get('/', requireAuth, async (_req, res) => {
             ai_ml_enabled: isAiMlFlagOn(aiMl)
         });
     } catch (e) {
-        logger.warn('FeatureFlags', 'Błąd GET / (ciche flagi domyślne)', String(e));
-        res.json({ import_export_enabled: false, pz_stable_id: true, ai_ml_enabled: true });
+        // P0.2 fail-closed: błąd DB ≠ ON. Zwykłe 200 z domyślnym ai_ml_enabled:true
+        // kłamałoby UI (fetchJson mapuje 503 → {error} → aiMlEnabled null = UNKNOWN).
+        logger.warn('FeatureFlags', 'Błąd GET / (baza niedostępna, fail-closed 503)', String(e));
+        res.status(503).json({ error: 'Flagi niedostępne (błąd bazy)', code: 'FLAGS_UNAVAILABLE' });
     }
 });
 

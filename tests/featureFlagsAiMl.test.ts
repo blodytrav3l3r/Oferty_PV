@@ -83,6 +83,14 @@ describe('feature-flags AI/ML kill-switch', () => {
         expect(res.body.ai_ml_enabled).toBe(false);
     });
 
+    it('GET przy błędzie DB -> 503 FLAGS_UNAVAILABLE (nigdy jawne ON)', async () => {
+        (mockFindUnique as any).mockRejectedValue(new Error('db down'));
+        const res = await request(buildApp()).get('/api/feature-flags');
+        expect(res.status).toBe(503);
+        expect(res.body.code).toBe('FLAGS_UNAVAILABLE');
+        expect(res.body.ai_ml_enabled).toBeUndefined();
+    });
+
     it('PUT non-admin -> 403', async () => {
         userRole.role = 'user';
         flagStore(true);
