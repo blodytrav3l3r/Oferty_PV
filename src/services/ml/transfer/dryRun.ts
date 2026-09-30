@@ -1,11 +1,9 @@
-import prisma from '../../../prismaClient';
-import { logger } from '../../../utils/logger';
 import { TransferError } from './transferErrors';
 import { inspectArchive } from './archiveGate';
 import { verifyGatedPackage } from './manifest';
 import { checkCompatibility, type CompatReport } from './compatibility';
 import { createDryRun, type DryRunRecord } from './dryRunStore';
-import { buildImportTarget } from './importModel';
+import { resolveCurrentImportTarget } from './targetResolver';
 import { logAudit } from '../../auditService';
 
 /**
@@ -51,17 +49,6 @@ function parseModelShape(text: string): ParsedModelShape {
     return json as ParsedModelShape;
 }
 
-function resolveTargetDataset(): Promise<string | null> {
-    // Baseline do porównania fingerprintu: najnowszy run treningowy celu.
-    return prisma.aiTrainingRun
-        .findFirst({ orderBy: { startedAt: 'desc' } })
-        .then((run) => run?.datasetFingerprint ?? null)
-        .catch((e: unknown) => {
-            logger.warn('TransferDryRun', `Brak baseline datasetu: ${String(e)}`);
-            return null;
-        });
-}
-
 export async function runDryRun(buffer: Buffer, userId: string): Promise<DryRunResult> {
     const gated = await inspectArchive(buffer);
     const { manifest, files } = verifyGatedPackage(gated);
@@ -70,7 +57,7 @@ export async function runDryRun(buffer: Buffer, userId: string): Promise<DryRunR
     if (!modelPath) throw new TransferError('MODEL_INVALID', 'Pakiet nie zawiera modelu');
     const shape = parseModelShape(files.get(modelPath)?.toString('utf8') ?? '');
 
-    const target = buildImportTarget(await resolveTargetDataset());
+    const target = await resolveCurrentImportTarget();
     const report: CompatReport = checkCompatibility(manifest, shape, target);
     const manifestBytes = files.get('manifest.json');
     if (!manifestBytes) throw new TransferError('MANIFEST_MISSING', 'Brak manifest.json');

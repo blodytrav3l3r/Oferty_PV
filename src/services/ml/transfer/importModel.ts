@@ -1,19 +1,12 @@
 import crypto from 'crypto';
 import prisma from '../../../prismaClient';
-import { getVersion } from '../../../version';
-import { FEATURE_NAMES, ML_CONSTANTS } from '../../../config/mlConstants';
 import { AcceptanceModel } from '../AcceptanceModel';
 import { AiModelState } from '../aiModelState';
-import { SOKML_AI_SCHEMA_VERSION } from './transferConstants';
 import { TransferError } from './transferErrors';
 import { inspectArchive } from './archiveGate';
 import { verifyGatedPackage, sha256Hex, type SokmlManifest } from './manifest';
-import {
-    checkCompatibility,
-    type CompatReport,
-    type CompatTarget,
-    type ModelArtifactShape
-} from './compatibility';
+import { checkCompatibility, type CompatReport, type ModelArtifactShape } from './compatibility';
+import { resolveCurrentImportTarget } from './targetResolver';
 import { getDryRun } from './dryRunStore';
 import {
     parseRecordsNdjson,
@@ -38,20 +31,6 @@ export interface ImportResult {
     version: string;
     transferId: string;
     report: CompatReport;
-}
-
-/** Cel kompatybilności bieżącej instancji (solver/rules: brak baseline → null). */
-export function buildImportTarget(datasetFingerprint: string | null): CompatTarget {
-    return {
-        sokVersion: getVersion().version,
-        aiSchemaVersion: SOKML_AI_SCHEMA_VERSION,
-        featureVersion: ML_CONSTANTS.FEATURE_VERSION,
-        featureCount: ML_CONSTANTS.FEATURE_COUNT,
-        featureNames: [...FEATURE_NAMES],
-        solverVersion: null,
-        rulesVersion: null,
-        datasetFingerprint
-    };
 }
 
 function newTransferId(): string {
@@ -185,7 +164,8 @@ export async function importPackage(
     const shape = parseModelArtifact(modelText);
 
     // Re-compat (TOCTOU: cel mógł się zmienić między dry-run a importem).
-    const target = buildImportTarget(null);
+    // Ten sam resolver co dry-run — import widzi AKTUALNY baseline celu.
+    const target = await resolveCurrentImportTarget();
     const report = checkCompatibility(manifest, shape, target);
     if (report.status === 'blocked') {
         throw new TransferError('DRY_RUN_NOT_PASSED', 'Kompatybilność zmieniona — powtórz dry-run');
