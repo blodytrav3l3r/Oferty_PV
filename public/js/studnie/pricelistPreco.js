@@ -140,7 +140,7 @@ function renderPrecoRangeTable(title, table, dn, fieldBase) {
         html += `<th scope="col" class="preco-col-group">
             <div class="preco-group-head">
                 <span class="preco-group-prefix">DN</span>
-                <input type="text" class="edit-input preco-group-input" value="${sg}" onchange="updatePrecoGrupaKey(${dn}, '${fieldBase}', decodeURIComponent('${sgJs}'), this.value)" title="Edytuj nazwę grupy" aria-label="Nazwa grupy DN">
+                <input type="text" class="edit-input preco-group-input" value="${sg}" data-csp="$updatePrecoGrupaKey" data-csp-args="${escapeHtmlAttr(JSON.stringify([dn, '${fieldBase}', sgJs, '$value']))}" data-csp-on="change" title="Edytuj nazwę grupy" aria-label="Nazwa grupy DN">
                 <button class="btn-icon btn-icon--danger" data-action="removePrecoGrupaCol" data-dn="${dn}" data-fb="${fieldBase}" data-sg="${sgJs}" title="Usuń grupę" aria-label="Usuń grupę"><i data-lucide="x" class="icon-xs" aria-hidden="true"></i></button>
             </div>
         </th>`;

@@ -657,7 +657,8 @@ function _excelCellInp(_w) {
 }
 
 /* ===== OVERLAY SELECT ===== */
-function _excelOverlaySelectHtml(opts, curVal, onChange, width, disabled) {
+/* onChange -> csp: null albo { name, args } (CSP-B3, bez inline handlerow). */
+function _excelOverlaySelectHtml(opts, curVal, csp, width, disabled) {
     let label = '';
     for (let i = 0; i < opts.length; i++) {
         if (opts[i][0] === curVal) {
@@ -683,16 +684,16 @@ function _excelOverlaySelectHtml(opts, curVal, onChange, width, disabled) {
     const extraClass = disabled ? ' disabled' : '';
     const wrapperEvents = disabled
         ? ''
-        : " onfocus=\"excelCellFocus(this);_excelSelWrapFocus(this)\" onblur=\"excelCellBlur(this)\" onkeydown=\"if(!event.ctrlKey&&(event.key==='Enter'||event.key===' ')){event.preventDefault();var s=this.querySelector('select');if(typeof s.showPicker==='function'){s.showPicker()}else{s.focus();s.click()}}\"";
-    const escOnChange =
-        typeof escapeHtmlAttr === 'function' && onChange
-            ? escapeHtmlAttr(onChange)
-            : (onChange || '').replace(/"/g, '&quot;');
+        : ' data-csp="$excelCellFocus" data-csp-on="focus" data-csp-2="excelCellBlur" data-csp-2-on="blur" data-csp-2-args="["$el"]" data-csp-3="$selectWrapKey" data-csp-3-on="keydown"';
+    // onChange jako trojka data-csp {name, args} (CSP-B3) + synchronizacja labelki.
+    // csp = null -> select bez handlera zmiany (tylko label).
+    const cspAttr =
+        !disabled && csp && csp.name
+            ? ` data-csp="${csp.name}" data-csp-on="change" data-csp-args="${escapeHtmlAttr(JSON.stringify(csp.args || []))}"`
+            : '';
     const selectEvents = disabled
         ? ' disabled'
-        : ' tabindex="-1" onchange="' +
-          escOnChange +
-          ';this.nextElementSibling.textContent=this.options[this.selectedIndex].text"';
+        : ' tabindex="-1"' + cspAttr + ' data-csp-2="$selectLabel" data-csp-2-on="change"';
     return (
         '<div class="excel-sel-wrap' +
         extraClass +

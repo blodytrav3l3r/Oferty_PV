@@ -125,8 +125,7 @@ function showUserSelectionPopup(users, defaultUserId) {
                 border:1px solid ${isDefault ? 'rgba(var(--accent-rgb), 0.5)' : 'var(--border-color)'};
                 border-radius: var(--radius-sm); cursor:pointer; color:var(--text-primary); font:var(--fw-medium) var(--fs-lg) Inter,sans-serif;
                 transition:all 0.15s; text-align:left; width:100%;
-            " onmouseenter="this.style.borderColor='rgba(var(--accent-rgb), 0.5)';this.style.background='rgba(var(--accent-rgb), 0.1)'"
-               onmouseleave="if(!this.classList.contains('selected')){this.style.borderColor='${isDefault ? 'rgba(var(--accent-rgb), 0.5)' : 'var(--border-color)'}';this.style.background='${isDefault ? 'rgba(var(--accent-rgb), 0.15)' : 'var(--bg-subtle)'}'}">
+            " data-csp="$stylePair" data-csp-on="mouseover" data-csp-args="${escapeHtmlAttr(JSON.stringify(['borderColor', 'rgba(var(--accent-rgb), 0.5)', 'background', 'rgba(var(--accent-rgb), 0.1)']))}" data-csp-2="$userBtnLeave" data-csp-2-on="mouseout" data-csp-2-args="${escapeHtmlAttr(JSON.stringify([isDefault ? 'rgba(var(--accent-rgb), 0.5)' : 'var(--border-color)', isDefault ? 'rgba(var(--accent-rgb), 0.15)' : 'var(--bg-subtle)']))}">
                 <span class="fs-3xl">${roleBadge}</span>
                 <div class="flex-1">
                     <div class="fw-bold">${escapeHtml(displayName)}</div>

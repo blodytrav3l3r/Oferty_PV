@@ -152,9 +152,9 @@ function renderOfferItems() {
             if (isOrdered) {
                 checkboxCell = `<td class="text-center" data-csp-stop="1"><input type="checkbox" class="item-order-checkbox" data-uid="${uidAttr}" checked disabled style="cursor:not-allowed;width:16px;height:16px;opacity:0.5" title="Wszystkie sztuki zamówione" aria-label="Wszystkie sztuki zamówione"></td>`;
             } else if (isAuto) {
-                checkboxCell = `<td class="text-center" data-csp-stop="1"><input type="checkbox" class="item-order-checkbox item-order-auto" data-uid="${uidAttr}" ${itemDiamAttr} onchange="updateOrderSelectionCount()" style="cursor:pointer;width:16px;height:16px;opacity:0.7" title="Dodawane automatycznie razem z rurą — odznacz aby pominąć" aria-label="Wybierz pozycję automatyczną"></td>`;
+                checkboxCell = `<td class="text-center" data-csp-stop="1"><input type="checkbox" class="item-order-checkbox item-order-auto" data-uid="${uidAttr}" ${itemDiamAttr} data-csp="updateOrderSelectionCount" data-csp-args="[]" data-csp-on="change" style="cursor:pointer;width:16px;height:16px;opacity:0.7" title="Dodawane automatycznie razem z rurą — odznacz aby pominąć" aria-label="Wybierz pozycję automatyczną"></td>`;
             } else {
-                checkboxCell = `<td class="text-center" data-csp-stop="1"><input type="checkbox" class="item-order-checkbox item-order-pipe cursor-pointer icon-sm" data-uid="${uidAttr}" ${itemDiamAttr} onchange="updateOrderSelectionCount();onPipeCheckboxChange(this)" aria-label="Wybierz pozycję do zamówienia"></td>`;
+                checkboxCell = `<td class="text-center" data-csp-stop="1"><input type="checkbox" class="item-order-checkbox item-order-pipe cursor-pointer icon-sm" data-uid="${uidAttr}" ${itemDiamAttr} data-csp="$orderPipeCheck" data-csp-on="change" aria-label="Wybierz pozycję do zamówienia"></td>`;
             }
 
             let orderCell = '';
@@ -186,17 +186,17 @@ function renderOfferItems() {
           <td class="rury-col-num text-right" ><span class="text-center-block">${fmt(item.unitPrice)}</span></td>
           <td class="text-right qty-cell"><span class="text-center-block">${
               hasLength
-                  ? `<input type="number" class="edit-input w-75-c"  min="0" step="0.1" value="${metersVal}" data-csp="$select" onchange="updateItemMeters(${i},this.value)" title="Metry bieżące"${lockAttr}> m`
+                  ? `<input type="number" class="edit-input w-75-c"  min="0" step="0.1" value="${metersVal}" data-csp-2="$select" data-csp-3="updateItemMeters" data-csp-3-args="${escapeHtmlAttr(JSON.stringify([i, '$value']))}" data-csp-3-on="change" title="Metry bieżące"${lockAttr}> m`
                   : '—'
           }</span></td>
-          <td class="text-right qty-cell"><span class="text-center-block"><input type="number" class="edit-input w-75-c"  min="1" value="${item.quantity}" data-csp="$select" onchange="updateItem(${i},'quantity',this.value)"${lockAttr}> szt.</span></td>
+          <td class="text-right qty-cell"><span class="text-center-block"><input type="number" class="edit-input w-75-c"  min="1" value="${item.quantity}" data-csp-2="$select" data-csp-3="updateItem" data-csp-3-args="${escapeHtmlAttr(JSON.stringify([i, 'quantity', '$value']))}" data-csp-3-on="change"${lockAttr}> szt.</span></td>
           ${orderCell}
-          <td class="text-right qty-cell"><span class="text-center-block"><input type="number" class="edit-input w-75-c"  min="0" max="100" step="0.5" value="${item.discount}" data-csp="$select" onchange="updateItem(${i},'discount',this.value)"${lockAttr}>%</span></td>
+          <td class="text-right qty-cell"><span class="text-center-block"><input type="number" class="edit-input w-75-c"  min="0" max="100" step="0.5" value="${item.discount}" data-csp-2="$select" data-csp-3="updateItem" data-csp-3-args="${escapeHtmlAttr(JSON.stringify([i, 'discount', '$value']))}" data-csp-3-on="change"${lockAttr}>%</span></td>
           <td class="rury-col-num text-right" ><span class="text-center-block">${fmt(unitTotal)}</span></td>
-          <td class="text-right"><span class="text-center-block"><input type="number" class="edit-input w-75-c"  min="0" step="0.01" value="${item.surcharge || 0}" data-csp="$select" onchange="updateItem(${i},'surcharge',this.value)"${lockAttr}></span></td>
+          <td class="text-right"><span class="text-center-block"><input type="number" class="edit-input w-75-c"  min="0" step="0.01" value="${item.surcharge || 0}" data-csp-2="$select" data-csp-3="updateItem" data-csp-3-args="${escapeHtmlAttr(JSON.stringify([i, 'surcharge', '$value']))}" data-csp-3-on="change"${lockAttr}></span></td>
           <td class="rury-col-num" style="text-align:right;color:var(--warn)"><span class="text-center-block">${transportPerUnit > 0 ? fmt(transportPerUnit) : '—'}</span></td>
           <td class="rury-col-num" style="text-align:right;font-weight: var(--fw-semibold)"><span class="text-center-block">${fmt(netto)}</span></td>
-          <td class="text-right"><span class="text-center-block"><input type="text" class="edit-input" style="width:200px;text-align:center" value="${escapeHtmlAttr(item.commercialVersion || '')}" onchange="updateItemText(${i},'commercialVersion',this.value)" placeholder="Notatki"${lockAttr}></span></td>
+          <td class="text-right"><span class="text-center-block"><input type="text" class="edit-input" style="width:200px;text-align:center" value="${escapeHtmlAttr(item.commercialVersion || '')}" data-csp="updateItemText" data-csp-args="${escapeHtmlAttr(JSON.stringify([i, 'commercialVersion', '$value']))}" data-csp-on="change" placeholder="Notatki"${lockAttr}></span></td>
           <td style="text-align:right;white-space:nowrap;">
             <div style="display: inline-flex; align-items: center; gap: 0.5rem; justify-content: center;">
               ${

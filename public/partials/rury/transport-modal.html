@@ -84,10 +84,8 @@
                             color: var(--text-heading);
                         "
                         min="0"
-                        oninput="
-                            if (typeof syncRuryTransportFromModal === 'function')
-                                syncRuryTransportFromModal();
-                        "
+                        data-csp="syncRuryTransportFromModal"
+                        data-csp-on="input"
                     />
                 </div>
                 <div class="form-group" style="flex: 1; margin: 0">
@@ -118,10 +116,8 @@
                         "
                         min="0"
                         step="0.01"
-                        oninput="
-                            if (typeof syncRuryTransportFromModal === 'function')
-                                syncRuryTransportFromModal();
-                        "
+                        data-csp="syncRuryTransportFromModal"
+                        data-csp-on="input"
                     />
                 </div>
             </div>

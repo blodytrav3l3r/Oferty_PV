@@ -157,7 +157,7 @@ function renderOfferSummaryTableTab(transportResult, costPerTrip) {
         `<div class="table-wrap table-wrap-scroll"><table style="width:100%; table-layout:auto;">
       <th scope="col"ead>
         <tr>
-          <th scope="col" style="width:36px; text-align:center; white-space:nowrap;"><input type="checkbox" id="select-all-offer-summary" onchange="toggleAllOfferSummaryForOrder(this.checked)" class="cursor-pointer icon-sm"></th>
+          <th scope="col" style="width:36px; text-align:center; white-space:nowrap;"><input type="checkbox" id="select-all-offer-summary" data-csp="toggleAllOfferSummaryForOrder" data-csp-args="[&quot;$checked&quot;]" data-csp-on="change" class="cursor-pointer icon-sm"></th>
           <th scope="col" style="width:1%; min-width:36px; text-align:center; white-space:nowrap;">Lp.</th>
           <th scope="col" style="min-width:200px; max-width:320px; white-space:nowrap;">Produkt</th>
           <th scope="col" style="width:1%; min-width:100px; text-align:right; white-space:nowrap;">Cena jedn.</th>
@@ -237,7 +237,6 @@ function renderOfferSummaryTableTab(transportResult, costPerTrip) {
         const summDiamRaw = getProductDiameter(item.productId) || 0;
         const summDiamAttr = summDiamRaw > 0 ? `data-diameter="${summDiamRaw}"` : '';
         const summAutoClass = item.autoAdded ? ' offer-summary-auto' : '';
-        const summPipeHandler = item.autoAdded ? '' : ' onPipeCheckboxChange(this);';
         let summaryCheckboxCell;
         let summaryOrderCell;
         if (isOrdered) {
@@ -246,18 +245,18 @@ function renderOfferSummaryTableTab(transportResult, costPerTrip) {
             summaryOrderCell =
                 '<td class="text-center"><span class="order-fully-badge">Zamówione</span></td>';
         } else if (item.autoAdded) {
-            summaryCheckboxCell = `<td class="text-center" data-csp-stop="1"><input type="checkbox" class="offer-summary-checkbox${summAutoClass} cursor-pointer icon-sm" data-uid="${item.uid}" ${summDiamAttr} onchange="updateOfferSummarySelectionCount();${summPipeHandler}" ></td>`;
+            summaryCheckboxCell = `<td class="text-center" data-csp-stop="1"><input type="checkbox" class="offer-summary-checkbox${summAutoClass} cursor-pointer icon-sm" data-uid="${item.uid}" ${summDiamAttr} data-csp="$summaryPipeCheck" data-csp-on="change" data-csp-args="[${item.autoAdded ? 0 : 1}]" ></td>`;
             summaryOrderCell =
                 '<td class="text-center"><span class="order-fully-badge order-fully-badge--auto">Auto</span></td>';
         } else if (remaining > 0) {
-            summaryCheckboxCell = `<td class="text-center" data-csp-stop="1"><input type="checkbox" class="offer-summary-checkbox${summAutoClass} cursor-pointer icon-sm" data-uid="${item.uid}" ${summDiamAttr} onchange="updateOfferSummarySelectionCount();${summPipeHandler}" ></td>`;
+            summaryCheckboxCell = `<td class="text-center" data-csp-stop="1"><input type="checkbox" class="offer-summary-checkbox${summAutoClass} cursor-pointer icon-sm" data-uid="${item.uid}" ${summDiamAttr} data-csp="$summaryPipeCheck" data-csp-on="change" data-csp-args="[${item.autoAdded ? 0 : 1}]" ></td>`;
             const inputId = 'offer-summary-qty-' + item.uid;
             summaryOrderCell = `<td class="text-center text-nowrap" data-csp-stop="1" >
                 <input type="number" id="${inputId}" class="order-partial-qty" value="${remaining}" min="1" max="${remaining}" title="Ilość do zamówienia (pozostało ${remaining} z ${item.quantity})">
                 <span class="order-qty-max">/ ${item.quantity}</span>
             </td>`;
         } else {
-            summaryCheckboxCell = `<td class="text-center" data-csp-stop="1"><input type="checkbox" class="offer-summary-checkbox${summAutoClass} cursor-pointer icon-sm" data-uid="${item.uid}" ${summDiamAttr} onchange="updateOfferSummarySelectionCount();${summPipeHandler}" ></td>`;
+            summaryCheckboxCell = `<td class="text-center" data-csp-stop="1"><input type="checkbox" class="offer-summary-checkbox${summAutoClass} cursor-pointer icon-sm" data-uid="${item.uid}" ${summDiamAttr} data-csp="$summaryPipeCheck" data-csp-on="change" data-csp-args="[${item.autoAdded ? 0 : 1}]" ></td>`;
             summaryOrderCell =
                 '<td class="text-center"><span class="order-qty-all">&mdash;</span></td>';
         }

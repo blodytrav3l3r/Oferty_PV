@@ -284,7 +284,7 @@ describe('drawTransitions → data-prz-id w SVG', () => {
         };
         const out = context.drawTransitions(well, canvas, []);
         expect(out).toContain('data-prz-id="prz-test-1"');
-        expect(out).toContain('data-csp="svgPrzPointerClick"');
+        expect(out).toContain('data-csp-3="svgPrzPointerClick"');
         expect(out).toContain('prz-test-1');
         expect(out).not.toContain('onclick=');
     });

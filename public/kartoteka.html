@@ -312,11 +312,8 @@
                                     id="ka-local-search-input"
                                     class="form-input form-input-sm ka-search-input"
                                     placeholder="Szukaj po numerze oferty/zamówienia, kliencie, NIP, opiekunie, inwestycji, uwagach..."
-                                    oninput="
-                                        window.kartotekaUI &&
-                                            window.kartotekaUI.onSearchInput &&
-                                            window.kartotekaUI.onSearchInput()
-                                    "
+                                    data-csp="$kartotekaSearch"
+                                    data-csp-on="input"
                                 />
                             </div>
 

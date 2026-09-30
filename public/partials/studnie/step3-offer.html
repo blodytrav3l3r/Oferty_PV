@@ -14,13 +14,9 @@
             aria-controls="wizard-summary-content"
             data-csp="toggleCard"
             data-csp-args='["wizard-summary-content", "wizard-summary-icon"]'
-            onkeydown="
-                if (event.target.closest('button')) return;
-                if (event.key === 'Enter' || event.key === ' ') {
-                    event.preventDefault();
-                    toggleCard('wizard-summary-content', 'wizard-summary-icon');
-                }
-            "
+            data-csp-2="$keyToggleCard"
+            data-csp-2-args='["wizard-summary-content", "wizard-summary-icon"]'
+            data-csp-2-on="keydown"
             style="
                 display: flex;
                 align-items: center;
@@ -159,8 +155,10 @@
                         type="text"
                         id="input-well-numer"
                         placeholder="Nr studni"
-                        oninput="updateWellNumer()"
-                        data-csp="$select"
+                        data-csp="updateWellNumer"
+                        data-csp-on="input"
+                        data-csp-2="$select"
+                        data-csp-2-on="focus"
                         style="
                             width: 95px;
                             padding: 0.28rem 0.4rem;
@@ -192,17 +190,14 @@
                         step="0.001"
                         id="input-rzedna-wlazu"
                         placeholder="100.50"
-                        onfocus="this.select()"
-                        onblur="
-                            resolveFieldValue(this);
-                            updateElevations();
-                        "
                         data-csp="$select"
-                        onkeydown="
-                            if (event.key === 'Enter') {
-                                this.blur();
-                            }
-                        "
+                        data-csp-on="focus"
+                        data-csp-2="$resolveElevations"
+                        data-csp-2-on="blur"
+                        data-csp-3="$dom"
+                        data-csp-3-args='["blur", "$el"]'
+                        data-csp-3-on="keydown"
+                        data-csp-3-key="Enter"
                         style="
                             width: 95px;
                             padding: 0.28rem 0.4rem;
@@ -233,17 +228,14 @@
                         step="0.001"
                         id="input-rzedna-dna"
                         placeholder="97.20"
-                        onfocus="this.select()"
-                        onblur="
-                            resolveFieldValue(this);
-                            updateElevations();
-                        "
                         data-csp="$select"
-                        onkeydown="
-                            if (event.key === 'Enter') {
-                                this.blur();
-                            }
-                        "
+                        data-csp-on="focus"
+                        data-csp-2="$resolveElevations"
+                        data-csp-2-on="blur"
+                        data-csp-3="$dom"
+                        data-csp-3-args='["blur", "$el"]'
+                        data-csp-3-on="keydown"
+                        data-csp-3-key="Enter"
                         style="
                             width: 95px;
                             padding: 0.28rem 0.4rem;
@@ -337,16 +329,14 @@
                         step="1"
                         id="input-doplata"
                         placeholder="0"
-                        onblur="
-                            resolveFieldValue(this);
-                            updateDoplata();
-                        "
                         data-csp="$select"
-                        onkeydown="
-                            if (event.key === 'Enter') {
-                                this.blur();
-                            }
-                        "
+                        data-csp-on="focus"
+                        data-csp-2="$resolveDoplata"
+                        data-csp-2-on="blur"
+                        data-csp-3="$dom"
+                        data-csp-3-args='["blur", "$el"]'
+                        data-csp-3-on="keydown"
+                        data-csp-3-key="Enter"
                         style="
                             width: 80px;
                             padding: 0.28rem 0.4rem;
@@ -425,7 +415,9 @@
                             step="0.1"
                             min="0.5"
                             max="10"
-                            onchange="onRedukcjaMinChange(this.value)"
+                            data-csp="onRedukcjaMinChange"
+                            data-csp-args='["$value"]'
+                            data-csp-on="change"
                             style="
                                 width: 3.2rem;
                                 font-size: var(--fs-xs);

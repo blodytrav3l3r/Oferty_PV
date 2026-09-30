@@ -36,7 +36,7 @@ check_in('fill pomija nazwe (colIdx 3)', 'excelCopyPaste.js', r'colIdx\s*[<>]=\s
 # E4: _excelGetVisibleRows przeniesione do excelPasteSeq.js (split bajtowo identyczny)
 check_in('fill pomija wiersze ukryte filtrem', 'excelPasteSeq.js', r'display\s*!==\s*[\'"]none[\'"]')
 check_in('galaz Ctrl+Enter w nawigacji', 'excelCellNavigation.js', r'_excelHandleFillDown')
-check_in('guard !ctrlKey na Enter selecta', 'excelHelpers.js', r'!event\.ctrlKey')
+check_in('guard !ctrlKey na Enter selecta', '../shared/cspActions.js', r'!event\.ctrlKey')
 
 # ===== F2: trwalosc szerokosci kolumn =====
 check_in('_excelColWidths zdefiniowane', 'excelState.js', r'_excelColWidths\s*=\s*\{\}')

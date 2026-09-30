@@ -146,7 +146,7 @@ function renderTransitionTileHTML(item, globalIndex, product, opts = {}) {
     const enableDrag = opts.enableDragDrop === true;
 
     const dragAttrs = enableDrag
-        ? `data-prz-idx="${globalIndex}" draggable="true" ondragstart="handlePrzDragStart(event)" ondragover="handlePrzDragOver(event)" ondrop="handlePrzDrop(event)" ondragend="handlePrzDragEnd(event)"`
+        ? `data-prz-idx="${globalIndex}" draggable="true" data-csp="handlePrzDragStart" data-csp-args="[&quot;$event&quot;]" data-csp-on="dragstart" data-csp="handlePrzDragOver" data-csp-args="[&quot;$event&quot;]" data-csp-on="dragover" data-csp="handlePrzDrop" data-csp-args="[&quot;$event&quot;]" data-csp-on="drop" data-csp="handlePrzDragEnd" data-csp-args="[&quot;$event&quot;]" data-csp-on="dragend"`
         : '';
     const cursorStyle = enableDrag ? 'cursor:grab;' : '';
 
@@ -157,10 +157,7 @@ function renderTransitionTileHTML(item, globalIndex, product, opts = {}) {
        ensurePrzejsciaIds w renderWellPrzejscia), nie globalIndex — odporne
        na re-sort/filtr. */
     const safeTileId = String(tileId).replace(/'/g, '');
-    const cfgHoverOn = assignedCfgIdx >= 0 ? ` window.highlightSvg('cfg', ${assignedCfgIdx});` : '';
-    const cfgHoverOff =
-        assignedCfgIdx >= 0 ? ` window.unhighlightSvg('cfg', ${assignedCfgIdx});` : '';
-    const highlightAttrs = `onmouseenter="this.style.filter='brightness(1.1)'; window.highlightSvg('prz', '${safeTileId}');${cfgHoverOn}" onmouseleave="this.style.filter='brightness(1)'; window.unhighlightSvg('prz', '${safeTileId}');${cfgHoverOff}"`;
+    const highlightAttrs = `data-csp="$tileHover" data-csp-on="mouseover" data-csp-args="${escapeHtmlAttr(JSON.stringify([safeTileId, assignedCfgIdx, 'in']))}" data-csp-2="$tileHover" data-csp-2-on="mouseout" data-csp-2-args="${escapeHtmlAttr(JSON.stringify([safeTileId, assignedCfgIdx, 'out']))}"`;
 
     const dnLabel = typeof dn === 'string' && dn.includes('/') ? dn : 'DN ' + dn;
 

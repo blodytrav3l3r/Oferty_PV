@@ -17,12 +17,24 @@ describe('P0.6 headers matrix', () => {
         expect(res.headers['permissions-policy']).toContain('camera=()');
     });
 
-    it('CSP enforce bez obcych źródeł skryptów', async () => {
+    it('CSP enforce: script-src self + nonce, zero unsafe-inline dla skryptów', async () => {
         const res = await request(app).get('/');
         const csp = String(res.headers['content-security-policy'] || '');
         expect(csp).toContain("script-src 'self'");
+        expect(csp).toMatch(/nonce-[A-Za-z0-9+/=]+/);
+        // script-src-attr bez unsafe-inline (fallback: 'none' — zero handlerów inline).
+        const scriptAttr = /script-src-attr ([^;]*)/.exec(csp)?.[1] ?? '';
+        expect(scriptAttr).not.toContain("'unsafe-inline'");
         expect(csp).not.toMatch(/https?:\/\/(?!self)/);
         expect(csp).toContain("frame-ancestors 'self'");
+    });
+
+    it('CSP enforce: nonce per request (nie statyczny)', async () => {
+        const a = await request(app).get('/');
+        const b = await request(app).get('/');
+        const ca = String(a.headers['content-security-policy'] || '');
+        const cb = String(b.headers['content-security-policy'] || '');
+        expect(ca).not.toBe(cb);
     });
 
     it('CSP Report-Only z nonce per request', async () => {

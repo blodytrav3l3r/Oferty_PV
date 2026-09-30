@@ -209,13 +209,23 @@ app.get('/api/docs.json', (_req, res) => {
 });
 
 /* ===== BEZPIECZEŃSTWO ===== */
+// Nonce MUSI powstać przed helmet (dyrektywa scriptSrc czyta res.locals.cspNonce).
+app.use(cspNonceMiddleware);
 app.use(
     helmet({
         contentSecurityPolicy: {
             directives: {
                 defaultSrc: ["'self'"],
-                scriptSrc: ["'self'", "'unsafe-inline'"],
-                scriptSrcAttr: ["'unsafe-inline'"],
+                // CSP-E: zero unsafe-inline dla skryptów — inline <script> dostają
+                // per-request nonce (injectAppNameScript), handlery wyeliminowane
+                // (dyspozytor data-csp). script-src-attr celowo bez wpisu (fallback
+                // do script-src). style-src zostaje z unsafe-inline (style="..."
+                // nie wykonuje JS — ryzyko szczątkowe, udokumentowane w ADR).
+                scriptSrc: [
+                    "'self'",
+                    (_req: unknown, res: unknown) =>
+                        `'nonce-${(res as { locals?: { cspNonce?: string } }).locals?.cspNonce ?? 'missing'}'`
+                ],
                 styleSrc: ["'self'", "'unsafe-inline'"],
                 imgSrc: ["'self'", 'data:', 'blob:'],
                 connectSrc: ["'self'"],
@@ -241,8 +251,7 @@ app.use(compression());
 // oraz /health i /metrics nie są dotknięte (middleware przepuszcza nie-mutacje).
 app.use(csrfProtection);
 
-/* ===== CSP NONCE + REPORT-ONLY (Faza 1 planu CSP) ===== */
-app.use(cspNonceMiddleware);
+/* ===== CSP REPORT-ONLY (monitoring po enforce, Faza 1 planu CSP) ===== */
 app.use(cspReportOnly);
 
 /* ===== KOMPONENTY POŚREDNICZĄCE (MIDDLEWARE) ===== */

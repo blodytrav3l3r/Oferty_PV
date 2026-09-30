@@ -101,9 +101,9 @@ function renderDiscountPanel() {
             (disc.dennica || 0) +
             '" id="disc-' +
             discountDn +
-            '-dennica" class="discount-input" data-csp="$select" onchange="updateDiscount(\'' +
-            discountDn +
-            "','dennica',this.value)\" aria-label=\"Rabat dennica " +
+            '-dennica" class="discount-input" data-csp="$select" data-csp-2="updateDiscount" data-csp-2-on="change" data-csp-2-args="' +
+            escapeHtmlAttr(JSON.stringify([discountDn, 'dennica', '$value'])) +
+            '" aria-label="Rabat dennica "' +
             dnLabel +
             '"><span class="discount-suffix">%</span></div>';
         html +=
@@ -111,9 +111,9 @@ function renderDiscountPanel() {
             (disc.nadbudowa || 0) +
             '" id="disc-' +
             discountDn +
-            '-nadbudowa" class="discount-input" data-csp="$select" onchange="updateDiscount(\'' +
-            discountDn +
-            "','nadbudowa',this.value)\" aria-label=\"Rabat nadbudowa " +
+            '-nadbudowa" class="discount-input" data-csp="$select" data-csp-2="updateDiscount" data-csp-2-on="change" data-csp-2-args="' +
+            escapeHtmlAttr(JSON.stringify([discountDn, 'nadbudowa', '$value'])) +
+            '" aria-label="Rabat nadbudowa "' +
             dnLabel +
             '"><span class="discount-suffix">%</span></div>';
 
@@ -137,11 +137,9 @@ function renderDiscountPanel() {
                 discountDn +
                 '-dennica' +
                 cls +
-                '" class="discount-input" data-csp="$select" onchange="updateDiscount(\'' +
-                discountDn +
-                "','dennica" +
-                cls +
-                '\',this.value)" aria-label="Rabat dennica ' +
+                '" class="discount-input" data-csp="$select" data-csp-2="updateDiscount" data-csp-2-on="change" data-csp-2-args="' +
+                escapeHtmlAttr(JSON.stringify([discountDn, 'dennica' + cls, '$value'])) +
+                '" aria-label="Rabat dennica ' +
                 cls +
                 ' ' +
                 dnLabel +
@@ -155,11 +153,9 @@ function renderDiscountPanel() {
                 discountDn +
                 '-nadbudowa' +
                 cls +
-                '" class="discount-input" data-csp="$select" onchange="updateDiscount(\'' +
-                discountDn +
-                "','nadbudowa" +
-                cls +
-                '\',this.value)" aria-label="Rabat nadbudowa ' +
+                '" class="discount-input" data-csp="$select" data-csp-2="updateDiscount" data-csp-2-on="change" data-csp-2-args="' +
+                escapeHtmlAttr(JSON.stringify([discountDn, 'nadbudowa' + cls, '$value'])) +
+                '" aria-label="Rabat nadbudowa ' +
                 cls +
                 ' ' +
                 dnLabel +
@@ -194,11 +190,9 @@ function renderDiscountPanel() {
                 discountDn +
                 '-zwienczenie' +
                 cls +
-                '" class="discount-input" data-csp="$select" onchange="updateDiscount(\'' +
-                discountDn +
-                "','zwienczenie" +
-                cls +
-                '\',this.value)" aria-label="Rabat zako\u0144czenie ' +
+                '" class="discount-input" data-csp="$select" data-csp-2="updateDiscount" data-csp-2-on="change" data-csp-2-args="' +
+                escapeHtmlAttr(JSON.stringify([discountDn, 'zwienczenie' + cls, '$value'])) +
+                '" aria-label="Rabat zako\u0144czenie ' +
                 cls +
                 ' ' +
                 dnLabel +
@@ -211,9 +205,9 @@ function renderDiscountPanel() {
                 (disc.preco || 0) +
                 '" id="disc-' +
                 discountDn +
-                '-preco" class="discount-input discount-input--danger" data-csp="$select" onchange="updateDiscount(\'' +
-                discountDn +
-                "','preco',this.value)\" aria-label=\"Rabat PRECO " +
+                '-preco" class="discount-input discount-input--danger" data-csp="$select" data-csp-2="updateDiscount" data-csp-2-on="change" data-csp-2-args="' +
+                escapeHtmlAttr(JSON.stringify([discountDn, 'preco', '$value'])) +
+                '" aria-label="Rabat PRECO "' +
                 dnLabel +
                 '"><span class="discount-suffix discount-suffix--danger">%</span></div>';
         }
@@ -265,7 +259,7 @@ function renderDiscountPanel() {
         html +=
             '<div class="discount-grid"><span class="discount-label discount-label--blue">Globalny Rabat</span><div class="discount-input-wrap"><input type="number" min="0" step="1" value="' +
             pehdDiscountValue +
-            '" id="disc-global-pehd" class="discount-input discount-input--blue" data-csp="$select" onchange="updateGlobalPehdDiscount(this.value)" aria-label="Globalny rabat PEHD"><span class="discount-suffix discount-suffix--blue">%</span></div></div>';
+            '" id="disc-global-pehd" class="discount-input discount-input--blue" data-csp-2="$select" data-csp-3="updateGlobalPehdDiscount" data-csp-3-args="[&quot;$value&quot;]" data-csp-3-on="change" aria-label="Globalny rabat PEHD"><span class="discount-suffix discount-suffix--blue">%</span></div></div>';
         html += '</div>';
     }
 
@@ -287,14 +281,14 @@ function renderDiscountPanel() {
             html +=
                 '<span class="discount-label discount-label--purple">Wewn\u0119trzne</span><div class="discount-input-wrap"><input type="number" min="0" step="0.01" value="' +
                 malWCena +
-                '" id="disc-mal-wew-cena" class="discount-input discount-input--purple" data-csp="$select" onchange="updateGlobalPaintingCost(\'malowanieWewCena\', this.value)" aria-label="Koszt malowania wewn\u0119trznego"><span class="discount-suffix discount-suffix--purple">z\u0142</span></div>';
+                '" id="disc-mal-wew-cena" class="discount-input discount-input--purple" data-csp-2="$select" data-csp-3="updateGlobalPaintingCost" data-csp-3-args="[&quot;malowanieWewCena&quot;, &quot;$value&quot;]" data-csp-3-on="change" aria-label="Koszt malowania wewn\u0119trznego"><span class="discount-suffix discount-suffix--purple">z\u0142</span></div>';
         }
 
         if (anyMalowanieZ) {
             html +=
                 '<span class="discount-label discount-label--purple">Zewn\u0119trzne</span><div class="discount-input-wrap"><input type="number" min="0" step="0.01" value="' +
                 malZCena +
-                '" id="disc-mal-zew-cena" class="discount-input discount-input--purple" data-csp="$select" onchange="updateGlobalPaintingCost(\'malowanieZewCena\', this.value)" aria-label="Koszt malowania zewn\u0119trznego"><span class="discount-suffix discount-suffix--purple">z\u0142</span></div>';
+                '" id="disc-mal-zew-cena" class="discount-input discount-input--purple" data-csp-2="$select" data-csp-3="updateGlobalPaintingCost" data-csp-3-args="[&quot;malowanieZewCena&quot;, &quot;$value&quot;]" data-csp-3-on="change" aria-label="Koszt malowania zewn\u0119trznego"><span class="discount-suffix discount-suffix--purple">z\u0142</span></div>';
         }
 
         html += '</div></div>';

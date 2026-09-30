@@ -545,9 +545,11 @@ describe('E5.5 gate: okablowanie bez zmian zachowania', () => {
         }
     });
 
-    it('CSP enforce bez zmian (legacy unsafe-inline celowo, zero obcych domen)', () => {
+    it('CSP enforce: nonce per-request, zero unsafe-inline dla skryptów', () => {
         const appSrc = readSrc('src/app.ts');
-        expect(appSrc).toContain(`scriptSrc: ["'self'", "'unsafe-inline'"]`);
+        expect(appSrc).toContain('cspNonceMiddleware');
+        expect(appSrc).toContain('nonce-');
+        expect(appSrc).not.toContain(`scriptSrc: ["'self'", "'unsafe-inline'"]`);
         expect(appSrc).toContain(`frameAncestors: ["'self'"]`);
         const helmetBlock = appSrc.slice(
             appSrc.indexOf('helmet({'),

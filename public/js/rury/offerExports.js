@@ -139,7 +139,7 @@ function exportOfferPDF(id) {
     .letterhead-header { width: 100%; object-fit: contain; margin-bottom: 20px; display: block; }
     .letterhead-footer { width: 100%; object-fit: contain; margin-top: 20px; display: block; page-break-inside: avoid; }
   </style></head><body>
-  <img src="${window.location.origin}/images/letterhead-header.png" class="letterhead-header" onload="window._hLoaded=true" onerror="window._hLoaded=true" />
+  <img src="${window.location.origin}/images/letterhead-header.png" class="letterhead-header" data-print-img="h" />
   <div class="header-line" style="margin-top:20px;">
     <h1>OFERTA HANDLOWA</h1>
     <div style="display:flex;justify-content:space-between">
@@ -192,10 +192,24 @@ function exportOfferPDF(id) {
     <strong>Warunki płatności:</strong> ${escapeHtml(offer.paymentTerms || 'Do uzgodnienia lub według indywidualnych warunków handlowych.')}<br>
     <strong>Data ważności oferty:</strong> ${escapeHtml(offer.validity || '7 dni')}
   </div>
-  <img src="${window.location.origin}/images/letterhead-footer.png" class="letterhead-footer" onload="window._fLoaded=true" onerror="window._fLoaded=true" />
+  <img src="${window.location.origin}/images/letterhead-footer.png" class="letterhead-footer" data-print-img="f" />
   <div class="footer">Oferta wygenerowana automatycznie • ${escapeHtml(window.APP_NAME || 'S.O.K.')}</div>
   </body></html>`);
     printWin.document.close();
+    // CSP-B3: ladowanie obrazow bez onload/onerror (blokowane w enforce).
+    try {
+        const mark = (key) => {
+            printWin['_' + key + 'Loaded'] = true;
+        };
+        printWin.document.querySelectorAll('img[data-print-img]').forEach((img) => {
+            const key = img.getAttribute('data-print-img');
+            if (img.complete && img.naturalWidth > 0) mark(key);
+            else {
+                img.addEventListener('load', () => mark(key));
+                img.addEventListener('error', () => mark(key));
+            }
+        });
+    } catch (_e) {}
     let rounds = 0;
     const checkInterval = setInterval(() => {
         rounds++;
@@ -334,9 +348,9 @@ function renderDiscountModalItems() {
         </td>
         <td style="padding:0.4rem; text-align:center; vertical-align:middle;">
           <input type="number" step="0.5" min="0" max="100" value="${d}" 
-            data-csp="$select"
-            oninput="updateTempDiscount(${index}, this)"
-            onchange="checkGasketDiscount(${index}, this)"
+            data-csp-2="$select"
+            data-csp-3="updateTempDiscount" data-csp-3-args="${escapeHtmlAttr(JSON.stringify([index, '$el']))}" data-csp-3-on="input"
+            data-csp-4="checkGasketDiscount" data-csp-4-args="${escapeHtmlAttr(JSON.stringify([index, '$el']))}" data-csp-4-on="change"
             style="width:65px; padding:0.3rem; text-align:center; border:1px solid var(--border); border-radius: var(--radius-2xs); font-weight: var(--fw-bold); color:var(--accent-text); background:var(--bg-input);">
           ${warningText}
         </td>

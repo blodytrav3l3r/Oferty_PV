@@ -40,14 +40,14 @@ function renderPrzejsciaDetailsTable(_existingData) {
             <td>
                 ${
                     isCustom
-                        ? `<input type="text" class="form-input fs-sm-024" value="${escapeHtmlAttr(row.rodzaj || '')}"  data-field="rodzaj" data-source="${row.source}" data-idx="${row._idx}" onchange="_syncCustomRow(this)" />`
+                        ? `<input type="text" class="form-input fs-sm-024" value="${escapeHtmlAttr(row.rodzaj || '')}"  data-field="rodzaj" data-source="${row.source}" data-idx="${row._idx}" data-csp="_syncCustomRow" data-csp-args="[&quot;$el&quot;]" data-csp-on="change" />`
                         : `<span class="fw-600">${escapeHtml(row.rodzaj || '\u2014')}</span>`
                 }
             </td>
-            <td><input type="text" class="form-input fs-sm-024" value="${escapeHtmlAttr(row.dnOd || '')}"  data-field="dnOd" data-source="${row.source}" data-idx="${row._idx}" onchange="_syncCustomRow(this)" /></td>
-            <td><input type="text" class="form-input fs-sm-024" value="${escapeHtmlAttr(row.dnDo || '')}"  data-field="dnDo" data-source="${row.source}" data-idx="${row._idx}" onchange="_syncCustomRow(this)" /></td>
-            <td><input type="number" class="form-input fs-sm-024" value="${escapeHtmlAttr(row.ilosc || '')}"  data-field="ilosc" data-source="${row.source}" data-idx="${row._idx}" onchange="_syncCustomRow(this)" /></td>
-            <td><input type="text" class="form-input fs-sm-024" value="${escapeHtmlAttr(row.uwagi || '')}"  data-field="uwagi" data-source="${row.source}" data-idx="${row._idx}" onchange="_syncCustomRow(this)" /></td>
+            <td><input type="text" class="form-input fs-sm-024" value="${escapeHtmlAttr(row.dnOd || '')}"  data-field="dnOd" data-source="${row.source}" data-idx="${row._idx}" data-csp="_syncCustomRow" data-csp-args="[&quot;$el&quot;]" data-csp-on="change" /></td>
+            <td><input type="text" class="form-input fs-sm-024" value="${escapeHtmlAttr(row.dnDo || '')}"  data-field="dnDo" data-source="${row.source}" data-idx="${row._idx}" data-csp="_syncCustomRow" data-csp-args="[&quot;$el&quot;]" data-csp-on="change" /></td>
+            <td><input type="number" class="form-input fs-sm-024" value="${escapeHtmlAttr(row.ilosc || '')}"  data-field="ilosc" data-source="${row.source}" data-idx="${row._idx}" data-csp="_syncCustomRow" data-csp-args="[&quot;$el&quot;]" data-csp-on="change" /></td>
+            <td><input type="text" class="form-input fs-sm-024" value="${escapeHtmlAttr(row.uwagi || '')}"  data-field="uwagi" data-source="${row.source}" data-idx="${row._idx}" data-csp="_syncCustomRow" data-csp-args="[&quot;$el&quot;]" data-csp-on="change" /></td>
             <td>
                 <button type="button" class="form-input" value="${row.czyPrzejscie === 'NIE' ? 'NIE' : 'TAK'}" data-field="czyPrzejscie" data-source="${row.source}" data-idx="${row._idx}" data-csp="_toggleCzyPrzejscie" data-csp-args="[&quot;$el&quot;]" style="width:100%;font-size: var(--fs-lg);padding:0.55rem 0.8rem;box-sizing:border-box;font-weight:var(--fw-bold);cursor:pointer;${row.czyPrzejscie === 'NIE' ? 'color:var(--danger-hover);background:rgba(var(--danger-rgb), 0.1);border:1px solid rgba(var(--danger-rgb), 0.3);' : 'color:var(--success-hover);background:rgba(var(--success-rgb), 0.1);border:1px solid rgba(var(--success-rgb), 0.3);'}">${row.czyPrzejscie === 'NIE' ? 'NIE' : 'TAK'}</button>
             </td>

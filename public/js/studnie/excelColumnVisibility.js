@@ -65,9 +65,9 @@ function _excelToggleColumnPopup() {
         h += '<input type="checkbox"';
         if (!hidden) h += ' checked';
         h +=
-            ' onchange="_excelOnColumnToggle(\'' +
-            col.id.replace(/'/g, "\\'") +
-            '\',this.checked)" style="accent-color:var(--accent2);cursor:pointer;" />';
+            ' data-csp="_excelOnColumnToggle" data-csp-on="change" data-csp-args="' +
+            escapeHtmlAttr(JSON.stringify([col.id, '$checked'])) +
+            '" style="accent-color:var(--accent2);cursor:pointer;" />';
         h +=
             escapeHtml(colName) +
             (detail
@@ -138,9 +138,9 @@ function _excelToggleColumnPopup() {
             html += '<input type="checkbox"';
             if (allVis) html += ' checked';
             html +=
-                ' onchange="_excelOnDnSelectAll(\'' +
-                col.id.replace(/'/g, "\\'") +
-                '\',this.checked)" style="accent-color:var(--accent2);cursor:pointer;width:10px;height:10px;" />';
+                ' data-csp="_excelOnDnSelectAll" data-csp-on="change" data-csp-args="' +
+                escapeHtmlAttr(JSON.stringify([col.id, '$checked'])) +
+                '" style="accent-color:var(--accent2);cursor:pointer;width:10px;height:10px;" />';
             html += 'Wszystkie</label>';
             html += '</div>';
         });
@@ -182,18 +182,15 @@ function _excelToggleColumnPopup() {
                             return !_excelIsColumnHidden(id);
                         });
                         const cellIndet = !cellAllVis && cellSomeVis;
-                        const escapedIds = cellIds.map(function (id) {
-                            return id.replace(/'/g, "\\'");
-                        });
                         html +=
                             '<label style="display:inline-flex;align-items:center;gap:0.2rem;margin-right:0.2rem;font-size: var(--fs-3xs);color:var(--excel-text-dim);cursor:pointer;white-space:nowrap;">';
                         html +=
                             '<input type="checkbox"' +
                             (cellAllVis ? ' checked' : '') +
                             (cellIndet ? ' data-indeterminate="true"' : '') +
-                            ' onchange="_excelOnCellToggleAll([\'' +
-                            escapedIds.join("','") +
-                            '\'],this.checked)" style="accent-color:var(--accent2);cursor:pointer;width:8px;height:8px;" />';
+                            ' data-csp="_excelOnCellToggleAll" data-csp-on="change" data-csp-args="' +
+                            escapeHtmlAttr(JSON.stringify([cellIds, '$checked'])) +
+                            '" style="accent-color:var(--accent2);cursor:pointer;width:8px;height:8px;" />';
                         html += '<span style="color:var(--excel-text-faint);">wsz.</span></label>';
                     }
                     cols.forEach(function (c) {

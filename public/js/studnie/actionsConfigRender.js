@@ -161,8 +161,7 @@ function renderWellConfig() {
 
         // Pelne tlo koloru typu + fg z pary AA (typeBadge) — CSS dziedziczy.
         const tileMod = isPlaceholder ? ' config-tile--placeholder' : '';
-        html += `<div data-cfg-idx="${index}" class="config-tile${tileMod}" draggable="true" ondragstart="handleCfgDragStart(event)" ondragover="handleCfgDragOver(event)" ondrop="handleCfgDrop(event)" ondragend="handleCfgDragEnd(event)" style="--tile-accent:${badge.bg};--tile-fg:${badge.fg};"
-                      onmouseenter="if(!${isPlaceholder}){window.highlightSvg('cfg', ${index})}" onmouseleave="if(!${isPlaceholder}){window.unhighlightSvg('cfg', ${index})}">
+        html += `<div data-cfg-idx="${index}" class="config-tile${tileMod}" draggable="true" data-csp="handleCfgDragStart" data-csp-args="[&quot;$event&quot;]" data-csp-on="dragstart" data-csp-2="handleCfgDragOver" data-csp-2-args="[&quot;$event&quot;]" data-csp-2-on="dragover" data-csp-3="handleCfgDrop" data-csp-3-args="[&quot;$event&quot;]" data-csp-3-on="drop" data-csp-4="handleCfgDragEnd" data-csp-4-args="[&quot;$event&quot;]" data-csp-4-on="dragend" style="--tile-accent:${badge.bg};--tile-fg:${badge.fg};"${isPlaceholder ? '' : ` data-csp-5="highlightSvg" data-csp-5-on="mouseover" data-csp-5-args="${escapeHtmlAttr(JSON.stringify(['cfg', index]))}" data-csp-6="unhighlightSvg" data-csp-6-on="mouseout" data-csp-6-args="${escapeHtmlAttr(JSON.stringify(['cfg', index]))}"`}>
           <div class="cfg-row-main">
 
             <div class="cfg-col-left">

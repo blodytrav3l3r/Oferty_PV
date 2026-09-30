@@ -19,7 +19,7 @@ function toggleSubUsersList() {
                 .map(
                     (u) => `
                         <label class="sub-user-checkbox">
-                            <input type="checkbox" value="${escapeHtmlAttr(u.id)}" ${selectedSubUsers.includes(u.id) ? 'checked' : ''} onchange="updateSubUsers(this)">
+                            <input type="checkbox" value="${escapeHtmlAttr(u.id)}" ${selectedSubUsers.includes(u.id) ? 'checked' : ''} data-csp="updateSubUsers" data-csp-args="[&quot;$el&quot;]" data-csp-on="change">
                             ${u.firstName && u.lastName ? escapeHtml(u.firstName + ' ' + u.lastName) : escapeHtml(u.username)}
                         </label>
                     `

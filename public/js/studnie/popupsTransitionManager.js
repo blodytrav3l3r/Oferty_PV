@@ -80,7 +80,7 @@ ${[...allMaterials]
             <label class="tm-filter-label" for="tm-filter-search"><i data-lucide="search" aria-hidden="true"></i> Szukaj</label>
             <div class="tm-search-wrap">
                <i data-lucide="search" aria-hidden="true"></i>
-                <input type="text" id="tm-filter-search" class="tm-search-input" placeholder="Nazwa, materiał, DN..." maxlength="30" oninput="tmApplyFiltersDebounced(); window.tmToggleSearchClear && window.tmToggleSearchClear()" autocomplete="off">
+                <input type="text" id="tm-filter-search" class="tm-search-input" placeholder="Nazwa, materiał, DN..." maxlength="30" data-csp="$tmSearch" data-csp-on="input" autocomplete="off">
                <button type="button" id="tm-search-clear" class="tm-search-clear" aria-label="Wyczyść wyszukiwanie" data-csp="$clearTmSearch"><i data-lucide="x" class="icon-xxs" aria-hidden="true"></i></button>
             </div>
          </div>
@@ -100,7 +100,7 @@ ${[...allDNs]
       </div>
       <div class="tm-toolbar">
          <label class="tm-toolbar-check">
-            <input type="checkbox" id="tm-select-all" onchange="tmToggleSelectAll()">
+            <input type="checkbox" id="tm-select-all" data-csp="tmToggleSelectAll" data-csp-args="[]" data-csp-on="change">
             <span>Zaznacz wszystko</span>
          </label>
          <span class="tm-toolbar-sep">|</span>
@@ -333,7 +333,7 @@ function _tmRenderTableImmediate() {
         html += `
         <div class="${wellCardClass}">
           <div class="tm-well-head">
-            <input type="checkbox" ${wellAllSel ? 'checked' : ''} onchange="tmToggleWell(${w.wellIndex}, this.checked)" ${wellLocked ? 'disabled' : ''} aria-label="Zaznacz wszystkie przejścia studni ${escapeHtmlAttr(w.wellName)}">
+            <input type="checkbox" ${wellAllSel ? 'checked' : ''} data-csp="tmToggleWell" data-csp-args="${escapeHtmlAttr(JSON.stringify([w.wellIndex, '$checked']))}" data-csp-on="change" ${wellLocked ? 'disabled' : ''} aria-label="Zaznacz wszystkie przejścia studni ${escapeHtmlAttr(w.wellName)}">
             <div style="flex:1; display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap;">
               <span class="tm-well-name">${escapeHtml(w.wellName)}</span>
               ${wellLocked ? '<span class="tm-well-lock"><i data-lucide="lock" aria-hidden="true"></i>Zablokowana</span>' : ''}

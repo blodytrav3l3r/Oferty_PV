@@ -133,7 +133,7 @@ function renderInlinePrzejsciaApp(containerId) {
         <div style="padding:0.4rem 0;">
             <div class="flex-space-between">
                 <div style="font-size: 0.52rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.35px; font-weight: var(--fw-semibold); opacity:0.9;">Rodzaj materiału</div>
-                <button data-action="openPrzejsciaVisibilityPopup" data-container="${containerId || ''}" style="background:rgba(var(--accent-rgb), 0.1); border:1px solid rgba(var(--accent-rgb), 0.3); color:var(--accent-text); font-size: var(--fs-2xs); font-weight: var(--fw-semibold); padding:0.15rem 0.5rem; border-radius: var(--radius-2xs); cursor:pointer; transition:all 0.15s;" onmouseenter="this.style.background='rgba(var(--accent-rgb), 0.2)';this.style.borderColor='rgba(var(--accent-rgb), 0.5)'" onmouseleave="this.style.background='rgba(var(--accent-rgb), 0.1)';this.style.borderColor='rgba(var(--accent-rgb), 0.3)'">${visibilityBtnLabel}</button>
+                <button data-action="openPrzejsciaVisibilityPopup" data-container="${containerId || ''}" style="background:rgba(var(--accent-rgb), 0.1); border:1px solid rgba(var(--accent-rgb), 0.3); color:var(--accent-text); font-size: var(--fs-2xs); font-weight: var(--fw-semibold); padding:0.15rem 0.5rem; border-radius: var(--radius-2xs); cursor:pointer; transition:all 0.15s;" data-csp="$stylePair" data-csp-on="mouseover" data-csp-args="[&quot;background&quot;, &quot;rgba(var(--accent-rgb), 0.2)&quot;, &quot;borderColor&quot;, &quot;rgba(var(--accent-rgb), 0.5)&quot;]" data-csp-2="$stylePair" data-csp-2-on="mouseout" data-csp-2-args="[&quot;background&quot;, &quot;rgba(var(--accent-rgb), 0.1)&quot;, &quot;borderColor&quot;, &quot;rgba(var(--accent-rgb), 0.3)&quot;]">${visibilityBtnLabel}</button>
             </div>
             <div id="przejscia-type-scroll" style="max-height:140px; overflow-y:auto; padding-right:0.2rem; scrollbar-width:thin; scrollbar-color:rgba(var(--accent-rgb), 0.5) transparent;">
                 <div class="grid-auto-120">
@@ -146,8 +146,7 @@ function renderInlinePrzejsciaApp(containerId) {
                                     background:${isActive ? 'rgba(var(--accent-rgb), 0.2)' : 'var(--bg-secondary)'};
                                     border:1px solid ${isActive ? 'rgba(var(--accent-rgb), 0.5)' : 'var(--border)'};
                                     ${isActive ? 'box-shadow:0 0 8px rgba(var(--accent-rgb), 0.15);' : ''}"
-                             onmouseenter="if(!${isActive})this.style.background='rgba(var(--accent-rgb), 0.1)';this.style.borderColor='rgba(var(--accent-rgb), 0.3)'"
-                             onmouseleave="if(!${isActive})this.style.background='var(--bg-secondary)';this.style.borderColor='var(--border)'"
+                             ${isActive ? '' : `data-csp="$stylePair" data-csp-on="mouseover" data-csp-args="${escapeHtmlAttr(JSON.stringify(['background', 'rgba(var(--accent-rgb), 0.1)', 'borderColor', 'rgba(var(--accent-rgb), 0.3)']))}" data-csp-2="$stylePair" data-csp-2-on="mouseout" data-csp-2-args="${escapeHtmlAttr(JSON.stringify(['background', 'var(--bg-secondary)', 'borderColor', 'var(--border)']))}"`}
                              title="${escapeHtmlAttr(t)}">
                               <div class="${isActive ? 'color-accent' : ''}" style="font-size: var(--fs-xs); font-weight: var(--fw-bold); text-align:center; line-height:1.25; word-break:break-word; overflow-wrap:anywhere;">${escapeHtml(t)}</div>
                         </div>`;
@@ -172,8 +171,7 @@ function renderInlinePrzejsciaApp(containerId) {
                                 background:${isActive ? 'rgba(var(--accent-rgb), 0.2)' : 'var(--bg-secondary)'};
                                 border:1px solid ${isActive ? 'rgba(var(--accent-rgb), 0.5)' : 'var(--border)'};
                                 ${isActive ? 'box-shadow:0 0 10px rgba(var(--accent-rgb), 0.3);' : ''}"
-                         onmouseenter="if(!${isActive}){this.style.background='rgba(var(--accent-rgb), 0.1)';this.style.borderColor='rgba(var(--accent-rgb), 0.3)'}"
-                         onmouseleave="if(!${isActive}){this.style.background='var(--bg-secondary)';this.style.borderColor='var(--border)'}"
+                         ${isActive ? '' : `data-csp="$stylePair" data-csp-on="mouseover" data-csp-args="${escapeHtmlAttr(JSON.stringify(['background', 'rgba(var(--accent-rgb), 0.1)', 'borderColor', 'rgba(var(--accent-rgb), 0.3)']))}" data-csp-2="$stylePair" data-csp-2-on="mouseout" data-csp-2-args="${escapeHtmlAttr(JSON.stringify(['background', 'var(--bg-secondary)', 'borderColor', 'var(--border)']))}"`}
                          data-action="inlineSetDN" data-id="${escapeHtmlAttr(p.id)}" data-container="${escapeHtmlAttr(containerId || '')}">
                           <div class="${isActive ? 'color-accent' : ''}" style="font-size: var(--fs-xs); font-weight: var(--fw-extrabold); text-align:center; line-height:1.25; letter-spacing:0.3px; overflow-wrap:anywhere;">${dnLabel}</div>
                     </div>
@@ -195,7 +193,7 @@ function renderInlinePrzejsciaApp(containerId) {
                 <div class="wt-add-header">Rzędna [m]</div>
                 <div class="wt-add-body">
                     <input type="text" inputmode="decimal" class="form-input" id="inl-rzedna-${containerId || 'main'}" step="0.001"
-                           data-csp="$select" onkeydown="if(event.key==='Enter') window.inlineFinish('${containerId || 'main'}', '${containerId || ''}')"
+                           data-csp-2="$select" data-csp-3="inlineFinish" data-csp-3-args="${escapeHtmlAttr(JSON.stringify([containerId || 'main', containerId || '']))}" data-csp-3-on="keydown" data-csp-3-key="Enter" data-csp-3-key="Enter"
                            value="${well && well.rzednaDna !== null && well.rzednaDna !== undefined ? parseFloat(well.rzednaDna).toFixed(3) : ''}"
                            placeholder="—">
                 </div>
@@ -203,19 +201,19 @@ function renderInlinePrzejsciaApp(containerId) {
             <div class="wt-add-cell">
                 <div class="wt-add-header">Kąt [°]</div>
                 <div class="wt-add-body">
-                    <input type="number" class="form-input color-link" id="inl-angle-${containerId || 'main'}" value="0" min="0" max="360" data-csp="$select" oninput="window.inlineUpdateAngles('${containerId || 'main'}')" onkeydown="if(event.key==='Enter') window.inlineFinish('${containerId || 'main'}', '${containerId || ''}')">
+                    <input type="number" class="form-input color-link" id="inl-angle-${containerId || 'main'}" value="0" min="0" max="360" data-csp-2="$select" data-csp-3="inlineUpdateAngles" data-csp-3-args="${escapeHtmlAttr(JSON.stringify([containerId || 'main']))}" data-csp-3-on="input" data-csp-4="inlineFinish" data-csp-4-args="${escapeHtmlAttr(JSON.stringify([containerId || 'main', containerId || '']))}" data-csp-4-on="keydown" data-csp-4-key="Enter" data-csp-4-key="Enter">
                 </div>
             </div>
             <div class="wt-add-cell" title="Spadek w kinecie [%]">
                 <div class="wt-add-header">Spadek kin. [%]</div>
                 <div class="wt-add-body">
-                    <input type="number" class="form-input" id="inl-spadek-kineta-${containerId || 'main'}" step="1" data-csp="$select" onkeydown="if(event.key==='Enter') window.inlineFinish('${containerId || 'main'}', '${containerId || ''}')" placeholder="—">
+                    <input type="number" class="form-input" id="inl-spadek-kineta-${containerId || 'main'}" step="1" data-csp-2="$select" data-csp-3="inlineFinish" data-csp-3-args="${escapeHtmlAttr(JSON.stringify([containerId || 'main', containerId || '']))}" data-csp-3-on="keydown" data-csp-3-key="Enter" data-csp-3-key="Enter" placeholder="—">
                 </div>
             </div>
             <div class="wt-add-cell" title="Spadek w mufie [%]">
                 <div class="wt-add-header">Spadek mufy [%]</div>
                 <div class="wt-add-body">
-                    <input type="number" class="form-input" id="inl-spadek-mufa-${containerId || 'main'}" step="1" data-csp="$select" onkeydown="if(event.key==='Enter') window.inlineFinish('${containerId || 'main'}', '${containerId || ''}')" placeholder="—">
+                    <input type="number" class="form-input" id="inl-spadek-mufa-${containerId || 'main'}" step="1" data-csp-2="$select" data-csp-3="inlineFinish" data-csp-3-args="${escapeHtmlAttr(JSON.stringify([containerId || 'main', containerId || '']))}" data-csp-3-on="keydown" data-csp-3-key="Enter" data-csp-3-key="Enter" placeholder="—">
                 </div>
             </div>
             <div class="wt-add-cell" title="Kąt wykonania">
@@ -450,7 +448,7 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
                 const inpType = 'text';
                 const inpMode = ' inputmode="decimal"';
 
-                element.innerHTML = `<input type="${inpType}"${inpMode} placeholder="${escapeHtmlAttr(String(val))}" value="${escapeHtmlAttr(String(val))}" style="width:100%; min-width:0; max-width:100%; height:30px; margin:0; box-sizing:border-box; background: var(--bg-tertiary); color: var(--text-primary); border:1px solid var(--accent); border-radius: var(--radius-xs); font-size: var(--fs-base); font-weight: var(--fw-bold); text-align:center; padding:0 0.25rem; outline:none;" data-csp="$select" onfocus="this.select()" onblur="window.saveQuickEdit(${index}, '${field}', this.value, this)" onkeydown="if(event.key==='Enter') this.blur();">`;
+                element.innerHTML = `<input type="${inpType}"${inpMode} placeholder="${escapeHtmlAttr(String(val))}" value="${escapeHtmlAttr(String(val))}" style="width:100%; min-width:0; max-width:100%; height:30px; margin:0; box-sizing:border-box; background: var(--bg-tertiary); color: var(--text-primary); border:1px solid var(--accent); border-radius: var(--radius-xs); font-size: var(--fs-base); font-weight: var(--fw-bold); text-align:center; padding:0 0.25rem; outline:none;" data-csp-2="$select" data-csp-3="$select" data-csp-3-on="focus" data-csp-4="saveQuickEdit" data-csp-4-args="${escapeHtmlAttr(JSON.stringify([index, field, '$value', '$el']))}" data-csp-4-on="blur" data-csp-5="$dom" data-csp-5-args="["blur", "$el"]" data-csp-5-on="keydown" data-csp-5-key="Enter">`;
                 const inp = element.querySelector('input');
                 inp.focus();
                 try {
@@ -996,19 +994,19 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
               <div class="wt-edit-form">
                 <div class="form-group m-0">
                   <label class="fs-3xs-muted-block" for="edit-rzedna-${globalIndex}">Rzędna [m]</label>
-                  <input type="text" inputmode="decimal" class="form-input fs-base-rc" id="edit-rzedna-${globalIndex}" step="0.001" value="${editPrzejscieState.rzedna}" placeholder="142.500" onchange="window.syncEditState()" onkeydown="if(event.key==='Enter') this.blur();">
+                  <input type="text" inputmode="decimal" class="form-input fs-base-rc" id="edit-rzedna-${globalIndex}" step="0.001" value="${editPrzejscieState.rzedna}" placeholder="142.500" data-csp-2="syncEditState" data-csp-2-args="[]" data-csp-2-on="change" data-csp-3="$dom" data-csp-3-args="["blur", "$el"]" data-csp-3-on="keydown" data-csp-3-key="Enter">
                 </div>
                 <div class="form-group m-0">
                   <label class="fs-3xs-muted-block" for="edit-angle-${globalIndex}">Kąt [°]</label>
-                  <input type="number" class="form-input color-link fs-base-rc" id="edit-angle-${globalIndex}" value="${editPrzejscieState.angle}" min="0" max="360" oninput="editUpdateAngles(${globalIndex}); window.syncEditState()" onkeydown="if(event.key==='Enter') this.blur();">
+                  <input type="number" class="form-input color-link fs-base-rc" id="edit-angle-${globalIndex}" value="${editPrzejscieState.angle}" min="0" max="360" data-csp-2="$anglesSync" data-csp-2-args="${escapeHtmlAttr(JSON.stringify([globalIndex]))}" data-csp-2-on="input" data-csp-3="$dom" data-csp-3-args="["blur", "$el"]" data-csp-3-on="keydown" data-csp-3-key="Enter">
                 </div>
                 <div class="form-group m-0">
                   <label class="fs-3xs-muted-block" for="edit-spadek-kineta-${globalIndex}">Spadek w kinecie [%]</label>
-                  <input type="number" class="form-input fs-base-rc" id="edit-spadek-kineta-${globalIndex}" step="1" value="${editPrzejscieState.spadekKineta}" onchange="window.syncEditState()" onkeydown="if(event.key==='Enter') this.blur();">
+                  <input type="number" class="form-input fs-base-rc" id="edit-spadek-kineta-${globalIndex}" step="1" value="${editPrzejscieState.spadekKineta}" data-csp-2="syncEditState" data-csp-2-args="[]" data-csp-2-on="change" data-csp-3="$dom" data-csp-3-args="["blur", "$el"]" data-csp-3-on="keydown" data-csp-3-key="Enter">
                 </div>
                 <div class="form-group m-0">
                   <label class="fs-3xs-muted-block" for="edit-spadek-mufa-${globalIndex}">Spadek w mufie [%]</label>
-                  <input type="number" class="form-input fs-base-rc" id="edit-spadek-mufa-${globalIndex}" step="1" value="${editPrzejscieState.spadekMufa}" onchange="window.syncEditState()" onkeydown="if(event.key==='Enter') this.blur();">
+                  <input type="number" class="form-input fs-base-rc" id="edit-spadek-mufa-${globalIndex}" step="1" value="${editPrzejscieState.spadekMufa}" data-csp-2="syncEditState" data-csp-2-args="[]" data-csp-2-on="change" data-csp-3="$dom" data-csp-3-args="["blur", "$el"]" data-csp-3-on="keydown" data-csp-3-key="Enter">
                 </div>
               </div>
 

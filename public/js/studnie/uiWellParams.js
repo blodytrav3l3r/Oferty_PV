@@ -284,8 +284,7 @@ function renderWellParams() {
                 transition:all 0.15s ease;
                 display:flex; align-items:center; justify-content:center;
                 ${isActive ? 'box-shadow:0 0 10px rgba(var(--accent-rgb), 0.2);' : ''}
-            " onmouseenter="if(!${isActive}){this.style.borderColor='var(--accent-border)';this.style.background='var(--bg-hover)'}"
-               onmouseleave="if(!${isActive}){this.style.borderColor='var(--border)';this.style.background='var(--bg-tertiary)'}"
+            " ${isActive ? '' : `data-csp-2="$stylePair" data-csp-2-on="mouseover" data-csp-2-args="${escapeHtmlAttr(JSON.stringify(['borderColor', 'var(--accent-border)', 'background', 'var(--bg-hover)']))}" data-csp-3="$stylePair" data-csp-3-on="mouseout" data-csp-3-args="${escapeHtmlAttr(JSON.stringify(['borderColor', 'var(--border)', 'background', 'var(--bg-tertiary)']))}"`}
             >${escapeHtml(lbl)}</button>`;
         });
         html += `</div></div>`;
@@ -295,11 +294,11 @@ function renderWellParams() {
             const dis = isSoftLocked ? ' disabled' : '';
             html += `<div class="well-param-row">`;
             html += `<span class="well-param-label">Nazwa p. wew.</span>`;
-            html += `<input${dis} type="text" value="${escapeHtmlAttr(well.powlokaNameW || '')}" data-csp="$select" onchange="updateWellParam('powlokaNameW', this.value)" placeholder="Nazwa powłoki..." style="flex:1; height:34px; background:rgba(var(--black-rgb), 0.2); border:1px solid rgba(var(--white-rgb), 0.1); color:var(--text-primary); padding:0 0.7rem; font-size: var(--fs-lg); border-radius: var(--radius-sm);">`;
+            html += `<input${dis} type="text" value="${escapeHtmlAttr(well.powlokaNameW || '')}" data-csp-2="$select" data-csp-3="updateWellParam" data-csp-3-args="[&quot;powlokaNameW&quot;, &quot;$value&quot;]" data-csp-3-on="change" placeholder="Nazwa powłoki..." style="flex:1; height:34px; background:rgba(var(--black-rgb), 0.2); border:1px solid rgba(var(--white-rgb), 0.1); color:var(--text-primary); padding:0 0.7rem; font-size: var(--fs-lg); border-radius: var(--radius-sm);">`;
             html += `</div>`;
             html += `<div class="well-param-row">`;
             html += `<span class="well-param-label">Koszt p. wew.</span>`;
-            html += `<input${dis} type="number" step="0.01" value="${well.malowanieWewCena || ''}" data-csp="$select" onchange="updateWellParam('malowanieWewCena', parseFloat(this.value)||0)" placeholder="PLN / m²" style="width:120px; height:34px; background:rgba(var(--black-rgb), 0.2); border:1px solid rgba(var(--white-rgb), 0.1); color:var(--text-primary); padding:0 0.7rem; font-size: var(--fs-lg); border-radius: var(--radius-sm);">`;
+            html += `<input${dis} type="number" step="0.01" value="${well.malowanieWewCena || ''}" data-csp-2="$select" data-csp-3="$updateWellParamF" data-csp-3-args="[&quot;malowanieWewCena&quot;]" data-csp-3-on="change" placeholder="PLN / m²" style="width:120px; height:34px; background:rgba(var(--black-rgb), 0.2); border:1px solid rgba(var(--white-rgb), 0.1); color:var(--text-primary); padding:0 0.7rem; font-size: var(--fs-lg); border-radius: var(--radius-sm);">`;
             html += `</div>`;
         }
 
@@ -307,11 +306,11 @@ function renderWellParams() {
             const dis = isSoftLocked ? ' disabled' : '';
             html += `<div class="well-param-row">`;
             html += `<span class="well-param-label">Nazwa p. zew.</span>`;
-            html += `<input${dis} type="text" value="${escapeHtmlAttr(well.powlokaNameZ || '')}" data-csp="$select" onchange="updateWellParam('powlokaNameZ', this.value)" placeholder="Nazwa powłoki..." style="flex:1; height:34px; background:rgba(var(--black-rgb), 0.2); border:1px solid rgba(var(--white-rgb), 0.1); color:var(--text-primary); padding:0 0.7rem; font-size: var(--fs-lg); border-radius: var(--radius-sm);">`;
+            html += `<input${dis} type="text" value="${escapeHtmlAttr(well.powlokaNameZ || '')}" data-csp-2="$select" data-csp-3="updateWellParam" data-csp-3-args="[&quot;powlokaNameZ&quot;, &quot;$value&quot;]" data-csp-3-on="change" placeholder="Nazwa powłoki..." style="flex:1; height:34px; background:rgba(var(--black-rgb), 0.2); border:1px solid rgba(var(--white-rgb), 0.1); color:var(--text-primary); padding:0 0.7rem; font-size: var(--fs-lg); border-radius: var(--radius-sm);">`;
             html += `</div>`;
             html += `<div class="well-param-row">`;
             html += `<span class="well-param-label">Koszt p. zew.</span>`;
-            html += `<input${dis} type="number" step="0.01" value="${well.malowanieZewCena || ''}" data-csp="$select" onchange="updateWellParam('malowanieZewCena', parseFloat(this.value)||0)" placeholder="PLN / m²" style="width:120px; height:34px; background:rgba(var(--black-rgb), 0.2); border:1px solid rgba(var(--white-rgb), 0.1); color:var(--text-primary); padding:0 0.7rem; font-size: var(--fs-lg); border-radius: var(--radius-sm);">`;
+            html += `<input${dis} type="number" step="0.01" value="${well.malowanieZewCena || ''}" data-csp-2="$select" data-csp-3="$updateWellParamF" data-csp-3-args="[&quot;malowanieZewCena&quot;]" data-csp-3-on="change" placeholder="PLN / m²" style="width:120px; height:34px; background:rgba(var(--black-rgb), 0.2); border:1px solid rgba(var(--white-rgb), 0.1); color:var(--text-primary); padding:0 0.7rem; font-size: var(--fs-lg); border-radius: var(--radius-sm);">`;
             html += `</div>`;
         }
 
@@ -320,7 +319,7 @@ function renderWellParams() {
             html += `<div class="well-param-row" style="min-height:32px; margin-top:0.3rem; ${isGreyedOut ? 'opacity: 0.5;' : ''}">`;
             html += `<span class="well-param-label">Wys. wkładki osadnik</span>`;
             html += `<div class="flex-gap-5">`;
-            html += `<input${dis} type="number" value="${well.wkladkaOsadnikH || ''}" data-csp="$select" onchange="updateWellParam('wkladkaOsadnikH', parseFloat(this.value)||0)" placeholder="Wys. w mm" style="width:120px; height:34px; background:rgba(var(--black-rgb), 0.2); border:1px solid rgba(var(--white-rgb), 0.1); color:var(--text-primary); padding:0 0.7rem; font-size: var(--fs-lg); border-radius: var(--radius-sm);">`;
+            html += `<input${dis} type="number" value="${well.wkladkaOsadnikH || ''}" data-csp-2="$select" data-csp-3="$updateWellParamF" data-csp-3-args="[&quot;wkladkaOsadnikH&quot;]" data-csp-3-on="change" placeholder="Wys. w mm" style="width:120px; height:34px; background:rgba(var(--black-rgb), 0.2); border:1px solid rgba(var(--white-rgb), 0.1); color:var(--text-primary); padding:0 0.7rem; font-size: var(--fs-lg); border-radius: var(--radius-sm);">`;
             html += `<span style="font-size:var(--fs-sm); color:var(--text-muted);">mm</span>`;
             html += `</div></div>`;
         }

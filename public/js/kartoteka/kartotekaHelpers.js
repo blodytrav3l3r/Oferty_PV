@@ -290,7 +290,7 @@ function buildOfferCardHtml(offer, hasOrder, orders, order, role, isLocalList) {
         const badgeStateClass = hasModifiedOrder ? 'btn-order-badge modified' : 'btn-order-badge';
         const countLabel = orderCount > 0 ? ` (${orderCount})` : '';
 
-        orderBadge = `<a href="javascript:void(0)" class="btn btn-sm ${badgeStateClass}" data-order-id="${escapeHtmlAttr(order?.id || '')}" data-offer-id="${escapeHtmlAttr(offer.id)}" data-offer-type="${escapeHtmlAttr(offer.type)}" title="Kliknij aby zobaczyć listę zamówień powiązanych z tą ofertą${hasModifiedOrder ? ' (wykryto zmiany)' : ''}">
+        orderBadge = `<a href="#" class="btn btn-sm ${badgeStateClass}" data-order-id="${escapeHtmlAttr(order?.id || '')}" data-offer-id="${escapeHtmlAttr(offer.id)}" data-offer-type="${escapeHtmlAttr(offer.type)}" title="Kliknij aby zobaczyć listę zamówień powiązanych z tą ofertą${hasModifiedOrder ? ' (wykryto zmiany)' : ''}">
                     <i data-lucide="package" aria-hidden="true"></i> Zamówienia${countLabel}${hasModifiedOrder ? ' • zmiany' : ''}
                    </a>`;
 

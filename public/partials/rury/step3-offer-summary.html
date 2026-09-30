@@ -41,7 +41,9 @@
                                 <input
                                     type="checkbox"
                                     id="select-all-items"
-                                    onchange="toggleAllItemsForOrder(this.checked)"
+                                    data-csp="toggleAllItemsForOrder"
+                                    data-csp-args='["$checked"]'
+                                    data-csp-on="change"
                                     style="cursor: pointer; width: 16px; height: 16px"
                                 />
                             </th>

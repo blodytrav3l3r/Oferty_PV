@@ -246,7 +246,7 @@ function drawTransitionShape(idx, przId, px, prY, radiusW, radiusH, isRect, isEg
     const sDash = isBack ? 'stroke-dasharray="2,2"' : '';
     const safeId = String(przId == null ? '' : przId).replace(/'/g, '');
 
-    const gOpen = `<g class="svg-prz-${idx}" data-prz-id="${safeId}" style="cursor:pointer;transition:all 0.2s;" onmouseenter="window.svgPrzPointerEnter(event, '${safeId}')" onmouseleave="window.svgPrzPointerLeave(event, '${safeId}')" data-csp="svgPrzPointerClick" data-csp-args="${escapeHtmlAttr(JSON.stringify(['$event', safeId]))}">`;
+    const gOpen = `<g class="svg-prz-${idx}" data-prz-id="${safeId}" style="cursor:pointer;transition:all 0.2s;" data-csp="svgPrzPointerEnter" data-csp-on="mouseover" data-csp-args="${escapeHtmlAttr(JSON.stringify(['$event', safeId]))}" data-csp-2="svgPrzPointerLeave" data-csp-2-on="mouseout" data-csp-2-args="${escapeHtmlAttr(JSON.stringify(['$event', safeId]))}" data-csp-3="svgPrzPointerClick" data-csp-3-on="click" data-csp-3-args="${escapeHtmlAttr(JSON.stringify(['$event', safeId]))}">`;
     const gClose = '</g>';
 
     if (isRect) {

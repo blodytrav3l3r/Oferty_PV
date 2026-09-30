@@ -73,7 +73,8 @@
                         class="wizard-form-input"
                         id="client-name"
                         placeholder="Budimex S.A."
-                        oninput="updateStep1NextState()"
+                        data-csp="updateStep1NextState"
+                        data-csp-on="input"
                     />
                 </div>
                 <div class="wizard-form-group">
@@ -82,7 +83,8 @@
                         class="wizard-form-input"
                         id="client-nip"
                         placeholder="1234567890"
-                        oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+                        data-csp="$digitsOnly"
+                        data-csp-on="input"
                     />
                 </div>
                 <div class="wizard-form-group">

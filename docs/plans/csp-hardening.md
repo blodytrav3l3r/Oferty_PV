@@ -1,7 +1,7 @@
 # CSP hardening — plan etapowy (bez rewrite frontendu)
 
-**Status:** CSP-A DONE (inventory 2026-09-28) → CSP-B-statyczne DONE (sufit 40→0, 2026-09-29) → CSP-B2 (partials/szablony) TODO → CSP-C TODO → CSP-D TODO → CSP-E TODO  
-**Reguła legacy surface:** NEW inline handlers / NEW globals = 0 (test `cspInventory`, sufit onclick=0).
+**Status:** CSP-A DONE → CSP-B-statyczne DONE (sufit 40→0) → CSP-B2 DONE (partials+szablony, dyspozytor data-csp) → CSP-B3 DONE (wszystkie on*, data-csp-on + kompozyty) → CSP-E WYKONANE (enforce, ten batch)
+**Reguła legacy surface:** NEW inline handlers / NEW globals = 0 (testy `cspInventory` + `cspEnforce`).
 
 ## Stan obecny
 
@@ -31,7 +31,9 @@ JS (`public/js`, ~245 plików):
 ## Kolejne etapy
 
 - **CSP-B-statyczne DONE 2026-09-29:** `zlecenia` (10, `data-zl` + delegacja w `spa/zlecenia.js`), `kartoteka` (9 + header, `bindStaticActions` w `kartotekaInit.js`), `index` (7 + header, `data-idx` w `dashboard.js`), `app` (header), `rury` (2, id w `wizard.js`), `studnie` (7 + trash + 2x mouse, binder w `uiHelpers.js`); header-logout (3, klasa w `auth.js`); guardy vm-sandbox; inline `<script>` boot → ESM z nonce. Każdy moduł: test regresji.
-- **CSP-B2 (następny batch):** partials (137 onclick) + szablony JS (199 onclick) — delegacja na kontenerach; test `pricelistChrome` dziś asertuje onclick w partialach (do aktualizacji w B2). Dopiero po B2 + nonce dla 17 inline `<script>` możliwy CSP-E.
+- **CSP-B2 DONE 2026-09-30:** dyspozytor `shared/cspActions.js` (data-csp + JSON args + scope + $el/$event/$checked/$value + kompozyty); partiale rury+studnie (137 onclick → 0); szablony JS (199 onclick → 0); selektory `[onclick]` → `[data-csp]`; `javascript:void(0)` → `#`; print-window onload → addEventListener.
+- **CSP-B3 DONE 2026-09-30:** wszystkie pozostałe on* (change/input/keydown/focus/blur/mousedown/scroll/drag/mouse) → data-csp-on + warianty -2..-6; style-hover → $styleSet/$stylePair/$hoverBg/$activeHover/$userBtnLeave/$tileHover; warn/toggle/select-wrap → kompozyty; mouseover/out emulują enter/leave (relatedTarget).
+- **CSP-E DONE 2026-09-30:** enforce `script-src 'self' + nonce per-request` (Helmet, nonce przed helmetem), script-src-attr bez unsafe-inline (fallback 'none'); style-src zostaje z unsafe-inline (style="" nie wykonuje JS — ryzyko szczątkowe); Report-Only zostaje jako monitoring; 17 inline `<script>` dostaje nonce w `injectAppNameScript`.
 - **CSP-C:** nonce na wszystkich skryptach first-party; `xlsxLoader` — brak akcji (same-origin vendor); `eval` — brak w prod (0), `safeEval` tylko kalkulacje (`shared/calcInput.js`), `insertAdjacentHTML` poza CSP (XSS przez `escapeHtml`, osobny tor).
 - **CSP-D:** testy browser/security: Report-Only violations = 0 na smoke + extended E2E.
 - **CSP-E:** dopiero po CSP-D: usunięcie `unsafe-inline` z enforce, 1 commit, rollback = revert.

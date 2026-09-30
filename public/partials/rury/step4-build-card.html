@@ -377,11 +377,9 @@
                     <select
                         id="step4-uszczelka-studni"
                         class="form-input form-input-wide"
-                        onchange="
-                            document.getElementById(
-                                'step4-uszczelka-studni-inne-wrap'
-                            ).style.display = this.value === 'Inne' ? 'block' : 'none'
-                        "
+                        data-csp="$toggleInne"
+                        data-csp-args='["step4-uszczelka-studni-inne-wrap"]'
+                        data-csp-on="change"
                     >
                         <option value="Nie dotyczy">Nie dotyczy</option>
                         <option value="Brak" selected>Brak</option>
@@ -431,10 +429,9 @@
                     <select
                         id="step4-rodzaj-stopni"
                         class="form-input form-input-wide"
-                        onchange="
-                            document.getElementById('step4-rodzaj-stopni-inne-wrap').style.display =
-                                this.value === 'Inne' ? 'block' : 'none'
-                        "
+                        data-csp="$toggleInne"
+                        data-csp-args='["step4-rodzaj-stopni-inne-wrap"]'
+                        data-csp-on="change"
                     >
                         <option value="Nie dotyczy" selected>Nie dotyczy</option>
                         <option value="Brak">Brak</option>
@@ -486,10 +483,9 @@
                     <select
                         id="step4-kineta"
                         class="form-input form-input-wide"
-                        onchange="
-                            document.getElementById('step4-kineta-inne-wrap').style.display =
-                                this.value === 'Inne' ? 'block' : 'none'
-                        "
+                        data-csp="$toggleInne"
+                        data-csp-args='["step4-kineta-inne-wrap"]'
+                        data-csp-on="change"
                     >
                         <option value="Nie dotyczy">Nie dotyczy</option>
                         <option value="Brak" selected>Brak</option>
@@ -737,7 +733,9 @@
                     <select
                         id="step4-przejscia-zamowione"
                         class="form-input form-input-wide"
-                        onchange="handlePrzejsciaZamowioneChange(this)"
+                        data-csp="handlePrzejsciaZamowioneChange"
+                        data-csp-args='["$el"]'
+                        data-csp-on="change"
                     >
                         <option value="Nie dotyczy" selected>Nie dotyczy</option>
                         <option value="Tak">Tak</option>
@@ -852,6 +850,12 @@
                             type="button"
                             id="step4-add-custom-przejscie-btn"
                             data-csp="addCustomPrzejscieRow"
+                            data-csp-2="$stylePair"
+                            data-csp-2-on="mouseover"
+                            data-csp-2-args='["background", "rgba(var(--accent2-rgb), 0.3)", "borderColor", "rgba(var(--accent2-rgb), 0.5)"]'
+                            data-csp-3="$stylePair"
+                            data-csp-3-on="mouseout"
+                            data-csp-3-args='["background", "rgba(var(--accent2-rgb), 0.1)", "borderColor", "rgba(var(--accent2-rgb), 0.3)"]'
                             class="gap-1"
                             style="
                                 display: flex;
@@ -867,14 +871,6 @@
                                 transition: all 0.15s;
                                 text-transform: uppercase;
                                 letter-spacing: 0.3px;
-                            "
-                            onmouseenter="
-                                this.style.background = 'rgba(var(--accent2-rgb), 0.3)';
-                                this.style.borderColor = 'rgba(var(--accent2-rgb), 0.5)';
-                            "
-                            onmouseleave="
-                                this.style.background = 'rgba(var(--accent2-rgb), 0.1)';
-                                this.style.borderColor = 'rgba(var(--accent2-rgb), 0.3)';
                             "
                         >
                             <i data-lucide="plus" style="width: 16px; height: 16px"></i>

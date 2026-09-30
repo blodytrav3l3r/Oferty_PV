@@ -279,9 +279,9 @@ function _bulkSeqRowHtml(g, numOrNull, excluded, fixedH) {
                 border-radius: var(--radius-sm); cursor:${disabled || isExcluded ? 'default' : 'grab'};
                 opacity:${disabled || isExcluded ? '0.4' : '1'}; transition:all 0.15s; margin-bottom:0.3rem;${heightStyle}">
             <input type="text" inputmode="numeric" class="bulk-seq-num" ${disabled || isExcluded ? 'disabled' : ''}${numVal}${numPlaceholder}
-                onfocus="this.dataset.old = this.value; this.value = '';"
-                onblur="reorderBulkSeqList(this)"
-                onkeydown="if(event.key === 'Enter') this.blur();"
+                data-csp-2="$stashValue" data-csp-2-on="focus"
+                data-csp-3="reorderBulkSeqList" data-csp-3-args="[&quot;$el&quot;]" data-csp-3-on="blur"
+                data-csp-4="$dom" data-csp-4-args="["blur", "$el"]" data-csp-4-on="keydown" data-csp-4-key="Enter"
                 style="width:72px; height:28px; text-align:center; padding:0;
                 background:${disabled || isExcluded ? 'rgba(var(--white-rgb), 0.05)' : 'rgba(var(--accent2-rgb), 0.15)'};
                 border:1px solid ${disabled || isExcluded ? 'transparent' : 'rgba(var(--accent2-rgb), 0.5)'}; border-radius: var(--radius-sm);

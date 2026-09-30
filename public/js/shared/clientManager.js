@@ -162,7 +162,7 @@ function showClientsDb() {
       <div class="clients-search">
         <div class="clients-search-row">
           <div class="clients-search-field">
-            <input type="text" id="clients-search-input" class="form-input" placeholder="Szukaj po nazwie lub NIP..." oninput="filterClientsDb(this.value)">
+            <input type="text" id="clients-search-input" class="form-input" placeholder="Szukaj po nazwie lub NIP..." data-csp="filterClientsDb" data-csp-args="[&quot;$value&quot;]" data-csp-on="input">
           </div>
         </div>
       </div>

@@ -372,7 +372,7 @@ function openExcelTableModal() {
             <div class="excel-topbar-actions">
 
                 <div class="excel-search-wrap">
-                    <input type="text" id="excel-search-input" class="excel-search-input" placeholder="Szukaj studni..." oninput="excelFilterWells(this.value)" aria-label="Szukaj studni" style="width:220px;" />
+                    <input type="text" id="excel-search-input" class="excel-search-input" placeholder="Szukaj studni..." data-csp="excelFilterWells" data-csp-args="[&quot;$value&quot;]" data-csp-on="input" aria-label="Szukaj studni" style="width:220px;" />
                     <button type="button" id="excel-search-clear" data-csp="excelClearSearch" data-csp-args="[]" title="Wyczyść filtr" aria-label="Wyczyść filtr" class="excel-icon-btn excel-search-clear" style="display:none;"><i data-lucide="x" class="icon-xs" aria-hidden="true"></i></button>
                 </div>
                 <button data-csp="_excelToggleColumnPopup" data-csp-args="[]" id="excel-col-vis-btn" class="excel-toolbar-btn" title="Pokaż/ukryj kolumny"><i data-lucide="table-properties" class="icon-xs" aria-hidden="true"></i>Kolumny</button>

@@ -110,9 +110,15 @@
                     <div
                         class="well-diagram-panel"
                         id="drop-zone-diagram"
-                        ondragover="allowDropWellComponent(event)"
-                        ondragleave="dragLeaveWellComponent(event)"
-                        ondrop="dropWellComponent(event)"
+                        data-csp="allowDropWellComponent"
+                        data-csp-on="dragover"
+                        data-csp-args='["$event"]'
+                        data-csp-2="dragLeaveWellComponent"
+                        data-csp-2-on="dragleave"
+                        data-csp-2-args='["$event"]'
+                        data-csp-3="dropWellComponent"
+                        data-csp-3-on="drop"
+                        data-csp-3-args='["$event"]'
                     >
                         <div
                             class="well-summary-mini gap-1"

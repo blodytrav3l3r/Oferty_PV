@@ -148,9 +148,9 @@ describe('frontend: panel Zarządzanie cennikiem (3 przyciski + 3 sekcje)', () =
         expect(panel).not.toContain('pv-row-label">PRECO<');
         expect(panel).not.toContain('onclick="exportPrecoToExcel()"');
         expect(panel).toContain('id="pv-import-excel"');
-        expect(panel).toContain('onchange="');
-        expect(panel).toContain('importRuryFromExcel(event)');
-        expect(panel).toContain('importStudnieFromExcel(event)');
+        expect(panel).toContain('data-csp-on="change"');
+        expect(panel).toContain('importRuryFromExcel');
+        expect(panel).toContain('importStudnieFromExcel');
         expect(panel).toContain('data-csp="saveAllDefaults" data-csp-scope="parent"');
         expect(panel).toContain('data-csp="resetPriceList"');
         expect(panel).toContain('data-csp="resetStudniePriceList"');

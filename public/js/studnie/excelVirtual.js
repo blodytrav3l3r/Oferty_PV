@@ -616,15 +616,15 @@ function _excelVirtualRenderBody() {
                 stickyZ +
                 ';background:' +
                 emptyBg +
-                ';border-right:1px solid var(--excel-border);"><input type="text" placeholder="Wpisz nazwę (Enter)" title="Wpisz nazwę nowej studni i wciśnij Enter" id="excel-empty-name" onkeydown="if(event.key===\'Enter\')excelCreateFromEmpty()" onblur="excelCreateFromEmpty(event)" onfocus="excelCellFocus(this);_excelSelWrapFocus(this)" style="background:var(--excel-input-bg);border:1px dashed rgba(var(--accent-rgb),0.4);border-radius:2px;color:var(--accent-text);font-size:var(--fs-sm);outline:none;text-align:left;width:118px;box-sizing:border-box;" /></td><td class="excel-td excel-td-empty" style="position:sticky;left:162px;z-index:' +
+                ';border-right:1px solid var(--excel-border);"><input type="text" placeholder="Wpisz nazwę (Enter)" title="Wpisz nazwę nowej studni i wciśnij Enter" id="excel-empty-name" data-csp-2="excelCreateFromEmpty" data-csp-2-args="[]" data-csp-2-on="keydown" data-csp-2-key="Enter" data-csp-2-key="Enter" data-csp-3="excelCreateFromEmpty" data-csp-3-args="[&quot;$event&quot;]" data-csp-3-on="blur" data-csp-4="$excelCellFocus" data-csp-4-on="focus" style="background:var(--excel-input-bg);border:1px dashed rgba(var(--accent-rgb),0.4);border-radius:2px;color:var(--accent-text);font-size:var(--fs-sm);outline:none;text-align:left;width:118px;box-sizing:border-box;" /></td><td class="excel-td excel-td-empty" style="position:sticky;left:162px;z-index:' +
                 stickyZ +
                 ';background:' +
                 emptyBg +
-                ';text-align:right;"><input type="number" step="0.01" placeholder="\u2014" id="excel-empty-rzw" onfocus="excelCellFocus(this);_excelSelWrapFocus(this)" style="background:var(--excel-input-bg);border:1px solid var(--excel-input-border);border-radius:2px;color:var(--text-primary);font-size:var(--fs-sm);outline:none;text-align:right;width:72px;" /></td><td class="excel-td excel-td-empty" style="position:sticky;left:240px;z-index:' +
+                ';text-align:right;"><input type="number" step="0.01" placeholder="\u2014" id="excel-empty-rzw" data-csp="$excelCellFocus" data-csp-on="focus" style="background:var(--excel-input-bg);border:1px solid var(--excel-input-border);border-radius:2px;color:var(--text-primary);font-size:var(--fs-sm);outline:none;text-align:right;width:72px;" /></td><td class="excel-td excel-td-empty" style="position:sticky;left:240px;z-index:' +
                 stickyZ +
                 ';background:' +
                 emptyBg +
-                ';text-align:right;"><input type="number" step="0.01" placeholder="\u2014" id="excel-empty-rzd" onfocus="excelCellFocus(this);_excelSelWrapFocus(this)" style="background:var(--excel-input-bg);border:1px solid var(--excel-input-border);border-radius:2px;color:var(--text-primary);font-size:var(--fs-sm);outline:none;text-align:right;width:72px;" /></td><td class="excel-td excel-td-empty" style="position:sticky;left:318px;z-index:' +
+                ';text-align:right;"><input type="number" step="0.01" placeholder="\u2014" id="excel-empty-rzd" data-csp="$excelCellFocus" data-csp-on="focus" style="background:var(--excel-input-bg);border:1px solid var(--excel-input-border);border-radius:2px;color:var(--text-primary);font-size:var(--fs-sm);outline:none;text-align:right;width:72px;" /></td><td class="excel-td excel-td-empty" style="position:sticky;left:318px;z-index:' +
                 stickyZ +
                 ';background:' +
                 emptyBg +

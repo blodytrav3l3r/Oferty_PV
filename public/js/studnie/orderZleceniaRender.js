@@ -257,7 +257,7 @@ function renderZleceniaWellConfig() {
             zleceniaElementsList[zleceniaSelectedIdx] &&
             zleceniaElementsList[zleceniaSelectedIdx].elementIndex === index;
 
-        html += `<div data-zl-idx="${index}" class="zl-config-tile${isLocked ? ' zl-config-tile--locked' : ''}${isCurrentlyEdited ? ' zl-config-tile--edited' : ''}" draggable="${!isLocked}" ondragstart="handleZlCfgDragStart(event)" ondragover="handleZlCfgDragOver(event)" ondrop="handleZlCfgDrop(event)" ondragend="handleZlCfgDragEnd(event)"
+        html += `<div data-zl-idx="${index}" class="zl-config-tile${isLocked ? ' zl-config-tile--locked' : ''}${isCurrentlyEdited ? ' zl-config-tile--edited' : ''}" draggable="${!isLocked}" data-csp-2="handleZlCfgDragStart" data-csp-2-args="[&quot;$event&quot;]" data-csp-2-on="dragstart" data-csp-3="handleZlCfgDragOver" data-csp-3-args="[&quot;$event&quot;]" data-csp-3-on="dragover" data-csp-4="handleZlCfgDrop" data-csp-4-args="[&quot;$event&quot;]" data-csp-4-on="drop" data-csp-5="handleZlCfgDragEnd" data-csp-5-args="[&quot;$event&quot;]" data-csp-5-on="dragend"
                       style="--tile-accent:${badge.bg};">
           <div class="flex-between">
             <div class="flex-gap-4">

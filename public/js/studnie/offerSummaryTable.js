@@ -46,7 +46,7 @@ function renderOfferSummaryTable(order, orderChanges, totals) {
     let html = `<div class="table-wrap"><table class="w-100">
       <thead>
         <tr>
-          ${showOrderSelection ? '<th scope="col" style="width:4%; min-width:40px; text-align:center;"><input type="checkbox" id="select-all-wells-for-order" onchange="toggleAllWellsForOrder(this.checked)" class="cursor-icon-16"></th>' : ''}
+          ${showOrderSelection ? '<th scope="col" style="width:4%; min-width:40px; text-align:center;"><input type="checkbox" id="select-all-wells-for-order" data-csp="toggleAllWellsForOrder" data-csp-args="[&quot;$checked&quot;]" data-csp-on="change" class="cursor-icon-16"></th>' : ''}
           <th scope="col" style="width:1%; min-width:30px; text-align:center; white-space:nowrap;">Lp.</th>
           <th scope="col" style="width:1%; min-width:20px;"></th> <!-- Expand icon -->
           <th scope="col" class="w-100" style="text-align:left;">Nazwa studni</th>

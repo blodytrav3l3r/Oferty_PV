@@ -483,9 +483,9 @@
     function transferHtml(type) {
         var isRury = type === 'rury';
         var importInput =
-            '<input type="file" id="pv-import-excel" style="display: none" accept=".xlsx,.xls" onchange="' +
-            (isRury ? 'importRuryFromExcel(event)' : 'importStudnieFromExcel(event)') +
-            '">';
+            '<input type="file" id="pv-import-excel" style="display: none" accept=".xlsx,.xls" data-csp-on="change" data-csp="' +
+            (isRury ? 'importRuryFromExcel' : 'importStudnieFromExcel') +
+            '" data-csp-args="["$event"]"">';
         if (isRury) {
             return (
                 '<div class="pv-row"><span class="pv-row-label">Rury</span><span class="pv-actions">' +

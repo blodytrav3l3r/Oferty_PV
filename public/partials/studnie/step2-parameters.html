@@ -239,7 +239,8 @@
                                         id="pehd-dennica"
                                         checked
                                         class="icon-check"
-                                        onchange="validateWizardStep2()"
+                                        data-csp="validateWizardStep2"
+                                        data-csp-on="change"
                                     />
                                     Dennica
                                 </label>
@@ -249,7 +250,8 @@
                                         id="pehd-nadbudowa"
                                         checked
                                         class="icon-check"
-                                        onchange="validateWizardStep2()"
+                                        data-csp="validateWizardStep2"
+                                        data-csp-on="change"
                                     />
                                     Nadbudowa
                                 </label>
@@ -259,7 +261,8 @@
                                         id="pehd-zwienczenie"
                                         checked
                                         class="icon-check"
-                                        onchange="validateWizardStep2()"
+                                        data-csp="validateWizardStep2"
+                                        data-csp-on="change"
                                     />
                                     Zwieńczenie
                                 </label>
@@ -391,10 +394,9 @@
                             class="wizard-form-input"
                             id="powloka-name-w"
                             placeholder="Nazwa powłoki..."
-                            oninput="
-                                updateParamInput('powlokaNameW', this.value);
-                                validateWizardStep2();
-                            "
+                            data-csp="$paramValidate"
+                            data-csp-args='["powlokaNameW"]'
+                            data-csp-on="input"
                         />
                     </div>
                     <div class="wizard-form-group mt-2-hidden" id="malowanie-wew-cena-group">
@@ -407,10 +409,9 @@
                             type="number"
                             step="0.01"
                             placeholder="Koszt za 1m²..."
-                            oninput="
-                                updateParamInput('malowanieWewCena', this.value);
-                                validateWizardStep2();
-                            "
+                            data-csp="$paramValidate"
+                            data-csp-args='["malowanieWewCena"]'
+                            data-csp-on="input"
                         />
                     </div>
                     <div class="wizard-form-group mt-2-hidden" id="powloka-name-z-group">
@@ -421,10 +422,9 @@
                             class="wizard-form-input"
                             id="powloka-name-z"
                             placeholder="Nazwa powłoki..."
-                            oninput="
-                                updateParamInput('powlokaNameZ', this.value);
-                                validateWizardStep2();
-                            "
+                            data-csp="$paramValidate"
+                            data-csp-args='["powlokaNameZ"]'
+                            data-csp-on="input"
                         />
                     </div>
                     <div class="wizard-form-group mt-2-hidden" id="malowanie-zew-cena-group">
@@ -437,10 +437,9 @@
                             type="number"
                             step="0.01"
                             placeholder="Koszt za 1m²..."
-                            oninput="
-                                updateParamInput('malowanieZewCena', this.value);
-                                validateWizardStep2();
-                            "
+                            data-csp="$paramValidate"
+                            data-csp-args='["malowanieZewCena"]'
+                            data-csp-on="input"
                         />
                     </div>
 

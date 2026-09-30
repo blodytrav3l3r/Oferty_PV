@@ -296,9 +296,9 @@ function renderOfferDiscountsPopupContent() {
             <div class="disc-input-wrap">
                 <input type="number" class="text-center offer-discount-input disc-input"
                        value="${value}"
-                       onfocus="this.dataset.oldValue=this.value; this.value='';"
-                       onblur="if(this.value===''){this.value=this.dataset.oldValue;}else{handleOfferDiscountChange('${dn}', '${type}', this.value);}"
-                       onkeydown="if(event.key==='Enter') this.blur();">
+                       data-csp="$stashValue" data-csp-args="[&quot;oldValue&quot;]" data-csp-on="focus"
+                       data-csp-2="$discountBlur" data-csp-2-on="blur" data-csp-2-args="${escapeHtmlAttr(JSON.stringify([dn, type]))}"
+                       data-csp-3="$dom" data-csp-3-args="["blur", "$el"]" data-csp-3-on="keydown" data-csp-3-key="Enter">
                 <span class="disc-pct">%</span>
             </div>
         </div>`;
@@ -441,7 +441,7 @@ function renderOfferDiscountsPopupContent() {
         });
 
         html += `
-        <div style="background: rgba(var(--white-rgb), 0.05); border: 1px solid rgba(var(--white-rgb), 0.05); border-radius: var(--radius-sm); padding: 0.45rem 0.7rem; transition: border-color 0.2s;" onmouseenter="this.style.borderColor='rgba(var(--accent-rgb), 0.2)'" onmouseleave="this.style.borderColor='rgba(var(--white-rgb), 0.05)'">
+        <div style="background: rgba(var(--white-rgb), 0.05); border: 1px solid rgba(var(--white-rgb), 0.05); border-radius: var(--radius-sm); padding: 0.45rem 0.7rem; transition: border-color 0.2s;" data-csp="$styleSet" data-csp-on="mouseover" data-csp-args="[&quot;borderColor&quot;, &quot;rgba(var(--accent-rgb), 0.2)&quot;]" data-csp-2="$styleSet" data-csp-2-on="mouseout" data-csp-2-args="[&quot;borderColor&quot;, &quot;rgba(var(--white-rgb), 0.05)&quot;]">
             <div class="flex-space-between">
                 <div class="flex-gap-35">
                     <span style="display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 6px rgba(var(--accent-rgb), 0.5);"></span>
@@ -497,9 +497,9 @@ function renderOfferDiscountsPopupContent() {
                         <input type="number" min="0" step="1" value="${pehdDiscountValue}"
                             id="offer-pehd-discount"
                             class="text-center offer-discount-input"
-                            data-csp="$select"
-                            oninput="handleOfferPehdDiscountChange(this.value)"
-                            onkeydown="if(event.key==='Enter') this.blur();"
+                            data-csp-2="$select"
+                            data-csp-3="handleOfferPehdDiscountChange" data-csp-3-args="[&quot;$value&quot;]" data-csp-3-on="input"
+                            data-csp-4="$dom" data-csp-4-args="["blur", "$el"]" data-csp-4-on="keydown" data-csp-4-key="Enter"
                             style="min-width:0; flex:1; font-size: var(--fs-xl); font-weight: var(--fw-black); color: var(--blue-alt); background: transparent; border: none; outline: none; text-align: center;">
                         <span style="font-size: var(--fs-sm); font-weight: var(--fw-extrabold); color: rgba(var(--blue-alt-rgb), 0.5); padding-right: 0.4rem;">%</span>
                     </div>
@@ -536,9 +536,9 @@ function renderOfferDiscountsPopupContent() {
                         <input type="number" min="0" step="0.01" value="${malWC}"
                             id="offer-mal-wew-cena"
                             class="text-center offer-discount-input"
-                            data-csp="$select"
-                            oninput="handleOfferPaintingCostChange('malowanieWewCena', this.value)"
-                            onkeydown="if(event.key==='Enter') this.blur();"
+                            data-csp-2="$select"
+                            data-csp-3="handleOfferPaintingCostChange" data-csp-3-args="[&quot;malowanieWewCena&quot;, &quot;$value&quot;]" data-csp-3-on="input"
+                            data-csp-4="$dom" data-csp-4-args="["blur", "$el"]" data-csp-4-on="keydown" data-csp-4-key="Enter"
                             style="min-width:0; flex:1; font-size: var(--fs-xl); font-weight: var(--fw-black); color: var(--purple-alt); background: transparent; border: none; outline: none; text-align: center;">
                         <span style="font-size: var(--fs-sm); font-weight: var(--fw-extrabold); color: rgba(var(--accent2-rgb), 0.5); padding-right: 0.4rem;">zł</span>
                     </div>
@@ -553,9 +553,9 @@ function renderOfferDiscountsPopupContent() {
                         <input type="number" min="0" step="0.01" value="${malZC}"
                             id="offer-mal-zew-cena"
                             class="text-center offer-discount-input"
-                            data-csp="$select"
-                            oninput="handleOfferPaintingCostChange('malowanieZewCena', this.value)"
-                            onkeydown="if(event.key==='Enter') this.blur();"
+                            data-csp-2="$select"
+                            data-csp-3="handleOfferPaintingCostChange" data-csp-3-args="[&quot;malowanieZewCena&quot;, &quot;$value&quot;]" data-csp-3-on="input"
+                            data-csp-4="$dom" data-csp-4-args="["blur", "$el"]" data-csp-4-on="keydown" data-csp-4-key="Enter"
                             style="min-width:0; flex:1; font-size: var(--fs-xl); font-weight: var(--fw-black); color: var(--purple-alt); background: transparent; border: none; outline: none; text-align: center;">
                         <span style="font-size: var(--fs-sm); font-weight: var(--fw-extrabold); color: rgba(var(--accent2-rgb), 0.5); padding-right: 0.4rem;">zł</span>
                     </div>

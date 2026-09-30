@@ -214,21 +214,21 @@ function excelOpenWellParams(wIdx) {
             if (def.key === 'malowanieW' && well.malowanieW && well.malowanieW !== 'brak') {
                 bodyHtml += `<div class="well-param-row">`;
                 bodyHtml += `<span class="well-param-label">Nazwa p. wew.</span>`;
-                bodyHtml += `<input type="text" class="well-param-input" value="${escapeHtmlAttr(well.powlokaNameW || '')}" data-csp="$select" onchange="_excelUpdateWellParam(${wIdx},'powlokaNameW',this.value);excelRefreshParamsPopup(${wIdx})" placeholder="Nazwa powłoki...">`;
+                bodyHtml += `<input type="text" class="well-param-input" value="${escapeHtmlAttr(well.powlokaNameW || '')}" data-csp-2="$select" data-csp-3="$wellParamRefresh" data-csp-3-args="${escapeHtmlAttr(JSON.stringify([wIdx, 'powlokaNameW', 0]))}" data-csp-3-on="change" placeholder="Nazwa powłoki...">`;
                 bodyHtml += `</div>`;
                 bodyHtml += `<div class="well-param-row">`;
                 bodyHtml += `<span class="well-param-label">Koszt p. wew.</span>`;
-                bodyHtml += `<input type="number" step="0.01" value="${well.malowanieWewCena || ''}" data-csp="$select" onchange="_excelUpdateWellParam(${wIdx},'malowanieWewCena',parseFloat(this.value)||0);excelRefreshParamsPopup(${wIdx})" placeholder="PLN / m²" style="width:120px;height:34px;background:var(--excel-input-bg);border:1px solid var(--excel-input-border);color:var(--text-primary);padding:0 0.7rem;font-size: var(--fs-lg);border-radius: var(--radius-sm);">`;
+                bodyHtml += `<input type="number" step="0.01" value="${well.malowanieWewCena || ''}" data-csp-2="$select" data-csp-3="$wellParamRefresh" data-csp-3-args="${escapeHtmlAttr(JSON.stringify([wIdx, 'malowanieWewCena', 1]))}" data-csp-3-on="change" placeholder="PLN / m²" style="width:120px;height:34px;background:var(--excel-input-bg);border:1px solid var(--excel-input-border);color:var(--text-primary);padding:0 0.7rem;font-size: var(--fs-lg);border-radius: var(--radius-sm);">`;
                 bodyHtml += `</div>`;
             }
             if (def.key === 'malowanieZ' && well.malowanieZ && well.malowanieZ !== 'brak') {
                 bodyHtml += `<div class="well-param-row">`;
                 bodyHtml += `<span class="well-param-label">Nazwa p. zew.</span>`;
-                bodyHtml += `<input type="text" value="${escapeHtmlAttr(well.powlokaNameZ || '')}" data-csp="$select" onchange="_excelUpdateWellParam(${wIdx},'powlokaNameZ',this.value);excelRefreshParamsPopup(${wIdx})" placeholder="Nazwa powłoki..." style="flex:1;height:34px;background:var(--excel-input-bg);border:1px solid var(--excel-input-border);color:var(--text-primary);padding:0 0.7rem;font-size: var(--fs-lg);border-radius: var(--radius-sm);">`;
+                bodyHtml += `<input type="text" value="${escapeHtmlAttr(well.powlokaNameZ || '')}" data-csp-2="$select" data-csp-3="$wellParamRefresh" data-csp-3-args="${escapeHtmlAttr(JSON.stringify([wIdx, 'powlokaNameZ', 0]))}" data-csp-3-on="change" placeholder="Nazwa powłoki..." style="flex:1;height:34px;background:var(--excel-input-bg);border:1px solid var(--excel-input-border);color:var(--text-primary);padding:0 0.7rem;font-size: var(--fs-lg);border-radius: var(--radius-sm);">`;
                 bodyHtml += `</div>`;
                 bodyHtml += `<div class="well-param-row">`;
                 bodyHtml += `<span class="well-param-label">Koszt p. zew.</span>`;
-                bodyHtml += `<input type="number" step="0.01" value="${well.malowanieZewCena || ''}" data-csp="$select" onchange="_excelUpdateWellParam(${wIdx},'malowanieZewCena',parseFloat(this.value)||0);excelRefreshParamsPopup(${wIdx})" placeholder="PLN / m²" style="width:120px;height:34px;background:var(--excel-input-bg);border:1px solid var(--excel-input-border);color:var(--text-primary);padding:0 0.7rem;font-size: var(--fs-lg);border-radius: var(--radius-sm);">`;
+                bodyHtml += `<input type="number" step="0.01" value="${well.malowanieZewCena || ''}" data-csp-2="$select" data-csp-3="$wellParamRefresh" data-csp-3-args="${escapeHtmlAttr(JSON.stringify([wIdx, 'malowanieZewCena', 1]))}" data-csp-3-on="change" placeholder="PLN / m²" style="width:120px;height:34px;background:var(--excel-input-bg);border:1px solid var(--excel-input-border);color:var(--text-primary);padding:0 0.7rem;font-size: var(--fs-lg);border-radius: var(--radius-sm);">`;
                 bodyHtml += `</div>`;
             }
         });

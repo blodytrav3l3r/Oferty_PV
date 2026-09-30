@@ -43,8 +43,7 @@ function showStycznaPopup(mode = 'select') {
             display:grid; grid-template-columns:1fr auto auto; align-items:center; gap:0.6rem;
             padding:0.55rem 0.8rem; background:var(--bg-tile); border:1px solid var(--border-glass);
             border-radius: var(--radius-sm); cursor:pointer; transition:all 0.15s; text-align:left; color:inherit; width:100%;
-        " onmouseenter="if(!this.classList.contains('styczna-product-btn--active')){this.style.borderColor='var(--accent-border-medium)'; this.style.background='var(--bg-hover)'}"
-            onmouseleave="if(!this.classList.contains('styczna-product-btn--active')){this.style.borderColor='var(--border-glass)'; this.style.background='var(--bg-tile)'}">
+        " data-csp-2="$activeHover" data-csp-2-on="mouseover" data-csp-2-args="${escapeHtmlAttr(JSON.stringify(['styczna-product-btn--active', 'borderColor', 'var(--accent-border-medium)', 'background', 'var(--bg-hover)']))}" data-csp-3="$activeHover" data-csp-3-on="mouseout" data-csp-3-args="${escapeHtmlAttr(JSON.stringify(['styczna-product-btn--active', 'borderColor', 'var(--border-glass)', 'background', 'var(--bg-tile)']))}">
             <div>
                 <div style="font-size: var(--fs-md); font-weight: var(--fw-bold); color:var(--text-primary);">DN${p.dn}</div>
                 <div style="font-size: var(--fs-xs); color:var(--text-muted); margin-top:1px;">${escapeHtml(p.name)}</div>
