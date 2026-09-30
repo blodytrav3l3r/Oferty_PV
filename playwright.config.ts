@@ -9,7 +9,9 @@ export default defineConfig({
     retries: 0,
     reporter: [['list'], ['html', { open: 'never' }]],
     use: {
-        baseURL: 'http://localhost:3000',
+        // PLAYWRIGHT_BASE_URL: testy na izolowanym serwerze (np. :3177),
+        // żeby nie dotykać deweloperskiego :3000 ani prod DB.
+        baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000',
         trace: 'on-first-retry',
         screenshot: 'only-on-failure'
     },

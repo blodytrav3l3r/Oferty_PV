@@ -751,7 +751,9 @@ body::before {
     color: var(--text-secondary);
     font-size: var(--fs-sm);
     padding: 0.35rem 0.5rem;
-    opacity: 0.65;
+    /* axe color-contrast: opacity 0.65 sciagalo slate-400 do 3.64:1;
+       pelny slate-400 na tle headera ~7:1 (celowy wyjatek tylko dla tej klasy). */
+    opacity: 1;
     font-feature-settings: 'tnum';
 }
 
