@@ -21,6 +21,23 @@ jest.mock('../../src/utils/logger', () => ({
     logger: { info: jest.fn(), warn: jest.fn(), error: jest.fn() }
 }));
 
+// Wstrzyknięcie awarii do importDatasetRows (transakcyjność importu).
+// Domyślnie deleguje do prawdziwej implementacji (holder omija hoisting).
+const mockDatasetFailure: { fn?: (...args: any[]) => Promise<any> } = {};
+jest.mock('../../src/services/ml/transfer/dataset', () => {
+    const actual = jest.requireActual('../../src/services/ml/transfer/dataset') as Record<
+        string,
+        (...args: any[]) => Promise<any>
+    >;
+    return {
+        ...actual,
+        importDatasetRows: (...args: any[]) =>
+            mockDatasetFailure.fn
+                ? mockDatasetFailure.fn(...args)
+                : actual.importDatasetRows(...args)
+    };
+});
+
 const UID = 'p7-test';
 const createdModelIds: string[] = [];
 let createdTransferIds: string[] = [];
@@ -190,4 +207,70 @@ describe('P7 round-trip', () => {
             code: 'DRY_RUN_NOT_FOUND'
         });
     });
+
+    it('kolizja wersji z obcego pakietu → MODEL_DUPLICATE (nie false ALREADY_IMPORTED)', async () => {
+        // Model V istnieje lokalnie; pakiet B (inny fingerprint) deklaruje tę samą wersję.
+        const versionB = uniqVersion();
+        await seedModel(versionB);
+        const idA = await seedModel(uniqVersion());
+        const pkgA = await buildModelPackage(idA, UID);
+        createdTransferIds.push(pkgA.transferId);
+        const evil = await rebuildManifestVersion(pkgA.buffer, versionB);
+        const dry = await runDryRun(evil, UID);
+        await expect(importPackage(evil, dry.record.id, UID)).rejects.toMatchObject({
+            code: 'MODEL_DUPLICATE'
+        });
+        await prisma.aiModel.delete({ where: { id: idA } });
+    }, 30000);
+
+    it('awaria zapisu w transakcji → rollback bez częściowych danych', async () => {
+        const freshVersion = uniqVersion();
+        const freshId = await seedModel(freshVersion);
+        // Pakiet FULL, żeby importDatasetRows było wołane wewnątrz transakcji.
+        const pkg = await buildModelPackage(freshId, UID, { dataset: 'full' });
+        createdTransferIds.push(pkg.transferId);
+        await prisma.aiModel.delete({ where: { id: freshId } });
+        const { record } = await runDryRun(pkg.buffer, UID);
+        mockDatasetFailure.fn = () => Promise.reject(new Error('boom-tx'));
+        try {
+            await expect(importPackage(pkg.buffer, record.id, UID)).rejects.toThrow('boom-tx');
+        } finally {
+            delete mockDatasetFailure.fn;
+        }
+        // Model CANDIDATE wycofany razem z resztą transakcji.
+        expect(await prisma.aiModel.findFirst({ where: { version: freshVersion } })).toBeNull();
+        expect(
+            await prisma.aiTransfer.findFirst({
+                where: { packageFingerprint: pkg.packageFingerprint, direction: 'IMPORT' }
+            })
+        ).toBeNull();
+    }, 30000);
 });
+
+/** Przepisuje manifest (wersja + packageId) z przeliczeniem hashy — obcy pakiet. */
+async function rebuildManifestVersion(buf: Buffer, version: string): Promise<Buffer> {
+    const JSZip = (await import('jszip')).default;
+    const { buildChecksumsFile, sha256Hex } =
+        await import('../../src/services/ml/transfer/manifest');
+    const zip = await JSZip.loadAsync(buf);
+    const manifest = JSON.parse((await zip.file('manifest.json')!.async('string')) as string);
+    manifest.model.version = version;
+    manifest.transferPackageId = 'pkg_collision_test';
+    const manifestText = JSON.stringify(manifest);
+    const hashes = manifest.artifacts as Array<{ path: string; sha256: string }>;
+    const checksums = buildChecksumsFile([
+        ...hashes,
+        { path: 'manifest.json', sha256: sha256Hex(manifestText) }
+    ]);
+    const out = new JSZip();
+    const names = Object.keys(zip.files);
+    for (const name of names) {
+        const f = zip.file(name);
+        if (!f || f.dir) continue;
+        if (name === 'manifest.json' || name === 'checksums.sha256') continue;
+        out.file(name, await f.async('uint8array'));
+    }
+    out.file('manifest.json', manifestText);
+    out.file('checksums.sha256', checksums);
+    return out.generateAsync({ type: 'nodebuffer' });
+}

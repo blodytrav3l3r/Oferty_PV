@@ -39,7 +39,7 @@ function sendTransferError(res: Response, e: TransferError): void {
                 e.code === 'ARTIFACT_TOO_LARGE' ||
                 e.code === 'UNPACKED_TOO_LARGE'
               ? 413
-              : e.code === 'DRY_RUN_PACKAGE_MISMATCH'
+              : e.code === 'DRY_RUN_PACKAGE_MISMATCH' || e.code === 'MODEL_DUPLICATE'
                 ? 409
                 : 400;
     res.status(status).json({ error: e.message, code: e.code });

@@ -118,12 +118,26 @@ Definicja obowiązująca:
 
 ```text
 packageFingerprint = SHA-256(
-  canonical sorted list: artifactPath + ":" + artifactSha256,
-  linie posortowane deterministycznie, zakończone LF
+  join(LF, sort(artifactPath + ":" + artifactSha256)) + LF
 )
 ```
 
-Ten sam stan AI/ML → ten sam `packageFingerprint`, niezależnie od metadanych ZIP.
+Każda linia (łącznie z ostatnią) zakończona LF — wektor testowy:
+`"a.json:<sha>\nb.json:<sha>\n"`. Ten sam stan AI/ML → ten sam
+`packageFingerprint`, niezależnie od metadanych ZIP.
+
+### Hardening P7.0 (audyt 2026-09-30, wdrożone)
+
+- Exact-set: `set(ZIP artifacts) === set(manifest.artifacts)` (duplikat
+  w manifeście + brakujący plik przy równej liczebności = BLOCKED).
+- Duplikat linii w `checksums.sha256` = BLOCKED.
+- Symlink w central directory (Unix file type `S_IFLNK`) = BLOCKED (`SYMLINK_ENTRY`).
+- Limity zip-bomb z metadanych CD **przed** dekompresją (per-artefakt, suma,
+  ratio); odrzucenie ZIP64 i nieznanych metod kompresji. Strumieniowe limity
+  przy odczycie zostają jako druga linia obrony.
+- Kolizja wersji z obcego pakietu = `MODEL_DUPLICATE` (409), nie fałszywe
+  `ALREADY_IMPORTED` (to tylko ten sam `packageFingerprint`).
+- Import w jednej transakcji Prisma (model + dataset + wiedza + transfer + audit).
 
 ### Uwaga implementacyjna — zakaz cyklu manifest ↔ fingerprint
 

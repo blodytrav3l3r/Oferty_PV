@@ -71,12 +71,17 @@ export function sha256Hex(data: Buffer | string): string {
     return crypto.createHash('sha256').update(data).digest('hex');
 }
 
-/** Kanoniczna lista artefaktów (deterministycznie posortowana). */
+/**
+ * Kanoniczna lista artefaktów (GO-1): linie `path:sha` posortowane
+ * deterministycznie, każda zakończona LF (łącznie z ostatnią).
+ */
 export function canonicalArtifactList(entries: Array<{ path: string; sha256: string }>): string {
-    return [...entries]
-        .sort((a, b) => (a.path < b.path ? -1 : a.path > b.path ? 1 : 0))
-        .map((e) => `${e.path}:${e.sha256}`)
-        .join('\n');
+    return (
+        [...entries]
+            .sort((a, b) => (a.path < b.path ? -1 : a.path > b.path ? 1 : 0))
+            .map((e) => `${e.path}:${e.sha256}`)
+            .join('\n') + '\n'
+    );
 }
 
 /** Kanoniczny fingerprint pakietu (GO-1). Wejście: artefakty BEZ manifestu. */
@@ -104,6 +109,12 @@ function parseChecksumsFile(text: string): Map<string, string> {
         const match = /^([0-9a-f]{64})\s+(.+)$/.exec(trimmed);
         if (!match) {
             throw new TransferError('CHECKSUM_MISMATCH', 'Nieprawidłowy format checksums.sha256');
+        }
+        if (map.has(match[2])) {
+            throw new TransferError(
+                'CHECKSUM_MISMATCH',
+                `Zduplikowany wpis w checksums.sha256: ${match[2]}`
+            );
         }
         map.set(match[2], match[1]);
     }
@@ -142,13 +153,21 @@ export function verifyGatedPackage(gated: Map<string, GatedEntry>): VerifiedPack
     }
     const checksums = parseChecksumsFile(checksumsEntry.data.toString('utf8'));
 
-    // Każdy wpis (poza manifestem i checksums) musi być w obu listach ze zgodnym hashem.
+    // Exact-set: zbiory muszą być równe (duplikat w manifeście + brakujący
+    // plik przy równej liczebności przechodził poprzednie sprawdzenie).
     const contentPaths = [...gated.keys()].filter(
         (p) => p !== 'manifest.json' && p !== 'checksums.sha256'
     );
-    const manifestPaths = new Set(manifest.artifacts.map((a) => a.path));
-    if (contentPaths.length !== manifest.artifacts.length) {
-        throw new TransferError('CHECKSUM_MISMATCH', 'Liczba artefaktów niezgodna z manifestem');
+    const manifestPaths = manifest.artifacts.map((a) => a.path);
+    if (new Set(manifestPaths).size !== manifestPaths.length) {
+        throw new TransferError('CHECKSUM_MISMATCH', 'Zduplikowane wpisy w manifest.artifacts');
+    }
+    const contentSet = new Set(contentPaths);
+    if (
+        manifestPaths.length !== contentPaths.length ||
+        !manifestPaths.every((p) => contentSet.has(p))
+    ) {
+        throw new TransferError('CHECKSUM_MISMATCH', 'Zawartość ZIP niezgodna z manifestem');
     }
     for (const artifact of manifest.artifacts) {
         const entry = gated.get(artifact.path);
@@ -161,11 +180,6 @@ export function verifyGatedPackage(gated: Map<string, GatedEntry>): VerifiedPack
                 `Brak hashy w checksums: ${artifact.path}`
             );
         }
-        manifestPaths.delete(artifact.path);
-    }
-    // manifestPaths puste + równa liczebność = brak nadmiarowych wpisów.
-    if (manifestPaths.size > 0) {
-        throw new TransferError('CHECKSUM_MISMATCH', 'Nadmiarowe wpisy względem manifestu');
     }
     // Hash manifestu w checksums musi odpowiadać faktycznemu manifestowi.
     if (checksums.get('manifest.json') !== manifestEntry.sha256) {

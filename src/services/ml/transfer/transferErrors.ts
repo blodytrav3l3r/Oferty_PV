@@ -26,6 +26,7 @@ export type TransferBlockCode =
     | 'DRY_RUN_PACKAGE_MISMATCH'
     | 'DRY_RUN_NOT_PASSED'
     | 'ALREADY_IMPORTED'
+    | 'SYMLINK_ENTRY'
     | 'MODEL_DUPLICATE'
     | 'MODEL_NOT_FOUND'
     | 'MODEL_INVALID'

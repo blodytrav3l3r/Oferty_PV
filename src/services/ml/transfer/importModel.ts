@@ -15,8 +15,13 @@ import {
     type ModelArtifactShape
 } from './compatibility';
 import { getDryRun } from './dryRunStore';
-import { parseRecordsNdjson, verifyDatasetIntegrity, importDatasetRows } from './dataset';
-import { parsePatternsFile, importPatterns } from './knowledge';
+import {
+    parseRecordsNdjson,
+    verifyDatasetIntegrity,
+    importDatasetRows,
+    type DatasetRow
+} from './dataset';
+import { parsePatternsFile, importPatterns, type KnowledgePattern } from './knowledge';
 import { logAudit } from '../../auditService';
 
 /**
@@ -158,17 +163,17 @@ export async function importPackage(
             report: dryRun.report
         };
     }
+    // Wersja istnieje, ale pakiet jest nowy (inny fingerprint): kolizja wersji,
+    // nie duplikat transferu. Fałszywe ALREADY_IMPORTED ukrywałoby problem —
+    // jawny konflikt 409 z identyfikatorem istniejącego modelu.
     const existingModel = await prisma.aiModel.findFirst({
         where: { version: manifest.model.version }
     });
     if (existingModel) {
-        return {
-            status: 'ALREADY_IMPORTED',
-            modelId: existingModel.id,
-            version: existingModel.version,
-            transferId: '',
-            report: dryRun.report
-        };
+        throw new TransferError(
+            'MODEL_DUPLICATE',
+            `Wersja ${manifest.model.version} już istnieje (model ${existingModel.id})`
+        );
     }
 
     if (manifest.dataset.mode === 'full' && !files.has('datasets/records.ndjson')) {
@@ -191,26 +196,23 @@ export async function importPackage(
     }
     smokeTestModel(shape);
 
-    // P7.5 Extended: dataset FULL (integralność → wiersze), wiedza, telemetria.
-    // Kolejność po walidacji modelu; każdy artefakt ścisły (strict, bez silent skip).
+    // P7.5 Extended: parsowanie + weryfikacja integralności POZA transakcją
+    // (czyste funkcje); zapisy do DB w jednej transakcji (atomowość).
     const extendedSummary: Record<string, number> = {};
+    let datasetRows: DatasetRow[] | null = null;
     const recordsText = files.get('datasets/records.ndjson')?.toString('utf8');
     if (recordsText !== undefined) {
-        const rows = parseRecordsNdjson(recordsText);
+        datasetRows = parseRecordsNdjson(recordsText);
         verifyDatasetIntegrity(
-            rows,
+            datasetRows,
             manifest.dataset.fingerprint ?? '',
             manifest.model.featureVersion
         );
-        const ds = await importDatasetRows(rows);
-        extendedSummary.datasetInserted = ds.inserted;
-        extendedSummary.datasetSkipped = ds.skipped;
     }
+    let kbPatterns: KnowledgePattern[] | null = null;
     const patternsText = files.get('knowledge/patterns.json')?.toString('utf8');
     if (patternsText !== undefined) {
-        const kb = await importPatterns(parsePatternsFile(patternsText));
-        extendedSummary.knowledgeInserted = kb.inserted;
-        extendedSummary.knowledgeSkipped = kb.skipped;
+        kbPatterns = parsePatternsFile(patternsText);
     }
     const telemetryText = files.get('telemetry/selected.json')?.toString('utf8');
     if (telemetryText !== undefined) {
@@ -228,6 +230,8 @@ export async function importPackage(
     }
 
     // Zapis: ZAWSZE CANDIDATE, active=false. PRODUCTION tylko przez APPROVE+PROMOTE.
+    // Jedna transakcja: model + dataset + wiedza + rekord transferu + audit —
+    // awaria w środku wycofuje wszystko (brak częściowych importów).
     const transferId = newTransferId();
     const now = new Date().toISOString();
     let trainingRows = 0;
@@ -239,52 +243,73 @@ export async function importPackage(
     } catch {
         trainingRows = 0;
     }
-    const created = await prisma.aiModel.create({
-        data: {
-            id: crypto.randomUUID(),
-            version: manifest.model.version,
-            weights: JSON.stringify(shape.weights),
-            bias: shape.bias,
-            metrics: shape.metricsJson,
-            features: JSON.stringify(shape.features),
-            featureMins: JSON.stringify(shape.featureMins),
-            featureMaxs: JSON.stringify(shape.featureMaxs),
-            trainingRows,
-            featureVersion: manifest.model.featureVersion,
-            state: AiModelState.CANDIDATE,
-            seed: null,
-            featureDistributions: null,
-            active: false,
-            notes: `Import transfer ${transferId} (${manifest.transferPackageId})`,
-            createdAt: now
-        }
-    });
     const modelFp = manifest.artifacts.find((a) => a.path === modelPath)?.sha256 ?? '';
-    await prisma.aiTransfer.create({
-        data: {
-            id: crypto.randomUUID(),
-            transferId,
-            direction: 'IMPORT',
-            packageFingerprint: manifest.packageFingerprint,
-            manifestFingerprint: dryRun.manifestFingerprint,
-            modelVersion: created.version,
-            modelFingerprint: 'sha256:' + modelFp,
-            datasetFingerprint: manifest.lineage.datasetFingerprint,
-            sourceSokVersion: manifest.sourceSokVersion,
-            targetSokVersion: target.sokVersion,
-            status: 'COMPLETED',
-            result: 'CANDIDATE',
-            userId,
-            createdAt: now
+    const created = await prisma.$transaction(async (tx) => {
+        const model = await tx.aiModel.create({
+            data: {
+                id: crypto.randomUUID(),
+                version: manifest.model.version,
+                weights: JSON.stringify(shape.weights),
+                bias: shape.bias,
+                metrics: shape.metricsJson,
+                features: JSON.stringify(shape.features),
+                featureMins: JSON.stringify(shape.featureMins),
+                featureMaxs: JSON.stringify(shape.featureMaxs),
+                trainingRows,
+                featureVersion: manifest.model.featureVersion,
+                state: AiModelState.CANDIDATE,
+                seed: null,
+                featureDistributions: null,
+                active: false,
+                notes: `Import transfer ${transferId} (${manifest.transferPackageId})`,
+                createdAt: now
+            }
+        });
+        if (datasetRows) {
+            const ds = await importDatasetRows(datasetRows, tx);
+            extendedSummary.datasetInserted = ds.inserted;
+            extendedSummary.datasetSkipped = ds.skipped;
         }
-    });
-    await logAudit('ai_transfer', transferId, userId, 'TRANSFER_IMPORT_COMPLETED', {
-        packageFingerprint: manifest.packageFingerprint,
-        modelVersion: created.version,
-        sourceSokVersion: manifest.sourceSokVersion,
-        targetSokVersion: target.sokVersion,
-        result: 'CANDIDATE',
-        ...extendedSummary
+        if (kbPatterns) {
+            const kb = await importPatterns(kbPatterns, tx);
+            extendedSummary.knowledgeInserted = kb.inserted;
+            extendedSummary.knowledgeSkipped = kb.skipped;
+        }
+        await tx.aiTransfer.create({
+            data: {
+                id: crypto.randomUUID(),
+                transferId,
+                direction: 'IMPORT',
+                packageFingerprint: manifest.packageFingerprint,
+                manifestFingerprint: dryRun.manifestFingerprint,
+                modelVersion: model.version,
+                modelFingerprint: 'sha256:' + modelFp,
+                datasetFingerprint: manifest.lineage.datasetFingerprint,
+                sourceSokVersion: manifest.sourceSokVersion,
+                targetSokVersion: target.sokVersion,
+                status: 'COMPLETED',
+                result: 'CANDIDATE',
+                userId,
+                createdAt: now
+            }
+        });
+        await logAudit(
+            'ai_transfer',
+            transferId,
+            userId,
+            'TRANSFER_IMPORT_COMPLETED',
+            {
+                packageFingerprint: manifest.packageFingerprint,
+                modelVersion: model.version,
+                sourceSokVersion: manifest.sourceSokVersion,
+                targetSokVersion: target.sokVersion,
+                result: 'CANDIDATE',
+                ...extendedSummary
+            },
+            null,
+            tx
+        );
+        return model;
     });
     return {
         status: 'IMPORTED',

@@ -1,5 +1,6 @@
 import crypto from 'crypto';
 import prisma from '../../../prismaClient';
+import type { Prisma } from '../../../../generated/prisma';
 import { TransferError } from './transferErrors';
 
 /**
@@ -82,11 +83,14 @@ export interface KnowledgeImportResult {
     skipped: number;
 }
 
-export async function importPatterns(patterns: KnowledgePattern[]): Promise<KnowledgeImportResult> {
+export async function importPatterns(
+    patterns: KnowledgePattern[],
+    db: Prisma.TransactionClient = prisma
+): Promise<KnowledgeImportResult> {
     let inserted = 0;
     let skipped = 0;
     for (const p of patterns) {
-        const existing = await prisma.ai_knowledge_base.findFirst({
+        const existing = await db.ai_knowledge_base.findFirst({
             where: { patternKey: p.patternKey, status: { not: 'archived' } },
             select: { id: true }
         });
@@ -94,7 +98,7 @@ export async function importPatterns(patterns: KnowledgePattern[]): Promise<Know
             skipped++;
             continue;
         }
-        await prisma.ai_knowledge_base.create({
+        await db.ai_knowledge_base.create({
             data: { id: crypto.randomUUID(), ...p }
         });
         inserted++;

@@ -27,12 +27,19 @@ const CD_SIG = 0x02014b50;
 // EOCD może być poprzedzony komentarzem do 65535 B.
 const EOCD_SCAN_WINDOW = 65535 + 22;
 
-interface CdEntry {
+export interface CdEntry {
     name: string;
     dir: boolean;
+    /** Unix file type z external attributes (S_IFLNK = symlink). */
+    symlink: boolean;
+    compSize: number;
+    uncompSize: number;
 }
 
-/** Odczyt nazw wpisów z central directory — zero dekompresji treści. */
+const ZIP64_SENTINEL = 0xffffffff;
+const S_IFLNK = 0xa000;
+
+/** Odczyt wpisów z central directory — zero dekompresji treści. */
 export function readCentralDirectoryNames(buffer: Buffer): CdEntry[] {
     const tail = Math.min(buffer.length, EOCD_SCAN_WINDOW);
     let eocdAt = -1;
@@ -54,15 +61,31 @@ export function readCentralDirectoryNames(buffer: Buffer): CdEntry[] {
         if (pos + 46 > buffer.length || buffer.readUInt32LE(pos) !== CD_SIG) {
             throw new TransferError('ARCHIVE_INVALID', 'Uszkodzony central directory');
         }
+        const method = buffer.readUInt16LE(pos + 10);
+        if (method !== 0 && method !== 8) {
+            throw new TransferError('ARCHIVE_INVALID', 'Nieobsługiwana metoda kompresji');
+        }
+        const compSize = buffer.readUInt32LE(pos + 20);
+        const uncompSize = buffer.readUInt32LE(pos + 24);
+        if (compSize === ZIP64_SENTINEL || uncompSize === ZIP64_SENTINEL) {
+            throw new TransferError('ARCHIVE_INVALID', 'ZIP64 nieobsługiwany');
+        }
         const nameLen = buffer.readUInt16LE(pos + 28);
         const extraLen = buffer.readUInt16LE(pos + 30);
         const commentLen = buffer.readUInt16LE(pos + 32);
+        const externalAttrs = buffer.readUInt32LE(pos + 38);
         const nameEnd = pos + 46 + nameLen;
         if (nameEnd > buffer.length) {
             throw new TransferError('ARCHIVE_INVALID', 'Nazwa wpisu poza zakresem');
         }
         const name = buffer.toString('utf8', pos + 46, nameEnd);
-        entries.push({ name, dir: name.endsWith('/') });
+        entries.push({
+            name,
+            dir: name.endsWith('/'),
+            symlink: ((externalAttrs >>> 16) & 0xf000) === S_IFLNK,
+            compSize,
+            uncompSize
+        });
         pos = nameEnd + extraLen + commentLen;
     }
     return entries;
@@ -150,13 +173,29 @@ export async function inspectArchive(
     if (cdEntries.length > limits.maxFiles * 4) {
         throw new TransferError('TOO_MANY_FILES', 'Zbyt wiele wpisów w archiwum');
     }
-    // 2. Nazwy: traversal/abs/duplikaty; allowlista dla plików.
+    // 2. Struktura: nazwy, symlinki, duplikaty, allowlista + limity
+    // z metadanych CD (przed jakąkolwiek dekompresją; deklarowane rozmiary
+    // mogą kłamać w dół — strumieniowe limity przy odczycie zostają).
     const seen = new Set<string>();
     const files: string[] = [];
+    let declaredUnpacked = 0;
     for (const entry of cdEntries) {
         validateEntryName(entry.name);
         const normalized = entry.name.replace(/\\/g, '/');
         if (entry.dir) continue;
+        if (entry.symlink) {
+            throw new TransferError('SYMLINK_ENTRY', `Wpis symlink: ${normalized}`);
+        }
+        if (entry.uncompSize > limits.maxArtifactBytes) {
+            throw new TransferError(
+                'ARTIFACT_TOO_LARGE',
+                `Artefakt przekracza limit: ${normalized}`
+            );
+        }
+        declaredUnpacked += entry.uncompSize;
+        if (declaredUnpacked > limits.maxUnpackedBytes) {
+            throw new TransferError('UNPACKED_TOO_LARGE', 'Pakiet po rozpakowaniu za duży');
+        }
         if (seen.has(normalized)) {
             throw new TransferError('DUPLICATE_PATH', `Zduplikowana ścieżka: ${normalized}`);
         }
@@ -165,6 +204,9 @@ export async function inspectArchive(
             throw new TransferError('UNKNOWN_ARTIFACT', `Artefakt spoza allowlisty: ${normalized}`);
         }
         files.push(normalized);
+    }
+    if (declaredUnpacked / Math.max(buffer.length, 1) > limits.maxCompressionRatio) {
+        throw new TransferError('COMPRESSION_RATIO_EXCEEDED', 'Podejrzany stopień kompresji');
     }
     if (files.length === 0 || files.length > limits.maxFiles) {
         throw new TransferError('TOO_MANY_FILES', 'Nieprawidłowa liczba plików w pakiecie');

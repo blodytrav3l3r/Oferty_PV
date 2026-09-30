@@ -1,4 +1,5 @@
 import prisma from '../../../prismaClient';
+import type { Prisma } from '../../../../generated/prisma';
 import { ML_CONSTANTS } from '../../../config/mlConstants';
 import { computeDatasetFingerprint } from '../TrainingPipeline';
 import { SOKML_DATASET_SCHEMA_VERSION } from './transferConstants';
@@ -163,10 +164,16 @@ export interface DatasetImportResult {
     skipped: number;
 }
 
-/** Import wierszy: istniejące id pomijane (idempotencja na poziomie rekordu). */
-export async function importDatasetRows(rows: DatasetRow[]): Promise<DatasetImportResult> {
+/**
+ * Import wierszy: istniejące id pomijane (idempotencja na poziomie rekordu).
+ * `db` pozwala wpiąć zapis w transakcję importu (atomowość, brak częściowych danych).
+ */
+export async function importDatasetRows(
+    rows: DatasetRow[],
+    db: Prisma.TransactionClient = prisma
+): Promise<DatasetImportResult> {
     if (rows.length === 0) return { inserted: 0, skipped: 0 };
-    const existing = await prisma.aiFeature.findMany({
+    const existing = await db.aiFeature.findMany({
         where: { id: { in: rows.map((r) => r.id) } },
         select: { id: true }
     });
@@ -174,7 +181,7 @@ export async function importDatasetRows(rows: DatasetRow[]): Promise<DatasetImpo
     const fresh = rows.filter((r) => !existingIds.has(r.id));
     if (fresh.length > 0) {
         // Bez skipDuplicates (SQLite): istniejące odfiltrowane wyżej.
-        await prisma.aiFeature.createMany({ data: fresh });
+        await db.aiFeature.createMany({ data: fresh });
     }
     return { inserted: fresh.length, skipped: rows.length - fresh.length };
 }
