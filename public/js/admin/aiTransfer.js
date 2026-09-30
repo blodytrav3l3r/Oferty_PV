@@ -42,9 +42,17 @@
     }
 
     function checkIcon(status) {
-        if (status === 'PASS') return '<i data-lucide="check"></i>';
-        if (status === 'WARNING') return '<i data-lucide="alert-triangle"></i>';
-        return '<i data-lucide="x"></i>';
+        if (status === 'PASS')
+            return '<i data-lucide="check-circle" class="icon-xs" aria-hidden="true"></i>';
+        if (status === 'WARNING')
+            return '<i data-lucide="alert-triangle" class="icon-xs" aria-hidden="true"></i>';
+        return '<i data-lucide="x-circle" class="icon-xs" aria-hidden="true"></i>';
+    }
+
+    function checkLabel(status) {
+        if (status === 'PASS') return 'Zgodne';
+        if (status === 'WARNING') return 'Uwaga';
+        return 'Blokada';
     }
 
     function renderChecks(host, checks) {
@@ -60,6 +68,15 @@
                         ' <code>' +
                         esc(c.code) +
                         '</code>' +
+                        ' <span class="ops-pill ' +
+                        (c.status === 'PASS'
+                            ? 'ops-ok'
+                            : c.status === 'WARNING'
+                              ? 'ops-warn'
+                              : 'ops-err') +
+                        '">' +
+                        checkLabel(c.status) +
+                        '</span>' +
                         (c.detail ? ' <span>' + esc(c.detail) + '</span>' : '') +
                         '</li>'
                     );
@@ -70,40 +87,59 @@
     }
 
     function renderHistory(host) {
-        host.innerHTML = '<p>Ładowanie historii…</p>';
+        host.innerHTML = '<p class="text-muted">Ładowanie historii…</p>';
         var p = window.fetchJson(EPS.history);
         if (!p || !p.then) {
-            host.innerHTML = '<p>Historia niedostępna (brak połączenia).</p>';
+            host.innerHTML = '<p class="text-muted">Historia niedostępna (brak połączenia).</p>';
             return;
         }
         p.then(function (res) {
             var rows = (res && res.data) || [];
             if (!rows.length) {
-                host.innerHTML = '<p>Brak transferów.</p>';
+                host.innerHTML = '<p class="text-muted">Brak zarejestrowanych transferów.</p>';
                 return;
             }
             host.innerHTML =
-                '<table class="ai-table"><thead><tr><th>Data</th><th>Kierunek</th><th>Wersja</th><th>Wynik</th><th>Transfer</th></tr></thead><tbody>' +
+                '<div class="ai-table-wrap">' +
+                '<table class="ai-table"><thead><tr><th>Data</th><th>Kierunek</th><th>Wersja modelu</th><th>Status</th><th>Identyfikator transferu</th></tr></thead><tbody>' +
                 rows
                     .map(function (r) {
+                        var statusCls =
+                            r.status === 'COMPLETED'
+                                ? 'ops-ok'
+                                : r.status === 'ALREADY_IMPORTED'
+                                  ? 'ops-warn'
+                                  : 'ops-err';
+                        var statusLabel =
+                            r.status === 'COMPLETED'
+                                ? 'Ukończono'
+                                : r.status === 'ALREADY_IMPORTED'
+                                  ? 'Już zaimportowano'
+                                  : r.status === 'REJECTED'
+                                    ? 'Odrzucono'
+                                    : r.status;
                         return (
                             '<tr><td>' +
-                            esc(r.createdAt || '') +
-                            '</td><td>' +
-                            esc(r.direction || '') +
-                            '</td><td>' +
+                            esc((r.createdAt || '').slice(0, 19).replace('T', ' ')) +
+                            '</td><td><span class="ops-pill ' +
+                            (r.direction === 'EXPORT' ? 'ops-ok' : 'ops-warn') +
+                            '">' +
+                            esc(r.direction === 'EXPORT' ? 'Eksport' : 'Import') +
+                            '</span></td><td><code>' +
                             esc(r.modelVersion || '—') +
-                            '</td><td>' +
-                            esc(r.status || '') +
-                            '</td><td><code>' +
+                            '</code></td><td><span class="ops-pill ' +
+                            statusCls +
+                            '">' +
+                            esc(statusLabel) +
+                            '</span></td><td><code>' +
                             esc(r.transferId || '') +
                             '</code></td></tr>'
                         );
                     })
                     .join('') +
-                '</tbody></table>';
+                '</tbody></table></div>';
         }).catch(function () {
-            host.innerHTML = '<p>Nie udało się pobrać historii.</p>';
+            host.innerHTML = '<p class="text-muted">Nie udało się pobrać historii transferów.</p>';
         });
     }
 
@@ -236,13 +272,19 @@
                     }
                     previewHost.innerHTML =
                         '<dl class="ai-dl">' +
-                        '<dt>Model</dt><dd>' +
+                        '<dt>Model</dt><dd><code>' +
                         esc(p.model.version) +
-                        ' (' +
-                        esc(p.model.state || '?') +
+                        '</code> (' +
+                        esc(p.model.state || 'nieznany') +
                         ')</dd>' +
-                        '<dt>Dataset</dt><dd>' +
-                        esc(p.dataset.mode) +
+                        '<dt>Zbiór danych</dt><dd>' +
+                        esc(
+                            p.dataset.mode === 'full'
+                                ? 'Pełny (records.ndjson)'
+                                : p.dataset.mode === 'fingerprint-only'
+                                  ? 'Tylko sygnatura (fingerprint)'
+                                  : 'Brak'
+                        ) +
                         (p.dataset.fingerprint
                             ? ' <code>' + esc(p.dataset.fingerprint) + '</code>'
                             : '') +
@@ -250,15 +292,15 @@
                             ? ' (' + esc(String(p.dataset.recordCount)) + ' rekordów)'
                             : '') +
                         '</dd>' +
-                        '<dt>Knowledge</dt><dd>' +
+                        '<dt>Baza wiedzy</dt><dd>' +
                         (p.knowledge && p.knowledge.included
-                            ? esc(String(p.knowledge.patterns)) + ' patterns'
-                            : 'nie') +
+                            ? esc(String(p.knowledge.patterns)) + ' wzorców'
+                            : 'Brak') +
                         '</dd>' +
                         '<dt>Telemetria</dt><dd>' +
-                        esc(p.telemetry ? p.telemetry.note : 'nie') +
+                        esc(p.telemetry ? p.telemetry.note : 'Brak') +
                         '</dd>' +
-                        '<dt>Training runs</dt><dd>' +
+                        '<dt>Cykle treningowe</dt><dd>' +
                         esc(String(p.trainingRuns)) +
                         '</dd>' +
                         '<dt>Szacowany rozmiar</dt><dd>' +
@@ -345,22 +387,26 @@
                     var extras = '';
                     if (pv.datasetRecords != null)
                         extras +=
-                            '<p>Dataset FULL: ' + esc(String(pv.datasetRecords)) + ' rekordów</p>';
+                            '<p>Pełny zbiór danych: <strong>' +
+                            esc(String(pv.datasetRecords)) +
+                            '</strong> rekordów</p>';
                     if (pv.knowledgePatterns != null)
                         extras +=
-                            '<p>Knowledge: ' + esc(String(pv.knowledgePatterns)) + ' patterns</p>';
+                            '<p>Wzorce bazy wiedzy: <strong>' +
+                            esc(String(pv.knowledgePatterns)) +
+                            '</strong> pozycji</p>';
                     if (pv.telemetryGroups != null)
                         extras +=
-                            '<p>Telemetria: ' +
+                            '<p>Telemetria: <strong>' +
                             esc(String(pv.telemetryGroups)) +
-                            ' grup (informacyjnie)</p>';
+                            '</strong> grup operacyjnych</p>';
                     var html =
-                        '<p>Pakiet: <code>' +
+                        '<p>Sygnatura pakietu: <code>' +
                         esc(pv.packageFingerprint) +
                         '</code></p>' +
-                        '<p>Model: ' +
+                        '<p>Wersja modelu: <code>' +
                         esc(pv.modelVersion) +
-                        ' → wynik: CANDIDATE</p>' +
+                        '</code> → status po imporcie: <strong>CANDIDATE (Kandydat)</strong></p>' +
                         extras;
                     resultHost.innerHTML = html;
                     var checksHost = document.createElement('div');
@@ -370,7 +416,8 @@
                         importBtn.disabled = false;
                     } else {
                         var blocked = document.createElement('p');
-                        blocked.textContent = 'IMPORT BLOCKED — popraw pakiet.';
+                        blocked.className = 'text-danger';
+                        blocked.textContent = 'Import zablokowany — pakiet zawiera niezgodności.';
                         resultHost.appendChild(blocked);
                     }
                 })
@@ -403,12 +450,18 @@
                         }
                         resultHost.innerHTML =
                             '<p>Wynik: <strong>' +
-                            esc(out.body.status) +
-                            '</strong> — wersja ' +
+                            esc(
+                                out.body.status === 'IMPORTED'
+                                    ? 'Pomyślnie zaimportowano'
+                                    : out.body.status === 'ALREADY_IMPORTED'
+                                      ? 'Pakiet był już wcześniej zaimportowany'
+                                      : out.body.status
+                            ) +
+                            '</strong> — wersja modelu: <code>' +
                             esc(out.body.version || '?') +
-                            ' (' +
+                            '</code> (identyfikator: <code>' +
                             esc(out.body.transferId || '') +
-                            '). Model wymaga APPROVE → PROMOTE.</p>';
+                            '</code>). Model otrzymał status CANDIDATE i wymaga zatwierdzenia przez administratora (Zatwierdź / Awansuj).</p>';
                         toast('Import zakończony: ' + out.body.status, 'success');
                         renderHistory(historyHost);
                     })
@@ -439,30 +492,39 @@
             return;
         }
         host.innerHTML =
-            '<h4 class="ai-section-title"><i data-lucide="arrow-left-right"></i> Transfer Center (.sokml)</h4>' +
-            '<div class="ai-toolbar"><strong>Eksport</strong></div>' +
-            '<div class="ai-toolbar">' +
-            '<select id="ai-tr-model" class="ai-filter-input" aria-label="Model do eksportu"></select>' +
-            '<button id="ai-tr-preview-btn" class="ai-btn"><i data-lucide="eye"></i> Podgląd</button>' +
-            '<button id="ai-tr-export-btn" class="ai-btn ai-btn-primary"><i data-lucide="download"></i> Eksportuj .sokml</button>' +
+            '<h4 class="ai-section-title"><i data-lucide="arrow-left-right"></i> Centrum transferu modeli i danych (.sokml)</h4>' +
+            '<div class="ai-transfer-grid">' +
+            '  <div class="ai-transfer-card">' +
+            '    <div class="ai-transfer-card-header"><i data-lucide="upload"></i> Eksport pakietu .sokml</div>' +
+            '    <div class="ai-toolbar" style="margin-bottom:0">' +
+            '      <select id="ai-tr-model" class="ai-filter-input" style="width:100%" aria-label="Model do eksportu"></select>' +
+            '    </div>' +
+            '    <div class="ai-transfer-options">' +
+            '      <label><input type="checkbox" id="ai-tr-full"> Pełny zbiór uczący (records.ndjson)</label>' +
+            '      <label><input type="checkbox" id="ai-tr-kb"> Baza wiedzy (wzorce i reguły)</label>' +
+            '      <label title="Agregaty operacyjne z ostatnich 30 dni — tylko informacyjnie"><input type="checkbox" id="ai-tr-tel"> Podsumowanie telemetrii (agregaty)</label>' +
+            '    </div>' +
+            '    <div class="ai-toolbar" style="margin-bottom:0">' +
+            '      <button id="ai-tr-preview-btn" class="ai-btn"><i data-lucide="eye"></i> Podgląd zawartości</button>' +
+            '      <button id="ai-tr-export-btn" class="ai-btn ai-btn-primary"><i data-lucide="download"></i> Eksportuj pakiet</button>' +
+            '    </div>' +
+            '    <div id="ai-tr-export-preview" class="ai-transfer-preview"></div>' +
+            '    <p id="ai-tr-export-status" class="ai-transfer-status" aria-live="polite"></p>' +
+            '  </div>' +
+            '  <div class="ai-transfer-card">' +
+            '    <div class="ai-transfer-card-header"><i data-lucide="download"></i> Import i weryfikacja pakietu</div>' +
+            '    <div class="ai-file-btn-wrapper">' +
+            '      <input type="file" id="ai-tr-file" accept=".sokml" aria-label="Wybierz plik pakietu .sokml">' +
+            '    </div>' +
+            '    <div class="ai-toolbar" style="margin-bottom:0">' +
+            '      <button id="ai-tr-dryrun-btn" class="ai-btn"><i data-lucide="search"></i> Wykonaj próbę (Dry-run)</button>' +
+            '      <button id="ai-tr-import-btn" class="ai-btn ai-btn-primary"><i data-lucide="check"></i> Zatwierdź import</button>' +
+            '    </div>' +
+            '    <div id="ai-tr-import-result" class="ai-transfer-preview" aria-live="polite"></div>' +
+            '  </div>' +
             '</div>' +
-            '<div class="ai-toolbar">' +
-            '<label><input type="checkbox" id="ai-tr-full"> Dataset FULL (rekordy)</label>' +
-            '<label><input type="checkbox" id="ai-tr-kb"> Knowledge (patterns)</label>' +
-            '<label title="Agregaty operacyjne z 30 dni — informacyjnie, bez zapisu u celu"><input type="checkbox" id="ai-tr-tel"> Telemetria (agregaty)</label>' +
-            '</div>' +
-            '<div id="ai-tr-export-preview"></div>' +
-            '<p id="ai-tr-export-status" aria-live="polite"></p>' +
             '<div class="ai-divider" role="separator"></div>' +
-            '<div class="ai-toolbar"><strong>Import</strong></div>' +
-            '<div class="ai-toolbar">' +
-            '<input type="file" id="ai-tr-file" accept=".sokml" aria-label="Plik pakietu .sokml">' +
-            '<button id="ai-tr-dryrun-btn" class="ai-btn"><i data-lucide="search"></i> Dry-run</button>' +
-            '<button id="ai-tr-import-btn" class="ai-btn ai-btn-primary"><i data-lucide="upload"></i> Importuj</button>' +
-            '</div>' +
-            '<div id="ai-tr-import-result" aria-live="polite"></div>' +
-            '<div class="ai-divider" role="separator"></div>' +
-            '<div class="ai-toolbar"><strong>Historia transferów</strong></div>' +
+            '<div class="ai-section-title"><i data-lucide="history"></i> Historia operacji transferu</div>' +
             '<div id="ai-tr-history"></div>';
         var historyHost = host.querySelector('#ai-tr-history');
         wireExport(host);

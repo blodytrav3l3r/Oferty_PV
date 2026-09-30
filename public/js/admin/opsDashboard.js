@@ -101,7 +101,7 @@
     }
 
     function renderApp(container, version, sysinfo) {
-        var html = '<h4>Aplikacja</h4>';
+        var html = '<div class="ops-card"><h4><i data-lucide="layers"></i>Aplikacja</h4>';
         if (!version && !sysinfo) {
             html += row('Status', 'brak danych', 'UNKNOWN');
         } else {
@@ -119,11 +119,12 @@
                 html += row('Diagnostyka', 'wymaga admina', 'UNKNOWN');
             }
         }
+        html += '</div>';
         container.innerHTML += html;
     }
 
     function renderHealth(container, live, ready) {
-        var html = '<h4>Zdrowie</h4>';
+        var html = '<div class="ops-card"><h4><i data-lucide="activity"></i>Zdrowie</h4>';
         html += row('Liveness', live ? 'odpowiada' : 'brak odpowiedzi', live ? 'OK' : 'ERROR');
         if (!ready) {
             html += row('Readiness (DB)', 'brak danych', 'UNKNOWN');
@@ -132,11 +133,12 @@
         } else {
             html += row('Readiness (DB)', 'niedostępna', 'ERROR');
         }
+        html += '</div>';
         container.innerHTML += html;
     }
 
     function renderApi(container, metrics, csp) {
-        var html = '<h4>API</h4>';
+        var html = '<div class="ops-card"><h4><i data-lucide="server"></i>API</h4>';
         if (!metrics) {
             html += row('Metryki', 'wymagają admina', 'UNKNOWN');
         } else {
@@ -181,11 +183,12 @@
             }
         }
         html += row('CSP enforce', csp ? 'aktywne' : 'brak / report-only', csp ? 'OK' : 'WARNING');
+        html += '</div>';
         container.innerHTML += html;
     }
 
     function renderMl(container, ml) {
-        var html = '<h4>ML</h4>';
+        var html = '<div class="ops-card"><h4><i data-lucide="brain"></i>ML</h4>';
         if (!ml) {
             html += row('Status', 'brak danych', 'UNKNOWN');
         } else if (!ml.mlOnline) {
@@ -220,6 +223,7 @@
                 ml.lastDatasetFingerprint ? 'OK' : 'UNKNOWN'
             );
         }
+        html += '</div>';
         container.innerHTML += html;
     }
 
@@ -278,17 +282,17 @@
                 renderError(el);
                 return;
             }
-            el.innerHTML = '';
-            // getJson zwraca {body, headers} — odpakuj raz, centralnie.
+            el.innerHTML = '<div class="ops-grid"></div>';
+            var grid = el.querySelector('.ops-grid');
             function bodyOf(r) {
                 if (!r || r.status !== 'fulfilled' || !r.value) return null;
                 var v = r.value;
                 return v && v.body !== undefined && v.headers !== undefined ? v.body : v;
             }
-            renderApp(el, bodyOf(results[0]), bodyOf(results[1]));
-            renderHealth(el, bodyOf(results[2]), bodyOf(results[3]));
-            renderApi(el, bodyOf(results[4]), !!csp);
-            renderMl(el, bodyOf(results[5]));
+            renderApp(grid, bodyOf(results[0]), bodyOf(results[1]));
+            renderHealth(grid, bodyOf(results[2]), bodyOf(results[3]));
+            renderApi(grid, bodyOf(results[4]), !!csp);
+            renderMl(grid, bodyOf(results[5]));
             if (typeof lucide !== 'undefined' && lucide.createIcons) {
                 try {
                     lucide.createIcons({ root: el });

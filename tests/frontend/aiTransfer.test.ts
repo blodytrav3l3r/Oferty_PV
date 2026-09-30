@@ -63,7 +63,7 @@ describe('aiTransfer', () => {
         expect(host.querySelector('#ai-tr-model')).not.toBeNull();
         expect(host.querySelector('#ai-tr-file').getAttribute('accept')).toBe('.sokml');
         expect(host.querySelector('#ai-tr-import-btn').disabled).toBe(true);
-        expect(host.textContent).toContain('Transfer Center');
+        expect(host.textContent).toContain('Centrum transferu');
     });
 
     it('escapuje złośliwą wersję modelu na liście', async () => {
