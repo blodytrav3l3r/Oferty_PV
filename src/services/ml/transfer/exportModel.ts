@@ -20,6 +20,14 @@ import {
     sha256Hex,
     type SokmlManifest
 } from './manifest';
+import {
+    fetchEligibleDatasetRows,
+    serializeRecordsNdjson,
+    buildDatasetManifest,
+    type DatasetRow
+} from './dataset';
+import { exportPatterns } from './knowledge';
+import { buildTelemetryAggregates } from './telemetryExport';
 
 /**
  * P7.2 — Export model-only (samowystarczalny artefakt).
@@ -106,17 +114,28 @@ export interface ExportPreview {
         trainingRows: number;
     };
     dataset: {
-        mode: 'fingerprint-only' | 'not-included';
+        mode: 'fingerprint-only' | 'full' | 'not-included';
         fingerprint: string | null;
         recordCount: number | null;
     };
+    knowledge: { included: boolean; patterns: number };
+    telemetry: { included: boolean; note: string };
     trainingRuns: number;
     lineageIncluded: boolean;
     estimatedBytes: number;
 }
 
+export interface ExportOptions {
+    dataset?: 'fingerprint-only' | 'full' | 'not-included';
+    knowledge?: boolean;
+    telemetry?: boolean;
+}
+
 /** Podgląd eksportu (bez generowania pliku) — użytkownik widzi, co opuszcza komputer. */
-export async function buildExportPreview(modelId: string): Promise<ExportPreview> {
+export async function buildExportPreview(
+    modelId: string,
+    options: ExportOptions = {}
+): Promise<ExportPreview> {
     const record = await prisma.aiModel.findUnique({ where: { id: modelId } });
     if (!record) throw new TransferError('MODEL_NOT_FOUND', 'Model nie istnieje');
     const parsed = parseModelRecord(record);
@@ -126,6 +145,25 @@ export async function buildExportPreview(modelId: string): Promise<ExportPreview
         take: 100
     });
     const withFingerprint = runs.find((r) => r.datasetFingerprint);
+    const datasetMode = options.dataset ?? (withFingerprint ? 'fingerprint-only' : 'not-included');
+    const datasetBlock =
+        datasetMode === 'full'
+            ? {
+                  mode: datasetMode,
+                  fingerprint: null as string | null,
+                  recordCount: await prisma.aiFeature.count({
+                      where: { label: { not: 'NO_FEEDBACK' } }
+                  })
+              }
+            : {
+                  mode: datasetMode,
+                  fingerprint: withFingerprint?.datasetFingerprint ?? null,
+                  recordCount: withFingerprint?.datasetSize ?? null
+              };
+    const knowledgePatterns =
+        options.knowledge === true
+            ? await prisma.ai_knowledge_base.count({ where: { status: { not: 'archived' } } })
+            : 0;
     const estimatedBytes =
         record.weights.length + record.features.length + record.metrics.length + 4096;
     return {
@@ -137,10 +175,14 @@ export async function buildExportPreview(modelId: string): Promise<ExportPreview
             featureCount: parsed.features.length,
             trainingRows: record.trainingRows
         },
-        dataset: {
-            mode: withFingerprint ? 'fingerprint-only' : 'not-included',
-            fingerprint: withFingerprint?.datasetFingerprint ?? null,
-            recordCount: withFingerprint?.datasetSize ?? null
+        dataset: datasetBlock,
+        knowledge: { included: options.knowledge === true, patterns: knowledgePatterns },
+        telemetry: {
+            included: options.telemetry === true,
+            note:
+                options.telemetry === true
+                    ? 'Agregaty operacyjne (30 dni) — informacyjnie, bez zapisu u celu'
+                    : 'Wyłączona'
         },
         trainingRuns: runs.length,
         lineageIncluded: true,
@@ -156,7 +198,11 @@ export interface BuiltPackage {
 }
 
 /** Buduje kompletny .sokml dla modelu + zapisuje rekord AiTransfer (EXPORT). */
-export async function buildModelPackage(modelId: string, userId: string): Promise<BuiltPackage> {
+export async function buildModelPackage(
+    modelId: string,
+    userId: string,
+    options: ExportOptions = {}
+): Promise<BuiltPackage> {
     const record = await prisma.aiModel.findUnique({ where: { id: modelId } });
     if (!record) throw new TransferError('MODEL_NOT_FOUND', 'Model nie istnieje');
     const parsed = parseModelRecord(record);
@@ -189,7 +235,25 @@ export async function buildModelPackage(modelId: string, userId: string): Promis
     const contentArtifacts: Array<{ path: string; text: string }> = [
         { path: modelPath, text: modelText }
     ];
-    if (withFingerprint?.datasetFingerprint) {
+    const datasetMode = options.dataset ?? (withFingerprint ? 'fingerprint-only' : 'not-included');
+    let datasetRows: DatasetRow[] | null = null;
+    let resolvedFingerprint: string | null = null;
+    let resolvedRecordCount: number | null = null;
+    if (datasetMode === 'full') {
+        // P7.5 Extended: snapshot kwalifikowalnych wierszy (semantyka w dataset.ts).
+        datasetRows = await fetchEligibleDatasetRows();
+        const fullManifest = buildDatasetManifest(datasetRows);
+        resolvedFingerprint = fullManifest.fingerprint;
+        resolvedRecordCount = fullManifest.recordCount;
+        contentArtifacts.push({
+            path: 'datasets/manifest.json',
+            text: JSON.stringify(fullManifest)
+        });
+        contentArtifacts.push({
+            path: 'datasets/records.ndjson',
+            text: serializeRecordsNdjson(datasetRows)
+        });
+    } else if (withFingerprint?.datasetFingerprint && datasetMode === 'fingerprint-only') {
         contentArtifacts.push({
             path: 'datasets/manifest.json',
             text: JSON.stringify({
@@ -202,6 +266,22 @@ export async function buildModelPackage(modelId: string, userId: string): Promis
             })
         });
     }
+    if (options.knowledge === true) {
+        contentArtifacts.push({
+            path: 'knowledge/patterns.json',
+            text: JSON.stringify(await exportPatterns())
+        });
+    }
+    if (options.telemetry === true) {
+        contentArtifacts.push({
+            path: 'telemetry/selected.json',
+            text: JSON.stringify(await buildTelemetryAggregates())
+        });
+    }
+    // Model niesie finalny fingerprint datasetu (full ze snapshotu albo run).
+    modelArtifact.datasetFingerprint =
+        resolvedFingerprint ?? withFingerprint?.datasetFingerprint ?? null;
+    contentArtifacts[0] = { path: modelPath, text: JSON.stringify(modelArtifact) };
     contentArtifacts.push({
         path: 'training/runs.json',
         text: JSON.stringify(
@@ -256,12 +336,12 @@ export async function buildModelPackage(modelId: string, userId: string): Promis
         sourceSokVersion: sokVersion,
         sourcePlatform: `${process.platform}-${process.arch}`,
         dataset: {
-            fingerprint: withFingerprint?.datasetFingerprint ?? null,
+            fingerprint: resolvedFingerprint ?? withFingerprint?.datasetFingerprint ?? null,
             fingerprintAlgorithm: 'SHA-256',
             fingerprintVersion: 1,
             datasetSchemaVersion: SOKML_DATASET_SCHEMA_VERSION,
-            recordCount: withFingerprint?.datasetSize ?? null,
-            mode: withFingerprint ? 'fingerprint-only' : 'not-included'
+            recordCount: resolvedRecordCount ?? withFingerprint?.datasetSize ?? null,
+            mode: datasetMode
         },
         model: {
             version: record.version,
@@ -270,7 +350,7 @@ export async function buildModelPackage(modelId: string, userId: string): Promis
             modelSchemaVersion: SOKML_MODEL_SCHEMA_VERSION
         },
         lineage: {
-            datasetFingerprint: withFingerprint?.datasetFingerprint ?? null,
+            datasetFingerprint: resolvedFingerprint ?? withFingerprint?.datasetFingerprint ?? null,
             datasetSchemaVersion: SOKML_DATASET_SCHEMA_VERSION,
             solverVersion: null,
             rulesVersion: null,
@@ -293,6 +373,8 @@ export async function buildModelPackage(modelId: string, userId: string): Promis
     zip.file('checksums.sha256', checksums);
     const buffer = await zip.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE' });
 
+    const extended =
+        datasetMode === 'full' || options.knowledge === true || options.telemetry === true;
     await prisma.aiTransfer.create({
         data: {
             id: crypto.randomUUID(),
@@ -302,11 +384,11 @@ export async function buildModelPackage(modelId: string, userId: string): Promis
             manifestFingerprint: 'sha256:' + sha256Hex(manifestText),
             modelVersion: record.version,
             modelFingerprint: 'sha256:' + hashes.find((h) => h.path === modelPath)?.sha256,
-            datasetFingerprint: withFingerprint?.datasetFingerprint ?? null,
+            datasetFingerprint: resolvedFingerprint ?? withFingerprint?.datasetFingerprint ?? null,
             sourceSokVersion: sokVersion,
             targetSokVersion: sokVersion,
             status: 'COMPLETED',
-            result: 'MODEL_ONLY',
+            result: extended ? 'FULL' : 'MODEL_ONLY',
             userId,
             createdAt: new Date().toISOString()
         }

@@ -136,14 +136,19 @@
         });
     }
 
-    function downloadPackage(modelId, statusHost) {
+    function downloadPackage(modelId, scope, statusHost) {
         statusHost.textContent = 'Generowanie pakietu…';
         // Jeden POST: binarka przy OK, JSON z kodem przy błędzie (rozjazd po Content-Type).
         fetch(EPS.export, {
             method: 'POST',
             credentials: 'same-origin',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ modelId: modelId })
+            body: JSON.stringify({
+                modelId: modelId,
+                dataset: scope.dataset,
+                knowledge: scope.knowledge === true ? true : undefined,
+                telemetry: scope.telemetry === true ? true : undefined
+            })
         })
             .then(function (resp) {
                 var ct = resp.headers.get('Content-Type') || '';
@@ -186,6 +191,26 @@
             });
     }
 
+    function exportScope(root) {
+        function checked(id) {
+            var el = root.querySelector(id);
+            return !!(el && el.checked);
+        }
+        return {
+            dataset: checked('#ai-tr-full') ? 'full' : undefined,
+            knowledge: checked('#ai-tr-kb') || undefined,
+            telemetry: checked('#ai-tr-tel') || undefined
+        };
+    }
+
+    function scopeQuery(scope) {
+        var q = [];
+        if (scope.dataset) q.push('dataset=' + scope.dataset);
+        if (scope.knowledge) q.push('knowledge=1');
+        if (scope.telemetry) q.push('telemetry=1');
+        return q.length ? '&' + q.join('&') : '';
+    }
+
     function wireExport(root) {
         var select = root.querySelector('#ai-tr-model');
         var previewBtn = root.querySelector('#ai-tr-preview-btn');
@@ -197,8 +222,13 @@
         previewBtn.addEventListener('click', function () {
             if (!select.value) return;
             previewHost.innerHTML = '<p>Ładowanie podglądu…</p>';
+            var url =
+                EPS.previewExport +
+                '?modelId=' +
+                encodeURIComponent(select.value) +
+                scopeQuery(exportScope(root));
             window
-                .fetchJson(EPS.previewExport + '?modelId=' + encodeURIComponent(select.value))
+                .fetchJson(url)
                 .then(function (p) {
                     if (!p || p.error) {
                         previewHost.innerHTML = '<p>Podgląd niedostępny.</p>';
@@ -216,6 +246,17 @@
                         (p.dataset.fingerprint
                             ? ' <code>' + esc(p.dataset.fingerprint) + '</code>'
                             : '') +
+                        (p.dataset.recordCount != null
+                            ? ' (' + esc(String(p.dataset.recordCount)) + ' rekordów)'
+                            : '') +
+                        '</dd>' +
+                        '<dt>Knowledge</dt><dd>' +
+                        (p.knowledge && p.knowledge.included
+                            ? esc(String(p.knowledge.patterns)) + ' patterns'
+                            : 'nie') +
+                        '</dd>' +
+                        '<dt>Telemetria</dt><dd>' +
+                        esc(p.telemetry ? p.telemetry.note : 'nie') +
                         '</dd>' +
                         '<dt>Training runs</dt><dd>' +
                         esc(String(p.trainingRuns)) +
@@ -233,7 +274,7 @@
             if (!select.value) return;
             var confirmFn = window.aiUiConfirm || window.appConfirm;
             var run = function () {
-                downloadPackage(select.value, statusHost);
+                downloadPackage(select.value, exportScope(root), statusHost);
             };
             if (typeof confirmFn === 'function') {
                 confirmFn('Wyeksportować pakiet .sokml wybranego modelu?', {
@@ -300,13 +341,27 @@
                     }
                     state.buffer = out.buf;
                     state.dryRunId = out.body.dryRunId;
+                    var pv = out.body.preview;
+                    var extras = '';
+                    if (pv.datasetRecords != null)
+                        extras +=
+                            '<p>Dataset FULL: ' + esc(String(pv.datasetRecords)) + ' rekordów</p>';
+                    if (pv.knowledgePatterns != null)
+                        extras +=
+                            '<p>Knowledge: ' + esc(String(pv.knowledgePatterns)) + ' patterns</p>';
+                    if (pv.telemetryGroups != null)
+                        extras +=
+                            '<p>Telemetria: ' +
+                            esc(String(pv.telemetryGroups)) +
+                            ' grup (informacyjnie)</p>';
                     var html =
                         '<p>Pakiet: <code>' +
-                        esc(out.body.preview.packageFingerprint) +
+                        esc(pv.packageFingerprint) +
                         '</code></p>' +
                         '<p>Model: ' +
-                        esc(out.body.preview.modelVersion) +
-                        ' → wynik: CANDIDATE</p>';
+                        esc(pv.modelVersion) +
+                        ' → wynik: CANDIDATE</p>' +
+                        extras;
                     resultHost.innerHTML = html;
                     var checksHost = document.createElement('div');
                     resultHost.appendChild(checksHost);
@@ -390,6 +445,11 @@
             '<select id="ai-tr-model" class="ai-filter-input" aria-label="Model do eksportu"></select>' +
             '<button id="ai-tr-preview-btn" class="ai-btn"><i data-lucide="eye"></i> Podgląd</button>' +
             '<button id="ai-tr-export-btn" class="ai-btn ai-btn-primary"><i data-lucide="download"></i> Eksportuj .sokml</button>' +
+            '</div>' +
+            '<div class="ai-toolbar">' +
+            '<label><input type="checkbox" id="ai-tr-full"> Dataset FULL (rekordy)</label>' +
+            '<label><input type="checkbox" id="ai-tr-kb"> Knowledge (patterns)</label>' +
+            '<label title="Agregaty operacyjne z 30 dni — informacyjnie, bez zapisu u celu"><input type="checkbox" id="ai-tr-tel"> Telemetria (agregaty)</label>' +
             '</div>' +
             '<div id="ai-tr-export-preview"></div>' +
             '<p id="ai-tr-export-status" aria-live="polite"></p>' +

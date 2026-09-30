@@ -28,7 +28,8 @@ export type TransferBlockCode =
     | 'ALREADY_IMPORTED'
     | 'MODEL_DUPLICATE'
     | 'MODEL_NOT_FOUND'
-    | 'MODEL_INVALID';
+    | 'MODEL_INVALID'
+    | 'DATASET_INVALID';
 
 export class TransferError extends Error {
     readonly code: TransferBlockCode;

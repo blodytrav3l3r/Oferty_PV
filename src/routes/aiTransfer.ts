@@ -45,7 +45,29 @@ function sendTransferError(res: Response, e: TransferError): void {
     res.status(status).json({ error: e.message, code: e.code });
 }
 
-const exportBodySchema = z.object({ modelId: z.string().min(1) });
+const exportBodySchema = z.object({
+    modelId: z.string().min(1),
+    dataset: z.enum(['fingerprint-only', 'full', 'not-included']).optional(),
+    knowledge: z.boolean().optional(),
+    telemetry: z.boolean().optional()
+});
+
+type ExportScope = {
+    dataset?: 'fingerprint-only' | 'full' | 'not-included';
+    knowledge?: boolean;
+    telemetry?: boolean;
+};
+
+function scopeFromQuery(query: Request['query']): ExportScope {
+    const scope: ExportScope = {};
+    const dataset = String(query.dataset ?? '');
+    if (dataset === 'full' || dataset === 'fingerprint-only' || dataset === 'not-included') {
+        scope.dataset = dataset;
+    }
+    if (query.knowledge === '1' || query.knowledge === 'true') scope.knowledge = true;
+    if (query.telemetry === '1' || query.telemetry === 'true') scope.telemetry = true;
+    return scope;
+}
 
 /* ===== EXPORT: podgląd (co opuszcza komputer) ===== */
 router.get(
@@ -61,7 +83,7 @@ router.get(
                 res.status(400).json({ error: 'Brak modelId', code: 'MODEL_NOT_FOUND' });
                 return;
             }
-            res.json(await buildExportPreview(modelId));
+            res.json(await buildExportPreview(modelId, scopeFromQuery(req.query)));
         } catch (e) {
             if (e instanceof TransferError) sendTransferError(res, e);
             else sendInternalError(res, 'AiTransferRoute', e);
@@ -85,7 +107,11 @@ router.post(
                 return;
             }
             const userId = authReq.user?.id || '';
-            const pkg = await buildModelPackage(parsed.data.modelId, userId);
+            const pkg = await buildModelPackage(parsed.data.modelId, userId, {
+                dataset: parsed.data.dataset,
+                knowledge: parsed.data.knowledge,
+                telemetry: parsed.data.telemetry
+            });
             await logAudit('ai_transfer', pkg.transferId, userId, 'TRANSFER_EXPORT_COMPLETED', {
                 packageFingerprint: pkg.packageFingerprint,
                 modelVersion: pkg.manifest.model.version,

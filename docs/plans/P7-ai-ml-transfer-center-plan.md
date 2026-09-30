@@ -2,16 +2,18 @@
 
 > Wersja: 1.34.0 | Baza: `c71fc925` (main) | Status: KONTRAKT v3 (zamrożony,
 > GO na implementację P7 Core; P7.5 Extended dopiero po realnym round-trip PC-A→PC-B)
-> Realizacja 2026-09-30: P7.0–P7.7 + P7.2–P7.4 (fingerprint-only) + P7.5 Core +
-> audit/historia/API — ZROBIONE i pokryte testami (tests/transfer, 30 testów).
-> OTWARTE: P7.8 UI (zakładka Transfer w Dashboardzie), P7.5 Extended
-> (FULL DATA / Knowledge / Telemetry), P7.9 cross-instance na dwóch fizycznych
-> maszynach (round-trip zweryfikowany na jednej instancji + symulacja PC-B).
-> Cel: bezpieczny, wersjonowany i audytowalny mechanizm przenoszenia stanu AI/ML
-> między instancjami S.O.K. Pakiet `.sokml` = oficjalny artefakt MLOps, nie kontener
-> na pliki. Import zawsze: CANDIDATE → IMPORT/LINEAGE/MODEL VALIDATION →
-> ADMIN REVIEW → APPROVE → PROMOTE. Tylko AcceptanceModel (round-trip first,
-> inne typy modeli poza zakresem).
+> Realizacja 2026-09-30: P7.0–P7.7 + P7.2–P7.4 + P7.5 Core + P7.5 Extended
+> (FULL DATA records.ndjson, Knowledge patterns, Telemetry selected) + P7.8 UI
+>
+> - audit/historia/API — ZROBIONE i pokryte testami (tests/transfer 34 testy,
+>   tests/frontend/aiTransfer 4 testy).
+>   OTWARTE: P7.9 cross-instance na dwóch fizycznych maszynach (round-trip
+>   zweryfikowany na jednej instancji + symulacja PC-B).
+>   Cel: bezpieczny, wersjonowany i audytowalny mechanizm przenoszenia stanu AI/ML
+>   między instancjami S.O.K. Pakiet `.sokml` = oficjalny artefakt MLOps, nie kontener
+>   na pliki. Import zawsze: CANDIDATE → IMPORT/LINEAGE/MODEL VALIDATION →
+>   ADMIN REVIEW → APPROVE → PROMOTE. Tylko AcceptanceModel (round-trip first,
+>   inne typy modeli poza zakresem).
 
 ## 0. Kolejność etapów (obowiązująca)
 

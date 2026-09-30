@@ -129,12 +129,14 @@ describe('validateEntryName', () => {
 });
 
 describe('isAllowedArtifactPath', () => {
-    it('allowlista Core: modele + manifesty, bez knowledge/telemetry', () => {
+    it('allowlista: Core + P7.5 Extended (opt-in), reszta zablokowana', () => {
         expect(isAllowedArtifactPath('models/m.json')).toBe(true);
         expect(isAllowedArtifactPath('manifest.json')).toBe(true);
         expect(isAllowedArtifactPath('models/a/b.json')).toBe(false);
-        expect(isAllowedArtifactPath('knowledge/patterns.json')).toBe(false);
-        expect(isAllowedArtifactPath('telemetry/selected.json')).toBe(false);
+        expect(isAllowedArtifactPath('knowledge/patterns.json')).toBe(true);
+        expect(isAllowedArtifactPath('telemetry/selected.json')).toBe(true);
+        expect(isAllowedArtifactPath('knowledge/other.json')).toBe(false);
+        expect(isAllowedArtifactPath('evil.exe')).toBe(false);
     });
 });
 

@@ -23,6 +23,9 @@ export interface DryRunPreview {
     featureVersion: string;
     datasetMode: string;
     datasetFingerprint: string | null;
+    datasetRecords: number | null;
+    knowledgePatterns: number | null;
+    telemetryGroups: number | null;
     artifacts: number;
 }
 
@@ -89,7 +92,37 @@ export async function runDryRun(buffer: Buffer, userId: string): Promise<DryRunR
             featureVersion: manifest.model.featureVersion,
             datasetMode: manifest.dataset.mode,
             datasetFingerprint: manifest.dataset.fingerprint,
+            datasetRecords: countExtended(files.get('datasets/records.ndjson'), countLines),
+            knowledgePatterns: countExtended(files.get('knowledge/patterns.json'), countArray),
+            telemetryGroups: countExtended(files.get('telemetry/selected.json'), countGroups),
             artifacts: manifest.artifacts.length
         }
     };
+}
+
+function countExtended(
+    bytes: Buffer | undefined,
+    counter: (text: string) => number | null
+): number | null {
+    if (!bytes) return null;
+    try {
+        return counter(bytes.toString('utf8'));
+    } catch {
+        return null;
+    }
+}
+
+function countLines(text: string): number | null {
+    const n = text.split('\n').filter((l) => l.trim()).length;
+    return n;
+}
+
+function countArray(text: string): number | null {
+    const parsed: unknown = JSON.parse(text);
+    return Array.isArray(parsed) ? parsed.length : null;
+}
+
+function countGroups(text: string): number | null {
+    const parsed = JSON.parse(text) as { byDaySource?: unknown };
+    return Array.isArray(parsed.byDaySource) ? parsed.byDaySource.length : null;
 }

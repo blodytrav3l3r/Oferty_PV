@@ -15,6 +15,8 @@ import {
     type ModelArtifactShape
 } from './compatibility';
 import { getDryRun } from './dryRunStore';
+import { parseRecordsNdjson, verifyDatasetIntegrity, importDatasetRows } from './dataset';
+import { parsePatternsFile, importPatterns } from './knowledge';
 import { logAudit } from '../../auditService';
 
 /**
@@ -169,8 +171,8 @@ export async function importPackage(
         };
     }
 
-    if (manifest.dataset.mode === 'full') {
-        throw new TransferError('MODEL_INVALID', 'Pakiet FULL DATA wymaga P7.5 Extended');
+    if (manifest.dataset.mode === 'full' && !files.has('datasets/records.ndjson')) {
+        throw new TransferError('DATASET_INVALID', 'Tryb full bez records.ndjson');
     }
     const modelPath = resolveModelArtifactPath(manifest);
     const modelText = files.get(modelPath)?.toString('utf8');
@@ -188,6 +190,42 @@ export async function importPackage(
         throw new TransferError('MODEL_INVALID', 'Niekompletne lineage pakietu');
     }
     smokeTestModel(shape);
+
+    // P7.5 Extended: dataset FULL (integralność → wiersze), wiedza, telemetria.
+    // Kolejność po walidacji modelu; każdy artefakt ścisły (strict, bez silent skip).
+    const extendedSummary: Record<string, number> = {};
+    const recordsText = files.get('datasets/records.ndjson')?.toString('utf8');
+    if (recordsText !== undefined) {
+        const rows = parseRecordsNdjson(recordsText);
+        verifyDatasetIntegrity(
+            rows,
+            manifest.dataset.fingerprint ?? '',
+            manifest.model.featureVersion
+        );
+        const ds = await importDatasetRows(rows);
+        extendedSummary.datasetInserted = ds.inserted;
+        extendedSummary.datasetSkipped = ds.skipped;
+    }
+    const patternsText = files.get('knowledge/patterns.json')?.toString('utf8');
+    if (patternsText !== undefined) {
+        const kb = await importPatterns(parsePatternsFile(patternsText));
+        extendedSummary.knowledgeInserted = kb.inserted;
+        extendedSummary.knowledgeSkipped = kb.skipped;
+    }
+    const telemetryText = files.get('telemetry/selected.json')?.toString('utf8');
+    if (telemetryText !== undefined) {
+        // Informacyjnie: weryfikacja kształtu, zero zapisów do DB.
+        let groups = -1;
+        try {
+            const tel = JSON.parse(telemetryText) as { byDaySource?: unknown };
+            groups = Array.isArray(tel.byDaySource) ? tel.byDaySource.length : -1;
+        } catch {
+            groups = -1;
+        }
+        if (groups < 0)
+            throw new TransferError('DATASET_INVALID', 'Nieprawidłowe telemetry/selected.json');
+        extendedSummary.telemetryGroups = groups;
+    }
 
     // Zapis: ZAWSZE CANDIDATE, active=false. PRODUCTION tylko przez APPROVE+PROMOTE.
     const transferId = newTransferId();
@@ -245,7 +283,8 @@ export async function importPackage(
         modelVersion: created.version,
         sourceSokVersion: manifest.sourceSokVersion,
         targetSokVersion: target.sokVersion,
-        result: 'CANDIDATE'
+        result: 'CANDIDATE',
+        ...extendedSummary
     });
     return {
         status: 'IMPORTED',

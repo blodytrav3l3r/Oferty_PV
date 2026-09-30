@@ -52,7 +52,10 @@ const SOKML_ALLOWED_EXACT = new Set([
     'datasets/manifest.json',
     'datasets/records.ndjson',
     'training/runs.json',
-    'lineage/snapshots.json'
+    'lineage/snapshots.json',
+    // P7.5 Extended (opt-in): wiedza i wybrane agregaty telemetryczne.
+    'knowledge/patterns.json',
+    'telemetry/selected.json'
 ]);
 
 /** Sprawdza, czy ścieżka artefaktu jest na allowliście P7 Core. */
