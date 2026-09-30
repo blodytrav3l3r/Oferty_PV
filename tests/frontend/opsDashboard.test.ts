@@ -32,8 +32,11 @@ function evalFile() {
     (0, eval)(fs.readFileSync(FILE, 'utf8'));
 }
 
+const CSP_STRONG = "default-src 'self'; script-src 'self' 'nonce-abc123=='";
+
 const healthy: Record<string, any> = {
-    '/api/version': resp({ version: '1.31.0' }, { 'content-security-policy': "script-src 'self'" }),
+    // /api/version jest PRZED Helmet (src/app.ts) — nie niesie CSP (fałszywy WARNING przed fixem).
+    '/api/version': resp({ version: '1.31.0' }),
     '/api/admin/system-info': resp({
         version: '1.31.0',
         environment: 'test',
@@ -54,16 +57,20 @@ const healthy: Record<string, any> = {
             lastBackupAt: '2026-09-27T10:00:00.000Z'
         }
     }),
-    '/api/telemetry/ai/ml-status': resp({
-        mlOnline: true,
-        modelVersion: 'v1',
-        aiInfluencePct: 50,
-        activeModelAuc: 0.8,
-        baselineAccuracy: 0.6,
-        trainingRows: 100,
-        lastTrainingRun: { id: 'run123456' },
-        lastDatasetFingerprint: 'abcdef1234567890'
-    })
+    // ml-status jest ZA Helmet (mountRoutes) — jedyne słuszne źródło sondy CSP.
+    '/api/telemetry/ai/ml-status': resp(
+        {
+            mlOnline: true,
+            modelVersion: 'v1',
+            aiInfluencePct: 50,
+            activeModelAuc: 0.8,
+            baselineAccuracy: 0.6,
+            trainingRows: 100,
+            lastTrainingRun: { id: 'run123456' },
+            lastDatasetFingerprint: 'abcdef1234567890'
+        },
+        { 'content-security-policy': CSP_STRONG }
+    )
 };
 
 describe('P6 ops dashboard', () => {
@@ -88,6 +95,58 @@ describe('P6 ops dashboard', () => {
         expect(html).toContain('ops-ok');
         expect(html).toContain('1.31.0');
         expect(html).toContain('abcdef123456'.slice(0, 12));
+        // Sonda CSP z ml-status (nie z /api/version): mocny enforce -> OK.
+        expect(html).toContain('CSP enforce');
+        expect(html).toContain('aktywne');
+    });
+
+    test('CSP: brak nagłówka na ml-status -> WARNING (słabe), nie OK', async () => {
+        (global as any).fetch = jest.fn(async (url: string) => {
+            if (url === '/api/telemetry/ai/ml-status')
+                return resp({
+                    mlOnline: true,
+                    modelVersion: 'v1',
+                    aiInfluencePct: 50
+                });
+            return healthy[url];
+        });
+        loadDom();
+        evalFile();
+        await new Promise((r) => setTimeout(r, 50));
+        const html = document.getElementById('ops-container')!.innerHTML;
+        expect(html).toContain('słabe / report-only');
+        expect(html).toContain('ops-warn');
+        expect(html).not.toContain('aktywne');
+    });
+
+    test('CSP: nagłówek bez nonce -> WARNING (sam script-src nie dowodzi enforce)', async () => {
+        (global as any).fetch = jest.fn(async (url: string) => {
+            if (url === '/api/telemetry/ai/ml-status')
+                return resp(
+                    { mlOnline: true, modelVersion: 'v1', aiInfluencePct: 50 },
+                    { 'content-security-policy': "default-src 'self'; script-src 'self'" }
+                );
+            return healthy[url];
+        });
+        loadDom();
+        evalFile();
+        await new Promise((r) => setTimeout(r, 50));
+        const html = document.getElementById('ops-container')!.innerHTML;
+        expect(html).toContain('słabe / report-only');
+        expect(html).not.toContain('aktywne');
+    });
+
+    test('CSP: ml-status pada -> UNKNOWN (niezweryfikowane), nie fałszywy WARNING', async () => {
+        (global as any).fetch = jest.fn(async (url: string) => {
+            if (url === '/api/telemetry/ai/ml-status') return Promise.reject(new Error('down'));
+            return healthy[url];
+        });
+        loadDom();
+        evalFile();
+        await new Promise((r) => setTimeout(r, 50));
+        const html = document.getElementById('ops-container')!.innerHTML;
+        expect(html).toContain('niezweryfikowane');
+        expect(html).toContain('ops-unknown');
     });
 
     test('metrics niedostępne -> UNKNOWN (nie ERROR)', async () => {

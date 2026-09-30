@@ -62,6 +62,19 @@
         );
     }
 
+    // Sonda CSP enforce — kontrakt jak tests/security/headers.test.ts:
+    // enforce = script-src 'self' + nonce per-request. Report-Only to osobny
+    // nagłówek i nie dowodzi enforce. undefined = brak odpowiedzi (UNKNOWN),
+    // null/pusty/słaby = WARNING.
+    function cspStatus(h) {
+        if (h === undefined) return { label: 'niezweryfikowane', state: 'UNKNOWN' };
+        var v = String(h || '');
+        var strong = v.indexOf('script-src') !== -1 && /nonce-[A-Za-z0-9+/=]+/.test(v);
+        return strong
+            ? { label: 'aktywne', state: 'OK' }
+            : { label: 'słabe / report-only', state: 'WARNING' };
+    }
+
     function row(name, value, state, hint) {
         return (
             '<div class="ops-row"><span class="ops-name"' +
@@ -273,9 +286,9 @@
         }
         html += row(
             'CSP enforce',
-            csp ? 'aktywne' : 'brak / report-only',
-            csp ? 'OK' : 'WARNING',
-            'Czy wysyłany jest nagłówek Content-Security-Policy (z /api/version). report-only / brak = XSS łatwiejszy — sprawdź Helmet w app.ts.'
+            csp.label,
+            csp.state,
+            'Treść nagłówka Content-Security-Policy z /api/telemetry/ai/ml-status (za Helmet; /api/version i /api/admin/system-info są przed Helmet i nie niosą CSP). OK = script-src + nonce (kontrakt headers.test.ts). Sam Report-Only nie dowodzi enforce.'
         );
         html += '</div>';
         container.innerHTML += html;
@@ -351,10 +364,8 @@
             return;
         }
         container.innerHTML = '<p class="text-muted">Ładowanie…</p>';
-        var csp = null;
         Promise.allSettled([
             getJson('/api/version').then(function (r) {
-                csp = r.headers && r.headers.get ? r.headers.get('content-security-policy') : null;
                 return r.body;
             }),
             getJson('/api/admin/system-info').catch(function () {
@@ -397,9 +408,17 @@
                 var v = r.value;
                 return v && v.body !== undefined && v.headers !== undefined ? v.body : v;
             }
+            // CSP tylko z odpowiedzi za Helmet (ml-status); brak odpowiedzi = undefined = UNKNOWN.
+            function headerOf(r) {
+                if (!r || r.status !== 'fulfilled' || !r.value) return undefined;
+                var v = r.value;
+                if (v && v.headers && typeof v.headers.get === 'function')
+                    return v.headers.get('content-security-policy');
+                return null;
+            }
             renderApp(grid, bodyOf(results[0]), bodyOf(results[1]));
             renderHealth(grid, bodyOf(results[2]), bodyOf(results[3]));
-            renderApi(grid, bodyOf(results[4]), !!csp);
+            renderApi(grid, bodyOf(results[4]), cspStatus(headerOf(results[5])));
             renderMl(grid, bodyOf(results[5]));
             if (typeof lucide !== 'undefined' && lucide.createIcons) {
                 try {
