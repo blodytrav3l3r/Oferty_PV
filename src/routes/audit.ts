@@ -22,6 +22,7 @@ const KNOWN_ENTITY_TYPES = [
     'document_share',
     'settings',
     'ai_model',
+    'ai_transfer',
     'pricelist_version'
 ] as const;
 

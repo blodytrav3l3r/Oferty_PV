@@ -723,6 +723,30 @@ model AiTrainingRun {
 }
 
 // =============================================================================
+// P7: AI/ML Transfer — historia eksportów/importów (.sokml) + idempotencja
+// =============================================================================
+
+model AiTransfer {
+  id                  String   @id
+  transferId          String   @unique    // np. trf_20260930_ab12cd
+  direction           String                // EXPORT | IMPORT
+  packageFingerprint  String                // kanoniczny fingerprint (GO-1, bez manifestu)
+  manifestFingerprint String?               // SHA-256 bajtów manifest.json
+  modelVersion        String?               // wersja modelu w pakiecie
+  modelFingerprint    String?               // SHA-256 artefaktu modelu
+  datasetFingerprint  String?               // fingerprint datasetu (gdy znany)
+  sourceSokVersion    String
+  targetSokVersion    String
+  status              String                // COMPLETED | REJECTED | ALREADY_IMPORTED
+  result              String?               // kod wyniku (np. kod CHECK compat / powód odrzucenia)
+  userId              String?
+  createdAt           String
+
+  @@index([packageFingerprint], map: "idx_aitransfer_packagefp")
+  @@index([createdAt], map: "idx_aitransfer_created")
+}
+
+// =============================================================================
 // FAZA 7: Daily Evaluation Metrics — metryki dzienne do A/B testow
 // =============================================================================
 

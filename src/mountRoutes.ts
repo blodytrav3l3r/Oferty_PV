@@ -24,6 +24,7 @@ import telemetryAiRoutes from './routes/telemetryAi';
 import telemetryAiDashboardRoutes from './routes/telemetryAiDashboard';
 import featureFlagsRoutes from './routes/featureFlags';
 import aiMlRoutes from './routes/telemetryAiMl';
+import aiTransferRoutes from './routes/aiTransfer';
 import searchRoutes from './routes/offers/search';
 import productionSearchRoutes from './routes/orders/productionSearch';
 import priceOverridesRoutes from './routes/priceOverrides';
@@ -99,6 +100,7 @@ export function mountRoutes(app: express.Express, apiLimiter: express.RequestHan
     app.use('/api/preco-pricing', apiLimiter, largeJson, precoPricingRoutes);
     app.use('/api/feature-flags', smallJson, featureFlagsRoutes);
     app.use('/api/telemetry', smallJson, aiMlRoutes); // ML prediction API
+    app.use('/api/telemetry', smallJson, aiTransferRoutes); // P7: AI/ML Transfer Center (.sokml)
     app.use('/api/price-overrides', apiLimiter, smallJson, priceOverridesRoutes);
     app.use('/api/pricelist-versions', apiLimiter, largeJson, pricelistVersionsRoutes);
     app.use('/api/export-combined', apiLimiter, smallJson, exportCombinedRoutes);

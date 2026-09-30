@@ -1,0 +1,95 @@
+import prisma from '../../../prismaClient';
+import { logger } from '../../../utils/logger';
+import { TransferError } from './transferErrors';
+import { inspectArchive } from './archiveGate';
+import { verifyGatedPackage } from './manifest';
+import { checkCompatibility, type CompatReport } from './compatibility';
+import { createDryRun, type DryRunRecord } from './dryRunStore';
+import { buildImportTarget } from './importModel';
+import { logAudit } from '../../auditService';
+
+/**
+ * P7.7 — Dry-run (first-class, bez zapisu do DB).
+ *
+ * UPLOAD → brama → manifest → compat → dryRunId. Import wymaga świeżego,
+ * pozytywnego dry-run dla DOKŁADNIE tego pakietu (GO-2).
+ */
+
+export interface DryRunPreview {
+    packageFingerprint: string;
+    sourceSokVersion: string;
+    modelVersion: string;
+    modelState: string;
+    featureVersion: string;
+    datasetMode: string;
+    datasetFingerprint: string | null;
+    artifacts: number;
+}
+
+export interface DryRunResult {
+    record: DryRunRecord;
+    preview: DryRunPreview;
+}
+
+interface ParsedModelShape {
+    features: string[];
+    weights: number[];
+    featureMins: number[];
+    featureMaxs: number[];
+}
+
+function parseModelShape(text: string): ParsedModelShape {
+    let json: unknown;
+    try {
+        json = JSON.parse(text);
+    } catch {
+        throw new TransferError('MODEL_INVALID', 'Artefakt modelu nie jest JSON');
+    }
+    return json as ParsedModelShape;
+}
+
+function resolveTargetDataset(): Promise<string | null> {
+    // Baseline do porównania fingerprintu: najnowszy run treningowy celu.
+    return prisma.aiTrainingRun
+        .findFirst({ orderBy: { startedAt: 'desc' } })
+        .then((run) => run?.datasetFingerprint ?? null)
+        .catch((e: unknown) => {
+            logger.warn('TransferDryRun', `Brak baseline datasetu: ${String(e)}`);
+            return null;
+        });
+}
+
+export async function runDryRun(buffer: Buffer, userId: string): Promise<DryRunResult> {
+    const gated = await inspectArchive(buffer);
+    const { manifest, files } = verifyGatedPackage(gated);
+
+    const modelPath = manifest.artifacts.map((a) => a.path).find((p) => p.startsWith('models/'));
+    if (!modelPath) throw new TransferError('MODEL_INVALID', 'Pakiet nie zawiera modelu');
+    const shape = parseModelShape(files.get(modelPath)?.toString('utf8') ?? '');
+
+    const target = buildImportTarget(await resolveTargetDataset());
+    const report: CompatReport = checkCompatibility(manifest, shape, target);
+    const manifestBytes = files.get('manifest.json');
+    if (!manifestBytes) throw new TransferError('MANIFEST_MISSING', 'Brak manifest.json');
+    const record = createDryRun(manifest.packageFingerprint, manifestBytes, manifest, report);
+
+    await logAudit('ai_transfer', record.id, userId, 'TRANSFER_DRY_RUN', {
+        packageFingerprint: manifest.packageFingerprint,
+        modelVersion: manifest.model.version,
+        sourceSokVersion: manifest.sourceSokVersion,
+        result: report.status
+    });
+    return {
+        record,
+        preview: {
+            packageFingerprint: manifest.packageFingerprint,
+            sourceSokVersion: manifest.sourceSokVersion,
+            modelVersion: manifest.model.version,
+            modelState: manifest.model.state,
+            featureVersion: manifest.model.featureVersion,
+            datasetMode: manifest.dataset.mode,
+            datasetFingerprint: manifest.dataset.fingerprint,
+            artifacts: manifest.artifacts.length
+        }
+    };
+}
