@@ -4,6 +4,48 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.34.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.33.0...v1.34.0) (2026-09-30)
+
+### Features
+
+- **prisma:** fk restrict versionid i checkpoint p1 ([72752c9](https://github.com/blodytrav3l3r/Oferty_PV/commit/72752c91252361e33d58c3bae21c6de87524cef4))
+- **security:** csp enforce bez unsafe-inline ([9e09b9a](https://github.com/blodytrav3l3r/Oferty_PV/commit/9e09b9a20e0acc4324901b8c0c674682d3e681f5))
+- **telemetry:** requestid w logach audytu ([ce7e26e](https://github.com/blodytrav3l3r/Oferty_PV/commit/ce7e26ea288ca72ee27f06621385518399d7dc81))
+- **ui:** csp-b reszta stron bez onclick ([33a071a](https://github.com/blodytrav3l3r/Oferty_PV/commit/33a071a313f6cfcb8e892dde78cccc8b68a74714))
+- **ui:** csp-b zlecenia i kartoteka bez onclick ([2f4ded8](https://github.com/blodytrav3l3r/Oferty_PV/commit/2f4ded811d0d125ed7ffcdbe9e89e17edcddb80a))
+- **ui:** csp-b2 dyspozytor i partiale rury ([9f20612](https://github.com/blodytrav3l3r/Oferty_PV/commit/9f20612ddcec745a93628f4dee7d18a812631ddd))
+- **ui:** csp-b2 partiale studnie na data-csp ([595a2ff](https://github.com/blodytrav3l3r/Oferty_PV/commit/595a2ff587c5a37eadf347e912f4fb8b4f5dc4f9))
+- **ui:** csp-b2 szablony js na data-csp ([a4e4983](https://github.com/blodytrav3l3r/Oferty_PV/commit/a4e4983047de8dcc2a095037d3ffd3972af59095))
+
+### Bug Fixes
+
+- **api:** finite w zod rabatow i ai batch z atomowym cache ([a5c4bc8](https://github.com/blodytrav3l3r/Oferty_PV/commit/a5c4bc83ac7fd48c7daf118656d9c0e7df9ab5d4))
+- **api:** jawne finite i 404 well-not-found ([0763eea](https://github.com/blodytrav3l3r/Oferty_PV/commit/0763eea7f21fb16bff0d809d85dddca21f1267ba))
+- **api:** zod dla versions i allowlista audytu ([5a5fb90](https://github.com/blodytrav3l3r/Oferty_PV/commit/5a5fb907fb47cd9746b7f22820296e459147b0ad))
+- **audit:** audyt biznesowy w transakcji, koniec phantom audit ([7166fce](https://github.com/blodytrav3l3r/Oferty_PV/commit/7166fce12d18f6685cba3992a705e940b15f64b8))
+- **ci:** brak serwera w load to fail nie skip ([efe8d32](https://github.com/blodytrav3l3r/Oferty_PV/commit/efe8d32c5f66a91cb29452fcfeaae5e013c34cba))
+- **ci:** jawny status deploy nie maskowany sukces ([eab80f1](https://github.com/blodytrav3l3r/Oferty_PV/commit/eab80f19a140f59479000bc5421e2d4cfb46ea0e))
+- **config:** trailing newline w git-workflow dla format-check ([c511f84](https://github.com/blodytrav3l3r/Oferty_PV/commit/c511f84cd38bcd1eae504da551933d883ba76a3c))
+- **prisma:** atomowy ensure active z lockiem i sha serwisu ([d4824b5](https://github.com/blodytrav3l3r/Oferty_PV/commit/d4824b52abcc878ed61320a385888dd43bad5ce1))
+- **prisma:** auto-ensure wersji active z live przy starcie ([337dedd](https://github.com/blodytrav3l3r/Oferty_PV/commit/337deddbc8a7991126957eff95233d28a0b8e0fd))
+- **security:** lifecycle shares i clientid w transakcji ([1060f6f](https://github.com/blodytrav3l3r/Oferty_PV/commit/1060f6f746f53618413dc849b1beff7f332288c2))
+- **security:** ownership delete klientow i guardy lockow ([baf3848](https://github.com/blodytrav3l3r/Oferty_PV/commit/baf3848d24c8e1bc47f6988fe630200f7c88fb91))
+- **security:** publiczny health/pdf minimalny i smoke admin-only ([c02fa5d](https://github.com/blodytrav3l3r/Oferty_PV/commit/c02fa5df76c4de8f54d2fe008ea87d7a528b88c4))
+- **security:** uuid zamiast date-now i checkpoint e4 ([c9df9d7](https://github.com/blodytrav3l3r/Oferty_PV/commit/c9df9d78fe20e3d3e19b828bd8e7932b226e1574))
+- **studnie:** avr na stale iteracje i seedowana eksploracja ([e9d362c](https://github.com/blodytrav3l3r/Oferty_PV/commit/e9d362c7447ae63f4dbb90382c3bf42798e05e94))
+- **studnie:** confirm destrukcji i guard podwojnego zapisu ([c2ded4a](https://github.com/blodytrav3l3r/Oferty_PV/commit/c2ded4a17ae7cd336a7fbb5c5aa748372cbde75a))
+- **studnie:** dp na iteracje i preco error w ui ([335002d](https://github.com/blodytrav3l3r/Oferty_PV/commit/335002dac33d7c82a838d0acc8ca5d490c8b2cce))
+- **studnie:** guard finite rzednych solvera i checkpoint e2 ([f1f2a7b](https://github.com/blodytrav3l3r/Oferty_PV/commit/f1f2a7b7e4501c04c67a15fe01c28e8a2c3d594b))
+- **studnie:** guardy showtoast na sciezkach bledu ([c35e3e1](https://github.com/blodytrav3l3r/Oferty_PV/commit/c35e3e19c5d0ade01c60573954604f42ede64249))
+- **studnie:** kontrakt rabatu 0-100 reject zamiast cichego liczenia ([8d42b81](https://github.com/blodytrav3l3r/Oferty_PV/commit/8d42b815ccb3c23476fbae54b97a474aae5cd15e))
+- **studnie:** render odporny na corrupt rabaty bez bialego ekranu ([158e8e3](https://github.com/blodytrav3l3r/Oferty_PV/commit/158e8e35b2c7ef7c3ef5301ed1dfaab1e8205eb3))
+- **test:** harness draftloop wysyla origin i referer ([26ec0fc](https://github.com/blodytrav3l3r/Oferty_PV/commit/26ec0fc15aa4ac8e58b9a6aba425541f1f70a1d0))
+- **ui:** autor wersji nazwa zamiast id i checkpoint e9 ([236228c](https://github.com/blodytrav3l3r/Oferty_PV/commit/236228c68f32f2bb41a49ea0db3e12b16abb7dba))
+- **ui:** confirm na appconfirm i checkpoint p2 ([ce89fc8](https://github.com/blodytrav3l3r/Oferty_PV/commit/ce89fc8d424e9dfffafa8d8ae4f041f1a55302c8))
+- **ui:** kartoteka header bez onclick ([9d43ba5](https://github.com/blodytrav3l3r/Oferty_PV/commit/9d43ba5454ca6d0077b5c15ce4a1f9bea3143dde))
+- **ui:** notatki w zarzadzaniu cennikami i estetyka olowka ([c4e0344](https://github.com/blodytrav3l3r/Oferty_PV/commit/c4e0344fd0375321e61a59032032352e9e65eec3))
+- **ui:** print img guard pod typecheck ([3f54604](https://github.com/blodytrav3l3r/Oferty_PV/commit/3f546042a1a2318fab4547a3841499142752f42d))
+
 ## [1.33.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.32.0...v1.33.0) (2026-09-28)
 
 ### Features
