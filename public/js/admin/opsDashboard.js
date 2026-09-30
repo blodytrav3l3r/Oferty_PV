@@ -15,6 +15,17 @@
         return typeof escapeHtml === 'function' ? escapeHtml(String(s)) : String(s);
     }
 
+    function escAttr(s) {
+        if (typeof window !== 'undefined' && typeof window.escapeHtmlAttr === 'function')
+            return window.escapeHtmlAttr(String(s));
+        if (typeof escapeHtmlAttr === 'function') return escapeHtmlAttr(String(s));
+        return String(s == null ? '' : s)
+            .replace(/&/g, '&amp;')
+            .replace(/"/g, '&quot;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
+    }
+
     function isAdmin() {
         try {
             return !!(window.currentUser && window.currentUser.role === 'admin');
@@ -51,9 +62,11 @@
         );
     }
 
-    function row(name, value, state) {
+    function row(name, value, state, hint) {
         return (
-            '<div class="ops-row"><span class="ops-name">' +
+            '<div class="ops-row"><span class="ops-name"' +
+            (hint ? ' title="' + escAttr(hint) + '"' : '') +
+            '>' +
             esc(name) +
             '</span><span class="ops-value">' +
             value +
@@ -101,22 +114,54 @@
     }
 
     function renderApp(container, version, sysinfo) {
-        var html = '<div class="ops-card"><h4><i data-lucide="layers"></i>Aplikacja</h4>';
+        var html =
+            '<div class="ops-card"><h4 title="' +
+            escAttr(
+                'Wersja, środowisko i zasoby procesu. Służy do weryfikacji wdrożenia (czy działa nowy kod) i wykrywania restartów / wycieków pamięci.'
+            ) +
+            '"><i data-lucide="layers"></i>Aplikacja</h4>';
         if (!version && !sysinfo) {
             html += row('Status', 'brak danych', 'UNKNOWN');
         } else {
-            if (version) html += row('Wersja', esc(version.version || '?'), 'OK');
+            if (version)
+                html += row(
+                    'Wersja',
+                    esc(version.version || '?'),
+                    'OK',
+                    'Numer wydania z /api/version. Porównaj z CHANGELOG — inna wersja niż po deployu = stary kod lub cache.'
+                );
             if (sysinfo) {
-                html += row('Środowisko', esc(sysinfo.environment || '?'), 'OK');
-                html += row('Commit', esc(String(sysinfo.commitHash || '?').slice(0, 12)), 'OK');
-                html += row('Uptime', esc(fmtUptime(sysinfo.uptime)), 'OK');
+                html += row(
+                    'Środowisko',
+                    esc(sysinfo.environment || '?'),
+                    'OK',
+                    'Tryb serwera (development / production). W development ścieżki i logi mogą się różnić.'
+                );
+                html += row(
+                    'Commit',
+                    esc(String(sysinfo.commitHash || '?').slice(0, 12)),
+                    'OK',
+                    'Skrót commita git działającego kodu. Pozwala powiązać zachowanie z konkretną rewizją.'
+                );
+                html += row(
+                    'Uptime',
+                    esc(fmtUptime(sysinfo.uptime)),
+                    'OK',
+                    'Czas od startu procesu. Nagły spadek = restart (crash, deploy, reboot).'
+                );
                 html += row(
                     'Pamięć RSS',
                     esc(fmtBytes(sysinfo.memory && sysinfo.memory.rss)),
-                    (sysinfo.memory && sysinfo.memory.rss) > 1024 * 1024 * 1024 ? 'WARNING' : 'OK'
+                    (sysinfo.memory && sysinfo.memory.rss) > 1024 * 1024 * 1024 ? 'WARNING' : 'OK',
+                    'Zużycie RAM procesu Node. WARNING powyżej 1 GB — możliwy wyciek, sprawdź logi i zrestartuj.'
                 );
             } else {
-                html += row('Diagnostyka', 'wymaga admina', 'UNKNOWN');
+                html += row(
+                    'Diagnostyka',
+                    'wymaga admina',
+                    'UNKNOWN',
+                    'Szczegóły systemowe tylko dla admina (/api/admin/system-info).'
+                );
             }
         }
         html += '</div>';
@@ -124,23 +169,53 @@
     }
 
     function renderHealth(container, live, ready) {
-        var html = '<div class="ops-card"><h4><i data-lucide="activity"></i>Zdrowie</h4>';
-        html += row('Liveness', live ? 'odpowiada' : 'brak odpowiedzi', live ? 'OK' : 'ERROR');
+        var html =
+            '<div class="ops-card"><h4 title="' +
+            escAttr(
+                'Sondy Kubernetes-style: liveness = czy proces żyje, readiness = czy baza gotowa. ERROR tutaj = najpierw sprawdź serwer i bazę.'
+            ) +
+            '"><i data-lucide="activity"></i>Zdrowie</h4>';
+        html += row(
+            'Liveness',
+            live ? 'odpowiada' : 'brak odpowiedzi',
+            live ? 'OK' : 'ERROR',
+            'Czy proces odpowiada na /health. ERROR = serwer padł lub wiesza się.'
+        );
         if (!ready) {
             html += row('Readiness (DB)', 'brak danych', 'UNKNOWN');
         } else if (ready.status === 'ready') {
-            html += row('Readiness (DB)', 'gotowa', 'OK');
+            html += row(
+                'Readiness (DB)',
+                'gotowa',
+                'OK',
+                'Wynik /health/ready (SELECT 1 na bazie). OK = baza gotowa na ruch.'
+            );
         } else {
-            html += row('Readiness (DB)', 'niedostępna', 'ERROR');
+            html += row(
+                'Readiness (DB)',
+                'niedostępna',
+                'ERROR',
+                'Baza nie odpowiada (SELECT 1 nie przeszedł). Sprawdź plik SQLite, dysk i backup.'
+            );
         }
         html += '</div>';
         container.innerHTML += html;
     }
 
     function renderApi(container, metrics, csp) {
-        var html = '<div class="ops-card"><h4><i data-lucide="server"></i>API</h4>';
+        var html =
+            '<div class="ops-card"><h4 title="' +
+            escAttr(
+                'Ruch i kondycja API z /metrics. WARNING przy 5xx / busy / błędach audytu / braku backupów / braku CSP.'
+            ) +
+            '"><i data-lucide="server"></i>API</h4>';
         if (!metrics) {
-            html += row('Metryki', 'wymagają admina', 'UNKNOWN');
+            html += row(
+                'Metryki',
+                'wymagają admina',
+                'UNKNOWN',
+                'Liczniki /metrics tylko dla admina.'
+            );
         } else {
             var eps = metrics.endpoints || {};
             var names = Object.keys(eps);
@@ -150,19 +225,31 @@
                 total += eps[k].n || 0;
                 errors += eps[k].errors || 0;
             });
-            html += row('Żądania (od startu)', esc(String(total)), 'OK');
-            html += row('Błędy 5xx', esc(String(errors)), errors > 0 ? 'WARNING' : 'OK');
+            html += row(
+                'Żądania (od startu)',
+                esc(String(total)),
+                'OK',
+                'Licznik żądań od startu procesu. Zeruje się przy restarcie — spadek razem z Uptime = restart.'
+            );
+            html += row(
+                'Błędy 5xx',
+                esc(String(errors)),
+                errors > 0 ? 'WARNING' : 'OK',
+                'Liczba błędów serwera 5xx. WARNING przy >0 — sprawdź logi serwera (logger), ostatnie deploye i bazę.'
+            );
             html += row(
                 'DB: zapytania / busy',
                 esc(String((metrics.db && metrics.db.queries) || 0)) +
                     ' / ' +
                     esc(String((metrics.db && metrics.db.busy) || 0)),
-                (metrics.db && metrics.db.busy) > 0 ? 'WARNING' : 'OK'
+                (metrics.db && metrics.db.busy) > 0 ? 'WARNING' : 'OK',
+                'Zapytania DB vs blokady SQLITE_BUSY (konkurencja o SQLite). busy >0 = równoległe zapisy czekają — sprawdź WAL i obciążenie.'
             );
             html += row(
                 'Błędy audytu',
                 esc(String((metrics.audit && metrics.audit.failures) || 0)),
-                (metrics.audit && metrics.audit.failures) > 0 ? 'WARNING' : 'OK'
+                (metrics.audit && metrics.audit.failures) > 0 ? 'WARNING' : 'OK',
+                'Nieudane zapisy audytu (tabela audit). >0 = dziura w historii zmian — sprawdź bazę i miejsce na dysku.'
             );
             if (metrics.storage) {
                 html += row(
@@ -170,7 +257,8 @@
                     esc(fmtBytes(metrics.storage.dbBytes)) +
                         ' / ' +
                         esc(fmtBytes(metrics.storage.walBytes)),
-                    'OK'
+                    'OK',
+                    'Rozmiar pliku bazy i dziennika WAL. Szybki wzrost WAL = niezamknięte transakcje lub duży import.'
                 );
                 html += row(
                     'Backupy',
@@ -178,40 +266,59 @@
                         (metrics.storage.lastBackupAt
                             ? ' (ostatni: ' + esc(metrics.storage.lastBackupAt.slice(0, 10)) + ')'
                             : ' (brak)'),
-                    (metrics.storage.backups || 0) > 0 ? 'OK' : 'WARNING'
+                    (metrics.storage.backups || 0) > 0 ? 'OK' : 'WARNING',
+                    'Liczba backupów i data ostatniego. WARNING przy braku — wykonaj npm run backup przed migracją.'
                 );
             }
         }
-        html += row('CSP enforce', csp ? 'aktywne' : 'brak / report-only', csp ? 'OK' : 'WARNING');
+        html += row(
+            'CSP enforce',
+            csp ? 'aktywne' : 'brak / report-only',
+            csp ? 'OK' : 'WARNING',
+            'Czy wysyłany jest nagłówek Content-Security-Policy (z /api/version). report-only / brak = XSS łatwiejszy — sprawdź Helmet w app.ts.'
+        );
         html += '</div>';
         container.innerHTML += html;
     }
 
     function renderMl(container, ml) {
-        var html = '<div class="ops-card"><h4><i data-lucide="brain"></i>ML</h4>';
+        var html =
+            '<div class="ops-card"><h4 title="' +
+            escAttr(
+                'Status modułu AI/ML z /api/telemetry/ai/ml-status. WARNING/offline = działa ranking techniczny (reguły), bez uczenia.'
+            ) +
+            '"><i data-lucide="brain"></i>ML</h4>';
         if (!ml) {
             html += row('Status', 'brak danych', 'UNKNOWN');
         } else if (!ml.mlOnline) {
-            html += row('Status', 'offline (ranking techniczny)', 'WARNING');
+            html += row(
+                'Status',
+                'offline (ranking techniczny)',
+                'WARNING',
+                'ML wyłączony (kill-switch feature_ai_ml_enabled lub brak modelu). Oferty liczone regułami — sprawdź flagę i trening.'
+            );
         } else {
             html += row(
                 'Model',
                 esc(ml.modelVersion || '?') + ' @ ' + esc(String(ml.aiInfluencePct || 0)) + '%',
-                'OK'
+                'OK',
+                'Aktywna wersja modelu i % decyzji AI w rankingu. Niski % = AI mało wpływa — sprawdź progi i rewardy.'
             );
             html += row(
                 'AUC / baseline',
                 esc(ml.activeModelAuc != null ? Number(ml.activeModelAuc).toFixed(4) : '—') +
                     ' / ' +
                     esc(ml.baselineAccuracy != null ? Number(ml.baselineAccuracy).toFixed(4) : '—'),
-                'OK'
+                'OK',
+                'Jakość modelu (AUC) vs dokładność reguł (baseline). AUC blisko baseline = model niewiele lepszy od reguł.'
             );
             html += row(
                 'Wiersze / run',
                 esc(ml.trainingRows != null ? String(ml.trainingRows) : '—') +
                     ' / ' +
                     esc(ml.lastTrainingRun ? String(ml.lastTrainingRun.id).slice(0, 8) : '—'),
-                'OK'
+                'OK',
+                'Wiersze treningowe i ID ostatniego treningu. Mało wierszy = słaby model — zbierz więcej decyzji (rewardy).'
             );
             html += row(
                 'Dataset',
@@ -220,7 +327,8 @@
                         ? String(ml.lastDatasetFingerprint).slice(0, 12) + '…'
                         : '—'
                 ),
-                ml.lastDatasetFingerprint ? 'OK' : 'UNKNOWN'
+                ml.lastDatasetFingerprint ? 'OK' : 'UNKNOWN',
+                'Fingerprint datasetu treningowego. UNKNOWN = brak treningu na tych danych — model może być nieaktualny.'
             );
         }
         html += '</div>';

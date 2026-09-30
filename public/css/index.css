@@ -1197,6 +1197,12 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
     min-width: 11rem;
     color: var(--text-muted);
 }
+.ops-name[title],
+.ops-card h4[title] {
+    cursor: help;
+    text-decoration: underline dotted;
+    text-underline-offset: 3px;
+}
 .ops-value {
     flex: 1;
 }
