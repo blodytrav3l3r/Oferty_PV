@@ -243,6 +243,11 @@ monolityczne pliki JS rozbito na małe moduły delegujące (np. `wellActions.js`
 (adresy `app.html#/<moduł>`), nagłówek i logo współdzielone przez `public/js/shared/headerUser.js`
 oraz `public/images/logo-sok.svg`.
 
+Zdarzenia DOM bez inline handlerów (CSP-E, 2026-09-30): zero atrybutów `on*`
+w HTML/partialach/szablonach — jeden dyspozytor `public/js/shared/cspActions.js`
+(`data-csp` + `data-csp-on` + `data-csp-args` JSON, warianty `-2..-6`, kompozyty
+`$*`); CSP enforce `script-src 'self' + nonce` (szczegóły: `docs/SECURITY.md`).
+
 ### Stack
 
 | Technologia             | Rola                               |
@@ -314,7 +319,7 @@ Główne pliki rdzeniowe w `public/js/studnie/` po podziale:
 - Backup przez `VACUUM INTO` (WAL-safe snapshot)
 - Prisma ORM zarządza schematem i migracjami
 
-### Modele (41)
+### Modele (48)
 
 - **users** — użytkownicy systemu
 - **sessions** — sesje logowania (token-based)

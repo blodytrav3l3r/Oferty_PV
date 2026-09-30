@@ -70,13 +70,17 @@ const valid = await bcrypt.compare(password, hash);
 Aplikacja używa **Helmet.js** do ustawienia nagłówków bezpieczeństwa HTTP.
 
 ```typescript
+// Nonce powstaje przed helmet (dyrektywa scriptSrc czyta res.locals.cspNonce).
+app.use(cspNonceMiddleware);
 app.use(
     helmet({
         contentSecurityPolicy: {
             directives: {
                 defaultSrc: ["'self'"],
-                scriptSrc: ["'self'", "'unsafe-inline'"],
-                scriptSrcAttr: ["'unsafe-inline'"],
+                // CSP-E (2026-09-30): zero unsafe-inline dla skryptów.
+                scriptSrc: ["'self'", (_req, res) => `'nonce-${res.locals?.cspNonce}'`],
+                // script-src-attr bez wpisu (fallback do script-src); style-src
+                // zostaje z unsafe-inline (style="" nie wykonuje JS).
                 styleSrc: ["'self'", "'unsafe-inline'"],
                 imgSrc: ["'self'", 'data:', 'blob:'],
                 connectSrc: ["'self'"],
@@ -91,13 +95,13 @@ app.use(
 );
 ```
 
-### Faza 1 CSP — nonce + Report-Only (monitoring)
+### CSP enforce (CSP-E, 2026-09-30) + Report-Only jako monitoring
 
-Równolegle działa warstwa raportowania (`src/app.ts:182-184,344-345`):
-
-- `cspNonceMiddleware` — wstrzykuje nonce CSP do odpowiedzi HTML
-- `cspReportOnly` — polityka Report-Only (obserwacja bez blokowania)
-- `POST /api/csp-report` — endpoint raportów naruszeń (log `warn`, obcięcie do 2000 znaków)
+- Enforce powyżej: inline `<script>` dostają per-request nonce w `injectAppNameScript`
+  (`src/utils/brandHtml.ts`); handlery inline wyeliminowane (0 `on*` — dyspozytor
+  `public/js/shared/cspActions.js`: `data-csp` + `data-csp-on` + JSON args).
+- Równolegle działa warstwa raportowania (`cspReportOnly`, `POST /api/csp-report`,
+  log `warn` ≤2000 znaków) — monitoring po enforce, nie zamiast niego.
 
 ### Dodatkowe nagłówki (securityHeaders)
 
@@ -228,8 +232,8 @@ export function httpsRedirect(req: Request, res: Response, next: NextFunction): 
 
 - Aplikacja serwuje backend i frontend z tego samego serwera (brak CORS)
 - CSP (Content Security Policy) kontroluje dozwolone źródła:
-    - Skrypty: `'self'` + `'unsafe-inline'` (dla Vanilla JS event handlerów)
-    - Style: `'self'` + `'unsafe-inline'`
+    - Skrypty: `'self'` + nonce per-request (CSP-E; inline handlery wyeliminowane)
+    - Style: `'self'` + `'unsafe-inline'` (style="" nie wykonuje JS)
     - Połączenia: `'self'`
 
 ---
@@ -342,7 +346,11 @@ Fala napraw z audytu v1.15.1 (A-01…A-60) — plan i status w `docs/plans/archi
 **Zasady frontendu** (baza błędów #39, #40-44 w `AGENTS.md`): interpolacja do `innerHTML`
 zawsze przez `escapeHtml(str)`; do atrybutów (`aria-label`, `title`, `onclick`) — `escapeHtmlAttr`/`escapeJsStr`, nigdy `escapeHtml` (nie escapuje `"`).
 
-**Polityka CSP SEC-02** (plan modernizacji F0, `unsafe-inline` zostaje): nowy kod NIE dodaje
-atrybutów `onclick`/inline handlerów — zamiast tego `addEventListener` (delegacja) albo
-istniejący wzorzec `dataset`. Raporty z `/api/csp-report` (Report-Only) przeglądane przy zmianach
-w Helmet. Pełna migracja nonce odłożona (366 handlerów w 77 plikach — koszt XL).
+**Polityka CSP SEC-02** (domknięta 2026-09-30, `unsafe-inline` usunięte ze skryptów):
+nowy kod NIE dodaje atrybutów `on*`/inline handlerów — zamiast tego dyspozytor
+`public/js/shared/cspActions.js` (`data-csp` + `data-csp-on` + `data-csp-args` JSON
+przez `escapeHtmlAttr`, warianty `-2..-6`, kompozyty `$*` bez nowych `window.*`).
+Pilnują tego testy `tests/security/cspInventory.test.ts` (sufit `onclick: 0`,
+zero `on*` w partialach/szablonach) i `tests/security/cspEnforce.test.ts`
+(brak `javascript:`-URLi, nonce na każdym inline `<script>`). Raporty
+z `/api/csp-report` (Report-Only) służą jako monitoring po enforce.

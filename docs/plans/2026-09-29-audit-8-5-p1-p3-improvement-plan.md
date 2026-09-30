@@ -2,7 +2,7 @@
 
 **Data:** 2026-09-29
 **HEAD zweryfikowany:** `dce990c` (`style(studnie): format offerdiscountspopup pod ci`), worktree clean, `VERSION` = `package.json` = `1.33.0`
-**Status:** PLAN — nie wykonywać kodu bez Batch GO na paczkę; push/restart/migracje tylko za osobnym GO (kontrakt autonomii).
+**Status:** WYKONANY 2026-09-29/30 — wszystkie batche (P1-5A/5B, P1-1 CSP-B/B2/B3/CSP-E, P1-2, P1-3, P1-4, P2) zaimplementowane, przetestowane i wypchnięte; CI zielone. Szczegóły: `docs/plans/csp-hardening.md`, `frontend-dependency-map.md`, `security-matrix-p1-2.md`, `api-contract-p1-3.md`, `audit-matrix-p1-4.md`.
 **Zakres audytu:** read-only `origin/main`, hipotezy audytora zweryfikowane niżej (FACT vs HYPOTHESIS).
 
 ## Evidence ledger (zweryfikowane 2026-09-29)
