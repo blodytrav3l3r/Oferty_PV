@@ -178,6 +178,14 @@ function showLoggedIn(user) {
     }
 
     loadRecycledNumbers(user);
+    // Powiadom widgety zależne od roli (np. Operacje): ich init na
+    // DOMContentLoaded wyprzedza async GET /api/auth/me, więc synchroniczny
+    // odczyt window.currentUser dawał fałszywe "wymaga roli admin".
+    try {
+        document.dispatchEvent(
+            new CustomEvent('sok:user-ready', { detail: { role: user.role, id: user.id } })
+        );
+    } catch (_e) {}
 }
 
 async function doLogin(event) {

@@ -127,6 +127,24 @@ describe('P6 ops dashboard', () => {
         );
     });
 
+    test('wyścig sesji: pusty currentUser przy starcie, karty po sok:user-ready', async () => {
+        (window as any).currentUser = undefined;
+        (global as any).fetch = jest.fn(async (url: string) => healthy[url]);
+        loadDom();
+        evalFile();
+        await new Promise((r) => setTimeout(r, 20));
+        expect(document.getElementById('ops-container')!.textContent).toContain(
+            'wymaga roli admin'
+        );
+        // Sesja rozwiązana później (async /me -> showLoggedIn -> event).
+        (window as any).currentUser = { id: 'a1', role: 'admin' };
+        document.dispatchEvent(new CustomEvent('sok:user-ready', { detail: { role: 'admin' } }));
+        await new Promise((r) => setTimeout(r, 50));
+        const html = document.getElementById('ops-container')!.innerHTML;
+        expect(html).toContain('Aplikacja');
+        expect(html).toContain('Zdrowie');
+    });
+
     test('a11y i higiena: brak inline onclick, aria-live na kontenerze', async () => {
         (global as any).fetch = jest.fn(async (url: string) => healthy[url]);
         loadDom();

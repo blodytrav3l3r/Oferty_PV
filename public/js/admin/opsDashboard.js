@@ -303,6 +303,12 @@
 
     function init() {
         if (!document.getElementById('ops-container')) return;
+        // Sesja rozwiązywana asynchronicznie (/api/auth/me) — pierwszy refresh()
+        // na DOMContentLoaded trafia w pusty window.currentUser. Odśwież też
+        // w momencie gotowości użytkownika (event z showLoggedIn).
+        document.addEventListener('sok:user-ready', function () {
+            refresh();
+        });
         refresh();
         if (_timer) return;
         _timer = setInterval(function () {
