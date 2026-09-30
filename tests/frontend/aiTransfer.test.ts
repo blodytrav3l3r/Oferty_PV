@@ -133,6 +133,45 @@ describe('aiTransfer', () => {
         expect(h.textContent).toContain('niezweryfikowany');
     });
 
+    it('historia: błąd serwera to error state, nie pusta lista', async () => {
+        ctx.fetchJson.mockImplementation((url) => {
+            if (url === '/api/telemetry/ai/transfer/history')
+                return Promise.resolve({ error: 'server' });
+            return Promise.resolve({ models: [] });
+        });
+        ctx.win.aiRenderTransfer(host);
+        await tick();
+        const history = host.querySelector('#ai-tr-history');
+        expect(history.textContent).toContain('Błąd pobierania historii');
+        expect(history.textContent).toContain('server');
+        expect(history.textContent).not.toContain('Brak zarejestrowanych transferów');
+    });
+
+    it('historia: pusta data to empty state', async () => {
+        ctx.fetchJson.mockImplementation((url) => {
+            if (url === '/api/telemetry/ai/transfer/history') return Promise.resolve({ data: [] });
+            return Promise.resolve({ models: [] });
+        });
+        ctx.win.aiRenderTransfer(host);
+        await tick();
+        expect(host.querySelector('#ai-tr-history').textContent).toContain(
+            'Brak zarejestrowanych transferów'
+        );
+    });
+
+    it('modele: błąd to error option, nie pusta lista', async () => {
+        ctx.fetchJson.mockImplementation((url) => {
+            if (url === '/api/telemetry/ai/models')
+                return Promise.resolve({ error: 'unavailable' });
+            return Promise.resolve({ data: [] });
+        });
+        ctx.win.aiRenderTransfer(host);
+        await tick();
+        const select = host.querySelector('#ai-tr-model');
+        expect(select.textContent).toContain('Błąd pobierania');
+        expect(select.textContent).not.toContain('Brak modeli');
+    });
+
     it('przed rozstrzygnięciem flagi nie ma nic wykonywalnego (loading)', () => {
         let resolveFlag;
         const pending = loadTransfer({

@@ -94,7 +94,16 @@
             return;
         }
         p.then(function (res) {
-            var rows = (res && res.data) || [];
+            // P1.1: error state ≠ empty state. 500/503/network (fetchJson: {error})
+            // nigdy nie wyglądają jak "brak transferów".
+            if (!res || res.error) {
+                host.innerHTML =
+                    '<p class="text-muted">Błąd pobierania historii (' +
+                    esc(res && res.error ? res.error : 'network') +
+                    ').</p>';
+                return;
+            }
+            var rows = res.data || [];
             if (!rows.length) {
                 host.innerHTML = '<p class="text-muted">Brak zarejestrowanych transferów.</p>';
                 return;
@@ -151,7 +160,14 @@
             return;
         }
         p.then(function (res) {
-            var models = (res && res.models) || [];
+            if (!res || res.error) {
+                select.innerHTML =
+                    '<option value="">Błąd pobierania (' +
+                    esc(res && res.error ? res.error : 'network') +
+                    ')</option>';
+                return;
+            }
+            var models = res.models || [];
             select.innerHTML = models.length
                 ? models
                       .map(function (m) {
