@@ -1,7 +1,7 @@
 # Bezpieczeństwo — S.O.K. — System Ofert i Kalkulacji
 
 **Wersja:** 1.34.0  
-**Ostatnia aktualizacja:** 2026-08-24
+**Ostatnia aktualizacja:** 2026-09-30
 
 > Szczegółowa macierz uprawnień per trasa: `docs/security/permission-matrix.md` (uzupełnienie tego dokumentu, nie drugi SSoT).
 
@@ -285,24 +285,24 @@ if (process.env.SENTRY_DSN) {
 
 ## 12. Podsumowanie zabezpieczeń
 
-| Mechanizm                       | Status                 |
-| ------------------------------- | ---------------------- |
-| HttpOnly cookies                | ✔                      |
-| Secure flag (HTTPS)             | ✔ (w produkcji)        |
-| SameSite=Lax                    | ✔                      |
-| Helmet (CSP, HSTS)              | ✔                      |
-| Rate limiting                   | ✔                      |
-| Bcrypt hashing                  | ✔ (10 rund)            |
-| Zod validation                  | ✔                      |
-| Prisma ORM (SQL injection safe) | ✔                      |
-| HTTPS redirect                  | ✔ (w produkcji)        |
-| Permissions-Policy              | ✔                      |
-| Referrer-Policy                 | ✔                      |
-| X-Content-Type-Options          | ✔                      |
-| Audit log                       | ✔                      |
-| Sentry monitoring               | ✔ (opcjonalny)         |
-| CSRF                            | ⚠ (planowane)          |
-| npm audit                       | ⚠ (wykonywać okresowo) |
+| Mechanizm                       | Status                                                |
+| ------------------------------- | ----------------------------------------------------- |
+| HttpOnly cookies                | ✔                                                     |
+| Secure flag (HTTPS)             | ✔ (w produkcji)                                       |
+| SameSite=Lax                    | ✔                                                     |
+| Helmet (CSP, HSTS)              | ✔                                                     |
+| Rate limiting                   | ✔                                                     |
+| Bcrypt hashing                  | ✔ (10 rund)                                           |
+| Zod validation                  | ✔                                                     |
+| Prisma ORM (SQL injection safe) | ✔                                                     |
+| HTTPS redirect                  | ✔ (w produkcji)                                       |
+| Permissions-Policy              | ✔                                                     |
+| Referrer-Policy                 | ✔                                                     |
+| X-Content-Type-Options          | ✔                                                     |
+| Audit log                       | ✔                                                     |
+| Sentry monitoring               | ✔ (opcjonalny)                                        |
+| CSRF                            | ✔ (same-origin dla mutacji, `src/middleware/csrf.ts`) |
+| npm audit                       | ⚠ (wykonywać okresowo)                                |
 
 ---
 
