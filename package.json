@@ -95,6 +95,7 @@
         "load:sustained": "node scripts/load-100.mjs --sustained",
         "benchmark:autoselect": "node scripts/benchmark-autoselect.mjs",
         "benchmark:autoselect:quick": "node scripts/benchmark-autoselect.mjs --quick --repeats=10 --warmup=3",
+        "perf:baseline": "node tests/playwright/perfBaseline.cjs --spawn",
         "git:safety": "node scripts/git-safety/cli.mjs",
         "git:safety:list": "node scripts/git-safety/cli.mjs list",
         "git:safety:inspect": "node scripts/git-safety/cli.mjs inspect",
