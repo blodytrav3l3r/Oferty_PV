@@ -19,7 +19,9 @@ const config: Config.InitialOptions = {
             preset: 'ts-jest',
             testEnvironment: 'node',
             roots: ['<rootDir>/tests'],
-            testMatch: ['**/*.test.ts'],
+            testMatch: ['**/*.test.ts', '!**/frontend/**', '!**/git-safety/**'],
+            // Negacje w testMatch (nie ignorePatterns): CLI --testPathIgnorePatterns
+            // nadpisuje config-ignore (npm test/lite), a testMatch zostaje.
             testPathIgnorePatterns: ['/frontend/', 'git-safety'],
             // Izolacja SQLite per worker (setupDbIsolation) — koniec flaków
             // SQLITE_BUSY ze współdzielonego pliku DB.
