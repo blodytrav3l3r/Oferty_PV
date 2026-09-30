@@ -1,8 +1,8 @@
 (function () {
     'use strict';
 
-    // Slim orchestrator — reszta w aiDashboardCore.js + aiDashboardMl.js (ADR-008)
-    // Kolejność ładowania w index.html: aiDashboardCore → aiDashboardMl → aiDashboard (ten plik)
+    // Slim orchestrator — reszta w aiDashboardCore.js + aiDashboardMl.js + aiTransfer.js (ADR-008)
+    // Kolejność ładowania w index.html: aiDashboardCore → aiDashboardMl → aiTransfer → aiDashboard (ten plik)
 
     function getEndpoints() {
         return (
@@ -158,6 +158,8 @@
             '<div id="ai-ml-section"><div id="ai-ml-status"></div><div id="ai-feature-importance"></div></div>' +
             '<div class="ai-divider" role="separator"></div>' +
             '<div id="ai-well-selections-section"><div id="ai-well-selections"></div></div>' +
+            '<div class="ai-divider" role="separator"></div>' +
+            '<div id="ai-transfer-section"><div id="ai-transfer"></div></div>' +
             '</div>';
 
         if (window.aiRenderStats) window.aiRenderStats(document.getElementById('ai-stats'));
@@ -166,6 +168,8 @@
         if (window.aiRenderFeatureImportance)
             window.aiRenderFeatureImportance(document.getElementById('ai-feature-importance'));
         renderWellSelections(document.getElementById('ai-well-selections'));
+        if (window.aiRenderTransfer)
+            window.aiRenderTransfer(document.getElementById('ai-transfer'));
         if (window.aiRenderPatterns)
             window.aiRenderPatterns(document.getElementById('ai-patterns'));
 
