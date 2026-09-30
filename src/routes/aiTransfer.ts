@@ -103,7 +103,9 @@ router.post(
         try {
             const parsed = exportBodySchema.safeParse(req.body);
             if (!parsed.success) {
-                res.status(400).json({ error: 'Nieprawidłowe body', code: 'MODEL_NOT_FOUND' });
+                // P1.3: zły kształt body to INVALID_BODY, nie MODEL_NOT_FOUND
+                // (MODEL_NOT_FOUND = modelId poprawny, ale model nie istnieje).
+                res.status(400).json({ error: 'Nieprawidłowe body', code: 'INVALID_BODY' });
                 return;
             }
             const userId = authReq.user?.id || '';
