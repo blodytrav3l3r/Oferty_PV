@@ -4,30 +4,28 @@ const path = require('path');
 const readline = require('readline');
 const { execFileSync } = require('child_process');
 
-const args = process.argv.slice(2);
-const yes = args.includes('--yes');
-const sourceArg = args.find((a) => !a.startsWith('--'));
-if (!sourceArg) {
-    console.error('Użycie: node scripts/restore-db.js <plik_backupu> [--yes]');
-    process.exit(1);
-}
-const sourcePath = path.resolve(sourceArg);
-const DB_PATH = process.env.RESTORE_DB_PATH
-    ? path.resolve(process.env.RESTORE_DB_PATH)
-    : path.resolve(__dirname, '..', 'data', 'app_database.sqlite');
-const PRISMA_DIR = process.env.RESTORE_PRISMA_DIR
-    ? path.resolve(process.env.RESTORE_PRISMA_DIR)
-    : path.resolve(__dirname, '..');
-
-if (!fs.existsSync(sourcePath)) {
-    console.error(`Plik backupu nie istnieje: ${sourcePath}`);
-    process.exit(1);
-}
+const SQLITE_MAGIC = Buffer.from('SQLite format 3\u0000', 'binary');
 
 const PRISMA_CLI = path.join(__dirname, '..', 'node_modules', 'prisma', 'build', 'index.js');
-const ENV = { ...process.env, DATABASE_URL: 'file:' + DB_PATH.replace(/\\/g, '/') };
 
-const SQLITE_MAGIC = Buffer.from('SQLite format 3\u0000', 'binary');
+function parseCliArgs(argv) {
+    const args = argv.slice(2);
+    const yes = args.includes('--yes');
+    const sourceArg = args.find((a) => !a.startsWith('--'));
+    return { yes, sourceArg };
+}
+
+function resolvePaths(sourceArg) {
+    const sourcePath = path.resolve(sourceArg);
+    const dbPath = process.env.RESTORE_DB_PATH
+        ? path.resolve(process.env.RESTORE_DB_PATH)
+        : path.resolve(__dirname, '..', 'data', 'app_database.sqlite');
+    const prismaDir = process.env.RESTORE_PRISMA_DIR
+        ? path.resolve(process.env.RESTORE_PRISMA_DIR)
+        : path.resolve(__dirname, '..');
+    const env = { ...process.env, DATABASE_URL: 'file:' + dbPath.replace(/\\/g, '/') };
+    return { sourcePath, dbPath, prismaDir, env };
+}
 
 function isSqliteFile(filePath) {
     try {
@@ -76,16 +74,16 @@ function verifyChecksum(filePath) {
     return true;
 }
 
-function runPrisma(args) {
+function runPrisma(args, prismaDir, env) {
     return execFileSync(process.execPath, [PRISMA_CLI, ...args], {
-        cwd: PRISMA_DIR,
+        cwd: prismaDir,
         encoding: 'utf8',
-        env: ENV,
+        env,
         stdio: ['pipe', 'pipe', 'pipe']
     });
 }
 
-function confirm() {
+function confirm(yes, sourcePath) {
     if (yes) return Promise.resolve(true);
     return new Promise((resolve) => {
         const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
@@ -99,8 +97,23 @@ function confirm() {
     });
 }
 
-(async () => {
-    const ok = await confirm();
+async function main() {
+    const { yes, sourceArg } = parseCliArgs(process.argv);
+    if (!sourceArg) {
+        console.error('Użycie: node scripts/restore-db.js <plik_backupu> [--yes]');
+        process.exit(1);
+    }
+    const {
+        sourcePath,
+        dbPath: DB_PATH,
+        prismaDir: PRISMA_DIR,
+        env: ENV
+    } = resolvePaths(sourceArg);
+    if (!fs.existsSync(sourcePath)) {
+        console.error(`Plik backupu nie istnieje: ${sourcePath}`);
+        process.exit(1);
+    }
+    const ok = await confirm(yes, sourcePath);
     if (!ok) {
         console.log('Anulowano.');
         process.exit(0);
@@ -131,7 +144,7 @@ function confirm() {
     console.log(`Baza przywrocona z: ${sourcePath}`);
     console.log('[INFO] Synchronizuje schemat bazy (migrate deploy)...');
     try {
-        const out = runPrisma(['migrate', 'deploy']);
+        const out = runPrisma(['migrate', 'deploy'], PRISMA_DIR, ENV);
         console.log(out.trim());
         console.log('[OK] Schemat zsynchronizowany.');
     } catch (e) {
@@ -144,4 +157,12 @@ function confirm() {
         console.warn(stderr.split('\n').slice(0, 6).join('\n'));
         process.exit(1);
     }
-})();
+}
+
+// P1.3: guard require.main — import nie uruchamia restore (testy regresji
+// mogą importować guardy isSqliteFile/verifyChecksum/integrityCheck).
+if (require.main === module) {
+    main();
+}
+
+module.exports = { isSqliteFile, verifyChecksum, integrityCheck };
