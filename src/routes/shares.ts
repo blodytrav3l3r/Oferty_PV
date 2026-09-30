@@ -12,6 +12,7 @@ import {
 import { canWriteDoc, isValidShareDocumentType, hasShare } from '../utils/ownership';
 import { logger } from '../utils/logger';
 import { logAudit } from '../services/auditService';
+import { searchCache } from '../utils/searchCache';
 
 const router = express.Router();
 const SHARE_LIMIT = 50;
@@ -204,6 +205,8 @@ router.post('/', requireAuth, WRITE_LIMITER, validateData(shareCreateSchema), as
         `Udostępniono ${documentType} ${documentId} → ${newIds.join(', ')} przez ${authReq.user!.username}`
     );
 
+    // F-003b: zmiana shares zmienia role-where w search → invaliduj cache (jak crud).
+    searchCache.invalidateAll();
     const shares = await prisma.document_shares.findMany({ where: { documentType, documentId } });
     res.json({ ok: true, data: shares, added: newIds.length });
 });
@@ -266,6 +269,8 @@ router.post(
                 where: { documentType, documentId }
             });
         });
+        // F-003b: revoke zmienia role-where w search → invaliduj cache.
+        searchCache.invalidateAll();
         res.json({ ok: true, data: shares });
     }
 );
@@ -311,6 +316,8 @@ router.delete('/:id', requireAuth, WRITE_LIMITER, async (req, res) => {
             tx
         );
     });
+    // F-003b: revoke zmienia role-where w search → invaliduj cache.
+    searchCache.invalidateAll();
     res.json({ ok: true });
 });
 

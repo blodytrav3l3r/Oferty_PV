@@ -36,6 +36,11 @@ const sharesModel = {
     createMany: jest.fn(async ({ data }: any) => {
         for (const d of data) store.shares.push({ ...d });
         return { count: data.length };
+    }),
+    deleteMany: jest.fn(async ({ where }: any) => {
+        const before = store.shares.length;
+        store.shares = store.shares.filter((r) => !matches(r, where));
+        return { count: before - store.shares.length };
     })
 };
 
@@ -63,6 +68,15 @@ jest.mock('../src/utils/logger', () => ({
 
 jest.mock('../src/services/auditService', () => ({
     logAudit: jest.fn()
+}));
+
+jest.mock('../src/utils/searchCache', () => ({
+    searchCache: {
+        get: jest.fn(),
+        set: jest.fn(),
+        invalidateAll: jest.fn(),
+        invalidateNamespace: jest.fn()
+    }
 }));
 
 jest.mock('../src/prismaClient', () => ({
@@ -156,5 +170,30 @@ describe('POST /api/shares limit 50 atomowo', () => {
             .post('/api/shares')
             .send({ ...DOC, userIds: ['u2'] });
         expect(res.status).toBe(404);
+    });
+});
+
+describe('shares → invalidacja searchCache (F-003b)', () => {
+    test('POST create invaliduje cache wyszukiwania', async () => {
+        const { searchCache } = await import('../src/utils/searchCache');
+        const res = await request(createApp())
+            .post('/api/shares')
+            .send({ ...DOC, userIds: ['u2'] });
+        expect(res.status).toBe(200);
+        expect(searchCache.invalidateAll).toHaveBeenCalled();
+    });
+
+    test('POST revoke invaliduje cache wyszukiwania', async () => {
+        const { searchCache } = await import('../src/utils/searchCache');
+        const app = createApp();
+        await request(app)
+            .post('/api/shares')
+            .send({ ...DOC, userIds: ['u2'] });
+        jest.clearAllMocks();
+        const res = await request(app)
+            .post('/api/shares/revoke')
+            .send({ ...DOC, userIds: ['u2'] });
+        expect(res.status).toBe(200);
+        expect(searchCache.invalidateAll).toHaveBeenCalled();
     });
 });
