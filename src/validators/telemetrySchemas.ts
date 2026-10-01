@@ -7,6 +7,23 @@
 
 import { z } from 'zod';
 
+const finiteNumericInput = z
+    .union([
+        z.number().finite(),
+        z.string().trim().min(1, 'Wartość liczbowa nie może być pusta')
+    ])
+    .transform((value, ctx) => {
+        const numeric = typeof value === 'number' ? value : Number(value);
+        if (!Number.isFinite(numeric)) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: 'Wartość musi być skończoną liczbą'
+            });
+            return z.NEVER;
+        }
+        return numeric;
+    });
+
 // =============================================================================
 // Komponent studni (snapshot)
 // =============================================================================
@@ -59,35 +76,15 @@ export const telemetryConfigSchema = z.object({
 
     // Parametry wejściowe studni
     dn: z.string().optional(),
-    rzDna: z
-        .union([z.number(), z.string()])
-        .optional()
-        .transform((v) =>
-            v === undefined ? undefined : typeof v === 'string' ? parseFloat(v) : v
-        ),
-    rzWlazu: z
-        .union([z.number(), z.string()])
-        .optional()
-        .transform((v) =>
-            v === undefined ? undefined : typeof v === 'string' ? parseFloat(v) : v
-        ),
-    wellHeight: z
-        .union([z.number(), z.string()])
-        .optional()
-        .transform((v) =>
-            v === undefined ? undefined : typeof v === 'string' ? parseFloat(v) : v
-        ),
+    rzDna: finiteNumericInput.optional(),
+    rzWlazu: finiteNumericInput.optional(),
+    wellHeight: finiteNumericInput.optional(),
     wellType: z.string().optional(),
     terminationType: z.string().optional(),
     reductionType: z.string().optional(),
     zwiencenieType: z.string().optional(),
     dennicaType: z.string().optional(),
-    dennicaHeight: z
-        .union([z.number(), z.string()])
-        .optional()
-        .transform((v) =>
-            v === undefined ? undefined : typeof v === 'string' ? parseFloat(v) : v
-        ),
+    dennicaHeight: finiteNumericInput.optional(),
     kineta: z.string().optional(),
     ringCount: z.number().int().optional(),
     ringHeights: z.array(z.number()).optional(),
