@@ -155,6 +155,20 @@ Zamiast inline style używaj istniejących utility. Najczęściej używane:
   (`title`, `aria-label`) przez `escapeHtmlAttr`/`escapeJsStr`.
 - Przyciski ikonowe bez tekstu MUSZĄ mieć `aria-label`.
 
+## 8a. Dashboard Operacje / Transfer Center (kontrakt)
+
+- Karty statusów: `.ops-card` + wiersze `.ops-row` (`.ops-name` / `.ops-value`) + pigułki
+  `.ops-pill` ze stanami `.ops-ok` / `.ops-warn` / `.ops-err` / `.ops-unknown`
+  (SSoT: `public/css/index.css`, sekcja P6). Kolor NIGDY sam — zawsze ikona + label.
+- Każda nazwa wiersza i nagłówek sekcji MA tooltip `title=` (dymek) z opisem:
+  skąd dana pochodzi, co znaczy WARNING, co sprawdzić. Atrybut przez `escapeHtmlAttr`.
+- Semantyka stanów: `OK` = zdrowe; `WARNING` = wymaga uwagi, nie błąd;
+  `ERROR` = nie działa; `UNKNOWN` = niezweryfikowane (brak odpowiedzi), NIE mylić
+  z pustką ani z OFF. Stan błędu NIGDY nie wygląda jak pusty stan.
+- Karty metryk AI: `window.aiStatCard(tytuł, wartość, kolor, opis, tooltip)`.
+  Metryki różnych jednostek (np. ROC-AUC vs accuracy) jako OSOBNE karty —
+  zakaz odejmowania i pokazywania „pp" między nimi.
+
 ## 9. Dostępność (a11y) — checklista obowiązkowa
 
 - Kontrast ≥ 4.5:1 (dark tokens z `style.base.css`).

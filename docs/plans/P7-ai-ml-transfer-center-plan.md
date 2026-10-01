@@ -1,6 +1,6 @@
-# P7 — AI/ML Transfer Center (plan wdrożenia, NIE wykonano)
+# P7 — AI/ML Transfer Center (ZROBIONE P7.0–P7.8; OTWARTE: P7.9 cross-instance)
 
-> Wersja: 1.34.0 | Baza: `c71fc925` (main) | Status: KONTRAKT v3 (zamrożony,
+> Wersja: 1.35.0 | Baza: `d5ee9da` (main) | Status: KONTRAKT v3 (zamrożony,
 > GO na implementację P7 Core; P7.5 Extended dopiero po realnym round-trip PC-A→PC-B)
 > Realizacja 2026-09-30: P7.0–P7.7 + P7.2–P7.4 + P7.5 Core + P7.5 Extended
 > (FULL DATA records.ndjson, Knowledge patterns, Telemetry selected) + P7.8 UI

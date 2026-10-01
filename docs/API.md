@@ -472,16 +472,34 @@ Wymaga autoryzacji.
 | GET    | `/api/telemetry/ai/feature-schema`      | Wersja i nazwy cech ML                               |
 | POST   | `/api/telemetry/ai/rollback`            | Rollback do poprzedniego modelu (admin)              |
 
+## Transfer Center P7 (`/api/telemetry/ai/transfer`)
+
+Wymaga `requireAuth` + `requireAdmin` + `requireAiMlEnabled` (AI OFF → `503 {error: "disabled"}`).
+Upload binarny przez `express.raw` (`application/octet-stream`, limit `SOKML_LIMITS`).
+Przepływ: export → dry-run (binding `dryRunId` + `userId`, TTL) → import (zawsze `CANDIDATE`).
+
+| Metoda | Ścieżka                                              | Opis                                                                                                                                  |
+| ------ | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| GET    | `/api/telemetry/ai/transfer/preview-export?modelId=` | Podgląd zawartości pakietu (co opuszcza komputer)                                                                                     |
+| POST   | `/api/telemetry/ai/transfer/export`                  | Generowanie `.sokml` (`{modelId, dataset?, knowledge?, telemetry?}`; złe body → `400 INVALID_BODY`)                                   |
+| POST   | `/api/telemetry/ai/transfer/dry-run`                 | Analiza pakietu bez zapisu (`{dryRunId, status, checks, preview}`)                                                                    |
+| POST   | `/api/telemetry/ai/transfer/import?dryRunId=`        | Import ze świeżego dry-run (`DRY_RUN_USER_MISMATCH` → 403, `DRY_RUN_PACKAGE_MISMATCH` → 409, duplikat wersji → 409 `MODEL_DUPLICATE`) |
+| GET    | `/api/telemetry/ai/transfer/history`                 | Historia transferów (`{data}`, max 100, malejąco)                                                                                     |
+| GET    | `/api/telemetry/ai/transfer/:transferId`             | Detal transferu (404 gdy brak)                                                                                                        |
+
+Sonda CSP dashboardu Operacje czyta `Content-Security-Policy` z `/api/telemetry/ai/ml-status`
+(za Helmet). `/api/version` i `/api/admin/system-info` są przed Helmet i nie niosą CSP.
+
 ## Feature Flags (`/api/feature-flags`)
 
 Wymaga autoryzacji (administrator).
 
-| Metoda | Ścieżka                            | Opis                                                                   |
-| ------ | ---------------------------------- | ---------------------------------------------------------------------- |
-| GET    | `/api/feature-flags`               | Lista flag funkcjonalnych                                              |
-| PUT    | `/api/feature-flags/import-export` | Włączenie/wyłączenie import-eksport (`{enabled}`, audyt)               |
-| PUT    | `/api/feature-flags/ai-ml`         | Włączenie/wyłączenie AI/ML (`{enabled: boolean}`, 400 gdy nie-boolean) |
-| POST   | `/api/feature-flags/audit`         | Ręczny wpis audytu (`entityType`, `entityId`, `action`, 400 bez pól)   |
+| Metoda | Ścieżka                            | Opis                                                                                        |
+| ------ | ---------------------------------- | ------------------------------------------------------------------------------------------- |
+| GET    | `/api/feature-flags`               | Lista flag (`ai_ml_enabled` fail-closed: błąd DB → `503 FLAGS_UNAVAILABLE`, nigdy jawne ON) |
+| PUT    | `/api/feature-flags/import-export` | Włączenie/wyłączenie import-eksport (`{enabled}`, audyt)                                    |
+| PUT    | `/api/feature-flags/ai-ml`         | Włączenie/wyłączenie AI/ML (`{enabled: boolean}`, 400 gdy nie-boolean)                      |
+| POST   | `/api/feature-flags/audit`         | Ręczny wpis audytu (`entityType`, `entityId`, `action`, 400 bez pól)                        |
 
 ---
 
