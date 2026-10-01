@@ -274,6 +274,7 @@ jobs:
         needs: test
         env:
             DATABASE_URL: 'file:./test-ci.sqlite?connection_limit=1&busy_timeout=30000'
+            TEST_ADMIN_PASSWORD: test-admin-pass
             DEFAULT_ADMIN_PASSWORD: test-admin-pass
         steps:
             - uses: actions/checkout@v7
