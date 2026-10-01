@@ -501,6 +501,11 @@ router.post(
 );
 
 /* ===== STUDNIE DOBRANE PRZEZ AI (well selections) ===== */
+// P1.5 KONTRAKT: jawny read-only exception spod kill-switcha. Agregacja
+// diagnostyczna bez mutacji — dostępna także przy AI OFF (dashboard sam jest
+// blokowany bramką UI). Operacje wykonawcze (predict/train/reward/transfer)
+// ZAWSZE za requireAiMlEnabled. Zmiana tego wyjątku = świadoma decyzja
+// kontraktowa + aktualizacja telemetryAiMlDisabled.test.ts.
 
 router.get(
     '/ai/well-selections',

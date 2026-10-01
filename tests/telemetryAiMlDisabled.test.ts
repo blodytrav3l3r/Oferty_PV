@@ -1,4 +1,6 @@
 import { describe, expect, it, jest, beforeEach } from '@jest/globals';
+import request from 'supertest';
+import express from 'express';
 import { isAiMlFlagOn, requireAiMlEnabled, AI_ML_FLAG_KEY } from '../src/middleware/aiMlGuard';
 import aiMlRouter from '../src/routes/telemetryAiMl';
 import aiDashboardRouter from '../src/routes/telemetryAiDashboard';
@@ -75,6 +77,15 @@ jest.mock('../src/services/ml/predictionCache', () => ({
 
 jest.mock('../src/services/auditService', () => ({
     logAudit: jest.fn<any>().mockResolvedValue(undefined)
+}));
+
+// P1.5 runtime: kontrakt guardów jako admin (bez tego realny requireAuth da 401).
+jest.mock('../src/middleware/auth', () => ({
+    requireAuth: (req: any, _res: any, next: any) => {
+        req.user = { id: 'u1', role: 'admin' };
+        next();
+    },
+    requireAdmin: (_req: any, _res: any, next: any) => next()
 }));
 
 jest.mock('../src/services/telemetry/learning', () => ({
@@ -204,5 +215,31 @@ describe('aiMlGuard — pokrycie wszystkich endpointów BLOCK', () => {
         const inMl = hasGuard(aiMlRouter, `${method} ${path}`);
         const inDash = hasGuard(aiDashboardRouter, `${method} ${path}`);
         expect(inMl || inDash).toBe(true);
+    });
+});
+
+// P1.5 KONTRAKT read-only exception: well-selections jawnie BEZ guarda
+// (diagnostyka przy AI OFF), operacje wykonawcze ZAWSZE 503.
+describe('aiMlGuard — read-only exception well-selections', () => {
+    it('GET /ai/well-selections celowo bez requireAiMlEnabled', () => {
+        expect(hasGuard(aiMlRouter, 'GET /ai/well-selections')).toBe(false);
+    });
+
+    it('OFF: well-selections → 200, predict/batch → 503', async () => {
+        (mockFindUnique as any).mockImplementation(async ({ where }: any) => {
+            if (where.key === AI_ML_FLAG_KEY) return { value: '"0"' };
+            return null;
+        });
+        const app = express();
+        app.use(express.json());
+        app.use('/api/telemetry', aiMlRouter);
+        const read = await request(app).get('/api/telemetry/ai/well-selections');
+        expect(read.status).toBe(200);
+        expect(read.body).toHaveProperty('items');
+        const exec = await request(app)
+            .post('/api/telemetry/ai/predict/batch')
+            .send({ candidates: [] });
+        expect(exec.status).toBe(503);
+        expect(exec.body).toEqual({ error: 'disabled' });
     });
 });
