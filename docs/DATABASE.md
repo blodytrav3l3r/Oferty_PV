@@ -803,6 +803,32 @@ Skrypt weryfikuje poprawność pliku backupu przed nadpisaniem bazy:
 
 Niepoprawny backup jest odrzucany (bez nadpisywania działającej bazy).
 
+### Guardy restore i regresja
+
+Guardy (`isSqliteFile`/`verifyChecksum`/`integrityCheck`) są importowalne
+(guard `require.main`) i pokryte regresją `tests/restoreGuards.test.ts` —
+brak pliku, podmieniony bajt i brak sidecara mają zdefiniowane zachowanie
+(exit 1 / exit 1 / WARN + kontynuacja).
+Cel testowy: `RESTORE_DB_PATH=<plik> node scripts/restore-db.js <backup> --yes`.
+
+### Synchronizacja schematu przy restore
+
+Po skopiowaniu pliku `npm run restore` automatycznie wykonuje
+`npx prisma migrate deploy`, co synchronizuje schemat bazy z aktualnym stanem
+migracji — tworzy m.in. indeksy deduplikacji telemetrii AI
+(`idx_logs_well`, `idx_logs_source_well`) oraz nowe kolumny/tabele.
+**Ręczne kopiowanie pliku backupu NIE synchronizuje schematu** (dla pełnej
+spójności użyj `migrate deploy`; przy starcie serwera indeksy telemetrii AI
+i tak są uzupełniane automatycznie przez auto-heal w `src/app.ts`).
+
+### Drill E2E (P1.3, 2026-09-30)
+
+Backup 1,36 GB + SHA-256 + integrity OK; restore na czysty cel +
+`migrate deploy` (17 migracji, none pending); 14/14 tabel identyczne;
+smoke aplikacji OK. RPO = interwał crona hosta; RTO = ręczny restore (minuty).
+
+Stan bazy (backup, wersja, rozmiar) można sprawdzić przez `GET /health`.
+
 ### Ręczne przywrócenie
 
 ```bash

@@ -351,3 +351,9 @@ Usunięto też nieużywane importy/instancje: `RecommendationEngine`, `Authentic
 - `docs/API.md` + `docs/SECURITY.md`: auth cookie-first, `x-auth-token` = tymczasowy shim (e2-auth-decision wariant A).
 - AGENTS.md §5: odsyłacz do pełnej bazy `docs/errors-known.md` (#1–#53).
 - `docs/security/permission-matrix.md` ↔ `docs/SECURITY.md`: linki dwukierunkowe (jeden SSoT pojęciowy).
+
+## [2026-10-02] Faza C3.1 — Merge BACKUP_RESTORE → DATABASE (docs(docs))
+
+| Plik                     | Operacja                                                                                                                                                                                                                                                                                                                         | Uzasadnienie                                                                           |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| `docs/BACKUP_RESTORE.md` | `git rm` po wchłonięciu unikalnych treści do `docs/DATABASE.md` §5 (guardy restore + cel `tests/restoreGuards.test.ts`, drill E2E P1.3, synchronizacja schematu `migrate deploy`, ostrzeżenie o ręcznym kopiowaniu, `GET /health` jako stan bazy). Sekcje Backup/Restore/Przenoszenie/Wersja istniały 1:1 w `DATABASE.md` §§4–7. | Content-level diff: zero utraty informacji; jeden SSoT backup/restore. Historia w Git. |
