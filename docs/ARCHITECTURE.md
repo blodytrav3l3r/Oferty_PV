@@ -14,6 +14,10 @@ Aplikacja S.O.K. — System Ofert i Kalkulacji to pojedyncza aplikacja webowa (m
 - **Frontend SPA** — Vanilla JavaScript z osobnymi widokami HTML (bez frameworka)
 - **Baza danych** — SQLite przez Prisma ORM
 - **Serwer** — Express jako jedyny serwer (dev i prod), serwuje API i `public/`
+- **Model procesu** — single-node, jednodprocesowy: stan ulotny w `Map` w pamięci
+  (`predictionCache`, `dryRunStore`, flaga `trainingRunning`) znika przy restarcie.
+  Decyzja świadoma (brak wymagania multi-instance; P7.9 cross-instance otwarte).
+  Migracja bindingów do DB dopiero z realnym wymaganiem skalowania.
 
 ```
 ┌──────────────────────────────────────────────────────┐
