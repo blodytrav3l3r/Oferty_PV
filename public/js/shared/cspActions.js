@@ -364,6 +364,11 @@
         try {
             args = JSON.parse(el.getAttribute(argSrc) || '[]');
         } catch (_e) {
+            // Glosny fail zamiast cichego return — zly JSON w data-csp-args
+            // oznaczal martwy przycisk bez sladu (przypadek Excela, blur).
+            if (typeof console !== 'undefined' && console.warn) {
+                console.warn('[csp] zly JSON w ' + argSrc + ':', el.getAttribute(argSrc), el);
+            }
             return;
         }
         if (!Array.isArray(args)) return;

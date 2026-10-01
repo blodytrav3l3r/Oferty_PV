@@ -684,7 +684,7 @@ function _excelOverlaySelectHtml(opts, curVal, csp, width, disabled) {
     const extraClass = disabled ? ' disabled' : '';
     const wrapperEvents = disabled
         ? ''
-        : ' data-csp="$excelCellFocus" data-csp-on="focus" data-csp-2="excelCellBlur" data-csp-2-on="blur" data-csp-2-args="["$el"]" data-csp-3="$selectWrapKey" data-csp-3-on="keydown"';
+        : ' data-csp="$excelCellFocus" data-csp-on="focus" data-csp-2="excelCellBlur" data-csp-2-on="blur" data-csp-2-args="[&quot;$el&quot;]" data-csp-3="$selectWrapKey" data-csp-3-on="keydown"';
     // onChange jako trojka data-csp {name, args} (CSP-B3) + synchronizacja labelki.
     // csp = null -> select bez handlera zmiany (tylko label).
     const cspAttr =

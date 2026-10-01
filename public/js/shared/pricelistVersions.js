@@ -485,7 +485,7 @@
         var importInput =
             '<input type="file" id="pv-import-excel" style="display: none" accept=".xlsx,.xls" data-csp-on="change" data-csp="' +
             (isRury ? 'importRuryFromExcel' : 'importStudnieFromExcel') +
-            '" data-csp-args="["$event"]"">';
+            '" data-csp-args="[&quot;$event&quot;]"">';
         if (isRury) {
             return (
                 '<div class="pv-row"><span class="pv-row-label">Rury</span><span class="pv-actions">' +

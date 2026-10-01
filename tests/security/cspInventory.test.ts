@@ -110,6 +110,25 @@ describe('CSP-A inventory ceiling', () => {
         expect(bad).toEqual([]);
     });
 
+    it('data-csp-args bez surowego cudzyslowu po [ (martwy handler)', () => {
+        // data-csp-args="["$el"]" ucina atrybut na [ — JSON.parse pada,
+        // dyspozytor milczy, przycisk martwy (przypadek blur w Excelu).
+        // Poprawnie: &quot; albo konkatenacja z ' (np. "[' + wIdx + ']").
+        const dir = path.join(PUB, 'js');
+        const walk = (d: string): string[] =>
+            fs.readdirSync(d, { withFileTypes: true }).flatMap((e) => {
+                const fp = path.join(d, e.name);
+                return e.isDirectory() ? walk(fp) : fp.endsWith('.js') ? [fp] : [];
+            });
+        const bad: string[] = [];
+        for (const f of walk(dir)) {
+            const s = fs.readFileSync(f, 'utf8');
+            const m = s.match(/data-csp(-\d)?-args="\[["]/g);
+            if (m) bad.push(`${path.relative(PUB, f)}: ${m.join(',')}`);
+        }
+        expect(bad).toEqual([]);
+    });
+
     it('enforce CSP nie zawiera obcych zrodel skryptow', () => {
         const app = fs.readFileSync(path.resolve(__dirname, '..', '..', 'src', 'app.ts'), 'utf8');
         expect(app).toMatch(/scriptSrc/);

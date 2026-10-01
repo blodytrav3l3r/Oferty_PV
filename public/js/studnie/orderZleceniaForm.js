@@ -551,7 +551,7 @@ async function populateZleceniaForm(el) {
                 <div class="form-group-sm">
                     <label class="form-label-sm">Ustalanie kąta stopni / Wykonanie</label>
                     <div style="display:flex; gap:0.25rem; flex-wrap:wrap; margin-top:0.2rem; align-items:center;" class="zl-param-group">
-                        <input type="number" id="zl-kat-stopni" class="form-input form-input-sm" value="${katStopni}" placeholder="np. 90" min="0" max="360" data-csp-2="$select" data-csp-3="onZleceniaKatChange" data-csp-3-args="[]" data-csp-3-on="input" data-csp-4="$dom" data-csp-4-args="["blur", "$el"]" data-csp-4-on="keydown" data-csp-4-key="Enter" style="width:70px;">
+                        <input type="number" id="zl-kat-stopni" class="form-input form-input-sm" value="${katStopni}" placeholder="np. 90" min="0" max="360" data-csp-2="$select" data-csp-3="onZleceniaKatChange" data-csp-3-args="[]" data-csp-3-on="input" data-csp-4="$dom" data-csp-4-args="[&quot;blur&quot;, &quot;$el&quot;]" data-csp-4-on="keydown" data-csp-4-key="Enter" style="width:70px;">
                         <span style="font-size: var(--fs-4xl); color:var(--text-muted); margin: 0 4px;">→</span>
                         <input type="text" id="zl-wykonanie" class="form-input form-input-sm" value="${wykonanie ? wykonanie + '°' : ''}" readonly style="width:70px; color:var(--accent-hover); font-weight: var(--fw-bold); margin-right:5px; pointer-events:none;">
                         ${katOptions

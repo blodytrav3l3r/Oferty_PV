@@ -323,7 +323,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             escapeHtmlAttr(well.name) +
             '" data-csp="excelOnNameChange" data-csp-on="change" data-csp-args="[' +
             wIdx +
-            ', &quot;$value&quot;]" data-csp-2="$excelCellFocus" data-csp-2-on="focus" data-csp-3="excelCellBlur" data-csp-3-on="blur" data-csp-3-args="["$el"]" style="' +
+            ', &quot;$value&quot;]" data-csp-2="$excelCellFocus" data-csp-2-on="focus" data-csp-3="excelCellBlur" data-csp-3-on="blur" data-csp-3-args="[&quot;$el&quot;]" style="' +
             _excelCellInp(120) +
             'text-align:left;width:118px;" /></td>';
         /* Rz Wlazu */
@@ -337,7 +337,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             (well.rzednaWlazu != null ? well.rzednaWlazu : '') +
             '" data-csp="excelOnRzednaChange" data-csp-on="change" data-csp-args="[' +
             wIdx +
-            ']" data-csp-2="$excelCellFocus" data-csp-2-on="focus" data-csp-3="excelCellBlur" data-csp-3-on="blur" data-csp-3-args="["$el"]" style="' +
+            ']" data-csp-2="$excelCellFocus" data-csp-2-on="focus" data-csp-3="excelCellBlur" data-csp-3-on="blur" data-csp-3-args="[&quot;$el&quot;]" style="' +
             _excelCellInp(72) +
             '" /></td>';
         /* Rz Dna */
@@ -351,7 +351,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             (well.rzednaDna != null ? well.rzednaDna : '') +
             '" data-csp="excelOnRzednaChange" data-csp-on="change" data-csp-args="[' +
             wIdx +
-            ']" data-csp-2="$excelCellFocus" data-csp-2-on="focus" data-csp-3="excelCellBlur" data-csp-3-on="blur" data-csp-3-args="["$el"]" style="' +
+            ']" data-csp-2="$excelCellFocus" data-csp-2-on="focus" data-csp-3="excelCellBlur" data-csp-3-on="blur" data-csp-3-args="[&quot;$el&quot;]" style="' +
             _excelCellInp(72) +
             '" /></td>';
         /* Wys auto */
@@ -422,7 +422,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
                 rzWlPlaceholder +
                 '" data-csp="excelOnPrzejscieChange" data-csp-on="change" data-csp-args="' +
                 escapeHtmlAttr(JSON.stringify([wIdx, _i, 'rzednaWlaczenia', '$value'])) +
-                '" data-csp-2="$excelCellFocus" data-csp-2-on="focus" data-csp-3="excelCellBlur" data-csp-3-on="blur" data-csp-3-args="["$el"]" style="' +
+                '" data-csp-2="$excelCellFocus" data-csp-2-on="focus" data-csp-3="excelCellBlur" data-csp-3-on="blur" data-csp-3-args="[&quot;$el&quot;]" style="' +
                 _excelCellInp(72) +
                 '" /></td>';
             html +=
@@ -436,7 +436,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
                 wIdx +
                 ',' +
                 _i +
-                ', &quot;angle&quot;, &quot;$value&quot;]" data-csp-2="$excelCellFocus" data-csp-2-on="focus" data-csp-3="excelCellBlur" data-csp-3-on="blur" data-csp-3-args="["$el"]" style="' +
+                ', &quot;angle&quot;, &quot;$value&quot;]" data-csp-2="$excelCellFocus" data-csp-2-on="focus" data-csp-3="excelCellBlur" data-csp-3-on="blur" data-csp-3-args="[&quot;$el&quot;]" style="' +
                 _excelCellInp(50) +
                 'text-align:center;" /></td>';
             html +=
@@ -514,7 +514,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
                         ].concat(c.fromReduction ? [c.targetDn || 1000] : [])
                     )
                 ) +
-                '" data-csp-2="$excelCellFocus" data-csp-2-on="focus" data-csp-3="excelCellBlur" data-csp-3-on="blur" data-csp-3-args="["$el"]" style="' +
+                '" data-csp-2="$excelCellFocus" data-csp-2-on="focus" data-csp-3="excelCellBlur" data-csp-3-on="blur" data-csp-3-args="[&quot;$el&quot;]" style="' +
                 _excelCellInp(50) +
                 'text-align:center;width:52px;" /></td>';
         });

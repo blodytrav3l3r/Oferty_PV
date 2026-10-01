@@ -448,7 +448,7 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
                 const inpType = 'text';
                 const inpMode = ' inputmode="decimal"';
 
-                element.innerHTML = `<input type="${inpType}"${inpMode} placeholder="${escapeHtmlAttr(String(val))}" value="${escapeHtmlAttr(String(val))}" style="width:100%; min-width:0; max-width:100%; height:30px; margin:0; box-sizing:border-box; background: var(--bg-tertiary); color: var(--text-primary); border:1px solid var(--accent); border-radius: var(--radius-xs); font-size: var(--fs-base); font-weight: var(--fw-bold); text-align:center; padding:0 0.25rem; outline:none;" data-csp-2="$select" data-csp-3="$select" data-csp-3-on="focus" data-csp-4="saveQuickEdit" data-csp-4-args="${escapeHtmlAttr(JSON.stringify([index, field, '$value', '$el']))}" data-csp-4-on="blur" data-csp-5="$dom" data-csp-5-args="["blur", "$el"]" data-csp-5-on="keydown" data-csp-5-key="Enter">`;
+                element.innerHTML = `<input type="${inpType}"${inpMode} placeholder="${escapeHtmlAttr(String(val))}" value="${escapeHtmlAttr(String(val))}" style="width:100%; min-width:0; max-width:100%; height:30px; margin:0; box-sizing:border-box; background: var(--bg-tertiary); color: var(--text-primary); border:1px solid var(--accent); border-radius: var(--radius-xs); font-size: var(--fs-base); font-weight: var(--fw-bold); text-align:center; padding:0 0.25rem; outline:none;" data-csp-2="$select" data-csp-3="$select" data-csp-3-on="focus" data-csp-4="saveQuickEdit" data-csp-4-args="${escapeHtmlAttr(JSON.stringify([index, field, '$value', '$el']))}" data-csp-4-on="blur" data-csp-5="$dom" data-csp-5-args="[&quot;blur&quot;, &quot;$el&quot;]" data-csp-5-on="keydown" data-csp-5-key="Enter">`;
                 const inp = element.querySelector('input');
                 inp.focus();
                 try {
@@ -994,19 +994,19 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
               <div class="wt-edit-form">
                 <div class="form-group m-0">
                   <label class="fs-3xs-muted-block" for="edit-rzedna-${globalIndex}">Rzędna [m]</label>
-                  <input type="text" inputmode="decimal" class="form-input fs-base-rc" id="edit-rzedna-${globalIndex}" step="0.001" value="${editPrzejscieState.rzedna}" placeholder="142.500" data-csp-2="syncEditState" data-csp-2-args="[]" data-csp-2-on="change" data-csp-3="$dom" data-csp-3-args="["blur", "$el"]" data-csp-3-on="keydown" data-csp-3-key="Enter">
+                  <input type="text" inputmode="decimal" class="form-input fs-base-rc" id="edit-rzedna-${globalIndex}" step="0.001" value="${editPrzejscieState.rzedna}" placeholder="142.500" data-csp-2="syncEditState" data-csp-2-args="[]" data-csp-2-on="change" data-csp-3="$dom" data-csp-3-args="[&quot;blur&quot;, &quot;$el&quot;]" data-csp-3-on="keydown" data-csp-3-key="Enter">
                 </div>
                 <div class="form-group m-0">
                   <label class="fs-3xs-muted-block" for="edit-angle-${globalIndex}">Kąt [°]</label>
-                  <input type="number" class="form-input color-link fs-base-rc" id="edit-angle-${globalIndex}" value="${editPrzejscieState.angle}" min="0" max="360" data-csp-2="$anglesSync" data-csp-2-args="${escapeHtmlAttr(JSON.stringify([globalIndex]))}" data-csp-2-on="input" data-csp-3="$dom" data-csp-3-args="["blur", "$el"]" data-csp-3-on="keydown" data-csp-3-key="Enter">
+                  <input type="number" class="form-input color-link fs-base-rc" id="edit-angle-${globalIndex}" value="${editPrzejscieState.angle}" min="0" max="360" data-csp-2="$anglesSync" data-csp-2-args="${escapeHtmlAttr(JSON.stringify([globalIndex]))}" data-csp-2-on="input" data-csp-3="$dom" data-csp-3-args="[&quot;blur&quot;, &quot;$el&quot;]" data-csp-3-on="keydown" data-csp-3-key="Enter">
                 </div>
                 <div class="form-group m-0">
                   <label class="fs-3xs-muted-block" for="edit-spadek-kineta-${globalIndex}">Spadek w kinecie [%]</label>
-                  <input type="number" class="form-input fs-base-rc" id="edit-spadek-kineta-${globalIndex}" step="1" value="${editPrzejscieState.spadekKineta}" data-csp-2="syncEditState" data-csp-2-args="[]" data-csp-2-on="change" data-csp-3="$dom" data-csp-3-args="["blur", "$el"]" data-csp-3-on="keydown" data-csp-3-key="Enter">
+                  <input type="number" class="form-input fs-base-rc" id="edit-spadek-kineta-${globalIndex}" step="1" value="${editPrzejscieState.spadekKineta}" data-csp-2="syncEditState" data-csp-2-args="[]" data-csp-2-on="change" data-csp-3="$dom" data-csp-3-args="[&quot;blur&quot;, &quot;$el&quot;]" data-csp-3-on="keydown" data-csp-3-key="Enter">
                 </div>
                 <div class="form-group m-0">
                   <label class="fs-3xs-muted-block" for="edit-spadek-mufa-${globalIndex}">Spadek w mufie [%]</label>
-                  <input type="number" class="form-input fs-base-rc" id="edit-spadek-mufa-${globalIndex}" step="1" value="${editPrzejscieState.spadekMufa}" data-csp-2="syncEditState" data-csp-2-args="[]" data-csp-2-on="change" data-csp-3="$dom" data-csp-3-args="["blur", "$el"]" data-csp-3-on="keydown" data-csp-3-key="Enter">
+                  <input type="number" class="form-input fs-base-rc" id="edit-spadek-mufa-${globalIndex}" step="1" value="${editPrzejscieState.spadekMufa}" data-csp-2="syncEditState" data-csp-2-args="[]" data-csp-2-on="change" data-csp-3="$dom" data-csp-3-args="[&quot;blur&quot;, &quot;$el&quot;]" data-csp-3-on="keydown" data-csp-3-key="Enter">
                 </div>
               </div>
 
