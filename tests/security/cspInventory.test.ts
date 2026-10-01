@@ -129,6 +129,25 @@ describe('CSP-A inventory ceiling', () => {
         expect(bad).toEqual([]);
     });
 
+    it('data-csp-args bez martwej konkatenacji (literal + wIdx +)', () => {
+        // "[&quot; + wIdx + &quot;]" w single-quoted stringu to literal,
+        // nie konkatenacja — w DOM laduje invalid JSON, klik umiera.
+        // Poprawnie: "[' + wIdx + ']" (liczba, jak pre-CSP onclick).
+        const dir = path.join(PUB, 'js');
+        const walk = (d: string): string[] =>
+            fs.readdirSync(d, { withFileTypes: true }).flatMap((e) => {
+                const fp = path.join(d, e.name);
+                return e.isDirectory() ? walk(fp) : fp.endsWith('.js') ? [fp] : [];
+            });
+        const bad: string[] = [];
+        for (const f of walk(dir)) {
+            const s = fs.readFileSync(f, 'utf8');
+            const m = s.match(/&quot; \+/g);
+            if (m) bad.push(`${path.relative(PUB, f)}: ${m.length}x`);
+        }
+        expect(bad).toEqual([]);
+    });
+
     it('enforce CSP nie zawiera obcych zrodel skryptow', () => {
         const app = fs.readFileSync(path.resolve(__dirname, '..', '..', 'src', 'app.ts'), 'utf8');
         expect(app).toMatch(/scriptSrc/);

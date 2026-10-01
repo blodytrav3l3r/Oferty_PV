@@ -287,7 +287,9 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             wIdx +
             '" data-widx="' +
             wIdx +
-            '" data-csp="$prevent" data-csp-on="mousedown" data-csp-2="_excelToggleWellAutoMode" data-csp-2-args="[&quot; + wIdx + &quot;]" class="excel-mode-btn ' +
+            '" data-csp="$prevent" data-csp-on="mousedown" data-csp-2="_excelToggleWellAutoMode" data-csp-2-args="[' +
+            wIdx +
+            ']" class="excel-mode-btn ' +
             (isAuto ? 'is-auto' : 'is-manual') +
             '" title="' +
             (isAuto ? 'Auto (klik = przełącz na Manual)' : 'Manual (klik = przełącz na Auto)') +
@@ -297,7 +299,9 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             wIdx +
             '" data-widx="' +
             wIdx +
-            '" data-csp="_excelRunAutoSelectForWell" data-csp-args="[&quot; + wIdx + &quot;]"' +
+            '" data-csp="_excelRunAutoSelectForWell" data-csp-args="[' +
+            wIdx +
+            ']"' +
             (isAuto ? '' : ' disabled') +
             ' class="excel-run-btn ' +
             (isAuto ? 'is-auto' : 'is-manual') +
@@ -582,7 +586,9 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
                 '<span title="Studnia zablokowana — edycja niedostępna" style="color:var(--danger-hover);display:inline-flex;align-items:center;margin-right:2px;"><i data-lucide="lock" class="icon-xs" aria-hidden="true"></i></span>';
         }
         html +=
-            '<button data-csp="excelOpenWellParams" data-csp-args="[&quot; + wIdx + &quot;]" title="Parametry" class="excel-action-btn is-accent"><i data-lucide="settings" class="icon-sm" aria-hidden="true"></i></button>';
+            '<button data-csp="excelOpenWellParams" data-csp-args="[' +
+            wIdx +
+            ']" title="Parametry" class="excel-action-btn is-accent"><i data-lucide="settings" class="icon-sm" aria-hidden="true"></i></button>';
         const _hasUwagi = !!(well.uwagi && String(well.uwagi).trim());
         const _uwagiPrev = _hasUwagi
             ? (typeof escapeHtmlAttr === 'function'
@@ -601,9 +607,13 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             (_hasUwagi ? ' has-uwagi' : '') +
             '"><i data-lucide="file-text" class="icon-sm" aria-hidden="true"></i></button>';
         html +=
-            '<button data-csp="excelDuplicateWell" data-csp-args="[&quot; + wIdx + &quot;]" title="Duplikuj" class="excel-action-btn is-blue"><i data-lucide="copy" class="icon-sm" aria-hidden="true"></i></button>';
+            '<button data-csp="excelDuplicateWell" data-csp-args="[' +
+            wIdx +
+            ']" title="Duplikuj" class="excel-action-btn is-blue"><i data-lucide="copy" class="icon-sm" aria-hidden="true"></i></button>';
         html +=
-            '<button data-csp="excelDeleteWell" data-csp-args="[&quot; + wIdx + &quot;]" title="Usu\u0144" class="excel-action-btn is-danger"><i data-lucide="trash-2" class="icon-sm" aria-hidden="true"></i></button>';
+            '<button data-csp="excelDeleteWell" data-csp-args="[' +
+            wIdx +
+            ']" title="Usu\u0144" class="excel-action-btn is-danger"><i data-lucide="trash-2" class="icon-sm" aria-hidden="true"></i></button>';
         html += '</div></td>';
         html += '</tr>';
     });
