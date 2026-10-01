@@ -1,6 +1,5 @@
 import express, { type Request, type Response } from 'express';
 import { z } from 'zod';
-import prisma from '../prismaClient';
 import { logger } from '../utils/logger';
 import { requireAuth, requireAdmin, type AuthenticatedRequest } from '../middleware/auth';
 import { requireAiMlEnabled } from '../middleware/aiMlGuard';
@@ -11,6 +10,7 @@ import { sokmlFilename } from '../services/ml/transfer/transferFilename';
 import { buildExportPreview, buildModelPackage } from '../services/ml/transfer/exportModel';
 import { runDryRun } from '../services/ml/transfer/dryRun';
 import { importPackage } from '../services/ml/transfer/importModel';
+import { listTransferHistory, getTransferDetail } from '../services/ml/transfer/transferHistory';
 import { logAudit } from '../services/auditService';
 
 /**
@@ -208,11 +208,7 @@ router.get(
     requireAiMlEnabled,
     async (_req: Request, res: Response) => {
         try {
-            const rows = await prisma.aiTransfer.findMany({
-                orderBy: { createdAt: 'desc' },
-                take: 100
-            });
-            res.json({ data: rows });
+            res.json({ data: await listTransferHistory() });
         } catch (e) {
             sendInternalError(res, 'AiTransferRoute', e);
         }
@@ -227,9 +223,7 @@ router.get(
     requireAiMlEnabled,
     async (req: Request, res: Response) => {
         try {
-            const row = await prisma.aiTransfer.findUnique({
-                where: { transferId: req.params.transferId }
-            });
+            const row = await getTransferDetail(req.params.transferId);
             if (!row) {
                 res.status(404).json({ error: 'Transfer nie istnieje' });
                 return;
