@@ -99,6 +99,25 @@ describe('telemetryConfigSchema', () => {
         expect(r.success).toBe(true);
     });
 
+    it('odrzuca niepoprawne wartości liczbowe w polach telemetry', () => {
+        for (const field of ['rzDna', 'rzWlazu', 'wellHeight', 'dennicaHeight']) {
+            for (const value of ['abc', '12abc', 'Infinity', '', '   ']) {
+                expect(
+                    telemetryConfigSchema.safeParse({
+                        solverSource: 'AUTO_JS',
+                        [field]: value
+                    }).success
+                ).toBe(false);
+            }
+            expect(
+                telemetryConfigSchema.safeParse({
+                    solverSource: 'AUTO_JS',
+                    [field]: '105.5'
+                }).success
+            ).toBe(true);
+        }
+    });
+
     it('rzDna jako string jest konwertowane na number', () => {
         const r = telemetryConfigSchema.safeParse({
             solverSource: 'AUTO_JS',
