@@ -1,3 +1,4 @@
+// @ts-check
 // Zależności (ładowane przed tym skryptem): shared/auth.js, shared/ui.js
 
 let adminUsers = [];
@@ -326,9 +327,9 @@ function updateStatsBar() {
     const adminEl = document.getElementById('stat-admin-count');
     const proEl = document.getElementById('stat-pro-count');
     const userEl = document.getElementById('stat-user-count');
-    if (adminEl) adminEl.textContent = counts.admin;
-    if (proEl) proEl.textContent = counts.pro;
-    if (userEl) userEl.textContent = counts.user;
+    if (adminEl) adminEl.textContent = String(counts.admin);
+    if (proEl) proEl.textContent = String(counts.pro);
+    if (userEl) userEl.textContent = String(counts.user);
 }
 
 function startEditUser(id) {

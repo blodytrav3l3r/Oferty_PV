@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * priceDefaults.js — Zapisz/Przywróć domyślne cenniki.
  *

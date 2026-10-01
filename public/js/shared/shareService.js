@@ -1,4 +1,4 @@
-// @ts-nocheck
+// @ts-check
 /**
  * shareService.js — obsługa API udostępniania dokumentów.
  * Używa StorageService.getHeaders() dla auth.

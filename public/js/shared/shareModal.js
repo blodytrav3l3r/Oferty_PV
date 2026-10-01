@@ -1,4 +1,4 @@
-// @ts-nocheck
+// @ts-check
 /**
  * shareModal.js — modal udostępniania z kafelkową listą użytkowników.
  * Zależności: modalCore.js (showModal/closeModal), shareService.js, escapeHtml, lucide
@@ -58,11 +58,13 @@ export async function openShareModal(documentType, documentId) {
             </div>
             <div class="share-modal-body text-center fs-sm-muted"><span class="share-icon-avatar share-icon-avatar--muted" style="margin:0 auto 0.6rem"><i data-lucide="loader-2" class="lucide-spin"></i></span> Ładowanie użytkowników...</div>
         </div>`;
-    const overlay = window.showModal({
-        id: 'share-modal',
-        titleId: 'share-title',
-        html: loadingHtml
-    });
+    const overlay = /** @type {HTMLElement} */ (
+        window.showModal({
+            id: 'share-modal',
+            titleId: 'share-title',
+            html: loadingHtml
+        })
+    );
     if (window.lucide) window.lucide.createIcons({ root: overlay });
 
     let users = [];
@@ -181,10 +183,14 @@ export async function openShareModal(documentType, documentId) {
     overlay.innerHTML = buildHtml();
     if (window.lucide) window.lucide.createIcons({ root: overlay });
 
-    const searchInput = overlay.querySelector('#share-search');
-    const gridWrap = overlay.querySelector('#share-grid-wrap');
+    const searchInput = /** @type {HTMLInputElement|null} */ (
+        overlay.querySelector('#share-search')
+    );
+    const gridWrap = /** @type {HTMLElement|null} */ (overlay.querySelector('#share-grid-wrap'));
     const counterEl = overlay.querySelector('#share-counter');
-    const confirmBtn = overlay.querySelector('#share-confirm');
+    const confirmBtn = /** @type {HTMLButtonElement|null} */ (
+        overlay.querySelector('#share-confirm')
+    );
 
     function updateCounter() {
         if (counterEl) counterEl.textContent = `${selected.size} / 50`;
@@ -196,14 +202,16 @@ export async function openShareModal(documentType, documentId) {
     }
 
     function syncSharedHeader() {
-        const info = overlay.querySelector('.share-already');
+        const info = /** @type {HTMLElement|null} */ (overlay.querySelector('.share-already'));
         const countShared = sharedIds.size;
         if (info) {
             info.innerHTML = `<span class="share-icon-avatar share-icon-avatar--blue share-icon-avatar--sm" aria-hidden="true"><i data-lucide="users"></i></span> Już udostępnione: ${countShared} użytkownikom`;
             info.style.display = '';
             if (window.lucide) window.lucide.createIcons({ root: info });
         }
-        const bulkBtn = overlay.querySelector('#share-revoke-all');
+        const bulkBtn = /** @type {HTMLElement|null} */ (
+            overlay.querySelector('#share-revoke-all')
+        );
         if (bulkBtn) bulkBtn.style.display = countShared > 0 && canShare ? '' : 'none';
     }
 
@@ -254,7 +262,7 @@ export async function openShareModal(documentType, documentId) {
         updateCounter();
     }
     gridWrap?.addEventListener('click', onTileClick);
-    gridWrap?.addEventListener('keydown', (e) => {
+    gridWrap?.addEventListener('keydown', (/** @param {KeyboardEvent} e */ e) => {
         if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
             onTileClick(e);
