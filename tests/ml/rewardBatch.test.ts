@@ -109,6 +109,34 @@ describe('POST /api/telemetry/ai/reward-batch', () => {
         expect(res.body.rejected).toEqual([{ wellId: 'w-missing', reason: 'WELL_NOT_FOUND' }]);
     });
 
+    it('P1.7: błąd itemu loguje wellId i klasę/kod (response bez zmian)', async () => {
+        mockLogsFindMany.mockResolvedValue([{ wellId: 'w-ok' }, { wellId: 'w-boom' }]);
+        mockProcessAction.mockImplementation(async (a: any) => {
+            if (a.wellId === 'w-boom') {
+                const err = new Error('boom-tx') as Error & { code: string };
+                err.name = 'PrismaClientKnownRequestError';
+                (err as any).code = 'P2002';
+                throw err;
+            }
+            return { applied: true };
+        });
+        const res = await request(app)
+            .post('/api/telemetry/ai/reward-batch')
+            .send({ items: [item('w-ok'), item('w-boom')] });
+        expect(res.status).toBe(200);
+        expect(res.body.applied).toEqual(['w-ok']);
+        expect(res.body.rejected).toEqual([{ wellId: 'w-boom', reason: 'ERROR' }]);
+        const { logger } = (await import('../../src/utils/logger')) as any;
+        expect(logger.error).toHaveBeenCalledWith(
+            'AiRewardBatchRoute',
+            expect.stringContaining('w-boom')
+        );
+        expect(logger.error).toHaveBeenCalledWith(
+            'AiRewardBatchRoute',
+            expect.stringContaining('PrismaClientKnownRequestError:P2002')
+        );
+    });
+
     it('jeden findMany IN dla całego batcha (brak N× lookupów)', async () => {
         mockLogsFindMany.mockResolvedValue([{ wellId: 'w1' }, { wellId: 'w2' }]);
         await request(app)

@@ -486,7 +486,18 @@ router.post(
                     else if (result.status === 'forbidden')
                         rejected.push({ wellId: item.wellId, reason: 'FORBIDDEN' });
                     else duplicates.push(item.wellId);
-                } catch {
+                } catch (e: unknown) {
+                    // P1.7 observability: odpowiedź bez zmian (reason ERROR),
+                    // diagnostyka w logu — wellId + klasa/kod błędu, bez payloadu.
+                    const errName = e instanceof Error ? e.name : 'Error';
+                    const errCode =
+                        typeof e === 'object' && e !== null && 'code' in e
+                            ? String((e as { code: unknown }).code)
+                            : 'unknown';
+                    logger.error(
+                        'AiRewardBatchRoute',
+                        `Reward item failed wellId=${item.wellId} ${errName}:${errCode}`
+                    );
                     rejected.push({ wellId: item.wellId, reason: 'ERROR' });
                 }
             }
