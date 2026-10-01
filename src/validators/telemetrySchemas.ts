@@ -7,22 +7,16 @@
 
 import { z } from 'zod';
 
-const finiteNumericInput = z
-    .union([
-        z.number().finite(),
-        z.string().trim().min(1, 'Wartość liczbowa nie może być pusta')
-    ])
-    .transform((value, ctx) => {
-        const numeric = typeof value === 'number' ? value : Number(value);
-        if (!Number.isFinite(numeric)) {
-            ctx.addIssue({
-                code: z.ZodIssueCode.custom,
-                message: 'Wartość musi być skończoną liczbą'
-            });
-            return z.NEVER;
+const finiteNumericInput = z.preprocess(
+    (value) => {
+        if (typeof value === 'string') {
+            const trimmed = value.trim();
+            return trimmed === '' ? Number.NaN : Number(trimmed);
         }
-        return numeric;
-    });
+        return value;
+    },
+    z.number().finite('Wartość musi być skończoną liczbą')
+);
 
 // =============================================================================
 // Komponent studni (snapshot)
