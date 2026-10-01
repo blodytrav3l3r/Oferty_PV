@@ -10,8 +10,8 @@ window.decDiagramWellQty = async function (idx) {
 window.svgDragStartIndex = -1;
 
 window.svgPointerDown = function (ev, idx) {
-    ev.preventDefault();
     if (ev.ctrlKey || ev.metaKey) return;
+    ev.preventDefault();
     const well = getCurrentWell();
     if (!well) return;
 

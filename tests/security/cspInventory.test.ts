@@ -101,7 +101,10 @@ describe('CSP-A inventory ceiling', () => {
         const bad: string[] = [];
         for (const f of walk(dir)) {
             const s = fs.readFileSync(f, 'utf8');
-            const m = s.match(/\son[a-z]+\s*=\s*["']/g);
+            // Bramka lapie tez on* na poczatku template-chunka (po backticku),
+            // nie tylko po spacji — inaczej inline handlery w szablonach JS
+            // przechodza niezauwazone (przypadek diagramComponents.js, CSP-E).
+            const m = s.match(/[\s`]on[a-z]+\s*=\s*["']/g);
             if (m) bad.push(`${path.relative(PUB, f)}: ${m.join(',')}`);
         }
         expect(bad).toEqual([]);

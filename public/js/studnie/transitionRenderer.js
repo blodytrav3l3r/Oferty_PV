@@ -146,7 +146,7 @@ function renderTransitionTileHTML(item, globalIndex, product, opts = {}) {
     const enableDrag = opts.enableDragDrop === true;
 
     const dragAttrs = enableDrag
-        ? `data-prz-idx="${globalIndex}" draggable="true" data-csp="handlePrzDragStart" data-csp-args="[&quot;$event&quot;]" data-csp-on="dragstart" data-csp="handlePrzDragOver" data-csp-args="[&quot;$event&quot;]" data-csp-on="dragover" data-csp="handlePrzDrop" data-csp-args="[&quot;$event&quot;]" data-csp-on="drop" data-csp="handlePrzDragEnd" data-csp-args="[&quot;$event&quot;]" data-csp-on="dragend"`
+        ? `data-prz-idx="${globalIndex}" draggable="true" data-csp="handlePrzDragStart" data-csp-args="[&quot;$event&quot;]" data-csp-on="dragstart" data-csp-2="handlePrzDragOver" data-csp-2-args="[&quot;$event&quot;]" data-csp-2-on="dragover" data-csp-3="handlePrzDrop" data-csp-3-args="[&quot;$event&quot;]" data-csp-3-on="drop" data-csp-4="handlePrzDragEnd" data-csp-4-args="[&quot;$event&quot;]" data-csp-4-on="dragend"`
         : '';
     const cursorStyle = enableDrag ? 'cursor:grab;' : '';
 

@@ -391,14 +391,16 @@ function drawAllComponents(visible, canvas) {
             comp._cfgIdx !== undefined
                 ? `<g class="diag-comp-grp svg-cfg-${comp._cfgIdx}" style="transition:all 0.2s; ${plStyle}" cursor="grab" ${pointerEvents} ` +
                   `data-cfg-idx="${comp._cfgIdx}" draggable="true" ` +
-                  `ondragstart="window.handleCfgDragStart(event)" ` +
-                  `ondragend="window.handleCfgDragEnd(event)" ` +
-                  `onmousedown="window.svgPointerDown(event, ${comp._cfgIdx})" ` +
-                  `onmouseenter="window.svgPointerEnter(event, ${comp._cfgIdx})" ` +
-                  `onmouseleave="window.svgPointerLeave(event, ${comp._cfgIdx})" ` +
-                  `onmouseup="window.svgPointerUp(event, ${comp._cfgIdx})" ` +
-                  `ontouchstart="window.svgTouchStart(event, ${comp._cfgIdx})" ` +
-                  `ontouchend="window.svgTouchEnd(event)">`
+                  // CSP: zero inline on* (script-src bez unsafe-inline je blokuje) —
+                  // dyspozytor data-csp w cspActions.js. Slotow jest 6, wiec para
+                  // dragstart/dragend odpada (martwa: preventDefault w svgPointerDown
+                  // i tak gasi natywny drag; przesuwanie idzie sciezka mousedown→mousemove).
+                  `data-csp="svgPointerDown" data-csp-on="mousedown" data-csp-args="[&quot;$event&quot;,${comp._cfgIdx}]" ` +
+                  `data-csp-2="svgPointerUp" data-csp-2-on="mouseup" data-csp-2-args="[&quot;$event&quot;,${comp._cfgIdx}]" ` +
+                  `data-csp-3="svgPointerEnter" data-csp-3-on="mouseover" data-csp-3-args="[&quot;$event&quot;,${comp._cfgIdx}]" ` +
+                  `data-csp-4="svgPointerLeave" data-csp-4-on="mouseout" data-csp-4-args="[&quot;$event&quot;,${comp._cfgIdx}]" ` +
+                  `data-csp-5="svgTouchStart" data-csp-5-on="touchstart" data-csp-5-args="[&quot;$event&quot;,${comp._cfgIdx}]" ` +
+                  `data-csp-6="svgTouchEnd" data-csp-6-on="touchend" data-csp-6-args="[]">`
                 : '';
         const grpClose = comp._cfgIdx !== undefined ? `</g>` : '';
         // Pierścień kompletu: boczne zakładki od spodu płyty (bez przerwy),

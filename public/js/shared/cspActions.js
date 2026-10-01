@@ -6,7 +6,7 @@
  * Atrybuty:
  *   data-csp="fnName"            — window.fnName(...args)
  *   data-csp-scope="kartotekaUI" — window[kartotekaUI].fnName(...args)
- *   data-csp-on="change|input|keydown|focus|blur|mouseover|mouseout|mousedown|drag*"
+ *   data-csp-on="change|input|keydown|focus|blur|mouseover|mouseout|mousedown|mouseup|drag*|touchstart|touchend"
  *                                — zdarzenie (domyślnie click; focus/blur przez
  *                                  focusin/focusout; mouseover/out emulują
  *                                  enter/leave przez relatedTarget)
@@ -280,12 +280,14 @@
         }
     }
 
-    // data-csp-on: click (domyslnie) | mousedown | change | input | keydown | focus | blur |
-    //               mouseover | mouseout | dragstart | dragover | dragleave | drop | dragend | scroll.
+    // data-csp-on: click (domyslnie) | mousedown | mouseup | change | input | keydown | focus | blur |
+    //               mouseover | mouseout | dragstart | dragover | dragleave | drop | dragend | scroll |
+    //               touchstart | touchend.
     // focus/blur ida przez focusin/focusout (bubluja). keydown filtruje data-csp-key.
     const EVENTS = [
         ['click', 'click'],
         ['mousedown', 'mousedown'],
+        ['mouseup', 'mouseup'],
         ['scroll', 'scroll'],
         ['change', 'change'],
         ['input', 'input'],
@@ -298,7 +300,10 @@
         ['dragover', 'dragover'],
         ['dragleave', 'dragleave'],
         ['drop', 'drop'],
-        ['dragend', 'dragend']
+        ['dragend', 'dragend'],
+        // touchstart musi byc nie-passive, bo svgTouchStart wola preventDefault.
+        ['touchstart', 'touchstart', { passive: false }],
+        ['touchend', 'touchend']
     ];
     function handle(event, domEvent) {
         const el =
@@ -383,7 +388,7 @@
         const fn = target && target[name];
         if (typeof fn === 'function') fn.apply(target, args);
     }
-    for (const [on, domEvent] of EVENTS) {
-        document.addEventListener(domEvent, (event) => handle(event, on));
+    for (const [on, domEvent, opts] of EVENTS) {
+        document.addEventListener(domEvent, (event) => handle(event, on), opts);
     }
 })();
