@@ -6,8 +6,8 @@
  * (fantomowa "1" w Krag H=250, pusta komorka partnera).
  *
  * Sprawdza:
- *  1. Kazdy input liczbowy komponentu ma sygnature oninput zgodna z naglowkiem
- *     w tej samej kolumnie (th[data-col-id]) — wszystkie zakladki DN.
+ *  1. Kazdy input liczbowy komponentu ma sygnature data-csp-args zgodna
+ *     z naglowkiem w tej samej kolumnie (th[data-col-id]) — wszystkie zakladki DN.
  *  2. Scenariusz pary na DN1000: pusta studnia -> "1" w pierscien ->
  *     model plyta+pierscien, komorka plyty "1", Krag H=250 pusty (i odwrotnie).
  *
@@ -144,22 +144,29 @@ function sleep(ms) {
                         detail: `th/td count ${h1ths.length}/${tds.length}`
                     };
                 const bad = [];
+                // CSP-E (9e09b9a): inputy nie maja oninput — sygnatura siedzi
+                // w data-csp="excelOnCompChange" + data-csp-args [wIdx,ct,h,$value,pid].
+                const compArgs = (inp) => {
+                    if (inp.getAttribute('data-csp') !== 'excelOnCompChange') return null;
+                    try {
+                        return JSON.parse(inp.getAttribute('data-csp-args') || 'null');
+                    } catch (_) {
+                        return null;
+                    }
+                };
                 tds.forEach((td, i) => {
                     const inp = td.querySelector('input[type="number"]');
                     if (!inp) return; // sticky/select/auto/readonly — poza zakresem
-                    const oi = inp.getAttribute('oninput') || '';
-                    if (!oi.includes('excelOnCompChange')) return; // rzedne/kat/przejscia — inny handler
-                    const m = oi.match(
-                        /excelOnCompChange\(\d+,'([^']+)',([^,]+),this\.value,('[^']*'|[^,)]+)/
-                    );
-                    if (!m) {
-                        bad.push(`td${i}: unparseable oninput`);
+                    const a = compArgs(inp);
+                    if (!a) return; // rzedne/kat/przejscia — inny handler
+                    const ct = a[1];
+                    const h = String(a[2]);
+                    const pid = a[4] || null;
+                    if (!ct) {
+                        bad.push(`td${i}: unparseable data-csp-args`);
                         return;
                     }
-                    const ct = m[1];
-                    const h = m[2].trim();
-                    const pid = m[3].trim().replace(/^'|'$/g, '');
-                    const expected = pid && pid !== 'null' ? `${ct}_${pid}` : `${ct}_${h}`;
+                    const expected = pid ? `${ct}_${pid}` : `${ct}_${h}`;
                     const thId = h1ths[i].getAttribute('data-col-id') || '';
                     if (thId !== expected) bad.push(`td${i}: th=${thId} vs input=${expected}`);
                 });
@@ -177,16 +184,24 @@ function sleep(ms) {
             if (typeof excelSwitchTab === 'function') excelSwitchTab('1000');
         });
         // przyczyna: DOM — wiersz DN1000 po przełączeniu zakładki.
-        await frame.waitForSelector('#excel-table-container tr[data-widx="0"] input[type="number"]', {
-            timeout: 10000
-        });
+        await frame.waitForSelector(
+            '#excel-table-container tr[data-widx="0"] input[type="number"]',
+            {
+                timeout: 10000
+            }
+        );
 
         const cellVal = (ct) =>
             frame.evaluate((c) => {
                 const r = document.querySelector('#excel-table-container tr[data-widx="0"]');
-                const inp = [...r.querySelectorAll('input[type="number"]')].find((i) =>
-                    (i.getAttribute('oninput') || '').includes(`'${c}'`)
-                );
+                const inp = [...r.querySelectorAll('input[type="number"]')].find((i) => {
+                    if (i.getAttribute('data-csp') !== 'excelOnCompChange') return false;
+                    try {
+                        return JSON.parse(i.getAttribute('data-csp-args') || 'null')[1] === c;
+                    } catch (_) {
+                        return false;
+                    }
+                });
                 return inp ? inp.value : 'NO-INPUT';
             }, ct);
         const cfg = () =>
@@ -196,14 +211,19 @@ function sleep(ms) {
         const typeIn = async (ct) => {
             const h = await frame.evaluateHandle((c) => {
                 const r = document.querySelector('#excel-table-container tr[data-widx="0"]');
-                return [...r.querySelectorAll('input[type="number"]')].find((i) =>
-                    (i.getAttribute('oninput') || '').includes(`'${c}'`)
-                );
+                return [...r.querySelectorAll('input[type="number"]')].find((i) => {
+                    if (i.getAttribute('data-csp') !== 'excelOnCompChange') return false;
+                    try {
+                        return JSON.parse(i.getAttribute('data-csp-args') || 'null')[1] === c;
+                    } catch (_) {
+                        return false;
+                    }
+                });
             }, ct);
             const el = h.asElement();
             if (!el) throw new Error(`no input for ${ct}`);
             await el.fill('1');
-            // przyczyna: DOM/model — handler oninput + konwersja pary relief synchronicznie
+            // przyczyna: DOM/model — dyspozytor data-csp (input) + konwersja pary relief
             // dopisują PZE-/PO- do wells[0].config; czekamy na ten stan zamiast snu.
             await frame
                 .waitForFunction(
@@ -241,9 +261,12 @@ function sleep(ms) {
             _excelRenderTable('1000');
         });
         // przyczyna: DOM — wiersz po re-renderze tabeli (poprzedni selektor wygasa).
-        await frame.waitForSelector('#excel-table-container tr[data-widx="0"] input[type="number"]', {
-            timeout: 10000
-        });
+        await frame.waitForSelector(
+            '#excel-table-container tr[data-widx="0"] input[type="number"]',
+            {
+                timeout: 10000
+            }
+        );
         await typeIn('plyta_zamykajaca');
         config = await cfg();
         const ring = await cellVal('pierscien_odciazajacy');
