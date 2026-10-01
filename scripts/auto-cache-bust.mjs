@@ -46,7 +46,6 @@ const MD_FILES = [
     'docs/RELEASE_PROCESS.md',
     'docs/SECURITY.md',
     'docs/DATABASE.md',
-    'docs/baseline-https.md',
     'docs/instalacja-krok-po-kroku-dla-laika.md',
     'docs/instalacja-przenoszenie-systemu.md'
 ];

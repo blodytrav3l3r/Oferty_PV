@@ -339,8 +339,8 @@ npm run backup:install-cron
 
 Skonsolidowana checklista do wykonania ręcznie po wdrożeniu produkcyjnym przez
 reverse proxy z HTTPS. Szczegóły konfiguracji proxy znajdują się w sekcji 4
-powyżej — poniższa lista jest samowystarczalna dla wykonawcy, a wyniki odhacza
-się również w `docs/baseline-https.md` oraz `docs/plans/archive/https-migration-plan.md`.
+powyżej — poniższa lista jest samowystarczalna dla wykonawcy (odhaczasz
+checkboxy w §7.1–§7.6 poniżej).
 
 ### 7.1 Deploy reverse proxy (HTTPS)
 
@@ -389,13 +389,13 @@ się również w `docs/baseline-https.md` oraz `docs/plans/archive/https-migrati
 
 ### 7.5 Macierz przeglądarek
 
-- [ ] Przetestowano i odhaczono macierz w `docs/baseline-https.md` §4
+- [ ] Przetestowano macierz przeglądarek
       (Chrome, Edge, Firefox, Safari, Brave) — funkcje: logowanie, iframe,
       clipboard, Excel, drukowanie, `window.open`, PDF/DOCX, upload, storage
 
 ### 7.6 Zamknięcie wdrożenia
 
-- [ ] Odhaczono checkboxy w `docs/baseline-https.md` §3 (Testy po migracji) i §4 (Macierz przeglądarek)
+- [ ] Odhaczono checkboxy §7.4 (Testy E2E) i §7.5 (Macierz przeglądarek) powyżej
 - [ ] Odhaczono kryteria manualne w `docs/plans/archive/https-migration-plan.md` §10 (Kryteria zakończenia)
 
 ---
