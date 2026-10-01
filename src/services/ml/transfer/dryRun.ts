@@ -3,6 +3,7 @@ import { inspectArchive } from './archiveGate';
 import { verifyGatedPackage } from './manifest';
 import { checkCompatibility, type CompatReport } from './compatibility';
 import { createDryRun, type DryRunRecord } from './dryRunStore';
+import { parseModelArtifact } from './importModel';
 import { resolveCurrentImportTarget } from './targetResolver';
 import { logAudit } from '../../auditService';
 
@@ -32,30 +33,14 @@ export interface DryRunResult {
     preview: DryRunPreview;
 }
 
-interface ParsedModelShape {
-    features: string[];
-    weights: number[];
-    featureMins: number[];
-    featureMaxs: number[];
-}
-
-function parseModelShape(text: string): ParsedModelShape {
-    let json: unknown;
-    try {
-        json = JSON.parse(text);
-    } catch {
-        throw new TransferError('MODEL_INVALID', 'Artefakt modelu nie jest JSON');
-    }
-    return json as ParsedModelShape;
-}
-
 export async function runDryRun(buffer: Buffer, userId: string): Promise<DryRunResult> {
     const gated = await inspectArchive(buffer);
     const { manifest, files } = verifyGatedPackage(gated);
 
     const modelPath = manifest.artifacts.map((a) => a.path).find((p) => p.startsWith('models/'));
     if (!modelPath) throw new TransferError('MODEL_INVALID', 'Pakiet nie zawiera modelu');
-    const shape = parseModelShape(files.get(modelPath)?.toString('utf8') ?? '');
+    // P1.2+: SSoT walidacji z importModel (pełna struktura + finite, nie ślepy cast).
+    const shape = parseModelArtifact(files.get(modelPath)?.toString('utf8') ?? '');
 
     const target = await resolveCurrentImportTarget();
     const report: CompatReport = checkCompatibility(manifest, shape, target);

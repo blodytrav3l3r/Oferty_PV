@@ -38,7 +38,8 @@ function newTransferId(): string {
     return `trf_${date}_${crypto.randomBytes(3).toString('hex')}`;
 }
 
-function parseModelArtifact(
+/** SSoT walidacji artefaktu modelu (używane przez import i dry-run). */
+export function parseModelArtifact(
     text: string
 ): ModelArtifactShape & { metricsJson: string; bias: number } {
     let json: unknown;
