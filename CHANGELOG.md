@@ -4,6 +4,21 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.36.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.35.1...v1.36.0) (2026-10-01)
+
+### Features
+
+- **security:** licznik 429 per limiter w metrics ([788079b](https://github.com/blodytrav3l3r/Oferty_PV/commit/788079ba988173c07664beb48d52796d70338ac4))
+
+### Bug Fixes
+
+- **ci:** ujednolicenie credential fixture w axe-a11y ([ebad16c](https://github.com/blodytrav3l3r/Oferty_PV/commit/ebad16c5cb326839d89641442c0474c862d3995d))
+- **orders:** domkniecie kontraktu dto studni ([8989969](https://github.com/blodytrav3l3r/Oferty_PV/commit/8989969e5c3251e4aad78924b63ec2c461ff807e))
+- **studnie:** martwe przyciski akcji excela przez literal w args ([20cbeb1](https://github.com/blodytrav3l3r/Oferty_PV/commit/20cbeb1372795111bde65d4cab308fc25d8286c1))
+- **studnie:** naprawa martwych akcji excela przez zle data-csp-args ([1750972](https://github.com/blodytrav3l3r/Oferty_PV/commit/17509720b78a14e176b9d1c1f13f11c9aca798a7))
+- **studnie:** popups, pusty stan przejść i drag w zleceniu ([3d30828](https://github.com/blodytrav3l3r/Oferty_PV/commit/3d308289b3bbbeea751839ee63230e98fbc63cc8))
+- **studnie:** przywrocenie drag i ctrl-klik w podgladzie diagramu ([e501ffb](https://github.com/blodytrav3l3r/Oferty_PV/commit/e501ffbb0027bec7ca73d42ec3ccd384c3594e8f))
+
 ### [1.35.1](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.35.0...v1.35.1) (2026-10-01)
 
 ## [1.35.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.34.0...v1.35.0) (2026-10-01)

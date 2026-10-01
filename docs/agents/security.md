@@ -26,6 +26,7 @@
 
 ## CSP / DOM / storage
 
-- Nie zmieniaj konfiguracji Helmet bez potrzeby (inline handlers celowe).
+- Nie zmieniaj konfiguracji Helmet bez potrzeby. Eventy TYLKO przez dyspozytor `data-csp` (`public/js/shared/cspActions.js`) — zero nowych inline `on*` (błąd #55); eventy `mouseup`/`touchstart`/`touchend` obsługiwane.
+- `data-csp-args` to JSON w atrybucie HTML: cudzysłowy TYLKO jako `&quot;` albo konkatenacja poza stringiem (`"[' + wIdx + ']"`); surowy `"` ucina atrybut → martwy handler (błędy #56, #57). Bramki w `tests/security/cspInventory.test.ts`.
 - DOM z danych użytkownika tylko przez `escapeHtml`; kalkulator przez `safeEval` (przecinek→kropka, błąd #4); `if (element)` przed listenerami (błąd #10).
 - `localStorage` tylko dane nie-wrażliwe, zawsze try/catch + walidacja typu.

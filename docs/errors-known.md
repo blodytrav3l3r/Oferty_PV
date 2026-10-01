@@ -362,3 +362,24 @@
 **Fix** (`wellTransitions.js`, `wellActions.js`, `transitionRenderer.js`, `solverValidation.js`): tor naturalny mousedown→blur→click (handler mousedown usunięty); zapis przy fokusie w polu QE synchroniczny i cichy (`isQeInputFocused` + `runQeSilent`: brak refresha listy/modala, ciężkie rendery odroczone `scheduleQeHeavyRefresh` poza task clicka z koalescencją); kontener zapamiętany na wejściu (`entryContainerId`); guard fokusu ignoruje odłączony node (`isConnected !== false`); `renderWellConfigErrors` pomija refresh modala przy fokusie QE (banner sync na wyjściu z edycji); stempel `qeApplied` usunięty (cicha ścieżka + idempotentny zapis go zastępują); allowlista pól (`QE_FIELD_ALLOWLIST`) + `qeAttrEscape` w selektorze; recheck locków na starcie `applyChanges` (F2); `flushQePendingState()` na wejściu `closeZleceniaModal` (F3). Eksperymentalny tryb `light` w `refreshZleceniaModalIfActive` usunięty (brak callerów, omijał strażnik `__zlRefreshInFlight`).
 **Ograniczenia**: pełny obraz listy (re-sort/filtr po zmianie rzędnej) dopiero przy blur poza pola; banner błędów PZ sync na wyjściu z edycji; tor fokusu zwalidowany wyłącznie na Chromium (cała automatyzacja E2E projektu to `chromium.launch`, `playwright.config.ts` ma jeden projekt) — kolejność `mousedown→blur→focus` w Firefox/Safari niepotwierdzona.
 **Testy**: `przejsciaQuickEditSwitch.test.ts` (14 przypadków: switch, exit-timer 100 ms, pending, kontener z wejścia, flush, odłączony activeElement, F4 old→new, same-cell, F2 lock, F3 lifecycle, F1 allowlista, koalescencja, banner-QE ×2 — każdy failuje na HEAD bez fixa); `tests/playwright/qeQuickEditSwitch.cjs` (1-klik Kąt→Rzędna→blur + killer z wiszącym fetchem 1500 ms, 5/5).
+
+## 55. Martwy diagram studni po CSP-E (inline on* nieprzemigrowane)
+
+**Problem**: `drawAllComponents` (`diagramComponents.js`) generował `<g>` z 8 inline handlerami (`onmousedown`, `onmouseup`, `ondragstart`…). Po przełączeniu enforce na nonce-only (commit `9e09b9a`) przeglądarka blokuje WSZYSTKIE inline `on*` — drag elementów i ctrl+klik usuwanie umarły jednocześnie, bez błędu w konsoli. Bramka `cspInventory` nie łapała: regex `/\son…/` wymaga białego znaku, a handlery stały na początku template-chunka (po backticku).
+**Objaw**: Klik/przeciągnięcie elementu w podglądzie studni bez efektu.
+**Fix**: `<g>` na dyspozytor `data-csp` (6 slotów: mousedown/mouseup/mouseover/mouseout/touchstart/touchend; dragstart/dragend pominięte — martwe, bo `preventDefault` w `svgPointerDown` i tak gasi natywny drag); dyspozytor rozszerzony o `mouseup`/`touchstart`/`touchend` (touchstart nie-passive, bo `svgTouchStart` woła `preventDefault`); guard ctrl/meta przed `preventDefault`.
+**Testy**: regex bramki `[\s\`]on…`(RED na starym kodzie — FAIL, GREEN po fixie);`cspEnforce` 12/12.
+
+## 56. Ucięte data-csp-args z surowym cudzysłowem
+
+**Problem**: `data-csp-3-args="["$el"]"` — surowy `"` w środku zamyka atrybut HTML na `[`; `JSON.parse("[")` pada, a dyspozytor robił cichy `return`. 12+ miejsc: blur Excela (`excelCellBlur` na 7 inputach/selectach → `_excelUserEditing` nigdy nie wracał na `false` → polling/autozapis stawał po pierwszej edycji komórki), Enter-blur (`$dom`) w edycji przejść/rabatach/zleceniach, scroll popupu mismatchów (`_excelMismatchOnScroll`).
+**Objaw**: Akcje bez efektu i bez błędu w konsoli.
+**Fix**: `&quot;` w args; dyspozytor loguje `console.warn` zamiast milczeć; bramka w `cspInventory` na surowy cudzysłów po `[` w `data-csp-args`.
+**Testy**: bramka RED-na-starym/GREEN-na-nowym; excel 30/30 (`excelHelpers`, `excelBrokenConcat`, `excelColumnContextMenu`, `excelArrowNav`, `excelKeyboardGuards`).
+
+## 57. Literal `+ wIdx +` w data-csp-args (martwe przyciski akcji Excela)
+
+**Problem**: Migracja CSP-B2 przepisała `onclick="excelDeleteWell(' + wIdx + ')"` na `data-csp-args="[&quot; + wIdx + &quot;]"` WEWNĄTRZ single-quoted stringa — konkatenacja stała się literalnym tekstem; w DOM ląduje invalid JSON `[" + wIdx + "]` → klik martwy. 7 miejsc: Parametry/Duplikuj/Usuń/Auto-toggle/run-auto (`excelTableBody.js`) + `selectWell` (`wellVirtual.js`). Pułapka drugiego rzędu: naprawa samych encji dałaby args-string `"0"`, a `excelDuplicateWell` robi `wells.splice(wIdx + 1)` i `excelSelectRow(wIdx + 1)` — `"0" + 1 === "01"`; fix od razu przywraca liczbę (`"[' + wIdx + ']"`, jak pre-CSP).
+**Objaw**: Przyciski akcji wiersza Excela bez efektu (Uwagi/`$notesRow` miały poprawną konkatenację i działały).
+**Fix + dowód runtime** (Playwright, headless, 0 JS-errorów): Parametry → popup, Uwagi → `#well-uwagi-modal`, Duplikuj → `wells 1→2` ("(kopia)"), Usuń → confirm → `2→1`; bramka w `cspInventory` na wzorzec `&quot; +`.
+**Testy**: `cspInventory` 14/14, `typecheck:frontend` + ESLint czyste.
