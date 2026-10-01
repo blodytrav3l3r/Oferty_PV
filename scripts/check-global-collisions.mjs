@@ -3,7 +3,9 @@
  * check-global-collisions.mjs — wykrywa globalne nazwy przypisywane w >=2 plikach
  * ładowanych na TEJ SAMEJ stronie (ryzyko nadpisania window.X).
  *
- * Zadanie TASK-048 (docs/REPAIR_PLAN.md). Bezpieczne — raportuje, nie blokuje.
+ * Zadanie TASK-048 (docs/REPAIR_PLAN.md). Gate: FAIL gdy liczba zgłoszeń
+ * przekroczy BASELINE (P1.3 — najpierw stop +1, redukcja osobnymi etapami).
+ * Nadpisanie baseline tylko przez COLLISIONS_BASELINE w env (kryzysowo).
  */
 
 import fs from 'fs';
@@ -83,5 +85,14 @@ for (const page of PAGES) {
 if (total === 0) {
     console.log('[collisions] OK — brak zduplikowanych globalnych na stronach.');
 }
-console.log(`[collisions] zgłoszeń: ${total} (raport informacyjny, nie blokuje).`);
+// P1.3: baseline gate — nowe globale ponad baseline blokują validate.
+const BASELINE = Number(process.env.COLLISIONS_BASELINE || 45);
+console.log(`[collisions] zgłoszeń: ${total} (baseline: ${BASELINE}).`);
+if (total > BASELINE) {
+    console.error(
+        `[collisions] FAIL — ${total} > baseline ${BASELINE}: nowe kolizje globali. ` +
+            'Usuń duplikat albo scalisz w namespace; awaryjnie COLLISIONS_BASELINE=N.'
+    );
+    process.exit(1);
+}
 process.exit(0);
