@@ -7,6 +7,7 @@ import { requireAiMlEnabled } from '../middleware/aiMlGuard';
 import { READ_LIMITER, WRITE_LIMITER, EXPORT_LIMITER } from '../middleware/rateLimiters';
 import { SOKML_LIMITS } from '../services/ml/transfer/transferConstants';
 import { TransferError } from '../services/ml/transfer/transferErrors';
+import { sokmlFilename } from '../services/ml/transfer/transferFilename';
 import { buildExportPreview, buildModelPackage } from '../services/ml/transfer/exportModel';
 import { runDryRun } from '../services/ml/transfer/dryRun';
 import { importPackage } from '../services/ml/transfer/importModel';
@@ -35,13 +36,15 @@ function sendTransferError(res: Response, e: TransferError): void {
     const status =
         e.code === 'MODEL_NOT_FOUND'
             ? 404
-            : e.code === 'UPLOAD_TOO_LARGE' ||
-                e.code === 'ARTIFACT_TOO_LARGE' ||
-                e.code === 'UNPACKED_TOO_LARGE'
-              ? 413
-              : e.code === 'DRY_RUN_PACKAGE_MISMATCH' || e.code === 'MODEL_DUPLICATE'
-                ? 409
-                : 400;
+            : e.code === 'DRY_RUN_USER_MISMATCH'
+              ? 403
+              : e.code === 'UPLOAD_TOO_LARGE' ||
+                  e.code === 'ARTIFACT_TOO_LARGE' ||
+                  e.code === 'UNPACKED_TOO_LARGE'
+                ? 413
+                : e.code === 'DRY_RUN_PACKAGE_MISMATCH' || e.code === 'MODEL_DUPLICATE'
+                  ? 409
+                  : 400;
     res.status(status).json({ error: e.message, code: e.code });
 }
 
@@ -121,9 +124,10 @@ router.post(
                 result: 'MODEL_ONLY'
             });
             res.setHeader('Content-Type', 'application/octet-stream');
+            // P1-S: wersja sanityzowana centralnym helperem (cudzysłów/CRLF/separatory).
             res.setHeader(
                 'Content-Disposition',
-                `attachment; filename="sok-ai-ml-${pkg.manifest.model.version}.sokml"`
+                `attachment; filename="${sokmlFilename(pkg.manifest.model.version)}"`
             );
             res.send(pkg.buffer);
         } catch (e) {

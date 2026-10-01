@@ -110,6 +110,10 @@ export async function importPackage(
     if (!dryRun) {
         throw new TransferError('DRY_RUN_NOT_FOUND', 'Brak ważnego dry-run dla importu');
     }
+    // P1-S: binding dry-run ↔ użytkownik. Cudzy dryRunId nie importuje.
+    if (dryRun.userId !== userId) {
+        throw new TransferError('DRY_RUN_USER_MISMATCH', 'Dry-run należy do innego użytkownika');
+    }
     const gated = await inspectArchive(buffer);
     const { manifest, files } = verifyGatedPackage(gated);
 

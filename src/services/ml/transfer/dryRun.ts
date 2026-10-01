@@ -61,7 +61,13 @@ export async function runDryRun(buffer: Buffer, userId: string): Promise<DryRunR
     const report: CompatReport = checkCompatibility(manifest, shape, target);
     const manifestBytes = files.get('manifest.json');
     if (!manifestBytes) throw new TransferError('MANIFEST_MISSING', 'Brak manifest.json');
-    const record = createDryRun(manifest.packageFingerprint, manifestBytes, manifest, report);
+    const record = createDryRun(
+        manifest.packageFingerprint,
+        manifestBytes,
+        manifest,
+        report,
+        userId
+    );
 
     await logAudit('ai_transfer', record.id, userId, 'TRANSFER_DRY_RUN', {
         packageFingerprint: manifest.packageFingerprint,

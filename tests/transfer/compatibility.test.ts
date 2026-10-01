@@ -172,10 +172,16 @@ describe('dryRunStore', () => {
     it('create → get wiąże fingerprinty; clear czyści', () => {
         clearDryRuns();
         const m = manifest();
-        const rec = createDryRun(m.packageFingerprint, Buffer.from('manifest-bytes'), m, {
-            status: 'compatible',
-            checks: []
-        });
+        const rec = createDryRun(
+            m.packageFingerprint,
+            Buffer.from('manifest-bytes'),
+            m,
+            {
+                status: 'compatible',
+                checks: []
+            },
+            'u1'
+        );
         expect(rec.id.startsWith('dry_')).toBe(true);
         expect(rec.manifestFingerprint).toMatch(/^sha256:[0-9a-f]{64}$/);
         expect(getDryRun(rec.id)?.packageFingerprint).toBe(m.packageFingerprint);

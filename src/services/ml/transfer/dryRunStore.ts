@@ -16,6 +16,8 @@ export interface DryRunRecord {
     manifestFingerprint: string;
     manifest: SokmlManifest;
     report: CompatReport;
+    // P1-S: binding dry-run ↔ użytkownik. Import sprawdza zgodność userId.
+    userId: string;
     createdAt: number;
 }
 
@@ -35,7 +37,8 @@ export function createDryRun(
     packageFingerprint: string,
     manifestBytes: Buffer,
     manifest: SokmlManifest,
-    report: CompatReport
+    report: CompatReport,
+    userId: string
 ): DryRunRecord {
     purgeExpired(Date.now());
     const rec: DryRunRecord = {
@@ -44,6 +47,7 @@ export function createDryRun(
         manifestFingerprint: fingerprintOfManifest(manifestBytes),
         manifest,
         report,
+        userId,
         createdAt: Date.now()
     };
     store.set(rec.id, rec);
