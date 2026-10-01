@@ -497,7 +497,10 @@ async function seedOfferRuryDraft(frame, clientName) {
             if (!ready) {
                 console.log('  ⏭ SKIP T5: brak draftAutosave w studniach');
             } else {
-                const t5 = await sframe.evaluate(() => {
+                // uid ze zweryfikowanego framera RURY (T1): swiezy iframe studni
+                // moze nie zdazyc z auth init (currentUser undefined) — wtedy
+                // buildDraft zwracal null i T5 padal losowo na wolnych runnerach.
+                const t5 = await sframe.evaluate((knownUid) => {
                     try {
                         const DTO = {
                             id: 'w1',
@@ -586,7 +589,8 @@ async function seedOfferRuryDraft(frame, clientName) {
                             if (typeof currentWizardStep !== 'undefined')
                                 payload.wizardStep = currentWizardStep;
                         } catch (_) {}
-                        const uid2 = window.currentUser && window.currentUser.id;
+                        const uid2 =
+                            knownUid || (window.currentUser && window.currentUser.id);
                         const draft = window.draftStore.buildDraft({
                             userId: uid2,
                             kind: 'order_studnie',
@@ -608,7 +612,7 @@ async function seedOfferRuryDraft(frame, clientName) {
                     } catch (e) {
                         return { ok: false, reason: String((e && e.message) || e) };
                     }
-                });
+                }, uid);
                 check('T5 seed order_studnie', !!t5.ok, `reason=${t5.reason}`);
                 if (t5.ok) {
                     check(
