@@ -2148,7 +2148,7 @@ html[data-theme='light'] #btn-auto-select:disabled {
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(var(--black-rgb), 0.8);
+    background: var(--shadow-color);
     z-index: var(--z-overlay);
     display: none;
     align-items: center;
@@ -2227,7 +2227,7 @@ html[data-theme='light'] #btn-auto-select:disabled {
     position: fixed;
     inset: 0;
     z-index: 2000; /* GENERIC_MODAL_BACKDROP */
-    background: rgba(var(--black-rgb), 0.8);
+    background: var(--shadow-color);
     display: none;
     align-items: stretch;
     justify-content: center;

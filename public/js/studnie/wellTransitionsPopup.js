@@ -27,7 +27,7 @@ function openPrzejsciaVisibilityPopup(containerId) {
     overlay.style.cssText =
         'position:fixed; inset:0; z-index:' +
         popupZ +
-        ';background:rgba(var(--black-rgb), 0.8); backdrop-filter:blur(6px); display:flex; align-items:center; justify-content:center; animation:fadeInOverlay 0.2s ease;';
+        ';background:var(--shadow-color); display:flex; align-items:center; justify-content:center; animation:fadeInOverlay 0.2s ease;';
     overlay.onclick = (e) => {
         if (e.target === overlay) closePrzejsciaVisibilityPopup(containerId);
     };

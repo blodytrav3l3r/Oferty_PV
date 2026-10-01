@@ -127,9 +127,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(var(--black-rgb), 0.8);
-    -webkit-backdrop-filter: blur(4px);
-    backdrop-filter: blur(4px);
+    background: var(--shadow-color);
     z-index: 2000; /* GENERIC_MODAL_BACKDROP */
     display: none;
     align-items: center;
@@ -207,7 +205,7 @@
     position: fixed;
     inset: 0;
     z-index: 2000; /* GENERIC_MODAL_BACKDROP */
-    background: rgba(var(--black-rgb), 0.8);
+    background: var(--shadow-color);
     display: none;
     align-items: stretch;
     justify-content: center;
@@ -216,11 +214,6 @@
 
 .zlecenia-overlay.active {
     display: flex;
-}
-
-/* Backdrop w light — przyciemnienie jak excel, nie pełna czerń. */
-html[data-theme='light'] .zlecenia-overlay {
-    background: rgba(var(--slate-950-rgb), 0.45);
 }
 
 .zlecenia-container {

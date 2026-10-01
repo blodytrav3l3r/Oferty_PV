@@ -89,15 +89,17 @@ function renderInlinePrzejsciaApp(containerId) {
     // Jeśli żadne typy nie są widoczne, pokaż stan pusty
     if (types.length === 0) {
         container.innerHTML = `
-            <div style="text-align:center; padding:1.5rem; border:1px dashed rgba(var(--accent-rgb), 0.2); border-radius: var(--radius-sm); background:rgba(var(--slate-950-rgb), 0.3); margin:0.4rem 0;">
-                <div style="font-size: var(--fs-6xl); margin-bottom:0.5rem;"><i data-lucide="ban"></i></div>
+            <div class="empty-state" style="border:1px dashed var(--border); border-radius: var(--radius-sm); background:var(--bg-secondary); margin:0.4rem 0;">
+                <div style="margin-bottom:0.5rem; color:var(--text-muted);"><i data-lucide="eye"></i></div>
                 <div style="font-size: var(--fs-base); font-weight: var(--fw-bold); color:var(--text-primary); margin-bottom:0.3rem;">Wszystkie przejścia są ukryte</div>
                 <div style="font-size: var(--fs-xs); color:var(--text-muted); margin-bottom:0.8rem;">Włącz widoczność wybranych typów przejść, aby móc je dodawać.</div>
-                <button class="btn btn-primary btn-sm" data-action="openPrzejsciaVisibilityPopup" data-container="${containerId || ''}" style="padding:0.35rem 0.8rem; font-size: var(--fs-sm);">
-                    <i data-lucide="eye"></i>️ Pokaż przejścia (${allTypes.length} dostępnych)
+                <button class="btn btn-primary btn-sm" data-action="openPrzejsciaVisibilityPopup" data-container="${containerId || ''}" style="padding:0.35rem 0.8rem; font-size: var(--fs-sm); display:inline-flex; align-items:center; gap:0.4rem;">
+                    <i data-lucide="eye" style="width:16px; height:16px; flex-shrink:0;"></i> Pokaż przejścia (${allTypes.length} dostępnych)
                 </button>
             </div>
         `;
+        if (window.lucide && window.lucide.createIcons)
+            window.lucide.createIcons({ root: container });
         return;
     }
 

@@ -306,7 +306,7 @@
     --excel-row-odd: #111827;
     --excel-row-active: rgba(var(--blue-rgb), 0.18);
     --excel-tint-base: var(--slate-950);
-    --excel-backdrop: rgba(var(--black-rgb), 0.8);
+    --excel-backdrop: var(--shadow-color);
     --excel-shadow: 0 20px 60px rgba(var(--black-rgb), 0.8);
 
     /* Diagram studni (SVG) — wartości dla ciemnego motywu, nadpisane w [data-theme='light'] */
@@ -2576,7 +2576,7 @@ html[data-theme='light'] {
     --excel-row-odd: #ffffff;
     --excel-row-active: rgba(var(--blue-rgb), 0.24);
     --excel-tint-base: #ffffff;
-    --excel-backdrop: rgba(15, 23, 42, 0.45);
+    --excel-backdrop: var(--shadow-color);
     --excel-shadow: 0 8px 32px rgba(15, 23, 42, 0.16);
     --excel-row-height: 32px;
 }

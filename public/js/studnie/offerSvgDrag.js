@@ -15,7 +15,10 @@ window.svgPointerDown = function (ev, idx) {
     const well = getCurrentWell();
     if (!well) return;
 
-    if (typeof isWellLocked === 'function' && isWellLocked()) {
+    const zlReorder =
+        typeof canReorderInZleceniaModal === 'function' && canReorderInZleceniaModal(well);
+
+    if (!zlReorder && typeof isWellLocked === 'function' && isWellLocked()) {
         if (typeof showToast === 'function') {
             const well = getCurrentWell();
             const hasAcceptedPO =
@@ -31,7 +34,7 @@ window.svgPointerDown = function (ev, idx) {
 
     // Jeśli modal Zlecenia jest otwarty, zaznacz element zamiast przeciągania
     const zlModal = document.getElementById('zlecenia-modal');
-    if (zlModal && zlModal.classList.contains('active')) {
+    if (zlModal && zlModal.classList.contains('active') && !zlReorder) {
         const targetIdx = zleceniaElementsList.findIndex(
             (el) => el.wellIndex === currentWellIndex && el.elementIndex === idx
         );
@@ -39,6 +42,16 @@ window.svgPointerDown = function (ev, idx) {
             selectZleceniaElement(targetIdx);
         }
         return;
+    }
+
+    // W modalu zleceń (bez zaakceptowanego PZ) klik też wybiera element do formularza…
+    if (zlReorder) {
+        const targetIdx = zleceniaElementsList.findIndex(
+            (el) => el.wellIndex === currentWellIndex && el.elementIndex === idx
+        );
+        if (targetIdx >= 0) {
+            selectZleceniaElement(targetIdx);
+        }
     }
 
     startWellDragListeners();
@@ -79,7 +92,9 @@ window.svgTouchStart = function (ev, idx) {
     ev.preventDefault();
     const well = getCurrentWell();
     if (!well) return;
-    if (typeof isWellLocked === 'function' && isWellLocked()) {
+    const zlReorder =
+        typeof canReorderInZleceniaModal === 'function' && canReorderInZleceniaModal(well);
+    if (!zlReorder && typeof isWellLocked === 'function' && isWellLocked()) {
         if (typeof showToast === 'function') {
             const hasAcceptedPO = (
                 typeof productionOrders !== 'undefined' && productionOrders ? productionOrders : []
@@ -87,6 +102,14 @@ window.svgTouchStart = function (ev, idx) {
             showToast(hasAcceptedPO ? WELL_LOCKED_MSG : OFFER_LOCKED_MSG, 'error');
         }
         return;
+    }
+    if (zlReorder) {
+        const targetIdx = zleceniaElementsList.findIndex(
+            (el) => el.wellIndex === currentWellIndex && el.elementIndex === idx
+        );
+        if (targetIdx >= 0) {
+            selectZleceniaElement(targetIdx);
+        }
     }
     startWellDragListeners();
     window.svgDragStartIndex = idx;
@@ -178,6 +201,17 @@ const _wellDragHandlers = {
                 renderWellConfig();
                 renderWellDiagram();
                 updateSummary();
+            }
+
+            // W modalu zleceń kolejność configu to też kolejność elementów —
+            // przebuduj listę (świeże elementIndex) z zachowaniem zaznaczenia po _elemId.
+            if (
+                typeof canReorderInZleceniaModal === 'function' &&
+                well &&
+                canReorderInZleceniaModal(well) &&
+                typeof window.refreshZleceniaModalIfActive === 'function'
+            ) {
+                window.refreshZleceniaModalIfActive();
             }
 
             if (trash) {

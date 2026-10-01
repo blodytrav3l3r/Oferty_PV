@@ -1,6 +1,56 @@
 // @ts-check
 /* ===== ZLECENIA PRODUKCYJNE — MODAL + ZAPIS ===== */
 
+/**
+ * Czy modal Zlecenia Produkcyjne jest otwarty. Edycja konfiguracji studni
+ * (przeciąganie w podglądzie, strzałki/kafelki) jest dozwolona wewnątrz
+ * modala dla studni bez zaakceptowanego PZ — locki oferty/zamówienia
+ * chronią widok kalkulatora, nie edytor produkcyjny.
+ */
+function isZleceniaModalActive() {
+    try {
+        if (typeof document === 'undefined') return false;
+        const modal = document.getElementById('zlecenia-modal');
+        return !!(modal && modal.classList.contains('active'));
+    } catch (_e) {
+        return false;
+    }
+}
+
+/** Czy studnia ma zaakceptowane zlecenie produkcyjne (twardy freeze — także w modalu). */
+function hasAcceptedProductionOrderFor(well) {
+    try {
+        if (!well) return false;
+        const list =
+            typeof productionOrders !== 'undefined' && productionOrders ? productionOrders : [];
+        return (
+            Array.isArray(list) &&
+            list.some((po) => po && po.wellId === well.id && po.status === 'accepted')
+        );
+    } catch (_e) {
+        return false;
+    }
+}
+
+/**
+ * Czy konfigurację studni wolno przestawiać w aktywnym modalu zleceń.
+ * Zaakceptowane PZ = zamrożone; reszta edytowalna (modal pracuje na żywych
+ * wells ze snapshotem/restore przy zamknięciu).
+ */
+function canReorderInZleceniaModal(well) {
+    try {
+        if (typeof isZleceniaModalActive !== 'function' || !isZleceniaModalActive()) return false;
+        if (
+            typeof hasAcceptedProductionOrderFor === 'function' &&
+            hasAcceptedProductionOrderFor(well)
+        )
+            return false;
+        return true;
+    } catch (_e) {
+        return false;
+    }
+}
+
 function openZleceniaProdukcyjne(targetWellId = null, targetElementIndex = null) {
     logger.info('orderManager', '[openZleceniaProdukcyjne] Initializing modal...', {
         targetWellId,
@@ -322,3 +372,6 @@ async function _saveProductionOrderInner() {
 window.openZleceniaProdukcyjne = openZleceniaProdukcyjne;
 window.closeZleceniaModal = closeZleceniaModal;
 window.saveProductionOrder = saveProductionOrder;
+window.isZleceniaModalActive = isZleceniaModalActive;
+window.hasAcceptedProductionOrderFor = hasAcceptedProductionOrderFor;
+window.canReorderInZleceniaModal = canReorderInZleceniaModal;

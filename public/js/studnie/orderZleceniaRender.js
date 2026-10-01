@@ -250,7 +250,12 @@ function renderZleceniaWellConfig() {
                 : studnieProducts.find((pr) => pr.id === item.productId);
         if (!p) return;
         const badge = typeBadge[p.componentType] || { bg: 'var(--slate-700)', label: '?' };
-        const isLocked = isWellLocked();
+        // W modalu (bez zaakceptowanego PZ) konfiguracja jest edytowalna —
+        // locki chronią widok kalkulatora, nie edytor produkcyjny.
+        const zlReorder =
+            typeof canReorderInZleceniaModal === 'function' &&
+            canReorderInZleceniaModal(getCurrentWell());
+        const isLocked = !zlReorder && isWellLocked();
 
         const isCurrentlyEdited =
             zleceniaSelectedIdx !== -1 &&

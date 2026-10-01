@@ -21,7 +21,7 @@
 .upm-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(var(--black-rgb), 0.8);
+    background: var(--shadow-color);
     display: flex;
     justify-content: center;
     align-items: center;

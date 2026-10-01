@@ -4,15 +4,17 @@
 function moveWellComponent(index, direction) {
     const well = getCurrentWell();
     if (!well) return;
-    if (isOfferLocked()) {
+    const zlReorder =
+        typeof canReorderInZleceniaModal === 'function' && canReorderInZleceniaModal(well);
+    if (!zlReorder && isOfferLocked()) {
         showToast(OFFER_LOCKED_MSG, 'error');
         return;
     }
-    if (isWellLocked()) {
+    if (!zlReorder && isWellLocked()) {
         showToast(WELL_LOCKED_MSG, 'error');
         return;
     }
-    if (window.pzGuard && window.pzGuard.hasPzForWell(well.id)) {
+    if (!zlReorder && window.pzGuard && window.pzGuard.hasPzForWell(well.id)) {
         showToast(
             '<i data-lucide="x-circle"></i> Nie można przesuwać elementów studni — ma przypisane zlecenia produkcyjne. Usuń najpierw zlecenia w zakładce „Zlecenia produkcyjne”.',
             'error'
@@ -36,6 +38,10 @@ function moveWellComponent(index, direction) {
     renderWellDiagram();
     updateSummary();
     updateHeightIndicator();
+    // W modalu zleceń przebuduj listę elementów (świeże elementIndex), wybór po _elemId.
+    if (zlReorder && typeof window.refreshZleceniaModalIfActive === 'function') {
+        window.refreshZleceniaModalIfActive();
+    }
 }
 // Alias dla modalu Zlecenia Produkcyjne (data-zl-idx) — ta sama logika, odświeża też listę zleceń
 window.moveZleceniaComponent = moveWellComponent;
@@ -44,7 +50,9 @@ let draggedCfgIndex = null;
 
 window.handleCfgDragStart = function (e) {
     const well = getCurrentWell();
-    if (well && window.pzGuard && window.pzGuard.hasPzForWell(well.id)) {
+    const zlReorder =
+        well && typeof canReorderInZleceniaModal === 'function' && canReorderInZleceniaModal(well);
+    if (!zlReorder && well && window.pzGuard && window.pzGuard.hasPzForWell(well.id)) {
         showToast(
             '<i data-lucide="x-circle"></i> Nie można przesuwać elementów studni — ma przypisane zlecenia produkcyjne. Usuń najpierw zlecenia w zakładce „Zlecenia produkcyjne”.',
             'error'
@@ -68,7 +76,7 @@ window.handleCfgDragOver = function (e) {
     if (draggedCfgIndex === null && !window.currentDraggedPlaceholderId) return;
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
-    const tile = e.target.closest('.config-tile');
+    const tile = e.target.closest('.config-tile, .zl-config-tile');
 
     if (draggedCfgIndex !== null) {
         if (tile) {
@@ -122,23 +130,27 @@ window.handleCfgDragOver = function (e) {
 window.handleCfgDrop = function (e) {
     e.preventDefault();
     e.stopPropagation();
-    if (isOfferLocked()) {
+    const curWell = getCurrentWell();
+    const zlReorder =
+        curWell &&
+        typeof canReorderInZleceniaModal === 'function' &&
+        canReorderInZleceniaModal(curWell);
+    if (!zlReorder && isOfferLocked()) {
         showToast(OFFER_LOCKED_MSG, 'error');
         return;
     }
-    if (isWellLocked()) {
+    if (!zlReorder && isWellLocked()) {
         showToast(WELL_LOCKED_MSG, 'error');
         return;
     }
-    const curWell = getCurrentWell();
-    if (curWell && window.pzGuard && window.pzGuard.hasPzForWell(curWell.id)) {
+    if (!zlReorder && curWell && window.pzGuard && window.pzGuard.hasPzForWell(curWell.id)) {
         showToast(
             '<i data-lucide="x-circle"></i> Nie można przesuwać elementów studni — ma przypisane zlecenia produkcyjne. Usuń najpierw zlecenia w zakładce „Zlecenia produkcyjne”.',
             'error'
         );
         return;
     }
-    const tile = e.target.closest('.config-tile');
+    const tile = e.target.closest('.config-tile, .zl-config-tile');
 
     if (tile) {
         const well = getCurrentWell();
@@ -157,6 +169,9 @@ window.handleCfgDrop = function (e) {
             renderWellDiagram();
             updateSummary();
             updateHeightIndicator();
+            if (zlReorder && typeof window.refreshZleceniaModalIfActive === 'function') {
+                window.refreshZleceniaModalIfActive();
+            }
         } else if (well && window.currentDraggedPlaceholderId) {
             try {
                 enforceSingularTopClosures(well, window.currentDraggedPlaceholderId);
@@ -233,6 +248,15 @@ window.handleCfgDragEnd = function (e) {
             renderWellDiagram();
             updateHeightIndicator();
         });
+        // Live-reorder w dragover mógł przestawić config bez dropa —
+        // w modalu zawsze odśwież listę (wybór po _elemId).
+        if (
+            typeof canReorderInZleceniaModal === 'function' &&
+            canReorderInZleceniaModal(well) &&
+            typeof window.refreshZleceniaModalIfActive === 'function'
+        ) {
+            window.refreshZleceniaModalIfActive();
+        }
     }
 };
 
