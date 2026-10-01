@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * CSP-B2/B3: delegowane handlery zamiast inline on* w HTML/partialach/szablonach JS.
  * Partiale ladują się przez innerHTML (partialLoader) — bezpośrednie bindowanie
@@ -275,7 +276,7 @@
                 }
             }
             if (updateFn && typeof window[updateFn] === 'function') {
-                window[updateFn](prefix, el.value);
+                /** @type {any} */ (window[updateFn])(prefix, el.value);
             }
         }
     }
@@ -284,6 +285,7 @@
     //               mouseover | mouseout | dragstart | dragover | dragleave | drop | dragend | scroll |
     //               touchstart | touchend.
     // focus/blur ida przez focusin/focusout (bubluja). keydown filtruje data-csp-key.
+    /** @type {Array<[string, string, any?]>} */
     const EVENTS = [
         ['click', 'click'],
         ['mousedown', 'mousedown'],
@@ -390,6 +392,7 @@
         const scope = el.getAttribute(scopeSrc);
         const w = window;
         const target = !scope ? w : scope === 'parent' ? w.parent : w[scope];
+        /** @type {any} */
         const fn = target && target[name];
         if (typeof fn === 'function') fn.apply(target, args);
     }
