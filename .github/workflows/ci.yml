@@ -460,6 +460,8 @@ jobs:
         runs-on: ubuntu-latest
         needs: test
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+            DATABASE_URL: 'file:./test-ci.sqlite?connection_limit=1&busy_timeout=30000'
         steps:
             - uses: actions/checkout@v7
 
@@ -474,6 +476,15 @@ jobs:
 
             - name: Sprawdź spójność wersji
               run: npm run version:check
+
+            - name: Generate Prisma client
+              run: npx prisma generate
+
+            - name: Seed testowej bazy (cenniki do prices:verify)
+              run: npx prisma db push --skip-generate && npx ts-node prisma/seed.ts
+
+            - name: Spójność cenników LIVE = Default = plik
+              run: npm run prices:verify
 
     drift-check:
         name: DB schema sanity (blokuje)
