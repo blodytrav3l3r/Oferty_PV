@@ -2,6 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import {
     observeStudnieOrderDto,
+    studnieOrderItemSchema,
     ORDER_WELL_DTO_FIELDS,
     ORDER_CONFIG_ITEM_DTO_FIELDS,
     ORDER_PRZEJSCIE_DTO_FIELDS
@@ -32,8 +33,10 @@ function feList(varName: string): string[] {
     return [...m[1].matchAll(/'([^']+)'/g)].map((x) => x[1]);
 }
 
-/** Delta FE→BE znana w dniu symulacji (do decyzji LEGACY przy flipie). */
-const KNOWN_DELTA = ['frozenPrecoSuma', 'redukcjaZakonczenieByDn', 'stycznaDn'];
+/** Delta FE→BE: pusta od domknięcia kontraktu (3 klucze LEGACY dodane).
+ * Każdy NOWY klucz spoza tej listy wywala test → wymusza decyzję
+ * KEEP / STRIP / STRICT / LEGACY zanim flip stanie się bezpieczny. */
+const KNOWN_DELTA: string[] = [];
 
 function fullFeWell(): Record<string, unknown> {
     const well: Record<string, unknown> = {};
@@ -88,22 +91,25 @@ describe('orderDtoStrictSim — symulacja flipa do .strict()', () => {
         );
     });
 
-    test('KNOWN_ANOMALY: type w kontrakcie, a flagowane jako leak', () => {
+    test('type w kontrakcie i NIE flagowane jako leak (anomalia naprawiona)', () => {
         const obs = observeStudnieOrderDto({
             wells: [{ id: 'w1', type: 'standard', config: [], przejscia: [] }]
         });
-        // Kontrakt zna 'type' (ORDER_WELL_DTO_FIELDS) — a denylist też.
+        // Kontrakt zna 'type', denylist już nie — czysta studnia bez alarmów.
         expect(ORDER_WELL_DTO_FIELDS).toContain('type');
         expect(obs.unknownKeysTotal).toBe(0);
-        // Stan obecny do rozstrzygnięcia przed flipem (nie FIX w tym teście).
-        expect(obs.runtimeLeaked).toContain('type');
+        expect(obs.runtimeLeaked).not.toContain('type');
     });
 
-    test('werdykt symulacji: flip NIE jest dziś bezpieczny', () => {
+    test('werdykt symulacji: poziom studni gotowy, top-level NIE (rest→blob)', () => {
         const obs = observeStudnieOrderDto({ wells: [fullFeWell()] });
-        const strictWouldRejectLegal =
-            obs.unknownWellKeys.length > 0 || obs.runtimeLeaked.includes('type');
-        // Gdy to padnie (false), kontrakt dogoniony — wolno projektować flip.
-        expect(strictWouldRejectLegal).toBe(true);
+        // Poziom studni/config/przejść: zero unknown — strict-safe.
+        expect(obs.unknownKeysTotal).toBe(0);
+        expect(obs.runtimeLeaked).toEqual([]);
+        // ALE: route robi `...rest → blob` (studnieOrders.crud.ts:201-206),
+        // więc top-level MUSI zostać passthrough do inwentaryzacji kluczy
+        // (offerId, updatedAt, serverVersion, ...). Ślepy strict na
+        // studnieOrderItemSchema dziś odrzuciłby legalny ruch.
+        expect(studnieOrderItemSchema.safeParse({ id: 'o1', offerId: 'x' }).success).toBe(true);
     });
 });

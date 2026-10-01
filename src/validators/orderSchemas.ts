@@ -104,11 +104,13 @@ export const ORDER_WELL_DTO_FIELDS = [
     'psiaBuda',
     'stycznaNadbudowa1200',
     'stycznaVariant',
+    'stycznaDn',
     'zakonczenie',
     'zakonczenieByDn',
     'redukcjaDN1000',
     'redukcjaMinH',
     'redukcjaZakonczenie',
+    'redukcjaZakonczenieByDn',
     'redukcjaTargetDN',
     'redukcjaKinety',
     'uszczelka',
@@ -139,6 +141,7 @@ export const ORDER_WELL_DTO_FIELDS = [
     'agresjaMrozowa',
     'precoFullHeight',
     'frozenTransportCost',
+    'frozenPrecoSuma',
     'pehdDiscount',
     'autoSelect',
     'autoLocked',
@@ -147,7 +150,9 @@ export const ORDER_WELL_DTO_FIELDS = [
     'przejscia'
 ] as const;
 
-/** Klucze runtime/cache, które DTO ma odcinać (oczekiwane jako nieobecne). */
+/** Klucze runtime/cache, które DTO ma odcinać (oczekiwane jako nieobecne).
+ * 'type' celowo NIE na liście: to pole kontraktowe (ORDER_WELL_DTO_FIELDS),
+ * emitowane przez FE — flagowanie go jako leak dawało fałszywe alarmy. */
 export const ORDER_WELL_RUNTIME_FIELDS = [
     '_lastAutoConfig',
     '_lastAutoTelemetryId',
@@ -158,7 +163,6 @@ export const ORDER_WELL_RUNTIME_FIELDS = [
     'configErrors',
     'configStatus',
     'wellHeight',
-    'type',
     'warehouse'
 ] as const;
 
