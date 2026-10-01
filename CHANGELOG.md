@@ -4,6 +4,35 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.35.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.34.0...v1.35.0) (2026-10-01)
+
+### Features
+
+- **api:** p7 extended - dataset full, knowledge, telemetry w .sokml ([e1b45b6](https://github.com/blodytrav3l3r/Oferty_PV/commit/e1b45b60d25f7b675a5670104803cef114a5250b))
+- **api:** p7 transfer center ai/ml - eksport/import .sokml ([4235f36](https://github.com/blodytrav3l3r/Oferty_PV/commit/4235f364b13aade4bbf72c75c12ae0110112cd87))
+- **ui:** dymki title z opisami sekcji operacje ([9b61051](https://github.com/blodytrav3l3r/Oferty_PV/commit/9b61051c39eee27c10bb166d89e1561f05d01e14))
+- **ui:** p7 transfer center - zakladka transferu w dashboardzie ai ([9b6647c](https://github.com/blodytrav3l3r/Oferty_PV/commit/9b6647c62cf9654a662ebe273726d7be9c6b21bb))
+
+### Bug Fixes
+
+- **api:** flagi fail-closed 503 przy bledzie db ([5d38f5a](https://github.com/blodytrav3l3r/Oferty_PV/commit/5d38f5aeea740d20948342ae3ae5534c51dc4e4f))
+- **api:** hardening transferu po audycie zewnetrznym ([f0b0dfe](https://github.com/blodytrav3l3r/Oferty_PV/commit/f0b0dfe3d9f6b12eae9d9d93d8befc3245716730))
+- **api:** invalid body exportu to invalid body ([974c786](https://github.com/blodytrav3l3r/Oferty_PV/commit/974c786bcf748165fae1e0bdf7193c38a75f0d10))
+- **api:** invalidacja searchcache po zmianie shares ([9684a26](https://github.com/blodytrav3l3r/Oferty_PV/commit/9684a2671a33c2fe502ad3ecc8414b36f3c3cc8d))
+- **api:** reward batch loguje blad itemu ([6095f80](https://github.com/blodytrav3l3r/Oferty_PV/commit/6095f807503681b671cf0406c7b9b2473c5be9ac))
+- **prisma:** binding dry-run do usera i nazwa pliku ([d5ee9da](https://github.com/blodytrav3l3r/Oferty_PV/commit/d5ee9daf95fd873c2a93bae8a6940d1343e96167))
+- **prisma:** wspolny resolver targetu dry-run i import ([6f589df](https://github.com/blodytrav3l3r/Oferty_PV/commit/6f589dfd2fc8ec5e1a86b0f2fe0cce3e043f9673))
+- **studnie:** przerwa miedzy podgladem a kafelkami ceny i kosza ([34aa925](https://github.com/blodytrav3l3r/Oferty_PV/commit/34aa925604d462600e6687afebab0f7c5ea2d654))
+- **test:** testmatch backend bez frontend i git-safety ([0915fe5](https://github.com/blodytrav3l3r/Oferty_PV/commit/0915fe5d6367175d198ead7920b011ec93e52460))
+- **ui:** error state historii i modeli transferu ([183edec](https://github.com/blodytrav3l3r/Oferty_PV/commit/183edecf715ba46fc196124e0dec22ba6b21c9b8))
+- **ui:** naprawa przyciskow oferta i cennik w gornej nawigacji ([b8115de](https://github.com/blodytrav3l3r/Oferty_PV/commit/b8115de792b9193d654510a80e9a062da5ab4aa4))
+- **ui:** odswiezanie operacji po rozwiazaniu sesji ([48e9c6f](https://github.com/blodytrav3l3r/Oferty_PV/commit/48e9c6fb6b54b5cacd0cc1fb668dcf77662342fe))
+- **ui:** osobne karty roc-auc i baseline ([59d4097](https://github.com/blodytrav3l3r/Oferty_PV/commit/59d409743a1f4b2b9d244b144bbb4dbe97a3cd0d))
+- **ui:** polski komentarz sekcji css centrum transferu ([59ee487](https://github.com/blodytrav3l3r/Oferty_PV/commit/59ee4870856a3fa9f276225bdfb39cd413879c55))
+- **ui:** sonda csp enforce z ml-status zamiast version ([adc99bb](https://github.com/blodytrav3l3r/Oferty_PV/commit/adc99bbe788a9e94443e5aa5020770554bfba6df))
+- **ui:** tri-state kill-switch async gate transfer dashboard ([2eb8a0f](https://github.com/blodytrav3l3r/Oferty_PV/commit/2eb8a0fcc99089dab70663ee00f308a1170ddb0f))
+- **ui:** ujednolicenie wygladu kart operacji i transfer center ([962ac05](https://github.com/blodytrav3l3r/Oferty_PV/commit/962ac0580a37e47b650ae8dfcd74f15997f6c98e))
+
 ## [1.34.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.33.0...v1.34.0) (2026-09-30)
 
 ### Features
