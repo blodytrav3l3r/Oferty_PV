@@ -1,9 +1,12 @@
 import { Request, Response } from 'express';
+import { recordRateLimited } from '../utils/metrics';
 
 interface RateLimiterOpts {
     windowMs?: number;
     maxHits?: number;
     message?: string;
+    /** Nazwa do metryk /metrics (P2.2). Bez nazwy liczone jako 'default'. */
+    name?: string;
     /**
      * E4b: własny klucz bucketa. Domyślnie IP. Dla logowania: IP + login,
      * bo user ID nie istnieje przed uwierzytelnieniem.
@@ -24,6 +27,7 @@ export function createRateLimiter({
     windowMs = 15 * 60 * 1000,
     maxHits = 15,
     message = 'Zbyt wiele prób. Spróbuj ponownie później.',
+    name = 'default',
     keyGenerator
 }: RateLimiterOpts = {}): (req: Request, res: Response, next: () => void) => void {
     const hits = new Map<string, HitRecord>();
@@ -61,6 +65,7 @@ export function createRateLimiter({
         if (record.count > maxHits) {
             const retryAfterSec = Math.ceil((record.resetAt - now) / 1000);
             res.setHeader('Retry-After', retryAfterSec);
+            recordRateLimited(name);
             res.status(429).json({ error: message, retryAfter: retryAfterSec });
             return;
         }

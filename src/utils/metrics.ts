@@ -25,6 +25,8 @@ let dbMsTotal = 0;
 let busyCount = 0;
 // P0.4: licznik utraconych zapisów audytu (audit failure != business failure).
 let auditFailures = 0;
+// P2.2: odrzucenia rate-limitera per nazwa (observability brute-force).
+const rateLimitedByName = new Map<string, number>();
 let loopLagMs = 0;
 let loopLagMax = 0;
 let samplerStarted = false;
@@ -105,6 +107,11 @@ export function recordAuditFailure(): void {
     auditFailures++;
 }
 
+/** Wołane z rateLimiter przy odpowiedzi 429 (nazwa limitera lub 'default'). */
+export function recordRateLimited(name: string): void {
+    rateLimitedByName.set(name, (rateLimitedByName.get(name) ?? 0) + 1);
+}
+
 export interface StorageSnapshot {
     dbBytes: number | null;
     walBytes: number | null;
@@ -119,6 +126,7 @@ export interface MetricsSnapshot {
     loopLagMaxMs: number;
     db: { queries: number; msTotal: number; avgMs: number; busy: number };
     audit: { failures: number };
+    ratelimit: { rejected: number; byName: Record<string, number> };
     storage: StorageSnapshot;
     endpoints: Record<
         string,
@@ -151,6 +159,10 @@ export function getMetricsSnapshot(pdf: Record<string, unknown> = {}): MetricsSn
             busy: busyCount
         },
         audit: { failures: auditFailures },
+        ratelimit: {
+            rejected: [...rateLimitedByName.values()].reduce((a, b) => a + b, 0),
+            byName: Object.fromEntries(rateLimitedByName)
+        },
         storage: getStorageSnapshot(),
         endpoints: eps,
         pdf
@@ -256,6 +268,7 @@ export function resetMetrics(): void {
     dbMsTotal = 0;
     busyCount = 0;
     auditFailures = 0;
+    rateLimitedByName.clear();
     loopLagMs = 0;
     loopLagMax = 0;
 }

@@ -1,10 +1,11 @@
 import express from 'express';
 import request from 'supertest';
 import { createRateLimiter } from '../../src/middleware/rateLimiter';
+import { getMetricsSnapshot, resetMetrics } from '../../src/utils/metrics';
 
-function buildApp(maxHits: number) {
+function buildApp(maxHits: number, name?: string) {
     const app = express();
-    app.post('/write', createRateLimiter({ windowMs: 60000, maxHits }), (_req, res) =>
+    app.post('/write', createRateLimiter({ windowMs: 60000, maxHits, name }), (_req, res) =>
         res.status(200).json({ ok: true })
     );
     return app;
@@ -33,5 +34,16 @@ describe('P0.6 rate-limit matrix', () => {
         expect((await request(a).post('/write')).status).toBe(200);
         expect((await request(a).post('/write')).status).toBe(429);
         expect((await request(b).post('/write')).status).toBe(200);
+    });
+
+    it('P2.2: odrzucenie 429 liczone w /metrics per nazwa', async () => {
+        resetMetrics();
+        const app = buildApp(1, 'p22-probe');
+        expect((await request(app).post('/write')).status).toBe(200);
+        expect((await request(app).post('/write')).status).toBe(429);
+        expect((await request(app).post('/write')).status).toBe(429);
+        const snap = getMetricsSnapshot();
+        expect(snap.ratelimit.rejected).toBe(2);
+        expect(snap.ratelimit.byName['p22-probe']).toBe(2);
     });
 });

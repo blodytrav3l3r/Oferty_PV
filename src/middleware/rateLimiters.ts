@@ -19,7 +19,8 @@ const DEFAULT_MSG = 'Zbyt wiele operacji. Odczekaj minutę.';
 export const WRITE_LIMITER = createRateLimiter({
     windowMs: 60 * 1000,
     maxHits: 60,
-    message: DEFAULT_MSG
+    message: DEFAULT_MSG,
+    name: 'write'
 });
 
 /**
@@ -30,7 +31,8 @@ export const WRITE_LIMITER = createRateLimiter({
 export const TELEMETRY_WRITE_LIMITER = createRateLimiter({
     windowMs: 60 * 1000,
     maxHits: 1200,
-    message: 'Zbyt wiele zdarzeń telemetrycznych. Odczekaj chwilę.'
+    message: 'Zbyt wiele zdarzeń telemetrycznych. Odczekaj chwilę.',
+    name: 'telemetry_write'
 });
 
 /**
@@ -40,25 +42,29 @@ export const TELEMETRY_WRITE_LIMITER = createRateLimiter({
 export const READ_LIMITER = createRateLimiter({
     windowMs: 60 * 1000,
     maxHits: 600,
-    message: 'Zbyt wiele odczytów. Odczekaj chwilę.'
+    message: 'Zbyt wiele odczytów. Odczekaj chwilę.',
+    name: 'read'
 });
 
 export const PRICELIST_WRITE_LIMITER = createRateLimiter({
     windowMs: 60 * 1000,
     maxHits: 30,
-    message: 'Zbyt wiele operacji na cennikach. Odczekaj minutę.'
+    message: 'Zbyt wiele operacji na cennikach. Odczekaj minutę.',
+    name: 'pricelist_write'
 });
 
 export const EXPORT_LIMITER = createRateLimiter({
     windowMs: 60 * 1000,
     maxHits: 20,
-    message: 'Zbyt wiele eksportów. Odczekaj minutę.'
+    message: 'Zbyt wiele eksportów. Odczekaj minutę.',
+    name: 'export'
 });
 
 export const LOGIN_LIMITER = createRateLimiter({
     windowMs: 60 * 1000,
     maxHits: 10,
     message: 'Zbyt wiele prób logowania. Odczekaj minutę.',
+    name: 'login',
     // E4b: bucket per IP + znormalizowany login (user ID nieznane przed auth).
     // Brak/malformed loginu → sam IP, żeby nie tworzyć bucketa na śmieć.
     keyGenerator: (req: any) => {
@@ -77,17 +83,20 @@ export const LOGIN_LIMITER = createRateLimiter({
 export const CHANGE_PASSWORD_LIMITER = createRateLimiter({
     windowMs: 15 * 60 * 1000,
     maxHits: 5,
-    message: 'Zbyt wiele prób zmiany hasła. Odczekaj 15 minut.'
+    message: 'Zbyt wiele prób zmiany hasła. Odczekaj 15 minut.',
+    name: 'change_password'
 });
 
 export const ADMIN_USERS_LIMITER = createRateLimiter({
     windowMs: 60 * 1000,
     maxHits: 30,
-    message: 'Zbyt wiele operacji na użytkownikach. Odczekaj minutę.'
+    message: 'Zbyt wiele operacji na użytkownikach. Odczekaj minutę.',
+    name: 'admin_users'
 });
 
 export const PRECO_PRICING_LIMITER = createRateLimiter({
     windowMs: 60 * 1000,
     maxHits: 20,
-    message: 'Zbyt wiele operacji na cennikach. Odczekaj minutę.'
+    message: 'Zbyt wiele operacji na cennikach. Odczekaj minutę.',
+    name: 'preco_pricing'
 });
