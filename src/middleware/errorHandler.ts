@@ -24,7 +24,20 @@ export function errorHandler(err: Error, req: Request, res: Response, _next: Nex
         // Ignoruj — nagłówki mogły już zostać wysłane.
     }
     // M: licznik SQLITE_BUSY/lock — contention pisarzy na 1 DB.
-    if (/locked|busy|timeout/i.test(err.message || '')) recordDbBusy();
+    // Heavy-write: zamiast mylącego 500 zwróć 429 + Retry-After (backpressure,
+    // klient/load-100 ponawia po odczekaniu; 5xx==0 w DoD).
+    if (/locked|busy|timeout/i.test(err.message || '')) {
+        recordDbBusy();
+        try {
+            res.setHeader('Retry-After', 2);
+        } catch {
+            // Ignoruj — nagłówki mogły już zostać wysłane.
+        }
+        if (!res.headersSent) {
+            res.status(429).json({ error: 'Baza zajęta — spróbuj ponownie', requestId });
+            return;
+        }
+    }
     // PayloadTooLargeError z body-parser (przekroczony limit express.json) —
     // jako 413 z jawnym komunikatem zamiast mylącego generycznego 500.
     const status = (err as { status?: unknown }).status;

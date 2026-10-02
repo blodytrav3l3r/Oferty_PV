@@ -6,7 +6,15 @@ import crypto from 'crypto';
  */
 export function httpsRedirect(req: Request, res: Response, next: NextFunction): void {
     // Healthcheck Dockera i endpoint wersji działają po HTTP — nie przekierowuj ich na HTTPS.
-    if (req.path === '/health' || req.path === '/api/version') {
+    // /health/ready i /health/live muszą być na liście: Docker HEALTHCHECK pyta
+    // /health/ready po plain HTTP wewnątrz kontenera (inaczej 302 → wieczne unhealthy).
+    if (
+        req.path === '/health' ||
+        req.path === '/health/ready' ||
+        req.path === '/health/live' ||
+        req.path === '/api/version' ||
+        req.path.startsWith('/health/pdf')
+    ) {
         next();
         return;
     }

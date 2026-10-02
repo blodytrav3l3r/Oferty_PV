@@ -22,7 +22,9 @@ RUN npm ci --no-audit --no-fund
 COPY . .
 
 # Generujemy klienta Prisma (wymaga DATABASE_URL przez prisma.config.ts)
-ENV DATABASE_URL=file:/var/data/app_database.sqlite?connection_limit=1&busy_timeout=30000
+# Prod Docker: connection_limit=3 — pomiar load-100: limit=1 dawał 5xx/BUSY
+# przy burstach, limit=3 daje 0 5xx (WAL pozwala na równoległe odczyty).
+ENV DATABASE_URL=file:/var/data/app_database.sqlite?connection_limit=3&busy_timeout=30000
 RUN npx prisma generate
 
 # Budujemy projekt

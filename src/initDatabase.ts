@@ -7,12 +7,13 @@ import { logger } from './utils/logger';
 
 /**
  * PRAGMA połączenia: WAL + synchronous + busy_timeout + user_version + FK.
- * connection_limit=1: pula ma jedno połączenie, pragma trzyma się go na stałe.
+ * Dev/test: connection_limit=1; prod Docker: connection_limit=3 (równoległe
+ * odczyty WAL, pisarz nadal serializowany przez SQLite + busy_timeout).
  */
 export async function initDatabasePragmas(): Promise<void> {
     try {
-        // Sekwencyjnie na jednym połączeniu (connection_limit=1) — Promise.all
-        // na współdzielonym połączeniu SQLite dawał SQLITE_BUSY / race.
+        // Sekwencyjnie (Promise.all na współdzielonym połączeniu SQLite
+        // dawał SQLITE_BUSY / race).
         await prisma.$queryRawUnsafe('PRAGMA journal_mode=WAL');
         await prisma.$queryRawUnsafe('PRAGMA synchronous=NORMAL');
         await prisma.$queryRawUnsafe('PRAGMA busy_timeout=30000');

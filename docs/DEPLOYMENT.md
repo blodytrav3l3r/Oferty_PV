@@ -109,7 +109,7 @@ services:
                     'CMD',
                     'node',
                     '-e',
-                    "require('http').get('http://localhost:10000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
+                    "require('http').get('http://localhost:10000/health/ready', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
                 ]
             interval: 30s
             timeout: 10s
@@ -175,7 +175,7 @@ Aplikacja dostępna pod: `http://localhost:3000`
     → identyczne sumy; `ls -la data/` zawiera `app_database.sqlite` (+ `-wal`/`-shm`).
 6. Zaktualizuj pliki (docker-compose.yml / docs) i uruchom:
    `docker compose up -d --build`.
-7. Weryfikacja: `docker ps` (kontener `sok-oferty` healthy), `curl localhost:3000/health`
+7. Weryfikacja: `docker ps` (kontener `sok-oferty` healthy), `curl localhost:3000/health/ready`
    → 200, logowanie → istniejące oferty/zamówienia widoczne.
 8. **Retencja:** NIE usuwaj `witros_data` przez minimum 2 cykle release.
    Usunięcie tylko po potwierdzeniu stabilności:
@@ -187,7 +187,7 @@ Docker ma wbudowany HEALTHCHECK (w `Dockerfile`, `start-period: 15s`):
 
 ```
 HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
-    CMD node -e "require('http').get('http://localhost:10000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
+    CMD node -e "require('http').get('http://localhost:10000/health/ready', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
 ```
 
 Uwaga: `docker-compose.yml` używa `start_period: 30s` w sekcji `healthcheck` — dłuższy okres startu pod compose niż wbudowany w obraz.

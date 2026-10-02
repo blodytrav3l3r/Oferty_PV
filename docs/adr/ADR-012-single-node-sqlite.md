@@ -6,7 +6,7 @@
 ## Decyzja
 
 1. Jeden plik bazy = dokładnie jeden proces Node. Zakaz PM2 cluster, drugiego kontenera i drugiej instalacji na tym samym pliku.
-2. `connection_limit=1`, `journal_mode=WAL`, `synchronous=NORMAL`, `busy_timeout=30000` (`src/prismaClient.ts`, `src/initDatabase.ts`) — bez zmian.
+2. `connection_limit=1` dev/test, `connection_limit=3` prod Docker (`Dockerfile`, `docker-entrypoint.sh` — pomiar load-100: 1→5xx/BUSY, 3→0 5xx), `journal_mode=WAL`, `synchronous=NORMAL`, `busy_timeout=30000` (`src/prismaClient.ts`, `src/initDatabase.ts`).
 3. `createModuleLock()` (`src/middleware/writeLock.ts`, timeout 30 s, poll 100 ms) jest wyłącznie anty-TOCTOU **w procesie** (bulk cenników, dedup AUTO_JS). Między procesami chroni tylko SQLite (busy-timeout).
 4. Claimy numerów atomowym `UPDATE lastNumber+N` (`src/routes/orders/numbering.ts`) — bez RAM-locka, DB daje gwarancję. Wzorzec obowiązujący dla nowych claimów.
 
