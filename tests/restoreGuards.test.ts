@@ -115,7 +115,11 @@ describe('restore target guard (P1: brak silent fallback do live DB)', () => {
 
     test('CLI bez celu NIE rusza live DB (fail-closed, exit != 0)', () => {
         const script = path.join(__dirname, '..', 'scripts', 'restore-db.js');
-        const before = fs.readFileSync(liveDbPath());
+        // Hermetyczność CI: live DB może nie istnieć (runner używa test-ci.sqlite).
+        // Odmowa następuje przed jakimkolwiek copyFileSync, więc brak pliku też
+        // dowodzi fail-closed; porównanie bajtów tylko gdy plik istnieje.
+        const liveExists = fs.existsSync(liveDbPath());
+        const before = liveExists ? fs.readFileSync(liveDbPath()) : null;
         const env = { ...process.env };
         delete env.RESTORE_DB_PATH;
         let code = 0;
@@ -128,6 +132,8 @@ describe('restore target guard (P1: brak silent fallback do live DB)', () => {
         }
         expect(code).not.toBe(0);
         expect(stderr).toMatch(/jawnego celu/i);
-        expect(fs.readFileSync(liveDbPath()).equals(before)).toBe(true);
+        if (before !== null) {
+            expect(fs.readFileSync(liveDbPath()).equals(before)).toBe(true);
+        }
     });
 });
