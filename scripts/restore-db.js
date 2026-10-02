@@ -144,13 +144,19 @@ async function main() {
         console.error(
             'Użycie: node scripts/restore-db.js <plik_backupu> --target <plik_docelowy> [--live] [--yes]'
         );
-        console.error('  Cel: --target albo RESTORE_DB_PATH. Bez jawnego celu restore NIE wykona się.');
+        console.error(
+            '  Cel: --target albo RESTORE_DB_PATH. Bez jawnego celu restore NIE wykona się.'
+        );
         process.exit(1);
     }
     const target = resolveTarget({ targetArg, envTarget: process.env.RESTORE_DB_PATH, live });
     if (!target.ok && target.code === 'NO_TARGET') {
-        console.error('[BLAD] Brak jawnego celu restore. Podaj --target <plik> albo RESTORE_DB_PATH.');
-        console.error('[BLAD] Restore bez jawnego celu jest zabronione (brak fallback do live DB).');
+        console.error(
+            '[BLAD] Brak jawnego celu restore. Podaj --target <plik> albo RESTORE_DB_PATH.'
+        );
+        console.error(
+            '[BLAD] Restore bez jawnego celu jest zabronione (brak fallback do live DB).'
+        );
         process.exit(1);
     }
     if (!target.ok && target.code === 'LIVE_REFUSED') {

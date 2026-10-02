@@ -102,7 +102,14 @@ describe('restore target guard (P1: brak silent fallback do live DB)', () => {
     });
 
     test('parseCliArgs: parsuje --target i --live, źródło to pierwszy pozycyjny', () => {
-        const p = parseCliArgs(['node', 'restore-db.js', 'b.sqlite', '--target', 'c.sqlite', '--live']);
+        const p = parseCliArgs([
+            'node',
+            'restore-db.js',
+            'b.sqlite',
+            '--target',
+            'c.sqlite',
+            '--live'
+        ]);
         expect(p).toEqual({ yes: false, live: true, targetArg: 'c.sqlite', sourceArg: 'b.sqlite' });
     });
 
