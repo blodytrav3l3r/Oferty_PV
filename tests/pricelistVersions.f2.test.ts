@@ -322,6 +322,18 @@ describe('F2 activate', () => {
             code: 'ACTIVATE_NOT_SCHEDULED'
         });
     });
+
+    test('M2: powtórna aktywacja tej samej wersji → 409, dokładnie jedna ACTIVE', async () => {
+        const draft = await createDraft('rury', [rura('r1')], {
+            effectiveFrom: '2026-09-01T00:00:00.000Z'
+        });
+        const active = await activate(draft.id, { userId: 'admin1' });
+        expect(active.status).toBe('ACTIVE');
+        await expect(activate(draft.id, { userId: 'admin1' })).rejects.toMatchObject({
+            statusCode: 409
+        });
+        expect(versions.filter((v) => v.type === 'rury' && v.status === 'ACTIVE')).toHaveLength(1);
+    });
 });
 
 describe('F2 backdate', () => {

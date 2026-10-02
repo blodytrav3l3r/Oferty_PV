@@ -478,5 +478,126 @@ describe('Rury Offers CRUD — warstwa zapisu', () => {
             expect(res.statusCode).toBe(500);
             expect(prisma.$transaction).toHaveBeenCalledTimes(1);
         });
+
+        it('M3: ten sam Idempotency-Key → jedno utworzenie, retry replayuje id', async () => {
+            const store = new Map<string, any>();
+            (prisma as any).idempotency_keys = {
+                create: jest.fn(async ({ data }: any) => {
+                    const k = `${data.userId}|${data.endpoint}|${data.key}`;
+                    if (store.has(k)) {
+                        const e: any = new Error('Unique constraint');
+                        e.code = 'P2002';
+                        throw e;
+                    }
+                    store.set(k, { ...data });
+                    return data;
+                }),
+                findUnique: jest.fn(async ({ where }: any) => {
+                    const w = where.userId_endpoint_key;
+                    return store.get(`${w.userId}|${w.endpoint}|${w.key}`) || null;
+                }),
+                updateMany: jest.fn(async ({ where, data }: any) => {
+                    let count = 0;
+                    for (const [k, row] of store) {
+                        if (Object.entries(where).every(([f, v]) => (row as any)[f] === v)) {
+                            store.set(k, { ...row, ...data });
+                            count++;
+                        }
+                    }
+                    return { count };
+                }),
+                deleteMany: jest.fn(async () => ({ count: 0 }))
+            };
+            (prisma.offers_rel.findUnique as jest.Mock).mockResolvedValue({
+                ...mockOfferRury,
+                data: JSON.stringify({ clientName: 'ACME' })
+            });
+            (prisma.offer_items_rel.findMany as jest.Mock).mockResolvedValue([]);
+            (prisma.offers_rel.create as jest.Mock).mockResolvedValue({});
+
+            const send = () =>
+                request(app)
+                    .post(`/api/offers/${UUID_SRC}/duplicate`)
+                    .set('x-user-id', 'user-id')
+                    .set('Idempotency-Key', 'dup-1');
+            const first = await send();
+            const second = await send();
+            expect(first.statusCode).toBe(200);
+            expect(second.statusCode).toBe(200);
+            expect(second.body).toEqual(first.body);
+            expect(prisma.offers_rel.create).toHaveBeenCalledTimes(1);
+            delete (prisma as any).idempotency_keys;
+        });
+    });
+
+    describe('M3: unikalność numeru oferty (I-004)', () => {
+        it('dwa create z tym samym numerem w batchu → 409 DUPLICATE_NUMBER, nic nie zapisane', async () => {
+            (prisma.offers_rel.findMany as jest.Mock).mockResolvedValue([]);
+            (prisma.offer_items_rel.findMany as jest.Mock).mockResolvedValue([]);
+
+            const res = await request(app)
+                .post('/api/offers')
+                .set('x-user-id', 'user-id')
+                .send({
+                    data: [
+                        { clientId: 'c1', offer_number: 'OF/1', status: 'draft', items: [] },
+                        { clientId: 'c1', offer_number: 'OF/1', status: 'draft', items: [] }
+                    ]
+                });
+
+            expect(res.statusCode).toBe(409);
+            expect(res.body.code).toBe('DUPLICATE_NUMBER');
+            expect(prisma.offers_rel.create).not.toHaveBeenCalled();
+            expect(prisma.offers_rel.upsert).not.toHaveBeenCalled();
+        });
+
+        it('update na numer cudzego dokumentu → 409, własny numer przechodzi', async () => {
+            // olds prefetch (po id) + clash-check (po numerze) — routing po where.
+            (prisma.offers_rel.findMany as jest.Mock).mockImplementation(async (args: any) => {
+                if (args?.where?.offer_number?.in) {
+                    return [{ id: 'o-2', offer_number: 'OF/9' }];
+                }
+                return [{ ...mockOfferRury, id: 'o-1', version: 1 }];
+            });
+            (prisma.offer_items_rel.findMany as jest.Mock).mockResolvedValue([]);
+            (prisma.offers_rel.updateMany as jest.Mock).mockResolvedValue({ count: 1 });
+            (prisma.offer_items_rel.deleteMany as jest.Mock).mockResolvedValue({});
+            (prisma.offer_items_rel.createMany as jest.Mock).mockResolvedValue({});
+
+            const clash = await request(app)
+                .post('/api/offers')
+                .set('x-user-id', 'user-id')
+                .send({
+                    data: [
+                        {
+                            id: 'o-1',
+                            clientId: 'c1',
+                            offer_number: 'OF/9',
+                            status: 'draft',
+                            version: 1,
+                            items: []
+                        }
+                    ]
+                });
+            expect(clash.statusCode).toBe(409);
+            expect(clash.body.code).toBe('DUPLICATE_NUMBER');
+
+            const own = await request(app)
+                .post('/api/offers')
+                .set('x-user-id', 'user-id')
+                .send({
+                    data: [
+                        {
+                            id: 'o-2',
+                            clientId: 'c1',
+                            offer_number: 'OF/9',
+                            status: 'draft',
+                            version: 1,
+                            items: []
+                        }
+                    ]
+                });
+            expect(own.statusCode).toBe(200);
+        });
     });
 });

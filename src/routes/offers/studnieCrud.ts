@@ -582,6 +582,41 @@ router.post(
                     clientNumber: string | null;
                 };
             }> = [];
+            // M3: jawny numer oferty musi być unikalny (I-004) — jak w ruryCrud.
+            const wantedNumbers = new Map<string, string>();
+            for (const o of incoming) {
+                const num =
+                    typeof o.number === 'string' && o.number
+                        ? o.number
+                        : typeof o.offer_number === 'string' && o.offer_number
+                          ? o.offer_number
+                          : '';
+                if (!num) continue;
+                const numDocId = typeof o.id === 'string' ? o.id : '';
+                const clash = wantedNumbers.get(num);
+                if (clash !== undefined && (clash !== numDocId || numDocId === '')) {
+                    const dup = { error: 'Numer oferty już istnieje', code: 'DUPLICATE_NUMBER' };
+                    if (idemKey)
+                        await completeIdempotencyKey(idemUser, idemEndpoint, idemKey, 409, dup);
+                    return res.status(409).json(dup);
+                }
+                wantedNumbers.set(num, numDocId);
+            }
+            if (wantedNumbers.size > 0) {
+                const taken = await prisma.offers_studnie_rel.findMany({
+                    where: { offer_number: { in: [...wantedNumbers.keys()] } },
+                    select: { id: true, offer_number: true }
+                });
+                const conflict = taken.find(
+                    (t) => t.offer_number && wantedNumbers.get(t.offer_number!) !== t.id
+                );
+                if (conflict) {
+                    const dup = { error: 'Numer oferty już istnieje', code: 'DUPLICATE_NUMBER' };
+                    if (idemKey)
+                        await completeIdempotencyKey(idemUser, idemEndpoint, idemKey, 409, dup);
+                    return res.status(409).json(dup);
+                }
+            }
             for (const o of incoming) {
                 let docId = o.id;
                 if (!docId) {

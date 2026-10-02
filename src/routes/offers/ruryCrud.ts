@@ -226,6 +226,47 @@ router.post(
                 };
             }> = [];
 
+            // M3: jawny numer oferty musi być unikalny (I-004) — kolizja
+            // (w batchu albo z cudzym dokumentem) to 409 zanim cokolwiek zapiszemy.
+            // Puste numery pomijamy (drafty bez numeru); wyścig dwóch batchów
+            // wymagałby UNIQUE w DB (follow-up migracyjny).
+            const wantedNumbers = new Map<string, string>();
+            for (const o of incoming) {
+                const num =
+                    typeof o.offer_number === 'string' && o.offer_number
+                        ? o.offer_number
+                        : typeof o.number === 'string' && o.number
+                          ? o.number
+                          : '';
+                if (!num) continue;
+                const docId = typeof o.id === 'string' ? o.id : '';
+                const clash = wantedNumbers.get(num);
+                // Pusty docId (create) nigdy nie „pasuje" — dwa create z tym
+                // samym numerem to kolizja.
+                if (clash !== undefined && (clash !== docId || docId === '')) {
+                    const dup = { error: 'Numer oferty już istnieje', code: 'DUPLICATE_NUMBER' };
+                    if (idemKey)
+                        await completeIdempotencyKey(idemUser, idemEndpoint, idemKey, 409, dup);
+                    return res.status(409).json(dup);
+                }
+                wantedNumbers.set(num, docId);
+            }
+            if (wantedNumbers.size > 0) {
+                const taken = await prisma.offers_rel.findMany({
+                    where: { offer_number: { in: [...wantedNumbers.keys()] } },
+                    select: { id: true, offer_number: true }
+                });
+                const conflict = taken.find(
+                    (t) => t.offer_number && wantedNumbers.get(t.offer_number!) !== t.id
+                );
+                if (conflict) {
+                    const dup = { error: 'Numer oferty już istnieje', code: 'DUPLICATE_NUMBER' };
+                    if (idemKey)
+                        await completeIdempotencyKey(idemUser, idemEndpoint, idemKey, 409, dup);
+                    return res.status(409).json(dup);
+                }
+            }
+
             for (const o of incoming) {
                 let docId = o.id;
                 if (!docId) {
@@ -806,17 +847,50 @@ router.post('/:id/duplicate', requireAuth, writeOffersLimiter, async (req, res) 
         }
         const { id } = parsed.data;
 
+        // M3: Idempotency-Key — podwójny klik duplikuje raz (deterministyczne
+        // newId, retry replayuje ten sam wynik zamiast drugiej -KOPIA).
+        const idemEndpoint = `POST /api/offers-rury/${id}/duplicate`;
+        const idemKey = idempotencyKeyFrom(req);
+        const idemUser = authReq.user?.id || '';
+        if (idemKey) {
+            const claim = await claimIdempotencyKey(idemUser, idemEndpoint, idemKey, req.body);
+            if (claim.action === 'replay') return res.status(claim.status).json(claim.body);
+            if (claim.action === 'reuse')
+                return res.status(409).json({
+                    error: 'Klucz idempotencji użyty z innym payloadem',
+                    code: 'IDEMPOTENCY_KEY_REUSE'
+                });
+            if (claim.action === 'in-progress')
+                return res.status(409).json({
+                    error: 'Żądanie w trakcie przetwarzania — spróbuj ponownie',
+                    code: 'IDEMPOTENCY_IN_PROGRESS'
+                });
+        }
+
         const source = await prisma.offers_rel.findUnique({ where: { id } });
         if (!source) {
-            return res.status(404).json({ error: 'Oferta źródłowa nie istnieje' });
+            const notFound = { error: 'Oferta źródłowa nie istnieje' };
+            if (idemKey)
+                await completeIdempotencyKey(idemUser, idemEndpoint, idemKey, 404, notFound);
+            return res.status(404).json(notFound);
         }
         if (!canReadDoc(authReq.user, source.userId)) {
-            return res.status(403).json({ error: 'Brak uprawnień do odczytu oferty źródłowej' });
+            const forbidden = { error: 'Brak uprawnień do odczytu oferty źródłowej' };
+            if (idemKey)
+                await completeIdempotencyKey(idemUser, idemEndpoint, idemKey, 403, forbidden);
+            return res.status(403).json(forbidden);
         }
 
         const sourceItems = await prisma.offer_items_rel.findMany({ where: { offerId: id } });
 
-        const newId = uuidv4();
+        const newId = idemKey
+            ? 'idem-' +
+              crypto
+                  .createHash('sha256')
+                  .update(`${idemUser}|${idemEndpoint}|${idemKey}`)
+                  .digest('hex')
+                  .slice(0, 16)
+            : uuidv4();
         // P0.1: kopia zawsze na siebie (read-check źródła powyżej).
         const resolved = resolveWriteUserId(authReq.user, undefined);
         if (!resolved.allowed) {
@@ -893,7 +967,9 @@ router.post('/:id/duplicate', requireAuth, writeOffersLimiter, async (req, res) 
         );
 
         searchCache.invalidateAll();
-        return res.json({ ok: true, data: { id: newId } });
+        const dupPayload = { ok: true, data: { id: newId } };
+        if (idemKey) await completeIdempotencyKey(idemUser, idemEndpoint, idemKey, 200, dupPayload);
+        return res.json(dupPayload);
     } catch (e: unknown) {
         if (mapPrismaError(res, e)) return;
         const message = e instanceof Error ? e.message : 'Unknown error';

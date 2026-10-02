@@ -663,10 +663,23 @@ export async function activate(
                 where: { type, status: 'ACTIVE' },
                 data: { status: 'ARCHIVED' }
             });
-            const updated = await tx.pricelistVersion.update({
-                where: { id },
+            // M2: predykat statusu — dwa procesy (in-memory lock jest per-proces)
+            // nie aktywują tej samej wersji dwukrotnie; przegrany dostaje 409.
+            const activated = await tx.pricelistVersion.updateMany({
+                where: { id, status: 'SCHEDULED' },
                 data: { status: 'ACTIVE' }
             });
+            if (activated.count !== 1) {
+                throw new PricelistVersionError(
+                    409,
+                    'ACTIVATE_RACE',
+                    `Wersja ${id} zmieniła status w trakcie aktywacji — odśwież i spróbuj ponownie`
+                );
+            }
+            const updated = await tx.pricelistVersion.findUnique({ where: { id } });
+            if (!updated) {
+                throw new PricelistVersionError(404, 'NOT_FOUND', `Wersja ${id} nie istnieje`);
+            }
             await tx.settings.upsert({
                 where: { key: DEFAULTS_UPDATED_AT_KEY },
                 update: { value: nowIso },
