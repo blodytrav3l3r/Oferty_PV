@@ -7,9 +7,18 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import * as crypto from 'crypto';
+import { execFileSync } from 'child_process';
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const { isSqliteFile, verifyChecksum, integrityCheck } = require('../scripts/restore-db.js');
+const {
+    isSqliteFile,
+    verifyChecksum,
+    integrityCheck,
+    parseCliArgs,
+    resolveTarget,
+    isLiveDbPath,
+    liveDbPath
+} = require('../scripts/restore-db.js');
 
 function tmpFile(name: string): string {
     return path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'p13-')), name);
@@ -57,5 +66,61 @@ describe('restore guards (P1.3 / F-001)', () => {
 
     test('verifyChecksum: brak sidecara (legacy) → true z ostrzeżeniem', () => {
         expect(verifyChecksum(makeDb())).toBe(true);
+    });
+});
+
+describe('restore target guard (P1: brak silent fallback do live DB)', () => {
+    test('resolveTarget: brak --target i brak env → NO_TARGET (żadnego fallback)', () => {
+        expect(resolveTarget({ targetArg: null, envTarget: undefined, live: false })).toEqual({
+            ok: false,
+            code: 'NO_TARGET'
+        });
+    });
+
+    test('resolveTarget: cel live bez --live → LIVE_REFUSED', () => {
+        const r = resolveTarget({ targetArg: liveDbPath(), envTarget: undefined, live: false });
+        expect(r.ok).toBe(false);
+        expect(r.code).toBe('LIVE_REFUSED');
+    });
+
+    test('resolveTarget: cel live z --live → dozwolony, oznaczony live', () => {
+        const r = resolveTarget({ targetArg: liveDbPath(), envTarget: undefined, live: true });
+        expect(r.ok).toBe(true);
+        expect(r.live).toBe(true);
+    });
+
+    test('resolveTarget: jawny cel poza live → dozwolony, nie live', () => {
+        const t = tmpFile('cel.sqlite');
+        const r = resolveTarget({ targetArg: t, envTarget: undefined, live: false });
+        expect(r.ok).toBe(true);
+        expect(r.live).toBe(false);
+    });
+
+    test('isLiveDbPath: wykrywa live i odrzuca inne ścieżki', () => {
+        expect(isLiveDbPath(liveDbPath())).toBe(true);
+        expect(isLiveDbPath(tmpFile('inny.sqlite'))).toBe(false);
+    });
+
+    test('parseCliArgs: parsuje --target i --live, źródło to pierwszy pozycyjny', () => {
+        const p = parseCliArgs(['node', 'restore-db.js', 'b.sqlite', '--target', 'c.sqlite', '--live']);
+        expect(p).toEqual({ yes: false, live: true, targetArg: 'c.sqlite', sourceArg: 'b.sqlite' });
+    });
+
+    test('CLI bez celu NIE rusza live DB (fail-closed, exit != 0)', () => {
+        const script = path.join(__dirname, '..', 'scripts', 'restore-db.js');
+        const before = fs.readFileSync(liveDbPath());
+        const env = { ...process.env };
+        delete env.RESTORE_DB_PATH;
+        let code = 0;
+        let stderr = '';
+        try {
+            execFileSync(process.execPath, [script, makeDb()], { encoding: 'utf8', env });
+        } catch (e) {
+            code = (e as { status?: number }).status ?? 1;
+            stderr = String((e as { stderr?: unknown }).stderr ?? (e as Error).message);
+        }
+        expect(code).not.toBe(0);
+        expect(stderr).toMatch(/jawnego celu/i);
+        expect(fs.readFileSync(liveDbPath()).equals(before)).toBe(true);
     });
 });
