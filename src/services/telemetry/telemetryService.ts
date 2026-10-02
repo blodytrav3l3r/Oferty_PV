@@ -28,6 +28,9 @@ import {
 
 class TelemetryService {
     private readonly lock = createModuleLock();
+    // D-FIX-3: osobny lock first-touch MANUAL (nie ten od recordConfig —
+    // tamten jest niereentrantny, a recordManualIfAbsent woła recordConfig).
+    private readonly manualLock = createModuleLock();
 
     /**
      * Zapisuje kompletną konfigurację z kontekstem wejściowym.
@@ -392,26 +395,43 @@ class TelemetryService {
             // updateMany zamiast update: brak rekordu (np. gdy /config nie dotarł
             // wcześniej) nie może rzucić P2025 — telemetria jest pasywna,
             // brak rekordu nie jest błędem.
+            // D-FIX-3: warunek `wasAccepted: { not: accepted }` czyni acceptance
+            // idempotentnym na poziomie DB (działa między procesami/restartami):
+            // powtórzony identyczny acceptance nie inkrementuje usageCount ani
+            // nie odtwarza efektów; legalna zmiana stanu (accept→reject i
+            // odwrotnie) nadal przechodzi, bo predykat dotyczy tylko repetycji.
             const result = await prisma.ai_telemetry_logs.updateMany({
-                where: { id: telemetryId },
+                where: { id: telemetryId, wasAccepted: { not: accepted } },
                 data: updates
             });
 
             // Fallback: telemetryId to ID studni (wellId) — oznacz najnowszy
-            // rekord konfiguracji tej studni.
+            // rekord konfiguracji tej studni. D-FIX-3: fallback TYLKO gdy
+            // wiersz o danym id nie istnieje; przy repetycji (wiersz istnieje,
+            // stan już zgodny) nie wolno mutować innego (nowszego) wiersza.
             let resolvedId: string | null = result.count > 0 ? telemetryId : null;
-            if (result.count === 0 && wellId) {
-                const latest = await prisma.ai_telemetry_logs.findFirst({
-                    where: { wellId },
-                    orderBy: { createdAt: 'desc' },
+            if (!resolvedId) {
+                const exists = await prisma.ai_telemetry_logs.findFirst({
+                    where: { id: telemetryId },
                     select: { id: true }
                 });
-                if (latest) {
-                    await prisma.ai_telemetry_logs.updateMany({
-                        where: { id: latest.id },
-                        data: updates
+                if (exists) {
+                    // Repetycja: stan już zgodny, inkrement pominięty wyżej;
+                    // etykieta wskazuje ten sam wiersz (sync idempotentny).
+                    resolvedId = exists.id;
+                } else if (wellId) {
+                    const latest = await prisma.ai_telemetry_logs.findFirst({
+                        where: { wellId },
+                        orderBy: { createdAt: 'desc' },
+                        select: { id: true }
                     });
-                    resolvedId = latest.id;
+                    if (latest) {
+                        await prisma.ai_telemetry_logs.updateMany({
+                            where: { id: latest.id, wasAccepted: { not: accepted } },
+                            data: updates
+                        });
+                        resolvedId = latest.id;
+                    }
                 }
             }
 
@@ -442,6 +462,33 @@ class TelemetryService {
             );
             throw e;
         }
+    }
+
+    /**
+     * D-FIX-3: first-touch MANUAL pod lockiem — check (findFirst) i insert
+     * (recordConfig) atomowe w obrębie procesu. Dwa równoległe acceptance
+     * tej samej studni bez rekordu tworzą JEDEN wiersz MANUAL zamiast dwóch.
+     * Lock procesu nie chroni przed drugim procesem — resztkowa współbieżność
+     * międzyprocesowa pozostaje (deployment: single-process, fork×1).
+     * Przy contention (>30 s) capture jest pomijany (telemetria, nie blokada
+     * acceptance — acceptance zapisuje się niezależnie wyżej).
+     */
+    async recordManualIfAbsent(
+        wellId: string,
+        payload: TelemetryConfigPayload,
+        userId?: string
+    ): Promise<{ created: boolean; telemetryId?: string }> {
+        const r = await this.manualLock.runWithLock(async () => {
+            const existing = await prisma.ai_telemetry_logs.findFirst({
+                where: { wellId },
+                select: { id: true }
+            });
+            if (existing) return { created: false as const };
+            const res = await this.recordConfig({ ...payload, wellId }, userId);
+            return { created: true as const, telemetryId: res.telemetryId };
+        });
+        if (!r.acquired) return { created: false };
+        return r.value;
     }
 
     /**

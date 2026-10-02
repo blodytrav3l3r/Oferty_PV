@@ -32,13 +32,15 @@ jest.mock('../src/middleware/rateLimiters', () => ({
 }));
 
 const mockRecordAcceptance = jest.fn<any>().mockResolvedValue(undefined);
-const mockRecordConfig = jest.fn<any>().mockResolvedValue({ id: 'rec-config' });
+// D-FIX-3: route woła recordManualIfAbsent (check+insert pod lockiem serwisu)
+// zamiast findFirst + recordConfig wprost.
+const mockRecordManualIfAbsent = jest.fn<any>().mockResolvedValue({ created: false });
 const mockRecordEvent = jest.fn<any>().mockResolvedValue(undefined);
 
 jest.mock('../src/services/telemetry', () => ({
     telemetryService: {
         recordAcceptance: (...args: any[]) => mockRecordAcceptance(...args),
-        recordConfig: (...args: any[]) => mockRecordConfig(...args),
+        recordManualIfAbsent: (...args: any[]) => mockRecordManualIfAbsent(...args),
         recordEvent: (...args: any[]) => mockRecordEvent(...args)
     }
 }));
@@ -66,7 +68,7 @@ jest.mock('../src/prismaClient', () => ({
 describe('POST /api/telemetry/ai/acceptance-full (A3)', () => {
     beforeEach(() => {
         mockRecordAcceptance.mockClear();
-        mockRecordConfig.mockClear();
+        mockRecordManualIfAbsent.mockClear();
         mockRecordEvent.mockClear();
     });
 
@@ -92,52 +94,42 @@ describe('POST /api/telemetry/ai/acceptance-full (A3)', () => {
         }
     };
 
-    it('studnia z rekordem telemetrii → recordConfig NIE wywołany (bez duplikatu)', async () => {
+    it('accept z configSnapshot → recordManualIfAbsent raz (decyzja serwisu, nie route)', async () => {
         mockTelemetryLogsFindFirst.mockResolvedValue({ id: 'rec-1' });
 
         const res = await postAcceptanceFull(baseBody);
 
         expect(res.status).toBe(200);
         expect(res.body).toEqual({ success: true });
-        expect(mockTelemetryLogsFindFirst).toHaveBeenCalledWith(
-            expect.objectContaining({ where: { wellId: 'well-w1' } })
-        );
         expect(mockRecordAcceptance).toHaveBeenCalledTimes(1);
-        expect(mockRecordConfig).not.toHaveBeenCalled();
-        expect(mockRecordEvent).toHaveBeenCalledTimes(1);
-    });
-
-    it('studnia bez rekordu telemetrii → recordConfig wywołany raz (pełna manualna)', async () => {
-        mockTelemetryLogsFindFirst.mockResolvedValue(null);
-
-        const res = await postAcceptanceFull(baseBody);
-
-        expect(res.status).toBe(200);
-        expect(mockRecordConfig).toHaveBeenCalledTimes(1);
-        const [config, userId] = mockRecordConfig.mock.calls[0] as any[];
+        expect(mockRecordManualIfAbsent).toHaveBeenCalledTimes(1);
+        const [wellId, config, userId] = mockRecordManualIfAbsent.mock.calls[0] as any[];
+        expect(wellId).toBe('well-w1');
         expect(config.wellId).toBe('well-w1');
         expect(config.solverSource).toBe('MANUAL');
         expect(config.selectionReason).toBe('user_accepted_post_solver');
         expect(userId).toBeUndefined();
+        expect(mockRecordEvent).toHaveBeenCalledTimes(1);
     });
 
-    it('wellId undefined → recordConfig wywołany (stare zachowanie, brak guarda wellId)', async () => {
+    it('wellId undefined → brak capture (guard wellId, brak wołania serwisu)', async () => {
         mockTelemetryLogsFindFirst.mockResolvedValue(null);
 
         const bodyWithoutWellId = { ...baseBody, wellId: undefined };
         const res = await postAcceptanceFull(bodyWithoutWellId);
 
         expect(res.status).toBe(200);
-        expect(mockRecordConfig).toHaveBeenCalledTimes(1);
+        expect(mockRecordAcceptance).toHaveBeenCalledTimes(1);
+        expect(mockRecordManualIfAbsent).not.toHaveBeenCalled();
     });
 
-    it('rejected → recordConfig nigdy nie wywoływany (niezależnie od rekordu)', async () => {
+    it('rejected → recordManualIfAbsent nigdy nie wywoływany (niezależnie od rekordu)', async () => {
         mockTelemetryLogsFindFirst.mockResolvedValue(null);
 
         const res = await postAcceptanceFull({ ...baseBody, accepted: false });
 
         expect(res.status).toBe(200);
         expect(mockRecordAcceptance).toHaveBeenCalledTimes(1);
-        expect(mockRecordConfig).not.toHaveBeenCalled();
+        expect(mockRecordManualIfAbsent).not.toHaveBeenCalled();
     });
 });

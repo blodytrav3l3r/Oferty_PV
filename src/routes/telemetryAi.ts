@@ -11,7 +11,6 @@ import express from 'express';
 import { requireAuth, AuthenticatedRequest } from '../middleware/auth';
 import { TELEMETRY_WRITE_LIMITER } from '../middleware/rateLimiters';
 import { logger } from '../utils/logger';
-import prisma from '../prismaClient';
 import { telemetryService } from '../services/telemetry';
 import { assertOfferReadable, assertTelemetryIdWritable } from '../utils/telemetryOwnership';
 import {
@@ -154,7 +153,7 @@ router.post('/ai/acceptance-full', requireAuth, TELEMETRY_WRITE_LIMITER, async (
             data.wellId || undefined
         );
 
-        if (data.accepted && data.configSnapshot) {
+        if (data.accepted && data.configSnapshot && data.wellId) {
             const snap = data.configSnapshot;
 
             // Zapisz kopię MANUAL tylko gdy studnia nie ma jeszcze żadnego rekordu
@@ -162,58 +161,52 @@ router.post('/ai/acceptance-full', requireAuth, TELEMETRY_WRITE_LIMITER, async (
             // uchwyć jej konfigurację, zamiast powielać rekord oznaczony już
             // przez recordAcceptance wyżej (duplikat zawyżał liczniki i mnożył
             // wiersze bez wartości treningowej).
-            const hasTelemetryRecord = data.wellId
-                ? await prisma.ai_telemetry_logs.findFirst({
-                      where: { wellId: data.wellId },
-                      select: { id: true }
-                  })
-                : null;
-
-            if (!hasTelemetryRecord) {
-                await telemetryService.recordConfig(
-                    {
-                        solverSource: 'MANUAL',
-                        wasAccepted: true,
-                        wasRejected: false,
-                        wasModified: false,
-                        offerId: data.offerId,
-                        wellId: data.wellId,
-                        warehouse: data.warehouse,
-                        dn: snap.dn != null ? String(snap.dn) : undefined,
-                        dennicaHeight:
-                            typeof snap.dennicaHeight === 'number' ? snap.dennicaHeight : undefined,
-                        ringCount: typeof snap.ringCount === 'number' ? snap.ringCount : undefined,
-                        allComponentIds: Array.isArray(snap.allComponentIds)
-                            ? (snap.allComponentIds as string[])
+            // D-FIX-3: check+insert pod lockiem serwisu (recordManualIfAbsent) —
+            // dwa równoległe requesty tworzą jeden wiersz, nie dwa.
+            await telemetryService.recordManualIfAbsent(
+                data.wellId,
+                {
+                    solverSource: 'MANUAL',
+                    wasAccepted: true,
+                    wasRejected: false,
+                    wasModified: false,
+                    offerId: data.offerId,
+                    wellId: data.wellId,
+                    warehouse: data.warehouse,
+                    dn: snap.dn != null ? String(snap.dn) : undefined,
+                    dennicaHeight:
+                        typeof snap.dennicaHeight === 'number' ? snap.dennicaHeight : undefined,
+                    ringCount: typeof snap.ringCount === 'number' ? snap.ringCount : undefined,
+                    allComponentIds: Array.isArray(snap.allComponentIds)
+                        ? (snap.allComponentIds as string[])
+                        : undefined,
+                    appliedReductions: Array.isArray(snap.appliedReductions)
+                        ? (snap.appliedReductions as never[])
+                        : undefined,
+                    appliedKonus: Array.isArray(snap.appliedKonus)
+                        ? (snap.appliedKonus as never[])
+                        : undefined,
+                    appliedHatches: Array.isArray(snap.appliedHatches)
+                        ? (snap.appliedHatches as never[])
+                        : undefined,
+                    appliedSeals: Array.isArray(snap.appliedSeals)
+                        ? (snap.appliedSeals as never[])
+                        : undefined,
+                    originalConfig: data.originalConfig as never[] | undefined,
+                    finalConfig: data.finalConfig as never[] | undefined,
+                    transitions: data.transitions as never[] | undefined,
+                    selectionReason: 'user_accepted_post_solver',
+                    featureSnapshot:
+                        typeof snap.featureSnapshot === 'object' && snap.featureSnapshot
+                            ? (snap.featureSnapshot as Record<string, unknown>)
                             : undefined,
-                        appliedReductions: Array.isArray(snap.appliedReductions)
-                            ? (snap.appliedReductions as never[])
-                            : undefined,
-                        appliedKonus: Array.isArray(snap.appliedKonus)
-                            ? (snap.appliedKonus as never[])
-                            : undefined,
-                        appliedHatches: Array.isArray(snap.appliedHatches)
-                            ? (snap.appliedHatches as never[])
-                            : undefined,
-                        appliedSeals: Array.isArray(snap.appliedSeals)
-                            ? (snap.appliedSeals as never[])
-                            : undefined,
-                        originalConfig: data.originalConfig as never[] | undefined,
-                        finalConfig: data.finalConfig as never[] | undefined,
-                        transitions: data.transitions as never[] | undefined,
-                        selectionReason: 'user_accepted_post_solver',
-                        featureSnapshot:
-                            typeof snap.featureSnapshot === 'object' && snap.featureSnapshot
-                                ? (snap.featureSnapshot as Record<string, unknown>)
-                                : undefined,
-                        labelSnapshot:
-                            typeof snap.labelSnapshot === 'object' && snap.labelSnapshot
-                                ? (snap.labelSnapshot as Record<string, unknown>)
-                                : undefined
-                    },
-                    userId
-                );
-            }
+                    labelSnapshot:
+                        typeof snap.labelSnapshot === 'object' && snap.labelSnapshot
+                            ? (snap.labelSnapshot as Record<string, unknown>)
+                            : undefined
+                },
+                userId
+            );
         }
 
         await telemetryService.recordEvent(
