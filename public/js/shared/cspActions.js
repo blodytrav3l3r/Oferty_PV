@@ -33,6 +33,21 @@
         return;
     }
 
+    // P2: puste = 0 (legacy czyszczenie pola), finite = liczba,
+    // śmieć (niepuste, nie-finite) = undefined + toast, bez zapisu do modelu.
+    function parseFiniteField(field) {
+        const raw = field && field.value !== undefined ? String(field.value) : '';
+        if (raw.trim() === '') return 0;
+        const n = parseFloat(raw.replace(',', '.'));
+        if (!Number.isFinite(n)) {
+            if (typeof window !== 'undefined' && typeof window.showToast === 'function') {
+                window.showToast('Nieprawidłowa wartość liczbowa — pominięto', 'error');
+            }
+            return undefined;
+        }
+        return n;
+    }
+
     function composites(name, el, args, event) {
         if (name === '$gotoOrder') {
             window.location.href = 'studnie.html?order=' + args[0];
@@ -109,7 +124,10 @@
                 window.handleOfferDiscountChange(args[0], args[1], el.value);
             }
         } else if (name === '$wellParamRefresh') {
-            const v = args[3] ? parseFloat(el.value) || 0 : el.value;
+            // P2: śmieć (niepuste, nie-finite) nie wchodzi do modelu jako ciche 0 —
+            // toast + skip; puste = 0 (legacy czyszczenie pola).
+            const v = args[3] ? parseFiniteField(el) : el.value;
+            if (v === undefined) return;
             if (typeof window._excelUpdateWellParam === 'function') {
                 window._excelUpdateWellParam(args[0], args[1], v);
             }
@@ -139,8 +157,10 @@
                 window.tmToggleSearchClear();
             }
         } else if (name === '$updateWellParamF') {
+            const pv = parseFiniteField(el);
+            if (pv === undefined) return;
             if (typeof window.updateWellParam === 'function') {
-                window.updateWellParam(args[0], parseFloat(el.value) || 0);
+                window.updateWellParam(args[0], pv);
             }
         } else if (name === '$summaryPipeCheck') {
             if (typeof window.updateOfferSummarySelectionCount === 'function') {

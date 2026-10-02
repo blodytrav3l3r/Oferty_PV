@@ -75,7 +75,18 @@ function applyDiscount(dn, type, value) {
 }
 
 function updateGlobalPaintingCost(field, value) {
-    const numVal = parseFloat(value) || 0;
+    // P2: śmieć nie zeruje cen wszystkich studni — toast + brak zapisu.
+    // Puste = 0 (legacy czyszczenie pola).
+    const raw = value !== undefined && value !== null ? String(value) : '';
+    if (raw.trim() !== '') {
+        const n = parseFloat(raw.replace(',', '.'));
+        if (!Number.isFinite(n)) {
+            if (typeof window !== 'undefined' && typeof window.showToast === 'function')
+                window.showToast('Nieprawidłowa cena malowania — pominięto', 'error');
+            return;
+        }
+    }
+    const numVal = raw.trim() === '' ? 0 : parseFloat(raw.replace(',', '.'));
     wells.forEach((w) => {
         w[field] = numVal;
 
@@ -127,7 +138,17 @@ function updateGlobalPaintingCost(field, value) {
 }
 
 function updateGlobalPehdDiscount(value) {
-    const numVal = parseFloat(value) || 0;
+    // P2: jak wyżej — śmieć nie zeruje rabatu PEHD we wszystkich studniach.
+    const raw = value !== undefined && value !== null ? String(value) : '';
+    if (raw.trim() !== '') {
+        const n = parseFloat(raw.replace(',', '.'));
+        if (!Number.isFinite(n)) {
+            if (typeof window !== 'undefined' && typeof window.showToast === 'function')
+                window.showToast('Nieprawidłowy rabat — pominięto', 'error');
+            return;
+        }
+    }
+    const numVal = raw.trim() === '' ? 0 : parseFloat(raw.replace(',', '.'));
     wells.forEach((w) => {
         w.pehdDiscount = numVal;
     });

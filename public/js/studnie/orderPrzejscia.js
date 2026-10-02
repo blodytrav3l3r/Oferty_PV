@@ -341,7 +341,7 @@ function buildPrzejscieRowHTML(row, idx, source) {
                 ${dnOptions.map((d) => `<option value="${d}" ${parseFloat(row.dnOd) === d ? 'selected' : ''}>${d}</option>`).join('')}
                 <option value="Inne" ${isDnOdInne ? 'selected' : ''}>Inne</option>
             </select>
-            <input type="number" id="${prefix}-dnod" class="form-input" value="${row.dnOd || ''}" placeholder="DN od" min="0" style="width:100%; min-width:0; font-size: var(--fs-base); text-align:center; background:rgba(var(--white-rgb), 0.05); border:1px solid rgba(var(--white-rgb), 0.1); border-radius: var(--radius-2xs); color:var(--text-primary); font-weight: var(--fw-bold); box-sizing:border-box; display:${isDnOdInne ? 'block' : 'none'};" ${warnScript ? `data-csp="$warnToggle" data-csp-on="change" data-csp-args="${escapeHtmlAttr(JSON.stringify([prefix, null, null, 1]))}"` : ''}>
+            <input type="number" id="${prefix}-dnod" class="form-input" value="${escapeHtmlAttr(row.dnOd || '')}" placeholder="DN od" min="0" style="width:100%; min-width:0; font-size: var(--fs-base); text-align:center; background:rgba(var(--white-rgb), 0.05); border:1px solid rgba(var(--white-rgb), 0.1); border-radius: var(--radius-2xs); color:var(--text-primary); font-weight: var(--fw-bold); box-sizing:border-box; display:${isDnOdInne ? 'block' : 'none'};" ${warnScript ? `data-csp="$warnToggle" data-csp-on="change" data-csp-args="${escapeHtmlAttr(JSON.stringify([prefix, null, null, 1]))}"` : ''}>
         </div>`;
 
     const dnDoCell = rowHasStringDn
@@ -356,7 +356,7 @@ function buildPrzejscieRowHTML(row, idx, source) {
                 ${dnOptions.map((d) => `<option value="${d}" ${parseFloat(row.dnDo) === d ? 'selected' : ''}>${d}</option>`).join('')}
                 <option value="Inne" ${isDnDoInne ? 'selected' : ''}>Inne</option>
             </select>
-            <input type="number" id="${prefix}-dndo" class="form-input" value="${row.dnDo || ''}" placeholder="DN do" min="0" style="width:100%; min-width:0; font-size: var(--fs-base); text-align:center; background:rgba(var(--white-rgb), 0.05); border:1px solid rgba(var(--white-rgb), 0.1); border-radius: var(--radius-2xs); color:var(--text-primary); font-weight: var(--fw-bold); box-sizing:border-box; display:${isDnDoInne ? 'block' : 'none'};" ${warnScript ? `data-csp="$warnToggle" data-csp-on="change" data-csp-args="${escapeHtmlAttr(JSON.stringify([prefix, null, null, 1]))}"` : ''}>
+            <input type="number" id="${prefix}-dndo" class="form-input" value="${escapeHtmlAttr(row.dnDo || '')}" placeholder="DN do" min="0" style="width:100%; min-width:0; font-size: var(--fs-base); text-align:center; background:rgba(var(--white-rgb), 0.05); border:1px solid rgba(var(--white-rgb), 0.1); border-radius: var(--radius-2xs); color:var(--text-primary); font-weight: var(--fw-bold); box-sizing:border-box; display:${isDnDoInne ? 'block' : 'none'};" ${warnScript ? `data-csp="$warnToggle" data-csp-on="change" data-csp-args="${escapeHtmlAttr(JSON.stringify([prefix, null, null, 1]))}"` : ''}>
         </div>`;
 
     return `<tr style="border-bottom:1px solid rgba(var(--white-rgb), 0.05); background:${rowBg}; border-left:${borderLeft};" data-psz-source="${source}" data-psz-idx="${idx}">
