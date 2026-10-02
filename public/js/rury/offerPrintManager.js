@@ -10,6 +10,20 @@ function handlePrintClickRury() {
 
 window.handlePrintClickRury = handlePrintClickRury;
 
+// Wspólny fetch eksportów (Paczka A): 429 + błąd sieci z retry 3×,
+// backoff z Retry-After, cap 10s. Eksporty read-only (brak zapisów DB),
+// więc powtórka = regeneracja pliku, bez efektu ubocznego.
+async function fetchExport(url, fetchOpts) {
+    const opts = Object.assign({ headers: authHeaders() }, fetchOpts || {});
+    if (typeof window.fetchWithRetry429 === 'function') {
+        const out = await window.fetchWithRetry429(url, opts, {
+            onRetry: () => showToast('Kolejka eksportu zajęta — ponawiam...', 'info')
+        });
+        return out.res;
+    }
+    return fetch(url, opts);
+}
+
 function showUniversalPrintModalRury(offerId, orderId, relatedOrders) {
     const targetOfferId =
         offerId || (typeof editingOfferId !== 'undefined' ? editingOfferId : null);
@@ -124,20 +138,6 @@ async function exportOfferDirectRury_action(offerId, format) {
         return;
     }
 
-    // Kolejka PDF ma sufit 2+10: przy burstcie serwer odpowiada 429 +
-    // Retry-After. Jeden retry po odczekaniu (wzorzec _bulkPutChunk).
-    const fetchExport = async (url) => {
-        let res = await fetch(url, { headers: authHeaders() });
-        if (res.status === 429) {
-            const wait =
-                Math.min(10, parseInt(res.headers.get('retry-after') || '2', 10) || 2) * 1000;
-            showToast('Kolejka eksportu zajęta — ponawiam...', 'info');
-            await new Promise((r) => setTimeout(r, wait));
-            res = await fetch(url, { headers: authHeaders() });
-        }
-        return res;
-    };
-
     try {
         if (format === 'pdf') {
             const res = await fetchExport(`/api/offers-rury/${offerId}/export-pdf`);
@@ -194,9 +194,7 @@ async function exportKartaDirectRury_action(orderId, format) {
 
     try {
         const endpoint = format === 'pdf' ? 'export-karta-pdf' : 'export-karta-docx';
-        const res = await fetch(`/api/orders-rury/${orderId}/${endpoint}`, {
-            headers: authHeaders()
-        });
+        const res = await fetchExport(`/api/orders-rury/${orderId}/${endpoint}`);
         if (!res.ok) {
             const errText = await res.text().catch(() => 'Unknown error');
             throw new Error(errText);
@@ -242,12 +240,7 @@ async function exportOrderDirectRury_action(orderId, format) {
     try {
         showToast(`Generowanie Zamówienia (${format.toUpperCase()})...`, 'info');
         const endpoint = format === 'pdf' ? 'export-pdf' : 'export-docx';
-        const res = await fetch(`/api/orders-rury/${orderId}/${endpoint}`, {
-            headers:
-                typeof authHeaders === 'function'
-                    ? authHeaders()
-                    : { 'Content-Type': 'application/json' }
-        });
+        const res = await fetchExport(`/api/orders-rury/${orderId}/${endpoint}`);
         if (!res.ok) {
             const errText = await res.text().catch(() => res.statusText);
             throw new Error(
@@ -322,7 +315,7 @@ async function exportRuryOrderAsOffer_action(orderId, format) {
 
     try {
         const endpoint = format === 'pdf' ? 'export-offer-pdf' : 'export-offer-docx';
-        const res = await fetch(`/api/orders-rury/${orderId}/${endpoint}`, {
+        const res = await fetchExport(`/api/orders-rury/${orderId}/${endpoint}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', ...authHeaders() },
             body: JSON.stringify(payload)

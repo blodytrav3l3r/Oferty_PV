@@ -53,6 +53,15 @@ function loadCtx(fetchImpl: any) {
     };
     context.window = { debounce: undefined };
     vm.createContext(context);
+    // Realny helper retry (A1): transform ESM→classic jak w fetchRetry429.test.ts.
+    // Bez tego fallback bez retry łamałby test 429 (puts 3 zamiast 4).
+    const fetchJsonRaw = fs.readFileSync(
+        path.join(__dirname, '../../public/js/shared/fetchJson.js'),
+        'utf8'
+    );
+    vm.runInContext(fetchJsonRaw.replace(/^export /gm, ''), context, {
+        filename: 'fetchJson.js'
+    });
     for (const f of ['excelBulkJob.js', 'orderBulkModel.js', 'orderBulk.js']) {
         vm.runInContext(
             fs.readFileSync(path.join(__dirname, '../../public/js/studnie', f), 'utf8'),

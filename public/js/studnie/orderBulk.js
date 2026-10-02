@@ -816,31 +816,55 @@ async function executeBulkFromPopup() {
  * Hurtowy claim numerów produkcyjnych — 1 request na maks. 200 pozycji (bulk P0).
  * @param {string} userId właściciel numeracji
  * @param {number} count liczba numerów (1..200)
+ * @param {string} idemKey stabilny klucz operacji (A2) — retry tym samym
+ *   kluczem replayuje TE SAME numery (backend claimIdempotencyKey), nowy
+ *   chunk = nowy klucz. Bez klucza każdy retry mintowałby nowy zakres.
  * @returns {Promise<{numbers: string[], seqs: number[]}>}
  */
-async function _bulkClaimRange(userId, count) {
-    const res = await fetch(
-        '/api/orders-studnie/claim-production-numbers/' + encodeURIComponent(userId),
-        {
-            method: 'POST',
-            headers: authHeaders(),
-            body: JSON.stringify({ count: count })
-        }
-    );
-    const data = await res.json();
-    if (!res.ok) throw new Error((data && data.error) || 'Server error');
+async function _bulkClaimRange(userId, count, idemKey, signal) {
+    const headers = Object.assign({}, authHeaders());
+    if (idemKey) headers['Idempotency-Key'] = idemKey;
+    const url = '/api/orders-studnie/claim-production-numbers/' + encodeURIComponent(userId);
+    const opts = {
+        method: 'POST',
+        headers: headers,
+        body: JSON.stringify({ count: count })
+    };
+    const run =
+        typeof window.fetchWithRetry429 === 'function'
+            ? () => window.fetchWithRetry429(url, opts, { signal: signal || null })
+            : async () => ({ res: await fetch(url, opts), attempts: 1 });
+    const out = await run();
+    const data = await out.res.json();
+    if (!out.res.ok) throw new Error((data && data.error) || 'Server error');
     return data;
 }
 
 /**
  * Hurtowy zapis chunka zleceń (PUT batch). Zwraca status + ciało do reconciliacji.
+ * Retry 3× po 429 (helper); retry sieciowy jawnie dozwolony — PUT jest
+ * upsertem po stabilnym client-id w all-or-nothing Tx (production.ts:245-505),
+ * więc powtórka nie duplikuje (dowód w komentarzu Paczki A, nie założenie).
  */
-async function _bulkPutChunk(orders) {
-    const res = await fetch('/api/orders-studnie/production', {
+async function _bulkPutChunk(orders, idemKey, signal) {
+    const headers = Object.assign({}, authHeaders());
+    if (idemKey) headers['Idempotency-Key'] = idemKey;
+    const url = '/api/orders-studnie/production';
+    const opts = {
         method: 'PUT',
-        headers: authHeaders(),
+        headers: headers,
         body: JSON.stringify({ data: orders })
-    });
+    };
+    let res;
+    if (typeof window.fetchWithRetry429 === 'function') {
+        const out = await window.fetchWithRetry429(url, opts, {
+            retryNetwork: true,
+            signal: signal || null
+        });
+        res = out.res;
+    } else {
+        res = await fetch(url, opts);
+    }
     const body = await res.json();
     return {
         status: res.status,
@@ -853,19 +877,30 @@ async function _bulkPutChunk(orders) {
 /**
  * Zwrot niezapisanych numerów do puli recycled (reconciliacja claimed - saved).
  * Chunkami 200 — jak limit endpointu (bez tego >200 niezapisanych = 400 i dziury).
+ * Retry 3× po 429 + sieciowy: INSERT ON CONFLICT DO NOTHING (production.ts:835-839)
+ * czyni powtórkę no-op — brak dziur ani dubli.
  */
-async function _bulkRecycleNumbers(userId, seqNumbers) {
+async function _bulkRecycleNumbers(userId, seqNumbers, signal) {
     if (!Array.isArray(seqNumbers) || seqNumbers.length === 0) return;
     for (let i = 0; i < seqNumbers.length; i += _BULK_CHUNK) {
+        const opts = {
+            method: 'POST',
+            headers: authHeaders(),
+            body: JSON.stringify({
+                userId: userId,
+                seqNumbers: seqNumbers.slice(i, i + _BULK_CHUNK)
+            })
+        };
         try {
-            await fetch('/api/orders-studnie/production/recycle-numbers', {
-                method: 'POST',
-                headers: authHeaders(),
-                body: JSON.stringify({
-                    userId: userId,
-                    seqNumbers: seqNumbers.slice(i, i + _BULK_CHUNK)
-                })
-            });
+            if (typeof window.fetchWithRetry429 === 'function') {
+                await window.fetchWithRetry429(
+                    '/api/orders-studnie/production/recycle-numbers',
+                    opts,
+                    { retryNetwork: true, signal: signal || null }
+                );
+            } else {
+                await fetch('/api/orders-studnie/production/recycle-numbers', opts);
+            }
         } catch (_e) {
             /* best-effort: dziura w numeracji lepsza niż błąd dla użytkownika */
         }
@@ -948,7 +983,13 @@ async function executeBulkGeneration(elements) {
         typeof _excelBulkHideProgress === 'function' ? _excelBulkHideProgress : () => {};
     showBulkProgress(0);
 
+    // Klucz przebiegu (A2): stabilny dla retry tej samej operacji, nowy
+    // dla nowego przebiegu. Chunk dokleja własny sufiks — NIGDY nowy klucz
+    // przy retry tego samego chunka (to mintowałoby nowe numery).
+    const bulkRunKey = 'bulk_' + Date.now() + '_' + Math.floor(Math.random() * 1000000);
+
     // Faza 1: claimy chunkami 200 (sekwencyjnie — numery po kolei popupu, 1:1 z built).
+    // Retry 3× w _bulkClaimRange (429 + sieć, ten sam klucz = te same numery).
     const claimed = [];
     let stopped = false;
     for (let start = 0; start < built.length && !stopped; start += _BULK_CHUNK) {
@@ -959,7 +1000,7 @@ async function executeBulkGeneration(elements) {
         const n = Math.min(_BULK_CHUNK, built.length - start);
         let range = null;
         try {
-            range = await _bulkClaimRange(userId, n);
+            range = await _bulkClaimRange(userId, n, bulkRunKey + '_claim_' + start, signal);
         } catch (e) {
             logger.error('orderManager', 'Błąd claima numerów produkcyjnych:', e);
             range = null;
@@ -978,7 +1019,8 @@ async function executeBulkGeneration(elements) {
         showBulkProgress(Math.min(start + n, built.length));
     }
 
-    // Faza 2: PUT chunkami 200 z jednym retry po 429 (Retry-After).
+    // Faza 2: PUT chunkami 200. Retry 3× po 429 w _bulkPutChunk (helper,
+    // ten sam klucz chunka); końcowy 429/5xx = putErrors + recycle.
     const savedIds = new Set();
     const savedVersions = new Map();
     let putErrors = 0;
@@ -995,30 +1037,10 @@ async function executeBulkGeneration(elements) {
             const payload = slice.map((b) => b.order);
             let resp = null;
             try {
-                resp = await _bulkPutChunk(payload);
+                resp = await _bulkPutChunk(payload, bulkRunKey + '_put_' + start, signal);
             } catch (e) {
                 logger.error('orderManager', 'Błąd zapisu chunka zleceń:', e);
                 resp = null;
-            }
-            if (resp && resp.status === 429 && !isAborted()) {
-                // Jeden retry po Retry-After, przerywalny abortem (Anuluj działa w trakcie).
-                const secs = parseFloat(resp.retryAfter);
-                try {
-                    await _bulkSleepAbortable((Number.isFinite(secs) ? secs : 1) * 1000, signal);
-                } catch (_e) {
-                    stopped = true;
-                    break;
-                }
-                if (isAborted()) {
-                    stopped = true;
-                    break;
-                }
-                try {
-                    resp = await _bulkPutChunk(payload);
-                } catch (e) {
-                    logger.error('orderManager', 'Błąd retry chunka zleceń:', e);
-                    resp = null;
-                }
             }
             const saved =
                 resp && resp.body && Array.isArray(resp.body.saved) ? resp.body.saved : [];
@@ -1055,7 +1077,7 @@ async function executeBulkGeneration(elements) {
     }
     if (unsavedSeqs.length > 0) {
         try {
-            await _bulkRecycleNumbers(userId, unsavedSeqs);
+            await _bulkRecycleNumbers(userId, unsavedSeqs, signal);
         } catch (e) {
             logger.error('orderManager', 'Błąd zwrotu numerów produkcyjnych:', e);
         }

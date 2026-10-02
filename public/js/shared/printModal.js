@@ -354,14 +354,28 @@
             if (typeof showToast === 'function') {
                 showToast(`Generowanie wydruku łącznego (${format.toUpperCase()})...`, 'info');
             }
-            const res = await fetch(`/api/export-combined/${format}`, {
+            const fetchBody = {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     ...(typeof authHeaders === 'function' ? authHeaders() : {})
                 },
                 body: JSON.stringify({ offerRuryId: ruryId, offerStudnieId: studnieId })
-            });
+            };
+            const res =
+                typeof window.fetchWithRetry429 === 'function'
+                    ? (
+                          await window.fetchWithRetry429(
+                              `/api/export-combined/${format}`,
+                              fetchBody,
+                              {
+                                  onRetry: () =>
+                                      typeof showToast === 'function' &&
+                                      showToast('Kolejka eksportu zajęta — ponawiam...', 'info')
+                              }
+                          )
+                      ).res
+                    : await fetch(`/api/export-combined/${format}`, fetchBody);
             if (!res.ok) {
                 const errText = await res.text().catch(() => res.statusText);
                 throw new Error(describeCombinedError(res.status, errText));

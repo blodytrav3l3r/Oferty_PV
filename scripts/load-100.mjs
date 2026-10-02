@@ -24,12 +24,16 @@ function argValue(name) {
 if (process.argv.includes('--help') || process.argv.includes('-h')) {
     console.log(
         [
-            'Użycie: node scripts/load-100.mjs [--quick] [--sustained] [--users N] [--base URL]',
+            'Użycie: node scripts/load-100.mjs [--quick] [--sustained] [--users N] [--base URL] [--shared-ip] [--bulk200[=N]]',
             '  --quick      faza steady 60 s (domyślnie 300 s); wariant do CI przy pushu',
             '  --sustained  faza steady ~15 min (900 s); TYLKO workflow_dispatch/nightly',
             '  --users N    liczba wirtualnych userów (domyślnie 100); dla 100 podział',
             '               workerów identyczny jak historycznie (80/15/3 + claim + PDF)',
             '  --base URL   bazowy URL serwera (też BENCH_BASE_URL); formy --base=URL i --base URL',
+            '  --shared-ip  wszyscy workerzy za jednym IP (symulacja NAT/proxy — wspólny',
+            '               kubełek limiterów per-IP, wariant pesymistyczny)',
+            '  --bulk200[=N] faza bulk: N równoległych cykli claim-200 + PUT-200 + cleanup',
+            '               (domyślnie 2; samosprzątająca — DELETE + recycle reszty)',
             '  --help, -h   ta pomoc (działa bez serwera)'
         ].join('\n')
     );
@@ -78,7 +82,16 @@ function pct(sorted, p) {
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const rnd = (a, b) => a + Math.random() * (b - a);
 const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
-const ipOf = (i) => `10.99.${Math.floor(i / 250) + 1}.${(i % 250) + 1}`;
+// --shared-ip: symulacja NAT — wszyscy za jednym adresem, limity per-IP dzielone.
+const SHARED_IP = process.argv.includes('--shared-ip');
+const ipOf = (i) =>
+    SHARED_IP ? '10.99.0.250' : `10.99.${Math.floor(i / 250) + 1}.${(i % 250) + 1}`;
+// --bulk200[=N]: faza ciężkiego bulku (claim-200 + PUT-200 + cleanup), domyślnie 2 cykle.
+const BULK200_RAW = argValue('--bulk200');
+const BULK200 =
+    process.argv.includes('--bulk200') || BULK200_RAW !== null
+        ? Math.max(1, parseInt(BULK200_RAW || '2', 10) || 2)
+        : 0;
 
 // Podział workerów fazy steady w proporcjach historycznych dla 100 userów:
 // 80 czytelników / 15 piszących / 3 batchujące + 1 claim + 1 PDF.
@@ -365,6 +378,90 @@ async function main() {
 
     await Promise.all(workers);
 
+    // Faza bulk-200 (--bulk200[=N], domyślnie OFF): N równoległych cykli
+    // claim-200 (z Idempotency-Key jak FE) + PUT-200 + cleanup (DELETE +
+    // recycle reszty). Samosprzątająca — po fazie zero śladów w DB.
+    // Wynik informacyjny (bulk200Fail), NIE w bramce DoD write-fail (DoD bez zmian).
+    if (BULK200 > 0) {
+        const bulkRuns = [];
+        for (let k = 0; k < BULK200; k++) {
+            bulkRuns.push(
+                (async () => {
+                    const hi = { ...H(k), 'Idempotency-Key': `load-bulk-${Date.now()}-${k}` };
+                    const c = await withBackoff(() =>
+                        timeFetch(`/api/orders-studnie/claim-production-numbers/${adminId}`, {
+                            method: 'POST',
+                            headers: hi,
+                            body: JSON.stringify({ count: 200 })
+                        })
+                    );
+                    rec('bulk200', c);
+                    if (c.status !== 200) return;
+                    let seqs = [];
+                    try {
+                        seqs = JSON.parse(c.body)?.seqs || [];
+                    } catch {
+                        /* ignore */
+                    }
+                    const docs = seqs.map((seq, j) => ({
+                        id: `loadbulk_${Date.now()}_${k}_${j}`,
+                        userId: adminId,
+                        wellId: 'load-bulk',
+                        elementIndex: j,
+                        productionOrderNumber: `LB/X/${String(seq).padStart(5, '0')}/26`
+                    }));
+                    const put = await withBackoff(() =>
+                        timeFetch('/api/orders-studnie/production', {
+                            method: 'PUT',
+                            headers: H(k),
+                            body: JSON.stringify({ data: docs })
+                        })
+                    );
+                    rec('bulk200', put);
+                    let savedIds = [];
+                    try {
+                        savedIds = (JSON.parse(put.body)?.saved || []).map((s) => s.id);
+                    } catch {
+                        /* ignore */
+                    }
+                    // Cleanup jednym batch-delete (auto-recykling numerów w Tx)
+                    // zamiast 200× DELETE (te waliły w WRITE 60/min).
+                    if (savedIds.length) {
+                        const del = await withBackoff(() =>
+                            timeFetch('/api/orders-studnie/production/batch-delete', {
+                                method: 'POST',
+                                headers: H(k),
+                                body: JSON.stringify({ ids: savedIds.slice(0, 200) })
+                            })
+                        );
+                        rec('bulk200', del);
+                    }
+                    const putSeqs = new Set(
+                        docs
+                            .filter((d) => savedIds.includes(d.id))
+                            .map((d, j) => seqs[j])
+                            .filter((s) => s !== undefined)
+                    );
+                    const unsaved = seqs.filter((s) => !putSeqs.has(s));
+                    if (unsaved.length) {
+                        const rc = await withBackoff(() =>
+                            timeFetch('/api/orders-studnie/production/recycle-numbers', {
+                                method: 'POST',
+                                headers: H(k),
+                                body: JSON.stringify({
+                                    userId: adminId,
+                                    seqNumbers: unsaved.slice(0, 200)
+                                })
+                            })
+                        );
+                        rec('bulk200', rc);
+                    }
+                })()
+            );
+        }
+        await Promise.all(bulkRuns);
+    }
+
     // Burst: N jednoczesnych one-shotów (po 1 hicie na kubełek) + PDF.
     // Dla N=100 podział identyczny jak historycznie (55/20/10/5 + 5 health + 2 PDF + 3 fill).
     const burstFns = [];
@@ -450,6 +547,8 @@ async function main() {
         quick: QUICK,
         sustained: SUSTAINED,
         users: USERS,
+        sharedIp: SHARED_IP,
+        bulk200: BULK200,
         steadyMs: STEADY_MS,
         ops: {},
         burst: null,
@@ -494,6 +593,8 @@ async function main() {
     const writeFail = stats.filter(
         (s) => (s.op === 'write' || s.op === 'batch') && s.status !== 200
     ).length;
+    // bulk200 informacyjnie (faza --bulk200): NIE w bramce write-fail (DoD bez zmian).
+    const bulk200Fail = stats.filter((s) => s.op === 'bulk200' && s.status !== 200).length;
     const crudP95 = Math.max(
         report.ops.read?.p95 || 0,
         report.ops.write?.p95 || 0,
@@ -511,7 +612,10 @@ async function main() {
         writeFail,
         busyDelta,
         crudP95,
-        throttled
+        throttled,
+        bulk200Fail,
+        sharedIp: SHARED_IP,
+        bulk200: BULK200
     };
     report.dod = dod;
     const pass =

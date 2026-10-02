@@ -196,12 +196,30 @@ export function generatePDF(html: string): Promise<Buffer> {
 
 /** Mapuje błąd PDF na odpowiedź HTTP. Zwraca true gdy obsłużony. */
 export function mapPdfError(
-    res: { status(code: number): { json(body: unknown): unknown } },
+    res: {
+        status(code: number): { json(body: unknown): unknown };
+        set?(field: string, value: string): unknown;
+    },
     e: unknown,
     context: string
 ): boolean {
     const status = (e as { status?: number }).status;
     if (status === 429 || status === 504 || status === 500) {
+        // A3: PDF_BUSY 429 niesie REALNY Retry-After z głębokości kolejki
+        // (avg z pdfMetrics, nie zgadywane 2s): klient czeka na zwolnienie
+        // slotu zamiast strzelać w ciemno. Kompat: sam nagłówek, body bez zmian.
+        if (status === 429) {
+            const avgSec = pdfMetrics.done > 0 ? pdfMetrics.totalMs / pdfMetrics.done / 1000 : 5;
+            const retryAfter = Math.min(
+                120,
+                Math.max(2, Math.ceil(((queue.length + 1) / PDF_CONCURRENCY) * avgSec))
+            );
+            try {
+                res.set?.('Retry-After', String(retryAfter));
+            } catch {
+                /* shim testowy bez set — sam status wystarczy */
+            }
+        }
         const message = e instanceof Error ? e.message : 'Błąd generowania PDF';
         const detail = e instanceof Error ? e.stack || e.message : message;
         logger.error('Pdf', `Błąd eksportu PDF (${context})`, detail);

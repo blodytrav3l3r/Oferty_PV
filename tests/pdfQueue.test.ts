@@ -92,4 +92,19 @@ describe('P0-G kolejka PDF', () => {
             false
         );
     });
+
+    test('A3: mapPdfError 429 stawia Retry-After z kolejki (2..120s), body bez zmian', () => {
+        const set = jest.fn();
+        const json = jest.fn();
+        const res: any = { status: jest.fn().mockReturnValue({ json }), json, set };
+        const err: any = new Error('Generowanie PDF zajęte — spróbuj ponownie za chwilę');
+        err.status = 429;
+        err.code = 'PDF_BUSY';
+        expect(mapPdfError(res, err, 'test')).toBe(true);
+        expect(set).toHaveBeenCalledWith('Retry-After', expect.any(String));
+        const secs = parseInt(set.mock.calls[0][1], 10);
+        expect(secs).toBeGreaterThanOrEqual(2);
+        expect(secs).toBeLessThanOrEqual(120);
+        expect(json).toHaveBeenCalledWith({ error: err.message, code: 'PDF_BUSY' });
+    });
 });

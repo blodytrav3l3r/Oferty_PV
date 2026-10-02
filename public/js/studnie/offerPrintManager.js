@@ -4,6 +4,23 @@
    offerPrintManager.js
    ============================ */
 
+// Wspólny fetch eksportów (Paczka A): 429 + błąd sieci z retry 3×,
+// backoff z Retry-After, cap 10s. Eksporty read-only (brak zapisów DB).
+function fetchExportStudnie(url, fetchOpts) {
+    const baseHeaders =
+        typeof authHeaders === 'function' ? authHeaders() : { 'Content-Type': 'application/json' };
+    const opts = Object.assign({ headers: baseHeaders }, fetchOpts || {});
+    const notify = () => {
+        if (typeof showToast === 'function') {
+            showToast('Kolejka eksportu zajęta — ponawiam...', 'info');
+        }
+    };
+    if (typeof window.fetchWithRetry429 === 'function') {
+        return window.fetchWithRetry429(url, opts, { onRetry: notify }).then((out) => out.res);
+    }
+    return fetch(url, opts);
+}
+
 /**
  * Buduje blok danych klienta.
  */
@@ -453,22 +470,8 @@ window.exportOfferDirect_action = async function (offerId, format) {
     }
 
     const endpoint = format === 'pdf' ? 'export-pdf' : 'export-docx';
-    const exportHeaders =
-        typeof authHeaders === 'function' ? authHeaders() : { 'Content-Type': 'application/json' };
-    // Jeden retry po 429 + Retry-After (kolejka PDF 2+10) — wzorzec _bulkPutChunk.
-    const fetchOnce = () =>
-        fetch(`/api/offers-studnie/${offerId}/${endpoint}`, { headers: exportHeaders });
-    fetchOnce()
+    fetchExportStudnie(`/api/offers-studnie/${offerId}/${endpoint}`)
         .then(async (res) => {
-            if (res.status === 429) {
-                const wait =
-                    Math.min(10, parseInt(res.headers.get('retry-after') || '2', 10) || 2) * 1000;
-                if (typeof showToast === 'function') {
-                    showToast('Kolejka eksportu zajęta — ponawiam...', 'info');
-                }
-                await new Promise((r) => setTimeout(r, wait));
-                res = await fetchOnce();
-            }
             if (!res.ok) {
                 const errText = await res.text().catch(() => res.statusText);
                 throw new Error(
@@ -527,12 +530,7 @@ window.exportOrderDirect_action = async function (orderId, format) {
     }
 
     const endpoint = format === 'pdf' ? 'export-pdf' : 'export-docx';
-    fetch(`/api/orders-studnie/${orderId}/${endpoint}`, {
-        headers:
-            typeof authHeaders === 'function'
-                ? authHeaders()
-                : { 'Content-Type': 'application/json' }
-    })
+    fetchExportStudnie(`/api/orders-studnie/${orderId}/${endpoint}`)
         .then(async (res) => {
             if (!res.ok) {
                 const errText = await res.text().catch(() => res.statusText);
@@ -577,12 +575,7 @@ window.exportKartaDirect_action = async function (orderId, format) {
     }
 
     const endpoint = format === 'pdf' ? 'export-karta-pdf' : 'export-karta-docx';
-    fetch(`/api/orders-studnie/${orderId}/${endpoint}`, {
-        headers:
-            typeof authHeaders === 'function'
-                ? authHeaders()
-                : { 'Content-Type': 'application/json' }
-    })
+    fetchExportStudnie(`/api/orders-studnie/${orderId}/${endpoint}`)
         .then(async (res) => {
             if (!res.ok) {
                 const errText = await res.text().catch(() => res.statusText);
@@ -701,7 +694,7 @@ async function exportStudnieOrderAsOffer_action(orderId, format) {
             showToast(`Generowanie oferty z zamówienia (${format.toUpperCase()})...`, 'info');
         }
         const endpoint = format === 'pdf' ? 'export-offer-pdf' : 'export-offer-docx';
-        const res = await fetch(`/api/orders-studnie/${orderId}/${endpoint}`, {
+        const res = await fetchExportStudnie(`/api/orders-studnie/${orderId}/${endpoint}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

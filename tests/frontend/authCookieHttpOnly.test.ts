@@ -63,11 +63,8 @@ function loadAuth(sandbox: any) {
 }
 
 function loadFetchJson(sandbox: any) {
-    // Plik jest modułem ESM — do vm wycinamy słowo kluczowe export.
-    const code = readJs('shared/fetchJson.js').replace(
-        'export async function fetchJson',
-        'async function fetchJson'
-    );
+    // Plik jest modułem ESM — do vm wycinamy WSZYSTKIE exporty (fetchJson + fetchWithRetry429).
+    const code = readJs('shared/fetchJson.js').replace(/^export /gm, '');
     vm.runInContext(code + '\nthis.fetchJsonFn = fetchJson;', sandbox);
     return sandbox.fetchJsonFn;
 }
