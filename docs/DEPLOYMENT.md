@@ -206,6 +206,25 @@ curl -b authToken=<sesja-admina> "localhost:3000/health/pdf?smoke=1"    # 200 + 
 
 `503 {status: "degraded"}` = binarka niewidoczna (sprawdź `PUPPETEER_CACHE_DIR`, `HOME`, `docker exec` → `ls ~/.cache/puppeteer`). Deploy dockerowy (`node scripts/deploy.mjs docker vX.Y.Z`) wykonuje te kontrole automatycznie jako krok `deploy:check:pdf` (`npm run deploy:check:pdf` loguje się jako admin; bez hasła w env smoke jest SKIPPED) — nieudany smoke przerywa deploy.
 
+### Pamięć kontenera (C3 — protokół pomiaru, limit PENDING staging)
+
+`mem_limit` celowo NIE ustawiony: na dev-maszynie brak Dockera, a RSS noda
+(~200–230 MB we wszystkich load-100) nie liczy procesów potomnych Chromium
+(sonda: 2× równoległy PDF, RSS 226 → 226 MB — dzieci poza RSS noda).
+Arbitralny limit zabiłby PDF albo nic nie wniósł.
+
+Szacunek z pomiarów (do potwierdzenia na stagingu):
+`~230 MB (node) + 2 × ~350 MB (Chromium, concurrency=2) + 512 MB (shm)` ≈ **1,5 GB peak**.
+
+Drill na stagingu przed ustawieniem `mem_limit`:
+
+1. `docker compose up -d --build`, odczekaj healthy (`/health/ready`).
+2. W tle: `docker stats --no-stream --format '{{.MemUsage}}' sok-oferty` co 10 s.
+3. `node scripts/load-100.mjs --users 100` + równolegle 2× eksport PDF dużej oferty.
+4. Zanotuj peak; `mem_limit = peak × 1,5`, `mem_reservation = peak`.
+5. Restart: `docker restart sok-oferty` → healthy w `start_period` 30 s.
+6. Powtórz load — brak OOM-kill (`docker inspect -f '{{.State.OOMKilled}}'`).
+
 ## 4. VPS (Linux)
 
 > **HTTPS jest wymagane w produkcji.** Bez reverse proxy z TLS funkcje przeglądarki

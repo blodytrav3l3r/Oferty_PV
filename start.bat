@@ -119,6 +119,9 @@ if not exist "data" mkdir data
 set "MAX_RESTARTS=5"
 set "RESTART_DELAY=5"
 set "RESTART_COUNT=0"
+REM C1: okno resetu licznika (s) + rotacja watchdog.log (bajty, 1 backup .1)
+set "WATCHDOG_WINDOW=3600"
+set "WATCHDOG_LOG_MAX=1048576"
 
 :watchdog_loop
 if /i "%MODE%"=="prod" (
@@ -136,9 +139,17 @@ if /i "%MODE%"=="prod" (
 
 set "EXITCODE=%ERRORLEVEL%"
 echo [%date% %time%] Server exited with code %EXITCODE% >> data\watchdog.log
+REM C1: rotacja logu best-effort (nigdy nie blokuje watchdoga)
+call node scripts\watchdog.cjs rotate data\watchdog.log %WATCHDOG_LOG_MAX% >nul 2>nul
 
 REM exit 0 = kontrolowane zamkniecie (Ctrl+C / SIGTERM) -> nie restartuj
 if "%EXITCODE%"=="0" goto watchdog_end
+
+REM C1: zdrowy okres (>WATCHDOG_WINDOW bez crasha) kasuje historie licznika.
+REM Crash loop dalej rosnie i staje na MAX_RESTARTS (brak nieskonczonej petli).
+set "WD_DECISION=KEEP"
+for /f "tokens=*" %%w in ('node scripts\watchdog.cjs window data\watchdog.last %WATCHDOG_WINDOW% 2^>nul') do set "WD_DECISION=%%w"
+if /i "!WD_DECISION!"=="RESET" set "RESTART_COUNT=0"
 
 set /a RESTART_COUNT+=1
 

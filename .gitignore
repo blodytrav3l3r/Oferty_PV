@@ -54,6 +54,9 @@ data/migration_backup/
 data/*.sqlite*
 data/*.sqlite-shm
 data/*.sqlite-wal
+# Runtime/incydenty (dowody lokalne, stan watchdoga — nie commituj)
+data/incidents/
+data/watchdog.last
 /*.sqlite*
 /*.db
 prisma/data/

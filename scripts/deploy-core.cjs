@@ -29,10 +29,13 @@ function linuxStartCmd() {
     // swiezego profilu gdy nie (pierwszy deploy). Konstrukcja if/fi zamiast
     // slepego `restart || start`: blad restartu nie moze odpalic startu, a blad
     // galezi przerywa deploy (fail-fast) zanim `pm2 save` zamaskuje exit code.
+    // C2: start przez ecosystem.config.cjs (limity crash loop + memory + logi),
+    // restart zostawia dotychczasowy profil (reload konfiguracji przy redeploy
+    // robi `pm2 restart --update-env` ręcznie, nie tutaj).
     return (
         'if pm2 describe sok-oferty > /dev/null 2>&1; ' +
         'then pm2 restart sok-oferty; ' +
-        'else pm2 start dist/server.js --name sok-oferty; ' +
+        'else pm2 start ecosystem.config.cjs; ' +
         'fi && pm2 save'
     );
 }

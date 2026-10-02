@@ -127,17 +127,41 @@ describe('deploy-core', () => {
         });
     });
 
+    describe('C2 ecosystem.config.cjs (tylko Linux bare-metal)', () => {
+        /* eslint-disable @typescript-eslint/no-require-imports -- moduł CJS */
+        const eco = require('../../ecosystem.config.cjs') as {
+            apps: Array<Record<string, unknown>>;
+        };
+        /* eslint-enable @typescript-eslint/no-require-imports */
+        it('jeden proces fork (ADR-012 single-node SQLite)', () => {
+            expect(eco.apps).toHaveLength(1);
+            expect(eco.apps[0].name).toBe('sok-oferty');
+            expect(eco.apps[0].script).toBe('dist/server.js');
+            expect(eco.apps[0].instances).toBe(1);
+            expect(eco.apps[0].exec_mode).toBe('fork');
+            expect((eco.apps[0].env as Record<string, unknown>).NODE_ENV).toBe('production');
+        });
+        it('crash loop staje (max_restarts), kill_timeout = graceful 10s', () => {
+            expect(eco.apps[0].max_restarts).toBeGreaterThan(0);
+            expect(eco.apps[0].min_uptime).toBeDefined();
+            expect(eco.apps[0].kill_timeout).toBe(10000);
+            expect(eco.apps[0].max_memory_restart).toBeDefined();
+        });
+    });
+
     describe('P0.2 linux PM2 start-or-restart', () => {
         it('jawny check: describe -> restart (istnieje) albo start (swiezy profil) -> save', () => {
             const cmd: string = core.linuxStartCmd();
             expect(cmd).toContain('pm2 describe sok-oferty');
             expect(cmd).toContain('pm2 restart sok-oferty');
-            expect(cmd).toContain('pm2 start dist/server.js --name sok-oferty');
+            // C2: świeży start przez ecosystem (limity), nie ad-hoc CLI.
+            expect(cmd).toContain('pm2 start ecosystem.config.cjs');
+            expect(cmd).not.toContain('pm2 start dist/server.js');
             expect(cmd).toContain('pm2 save');
             // kolejnosc: najpierw check, save na samym koncu
             expect(cmd.indexOf('pm2 describe')).toBeLessThan(cmd.indexOf('pm2 restart'));
-            expect(cmd.indexOf('pm2 restart')).toBeLessThan(cmd.indexOf('pm2 start dist'));
-            expect(cmd.lastIndexOf('pm2 save')).toBeGreaterThan(cmd.indexOf('pm2 start dist'));
+            expect(cmd.indexOf('pm2 restart')).toBeLessThan(cmd.indexOf('pm2 start ecosystem'));
+            expect(cmd.lastIndexOf('pm2 save')).toBeGreaterThan(cmd.indexOf('pm2 start ecosystem'));
         });
 
         it('bez slepego fallbacku: blad restartu nie moze odpalic startu ani zamaskowac exit code', () => {
