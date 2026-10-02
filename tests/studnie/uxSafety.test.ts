@@ -65,16 +65,9 @@ describe('uxSafety: confirm przed destrukcją (actionsCrud)', () => {
         ctx = makeCtx();
     });
 
-    test('removeWellComponent: cancel → brak splice, confirm wołany pierwszy', async () => {
-        confirmQueue.push(false);
+    test('removeWellComponent: bez confirm — od razu splice (szybka praca z podglądu)', async () => {
         await vm.runInContext('removeWellComponent(0)', ctx);
-        expect(order).toEqual(['confirm']);
-        expect(well.config.length).toBe(1);
-
-        order.length = 0;
-        confirmQueue.push(true);
-        await vm.runInContext('removeWellComponent(0)', ctx);
-        expect(order).toEqual(['confirm', 'splice']);
+        expect(order).toEqual(['splice']);
         expect(well.config.length).toBe(0);
     });
 
@@ -91,16 +84,9 @@ describe('uxSafety: confirm przed destrukcją (actionsCrud)', () => {
         expect(well.config.length).toBe(0);
     });
 
-    test('updateWellQuantity qty<=0 deleguje do remove (z confirmen)', async () => {
-        confirmQueue.push(false);
+    test('updateWellQuantity qty<=0 deleguje do remove (bez confirma)', async () => {
         await vm.runInContext('updateWellQuantity(0, 0)', ctx);
-        expect(order).toEqual(['confirm']);
-        expect(well.config.length).toBe(1);
-
-        order.length = 0;
-        confirmQueue.push(true);
-        await vm.runInContext('updateWellQuantity(0, 0)', ctx);
-        expect(order).toEqual(['confirm', 'splice']);
+        expect(order).toEqual(['splice']);
         expect(well.config.length).toBe(0);
     });
 });

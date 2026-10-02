@@ -247,7 +247,7 @@ function addWellComponent(productId) {
     }
 }
 
-async function removeWellComponent(index) {
+function removeWellComponent(index) {
     if (isOfferLocked()) {
         if (typeof window.showToast === 'function') window.showToast(OFFER_LOCKED_MSG, 'error');
         return;
@@ -256,15 +256,9 @@ async function removeWellComponent(index) {
         if (typeof window.showToast === 'function') window.showToast(WELL_LOCKED_MSG, 'error');
         return;
     }
-    if (
-        !(await appConfirm('Czy na pewno usunąć ten element ze studni?', {
-            title: 'Usuwanie elementu',
-            type: 'danger'
-        }))
-    )
-        return;
     const well = getCurrentWell();
-    if (well && window.pzGuard && window.pzGuard.hasPzForElementAtOrAfter(well.id, index)) {
+    if (!well) return;
+    if (window.pzGuard && window.pzGuard.hasPzForElementAtOrAfter(well.id, index)) {
         if (typeof window.showToast === 'function')
             window.showToast(
                 '<i data-lucide="x-circle"></i> Nie można usunąć elementu — ma przypisane zlecenie produkcyjne. Usuń najpierw zlecenie w zakładce „Zlecenia produkcyjne”.',
