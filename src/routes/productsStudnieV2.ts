@@ -4,6 +4,7 @@ import { logger } from '../utils/logger';
 import { validateData } from '../validators/authSchema';
 import { PRICELIST_WRITE_LIMITER } from '../middleware/rateLimiters';
 import { pricelistDataSchema, productStudniePatchSchema } from '../validators/offerSchemas';
+import { requireFinitePrice, InvalidPriceError } from '../validators/finiteNumbers';
 import { createModuleLock } from '../middleware/writeLock';
 import prisma from '../prismaClient';
 import { buildXlsx } from '../utils/minimalXlsx';
@@ -145,7 +146,8 @@ function fromLegacy(p: Record<string, unknown>): StudnieProductRaw {
         dn: p.dn != null ? String(p.dn) : null,
         height: p.height != null ? Number(p.height) : null,
         weight: p.weight != null ? Number(p.weight) : null,
-        price: Number(p.price ?? 0),
+        // D-FIX-2: brak/cicha koercja ceny na 0 zabroniona.
+        price: requireFinitePrice(p.price, 'price'),
         area: p.area != null ? Number(p.area) : null,
         areaExt: p.areaExt != null ? Number(p.areaExt) : null,
         transport: p.transport != null ? Number(p.transport) : null,
@@ -297,6 +299,11 @@ router.put(
             }
             res.json(result.value);
         } catch (err: unknown) {
+            // D-FIX-2: invalid numeric input to 400 (tx rollback — nic nie zapisane).
+            if (err instanceof InvalidPriceError) {
+                res.status(400).json({ error: err.message });
+                return;
+            }
             const message = err instanceof Error ? err.message : 'Unknown error';
             logger.error('ProductsStudnieV2', 'PUT error', message);
             res.status(500).json({ error: 'Wewnętrzny błąd serwera' });

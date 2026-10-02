@@ -12,7 +12,7 @@ export const productPatchSchema = z
     .object({
         name: z.string().optional(),
         category: z.string().optional(),
-        price: z.number().optional(),
+        price: z.number().finite().optional(),
         transport: z.number().nullable().optional(),
         weight: z.number().nullable().optional(),
         area: z.number().nullable().optional()
@@ -27,7 +27,7 @@ export const productStudniePatchSchema = z
         dn: z.union([z.string(), z.number()]).nullable().optional(),
         height: z.number().nullable().optional(),
         weight: z.number().nullable().optional(),
-        price: z.number().optional(),
+        price: z.number().finite().optional(),
         area: z.number().nullable().optional(),
         areaExt: z.number().nullable().optional(),
         transport: z.number().nullable().optional(),

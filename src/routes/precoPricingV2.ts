@@ -4,6 +4,7 @@ import { logger } from '../utils/logger';
 import { PRECO_PRICING_LIMITER } from '../middleware/rateLimiters';
 import { validateData } from '../validators/authSchema';
 import { precoPricingUpdateSchema, precoPricingPatchSchema } from '../validators/offerSchemas';
+import { requireFinitePrice, InvalidPriceError } from '../validators/finiteNumbers';
 import { createModuleLock } from '../middleware/writeLock';
 import prisma from '../prismaClient';
 import { buildXlsx } from '../utils/minimalXlsx';
@@ -111,13 +112,21 @@ async function flattenAndSave(input: Record<string, unknown>, isDefault: boolean
             if (Array.isArray(kinety)) {
                 for (const k of kinety) {
                     const kin = k as Record<string, unknown>;
+                    // D-FIX-2: wymiary/ceny kinety wymagane i skończone —
+                    // brak/cicha koercja na 0 zabroniona (throw przed tx).
                     kinetyRows.push({
                         id: `preco_kinety_${key}_${kinetyIdx}`,
                         order: (kin.order as number) ?? kinetyIdx,
-                        dn: (kin.dn ?? 0) as number,
+                        dn: requireFinitePrice(kin.dn, `kinety[${kinetyIdx}].dn`),
                         wellDn: dn,
-                        height: (kin.prosta ?? kin.height) as number,
-                        cena: (kin.dodWlot ?? kin.cena) as number
+                        height: requireFinitePrice(
+                            kin.prosta ?? kin.height,
+                            `kinety[${kinetyIdx}].height`
+                        ),
+                        cena: requireFinitePrice(
+                            kin.dodWlot ?? kin.cena,
+                            `kinety[${kinetyIdx}].cena`
+                        )
                     });
                     kinetyIdx++;
                 }
@@ -132,8 +141,8 @@ async function flattenAndSave(input: Record<string, unknown>, isDefault: boolean
                             id: `preco_zakres_${label}_${zakresIdx}`,
                             order: (it.order as number) ?? zakresIdx,
                             label,
-                            min: it.min as number,
-                            max: it.max as number,
+                            min: requireFinitePrice(it.min, `zakresy[${zakresIdx}].min`),
+                            max: requireFinitePrice(it.max, `zakresy[${zakresIdx}].max`),
                             grupy: JSON.stringify(grupy),
                             wellDn: dn
                         });
@@ -222,6 +231,11 @@ router.put(
             }
             res.json(result.value);
         } catch (err: unknown) {
+            // D-FIX-2: invalid numeric input to 400 (throw przed tx).
+            if (err instanceof InvalidPriceError) {
+                res.status(400).json({ error: err.message });
+                return;
+            }
             const message = err instanceof Error ? err.message : 'Unknown error';
             logger.error('PrecoPricingV2', 'PUT error', message);
             res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
@@ -282,6 +296,11 @@ router.patch(
             }
             res.json(result.value);
         } catch (err: unknown) {
+            // D-FIX-2: invalid numeric input to 400 (flattenAndSave waliduje).
+            if (err instanceof InvalidPriceError) {
+                res.status(400).json({ error: err.message });
+                return;
+            }
             const message = err instanceof Error ? err.message : 'Unknown error';
             logger.error('PrecoPricingV2', 'PATCH error', message);
             res.status(500).json({ error: 'Wewnętrzny błąd serwera' });

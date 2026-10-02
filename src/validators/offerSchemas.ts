@@ -58,9 +58,9 @@ export const offerItemSchema = z
     .object({
         id: z.string().optional(),
         productId: z.string().min(1, 'ID produktu jest wymagane'),
-        quantity: z.number().positive('Ilość musi być dodatnia'),
+        quantity: z.number().finite().positive('Ilość musi być dodatnia'),
         discount: z.number().min(0).max(100).finite().optional(),
-        price: z.number().nonnegative('Cena nie może być ujemna').optional()
+        price: z.number().finite().nonnegative('Cena nie może być ujemna').optional()
     })
     .passthrough(); // P0.3(A): celowy passthrough — payload niesie pola domenowe/serwerowe (uid/id/version), walidacja bramkuje rdzeń
 
@@ -70,7 +70,7 @@ export const offerCreateSchema = z
         clientId: z.string().min(1, 'ID klienta jest wymagane'),
         state: z.enum(['draft', 'final']).default('draft'),
         status: z.enum(['active', 'draft']).optional(),
-        transportCost: z.number().min(0).default(0),
+        transportCost: z.number().finite().min(0).default(0),
         items: z.array(offerItemSchema),
         data: z.record(z.string(), z.unknown()).optional()
     })
@@ -93,18 +93,18 @@ export const wellComponentSchema = z
         typ: z.string().optional(),
         componentType: z.string().optional(),
         layer: z.string().optional(),
-        dn: z.number().positive().optional(),
-        height: z.number().nonnegative().optional(),
-        wysokoscUzytkowa: z.number().nonnegative().optional(),
-        waga: z.number().nonnegative().optional(),
-        pojemnosc: z.number().nonnegative().optional(),
-        iloscStopni: z.number().int().nonnegative().optional(),
-        position: z.number().int().nonnegative().optional(),
-        quantity: z.number().int().positive().default(1),
-        price: z.number().nonnegative().optional(),
+        dn: z.number().finite().positive().optional(),
+        height: z.number().finite().nonnegative().optional(),
+        wysokoscUzytkowa: z.number().finite().nonnegative().optional(),
+        waga: z.number().finite().nonnegative().optional(),
+        pojemnosc: z.number().finite().nonnegative().optional(),
+        iloscStopni: z.number().int().finite().nonnegative().optional(),
+        position: z.number().int().finite().nonnegative().optional(),
+        quantity: z.number().int().finite().positive().default(1),
+        price: z.number().finite().nonnegative().optional(),
         discount: z.number().min(0).max(100).finite().optional(),
         isOverwritten: z.boolean().optional(),
-        overwrittenCost: z.number().nonnegative().optional()
+        overwrittenCost: z.number().finite().nonnegative().optional()
     })
     .passthrough(); // P0.3(A): celowy passthrough — payload niesie pola domenowe/serwerowe (uid/id/version), walidacja bramkuje rdzeń
 
@@ -116,11 +116,11 @@ export const passageConfigSchema = z
         dnPrzejscia: z.union([z.string(), z.number()]).optional(),
         typRury: z.string().optional(),
         typPrzejscia: z.string().optional(),
-        heightFromBottom: z.number().nonnegative().optional(),
-        zapasDol: z.number().nonnegative().optional(),
-        zapasGora: z.number().nonnegative().optional(),
-        zapasDolMin: z.number().nonnegative().optional(),
-        zapasGoraMin: z.number().nonnegative().optional()
+        heightFromBottom: z.number().finite().nonnegative().optional(),
+        zapasDol: z.number().finite().nonnegative().optional(),
+        zapasGora: z.number().finite().nonnegative().optional(),
+        zapasDolMin: z.number().finite().nonnegative().optional(),
+        zapasGoraMin: z.number().finite().nonnegative().optional()
     })
     .passthrough(); // P0.3(A): celowy passthrough — payload niesie pola domenowe/serwerowe (uid/id/version), walidacja bramkuje rdzeń
 
@@ -129,14 +129,14 @@ export const wellDataSchema = z
         id: z.string().optional(),
         dn: z.union([z.number(), z.string().min(1, 'Średnica DN jest wymagana')]).optional(),
         type: z.string().optional(),
-        totalPrice: z.number().nonnegative().optional(),
-        price: z.number().nonnegative().optional(),
+        totalPrice: z.number().finite().nonnegative().optional(),
+        price: z.number().finite().nonnegative().optional(),
         discount: z.number().min(0).max(100).finite().optional(),
         zwienczenie: z.string().optional(),
         components: z.array(wellComponentSchema).optional(),
         passages: z.array(passageConfigSchema).optional(),
-        height: z.number().positive('Wysokość studni jest wymagana').optional(),
-        depth: z.number().nonnegative().optional()
+        height: z.number().finite().positive('Wysokość studni jest wymagana').optional(),
+        depth: z.number().finite().nonnegative().optional()
     })
     .passthrough(); // P0.3(A): celowy passthrough — payload niesie pola domenowe/serwerowe (uid/id/version), walidacja bramkuje rdzeń
 
@@ -146,9 +146,9 @@ export const offerStudnieCreateSchema = z
         clientId: z.string().min(1, 'ID klienta jest wymagane'),
         state: z.enum(['draft', 'final']).default('draft'),
         status: z.enum(['active', 'draft']).optional(),
-        transportCost: z.number().min(0).default(0),
+        transportCost: z.number().finite().min(0).default(0),
         wells: z.array(wellDataSchema),
-        totalPrice: z.number().nonnegative().optional(),
+        totalPrice: z.number().finite().nonnegative().optional(),
         data: z.record(z.string(), z.unknown()).optional()
     })
     .passthrough(); // P0.3(A): celowy passthrough — payload niesie pola domenowe/serwerowe (uid/id/version), walidacja bramkuje rdzeń

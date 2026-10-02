@@ -4,6 +4,7 @@ import { logger } from '../utils/logger';
 import { validateData } from '../validators/authSchema';
 import { PRICELIST_WRITE_LIMITER } from '../middleware/rateLimiters';
 import { pricelistDataSchema, productPatchSchema } from '../validators/offerSchemas';
+import { requireFinitePrice, InvalidPriceError } from '../validators/finiteNumbers';
 import { createModuleLock } from '../middleware/writeLock';
 import prisma from '../prismaClient';
 import { buildXlsx } from '../utils/minimalXlsx';
@@ -68,11 +69,12 @@ router.put(
         try {
             const result = await runWithLock(async () => {
                 const arr: Record<string, unknown>[] = req.body.data;
-                const mapped = arr.map((item) => ({
+                const mapped = arr.map((item, idx) => ({
                     id: String(item.id),
                     name: String(item.name ?? ''),
                     category: String(item.category ?? ''),
-                    price: Number(item.price ?? 0),
+                    // D-FIX-2: brak/cicha koercja ceny na 0 zabroniona.
+                    price: requireFinitePrice(item.price, `data[${idx}].price`),
                     transport: item.transport != null ? Number(item.transport) : null,
                     weight: item.weight != null ? Number(item.weight) : null,
                     area: item.area != null ? Number(item.area) : null
@@ -91,6 +93,11 @@ router.put(
             }
             res.json(result.value);
         } catch (err: unknown) {
+            // D-FIX-2: invalid numeric input to 400 (przed tx — nic nie zapisane).
+            if (err instanceof InvalidPriceError) {
+                res.status(400).json({ error: err.message });
+                return;
+            }
             const message = err instanceof Error ? err.message : 'Unknown error';
             logger.error('ProductsV2', 'PUT error', message);
             res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
