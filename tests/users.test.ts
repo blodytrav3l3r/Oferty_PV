@@ -18,7 +18,9 @@ jest.mock('../src/middleware/auth', () => ({
         } else {
             res.status(403).json({ error: 'Brak uprawnień administratora' });
         }
-    }
+    },
+    authCacheInvalidateUser: jest.fn(),
+    deleteUserSessions: jest.fn().mockResolvedValue(0)
 }));
 
 // Mock bcrypt
@@ -41,6 +43,7 @@ jest.mock('../src/prismaClient', () => ({
             delete: jest.fn()
         },
         sessions: {
+            findMany: jest.fn().mockResolvedValue([]),
             deleteMany: jest.fn()
         },
         document_shares: {

@@ -1,7 +1,13 @@
 import express from 'express';
 import bcrypt from 'bcryptjs';
 import prisma from '../prismaClient';
-import { requireAuth, requireAdmin, AuthenticatedRequest } from '../middleware/auth';
+import {
+    requireAuth,
+    requireAdmin,
+    AuthenticatedRequest,
+    authCacheInvalidateUser,
+    deleteUserSessions
+} from '../middleware/auth';
 import { mapPrismaError } from '../utils/prismaErrors';
 import { validateData } from '../validators/authSchema';
 import { ADMIN_USERS_LIMITER } from '../middleware/rateLimiters';
@@ -144,6 +150,19 @@ router.put(
                 }
             });
 
+            // D-FIX-1: rola/hasło to zmiana bezpieczeństwa — natychmiastowe
+            // unieważnienie cache + purge sesji (stary stan nie może zostać
+            // aktywny: cache 30 s ani sesje do 7 dni). Self-edit zachowuje
+            // bieżącą sesję admina (jak self-service change-password).
+            const roleChanged = role !== undefined && role !== user.role;
+            const passwordChanged = password !== undefined && password !== '';
+            authCacheInvalidateUser(userId);
+            if (roleChanged || passwordChanged) {
+                const authReq = req as AuthenticatedRequest;
+                const selfToken = userId === authReq.user?.id ? req.cookies?.authToken : undefined;
+                await deleteUserSessions(userId, selfToken);
+            }
+
             res.json({ ok: true });
         } catch (e: unknown) {
             const message = e instanceof Error ? e.message : 'Unknown error';
@@ -195,6 +214,9 @@ router.delete('/:id', requireAuth, requireAdmin, adminUsersLimiter, async (req, 
             });
             await tx.users.delete({ where: { id: req.params.id } });
         });
+        // D-FIX-1: sesje skasowane w tx powyżej; dobij wpis cache (rola usera
+        // nie może wisieć 30 s po usunięciu konta).
+        authCacheInvalidateUser(req.params.id);
         res.json({ ok: true });
     } catch (e: unknown) {
         if (mapPrismaError(res, e)) return;

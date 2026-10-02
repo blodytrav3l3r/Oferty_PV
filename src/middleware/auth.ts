@@ -70,7 +70,7 @@ function authCacheInvalidateToken(tokenHash: string): void {
     authCache.delete(tokenHash);
 }
 
-function authCacheInvalidateUser(userId: string, exceptTokenHash?: string): void {
+export function authCacheInvalidateUser(userId: string, exceptTokenHash?: string): void {
     for (const [k, e] of authCache) {
         if (e.userId === userId && k !== exceptTokenHash) authCache.delete(k);
     }

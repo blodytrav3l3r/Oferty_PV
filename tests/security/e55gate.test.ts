@@ -39,11 +39,14 @@ jest.mock('../../src/middleware/auth', () => ({
     },
     requireAdmin: (req: any, res: any, next: any) => {
         if (!req.user || req.user.role !== 'admin') {
-            res.status(403).json({ error: 'Brak uprawnień — wymagany administrator' });
+            res.status(403).json({ error: 'Brak uprawnień - wymagany administrator' });
             return;
         }
         next();
-    }
+    },
+    // D-FIX-1: users.ts woła invalidację/purge po PUT/DELETE.
+    authCacheInvalidateUser: jest.fn(),
+    deleteUserSessions: jest.fn().mockResolvedValue(0)
 }));
 
 jest.mock('../../src/middleware/rateLimiters', () => ({
