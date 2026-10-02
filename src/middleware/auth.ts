@@ -1,5 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import crypto from 'crypto';
+// bcryptjs celowo (pure-JS, zero node-gyp na Windows): koszt tylko na
+// login/change-password, a LOGIN_LIMITER (10/min) ucina burst. Sesja cookie
+// omija hash per request.
 import bcrypt from 'bcryptjs';
 import prisma from '../prismaClient';
 import { getUserObject, User } from '../helpers';
@@ -33,6 +36,44 @@ declare global {
 
 export interface AuthenticatedRequest extends Request {
     user?: User;
+}
+
+// P1-auth-cache: gorąca ścieżka robiła 2Q per request (sesja + user) na
+// 1 połączeniu SQLite. Cache usera per token hash z krótkim TTL 30 s —
+// odświeżenie roli/uprawnień opóźnione max 30 s, akceptowalne dla 100 userów.
+// Unieważniane w deleteSession/deleteUserSessions (wylogowanie/zmiana hasła).
+const AUTH_CACHE_TTL_MS = 30_000;
+interface AuthCacheEntry {
+    user: User;
+    userId: string;
+    exp: number;
+}
+const authCache = new Map<string, AuthCacheEntry>();
+
+function authCacheGet(tokenHash: string): User | null {
+    const e = authCache.get(tokenHash);
+    if (!e) return null;
+    if (Date.now() > e.exp) {
+        authCache.delete(tokenHash);
+        return null;
+    }
+    return e.user;
+}
+
+function authCacheSet(tokenHash: string, user: User, userId: string): void {
+    // Bound: sesji max 10/user, użytkowników setki — cap 2000 wpisów przed leakiem.
+    if (authCache.size >= 2000) authCache.clear();
+    authCache.set(tokenHash, { user, userId, exp: Date.now() + AUTH_CACHE_TTL_MS });
+}
+
+function authCacheInvalidateToken(tokenHash: string): void {
+    authCache.delete(tokenHash);
+}
+
+function authCacheInvalidateUser(userId: string, exceptTokenHash?: string): void {
+    for (const [k, e] of authCache) {
+        if (e.userId === userId && k !== exceptTokenHash) authCache.delete(k);
+    }
 }
 
 /**
@@ -106,8 +147,10 @@ export async function getSession(token: string | undefined): Promise<Session | n
  */
 export async function deleteSession(token: string): Promise<void> {
     try {
+        const tokenHash = hashToken(token);
+        authCacheInvalidateToken(tokenHash);
         await prisma.sessions.delete({
-            where: { token: hashToken(token) }
+            where: { token: tokenHash }
         });
     } catch (_e) {
         // Ignoruj jeśli sesja nie istnieje
@@ -128,6 +171,7 @@ export async function deleteUserSessions(userId: string, exceptToken?: string): 
         });
         const victims = rows.map((r) => r.token).filter((t) => t !== keep);
         if (victims.length === 0) return 0;
+        authCacheInvalidateUser(userId, keep ?? undefined);
         const res = await prisma.sessions.deleteMany({
             where: { token: { in: victims } }
         });
@@ -144,9 +188,24 @@ export async function deleteUserSessions(userId: string, exceptToken?: string): 
 export async function requireAuth(req: Request, res: Response, next: NextFunction): Promise<void> {
     // Cookie-only: legacy shim x-auth-token usunięty (sunset) — nagłówek ignorowany.
     const token = req.cookies?.authToken;
+    if (!token) {
+        res.status(401).json({ error: 'Nieautoryzowany — zaloguj się' });
+        return;
+    }
+    // Fast-path: sesja ZAWSZE weryfikowana w DB (natychmiastowa rewokacja
+    // po logout/usunięciu usera), tylko wiersz usera brany z cache 30 s.
+    // Zysk: 2Q → 1Q per request zamiast 0Q (0Q łamało test usuniętego usera).
+    const tokenHash = hashToken(token);
+    const cached = authCacheGet(tokenHash);
     const session = await getSession(token);
     if (!session) {
+        if (cached) authCacheInvalidateToken(tokenHash);
         res.status(401).json({ error: 'Nieautoryzowany — zaloguj się' });
+        return;
+    }
+    if (cached && cached.id === session.userId) {
+        req.user = cached;
+        next();
         return;
     }
 
@@ -160,6 +219,7 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
         }
 
         req.user = getUserObject(user);
+        authCacheSet(tokenHash, req.user, session.userId);
         next();
     } catch (e) {
         logger.error('Auth', 'Błąd bazy danych w requireAuth', e);

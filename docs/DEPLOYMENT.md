@@ -333,6 +333,17 @@ sudo certbot --nginx -d twoja-domena.pl
 npm run backup:install-cron
 ```
 
+### Drill restore (miesięcznie)
+
+Retencja: max 30 kopii (`scripts/backup.ts`). Raz w miesiącu na stagingu:
+
+```bash
+npm run backup
+npm run restore -- data/backups/backup_<najnowszy>.sqlite
+```
+
+Cel: RTO minuty, RPO = interwał crona. Nieudany drill = P1.
+
 ---
 
 ## 7. Weryfikacja po wdrożeniu (checklist)

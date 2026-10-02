@@ -453,13 +453,22 @@ window.exportOfferDirect_action = async function (offerId, format) {
     }
 
     const endpoint = format === 'pdf' ? 'export-pdf' : 'export-docx';
-    fetch(`/api/offers-studnie/${offerId}/${endpoint}`, {
-        headers:
-            typeof authHeaders === 'function'
-                ? authHeaders()
-                : { 'Content-Type': 'application/json' }
-    })
+    const exportHeaders =
+        typeof authHeaders === 'function' ? authHeaders() : { 'Content-Type': 'application/json' };
+    // Jeden retry po 429 + Retry-After (kolejka PDF 2+10) — wzorzec _bulkPutChunk.
+    const fetchOnce = () =>
+        fetch(`/api/offers-studnie/${offerId}/${endpoint}`, { headers: exportHeaders });
+    fetchOnce()
         .then(async (res) => {
+            if (res.status === 429) {
+                const wait =
+                    Math.min(10, parseInt(res.headers.get('retry-after') || '2', 10) || 2) * 1000;
+                if (typeof showToast === 'function') {
+                    showToast('Kolejka eksportu zajęta — ponawiam...', 'info');
+                }
+                await new Promise((r) => setTimeout(r, wait));
+                res = await fetchOnce();
+            }
             if (!res.ok) {
                 const errText = await res.text().catch(() => res.statusText);
                 throw new Error(

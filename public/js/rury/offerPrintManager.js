@@ -124,11 +124,23 @@ async function exportOfferDirectRury_action(offerId, format) {
         return;
     }
 
+    // Kolejka PDF ma sufit 2+10: przy burstcie serwer odpowiada 429 +
+    // Retry-After. Jeden retry po odczekaniu (wzorzec _bulkPutChunk).
+    const fetchExport = async (url) => {
+        let res = await fetch(url, { headers: authHeaders() });
+        if (res.status === 429) {
+            const wait =
+                Math.min(10, parseInt(res.headers.get('retry-after') || '2', 10) || 2) * 1000;
+            showToast('Kolejka eksportu zajęta — ponawiam...', 'info');
+            await new Promise((r) => setTimeout(r, wait));
+            res = await fetch(url, { headers: authHeaders() });
+        }
+        return res;
+    };
+
     try {
         if (format === 'pdf') {
-            const res = await fetch(`/api/offers-rury/${offerId}/export-pdf`, {
-                headers: authHeaders()
-            });
+            const res = await fetchExport(`/api/offers-rury/${offerId}/export-pdf`);
             if (!res.ok) {
                 const errText = await res.text().catch(() => res.statusText);
                 throw new Error(`Eksport PDF (${res.status}): ${errText.slice(0, 200)}`);
@@ -146,9 +158,7 @@ async function exportOfferDirectRury_action(offerId, format) {
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
         } else if (format === 'docx') {
-            const res = await fetch(`/api/offers-rury/${offerId}/export-docx`, {
-                headers: authHeaders()
-            });
+            const res = await fetchExport(`/api/offers-rury/${offerId}/export-docx`);
             if (!res.ok) {
                 const errText = await res.text().catch(() => res.statusText);
                 throw new Error(`Eksport DOCX (${res.status}): ${errText.slice(0, 200)}`);
