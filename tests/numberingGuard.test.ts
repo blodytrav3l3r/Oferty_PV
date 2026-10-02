@@ -148,4 +148,19 @@ describe('P0.2 numbering guard', () => {
         expect(retry.body.code).toBe('IDEMPOTENCY_KEY_REUSE');
         expect(prisma.order_counters.upsert).toHaveBeenCalledTimes(1);
     });
+
+    it('drenaż licznika throttlowany: seria claimów w końcu 429 (P1.2)', async () => {
+        (prisma.users.findUnique as jest.Mock).mockResolvedValue({ symbol: 'BB' });
+        (prisma.order_counters.upsert as jest.Mock).mockResolvedValue({ lastNumber: 7 });
+        let got429 = false;
+        for (let i = 0; i < 70; i++) {
+            const res = await request(app).post('/api/numbering/claim-number/user-B').send({});
+            if (res.statusCode === 429) {
+                got429 = true;
+                break;
+            }
+            expect(res.statusCode).toBe(200);
+        }
+        expect(got429).toBe(true);
+    });
 });

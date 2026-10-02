@@ -2,6 +2,7 @@ import express from 'express';
 import { z } from 'zod';
 import prisma from '../../prismaClient';
 import { requireAuth, AuthenticatedRequest } from '../../middleware/auth';
+import { WRITE_LIMITER } from '../../middleware/rateLimiters';
 import { canClaimNumber } from '../../utils/ownership';
 import {
     claimIdempotencyKey,
@@ -121,6 +122,8 @@ router.get('/recycled', requireAuth, async (req, res) => {
 
 /* ===== GENEROWANIE NUMERU ZAMÓWIENIA ===== */
 
+// Podgląd następnego numeru — NIE rezerwuje (bez incrementu). Frontend
+// nie może go traktować jako przyznanego; przydział tylko przez claim-*.
 router.get('/next-number/:userId', requireAuth, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
@@ -153,7 +156,11 @@ router.get('/next-number/:userId', requireAuth, async (req, res) => {
     }
 });
 
-router.post('/claim-number/:userId', requireAuth, async (req, res) => {
+// P1.2: WRITE_LIMITER przeciw drenażowi licznika (pętla claimów bez throttlingu).
+// Crash przed completeIdempotencyKey zostawia lukę w numeracji (licznik
+// poszedł w górę, retry rezerwuje kolejny) — luki dopuszczalne, unikalność
+// zachowana przez atomowy upsert/increment.
+router.post('/claim-number/:userId', requireAuth, WRITE_LIMITER, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
         const userId = req.params.userId;
@@ -209,7 +216,7 @@ router.post('/claim-number/:userId', requireAuth, async (req, res) => {
 
 /* ===== GENEROWANIE NUMERU ZLECENIA PRODUKCYJNEGO ===== */
 
-router.post('/claim-production-number/:userId', requireAuth, async (req, res) => {
+router.post('/claim-production-number/:userId', requireAuth, WRITE_LIMITER, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
         const userId = req.params.userId;
@@ -287,7 +294,7 @@ router.post('/claim-production-number/:userId', requireAuth, async (req, res) =>
  * P0-B: recycled + atomowa rezerwacja zakresu licznika w transakcji (bez pętli
  * cand++ i bez RAM-locka — gwarancję daje DB).
  */
-router.post('/claim-production-numbers/:userId', requireAuth, async (req, res) => {
+router.post('/claim-production-numbers/:userId', requireAuth, WRITE_LIMITER, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
         const userId = req.params.userId;
