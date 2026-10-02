@@ -168,7 +168,8 @@ describe('POST /api/telemetry/ai/reward-batch', () => {
         // findMany routowane po where: existence vs parents (where.id.in) vs sugestie.
         mockLogsFindMany.mockImplementation(async (args: any) => {
             if (args?.where?.id?.in) return [{ id: 'tel-x', wellId: 'w4', userId: 'someone-else' }];
-            if (args?.where?.solverSource) return [{ id: 'sug-3', wellId: 'w3', userId: 'u3' }];
+            // P1.1: sugestia legacy bez właściciela — MODIFY przechodzi (brak atrybucji).
+            if (args?.where?.solverSource) return [{ id: 'sug-3', wellId: 'w3', userId: null }];
             return [{ wellId: 'w1' }, { wellId: 'w2' }, { wellId: 'w3' }, { wellId: 'w4' }];
         });
         const res = await request(app)

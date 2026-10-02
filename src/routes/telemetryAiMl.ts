@@ -283,12 +283,32 @@ async function processRewardItem(
     | { status: 'applied' }
 > {
     // P1 anti-farming: nagroda tylko dla studni z wierszem telemetry.
+    // P1.1: i tylko dla własnej studni (wiersz cudzego właściciela → FORBIDDEN).
     const telemetryWell = await prisma.ai_telemetry_logs.findFirst({
         where: { wellId: data.wellId },
-        select: { id: true }
+        select: { id: true, userId: true, offerId: true }
     });
     if (!telemetryWell) {
         return { status: 'well-not-found' };
+    }
+    if (telemetryWell.userId && !canWriteDoc(user, telemetryWell.userId)) {
+        return { status: 'forbidden' };
+    }
+    if (!telemetryWell.userId && telemetryWell.offerId) {
+        const [rury, studnie] = await Promise.all([
+            prisma.offers_rel.findUnique({
+                where: { id: telemetryWell.offerId },
+                select: { userId: true }
+            }),
+            prisma.offers_studnie_rel.findUnique({
+                where: { id: telemetryWell.offerId },
+                select: { userId: true }
+            })
+        ]);
+        const owner = rury?.userId ?? studnie?.userId ?? null;
+        if ((rury || studnie) && !canWriteDoc(user, owner)) {
+            return { status: 'forbidden' };
+        }
     }
 
     return applyRewardItem(data, user);
@@ -334,16 +354,19 @@ async function applyRewardItem(
     user: AuthenticatedRequest['user'],
     preTarget?: RewardTarget
 ): Promise<{ status: 'duplicate' } | { status: 'applied' } | { status: 'forbidden' }> {
-    // P1 reward ownership: silny negatyw (REJECT, −1.0) tylko z prawem zapisu
-    // do właściciela ETYKIETOWANEJ sugestii. Gate PRZED jakimkolwiek zapisem
-    // (także przed aiRewardLog). ACCEPT/MODIFY bez zmian.
+    // P1 reward ownership: silny negatyw (REJECT, −1.0) i korekta etykiety
+    // (MODIFY) tylko z prawem zapisu do właściciela ETYKIETOWANEJ sugestii.
+    // Gate PRZED jakimkolwiek zapisem (także przed aiRewardLog).
+    // ACCEPT/ADJUST/SWAP nie mutują cudzego wiersza (wpis z własnym userId),
+    // ale processRewardItem i tak wymaga własności studni (P1.1).
     // P2 dedup: unikalny indeks uq_reward_well_action + P2002 (atomowo) —
     // zapis celowo per-item (wspólny tx dla batcha zmieniłby semantykę:
     // drugi duplikat w batchu wycofałby cały tx zamiast statusu 'duplicate').
     let target: RewardTarget | undefined = preTarget;
-    if (data.action === 'REJECT') {
+    if (data.action === 'REJECT' || data.action === 'MODIFY') {
         if (target === undefined) target = await resolveRewardTarget(data);
-        if (target && !canWriteDoc(user, target.userId)) {
+        // Tylko gdy sugestia ma właściciela; legacy bez userId — brak atrybucji.
+        if (target?.userId && !canWriteDoc(user, target.userId)) {
             return { status: 'forbidden' };
         }
     }

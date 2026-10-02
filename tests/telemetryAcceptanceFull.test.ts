@@ -44,12 +44,21 @@ jest.mock('../src/services/telemetry', () => ({
 }));
 
 let mockTelemetryLogsFindFirst = jest.fn<any>().mockResolvedValue(null);
+let mockTelemetryLogsFindUnique = jest.fn<any>().mockResolvedValue(null);
+let mockOffersFindUnique = jest.fn<any>().mockResolvedValue(null);
 
 jest.mock('../src/prismaClient', () => ({
     __esModule: true,
     default: {
+        offers_rel: {
+            findUnique: (...args: any[]) => mockOffersFindUnique(...args)
+        },
+        offers_studnie_rel: {
+            findUnique: (...args: any[]) => mockOffersFindUnique(...args)
+        },
         ai_telemetry_logs: {
-            findFirst: (...args: any[]) => mockTelemetryLogsFindFirst(...args)
+            findFirst: (...args: any[]) => mockTelemetryLogsFindFirst(...args),
+            findUnique: (...args: any[]) => mockTelemetryLogsFindUnique(...args)
         }
     }
 }));

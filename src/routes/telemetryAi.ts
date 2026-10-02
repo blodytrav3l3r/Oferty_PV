@@ -13,6 +13,7 @@ import { TELEMETRY_WRITE_LIMITER } from '../middleware/rateLimiters';
 import { logger } from '../utils/logger';
 import prisma from '../prismaClient';
 import { telemetryService } from '../services/telemetry';
+import { assertOfferReadable, assertTelemetryIdWritable } from '../utils/telemetryOwnership';
 import {
     type TelemetryAcceptanceFullInput,
     type TelemetryConfigInput,
@@ -45,6 +46,10 @@ router.post('/ai/config', requireAuth, TELEMETRY_WRITE_LIMITER, async (req, res)
     }
 
     try {
+        // P1.1: nie dopisuj sygnału do cudzej istniejącej oferty.
+        if (!(await assertOfferReadable(authReq.user, parse.data.offerId))) {
+            return res.status(403).json({ error: 'Brak dostępu do oferty' });
+        }
         const result = await telemetryService.recordConfig(
             parse.data as TelemetryConfigInput,
             userId
@@ -74,6 +79,16 @@ router.post('/ai/event', requireAuth, TELEMETRY_WRITE_LIMITER, async (req, res) 
     }
 
     try {
+        // P1.1: event podpięty pod cudzy wiersz telemetry → 403.
+        if (
+            !(await assertTelemetryIdWritable(
+                authReq.user,
+                parse.data.telemetryId,
+                parse.data.wellId
+            ))
+        ) {
+            return res.status(403).json({ error: 'Brak dostępu do telemetrii' });
+        }
         const result = await telemetryService.recordEvent(
             parse.data as TelemetryEventInputType,
             userId
@@ -126,6 +141,13 @@ router.post('/ai/acceptance-full', requireAuth, TELEMETRY_WRITE_LIMITER, async (
 
     try {
         const data = parse.data as TelemetryAcceptanceFullInput;
+        // P1.1: acceptance (etykieta treningowa) tylko dla własnej studni.
+        if (
+            !(await assertTelemetryIdWritable(authReq.user, data.telemetryId, data.wellId)) ||
+            !(await assertOfferReadable(authReq.user, data.offerId))
+        ) {
+            return res.status(403).json({ error: 'Brak dostępu do telemetrii' });
+        }
         await telemetryService.recordAcceptance(
             data.telemetryId,
             data.accepted,

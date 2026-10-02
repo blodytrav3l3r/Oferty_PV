@@ -737,7 +737,7 @@ describe('POST /ai/reward ownership (P1 gate na ownerze targetu)', () => {
         expect(mockUpdateLabelByTelemetry).toHaveBeenCalledWith('tel-a', 'REJECTED');
     });
 
-    it('obcy MODIFY bez zmian → 200 (zakres: tylko REJECT gateowany)', async () => {
+    it('obcy MODIFY cudzej sugestii → 403 FORBIDDEN, zero zapisow (P1.1)', async () => {
         mockTarget({ id: 'tel-b', userId: 'userB' });
 
         const res = await request(app)
@@ -745,8 +745,10 @@ describe('POST /ai/reward ownership (P1 gate na ownerze targetu)', () => {
             .set(asUser('userA'))
             .send({ action: 'MODIFY', wellId: 'well-1' });
 
-        expect(res.status).toBe(200);
-        expect(mockProcessAction).toHaveBeenCalled();
+        expect(res.status).toBe(403);
+        expect(res.body).toEqual({ error: 'FORBIDDEN' });
+        expect(mockProcessAction).not.toHaveBeenCalled();
+        expect(mockUpdateLabelByTelemetry).not.toHaveBeenCalled();
     });
 
     it('batch mieszany: wlasny applied, cudzy FORBIDDEN', async () => {
