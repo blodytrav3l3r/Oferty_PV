@@ -8,7 +8,7 @@
  */
 
 import express from 'express';
-import { requireAuth, AuthenticatedRequest } from '../middleware/auth';
+import { requireAuth, requireAdmin, AuthenticatedRequest } from '../middleware/auth';
 import { TELEMETRY_WRITE_LIMITER } from '../middleware/rateLimiters';
 import { logger } from '../utils/logger';
 import prisma from '../prismaClient';
@@ -90,7 +90,7 @@ router.post('/ai/event', requireAuth, TELEMETRY_WRITE_LIMITER, async (req, res) 
  * POST /api/telemetry/ai/version
  * Rejestruje nową wersję solvera/reguł/AI.
  */
-router.post('/ai/version', requireAuth, TELEMETRY_WRITE_LIMITER, async (req, res) => {
+router.post('/ai/version', requireAuth, requireAdmin, TELEMETRY_WRITE_LIMITER, async (req, res) => {
     const parse = telemetryVersionSchema.safeParse(req.body);
     if (!parse.success) {
         return res.status(400).json({

@@ -20,6 +20,7 @@ import clientsRoutes from '../../src/routes/clients';
 import pricelistVersionRoutes from '../../src/routes/pricelistVersions';
 import sharesRoutes from '../../src/routes/shares';
 import telemetryRoutes from '../../src/routes/telemetryAiMl';
+import telemetryAiRoutes from '../../src/routes/telemetryAi';
 import usersRoutes from '../../src/routes/users';
 import { PricelistVersionError } from '../../src/services/pricelistVersionService';
 
@@ -186,6 +187,7 @@ function buildApp(): express.Application {
     app.use(express.json());
     app.use('/api/pricelist-versions', pricelistVersionRoutes);
     app.use('/api/telemetry', telemetryRoutes);
+    app.use('/api/telemetry', telemetryAiRoutes);
     app.use('/api/users', usersRoutes);
     app.use('/api/clients', clientsRoutes);
     app.use('/api/shares', sharesRoutes);
@@ -275,6 +277,27 @@ describe('E5.5 gate: 401 bez sesji (wszystkie 6 ścieżek)', () => {
     it('GET /audit/:entityType/:entityId → 401', async () => {
         const res = await request(app).get('/api/audit/offer/o1').set(anon);
         expect(res.status).toBe(401);
+    });
+});
+
+describe('E5.5 gate: rejestracja wersji AI wymaga admina', () => {
+    let app: express.Application;
+    beforeEach(() => {
+        app = buildApp();
+    });
+
+    it('anonimowy → 401, zwykły user → 403 przed wywołaniem rejestracji', async () => {
+        const anonRes = await request(app)
+            .post('/api/telemetry/ai/version')
+            .set(anon)
+            .send({ componentType: 'solver', version: 'test-anon' });
+        expect(anonRes.status).toBe(401);
+
+        const userRes = await request(app)
+            .post('/api/telemetry/ai/version')
+            .set(user)
+            .send({ componentType: 'solver', version: 'test-user' });
+        expect(userRes.status).toBe(403);
     });
 });
 
