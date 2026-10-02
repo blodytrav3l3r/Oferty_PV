@@ -6,7 +6,7 @@ import { logger } from '../../utils/logger';
 import { WRITE_LIMITER } from '../../middleware/rateLimiters';
 import { canReadWithShare, canWriteDoc } from '../../utils/ownership';
 import { searchCache } from '../../utils/searchCache';
-import { removeFts5 } from '../../utils/fts5Sync';
+import { enqueueFtsRemove } from '../../utils/fts5Queue';
 import { hasProductionOrdersForOffer } from '../../utils/productionOrderGuard';
 import { mapPrismaError } from '../../utils/prismaErrors';
 import { HOT_TX_OPTS } from '../../utils/hotTx';
@@ -225,7 +225,8 @@ router.delete('/:id', requireAuth, writeOffersLimiter, async (req, res) => {
                 }
                 throw e;
             }
-            await removeFts5('studnie', id);
+            // B1: tombstone FTS w tle — search ma LIKE-fallback.
+            enqueueFtsRemove('studnie', id);
 
             logger.info('Offers', `Oferta studnie ${id} usunięta przez ${authReq.user?.username}`);
             searchCache.invalidateAll();
@@ -309,7 +310,8 @@ router.delete('/:id', requireAuth, writeOffersLimiter, async (req, res) => {
             }
             throw e;
         }
-        await removeFts5('rury', id);
+        // B1: tombstone FTS w tle — search ma LIKE-fallback.
+        enqueueFtsRemove('rury', id);
 
         logger.info('Offers', `Oferta rury ${id} usunięta przez ${authReq.user?.username}`);
         searchCache.invalidateAll();

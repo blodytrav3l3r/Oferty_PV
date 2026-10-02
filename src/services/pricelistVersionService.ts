@@ -212,7 +212,12 @@ function isUniqueViolation(err: unknown): boolean {
 
 type Tx = Prisma.TransactionClient;
 
-/** Wstawia wiersze wersji paczkami po 25 (baza błędów #1, chunkedCreateMany). */
+/**
+ * Wstawia wiersze wersji paczkami po 100 — benchmark B2 na 2000 wierszach:
+ * chunk 25 = 7531 ms, 100 = 2116 ms (÷3.5), 500 = zrywanie silnika.
+ * Default 25 zostaje dla seeda (baza błędów #1) — tu jawny parametr.
+ */
+const VERSION_ITEMS_CHUNK = 100;
 async function insertVersionItems(
     tx: Tx,
     type: PricelistType,
@@ -225,7 +230,8 @@ async function insertVersionItems(
             id: `${versionId}:${row.id}`,
             versionId
         }));
-        if (data.length > 0) await chunkedCreateMany(tx.pricelistItemRury, data);
+        if (data.length > 0)
+            await chunkedCreateMany(tx.pricelistItemRury, data, VERSION_ITEMS_CHUNK);
         return;
     }
     if (type === 'studnie') {
@@ -234,7 +240,8 @@ async function insertVersionItems(
             id: `${versionId}:${row.id}`,
             versionId
         }));
-        if (data.length > 0) await chunkedCreateMany(tx.pricelistItemStudnie, data);
+        if (data.length > 0)
+            await chunkedCreateMany(tx.pricelistItemStudnie, data, VERSION_ITEMS_CHUNK);
         return;
     }
     const preco = rows as PrecoRows;
@@ -253,9 +260,12 @@ async function insertVersionItems(
         id: `${versionId}:${row.id}`,
         versionId
     }));
-    if (konfig.length > 0) await chunkedCreateMany(tx.pricelistItemPrecoKonfig, konfig);
-    if (kinety.length > 0) await chunkedCreateMany(tx.pricelistItemPrecoKinety, kinety);
-    if (zakresy.length > 0) await chunkedCreateMany(tx.pricelistItemPrecoZakresy, zakresy);
+    if (konfig.length > 0)
+        await chunkedCreateMany(tx.pricelistItemPrecoKonfig, konfig, VERSION_ITEMS_CHUNK);
+    if (kinety.length > 0)
+        await chunkedCreateMany(tx.pricelistItemPrecoKinety, kinety, VERSION_ITEMS_CHUNK);
+    if (zakresy.length > 0)
+        await chunkedCreateMany(tx.pricelistItemPrecoZakresy, zakresy, VERSION_ITEMS_CHUNK);
 }
 
 async function deleteVersionItems(tx: Tx, type: PricelistType, versionId: string): Promise<void> {

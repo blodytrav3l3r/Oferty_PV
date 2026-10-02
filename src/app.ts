@@ -19,6 +19,7 @@ import { ensureAdminExists } from './middleware/auth';
 import { requireAuth, requireAdmin } from './middleware/auth';
 import { getMetricsSnapshot } from './utils/metrics';
 import { getPdfMetrics } from './services/pdf/pdfEngine';
+import { getFtsQueueMetrics, reconcileFts5 } from './utils/fts5Queue';
 import healthPdfRouter from './routes/healthPdf';
 import {
     httpsRedirect,
@@ -186,7 +187,7 @@ app.get('/api/admin/system-info', requireAuth, requireAdmin, (_req, res) => {
  *         description: Wymagana rola admin
  */
 app.get('/metrics', requireAuth, requireAdmin, (_req, res) => {
-    res.json(getMetricsSnapshot(getPdfMetrics()));
+    res.json(getMetricsSnapshot(getPdfMetrics(), getFtsQueueMetrics()));
 });
 
 /* ===== DOKUMENTACJA API (Swagger) ===== */
@@ -420,6 +421,17 @@ export async function initApp(): Promise<void> {
 
     // Auto-heal schematu (indeksy, shares, FTS5) — BE-01: szczegóły w src/initDatabase.ts
     await ensureDatabaseIndexes();
+    // B1: reconcile FTS po restarcie (utracona kolejka in-memory) — bounded,
+    // nie blokuje startu przy dużej rozbieżności (max 5 rund × 20).
+    try {
+        await reconcileFts5();
+    } catch (err) {
+        logger.warn(
+            'Server',
+            'Reconcile FTS nie powiódł się (search działa na LIKE-fallback):',
+            err instanceof Error ? err.message : String(err)
+        );
+    }
     // Model ML — auto-heal: upewnij się, że w bazie istnieje aktywny model ML dla bieżącej wersji cech
     try {
         await modelRegistry.ensureStarterModelExists();

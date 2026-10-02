@@ -283,15 +283,15 @@ describe('F1 pricelistVersions', () => {
         expect(itemsRury.length).toBe(0);
     });
 
-    test('chunking > 25 wierszy (30 → 2× createMany)', async () => {
-        const rows = Array.from({ length: 30 }, (_, i) => rura(`r${i}`, 100 + i));
+    test('chunking > 100 wierszy (250 → 3× createMany, VERSION_ITEMS_CHUNK)', async () => {
+        const rows = Array.from({ length: 250 }, (_, i) => rura(`r${i}`, 100 + i));
         const v = await createDraft('rury', rows, { effectiveFrom: '2026-09-01T00:00:00.000Z' });
         expect(v.seq).toBe(1);
-        expect(txMock.pricelistItemRury.createMany).toHaveBeenCalledTimes(2);
+        expect(txMock.pricelistItemRury.createMany).toHaveBeenCalledTimes(3);
         expect(txMock.pricelistItemRury.createMany).toHaveBeenNthCalledWith(1, {
             data: expect.arrayContaining([])
         });
-        expect(itemsRury.filter((i) => i.versionId === v.id).length).toBe(30);
+        expect(itemsRury.filter((i) => i.versionId === v.id).length).toBe(250);
     });
 
     test('resolveActive deterministyczny (mock findFirst)', async () => {

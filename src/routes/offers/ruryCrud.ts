@@ -5,7 +5,7 @@ import { requireAuth, AuthenticatedRequest } from '../../middleware/auth';
 import crypto from 'crypto';
 import { normalizeDate } from '../../helpers';
 import { searchCache } from '../../utils/searchCache';
-import { syncFts5 } from '../../utils/fts5Sync';
+import { enqueueFtsSync } from '../../utils/fts5Queue';
 import { buildRoleWhereClauseWithShares } from '../../utils/roleFilter';
 import { logger } from '../../utils/logger';
 import { validateData } from '../../validators/authSchema';
@@ -522,16 +522,11 @@ router.post(
                     }
                 }
             }, HOT_TX_OPTS);
-            let ftsFailed = 0;
+            // B1: FTS w tle (kolejka z retry) — odpowiedź nie czeka na indeks.
+            // Bezpieczne: sync był post-commit warn-only, a search ma LIKE-fallback.
             for (const w of pendingWrites) {
-                if (!(await syncFts5('rury', w.fts))) ftsFailed++;
+                enqueueFtsSync('rury', w.fts);
             }
-            // P1-B: cichy dryf FTS widoczny w logu (zapis biznesowy już zacommitowany).
-            if (ftsFailed > 0)
-                logger.warn(
-                    'Offers',
-                    `FTS sync pominięty dla ${ftsFailed}/${pendingWrites.length} ofert rury`
-                );
 
             logger.info(
                 'Offers',
@@ -812,16 +807,10 @@ router.put(
                     }
                 }
             }, HOT_TX_OPTS);
-            let ftsPutFailed = 0;
+            // B1: FTS w tle (kolejka z retry) — odpowiedź nie czeka na indeks.
             for (const w of pendingPut) {
-                if (!(await syncFts5('rury', w.fts))) ftsPutFailed++;
+                enqueueFtsSync('rury', w.fts);
             }
-            // P1-B: cichy dryf FTS widoczny w logu (zapis biznesowy już zacommitowany).
-            if (ftsPutFailed > 0)
-                logger.warn(
-                    'Offers',
-                    `FTS sync pominięty dla ${ftsPutFailed}/${pendingPut.length} ofert rury (PUT)`
-                );
 
             searchCache.invalidateAll();
             res.json({ ok: true });
@@ -946,18 +935,14 @@ router.post('/:id/duplicate', requireAuth, writeOffersLimiter, async (req, res) 
             }
         });
 
-        // FTS poza transakcją, warn-only (wzorzec z reszty pliku) — dryf łata cron.
-        if (
-            !(await syncFts5('rury', {
-                id: newId,
-                offer_number: source.offer_number ? `${source.offer_number}-KOPIA` : '',
-                clientName: dupClientName,
-                investName: dupInvestName,
-                clientNumber: dupClientNumber
-            }))
-        ) {
-            logger.warn('Offers', 'Dryf FTS po duplikacji oferty rur', newId);
-        }
+        // FTS poza transakcją, w tle (B1) — dryf łata kolejka/reconcile.
+        enqueueFtsSync('rury', {
+            id: newId,
+            offer_number: source.offer_number ? `${source.offer_number}-KOPIA` : '',
+            clientName: dupClientName,
+            investName: dupInvestName,
+            clientNumber: dupClientNumber
+        });
 
         logAudit('offer', newId, authReq.user?.id || '', 'duplicate', null, { sourceId: id });
 

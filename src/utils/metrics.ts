@@ -133,9 +133,13 @@ export interface MetricsSnapshot {
         { n: number; p50: number; p95: number; errors: number; lastMs: number }
     >;
     pdf: Record<string, unknown>;
+    fts: Record<string, unknown>;
 }
 
-export function getMetricsSnapshot(pdf: Record<string, unknown> = {}): MetricsSnapshot {
+export function getMetricsSnapshot(
+    pdf: Record<string, unknown> = {},
+    fts: Record<string, unknown> = {}
+): MetricsSnapshot {
     const eps: MetricsSnapshot['endpoints'] = {};
     for (const [key, st] of endpoints) {
         const sorted = [...st.samples].sort((a, b) => a - b);
@@ -165,7 +169,8 @@ export function getMetricsSnapshot(pdf: Record<string, unknown> = {}): MetricsSn
         },
         storage: getStorageSnapshot(),
         endpoints: eps,
-        pdf
+        pdf,
+        fts
     };
 }
 

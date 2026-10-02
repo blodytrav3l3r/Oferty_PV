@@ -5,7 +5,7 @@ import { requireAuth, AuthenticatedRequest } from '../../middleware/auth';
 import crypto from 'crypto';
 import { normalizeDate } from '../../helpers';
 import { searchCache } from '../../utils/searchCache';
-import { syncFts5, removeFts5 } from '../../utils/fts5Sync';
+import { enqueueFtsSync, enqueueFtsRemove } from '../../utils/fts5Queue';
 import { logger } from '../../utils/logger';
 import { validateData } from '../../validators/authSchema';
 import { WRITE_LIMITER } from '../../middleware/rateLimiters';
@@ -901,17 +901,12 @@ router.post(
                 }
             }, HOT_TX_OPTS);
             const results: Record<string, unknown>[] = [];
-            let ftsFailed = 0;
+            // B1: FTS w tle (kolejka z retry) — odpowiedź nie czeka na indeks.
+            // Bezpieczne: sync był post-commit warn-only, a search ma LIKE-fallback.
             for (const w of pending) {
-                if (!(await syncFts5('studnie', w.fts))) ftsFailed++;
+                enqueueFtsSync('studnie', w.fts);
                 results.push({ id: w.docId, ok: true });
             }
-            // P1-B: cichy dryf FTS widoczny w logu (zapis biznesowy już zacommitowany).
-            if (ftsFailed > 0)
-                logger.warn(
-                    'Offers',
-                    `FTS sync pominięty dla ${ftsFailed}/${pending.length} ofert studni`
-                );
 
             logger.info(
                 'Offers',
@@ -1200,16 +1195,10 @@ router.put(
                     });
                 }
             }, HOT_TX_OPTS);
-            let ftsPutFailed = 0;
+            // B1: FTS w tle (kolejka z retry) — odpowiedź nie czeka na indeks.
             for (const w of pendingPut) {
-                if (!(await syncFts5('studnie', w.fts))) ftsPutFailed++;
+                enqueueFtsSync('studnie', w.fts);
             }
-            // P1-B: cichy dryf FTS widoczny w logu (zapis biznesowy już zacommitowany).
-            if (ftsPutFailed > 0)
-                logger.warn(
-                    'Offers',
-                    `FTS sync pominięty dla ${ftsPutFailed}/${pendingPut.length} ofert studni (PUT)`
-                );
 
             searchCache.invalidateAll();
             res.json({ ok: true });
@@ -1295,7 +1284,8 @@ router.delete('/studnie/:id', requireAuth, writeOffersLimiter, async (req, res) 
             }
             throw e;
         }
-        await removeFts5('studnie', id);
+        // B1: tombstone FTS w tle — search ma LIKE-fallback, brak fałszywego braku.
+        enqueueFtsRemove('studnie', id);
 
         logger.info(
             'Offers',
