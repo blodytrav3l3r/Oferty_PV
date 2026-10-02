@@ -124,6 +124,10 @@ export async function claimIdempotencyKey(
             }
             return { action: 'replay', status: row.responseStatus ?? 200, body: parsed };
         }
+        // PENDING: ten sam klucz + inny payload → REUSE (jak DONE), zanim
+        // uznamy wiersz za „ktoś pracuje / crash”. Bez tego podmieniony
+        // payload w oknie PENDING był niewykrywalny.
+        if (row.status !== 'DONE' && row.requestHash !== hash) return { action: 'reuse' };
         // PENDING: świeży = ktoś pracuje; stary = crash → reclaim.
         // updateMany nie przyjmuje compound-unique (tylko skalary) — trójka jest unikalna (PK).
         if (Date.now() - Date.parse(row.createdAt) < PENDING_RECLAIM_MS)

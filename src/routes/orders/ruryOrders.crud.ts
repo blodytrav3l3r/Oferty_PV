@@ -101,7 +101,7 @@ router.get('/', requireAuth, async (req, res) => {
     }
 });
 
-router.post('/claim-rury-number/:userId', requireAuth, async (req, res) => {
+router.post('/claim-rury-number/:userId', requireAuth, writeOrdersLimiter, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
         const userId = req.params.userId;
@@ -135,7 +135,13 @@ router.post('/claim-rury-number/:userId', requireAuth, async (req, res) => {
             where: { id: userId },
             select: { symbol: true }
         });
-        if (!user) return res.status(404).json({ error: 'Użytkownik nie znaleziony' });
+        // P2: domknij klucz wynikiem — retry replayuje 404 zamiast wisieć PENDING.
+        if (!user) {
+            const notFound = { error: 'Użytkownik nie znaleziony' };
+            if (idemKey)
+                await completeIdempotencyKey(idemUser, idemEndpoint, idemKey, 404, notFound);
+            return res.status(404).json(notFound);
+        }
 
         const symbol = user.symbol || '??';
         const counter = await prisma.order_counters_rury.upsert({

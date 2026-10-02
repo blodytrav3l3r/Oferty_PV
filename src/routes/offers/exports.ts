@@ -5,7 +5,7 @@ import { generateOfferRuryPDF, generateOfferStudniePDF } from '../../services/pd
 import { mapPdfError } from '../../services/pdf/pdfEngine';
 import { generateOfferRuryDOCX, generateOfferStudnieDOCX } from '../../services/docx';
 import { logger } from '../../utils/logger';
-import { canReadDoc } from '../../utils/ownership';
+import { canReadWithShare } from '../../utils/ownership';
 import { EXPORT_LIMITER } from '../../middleware/rateLimiters';
 import { exportFilename } from '../../utils/exportFilenames';
 
@@ -22,7 +22,9 @@ router.get('/:id/export-pdf', requireAuth, EXPORT_LIMITER, async (req, res) => {
             where: { id },
             select: { userId: true, offer_number: true }
         });
-        if (!offer || !canReadDoc(authReq.user, offer.userId)) {
+        // P2: eksport to odczyt utrwalonego dokumentu (I-008) — ten sam kontrakt
+        // co GET /:id: odbiorca share czyta i eksportuje (404 przy braku dostępu).
+        if (!offer || !(await canReadWithShare(authReq.user, offer.userId, 'offer', id))) {
             return res.status(404).json({ error: 'Not found' });
         }
         const pdfBuffer = await generateOfferRuryPDF(id);
@@ -49,7 +51,8 @@ router.get('/studnie/:id/export-pdf', requireAuth, EXPORT_LIMITER, async (req, r
             where: { id },
             select: { userId: true, offer_number: true }
         });
-        if (!offer || !canReadDoc(authReq.user, offer.userId)) {
+        // P2: jak wyżej — kontrakt share obejmuje eksport (I-008).
+        if (!offer || !(await canReadWithShare(authReq.user, offer.userId, 'offer_studnie', id))) {
             return res.status(404).json({ error: 'Not found' });
         }
         const pdfBuffer = await generateOfferStudniePDF(id);
@@ -76,7 +79,8 @@ router.get('/:id/export-docx', requireAuth, EXPORT_LIMITER, async (req, res) => 
             where: { id },
             select: { userId: true, offer_number: true }
         });
-        if (!offer || !canReadDoc(authReq.user, offer.userId)) {
+        // P2: jak wyżej — kontrakt share obejmuje eksport (I-008).
+        if (!offer || !(await canReadWithShare(authReq.user, offer.userId, 'offer', id))) {
             return res.status(404).json({ error: 'Not found' });
         }
         const docxBuffer = await generateOfferRuryDOCX(id);
@@ -105,7 +109,8 @@ router.get('/studnie/:id/export-docx', requireAuth, EXPORT_LIMITER, async (req, 
             where: { id },
             select: { userId: true, offer_number: true }
         });
-        if (!offer || !canReadDoc(authReq.user, offer.userId)) {
+        // P2: jak wyżej — kontrakt share obejmuje eksport (I-008).
+        if (!offer || !(await canReadWithShare(authReq.user, offer.userId, 'offer_studnie', id))) {
             return res.status(404).json({ error: 'Not found' });
         }
         const docxBuffer = await generateOfferStudnieDOCX(id);

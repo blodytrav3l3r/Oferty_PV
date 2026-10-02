@@ -136,7 +136,7 @@ router.get('/next-number/:userId', requireAuth, async (req, res) => {
 
         const user = await prisma.users.findUnique({
             where: { id: userId },
-            select: { symbol: true }
+            select: { symbol: true, productionOrderStartNumber: true }
         });
         if (!user) return res.status(404).json({ error: 'Użytkownik nie znaleziony' });
 
@@ -192,7 +192,13 @@ router.post('/claim-number/:userId', requireAuth, WRITE_LIMITER, async (req, res
             where: { id: userId },
             select: { symbol: true }
         });
-        if (!user) return res.status(404).json({ error: 'Użytkownik nie znaleziony' });
+        // P2: domknij klucz wynikiem — retry replayuje 404 zamiast wisieć PENDING.
+        if (!user) {
+            const notFound = { error: 'Użytkownik nie znaleziony' };
+            if (idemKey)
+                await completeIdempotencyKey(idemUser, idemEndpoint, idemKey, 404, notFound);
+            return res.status(404).json(notFound);
+        }
 
         const symbol = user.symbol || '??';
 
@@ -326,14 +332,21 @@ router.post('/claim-production-numbers/:userId', requireAuth, WRITE_LIMITER, asy
                 });
         }
         const parsed = claimProductionNumbersSchema.safeParse(req.body ?? {});
+        // P2: domknij klucz wynikiem — retry replayuje błąd zamiast wisieć PENDING.
         if (!parsed.success) {
             const tooBig = parsed.error.issues.some((i) => i.code === 'too_big');
-            if (tooBig) {
-                return res.status(400).json({
-                    error: `Zbyt wiele numerów w jednym żądaniu (max ${CLAIM_RANGE_MAX})`
-                });
-            }
-            return res.status(400).json({ error: 'Pole count musi być liczbą całkowitą >= 1' });
+            const invalid = tooBig
+                ? { error: `Zbyt wiele numerów w jednym żądaniu (max ${CLAIM_RANGE_MAX})` }
+                : { error: 'Pole count musi być liczbą całkowitą >= 1' };
+            if (idemBulkKey)
+                await completeIdempotencyKey(
+                    idemBulkUser,
+                    idemBulkEndpoint,
+                    idemBulkKey,
+                    400,
+                    invalid
+                );
+            return res.status(400).json(invalid);
         }
         const count = parsed.data.count;
         const year = new Date().getFullYear();
@@ -343,7 +356,18 @@ router.post('/claim-production-numbers/:userId', requireAuth, WRITE_LIMITER, asy
             where: { id: userId },
             select: { symbol: true, productionOrderStartNumber: true }
         });
-        if (!user) return res.status(404).json({ error: 'Użytkownik nie znaleziony' });
+        if (!user) {
+            const notFound = { error: 'Użytkownik nie znaleziony' };
+            if (idemBulkKey)
+                await completeIdempotencyKey(
+                    idemBulkUser,
+                    idemBulkEndpoint,
+                    idemBulkKey,
+                    404,
+                    notFound
+                );
+            return res.status(404).json(notFound);
+        }
 
         const symbol = user.symbol || '??';
         const startNum = user.productionOrderStartNumber || 1;

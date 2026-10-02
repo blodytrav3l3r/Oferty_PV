@@ -254,18 +254,36 @@ router.post(
                         typeof o.userId === 'string' ? o.userId : undefined
                     );
                     if (!assigned.allowed) {
-                        return res
-                            .status(403)
-                            .json({ error: 'Brak uprawnień do modyfikacji tej oferty' });
+                        // P2: domknij klucz wynikiem — retry replayuje 403
+                        // zamiast wisieć PENDING (fałszywe in-progress 5 min).
+                        const forbidden = { error: 'Brak uprawnień do modyfikacji tej oferty' };
+                        if (idemKey)
+                            await completeIdempotencyKey(
+                                idemUser,
+                                idemEndpoint,
+                                idemKey,
+                                403,
+                                forbidden
+                            );
+                        return res.status(403).json(forbidden);
                     }
                     effectiveUserId = assigned.effectiveUserId;
                 } else {
                     // P0.1: create tylko dla siebie / subUsera (pro) / dowolnie (admin).
                     const resolved = resolveWriteUserId(authReq.user, o.userId);
                     if (!resolved.allowed) {
-                        return res.status(403).json({
+                        const forbiddenCreate = {
                             error: 'Brak uprawnień do utworzenia oferty dla tego użytkownika'
-                        });
+                        };
+                        if (idemKey)
+                            await completeIdempotencyKey(
+                                idemUser,
+                                idemEndpoint,
+                                idemKey,
+                                403,
+                                forbiddenCreate
+                            );
+                        return res.status(403).json(forbiddenCreate);
                     }
                     effectiveUserId = resolved.effectiveUserId;
                 }
@@ -333,10 +351,13 @@ router.post(
                 // ignoruje pole (dostaje frozenRuryVersionId).
                 const requestedStamp = old && typeof stampReq === 'string' ? stampReq : '';
                 if (requestedStamp && requestedStamp !== activeRuryId) {
-                    return res.status(409).json({
+                    const stale = {
                         error: 'Oferta przeliczona do nieaktualnej wersji cennika — odśwież i przelicz ponownie',
                         code: 'STALE_PRICELIST'
-                    });
+                    };
+                    if (idemKey)
+                        await completeIdempotencyKey(idemUser, idemEndpoint, idemKey, 409, stale);
+                    return res.status(409).json(stale);
                 }
                 const dataStr = JSON.stringify(blobSrc);
 

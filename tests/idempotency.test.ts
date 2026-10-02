@@ -91,6 +91,27 @@ describe('P1-A idempotency', () => {
         });
     });
 
+    test('P2: PENDING + inny payload → reuse (także po starzeniu, bez reclaimu)', async () => {
+        await claimIdempotencyKey('u1', 'E', 'k1', { a: 1 }, D());
+        expect(await claimIdempotencyKey('u1', 'E', 'k1', { a: 2 }, D())).toEqual({
+            action: 'reuse'
+        });
+        store['u1|E|k1'].createdAt = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+        expect(await claimIdempotencyKey('u1', 'E', 'k1', { a: 2 }, D())).toEqual({
+            action: 'reuse'
+        });
+    });
+
+    test('P2: domknięcie 403 zapisuje DONE — retry replayuje 403, nie wisi PENDING', async () => {
+        await claimIdempotencyKey('u1', 'E', 'k1', { a: 1 }, D());
+        await completeIdempotencyKey('u1', 'E', 'k1', 403, { error: 'x' }, D());
+        expect(await claimIdempotencyKey('u1', 'E', 'k1', { a: 1 }, D())).toEqual({
+            action: 'replay',
+            status: 403,
+            body: { error: 'x' }
+        });
+    });
+
     test('klucze różnych userów nie kolidują', async () => {
         await claimIdempotencyKey('u1', 'E', 'k1', { a: 1 }, D());
         expect(await claimIdempotencyKey('u2', 'E', 'k1', { a: 1 }, D())).toEqual({

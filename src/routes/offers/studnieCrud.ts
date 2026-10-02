@@ -612,18 +612,36 @@ router.post(
                         requestedUserId || undefined
                     );
                     if (!assigned.allowed) {
-                        return res
-                            .status(403)
-                            .json({ error: 'Brak uprawnień do modyfikacji tej oferty' });
+                        // P2: domknij klucz wynikiem — retry replayuje 403
+                        // zamiast wisieć PENDING (fałszywe in-progress 5 min).
+                        const forbidden = { error: 'Brak uprawnień do modyfikacji tej oferty' };
+                        if (idemKey)
+                            await completeIdempotencyKey(
+                                idemUser,
+                                idemEndpoint,
+                                idemKey,
+                                403,
+                                forbidden
+                            );
+                        return res.status(403).json(forbidden);
                     }
                     effectiveUserId = assigned.effectiveUserId;
                 } else {
                     // P0.1: create tylko dla siebie / subUsera (pro) / dowolnie (admin).
                     const resolved = resolveWriteUserId(authReq.user, o.userId);
                     if (!resolved.allowed) {
-                        return res.status(403).json({
+                        const forbiddenCreate = {
                             error: 'Brak uprawnień do utworzenia oferty dla tego użytkownika'
-                        });
+                        };
+                        if (idemKey)
+                            await completeIdempotencyKey(
+                                idemUser,
+                                idemEndpoint,
+                                idemKey,
+                                403,
+                                forbiddenCreate
+                            );
+                        return res.status(403).json(forbiddenCreate);
                     }
                     effectiveUserId = resolved.effectiveUserId;
                 }
@@ -640,18 +658,36 @@ router.post(
                                 const newWell = newWells.find((w) => w.id === oid) as
                                     Record<string, unknown> | undefined;
                                 if (oldWell && !newWell) {
-                                    return res.status(403).json({
+                                    const lockedGone = {
                                         error: 'Nie można usunąć studni na zamówieniu — usuń najpierw zamówienie.'
-                                    });
+                                    };
+                                    if (idemKey)
+                                        await completeIdempotencyKey(
+                                            idemUser,
+                                            idemEndpoint,
+                                            idemKey,
+                                            403,
+                                            lockedGone
+                                        );
+                                    return res.status(403).json(lockedGone);
                                 }
                                 if (
                                     oldWell &&
                                     newWell &&
                                     !isWellDiffWhitelisted(oldWell, newWell)
                                 ) {
-                                    return res.status(403).json({
+                                    const lockedEdit = {
                                         error: 'Studnia na zamówieniu — Konfiguracja i Parametry zablokowane. Edytuj przez zamówienie.'
-                                    });
+                                    };
+                                    if (idemKey)
+                                        await completeIdempotencyKey(
+                                            idemUser,
+                                            idemEndpoint,
+                                            idemKey,
+                                            403,
+                                            lockedEdit
+                                        );
+                                    return res.status(403).json(lockedEdit);
                                 }
                             }
                         }
@@ -732,10 +768,13 @@ router.post(
                 // ignoruje pole (dostaje frozenStudnieVersionId).
                 const requestedStamp = old && typeof stampReq === 'string' ? stampReq : '';
                 if (requestedStamp && requestedStamp !== activeStudnieId) {
-                    return res.status(409).json({
+                    const stale = {
                         error: 'Oferta przeliczona do nieaktualnej wersji cennika — odśwież i przelicz ponownie',
                         code: 'STALE_PRICELIST'
-                    });
+                    };
+                    if (idemKey)
+                        await completeIdempotencyKey(idemUser, idemEndpoint, idemKey, 409, stale);
+                    return res.status(409).json(stale);
                 }
                 const dataStr = JSON.stringify(blobSrc);
                 const historyStr = JSON.stringify(newHistory);
