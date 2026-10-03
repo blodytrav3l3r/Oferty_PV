@@ -21,6 +21,8 @@ interface PdfJob {
     reject: (err: unknown) => void;
     timer: NodeJS.Timeout;
     settled: boolean;
+    started: boolean;
+    released: boolean;
 }
 
 const queue: PdfJob[] = [];
@@ -96,17 +98,24 @@ export function getChromiumStatus(): ChromiumStatus {
     };
 }
 
+function releaseSlot(job: PdfJob) {
+    if (job.released) return;
+    job.released = true;
+    active--;
+    pdfMetrics.activeJobs = active;
+    pdfMetrics.queueDepth = queue.length;
+    pump();
+}
+
 function pump() {
     while (active < PDF_CONCURRENCY && queue.length > 0) {
         const job = queue.shift() as PdfJob;
+        job.started = true;
         active++;
         pdfMetrics.activeJobs = active;
         pdfMetrics.queueDepth = queue.length;
         void runJob(job).finally(() => {
-            active--;
-            pdfMetrics.activeJobs = active;
-            pdfMetrics.queueDepth = queue.length;
-            pump();
+            releaseSlot(job);
         });
     }
 }
@@ -175,7 +184,15 @@ export function generatePDF(html: string): Promise<Buffer> {
         );
     }
     return new Promise<Buffer>((resolve, reject) => {
-        const job: PdfJob = { html, resolve, reject, timer: undefined as never, settled: false };
+        const job: PdfJob = {
+            html,
+            resolve,
+            reject,
+            timer: undefined as never,
+            settled: false,
+            started: false,
+            released: false
+        };
         const timer = setTimeout(() => {
             const idx = queue.indexOf(job);
             if (idx >= 0) queue.splice(idx, 1);
@@ -184,6 +201,9 @@ export function generatePDF(html: string): Promise<Buffer> {
             job.settled = true;
             pdfMetrics.failed504++;
             reject(new PdfError(504, 'PDF_TIMEOUT', 'Generowanie PDF przekroczyło limit czasu'));
+            // D-018: porzucony RUNNING job oddaje slot natychmiast — późny wynik
+            // odrzucany przez flagę settled w runJob (Chromium dogasa w tle).
+            if (job.started) releaseSlot(job);
         }, PDF_JOB_TIMEOUT_MS);
         // Timeout nie trzyma procesu przy życiu.
         timer.unref?.();
