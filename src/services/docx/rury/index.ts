@@ -8,14 +8,16 @@ import type { UserContactInfo } from '../../pdfGenerator';
 import { buildRuryDocument, buildRurySection } from './builder';
 import { logger } from '../../../utils/logger';
 import type { RuryOfferDataBlob, RuryOrderDataBlob } from '../../../types/offerData';
+import type { User } from '../../../helpers';
 
 /**
  * Pobiera z bazy dane oferty rur i przygotowuje wszystkie elementy
  * potrzebne do zbudowania dokumentu DOCX (kontekst + sparsowane dane + klient).
  * Współdzielone przez generowanie pojedynczej oferty i wydruk łączny.
+ * D-010: authUser (opcjonalny) — re-check własności w builderze kontekstu.
  */
-export async function loadRuryOfferData(offerId: string) {
-    const ctx = await buildRuryOfferContextFromOfferId(offerId);
+export async function loadRuryOfferData(offerId: string, authUser?: User) {
+    const ctx = await buildRuryOfferContextFromOfferId(offerId, authUser);
 
     const offer = await prisma.offers_rel.findUnique({ where: { id: offerId } });
     if (!offer) throw new Error('Oferta nie znaleziona');

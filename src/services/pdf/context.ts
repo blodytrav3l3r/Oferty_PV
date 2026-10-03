@@ -1,5 +1,7 @@
 import prisma from '../../prismaClient';
 import { logger } from '../../utils/logger';
+import { canReadDoc } from '../../utils/ownership';
+import type { User } from '../../helpers';
 import { mapWellsToItems } from './helpers';
 import { lookupOfferUsers } from './offerUsers';
 import type { RuryOfferData, StudnieOfferData } from './types';
@@ -11,6 +13,19 @@ import type {
 } from '../../types/offerData';
 
 const MAX_TRANSPORT_WEIGHT = 24000;
+
+/**
+ * D-010: odmowa dostępu przy re-checku własności w builderze kontekstu
+ * (TOCTOU check→fetch w eksporcie łącznym). Route mapuje na 404
+ * (kontrakt anti-oracle), nigdy 500.
+ */
+export class OfferAccessDeniedError extends Error {
+    readonly status = 404;
+    constructor(message = 'Not found') {
+        super(message);
+        this.name = 'OfferAccessDeniedError';
+    }
+}
 
 /**
  * Uzupełnia pozycje rur o kategorię produktu (pobierana z ProductsRury),
@@ -40,13 +55,23 @@ async function enrichRuryItemsWithCategories(items: unknown[]): Promise<unknown[
     });
 }
 
-export async function buildRuryOfferContextFromOfferId(offerId: string): Promise<RuryOfferData> {
+export async function buildRuryOfferContextFromOfferId(
+    offerId: string,
+    authUser?: User
+): Promise<RuryOfferData> {
     const offer = await prisma.offers_rel.findUnique({
         where: { id: offerId }
     });
 
     if (!offer) {
         throw new Error('Oferta nie znaleziona');
+    }
+
+    // D-010: re-check własności na ŚWIEŻYM wierszu (koniec TOCTOU
+    // check→fetch: revoke/delete między autoryzacją w route a pobraniem
+    // danych). Bez authUser (pojedyncze eksporty) zachowanie bez zmian.
+    if (authUser && !canReadDoc(authUser, offer.userId)) {
+        throw new OfferAccessDeniedError();
     }
 
     let offerData: RuryOfferDataBlob = {};
@@ -188,7 +213,8 @@ export async function buildRuryOrderContextFromOrderId(orderId: string): Promise
 }
 
 export async function buildStudnieOfferContextFromOfferId(
-    offerId: string
+    offerId: string,
+    authUser?: User
 ): Promise<StudnieOfferData> {
     const offer = await prisma.offers_studnie_rel.findUnique({
         where: { id: offerId }
@@ -196,6 +222,11 @@ export async function buildStudnieOfferContextFromOfferId(
 
     if (!offer) {
         throw new Error('Oferta studni nie znaleziona');
+    }
+
+    // D-010: re-check własności na ŚWIEŻYM wierszu (jak wyżej).
+    if (authUser && !canReadDoc(authUser, offer.userId)) {
+        throw new OfferAccessDeniedError();
     }
 
     let offerData: StudnieOfferDataBlob = {};

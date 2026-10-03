@@ -4,6 +4,7 @@ import prisma from '../prismaClient';
 import { requireAuth, AuthenticatedRequest } from '../middleware/auth';
 import { generateCombinedOfferPDF, generateCombinedOfferDOCX } from '../services/combinedExport';
 import { mapPdfError } from '../services/pdf/pdfEngine';
+import { OfferAccessDeniedError } from '../services/pdf/context';
 import { logger } from '../utils/logger';
 import { canReadDoc } from '../utils/ownership';
 import { EXPORT_LIMITER } from '../middleware/rateLimiters';
@@ -97,7 +98,11 @@ router.post('/pdf', requireAuth, EXPORT_LIMITER, async (req, res) => {
             return res.status(404).json({ error: 'Not found' });
         }
 
-        const pdfBuffer = await generateCombinedOfferPDF(ids.offerRuryId, ids.offerStudnieId);
+        const pdfBuffer = await generateCombinedOfferPDF(
+            ids.offerRuryId,
+            ids.offerStudnieId,
+            authReq.user
+        );
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader(
             'Content-Disposition',
@@ -112,6 +117,11 @@ router.post('/pdf', requireAuth, EXPORT_LIMITER, async (req, res) => {
         );
         res.send(pdfBuffer);
     } catch (e: unknown) {
+        // D-010: re-check własności w builderze wykrył revoke/delete
+        // między autoryzacją a pobraniem danych — kontrakt anti-oracle: 404.
+        if (e instanceof OfferAccessDeniedError) {
+            return res.status(404).json({ error: 'Not found' });
+        }
         if (mapPdfError(res, e, 'combined')) return;
         const message = e instanceof Error ? e.message : 'Unknown error';
         logger.error('ExportCombined', 'Błąd eksportu PDF łącznego', message);
@@ -137,7 +147,11 @@ router.post('/docx', requireAuth, EXPORT_LIMITER, async (req, res) => {
             return res.status(404).json({ error: 'Not found' });
         }
 
-        const docxBuffer = await generateCombinedOfferDOCX(ids.offerRuryId, ids.offerStudnieId);
+        const docxBuffer = await generateCombinedOfferDOCX(
+            ids.offerRuryId,
+            ids.offerStudnieId,
+            authReq.user
+        );
         res.setHeader('Content-Type', DOCX_CONTENT_TYPE);
         res.setHeader(
             'Content-Disposition',
@@ -152,6 +166,10 @@ router.post('/docx', requireAuth, EXPORT_LIMITER, async (req, res) => {
         );
         res.send(docxBuffer);
     } catch (e: unknown) {
+        // D-010: jak wyżej (ścieżka DOCX) — anti-oracle: 404.
+        if (e instanceof OfferAccessDeniedError) {
+            return res.status(404).json({ error: 'Not found' });
+        }
         const message = e instanceof Error ? e.message : 'Unknown error';
         logger.error('ExportCombined', 'Błąd eksportu DOCX łącznego', message);
         res.status(500).json({ error: 'Wewnętrzny błąd serwera' });

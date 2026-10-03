@@ -28,14 +28,16 @@ import { isRuryTransportSeparateFlag, resolveRuryTransportTotal } from '../ruryT
 import { buildSummarySection as buildRurySummarySection } from './rury/sections';
 import { loadRuryOfferData } from './rury';
 import { loadStudnieOfferData } from './studnie';
+import type { User } from '../../helpers';
 
 export async function buildCombinedDocument(
     offerRuryId: string,
-    offerStudnieId: string
+    offerStudnieId: string,
+    authUser?: User
 ): Promise<Document> {
     const [rury, studnie] = await Promise.all([
-        loadRuryOfferData(offerRuryId),
-        loadStudnieOfferData(offerStudnieId)
+        loadRuryOfferData(offerRuryId, authUser),
+        loadStudnieOfferData(offerStudnieId, authUser)
     ]);
 
     const ruryCtx = rury.ctx;
@@ -214,7 +216,8 @@ function buildCombinedTotalTable(total: number): Table {
 
 export async function generateCombinedOfferDOCX(
     offerRuryId: string,
-    offerStudnieId: string
+    offerStudnieId: string,
+    authUser?: User
 ): Promise<Buffer> {
-    return Packer.toBuffer(await buildCombinedDocument(offerRuryId, offerStudnieId));
+    return Packer.toBuffer(await buildCombinedDocument(offerRuryId, offerStudnieId, authUser));
 }

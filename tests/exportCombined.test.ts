@@ -104,7 +104,11 @@ describe('Export Combined (Wydruk łączny) — POST /api/export-combined', () =
             expect(res.headers['content-disposition']).toMatch(/oferta_laczna_/);
             expect(res.headers['content-disposition']).toMatch(/\.pdf/);
             expect(Number(res.headers['content-length'])).toBeGreaterThan(0);
-            expect(generateCombinedOfferPDF).toHaveBeenCalledWith(RURY_UUID, STUDNIE_UUID);
+            expect(generateCombinedOfferPDF).toHaveBeenCalledWith(
+                RURY_UUID,
+                STUDNIE_UUID,
+                expect.objectContaining({ id: 'user1' })
+            );
         });
 
         it('walidacja: brak obu ID -> 400', async () => {
@@ -152,7 +156,11 @@ describe('Export Combined (Wydruk łączny) — POST /api/export-combined', () =
             expect(res.headers['content-disposition']).toMatch(/oferta_laczna_/);
             expect(res.headers['content-disposition']).toMatch(/\.docx/);
             expect(Number(res.headers['content-length'])).toBeGreaterThan(0);
-            expect(generateCombinedOfferDOCX).toHaveBeenCalledWith(RURY_UUID, STUDNIE_UUID);
+            expect(generateCombinedOfferDOCX).toHaveBeenCalledWith(
+                RURY_UUID,
+                STUDNIE_UUID,
+                expect.objectContaining({ id: 'user1' })
+            );
         });
 
         it('walidacja: brak obu ID -> 400', async () => {
@@ -198,7 +206,11 @@ describe('Export Combined (Wydruk łączny) — POST /api/export-combined', () =
                 .send({ offerRuryId: LEGACY_RURY, offerStudnieId: LEGACY_STUDNIE });
 
             expect(res.statusCode).toBe(200);
-            expect(generateCombinedOfferPDF).toHaveBeenCalledWith(LEGACY_RURY, LEGACY_STUDNIE);
+            expect(generateCombinedOfferPDF).toHaveBeenCalledWith(
+                LEGACY_RURY,
+                LEGACY_STUDNIE,
+                expect.objectContaining({ id: 'user1' })
+            );
         });
 
         it('POST /docx: legacy ID przechodzą walidację (200, nie 400)', async () => {
@@ -207,7 +219,11 @@ describe('Export Combined (Wydruk łączny) — POST /api/export-combined', () =
                 .send({ offerRuryId: LEGACY_RURY, offerStudnieId: LEGACY_STUDNIE });
 
             expect(res.statusCode).toBe(200);
-            expect(generateCombinedOfferDOCX).toHaveBeenCalledWith(LEGACY_RURY, LEGACY_STUDNIE);
+            expect(generateCombinedOfferDOCX).toHaveBeenCalledWith(
+                LEGACY_RURY,
+                LEGACY_STUDNIE,
+                expect.objectContaining({ id: 'user1' })
+            );
         });
 
         it('wstrzyknięte znaki (ścieżka/spacja) dalej -> 400 bez dotykania generatora', async () => {

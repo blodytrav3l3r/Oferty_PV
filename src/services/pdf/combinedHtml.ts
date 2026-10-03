@@ -9,6 +9,7 @@ import { buildRurySectionHTML } from './ruryHtml';
 import { buildStudnieSectionHTML } from './studnieHtml';
 import { generatePDF } from './pdfEngine';
 import { buildRuryOfferContextFromOfferId, buildStudnieOfferContextFromOfferId } from './context';
+import type { User } from '../../helpers';
 
 /**
  * Generuje JEDEN spójny dokument HTML wydruku łącznego (studnie + rury):
@@ -140,14 +141,17 @@ export async function generateCombinedHTML(
 /**
  * Generuje jeden plik PDF zawierający ofertę studni i ofertę rur
  * (jeden spójny dokument ze wspólnym tytułem i warunkami występującymi raz).
+ * D-010: authUser (opcjonalny) jest re-weryfikowany na świeżych wierszach
+ * w builderach kontekstu — zamyka TOCTOU check→fetch.
  */
 export async function generateCombinedOfferPDF(
     offerRuryId: string,
-    offerStudnieId: string
+    offerStudnieId: string,
+    authUser?: User
 ): Promise<Buffer> {
     const [ruryCtx, studnieCtx] = await Promise.all([
-        buildRuryOfferContextFromOfferId(offerRuryId),
-        buildStudnieOfferContextFromOfferId(offerStudnieId)
+        buildRuryOfferContextFromOfferId(offerRuryId, authUser),
+        buildStudnieOfferContextFromOfferId(offerStudnieId, authUser)
     ]);
     const html = await generateCombinedHTML(studnieCtx, ruryCtx);
     return generatePDF(html);

@@ -14,15 +14,20 @@ import {
 import type { UserContactInfo } from '../../pdfGenerator';
 import { buildStudnieDocument, buildStudnieSection } from './builder';
 import { logger } from '../../../utils/logger';
+import { canReadDoc } from '../../../utils/ownership';
+import { OfferAccessDeniedError } from '../../pdf/context';
+import type { User } from '../../../helpers';
 
 /**
  * Pobiera z bazy dane oferty studni i przygotowuje wszystkie elementy
  * potrzebne do zbudowania dokumentu DOCX (dane oferty + studnie + klient).
  * Współdzielone przez generowanie pojedynczej oferty i wydruk łączny.
+ * D-010: authUser (opcjonalny) — re-check własności na świeżym wierszu.
  */
-export async function loadStudnieOfferData(offerId: string) {
+export async function loadStudnieOfferData(offerId: string, authUser?: User) {
     const offer = await prisma.offers_studnie_rel.findUnique({ where: { id: offerId } });
     if (!offer) throw new Error('Oferta studni nie znaleziona');
+    if (authUser && !canReadDoc(authUser, offer.userId)) throw new OfferAccessDeniedError();
 
     let offerData: Record<string, unknown> = {};
     try {
