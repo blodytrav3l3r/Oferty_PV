@@ -110,7 +110,8 @@ jest.mock('../src/prismaClient', () => ({
         offers_rel: { findUnique: jest.fn(async (args: any) => ownerOf(args)) },
         offers_studnie_rel: { findUnique: jest.fn(async (args: any) => ownerOf(args)) },
         orders_rury_rel: { findUnique: jest.fn(async (args: any) => ownerOf(args)) },
-        orders_studnie_rel: { findUnique: jest.fn(async (args: any) => ownerOf(args)) }
+        orders_studnie_rel: { findUnique: jest.fn(async (args: any) => ownerOf(args)) },
+        production_orders_rel: { findUnique: jest.fn(async (args: any) => ownerOf(args)) }
     }
 }));
 
@@ -249,6 +250,28 @@ describe('Twarda blokada edycji (doc_locks)', () => {
             .post('/api/locks/acquire')
             .send({ docType: 'invoice', docId: 'o1' });
         expect(res.status).toBe(400);
+    });
+
+    test('production: acquire + cudzy 423 + assert w zapisie', async () => {
+        const app = createApp();
+        const ok = await request(app)
+            .post('/api/locks/acquire')
+            .send({ docType: 'production', docId: 'pz1' });
+        expect(ok.status).toBe(200);
+        await expect(
+            assertDocLockForWrite(prisma as any, {
+                docType: 'production',
+                docId: 'pz1',
+                user: { id: 'user-b' }
+            })
+        ).rejects.toMatchObject({ status: 423, code: 'DOC_LOCKED' });
+        await expect(
+            assertDocLockForWrite(prisma as any, {
+                docType: 'production',
+                docId: 'pz1',
+                user: { id: 'user-a' }
+            })
+        ).resolves.toBeUndefined();
     });
 
     test('assertDocLockForWrite: brak wiersza przepuszcza (stare sesje, chroni 409)', async () => {

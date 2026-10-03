@@ -14,7 +14,13 @@ import type { User } from '../helpers';
 /** TTL blokady: brak heartbeat w tym czasie = blokada wygasla. */
 export const DOC_LOCK_TTL_MS = 180000;
 
-export const DOC_LOCK_TYPES = ['offer', 'offer_studnie', 'order_rury', 'order_studnie'] as const;
+export const DOC_LOCK_TYPES = [
+    'offer',
+    'offer_studnie',
+    'order_rury',
+    'order_studnie',
+    'production'
+] as const;
 export type DocLockType = (typeof DOC_LOCK_TYPES)[number];
 
 export interface DocLockRow {
@@ -80,7 +86,8 @@ const DOC_OWNER_DELEGATES: Record<DocLockType, string> = {
     offer: 'offers_rel',
     offer_studnie: 'offers_studnie_rel',
     order_rury: 'orders_rury_rel',
-    order_studnie: 'orders_studnie_rel'
+    order_studnie: 'orders_studnie_rel',
+    production: 'production_orders_rel'
 };
 
 /** Minimalny klient do odczytu wlasciciela (delegaty opcjonalne — brak = nie weryfikowalne). */
@@ -89,6 +96,7 @@ export interface DocOwnerClient {
     offers_studnie_rel?: { findUnique(args: any): Promise<any> };
     orders_rury_rel?: { findUnique(args: any): Promise<any> };
     orders_studnie_rel?: { findUnique(args: any): Promise<any> };
+    production_orders_rel?: { findUnique(args: any): Promise<any> };
 }
 
 /**

@@ -62,6 +62,10 @@ jest.mock('../../src/prismaClient', () => ({
             updateMany: jest.fn(),
             deleteMany: jest.fn()
         },
+        // Twarda blokada PZ: domyślnie brak wiersza = zapis przepuszczony.
+        doc_locks: {
+            findUnique: jest.fn(async () => null)
+        },
         $queryRaw: jest.fn(),
         $executeRaw: jest.fn().mockResolvedValue(1),
         $executeRawUnsafe: jest.fn().mockResolvedValue(1),
@@ -239,6 +243,36 @@ describe('Production Orders (PZ) routes', () => {
             expect(res.statusCode).toBe(200);
             expect(res.body.ok).toBe(true);
             expect(prisma.production_orders_rel.create).toHaveBeenCalledTimes(2);
+        });
+
+        it('cudzy świeży lock PZ → 423 z holderem, batch cofnięty', async () => {
+            (prisma.production_orders_rel.findMany as jest.Mock).mockResolvedValue([
+                {
+                    id: 'pz-1',
+                    userId: 'user-id',
+                    version: 1,
+                    data: '{}'
+                }
+            ]);
+            (prisma.doc_locks.findUnique as jest.Mock).mockResolvedValue({
+                docType: 'production',
+                docId: 'pz-1',
+                userId: 'other-user',
+                userName: 'Obcy',
+                lockedAt: new Date().toISOString(),
+                heartbeatAt: new Date().toISOString()
+            });
+
+            const res = await request(app)
+                .put('/api/orders/production')
+                .set('x-user-id', 'user-id')
+                .send({ data: [{ id: 'pz-1', wellId: 'w-1', status: 'draft' }] });
+
+            expect(res.statusCode).toBe(423);
+            expect(res.body.code).toBe('DOC_LOCKED');
+            expect(res.body.holder.userId).toBe('other-user');
+            expect(res.body.saved).toEqual([]);
+            expect(prisma.production_orders_rel.create).not.toHaveBeenCalled();
         });
 
         it('blokuje edycję cudzego PZ (P0.1)', async () => {

@@ -149,6 +149,19 @@ async function closeZleceniaModal() {
 
     wellsSnapshotBeforeZlecenia = null;
 
+    // Zwolnij blokadę edytowanego zlecenia (best-effort, serwer wygasi TTL).
+    try {
+        if (window.lockService && typeof window.lockService.release === 'function') {
+            const h =
+                typeof window.lockService.current === 'function'
+                    ? window.lockService.current()
+                    : null;
+            if (h && h.docType === 'production') window.lockService.release();
+        }
+    } catch (_e) {
+        /* best-effort */
+    }
+
     const modal = document.getElementById('zlecenia-modal');
     if (modal) modal.classList.remove('active');
 

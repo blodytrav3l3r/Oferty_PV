@@ -19,6 +19,7 @@ import { WRITE_LIMITER } from '../../middleware/rateLimiters';
 import { searchCache } from '../../utils/searchCache';
 import { mapProductionOrderRow } from '../../utils/productionSearchUtils';
 import { mapPrismaError } from '../../utils/prismaErrors';
+import { assertDocLockForWrite } from '../../utils/docLocks';
 import { HOT_TX_OPTS } from '../../utils/hotTx';
 import {
     claimIdempotencyKey,
@@ -343,6 +344,15 @@ router.put(
                         targetUserId = created.effectiveUserId;
                     }
 
+                    // Twarda blokada edycji PZ: cudzy świeży lock = 423, cały batch cofnięty.
+                    if (old) {
+                        await assertDocLockForWrite(tx, {
+                            docType: 'production',
+                            docId,
+                            user: { id: authReq.user?.id || '' }
+                        });
+                    }
+
                     if (old) {
                         await logAudit(
                             'production_order',
@@ -489,6 +499,17 @@ router.put(
                     saved: []
                 });
             }
+            // Twarda blokada: cudzy lock na zleceniu — cały batch cofnięty.
+            if ((e as { status?: number }).status === 423) {
+                return res.status(423).json({
+                    error:
+                        (e as { message?: string }).message ||
+                        'Zlecenie jest edytowane przez innego użytkownika',
+                    code: (e as { code?: string }).code || 'DOC_LOCKED',
+                    holder: (e as { holder?: unknown }).holder,
+                    saved: []
+                });
+            }
             // P0-A: P2002 = dubel finalnego numeru (UNIQUE) — safety net, nie sterowanie.
             if ((e as { code?: string }).code === 'P2002') {
                 return res.status(409).json({
@@ -598,6 +619,15 @@ router.post(
                 targetUserId = created.effectiveUserId;
             }
 
+            // Twarda blokada edycji PZ: cudzy świeży lock = 423.
+            if (old) {
+                await assertDocLockForWrite(prisma, {
+                    docType: 'production',
+                    docId,
+                    user: { id: authReq.user?.id || '' }
+                });
+            }
+
             if (old) {
                 await logAudit(
                     'production_order',
@@ -692,6 +722,16 @@ router.post(
                 });
             res.json({ ok: true, id: docId });
         } catch (e: unknown) {
+            // Twarda blokada: cudzy lock na zleceniu.
+            if ((e as { status?: number }).status === 423) {
+                return res.status(423).json({
+                    error:
+                        (e as { message?: string }).message ||
+                        'Zlecenie jest edytowane przez innego użytkownika',
+                    code: (e as { code?: string }).code || 'DOC_LOCKED',
+                    holder: (e as { holder?: unknown }).holder
+                });
+            }
             // P0-A: P2002 = dubel finalnego numeru (UNIQUE) — safety net, nie sterowanie.
             if ((e as { code?: string }).code === 'P2002') {
                 if (idemKey)
@@ -762,6 +802,12 @@ router.post('/batch-delete', requireAuth, writeProductionLimiter, async (req, re
                 if (!canDeleteDoc(authReq.user, row.userId)) {
                     throw { status: 403, message: 'Brak uprawnień do usunięcia tego zlecenia' };
                 }
+                // Twarda blokada: cudzy lock na zleceniu = 423, cały batch cofnięty.
+                await assertDocLockForWrite(tx, {
+                    docType: 'production',
+                    docId: order.id,
+                    user: { id: authReq.user?.id || '' }
+                });
                 const rowData = parseJsonField<Record<string, unknown>>(row.data, {});
                 if (rowData.status === 'accepted') {
                     skippedTx++;
@@ -804,6 +850,16 @@ router.post('/batch-delete', requireAuth, writeProductionLimiter, async (req, re
             return res
                 .status(403)
                 .json({ error: (e as { message?: string }).message || 'Brak uprawnień' });
+        }
+        // Twarda blokada: cudzy lock na zleceniu.
+        if ((e as { status?: number }).status === 423) {
+            return res.status(423).json({
+                error:
+                    (e as { message?: string }).message ||
+                    'Zlecenie jest edytowane przez innego użytkownika',
+                code: (e as { code?: string }).code || 'DOC_LOCKED',
+                holder: (e as { holder?: unknown }).holder
+            });
         }
         if (mapPrismaError(res, e)) return;
         const message = e instanceof Error ? e.message : 'Unknown error';
@@ -1108,6 +1164,12 @@ router.delete('/:id', requireAuth, writeProductionLimiter, async (req, res) => {
                 if (row && !canDeleteDoc(authReq.user, row.userId)) {
                     throw { status: 403, message: 'Brak uprawnień do usunięcia tego zlecenia' };
                 }
+                // Twarda blokada: cudzy lock na zleceniu = 423.
+                await assertDocLockForWrite(tx, {
+                    docType: 'production',
+                    docId,
+                    user: { id: authReq.user?.id || '' }
+                });
                 await recycleProductionNumber(existing.userId || '', oldData, tx);
                 await logAudit(
                     'production_order',
@@ -1131,6 +1193,16 @@ router.delete('/:id', requireAuth, writeProductionLimiter, async (req, res) => {
                 return res
                     .status(403)
                     .json({ error: (e as { message?: string }).message || 'Brak uprawnień' });
+            }
+            // Twarda blokada: cudzy lock na zleceniu.
+            if ((e as { status?: number }).status === 423) {
+                return res.status(423).json({
+                    error:
+                        (e as { message?: string }).message ||
+                        'Zlecenie jest edytowane przez innego użytkownika',
+                    code: (e as { code?: string }).code || 'DOC_LOCKED',
+                    holder: (e as { holder?: unknown }).holder
+                });
             }
             throw e;
         }

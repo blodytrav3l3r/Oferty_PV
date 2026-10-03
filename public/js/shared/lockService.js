@@ -210,12 +210,17 @@ function showDocLockedModal(opts) {
         (typeof currentUser !== 'undefined' && currentUser && currentUser.role === 'admin')
     );
     const title = 'Dokument edytowany przez innego użytkownika';
+    const initial = (holder.name || '?').trim().charAt(0).toUpperCase() || '?';
     const bodyHtml =
-        '<p><strong>' +
+        '<div class="flex-gap-4">' +
+        '<span class="share-avatar" aria-hidden="true">' +
+        _esc(initial) +
+        '</span>' +
+        '<div><p class="m-0"><strong>' +
         _esc(holder.name) +
-        '</strong>' +
-        (holder.when ? ' od ' + _esc(holder.when) : '') +
-        ' edytuje ten dokument.</p>' +
+        '</strong></p>' +
+        (holder.when ? '<p class="text-muted m-0">Edytuje od ' + _esc(holder.when) + '</p>' : '') +
+        '</div></div>' +
         '<p>Nie można otworzyć go do edycji. Spróbuj ponownie później.</p>';
 
     if (typeof window !== 'undefined' && typeof window.showModal === 'function') {

@@ -124,4 +124,17 @@ describe('lockService (doc_locks frontend)', () => {
         expect(modalOpts.html).not.toContain('<img src=x');
         expect(modalOpts.html).toContain('&lt;img');
     });
+
+    test('modal holdera pokazuje awatar z inicjałem (klasy SOK, bez inline style)', async () => {
+        fetchHandler = () =>
+            errJson(423, {
+                code: 'DOC_LOCKED',
+                holder: { userId: 'u2', userName: 'Ewa', lockedAt: '2026-01-01T10:00:00.000Z' }
+            });
+        await ctx.window.lockService.tryOpen('production', 'pz1', () => {});
+        expect(modalOpts.html).toContain('share-avatar');
+        expect(modalOpts.html).toContain('>E<');
+        expect(modalOpts.html).toContain('Ewa');
+        expect(modalOpts.html).not.toMatch(/style="/);
+    });
 });

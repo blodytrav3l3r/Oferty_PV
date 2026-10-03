@@ -306,6 +306,38 @@ async function selectZleceniaElement(idx) {
     if (typeof ensurePzDetailForElement === 'function') await ensurePzDetailForElement(el);
     if (zleceniaSelectedIdx !== idx) return; // szybkie przeklikanie — nie nadpisuj nowszego
     populateZleceniaForm(el);
+
+    // Twarda blokada PZ: drugi użytkownik nie edytuje tego samego zlecenia
+    // (modal 423 z holderem). Nowe (niezapisane) PZ nie mają id — nic do blokowania.
+    try {
+        const existing =
+            typeof pzGuard !== 'undefined' &&
+            pzGuard &&
+            typeof pzGuard.findPzForElement === 'function'
+                ? pzGuard.findPzForElement(
+                      (typeof productionOrders !== 'undefined' && productionOrders) || [],
+                      el.well && el.well.id,
+                      (el.configItem && el.configItem._elemId) || '',
+                      el.elementIndex
+                  )
+                : null;
+        if (
+            existing &&
+            existing.id &&
+            window.lockService &&
+            typeof window.lockService.tryOpen === 'function'
+        ) {
+            const ok = await window.lockService.tryOpen('production', existing.id, function () {
+                if (typeof selectZleceniaElement === 'function') selectZleceniaElement(idx);
+            });
+            if (!ok && zleceniaSelectedIdx === idx) {
+                // Konflikt: formularz pokazuje dane, ale zapis zablokuje backend 423.
+                // Użytkownik widzi modal z holderem (kto edytuje).
+            }
+        }
+    } catch (_e) {
+        // Brak locka (np. sieć) nie blokuje edycji — chroni backend 409/423.
+    }
 }
 
 window.filterZleceniaList = filterZleceniaList;
