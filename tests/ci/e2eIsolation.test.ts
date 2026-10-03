@@ -36,7 +36,7 @@ describe('D-017 E2E isolation: playwright webServer', () => {
 
     it('webServer.url jest na izolowanym porcie (nie :3000)', () => {
         expect(PW).toMatch(/webServer/);
-        expect(PW).not.toMatch(/url:\s*'http:\/\/localhost:3000\/health'/);
+        expect(PW).not.toMatch(/localhost:3000/);
         expect(PW).toMatch(/\/health[`'"]/);
     });
 
@@ -55,12 +55,24 @@ describe('D-017 E2E isolation: playwright webServer', () => {
 describe('D-017 E2E isolation: specy nie walą w dev :3000', () => {
     it('smokeOfferFlow.spec.ts default NIE jest :3000', () => {
         expect(SMOKE).toMatch(/PLAYWRIGHT_BASE_URL/);
-        expect(SMOKE).not.toMatch(/'\s*http:\/\/localhost:3000'\s*;?\s*$/m);
+        expect(SMOKE).not.toMatch(/localhost:3000/);
     });
 
     it('aiDashboardSmoke.spec.ts default NIE jest :3000', () => {
         expect(AI_SMOKE).toMatch(/PLAYWRIGHT_BASE_URL/);
-        expect(AI_SMOKE).not.toMatch(/'\s*http:\/\/localhost:3000'\s*;?\s*$/m);
+        expect(AI_SMOKE).not.toMatch(/localhost:3000/);
+    });
+});
+
+describe('D-017 E2E isolation: skrypty .cjs nie walą w dev :3000', () => {
+    const CJS = ['excelReliefPair.cjs', 'excelEmptyRowAlignment.cjs', 'partialOrderRury.cjs'].map(
+        (f) => fs.readFileSync(path.join(ROOT, 'tests', 'playwright', f), 'utf8')
+    );
+
+    it.each([0, 1, 2])('.cjs [%#] honoruje BASE_URL/PLAYWRIGHT_BASE_URL, default :3199', (i) => {
+        expect(CJS[i]).toMatch(/PLAYWRIGHT_BASE_URL/);
+        expect(CJS[i]).not.toMatch(/localhost:3000/);
+        expect(CJS[i]).toMatch(/localhost:3199/);
     });
 });
 

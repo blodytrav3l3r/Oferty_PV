@@ -6,14 +6,14 @@
  *
  * Run:        node tests/playwright/excelEmptyRowAlignment.cjs
  * Requires:   playwright (available in npx cache or node_modules)
- * Requires:   backend running on localhost:3000
+ * Requires:   backend izolowany (E2E :3199 / BASE_URL), nigdy dev :3000
  *
  * Exit code:
  *   0 = all tabs aligned
  *   1 = at least one column misaligned or error
  */
 
-const BASE = process.env.BASE_URL || 'http://localhost:3000';
+const BASE = process.env.BASE_URL || process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3199';
 
 /* ── Playwright resolution ── */
 function resolvePlaywright() {

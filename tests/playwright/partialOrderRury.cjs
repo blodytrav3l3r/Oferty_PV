@@ -3,10 +3,10 @@
  * Tests: qty input read scope, ZT auto-check, orderedQuantity tracking.
  *
  * Run:  node tests/playwright/partialOrderRury.cjs
- * Needs: backend on :3000
+ * Needs: backend izolowany (E2E :3199 / BASE_URL), nigdy dev :3000
  */
 
-const BASE = process.env.BASE_URL || 'http://localhost:3000';
+const BASE = process.env.BASE_URL || process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3199';
 
 function resolvePlaywright() {
     try {

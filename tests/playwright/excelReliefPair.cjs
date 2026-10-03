@@ -12,11 +12,11 @@
  *     model plyta+pierscien, komorka plyty "1", Krag H=250 pusty (i odwrotnie).
  *
  * Run:        node tests/playwright/excelReliefPair.cjs
- * Requires:   backend running on localhost:3000
+ * Requires:   backend izolowany (E2E :3199 / BASE_URL), nigdy dev :3000
  * Exit code:  0 = pass, 1 = fail
  */
 
-const BASE = process.env.BASE_URL || 'http://localhost:3000';
+const BASE = process.env.BASE_URL || process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3199';
 
 function resolvePlaywright() {
     try {
