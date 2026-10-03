@@ -231,14 +231,14 @@ router.get('/shareable', requireAuth, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
         const users = await prisma.users.findMany({
+            // D-012: kafelki używają tylko id/username/role/imiona/symbol
+            // (shareModal.js) — email/phone nie są nigdzie czytane, nie wysyłaj PII.
             select: {
                 id: true,
                 username: true,
                 role: true,
                 firstName: true,
                 lastName: true,
-                email: true,
-                phone: true,
                 symbol: true
             }
         });
@@ -258,7 +258,21 @@ router.get('/shareable', requireAuth, async (req, res) => {
 // GET /api/users-for-assignment (alias: /for-assignment)
 router.get('/for-assignment', requireAuth, async (_req, res) => {
     try {
-        const users = await prisma.users.findMany();
+        // D-012: jawny select — bez password/subUsers/limitów (findMany bez
+        // select zwracałby hash hasła do pamięci). Na drucie email/phone ZOSTAJĄ:
+        // stopka kontaktowa wydruku (offerPrintManager.js renderUser) je renderuje.
+        const users = await prisma.users.findMany({
+            select: {
+                id: true,
+                username: true,
+                role: true,
+                firstName: true,
+                lastName: true,
+                email: true,
+                phone: true,
+                symbol: true
+            }
+        });
 
         const mapUser = (u: {
             id: string;

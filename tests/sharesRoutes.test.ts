@@ -171,6 +171,15 @@ describe('POST /api/shares limit 50 atomowo', () => {
             .send({ ...DOC, userIds: ['u2'] });
         expect(res.status).toBe(404);
     });
+
+    test('D-012: nieznany user → 400 generycznie, bez echa sondowanego id', async () => {
+        const res = await request(createApp())
+            .post('/api/shares')
+            .send({ ...DOC, userIds: ['u2', 'ghost-probe-xyz'] });
+        expect(res.status).toBe(400);
+        expect(res.body.error).toBeTruthy();
+        expect(res.body.error).not.toContain('ghost-probe-xyz');
+    });
 });
 
 describe('shares → invalidacja searchCache (F-003b)', () => {

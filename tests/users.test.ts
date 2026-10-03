@@ -315,5 +315,55 @@ describe('Users Routes', () => {
             expect(res.statusCode).toBe(200);
             expect(res.body.data).toHaveLength(2); // pełna lista — każdy może przypisać każdemu
         });
+
+        it('D-012: select bez password/subUsers, email/phone zostają (stopka wydruku)', async () => {
+            (prisma.users.findMany as jest.Mock).mockResolvedValue(mockUsers);
+            const res = await request(app)
+                .get('/api/users/for-assignment')
+                .set('x-user-id', 'other-id')
+                .set('x-user-role', 'user');
+
+            expect(res.statusCode).toBe(200);
+            const select = (prisma.users.findMany as jest.Mock).mock.calls[0][0].select;
+            expect(select.password).toBeUndefined();
+            expect(select.subUsers).toBeUndefined();
+            expect(select.orderStartNumber).toBeUndefined();
+            // używane przez dropdown (id/username/imiona/symbol/role) + stopkę
+            // kontaktową wydruku (offerPrintManager.js: email/phone)
+            expect(select).toEqual({
+                id: true,
+                username: true,
+                role: true,
+                firstName: true,
+                lastName: true,
+                email: true,
+                phone: true,
+                symbol: true
+            });
+            expect(res.body.data[0]).not.toHaveProperty('password');
+        });
+    });
+
+    describe('D-012: GET /api/users/shareable minimalizacja PII', () => {
+        it('low-priv user: select tylko pola kafelków, bez email/phone/password', async () => {
+            (prisma.users.findMany as jest.Mock).mockResolvedValue(mockUsers);
+            const res = await request(app)
+                .get('/api/users/shareable')
+                .set('x-user-id', 'other-id')
+                .set('x-user-role', 'user');
+
+            expect(res.statusCode).toBe(200);
+            const select = (prisma.users.findMany as jest.Mock).mock.calls[0][0].select;
+            expect(select).toEqual({
+                id: true,
+                username: true,
+                role: true,
+                firstName: true,
+                lastName: true,
+                symbol: true
+            });
+            expect(res.body.data).toHaveLength(1); // tylko rola user, bez self
+            expect(res.body.data[0].id).toBe('user-id');
+        });
     });
 });

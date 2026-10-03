@@ -133,8 +133,8 @@ router.post('/', requireAuth, WRITE_LIMITER, validateData(shareCreateSchema), as
     });
     const foundIds = new Set(users.map((u) => u.id));
     const missing = uniqueIds.filter((id) => !foundIds.has(id));
-    if (missing.length > 0)
-        return res.status(400).json({ error: `Nieznani użytkownicy: ${missing.join(', ')}` });
+    // D-012: generyczny komunikat bez echa ids (nie potwierdzaj sondowania UUID).
+    if (missing.length > 0) return res.status(400).json({ error: 'Nieznani użytkownicy' });
     // user może udostępniać tylko innym userom — admin/pro mają dostęp zawsze
     if (authReq.user!.role === 'user') {
         const nonUserTargets = users.filter((u) => u.role !== 'user').map((u) => u.id);
