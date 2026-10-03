@@ -2782,6 +2782,21 @@ html[data-theme='light'] textarea {
     color-scheme: light;
 }
 
+/* Ikonka kalendarza w input[type=date] — jawny kontrast w obu motywach.
+   Domyślny rendering przeglądarki zlewa ikonę z tłem (kartoteka: ka-date-from/to).
+   WebKit: pełna nieprzezroczystość + przyciemnienie glifu w light; w dark
+   jasny glif na ciemnym tle kontrastuje sam. Firefox bierze color-scheme. */
+.form-input[type='date']::-webkit-calendar-picker-indicator {
+    opacity: 1;
+    cursor: pointer;
+}
+html[data-theme='light'] .form-input[type='date']::-webkit-calendar-picker-indicator {
+    filter: brightness(0.55);
+}
+.form-input[type='date']::-webkit-calendar-picker-indicator:hover {
+    opacity: 0.75;
+}
+
 html[data-theme='light'] option {
     background: var(--bg-secondary);
     color: var(--text-primary);

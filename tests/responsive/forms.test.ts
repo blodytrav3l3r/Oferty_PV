@@ -17,6 +17,18 @@ describe('Formularze — responsywność', () => {
         expect(mqMatch).not.toBeNull();
     });
 
+    test('ikonka kalendarza w date ma jawny kontrast (nie zlewa się z tłem)', () => {
+        const css = fs.readFileSync('public/css/style.base.css', 'utf-8');
+        // Bazowa reguła: pełna nieprzezroczystość + pointer.
+        expect(css).toMatch(
+            /\.form-input\[type='date'\]::-webkit-calendar-picker-indicator\s*\{[^}]*opacity:\s*1/
+        );
+        // Light: przyciemnienie glifu (kontrast na jasnym tle).
+        expect(css).toMatch(
+            /html\[data-theme='light'\]\s*\.form-input\[type='date'\]::-webkit-calendar-picker-indicator\s*\{[^}]*filter:\s*brightness\(/
+        );
+    });
+
     test('każdy formularz w rury partialach ma klasę .wizard-form-grid', () => {
         const partialDirs = ['public/partials/rury', 'public/partials/shared'];
         let allHtml = '';
