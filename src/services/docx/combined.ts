@@ -9,6 +9,7 @@
  */
 
 import { AlignmentType, Document, Packer, Paragraph, Table, TableRow, WidthType } from 'docx';
+import { buildCorruptedBanner } from './helpers';
 import { buildImageHeader, buildImageFooter } from './headerFooter';
 import { fmtDate, fmtCurrency, textCell } from './helpers';
 import { COLOR_GRAY_HEADER, COLOR_WHITE, NO_BORDERS, SZ_GRAND_TOTAL } from './constants';
@@ -107,6 +108,11 @@ export async function buildCombinedDocument(
     );
 
     const children: (Paragraph | Table)[] = [];
+
+    // A-01: stempel gdy któraś strona ma uszkodzony blob.
+    if (rury.dataCorrupted || studnie.dataCorrupted) {
+        children.push(buildCorruptedBanner());
+    }
 
     // 1. Wspólny tytuł (oba numery ofert)
     children.push(buildTitleParagraph(combinedNumber, 'offer'));

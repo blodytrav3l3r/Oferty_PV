@@ -6,7 +6,7 @@
 
 import { Document, ISectionOptions, Paragraph, Table } from 'docx';
 import { UserContactInfo } from '../../pdfGenerator';
-import { fmtDate } from '../helpers';
+import { fmtDate, buildCorruptedBanner } from '../helpers';
 import { buildImageHeader, buildImageFooter } from '../headerFooter';
 import {
     buildTitleParagraph,
@@ -35,7 +35,9 @@ export function buildStudnieDocument(
     wells: unknown[],
     authorUser: UserContactInfo | null,
     guardianUser: UserContactInfo | null,
-    documentType: 'offer' | 'order' = 'offer'
+    documentType: 'offer' | 'order' = 'offer',
+    // A-01: stempel uszkodzonych danych (best-effort render z corrupt bloba).
+    dataCorrupted = false
 ): Document {
     return new Document({
         sections: [
@@ -46,7 +48,8 @@ export function buildStudnieDocument(
                 wells,
                 authorUser,
                 guardianUser,
-                documentType
+                documentType,
+                dataCorrupted
             )
         ]
     });
@@ -64,7 +67,8 @@ export function buildStudnieSection(
     wells: unknown[],
     authorUser: UserContactInfo | null,
     guardianUser: UserContactInfo | null,
-    documentType: 'offer' | 'order' = 'offer'
+    documentType: 'offer' | 'order' = 'offer',
+    dataCorrupted = false
 ): ISectionOptions {
     const children = buildStudnieSectionChildren(
         offer,
@@ -73,7 +77,8 @@ export function buildStudnieSection(
         wells,
         authorUser,
         guardianUser,
-        documentType
+        documentType,
+        dataCorrupted
     );
 
     return {
@@ -106,7 +111,9 @@ export function buildStudnieSectionChildren(
     wells: unknown[],
     authorUser: UserContactInfo | null,
     guardianUser: UserContactInfo | null,
-    documentType: 'offer' | 'order' = 'offer'
+    documentType: 'offer' | 'order' = 'offer',
+    // A-01: stempel uszkodzonych danych (best-effort render z corrupt bloba).
+    dataCorrupted = false
 ): (Paragraph | Table)[] {
     const isOrder = documentType === 'order';
     const rawNumber =
@@ -132,6 +139,9 @@ export function buildStudnieSectionChildren(
     );
 
     const children: (Paragraph | Table)[] = [];
+
+    // A-01: stempel na początku dokumentu.
+    if (dataCorrupted) children.push(buildCorruptedBanner());
 
     // 1. Tytuł
     children.push(buildTitleParagraph(offerNumber, documentType));

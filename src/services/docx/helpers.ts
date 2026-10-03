@@ -23,6 +23,21 @@ export function fmtDate(dateStr: string): string {
     }
 }
 
+// ─── Stempel uszkodzonych danych (A-01) ─────────────────────────────────
+// Best-effort render z nieparsowalnego bloba JSON MUSI być jawnie oznaczony,
+// żeby dokument nie wyglądał na ważny. Statyczny tekst, brak interpolacji.
+export function buildCorruptedBanner(): Paragraph {
+    return new Paragraph({
+        children: [
+            new TextRun({
+                text: 'DANE_USZKODZONE — dokument wygenerowany z niepełnych danych (uszkodzony zapis oferty/zamówienia). Nie używać jako ważny dokument.',
+                bold: true,
+                color: 'CC0000'
+            })
+        ]
+    });
+}
+
 // ─── Budowanie komórek tabeli ───────────────────────────────────────
 
 /** Tworzy komórkę tabeli z tekstem — reużywalny helper */

@@ -33,17 +33,26 @@ jest.mock('../src/utils/logger', () => ({
     }
 }));
 
-jest.mock('../src/utils/ownership', () => ({
-    canWriteDoc: jest.fn().mockReturnValue(true),
-    canReadDoc: jest.fn().mockImplementation((user: any, ownerId: string | null) => {
+jest.mock('../src/utils/ownership', () => {
+    const canReadDoc = (user: any, ownerId: string | null) => {
         if (user?.role === 'admin') return true;
         if (user?.id === ownerId) return true;
         if (user?.role === 'pro' && Array.isArray(user?.subUsers) && ownerId) {
             return user.subUsers.includes(ownerId);
         }
         return false;
-    })
-}));
+    };
+    return {
+        canWriteDoc: jest.fn().mockReturnValue(true),
+        canReadDoc: jest.fn().mockImplementation(canReadDoc),
+        // A-02: route jest share-aware (jak single eksporty).
+        canReadWithShare: jest
+            .fn()
+            .mockImplementation(async (user: any, ownerId: string | null) =>
+                canReadDoc(user, ownerId)
+            )
+    };
+});
 
 jest.mock('../src/prismaClient', () => ({
     __esModule: true,
@@ -63,7 +72,7 @@ jest.mock('../src/services/combinedExport', () => ({
 }));
 
 import prisma from '../src/prismaClient';
-import { canReadDoc } from '../src/utils/ownership';
+import { canReadWithShare } from '../src/utils/ownership';
 import {
     generateCombinedOfferPDF,
     generateCombinedOfferDOCX
@@ -180,8 +189,8 @@ describe('Export Combined (Wydruk łączny) — POST /api/export-combined', () =
         });
     });
 
-    describe('canReadDoc dla OBIU ofert', () => {
-        it('sprawdza uprawnienia do obu ofert (rur i studni)', async () => {
+    describe('canReadWithShare dla OBIU ofert', () => {
+        it('sprawdza uprawnienia do obu ofert (rur i studni, share-aware)', async () => {
             await request(app).post('/api/export-combined/pdf').send(validBody);
 
             expect(prisma.offers_rel.findUnique).toHaveBeenCalledWith({
@@ -192,7 +201,7 @@ describe('Export Combined (Wydruk łączny) — POST /api/export-combined', () =
                 where: { id: STUDNIE_UUID },
                 select: { userId: true, offer_number: true }
             });
-            expect(canReadDoc).toHaveBeenCalled();
+            expect(canReadWithShare).toHaveBeenCalledTimes(2);
         });
     });
 

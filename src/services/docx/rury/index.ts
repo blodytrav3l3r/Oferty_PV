@@ -9,6 +9,8 @@ import { buildRuryDocument, buildRurySection } from './builder';
 import { logger } from '../../../utils/logger';
 import type { RuryOfferDataBlob, RuryOrderDataBlob } from '../../../types/offerData';
 import type { User } from '../../../helpers';
+import { canReadWithShare } from '../../../utils/ownership';
+import { OfferAccessDeniedError } from '../../pdf/context';
 
 /**
  * Pobiera z bazy dane oferty rur i przygotowuje wszystkie elementy
@@ -21,19 +23,27 @@ export async function loadRuryOfferData(offerId: string, authUser?: User) {
 
     const offer = await prisma.offers_rel.findUnique({ where: { id: offerId } });
     if (!offer) throw new Error('Oferta nie znaleziona');
+    // A-02: share-aware re-check (jak single eksporty); builder kontekstu
+    // wyżej sprawdza to samo — dublet celowy (loader ma własny fetch).
+    if (authUser && !(await canReadWithShare(authUser, offer.userId, 'offer', offerId))) {
+        throw new OfferAccessDeniedError();
+    }
 
     let offerData: RuryOfferDataBlob = {};
+    let dataCorrupted = false;
     try {
         if (offer.data) offerData = JSON.parse(offer.data) as RuryOfferDataBlob;
     } catch (e) {
         logger.warn('DocxRury', 'Nie udało się sparsować danych oferty', e);
+        // A-01: best-effort render + flaga do stempla DANE_USZKODZONE w DOCX.
+        dataCorrupted = true;
     }
 
     const client = offer.clientId
         ? await prisma.clients_rel.findUnique({ where: { id: offer.clientId } })
         : null;
 
-    return { ctx, offerData, client };
+    return { ctx, offerData, client, dataCorrupted };
 }
 
 /**
@@ -41,7 +51,7 @@ export async function loadRuryOfferData(offerId: string, authUser?: User) {
  * Wykorzystywany przez generateOfferRuryDOCX oraz wydruk łączny.
  */
 export async function buildRuryOfferDocument(offerId: string): Promise<Document> {
-    const { ctx, offerData, client } = await loadRuryOfferData(offerId);
+    const { ctx, offerData, client, dataCorrupted } = await loadRuryOfferData(offerId);
 
     logger.info('DocxRury', `Generowanie DOCX dla oferty ${offerId}, pozycji: ${ctx.items.length}`);
 
@@ -51,7 +61,9 @@ export async function buildRuryOfferDocument(offerId: string): Promise<Document>
         client,
         ctx.items as Record<string, unknown>[],
         ctx.authorUser ?? null,
-        ctx.guardianUser ?? null
+        ctx.guardianUser ?? null,
+        'offer',
+        dataCorrupted
     );
 }
 
@@ -60,7 +72,7 @@ export async function buildRuryOfferDocument(offerId: string): Promise<Document>
  * Umożliwia złożenie wydruku łącznego (rury + studnie) w jednym dokumencie.
  */
 export async function buildRuryOfferSection(offerId: string): Promise<ISectionOptions> {
-    const { ctx, offerData, client } = await loadRuryOfferData(offerId);
+    const { ctx, offerData, client, dataCorrupted } = await loadRuryOfferData(offerId);
 
     return buildRurySection(
         { offer_number: ctx.offerNumber },
@@ -68,7 +80,9 @@ export async function buildRuryOfferSection(offerId: string): Promise<ISectionOp
         client,
         ctx.items as Record<string, unknown>[],
         ctx.authorUser ?? null,
-        ctx.guardianUser ?? null
+        ctx.guardianUser ?? null,
+        'offer',
+        dataCorrupted
     );
 }
 

@@ -1,6 +1,6 @@
 import { Document, ISectionOptions, Paragraph, Table } from 'docx';
 import { UserContactInfo } from '../../pdfGenerator';
-import { fmtDate } from '../helpers';
+import { fmtDate, buildCorruptedBanner } from '../helpers';
 import { buildImageHeader, buildImageFooter } from '../headerFooter';
 import {
     buildTitleParagraph,
@@ -22,7 +22,8 @@ export function buildRuryDocument(
     items: Record<string, unknown>[],
     authorUser: UserContactInfo | null,
     guardianUser: UserContactInfo | null,
-    documentType: 'offer' | 'order' = 'offer'
+    documentType: 'offer' | 'order' = 'offer',
+    dataCorrupted = false
 ): Document {
     return new Document({
         sections: [
@@ -33,7 +34,8 @@ export function buildRuryDocument(
                 items,
                 authorUser,
                 guardianUser,
-                documentType
+                documentType,
+                dataCorrupted
             )
         ]
     });
@@ -51,7 +53,8 @@ export function buildRurySection(
     items: Record<string, unknown>[],
     authorUser: UserContactInfo | null,
     guardianUser: UserContactInfo | null,
-    documentType: 'offer' | 'order' = 'offer'
+    documentType: 'offer' | 'order' = 'offer',
+    dataCorrupted = false
 ): ISectionOptions {
     const children = buildRurySectionChildren(
         offer,
@@ -60,7 +63,8 @@ export function buildRurySection(
         items,
         authorUser,
         guardianUser,
-        documentType
+        documentType,
+        dataCorrupted
     );
 
     return {
@@ -93,7 +97,9 @@ export function buildRurySectionChildren(
     items: Record<string, unknown>[],
     authorUser: UserContactInfo | null,
     guardianUser: UserContactInfo | null,
-    documentType: 'offer' | 'order' = 'offer'
+    documentType: 'offer' | 'order' = 'offer',
+    // A-01: stempel uszkodzonych danych (best-effort render z corrupt bloba).
+    dataCorrupted = false
 ): (Paragraph | Table)[] {
     const isOrder = documentType === 'order';
     const offerNumber =
@@ -116,6 +122,9 @@ export function buildRurySectionChildren(
     const paymentTerms = String(offerData.paymentTerms ?? '');
 
     const children: (Paragraph | Table)[] = [];
+
+    // A-01: stempel na początku dokumentu.
+    if (dataCorrupted) children.push(buildCorruptedBanner());
 
     // 1. Tytuł
     children.push(buildTitleParagraph(offerNumber, documentType));

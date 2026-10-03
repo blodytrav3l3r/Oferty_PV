@@ -6,7 +6,7 @@ import { generateCombinedOfferPDF, generateCombinedOfferDOCX } from '../services
 import { mapPdfError } from '../services/pdf/pdfEngine';
 import { OfferAccessDeniedError } from '../services/pdf/context';
 import { logger } from '../utils/logger';
-import { canReadDoc } from '../utils/ownership';
+import { canReadWithShare } from '../utils/ownership';
 import { EXPORT_LIMITER } from '../middleware/rateLimiters';
 import { exportFilename } from '../utils/exportFilenames';
 
@@ -37,9 +37,13 @@ async function canExportBothOffers(
     ]);
 
     if (!ruryOffer || !studnieOffer) return null;
-    const allowed =
-        canReadDoc(authReq.user, ruryOffer.userId) && canReadDoc(authReq.user, studnieOffer.userId);
-    if (!allowed) return null;
+    // A-02: share-aware jak single eksporty (canReadWithShare) — współdzielona
+    // oferta jest legalna w combined; re-check w builderach powtarza ten sam test.
+    const [ruryAllowed, studnieAllowed] = await Promise.all([
+        canReadWithShare(authReq.user, ruryOffer.userId, 'offer', offerRuryId),
+        canReadWithShare(authReq.user, studnieOffer.userId, 'offer_studnie', offerStudnieId)
+    ]);
+    if (!ruryAllowed || !studnieAllowed) return null;
     return {
         ruryOfferNumber: ruryOffer.offer_number,
         studnieOfferNumber: studnieOffer.offer_number

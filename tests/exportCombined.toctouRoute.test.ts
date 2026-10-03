@@ -37,7 +37,9 @@ jest.mock('../src/utils/ownership', () => ({
             return user.subUsers.includes(ownerId);
         }
         return false;
-    })
+    }),
+    // A-02: route woła canReadWithShare (share-aware, jak single eksporty).
+    canReadWithShare: jest.fn().mockImplementation(() => true)
 }));
 
 jest.mock('../src/prismaClient', () => ({

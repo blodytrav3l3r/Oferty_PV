@@ -1,6 +1,6 @@
 import prisma from '../../prismaClient';
 import { logger } from '../../utils/logger';
-import { canReadDoc } from '../../utils/ownership';
+import { canReadWithShare } from '../../utils/ownership';
 import type { User } from '../../helpers';
 import { mapWellsToItems } from './helpers';
 import { lookupOfferUsers } from './offerUsers';
@@ -70,7 +70,8 @@ export async function buildRuryOfferContextFromOfferId(
     // D-010: re-check własności na ŚWIEŻYM wierszu (koniec TOCTOU
     // check→fetch: revoke/delete między autoryzacją w route a pobraniem
     // danych). Bez authUser (pojedyncze eksporty) zachowanie bez zmian.
-    if (authUser && !canReadDoc(authUser, offer.userId)) {
+    // A-02: share-aware (jak single eksporty) — współdzielona oferta legalna.
+    if (authUser && !(await canReadWithShare(authUser, offer.userId, 'offer', offerId))) {
         throw new OfferAccessDeniedError();
     }
 
@@ -233,7 +234,8 @@ export async function buildStudnieOfferContextFromOfferId(
     }
 
     // D-010: re-check własności na ŚWIEŻYM wierszu (jak wyżej).
-    if (authUser && !canReadDoc(authUser, offer.userId)) {
+    // A-02: share-aware (jak single eksporty).
+    if (authUser && !(await canReadWithShare(authUser, offer.userId, 'offer_studnie', offerId))) {
         throw new OfferAccessDeniedError();
     }
 

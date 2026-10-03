@@ -14,7 +14,7 @@ import {
 import type { UserContactInfo } from '../../pdfGenerator';
 import { buildStudnieDocument, buildStudnieSection } from './builder';
 import { logger } from '../../../utils/logger';
-import { canReadDoc } from '../../../utils/ownership';
+import { canReadWithShare } from '../../../utils/ownership';
 import { OfferAccessDeniedError } from '../../pdf/context';
 import type { User } from '../../../helpers';
 
@@ -27,13 +27,19 @@ import type { User } from '../../../helpers';
 export async function loadStudnieOfferData(offerId: string, authUser?: User) {
     const offer = await prisma.offers_studnie_rel.findUnique({ where: { id: offerId } });
     if (!offer) throw new Error('Oferta studni nie znaleziona');
-    if (authUser && !canReadDoc(authUser, offer.userId)) throw new OfferAccessDeniedError();
+    // A-02: share-aware (jak single eksporty).
+    if (authUser && !(await canReadWithShare(authUser, offer.userId, 'offer_studnie', offerId))) {
+        throw new OfferAccessDeniedError();
+    }
 
     let offerData: Record<string, unknown> = {};
+    let dataCorrupted = false;
     try {
         if (offer.data) offerData = JSON.parse(offer.data) as Record<string, unknown>;
     } catch (e) {
         logger.warn('DocxStudnie', 'Nie udało się sparsować danych oferty', e);
+        // A-01: best-effort render + flaga do stempla DANE_USZKODZONE w DOCX.
+        dataCorrupted = true;
     }
 
     let wells: unknown[] = [];
@@ -48,7 +54,7 @@ export async function loadStudnieOfferData(offerId: string, authUser?: User) {
         : null;
     const { authorUser, guardianUser } = await lookupOfferUsers(offerData, offer.userId);
 
-    return { offer, offerData, client, wells, authorUser, guardianUser };
+    return { offer, offerData, client, wells, authorUser, guardianUser, dataCorrupted };
 }
 
 /**
@@ -56,12 +62,21 @@ export async function loadStudnieOfferData(offerId: string, authUser?: User) {
  * Wykorzystywany przez generateOfferStudnieDOCX oraz wydruk łączny.
  */
 export async function buildStudnieOfferDocument(offerId: string): Promise<Document> {
-    const { offer, offerData, client, wells, authorUser, guardianUser } =
+    const { offer, offerData, client, wells, authorUser, guardianUser, dataCorrupted } =
         await loadStudnieOfferData(offerId);
 
     logger.info('DocxStudnie', `Generowanie DOCX dla oferty ${offerId}, studni: ${wells.length}`);
 
-    return buildStudnieDocument(offer, offerData, client, wells, authorUser, guardianUser);
+    return buildStudnieDocument(
+        offer,
+        offerData,
+        client,
+        wells,
+        authorUser,
+        guardianUser,
+        'offer',
+        dataCorrupted
+    );
 }
 
 /**
@@ -69,10 +84,19 @@ export async function buildStudnieOfferDocument(offerId: string): Promise<Docume
  * Umożliwia złożenie wydruku łącznego (rury + studnie) w jednym dokumencie.
  */
 export async function buildStudnieOfferSection(offerId: string): Promise<ISectionOptions> {
-    const { offer, offerData, client, wells, authorUser, guardianUser } =
+    const { offer, offerData, client, wells, authorUser, guardianUser, dataCorrupted } =
         await loadStudnieOfferData(offerId);
 
-    return buildStudnieSection(offer, offerData, client, wells, authorUser, guardianUser);
+    return buildStudnieSection(
+        offer,
+        offerData,
+        client,
+        wells,
+        authorUser,
+        guardianUser,
+        'offer',
+        dataCorrupted
+    );
 }
 
 /**
