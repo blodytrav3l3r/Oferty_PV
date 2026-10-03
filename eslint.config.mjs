@@ -12,6 +12,12 @@ export default tseslint.config(
     })),
     {
         files: ['src/**/*.{js,ts}', 'server.ts', 'scripts/**/*.{js,ts}', 'tests/**/*.{js,ts}'],
+        // D-013: reguły @typescript-eslint/* wymagają rejestracji pluginu także
+        // dla plików .js (recommended jest zmapowane tylko na **/*.ts powyżej) —
+        // bez tego każdy `eslint scripts/*.js` crashował brakiem pluginu.
+        plugins: {
+            '@typescript-eslint': tseslint.plugin
+        },
         languageOptions: {
             parser: tseslint.parser,
             globals: {
