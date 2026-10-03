@@ -432,14 +432,47 @@ router.post(
             const user = req.user;
 
             // Jeden lookup telemetry dla całego batcha zamiast N findFirst.
+            // D-011: te same pola własności co single (processRewardItem) —
+            // batch ACCEPT/ADJUST/SWAP omijał well-gate (label poisoning).
             const wellIds = [...new Set(items.map((i) => i.wellId))];
             const rows = await prisma.ai_telemetry_logs.findMany({
                 where: { wellId: { in: wellIds } },
-                select: { wellId: true }
+                select: { wellId: true, userId: true, offerId: true }
             });
-            const withTelemetry = new Set(
-                rows.map((r) => r.wellId).filter((w): w is string => !!w)
+            const rowByWell = new Map(
+                rows
+                    .filter((r) => r.wellId)
+                    .map((r) => [
+                        r.wellId as string,
+                        { userId: r.userId ?? null, offerId: r.offerId ?? null }
+                    ])
             );
+            const withTelemetry = new Set(rowByWell.keys());
+
+            // D-011: wiersze bez userId, ale z offerId (legacy) — właściciel
+            // z oferty, jednym findMany IN per typ (jak assertOfferReadable).
+            const offerIds = [
+                ...new Set(
+                    [...rowByWell.values()].map((r) => r.offerId).filter((o): o is string => !!o)
+                )
+            ];
+            const offerOwner = new Map<string, string | null>();
+            if (offerIds.length > 0) {
+                const [rury, studnie] = await Promise.all([
+                    prisma.offers_rel.findMany({
+                        where: { id: { in: offerIds } },
+                        select: { id: true, userId: true }
+                    }),
+                    prisma.offers_studnie_rel.findMany({
+                        where: { id: { in: offerIds } },
+                        select: { id: true, userId: true }
+                    })
+                ]);
+                for (const o of rury) offerOwner.set(o.id, o.userId ?? null);
+                for (const o of studnie) {
+                    if (!offerOwner.has(o.id)) offerOwner.set(o.id, o.userId ?? null);
+                }
+            }
 
             // Prefetch targetów etykietowania (MODIFY/REJECT): 2× findMany IN
             // zamiast do 2× findFirst per item (parent + pierwsza sugestia AUTO).
@@ -503,6 +536,23 @@ router.post(
                     if (!withTelemetry.has(item.wellId)) {
                         rejected.push({ wellId: item.wellId, reason: 'WELL_NOT_FOUND' });
                         continue;
+                    }
+                    // D-011: well-gate jak w single (processRewardItem) —
+                    // cudza studnia → FORBIDDEN przed jakimkolwiek zapisem.
+                    const wellRow = rowByWell.get(item.wellId);
+                    if (wellRow?.userId && !canWriteDoc(user, wellRow.userId)) {
+                        rejected.push({ wellId: item.wellId, reason: 'FORBIDDEN' });
+                        continue;
+                    }
+                    if (!wellRow?.userId && wellRow?.offerId) {
+                        const owner = offerOwner.has(wellRow.offerId)
+                            ? (offerOwner.get(wellRow.offerId) ?? null)
+                            : null;
+                        // Nieznane offerId (draft) → pass, jak assertOfferReadable.
+                        if (offerOwner.has(wellRow.offerId) && !canWriteDoc(user, owner)) {
+                            rejected.push({ wellId: item.wellId, reason: 'FORBIDDEN' });
+                            continue;
+                        }
                     }
                     const result = await applyRewardItem(item, user, targetByIndex.get(idx));
                     if (result.status === 'applied') applied.push(item.wellId);
