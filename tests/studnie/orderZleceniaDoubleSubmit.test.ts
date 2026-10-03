@@ -61,6 +61,12 @@ function loadModal(hooks: { gateSave?: boolean; failSave?: boolean } = {}) {
     sb.window = sb;
     sb.globalThis = sb;
     vm.createContext(sb);
+    // D-008: modal claimuje przez claimSingleProductionNumber z helpers
+    // (kolejność jak w studnie.html: helpers przed modalem) — bez tego
+    // claim rzucałby ReferenceError łapany w try/catch (cichy brak numeru).
+    vm.runInContext(fs.readFileSync(path.join(JS_DIR, 'orderZleceniaHelpers.js'), 'utf8'), sb, {
+        filename: 'orderZleceniaHelpers.js'
+    });
     vm.runInContext(fs.readFileSync(path.join(JS_DIR, 'orderZleceniaModal.js'), 'utf8'), sb, {
         filename: 'orderZleceniaModal.js'
     });

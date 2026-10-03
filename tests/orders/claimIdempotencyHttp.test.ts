@@ -116,4 +116,44 @@ describe('A2 claim/PUT idempotency (HTTP, real DB)', () => {
         });
         expect(rows).toHaveLength(3);
     });
+
+    test('D-008 single retry tym samym kluczem → ten sam numer, licznik +1 raz', async () => {
+        const a = app();
+        const r1 = await request(a)
+            .post('/api/orders-studnie/claim-production-number/admin-1')
+            .set('Idempotency-Key', 'single-d008-r1')
+            .send({});
+        expect(r1.status).toBe(200);
+        expect(r1.body.number).toBeTruthy();
+
+        const r2 = await request(a)
+            .post('/api/orders-studnie/claim-production-number/admin-1')
+            .set('Idempotency-Key', 'single-d008-r1')
+            .send({});
+        expect(r2.status).toBe(200);
+        expect(r2.body).toEqual(r1.body);
+
+        // Licznik ruszył raz: świeży klucz daje wyższy seq.
+        const r3 = await request(a)
+            .post('/api/orders-studnie/claim-production-number/admin-1')
+            .set('Idempotency-Key', 'single-d008-r2')
+            .send({});
+        expect(r3.status).toBe(200);
+        expect(r3.body.nextSeq).toBeGreaterThan(r1.body.nextSeq);
+    });
+
+    test('D-008 single ten sam klucz + inny payload → 409 REUSE (kontrakt serwera)', async () => {
+        const a = app();
+        const r1 = await request(a)
+            .post('/api/orders-studnie/claim-production-number/admin-1')
+            .set('Idempotency-Key', 'single-d008-reuse')
+            .send({});
+        expect(r1.status).toBe(200);
+        const r2 = await request(a)
+            .post('/api/orders-studnie/claim-production-number/admin-1')
+            .set('Idempotency-Key', 'single-d008-reuse')
+            .send({ other: 'payload' });
+        expect(r2.status).toBe(409);
+        expect(r2.body.code).toBe('IDEMPOTENCY_KEY_REUSE');
+    });
 });

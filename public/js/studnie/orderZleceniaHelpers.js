@@ -85,9 +85,48 @@ function buildEtykietaElementsSnapshot(well) {
     return items;
 }
 
+/**
+ * D-008: stabilny Idempotency-Key per intencja single-claimu numeru PZ.
+ * Retry MUSI nieść ten sam klucz (serwer replayuje ten sam numer przez
+ * claimIdempotencyKey); losowy klucz per retry mintowałby nowy numer (gap).
+ * Determinystyczny ze scopeId (id PZ albo tożsamość elementu) + userId —
+ * double-click tej samej intencji trafia w ten sam klucz = 1 numer.
+ * Limit 128 znaków nagłówka (idempotency.ts): 10 + 64 + 1 + 32 < 128.
+ */
+function singleProductionClaimKey(scopeId, targetUserId) {
+    const safeScope = String(scopeId || 'noid')
+        .replace(/[^A-Za-z0-9_-]/g, '_')
+        .slice(0, 64);
+    const safeUser = String(targetUserId || 'nouser')
+        .replace(/[^A-Za-z0-9_-]/g, '_')
+        .slice(0, 32);
+    return 'pz-single_' + safeScope + '_' + safeUser;
+}
+
+/**
+ * D-008: single-claim jednego numeru PZ przez wspólny fetchWithRetry429
+ * (ten sam helper co bulk). Zwraca Response (caller robi .json() jak dotąd).
+ * Semantyka helpera bez zmian: retry tylko 429 + sieć/abort sprzed odpowiedzi
+ * (nagłówek Idempotency-Key czyni retry sieciowy bezpiecznym), 4xx/5xx bez retry.
+ * Fallback do fetch z kluczem, gdy helpera brak — ręczny retry nadal idempotentny.
+ */
+async function claimSingleProductionNumber(targetUserId, scopeId) {
+    const headers = Object.assign({}, authHeaders());
+    headers['Idempotency-Key'] = singleProductionClaimKey(scopeId, targetUserId);
+    const url = '/api/orders-studnie/claim-production-number/' + encodeURIComponent(targetUserId);
+    const opts = { method: 'POST', headers: headers };
+    if (typeof window !== 'undefined' && typeof window.fetchWithRetry429 === 'function') {
+        const out = await window.fetchWithRetry429(url, opts);
+        return out.res;
+    }
+    return fetch(url, opts);
+}
+
 /* ===== Rejestracja globali ===== */
 window.getElementStatus = getElementStatus;
 window.parseWysokoscGlebokosc = parseWysokoscGlebokosc;
 window.getStudniaDIN = getStudniaDIN;
 window.calcStopnieExecution = calcStopnieExecution;
 window.buildEtykietaElementsSnapshot = buildEtykietaElementsSnapshot;
+window.singleProductionClaimKey = singleProductionClaimKey;
+window.claimSingleProductionNumber = claimSingleProductionNumber;

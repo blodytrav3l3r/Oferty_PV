@@ -216,13 +216,18 @@ async function _saveProductionOrderInner() {
                 (currentUser ? currentUser.id : null);
 
             if (targetUserId) {
-                const claimResp = await fetch(
-                    '/api/orders-studnie/claim-production-number/' + targetUserId,
-                    {
-                        method: 'POST',
-                        headers: authHeaders()
-                    }
-                );
+                // D-008: stabilny klucz per intencja (id PZ albo tożsamość elementu) —
+                // retry i double-click trafiają w ten sam klucz = 1 numer, brak gapów.
+                const claimScopeId =
+                    existingIdx >= 0 && existingOrder && existingOrder.id
+                        ? existingOrder.id
+                        : 'new_' +
+                          well.id +
+                          '_' +
+                          ((el.configItem && el.configItem._elemId) || '') +
+                          '_' +
+                          elementIndex;
+                const claimResp = await claimSingleProductionNumber(targetUserId, claimScopeId);
                 if (claimResp.ok) {
                     const claimData = await claimResp.json();
                     if (claimData.number) {

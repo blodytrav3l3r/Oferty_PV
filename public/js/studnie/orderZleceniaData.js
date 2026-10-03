@@ -400,13 +400,9 @@ async function acceptProductionOrder() {
                 showToast('Brak przypisanego użytkownika', 'error');
                 return;
             }
-            const claimResp = await fetch(
-                '/api/orders-studnie/claim-production-number/' + targetUserId,
-                {
-                    method: 'POST',
-                    headers: authHeaders()
-                }
-            );
+            // D-008: single-claim ze stabilnym Idempotency-Key per PZ (po.id) —
+            // retry po crashu/sieci replayuje ten sam numer zamiast robić gap.
+            const claimResp = await claimSingleProductionNumber(targetUserId, po.id);
             const claimData = await claimResp.json();
             if (claimResp.ok && claimData.number) {
                 po.productionOrderNumber = claimData.number;

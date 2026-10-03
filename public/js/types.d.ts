@@ -149,6 +149,12 @@ declare function appConfirm(msg: string): Promise<boolean>;
 declare function escapeHtml(str: string | number | null | undefined): string;
 declare function setText(el: HTMLElement | null, value: string | number | null | undefined): void;
 declare function authHeaders(): Record<string, string>;
+/* D-008: single-claim PZ (orderZleceniaHelpers.js) */
+declare function singleProductionClaimKey(scopeId: string, targetUserId: string): string;
+declare function claimSingleProductionNumber(
+    targetUserId: string,
+    scopeId: string
+): Promise<Response>;
 /* ===== Deklaracje dla window.* ===== */
 interface Window {
     /* constants.js */
