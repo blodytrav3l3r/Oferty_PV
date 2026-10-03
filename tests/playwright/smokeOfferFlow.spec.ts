@@ -12,7 +12,7 @@
 import { test, expect } from '@playwright/test';
 
 const ADMIN_PASSWORD = process.env.TEST_ADMIN_PASSWORD || 'anim123456';
-const BASE = process.env.BASE_URL || 'http://localhost:3000';
+const BASE = process.env.BASE_URL || process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3199';
 
 test.beforeAll(async ({ request }) => {
     const resp = await request.post(`${BASE}/api/auth/login`, {

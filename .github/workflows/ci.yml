@@ -273,7 +273,7 @@ jobs:
         runs-on: ubuntu-latest
         needs: test
         env:
-            DATABASE_URL: 'file:./test-ci.sqlite?connection_limit=1&busy_timeout=30000'
+            DATABASE_URL: 'file:./test-playwright.sqlite?connection_limit=1&busy_timeout=30000'
             TEST_ADMIN_PASSWORD: test-admin-pass
             DEFAULT_ADMIN_PASSWORD: test-admin-pass
         steps:
@@ -308,7 +308,7 @@ jobs:
         runs-on: ubuntu-latest
         needs: test
         env:
-            DATABASE_URL: 'file:./test-ci.sqlite?connection_limit=1&busy_timeout=30000'
+            DATABASE_URL: 'file:./test-playwright.sqlite?connection_limit=1&busy_timeout=30000'
             TEST_ADMIN_PASSWORD: test-admin-pass
             DEFAULT_ADMIN_PASSWORD: test-admin-pass
         steps:
@@ -344,7 +344,7 @@ jobs:
         needs: test
         continue-on-error: true
         env:
-            DATABASE_URL: 'file:./test-ci.sqlite?connection_limit=1&busy_timeout=30000'
+            DATABASE_URL: 'file:./test-e2e-extended.sqlite?connection_limit=1&busy_timeout=30000'
             TEST_ADMIN_PASSWORD: test-admin-pass
             DEFAULT_ADMIN_PASSWORD: test-admin-pass
         steps:
@@ -376,18 +376,20 @@ jobs:
                   node tests/playwright/draftRecovery.cjs --spawn
                   node tests/playwright/draftLoopProof.cjs --spawn
 
-            - name: Start serwera :3000 w tle
+            - name: Start serwera :3198 w tle (izolowany)
               run: |
                   npm run build
-                  PORT=3000 NODE_ENV=test nohup node dist/server.js > e2e-extended-server.log 2>&1 &
+                  PORT=3198 NODE_ENV=test DATABASE_URL='file:./test-e2e-extended.sqlite?connection_limit=1&busy_timeout=30000' nohup node dist/server.js > e2e-extended-server.log 2>&1 &
                   echo $! > e2e-extended-server.pid
                   for i in $(seq 1 30); do
-                    curl -sf http://localhost:3000/health && break
+                    curl -sf http://localhost:3198/health && break
                     sleep 2
                   done
-                  curl -sf http://localhost:3000/health
+                  curl -sf http://localhost:3198/health
 
-            - name: Excel relief/empty-row + partial order (BASE :3000)
+            - name: Excel relief/empty-row + partial order (BASE :3198)
+              env:
+                  BASE_URL: 'http://localhost:3198'
               run: |
                   node tests/playwright/excelReliefPair.cjs
                   node tests/playwright/excelEmptyRowAlignment.cjs

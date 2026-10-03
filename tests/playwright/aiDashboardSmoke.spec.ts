@@ -10,7 +10,7 @@
 import { test, expect } from '@playwright/test';
 
 const ADMIN_PASSWORD = process.env.TEST_ADMIN_PASSWORD || 'anim123456';
-const BASE = process.env.BASE_URL || 'http://localhost:3000';
+const BASE = process.env.BASE_URL || process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3199';
 
 test.describe('e2e: AI dashboard smoke (read-only)', () => {
     test.beforeEach(async ({ request }) => {

@@ -13,7 +13,7 @@
  *   1 = at least one column misaligned or error
  */
 
-const BASE = 'http://localhost:3000';
+const BASE = process.env.BASE_URL || 'http://localhost:3000';
 
 /* ── Playwright resolution ── */
 function resolvePlaywright() {

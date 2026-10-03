@@ -16,7 +16,7 @@
  * Exit code:  0 = pass, 1 = fail
  */
 
-const BASE = 'http://localhost:3000';
+const BASE = process.env.BASE_URL || 'http://localhost:3000';
 
 function resolvePlaywright() {
     try {
