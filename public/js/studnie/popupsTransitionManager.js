@@ -701,7 +701,7 @@ function tmEditSelectDN(el, wellIdx, trIdx) {
                   );
         if (product) {
             const resultDiv = document.getElementById('tm-edit-result');
-            resultDiv.innerHTML = `<div><span class="text-primary fw-600" style="font-size:var(--fs-sm);">${escapeHtml(product.category)} DN${product.dn}</span><span class="color-success fw-700" style="margin-left:0.5rem;font-size:var(--fs-sm);">${product.price != null ? parseInt(product.price).toLocaleString('pl-PL') : '—'} PLN</span></div>
+            resultDiv.innerHTML = `<div><span class="text-primary fw-600" style="font-size:var(--fs-sm);">${escapeHtml(product.category)} DN${escapeHtml(String(product.dn ?? ''))}</span><span class="color-success fw-700" style="margin-left:0.5rem;font-size:var(--fs-sm);">${product.price != null ? parseInt(product.price).toLocaleString('pl-PL') : '—'} PLN</span></div>
               <button class="btn btn-primary btn-sm" data-action="tmEditApply" data-well="${wellIdx}" data-tr="${trIdx}">Zastosuj</button>`;
         }
     }

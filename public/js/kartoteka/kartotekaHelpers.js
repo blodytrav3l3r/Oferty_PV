@@ -392,7 +392,7 @@ function buildOfferCardHtml(offer, hasOrder, orders, order, role, isLocalList) {
                                         <button class="action-btn secondary" data-id="${escapeHtmlAttr(offer.id)}" data-type="${escapeHtmlAttr(offer.type)}" title="Historia zmian" aria-label="Historia zmian">
                                             <i data-lucide="clock" aria-hidden="true"></i>
                                         </button>
-                                        <button class="action-btn secondary" data-id="${escapeHtmlAttr(offer.id)}" data-type="${escapeHtmlAttr(offer.type)}" data-offer-id="${escapeHtmlAttr(offer.id)}" data-offer-type="${offer.type}" data-order-id="${hasOrder ? order?.id || '' : ''}" title="Wydruk" aria-label="Wydruk">
+                                        <button class="action-btn secondary" data-id="${escapeHtmlAttr(offer.id)}" data-type="${escapeHtmlAttr(offer.type)}" data-offer-id="${escapeHtmlAttr(offer.id)}" data-offer-type="${escapeHtmlAttr(offer.type)}" data-order-id="${escapeHtmlAttr(hasOrder ? order?.id || '' : '')}" title="Wydruk" aria-label="Wydruk">
                                             <i data-lucide="printer" aria-hidden="true"></i>
                                         </button>
                                         <button class="action-btn secondary btn-share" data-id="${escapeHtmlAttr(offer.id)}" data-type="${escapeHtmlAttr(offer.type)}" title="Udostępnij" aria-label="Udostępnij"><i data-lucide="share-2" aria-hidden="true"></i></button>

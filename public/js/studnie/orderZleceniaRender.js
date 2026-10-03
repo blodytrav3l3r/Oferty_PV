@@ -137,7 +137,7 @@ function renderZleceniaList() {
 
         html += `<div style="background:var(--bg-secondary); padding:0.6rem 0.8rem; border-bottom:1px solid var(--border-glass); border-top:1px solid var(--border-glass); position:sticky; top:0; z-index:${LAYERS.STICKY_TABLE_TH}; display:flex; justify-content:space-between; align-items:center; margin-top:-1px;">
             <div style="font-size: var(--fs-base); font-weight: var(--fw-extrabold); color:var(--accent-hover); text-transform:uppercase; letter-spacing:0.5px;"><i data-lucide="tag"></i> ${escapeHtml(group.wellName)}</div>
-            <div style="font-size: var(--fs-xs); font-weight: var(--fw-bold); color:var(--text-muted); background:var(--bg-primary); padding:0.2rem 0.5rem; border-radius: var(--radius); border:1px solid var(--border-glass);">${group.wellDn === 'styczna' ? 'Styczna' : 'DN' + group.wellDn}</div>
+            <div style="font-size: var(--fs-xs); font-weight: var(--fw-bold); color:var(--text-muted); background:var(--bg-primary); padding:0.2rem 0.5rem; border-radius: var(--radius); border:1px solid var(--border-glass);">${group.wellDn === 'styczna' ? 'Styczna' : 'DN' + escapeHtml(String(group.wellDn ?? ''))}</div>
         </div>
         <div style="padding: 0.4rem;">`;
 

@@ -55,7 +55,7 @@ function renderPriceList() {
       <tr>
         <td colspan="7" style="padding: 0; border: none;">
           <div class="cat-header">
-            ${cat} <span class="cat-count">(${items.length} produktów)</span>
+            ${escapeHtml(cat)} <span class="cat-count">(${items.length} produktów)</span>
           </div>
         </td>
       </tr>`;
@@ -255,7 +255,7 @@ function showAddProductModal() {
     <div class="modal">
       <div class="modal-header"><h3 id="add-product-title"><i data-lucide="plus" aria-hidden="true"></i> Dodaj nowy produkt</h3><button class="btn-icon" aria-label="Zamknij" data-action="closeModal"><i data-lucide="x" aria-hidden="true"></i></button></div>
       <div class="form-group"><label class="form-label">Kategoria</label>
-        <select class="form-select" id="np-category">${CATEGORIES.map((c) => `<option value="${c}">${c}</option>`).join('')}</select></div>
+        <select class="form-select" id="np-category">${CATEGORIES.map((c) => `<option value="${escapeHtmlAttr(c)}">${escapeHtml(c)}</option>`).join('')}</select></div>
       <div class="form-group"><label class="form-label">Indeks</label><input class="form-input" id="np-id" placeholder="np. RTB-0-10-25-K00"></div>
       <div class="form-group"><label class="form-label">Nazwa produktu</label><input class="form-input" id="np-name" placeholder="np. RURA WITROS..."></div>
       <div class="form-row form-row-4">

@@ -310,7 +310,7 @@ function renderWellConfig() {
 
             if (precoCalc.error) {
                 html += `<div style="margin-top:0.5rem; padding:0.6rem 0.7rem; background:rgba(var(--danger-rgb), 0.15); border:1px solid var(--danger); border-radius: var(--radius-sm); color:var(--danger); font-weight: var(--fw-bold); font-size: var(--fs-lg); line-height:1.4;">`;
-                html += `<i data-lucide="alert-triangle" class="icon-sm" aria-hidden="true"></i> ${precoCalc.error}`;
+                html += `<i data-lucide="alert-triangle" class="icon-sm" aria-hidden="true"></i> ${escapeHtml(precoCalc.error)}`;
                 html += `</div>`;
             } else {
                 const precoMult = 1 - discPreco / 100;
@@ -325,7 +325,7 @@ function renderWellConfig() {
 
                 const etykietyBaza =
                     precoCalc.bazowaEtykiety && precoCalc.bazowaEtykiety.length > 0
-                        ? ` [${precoCalc.bazowaEtykiety.join(' / ')}]`
+                        ? ` [${escapeHtml(precoCalc.bazowaEtykiety.join(' / '))}]`
                         : '';
                 const bazowaLabel =
                     precoCalc.bazowaDN && precoCalc.bazowaDN.length > 0
@@ -334,7 +334,9 @@ function renderWellConfig() {
                 html += `<span>Kineta bazowa${bazowaLabel}</span><span class="text-right-600">${fmtInt(precoCalc.bazowa)} PLN</span>`;
 
                 if (precoCalc.redukcja > 0) {
-                    const redDesc = precoCalc.redukcjaOpis ? ` (${precoCalc.redukcjaOpis})` : '';
+                    const redDesc = precoCalc.redukcjaOpis
+                        ? ` (${escapeHtml(precoCalc.redukcjaOpis)})`
+                        : '';
                     html += `<span>&nbsp;&nbsp;&nbsp;↳ Redukcja kinety${redDesc}</span><span class="text-right-600">${fmtInt(precoCalc.redukcja)} PLN</span>`;
                 }
 
@@ -347,7 +349,7 @@ function renderWellConfig() {
                         precoCalc.bazowaIds.includes(u._id)
                     );
                     uniesieniaBazy.forEach((u) => {
-                        html += `<span>&nbsp;&nbsp;&nbsp;↳ Uniesienie kinety (${u.mm} mm) [${u.label}]</span><span class="text-right-600">${fmtInt(u.cena)} PLN</span>`;
+                        html += `<span>&nbsp;&nbsp;&nbsp;↳ Uniesienie kinety (${u.mm} mm) [${escapeHtml(u.label)}]</span><span class="text-right-600">${fmtInt(u.cena)} PLN</span>`;
                         u._wyrenderowane = true;
                     });
                 }
@@ -361,7 +363,7 @@ function renderWellConfig() {
                         precoCalc.bazowaIds.includes(s._id)
                     );
                     spadkiBazy.forEach((s) => {
-                        html += `<span>&nbsp;&nbsp;&nbsp;↳ Spadek ${s.typ} (${s.procent} %) [${s.label}]</span><span class="text-right-600">${fmtInt(s.cena)} PLN</span>`;
+                        html += `<span>&nbsp;&nbsp;&nbsp;↳ Spadek ${escapeHtml(s.typ)} (${s.procent} %) [${escapeHtml(s.label)}]</span><span class="text-right-600">${fmtInt(s.cena)} PLN</span>`;
                         s._wyrenderowane = true;
                     });
                 }
@@ -377,8 +379,8 @@ function renderWellConfig() {
                         d.label && d.label.startsWith(FLOW_TYPES.WYLOT)
                             ? FLOW_TYPES.WYLOT
                             : FLOW_TYPES.WLOT;
-                    const fLabel = d.label ? ` [${d.label}]` : '';
-                    html += `<span>Dod. ${flowTypeName} DN${d.dn} (${typLabel})${fLabel}</span><span class="text-right-600">${fmtInt(d.cena)} PLN</span>`;
+                    const fLabel = d.label ? ` [${escapeHtml(d.label)}]` : '';
+                    html += `<span>Dod. ${flowTypeName} DN${escapeHtml(String(d.dn ?? ''))} (${typLabel})${fLabel}</span><span class="text-right-600">${fmtInt(d.cena)} PLN</span>`;
 
                     if (precoCalc.uniesieniaSzczegoly && precoCalc.uniesieniaSzczegoly.length > 0) {
                         const uniesieniaDlaWlotu = precoCalc.uniesieniaSzczegoly.filter(
@@ -395,7 +397,7 @@ function renderWellConfig() {
                             (s) => s._id === d._id
                         );
                         spadkiDlaWlotu.forEach((s) => {
-                            html += `<span>&nbsp;&nbsp;&nbsp;↳ Spadek ${s.typ} (${s.procent} %)</span><span class="text-right-600">${fmtInt(s.cena)} PLN</span>`;
+                            html += `<span>&nbsp;&nbsp;&nbsp;↳ Spadek ${escapeHtml(s.typ)} (${s.procent} %)</span><span class="text-right-600">${fmtInt(s.cena)} PLN</span>`;
                             s._wyrenderowane = true;
                         });
                     }
@@ -404,7 +406,7 @@ function renderWellConfig() {
                 if (precoCalc.uniesieniaSzczegoly && precoCalc.uniesieniaSzczegoly.length > 0) {
                     precoCalc.uniesieniaSzczegoly.forEach((u) => {
                         if (!u._wyrenderowane) {
-                            const uLabel = u.label ? ` [${u.label}]` : '';
+                            const uLabel = u.label ? ` [${escapeHtml(u.label)}]` : '';
                             html += `<span>Uniesienie kinety (${u.mm} mm)${uLabel}</span><span class="text-right-600">${fmtInt(u.cena)} PLN</span>`;
                         }
                     });
@@ -421,8 +423,8 @@ function renderWellConfig() {
                 if (precoCalc.spadkiSzczegoly && precoCalc.spadkiSzczegoly.length > 0) {
                     precoCalc.spadkiSzczegoly.forEach((s) => {
                         if (!s._wyrenderowane) {
-                            const sLabel = s.label ? ` [${s.label}]` : '';
-                            html += `<span>Spadek ${s.typ} (${s.procent} %)${sLabel}</span><span class="text-right-600">${fmtInt(s.cena)} PLN</span>`;
+                            const sLabel = s.label ? ` [${escapeHtml(s.label)}]` : '';
+                            html += `<span>Spadek ${escapeHtml(s.typ)} (${s.procent} %)${sLabel}</span><span class="text-right-600">${fmtInt(s.cena)} PLN</span>`;
                         }
                     });
                 } else {
