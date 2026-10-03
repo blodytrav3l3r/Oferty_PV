@@ -75,10 +75,13 @@ export async function buildRuryOfferContextFromOfferId(
     }
 
     let offerData: RuryOfferDataBlob = {};
+    let dataCorrupted = false;
     try {
         if (offer.data) offerData = JSON.parse(offer.data) as RuryOfferDataBlob;
     } catch (e) {
         logger.warn('PdfRury', 'Nie udało się sparsować danych oferty', e);
+        // D-014: best-effort render (kontrakt z testów) + jawna flaga do stempla w PDF.
+        dataCorrupted = true;
     }
 
     const items = await prisma.offer_items_rel.findMany({
@@ -117,7 +120,8 @@ export async function buildRuryOfferContextFromOfferId(
         paymentTerms: String(offerData.paymentTerms ?? ''),
         validity: String(offerData.validity ?? ''),
         authorUser,
-        guardianUser
+        guardianUser,
+        ...(dataCorrupted ? { dataCorrupted: true as const } : {})
     };
 }
 
@@ -128,10 +132,13 @@ export async function buildRuryOrderContextFromOrderId(orderId: string): Promise
     }
 
     let orderData: RuryOrderDataBlob = {};
+    let dataCorrupted = false;
     try {
         if (order.data) orderData = JSON.parse(order.data) as RuryOrderDataBlob;
     } catch (e) {
         logger.warn('PdfRury', 'Błąd parsowania order.data', e);
+        // D-014: best-effort render + jawna flaga do stempla w PDF.
+        dataCorrupted = true;
     }
 
     let items: unknown[] = [];
@@ -208,7 +215,8 @@ export async function buildRuryOrderContextFromOrderId(orderId: string): Promise
         paymentTerms: String(orderData.paymentTerms ?? ''),
         validity: '',
         authorUser,
-        guardianUser
+        guardianUser,
+        ...(dataCorrupted ? { dataCorrupted: true as const } : {})
     };
 }
 
@@ -230,10 +238,13 @@ export async function buildStudnieOfferContextFromOfferId(
     }
 
     let offerData: StudnieOfferDataBlob = {};
+    let dataCorrupted = false;
     try {
         if (offer.data) offerData = JSON.parse(offer.data) as StudnieOfferDataBlob;
     } catch (e) {
         logger.warn('PdfStudnie', 'Nie udało się sparsować danych oferty', e);
+        // D-014: best-effort render + jawna flaga do stempla w PDF.
+        dataCorrupted = true;
     }
 
     let wells: unknown[] = [];
@@ -308,7 +319,8 @@ export async function buildStudnieOfferContextFromOfferId(
         validity: String(offerData.validity ?? ''),
         wellUwagi,
         authorUser,
-        guardianUser
+        guardianUser,
+        ...(dataCorrupted ? { dataCorrupted: true as const } : {})
     };
 }
 
@@ -321,10 +333,13 @@ export async function buildStudnieOrderContextFromOrderId(
     }
 
     let orderData: StudnieOrderDataBlob = {};
+    let dataCorrupted = false;
     try {
         if (order.data) orderData = JSON.parse(order.data) as StudnieOrderDataBlob;
     } catch (e) {
         logger.warn('PdfStudnie', 'Błąd parsowania order.data', e);
+        // D-014: best-effort render + jawna flaga do stempla w PDF.
+        dataCorrupted = true;
     }
 
     let wells: unknown[] = [];
@@ -340,6 +355,7 @@ export async function buildStudnieOrderContextFromOrderId(
                 if (Array.isArray(parsed.wellsExport)) wells = parsed.wellsExport;
             } catch (e) {
                 logger.warn('PdfStudnie', 'Błąd parsowania offer.data (fallback)', e);
+                dataCorrupted = true;
             }
         }
     }
@@ -403,6 +419,7 @@ export async function buildStudnieOrderContextFromOrderId(
         validity: '',
         wellUwagi,
         authorUser,
-        guardianUser
+        guardianUser,
+        ...(dataCorrupted ? { dataCorrupted: true as const } : {})
     };
 }

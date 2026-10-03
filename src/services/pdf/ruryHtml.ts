@@ -230,6 +230,12 @@ export async function generateRuryHTML(data: RuryOfferData): Promise<string> {
 
     const { tables, summary } = buildRurySectionHTML(data);
 
+    // D-014: uszkodzony blob JSON = best-effort render, ale dokument MUSI być
+    // jawnie oznaczony, żeby nie wyglądał na ważny dokument prawny.
+    const corruptedBanner = data.dataCorrupted
+        ? '<div style="border:2pt solid #c00;color:#c00;font-weight:700;text-align:center;padding:8px;margin:10px 0;">DANE_USZKODZONE — dokument wygenerowany z niepełnych danych (uszkodzony zapis oferty/zamówienia). Nie używać jako ważny dokument.</div>'
+        : '';
+
     let sekcjaUwagi = '';
     if (data.notes) {
         sekcjaUwagi += `<div class="notes-section"><div class="note-box">${escapeHtml(data.notes).replace(/\n/g, '<br>')}</div></div>`;
@@ -253,7 +259,7 @@ export async function generateRuryHTML(data: RuryOfferData): Promise<string> {
     html = html.replace(/\{\{DATA_WAZNOSCI\}\}/g, validityString);
     html = html.replace(/\{\{DANE_KLIENTA\}\}/g, daneKlienta);
     html = html.replace(/\{\{DANE_INWESTYCJI\}\}/g, daneInwestycji);
-    html = html.replace(/\{\{TABELA_POZYCJI\}\}/g, tables);
+    html = html.replace(/\{\{TABELA_POZYCJI\}\}/g, corruptedBanner + tables);
     html = html.replace(/\{\{TABELA_TRANSPORTU\}\}/g, '');
     html = html.replace(/\{\{PODSUMOWANIE\}\}/g, summary);
     html = html.replace(/\{\{SEKCJA_UWAGI\}\}/g, sekcjaUwagi);

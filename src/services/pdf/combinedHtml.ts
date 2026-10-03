@@ -31,6 +31,12 @@ export async function generateCombinedHTML(
     const studnieSection = buildStudnieSectionHTML(studnieData);
     const rurySection = buildRurySectionHTML(ruryData);
 
+    // D-014: uszkodzony blob po którejkolwiek stronie = cały dokument oznaczony.
+    const corruptedBanner =
+        studnieData.dataCorrupted || ruryData.dataCorrupted
+            ? '<div style="border:2pt solid #c00;color:#c00;font-weight:700;text-align:center;padding:8px;margin:10px 0;">DANE_USZKODZONE — dokument wygenerowany z niepełnych danych (uszkodzony zapis oferty/zamówienia). Nie używać jako ważny dokument.</div>'
+            : '';
+
     const validityString = studnieData.validity || `${studnieData.validityDays} dni`;
     const isOrder = studnieData.documentType === 'order';
     const combinedNumber = `${studnieData.offerNumber} + ${ruryData.offerNumber}`;
@@ -114,7 +120,7 @@ export async function generateCombinedHTML(
     html = html.replace(/\{\{DANE_KLIENTA\}\}/g, daneKlienta);
     html = html.replace(/\{\{DANE_INWESTYCJI\}\}/g, daneInwestycji);
     // TABELE_DN: same tabele studni (kolejno wg DN, bez nagłówka)
-    html = html.replace(/\{\{TABELE_DN\}\}/g, studnieSection.tables);
+    html = html.replace(/\{\{TABELE_DN\}\}/g, corruptedBanner + studnieSection.tables);
     // TABELA_RUR: podsumowanie studni -> uwagi studni -> tabele rur -> podsumowanie rur -> uwagi rur -> suma łączna -> warunki płatności
     html = html.replace(
         /\{\{TABELA_RUR\}\}/g,

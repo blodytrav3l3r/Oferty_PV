@@ -33,6 +33,8 @@ export interface RuryOfferData {
     validity?: string;
     authorUser?: UserContactInfo | null;
     guardianUser?: UserContactInfo | null;
+    /** D-014: true gdy blob JSON oferty/zamówienia był nieparsowalny (best-effort render). */
+    dataCorrupted?: boolean;
 }
 
 export interface StudnieOfferData {
@@ -73,4 +75,6 @@ export interface StudnieOfferData {
     wellUwagi?: Array<{ name: string; dn: string; uwagi: string }>;
     authorUser?: UserContactInfo | null;
     guardianUser?: UserContactInfo | null;
+    /** D-014: true gdy blob JSON oferty/zamówienia był nieparsowalny (best-effort render). */
+    dataCorrupted?: boolean;
 }

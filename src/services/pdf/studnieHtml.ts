@@ -174,6 +174,12 @@ export async function generateStudnieHTML(data: StudnieOfferData): Promise<strin
 
     const { tables, summary } = buildStudnieSectionHTML(data);
 
+    // D-014: uszkodzony blob JSON = best-effort render, ale dokument MUSI być
+    // jawnie oznaczony, żeby nie wyglądał na ważny dokument prawny.
+    const corruptedBanner = data.dataCorrupted
+        ? '<div style="border:2pt solid #c00;color:#c00;font-weight:700;text-align:center;padding:8px;margin:10px 0;">DANE_USZKODZONE — dokument wygenerowany z niepełnych danych (uszkodzony zapis oferty/zamówienia). Nie używać jako ważny dokument.</div>'
+        : '';
+
     let sekcjaUwagi = '';
     if (data.notes) {
         sekcjaUwagi += `
@@ -216,7 +222,7 @@ export async function generateStudnieHTML(data: StudnieOfferData): Promise<strin
     html = html.replace(/\{\{DATA_WAZNOSCI\}\}/g, validityString);
     html = html.replace(/\{\{DANE_KLIENTA\}\}/g, daneKlienta);
     html = html.replace(/\{\{DANE_INWESTYCJI\}\}/g, daneInwestycji);
-    html = html.replace(/\{\{TABELE_DN\}\}/g, tables);
+    html = html.replace(/\{\{TABELE_DN\}\}/g, corruptedBanner + tables);
     html = html.replace(/\{\{TABELA_RUR\}\}/g, '');
     html = html.replace(/\{\{PODSUMOWANIE\}\}/g, summary);
     html = html.replace(/\{\{SEKCJA_UWAGI\}\}/g, sekcjaUwagi);
