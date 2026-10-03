@@ -4,6 +4,40 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.37.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.36.1...v1.37.0) (2026-10-03)
+
+### Features
+
+- **deploy:** watchdog okno, pm2 ecosystem i protokol staged memory ([6160098](https://github.com/blodytrav3l3r/Oferty_PV/commit/6160098b65a673dff9b3f19a7e5e96724527dd1d))
+
+### Bug Fixes
+
+- **api:** reclaim slotu pdf przy timeout running jobu ([68c624d](https://github.com/blodytrav3l3r/Oferty_PV/commit/68c624dd2b422b955935b9ffad94bc3a711744ce))
+- **api:** reject invalid and non-finite numeric values ([f6c44d6](https://github.com/blodytrav3l3r/Oferty_PV/commit/f6c44d6928163e85ad9c62e42e51f2736a8afc6e))
+- **api:** sanitize generated filenames ([99c73b4](https://github.com/blodytrav3l3r/Oferty_PV/commit/99c73b47c85c4df19018548c2a4a1b12d8bbc43c))
+- **auth:** invalidate sessions after admin user security changes ([4473763](https://github.com/blodytrav3l3r/Oferty_PV/commit/4473763eef26b861555f6195fb6f234ba0d7dbcb))
+- **clients:** stabilne id klientow przed put (d-009) ([0f2fcb7](https://github.com/blodytrav3l3r/Oferty_PV/commit/0f2fcb7af85682e2dd8b99f64504faa5d300f006))
+- **config:** fix eslint handling for scripts ([6953c20](https://github.com/blodytrav3l3r/Oferty_PV/commit/6953c2069df1f59f63e4cfe35c148d0c78e59be3))
+- **docker:** pool 3, health ready, busy 429 pod 100 userow ([fcaf521](https://github.com/blodytrav3l3r/Oferty_PV/commit/fcaf5216e9a038eebed3e18e397737baae9b693e))
+- **offers:** kontrakt share w eksporcie i domykanie klucza idempotencji ([bb56c88](https://github.com/blodytrav3l3r/Oferty_PV/commit/bb56c883a70225b0ded22d99aac9de73b4874e70))
+- **offers:** stempel uszkodzonych danych przy blednym blobie pdf ([3e4470b](https://github.com/blodytrav3l3r/Oferty_PV/commit/3e4470b4915efcfbfe675f4ae5a7fd108eced2e8))
+- **orders:** limiter claimow numeracji i dokumentacja luk ([576d740](https://github.com/blodytrav3l3r/Oferty_PV/commit/576d7409c29d8549f944a870e4ce68144b6185ca))
+- **prisma:** guard wyscigu aktywacji i unikalnosc numeru oferty ([23b1f11](https://github.com/blodytrav3l3r/Oferty_PV/commit/23b1f11f0fb3f0d2c720ddc93ef48c18c475817a))
+- **security:** mniej pii w users shareable (d-012) ([3727bf5](https://github.com/blodytrav3l3r/Oferty_PV/commit/3727bf505fb464def5502a6736881c0dc4b724d6))
+- **security:** re-check własności w eksporcie łącznym (d-010) ([4dd33b9](https://github.com/blodytrav3l3r/Oferty_PV/commit/4dd33b9575d860327115ff283b9404725bc700e0))
+- **security:** require explicit restore target ([489d409](https://github.com/blodytrav3l3r/Oferty_PV/commit/489d40917f8656feb8ff9420fdf7a3e5cdd57b3c))
+- **security:** share-aware combined export i docx banner ([5d34f23](https://github.com/blodytrav3l3r/Oferty_PV/commit/5d34f23a27592f725887c6549c825085afdc542e))
+- **studnie:** escape dn w przejsciu i straznik finite parametrow ([544fd8e](https://github.com/blodytrav3l3r/Oferty_PV/commit/544fd8e917339068e0a9bef9ec627246a25b2113))
+- **studnie:** idempotency-key w single-claim numeru pz ([d79e123](https://github.com/blodytrav3l3r/Oferty_PV/commit/d79e123b2411a41ae91763a7ae15cbf313d0c5bb))
+- **studnie:** usunięcie potwierdzenia usuwania elementu ([d344e55](https://github.com/blodytrav3l3r/Oferty_PV/commit/d344e55c9acae687ccf1270dc96aa4a568ddb6c1))
+- **studnie:** zapis chunka pz przez shared fetchwithretry429 (d-015) ([5853145](https://github.com/blodytrav3l3r/Oferty_PV/commit/5853145df79ddf4d55776098ff14910661bb8fb2))
+- **telemetry:** gate ownership telemetrii i reward modify ([8d02d19](https://github.com/blodytrav3l3r/Oferty_PV/commit/8d02d199725c550320c81ef5c90a503d65af3e29))
+- **telemetry:** make acceptance idempotent under concurrency ([864e894](https://github.com/blodytrav3l3r/Oferty_PV/commit/864e8946277b423d8d2b877460323a692729150f))
+- **telemetry:** well-gate w reward-batch (d-011) ([08f0e4a](https://github.com/blodytrav3l3r/Oferty_PV/commit/08f0e4abbfcd9fd1483c377adbd157af8aa299e4))
+- **test:** e2e skrypty cjs na izolowanym porcie ([5962ea4](https://github.com/blodytrav3l3r/Oferty_PV/commit/5962ea4fcb705fa7b4be5cfe4a7d133a9e9ae9cc))
+- **test:** hermetyczny guard restore bez live db na ci ([c08c3e7](https://github.com/blodytrav3l3r/Oferty_PV/commit/c08c3e74c6176215c48e03a40d391b9acbb9d438))
+- **test:** mock share-aware gate w e3b ([9c627b4](https://github.com/blodytrav3l3r/Oferty_PV/commit/9c627b4847a50b227d25261adad45c21104766cc))
+
 ### [1.36.1](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.36.0...v1.36.1) (2026-10-01)
 
 ## [1.36.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.35.1...v1.36.0) (2026-10-01)

@@ -1,6 +1,6 @@
 # Tech Stack — stos technologiczny
 
-**Wersja:** 1.36.1  
+**Wersja:** 1.37.0  
 **Ostatnia aktualizacja:** 2026-08-24
 
 ## Licencje — podsumowanie
