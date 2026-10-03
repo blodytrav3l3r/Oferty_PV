@@ -36,8 +36,34 @@ async function loadClientsDb() {
     }
 }
 
+/* ===== STABILNE ID (D-009) ===== */
+// Serwer minci UUID per request dla wierszy bez id (clients.ts: docId =
+// c.id || randomUUID) — retry/double-submit payloadu z id-less wierszami
+// tworzył duplikaty. Mintujemy stabilne id PRZED pierwszym PUT (ten sam
+// format co serwer: crypto.randomUUID, fallback jak w wellElemId.js),
+// więc retry niesie te same ids → upsert bez duplikatów. Idempotentne:
+// istniejące id bez zmian; mutacja in-place stabilizuje też clientsDb.
+function newClientId() {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+        return crypto.randomUUID();
+    }
+    return 'cl_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 10);
+}
+
+function ensureClientIds(data) {
+    if (!Array.isArray(data)) return data;
+    for (const item of data) {
+        if (!item || typeof item !== 'object') continue;
+        if (!item.id) {
+            item.id = newClientId();
+        }
+    }
+    return data;
+}
+
 async function saveClientsDbData(data) {
     try {
+        ensureClientIds(data);
         const res = await fetch('/api/clients', {
             method: 'PUT',
             headers: authHeaders(),
@@ -125,7 +151,7 @@ function saveClientToDb() {
             });
     } else {
         clientsDb.push({
-            id: Date.now().toString(),
+            id: newClientId(),
             name,
             nip,
             address,
@@ -383,3 +409,5 @@ window.cancelEditClient = cancelEditClient;
 /* ===== Rejestracja globali ===== */
 window.loadClientsDb = loadClientsDb;
 window.deleteClientFromDb = deleteClientFromDb;
+window.ensureClientIds = ensureClientIds;
+window.newClientId = newClientId;
