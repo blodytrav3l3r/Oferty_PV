@@ -50,6 +50,8 @@ jest.mock('../src/services/auditService', () => ({
 jest.mock('../src/utils/ownership', () => ({
     canWriteDoc: jest.fn().mockReturnValue(true),
     canReadDoc: jest.fn().mockReturnValue(true),
+    // A-02: export-combined jest share-aware (jak single eksporty).
+    canReadWithShare: jest.fn().mockResolvedValue(true),
     canClaimNumber: jest.fn().mockReturnValue(true)
 }));
 
