@@ -1,7 +1,7 @@
 # API — dokumentacja endpointów
 
 **Wersja:** 1.36.1  
-**Ostatnia aktualizacja:** 2026-09-09  
+**Ostatnia aktualizacja:** 2026-10-03  
 **Dokumentacja Swagger/OpenAPI:** `/api/docs` (po uruchomieniu serwera) — źródło autorytatywne (surowy JSON: `GET /api/docs.json`)
 
 > **Uwaga:** Pełna, zawsze aktualna dokumentacja API dostępna jest przez Swagger pod `/api/docs`.
@@ -70,11 +70,11 @@ Publiczny endpoint raportów CSP (`Content-Type: application/csp-report`, odpowi
 
 ## Autoryzacja (`/api/auth`)
 
-Wszystkie endpointy auth (oprócz login) wymagają autoryzacji przez ciasteczko `authToken` (HttpOnly, podstawowy mechanizm). Nagłówek `x-auth-token` działa jako tymczasowy shim kompatybilności API (decyzja `e2-auth-decision`: docelowo cookie-first).
+Wszystkie endpointy auth (oprócz login) wymagają autoryzacji przez ciasteczko `authToken` (HttpOnly, jedyny mechanizm). Nagłówek `x-auth-token` jest wygaszony (sunset) — serwer go ignoruje; wywołania API muszą wysyłać cookie (`credentials: include`).
 
 ### `POST /api/auth/login`
 
-Logowanie użytkownika. Zwraca token sesji i dane użytkownika.
+Logowanie użytkownika. Zwraca wyłącznie dane użytkownika; sesja trafia do cookie `authToken` (HttpOnly, `SameSite=Lax`).
 
 **Body:**
 
@@ -89,7 +89,6 @@ Logowanie użytkownika. Zwraca token sesji i dane użytkownika.
 
 ```json
 {
-    "token": "a1b2c3d4...",
     "user": {
         "id": "usr_admin",
         "username": "admin",
@@ -126,18 +125,19 @@ Zmiana hasła przez zalogowanego użytkownika.
 
 ## Użytkownicy (`/api/users`)
 
-Wymaga autoryzacji.
-
-| Metoda | Ścieżka          | Opis                          |
-| ------ | ---------------- | ----------------------------- |
-| GET    | `/api/users`     | Lista użytkowników            |
-| GET    | `/api/users/:id` | Szczegóły użytkownika         |
-| PUT    | `/api/users/:id` | Aktualizacja użytkownika      |
-| DELETE | `/api/users/:id` | Usunięcie użytkownika (admin) |
+| Metoda | Ścieżka                     | Auth  | Opis                                                               |
+| ------ | --------------------------- | ----- | ------------------------------------------------------------------ |
+| GET    | `/api/users`                | admin | Lista użytkowników                                                 |
+| PUT    | `/api/users/:id`            | admin | Aktualizacja użytkownika (zmiana roli/hasła unieważnia jego sesje) |
+| DELETE | `/api/users/:id`            | admin | Usunięcie użytkownika (blokada 403 gdy ma dokumenty)               |
+| GET    | `/api/users/shareable`      | auth  | Użytkownicy do udostępniania (bez siebie)                          |
+| GET    | `/api/users/for-assignment` | auth  | Użytkownicy do przypisania                                         |
+| GET    | `/api/users/me/preferences` | auth  | Własne preferencje (`{preferences}`)                               |
+| PUT    | `/api/users/me/preferences` | auth  | Zapis własnej preferencji (`{key: "theme", value}`)                |
 
 ### `GET /api/users-for-assignment`
 
-Lista użytkowników do przypisania (wewnętrzny alias).
+Lista użytkowników do przypisania (wewnętrzny alias na `/api/users/for-assignment`).
 
 ---
 
@@ -172,16 +172,14 @@ Typy dokumentów: `offer`, `offer_studnie`, `order_rury`, `order_studnie`.
 
 ## Produkty — Rury (`/api/products`)
 
-Wymaga autoryzacji.
-
-| Metoda | Ścieżka                   | Opis                             |
-| ------ | ------------------------- | -------------------------------- |
-| GET    | `/api/products`           | Lista wszystkich produktów (rur) |
-| GET    | `/api/products/:id`       | Szczegóły produktu               |
-| POST   | `/api/products`           | Dodanie produktu                 |
-| PUT    | `/api/products/:id`       | Aktualizacja produktu            |
-| DELETE | `/api/products/:id`       | Usunięcie produktu               |
-| PUT    | `/api/products/pricelist` | Aktualizacja całego cennika rur  |
+| Metoda | Ścieżka                     | Auth  | Opis                                           |
+| ------ | --------------------------- | ----- | ---------------------------------------------- |
+| GET    | `/api/products`             | auth  | Lista wszystkich produktów (rur)               |
+| PUT    | `/api/products`             | admin | Hurtowy zapis cennika (usuń wszystko + utwórz) |
+| PATCH  | `/api/products/:id`         | admin | Edycja jednego produktu                        |
+| DELETE | `/api/products/:id`         | admin | Usunięcie produktu                             |
+| GET    | `/api/products/export.xlsx` | auth  | Eksport XLSX (`?source=live\|default`)         |
+| GET    | `/api/products/default`     | auth  | Domyślny cennik rur                            |
 
 Produkty są ładowane przez `prisma/seed.ts` z pliku `data/seed_rury.json`. Seed nie jest uruchamiany automatycznie przy starcie serwera — wykonuje go `scripts/ensure-db.bat` → `scripts/check-db.js` → `prisma/seed.ts` (ręcznie: `npm run prisma:seed`).
 
@@ -189,16 +187,14 @@ Produkty są ładowane przez `prisma/seed.ts` z pliku `data/seed_rury.json`. See
 
 ## Produkty — Studnie (`/api/products-studnie`)
 
-Wymaga autoryzacji.
-
-| Metoda | Ścieżka                           | Opis                                |
-| ------ | --------------------------------- | ----------------------------------- |
-| GET    | `/api/products-studnie`           | Lista wszystkich produktów (studni) |
-| GET    | `/api/products-studnie/:id`       | Szczegóły produktu                  |
-| POST   | `/api/products-studnie`           | Dodanie produktu                    |
-| PUT    | `/api/products-studnie/:id`       | Aktualizacja produktu               |
-| DELETE | `/api/products-studnie/:id`       | Usunięcie produktu                  |
-| PUT    | `/api/products-studnie/pricelist` | Aktualizacja całego cennika studni  |
+| Metoda | Ścieżka                             | Auth  | Opis                                           |
+| ------ | ----------------------------------- | ----- | ---------------------------------------------- |
+| GET    | `/api/products-studnie`             | auth  | Lista wszystkich produktów (studni)            |
+| PUT    | `/api/products-studnie`             | admin | Hurtowy zapis cennika (usuń wszystko + utwórz) |
+| PATCH  | `/api/products-studnie/:id`         | admin | Edycja jednego produktu                        |
+| DELETE | `/api/products-studnie/:id`         | admin | Usunięcie produktu                             |
+| GET    | `/api/products-studnie/export.xlsx` | auth  | Eksport XLSX + PRECO (`?source=live\|default`) |
+| GET    | `/api/products-studnie/default`     | auth  | Domyślny cennik studni                         |
 
 Produkty są ładowane przez `prisma/seed.ts` z pliku `data/seed_studnie.json` (nie automatycznie przy starcie serwera).
 
@@ -221,16 +217,16 @@ Wymaga autoryzacji. Wyszukiwanie łączne (UNION rury + studnie) z kursorem (`ne
 
 Wymaga autoryzacji.
 
-| Metoda | Ścieżka                            | Opis                        |
-| ------ | ---------------------------------- | --------------------------- |
-| GET    | `/api/offers-rury`                 | Lista ofert rur             |
-| GET    | `/api/offers-rury/:id`             | Szczegóły oferty            |
-| POST   | `/api/offers-rury`                 | Utworzenie nowej oferty rur |
-| PUT    | `/api/offers-rury/:id`             | Aktualizacja oferty         |
-| DELETE | `/api/offers-rury/:id`             | Usunięcie oferty            |
-| GET    | `/api/offers-rury/search?q=`       | Wyszukiwanie ofert          |
-| GET    | `/api/offers-rury/:id/export-pdf`  | Eksport oferty do PDF       |
-| GET    | `/api/offers-rury/:id/export-docx` | Eksport oferty do DOCX      |
+| Metoda | Ścieżka                            | Opis                         |
+| ------ | ---------------------------------- | ---------------------------- |
+| GET    | `/api/offers-rury`                 | Lista ofert rur              |
+| GET    | `/api/offers-rury/:id`             | Szczegóły oferty             |
+| POST   | `/api/offers-rury`                 | Utworzenie nowej oferty rur  |
+| PUT    | `/api/offers-rury`                 | Aktualizacja oferty (całość) |
+| DELETE | `/api/offers-rury/:id`             | Usunięcie oferty             |
+| POST   | `/api/offers-rury/:id/duplicate`   | Duplikowanie oferty          |
+| GET    | `/api/offers-rury/:id/export-pdf`  | Eksport oferty do PDF        |
+| GET    | `/api/offers-rury/:id/export-docx` | Eksport oferty do DOCX       |
 
 ---
 
@@ -254,19 +250,18 @@ Wymaga autoryzacji. Alias do `/api/offers-rury/studnie`.
 
 Wymaga autoryzacji.
 
-| Metoda | Ścieżka                                      | Opis                          |
-| ------ | -------------------------------------------- | ----------------------------- |
-| GET    | `/api/orders-rury`                           | Lista zamówień rur            |
-| GET    | `/api/orders-rury/:id`                       | Szczegóły zamówienia          |
-| POST   | `/api/orders-rury`                           | Utworzenie zamówienia         |
-| PUT    | `/api/orders-rury/:id`                       | Aktualizacja zamówienia       |
-| PATCH  | `/api/orders-rury/:id`                       | Częściowa aktualizacja        |
-| DELETE | `/api/orders-rury/:id`                       | Anulowanie zamówienia         |
-| POST   | `/api/orders-rury/claim-rury-number/:userId` | Przypisanie numeru zamówienia |
-| GET    | `/api/orders-rury/:id/export-pdf`            | Eksport zamówienia do PDF     |
-| GET    | `/api/orders-rury/:id/export-docx`           | Eksport zamówienia do DOCX    |
-| GET    | `/api/orders-rury/:id/export-karta-pdf`      | Eksport karty budowy do PDF   |
-| GET    | `/api/orders-rury/:id/export-karta-docx`     | Eksport karty budowy do DOCX  |
+| Metoda | Ścieżka                                      | Opis                               |
+| ------ | -------------------------------------------- | ---------------------------------- |
+| GET    | `/api/orders-rury`                           | Lista zamówień rur                 |
+| GET    | `/api/orders-rury/:id`                       | Szczegóły zamówienia               |
+| PUT    | `/api/orders-rury`                           | Utworzenie/aktualizacja zamówienia |
+| PATCH  | `/api/orders-rury/:id`                       | Częściowa aktualizacja             |
+| DELETE | `/api/orders-rury/:id`                       | Anulowanie zamówienia              |
+| POST   | `/api/orders-rury/claim-rury-number/:userId` | Przypisanie numeru zamówienia      |
+| GET    | `/api/orders-rury/:id/export-pdf`            | Eksport zamówienia do PDF          |
+| GET    | `/api/orders-rury/:id/export-docx`           | Eksport zamówienia do DOCX         |
+| GET    | `/api/orders-rury/:id/export-karta-pdf`      | Eksport karty budowy do PDF        |
+| GET    | `/api/orders-rury/:id/export-karta-docx`     | Eksport karty budowy do DOCX       |
 
 ## Zamówienia — Studnie (`/api/orders-studnie`)
 
@@ -288,14 +283,18 @@ Wymaga autoryzacji.
 
 Wymaga autoryzacji.
 
-| Metoda | Ścieżka                                       | Opis                                        |
-| ------ | --------------------------------------------- | ------------------------------------------- |
-| GET    | `/api/orders-studnie/production`              | Lista zleceń produkcyjnych (PZ)             |
-| POST   | `/api/orders-studnie/production`              | Utworzenie zlecenia produkcyjnego           |
-| PUT    | `/api/orders-studnie/production`              | Aktualizacja zlecenia produkcyjnego         |
-| GET    | `/api/orders-studnie/production/:id`          | Szczegóły zlecenia                          |
-| DELETE | `/api/orders-studnie/production/:id`          | Usunięcie zlecenia (writeProductionLimiter) |
-| POST   | `/api/orders-studnie/production/batch-delete` | Masowe usunięcie (chunkowane po 200 ids)    |
+| Metoda | Ścieżka                                            | Opis                                     |
+| ------ | -------------------------------------------------- | ---------------------------------------- |
+| GET    | `/api/orders-studnie/production`                   | Lista zleceń produkcyjnych (PZ)          |
+| POST   | `/api/orders-studnie/production`                   | Utworzenie zlecenia produkcyjnego        |
+| PUT    | `/api/orders-studnie/production`                   | Aktualizacja zlecenia produkcyjnego      |
+| GET    | `/api/orders-studnie/production/index`             | Indeks zleceń                            |
+| GET    | `/api/orders-studnie/production/:id`               | Szczegóły zlecenia                       |
+| DELETE | `/api/orders-studnie/production/:id`               | Usunięcie zlecenia                       |
+| POST   | `/api/orders-studnie/production/batch-delete`      | Masowe usunięcie (chunkowane po 200 ids) |
+| POST   | `/api/orders-studnie/production/recycle-numbers`   | Zwrot numerów do puli                    |
+| POST   | `/api/orders-studnie/production/print-count-batch` | Hurtowe liczniki wydruków                |
+| POST   | `/api/orders-studnie/production/:id/print-count`   | Inkrementacja licznika wydruków          |
 
 ## Wyszukiwanie produkcji (`/api/orders-studnie/production/search`)
 
@@ -321,24 +320,19 @@ Wymaga autoryzacji. Montowana przed trasami `/:id` (barrel `orders/index.ts`).
 
 Wymaga autoryzacji.
 
-| Metoda | Ścieżka              | Opis                                          |
-| ------ | -------------------- | --------------------------------------------- |
-| GET    | `/api/clients`       | Lista klientów (dla zalogowanego użytkownika) |
-| GET    | `/api/clients/:id`   | Szczegóły klienta                             |
-| POST   | `/api/clients`       | Dodanie klienta                               |
-| PUT    | `/api/clients/:id`   | Aktualizacja klienta                          |
-| DELETE | `/api/clients/:id`   | Usunięcie klienta                             |
-| POST   | `/api/clients/batch` | Dodanie wielu klientów naraz (batch)          |
+| Metoda | Ścieżka        | Opis                                                                                                         |
+| ------ | -------------- | ------------------------------------------------------------------------------------------------------------ |
+| GET    | `/api/clients` | Lista klientów (wspólna baza, wszyscy widzą wszystkich)                                                      |
+| PUT    | `/api/clients` | Synchronizacja klientów (`{data: [...]}`, upsert; pusta tablica = czyszczenie tylko dla admina, inaczej 403) |
 
 ---
 
 ## Audyt (`/api/audit`)
 
-Wymaga autoryzacji (administrator).
+Wymaga autoryzacji (bez wymogu administratora).
 
 | Metoda | Ścieżka                                           | Opis                                                            |
 | ------ | ------------------------------------------------- | --------------------------------------------------------------- |
-| GET    | `/api/audit`                                      | Lista logów audytowych                                          |
 | GET    | `/api/audit/:entityType/:entityId`                | Logi dla konkretnego zasobu                                     |
 | GET    | `/api/audit/rebuild/:entityType/:entityId/:logId` | Rekonstrukcja stanu zasobu na moment wpisu (404 gdy brak wpisu) |
 
@@ -346,27 +340,43 @@ Wymaga autoryzacji (administrator).
 
 ## Ustawienia (`/api/settings`)
 
-Wymaga autoryzacji (administrator).
-
-| Metoda | Ścieżka                     | Opis                                                            |
-| ------ | --------------------------- | --------------------------------------------------------------- |
-| GET    | `/api/settings`             | Pobranie wszystkich ustawień                                    |
-| GET    | `/api/settings/year-letter` | Litera roku (`{letter, year}`, klucz `year_letter_YYYY`)        |
-| PUT    | `/api/settings/year-letter` | Ustawienie litery roku (admin, uppercase, `{ok, letter, year}`) |
-| GET    | `/api/settings/:key`        | Pobranie konkretnego ustawienia                                 |
+| Metoda | Ścieżka                       | Auth  | Opis                                                     |
+| ------ | ----------------------------- | ----- | -------------------------------------------------------- |
+| GET    | `/api/settings/year-letter`   | auth  | Litera roku (`{letter, year}`, klucz `year_letter_YYYY`) |
+| PUT    | `/api/settings/year-letter`   | admin | Ustawienie litery roku (uppercase, `{ok, letter, year}`) |
+| GET    | `/api/settings/magazyn-codes` | auth  | Kody magazynów                                           |
+| PUT    | `/api/settings/magazyn-codes` | admin | Ustawienie kodów magazynów                               |
+| GET    | `/api/settings/:key`          | auth  | Pobranie konkretnego ustawienia (allowlista kluczy)      |
 
 ---
 
 ## Preco Pricing (`/api/preco-pricing`)
 
-Wymaga autoryzacji.
+| Metoda | Ścieżka                          | Auth  | Opis                                                                |
+| ------ | -------------------------------- | ----- | ------------------------------------------------------------------- |
+| GET    | `/api/preco-pricing`             | auth  | Pobranie cennika Preco                                              |
+| PUT    | `/api/preco-pricing`             | admin | Pełny zapis struktury PRECO (niepoprawne liczby → 400, brak zapisu) |
+| PATCH  | `/api/preco-pricing`             | admin | Częściowa aktualizacja (scalenie z live, ta sama walidacja)         |
+| GET    | `/api/preco-pricing/default`     | auth  | Pobranie domyślnego cennika Preco                                   |
+| GET    | `/api/preco-pricing/export.xlsx` | auth  | Eksport XLSX (`?source=live\|default`)                              |
 
-| Metoda | Ścieżka                      | Opis                              |
-| ------ | ---------------------------- | --------------------------------- |
-| GET    | `/api/preco-pricing`         | Pobranie cennika Preco            |
-| PUT    | `/api/preco-pricing`         | Aktualizacja cennika Preco        |
-| PATCH  | `/api/preco-pricing`         | Częściowa aktualizacja            |
-| GET    | `/api/preco-pricing/default` | Pobranie domyślnego cennika Preco |
+## Wersje cenników (`/api/pricelist-versions`)
+
+Wymaga autoryzacji (administrator, oprócz etykiet).
+
+| Metoda | Ścieżka                                   | Auth  | Opis                                      |
+| ------ | ----------------------------------------- | ----- | ----------------------------------------- |
+| GET    | `/api/pricelist-versions`                 | admin | Lista wersji                              |
+| GET    | `/api/pricelist-versions/labels`          | auth  | Etykiety wersji                           |
+| POST   | `/api/pricelist-versions/:type/drafts`    | admin | Nowy szkic wersji (`201` przy utworzeniu) |
+| PUT    | `/api/pricelist-versions/:id`             | admin | Edycja wersji                             |
+| DELETE | `/api/pricelist-versions/:id`             | admin | Usunięcie wersji                          |
+| POST   | `/api/pricelist-versions/:id/activate`    | admin | Aktywacja wersji                          |
+| POST   | `/api/pricelist-versions/:id/backdate`    | admin | Aktywacja wsteczna                        |
+| POST   | `/api/pricelist-versions/:id/clone-draft` | admin | Klonowanie szkicu                         |
+| POST   | `/api/pricelist-versions/activate-due`    | admin | Aktywacja zaplanowanych                   |
+| GET    | `/api/pricelist-versions/:id/diff`        | admin | Różnice wersji                            |
+| GET    | `/api/pricelist-versions/:id/export`      | admin | Eksport zamrożonej wersji                 |
 
 ## Domyślne cenniki (`/api/price-overrides`)
 
@@ -402,16 +412,25 @@ Wymaga autoryzacji. Łączy oferty rur i studni w jeden dokument.
 
 ---
 
+## Telemetria (`/api/telemetry`)
+
+Wymaga autoryzacji.
+
+| Metoda | Ścieżka                   | Opis                         |
+| ------ | ------------------------- | ---------------------------- |
+| POST   | `/api/telemetry/override` | Nadpisanie ręczne telemetrii |
+| GET    | `/api/telemetry/logs`     | Logi telemetry               |
+
 ## Telemetria AI (`/api/telemetry/ai`)
 
 Wymaga autoryzacji. Telemetria jest **pasywna** — solver JS pozostaje źródłem prawdy **reguł** doboru komponentów studni. AI (dual-ranking) może wybrać innego kandydata spośród kandydatów solvera — wtedy `solverSource: 'AI_SUGGEST'`.
 
-| Metoda | Ścieżka                             | Opis                                                    |
-| ------ | ----------------------------------- | ------------------------------------------------------- |
-| POST   | `/api/telemetry/ai/config`          | Zapis pełnej konfiguracji studni z kontekstem           |
-| POST   | `/api/telemetry/ai/event`           | Pojedyncze zdarzenie (user_change, accept, itp.)        |
-| POST   | `/api/telemetry/ai/version`         | Rejestracja nowej wersji solvera/reguł/AI               |
-| POST   | `/api/telemetry/ai/acceptance-full` | Rozszerzony acceptance (oferta + akceptacja + snapshot) |
+| Metoda | Ścieżka                             | Opis                                                                                           |
+| ------ | ----------------------------------- | ---------------------------------------------------------------------------------------------- |
+| POST   | `/api/telemetry/ai/config`          | Zapis pełnej konfiguracji studni z kontekstem                                                  |
+| POST   | `/api/telemetry/ai/event`           | Pojedyncze zdarzenie (user_change, accept, itp.)                                               |
+| POST   | `/api/telemetry/ai/version`         | Rejestracja nowej wersji solvera/reguł/AI                                                      |
+| POST   | `/api/telemetry/ai/acceptance-full` | Rozszerzony acceptance (oferta + akceptacja + snapshot; idempotentny — powtórka nie duplikuje) |
 
 ### `POST /api/telemetry/ai/config` — deduplikacja AUTO_JS
 
@@ -457,20 +476,32 @@ Pola odpowiedzi (oprócz listy `items`):
 
 Wymaga autoryzacji.
 
-| Metoda | Ścieżka                                 | Opis                                                 |
-| ------ | --------------------------------------- | ---------------------------------------------------- |
-| POST   | `/api/telemetry/ai/predict/batch`       | Predykcja batch dla kandydujących konfiguracji       |
-| POST   | `/api/telemetry/ai/reward`              | Zapis nagrody (reward) za akcję                      |
-| GET    | `/api/telemetry/ai/settings`            | Poziom wpływu AI (`wells_ai_influence`)              |
-| POST   | `/api/telemetry/ai/settings`            | Ustawienie wpływu AI 0–100 (admin)                   |
-| GET    | `/api/telemetry/ai/ml-status`           | Status pipeline ML (model, trening, cache, retencja) |
-| GET    | `/api/telemetry/ai/health`              | Health ML + metryki jakości danych                   |
-| GET    | `/api/telemetry/ai/models`              | Lista modeli                                         |
-| DELETE | `/api/telemetry/ai/models/:id`          | Usunięcie modelu (admin)                             |
-| POST   | `/api/telemetry/ai/models/:id/activate` | Aktywacja modelu (admin)                             |
-| POST   | `/api/telemetry/ai/train`               | Wymuszenie trenowania modelu (admin)                 |
-| GET    | `/api/telemetry/ai/feature-schema`      | Wersja i nazwy cech ML                               |
-| POST   | `/api/telemetry/ai/rollback`            | Rollback do poprzedniego modelu (admin)              |
+| Metoda | Ścieżka                                 | Auth  | Opis                                                 |
+| ------ | --------------------------------------- | ----- | ---------------------------------------------------- |
+| POST   | `/api/telemetry/ai/predict/batch`       | auth  | Predykcja batch dla kandydujących konfiguracji       |
+| POST   | `/api/telemetry/ai/reward`              | auth  | Zapis nagrody (reward) za akcję                      |
+| POST   | `/api/telemetry/ai/reward-batch`        | auth  | Hurtowy zapis nagród                                 |
+| GET    | `/api/telemetry/ai/settings`            | auth  | Poziom wpływu AI (`wells_ai_influence`)              |
+| POST   | `/api/telemetry/ai/settings`            | admin | Ustawienie wpływu AI 0–100                           |
+| GET    | `/api/telemetry/ai/ml-status`           | auth  | Status pipeline ML (model, trening, cache, retencja) |
+| GET    | `/api/telemetry/ai/health`              | admin | Health ML + metryki jakości danych                   |
+| GET    | `/api/telemetry/ai/well-selections`     | admin | Wybory studni AI                                     |
+| GET    | `/api/telemetry/ai/models`              | admin | Lista modeli                                         |
+| GET    | `/api/telemetry/ai/models/:id`          | admin | Szczegóły modelu                                     |
+| DELETE | `/api/telemetry/ai/models/:id`          | admin | Usunięcie modelu                                     |
+| POST   | `/api/telemetry/ai/models/:id/activate` | admin | Aktywacja modelu                                     |
+| POST   | `/api/telemetry/ai/models/:id/promote`  | admin | Promocja modelu                                      |
+| POST   | `/api/telemetry/ai/models/:id/approve`  | admin | Zatwierdzenie modelu                                 |
+| POST   | `/api/telemetry/ai/train`               | admin | Wymuszenie trenowania modelu                         |
+| GET    | `/api/telemetry/ai/feature-schema`      | auth  | Wersja i nazwy cech ML                               |
+| GET    | `/api/telemetry/ai/feature-importance`  | admin | Ważność cech                                         |
+| GET    | `/api/telemetry/ai/drift`               | admin | Detekcja dryfu                                       |
+| GET    | `/api/telemetry/ai/training-users`      | admin | Użytkownicy treningowi                               |
+| PUT    | `/api/telemetry/ai/training-users`      | admin | Ustawienie użytkowników treningowych                 |
+| GET    | `/api/telemetry/ai/training/runs`       | admin | Historia uruchomień treningu                         |
+| GET    | `/api/telemetry/ai/training/runs/:id`   | admin | Szczegóły uruchomienia treningu                      |
+| GET    | `/api/telemetry/ai/predictions/stats`   | admin | Statystyki predykcji                                 |
+| POST   | `/api/telemetry/ai/rollback`            | admin | Rollback do poprzedniego modelu                      |
 
 ## Transfer Center P7 (`/api/telemetry/ai/transfer`)
 
@@ -492,29 +523,56 @@ Sonda CSP dashboardu Operacje czyta `Content-Security-Policy` z `/api/telemetry/
 
 ## Feature Flags (`/api/feature-flags`)
 
-Wymaga autoryzacji (administrator).
-
-| Metoda | Ścieżka                            | Opis                                                                                        |
-| ------ | ---------------------------------- | ------------------------------------------------------------------------------------------- |
-| GET    | `/api/feature-flags`               | Lista flag (`ai_ml_enabled` fail-closed: błąd DB → `503 FLAGS_UNAVAILABLE`, nigdy jawne ON) |
-| PUT    | `/api/feature-flags/import-export` | Włączenie/wyłączenie import-eksport (`{enabled}`, audyt)                                    |
-| PUT    | `/api/feature-flags/ai-ml`         | Włączenie/wyłączenie AI/ML (`{enabled: boolean}`, 400 gdy nie-boolean)                      |
-| POST   | `/api/feature-flags/audit`         | Ręczny wpis audytu (`entityType`, `entityId`, `action`, 400 bez pól)                        |
+| Metoda | Ścieżka                            | Auth  | Opis                                                                                        |
+| ------ | ---------------------------------- | ----- | ------------------------------------------------------------------------------------------- |
+| GET    | `/api/feature-flags`               | auth  | Lista flag (`ai_ml_enabled` fail-closed: błąd DB → `503 FLAGS_UNAVAILABLE`, nigdy jawne ON) |
+| PUT    | `/api/feature-flags/import-export` | admin | Włączenie/wyłączenie import-eksport (`{enabled}`, audyt)                                    |
+| PUT    | `/api/feature-flags/ai-ml`         | admin | Włączenie/wyłączenie AI/ML (`{enabled: boolean}`, 400 gdy nie-boolean)                      |
+| POST   | `/api/feature-flags/audit`         | admin | Ręczny wpis audytu (`entityType`, `entityId`, `action`, 400 bez pól)                        |
 
 ---
 
 ## Rate Limiting
 
-| Limiter                  | Okno   | Max prób | Endpointy                                                                              |
-| ------------------------ | ------ | -------- | -------------------------------------------------------------------------------------- |
-| LOGIN_LIMITER            | 15 min | 15       | `/api/auth/login`                                                                      |
-| API_LIMITER              | 15 min | 300      | Wszystkie endpointy `/api/*`                                                           |
-| WRITE_LIMITER            | 15 min | 60       | Zapis danych (POST/PUT/DELETE)                                                         |
-| PRICELIST_WRITE_LIMITER  | 1 godz | 30       | Aktualizacja cenników (`/api/products*`, `/api/preco-pricing`, `/api/price-overrides`) |
-| EXPORT_LIMITER           | 15 min | 20       | Eksport PDF/DOCX (`/api/export-combined/*`, `/:id/export-*`)                           |
-| WRITE_PRODUCTION_LIMITER | 1 min  | 30       | Zlecenia produkcyjne (`DELETE /api/orders-studnie/production/:id`)                     |
-| TELEMETRY_WRITE_LIMITER  | 1 min  | 1200     | Zapis telemetrii (`POST /api/telemetry/ai/config                                       | event | version | acceptance-full | predict/batch | reward*`) |
-| READ_LIMITER             | 1 min  | 600      | Odczyty telemetrii (dashboard, wiedza, modele, treningi — polling)                     |
+Odpowiedź po przekroczeniu: `429` + nagłówek `Retry-After`.
+
+| Limiter                 | Okno   | Max prób | Endpointy                                                               |
+| ----------------------- | ------ | -------- | ----------------------------------------------------------------------- |
+| LOGIN_LIMITER           | 1 min  | 10       | `/api/auth/login` (kubełek per IP + login)                              |
+| API_LIMITER             | 15 min | 300      | Większość endpointów `/api/*` (zapis ofert/zamówień ma własne limitery) |
+| WRITE_LIMITER           | 1 min  | 60       | Zapis danych (POST/PUT/DELETE, w tym zlecenia produkcyjne)              |
+| PRICELIST_WRITE_LIMITER | 1 min  | 30       | Cenniki rury (`PUT /api/products`)                                      |
+| PRECO_PRICING_LIMITER   | 1 min  | 20       | Cennik PRECO (`PUT/PATCH /api/preco-pricing`)                           |
+| EXPORT_LIMITER          | 1 min  | 20       | Eksport PDF/DOCX (`/api/export-combined/*`, `/:id/export-*`)            |
+| TELEMETRY_WRITE_LIMITER | 1 min  | 1200     | Zapis telemetrii (`POST /api/telemetry/ai/config                        | event | version | acceptance-full | predict/batch | reward*`) |
+| READ_LIMITER            | 1 min  | 600      | Odczyty telemetrii (dashboard, wiedza, modele, treningi — polling)      |
+| CHANGE_PASSWORD_LIMITER | 15 min | 5        | `/api/auth/change-password` oraz `/api/auth/register` (admin)           |
+| ADMIN_USERS_LIMITER     | 1 min  | 30       | `/api/users/*` (admin)                                                  |
+
+---
+
+## Statusy HTTP
+
+| Status | Znaczenie w API                                                                            |
+| ------ | ------------------------------------------------------------------------------------------ |
+| 200    | Sukces (GET/PUT/PATCH/DELETE zwracają JSON, eksporty — plik)                               |
+| 201    | Utworzono wersję cennika (`POST /api/pricelist-versions/:type/drafts`, aktywacje)          |
+| 204    | Raport CSP przyjęty (`POST /api/csp-report`, bez body)                                     |
+| 400    | Błąd walidacji (Zod przez `validateData`, zły format, invalid numeric input — patrz niżej) |
+| 401    | Brak/nieprawidłowa sesja (brak cookie `authToken`, wygasła lub unieważniona)               |
+| 403    | Brak uprawnień (rola, ownership, full-wipe klientów dla nie-admina, revoke share)          |
+| 404    | Brak zasobu (404 zamiast 403 także przy odmowie dostępu do eksportu — anti-oracle)         |
+| 409    | Konflikt (zajęty login, `VERSION_CONFLICT` przy ślepym zapisie, duplikat transferu)        |
+| 422    | Błąd semantyczny: nieznany typ wersji, `NON_FINITE_SCORE` w AI batch                       |
+| 429    | Rate limit (`Retry-After`); także zapis w toku (lock)                                      |
+| 500    | Wewnętrzny błąd serwera (generyczny, bez wycieku szczegółów)                               |
+| 503    | Niedostępne: DB niegotowa (`/health/ready`), Chromium (`/health/pdf`), AI OFF, flagi       |
+
+---
+
+## Walidacja liczb (finite numbers)
+
+Pola cenowe, ilości i wymiary nie przyjmują cichych zer. Endpointy `PUT /api/products`, `PUT /api/products-studnie` oraz `PUT/PATCH /api/preco-pricing` odrzucają wartości `null`, `undefined`, pusty string, stringi nienumeryczne, `NaN`, `Infinity`, `-Infinity` oraz liczby ujemne — odpowiedzią jest **HTTP 400 i brak jakiegokolwiek zapisu do DB**. Poprawne liczby oraz numeryczne stringi (np. `"13"`) przechodzą (200). Schematy Zod dla ofert i snapshotów wymagają dodatkowo `.finite()` na polach cen/wymiarów (nie-skończone wartości odrzucane na wejściu).
 
 ---
 
@@ -531,7 +589,8 @@ Wymaga autoryzacji (administrator). FTS to dane pochodne — status i rebuild wy
 
 ## Uwagi
 
-- Wszystkie endpointy (oprócz `/health` i `/api/auth/login`) zwracają `401` przy braku autoryzacji.
-- Token: ciasteczko `authToken` (podstawowe); nagłówek `x-auth-token` to tymczasowy shim (nie drugi mechanizm docelowy).
+- Wszystkie endpointy (oprócz publicznych: `/health*`, `/api/auth/login`, `/api/version`, `/api/docs*`, `/api/csp-report`) zwracają `401` przy braku autoryzacji.
+- Token: wyłącznie ciasteczko `authToken` (HttpOnly); nagłówek `x-auth-token` jest ignorowany.
 - W produkcji ciasteczko `authToken` ma flagę `Secure` (wymaga HTTPS).
+- Zmiana roli/hasła użytkownika przez admina (`PUT /api/users/:id`) natychmiast unieważnia jego sesje (stara cookie → `401`).
 - Pełną dokumentację OpenAPI ze schematami i przykładami znajdziesz pod `/api/docs`.
