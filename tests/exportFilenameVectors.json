@@ -47,5 +47,31 @@
             "ext": "XLSX",
             "out": "oferta_OF-5_2026-09-21.xlsx"
         }
+    ],
+    "versionFilename": [
+        { "type": "rury", "version": "v3", "out": "Cennik_Rury_v3_Export.xlsx" },
+        {
+            "type": "studnie",
+            "version": "v1-20260101",
+            "out": "Cennik_Studnie_v1-20260101_Export.xlsx"
+        },
+        { "type": "preco", "version": "v2", "out": "Cennik_Preco_v2_Export.xlsx" },
+        { "type": "../", "version": "../../etc", "out": "Cennik_-_-..-etc_Export.xlsx" },
+        { "type": "..\\..", "version": "..\\evil", "out": "Cennik_-_-evil_Export.xlsx" },
+        { "type": "rury", "version": "v\"1\"\r\nevil", "out": "Cennik_Rury_v_1_evil_Export.xlsx" },
+        { "type": "a/b\\c", "version": "v1", "out": "Cennik_a-b-c_v1_Export.xlsx" },
+        { "type": ".", "version": "..", "out": "Cennik_dokument_dokument_Export.xlsx" },
+        { "type": "", "version": "", "out": "Cennik_dokument_dokument_Export.xlsx" },
+        { "type": "evil\"type", "version": "v1", "out": "Cennik_evil_type_v1_Export.xlsx" },
+        {
+            "type": "rury",
+            "version": "Zażółć gęślą jaźń",
+            "out": "Cennik_Rury_Zazolc_gesla_jazn_Export.xlsx"
+        },
+        {
+            "type": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+            "version": "v1",
+            "out": "Cennik_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_v1_Export.xlsx"
+        }
     ]
 }

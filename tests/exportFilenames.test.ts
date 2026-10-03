@@ -4,7 +4,12 @@
  * parzystości frontendu (tests/frontend/exportFilenamesParity.test.ts).
  */
 import vectors from './exportFilenameVectors.json';
-import { safeExportPart, pickNamePart, exportFilename } from '../src/utils/exportFilenames';
+import {
+    safeExportPart,
+    pickNamePart,
+    exportFilename,
+    versionExportFilename
+} from '../src/utils/exportFilenames';
 
 describe('exportFilenames (backend SSoT)', () => {
     test.each(vectors.safePart.map((v) => [v.in, v.out]))(
@@ -38,5 +43,39 @@ describe('exportFilenames (backend SSoT)', () => {
     test('rozszerzenie sanityzowane (bez kropki, lowercase, cap)', () => {
         expect(exportFilename('oferta_rury', [['OF/1']], 'PDF')).toBe('oferta_rury_OF-1.pdf');
         expect(exportFilename('oferta_rury', [['OF/1']], '.pdf')).toBe('oferta_rury_OF-1.pdf');
+    });
+
+    test.each(
+        (vectors.versionFilename as { type: string; version: string; out: string }[]).map((v) => [
+            v.type,
+            v.version,
+            v.out
+        ])
+    )('versionExportFilename(%p, %p) → %p', (type: string, version: string, expected: string) => {
+        expect(versionExportFilename(type, version)).toBe(expected);
+    });
+
+    test('versionExportFilename: nigdy separator/CRLF/cudzysłów/pusty', () => {
+        const long = 'x'.repeat(100);
+        const cases: [string, string][] = [
+            ['rury', 'v3'],
+            ['../', '../../etc'],
+            ['..\\..', '..\\evil'],
+            ['a/b\\c', 'v"1"\r\nevil'],
+            ['.', '..'],
+            ['', ''],
+            [long, 'v1'],
+            ['rury', 'Zażółć gęślą jaźń'],
+            ['rury', '"a\r\nb"'],
+            ['evil"type', 'v1']
+        ];
+        for (const [t, v] of cases) {
+            const out = versionExportFilename(t, v);
+            expect(out.length).toBeGreaterThan(0);
+            expect(out).not.toMatch(/[/\\]/);
+            expect(out).not.toMatch(/["\r\n]/);
+            expect(out).toMatch(/^Cennik_.+_Export\.xlsx$/);
+        }
+        expect(versionExportFilename('rury', 'v3')).toBe('Cennik_Rury_v3_Export.xlsx');
     });
 });

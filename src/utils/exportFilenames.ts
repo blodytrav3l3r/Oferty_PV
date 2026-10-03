@@ -66,7 +66,7 @@ export function exportFilename(kind: string, parts: unknown[][], ext: string): s
  * (public/js/shared/pricelistVersions.js).
  */
 export function versionExportFilename(type: string, version: string): string {
-    const label =
+    const rawLabel =
         type === 'rury'
             ? 'Rury'
             : type === 'studnie'
@@ -74,5 +74,5 @@ export function versionExportFilename(type: string, version: string): string {
               : type === 'preco'
                 ? 'Preco'
                 : type;
-    return `Cennik_${label}_${version}_Export.xlsx`;
+    return `Cennik_${safeExportPart(rawLabel)}_${safeExportPart(version)}_Export.xlsx`;
 }
