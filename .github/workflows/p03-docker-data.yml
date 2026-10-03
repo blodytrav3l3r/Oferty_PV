@@ -188,10 +188,12 @@ jobs:
                     echo "RESTORE_DENIED_OK - granica ownership potwierdzona"
                   fi
 
+            # P1 restore guard: jawny --target + --live (celowy restore live DB
+            # w jednorazowym kontenerze CI — dokładnie mechanizm do tego celu).
             - name: KROK 11b - restore przez sudo (kontrakt)
               run: |
                   export DATABASE_URL="file:$PWD/data/app_database.sqlite?connection_limit=1&busy_timeout=30000"
-                  sudo -E npm run restore -- "$(cat /tmp/p03-backup-file.txt)" --yes
+                  sudo -E npm run restore -- "$(cat /tmp/p03-backup-file.txt)" --target ./data/app_database.sqlite --live --yes
                   echo "RESTORE_HOST_OK"
                   stat -c 'db po: owner=%U(%u) group=%G(%g) mode=%a' ./data/app_database.sqlite
 
