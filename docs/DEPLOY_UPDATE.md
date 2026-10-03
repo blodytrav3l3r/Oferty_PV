@@ -104,6 +104,14 @@ Poprzedni tag odczytasz z logu: `data/deploy-log.log`.
 - PM2 uruchamia aplikację automatycznie po restarcie maszyny (pracownicy nie tracą dostępu w nocy).
 - Deploy: `./deploy.sh linux vX.Y.Z` — dodatkowo kopiuje klienta Prisma do `dist/`.
 - HTTPS: Caddy/Nginx + Let's Encrypt (zob. `docs/DEPLOYMENT.md` §4).
+- Rotacja logów PM2 (D-016): `data/logs/pm2-error.log` i `pm2-out.log`
+  (zob. `ecosystem.config.cjs`) rosną bez limitu — sam PM2 ich nie rotuje
+  (`max_size` to opcja modułu pm2-logrotate, nie pole ecosystem; Docker ma
+  własny cap `json-file 10m×3` i go nie dotyczy). Raz na hoście
+  (operacyjnie, stan w `~/.pm2/`, nie w repo):
+  `pm2 install pm2-logrotate && pm2 set pm2-logrotate:max_size 10M && pm2 set pm2-logrotate:retain 7 && pm2 set pm2-logrotate:compress true && pm2 save`.
+  Bez modułu, awaryjnie: `pm2 flush` (czyści logi bez restartu).
+  Kontrola: `du -sh data/logs/`, `pm2 conf pm2-logrotate`.
 
 ### 6.3 Docker
 
