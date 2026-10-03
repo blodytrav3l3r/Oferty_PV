@@ -196,7 +196,7 @@ function auditPzElementKeyMismatch() {
 /**
  * Zapis PZ jednym requestem bulk PUT ({ data: [...] }) zamiast N× POST.
  * 1 zapis = 1 req (chunk 200) zamiast N req — nie dobija WRITE_LIMITER 60/min.
- * 429 → jeden retry po Retry-After (wzorzec _bulkPutChunk z orderBulk.js).
+ * 429 → retry przez wspólny fetchWithRetry429 (jak _bulkPutChunk).
  */
 // Współbieżne zapisy (double-click, accept→save+save) współdzielą jeden lot.
 // Bez tego każdy klik to kolejny burst PUT pod limiter.
@@ -270,29 +270,28 @@ function _stripPzTransient(po) {
 }
 
 async function _saveProductionChunk(chunk, noRetry) {
-    const doPut = async () => {
-        const res = await fetch('/api/orders-studnie/production', {
-            method: 'PUT',
-            headers: authHeaders(),
-            body: JSON.stringify({ data: chunk.map(_stripPzTransient) })
-        });
-        let body = {};
-        try {
-            body = await res.json();
-        } catch (_e) {}
-        return { res, body };
+    const url = '/api/orders-studnie/production';
+    const opts = {
+        method: 'PUT',
+        headers: authHeaders(),
+        body: JSON.stringify({ data: chunk.map(_stripPzTransient) })
     };
-    let { res, body } = await doPut();
-    if (res.status === 429 && !noRetry) {
-        let retryAfter = (body && body.retryAfter) || 0;
-        if (!retryAfter) {
-            try {
-                retryAfter = parseInt(res.headers.get('Retry-After') || '0', 10) || 0;
-            } catch (_e2) {}
-        }
-        await new Promise((r) => setTimeout(r, Math.max(1, retryAfter || 5) * 1000));
-        ({ res, body } = await doPut());
+    // D-015: chunk przez wspólny fetchWithRetry429 (ten sam helper co
+    // _bulkPutChunk i single-claim). Retry tylko 429 (max 3 próby w helperze);
+    // 4xx/5xx bez retry; PUT bez Idempotency-Key = brak retry sieciowego.
+    let res;
+    if (typeof window.fetchWithRetry429 === 'function') {
+        const out = await window.fetchWithRetry429(url, opts, {
+            maxAttempts: noRetry ? 1 : 3
+        });
+        res = out.res;
+    } else {
+        res = await fetch(url, opts);
     }
+    let body = {};
+    try {
+        body = await res.json();
+    } catch (_e) {}
     if (!res.ok) {
         const err = new Error((body && body.error) || 'Server error');
         logger.error('orderManager', 'saveProductionOrdersData error:', err);
