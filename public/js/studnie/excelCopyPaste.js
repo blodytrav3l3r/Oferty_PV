@@ -310,6 +310,13 @@ function _excelHandleCut(e) {
     _excelHandleCopy(e);
     _excelSaveUndoSnapshot();
     _excelPasteInProgress = true;
+    var _cutWIdxs = [];
+    var _cutSeen = {};
+    function _cutTrack(wIdx) {
+        if (typeof wIdx !== 'number' || isNaN(wIdx) || _cutSeen[wIdx]) return;
+        _cutSeen[wIdx] = 1;
+        _cutWIdxs.push(wIdx);
+    }
     try {
         if (_excelSelectedCells.length > 0) {
             _excelSelectedCells.forEach(function (cell) {
@@ -320,21 +327,32 @@ function _excelHandleCut(e) {
                 const target = td ? td.querySelector('input, select') : null;
                 if (!target) return;
                 _excelSetCellValue(target, '');
+                _cutTrack(cell.wIdx);
             });
         } else {
             /* Zaznaczone kolumny — czyść we wszystkich widocznych wierszach */
             _excelGetVisibleRows().forEach(function (row) {
+                const _cw = parseInt(row.getAttribute('data-widx'), 10);
                 _excelSelectedCols.forEach(function (colIdx) {
                     if (colIdx === 3) return; /* nazwa studni — nigdy nie kasuj */
                     const td = row.children[colIdx];
                     const target = td ? td.querySelector('input, select') : null;
-                    if (target) _excelSetCellValue(target, '');
+                    if (target) {
+                        _excelSetCellValue(target, '');
+                        _cutTrack(_cw);
+                    }
                 });
             });
         }
         showToast('Wycinto: ' + _excelSelectedCells.length + ' komorek', 'info');
     } finally {
         _excelPasteInProgress = false;
+    }
+    /* Cut omijał refresh (quiet bez doneCallback) — bulk flush + debounce jak fill. */
+    if (_cutWIdxs.length > 0) {
+        if (typeof _excelSyncActiveRowErrorsBulk === 'function')
+            _excelSyncActiveRowErrorsBulk(_cutWIdxs);
+        if (typeof _excelDebouncedRefresh === 'function') _excelDebouncedRefresh(_cutWIdxs);
     }
 }
 
@@ -414,6 +432,15 @@ function _excelHandlePaste(e) {
             try {
                 _excelRefreshDupColors();
             } catch (_e) {}
+        /* Pasek aktywnego wiersza po wklejeniu (pełny render już przemalował tła). */
+        if (_pasteCtx && _pasteCtx.affected && _pasteCtx.affected.size > 0) {
+            var _lastAffected = -1;
+            _pasteCtx.affected.forEach(function (wIdx) {
+                _lastAffected = wIdx;
+            });
+            if (typeof _excelRenderActiveRowStrip === 'function' && _lastAffected >= 0)
+                _excelRenderActiveRowStrip(_lastAffected);
+        }
         if (typeof _excelMarkDirty === 'function')
             try {
                 _excelMarkDirty();
@@ -1982,6 +2009,8 @@ function _excelHandleFillDown() {
                 _fillWIdxs.push(cell.wIdx);
             }
         });
+        if (typeof _excelSyncActiveRowErrorsBulk === 'function')
+            _excelSyncActiveRowErrorsBulk(_fillWIdxs);
         _excelDebouncedRefresh(_fillWIdxs);
         showToast('Wypełniono ' + plan.length + ' komórek', 'info');
     } finally {

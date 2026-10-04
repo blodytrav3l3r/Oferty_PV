@@ -775,6 +775,97 @@ function _excelRefreshAutoCells(wIdx, row) {
     if (uCell) uCell.textContent = uszcz;
 }
 
+/* ===== WSPÓLNY MALARZ STATUSU WIERSZA (bez re-rendera) ===== */
+/* Jedyny writer DOM statusu wiersza: tła (data-base/orig/hover/active-bg +
+   style.background + sticky td), title z błędami, klasy excel-row-error/warning
+   i kolor czcionki. Używają: _excelRefreshDupColors (pętla) i fast path
+   _excelPaintRowStatus (1 wiersz). keepBg=true zachowuje tint duplikatu
+   (dup > ERROR na tle; błąd sygnalizują klasa+kolor+title). */
+function _excelApplyRowStatusDom(row, well, eff, isDup, isLocked, solidBg) {
+    if (!row || !well || !eff) return;
+    if (!eff.keepBg) {
+        row.setAttribute('data-base-bg', eff.rowBg);
+        row.setAttribute('data-orig-bg', eff.rowBg);
+        row.setAttribute('data-hover-bg', eff.hoverBg);
+        row.setAttribute('data-active-bg', eff.activeBg);
+        row.style.background = eff.rowBg;
+    }
+    var _errTitle = typeof _excelErrorTitle === 'function' ? _excelErrorTitle(well) : '';
+    var _rowTitle =
+        typeof _excelRowTitle === 'function' ? _excelRowTitle(_errTitle, !!isLocked) : _errTitle;
+    if (_rowTitle) row.setAttribute('title', _rowTitle);
+    else row.removeAttribute('title');
+    var effStatusKey = well.configStatus;
+    var effTextColor =
+        effStatusKey === 'ERROR'
+            ? 'var(--danger-hover)'
+            : effStatusKey === 'WARNING'
+              ? 'var(--warn-hover)'
+              : '';
+    if (effTextColor) {
+        row.style.color = effTextColor;
+        row.classList.add(effStatusKey === 'ERROR' ? 'excel-row-error' : 'excel-row-warning');
+        row.classList.remove(effStatusKey === 'ERROR' ? 'excel-row-warning' : 'excel-row-error');
+    } else {
+        row.style.color = '';
+        row.classList.remove('excel-row-error', 'excel-row-warning');
+    }
+    if (isDup) row.classList.add('excel-row-dup');
+    else row.classList.remove('excel-row-dup');
+    if (!eff.keepBg) {
+        var _solid = solidBg || row.getAttribute('data-solid-bg') || 'var(--excel-row-even)';
+        row.querySelectorAll('td:nth-child(-n+7)').forEach(function (td) {
+            td.style.background = _excelStickyCellBg(eff.rowBg, _solid);
+        });
+    }
+}
+
+/* Fast path: przemaluj JEDEN wiersz po zmianie błędów (bez mapy duplikatów —
+   ta zależy tylko od numer/nazwa i jest odświeżana pełnym _excelRefreshDupColors
+   przy ich edycji; tu zachowujemy istniejący tint dup). No-op gdy brak TR
+   w DOM (wirtualizacja/filtr). */
+function _excelPaintRowStatus(row, well) {
+    if (!row || !well) return;
+    var wIdxAttr = row.getAttribute ? row.getAttribute('data-widx') : null;
+    var wIdx = wIdxAttr != null ? parseInt(wIdxAttr, 10) : NaN;
+    var isDupDom = !!(row.classList && row.classList.contains('excel-row-dup'));
+    if (isDupDom) {
+        var _locked =
+            typeof _excelIsWellLocked === 'function' && !isNaN(wIdx)
+                ? _excelIsWellLocked(wIdx)
+                : false;
+        _excelApplyRowStatusDom(row, well, { keepBg: true }, true, _locked, null);
+        return;
+    }
+    var isActive =
+        typeof currentWellIndex !== 'undefined' && !isNaN(wIdx) && wIdx === currentWellIndex;
+    var solidBase =
+        (row.getAttribute && row.getAttribute('data-solid-bg')) || 'var(--excel-row-even)';
+    var wellStatus = _excelGetRowStatus(well);
+    var rowBg;
+    var hoverBg;
+    var activeBg;
+    if (wellStatus) {
+        rowBg = isActive ? wellStatus.active : wellStatus.base;
+        hoverBg = wellStatus.hover;
+        activeBg = wellStatus.active;
+    } else {
+        rowBg = isActive ? 'var(--excel-row-active)' : solidBase;
+        hoverBg = isActive ? 'rgba(var(--blue-rgb), 0.28)' : 'var(--excel-row-hover)';
+        activeBg = 'var(--excel-row-active)';
+    }
+    var isLocked2 =
+        typeof _excelIsWellLocked === 'function' && !isNaN(wIdx) ? _excelIsWellLocked(wIdx) : false;
+    _excelApplyRowStatusDom(
+        row,
+        well,
+        { rowBg: rowBg, hoverBg: hoverBg, activeBg: activeBg },
+        false,
+        isLocked2,
+        solidBase
+    );
+}
+
 /* ===== NATYCHMIASTOWE ODŚWIEŻENIE KOLORÓW DUPLIKATÓW (bez re-rendera) ===== */
 function _excelRefreshDupColors() {
     const container = document.getElementById('excel-table-container');
@@ -872,41 +963,13 @@ function _excelRefreshDupColors() {
                     ? rowActiveDupSolid[dupColorKey] || 'rgba(var(--blue-rgb), 0.3)'
                     : hoverDupSolid[dupColorKey] || 'rgba(var(--blue-rgb), 0.25)';
         }
-        const effStatusKey = wellStatus ? well.configStatus : null;
-        const effTextColor =
-            effStatusKey === 'ERROR'
-                ? 'var(--danger-hover)'
-                : effStatusKey === 'WARNING'
-                  ? 'var(--warn-hover)'
-                  : '';
-
-        row.setAttribute('data-base-bg', effRowBg);
-        row.setAttribute('data-orig-bg', effRowBg);
-        row.setAttribute('data-hover-bg', effHoverBg);
-        row.setAttribute('data-active-bg', effActiveBg);
-        row.style.background = effRowBg;
-        /* Tooltip z błędami — odświeżany razem z tłem, inaczej hover pokazuje
-           stary pierwszy błąd (D2). */
-        var _effTitle = typeof _excelErrorTitle === 'function' ? _excelErrorTitle(well) : '';
-        if (_effTitle) row.setAttribute('title', _effTitle);
-        else row.removeAttribute('title');
-        if (effTextColor) {
-            row.style.color = effTextColor;
-            row.classList.add(effStatusKey === 'ERROR' ? 'excel-row-error' : 'excel-row-warning');
-            row.classList.remove(
-                effStatusKey === 'ERROR' ? 'excel-row-warning' : 'excel-row-error'
-            );
-        } else {
-            row.style.color = '';
-            row.classList.remove('excel-row-error', 'excel-row-warning');
-        }
-        if (isDup) row.classList.add('excel-row-dup');
-        else row.classList.remove('excel-row-dup');
-        /* Zaktualizuj tła kolumn sticky — inaczej część wiersza (Lp, nazwa,
-           rzędne) ma inną barwę niż reszta (bug S4). */
-        const solidBg = row.getAttribute('data-solid-bg') || 'var(--excel-row-even)';
-        row.querySelectorAll('td:nth-child(-n+7)').forEach(function (td) {
-            td.style.background = _excelStickyCellBg(effRowBg, solidBg);
-        });
+        _excelApplyRowStatusDom(
+            row,
+            well,
+            { rowBg: effRowBg, hoverBg: effHoverBg, activeBg: effActiveBg },
+            isDup,
+            typeof _excelIsWellLocked === 'function' ? _excelIsWellLocked(wIdx) : false,
+            baseBg
+        );
     });
 }

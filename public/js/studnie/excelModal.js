@@ -387,6 +387,7 @@ function openExcelTableModal() {
             </div>
         </div>
         <div id="excel-tabs" class="excel-tabs-bar"></div>
+        <div id="excel-active-errors" role="status" style="display:none;margin:0.35rem 0.6rem 0;padding:0.4rem 0.6rem;background:rgba(var(--danger-rgb), 0.08);border:1px solid rgba(var(--danger-rgb), 0.3);border-radius:var(--radius-sm);color:var(--danger);font-size:var(--fs-xs);font-weight:var(--fw-semibold);line-height:1.4;"></div>
         <div id="excel-table-container" class="excel-table-holder"></div>
         </div>
     `;
@@ -646,6 +647,8 @@ function excelSelectRow(wIdx) {
     }
 
     _excelSyncMainPreview(wIdx);
+    /* Selekcja bez edycji: sam pasek z cache, bez recalc. */
+    if (typeof _excelScheduleActiveRowPaint === 'function') _excelScheduleActiveRowPaint(wIdx);
 }
 
 /* ===== Rejestracja globali ===== */

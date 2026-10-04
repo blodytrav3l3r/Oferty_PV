@@ -150,6 +150,155 @@ function _excelRecalcPendingWellErrors() {
     return targets.length > 0;
 }
 
+/* ===== FAST PATH: błędy aktywnego wiersza bez czekania na debounce ===== */
+/* Model sync (1 studnia), DOM coalesced rAF (1 wiersz + pasek w overlay).
+   Ciężkie updateSummary/diagram/lista zostają w _excelDebouncedRefresh.
+   Główny banner za overlayem jest niewidoczny — nie ruszamy go per-edycja;
+   synchronizuje się w timerze i przy zamknięciu (refreshAll). */
+var _excelPendingActivePaint = -1;
+var _excelActivePaintRaf = 0;
+
+function _excelSyncActiveRowErrors(wIdx, opts) {
+    var doRecalc = !opts || opts.recalc !== false;
+    var force = !!opts && !!opts.force;
+    if (!force && typeof _excelPasteQuiet === 'function') {
+        try {
+            if (_excelPasteQuiet()) return 'deferred';
+        } catch (_e) {}
+    }
+    if (typeof wells === 'undefined' || !wells || !wells[wIdx]) return 'missing';
+    if (doRecalc && typeof recalculateWellErrors === 'function') {
+        try {
+            recalculateWellErrors(wells[wIdx]);
+        } catch (_e2) {}
+    }
+    _excelScheduleActiveRowPaint(wIdx);
+    return 'scheduled';
+}
+
+function _excelScheduleActiveRowPaint(wIdx) {
+    if (typeof wIdx !== 'number' || isNaN(wIdx)) return;
+    _excelPendingActivePaint = wIdx;
+    if (_excelActivePaintRaf) return;
+    if (
+        typeof requestAnimationFrame === 'function' &&
+        typeof document !== 'undefined' &&
+        document.getElementById &&
+        document.getElementById('excel-table-overlay')
+    ) {
+        _excelActivePaintRaf = requestAnimationFrame(function () {
+            _excelActivePaintRaf = 0;
+            var target = _excelPendingActivePaint;
+            _excelPendingActivePaint = -1;
+            _excelFlushActiveRowPaint(target);
+        });
+    } else {
+        _excelFlushActiveRowPaint(wIdx);
+    }
+}
+
+function _excelFlushActiveRowPaint(wIdx) {
+    if (typeof wells === 'undefined' || !wells || !wells[wIdx]) return;
+    if (
+        typeof document === 'undefined' ||
+        !document.getElementById ||
+        !document.getElementById('excel-table-overlay')
+    )
+        return;
+    var well = wells[wIdx];
+    try {
+        var row = document.querySelector('tr[data-widx="' + wIdx + '"]');
+        if (row && typeof _excelPaintRowStatus === 'function') _excelPaintRowStatus(row, well);
+    } catch (_e) {}
+    _excelRenderActiveRowStrip(wIdx);
+}
+
+function _excelActiveErrorsKeyFor(wIdx, well) {
+    var errs = (well && well.configErrors) || [];
+    return wIdx + '|' + errs.slice().sort().join('\n');
+}
+
+/* Pasek błędów aktywnego wiersza w overlay (#excel-active-errors).
+   Guard klucza + ukrycia: ten sam błąd nie pisze DOM drugi raz. */
+function _excelRenderActiveRowStrip(wIdx) {
+    var el = null;
+    try {
+        el = document.getElementById('excel-active-errors');
+    } catch (_e) {
+        return;
+    }
+    if (!el) return;
+    var well = typeof wells !== 'undefined' && wells ? wells[wIdx] : null;
+    if (!well) {
+        el.style.display = 'none';
+        return;
+    }
+    var errs = well.configErrors || [];
+    var key = _excelActiveErrorsKeyFor(wIdx, well);
+    if (el.dataset && el.dataset.errkey === key && el.style.display !== 'none') return;
+    if (el.dataset) el.dataset.errkey = key;
+    if (errs.length === 0) {
+        el.style.display = 'none';
+        el.innerHTML = '';
+        return;
+    }
+    var esc =
+        typeof escapeHtml === 'function'
+            ? escapeHtml
+            : function (s) {
+                  return String(s);
+              };
+    var rawLabel =
+        well.numer != null && String(well.numer).trim() !== ''
+            ? String(well.numer)
+            : well.name || '#' + (wIdx + 1);
+    var items = errs
+        .map(function (e) {
+            return '• ' + esc(String(e));
+        })
+        .join('<br>');
+    el.innerHTML = 'Błędy — wiersz ' + esc(rawLabel) + ':<br>' + items;
+    el.style.display = 'block';
+}
+
+/* Bulk flush dla fill/cut (bez pełnego rendera): recalc+paint każdego,
+   pasek dla ostatniego. Paste ma własny _finishPaste (pełny render). */
+function _excelSyncActiveRowErrorsBulk(wIdxs) {
+    if (!Array.isArray(wIdxs) || wIdxs.length === 0) return;
+    var seen = {};
+    var last = -1;
+    var i;
+    for (i = 0; i < wIdxs.length; i++) {
+        var wIdx = wIdxs[i];
+        if (typeof wIdx !== 'number' || isNaN(wIdx) || seen[wIdx]) continue;
+        seen[wIdx] = 1;
+        if (typeof wells === 'undefined' || !wells[wIdx]) continue;
+        if (typeof recalculateWellErrors === 'function') {
+            try {
+                recalculateWellErrors(wells[wIdx]);
+            } catch (_e) {}
+        }
+        last = wIdx;
+    }
+    if (
+        typeof document !== 'undefined' &&
+        document.getElementById &&
+        document.getElementById('excel-table-overlay')
+    ) {
+        for (var k in seen) {
+            if (!Object.prototype.hasOwnProperty.call(seen, k)) continue;
+            var n = parseInt(k, 10);
+            if (typeof wells === 'undefined' || !wells[n]) continue;
+            try {
+                var row = document.querySelector('tr[data-widx="' + k + '"]');
+                if (row && typeof _excelPaintRowStatus === 'function')
+                    _excelPaintRowStatus(row, wells[n]);
+            } catch (_e2) {}
+        }
+    }
+    if (last >= 0) _excelRenderActiveRowStrip(last);
+}
+
 /* F2b: przeliczenie błędów studni jednej zakładki (open/switch). Reszta tabów
    przy własnym switchu; globalni czytelnicy (oferta/lista) wołają
    refreshAllWellErrors() przed renderem, więc stan końcowy identyczny.
@@ -168,6 +317,12 @@ function _excelRecalcTabWellErrors(tab) {
         if (typeof getCurrentWell === 'function' && typeof renderWellConfigErrors === 'function')
             renderWellConfigErrors(getCurrentWell());
     } catch (_e2) {}
+    /* Zmiana zakładki: pasek aktywnego wiersza gaśnie (wiersz z innej zakładki).
+       Pokaże się na nowo przy selekcji/edycji (dataset.errkey zostaje — guard). */
+    try {
+        var _strip = document.getElementById('excel-active-errors');
+        if (_strip) _strip.style.display = 'none';
+    } catch (_e3) {}
 }
 
 function _excelDebouncedRefresh(editedWIdx) {

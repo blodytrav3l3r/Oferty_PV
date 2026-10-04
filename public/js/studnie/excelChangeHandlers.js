@@ -63,6 +63,7 @@ function excelOnRzednaChange(wIdx) {
         _excelAutoSelectForWell(wIdx);
     } else {
         _excelMarkAsManual(wIdx);
+        if (typeof _excelSyncActiveRowErrors === 'function') _excelSyncActiveRowErrors(wIdx);
         if (typeof _excelDebouncedRefresh === 'function') _excelDebouncedRefresh(wIdx);
     }
 }
@@ -237,6 +238,7 @@ function excelOnPrzejscieChange(wIdx, trIdx, field, value) {
     }
     _excelUpdateLeftPreview(wIdx);
     if (typeof _excelImmediatePreview === 'function') _excelImmediatePreview(wIdx);
+    if (typeof _excelSyncActiveRowErrors === 'function') _excelSyncActiveRowErrors(wIdx);
     _excelDebouncedRefresh(wIdx);
 }
 
@@ -298,7 +300,10 @@ function excelOnPrzejscieTypeChange(wIdx, trIdx, value) {
     }
     if (typeof _excelImmediatePreview === 'function' && !_excelPasteQuiet())
         _excelImmediatePreview(wIdx);
-    if (!_excelPasteQuiet()) _excelDebouncedRefresh(wIdx);
+    if (!_excelPasteQuiet()) {
+        if (typeof _excelSyncActiveRowErrors === 'function') _excelSyncActiveRowErrors(wIdx);
+        _excelDebouncedRefresh(wIdx);
+    }
 }
 
 /* Wspólny rdzeń modelowy włazu — handler DOM i ścieżka model-only wklejania. */
@@ -335,7 +340,8 @@ function excelOnWlazChange(wIdx, productId) {
     }
     _excelMarkManual(well);
     _excelUpdateLeftPreview(wIdx);
-    _excelUpdateHeaderProdCodes();
+    if (typeof _excelImmediatePreview === 'function') _excelImmediatePreview(wIdx);
+    if (typeof _excelSyncActiveRowErrors === 'function') _excelSyncActiveRowErrors(wIdx);
     _excelDebouncedRefresh(wIdx);
 }
 
@@ -626,6 +632,7 @@ function excelOnCompChange(wIdx, componentType, height, value, productId, redDn)
     if (typeof _excelImmediatePreview === 'function') _excelImmediatePreview(wIdx);
     else _excelUpdateLeftPreview(wIdx);
     _excelUpdateHeaderProdCodes();
+    if (typeof _excelSyncActiveRowErrors === 'function') _excelSyncActiveRowErrors(wIdx);
     _excelDebouncedRefresh(wIdx);
 }
 
@@ -672,6 +679,7 @@ function excelOnKinetaChange(wIdx, value) {
     if (_excelPasteQuiet()) return; /* model gotowy; preview/refresh raz w doneCallback */
     _excelUpdateLeftPreview(wIdx);
     if (typeof _excelImmediatePreview === 'function') _excelImmediatePreview(wIdx);
+    if (typeof _excelSyncActiveRowErrors === 'function') _excelSyncActiveRowErrors(wIdx);
     _excelDebouncedRefresh(wIdx);
 }
 
@@ -708,6 +716,7 @@ function excelOnPsiaBudaChange(wIdx, checked) {
     if (row) _excelRefreshAutoCells(wIdx, row);
     _excelUpdateLeftPreview(wIdx);
     if (typeof _excelImmediatePreview === 'function') _excelImmediatePreview(wIdx);
+    if (typeof _excelSyncActiveRowErrors === 'function') _excelSyncActiveRowErrors(wIdx);
     _excelDebouncedRefresh(wIdx);
 }
 
@@ -747,6 +756,7 @@ async function excelOnReductionSelectChange(wIdx, value) {
     }
     _excelRenderTable(_excelActiveTab);
     if (typeof _excelImmediatePreview === 'function') _excelImmediatePreview(wIdx);
+    if (typeof _excelSyncActiveRowErrors === 'function') _excelSyncActiveRowErrors(wIdx);
     _excelDebouncedRefresh(wIdx);
 }
 

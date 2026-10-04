@@ -50,6 +50,8 @@ async function _excelAutoSelectForWell(wIdx) {
                 _excelClearResCache(well);
                 _excelRenderTable(_excelActiveTab);
                 _excelUpdateHeaderProdCodes();
+                if (typeof _excelSyncActiveRowErrors === 'function')
+                    _excelSyncActiveRowErrors(wIdx);
                 // restore scroll + logical focus — nie wracaj na początek
                 if (container && savedScrollTop !== null) {
                     container.scrollTop = savedScrollTop;
@@ -206,6 +208,7 @@ async function _excelRunAutoSelectForWell(wIdx) {
         _excelClearResCache(well);
         _excelRenderTable(_excelActiveTab);
         _excelUpdateHeaderProdCodes();
+        if (typeof _excelSyncActiveRowErrors === 'function') _excelSyncActiveRowErrors(wIdx);
         if (container2 && savedScrollTop2 !== null) {
             container2.scrollTop = savedScrollTop2;
             if (savedScrollLeft2 !== null) container2.scrollLeft = savedScrollLeft2;
