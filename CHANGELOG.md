@@ -4,6 +4,17 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.38.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.37.2...v1.38.0) (2026-10-04)
+
+### Features
+
+- **studnie:** bledy aktywnego wiersza w excelu na zywo ([b781253](https://github.com/blodytrav3l3r/Oferty_PV/commit/b78125368896fa1a1a28f5ba809553eccb88ffd7))
+- **ui:** modal blokady dokumentu do standardu sok ([1ab2d44](https://github.com/blodytrav3l3r/Oferty_PV/commit/1ab2d44d1dee1c3e02e5fe289f7fb55434f31edf))
+
+### Bug Fixes
+
+- **studnie:** pasek bledow aktywnego wiersza pod tabele excelu ([acdf5ee](https://github.com/blodytrav3l3r/Oferty_PV/commit/acdf5eec04a45c81924796c81a3366ea4d37f87f))
+
 ### [1.37.2](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.37.1...v1.37.2) (2026-10-04)
 
 ### Features
