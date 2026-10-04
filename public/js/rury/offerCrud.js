@@ -147,6 +147,13 @@ async function saveOffer() {
         if (typeof _rebuildRuryOffersMap === 'function') _rebuildRuryOffersMap();
 
         renderSavedOffers();
+        // Badge na pieczątkę z zapisu (pending już wyczyszczony).
+        if (window.offerPricelistBanner)
+            window.offerPricelistBanner.badge({
+                type: 'rury',
+                stampId: offerDoc.pricelistVersionId || null,
+                anchorId: 'offer-form-title'
+            });
         // P1.1b: sukces SAVED kasuje draft (zapis draftu ≠ zapis SAVED).
         if (window.draftAutosave)
             window.draftAutosave.clearContext('offer_rury', 'new', editingOfferId);
@@ -440,6 +447,13 @@ function recalcRuryToActive(activeId) {
         if (product && product.price != null) item.unitPrice = product.price;
     });
     renderOfferItems();
+    // Badge od razu na pending (nie dopiero po zapisie+reload).
+    if (window.offerPricelistBanner)
+        window.offerPricelistBanner.badge({
+            type: 'rury',
+            stampId: pendingRuryStampId || null,
+            anchorId: 'offer-form-title'
+        });
     return true;
 }
 

@@ -363,6 +363,22 @@ describe('frontend static: wpięcie badge w edytory', () => {
             expect(src).toContain('stampId: null');
         }
     });
+    test('badge przemalowany po recalc i po zapisie (nie kłamie do reloadu)', () => {
+        const ruryCrud = fs.readFileSync(path.join(ROOT, 'public/js/rury/offerCrud.js'), 'utf8');
+        const studnieMgr = fs.readFileSync(
+            path.join(ROOT, 'public/js/studnie/offerManager.js'),
+            'utf8'
+        );
+        const studnieSave = fs.readFileSync(
+            path.join(ROOT, 'public/js/studnie/offerSave.js'),
+            'utf8'
+        );
+        expect(ruryCrud).toContain('stampId: pendingRuryStampId || null');
+        expect(ruryCrud).toContain('stampId: offerDoc.pricelistVersionId || null');
+        expect(studnieMgr).toContain('stampId: window.pendingStudnieStampId || null');
+        expect(studnieSave).toContain('stampId: offerDoc.pricelistVersionId || null');
+        expect(studnieSave).toContain('stampId: fresh.pricelistVersionId || null');
+    });
 });
 describe('frontend static: kontrakt bannera', () => {
     test('tylko ikony z iconsSlim (alert-triangle, refresh-cw)', () => {

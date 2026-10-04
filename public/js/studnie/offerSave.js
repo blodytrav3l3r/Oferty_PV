@@ -159,6 +159,13 @@ async function saveOfferStudnie() {
         if (typeof _rebuildOffersStudnieById === 'function') _rebuildOffersStudnieById();
 
         renderSavedOffersStudnie();
+        // Badge na pieczątkę z zapisu (pending już wyczyszczony).
+        if (window.offerPricelistBanner)
+            window.offerPricelistBanner.badge({
+                type: 'studnie',
+                stampId: offerDoc.pricelistVersionId || null,
+                anchorId: 'offer-form-title-studnie'
+            });
 
         // Pasywne uczenie — cichy POST (fire-and-forget, bez blokowania UI).
         // Przy edycji istniejącej oferty wysyłamy tylko studnie zmienione od
@@ -271,6 +278,13 @@ async function saveOfferStudnie() {
                     if (typeof _rebuildOffersStudnieById === 'function')
                         _rebuildOffersStudnieById();
                     renderSavedOffersStudnie();
+                    // Badge na pieczątkę świeżej kopii (konflikt → load niżej i tak przemaluje).
+                    if (window.offerPricelistBanner)
+                        window.offerPricelistBanner.badge({
+                            type: 'studnie',
+                            stampId: fresh.pricelistVersionId || null,
+                            anchorId: 'offer-form-title-studnie'
+                        });
                     if (typeof loadSavedOfferStudnie === 'function')
                         await loadSavedOfferStudnie(fresh, fresh.id);
                 }

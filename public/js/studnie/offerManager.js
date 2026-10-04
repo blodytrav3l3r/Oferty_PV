@@ -272,6 +272,13 @@ function recalcStudnieToActive(activeId) {
     isOfferEditFrozen = false;
     if (typeof refreshAll === 'function') refreshAll();
     if (typeof renderOfferSummary === 'function') renderOfferSummary();
+    // Badge od razu na pending (nie dopiero po zapisie+reload).
+    if (window.offerPricelistBanner)
+        window.offerPricelistBanner.badge({
+            type: 'studnie',
+            stampId: window.pendingStudnieStampId || null,
+            anchorId: 'offer-form-title-studnie'
+        });
     return true;
 }
 
