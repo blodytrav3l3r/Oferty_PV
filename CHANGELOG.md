@@ -4,6 +4,17 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+### [1.38.1](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.38.0...v1.38.1) (2026-10-04)
+
+### Bug Fixes
+
+- **studnie:** calosc ze scianami dennicy i osadnik z h_os ([ab2c9cb](https://github.com/blodytrav3l3r/Oferty_PV/commit/ab2c9cbe43ff778e94ea7b77e0585af2b64449b1))
+- **studnie:** gola dennica bez kinety malowana na dennicy ([731862a](https://github.com/blodytrav3l3r/Oferty_PV/commit/731862a9e2a014a2e51fbddbc90dd066738c47d4))
+- **studnie:** malowanie kineta+denn. ze scianami dennicy ([934f84d](https://github.com/blodytrav3l3r/Oferty_PV/commit/934f84dbdf8f284d925af7a513b39376b41a2643))
+- **studnie:** odswiezanie cen po zmianie parametrow wczytanej oferty ([fdbbc37](https://github.com/blodytrav3l3r/Oferty_PV/commit/fdbbc37522c130e0855bf2162c6094465635eb28))
+- **studnie:** spocznik brak to h rowne 0 w malowaniu ([a75f09e](https://github.com/blodytrav3l3r/Oferty_PV/commit/a75f09e9711d3af204f04eba930d703437a748f6))
+- **ui:** ujednolicenie paska nawigacji do kartoteki ofert ([a42b797](https://github.com/blodytrav3l3r/Oferty_PV/commit/a42b797d978bf4997609f8fd92e4cc8797287355))
+
 ## [1.38.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.37.2...v1.38.0) (2026-10-04)
 
 ### Features
