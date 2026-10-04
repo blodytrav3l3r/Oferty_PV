@@ -4,6 +4,13 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.39.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.38.1...v1.39.0) (2026-10-04)
+
+### Features
+
+- **studnie:** kolejnosc malowanie kinety dennica przejscia ([2cbef18](https://github.com/blodytrav3l3r/Oferty_PV/commit/2cbef184008ca33b67e0ab0a3343565419926cf5))
+- **studnie:** rozroznienie etykiet malowania w ofercie ([834f78c](https://github.com/blodytrav3l3r/Oferty_PV/commit/834f78c4068f37eb6a48fcb6797569674431d9cf))
+
 ### [1.38.1](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.38.0...v1.38.1) (2026-10-04)
 
 ### Bug Fixes
