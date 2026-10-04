@@ -219,26 +219,41 @@ describe('frontend vm: offerPricelistBanner.refresh', () => {
 });
 
 describe('frontend vm: offerPricelistBanner.badge (stały badge w nagłówku)', () => {
-    function makeBadgeDoc() {
+    function makeBadgeDoc({ noWizard = false, hiddenTitle = false } = {}) {
         const inserted = [];
+        const wizard = {
+            id: 'wizard-indicator',
+            children: [],
+            appendChild(c) {
+                this.children.push(c);
+            },
+            getAttribute: () => ''
+        };
         const anchor = {
             id: 'offer-form-title-studnie',
             nextSibling: null,
+            getAttribute: (k) => (k === 'style' && hiddenTitle ? 'display: none' : ''),
             parentElement: {
                 insertBefore(el) {
                     inserted.push(el);
                 }
-            }
+            },
+            after() {}
         };
         const badgeEls = {};
+        let created = 0;
         return {
             inserted,
             badgeEls,
+            createdCount: () => created,
+            addWizard: () => {},
             getElementById: (id) => {
+                if (id === 'wizard-indicator') return noWizard ? null : wizard;
                 if (id === 'offer-form-title-studnie' || id === 'offer-form-title') return anchor;
                 return badgeEls[id] || null;
             },
             createElement: () => {
+                created += 1;
                 const el = {
                     id: '',
                     className: '',
@@ -254,16 +269,18 @@ describe('frontend vm: offerPricelistBanner.badge (stały badge w nagłówku)', 
                 };
                 return el;
             },
-            body: { appendChild() {}, firstChild: null }
+            body: { appendChild: jest.fn(), firstChild: null }
         };
     }
 
-    function loadBadge({ labels, labelsByIds }) {
-        const document = makeBadgeDoc();
+    function loadBadge({ labels, labelsByIds, docOpts }) {
+        const document = makeBadgeDoc(docOpts);
         const sandbox = {
             window: {},
             console,
-            document
+            document,
+            setTimeout: (fn: (...a: unknown[]) => void, ms?: number) =>
+                setTimeout(() => fn(), ms ?? 0)
         };
         sandbox.window.escapeHtml = (s) => String(s ?? '');
         sandbox.window.lucide = { createIcons: jest.fn() };
@@ -283,21 +300,34 @@ describe('frontend vm: offerPricelistBanner.badge (stały badge w nagłówku)', 
                 delete document.badgeEls[el.id];
                 origRemove();
             };
-            const { insertBefore } = document.getElementById(
-                'offer-form-title-studnie'
-            ).parentElement;
-            document.getElementById('offer-form-title-studnie').parentElement.insertBefore = (
-                child
-            ) => {
-                document.badgeEls[child.id] = child;
-                insertBefore(child);
-            };
+            const host =
+                document.getElementById('wizard-indicator') ||
+                document.getElementById('offer-form-title-studnie');
+            const sink = host.appendChild
+                ? { push: (c) => host.appendChild(c) }
+                : { push: (c) => host.parentElement.insertBefore(c) };
+            const origPush = sink.push.bind(sink);
+            if (host.appendChild) {
+                const origAppend = host.appendChild.bind(host);
+                host.appendChild = (c) => {
+                    document.badgeEls[c.id] = c;
+                    return origAppend(c);
+                };
+            } else {
+                const pe = host.parentElement;
+                const origInsert = pe.insertBefore.bind(pe);
+                pe.insertBefore = (c, r) => {
+                    document.badgeEls[c.id] = c;
+                    return origInsert(c, r);
+                };
+            }
+            void origPush;
             return el;
         };
         return { sandbox, document };
     }
 
-    test('nowa oferta (brak pieczątki) → badge aktywnego', async () => {
+    test('nowa oferta (brak pieczątki) → badge aktywnego w wizard-indicator', async () => {
         const { sandbox, document } = loadBadge({ labels: { v2: ACTIVE } });
         const visible = await vm.runInContext(
             'window.offerPricelistBanner.badge({type:"studnie",stampId:null,anchorId:"offer-form-title-studnie"})',
@@ -306,6 +336,9 @@ describe('frontend vm: offerPricelistBanner.badge (stały badge w nagłówku)', 
         expect(visible).toBe(true);
         const badge = document.badgeEls['pv-offer-badge-studnie'];
         expect(badge.textContent).toBe('Cennik: v2-20260102 (aktywny) · Studnie');
+        const wizard = document.getElementById('wizard-indicator');
+        expect(wizard.children).toContain(badge);
+        expect(document.inserted).toHaveLength(0);
     });
 
     test('wczytana oferta z pieczątką → badge wersji oferty', async () => {
@@ -321,6 +354,21 @@ describe('frontend vm: offerPricelistBanner.badge (stały badge w nagłówku)', 
         expect(document.badgeEls['pv-offer-badge-studnie'].textContent).toBe(
             'Cennik: v1-20260101 · Studnie'
         );
+    });
+
+    test('ukryty tytuł kroku → wizard, nie ślepa kotwica', async () => {
+        const { sandbox, document } = loadBadge({
+            labels: { v2: ACTIVE },
+            docOpts: { hiddenTitle: true }
+        });
+        const visible = await vm.runInContext(
+            'window.offerPricelistBanner.badge({type:"studnie",stampId:null,anchorId:"offer-form-title-studnie"})',
+            sandbox
+        );
+        expect(visible).toBe(true);
+        const wizard = document.getElementById('wizard-indicator');
+        expect(wizard.children).toHaveLength(1);
+        expect(document.inserted).toHaveLength(0);
     });
 
     test('nieznana pieczątka → badge legacy (nie cisza)', async () => {
@@ -343,10 +391,53 @@ describe('frontend vm: offerPricelistBanner.badge (stały badge w nagłówku)', 
         expect(document.badgeEls['pv-offer-badge-rury'] || null).toBeNull();
     });
 
-    test('badge bez fetchy na piechotę i bez onclick', () => {
+    test('brak kotwicy wcale → false, nic nie tworzone, brak body-append', async () => {
+        const { sandbox, document } = loadBadge({
+            labels: { v2: ACTIVE },
+            docOpts: { noWizard: true, hiddenTitle: true }
+        });
+        const visible = await vm.runInContext(
+            'window.offerPricelistBanner.badge({type:"rury",stampId:null,waitTries:0})',
+            sandbox
+        );
+        expect(visible).toBe(false);
+        expect(document.createdCount()).toBe(0);
+        expect(document.body.appendChild).not.toHaveBeenCalled();
+    });
+
+    test('async partial: kotwica dokładana po chwili → retry maluje', async () => {
+        const { sandbox, document } = loadBadge({
+            labels: { v2: ACTIVE },
+            docOpts: { noWizard: true, hiddenTitle: true }
+        });
+        const anchor = document.getElementById('offer-form-title');
+        setTimeout(() => {
+            const wiz = {
+                id: 'wizard-indicator',
+                children: [],
+                appendChild(c) {
+                    this.children.push(c);
+                },
+                getAttribute: () => ''
+            };
+            const orig = document.getElementById.bind(document);
+            document.getElementById = (id) => (id === 'wizard-indicator' ? wiz : orig(id));
+            (document as any).lateWizard = wiz;
+            void anchor;
+        }, 30);
+        const visible = await vm.runInContext(
+            'window.offerPricelistBanner.badge({type:"studnie",stampId:null,waitDelayMs:20})',
+            sandbox
+        );
+        expect(visible).toBe(true);
+        expect((document as any).lateWizard.children).toHaveLength(1);
+    });
+
+    test('badge bez fetchy na piechotę, bez onclick i bez body-append', () => {
         const badgeSrc = BANNER_SRC.slice(BANNER_SRC.indexOf('STAŁY BADGE'));
         expect(badgeSrc).not.toContain('fetch(');
         expect(badgeSrc).not.toContain('onclick=');
+        expect(badgeSrc).not.toContain('document.body.appendChild');
     });
 });
 
@@ -378,6 +469,20 @@ describe('frontend static: wpięcie badge w edytory', () => {
         expect(studnieMgr).toContain('stampId: window.pendingStudnieStampId || null');
         expect(studnieSave).toContain('stampId: offerDoc.pricelistVersionId || null');
         expect(studnieSave).toContain('stampId: fresh.pricelistVersionId || null');
+    });
+    test('badge w edytorach zamówień (rury + studnie)', () => {
+        const ruryOrder = fs.readFileSync(
+            path.join(ROOT, 'public/js/rury/orderEditMode.js'),
+            'utf8'
+        );
+        const studnieOrder = fs.readFileSync(
+            path.join(ROOT, 'public/js/studnie/orderCrud.js'),
+            'utf8'
+        );
+        expect(ruryOrder).toContain('offerPricelistBanner.badge');
+        expect(ruryOrder).toContain('stampId: orderData.pricelistVersionId || null');
+        expect(studnieOrder).toContain('offerPricelistBanner.badge');
+        expect(studnieOrder).toContain('stampId: order.pricelistVersionId || null');
     });
 });
 describe('frontend static: kontrakt bannera', () => {

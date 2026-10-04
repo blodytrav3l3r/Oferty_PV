@@ -86,6 +86,12 @@ async function enterRuryOrderEditMode(orderId) {
         if (typeof goToPhase === 'function') goToPhase(5);
         updateRuryOrderSummary(orderData);
         renderOrderModeBanner(orderData);
+        // Pieczątka zamówienia (kolumna, nie blob) — ten sam helper co oferty.
+        if (window.offerPricelistBanner)
+            window.offerPricelistBanner.badge({
+                type: 'rury',
+                stampId: orderData.pricelistVersionId || null
+            });
         if (typeof updateTransportCostSummary === 'function') updateTransportCostSummary();
 
         if (window.lucide) lucide.createIcons();

@@ -68,8 +68,50 @@
 
     /* ===== STAŁY BADGE „Cennik: vX" W NAGŁÓWKU EDYTORA ===== */
     /* Zawsze widoczny: pieczątka oferty, „legacy" bez pieczątki albo aktywny
-     * dla nowej oferty. Malowany obok kotwicy tytułu (rodzeństwo, więc
-     * przeżywa titleEl.innerHTML). Bez fetchy na piechotę — tylko fetchLabels. */
+     * dla nowej oferty. Kotwica główna: #wizard-indicator (stały we wszystkich
+     * krokach); fallback: tytuł kroku. Jawny brak body-append — badge w body
+     * był niewidoczny (fabryka cichych faili). Bez fetchy na piechotę. */
+
+    /* Pasek kroków — jeden per edytor, widoczny w każdym kroku. */
+    var WIZARD_ANCHOR = 'wizard-indicator';
+
+    function isShown(el) {
+        if (!el || typeof el.getAttribute !== 'function') return true;
+        var style = typeof el.getAttribute === 'function' ? el.getAttribute('style') || '' : '';
+        if (/display\s*:\s*none/i.test(style)) return false;
+        if (typeof el.offsetParent !== 'undefined' && el.offsetParent === null) return false;
+        return true;
+    }
+
+    function resolveBadgeHost(anchorId) {
+        if (typeof document === 'undefined' || !document.getElementById) return null;
+        var ids = [WIZARD_ANCHOR];
+        if (anchorId && anchorId !== WIZARD_ANCHOR) ids.push(anchorId);
+        for (var i = 0; i < ids.length; i++) {
+            var anchor = document.getElementById(ids[i]);
+            if (!anchor || !isShown(anchor)) continue;
+            if (ids[i] === WIZARD_ANCHOR) {
+                if (typeof anchor.appendChild === 'function')
+                    return { mode: 'append', node: anchor };
+                continue;
+            }
+            if (anchor.parentElement && typeof anchor.parentElement.insertBefore === 'function')
+                return { mode: 'sibling', node: anchor };
+            if (typeof anchor.after === 'function') return { mode: 'after', node: anchor };
+        }
+        return null;
+    }
+
+    function waitForBadgeHost(anchorId, tries, delayMs) {
+        var host = resolveBadgeHost(anchorId);
+        if (host) return Promise.resolve(host);
+        if (tries <= 0 || typeof setTimeout !== 'function') return Promise.resolve(null);
+        return new Promise(function (resolve) {
+            setTimeout(function () {
+                resolve(waitForBadgeHost(anchorId, tries - 1, delayMs));
+            }, delayMs);
+        });
+    }
 
     function badgeId(type) {
         return 'pv-offer-badge-' + type;
@@ -87,7 +129,12 @@
             hideBadge(type);
             return false;
         }
-        var anchor = anchorId ? document.getElementById(anchorId) : null;
+        var host = resolveBadgeHost(anchorId);
+        if (!host) {
+            if (typeof console !== 'undefined' && typeof console.debug === 'function')
+                console.debug('[pv-badge] brak kotwicy dla typu ' + type);
+            return false;
+        }
         var el = document.getElementById(badgeId(type));
         if (!el) {
             if (typeof document.createElement !== 'function') return false;
@@ -95,18 +142,12 @@
             el.id = badgeId(type);
             el.className = 'badge-info text-nowrap';
             el.setAttribute('data-pv-offer-badge', type);
-            if (
-                anchor &&
-                anchor.parentElement &&
-                typeof anchor.parentElement.insertBefore === 'function'
-            ) {
-                anchor.parentElement.insertBefore(el, anchor.nextSibling || null);
-            } else if (anchor && typeof anchor.after === 'function') {
-                anchor.after(el);
-            } else if (document.body && typeof document.body.appendChild === 'function') {
-                document.body.appendChild(el);
+            if (host.mode === 'append') {
+                host.node.appendChild(el);
+            } else if (host.mode === 'sibling') {
+                host.node.parentElement.insertBefore(el, host.node.nextSibling || null);
             } else {
-                return false;
+                host.node.after(el);
             }
         }
         el.setAttribute('title', title || 'Wersja cennika');
@@ -116,7 +157,8 @@
 
     /**
      * Stały badge cennika w nagłówku edytora.
-     * @param {{type: string, stampId?: string|null, anchorId?: string}} opts
+     * @param {{type: string, stampId?: string|null, anchorId?: string,
+     *   waitTries?: number, waitDelayMs?: number}} opts
      * @returns {Promise<boolean>} true gdy badge widoczny
      */
     async function refreshBadge(opts) {
@@ -130,6 +172,15 @@
             labels = await pv.fetchLabels(type);
         } catch (_e) {
             hideBadge(type);
+            return false;
+        }
+        // Partial z #wizard-indicator może być jeszcze niewstrzyknięty.
+        var waitTries = opts && typeof opts.waitTries === 'number' ? opts.waitTries : 3;
+        var waitMs = opts && typeof opts.waitDelayMs === 'number' ? opts.waitDelayMs : 300;
+        var ready = await waitForBadgeHost((opts && opts.anchorId) || null, waitTries, waitMs);
+        if (!ready) {
+            if (typeof console !== 'undefined' && typeof console.debug === 'function')
+                console.debug('[pv-badge] brak kotwicy dla typu ' + type);
             return false;
         }
         var active = pickActive(labels);

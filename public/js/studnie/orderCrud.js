@@ -890,6 +890,12 @@ async function enterOrderEditMode(orderId) {
         logger.info('orderManager', '[enterOrderEditMode] calling renderOrderModeBanner...');
         renderOrderModeBanner();
         if (typeof renderOfferLockBanner === 'function') renderOfferLockBanner();
+        // Pieczątka zamówienia (kolumna, nie blob) — ten sam helper co oferty.
+        if (window.offerPricelistBanner)
+            window.offerPricelistBanner.badge({
+                type: 'studnie',
+                stampId: order.pricelistVersionId || null
+            });
 
         document.title = `📦 Zamówienie: ${order.orderNumber || order.number || orderId}`;
 

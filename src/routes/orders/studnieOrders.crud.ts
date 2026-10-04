@@ -102,9 +102,10 @@ router.get('/', requireAuth, async (req, res) => {
                 status: string | null;
                 createdAt: string | null;
                 version: number | null;
+                pricelistVersionId: string | null;
                 data: string | null;
             }>
-        >`SELECT id, "userId", "offerStudnieId", status, data, version,
+        >`SELECT id, "userId", "offerStudnieId", status, data, version, "pricelistVersionId",
             CASE WHEN "createdAt" GLOB '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]'
                 THEN datetime(CAST("createdAt" AS INTEGER)/1000, 'unixepoch')
                 ELSE "createdAt" END as "createdAt"
@@ -130,7 +131,8 @@ router.get('/', requireAuth, async (req, res) => {
                 status: o.status,
                 createdAt: o.createdAt,
                 // P0-D2: kolumna wygrywa z blobem.
-                version: o.version ?? 1
+                version: o.version ?? 1,
+                pricelistVersionId: o.pricelistVersionId ?? null
             };
         });
 
@@ -381,7 +383,8 @@ router.get('/:id', requireAuth, async (req, res) => {
                 createdAt: o.createdAt,
                 ...parsedData,
                 // P0-D2: kolumna wygrywa z blobem.
-                version: o.version ?? 1
+                version: o.version ?? 1,
+                pricelistVersionId: o.pricelistVersionId ?? null
             }
         });
     } catch (e: unknown) {
