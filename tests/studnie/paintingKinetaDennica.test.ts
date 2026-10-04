@@ -89,7 +89,10 @@ describe('Malowanie wew. kineta_dennica — ściany dennicy na wierszu dennicy',
             malowanieW: 'kineta_dennica',
             malowanieWewCena: 200,
             malowanieZ: 'brak',
-            config: [{ productId: 'DDD-10-115', quantity: 1 }],
+            config: [
+                { productId: 'DDD-10-115', quantity: 1 },
+                { productId: 'KIN-10', quantity: 1 }
+            ],
             przejscia: [
                 { dn: '200', angle: 0, productId: 'RURA-200' },
                 { dn: '200', angle: 180, productId: 'RURA-200' }
@@ -196,18 +199,19 @@ describe('Malowanie wew. kineta_dennica — ściany dennicy na wierszu dennicy',
         expect(ctx.getItemAssessedPrice(well, p, false, well.config[0])).toBe(1150);
     });
 
-    test('10. osadnik 3m (dennica 1m + 2×krąg1000 + płyta, H_os=1000): dno+ściany 1m na kinecie', () => {
+    test('10. osadnik 3m bez kinety (H_os=1000): wkładka ≈3.8956 m² na wierszu dennicy', () => {
         const well = makeWell({
             malowanieW: 'cale',
             wkladkaOsadnikPreco: 'tak',
-            wkladkaOsadnikH: 1000
+            wkladkaOsadnikH: 1000,
+            config: [{ productId: 'DDD-10-115', quantity: 1 }]
         });
         // wkładka: π·0.25 + 2π·0.5·1 − 2·(π·0.1²/2) ≈ 3.8956 m²
         expect(ctx.calcKinetaPaintingArea(well)).toBeCloseTo(3.8956, 3);
         expect(ctx.calcDennicaWallsArea(well, product('DDD-10-115'))).toBe(0);
-        expect(ctx.getItemAssessedPrice(well, product('DDD-10-115'), false, well.config[0])).toBe(
-            1000
-        );
+        expect(
+            ctx.getItemAssessedPrice(well, product('DDD-10-115'), false, well.config[0])
+        ).toBeCloseTo(1000 + 3.8956 * 200, 0);
         expect(
             ctx.getItemAssessedPrice(well, product('KDB-10-10'), false, well.config[0])
         ).toBeCloseTo(400 + 3.14 * 200, 2);
@@ -220,5 +224,32 @@ describe('Malowanie wew. kineta_dennica — ściany dennicy na wierszu dennicy',
         expect(
             ctx.getItemAssessedPrice(well, product('KIN-10'), false, well.config[0])
         ).toBeCloseTo(500 + 0.8996 * 200, 1);
+    });
+
+    test('12. goła dennica 1m bez rur i kinety: A_kin ≈3.927 m² na dennicy we wszystkich wariantach', () => {
+        const bare = (malowanieW: string) =>
+            makeWell({
+                malowanieW,
+                przejscia: [],
+                config: [{ productId: 'DDD-10-115', quantity: 1 }]
+            });
+        for (const mode of ['kineta', 'kineta_dennica', 'cale']) {
+            const well = bare(mode);
+            expect(
+                ctx.getItemAssessedPrice(well, product('DDD-10-115'), false, well.config[0])
+            ).toBeCloseTo(1000 + 3.927 * 200, 0);
+        }
+    });
+
+    test('13. osadnik H_os=500 bez kinety: dennica = wkładka + ściany powyżej (razem dno+pełne ściany)', () => {
+        const well = makeWell({
+            wkladkaOsadnikPreco: 'tak',
+            wkladkaOsadnikH: 500,
+            config: [{ productId: 'DDD-10-115', quantity: 1 }]
+        });
+        // wkładka ≈2.3248 + ściany powyżej ≈1.5708 = dno + pełne ściany ≈3.8956 m²
+        expect(
+            ctx.getItemAssessedPrice(well, product('DDD-10-115'), false, well.config[0])
+        ).toBeCloseTo(1000 + 3.8956 * 200, 0);
     });
 });

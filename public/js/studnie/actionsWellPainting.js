@@ -183,6 +183,17 @@ function getSpocznikHeight(well) {
     return (maxPipeDn / 2 / 1000) * parseSpocznikFraction(well.spocznikH) || 0;
 }
 
+function hasKinetaItem(well) {
+    if (!well || !well.config) return false;
+    return well.config.some((item) => {
+        const pr =
+            typeof getStudnieProductById === 'function'
+                ? getStudnieProductById(item.productId)
+                : studnieProducts.find((x) => x.id === item.productId);
+        return pr && pr.componentType === 'kineta';
+    });
+}
+
 function calcDennicaWallsArea(well, p) {
     if (!p || p.componentType !== 'dennica') return 0;
     const dnStudni = parseInt(well && well.dn);
@@ -331,3 +342,4 @@ window.getPehdTooltip = getPehdTooltip;
 window.isSettlingWell = isSettlingWell;
 window.calcKinetaPaintingArea = calcKinetaPaintingArea;
 window.calcDennicaWallsArea = calcDennicaWallsArea;
+window.hasKinetaItem = hasKinetaItem;

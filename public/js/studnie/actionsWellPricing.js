@@ -234,10 +234,17 @@ function getItemAssessedPrice(well, p, applyDiscount = true, item = null) {
 
     if (well.malowanieW && well.malowanieW !== 'brak' && well.malowanieWewCena) {
         if (
-            (well.malowanieW === 'kineta_dennica' || well.malowanieW === 'cale') &&
-            p.componentType === 'dennica'
+            p.componentType === 'dennica' &&
+            (well.malowanieW === 'kineta_dennica' ||
+                well.malowanieW === 'cale' ||
+                well.malowanieW === 'kineta')
         ) {
-            itemPrice += calcDennicaWallsArea(well, p) * well.malowanieWewCena;
+            if (well.malowanieW !== 'kineta') {
+                itemPrice += calcDennicaWallsArea(well, p) * well.malowanieWewCena;
+            }
+            if (!hasKinetaItem(well)) {
+                itemPrice += calcKinetaPaintingArea(well) * well.malowanieWewCena;
+            }
         } else if (well.malowanieW === 'cale') {
             if (p.componentType === 'dennica' || p.componentType === 'styczna') {
             } else {
@@ -246,8 +253,10 @@ function getItemAssessedPrice(well, p, applyDiscount = true, item = null) {
         }
     } else if (well.malowanieW && well.malowanieW !== 'brak' && p.malowanieWewnetrzne) {
         if (
-            (well.malowanieW === 'kineta_dennica' || well.malowanieW === 'cale') &&
-            p.componentType === 'dennica'
+            p.componentType === 'dennica' &&
+            (well.malowanieW === 'kineta_dennica' ||
+                well.malowanieW === 'cale' ||
+                (well.malowanieW === 'kineta' && !hasKinetaItem(well)))
         ) {
             itemPrice += parseFloat(p.malowanieWewnetrzne);
         } else if (
@@ -390,10 +399,17 @@ function getItemPriceBreakdown(well, p, applyDiscount, item) {
 
     if (well.malowanieW && well.malowanieW !== 'brak' && well.malowanieWewCena) {
         if (
-            (well.malowanieW === 'kineta_dennica' || well.malowanieW === 'cale') &&
-            p.componentType === 'dennica'
+            p.componentType === 'dennica' &&
+            (well.malowanieW === 'kineta_dennica' ||
+                well.malowanieW === 'cale' ||
+                well.malowanieW === 'kineta')
         ) {
-            malowanieW = calcDennicaWallsArea(well, p) * well.malowanieWewCena;
+            if (well.malowanieW !== 'kineta') {
+                malowanieW = calcDennicaWallsArea(well, p) * well.malowanieWewCena;
+            }
+            if (!hasKinetaItem(well)) {
+                malowanieW += calcKinetaPaintingArea(well) * well.malowanieWewCena;
+            }
         } else if (well.malowanieW === 'cale') {
             if (p.componentType !== 'dennica' && p.componentType !== 'styczna') {
                 malowanieW = (p.area || 0) * well.malowanieWewCena;
@@ -401,8 +417,10 @@ function getItemPriceBreakdown(well, p, applyDiscount, item) {
         }
     } else if (well.malowanieW && well.malowanieW !== 'brak' && p.malowanieWewnetrzne) {
         if (
-            (well.malowanieW === 'kineta_dennica' || well.malowanieW === 'cale') &&
-            p.componentType === 'dennica'
+            p.componentType === 'dennica' &&
+            (well.malowanieW === 'kineta_dennica' ||
+                well.malowanieW === 'cale' ||
+                (well.malowanieW === 'kineta' && !hasKinetaItem(well)))
         ) {
             malowanieW = parseFloat(p.malowanieWewnetrzne);
         } else if (
