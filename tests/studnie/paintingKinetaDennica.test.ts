@@ -146,11 +146,11 @@ describe('Malowanie wew. kineta_dennica — ściany dennicy na wierszu dennicy',
         expect(b.malowanieW).toBeCloseTo(2.9845 * 200, 0);
     });
 
-    test('6. cale: dennica 0 (kryta przez A_kin), krąg i płyta po area×C', () => {
+    test('6. cale: dennica = ściany (jak kineta_dennica), krąg i płyta po area×C', () => {
         const well = makeWell({ malowanieW: 'cale' });
-        expect(ctx.getItemAssessedPrice(well, product('DDD-10-115'), false, well.config[0])).toBe(
-            1000
-        );
+        expect(
+            ctx.getItemAssessedPrice(well, product('DDD-10-115'), false, well.config[0])
+        ).toBeCloseTo(1000 + 2.9845 * 200, 0);
         expect(
             ctx.getItemAssessedPrice(well, product('KDB-10-10'), false, well.config[0])
         ).toBeCloseTo(400 + 3.14 * 200, 2);
@@ -165,9 +165,19 @@ describe('Malowanie wew. kineta_dennica — ściany dennicy na wierszu dennicy',
         expect(ctx.getItemAssessedPrice(well, product('STY-10'), false, well.config[0])).toBe(4750);
     });
 
-    test('8. osadnik i brak rur: brak dopłaty dennicy', () => {
+    test('8. osadnik: ściany powyżej H_os (H_os=500 → 2π·0.5·0.5 ≈ 1.5708 m²); brak rur standard → 0', () => {
         const osadnikWell = makeWell({ wkladkaOsadnikPreco: 'tak', wkladkaOsadnikH: 500 });
-        expect(ctx.calcDennicaWallsArea(osadnikWell, product('DDD-10-115'))).toBe(0);
+        expect(ctx.calcDennicaWallsArea(osadnikWell, product('DDD-10-115'))).toBeCloseTo(1.5708, 3);
+        expect(
+            ctx.getItemAssessedPrice(
+                osadnikWell,
+                product('DDD-10-115'),
+                false,
+                osadnikWell.config[0]
+            )
+        ).toBeCloseTo(1000 + 1.5708 * 200, 0);
+        const fullWell = makeWell({ wkladkaOsadnikPreco: 'tak', wkladkaOsadnikH: 1000 });
+        expect(ctx.calcDennicaWallsArea(fullWell, product('DDD-10-115'))).toBe(0);
         const noPipesWell = makeWell({ przejscia: [] });
         expect(ctx.calcDennicaWallsArea(noPipesWell, product('DDD-10-115'))).toBe(0);
         expect(
@@ -184,5 +194,22 @@ describe('Malowanie wew. kineta_dennica — ściany dennicy na wierszu dennicy',
         const well = makeWell({ malowanieWewCena: 0 });
         const p = { ...product('DDD-10-115'), malowanieWewnetrzne: 150 };
         expect(ctx.getItemAssessedPrice(well, p, false, well.config[0])).toBe(1150);
+    });
+
+    test('10. osadnik 3m (dennica 1m + 2×krąg1000 + płyta, H_os=1000): dno+ściany 1m na kinecie', () => {
+        const well = makeWell({
+            malowanieW: 'cale',
+            wkladkaOsadnikPreco: 'tak',
+            wkladkaOsadnikH: 1000
+        });
+        // wkładka: π·0.25 + 2π·0.5·1 − 2·(π·0.1²/2) ≈ 3.8956 m²
+        expect(ctx.calcKinetaPaintingArea(well)).toBeCloseTo(3.8956, 3);
+        expect(ctx.calcDennicaWallsArea(well, product('DDD-10-115'))).toBe(0);
+        expect(ctx.getItemAssessedPrice(well, product('DDD-10-115'), false, well.config[0])).toBe(
+            1000
+        );
+        expect(
+            ctx.getItemAssessedPrice(well, product('KDB-10-10'), false, well.config[0])
+        ).toBeCloseTo(400 + 3.14 * 200, 2);
     });
 });

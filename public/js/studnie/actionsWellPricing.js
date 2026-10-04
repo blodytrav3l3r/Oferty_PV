@@ -233,7 +233,10 @@ function getItemAssessedPrice(well, p, applyDiscount = true, item = null) {
     itemPrice += getPehdSurcharge(well, p, applyDiscount, item);
 
     if (well.malowanieW && well.malowanieW !== 'brak' && well.malowanieWewCena) {
-        if (well.malowanieW === 'kineta_dennica' && p.componentType === 'dennica') {
+        if (
+            (well.malowanieW === 'kineta_dennica' || well.malowanieW === 'cale') &&
+            p.componentType === 'dennica'
+        ) {
             itemPrice += calcDennicaWallsArea(well, p) * well.malowanieWewCena;
         } else if (well.malowanieW === 'cale') {
             if (p.componentType === 'dennica' || p.componentType === 'styczna') {
@@ -242,7 +245,10 @@ function getItemAssessedPrice(well, p, applyDiscount = true, item = null) {
             }
         }
     } else if (well.malowanieW && well.malowanieW !== 'brak' && p.malowanieWewnetrzne) {
-        if (well.malowanieW === 'kineta_dennica' && p.componentType === 'dennica') {
+        if (
+            (well.malowanieW === 'kineta_dennica' || well.malowanieW === 'cale') &&
+            p.componentType === 'dennica'
+        ) {
             itemPrice += parseFloat(p.malowanieWewnetrzne);
         } else if (
             well.malowanieW === 'cale' &&
@@ -383,7 +389,10 @@ function getItemPriceBreakdown(well, p, applyDiscount, item) {
     pehd = getPehdSurcharge(well, p, applyDiscount, item);
 
     if (well.malowanieW && well.malowanieW !== 'brak' && well.malowanieWewCena) {
-        if (well.malowanieW === 'kineta_dennica' && p.componentType === 'dennica') {
+        if (
+            (well.malowanieW === 'kineta_dennica' || well.malowanieW === 'cale') &&
+            p.componentType === 'dennica'
+        ) {
             malowanieW = calcDennicaWallsArea(well, p) * well.malowanieWewCena;
         } else if (well.malowanieW === 'cale') {
             if (p.componentType !== 'dennica' && p.componentType !== 'styczna') {
@@ -391,7 +400,10 @@ function getItemPriceBreakdown(well, p, applyDiscount, item) {
             }
         }
     } else if (well.malowanieW && well.malowanieW !== 'brak' && p.malowanieWewnetrzne) {
-        if (well.malowanieW === 'kineta_dennica' && p.componentType === 'dennica') {
+        if (
+            (well.malowanieW === 'kineta_dennica' || well.malowanieW === 'cale') &&
+            p.componentType === 'dennica'
+        ) {
             malowanieW = parseFloat(p.malowanieWewnetrzne);
         } else if (
             well.malowanieW === 'cale' &&

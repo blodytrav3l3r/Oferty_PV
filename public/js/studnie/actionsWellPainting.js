@@ -186,13 +186,18 @@ function calcDennicaWallsArea(well, p) {
     if (!p || p.componentType !== 'dennica') return 0;
     const dnStudni = parseInt(well && well.dn);
     if (!dnStudni || isNaN(dnStudni)) return 0;
-    if (well.wkladkaOsadnikPreco === 'tak') return 0;
-    const pipes = collectPipeGeometry(well);
-    if (pipes.length === 0) return 0;
     const R = dnStudni / 2000;
     const H = (p.height || 0) / 1000;
     if (H <= 0) return 0;
-    return Math.max(0, 2 * Math.PI * R * (H - getSpocznikHeight(well)));
+    let hPainted;
+    if (well.wkladkaOsadnikPreco === 'tak') {
+        hPainted = (parseFloat(well.wkladkaOsadnikH) || 0) / 1000;
+    } else {
+        const pipes = collectPipeGeometry(well);
+        if (pipes.length === 0) return 0;
+        hPainted = getSpocznikHeight(well);
+    }
+    return Math.max(0, 2 * Math.PI * R * (H - hPainted));
 }
 
 function calcStandardKinetaPaintingArea(well, R) {
