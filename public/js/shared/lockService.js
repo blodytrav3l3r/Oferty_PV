@@ -66,12 +66,19 @@ function isDocLocked(err) {
     return e.status === 423 || e.code === 'DOC_LOCKED';
 }
 
-/** Imie posiadacza + czas do modala (tylko niezbedne dane). */
+/** Imie posiadacza + czas do modala w formacie PL (tylko niezbedne dane). */
 function describeHolder(holder) {
     const name = (holder && holder.userName) || 'inny użytkownik';
     let when = '';
     try {
-        if (holder && holder.lockedAt) when = new Date(holder.lockedAt).toLocaleString();
+        if (holder && holder.lockedAt)
+            when = new Date(holder.lockedAt).toLocaleString('pl-PL', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
     } catch (_e) {
         when = '';
     }
@@ -221,7 +228,7 @@ function showDocLockedModal(opts) {
         '</strong></p>' +
         (holder.when ? '<p class="text-muted m-0">Edytuje od ' + _esc(holder.when) + '</p>' : '') +
         '</div></div>' +
-        '<p>Nie można otworzyć go do edycji. Spróbuj ponownie później.</p>';
+        '<p>Tego dokumentu nie można teraz edytować. Spróbuj ponownie później.</p>';
 
     if (typeof window !== 'undefined' && typeof window.showModal === 'function') {
         const overlay = window.showModal({
@@ -230,10 +237,10 @@ function showDocLockedModal(opts) {
             titleId: 'doc-locked-title',
             html:
                 '<div class="modal"><div class="modal-header">' +
-                '<h3 id="doc-locked-title"><i data-lucide="lock" aria-hidden="true"></i> ' +
+                '<h3 id="doc-locked-title"><span class="share-icon-avatar" aria-hidden="true"><i data-lucide="lock" aria-hidden="true"></i></span> ' +
                 _esc(title) +
                 '</h3>' +
-                '<button type="button" class="btn-icon" aria-label="Zamknij" data-act="back"><i data-lucide="x" aria-hidden="true"></i></button>' +
+                '<button type="button" class="btn-icon btn-close-x" aria-label="Zamknij" data-act="back"><i data-lucide="x" aria-hidden="true"></i></button>' +
                 '</div><div class="modal-body">' +
                 bodyHtml +
                 '</div><div class="modal-footer">' +

@@ -137,4 +137,28 @@ describe('lockService (doc_locks frontend)', () => {
         expect(modalOpts.html).toContain('Ewa');
         expect(modalOpts.html).not.toMatch(/style="/);
     });
+
+    test('modal w standardzie SOK: avatar-ikona w tytule, X btn-close-x, tekst PL', async () => {
+        fetchHandler = () =>
+            errJson(423, {
+                code: 'DOC_LOCKED',
+                holder: { userId: 'u2', userName: 'Ewa', lockedAt: '2026-01-01T10:00:00.000Z' }
+            });
+        await ctx.window.lockService.tryOpen('production', 'pz1', () => {});
+        expect(modalOpts.html).toContain('share-icon-avatar');
+        expect(modalOpts.html).toContain('data-lucide="lock"');
+        expect(modalOpts.html).toContain('btn-icon btn-close-x');
+        expect(modalOpts.html).toContain('Tego dokumentu nie można teraz edytować');
+        expect(modalOpts.html).not.toContain('Nie można otworzyć go do edycji');
+    });
+
+    test('describeHolder: data w formacie pl-PL bez sekund', () => {
+        const { when } = ctx.window.lockService.describeHolder({
+            userName: 'Ewa',
+            lockedAt: '2026-01-01T10:00:00.000Z'
+        });
+        expect(when).toMatch(/01\.01\.2026/);
+        expect(when).not.toMatch(/:\d{2}:\d{2}$/);
+        expect(ctx.window.lockService.describeHolder({}).when).toBe('');
+    });
 });
