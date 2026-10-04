@@ -253,3 +253,23 @@ describe('Malowanie wew. kineta_dennica — ściany dennicy na wierszu dennicy',
         ).toBeCloseTo(1000 + 3.8956 * 200, 0);
     });
 });
+
+describe('Malowanie — etykiety dopłat w ofercie (offerWellComponents)', () => {
+    const src = fs.readFileSync(
+        path.join(__dirname, '../../public/js/studnie/offerWellComponents.js'),
+        'utf8'
+    );
+
+    test('wiersz kinety: malowanie kinety', () => {
+        expect(src).toContain('w cenie: malowanie kinety');
+    });
+
+    test('wiersz dennicy: malowanie dennicy (gałąź componentType)', () => {
+        expect(src).toContain("p.componentType === 'dennica'");
+        expect(src).toContain('w cenie: malowanie dennicy');
+    });
+
+    test('reszta elementów: generyczne malowanie wewnątrz', () => {
+        expect(src).toContain('w cenie: malowanie wewnątrz');
+    });
+});

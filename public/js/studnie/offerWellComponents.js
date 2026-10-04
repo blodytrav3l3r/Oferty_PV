@@ -321,8 +321,14 @@ function renderComponentSubItems(well, p, item, itemPrzejscia, disc, wellTranspo
                 ' PLN</td></tr>';
         }
         if (bd.malowanieW > 0) {
+            const malWLabel =
+                p.componentType === 'dennica'
+                    ? 'w cenie: malowanie dennicy'
+                    : 'w cenie: malowanie wewnątrz';
             html +=
-                '<tr class="included-row-accent"><td colspan="3" class="pl-lg">w cenie: malowanie wewnątrz</td><td class="text-right">' +
+                '<tr class="included-row-accent"><td colspan="3" class="pl-lg">' +
+                malWLabel +
+                '</td><td class="text-right">' +
                 fmt(bd.malowanieW) +
                 ' PLN</td></tr>';
         }
@@ -492,7 +498,7 @@ function renderComponentSubItems(well, p, item, itemPrzejscia, disc, wellTranspo
                 // Safe-wrapper zwraca null przy corrupt (flaga już ustawiona) — pomiń wiersze.
                 if (kBd && kBd.malowanieW > 0) {
                     html +=
-                        '<tr class="opacity-5-xs-pink"><td colspan="3" class="pl-lg">w cenie: malowanie wewnątrz</td><td class="text-right">' +
+                        '<tr class="opacity-5-xs-pink"><td colspan="3" class="pl-lg">w cenie: malowanie kinety</td><td class="text-right">' +
                         fmt(kBd.malowanieW * kQ) +
                         ' PLN</td></tr>';
                 }
