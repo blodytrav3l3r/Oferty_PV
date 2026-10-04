@@ -620,6 +620,23 @@ function freezeWellPreco(well, preserveExisting = false) {
 }
 
 /**
+ * Unieważnia snapshot cen pozycji studni po edycji parametru wpływającego
+ * na cenę (krąg/dennica Beton<->Żelbet, PEHD, klasa betonu, agresje, klasy
+ * nośności, malowanie, kineta/spocznik, redukcja, stopnie, uszczelka...).
+ * Bez tego calcWellStats bierze item.frozenPrice (isFrozenPriceCtx) i cena
+ * stoi mimo zmiany elementu. Przejścia nietknięte (osobna ścieżka popup).
+ */
+function invalidateFrozenPricesForWell(well) {
+    if (!well) return;
+    (well.config || []).forEach((item) => {
+        delete item.frozenPrice;
+        delete item.frozenPriceBase;
+        delete item.frozenName;
+    });
+    delete well.frozenPrecoSuma;
+}
+
+/**
  * Jedyny dozwolony default trybu transportu (Faza 0, #1).
  * Snapshot, order i odczyt w enterOrderEditMode MUSZĄ używać tej funkcji —
  * rozjazd defaultów ('full' vs 'fractional') flagował kiedyś wszystkie studnie.
@@ -1015,6 +1032,7 @@ function isFrozenPriceCtx() {
 }
 
 window.freezeWellPrices = freezeWellPrices;
+window.invalidateFrozenPricesForWell = invalidateFrozenPricesForWell;
 window.isFrozenPriceCtx = isFrozenPriceCtx;
 window.getOrderChanges = getOrderChanges;
 window.normalizeTransportMode = normalizeTransportMode;

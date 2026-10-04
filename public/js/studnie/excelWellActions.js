@@ -73,6 +73,15 @@ function _excelUpdateWellParam(wIdx, paramKey, value) {
             w[paramKey] = value;
         });
     }
+    if (typeof invalidateFrozenPricesForWell === 'function') {
+        if (paramKey === 'malowanieWewCena' || paramKey === 'malowanieZewCena') {
+            wells.forEach(function (w) {
+                invalidateFrozenPricesForWell(w);
+            });
+        } else {
+            invalidateFrozenPricesForWell(well);
+        }
+    }
     if (paramKey === 'wkladkaOsadnikPreco' && value === 'tak') {
         well.kineta = 'brak';
         well.spocznik = 'brak';

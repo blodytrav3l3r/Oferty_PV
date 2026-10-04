@@ -128,6 +128,16 @@ async function updateWellParam(paramKey, value) {
         showToast('Zaktualizowano cenę malowania we wszystkich studniach', 'info');
     }
 
+    // Edycja parametru unieważnia snapshot cen (freeze z wczytania oferty) —
+    // inaczej calcWellStats bierze frozenPrice i cena stoi mimo zmiany elementu.
+    if (typeof invalidateFrozenPricesForWell === 'function') {
+        if (paramKey === 'malowanieWewCena' || paramKey === 'malowanieZewCena') {
+            wells.forEach((w) => invalidateFrozenPricesForWell(w));
+        } else {
+            invalidateFrozenPricesForWell(well);
+        }
+    }
+
     // Studnia osadnikowa z wkładką PRECO → wymusz kineta=brak, spocznik=brak
     if (paramKey === 'wkladkaOsadnikPreco' && value === 'tak') {
         well.kineta = 'brak';
@@ -243,6 +253,7 @@ function resetWellParamsToDefaults() {
     WELL_PARAM_DEFS.forEach((def) => {
         if (gp[def.key] !== undefined) well[def.key] = gp[def.key];
     });
+    if (typeof invalidateFrozenPricesForWell === 'function') invalidateFrozenPricesForWell(well);
     // Zresetuj również nazwy powłok
     well.powlokaNameW = gp.powlokaNameW || '';
     well.powlokaNameZ = gp.powlokaNameZ || '';
@@ -334,6 +345,9 @@ async function applyGlobalParamsToAllWells() {
         if (typeof updateConfigToMatchParams === 'function') {
             updateConfigToMatchParams(well);
         }
+        if (typeof invalidateFrozenPricesForWell === 'function') {
+            invalidateFrozenPricesForWell(well);
+        }
         currentWellIndex = index;
         if (
             !well.autoLocked &&
@@ -372,6 +386,13 @@ async function updateParamInput(paramName, value) {
         wells.forEach((w) => {
             w[paramName] = value;
         });
+    }
+    if (typeof invalidateFrozenPricesForWell === 'function') {
+        if (paramName === 'malowanieWewCena' || paramName === 'malowanieZewCena') {
+            wells.forEach((w) => invalidateFrozenPricesForWell(w));
+        } else {
+            invalidateFrozenPricesForWell(well);
+        }
     }
 
     updateAutoLockUI();

@@ -669,6 +669,9 @@ function _excelKinetaModelUpdate(wIdx, value) {
     if (value === 'brak') {
         well.spocznikH = 'brak';
     }
+    if (typeof invalidateFrozenPricesForWell === 'function') {
+        invalidateFrozenPricesForWell(well);
+    }
     if (typeof syncKineta === 'function') syncKineta(well);
 }
 
