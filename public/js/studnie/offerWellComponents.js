@@ -320,15 +320,9 @@ function renderComponentSubItems(well, p, item, itemPrzejscia, disc, wellTranspo
                 fmt(bd.pehd) +
                 ' PLN</td></tr>';
         }
-        if (bd.malowanieW > 0) {
-            const malWLabel =
-                p.componentType === 'dennica'
-                    ? 'w cenie: malowanie dennicy'
-                    : 'w cenie: malowanie wewnątrz';
+        if (bd.malowanieW > 0 && !isBase) {
             html +=
-                '<tr class="included-row-accent"><td colspan="3" class="pl-lg">' +
-                malWLabel +
-                '</td><td class="text-right">' +
+                '<tr class="included-row-accent"><td colspan="3" class="pl-lg">w cenie: malowanie wewnątrz</td><td class="text-right">' +
                 fmt(bd.malowanieW) +
                 ' PLN</td></tr>';
         }
@@ -366,78 +360,6 @@ function renderComponentSubItems(well, p, item, itemPrzejscia, disc, wellTranspo
             <td colspan="3" class="pl-lg">↳ + Wkładka osadnika (przestarzałe)</td>
             <td class="text-right">${fmt(item._osadnikCost)} PLN</td>
         </tr>`;
-    }
-
-    if (itemPrzejscia) {
-        itemPrzejscia.forEach((pr) => {
-            const prProd =
-                typeof getStudnieProductById === 'function'
-                    ? getStudnieProductById(pr.productId)
-                    : studnieProducts.find((x) => x.id === pr.productId);
-            if (!prProd) return;
-
-            if (pr.frozenTransitionPrice != null) {
-                // Zamrożona cena zawiera ten sam rabat dla przejścia i wiercenia
-                // (jeden mult przy freeze) — % odtwarzany z sum frozenPrice/frozenPriceBase.
-                const frPct =
-                    pr.frozenPriceBase > 0 && pr.frozenPrice != null
-                        ? (1 - pr.frozenPrice / pr.frozenPriceBase) * 100
-                        : typeof getTransitionHostPctSafe === 'function'
-                          ? getTransitionHostPctSafe(well, disc, pr._hostType)
-                          : typeof getTransitionHostPct === 'function'
-                            ? getTransitionHostPct(well, disc, pr._hostType)
-                            : 0;
-                const frBadge = subDiscountStr(frPct);
-                html += `<tr class="opacity-6-sm-accent">
-                    <td colspan="3" class="pl-lg">↳ + Przejście: ${escapeHtml(pr.frozenName || prProd.category)} ${escapeHtml(prProd.dn || '')} (${pr.angle}°)${frBadge}</td>
-                    <td class="text-right">${fmt(pr.frozenTransitionPrice)} PLN</td>
-                </tr>`;
-                if (pr.doplata) {
-                    const doplPrColor = pr.doplata > 0 ? 'var(--success)' : 'var(--danger)';
-                    const doplPrSign = pr.doplata > 0 ? '+' : '';
-                    html += `<tr style="opacity:0.6; font-size: var(--fs-sm); color:${doplPrColor};">
-                        <td class="pl-20">↳ ${doplPrSign} Dopłata indywidualna do przejścia</td>
-                        <td class="text-right">${fmt(pr.doplata)} PLN</td>
-                    </tr>`;
-                }
-                if (pr.frozenDrillingPrice > 0) {
-                    html += `<tr class="included-row-warn">
-                        <td colspan="3" class="pl-lg">↳ + ${escapeHtml(pr.frozenDrillingName || 'Wiercenie')} ${escapeHtml(pr.frozenDrillingDn || '')}${frBadge}</td>
-                        <td class="text-right">${fmt(pr.frozenDrillingPrice)} PLN</td>
-                    </tr>`;
-                }
-            } else {
-                // Rabat wg hosta przejścia: dennica/styczna -> dennicowy, reszta -> nadbudowa.
-                const prPct =
-                    typeof getTransitionHostPctSafe === 'function'
-                        ? getTransitionHostPctSafe(well, disc, pr._hostType)
-                        : typeof getTransitionHostPct === 'function'
-                          ? getTransitionHostPct(well, disc, pr._hostType)
-                          : getWellNadbudowaPct(well, disc);
-                const prMult = 1 - prPct / 100;
-                const prBadge = subDiscountStr(prPct);
-                const prPrice = (prProd.price || 0) * prMult;
-                html += `<tr class="opacity-6-sm-accent">
-                    <td colspan="3" class="pl-lg">↳ + Przejście: ${escapeHtml(prProd.category)} ${escapeHtml(prProd.dn)} (${pr.angle}°)${prBadge}</td>
-                    <td class="text-right">${fmt(prPrice)} PLN</td>
-                </tr>`;
-                if (pr.doplata) {
-                    const doplPrColor2 = pr.doplata > 0 ? 'var(--success)' : 'var(--danger)';
-                    const doplPrSign2 = pr.doplata > 0 ? '+' : '';
-                    html += `<tr style="opacity:0.6; font-size: var(--fs-sm); color:${doplPrColor2};">
-                        <td class="pl-20">↳ ${doplPrSign2} Dopłata indywidualna do przejścia</td>
-                        <td class="text-right">${fmt(pr.doplata)} PLN</td>
-                    </tr>`;
-                }
-                if (pr._drillingBasePrice > 0 && pr._drillingProd) {
-                    const drillPrice = pr._drillingBasePrice * prMult;
-                    html += `<tr class="included-row-warn">
-                        <td colspan="3" class="pl-lg">↳ + ${escapeHtml(pr._drillingProd.name)} ${escapeHtml(String(pr._drillingProd.dn ?? ''))}${prBadge}</td>
-                        <td class="text-right">${fmt(drillPrice)} PLN</td>
-                    </tr>`;
-                }
-            }
-        });
     }
 
     if (isBase && !item.isPsiaBuda) {
@@ -510,6 +432,91 @@ function renderComponentSubItems(well, p, item, itemPrzejscia, disc, wellTranspo
                 }
             }
         }
+    }
+
+    if (isBase && bd && bd.malowanieW > 0) {
+        const baseMalWLabel =
+            p.componentType === 'dennica'
+                ? 'w cenie: malowanie dennicy'
+                : 'w cenie: malowanie wewnątrz';
+        html +=
+            '<tr class="included-row-accent"><td colspan="3" class="pl-lg">' +
+            baseMalWLabel +
+            '</td><td class="text-right">' +
+            fmt(bd.malowanieW) +
+            ' PLN</td></tr>';
+    }
+
+    if (itemPrzejscia) {
+        itemPrzejscia.forEach((pr) => {
+            const prProd =
+                typeof getStudnieProductById === 'function'
+                    ? getStudnieProductById(pr.productId)
+                    : studnieProducts.find((x) => x.id === pr.productId);
+            if (!prProd) return;
+
+            if (pr.frozenTransitionPrice != null) {
+                // Zamrożona cena zawiera ten sam rabat dla przejścia i wiercenia
+                // (jeden mult przy freeze) — % odtwarzany z sum frozenPrice/frozenPriceBase.
+                const frPct =
+                    pr.frozenPriceBase > 0 && pr.frozenPrice != null
+                        ? (1 - pr.frozenPrice / pr.frozenPriceBase) * 100
+                        : typeof getTransitionHostPctSafe === 'function'
+                          ? getTransitionHostPctSafe(well, disc, pr._hostType)
+                          : typeof getTransitionHostPct === 'function'
+                            ? getTransitionHostPct(well, disc, pr._hostType)
+                            : 0;
+                const frBadge = subDiscountStr(frPct);
+                html += `<tr class="opacity-6-sm-accent">
+                    <td colspan="3" class="pl-lg">↳ + Przejście: ${escapeHtml(pr.frozenName || prProd.category)} ${escapeHtml(prProd.dn || '')} (${pr.angle}°)${frBadge}</td>
+                    <td class="text-right">${fmt(pr.frozenTransitionPrice)} PLN</td>
+                </tr>`;
+                if (pr.doplata) {
+                    const doplPrColor = pr.doplata > 0 ? 'var(--success)' : 'var(--danger)';
+                    const doplPrSign = pr.doplata > 0 ? '+' : '';
+                    html += `<tr style="opacity:0.6; font-size: var(--fs-sm); color:${doplPrColor};">
+                        <td class="pl-20">↳ ${doplPrSign} Dopłata indywidualna do przejścia</td>
+                        <td class="text-right">${fmt(pr.doplata)} PLN</td>
+                    </tr>`;
+                }
+                if (pr.frozenDrillingPrice > 0) {
+                    html += `<tr class="included-row-warn">
+                        <td colspan="3" class="pl-lg">↳ + ${escapeHtml(pr.frozenDrillingName || 'Wiercenie')} ${escapeHtml(pr.frozenDrillingDn || '')}${frBadge}</td>
+                        <td class="text-right">${fmt(pr.frozenDrillingPrice)} PLN</td>
+                    </tr>`;
+                }
+            } else {
+                // Rabat wg hosta przejścia: dennica/styczna -> dennicowy, reszta -> nadbudowa.
+                const prPct =
+                    typeof getTransitionHostPctSafe === 'function'
+                        ? getTransitionHostPctSafe(well, disc, pr._hostType)
+                        : typeof getTransitionHostPct === 'function'
+                          ? getTransitionHostPct(well, disc, pr._hostType)
+                          : getWellNadbudowaPct(well, disc);
+                const prMult = 1 - prPct / 100;
+                const prBadge = subDiscountStr(prPct);
+                const prPrice = (prProd.price || 0) * prMult;
+                html += `<tr class="opacity-6-sm-accent">
+                    <td colspan="3" class="pl-lg">↳ + Przejście: ${escapeHtml(prProd.category)} ${escapeHtml(prProd.dn)} (${pr.angle}°)${prBadge}</td>
+                    <td class="text-right">${fmt(prPrice)} PLN</td>
+                </tr>`;
+                if (pr.doplata) {
+                    const doplPrColor2 = pr.doplata > 0 ? 'var(--success)' : 'var(--danger)';
+                    const doplPrSign2 = pr.doplata > 0 ? '+' : '';
+                    html += `<tr style="opacity:0.6; font-size: var(--fs-sm); color:${doplPrColor2};">
+                        <td class="pl-20">↳ ${doplPrSign2} Dopłata indywidualna do przejścia</td>
+                        <td class="text-right">${fmt(pr.doplata)} PLN</td>
+                    </tr>`;
+                }
+                if (pr._drillingBasePrice > 0 && pr._drillingProd) {
+                    const drillPrice = pr._drillingBasePrice * prMult;
+                    html += `<tr class="included-row-warn">
+                        <td colspan="3" class="pl-lg">↳ + ${escapeHtml(pr._drillingProd.name)} ${escapeHtml(String(pr._drillingProd.dn ?? ''))}${prBadge}</td>
+                        <td class="text-right">${fmt(drillPrice)} PLN</td>
+                    </tr>`;
+                }
+            }
+        });
     }
 
     const precoAlloc = calculatePrecoAllocationForItem(well, itemIndex);

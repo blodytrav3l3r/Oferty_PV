@@ -272,4 +272,13 @@ describe('Malowanie — etykiety dopłat w ofercie (offerWellComponents)', () =>
     test('reszta elementów: generyczne malowanie wewnątrz', () => {
         expect(src).toContain('w cenie: malowanie wewnątrz');
     });
+
+    test('kolejność: malowanie kinety → malowanie dennicy → przejścia', () => {
+        const idxKinety = src.indexOf('w cenie: malowanie kinety');
+        const idxDennicy = src.indexOf('w cenie: malowanie dennicy');
+        const idxPrzejsc = src.indexOf('if (itemPrzejscia)');
+        expect(idxKinety).toBeGreaterThan(-1);
+        expect(idxDennicy).toBeGreaterThan(idxKinety);
+        expect(idxPrzejsc).toBeGreaterThan(idxDennicy);
+    });
 });
