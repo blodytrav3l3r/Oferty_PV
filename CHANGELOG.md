@@ -4,6 +4,19 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+### [1.37.2](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.37.1...v1.37.2) (2026-10-04)
+
+### Features
+
+- **ui:** badge cennika na wizard-indicator z retry i w zamowieniach ([bb2cb48](https://github.com/blodytrav3l3r/Oferty_PV/commit/bb2cb48a4c455c60de6abd321f90ff3b2c43d64e))
+- **ui:** kafel cennika jak author-badge, ikona tag, wyrownany do prawej ([9380f30](https://github.com/blodytrav3l3r/Oferty_PV/commit/9380f30dd0b44f4e04ac37f6337017ce0450616e))
+- **ui:** staly badge cennika w naglowku edytora ofert ([60e36cc](https://github.com/blodytrav3l3r/Oferty_PV/commit/60e36cce1dab6ad7f681f6d5e5cfdcdaf9cad0f6))
+
+### Bug Fixes
+
+- **ui:** badge cennika przemalowany po recalc i zapisie ([e6129ea](https://github.com/blodytrav3l3r/Oferty_PV/commit/e6129eaf5e5a38b465401b16e94b4af21e773e5d))
+- **ui:** kafel cennika absolutnie do prawej steppera ([671c99c](https://github.com/blodytrav3l3r/Oferty_PV/commit/671c99c375ab749cbc2482d8fa5400d6597afeaf))
+
 ### [1.37.1](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.37.0...v1.37.1) (2026-10-04)
 
 ### Features
