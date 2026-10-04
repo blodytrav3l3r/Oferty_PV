@@ -70,6 +70,20 @@
     height: 12px;
 }
 
+/* W pasku kroków badge nie bierze udziału we flex (kropki zostają
+ * wyśrodkowane jak wcześniej) — doklejony absolutnie do prawej. */
+.wizard-indicator {
+    position: relative;
+}
+
+.wizard-indicator > .pv-offer-badge {
+    position: absolute;
+    right: 0.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    margin-left: 0;
+}
+
 /* Role badges — zgodnie z Pulpitem (Zarządzanie Użytkownikami): ADMIN bursztyn (warn), PRO fiolet (accent), USER zielony (success) */
 .role-admin {
     background: var(--warn-bg);

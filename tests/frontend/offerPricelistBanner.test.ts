@@ -465,6 +465,10 @@ describe('frontend vm: offerPricelistBanner.badge (stały badge w nagłówku)', 
             'var(--fw-medium)'
         ])
             expect(badgeCss).toContain(prop);
+        // W stepperze badge absolutnie do prawej — kropki zostają wyśrodkowane
+        expect(badgeCss).toContain('.wizard-indicator > .pv-offer-badge');
+        expect(badgeCss).toContain('position: absolute');
+        expect(badgeCss).toContain('right: 0.5rem');
         // ikona tag w iconsSlim (test kontraktu ikon wyżej sprawdza resztę)
         const slim = fs.readFileSync(path.join(ROOT, 'public/js/shared/iconsSlim.js'), 'utf8');
         expect(slim).toMatch(/['"]?tag['"]?\s*:/);
