@@ -176,6 +176,7 @@ function identifyMainChannelAndTributaries(pipes) {
 }
 
 function getSpocznikHeight(well) {
+    if (well.spocznikH === 'brak') return 0;
     const pipes = collectPipeGeometry(well);
     if (pipes.length === 0) return 0;
     const maxPipeDn = Math.max(...pipes.map((p) => p.dnMm));

@@ -212,4 +212,13 @@ describe('Malowanie wew. kineta_dennica — ściany dennicy na wierszu dennicy',
             ctx.getItemAssessedPrice(well, product('KDB-10-10'), false, well.config[0])
         ).toBeCloseTo(400 + 3.14 * 200, 2);
     });
+
+    test("11. spocznikH='brak': h=0 (kanały+płaskie ≈0.8996 m²), ściany dennicy pełne ≈3.1416 m²", () => {
+        const well = makeWell({ spocznik: 'brak', spocznikH: 'brak' });
+        expect(ctx.calcKinetaPaintingArea(well)).toBeCloseTo(0.8996, 3);
+        expect(ctx.calcDennicaWallsArea(well, product('DDD-10-115'))).toBeCloseTo(3.1416, 3);
+        expect(
+            ctx.getItemAssessedPrice(well, product('KIN-10'), false, well.config[0])
+        ).toBeCloseTo(500 + 0.8996 * 200, 1);
+    });
 });
