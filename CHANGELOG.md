@@ -4,6 +4,18 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+### [1.37.1](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.37.0...v1.37.1) (2026-10-04)
+
+### Features
+
+- **orders:** twarda blokada edycji zlecen produkcyjnych ([5d21d6c](https://github.com/blodytrav3l3r/Oferty_PV/commit/5d21d6cd9ff1d25577ad9ce7eb45b95c4f4a8963))
+
+### Bug Fixes
+
+- **ci:** explicit restore target in p03 workflow ([072913d](https://github.com/blodytrav3l3r/Oferty_PV/commit/072913dbca79754cde39d8bccbb899f93c73249d))
+- **ui:** escape danych w sinkach innerhtml (p1-fe-escape) ([c1e250a](https://github.com/blodytrav3l3r/Oferty_PV/commit/c1e250a4af5e1d7b3a22c0321358a64d7c04a84b))
+- **ui:** kontrast ikonki kalendarza w polach daty ([5650725](https://github.com/blodytrav3l3r/Oferty_PV/commit/5650725ba6092348b1e6ac8ded80f2400641ecba))
+
 ## [1.37.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.36.1...v1.37.0) (2026-10-03)
 
 ### Features
