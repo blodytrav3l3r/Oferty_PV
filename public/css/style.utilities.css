@@ -50,6 +50,26 @@
     border: 1px solid rgba(var(--slate-400-rgb), 0.3);
 }
 
+/* Badge wersji cennika w edytorze (offerPricelistBanner.js) — kształt jak
+ * author-badge, kolory z .badge-info; margin-left:auto spycha w prawo
+ * (wizard-indicator i card-title-sm to flex). */
+.pv-offer-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.2rem 0.55rem;
+    border-radius: var(--radius-sm);
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-medium);
+    white-space: nowrap;
+    margin-left: auto;
+}
+
+.pv-offer-badge svg {
+    width: 12px;
+    height: 12px;
+}
+
 /* Role badges — zgodnie z Pulpitem (Zarządzanie Użytkownikami): ADMIN bursztyn (warn), PRO fiolet (accent), USER zielony (success) */
 .role-admin {
     background: var(--warn-bg);

@@ -254,6 +254,7 @@ describe('frontend vm: offerPricelistBanner.badge (stały badge w nagłówku)', 
             },
             createElement: () => {
                 created += 1;
+                let html = '';
                 const el = {
                     id: '',
                     className: '',
@@ -267,6 +268,13 @@ describe('frontend vm: offerPricelistBanner.badge (stały badge w nagłówku)', 
                         this.removed = true;
                     }
                 };
+                Object.defineProperty(el, 'innerHTML', {
+                    get: () => html,
+                    set: (v) => {
+                        html = String(v);
+                        el.textContent = html.replace(/<[^>]*>/g, '');
+                    }
+                });
                 return el;
             },
             body: { appendChild: jest.fn(), firstChild: null }
@@ -431,6 +439,35 @@ describe('frontend vm: offerPricelistBanner.badge (stały badge w nagłówku)', 
         );
         expect(visible).toBe(true);
         expect((document as any).lateWizard.children).toHaveLength(1);
+    });
+
+    test('badge wygląda jak kafel projektu: klasa, ikona tag, prawo', async () => {
+        const { sandbox, document } = loadBadge({ labels: { v2: ACTIVE } });
+        await vm.runInContext(
+            'window.offerPricelistBanner.badge({type:"studnie",stampId:null,anchorId:"offer-form-title-studnie"})',
+            sandbox
+        );
+        const badge = document.badgeEls['pv-offer-badge-studnie'];
+        expect(badge.className).toContain('pv-offer-badge');
+        expect(badge.className).toContain('badge-info');
+        const html = (badge as any).innerHTML as string;
+        expect(html).toContain('data-lucide="tag"');
+        expect(html).toContain('Cennik: v2-20260102 (aktywny)');
+        expect(sandbox.window.lucide.createIcons).toHaveBeenCalled();
+        // CSS: kafel + margin-left:auto (prawo), tokeny projektu
+        const css = fs.readFileSync(path.join(ROOT, 'public/css/style.utilities.css'), 'utf8');
+        const badgeCss = css.slice(css.indexOf('.pv-offer-badge'));
+        for (const prop of [
+            'inline-flex',
+            'margin-left: auto',
+            'var(--radius-sm)',
+            'var(--fs-sm)',
+            'var(--fw-medium)'
+        ])
+            expect(badgeCss).toContain(prop);
+        // ikona tag w iconsSlim (test kontraktu ikon wyżej sprawdza resztę)
+        const slim = fs.readFileSync(path.join(ROOT, 'public/js/shared/iconsSlim.js'), 'utf8');
+        expect(slim).toMatch(/['"]?tag['"]?\s*:/);
     });
 
     test('badge bez fetchy na piechotę, bez onclick i bez body-append', () => {

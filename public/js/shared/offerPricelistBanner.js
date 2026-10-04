@@ -140,7 +140,7 @@
             if (typeof document.createElement !== 'function') return false;
             el = document.createElement('span');
             el.id = badgeId(type);
-            el.className = 'badge-info text-nowrap';
+            el.className = 'badge-info text-nowrap pv-offer-badge';
             el.setAttribute('data-pv-offer-badge', type);
             if (host.mode === 'append') {
                 host.node.appendChild(el);
@@ -151,7 +151,8 @@
             }
         }
         el.setAttribute('title', title || 'Wersja cennika');
-        el.textContent = text;
+        el.innerHTML = '<i data-lucide="tag"></i><span>' + esc(text) + '</span>';
+        icons(el);
         return true;
     }
 
