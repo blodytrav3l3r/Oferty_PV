@@ -218,6 +218,12 @@ function clearOfferForm() {
     window.editingOfferCreatedByUserId = null;
     window.editingOfferCreatedByUserName = '';
     if (window.offerPricelistBanner) window.offerPricelistBanner.hide('rury');
+    if (window.offerPricelistBanner)
+        window.offerPricelistBanner.badge({
+            type: 'rury',
+            stampId: null,
+            anchorId: 'offer-form-title'
+        });
     clearOfferFormFields(generateOfferNumber);
     if (typeof clearOrderEditState === 'function') clearOrderEditState();
     currentOfferItems = [];
@@ -394,6 +400,11 @@ async function loadOffer(id) {
             onRecalc: function () {
                 return recalcRuryToActive();
             }
+        });
+        window.offerPricelistBanner.badge({
+            type: 'rury',
+            stampId: normalized.pricelistVersionId || null,
+            anchorId: 'offer-form-title'
         });
     }
     showSection('builder');

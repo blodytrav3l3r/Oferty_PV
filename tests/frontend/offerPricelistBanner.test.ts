@@ -218,6 +218,152 @@ describe('frontend vm: offerPricelistBanner.refresh', () => {
     });
 });
 
+describe('frontend vm: offerPricelistBanner.badge (stały badge w nagłówku)', () => {
+    function makeBadgeDoc() {
+        const inserted = [];
+        const anchor = {
+            id: 'offer-form-title-studnie',
+            nextSibling: null,
+            parentElement: {
+                insertBefore(el) {
+                    inserted.push(el);
+                }
+            }
+        };
+        const badgeEls = {};
+        return {
+            inserted,
+            badgeEls,
+            getElementById: (id) => {
+                if (id === 'offer-form-title-studnie' || id === 'offer-form-title') return anchor;
+                return badgeEls[id] || null;
+            },
+            createElement: () => {
+                const el = {
+                    id: '',
+                    className: '',
+                    textContent: '',
+                    attrs: {},
+                    removed: false,
+                    setAttribute(k, v) {
+                        this.attrs[k] = v;
+                    },
+                    remove() {
+                        this.removed = true;
+                    }
+                };
+                return el;
+            },
+            body: { appendChild() {}, firstChild: null }
+        };
+    }
+
+    function loadBadge({ labels, labelsByIds }) {
+        const document = makeBadgeDoc();
+        const sandbox = {
+            window: {},
+            console,
+            document
+        };
+        sandbox.window.escapeHtml = (s) => String(s ?? '');
+        sandbox.window.lucide = { createIcons: jest.fn() };
+        sandbox.window.pricelistVersions = {
+            fetchLabels: jest.fn(async () => labels),
+            fetchLabelsByIds: jest.fn(async () => labelsByIds || {})
+        };
+        vm.createContext(sandbox);
+        vm.runInContext(BANNER_SRC, sandbox, { filename: 'offerPricelistBanner.js' });
+        // createElement rejestruje badge w dokumencie
+        const origCreate = document.createElement.bind(document);
+        document.createElement = (...a) => {
+            const el = origCreate(...a);
+            const origRemove = el.remove.bind(el);
+            el.remove = () => {
+                el.removed = true;
+                delete document.badgeEls[el.id];
+                origRemove();
+            };
+            const { insertBefore } = document.getElementById(
+                'offer-form-title-studnie'
+            ).parentElement;
+            document.getElementById('offer-form-title-studnie').parentElement.insertBefore = (
+                child
+            ) => {
+                document.badgeEls[child.id] = child;
+                insertBefore(child);
+            };
+            return el;
+        };
+        return { sandbox, document };
+    }
+
+    test('nowa oferta (brak pieczątki) → badge aktywnego', async () => {
+        const { sandbox, document } = loadBadge({ labels: { v2: ACTIVE } });
+        const visible = await vm.runInContext(
+            'window.offerPricelistBanner.badge({type:"studnie",stampId:null,anchorId:"offer-form-title-studnie"})',
+            sandbox
+        );
+        expect(visible).toBe(true);
+        const badge = document.badgeEls['pv-offer-badge-studnie'];
+        expect(badge.textContent).toBe('Cennik: v2-20260102 (aktywny) · Studnie');
+    });
+
+    test('wczytana oferta z pieczątką → badge wersji oferty', async () => {
+        const { sandbox, document } = loadBadge({
+            labels: { v2: ACTIVE },
+            labelsByIds: { v1: STAMP }
+        });
+        const visible = await vm.runInContext(
+            'window.offerPricelistBanner.badge({type:"studnie",stampId:"v1",anchorId:"offer-form-title-studnie"})',
+            sandbox
+        );
+        expect(visible).toBe(true);
+        expect(document.badgeEls['pv-offer-badge-studnie'].textContent).toBe(
+            'Cennik: v1-20260101 · Studnie'
+        );
+    });
+
+    test('nieznana pieczątka → badge legacy (nie cisza)', async () => {
+        const { sandbox, document } = loadBadge({ labels: { v2: ACTIVE }, labelsByIds: {} });
+        const visible = await vm.runInContext(
+            'window.offerPricelistBanner.badge({type:"rury",stampId:"vX",anchorId:"offer-form-title"})',
+            sandbox
+        );
+        expect(visible).toBe(true);
+        expect(document.badgeEls['pv-offer-badge-rury'].textContent).toBe('Cennik: legacy · Rury');
+    });
+
+    test('brak ACTIVE i brak pieczątki → cisza', async () => {
+        const { sandbox, document } = loadBadge({ labels: {} });
+        const visible = await vm.runInContext(
+            'window.offerPricelistBanner.badge({type:"rury",stampId:null})',
+            sandbox
+        );
+        expect(visible).toBe(false);
+        expect(document.badgeEls['pv-offer-badge-rury'] || null).toBeNull();
+    });
+
+    test('badge bez fetchy na piechotę i bez onclick', () => {
+        const badgeSrc = BANNER_SRC.slice(BANNER_SRC.indexOf('STAŁY BADGE'));
+        expect(badgeSrc).not.toContain('fetch(');
+        expect(badgeSrc).not.toContain('onclick=');
+    });
+});
+
+describe('frontend static: wpięcie badge w edytory', () => {
+    test('badge() w clear + load (rury + studnie)', () => {
+        const ruryCrud = fs.readFileSync(path.join(ROOT, 'public/js/rury/offerCrud.js'), 'utf8');
+        const studnieMgr = fs.readFileSync(
+            path.join(ROOT, 'public/js/studnie/offerManager.js'),
+            'utf8'
+        );
+        for (const src of [ruryCrud, studnieMgr]) {
+            expect(src).toContain('offerPricelistBanner.badge');
+            expect(src).toContain('stampId: normalized.pricelistVersionId || null');
+            expect(src).toContain('stampId: null');
+        }
+    });
+});
 describe('frontend static: kontrakt bannera', () => {
     test('tylko ikony z iconsSlim (alert-triangle, refresh-cw)', () => {
         const slim = fs.readFileSync(path.join(ROOT, 'public/js/shared/iconsSlim.js'), 'utf8');

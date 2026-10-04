@@ -19,6 +19,12 @@ function clearOfferForm() {
     // żyją w różnych plikach, offerSave.js ładuje się wcześniej).
     window.pendingStudnieStampId = null;
     if (window.offerPricelistBanner) window.offerPricelistBanner.hide('studnie');
+    if (window.offerPricelistBanner)
+        window.offerPricelistBanner.badge({
+            type: 'studnie',
+            stampId: null,
+            anchorId: 'offer-form-title-studnie'
+        });
     clearOfferFormFields(generateOfferNumberStudnie);
     if (typeof clearOrderNumberField === 'function') clearOrderNumberField();
     wells = [];
@@ -224,6 +230,11 @@ async function loadSavedOfferStudnie(id_or_doc, optionalId, targetSection, preve
             onRecalc: function () {
                 return recalcStudnieToActive();
             }
+        });
+        window.offerPricelistBanner.badge({
+            type: 'studnie',
+            stampId: normalized.pricelistVersionId || null,
+            anchorId: 'offer-form-title-studnie'
         });
     }
     // P1.1b: banner recovery tylko gdy draft istnieje i różni się od SAVED.

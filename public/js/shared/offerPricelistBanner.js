@@ -66,6 +66,112 @@
         if (el && typeof el.remove === 'function') el.remove();
     }
 
+    /* ===== STAŁY BADGE „Cennik: vX" W NAGŁÓWKU EDYTORA ===== */
+    /* Zawsze widoczny: pieczątka oferty, „legacy" bez pieczątki albo aktywny
+     * dla nowej oferty. Malowany obok kotwicy tytułu (rodzeństwo, więc
+     * przeżywa titleEl.innerHTML). Bez fetchy na piechotę — tylko fetchLabels. */
+
+    function badgeId(type) {
+        return 'pv-offer-badge-' + type;
+    }
+
+    function hideBadge(type) {
+        if (typeof document === 'undefined' || !document.getElementById) return;
+        var el = document.getElementById(badgeId(type));
+        if (el && typeof el.remove === 'function') el.remove();
+    }
+
+    function paintBadge(type, anchorId, text, title) {
+        if (typeof document === 'undefined' || !document.getElementById) return false;
+        if (!text) {
+            hideBadge(type);
+            return false;
+        }
+        var anchor = anchorId ? document.getElementById(anchorId) : null;
+        var el = document.getElementById(badgeId(type));
+        if (!el) {
+            if (typeof document.createElement !== 'function') return false;
+            el = document.createElement('span');
+            el.id = badgeId(type);
+            el.className = 'badge-info text-nowrap';
+            el.setAttribute('data-pv-offer-badge', type);
+            if (
+                anchor &&
+                anchor.parentElement &&
+                typeof anchor.parentElement.insertBefore === 'function'
+            ) {
+                anchor.parentElement.insertBefore(el, anchor.nextSibling || null);
+            } else if (anchor && typeof anchor.after === 'function') {
+                anchor.after(el);
+            } else if (document.body && typeof document.body.appendChild === 'function') {
+                document.body.appendChild(el);
+            } else {
+                return false;
+            }
+        }
+        el.setAttribute('title', title || 'Wersja cennika');
+        el.textContent = text;
+        return true;
+    }
+
+    /**
+     * Stały badge cennika w nagłówku edytora.
+     * @param {{type: string, stampId?: string|null, anchorId?: string}} opts
+     * @returns {Promise<boolean>} true gdy badge widoczny
+     */
+    async function refreshBadge(opts) {
+        var type = (opts && opts.type) || '';
+        if (!type || typeof document === 'undefined') return false;
+        var pv = window.pricelistVersions;
+        if (!pv || typeof pv.fetchLabels !== 'function') return false;
+        var stampId = (opts && opts.stampId) || null;
+        var labels;
+        try {
+            labels = await pv.fetchLabels(type);
+        } catch (_e) {
+            hideBadge(type);
+            return false;
+        }
+        var active = pickActive(labels);
+        var label = typeLabel(type);
+        var suffix = label ? ' · ' + label : '';
+        if (stampId) {
+            var stamp = labels[stampId];
+            if (!stamp && typeof pv.fetchLabelsByIds === 'function') {
+                try {
+                    var extra = await pv.fetchLabelsByIds(type, [stampId]);
+                    stamp = extra[stampId];
+                } catch (_e2) {
+                    /* legacy poniżej */
+                }
+            }
+            if (stamp) {
+                return paintBadge(
+                    type,
+                    opts && opts.anchorId,
+                    'Cennik: ' + stamp.version + suffix,
+                    'Wersja cennika oferty'
+                );
+            }
+            return paintBadge(
+                type,
+                opts && opts.anchorId,
+                'Cennik: legacy' + suffix,
+                'Oferta sprzed wersjonowania cenników'
+            );
+        }
+        if (!active) {
+            hideBadge(type);
+            return false;
+        }
+        return paintBadge(
+            type,
+            opts && opts.anchorId,
+            'Cennik: ' + active.version + ' (aktywny)' + suffix,
+            'Aktywny cennik — nowa oferta liczy po nim'
+        );
+    }
+
     /**
      * @param {{type: string, stampId?: string|null, anchorId?: string,
      *   onRecalc?: (activeId?: string) => (boolean|Promise<boolean>)}} opts
@@ -158,6 +264,7 @@
 
     window.offerPricelistBanner = {
         refresh: refreshBanner,
-        hide: hideBanner
+        hide: hideBanner,
+        badge: refreshBadge
     };
 })();
