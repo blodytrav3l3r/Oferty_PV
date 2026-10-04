@@ -474,6 +474,37 @@ describe('frontend vm: offerPricelistBanner.badge (stały badge w nagłówku)', 
         expect(slim).toMatch(/['"]?tag['"]?\s*:/);
     });
 
+    test('hide() gasi tylko pasek ostrzeżenia — badge trwały zostaje', async () => {
+        const { sandbox, document } = loadBadge({ labels: { v2: ACTIVE } });
+        await vm.runInContext(
+            'window.offerPricelistBanner.badge({type:"studnie",stampId:null})',
+            sandbox
+        );
+        expect(document.badgeEls['pv-offer-badge-studnie']).toBeDefined();
+        await vm.runInContext(`window.offerPricelistBanner.hide('studnie')`, sandbox);
+        expect(document.badgeEls['pv-offer-badge-studnie'].removed).toBe(false);
+    });
+
+    test('drugie badge() aktualizuje tekst, nie duplikuje elementu', async () => {
+        const { sandbox, document } = loadBadge({
+            labels: { v2: ACTIVE },
+            labelsByIds: { v1: STAMP }
+        });
+        await vm.runInContext(
+            'window.offerPricelistBanner.badge({type:"studnie",stampId:null})',
+            sandbox
+        );
+        const before = document.createdCount();
+        await vm.runInContext(
+            'window.offerPricelistBanner.badge({type:"studnie",stampId:"v1"})',
+            sandbox
+        );
+        expect(document.createdCount()).toBe(before);
+        expect(document.badgeEls['pv-offer-badge-studnie'].textContent).toBe(
+            'Cennik: v1-20260101 · Studnie'
+        );
+    });
+
     test('badge bez fetchy na piechotę, bez onclick i bez body-append', () => {
         const badgeSrc = BANNER_SRC.slice(BANNER_SRC.indexOf('STAŁY BADGE'));
         expect(badgeSrc).not.toContain('fetch(');

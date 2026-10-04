@@ -32,7 +32,8 @@ jest.mock('../../src/prismaClient', () => ({
         users: { findUnique: jest.fn() },
         orders_rury_rel: { findUnique: jest.fn() },
         orders_studnie_rel: { findUnique: jest.fn() },
-        $queryRaw: jest.fn()
+        $queryRaw: jest.fn(),
+        $transaction: jest.fn()
     },
     Prisma: {
         empty: '',
@@ -100,6 +101,26 @@ describe('order stamp (rury)', () => {
         const res = await request(createApp()).get('/api/orders-rury/');
         expect(res.status).toBe(200);
         expect(res.body.data[0].pricelistVersionId).toBe('v9');
+    });
+
+    it('PUT nie czyści stamp kolumny (update bez pricelistVersionId w danych)', async () => {
+        (prisma.orders_rury_rel.findUnique as jest.Mock).mockResolvedValue(RURY_ROW);
+        const updateMany = jest.fn(async () => ({ count: 1 }));
+        (prisma.$transaction as jest.Mock).mockImplementation(async (fn: any) =>
+            fn({
+                orders_rury_rel: {
+                    findUnique: prisma.orders_rury_rel.findUnique,
+                    updateMany
+                }
+            })
+        );
+        const res = await request(createApp())
+            .put('/api/orders-rury')
+            .send({ data: [{ id: 'or-1', version: 1, offerId: 'off-1', status: 'new' }] });
+        expect(res.status).toBe(200);
+        expect(updateMany).toHaveBeenCalledTimes(1);
+        const written = ((updateMany.mock.calls[0] as any[])[0] as any).data;
+        expect('pricelistVersionId' in written).toBe(false);
     });
 });
 
