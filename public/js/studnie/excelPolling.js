@@ -325,6 +325,43 @@ function _excelRecalcTabWellErrors(tab) {
     } catch (_e3) {}
 }
 
+/* Throttle-guard przeciw glodzeniu debounce: seria szybkich edycji
+   (np. kilka przejsc pod rzad) kasowala timer w kolko i odswiezka z edycji N
+   odpalala sie dopiero po edycji N+1. Pierwsza edycja w serii stawia znacznik
+   czasu; kolejna edycja po >=1200 ms flushuje synchronicznie zamiast
+   przekladac timer w nieskonczonosc. */
+var _excelRefreshFirstAt = 0;
+var _EXCEL_REFRESH_DEBOUNCE_MS = 800;
+var _EXCEL_REFRESH_MAX_WAIT_MS = 1200;
+function _excelFlushDebouncedRefresh() {
+    _excelRefreshTimer = null;
+    /* Tylko odśwież kody h3 — NIE refreshAll (zbyt wolne przy 50+ studniach) */
+    _excelUpdateHeaderProdCodes();
+    /* Przelicz błędy edytowanych studni (kolejka) i odśwież tła */
+    _excelRecalcPendingWellErrors();
+    /* Odśwież główny panel gdy Excel jest otwarty.
+           F2c-A: guard tłumi wewnętrzny render listy w updateSummary
+           (wzór z _excelSyncMainPreview) — jawny render niżej i tak następował.
+           F2c-B: lista pod overlayem jest niewidoczna — odłóż na zamknięcie. */
+    let _prevListGuard = false;
+    try {
+        if (typeof window !== 'undefined' && window._renderingWellsList) _prevListGuard = true;
+        else if (typeof window !== 'undefined') window._renderingWellsList = true;
+        if (typeof window.updateSummary === 'function') window.updateSummary();
+    } catch (_eSum) {
+    } finally {
+        try {
+            if (typeof window !== 'undefined' && !_prevListGuard)
+                window._renderingWellsList = false;
+        } catch (_eSum2) {}
+    }
+    if (typeof window.renderWellDiagram === 'function') window.renderWellDiagram();
+    if (typeof document !== 'undefined' && document.getElementById('excel-table-overlay')) {
+        if (typeof _excelListStale !== 'undefined') _excelListStale = true;
+    } else if (typeof window.renderWellsList === 'function') window.renderWellsList();
+    _excelRefreshFirstAt = 0;
+}
+
 function _excelDebouncedRefresh(editedWIdx) {
     _excelMarkDirty();
     if (typeof editedWIdx === 'number' && !isNaN(editedWIdx)) {
@@ -337,32 +374,26 @@ function _excelDebouncedRefresh(editedWIdx) {
     } else {
         _excelRefreshAllErrorsPending = true;
     }
-    if (_excelRefreshTimer) clearTimeout(_excelRefreshTimer);
-    _excelRefreshTimer = setTimeout(() => {
-        _excelRefreshTimer = null;
-        /* Tylko odśwież kody h3 — NIE refreshAll (zbyt wolne przy 50+ studniach) */
-        _excelUpdateHeaderProdCodes();
-        /* Przelicz błędy edytowanych studni (kolejka) i odśwież tła */
-        _excelRecalcPendingWellErrors();
-        /* Odśwież główny panel gdy Excel jest otwarty.
-           F2c-A: guard tłumi wewnętrzny render listy w updateSummary
-           (wzór z _excelSyncMainPreview) — jawny render niżej i tak następował.
-           F2c-B: lista pod overlayem jest niewidoczna — odłóż na zamknięcie. */
-        let _prevListGuard = false;
-        try {
-            if (typeof window !== 'undefined' && window._renderingWellsList) _prevListGuard = true;
-            else if (typeof window !== 'undefined') window._renderingWellsList = true;
-            if (typeof window.updateSummary === 'function') window.updateSummary();
-        } catch (_eSum) {
-        } finally {
+    var _now = typeof Date !== 'undefined' && Date.now ? Date.now() : new Date().getTime();
+    if (_excelRefreshTimer) {
+        /* Seria trwa dluzej niz MAX_WAIT — flush teraz, nowy timer na reszte. */
+        if (_excelRefreshFirstAt > 0 && _now - _excelRefreshFirstAt >= _EXCEL_REFRESH_MAX_WAIT_MS) {
             try {
-                if (typeof window !== 'undefined' && !_prevListGuard)
-                    window._renderingWellsList = false;
-            } catch (_eSum2) {}
+                clearTimeout(_excelRefreshTimer);
+            } catch (_eClr) {}
+            _excelFlushDebouncedRefresh();
+            _excelRefreshFirstAt = _now;
+            _excelRefreshTimer = setTimeout(
+                _excelFlushDebouncedRefresh,
+                _EXCEL_REFRESH_DEBOUNCE_MS
+            );
+            return;
         }
-        if (typeof window.renderWellDiagram === 'function') window.renderWellDiagram();
-        if (typeof document !== 'undefined' && document.getElementById('excel-table-overlay')) {
-            if (typeof _excelListStale !== 'undefined') _excelListStale = true;
-        } else if (typeof window.renderWellsList === 'function') window.renderWellsList();
-    }, 800);
+        try {
+            clearTimeout(_excelRefreshTimer);
+        } catch (_eClr2) {}
+    } else {
+        _excelRefreshFirstAt = _now;
+    }
+    _excelRefreshTimer = setTimeout(_excelFlushDebouncedRefresh, _EXCEL_REFRESH_DEBOUNCE_MS);
 }

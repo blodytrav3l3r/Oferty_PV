@@ -239,6 +239,21 @@ function excelOnPrzejscieChange(wIdx, trIdx, field, value) {
     _excelUpdateLeftPreview(wIdx);
     if (typeof _excelImmediatePreview === 'function') _excelImmediatePreview(wIdx);
     if (typeof _excelSyncActiveRowErrors === 'function') _excelSyncActiveRowErrors(wIdx);
+    /* Natychmiastowy refresh wiersza (bez czekania na debounce 800 ms):
+       OT-swap z preview (enforceOtRings) mogl podmienic krag<->krag_ot —
+       odswiez liczniki w miejscu + kody h3. Wiersz pobierz swiezo z DOM
+       (preview mogl zrobic re-render). */
+    try {
+        var _przRow =
+            typeof document !== 'undefined'
+                ? document.querySelector('tr[data-widx="' + wIdx + '"]')
+                : null;
+        if (_przRow) {
+            if (typeof _excelRefreshAutoCells === 'function') _excelRefreshAutoCells(wIdx, _przRow);
+            if (typeof _excelRefreshKragCells === 'function') _excelRefreshKragCells(wIdx, _przRow);
+        }
+        if (typeof _excelUpdateHeaderProdCodes === 'function') _excelUpdateHeaderProdCodes();
+    } catch (_ePrzRefresh) {}
     _excelDebouncedRefresh(wIdx);
 }
 
@@ -575,6 +590,71 @@ function _excelRefreshReliefCells(wIdx, row) {
             ? row.children[visIdx].querySelector('input')
             : null;
         if (!input) return;
+        var want = expected ? String(expected) : '';
+        if (input.value !== want) input.value = want;
+    });
+}
+
+/* Odświeżenie komórek kręgów (krag/krag_ot) w miejscu po zmianie przejścia
+   (OT-swap enforceOtRings zamienia typy bez re-rendera). Wzorzec jak
+   _excelRefreshReliefCells powyżej: wartości liczy ten sam
+   _excelCountProductInConfig co render TBODY; mapowanie kolumna->TD przez
+   _excelBuildVisibleSeq. Pomija element aktualnie edytowany (activeElement),
+   żeby nie nadpisać wpisywanej wartości. */
+function _excelRefreshKragCells(wIdx, row) {
+    if (typeof wells === 'undefined' || !wells[wIdx] || !row) return;
+    if (typeof _excelGetVisibleComponentColumns !== 'function') return;
+    if (typeof _excelCountProductInConfig !== 'function') return;
+    if (typeof _excelBuildVisibleSeq !== 'function') return;
+    var well = wells[wIdx];
+    var tab = typeof _excelActiveTab !== 'undefined' ? _excelActiveTab : '1000';
+    var cols = [];
+    try {
+        cols = (_excelGetVisibleComponentColumns(tab, well) || []).filter(function (c) {
+            return (
+                c &&
+                c.type !== 'select' &&
+                c.type !== 'auto' &&
+                (c.componentType === 'krag' || c.componentType === 'krag_ot')
+            );
+        });
+    } catch (_e) {
+        return;
+    }
+    if (cols.length === 0) return;
+    var seq = [];
+    try {
+        seq = _excelBuildVisibleSeq() || [];
+    } catch (_e2) {
+        return;
+    }
+    var activeEl = typeof document !== 'undefined' ? document.activeElement : null;
+    cols.forEach(function (c) {
+        var expected = 0;
+        try {
+            expected = _excelCountProductInConfig(
+                well,
+                c.componentType,
+                c.height,
+                c.productId,
+                c.fromReduction ? c.targetDn || well.redukcjaTargetDN || 1000 : null
+            );
+        } catch (_e3) {
+            return;
+        }
+        var visIdx = -1;
+        for (var i = 0; i < seq.length; i++) {
+            if (seq[i] && seq[i].id === c.id) {
+                visIdx = seq[i].vis;
+                break;
+            }
+        }
+        if (visIdx < 0 || !row.children || !row.children[visIdx]) return;
+        var input = row.children[visIdx].querySelector
+            ? row.children[visIdx].querySelector('input')
+            : null;
+        if (!input) return;
+        if (activeEl && input === activeEl) return;
         var want = expected ? String(expected) : '';
         if (input.value !== want) input.value = want;
     });

@@ -740,6 +740,23 @@ function _excelVirtualRenderBody() {
     const origRender = typeof _excelRenderTable === 'function' ? _excelRenderTable : null;
     if (!origRender) return;
     window._excelRenderTable = function (dn) {
+        /* P0 scroll-preserve: zapisz scroll PRZED header-only renderem.
+           origRender ze stubem tbody ma znikomy scrollHeight, wiec jego
+           wewnetrzny restore klampuje scrollTop do ~0 (skok do wiersza 1).
+           Odtwarzamy po pierwszym RenderBody (sa spacery) + drugi RenderBody
+           na poprawny slice — wzor z _excelAutoSelectForWell. */
+        var _savedTop = null;
+        var _savedLeft = null;
+        try {
+            var _sc0 =
+                typeof document !== 'undefined'
+                    ? document.getElementById('excel-table-container')
+                    : null;
+            if (_sc0) {
+                _savedTop = _sc0.scrollTop;
+                _savedLeft = _sc0.scrollLeft;
+            }
+        } catch (_eSc0) {}
         const origTbody = window._excelRenderTbody;
         let skipped = false;
         if (typeof origTbody === 'function') {
@@ -767,6 +784,19 @@ function _excelVirtualRenderBody() {
         _excelVirtualBuildFiltered();
         _excelVirtualAttach();
         _excelVirtualRenderBody();
+        /* Odtworz scroll zapisany przed wipe (pierwszy RenderBody odbudowal
+           spacery/scrollHeight) i przelicz slice na wlasciwa pozycje. */
+        try {
+            var _sc1 =
+                typeof document !== 'undefined'
+                    ? document.getElementById('excel-table-container')
+                    : null;
+            if (_sc1 && _savedTop !== null) {
+                _sc1.scrollTop = _savedTop;
+                if (_savedLeft !== null) _sc1.scrollLeft = _savedLeft;
+                _excelVirtualRenderBody();
+            }
+        } catch (_eSc1) {}
         /* Restore fokusa zgubionego przez wipe — tylko gdy fokus faktycznie uciekł
            z grida; bez scrollowania (wiersz poza viewportem = odpuść). */
         try {

@@ -306,7 +306,13 @@ function _excelRenderTable(dn) {
                 if (typeof savedFocus.wIdx !== 'undefined' && !isNaN(savedFocus.wIdx)) {
                     currentWellIndex = savedFocus.wIdx;
                 }
-                restoreEl.focus();
+                /* preventScroll: scroll jest juz odtworzony powyzej; natywny
+                   focus sciagnalby widok do komorki (skok przy wierszu ~100). */
+                try {
+                    restoreEl.focus({ preventScroll: true });
+                } catch (_eFs) {
+                    restoreEl.focus();
+                }
                 /* Kursor na koniec zamiast select() — zaznaczenie całej wartości
                    sprawia, że kolejny klawisz ją zastępuje (niemożliwe było
                    wpisanie wielocyfrowej ilości). number/range nie wspiera selection (InvalidStateError). */

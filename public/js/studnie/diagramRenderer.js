@@ -337,14 +337,28 @@ function renderWellDiagram(targetSvg, targetWell) {
                 if (typeof _excelClearResCache === 'function') _excelClearResCache(well);
                 /* Config zmutowany (krag↔krag_ot) — odśwież listę kafelków i Excel */
                 if (typeof renderWellConfig === 'function') renderWellConfig();
-                if (
-                    typeof document !== 'undefined' &&
-                    document.getElementById('excel-table-overlay') &&
-                    typeof _excelRenderTable === 'function' &&
-                    typeof _excelActiveTab !== 'undefined'
-                ) {
-                    _excelRenderTable(_excelActiveTab);
-                }
+                /* Excel: synchroniczny _excelRenderTable w srodku preview
+                   (render w renderze) gubil fokus/scroll edytowanej komorki
+                   (skok do wiersza 1 przy ~100 wierszach). Zamiast tego:
+                   in-place komorek krag/krag_ot w edytowanym wierszu + ciezki
+                   refresh w debounce. Pelny render i tak robi AUTO-solver
+                   (_excelAutoSelectForWell) i _excelDebouncedRefresh. */
+                try {
+                    var _wIdx =
+                        typeof wells !== 'undefined' && Array.isArray(wells)
+                            ? wells.indexOf(well)
+                            : -1;
+                    if (_wIdx >= 0 && typeof document !== 'undefined') {
+                        var _otRow = document.querySelector('tr[data-widx="' + _wIdx + '"]');
+                        if (_otRow) {
+                            if (typeof _excelRefreshAutoCells === 'function')
+                                _excelRefreshAutoCells(_wIdx, _otRow);
+                            if (typeof _excelRefreshKragCells === 'function')
+                                _excelRefreshKragCells(_wIdx, _otRow);
+                        }
+                    }
+                } catch (_eOtRow) {}
+                if (typeof _excelDebouncedRefresh === 'function') _excelDebouncedRefresh();
             }
         } catch (_e) {}
     }
