@@ -870,6 +870,13 @@ function _excelHandlePaste(e) {
                                   };
                         well.name = rawName;
                         well.numer = rawName.replace(/ (PRE|UTH)$/, '');
+                        /* Wklejone studnie domyslnie MANUAL (nie AUTO): createNewWell
+                           stawia autoSelect=true, a _finishPaste odpalalby solver
+                           na kazdej wklejonej studni z kompletnymi rzednymi.
+                           Semantyka jak _excelFinalizePasteAffected (idempotentne). */
+                        well.autoSelect = false;
+                        well.configSource = 'MANUAL';
+                        well.autoLocked = true;
                         if (typeof autoUpdateWellName === 'function') {
                             try {
                                 autoUpdateWellName(well, wells.length);
