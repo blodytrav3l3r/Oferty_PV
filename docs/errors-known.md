@@ -389,4 +389,8 @@
 **Objaw**: Migotanie i opóźnienie po wyborze Rodzaj/Średnica/Właz; poprzedni wpis odświeżał się dopiero po kolejnym; scroll spadał do góry.
 **Fix**: Kontrakt L0/L1/L2 (`excelChangeHandlers.js`): L0 in-place wiersza (auto-komórki, kręgi, relief, opcje Średnicy, kody h3, paint — sync), L1 panele sync (`_excelImmediatePreview`), L2 debounce tylko kolejka błędów + kolory + flaga listy (ciężkie panele tylko gdy `_excelRefreshAllErrorsPending`, czyli operacje strukturalne); full-render wyłącznie strukturalny (tab, kolumny, redukcja, solver AUTO, paste/undo/filtr/sort); preserve scrolla w patchu virtual + `preventScroll` przy restore fokusa; throttle-guard maxWait 1200 ms przeciw głodzeniu debounce.
 **Testy**: `excelRefreshContract.test.ts` (RED-na-starym 3/4); `tests/studnie` 124+ suit bez regresji.
+
+**Dopiska (regresja po fixie)**: usunięcie full-rendera ujawniło, że overlay-selecty nigdy nie odświeżały labelki live — dyspozytor CSP (`cspActions.js`: pętla po slotach z `break`) odpala na event tylko PIERWSZY pasujący slot, więc `$selectLabel` (`data-csp-2`) przy `change` nie leci wcale (pełny render to maskował; select trzeba było przewinąć poza virtual slice, żeby model dorysował wartość).
+**Fix**: `_excelSyncRowSelect` w handlerach modelu (Rodzaj, Średnica, Właz, Kineta) — value + labelka z tekstu wybranej opcji, in-place, bez ruszania fokusa. Dyspozytora nie tykać (globalny blast radius).
+**Testy**: `tests/frontend/excelSelectLiveLabel.test.ts` (prawdziwy DOM jsdom, RED-na-starym 3/3).
 **Testy**: `cspInventory` 14/14, `typecheck:frontend` + ESLint czyste.

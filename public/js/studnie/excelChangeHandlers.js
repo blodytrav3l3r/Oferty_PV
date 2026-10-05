@@ -252,6 +252,21 @@ function excelOnPrzejscieChange(wIdx, trIdx, field, value) {
             if (typeof _excelRefreshAutoCells === 'function') _excelRefreshAutoCells(wIdx, _przRow);
             if (typeof _excelRefreshKragCells === 'function') _excelRefreshKragCells(wIdx, _przRow);
         }
+        /* Baza #58: labelka selecta Średnicy (dyspozytor CSP odpala tylko slot
+           modelu, $selectLabel nigdy nie leci) — inputy rzędna/kąt są natywne. */
+        if (
+            field === 'productId' &&
+            typeof _excelSyncRowSelect === 'function' &&
+            wells[wIdx] &&
+            wells[wIdx].przejscia &&
+            wells[wIdx].przejscia[trIdx]
+        )
+            _excelSyncRowSelect(
+                wIdx,
+                'excelOnPrzejscieChange',
+                [wIdx, trIdx],
+                wells[wIdx].przejscia[trIdx].productId || ''
+            );
         if (typeof _excelUpdateHeaderProdCodes === 'function') _excelUpdateHeaderProdCodes();
     } catch (_ePrzRefresh) {}
     _excelDebouncedRefresh(wIdx);
@@ -270,6 +285,76 @@ function excelOnPrzejscieChange(wIdx, trIdx, field, value) {
  * FULL _excelRenderTable TYLKO na zdarzenia strukturalne: tab DN, +/− kolumna
  * przejścia, redukcja (inne kolumny), solver AUTO (inny config), paste/undo/
  * filtr/sort. EDYCJA KOMÓRKI NIGDY NIE ROBI FULL-RENDERA. */
+
+/* Synchronizacja wartości + widocznej labelki overlay-selecta w edytowanym
+   wierszu (baza #58). Tło: dyspozytor CSP (cspActions.js) odpala tylko PIERWSZY
+   pasujący slot na event (`break`), więc przy `change` działa handler modelu
+   (data-csp) ALBO `$selectLabel` (data-csp-2) — nigdy oba. Labelka nigdy nie
+   odświeżała się live; maskował to pełny re-render. Selekcja po data-csp-args
+   (statyczny prefiks bez "$value"), labelka z tekstu wybranej opcji
+   (jak $selectLabel). No-op poza DOM (virtual slice) i bez document (testy vm).
+   Zwraca true gdy zsynchronizowano. */
+function _excelSyncRowSelect(wIdx, cspName, staticArgs, value) {
+    try {
+        if (typeof document === 'undefined') return false;
+        var row = document.querySelector('tr[data-widx="' + wIdx + '"]');
+        if (!row || !row.querySelectorAll) return false;
+        var sels = /** @type {any} */ (null);
+        try {
+            sels = row.querySelectorAll('select[data-csp="' + cspName + '"]');
+        } catch (_eQ) {
+            return false;
+        }
+        if (!sels || !sels.length) return false;
+        var want = value == null ? '' : String(value);
+        for (var i = 0; i < sels.length; i++) {
+            var sel = sels[i];
+            var raw = sel.getAttribute ? sel.getAttribute('data-csp-args') : null;
+            if (!raw) continue;
+            var arr = null;
+            try {
+                arr = JSON.parse(raw);
+            } catch (_eJ) {
+                continue;
+            }
+            if (!Array.isArray(arr)) continue;
+            var ok = true;
+            for (var k = 0; k < staticArgs.length; k++) {
+                if (arr[k] !== staticArgs[k]) {
+                    ok = false;
+                    break;
+                }
+            }
+            if (!ok) continue;
+            if (sel.value !== want) {
+                var has = false;
+                try {
+                    for (var o = 0; o < sel.options.length; o++) {
+                        if (String(sel.options[o].value) === want) {
+                            has = true;
+                            break;
+                        }
+                    }
+                } catch (_eO) {}
+                try {
+                    sel.value = has ? want : '';
+                } catch (_eV) {}
+            }
+            try {
+                var wrap = sel.closest ? sel.closest('.excel-sel-wrap') : null;
+                var labelEl = wrap ? wrap.querySelector('div') : null;
+                if (labelEl) {
+                    var txt = '—';
+                    if (sel.options && sel.selectedIndex >= 0 && sel.options[sel.selectedIndex])
+                        txt = sel.options[sel.selectedIndex].text;
+                    if (labelEl.textContent !== txt) labelEl.textContent = txt;
+                }
+            } catch (_eL) {}
+            return true;
+        }
+    } catch (_eS) {}
+    return false;
+}
 
 /* Przebudowa opcji selecta Średnica (DN) w miejscu po zmianie Rodzaju —
    bez full-rendera (baza #58). Parytet z TBODY: te same opcje
@@ -429,14 +514,17 @@ function excelOnPrzejscieTypeChange(wIdx, trIdx, value) {
         return;
     }
     /* Baza #58: brak full-rendera — liczba kolumn się nie zmienia, więc wystarczy
-       in-place selecta Średnicy w tym wierszu. currentWellIndex nietknięty
-       (poprzednie -1 gasiło podświetlenie wiersza i psuło kody h3 — bug S7). */
+       in-place selectów w tym wierszu (najpierw labelka Rodzaju, potem opcje
+       Średnicy). currentWellIndex nietknięty (poprzednie -1 gasiło
+       podświetlenie wiersza i psuło kody h3 — bug S7). */
     if (typeof _excelPasteInProgress === 'undefined' || !_excelPasteInProgress) {
         if (typeof recalculateWellErrors === 'function' && wells[wIdx]) {
             try {
                 recalculateWellErrors(wells[wIdx]);
             } catch (_e) {}
         }
+        if (typeof _excelSyncRowSelect === 'function')
+            _excelSyncRowSelect(wIdx, 'excelOnPrzejscieTypeChange', [wIdx, trIdx], value || '');
         if (typeof _excelRefreshTransitionDnOptions === 'function')
             _excelRefreshTransitionDnOptions(wIdx, trIdx);
         if (typeof _excelUpdateHeaderProdCodes === 'function') _excelUpdateHeaderProdCodes();
@@ -481,10 +569,12 @@ function excelOnWlazChange(wIdx, productId) {
             recalculateWellErrors(well);
         } catch (_e) {}
     }
-    /* Baza #58: sam model — select Właza już pokazuje nową wartość w DOM,
-       kolumny stałe; panele robi L1 poniżej. */
+    /* Baza #58: sam model — kolumny stałe; labelkę selecta synchronizuje
+       _excelSyncRowSelect (single-slot dyspozytora), panele robi L1 poniżej. */
     if (typeof _excelMarkManualModel === 'function') _excelMarkManualModel(well);
     else _excelMarkManual(well);
+    if (typeof _excelSyncRowSelect === 'function')
+        _excelSyncRowSelect(wIdx, 'excelOnWlazChange', [wIdx], productId || '');
     _excelUpdateLeftPreview(wIdx);
     if (typeof _excelImmediatePreview === 'function') _excelImmediatePreview(wIdx);
     if (typeof _excelSyncActiveRowErrors === 'function') _excelSyncActiveRowErrors(wIdx);
@@ -905,6 +995,9 @@ function excelOnKinetaChange(wIdx, value) {
     if (!_excelPasteQuiet()) _excelSaveUndoSnapshot(wIdx);
     _excelKinetaModelUpdate(wIdx, value);
     if (_excelPasteQuiet()) return; /* model gotowy; preview/refresh raz w doneCallback */
+    /* Baza #58: labelka selecta Kinety (single-slot dyspozytora) — in-place. */
+    if (typeof _excelSyncRowSelect === 'function')
+        _excelSyncRowSelect(wIdx, 'excelOnKinetaChange', [wIdx], value || '');
     _excelUpdateLeftPreview(wIdx);
     if (typeof _excelImmediatePreview === 'function') _excelImmediatePreview(wIdx);
     if (typeof _excelSyncActiveRowErrors === 'function') _excelSyncActiveRowErrors(wIdx);
