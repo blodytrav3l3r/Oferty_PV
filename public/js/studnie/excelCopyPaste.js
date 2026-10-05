@@ -872,11 +872,13 @@ function _excelHandlePaste(e) {
                         well.numer = rawName.replace(/ (PRE|UTH)$/, '');
                         /* Wklejone studnie domyslnie MANUAL (nie AUTO): createNewWell
                            stawia autoSelect=true, a _finishPaste odpalalby solver
-                           na kazdej wklejonej studni z kompletnymi rzednymi.
-                           Semantyka jak _excelFinalizePasteAffected (idempotentne). */
-                        well.autoSelect = false;
-                        well.configSource = 'MANUAL';
-                        well.autoLocked = true;
+                           na kazdej wklejonej studni z kompletnymi rzednymi. */
+                        if (typeof _excelDefaultManual === 'function') _excelDefaultManual(well);
+                        else {
+                            well.autoSelect = false;
+                            well.configSource = 'MANUAL';
+                            well.autoLocked = true;
+                        }
                         if (typeof autoUpdateWellName === 'function') {
                             try {
                                 autoUpdateWellName(well, wells.length);

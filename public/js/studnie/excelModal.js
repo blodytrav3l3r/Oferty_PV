@@ -477,10 +477,21 @@ function openExcelTableModal() {
     _excelStopPolling();
     _excelStartPolling();
     _excelUpdateWellCount();
-    /* Migracja autoSelect - wszystkie istniejace studnie dostaja default true */
+    /* Migracja autoSelect - studnie bez jawnej flagi dostaja default MANUAL,
+       chyba że config pochodzi z solvera (AUTO*) — wtedy AUTO jak dotąd
+       (spójne z _excelSyncAutoManualUI w excelPolling.js). */
     if (typeof wells !== 'undefined') {
         wells.forEach(function (w) {
-            if (w && typeof w.autoSelect === 'undefined') w.autoSelect = true;
+            if (w && typeof w.autoSelect === 'undefined') {
+                var _src = w.configSource;
+                if (_src === 'AUTO' || _src === 'AUTO_JS' || _src === 'AUTO_AI') {
+                    w.autoSelect = true;
+                } else {
+                    w.autoSelect = false;
+                    if (typeof w.configSource === 'undefined') w.configSource = 'MANUAL';
+                    if (typeof w.autoLocked === 'undefined') w.autoLocked = true;
+                }
+            }
         });
     }
 

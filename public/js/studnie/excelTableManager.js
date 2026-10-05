@@ -573,6 +573,8 @@ function _excelPasteCreateWells(text) {
                               redukcjaMinH: 2500
                           };
                 well.name = name; /* pozwól na duplikaty */
+                /* Domyślnie MANUAL (jak surplus w excelCopyPaste.js). */
+                if (typeof _excelDefaultManual === 'function') _excelDefaultManual(well);
                 wells.push(well);
                 _addedIdsLines.push(well.id);
                 _excelAutoSetWlaz(well);
@@ -668,6 +670,8 @@ function _excelPasteCreateWells(text) {
                   };
         well.name = name;
         well.numer = String(name).replace(/ (PRE|UTH)$/, '');
+        /* Domyślnie MANUAL (jak surplus w excelCopyPaste.js). */
+        if (typeof _excelDefaultManual === 'function') _excelDefaultManual(well);
         if (rzw !== null && !isNaN(rzw)) well.rzednaWlazu = rzw;
         if (rzd !== null && !isNaN(rzd)) well.rzednaDna = rzd;
         // przejścia z parsowania

@@ -277,6 +277,17 @@ function _excelPrzejsciaAvailDn(cat, refDn) {
             return parseFloat(a.dn) - parseFloat(b.dn);
         });
 }
+/* Domyślny tryb MANUAL dla studni tworzonych w Excelu — auto-dobór tylko na
+   żądanie (przycisk run-auto / bulk). Ta sama trójka flag co
+   _excelFinalizePasteAffected (idempotentne). Nie ruszać globalnego defaultu
+   createNewWell (konfigurator zostaje po staremu). */
+function _excelDefaultManual(well) {
+    if (!well) return well;
+    well.autoSelect = false;
+    well.configSource = 'MANUAL';
+    well.autoLocked = true;
+    return well;
+}
 /* Etykieta DN jak w renderze TBODY (łamane DN z '/' bez prefiksu). */
 function _excelPrzejsciaDnLabel(p) {
     if (!p) return '';

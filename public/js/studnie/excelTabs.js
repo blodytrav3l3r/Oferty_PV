@@ -136,6 +136,9 @@ function excelCreateFromEmpty() {
 
         if (rzw !== null) well.rzednaWlazu = rzw;
         if (rzd !== null) well.rzednaDna = rzd;
+        /* Domyślnie MANUAL — auto-dobór tylko na żądanie (run-auto).
+           (Poprzedni setTimeout z _excelAutoSelectForWell usunięty.) */
+        if (typeof _excelDefaultManual === 'function') _excelDefaultManual(well);
 
         _excelSaveUndoSnapshot();
         _excelMarkDirty();
@@ -150,11 +153,6 @@ function excelCreateFromEmpty() {
         _excelUpdateWellCount();
         const newWIdx = wells.length - 1;
         _excelDebouncedRefresh(newWIdx);
-        if (_excelAutoSelectEnabled && rzw !== null && rzd !== null && rzw > rzd) {
-            setTimeout(function () {
-                _excelAutoSelectForWell(newWIdx);
-            }, 200);
-        }
         showToast('Dodano: ' + autoName, 'success');
     } finally {
         setTimeout(() => {
