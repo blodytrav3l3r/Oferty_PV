@@ -6,6 +6,7 @@
 - Commit: `git add -A` → `git commit -m "typ(scope): opis"` → `git push`
 - Przed commitem: `npm run validate` (typecheck backend+frontend, lint backend+frontend, testy)
 - Po modyfikacji kodu frontendowego: `npm run format`
+- Po zmianie CSS testowanej w prod (`start.bat`, `NODE_ENV=production`): zrestartuj serwer (prestart regeneruje ignorowany w gicie `public/css/min/`, który prod serwuje zamiast źródeł) i zrób twardy refresh (Ctrl+Shift+R) — `?v=` zmienia tylko release, więc zwykłe F5 poda stare pliki z cache.
 - **OBOWIĄZKOWO przed każdym commitem i pushem**: `npm run version:check` — waliduje spójność wersji we WSZYSTKICH źródłach (VERSION, package.json, CHANGELOG.md, *.bat, HTML `?v=`, oraz markery `**Wersja:**`/`> Wersja:`/JSON w `README.md` i `docs/*.md`). **Bez wyjątków** — także przy samych poprawkach dokumentacji. Rozjazd = blokada (pre-push).
 - **Uwaga:** Husky pre-commit hook jest aktywny (python `scripts/excel-validator.py` + lint-staged). Gdyby zablokował commit (np. błąd walidatora Excel), obejście:
     ```bash
