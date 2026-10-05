@@ -125,6 +125,11 @@ function goToPhase(step) {
             if (order) updateRuryOrderSummary(order);
         }
     }
+
+    // Badge cennika wraca do wizard-indicator przy każdej zmianie kroku.
+    if (window.offerPricelistBanner && typeof window.offerPricelistBanner.reattach === 'function') {
+        window.offerPricelistBanner.reattach('rury');
+    }
 }
 
 window.goToPhase = goToPhase;

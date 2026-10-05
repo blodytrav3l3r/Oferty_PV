@@ -75,6 +75,10 @@
     /* Pasek kroków — jeden per edytor, widoczny w każdym kroku. */
     var WIZARD_ANCHOR = 'wizard-indicator';
 
+    /* Ostatnia pieczątka per typ — reattach() w nawigacji wizarda (kroki 1-5)
+     * przemalowuje badge bez znajomości oferty/zamówienia. */
+    var lastStamp = {};
+
     function isShown(el) {
         if (!el || typeof el.getAttribute !== 'function') return true;
         var style = typeof el.getAttribute === 'function' ? el.getAttribute('style') || '' : '';
@@ -119,6 +123,7 @@
 
     function hideBadge(type) {
         if (typeof document === 'undefined' || !document.getElementById) return;
+        if (Object.prototype.hasOwnProperty.call(lastStamp, type)) delete lastStamp[type];
         var el = document.getElementById(badgeId(type));
         if (el && typeof el.remove === 'function') el.remove();
     }
@@ -142,13 +147,15 @@
             el.id = badgeId(type);
             el.className = 'badge-info text-nowrap pv-offer-badge';
             el.setAttribute('data-pv-offer-badge', type);
-            if (host.mode === 'append') {
-                host.node.appendChild(el);
-            } else if (host.mode === 'sibling') {
-                host.node.parentElement.insertBefore(el, host.node.nextSibling || null);
-            } else {
-                host.node.after(el);
-            }
+        }
+        // Relokacja: badge namalowany w ukrytej sekcji oferty wraca do
+        // widocznego wizard-indicator przy wejściu w builder (kroki 1-5).
+        if (host.mode === 'append') {
+            host.node.appendChild(el);
+        } else if (host.mode === 'sibling') {
+            host.node.parentElement.insertBefore(el, host.node.nextSibling || null);
+        } else {
+            host.node.after(el);
         }
         el.setAttribute('title', title || 'Wersja cennika');
         el.innerHTML = '<i data-lucide="tag"></i><span>' + esc(text) + '</span>';
@@ -168,6 +175,7 @@
         var pv = window.pricelistVersions;
         if (!pv || typeof pv.fetchLabels !== 'function') return false;
         var stampId = (opts && opts.stampId) || null;
+        lastStamp[type] = stampId;
         var labels;
         try {
             labels = await pv.fetchLabels(type);
@@ -314,9 +322,19 @@
         return true;
     }
 
+    /* Ponowne wpięcie badge po wejściu w builder / zmianie kroku wizarda.
+     * Bez parametrów oferty — jedzie na ostatniej pieczątce (null = aktywny
+     * dla nowej oferty). Fire-and-forget z nawigacji. */
+    function reattachBadge(type) {
+        if (!type || typeof document === 'undefined') return Promise.resolve(false);
+        var stamp = Object.prototype.hasOwnProperty.call(lastStamp, type) ? lastStamp[type] : null;
+        return refreshBadge({ type: type, stampId: stamp });
+    }
+
     window.offerPricelistBanner = {
         refresh: refreshBanner,
         hide: hideBanner,
-        badge: refreshBadge
+        badge: refreshBadge,
+        reattach: reattachBadge
     };
 })();

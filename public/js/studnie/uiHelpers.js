@@ -1,5 +1,12 @@
 // @ts-check
 /* ===== KREATOR ===== */
+/* Badge cennika wraca do wizard-indicator przy każdej zmianie kroku. */
+function reattachStudniePricelistBadge() {
+    if (window.offerPricelistBanner && typeof window.offerPricelistBanner.reattach === 'function') {
+        window.offerPricelistBanner.reattach('studnie');
+    }
+}
+
 function goToWizardStep(step) {
     if (typeof orderEditMode !== 'undefined' && orderEditMode) {
         if (step <= 2) {
@@ -15,6 +22,7 @@ function goToWizardStep(step) {
             showSection('builder');
             if (step === 1) updateStep1NextState();
             if (step === 2) validateWizardStep2();
+            reattachStudniePricelistBadge();
             return;
         }
         if (step === 3) {
@@ -60,12 +68,14 @@ function goToWizardStep(step) {
             initKartaBudowyStep4();
         }
 
+        reattachStudniePricelistBadge();
         return;
     }
 
     if (step === 5) {
         // Krok 4.2 (Zamówienie) — wejdź w tryb edycji zamówienia w builderze
         enterWizardOrderMode();
+        reattachStudniePricelistBadge();
         return;
     }
 
@@ -81,6 +91,7 @@ function goToWizardStep(step) {
     if (step === 1) updateStep1NextState();
     if (step === 3) updateWizardSummaryBar();
     if (step === 2) validateWizardStep2();
+    reattachStudniePricelistBadge();
 }
 
 /**

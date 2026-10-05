@@ -505,6 +505,73 @@ describe('frontend vm: offerPricelistBanner.badge (stały badge w nagłówku)', 
         );
     });
 
+    test('badge wraca do wizard-indicator po wejściu w builder (relokacja)', async () => {
+        const { sandbox, document } = loadBadge({
+            labels: { v2: ACTIVE },
+            labelsByIds: { v1: STAMP },
+            docOpts: { noWizard: true }
+        });
+        await vm.runInContext(
+            'window.offerPricelistBanner.badge({type:"studnie",stampId:"v1",anchorId:"offer-form-title-studnie"})',
+            sandbox
+        );
+        const badge = document.badgeEls['pv-offer-badge-studnie'];
+        expect(document.inserted).toContain(badge);
+        // Builder wstaje (partial async): wizard-indicator dokładany później.
+        const wiz = {
+            id: 'wizard-indicator',
+            children: [],
+            appendChild(c) {
+                if (!this.children.includes(c)) this.children.push(c);
+            },
+            getAttribute: () => ''
+        };
+        const orig = document.getElementById.bind(document);
+        document.getElementById = (id) => (id === 'wizard-indicator' ? wiz : orig(id));
+        await vm.runInContext(
+            'window.offerPricelistBanner.badge({type:"studnie",stampId:"v1",anchorId:"offer-form-title-studnie"})',
+            sandbox
+        );
+        expect(wiz.children).toContain(badge);
+        expect(badge.textContent).toBe('Cennik: v1-20260101 · Studnie');
+    });
+
+    test('reattach() przemalowuje badge na ostatniej pieczątce (nawigacja kroków)', async () => {
+        const { sandbox, document } = loadBadge({
+            labels: { v2: ACTIVE },
+            labelsByIds: { v1: STAMP }
+        });
+        expect(typeof sandbox.window.offerPricelistBanner.reattach).toBe('function');
+        await vm.runInContext(
+            'window.offerPricelistBanner.badge({type:"studnie",stampId:"v1"})',
+            sandbox
+        );
+        const calls = sandbox.window.pricelistVersions.fetchLabels.mock.calls.length;
+        const visible = await vm.runInContext(
+            'window.offerPricelistBanner.reattach("studnie")',
+            sandbox
+        );
+        expect(visible).toBe(true);
+        expect(sandbox.window.pricelistVersions.fetchLabels.mock.calls.length).toBeGreaterThan(
+            calls
+        );
+        expect(document.badgeEls['pv-offer-badge-studnie'].textContent).toBe(
+            'Cennik: v1-20260101 · Studnie'
+        );
+    });
+
+    test('reattach() bez historii → badge aktywnego (nowa oferta w builderze)', async () => {
+        const { sandbox, document } = loadBadge({ labels: { v2: ACTIVE } });
+        const visible = await vm.runInContext(
+            'window.offerPricelistBanner.reattach("rury")',
+            sandbox
+        );
+        expect(visible).toBe(true);
+        expect(document.badgeEls['pv-offer-badge-rury'].textContent).toBe(
+            'Cennik: v2-20260102 (aktywny) · Rury'
+        );
+    });
+
     test('badge bez fetchy na piechotę, bez onclick i bez body-append', () => {
         const badgeSrc = BANNER_SRC.slice(BANNER_SRC.indexOf('STAŁY BADGE'));
         expect(badgeSrc).not.toContain('fetch(');
@@ -541,6 +608,15 @@ describe('frontend static: wpięcie badge w edytory', () => {
         expect(studnieMgr).toContain('stampId: window.pendingStudnieStampId || null');
         expect(studnieSave).toContain('stampId: offerDoc.pricelistVersionId || null');
         expect(studnieSave).toContain('stampId: fresh.pricelistVersionId || null');
+    });
+    test('reattach w nawigacji wizarda (rury + studnie, kroki 1-5)', () => {
+        const ruryWizard = fs.readFileSync(path.join(ROOT, 'public/js/rury/wizard.js'), 'utf8');
+        const studnieNav = fs.readFileSync(
+            path.join(ROOT, 'public/js/studnie/uiHelpers.js'),
+            'utf8'
+        );
+        expect(ruryWizard).toContain("offerPricelistBanner.reattach('rury')");
+        expect(studnieNav).toContain("offerPricelistBanner.reattach('studnie')");
     });
     test('badge w edytorach zamówień (rury + studnie)', () => {
         const ruryOrder = fs.readFileSync(
