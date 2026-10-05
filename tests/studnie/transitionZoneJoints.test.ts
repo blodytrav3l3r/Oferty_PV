@@ -226,9 +226,12 @@ describe('P2: excelOnPrzejscieChange kontrakt AUTO/MANUAL', () => {
         const h1 = loadHandlers();
         h1.wells.push(autoWell());
         h1.context.excelOnPrzejscieTypeChange(0, 0, 'inne');
-        // productId wyczyszczone (kategoria nie pasuje) → brak solve, jest render
+        // productId wyczyszczone (kategoria nie pasuje) → brak solve;
+        // baza #58: brak full-rendera (in-place selecta Średnicy zamiast rendera)
         expect(h1.calls.auto).toEqual([]);
-        expect(h1.calls.renders).toBe(1);
+        expect(h1.calls.renders).toBe(0);
+        expect(h1.wells[0].przejscia[0].tempCategory).toBe('inne');
+        expect(h1.wells[0].przejscia[0].productId).toBe('');
 
         const h2 = loadHandlers();
         const w2 = autoWell();

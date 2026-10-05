@@ -257,6 +257,137 @@ function excelOnPrzejscieChange(wIdx, trIdx, field, value) {
     _excelDebouncedRefresh(wIdx);
 }
 
+/* ===== KONTRAKT REFRESHA EXCELA (baza #58) =====
+ * L0 sync / wiersz: _excelRefreshAutoCells + _excelRefreshKragCells +
+ *   _excelRefreshReliefCells + _excelRefreshTransitionDnOptions + kody h3 +
+ *   paint statusu (rAF) — natychmiast, bez czekania.
+ * L1 sync / panele: _excelUpdateLeftPreview + _excelImmediatePreview
+ *   (kafelki + diagram) — na każdy change, natychmiast.
+ * L2 async / kolejka: _excelDebouncedRefresh (800 ms, maxWait 1200 ms) —
+ *   TYLKO kolejka błędów + kolory duplikatów + flaga listy; panele pomija,
+ *   bo L1 już je policzył (ciężkie robi gdy _excelRefreshAllErrorsPending,
+ *   czyli operacje strukturalne).
+ * FULL _excelRenderTable TYLKO na zdarzenia strukturalne: tab DN, +/− kolumna
+ * przejścia, redukcja (inne kolumny), solver AUTO (inny config), paste/undo/
+ * filtr/sort. EDYCJA KOMÓRKI NIGDY NIE ROBI FULL-RENDERA. */
+
+/* Przebudowa opcji selecta Średnica (DN) w miejscu po zmianie Rodzaju —
+   bez full-rendera (baza #58). Parytet z TBODY: te same opcje
+   ([['', '—'], ...availDns], label 'DN x' lub DN z '/'), ten sam SSoT
+   (_excelPrzejsciaAvailDn). Nie rusza fokusa ani scrolla; no-op gdy wiersz
+   poza DOM (virtual slice) — model jest źródłem prawdy, render dorysuje. */
+function _excelRefreshTransitionDnOptions(wIdx, trIdx) {
+    try {
+        if (typeof wells === 'undefined' || !wells[wIdx]) return;
+        if (typeof document === 'undefined') return;
+        var well = wells[wIdx];
+        var prz = well.przejscia ? well.przejscia[trIdx] : null;
+        if (!prz) return;
+        var tab = typeof _excelActiveTab !== 'undefined' ? _excelActiveTab : '1000';
+        var maxTr =
+            typeof _excelMaxTransitions !== 'undefined' && _excelMaxTransitions[tab]
+                ? _excelMaxTransitions[tab]
+                : 1;
+        if (trIdx < 0 || trIdx >= maxTr) return;
+        var row = document.querySelector('tr[data-widx="' + wIdx + '"]');
+        if (!row) return;
+        var logical = 7 + trIdx * 4 + 3;
+        var cell = null;
+        try {
+            if (typeof _excelGetCellByLogical === 'function')
+                cell = _excelGetCellByLogical(row, logical);
+        } catch (_eCell) {}
+        if (!cell && row.children) cell = row.children[logical] || null;
+        if (!cell || !cell.querySelector) return;
+        var wrap = cell.querySelector('.excel-sel-wrap');
+        if (!wrap) return;
+        var sel = wrap.querySelector('select');
+        if (!sel) return;
+        var prod = null;
+        try {
+            prod =
+                typeof getStudnieProductById === 'function'
+                    ? getStudnieProductById(prz.productId)
+                    : (typeof studnieProducts !== 'undefined' ? studnieProducts : []).find(
+                          function (p) {
+                              return p.id === prz.productId;
+                          }
+                      );
+        } catch (_eProd) {}
+        var activeCat = prod ? prod.category : prz.tempCategory || '';
+        var refDn = null;
+        try {
+            if (typeof _excelPrzejsciaRefDn === 'function') refDn = _excelPrzejsciaRefDn(tab);
+        } catch (_eRef) {}
+        var avail = [];
+        try {
+            if (typeof _excelPrzejsciaAvailDn === 'function')
+                avail = _excelPrzejsciaAvailDn(activeCat, refDn) || [];
+        } catch (_eAvail) {}
+        var esc =
+            typeof escapeHtml === 'function'
+                ? escapeHtml
+                : function (s) {
+                      return String(s);
+                  };
+        var escA =
+            typeof escapeHtmlAttr === 'function'
+                ? escapeHtmlAttr
+                : function (s) {
+                      return String(s == null ? '' : s).replace(/"/g, '&quot;');
+                  };
+        var labelFor = function (pid) {
+            if (!pid) return '—';
+            for (var i = 0; i < avail.length; i++) {
+                if (avail[i].id !== pid) continue;
+                var _lbl = null;
+                try {
+                    _lbl =
+                        typeof _excelPrzejsciaDnLabel === 'function'
+                            ? _excelPrzejsciaDnLabel(avail[i])
+                            : 'DN ' + avail[i].dn;
+                } catch (_eLbl) {
+                    _lbl = 'DN ' + avail[i].dn;
+                }
+                return _lbl;
+            }
+            return '—';
+        };
+        var html = '<option value="">—</option>';
+        for (var k = 0; k < avail.length; k++) {
+            var _id = avail[k].id || '';
+            var _lb = null;
+            try {
+                _lb =
+                    typeof _excelPrzejsciaDnLabel === 'function'
+                        ? _excelPrzejsciaDnLabel(avail[k])
+                        : 'DN ' + avail[k].dn;
+            } catch (_eLb) {
+                _lb = 'DN ' + avail[k].dn;
+            }
+            html +=
+                '<option value="' +
+                escA(_id) +
+                '"' +
+                (_id === prz.productId ? ' selected' : '') +
+                '>' +
+                esc(_lb) +
+                '</option>';
+        }
+        sel.innerHTML = html;
+        if (sel.value !== (prz.productId || '')) {
+            try {
+                sel.value = prz.productId || '';
+            } catch (_eVal) {}
+        }
+        var labelEl = wrap.querySelector('div');
+        if (labelEl) {
+            var _txt = labelFor(prz.productId);
+            if (labelEl.textContent !== _txt) labelEl.textContent = _txt;
+        }
+    } catch (_eDn) {}
+}
+
 function excelOnPrzejscieTypeChange(wIdx, trIdx, value) {
     if (!_excelGuardWellLocked(wIdx)) return;
     if (typeof _excelPasteInProgress === 'undefined' || !_excelPasteInProgress)
@@ -297,20 +428,17 @@ function excelOnPrzejscieTypeChange(wIdx, trIdx, value) {
         _excelAutoSelectForWell(wIdx);
         return;
     }
-    const savedIdx = typeof currentWellIndex !== 'undefined' ? currentWellIndex : -1;
-    currentWellIndex = -1;
+    /* Baza #58: brak full-rendera — liczba kolumn się nie zmienia, więc wystarczy
+       in-place selecta Średnicy w tym wierszu. currentWellIndex nietknięty
+       (poprzednie -1 gasiło podświetlenie wiersza i psuło kody h3 — bug S7). */
     if (typeof _excelPasteInProgress === 'undefined' || !_excelPasteInProgress) {
         if (typeof recalculateWellErrors === 'function' && wells[wIdx]) {
             try {
                 recalculateWellErrors(wells[wIdx]);
             } catch (_e) {}
         }
-        _excelRenderTable(_excelActiveTab);
-    }
-    /* Przywróć zaznaczenie — inaczej kody produktów w h3 zostają w fallbacku
-       i aktywny wiersz traci podświetlenie (bug S7). */
-    if (savedIdx >= 0) {
-        currentWellIndex = savedIdx;
+        if (typeof _excelRefreshTransitionDnOptions === 'function')
+            _excelRefreshTransitionDnOptions(wIdx, trIdx);
         if (typeof _excelUpdateHeaderProdCodes === 'function') _excelUpdateHeaderProdCodes();
     }
     if (typeof _excelImmediatePreview === 'function' && !_excelPasteQuiet())
@@ -353,20 +481,32 @@ function excelOnWlazChange(wIdx, productId) {
             recalculateWellErrors(well);
         } catch (_e) {}
     }
-    _excelMarkManual(well);
+    /* Baza #58: sam model — select Właza już pokazuje nową wartość w DOM,
+       kolumny stałe; panele robi L1 poniżej. */
+    if (typeof _excelMarkManualModel === 'function') _excelMarkManualModel(well);
+    else _excelMarkManual(well);
     _excelUpdateLeftPreview(wIdx);
     if (typeof _excelImmediatePreview === 'function') _excelImmediatePreview(wIdx);
     if (typeof _excelSyncActiveRowErrors === 'function') _excelSyncActiveRowErrors(wIdx);
     _excelDebouncedRefresh(wIdx);
 }
 
-function _excelMarkManual(well) {
+/* Modelowa połowa _excelMarkManual: same flagi + sync przycisków, ZERO renderów.
+   Ścieżki edycji komórki (Właz, kręgi) nie zmieniają struktury kolumn, więc
+   full-render jest tam czystym kosztem (baza #58) — ciężkie panele robi L1. */
+function _excelMarkManualModel(well) {
     if (!well) return;
     well.autoLocked = true;
     well.configSource = 'MANUAL';
     well.autoSelect = false;
     if (typeof _excelSyncAutoManualUI === 'function') _excelSyncAutoManualUI();
-    if (typeof window.updateAutoLockUI === 'function') window.updateAutoLockUI();
+    try {
+        if (typeof window !== 'undefined' && typeof window.updateAutoLockUI === 'function')
+            window.updateAutoLockUI();
+    } catch (_eLockUI) {}
+}
+function _excelMarkManual(well) {
+    _excelMarkManualModel(well);
     if (typeof _excelRenderTable === 'function') _excelRenderTable(_excelActiveTab);
     if (typeof window.updateSummary === 'function') window.updateSummary();
     if (typeof window.renderWellDiagram === 'function') window.renderWellDiagram();
@@ -691,23 +831,28 @@ function excelOnCompChange(wIdx, componentType, height, value, productId, redDn)
         componentType === 'plyta_najazdowa' ||
         componentType === 'plyta_zamykajaca' ||
         componentType === 'pierscien_odciazajacy';
-    /* Pełny re-render TYLKO po realnej zamianie krag <-> krag_ot.
-       Para relief aktualizowana jest w miejscu (_excelRefreshReliefCells) —
-       render przy wpisywaniu (oninput) wyrzucał fokus i niebieskie
-       zaznaczenie nawigacji strzałkami. */
+    /* Baza #58: brak full-rendera także po zamianie krag <-> krag_ot —
+       kolumny kręgów są stałe, zmieniają się tylko liczniki (in-place jak
+       para relief). Flagi MANUAL stawia sam _excelCompModelUpdate. */
     if ((componentType === 'krag' || componentType === 'krag_ot') && modelMutated) {
         if (typeof recalculateWellErrors === 'function' && well) {
             try {
                 recalculateWellErrors(well);
             } catch (_e) {}
         }
-        _excelMarkManual(well);
+        if (typeof _excelMarkManualModel === 'function') _excelMarkManualModel(well);
+        else _excelMarkManual(well);
     }
 
     const row = document.querySelector(`tr[data-widx="${wIdx}"]`);
     if (row) {
         _excelRefreshAutoCells(wIdx, row);
         if (isRelief && modelMutated) _excelRefreshReliefCells(wIdx, row);
+        if (
+            (componentType === 'krag' || componentType === 'krag_ot') &&
+            typeof _excelRefreshKragCells === 'function'
+        )
+            _excelRefreshKragCells(wIdx, row);
     }
     if (typeof _excelImmediatePreview === 'function') _excelImmediatePreview(wIdx);
     else _excelUpdateLeftPreview(wIdx);

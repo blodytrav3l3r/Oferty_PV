@@ -236,6 +236,53 @@ function _excelCalcUszczelkaCount(well) {
     return count;
 }
 
+/* ===== SSoT: DN przejść per kategoria (render TBODY + in-place refresh) ===== */
+/* RefDn jak w renderze: DN pierwszej studni aktywnego taba, fallback do taba.
+   (Baza #58: edycja Rodzaju nie robi full-rendera — opcje Średnicy liczy to samo źródło.) */
+function _excelPrzejsciaRefDn(tab) {
+    try {
+        if (typeof wells !== 'undefined' && Array.isArray(wells)) {
+            for (var i = 0; i < wells.length; i++) {
+                if (
+                    wells[i] &&
+                    typeof _excelWellMatchesTab === 'function' &&
+                    _excelWellMatchesTab(wells[i], tab)
+                )
+                    return wells[i].dn;
+            }
+        }
+    } catch (_e) {}
+    return tab === 'styczne' ? 'styczna' : tab;
+}
+/* Dostępne DN przejść danej kategorii — parytet z _przAvail w renderze TBODY
+   (componentType + active + limit getMaxPipeDn, sort numerycznie; rendera nie
+   tykać — protected zone). Bez filtra visiblePrzejsciaTypes (render też go
+   tu nie stosuje). Przy zmianie reguły w TBODY zaktualizować i ten helper. */
+function _excelPrzejsciaAvailDn(cat, refDn) {
+    if (!cat || typeof studnieProducts === 'undefined') return [];
+    var maxDn = null;
+    try {
+        if (typeof getMaxPipeDn === 'function') maxDn = getMaxPipeDn(refDn);
+    } catch (_e2) {}
+    return studnieProducts
+        .filter(function (p) {
+            return (
+                p.componentType === 'przejscie' &&
+                p.active !== 0 &&
+                (maxDn === null || parseInt(p.dn) <= maxDn) &&
+                p.category === cat
+            );
+        })
+        .sort(function (a, b) {
+            return parseFloat(a.dn) - parseFloat(b.dn);
+        });
+}
+/* Etykieta DN jak w renderze TBODY (łamane DN z '/' bez prefiksu). */
+function _excelPrzejsciaDnLabel(p) {
+    if (!p) return '';
+    return typeof p.dn === 'string' && p.dn.indexOf('/') >= 0 ? p.dn : 'DN ' + p.dn;
+}
+
 function _excelCountProductInConfig(well, componentType, height, productId, targetDn) {
     let count = 0;
     let filterDn = targetDn !== undefined && targetDn !== null ? targetDn : well.dn;
