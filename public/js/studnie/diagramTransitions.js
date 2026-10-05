@@ -121,16 +121,33 @@ function drawTransitions(well, canvas, dimLinesY) {
 }
 
 /**
- * Formatuje podniesienie dolnej krawędzi przejścia nad dnem studni (metry).
+ * Formatuje podniesienie dolnej krawędzi przejścia nad dnem studni
+ * w jednostce wybranej w „Jednostki wysokości” (mm/cm/m + precyzja).
  * Zawsze ze znakiem: dodatnie `+1,00`, ujemne `-0,20` (decyzja użytkownika).
  * Zwraca '' gdy brak danych — wtedy etykieta to sam `DN xxx`.
  */
 function formatTransitionLift(liftM) {
     const v = typeof liftM === 'number' ? liftM : parseFloat(liftM);
     if (!isFinite(v)) return '';
-    const rounded = Math.round(v * 100) / 100;
+    let unit = 'm';
+    try {
+        if (typeof getDisplayUnit === 'function') unit = getDisplayUnit() || 'm';
+    } catch (_e) {}
+    let dec = unit === 'mm' ? 0 : 2;
+    try {
+        if (typeof getDisplayDecimals === 'function') dec = getDisplayDecimals(unit);
+    } catch (_e) {}
+    if (unit === 'mm') dec = 0;
+    const mm = v * 1000;
+    const conv = unit === 'mm' ? mm : unit === 'cm' ? mm / 10 : mm / 1000;
+    const factor = Math.pow(10, dec);
+    const rounded = Math.round(conv * factor) / factor;
     const sign = rounded < 0 ? '-' : '+';
-    return sign + Math.abs(rounded).toFixed(2).replace('.', ',');
+    const body =
+        unit === 'mm'
+            ? String(Math.abs(Math.round(conv)))
+            : Math.abs(rounded).toFixed(dec).replace('.', ',');
+    return sign + body;
 }
 
 /**
@@ -282,3 +299,4 @@ function drawTransitionGuideLine(it) {
 
 /* ===== Rejestracja globali ===== */
 window.drawTransitions = drawTransitions;
+window.formatTransitionLift = formatTransitionLift;
