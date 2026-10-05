@@ -618,6 +618,10 @@ function _excelHandleKeydown(e) {
         return;
     }
 
+    /* Ctrl+Shift+H obsługuje _excelGlobalHotkeys (document+capture, excelModal.js):
+       keydown kontenera ani overlay-bubble nie widzą fokusu spoza tabeli/modala,
+       a dublowanie gałęzi przełączyłoby sekcję 2×. */
+
     /* Ctrl+Shift+A = auto-dobór elementów dla aktywnego wiersza (jak przycisk Run) */
     if (isCtrl && e.shiftKey && (e.key === 'a' || e.key === 'A')) {
         const activeRow = document.activeElement
@@ -645,7 +649,7 @@ function _excelHandleKeydown(e) {
             /* wIdx z atrybutu — DOM order może się różnić (filtrowanie, wstawianie) */
             const wIdx = parseInt(row.getAttribute('data-widx'), 10);
             if (isNaN(wIdx)) return;
-            const tds = row.querySelectorAll('td');
+            const tds = row.querySelectorAll('td:not(.excel-tr-hidden)');
             tds.forEach(function (td, cIdx) {
                 if (cIdx < 4) return; /* pomiń checkbox, A/M, Lp + Nr Studni (nazwa nigdy) */
                 _excelSelectedCells.push({ wIdx: wIdx, colIdx: cIdx });

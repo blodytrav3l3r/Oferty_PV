@@ -237,7 +237,7 @@ function renderZleceniaWellConfig() {
         avr: { bg: 'var(--cmp-avr)', label: '<i data-lucide="settings"></i>' },
         plyta_redukcyjna: { bg: 'var(--cmp-plyta-redukcyjna)', label: '⬛' },
         krag: { bg: 'var(--cmp-krag)', label: '<i data-lucide="square"></i>' },
-        krag_ot: { bg: 'var(--cmp-krag)', label: '<i data-lucide="square"></i>' },
+        krag_ot: { bg: 'var(--purple)', label: '<i data-lucide="square"></i>' },
         dennica: { bg: 'var(--cmp-dennica)', label: '<i data-lucide="square"></i>' },
         kineta: { bg: 'var(--cmp-kineta)', label: '<i data-lucide="plug"></i>' }
     };

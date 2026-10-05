@@ -23,7 +23,7 @@ const SVG_COLORS = {
     konus: 'var(--cmp-konus)',
     avr: 'var(--cmp-avr)',
     krag: 'var(--cmp-krag)',
-    krag_ot: 'var(--cmp-krag)',
+    krag_ot: 'var(--purple)',
     osadnik: 'var(--cmp-osadnik)',
     dennica: 'var(--cmp-dennica)',
     styczna: 'var(--cmp-styczna)',

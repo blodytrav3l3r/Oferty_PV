@@ -74,6 +74,19 @@ function _excelOnClickCell(e) {
     }
 }
 
+/* Globalny skrót sekcji PRZ: document+capture (jak schowek), bo fokus bywa
+   poza tabelą i poza overlayem (toolbar, przycisk otwierający modal).
+   Guardy jak wszędzie: modal otwarty i nic na wierzchu. */
+function _excelGlobalHotkeys(e) {
+    if (!e || !((e.ctrlKey || e.metaKey) && e.shiftKey)) return;
+    if (e.key !== 'h' && e.key !== 'H') return;
+    if (!document.getElementById('excel-table-overlay')) return;
+    if (document.querySelector('.modal-overlay:not(#excel-table-overlay)')) return;
+    e.preventDefault();
+    if (typeof e.stopPropagation === 'function') e.stopPropagation();
+    if (typeof _excelToggleTransitionsSection === 'function') _excelToggleTransitionsSection();
+}
+
 function _excelRegisterExcelListeners() {
     const container = document.getElementById('excel-table-container');
     if (!container || /** @type {any} */ (container)._excelListenersAttached) return;
@@ -89,6 +102,7 @@ function _excelRegisterExcelListeners() {
     };
     document.addEventListener('keydown', _arrowHandler, true);
     /** @type {any} */ (container)._arrowHandler = _arrowHandler;
+    document.addEventListener('keydown', _excelGlobalHotkeys, true);
     container.addEventListener('focusin', _excelOnFocusInRow);
     container.addEventListener('click', _excelOnClickCell);
     document.addEventListener('copy', _excelHandleCopy);
@@ -149,6 +163,7 @@ function _excelUnregisterExcelListeners() {
     }
     document.removeEventListener('copy', _excelHandleCopy);
     document.removeEventListener('cut', _excelHandleCut);
+    document.removeEventListener('keydown', _excelGlobalHotkeys, true);
     if (_container) _container.removeEventListener('paste', _excelHandlePaste, true);
     if (_container) _container.removeEventListener('mousedown', _excelOnMouseDown);
     document.removeEventListener('mousemove', _excelOnMouseMove);
@@ -346,8 +361,8 @@ function openExcelTableModal() {
             #excel-table-container td.drag-preview .excel-sel-wrap { outline:inherit; outline-offset:-2px; }
             #excel-empty-name::placeholder { color: rgba(var(--accent-rgb), 0.65); font-style: italic; font-size: var(--fs-xs); }
             #excel-table-container th.excel-col-selected { background:rgba(var(--accent-rgb), 0.3) !important; box-shadow:inset 0 0 0 1px rgba(var(--accent-rgb), 0.3); }
-            #excel-table-container .h3-prodcode { font-size: var(--fs-3xs);font-weight: var(--fw-semibold);color:var(--excel-text-dim);line-height:1.45; }
-            #excel-table-container .h3-prodprice { font-size: var(--fs-3xs);color:var(--success-hover);font-weight: var(--fw-bold);line-height:1.4;white-space:nowrap;background:rgba(var(--success-rgb), 0.05);border-radius: var(--radius-2xs);padding:1px 5px;margin-top:2px;display:inline-block; }
+            #excel-table-container .h3-prodcode { font-size:inherit;font-weight: var(--fw-semibold);color:var(--excel-text-dim);line-height:1.45; }
+            #excel-table-container .h3-prodprice { font-size:inherit;color:var(--success-hover);font-weight: var(--fw-bold);line-height:1.4;white-space:nowrap;background:rgba(var(--success-rgb), 0.05);border-radius: var(--radius-2xs);padding:1px 5px;margin-top:2px;display:inline-block; }
             #excel-table-container tbody tr:hover { background:var(--excel-row-hover); }
             #excel-table-container .excel-resize-handle { width:4px !important;background:var(--excel-border); }
             #excel-table-container .excel-resize-handle:hover { background:rgba(var(--accent-rgb), 0.5) !important; }
@@ -377,6 +392,8 @@ function openExcelTableModal() {
                 </div>
                 <button data-csp="_excelToggleColumnPopup" data-csp-args="[]" id="excel-col-vis-btn" class="excel-toolbar-btn" title="Pokaż/ukryj kolumny"><i data-lucide="table-properties" class="icon-xs" aria-hidden="true"></i>Kolumny</button>
                 <button data-csp="openPrzejsciaVisibilityPopup" data-csp-args="[&quot;excel&quot;]" class="excel-toolbar-btn" title="Pokaż/ukryj typy przejść"><i data-lucide="arrow-right-left" class="icon-xs" aria-hidden="true"></i>Przejścia</button>
+                <button data-csp="_excelToggleTransitionsSection" data-csp-args="[]" id="excel-transitions-toggle" class="excel-toolbar-btn" aria-pressed="false" title="Ukryj sekcję przejść (Ctrl+Shift+H)"><i data-lucide="eye" class="icon-xs" aria-hidden="true"></i><span class="excel-toggle-label">Ukryj przejścia</span></button>
+                <button data-csp="_excelAutofitAllColumns" data-csp-args="[]" class="excel-toolbar-btn" title="Dopasuj szerokość kolumn do najszerszego tekstu (czyści zapisane szerokości)"><i data-lucide="sliders-horizontal" class="icon-xs" aria-hidden="true"></i>Dopasuj kolumny</button>
                 <button data-csp="_excelBulkRunAutoSelect" data-csp-args="[]" id="excel-bulk-recalc" class="excel-toolbar-btn excel-toolbar-btn--success" title="Auto-dobór dla zaznaczonych (checkbox)"><i data-lucide="refresh-cw" class="icon-xs" aria-hidden="true"></i>Auto-dobór zaznaczonych</button>
                 <button data-csp="_excelBulkDeleteSelected" data-csp-args="[]" id="excel-bulk-delete" class="excel-toolbar-btn excel-toolbar-btn--danger" title="Usuń zaznaczone studnie (checkbox)"><i data-lucide="trash-2" class="icon-xs" aria-hidden="true"></i>Usuń zaznaczone</button>
                 <button data-csp="openWellNotesForExcelSelection" data-csp-args="[]" class="excel-toolbar-btn" title="Uwagi do zaznaczonej studni"><i data-lucide="file-text" class="icon-xs" aria-hidden="true"></i>Uwagi</button>
@@ -424,7 +441,9 @@ function openExcelTableModal() {
     });
     overlay.setAttribute('aria-label', 'Tabela konfiguracyjna studni');
     _excelPositionOverlay(overlay);
-    // Ctrl+S / Ctrl+R — showModal obsługuje tylko Escape; te skróty dokładamy
+    // Ctrl+S / Ctrl+R — showModal obsługuje tylko Escape; te skróty dokładamy.
+    // Ctrl+Shift+H łapie _excelGlobalHotkeys (document+capture) — overlay-bubble
+    // nie widzi fokusu spoza modala (np. przycisk otwierający tabelę).
     const _excelOverlayKeyHandler = function (e) {
         if (document.querySelector('.modal-overlay:not(#excel-table-overlay)')) return;
         if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S')) {
@@ -449,6 +468,8 @@ function openExcelTableModal() {
     _excelRegisterExcelListeners();
 
     _excelLoadColumnVisibility();
+    if (typeof _excelLoadHeaderFonts === 'function') _excelLoadHeaderFonts();
+    if (typeof _excelLoadHideTransitions === 'function') _excelLoadHideTransitions();
     _excelLoadColWidths();
     _perfMark('open-overlay');
     _excelActiveTab = DN_TABS[0];
@@ -468,6 +489,14 @@ function openExcelTableModal() {
     _perfMark('open-tabs');
     _excelRenderTable(_excelActiveTab);
     _perfMark('open-render');
+    /* Etykieta przełącznika sekcji PRZ wg zapisanego stanu */
+    if (typeof _excelSyncTransitionsToggleBtn === 'function') {
+        try {
+            _excelSyncTransitionsToggleBtn(
+                typeof _excelTransitionsHidden === 'function' && _excelTransitionsHidden()
+            );
+        } catch (_eTgl) {}
+    }
     /* Diagram z tego samego znormalizowanego źródła co tabela (post-dedup ID).
        Bez tego <g> niosłoby ID sprzed otwarcia, a TD już nowe → hover bez matchu. */
     try {

@@ -525,6 +525,7 @@ function _excelVirtualRenderBody() {
         return wells[idx];
     });
     const dn = typeof _excelActiveTab !== 'undefined' ? _excelActiveTab : '1000';
+    /* Sekcja PRZ chowa się klasą display:none (kolumny zostają) — maxTr zawsze pełny */
     const maxTr = typeof _excelMaxTransitions !== 'undefined' ? _excelMaxTransitions[dn] || 1 : 1;
     let refWell = sliceWells[0];
     if (!refWell && typeof _excelGetReferenceWell === 'function')
@@ -879,7 +880,7 @@ function _excelVirtualGetCellValue(wellIdx, colIdx) {
     if (colIdx === 4) return w.rzednaWlazu != null ? String(w.rzednaWlazu) : '';
     if (colIdx === 5) return w.rzednaDna != null ? String(w.rzednaDna) : '';
     if (colIdx === 6) return String(_excelCalcWellHeight ? _excelCalcWellHeight(w) : '');
-    // przejscia: col 7.. 7+maxTr*4-1
+    // przejscia: col 7.. 7+maxTr*4-1 (ukryte mają display:none, indeksy stabilne)
     const maxTr =
         typeof _excelMaxTransitions !== 'undefined'
             ? _excelMaxTransitions[_excelActiveTab] || 1

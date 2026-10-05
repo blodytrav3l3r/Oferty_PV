@@ -307,7 +307,7 @@ function buildConfigMap(well, findProductFn, includeName = false) {
         avr: { bg: 'var(--cmp-avr)' },
         plyta_redukcyjna: { bg: 'var(--cmp-plyta-redukcyjna)' },
         krag: { bg: 'var(--cmp-krag)' },
-        krag_ot: { bg: 'var(--cmp-krag)' },
+        krag_ot: { bg: 'var(--purple)' },
         dennica: { bg: 'var(--cmp-dennica)' },
         kineta: { bg: 'var(--cmp-kineta)' }
     };

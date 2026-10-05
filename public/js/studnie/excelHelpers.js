@@ -755,7 +755,7 @@ function _excelOverlaySelectHtml(opts, curVal, csp, width, disabled) {
     return (
         '<div class="excel-sel-wrap' +
         extraClass +
-        '" tabindex="0" style="display:inline-flex;position:relative;width:auto;min-width:40px;outline:none;' +
+        '" tabindex="0" style="display:inline-flex;position:relative;width:auto;min-width:0;outline:none;' +
         (width ? 'width:' + width + 'px;' : '') +
         '"' +
         wrapperEvents +

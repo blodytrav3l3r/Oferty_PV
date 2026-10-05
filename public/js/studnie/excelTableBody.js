@@ -70,6 +70,9 @@ function _excelGetRowStatus(well) {
 /* ===== TBODY RENDER ===== */
 function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
     let html = '</thead><tbody>';
+    /* Ukryta sekcja PRZ = klasa display:none (kolumny zostają — stabilne indeksy) */
+    const hideTr = typeof _excelTransitionsHidden === 'function' && _excelTransitionsHidden();
+    const trHideCls = hideTr ? ' excel-tr-hidden' : '';
     // Legacy dedup: stare klony studni mogą dzielić pr.id między wierszami
     // (hover SVG podświetlałby wtedy kilka wierszy naraz). Idempotentny —
     // unikalnych id nie zmienia, więc wielokrotne rendery to no-op.
@@ -418,6 +421,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             html +=
                 '<td class="excel-td excel-td-right excel-tr-first' +
                 (_i % 2 === 1 ? ' excel-tr-alt' : '') +
+                trHideCls +
                 '"' +
                 przIdAttr +
                 '><input type="number" step="0.01" value="' +
@@ -432,6 +436,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             html +=
                 '<td class="excel-td excel-td-center' +
                 (_i % 2 === 1 ? ' excel-tr-alt' : '') +
+                trHideCls +
                 '"' +
                 przIdAttr +
                 '><input type="number" step="1" value="' +
@@ -446,6 +451,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             html +=
                 '<td class="excel-td excel-td-left' +
                 (_i % 2 === 1 ? ' excel-tr-alt' : '') +
+                trHideCls +
                 '"' +
                 przIdAttr +
                 '>' +
@@ -454,14 +460,20 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             html +=
                 '<td class="excel-td excel-td-left excel-tr-last' +
                 (_i % 2 === 1 ? ' excel-tr-alt' : '') +
+                trHideCls +
                 '"' +
                 przIdAttr +
                 '>' +
                 dnHtml +
                 '</td>';
         }
-        /* Gap */
-        html += '<td class="code-cell-center"></td><td class="code-cell-center"></td>';
+        /* Gap (odpowiednik +/-, znika razem z sekcją) */
+        html +=
+            '<td class="code-cell-center' +
+            trHideCls +
+            '"></td><td class="code-cell-center' +
+            trHideCls +
+            '"></td>';
         /* Wlaz */
         const wlazCol = _wlazCol;
         const wlazProducts = wlazCol
@@ -677,33 +689,38 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
         html +=
             '<td class="excel-td excel-td-empty excel-tr-first' +
             _alt +
+            trHideCls +
             '" style="' +
-            'text-align:right;"><input type="number" step="0.01" placeholder="\u2014" data-csp-2="$excelCellFocus" data-csp-2-on="focus" data-csp-3="excelCellBlur" data-csp-3-args="[&quot;$el&quot;]" data-csp-3-on="blur" style="' +
+            'text-align:right;"><input type="number" step="0.01" placeholder="—" data-csp-2="$excelCellFocus" data-csp-2-on="focus" data-csp-3="excelCellBlur" data-csp-3-args="[&quot;$el&quot;]" data-csp-3-on="blur" style="' +
             _excelCellInp(72) +
             '" /></td>';
         html +=
             '<td class="excel-td excel-td-empty' +
             _alt +
+            trHideCls +
             '" style="' +
-            'text-align:center;"><input type="number" step="1" placeholder="\u2014" data-csp-2="$excelCellFocus" data-csp-2-on="focus" data-csp-3="excelCellBlur" data-csp-3-args="[&quot;$el&quot;]" data-csp-3-on="blur" style="' +
+            'text-align:center;"><input type="number" step="1" placeholder="—" data-csp-2="$excelCellFocus" data-csp-2-on="focus" data-csp-3="excelCellBlur" data-csp-3-args="[&quot;$el&quot;]" data-csp-3-on="blur" style="' +
             _excelCellInp(50) +
             '" /></td>';
         html +=
             '<td class="excel-td excel-td-empty' +
             _alt +
+            trHideCls +
             '" style="' +
             'text-align:left;">' +
-            _excelOverlaySelectHtml([['', '\u2014']], '', null, 120, false) +
+            _excelOverlaySelectHtml([['', '—']], '', null, 120, false) +
             '</td>';
         html +=
             '<td class="excel-td excel-td-empty excel-tr-last' +
             _alt +
+            trHideCls +
             '" style="' +
             'text-align:left;">' +
-            _excelOverlaySelectHtml([['', '\u2014']], '', null, 110, false) +
+            _excelOverlaySelectHtml([['', '—']], '', null, 110, false) +
             '</td>';
     }
-    html += '<td class="code-cell"></td><td class="code-cell"></td>';
+    html +=
+        '<td class="code-cell' + trHideCls + '"></td><td class="code-cell' + trHideCls + '"></td>';
     html +=
         '<td class="excel-td excel-td-empty" style="' +
         'text-align:left;">' +

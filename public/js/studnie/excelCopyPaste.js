@@ -367,6 +367,20 @@ function _excelHandlePaste(e) {
     e.preventDefault();
     e.stopPropagation();
 
+    /* Ukryta sekcja PRZ nie ma komórek docelowych — najpierw ją odkryj */
+    if (typeof _excelTransitionsHidden === 'function' && _excelTransitionsHidden()) {
+        try {
+            _excelHideTransitions = false;
+        } catch (_eUnhide) {}
+        if (typeof _excelSaveHideTransitions === 'function') _excelSaveHideTransitions();
+        if (typeof _excelSyncTransitionsToggleBtn === 'function')
+            _excelSyncTransitionsToggleBtn(false);
+        if (typeof _excelRenderTable === 'function' && typeof _excelActiveTab !== 'undefined')
+            _excelRenderTable(_excelActiveTab);
+        if (typeof showToast === 'function')
+            showToast('Odkryto sekcję przejść do wklejenia', 'info');
+    }
+
     /* Paste w pusty wiersz → utwórz nowe studnie */
     const _emptyInput = document.getElementById('excel-empty-name');
     if (_emptyInput && _emptyInput === document.activeElement) {

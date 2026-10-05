@@ -70,7 +70,7 @@ function renderWellConfig() {
             label: 'Redukcja'
         },
         krag: { bg: 'var(--cmp-krag)', fg: 'var(--white)', label: 'Krąg' },
-        krag_ot: { bg: 'var(--cmp-krag)', fg: 'var(--white)', label: 'Krąg OT' },
+        krag_ot: { bg: 'var(--purple)', fg: 'var(--white)', label: 'Krąg OT' },
         dennica: { bg: 'var(--cmp-dennica)', fg: 'var(--white)', label: 'Dennica' },
         kineta: { bg: 'var(--cmp-kineta)', fg: 'var(--white)', label: 'Kineta' },
         uszczelka: { bg: 'var(--slate-700)', fg: 'var(--white)', label: 'Uszczelka' },

@@ -178,6 +178,7 @@ function _excelResetColumnVisibility() {
     _excelResetLayoutDependentState();
     _excelHiddenColumnIds = [];
     _excelSaveColumnVisibility();
+    if (typeof _excelResetHeaderFonts === 'function') _excelResetHeaderFonts();
     /* Wyczyść szerokości kolumn aktywnej zakładki — tylko klucze "tab-" */
     Object.keys(_excelColWidths).forEach((k) => {
         if (k.indexOf(_excelActiveTab + '-') === 0) delete _excelColWidths[k];
@@ -190,9 +191,123 @@ function _excelIsColumnHidden(colId) {
     return _excelHiddenColumnIds.indexOf(colId) >= 0;
 }
 
+/* ===== Transitions Section Visibility (globalny przelacznik sekcji PRZ) ===== */
+let _excelHideTransitions = false;
+const _EXCEL_HIDE_TRANSITIONS_KEY = 'sok_excel_hide_transitions';
+const _EXCEL_HIDE_TRANSITIONS_LEGACY_KEY = 'witros_excel_hide_transitions';
+
+function _excelLoadHideTransitions() {
+    try {
+        _excelMigrateLegacyKey(_EXCEL_HIDE_TRANSITIONS_KEY, _EXCEL_HIDE_TRANSITIONS_LEGACY_KEY);
+        const saved = localStorage.getItem(_EXCEL_HIDE_TRANSITIONS_KEY);
+        _excelHideTransitions = saved === '1' || saved === 'true';
+    } catch (_e) {
+        _excelHideTransitions = false;
+    }
+}
+
+function _excelSaveHideTransitions() {
+    try {
+        localStorage.setItem(_EXCEL_HIDE_TRANSITIONS_KEY, _excelHideTransitions ? '1' : '0');
+    } catch (_e) {}
+}
+
+function _excelTransitionsHidden() {
+    try {
+        if (typeof _excelHideTransitions === 'boolean') return _excelHideTransitions;
+    } catch (_e) {}
+    return false;
+}
+if (typeof window !== 'undefined') {
+    window._excelLoadHideTransitions = _excelLoadHideTransitions;
+    window._excelSaveHideTransitions = _excelSaveHideTransitions;
+    window._excelTransitionsHidden = _excelTransitionsHidden;
+}
+
+/* ===== Header Font Sizes State (H1/H2/H3, stepper px, wzorzec jak visibility) ===== */
+const _EXCEL_HEADER_FONTS_KEY = 'sok_excel_header_fonts';
+const _EXCEL_HEADER_FONTS_LEGACY_KEY = 'witros_excel_header_fonts';
+const _EXCEL_HEADER_FONT_MIN = 8;
+const _EXCEL_HEADER_FONT_MAX = 20;
+const _EXCEL_HEADER_FONT_DEFAULTS = { h1: 10, h2: 10, h3: 9 };
+let _excelHeaderFontSizes = {
+    h1: _EXCEL_HEADER_FONT_DEFAULTS.h1,
+    h2: _EXCEL_HEADER_FONT_DEFAULTS.h2,
+    h3: _EXCEL_HEADER_FONT_DEFAULTS.h3
+};
+
+function _excelNormalizeHeaderFonts(input) {
+    const out = {
+        h1: _EXCEL_HEADER_FONT_DEFAULTS.h1,
+        h2: _EXCEL_HEADER_FONT_DEFAULTS.h2,
+        h3: _EXCEL_HEADER_FONT_DEFAULTS.h3
+    };
+    if (!input || typeof input !== 'object') return out;
+    ['h1', 'h2', 'h3'].forEach(function (k) {
+        const n = typeof input[k] === 'number' ? input[k] : parseInt(input[k], 10);
+        if (!Number.isFinite(n)) return;
+        out[k] = Math.max(_EXCEL_HEADER_FONT_MIN, Math.min(_EXCEL_HEADER_FONT_MAX, Math.round(n)));
+    });
+    return out;
+}
+
+function _excelLoadHeaderFonts() {
+    try {
+        _excelMigrateLegacyKey(_EXCEL_HEADER_FONTS_KEY, _EXCEL_HEADER_FONTS_LEGACY_KEY);
+        const saved = JSON.parse(localStorage.getItem(_EXCEL_HEADER_FONTS_KEY));
+        _excelHeaderFontSizes = _excelNormalizeHeaderFonts(saved);
+    } catch (_e) {
+        _excelHeaderFontSizes = _excelNormalizeHeaderFonts(null);
+    }
+}
+
+function _excelSaveHeaderFonts() {
+    try {
+        localStorage.setItem(_EXCEL_HEADER_FONTS_KEY, JSON.stringify(_excelHeaderFontSizes));
+    } catch (_e) {}
+}
+
+function _excelHeaderFontPx(row) {
+    const v =
+        _excelHeaderFontSizes && typeof _excelHeaderFontSizes[row] === 'number'
+            ? _excelHeaderFontSizes[row]
+            : _EXCEL_HEADER_FONT_DEFAULTS[row];
+    if (!Number.isFinite(v)) return _EXCEL_HEADER_FONT_DEFAULTS[row] || 10;
+    return Math.max(_EXCEL_HEADER_FONT_MIN, Math.min(_EXCEL_HEADER_FONT_MAX, Math.round(v)));
+}
+
+function _excelResetHeaderFonts() {
+    _excelHeaderFontSizes = _excelNormalizeHeaderFonts(null);
+    _excelSaveHeaderFonts();
+}
+
+function _excelHeaderFontLimits() {
+    return { min: _EXCEL_HEADER_FONT_MIN, max: _EXCEL_HEADER_FONT_MAX };
+}
+if (typeof window !== 'undefined') {
+    window._excelLoadHeaderFonts = _excelLoadHeaderFonts;
+    window._excelSaveHeaderFonts = _excelSaveHeaderFonts;
+    window._excelHeaderFontPx = _excelHeaderFontPx;
+    window._excelResetHeaderFonts = _excelResetHeaderFonts;
+    window._excelHeaderFontLimits = _excelHeaderFontLimits;
+}
+
 /* ===== Column Widths State (trwałość szerokości kolumn, wzorzec jak visibility) ===== */
 const _EXCEL_COL_WIDTHS_KEY = 'sok_excel_col_widths';
 const _EXCEL_COL_WIDTHS_LEGACY_KEY = 'witros_excel_col_widths';
+/* Floor ścisku kolumny — nadmiar ukrywany (ellipsis, bez zawijania) */
+const _EXCEL_COL_MIN_WIDTH = 10;
+/* Pułap autofit — kolumna domyślnie nie szersza (drag/dblclick bez limitu w górę) */
+const _EXCEL_COL_FIT_MAX = 320;
+/* Szerokości z autofit (runtime, per zakładka) — zapisany drag zawsze wygrywa */
+const _excelAutoFittedWidths = {};
+
+function _excelColMinWidth() {
+    try {
+        if (typeof _EXCEL_COL_MIN_WIDTH === 'number') return _EXCEL_COL_MIN_WIDTH;
+    } catch (_e) {}
+    return 20;
+}
 
 function _excelLoadColWidths() {
     try {
@@ -260,6 +375,7 @@ if (typeof window !== 'undefined') {
     window._excelBuildWellIndex = _excelBuildWellIndex;
     window._excelRebuildWellIndex = _excelRebuildWellIndex;
     window._excelGetWellIdxById = _excelGetWellIdxById;
+    window._excelColMinWidth = _excelColMinWidth;
 }
 
 /* ===== filteredIndexes SSoT — centralna invalidacja ===== */

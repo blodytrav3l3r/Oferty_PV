@@ -249,6 +249,19 @@ function _excelToggleColumnPopup() {
 
     const existingModal = document.getElementById('excel-col-vis-modal');
     if (existingModal) {
+        const fontHtml = _excelBuildHeaderFontHtml();
+        const tmp = document.createElement('div');
+        tmp.innerHTML = fontHtml;
+        const newFont = tmp.firstChild;
+        const oldFont = existingModal.querySelector('#excel-header-font-box');
+        if (oldFont && newFont) {
+            oldFont.replaceWith(newFont);
+            if (typeof lucide !== 'undefined' && lucide.createIcons) {
+                try {
+                    lucide.createIcons({ root: existingModal });
+                } catch (_eIcons) {}
+            }
+        }
         const gridHtml = _excelBuildColumnGridHtml(gridCols, allCts, groupLabels);
         const oldGrid = existingModal.querySelector('#excel-col-vis-grid');
         if (oldGrid) oldGrid.outerHTML = gridHtml;
@@ -266,7 +279,7 @@ function _excelToggleColumnPopup() {
     html += '<div class="modal modal--excel-col-vis">';
     html +=
         '<div class="modal-header"><h3>Wybór kolumn Excel</h3><button type="button" data-csp="$dom" data-csp-args=\'["remove", ".modal-overlay"]\' class="btn-icon" aria-label="Zamknij"><i data-lucide="x" aria-hidden="true"></i></button></div>';
-    html += '<div class="excel-col-vis-body">' + gridHtml + '</div>';
+    html += '<div class="excel-col-vis-body">' + _excelBuildHeaderFontHtml() + gridHtml + '</div>';
     html += '<div class="modal-footer">';
     html +=
         '<button type="button" data-csp="$resetColumnsAndClose" class="btn btn-secondary excel-reset-btn">Przywróć domyślne</button>';
@@ -290,6 +303,113 @@ function _excelToggleColumnPopup() {
             lucide.createIcons({ root: overlay });
         } catch (_e) {}
     }
+}
+
+/* ===== Rozmiar czcionki nagłówków H1/H2/H3 (stepper px, wszystkie kolumny) ===== */
+function _excelBuildHeaderFontHtml() {
+    const rows = [
+        { id: 'h1', label: 'H1 — Nazwa elementu' },
+        { id: 'h2', label: 'H2 — Szczegóły' },
+        { id: 'h3', label: 'H3 — Indeksy i ceny' }
+    ];
+    const lim =
+        typeof _excelHeaderFontLimits === 'function'
+            ? _excelHeaderFontLimits()
+            : { min: 8, max: 20 };
+    let html = '<div id="excel-header-font-box" class="excel-font-box">';
+    html += '<div class="excel-font-head">Rozmiar czcionki nagłówków</div>';
+    html += '<div class="excel-font-rows">';
+    rows.forEach(function (r) {
+        const px =
+            typeof _excelHeaderFontPx === 'function'
+                ? _excelHeaderFontPx(r.id)
+                : r.id === 'h3'
+                  ? 9
+                  : 10;
+        html += '<div class="excel-font-row">';
+        html += '<span class="excel-font-label">' + escapeHtml(r.label) + '</span>';
+        html +=
+            '<button type="button" data-csp="_excelHeaderFontStep" data-csp-args="' +
+            escapeHtmlAttr(JSON.stringify([r.id, -1])) +
+            '" class="unit-popup-btn excel-font-step" aria-label="Zmniejsz ' +
+            escapeHtmlAttr(r.id) +
+            '"' +
+            (px <= lim.min ? ' disabled aria-disabled="true"' : '') +
+            '><i data-lucide="minus" class="icon-xs" aria-hidden="true"></i></button>';
+        html += '<span class="excel-font-val">' + px + ' px</span>';
+        html +=
+            '<button type="button" data-csp="_excelHeaderFontStep" data-csp-args="' +
+            escapeHtmlAttr(JSON.stringify([r.id, 1])) +
+            '" class="unit-popup-btn excel-font-step" aria-label="Zwiększ ' +
+            escapeHtmlAttr(r.id) +
+            '"' +
+            (px >= lim.max ? ' disabled aria-disabled="true"' : '') +
+            '><i data-lucide="plus" class="icon-xs" aria-hidden="true"></i></button>';
+        html += '</div>';
+    });
+    html +=
+        '<button type="button" data-csp="_excelHeaderFontReset" data-csp-args="[]" class="btn btn-secondary btn-sm" title="Przywróć domyślne rozmiary nagłówków">Resetuj</button>';
+    html += '</div></div>';
+    return html;
+}
+
+function _excelHeaderFontStep(row, delta) {
+    if (['h1', 'h2', 'h3'].indexOf(row) < 0) return;
+    const d = parseInt(delta, 10) || 0;
+    if (!d) return;
+    const cur = typeof _excelHeaderFontPx === 'function' ? _excelHeaderFontPx(row) : 10;
+    if (typeof _excelHeaderFontSizes === 'undefined' || !_excelHeaderFontSizes) return;
+    _excelHeaderFontSizes[row] = cur + d;
+    if (typeof _excelNormalizeHeaderFonts === 'function')
+        _excelHeaderFontSizes = _excelNormalizeHeaderFonts(_excelHeaderFontSizes);
+    if (typeof _excelSaveHeaderFonts === 'function') _excelSaveHeaderFonts();
+    if (typeof _excelActiveTab !== 'undefined' && typeof _excelRenderTable === 'function')
+        _excelRenderTable(_excelActiveTab);
+    if (typeof _excelToggleColumnPopup === 'function') _excelToggleColumnPopup();
+}
+
+function _excelHeaderFontReset() {
+    if (typeof _excelResetHeaderFonts === 'function') _excelResetHeaderFonts();
+    if (typeof _excelActiveTab !== 'undefined' && typeof _excelRenderTable === 'function')
+        _excelRenderTable(_excelActiveTab);
+    if (typeof _excelToggleColumnPopup === 'function') _excelToggleColumnPopup();
+}
+if (typeof window !== 'undefined') {
+    window._excelHeaderFontStep = _excelHeaderFontStep;
+    window._excelHeaderFontReset = _excelHeaderFontReset;
+}
+
+/* ===== Przełącznik całej sekcji przejść (PRZ) — globalny, z persistencją ===== */
+function _excelToggleTransitionsSection() {
+    const next = typeof _excelTransitionsHidden === 'function' ? !_excelTransitionsHidden() : true;
+    try {
+        _excelHideTransitions = next;
+    } catch (_e) {
+        return;
+    }
+    if (typeof _excelSaveHideTransitions === 'function') _excelSaveHideTransitions();
+    _excelSyncTransitionsToggleBtn(next);
+    if (typeof _excelActiveTab !== 'undefined' && typeof _excelRenderTable === 'function')
+        _excelRenderTable(_excelActiveTab);
+}
+
+function _excelSyncTransitionsToggleBtn(hidden) {
+    try {
+        const btn = document.getElementById('excel-transitions-toggle');
+        if (!btn) return;
+        const label = btn.querySelector('.excel-toggle-label');
+        const text = hidden ? 'Pokaż przejścia' : 'Ukryj przejścia';
+        if (label) label.textContent = text;
+        else btn.textContent = text;
+        btn.setAttribute('aria-pressed', hidden ? 'true' : 'false');
+        btn.title = hidden
+            ? 'Pokaż sekcję przejść (Ctrl+Shift+H)'
+            : 'Ukryj sekcję przejść (Ctrl+Shift+H)';
+    } catch (_e) {}
+}
+if (typeof window !== 'undefined') {
+    window._excelToggleTransitionsSection = _excelToggleTransitionsSection;
+    window._excelSyncTransitionsToggleBtn = _excelSyncTransitionsToggleBtn;
 }
 
 function _excelOnDnSelectAll(dnKey, checked) {

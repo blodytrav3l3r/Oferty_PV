@@ -40,7 +40,11 @@ function _excelRenderTable(dn) {
             : wells.filter(function (w) {
                   return _excelWellMatchesTab(w, dn);
               });
+    const hideTr = typeof _excelTransitionsHidden === 'function' && _excelTransitionsHidden();
     const maxTr = _excelMaxTransitions[dn] || 1;
+    /* Ukrycie = klasa display:none (nie usuwanie): indeksy kolumn stabilne,
+       nagłówek i body zawsze mają tę samą liczbę komórek. */
+    const trHideCls = hideTr ? ' excel-tr-hidden' : '';
     let refWell = tabWells[0];
     if (!refWell && typeof _excelGetReferenceWell === 'function') {
         refWell = _excelGetReferenceWell(dn);
@@ -59,12 +63,21 @@ function _excelRenderTable(dn) {
     let h2 = ''; // rząd 3: szczegóły
     let h3 = ''; // rząd 1: średnica (DN)
 
+    const _h1Px = typeof _excelHeaderFontPx === 'function' ? _excelHeaderFontPx('h1') : 10;
+    const _h2Px = typeof _excelHeaderFontPx === 'function' ? _excelHeaderFontPx('h2') : 10;
+    const _h3Px = typeof _excelHeaderFontPx === 'function' ? _excelHeaderFontPx('h3') : 9;
     const thBase =
-        'padding:0.4rem 0.5rem;font-size: var(--fs-xs);font-weight: var(--fw-semibold);text-transform:uppercase;letter-spacing:0.4px;white-space:nowrap;';
+        'padding:0.4rem 0.5rem;font-size:' +
+        _h1Px +
+        'px;font-weight: var(--fw-semibold);text-transform:uppercase;letter-spacing:0.4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
     const th2Base =
-        'padding:0.2rem 0.5rem;font-size: var(--fs-2xs);font-weight: var(--fw-normal);white-space:pre-wrap;word-break:break-word;max-width:100px;line-height:1.3;';
+        'padding:0.2rem 0.5rem;font-size:' +
+        _h2Px +
+        'px;font-weight: var(--fw-normal);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100px;line-height:1.3;';
     const th3Base =
-        'padding:0.1rem 0.5rem;font-size: var(--fs-3xs);font-weight: var(--fw-medium);color:var(--excel-text-dim);text-align:center;white-space:nowrap;background:var(--excel-header-bg);';
+        'padding:0.1rem 0.5rem;font-size:' +
+        _h3Px +
+        'px;font-weight: var(--fw-medium);color:var(--excel-text-dim);text-align:center;white-space:nowrap;background:var(--excel-header-bg);';
 
     const dnLabel = dn === 'styczne' ? 'Styczne' : 'DN' + dn;
     const dnTh3 = (ct) => (ct === 'avr' ? 'uniw.' : dnLabel);
@@ -98,24 +111,24 @@ function _excelRenderTable(dn) {
 
     for (let i = 0; i < maxTr; i++) {
         const _alt = i % 2 === 1 ? ' excel-tr-alt' : '';
-        h1 += `<th scope="col" data-excel-col="trz-${i}-rzedna" class="excel-tr-first${_alt}" style="${thBase}background:var(--excel-header-bg);color:${dnColor};min-width:78px;text-align:right;">Rz.wlot ${i}</th>`;
-        h2 += `<th scope="col" class="excel-tr-first${_alt}" style="${th2Base}background:var(--excel-header-bg);color:${dnColor};min-width:78px;text-align:right;">·</th>`;
-        h3 += `<th scope="col" colspan="4" class="excel-tr-group${_alt}" style="${th3Base}background:var(--excel-header-bg);color:${dnColor};text-align:center;">PRZ ${i}</th>`;
-        h1 += `<th scope="col" data-excel-col="trz-${i}-kat" class="${_alt.trim()}" style="${thBase}background:var(--excel-header-bg);color:${dnColor};min-width:55px;text-align:center;">Kąt ${i}°</th>`;
-        h2 += `<th scope="col" class="${_alt.trim()}" style="${th2Base}background:var(--excel-header-bg);color:${dnColor};min-width:55px;text-align:center;">·</th>`;
-        h1 += `<th scope="col" data-excel-col="trz-${i}-rodzaj" class="${_alt.trim()}" style="${thBase}background:var(--excel-header-bg);color:${dnColor};min-width:125px;text-align:left;">Rodzaj ${i}</th>`;
-        h2 += `<th scope="col" class="${_alt.trim()}" style="${th2Base}background:var(--excel-header-bg);color:${dnColor};min-width:125px;text-align:left;">·</th>`;
-        h1 += `<th scope="col" data-excel-col="trz-${i}-srednica" class="excel-tr-last${_alt}" style="${thBase}background:var(--excel-header-bg);color:${dnColor};min-width:110px;text-align:left;">Średnica ${i}</th>`;
-        h2 += `<th scope="col" class="excel-tr-last${_alt}" style="${th2Base}background:var(--excel-header-bg);color:${dnColor};min-width:110px;text-align:left;">·</th>`;
+        h1 += `<th scope="col" data-excel-col="trz-${i}-rzedna" class="excel-tr-first${_alt}${trHideCls}" style="${thBase}background:var(--excel-header-bg);color:${dnColor};min-width:78px;text-align:right;">Rz.wlot ${i}</th>`;
+        h2 += `<th scope="col" class="excel-tr-first${_alt}${trHideCls}" style="${th2Base}background:var(--excel-header-bg);color:${dnColor};min-width:78px;text-align:right;">·</th>`;
+        h3 += `<th scope="col" colspan="4" class="excel-tr-group${_alt}${trHideCls}" style="${th3Base}background:var(--excel-header-bg);color:${dnColor};text-align:center;">PRZ ${i}</th>`;
+        h1 += `<th scope="col" data-excel-col="trz-${i}-kat" class="${_alt.trim()}${trHideCls}" style="${thBase}background:var(--excel-header-bg);color:${dnColor};min-width:55px;text-align:center;">Kąt ${i}°</th>`;
+        h2 += `<th scope="col" class="${_alt.trim()}${trHideCls}" style="${th2Base}background:var(--excel-header-bg);color:${dnColor};min-width:55px;text-align:center;">·</th>`;
+        h1 += `<th scope="col" data-excel-col="trz-${i}-rodzaj" class="${_alt.trim()}${trHideCls}" style="${thBase}background:var(--excel-header-bg);color:${dnColor};min-width:125px;text-align:left;">Rodzaj ${i}</th>`;
+        h2 += `<th scope="col" class="${_alt.trim()}${trHideCls}" style="${th2Base}background:var(--excel-header-bg);color:${dnColor};min-width:125px;text-align:left;">·</th>`;
+        h1 += `<th scope="col" data-excel-col="trz-${i}-srednica" class="excel-tr-last${_alt}${trHideCls}" style="${thBase}background:var(--excel-header-bg);color:${dnColor};min-width:110px;text-align:left;">Średnica ${i}</th>`;
+        h2 += `<th scope="col" class="excel-tr-last${_alt}${trHideCls}" style="${th2Base}background:var(--excel-header-bg);color:${dnColor};min-width:110px;text-align:left;">·</th>`;
     }
 
-    // Przyciski +/-
-    h1 += `<th scope="col" data-excel-col="tr-minus" style="${thBase}background:var(--excel-header-bg);color:var(--excel-text-dim);min-width:24px;text-align:center;padding:0;"><button type="button" data-csp="excelRemoveTransitionColumn" data-csp-args="[]" class="excel-icon-btn is-danger excel-col-toggle" title="Usuń ostatnią kolumnę przejścia" aria-label="Usuń ostatnią kolumnę przejścia"><i data-lucide="minus" class="icon-sm" aria-hidden="true"></i></button></th>`;
-    h2 += `<th scope="col" style="${th2Base}background:var(--excel-header-bg);color:var(--excel-text-dim);min-width:24px;text-align:center;padding:0;">·</th>`;
-    h3 += `<th scope="col" style="${th3Base}background:var(--excel-header-bg);color:var(--excel-text-dim);min-width:24px;text-align:center;padding:0;">·</th>`;
-    h1 += `<th scope="col" data-excel-col="tr-plus" style="${thBase}background:var(--excel-header-bg);color:var(--excel-text-dim);min-width:24px;text-align:center;padding:0;"><button type="button" data-csp="excelAddTransitionColumn" data-csp-args="[]" class="excel-icon-btn excel-col-toggle is-plus" title="Dodaj kolumnę przejścia" aria-label="Dodaj kolumnę przejścia"><i data-lucide="plus" class="icon-sm" aria-hidden="true"></i></button></th>`;
-    h2 += `<th scope="col" style="${th2Base}background:var(--excel-header-bg);color:var(--excel-text-dim);min-width:24px;text-align:center;padding:0;">·</th>`;
-    h3 += `<th scope="col" style="${th3Base}background:var(--excel-header-bg);color:var(--excel-text-dim);min-width:24px;text-align:center;padding:0;">·</th>`;
+    // Przyciski +/- (przy ukrytej sekcji display:none razem z nią)
+    h1 += `<th scope="col" data-excel-col="tr-minus" class="${trHideCls.trim()}" style="${thBase}background:var(--excel-header-bg);color:var(--excel-text-dim);min-width:24px;text-align:center;padding:0;"><button type="button" data-csp="excelRemoveTransitionColumn" data-csp-args="[]" class="excel-icon-btn is-danger excel-col-toggle" title="Usuń ostatnią kolumnę przejścia" aria-label="Usuń ostatnią kolumnę przejścia"><i data-lucide="minus" class="icon-sm" aria-hidden="true"></i></button></th>`;
+    h2 += `<th scope="col" class="${trHideCls.trim()}" style="${th2Base}background:var(--excel-header-bg);color:var(--excel-text-dim);min-width:24px;text-align:center;padding:0;">·</th>`;
+    h3 += `<th scope="col" class="${trHideCls.trim()}" style="${th3Base}background:var(--excel-header-bg);color:var(--excel-text-dim);min-width:24px;text-align:center;padding:0;">·</th>`;
+    h1 += `<th scope="col" data-excel-col="tr-plus" class="${trHideCls.trim()}" style="${thBase}background:var(--excel-header-bg);color:var(--excel-text-dim);min-width:24px;text-align:center;padding:0;"><button type="button" data-csp="excelAddTransitionColumn" data-csp-args="[]" class="excel-icon-btn excel-col-toggle is-plus" title="Dodaj kolumnę przejścia" aria-label="Dodaj kolumnę przejścia"><i data-lucide="plus" class="icon-sm" aria-hidden="true"></i></button></th>`;
+    h2 += `<th scope="col" class="${trHideCls.trim()}" style="${th2Base}background:var(--excel-header-bg);color:var(--excel-text-dim);min-width:24px;text-align:center;padding:0;">·</th>`;
+    h3 += `<th scope="col" class="${trHideCls.trim()}" style="${th3Base}background:var(--excel-header-bg);color:var(--excel-text-dim);min-width:24px;text-align:center;padding:0;">·</th>`;
 
     // Właz
     h1 += `<th scope="col" data-excel-col="wlaz" style="${thBase}background:var(--excel-header-bg);color:var(--success-hover);min-width:65px;text-align:left;">Właz</th>`;
@@ -238,7 +251,7 @@ function _excelRenderTable(dn) {
             : dnTh3(ct);
         h1 += `<th scope="col" data-col-id="${escapeHtmlAttr(c.id)}" data-excel-col="comp-${escapeHtmlAttr(c.id)}" class="excel-hdr-themed" style="${thBase}background:var(--excel-header-bg);--hc-fill:${hcFill};--hc-stroke:${hcStroke};min-width:95px;text-align:center;">${colLabel}</th>`;
         h2 += `<th scope="col" data-col-id="${escapeHtmlAttr(c.id)}" class="excel-hdr-themed" style="${th2Base}background:var(--excel-header-bg);--hc-fill:${hcFill};--hc-stroke:${hcStroke};min-width:95px;text-align:center;">${colDetail}</th>`;
-        h3 += `<th scope="col" data-col-id="${escapeHtmlAttr(c.id)}" class="excel-hdr-themed" style="padding:${h3Pad};font-size: var(--fs-3xs);font-weight: var(--fw-medium);color:var(--excel-text-dim);text-align:center;white-space:nowrap;background:var(--excel-header-bg);--hc-fill:${hcFill};--hc-stroke:${hcStroke};min-width:95px;text-align:center;">${colDnLabel}${colCode}</th>`;
+        h3 += `<th scope="col" data-col-id="${escapeHtmlAttr(c.id)}" class="excel-hdr-themed" style="padding:${h3Pad};font-size:${_h3Px}px;font-weight: var(--fw-medium);color:var(--excel-text-dim);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:var(--excel-header-bg);--hc-fill:${hcFill};--hc-stroke:${hcStroke};min-width:95px;text-align:center;">${colDnLabel}${colCode}</th>`;
     });
 
     h1 += `<th scope="col" data-excel-col="h-denn" style="${thBase}background:var(--excel-header-bg);color:var(--warn-hover);min-width:60px;text-align:center;">H denn</th>`;
@@ -280,6 +293,8 @@ function _excelRenderTable(dn) {
     container.scrollTop = prevScrollTop;
     /* Zastosuj zapisane szerokości kolumn (stabilne data-excel-col) */
     _excelApplyColWidths(dn);
+    /* Autofit kolumn bez zapisanego draga do najszerszego tekstu */
+    if (typeof _excelAutoFitColumns === 'function') _excelAutoFitColumns(dn);
     _excelInitColumnResize();
     _excelInitColumnSelect();
     _excelApplyStickyColumns();
@@ -341,10 +356,159 @@ function _excelRenderTable(dn) {
 
 /* Zastosuj zapisane szerokości kolumn po stabilnym data-excel-col
    z kanonicznego wiersza h1 (drugi tr thead). Wiersz h3 ma colspan=4
-   (grupa PRZ), więc mapowanie po nim dawałoby jedną szerokość na
-   4 podkolumny i zły indeks — stąd h1. Legacy klucze numeryczne
-   "zakładka-ci" działają jako fallback po indeksie. Szerokość trafia
-   na th (h1+h2) i td, nie tylko na nagłówek. */
+   (grupa PRZ), więc mapowany jest helperem _excelH3CellForCol.
+   Legacy klucze numeryczne "zakładka-ci" działają jako fallback po indeksie.
+   Szerokość trafia na th (h1+h2+h3) i td, nie tylko na nagłówek. */
+/* Mapowanie indeksu kanonicznego (wiersz h1) na komórkę wiersza h3.
+   Wiersz h3 grupuje kolumny PRZ (colspan=4), więc indeksy nie są 1:1.
+   Bez tego H3 trzyma twarde min-width (95px) i blokuje ściskanie kolumn. */
+function _excelH3CellForCol(h3ths, ci) {
+    let acc = 0;
+    for (let i = 0; i < h3ths.length; i++) {
+        const th = h3ths[i];
+        let span = 1;
+        try {
+            if (th && typeof th.colSpan === 'number' && th.colSpan > 1) span = th.colSpan;
+            else if (th && typeof th.getAttribute === 'function')
+                span = parseInt(th.getAttribute('colspan') || '1', 10) || 1;
+        } catch (_e) {}
+        if (ci >= acc && ci < acc + span) return { th, span };
+        acc += span;
+    }
+    return null;
+}
+
+/* Szerokość na wiersz h3: pojedyncza kolumna dostaje wymiar wprost,
+   grupa (PRZ i, colspan>1) dostaje minWidth 0 — szerokość wyznaczają dzieci. */
+function _excelApplyWidthToH3(h3ths, ci, newWidth) {
+    const hit = _excelH3CellForCol(h3ths, ci);
+    if (!hit || !hit.th || !hit.th.style) return;
+    if (hit.span > 1) {
+        hit.th.style.minWidth = '0px';
+    } else {
+        hit.th.style.minWidth = newWidth + 'px';
+        hit.th.style.width = newWidth + 'px';
+        hit.th.style.maxWidth = newWidth + 'px';
+    }
+}
+if (typeof window !== 'undefined') {
+    window._excelH3CellForCol = _excelH3CellForCol;
+    window._excelApplyWidthToH3 = _excelApplyWidthToH3;
+}
+/* Naturalna szerokość komórki body — po najszerszym tekście.
+   Input: scrollWidth pełnego tekstu; select: labelka; tekst: cała zawartość. */
+function _excelCellNaturalWidth(td) {
+    if (!td) return 0;
+    try {
+        const inp = td.querySelector ? td.querySelector('input') : null;
+        if (inp && typeof inp.scrollWidth === 'number' && inp.scrollWidth > 0)
+            return inp.scrollWidth;
+        const lab = td.querySelector ? td.querySelector('.excel-sel-wrap div') : null;
+        if (lab && typeof lab.scrollWidth === 'number' && lab.scrollWidth > 0)
+            return lab.scrollWidth;
+        if (typeof td.scrollWidth === 'number') return td.scrollWidth;
+    } catch (_e) {}
+    return 0;
+}
+
+/* Autofit: domyślna szerokość kolumn bez zapisanego draga = najszerszy tekst
+   (nagłówki h1/h2/h3-single + wiersze w DOM). Zapisany drag nietknięty.
+   onlyCi != null → dopasuj tylko tę kolumnę (dblclick na uchwycie). */
+function _excelAutoFitColumns(dn, onlyCi) {
+    if (typeof _excelColWidths === 'undefined') return;
+    const container = document.getElementById('excel-table-container');
+    if (!container) return;
+    const tbl = container.querySelector('table');
+    if (!tbl) return;
+    const headRows = tbl.querySelectorAll('thead tr');
+    if (headRows.length < 2) return;
+    const h1ths = headRows[1].querySelectorAll('th');
+    if (h1ths.length === 0) return;
+    const h2ths = headRows.length > 2 ? headRows[2].querySelectorAll('th') : [];
+    const h3ths = headRows[0].querySelectorAll('th');
+    const tab = String(dn);
+    const minW = typeof _excelColMinWidth === 'function' ? _excelColMinWidth() : 10;
+    let maxW = 320;
+    try {
+        if (typeof _EXCEL_COL_FIT_MAX === 'number') maxW = _EXCEL_COL_FIT_MAX;
+    } catch (_e) {}
+    const rows = tbl.querySelectorAll('tbody tr[data-widx]');
+    const hideTr = typeof _excelTransitionsHidden === 'function' && _excelTransitionsHidden();
+    const cols = onlyCi != null && onlyCi >= 0 ? [onlyCi] : null;
+    const fitOne = function (ci) {
+        const h1th = h1ths[ci];
+        if (!h1th) return;
+        const colId =
+            typeof h1th.getAttribute === 'function' ? h1th.getAttribute('data-excel-col') : null;
+        /* Ukryte kolumny PRZ: scrollWidth 0 zatrułby fit (10px po odkryciu) */
+        if (
+            hideTr &&
+            colId &&
+            (colId.indexOf('trz-') === 0 || colId === 'tr-minus' || colId === 'tr-plus')
+        )
+            return;
+        const key =
+            typeof _excelColWidthKey === 'function'
+                ? _excelColWidthKey(tab, colId || String(ci))
+                : tab + '-' + (colId || String(ci));
+        // zapisany drag wygrywa — autofit go nie rusza
+        if (_excelColWidths[key] != null) {
+            if (typeof _excelAutoFittedWidths !== 'undefined') delete _excelAutoFittedWidths[key];
+            return;
+        }
+        let w = 0;
+        try {
+            if (typeof h1th.scrollWidth === 'number') w = Math.max(w, h1th.scrollWidth);
+            if (h2ths[ci] && typeof h2ths[ci].scrollWidth === 'number')
+                w = Math.max(w, h2ths[ci].scrollWidth);
+            const hit =
+                typeof _excelH3CellForCol === 'function' ? _excelH3CellForCol(h3ths, ci) : null;
+            if (hit && hit.span === 1 && hit.th && typeof hit.th.scrollWidth === 'number')
+                w = Math.max(w, hit.th.scrollWidth);
+            for (let r = 0; r < rows.length; r++) {
+                const cell = rows[r].children[ci];
+                if (cell) w = Math.max(w, _excelCellNaturalWidth(cell));
+            }
+        } catch (_e2) {}
+        if (!(w > 0)) return;
+        w = Math.max(minW, Math.min(maxW, Math.ceil(w) + 2));
+        if (typeof _excelAutoFittedWidths !== 'undefined') _excelAutoFittedWidths[key] = w;
+        h1th.style.minWidth = w + 'px';
+        h1th.style.width = w + 'px';
+        if (h2ths[ci]) {
+            h2ths[ci].style.minWidth = w + 'px';
+            h2ths[ci].style.width = w + 'px';
+        }
+        if (typeof _excelApplyWidthToH3 === 'function') {
+            const hit2 =
+                typeof _excelH3CellForCol === 'function' ? _excelH3CellForCol(h3ths, ci) : null;
+            if (hit2 && hit2.span === 1 && hit2.th && hit2.th.style) {
+                hit2.th.style.minWidth = w + 'px';
+                hit2.th.style.width = w + 'px';
+            } else if (hit2 && hit2.span > 1 && hit2.th && hit2.th.style) {
+                hit2.th.style.minWidth = '0px';
+            }
+        }
+        const bodyRows = tbl.querySelectorAll('tbody tr');
+        bodyRows.forEach(function (row) {
+            const cell = row.children[ci];
+            if (cell) {
+                cell.style.minWidth = w + 'px';
+                cell.style.width = w + 'px';
+            }
+        });
+    };
+    if (cols) {
+        fitOne(cols[0]);
+    } else {
+        for (let ci = 0; ci < h1ths.length; ci++) fitOne(ci);
+    }
+    if (typeof _excelApplyStickyColumns === 'function') _excelApplyStickyColumns();
+}
+if (typeof window !== 'undefined') {
+    window._excelCellNaturalWidth = _excelCellNaturalWidth;
+    window._excelAutoFitColumns = _excelAutoFitColumns;
+}
 function _excelApplyColWidths(dn) {
     if (typeof _excelColWidths === 'undefined' || !_excelColWidths) return;
     const container = document.getElementById('excel-table-container');
@@ -356,35 +520,70 @@ function _excelApplyColWidths(dn) {
     const h1ths = headRows[1].querySelectorAll('th');
     if (h1ths.length === 0) return;
     const h2ths = headRows.length > 2 ? headRows[2].querySelectorAll('th') : [];
+    const h3ths = headRows[0].querySelectorAll('th');
     const tab = String(dn);
     const byId = {};
     const legacyByIdx = {};
+    const fitById = {};
+    const fitLegacyByIdx = {};
+    const minW = typeof _excelColMinWidth === 'function' ? _excelColMinWidth() : 10;
     Object.keys(_excelColWidths).forEach(function (key) {
         const parsed =
             typeof _excelParseColWidthKey === 'function' ? _excelParseColWidthKey(key) : null;
         if (!parsed || parsed.tab !== tab) return;
         const w = parseFloat(_excelColWidths[key]);
-        if (!isFinite(w) || w < 30) return;
+        if (!isFinite(w) || w < minW) return;
         if (/^-?\d+$/.test(parsed.colId)) legacyByIdx[parseInt(parsed.colId, 10)] = w;
         else byId[parsed.colId] = w;
     });
+    /* Autofit z poprzedniego pełnego rendera (virtual dokleja slice) — zapisany drag wygrywa */
+    try {
+        if (typeof _excelAutoFittedWidths !== 'undefined' && _excelAutoFittedWidths) {
+            Object.keys(_excelAutoFittedWidths).forEach(function (key) {
+                const parsed =
+                    typeof _excelParseColWidthKey === 'function'
+                        ? _excelParseColWidthKey(key)
+                        : null;
+                if (!parsed || parsed.tab !== tab) return;
+                const w = parseFloat(_excelAutoFittedWidths[key]);
+                if (!isFinite(w) || w < minW) return;
+                if (/^-?\d+$/.test(parsed.colId)) fitLegacyByIdx[parseInt(parsed.colId, 10)] = w;
+                else fitById[parsed.colId] = w;
+            });
+        }
+    } catch (_eFit) {}
     const bodyRows = tbl.querySelectorAll('tbody tr');
     h1ths.forEach(function (th, ci) {
         const colId =
             typeof th.getAttribute === 'function' ? th.getAttribute('data-excel-col') : null;
-        const w = colId && byId[colId] != null ? byId[colId] : legacyByIdx[ci];
+        const saved = colId && byId[colId] != null ? byId[colId] : legacyByIdx[ci];
+        const fitted =
+            saved == null
+                ? colId && fitById[colId] != null
+                    ? fitById[colId]
+                    : fitLegacyByIdx[ci]
+                : null;
+        const w = saved != null ? saved : fitted;
         if (w == null) return;
         th.style.minWidth = w + 'px';
         th.style.width = w + 'px';
+        /* maxWidth tylko dla twardego draga; fitted rośnie naturalnie do kolejnego fita */
+        if (saved != null) th.style.maxWidth = w + 'px';
+        else th.style.maxWidth = '';
         if (h2ths[ci]) {
             h2ths[ci].style.minWidth = w + 'px';
             h2ths[ci].style.width = w + 'px';
+            if (saved != null) h2ths[ci].style.maxWidth = w + 'px';
+            else h2ths[ci].style.maxWidth = '';
         }
+        if (typeof _excelApplyWidthToH3 === 'function') _excelApplyWidthToH3(h3ths, ci, w);
         bodyRows.forEach(function (row) {
             const cell = row.children[ci];
             if (cell) {
                 cell.style.minWidth = w + 'px';
                 cell.style.width = w + 'px';
+                if (saved != null) cell.style.maxWidth = w + 'px';
+                else cell.style.maxWidth = '';
             }
         });
     });

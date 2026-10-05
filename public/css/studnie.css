@@ -1480,9 +1480,12 @@ html[data-theme='light'] .unit-popup-preview {
     --tile-accent: var(--success);
 }
 
-.tile[data-type='krag'],
-.tile[data-type='krag_ot'] {
+.tile[data-type='krag'] {
     --tile-accent: var(--accent);
+}
+
+.tile[data-type='krag_ot'] {
+    --tile-accent: var(--purple-alt);
 }
 
 .tile[data-type='konus'] {
@@ -2704,13 +2707,26 @@ select[id$='-czy'] option {
     appearance: none;
 }
 
+#excel-table-container thead th {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: center !important;
+}
+
+#excel-table-container td {
+    text-align: center !important;
+    overflow: hidden;
+}
+
 #excel-table-container input[type='text'],
 #excel-table-container input[type='number'] {
     width: 100% !important;
     height: 100% !important;
     box-sizing: border-box !important;
+    min-width: 0 !important;
     padding: 0.3rem 0.45rem;
     background: transparent;
+    text-align: center !important;
 }
 
 #excel-table-container select {
@@ -2734,6 +2750,7 @@ select[id$='-czy'] option {
     width: 100% !important;
     height: 100% !important;
     box-sizing: border-box !important;
+    min-width: 0 !important;
 }
 
 #excel-table-container .excel-sel-wrap > div {
@@ -2746,6 +2763,8 @@ select[id$='-czy'] option {
     letter-spacing: 0.1px !important;
     display: flex !important;
     align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
     width: 100% !important;
     height: 100% !important;
     box-sizing: border-box !important;
@@ -2860,6 +2879,11 @@ select[id$='-czy'] option {
 .excel-td-center {
     text-align: center;
 }
+/* Ukryta sekcja przejść (PRZ) — kolumny zostają w DOM (stabilne indeksy),
+   znikają tylko z layoutu. Liczba komórek nagłówek↔body zawsze identyczna. */
+#excel-table-container .excel-tr-hidden {
+    display: none;
+}
 .excel-td-right {
     text-align: right;
 }
@@ -2904,9 +2928,11 @@ td.excel-tint--avr input {
 td.excel-tint--konus input {
     background: color-mix(in srgb, var(--cmp-konus) 13%, var(--excel-tint-base)) !important;
 }
-td.excel-tint--krag input,
-td.excel-tint--krag_ot input {
+td.excel-tint--krag input {
     background: color-mix(in srgb, var(--cmp-krag) 13%, var(--excel-tint-base)) !important;
+}
+td.excel-tint--krag_ot input {
+    background: color-mix(in srgb, var(--purple-alt) 13%, var(--excel-tint-base)) !important;
 }
 td.excel-tint--dennica input {
     background: color-mix(in srgb, var(--cmp-dennica) 13%, var(--excel-tint-base)) !important;
@@ -4420,6 +4446,56 @@ td.excel-tr-selected .excel-sel-wrap > div {
 .excel-reset-btn:hover {
     background: rgba(var(--danger-rgb), 0.2);
     border-color: rgba(var(--danger-rgb), 0.4);
+}
+
+/* Popup "Wybór kolumn": rozmiar czcionki nagłówków H1/H2/H3.
+   Steppery na .unit-popup-btn (jak popup Jednostki), reset na .btn. */
+.excel-font-box {
+    margin-bottom: 0.8rem;
+    border: 1px solid var(--excel-border-subtle);
+    border-radius: var(--radius-2xs);
+    overflow: hidden;
+}
+.excel-font-head {
+    padding: 0.25rem 0.6rem;
+    background: var(--excel-border-subtle);
+    font-size: var(--fs-3xs);
+    font-weight: var(--fw-semibold);
+    color: var(--excel-text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+.excel-font-rows {
+    display: flex;
+    gap: 0.6rem 1.2rem;
+    padding: 0.5rem 0.6rem;
+    flex-wrap: wrap;
+    align-items: center;
+}
+.excel-font-row {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    white-space: nowrap;
+}
+.excel-font-label {
+    font-size: var(--fs-3xs);
+    color: var(--excel-text-dim);
+    min-width: 8.5rem;
+}
+.excel-font-step {
+    min-width: 1.8rem;
+    padding: 0.15rem 0.2rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+.excel-font-val {
+    font-size: var(--fs-3xs);
+    color: var(--excel-text);
+    min-width: 3rem;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
 }
 
 /* Neutralny przycisk tekstowy popupów Excela (stopka "Zamknij") */

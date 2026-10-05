@@ -50,6 +50,10 @@ const EXCEL_SHORTCUTS = [
         ]
     },
     {
+        section: 'Widok',
+        items: [{ keys: 'Ctrl+Shift+H', description: 'Ukryj/pokaż sekcję przejść (PRZ)' }]
+    },
+    {
         section: 'Inne',
         items: [
             { keys: 'Ctrl+S', description: 'Zapisz zmiany i zamknij tabelę' },
