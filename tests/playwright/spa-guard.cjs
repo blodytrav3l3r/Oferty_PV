@@ -10,6 +10,7 @@
  *   G6 Zapisz i przejdź przy niekompletnej ofercie (brak numeru) -> walidacja blokuje, zostaje
  *   G7 F5 z brudem -> popup 3-btn w iframe (kontekst + Zapisz i odśwież) -> Anuluj -> bez reloadu
  *   G8 flush + F5 -> recovery draftu po przeladowaniu (modal #sok-draft-modal)
+ *   G9 Przywróć -> logout z brudem -> licznik draftów -> Zostań -> sesja cała
  *
  * Run:
  *   node tests/playwright/spa-guard.cjs                # wymaga backendu na :3000
@@ -345,6 +346,45 @@ async function waitModuleFrame(page, mod) {
         await frame4.evaluate(() => window.draftAutosave.checkRecovery('offer_rury'));
         const recModal = await frame4.locator('#sok-draft-modal').count();
         check('G8 recovery po F5: modal draftu', recModal > 0, `modalCount=${recModal}`);
+
+        // G9: Przywróć -> brud wraca -> logout pyta z licznikiem -> Zostań -> sesja cała.
+        await frame4.click('[data-draft-act="restore"]');
+        await frame4.waitForFunction(() => !document.getElementById('sok-draft-modal'), null, {
+            timeout: 5000
+        });
+        const fieldRestored = await frame4.inputValue('#client-name');
+        check('G9 Przywróć: pole z draftu', fieldRestored === 'GUARD-E2E', fieldRestored);
+        await frame4.evaluate(() => window.draftAutosave.flushAll());
+        // :not(#theme-toggle) — przełącznik motywu dzieli klasę .header-logout.
+        await page.click('button.header-logout:not(#theme-toggle)');
+        await page.waitForSelector('#app-confirm-overlay', { timeout: 8000 });
+        await sleep(400); // handlery modala wpinane +50ms po renderze
+        const lobtns = await page.evaluate(() => ({
+            save: document.getElementById('app-confirm-save')?.textContent || '',
+            leave: !!document.getElementById('app-confirm-leave'),
+            cancel: !!document.getElementById('app-confirm-cancel'),
+            msg: document.getElementById('app-confirm-message')?.textContent || ''
+        }));
+        check(
+            'G9 logout: 3-btn (Zapisz i wyloguj)',
+            /Zapisz i wyloguj/.test(lobtns.save) && lobtns.leave && lobtns.cancel,
+            JSON.stringify(lobtns).slice(0, 160)
+        );
+        check(
+            'G9 logout: licznik draftów',
+            /Lokalnych draftów: 1/.test(lobtns.msg),
+            lobtns.msg.slice(0, 160)
+        );
+        await page.click('#app-confirm-cancel');
+        await page.waitForFunction(() => !document.getElementById('app-confirm-overlay'), null, {
+            timeout: 5000
+        });
+        const stillApp = await page.evaluate(
+            () =>
+                window.location.href.includes('app.html') &&
+                !!(window.currentUser && window.currentUser.id !== undefined)
+        );
+        check('G9 Zostań: sesja i strona całe', stillApp === true, String(stillApp));
     } catch (e) {
         failed = true;
         errors.push('EXCEPTION: ' + String((e && e.message) || e));
