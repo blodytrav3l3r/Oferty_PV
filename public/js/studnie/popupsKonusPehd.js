@@ -2,12 +2,65 @@
 
 /* ===== KONUS PEHD RESOLVER ===== */
 
+/* Check Konus 1:1 z enforceGlobalKonusPehdRule (actionsWellSync.js):
+   config + zakonczenie + redukcjaZakonczenie. Lokalnie, żeby nie ruszać SSoT. */
+function _konusResolverWellHasKonus(well) {
+    if (!well) return false;
+    if (well.config && well.config.length > 0) {
+        const found = well.config.some((c) => {
+            const p =
+                typeof getStudnieProductById === 'function'
+                    ? getStudnieProductById(c.productId)
+                    : (typeof studnieProducts !== 'undefined' ? studnieProducts : []).find(
+                          (pr) => pr.id === c.productId
+                      );
+            return p && p.componentType === 'konus';
+        });
+        if (found) return true;
+    }
+    for (const field of ['zakonczenie', 'redukcjaZakonczenie']) {
+        if (!well[field]) continue;
+        const p =
+            typeof getStudnieProductById === 'function'
+                ? getStudnieProductById(well[field])
+                : (typeof studnieProducts !== 'undefined' ? studnieProducts : []).find(
+                      (pr) => pr.id === well[field]
+                  );
+        if (p && p.componentType === 'konus') return true;
+    }
+    return false;
+}
+
 function closeKonusResolver() {
     window.konusResolverOpen = false;
     const cb = window.konusResolverCallback;
     window.konusResolverCallback = null;
     const el = document.getElementById('pehd-konus-resolver');
     if (el) el.remove();
+    /* Anuluj/X bez wyboru płyty: Konus zostaje → wkładka Zwieńcz. wraca na 'brak'.
+       Po resolve flaga _konusResolved stoi (Konus znika) — nic nie cofamy. */
+    try {
+        const wIdx = window._konusResolverWellIndex;
+        const resolved = window._konusResolved;
+        window._konusResolverWellIndex = -1;
+        window._konusResolved = false;
+        if (!resolved && typeof wIdx === 'number' && wIdx >= 0) {
+            const well = typeof wells !== 'undefined' && Array.isArray(wells) ? wells[wIdx] : null;
+            if (
+                well &&
+                well.wkladkaZwienczenie &&
+                well.wkladkaZwienczenie !== 'brak' &&
+                _konusResolverWellHasKonus(well)
+            ) {
+                well.wkladkaZwienczenie = 'brak';
+                if (typeof renderWellParams === 'function') renderWellParams();
+                if (typeof updateParamTilesUI === 'function') updateParamTilesUI();
+                if (typeof updateSummary === 'function') updateSummary();
+                if (typeof window.refreshExcelFromConfig === 'function')
+                    window.refreshExcelFromConfig();
+            }
+        }
+    } catch (_eRevert) {}
     if (cb) cb();
 }
 
@@ -19,6 +72,8 @@ window.showKonusPehdResolverModal = function (wellIndex, callback) {
 
     window.konusResolverOpen = true;
     window.konusResolverCallback = callback || null;
+    window._konusResolverWellIndex = wellIndex;
+    window._konusResolved = false;
 
     const html = `
     <div class="modal" style="max-width:620px;border-color:rgba(var(--danger-rgb),0.35);">
@@ -98,6 +153,7 @@ window.resolveKonusPehd = async function (wellIndex, type) {
         well.autoSelect = true;
         well.config = [];
 
+        window._konusResolved = true;
         closeKonusResolver();
 
         if (typeof updateAutoLockUI === 'function') updateAutoLockUI();
