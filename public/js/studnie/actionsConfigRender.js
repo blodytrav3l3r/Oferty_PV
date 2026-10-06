@@ -348,14 +348,18 @@ function renderWellConfig() {
                     };
                     const kWeight = (kp.weight || 0) * (kinetaItem.quantity || 1);
                     // Ten sam kafelek co reszta (config-tile) — statyczny, bez drag/usuń.
+                    // Ukryte zaślepki idx-box i remove-cell trzymają tekst i CENA w linii z resztą.
                     html += `<div class="config-tile config-tile--static" style="--tile-accent:${kBadge.bg};--tile-fg:${kBadge.fg};">
           <div class="cfg-row-main">
-            <div class="cfg-col-text">
+            <div class="cfg-col-left">
+              <div class="cfg-idx-box" style="visibility:hidden;" aria-hidden="true"><span class="cfg-idx-num">•</span></div>
+              <div class="cfg-col-text">
               <div class="cfg-title-row">
                 <span class="cfg-type-badge" style="background:${kBadge.bg};color:${kBadge.fg};">${kBadge.label.split(' ')[1] || kBadge.label}</span>
                 <div class="cfg-item-name">↳ + ${escapeHtml(kp.name)}${kPct > 0 ? ` <span class="color-success">(-${String(kPct).replace('.', ',')}%)</span>` : ''}</div>
               </div>
               <div class="cfg-id-line">${escapeHtml(kp.id)}${kMalLines.length > 0 ? ' | ' + escapeHtml(kMalLines.join(' • ')) : ''}</div>
+              </div>
             </div>
             <div class="cfg-row-side">
               <div class="cfg-values-grid">
@@ -365,6 +369,7 @@ function renderWellConfig() {
                 <span class="fs-xs-muted">CENA:</span>
                 <span class="cfg-price-val">${fmt(kPrice)} PLN</span>
               </div>
+              <div class="cfg-remove-cell" style="visibility:hidden;" aria-hidden="true"></div>
             </div>
           </div>
         </div>`;
