@@ -1474,6 +1474,21 @@ html[data-theme='light'] .unit-popup-preview {
     margin-left: 4px;
     font-weight: var(--fw-bold);
 }
+/* Podwiersz kinety pod dennicą (jak w Ofercie: ↳ + Kineta) */
+.cfg-sub-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6rem;
+    padding: 0.2rem 0.7rem 0.2rem 3.2rem;
+    font-size: var(--fs-sm);
+    color: var(--pink-hover);
+    opacity: 0.85;
+}
+.cfg-sub-price {
+    font-weight: var(--fw-bold);
+    white-space: nowrap;
+}
 
 /* Kolory typów kafelków */
 .tile[data-type='dennica'] {

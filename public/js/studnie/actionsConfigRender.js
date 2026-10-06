@@ -82,6 +82,49 @@ function renderWellConfig() {
     // P4-P0: kontekst Preco raz per studnia (nie per pozycja).
     const precoCtx =
         typeof computePrecoWellContext === 'function' ? computePrecoWellContext(well) : undefined;
+    // Parytet z zakładką Oferta: wiersz liczy SSoT calculateLinePricing
+    // (transport + dopłata + alokacja PRECO + przejścia/wiercenia), nie inline.
+    const _discKey = well.dn === 'styczna' ? 'styczne' : well.dn;
+    const _activeDisc =
+        typeof getWellActiveDiscounts === 'function'
+            ? getWellActiveDiscounts(well)
+            : typeof wellDiscounts !== 'undefined'
+              ? wellDiscounts
+              : {};
+    const _disc = (_activeDisc && _discKey ? _activeDisc[_discKey] : null) || {
+        dennica: 0,
+        nadbudowa: 0
+    };
+    const _assigned =
+        typeof calculateAssignedPrzejscia === 'function' ? calculateAssignedPrzejscia(well) : [];
+    // Udział transportu jak w updateSummary (ten sam wzór co kafelek Ceny).
+    let _wellTransportCost = 0;
+    try {
+        if (typeof calculateOfferTotals === 'function') {
+            const _totals = calculateOfferTotals();
+            const _cs =
+                typeof safeCalcWellStats === 'function'
+                    ? safeCalcWellStats
+                    : typeof calcWellStats === 'function'
+                      ? calcWellStats
+                      : null;
+            if (_totals && _cs) {
+                const _st = _cs(well);
+                if (_totals.globalWeight > 0 && _totals.totalTransportCost > 0) {
+                    _wellTransportCost =
+                        _totals.totalTransportCost * (_st.weight / _totals.globalWeight);
+                }
+            }
+        }
+        if (
+            typeof orderEditMode !== 'undefined' &&
+            orderEditMode &&
+            well.frozenTransportCost != null &&
+            isFinite(Number(well.frozenTransportCost))
+        ) {
+            _wellTransportCost = Number(well.frozenTransportCost);
+        }
+    } catch (_eTr) {}
     well.config.forEach((item, index) => {
         const p =
             typeof resolveEffectiveProduct === 'function'
@@ -92,60 +135,31 @@ function renderWellConfig() {
                     ? getStudnieProductById(item.productId)
                     : studnieProducts.find((pr) => pr.id === item.productId);
         if (!p) return;
+        // Kineta nie ma osobnego wiersza — idzie podwierszem pod dennicą jak w Ofercie.
+        if (p.componentType === 'kineta') return;
         const frozenCtx = typeof isFrozenPriceCtx === 'function' && isFrozenPriceCtx();
         // Render: corrupt stored → fallback 0% + flaga (kontrakt throw nietknięty).
         const _assessed =
             typeof getItemAssessedPriceSafe === 'function'
                 ? getItemAssessedPriceSafe
                 : getItemAssessedPrice;
-        const itemPrice =
-            item.frozenPrice != null && frozenCtx
-                ? item.frozenPrice
-                : _assessed(well, p, true, item);
-        let totalPrice = itemPrice * item.quantity;
-
-        if (p.componentType === 'dennica' || p.componentType === 'styczna') {
-            if (!item.isPsiaBuda) {
-                const kinetaItem = well.config.find((c) => {
-                    const pr =
-                        typeof getStudnieProductById === 'function'
-                            ? getStudnieProductById(c.productId)
-                            : typeof getStudnieProductById === 'function'
-                              ? getStudnieProductById(c.productId)
-                              : studnieProducts.find((x) => x.id === c.productId);
-                    return pr && pr.componentType === 'kineta';
-                });
-                if (kinetaItem) {
-                    const kinetaProd =
-                        typeof getStudnieProductById === 'function'
-                            ? getStudnieProductById(kinetaItem.productId)
-                            : typeof getStudnieProductById === 'function'
-                              ? getStudnieProductById(kinetaItem.productId)
-                              : studnieProducts.find((x) => x.id === kinetaItem.productId);
-                    if (kinetaProd) {
-                        const rawKinetaPrice =
-                            kinetaItem.frozenPrice != null && frozenCtx
-                                ? kinetaItem.frozenPrice
-                                : _assessed(well, kinetaProd, true, kinetaItem);
-                        totalPrice += rawKinetaPrice * (kinetaItem.quantity || 1);
-                    }
-                }
-                if (well.kineta === 'preco' || well.kineta === 'precotop') {
-                    const precoCalc = calcPrecoPricing(well);
-                    const discKey = well.dn === 'styczna' ? 'styczne' : well.dn;
-                    const _precoObj =
-                        (typeof wellDiscounts !== 'undefined' ? wellDiscounts : {})[discKey] || {};
-                    const discPreco =
-                        typeof safePrecoPct === 'function'
-                            ? safePrecoPct(well, _precoObj)
-                            : _precoObj.preco || 0;
-                    const precoMult = 1 - discPreco / 100;
-                    totalPrice += precoCalc.suma * precoMult;
-                }
-                if (well.doplata) {
-                    totalPrice += well.doplata;
-                }
-            }
+        let totalPrice;
+        if (typeof calculateLinePricing === 'function') {
+            totalPrice = calculateLinePricing(
+                well,
+                p,
+                item,
+                _wellTransportCost,
+                _disc,
+                (_assigned && _assigned[index]) || null,
+                index,
+                precoCtx
+            ).totalLinePrice;
+        } else {
+            totalPrice =
+                (item.frozenPrice != null && frozenCtx
+                    ? item.frozenPrice
+                    : _assessed(well, p, true, item)) * item.quantity;
         }
         const totalWeight = (p.weight || 0) * item.quantity;
         const badge = typeBadge[p.componentType] || {
@@ -284,6 +298,48 @@ function renderWellConfig() {
 
           </div>
         </div>`;
+        // Podwiersz kinety jak w Ofercie (↳ + Kineta + malowanie kinety w cenie).
+        if ((p.componentType === 'dennica' || p.componentType === 'styczna') && !item.isPsiaBuda) {
+            const kinetaItem = (well.config || []).find((c) => {
+                const pr =
+                    typeof getStudnieProductById === 'function'
+                        ? getStudnieProductById(c.productId)
+                        : studnieProducts.find((x) => x.id === c.productId);
+                return pr && pr.componentType === 'kineta';
+            });
+            if (kinetaItem) {
+                const kp =
+                    typeof getStudnieProductById === 'function'
+                        ? getStudnieProductById(kinetaItem.productId)
+                        : studnieProducts.find((x) => x.id === kinetaItem.productId);
+                if (kp) {
+                    const kPrice =
+                        (kinetaItem.frozenPrice != null && frozenCtx
+                            ? kinetaItem.frozenPrice
+                            : _assessed(well, kp, true, kinetaItem)) * (kinetaItem.quantity || 1);
+                    const kPct = kp
+                        ? typeof getWellDiscountPctSafe === 'function'
+                            ? getWellDiscountPctSafe(well, kp, _disc)
+                            : typeof getWellDiscountPct === 'function'
+                              ? getWellDiscountPct(well, kp, _disc)
+                              : 0
+                        : 0;
+                    html += `<div class="cfg-sub-row"><span>↳ + ${escapeHtml(kp.name)}${kPct > 0 ? ` <span class="color-success">(-${String(kPct).replace('.', ',')}%)</span>` : ''}</span><span class="cfg-sub-price">${fmt(kPrice)} PLN</span></div>`;
+                    const kBd =
+                        typeof getItemPriceBreakdownSafe === 'function'
+                            ? getItemPriceBreakdownSafe(well, kp, true, kinetaItem)
+                            : typeof getItemPriceBreakdown === 'function'
+                              ? getItemPriceBreakdown(well, kp, true, kinetaItem)
+                              : null;
+                    if (kBd && kBd.malowanieW > 0) {
+                        html += `<div class="cfg-sub-row"><span>w cenie: malowanie kinety</span><span class="cfg-sub-price">${fmt(kBd.malowanieW * (kinetaItem.quantity || 1))} PLN</span></div>`;
+                    }
+                    if (kBd && kBd.malowanieZ > 0) {
+                        html += `<div class="cfg-sub-row"><span>w cenie: malowanie zewnątrz</span><span class="cfg-sub-price">${fmt(kBd.malowanieZ * (kinetaItem.quantity || 1))} PLN</span></div>`;
+                    }
+                }
+            }
+        }
     });
 
     if (
