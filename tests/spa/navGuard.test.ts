@@ -1,4 +1,3 @@
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment -- wzorzec vm (transitionsModals)
 // @ts-nocheck
 /* =============================================================
    Testy guarda nawigacji SPA — popup aplikacji (appConfirm) przy
@@ -182,5 +181,89 @@ describe('Guard nawigacji SPA — appConfirm przy niezapisanych zmianach', () =>
         state.hash = '#/rury?tab=offer';
         await context.window.SpaRouter.navigate();
         expect(confirmCalls).toHaveLength(0);
+    });
+});
+
+/** Kontekst z appConfirm3 (3-btn) i SSoT dirty — ścieżki P0.3/P1.1/P1.2 */
+function runContext3(opts = {}) {
+    const base = runContext();
+    const { context, state } = base;
+    const calls3 = [];
+    let choiceResolve = null;
+    context.window.appConfirm3 = (message, cOpts) => {
+        calls3.push({ message, opts: cOpts });
+        return new Promise((resolve) => {
+            choiceResolve = resolve;
+        });
+    };
+    context.window.__sokIsDirty = () => state.dirty;
+    context.window.__sokSaveDirty =
+        opts.saveFn ||
+        (async () => {
+            state.dirty = false;
+            return true;
+        });
+    context.window.__sokDescribeDirty = () =>
+        state.dirty ? { kind: 'offer_rury', docId: 'new', number: '', module: 'rury' } : null;
+    context.window.__sokKindLabel = (k) => (k === 'offer_rury' ? 'Oferta (Rury)' : 'Dokument');
+    // showToast do ścieżki nieudanego zapisu
+    context.window.showToast = () => {};
+    return {
+        ...base,
+        calls3,
+        resolveChoice: (val) => {
+            const r = choiceResolve;
+            choiceResolve = null;
+            r(val);
+        }
+    };
+}
+
+describe('Guard SPA — 3-btn i A-vs-B (P0.3/P1.1/P1.2)', () => {
+    test('TEST 5: A-vs-B — ?edit=X nad brudną edycją pyta i nazywa cel', async () => {
+        const { context, state, calls3, resolveChoice } = runContext3();
+        await bootOnRury(context, state);
+        state.dirty = true;
+        state.hash = '#/rury?edit=E2E_X1';
+        const navPromise = context.window.SpaRouter.navigate();
+        await flush();
+        expect(state.hash).toBe('#/rury');
+        expect(calls3).toHaveLength(1);
+        expect(calls3[0].message).toMatch(/wczyta.*E2E_X1/);
+        expect(calls3[0].message).toMatch(/Oferta \(Rury\)/);
+        resolveChoice('stay');
+        await navPromise;
+        expect(state.hash).toBe('#/rury');
+    });
+
+    test('TEST 6: save — zapis czysci dirty i nawigacja przechodzi', async () => {
+        const { context, state, calls3, resolveChoice } = runContext3();
+        await bootOnRury(context, state);
+        state.dirty = true;
+        state.hash = '#/studnie';
+        const navPromise = context.window.SpaRouter.navigate();
+        await flush();
+        expect(calls3).toHaveLength(1);
+        expect(calls3[0].message).toMatch(/Oferta \(Rury\)/);
+        resolveChoice('save');
+        await navPromise;
+        expect(state.hash).toBe('#/studnie');
+        expect(state.dirty).toBe(false);
+    });
+
+    test('TEST 7: save nieudany — zostaje, bez nawigacji', async () => {
+        const { context, state, calls3, resolveChoice } = runContext3({
+            saveFn: async () => false
+        });
+        await bootOnRury(context, state);
+        state.dirty = true;
+        state.hash = '#/studnie';
+        const navPromise = context.window.SpaRouter.navigate();
+        await flush();
+        expect(calls3).toHaveLength(1);
+        resolveChoice('save');
+        await navPromise;
+        expect(state.hash).toBe('#/rury');
+        expect(state.dirty).toBe(true);
     });
 });
