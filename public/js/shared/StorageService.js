@@ -151,7 +151,12 @@ class StorageService {
 
     /**
      * Usuwa ofertę z bazy danych serwera.
+     * Kasowanie jest idempotentne: 404 („oferty nie ma") to też sukces —
+     * cel (brak oferty) jest osiągnięty. Zwraca 'already-gone' zamiast
+     * rzucać, żeby wołający mógł pominąć sprzątanie blokady (jej
+     * zwalnianie dla nieistniejącego dokumentu też dałoby 404).
      * @param {string} id - ID dokumentu.
+     * @returns {Promise<true|'already-gone'>} Wynik kasowania.
      */
     async deleteOffer(id) {
         if (!this.initialized) throw new Error('StorageService not initialized.');
@@ -167,6 +172,7 @@ class StorageService {
             ? [`/api/offers-rury/studnie/${id}`, `/api/offers-rury/${id}`]
             : [`/api/offers-rury/${id}`, `/api/offers-rury/studnie/${id}`];
 
+        let sawNotFound = false;
         for (let i = 0; i < endpoints.length; i++) {
             const url = endpoints[i];
             let res;
@@ -192,6 +198,23 @@ class StorageService {
                 );
             }
 
+            if (res.status === 404) {
+                // Oferty nie ma na serwerze (stara lista, podwójne kliknięcie,
+                // oferta tylko lokalna) — to też sukces, nie błąd.
+                // 404 z własnego działu (pierwsza próba) kończy pętlę od razu:
+                // drugi endpoint i tak zwróciłby 404 (obcy dział), więc nie
+                // ma po co go pytać — mniej szumu 404 w konsoli.
+                sawNotFound = true;
+                if (i === 0) {
+                    logger.info(
+                        'StorageService',
+                        `[StorageService] Oferta ${id} już nie istnieje (404) — traktuję jako usuniętą.`
+                    );
+                    return 'already-gone';
+                }
+                continue;
+            }
+
             if (res.status === 500) {
                 // 500 = oferta mogła być już usunięta z DB (błąd FTS5/cache)
                 logger.warn(
@@ -200,6 +223,14 @@ class StorageService {
                 );
                 continue;
             }
+        }
+
+        if (sawNotFound) {
+            logger.info(
+                'StorageService',
+                `[StorageService] Oferta ${id} już nie istnieje (404) — traktuję jako usuniętą.`
+            );
+            return 'already-gone';
         }
 
         const errMsg = 'Nie udało się usunąć oferty z żadnego endpointu';

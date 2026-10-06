@@ -491,14 +491,21 @@ export default {
         }
 
         try {
-            await storageService.deleteOffer(id);
-            // Sprzatanie blokady usunietego dokumentu (tylko po sukcesie DELETE).
-            if (window.lockService) {
+            const deleteResult = await storageService.deleteOffer(id);
+            // Sprzatanie blokady usunietego dokumentu (tylko po faktycznym DELETE).
+            // Przy 'already-gone' dokumentu nie ma na serwerze, więc release
+            // też zwróciłby 404 — pomijamy (wygasłe blokady czyszczą się same).
+            if (deleteResult === true && window.lockService) {
                 const docType = String(id).startsWith('offer_studnie_') ? 'offer_studnie' : 'offer';
                 window.lockService.releaseOf(docType, id);
             }
             if (typeof window.showToast === 'function') {
-                window.showToast('Oferta została usunięta.', 'success');
+                window.showToast(
+                    deleteResult === 'already-gone'
+                        ? 'Oferta już była usunięta z serwera.'
+                        : 'Oferta została usunięta.',
+                    deleteResult === 'already-gone' ? 'info' : 'success'
+                );
             }
             this.loadLocalOffers(); // Odświeżenie listy ofert
         } catch (error) {
