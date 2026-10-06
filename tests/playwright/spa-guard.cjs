@@ -8,6 +8,8 @@
  *   G4 draft przetrwal wyjscie + powrot bez zapisu (pole zachowane, klucz w localStorage)
  *   G5 A-vs-B: ?edit=X1 nad brudna edycja -> popup "wczytać X1" -> Zostań -> hash wrocony
  *   G6 Zapisz i przejdź przy niekompletnej ofercie (brak numeru) -> walidacja blokuje, zostaje
+ *   G7 F5 z brudem -> popup 3-btn w iframe (kontekst + Zapisz i odśwież) -> Anuluj -> bez reloadu
+ *   G8 flush + F5 -> recovery draftu po przeladowaniu (modal #sok-draft-modal)
  *
  * Run:
  *   node tests/playwright/spa-guard.cjs                # wymaga backendu na :3000
@@ -202,6 +204,7 @@ async function waitModuleFrame(page, mod) {
         // G1: klik Kartoteka -> popup 3-btn z kontekstem w DOM rodzica.
         await page.click('#spa-app-kartoteka');
         await page.waitForSelector('#app-confirm-overlay', { timeout: 8000 });
+        await sleep(400); // handlery modala wpinane +50ms po renderze
         const btns = await page.evaluate(() => ({
             save: !!document.getElementById('app-confirm-save'),
             leave: !!document.getElementById('app-confirm-leave'),
@@ -231,6 +234,7 @@ async function waitModuleFrame(page, mod) {
         // G3: Opuść bez zapisu -> kartoteka.
         await page.click('#spa-app-kartoteka');
         await page.waitForSelector('#app-confirm-overlay', { timeout: 8000 });
+        await sleep(400); // handlery modala wpinane +50ms po renderze
         await page.click('#app-confirm-leave');
         await page.waitForFunction(() => /kartoteka/.test(window.location.hash), null, {
             timeout: 8000
@@ -243,6 +247,7 @@ async function waitModuleFrame(page, mod) {
         // powrot tez przez guard (brud w ukrytym iframe) -> opusc bez zapisu
         try {
             await page.waitForSelector('#app-confirm-overlay', { timeout: 5000 });
+            await sleep(400); // handlery modala wpinane +50ms po renderze
             await page.click('#app-confirm-leave');
         } catch (_) {}
         await page.waitForFunction(() => /#\/rury/.test(window.location.hash), null, {
@@ -268,6 +273,7 @@ async function waitModuleFrame(page, mod) {
             window.location.hash = '#/rury?edit=E2E_X1';
         });
         await page.waitForSelector('#app-confirm-overlay', { timeout: 8000 });
+        await sleep(400); // handlery modala wpinane +50ms po renderze
         const abMsg =
             (await page.evaluate(
                 () => document.getElementById('app-confirm-message')?.textContent || ''
@@ -289,6 +295,7 @@ async function waitModuleFrame(page, mod) {
             window.location.hash = '#/kartoteka';
         });
         await page.waitForSelector('#app-confirm-overlay', { timeout: 8000 });
+        await sleep(400); // handlery modala wpinane +50ms po renderze
         await page.click('#app-confirm-save');
         await sleep(2500);
         const overlayGone = await page.evaluate(
@@ -300,6 +307,44 @@ async function waitModuleFrame(page, mod) {
             overlayGone && /rury/.test(hashG6),
             `overlayGone=${overlayGone} hash=${hashG6}`
         );
+
+        // G7: F5 z brudem -> custom popup 3-btn w iframe (nie natywny) -> Anuluj -> bez reloadu.
+        const frame3 = await waitModuleFrame(page, 'rury');
+        await frame3.click('#client-name');
+        await frame3.press('#client-name', 'F5');
+        await frame3.waitForSelector('#app-confirm-overlay', { timeout: 8000 });
+        await sleep(400); // handlery modala wpinane +50ms po renderze
+        const f5btns = await frame3.evaluate(() => ({
+            save: !!document.getElementById('app-confirm-save'),
+            leave: !!document.getElementById('app-confirm-leave'),
+            cancel: !!document.getElementById('app-confirm-cancel'),
+            msg: document.getElementById('app-confirm-message')?.textContent || ''
+        }));
+        check(
+            'G7 F5: popup 3-btn w iframe',
+            f5btns.save && f5btns.leave && f5btns.cancel,
+            JSON.stringify(f5btns).slice(0, 160)
+        );
+        check('G7 F5: popup z kontekstem', /Rury/.test(f5btns.msg), f5btns.msg.slice(0, 120));
+        await frame3.click('#app-confirm-cancel');
+        await frame3.waitForFunction(() => !document.getElementById('app-confirm-overlay'), null, {
+            timeout: 5000
+        });
+        const fieldG7 = await frame3.inputValue('#client-name');
+        check('G7 Anuluj: bez reloadu, pole cale', fieldG7 === 'GUARD-E2E', fieldG7);
+
+        // G8: deterministyczny flush + prawdziwy reload -> recovery draftu.
+        await frame3.evaluate(() => window.draftAutosave.flushAll());
+        await page.reload({ waitUntil: 'domcontentloaded', timeout: 30000 });
+        const frame4 = await waitModuleFrame(page, 'rury');
+        await frame4.waitForFunction(
+            () => window.currentUser && window.currentUser.id !== undefined,
+            null,
+            { timeout: 15000 }
+        );
+        await frame4.evaluate(() => window.draftAutosave.checkRecovery('offer_rury'));
+        const recModal = await frame4.locator('#sok-draft-modal').count();
+        check('G8 recovery po F5: modal draftu', recModal > 0, `modalCount=${recModal}`);
     } catch (e) {
         failed = true;
         errors.push('EXCEPTION: ' + String((e && e.message) || e));

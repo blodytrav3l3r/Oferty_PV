@@ -159,4 +159,19 @@ describe('sokDirty SSoT — flaga + diff', () => {
         };
         await expect(sandbox.window.__sokSaveDirty(blockedWin)).resolves.toBe(false);
     });
+
+    it('__sokDirtyWindow: lokalny brud => window, czysto => null', () => {
+        const { sandbox, setFields } = loadCtx();
+        expect(sandbox.window.__sokDirtyWindow('rury')).toBeNull();
+        setFields({ clientName: 'Kowalski' });
+        expect(sandbox.window.__sokDirtyWindow('rury')).toBe(sandbox.window);
+    });
+
+    it('__sokCountDrafts: 0 przed zapisem draftu, 1 po flushu', () => {
+        const { sandbox, setFields } = loadCtx();
+        expect(sandbox.window.__sokCountDrafts()).toBe(0);
+        setFields({ clientName: 'Kowalski' });
+        expect(sandbox._draftWriteKind('offer_rury', true)).toBe(true);
+        expect(sandbox.window.__sokCountDrafts()).toBe(1);
+    });
 });
