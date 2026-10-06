@@ -13,6 +13,7 @@
  *   G9 Przywróć -> logout z brudem -> licznik draftów -> Zostań -> sesja cała
  *   G10 leave porzuca stan: kartoteka -> zlecenia BEZ popupu; nowa edycja uzbraja z powrotem
  *   G11 żaden natywny dialog (beforeunload) nie wyskakuje przy klikaniu kafli
+ *   G12 świeże moduły czyste: studnie (pre-wypełnione notatki!) i rury bez popupu przy wyjściu
  *
  * Run:
  *   node tests/playwright/spa-guard.cjs                # wymaga backendu na :3000
@@ -190,7 +191,50 @@ async function waitModuleFrame(page, mod) {
             `status=${loginResp.status()}`
         );
 
-        const frame = await enterModule(page, 'rury');
+        let frame = await enterModule(page, 'rury');
+        await frame.waitForFunction(
+            () => window.currentUser && window.currentUser.id !== undefined,
+            null,
+            { timeout: 15000 }
+        );
+
+        // G12: świeże moduły bez edycji = czysto (studnie pre-wypełniają notatki
+        // generatorem — to nie brud; rury kontrolnie tak samo).
+        for (const mod of ['studnie', 'rury']) {
+            const fr = await enterModule(page, mod);
+            await fr.waitForFunction(
+                () => window.currentUser && window.currentUser.id !== undefined,
+                null,
+                { timeout: 15000 }
+            );
+            await sleep(1000);
+            const fresh = await fr.evaluate(() => ({
+                dirty: window.__sokIsDirty ? window.__sokIsDirty() : 'NO_FN',
+                notes:
+                    document.getElementById('offer-tab-notes')?.value ||
+                    document.getElementById('offer-notes')?.value ||
+                    ''
+            }));
+            check(`G12 świeży ${mod}: brak brudu`, fresh.dirty === false, `dirty=${fresh.dirty}`);
+            if (mod === 'studnie') {
+                check(
+                    'G12 pułapka istnieje: notatki pre-wypełnione generatorem',
+                    /Parametry techniczne:/.test(fresh.notes),
+                    fresh.notes.slice(0, 80)
+                );
+            }
+            await page.click('#spa-app-kartoteka');
+            await sleep(1500);
+            const silent = await page.evaluate(
+                () =>
+                    !document.getElementById('app-confirm-overlay') &&
+                    /kartoteka/.test(window.location.hash)
+            );
+            check(`G12 wyjście ze świeżego ${mod}: bez popupu`, silent === true, String(silent));
+        }
+
+        // G12 przeładował stronę 2× — odnów ramkę rur przed G0.
+        frame = await enterModule(page, 'rury');
         await frame.waitForFunction(
             () => window.currentUser && window.currentUser.id !== undefined,
             null,

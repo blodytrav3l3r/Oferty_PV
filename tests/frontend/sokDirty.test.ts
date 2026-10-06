@@ -71,6 +71,9 @@ function loadCtx() {
     sandbox.window.addEventListener = () => {};
     vm.createContext(sandbox);
     vm.runInContext(readJs('shared/draftStore.js'), sandbox, { filename: 'draftStore.js' });
+    vm.runInContext(readJs('shared/offerNotesGenerator.js'), sandbox, {
+        filename: 'offerNotesGenerator.js'
+    });
     vm.runInContext(readJs('shared/draftAutosave.js'), sandbox, { filename: 'draftAutosave.js' });
     vm.runInContext(readJs('shared/sokDirty.js'), sandbox, { filename: 'sokDirty.js' });
     sandbox.window.draftAutosave.initKind('offer_rury');
@@ -173,6 +176,26 @@ describe('sokDirty SSoT — flaga + diff', () => {
         setFields({ clientName: 'Kowalski' });
         expect(sandbox._draftWriteKind('offer_rury', true)).toBe(true);
         expect(sandbox.window.__sokCountDrafts()).toBe(1);
+    });
+
+    it('stripGeneratedNotes: sam blok to nie brud, prefix użytkownika to brud', () => {
+        const { sandbox } = loadCtx();
+        const gen =
+            'Parametry techniczne: Nadbudowa i Dennica: Betonowa.\nCena franco budowa bez rozładunku przy dostawie pełnych transportów 24t.';
+        const strip = sandbox.window.stripGeneratedNotes;
+        expect(strip(gen)).toBe('');
+        expect(strip('Moje uwagi\n\n' + gen)).toBe('Moje uwagi');
+        expect(strip('Zwykła notatka')).toBe('Zwykła notatka');
+        const da = sandbox.window.draftAutosave;
+        const ds = sandbox.window.draftStore;
+        const live = (notes: string) =>
+            ds.pickDraftPayload({ fields: { ...CLEAN_FIELDS, notes }, wells: [] });
+        const empty = ds.pickDraftPayload({ fields: { ...CLEAN_FIELDS, notes: '' }, wells: [] });
+        expect(da.areEquivalent('offer_studnie', live(gen), empty, true)).toBe(true);
+        expect(da.areEquivalent('offer_studnie', live('Moje uwagi\n\n' + gen), empty, true)).toBe(
+            false
+        );
+        expect(da.areEquivalent('offer_rury', live(gen), empty, true)).toBe(true);
     });
 
     it('abandon: leave wycisza ten sam stan, nowa edycja uzbraja z powrotem', () => {
