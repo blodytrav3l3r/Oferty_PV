@@ -501,6 +501,22 @@ function _draftComparablePayload(kind, payload) {
         Object.keys(out.fields).forEach(function (k) {
             fields[k] = out.fields[k];
         });
+        // Notatki generowane (studnie pre-wypełniają świeży formularz tekstem
+        // z generatora) to nie brud użytkownika — porównuj sam tekst użytkownika.
+        // Symetrycznie po obu stronach (live i SAVED po zapisie też niesie blok).
+        // typeof-guard w czasie wywołania (kolejność <script> dowolna).
+        if (typeof fields.notes === 'string') {
+            try {
+                var _sgn = null;
+                if (typeof stripGeneratedNotes === 'function') _sgn = stripGeneratedNotes;
+                else if (
+                    typeof window !== 'undefined' &&
+                    typeof window.stripGeneratedNotes === 'function'
+                )
+                    _sgn = window.stripGeneratedNotes;
+                if (_sgn) fields.notes = _sgn(fields.notes);
+            } catch (_eNotes) {}
+        }
         Object.keys(_DRAFT_FIELD_FALLBACKS).forEach(function (k) {
             if (fields[k] === undefined || fields[k] === null)
                 fields[k] = _DRAFT_FIELD_FALLBACKS[k];

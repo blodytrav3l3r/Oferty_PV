@@ -45,4 +45,26 @@ function createOfferNotesGenerator(summaryProviders) {
     };
 }
 
+/**
+ * Odcina blok generowany przez generateOfferNotes (od pierwszego markera
+ * do końca), zostawiając tekst użytkownika. Te same markery co przy
+ * regeneracji powyżej — jedno źródło prawdy o składni bloku.
+ * Służy porównaniu draft-vs-SAVED (świeże studnie pre-wypełniają notatki,
+ * to nie jest brud użytkownika).
+ * @param {*} text
+ * @returns {string}
+ */
+function stripGeneratedNotes(text) {
+    let s = String(text ?? '');
+    const markers = ['Parametry techniczne:', 'Cena franco budowa'];
+    let cut = -1;
+    for (const m of markers) {
+        const i = s.indexOf(m);
+        if (i !== -1 && (cut === -1 || i < cut)) cut = i;
+    }
+    if (cut !== -1) s = s.substring(0, cut);
+    return s.trim();
+}
+
 window.createOfferNotesGenerator = createOfferNotesGenerator;
+window.stripGeneratedNotes = stripGeneratedNotes;
