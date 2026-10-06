@@ -4,6 +4,39 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.40.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.39.0...v1.40.0) (2026-10-06)
+
+### Features
+
+- **studnie:** ceny konfiguracji jak w ofercie ([2d60a34](https://github.com/blodytrav3l3r/Oferty_PV/commit/2d60a345675493935b28bf4c39092cf4deaf6632))
+- **studnie:** excel: fonty h1-h3, kolory ot, kolumny i sekcja przejść ([d5c8839](https://github.com/blodytrav3l3r/Oferty_PV/commit/d5c883975e2962d35c4963542777735d8ce8b962))
+- **studnie:** podniesienie przejść w jednostce z jednostek wysokości ([2a8449d](https://github.com/blodytrav3l3r/Oferty_PV/commit/2a8449d729b55cd7e0c8d24a344f39057e952cbd))
+- **studnie:** podwiersz kinety jako kafelek sok ([bc66df9](https://github.com/blodytrav3l3r/Oferty_PV/commit/bc66df94f33061c1c94ab4ead48dc9677e4dbdc1))
+- **ui:** zapis tylko dla ofert z pozycjami ([1328806](https://github.com/blodytrav3l3r/Oferty_PV/commit/1328806edfde5229dd7d1c76a261ae535d9fbb6b))
+- **ui:** zapisz i idz w guardzie niezapisanych zmian ([1f31b05](https://github.com/blodytrav3l3r/Oferty_PV/commit/1f31b05b52049b963ff2f7f10f25e01d6ca3288a))
+
+### Bug Fixes
+
+- **auth:** selektor logout bez kolizji z przelacznikiem motywu ([40c2f1b](https://github.com/blodytrav3l3r/Oferty_PV/commit/40c2f1bc65403618ad321bec65bd580d125f396d))
+- **offers:** idempotentne kasowanie oferty przy 404 z serwera ([0aa1c2b](https://github.com/blodytrav3l3r/Oferty_PV/commit/0aa1c2bcbfc47c890816f57d0aee1c7bc2de9c75))
+- **studnie:** anuluj konus-pehd cofa wkladke na brak ([2fe57ca](https://github.com/blodytrav3l3r/Oferty_PV/commit/2fe57caa136c663b176ae0595254ce311717a3fb))
+- **studnie:** blokada konus-pehd tez w excelu ([659b212](https://github.com/blodytrav3l3r/Oferty_PV/commit/659b2122be401401b6deb4f883fa9ccb27b33509))
+- **studnie:** domyślny manual dla studni tworzonych w excelu ([fc72ff9](https://github.com/blodytrav3l3r/Oferty_PV/commit/fc72ff9965430f59e211f37ebb50dabd2a154194))
+- **studnie:** edycja komórki excelu bez full-rendera (kontrakt l0/l1/l2) ([bc10333](https://github.com/blodytrav3l3r/Oferty_PV/commit/bc103331edb5abfd3c99792a94f5bbfe6408bd50))
+- **studnie:** kafelek ceny dogania edycje konfiguratora ([aa85d5a](https://github.com/blodytrav3l3r/Oferty_PV/commit/aa85d5aedbed165fc218e03babf6093f56b01b4d))
+- **studnie:** label zakładki dennice zamiast dennicy ([fda17d6](https://github.com/blodytrav3l3r/Oferty_PV/commit/fda17d67b2b9b035e99864da980fea30ee1681ad))
+- **studnie:** live labelki selectów excelu bez scrolla (single-slot csp) ([a5740f9](https://github.com/blodytrav3l3r/Oferty_PV/commit/a5740f96b4c2350991cda8c9887ce6258ebf28b9))
+- **studnie:** odświeżanie przejść w excelu i skok widoku do wiersza 1 ([abc34f9](https://github.com/blodytrav3l3r/Oferty_PV/commit/abc34f9764491238d793d234d814941c5037c12a))
+- **studnie:** popup parametrow excela gasnie po anuluj konus-pehd ([0ef32bf](https://github.com/blodytrav3l3r/Oferty_PV/commit/0ef32bfb91614913621759c3fa3a78c0a62c504a))
+- **studnie:** puste kategorie przejść w nowej ofercie ([2d42414](https://github.com/blodytrav3l3r/Oferty_PV/commit/2d42414a1ef968e1e1642f89ac27c46a2cde2264))
+- **studnie:** wklejane studnie w excelu domyślnie manual nie auto ([a7308f0](https://github.com/blodytrav3l3r/Oferty_PV/commit/a7308f09cd656e238a1689c45ca68e9661d20af3))
+- **test:** stabilny pricelistchunk bez kolizji unique ([5d14946](https://github.com/blodytrav3l3r/Oferty_PV/commit/5d149460608a8627665a29141a012481fd6e0fd1))
+- **ui:** badge cennika wraca do wizard-indicator w krokach 1-5 ([ab4a0bf](https://github.com/blodytrav3l3r/Oferty_PV/commit/ab4a0bff9f2931f9dc4442e8554fc6007bb7fb22))
+- **ui:** generowane notatki to nie brud w guardzie ([012a3f1](https://github.com/blodytrav3l3r/Oferty_PV/commit/012a3f1b01034737db27898f1f9b6bf4835d0401))
+- **ui:** guard 3-btn w linkach i f5 plus licznik draftow ([cc00889](https://github.com/blodytrav3l3r/Oferty_PV/commit/cc008899bad2d22129bc0bf7e5753bda9b637733))
+- **ui:** jawne tło wizard-indicator dla kontrastu axe ([3cee71a](https://github.com/blodytrav3l3r/Oferty_PV/commit/3cee71a6af42ba51c13a87944984cd083893564b))
+- **ui:** porzucenie brudu wycisza guard do nowej edycji ([08f47b4](https://github.com/blodytrav3l3r/Oferty_PV/commit/08f47b4d64754df0bdf0eae459d800b6480b8314))
+
 ## [1.39.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.38.1...v1.39.0) (2026-10-04)
 
 ### Features
