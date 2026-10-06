@@ -45,6 +45,48 @@ function authHeaders() {
 }
 
 /**
+ * Okno trzymające brudny dokument (P1.3): najpierw lokalny draft, potem iframe.
+ * @param {string} [moduleHint] moduł z __sokDescribeDirty (np. 'studnie')
+ * @returns {Window|null}
+ */
+function _logoutDirtyWindow(moduleHint) {
+    try {
+        if (
+            window.draftAutosave &&
+            typeof window.draftAutosave.describeDirty === 'function' &&
+            window.draftAutosave.describeDirty()
+        )
+            return window;
+    } catch (_e) {}
+    try {
+        const frames = document.querySelectorAll('iframe.spa-module-iframe');
+        for (let i = 0; i < frames.length; i++) {
+            try {
+                const fr = /** @type {HTMLIFrameElement} */ (frames[i]);
+                const w = fr.contentWindow;
+                if (!w) continue;
+                const mod = String(fr.id || '').replace('spa-iframe-', '');
+                if (moduleHint && mod === moduleHint) return w;
+            } catch (_e2) {}
+        }
+        for (let i = 0; i < frames.length; i++) {
+            try {
+                const w = /** @type {HTMLIFrameElement} */ (frames[i]).contentWindow;
+                if (!w) continue;
+                if (w.draftAutosave && typeof w.draftAutosave.describeDirty === 'function') {
+                    if (w.draftAutosave.describeDirty()) return w;
+                } else if (w._excelDirty) {
+                    return w;
+                } else if (typeof w._isWizardDirty === 'function' && w._isWizardDirty()) {
+                    return w;
+                }
+            } catch (_e3) {}
+        }
+    } catch (_e4) {}
+    return null;
+}
+
+/**
  * Wylogowuje użytkownika — kasuje sesje i localStorage, przeładowuje stronę.
  * Gdy są niezapisane zmiany, pyta custom popupem (appConfirm) — kopia SSoT z ui.js.
  */
@@ -57,21 +99,73 @@ async function appLogout() {
             (typeof window._isWizardDirty === 'function' && window._isWizardDirty()) ||
             (typeof window._isDirtyNow === 'function' && window._isDirtyNow());
         if (isDirty) {
+            // P1.3: nazwij brudny dokument + policz drafty; 3-btn gdy da się zapisać.
+            let target = null;
+            let contextMsg = 'Wprowadzone zmiany mogą nie zostać zapisane.';
+            try {
+                if (typeof window.__sokDescribeDirty === 'function') {
+                    const d = window.__sokDescribeDirty();
+                    if (d && (d.kind || d.module || d.number || d.docId)) {
+                        const label =
+                            typeof window.__sokKindLabel === 'function' && d.kind
+                                ? window.__sokKindLabel(d.kind)
+                                : d.module
+                                  ? 'Dokument (' + d.module + ')'
+                                  : 'Dokument';
+                        const num = d.number || (d.docId && d.docId !== 'new' ? d.docId : '') || '';
+                        contextMsg =
+                            (num ? label + ' ' + num : label) +
+                            ' ma niezapisane zmiany.\nWylogowanie skasuje też lokalne drafty.';
+                        target = _logoutDirtyWindow(d.module);
+                    }
+                }
+            } catch (_e0) {}
+            const canSave =
+                !!target &&
+                (typeof target.saveCurrentOrder === 'function' ||
+                    typeof target.saveOfferStudnie === 'function' ||
+                    typeof target.saveOffer === 'function');
             const confirmFn = window.appConfirm || window.parent?.appConfirm;
-            if (typeof confirmFn === 'function') {
+            const confirm3Fn = window.appConfirm3 || window.parent?.appConfirm3;
+            const useFn = canSave && typeof confirm3Fn === 'function' ? confirm3Fn : confirmFn;
+            if (typeof useFn === 'function') {
                 try {
                     window._confirmLock = true;
                     if (window.parent) window.parent._confirmLock = true;
-                    const ok = await /** @type {any} */ (confirmFn)(
-                        'Wprowadzone zmiany mogą nie zostać zapisane.',
-                        {
+                    if (useFn === confirm3Fn) {
+                        const choice = await /** @type {any} */ (useFn)(contextMsg, {
+                            title: 'Niezapisane zmiany',
+                            type: 'warning',
+                            saveText: 'Zapisz i wyloguj',
+                            okText: 'Wyloguj bez zapisu',
+                            cancelText: 'Zostań'
+                        });
+                        if (choice === 'stay') return;
+                        if (choice === 'save') {
+                            let saved = false;
+                            try {
+                                if (typeof window.__sokSaveDirty === 'function')
+                                    saved =
+                                        (await window.__sokSaveDirty(target || window)) === true;
+                                else if (target && target !== window) {
+                                    const pw = window.parent || window;
+                                    if (typeof pw.__sokSaveDirty === 'function')
+                                        saved = (await pw.__sokSaveDirty(target)) === true;
+                                }
+                            } catch (_eS) {
+                                saved = false;
+                            }
+                            if (!saved) return;
+                        }
+                    } else {
+                        const ok = await /** @type {any} */ (useFn)(contextMsg, {
                             title: 'Niezapisane zmiany',
                             type: 'warning',
                             okText: 'Opuść bez zapisu',
                             cancelText: 'Zostań'
-                        }
-                    );
-                    if (!ok) return;
+                        });
+                        if (!ok) return;
+                    }
                 } finally {
                     try {
                         window._confirmLock = false;

@@ -28,6 +28,10 @@
     let _lastCleanHash = null; // ostatni hash bez niezapisanych zmian
 
     function _isDirtyNow() {
+        // SPA-GUARD-PRO P0.1: SSoT w shared/sokDirty.js (flagi + diff draft-vs-SAVED).
+        try {
+            if (typeof window.__sokIsDirty === 'function') return window.__sokIsDirty() === true;
+        } catch (_e0) {}
         try {
             if (typeof window._isWizardDirty === 'function' && window._isWizardDirty() === true)
                 return true;
@@ -77,17 +81,120 @@
         } catch {}
     }
 
+    function _moduleFromHash(hash) {
+        try {
+            const h = String(hash || '').replace('#/', '');
+            const mod = h.split('?')[0] || 'rury';
+            return MODULES[mod] ? mod : 'rury';
+        } catch (_e) {
+            return 'rury';
+        }
+    }
+
+    function _offerIdFromHash(hash) {
+        try {
+            const h = String(hash || '');
+            const qs = h.indexOf('?') !== -1 ? h.slice(h.indexOf('?') + 1) : '';
+            const usp = new URLSearchParams(qs);
+            return usp.get('edit') || usp.get('order') || '';
+        } catch (_e) {
+            return '';
+        }
+    }
+
+    // Komunikat guarda z kontekstem (P1.1): która oferta, dokąd idziesz.
+    // Fallback do generycznego tekstu gdy brak SSoT (mieszany deploy).
+    function _dirtyLeaveMessage(targetHash) {
+        const base = 'Wprowadzone zmiany mogą nie zostać zapisane.';
+        try {
+            const targetMod = _moduleFromHash(targetHash);
+            const targetName = (MODULES[targetMod] && MODULES[targetMod].logo) || targetMod;
+            const targetOffer = _offerIdFromHash(targetHash);
+            if (typeof window.__sokDescribeDirty === 'function') {
+                const d = window.__sokDescribeDirty();
+                if (d && (d.kind || d.module || d.number || d.docId)) {
+                    const label =
+                        typeof window.__sokKindLabel === 'function' && d.kind
+                            ? window.__sokKindLabel(d.kind)
+                            : d.module
+                              ? 'Dokument (' + d.module + ')'
+                              : 'Dokument';
+                    const num = d.number || (d.docId && d.docId !== 'new' ? d.docId : '') || '';
+                    const what = num ? label + ' ' + num : label;
+                    // P1.2: oferta B nad brudną A — nazwij obie strony.
+                    if (targetOffer && d.docId && targetOffer !== d.docId)
+                        return (
+                            what +
+                            ' ma niezapisane zmiany.\nPorzucić je i wczytać ' +
+                            targetOffer +
+                            ' (' +
+                            targetName +
+                            ')?'
+                        );
+                    return (
+                        what +
+                        ' ma niezapisane zmiany.\nZapisać przed przejściem do: ' +
+                        targetName +
+                        '?'
+                    );
+                }
+            }
+            return base + '\nPrzejść do: ' + targetName + '?';
+        } catch (_e) {
+            return base;
+        }
+    }
+
+    async function _saveDirtyPrev() {
+        try {
+            if (typeof window.__sokSaveDirty !== 'function') return false;
+            const prevWin =
+                currentModule && iframes[currentModule]
+                    ? iframes[currentModule].contentWindow
+                    : null;
+            // Fallback: brak żywego iframe (np. kontekst testowy) — próba na sobie,
+            // w rodzicu SPA saverów nie ma więc kończy się szybkim false.
+            return (await window.__sokSaveDirty(prevWin || window)) === true;
+        } catch (_e) {
+            return false;
+        }
+    }
+
     async function _confirmLeaveModule(targetHash) {
         if (_getConfirmLock()) return;
         _setConfirmLock(true);
         try {
-            const ok = await window.appConfirm('Wprowadzone zmiany mogą nie zostać zapisane.', {
-                title: 'Niezapisane zmiany',
-                type: 'warning',
-                okText: 'Opuść bez zapisu',
-                cancelText: 'Zostań'
-            });
-            if (!ok) return;
+            const msg = _dirtyLeaveMessage(targetHash);
+            let choice = 'stay';
+            if (typeof window.appConfirm3 === 'function') {
+                choice = await window.appConfirm3(msg, {
+                    title: 'Niezapisane zmiany',
+                    type: 'warning',
+                    saveText: 'Zapisz i przejdź',
+                    okText: 'Opuść bez zapisu',
+                    cancelText: 'Zostań'
+                });
+            } else {
+                const ok = await window.appConfirm(msg, {
+                    title: 'Niezapisane zmiany',
+                    type: 'warning',
+                    okText: 'Opuść bez zapisu',
+                    cancelText: 'Zostań'
+                });
+                choice = ok ? 'leave' : 'stay';
+            }
+            if (choice === 'stay') return;
+            if (choice === 'save') {
+                const saved = await _saveDirtyPrev();
+                if (!saved) {
+                    if (typeof window.showToast === 'function')
+                        window.showToast(
+                            'Nie udało się zapisać automatycznie — zapisz ręcznie i spróbuj ponownie.',
+                            'warning'
+                        );
+                    return;
+                }
+            }
             _navForceOnce = true;
             window._bypassBeforeUnload = true;
             if (window.location.hash === targetHash) navigate();
@@ -436,6 +543,29 @@
             return;
         }
         _navReverting = false;
+
+        // P1.2: ten sam moduł, inne ?edit/?order — oferta B nad brudną edycją A.
+        // Reload wyrzuciłby widok A bez słowa (gdy A czyste — poprawnie, gdy brudne — guard).
+        // Sam ?tab= nie przeładowuje (sekcja w żywym iframe) — poza guardem.
+        if (
+            !_navForceOnce &&
+            currentModule !== null &&
+            module === currentModule &&
+            (params.edit || params.order) &&
+            _isDirtyNow()
+        ) {
+            try {
+                const probeKey = _logicalSrcKey(module, params);
+                const prevKey = iframes[module] ? _getSpaLogicalSrc(iframes[module]) : probeKey;
+                if (probeKey !== prevKey) {
+                    const targetHash = window.location.hash;
+                    _navReverting = true;
+                    window.location.hash = _lastCleanHash || '#/' + currentModule;
+                    await _confirmLeaveModule(targetHash);
+                    return;
+                }
+            } catch (_eAB) {}
+        }
 
         // Zapamiętaj hash jako punkt powrotu dla przyszłego anulowania guarda
         _lastCleanHash = window.location.hash;
