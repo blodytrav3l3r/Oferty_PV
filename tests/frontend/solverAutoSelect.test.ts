@@ -101,8 +101,11 @@ function loadSolver(well: any) {
     sandbox.refreshAll = () => {};
     sandbox.renderWellConfig = () => {};
     sandbox.renderWellDiagram = () => {};
-    sandbox.updateSummary = () => {};
-    return { sandbox, toasts, logs };
+    let updateSummaryCalls = 0;
+    sandbox.updateSummary = () => {
+        updateSummaryCalls++;
+    };
+    return { sandbox, toasts, logs, getUpdateSummaryCalls: () => updateSummaryCalls };
 }
 
 describe('solverAutoSelect guardy wejscia', () => {
@@ -142,13 +145,19 @@ describe('solverAutoSelect guardy wejscia', () => {
         expect(toasts.some((t) => t.includes('ładują'))).toBe(true);
     });
 
-    it('wspolbiezny drugi run → pomijany (guard reentrancji)', async () => {
+    it('wspolbiezny drugi run → kolejkowany re-run, nie gubiony (kafelek Ceny)', async () => {
         const well = baseWell();
-        const { sandbox, logs } = loadSolver(well);
+        const { sandbox, logs, getUpdateSummaryCalls } = loadSolver(well);
         const p1 = sandbox.autoSelectComponents(false);
         const p2 = sandbox.autoSelectComponents(false);
         await Promise.all([p1, p2]);
-        expect(logs.some(([l, m]) => l === 'warn' && m.includes('Pomijam'))).toBe(true);
+        expect(logs.some(([l, m]) => m.includes('kolejkuję re-run'))).toBe(true);
+        // Zakolejkowany re-run dobiega do renderu (updateSummary = kafelek Ceny).
+        for (let i = 0; i < 250 && getUpdateSummaryCalls() < 2; i++) {
+            await new Promise((r) => setTimeout(r, 20));
+        }
+        expect(getUpdateSummaryCalls()).toBeGreaterThanOrEqual(2);
+        expect(['OK', 'WARNING'].includes(well.configStatus)).toBe(true);
     });
 });
 

@@ -50,6 +50,13 @@ function updateElevations() {
     }
 
     updateHeightIndicator();
+    // Kafelek Ceny na żywo z bieżącego configu — nie czeka na solver.
+    // Solver domaluje docelową cenę po doborze (także gdy run padnie/zakolejkuje się).
+    if (typeof updateSummary === 'function') {
+        try {
+            updateSummary();
+        } catch (_eSum) {}
+    }
     _debouncedRefreshWells();
 
     if (elevationDebounceTimer) clearTimeout(elevationDebounceTimer);
@@ -263,6 +270,12 @@ function updateDoplata() {
         domEl.classList.remove('color-success', 'color-danger', 'fw-700');
     }
 
+    // Dopłata wchodzi do ceny 1:1 — kafelek od razu, pełny refresh z debounce.
+    if (typeof updateSummary === 'function') {
+        try {
+            updateSummary();
+        } catch (_eSum2) {}
+    }
     _debouncedRefreshFull();
 }
 

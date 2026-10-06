@@ -179,7 +179,11 @@ window.updateSummary = function updateSummary() {
         updateHeightIndicator();
         return;
     }
-    const stats = calcWellStats(well);
+    // Kafelek Ceny nie może zależeć od czystości rabatów — corrupt stored
+    // (RangeError z assertDiscountPct) dawałby martwy kafelek ze starą ceną.
+    // safeCalcWellStats robi fallback 0% + badge, jak lista i pipeline.
+    const stats =
+        typeof safeCalcWellStats === 'function' ? safeCalcWellStats(well) : calcWellStats(well);
 
     let wellTransportCost = 0;
     if (typeof calculateOfferTotals === 'function') {

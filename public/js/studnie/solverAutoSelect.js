@@ -19,6 +19,11 @@
 
 /* ===== GŁÓWNY PUNKT WEJŚCIA AUTO-DOBORU ===== */
 let isAutoSelectRunning = false;
+// Kolejka coalesce jak w Excelu (_excelAutoChain): szybka edycja w trakcie
+// runa kolejkuje JEDEN re-run zamiast ginąć — ostatni run widzi finalny model,
+// więc kafelek Ceny zawsze dogania ostatnią edycję.
+let _autoSelectQueued = false;
+let _autoSelectQueuedAuto = false;
 window.__autoSelectCallCount = 0;
 const __MAX_AUTO_SELECT_CALLS = 10;
 // Model kompletu odciążającego: pierścień nachodzi na krąg (wkład wysokości 0),
@@ -65,8 +70,11 @@ const AVR_MAX_ITERATIONS = 1000;
 if (typeof window !== 'undefined') window.AVR_MAX_ITERATIONS = AVR_MAX_ITERATIONS;
 window.autoSelectComponents = async function autoSelectComponents(autoTriggered = false) {
     if (isAutoSelectRunning) {
-        if (autoTriggered) logger.debug('wellSolver', '[AutoSelect] Pomijam — już trwa auto-dobór');
-        else logger.warn('wellSolver', '[AutoSelect] Pomijam — już trwa auto-dobór');
+        _autoSelectQueued = true;
+        _autoSelectQueuedAuto = _autoSelectQueuedAuto || autoTriggered;
+        if (autoTriggered)
+            logger.debug('wellSolver', '[AutoSelect] Run w trakcie — kolejkuję re-run');
+        else logger.warn('wellSolver', '[AutoSelect] Run w trakcie — kolejkuję re-run');
         return;
     }
     window.__autoSelectCallCount++;
@@ -303,6 +311,23 @@ window.autoSelectComponents = async function autoSelectComponents(autoTriggered 
     } finally {
         isAutoSelectRunning = false;
         if (window.__autoSelectCallCount > 0) window.__autoSelectCallCount--;
+        if (_autoSelectQueued) {
+            _autoSelectQueued = false;
+            const _qAuto = _autoSelectQueuedAuto;
+            _autoSelectQueuedAuto = false;
+            try {
+                const _qp =
+                    typeof autoSelectComponents === 'function'
+                        ? autoSelectComponents(_qAuto)
+                        : null;
+                if (_qp && typeof _qp.catch === 'function')
+                    _qp.catch(function (_qe) {
+                        logger.error('wellSolver', '[AutoSelect] Błąd kolejkowanego re-runa');
+                    });
+            } catch (_qe) {
+                logger.error('wellSolver', '[AutoSelect] Błąd kolejkowanego re-runa');
+            }
+        }
     }
 };
 
