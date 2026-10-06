@@ -74,6 +74,14 @@
  * wyśrodkowane jak wcześniej) — doklejony absolutnie do prawej. */
 .wizard-indicator {
     position: relative;
+    /* Jawne nieprzezroczyste tło = kolor strony. Router SPA (router.js)
+     * ustawia body/html iframe na transparent, więc axe-Core zakłada biały
+     * canvas i fałszywie failuje color-contrast dla dzieci (label #a5b4fc
+     * 1.99 i badge #60a5fa 2.13 na bieli; realnie na --bg-primary 9.66
+     * i ~6.4 — por. ADR-013 pkt 8). Nieprzezroczysty przodek zatrzymuje
+     * łańcuch blade'owania axe na realnym tle. Wizualnie zero zmian
+     * (tożsame z tłem body w SPA i standalone, dark i light). */
+    background-color: var(--bg-primary);
 }
 
 .wizard-indicator > .pv-offer-badge {
