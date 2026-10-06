@@ -222,4 +222,20 @@ describe('sokDirty SSoT — flaga + diff', () => {
         sandbox.window._excelDirty = false;
         expect(sandbox.window.__sokIsDirty()).toBe(false);
     });
+
+    it('__sokCanSave: saver + wiersze => true; pusto/brak savera => false', () => {
+        const { sandbox, setFields } = loadCtx();
+        sandbox.window.saveOffer = jest.fn(async () => {});
+        setFields({ clientName: 'Kowalski' }); // brud bez pozycji
+        expect(sandbox.window.draftAutosave.liveRowCount('offer_rury')).toBe(0);
+        expect(sandbox.window.__sokCanSave(sandbox.window)).toBe(false);
+        sandbox.currentOfferItems = [
+            { uid: 'rur_1', productId: 'p', quantity: 2, unitPrice: 100, discount: 0 }
+        ];
+        expect(sandbox.window.draftAutosave.liveRowCount('offer_rury')).toBe(1);
+        expect(sandbox.window.__sokCanSave(sandbox.window)).toBe(true);
+        delete sandbox.window.saveOffer;
+        expect(sandbox.window.__sokCanSave(sandbox.window)).toBe(false);
+        expect(sandbox.window.__sokCanSave(null)).toBe(false);
+    });
 });

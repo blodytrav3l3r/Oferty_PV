@@ -180,6 +180,29 @@ async function waitModuleFrame(page, mod) {
         }
     };
 
+    // Klik przycisku modala SYNTEZOWANY (dispatchEvent): odporny na wyścig
+    // trafienia (layout-shift paska przewijania przy otwieraniu modala potrafi
+    // skierować prawdziwy klik w backdrop, co po cichu zamyka popup jako Zostań).
+    // Skutek weryfikowany zanikiem overlaya przez wołającego.
+    async function clickModalBtn(scope, id) {
+        const exists = await scope.evaluate((bid) => !!document.getElementById(bid), id);
+        if (!exists) throw new Error(`Brak przycisku ${id} w DOM`);
+        await scope.locator(`#${id}`).dispatchEvent('click');
+    }
+
+    // Opuść: 3-btn ma #app-confirm-leave, 2-btn fallback #app-confirm-ok.
+    async function clickModalLeave(scope) {
+        const id = await scope.evaluate(() =>
+            document.getElementById('app-confirm-leave')
+                ? 'app-confirm-leave'
+                : document.getElementById('app-confirm-ok')
+                  ? 'app-confirm-ok'
+                  : null
+        );
+        if (!id) throw new Error('Brak przycisku Opuść w DOM');
+        await clickModalBtn(scope, id);
+    }
+
     try {
         const loginResp = await page.request.post(`${BASE}/api/auth/login`, {
             data: { username: 'admin', password: ADMIN_PASSWORD }
@@ -248,28 +271,70 @@ async function waitModuleFrame(page, mod) {
         );
         check('G0 SSoT dirty wykrywa edycje rur bez flag', dirtyNow === true, `dirty=${dirtyNow}`);
 
-        // G1: klik Kartoteka -> popup 3-btn z kontekstem w DOM rodzica.
+        // G1: klik Kartoteka -> popup 2-btn (nagłówek bez pozycji = niezapisywalna).
         await page.click('#spa-app-kartoteka');
         await page.waitForSelector('#app-confirm-overlay', { timeout: 8000 });
         await sleep(400); // handlery modala wpinane +50ms po renderze
         const btns = await page.evaluate(() => ({
             save: !!document.getElementById('app-confirm-save'),
-            leave: !!document.getElementById('app-confirm-leave'),
+            leave:
+                !!document.getElementById('app-confirm-leave') ||
+                !!document.getElementById('app-confirm-ok'),
             cancel: !!document.getElementById('app-confirm-cancel'),
             msg: document.getElementById('app-confirm-message')?.textContent || ''
         }));
         check(
-            'G1 popup ma 3 przyciski',
-            btns.save && btns.leave && btns.cancel,
-            JSON.stringify(btns)
+            'G1 oferta bez pozycji: 2-btn, bez ślepego Zapisz',
+            !btns.save && btns.leave && btns.cancel,
+            JSON.stringify(btns).slice(0, 160)
         );
         check('G1 popup nazywa dokument (P1.1)', /Rury/.test(btns.msg), btns.msg.slice(0, 120));
 
-        // G2: Zostań -> dalej rury, pole cale.
-        await page.click('#app-confirm-cancel');
+        // G1b: z pozycją oferta zapisywalna -> 3-btn wraca. Bez klikania Zapisz.
+        // Stay overlay#1 (dispatch syntetyczny — odporny na pudła w backdrop).
+        await clickModalBtn(page, 'app-confirm-cancel');
         await page.waitForFunction(() => !document.getElementById('app-confirm-overlay'), null, {
             timeout: 5000
         });
+        await frame.evaluate(() => {
+            try {
+                currentOfferItems.push({
+                    uid: 'e2e1',
+                    productId: 'E2E',
+                    quantity: 1,
+                    unitPrice: 100,
+                    discount: 0
+                });
+                if (typeof renderOfferItems === 'function') renderOfferItems();
+            } catch (_) {}
+        });
+        await page.click('#spa-app-kartoteka');
+        await page.waitForSelector('#app-confirm-overlay', { timeout: 8000 });
+        await sleep(400); // handlery modala wpinane +50ms po renderze
+        const btnsB = await page.evaluate(() => ({
+            save: !!document.getElementById('app-confirm-save'),
+            leave: !!document.getElementById('app-confirm-leave'),
+            cancel: !!document.getElementById('app-confirm-cancel')
+        }));
+        check(
+            'G1b oferta z pozycją: 3-btn (Zapisz wraca)',
+            btnsB.save && btnsB.leave && btnsB.cancel,
+            JSON.stringify(btnsB)
+        );
+        // G1b stay: zamyka overlay#2 (poprzedni stay G1 zamknął overlay#1).
+        await clickModalBtn(page, 'app-confirm-cancel');
+        await page.waitForFunction(() => !document.getElementById('app-confirm-overlay'), null, {
+            timeout: 5000
+        });
+        // G1c: sprzątnij pozycję — dalej scenariusz oferty bez pozycji.
+        await frame.evaluate(() => {
+            try {
+                currentOfferItems.length = 0;
+                if (typeof renderOfferItems === 'function') renderOfferItems();
+            } catch (_) {}
+        });
+
+        // G2: Zostań -> dalej rury, pole cale (overlay zamknięty stay G1b, bez kliku).
         const hashStay = await page.evaluate(() => window.location.hash);
         const fieldStay = await frame.inputValue('#client-name');
         check(
@@ -282,7 +347,7 @@ async function waitModuleFrame(page, mod) {
         await page.click('#spa-app-kartoteka');
         await page.waitForSelector('#app-confirm-overlay', { timeout: 8000 });
         await sleep(400); // handlery modala wpinane +50ms po renderze
-        await page.click('#app-confirm-leave');
+        await clickModalLeave(page);
         await page.waitForFunction(() => /kartoteka/.test(window.location.hash), null, {
             timeout: 8000
         });
@@ -295,7 +360,7 @@ async function waitModuleFrame(page, mod) {
         try {
             await page.waitForSelector('#app-confirm-overlay', { timeout: 5000 });
             await sleep(400); // handlery modala wpinane +50ms po renderze
-            await page.click('#app-confirm-leave');
+            await clickModalLeave(page);
         } catch (_) {}
         await page.waitForFunction(() => /#\/rury/.test(window.location.hash), null, {
             timeout: 8000
@@ -330,58 +395,73 @@ async function waitModuleFrame(page, mod) {
             )) || '';
         check(
             'G5 A-vs-B: popup nazywa wczytywana oferte',
-            /wczyta.*E2E_X1/.test(abMsg),
+            /E2E_X1/.test(abMsg) && /bez zapisywania/.test(abMsg),
             abMsg.slice(0, 160)
         );
-        await page.click('#app-confirm-cancel');
+        await clickModalBtn(page, 'app-confirm-cancel');
         await page.waitForFunction(() => !document.getElementById('app-confirm-overlay'), null, {
             timeout: 5000
         });
         const hashAB = await page.evaluate(() => window.location.hash);
         check('G5 Zostań: hash wrocony (bez edit=X1)', !/E2E_X1/.test(hashAB), hashAB);
 
-        // G6: Zapisz i przejdź przy niekompletnej ofercie (pusty numer) -> blokada, zostaje.
+        // G6: oferta bez pozycji -> 2-btn (brak ślepego Zapisz) -> Opuść przechodzi.
         await page.evaluate(() => {
             window.location.hash = '#/kartoteka';
         });
         await page.waitForSelector('#app-confirm-overlay', { timeout: 8000 });
         await sleep(400); // handlery modala wpinane +50ms po renderze
-        await page.click('#app-confirm-save');
-        await sleep(2500);
-        const overlayGone = await page.evaluate(
-            () => !document.getElementById('app-confirm-overlay')
-        );
-        const hashG6 = await page.evaluate(() => window.location.hash);
+        const btns6 = await page.evaluate(() => ({
+            save: !!document.getElementById('app-confirm-save'),
+            leave:
+                !!document.getElementById('app-confirm-leave') ||
+                !!document.getElementById('app-confirm-ok')
+        }));
         check(
-            'G6 Zapisz i przejdź zablokowany walidacja: zostaje w rurach',
-            overlayGone && /rury/.test(hashG6),
-            `overlayGone=${overlayGone} hash=${hashG6}`
+            'G6 oferta bez pozycji: brak przycisku Zapisz',
+            !btns6.save && btns6.leave,
+            JSON.stringify(btns6)
         );
+        await clickModalLeave(page);
+        await page.waitForFunction(() => /kartoteka/.test(window.location.hash), null, {
+            timeout: 8000
+        });
+        const hashG6 = await page.evaluate(() => window.location.hash);
+        check('G6 Opuść bez zapisu: hash kartoteka', /kartoteka/.test(hashG6), hashG6);
 
-        // G7: F5 z brudem -> custom popup 3-btn w iframe (nie natywny) -> Anuluj -> bez reloadu.
+        // G7: F5 z brudem -> custom popup 2-btn w iframe (oferta bez pozycji) -> Anuluj.
+        // Uwaga: G6-leave wylądował na kartotece i porzucił stan — wróć na rury
+        // z NOWĄ edycją (re-arm).
+        await page.click('#spa-app-rury');
+        await page.waitForFunction(() => /#\/rury/.test(window.location.hash), null, {
+            timeout: 8000
+        });
         const frame3 = await waitModuleFrame(page, 'rury');
+        await frame3.fill('#client-name', 'GUARD-E2E-F5');
         await frame3.click('#client-name');
         await frame3.press('#client-name', 'F5');
         await frame3.waitForSelector('#app-confirm-overlay', { timeout: 8000 });
         await sleep(400); // handlery modala wpinane +50ms po renderze
         const f5btns = await frame3.evaluate(() => ({
             save: !!document.getElementById('app-confirm-save'),
-            leave: !!document.getElementById('app-confirm-leave'),
+            leave:
+                !!document.getElementById('app-confirm-leave') ||
+                !!document.getElementById('app-confirm-ok'),
             cancel: !!document.getElementById('app-confirm-cancel'),
             msg: document.getElementById('app-confirm-message')?.textContent || ''
         }));
         check(
-            'G7 F5: popup 3-btn w iframe',
-            f5btns.save && f5btns.leave && f5btns.cancel,
+            'G7 F5: popup 2-btn w iframe (bez ślepego Zapisz)',
+            !f5btns.save && f5btns.leave && f5btns.cancel,
             JSON.stringify(f5btns).slice(0, 160)
         );
         check('G7 F5: popup z kontekstem', /Rury/.test(f5btns.msg), f5btns.msg.slice(0, 120));
-        await frame3.click('#app-confirm-cancel');
+        await clickModalBtn(frame3, 'app-confirm-cancel');
         await frame3.waitForFunction(() => !document.getElementById('app-confirm-overlay'), null, {
             timeout: 5000
         });
         const fieldG7 = await frame3.inputValue('#client-name');
-        check('G7 Anuluj: bez reloadu, pole cale', fieldG7 === 'GUARD-E2E-AB', fieldG7);
+        check('G7 Anuluj: bez reloadu, pole cale', fieldG7 === 'GUARD-E2E-F5', fieldG7);
 
         // G8: deterministyczny flush + prawdziwy reload -> recovery draftu.
         await frame3.evaluate(() => window.draftAutosave.flushAll());
@@ -402,7 +482,7 @@ async function waitModuleFrame(page, mod) {
             timeout: 5000
         });
         const fieldRestored = await frame4.inputValue('#client-name');
-        check('G9 Przywróć: pole z draftu', fieldRestored === 'GUARD-E2E-AB', fieldRestored);
+        check('G9 Przywróć: pole z draftu', fieldRestored === 'GUARD-E2E-F5', fieldRestored);
         await frame4.evaluate(() => window.draftAutosave.flushAll());
         // :not(#theme-toggle) — przełącznik motywu dzieli klasę .header-logout.
         await page.click('button.header-logout:not(#theme-toggle)');
@@ -410,13 +490,15 @@ async function waitModuleFrame(page, mod) {
         await sleep(400); // handlery modala wpinane +50ms po renderze
         const lobtns = await page.evaluate(() => ({
             save: document.getElementById('app-confirm-save')?.textContent || '',
-            leave: !!document.getElementById('app-confirm-leave'),
+            leave:
+                !!document.getElementById('app-confirm-leave') ||
+                !!document.getElementById('app-confirm-ok'),
             cancel: !!document.getElementById('app-confirm-cancel'),
             msg: document.getElementById('app-confirm-message')?.textContent || ''
         }));
         check(
-            'G9 logout: 3-btn (Zapisz i wyloguj)',
-            /Zapisz i wyloguj/.test(lobtns.save) && lobtns.leave && lobtns.cancel,
+            'G9 logout: 2-btn (oferta bez pozycji, brak ślepego Zapisz)',
+            !/Zapisz i wyloguj/.test(lobtns.save) && lobtns.leave && lobtns.cancel,
             JSON.stringify(lobtns).slice(0, 160)
         );
         check(
@@ -424,7 +506,7 @@ async function waitModuleFrame(page, mod) {
             /Lokalnych draftów: 1/.test(lobtns.msg),
             lobtns.msg.slice(0, 160)
         );
-        await page.click('#app-confirm-cancel');
+        await clickModalBtn(page, 'app-confirm-cancel');
         await page.waitForFunction(() => !document.getElementById('app-confirm-overlay'), null, {
             timeout: 5000
         });
@@ -446,7 +528,7 @@ async function waitModuleFrame(page, mod) {
         await page.click('#spa-app-kartoteka');
         await page.waitForSelector('#app-confirm-overlay', { timeout: 8000 });
         await sleep(400); // handlery modala wpinane +50ms po renderze
-        await page.click('#app-confirm-leave');
+        await clickModalLeave(page);
         await page.waitForFunction(() => /kartoteka/.test(window.location.hash), null, {
             timeout: 8000
         });
@@ -478,7 +560,7 @@ async function waitModuleFrame(page, mod) {
         await page.waitForSelector('#app-confirm-overlay', { timeout: 8000 });
         await sleep(400); // handlery modala wpinane +50ms po renderze
         check('G10 re-arm: nowa edycja pyta znowu', true, '');
-        await page.click('#app-confirm-cancel');
+        await clickModalBtn(page, 'app-confirm-cancel');
         await page.waitForFunction(() => !document.getElementById('app-confirm-overlay'), null, {
             timeout: 5000
         });
