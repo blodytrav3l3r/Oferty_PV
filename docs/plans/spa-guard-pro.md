@@ -1,6 +1,6 @@
 # SPA-GUARD-PRO — pakiet profesjonalny: guard zakładek + edytowane oferty (P0+P1)
 
-**Status:** PLAN (nie rozpoczęty)
+**Status:** DONE (2026-10-06, 4 commity: 84b7658, 5262f3f, 1f31b05, af52ede + domknięcie)
 **Data:** 2026-10-06
 **Zakres:** wyłącznie `public/js/spa/router.js`, `public/js/shared/ui.js`, `public/js/shared/auth.js`, `public/js/shared/draftAutosave.js` (+ cienka warstwa SSoT dirty) + testy. Bez zmian backendu, bez zmian cen, bez dotykania Excela/solvera. Inwarianty I-001–I-012 bez zmian.
 **Baseline FACT (zweryfikowane w kodzie):**
@@ -20,15 +20,15 @@ Po pakiecie: (a) guard wykrywa brud także w rurach (diff, nie flaga), (b) jedno
 
 ## 2. Evidence ledger (startowy — statusy do aktualizacji w trakcie)
 
-| ID    | Twierdzenie                                                | Dowód                                                              | Status   |
-| ----- | ---------------------------------------------------------- | ------------------------------------------------------------------ | -------- |
-| E-001 | Guard routera oparty na flagach, rury bez `_excelDirty`    | `router.js:30-54`, `excelHelpers.js:819` (tylko studnie stawia)    | VERIFIED |
-| E-002 | Duplikat `_isWizardDirty` w routerze i ui.js               | `router.js:30`, `ui.js:693`                                        | VERIFIED |
-| E-003 | Komparator kanoniczny istnieje i jest SSoT dla recovery    | `draftAutosave.js:565` `_draftEquivalent`, użyty w `707,1446,1464` | VERIFIED |
-| E-004 | `areEquivalent` wystawione publicznie                      | `draftAutosave.js:1526`                                            | VERIFIED |
-| E-005 | Hash SPA nie woła `beforeunload`, router flushuje ręcznie  | `router.js:25`, `router.js:456`                                    | VERIFIED |
-| E-006 | Zapisy per moduł osiągalne z rodzica przez `contentWindow` | `offerCrud.js:592`, `offerSave.js:421`, `orderCrud.js:1284`        | VERIFIED |
-| E-007 | Otwarcie B nad edycją A = reload iframe (utrata widoku A)  | `router.js:480-484`                                                | VERIFIED |
+| ID    | Twierdzenie                                                | Dowód                                                              | Status                                                           |
+| ----- | ---------------------------------------------------------- | ------------------------------------------------------------------ | ---------------------------------------------------------------- |
+| E-001 | Guard routera oparty na flagach, rury bez `_excelDirty`    | `router.js:30-54`, `excelHelpers.js:819` (tylko studnie stawia)    | VERIFIED → FIXED (`sokDirty.js`, diff rozstrzyga)                |
+| E-002 | Duplikat `_isWizardDirty` w routerze i ui.js               | `router.js:30`, `ui.js:693`                                        | VERIFIED → FIXED (delegaty do `__sokIsDirty`)                    |
+| E-003 | Komparator kanoniczny istnieje i jest SSoT dla recovery    | `draftAutosave.js:565` `_draftEquivalent`, użyty w `707,1446,1464` | VERIFIED (użyty w `hasUnsavedChanges`)                           |
+| E-004 | `areEquivalent` wystawione publicznie                      | `draftAutosave.js:1526`                                            | VERIFIED (+ `collectLive`, `hasUnsavedChanges`, `describeDirty`) |
+| E-005 | Hash SPA nie woła `beforeunload`, router flushuje ręcznie  | `router.js:25`, `router.js:456`                                    | VERIFIED (bez zmian)                                             |
+| E-006 | Zapisy per moduł osiągalne z rodzica przez `contentWindow` | `offerCrud.js:592`, `offerSave.js:421`, `orderCrud.js:1284`        | VERIFIED (`__sokSaveDirty`, weryfikacja przez re-diff)           |
+| E-007 | Otwarcie B nad edycją A = reload iframe (utrata widoku A)  | `router.js:480-484`                                                | VERIFIED → GUARD (A-vs-B w `navigate()`, TEST 5)                 |
 
 ## 3. P0 — must (kolejność = kolejność commitów, jeden obszar = jeden commit)
 
@@ -103,6 +103,16 @@ Po pakiecie: (a) guard wykrywa brud także w rurach (diff, nie flaga), (b) jedno
 7. P1.3 logout → commit `fix(auth): popup draftow przed wylogowaniem`
 
 Każdy checkpoint: CLAIM → EVIDENCE (plik:linia) → REPRO (komenda) → BEFORE/AFTER → TESTS (komendy + wynik) → DIFF → COMMIT. Push i release poza zakresem (osobne GO, kontrakt autonomii 🔴).
+
+## 8. Domknięcie do 100% (2026-10-06)
+
+Trzy luki z audytu plan-vs-kod, naprawione po review:
+
+- **Linki i F5 na 3-btn**: `ui.js` click-guard i F5-guard używają `_leaveGuardContext()` + `appConfirm3` (zapis gdy saver dostępny), fallback 2-btn z kontekstem w treści. E2E G7 (F5 → 3-btn → Anuluj → bez reloadu).
+- **Licznik draftów w logout**: `__sokCountDrafts()` (unia kluczy po współdzielonym storage) w treści popupu — `auth.js`. Test vm: 0 przed / 1 po flushu.
+- **E2E F5 + recovery**: G8 (flush → reload → `checkRecovery` → modal). Dwie flaki usunięte: settle 400 ms po renderze modala (handlery +50 ms) oraz wait na `currentUser` przed `checkRecovery` po reloadzie.
+
+Świadome odstępstwa od planu (decyzje, nie zaległości): brak memo 500 ms (diff tani, poprawność > mikro-opt), `_logoutDirtyWindow` deleguje do `__sokDirtyWindow` (mniej duplikacji niż planowane), `currentSaved` wystawione ale guard idzie przez `hasUnsavedChanges` (węższe API), 4 commity zamiast 7 (P0.1+P0.2 razem — jeden obszar SSoT).
 
 ## 7. Ryzyka i odrzucenia
 
