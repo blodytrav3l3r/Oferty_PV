@@ -326,7 +326,7 @@ if (typeof window !== 'undefined') {
     // Guard: sandboxy testowe (vm) maja okrojony document lub brak document.
     if (typeof document === 'undefined' || typeof document.querySelectorAll !== 'function') return;
     function bind() {
-        document.querySelectorAll('.header-logout').forEach((btn) => {
+        document.querySelectorAll('.header-logout:not(#theme-toggle)').forEach((btn) => {
             // Elementy z data-csp naleza do dyspozytora CSP-B2 (brak podwojnego logout).
             if (btn.hasAttribute && btn.hasAttribute('data-csp')) return;
             btn.addEventListener('click', () => appLogout());
