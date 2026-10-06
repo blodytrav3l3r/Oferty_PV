@@ -868,11 +868,13 @@ function _leaveGuardContext() {
         if (typeof window.__sokDirtyWindow === 'function') target = window.__sokDirtyWindow(mod);
     } catch (_e2) {}
     try {
-        canSave =
-            !!target &&
-            (typeof target.saveCurrentOrder === 'function' ||
-                typeof target.saveOfferStudnie === 'function' ||
-                typeof target.saveOffer === 'function');
+        if (typeof window.__sokCanSave === 'function') canSave = window.__sokCanSave(target);
+        else
+            canSave =
+                !!target &&
+                (typeof target.saveCurrentOrder === 'function' ||
+                    typeof target.saveOfferStudnie === 'function' ||
+                    typeof target.saveOffer === 'function');
     } catch (_e3) {}
     return { msg, target, canSave };
 }

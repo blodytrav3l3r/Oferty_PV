@@ -135,11 +135,18 @@ async function appLogout() {
                     }
                 }
             } catch (_e0) {}
-            const canSave =
-                !!target &&
-                (typeof target.saveCurrentOrder === 'function' ||
-                    typeof target.saveOfferStudnie === 'function' ||
-                    typeof target.saveOffer === 'function');
+            const canSave = (() => {
+                try {
+                    if (typeof window.__sokCanSave === 'function')
+                        return window.__sokCanSave(target);
+                } catch (_eC) {}
+                return (
+                    !!target &&
+                    (typeof target.saveCurrentOrder === 'function' ||
+                        typeof target.saveOfferStudnie === 'function' ||
+                        typeof target.saveOffer === 'function')
+                );
+            })();
             const confirmFn = window.appConfirm || window.parent?.appConfirm;
             const confirm3Fn = window.appConfirm3 || window.parent?.appConfirm3;
             const useFn = canSave && typeof confirm3Fn === 'function' ? confirm3Fn : confirmFn;

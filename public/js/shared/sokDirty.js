@@ -256,6 +256,58 @@
     }
 
     /**
+     * Saver dla okna (offer vs order, rury vs studnie) albo null.
+     * @param {Window} w
+     * @returns {Function|null}
+     */
+    function _sokSaverFor(w) {
+        try {
+            if (!w) return null;
+            var oe = null;
+            try {
+                oe = w.orderEditMode;
+            } catch (_e) {}
+            if (oe && typeof w.saveCurrentOrder === 'function') return w.saveCurrentOrder;
+            if (typeof w.saveOfferStudnie === 'function') return w.saveOfferStudnie;
+            if (typeof w.saveOffer === 'function') return w.saveOffer;
+        } catch (_e2) {}
+        return null;
+    }
+
+    /**
+     * Czy okno da się zapisać TERAZ. Pusta oferta (0 pozycji) jest niezapisywalna
+     * w obu modułach (savery odrzucają) — guard nie oferuje ślepej uliczki,
+     * tylko 2-btn (Opuść/Zostań). Nieustalone (legacy) = true jak dotąd.
+     * @param {Window} w okno docelowe (iframe contentWindow)
+     * @returns {boolean}
+     */
+    function __sokCanSave(w) {
+        try {
+            if (_sokSaverFor(w) === null) return false;
+            if (
+                w.draftAutosave &&
+                typeof w.draftAutosave.describeDirty === 'function' &&
+                typeof w.draftAutosave.liveRowCount === 'function'
+            ) {
+                var d = null;
+                try {
+                    d = w.draftAutosave.describeDirty();
+                } catch (_e) {}
+                if (d && d.kind) {
+                    var n = 0;
+                    try {
+                        n = w.draftAutosave.liveRowCount(d.kind);
+                    } catch (_e2) {}
+                    return n > 0;
+                }
+            }
+            return true;
+        } catch (_e3) {
+            return false;
+        }
+    }
+
+    /**
      * Zapisz brudny kontekst w danym oknie. Agnostyczny wobec kontraktu
      * saverów (rury saveOffer zwraca undefined, studnie boolean) — sukces
      * = brak wyjątku + czysto po zapisie.
@@ -263,17 +315,9 @@
      * @returns {Promise<boolean>} true = zapisano (można nawigować)
      */
     function __sokSaveDirty(w) {
-        var fn = null;
+        var fn = _sokSaverFor(w);
         try {
-            if (!w) return Promise.resolve(false);
-            var oe = null;
-            try {
-                oe = w.orderEditMode;
-            } catch (_e) {}
-            if (oe && typeof w.saveCurrentOrder === 'function') fn = w.saveCurrentOrder;
-            else if (typeof w.saveOfferStudnie === 'function') fn = w.saveOfferStudnie;
-            else if (typeof w.saveOffer === 'function') fn = w.saveOffer;
-            if (!fn) return Promise.resolve(false);
+            if (!w || !fn) return Promise.resolve(false);
             return Promise.resolve()
                 .then(function () {
                     return fn.call(w);
@@ -394,6 +438,7 @@
         window.__sokIsDirty = __sokIsDirty;
         window.__sokDescribeDirty = __sokDescribeDirty;
         window.__sokSaveDirty = __sokSaveDirty;
+        window.__sokCanSave = __sokCanSave;
         window.__sokKindLabel = __sokKindLabel;
         window.__sokDirtyWindow = __sokDirtyWindow;
         window.__sokCountDrafts = __sokCountDrafts;

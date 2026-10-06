@@ -1613,6 +1613,25 @@ function _draftDescribeDirty() {
     return null;
 }
 
+/**
+ * Liczba pozycji live rodzaju (do bramki zapisywalności guarda).
+ * Pusta oferta (0 pozycji) jest niezapisywalna w obu modułach.
+ * @param {string} kind
+ * @returns {number}
+ */
+function _draftLiveRowCount(kind) {
+    var live = null;
+    try {
+        live = _draftCollectLive(kind);
+    } catch (_e) {
+        return 0;
+    }
+    if (!live) return 0;
+    if (Array.isArray(live.wells)) return live.wells.length;
+    if (Array.isArray(live.items)) return live.items.length;
+    return 0;
+}
+
 window.draftAutosave = {
     DEBOUNCE_MS: DRAFT_AUTOSAVE_DEBOUNCE_MS,
     MODAL_ID: DRAFT_MODAL_ID,
@@ -1629,6 +1648,7 @@ window.draftAutosave = {
     collectLive: _draftCollectLive,
     hasUnsavedChanges: _draftHasUnsavedChanges,
     describeDirty: _draftDescribeDirty,
+    liveRowCount: _draftLiveRowCount,
     currentUserId: _draftUserId,
     describeDiff: _draftDescribeDiff
 };

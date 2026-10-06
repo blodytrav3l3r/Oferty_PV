@@ -101,10 +101,10 @@
             return '';
         }
     }
-
     // Komunikat guarda z kontekstem (P1.1): która oferta, dokąd idziesz.
     // Fallback do generycznego tekstu gdy brak SSoT (mieszany deploy).
-    function _dirtyLeaveMessage(targetHash) {
+    // canSave=false: bez obietnicy zapisu (2-btn) — tekst tylko o porzuceniu.
+    function _dirtyLeaveMessage(targetHash, canSave) {
         const base = 'Wprowadzone zmiany mogą nie zostać zapisane.';
         try {
             const targetMod = _moduleFromHash(targetHash);
@@ -123,20 +123,20 @@
                     const what = num ? label + ' ' + num : label;
                     // P1.2: oferta B nad brudną A — nazwij obie strony.
                     if (targetOffer && d.docId && targetOffer !== d.docId)
-                        return (
-                            what +
-                            ' ma niezapisane zmiany.\nPorzucić je i wczytać ' +
-                            targetOffer +
-                            ' (' +
-                            targetName +
-                            ')?'
-                        );
-                    return (
-                        what +
-                        ' ma niezapisane zmiany.\nZapisać przed przejściem do: ' +
-                        targetName +
-                        '?'
-                    );
+                        return canSave === false
+                            ? `${what} ma niezapisane zmiany.\nPrzejść do ${targetOffer} (${targetName}) bez zapisywania?`
+                            : what +
+                                  ' ma niezapisane zmiany.\nPorzucić je i wczytać ' +
+                                  targetOffer +
+                                  ' (' +
+                                  targetName +
+                                  ')?';
+                    return canSave === false
+                        ? `${what} ma niezapisane zmiany.\nPrzejść do: ${targetName} bez zapisywania?`
+                        : what +
+                              ' ma niezapisane zmiany.\nZapisać przed przejściem do: ' +
+                              targetName +
+                              '?';
                 }
             }
             return base + '\nPrzejść do: ' + targetName + '?';
@@ -164,9 +164,20 @@
         if (_getConfirmLock()) return;
         _setConfirmLock(true);
         try {
-            const msg = _dirtyLeaveMessage(targetHash);
+            // Pusta oferta (0 pozycji) niezapisywalna — 2-btn zamiast ślepego „Zapisz".
+            let canSavePrev = true;
+            try {
+                if (typeof window.__sokCanSave === 'function') {
+                    const _pw =
+                        currentModule && iframes[currentModule]
+                            ? iframes[currentModule].contentWindow
+                            : null;
+                    canSavePrev = window.__sokCanSave(_pw || window) === true;
+                }
+            } catch (_eCS) {}
+            const msg = _dirtyLeaveMessage(targetHash, canSavePrev);
             let choice = 'stay';
-            if (typeof window.appConfirm3 === 'function') {
+            if (canSavePrev && typeof window.appConfirm3 === 'function') {
                 choice = await window.appConfirm3(msg, {
                     title: 'Niezapisane zmiany',
                     type: 'warning',
