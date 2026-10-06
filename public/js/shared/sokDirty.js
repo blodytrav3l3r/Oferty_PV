@@ -7,6 +7,11 @@
  * Lokalnie: flagi (_excelDirty/_wizardDirty) fast-path + diff draft-vs-SAVED
  * (draftAutosave.hasUnsavedChanges, rozstrzyga ciche edycje rur bez flag).
  * W rodzicu: dodatkowo skan iframe (nowa funkcja albo legacy fallback).
+ *
+ * Pamięć porzucenia (__sokAbandonCurrent, nagabywanie-fiks): „Opuść bez zapisu"
+ * zapamiętuje sygnaturę porzuconego stanu per realm (rodzic propaguje do iframe).
+ * Guard milczy dopóki live jest identyczny z porzuconym; każda nowa edycja
+ * uzbraja go z powrotem. Session-only, bez localStorage.
  */
 
 (function () {
@@ -22,17 +27,6 @@
         try {
             if (typeof window !== 'undefined' && window._wizardDirty) return true;
         } catch (_e3) {}
-        return false;
-    }
-
-    function _localDiffDirty() {
-        try {
-            if (
-                window.draftAutosave &&
-                typeof window.draftAutosave.hasUnsavedChanges === 'function'
-            )
-                return window.draftAutosave.hasUnsavedChanges() === true;
-        } catch (_e) {}
         return false;
     }
 
@@ -68,12 +62,15 @@
 
     /**
      * Czy gdziekolwiek są niezapisane zmiany (lokalnie + iframe).
+     * Porzucony stan (__sokAbandonCurrent) nie liczy się jako brud.
      * @returns {boolean}
      */
     function __sokIsDirty() {
         try {
-            if (_localFlagsDirty()) return true;
-            if (_localDiffDirty()) return true;
+            var self = _sokSelfSigs();
+            for (var k = 0; k < self.length; k++) {
+                if (!_sokAbandonedMatch(self[k])) return true;
+            }
             var frames = null;
             try {
                 frames =
@@ -93,6 +90,110 @@
             }
         } catch (_e3) {}
         return false;
+    }
+
+    /**
+     * Sygnatury brudnych kontekstów WŁASNEGO okna (flagi + diff).
+     * Pusta lista = czysto. Sygnatura stabilna dla identycznego stanu.
+     * @returns {Array<{kind: string, docId: string, sig: string, flags: boolean}>}
+     */
+    function _sokSelfSigs() {
+        var out = [];
+        try {
+            var flags = _localFlagsDirty();
+            var d = null;
+            try {
+                if (
+                    window.draftAutosave &&
+                    typeof window.draftAutosave.describeDirty === 'function'
+                )
+                    d = window.draftAutosave.describeDirty();
+            } catch (_e) {}
+            if (d) {
+                var canon = '';
+                try {
+                    var live = window.draftAutosave.collectLive(d.kind);
+                    canon =
+                        window.draftStore &&
+                        typeof window.draftStore.canonicalPayloadJson === 'function'
+                            ? window.draftStore.canonicalPayloadJson(live) || ''
+                            : '';
+                } catch (_e2) {}
+                out.push({
+                    kind: String(d.kind || ''),
+                    docId: String(d.docId || ''),
+                    sig: canon,
+                    flags: flags
+                });
+                return out;
+            }
+            if (flags) {
+                out.push({ kind: '', docId: '', sig: '', flags: true });
+                return out;
+            }
+            try {
+                if (
+                    window.draftAutosave &&
+                    typeof window.draftAutosave.hasUnsavedChanges === 'function' &&
+                    window.draftAutosave.hasUnsavedChanges() === true
+                )
+                    out.push({ kind: '?', docId: '?', sig: '?', flags: false });
+            } catch (_e3) {}
+        } catch (_e4) {}
+        return out;
+    }
+
+    /** Porzucone sygnatury tego realmu (session-only, cap 50). */
+    var _sokAbandoned = [];
+
+    function _sokAbandonedMatch(s) {
+        try {
+            for (var i = 0; i < _sokAbandoned.length; i++) {
+                var a = _sokAbandoned[i];
+                if (
+                    a &&
+                    a.kind === s.kind &&
+                    a.docId === s.docId &&
+                    a.sig === s.sig &&
+                    a.flags === s.flags
+                )
+                    return true;
+            }
+        } catch (_e) {}
+        return false;
+    }
+
+    /**
+     * Zapamiętaj porzucenie WŁASNEGO okna (woła to też rodzic per iframe).
+     */
+    function __sokAbandonLocal() {
+        try {
+            _sokAbandoned = _sokSelfSigs().slice(0, 50);
+        } catch (_e) {
+            _sokAbandoned = [];
+        }
+    }
+
+    /**
+     * „Opuść bez zapisu": porzuć bieżący brud tu + w każdym iframe.
+     * Guard wraca dopiero przy NOWEJ edycji (inna sygnatura live).
+     */
+    function __sokAbandonCurrent() {
+        __sokAbandonLocal();
+        var frames = null;
+        try {
+            frames =
+                typeof document !== 'undefined'
+                    ? document.querySelectorAll('iframe.spa-module-iframe')
+                    : null;
+        } catch (_e) {}
+        if (!frames) return;
+        for (var i = 0; i < frames.length; i++) {
+            try {
+                var w = /** @type {HTMLIFrameElement} */ (frames[i]).contentWindow;
+                if (w && typeof w.__sokAbandonLocal === 'function') w.__sokAbandonLocal();
+            } catch (_e2) {}
+        }
     }
 
     /**
@@ -296,5 +397,7 @@
         window.__sokKindLabel = __sokKindLabel;
         window.__sokDirtyWindow = __sokDirtyWindow;
         window.__sokCountDrafts = __sokCountDrafts;
+        window.__sokAbandonLocal = __sokAbandonLocal;
+        window.__sokAbandonCurrent = __sokAbandonCurrent;
     } catch (_e) {}
 })();

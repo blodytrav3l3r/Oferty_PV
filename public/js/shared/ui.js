@@ -921,6 +921,12 @@ document.addEventListener('click', async (e) => {
                     );
                 return;
             }
+            if (choice !== 'save') {
+                try {
+                    if (typeof window.__sokAbandonCurrent === 'function')
+                        window.__sokAbandonCurrent();
+                } catch (_eAb) {}
+            }
         } else {
             const ok = await window.appConfirm(ctx.msg, {
                 title: 'Niezapisane zmiany',
@@ -929,6 +935,9 @@ document.addEventListener('click', async (e) => {
                 cancelText: 'Zostań'
             });
             if (!ok) return;
+            try {
+                if (typeof window.__sokAbandonCurrent === 'function') window.__sokAbandonCurrent();
+            } catch (_eAb2) {}
         }
         _bypassBeforeUnload = true;
         window._bypassBeforeUnload = true;

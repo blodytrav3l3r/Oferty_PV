@@ -194,6 +194,13 @@
                         );
                     return;
                 }
+            } else {
+                // „Opuść bez zapisu" = świadome porzucenie: guard milczy dopóki
+                // nic nowego nie wpiszesz (sygnatura w __sokAbandonCurrent).
+                try {
+                    if (typeof window.__sokAbandonCurrent === 'function')
+                        window.__sokAbandonCurrent();
+                } catch (_eAb) {}
             }
             _navForceOnce = true;
             window._bypassBeforeUnload = true;

@@ -171,6 +171,11 @@ async function appLogout() {
                                 saved = false;
                             }
                             if (!saved) return;
+                        } else {
+                            try {
+                                if (typeof window.__sokAbandonCurrent === 'function')
+                                    window.__sokAbandonCurrent();
+                            } catch (_eAb) {}
                         }
                     } else {
                         const ok = await /** @type {any} */ (useFn)(contextMsg, {
