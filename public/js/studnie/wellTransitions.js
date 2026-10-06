@@ -86,16 +86,22 @@ function renderInlinePrzejsciaApp(containerId) {
             ? `<i data-lucide="eye"></i>️ Pokaż/Ukryj (${hiddenCount} ukrytych)`
             : '<i data-lucide="eye"></i>️ Pokaż/Ukryj';
 
-    // Jeśli żadne typy nie są widoczne, pokaż stan pusty
+    // Jeśli żadne typy nie są widoczne, pokaż stan pusty.
+    // Rozróżnij pusty katalog (0/0 — problem z danymi) od ukrytych (0/N).
     if (types.length === 0) {
+        const catalogEmpty = allTypes.length === 0;
         container.innerHTML = `
             <div class="empty-state" style="border:1px dashed var(--border); border-radius: var(--radius-sm); background:var(--bg-secondary); margin:0.4rem 0;">
                 <div style="margin-bottom:0.5rem; color:var(--text-muted);"><i data-lucide="eye"></i></div>
-                <div style="font-size: var(--fs-base); font-weight: var(--fw-bold); color:var(--text-primary); margin-bottom:0.3rem;">Wszystkie przejścia są ukryte</div>
-                <div style="font-size: var(--fs-xs); color:var(--text-muted); margin-bottom:0.8rem;">Włącz widoczność wybranych typów przejść, aby móc je dodawać.</div>
-                <button class="btn btn-primary btn-sm" data-action="openPrzejsciaVisibilityPopup" data-container="${containerId || ''}" style="padding:0.35rem 0.8rem; font-size: var(--fs-sm); display:inline-flex; align-items:center; gap:0.4rem;">
+                <div style="font-size: var(--fs-base); font-weight: var(--fw-bold); color:var(--text-primary); margin-bottom:0.3rem;">${catalogEmpty ? 'Brak przejść w aktywnym cenniku' : 'Wszystkie przejścia są ukryte'}</div>
+                <div style="font-size: var(--fs-xs); color:var(--text-muted); margin-bottom:0.8rem;">${catalogEmpty ? 'Katalog nie zawiera aktywnych przejść — odśwież stronę lub sprawdź wersję ACTIVE cennika studni.' : 'Włącz widoczność wybranych typów przejść, aby móc je dodawać.'}</div>
+                ${
+                    catalogEmpty
+                        ? ''
+                        : `<button class="btn btn-primary btn-sm" data-action="openPrzejsciaVisibilityPopup" data-container="${containerId || ''}" style="padding:0.35rem 0.8rem; font-size: var(--fs-sm); display:inline-flex; align-items:center; gap:0.4rem;">
                     <i data-lucide="eye" style="width:16px; height:16px; flex-shrink:0;"></i> Pokaż przejścia (${allTypes.length} dostępnych)
-                </button>
+                </button>`
+                }
             </div>
         `;
         if (window.lucide && window.lucide.createIcons)

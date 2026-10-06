@@ -37,17 +37,20 @@ function openPrzejsciaVisibilityPopup(containerId) {
 
     const visibleCount = allTypes.filter((t) => visiblePrzejsciaTypes.has(t)).length;
 
-    const tilesHtml = allTypes
-        .map((t) => {
-            const isVisible = visiblePrzejsciaTypes.has(t);
-            return `
-            <div class="przejscia-vis-tile ${isVisible ? 'visible' : 'hidden-type'}"
-                 data-action="togglePrzejsciaTypeVisibility" data-t="${escapeJsStr(t)}"
-                 title="${escapeHtmlAttr(t)}">
-                <div class="przejscia-vis-tile-name">${escapeHtml(t)}</div>
-            </div>`;
-        })
-        .join('');
+    const tilesHtml =
+        allTypes.length === 0
+            ? `<div class="empty-state" style="padding:0.8rem; text-align:center; color:var(--text-muted); font-size: var(--fs-xs);">Brak przejść w aktywnym katalogu cennika.<br>Odśwież stronę lub sprawdź wersję ACTIVE cennika studni.</div>`
+            : allTypes
+                  .map((t) => {
+                      const isVisible = visiblePrzejsciaTypes.has(t);
+                      return `
+             <div class="przejscia-vis-tile ${isVisible ? 'visible' : 'hidden-type'}"
+                  data-action="togglePrzejsciaTypeVisibility" data-t="${escapeJsStr(t)}"
+                  title="${escapeHtmlAttr(t)}">
+                 <div class="przejscia-vis-tile-name">${escapeHtml(t)}</div>
+             </div>`;
+                  })
+                  .join('');
 
     overlay.innerHTML = `
         <div class="przejscia-vis-popup">

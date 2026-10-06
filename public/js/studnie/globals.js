@@ -136,10 +136,11 @@ function __assertStudnieMapFresh() {
     return true;
 }
 function getPrzejsciaCategories() {
-    if (przejsciaByCategory.size !== przejsciaCategoriesSorted.length) {
-        // P0.4: detektor referencja+wersja (nie sam size).
-        if (_isStudnieMapStale()) _rebuildStudnieProductsById();
-    }
+    // SSoT staleness: referencja tablicy + jawna wersja (jak getPrzejsciaForCategory).
+    // Poprzedni guard (size mapy vs długość listy) był zawsze równy i nie
+    // wykrywał podmiany z obejściem settera ani mutacji in-place — popup
+    // "Pokaż / Ukryj przejścia" dostawał wtedy pustą listę (0/0).
+    if (_isStudnieMapStale()) _rebuildStudnieProductsById();
     return przejsciaCategoriesSorted;
 }
 function getPrzejsciaForCategory(cat) {

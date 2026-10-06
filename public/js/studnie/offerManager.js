@@ -31,6 +31,14 @@ function clearOfferForm() {
     wellCounter = 1;
     currentWellIndex = 0;
     wellDiscounts = {}; // Reset rabatow
+    // Nowa oferta = czysty stan widoczności przejść (bez dziedziczenia po
+    // poprzedniej ofercie). Katalog (getPrzejsciaCategories) podaje pełną
+    // listę kafli; użytkownik włącza typy w popupie "Pokaż / Ukryj".
+    visiblePrzejsciaTypes = new Set();
+    if (typeof inlinePrzejsciaState !== 'undefined' && inlinePrzejsciaState) {
+        inlinePrzejsciaState.type = null;
+        inlinePrzejsciaState.dnId = null;
+    }
 
     offerDefaultZakonczenie = null;
     offerDefaultRedukcja = false;
