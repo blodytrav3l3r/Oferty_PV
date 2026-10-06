@@ -38,7 +38,7 @@ function renderStudniePriceList() {
     });
 
     const groupLabels = {
-        dennica: '<i data-lucide="square"></i> Dennicy',
+        dennica: '<i data-lucide="square"></i> Dennice',
         osadnik: '<i data-lucide="layers"></i> Osadniki',
         konus: '<i data-lucide="diamond"></i> Konusy',
         krag: '<i data-lucide="square"></i> Kręgi',

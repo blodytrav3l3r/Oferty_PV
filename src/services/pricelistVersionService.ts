@@ -971,7 +971,7 @@ export function liveStudnieSheetName(p: Record<string, unknown>): string {
     )
         return 'Styczna';
     if (c.includes('kinet') || ct === 'kineta') return 'Kinety';
-    if (c.includes('dennic') || ct === 'dennica') return 'Dennicy';
+    if (c.includes('dennic') || ct === 'dennica') return 'Dennice';
     if (p.dn !== null && p.dn !== undefined && String(p.dn) !== '') {
         return 'DN' + String(p.dn);
     }

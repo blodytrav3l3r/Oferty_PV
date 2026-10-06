@@ -193,7 +193,7 @@ describe('Etap A: projectVersionToLiveShape — STUDNIE', () => {
         expect(STUDNIE_LIVE_COLUMNS).toHaveLength(34);
     });
 
-    it('getSheetName 1:1 z LIVE (Akcesoria/Przejścia/Styczna/Kinety/Dennicy/DN/Inne)', () => {
+    it('getSheetName 1:1 z LIVE (Akcesoria/Przejścia/Styczna/Kinety/Dennice/DN/Inne)', () => {
         expect(liveStudnieSheetName({ category: 'Akcesoria studni' })).toBe('Akcesoria');
         expect(liveStudnieSheetName({ componentType: 'wlaz' })).toBe('Akcesoria');
         expect(liveStudnieSheetName({ category: 'Przejścia szczelne' })).toBe('Przejścia');
@@ -211,8 +211,8 @@ describe('Etap A: projectVersionToLiveShape — STUDNIE', () => {
         ).toBe('Styczna');
         expect(liveStudnieSheetName({ category: 'Kinety XYZ' })).toBe('Kinety');
         expect(liveStudnieSheetName({ componentType: 'kineta' })).toBe('Kinety');
-        expect(liveStudnieSheetName({ category: 'Dennice', componentType: 'x' })).toBe('Dennicy');
-        expect(liveStudnieSheetName({ componentType: 'dennica' })).toBe('Dennicy');
+        expect(liveStudnieSheetName({ category: 'Dennice', componentType: 'x' })).toBe('Dennice');
+        expect(liveStudnieSheetName({ componentType: 'dennica' })).toBe('Dennice');
         expect(liveStudnieSheetName({ dn: '1000' })).toBe('DN1000');
         expect(liveStudnieSheetName({})).toBe('Inne');
     });
