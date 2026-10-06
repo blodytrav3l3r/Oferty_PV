@@ -1474,10 +1474,10 @@ html[data-theme='light'] .unit-popup-preview {
     margin-left: 4px;
     font-weight: var(--fw-bold);
 }
-/* Podwiersz kinety: ten sam kafelek, statyczny (bez drag/hover) + wcięcie */
+/* Podwiersz kinety: ten sam kafelek, statyczny (bez drag/hover).
+   Pełna szerokość jak reszta — kolumny WAGA/CENA w jednej linii. */
 .config-tile--static {
     cursor: default;
-    margin-left: 2.2rem;
 }
 .config-tile--static:hover {
     filter: none;
