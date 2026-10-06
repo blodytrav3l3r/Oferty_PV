@@ -374,6 +374,94 @@ function appConfirm(message, opts = {}) {
 }
 
 /**
+ * In-app confirm z 3 opcjami (SPA-GUARD-PRO P0.3: „Zapisz i idź").
+ * @param {string} message - Treść (escapowana, \n → <br>)
+ * @param {object} [opts] - title, type, saveText, okText, cancelText
+ * @returns {Promise<'save'|'leave'|'stay'>} stay = też zamknięcie/X/Escape
+ */
+function appConfirm3(message, opts = {}) {
+    const {
+        title = 'Niezapisane zmiany',
+        saveText = 'Zapisz i przejdź',
+        okText = 'Opuść bez zapisu',
+        cancelText = 'Zostań',
+        type = 'warning'
+    } = opts;
+
+    return new Promise((resolve) => {
+        let resolved = false;
+        const once = (result) => {
+            if (!resolved) {
+                resolved = true;
+                resolve(result);
+            }
+        };
+
+        _ensureConfirmStyles();
+
+        const iconMap = {
+            info: '<i data-lucide="info" class="icon-32-accent"></i>',
+            warning: '<i data-lucide="alert-triangle" class="icon-32-warn"></i>',
+            danger: '<i data-lucide="trash-2" class="icon-32-danger"></i>'
+        };
+        const accentMap = {
+            info: 'var(--accent)',
+            warning: 'var(--warn)',
+            danger: 'var(--danger)'
+        };
+        const accent = accentMap[type] || accentMap.warning;
+
+        const safeTitle = _escapeHtml(title);
+        const safeMsg = _escapeHtml(message).replace(/\n/g, '<br>');
+        const safeSave = _escapeHtml(saveText);
+        const safeOk = _escapeHtml(okText);
+        const safeCancel = _escapeHtml(cancelText);
+
+        const html = `
+            <div class="app-confirm-modal">
+                <div class="app-confirm-icon" id="app-confirm-icon">${iconMap[type] || iconMap.warning}</div>
+                <div class="app-confirm-title" id="app-confirm-title">${safeTitle}</div>
+                <div class="app-confirm-message" id="app-confirm-message">${safeMsg}</div>
+                <div class="app-confirm-actions">
+                    <button class="app-confirm-btn" id="app-confirm-cancel">${safeCancel}</button>
+                    <button class="app-confirm-btn" id="app-confirm-leave">${safeOk}</button>
+                    <button class="app-confirm-btn" id="app-confirm-save" style="background:${accent}">${safeSave}</button>
+                </div>
+            </div>`;
+
+        const overlay = showModal({
+            id: 'app-confirm-overlay',
+            titleId: 'app-confirm-title',
+            html: html,
+            onClose: () => once('stay')
+        });
+
+        if (window.lucide && typeof window.lucide.createIcons === 'function') {
+            setTimeout(() => window.lucide.createIcons({ root: overlay }), 10);
+        }
+
+        setTimeout(() => {
+            const saveBtn = document.getElementById('app-confirm-save');
+            const leaveBtn = document.getElementById('app-confirm-leave');
+            const cancelBtn = document.getElementById('app-confirm-cancel');
+            if (!saveBtn || !leaveBtn || !cancelBtn) return;
+
+            saveBtn.focus();
+
+            const close = (result) => {
+                untrapFocus(overlay);
+                overlay.remove();
+                _restoreBodyScroll();
+                once(result);
+            };
+            saveBtn.addEventListener('click', () => close('save'));
+            leaveBtn.addEventListener('click', () => close('leave'));
+            cancelBtn.addEventListener('click', () => close('stay'));
+        }, 50);
+    });
+}
+
+/**
  * In-app alert — zastępuje natywny alert().
  * Modal z pojedynczym przyciskiem OK. Zwraca Promise<void>.
  *
@@ -556,6 +644,7 @@ function _escapeHtml(str) {
 }
 
 window.appConfirm = appConfirm;
+window.appConfirm3 = appConfirm3;
 window.appAlert = appAlert;
 window.appPrompt = appPrompt;
 
@@ -691,6 +780,11 @@ try {
     });
 } catch {}
 function _isWizardDirty() {
+    // SPA-GUARD-PRO P0.1: SSoT w shared/sokDirty.js (flagi + diff draft-vs-SAVED).
+    // Ten delegat zostaje dla kompatybilności (legacy woła bezpośrednio).
+    try {
+        if (typeof window.__sokIsDirty === 'function') return window.__sokIsDirty() === true;
+    } catch (_e) {}
     try {
         if (typeof _excelDirty !== 'undefined' && _excelDirty) return true;
         if (typeof window._excelDirty !== 'undefined' && window._excelDirty) return true;

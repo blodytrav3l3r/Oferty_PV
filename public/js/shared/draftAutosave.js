@@ -1512,6 +1512,91 @@ function _draftInitKind(kind) {
     } catch (_e4) {}
 }
 
+/**
+ * Czy live różni się od SAVED dla któregokolwiek ZAREJESTROWANEGO rodzaju.
+ * Read-only (nie zapisuje, nie toastuje) — źródło prawdy guarda SPA (P0.2).
+ * Slim (lista bez pozycji) = brak decyzji. Brak initKind = false (rodzic SPA
+ * nie rejestruje rodzajów, guard działa tam przez skan iframe).
+ * @returns {boolean} true = są niezapisane zmiany
+ */
+function _draftHasUnsavedChanges() {
+    if (_draftInitedKinds.length === 0) return false;
+    for (var i = 0; i < _draftInitedKinds.length; i++) {
+        var kind = _draftInitedKinds[i];
+        var cfg = _draftKindConfig[kind];
+        if (!cfg || typeof cfg.isActive !== 'function') continue;
+        try {
+            if (!cfg.isActive()) continue;
+        } catch (_e) {
+            continue;
+        }
+        var docId = null;
+        try {
+            docId = cfg.getDocId();
+        } catch (_e2) {
+            continue;
+        }
+        if (!docId) continue;
+        var cur = _draftCurrentSaved(kind, cfg, docId);
+        if (!cur || cur.slim || !cur.payload) continue;
+        var live = null;
+        try {
+            live = _draftCollectLive(kind);
+        } catch (_e3) {
+            continue;
+        }
+        try {
+            if (!_draftEquivalent(kind, live, cur.payload, cur.isNew)) return true;
+        } catch (_e4) {}
+    }
+    return false;
+}
+
+/**
+ * Pierwszy brudny kontekst do komunikatu guarda (P1.1). Read-only.
+ * @returns {{kind: string, docId: string, number: string}|null}
+ */
+function _draftDescribeDirty() {
+    if (_draftInitedKinds.length === 0) return null;
+    for (var i = 0; i < _draftInitedKinds.length; i++) {
+        var kind = _draftInitedKinds[i];
+        var cfg = _draftKindConfig[kind];
+        if (!cfg || typeof cfg.isActive !== 'function') continue;
+        try {
+            if (!cfg.isActive()) continue;
+        } catch (_e) {
+            continue;
+        }
+        var docId = null;
+        try {
+            docId = cfg.getDocId();
+        } catch (_e2) {
+            continue;
+        }
+        if (!docId) continue;
+        var cur = _draftCurrentSaved(kind, cfg, docId);
+        if (!cur || cur.slim || !cur.payload) continue;
+        var live = null;
+        try {
+            live = _draftCollectLive(kind);
+        } catch (_e3) {
+            continue;
+        }
+        var dirty = false;
+        try {
+            dirty = !_draftEquivalent(kind, live, cur.payload, cur.isNew);
+        } catch (_e4) {}
+        if (!dirty) continue;
+        var number = '';
+        try {
+            if (live && live.fields && live.fields.number) number = String(live.fields.number);
+            else if (cur.savedDoc && cur.savedDoc.number) number = String(cur.savedDoc.number);
+        } catch (_e5) {}
+        return { kind: kind, docId: String(docId), number: number };
+    }
+    return null;
+}
+
 window.draftAutosave = {
     DEBOUNCE_MS: DRAFT_AUTOSAVE_DEBOUNCE_MS,
     MODAL_ID: DRAFT_MODAL_ID,
@@ -1525,6 +1610,9 @@ window.draftAutosave = {
     showModal: _draftShowDraftModal,
     areEquivalent: _draftEquivalent,
     currentSaved: _draftCurrentSaved,
+    collectLive: _draftCollectLive,
+    hasUnsavedChanges: _draftHasUnsavedChanges,
+    describeDirty: _draftDescribeDirty,
     currentUserId: _draftUserId,
     describeDiff: _draftDescribeDiff
 };
