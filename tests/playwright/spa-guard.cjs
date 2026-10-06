@@ -11,6 +11,8 @@
  *   G7 F5 z brudem -> popup 3-btn w iframe (kontekst + Zapisz i odśwież) -> Anuluj -> bez reloadu
  *   G8 flush + F5 -> recovery draftu po przeladowaniu (modal #sok-draft-modal)
  *   G9 Przywróć -> logout z brudem -> licznik draftów -> Zostań -> sesja cała
+ *   G10 leave porzuca stan: kartoteka -> zlecenia BEZ popupu; nowa edycja uzbraja z powrotem
+ *   G11 żaden natywny dialog (beforeunload) nie wyskakuje przy klikaniu kafli
  *
  * Run:
  *   node tests/playwright/spa-guard.cjs                # wymaga backendu na :3000
@@ -270,6 +272,9 @@ async function waitModuleFrame(page, mod) {
         check('G4 draft sflushowany przy zmianie modulu', !!draftKey, String(draftKey));
 
         // G5: A-vs-B — ?edit=X1 nad brudna nowa oferta -> "wczytać X1" -> Zostań.
+        // Uwaga: powrót w G4 wołał leave (= abandon), więc najpierw NOWA edycja.
+        const frameAB = await waitModuleFrame(page, 'rury');
+        await frameAB.fill('#client-name', 'GUARD-E2E-AB');
         await page.evaluate(() => {
             window.location.hash = '#/rury?edit=E2E_X1';
         });
@@ -332,7 +337,7 @@ async function waitModuleFrame(page, mod) {
             timeout: 5000
         });
         const fieldG7 = await frame3.inputValue('#client-name');
-        check('G7 Anuluj: bez reloadu, pole cale', fieldG7 === 'GUARD-E2E', fieldG7);
+        check('G7 Anuluj: bez reloadu, pole cale', fieldG7 === 'GUARD-E2E-AB', fieldG7);
 
         // G8: deterministyczny flush + prawdziwy reload -> recovery draftu.
         await frame3.evaluate(() => window.draftAutosave.flushAll());
@@ -353,7 +358,7 @@ async function waitModuleFrame(page, mod) {
             timeout: 5000
         });
         const fieldRestored = await frame4.inputValue('#client-name');
-        check('G9 Przywróć: pole z draftu', fieldRestored === 'GUARD-E2E', fieldRestored);
+        check('G9 Przywróć: pole z draftu', fieldRestored === 'GUARD-E2E-AB', fieldRestored);
         await frame4.evaluate(() => window.draftAutosave.flushAll());
         // :not(#theme-toggle) — przełącznik motywu dzieli klasę .header-logout.
         await page.click('button.header-logout:not(#theme-toggle)');
@@ -385,6 +390,59 @@ async function waitModuleFrame(page, mod) {
                 !!(window.currentUser && window.currentUser.id !== undefined)
         );
         check('G9 Zostań: sesja i strona całe', stillApp === true, String(stillApp));
+
+        // G10+G11: porzucenie pamięta stan; natywne dialogi zakazane przy kaflach.
+        const nativeDialogs = [];
+        page.on('dialog', async (d) => {
+            try {
+                nativeDialogs.push(d.type());
+            } catch (_) {}
+        });
+        // Stan po G9: brudny GUARD-E2E w rurach (G9 to był Zostań — nie porzucony).
+        await page.click('#spa-app-kartoteka');
+        await page.waitForSelector('#app-confirm-overlay', { timeout: 8000 });
+        await sleep(400); // handlery modala wpinane +50ms po renderze
+        await page.click('#app-confirm-leave');
+        await page.waitForFunction(() => /kartoteka/.test(window.location.hash), null, {
+            timeout: 8000
+        });
+        const cleanAfterLeave = await page.evaluate(() =>
+            typeof window.__sokIsDirty === 'function' ? window.__sokIsDirty() : 'NO_SSOT'
+        );
+        check(
+            'G10 leave porzuca stan: guard cichy',
+            cleanAfterLeave === false,
+            `dirty=${cleanAfterLeave}`
+        );
+        // Drugie przejście (kartoteka -> zlecenia) BEZ popupu.
+        await page.click('#spa-app-zlecenia');
+        await sleep(1500);
+        const noPopup = await page.evaluate(
+            () =>
+                !document.getElementById('app-confirm-overlay') &&
+                /zlecenia/.test(window.location.hash)
+        );
+        check('G10 drugie przejście bez popupu', noPopup === true, String(noPopup));
+        // Re-arm: powrót + nowa edycja -> guard wraca.
+        await page.click('#spa-app-rury');
+        await page.waitForFunction(() => /#\/rury/.test(window.location.hash), null, {
+            timeout: 8000
+        });
+        const frame5 = await waitModuleFrame(page, 'rury');
+        await frame5.fill('#client-name', 'GUARD-E2E X');
+        await page.click('#spa-app-kartoteka');
+        await page.waitForSelector('#app-confirm-overlay', { timeout: 8000 });
+        await sleep(400); // handlery modala wpinane +50ms po renderze
+        check('G10 re-arm: nowa edycja pyta znowu', true, '');
+        await page.click('#app-confirm-cancel');
+        await page.waitForFunction(() => !document.getElementById('app-confirm-overlay'), null, {
+            timeout: 5000
+        });
+        check(
+            'G11 brak natywnych dialogów przy kaflach',
+            nativeDialogs.length === 0,
+            JSON.stringify(nativeDialogs)
+        );
     } catch (e) {
         failed = true;
         errors.push('EXCEPTION: ' + String((e && e.message) || e));

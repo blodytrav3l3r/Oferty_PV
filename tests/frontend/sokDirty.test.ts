@@ -174,4 +174,29 @@ describe('sokDirty SSoT — flaga + diff', () => {
         expect(sandbox._draftWriteKind('offer_rury', true)).toBe(true);
         expect(sandbox.window.__sokCountDrafts()).toBe(1);
     });
+
+    it('abandon: leave wycisza ten sam stan, nowa edycja uzbraja z powrotem', () => {
+        const { sandbox, setFields } = loadCtx();
+        setFields({ clientName: 'Kowalski' });
+        expect(sandbox.window.__sokIsDirty()).toBe(true);
+        sandbox.window.__sokAbandonCurrent();
+        expect(sandbox.window.__sokIsDirty()).toBe(false);
+        // ten sam stan dalej cichy (drugie przejście bez popupu)
+        expect(sandbox.window.__sokIsDirty()).toBe(false);
+        // nowa edycja -> re-arm
+        setFields({ clientName: 'Kowalski bis' });
+        expect(sandbox.window.__sokIsDirty()).toBe(true);
+    });
+
+    it('abandon: flaga bez diffa tez podlega porzuceniu', () => {
+        const { sandbox } = loadCtx();
+        sandbox._excelDirty = true;
+        sandbox.window._excelDirty = true;
+        expect(sandbox.window.__sokIsDirty()).toBe(true);
+        sandbox.window.__sokAbandonCurrent();
+        expect(sandbox.window.__sokIsDirty()).toBe(false);
+        sandbox._excelDirty = false;
+        sandbox.window._excelDirty = false;
+        expect(sandbox.window.__sokIsDirty()).toBe(false);
+    });
 });
