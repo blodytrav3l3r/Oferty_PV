@@ -159,7 +159,15 @@ window.resolveKonusPehd = async function (wellIndex, type) {
         if (typeof updateAutoLockUI === 'function') updateAutoLockUI();
         if (typeof window._excelSyncAutoManualUI === 'function') window._excelSyncAutoManualUI();
 
-        if (currentWizardStep === 3) {
+        // Z Excela (overlay otwarty): re-solve w kontekście Excela —
+        // tabela + preview + kafelek Ceny od razu, nie przy najbliższej edycji.
+        if (
+            typeof document !== 'undefined' &&
+            document.getElementById('excel-table-overlay') &&
+            typeof _excelAutoSelectForWell === 'function'
+        ) {
+            await _excelAutoSelectForWell(wellIndex);
+        } else if (currentWizardStep === 3) {
             await autoSelectComponents(true);
             refreshAll();
         }

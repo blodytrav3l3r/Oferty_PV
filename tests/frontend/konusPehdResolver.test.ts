@@ -14,6 +14,7 @@ function readJs(rel: string): string {
 
 const KONUS = { id: 'KON-1000', componentType: 'konus', dn: 1000 };
 const PLYTA = { id: 'PLY-1000', componentType: 'plyta_din', dn: 1000 };
+const PLYTA_KLB = { ...PLYTA, magazynKLB: 1 };
 
 function loadResolver(wells: any[]) {
     const sandbox: any = { window: {}, console };
@@ -23,6 +24,8 @@ function loadResolver(wells: any[]) {
     sandbox.studnieProducts = [KONUS, PLYTA];
     sandbox.getStudnieProductById = (id: string) => [KONUS, PLYTA].find((p) => p.id === id);
     sandbox.document = { getElementById: () => null };
+    sandbox.escapeHtml = (s: unknown) => String(s);
+    sandbox.escapeHtmlAttr = (s: unknown) => String(s);
     sandbox.renderWellParams = () => {};
     sandbox.updateParamTilesUI = () => {};
     sandbox.updateSummary = () => {
@@ -88,5 +91,62 @@ describe('konusPehdResolver: Anuluj cofa wkladke na brak', () => {
         sandbox.closeKonusResolver();
         expect(wells[0].wkladkaZwienczenie).toBe('3mm');
         expect(getSummaryCalls()).toBe(0);
+    });
+});
+
+describe('konusPehdResolver: sciezka Excel (Parametry tej studni)', () => {
+    function loadExcel(wells: any[]) {
+        const { sandbox } = loadResolver(wells);
+        // Ciężki ogon _excelUpdateWellParam: same stuby.
+        sandbox._excelGuardWellLocked = () => true;
+        sandbox.invalidateFrozenPricesForWell = () => {};
+        sandbox.syncKineta = () => {};
+        sandbox._excelSyncMainPreview = () => {};
+        sandbox._excelDebouncedRefresh = () => {};
+        sandbox.recalculateWellErrors = () => {};
+        sandbox._excelRenderTable = () => {};
+        sandbox._excelActiveTab = '1000';
+        sandbox.closeExcelParamsPopup = () => {};
+        sandbox.excelOpenWellParams = () => {};
+        sandbox.showToast = () => {};
+        // showModal przechwycone — modal „otwarty" (indeks zapamiętany), bez DOM.
+        let modalOpened = -1;
+        sandbox.showModal = () => {
+            modalOpened = 1;
+            return {};
+        };
+        vm.runInContext(readJs('studnie/excelWellActions.js'), sandbox, {
+            filename: 'excelWellActions.js'
+        });
+        return { sandbox, modalOpened: () => modalOpened };
+    }
+
+    it('wybor 3mm przy Konusie → modal + Anuluj cofa na brak', () => {
+        const wells = [{ ...konusWell(), wkladkaZwienczenie: 'brak' }];
+        const { sandbox, modalOpened } = loadExcel(wells);
+        sandbox._excelUpdateWellParam(0, 'wkladkaZwienczenie', '3mm');
+        expect(modalOpened()).toBe(1);
+        expect(wells[0].wkladkaZwienczenie).toBe('3mm');
+        expect(sandbox.window._konusResolverWellIndex).toBe(0);
+        sandbox.closeKonusResolver();
+        expect(wells[0].wkladkaZwienczenie).toBe('brak');
+    });
+
+    it('resolve z Excela → zakonczenie podmienione + re-solve w kontekscie Excela', async () => {
+        const wells = [{ ...konusWell(), magazyn: 'Kluczbork' }];
+        const { sandbox } = loadExcel(wells);
+        sandbox.studnieProducts = [KONUS, PLYTA_KLB];
+        let excelAutoRuns = 0;
+        sandbox._excelAutoSelectForWell = async () => {
+            excelAutoRuns++;
+        };
+        // Overlay Excela otwarty → gałąź _excelAutoSelectForWell (nie krok-3).
+        sandbox.document = {
+            getElementById: (id: string) => (id === 'excel-table-overlay' ? {} : null)
+        };
+        await sandbox.window.resolveKonusPehd(0, 'plyta_din');
+        expect(wells[0].zakonczenie).toBe('PLY-1000');
+        expect(excelAutoRuns).toBe(1);
+        expect(wells[0].wkladkaZwienczenie).toBe('3mm');
     });
 });

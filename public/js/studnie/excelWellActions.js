@@ -120,6 +120,25 @@ function _excelUpdateWellParam(wIdx, paramKey, value) {
     if (paramKey === 'kineta' || paramKey === 'spocznik' || paramKey === 'spocznikH') {
         if (typeof syncKineta === 'function') syncKineta(well);
     }
+    // Konus + wkładka PEHD na zwieńczeniu technologicznie wykluczone —
+    // jak w konfiguratorze (updateWellParam): modal z wyborem zakończenia.
+    // Anuluj cofa wkładkę na 'brak' (closeKonusResolver, popupsKonusPehd.js).
+    if (paramKey === 'wkladkaZwienczenie' && value !== 'brak') {
+        const hasKonus =
+            well.config &&
+            well.config.some((c) => {
+                const p =
+                    typeof getStudnieProductById === 'function'
+                        ? getStudnieProductById(c.productId)
+                        : (typeof studnieProducts !== 'undefined' ? studnieProducts : []).find(
+                              (pr) => pr.id === c.productId
+                          );
+                return p && p.componentType === 'konus';
+            });
+        if (hasKonus && typeof window.showKonusPehdResolverModal === 'function') {
+            window.showKonusPehdResolverModal(wIdx);
+        }
+    }
     /* Parametry cenowe (malowanie itd.) — kafelki preview natychmiast za wierszem. */
     try {
         if (typeof _excelSyncMainPreview === 'function') _excelSyncMainPreview(wIdx);
