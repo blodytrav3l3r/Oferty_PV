@@ -129,7 +129,7 @@ function renderTiles() {
         <div class="tile-name">${escapeHtml(p.name)}</div>
         <div class="tile-meta">
           <span>${p.weight ? fmtInt(p.weight) + ' kg' : ''}</span>
-          <span class="tile-price">${fmtInt(displayPrice)} PLN</span>
+          <span class="tile-price">${fmt(displayPrice)} PLN</span>
         </div>
       </div>`;
         });
@@ -191,7 +191,7 @@ function renderTiles() {
                         <div class="tile-name">${escapeHtml(p.name)}</div>
                         <div class="tile-meta">
                           <span>${p.weight ? fmtInt(p.weight) + ' kg' : ''}</span>
-                          <span class="tile-price">${fmtInt(p.price)} PLN</span>
+                          <span class="tile-price">${fmt(p.price)} PLN</span>
                         </div>
                       </div>`;
                 });
@@ -296,7 +296,7 @@ function renderTiles() {
                             <div class="tile-name">${escapeHtml(p.name)}</div>
                             <div class="tile-meta">
                               <span>${p.weight ? fmtInt(p.weight) + ' kg' : ''}</span>
-                              <span class="tile-price">${fmtInt(displayPrice)} PLN</span>
+                              <span class="tile-price">${fmt(displayPrice)} PLN</span>
                             </div>
                           </div>`;
                     });

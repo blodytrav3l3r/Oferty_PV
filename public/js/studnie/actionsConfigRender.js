@@ -289,7 +289,7 @@ function renderWellConfig() {
                 <div class="cfg-spacer-60"></div>
 
                 <span class="fs-xs-muted">CENA:</span>
-                <span class="cfg-price-val">${fmtInt(totalPrice)} PLN</span>
+                <span class="cfg-price-val">${fmt(totalPrice)} PLN</span>
               </div>
               <div class="cfg-remove-cell">
                 <button class="btn-icon btn-icon--danger" data-csp="removeWellComponent" data-csp-args="${escapeHtmlAttr(JSON.stringify([index]))}" title="Usuń" aria-label="Usuń" style="width:26px; height:26px; display:${item.autoAdded ? 'none' : 'flex'};"><i data-lucide="x" class="icon-xs" aria-hidden="true"></i></button>
@@ -406,7 +406,7 @@ function renderWellConfig() {
                 html += `<div style="margin-top:0.5rem; padding:0.6rem 0.7rem; background:linear-gradient(135deg, rgba(var(--danger-rgb), 0.1), rgba(var(--accent2-rgb), 0.1)); border:1px solid rgba(var(--danger-rgb), 0.3); border-radius: var(--radius-sm);">`;
                 html += `<div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.4rem;">`;
                 html += `<span style="font-weight: var(--fw-extrabold); font-size: var(--fs-lg); color:var(--danger);"><i data-lucide="settings" class="icon-xs" style="vertical-align:-1px; margin-right:2px;"></i> Wkładka ${kinetaLabel}</span>`;
-                html += `<span style="font-weight: var(--fw-extrabold); font-size: var(--fs-2xl); color:var(--success);">${fmtInt(precoFinal)} PLN</span>`;
+                html += `<span style="font-weight: var(--fw-extrabold); font-size: var(--fs-2xl); color:var(--success);">${fmt(precoFinal)} PLN</span>`;
                 html += `</div>`;
                 html += `<div style="display:grid; grid-template-columns:1fr auto; gap:0.15rem var(--tile-gap-sm-plus); font-size: var(--fs-base); color:var(--text-secondary);">`;
 
@@ -418,13 +418,13 @@ function renderWellConfig() {
                     precoCalc.bazowaDN && precoCalc.bazowaDN.length > 0
                         ? ` (DN ${precoCalc.bazowaDN.join(' / DN ')})${etykietyBaza}`
                         : '';
-                html += `<span>Kineta bazowa${bazowaLabel}</span><span class="text-right-600">${fmtInt(precoCalc.bazowa)} PLN</span>`;
+                html += `<span>Kineta bazowa${bazowaLabel}</span><span class="text-right-600">${fmt(precoCalc.bazowa)} PLN</span>`;
 
                 if (precoCalc.redukcja > 0) {
                     const redDesc = precoCalc.redukcjaOpis
                         ? ` (${escapeHtml(precoCalc.redukcjaOpis)})`
                         : '';
-                    html += `<span>&nbsp;&nbsp;&nbsp;↳ Redukcja kinety${redDesc}</span><span class="text-right-600">${fmtInt(precoCalc.redukcja)} PLN</span>`;
+                    html += `<span>&nbsp;&nbsp;&nbsp;↳ Redukcja kinety${redDesc}</span><span class="text-right-600">${fmt(precoCalc.redukcja)} PLN</span>`;
                 }
 
                 if (
@@ -436,7 +436,7 @@ function renderWellConfig() {
                         precoCalc.bazowaIds.includes(u._id)
                     );
                     uniesieniaBazy.forEach((u) => {
-                        html += `<span>&nbsp;&nbsp;&nbsp;↳ Uniesienie kinety (${u.mm} mm) [${escapeHtml(u.label)}]</span><span class="text-right-600">${fmtInt(u.cena)} PLN</span>`;
+                        html += `<span>&nbsp;&nbsp;&nbsp;↳ Uniesienie kinety (${u.mm} mm) [${escapeHtml(u.label)}]</span><span class="text-right-600">${fmt(u.cena)} PLN</span>`;
                         u._wyrenderowane = true;
                     });
                 }
@@ -450,7 +450,7 @@ function renderWellConfig() {
                         precoCalc.bazowaIds.includes(s._id)
                     );
                     spadkiBazy.forEach((s) => {
-                        html += `<span>&nbsp;&nbsp;&nbsp;↳ Spadek ${escapeHtml(s.typ)} (${s.procent} %) [${escapeHtml(s.label)}]</span><span class="text-right-600">${fmtInt(s.cena)} PLN</span>`;
+                        html += `<span>&nbsp;&nbsp;&nbsp;↳ Spadek ${escapeHtml(s.typ)} (${s.procent} %) [${escapeHtml(s.label)}]</span><span class="text-right-600">${fmt(s.cena)} PLN</span>`;
                         s._wyrenderowane = true;
                     });
                 }
@@ -467,14 +467,14 @@ function renderWellConfig() {
                             ? FLOW_TYPES.WYLOT
                             : FLOW_TYPES.WLOT;
                     const fLabel = d.label ? ` [${escapeHtml(d.label)}]` : '';
-                    html += `<span>Dod. ${flowTypeName} DN${escapeHtml(String(d.dn ?? ''))} (${typLabel})${fLabel}</span><span class="text-right-600">${fmtInt(d.cena)} PLN</span>`;
+                    html += `<span>Dod. ${flowTypeName} DN${escapeHtml(String(d.dn ?? ''))} (${typLabel})${fLabel}</span><span class="text-right-600">${fmt(d.cena)} PLN</span>`;
 
                     if (precoCalc.uniesieniaSzczegoly && precoCalc.uniesieniaSzczegoly.length > 0) {
                         const uniesieniaDlaWlotu = precoCalc.uniesieniaSzczegoly.filter(
                             (u) => u._id === d._id
                         );
                         uniesieniaDlaWlotu.forEach((u) => {
-                            html += `<span>&nbsp;&nbsp;&nbsp;↳ Uniesienie kinety (${u.mm} mm)</span><span class="text-right-600">${fmtInt(u.cena)} PLN</span>`;
+                            html += `<span>&nbsp;&nbsp;&nbsp;↳ Uniesienie kinety (${u.mm} mm)</span><span class="text-right-600">${fmt(u.cena)} PLN</span>`;
                             u._wyrenderowane = true;
                         });
                     }
@@ -484,7 +484,7 @@ function renderWellConfig() {
                             (s) => s._id === d._id
                         );
                         spadkiDlaWlotu.forEach((s) => {
-                            html += `<span>&nbsp;&nbsp;&nbsp;↳ Spadek ${escapeHtml(s.typ)} (${s.procent} %)</span><span class="text-right-600">${fmtInt(s.cena)} PLN</span>`;
+                            html += `<span>&nbsp;&nbsp;&nbsp;↳ Spadek ${escapeHtml(s.typ)} (${s.procent} %)</span><span class="text-right-600">${fmt(s.cena)} PLN</span>`;
                             s._wyrenderowane = true;
                         });
                     }
@@ -494,39 +494,39 @@ function renderWellConfig() {
                     precoCalc.uniesieniaSzczegoly.forEach((u) => {
                         if (!u._wyrenderowane) {
                             const uLabel = u.label ? ` [${escapeHtml(u.label)}]` : '';
-                            html += `<span>Uniesienie kinety (${u.mm} mm)${uLabel}</span><span class="text-right-600">${fmtInt(u.cena)} PLN</span>`;
+                            html += `<span>Uniesienie kinety (${u.mm} mm)${uLabel}</span><span class="text-right-600">${fmt(u.cena)} PLN</span>`;
                         }
                     });
                 } else if (
                     precoCalc.uniesienie > 0 &&
                     (!precoCalc.uniesieniaSzczegoly || precoCalc.uniesieniaSzczegoly.length === 0)
                 ) {
-                    html += `<span>Uniesienie kinety</span><span class="text-right-600">${fmtInt(precoCalc.uniesienie)} PLN</span>`;
+                    html += `<span>Uniesienie kinety</span><span class="text-right-600">${fmt(precoCalc.uniesienie)} PLN</span>`;
                 }
 
                 if (precoCalc.skrzynki && precoCalc.skrzynki.ilosc > 0) {
-                    html += `<span>Skrzynki włazowe (${precoCalc.skrzynki.ilosc} szt.)</span><span class="text-right-600">${fmtInt(precoCalc.skrzynki.suma)} PLN</span>`;
+                    html += `<span>Skrzynki włazowe (${precoCalc.skrzynki.ilosc} szt.)</span><span class="text-right-600">${fmt(precoCalc.skrzynki.suma)} PLN</span>`;
                 }
                 if (precoCalc.spadkiSzczegoly && precoCalc.spadkiSzczegoly.length > 0) {
                     precoCalc.spadkiSzczegoly.forEach((s) => {
                         if (!s._wyrenderowane) {
                             const sLabel = s.label ? ` [${escapeHtml(s.label)}]` : '';
-                            html += `<span>Spadek ${escapeHtml(s.typ)} (${s.procent} %)${sLabel}</span><span class="text-right-600">${fmtInt(s.cena)} PLN</span>`;
+                            html += `<span>Spadek ${escapeHtml(s.typ)} (${s.procent} %)${sLabel}</span><span class="text-right-600">${fmt(s.cena)} PLN</span>`;
                         }
                     });
                 } else {
                     if (precoCalc.spadekKineta > 0) {
-                        html += `<span>Spadek kineta</span><span class="text-right-600">${fmtInt(precoCalc.spadekKineta)} PLN</span>`;
+                        html += `<span>Spadek kineta</span><span class="text-right-600">${fmt(precoCalc.spadekKineta)} PLN</span>`;
                     }
                     if (precoCalc.spadekMufa > 0) {
-                        html += `<span>Spadek mufa</span><span class="text-right-600">${fmtInt(precoCalc.spadekMufa)} PLN</span>`;
+                        html += `<span>Spadek mufa</span><span class="text-right-600">${fmt(precoCalc.spadekMufa)} PLN</span>`;
                     }
                 }
                 if (precoCalc.pelnaWysokosc) {
-                    html += `<span>↳ Wkładka uzupełniająca (${precoCalc.pelnaWysokosc.metry.toFixed(2)} m)</span><span class="text-right-600">${fmtInt(precoCalc.pelnaWysokosc.cena)} PLN</span>`;
+                    html += `<span>↳ Wkładka uzupełniająca (${precoCalc.pelnaWysokosc.metry.toFixed(2)} m)</span><span class="text-right-600">${fmt(precoCalc.pelnaWysokosc.cena)} PLN</span>`;
                 }
                 if (discPreco > 0) {
-                    html += `<span class="color-success">Rabat wkładka PRECO (${discPreco}%)</span><span class="color-success text-right-600" >-${fmtInt(precoCalc.suma - precoFinal)} PLN</span>`;
+                    html += `<span class="color-success">Rabat wkładka PRECO (${discPreco}%)</span><span class="color-success text-right-600" >-${fmt(precoCalc.suma - precoFinal)} PLN</span>`;
                 }
                 html += `</div></div>`;
             }
