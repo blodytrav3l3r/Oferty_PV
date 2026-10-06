@@ -149,4 +149,23 @@ describe('konusPehdResolver: sciezka Excel (Parametry tej studni)', () => {
         expect(excelAutoRuns).toBe(1);
         expect(wells[0].wkladkaZwienczenie).toBe('3mm');
     });
+
+    it('Anuluj przy otwartym popupie parametrow → popup przemalowany na brak', () => {
+        const wells = [konusWell()];
+        const { sandbox } = loadExcel(wells);
+        let reopened = -1;
+        sandbox.closeExcelParamsPopup = () => {};
+        sandbox.excelOpenWellParams = (wIdx: number) => {
+            reopened = wIdx;
+        };
+        // Popup parametrów otwarty (stary aktywny kafelek 3mm).
+        sandbox.document = {
+            getElementById: (id: string) => (id === 'excel-params-popup' ? {} : null)
+        };
+        sandbox.window._konusResolverWellIndex = 0;
+        sandbox.window._konusResolved = false;
+        sandbox.closeKonusResolver();
+        expect(wells[0].wkladkaZwienczenie).toBe('brak');
+        expect(reopened).toBe(0);
+    });
 });

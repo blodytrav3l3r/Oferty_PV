@@ -58,6 +58,17 @@ function closeKonusResolver() {
                 if (typeof updateSummary === 'function') updateSummary();
                 if (typeof window.refreshExcelFromConfig === 'function')
                     window.refreshExcelFromConfig();
+                // Otwarty popup "Parametry tej studni" (Excel) trzymałby stary
+                // aktywny kafelek — przemaluj go na cofnięty model.
+                if (
+                    typeof document !== 'undefined' &&
+                    document.getElementById('excel-params-popup') &&
+                    typeof closeExcelParamsPopup === 'function' &&
+                    typeof excelOpenWellParams === 'function'
+                ) {
+                    closeExcelParamsPopup();
+                    excelOpenWellParams(wIdx);
+                }
             }
         }
     } catch (_eRevert) {}
