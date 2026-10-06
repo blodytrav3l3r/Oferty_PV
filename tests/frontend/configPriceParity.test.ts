@@ -117,5 +117,7 @@ describe('konfiguracja betonowa: ceny jak w ofercie', () => {
         expect(rows).toBe(2);
         expect(html()).toContain('↳ + Kineta DN1000');
         expect(html()).toContain('w cenie: malowanie kinety');
+        // Podwiersz to pełny kafelek SOK (config-tile), nie goły tekst.
+        expect(html()).toContain('config-tile config-tile--static');
     });
 });

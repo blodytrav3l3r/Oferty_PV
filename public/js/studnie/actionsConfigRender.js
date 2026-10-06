@@ -324,19 +324,50 @@ function renderWellConfig() {
                               ? getWellDiscountPct(well, kp, _disc)
                               : 0
                         : 0;
-                    html += `<div class="cfg-sub-row"><span>↳ + ${escapeHtml(kp.name)}${kPct > 0 ? ` <span class="color-success">(-${String(kPct).replace('.', ',')}%)</span>` : ''}</span><span class="cfg-sub-price">${fmt(kPrice)} PLN</span></div>`;
                     const kBd =
                         typeof getItemPriceBreakdownSafe === 'function'
                             ? getItemPriceBreakdownSafe(well, kp, true, kinetaItem)
                             : typeof getItemPriceBreakdown === 'function'
                               ? getItemPriceBreakdown(well, kp, true, kinetaItem)
                               : null;
+                    const kMalLines = [];
                     if (kBd && kBd.malowanieW > 0) {
-                        html += `<div class="cfg-sub-row"><span>w cenie: malowanie kinety</span><span class="cfg-sub-price">${fmt(kBd.malowanieW * (kinetaItem.quantity || 1))} PLN</span></div>`;
+                        kMalLines.push(
+                            `w cenie: malowanie kinety ${fmt(kBd.malowanieW * (kinetaItem.quantity || 1))} PLN`
+                        );
                     }
                     if (kBd && kBd.malowanieZ > 0) {
-                        html += `<div class="cfg-sub-row"><span>w cenie: malowanie zewnątrz</span><span class="cfg-sub-price">${fmt(kBd.malowanieZ * (kinetaItem.quantity || 1))} PLN</span></div>`;
+                        kMalLines.push(
+                            `w cenie: malowanie zewnątrz ${fmt(kBd.malowanieZ * (kinetaItem.quantity || 1))} PLN`
+                        );
                     }
+                    const kBadge = typeBadge[kp.componentType] || {
+                        bg: 'var(--slate-700)',
+                        fg: 'var(--white)',
+                        label: '?'
+                    };
+                    const kWeight = (kp.weight || 0) * (kinetaItem.quantity || 1);
+                    // Ten sam kafelek co reszta (config-tile) — statyczny, bez drag/usuń.
+                    html += `<div class="config-tile config-tile--static" style="--tile-accent:${kBadge.bg};--tile-fg:${kBadge.fg};">
+          <div class="cfg-row-main">
+            <div class="cfg-col-text">
+              <div class="cfg-title-row">
+                <span class="cfg-type-badge" style="background:${kBadge.bg};color:${kBadge.fg};">${kBadge.label.split(' ')[1] || kBadge.label}</span>
+                <div class="cfg-item-name">↳ + ${escapeHtml(kp.name)}${kPct > 0 ? ` <span class="color-success">(-${String(kPct).replace('.', ',')}%)</span>` : ''}</div>
+              </div>
+              <div class="cfg-id-line">${escapeHtml(kp.id)}${kMalLines.length > 0 ? ' | ' + escapeHtml(kMalLines.join(' • ')) : ''}</div>
+            </div>
+            <div class="cfg-row-side">
+              <div class="cfg-values-grid">
+                <span class="fs-xs-muted">WAGA:</span>
+                <span class="cfg-weight-val">${kWeight > 0 ? fmtInt(kWeight) + ' kg' : '—'}</span>
+                <div class="cfg-spacer-60"></div>
+                <span class="fs-xs-muted">CENA:</span>
+                <span class="cfg-price-val">${fmt(kPrice)} PLN</span>
+              </div>
+            </div>
+          </div>
+        </div>`;
                 }
             }
         }
