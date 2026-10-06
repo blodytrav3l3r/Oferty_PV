@@ -50,6 +50,11 @@ function authHeaders() {
  * @returns {Window|null}
  */
 function _logoutDirtyWindow(moduleHint) {
+    // SSoT w shared/sokDirty.js; lokalna kopia tylko na mieszany deploy.
+    try {
+        if (typeof window.__sokDirtyWindow === 'function')
+            return window.__sokDirtyWindow(moduleHint);
+    } catch (_e) {}
     try {
         if (
             window.draftAutosave &&
@@ -57,7 +62,7 @@ function _logoutDirtyWindow(moduleHint) {
             window.draftAutosave.describeDirty()
         )
             return window;
-    } catch (_e) {}
+    } catch (_e0) {}
     try {
         const frames = document.querySelectorAll('iframe.spa-module-iframe');
         for (let i = 0; i < frames.length; i++) {
@@ -113,9 +118,19 @@ async function appLogout() {
                                   ? 'Dokument (' + d.module + ')'
                                   : 'Dokument';
                         const num = d.number || (d.docId && d.docId !== 'new' ? d.docId : '') || '';
+                        let draftSuffix = 'Wylogowanie skasuje też lokalne drafty.';
+                        try {
+                            if (typeof window.__sokCountDrafts === 'function') {
+                                const n = window.__sokCountDrafts();
+                                if (n > 0)
+                                    draftSuffix =
+                                        'Lokalnych draftów: ' + n + ' — wylogowanie je skasuje.';
+                            }
+                        } catch (_eN) {}
                         contextMsg =
                             (num ? label + ' ' + num : label) +
-                            ' ma niezapisane zmiany.\nWylogowanie skasuje też lokalne drafty.';
+                            ' ma niezapisane zmiany.\n' +
+                            draftSuffix;
                         target = _logoutDirtyWindow(d.module);
                     }
                 }

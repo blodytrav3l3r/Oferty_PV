@@ -205,10 +205,96 @@
         return 'Dokument';
     }
 
+    /**
+     * Okno trzymające brudny dokument: najpierw lokalny draft, potem iframe
+     * pasujący do podpowiedzi modułu, potem pierwszy brudny iframe.
+     * @param {string} [moduleHint] np. 'studnie' z __sokDescribeDirty
+     * @returns {Window|null}
+     */
+    function __sokDirtyWindow(moduleHint) {
+        try {
+            if (
+                window.draftAutosave &&
+                typeof window.draftAutosave.describeDirty === 'function' &&
+                window.draftAutosave.describeDirty()
+            )
+                return window;
+        } catch (_e) {}
+        var frames = null;
+        try {
+            frames =
+                typeof document !== 'undefined'
+                    ? document.querySelectorAll('iframe.spa-module-iframe')
+                    : null;
+        } catch (_e2) {
+            frames = null;
+        }
+        if (!frames) return null;
+        var i;
+        for (i = 0; i < frames.length; i++) {
+            try {
+                var fr = /** @type {HTMLIFrameElement} */ (frames[i]);
+                var w = fr.contentWindow;
+                if (!w) continue;
+                var mod = String(fr.id || '').replace('spa-iframe-', '');
+                if (moduleHint && mod === moduleHint) return w;
+            } catch (_e3) {}
+        }
+        for (i = 0; i < frames.length; i++) {
+            try {
+                var w2 = /** @type {HTMLIFrameElement} */ (frames[i]).contentWindow;
+                if (!w2) continue;
+                if (_frameDirty(w2)) return w2;
+            } catch (_e4) {}
+        }
+        return null;
+    }
+
+    /**
+     * Liczba lokalnych draftów użytkownika (P1.3, unia po storage współdzielonym
+     * same-origin — rodzic liczy przez iframe, moduł lokalnie).
+     * @returns {number}
+     */
+    function __sokCountDrafts() {
+        var keys = {};
+        function collect(w) {
+            try {
+                if (!w || !w.draftStore || typeof w.draftStore.listUserDraftKeys !== 'function')
+                    return;
+                var uid = null;
+                try {
+                    uid = w.currentUser && w.currentUser.id;
+                } catch (_e) {}
+                if (uid === undefined || uid === null || String(uid) === '') return;
+                var list = w.draftStore.listUserDraftKeys(w.localStorage, String(uid));
+                for (var i = 0; i < list.length; i++) keys[list[i]] = 1;
+            } catch (_e2) {}
+        }
+        collect(window);
+        try {
+            var frames =
+                typeof document !== 'undefined'
+                    ? document.querySelectorAll('iframe.spa-module-iframe')
+                    : null;
+            if (frames) {
+                for (var i = 0; i < frames.length; i++) {
+                    try {
+                        collect(/** @type {HTMLIFrameElement} */ (frames[i]).contentWindow);
+                    } catch (_e3) {}
+                }
+            }
+        } catch (_e4) {}
+        var n = 0;
+        for (var k in keys) if (Object.prototype.hasOwnProperty.call(keys, k)) n++;
+        return n;
+    }
+
     try {
         window.__sokIsDirty = __sokIsDirty;
         window.__sokDescribeDirty = __sokDescribeDirty;
         window.__sokSaveDirty = __sokSaveDirty;
         window.__sokKindLabel = __sokKindLabel;
+        window.__sokDirtyWindow = __sokDirtyWindow;
+        window.__sokCountDrafts = __sokCountDrafts;
     } catch (_e) {}
 })();

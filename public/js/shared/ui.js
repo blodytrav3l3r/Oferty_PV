@@ -840,7 +840,49 @@ window.addEventListener('pagehide', () => {
 
 /* ===== Custom popup przy opuszczeniu strony — styl projektu (modalCore) =====
    Custom appConfirm dla linków i reload; native beforeunload zostaje safety-net
-   dla X / Reload z UI przeglądarki. Jedno źródło _isWizardDirty(), jeden lock. */
+   dla X / Reload z UI przeglądarki. Jedno źródło _isWizardDirty(), jeden lock.
+   SPA-GUARD-PRO: 3-btn (appConfirm3) z kontekstem gdy da się zapisać. */
+// Kontekst wyjścia: komunikat z nazwą dokumentu + okno do zapisu + flaga savera.
+function _leaveGuardContext() {
+    let msg = 'Wprowadzone zmiany mogą nie zostać zapisane.';
+    let target = null;
+    let canSave = false;
+    let mod = null;
+    try {
+        if (typeof window.__sokDescribeDirty === 'function') {
+            const d = window.__sokDescribeDirty();
+            if (d && (d.kind || d.module || d.number || d.docId)) {
+                const label =
+                    typeof window.__sokKindLabel === 'function' && d.kind
+                        ? window.__sokKindLabel(d.kind)
+                        : d.module
+                          ? 'Dokument (' + d.module + ')'
+                          : 'Dokument';
+                const num = d.number || (d.docId && d.docId !== 'new' ? d.docId : '') || '';
+                msg = (num ? label + ' ' + num : label) + ' ma niezapisane zmiany.';
+                mod = d.module || null;
+            }
+        }
+    } catch (_e) {}
+    try {
+        if (typeof window.__sokDirtyWindow === 'function') target = window.__sokDirtyWindow(mod);
+    } catch (_e2) {}
+    try {
+        canSave =
+            !!target &&
+            (typeof target.saveCurrentOrder === 'function' ||
+                typeof target.saveOfferStudnie === 'function' ||
+                typeof target.saveOffer === 'function');
+    } catch (_e3) {}
+    return { msg, target, canSave };
+}
+async function _leaveGuardSave(target) {
+    try {
+        if (typeof window.__sokSaveDirty === 'function')
+            return (await window.__sokSaveDirty(target || window)) === true;
+    } catch (_e) {}
+    return false;
+}
 // @ts-ignore — e typed as any in legacy JS
 document.addEventListener('click', async (e) => {
     const _t = /** @type {any} */ (e).target;
@@ -861,13 +903,33 @@ document.addEventListener('click', async (e) => {
     _confirmLock = true;
     window._confirmLock = true;
     try {
-        const ok = await window.appConfirm('Wprowadzone zmiany mogą nie zostać zapisane.', {
-            title: 'Niezapisane zmiany',
-            type: 'warning',
-            okText: 'Opuść bez zapisu',
-            cancelText: 'Zostań'
-        });
-        if (!ok) return;
+        const ctx = _leaveGuardContext();
+        if (ctx.canSave && typeof window.appConfirm3 === 'function') {
+            const choice = await window.appConfirm3(ctx.msg, {
+                title: 'Niezapisane zmiany',
+                type: 'warning',
+                saveText: 'Zapisz i przejdź',
+                okText: 'Opuść bez zapisu',
+                cancelText: 'Zostań'
+            });
+            if (choice === 'stay') return;
+            if (choice === 'save' && !(await _leaveGuardSave(ctx.target))) {
+                if (typeof showToast === 'function')
+                    showToast(
+                        'Nie udało się zapisać — zapisz ręcznie i spróbuj ponownie.',
+                        'warning'
+                    );
+                return;
+            }
+        } else {
+            const ok = await window.appConfirm(ctx.msg, {
+                title: 'Niezapisane zmiany',
+                type: 'warning',
+                okText: 'Opuść bez zapisu',
+                cancelText: 'Zostań'
+            });
+            if (!ok) return;
+        }
         _bypassBeforeUnload = true;
         window._bypassBeforeUnload = true;
         window.location.href = /** @type {HTMLAnchorElement} */ (anchor).href;
@@ -893,16 +955,33 @@ document.addEventListener('keydown', async (e) => {
     _confirmLock = true;
     window._confirmLock = true;
     try {
-        const ok = await window.appConfirm(
-            'Wprowadzone zmiany mogą nie zostać zapisane. Czy chcesz odświeżyć stronę?',
-            {
+        const ctx = _leaveGuardContext();
+        if (ctx.canSave && typeof window.appConfirm3 === 'function') {
+            const choice = await window.appConfirm3(ctx.msg + ' Czy chcesz odświeżyć stronę?', {
+                title: 'Niezapisane zmiany',
+                type: 'warning',
+                saveText: 'Zapisz i odśwież',
+                okText: 'Odrzuć i odśwież',
+                cancelText: 'Anuluj'
+            });
+            if (choice === 'stay') return;
+            if (choice === 'save' && !(await _leaveGuardSave(ctx.target))) {
+                if (typeof showToast === 'function')
+                    showToast(
+                        'Nie udało się zapisać — zapisz ręcznie i spróbuj ponownie.',
+                        'warning'
+                    );
+                return;
+            }
+        } else {
+            const ok = await window.appConfirm(ctx.msg + ' Czy chcesz odświeżyć stronę?', {
                 title: 'Niezapisane zmiany',
                 type: 'warning',
                 okText: 'Odśwież',
                 cancelText: 'Anuluj'
-            }
-        );
-        if (!ok) return;
+            });
+            if (!ok) return;
+        }
         _bypassBeforeUnload = true;
         window._bypassBeforeUnload = true;
         window.location.reload();
