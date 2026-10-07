@@ -99,7 +99,7 @@ function renderInlinePrzejsciaApp(containerId) {
                     catalogEmpty
                         ? ''
                         : `<button class="btn btn-primary btn-sm" data-action="openPrzejsciaVisibilityPopup" data-container="${containerId || ''}" style="padding:0.35rem 0.8rem; font-size: var(--fs-sm); display:inline-flex; align-items:center; gap:0.4rem;">
-                    <i data-lucide="eye" style="width:16px; height:16px; flex-shrink:0;"></i> Pokaż przejścia (${allTypes.length} dostępnych)
+                    <i data-lucide="eye"></i> Pokaż przejścia (${allTypes.length} dostępnych)
                 </button>`
                 }
             </div>

@@ -1322,6 +1322,16 @@ html[data-theme='light'] .toast-warning {
     font-size: var(--fs-md);
 }
 
+/* Ikona w przycisku wewnątrz empty-state to nie dekoracja: bez guarda łapała
+   .empty-state svg (48px, margin-bottom, opacity) i pływała nad tekstem.
+   Rozmiar lustrzany z .btn svg (style.base.css), wyższa specyficzność celowo. */
+.empty-state .btn svg {
+    width: 16px;
+    height: 16px;
+    margin-bottom: 0;
+    opacity: 1;
+}
+
 /* Offer items – category & diameter grouping */
 .offer-cat-header td {
     background: linear-gradient(90deg, var(--bg-hover), var(--accent-bg));
