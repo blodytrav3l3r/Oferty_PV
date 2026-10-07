@@ -1,6 +1,6 @@
 # Bezpieczeństwo — S.O.K. — System Ofert i Kalkulacji
 
-**Wersja:** 1.40.0  
+**Wersja:** 1.41.0  
 **Ostatnia aktualizacja:** 2026-09-30
 
 > Szczegółowa macierz uprawnień per trasa: `docs/security/permission-matrix.md` (uzupełnienie tego dokumentu, nie drugi SSoT).
@@ -13,12 +13,14 @@
 
 System używa tokenów sesji do uwierzytelniania użytkowników.
 
-| Parametr       | Wartość                                                              |
-| -------------- | -------------------------------------------------------------------- |
-| Długość tokena | 64 znaki hex (32 bajty)                                              |
-| Generator      | `crypto.randomBytes(32)`                                             |
-| Czas życia     | 7 dni (`SESSION_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000`)               |
-| Przechowywanie | Baza danych (`sessions`), HttpOnly cookie (główne) + nagłówek (shim) |
+| Parametr       | Wartość                                                                                                                       |
+| -------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| Długość tokena | 64 znaki hex (32 bajty)                                                                                                       |
+| Generator      | `crypto.randomBytes(32)`                                                                                                      |
+| Idle timeout   | 1h bezczynności (`SESSION_IDLE_TIMEOUT_MS`, kolumna `sessions.lastActivity`; aktywność przedłuża, dotknięcie throttled 5 min) |
+| Absolute max   | 7 dni od utworzenia (`SESSION_ABSOLUTE_MAX_MS`)                                                                               |
+| Kody 401       | `SESSION_IDLE_EXPIRED` (idle) / `SESSION_EXPIRED` (absolute)                                                                  |
+| Przechowywanie | Baza danych (`sessions`), HttpOnly cookie (główne) + nagłówek (shim)                                                          |
 
 ```typescript
 // src/middleware/auth.ts

@@ -63,6 +63,20 @@ describe('A1 saveErrorKind', () => {
         expect(s.window.saveErrorKind('tekst')).toBe('unknown');
     });
 
+    it('P1-idle: 401 idle/expired → session-idle/session-expired (nie server)', () => {
+        const s = loadUi(true);
+        expect(s.window.saveErrorKind({ status: 401, code: 'SESSION_IDLE_EXPIRED' })).toBe(
+            'session-idle'
+        );
+        expect(s.window.saveErrorKind({ status: 401, code: 'SESSION_EXPIRED' })).toBe(
+            'session-expired'
+        );
+        expect(s.window.saveErrorKind({ status: 401 })).toBe('session-expired');
+        expect(s.window.saveSessionIdleMessage('session-idle')).toContain('1h bezczynności');
+        expect(s.window.saveSessionIdleMessage('session-expired')).toContain('drafcie');
+        expect(s.window.saveSessionIdleMessage('server')).toBeNull();
+    });
+
     it('saveOfflineMessage tylko dla offline/network', () => {
         const s = loadUi(true);
         expect(s.window.saveOfflineMessage('offline')).toContain('drafcie');

@@ -4,6 +4,13 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.41.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.40.0...v1.41.0) (2026-10-07)
+
+### Features
+
+- **auth:** sesja krocząca — wylogowanie po 1h bezczynności, absolute max 7d (kolumna `sessions.lastActivity`, touch throttled 5 min, kody `SESSION_IDLE_EXPIRED`/`SESSION_EXPIRED`)
+- **ui:** popupy sesji w standardzie S.O.K. — ostrzeżenie 5 min przed końcem idle z licznikiem i przedłużeniem, modal wygaśnięcia bez utraty draftu (401 przy zapisie nie gubi roboty)
+
 ## [1.40.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.39.0...v1.40.0) (2026-10-06)
 
 ### Features

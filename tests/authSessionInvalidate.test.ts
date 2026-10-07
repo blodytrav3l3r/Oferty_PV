@@ -81,6 +81,13 @@ jest.mock('../src/prismaClient', () => ({
                 return data;
             }),
             findUnique: jest.fn(async ({ where }: any) => sessions.get(where.token) ?? null),
+            update: jest.fn(async ({ where, data }: any) => {
+                const cur = sessions.get(where.token);
+                if (!cur) throw new Error('not found');
+                const next = { ...cur, ...data };
+                sessions.set(where.token, next);
+                return next;
+            }),
             findMany: jest.fn(async ({ where }: any) =>
                 [...sessions.values()]
                     .filter((s) => (where.userId ? s.userId === where.userId : true))

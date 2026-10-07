@@ -205,6 +205,23 @@ async function saveOffer() {
             showToast(_off, 'warning');
             return;
         }
+        // P1-idle: 401 po 1h bezczynnosci / 7d absolute — draft zachowany
+        // (clearContext tylko po sukcesie), modal zamiast cichego redirectu.
+        if (_kind === 'session-idle' || _kind === 'session-expired') {
+            var _msg =
+                typeof saveSessionIdleMessage === 'function'
+                    ? saveSessionIdleMessage(_kind)
+                    : 'Sesja wygasła — zaloguj się ponownie. Zmiany zachowane w drafcie.';
+            showToast(_msg, 'warning');
+            try {
+                if (
+                    window.sessionIdle &&
+                    typeof window.sessionIdle.notifyUnauthorized === 'function'
+                )
+                    window.sessionIdle.notifyUnauthorized(err);
+            } catch (_e) {}
+            return;
+        }
         showToast('Błąd zapisu oferty', 'error');
     } finally {
         window.isSavingOffer = false;

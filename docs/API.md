@@ -1,6 +1,6 @@
 # API — dokumentacja endpointów
 
-**Wersja:** 1.40.0  
+**Wersja:** 1.41.0  
 **Ostatnia aktualizacja:** 2026-10-03  
 **Dokumentacja Swagger/OpenAPI:** `/api/docs` (po uruchomieniu serwera) — źródło autorytatywne (surowy JSON: `GET /api/docs.json`)
 
@@ -23,7 +23,7 @@ Sprawdzenie statusu serwera. Używany przez Docker HEALTHCHECK i Render health c
   "timestamp": "2026-06-30T12:00:00.000Z",
   "uptime": 123.45,
   "memory": { ... },
-  "version": "1.40.0"
+  "version": "1.41.0"
 }
 ```
 
@@ -57,12 +57,12 @@ Publiczny endpoint raportów CSP (`Content-Type: application/csp-report`, odpowi
 
 ```json
 {
-    "version": "1.40.0",
+    "version": "1.41.0",
     "commitHash": "389dd6e",
     "branch": "main",
     "buildDate": "2026-08-09T00:00:00.000Z",
     "environment": "development",
-    "dbVersion": "1.40.0"
+    "dbVersion": "1.41.0"
 }
 ```
 
@@ -553,20 +553,20 @@ Odpowiedź po przekroczeniu: `429` + nagłówek `Retry-After`.
 
 ## Statusy HTTP
 
-| Status | Znaczenie w API                                                                            |
-| ------ | ------------------------------------------------------------------------------------------ |
-| 200    | Sukces (GET/PUT/PATCH/DELETE zwracają JSON, eksporty — plik)                               |
-| 201    | Utworzono wersję cennika (`POST /api/pricelist-versions/:type/drafts`, aktywacje)          |
-| 204    | Raport CSP przyjęty (`POST /api/csp-report`, bez body)                                     |
-| 400    | Błąd walidacji (Zod przez `validateData`, zły format, invalid numeric input — patrz niżej) |
-| 401    | Brak/nieprawidłowa sesja (brak cookie `authToken`, wygasła lub unieważniona)               |
-| 403    | Brak uprawnień (rola, ownership, full-wipe klientów dla nie-admina, revoke share)          |
-| 404    | Brak zasobu (404 zamiast 403 także przy odmowie dostępu do eksportu — anti-oracle)         |
-| 409    | Konflikt (zajęty login, `VERSION_CONFLICT` przy ślepym zapisie, duplikat transferu)        |
-| 422    | Błąd semantyczny: nieznany typ wersji, `NON_FINITE_SCORE` w AI batch                       |
-| 429    | Rate limit (`Retry-After`); także zapis w toku (lock)                                      |
-| 500    | Wewnętrzny błąd serwera (generyczny, bez wycieku szczegółów)                               |
-| 503    | Niedostępne: DB niegotowa (`/health/ready`), Chromium (`/health/pdf`), AI OFF, flagi       |
+| Status | Znaczenie w API                                                                                                                                                 |
+| ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 200    | Sukces (GET/PUT/PATCH/DELETE zwracają JSON, eksporty — plik)                                                                                                    |
+| 201    | Utworzono wersję cennika (`POST /api/pricelist-versions/:type/drafts`, aktywacje)                                                                               |
+| 204    | Raport CSP przyjęty (`POST /api/csp-report`, bez body)                                                                                                          |
+| 400    | Błąd walidacji (Zod przez `validateData`, zły format, invalid numeric input — patrz niżej)                                                                      |
+| 401    | Brak/nieprawidłowa sesja (brak cookie `authToken`, wygasła lub unieważniona; kody `SESSION_IDLE_EXPIRED` po 1h bezczynności / `SESSION_EXPIRED` po 7d absolute) |
+| 403    | Brak uprawnień (rola, ownership, full-wipe klientów dla nie-admina, revoke share)                                                                               |
+| 404    | Brak zasobu (404 zamiast 403 także przy odmowie dostępu do eksportu — anti-oracle)                                                                              |
+| 409    | Konflikt (zajęty login, `VERSION_CONFLICT` przy ślepym zapisie, duplikat transferu)                                                                             |
+| 422    | Błąd semantyczny: nieznany typ wersji, `NON_FINITE_SCORE` w AI batch                                                                                            |
+| 429    | Rate limit (`Retry-After`); także zapis w toku (lock)                                                                                                           |
+| 500    | Wewnętrzny błąd serwera (generyczny, bez wycieku szczegółów)                                                                                                    |
+| 503    | Niedostępne: DB niegotowa (`/health/ready`), Chromium (`/health/pdf`), AI OFF, flagi                                                                            |
 
 ---
 

@@ -98,4 +98,27 @@ export async function ensureDatabaseIndexes(): Promise<void> {
             e instanceof Error ? e.message : String(e)
         );
     }
+
+    // Auto-heal: kolumna sessions.lastActivity (idle timeout 1h).
+    // Instalacje bez migrate deploy (legacy db push) nie maja kolumny —
+    // dolozenie + backfill lastActivity = createdAt. Idempotentne.
+    // UWAGA: wylacznie statyczny DDL bez parametrow uzytkownika, forma
+    // $executeRaw z literalem (kontrakt tests/sqlInjection.test.ts).
+    // Bez nowego indeksu (celowo): max 10 sesji na usera, drift migracji 0.
+    try {
+        const cols = (await prisma.$queryRawUnsafe('PRAGMA table_info("sessions")')) as Array<{
+            name: string;
+        }>;
+        if (Array.isArray(cols) && !cols.some((c) => c?.name === 'lastActivity')) {
+            await prisma.$executeRaw`ALTER TABLE "sessions" ADD COLUMN "lastActivity" BIGINT`;
+            await prisma.$executeRaw`UPDATE "sessions" SET "lastActivity" = "createdAt" WHERE "lastActivity" IS NULL`;
+            logger.info('Server', 'Auto-heal: dodano kolumnę sessions.lastActivity');
+        }
+    } catch (e) {
+        logger.warn(
+            'Server',
+            'Nie udało się upewnić schematu sessions.lastActivity:',
+            e instanceof Error ? e.message : String(e)
+        );
+    }
 }

@@ -458,9 +458,10 @@ model recycled_production_numbers {
 }
 
 model sessions {
-  token     String @id
-  userId    String
-  createdAt BigInt
+  token        String @id
+  userId       String
+  createdAt    BigInt
+  lastActivity BigInt?
 }
 
 model settings {

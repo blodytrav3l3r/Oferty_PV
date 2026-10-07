@@ -3,7 +3,9 @@ const mockPrisma = {
     sessions: {
         findUnique: jest.fn(),
         create: jest.fn(),
-        delete: jest.fn()
+        delete: jest.fn(),
+        deleteMany: jest.fn().mockResolvedValue({ count: 0 }),
+        update: jest.fn().mockResolvedValue({})
     },
     users: {
         findUnique: jest.fn(),

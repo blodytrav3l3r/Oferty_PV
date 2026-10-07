@@ -17,7 +17,9 @@ jest.mock('../src/prismaClient', () => ({
             create: jest.fn(),
             delete: jest.fn(),
             findMany: jest.fn(),
-            deleteMany: jest.fn()
+            findUnique: jest.fn(),
+            deleteMany: jest.fn(),
+            update: jest.fn()
         }
     }
 }));
@@ -234,7 +236,7 @@ describe('Auth Routes - Z-70', () => {
             });
         });
 
-        it('createSession nie kasuje przy <= 10 sesjach', async () => {
+        it('createSession nie rotuje przy <= 10 sesjach (tylko czystka idle)', async () => {
             const rows = Array.from({ length: 5 }, (_, i) => ({
                 token: `t${i}`,
                 createdAt: BigInt(i)
@@ -242,7 +244,12 @@ describe('Auth Routes - Z-70', () => {
             (prisma.sessions.findMany as jest.Mock).mockResolvedValue(rows);
             (prisma.sessions.deleteMany as jest.Mock).mockClear();
             await realAuth.createSession('u1');
-            expect(prisma.sessions.deleteMany).not.toHaveBeenCalled();
+            // Jedyny deleteMany to leniwa czystka idle (lastActivity) —
+            // rotacja po tokenach (in: [...]) nie zachodzi.
+            const calls = (prisma.sessions.deleteMany as jest.Mock).mock.calls;
+            expect(calls.length).toBe(1);
+            expect(calls[0][0].where.token).toBeUndefined();
+            expect(calls[0][0].where.lastActivity).toBeDefined();
         });
 
         it('deleteUserSessions zwraca 0 bez sesji', async () => {

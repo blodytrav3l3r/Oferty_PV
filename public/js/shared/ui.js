@@ -200,6 +200,20 @@ window.fetchWithTimeout = async function (url, options, timeoutMs) {
 };
 
 /**
+ * Komunikat wygaslej sesji (P1-idle) — draft zachowany, modal zamiast redirectu.
+ * @param {string} kind wynik saveErrorKind
+ * @returns {string|null} tekst albo null gdy inny rodzaj
+ */
+function saveSessionIdleMessage(kind) {
+    if (kind === 'session-idle')
+        return 'Sesja wygasła po 1h bezczynności — zaloguj się w nowej karcie. Zmiany zachowane w drafcie.';
+    if (kind === 'session-expired')
+        return 'Sesja wygasła — zaloguj się ponownie. Zmiany zachowane w drafcie.';
+    return null;
+}
+window.saveSessionIdleMessage = saveSessionIdleMessage;
+
+/**
  * Klasyfikacja błędu zapisu/odczytu (A1): 'offline' | 'network' | 'conflict'
  * | 'locked' | 'server' | 'unknown'. TypeError z fetch to 'network', nie
  * 'offline' (warstwa sieciowa ≠ brak sieci u użytkownika). UX łączy
@@ -213,6 +227,9 @@ function saveErrorKind(err) {
         if (typeof navigator !== 'undefined' && navigator.onLine === false) return 'offline';
     } catch (_e) {}
     if (!err || typeof err !== 'object') return 'unknown';
+    if (err.status === 401 && err.code === 'SESSION_IDLE_EXPIRED') return 'session-idle';
+    if (err.status === 401 && err.code === 'SESSION_EXPIRED') return 'session-expired';
+    if (err.status === 401) return 'session-expired';
     if (err.status === 409 || err.code === 'VERSION_CONFLICT') return 'conflict';
     try {
         var ls = typeof window !== 'undefined' && window ? window.lockService : undefined;

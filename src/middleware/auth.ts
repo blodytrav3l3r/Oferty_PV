@@ -8,7 +8,15 @@ import prisma from '../prismaClient';
 import { getUserObject, User } from '../helpers';
 import { logger } from '../utils/logger';
 
-export const SESSION_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000; // 7 dni
+export const SESSION_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000; // 7 dni (absolute max)
+// P1-idle: wylogowanie po 1h bezczynnosci; aktywnosc (kazdy autoryzowany request)
+// przedluza sesje. Absolute max 7d od utworzenia zostaje.
+export const SESSION_ABSOLUTE_MAX_MS = SESSION_MAX_AGE_MS;
+export const SESSION_IDLE_TIMEOUT_MS = 60 * 60 * 1000; // 1h
+// Throttle dotkniecia lastActivity — zapis max co 5 min, zeby nie dokladac
+// write na kazdy request (SQLite, connection_limit=3).
+export const SESSION_TOUCH_THROTTLE_MS = 5 * 60 * 1000;
+export type SessionExpiredReason = 'idle' | 'absolute';
 
 // P1-D: limit aktywnych sesji na użytkownika (rotacja najstarszych).
 export const SESSION_MAX_PER_USER = 10;
@@ -23,6 +31,7 @@ export interface Session {
     token: string;
     userId: string;
     createdAt: bigint;
+    lastActivity?: bigint;
 }
 
 declare global {
@@ -96,11 +105,21 @@ export async function createSession(userId: string): Promise<string> {
         data: {
             token: hashToken(token),
             userId,
-            createdAt: now
+            createdAt: now,
+            lastActivity: now
         }
     });
 
     try {
+        // Leniwa czystka sesji idle-wygaslych (bez crona).
+        try {
+            await prisma.sessions.deleteMany({
+                where: { lastActivity: { lt: now - SESSION_IDLE_TIMEOUT_MS } }
+            });
+        } catch (_e) {
+            // Kolumna lastActivity moze nie istniec na legacy DB bez migrate —
+            // wtedy auto-heal w ensureDatabaseIndexes() ja dolozy.
+        }
         const stale = await prisma.sessions.findMany({
             where: { userId },
             select: { token: true, createdAt: true },
@@ -120,25 +139,92 @@ export async function createSession(userId: string): Promise<string> {
     return token;
 }
 
+export interface SessionStatus {
+    session: Session | null;
+    reason: SessionExpiredReason | null;
+}
+
+function lastActivityOf(session: { createdAt: bigint; lastActivity?: bigint | null }): number {
+    const raw = session.lastActivity ?? session.createdAt;
+    return Number(raw);
+}
+
 /**
- * Pobiera sesję po tokenie.
+ * Pobiera sesję po tokenie wraz z powodem wygaśnięcia.
+ * - absolute: now - createdAt > SESSION_ABSOLUTE_MAX_MS (7d)
+ * - idle: now - lastActivity > SESSION_IDLE_TIMEOUT_MS (1h)
+ * Legacy wiersze bez lastActivity traktowane jak lastActivity = createdAt.
  */
-export async function getSession(token: string | undefined): Promise<Session | null> {
-    if (!token) return null;
+export async function getSessionWithStatus(token: string | undefined): Promise<SessionStatus> {
+    if (!token) return { session: null, reason: null };
     const tokenHash = hashToken(token);
     try {
         const session = await prisma.sessions.findUnique({
             where: { token: tokenHash }
         });
-        if (!session) return null;
-        if (Number(session.createdAt) + SESSION_MAX_AGE_MS < Date.now()) {
+        if (!session) return { session: null, reason: null };
+        const now = Date.now();
+        if (Number(session.createdAt) + SESSION_ABSOLUTE_MAX_MS < now) {
             await deleteSession(token);
-            return null;
+            return { session: null, reason: 'absolute' };
         }
-        return session as Session;
+        if (lastActivityOf(session) + SESSION_IDLE_TIMEOUT_MS < now) {
+            await deleteSession(token);
+            return { session: null, reason: 'idle' };
+        }
+        return { session: session as Session, reason: null };
     } catch (e) {
         logger.error('Auth', 'Błąd odczytu sesji', e);
-        return null;
+        return { session: null, reason: null };
+    }
+}
+
+/**
+ * Pobiera sesję po tokenie.
+ */
+export async function getSession(token: string | undefined): Promise<Session | null> {
+    const { session } = await getSessionWithStatus(token);
+    return session;
+}
+
+/**
+ * Odświeża lastActivity sesji (throttled — max co SESSION_TOUCH_THROTTLE_MS).
+ * Wariant po hashu (bez dodatkowego odczytu — requireAuth ma już wiersz).
+ * Fire-and-forget safe: błędy tylko logowane, nigdy nie psują requestu.
+ */
+export async function touchSessionByHash(
+    tokenHash: string,
+    lastActivity: bigint | number | null,
+    createdAt: bigint | number
+): Promise<void> {
+    try {
+        const last = Number(lastActivity ?? createdAt);
+        const now = Date.now();
+        if (last + SESSION_TOUCH_THROTTLE_MS > now) return;
+        await prisma.sessions.update({
+            where: { token: tokenHash },
+            data: { lastActivity: now }
+        });
+    } catch (e) {
+        logger.error('Auth', 'Błąd odświeżenia sesji', e);
+    }
+}
+
+/**
+ * Odświeża lastActivity sesji (throttled — max co SESSION_TOUCH_THROTTLE_MS).
+ * Fire-and-forget safe: błędy tylko logowane, nigdy nie psują requestu.
+ */
+export async function touchSession(token: string): Promise<void> {
+    try {
+        const tokenHash = hashToken(token);
+        const row = await prisma.sessions.findUnique({
+            where: { token: tokenHash },
+            select: { lastActivity: true, createdAt: true }
+        });
+        if (!row) return;
+        await touchSessionByHash(tokenHash, row.lastActivity, row.createdAt);
+    } catch (e) {
+        logger.error('Auth', 'Błąd odświeżenia sesji', e);
     }
 }
 
@@ -197,12 +283,29 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
     // Zysk: 2Q → 1Q per request zamiast 0Q (0Q łamało test usuniętego usera).
     const tokenHash = hashToken(token);
     const cached = authCacheGet(tokenHash);
-    const session = await getSession(token);
+    const { session, reason } = await getSessionWithStatus(token);
     if (!session) {
         if (cached) authCacheInvalidateToken(tokenHash);
+        if (reason === 'idle') {
+            res.status(401).json({
+                error: 'Sesja wygasła po 1h bezczynności — zaloguj się ponownie',
+                code: 'SESSION_IDLE_EXPIRED'
+            });
+            return;
+        }
+        if (reason === 'absolute') {
+            res.status(401).json({
+                error: 'Sesja wygasła — zaloguj się ponownie',
+                code: 'SESSION_EXPIRED'
+            });
+            return;
+        }
         res.status(401).json({ error: 'Nieautoryzowany — zaloguj się' });
         return;
     }
+    // Aktywnosc przedluza sesje (throttled, bez czekania na zapis;
+    // bez dodatkowego odczytu — wiersz juz mamy z getSessionWithStatus).
+    void touchSessionByHash(tokenHash, session.lastActivity ?? null, session.createdAt);
     if (cached && cached.id === session.userId) {
         req.user = cached;
         next();

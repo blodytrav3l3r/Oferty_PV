@@ -301,6 +301,23 @@ async function saveOfferStudnie() {
             showToast(_off, 'warning');
             return false;
         }
+        // P1-idle: 401 po 1h bezczynnosci / 7d absolute — draft zachowany,
+        // modal zamiast cichego redirectu.
+        if (_kind === 'session-idle' || _kind === 'session-expired') {
+            var _msg =
+                typeof saveSessionIdleMessage === 'function'
+                    ? saveSessionIdleMessage(_kind)
+                    : 'Sesja wygasła — zaloguj się ponownie. Zmiany zachowane w drafcie.';
+            showToast(_msg, 'warning');
+            try {
+                if (
+                    window.sessionIdle &&
+                    typeof window.sessionIdle.notifyUnauthorized === 'function'
+                )
+                    window.sessionIdle.notifyUnauthorized(err);
+            } catch (_e) {}
+            return false;
+        }
         showToast('Błąd zapisu oferty', 'error');
         return false;
     } finally {
