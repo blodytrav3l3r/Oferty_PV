@@ -4,6 +4,25 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+### [1.41.1](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.40.0...v1.41.1) (2026-10-07)
+
+### Features
+
+- **auth:** krocząca sesja idle 1h i popup wylogowania ([30ac818](https://github.com/blodytrav3l3r/Oferty_PV/commit/30ac818b0b46c856db2d508170f57741ef155127))
+
+### Bug Fixes
+
+- **api:** globalny limiter x4 do 1200 na 15 minut ([2ee5d66](https://github.com/blodytrav3l3r/Oferty_PV/commit/2ee5d6627469dd5a80ebcd7ac4ff8a60ed1248fe))
+- **api:** odbiorca share widzi dokumenty na listach ([8142852](https://github.com/blodytrav3l3r/Oferty_PV/commit/8142852cf76048b5598c0f2d4e2709d486f43a87))
+- **api:** udostępnienia obejmują kopię oferty i eksport zamówień ([52d9bba](https://github.com/blodytrav3l3r/Oferty_PV/commit/52d9bba2a548e484de54515b5ea8328c8593468b))
+- **orders:** zapis i rabaty w trybie zamówienia tylko do zamówienia ([4e0e1fc](https://github.com/blodytrav3l3r/Oferty_PV/commit/4e0e1fcdd98785e482592e2585cf43e4e75f87bc))
+- **studnie:** ikona przycisku pokaż przejścia w empty-state ([d1914f7](https://github.com/blodytrav3l3r/Oferty_PV/commit/d1914f79204ec0191a7f52d5d5000fea4ee8d987))
+- **ui:** badge cennika jako pill w osobnym wierszu karty ([caf31f4](https://github.com/blodytrav3l3r/Oferty_PV/commit/caf31f457df3c075d6c343ba458eb23f79d553b5))
+- **ui:** ikona tag zamiast tags w badge cennika kartoteki ([ee2cdb7](https://github.com/blodytrav3l3r/Oferty_PV/commit/ee2cdb72ade98a18671493d598267c2dfb97f575))
+- **ui:** ikony lucide i aria-label zgodnie z wytycznymi ([a3656a1](https://github.com/blodytrav3l3r/Oferty_PV/commit/a3656a13b5fcf74d3527b127a3e31ee98f64348a))
+- **ui:** modal blokady dokumentu w standardzie modal--ie ([7774714](https://github.com/blodytrav3l3r/Oferty_PV/commit/77747148d3e090da4cb159bd8e7868afe561cc90))
+- **ui:** odrzucenie draftu blokuje ponowny zapis w sesji ([beb2fcf](https://github.com/blodytrav3l3r/Oferty_PV/commit/beb2fcf5d40c5bc32b7d39106bf9ed91fed1b3a1))
+
 ## [1.41.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.40.0...v1.41.0) (2026-10-07)
 
 ### Features
