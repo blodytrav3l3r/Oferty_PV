@@ -42,7 +42,16 @@ jest.mock('../src/utils/logger', () => ({
 
 jest.mock('../src/utils/ownership', () => ({
     canWriteDoc: jest.fn().mockReturnValue(true),
-    canReadDoc: jest.fn().mockReturnValue(true)
+    canReadDoc: jest.fn().mockReturnValue(true),
+    // P0.3: POST export-offer-* używają canReadWithShare (owner/pro/admin jak canReadDoc).
+    canReadWithShare: jest.fn().mockImplementation(async (user: any, ownerId: string | null) => {
+        if (user?.role === 'admin') return true;
+        if (user?.id === ownerId) return true;
+        if (user?.role === 'pro' && Array.isArray(user?.subUsers) && ownerId) {
+            return user.subUsers.includes(ownerId);
+        }
+        return false;
+    })
 }));
 
 jest.mock('../src/utils/roleFilter', () => ({

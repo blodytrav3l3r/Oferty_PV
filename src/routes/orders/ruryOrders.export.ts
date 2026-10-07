@@ -3,7 +3,7 @@ import { requireAuth, AuthenticatedRequest } from '../../middleware/auth';
 import { EXPORT_LIMITER } from '../../middleware/rateLimiters';
 import { ruryOfferExportSchema } from '../../validators/offerSchemas';
 import { logger } from '../../utils/logger';
-import { canReadDoc } from '../../utils/ownership';
+import { canReadWithShare } from '../../utils/ownership';
 import {
     generateRuryPDFFromContext,
     generateRuryOrderPDF,
@@ -31,7 +31,7 @@ router.get('/:id/export-karta-pdf', requireAuth, exportOrdersLimiter, async (req
             where: { id },
             select: { userId: true }
         });
-        if (!order || !canReadDoc(authReq.user, order.userId)) {
+        if (!order || !(await canReadWithShare(authReq.user, order.userId, 'order_rury', id))) {
             return res.status(404).json({ error: 'Not found' });
         }
         const pdfBuffer = await generateKartaBudowyRuryPDF(id);
@@ -58,7 +58,7 @@ router.get('/:id/export-karta-docx', requireAuth, exportOrdersLimiter, async (re
             where: { id },
             select: { userId: true }
         });
-        if (!order || !canReadDoc(authReq.user, order.userId)) {
+        if (!order || !(await canReadWithShare(authReq.user, order.userId, 'order_rury', id))) {
             return res.status(404).json({ error: 'Not found' });
         }
         const docxBuffer = await generateKartaBudowyRuryDOCX(id);
@@ -89,7 +89,7 @@ router.get('/:id/export-pdf', requireAuth, exportOrdersLimiter, async (req, res)
             where: { id: docId },
             select: { id: true, userId: true }
         });
-        if (!o || !canReadDoc(authReq.user, o.userId)) {
+        if (!o || !(await canReadWithShare(authReq.user, o.userId, 'order_rury', docId))) {
             return res.status(404).json({ error: 'Zamówienie nie znalezione' });
         }
         const pdfBuffer = await generateRuryOrderPDF(docId);
@@ -116,7 +116,7 @@ router.get('/:id/export-docx', requireAuth, exportOrdersLimiter, async (req, res
             where: { id: docId },
             select: { id: true, userId: true }
         });
-        if (!o || !canReadDoc(authReq.user, o.userId)) {
+        if (!o || !(await canReadWithShare(authReq.user, o.userId, 'order_rury', docId))) {
             return res.status(404).json({ error: 'Zamówienie nie znalezione' });
         }
         const docxBuffer = await generateRuryOrderDOCX(docId);
@@ -159,12 +159,7 @@ router.post('/:id/export-offer-pdf', requireAuth, exportOrdersLimiter, async (re
             where: { id: docId },
             select: { id: true, userId: true }
         });
-        const isOwner = o && o.userId === authReq.user?.id;
-        const isProParent =
-            o &&
-            authReq.user?.role === 'pro' &&
-            (authReq.user?.subUsers || []).includes(o.userId || '');
-        if (!o || (authReq.user?.role !== 'admin' && !isOwner && !isProParent)) {
+        if (!o || !(await canReadWithShare(authReq.user, o.userId, 'order_rury', docId))) {
             return res.status(404).json({ error: 'Zamówienie nie znalezione' });
         }
 
@@ -233,12 +228,7 @@ router.post('/:id/export-offer-docx', requireAuth, exportOrdersLimiter, async (r
             where: { id: docId },
             select: { id: true, userId: true }
         });
-        const isOwner = o && o.userId === authReq.user?.id;
-        const isProParent =
-            o &&
-            authReq.user?.role === 'pro' &&
-            (authReq.user?.subUsers || []).includes(o.userId || '');
-        if (!o || (authReq.user?.role !== 'admin' && !isOwner && !isProParent)) {
+        if (!o || !(await canReadWithShare(authReq.user, o.userId, 'order_rury', docId))) {
             return res.status(404).json({ error: 'Zamówienie nie znalezione' });
         }
 

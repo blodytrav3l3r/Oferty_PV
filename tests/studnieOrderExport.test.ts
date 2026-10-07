@@ -53,6 +53,16 @@ jest.mock('../src/utils/ownership', () => ({
             return user.subUsers.includes(ownerId);
         }
         return false;
+    }),
+    // P0.3: exporty zamówień używają canReadWithShare (owner/pro/admin jak canReadDoc;
+    // share-recipient pokryty w tests/p02-share-runtime.test.ts na prawdziwym ownership).
+    canReadWithShare: jest.fn().mockImplementation(async (user: any, ownerId: string | null) => {
+        if (user?.role === 'admin') return true;
+        if (user?.id === ownerId) return true;
+        if (user?.role === 'pro' && Array.isArray(user?.subUsers) && ownerId) {
+            return user.subUsers.includes(ownerId);
+        }
+        return false;
     })
 }));
 

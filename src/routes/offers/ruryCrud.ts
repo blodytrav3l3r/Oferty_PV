@@ -11,7 +11,7 @@ import { logger } from '../../utils/logger';
 import { validateData } from '../../validators/authSchema';
 import { WRITE_LIMITER } from '../../middleware/rateLimiters';
 import {
-    canReadDoc,
+    canReadWithShare,
     canWriteDoc,
     resolveWriteUserId,
     resolveAssignUserId
@@ -863,7 +863,7 @@ router.post('/:id/duplicate', requireAuth, writeOffersLimiter, async (req, res) 
                 await completeIdempotencyKey(idemUser, idemEndpoint, idemKey, 404, notFound);
             return res.status(404).json(notFound);
         }
-        if (!canReadDoc(authReq.user, source.userId)) {
+        if (!(await canReadWithShare(authReq.user, source.userId, 'offer', id))) {
             const forbidden = { error: 'Brak uprawnień do odczytu oferty źródłowej' };
             if (idemKey)
                 await completeIdempotencyKey(idemUser, idemEndpoint, idemKey, 403, forbidden);
