@@ -367,7 +367,8 @@ function buildOfferCardHtml(offer, hasOrder, orders, order, role, isLocalList) {
                             </div>
                             <div class="offer-price-section">
                                 <div class="offer-price">${typeof window.fmt === 'function' ? window.fmt(priceVal) + ' PLN' : priceVal.toFixed(2) + ' PLN'}</div>
-                                <div class="offer-meta">${dateStr} • ${itemCount} ${isWell ? 'studni' : 'poz.'}${pvBadge ? ` • ${pvBadge}` : ''}</div>
+                                <div class="offer-meta">${dateStr} • ${itemCount} ${isWell ? 'studni' : 'poz.'}</div>
+                                ${pvBadge ? `<div class="offer-meta"><i data-lucide="tags" aria-hidden="true"></i> ${pvBadge}</div>` : ''}
                             </div>
                         </div>
                         ${orderList.length > 0 ? `<div class="offer-orders-panel">${orderItemsHtml}</div>` : ''}

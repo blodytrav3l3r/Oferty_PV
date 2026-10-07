@@ -154,7 +154,7 @@
         if (!versionId) return '';
         var typeAttr = type ? ' data-pv-type="' + escAttr(type) + '"' : '';
         return (
-            '<span class="badge-info text-nowrap" data-pv-id="' +
+            '<span class="pv-offer-badge badge-info" data-pv-id="' +
             escAttr(versionId) +
             '"' +
             typeAttr +
@@ -167,7 +167,7 @@
      *  Bez fetchy per karta — 1× fetchLabels per typ (cache). */
     function activeBadgeHtml(type) {
         return (
-            '<span class="badge-info text-nowrap" data-pv-active="' +
+            '<span class="pv-offer-badge badge-info" data-pv-active="' +
             escAttr(type) +
             '" title="Aktywny cennik…">cennik…</span>'
         );
