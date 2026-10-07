@@ -46,8 +46,8 @@ router.get('/', requireAuth, async (req, res) => {
                 orderStatus: params.orderStatus,
                 orderRef
             });
-        const roleSqlRury = buildRoleWhereConditionWithShares(user, 'offer');
-        const roleSqlStudnie = buildRoleWhereConditionWithShares(user, 'offer_studnie');
+        const roleSqlRury = buildRoleWhereConditionWithShares(user, 'offer', 'o');
+        const roleSqlStudnie = buildRoleWhereConditionWithShares(user, 'offer_studnie', 's');
         const buildWhereSql = (roleSql: Prisma.Sql, whereParts: Prisma.Sql[]) =>
             roleSql !== Prisma.empty
                 ? Prisma.sql`${roleSql}${
@@ -288,7 +288,7 @@ router.get('/orders', requireAuth, async (req, res) => {
         const table = offerType === 'studnie' ? 'orders_studnie_rel' : 'orders_rury_rel';
         const idCol = offerType === 'studnie' ? 'offerStudnieId' : 'offerId';
         const docType = offerType === 'studnie' ? 'order_studnie' : 'order_rury';
-        const roleSql = buildRoleWhereConditionWithShares(authReq.user, docType);
+        const roleSql = buildRoleWhereConditionWithShares(authReq.user, docType, 't');
         const idCond = Prisma.sql`${Prisma.raw(idCol)} = ${id}`;
         const whereSql =
             roleSql !== Prisma.empty
@@ -296,7 +296,7 @@ router.get('/orders', requireAuth, async (req, res) => {
                 : Prisma.sql`WHERE ${idCond}`;
 
         const rows = await prisma.$queryRaw(Prisma.sql`
-            SELECT * FROM ${Prisma.raw(table)}
+            SELECT * FROM ${Prisma.raw(table)} t
             ${whereSql}
             ORDER BY "createdAt" DESC
             LIMIT 50

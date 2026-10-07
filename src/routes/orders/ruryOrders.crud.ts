@@ -44,7 +44,7 @@ router.get('/', requireAuth, async (req, res) => {
                       .slice(0, 200)
                 : [];
         let whereCondition = authReq.user
-            ? buildRoleWhereConditionWithShares(authReq.user, 'order_rury')
+            ? buildRoleWhereConditionWithShares(authReq.user, 'order_rury', 'o')
             : Prisma.empty;
         if (offerIds.length > 0) {
             const idCond = Prisma.sql`"offerId" IN (${Prisma.join(offerIds)})`;
@@ -68,7 +68,7 @@ router.get('/', requireAuth, async (req, res) => {
             CASE WHEN "createdAt" GLOB '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]'
                 THEN datetime(CAST("createdAt" AS INTEGER)/1000, 'unixepoch')
                 ELSE "createdAt" END as "createdAt"
-         FROM orders_rury_rel ${whereCondition}`;
+         FROM orders_rury_rel o ${whereCondition}`;
 
         const mapped = orders.map((o) => {
             const parsedData = parseJsonField<Record<string, unknown>>(o.data, {});

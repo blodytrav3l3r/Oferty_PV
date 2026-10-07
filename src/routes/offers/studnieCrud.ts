@@ -291,7 +291,7 @@ router.get('/studnie', requireAuth, async (req, res) => {
     try {
         const pq = paginationQuerySchema.parse(req.query);
         const whereCondition = authReq.user
-            ? buildRoleWhereConditionWithShares(authReq.user, 'offer_studnie')
+            ? buildRoleWhereConditionWithShares(authReq.user, 'offer_studnie', 's')
             : Prisma.empty;
 
         logger.debug('Offers', 'GET /studnie', {
@@ -345,7 +345,7 @@ router.get('/studnie', requireAuth, async (req, res) => {
                 CASE WHEN "updatedAt" GLOB '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]'
                     THEN datetime(CAST("updatedAt" AS INTEGER)/1000, 'unixepoch')
                     ELSE "updatedAt" END as "updatedAt"
-             FROM offers_studnie_rel ${whereCondition} ${cursorWhere}
+              FROM offers_studnie_rel s ${whereCondition} ${cursorWhere}
                 ORDER BY ${Prisma.raw(sortCol + ' ' + sortDir)}, id ${Prisma.raw(sortDir)}
                 LIMIT ${pq.limit + 1}`
             : await prisma.$queryRaw<
@@ -369,14 +369,14 @@ router.get('/studnie', requireAuth, async (req, res) => {
                 CASE WHEN "updatedAt" GLOB '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]'
                     THEN datetime(CAST("updatedAt" AS INTEGER)/1000, 'unixepoch')
                     ELSE "updatedAt" END as "updatedAt"
-             FROM offers_studnie_rel ${whereCondition}
-                ORDER BY ${Prisma.raw(sortCol + ' ' + sortDir)}
+              FROM offers_studnie_rel s ${whereCondition}
+                 ORDER BY ${Prisma.raw(sortCol + ' ' + sortDir)}
                 LIMIT ${pq.limit} OFFSET ${pq.skip}`;
 
         const countResult = canKeyset
             ? null
             : await prisma.$queryRaw<Array<{ cnt: number }>>`
-            SELECT COUNT(*) as cnt FROM offers_studnie_rel ${whereCondition}`;
+            SELECT COUNT(*) as cnt FROM offers_studnie_rel s ${whereCondition}`;
         const totalCount = canKeyset ? null : Number(countResult?.[0]?.cnt ?? 0);
 
         // keyset: hasMore + nextCursor from extra row

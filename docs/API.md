@@ -144,6 +144,11 @@ Lista użytkowników do przypisania (wewnętrzny alias na `/api/users/for-assign
 ## Udostępnianie dokumentów (`/api/shares`)
 
 Wymaga autoryzacji. Typy dokumentów: `offer`, `offer_studnie`, `order_rury`, `order_studnie`.
+Odbiorca widzi udostępniony dokument na listach (`/api/offers/search`,
+`GET /studnie`, listy zamówień), w detalu, w eksporcie PDF/DOCX i może go
+skopiować jako własną kopię (duplikat rur). Share jest per-dokument:
+udostępnienie oferty NIE obejmuje jej zamówień (te wymagają osobnego share
+typu `order_rury` / `order_studnie`).
 
 | Metoda | Ścieżka              | Opis                                                                     |
 | ------ | -------------------- | ------------------------------------------------------------------------ |

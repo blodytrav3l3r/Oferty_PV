@@ -66,7 +66,10 @@ export function buildRoleWhereConditionWithShares(
     const tbl = table ? `"${table}"` : '';
     const idCol = tbl ? `${tbl}."id"` : '"id"';
     const userIdCol = tbl ? `${tbl}."userId"` : '"userId"';
-    const shareCond = Prisma.sql`EXISTS (SELECT 1 FROM "document_shares" WHERE "sharedWithUserId" = ${user.id} AND "documentType" = ${documentType} AND "documentId" = ${Prisma.raw(idCol)})`;
+    // P0.4: wewnętrzna tabela MUSI mieć alias (ds) — gołe "id" w podzapytaniu
+    // SQLite wiązałoby z document_shares.id (PK), nie z ofertą z zewnątrz,
+    // i EXISTS był zawsze false (odbiorca share nigdy nie widział dokumentu).
+    const shareCond = Prisma.sql`EXISTS (SELECT 1 FROM "document_shares" ds WHERE ds."sharedWithUserId" = ${user.id} AND ds."documentType" = ${documentType} AND ds."documentId" = ${Prisma.raw(idCol)})`;
     if (user.role === 'pro') {
         const allowedIds = [user.id, ...(user.subUsers || [])].filter(isValidId);
         if (allowedIds.length === 0) return Prisma.sql`WHERE ${shareCond}`;
