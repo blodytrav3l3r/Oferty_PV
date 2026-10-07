@@ -3,7 +3,7 @@ import { requireAuth, AuthenticatedRequest } from '../../middleware/auth';
 import { EXPORT_LIMITER } from '../../middleware/rateLimiters';
 import { studnieOfferExportSchema } from '../../validators/offerSchemas';
 import { logger } from '../../utils/logger';
-import { canReadWithShare } from '../../utils/ownership';
+import { canReadOrderWithOfferShare } from '../../utils/ownership';
 import {
     generateKartaBudowyPDF,
     generateStudniePDFFromContext,
@@ -33,7 +33,10 @@ router.get('/:id/export-karta-pdf', requireAuth, exportOrdersLimiter, async (req
             where: { id },
             select: { userId: true }
         });
-        if (!order || !(await canReadWithShare(authReq.user, order.userId, 'order_studnie', id))) {
+        if (
+            !order ||
+            !(await canReadOrderWithOfferShare(authReq.user, order.userId, 'order_studnie', id))
+        ) {
             return res.status(404).json({ error: 'Not found' });
         }
         const pdfBuffer = await generateKartaBudowyPDF(id);
@@ -60,7 +63,10 @@ router.get('/:id/export-karta-docx', requireAuth, exportOrdersLimiter, async (re
             where: { id },
             select: { userId: true }
         });
-        if (!order || !(await canReadWithShare(authReq.user, order.userId, 'order_studnie', id))) {
+        if (
+            !order ||
+            !(await canReadOrderWithOfferShare(authReq.user, order.userId, 'order_studnie', id))
+        ) {
             return res.status(404).json({ error: 'Not found' });
         }
         const docxBuffer = await generateKartaBudowyDOCX(id);
@@ -92,7 +98,10 @@ router.get('/:id/export-pdf', requireAuth, exportOrdersLimiter, async (req, res)
             where: { id: docId },
             select: { id: true, userId: true }
         });
-        if (!o || !(await canReadWithShare(authReq.user, o.userId, 'order_studnie', docId))) {
+        if (
+            !o ||
+            !(await canReadOrderWithOfferShare(authReq.user, o.userId, 'order_studnie', docId))
+        ) {
             return res.status(404).json({ error: 'Zamówienie studni nie znalezione' });
         }
         const pdfBuffer = await generateStudnieOrderPDF(docId);
@@ -119,7 +128,10 @@ router.get('/:id/export-docx', requireAuth, exportOrdersLimiter, async (req, res
             where: { id: docId },
             select: { id: true, userId: true }
         });
-        if (!o || !(await canReadWithShare(authReq.user, o.userId, 'order_studnie', docId))) {
+        if (
+            !o ||
+            !(await canReadOrderWithOfferShare(authReq.user, o.userId, 'order_studnie', docId))
+        ) {
             return res.status(404).json({ error: 'Zamówienie studni nie znalezione' });
         }
         const docxBuffer = await generateStudnieOrderDOCX(docId);
@@ -164,7 +176,10 @@ router.post('/:id/export-offer-pdf', requireAuth, exportOrdersLimiter, async (re
             where: { id: docId },
             select: { id: true, userId: true }
         });
-        if (!o || !(await canReadWithShare(authReq.user, o.userId, 'order_studnie', docId))) {
+        if (
+            !o ||
+            !(await canReadOrderWithOfferShare(authReq.user, o.userId, 'order_studnie', docId))
+        ) {
             return res.status(404).json({ error: 'Zamówienie studni nie znalezione' });
         }
 
@@ -236,7 +251,10 @@ router.post('/:id/export-offer-docx', requireAuth, exportOrdersLimiter, async (r
             where: { id: docId },
             select: { id: true, userId: true }
         });
-        if (!o || !(await canReadWithShare(authReq.user, o.userId, 'order_studnie', docId))) {
+        if (
+            !o ||
+            !(await canReadOrderWithOfferShare(authReq.user, o.userId, 'order_studnie', docId))
+        ) {
             return res.status(404).json({ error: 'Zamówienie studni nie znalezione' });
         }
 

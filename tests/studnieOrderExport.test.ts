@@ -63,7 +63,19 @@ jest.mock('../src/utils/ownership', () => ({
             return user.subUsers.includes(ownerId);
         }
         return false;
-    })
+    }),
+    // P0.5: bramki zamówień używają canReadOrderWithOfferShare (ta sama semantyka
+    // owner/pro/admin; dziedziczenie po ofercie pokryte w sharesRawSql + p02).
+    canReadOrderWithOfferShare: jest
+        .fn()
+        .mockImplementation(async (user: any, ownerId: string | null) => {
+            if (user?.role === 'admin') return true;
+            if (user?.id === ownerId) return true;
+            if (user?.role === 'pro' && Array.isArray(user?.subUsers) && ownerId) {
+                return user.subUsers.includes(ownerId);
+            }
+            return false;
+        })
 }));
 
 jest.mock('../src/utils/roleFilter', () => ({

@@ -8,8 +8,8 @@ import studnieOrdersRouter from '../src/routes/orders/studnieOrders.export';
 const OWNER = { id: 'owner-a', role: 'user', subUsers: [], username: 'ownerA' };
 const RECIPIENT = { id: 'user-b', role: 'user', subUsers: [], username: 'userB' };
 let currentUser: any = { ...OWNER };
-// share present only when true; toggled per scenario
-let sharePresent = true;
+// typy dokumentów z aktywnym share (per scenariusz); hasShare mockuje po documentType
+let shareDocTypes: string[] = ['offer', 'order_rury', 'order_studnie'];
 
 jest.mock('../src/middleware/auth', () => ({
     requireAuth: (req: any, _res: any, next: any) => {
@@ -115,7 +115,9 @@ jest.mock('../src/prismaClient', () => ({
             )
         },
         document_shares: {
-            findFirst: jest.fn(async () => (sharePresent ? { id: 'share-1' } : null))
+            findFirst: jest.fn(async ({ where }: any) =>
+                shareDocTypes.includes(where?.documentType) ? { id: 'share-1' } : null
+            )
         },
         $transaction: jest.fn(async (fn: any) => {
             const prismaMock = jest.requireMock('../src/prismaClient').default;
@@ -137,7 +139,7 @@ describe('P0.2 share runtime — recipient B (share present)', () => {
     let app: express.Application;
     beforeEach(() => {
         currentUser = { ...RECIPIENT };
-        sharePresent = true;
+        shareDocTypes = ['offer', 'order_rury', 'order_studnie'];
         app = createApp();
     });
 
@@ -181,7 +183,7 @@ describe('P0.2 regression — owner A keeps access', () => {
     let app: express.Application;
     beforeEach(() => {
         currentUser = { ...OWNER };
-        sharePresent = false;
+        shareDocTypes = [];
         app = createApp();
     });
 
@@ -192,6 +194,45 @@ describe('P0.2 regression — owner A keeps access', () => {
 
     it('owner export own order → 200', async () => {
         const res = await request(app).get(`/api/orders-rury/${RURY_ORDER_ID}/export-pdf`);
+        expect(res.statusCode).toBe(200);
+    });
+});
+
+describe('P0.5 inheritance — tylko share oferty, brak share zamówienia', () => {
+    let app: express.Application;
+    beforeEach(() => {
+        currentUser = { ...RECIPIENT };
+        // tylko oferta-studnie udostępniona; order_studnie NIE
+        shareDocTypes = ['offer_studnie'];
+        app = createApp();
+    });
+
+    it('D1 detail order_studnie przez share oferty → 200', async () => {
+        const res = await request(app).get(`/api/orders-studnie/${STUDNIE_ORDER_ID}`);
+        expect(res.statusCode).toBe(200);
+    });
+
+    it('D2 export order_studnie przez share oferty → 200', async () => {
+        const res = await request(app).get(`/api/orders-studnie/${STUDNIE_ORDER_ID}/export-pdf`);
+        expect(res.statusCode).toBe(200);
+    });
+
+    it('D3 rury order bez share oferty (offer spoza listy) → 404', async () => {
+        const res = await request(app).get(`/api/orders-rury/${RURY_ORDER_ID}`);
+        expect(res.statusCode).toBe(404);
+    });
+});
+
+describe('P0.5 inheritance — share oferty rur', () => {
+    let app: express.Application;
+    beforeEach(() => {
+        currentUser = { ...RECIPIENT };
+        shareDocTypes = ['offer'];
+        app = createApp();
+    });
+
+    it('D4 detail order_rury przez share oferty → 200', async () => {
+        const res = await request(app).get(`/api/orders-rury/${RURY_ORDER_ID}`);
         expect(res.statusCode).toBe(200);
     });
 });

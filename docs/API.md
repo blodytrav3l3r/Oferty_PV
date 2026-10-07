@@ -146,9 +146,9 @@ Lista użytkowników do przypisania (wewnętrzny alias na `/api/users/for-assign
 Wymaga autoryzacji. Typy dokumentów: `offer`, `offer_studnie`, `order_rury`, `order_studnie`.
 Odbiorca widzi udostępniony dokument na listach (`/api/offers/search`,
 `GET /studnie`, listy zamówień), w detalu, w eksporcie PDF/DOCX i może go
-skopiować jako własną kopię (duplikat rur). Share jest per-dokument:
-udostępnienie oferty NIE obejmuje jej zamówień (te wymagają osobnego share
-typu `order_rury` / `order_studnie`).
+skopiować jako własną kopię (duplikat rur). Share oferty obejmuje też odczyt
+jej zamówień (dziedziczenie read-only; zapis i PZ bez zmian) — niezależny
+share samego zamówienia (`order_rury` / `order_studnie`) działa bez oferty.
 
 | Metoda | Ścieżka              | Opis                                                                     |
 | ------ | -------------------- | ------------------------------------------------------------------------ |

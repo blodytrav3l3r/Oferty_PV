@@ -174,3 +174,42 @@ export async function canReadWithShare(
     if (!user || !documentType || !documentId) return false;
     return hasShare(user.id, documentType, documentId);
 }
+
+/**
+ * Odczyt zamówienia z dziedziczeniem po ofercie-rodzicu (P0.5):
+ * własne / jawnie udostępnione / udostępniona oferta (przez offerId /
+ * offerStudnieId z wiersza).
+ * Zapis dziedziczenia NIE ma (PATCH/DELETE/locks zostają przy canWriteDoc).
+ */
+export async function canReadOrderWithOfferShare(
+    user: User | undefined,
+    orderUserId: string | null | undefined,
+    orderDocType: 'order_rury' | 'order_studnie',
+    orderId: string
+): Promise<boolean> {
+    if (canReadDoc(user, orderUserId)) return true;
+    if (!user || !orderId) return false;
+    if (await hasShare(user.id, orderDocType, orderId)) return true;
+    try {
+        const offerDocType = orderDocType === 'order_rury' ? 'offer' : 'offer_studnie';
+        const row =
+            orderDocType === 'order_rury'
+                ? await prisma.orders_rury_rel.findUnique({
+                      where: { id: orderId },
+                      select: { offerId: true }
+                  })
+                : await prisma.orders_studnie_rel.findUnique({
+                      where: { id: orderId },
+                      select: { offerStudnieId: true }
+                  });
+        const offerId =
+            orderDocType === 'order_rury'
+                ? (row as { offerId?: string | null } | null)?.offerId
+                : (row as { offerStudnieId?: string | null } | null)?.offerStudnieId;
+        if (!offerId) return false;
+        return hasShare(user.id, offerDocType, offerId);
+    } catch (e) {
+        logger.warn('Ownership', 'Błąd canReadOrderWithOfferShare (fail-closed)', String(e));
+        return false;
+    }
+}

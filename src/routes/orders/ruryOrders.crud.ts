@@ -13,9 +13,9 @@ import {
     canClaimNumber,
     resolveWriteUserId,
     resolveAssignUserId,
-    canReadWithShare
+    canReadOrderWithOfferShare
 } from '../../utils/ownership';
-import { buildRoleWhereConditionWithShares } from '../../utils/roleFilter';
+import { buildOrderListWhereWithOfferShare } from '../../utils/roleFilter';
 import { versionedWrite, mapVersionConflict } from '../../utils/versionWrite';
 import { assertDocLockForWrite, mapDocLockConflict } from '../../utils/docLocks';
 import { mapPrismaError } from '../../utils/prismaErrors';
@@ -44,7 +44,11 @@ router.get('/', requireAuth, async (req, res) => {
                       .slice(0, 200)
                 : [];
         let whereCondition = authReq.user
-            ? buildRoleWhereConditionWithShares(authReq.user, 'order_rury', 'o')
+            ? buildOrderListWhereWithOfferShare(authReq.user, 'order_rury', {
+                  alias: 'o',
+                  fkCol: '"offerId"',
+                  offerDocType: 'offer'
+              })
             : Prisma.empty;
         if (offerIds.length > 0) {
             const idCond = Prisma.sql`"offerId" IN (${Prisma.join(offerIds)})`;
@@ -294,7 +298,10 @@ router.get('/:id', requireAuth, async (req, res) => {
         const o = await prisma.orders_rury_rel.findUnique({
             where: { id: docId }
         });
-        if (!o || !(await canReadWithShare(authReq.user, o.userId, 'order_rury', docId))) {
+        if (
+            !o ||
+            !(await canReadOrderWithOfferShare(authReq.user, o.userId, 'order_rury', docId))
+        ) {
             return res.status(404).json({ error: 'Zamówienie nie znalezione' });
         }
 

@@ -37,7 +37,9 @@ jest.mock('../../src/utils/searchCache', () => ({
 }));
 
 jest.mock('../../src/utils/roleFilter', () => ({
-    buildRoleWhereConditionWithShares: jest.fn(() => '')
+    buildRoleWhereConditionWithShares: jest.fn(() => ''),
+    // P0.5: listy zamówień używają buildOrderListWhereWithOfferShare.
+    buildOrderListWhereWithOfferShare: jest.fn(() => '')
 }));
 
 jest.mock('../../src/prismaClient', () => ({

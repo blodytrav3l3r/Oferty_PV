@@ -1,7 +1,10 @@
 import express from 'express';
 import prisma, { Prisma } from '../../prismaClient';
 import { requireAuth, AuthenticatedRequest } from '../../middleware/auth';
-import { buildRoleWhereConditionWithShares } from '../../utils/roleFilter';
+import {
+    buildRoleWhereConditionWithShares,
+    buildOrderListWhereWithOfferShare
+} from '../../utils/roleFilter';
 import { logger } from '../../utils/logger';
 import { searchCache } from '../../utils/searchCache';
 import { parseJsonField } from '../../helpers';
@@ -288,7 +291,11 @@ router.get('/orders', requireAuth, async (req, res) => {
         const table = offerType === 'studnie' ? 'orders_studnie_rel' : 'orders_rury_rel';
         const idCol = offerType === 'studnie' ? 'offerStudnieId' : 'offerId';
         const docType = offerType === 'studnie' ? 'order_studnie' : 'order_rury';
-        const roleSql = buildRoleWhereConditionWithShares(authReq.user, docType, 't');
+        const roleSql = buildOrderListWhereWithOfferShare(authReq.user, docType, {
+            alias: 't',
+            fkCol: offerType === 'studnie' ? '"offerStudnieId"' : '"offerId"',
+            offerDocType: offerType === 'studnie' ? 'offer_studnie' : 'offer'
+        });
         const idCond = Prisma.sql`${Prisma.raw(idCol)} = ${id}`;
         const whereSql =
             roleSql !== Prisma.empty

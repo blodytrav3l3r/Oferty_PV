@@ -30,17 +30,21 @@ jest.mock('../src/utils/searchCache', () => ({
 
 jest.mock('../src/utils/roleFilter', () => ({
     buildRoleWhereCondition: jest.fn(),
-    buildRoleWhereConditionWithShares: jest.fn()
+    buildRoleWhereConditionWithShares: jest.fn(),
+    // P0.5: /orders używa buildOrderListWhereWithOfferShare.
+    buildOrderListWhereWithOfferShare: jest.fn()
 }));
 
 import {
     buildRoleWhereCondition,
-    buildRoleWhereConditionWithShares
+    buildRoleWhereConditionWithShares,
+    buildOrderListWhereWithOfferShare
 } from '../src/utils/roleFilter';
 
 function setRoleSql(sql: string) {
     (buildRoleWhereCondition as jest.Mock).mockReturnValue(sql);
     (buildRoleWhereConditionWithShares as jest.Mock).mockReturnValue(sql);
+    (buildOrderListWhereWithOfferShare as jest.Mock).mockReturnValue(sql);
 }
 
 jest.mock('../src/prismaClient', () => {

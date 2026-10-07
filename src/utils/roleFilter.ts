@@ -79,3 +79,34 @@ export function buildRoleWhereConditionWithShares(
 }
 
 type ShareDocType = 'offer' | 'offer_studnie' | 'order_rury' | 'order_studnie';
+
+/**
+ * Lista zamówień z dziedziczeniem odczytu po ofercie-rodzicu (P0.5):
+ * zamówienie widoczne gdy własne LUB jawnie udostępnione LUB udostępniona
+ * jego oferta (porównanie ds."documentId" z kolumną FK — bez JOINa, indeks
+ * idx_shares_doctype_docid). FK NULL (legacy) → brak dopasowania, bez wycieku.
+ * Zapis (PATCH/DELETE/locks) dziedziczenia NIE ma — tylko odczyt list.
+ */
+export function buildOrderListWhereWithOfferShare(
+    user: Pick<User, 'role' | 'id' | 'subUsers'>,
+    orderDocType: string,
+    opts: { alias: string; fkCol: string; offerDocType: string }
+): Prisma.Sql {
+    if (user.role === 'admin') return Prisma.empty;
+    const { alias, fkCol, offerDocType } = opts;
+    const a = `"${alias}"`;
+    const ownCond =
+        user.role === 'pro'
+            ? (() => {
+                  const allowedIds = [user.id, ...(user.subUsers || [])].filter(isValidId);
+                  if (allowedIds.length === 0) return null;
+                  return Prisma.sql`${Prisma.raw(`${a}."userId"`)} IN (${Prisma.join(allowedIds)})`;
+              })()
+            : Prisma.sql`${Prisma.raw(`${a}."userId"`)} = ${user.id}`;
+    const orderShareCond = Prisma.sql`EXISTS (SELECT 1 FROM "document_shares" ds WHERE ds."sharedWithUserId" = ${user.id} AND ds."documentType" = ${orderDocType} AND ds."documentId" = ${Prisma.raw(`${a}."id"`)})`;
+    const offerShareCond = Prisma.sql`EXISTS (SELECT 1 FROM "document_shares" ds WHERE ds."sharedWithUserId" = ${user.id} AND ds."documentType" = ${offerDocType} AND ds."documentId" = ${Prisma.raw(`${a}.${fkCol}`)})`;
+    if (ownCond === null) {
+        return Prisma.sql`WHERE (${orderShareCond} OR ${offerShareCond})`;
+    }
+    return Prisma.sql`WHERE (${ownCond} OR ${orderShareCond} OR ${offerShareCond})`;
+}

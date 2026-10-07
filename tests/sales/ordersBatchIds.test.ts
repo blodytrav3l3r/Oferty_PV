@@ -74,7 +74,9 @@ jest.mock('../../src/utils/roleFilter', () => {
     };
     return {
         buildRoleWhereCondition: fn,
-        buildRoleWhereConditionWithShares: fn
+        buildRoleWhereConditionWithShares: fn,
+        // P0.5: listy zamówień używają buildOrderListWhereWithOfferShare.
+        buildOrderListWhereWithOfferShare: fn
     };
 });
 
