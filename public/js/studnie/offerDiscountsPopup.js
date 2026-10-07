@@ -54,6 +54,14 @@ function openOfferDiscountsPopup() {
     _wireOfferDiscountsDismiss();
     const modal = document.getElementById('offer-discounts-modal');
     if (!modal) return;
+    const titleEl = document.getElementById('offer-discounts-modal-title');
+    if (titleEl) {
+        const isOrder = typeof orderEditMode !== 'undefined' && !!orderEditMode;
+        titleEl.innerHTML =
+            '<i data-lucide="percent" class="icon-sm"></i> Zarządzanie Rabatami ' +
+            (isOrder ? 'Zamówienia' : 'Oferty');
+        if (window.lucide) lucide.createIcons({ root: titleEl });
+    }
     renderOfferDiscountsPopupContent();
     modal.classList.add('active');
 }
@@ -64,20 +72,29 @@ function closeOfferDiscountsPopup() {
 }
 
 async function handleOfferDiscountsSave() {
+    const isOrder = typeof orderEditMode !== 'undefined' && !!orderEditMode;
     const shouldSave = await window.appConfirm(
         '<div style="font-size: var(--fs-xl); line-height: 1.4; padding: 0.5rem 0;">Czy na pewno chcesz zapisać zmienione rabaty na stałe do bazy?</div>',
         {
             title: '<div class="fs-3xl-eb">Zapisz nową konfigurację cenową</div>',
             type: 'info',
             allowHtml: true,
-            okText: '<i data-lucide="save"></i> Zapisz ofertę',
+            okText: isOrder
+                ? '<i data-lucide="save"></i> Zapisz zamówienie'
+                : '<i data-lucide="save"></i> Zapisz ofertę',
             cancelText: 'Anuluj'
         }
     );
 
     if (shouldSave) {
         closeOfferDiscountsPopup();
-        if (typeof window.saveOfferStudnie === 'function') {
+        if (isOrder) {
+            if (typeof window.saveCurrentOrder === 'function') {
+                await window.saveCurrentOrder();
+            } else if (typeof window.showToast === 'function') {
+                window.showToast('Zapis zamówienia niedostępny w tej konotacji.', 'error');
+            }
+        } else if (typeof window.saveOfferStudnie === 'function') {
             await window.saveOfferStudnie();
             if (typeof window.renderSavedOffersStudnie === 'function')
                 window.renderSavedOffersStudnie();

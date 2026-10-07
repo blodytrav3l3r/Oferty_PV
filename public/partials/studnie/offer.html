@@ -306,11 +306,13 @@
             <!-- AKCJE -->
             <div class="summary-card summary-card-actions">
                 <div class="summary-card-actions-grid">
+                    <!-- Zapis wyłącznie przez onclick z renderOfferSummary (per tryb).
+                         Bez data-csp: atrybut dublował zapis (delegacja document
+                         wołała saveOfferStudnie obok onclick). -->
                     <button
                         type="button"
                         id="btn-save-studnie-offer"
                         class="summary-action-btn summary-action-btn--save"
-                        data-csp="saveOfferStudnie"
                     >
                         <i data-lucide="save"></i> Zapisz ofertę
                     </button>
