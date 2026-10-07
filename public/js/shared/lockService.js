@@ -228,7 +228,7 @@ function showDocLockedModal(opts) {
         '</strong></p>' +
         (holder.when ? '<p class="text-muted m-0">Edytuje od ' + _esc(holder.when) + '</p>' : '') +
         '</div></div>' +
-        '<p>Tego dokumentu nie można teraz edytować. Spróbuj ponownie później.</p>';
+        '<p class="ie-modal-lead">Tego dokumentu nie można teraz edytować. Spróbuj ponownie później.</p>';
 
     if (typeof window !== 'undefined' && typeof window.showModal === 'function') {
         const overlay = window.showModal({
@@ -236,19 +236,19 @@ function showDocLockedModal(opts) {
             title,
             titleId: 'doc-locked-title',
             html:
-                '<div class="modal"><div class="modal-header">' +
-                '<h3 id="doc-locked-title"><span class="share-icon-avatar" aria-hidden="true"><i data-lucide="lock" aria-hidden="true"></i></span> ' +
+                '<div class="modal modal--ie modal--md" role="document"><div class="modal-header">' +
+                '<h3 id="doc-locked-title"><span class="modal-title-icon modal-title-icon--warn" aria-hidden="true"><i data-lucide="lock" class="icon-sm" aria-hidden="true"></i></span> ' +
                 _esc(title) +
                 '</h3>' +
-                '<button type="button" class="btn-icon btn-close-x" aria-label="Zamknij" data-act="back"><i data-lucide="x" aria-hidden="true"></i></button>' +
+                '<button type="button" class="btn-icon" aria-label="Zamknij" data-act="back"><i data-lucide="x" class="icon-14" aria-hidden="true"></i></button>' +
                 '</div><div class="modal-body">' +
                 bodyHtml +
                 '</div><div class="modal-footer">' +
-                '<button type="button" class="btn btn-secondary" data-act="back"><i data-lucide="arrow-left" aria-hidden="true"></i> Wróć do listy</button>' +
+                '<button type="button" class="btn btn-sm btn-secondary btn-flex-1" data-act="back"><i data-lucide="arrow-left" class="icon-14" aria-hidden="true"></i> Wróć do listy</button>' +
                 (isAdmin
-                    ? '<button type="button" class="btn btn-danger" data-act="force"><i data-lucide="shield-alert" aria-hidden="true"></i> Przejmij</button>'
+                    ? '<button type="button" class="btn btn-sm btn-danger btn-flex-1" data-act="force"><i data-lucide="shield-alert" class="icon-14" aria-hidden="true"></i> Przejmij</button>'
                     : '') +
-                '<button type="button" class="btn btn-primary" data-act="retry"><i data-lucide="refresh-cw" aria-hidden="true"></i> Spróbuj ponownie</button>' +
+                '<button type="button" class="btn btn-sm btn-primary btn-flex-1" data-act="retry"><i data-lucide="refresh-cw" class="icon-14" aria-hidden="true"></i> Spróbuj ponownie</button>' +
                 '</div></div>'
         });
         const close = function () {
