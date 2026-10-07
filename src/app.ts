@@ -354,7 +354,7 @@ if (NODE_ENV === 'production') {
 /* ===== LIMITOWANIE ŻĄDAŃ API ===== */
 const apiLimiter = createRateLimiter({
     windowMs: 15 * 60 * 1000, // 15 minut
-    maxHits: 300,
+    maxHits: 1200, // x4: SPA + heartbeat lockow wybijaly 300 przy intensywnej pracy
     message: 'Zbyt wiele żądań. Odczekaj chwilę.'
 });
 
