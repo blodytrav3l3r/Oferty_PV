@@ -15,6 +15,11 @@ var DRAFT_MODAL_ID = 'sok-draft-modal';
 var _draftInitedKinds = [];
 /** Ostatnio zapisany kanoniczny JSON per klucz (bramka diff, brak zapisu bez zmian). */
 var _draftLastWritten = {};
+/** Tombstone sesyjny Odrzuć: key → fingerprint comparable-live w chwili odrzucenia.
+ * Pamięć sesyjna (reset z przeładowaniem), brak localStorage. Blokuje ponowny
+ * zapis TEGO SAMEGO stanu live; realna zmiana formularza zmienia fingerprint
+ * i autosave wraca. Nie czyścić w initKind; czyści logout i clearContext. */
+var _draftDismissed = {};
 /** Karta w trybie zdegradowanym po quota (drafty wyłączone do końca sesji). */
 var _draftSessionDisabled = false;
 /** Flaga oversize per klucz (jeden toast na klucz, nie spam). */
@@ -696,6 +701,42 @@ function _draftMaybeSweep(userId) {
 }
 
 /**
+ * Fingerprint porównywalnego live dla tombstone (ten sam SSoT co komparator:
+ * _draftComparablePayload + canonicalPayloadJson). Zwraca '' przy błędzie.
+ * @param {string} kind
+ * @param {*} livePayload payload z _draftCollectLive
+ * @returns {string}
+ */
+function _draftLiveFingerprint(kind, livePayload) {
+    try {
+        var proj = _draftComparablePayload(kind, livePayload);
+        var fp = window.draftStore.canonicalPayloadJson(proj);
+        return typeof fp === 'string' ? fp : '';
+    } catch (_e) {
+        return '';
+    }
+}
+
+/**
+ * Klucze draftu do skasowania przy Odrzuć: bieżący kontekst + draft.docId
+ * (dedup; chroni rozjazd sanitizacji docId).
+ * @param {string} userId
+ * @param {string} kind
+ * @param {*} currentDocId
+ * @param {*} draftDocId
+ * @returns {string[]}
+ */
+function _draftDismissKeys(userId, kind, currentDocId, draftDocId) {
+    var keys = [];
+    [currentDocId, draftDocId].forEach(function (d) {
+        if (d === undefined || d === null) return;
+        var key = window.draftStore.buildDraftKey(userId, kind, d);
+        if (key && keys.indexOf(key) === -1) keys.push(key);
+    });
+    return keys;
+}
+
+/**
  * Właściwy zapis draftu dla rodzaju. Zwraca false gdy pominięto/zablokowano.
  * @param {string} kind
  * @param {boolean} isFlush wywołanie synchroniczne przy wyjściu (bez toastów-spamu)
@@ -716,6 +757,11 @@ function _draftWriteKind(kind, isFlush) {
     var canon = window.draftStore.canonicalPayloadJson(payload);
     if (!canon) return false;
     if (_draftLastWritten[key] === canon) return false;
+    // Tombstone Odrzuć (sesyjny): live identyczny ze stanem odrzuconym → brak
+    // zapisu. Bez self-heal-delete: obcy draft pod kluczem zostaje nietknięty.
+    // Realna zmiana formularza zmienia fingerprint → blokada sama odpada.
+    var _fp = _draftLiveFingerprint(kind, payload);
+    if (_fp && _draftDismissed[key] === _fp) return false;
     // Idempotency guard (SSoT z recovery): live równoważny SAVED → brak zapisu.
     // Bez tego flush po czystym SAVED wskrzeszał draft-ducha (slim/DTO robiły resztę).
     // Slim (payload null): brak podstaw do bramki — zapis według _draftLastWritten.
@@ -818,11 +864,21 @@ function _draftClearContext(kind, oldDocId, newDocId) {
             window.draftStore.removeDraft(window.localStorage, key);
             delete _draftLastWritten[key];
             delete _draftOversizeNoted[key];
+            delete _draftDismissed[key];
         }
     });
     try {
         _draftHideDraftModal();
     } catch (_e) {}
+}
+
+/**
+ * Czyści całą mapę tombstone (logout — razem z kontekstem draftów).
+ * initKind celowo NIE czyści (semantyka „Odrzuć w tej sesji").
+ */
+function _draftClearDismissed() {
+    var keys = Object.keys(_draftDismissed);
+    for (var i = 0; i < keys.length; i++) delete _draftDismissed[keys[i]];
 }
 
 /**
@@ -1132,17 +1188,35 @@ function _draftShowDraftModal(kind, draft, savedDoc) {
         if (act === 'download') {
             _draftDownloadJson(draft, kind);
         } else if (act === 'discard') {
-            // Odrzuć = pełny reset stanu draftu: kasuj klucz i zabij pending
-            // debounce sprzed kliknięcia (inaczej timer wskrzesza draft po Odśwież).
+            // Odrzuć = „nie zapisuj ponownie tego samego stanu w sesji":
+            // cancelPending → aktualny docId/klucze → fingerprint live →
+            // tombstone → removeDraft (current + draft.docId) → clear bramek.
             _draftCancelPending();
             var discarded = false;
             var userId = _draftUserId();
             if (userId) {
-                var key = window.draftStore.buildDraftKey(userId, kind, draft.docId);
-                if (key) {
-                    window.draftStore.removeDraft(window.localStorage, key);
-                    discarded = true;
+                var _cfg = _draftKindConfig[kind];
+                var _curDocId = null;
+                try {
+                    _curDocId = _cfg && _cfg.getDocId ? _cfg.getDocId() : null;
+                } catch (_eCur) {}
+                var _live = null;
+                try {
+                    _live = _draftCollectLive(kind);
+                } catch (_eLive) {}
+                var _lfp = _live ? _draftLiveFingerprint(kind, _live) : '';
+                var _keys = _draftDismissKeys(userId, kind, _curDocId, draft && draft.docId);
+                if (_keys.length === 0) {
+                    var _fb = window.draftStore.buildDraftKey(userId, kind, draft && draft.docId);
+                    if (_fb) _keys.push(_fb);
                 }
+                _keys.forEach(function (k) {
+                    if (_lfp) _draftDismissed[k] = _lfp;
+                    window.draftStore.removeDraft(window.localStorage, k);
+                    delete _draftLastWritten[k];
+                    delete _draftOversizeNoted[k];
+                    discarded = true;
+                });
             }
             _draftHideDraftModal();
             if (discarded) _draftToast('Draft odrzucony (zapisana wersja nietknięta)', 'info');
@@ -1639,6 +1713,7 @@ window.draftAutosave = {
     scheduleSave: _draftScheduleSave,
     flushAll: _draftFlushAll,
     clearContext: _draftClearContext,
+    clearDismissed: _draftClearDismissed,
     checkRecovery: _draftCheckRecovery,
     hideBanner: _draftHideBanner,
     hideModal: _draftHideDraftModal,

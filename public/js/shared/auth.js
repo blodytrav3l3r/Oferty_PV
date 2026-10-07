@@ -235,6 +235,8 @@ async function appLogout() {
         if (window.draftStore && window.draftAutosave) {
             const _draftUser = window.draftAutosave.currentUserId();
             if (_draftUser) window.draftStore.removeUserDrafts(window.localStorage, _draftUser);
+            if (typeof window.draftAutosave.clearDismissed === 'function')
+                window.draftAutosave.clearDismissed();
         }
     } catch {}
     window.location.href = 'index.html';
