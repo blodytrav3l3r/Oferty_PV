@@ -57,21 +57,17 @@ async function showSectionRury(id) {
         const ctxBadge = document.getElementById('offer-context-badge');
         const ctxText = document.getElementById('offer-context-text');
         if (ctxBanner && ctxBadge && ctxText) {
-            ctxBanner.style.display = 'block';
             if (window.orderEditMode) {
-                ctxBadge.innerHTML =
-                    '<i data-lucide="package" class="icon-xs"></i> Zamówienie (krok 5)';
-                ctxBadge.classList.add('badge-ok');
-                ctxText.textContent =
-                    'Podgląd zamówienia — dane pochodzą z zatwierdzonego zamówienia.';
+                // Tryb zamówienia identyfikuje banner na górze (renderOrderModeBanner).
+                ctxBanner.style.display = 'none';
             } else if (window.editingOfferId) {
-                ctxBadge.innerHTML = '<i data-lucide="pencil" class="icon-xs"></i> Oferta (krok 3)';
-                ctxBadge.classList.add('badge-info');
-                ctxText.textContent = 'Podgląd oferty — edytuj pozycje w zakładce Konfiguracja.';
+                // Edycja oferty ma własny nagłówek sekcji — linia kontekstu zbędna.
+                ctxBanner.style.display = 'none';
             } else {
-                ctxBadge.innerHTML = '<i data-lucide="file-text" class="icon-xs"></i> Nowa oferta';
-                ctxBadge.classList.add('badge-muted');
-                ctxText.textContent = 'Dodaj produkty w zakładce Konfiguracja.';
+                ctxBanner.style.display = 'block';
+                ctxBadge.textContent = 'Nowa oferta';
+                ctxText.innerHTML =
+                    '— Dodaj produkty w zakładce <a href="#" data-csp="showSection" data-csp-args=\'["builder"]\'>Konfiguracja</a>.';
             }
             if (window.lucide) lucide.createIcons();
         }

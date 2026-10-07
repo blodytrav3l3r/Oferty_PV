@@ -1,35 +1,42 @@
 /* ===== BANERY STATUSU ===== */
 
-function renderOrderBanners(order, orderChanges) {
-    let html = '';
+/* Zielony/czerwony banner statusu zamówienia — treść bez zmian, montowany
+   na górze sekcji (#offer-order-banner-top), nie w Zestawieniu. */
+function renderOrderStatusBanner(order, orderChanges) {
     const wellChanges = (orderChanges && orderChanges.wells) || {};
     const transportChanged = !!(orderChanges && orderChanges.transportChanged);
     const changeCount = Object.keys(wellChanges).length;
     const hasChanges = changeCount > 0 || transportChanged;
 
-    if (order) {
-        const statusText = !hasChanges
-            ? '— bez zmian'
-            : changeCount > 0 && transportChanged
-              ? `— ${changeCount} studni zmienionych • zmieniono transport`
-              : changeCount > 0
-                ? `— ${changeCount} studni zmienionych`
-                : '— zmieniono transport';
-        const orderNum = escapeHtml(order.orderNumber || order.number || '—');
-        const offerNum = escapeHtml(order.offerNumber || '—');
-        html += `<div class="order-banner ${hasChanges ? 'order-banner--danger' : 'order-banner--success'}">
+    if (!order) return '';
+    const statusText = !hasChanges
+        ? '— bez zmian'
+        : changeCount > 0 && transportChanged
+          ? `— ${changeCount} studni zmienionych • zmieniono transport`
+          : changeCount > 0
+            ? `— ${changeCount} studni zmienionych`
+            : '— zmieniono transport';
+    const orderNum = escapeHtml(order.orderNumber || order.number || '—');
+    const offerNum = escapeHtml(order.offerNumber || '—');
+    return `<div class="order-banner ${hasChanges ? 'order-banner--danger' : 'order-banner--success'}">
             <div class="flex-gap-4">
                 <span class="fs-3xl"><i data-lucide="package"></i></span>
                 <span class="order-banner-title">ZAMÓWIENIE ${orderNum} • Oferta ${offerNum} ${statusText}</span>
             </div>
             <button class="btn btn-sm" data-csp="$orderSave"><i data-lucide="package" aria-hidden="true"></i> Zapisz zamówienie</button>
         </div>`;
-    }
+}
 
+/* Niebieski pasek postępu zamówień (tryb oferty) — zostaje w Zestawieniu. */
+function renderOrderProgressBanner() {
     if (!orderEditMode && editingOfferIdStudnie && wells.length > 0) {
-        html += renderPartialOrderProgress();
+        return renderPartialOrderProgress();
     }
-    return html;
+    return '';
+}
+
+function renderOrderBanners(order, orderChanges) {
+    return renderOrderStatusBanner(order, orderChanges) + renderOrderProgressBanner();
 }
 
 function renderPartialOrderProgress() {
@@ -64,4 +71,6 @@ function renderPartialOrderProgress() {
 }
 
 /* ===== Rejestracja globali ===== */
+window.renderOrderStatusBanner = renderOrderStatusBanner;
+window.renderOrderProgressBanner = renderOrderProgressBanner;
 window.renderOrderBanners = renderOrderBanners;

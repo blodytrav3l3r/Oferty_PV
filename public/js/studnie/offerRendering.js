@@ -32,12 +32,20 @@ function renderOfferSummary() {
     const totals = calculateOfferTotals();
 
     let html = '';
-    html += renderOrderBanners(order, orderChanges);
+    html += renderOrderProgressBanner();
     html += renderOfferSummaryTable(order, orderChanges, totals);
 
     container.innerHTML = html;
 
     if (window.lucide) window.lucide.createIcons({ root: container });
+
+    const statusContainer = document.getElementById('offer-order-banner-top');
+    if (statusContainer) {
+        const statusHtml = renderOrderStatusBanner(order, orderChanges);
+        statusContainer.innerHTML = statusHtml;
+        statusContainer.classList.toggle('hidden', !statusHtml);
+        if (statusHtml && window.lucide) window.lucide.createIcons({ root: statusContainer });
+    }
 
     updateOfferSummaryUI(totals);
 
