@@ -28,7 +28,7 @@ function renderWellHeaderRow(
             (stats && stats.discountError);
         if (_corr)
             badges +=
-                ' <span style="font-size: var(--fs-3xs); padding:1px 5px; border-radius: var(--radius-2xs); background:rgba(var(--danger-rgb), 0.2); color:var(--danger-hover); font-weight: var(--fw-bold); margin-left:0.3rem;" title="Nieprawidłowy zapis rabatu (legacy/draft) — cena bez rabatu">⚠ RABAT</span>';
+                ' <span style="font-size: var(--fs-3xs); padding:1px 5px; border-radius: var(--radius-2xs); background:rgba(var(--danger-rgb), 0.2); color:var(--danger-hover); font-weight: var(--fw-bold); margin-left:0.3rem;" title="Nieprawidłowy zapis rabatu (legacy/draft) — cena bez rabatu"><i data-lucide="warn-glyph" class="icon-xxs" aria-hidden="true"></i> RABAT</span>';
         // PRECO error-state: stats.error (price:0) — badge zamiast cichego 0.
         const _perr =
             (typeof isWellPricingError === 'function' && isWellPricingError(well, stats)) ||
@@ -37,7 +37,7 @@ function renderWellHeaderRow(
             badges +=
                 typeof pricingErrorBadge === 'function'
                     ? pricingErrorBadge(stats && stats.error)
-                    : ' <span style="font-size: var(--fs-2xs); color:var(--danger); margin-left:0.3rem;">(⚠ cena)</span>';
+                    : ' <span style="font-size: var(--fs-2xs); color:var(--danger); margin-left:0.3rem;">(<i data-lucide="warn-glyph" class="icon-xxs" aria-hidden="true"></i> cena)</span>';
     } catch (_e) {}
     const errorCell = getWellErrorCell(well);
     const displayLp = lp !== undefined ? lp : i + 1;
@@ -673,7 +673,7 @@ function renderComponentSubItems(well, p, item, itemPrzejscia, disc, wellTranspo
             }
         } else if (precoAlloc.error && precoAlloc.isBottomMostDennica) {
             html += `<tr class="opacity-6-sm-danger">
-                <td colspan="3" class="pl-lg">↳ ⚠ Wkładka PRECO — ${precoAlloc.error}</td>
+                <td colspan="3" class="pl-lg"><i data-lucide="warn-glyph" class="icon-xxs" aria-hidden="true"></i> Wkładka PRECO — ${precoAlloc.error}</td>
                 <td class="text-right">—</td>
             </tr>`;
         }

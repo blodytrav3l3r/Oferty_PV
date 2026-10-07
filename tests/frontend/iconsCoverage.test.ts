@@ -47,6 +47,43 @@ describe('iconsSlim pokrycie ikon shared', () => {
         const missing = [...usedIcons('theme.js')].filter((n) => !keys.has(n));
         expect(missing).toEqual([]);
     });
+
+    test('ui.js roleBadge: rola pro jako data-lucide star, brak emoji-ikon', () => {
+        const keys = iconKeys();
+        expect(keys.has('star')).toBe(true);
+        const code = fs.readFileSync(path.join(SHARED_DIR, 'ui.js'), 'utf8');
+        expect(code).toMatch('data-lucide="star"');
+        expect(code).not.toMatch('⭐');
+    });
+
+    test('P0/P2: nowe klucze w allowliście (server, warn-glyph, alias arrow-left-right)', () => {
+        const keys = iconKeys();
+        for (const n of ['server', 'warn-glyph', 'arrow-left-right']) {
+            expect(keys.has(n)).toBe(true);
+        }
+    });
+
+    test('P2: brak emoji-ikon w plikach objętych fixem', () => {
+        const files = [
+            'public/js/shared/ui.js',
+            'public/js/studnie/actionsTiles.js',
+            'public/js/studnie/orderZleceniaRender.js',
+            'public/js/studnie/actionsWellPricing.js',
+            'public/js/studnie/offerHelpers.js',
+            'public/js/studnie/offerTransport.js',
+            'public/js/studnie/offerWellComponents.js',
+            'public/js/studnie/orderCrud.js',
+            'public/partials/studnie/step1-client.html',
+            'public/partials/studnie/step2-parameters.html',
+            'public/partials/rury/step1-client.html',
+            'public/js/admin/aiTransfer.js',
+            'public/js/admin/opsDashboard.js'
+        ];
+
+        const re = new RegExp('[\u{1F000}-\u{1FAFF}\u2600-\u27BF\u2B00-\u2BFF]', 'u');
+        const dirty = files.filter((rel) => re.test(fs.readFileSync(path.join(ROOT, rel), 'utf8')));
+        expect(dirty).toEqual([]);
+    });
 });
 
 /* ===== Rozszerzenie na 5 katalogów (Faza 3, test kontraktowy, non-blocking) ==

@@ -793,7 +793,7 @@ function isWellDiscountCorrupt(well) {
 
 // Badge błędu rabatu — wygląd jak getDiscountStr, kolor danger (nie cichy).
 function discountCorruptBadge() {
-    return ' <span style="font-size: var(--fs-2xs); color:var(--danger); margin-left:0.3rem;" title="Nieprawidłowy zapis rabatu (legacy/draft) — cena bez rabatu">(⚠ rabat)</span>';
+    return ' <span style="font-size: var(--fs-2xs); color:var(--danger); margin-left:0.3rem;" title="Nieprawidłowy zapis rabatu (legacy/draft) — cena bez rabatu">(<i data-lucide="warn-glyph" class="icon-xxs" aria-hidden="true"></i> rabat)</span>';
 }
 
 function getWellDiscountPctSafe(well, p, disc) {
@@ -933,7 +933,7 @@ function pricingErrorBadge(msg) {
     return (
         ' <span style="font-size: var(--fs-2xs); color:var(--danger); margin-left:0.3rem;" title="' +
         safe +
-        '">(⚠ cena)</span>'
+        '">(<i data-lucide="warn-glyph" class="icon-xxs" aria-hidden="true"></i> cena)</span>'
     );
 }
 

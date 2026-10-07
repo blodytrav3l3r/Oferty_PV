@@ -138,7 +138,7 @@ window.updateModalTransportDetails = function () {
         totalValEl.textContent =
             (typeof fmt === 'function' ? fmt : (v) => v)(productsNetto + totalTransportCost) +
             ' PLN' +
-            (trHasPricingError ? ' (⚠ BŁĄD CENY)' : '');
+            (trHasPricingError ? ' (BŁĄD CENY)' : '');
         totalValEl.style.color = trHasPricingError ? 'var(--danger)' : '';
     }
 };

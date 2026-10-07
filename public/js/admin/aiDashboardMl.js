@@ -286,13 +286,13 @@
                                 : '<div class="ai-model-actions-cell">' +
                                   '<button class="ai-model-promote-btn" data-id="' +
                                   window.aiEscapeHtmlAttr(mm.id || '') +
-                                  '" title="Promuj do produkcji (state machine: APPROVED/CANDIDATE → PRODUCTION)"><i data-lucide="rocket"></i></button>' +
+                                  '" title="Promuj do produkcji (state machine: APPROVED/CANDIDATE → PRODUCTION)" aria-label="Promuj do produkcji"><i data-lucide="rocket"></i></button>' +
                                   '<button class="ai-model-activate-btn" data-id="' +
                                   window.aiEscapeHtmlAttr(mm.id || '') +
-                                  '" title="Ustaw ten model jako aktywny"><i data-lucide="check-circle"></i></button>' +
+                                  '" title="Ustaw ten model jako aktywny" aria-label="Ustaw ten model jako aktywny"><i data-lucide="check-circle"></i></button>' +
                                   '<button class="ai-model-delete-btn" data-id="' +
                                   window.aiEscapeHtmlAttr(mm.id || '') +
-                                  '" title="Usuń ten model"><i data-lucide="trash-2"></i></button>' +
+                                  '" title="Usuń ten model" aria-label="Usuń ten model"><i data-lucide="trash-2"></i></button>' +
                                   '</div>';
                             const metrics = window.aiSafeJson(mm.metrics);
                             const rocAuc =

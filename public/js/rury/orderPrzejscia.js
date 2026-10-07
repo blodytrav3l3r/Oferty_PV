@@ -54,7 +54,7 @@ function renderPrzejsciaDetailsTable(_existingData) {
             <td>
                 ${
                     isCustom
-                        ? `<button class="btn btn-sm btn-danger" data-csp="removePrzejscieRow" data-csp-args="${escapeHtmlAttr(JSON.stringify(['custom', row._idx]))}" style="font-size: var(--fs-lg);padding:0.73rem 0.5rem;box-sizing:border-box;"><i data-lucide="x" class="icon-12"></i></button>`
+                        ? `<button class="btn btn-sm btn-danger" aria-label="Usuń wiersz" data-csp="removePrzejscieRow" data-csp-args="${escapeHtmlAttr(JSON.stringify(['custom', row._idx]))}" style="font-size: var(--fs-lg);padding:0.73rem 0.5rem;box-sizing:border-box;"><i data-lucide="x" class="icon-12"></i></button>`
                         : '<span style="color:var(--text-muted);font-size: var(--fs-xs);">z oferty</span>'
                 }
             </td>

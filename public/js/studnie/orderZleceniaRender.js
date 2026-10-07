@@ -235,7 +235,10 @@ function renderZleceniaWellConfig() {
         },
         konus: { bg: 'var(--cmp-konus)', label: '<i data-lucide="diamond"></i>' },
         avr: { bg: 'var(--cmp-avr)', label: '<i data-lucide="settings"></i>' },
-        plyta_redukcyjna: { bg: 'var(--cmp-plyta-redukcyjna)', label: '⬛' },
+        plyta_redukcyjna: {
+            bg: 'var(--cmp-plyta-redukcyjna)',
+            label: '<i data-lucide="square"></i>'
+        },
         krag: { bg: 'var(--cmp-krag)', label: '<i data-lucide="square"></i>' },
         krag_ot: { bg: 'var(--purple)', label: '<i data-lucide="square"></i>' },
         dennica: { bg: 'var(--cmp-dennica)', label: '<i data-lucide="square"></i>' },

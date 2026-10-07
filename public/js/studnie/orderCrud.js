@@ -897,7 +897,7 @@ async function enterOrderEditMode(orderId) {
                 stampId: order.pricelistVersionId || null
             });
 
-        document.title = `📦 Zamówienie: ${order.orderNumber || order.number || orderId}`;
+        document.title = `Zamówienie: ${order.orderNumber || order.number || orderId}`;
 
         logger.info('orderManager', '[enterOrderEditMode] DONE');
         showToast('<i data-lucide="package"></i> Zamówienie wczytane do edycji', 'success');
@@ -1020,7 +1020,7 @@ async function loadOrderSnapshot(rebuiltData, orderId) {
         if (typeof refreshAll === 'function') refreshAll();
 
         renderOrderModeBanner();
-        document.title = `👁️ PODGLĄD Zamówienia: ${order.orderNumber || order.number || orderId}`;
+        document.title = `PODGLĄD Zamówienia: ${order.orderNumber || order.number || orderId}`;
 
         window.applyPreviewLockUI();
     } catch (err) {

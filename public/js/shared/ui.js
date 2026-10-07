@@ -116,7 +116,7 @@ function showUserSelectionPopup(users, defaultUserId) {
                 u.role === 'admin'
                     ? '<i data-lucide="key"></i>'
                     : u.role === 'pro'
-                      ? '⭐'
+                      ? '<i data-lucide="star"></i>'
                       : '<i data-lucide="user"></i>';
 
             html += `<button class="user-select-btn" data-user-id="${escapeHtmlAttr(u.id)}" style="

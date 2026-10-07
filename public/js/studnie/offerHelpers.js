@@ -54,7 +54,7 @@ function getDiscountStr(well, p, disc) {
         ) {
             return typeof discountCorruptBadge === 'function'
                 ? discountCorruptBadge()
-                : ' <span style="font-size: var(--fs-2xs); color:var(--danger); margin-left:0.3rem;">(⚠ rabat)</span>';
+                : ' <span style="font-size: var(--fs-2xs); color:var(--danger); margin-left:0.3rem;">(<i data-lucide="warn-glyph" class="icon-xxs" aria-hidden="true"></i> rabat)</span>';
         }
         return discountPct > 0
             ? ` <span style="font-size: var(--fs-2xs); color:var(--success); margin-left:0.3rem;">(-${discountPct}%)</span>`
@@ -78,7 +78,7 @@ function getDiscountStr(well, p, disc) {
         } catch (_l) {}
         return typeof discountCorruptBadge === 'function'
             ? discountCorruptBadge()
-            : ' <span style="font-size: var(--fs-2xs); color:var(--danger); margin-left:0.3rem;" title="Nieprawidłowy zapis rabatu — cena bez rabatu">(⚠ rabat)</span>';
+            : ' <span style="font-size: var(--fs-2xs); color:var(--danger); margin-left:0.3rem;" title="Nieprawidłowy zapis rabatu — cena bez rabatu">(<i data-lucide="warn-glyph" class="icon-xxs" aria-hidden="true"></i> rabat)</span>';
     }
 }
 

@@ -68,7 +68,7 @@ describe('precoErrorPropagation', () => {
         const sb = loadPricing();
         expect(typeof sb.pricingErrorBadge).toBe('function');
         const b = sb.pricingErrorBadge('Błąd "PRECO"');
-        expect(b).toMatch(/⚠/);
+        expect(b).toMatch(/warn-glyph/);
         expect(b).not.toMatch(/Błąd "PRECO"/);
         expect(b).toMatch(/&quot;/);
     });

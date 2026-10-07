@@ -147,14 +147,14 @@ describe('Render przy corrupt rabat stored: fallback 0% + sygnał błędu', () =
         expect(() => ctx.calcWellStats(well)).toThrow(RangeError);
     });
 
-    test('getDiscountStr corrupt → nie rzuca, badge ⚠ + flaga + warn', () => {
+    test('getDiscountStr corrupt → nie rzuca, badge warn-glyph + flaga + warn', () => {
         setCorrupt(150);
         const well = makeWell();
         let html: string = '';
         expect(() => {
             html = ctx.getDiscountStr(well, product('DDD-1000-300'), { dennica: 150 });
         }).not.toThrow();
-        expect(html).toContain('⚠');
+        expect(html).toContain('warn-glyph');
         expect(well._discountCorrupt).toBe(true);
         expect(ctx.logger.warn).toHaveBeenCalled();
     });
@@ -215,7 +215,7 @@ describe('Render przy corrupt rabat stored: fallback 0% + sygnał błędu', () =
         expect(offer.wellsForExport[0].config[0]._discountError).toBe(true);
     });
 
-    test('renderComponentSubItems (kineta) corrupt → nie rzuca, badge ⚠', () => {
+    test('renderComponentSubItems (kineta) corrupt → nie rzuca, badge warn-glyph', () => {
         setCorrupt(150);
         const well = makeWell({
             config: [
@@ -251,7 +251,7 @@ describe('Render przy corrupt rabat stored: fallback 0% + sygnał błędu', () =
             expect(() => {
                 htmlK = ctx.renderComponentSubItems(wellK, p, wellK.config[0], null, disc, 0, 0);
             }).not.toThrow();
-            expect(htmlK).toContain('⚠');
+            expect(htmlK).toContain('warn-glyph');
         } finally {
             ctx.studnieProducts.pop();
         }

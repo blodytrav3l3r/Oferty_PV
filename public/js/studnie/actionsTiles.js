@@ -21,7 +21,11 @@ function renderTiles() {
             icon: '',
             types: ['plyta_din', 'plyta_najazdowa', 'plyta_zamykajaca', 'pierscien_odciazajacy']
         },
-        { title: '⬛ Płyty redukcyjne', icon: '', types: ['plyta_redukcyjna'] },
+        {
+            title: '<i data-lucide="square"></i> Płyty redukcyjne',
+            icon: '',
+            types: ['plyta_redukcyjna']
+        },
         { title: '<i data-lucide="square"></i> Kręgi', icon: '', types: ['krag'] },
         {
             title: '<i data-lucide="square"></i> Kręgi z otworami (OT)',
