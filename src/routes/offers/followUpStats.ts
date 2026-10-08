@@ -40,12 +40,47 @@ export function buildOfferScopeCondition(
     return Prisma.sql`(${parts[0]} OR ${parts[1]})`;
 }
 
+/**
+ * CTE latest (wspólne dla outcomes/reasons/competitors/values/perRep).
+ * Niesie createdByUserId dla atrybucji wins (P5.2).
+ */
+export function buildLatestCte(fuScope: Prisma.Sql): Prisma.Sql {
+    return Prisma.sql`latest AS (
+        SELECT f."offerKind", f."offerId", f."outcome", f."loseReason", f."competitor", f."competitorPrice", f."createdByUserId"
+        FROM (
+            SELECT f."offerKind", f."offerId", f."outcome", f."loseReason", f."competitor", f."competitorPrice", f."createdByUserId",
+                ROW_NUMBER() OVER (PARTITION BY f."offerKind", f."offerId" ORDER BY f."contactedAt" DESC, f."createdAt" DESC) AS "rn"
+            FROM offer_follow_ups f
+            WHERE ${fuScope}
+        ) f WHERE f."rn" = 1
+    )`;
+}
+
 /** Filtr wierszy follow-up do ofert widocznych dla usera. */
 function followUpScope(scopeRury: Prisma.Sql, scopeStudnie: Prisma.Sql): Prisma.Sql {
     return Prisma.sql`(
         (f."offerKind" = 'rury' AND EXISTS (SELECT 1 FROM offers_rel o WHERE o."id" = f."offerId" AND ${scopeRury}))
         OR (f."offerKind" = 'studnie' AND EXISTS (SELECT 1 FROM offers_studnie_rel s WHERE s."id" = f."offerId" AND ${scopeStudnie}))
     )`;
+}
+
+/**
+ * P5.2: wins = oferty z latest WON przypisane autorowi wpisu latest
+ * (nie liczba wpisów WON). Join po (kind, id, autor) — wygraną dostaje
+ * autor domykającego wpisu, nie każdy wcześniejszy WON.
+ * CTE latest musi nieść createdByUserId (doklejane przez caller).
+ */
+export function buildPerRepSql(fuScope: Prisma.Sql, latestCte: Prisma.Sql): Prisma.Sql {
+    return Prisma.sql`WITH ${latestCte}
+        SELECT f."createdByUserId" AS "u", COUNT(*) AS "contacts",
+            COUNT(DISTINCT f."offerKind" || ':' || f."offerId") AS "offers",
+            COUNT(DISTINCT CASE WHEN l."outcome" = 'WON'
+                THEN l."offerKind" || ':' || l."offerId" END) AS "wins"
+        FROM offer_follow_ups f
+        LEFT JOIN latest l ON l."offerKind" = f."offerKind"
+            AND l."offerId" = f."offerId"
+            AND l."createdByUserId" = f."createdByUserId"
+        WHERE ${fuScope} GROUP BY f."createdByUserId" ORDER BY "contacts" DESC`;
 }
 
 // P4.2: jeden kontrakt konwersji (toNum z searchUtils), brak lokalnych wariantów.
@@ -76,15 +111,7 @@ router.get('/followups/stats', requireAuth, async (req, res) => {
         const scopeStudnie = buildOfferScopeCondition(user, 's', sharedStudnie);
         const fuScope = followUpScope(scopeRury, scopeStudnie);
 
-        const latestCte = Prisma.sql`latest AS (
-            SELECT f."offerKind", f."offerId", f."outcome", f."loseReason", f."competitor", f."competitorPrice"
-            FROM (
-                SELECT f."offerKind", f."offerId", f."outcome", f."loseReason", f."competitor", f."competitorPrice",
-                    ROW_NUMBER() OVER (PARTITION BY f."offerKind", f."offerId" ORDER BY f."contactedAt" DESC, f."createdAt" DESC) AS "rn"
-                FROM offer_follow_ups f
-                WHERE ${fuScope}
-            ) f WHERE f."rn" = 1
-        )`;
+        const latestCte = buildLatestCte(fuScope);
 
         // P4.2: 8 niezależnych SELECTów współbieżnie (brak zależności
         // wynikowych, read-only). Kolejność wyników z destrukturyzacji.
@@ -138,12 +165,7 @@ router.get('/followups/stats', requireAuth, async (req, res) => {
                     FROM offers_studnie_rel s JOIN latest l ON l."offerKind" = 'studnie' AND l."offerId" = s."id"
                     WHERE l."outcome" IN ('LOST_COMPETITION', 'LOST_OTHER')`
             ),
-            prisma.$queryRaw(
-                Prisma.sql`SELECT f."createdByUserId" AS "u", COUNT(*) AS "contacts",
-                    COUNT(DISTINCT f."offerKind" || ':' || f."offerId") AS "offers",
-                    SUM(CASE WHEN f."outcome" = 'WON' THEN 1 ELSE 0 END) AS "wins"
-                    FROM offer_follow_ups f WHERE ${fuScope} GROUP BY f."createdByUserId" ORDER BY "contacts" DESC`
-            ),
+            prisma.$queryRaw(buildPerRepSql(fuScope, latestCte)),
             // Średni czas do pierwszego kontaktu (globalnie): pierwszy kontakt
             // oferty vs data utworzenia oferty (ISO lub epoch-ms — reuse normalizacji).
             prisma.$queryRaw(
