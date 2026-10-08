@@ -208,6 +208,30 @@ describe('P0.3 OfferFollowUp — POST/GET', () => {
         expect(lostOk.status).toBe(200);
     });
 
+    it('P5.1 wyscig: P2002 z uq_fu_terminal_per_offer to 409, obcy P2002 to UNIQUE_CONFLICT', async () => {
+        // Przegrany wyścigu: INSERT rzuca P2002 z targetem constraintu.
+        (prisma.$transaction as jest.Mock).mockRejectedValueOnce({
+            code: 'P2002',
+            meta: { target: ['uq_fu_terminal_per_offer'] }
+        });
+        const loser = await request(app)
+            .post('/api/offers/rury/o-rury-1/followups')
+            .send({ ...validBody, outcome: 'WON' });
+        expect(loser.status).toBe(409);
+        expect(loser.body.code).toBe('TERMINAL_OUTCOME');
+
+        // Obcy P2002 (inny constraint w przyszłości) — dotychczasowa ścieżka.
+        (prisma.$transaction as jest.Mock).mockRejectedValueOnce({
+            code: 'P2002',
+            meta: { target: ['some_future_key'] }
+        });
+        const other = await request(app)
+            .post('/api/offers/rury/o-rury-1/followups')
+            .send(validBody);
+        expect(other.status).toBe(409);
+        expect(other.body.code).toBe('UNIQUE_CONFLICT');
+    });
+
     it('terminalna bez reopen: 409 TERMINAL_OUTCOME; z reopen: 200 + audyt reopen', async () => {
         (prisma.offer_follow_ups.findFirst as jest.Mock).mockResolvedValue({
             id: 'old',

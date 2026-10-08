@@ -158,6 +158,21 @@ router.post(
 
             return res.json({ ok: true, id: fuId });
         } catch (e) {
+            // P5.1: wyścig dwóch terminalnych POST rozstrzyga constraint
+            // uq_fu_terminal_per_offer — mapuj TYLKO ten index na 409.
+            // Inny P2002 (np. przyszły) idzie dotychczasową ścieżką.
+            if ((e as { code?: string })?.code === 'P2002') {
+                const target = JSON.stringify((e as { meta?: unknown })?.meta ?? '');
+                if (
+                    target.includes('uq_fu_terminal_per_offer') ||
+                    (target.includes('offerKind') && target.includes('offerId'))
+                ) {
+                    return res.status(409).json({
+                        error: 'Oferta została w międzyczasie zamknięta',
+                        code: 'TERMINAL_OUTCOME'
+                    });
+                }
+            }
             if (mapPrismaError(res, e)) return;
             logger.error('FollowUps', 'Błąd zapisu kontaktu', {
                 error: e instanceof Error ? e.message : String(e)
