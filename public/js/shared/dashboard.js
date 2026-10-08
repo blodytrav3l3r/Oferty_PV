@@ -98,6 +98,80 @@ async function loadRecycledNumbers(user) {
     }
 }
 
+/**
+ * Opieka nad ofertami (P2): agregat z istniejącego search API (limit=1 czyta
+ * tylko totalCount). Brak nowego endpointu — 4 lekkie requesty.
+ */
+async function loadFollowUpWidget() {
+    const panel = document.getElementById('followup-panel');
+    if (!panel) return;
+    const set = (id, v) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = String(v);
+    };
+    try {
+        const counts = {};
+        for (const st of ['needs_contact', 'in_progress', 'won', 'lost']) {
+            const res = await fetch(
+                '/api/offers/search?followupStatus=' + st + '&limit=1&t=' + Date.now(),
+                { credentials: 'same-origin' }
+            );
+            counts[st] = res.ok ? ((await res.json()).totalCount ?? 0) : 0;
+        }
+        set('fu-stat-needs', counts.needs_contact);
+        set('fu-stat-progress', counts.in_progress);
+        set('fu-stat-won', counts.won);
+        set('fu-stat-lost', counts.lost);
+
+        const topRes = await fetch(
+            '/api/offers/search?followupStatus=needs_contact&limit=5&sort=followup&t=' + Date.now(),
+            { credentials: 'same-origin' }
+        );
+        const list = document.getElementById('followup-top-list');
+        if (!list) return;
+        if (topRes.ok) {
+            const json = await topRes.json();
+            const items = json.data || [];
+            if (items.length === 0) {
+                list.innerHTML =
+                    '<span class="recycled-empty">Brak ofert wymagających kontaktu.</span>';
+            } else {
+                list.innerHTML = items
+                    .map((o) => {
+                        const name = o.clientName || (o.data && o.data.clientName) || 'Brak danych';
+                        const price =
+                            o.data && typeof o.data.totalBrutto === 'number'
+                                ? o.data.totalBrutto.toFixed(2) + ' PLN'
+                                : '';
+                        const overdue =
+                            o.followup && o.followup.nextContactAt
+                                ? Math.max(
+                                      0,
+                                      Math.floor(
+                                          (Date.now() - Date.parse(o.followup.nextContactAt)) /
+                                              86400000
+                                      )
+                                  )
+                                : null;
+                        const when =
+                            overdue === null
+                                ? 'brak kontaktu'
+                                : overdue <= 0
+                                  ? 'termin dzisiaj'
+                                  : overdue + ' dni po terminie';
+                        return (
+                            `<a class="recycled-badge" href="app.html#/kartoteka">` +
+                            `${escapeHtml(name)}${price ? ' • ' + escapeHtml(price) : ''} • ${escapeHtml(when)}</a>`
+                        );
+                    })
+                    .join('');
+            }
+        }
+    } catch (e) {
+        logger.error('dashboard', 'Failed to load followup widget', e);
+    }
+}
+
 // Obsluga klawiszy
 document.addEventListener('keydown', (e) => {
     // Ctrl+S / Cmd+S: zapisz bieżącą ofertę (rury lub studnie)
@@ -179,6 +253,7 @@ function showLoggedIn(user) {
     }
 
     loadRecycledNumbers(user);
+    loadFollowUpWidget();
     // Powiadom widgety zależne od roli (np. Operacje): ich init na
     // DOMContentLoaded wyprzedza async GET /api/auth/me, więc synchroniczny
     // odczyt window.currentUser dawał fałszywe "wymaga roli admin".

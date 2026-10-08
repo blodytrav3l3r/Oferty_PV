@@ -24,19 +24,35 @@ const isoDateTime = z
     .string()
     .refine((s) => Number.isFinite(Date.parse(s)), { message: 'Nieprawidłowa data ISO-8601' });
 
-export const followUpCreateSchema = z.object({
-    channel: z.enum(['PHONE', 'EMAIL', 'SMS', 'WHATSAPP', 'MEETING', 'OTHER']),
-    result: z.enum(['CONTACTED', 'NO_ANSWER', 'BUSY', 'CALLBACK_REQUESTED', 'WRONG_NUMBER']),
-    contactedAt: isoDateTime,
-    durationMin: z.number().int().min(0).max(480).nullish(),
-    note: z.string().max(2000).nullish(),
-    nextContactAt: isoDateTime.nullish(),
-    outcome: z.enum(['OPEN', 'WON', 'LOST_COMPETITION', 'LOST_OTHER', 'ABANDONED']).default('OPEN'),
-    loseReason: z.string().max(200).nullish(),
-    competitor: z.string().max(200).nullish(),
-    competitorPrice: z.number().finite().min(0).nullish(),
-    reopen: z.boolean().default(false)
-});
+export const followUpCreateSchema = z
+    .object({
+        channel: z.enum(['PHONE', 'EMAIL', 'SMS', 'WHATSAPP', 'MEETING', 'OTHER']),
+        result: z.enum(['CONTACTED', 'NO_ANSWER', 'BUSY', 'CALLBACK_REQUESTED', 'WRONG_NUMBER']),
+        contactedAt: isoDateTime,
+        durationMin: z.number().int().min(0).max(480).nullish(),
+        note: z.string().max(2000).nullish(),
+        nextContactAt: isoDateTime.nullish(),
+        outcome: z
+            .enum(['OPEN', 'WON', 'LOST_COMPETITION', 'LOST_OTHER', 'ABANDONED'])
+            .default('OPEN'),
+        loseReason: z.string().max(200).nullish(),
+        competitor: z.string().max(200).nullish(),
+        competitorPrice: z.number().finite().min(0).nullish(),
+        reopen: z.boolean().default(false)
+    })
+    // P2 twarde domknięcie: LOST_* wymaga powodu (miękkie z P0/P1 zaostrzone).
+    .superRefine((v, ctx) => {
+        if (
+            (v.outcome === 'LOST_COMPETITION' || v.outcome === 'LOST_OTHER') &&
+            !v.loseReason?.trim()
+        ) {
+            ctx.addIssue({
+                code: 'custom',
+                path: ['loseReason'],
+                message: 'Podaj powód utraty oferty'
+            });
+        }
+    });
 
 type FollowUpCreate = z.infer<typeof followUpCreateSchema>;
 

@@ -96,7 +96,11 @@ Regresja: istniejące search bez filtrów bez zmian; Kartoteka działa; statusy 
 ## 8. Checkpointy — osobne GO na każdy
 
 - GO P0.1: snapshot + baseline (read-only, bez zmian).
-- GO P0.2: schema + migracja `20261008000000_offer_follow_ups` + test migracji → commit. Model w schemacie: `offer_follow_ups` (konwencja małych nazw); daty String ISO-8601 UTC (konwencja projektu, nie DateTime).
+- GO P0.2: schema + migracja `20261008000000_offer_follow_ups` + test migracji → commit (`093b6b2`). Model: `offer_follow_ups`; daty String ISO-8601 UTC (konwencja projektu, nie DateTime).
+- GO P0.3: POST/GET `/:kind/:id/followups` + testy → commit (`c7f8f8a`). Audyt bezpośrednio przez tx (logAudit ma semantykę warn-only).
+- GO P0.4: filtry LOS w search + `calculateFollowUpHealth` + projekcja `followup` → commit (`703f380`).
+- GO P1: badge + filtr Los + modal `Zapisz kontakt` z timeline w Kartotece → commit (`e645d4f`).
+- GO P2: widget `Opieka nad ofertami` na Pulpicie (`index.html` + loader w `dashboard.js`, agregat z search `totalCount`, zero nowego endpointu) + twarde domknięcie (Zod `superRefine`: `LOST_*` wymaga `loseReason`; lustro w modalu).
 - GO P0.3: POST/GET + walidacje + ownership + testy → commit.
 - GO P0.4: audit atomowy + search + regresja → commit.
 - GO P1: UI Kartoteki → commit. GO P2: widget Pulpit + twarde domknięcie. P3: analityka.

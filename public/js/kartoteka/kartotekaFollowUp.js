@@ -212,6 +212,13 @@ export default {
             fail('Podaj poprawną datę następnego kontaktu.');
             return;
         }
+        // P2 twarde domknięcie (lustro walidacji BE): LOST_* wymaga powodu.
+        const outcomeVal = val('#fu-outcome') || 'OPEN';
+        const loseReasonVal = val('#fu-lose-reason');
+        if ((outcomeVal === 'LOST_COMPETITION' || outcomeVal === 'LOST_OTHER') && !loseReasonVal) {
+            fail('Podaj powód utraty oferty.');
+            return;
+        }
         const body = {
             channel: val('#fu-channel') || 'PHONE',
             result: val('#fu-result') || 'CONTACTED',
@@ -219,8 +226,8 @@ export default {
             durationMin,
             note: val('#fu-note') || null,
             nextContactAt: nextRaw ? new Date(nextRaw + 'T00:00:00').toISOString() : null,
-            outcome: val('#fu-outcome') || 'OPEN',
-            loseReason: val('#fu-lose-reason') || null,
+            outcome: outcomeVal,
+            loseReason: loseReasonVal || null,
             competitor: val('#fu-competitor') || null,
             reopen: !!overlay.querySelector('#fu-reopen')?.checked
         };

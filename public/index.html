@@ -316,6 +316,54 @@
                     </a>
                 </div>
 
+                <!-- Opieka nad ofertami (P2) -->
+                <div id="followup-panel" class="admin-container">
+                    <div class="admin-section-title">
+                        <div class="admin-title-group">
+                            <h3><i data-lucide="phone"></i> Opieka nad ofertami</h3>
+                        </div>
+                        <a href="app.html#/kartoteka" class="btn btn-sm btn-secondary"
+                            >Otwórz kartotekę</a
+                        >
+                    </div>
+                    <div class="admin-stats-row" id="followup-stats-row">
+                        <div class="admin-stat-card">
+                            <div class="admin-stat-icon danger"><i data-lucide="phone"></i></div>
+                            <div class="admin-stat-info">
+                                <div class="admin-stat-value" id="fu-stat-needs">–</div>
+                                <div class="admin-stat-label">Do kontaktu</div>
+                            </div>
+                        </div>
+                        <div class="admin-stat-card">
+                            <div class="admin-stat-icon pro"><i data-lucide="clock"></i></div>
+                            <div class="admin-stat-info">
+                                <div class="admin-stat-value" id="fu-stat-progress">–</div>
+                                <div class="admin-stat-label">W toku</div>
+                            </div>
+                        </div>
+                        <div class="admin-stat-card">
+                            <div class="admin-stat-icon user"><i data-lucide="check"></i></div>
+                            <div class="admin-stat-info">
+                                <div class="admin-stat-value" id="fu-stat-won">–</div>
+                                <div class="admin-stat-label">Wygrane</div>
+                            </div>
+                        </div>
+                        <div class="admin-stat-card">
+                            <div class="admin-stat-icon admin"><i data-lucide="x-circle"></i></div>
+                            <div class="admin-stat-info">
+                                <div class="admin-stat-value" id="fu-stat-lost">–</div>
+                                <div class="admin-stat-label">Utracone</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card system-card recycled-card">
+                        <div class="recycled-subtitle">Najpilniejsze do kontaktu</div>
+                        <div id="followup-top-list" class="recycled-list">
+                            <span class="recycled-empty">Ładowanie…</span>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Recycled Numbers Widget -->
                 <div id="recycled-panel" class="admin-container">
                     <div class="admin-section-title">

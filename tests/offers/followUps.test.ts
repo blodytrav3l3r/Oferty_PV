@@ -171,6 +171,23 @@ describe('P0.3 OfferFollowUp — POST/GET', () => {
         expect(prisma.offer_follow_ups.create as jest.Mock).not.toHaveBeenCalled();
     });
 
+    it('P2 twarde domkniecie: LOST_* bez powodu 400, z powodem 200', async () => {
+        const lostNoReason = await request(app)
+            .post('/api/offers/rury/o-rury-1/followups')
+            .send({ ...validBody, outcome: 'LOST_COMPETITION' });
+        expect(lostNoReason.status).toBe(400);
+
+        const lostBlank = await request(app)
+            .post('/api/offers/rury/o-rury-1/followups')
+            .send({ ...validBody, outcome: 'LOST_OTHER', loseReason: '   ' });
+        expect(lostBlank.status).toBe(400);
+
+        const lostOk = await request(app)
+            .post('/api/offers/rury/o-rury-1/followups')
+            .send({ ...validBody, outcome: 'LOST_COMPETITION', loseReason: 'cena' });
+        expect(lostOk.status).toBe(200);
+    });
+
     it('terminalna bez reopen: 409 TERMINAL_OUTCOME; z reopen: 200 + audyt reopen', async () => {
         (prisma.offer_follow_ups.findFirst as jest.Mock).mockResolvedValue({
             id: 'old',
