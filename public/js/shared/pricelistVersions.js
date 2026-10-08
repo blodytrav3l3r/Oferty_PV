@@ -574,12 +574,14 @@
         }
         return (
             '<form id="pv-save-form">' +
+            '<div class="form-row form-row-2">' +
             '<div class="form-group"><label>Nowa wersja (tylko podgląd)</label>' +
             '<input class="form-input" id="pv-next-label" value="' +
             escAttr(versionLabel(next, new Date()) + ' (nr ' + next + ')') +
             '" readonly></div>' +
             '<div class="form-group"><label for="pv-eff">Obowiązuje od (czas lokalny → UTC)</label>' +
             '<input class="form-input" type="datetime-local" id="pv-eff"></div>' +
+            '</div>' +
             '<div id="pv-past-warn" class="color-warn" style="display:none">Data w przeszłości — zapis jako wersja wsteczna (nota min. 10 znaków, bez auto-aktywacji).</div>' +
             '<div class="form-group"><label for="pv-note">Notatki</label>' +
             '<input class="form-input" id="pv-note" maxlength="500" placeholder="Opis zmiany (dla daty wstecznej: min. 10 znaków)"></div>' +
