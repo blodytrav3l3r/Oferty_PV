@@ -208,6 +208,30 @@ describe('P3 GET /followups/stats', () => {
         ]);
     });
 
+    it('perRep: win dostaje autor domykajacego wpisu (latest WON), nie kazdy kontaktujacy', async () => {
+        // Kontrakt KPI: rep-a kontaktowal oferte, ale latest WON napisal rep-b.
+        // SQL (buildPerRepSql) laczy latest po autorze — win idzie do rep-b.
+        const q = prisma.$queryRaw as jest.Mock;
+        q.mockResolvedValueOnce([{ outcome: 'WON', c: 1 }]);
+        q.mockResolvedValueOnce([{ total: 1, nocontact: 0 }]);
+        q.mockResolvedValueOnce([{ total: 0, nocontact: 0 }]);
+        q.mockResolvedValueOnce([]);
+        q.mockResolvedValueOnce([]);
+        q.mockResolvedValueOnce([{ k: 'won', v: 500 }]);
+        q.mockResolvedValueOnce([
+            { u: 'rep-a', contacts: 3, offers: 1, wins: 0 },
+            { u: 'rep-b', contacts: 1, offers: 1, wins: 1 }
+        ]);
+        q.mockResolvedValueOnce([{ h: null }]);
+
+        const res = await request(createApp()).get('/api/offers/followups/stats');
+        expect(res.status).toBe(200);
+        expect(res.body.stats.perRep).toEqual([
+            { userId: 'rep-a', contacts: 3, offers: 1, wins: 0 },
+            { userId: 'rep-b', contacts: 1, offers: 1, wins: 1 }
+        ]);
+    });
+
     it('user nie-admin: scope bez 1=1 (8 zapytan z filtrem)', async () => {
         mockUser.role = 'user';
         mockUser.id = 'rep-9';

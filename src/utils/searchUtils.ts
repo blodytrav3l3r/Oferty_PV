@@ -238,7 +238,7 @@ export function buildOrderStatusSql(orderStatus: SearchParams['orderStatus']): {
 export function followUpColumnsSql(kind: 'rury' | 'studnie', alias: string): Prisma.Sql {
     const a = Prisma.raw(alias);
     const latestWhere = Prisma.sql`"offerKind" = ${kind} AND "offerId" = ${a}.id`;
-    const latestOrder = Prisma.sql`ORDER BY "contactedAt" DESC, "createdAt" DESC LIMIT 1`;
+    const latestOrder = Prisma.sql`ORDER BY "contactedAt" DESC, "createdAt" DESC, "id" DESC LIMIT 1`;
     return Prisma.sql`,
         (SELECT outcome FROM offer_follow_ups WHERE ${latestWhere} ${latestOrder}) AS "_fu_outcome",
         (SELECT "nextContactAt" FROM offer_follow_ups WHERE ${latestWhere} ${latestOrder}) AS "_fu_next",

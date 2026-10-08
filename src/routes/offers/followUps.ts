@@ -21,9 +21,35 @@ function isTerminal(outcome: string): boolean {
     return (TERMINAL_OUTCOMES as readonly string[]).includes(outcome);
 }
 
-const isoDateTime = z
-    .string()
-    .refine((s) => Number.isFinite(Date.parse(s)), { message: 'Nieprawidłowa data ISO-8601' });
+// Ścisły kontrakt dat: pełne ISO-8601 z czasem i strefą (FE wysyła
+// toISOString). Sam Date.parse jest liberalny (łyka '10/10/2026',
+// 'Oct 10 2026'), więc regex + zakresy kalendarzowe + Date.parse.
+const ISO_DATETIME_RE =
+    /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2})(?:\.(\d{1,3}))?)?(Z|[+-](\d{2}):?(\d{2}))$/;
+
+function isStrictIsoDateTime(s: string): boolean {
+    const m = ISO_DATETIME_RE.exec(s);
+    if (!m) return false;
+    const y = Number(m[1]);
+    const mo = Number(m[2]);
+    const d = Number(m[3]);
+    const hh = Number(m[4]);
+    const mi = Number(m[5]);
+    const ss = m[6] === undefined ? 0 : Number(m[6]);
+    if (mo < 1 || mo > 12 || d < 1) return false;
+    const leap = (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0;
+    const dim = [31, leap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][mo - 1];
+    if (d > dim) return false;
+    if (hh > 23 || mi > 59 || ss > 59) return false;
+    if (m[8] !== 'Z') {
+        if (Number(m[9]) > 23 || Number(m[10]) > 59) return false;
+    }
+    return Number.isFinite(Date.parse(s));
+}
+
+const isoDateTime = z.string().refine(isStrictIsoDateTime, {
+    message: 'Nieprawidłowa data ISO-8601 (wymagane RRRR-MM-DDTHH:MM:SS ze strefą)'
+});
 
 export const followUpCreateSchema = z
     .object({
@@ -103,7 +129,7 @@ router.post(
             const body = req.body as FollowUpCreate;
             const latest = await prisma.offer_follow_ups.findFirst({
                 where: { offerKind: kind, offerId: id },
-                orderBy: [{ contactedAt: 'desc' }, { createdAt: 'desc' }]
+                orderBy: [{ contactedAt: 'desc' }, { createdAt: 'desc' }, { id: 'desc' }]
             });
             if (latest && isTerminal(latest.outcome) && !body.reopen) {
                 return res.status(409).json({
@@ -112,12 +138,22 @@ router.post(
                 });
             }
 
+            // Cykle obsługi: reopen po terminalnym starcie nowy cykl (nr+1),
+            // historia zostaje. Limit DB (uq_fu_terminal_per_cycle) dopuszcza
+            // max 1 terminal na cykl i rozstrzyga wyścigi równoległych POST.
+            const latestCycle =
+                latest && typeof (latest as { cycle?: unknown }).cycle === 'number'
+                    ? ((latest as { cycle?: number }).cycle as number)
+                    : 0;
+            const cycle = latest && isTerminal(latest.outcome) ? latestCycle + 1 : latestCycle;
+
             const now = new Date().toISOString();
             const fuId = crypto.randomUUID();
             const record = {
                 id: fuId,
                 offerKind: kind,
                 offerId: id,
+                cycle,
                 createdByUserId: authReq.user?.id ?? '',
                 createdAt: now,
                 contactedAt: new Date(body.contactedAt).toISOString(),
@@ -158,14 +194,15 @@ router.post(
 
             return res.json({ ok: true, id: fuId });
         } catch (e) {
-            // P5.1: wyścig dwóch terminalnych POST rozstrzyga constraint
-            // uq_fu_terminal_per_offer — mapuj TYLKO ten index na 409.
-            // Inny P2002 (np. przyszły) idzie dotychczasową ścieżką.
+            // Wyścig dwóch terminalnych POST w tym samym cyklu rozstrzyga
+            // constraint uq_fu_terminal_per_cycle (legacy: ..._per_offer).
+            // Mapuj TYLKO te indexy na 409 — inny P2002 idzie ścieżką
+            // mapPrismaError (409 UNIQUE_CONFLICT).
             if ((e as { code?: string })?.code === 'P2002') {
                 const target = JSON.stringify((e as { meta?: unknown })?.meta ?? '');
                 if (
-                    target.includes('uq_fu_terminal_per_offer') ||
-                    (target.includes('offerKind') && target.includes('offerId'))
+                    target.includes('uq_fu_terminal_per_cycle') ||
+                    target.includes('uq_fu_terminal_per_offer')
                 ) {
                     return res.status(409).json({
                         error: 'Oferta została w międzyczasie zamknięta',
@@ -204,7 +241,7 @@ router.get('/:kind/:id/followups', requireAuth, async (req, res) => {
 
         const items = await prisma.offer_follow_ups.findMany({
             where: { offerKind: kind, offerId: id },
-            orderBy: [{ contactedAt: 'desc' }, { createdAt: 'desc' }]
+            orderBy: [{ contactedAt: 'desc' }, { createdAt: 'desc' }, { id: 'desc' }]
         });
         return res.json({ ok: true, items });
     } catch (e) {

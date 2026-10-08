@@ -49,7 +49,7 @@ export function buildLatestCte(fuScope: Prisma.Sql): Prisma.Sql {
         SELECT f."offerKind", f."offerId", f."outcome", f."loseReason", f."competitor", f."competitorPrice", f."createdByUserId"
         FROM (
             SELECT f."offerKind", f."offerId", f."outcome", f."loseReason", f."competitor", f."competitorPrice", f."createdByUserId",
-                ROW_NUMBER() OVER (PARTITION BY f."offerKind", f."offerId" ORDER BY f."contactedAt" DESC, f."createdAt" DESC) AS "rn"
+                ROW_NUMBER() OVER (PARTITION BY f."offerKind", f."offerId" ORDER BY f."contactedAt" DESC, f."createdAt" DESC, f."id" DESC) AS "rn"
             FROM offer_follow_ups f
             WHERE ${fuScope}
         ) f WHERE f."rn" = 1

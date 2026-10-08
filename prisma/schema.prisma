@@ -394,6 +394,10 @@ model offer_follow_ups {
   id              String  @id
   offerKind       String
   offerId         String
+  // Cykl obsługi: reopen po wyniku terminalnym startuje cykl nr+1.
+  // Limit max 1 terminal na (offerKind, offerId, cycle) wymusza migracja
+  // SQL (partial index, niewidzialny dla `prisma migrate diff`).
+  cycle           Int     @default(0)
   createdByUserId String
   createdAt       String?
   contactedAt     String

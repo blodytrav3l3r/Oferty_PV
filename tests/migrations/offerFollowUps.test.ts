@@ -49,7 +49,10 @@ describe('P0.2 migracja offer_follow_ups', () => {
                 'outcome',
                 'loseReason',
                 'competitor',
-                'competitorPrice'
+                'competitorPrice',
+                // Cykle obslugi (20261009000000_fu_cycles): reopen startuje
+                // nowy cykl, limit terminalnosci per cykl.
+                'cycle'
             ]);
 
             const idx = db

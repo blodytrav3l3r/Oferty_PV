@@ -87,7 +87,7 @@ describe('P0.4 followUpColumnsSql — latest, nie MAX', () => {
     it('rury: kind literal + latest ORDER BY contactedAt/createdAt', () => {
         const sql = (followUpColumnsSql('rury', 'o') as any).render() as string;
         expect(sql).toContain('"offerKind" = rury');
-        expect(sql).toContain('ORDER BY "contactedAt" DESC, "createdAt" DESC LIMIT 1');
+        expect(sql).toContain('ORDER BY "contactedAt" DESC, "createdAt" DESC, "id" DESC LIMIT 1');
         expect(sql).toContain('"_fu_outcome"');
         expect(sql).toContain('"_fu_next"');
         expect(sql).toContain('"_fu_last"');

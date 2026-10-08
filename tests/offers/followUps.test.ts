@@ -235,7 +235,8 @@ describe('P0.3 OfferFollowUp — POST/GET', () => {
     it('terminalna bez reopen: 409 TERMINAL_OUTCOME; z reopen: 200 + audyt reopen', async () => {
         (prisma.offer_follow_ups.findFirst as jest.Mock).mockResolvedValue({
             id: 'old',
-            outcome: 'WON'
+            outcome: 'WON',
+            cycle: 0
         });
         const blocked = await request(app)
             .post('/api/offers/rury/o-rury-1/followups')
@@ -250,6 +251,76 @@ describe('P0.3 OfferFollowUp — POST/GET', () => {
         const audit = prisma.audit_logs.create as jest.Mock;
         expect(audit.mock.calls[0][0].data.action).toBe('reopen');
     });
+
+    it('cykle: OPEN dostaje cykl latest, reopen po terminalnym cykl+1, zamkniecie bez reopen w cyklu', async () => {
+        const create = prisma.offer_follow_ups.create as jest.Mock;
+        // Brak historii -> cykl 0.
+        await request(app).post('/api/offers/rury/o-rury-1/followups').send(validBody);
+        expect(create.mock.calls[0][0].data.cycle).toBe(0);
+
+        // OPEN w historii -> ten sam cykl.
+        (prisma.offer_follow_ups.findFirst as jest.Mock).mockResolvedValue({
+            id: 'o1',
+            outcome: 'OPEN',
+            cycle: 2
+        });
+        await request(app)
+            .post('/api/offers/rury/o-rury-1/followups')
+            .send({ ...validBody, outcome: 'WON' });
+        expect(create.mock.calls[1][0].data.cycle).toBe(2);
+
+        // Terminal + reopen -> nowy cykl (takze od razu terminalny).
+        (prisma.offer_follow_ups.findFirst as jest.Mock).mockResolvedValue({
+            id: 'o2',
+            outcome: 'WON',
+            cycle: 2
+        });
+        await request(app)
+            .post('/api/offers/rury/o-rury-1/followups')
+            .send({ ...validBody, reopen: true });
+        expect(create.mock.calls[2][0].data.cycle).toBe(3);
+        await request(app)
+            .post('/api/offers/rury/o-rury-1/followups')
+            .send({ ...validBody, outcome: 'LOST_OTHER', loseReason: 'cena', reopen: true });
+        expect(create.mock.calls[3][0].data.cycle).toBe(3);
+    });
+
+    it('P2002 z nowego constraintu cykli to 409 TERMINAL_OUTCOME', async () => {
+        (prisma.$transaction as jest.Mock).mockRejectedValueOnce({
+            code: 'P2002',
+            meta: { target: ['uq_fu_terminal_per_cycle'] }
+        });
+        const res = await request(app)
+            .post('/api/offers/rury/o-rury-1/followups')
+            .send({ ...validBody, outcome: 'WON' });
+        expect(res.status).toBe(409);
+        expect(res.body.code).toBe('TERMINAL_OUTCOME');
+    });
+
+    it.each([
+        [{ ...validBody, contactedAt: '10/10/2026' }],
+        [{ ...validBody, contactedAt: 'Oct 10 2026' }],
+        [{ ...validBody, contactedAt: '2026-13-01T10:00:00.000Z' }],
+        [{ ...validBody, contactedAt: '2026-02-30T10:00:00.000Z' }],
+        [{ ...validBody, contactedAt: '2026-10-10' }],
+        [{ ...validBody, contactedAt: '2026-10-10T25:00:00.000Z' }],
+        [{ ...validBody, contactedAt: '' }],
+        [{ ...validBody, contactedAt: null }]
+    ])('scisla walidacja dat odrzuca spoza ISO-8601: 400 (case %j)', async (body) => {
+        const res = await request(app).post('/api/offers/rury/o-rury-1/followups').send(body);
+        expect(res.status).toBe(400);
+        expect(prisma.offer_follow_ups.create as jest.Mock).not.toHaveBeenCalled();
+    });
+
+    it.each([['2026-10-10T09:00:00.000Z'], ['2026-10-10T09:00:00+02:00'], ['2026-10-10T09:00Z']])(
+        'scisla walidacja dat akceptuje ISO-8601: 200 (%s)',
+        async (contactedAt) => {
+            const res = await request(app)
+                .post('/api/offers/rury/o-rury-1/followups')
+                .send({ ...validBody, contactedAt });
+            expect(res.status).toBe(200);
+        }
+    );
 
     it('strefa czasowa: +02:00 normalizowane do UTC', async () => {
         const res = await request(app)
@@ -292,7 +363,8 @@ describe('P0.3 OfferFollowUp — POST/GET', () => {
         const findMany = prisma.offer_follow_ups.findMany as jest.Mock;
         expect(findMany.mock.calls[0][0].orderBy).toEqual([
             { contactedAt: 'desc' },
-            { createdAt: 'desc' }
+            { createdAt: 'desc' },
+            { id: 'desc' }
         ]);
 
         (prisma.offers_rel.findUnique as jest.Mock).mockResolvedValue({
