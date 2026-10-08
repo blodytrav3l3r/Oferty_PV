@@ -578,11 +578,11 @@
             '<input class="form-input" id="pv-next-label" value="' +
             escAttr(versionLabel(next, new Date()) + ' (nr ' + next + ')') +
             '" readonly></div>' +
-            '<div class="form-group"><label for="pv-note">Notatki</label>' +
-            '<input class="form-input" id="pv-note" maxlength="500" placeholder="Opis zmiany (dla daty wstecznej: min. 10 znaków)"></div>' +
             '<div class="form-group"><label for="pv-eff">Obowiązuje od (czas lokalny → UTC)</label>' +
             '<input class="form-input" type="datetime-local" id="pv-eff"></div>' +
             '<div id="pv-past-warn" class="color-warn" style="display:none">Data w przeszłości — zapis jako wersja wsteczna (nota min. 10 znaków, bez auto-aktywacji).</div>' +
+            '<div class="form-group"><label for="pv-note">Notatki</label>' +
+            '<input class="form-input" id="pv-note" maxlength="500" placeholder="Opis zmiany (dla daty wstecznej: min. 10 znaków)"></div>' +
             '<div class="form-group"><button type="submit" class="btn btn-primary w-100" title="Zapisuje bieżący stan cennika jako nową wersję (kopia wszystkich pozycji). Nie zmienia cen w ofertach ani cennika na żywo — nowa wersja czeka na aktywację (data przyszła) albo zapisuje się jako wsteczna (data przeszła, wymagana nota min. 10 znaków)."><i data-lucide="save"></i> Zapisz jako wersję</button></div>' +
             '</form>'
         );
