@@ -327,6 +327,20 @@ async function loadOffer(id) {
         }
     }
 
+    // Baseline SAVED z wczytanego dokumentu (false-positive guard):
+    // getSavedDoc czyta cache offers — bez podmiany widzi slim/stale z listy,
+    // a diff live-vs-SAVED sieje brud mimo braku edycji (jak studnie:135-143).
+    try {
+        if (!normalized.id) normalized.id = id;
+        if (typeof offers !== 'undefined' && Array.isArray(offers) && normalized.id) {
+            const _li = offers.findIndex((o) => o && String(o.id) === String(normalized.id));
+            if (_li >= 0) offers[_li] = normalized;
+            else offers.push(normalized);
+            if (typeof window._rebuildRuryOffersMap === 'function') window._rebuildRuryOffersMap();
+            else if (typeof _rebuildRuryOffersMap === 'function') _rebuildRuryOffersMap();
+        }
+    } catch (_e) {}
+
     if (typeof clearOrderEditState === 'function') clearOrderEditState();
     editingOfferId = id;
     editingOfferAssignedUserId = normalized.userId || null;
@@ -434,6 +448,14 @@ async function loadOffer(id) {
     showSection('builder');
     if (typeof goToPhase === 'function') goToPhase(3);
     showToast('Wczytano ofertę: ' + (normalized.number || 'bez numeru'), 'info');
+    // False-positive guard: wyczysc stale flagi brudu z poprzedniego dokumentu.
+    // checkRecovery ponizej postawi je na nowo, jesli odtworzy draft.
+    try {
+        if (typeof _excelDirty !== 'undefined') _excelDirty = false;
+    } catch (_e) {}
+    try {
+        window._wizardDirty = false;
+    } catch (_e2) {}
     // P1.1b: banner recovery tylko gdy draft istnieje i różni się od SAVED.
     if (window.draftAutosave) window.draftAutosave.checkRecovery('offer_rury');
 }

@@ -245,6 +245,14 @@ async function loadSavedOfferStudnie(id_or_doc, optionalId, targetSection, preve
             anchorId: 'offer-form-title-studnie'
         });
     }
+    // False-positive guard: wyczysc stale flagi brudu z poprzedniego dokumentu.
+    // checkRecovery ponizej postawi je na nowo, jesli odtworzy draft.
+    try {
+        if (typeof _excelDirty !== 'undefined') _excelDirty = false;
+    } catch (_e) {}
+    try {
+        window._wizardDirty = false;
+    } catch (_e2) {}
     // P1.1b: banner recovery tylko gdy draft istnieje i różni się od SAVED.
     if (window.draftAutosave) window.draftAutosave.checkRecovery('offer_studnie');
 }
