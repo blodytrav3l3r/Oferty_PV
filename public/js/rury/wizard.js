@@ -248,8 +248,9 @@ function initWizard() {
     goToPhase(1);
 
     // CSP-B: nawigacja faz bez onclick (id ze stale obecnych przyciskow).
+    // Uwaga: tylko prev ma tu listener — next jest sterowany per krok przez
+    // nextBtn.onclick w goToPhase; drugi handler powodowal podwojny awans (2->4).
     document.getElementById('wizard-nav-prev')?.addEventListener('click', () => phasePrev());
-    document.getElementById('wizard-nav-next')?.addEventListener('click', () => phaseNext());
 
     if (window.editingOfferId) {
         goToPhase(3);
