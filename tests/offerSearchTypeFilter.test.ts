@@ -164,4 +164,54 @@ describe('Wyszukiwarka ofert — filtr typu (rury vs studnie)', () => {
         // WHERE ... AND ... — oba filtry w jednym WHERE
         expect(sql).toMatch(/WHERE EXISTS_ORDER_MARKER\s+AND combined\."_type" = 'rury'/);
     });
+
+    // P5.3: tryb follow-up bez realnej paginacji — hasMore=false zamiast
+    // obietnicy kolejnej strony; poza trybem zachowanie bez zmian.
+    const fullRow = (id: string) => ({
+        id,
+        userId: 'user-id',
+        clientId: null,
+        state: 'final',
+        createdAt: '2026-10-01T00:00:00.000Z',
+        updatedAt: '2026-10-01T00:00:00.000Z',
+        offer_number: 'OF/' + id,
+        history: '[]',
+        _fu_outcome: null,
+        _fu_next: null,
+        _fu_last: null,
+        _type: 'rury',
+        transportCost: null,
+        _orderCount: 0,
+        clientName: 'ACME',
+        investName: '',
+        clientNip: '',
+        clientNumber: null
+    });
+
+    it('followupMode: 51 wierszy -> 50 danych, hasMore false, totalCount zostaje', async () => {
+        const rows = Array.from({ length: 51 }, (_, i) => fullRow('o-' + i));
+        (prisma.$queryRaw as jest.Mock)
+            .mockResolvedValueOnce(rows)
+            .mockResolvedValueOnce([{ cnt: 60 }]);
+        const res = await request(app).get(
+            '/api/offers/search?followupStatus=needs_contact&limit=50'
+        );
+        expect(res.status).toBe(200);
+        expect(res.body.data).toHaveLength(50);
+        expect(res.body.hasMore).toBe(false);
+        expect(res.body.nextCursor).toBeNull();
+        expect(res.body.totalCount).toBe(60);
+    });
+
+    it('poza followupMode: 51 wierszy -> hasMore true (regresja)', async () => {
+        const rows = Array.from({ length: 51 }, (_, i) => fullRow('o-' + i));
+        (prisma.$queryRaw as jest.Mock)
+            .mockResolvedValueOnce(rows)
+            .mockResolvedValueOnce([{ cnt: 60 }]);
+        const res = await request(app).get('/api/offers/search?limit=50');
+        expect(res.status).toBe(200);
+        expect(res.body.data).toHaveLength(50);
+        expect(res.body.hasMore).toBe(true);
+        expect(res.body.nextCursor).not.toBeNull();
+    });
 });

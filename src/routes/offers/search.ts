@@ -266,8 +266,10 @@ router.get('/', requireAuth, async (req, res) => {
 
         const rows = (await prisma.$queryRaw(sql)) as RawOfferRow[];
 
-        const hasMore = rows.length > limitVal;
-        const dataRows = hasMore ? rows.slice(0, limitVal) : rows;
+        // P5.3: tryb follow-up nie ma realnej paginacji (kursor ignorowany) —
+        // hasMore=false zamiast obietnicy kolejnej strony. totalCount zostaje.
+        const hasMore = !followupMode && rows.length > limitVal;
+        const dataRows = rows.length > limitVal ? rows.slice(0, limitVal) : rows;
 
         let nextCursor: string | null = null;
         let nextCursorId: string | null = null;
