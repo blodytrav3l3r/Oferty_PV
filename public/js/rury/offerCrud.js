@@ -454,7 +454,8 @@ async function loadOffer(id) {
         if (typeof _excelDirty !== 'undefined') _excelDirty = false;
     } catch (_e) {}
     try {
-        window._wizardDirty = false;
+        if (window.draftAutosave && typeof window.draftAutosave.resetWizardDirty === 'function')
+            window.draftAutosave.resetWizardDirty();
     } catch (_e2) {}
     // P1.1b: banner recovery tylko gdy draft istnieje i różni się od SAVED.
     if (window.draftAutosave) window.draftAutosave.checkRecovery('offer_rury');

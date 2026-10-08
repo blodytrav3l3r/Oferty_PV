@@ -873,6 +873,17 @@ function _draftClearContext(kind, oldDocId, newDocId) {
 }
 
 /**
+ * Reset podpowiedzi dirty kreatora (load dokumentu czyści stale flagi
+ * z poprzedniego dokumentu; checkRecovery stawia je na nowo przy odtworzeniu
+ * draftu). Jedyny zapis _wizardDirty = false — call sites nie tykają globala.
+ */
+function _draftResetWizardDirty() {
+    try {
+        window._wizardDirty = false;
+    } catch (_e) {}
+}
+
+/**
  * Czyści całą mapę tombstone (logout — razem z kontekstem draftów).
  * initKind celowo NIE czyści (semantyka „Odrzuć w tej sesji").
  */
@@ -1715,6 +1726,7 @@ window.draftAutosave = {
     clearContext: _draftClearContext,
     clearDismissed: _draftClearDismissed,
     checkRecovery: _draftCheckRecovery,
+    resetWizardDirty: _draftResetWizardDirty,
     hideBanner: _draftHideBanner,
     hideModal: _draftHideDraftModal,
     showModal: _draftShowDraftModal,

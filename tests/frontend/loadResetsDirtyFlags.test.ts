@@ -21,7 +21,7 @@ describe('frontend: load czyści stale flagi brudu (false-positive guard)', () =
         expect(reset).toBeGreaterThan(-1);
         expect(check).toBeGreaterThan(-1);
         expect(reset).toBeLessThan(check);
-        expect(src).toContain('window._wizardDirty = false');
+        expect(src).toContain('resetWizardDirty');
     });
 
     it('rury loadOffer: baseline SAVED z wczytanego dokumentu', () => {
@@ -37,6 +37,6 @@ describe('frontend: load czyści stale flagi brudu (false-positive guard)', () =
         expect(reset).toBeGreaterThan(-1);
         expect(check).toBeGreaterThan(-1);
         expect(reset).toBeLessThan(check);
-        expect(src).toContain('window._wizardDirty = false');
+        expect(src).toContain('resetWizardDirty');
     });
 });
