@@ -2,6 +2,7 @@ import express from 'express';
 import ruryCrudRouter from './ruryCrud';
 import studnieCrudRouter from './studnieCrud';
 import crudRouter from './crud';
+import followUpsRouter from './followUps';
 import exportsRouter from './exports';
 
 const router = express.Router();
@@ -17,5 +18,8 @@ router.use('/', studnieCrudRouter);
 
 // Dispatch: GET /:id, DELETE /:id (obsługuje zarówno rury jak i studnie)
 router.use('/', crudRouter);
+
+// Opieka nad ofertą: POST/GET /:kind/:id/followups (przed /:id nie ma kolizji — 3 segmenty)
+router.use('/', followUpsRouter);
 
 export default router;
