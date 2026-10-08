@@ -239,7 +239,9 @@ export default {
             contactedAt,
             durationMin,
             note: val('#fu-note') || null,
-            nextContactAt: nextRaw ? new Date(nextRaw + 'T00:00:00').toISOString() : null,
+            // P4.3: termin = koniec dnia lokalnego (nie północ — północ
+            // cofałaby termin do poprzedniego dnia po normalizacji do UTC).
+            nextContactAt: nextRaw ? new Date(nextRaw + 'T23:59:00').toISOString() : null,
             outcome: outcomeVal,
             loseReason: loseReasonVal || null,
             competitor: val('#fu-competitor') || null,

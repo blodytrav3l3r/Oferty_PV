@@ -6,6 +6,7 @@ import vm from 'vm';
 describe('kartotekaFollowUp submitFollowUp — guard', () => {
     let mixin: any;
     let fetchCalls: number;
+    let fetchBodies: string[];
     let resolvers: Array<(v: unknown) => void>;
 
     const load = () => {
@@ -15,6 +16,7 @@ describe('kartotekaFollowUp submitFollowUp — guard', () => {
         code = code.replace(/export default \{/, 'module.exports = {');
         const esc = (s: unknown) => String(s ?? '');
         fetchCalls = 0;
+        fetchBodies = [];
         resolvers = [];
         const vals: Record<string, string> = {
             '#fu-channel': 'PHONE',
@@ -30,8 +32,9 @@ describe('kartotekaFollowUp submitFollowUp — guard', () => {
         const context: any = {
             console,
             module: { exports: {} },
-            fetch: () => {
+            fetch: (_url: string, opts: { body?: string }) => {
                 fetchCalls++;
+                if (opts?.body) fetchBodies.push(opts.body);
                 return new Promise((resolve) => {
                     resolvers.push(resolve);
                 });
@@ -77,6 +80,30 @@ describe('kartotekaFollowUp submitFollowUp — guard', () => {
         await p1;
         expect(submitBtn.disabled).toBe(false);
         expect((ctx as { _fuSubmitting: boolean })._fuSubmitting).toBe(false);
+    });
+
+    test('P4.3: termin nastepnego kontaktu trzyma dzien lokalny (nie cofa do UTC)', async () => {
+        const { overlay } = load();
+        const ctx = Object.assign({ _fuSubmitting: false, loadLocalOffers: async () => {} }, mixin);
+        // Ustaw datę następnego kontaktu przez stub overlay.
+        const withNext = {
+            querySelector: (sel: string) =>
+                sel === '#fu-next' ? { value: '2026-10-10' } : overlay.querySelector(sel)
+        };
+        const p = mixin.submitFollowUp.call(ctx, 'o-1', 'rury', withNext);
+        resolvers.forEach((r) => r({ ok: true, json: async () => ({}) }));
+        await p;
+        expect(fetchBodies).toHaveLength(1);
+        const next = JSON.parse(fetchBodies[0]).nextContactAt as string;
+        const back = new Date(next);
+        const day =
+            back.getFullYear() +
+            '-' +
+            String(back.getMonth() + 1).padStart(2, '0') +
+            '-' +
+            String(back.getDate()).padStart(2, '0');
+        // Dzień po konwersji local→UTC→local ten sam, niezależnie od strefy.
+        expect(day).toBe('2026-10-10');
     });
 
     test('po zakonczeniu kolejny submit przechodzi (2 POST)', async () => {

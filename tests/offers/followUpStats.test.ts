@@ -124,6 +124,90 @@ describe('P3 GET /followups/stats', () => {
         expect(res.body.stats.perRep).toEqual([]);
     });
 
+    it('P4.3 cross-user: user widzi tylko wlasne oferty i follow-upy', async () => {
+        // Symulacja DB filtrującej po scope z SQL: scope niesie userId jako
+        // parametr — mock zwraca tylko wiersze widoczne dla tego usera.
+        const renderSql = (q: unknown): string => {
+            if (typeof q !== 'object' || q === null) return String(q);
+            const o = q as { strings?: string[]; values?: unknown[] };
+            if (!Array.isArray(o.strings) || !Array.isArray(o.values)) return String(q);
+            const values = o.values as unknown[];
+            let out = '';
+            o.strings.forEach((s, i) => {
+                out += s;
+                if (i < values.length) out += JSON.stringify(values[i]);
+            });
+            return out;
+        };
+        const collectValues = (q: unknown): string[] => {
+            const out: string[] = [];
+            const walk = (v: unknown): void => {
+                if (typeof v === 'string') {
+                    out.push(v);
+                    return;
+                }
+                if (typeof v === 'object' && v !== null) {
+                    const o = v as { strings?: string[]; values?: unknown[] };
+                    if (Array.isArray(o.strings) && Array.isArray(o.values)) {
+                        o.values.forEach(walk);
+                    }
+                }
+            };
+            walk(q);
+            return out;
+        };
+        const q = prisma.$queryRaw as jest.Mock;
+        q.mockImplementation((sql: unknown) => {
+            const vals = collectValues(sql);
+            const who = vals.includes('rep-b') ? 'rep-b' : 'rep-a';
+            const other = who === 'rep-a' ? 'rep-b' : 'rep-a';
+            const s = renderSql(sql);
+            // Guard: scope usera w każdym zapytaniu (nie admin, nie cudzy).
+            expect(vals).toContain(who);
+            expect(vals).not.toContain(other);
+            if (s.includes('FROM latest GROUP BY')) {
+                return Promise.resolve([{ outcome: 'OPEN', c: 1, _who: who }]);
+            }
+            if (s.includes('AS "nocontact"')) {
+                return Promise.resolve([
+                    { total: s.includes('FROM offers_rel') ? 1 : 0, nocontact: 0 }
+                ]);
+            }
+            if (s.includes('AS "r", COUNT')) {
+                return Promise.resolve([]);
+            }
+            if (s.includes('AS "cp"')) {
+                return Promise.resolve([]);
+            }
+            if (s.includes('AS "k"')) {
+                return Promise.resolve([{ k: 'won', v: who === 'rep-a' ? 100 : 200 }]);
+            }
+            if (s.includes('AS "u"')) {
+                return Promise.resolve([{ u: who, contacts: 1, offers: 1, wins: 0 }]);
+            }
+            return Promise.resolve([{ h: 5 }]);
+        });
+
+        mockUser.role = 'user';
+        mockUser.id = 'rep-a';
+        const resA = await request(createApp()).get('/api/offers/followups/stats');
+        expect(resA.status).toBe(200);
+        expect(resA.body.stats.outcomes).toEqual({ OPEN: 1 });
+        expect(resA.body.stats.offersTotal).toBe(1);
+        expect(resA.body.stats.wonValue).toBe(100);
+        expect(resA.body.stats.perRep).toEqual([
+            { userId: 'rep-a', contacts: 1, offers: 1, wins: 0 }
+        ]);
+
+        mockUser.id = 'rep-b';
+        const resB = await request(createApp()).get('/api/offers/followups/stats');
+        expect(resB.status).toBe(200);
+        expect(resB.body.stats.wonValue).toBe(200);
+        expect(resB.body.stats.perRep).toEqual([
+            { userId: 'rep-b', contacts: 1, offers: 1, wins: 0 }
+        ]);
+    });
+
     it('user nie-admin: scope bez 1=1 (8 zapytan z filtrem)', async () => {
         mockUser.role = 'user';
         mockUser.id = 'rep-9';

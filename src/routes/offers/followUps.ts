@@ -91,6 +91,9 @@ router.post(
             if (!offer) {
                 return res.status(404).json({ error: 'Oferta nie istnieje', code: 'NOT_FOUND' });
             }
+            // P4.3 kontrakt: udostępnienie = read-only. Odczyt timeline idzie
+            // przez canReadWithShare, ale zapis celowo wymaga canWriteDoc —
+            // kontakt dopisuje historię cudzej oferty, więc share nie wystarcza.
             if (!canWriteDoc(authReq.user, offer.userId)) {
                 return res
                     .status(403)
