@@ -411,6 +411,57 @@ function _excelCellNaturalWidth(td) {
     return 0;
 }
 
+/* Tekst komórki body do pomiaru autofit: wartosc inputa, labelka selecta,
+   inaczej przyciety textContent. */
+function _excelCellText(td) {
+    if (!td) return '';
+    try {
+        const inp = td.querySelector ? td.querySelector('input') : null;
+        if (inp && typeof inp.value === 'string' && inp.value) return inp.value;
+        const lab = td.querySelector ? td.querySelector('.excel-sel-wrap div') : null;
+        if (lab && typeof lab.textContent === 'string' && lab.textContent.trim())
+            return lab.textContent.trim();
+        if (typeof td.textContent === 'string') return td.textContent.trim();
+    } catch (_e) {}
+    return '';
+}
+
+/* Pomiar szerokosci tekstu (canvas 2d, font komórki). 0 gdy brak kontekstu. */
+let _excelFitCanvas = null;
+function _excelMeasureTextWidth(text, font) {
+    try {
+        if (typeof document === 'undefined' || !document.createElement) return 0;
+        if (!_excelFitCanvas) _excelFitCanvas = document.createElement('canvas');
+        const ctx = _excelFitCanvas.getContext ? _excelFitCanvas.getContext('2d') : null;
+        if (!ctx || typeof ctx.measureText !== 'function') return 0;
+        if (font) ctx.font = font;
+        const m = ctx.measureText(String(text));
+        return m && typeof m.width === 'number' ? m.width : 0;
+    } catch (_e) {
+        return 0;
+    }
+}
+
+function _excelFitFont(el) {
+    try {
+        if (typeof window !== 'undefined' && typeof window.getComputedStyle === 'function' && el) {
+            const cs = window.getComputedStyle(el);
+            if (cs && cs.font) return cs.font;
+        }
+    } catch (_e) {}
+    return '';
+}
+
+function _excelFitPadX(el) {
+    try {
+        if (typeof window !== 'undefined' && typeof window.getComputedStyle === 'function' && el) {
+            const cs = window.getComputedStyle(el);
+            const px = (parseFloat(cs.paddingLeft) || 0) + (parseFloat(cs.paddingRight) || 0);
+            if (px > 0) return Math.ceil(px);
+        }
+    } catch (_e) {}
+    return 8;
+}
 /* Autofit: domyślna szerokość kolumn bez zapisanego draga = najszerszy tekst
    (nagłówki h1/h2/h3-single + wiersze w DOM). Zapisany drag nietknięty.
    onlyCi != null → dopasuj tylko tę kolumnę (dblclick na uchwycie). */
@@ -456,22 +507,32 @@ function _excelAutoFitColumns(dn, onlyCi) {
             if (typeof _excelAutoFittedWidths !== 'undefined') delete _excelAutoFittedWidths[key];
             return;
         }
+        /* Pomiar po TEKSCIE (canvas), nie po scrollWidth zywych komorek:
+           input/select rozciagaja sie na komorke, wiec scrollWidth zwracal
+           istniejaca szerokosc zamiast tresci (samospelniajacy sie pomiar). */
+        const FIT_BREATH = 10;
+        const fitFont = _excelFitFont(h1th);
+        const fitPadX = _excelFitPadX(h1th);
         let w = 0;
+        let tw = 0;
         try {
-            if (typeof h1th.scrollWidth === 'number') w = Math.max(w, h1th.scrollWidth);
-            if (h2ths[ci] && typeof h2ths[ci].scrollWidth === 'number')
-                w = Math.max(w, h2ths[ci].scrollWidth);
+            if (h1th && typeof h1th.textContent === 'string')
+                tw = Math.max(tw, _excelMeasureTextWidth(h1th.textContent.trim(), fitFont));
+            if (h2ths[ci] && typeof h2ths[ci].textContent === 'string')
+                tw = Math.max(tw, _excelMeasureTextWidth(h2ths[ci].textContent.trim(), fitFont));
             const hit =
                 typeof _excelH3CellForCol === 'function' ? _excelH3CellForCol(h3ths, ci) : null;
-            if (hit && hit.span === 1 && hit.th && typeof hit.th.scrollWidth === 'number')
-                w = Math.max(w, hit.th.scrollWidth);
+            if (hit && hit.span === 1 && hit.th && typeof hit.th.textContent === 'string')
+                tw = Math.max(tw, _excelMeasureTextWidth(hit.th.textContent.trim(), fitFont));
             for (let r = 0; r < rows.length; r++) {
                 const cell = rows[r].children[ci];
-                if (cell) w = Math.max(w, _excelCellNaturalWidth(cell));
+                if (cell) tw = Math.max(tw, _excelMeasureTextWidth(_excelCellText(cell), fitFont));
             }
         } catch (_e2) {}
+        if (!(tw > 0)) return;
+        w = tw + fitPadX + FIT_BREATH;
         if (!(w > 0)) return;
-        w = Math.max(minW, Math.min(maxW, Math.ceil(w) + 2));
+        w = Math.max(minW, Math.min(maxW, Math.ceil(w)));
         if (typeof _excelAutoFittedWidths !== 'undefined') _excelAutoFittedWidths[key] = w;
         h1th.style.minWidth = w + 'px';
         h1th.style.width = w + 'px';
@@ -507,6 +568,8 @@ function _excelAutoFitColumns(dn, onlyCi) {
 }
 if (typeof window !== 'undefined') {
     window._excelCellNaturalWidth = _excelCellNaturalWidth;
+    window._excelCellText = _excelCellText;
+    window._excelMeasureTextWidth = _excelMeasureTextWidth;
     window._excelAutoFitColumns = _excelAutoFitColumns;
 }
 function _excelApplyColWidths(dn) {

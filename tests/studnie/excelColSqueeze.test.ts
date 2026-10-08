@@ -93,11 +93,65 @@ describe('excelColSqueeze scisk do 10px', () => {
         expect(ctx.rendered).toBe('1000');
     });
 
-    test('autofit do najszerszego tekstu (default)', () => {
+    test('autofit mierzy tekst (canvas), nie scrollWidth zywych komorek', () => {
         expect(readJs('excelTableRenderer.js')).toContain('_excelAutoFitColumns(dn)');
-        expect(readJs('excelTableRenderer.js')).toContain('_excelCellNaturalWidth');
+        expect(readJs('excelTableRenderer.js')).toContain('_excelMeasureTextWidth');
+        expect(readJs('excelTableRenderer.js')).toContain('_excelCellText');
         expect(readJs('excelTableRenderer.js')).toContain('_excelAutoFittedWidths');
         expect(readJs('excelColumnResize.js')).toContain('dblclick');
+    });
+
+    test('autofit zwija kolumne do tekstu + luz (nie do szerokosci inputa)', () => {
+        const measure = (t: string) => ({ width: String(t).length * 7 });
+        const styleOf = () => ({});
+        const mkTh = (text: string, colId: string) => ({
+            textContent: text,
+            getAttribute: (a: string) => (a === 'data-excel-col' ? colId : null),
+            style: styleOf(),
+            colSpan: 1
+        });
+        const h1 = [mkTh('RZ. WLOT 1', 'wlaz')];
+        const h3 = [mkTh('WLAZ', 'wlaz')];
+        const mkCell = (value: string) => ({
+            // input BEZ scrollWidth — stary pomiar nie mialby sie do czego przyssac
+            querySelector: (s: string) => (s === 'input' ? { value } : null),
+            textContent: '',
+            style: styleOf()
+        });
+        const bodyRow = { children: [mkCell('5')] };
+        const tbl = {
+            querySelectorAll: (sel: string) => {
+                if (sel === 'thead tr')
+                    return [{ querySelectorAll: () => h3 }, { querySelectorAll: () => h1 }];
+                if (sel === 'tbody tr[data-widx]') return [bodyRow];
+                if (sel === 'tbody tr') return [bodyRow];
+                return [];
+            },
+            querySelector: () => null
+        };
+        const ctx: any = {
+            window: {
+                getComputedStyle: () => ({
+                    font: '11px Inter',
+                    paddingLeft: '4px',
+                    paddingRight: '4px'
+                })
+            },
+            document: {
+                getElementById: (id: string) =>
+                    id === 'excel-table-container' ? { querySelector: () => tbl } : null,
+                createElement: () => ({ getContext: () => ({ font: '', measureText: measure }) })
+            },
+            _excelColWidths: {},
+            _excelColWidthKey: (t: string, c: string) => t + '-' + c,
+            _excelColMinWidth: () => 10
+        };
+        vm.createContext(ctx);
+        vm.runInContext(readJs('excelTableRenderer.js'), ctx);
+        vm.runInContext("_excelAutoFitColumns('1000')", ctx);
+        // najszerszy tekst: 'RZ. WLOT 1' = 10 znakow * 7 = 70 + padX 8 + oddech 10 = 88
+        expect(h1[0].style.width).toBe('88px');
+        expect(bodyRow.children[0].style.width).toBe('88px');
     });
 
     test('_excelCellNaturalWidth bierze input/label/td', () => {
