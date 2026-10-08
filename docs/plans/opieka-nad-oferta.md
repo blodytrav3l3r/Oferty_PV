@@ -100,7 +100,8 @@ Regresja: istniejące search bez filtrów bez zmian; Kartoteka działa; statusy 
 - GO P0.3: POST/GET `/:kind/:id/followups` + testy → commit (`c7f8f8a`). Audyt bezpośrednio przez tx (logAudit ma semantykę warn-only).
 - GO P0.4: filtry LOS w search + `calculateFollowUpHealth` + projekcja `followup` → commit (`703f380`).
 - GO P1: badge + filtr Los + modal `Zapisz kontakt` z timeline w Kartotece → commit (`e645d4f`).
-- GO P2: widget `Opieka nad ofertami` na Pulpicie (`index.html` + loader w `dashboard.js`, agregat z search `totalCount`, zero nowego endpointu) + twarde domknięcie (Zod `superRefine`: `LOST_*` wymaga `loseReason`; lustro w modalu).
+- GO P2: widget `Opieka nad ofertami` na Pulpicie (`index.html` + loader w `dashboard.js`, agregat z search `totalCount`, zero nowego endpointu) + twarde domknięcie (Zod `superRefine`: `LOST_*` wymaga `loseReason`; lustro w modalu) → commit (`a3e2a9c`).
+- GO P3: `GET /followups/stats` (latest przez `ROW_NUMBER`, scope owner+subUsers+shares, fail-closed) — konwersja, `wonValue/lostValue` z `totalBrutto`, причини, konkurencja+śr. cena, perRep, śr. czas do 1. kontaktu; KPI w widgecie Pulpitu (konwersja %, utracona wartość, śr. czas).
 - GO P0.3: POST/GET + walidacje + ownership + testy → commit.
 - GO P0.4: audit atomowy + search + regresja → commit.
 - GO P1: UI Kartoteki → commit. GO P2: widget Pulpit + twarde domknięcie. P3: analityka.

@@ -64,10 +64,18 @@ describe('dashboard loadFollowUpWidget', () => {
         return els;
     };
 
-    test('liczniki z totalCount + top-5 z escapem', async () => {
+    test('liczniki z totalCount + top-5 z escapem + KPI', async () => {
         const calls: string[] = [];
         const els = load(async (url: string) => {
             calls.push(url);
+            if (url.includes('followups/stats')) {
+                return {
+                    ok: true,
+                    json: async () => ({
+                        stats: { conversion: 0.295, lostValue: 12345.678, avgFirstContactH: 30.5 }
+                    })
+                };
+            }
             if (url.includes('sort=followup')) {
                 return {
                     ok: true,
@@ -105,6 +113,9 @@ describe('dashboard loadFollowUpWidget', () => {
         expect(top).toContain('&lt;b&gt;ACME&lt;/b&gt;');
         expect(top).not.toContain('<b>ACME</b>');
         expect(top).toContain('app.html#/kartoteka');
+        expect(els['fu-kpi-conversion'].textContent).toBe('29.5 %');
+        expect(els['fu-kpi-lost'].textContent).toBe('12345.68 PLN');
+        expect(els['fu-kpi-first'].textContent).toBe('30.5 h');
     });
 
     test('brak panelu: cichy return bez fetcha', async () => {

@@ -3,6 +3,7 @@ import ruryCrudRouter from './ruryCrud';
 import studnieCrudRouter from './studnieCrud';
 import crudRouter from './crud';
 import followUpsRouter from './followUps';
+import followUpStatsRouter from './followUpStats';
 import exportsRouter from './exports';
 
 const router = express.Router();
@@ -21,5 +22,9 @@ router.use('/', crudRouter);
 
 // Opieka nad ofertą: POST/GET /:kind/:id/followups (przed /:id nie ma kolizji — 3 segmenty)
 router.use('/', followUpsRouter);
+
+// Opieka nad ofertą (P3): GET /followups/stats — 2 segmenty z literałem,
+// brak kolizji z GET /:id ani /:kind/:id/followups.
+router.use('/', followUpStatsRouter);
 
 export default router;

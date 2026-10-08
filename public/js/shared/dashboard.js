@@ -123,6 +123,31 @@ async function loadFollowUpWidget() {
         set('fu-stat-won', counts.won);
         set('fu-stat-lost', counts.lost);
 
+        // P3: KPI z endpointu analityki (jeden request, scope roli po stronie BE).
+        try {
+            const statsRes = await fetch('/api/offers-rury/followups/stats?t=' + Date.now(), {
+                credentials: 'same-origin'
+            });
+            if (statsRes.ok) {
+                const s = (await statsRes.json()).stats || {};
+                const conv =
+                    typeof s.conversion === 'number' ? (s.conversion * 100).toFixed(1) + ' %' : '–';
+                set('fu-kpi-conversion', conv);
+                set(
+                    'fu-kpi-lost',
+                    typeof s.lostValue === 'number' ? s.lostValue.toFixed(2) + ' PLN' : '–'
+                );
+                set(
+                    'fu-kpi-first',
+                    typeof s.avgFirstContactH === 'number'
+                        ? s.avgFirstContactH.toFixed(1) + ' h'
+                        : '–'
+                );
+            }
+        } catch (e) {
+            logger.warn('dashboard', 'Failed to load followup KPI', e);
+        }
+
         const topRes = await fetch(
             '/api/offers/search?followupStatus=needs_contact&limit=5&sort=followup&t=' + Date.now(),
             { credentials: 'same-origin' }
