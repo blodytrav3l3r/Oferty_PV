@@ -8,6 +8,7 @@ import { validateData } from '../../validators/authSchema';
 import { canReadWithShare, canWriteDoc } from '../../utils/ownership';
 import { logger } from '../../utils/logger';
 import { mapPrismaError } from '../../utils/prismaErrors';
+import { searchCache } from '../../utils/searchCache';
 
 const router = express.Router();
 
@@ -147,6 +148,10 @@ router.post(
                     }
                 });
             });
+
+            // P4.1: follow-up zmienia projekcję search (badge LOS) —
+            // jak każdy CRUD ofert, czyścimy cache po sukcesie (nie w tx).
+            searchCache.invalidateAll();
 
             return res.json({ ok: true, id: fuId });
         } catch (e) {

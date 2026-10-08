@@ -181,6 +181,20 @@ export default {
     },
 
     async submitFollowUp(offerId, kind, overlay) {
+        // P4.1: guard przed podwójnym zapisem (2× Enter/klik = duplikat kontaktu).
+        if (this._fuSubmitting) return;
+        const submitBtn = overlay.querySelector('#fu-contact-form button[type="submit"]');
+        this._fuSubmitting = true;
+        if (submitBtn) submitBtn.disabled = true;
+        try {
+            return await this._submitFollowUpInner(offerId, kind, overlay);
+        } finally {
+            this._fuSubmitting = false;
+            if (submitBtn) submitBtn.disabled = false;
+        }
+    },
+
+    async _submitFollowUpInner(offerId, kind, overlay) {
         const errBox = overlay.querySelector('#fu-error');
         const fail = (msg) => {
             errBox.textContent = msg;

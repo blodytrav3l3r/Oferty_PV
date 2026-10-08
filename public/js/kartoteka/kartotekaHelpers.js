@@ -286,10 +286,10 @@ function followUpBadgeHtml(offer, nowIso) {
         return `<span class="status-badge neutral">${icon('phone')} Do kontaktu</span>`;
     }
     if (fu.outcome === 'WON') {
-        return `<span class="status-badge success">${icon('trophy')} Wygrana u nas</span>`;
+        return `<span class="status-badge success">${icon('check')} Wygrana u nas</span>`;
     }
     if (fu.outcome === 'LOST_COMPETITION') {
-        return `<span class="status-badge danger">${icon('trending-down')} Utracona — konkurencja</span>`;
+        return `<span class="status-badge danger">${icon('x-circle')} Utracona — konkurencja</span>`;
     }
     if (fu.outcome === 'LOST_OTHER') {
         return `<span class="status-badge danger">${icon('x-circle')} Nie zamówił</span>`;

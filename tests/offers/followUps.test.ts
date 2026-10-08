@@ -28,6 +28,10 @@ jest.mock('../../src/utils/logger', () => ({
     }
 }));
 
+jest.mock('../../src/utils/searchCache', () => ({
+    searchCache: { get: jest.fn(), set: jest.fn(), invalidateAll: jest.fn() }
+}));
+
 jest.mock('../../src/prismaClient', () => ({
     __esModule: true,
     default: {
@@ -115,6 +119,22 @@ describe('P0.3 OfferFollowUp — POST/GET', () => {
             entityId: res.body.id,
             action: 'create'
         });
+    });
+
+    it('P4.1: po udanym POST cache search jest czyszczony, po 400 nie', async () => {
+        const { searchCache: cache } = jest.requireMock('../../src/utils/searchCache') as {
+            searchCache: { invalidateAll: jest.Mock };
+        };
+        const res = await request(app).post('/api/offers/rury/o-rury-1/followups').send(validBody);
+        expect(res.status).toBe(200);
+        expect(cache.invalidateAll).toHaveBeenCalledTimes(1);
+
+        cache.invalidateAll.mockClear();
+        const bad = await request(app)
+            .post('/api/offers/rury/o-rury-1/followups')
+            .send({ ...validBody, channel: 'HELLO' });
+        expect(bad.status).toBe(400);
+        expect(cache.invalidateAll).not.toHaveBeenCalled();
     });
 
     it('POST studnie: 200', async () => {
