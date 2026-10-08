@@ -101,6 +101,91 @@ describe('excelColSqueeze scisk do 10px', () => {
         expect(readJs('excelColumnResize.js')).toContain('dblclick');
     });
 
+    test('naglowek H3 w kilku liniach mierzony per linia (nie sklejony)', () => {
+        const measure = (t: string) => ({ width: String(t).length * 7 });
+        const ctx: any = {
+            window: {},
+            document: {
+                createElement: () => ({ getContext: () => ({ font: '', measureText: measure }) })
+            }
+        };
+        vm.createContext(ctx);
+        vm.runInContext(readJs('excelTableRenderer.js'), ctx);
+        ctx.el = {
+            childNodes: [
+                { nodeType: 1, tagName: 'DIV', textContent: 'DN1200' },
+                { nodeType: 1, tagName: 'DIV', textContent: 'JZW-12-625-D' },
+                { nodeType: 1, tagName: 'DIV', textContent: '950 PLN' }
+            ]
+        };
+        // max linii: 'JZW-12-625-D' = 12 znakow * 7 = 84 (sklejone byloby 168+)
+        expect(vm.runInContext('_excelStackedMaxWidth(el, "")', ctx)).toBe(84);
+        ctx.el2 = { textContent: 'KRAG' };
+        expect(vm.runInContext('_excelStackedMaxWidth(el2, "")', ctx)).toBe(28);
+    });
+
+    test('autofit kolumny produktowej bierze najdluzsza linie H3', () => {
+        const measure = (t: string) => ({ width: String(t).length * 7 });
+        const styleOf = () => ({});
+        const mkTh = (text: string, colId: string, kids?: any[]) => ({
+            textContent: text,
+            childNodes: kids,
+            getAttribute: (a: string) => (a === 'data-excel-col' ? colId : null),
+            style: styleOf(),
+            colSpan: 1
+        });
+        const line = (t: string) => ({ nodeType: 1, tagName: 'DIV', textContent: t });
+        const h1 = [mkTh('KRAG', 'krag')];
+        const h3 = [
+            mkTh('DN1200JZW-12-625-D950 PLN', 'krag', [
+                line('DN1200'),
+                line('JZW-12-625-D'),
+                line('950 PLN')
+            ])
+        ];
+        const bodyRow = {
+            children: [
+                {
+                    querySelector: () => null,
+                    textContent: '500',
+                    style: styleOf()
+                }
+            ]
+        };
+        const tbl = {
+            querySelectorAll: (sel: string) => {
+                if (sel === 'thead tr')
+                    return [{ querySelectorAll: () => h3 }, { querySelectorAll: () => h1 }];
+                if (sel === 'tbody tr[data-widx]') return [bodyRow];
+                if (sel === 'tbody tr') return [bodyRow];
+                return [];
+            },
+            querySelector: () => null
+        };
+        const ctx: any = {
+            window: {
+                getComputedStyle: () => ({
+                    font: '11px Inter',
+                    paddingLeft: '4px',
+                    paddingRight: '4px'
+                })
+            },
+            document: {
+                getElementById: (id: string) =>
+                    id === 'excel-table-container' ? { querySelector: () => tbl } : null,
+                createElement: () => ({ getContext: () => ({ font: '', measureText: measure }) })
+            },
+            _excelColWidths: {},
+            _excelColWidthKey: (t: string, c: string) => t + '-' + c,
+            _excelColMinWidth: () => 10
+        };
+        vm.createContext(ctx);
+        vm.runInContext(readJs('excelTableRenderer.js'), ctx);
+        vm.runInContext("_excelAutoFitColumns('1000')", ctx);
+        // 'JZW-12-625-D' = 12 * 7 = 84 + padX 8 + oddech 2 = 94
+        expect(h1[0].style.width).toBe('94px');
+    });
+
     test('autofit zwija kolumne do tekstu + luz (nie do szerokosci inputa)', () => {
         const measure = (t: string) => ({ width: String(t).length * 7 });
         const styleOf = () => ({});

@@ -442,6 +442,29 @@ function _excelMeasureTextWidth(text, font) {
     }
 }
 
+/* Maks. szerokosc tekstu w elemencie liczona PER LINIA: dzieci blokowe
+   (naglowki H3 maja DN / kod / cene w osobnych liniach) mierzone osobno.
+   textContent calosci sklejalby linie w jeden dlugi lancuch i rozjezdzal fit. */
+function _excelStackedMaxWidth(el, font) {
+    if (!el) return 0;
+    try {
+        const kids = el.childNodes;
+        if (!kids || kids.length === 0)
+            return _excelMeasureTextWidth((el.textContent || '').trim(), font);
+        let m = 0;
+        for (let i = 0; i < kids.length; i++) {
+            const n = kids[i];
+            let t = '';
+            if (n.nodeType === 3) t = (n.nodeValue || '').trim();
+            else if (n.nodeType === 1 && n.tagName !== 'BR' && n.tagName !== 'SCRIPT')
+                t = (n.textContent || '').trim();
+            if (t) m = Math.max(m, _excelMeasureTextWidth(t, font));
+        }
+        return m;
+    } catch (_e) {
+        return 0;
+    }
+}
 function _excelFitFont(el) {
     try {
         if (typeof window !== 'undefined' && typeof window.getComputedStyle === 'function' && el) {
@@ -516,14 +539,12 @@ function _excelAutoFitColumns(dn, onlyCi) {
         let w = 0;
         let tw = 0;
         try {
-            if (h1th && typeof h1th.textContent === 'string')
-                tw = Math.max(tw, _excelMeasureTextWidth(h1th.textContent.trim(), fitFont));
-            if (h2ths[ci] && typeof h2ths[ci].textContent === 'string')
-                tw = Math.max(tw, _excelMeasureTextWidth(h2ths[ci].textContent.trim(), fitFont));
+            if (h1th) tw = Math.max(tw, _excelStackedMaxWidth(h1th, fitFont));
+            if (h2ths[ci]) tw = Math.max(tw, _excelStackedMaxWidth(h2ths[ci], fitFont));
             const hit =
                 typeof _excelH3CellForCol === 'function' ? _excelH3CellForCol(h3ths, ci) : null;
-            if (hit && hit.span === 1 && hit.th && typeof hit.th.textContent === 'string')
-                tw = Math.max(tw, _excelMeasureTextWidth(hit.th.textContent.trim(), fitFont));
+            if (hit && hit.span === 1 && hit.th)
+                tw = Math.max(tw, _excelStackedMaxWidth(hit.th, fitFont));
             for (let r = 0; r < rows.length; r++) {
                 const cell = rows[r].children[ci];
                 if (cell) tw = Math.max(tw, _excelMeasureTextWidth(_excelCellText(cell), fitFont));
@@ -570,6 +591,7 @@ if (typeof window !== 'undefined') {
     window._excelCellNaturalWidth = _excelCellNaturalWidth;
     window._excelCellText = _excelCellText;
     window._excelMeasureTextWidth = _excelMeasureTextWidth;
+    window._excelStackedMaxWidth = _excelStackedMaxWidth;
     window._excelAutoFitColumns = _excelAutoFitColumns;
 }
 function _excelApplyColWidths(dn) {
