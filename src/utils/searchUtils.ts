@@ -5,6 +5,8 @@ import { buildFts5Query } from './fts5Sync';
 // (YYYY-MM-DDTHH:MM:SS(.mmm)Z) — preset "Dzisiaj/7d/30d/miesiąc" (resolveDatePreset).
 const DATE_PARAM_RE = /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}(\.\d{1,3})?Z?)?$/;
 
+export type FollowupStatus = 'all' | 'needs_contact' | 'in_progress' | 'won' | 'lost';
+
 export interface SearchParams {
     q: string;
     type: 'all' | 'offer' | 'studnia_oferta';
@@ -12,10 +14,14 @@ export interface SearchParams {
     dateTo: string;
     userId: string;
     orderStatus: 'all' | 'with_order' | 'without_order';
+    followupStatus: FollowupStatus;
+    overdueOnly: boolean;
+    nextContactFrom: string;
+    nextContactTo: string;
     cursor: string;
     cursorId: string;
     limit: number;
-    sort: 'createdAt' | 'offer_number';
+    sort: 'createdAt' | 'offer_number' | 'followup';
     order: 'asc' | 'desc';
 }
 
@@ -37,10 +43,24 @@ export function parseSearchParams(query: Record<string, unknown>): SearchParams 
         orderStatus: ['all', 'with_order', 'without_order'].includes(query.orderStatus as string)
             ? (query.orderStatus as SearchParams['orderStatus'])
             : 'all',
+        followupStatus: (
+            ['all', 'needs_contact', 'in_progress', 'won', 'lost'] as FollowupStatus[]
+        ).includes(query.followupStatus as FollowupStatus)
+            ? (query.followupStatus as FollowupStatus)
+            : 'all',
+        overdueOnly: query.overdueOnly === true || query.overdueOnly === 'true',
+        nextContactFrom:
+            typeof query.nextContactFrom === 'string' && DATE_PARAM_RE.test(query.nextContactFrom)
+                ? query.nextContactFrom
+                : '',
+        nextContactTo:
+            typeof query.nextContactTo === 'string' && DATE_PARAM_RE.test(query.nextContactTo)
+                ? query.nextContactTo
+                : '',
         cursor: typeof query.cursor === 'string' ? query.cursor : '',
         cursorId: typeof query.cursorId === 'string' ? query.cursorId : '',
         limit: Math.min(100, Math.max(1, parseInt(String(query.limit), 10) || 50)),
-        sort: ['createdAt', 'offer_number'].includes(query.sort as string)
+        sort: ['createdAt', 'offer_number', 'followup'].includes(query.sort as string)
             ? (query.sort as SearchParams['sort'])
             : 'createdAt',
         order: query.order === 'asc' ? 'asc' : 'desc'
@@ -209,6 +229,75 @@ export function buildOrderStatusSql(orderStatus: SearchParams['orderStatus']): {
     return { joinSql: Prisma.empty, whereSql: Prisma.empty };
 }
 
+/**
+ * Opieka nad ofertą (P0.4): kolumny latest follow-up dla gałęzi UNION.
+ * latest = ORDER BY contactedAt DESC, createdAt DESC LIMIT 1 (nie MAX —
+ * późniejszy zapis z wcześniejszą datą nie może nadpisać terminu).
+ * Zwraca fragment listy SELECT z wiodącym przecinkiem.
+ */
+export function followUpColumnsSql(kind: 'rury' | 'studnie', alias: string): Prisma.Sql {
+    const a = Prisma.raw(alias);
+    const latestWhere = Prisma.sql`"offerKind" = ${kind} AND "offerId" = ${a}.id`;
+    const latestOrder = Prisma.sql`ORDER BY "contactedAt" DESC, "createdAt" DESC LIMIT 1`;
+    return Prisma.sql`,
+        (SELECT outcome FROM offer_follow_ups WHERE ${latestWhere} ${latestOrder}) AS "_fu_outcome",
+        (SELECT "nextContactAt" FROM offer_follow_ups WHERE ${latestWhere} ${latestOrder}) AS "_fu_next",
+        (SELECT "contactedAt" FROM offer_follow_ups WHERE ${latestWhere} ${latestOrder}) AS "_fu_last"`;
+}
+
+export interface FollowUpFilterInput {
+    followupStatus: FollowupStatus;
+    overdueOnly: boolean;
+    nextContactFrom: string;
+    nextContactTo: string;
+    /** ISO-8601 UTC "teraz" — parametr, nie NOW() w SQL (stabilne w requeście). */
+    nowIso: string;
+}
+
+/**
+ * Warunki LOS na poziomie combined (bez słowa WHERE — dokleja je caller).
+ * Lustro calculateFollowUpHealth (src/utils/followUpHealth.ts).
+ */
+export function buildFollowUpConditions(input: FollowUpFilterInput): Prisma.Sql[] {
+    const conds: Prisma.Sql[] = [];
+    const outcome = Prisma.sql`combined."_fu_outcome"`;
+    const next = Prisma.sql`combined."_fu_next"`;
+    const openOrNull = Prisma.sql`(${outcome} IS NULL OR ${outcome} = 'OPEN')`;
+
+    if (input.followupStatus === 'won') {
+        conds.push(Prisma.sql`${outcome} = 'WON'`);
+    } else if (input.followupStatus === 'lost') {
+        conds.push(Prisma.sql`${outcome} IN ('LOST_COMPETITION', 'LOST_OTHER', 'ABANDONED')`);
+    } else if (input.followupStatus === 'needs_contact') {
+        conds.push(Prisma.sql`${openOrNull} AND (${next} IS NULL OR ${next} <= ${input.nowIso})`);
+    } else if (input.followupStatus === 'in_progress') {
+        conds.push(Prisma.sql`${outcome} = 'OPEN' AND ${next} > ${input.nowIso}`);
+    }
+
+    if (input.overdueOnly) {
+        conds.push(Prisma.sql`${openOrNull} AND ${next} <= ${input.nowIso}`);
+    }
+    if (input.nextContactFrom) {
+        conds.push(Prisma.sql`${next} >= ${input.nextContactFrom}`);
+    }
+    if (input.nextContactTo) {
+        conds.push(Prisma.sql`${next} <= ${input.nextContactTo}`);
+    }
+    return conds;
+}
+
+/**
+ * Sort "Do kontaktu": zaległe najpierw (bucket 0: brak wyniku/OPEN
+ * z terminem minionym lub bez terminu), potem zaplanowane, potem
+ * zamknięte. W buckecie 0 brak terminu = najstarsza zaległość.
+ * Ustalony kierunek — params.order ignorowane w tym trybie.
+ */
+export function buildFollowUpOrderBy(nowIso: string): Prisma.Sql {
+    const outcome = Prisma.sql`combined."_fu_outcome"`;
+    const next = Prisma.sql`combined."_fu_next"`;
+    return Prisma.sql`CASE WHEN (${outcome} IS NULL OR ${outcome} = 'OPEN') AND (${next} IS NULL OR ${next} <= ${nowIso}) THEN 0 WHEN ${outcome} = 'OPEN' AND ${next} > ${nowIso} THEN 1 ELSE 2 END ASC, COALESCE(${next}, '0000') ASC, combined."createdAt" DESC, combined.id DESC`;
+}
+
 export interface RawOfferRow {
     id: string;
     userId: string | null;
@@ -241,6 +330,9 @@ export interface RawOfferRow {
     d_offerNumber: string | null;
     pricelistVersionId: string | null;
     history: string | null;
+    _fu_outcome: string | null;
+    _fu_next: string | null;
+    _fu_last: string | null;
     _type: string;
     transportCost: number | null;
     _orderCount: number | bigint;
@@ -266,6 +358,11 @@ export interface SearchOfferRowMapped {
     clientNip: string;
     clientNumber: string | null;
     type: 'offer' | 'studnia_oferta';
+    followup: {
+        outcome: string | null;
+        nextContactAt: string | null;
+        lastContactAt: string | null;
+    } | null;
     _orderCount: number;
     transportCost: number | null;
     number: string;
@@ -296,6 +393,15 @@ export function mapOfferRow(row: RawOfferRow): SearchOfferRowMapped {
     offer.type = row._type === 'studnie' ? 'studnia_oferta' : 'offer';
     offer.number = row.offer_number || '';
     offer._orderCount = Number(row._orderCount);
+    // Opieka nad ofertą (P0.4): latest follow-up jako projekcja do badge w P1.
+    offer.followup =
+        row._fu_outcome === null && row._fu_next === null && row._fu_last === null
+            ? null
+            : {
+                  outcome: row._fu_outcome,
+                  nextContactAt: row._fu_next,
+                  lastContactAt: row._fu_last
+              };
 
     // P1-C: data to projekcja (nie pełny blob). Małe JSON parsowane lokalnie.
     const data: Record<string, unknown> = {};

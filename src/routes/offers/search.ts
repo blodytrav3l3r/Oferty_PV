@@ -12,6 +12,9 @@ import {
     parseSearchParams,
     buildWhereParts,
     buildOrderStatusSql,
+    buildFollowUpConditions,
+    buildFollowUpOrderBy,
+    followUpColumnsSql,
     mapOfferRow,
     RawOfferRow
 } from '../../utils/searchUtils';
@@ -35,6 +38,17 @@ router.get('/', requireAuth, async (req, res) => {
             return res.json(cached);
         }
 
+        // Tryb follow-up: sortowanie po zaległości, nie po createdAt —
+        // kursor paginacji (createdAt) jest wtedy niezgodny, więc go pomijamy
+        // (v1: widok "Do kontaktu" bez głębokiej paginacji, hasMore działa).
+        const followupMode =
+            params.followupStatus !== 'all' ||
+            params.overdueOnly ||
+            params.nextContactFrom !== '' ||
+            params.nextContactTo !== '' ||
+            params.sort === 'followup';
+        const nowIso = new Date().toISOString();
+
         // Filtr dat obejmuje też daty zamówień (OR EXISTS per gałąź UNION).
         const buildBranchParts = (orderRef: { table: string; column: string; alias: string }) =>
             buildWhereParts({
@@ -42,8 +56,8 @@ router.get('/', requireAuth, async (req, res) => {
                 dateFrom: params.dateFrom,
                 dateTo: params.dateTo,
                 userId: params.userId,
-                cursor: params.cursor,
-                cursorId: params.cursorId,
+                cursor: followupMode ? '' : params.cursor,
+                cursorId: followupMode ? '' : params.cursorId,
                 sort: params.sort,
                 order: params.order,
                 orderStatus: params.orderStatus,
@@ -84,7 +98,7 @@ router.get('/', requireAuth, async (req, res) => {
                 : params.type === 'studnia_oferta'
                   ? Prisma.sql`combined."_type" = 'studnie'`
                   : Prisma.empty;
-        const combinedWhere =
+        let combinedWhere =
             orderStatusWhere !== Prisma.empty && typeWhere !== Prisma.empty
                 ? Prisma.sql`${orderStatusWhere} AND ${typeWhere}`
                 : orderStatusWhere !== Prisma.empty
@@ -93,9 +107,30 @@ router.get('/', requireAuth, async (req, res) => {
                     ? Prisma.sql`WHERE ${typeWhere}`
                     : Prisma.empty;
 
+        // Opieka nad ofertą (P0.4): warunki LOS doklejane AND (działają też
+        // samodzielnie — combinedWhere dostaje wtedy własne WHERE).
+        const followupConds = buildFollowUpConditions({
+            followupStatus: params.followupStatus,
+            overdueOnly: params.overdueOnly,
+            nextContactFrom: params.nextContactFrom,
+            nextContactTo: params.nextContactTo,
+            nowIso
+        });
+        if (followupConds.length > 0) {
+            const followupSql = Prisma.sql`${Prisma.join(followupConds, ' AND ')}`;
+            combinedWhere =
+                combinedWhere !== Prisma.empty
+                    ? Prisma.sql`${combinedWhere} AND ${followupSql}`
+                    : Prisma.sql`WHERE ${followupSql}`;
+        }
+
         const sortDir = params.order === 'asc' ? 'ASC' : 'DESC';
         const allowedSort = ['createdAt', 'offer_number'];
         const sortCol = allowedSort.includes(params.sort) ? params.sort : 'createdAt';
+        const orderBySql =
+            params.sort === 'followup'
+                ? buildFollowUpOrderBy(nowIso)
+                : Prisma.sql`${Prisma.raw(sortCol)} ${Prisma.raw(sortDir)}, id ${Prisma.raw(sortDir)}`;
         const limitVal = Math.min(params.limit, SEARCH_LIMIT_MAX);
 
         const sql = Prisma.sql`
@@ -149,6 +184,8 @@ router.get('/', requireAuth, async (req, res) => {
                     json_extract(o.data, '$.offerNumber') AS "d_offerNumber",
                     json_extract(o.data, '$.transportSeparate') AS "d_transportSeparate",
                     o."pricelistVersionId" AS "pricelistVersionId"
+                    -- Opieka nad ofertą (P0.4): latest follow-up do filtra LOS i badge.
+                    ${followUpColumnsSql('rury', 'o')}
                 FROM offers_rel o
                 LEFT JOIN (
                     SELECT "offerId", COUNT(*) as order_count
@@ -211,6 +248,8 @@ router.get('/', requireAuth, async (req, res) => {
                     json_extract(s.data, '$.offerNumber') AS "d_offerNumber",
                     json_extract(s.data, '$.transportSeparate') AS "d_transportSeparate",
                     s."pricelistVersionId" AS "pricelistVersionId"
+                    -- Opieka nad ofertą (P0.4): jak wyżej (kind studnie).
+                    ${followUpColumnsSql('studnie', 's')}
                 FROM offers_studnie_rel s
                 LEFT JOIN (
                     SELECT "offerStudnieId", COUNT(*) as order_count
@@ -220,7 +259,7 @@ router.get('/', requireAuth, async (req, res) => {
                 ${whereSqlStudnie}
             ) AS combined
             ${combinedWhere}
-            ORDER BY ${Prisma.raw(sortCol)} ${Prisma.raw(sortDir)}, id ${Prisma.raw(sortDir)}
+            ORDER BY ${orderBySql}
             LIMIT ${limitVal + 1}
         `;
 
@@ -231,7 +270,7 @@ router.get('/', requireAuth, async (req, res) => {
 
         let nextCursor: string | null = null;
         let nextCursorId: string | null = null;
-        if (hasMore && dataRows.length > 0) {
+        if (hasMore && dataRows.length > 0 && !followupMode) {
             const last = dataRows[dataRows.length - 1];
             nextCursor = last.createdAt;
             nextCursorId = last.id;
