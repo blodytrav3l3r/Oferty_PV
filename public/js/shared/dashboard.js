@@ -110,18 +110,21 @@ async function loadFollowUpWidget() {
         if (el) el.textContent = String(v);
     };
     try {
-        const counts = {};
-        for (const st of ['needs_contact', 'in_progress', 'won', 'lost']) {
-            const res = await fetch(
-                '/api/offers/search?followupStatus=' + st + '&limit=1&t=' + Date.now(),
-                { credentials: 'same-origin' }
-            );
-            counts[st] = res.ok ? ((await res.json()).totalCount ?? 0) : 0;
-        }
-        set('fu-stat-needs', counts.needs_contact);
-        set('fu-stat-progress', counts.in_progress);
-        set('fu-stat-won', counts.won);
-        set('fu-stat-lost', counts.lost);
+        // P4.2: niezależne requesty współbieżnie (kolejność z destrukturyzacji).
+        const countFetch = (st) =>
+            fetch('/api/offers/search?followupStatus=' + st + '&limit=1&t=' + Date.now(), {
+                credentials: 'same-origin'
+            })
+                .then((res) => (res.ok ? res.json() : { totalCount: 0 }))
+                .then((json) => json.totalCount ?? 0)
+                .catch(() => 0);
+        const [needs, progress, won, lost] = await Promise.all(
+            ['needs_contact', 'in_progress', 'won', 'lost'].map(countFetch)
+        );
+        set('fu-stat-needs', needs);
+        set('fu-stat-progress', progress);
+        set('fu-stat-won', won);
+        set('fu-stat-lost', lost);
 
         // P3: KPI z endpointu analityki (jeden request, scope roli po stronie BE).
         try {

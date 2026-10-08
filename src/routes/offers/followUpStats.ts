@@ -2,7 +2,7 @@ import express from 'express';
 import prisma, { Prisma } from '../../prismaClient';
 import { requireAuth, AuthenticatedRequest } from '../../middleware/auth';
 import { getSharedIdsForUser } from '../../utils/ownership';
-import { normalizedCreatedAtSql } from '../../utils/searchUtils';
+import { normalizedCreatedAtSql, toNum } from '../../utils/searchUtils';
 import { logger } from '../../utils/logger';
 import { mapPrismaError } from '../../utils/prismaErrors';
 
@@ -48,12 +48,8 @@ function followUpScope(scopeRury: Prisma.Sql, scopeStudnie: Prisma.Sql): Prisma.
     )`;
 }
 
-const num = (v: unknown): number => {
-    if (typeof v === 'number') return v;
-    if (typeof v === 'bigint') return Number(v);
-    if (typeof v === 'string' && v.trim() !== '' && !isNaN(Number(v))) return Number(v);
-    return 0;
-};
+// P4.2: jeden kontrakt konwersji (toNum z searchUtils), brak lokalnych wariantów.
+const num = (v: unknown): number => toNum(v as number | bigint | string | null | undefined) ?? 0;
 
 /**
  * GET /followups/stats — analityka opieki nad ofertą (P3, read-only).
@@ -90,77 +86,94 @@ router.get('/followups/stats', requireAuth, async (req, res) => {
             ) f WHERE f."rn" = 1
         )`;
 
-        const outcomeRows = (await prisma.$queryRaw(
-            Prisma.sql`WITH ${latestCte} SELECT "outcome", COUNT(*) AS "c" FROM latest GROUP BY "outcome"`
-        )) as Array<{ outcome: string; c: number | bigint }>;
-
-        const totalsRury = (await prisma.$queryRaw(
-            Prisma.sql`SELECT COUNT(*) AS "total",
-                SUM(CASE WHEN EXISTS (SELECT 1 FROM offer_follow_ups f WHERE f."offerKind" = 'rury' AND f."offerId" = o."id") THEN 0 ELSE 1 END) AS "nocontact"
-                FROM offers_rel o WHERE ${scopeRury}`
-        )) as Array<{ total: number | bigint; nocontact: number | bigint | null }>;
-        const totalsStudnie = (await prisma.$queryRaw(
-            Prisma.sql`SELECT COUNT(*) AS "total",
-                SUM(CASE WHEN EXISTS (SELECT 1 FROM offer_follow_ups f WHERE f."offerKind" = 'studnie' AND f."offerId" = s."id") THEN 0 ELSE 1 END) AS "nocontact"
-                FROM offers_studnie_rel s WHERE ${scopeStudnie}`
-        )) as Array<{ total: number | bigint; nocontact: number | bigint | null }>;
-
-        const reasonRows = (await prisma.$queryRaw(
-            Prisma.sql`WITH ${latestCte} SELECT "loseReason" AS "r", COUNT(*) AS "c" FROM latest
-                WHERE "outcome" IN ('LOST_COMPETITION', 'LOST_OTHER') GROUP BY "loseReason" ORDER BY "c" DESC`
-        )) as Array<{ r: string | null; c: number | bigint }>;
-
-        const competitorRows = (await prisma.$queryRaw(
-            Prisma.sql`WITH ${latestCte} SELECT "competitor" AS "cp", COUNT(*) AS "c", AVG("competitorPrice") AS "avg"
-                FROM latest WHERE "outcome" = 'LOST_COMPETITION' GROUP BY "competitor" ORDER BY "c" DESC`
-        )) as Array<{ cp: string | null; c: number | bigint; avg: number | null }>;
-
-        const valueRows = (await prisma.$queryRaw(
-            Prisma.sql`WITH ${latestCte}
-                SELECT 'won' AS "k", SUM(CAST(json_extract(o."data", '$.totalBrutto') AS REAL)) AS "v"
-                FROM offers_rel o JOIN latest l ON l."offerKind" = 'rury' AND l."offerId" = o."id"
-                WHERE l."outcome" = 'WON' AND ${scopeRury}
-                UNION ALL
-                SELECT 'won', SUM(CAST(json_extract(s."data", '$.totalBrutto') AS REAL))
-                FROM offers_studnie_rel s JOIN latest l ON l."offerKind" = 'studnie' AND l."offerId" = s."id"
-                WHERE l."outcome" = 'WON' AND ${scopeStudnie}
-                UNION ALL
-                SELECT 'lost', SUM(CAST(json_extract(o."data", '$.totalBrutto') AS REAL))
-                FROM offers_rel o JOIN latest l ON l."offerKind" = 'rury' AND l."offerId" = o."id"
-                WHERE l."outcome" IN ('LOST_COMPETITION', 'LOST_OTHER') AND ${scopeRury}
-                UNION ALL
-                SELECT 'lost', SUM(CAST(json_extract(s."data", '$.totalBrutto') AS REAL))
-                FROM offers_studnie_rel s JOIN latest l ON l."offerKind" = 'studnie' AND l."offerId" = s."id"
-                WHERE l."outcome" IN ('LOST_COMPETITION', 'LOST_OTHER') AND ${scopeStudnie}`
-        )) as Array<{ k: string; v: number | null }>;
-
-        const repRows = (await prisma.$queryRaw(
-            Prisma.sql`SELECT f."createdByUserId" AS "u", COUNT(*) AS "contacts",
-                COUNT(DISTINCT f."offerKind" || ':' || f."offerId") AS "offers",
-                SUM(CASE WHEN f."outcome" = 'WON' THEN 1 ELSE 0 END) AS "wins"
-                FROM offer_follow_ups f WHERE ${fuScope} GROUP BY f."createdByUserId" ORDER BY "contacts" DESC`
-        )) as Array<{
-            u: string;
-            contacts: number | bigint;
-            offers: number | bigint;
-            wins: number | bigint | null;
-        }>;
-
-        // Średni czas do pierwszego kontaktu (globalnie): pierwszy kontakt
-        // oferty vs data utworzenia oferty (ISO lub epoch-ms — reuse normalizacji).
-        const firstRows = (await prisma.$queryRaw(
-            Prisma.sql`SELECT AVG((julianday("first_c") - julianday("oc")) * 24) AS "h" FROM (
-                SELECT (SELECT MIN(f2."contactedAt") FROM offer_follow_ups f2
-                        WHERE f2."offerKind" = 'rury' AND f2."offerId" = o."id") AS "first_c",
-                    ${normalizedCreatedAtSql('o."createdAt"')} AS "oc"
-                FROM offers_rel o WHERE ${scopeRury}
-                UNION ALL
-                SELECT (SELECT MIN(f2."contactedAt") FROM offer_follow_ups f2
-                        WHERE f2."offerKind" = 'studnie' AND f2."offerId" = s."id"),
-                    ${normalizedCreatedAtSql('s."createdAt"')}
-                FROM offers_studnie_rel s WHERE ${scopeStudnie}
-            ) WHERE "first_c" IS NOT NULL AND "oc" IS NOT NULL`
-        )) as Array<{ h: number | null }>;
+        // P4.2: 8 niezależnych SELECTów współbieżnie (brak zależności
+        // wynikowych, read-only). Kolejność wyników z destrukturyzacji.
+        const [
+            outcomeRows,
+            totalsRury,
+            totalsStudnie,
+            reasonRows,
+            competitorRows,
+            valueRows,
+            repRows,
+            firstRows
+        ] = (await Promise.all([
+            prisma.$queryRaw(
+                Prisma.sql`WITH ${latestCte} SELECT "outcome", COUNT(*) AS "c" FROM latest GROUP BY "outcome"`
+            ),
+            prisma.$queryRaw(
+                Prisma.sql`SELECT COUNT(*) AS "total",
+                    SUM(CASE WHEN EXISTS (SELECT 1 FROM offer_follow_ups f WHERE f."offerKind" = 'rury' AND f."offerId" = o."id") THEN 0 ELSE 1 END) AS "nocontact"
+                    FROM offers_rel o WHERE ${scopeRury}`
+            ),
+            prisma.$queryRaw(
+                Prisma.sql`SELECT COUNT(*) AS "total",
+                    SUM(CASE WHEN EXISTS (SELECT 1 FROM offer_follow_ups f WHERE f."offerKind" = 'studnie' AND f."offerId" = s."id") THEN 0 ELSE 1 END) AS "nocontact"
+                    FROM offers_studnie_rel s WHERE ${scopeStudnie}`
+            ),
+            prisma.$queryRaw(
+                Prisma.sql`WITH ${latestCte} SELECT "loseReason" AS "r", COUNT(*) AS "c" FROM latest
+                    WHERE "outcome" IN ('LOST_COMPETITION', 'LOST_OTHER') GROUP BY "loseReason" ORDER BY "c" DESC`
+            ),
+            prisma.$queryRaw(
+                Prisma.sql`WITH ${latestCte} SELECT "competitor" AS "cp", COUNT(*) AS "c", AVG("competitorPrice") AS "avg"
+                    FROM latest WHERE "outcome" = 'LOST_COMPETITION' GROUP BY "competitor" ORDER BY "c" DESC`
+            ),
+            // CTE latest już scoped — join nie dokleja scope drugi raz (P4.2).
+            prisma.$queryRaw(
+                Prisma.sql`WITH ${latestCte}
+                    SELECT 'won' AS "k", SUM(CAST(json_extract(o."data", '$.totalBrutto') AS REAL)) AS "v"
+                    FROM offers_rel o JOIN latest l ON l."offerKind" = 'rury' AND l."offerId" = o."id"
+                    WHERE l."outcome" = 'WON'
+                    UNION ALL
+                    SELECT 'won', SUM(CAST(json_extract(s."data", '$.totalBrutto') AS REAL))
+                    FROM offers_studnie_rel s JOIN latest l ON l."offerKind" = 'studnie' AND l."offerId" = s."id"
+                    WHERE l."outcome" = 'WON'
+                    UNION ALL
+                    SELECT 'lost', SUM(CAST(json_extract(o."data", '$.totalBrutto') AS REAL))
+                    FROM offers_rel o JOIN latest l ON l."offerKind" = 'rury' AND l."offerId" = o."id"
+                    WHERE l."outcome" IN ('LOST_COMPETITION', 'LOST_OTHER')
+                    UNION ALL
+                    SELECT 'lost', SUM(CAST(json_extract(s."data", '$.totalBrutto') AS REAL))
+                    FROM offers_studnie_rel s JOIN latest l ON l."offerKind" = 'studnie' AND l."offerId" = s."id"
+                    WHERE l."outcome" IN ('LOST_COMPETITION', 'LOST_OTHER')`
+            ),
+            prisma.$queryRaw(
+                Prisma.sql`SELECT f."createdByUserId" AS "u", COUNT(*) AS "contacts",
+                    COUNT(DISTINCT f."offerKind" || ':' || f."offerId") AS "offers",
+                    SUM(CASE WHEN f."outcome" = 'WON' THEN 1 ELSE 0 END) AS "wins"
+                    FROM offer_follow_ups f WHERE ${fuScope} GROUP BY f."createdByUserId" ORDER BY "contacts" DESC`
+            ),
+            // Średni czas do pierwszego kontaktu (globalnie): pierwszy kontakt
+            // oferty vs data utworzenia oferty (ISO lub epoch-ms — reuse normalizacji).
+            prisma.$queryRaw(
+                Prisma.sql`SELECT AVG((julianday("first_c") - julianday("oc")) * 24) AS "h" FROM (
+                    SELECT (SELECT MIN(f2."contactedAt") FROM offer_follow_ups f2
+                            WHERE f2."offerKind" = 'rury' AND f2."offerId" = o."id") AS "first_c",
+                        ${normalizedCreatedAtSql('o."createdAt"')} AS "oc"
+                    FROM offers_rel o WHERE ${scopeRury}
+                    UNION ALL
+                    SELECT (SELECT MIN(f2."contactedAt") FROM offer_follow_ups f2
+                            WHERE f2."offerKind" = 'studnie' AND f2."offerId" = s."id"),
+                        ${normalizedCreatedAtSql('s."createdAt"')}
+                    FROM offers_studnie_rel s WHERE ${scopeStudnie}
+                ) WHERE "first_c" IS NOT NULL AND "oc" IS NOT NULL`
+            )
+        ])) as [
+            Array<{ outcome: string; c: number | bigint }>,
+            Array<{ total: number | bigint; nocontact: number | bigint | null }>,
+            Array<{ total: number | bigint; nocontact: number | bigint | null }>,
+            Array<{ r: string | null; c: number | bigint }>,
+            Array<{ cp: string | null; c: number | bigint; avg: number | null }>,
+            Array<{ k: string; v: number | null }>,
+            Array<{
+                u: string;
+                contacts: number | bigint;
+                offers: number | bigint;
+                wins: number | bigint | null;
+            }>,
+            Array<{ h: number | null }>
+        ];
 
         const outcomes: Record<string, number> = {};
         for (const r of outcomeRows) outcomes[r.outcome] = num(r.c);
