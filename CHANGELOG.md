@@ -4,6 +4,23 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+### [1.41.2](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.41.1...v1.41.2) (2026-10-08)
+
+### Features
+
+- **api:** share oferty obejmuje odczyt zamówień ([818f4dc](https://github.com/blodytrav3l3r/Oferty_PV/commit/818f4dc576ac17eed0ec4fe2f8de008c6d025fe1))
+
+### Bug Fixes
+
+- **offers:** load czysci flagi brudu i baseline saved ([af3f749](https://github.com/blodytrav3l3r/Oferty_PV/commit/af3f74940e4217f738d3a81bc86a96f42b02c52c))
+- **rury:** pojedynczy awans kreatora na klik dalej ([6ef4e3f](https://github.com/blodytrav3l3r/Oferty_PV/commit/6ef4e3ff9fbfdcba2c823a2bc4f247a40089bca6))
+- **rury:** remove unused rury order manager stub ([ddbde7a](https://github.com/blodytrav3l3r/Oferty_PV/commit/ddbde7afcf7d4d30baeeb23cc7719ed074161325))
+- **studnie:** autofit naglowkow h3 per linia ([4d912ec](https://github.com/blodytrav3l3r/Oferty_PV/commit/4d912ec4b75f41bd0982b62d6bb1b5408f4d4745))
+- **studnie:** ciasny autofit kolumn excela do tekstu ([67fc342](https://github.com/blodytrav3l3r/Oferty_PV/commit/67fc342d9bfcb928d9f17cda9ae4e222bd7d73a7))
+- **studnie:** oddech autofitu kolumn 2px ([a89427c](https://github.com/blodytrav3l3r/Oferty_PV/commit/a89427cde4e4d844b1042e85a4fff391d25031c3))
+- **ui:** kolejnosc pol wersji cennika w modalu ([cbeebd5](https://github.com/blodytrav3l3r/Oferty_PV/commit/cbeebd5173c2a1320c041003f6137ae9be3c9289))
+- **ui:** wersja i data obowiazywania obok siebie ([3fa7ecd](https://github.com/blodytrav3l3r/Oferty_PV/commit/3fa7ecde6a22d33ad3cbda7e8ef46328e4881ea9))
+
 ### [1.41.1](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.40.0...v1.41.1) (2026-10-07)
 
 ### Features
