@@ -360,6 +360,57 @@ model offers_studnie_rel {
   @@index([userId, updatedAt, id], map: "idx_offersstud_user_updated_id")
 }
 
+// Opieka nad oferta (P0.2): historia kontaktow follow-up, append-only.
+// Jedna tabela dla rury+studnie (offerKind+offerId, walidacja w API —
+// SQLite/Prisma nie wspiera polimorficznego FK). Daty jako String ISO-8601
+// UTC (konwencja projektu: createdAt/updatedAt wszedzie String).
+// Status karty = latest wpis wg (contactedAt, createdAt), nie MAX().
+enum OfferFollowUpChannel {
+  PHONE
+  EMAIL
+  SMS
+  WHATSAPP
+  MEETING
+  OTHER
+}
+
+enum OfferFollowUpResult {
+  CONTACTED
+  NO_ANSWER
+  BUSY
+  CALLBACK_REQUESTED
+  WRONG_NUMBER
+}
+
+enum OfferFollowUpOutcome {
+  OPEN
+  WON
+  LOST_COMPETITION
+  LOST_OTHER
+  ABANDONED
+}
+
+model offer_follow_ups {
+  id              String  @id
+  offerKind       String
+  offerId         String
+  createdByUserId String
+  createdAt       String?
+  contactedAt     String
+  channel         OfferFollowUpChannel
+  result          OfferFollowUpResult
+  durationMin     Int?
+  note            String?
+  nextContactAt   String?
+  outcome         OfferFollowUpOutcome @default(OPEN)
+  loseReason      String?
+  competitor      String?
+  competitorPrice Float?
+
+  @@index([offerKind, offerId, contactedAt], map: "idx_followups_offer_contacted")
+  @@index([createdByUserId, nextContactAt], map: "idx_followups_user_next")
+}
+
 // Liczniki numeracji ofert
 model order_counters {
   userId     String
