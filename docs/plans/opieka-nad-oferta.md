@@ -1,4 +1,12 @@
-# Opieka nad ofertą — plan (NIE WYKONYWAĆ bez GO na kod)
+# Opieka nad ofertą — plan ZREALIZOWANY I OPUBLIKOWANY
+
+Checkpoint: `5ed0d25` na `origin/main` (push 2026-10-08, pre-push zielony,
+3/3 lite-run PASS 418/418 przed pushem). Dalsze prace tylko za nowym GO.
+Otwarty finding (osobny temat, nie blokuje): flakiness workerów
+(`setupDbIsolation` / współbieżność SQLite) — rotujące pojedyncze failery
+pod pełnym obciążeniem, solo zielone. Bez zmian timeoutów/testów bez dowodów.
+
+Oryginalny plan (NIE WYKONYWAĆ bez GO na kod) — zachowany poniżej dla historii:
 
 Status: PLAN v2 po recenzji, implementacja czeka na GO per checkpoint (nie jeden GO na całość).
 Decyzja architektoniczna: Kartoteka = centrum, Pulpit = agregat. Bez nowej głównej zakładki. Nazwa UI: „Opieka nad ofertą", widok: „Do kontaktu".
