@@ -14,6 +14,7 @@ import {
     buildOrderStatusSql,
     buildFollowUpConditions,
     buildFollowUpOrderBy,
+    buildOffersCountSql,
     followUpColumnsSql,
     mapOfferRow,
     RawOfferRow
@@ -279,14 +280,7 @@ router.get('/', requireAuth, async (req, res) => {
         let totalCount: number | null = null;
         if (!params.cursor) {
             // Aliasy o/s jak w głównym SELECT — wymaga ich OR EXISTS z filtra dat.
-            const countSql = Prisma.sql`
-                SELECT COUNT(*) as cnt FROM (
-                    SELECT id, 'rury' AS "_type" FROM offers_rel o ${whereSqlRury}
-                    UNION ALL
-                    SELECT id, 'studnie' AS "_type" FROM offers_studnie_rel s ${whereSqlStudnie}
-                ) AS combined
-                ${combinedWhere}
-            `;
+            const countSql = buildOffersCountSql(whereSqlRury, whereSqlStudnie, combinedWhere);
             const countResult = (await prisma.$queryRaw(countSql)) as { cnt: number | bigint }[];
             totalCount = Number(countResult[0]?.cnt || 0);
         }

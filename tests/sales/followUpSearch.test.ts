@@ -2,6 +2,7 @@ import {
     parseSearchParams,
     buildFollowUpConditions,
     buildFollowUpOrderBy,
+    buildOffersCountSql,
     followUpColumnsSql,
     mapOfferRow,
     RawOfferRow
@@ -153,6 +154,20 @@ describe('P0.4 buildFollowUpOrderBy — zalegle najpierw', () => {
         expect(sql).toContain('THEN 1');
         expect(sql).toContain('ELSE 2 END ASC');
         expect(sql).toContain(`COALESCE(combined."_fu_next", '0000') ASC`);
+    });
+});
+
+describe('P0.4-fix buildOffersCountSql — kolumny _fu_* w count', () => {
+    it('count selektuje _fu_outcome/_fu_next/_fu_last w obu galeziach', () => {
+        const sql = (
+            buildOffersCountSql('' as any, '' as any, '' as any) as any
+        ).render() as string;
+        expect(sql).toContain('"_fu_outcome"');
+        expect(sql).toContain('"_fu_next"');
+        expect(sql).toContain('"_fu_last"');
+        expect(sql).toContain(`"offerKind" = rury`);
+        expect(sql).toContain(`"offerKind" = studnie`);
+        expect(sql).toContain('SELECT COUNT(*) as cnt');
     });
 });
 

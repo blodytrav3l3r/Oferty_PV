@@ -40,14 +40,30 @@ jest.mock('../src/utils/searchUtils', () => {
 });
 
 jest.mock('../src/prismaClient', () => {
+    // Renderer rekurencyjny: fragmenty z actual searchUtils to real-Sql
+    // ({strings, values}), nie stringi — rozwiń je zamiast String(v).
+    const renderValue = (v: unknown): string => {
+        if (
+            typeof v === 'object' &&
+            v !== null &&
+            Array.isArray((v as { strings?: unknown }).strings) &&
+            Array.isArray((v as { values?: unknown }).values)
+        ) {
+            const nested = v as { strings: string[]; values: unknown[] };
+            let out = '';
+            nested.strings.forEach((s, i) => {
+                out += s;
+                if (i < nested.values.length) out += renderValue(nested.values[i]);
+            });
+            return out;
+        }
+        return String(v);
+    };
     const sql = (strings: TemplateStringsArray, ...values: unknown[]): string => {
         let out = '';
         strings.forEach((s, i) => {
             out += s;
-            if (i < values.length) {
-                const v = values[i];
-                out += typeof v === 'object' && v !== null ? String(v) : String(v);
-            }
+            if (i < values.length) out += renderValue(values[i]);
         });
         return out;
     };
@@ -81,18 +97,38 @@ describe('Wyszukiwarka ofert — filtr typu (rury vs studnie)', () => {
         app = createApp();
     });
 
+    // Renderuje mock-stringi ORAZ real-Sql ({strings, values} z generated/prisma)
+    // — buildOffersCountSql buduje real-Sql w actual searchUtils.
+    function renderArg(arg: unknown): string {
+        if (
+            typeof arg === 'object' &&
+            arg !== null &&
+            Array.isArray((arg as { strings?: unknown }).strings) &&
+            Array.isArray((arg as { values?: unknown }).values)
+        ) {
+            const nested = arg as { strings: string[]; values: unknown[] };
+            let out = '';
+            nested.strings.forEach((s, i) => {
+                out += s;
+                if (i < nested.values.length) out += renderArg(nested.values[i]);
+            });
+            return out;
+        }
+        return String(arg);
+    }
+
     async function dataQuerySql() {
         const calls = (prisma.$queryRaw as jest.Mock).mock.calls;
         // Pierwsze wywołanie $queryRaw to query danych (ma ORDER BY), drugie to COUNT
-        const first = calls.find((c) => String(c[0]).includes('ORDER BY'));
-        return first ? String(first[0]) : '';
+        const first = calls.find((c) => renderArg(c[0]).includes('ORDER BY'));
+        return first ? renderArg(first[0]) : '';
     }
 
     async function countQuerySql() {
         const calls = (prisma.$queryRaw as jest.Mock).mock.calls;
         // COUNT nie ma ORDER BY — identyfikujemy po SELECT COUNT
-        const count = calls.find((c) => String(c[0]).includes('SELECT COUNT'));
-        return count ? String(count[0]) : '';
+        const count = calls.find((c) => renderArg(c[0]).includes('SELECT COUNT'));
+        return count ? renderArg(count[0]) : '';
     }
 
     it('type=offer: zapytanie filtruje po _type rury', async () => {

@@ -298,6 +298,26 @@ export function buildFollowUpOrderBy(nowIso: string): Prisma.Sql {
     return Prisma.sql`CASE WHEN (${outcome} IS NULL OR ${outcome} = 'OPEN') AND (${next} IS NULL OR ${next} <= ${nowIso}) THEN 0 WHEN ${outcome} = 'OPEN' AND ${next} > ${nowIso} THEN 1 ELSE 2 END ASC, COALESCE(${next}, '0000') ASC, combined."createdAt" DESC, combined.id DESC`;
 }
 
+/**
+ * Count-query search (P0.4-fix): MUSI selektować te same kolumny _fu_* co
+ * główne zapytanie — combinedWhere z filtrami LOS się do nich odwołuje.
+ * Regresja: brak kolumn = "no such column" = 500 na każdy filtr follow-up.
+ */
+export function buildOffersCountSql(
+    whereSqlRury: Prisma.Sql,
+    whereSqlStudnie: Prisma.Sql,
+    combinedWhere: Prisma.Sql
+): Prisma.Sql {
+    return Prisma.sql`
+        SELECT COUNT(*) as cnt FROM (
+            SELECT id, 'rury' AS "_type" ${followUpColumnsSql('rury', 'o')} FROM offers_rel o ${whereSqlRury}
+            UNION ALL
+            SELECT id, 'studnie' AS "_type" ${followUpColumnsSql('studnie', 's')} FROM offers_studnie_rel s ${whereSqlStudnie}
+        ) AS combined
+        ${combinedWhere}
+    `;
+}
+
 export interface RawOfferRow {
     id: string;
     userId: string | null;
