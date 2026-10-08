@@ -289,7 +289,8 @@ w HTML/partialach/szablonach — jeden dyspozytor `public/js/shared/cspActions.j
 
 Główne pliki rdzeniowe w `public/js/studnie/` po podziale:
 
-- `wellActions.js` (52 linie) → deleguje do 12 modułów `actions*.js`
+- `wellActions.js` → aktywny moduł domenowy (m.in. odświeżanie modala zleceń / stanu),
+  używany przez wiele modułów domeny studni; deleguje część logiki do modułów `actions*.js`
 - `wellManager.js` (277 linii) → deleguje do `actionsWellPainting.js`
 - `wellPopups.js` (322 linie) → deleguje do `popups*.js`
 - `wellTransitions.js` (643 linie) → deleguje do `wellTransitions*.js`
@@ -552,6 +553,130 @@ Oferty_PV/
 ├── docker-compose.yml               # Docker Compose
 └── .env.example                     # Zmienne środowiskowe
 ```
+
+---
+
+## Konwencja nazw modułów (stan faktyczny)
+
+Repozytorium stosuje opisowe nazwy odpowiadające odpowiedzialności modułu.
+Konwencja jest wskazówką, nie absolutną regułą — istnieją świadome wyjątki
+(poniżej, zwłaszcza `src/utils/`).
+
+### `Crud`
+
+Operacje create/read/update/delete oraz komunikacja z odpowiednimi
+endpointami/danymi. Przykłady: `offerCrud.js`, `orderCrud.js`,
+`wellTransitionsCrud.js`, `pricelistProductCrud.js`.
+
+### `Manager`
+
+Orkiestracja, stan, lifecycle albo koordynacja kilku operacji/modułów.
+Przykłady: `offerManager.js` (koordynuje renderowanie i zapis oferty),
+`wellManager.js`, `pricelistManager.js`, `excelConfigManager.js`.
+
+### `Helpers`
+
+Małe funkcje pomocnicze bez samodzielnej odpowiedzialności domenowej.
+Przykłady: `offerHelpers.js`, `excelHelpers.js`, `orderCrudHelpers.js`.
+
+### `Service`
+
+Usługi współdzielone/infrastrukturalne o wyraźnej odpowiedzialności usługowej.
+Przykłady: `StorageService.js`, `lockService.js`, `shareService.js`,
+`cronService.ts`.
+
+Uwaga: nie obowiązuje zasada „każdy plik używający Prisma musi być Service”.
+Część infrastruktury świadomie pozostaje w `src/utils/` (sekcja poniżej).
+
+## `src/utils/` — ustalony stan (audit 2026-10)
+
+Następujące moduły pozostają świadomie w `src/utils/`:
+
+```text
+ownership.ts
+telemetryOwnership.ts
+docLocks.ts
+fts5Sync.ts
+fts5Queue.ts
+cronService.ts
+productionOrderGuard.ts
+idempotency.ts
+```
+
+Powody:
+
+- istniejący graf zależności (DAG) jest poprawny i jednokierunkowy
+  (`services → utils`, brak cykli),
+- nazwy odpowiadają rzeczywistym odpowiedzialnościom (library/infra,
+  nie klasyczne singleton services),
+- przeniesienie powodowałoby niepotrzebny import churn i ryzyko,
+  szczególnie dla autoryzacji, blokad (`doc_locks`) oraz
+  idempotentności (exactly-once),
+- `cronService.ts` jest potencjalnym kandydatem do porządkowego przeniesienia
+  (`src/services/scheduler/`, priorytet P2), ale obecnie pozostaje bez zmian.
+
+## Frontend — świadomy podział domen
+
+Katalogi `public/js/rury/` i `public/js/studnie/` są świadomie rozdzielonymi
+domenami. Identyczne lub podobne nazwy plików pomiędzy nimi nie oznaczają
+automatycznie powielenia — scalanie wymaga dowodu (porównania implementacji).
+
+W szczególności nie należy scalać bez dowodu:
+
+```text
+orderCrud
+offerRendering
+orderKartaBudowy
+orderPrzejscia
+offerNotesGenerator
+```
+
+Audit wykazał, że różnice wynikają z innych payloadów API, innych modeli
+danych, innego DOM, innego zakresu stanu oraz logiki specyficznej dla domeny.
+
+### `offerNotesGenerator` — stan ustalony
+
+```text
+public/js/shared/offerNotesGenerator.js   — wspólny rdzeń (fabryka + markery)
+public/js/rury/offerNotesGenerator.js      — adapter domeny rur (2 providery)
+public/js/studnie/offerNotesGenerator.js   — logika providerów domeny studni
+```
+
+`shared/` zawiera wspólny core (fabrykę generatora notatek oraz odcinanie
+bloku generowanego), a `rury/` i `studnie/` zawierają adaptery i logikę
+providerów dla swoich domen. Właściwe częściowe wydzielenie wspólnego rdzenia
+zostało już wykonane (TASK-045) — dalsze scalanie nie jest obecnie uzasadnione.
+
+## Moduły compatibility / graniczne
+
+### `public/js/rury/orderManager.js`
+
+Compatibility stub / kandydat do usunięcia. Rzeczywista logika zamówień rur
+znajduje się w `orderItems.js`, `orderCrud.js`, `orderEditMode.js`,
+`orderSummary.js`, `orderKartaBudowy.js` i `orderPrzejscia.js`.
+Plik nie jest usuwany w ramach tej zmiany — ewentualne usunięcie wymaga
+osobnej weryfikacji runtime oraz zmiany kolejności skryptów w `rury.html`.
+
+### `public/js/studnie/wellActions.js`
+
+Aktywny moduł domenowy (nie stub), odpowiedzialny m.in. za odświeżanie modala
+zleceń i stanu. Używany przez wiele modułów domeny studni
+(`actively used by multiple well-domain modules`).
+
+## Konfiguracja AI / źródła zasad (SSoT)
+
+```text
+AGENTS.md
+    ↓
+docs/agents/*
+```
+
+`AGENTS.md` wraz z `docs/agents/*` jest głównym źródłem zasad repozytorium.
+`CLAUDE.md` może zawierać instrukcje specyficzne dla danego agenta/środowiska
+i nie należy traktować go automatycznie jako drugiego równorzędnego źródła
+zasad. Pomiędzy dokumentami istnieją rozbieżności wymagające świadomego
+utrzymania — `CLAUDE.md` nie jest usuwany ani scalany w ramach tej zmiany.
+Katalogi `.hermes/` i `.opencode/` pozostają bez zmian.
 
 ---
 
