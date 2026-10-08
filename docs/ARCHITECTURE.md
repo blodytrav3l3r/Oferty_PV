@@ -654,8 +654,8 @@ zostało już wykonane (TASK-045) — dalsze scalanie nie jest obecnie uzasadnio
 Compatibility stub / kandydat do usunięcia. Rzeczywista logika zamówień rur
 znajduje się w `orderItems.js`, `orderCrud.js`, `orderEditMode.js`,
 `orderSummary.js`, `orderKartaBudowy.js` i `orderPrzejscia.js`.
-Plik nie jest usuwany w ramach tej zmiany — ewentualne usunięcie wymaga
-osobnej weryfikacji runtime oraz zmiany kolejności skryptów w `rury.html`.
+Plik usunięto jako martwy stub (zero linii kodu, jedyną referencją był tag
+`<script>` w `rury.html`, usunięty razem z plikiem).
 
 ### `public/js/studnie/wellActions.js`
 
