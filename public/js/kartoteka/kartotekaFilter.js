@@ -29,6 +29,15 @@ export default {
         this.loadLocalOffers();
     },
 
+    /**
+     * Opieka nad ofertą (P1): filtr losu oferty (followupStatus w search API).
+     */
+    setFollowupFilter(followupFilter) {
+        this.currentFollowupFilter = followupFilter || 'all';
+        this.updateFilterCount();
+        this.loadLocalOffers();
+    },
+
     _syncFilterUI() {
         document.querySelectorAll('.ka-filter-btn').forEach((btn) => {
             btn.classList.toggle('active', btn.dataset.filter === this.currentFilter);
@@ -40,6 +49,11 @@ export default {
                 'btn-secondary',
                 btn.dataset.typeFilter !== this.currentTypeFilter
             );
+        });
+        document.querySelectorAll('.ka-followup-filter-btn').forEach((btn) => {
+            const active = btn.dataset.followupFilter === this.currentFollowupFilter;
+            btn.classList.toggle('active', active);
+            btn.classList.toggle('btn-secondary', !active);
         });
         const sel = document.getElementById('ka-user-filter');
         if (sel) sel.value = this.filters.user;
@@ -78,6 +92,7 @@ export default {
             (q ? 1 : 0) +
             (this.currentTypeFilter !== 'all' ? 1 : 0) +
             (this.currentFilter !== 'all' ? 1 : 0) +
+            (this.currentFollowupFilter && this.currentFollowupFilter !== 'all' ? 1 : 0) +
             (this.filters.user ? 1 : 0) +
             (dateActive ? 1 : 0);
         const btn = document.getElementById('ka-clear-filters');
@@ -91,6 +106,7 @@ export default {
     clearAllFilters() {
         this.currentFilter = 'all';
         this.currentTypeFilter = 'all';
+        this.currentFollowupFilter = 'all';
         this.filters.user = '';
         this.filters.date = { mode: 'preset', preset: 'today', from: '', to: '' };
 

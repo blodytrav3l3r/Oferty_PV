@@ -347,6 +347,14 @@ export default {
                 return;
             }
 
+            // ---- OPIEKA NAD OFERTĄ (P1): zapis kontaktu + timeline ----
+            if (btn.classList.contains('btn-followup') || title.includes('zapisz kontakt')) {
+                if (typeof this.openFollowUpModal === 'function') {
+                    await this.openFollowUpModal(String(id), typeAttr || 'studnia_oferta');
+                }
+                return;
+            }
+
             // ---- PRINT / EXPORT / KARTA BUDOWY ----
             if (
                 title.includes('wydruk') ||

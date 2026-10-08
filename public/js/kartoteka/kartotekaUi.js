@@ -4,6 +4,7 @@ import kartotekaSearch from './kartotekaSearch.js';
 import kartotekaFilter from './kartotekaFilter.js';
 import kartotekaHistory from './kartotekaHistory.js';
 import kartotekaActions from './kartotekaActions.js';
+import kartotekaFollowUp from './kartotekaFollowUp.js';
 
 class KartotekaUI {
     constructor() {
@@ -12,6 +13,8 @@ class KartotekaUI {
         this.ordersMap = new Map();
         this.currentFilter = 'all';
         this.currentTypeFilter = 'all';
+        // Opieka nad ofertą (P1): filtr losu (followupStatus w search API).
+        this.currentFollowupFilter = 'all';
         this.filters = {
             user: '',
             // Domyślnie pokazuj oferty z bieżącego dnia (spójnie z #/zlecenia).
@@ -47,6 +50,7 @@ Object.assign(KartotekaUI.prototype, kartotekaSearch);
 Object.assign(KartotekaUI.prototype, kartotekaFilter);
 Object.assign(KartotekaUI.prototype, kartotekaHistory);
 Object.assign(KartotekaUI.prototype, kartotekaActions);
+Object.assign(KartotekaUI.prototype, kartotekaFollowUp);
 
 document.addEventListener('DOMContentLoaded', () => {
     const isKartoteka = (window.location.pathname.split('/').pop() || '').startsWith('kartoteka');

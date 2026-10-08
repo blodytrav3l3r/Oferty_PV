@@ -109,6 +109,13 @@ function bindStaticActions() {
             if (window.kartotekaUI) window.kartotekaUI.setFilterLocalOffers(btn.dataset.filter);
         });
     });
+    // Opieka nad ofertą (P1): filtr losu oferty.
+    document.querySelectorAll('.ka-followup-filter-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+            if (window.kartotekaUI)
+                window.kartotekaUI.setFollowupFilter(btn.dataset.followupFilter);
+        });
+    });
     document.getElementById('ka-clear-filters')?.addEventListener('click', () => {
         if (window.kartotekaUI) window.kartotekaUI.clearAllFilters();
     });

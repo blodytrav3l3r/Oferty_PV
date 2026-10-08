@@ -328,6 +328,73 @@
     color: var(--success-hover);
 }
 
+/* Opieka nad ofertą (P1): warianty badge losu — kolory z tokenów, tekst zawsze obok ikony. */
+.status-badge.danger {
+    background: rgba(var(--danger-rgb), 0.1);
+    border: 1px solid rgba(var(--danger-rgb), 0.3);
+    color: var(--danger-hover, var(--danger));
+}
+
+.status-badge.warn {
+    background: var(--warn-bg);
+    border: 1px solid var(--warn-border);
+    color: var(--warn-hover);
+}
+
+.status-badge.info {
+    background: rgba(var(--blue-rgb), 0.1);
+    border: 1px solid rgba(var(--blue-rgb), 0.3);
+    color: var(--blue-hover);
+}
+
+.fu-badge-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    flex-wrap: wrap;
+    margin-top: 0.35rem;
+}
+
+/* Opieka nad ofertą (P1): formularz + timeline w modalu — klasy bazowe z utilities. */
+.fu-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.6rem;
+    margin-bottom: 0.8rem;
+}
+
+.fu-form-grid .fu-full {
+    grid-column: 1 / -1;
+}
+
+.fu-timeline {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 0.6rem;
+    max-height: 40vh;
+    overflow-y: auto;
+}
+
+.fu-timeline-item {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 0.5rem 0.65rem;
+    background: var(--bg-secondary);
+}
+
+.fu-timeline-meta {
+    font-size: var(--fs-sm);
+    color: var(--text-secondary);
+    margin-bottom: 0.2rem;
+}
+
+.fu-error {
+    color: var(--danger-hover, var(--danger));
+    font-size: var(--fs-sm);
+    margin-top: 0.4rem;
+}
+
 .status-badge.neutral {
     background: rgba(var(--slate-500-rgb), 0.1);
     border: 1px solid rgba(var(--slate-500-rgb), 0.2);

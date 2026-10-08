@@ -93,6 +93,10 @@ export default {
 
         const userId = this.filters.user;
 
+        // Opieka nad ofertą (P1): aktywny filtr losu wymusza sort zaległych.
+        const followupStatus = this.currentFollowupFilter || 'all';
+        const followupActive = followupStatus !== 'all';
+
         return {
             q,
             type: this.currentTypeFilter,
@@ -100,8 +104,9 @@ export default {
             dateTo,
             userId,
             orderStatus: this.currentFilter,
+            followupStatus,
             limit: 50,
-            sort: 'createdAt',
+            sort: followupActive ? 'followup' : 'createdAt',
             order: 'desc'
         };
     },
@@ -131,6 +136,7 @@ export default {
             dateTo: params.dateTo || '',
             userId: params.userId || '',
             orderStatus: params.orderStatus || 'all',
+            followupStatus: params.followupStatus || 'all',
             limit: String(params.limit || 50),
             sort: params.sort || 'createdAt',
             order: params.order || 'desc',
@@ -206,6 +212,9 @@ export default {
      */
     async loadMore() {
         if (this.isLoading || !this.searchResults?.hasMore) return;
+        // Tryb follow-up nie ma kursora (sort po zaległości, v1) — brak
+        // głębokiej paginacji; przycisk "Pokaż więcej" jest wtedy ukryty.
+        if ((this.currentFollowupFilter || 'all') !== 'all') return;
 
         const params = this.buildSearchParams();
         params.cursor = this.searchResults.nextCursor;
@@ -235,7 +244,11 @@ export default {
                     '|' +
                     (o && o._orderCount) +
                     '|' +
-                    ((o && o.data && (o.data.wellsCount ?? o.data.itemsCount)) ?? '')
+                    ((o && o.data && (o.data.wellsCount ?? o.data.itemsCount)) ?? '') +
+                    '|' +
+                    ((o && o.followup && o.followup.outcome) || '') +
+                    '|' +
+                    ((o && o.followup && o.followup.nextContactAt) || '')
             )
             .join(';');
     },
@@ -264,7 +277,8 @@ export default {
             window.pricelistVersions.hydrateActiveBadges(listDiv);
         }
 
-        if (this.searchResults?.hasMore) {
+        const followupMode = (this.currentFollowupFilter || 'all') !== 'all';
+        if (this.searchResults?.hasMore && !followupMode) {
             listDiv.insertAdjacentHTML('beforeend', this.renderLoadMore());
             document
                 .getElementById('ka-load-more-btn')

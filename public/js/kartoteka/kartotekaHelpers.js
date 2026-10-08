@@ -274,6 +274,44 @@ function buildOrderModalHtml(orders, offerKey, resolvedType, offerLabel) {
     return html;
 }
 
+/**
+ * Opieka nad ofertą (P1): badge losu z projekcji search `offer.followup`.
+ * Lustro BE calculateFollowUpHealth — tekst zawsze obok ikony (nie sam kolor).
+ */
+function followUpBadgeHtml(offer, nowIso) {
+    const fu = (offer && offer.followup) || null;
+    const now = nowIso || new Date().toISOString();
+    const icon = (name) => `<i data-lucide="${name}" aria-hidden="true"></i>`;
+    if (!fu) {
+        return `<span class="status-badge neutral">${icon('phone')} Do kontaktu</span>`;
+    }
+    if (fu.outcome === 'WON') {
+        return `<span class="status-badge success">${icon('trophy')} Wygrana u nas</span>`;
+    }
+    if (fu.outcome === 'LOST_COMPETITION') {
+        return `<span class="status-badge danger">${icon('trending-down')} Utracona — konkurencja</span>`;
+    }
+    if (fu.outcome === 'LOST_OTHER') {
+        return `<span class="status-badge danger">${icon('x-circle')} Nie zamówił</span>`;
+    }
+    if (fu.outcome === 'ABANDONED') {
+        return `<span class="status-badge neutral">${icon('archive')} Zamknięta</span>`;
+    }
+    if (fu.nextContactAt && fu.nextContactAt > now) {
+        const d = new Date(fu.nextContactAt).toLocaleDateString('pl-PL');
+        return `<span class="status-badge info">${icon('clock')} W toku • kontakt ${escapeHtml(d)}</span>`;
+    }
+    if (fu.nextContactAt) {
+        const days = Math.max(
+            0,
+            Math.floor((Date.parse(now) - Date.parse(fu.nextContactAt)) / 86400000)
+        );
+        const label = days <= 0 ? 'termin dzisiaj' : days + ' dni po terminie';
+        return `<span class="status-badge danger">${icon('phone')} Do kontaktu • ${escapeHtml(label)}</span>`;
+    }
+    return `<span class="status-badge warn">${icon('phone')} Do kontaktu</span>`;
+}
+
 function buildOfferCardHtml(offer, hasOrder, orders, order, role, isLocalList) {
     const orderList = orders && orders.length > 0 ? orders : [];
     // Licznik z search API (_orderCount), gdy ordersMap jeszcze pusta (tło dogrywa
@@ -375,6 +413,7 @@ function buildOfferCardHtml(offer, hasOrder, orders, order, role, isLocalList) {
                         <div class="offer-actions-row">
                             <div class="order-status-badge">
                                 ${orderBadge}
+                                <div class="fu-badge-wrap">${followUpBadgeHtml(offer)}</div>
                             </div>
                             <div class="offer-author-badges">
                                 ${dd.creatorName ? `<span class="author-badge"><i data-lucide="pen-tool" aria-hidden="true"></i> ${escapeHtml(dd.creatorName)}</span>` : ''}
@@ -392,6 +431,9 @@ function buildOfferCardHtml(offer, hasOrder, orders, order, role, isLocalList) {
                                         </button>
                                         <button class="action-btn secondary" data-id="${escapeHtmlAttr(offer.id)}" data-type="${escapeHtmlAttr(offer.type)}" title="Historia zmian" aria-label="Historia zmian">
                                             <i data-lucide="clock" aria-hidden="true"></i>
+                                        </button>
+                                        <button class="action-btn secondary btn-followup" data-id="${escapeHtmlAttr(offer.id)}" data-type="${escapeHtmlAttr(offer.type)}" title="Zapisz kontakt" aria-label="Zapisz kontakt">
+                                            <i data-lucide="phone" aria-hidden="true"></i>
                                         </button>
                                         <button class="action-btn secondary" data-id="${escapeHtmlAttr(offer.id)}" data-type="${escapeHtmlAttr(offer.type)}" data-offer-id="${escapeHtmlAttr(offer.id)}" data-offer-type="${escapeHtmlAttr(offer.type)}" data-order-id="${escapeHtmlAttr(hasOrder ? order?.id || '' : '')}" title="Wydruk" aria-label="Wydruk">
                                             <i data-lucide="printer" aria-hidden="true"></i>
