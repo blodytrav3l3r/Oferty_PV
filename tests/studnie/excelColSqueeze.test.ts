@@ -149,9 +149,9 @@ describe('excelColSqueeze scisk do 10px', () => {
         vm.createContext(ctx);
         vm.runInContext(readJs('excelTableRenderer.js'), ctx);
         vm.runInContext("_excelAutoFitColumns('1000')", ctx);
-        // najszerszy tekst: 'RZ. WLOT 1' = 10 znakow * 7 = 70 + padX 8 + oddech 10 = 88
-        expect(h1[0].style.width).toBe('88px');
-        expect(bodyRow.children[0].style.width).toBe('88px');
+        // najszerszy tekst: 'RZ. WLOT 1' = 10 znakow * 7 = 70 + padX 8 + oddech 2 = 80
+        expect(h1[0].style.width).toBe('80px');
+        expect(bodyRow.children[0].style.width).toBe('80px');
     });
 
     test('_excelCellNaturalWidth bierze input/label/td', () => {

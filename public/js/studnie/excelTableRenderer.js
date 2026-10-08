@@ -510,7 +510,7 @@ function _excelAutoFitColumns(dn, onlyCi) {
         /* Pomiar po TEKSCIE (canvas), nie po scrollWidth zywych komorek:
            input/select rozciagaja sie na komorke, wiec scrollWidth zwracal
            istniejaca szerokosc zamiast tresci (samospelniajacy sie pomiar). */
-        const FIT_BREATH = 10;
+        const FIT_BREATH = 2;
         const fitFont = _excelFitFont(h1th);
         const fitPadX = _excelFitPadX(h1th);
         let w = 0;
