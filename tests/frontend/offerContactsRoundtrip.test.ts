@@ -56,12 +56,12 @@ describe('frontend: offer contacts roundtrip', () => {
         }
     });
 
-    test('popup katalogu: kontakt 2-linie + przycisk Wczytaj + phone/email w edycji', () => {
+    test('popup katalogu: kontakt 2-linie + przycisk Wczytaj + edytor N-osob', () => {
         const src = read('public/js/shared/clientManager.js');
         expect(src).toContain('td-sub');
         expect(src).toContain('selectClientFromDb');
-        expect(src).toContain('edit-client-phone');
-        expect(src).toContain('edit-client-email');
+        expect(src).toContain('renderCatalogEditor');
+        expect(src).toContain('edit-client-contacts');
         expect(src).toContain('window.selectClientFromDb = selectClientFromDb;');
     });
 
@@ -86,5 +86,35 @@ describe('frontend: offer contacts roundtrip', () => {
         const css = read('public/css/style.responsive.css');
         expect(css).toContain('table-layout: auto;');
         expect(css).toContain('.td-contact');
+    });
+
+    test('katalog N-osob: cache + sync API + stabilne id', () => {
+        const src = read('public/js/shared/clientManager.js');
+        expect(src).toContain('fetchClientContacts');
+        expect(src).toContain('/contacts/sync');
+        expect(src).toContain('ensureContactIds');
+        expect(src).toContain('clientUpdatedAt');
+        // fetch-fail = blokada, nigdy pusty sync
+        expect(src).toContain('ok: false');
+    });
+
+    test('katalog N-osob: edytor .ccc-* z ★ i stanowiskiem, bez innerHTML na danych', () => {
+        const src = read('public/js/shared/clientManager.js');
+        expect(src).toContain('ccc-row');
+        expect(src).toContain('data-ccc');
+        expect(src).toContain('collectCatalogEditor');
+        expect(src).toContain('renderCatalogEditor');
+        expect(src).toContain('textContent');
+        const css = read('public/css/style.base.css');
+        expect(css).toContain('.ccc-row');
+        expect(css).toContain('.ccc-picks');
+    });
+
+    test('katalog N-osob: picker wyboru do oferty (checkboxy, escape atrybutow)', () => {
+        const src = read('public/js/shared/clientManager.js');
+        expect(src).toContain('client-contact-picker');
+        expect(src).toContain('data-ccc-pick');
+        expect(src).toContain('escapeHtmlAttr');
+        expect(src).toContain('proceedSelectClient');
     });
 });

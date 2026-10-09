@@ -14,6 +14,116 @@
 /* ===== STAN MODUŁU ===== */
 let editingClientId = null;
 
+/* ===== KATALOG KONTAKTÓW (N osób per klient) ===== */
+// Cache list per klient: {list:[{id,name,phone,email,position,isPrimary}], ok}
+// Snapshot oferty (blob clientContacts[]) zostaje SSoT oferty; katalog to podpowiedź.
+const clientContactsCache = {};
+const MAX_CATALOG_CONTACTS = 10;
+
+/**
+ * Lista do wyświetlenia: cache katalogu albo fallback mirror legacy
+ * z rozcięciem "Jan, 600" (telefon siedział w jednym stringu).
+ */
+function catalogDisplayList(c) {
+    const cached = clientContactsCache[c.id];
+    if (cached && cached.ok && cached.list.length > 0) return cached.list;
+    let name = c.contact || '';
+    let phone = c.phone || '';
+    try {
+        const CC = window.ClientContacts;
+        if (!phone && name && CC && typeof CC.parseLegacyMirror === 'function') {
+            const p = CC.parseLegacyMirror(name)[0];
+            if (p && (p.name || p.phone)) {
+                name = p.name || name;
+                phone = p.phone || '';
+            }
+        }
+    } catch (_e) {
+        // pasywnie — pełny string w jednej linii
+    }
+    if (!name && !phone && !(c.email || '')) return [];
+    return [{ id: null, name, phone, email: c.email || '', position: '', isPrimary: true }];
+}
+
+function newContactId() {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+        return crypto.randomUUID();
+    }
+    return 'cc_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 10);
+}
+
+// Stabilne id PRZED pierwszym sync (retry tym samym payloadem = upsert, nie duplikaty).
+function ensureContactIds(list) {
+    if (!Array.isArray(list)) return list;
+    for (const r of list) {
+        if (r && typeof r === 'object' && !r.id) r.id = newContactId();
+    }
+    return list;
+}
+
+/**
+ * Pobiera kontakty klienta (cache; nigdy nie rzuca).
+ * @param {string} clientId
+ * @param {boolean} [force]
+ * @returns {Promise<{list:Array, ok:boolean}>}
+ */
+async function fetchClientContacts(clientId, force) {
+    const hit = clientContactsCache[clientId];
+    if (hit && !force) return hit;
+    try {
+        const res = await fetch(`/api/clients/${encodeURIComponent(clientId)}/contacts`, {
+            headers: authHeaders(),
+            credentials: 'same-origin'
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const json = await res.json();
+        const entry = { list: Array.isArray(json.items) ? json.items : [], ok: true };
+        clientContactsCache[clientId] = entry;
+        return entry;
+    } catch (e) {
+        logger.error('clientManager', 'fetchClientContacts error:', e);
+        return { list: [], ok: false };
+    }
+}
+
+async function prefetchAllClientContacts() {
+    if (!Array.isArray(clientsDb) || clientsDb.length === 0) return;
+    await Promise.allSettled(
+        clientsDb.filter((c) => c && c.id).map((c) => fetchClientContacts(String(c.id)))
+    );
+}
+
+/**
+ * PUT sync pełnego zestawu (brak na liście = usuń). Fetch-fail = blokada, nigdy [].
+ * @returns {Promise<{ok:boolean, updatedAt?:string, error?:string, status?:number}>}
+ */
+async function syncClientContacts(clientId, rows, baseUpdatedAt) {
+    const body = { contacts: rows };
+    if (baseUpdatedAt) body.clientUpdatedAt = baseUpdatedAt;
+    try {
+        const res = await fetch(`/api/clients/${encodeURIComponent(clientId)}/contacts/sync`, {
+            method: 'PUT',
+            headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify(body)
+        });
+        const json = await res.json().catch(() => ({}));
+        if (!res.ok) {
+            return {
+                ok: false,
+                status: res.status,
+                error: json.error || `HTTP ${res.status}`,
+                updatedAt: json.updatedAt
+            };
+        }
+        clientContactsCache[clientId] = { list: rows, ok: true };
+        return { ok: true, updatedAt: json.updatedAt };
+    } catch (e) {
+        logger.error('clientManager', 'syncClientContacts error:', e);
+        return { ok: false, error: e.message || 'błąd sieci' };
+    }
+}
+
 /* ===== BEZPIECZEŃSTWO ===== */
 // escapeHtml dostarczany przez shared/ui.js (ładowany wcześniej)
 
@@ -78,6 +188,48 @@ async function saveClientsDbData(data) {
         logger.error('clientManager', 'saveClientsDbData error:', err);
         showToast('Błąd zapisu klientów: ' + (err.message || 'błąd sieci'), 'error');
         return false;
+    }
+}
+
+/**
+ * Dokleja pełną listę osób z edytora oferty do katalogu (PUT sync).
+ * Bez bazy updatedAt — wołane tuż po zapisie firmy (semantyka last-write-wins
+ * jak batch PUT). Fetch-fail = toast, nigdy pusty sync.
+ */
+function syncOfferEditorToCatalog(clientId) {
+    try {
+        const box = document.getElementById('client-contacts');
+        const CC = window.ClientContacts;
+        if (!box || !CC || typeof CC.collectContacts !== 'function') return;
+        const rows = ensureContactIds(
+            CC.collectContacts(box).map((r) => ({
+                name: r.name || '',
+                phone: r.phone || '',
+                email: r.email || '',
+                position: '',
+                isPrimary: false
+            }))
+        );
+        const named = rows.filter((r) => r.name.trim() !== '');
+        if (named.length === 0) return;
+        if (named.length < rows.length)
+            showToast('Pominięto osoby bez imienia (katalog wymaga nazwy)', 'warning');
+        named[0].isPrimary = true;
+        syncClientContacts(clientId, named, null).then((r) => {
+            if (!r.ok) {
+                showToast('Kontakty nie zapisane w katalogu: ' + (r.error || ''), 'warning');
+                return;
+            }
+            const c = clientsDb.find((x) => x.id === clientId);
+            if (c) {
+                c.contact = named[0].name;
+                c.phone = named[0].phone;
+                c.email = named[0].email;
+                if (r.updatedAt) c.updatedAt = r.updatedAt;
+            }
+        });
+    } catch (_e) {
+        // pasywnie — firma zapisana, kontakty zostaną w snapshocie oferty
     }
 }
 
@@ -159,6 +311,7 @@ function saveClientToDb() {
                         updatedAt: new Date().toISOString()
                     };
                     saveClientsDbData(clientsDb);
+                    syncOfferEditorToCatalog(clientsDb[existingIdx].id);
                     showToast('Zaktualizowano dane klienta', 'success');
                 }
                 _unlockSaveBtn();
@@ -168,8 +321,9 @@ function saveClientToDb() {
                 logger.error('clientManager', e);
             });
     } else {
+        const newId = newClientId();
         clientsDb.push({
-            id: newClientId(),
+            id: newId,
             name,
             nip,
             address,
@@ -180,6 +334,7 @@ function saveClientToDb() {
             createdAt: new Date().toISOString()
         });
         saveClientsDbData(clientsDb);
+        syncOfferEditorToCatalog(newId);
         showToast('Zapisano nowego klienta', 'success');
         if (_saveBtn) _saveBtn.disabled = false;
     }
@@ -212,11 +367,124 @@ function showClientsDb() {
 
     renderClientsDbList('');
     setTimeout(() => document.getElementById('clients-search-input')?.focus(), 100);
+    // Kontakty katalogu dociągane w tle (display +N, search, picker); brak = fallback mirror.
+    prefetchAllClientContacts().then(() => {
+        const input = document.getElementById('clients-search-input');
+        renderClientsDbList(input ? input.value : '');
+    });
 }
 
 /* ===== FILTROWANIE ===== */
 function filterClientsDb(query) {
     renderClientsDbList(query);
+}
+
+/* ===== EDYTOR KONTAKTÓW KATALOGU (N osób, .ccc-*) ===== */
+// Osobny namespace niż edytor oferty (.cc-*): wiersz niesie id + stanowisko + ★.
+function catalogEditorRow(container, clientId, r) {
+    const row = document.createElement('div');
+    row.className = 'ccc-row';
+    if (r && r.id) row.setAttribute('data-ccc-id', r.id);
+
+    const star = document.createElement('label');
+    star.className = 'ccc-star';
+    star.title = 'Główna osoba do kontaktu';
+    const radio = document.createElement('input');
+    radio.type = 'radio';
+    radio.name = 'ccc-primary-' + clientId;
+    radio.checked = !!(r && r.isPrimary);
+    radio.setAttribute('aria-label', 'Główna osoba do kontaktu');
+    radio.onclick = (e) => e.stopPropagation();
+    star.appendChild(radio);
+    const starMark = document.createElement('span');
+    starMark.textContent = '★';
+    star.appendChild(starMark);
+    row.appendChild(star);
+
+    const mk = (field, type, ph, cls) => {
+        const input = document.createElement('input');
+        input.type = type;
+        input.className = 'form-input form-input-sm' + (cls ? ' ' + cls : '');
+        input.placeholder = ph;
+        input.setAttribute('aria-label', ph);
+        input.setAttribute('data-ccc', field);
+        input.value = (r && r[field]) || '';
+        if (field === 'name') input.maxLength = 200;
+        if (field === 'phone') input.maxLength = 50;
+        if (field === 'email') input.maxLength = 200;
+        if (field === 'position') input.maxLength = 200;
+        input.onclick = (e) => e.stopPropagation();
+        return input;
+    };
+    row.appendChild(mk('name', 'text', 'Imię i nazwisko *', 'ccc-name'));
+    const del = document.createElement('button');
+    del.type = 'button';
+    del.className = 'btn btn-sm btn-secondary';
+    del.textContent = 'Usuń';
+    del.setAttribute('aria-label', 'Usuń osobę');
+    del.onclick = (e) => {
+        e.stopPropagation();
+        row.remove();
+    };
+    row.appendChild(del);
+    row.appendChild(mk('phone', 'tel', 'Telefon'));
+    row.appendChild(mk('email', 'email', 'E-mail', 'ccc-mail'));
+    row.appendChild(mk('position', 'text', 'Stanowisko', 'ccc-pos'));
+    container.appendChild(row);
+    return row;
+}
+
+function renderCatalogEditor(container, clientId, list) {
+    if (!container) return;
+    container.innerHTML = '';
+    const rows = document.createElement('div');
+    rows.className = 'ccc-rows';
+    const data = Array.isArray(list) && list.length > 0 ? list : [{}];
+    data.forEach((r, i) => {
+        // Domyślna ★ na pierwszej (mirror [0] przewidywalny).
+        const row = r && typeof r === 'object' ? r : {};
+        if (i === 0 && !data.some((x) => x && x.isPrimary)) row.isPrimary = true;
+        catalogEditorRow(rows, clientId, row);
+    });
+    container.appendChild(rows);
+    const add = document.createElement('button');
+    add.type = 'button';
+    add.className = 'btn btn-sm btn-secondary';
+    add.textContent = 'Dodaj osobę';
+    add.onclick = (e) => {
+        e.stopPropagation();
+        if (rows.querySelectorAll('[data-ccc-id], .ccc-row').length >= MAX_CATALOG_CONTACTS) {
+            showToast('Maksymalnie ' + MAX_CATALOG_CONTACTS + ' osób', 'warning');
+            return;
+        }
+        catalogEditorRow(rows, clientId, {});
+    };
+    container.appendChild(add);
+}
+
+function collectCatalogEditor(container, clientId) {
+    const out = [];
+    if (!container || typeof container.querySelectorAll !== 'function') return out;
+    container.querySelectorAll('.ccc-row').forEach((row) => {
+        const get = (k) => {
+            const el = row.querySelector(`[data-ccc="${k}"]`);
+            return el && typeof el.value === 'string' ? el.value.trim() : '';
+        };
+        // clientId to UUID/cc_* (bezpieczne znaki), bez CSS.escape.
+        const radio = row.querySelector(`input[name="ccc-primary-${clientId}"]`);
+        out.push({
+            id: row.getAttribute('data-ccc-id') || null,
+            name: get('name'),
+            phone: get('phone'),
+            email: get('email'),
+            position: get('position'),
+            isPrimary: !!(radio && radio.checked)
+        });
+    });
+    // Puste wiersze wypadają (jak BE); ★ awaryjnie na pierwszą.
+    const rows = out.filter((r) => r.name || r.phone || r.email || r.position);
+    if (rows.length > 0 && !rows.some((r) => r.isPrimary)) rows[0].isPrimary = true;
+    return rows;
 }
 
 /* ===== RENDEROWANIE LISTY ===== */
@@ -225,15 +493,22 @@ function renderClientsDbList(query) {
     if (!container) return;
 
     const q = (query || '').toLowerCase().trim();
+    const hitContact = (c) => {
+        const hit = (v) => v && v.toLowerCase().includes(q);
+        if (hit(c.contact) || hit(c.phone) || hit(c.email)) return true;
+        const cached = clientContactsCache[c.id];
+        return (
+            !!cached &&
+            cached.list.some((r) => hit(r.name) || hit(r.phone) || hit(r.email) || hit(r.position))
+        );
+    };
     const filtered = q
         ? clientsDb.filter(
               (c) =>
                   (c.name && c.name.toLowerCase().includes(q)) ||
                   (c.nip && c.nip.includes(q)) ||
                   (c.clientNumber && c.clientNumber.toLowerCase().includes(q)) ||
-                  (c.contact && c.contact.toLowerCase().includes(q)) ||
-                  (c.phone && c.phone.toLowerCase().includes(q)) ||
-                  (c.email && c.email.toLowerCase().includes(q))
+                  hitContact(c)
           )
         : clientsDb;
     const sorted = [...filtered].sort((a, b) =>
@@ -290,24 +565,27 @@ function renderClientsDbList(query) {
                 td.appendChild(input);
                 tr.appendChild(td);
             });
+            // Edytor N-osób katalogu (imię/telefon/e-mail/stanowisko + ★).
             const contactTd = document.createElement('td');
             contactTd.className = 'td-edit';
-            [
-                ['contact', 'text', 'Osoba'],
-                ['phone', 'tel', 'Telefon'],
-                ['email', 'email', 'E-mail']
-            ].forEach(([field, type, ph]) => {
-                const input = document.createElement('input');
-                input.type = type;
-                input.id = 'edit-client-' + field;
-                input.className = 'form-input form-input-sm';
-                input.placeholder = ph;
-                input.setAttribute('aria-label', ph);
-                input.value = c[field] || '';
-                input.onclick = (e) => e.stopPropagation();
-                input.style.marginBottom = '0.25rem';
-                contactTd.appendChild(input);
-            });
+            const cached = clientContactsCache[c.id];
+            const editList =
+                cached && cached.ok
+                    ? cached.list
+                    : [
+                          {
+                              id: null,
+                              name: c.contact || '',
+                              phone: c.phone || '',
+                              email: c.email || '',
+                              position: '',
+                              isPrimary: true
+                          }
+                      ];
+            const edBox = document.createElement('div');
+            edBox.id = 'edit-client-contacts';
+            renderCatalogEditor(edBox, c.id, editList);
+            contactTd.appendChild(edBox);
             tr.appendChild(contactTd);
             const actionTd = document.createElement('td');
             actionTd.className = 'td-edit td-actions';
@@ -335,41 +613,68 @@ function renderClientsDbList(query) {
             addrTd.textContent = c.address || '—';
             tr.appendChild(addrTd);
 
-            // Katalog = podpowiedź (1 osoba/firma): linia 1 osoba,
-            // linia 2 telefon, linia 3 e-mail. Legacy "Jan, 600..." rozbijane
-            // heurystyką, bo telefon siedzi w jednym stringu `contact`.
+            // Katalog N-osób: linia 1 primary/[0] + ★, linia 2 telefon,
+            // reszta za "+N" (rozwijane). Fallback mirror legacy z rozcięciem.
             const contactTd = document.createElement('td');
             contactTd.className = 'td-muted td-contact';
-            let dispName = c.contact || '';
-            let dispPhone = c.phone || '';
-            const dispEmail = c.email || '';
-            try {
-                const CC = window.ClientContacts;
-                if (!dispPhone && dispName && CC && typeof CC.parseLegacyMirror === 'function') {
-                    const parsed = CC.parseLegacyMirror(dispName)[0];
-                    if (parsed && (parsed.name || parsed.phone)) {
-                        dispName = parsed.name || dispName;
-                        dispPhone = parsed.phone || '';
-                    }
+            const list = catalogDisplayList(c);
+            if (list.length === 0) {
+                contactTd.textContent = '—';
+            } else {
+                const primary = list.find((r) => r.isPrimary) || list[0];
+                const contactName = document.createElement('span');
+                contactName.textContent = primary.name || '—';
+                contactTd.appendChild(contactName);
+                if (list.length > 1) {
+                    const star = document.createElement('span');
+                    star.className = 'td-sub';
+                    star.textContent = '★ Główna';
+                    contactTd.appendChild(star);
                 }
-            } catch (_e) {
-                // pasywnie — pełny string w jednej linii
-            }
-            const contactName = document.createElement('span');
-            contactName.textContent = dispName || '—';
-            contactTd.appendChild(contactName);
-            if (dispPhone) {
-                const contactPhone = document.createElement('span');
-                contactPhone.className = 'td-sub';
-                contactPhone.textContent = dispPhone;
-                contactTd.appendChild(contactPhone);
-            }
-            if (dispEmail) {
-                const contactEmail = document.createElement('span');
-                contactEmail.className = 'td-sub';
-                contactEmail.textContent = dispEmail;
-                contactTd.appendChild(contactEmail);
-                contactTd.title = dispEmail;
+                if (primary.phone) {
+                    const contactPhone = document.createElement('span');
+                    contactPhone.className = 'td-sub';
+                    contactPhone.textContent = primary.phone;
+                    contactTd.appendChild(contactPhone);
+                }
+                contactTd.title = list
+                    .map(
+                        (r) =>
+                            r.name +
+                            (r.phone ? ', ' + r.phone : '') +
+                            (r.email ? ', ' + r.email : '')
+                    )
+                    .join(' | ');
+                if (list.length > 1) {
+                    const rest = list.length - 1;
+                    const plus = document.createElement('button');
+                    plus.type = 'button';
+                    plus.className = 'btn btn-sm btn-secondary ccc-plus';
+                    plus.textContent = '+' + rest;
+                    plus.title = 'Pokaż wszystkie osoby';
+                    plus.setAttribute('aria-label', 'Pokaż wszystkie osoby do kontaktu');
+                    const full = document.createElement('div');
+                    full.className = 'ccc-full';
+                    full.hidden = true;
+                    for (const r of list) {
+                        const line = document.createElement('span');
+                        line.className = 'td-sub';
+                        line.textContent =
+                            (r.isPrimary ? '★ ' : '') +
+                            r.name +
+                            (r.phone ? ' — ' + r.phone : '') +
+                            (r.email ? ', ' + r.email : '') +
+                            (r.position ? ' (' + r.position + ')' : '');
+                        full.appendChild(line);
+                    }
+                    plus.onclick = (e) => {
+                        e.stopPropagation();
+                        full.hidden = !full.hidden;
+                        plus.textContent = full.hidden ? '+' + rest : '−';
+                    };
+                    contactTd.appendChild(plus);
+                    contactTd.appendChild(full);
+                }
             }
             tr.appendChild(contactTd);
 
@@ -399,38 +704,58 @@ function editClientInDb(id) {
     renderClientsDbList(searchInput ? searchInput.value : '');
 }
 
-function saveEditedClientInDb(id) {
+async function saveEditedClientInDb(id) {
     const name = document.getElementById('edit-client-name')?.value.trim() ?? '';
     const nip = document.getElementById('edit-client-nip')?.value.trim() ?? '';
     const address = document.getElementById('edit-client-address')?.value.trim() ?? '';
-    const contact = document.getElementById('edit-client-contact')?.value.trim() ?? '';
-    const phone = document.getElementById('edit-client-phone')?.value.trim() ?? '';
-    const email = document.getElementById('edit-client-email')?.value.trim() ?? '';
     const clientNumber = document.getElementById('edit-client-clientNumber')?.value.trim() ?? '';
 
     if (!name) {
         showToast('Wprowadź nazwę firmy', 'error');
         return;
     }
-    if (email && !/.+@.+\..+/.test(email)) {
-        showToast('Nieprawidłowy adres e-mail', 'error');
-        return;
-    }
 
     const client = clientsDb.find((c) => c.id === id);
-    if (client) {
-        client.name = name;
-        client.nip = nip;
-        client.address = address;
-        client.contact = contact;
-        client.phone = phone;
-        client.email = email;
-        client.clientNumber = clientNumber;
-        client.updatedAt = new Date().toISOString();
-        saveClientsDbData(clientsDb);
-        showToast('Zaktualizowano dane klienta', 'success');
+    if (!client) return;
+    // Kontakty: pełny sync (nie batch firm). Imię wymagane (BE 400).
+    const rows = ensureContactIds(
+        collectCatalogEditor(document.getElementById('edit-client-contacts'), id)
+    );
+    for (let i = 0; i < rows.length; i++) {
+        if (!rows[i].name) {
+            showToast(`Osoba ${i + 1}: podaj imię i nazwisko`, 'error');
+            return;
+        }
+        if (rows[i].email && !/.+@.+\..+/.test(rows[i].email)) {
+            showToast(`Osoba ${i + 1}: nieprawidłowy adres e-mail`, 'error');
+            return;
+        }
     }
+    const sync = await syncClientContacts(id, rows, client.updatedAt || null);
+    if (!sync.ok) {
+        if (sync.status === 409) {
+            if (sync.updatedAt) client.updatedAt = sync.updatedAt;
+            showToast(
+                'Kontakty zmieniono w międzyczasie — sprawdź listę i zapisz ponownie',
+                'warning'
+            );
+        } else {
+            showToast('Błąd zapisu kontaktów: ' + (sync.error || ''), 'error');
+        }
+        return;
+    }
+    const primary = rows.find((r) => r.isPrimary) || rows[0] || null;
+    client.name = name;
+    client.nip = nip;
+    client.address = address;
+    client.contact = primary ? primary.name : '';
+    client.phone = primary ? primary.phone : '';
+    client.email = primary ? primary.email : '';
+    client.clientNumber = clientNumber;
+    client.updatedAt = sync.updatedAt || new Date().toISOString();
     editingClientId = null;
+    await saveClientsDbData(clientsDb);
+    showToast('Zaktualizowano dane klienta', 'success');
     const searchInput = document.getElementById('clients-search-input');
     renderClientsDbList(searchInput ? searchInput.value : '');
 }
@@ -445,7 +770,6 @@ function cancelEditClient() {
 function selectClientFromDb(id) {
     // Snapshot-vs-katalog: jawne "Wczytaj" nie nadpisuje brudnego
     // edytora oferty bez potwierdzenia (snapshot per-offer ma pierwszeństwo).
-    // Katalog daje 1 osobę-podpowiedź; resztę dopisuje "Dodaj osobę" w ofercie.
     if (typeof document !== 'undefined' && document.getElementById('app-confirm-overlay')) return;
     try {
         const box = document.getElementById('client-contacts');
@@ -462,7 +786,7 @@ function selectClientFromDb(id) {
                         { title: 'Wczytaj klienta', type: 'warning' }
                     )
                     .then((ok) => {
-                        if (ok) selectClientFromDbForce(id);
+                        if (ok) proceedSelectClient(id);
                     })
                     .catch((e) => logger.error('clientManager', 'Wczytywanie klienta:', e));
                 return;
@@ -471,10 +795,57 @@ function selectClientFromDb(id) {
     } catch (_e) {
         // pasywnie — brak guarda, stare zachowanie
     }
-    selectClientFromDbForce(id);
+    proceedSelectClient(id);
 }
 
-function selectClientFromDbForce(id) {
+async function proceedSelectClient(id) {
+    const res = await fetchClientContacts(id);
+    if (!res.ok) showToast('Brak połączenia z katalogiem — wczytano podpowiedź z firmy', 'warning');
+    const rows = res.ok ? res.list : [];
+    // N osób → picker (wszystkie domyślnie zaznaczone); 1/0 → dotychczasowa ścieżka.
+    if (rows.length > 1) {
+        openContactPicker(id, rows);
+        return;
+    }
+    selectClientFromDbForce(id, rows.slice(0, 1));
+}
+
+function openContactPicker(id, rows) {
+    const c = clientsDb.find((client) => client.id === id);
+    const esc = (v) => window.escapeHtml(String(v ?? ''));
+    const items = rows
+        .map(
+            (r) =>
+                `<label class="ccc-pick"><input type="checkbox" data-ccc-pick="${window.escapeHtmlAttr(r.id || '')}" checked />` +
+                `<span>${esc(r.isPrimary ? '★ ' : '')}${esc(r.name)}${r.phone ? esc(' — ' + r.phone) : ''}${r.email ? esc(', ' + r.email) : ''}${r.position ? esc(' (' + r.position + ')') : ''}</span></label>`
+        )
+        .join('');
+    const overlay = showModal({
+        id: 'client-contact-picker',
+        html:
+            `<div class="modal"><h3>Wybierz osoby do oferty — ${esc(c ? c.name : '')}</h3>` +
+            `<p class="text-muted fs-md">Do oferty trafiają tylko zaznaczone. Katalog trzyma wszystkie.</p>` +
+            `<div class="ccc-picks">${items}</div>` +
+            `<div class="fu-form-actions"><button type="button" class="btn btn-sm btn-primary" data-ccc-pick-ok>Wczytaj zaznaczone</button>` +
+            `<button type="button" class="btn btn-sm btn-secondary" data-ccc-pick-cancel>Anuluj</button></div></div>`
+    });
+    overlay.querySelector('[data-ccc-pick-ok]').addEventListener('click', () => {
+        const picked = [...overlay.querySelectorAll('[data-ccc-pick]:checked')]
+            .map((cb) => rows.find((r) => r.id === cb.getAttribute('data-ccc-pick')))
+            .filter(Boolean);
+        if (picked.length === 0) {
+            showToast('Zaznacz co najmniej jedną osobę', 'error');
+            return;
+        }
+        closeModal('client-contact-picker');
+        selectClientFromDbForce(id, picked);
+    });
+    overlay.querySelector('[data-ccc-pick-cancel]').addEventListener('click', () => {
+        closeModal('client-contact-picker');
+    });
+}
+
+function selectClientFromDbForce(id, picked) {
     const c = clientsDb.find((client) => client.id === id);
     if (c) {
         const nameEl = document.getElementById('client-name');
@@ -487,26 +858,47 @@ function selectClientFromDbForce(id) {
         if (addrEl) addrEl.value = c.address || '';
         if (contactEl) contactEl.value = c.contact || '';
         if (numEl) numEl.value = c.clientNumber || '';
-        // Wiersz bazy → edytor osób (telefon/e-mail z kolumn clients_rel).
-        // Legacy "Jan, 600..." rozcinane: bez tego cały string lądował w polu nazwy.
+        // Katalog → edytor oferty (tylko imię/telefon/e-mail; snapshot bez id/stanowiska).
         try {
             const box = document.getElementById('client-contacts');
             const CC = window.ClientContacts;
             if (box && CC) {
-                let cand = {
-                    name: c.contact || '',
-                    phone: c.phone || '',
-                    email: c.email || ''
-                };
-                if (!cand.phone && cand.name && typeof CC.parseLegacyMirror === 'function') {
-                    const p = CC.parseLegacyMirror(cand.name)[0];
-                    if (p && (p.name || p.phone))
-                        cand = { name: p.name || cand.name, phone: p.phone, email: cand.email };
+                let rows = Array.isArray(picked) && picked.length > 0 ? picked : null;
+                if (!rows) {
+                    const cached = clientContactsCache[id];
+                    if (cached && cached.ok && cached.list.length > 0) rows = cached.list;
+                    else {
+                        let cand = {
+                            name: c.contact || '',
+                            phone: c.phone || '',
+                            email: c.email || ''
+                        };
+                        if (
+                            !cand.phone &&
+                            cand.name &&
+                            typeof CC.parseLegacyMirror === 'function'
+                        ) {
+                            const p = CC.parseLegacyMirror(cand.name)[0];
+                            if (p && (p.name || p.phone))
+                                cand = {
+                                    name: p.name || cand.name,
+                                    phone: p.phone,
+                                    email: cand.email
+                                };
+                        }
+                        rows = [cand];
+                    }
                 }
-                const single = CC.normalizeContacts([cand]);
+                const norm = CC.normalizeContacts(
+                    rows.map((r) => ({
+                        name: r.name || '',
+                        phone: r.phone || '',
+                        email: r.email || ''
+                    }))
+                );
                 CC.renderEditor(
                     box,
-                    single.length > 0 ? single : CC.parseLegacyMirror(c.contact || '')
+                    norm.length > 0 ? norm : CC.parseLegacyMirror(c.contact || '')
                 );
                 CC.bindEditor(box);
             }
@@ -529,6 +921,7 @@ async function deleteClientFromDb(id) {
     )
         return;
     clientsDb = clientsDb.filter((c) => c.id !== id);
+    delete clientContactsCache[id];
     saveClientsDbData(clientsDb);
 
     const searchInput = document.getElementById('clients-search-input');

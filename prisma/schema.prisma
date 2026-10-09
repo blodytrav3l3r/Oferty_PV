@@ -263,6 +263,26 @@ model clients_rel {
   @@index([userId], map: "idx_clients_user")
 }
 
+// Katalog osób do kontaktu klienta (Paczka 2): wiele kontaktów per klient.
+// Bez FK (konwencja projektu) — delete klienta kasuje kontakty kodowo
+// w tej samej tx (PUT /api/clients). Daty jako String ISO-8601 UTC
+// (konwencja: createdAt/updatedAt wszędzie String). isPrimary max-jeden
+// (ustawienie głównego zeruje resztę w tej samej tx sync).
+model client_contacts_rel {
+  id              String  @id
+  clientId        String
+  name            String
+  phone           String?
+  email           String?
+  position        String? @default("")
+  isPrimary       Int     @default(0)
+  createdByUserId String?
+  createdAt       String?
+  updatedAt       String?
+
+  @@index([clientId], map: "idx_client_contacts_client")
+}
+
 model offer_items_rel {
   id        String  @id
   offerId   String?

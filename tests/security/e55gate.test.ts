@@ -541,7 +541,7 @@ describe('E5.5 gate: okablowanie bez zmian zachowania', () => {
             ['src/routes/pricelistVersions.ts', 'PRICELIST_WRITE_LIMITER'],
             ['src/routes/users.ts', 'ADMIN_USERS_LIMITER'],
             ['src/routes/shares.ts', 'WRITE_LIMITER'],
-            ['src/routes/clients.ts', 'WRITE_LIMITER']
+            ['src/routes/clients/index.ts', 'WRITE_LIMITER']
         ];
         for (const [file, limiter] of wiring) {
             expect(readSrc(file)).toContain(limiter);

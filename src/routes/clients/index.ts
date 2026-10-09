@@ -1,15 +1,19 @@
 import express from 'express';
 import crypto from 'crypto';
-import prisma from '../prismaClient';
-import { requireAuth, AuthenticatedRequest } from '../middleware/auth';
+import prisma from '../../prismaClient';
+import { requireAuth, AuthenticatedRequest } from '../../middleware/auth';
 
-import { validateData } from '../validators/authSchema';
-import { WRITE_LIMITER } from '../middleware/rateLimiters';
-import { clientsBatchSchema } from '../validators/offerSchemas';
-import { logger } from '../utils/logger';
-import { canDeleteDoc } from '../utils/ownership';
+import { validateData } from '../../validators/authSchema';
+import { WRITE_LIMITER } from '../../middleware/rateLimiters';
+import { clientsBatchSchema } from '../../validators/offerSchemas';
+import { logger } from '../../utils/logger';
+import { canDeleteDoc } from '../../utils/ownership';
+import contactsRouter from './contacts';
 
 const router = express.Router();
+
+// Katalog kontaktów: GET/PUT /:clientId/contacts (osobny router, ten sam mount).
+router.use('/', contactsRouter);
 
 const writeClientsLimiter = WRITE_LIMITER;
 
@@ -127,6 +131,11 @@ router.put(
                         });
                         // Batch (N+1 -> 1): jeden DELETE ... WHERE id IN zamiast
                         // per-row DELETE. Ta sama semantyka, ta sama tx.
+                        // Katalog kontaktów: brak FK (konwencja) — cascade kodowe
+                        // w tej samej tx (snapshoty ofert w blobach zostają).
+                        await tx.client_contacts_rel.deleteMany({
+                            where: { clientId: { in: toDelete } }
+                        });
                         await tx.clients_rel.deleteMany({ where: { id: { in: toDelete } } });
                     }
 

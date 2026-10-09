@@ -231,6 +231,7 @@ describe('Clients CRUD — wspólna baza (Wariant A, globalny dostęp)', () => {
                 $queryRawUnsafe: jest.fn().mockResolvedValue([{ id: 'c-keep' }]),
                 $executeRaw: jest.fn().mockResolvedValue(1),
                 clients_rel: { deleteMany: jest.fn().mockResolvedValue({ count: 1 }) },
+                client_contacts_rel: { deleteMany: jest.fn().mockResolvedValue({ count: 0 }) },
                 offers_rel: { updateMany: jest.fn().mockResolvedValue({ count: 2 }) },
                 offers_studnie_rel: { updateMany: jest.fn().mockResolvedValue({ count: 1 }) }
             };
@@ -245,6 +246,9 @@ describe('Clients CRUD — wspólna baza (Wariant A, globalny dostęp)', () => {
             expect(res.statusCode).toBe(200);
             expect(txMock.clients_rel.deleteMany).toHaveBeenCalledWith({
                 where: { id: { in: ['c-gone'] } }
+            });
+            expect(txMock.client_contacts_rel.deleteMany).toHaveBeenCalledWith({
+                where: { clientId: { in: ['c-gone'] } }
             });
             expect(txMock.offers_rel.updateMany).toHaveBeenCalledWith({
                 where: { clientId: { in: ['c-gone'] } },
@@ -306,6 +310,7 @@ describe('Clients CRUD — wspólna baza (Wariant A, globalny dostęp)', () => {
                 $queryRawUnsafe: jest.fn().mockResolvedValue([{ id: 'c-moj' }]),
                 $executeRaw: jest.fn().mockResolvedValue(1),
                 clients_rel: { deleteMany: jest.fn().mockResolvedValue({ count: 1 }) },
+                client_contacts_rel: { deleteMany: jest.fn().mockResolvedValue({ count: 0 }) },
                 offers_rel: { updateMany: jest.fn().mockResolvedValue({ count: 0 }) },
                 offers_studnie_rel: { updateMany: jest.fn().mockResolvedValue({ count: 0 }) }
             };
@@ -321,6 +326,9 @@ describe('Clients CRUD — wspólna baza (Wariant A, globalny dostęp)', () => {
             expect(txMock.offers_rel.updateMany).toHaveBeenCalledWith({
                 where: { clientId: { in: ['c-obcy'] } },
                 data: { clientId: null }
+            });
+            expect(txMock.client_contacts_rel.deleteMany).toHaveBeenCalledWith({
+                where: { clientId: { in: ['c-obcy'] } }
             });
             expect(txMock.clients_rel.deleteMany).toHaveBeenCalledWith({
                 where: { id: { in: ['c-obcy'] } }

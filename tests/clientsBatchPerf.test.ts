@@ -59,6 +59,7 @@ function createTxMock(existing: Array<{ id: string; userId: string | null }>) {
         $queryRawUnsafe: jest.fn().mockResolvedValue([]),
         $executeRaw: jest.fn().mockResolvedValue(1),
         clients_rel: { deleteMany: jest.fn().mockResolvedValue({ count: 0 }) },
+        client_contacts_rel: { deleteMany: jest.fn().mockResolvedValue({ count: 0 }) },
         offers_rel: { updateMany: jest.fn().mockResolvedValue({ count: 0 }) },
         offers_studnie_rel: { updateMany: jest.fn().mockResolvedValue({ count: 0 }) }
     };
@@ -70,6 +71,7 @@ function roundtrips(txMock: ReturnType<typeof createTxMock>) {
         txMock.$queryRawUnsafe.mock.calls.length +
         txMock.$executeRaw.mock.calls.length +
         txMock.clients_rel.deleteMany.mock.calls.length +
+        txMock.client_contacts_rel.deleteMany.mock.calls.length +
         txMock.offers_rel.updateMany.mock.calls.length +
         txMock.offers_studnie_rel.updateMany.mock.calls.length
     );
@@ -83,7 +85,7 @@ beforeEach(() => {
 });
 
 describe('PUT /api/clients — batch (stała liczba roundtripów)', () => {
-    it('50 upsertów + 10 deletów = 5 roundtripów (przed: 63)', async () => {
+    it('50 upsertów + 10 deletów = 6 roundtripów (przed: 63; +1 cascade kontaktów)', async () => {
         const app = createApp();
         const existing = [
             ...Array.from({ length: 50 }, (_, i) => ({ id: `c-${i}`, userId: 'admin-1' })),
@@ -107,8 +109,12 @@ describe('PUT /api/clients — batch (stała liczba roundtripów)', () => {
         expect(txMock.clients_rel.deleteMany).toHaveBeenCalledWith({
             where: { id: { in: existing.slice(50).map((c) => c.id) } }
         });
+        expect(txMock.client_contacts_rel.deleteMany).toHaveBeenCalledTimes(1);
+        expect(txMock.client_contacts_rel.deleteMany).toHaveBeenCalledWith({
+            where: { clientId: { in: existing.slice(50).map((c) => c.id) } }
+        });
         expect(txMock.$queryRawUnsafe).toHaveBeenCalledTimes(1);
-        expect(roundtrips(txMock)).toBe(5);
+        expect(roundtrips(txMock)).toBe(6);
     });
 
     it('sam upsert bez deletów = 2 roundtripy, zero zapisów kasujących', async () => {

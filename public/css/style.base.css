@@ -1626,6 +1626,59 @@ button.btn-order-save:hover {
     white-space: nowrap;
 }
 
+/* Edytor kontaktów katalogu (N osób, namespace .ccc-*; oferta ma .cc-*). */
+.ccc-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+}
+.ccc-row {
+    display: grid;
+    grid-template-columns: auto 1fr 1fr auto;
+    gap: 0.35rem;
+    align-items: center;
+}
+.ccc-row .ccc-name {
+    grid-column: 2 / 4;
+}
+.ccc-row .ccc-mail {
+    grid-column: 3 / 5;
+}
+.ccc-row .ccc-pos {
+    grid-column: 2 / 5;
+}
+.ccc-star {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.15rem;
+    cursor: pointer;
+    color: var(--text-muted);
+    font-size: var(--fs-lg);
+}
+.ccc-plus {
+    margin-top: 0.25rem;
+    padding: 0.1rem 0.5rem;
+    font-size: var(--fs-sm);
+}
+.ccc-full {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    margin-top: 0.25rem;
+}
+.ccc-picks {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    margin: 0.8rem 0;
+}
+.ccc-pick {
+    display: flex;
+    gap: 0.5rem;
+    align-items: flex-start;
+    cursor: pointer;
+}
+
 /* Ożywione klasy używane w szablonach JS (offerAddItems.js, offerExports.js) */
 .fs-4xl-bold-primary {
     font-size: var(--fs-4xl);

@@ -4,6 +4,7 @@
  */
 import prisma from './prismaClient';
 import { logger } from './utils/logger';
+import crypto from 'crypto';
 
 /**
  * PRAGMA połączenia: WAL + synchronous + busy_timeout + user_version + FK.
@@ -118,6 +119,74 @@ export async function ensureDatabaseIndexes(): Promise<void> {
         logger.warn(
             'Server',
             'Nie udało się upewnić schematu sessions.lastActivity:',
+            e instanceof Error ? e.message : String(e)
+        );
+    }
+
+    await ensureClientContactsTable();
+}
+
+/**
+ * Auto-heal katalogu kontaktów klienta (Paczka 2): CREATE TABLE IF NOT EXISTS
+ * + backfill legacy (clients_rel.contact/phone/email → 1 wiersz
+ * isPrimary=1, tylko gdy któryś niepusty i klient nie ma jeszcze kontaktów).
+ * Idempotentne. Backfill w JS (id = crypto.randomUUID — SQLite nie ma UUID).
+ */
+export async function ensureClientContactsTable(): Promise<void> {
+    try {
+        await prisma.$executeRaw`CREATE TABLE IF NOT EXISTS "client_contacts_rel" ("id" TEXT NOT NULL PRIMARY KEY, "clientId" TEXT NOT NULL, "name" TEXT NOT NULL, "phone" TEXT, "email" TEXT, "position" TEXT DEFAULT '', "isPrimary" INTEGER NOT NULL DEFAULT 0, "createdByUserId" TEXT, "createdAt" TEXT, "updatedAt" TEXT)`;
+        await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "idx_client_contacts_client" ON "client_contacts_rel"("clientId")`;
+    } catch (e) {
+        logger.warn(
+            'Server',
+            'Nie udało się upewnić schematu client_contacts_rel:',
+            e instanceof Error ? e.message : String(e)
+        );
+        return;
+    }
+    try {
+        // UWAGA: wyłącznie statyczny DDL/DML bez parametrów użytkownika,
+        // forma $queryRaw z literalem (kontrakt tests/sqlInjection.test.ts).
+        const legacy =
+            (await prisma.$queryRaw`SELECT c."id", c."userId", c."contact", c."phone", c."email" FROM "clients_rel" AS "c" LEFT JOIN "client_contacts_rel" AS "cc" ON "cc"."clientId" = "c"."id" WHERE "cc"."id" IS NULL`) as Array<{
+                id: string;
+                userId: string | null;
+                contact: string | null;
+                phone: string | null;
+                email: string | null;
+            }>;
+        if (!Array.isArray(legacy) || legacy.length === 0) return;
+        const now = new Date().toISOString();
+        const rows = [];
+        for (const r of legacy) {
+            const name = (r.contact ?? '').trim();
+            const phone = (r.phone ?? '').trim();
+            const email = (r.email ?? '').trim();
+            if (!name && !phone && !email) continue;
+            rows.push({
+                id: crypto.randomUUID(),
+                clientId: r.id,
+                name,
+                phone: phone || null,
+                email: email || null,
+                position: '',
+                isPrimary: 1,
+                createdByUserId: r.userId ?? null,
+                createdAt: now,
+                updatedAt: now
+            });
+        }
+        if (rows.length > 0) {
+            await prisma.client_contacts_rel.createMany({ data: rows });
+            logger.info(
+                'Server',
+                `Auto-heal: backfill katalogu kontaktów (${rows.length} wierszy)`
+            );
+        }
+    } catch (e) {
+        logger.warn(
+            'Server',
+            'Nie udało się wykonać backfillu client_contacts_rel:',
             e instanceof Error ? e.message : String(e)
         );
     }
