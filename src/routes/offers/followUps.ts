@@ -51,37 +51,40 @@ const isoDateTime = z.string().refine(isStrictIsoDateTime, {
     message: 'Nieprawidłowa data ISO-8601 (wymagane RRRR-MM-DDTHH:MM:SS ze strefą)'
 });
 
+const followUpFields = {
+    channel: z.enum(['PHONE', 'EMAIL', 'SMS', 'WHATSAPP', 'MEETING', 'OTHER']),
+    result: z.enum(['CONTACTED', 'NO_ANSWER', 'BUSY', 'CALLBACK_REQUESTED', 'WRONG_NUMBER']),
+    contactedAt: isoDateTime,
+    durationMin: z.number().int().min(0).max(480).nullish(),
+    note: z.string().max(2000).nullish(),
+    nextContactAt: isoDateTime.nullish(),
+    outcome: z.enum(['OPEN', 'WON', 'LOST_COMPETITION', 'LOST_OTHER', 'ABANDONED']).default('OPEN'),
+    loseReason: z.string().max(200).nullish(),
+    competitor: z.string().max(200).nullish(),
+    competitorPrice: z.number().finite().min(0).nullish()
+};
+
+// P2 twarde domknięcie: LOST_* wymaga powodu (miękkie z P0/P1 zaostrzone).
+function checkLoseReason(v: { outcome: string; loseReason?: string | null }, ctx: z.RefinementCtx) {
+    if ((v.outcome === 'LOST_COMPETITION' || v.outcome === 'LOST_OTHER') && !v.loseReason?.trim()) {
+        ctx.addIssue({
+            code: 'custom',
+            path: ['loseReason'],
+            message: 'Podaj powód utraty oferty'
+        });
+    }
+}
+
 export const followUpCreateSchema = z
-    .object({
-        channel: z.enum(['PHONE', 'EMAIL', 'SMS', 'WHATSAPP', 'MEETING', 'OTHER']),
-        result: z.enum(['CONTACTED', 'NO_ANSWER', 'BUSY', 'CALLBACK_REQUESTED', 'WRONG_NUMBER']),
-        contactedAt: isoDateTime,
-        durationMin: z.number().int().min(0).max(480).nullish(),
-        note: z.string().max(2000).nullish(),
-        nextContactAt: isoDateTime.nullish(),
-        outcome: z
-            .enum(['OPEN', 'WON', 'LOST_COMPETITION', 'LOST_OTHER', 'ABANDONED'])
-            .default('OPEN'),
-        loseReason: z.string().max(200).nullish(),
-        competitor: z.string().max(200).nullish(),
-        competitorPrice: z.number().finite().min(0).nullish(),
-        reopen: z.boolean().default(false)
-    })
-    // P2 twarde domknięcie: LOST_* wymaga powodu (miękkie z P0/P1 zaostrzone).
-    .superRefine((v, ctx) => {
-        if (
-            (v.outcome === 'LOST_COMPETITION' || v.outcome === 'LOST_OTHER') &&
-            !v.loseReason?.trim()
-        ) {
-            ctx.addIssue({
-                code: 'custom',
-                path: ['loseReason'],
-                message: 'Podaj powód utraty oferty'
-            });
-        }
-    });
+    .object({ ...followUpFields, reopen: z.boolean().default(false) })
+    .superRefine(checkLoseReason);
 
 type FollowUpCreate = z.infer<typeof followUpCreateSchema>;
+
+// Edycja wpisu: pełny obiekt jak przy tworzeniu, bez flagi reopen w schemacie
+// (reopen idzie osobnym query ?reopen=1, żeby nie mylić z polem rekordu).
+const followUpUpdateSchema = z.object({ ...followUpFields }).superRefine(checkLoseReason);
+type FollowUpUpdate = z.infer<typeof followUpUpdateSchema>;
 
 function checkKind(kind: string): kind is 'rury' | 'studnie' {
     return kind === 'rury' || kind === 'studnie';
@@ -218,6 +221,188 @@ router.post(
         }
     }
 );
+
+function wantsReopen(req: express.Request): boolean {
+    const q = req.query.reopen;
+    if (q === '1' || q === 'true') return true;
+    const b = (req.body as { reopen?: unknown } | undefined)?.reopen;
+    return b === true;
+}
+
+async function loadFollowUp(kind: 'rury' | 'studnie', offerId: string, fuId: string) {
+    const fu = await prisma.offer_follow_ups.findUnique({ where: { id: fuId } });
+    if (!fu || fu.offerKind !== kind || fu.offerId !== offerId) return null;
+    return fu;
+}
+
+// Edycja + usuwanie wpisów historii: te same guardy co POST (kind, istnienie
+// oferty, canWriteDoc — share read-only nie wystarcza), audyt w tej samej tx,
+// invalidate cache (badge LOS liczy się z latest). Dotknięcie stanów
+// terminalnych (ustawienie/usunięcie terminala, zdjęcie terminala) wymaga
+// jawnego ?reopen=1 — lustro reguły 409 z POST.
+router.put(
+    '/:kind/:id/followups/:fuId',
+    requireAuth,
+    writeFollowUpLimiter,
+    validateData(followUpUpdateSchema),
+    async (req, res) => {
+        const authReq = req as AuthenticatedRequest;
+        try {
+            const { kind, id, fuId } = req.params;
+            if (!checkKind(kind)) {
+                return res
+                    .status(400)
+                    .json({ error: 'Nieprawidłowy typ oferty', code: 'INVALID_KIND' });
+            }
+            const offer = await loadOffer(kind, id);
+            if (!offer) {
+                return res.status(404).json({ error: 'Oferta nie istnieje', code: 'NOT_FOUND' });
+            }
+            if (!canWriteDoc(authReq.user, offer.userId)) {
+                return res
+                    .status(403)
+                    .json({ error: 'Brak uprawnień do zapisu kontaktu', code: 'FORBIDDEN' });
+            }
+            const existing = await loadFollowUp(kind, id, fuId);
+            if (!existing) {
+                return res.status(404).json({ error: 'Kontakt nie istnieje', code: 'NOT_FOUND' });
+            }
+            const body = req.body as FollowUpUpdate;
+            const reopen = wantsReopen(req);
+            const wasTerminal = isTerminal(existing.outcome);
+            const willBeTerminal = isTerminal(body.outcome);
+            if ((wasTerminal !== willBeTerminal || (wasTerminal && willBeTerminal)) && !reopen) {
+                return res.status(409).json({
+                    error: 'Zmiana wyniku terminalnego wymaga potwierdzenia (reopen)',
+                    code: 'TERMINAL_OUTCOME'
+                });
+            }
+            if (willBeTerminal && !wasTerminal) {
+                const sibling = await prisma.offer_follow_ups.findFirst({
+                    where: {
+                        offerKind: kind,
+                        offerId: id,
+                        cycle: existing.cycle,
+                        outcome: { in: [...TERMINAL_OUTCOMES] },
+                        NOT: { id: fuId }
+                    }
+                });
+                if (sibling) {
+                    return res.status(409).json({
+                        error: 'Oferta została w międzyczasie zamknięta',
+                        code: 'TERMINAL_OUTCOME'
+                    });
+                }
+            }
+            const now = new Date().toISOString();
+            const record = {
+                contactedAt: new Date(body.contactedAt).toISOString(),
+                channel: body.channel,
+                result: body.result,
+                durationMin: body.durationMin ?? null,
+                note: body.note ?? null,
+                nextContactAt: body.nextContactAt
+                    ? new Date(body.nextContactAt).toISOString()
+                    : null,
+                outcome: body.outcome,
+                loseReason: body.loseReason ?? null,
+                competitor: body.competitor ?? null,
+                competitorPrice: body.competitorPrice ?? null
+            };
+            await prisma.$transaction(async (tx) => {
+                await tx.offer_follow_ups.update({ where: { id: fuId }, data: record });
+                await tx.audit_logs.create({
+                    data: {
+                        id: crypto.randomUUID(),
+                        entityType: 'offer_followup',
+                        entityId: fuId,
+                        userId: authReq.user?.id ?? null,
+                        action: 'update',
+                        oldData: JSON.stringify(existing),
+                        newData: JSON.stringify({ ...existing, ...record }),
+                        createdAt: now
+                    }
+                });
+            });
+            searchCache.invalidateAll();
+            return res.json({ ok: true, id: fuId });
+        } catch (e) {
+            if ((e as { code?: string })?.code === 'P2002') {
+                const target = JSON.stringify((e as { meta?: unknown })?.meta ?? '');
+                if (
+                    target.includes('uq_fu_terminal_per_cycle') ||
+                    target.includes('uq_fu_terminal_per_offer')
+                ) {
+                    return res.status(409).json({
+                        error: 'Oferta została w międzyczasie zamknięta',
+                        code: 'TERMINAL_OUTCOME'
+                    });
+                }
+            }
+            if (mapPrismaError(res, e)) return;
+            logger.error('FollowUps', 'Błąd edycji kontaktu', {
+                error: e instanceof Error ? e.message : String(e)
+            });
+            return res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
+        }
+    }
+);
+
+router.delete('/:kind/:id/followups/:fuId', requireAuth, writeFollowUpLimiter, async (req, res) => {
+    const authReq = req as AuthenticatedRequest;
+    try {
+        const { kind, id, fuId } = req.params;
+        if (!checkKind(kind)) {
+            return res
+                .status(400)
+                .json({ error: 'Nieprawidłowy typ oferty', code: 'INVALID_KIND' });
+        }
+        const offer = await loadOffer(kind, id);
+        if (!offer) {
+            return res.status(404).json({ error: 'Oferta nie istnieje', code: 'NOT_FOUND' });
+        }
+        if (!canWriteDoc(authReq.user, offer.userId)) {
+            return res
+                .status(403)
+                .json({ error: 'Brak uprawnień do zapisu kontaktu', code: 'FORBIDDEN' });
+        }
+        const existing = await loadFollowUp(kind, id, fuId);
+        if (!existing) {
+            return res.status(404).json({ error: 'Kontakt nie istnieje', code: 'NOT_FOUND' });
+        }
+        // Usunięcie wpisu terminalnego to de facto reopen — jawna flaga.
+        if (isTerminal(existing.outcome) && !wantsReopen(req)) {
+            return res.status(409).json({
+                error: 'Usunięcie zamknięcia wymaga potwierdzenia (reopen)',
+                code: 'TERMINAL_OUTCOME'
+            });
+        }
+        const now = new Date().toISOString();
+        await prisma.$transaction(async (tx) => {
+            await tx.offer_follow_ups.delete({ where: { id: fuId } });
+            await tx.audit_logs.create({
+                data: {
+                    id: crypto.randomUUID(),
+                    entityType: 'offer_followup',
+                    entityId: fuId,
+                    userId: authReq.user?.id ?? null,
+                    action: 'delete',
+                    oldData: JSON.stringify(existing),
+                    newData: null,
+                    createdAt: now
+                }
+            });
+        });
+        searchCache.invalidateAll();
+        return res.json({ ok: true, id: fuId });
+    } catch (e) {
+        if (mapPrismaError(res, e)) return;
+        logger.error('FollowUps', 'Błąd usuwania kontaktu', {
+            error: e instanceof Error ? e.message : String(e)
+        });
+        return res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
+    }
+});
 
 router.get('/:kind/:id/followups', requireAuth, async (req, res) => {
     const authReq = req as AuthenticatedRequest;

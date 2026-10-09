@@ -2,6 +2,13 @@
 // Opieka nad ofertą (P1): modal "Zapisz kontakt" + timeline kontaktów.
 // Mixin do KartotekaUI (import w kartotekaUi.js) — ESM, addEventListener,
 // escapeHtml do innerHTML, brak nowych window.*.
+import {
+    legacyToContacts,
+    normalizeContacts,
+    renderEditor,
+    collectContacts,
+    bindEditor
+} from '../shared/clientContacts.js';
 
 const CHANNEL_LABELS = {
     PHONE: 'Telefon',
@@ -106,12 +113,32 @@ export default {
         const latest = items.length > 0 ? items[0] : null;
         const terminal = !!latest && TERMINAL_OUTCOMES.includes(latest.outcome);
 
+        // Osoby do kontaktu (prefill z DETAIL — tablica clientContacts
+        // albo klucze legacy; zapis osobnym PUT).
+        let ccList = [];
+        try {
+            const dResp = await fetch(
+                `/api/offers-rury/${encodeURIComponent(id)}?t=${Date.now()}`,
+                { headers }
+            );
+            if (dResp.ok) {
+                const dJson = await dResp.json();
+                ccList = legacyToContacts((dJson && dJson.data) || {});
+            }
+        } catch (e) {
+            logger.warn('kartotekaUi', 'Błąd pobierania danych klienta:', e);
+        }
+
         const overlay = window.showModal({
             id: 'offer-followup-modal',
             titleId: 'offer-followup-title',
             html:
-                `<div class="modal">` +
+                `<div class="modal modal--lg">` +
                 `<h3 id="offer-followup-title">Opieka nad ofertą — ${window.escapeHtml(title)}</h3>` +
+                `<div class="fu-client-box"><h4>Kontakt do klienta</h4>` +
+                `<div id="fu-cc-list" data-cc-hidden=""></div>` +
+                `<div class="fu-client-actions"><button type="button" class="btn btn-sm btn-secondary" id="fu-client-save">Zapisz kontakt do klienta</button></div>` +
+                `</div>` +
                 `<form id="fu-contact-form" class="fu-form-grid">` +
                 `<label> Kanał <select id="fu-channel" class="form-input form-input-sm">${optionsHtml(CHANNEL_LABELS, 'PHONE')}</select> </label>` +
                 `<label> Rezultat <select id="fu-result" class="form-input form-input-sm">${optionsHtml(RESULT_LABELS, 'CONTACTED')}</select> </label>` +
@@ -126,12 +153,21 @@ export default {
                     ? `<label class="fu-full"><input type="checkbox" id="fu-reopen" /> Ponownie otwórz zamkniętą ofertę</label>`
                     : '') +
                 `<div class="fu-full fu-error" id="fu-error" role="alert" hidden></div>` +
-                `<div class="fu-full"><button type="submit" class="btn btn-sm btn-primary">Zapisz kontakt</button></div>` +
+                `<div class="fu-full fu-form-actions"><button type="submit" class="btn btn-sm btn-primary" id="fu-submit-btn">Zapisz kontakt</button><button type="button" class="btn btn-sm btn-secondary" id="fu-cancel-edit" hidden>Anuluj edycję</button></div>` +
                 `</form>` +
                 `<h4>Historia kontaktów</h4>` +
                 `<div class="fu-timeline" id="fu-timeline">${this.renderFollowUpTimeline(items)}</div>` +
                 `</div>`
         });
+
+        this._fuItems = items;
+        this._fuEditingId = null;
+
+        const ccBox = overlay.querySelector('#fu-cc-list');
+        if (ccBox) {
+            renderEditor(ccBox, ccList);
+            bindEditor(ccBox);
+        }
 
         if (window.lucide) window.lucide.createIcons({ root: overlay });
 
@@ -149,6 +185,51 @@ export default {
             e.preventDefault();
             this.submitFollowUp(id, kind, overlay);
         });
+        overlay.querySelector('#fu-cancel-edit').addEventListener('click', () => {
+            this.cancelFollowUpEdit(overlay);
+        });
+        overlay.querySelector('#fu-client-save').addEventListener('click', () => {
+            this.saveClientContact(id, kind, overlay);
+        });
+        overlay.querySelector('#fu-timeline').addEventListener('click', (e) => {
+            const btn = e.target && e.target.closest ? e.target.closest('[data-fu-act]') : null;
+            if (!btn) return;
+            const fuId = btn.getAttribute('data-fu-id') || '';
+            if (btn.getAttribute('data-fu-act') === 'edit') this.startFollowUpEdit(fuId, overlay);
+            else if (btn.getAttribute('data-fu-act') === 'del')
+                this.deleteFollowUp(id, kind, fuId, overlay);
+        });
+    },
+
+    async loadFollowUpItems(kind, offerId) {
+        const headers =
+            typeof authHeaders === 'function'
+                ? authHeaders()
+                : { 'Content-Type': 'application/json' };
+        try {
+            const resp = await fetch(
+                `/api/offers-rury/${encodeURIComponent(kind)}/${encodeURIComponent(offerId)}/followups?t=${Date.now()}`,
+                { headers }
+            );
+            if (!resp.ok) return null;
+            const json = await resp.json();
+            return json.items || [];
+        } catch (e) {
+            logger.warn('kartotekaUi', 'Błąd odświeżania kontaktów:', e);
+            return null;
+        }
+    },
+
+    async refreshFollowUpTimeline(overlay, kind, offerId) {
+        const items = await this.loadFollowUpItems(kind, offerId);
+        if (items === null) return;
+        this._fuItems = items;
+        const box = overlay.querySelector('#fu-timeline');
+        if (box) {
+            box.innerHTML = this.renderFollowUpTimeline(items);
+            if (window.lucide) window.lucide.createIcons({ root: box });
+        }
+        await this.loadLocalOffers();
     },
 
     renderFollowUpTimeline(items) {
@@ -167,17 +248,157 @@ export default {
                 const next = fu.nextContactAt
                     ? ` • następny: ${window.escapeHtml(fmtDateTime(fu.nextContactAt))}`
                     : '';
+                const fuId = window.escapeHtmlAttr(String(fu.id || ''));
                 return (
-                    `<div class="fu-timeline-item">` +
+                    `<div class="fu-timeline-item" data-fu-item="${fuId}">` +
                     `<div class="fu-timeline-meta">${window.escapeHtml(fmtDateTime(fu.contactedAt))} • ${window.escapeHtml(channel)} • ${window.escapeHtml(result)}${dur}${next}</div>` +
                     (fu.note ? `<div>${window.escapeHtml(fu.note)}</div>` : '') +
                     (outcome
                         ? `<div class="fu-timeline-meta">Wynik: ${window.escapeHtml(outcome)}</div>`
                         : '') +
+                    `<div class="fu-timeline-actions"><button type="button" class="btn btn-sm btn-secondary" data-fu-act="edit" data-fu-id="${fuId}">Edytuj</button>` +
+                    `<button type="button" class="btn btn-sm btn-secondary" data-fu-act="del" data-fu-id="${fuId}">Usuń</button></div>` +
                     `</div>`
                 );
             })
             .join('');
+    },
+
+    startFollowUpEdit(fuId, overlay) {
+        const fu = (this._fuItems || []).find((x) => String(x.id) === String(fuId));
+        if (!fu) return;
+        this._fuEditingId = String(fuId);
+        const set = (sel, v) => {
+            const el = overlay.querySelector(sel);
+            if (el) el.value = v ?? '';
+        };
+        set('#fu-channel', fu.channel || 'PHONE');
+        set('#fu-result', fu.result || 'CONTACTED');
+        set(
+            '#fu-contacted-at',
+            fu.contactedAt && !Number.isNaN(Date.parse(fu.contactedAt))
+                ? toLocalInputValue(new Date(fu.contactedAt))
+                : toLocalInputValue(new Date())
+        );
+        set(
+            '#fu-duration',
+            fu.durationMin === null || fu.durationMin === undefined ? '' : String(fu.durationMin)
+        );
+        set('#fu-note', fu.note || '');
+        set(
+            '#fu-next',
+            fu.nextContactAt && !Number.isNaN(Date.parse(fu.nextContactAt))
+                ? String(fu.nextContactAt).slice(0, 10)
+                : ''
+        );
+        set('#fu-outcome', fu.outcome || 'OPEN');
+        set('#fu-lose-reason', fu.loseReason || '');
+        set('#fu-competitor', fu.competitor || '');
+        const outSel = overlay.querySelector('#fu-outcome');
+        if (outSel && typeof Event === 'function') outSel.dispatchEvent(new Event('change'));
+        // Edycja wpisu terminalnego wymaga flagi reopen — dostaw checkbox
+        // gdy go nie ma (formularz nowego kontaktu pokazuje go tylko dla latest).
+        if (TERMINAL_OUTCOMES.includes(fu.outcome) && !overlay.querySelector('#fu-reopen')) {
+            const errBox = overlay.querySelector('#fu-error');
+            const label = document.createElement('label');
+            label.className = 'fu-full';
+            label.id = 'fu-reopen-injected';
+            label.innerHTML =
+                '<input type="checkbox" id="fu-reopen" /> Potwierdzam zmianę wpisu z wynikiem terminalnym';
+            if (errBox && errBox.parentNode) errBox.parentNode.insertBefore(label, errBox);
+        }
+        const btn = overlay.querySelector('#fu-submit-btn');
+        if (btn) btn.textContent = 'Zapisz zmiany';
+        const cancel = overlay.querySelector('#fu-cancel-edit');
+        if (cancel) cancel.hidden = false;
+        const form = overlay.querySelector('#fu-contact-form');
+        if (form && typeof form.scrollIntoView === 'function') form.scrollIntoView();
+    },
+
+    cancelFollowUpEdit(overlay) {
+        this._fuEditingId = null;
+        const injected = overlay.querySelector('#fu-reopen-injected');
+        if (injected && typeof injected.remove === 'function') injected.remove();
+        const form = overlay.querySelector('#fu-contact-form');
+        if (form && typeof form.reset === 'function') form.reset();
+        const btn = overlay.querySelector('#fu-submit-btn');
+        if (btn) btn.textContent = 'Zapisz kontakt';
+        const cancel = overlay.querySelector('#fu-cancel-edit');
+        if (cancel) cancel.hidden = true;
+        const errBox = overlay.querySelector('#fu-error');
+        if (errBox) errBox.hidden = true;
+    },
+
+    async deleteFollowUp(offerId, kind, fuId, overlay) {
+        const fu = (this._fuItems || []).find((x) => String(x.id) === String(fuId));
+        if (!fu) return;
+        const terminal = TERMINAL_OUTCOMES.includes(fu.outcome);
+        const msg = terminal
+            ? 'Usunąć ten kontakt? To wpis z wynikiem terminalnym (zamknięcie oferty).'
+            : 'Usunąć ten kontakt z historii?';
+        if (typeof window.confirm === 'function' && !window.confirm(msg)) return;
+        const headers =
+            typeof authHeaders === 'function'
+                ? authHeaders()
+                : { 'Content-Type': 'application/json' };
+        try {
+            const resp = await fetch(
+                `/api/offers-rury/${encodeURIComponent(kind)}/${encodeURIComponent(offerId)}/followups/${encodeURIComponent(fuId)}${terminal ? '?reopen=1' : ''}`,
+                { method: 'DELETE', headers }
+            );
+            if (!resp.ok) {
+                const json = await resp.json().catch(() => ({}));
+                if (typeof window.showToast === 'function')
+                    window.showToast(json.error || 'Nie udało się usunąć kontaktu.', 'error');
+                return;
+            }
+            if (this._fuEditingId === String(fuId)) this.cancelFollowUpEdit(overlay);
+            if (typeof window.showToast === 'function')
+                window.showToast('Kontakt usunięty.', 'success');
+            await this.refreshFollowUpTimeline(overlay, kind, offerId);
+        } catch (e) {
+            logger.error('kartotekaUi', 'Błąd usuwania kontaktu:', e);
+            if (typeof window.showToast === 'function')
+                window.showToast('Błąd sieci — spróbuj ponownie.', 'error');
+        }
+    },
+
+    async saveClientContact(offerId, kind, overlay) {
+        const box = overlay.querySelector('#fu-cc-list');
+        const contacts = normalizeContacts(box ? collectContacts(box) : []);
+        const badEmail = contacts.find((c) => c.email !== '' && !/.+@.+\..+/.test(c.email));
+        if (badEmail) {
+            if (typeof window.showToast === 'function')
+                window.showToast('Podaj poprawny adres e-mail.', 'error');
+            return;
+        }
+        const headers =
+            typeof authHeaders === 'function'
+                ? authHeaders()
+                : { 'Content-Type': 'application/json' };
+        try {
+            const resp = await fetch(
+                `/api/offers-rury/${encodeURIComponent(kind)}/${encodeURIComponent(offerId)}/client-contact`,
+                {
+                    method: 'PUT',
+                    headers: { ...headers, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contacts })
+                }
+            );
+            const json = await resp.json().catch(() => ({}));
+            if (!resp.ok) {
+                if (typeof window.showToast === 'function')
+                    window.showToast(json.error || 'Nie udało się zapisać kontaktu.', 'error');
+                return;
+            }
+            if (typeof window.showToast === 'function')
+                window.showToast('Kontakt do klienta zapisany.', 'success');
+            await this.loadLocalOffers();
+        } catch (e) {
+            logger.error('kartotekaUi', 'Błąd zapisu kontaktu klienta:', e);
+            if (typeof window.showToast === 'function')
+                window.showToast('Błąd sieci — spróbuj ponownie.', 'error');
+        }
     },
 
     async submitFollowUp(offerId, kind, overlay) {
@@ -252,22 +473,35 @@ export default {
             typeof authHeaders === 'function'
                 ? authHeaders()
                 : { 'Content-Type': 'application/json' };
+        const editingId = this._fuEditingId || null;
+        const reopen = !!overlay.querySelector('#fu-reopen')?.checked;
+        const url = editingId
+            ? `/api/offers-rury/${encodeURIComponent(kind)}/${encodeURIComponent(offerId)}/followups/${encodeURIComponent(editingId)}${reopen ? '?reopen=1' : ''}`
+            : `/api/offers-rury/${encodeURIComponent(kind)}/${encodeURIComponent(offerId)}/followups`;
         try {
-            const resp = await fetch(
-                `/api/offers-rury/${encodeURIComponent(kind)}/${encodeURIComponent(offerId)}/followups`,
-                {
-                    method: 'POST',
-                    headers: { ...headers, 'Content-Type': 'application/json' },
-                    body: JSON.stringify(body)
-                }
-            );
+            const resp = await fetch(url, {
+                method: editingId ? 'PUT' : 'POST',
+                headers: { ...headers, 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
             const json = await resp.json().catch(() => ({}));
             if (!resp.ok) {
                 if (resp.status === 409) {
-                    fail('Oferta jest zamknięta — zaznacz „Ponownie otwórz", aby dopisać kontakt.');
+                    fail(
+                        editingId
+                            ? 'Zmiana wyniku terminalnego wymaga zaznaczenia „Ponownie otwórz".'
+                            : 'Oferta jest zamknięta — zaznacz „Ponownie otwórz", aby dopisać kontakt.'
+                    );
                 } else {
                     fail(json.error || 'Nie udało się zapisać kontaktu.');
                 }
+                return;
+            }
+            if (editingId) {
+                this.cancelFollowUpEdit(overlay);
+                if (typeof window.showToast === 'function')
+                    window.showToast('Kontakt zaktualizowany.', 'success');
+                await this.refreshFollowUpTimeline(overlay, kind, offerId);
                 return;
             }
             window.closeModal();

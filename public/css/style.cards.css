@@ -372,7 +372,7 @@
     flex-direction: column;
     gap: 0.5rem;
     margin-top: 0.6rem;
-    max-height: 40vh;
+    max-height: 55vh;
     overflow-y: auto;
 }
 
@@ -393,6 +393,60 @@
     color: var(--danger-hover, var(--danger));
     font-size: var(--fs-sm);
     margin-top: 0.4rem;
+}
+
+.fu-client-box {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 0.6rem 0.75rem;
+    margin-bottom: 0.8rem;
+    background: var(--bg-secondary);
+}
+
+.fu-client-box h4 {
+    margin: 0 0 0.5rem;
+}
+
+.fu-client-box .fu-form-grid {
+    margin-bottom: 0;
+    grid-template-columns: 1fr 1fr 1fr;
+}
+
+.fu-client-actions {
+    display: flex;
+    align-items: flex-end;
+}
+
+.fu-form-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.fu-timeline-actions {
+    display: flex;
+    gap: 0.4rem;
+    margin-top: 0.4rem;
+}
+
+/* Osoby do kontaktu — edytor wielu wierszy (krok 1 + modal Opieki). */
+.cc-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    margin-bottom: 0.5rem;
+}
+
+.cc-row {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr 1.2fr auto;
+    gap: 0.4rem;
+    align-items: center;
+}
+
+@media (max-width: 640px) {
+    .cc-row {
+        grid-template-columns: 1fr 1fr;
+    }
 }
 
 .status-badge.neutral {
