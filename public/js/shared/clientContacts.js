@@ -77,7 +77,13 @@ export function parseLegacyMirror(s) {
 function escAttr(s) {
     if (typeof window !== 'undefined' && typeof window.escapeHtmlAttr === 'function')
         return window.escapeHtmlAttr(s);
-    return String(s ?? '').replace(/"/g, '&quot;');
+    // Fallback pełnym łańcuchem (jak escapeHtmlAttr): sam cudzysłów nie wystarcza w value="...".
+    return String(s ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
 }
 
 /** Wiersz edytora: imię i nazwisko + telefon + e-mail + Usuń. */

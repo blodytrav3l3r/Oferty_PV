@@ -149,7 +149,7 @@ describe('frontend: offer contacts roundtrip', () => {
         const src = read('public/js/shared/clientManager.js');
         expect(src).toContain('await saveClientsDbData(clientsDb)');
         const saveIdx = src.indexOf('async function saveClientToDb');
-        const syncIdx = src.indexOf('syncOfferEditorToCatalog(newId)');
+        const syncIdx = src.indexOf('syncOfferEditorToCatalog(newId, stamp)');
         expect(saveIdx).toBeGreaterThan(-1);
         expect(syncIdx).toBeGreaterThan(saveIdx);
     });
@@ -159,6 +159,20 @@ describe('frontend: offer contacts roundtrip', () => {
         expect(src).toContain('diagnoseSync404');
         expect(src).toContain('zrestartuj serwer');
         expect(src).toContain('zapisz firmę jeszcze raz');
+    });
+
+    test('HIGH batch: brak zapisu na niezaladowanej bazie (anty-wipe)', () => {
+        const src = read('public/js/shared/clientManager.js');
+        expect(src).toContain('clientsLoadedOk');
+        expect(src).toContain('requireClientsLoaded');
+    });
+
+    test('HIGH batch: updatedAt serwera + rollback + 409 refetch', () => {
+        const src = read('public/js/shared/clientManager.js');
+        expect(src).toContain('json.updatedAt');
+        expect(src).toContain('fetchClientContacts(id, true)');
+        expect(src).toContain('clientContactsInflight');
+        expect(src).toContain('podpowiedź z firmy');
     });
 
     test('katalog N-osob: picker wyboru do oferty (checkboxy, escape atrybutow)', () => {

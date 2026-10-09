@@ -3,9 +3,8 @@ import express from 'express';
 import { z } from 'zod';
 import prisma from '../../prismaClient';
 import { requireAuth, AuthenticatedRequest } from '../../middleware/auth';
-import { WRITE_LIMITER } from '../../middleware/rateLimiters';
+import { WRITE_LIMITER, READ_LIMITER } from '../../middleware/rateLimiters';
 import { validateData } from '../../validators/authSchema';
-import { canWriteDoc } from '../../utils/ownership';
 import { logger } from '../../utils/logger';
 import { mapPrismaError } from '../../utils/prismaErrors';
 import { searchCache } from '../../utils/searchCache';
@@ -89,7 +88,9 @@ function normalizeEntries(raw: unknown): NormalizedContact[] {
     return out;
 }
 
-router.get('/:clientId/contacts', requireAuth, async (req, res) => {
+// Wariant A jak reszta katalogu: odczyt otwarty dla zalogowanych
+// (prefetch N+1 w popupie), zapis przez PUT sync poniżej.
+router.get('/:clientId/contacts', requireAuth, READ_LIMITER, async (req, res) => {
     try {
         const { clientId } = req.params;
         const client = await prisma.clients_rel.findUnique({ where: { id: clientId } });
@@ -123,14 +124,10 @@ router.put(
             if (!client) {
                 return res.status(404).json({ error: 'Klient nie istnieje', code: 'NOT_FOUND' });
             }
-            // Parity clients.ts: baza wspólna (Wariant A), zapis wymaga
-            // canWriteDoc względem właściciela; bezpański (userId null,
-            // legacy) fail-closed — tylko admin (ownership.ts).
-            if (!canWriteDoc(authReq.user, client.userId)) {
-                return res
-                    .status(403)
-                    .json({ error: 'Brak uprawnień do zapisu kontaktów', code: 'FORBIDDEN' });
-            }
+            // Wariant A jak batch PUT /api/clients: wspólna baza, każdy
+            // zalogowany edytuje kontakty każdego klienta (guard tylko
+            // full-wipe w batchu). canWriteDoc celowo brak — niespójny
+            // z batchem, który kasuje kontakty bez guarda.
             const body = req.body as ContactsSyncBody;
             if (
                 body.clientUpdatedAt != null &&
@@ -153,69 +150,89 @@ router.put(
                     });
                 }
             }
-            const existing = await prisma.client_contacts_rel.findMany({
-                where: { clientId }
-            });
-            const existingIds = new Set(existing.map((c) => c.id));
-            for (const c of entries) {
-                // IDOR: id spoza klienta (np. z klienta B) to 404, nie 403 —
-                // celowo jak loadFollowUp (mismatch = brak zasobu dla klienta).
-                if (c.id !== null && !existingIds.has(c.id)) {
-                    return res
-                        .status(404)
-                        .json({ error: 'Kontakt nie istnieje', code: 'NOT_FOUND' });
-                }
-            }
             const now = new Date().toISOString();
-            const incomingIds = new Set(
-                entries.filter((c) => c.id !== null).map((c) => c.id as string)
-            );
-            const toDelete = existing.filter((c) => !incomingIds.has(c.id)).map((c) => c.id);
-            // Max-jeden główny: pierwszy oznaczony wygrywa (id nowe mintujemy
-            // z góry, żeby zerowanie reszty było jawne w tej samej tx).
-            const newIds = new Map<number, string>();
-            entries.forEach((c, i) => {
-                if (c.id === null) newIds.set(i, crypto.randomUUID());
-            });
-            const idOf = (i: number): string => entries[i].id ?? (newIds.get(i) as string);
-            const primaryIdx = entries.findIndex((c) => c.isPrimary);
-            const primaryId = primaryIdx === -1 ? null : idOf(primaryIdx);
-            const news = entries
-                .map((c, i) => ({ c, i }))
-                .filter(({ c }) => c.id === null)
-                .map(({ c, i }) => ({
-                    id: idOf(i),
-                    clientId,
-                    name: c.name,
-                    phone: c.phone,
-                    email: c.email,
-                    position: c.position,
-                    isPrimary: primaryId !== null && idOf(i) === primaryId ? 1 : 0,
-                    createdByUserId: authReq.user?.id ?? null,
-                    createdAt: now,
-                    updatedAt: now
-                }));
-            const updates = entries
-                .filter((c) => c.id !== null)
-                .map((c) => ({
-                    id: c.id as string,
-                    data: {
+            // Odpowiedź HTTP z wnętrza tx (rollback przez throw).
+            const fail = (status: number, code: string, message: string): never => {
+                throw { __syncHttp: true, status, code, message };
+            };
+            const result = await prisma.$transaction(async (tx) => {
+                const existing = await tx.client_contacts_rel.findMany({
+                    where: { clientId }
+                });
+                const existingIds = new Set(existing.map((c) => c.id));
+                const unknownIds = [
+                    ...new Set(
+                        entries
+                            .filter((c) => c.id !== null && !existingIds.has(c.id))
+                            .map((c) => c.id as string)
+                    )
+                ];
+                if (unknownIds.length > 0) {
+                    const clash = (await tx.client_contacts_rel.findMany({
+                        where: { id: { in: unknownIds } },
+                        select: { id: true, clientId: true }
+                    })) as Array<{ id: string; clientId: string }>;
+                    // IDOR: id należące do INNEGO klienta → 404 (jak loadFollowUp).
+                    // Wolne id (FE-mintowane, retry) → insert z żądanym id.
+                    if (clash.some((r) => r.clientId !== clientId)) {
+                        fail(404, 'NOT_FOUND', 'Kontakt nie istnieje');
+                    }
+                }
+                const freeIds = new Set(unknownIds);
+                const incomingIds = new Set(
+                    entries.filter((c) => c.id !== null).map((c) => c.id as string)
+                );
+                const toDelete = existing.filter((c) => !incomingIds.has(c.id)).map((c) => c.id);
+                // Max-jeden główny: pierwszy oznaczony wygrywa (id bez id
+                // mintujemy z góry, żeby zerowanie reszty było jawne w tej samej tx).
+                const newIds = new Map<number, string>();
+                entries.forEach((c, i) => {
+                    if (c.id === null) newIds.set(i, crypto.randomUUID());
+                });
+                const idOf = (i: number): string => entries[i].id ?? (newIds.get(i) as string);
+                const primaryIdx = entries.findIndex((c) => c.isPrimary);
+                const primaryId = primaryIdx === -1 ? null : idOf(primaryIdx);
+                const news = entries
+                    .map((c, i) => ({ c, i }))
+                    .filter(({ c }) => c.id === null || freeIds.has(c.id as string))
+                    .map(({ c, i }) => ({
+                        id: idOf(i),
+                        clientId,
                         name: c.name,
                         phone: c.phone,
                         email: c.email,
                         position: c.position,
-                        isPrimary: primaryId !== null && c.id === primaryId ? 1 : 0,
+                        isPrimary: primaryId !== null && idOf(i) === primaryId ? 1 : 0,
+                        createdByUserId: authReq.user?.id ?? null,
+                        createdAt: now,
                         updatedAt: now
-                    }
-                }));
-            // Mirror kompatybilności: primary ?? [0] → clients_rel.
-            const all = [...updates.map((u) => ({ ...u.data, id: u.id })), ...news];
-            const mirrorSource =
-                (primaryId !== null ? all.find((c) => c.id === primaryId) : null) ?? all[0] ?? null;
-            const oldList = [...existing].sort((a, b) => String(a.id).localeCompare(String(b.id)));
-            await prisma.$transaction(async (tx) => {
+                    }));
+                const updates = entries
+                    .filter((c) => c.id !== null && !freeIds.has(c.id as string))
+                    .map((c) => ({
+                        id: c.id as string,
+                        data: {
+                            name: c.name,
+                            phone: c.phone,
+                            email: c.email,
+                            position: c.position,
+                            isPrimary: primaryId !== null && c.id === primaryId ? 1 : 0,
+                            updatedAt: now
+                        }
+                    }));
+                // Mirror kompatybilności: primary ?? [0] → clients_rel.
+                const all = [...updates.map((u) => ({ ...u.data, id: u.id })), ...news];
+                const mirrorSource =
+                    (primaryId !== null ? all.find((c) => c.id === primaryId) : null) ??
+                    all[0] ??
+                    null;
+                const oldList = [...existing].sort((a, b) =>
+                    String(a.id).localeCompare(String(b.id))
+                );
                 if (toDelete.length > 0) {
-                    await tx.client_contacts_rel.deleteMany({ where: { id: { in: toDelete } } });
+                    await tx.client_contacts_rel.deleteMany({
+                        where: { clientId, id: { in: toDelete } }
+                    });
                 }
                 for (const u of updates) {
                     await tx.client_contacts_rel.update({ where: { id: u.id }, data: u.data });
@@ -248,10 +265,15 @@ router.put(
                         createdAt: now
                     }
                 });
+                return { count: entries.length };
             });
             searchCache.invalidateAll();
-            return res.json({ ok: true, clientId, count: entries.length, updatedAt: now });
+            return res.json({ ok: true, clientId, count: result.count, updatedAt: now });
         } catch (e) {
+            if (e && typeof e === 'object' && (e as { __syncHttp?: unknown }).__syncHttp === true) {
+                const s = e as { status: number; code: string; message: string };
+                return res.status(s.status).json({ error: s.message, code: s.code });
+            }
             if (mapPrismaError(res, e)) return;
             logger.error('ClientContacts', 'Błąd synchronizacji kontaktów klienta', {
                 error: e instanceof Error ? e.message : String(e)

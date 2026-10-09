@@ -85,9 +85,23 @@ function ensureContactIds(list) {
  * @param {boolean} [force]
  * @returns {Promise<{list:Array, ok:boolean}>}
  */
+const clientContactsInflight = {};
+
 async function fetchClientContacts(clientId, force) {
     const hit = clientContactsCache[clientId];
     if (hit && !force) return hit;
+    // Koalescencja: równoległe wołania czekają na jeden request (H5).
+    if (!force && clientContactsInflight[clientId]) return clientContactsInflight[clientId];
+    const pending = fetchClientContactsOnce(clientId);
+    if (!force) clientContactsInflight[clientId] = pending;
+    try {
+        return await pending;
+    } finally {
+        if (clientContactsInflight[clientId] === pending) delete clientContactsInflight[clientId];
+    }
+}
+
+async function fetchClientContactsOnce(clientId) {
     try {
         const res = await fetch(`/api/clients/${encodeURIComponent(clientId)}/contacts`, {
             headers: authHeaders(),
@@ -117,7 +131,8 @@ async function prefetchAllClientContacts() {
  */
 async function syncClientContacts(clientId, rows, baseUpdatedAt) {
     const body = { contacts: rows };
-    if (baseUpdatedAt) body.clientUpdatedAt = baseUpdatedAt;
+    // Tylko string z serwera; `true` (stary serwer bez updatedAt) pomijamy.
+    if (typeof baseUpdatedAt === 'string' && baseUpdatedAt) body.clientUpdatedAt = baseUpdatedAt;
     try {
         const res = await fetch(`/api/clients/${encodeURIComponent(clientId)}/contacts/sync`, {
             method: 'PUT',
@@ -146,6 +161,10 @@ async function syncClientContacts(clientId, rows, baseUpdatedAt) {
 // escapeHtml dostarczany przez shared/ui.js (ładowany wcześniej)
 
 /* ===== API KLIENTÓW ===== */
+// Strażnik anty-wipe (C1): PUT wysyła PEŁNY stan, więc zapis na niezaładowanej
+// (pustej po failu) liście skasowałby bazę. Zapis/usunięcie tylko po udanym load.
+let clientsLoadedOk = false;
+
 async function loadClientsDb() {
     try {
         const res = await fetchWithTimeout('/api/clients', { headers: authHeaders() });
@@ -154,14 +173,24 @@ async function loadClientsDb() {
             throw new Error(json.error || `HTTP ${res.status}`);
         }
         const json = await res.json();
+        clientsLoadedOk = true;
         return json.data || [];
     } catch (err) {
+        clientsLoadedOk = false;
         // Abort (timeout/nawigacja) to nie błąd — tło spróbuje ponownie, bez toasta.
         if (err && err.name === 'AbortError') return [];
         logger.error('clientManager', 'loadClientsDb error:', err);
         showToast('Błąd ładowania klientów: ' + (err.message || 'błąd sieci'), 'error');
         return [];
     }
+}
+
+function requireClientsLoaded() {
+    if (!clientsLoadedOk) {
+        showToast('Baza klientów niezaładowana — odśwież stronę i spróbuj ponownie', 'error');
+        return false;
+    }
+    return true;
 }
 
 /* ===== STABILNE ID (D-009) ===== */
@@ -189,6 +218,11 @@ function ensureClientIds(data) {
     return data;
 }
 
+/**
+ * Zapis batch. Zwraca serwerowy updatedAt (string) albo false.
+ * String jest truthy — stare `if (await ...)` dalej działa; kto potrzebuje
+ * bazy do 409 bierze timestamp zamiast zegara klienta.
+ */
 async function saveClientsDbData(data) {
     try {
         ensureClientIds(data);
@@ -197,11 +231,11 @@ async function saveClientsDbData(data) {
             headers: authHeaders(),
             body: JSON.stringify({ data })
         });
+        const json = await res.json().catch(() => ({}));
         if (!res.ok) {
-            const json = await res.json().catch(() => ({}));
             throw new Error(json.error || `HTTP ${res.status}`);
         }
-        return true;
+        return typeof json.updatedAt === 'string' && json.updatedAt ? json.updatedAt : true;
     } catch (err) {
         logger.error('clientManager', 'saveClientsDbData error:', err);
         showToast('Błąd zapisu klientów: ' + (err.message || 'błąd sieci'), 'error');
@@ -234,7 +268,7 @@ async function diagnoseSync404(clientId) {
  * Bez bazy updatedAt — wołane TUŻ PO udanym zapisie firmy (semantyka
  * last-write-wins jak batch PUT). Fetch-fail = toast, nigdy pusty sync.
  */
-function syncOfferEditorToCatalog(clientId) {
+function syncOfferEditorToCatalog(clientId, baseUpdatedAt) {
     try {
         const box = document.getElementById('client-contacts');
         const CC = window.ClientContacts;
@@ -253,7 +287,7 @@ function syncOfferEditorToCatalog(clientId) {
         if (named.length < rows.length)
             showToast('Pominięto osoby bez imienia (katalog wymaga nazwy)', 'warning');
         named[0].isPrimary = true;
-        syncClientContacts(clientId, named, null).then(async (r) => {
+        syncClientContacts(clientId, named, baseUpdatedAt || null).then(async (r) => {
             if (!r.ok) {
                 if (r.status === 404) {
                     const cause = await diagnoseSync404(clientId);
@@ -293,6 +327,10 @@ async function saveClientToDb() {
     const _unlockSaveBtn = () => {
         if (_saveBtn) _saveBtn.disabled = false;
     };
+    if (!requireClientsLoaded()) {
+        _unlockSaveBtn();
+        return;
+    }
 
     const name = document.getElementById('client-name')?.value.trim() ?? '';
     const nip = document.getElementById('client-nip')?.value.trim() ?? '';
@@ -359,14 +397,19 @@ async function saveClientToDb() {
                         contact,
                         phone: contactPhone || clientsDb[existingIdx].phone || '',
                         email: contactEmail || clientsDb[existingIdx].email || '',
-                        clientNumber,
-                        updatedAt: new Date().toISOString()
+                        clientNumber
                     };
                     // Sync kontaktów DOPIERO po zapisie firmy — inaczej 404
-                    // (klienta jeszcze nie ma w bazie).
-                    if (await saveClientsDbData(clientsDb))
-                        syncOfferEditorToCatalog(clientsDb[existingIdx].id);
-                    showToast('Zaktualizowano dane klienta', 'success');
+                    // (klienta jeszcze nie ma w bazie). updatedAt stawia serwer.
+                    const stamp = await saveClientsDbData(clientsDb);
+                    if (!stamp) {
+                        showToast('Błąd zapisu klienta', 'error');
+                    } else {
+                        if (typeof stamp === 'string') clientsDb[existingIdx].updatedAt = stamp;
+                        // Baza z batcha: cudzy sync w międzyczasie → 409 zamiast LWW.
+                        syncOfferEditorToCatalog(clientsDb[existingIdx].id, stamp);
+                        showToast('Zaktualizowano dane klienta', 'success');
+                    }
                 }
                 _unlockSaveBtn();
             })
@@ -387,8 +430,17 @@ async function saveClientToDb() {
             clientNumber,
             createdAt: new Date().toISOString()
         });
-        if (await saveClientsDbData(clientsDb)) syncOfferEditorToCatalog(newId);
-        showToast('Zapisano nowego klienta', 'success');
+        const stamp = await saveClientsDbData(clientsDb);
+        if (!stamp) {
+            // Rollback fantoma — po F5 i tak by zniknął, ale UI nie kłamie.
+            clientsDb = clientsDb.filter((c) => c.id !== newId);
+            showToast('Błąd zapisu klienta', 'error');
+        } else {
+            const row = clientsDb.find((c) => c.id === newId);
+            if (row && typeof stamp === 'string') row.updatedAt = stamp;
+            syncOfferEditorToCatalog(newId, stamp);
+            showToast('Zapisano nowego klienta', 'success');
+        }
         if (_saveBtn) _saveBtn.disabled = false;
     }
 }
@@ -422,6 +474,8 @@ function showClientsDb() {
     setTimeout(() => document.getElementById('clients-search-input')?.focus(), 100);
     // Kontakty katalogu dociągane w tle (display +N, search, picker); brak = fallback mirror.
     prefetchAllClientContacts().then(() => {
+        // Nie czyść edycji zaczętej przed końcem prefetchu (H5).
+        if (editingClientId) return;
         const input = document.getElementById('clients-search-input');
         renderClientsDbList(input ? input.value : '');
     });
@@ -695,6 +749,9 @@ function renderClientsDbList(query) {
             // reszta za "+N" (rozwijane). Fallback mirror legacy z rozcięciem.
             const contactTd = document.createElement('td');
             contactTd.className = 'td-muted td-contact';
+            const cachedView = clientContactsCache[c.id];
+            // Uczciwe źródło: katalog offline → podpowiedź z firmy, nie "dane".
+            const fromMirror = !(cachedView && cachedView.ok && cachedView.list.length > 0);
             const list = catalogDisplayList(c);
             if (list.length === 0) {
                 contactTd.textContent = '—';
@@ -715,14 +772,16 @@ function renderClientsDbList(query) {
                     contactPhone.textContent = primary.phone;
                     contactTd.appendChild(contactPhone);
                 }
-                contactTd.title = list
-                    .map(
-                        (r) =>
-                            r.name +
-                            (r.phone ? ', ' + r.phone : '') +
-                            (r.email ? ', ' + r.email : '')
-                    )
-                    .join(' | ');
+                contactTd.title =
+                    (fromMirror ? '(podpowiedź z firmy, katalog niedostępny) ' : '') +
+                    list
+                        .map(
+                            (r) =>
+                                r.name +
+                                (r.phone ? ', ' + r.phone : '') +
+                                (r.email ? ', ' + r.email : '')
+                        )
+                        .join(' | ');
                 if (list.length > 1) {
                     const rest = list.length - 1;
                     const plus = document.createElement('button');
@@ -783,6 +842,7 @@ function editClientInDb(id) {
 }
 
 async function saveEditedClientInDb(id) {
+    if (!requireClientsLoaded()) return;
     const name = document.getElementById('edit-client-name')?.value.trim() ?? '';
     const nip = document.getElementById('edit-client-nip')?.value.trim() ?? '';
     const address = document.getElementById('edit-client-address')?.value.trim() ?? '';
@@ -812,9 +872,16 @@ async function saveEditedClientInDb(id) {
     const sync = await syncClientContacts(id, rows, client.updatedAt || null);
     if (!sync.ok) {
         if (sync.status === 409) {
+            // Odśwież bazę spod nóg: re-fetch + re-render edytora świeżymi
+            // wierszami serwera (retry na starym zestawie = lost update).
             if (sync.updatedAt) client.updatedAt = sync.updatedAt;
+            const fresh = await fetchClientContacts(id, true);
+            if (fresh.ok) {
+                const edBox = document.getElementById('edit-client-contacts');
+                renderCatalogEditor(edBox, id, fresh.list);
+            }
             showToast(
-                'Kontakty zmieniono w międzyczasie — sprawdź listę i zapisz ponownie',
+                'Kontakty zmieniono w międzyczasie — wczytano aktualne, sprawdź i zapisz ponownie',
                 'warning'
             );
         } else {
@@ -823,6 +890,16 @@ async function saveEditedClientInDb(id) {
         return;
     }
     const primary = rows.find((r) => r.isPrimary) || rows[0] || null;
+    const prevFirm = {
+        name: client.name,
+        nip: client.nip,
+        address: client.address,
+        contact: client.contact,
+        phone: client.phone,
+        email: client.email,
+        clientNumber: client.clientNumber,
+        updatedAt: client.updatedAt
+    };
     client.name = name;
     client.nip = nip;
     client.address = address;
@@ -830,9 +907,17 @@ async function saveEditedClientInDb(id) {
     client.phone = primary ? primary.phone : '';
     client.email = primary ? primary.email : '';
     client.clientNumber = clientNumber;
-    client.updatedAt = sync.updatedAt || new Date().toISOString();
+    if (typeof sync.updatedAt === 'string') client.updatedAt = sync.updatedAt;
+    const stamp = await saveClientsDbData(clientsDb);
+    if (!stamp) {
+        // Rollback lokalny: kontakty już w bazie, firma nie — edycja zostaje
+        // otwarta z wartościami użytkownika, nic nie jest "zaktualizowane".
+        Object.assign(client, prevFirm);
+        showToast('Błąd zapisu firmy (kontakty zapisane)', 'error');
+        return;
+    }
     editingClientId = null;
-    await saveClientsDbData(clientsDb);
+    if (typeof stamp === 'string') client.updatedAt = stamp;
     showToast('Zaktualizowano dane klienta', 'success');
     const searchInput = document.getElementById('clients-search-input');
     renderClientsDbList(searchInput ? searchInput.value : '');
@@ -975,20 +1060,35 @@ function selectClientFromDbForce(id, picked) {
 
 /* ===== USUWANIE KLIENTA ===== */
 async function deleteClientFromDb(id) {
-    if (
-        !(await appConfirm('Czy na pewno chcesz usunąć tego klienta z bazy?', {
+    if (!requireClientsLoaded()) return;
+    let confirmed = false;
+    try {
+        confirmed = await appConfirm('Czy na pewno chcesz usunąć tego klienta z bazy?', {
             title: 'Usuwanie klienta',
             type: 'danger'
-        }))
-    )
+        });
+    } catch (e) {
+        logger.error('clientManager', 'deleteClientFromDb confirm error:', e);
         return;
+    }
+    if (!confirmed) return;
+    const removed = clientsDb.find((c) => c.id === id);
+    const removedCache = clientContactsCache[id];
     clientsDb = clientsDb.filter((c) => c.id !== id);
     delete clientContactsCache[id];
-    saveClientsDbData(clientsDb);
+    if (editingClientId === id) editingClientId = null;
+    // Uczciwie: UI sprząta dopiero po 200; przy failu rollback + refetch.
+    if (!(await saveClientsDbData(clientsDb))) {
+        if (removed) clientsDb.push(removed);
+        if (removedCache) clientContactsCache[id] = removedCache;
+        else await fetchClientContacts(id, true);
+        showToast('Błąd usuwania klienta', 'error');
+    } else {
+        showToast('Klient usunięty z bazy', 'info');
+    }
 
     const searchInput = document.getElementById('clients-search-input');
     renderClientsDbList(searchInput ? searchInput.value : '');
-    showToast('Klient usunięty z bazy', 'info');
 }
 
 /* ===== Rejestracja globali ===== */

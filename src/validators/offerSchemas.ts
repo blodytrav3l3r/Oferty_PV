@@ -192,7 +192,8 @@ function isValidNip(nip: string): boolean {
 }
 
 export const clientSchema = z.object({
-    id: z.string().optional(),
+    // min/max zamiast uuid(): FE fallback mintuje 'cc_*' bez crypto.randomUUID.
+    id: z.string().min(1).max(100).optional(),
     name: z
         .string()
         .min(1, 'Nazwa klienta jest wymagana')

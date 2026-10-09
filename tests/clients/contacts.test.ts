@@ -20,6 +20,7 @@ jest.mock('../../src/middleware/auth', () => ({
 
 jest.mock('../../src/middleware/rateLimiters', () => ({
     WRITE_LIMITER: (_req: any, _res: any, next: any) => next(),
+    READ_LIMITER: (_req: any, _res: any, next: any) => next(),
     EXPORT_LIMITER: (_req: any, _res: any, next: any) => next(),
     LOGIN_LIMITER: (_req: any, _res: any, next: any) => next(),
     Cennik_LIMITER: (_req: any, _res: any, next: any) => next()
@@ -183,7 +184,7 @@ describe('Katalog kontaktów — PUT /:clientId/contacts/sync', () => {
         const m = mockPrisma();
         expect(m.$transaction).toHaveBeenCalledTimes(1);
         expect(m.client_contacts_rel.deleteMany).toHaveBeenCalledWith({
-            where: { id: { in: ['k-2'] } }
+            where: { clientId: 'c-1', id: { in: ['k-2'] } }
         });
         expect(m.client_contacts_rel.update).toHaveBeenCalledWith({
             where: { id: 'k-1' },
@@ -280,6 +281,11 @@ describe('Katalog kontaktów — PUT /:clientId/contacts/sync', () => {
 
     it('IDOR: id z klienta B → 404; brak klienta → 404', async () => {
         const app = createContactsApp();
+        const m = mockPrisma();
+        // 1. existing-list, 2. clash lookup z wierszem klienta B.
+        m.client_contacts_rel.findMany
+            .mockResolvedValueOnce(EXISTING.map((c) => ({ ...c })))
+            .mockResolvedValueOnce([{ id: 'k-obce', clientId: 'c-B' }]);
         const idor = await request(app)
             .put('/api/clients/c-1/contacts/sync')
             .send({
@@ -287,7 +293,6 @@ describe('Katalog kontaktów — PUT /:clientId/contacts/sync', () => {
             });
         expect(idor.status).toBe(404);
         expect(idor.body.code).toBe('NOT_FOUND');
-        const m = mockPrisma();
         m.clients_rel.findUnique.mockResolvedValueOnce(null);
         const missing = await request(app)
             .put('/api/clients/nie-ma/contacts/sync')
@@ -297,20 +302,33 @@ describe('Katalog kontaktów — PUT /:clientId/contacts/sync', () => {
         expect(missing.status).toBe(404);
     });
 
-    it('uprawnienia: obcy → 403, bezpański → 403, bezpański + admin → 200', async () => {
+    it('świeże id (FE-mintowane) → insert z żądanym id, retry bez duplikatów', async () => {
+        const app = createContactsApp();
+        const payload = { contacts: [{ id: 'cc-nowe-1', name: 'Nowa' }] };
+        const first = await request(app).put('/api/clients/c-1/contacts/sync').send(payload);
+        expect(first.status).toBe(200);
+        const m = mockPrisma();
+        expect(m.client_contacts_rel.create).toHaveBeenCalledWith({
+            data: expect.objectContaining({ id: 'cc-nowe-1', clientId: 'c-1', name: 'Nowa' })
+        });
+        const second = await request(app).put('/api/clients/c-1/contacts/sync').send(payload);
+        expect(second.status).toBe(200);
+        for (const call of m.client_contacts_rel.create.mock.calls) {
+            expect(call[0].data.id).toBe('cc-nowe-1');
+        }
+    });
+
+    it('Wariant A jak batch: każdy zalogowany zapisuje (bez guarda)', async () => {
         const app = createContactsApp();
         const m = mockPrisma();
         m.clients_rel.findUnique.mockResolvedValue({ ...CLIENT, userId: 'obcy' });
         expect(
             (await request(app).put('/api/clients/c-1/contacts/sync').send({ contacts: [] })).status
-        ).toBe(403);
+        ).toBe(200);
         m.clients_rel.findUnique.mockResolvedValue({ ...CLIENT, userId: null });
         expect(
             (await request(app).put('/api/clients/c-1/contacts/sync').send({ contacts: [] })).status
-        ).toBe(403);
-        mockUser.role = 'admin';
-        const ok = await request(app).put('/api/clients/c-1/contacts/sync').send({ contacts: [] });
-        expect(ok.status).toBe(200);
+        ).toBe(200);
     });
 
     it('konflikt clientUpdatedAt → 409 z updatedAt; zgodny → 200', async () => {
@@ -368,7 +386,7 @@ describe('Katalog kontaktów — PUT /:clientId/contacts/sync', () => {
         expect(res.status).toBe(200);
         const m = mockPrisma();
         expect(m.client_contacts_rel.deleteMany).toHaveBeenCalledWith({
-            where: { id: { in: ['k-1', 'k-2'] } }
+            where: { clientId: 'c-1', id: { in: ['k-1', 'k-2'] } }
         });
         expect(m.clients_rel.update).toHaveBeenCalledWith({
             where: { id: 'c-1' },

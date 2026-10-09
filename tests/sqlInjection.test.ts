@@ -18,6 +18,56 @@ describe('SQL Injection Prevention', () => {
         return result;
     }
 
+    // Wyrażenie wywołania $queryRawUnsafe/$executeRawUnsafe (nawiasy wielolinijkowe):
+    // konkatenacja SQL rozciąga się na wiele linii (clients/index.ts:215-229),
+    // skan liniowy jej nie widzi (false negative).
+    function unsafeCallSpans(content: string): { line: number; content: string }[] {
+        const lines = content.split('\n');
+        const out: { line: number; content: string }[] = [];
+        const starts: number[] = [];
+        lines.forEach((line, i) => {
+            if (line.includes('$queryRawUnsafe') || line.includes('$executeRawUnsafe'))
+                starts.push(i);
+        });
+        for (const start of starts) {
+            let depth = 0;
+            let end = start;
+            for (let i = start; i < lines.length; i++) {
+                for (const ch of lines[i]) {
+                    if (ch === '(') depth++;
+                    else if (ch === ')') depth--;
+                }
+                end = i;
+                if (depth <= 0 && i > start) break;
+                if (depth <= 0 && i === start && lines[i].indexOf('(') !== -1) {
+                    // jednolinijkowe — liniowy skan wystarczy, ale sprawdź i tak
+                    break;
+                }
+            }
+            const span = lines.slice(start, end + 1).join('\n');
+            // `+` między samymi literałami (template/string, np. stałe SQL
+            // + `${placeholders}` z samych `?`) = bezpieczne. `+` ze zmienną
+            // (identyfikatorem) po którejś stronie = wklejanie wartości do SQL.
+            // Uwaga: `${var}` wewnątrz template-stringa łapie tylko skan
+            // liniowy (reguła 1); tu po stripie literałów go nie widać.
+            const stripped = span
+                .replace(/`(?:\\.|[^`\\])*`/g, '``')
+                .replace(/'(?:\\.|[^'\\])*'/g, "''")
+                .replace(/"(?:\\.|[^"\\])*"/g, '""');
+            if (
+                /[\w)\]]\s*\+\s*[\w(`'"]/.test(stripped) ||
+                /[\w(`'"]\s*\+\s*[\w(]/.test(stripped)
+            ) {
+                // Odrzuć czyste `` + `` (same puste literały po stripie).
+                const bare = stripped.replace(/``/g, '').replace(/''/g, '').replace(/""/g, '');
+                if (/[\w)\]]\s*\+/.test(bare) || /\+\s*[\w(]/.test(bare)) {
+                    out.push({ line: start + 1, content: lines[start].trim().slice(0, 120) });
+                }
+            }
+        }
+        return out;
+    }
+
     function findUnsafePatterns(filePath: string): { line: number; content: string }[] {
         const content = fs.readFileSync(filePath, 'utf-8');
         const lines = content.split('\n');
@@ -39,6 +89,10 @@ describe('SQL Injection Prevention', () => {
                     results.push({ line: i + 1, content: line.trim() });
                 }
             }
+        }
+        // 3) Wielolinijkowe wywołania Unsafe (span nawiasów) — łata false negative.
+        for (const hit of unsafeCallSpans(content)) {
+            if (!results.some((r) => r.line === hit.line)) results.push(hit);
         }
         return results;
     }

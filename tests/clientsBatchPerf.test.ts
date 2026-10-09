@@ -18,6 +18,7 @@ jest.mock('../src/middleware/auth', () => ({
 
 jest.mock('../src/middleware/rateLimiters', () => ({
     WRITE_LIMITER: (_req: any, _res: any, next: any) => next(),
+    READ_LIMITER: (_req: any, _res: any, next: any) => next(),
     EXPORT_LIMITER: (_req: any, _res: any, next: any) => next(),
     LOGIN_LIMITER: (_req: any, _res: any, next: any) => next(),
     Cennik_LIMITER: (_req: any, _res: any, next: any) => next()
@@ -101,7 +102,8 @@ describe('PUT /api/clients — batch (stała liczba roundtripów)', () => {
             .send({ data: existing.slice(0, 50).map((c) => ({ id: c.id, name: `K ${c.id}` })) });
 
         expect(res.statusCode).toBe(200);
-        expect(res.body).toEqual({ ok: true, count: 50 });
+        expect(res.body).toMatchObject({ ok: true, count: 50 });
+        expect(typeof res.body.updatedAt).toBe('string');
         expect(txMock.$queryRaw).toHaveBeenCalledTimes(1);
         expect(txMock.offers_rel.updateMany).toHaveBeenCalledTimes(1);
         expect(txMock.offers_studnie_rel.updateMany).toHaveBeenCalledTimes(1);
@@ -133,7 +135,8 @@ describe('PUT /api/clients — batch (stała liczba roundtripów)', () => {
             .send({ data: existing.map((c) => ({ id: c.id, name: `K ${c.id}` })) });
 
         expect(res.statusCode).toBe(200);
-        expect(res.body).toEqual({ ok: true, count: 20 });
+        expect(res.body).toMatchObject({ ok: true, count: 20 });
+        expect(typeof res.body.updatedAt).toBe('string');
         expect(txMock.$queryRaw).toHaveBeenCalledTimes(1);
         expect(txMock.$queryRawUnsafe).toHaveBeenCalledTimes(1);
         expect(txMock.offers_rel.updateMany).not.toHaveBeenCalled();

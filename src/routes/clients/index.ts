@@ -239,7 +239,8 @@ router.put(
                 throw e;
             }
 
-            res.json({ ok: true, count: upserted.length });
+            // updatedAt wraca do FE jako baza 409 (koniec zegara klienta).
+            res.json({ ok: true, count: upserted.length, updatedAt: now });
         } catch (e: unknown) {
             logger.error('Clients', 'PUT /api/clients błąd', e);
             const message = e instanceof Error ? e.message : 'Unknown error';
