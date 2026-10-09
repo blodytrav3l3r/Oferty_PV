@@ -836,7 +836,11 @@ html[data-theme='light'] .kartoteka-filter-bar:hover {
 }
 
 .modal--clients table {
-    table-layout: fixed;
+    table-layout: auto;
+}
+
+.modal--clients .clients-table .td-contact {
+    min-width: 150px;
 }
 
 .modal--clients td,

@@ -342,6 +342,8 @@ interface ClientData {
     nip?: string;
     address?: string;
     contact?: string;
+    phone?: string;
+    email?: string;
     clientNumber?: string;
     updatedAt?: string;
     createdAt?: string;

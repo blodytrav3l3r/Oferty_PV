@@ -23,7 +23,7 @@ var DRAFT_TTL_MS = 14 * 24 * 3600 * 1000;
 /** Dozwolone rodzaje dokumentów (osobne klucze dla rur i studni). */
 var DRAFT_KINDS = ['offer_studnie', 'order_studnie', 'offer_rury', 'order_rury'];
 
-/** 15 pól nagłówka oferty — dokładnie wyjście getOfferFormFields(), nic więcej. */
+/** 19 pól nagłówka oferty — dokładnie wyjście getOfferFormFields(), nic więcej. */
 var DRAFT_FIELD_KEYS = [
     'number',
     'date',
@@ -32,6 +32,10 @@ var DRAFT_FIELD_KEYS = [
     'clientNip',
     'clientAddress',
     'clientContact',
+    'clientContacts',
+    'contactPerson',
+    'clientPhone',
+    'clientEmail',
     'investName',
     'investAddress',
     'investContractor',

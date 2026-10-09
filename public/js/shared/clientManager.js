@@ -95,6 +95,22 @@ function saveClientToDb() {
     const address = document.getElementById('client-address')?.value.trim() ?? '';
     const contact = document.getElementById('client-contact')?.value.trim() ?? '';
     const clientNumber = document.getElementById('client-number')?.value.trim() ?? '';
+    // Pierwsza osoba z edytora → telefon/e-mail wiersza clients_rel.
+    let contactPhone = '';
+    let contactEmail = '';
+    try {
+        const box = document.getElementById('client-contacts');
+        const CC = window.ClientContacts;
+        if (box && CC) {
+            const first = CC.collectContacts(box)[0];
+            if (first) {
+                contactPhone = first.phone || '';
+                contactEmail = first.email || '';
+            }
+        }
+    } catch (_e) {
+        // pasywnie — wiersz zapisze się bez telefonu/e-maila
+    }
 
     if (!name) {
         showToast('Wprowadź nazwę firmy, aby zapisać klienta', 'error');
@@ -137,6 +153,8 @@ function saveClientToDb() {
                         nip,
                         address,
                         contact,
+                        phone: contactPhone || clientsDb[existingIdx].phone || '',
+                        email: contactEmail || clientsDb[existingIdx].email || '',
                         clientNumber,
                         updatedAt: new Date().toISOString()
                     };
@@ -156,6 +174,8 @@ function saveClientToDb() {
             nip,
             address,
             contact,
+            phone: contactPhone,
+            email: contactEmail,
             clientNumber,
             createdAt: new Date().toISOString()
         });
@@ -170,14 +190,8 @@ function showClientsDb() {
     showModal({
         id: 'clients-db-modal',
         onClose: () => {
-            if (editingClientId) {
-                // Dirty check — edycja w toku, zapobiega przypadkowemu zamknięciu
-                if (typeof appConfirm === 'function') {
-                    // Sync guard: zwróć false, użytkownik musi anulować edycję ręcznie
-                    return false;
-                }
-                return false;
-            }
+            // Sync guard: edycja w toku — użytkownik anuluje ją ręcznie
+            if (editingClientId) return false;
         },
         html: `
     <div class="modal modal--clients">
@@ -188,7 +202,7 @@ function showClientsDb() {
       <div class="clients-search">
         <div class="clients-search-row">
           <div class="clients-search-field">
-            <input type="text" id="clients-search-input" class="form-input" placeholder="Szukaj po nazwie lub NIP..." data-csp="filterClientsDb" data-csp-args="[&quot;$value&quot;]" data-csp-on="input">
+            <input type="text" id="clients-search-input" class="form-input" placeholder="Szukaj po nazwie, NIP, osobie lub telefonie..." data-csp="filterClientsDb" data-csp-args="[&quot;$value&quot;]" data-csp-on="input">
           </div>
         </div>
       </div>
@@ -216,7 +230,10 @@ function renderClientsDbList(query) {
               (c) =>
                   (c.name && c.name.toLowerCase().includes(q)) ||
                   (c.nip && c.nip.includes(q)) ||
-                  (c.clientNumber && c.clientNumber.toLowerCase().includes(q))
+                  (c.clientNumber && c.clientNumber.toLowerCase().includes(q)) ||
+                  (c.contact && c.contact.toLowerCase().includes(q)) ||
+                  (c.phone && c.phone.toLowerCase().includes(q)) ||
+                  (c.email && c.email.toLowerCase().includes(q))
           )
         : clientsDb;
     const sorted = [...filtered].sort((a, b) =>
@@ -242,12 +259,12 @@ function renderClientsDbList(query) {
 
     const thead = document.createElement('thead');
     thead.innerHTML = `<tr>
-        <th scope="col" style="width:100px;">Nr klienta</th>
+        <th scope="col" style="width:84px;">Nr klienta</th>
         <th scope="col">Firma</th>
-        <th scope="col" style="width:130px;">NIP</th>
+        <th scope="col" style="width:110px;">NIP</th>
         <th scope="col">Adres</th>
         <th scope="col">Kontakt</th>
-        <th scope="col" class="td-center" style="width:100px;">Akcje</th>
+        <th scope="col" class="td-center" style="width:108px;">Akcje</th>
     </tr>`;
     table.appendChild(thead);
 
@@ -259,7 +276,8 @@ function renderClientsDbList(query) {
             editingClientId === c.id ? 'clients-row clients-row--editing' : 'clients-row';
 
         if (editingClientId === c.id) {
-            const fields = ['clientNumber', 'name', 'nip', 'address', 'contact'];
+            // Książka (1 osoba/firma): telefon/e-mail edytowane w komórce Kontakt.
+            const fields = ['clientNumber', 'name', 'nip', 'address'];
             fields.forEach((field) => {
                 const td = document.createElement('td');
                 td.className = 'td-edit';
@@ -272,6 +290,25 @@ function renderClientsDbList(query) {
                 td.appendChild(input);
                 tr.appendChild(td);
             });
+            const contactTd = document.createElement('td');
+            contactTd.className = 'td-edit';
+            [
+                ['contact', 'text', 'Osoba'],
+                ['phone', 'tel', 'Telefon'],
+                ['email', 'email', 'E-mail']
+            ].forEach(([field, type, ph]) => {
+                const input = document.createElement('input');
+                input.type = type;
+                input.id = 'edit-client-' + field;
+                input.className = 'form-input form-input-sm';
+                input.placeholder = ph;
+                input.setAttribute('aria-label', ph);
+                input.value = c[field] || '';
+                input.onclick = (e) => e.stopPropagation();
+                input.style.marginBottom = '0.25rem';
+                contactTd.appendChild(input);
+            });
+            tr.appendChild(contactTd);
             const actionTd = document.createElement('td');
             actionTd.className = 'td-edit td-actions';
             actionTd.innerHTML = `<button class="btn-icon btn-icon--accent" data-csp="saveEditedClientInDb" data-csp-args="${escapeHtmlAttr(JSON.stringify([c.id]))}" data-csp-stop="1" title="Zapisz" aria-label="Zapisz"><i data-lucide="save" aria-hidden="true"></i></button>
@@ -298,17 +335,52 @@ function renderClientsDbList(query) {
             addrTd.textContent = c.address || '—';
             tr.appendChild(addrTd);
 
+            // Katalog = podpowiedź (1 osoba/firma): linia 1 osoba,
+            // linia 2 telefon, linia 3 e-mail. Legacy "Jan, 600..." rozbijane
+            // heurystyką, bo telefon siedzi w jednym stringu `contact`.
             const contactTd = document.createElement('td');
-            contactTd.className = 'td-muted';
-            contactTd.textContent = c.contact || '—';
+            contactTd.className = 'td-muted td-contact';
+            let dispName = c.contact || '';
+            let dispPhone = c.phone || '';
+            const dispEmail = c.email || '';
+            try {
+                const CC = window.ClientContacts;
+                if (!dispPhone && dispName && CC && typeof CC.parseLegacyMirror === 'function') {
+                    const parsed = CC.parseLegacyMirror(dispName)[0];
+                    if (parsed && (parsed.name || parsed.phone)) {
+                        dispName = parsed.name || dispName;
+                        dispPhone = parsed.phone || '';
+                    }
+                }
+            } catch (_e) {
+                // pasywnie — pełny string w jednej linii
+            }
+            const contactName = document.createElement('span');
+            contactName.textContent = dispName || '—';
+            contactTd.appendChild(contactName);
+            if (dispPhone) {
+                const contactPhone = document.createElement('span');
+                contactPhone.className = 'td-sub';
+                contactPhone.textContent = dispPhone;
+                contactTd.appendChild(contactPhone);
+            }
+            if (dispEmail) {
+                const contactEmail = document.createElement('span');
+                contactEmail.className = 'td-sub';
+                contactEmail.textContent = dispEmail;
+                contactTd.appendChild(contactEmail);
+                contactTd.title = dispEmail;
+            }
             tr.appendChild(contactTd);
 
             const actionTd = document.createElement('td');
             actionTd.className = 'td-actions';
-            actionTd.innerHTML = `<button class="btn-icon btn-icon--dim" data-csp="editClientInDb" data-csp-args="${escapeHtmlAttr(JSON.stringify([c.id]))}" data-csp-stop="1" title="Edytuj" aria-label="Edytuj"><i data-lucide="pencil" aria-hidden="true"></i></button>
+            actionTd.innerHTML = `<button class="btn-icon btn-icon--accent" data-csp="selectClientFromDb" data-csp-args="${escapeHtmlAttr(JSON.stringify([c.id]))}" data-csp-stop="1" title="Wczytaj do oferty" aria-label="Wczytaj do oferty"><i data-lucide="download" aria-hidden="true"></i></button>
+                <button class="btn-icon btn-icon--dim" data-csp="editClientInDb" data-csp-args="${escapeHtmlAttr(JSON.stringify([c.id]))}" data-csp-stop="1" title="Edytuj" aria-label="Edytuj"><i data-lucide="pencil" aria-hidden="true"></i></button>
                 <button class="btn-icon btn-icon--danger" data-csp="deleteClientFromDb" data-csp-args="${escapeHtmlAttr(JSON.stringify([c.id]))}" data-csp-stop="1" title="Usuń z bazy" aria-label="Usuń z bazy"><i data-lucide="x" aria-hidden="true"></i></button>`;
             tr.appendChild(actionTd);
 
+            tr.title = 'Wczytaj do oferty';
             tr.onclick = () => selectClientFromDb(c.id);
         }
 
@@ -332,10 +404,16 @@ function saveEditedClientInDb(id) {
     const nip = document.getElementById('edit-client-nip')?.value.trim() ?? '';
     const address = document.getElementById('edit-client-address')?.value.trim() ?? '';
     const contact = document.getElementById('edit-client-contact')?.value.trim() ?? '';
+    const phone = document.getElementById('edit-client-phone')?.value.trim() ?? '';
+    const email = document.getElementById('edit-client-email')?.value.trim() ?? '';
     const clientNumber = document.getElementById('edit-client-clientNumber')?.value.trim() ?? '';
 
     if (!name) {
         showToast('Wprowadź nazwę firmy', 'error');
+        return;
+    }
+    if (email && !/.+@.+\..+/.test(email)) {
+        showToast('Nieprawidłowy adres e-mail', 'error');
         return;
     }
 
@@ -345,6 +423,8 @@ function saveEditedClientInDb(id) {
         client.nip = nip;
         client.address = address;
         client.contact = contact;
+        client.phone = phone;
+        client.email = email;
         client.clientNumber = clientNumber;
         client.updatedAt = new Date().toISOString();
         saveClientsDbData(clientsDb);
@@ -363,6 +443,38 @@ function cancelEditClient() {
 
 /* ===== WYBÓR KLIENTA ===== */
 function selectClientFromDb(id) {
+    // Snapshot-vs-katalog: jawne "Wczytaj" nie nadpisuje brudnego
+    // edytora oferty bez potwierdzenia (snapshot per-offer ma pierwszeństwo).
+    // Katalog daje 1 osobę-podpowiedź; resztę dopisuje "Dodaj osobę" w ofercie.
+    if (typeof document !== 'undefined' && document.getElementById('app-confirm-overlay')) return;
+    try {
+        const box = document.getElementById('client-contacts');
+        const CC = window.ClientContacts;
+        if (box && CC && typeof CC.collectContacts === 'function') {
+            const dirty = CC.collectContacts(box).some(
+                (r) => (r.name || '').trim() || (r.phone || '').trim() || (r.email || '').trim()
+            );
+            if (dirty && typeof window.appConfirm === 'function') {
+                // async guard — kontynuacja po potwierdzeniu
+                window
+                    .appConfirm(
+                        'Edytor osób do kontaktu zawiera dane. Wczytać dane klienta z bazy (nadpisze kontakty oferty)?',
+                        { title: 'Wczytaj klienta', type: 'warning' }
+                    )
+                    .then((ok) => {
+                        if (ok) selectClientFromDbForce(id);
+                    })
+                    .catch((e) => logger.error('clientManager', 'Wczytywanie klienta:', e));
+                return;
+            }
+        }
+    } catch (_e) {
+        // pasywnie — brak guarda, stare zachowanie
+    }
+    selectClientFromDbForce(id);
+}
+
+function selectClientFromDbForce(id) {
     const c = clientsDb.find((client) => client.id === id);
     if (c) {
         const nameEl = document.getElementById('client-name');
@@ -375,6 +487,32 @@ function selectClientFromDb(id) {
         if (addrEl) addrEl.value = c.address || '';
         if (contactEl) contactEl.value = c.contact || '';
         if (numEl) numEl.value = c.clientNumber || '';
+        // Wiersz bazy → edytor osób (telefon/e-mail z kolumn clients_rel).
+        // Legacy "Jan, 600..." rozcinane: bez tego cały string lądował w polu nazwy.
+        try {
+            const box = document.getElementById('client-contacts');
+            const CC = window.ClientContacts;
+            if (box && CC) {
+                let cand = {
+                    name: c.contact || '',
+                    phone: c.phone || '',
+                    email: c.email || ''
+                };
+                if (!cand.phone && cand.name && typeof CC.parseLegacyMirror === 'function') {
+                    const p = CC.parseLegacyMirror(cand.name)[0];
+                    if (p && (p.name || p.phone))
+                        cand = { name: p.name || cand.name, phone: p.phone, email: cand.email };
+                }
+                const single = CC.normalizeContacts([cand]);
+                CC.renderEditor(
+                    box,
+                    single.length > 0 ? single : CC.parseLegacyMirror(c.contact || '')
+                );
+                CC.bindEditor(box);
+            }
+        } catch (_e) {
+            // pasywnie — mirror w #client-contact już ustawiony
+        }
         if (typeof updateStep1NextState === 'function') updateStep1NextState();
         showToast('Wczytano dane klienta', 'success');
         closeModal();
@@ -411,3 +549,6 @@ window.loadClientsDb = loadClientsDb;
 window.deleteClientFromDb = deleteClientFromDb;
 window.ensureClientIds = ensureClientIds;
 window.newClientId = newClientId;
+window.selectClientFromDb = selectClientFromDb;
+window.selectClientFromDbForce = selectClientFromDbForce;
+window.renderClientsDbList = renderClientsDbList;

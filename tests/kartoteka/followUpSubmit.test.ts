@@ -12,8 +12,10 @@ describe('kartotekaFollowUp submitFollowUp — guard', () => {
     const load = () => {
         const file = path.join(__dirname, '../../public/js/kartoteka/kartotekaFollowUp.js');
         let code = fs.readFileSync(file, 'utf8');
-        // Plik ESM: tylko `export default` — zamień na przypisanie do testów.
-        code = code.replace(/export default \{/, 'module.exports = {');
+        // Plik ESM: importy wytnij (stub poniżej), `export default` na przypisanie.
+        code = code
+            .replace(/^import[\s\S]*?from\s+['"][^'"]+['"];?\s*$/gm, '')
+            .replace(/export default \{/, 'module.exports = {');
         const esc = (s: unknown) => String(s ?? '');
         fetchCalls = 0;
         fetchBodies = [];
@@ -31,6 +33,11 @@ describe('kartotekaFollowUp submitFollowUp — guard', () => {
         };
         const context: any = {
             console,
+            legacyToContacts: () => [],
+            normalizeContacts: (r: any) => (Array.isArray(r) ? r : []),
+            renderEditor: () => {},
+            collectContacts: () => [],
+            bindEditor: () => {},
             module: { exports: {} },
             fetch: (_url: string, opts: { body?: string }) => {
                 fetchCalls++;

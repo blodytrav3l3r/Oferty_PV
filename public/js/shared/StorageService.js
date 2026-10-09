@@ -302,6 +302,13 @@ class StorageService {
                 number: doc.data.number || doc.data.offerNumber,
                 clientName: doc.data.clientName,
                 clientNumber: doc.data.clientNumber,
+                clientNip: doc.data.clientNip,
+                clientAddress: doc.data.clientAddress,
+                clientContact: doc.data.clientContact,
+                clientContacts: doc.data.clientContacts,
+                contactPerson: doc.data.contactPerson,
+                clientPhone: doc.data.clientPhone,
+                clientEmail: doc.data.clientEmail,
                 date: doc.data.date || doc.data.offerDate
             };
 

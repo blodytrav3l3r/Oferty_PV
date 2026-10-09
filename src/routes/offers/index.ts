@@ -3,6 +3,7 @@ import ruryCrudRouter from './ruryCrud';
 import studnieCrudRouter from './studnieCrud';
 import crudRouter from './crud';
 import followUpsRouter from './followUps';
+import clientContactRouter from './clientContact';
 import followUpStatsRouter from './followUpStats';
 import exportsRouter from './exports';
 
@@ -22,6 +23,9 @@ router.use('/', crudRouter);
 
 // Opieka nad ofertą: POST/GET /:kind/:id/followups (przed /:id nie ma kolizji — 3 segmenty)
 router.use('/', followUpsRouter);
+
+// Kontakt klienta oferty: PUT /:kind/:id/client-contact (3 segmenty, bez kolizji).
+router.use('/', clientContactRouter);
 
 // Opieka nad ofertą (P3): GET /followups/stats — 2 segmenty z literałem,
 // brak kolizji z GET /:id ani /:kind/:id/followups.

@@ -1604,6 +1604,12 @@ button.btn-order-save:hover {
     font-weight: var(--fw-semibold);
     color: var(--text-primary);
 }
+/* Katalog = 1 osoba-podpowiedź: telefon małym pod osobą, e-mail w title. */
+.clients-table .td-sub {
+    display: block;
+    font-size: var(--fs-sm);
+    color: var(--text-muted);
+}
 .clients-table .td-mono {
     font-family: var(--font-mono, monospace);
     font-size: var(--fs-md);

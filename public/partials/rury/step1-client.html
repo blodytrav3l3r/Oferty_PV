@@ -97,13 +97,21 @@
                         placeholder="ul. Przykładowa 1, Warszawa"
                     />
                 </div>
-                <div class="wizard-form-group">
-                    <label class="wizard-form-label" for="client-contact">Kontakt</label>
-                    <input
-                        class="wizard-form-input"
-                        id="client-contact"
-                        placeholder="Jan Kowalski, 600 100 200"
-                    />
+                <div class="wizard-form-group" style="grid-column: 1 / -1">
+                    <span class="wizard-form-label" id="client-contacts-label"
+                        >Osoby do kontaktu</span
+                    >
+                    <div
+                        id="client-contacts"
+                        data-cc-hidden="client-contact"
+                        role="group"
+                        aria-labelledby="client-contacts-label"
+                    ></div>
+                    <input type="hidden" id="client-contact" />
+                    <p class="text-muted fs-md" style="margin: 0.25rem 0 0">
+                        Kontakt ofertowy — zapisuje się z tą ofertą. „Zapisz klienta” odkłada firmę
+                        + 1. osobę jako podpowiedź.
+                    </p>
                 </div>
             </div>
 

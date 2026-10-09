@@ -3,11 +3,44 @@
 /* Używane przez: offerCrud.js (rury), offerSave.js i offerManager.js (studnie) */
 
 /**
+ * Edytor osób do kontaktu (wiele wierszy) — render + zbiórka.
+ * Ukryte #client-contact to mirror legacy (pierwsza osoba), więc stare
+ * ścieżki (baza klientów, zamówienia, eksport) działają bez zmian.
+ */
+function getClientContactsList() {
+    const box = document.getElementById('client-contacts');
+    if (box && typeof window.ClientContacts !== 'undefined') {
+        return window.ClientContacts.collectContacts(box);
+    }
+    return [];
+}
+
+function renderClientContactsList(list, legacy) {
+    const box = document.getElementById('client-contacts');
+    if (!box || typeof window.ClientContacts === 'undefined') return;
+    let rows = Array.isArray(list) && list.length > 0 ? list : null;
+    if (!rows || rows.length === 0) {
+        rows = window.ClientContacts.legacyToContacts(legacy || {});
+    }
+    if (rows.length === 0) {
+        rows = window.ClientContacts.parseLegacyMirror(
+            (legacy && legacy.clientContact) ||
+                document.getElementById('client-contact')?.value ||
+                ''
+        );
+    }
+    window.ClientContacts.renderEditor(box, rows);
+    window.ClientContacts.bindEditor(box);
+}
+
+/**
  * Zbiera standardowe pola formularza oferty.
- * @returns {{number:string,date:string,clientName:string,clientNumber:string,clientNip:string,clientAddress:string,clientContact:string,investName:string,investAddress:string,investContractor:string,notes:string,paymentTerms:string,validity:string,transportKm:number,transportRate:number}}
+ * @returns {{number:string,date:string,clientName:string,clientNumber:string,clientNip:string,clientAddress:string,clientContact:string,clientContacts:Array,contactPerson:string,clientPhone:string,clientEmail:string,investName:string,investAddress:string,investContractor:string,notes:string,paymentTerms:string,validity:string,transportKm:number,transportRate:number}}
  */
 function getOfferFormFields() {
     const g = (id) => (document.getElementById(id)?.value ?? '').trim();
+    const clientContacts = getClientContactsList();
+    const first = Array.isArray(clientContacts) ? clientContacts[0] || {} : {};
     return {
         number: g('offer-number'),
         date: document.getElementById('offer-date')?.value || '',
@@ -16,6 +49,10 @@ function getOfferFormFields() {
         clientNip: g('client-nip'),
         clientAddress: g('client-address'),
         clientContact: g('client-contact'),
+        clientContacts: clientContacts,
+        contactPerson: String(first.name || ''),
+        clientPhone: String(first.phone || ''),
+        clientEmail: String(first.email || ''),
         investName: g('invest-name'),
         investAddress: g('invest-address'),
         investContractor: g('invest-contractor'),
@@ -38,7 +75,7 @@ function getOfferFormFields() {
 
 /**
  * Wypełnia standardowe pola formularza oferty danymi.
- * @param {{number?:string,date?:string,clientName?:string,clientNumber?:string,clientNip?:string,clientAddress?:string,clientContact?:string,investName?:string,investAddress?:string,investContractor?:string,notes?:string,paymentTerms?:string,validity?:string,transportKm?:number,transportRate?:number}} data
+ * @param {{number?:string,date?:string,clientName?:string,clientNumber?:string,clientNip?:string,clientAddress?:string,clientContact?:string,clientContacts?:Array,contactPerson?:string,clientPhone?:string,clientEmail?:string,investName?:string,investAddress?:string,investContractor?:string,notes?:string,paymentTerms?:string,validity?:string,transportKm?:number,transportRate?:number}} data
  */
 function setOfferFormFields(data) {
     const s = (id, val) => {
@@ -52,6 +89,13 @@ function setOfferFormFields(data) {
     s('client-nip', data.clientNip);
     s('client-address', data.clientAddress);
     s('client-contact', data.clientContact);
+    // Edytor osób: z tablicy bloba, fallback na klucze legacy/mirror.
+    renderClientContactsList(data.clientContacts, {
+        contactPerson: data.contactPerson,
+        clientPhone: data.clientPhone,
+        clientEmail: data.clientEmail,
+        clientContact: data.clientContact
+    });
     s('invest-name', data.investName);
     s('invest-address', data.investAddress);
     s('invest-contractor', data.investContractor);
@@ -172,6 +216,10 @@ function buildBaseOfferDoc(spec) {
         clientNip: fields.clientNip,
         clientAddress: fields.clientAddress,
         clientContact: fields.clientContact,
+        clientContacts: fields.clientContacts || [],
+        contactPerson: fields.contactPerson || '',
+        clientPhone: fields.clientPhone || '',
+        clientEmail: fields.clientEmail || '',
         investName: fields.investName,
         investAddress: fields.investAddress,
         investContractor: fields.investContractor,
@@ -311,6 +359,15 @@ document.addEventListener('DOMContentLoaded', function () {
 // Dociąga też pole Nr zamówienia, gdy wejście w tryb zamówienia (?order=)
 // nastąpiło przed wstrzyknięciem partiali kroku 1.
 document.addEventListener('partials:loaded', function () {
+    // Edytor osób do kontaktu w kroku 1 (gdy partial wstrzyknięty).
+    // Guard: nie nadpisuj wierszy wczytanych z oferty (partials race).
+    try {
+        const box = document.getElementById('client-contacts');
+        if (box && box.querySelector('[data-cc-row]')) return;
+        renderClientContactsList(null, null);
+    } catch (_e) {
+        // pasywnie — edytor dociągnie się przy wypełnieniu formularza
+    }
     syncOfferTabFields();
     try {
         let num = null;

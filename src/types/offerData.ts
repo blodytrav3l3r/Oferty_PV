@@ -7,6 +7,10 @@ export interface RuryOfferDataBlob {
     clientNip?: string;
     clientAddress?: string;
     clientContact?: string;
+    contactPerson?: string;
+    clientPhone?: string;
+    clientEmail?: string;
+    clientContacts?: Array<{ name?: string; phone?: string; email?: string }>;
     investName?: string;
     investAddress?: string;
     investContractor?: string;
@@ -37,6 +41,9 @@ export interface StudnieOfferDataBlob {
     clientNip?: string;
     clientAddress?: string;
     clientContact?: string;
+    contactPerson?: string;
+    clientEmail?: string;
+    clientContacts?: Array<{ name?: string; phone?: string; email?: string }>;
     investName?: string;
     investAddress?: string;
     investContractor?: string;
