@@ -194,6 +194,8 @@ if (!fs.existsSync(readyFlag)) {
         } else if (acquireLock()) {
             try {
                 // Sprzątnij szablony ze starego schematu (trzymamy lock).
+                // recursive: stare lockDir to katalogi (owner.json w środku),
+                // bez tego rmSync rzuca i sieroty się akumulują.
                 try {
                     for (const e of fs.readdirSync(tmpDir)) {
                         if (
@@ -202,7 +204,7 @@ if (!fs.existsSync(readyFlag)) {
                             path.join(tmpDir, e) !== templateReady &&
                             !e.startsWith(path.basename(lockDir))
                         ) {
-                            fs.rmSync(path.join(tmpDir, e), { force: true });
+                            fs.rmSync(path.join(tmpDir, e), { recursive: true, force: true });
                         }
                     }
                 } catch {
