@@ -25,40 +25,40 @@ const MAX_CATALOG_CONTACTS = 10;
  * z rozcięciem "Jan, 600" (telefon siedział w jednym stringu).
  */
 /**
- * Rozcina verbatim z katalogu ("Jan, 600" sprzed fixa splitu) — display-only,
- * DB naprawia heal przy starcie.
+ * Rozcina łączony mirror ("Jan, 600") — także gdy kolumna phone już coś ma,
+ * o ile cyfry się zgadzają. Display-only, DB naprawia heal przy starcie.
  */
-function splitCachedRow(r) {
-    if (!r || r.phone) return r;
+function splitMerged(name, phone) {
+    if (!name) return { name, phone };
     try {
         const CC = window.ClientContacts;
-        if (r.name && CC && typeof CC.parseLegacyMirror === 'function') {
-            const p = CC.parseLegacyMirror(r.name)[0];
-            if (p && p.phone) return { ...r, name: p.name || r.name, phone: p.phone };
+        if (CC && typeof CC.parseLegacyMirror === 'function') {
+            const p = CC.parseLegacyMirror(name)[0];
+            if (p && p.phone) {
+                const digits = (s) => String(s || '').replace(/\D/g, '');
+                if (!phone || digits(phone) === digits(p.phone))
+                    return { name: p.name || name, phone: phone || p.phone };
+            }
         }
     } catch (_e) {
         // pasywnie — verbatim
     }
-    return r;
+    return { name, phone };
+}
+
+function splitCachedRow(r) {
+    if (!r) return r;
+    const split = splitMerged(r.name || '', r.phone || '');
+    if (split.name === (r.name || '') && (split.phone || '') === (r.phone || '')) return r;
+    return { ...r, name: split.name, phone: split.phone };
 }
 
 function catalogDisplayList(c) {
     const cached = clientContactsCache[c.id];
     if (cached && cached.ok && cached.list.length > 0) return cached.list.map(splitCachedRow);
-    let name = c.contact || '';
-    let phone = c.phone || '';
-    try {
-        const CC = window.ClientContacts;
-        if (!phone && name && CC && typeof CC.parseLegacyMirror === 'function') {
-            const p = CC.parseLegacyMirror(name)[0];
-            if (p && (p.name || p.phone)) {
-                name = p.name || name;
-                phone = p.phone || '';
-            }
-        }
-    } catch (_e) {
-        // pasywnie — pełny string w jednej linii
-    }
+    const split = splitMerged(c.contact || '', c.phone || '');
+    const name = split.name;
+    const phone = split.phone;
     if (!name && !phone && !(c.email || '')) return [];
     return [{ id: null, name, phone, email: c.email || '', position: '', isPrimary: true }];
 }
@@ -650,34 +650,15 @@ function renderClientsDbList(query) {
             contactTd.className = 'td-edit';
             const cached = clientContactsCache[c.id];
             // Fallback mirror: łączony "Jan, 600" rozcinany jak w displayu.
-            let legacySingle = {
+            const legacySplit = splitMerged(c.contact || '', c.phone || '');
+            const legacySingle = {
                 id: null,
-                name: c.contact || '',
-                phone: c.phone || '',
+                name: legacySplit.name,
+                phone: legacySplit.phone,
                 email: c.email || '',
                 position: '',
                 isPrimary: true
             };
-            try {
-                const CC = window.ClientContacts;
-                if (
-                    !legacySingle.phone &&
-                    legacySingle.name &&
-                    CC &&
-                    typeof CC.parseLegacyMirror === 'function'
-                ) {
-                    const p = CC.parseLegacyMirror(legacySingle.name)[0];
-                    if (p && (p.name || p.phone)) {
-                        legacySingle = {
-                            ...legacySingle,
-                            name: p.name || legacySingle.name,
-                            phone: p.phone
-                        };
-                    }
-                }
-            } catch (_e) {
-                // pasywnie — pełny string w polu nazwy
-            }
             const editList = cached && cached.ok ? cached.list.map(splitCachedRow) : [legacySingle];
             const edBox = document.createElement('div');
             edBox.id = 'edit-client-contacts';
@@ -966,25 +947,8 @@ function selectClientFromDbForce(id, picked) {
                     if (cached && cached.ok && cached.list.length > 0)
                         rows = cached.list.map(splitCachedRow);
                     else {
-                        let cand = {
-                            name: c.contact || '',
-                            phone: c.phone || '',
-                            email: c.email || ''
-                        };
-                        if (
-                            !cand.phone &&
-                            cand.name &&
-                            typeof CC.parseLegacyMirror === 'function'
-                        ) {
-                            const p = CC.parseLegacyMirror(cand.name)[0];
-                            if (p && (p.name || p.phone))
-                                cand = {
-                                    name: p.name || cand.name,
-                                    phone: p.phone,
-                                    email: cand.email
-                                };
-                        }
-                        rows = [cand];
+                        const split = splitMerged(c.contact || '', c.phone || '');
+                        rows = [{ name: split.name, phone: split.phone, email: c.email || '' }];
                     }
                 }
                 const norm = CC.normalizeContacts(

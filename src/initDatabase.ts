@@ -4,6 +4,7 @@
  */
 import prisma from './prismaClient';
 import { logger } from './utils/logger';
+import { splitMergedContact } from './utils/contactSplit';
 import crypto from 'crypto';
 
 /**
@@ -127,16 +128,6 @@ export async function ensureDatabaseIndexes(): Promise<void> {
 }
 
 /**
- * Rozcina legacy "Imię, telefon" (lustro heurystyki FE parseLegacyMirror):
- * przecinek/średnik + 7-20 znaków telefonu. Bez dopasowania — verbatim.
- */
-function splitLegacyContact(name: string): { name: string; phone: string } {
-    const m = name.match(/^(.*?)[,;]\s*([\d+\-() ]{7,20})$/);
-    if (!m) return { name, phone: '' };
-    return { name: m[1].trim() || name, phone: m[2].trim() };
-}
-
-/**
  * Auto-heal katalogu kontaktów klienta (Paczka 2): CREATE TABLE IF NOT EXISTS
  * + backfill legacy (clients_rel.contact/phone/email → 1 wiersz
  * isPrimary=1, tylko gdy któryś niepusty i klient nie ma jeszcze kontaktów).
@@ -169,14 +160,11 @@ export async function ensureClientContactsTable(): Promise<void> {
         const rows = [];
         for (const r of Array.isArray(legacy) ? legacy : []) {
             let name = (r.contact ?? '').trim();
-            let phone = (r.phone ?? '').trim();
             const email = (r.email ?? '').trim();
             // Łączony mirror "Jan, 600" → osobne kolumny (jak display FE).
-            if (!phone && name) {
-                const split = splitLegacyContact(name);
-                name = split.name;
-                phone = split.phone;
-            }
+            const split = splitMergedContact(name, (r.phone ?? '').trim() || null);
+            name = split.name;
+            const phone = (split.phone ?? '').trim();
             if (!name && !phone && !email) continue;
             rows.push({
                 id: crypto.randomUUID(),
@@ -205,21 +193,25 @@ export async function ensureClientContactsTable(): Promise<void> {
             e instanceof Error ? e.message : String(e)
         );
     }
-    // Re-split jednorazowych verbatim ("Jan, 600" sprzed fixa splitu):
-    // wiersze z pustym phone, których name niesie telefon. Idempotentne —
-    // po rozcięciu phone niepusty, kolejny start je pomija.
+    // Re-split verbatim ("Jan, 600" sprzed fixów): name niesie telefon
+    // przy pustym phone ALBO zgodnym z wyciągniętym (po cyfrach).
+    // Idempotentne — po rozcięciu warunek już nie matchuje.
     try {
         const merged = (await prisma.client_contacts_rel.findMany({
-            where: { OR: [{ phone: null }, { phone: '' }] },
-            select: { id: true, name: true }
-        })) as Array<{ id: string; name: string }>;
+            select: { id: true, name: true, phone: true }
+        })) as Array<{ id: string; name: string | null; phone: string | null }>;
         let fixed = 0;
         for (const m of Array.isArray(merged) ? merged : []) {
-            const split = splitLegacyContact(String(m.name ?? ''));
-            if (!split.phone || split.name === String(m.name ?? '')) continue;
+            const before = String(m.name ?? '');
+            const split = splitMergedContact(before, m.phone ?? null);
+            if (split.name === before) continue;
             await prisma.client_contacts_rel.update({
                 where: { id: m.id },
-                data: { name: split.name, phone: split.phone, updatedAt: new Date().toISOString() }
+                data: {
+                    name: split.name,
+                    phone: split.phone,
+                    updatedAt: new Date().toISOString()
+                }
             });
             fixed++;
         }

@@ -126,7 +126,15 @@ describe('frontend: offer contacts roundtrip', () => {
         const src = read('public/js/shared/clientManager.js');
         const editIdx = src.indexOf('Edytor N-osób katalogu');
         expect(editIdx).toBeGreaterThan(-1);
-        expect(src.slice(editIdx, editIdx + 2000)).toContain('parseLegacyMirror');
+        expect(src.slice(editIdx, editIdx + 2000)).toContain('splitMerged');
+    });
+
+    test('katalog N-osob: jeden splitMerged we wszystkich sciezkach (phone tez)', () => {
+        const src = read('public/js/shared/clientManager.js');
+        expect(src).toContain('function splitMerged');
+        const uses = src.split('splitMerged(').length - 1;
+        // definicja + display + edit + Wczytaj (>=4 użycia)
+        expect(uses).toBeGreaterThanOrEqual(4);
     });
 
     test('katalog N-osob: verbatim z DB rozcinany w display/edycji/Wczytaj', () => {

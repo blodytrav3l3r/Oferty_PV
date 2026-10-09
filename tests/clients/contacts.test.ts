@@ -237,6 +237,33 @@ describe('Katalog kontaktów — PUT /:clientId/contacts/sync', () => {
         expect(bad.status).toBe(400);
     });
 
+    it('łączony mirror: zgodne cyfry → split, rozjazd → verbatim', async () => {
+        const app = createContactsApp();
+        const res = await request(app)
+            .put('/api/clients/c-1/contacts/sync')
+            .send({
+                contacts: [
+                    { id: 'k-1', name: 'Jan Kowalski, 600 100 200', phone: '600 100 200' },
+                    { id: 'k-2', name: 'Anna Nowak, 601 601 601', phone: '602 602 602' }
+                ]
+            });
+        expect(res.status).toBe(200);
+        const m = mockPrisma();
+        const updates = m.client_contacts_rel.update.mock.calls.map((c: any) => c[0]);
+        expect(updates).toContainEqual({
+            where: { id: 'k-1' },
+            data: expect.objectContaining({ name: 'Jan Kowalski', phone: '600 100 200' })
+        });
+        // Rozjazd cyfr: bez zgadywania, verbatim.
+        expect(updates).toContainEqual({
+            where: { id: 'k-2' },
+            data: expect.objectContaining({
+                name: 'Anna Nowak, 601 601 601',
+                phone: '602 602 602'
+            })
+        });
+    });
+
     it('walidacja: >10 → 400, zły e-mail → 400', async () => {
         const app = createContactsApp();
         const tooMany = await request(app)

@@ -9,6 +9,7 @@ import { canWriteDoc } from '../../utils/ownership';
 import { logger } from '../../utils/logger';
 import { mapPrismaError } from '../../utils/prismaErrors';
 import { searchCache } from '../../utils/searchCache';
+import { splitMergedContact } from '../../utils/contactSplit';
 
 const router = express.Router();
 
@@ -73,8 +74,17 @@ function normalizeEntries(raw: unknown): NormalizedContact[] {
             .trim()
             .slice(0, 200);
         if (!name && !phone && !email && !position) continue;
+        // Łączony "Jan, 600" z wypełnionym phone → czyste name (jak display).
+        const split = splitMergedContact(name, phone);
         const rawId = typeof r.id === 'string' && r.id.trim() !== '' ? r.id.trim() : null;
-        out.push({ id: rawId, name, phone, email, position, isPrimary: r.isPrimary === true });
+        out.push({
+            id: rawId,
+            name: split.name,
+            phone: split.phone,
+            email,
+            position,
+            isPrimary: r.isPrimary === true
+        });
     }
     return out;
 }
