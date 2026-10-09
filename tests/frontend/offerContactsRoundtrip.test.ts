@@ -98,6 +98,18 @@ describe('frontend: offer contacts roundtrip', () => {
         expect(src).toContain('ok: false');
     });
 
+    test('katalog N-osob: jawne pola z labelami + usuwanie per osoba', () => {
+        const src = read('public/js/shared/clientManager.js');
+        expect(src).toContain('ccc-field');
+        expect(src).toContain('ccc-grid');
+        expect(src).toContain('Imię i nazwisko *');
+        expect(src).toContain('renumberCatalogRows');
+        expect(src).toContain('Usuń osobę');
+        const css = read('public/css/style.base.css');
+        expect(css).toContain('.ccc-label');
+        expect(css).toContain('.ccc-head');
+    });
+
     test('katalog N-osob: edytor .ccc-* z ★ i stanowiskiem, bez innerHTML na danych', () => {
         const src = read('public/js/shared/clientManager.js');
         expect(src).toContain('ccc-row');

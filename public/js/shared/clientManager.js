@@ -417,14 +417,19 @@ function catalogEditorRow(container, clientId, r) {
     const starMark = document.createElement('span');
     starMark.textContent = '★';
     star.appendChild(starMark);
-    row.appendChild(star);
 
-    const mk = (field, type, ph, cls) => {
+    // Jawne pola z labelami (placeholder znika przy pisaniu, label nie).
+    const mkField = (field, type, label, wide) => {
+        const wrap = document.createElement('label');
+        wrap.className = 'ccc-field' + (wide ? ' ccc-wide' : '');
+        const cap = document.createElement('span');
+        cap.className = 'ccc-label';
+        cap.textContent = label;
+        wrap.appendChild(cap);
         const input = document.createElement('input');
         input.type = type;
-        input.className = 'form-input form-input-sm' + (cls ? ' ' + cls : '');
-        input.placeholder = ph;
-        input.setAttribute('aria-label', ph);
+        input.className = 'form-input form-input-sm';
+        input.placeholder = label;
         input.setAttribute('data-ccc', field);
         input.value = (r && r[field]) || '';
         if (field === 'name') input.maxLength = 200;
@@ -432,24 +437,46 @@ function catalogEditorRow(container, clientId, r) {
         if (field === 'email') input.maxLength = 200;
         if (field === 'position') input.maxLength = 200;
         input.onclick = (e) => e.stopPropagation();
-        return input;
+        wrap.appendChild(input);
+        return wrap;
     };
-    row.appendChild(mk('name', 'text', 'Imię i nazwisko *', 'ccc-name'));
+    const head = document.createElement('div');
+    head.className = 'ccc-head';
+    head.appendChild(star);
+    const title = document.createElement('span');
+    title.className = 'ccc-title';
+    head.appendChild(title);
     const del = document.createElement('button');
     del.type = 'button';
     del.className = 'btn btn-sm btn-secondary';
-    del.textContent = 'Usuń';
-    del.setAttribute('aria-label', 'Usuń osobę');
+    del.textContent = 'Usuń osobę';
+    del.setAttribute('aria-label', 'Usuń tę osobę z katalogu (po Zapisie)');
+    del.title = 'Usuwa wiersz; znika z katalogu po Zapisie klienta';
     del.onclick = (e) => {
         e.stopPropagation();
         row.remove();
+        renumberCatalogRows(container);
     };
-    row.appendChild(del);
-    row.appendChild(mk('phone', 'tel', 'Telefon'));
-    row.appendChild(mk('email', 'email', 'E-mail', 'ccc-mail'));
-    row.appendChild(mk('position', 'text', 'Stanowisko', 'ccc-pos'));
+    head.appendChild(del);
+    row.appendChild(head);
+    const grid = document.createElement('div');
+    grid.className = 'ccc-grid';
+    grid.appendChild(mkField('name', 'text', 'Imię i nazwisko *', true));
+    grid.appendChild(mkField('phone', 'tel', 'Telefon', false));
+    grid.appendChild(mkField('email', 'email', 'E-mail', false));
+    grid.appendChild(mkField('position', 'text', 'Stanowisko', true));
+    row.appendChild(grid);
     container.appendChild(row);
+    renumberCatalogRows(container);
     return row;
+}
+
+function renumberCatalogRows(container) {
+    if (!container || typeof container.querySelectorAll !== 'function') return;
+    container.querySelectorAll('.ccc-row').forEach((row, i) => {
+        const title = row.querySelector('.ccc-title');
+        if (title) title.textContent = 'Osoba ' + (i + 1);
+    });
 }
 
 function renderCatalogEditor(container, clientId, list) {
