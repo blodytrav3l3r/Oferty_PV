@@ -10,6 +10,7 @@ import * as crypto from 'crypto';
 import { execFileSync } from 'child_process';
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
+const restoreDb = require('../scripts/restore-db.js');
 const {
     isSqliteFile,
     verifyChecksum,
@@ -18,7 +19,7 @@ const {
     resolveTarget,
     isLiveDbPath,
     liveDbPath
-} = require('../scripts/restore-db.js');
+} = restoreDb;
 
 function tmpFile(name: string): string {
     return path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'p13-')), name);
@@ -33,6 +34,18 @@ function makeDb(): string {
     db.prepare('INSERT INTO t VALUES (?, ?)').run('a', 'b');
     db.close();
     return p;
+}
+
+// OOM-guard: live DB bywa duży — porównanie strumieniem (stała pamięć),
+// nigdy readFileSync całości (RangeError pod obciążeniem, fail hooka).
+function sha256File(p: string): Promise<string> {
+    return new Promise((resolve, reject) => {
+        const h = crypto.createHash('sha256');
+        const s = fs.createReadStream(p);
+        s.on('error', reject);
+        s.on('data', (d) => h.update(d as Buffer));
+        s.on('end', () => resolve(h.digest('hex')));
+    });
 }
 
 describe('restore guards (P1.3 / F-001)', () => {
@@ -113,13 +126,13 @@ describe('restore target guard (P1: brak silent fallback do live DB)', () => {
         expect(p).toEqual({ yes: false, live: true, targetArg: 'c.sqlite', sourceArg: 'b.sqlite' });
     });
 
-    test('CLI bez celu NIE rusza live DB (fail-closed, exit != 0)', () => {
+    test('CLI bez celu NIE rusza live DB (fail-closed, exit != 0)', async () => {
         const script = path.join(__dirname, '..', 'scripts', 'restore-db.js');
         // Hermetyczność CI: live DB może nie istnieć (runner używa test-ci.sqlite).
         // Odmowa następuje przed jakimkolwiek copyFileSync, więc brak pliku też
-        // dowodzi fail-closed; porównanie bajtów tylko gdy plik istnieje.
+        // dowodzi fail-closed; porównanie skrótem tylko gdy plik istnieje.
         const liveExists = fs.existsSync(liveDbPath());
-        const before = liveExists ? fs.readFileSync(liveDbPath()) : null;
+        const before = liveExists ? await sha256File(liveDbPath()) : null;
         const env = { ...process.env };
         delete env.RESTORE_DB_PATH;
         let code = 0;
@@ -133,7 +146,7 @@ describe('restore target guard (P1: brak silent fallback do live DB)', () => {
         expect(code).not.toBe(0);
         expect(stderr).toMatch(/jawnego celu/i);
         if (before !== null) {
-            expect(fs.readFileSync(liveDbPath()).equals(before)).toBe(true);
+            expect(await sha256File(liveDbPath())).toBe(before);
         }
     });
 });
