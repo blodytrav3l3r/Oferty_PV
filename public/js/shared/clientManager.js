@@ -210,9 +210,29 @@ async function saveClientsDbData(data) {
 }
 
 /**
+ * Rozstrzyga 404 z sync: brak klienta w bazie (wyścig/zapis padł) czy brak
+ * trasy na serwerze (stary kod sprzed de55901 = restart serwera).
+ * @returns {Promise<'client'|'route'|'server'>}
+ */
+async function diagnoseSync404(clientId) {
+    try {
+        const res = await fetch('/api/clients', {
+            headers: authHeaders(),
+            credentials: 'same-origin'
+        });
+        if (!res.ok) return 'server';
+        const json = await res.json().catch(() => ({}));
+        const rows = Array.isArray(json.data) ? json.data : [];
+        return rows.some((c) => c && c.id === clientId) ? 'route' : 'client';
+    } catch (_e) {
+        return 'server';
+    }
+}
+
+/**
  * Dokleja pełną listę osób z edytora oferty do katalogu (PUT sync).
- * Bez bazy updatedAt — wołane tuż po zapisie firmy (semantyka last-write-wins
- * jak batch PUT). Fetch-fail = toast, nigdy pusty sync.
+ * Bez bazy updatedAt — wołane TUŻ PO udanym zapisie firmy (semantyka
+ * last-write-wins jak batch PUT). Fetch-fail = toast, nigdy pusty sync.
  */
 function syncOfferEditorToCatalog(clientId) {
     try {
@@ -233,8 +253,22 @@ function syncOfferEditorToCatalog(clientId) {
         if (named.length < rows.length)
             showToast('Pominięto osoby bez imienia (katalog wymaga nazwy)', 'warning');
         named[0].isPrimary = true;
-        syncClientContacts(clientId, named, null).then((r) => {
+        syncClientContacts(clientId, named, null).then(async (r) => {
             if (!r.ok) {
+                if (r.status === 404) {
+                    const cause = await diagnoseSync404(clientId);
+                    if (cause === 'route') {
+                        showToast(
+                            'Serwer nie obsługuje kontaktów — zrestartuj serwer (kod po de55901)',
+                            'error'
+                        );
+                    } else if (cause === 'client') {
+                        showToast('Klienta nie ma w bazie — zapisz firmę jeszcze raz', 'error');
+                    } else {
+                        showToast('Kontakty nie zapisane w katalogu: brak połączenia', 'warning');
+                    }
+                    return;
+                }
                 showToast('Kontakty nie zapisane w katalogu: ' + (r.error || ''), 'warning');
                 return;
             }
@@ -252,7 +286,7 @@ function syncOfferEditorToCatalog(clientId) {
 }
 
 /* ===== ZAPIS KLIENTA Z FORMULARZA ===== */
-function saveClientToDb() {
+async function saveClientToDb() {
     const _saveBtn = document.querySelector('button[data-csp="saveClientToDb"]');
     if (_saveBtn) _saveBtn.disabled = true;
     // Odblokuj na KAŻDYM wyjściu — inaczej przycisk martwy po błędzie walidacji.
@@ -315,7 +349,7 @@ function saveClientToDb() {
             title: 'Aktualizacja klienta',
             type: 'warning'
         })
-            .then((ok) => {
+            .then(async (ok) => {
                 if (ok) {
                     clientsDb[existingIdx] = {
                         ...clientsDb[existingIdx],
@@ -328,8 +362,10 @@ function saveClientToDb() {
                         clientNumber,
                         updatedAt: new Date().toISOString()
                     };
-                    saveClientsDbData(clientsDb);
-                    syncOfferEditorToCatalog(clientsDb[existingIdx].id);
+                    // Sync kontaktów DOPIERO po zapisie firmy — inaczej 404
+                    // (klienta jeszcze nie ma w bazie).
+                    if (await saveClientsDbData(clientsDb))
+                        syncOfferEditorToCatalog(clientsDb[existingIdx].id);
                     showToast('Zaktualizowano dane klienta', 'success');
                 }
                 _unlockSaveBtn();
@@ -351,8 +387,7 @@ function saveClientToDb() {
             clientNumber,
             createdAt: new Date().toISOString()
         });
-        saveClientsDbData(clientsDb);
-        syncOfferEditorToCatalog(newId);
+        if (await saveClientsDbData(clientsDb)) syncOfferEditorToCatalog(newId);
         showToast('Zapisano nowego klienta', 'success');
         if (_saveBtn) _saveBtn.disabled = false;
     }
