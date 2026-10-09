@@ -58,6 +58,7 @@ Semantyka `outcome` (maszyna stanów, kontrakt P0):
 - `OPEN → WON | LOST_COMPETITION | LOST_OTHER | ABANDONED`; stany `WON/LOST_*/ABANDONED` = terminalne.
 - Status karty = **`latest` follow-up wg `(contactedAt, createdAt)`** (nie `MAX(nextContactAt)` — to błąd: późniejszy zapis z wcześniejszą datą dałby zły termin). Jego `outcome` + jego `nextContactAt` + `EXISTS orders_*`.
 - Ponowne otwarcie terminalnej = jawna akcja `reopen` (osobny wpis + audit), nigdy przypadkowy kolejny kontakt.
+- **Cykle obsługi (kontrakt aktualny):** jeden wpis terminalny zamyka bieżący cykl; `reopen: true` po terminalnym staruje nowy cykl (`cycle = poprzedni + 1`), historia append-only zostaje. Limit DB: `uq_fu_terminal_per_cycle` — max 1 terminal na `(offerKind, offerId, cycle)`; rozstrzyga też wyścig dwóch równoległych POST (przegrany → 409 `TERMINAL_OUTCOME`). Zapis na terminalnej bez `reopen` → 409. Migracja: `20261009000000_fu_cycles` (addytywna, backfill cykli z historii).
 - Zamknięcie miękkie w v1: `loseReason` opcjonalne; od P2 twardy obowiązek przy `LOST_*`.
 
 ## 3. API (P0) — kontrakt
