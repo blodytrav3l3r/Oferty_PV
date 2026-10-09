@@ -126,6 +126,8 @@ describe('restore target guard (P1: brak silent fallback do live DB)', () => {
         expect(p).toEqual({ yes: false, live: true, targetArg: 'c.sqlite', sourceArg: 'b.sqlite' });
     });
 
+    // Jawny timeout: spawn node + hash live DB pod obciążeniem workerów
+    // przekracza defaultowe 10 s (flaky fail hooka, solo ~6 s).
     test('CLI bez celu NIE rusza live DB (fail-closed, exit != 0)', async () => {
         const script = path.join(__dirname, '..', 'scripts', 'restore-db.js');
         // Hermetyczność CI: live DB może nie istnieć (runner używa test-ci.sqlite).
@@ -148,5 +150,5 @@ describe('restore target guard (P1: brak silent fallback do live DB)', () => {
         if (before !== null) {
             expect(await sha256File(liveDbPath())).toBe(before);
         }
-    });
+    }, 60000);
 });
