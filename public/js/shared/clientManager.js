@@ -569,19 +569,36 @@ function renderClientsDbList(query) {
             const contactTd = document.createElement('td');
             contactTd.className = 'td-edit';
             const cached = clientContactsCache[c.id];
-            const editList =
-                cached && cached.ok
-                    ? cached.list
-                    : [
-                          {
-                              id: null,
-                              name: c.contact || '',
-                              phone: c.phone || '',
-                              email: c.email || '',
-                              position: '',
-                              isPrimary: true
-                          }
-                      ];
+            // Fallback mirror: łączony "Jan, 600" rozcinany jak w displayu.
+            let legacySingle = {
+                id: null,
+                name: c.contact || '',
+                phone: c.phone || '',
+                email: c.email || '',
+                position: '',
+                isPrimary: true
+            };
+            try {
+                const CC = window.ClientContacts;
+                if (
+                    !legacySingle.phone &&
+                    legacySingle.name &&
+                    CC &&
+                    typeof CC.parseLegacyMirror === 'function'
+                ) {
+                    const p = CC.parseLegacyMirror(legacySingle.name)[0];
+                    if (p && (p.name || p.phone)) {
+                        legacySingle = {
+                            ...legacySingle,
+                            name: p.name || legacySingle.name,
+                            phone: p.phone
+                        };
+                    }
+                }
+            } catch (_e) {
+                // pasywnie — pełny string w polu nazwy
+            }
+            const editList = cached && cached.ok ? cached.list : [legacySingle];
             const edBox = document.createElement('div');
             edBox.id = 'edit-client-contacts';
             renderCatalogEditor(edBox, c.id, editList);

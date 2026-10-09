@@ -453,6 +453,31 @@ describe('Katalog kontaktów — auto-heal legacy-DB', () => {
         m.$executeRaw.mockRejectedValueOnce(new Error('locked'));
         await expect(ensureClientContactsTable()).resolves.toBeUndefined();
     });
+
+    it('backfill rozcina łączony mirror "Jan, 600" na name/phone', async () => {
+        const m = mockPrisma();
+        m.$queryRaw.mockResolvedValue([
+            {
+                id: 'c-merged',
+                userId: 'u-1',
+                contact: 'Jan Kowalski, 600 100 200',
+                phone: '',
+                email: ''
+            },
+            { id: 'c-plain', userId: 'u-1', contact: 'FHU Kowalski, import', phone: '', email: '' }
+        ]);
+        await ensureClientContactsTable();
+        const rows = m.client_contacts_rel.createMany.mock.calls[0][0].data;
+        expect(rows).toHaveLength(2);
+        expect(rows[0]).toMatchObject({
+            clientId: 'c-merged',
+            name: 'Jan Kowalski',
+            phone: '600 100 200',
+            isPrimary: 1
+        });
+        // Bez cyfr telefonu — verbatim, bez zgadywania.
+        expect(rows[1]).toMatchObject({ clientId: 'c-plain', name: 'FHU Kowalski, import' });
+    });
 });
 
 describe('Katalog kontaktów — migracja (realna persystencja)', () => {

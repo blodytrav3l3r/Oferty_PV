@@ -110,6 +110,13 @@ describe('frontend: offer contacts roundtrip', () => {
         expect(css).toContain('.ccc-picks');
     });
 
+    test('katalog N-osob: edit-fallback rozcina legacy mirror jak display', () => {
+        const src = read('public/js/shared/clientManager.js');
+        const editIdx = src.indexOf('Edytor N-osób katalogu');
+        expect(editIdx).toBeGreaterThan(-1);
+        expect(src.slice(editIdx, editIdx + 2000)).toContain('parseLegacyMirror');
+    });
+
     test('katalog N-osob: picker wyboru do oferty (checkboxy, escape atrybutow)', () => {
         const src = read('public/js/shared/clientManager.js');
         expect(src).toContain('client-contact-picker');

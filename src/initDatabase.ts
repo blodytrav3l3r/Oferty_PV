@@ -127,6 +127,16 @@ export async function ensureDatabaseIndexes(): Promise<void> {
 }
 
 /**
+ * Rozcina legacy "Imię, telefon" (lustro heurystyki FE parseLegacyMirror):
+ * przecinek/średnik + 7-20 znaków telefonu. Bez dopasowania — verbatim.
+ */
+function splitLegacyContact(name: string): { name: string; phone: string } {
+    const m = name.match(/^(.*?)[,;]\s*([\d+\-() ]{7,20})$/);
+    if (!m) return { name, phone: '' };
+    return { name: m[1].trim() || name, phone: m[2].trim() };
+}
+
+/**
  * Auto-heal katalogu kontaktów klienta (Paczka 2): CREATE TABLE IF NOT EXISTS
  * + backfill legacy (clients_rel.contact/phone/email → 1 wiersz
  * isPrimary=1, tylko gdy któryś niepusty i klient nie ma jeszcze kontaktów).
@@ -159,9 +169,15 @@ export async function ensureClientContactsTable(): Promise<void> {
         const now = new Date().toISOString();
         const rows = [];
         for (const r of legacy) {
-            const name = (r.contact ?? '').trim();
-            const phone = (r.phone ?? '').trim();
+            let name = (r.contact ?? '').trim();
+            let phone = (r.phone ?? '').trim();
             const email = (r.email ?? '').trim();
+            // Łączony mirror "Jan, 600" → osobne kolumny (jak display FE).
+            if (!phone && name) {
+                const split = splitLegacyContact(name);
+                name = split.name;
+                phone = split.phone;
+            }
             if (!name && !phone && !email) continue;
             rows.push({
                 id: crypto.randomUUID(),
