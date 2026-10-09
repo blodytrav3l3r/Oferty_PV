@@ -24,9 +24,27 @@ const MAX_CATALOG_CONTACTS = 10;
  * Lista do wyświetlenia: cache katalogu albo fallback mirror legacy
  * z rozcięciem "Jan, 600" (telefon siedział w jednym stringu).
  */
+/**
+ * Rozcina verbatim z katalogu ("Jan, 600" sprzed fixa splitu) — display-only,
+ * DB naprawia heal przy starcie.
+ */
+function splitCachedRow(r) {
+    if (!r || r.phone) return r;
+    try {
+        const CC = window.ClientContacts;
+        if (r.name && CC && typeof CC.parseLegacyMirror === 'function') {
+            const p = CC.parseLegacyMirror(r.name)[0];
+            if (p && p.phone) return { ...r, name: p.name || r.name, phone: p.phone };
+        }
+    } catch (_e) {
+        // pasywnie — verbatim
+    }
+    return r;
+}
+
 function catalogDisplayList(c) {
     const cached = clientContactsCache[c.id];
-    if (cached && cached.ok && cached.list.length > 0) return cached.list;
+    if (cached && cached.ok && cached.list.length > 0) return cached.list.map(splitCachedRow);
     let name = c.contact || '';
     let phone = c.phone || '';
     try {
@@ -598,7 +616,7 @@ function renderClientsDbList(query) {
             } catch (_e) {
                 // pasywnie — pełny string w polu nazwy
             }
-            const editList = cached && cached.ok ? cached.list : [legacySingle];
+            const editList = cached && cached.ok ? cached.list.map(splitCachedRow) : [legacySingle];
             const edBox = document.createElement('div');
             edBox.id = 'edit-client-contacts';
             renderCatalogEditor(edBox, c.id, editList);
@@ -883,7 +901,8 @@ function selectClientFromDbForce(id, picked) {
                 let rows = Array.isArray(picked) && picked.length > 0 ? picked : null;
                 if (!rows) {
                     const cached = clientContactsCache[id];
-                    if (cached && cached.ok && cached.list.length > 0) rows = cached.list;
+                    if (cached && cached.ok && cached.list.length > 0)
+                        rows = cached.list.map(splitCachedRow);
                     else {
                         let cand = {
                             name: c.contact || '',

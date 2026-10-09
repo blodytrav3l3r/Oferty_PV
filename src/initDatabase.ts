@@ -165,10 +165,9 @@ export async function ensureClientContactsTable(): Promise<void> {
                 phone: string | null;
                 email: string | null;
             }>;
-        if (!Array.isArray(legacy) || legacy.length === 0) return;
         const now = new Date().toISOString();
         const rows = [];
-        for (const r of legacy) {
+        for (const r of Array.isArray(legacy) ? legacy : []) {
             let name = (r.contact ?? '').trim();
             let phone = (r.phone ?? '').trim();
             const email = (r.email ?? '').trim();
@@ -203,6 +202,34 @@ export async function ensureClientContactsTable(): Promise<void> {
         logger.warn(
             'Server',
             'Nie udało się wykonać backfillu client_contacts_rel:',
+            e instanceof Error ? e.message : String(e)
+        );
+    }
+    // Re-split jednorazowych verbatim ("Jan, 600" sprzed fixa splitu):
+    // wiersze z pustym phone, których name niesie telefon. Idempotentne —
+    // po rozcięciu phone niepusty, kolejny start je pomija.
+    try {
+        const merged = (await prisma.client_contacts_rel.findMany({
+            where: { OR: [{ phone: null }, { phone: '' }] },
+            select: { id: true, name: true }
+        })) as Array<{ id: string; name: string }>;
+        let fixed = 0;
+        for (const m of Array.isArray(merged) ? merged : []) {
+            const split = splitLegacyContact(String(m.name ?? ''));
+            if (!split.phone || split.name === String(m.name ?? '')) continue;
+            await prisma.client_contacts_rel.update({
+                where: { id: m.id },
+                data: { name: split.name, phone: split.phone, updatedAt: new Date().toISOString() }
+            });
+            fixed++;
+        }
+        if (fixed > 0) {
+            logger.info('Server', `Auto-heal: rozcięto łączone kontakty (${fixed} wierszy)`);
+        }
+    } catch (e) {
+        logger.warn(
+            'Server',
+            'Nie udało się wykonać re-split client_contacts_rel:',
             e instanceof Error ? e.message : String(e)
         );
     }

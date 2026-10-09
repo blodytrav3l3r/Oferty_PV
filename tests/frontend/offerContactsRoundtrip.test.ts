@@ -117,6 +117,14 @@ describe('frontend: offer contacts roundtrip', () => {
         expect(src.slice(editIdx, editIdx + 2000)).toContain('parseLegacyMirror');
     });
 
+    test('katalog N-osob: verbatim z DB rozcinany w display/edycji/Wczytaj', () => {
+        const src = read('public/js/shared/clientManager.js');
+        expect(src).toContain('splitCachedRow');
+        const idx = src.indexOf('function splitCachedRow');
+        expect(idx).toBeGreaterThan(-1);
+        expect(src).toContain('cached.list.map(splitCachedRow)');
+    });
+
     test('katalog N-osob: picker wyboru do oferty (checkboxy, escape atrybutow)', () => {
         const src = read('public/js/shared/clientManager.js');
         expect(src).toContain('client-contact-picker');

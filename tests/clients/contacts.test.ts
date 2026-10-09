@@ -454,6 +454,22 @@ describe('Katalog kontaktów — auto-heal legacy-DB', () => {
         await expect(ensureClientContactsTable()).resolves.toBeUndefined();
     });
 
+    it('re-split naprawia verbatim sprzed fixa (pusty phone, telefon w name)', async () => {
+        const m = mockPrisma();
+        m.$queryRaw.mockResolvedValue([]);
+        m.client_contacts_rel.findMany.mockResolvedValue([
+            { id: 'r1', name: 'Jan Kowalski, 600 100 200' },
+            { id: 'r2', name: 'Anna' },
+            { id: 'r3', name: 'FHU Kowalski, import' }
+        ]);
+        await ensureClientContactsTable();
+        expect(m.client_contacts_rel.update).toHaveBeenCalledTimes(1);
+        expect(m.client_contacts_rel.update).toHaveBeenCalledWith({
+            where: { id: 'r1' },
+            data: { name: 'Jan Kowalski', phone: '600 100 200', updatedAt: expect.any(String) }
+        });
+    });
+
     it('backfill rozcina łączony mirror "Jan, 600" na name/phone', async () => {
         const m = mockPrisma();
         m.$queryRaw.mockResolvedValue([
