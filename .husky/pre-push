@@ -58,7 +58,11 @@ echo "── pre-push D: testy (sekwencyjnie) ──"
 # tworzą/usuwają tmp_git_safety_*.txt w root repo, a równoległe suity
 # skanujące drzewo (np. appNameCheck) łapią ENOENT na znikających plikach
 # i testy git-safety łapią index.lock. Zweryfikowane dwoma pushami.
-npm run test:quick:lite 2>&1 || { echo "❌ Testy — uruchom npm run test:quick:lite"; exit 1; }
+# pricelistChunk osobno z --runInBand: wali 2000 wierszy do prawdziwej
+# dev-bazy (I/O-bound, timeout 60 s) i pada wyłącznie pod pełną suitą
+# na współdzielonych workerach (solo PASS) — ten sam zakres, mniej kontencji.
+npx jest --no-coverage --testPathIgnorePatterns=tests/migrations --testPathIgnorePatterns=git-safety --testPathIgnorePatterns=tests/pricelistChunk.test.ts 2>&1 || { echo "❌ Testy — uruchom npm run test:quick:lite"; exit 1; }
+npx jest tests/pricelistChunk.test.ts --no-coverage --runInBand 2>&1 || { echo "❌ Testy pricelistChunk — uruchom npx jest tests/pricelistChunk.test.ts --runInBand"; exit 1; }
 npm run test:git-safety 2>&1 || { echo "❌ Testy git-safety — uruchom npm run test:git-safety"; exit 1; }
 
 echo "✓ pre-push zielony"
