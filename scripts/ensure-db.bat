@@ -12,6 +12,15 @@ call node scripts/check-db.js
 set "CHECK_EXIT=!errorlevel!"
 
 if !CHECK_EXIT! equ 0 (
+    REM Zdrowa baza tez wymaga migrate deploy: check-db widzi tylko tabele,
+    REM a nowe kolumny/indexy z kolejnych migracji inaczej nigdy sie nie pojawia
+    REM (500 na nowych polach, np. offer_follow_ups.cycle).
+    call npx prisma migrate deploy
+    if !errorlevel! neq 0 (
+        echo [BLAD] migrate deploy nie powiodl sie, exit=!errorlevel!.
+        endlocal
+        exit /b 1
+    )
     endlocal
     exit /b 0
 )
