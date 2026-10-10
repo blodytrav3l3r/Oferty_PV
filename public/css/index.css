@@ -2558,9 +2558,6 @@ html[data-theme='light'] body.index-page.logged-in::before {
     gap: 12px;
     align-items: start;
 }
-.care-dashboard-grid > .care-full-row {
-    grid-column: 1 / -1;
-}
 .care-side-col {
     display: flex;
     flex-direction: column;
