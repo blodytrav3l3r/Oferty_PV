@@ -265,10 +265,12 @@ function fmtTerm(it) {
 }
 
 /**
- * Handoff do modala opieki w Kartotece: zapis w sessionStorage + nawigacja.
- * Konsument: kartotekaInit.js (odczyt + openFollowUpModal + czyszczenie).
+ * Handoff do modala opieki w Kartotece: zapis w sessionStorage + parametr
+ * w hash (fallback gdyby storage był zablokowany).
+ * Konsument: kartotekaInit.js (hash > storage, jednorazowo + świeżość 5 min).
  */
 export function careOpenContact(offerKind, offerId) {
+    const target = 'app.html#/kartoteka?kontakt=' + encodeURIComponent(offerKind + ':' + offerId);
     try {
         if (typeof sessionStorage !== 'undefined') {
             sessionStorage.setItem(
@@ -281,15 +283,16 @@ export function careOpenContact(offerKind, offerId) {
             );
         }
     } catch {
-        /* best-effort */
+        /* storage zablokowany — ratuje parametr w hash */
     }
     try {
         if (typeof window !== 'undefined' && window.location) {
-            window.location.href = 'app.html#/kartoteka';
+            window.location.href = target;
         }
     } catch {
         /* best-effort */
     }
+    return target;
 }
 
 function matchFilter(it) {
@@ -444,7 +447,9 @@ function renderQueue(items) {
         snooze.addEventListener('click', () => snoozeQuick(it.offerKind, it.offerId, 3, row));
         actions.appendChild(snooze);
         const open = document.createElement('a');
-        open.href = 'app.html#/kartoteka';
+        open.href =
+            'app.html#/kartoteka?kontakt=' +
+            encodeURIComponent(String(it.offerKind) + ':' + String(it.offerId));
         open.className = 'btn btn-sm btn-primary';
         open.textContent = 'Kontakt';
         open.addEventListener('click', () => careOpenContact(it.offerKind, it.offerId));

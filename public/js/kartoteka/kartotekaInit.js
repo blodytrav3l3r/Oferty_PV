@@ -100,34 +100,81 @@ window.addEventListener('pagehide', () => {
 });
 
 /* ===== Handoff z kokpitu opieki: otwarcie modala kontaktu ===== */
+function readKontaktHash() {
+    const fromHash = (hash) => {
+        if (typeof hash !== 'string') return null;
+        const q = hash.split('?')[1];
+        if (!q) return null;
+        try {
+            const v = new URLSearchParams(q).get('kontakt');
+            if (!v) return null;
+            const sep = v.indexOf(':');
+            if (sep < 0) return null;
+            return { kind: v.slice(0, sep), id: v.slice(sep + 1) };
+        } catch (_e) {
+            return null;
+        }
+    };
+    try {
+        const own = fromHash(window.location.hash || '');
+        if (own && own.id) return own;
+        if (window.parent && window.parent !== window && window.parent.location) {
+            const parent = fromHash(window.parent.location.hash || '');
+            if (parent && parent.id) return parent;
+        }
+    } catch (_e) {
+        /* cross-origin lub brak dostępu — zostaje storage */
+    }
+    return null;
+}
+
 function consumeCareHandoff() {
     let payload = null;
-    try {
-        const raw =
-            typeof sessionStorage !== 'undefined'
-                ? sessionStorage.getItem('care-open-followup')
-                : null;
-        if (!raw) return;
-        sessionStorage.removeItem('care-open-followup');
-        payload = JSON.parse(raw);
-    } catch (_e) {
-        return;
+    const viaHash = readKontaktHash();
+    if (viaHash && viaHash.id) {
+        payload = {
+            id: viaHash.id,
+            displayType: viaHash.kind === 'studnie' ? 'studnia_oferta' : 'oferta',
+            at: Date.now()
+        };
+    } else {
+        try {
+            const raw =
+                typeof sessionStorage !== 'undefined'
+                    ? sessionStorage.getItem('care-open-followup')
+                    : null;
+            if (!raw) return false;
+            sessionStorage.removeItem('care-open-followup');
+            payload = JSON.parse(raw);
+        } catch (_e) {
+            return false;
+        }
     }
-    if (!payload || !payload.id) return;
+    if (!payload || !payload.id) return false;
     // Świeżość 5 minut — stary wpis to najpewniej porzucona nawigacja.
-    if (typeof payload.at === 'number' && Date.now() - payload.at > 5 * 60 * 1000) return;
+    if (typeof payload.at === 'number' && Date.now() - payload.at > 5 * 60 * 1000) return false;
+    // Hash nie czyści się sam (router jest właścicielem hasha) — guard przed
+    // dublem przy każdym wejściu do Kartoteki w oknie świeżości.
+    const doneKey = 'care-handoff-done:' + String(payload.id);
+    try {
+        if (typeof sessionStorage !== 'undefined' && sessionStorage.getItem(doneKey)) return true;
+    } catch (_e) {}
     const type = payload.displayType === 'studnia_oferta' ? 'studnia_oferta' : 'oferta';
     let tries = 0;
     const tick = () => {
         tries += 1;
         const ui = window.kartotekaUI;
         if (ui && typeof ui.openFollowUpModal === 'function') {
+            try {
+                if (typeof sessionStorage !== 'undefined') sessionStorage.setItem(doneKey, '1');
+            } catch (_e) {}
             ui.openFollowUpModal(String(payload.id), type);
             return;
         }
         if (tries < 50) setTimeout(tick, 100);
     };
     tick();
+    return true;
 }
 
 document.addEventListener('DOMContentLoaded', () => {

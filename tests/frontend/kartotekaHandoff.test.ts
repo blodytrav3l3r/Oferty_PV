@@ -2,10 +2,11 @@ import fs from 'fs';
 import path from 'path';
 import vm from 'vm';
 
-// Handoff kokpit -> Kartoteka: sessionStorage 'care-open-followup'
-// otwierany przez openFollowUpModal, wpis czyszczony (jednorazowy).
+// Handoff kokpit -> Kartoteka: parametr ?kontakt= w hash (fallback:
+// sessionStorage 'care-open-followup'). Otwierany przez openFollowUpModal,
+// jednorazowo (guard przed dublem, świeżość 5 min).
 describe('kartotekaInit care handoff', () => {
-    const load = (stored: string | null, ui: any) => {
+    const load = (opts: { stored?: string | null; hash?: string; ui?: any }) => {
         const file = path.join(__dirname, '../../public/js/kartoteka/kartotekaInit.js');
         const code = fs.readFileSync(file, 'utf8');
         let removed: string[] = [];
@@ -14,10 +15,17 @@ describe('kartotekaInit care handoff', () => {
             console,
             setTimeout: (_fn: any) => 0 as unknown as NodeJS.Timeout,
             clearTimeout: () => {},
+            URLSearchParams,
             localStorage: { getItem: () => null, setItem() {} },
             sessionStorage: {
-                getItem: () => stored,
-                setItem() {},
+                store: {} as Record<string, string>,
+                getItem(k: string) {
+                    if (k === 'care-open-followup') return opts.stored ?? null;
+                    return this.store[k] ?? null;
+                },
+                setItem(k: string, v: string) {
+                    this.store[k] = String(v);
+                },
                 removeItem: (k: string) => {
                     removed.push(k);
                 }
@@ -25,8 +33,8 @@ describe('kartotekaInit care handoff', () => {
             fetch: async () => ({ ok: false, json: async () => ({}) }),
             window: {
                 addEventListener() {},
-                location: { href: '' },
-                kartotekaUI: ui,
+                location: { href: '', hash: opts.hash ?? '' },
+                kartotekaUI: opts.ui,
                 headerUser: null,
                 importExportToolbar: null
             },
@@ -44,12 +52,28 @@ describe('kartotekaInit care handoff', () => {
         return { listeners, removed, context };
     };
 
-    test('świeży wpis otwiera modal i czyści storage', async () => {
+    test('parametr ?kontakt= w hash otwiera modal (fallback bez storage)', async () => {
         const opened: any[] = [];
-        const { listeners, removed } = load(
-            JSON.stringify({ id: 'o1', displayType: 'studnia_oferta', at: Date.now() }),
-            { openFollowUpModal: async (id: string, type: string) => void opened.push([id, type]) }
-        );
+        const { listeners } = load({
+            stored: null,
+            hash: '#/kartoteka?kontakt=rury%3Ao9',
+            ui: {
+                openFollowUpModal: async (id: string, type: string) => void opened.push([id, type])
+            }
+        });
+        for (const fn of listeners['DOMContentLoaded'] || []) await fn();
+        await new Promise((r) => setTimeout(r, 50));
+        expect(opened).toEqual([['o9', 'oferta']]);
+    });
+
+    test('świeży wpis w storage otwiera modal i czyści storage', async () => {
+        const opened: any[] = [];
+        const { listeners, removed } = load({
+            stored: JSON.stringify({ id: 'o1', displayType: 'studnia_oferta', at: Date.now() }),
+            ui: {
+                openFollowUpModal: async (id: string, type: string) => void opened.push([id, type])
+            }
+        });
         for (const fn of listeners['DOMContentLoaded'] || []) await fn();
         // Poczekaj na polling (tick 100ms).
         await new Promise((r) => setTimeout(r, 50));
@@ -59,14 +83,19 @@ describe('kartotekaInit care handoff', () => {
 
     test('brak wpisu / stary wpis: brak modala', async () => {
         const opened: any[] = [];
-        const a = load(null, {
-            openFollowUpModal: async (...args: any[]) => void opened.push(args)
+        const a = load({
+            stored: null,
+            ui: { openFollowUpModal: async (...args: any[]) => void opened.push(args) }
         });
         for (const fn of a.listeners['DOMContentLoaded'] || []) await fn();
-        const b = load(
-            JSON.stringify({ id: 'o1', displayType: 'oferta', at: Date.now() - 10 * 60 * 1000 }),
-            { openFollowUpModal: async (...args: any[]) => void opened.push(args) }
-        );
+        const b = load({
+            stored: JSON.stringify({
+                id: 'o1',
+                displayType: 'oferta',
+                at: Date.now() - 10 * 60 * 1000
+            }),
+            ui: { openFollowUpModal: async (...args: any[]) => void opened.push(args) }
+        });
         for (const fn of b.listeners['DOMContentLoaded'] || []) await fn();
         await new Promise((r) => setTimeout(r, 50));
         expect(opened).toEqual([]);

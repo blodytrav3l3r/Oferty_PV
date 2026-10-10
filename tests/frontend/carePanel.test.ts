@@ -321,7 +321,7 @@ describe('carePanel', () => {
         expect(JSON.parse(store['care-open-followup'])).toEqual(
             expect.objectContaining({ id: 's1', displayType: 'studnia_oferta' })
         );
-        expect(context.window.location.href).toBe('app.html#/kartoteka');
+        expect(context.window.location.href).toBe('app.html#/kartoteka?kontakt=studnie%3As1');
     });
 
     test('snooze +3d z undo (reopen)', async () => {
