@@ -2554,7 +2554,7 @@ html[data-theme='light'] body.index-page.logged-in::before {
 /* Opieka nad ofertami — cockpit (siatka + kolejka z akcjami) */
 .care-dashboard-grid {
     display: grid;
-    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+    grid-template-columns: minmax(0, 8fr) minmax(0, 5fr);
     gap: 12px;
     align-items: start;
 }
@@ -2574,42 +2574,15 @@ html[data-theme='light'] body.index-page.logged-in::before {
     gap: 4px;
     margin-bottom: 8px;
 }
-.care-queue-row {
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    padding: 8px 10px;
-    margin-bottom: 8px;
+#care-queue-list {
+    max-height: 560px;
+    overflow-y: auto;
+    padding-right: 4px;
 }
-.care-queue-head {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 6px;
-}
-.care-queue-sub {
-    color: var(--text-secondary);
-    font-size: var(--fs-base);
-    margin-top: 4px;
-}
-.care-queue-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin-top: 8px;
-}
-.care-bucket-row {
-    margin-bottom: 6px;
-}
-.care-bucket-bar {
-    background: var(--bg-tertiary);
-    border-radius: var(--radius-sm);
-    height: 8px;
-    margin-top: 4px;
-}
-.care-bucket-fill {
-    background: var(--accent);
-    border-radius: var(--radius-sm);
-    height: 8px;
+#care-notif-list {
+    max-height: 340px;
+    overflow-y: auto;
+    padding-right: 4px;
 }
 @media (max-width: 900px) {
     .care-dashboard-grid {
@@ -2649,6 +2622,8 @@ html[data-theme='light'] body.index-page.logged-in::before {
     padding: 10px 12px;
     background: var(--bg-card);
     min-width: 0;
+    display: flex;
+    flex-direction: column;
 }
 .care-queue-title {
     display: flex;
@@ -2666,6 +2641,7 @@ html[data-theme='light'] body.index-page.logged-in::before {
     color: var(--text-muted);
     font-weight: var(--fw-regular, 400);
     font-size: var(--fs-base);
+    white-space: nowrap;
 }
 .care-queue-line {
     display: flex;
@@ -2685,10 +2661,12 @@ html[data-theme='light'] body.index-page.logged-in::before {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 8px;
-    margin-top: 10px;
+    margin-top: auto;
+    padding-top: 10px;
 }
 .care-queue-btns .btn {
     justify-content: center;
+    width: 100%;
 }
 .care-notif-card {
     border: 1px solid var(--border);
@@ -2727,14 +2705,19 @@ html[data-theme='light'] body.index-page.logged-in::before {
 }
 .care-segments {
     display: flex;
-    gap: 4px;
+    gap: 3px;
     margin-top: 8px;
+    height: 10px;
 }
 .care-segments span {
-    height: 8px;
     border-radius: var(--radius-sm);
-    background: var(--bg-tertiary);
-    min-width: 4px;
+    height: 10px;
+    min-width: 6px;
+}
+@media (max-width: 1100px) {
+    .care-dashboard-grid {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    }
 }
 @media (max-width: 700px) {
     .care-queue-cards {

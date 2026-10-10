@@ -301,7 +301,7 @@ function renderQueue(items) {
         head.append(title, kind);
         row.appendChild(head);
         const pillRow = document.createElement('div');
-        pillRow.className = 'care-queue-head';
+        pillRow.className = 'care-queue-line';
         if (it.escalated) {
             const esc = document.createElement('span');
             esc.className = 'ops-pill ops-err';
