@@ -2769,7 +2769,7 @@ html[data-theme='light'] body.index-page.logged-in::before {
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
     padding: 8px 10px;
-    margin-bottom: 8px;
+    min-width: 0;
 }
 .care-notif-card.warn {
     background: var(--warn-bg);
@@ -2980,6 +2980,12 @@ html[data-theme='light'] body.index-page.logged-in::before {
 }
 .care-notif-grid {
     grid-template-columns: minmax(0, 1fr);
+    width: 100%;
+}
+.care-queue-cards,
+.care-chart,
+.care-bar--stacked {
+    width: 100%;
 }
 .care-notif-card .ops-pill {
     text-transform: uppercase;
