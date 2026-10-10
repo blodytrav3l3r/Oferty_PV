@@ -212,7 +212,7 @@ export default {
                     ? `<label class="fu-full"><input type="checkbox" id="fu-reopen" /> Ponownie otwórz zamkniętą ofertę</label>`
                     : '') +
                 `<div class="fu-full fu-error" id="fu-error" role="alert" hidden></div>` +
-                `<div class="fu-full fu-form-actions"><button type="submit" class="btn btn-sm btn-primary" id="fu-submit-btn">Zapisz kontakt</button><button type="button" class="btn btn-sm btn-secondary" id="fu-cancel-edit" hidden>Anuluj edycję</button></div>` +
+                `<div class="fu-full fu-form-actions"><button type="submit" class="btn btn-sm btn-primary" id="fu-submit-btn">Zapisz kontakt</button><button type="button" class="btn btn-sm btn-secondary" id="fu-cancel-edit" hidden>Anuluj edycję</button><button type="button" class="btn btn-sm btn-secondary" id="fu-snooze-btn" title="Odłóż pilnowanie (max 14 dni)">Odłóż</button><button type="button" class="btn btn-sm btn-secondary" id="fu-done-btn" title="Przestań pilnować tę ofertę">Done</button></div>` +
                 `</form>` +
                 `<h4>Historia kontaktów</h4>` +
                 `<div class="fu-timeline" id="fu-timeline">${this.renderFollowUpTimeline(items)}</div>` +
@@ -269,6 +269,12 @@ export default {
         });
         overlay.querySelector('#fu-client-save').addEventListener('click', () => {
             this.saveClientContact(id, kind, overlay);
+        });
+        overlay.querySelector('#fu-snooze-btn').addEventListener('click', () => {
+            this.snoozeCare(id, kind, overlay);
+        });
+        overlay.querySelector('#fu-done-btn').addEventListener('click', () => {
+            this.doneCare(id, kind, overlay);
         });
         overlay.querySelector('#fu-timeline').addEventListener('click', (e) => {
             const btn = e.target && e.target.closest ? e.target.closest('[data-fu-act]') : null;
@@ -478,6 +484,58 @@ export default {
             if (typeof window.showToast === 'function')
                 window.showToast('Błąd sieci — spróbuj ponownie.', 'error');
         }
+    },
+
+    careNote(overlay, text, isError) {
+        const box = overlay.querySelector('#fu-error');
+        if (!box) return;
+        box.hidden = false;
+        box.textContent = text;
+        box.classList.toggle('fu-ok', !isError);
+    },
+
+    async postCare(offerId, kind, overlay, action, payload) {
+        const headers =
+            typeof authHeaders === 'function'
+                ? authHeaders()
+                : { 'Content-Type': 'application/json' };
+        try {
+            const resp = await fetch(
+                `/api/care/${encodeURIComponent(kind)}/${encodeURIComponent(offerId)}/${action}?t=${Date.now()}`,
+                {
+                    method: 'POST',
+                    headers: { ...headers, 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload || {})
+                }
+            );
+            const json = await resp.json().catch(() => ({}));
+            if (!resp.ok) {
+                this.careNote(overlay, json.error || 'Nie udało się zapisać.', true);
+                return;
+            }
+            this.careNote(
+                overlay,
+                action === 'done' ? 'Oznaczono jako done.' : 'Odłożono pilnowanie.',
+                false
+            );
+            await this.loadLocalOffers();
+        } catch (e) {
+            logger.warn('kartotekaUi', 'Błąd stanu opieki:', e);
+            this.careNote(overlay, 'Błąd sieci — spróbuj ponownie.', true);
+        }
+    },
+
+    async snoozeCare(offerId, kind, overlay) {
+        const nextInput = overlay.querySelector('#fu-next');
+        const raw = nextInput && nextInput.value ? nextInput.value + 'T23:59:00' : null;
+        const until = raw || new Date(Date.now() + 7 * 86400000).toISOString();
+        await this.postCare(offerId, kind, overlay, 'snooze', {
+            snoozedUntil: new Date(until).toISOString()
+        });
+    },
+
+    async doneCare(offerId, kind, overlay) {
+        await this.postCare(offerId, kind, overlay, 'done', {});
     },
 
     async submitFollowUp(offerId, kind, overlay) {
