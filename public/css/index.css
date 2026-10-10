@@ -2558,6 +2558,9 @@ html[data-theme='light'] body.index-page.logged-in::before {
     gap: 12px;
     align-items: start;
 }
+.care-dashboard-grid > .care-full-row {
+    grid-column: 1 / -1;
+}
 .care-side-col {
     display: flex;
     flex-direction: column;
@@ -2663,7 +2666,7 @@ html[data-theme='light'] body.index-page.logged-in::before {
 }
 .care-queue-cards {
     display: grid;
-    grid-template-columns: minmax(0, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 10px;
 }
 .care-queue-card {
@@ -2779,6 +2782,9 @@ html[data-theme='light'] body.index-page.logged-in::before {
 @media (max-width: 1100px) {
     .care-dashboard-grid {
         grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    }
+    .care-queue-cards {
+        grid-template-columns: minmax(0, 1fr);
     }
 }
 @media (max-width: 700px) {
