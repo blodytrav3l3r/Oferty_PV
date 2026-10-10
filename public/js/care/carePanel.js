@@ -389,10 +389,11 @@ function renderQueue(items) {
         title.className = 'care-queue-name';
         const client = it.clientName ? String(it.clientName) : 'Brak klienta';
         const value = fmtMoney(it.value);
-        title.textContent = client + (value ? ' — ' + value : '');
+        title.textContent =
+            client + (value ? ' — ' + value : '') + (it.number ? ' • ' + String(it.number) : '');
         const kind = document.createElement('span');
-        kind.className = 'care-queue-kind';
-        kind.textContent = '(' + String(it.offerKind) + ')';
+        kind.className = 'ops-pill';
+        kind.textContent = String(it.offerKind);
         head.append(title, kind);
         row.appendChild(head);
         const pillRow = document.createElement('div');

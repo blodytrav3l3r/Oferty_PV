@@ -209,6 +209,15 @@ describe('carePanel', () => {
         expect(texts.join(' ')).toContain('4440.30 PLN');
         expect(texts.join(' ')).toContain('Eskalacja');
         expect(texts.join(' ')).toContain('Czeka');
+        // Pill rodzaju + numer oferty w nagłówku karty.
+        const pills: string[] = [];
+        const collectPills = (n: any): void => {
+            if (n.className && String(n.className).split(' ').includes('ops-pill') && n.textContent)
+                pills.push(n.textContent);
+            for (const c of n.children || []) collectPills(c);
+        };
+        collectPills(rows[0]);
+        expect(pills).toContain('rury');
         expect(els['care-sla-box'].hidden).toBe(true);
         expect(calls.filter((c) => c.includes('/api/care/')).length).toBeGreaterThanOrEqual(3);
     });
