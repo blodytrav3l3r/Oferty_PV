@@ -221,4 +221,33 @@ describe('kartotekaFollowUp — edycja, usuwanie, rozmiar, klient', () => {
         mixin.cancelFollowUpEdit.call(ctx, overlay);
         expect(ctx._fuEditingId).toBe(null);
     });
+
+    test('extractOfferContacts: koperta studni (blob w data.data)', () => {
+        expect(
+            mixin.extractOfferContacts({
+                data: {
+                    id: 'offer_studnie_1',
+                    data: { clientContacts: [{ name: 'Jan', phone: '600', email: '' }] }
+                }
+            })
+        ).toEqual([{ name: 'Jan', phone: '600', email: '' }]);
+    });
+
+    test('extractOfferContacts: spread rur (blob na wierzchu)', () => {
+        expect(
+            mixin.extractOfferContacts({
+                data: { id: 'offer_1', clientContacts: [{ name: 'A', phone: '1', email: '' }] }
+            })
+        ).toEqual([{ name: 'A', phone: '1', email: '' }]);
+    });
+
+    test('extractOfferContacts: fallback klucze legacy + pusto', () => {
+        expect(
+            mixin.extractOfferContacts({
+                data: { data: { contactPerson: 'Jan', clientPhone: '600', clientEmail: '' } }
+            })
+        ).toEqual([{ name: 'Jan', phone: '600', email: '' }]);
+        expect(mixin.extractOfferContacts({ data: {} })).toEqual([]);
+        expect(mixin.extractOfferContacts(null)).toEqual([]);
+    });
 });

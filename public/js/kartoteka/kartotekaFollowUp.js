@@ -75,6 +75,19 @@ function optionsHtml(map, selected) {
 
 export default {
     /**
+     * Czysty prefill osób ze snapshotu oferty. DETAIL zwraca kopertę
+     * {data:{...doc,data:blob}} (studnie) albo {data:{...blob}} (rury).
+     */
+    extractOfferContacts(dJson) {
+        const doc = (dJson && dJson.data) || {};
+        const blob =
+            doc && typeof doc.data === 'object' && doc.data !== null && !Array.isArray(doc.data)
+                ? doc.data
+                : doc;
+        return legacyToContacts(blob);
+    },
+
+    /**
      * Otwiera modal opieki: formularz kontaktu + historia kontaktów oferty.
      */
     async openFollowUpModal(offerId, offerType) {
@@ -113,8 +126,10 @@ export default {
         const latest = items.length > 0 ? items[0] : null;
         const terminal = !!latest && TERMINAL_OUTCOMES.includes(latest.outcome);
 
-        // Osoby do kontaktu (prefill z DETAIL — tablica clientContacts
-        // albo klucze legacy; zapis osobnym PUT).
+        // Osoby do kontaktu ze snapshotu oferty: DETAIL zwraca kopertę
+        // {data:{...doc, data:blob}} (studnie) albo {data:{...blob}} (rury) —
+        // branie dJson.data wprost dawało pusty edytor (obiekt-koperta
+        // nie ma clientContacts). Zapis osobnym PUT (snapshot SSoT).
         let ccList = [];
         try {
             const dResp = await fetch(
@@ -123,7 +138,51 @@ export default {
             );
             if (dResp.ok) {
                 const dJson = await dResp.json();
-                ccList = legacyToContacts((dJson && dJson.data) || {});
+                ccList = this.extractOfferContacts(dJson);
+                // Blob potrzebny też do fallbacku katalogu (nazwa/NIP firmy).
+                const doc = (dJson && dJson.data) || {};
+                const blob =
+                    doc &&
+                    typeof doc.data === 'object' &&
+                    doc.data !== null &&
+                    !Array.isArray(doc.data)
+                        ? doc.data
+                        : doc;
+                // Fallback: oferty sprzed feature nie mają snapshotu — dociągnij
+                // z katalogu po NIP/nazwie z bloba (oferta dalej SSoT, nic nie
+                // zapisujemy do katalogu).
+                if (ccList.length === 0) {
+                    const bName = typeof blob.clientName === 'string' ? blob.clientName.trim() : '';
+                    const bNip = typeof blob.clientNip === 'string' ? blob.clientNip.trim() : '';
+                    if (bName || bNip) {
+                        try {
+                            const cRes = await fetch(`/api/clients?t=${Date.now()}`, { headers });
+                            if (cRes.ok) {
+                                const cJson = await cRes.json();
+                                const rows = Array.isArray(cJson.data) ? cJson.data : [];
+                                const hit = rows.find(
+                                    (cl) =>
+                                        cl &&
+                                        ((bNip && cl.nip === bNip) || (bName && cl.name === bName))
+                                );
+                                if (hit && hit.id) {
+                                    const kRes = await fetch(
+                                        `/api/clients/${encodeURIComponent(hit.id)}/contacts?t=${Date.now()}`,
+                                        { headers }
+                                    );
+                                    if (kRes.ok) {
+                                        const kJson = await kRes.json();
+                                        if (Array.isArray(kJson.items) && kJson.items.length > 0) {
+                                            ccList = normalizeContacts(kJson.items);
+                                        }
+                                    }
+                                }
+                            }
+                        } catch (_e2) {
+                            // pasywnie — pusty edytor + hint poniżej
+                        }
+                    }
+                }
             }
         } catch (e) {
             logger.warn('kartotekaUi', 'Błąd pobierania danych klienta:', e);
@@ -167,6 +226,13 @@ export default {
         if (ccBox) {
             renderEditor(ccBox, ccList);
             bindEditor(ccBox);
+            if (ccList.length === 0) {
+                const hint = document.createElement('p');
+                hint.className = 'text-muted fs-md';
+                hint.style.margin = '0.25rem 0 0';
+                hint.textContent = 'Brak osób w tej ofercie — dopisz poniżej.';
+                ccBox.appendChild(hint);
+            }
         }
 
         if (window.lucide) window.lucide.createIcons({ root: overlay });
