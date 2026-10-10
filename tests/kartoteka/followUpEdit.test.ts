@@ -172,6 +172,13 @@ describe('kartotekaFollowUp — edycja, usuwanie, rozmiar, klient', () => {
         // Overlay stub musi obsłużyć listenery formularza.
         overlayStub.querySelector = (sel: string) => {
             if (sel === '#fu-timeline') return { addEventListener() {}, innerHTML: '' };
+            if (sel === '#fu-cc-list')
+                return {
+                    addEventListener() {},
+                    hidden: false,
+                    appendChild() {},
+                    querySelector: () => null
+                };
             return { addEventListener() {}, hidden: false };
         };
         await m.openFollowUpModal.call(ui, 'o-1', 'offer');
@@ -239,6 +246,23 @@ describe('kartotekaFollowUp — edycja, usuwanie, rozmiar, klient', () => {
                 data: { id: 'offer_1', clientContacts: [{ name: 'A', phone: '1', email: '' }] }
             })
         ).toEqual([{ name: 'A', phone: '1', email: '' }]);
+    });
+
+    test('przyciski kontaktu w jednym rzedzie, bez duplikatow', () => {
+        const src = fs.readFileSync(
+            path.join(__dirname, '../../public/js/kartoteka/kartotekaFollowUp.js'),
+            'utf8'
+        );
+        // Jeden "Dodaj osobę" (edytor) + jeden "Zapisz kontakt do klienta" (modal).
+        expect(src.match(/Dodaj osobę/g)).toHaveLength(1);
+        expect(src.match(/Zapisz kontakt do klienta/g)).toHaveLength(1);
+        // Zapisz doklejony do edytora obok Dodaj (nie osobny wiersz).
+        expect(src).toContain('ccBox.appendChild(saveBtn)');
+        const css = fs.readFileSync(
+            path.join(__dirname, '../../public/css/style.cards.css'),
+            'utf8'
+        );
+        expect(css).toContain('#fu-cc-list > .btn');
     });
 
     test('extractOfferContacts: fallback klucze legacy + pusto', () => {

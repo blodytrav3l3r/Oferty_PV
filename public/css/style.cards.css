@@ -417,6 +417,11 @@
     align-items: flex-end;
 }
 
+/* Rząd przycisków edytora kontaktu w Opiece: Dodaj + Zapisz obok siebie. */
+#fu-cc-list > .btn {
+    margin: 0.35rem 0.5rem 0 0;
+}
+
 .fu-form-actions {
     display: flex;
     gap: 0.5rem;

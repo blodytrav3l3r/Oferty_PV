@@ -226,11 +226,24 @@ export default {
         if (ccBox) {
             renderEditor(ccBox, ccList);
             bindEditor(ccBox);
+            // Jeden rząd przycisków: "Zapisz" doklejony do edytora obok
+            // "Dodaj osobę" (appendChild nie zrywa listenerów; pusty wrapper
+            // po nim usuwany, żeby nie robił dziury w layoucie).
+            const saveBtn = overlay.querySelector('#fu-client-save');
+            const actions = overlay.querySelector('.fu-client-actions');
+            if (saveBtn && typeof ccBox.appendChild === 'function') ccBox.appendChild(saveBtn);
+            if (
+                actions &&
+                typeof actions.hasChildNodes === 'function' &&
+                !actions.hasChildNodes() &&
+                typeof actions.remove === 'function'
+            )
+                actions.remove();
             if (ccList.length === 0) {
                 const hint = document.createElement('p');
                 hint.className = 'text-muted fs-md';
                 hint.style.margin = '0.25rem 0 0';
-                hint.textContent = 'Brak osób w tej ofercie — dopisz poniżej.';
+                hint.textContent = 'Brak osób w tej ofercie — dopisz powyżej.';
                 ccBox.appendChild(hint);
             }
         }
