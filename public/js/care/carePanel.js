@@ -186,6 +186,7 @@ function renderBuckets(summary) {
         chart.setAttribute('role', 'img');
         chart.setAttribute('aria-label', rows.map((r) => r[0] + ': ' + r[1]).join(', '));
         rows.forEach((r, i) => {
+            if (r[1] <= 0) return;
             const pct = Math.round((r[1] / total) * 100);
             const row = document.createElement('div');
             row.className = 'care-chart-row';
@@ -450,9 +451,11 @@ function renderQueue(items) {
         actions.appendChild(open);
         if (it.phone) {
             const tel = document.createElement('a');
-            tel.className = 'care-link-btn';
+            tel.className = 'btn btn-sm btn-secondary';
             tel.href = 'tel:' + String(it.phone).replace(/[^+\d]/g, '');
-            tel.textContent = String(it.phone);
+            tel.textContent = 'Zadzwoń';
+            tel.setAttribute('aria-label', 'Zadzwoń: ' + String(it.phone));
+            tel.title = String(it.phone);
             actions.appendChild(tel);
         }
         row.appendChild(actions);

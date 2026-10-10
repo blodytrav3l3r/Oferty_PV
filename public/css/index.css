@@ -2617,10 +2617,11 @@ html[data-theme='light'] body.index-page.logged-in::before {
     gap: 4px;
     margin-bottom: 8px;
 }
-#care-queue-list {
-    padding-right: 0;
-}
-#care-notif-list {
+#care-queue-list,
+#care-notif-list,
+#care-buckets {
+    max-height: none;
+    overflow-y: visible;
     padding-right: 0;
 }
 .care-notif-grid {
