@@ -106,6 +106,13 @@
     transition: box-shadow 0.2s ease;
 }
 
+/* Lucide podmienia <i> na <svg> 24px — rozmiar jawnie (wzorzec .action-btn). */
+.offer-icon-wrapper svg,
+.offer-icon-wrapper i {
+    width: 20px;
+    height: 20px;
+}
+
 .offer-title-section {
     flex: 1;
     min-width: 0;
@@ -190,6 +197,7 @@
     white-space: nowrap;
 }
 
+.author-badge svg,
 .author-badge i {
     width: 12px;
     height: 12px;
@@ -223,11 +231,19 @@
     align-items: center;
     justify-content: space-between;
     gap: 0.5rem;
-    min-height: 36px;
-    padding: 0.35rem 0.5rem;
+    min-height: 40px;
+    padding: 0.45rem 0.6rem;
     border: 1px solid rgba(var(--slate-400-rgb), 0.1);
     border-radius: var(--radius-sm);
     background: rgba(var(--slate-800-rgb), 0.8);
+    transition:
+        border-color 0.15s ease-in-out,
+        background-color 0.15s ease-in-out;
+}
+
+.offer-order-row:hover {
+    border-color: rgba(var(--success-rgb), 0.55);
+    background: rgba(var(--success-rgb), 0.08);
 }
 
 .offer-order-main {
@@ -245,7 +261,7 @@
 }
 
 .offer-order-main:hover strong {
-    color: var(--cyan);
+    color: var(--success-hover);
 }
 
 .offer-order-icon {
@@ -261,6 +277,7 @@
     color: var(--success-hover);
 }
 
+.offer-order-icon svg,
 .offer-order-icon i {
     width: 13px;
     height: 13px;
@@ -281,13 +298,13 @@
 }
 
 .offer-order-text strong {
-    font-size: var(--fs-base);
+    font-size: var(--fs-lg);
     font-weight: var(--fw-bold);
     color: var(--text-primary);
 }
 
 .offer-order-text small {
-    font-size: var(--fs-xs);
+    font-size: var(--fs-sm);
     color: var(--text-secondary);
 }
 
@@ -297,6 +314,89 @@
     justify-content: flex-end;
     gap: 0.3rem;
     flex: 0 0 auto;
+}
+
+/* Zwarty panel zamówień: reszta wierszy w natywnym <details>. */
+.orders-more {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.orders-toggle {
+    cursor: pointer;
+    align-self: flex-start;
+    display: inline-flex;
+    align-items: center;
+    box-sizing: border-box;
+    min-height: 34px;
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-semibold);
+    color: var(--accent-text);
+    padding: 0 0.85rem;
+    border-radius: var(--radius-sm);
+    background: rgba(var(--accent-rgb), 0.1);
+    border: 1px solid rgba(var(--accent-rgb), 0.2);
+    list-style: none;
+}
+
+.orders-toggle::-webkit-details-marker {
+    display: none;
+}
+
+.orders-toggle:hover {
+    background: rgba(var(--accent-rgb), 0.18);
+}
+
+/* Badże nagłówka karty: cennik + opieka nad ofertą w jednej linii. */
+.offer-badges {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.35rem;
+    flex-wrap: wrap;
+}
+
+/* Badge opieki klikalny jak słuchawka — reset wyglądu buttona. */
+.fu-badge-btn {
+    background: none;
+    border: 0;
+    padding: 0;
+    margin: 0;
+    font: inherit;
+    cursor: pointer;
+    display: inline-flex;
+}
+
+.fu-badge-btn:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+}
+
+/* Badże karty jak przyciski akcji (kształt .action-btn.text-btn, nie pill):
+ * prostokąt radius-sm, ten sam font i padding. Scope karty — modale
+ * i edytor zachowują swoje kształty. */
+.modern-offer-card .status-badge,
+.modern-offer-card .author-badge,
+.modern-offer-card .pv-offer-badge {
+    border-radius: var(--radius-sm);
+    font-size: var(--fs-base);
+    font-weight: var(--fw-semibold);
+    padding: 0 0.85rem;
+    margin-left: 0;
+    min-height: 34px;
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+}
+
+.modern-offer-card .status-badge svg,
+.modern-offer-card .status-badge i,
+.modern-offer-card .author-badge svg,
+.modern-offer-card .author-badge i {
+    width: 14px;
+    height: 14px;
 }
 
 .offer-actions-row {
@@ -345,14 +445,6 @@
     background: rgba(var(--blue-rgb), 0.1);
     border: 1px solid rgba(var(--blue-rgb), 0.3);
     color: var(--blue-hover);
-}
-
-.fu-badge-wrap {
-    display: flex;
-    align-items: center;
-    gap: 0.35rem;
-    flex-wrap: wrap;
-    margin-top: 0.35rem;
 }
 
 /* Opieka nad ofertą (P1): formularz + timeline w modalu — klasy bazowe z utilities. */
@@ -439,6 +531,7 @@
     display: flex;
     gap: 0.4rem;
     margin-top: 0.4rem;
+    justify-content: flex-end;
 }
 
 /* Osoby do kontaktu — edytor wielu wierszy (krok 1 + modal Opieki). */
@@ -468,9 +561,11 @@
     color: var(--text-secondary);
 }
 
+.status-badge svg,
 .status-badge i {
     width: 12px;
     height: 12px;
+    flex-shrink: 0;
 }
 
 .action-buttons {
@@ -673,11 +768,6 @@
     gap: 0.25rem;
 }
 
-.compact-mode .offer-author-badges .author-badge {
-    font-size: var(--fs-xs);
-    padding: 0.05rem 0.35rem;
-}
-
 .compact-mode .offer-price {
     font-size: var(--fs-xl);
 }
@@ -726,10 +816,24 @@
 }
 
 .compact-mode .status-badge {
-    padding: 0.15rem 0.5rem;
+    padding: 0 0.5rem;
     font-size: var(--fs-xs);
+    min-height: 26px;
 }
 
+.compact-mode .offer-author-badges .author-badge,
+.compact-mode .offer-badges .pv-offer-badge {
+    min-height: 26px;
+    padding: 0 0.55rem;
+    font-size: var(--fs-sm);
+}
+
+.compact-mode .orders-toggle {
+    min-height: 26px;
+    padding: 0 0.55rem;
+}
+
+.compact-mode .status-badge svg,
 .compact-mode .status-badge i {
     width: 10px;
     height: 10px;
@@ -744,7 +848,7 @@
 }
 
 .compact-mode .btn-order-badge {
-    height: 28px;
+    height: 26px;
     padding: 0 0.55rem;
     font-size: var(--fs-sm);
     gap: 0.3rem;

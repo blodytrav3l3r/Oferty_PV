@@ -73,4 +73,65 @@ describe('kartotekaHelpers buildOfferCardHtml — badge przy pustej mapie', () =
         expect(html).toContain('Brak zam');
         expect(html).not.toContain('Zamówienia (');
     });
+
+    test('licznik pozycji ujednolicony: zawsze „poz." (studnie i rury)', () => {
+        const studnie = buildOfferCardHtml(offer({ wellsCount: 5 }), true, [], null, 'admin', true);
+        expect(studnie).toContain('5 poz.');
+        expect(studnie).not.toContain(' studni');
+        const rury = buildOfferCardHtml(
+            offer({ id: 'offer_rury_1', type: 'offer', itemsCount: 5 }),
+            true,
+            [],
+            null,
+            'admin',
+            true
+        );
+        expect(rury).toContain('5 poz.');
+    });
+
+    test('wiele zamówień: pierwszy wiersz + <details> z resztą', () => {
+        const mk = (n: string) => ({
+            id: `ord-${n}`,
+            orderNumber: `LKZ/${n}`,
+            createdAt: '2026-09-01T10:00:00.000Z',
+            totalNetto: 100
+        });
+        const html = buildOfferCardHtml(
+            offer(),
+            true,
+            [mk('1'), mk('2'), mk('3')],
+            mk('1'),
+            'admin',
+            true
+        );
+        expect(html).toContain('LKZ/1');
+        expect(html).toContain('orders-more');
+        expect(html).toContain('+2 więcej');
+        expect(html).toContain('LKZ/2');
+        expect(html).toContain('LKZ/3');
+    });
+
+    test('jedno zamówienie: brak <details>', () => {
+        const ord = {
+            id: 'ord-1',
+            orderNumber: 'LKZ/1',
+            createdAt: '2026-09-01T10:00:00.000Z',
+            totalNetto: 100
+        };
+        const html = buildOfferCardHtml(offer(), true, [ord], ord, 'admin', true);
+        expect(html).not.toContain('orders-more');
+    });
+
+    test('badge follow-up w nagłówku karty (fu-badge-top)', () => {
+        const html = buildOfferCardHtml(offer(), true, [], null, 'admin', true);
+        expect(html).toContain('fu-badge-top');
+        expect(html).not.toContain('fu-badge-wrap');
+    });
+
+    test('badge follow-up klikalny jak słuchawka (btn-followup + data-id)', () => {
+        const html = buildOfferCardHtml(offer(), true, [], null, 'admin', true);
+        expect(html).toContain('btn-followup fu-badge-btn');
+        expect(html).toContain('data-id="offer_studnie_1"');
+        expect(html).toContain('Opieka nad ofert');
+    });
 });

@@ -282,34 +282,32 @@ function followUpBadgeHtml(offer, nowIso) {
     const fu = (offer && offer.followup) || null;
     const now = nowIso || new Date().toISOString();
     const icon = (name) => `<i data-lucide="${name}" aria-hidden="true"></i>`;
+    let inner;
     if (!fu) {
-        return `<span class="status-badge neutral">${icon('phone')} Do kontaktu</span>`;
-    }
-    if (fu.outcome === 'WON') {
-        return `<span class="status-badge success">${icon('check')} Wygrana u nas</span>`;
-    }
-    if (fu.outcome === 'LOST_COMPETITION') {
-        return `<span class="status-badge danger">${icon('x-circle')} Utracona — konkurencja</span>`;
-    }
-    if (fu.outcome === 'LOST_OTHER') {
-        return `<span class="status-badge danger">${icon('x-circle')} Nie zamówił</span>`;
-    }
-    if (fu.outcome === 'ABANDONED') {
-        return `<span class="status-badge neutral">${icon('archive')} Zamknięta</span>`;
-    }
-    if (fu.nextContactAt && fu.nextContactAt > now) {
+        inner = `<span class="status-badge neutral">${icon('phone')} Do kontaktu</span>`;
+    } else if (fu.outcome === 'WON') {
+        inner = `<span class="status-badge success">${icon('check')} Wygrana u nas</span>`;
+    } else if (fu.outcome === 'LOST_COMPETITION') {
+        inner = `<span class="status-badge danger">${icon('x-circle')} Utracona — konkurencja</span>`;
+    } else if (fu.outcome === 'LOST_OTHER') {
+        inner = `<span class="status-badge danger">${icon('x-circle')} Nie zamówił</span>`;
+    } else if (fu.outcome === 'ABANDONED') {
+        inner = `<span class="status-badge neutral">${icon('archive')} Zamknięta</span>`;
+    } else if (fu.nextContactAt && fu.nextContactAt > now) {
         const d = new Date(fu.nextContactAt).toLocaleDateString('pl-PL');
-        return `<span class="status-badge info">${icon('clock')} W toku • kontakt ${escapeHtml(d)}</span>`;
-    }
-    if (fu.nextContactAt) {
+        inner = `<span class="status-badge info">${icon('clock')} W toku • kontakt ${escapeHtml(d)}</span>`;
+    } else if (fu.nextContactAt) {
         const days = Math.max(
             0,
             Math.floor((Date.parse(now) - Date.parse(fu.nextContactAt)) / 86400000)
         );
         const label = days <= 0 ? 'termin dzisiaj' : days + ' dni po terminie';
-        return `<span class="status-badge danger">${icon('phone')} Do kontaktu • ${escapeHtml(label)}</span>`;
+        inner = `<span class="status-badge danger">${icon('phone')} Do kontaktu • ${escapeHtml(label)}</span>`;
+    } else {
+        inner = `<span class="status-badge warn">${icon('phone')} Do kontaktu</span>`;
     }
-    return `<span class="status-badge warn">${icon('phone')} Do kontaktu</span>`;
+    // Klik otwiera ten sam modal Opieki co ikona słuchawki (klasa btn-followup).
+    return `<button type="button" class="btn-followup fu-badge-btn" data-id="${escapeHtmlAttr(offer?.id || '')}" data-type="${escapeHtmlAttr(offer?.type || '')}" title="Opieka nad ofertą — zapisz kontakt" aria-label="Opieka nad ofertą — zapisz kontakt">${inner}</button>`;
 }
 
 function buildOfferCardHtml(offer, hasOrder, orders, order, role, isLocalList) {
@@ -332,25 +330,24 @@ function buildOfferCardHtml(offer, hasOrder, orders, order, role, isLocalList) {
                     <i data-lucide="package" aria-hidden="true"></i> Zamówienia${countLabel}${hasModifiedOrder ? ' • zmiany' : ''}
                    </a>`;
 
-        orderItemsHtml = orderList
-            .map((ord) => {
-                const rawLabel =
-                    ord?.orderNumber ||
-                    ord?.offerNumber ||
-                    (ord?.id ? String(ord.id).substring(0, 8) : 'Zamówienie');
-                const label = window.escapeHtml(rawLabel);
-                const labelAttr = escapeHtmlAttr(rawLabel);
-                const createdAt = ord.createdAt
-                    ? new Date(ord.createdAt).toLocaleDateString('pl-PL')
-                    : 'brak daty';
-                const orderValue = window.computeOrderValueWithTransport(ord, offer.type);
-                const changeInfo = window.getOrderChangeInfo(ord);
-                return `
+        const orderRowHtml = (ord) => {
+            const rawLabel =
+                ord?.orderNumber ||
+                ord?.offerNumber ||
+                (ord?.id ? String(ord.id).substring(0, 8) : 'Zamówienie');
+            const label = window.escapeHtml(rawLabel);
+            const labelAttr = escapeHtmlAttr(rawLabel);
+            const createdAt = ord.createdAt
+                ? new Date(ord.createdAt).toLocaleDateString('pl-PL')
+                : 'brak daty';
+            const orderValue = window.computeOrderValueWithTransport(ord, offer.type);
+            const changeInfo = window.getOrderChangeInfo(ord);
+            return `
                                 <div class="offer-order-row">
                                     <button class="offer-order-main btn-edit-order" data-order-id="${escapeHtmlAttr(ord.id)}" data-offer-type="${escapeHtmlAttr(offer.type)}" title="Edytuj zamówienie ${labelAttr}">
                                         <span class="offer-order-icon"><i data-lucide="package-check"></i></span>
                                         <span class="offer-order-text">
-                                            <strong>${label} <span style="color: var(--success-hover); font-weight: var(--fw-semibold);">• ${orderValue.toFixed(2)} PLN</span></strong>
+                                            <strong>${label} <span class="color-success">• ${orderValue.toFixed(2)} PLN</span></strong>
                                             <small>${createdAt}${ord.clientNumber ? ` • Nr klienta: ${window.escapeHtml(ord.clientNumber)}` : ''}${changeInfo.changed ? ' • zmienione względem oferty' : ''}</small>
                                         </span>
                                     </button>
@@ -360,8 +357,21 @@ function buildOfferCardHtml(offer, hasOrder, orders, order, role, isLocalList) {
                                         <button class="action-btn danger btn-delete-order" data-order-id="${escapeHtmlAttr(ord.id)}" data-offer-type="${escapeHtmlAttr(offer.type)}" title="Usuń zamówienie ${labelAttr}" aria-label="Usuń zamówienie ${labelAttr}"><i data-lucide="trash-2" aria-hidden="true"></i></button>
                                     </div>
                                 </div>`;
-            })
-            .join('');
+        };
+        // Kafelek zwarty: pierwszy wiersz zawsze widoczny, reszta w natywnym
+        // <details> (zero JS, dostępność z klawiatury za darmo). Pusta lista
+        // (licznik tylko z _orderCount, tło dogrywa szczegóły) → brak wierszy.
+        const restCount = orderList.length - 1;
+        orderItemsHtml =
+            orderList.length === 0
+                ? ''
+                : orderRowHtml(orderList[0]) +
+                  (restCount > 0
+                      ? `<details class="orders-more"><summary class="orders-toggle">+${restCount} więcej</summary>${orderList
+                            .slice(1)
+                            .map(orderRowHtml)
+                            .join('')}</details>`
+                      : '');
     } else {
         orderBadge = `<span style="background:rgba(var(--slate-500-rgb), 0.1); color:var(--text-secondary); padding:4px 10px; border-radius: var(--radius-sm);
                     border:1px solid rgba(var(--slate-500-rgb), 0.2); font-size: var(--fs-base); font-weight: var(--fw-semibold); white-space:nowrap;">Brak zamówienia</span>`;
@@ -405,15 +415,14 @@ function buildOfferCardHtml(offer, hasOrder, orders, order, role, isLocalList) {
                             </div>
                             <div class="offer-price-section">
                                 <div class="offer-price">${typeof window.fmt === 'function' ? window.fmt(priceVal) + ' PLN' : priceVal.toFixed(2) + ' PLN'}</div>
-                                <div class="offer-meta">${dateStr} • ${itemCount} ${isWell ? 'studni' : 'poz.'}</div>
-                                ${pvBadge ? `<div class="offer-meta"><i data-lucide="tag" aria-hidden="true"></i> ${pvBadge}</div>` : ''}
+                                <div class="offer-meta">${dateStr} • ${itemCount} poz.</div>
+                                <div class="offer-meta offer-badges">${pvBadge ? `${pvBadge}` : ''}<span class="fu-badge-top">${followUpBadgeHtml(offer)}</span></div>
                             </div>
                         </div>
                         ${orderList.length > 0 ? `<div class="offer-orders-panel">${orderItemsHtml}</div>` : ''}
                         <div class="offer-actions-row">
                             <div class="order-status-badge">
                                 ${orderBadge}
-                                <div class="fu-badge-wrap">${followUpBadgeHtml(offer)}</div>
                             </div>
                             <div class="offer-author-badges">
                                 ${dd.creatorName ? `<span class="author-badge"><i data-lucide="pen-tool" aria-hidden="true"></i> ${escapeHtml(dd.creatorName)}</span>` : ''}

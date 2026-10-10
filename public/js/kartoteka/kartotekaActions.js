@@ -262,7 +262,7 @@ export default {
             const btn = e.target.closest(
                 '.action-btn, .btn-order-badge, .btn-edit-order, .btn-change-owner, ' +
                     '.btn-delete-order, ' +
-                    '.btn-history-order, .btn-karta-budowy'
+                    '.btn-history-order, .btn-karta-budowy, .btn-followup'
             );
             if (!btn) return;
 
