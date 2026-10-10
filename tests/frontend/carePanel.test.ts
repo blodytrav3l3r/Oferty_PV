@@ -197,6 +197,7 @@ describe('carePanel', () => {
         expect(findClass(els['care-buckets'], 'care-chart')).toHaveLength(1);
         expect(findClass(els['care-buckets'], 'care-chart-row')).toHaveLength(4);
         expect(findClass(els['care-buckets'], 'care-chart-fill')).toHaveLength(4);
+        expect(findClass(els['care-buckets'], 'care-chart-dot')).toHaveLength(4);
         // Pasek proporcji całości (flex:N, tylko niezerowe).
         const bars = findClass(els['care-buckets'], 'care-bar');
         expect(bars).toHaveLength(1);
@@ -343,6 +344,40 @@ describe('carePanel', () => {
             expect.objectContaining({ id: 's1', displayType: 'studnia_oferta' })
         );
         expect(context.window.location.href).toBe('app.html#/kartoteka?kontakt=studnie%3As1');
+    });
+
+    test('jeden pill statusu: pauza wygrywa z eskalacją', async () => {
+        const { els, context } = load({
+            fetchMock: (url: string) => {
+                if (url.includes('/api/care/queue'))
+                    return okJson({
+                        items: [
+                            {
+                                offerKind: 'rury',
+                                offerId: 'o1',
+                                status: 'DUE',
+                                overdueDays: 9,
+                                escalated: true,
+                                paused: true,
+                                doneAt: null,
+                                snoozedUntil: '2026-10-20T00:00:00.000Z'
+                            }
+                        ]
+                    });
+                return okJson({ noContact: 0, due: 0, openOk: 0, won: 0, lost: 0 });
+            }
+        });
+        await context.__careTest.loadCarePanel();
+        const texts: string[] = [];
+        const walk = (n: any): void => {
+            if (n.textContent) texts.push(n.textContent);
+            for (const c of n.children || []) walk(c);
+        };
+        walk(els['care-queue-list']);
+        const joined = texts.join(' ');
+        expect(joined).toContain('Odłożone');
+        expect(joined).not.toContain('Eskalacja');
+        expect(joined).not.toContain('po terminie');
     });
 
     test('menu ⋮: otwiera, Done woła API, Escape zamyka', async () => {

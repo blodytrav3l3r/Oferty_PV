@@ -2687,6 +2687,12 @@ html[data-theme='light'] body.index-page.logged-in::before {
     overflow: hidden;
     text-overflow: ellipsis;
 }
+.care-queue-value {
+    font-size: var(--fs-lg);
+    font-weight: var(--fw-bold);
+    font-feature-settings: 'tnum';
+    margin-top: 2px;
+}
 .care-queue-kind {
     color: var(--text-muted);
     font-weight: var(--fw-regular, 400);
@@ -2777,6 +2783,33 @@ html[data-theme='light'] body.index-page.logged-in::before {
     margin-top: 4px;
     font-size: var(--fs-base);
 }
+.care-notif-head,
+.care-notif-foot {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+}
+.care-notif-who {
+    font-weight: var(--fw-bold);
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.care-notif-delay {
+    color: var(--danger-hover);
+    font-size: var(--fs-base);
+    white-space: nowrap;
+}
+.care-notif-card.warn .care-notif-delay {
+    color: var(--warn-hover, var(--warn));
+}
+.care-chart-dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
 .care-buckets-foot {
     display: flex;
     justify-content: space-between;
@@ -2784,6 +2817,9 @@ html[data-theme='light'] body.index-page.logged-in::before {
     color: var(--text-muted);
     font-size: var(--fs-base);
     margin-top: 8px;
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-sm);
+    padding: 8px 10px;
 }
 .care-chart {
     display: flex;

@@ -116,12 +116,15 @@ function renderNotifications(items, unreadCount) {
             headRow.appendChild(dl);
         }
         lines.appendChild(headRow);
+        const foot = document.createElement('div');
+        foot.className = 'care-notif-foot';
         if (n.createdAt) {
             const d = new Date(n.createdAt);
             if (!Number.isNaN(d.getTime())) {
                 const l2 = document.createElement('div');
+                l2.className = 'care-notif-date';
                 l2.textContent = 'Zgłoszono: ' + d.toLocaleDateString('pl-PL');
-                lines.appendChild(l2);
+                foot.appendChild(l2);
             }
         }
         card.appendChild(lines);
@@ -148,7 +151,8 @@ function renderNotifications(items, unreadCount) {
             }
             loadCarePanel();
         });
-        card.appendChild(read);
+        foot.appendChild(read);
+        card.appendChild(foot);
         grid.appendChild(card);
     }
     list.appendChild(grid);
@@ -228,12 +232,15 @@ function renderBuckets(summary) {
             row.className = 'care-chart-row';
             const head = document.createElement('div');
             head.className = 'care-chart-head';
+            const dot = document.createElement('span');
+            dot.className = 'care-chart-dot';
+            dot.style.background = BUCKET_COLORS[i % BUCKET_COLORS.length];
             const name = document.createElement('span');
             name.textContent = r[0];
             const count = document.createElement('span');
             count.className = 'care-chart-count';
             count.textContent = String(r[1]) + ' (' + pct + '%)';
-            head.append(name, count);
+            head.append(dot, name, count);
             const track = document.createElement('div');
             track.className = 'care-chart-track';
             const fill = document.createElement('div');
@@ -392,12 +399,29 @@ async function snoozeQuick(offerKind, offerId, days, row) {
     actions.append(done, undo);
 }
 
+/** Jeden pill statusu na kartę (priorytet: pauza > eskalacja > zaległość > nowy). */
+function statusPill(it) {
+    const pill = (cls, text) => {
+        const s = document.createElement('span');
+        s.className = cls;
+        s.textContent = text;
+        return s;
+    };
+    if (it.paused) return pill('ops-pill', it.doneAt ? 'Done' : 'Odłożone');
+    if (it.escalated) return pill('ops-pill ops-err', 'Eskalacja');
+    if (it.overdueDays > 0 && it.status !== 'NO_CONTACT')
+        return pill('ops-pill ops-warn', String(it.overdueDays) + 'd po terminie');
+    if (it.status === 'NO_CONTACT') return pill('ops-pill ops-warn', 'Nowy kontakt');
+    return null;
+}
+
 function renderQueue(items) {
     const list = document.getElementById('care-queue-list');
     if (!list) return;
     list.textContent = '';
     queueCache = Array.isArray(items) ? items : [];
     updateQueueFilterCounts();
+    setText('care-queue-count', queueCache.length + ' zadań');
     const visible = queueCache.filter(matchFilter);
     if (visible.length === 0) {
         const empty = document.createElement('span');
@@ -423,41 +447,21 @@ function renderQueue(items) {
         head.className = 'care-queue-title';
         const title = document.createElement('span');
         title.className = 'care-queue-name';
-        const client = it.clientName ? String(it.clientName) : 'Brak klienta';
-        const value = fmtMoney(it.value);
-        title.textContent =
-            client + (value ? ' — ' + value : '') + (it.number ? ' • ' + String(it.number) : '');
+        title.textContent = it.clientName ? String(it.clientName) : 'Brak klienta';
+        head.appendChild(title);
         const kind = document.createElement('span');
-        kind.className = 'ops-pill';
+        kind.className = 'ops-pill care-kind-pill';
         kind.textContent = String(it.offerKind);
-        head.append(title, kind);
+        head.appendChild(kind);
+        const status = statusPill(it);
+        if (status) head.appendChild(status);
         row.appendChild(head);
-        const pillRow = document.createElement('div');
-        pillRow.className = 'care-queue-line';
-        if (it.escalated) {
-            const esc = document.createElement('span');
-            esc.className = 'ops-pill ops-err';
-            esc.textContent = 'Eskalacja';
-            pillRow.appendChild(esc);
-        } else if (it.overdueDays > 0 && it.status !== 'NO_CONTACT') {
-            const late = document.createElement('span');
-            late.className = 'ops-pill ops-warn';
-            late.textContent = String(it.overdueDays) + 'd po terminie';
-            pillRow.appendChild(late);
-        }
-        if (it.paused) {
-            const paused = document.createElement('span');
-            paused.className = 'ops-pill';
-            paused.textContent = it.doneAt ? 'Done' : 'Odłożone';
-            pillRow.appendChild(paused);
-        }
-        if (it.status === 'NO_CONTACT') {
-            const nc = document.createElement('span');
-            nc.className = 'ops-pill ops-warn';
-            nc.textContent = 'Nowy kontakt';
-            pillRow.appendChild(nc);
-        }
-        if (pillRow.children.length > 0) row.appendChild(pillRow);
+        const valueLine = document.createElement('div');
+        valueLine.className = 'care-queue-value';
+        const value = fmtMoney(it.value);
+        valueLine.textContent =
+            (value ? value : '0.00 PLN') + (it.number ? ' • ' + String(it.number) : '');
+        row.appendChild(valueLine);
         const info = document.createElement('div');
         info.className = 'care-queue-info';
         const lines = [];
