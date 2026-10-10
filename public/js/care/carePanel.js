@@ -166,6 +166,20 @@ function renderBuckets(summary) {
         empty.textContent = 'Brak ofert w opiece.';
         box.appendChild(empty);
     } else {
+        // Pasek proporcji całości (flex:N jak w makiecie) + wiersze z udziałami.
+        const bar = document.createElement('div');
+        bar.className = 'care-bar';
+        bar.setAttribute('role', 'img');
+        bar.setAttribute('aria-label', rows.map((r) => r[0] + ': ' + r[1]).join(', '));
+        rows.forEach((r, i) => {
+            if (r[1] <= 0) return;
+            const s = document.createElement('span');
+            s.style.flex = String(r[1]);
+            s.style.background = BUCKET_COLORS[i % BUCKET_COLORS.length];
+            s.title = r[0] + ': ' + r[1];
+            bar.appendChild(s);
+        });
+        box.appendChild(bar);
         // Wykres wierszowy: etykieta + liczba + pasek udziału (osobno na wiersz).
         const chart = document.createElement('div');
         chart.className = 'care-chart';
@@ -233,7 +247,7 @@ function updateQueueFilterCounts() {
         if (!(key in counts)) return;
         if (!badge) {
             badge = document.createElement('span');
-            badge.className = 'ops-pill';
+            badge.className = 'care-count';
             badge.setAttribute('data-queue-count', '1');
             btn.appendChild(badge);
         }

@@ -185,6 +185,9 @@ describe('carePanel', () => {
         expect(findClass(els['care-buckets'], 'care-chart')).toHaveLength(1);
         expect(findClass(els['care-buckets'], 'care-chart-row')).toHaveLength(5);
         expect(findClass(els['care-buckets'], 'care-chart-fill')).toHaveLength(5);
+        // Pasek proporcji całości (flex:N, tylko niezerowe).
+        const bars = findClass(els['care-buckets'], 'care-bar');
+        expect(bars).toHaveLength(1);
         const grid = els['care-notif-list'].children;
         expect(grid).toHaveLength(1);
         expect(grid[0].className).toContain('care-notif-grid');
