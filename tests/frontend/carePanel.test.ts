@@ -242,7 +242,8 @@ describe('carePanel', () => {
         };
         collectPills(rows[0]);
         expect(pills).toContain('rury');
-        expect(els['care-sla-box'].hidden).toBe(true);
+        // P4: SLA-box dla każdej roli (user edytuje własne progi).
+        expect(els['care-sla-box'].hidden).toBe(false);
         expect(calls.filter((c) => c.includes('/api/care/')).length).toBeGreaterThanOrEqual(3);
     });
 
@@ -547,7 +548,7 @@ describe('carePanel', () => {
         expect(calls.some((c) => c.includes('/api/care/rury/o1/reopen'))).toBe(true);
     });
 
-    test('SLA-box widoczny tylko dla admina + zapis PUT', async () => {
+    test('SLA-box admina + zapis PUT globalny', async () => {
         let putBody: any = null;
         const { els, context } = load({
             role: 'admin',
@@ -770,6 +771,45 @@ describe('carePanel', () => {
         t3.context.__careTest.setQueueSort('sla');
         await t3.context.__careTest.loadCarePanel();
         expect(namesOf(t3.els['care-queue-list'])).toEqual(['Zetka', 'Ala']);
+    });
+
+    test('SLA zakresy: admin ma 3 opcje, zapis niesie scopeType', async () => {
+        let putBody: any = null;
+        const { els, context } = load({
+            role: 'admin',
+            fetchMock: (url: string, init?: any) => {
+                if (url.includes('/api/care/sla') && (init?.method || 'GET') === 'GET')
+                    return okJson({ sla: { firstContactH: 24, staleD: 7, escalationH: 72 } });
+                if (url.includes('/api/care/sla')) {
+                    putBody = JSON.parse(init.body);
+                    return okJson({ ok: true });
+                }
+                return okJson({ noContact: 0, due: 0, openOk: 0, won: 0, lost: 0 });
+            }
+        });
+        const children: any[] = [];
+        els['care-sla-scope'] = {
+            textContent: '',
+            value: 'team',
+            children,
+            dataset: {},
+            classList: { add() {}, remove() {}, toggle() {} },
+            setAttribute() {},
+            appendChild(c: any) {
+                children.push(c);
+                return c;
+            },
+            append(...cs: any[]) {
+                children.push(...cs);
+            },
+            addEventListener() {},
+            querySelector: () => null
+        };
+        await context.__careTest.loadCarePanel();
+        expect(children).toHaveLength(3);
+        const save = els['care-sla-save'];
+        for (const fn of save.handlers || []) await fn();
+        expect(putBody).toEqual(expect.objectContaining({ firstContactH: 24, scopeType: 'team' }));
     });
 
     test('widok grid/list + dopaginowanie cursorem', async () => {

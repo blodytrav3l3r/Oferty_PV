@@ -1097,6 +1097,21 @@ model care_sla_config {
   updatedAt     String?
 }
 
+// P4 opieka: progi SLA per zespół / per user (ADR-016, fallback do globalnych).
+// scopeType: 'team' (scopeId = owner-pro id) | 'user' (scopeId = user id).
+model care_sla_scopes {
+  scopeType     String
+  scopeId       String
+  firstContactH Int
+  staleD        Int
+  escalationH   Int
+  updatedBy     String?
+  updatedAt     String?
+
+  @@id([scopeType, scopeId])
+  @@index([scopeType, scopeId], map: "idx_caresla_scope")
+}
+
 // P2 opieka: centrum powiadomień in-app (pochodna stanu, nie event-bus).
 // Wiersz = fakt do pokazania userowi; odczyt = readAt; polling 60 s.
 // SLA_BREACH = przeterminowanie, ESCALATION = próg eskalacji, CALLBACK_DUE = termin dziś.

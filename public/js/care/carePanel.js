@@ -978,39 +978,81 @@ function setSyncText() {
         pad(d.getSeconds());
 }
 
-function isAdmin() {
+function careRole() {
     try {
-        return (
-            typeof window !== 'undefined' &&
-            window.currentUser &&
-            window.currentUser.role === 'admin'
-        );
+        if (typeof window !== 'undefined' && window.currentUser && window.currentUser.role)
+            return String(window.currentUser.role);
     } catch {
-        return false;
+        /* ignore */
     }
+    return 'user';
+}
+
+function slaScopeForRole(role) {
+    if (role === 'admin') return 'global';
+    return 'mine';
+}
+
+function slaScopeOptions(role) {
+    if (role === 'admin')
+        return [
+            ['global', 'Globalne'],
+            ['team', 'Zespół'],
+            ['mine', 'Moje']
+        ];
+    if (role === 'pro')
+        return [
+            ['team', 'Zespół'],
+            ['mine', 'Moje']
+        ];
+    return [['mine', 'Moje']];
+}
+
+function slaScopeToQuery(sel) {
+    if (sel === 'global') return 'all';
+    if (sel === 'team') return 'team';
+    return 'mine';
 }
 
 async function loadSlaBox() {
     const box = document.getElementById('care-sla-box');
-    if (!box || !isAdmin()) return;
-    const sla = await getJson('/api/care/sla?t=' + Date.now());
-    if (!sla || !sla.sla) return;
+    if (!box) return;
+    const role = careRole();
+    const scopeSel = document.getElementById('care-sla-scope');
+    if (scopeSel) {
+        const want = slaScopeOptions(role);
+        const current = scopeSel.value || slaScopeForRole(role);
+        scopeSel.textContent = '';
+        for (const [value, label] of want) {
+            const opt = document.createElement('option');
+            opt.value = value;
+            opt.textContent = label;
+            scopeSel.appendChild(opt);
+        }
+        scopeSel.value = want.some(([v]) => v === current) ? current : want[0][0];
+        if (!scopeSel.dataset.bound) {
+            scopeSel.dataset.bound = '1';
+            scopeSel.addEventListener('change', loadSlaBoxValues);
+        }
+    }
     box.hidden = false;
-    const first = document.getElementById('care-sla-first');
-    const stale = document.getElementById('care-sla-stale');
-    const esc = document.getElementById('care-sla-esc');
-    if (first) first.value = String(sla.sla.firstContactH ?? 24);
-    if (stale) stale.value = String(sla.sla.staleD ?? 7);
-    if (esc) esc.value = String(sla.sla.escalationH ?? 72);
+    await loadSlaBoxValues();
     const save = document.getElementById('care-sla-save');
     if (save && !save.dataset.bound) {
         save.dataset.bound = '1';
         save.addEventListener('click', async () => {
+            const first = document.getElementById('care-sla-first');
+            const stale = document.getElementById('care-sla-stale');
+            const esc = document.getElementById('care-sla-esc');
+            const sel = document.getElementById('care-sla-scope');
             const payload = {
                 firstContactH: Number(first && first.value) || 24,
                 staleD: Number(stale && stale.value) || 7,
                 escalationH: Number(esc && esc.value) || 72
             };
+            if (sel && sel.value !== 'global') {
+                payload.scopeType = sel.value === 'team' ? 'team' : 'user';
+            }
             try {
                 const resp = await fetch('/api/care/sla', {
                     method: 'PUT',
@@ -1027,6 +1069,20 @@ async function loadSlaBox() {
             }, 2000);
         });
     }
+}
+
+async function loadSlaBoxValues() {
+    const sel = document.getElementById('care-sla-scope');
+    const sla = await getJson(
+        '/api/care/sla?scope=' + slaScopeToQuery(sel ? sel.value : 'mine') + '&t=' + Date.now()
+    );
+    if (!sla || !sla.sla) return;
+    const first = document.getElementById('care-sla-first');
+    const stale = document.getElementById('care-sla-stale');
+    const esc = document.getElementById('care-sla-esc');
+    if (first) first.value = String(sla.sla.firstContactH ?? 24);
+    if (stale) stale.value = String(sla.sla.staleD ?? 7);
+    if (esc) esc.value = String(sla.sla.escalationH ?? 72);
 }
 
 function renderSummary(summary) {

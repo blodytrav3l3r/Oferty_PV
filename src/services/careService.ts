@@ -425,7 +425,8 @@ export async function getCareEtagInput(
             (SELECT MAX("readAt") FROM "care_notifications" WHERE "userId" = ${userId}) AS "e",
             (SELECT MAX("createdAt") FROM "offers_rel") AS "f",
             (SELECT MAX("createdAt") FROM "offers_studnie_rel") AS "g",
-            (SELECT "updatedAt" FROM "care_sla_config" WHERE "id" = 'global') AS "h"`
+            (SELECT "updatedAt" FROM "care_sla_config" WHERE "id" = 'global') AS "h",
+            (SELECT MAX("updatedAt") FROM "care_sla_scopes") AS "i"`
     )) as Array<Record<string, string | null>>;
     const r = rows[0] ?? {};
     return [
@@ -436,7 +437,8 @@ export async function getCareEtagInput(
         r.e ?? null,
         r.f ?? null,
         r.g ?? null,
-        r.h ?? null
+        r.h ?? null,
+        r.i ?? null
     ];
 }
 
@@ -557,6 +559,63 @@ export async function setSlaConfig(
 ): Promise<SlaConfig> {
     await db.$queryRaw(
         Prisma.sql`INSERT INTO "care_sla_config" ("id", "firstContactH", "staleD", "escalationH", "updatedBy", "updatedAt") VALUES ('global', ${cfg.firstContactH}, ${cfg.staleD}, ${cfg.escalationH}, ${cfg.updatedBy}, ${cfg.nowIso}) ON CONFLICT ("id") DO UPDATE SET "firstContactH" = ${cfg.firstContactH}, "staleD" = ${cfg.staleD}, "escalationH" = ${cfg.escalationH}, "updatedBy" = ${cfg.updatedBy}, "updatedAt" = ${cfg.nowIso}`
+    );
+    return {
+        firstContactH: cfg.firstContactH,
+        staleD: cfg.staleD,
+        escalationH: cfg.escalationH
+    };
+}
+
+// ─── P4: progi per zespół / per user (ADR-016, fallback do globalnych) ───
+
+export type SlaScopeType = 'team' | 'user';
+export type SlaSource = 'global' | SlaScopeType;
+
+export interface EffectiveSla extends SlaConfig {
+    source: SlaSource;
+}
+
+async function getScopedSlaRow(
+    db: RawDb,
+    scopeType: SlaScopeType,
+    scopeId: string
+): Promise<SlaConfig | null> {
+    const rows = await db.$queryRaw<Array<SlaConfig>>(
+        Prisma.sql`SELECT "firstContactH", "staleD", "escalationH" FROM "care_sla_scopes" WHERE "scopeType" = ${scopeType} AND "scopeId" = ${scopeId}`
+    );
+    const r = rows[0];
+    if (!r) return null;
+    return {
+        firstContactH: Number(r.firstContactH) || DEFAULT_SLA.firstContactH,
+        staleD: Number(r.staleD) || DEFAULT_SLA.staleD,
+        escalationH: Number(r.escalationH) || DEFAULT_SLA.escalationH
+    };
+}
+
+/** Efektywny próg w scope requeścia: team/user z fallbackiem do global. */
+export async function getEffectiveSla(
+    db: RawDb,
+    user: CareUser,
+    scope: CareScope
+): Promise<EffectiveSla> {
+    if (scope === 'team' && (user.role === 'pro' || user.role === 'admin')) {
+        const row = await getScopedSlaRow(db, 'team', user.id);
+        if (row) return { ...row, source: 'team' };
+    }
+    if (scope === 'mine') {
+        const row = await getScopedSlaRow(db, 'user', user.id);
+        if (row) return { ...row, source: 'user' };
+    }
+    return { ...(await getSlaConfig(db)), source: 'global' };
+}
+
+export async function setScopedSla(
+    db: RawDb,
+    cfg: SlaConfig & { scopeType: SlaScopeType; scopeId: string; updatedBy: string; nowIso: string }
+): Promise<SlaConfig> {
+    await db.$queryRaw(
+        Prisma.sql`INSERT INTO "care_sla_scopes" ("scopeType", "scopeId", "firstContactH", "staleD", "escalationH", "updatedBy", "updatedAt") VALUES (${cfg.scopeType}, ${cfg.scopeId}, ${cfg.firstContactH}, ${cfg.staleD}, ${cfg.escalationH}, ${cfg.updatedBy}, ${cfg.nowIso}) ON CONFLICT ("scopeType", "scopeId") DO UPDATE SET "firstContactH" = ${cfg.firstContactH}, "staleD" = ${cfg.staleD}, "escalationH" = ${cfg.escalationH}, "updatedBy" = ${cfg.updatedBy}, "updatedAt" = ${cfg.nowIso}`
     );
     return {
         firstContactH: cfg.firstContactH,

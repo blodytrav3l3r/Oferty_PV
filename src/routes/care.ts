@@ -18,6 +18,8 @@ import {
     clearCareState,
     getSlaConfig,
     setSlaConfig,
+    getEffectiveSla,
+    setScopedSla,
     syncCareNotifications,
     listCareNotifications,
     markCareNotificationRead,
@@ -95,7 +97,7 @@ router.get('/queue', requireAuth, READ_LIMITER, async (req, res) => {
             limit,
             hidePaused
         });
-        const sla = await getSlaConfig(prisma);
+        const sla = await getEffectiveSla(prisma, user, scope);
         const items = buildCareQueueView(result.items, sla, nowIso);
         return res.json({
             ok: true,
@@ -124,15 +126,25 @@ router.get('/panel', requireAuth, READ_LIMITER, async (req, res) => {
         const parsed = queueQuerySchema.safeParse(req.query);
         if (!parsed.success) return res.status(400).json({ error: 'Nieprawidłowe parametry' });
         const scope = toScope(parsed.data.scope);
-        const etag =
-            '"care-' +
-            crypto
-                .createHash('sha1')
-                .update(JSON.stringify([user.id, scope, await getCareEtagInput(prisma, user.id)]))
-                .digest('hex') +
-            '"';
-        res.set('ETag', etag);
-        if (req.headers['if-none-match'] === etag) return res.status(304).end();
+        // ETag best-effort: brak tabeli na legacy DB nie może wywalić panelu.
+        let etag: string | null = null;
+        try {
+            etag =
+                '"care-' +
+                crypto
+                    .createHash('sha1')
+                    .update(
+                        JSON.stringify([user.id, scope, await getCareEtagInput(prisma, user.id)])
+                    )
+                    .digest('hex') +
+                '"';
+        } catch {
+            etag = null;
+        }
+        if (etag) {
+            res.set('ETag', etag);
+            if (req.headers['if-none-match'] === etag) return res.status(304).end();
+        }
         const nowIso = new Date().toISOString();
         const limit = clampCareLimit(parsed.data.limit);
         const hidePaused = parsed.data.hidePaused ?? false;
@@ -145,7 +157,7 @@ router.get('/panel', requireAuth, READ_LIMITER, async (req, res) => {
                 limit,
                 hidePaused
             }),
-            getSlaConfig(prisma)
+            getEffectiveSla(prisma, user, scope)
         ]);
         const sync = await syncCareNotifications(prisma, user, scope, nowIso, sla);
         const { items: notifItems, unreadCount } = await listCareNotifications(prisma, user.id, {
@@ -402,44 +414,66 @@ router.get('/sla', requireAuth, READ_LIMITER, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     if (!authReq.user) return res.status(401).json({ error: 'Nieautoryzowany' });
     try {
-        return res.json({ ok: true, sla: await getSlaConfig(prisma) });
+        const parsed = summaryQuerySchema.safeParse(req.query);
+        if (!parsed.success) return res.status(400).json({ error: 'Nieprawidłowe parametry' });
+        const eff = await getEffectiveSla(prisma, authReq.user, toScope(parsed.data.scope));
+        const { source, ...sla } = eff;
+        return res.json({ ok: true, scope: toScope(parsed.data.scope), source, sla });
     } catch (e) {
         logger.warn('Care', 'Błąd odczytu SLA', String(e));
         return res.status(500).json({ error: 'Błąd serwera' });
     }
 });
 
+const slaPutSchema = slaSchema.extend({
+    scopeType: z.enum(['team', 'user']).optional()
+});
+
 router.put('/sla', requireAuth, WRITE_LIMITER, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     const user = authReq.user;
     if (!user) return res.status(401).json({ error: 'Nieautoryzowany' });
-    if (user.role !== 'admin') return res.status(403).json({ error: 'Tylko administrator' });
-    const parsed = slaSchema.safeParse(req.body);
+    const parsed = slaPutSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ error: 'Nieprawidłowa konfiguracja SLA' });
+    const { scopeType, ...cfg } = parsed.data;
+    // Global: tylko admin. Team: pro/admin (własny zespół). User: każdy dla siebie.
+    if (!scopeType && user.role !== 'admin') {
+        return res.status(403).json({ error: 'Tylko administrator' });
+    }
+    if (scopeType === 'team' && user.role !== 'pro' && user.role !== 'admin') {
+        return res.status(403).json({ error: 'Próg zespołu tylko dla pro/admin' });
+    }
+    const entityId = !scopeType ? 'global' : `${scopeType}:${user.id}`;
     try {
         const nowIso = new Date().toISOString();
-        const prevSla = await getSlaConfig(prisma);
         const sla = await prisma.$transaction(async (tx) => {
-            const next = await setSlaConfig(tx, {
-                ...parsed.data,
-                updatedBy: user.id,
-                nowIso
-            });
+            const prevSla = !scopeType
+                ? await getSlaConfig(tx)
+                : await getEffectiveSla(tx, user, scopeType === 'team' ? 'team' : 'mine');
+            const next = !scopeType
+                ? await setSlaConfig(tx, { ...cfg, updatedBy: user.id, nowIso })
+                : await setScopedSla(tx, {
+                      ...cfg,
+                      scopeType,
+                      scopeId: user.id,
+                      updatedBy: user.id,
+                      nowIso
+                  });
             await tx.audit_logs.create({
                 data: {
                     id: crypto.randomUUID(),
                     entityType: 'care_sla',
-                    entityId: 'global',
+                    entityId,
                     userId: user.id,
                     action: 'update',
                     oldData: JSON.stringify(prevSla),
-                    newData: JSON.stringify(parsed.data),
+                    newData: JSON.stringify(cfg),
                     createdAt: nowIso
                 }
             });
             return next;
         });
-        return res.json({ ok: true, sla });
+        return res.json({ ok: true, sla, scopeType: scopeType ?? 'global' });
     } catch (e) {
         if (mapPrismaError(res, e)) return;
         logger.warn('Care', 'Błąd zapisu SLA', String(e));
@@ -464,7 +498,7 @@ router.get('/notifications', requireAuth, READ_LIMITER, async (req, res) => {
         if (!parsed.success) return res.status(400).json({ error: 'Nieprawidłowe parametry' });
         const scope = toScope(parsed.data.scope);
         const nowIso = new Date().toISOString();
-        const sla = await getSlaConfig(prisma);
+        const sla = await getEffectiveSla(prisma, user, scope);
         const sync = await syncCareNotifications(prisma, user, scope, nowIso, sla);
         const { items, unreadCount } = await listCareNotifications(prisma, user.id, {
             unreadOnly: parsed.data.unreadOnly ?? true,

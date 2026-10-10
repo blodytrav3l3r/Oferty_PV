@@ -34,6 +34,8 @@ jest.mock('../../src/utils/idempotency', () => ({
 
 const auditCreate = jest.fn();
 const stateUpsert = jest.fn();
+const scopedSlaUpsert = jest.fn();
+const effectiveSlaMock = jest.fn();
 const stateDelete = jest.fn();
 
 jest.mock('../../src/services/careService', () => {
@@ -48,7 +50,9 @@ jest.mock('../../src/services/careService', () => {
             firstContactH: cfg.firstContactH,
             staleD: cfg.staleD,
             escalationH: cfg.escalationH
-        }))
+        })),
+        setScopedSla: (...a: unknown[]) => scopedSlaUpsert(...a),
+        getEffectiveSla: (...a: unknown[]) => effectiveSlaMock(...a)
     };
 });
 
@@ -179,5 +183,48 @@ describe('P1 care routes guardy', () => {
             .send({ firstContactH: 48, staleD: 10, escalationH: 96 });
         expect(ok.status).toBe(200);
         expect(ok.body.sla.firstContactH).toBe(48);
+    });
+
+    it('PUT sla scope: user dla siebie OK, team dla user → 403, pro team OK', async () => {
+        scopedSlaUpsert.mockResolvedValue({ firstContactH: 12, staleD: 3, escalationH: 36 });
+        const mine = await request(app())
+            .put('/api/care/sla')
+            .send({ firstContactH: 12, staleD: 3, escalationH: 36, scopeType: 'user' });
+        expect(mine.status).toBe(200);
+        expect(mine.body.scopeType).toBe('user');
+        expect(scopedSlaUpsert).toHaveBeenCalledWith(
+            expect.anything(),
+            expect.objectContaining({ scopeType: 'user', scopeId: 'u1' })
+        );
+        const teamDenied = await request(app())
+            .put('/api/care/sla')
+            .send({ firstContactH: 12, staleD: 3, escalationH: 36, scopeType: 'team' });
+        expect(teamDenied.status).toBe(403);
+        (globalThis as any).__careUser = { id: 'p1', role: 'pro', subUsers: ['u1'] };
+        const teamOk = await request(app())
+            .put('/api/care/sla')
+            .send({ firstContactH: 12, staleD: 3, escalationH: 36, scopeType: 'team' });
+        expect(teamOk.status).toBe(200);
+        expect(scopedSlaUpsert).toHaveBeenCalledWith(
+            expect.anything(),
+            expect.objectContaining({ scopeType: 'team', scopeId: 'p1' })
+        );
+    });
+
+    it('GET sla zwraca source (global/team/user)', async () => {
+        effectiveSlaMock.mockResolvedValue({
+            firstContactH: 24,
+            staleD: 7,
+            escalationH: 72,
+            source: 'global'
+        });
+        const res = await request(app()).get('/api/care/sla?scope=mine');
+        expect(res.status).toBe(200);
+        expect(res.body.source).toBe('global');
+        expect(effectiveSlaMock).toHaveBeenCalledWith(
+            expect.anything(),
+            expect.objectContaining({ id: 'u1' }),
+            'mine'
+        );
     });
 });
