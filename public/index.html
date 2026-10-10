@@ -323,27 +323,29 @@
                             <h3><i data-lucide="phone"></i> Opieka nad ofertami</h3>
                             <span id="care-task-count" class="ops-pill" aria-live="polite"></span>
                         </div>
-                        <div class="care-seg" role="group" aria-label="Zakres opieki">
-                            <button
-                                type="button"
-                                class="btn btn-sm care-scope-btn active"
-                                data-care-scope="mine"
-                                aria-pressed="true"
+                        <div class="care-head-actions">
+                            <div class="care-seg" role="group" aria-label="Zakres opieki">
+                                <button
+                                    type="button"
+                                    class="btn btn-sm care-scope-btn active"
+                                    data-care-scope="mine"
+                                    aria-pressed="true"
+                                >
+                                    Moje
+                                </button>
+                                <button
+                                    type="button"
+                                    class="btn btn-sm btn-secondary care-scope-btn"
+                                    data-care-scope="team"
+                                    aria-pressed="false"
+                                >
+                                    Zespół
+                                </button>
+                            </div>
+                            <a href="app.html#/kartoteka" class="btn btn-sm btn-secondary"
+                                >Otwórz kartotekę</a
                             >
-                                Moje
-                            </button>
-                            <button
-                                type="button"
-                                class="btn btn-sm btn-secondary care-scope-btn"
-                                data-care-scope="team"
-                                aria-pressed="false"
-                            >
-                                Zespół
-                            </button>
                         </div>
-                        <a href="app.html#/kartoteka" class="btn btn-sm btn-secondary"
-                            >Otwórz kartotekę</a
-                        >
                     </div>
                     <div class="admin-stats-row" id="followup-stats-row">
                         <div class="admin-stat-card">

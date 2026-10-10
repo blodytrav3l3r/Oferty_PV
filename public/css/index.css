@@ -3040,6 +3040,27 @@ html[data-theme='light'] body.index-page.logged-in::before {
     cursor: pointer;
     list-style: none;
 }
+/* Pasek nagłówka opieki: tytuł z lewej, akcje z prawej (nie środek). */
+#followup-panel .admin-section-title {
+    justify-content: space-between;
+    flex-wrap: wrap;
+    row-gap: 0.5rem;
+}
+#followup-panel .admin-title-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 0;
+}
+#care-task-count:empty {
+    display: none;
+}
+.care-head-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
 @media (max-width: 1100px) {
     .care-dashboard-grid {
         grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
