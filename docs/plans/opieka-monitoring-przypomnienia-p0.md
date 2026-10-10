@@ -146,3 +146,20 @@ Granice twarde: zero migracji/schematu/POST/PATCH/CRUD/powiadomień. Przekroczen
 - Bramy: typecheck/lint BE+FE PASS, collisions 45/45, prices:verify PASS, version:check 1.41.2.
 - Uwaga: restart serwera po dogodnym momencie (świeży klient Prisma + nowy kod tras).
   **P2 (centrum powiadomień) nadal CZEKA NA GO**.
+
+## 12. Checkpoint P2 (GO 2026-10-10, tryb build, commit `b461700`)
+
+- Schema: `care_notifications` (inbox per user, typy CALLBACK_DUE/SLA_BREACH/ESCALATION).
+  Migracja `20261010000001` additive IF NOT EXISTS, zastosowana ręcznie na live DB + backup.
+  Korekta `20261010000002` (kanoniczny DDL PK `care_sla_config` — naprawa `migrate diff`;
+  historia niemutowana, I-005 całe: baseline test PASS na czystym deploy).
+- Service: `syncCareNotifications` (INSERT brakujących + auto-read nieaktualnych, idempotentny),
+  `listCareNotifications` (unread + count), `markCareNotificationRead` (guard owner).
+  Pauza (snooze/done) i terminale nie generują. Queue: pola `escalated` (DUE + overdueH ≥ escalationH)
+  i `hidePaused`.
+- API: `GET /notifications` (sync przy odczycie, scope enforced) + `POST /:id/read` (404 cudze).
+- FE: centrum w panelu (badge aria-live, lista z mark-read, słupki pilności), polling 60 s.
+- Testy: notif 2/2, notif-routes 3/3, migracje P1/P2/baseline PASS, care ogółem 40/40.
+  Full `test:quick`: 2 flake (pricelistChunk solo PASS, baseline naprawione i PASS).
+- Bramy: typecheck/lint BE+FE PASS, collisions 45/45, prices:verify PASS, version:check 1.41.2.
+- Restart serwera po Twojej stronie (świeży klient Prisma + trasy P1/P2).
