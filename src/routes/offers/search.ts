@@ -45,6 +45,7 @@ router.get('/', requireAuth, async (req, res) => {
         const followupMode =
             params.followupStatus !== 'all' ||
             params.overdueOnly ||
+            params.hidePaused ||
             params.nextContactFrom !== '' ||
             params.nextContactTo !== '' ||
             params.sort === 'followup';
@@ -113,6 +114,7 @@ router.get('/', requireAuth, async (req, res) => {
         const followupConds = buildFollowUpConditions({
             followupStatus: params.followupStatus,
             overdueOnly: params.overdueOnly,
+            hidePaused: params.hidePaused,
             nextContactFrom: params.nextContactFrom,
             nextContactTo: params.nextContactTo,
             nowIso

@@ -105,6 +105,7 @@ export default {
             userId,
             orderStatus: this.currentFilter,
             followupStatus,
+            hidePaused: !!this.hidePaused,
             limit: 50,
             sort: followupActive ? 'followup' : 'createdAt',
             order: 'desc'
@@ -137,6 +138,7 @@ export default {
             userId: params.userId || '',
             orderStatus: params.orderStatus || 'all',
             followupStatus: params.followupStatus || 'all',
+            hidePaused: params.hidePaused ? 'true' : '',
             limit: String(params.limit || 50),
             sort: params.sort || 'createdAt',
             order: params.order || 'desc',

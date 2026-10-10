@@ -15,6 +15,8 @@ class KartotekaUI {
         this.currentTypeFilter = 'all';
         // Opieka nad ofertą (P1): filtr losu (followupStatus w search API).
         this.currentFollowupFilter = 'all';
+        // Opieka nad ofertą (P2): ukrywanie wstrzymanych (hidePaused w search API).
+        this.hidePaused = false;
         this.filters = {
             user: '',
             // Domyślnie pokazuj oferty z bieżącego dnia (spójnie z #/zlecenia).

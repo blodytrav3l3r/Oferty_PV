@@ -49,6 +49,7 @@ const NOW = '2026-10-08T12:00:00.000Z';
 const base = {
     followupStatus: 'all' as const,
     overdueOnly: false,
+    hidePaused: false,
     nextContactFrom: '',
     nextContactTo: '',
     nowIso: NOW
@@ -76,6 +77,8 @@ describe('P0.4 parseSearchParams — nowe filtry', () => {
         expect(parseSearchParams({ sort: 'DROP' }).sort).toBe('createdAt');
         expect(parseSearchParams({ overdueOnly: 'true' }).overdueOnly).toBe(true);
         expect(parseSearchParams({ overdueOnly: 'yes' }).overdueOnly).toBe(false);
+        expect(parseSearchParams({ hidePaused: 'true' }).hidePaused).toBe(true);
+        expect(parseSearchParams({}).hidePaused).toBe(false);
         expect(parseSearchParams({ nextContactFrom: '2026-10-01' }).nextContactFrom).toBe(
             '2026-10-01'
         );
@@ -132,6 +135,14 @@ describe('P0.4 buildFollowUpConditions', () => {
         const sql = render(buildFollowUpConditions({ ...base, overdueOnly: true }));
         expect(sql).toContain(`combined."_fu_next" <= ${NOW}`);
         expect(sql).not.toContain('combined."_fu_next" IS NULL');
+    });
+
+    it('hidePaused: NOT EXISTS care_states (done albo przyszły snooze)', () => {
+        const sql = render(buildFollowUpConditions({ ...base, hidePaused: true }));
+        expect(sql).toContain('NOT EXISTS');
+        expect(sql).toContain('care_states');
+        expect(sql).toContain(`cs."doneAt" IS NOT NULL`);
+        expect(render(buildFollowUpConditions(base))).not.toContain('care_states');
     });
 
     it('zakres nextContactFrom/To', () => {

@@ -116,6 +116,12 @@ function bindStaticActions() {
                 window.kartotekaUI.setFollowupFilter(btn.dataset.followupFilter);
         });
     });
+    // Opieka nad ofertą (P2): ukrywanie wstrzymanych.
+    document.querySelectorAll('.ka-hide-paused-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+            if (window.kartotekaUI) window.kartotekaUI.toggleHidePaused();
+        });
+    });
     document.getElementById('ka-clear-filters')?.addEventListener('click', () => {
         if (window.kartotekaUI) window.kartotekaUI.clearAllFilters();
     });

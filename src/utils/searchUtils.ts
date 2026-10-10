@@ -16,6 +16,8 @@ export interface SearchParams {
     orderStatus: 'all' | 'with_order' | 'without_order';
     followupStatus: FollowupStatus;
     overdueOnly: boolean;
+    /** P2: ukryj oferty wstrzymane (snooze/done w care_states). */
+    hidePaused: boolean;
     nextContactFrom: string;
     nextContactTo: string;
     cursor: string;
@@ -49,6 +51,7 @@ export function parseSearchParams(query: Record<string, unknown>): SearchParams 
             ? (query.followupStatus as FollowupStatus)
             : 'all',
         overdueOnly: query.overdueOnly === true || query.overdueOnly === 'true',
+        hidePaused: query.hidePaused === true || query.hidePaused === 'true',
         nextContactFrom:
             typeof query.nextContactFrom === 'string' && DATE_PARAM_RE.test(query.nextContactFrom)
                 ? query.nextContactFrom
@@ -248,6 +251,7 @@ export function followUpColumnsSql(kind: 'rury' | 'studnie', alias: string): Pri
 export interface FollowUpFilterInput {
     followupStatus: FollowupStatus;
     overdueOnly: boolean;
+    hidePaused: boolean;
     nextContactFrom: string;
     nextContactTo: string;
     /** ISO-8601 UTC "teraz" — parametr, nie NOW() w SQL (stabilne w requeście). */
@@ -276,6 +280,13 @@ export function buildFollowUpConditions(input: FollowUpFilterInput): Prisma.Sql[
 
     if (input.overdueOnly) {
         conds.push(Prisma.sql`${openOrNull} AND ${next} <= ${input.nowIso}`);
+    }
+    // P2: wstrzymane = wiersz w care_states z done albo przyszłym snooze.
+    // _type kartoteki ('rury'/'studnie') == offerKind w care_states.
+    if (input.hidePaused) {
+        conds.push(
+            Prisma.sql`NOT EXISTS (SELECT 1 FROM care_states cs WHERE cs."offerKind" = combined."_type" AND cs."offerId" = combined.id AND (cs."doneAt" IS NOT NULL OR cs."snoozedUntil" > ${input.nowIso}))`
+        );
     }
     if (input.nextContactFrom) {
         conds.push(Prisma.sql`${next} >= ${input.nextContactFrom}`);
