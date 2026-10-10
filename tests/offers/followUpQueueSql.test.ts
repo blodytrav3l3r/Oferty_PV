@@ -29,6 +29,8 @@ function freshDb(): DatabaseSync {
     db.exec(`CREATE TABLE offers_rel (id TEXT PRIMARY KEY, "userId" TEXT);
         CREATE TABLE offers_studnie_rel (id TEXT PRIMARY KEY, "userId" TEXT);
         CREATE TABLE document_shares (id TEXT PRIMARY KEY, "sharedWithUserId" TEXT, "documentType" TEXT, "documentId" TEXT);
+        CREATE TABLE care_states ("offerKind" TEXT NOT NULL, "offerId" TEXT NOT NULL, "snoozedUntil" TEXT, "doneAt" TEXT, "updatedBy" TEXT, "updatedAt" TEXT NOT NULL,
+            CONSTRAINT "care_states_pkey" PRIMARY KEY ("offerKind", "offerId"));
         CREATE TABLE offer_follow_ups (id TEXT PRIMARY KEY, "offerKind" TEXT,
             "offerId" TEXT, "createdByUserId" TEXT, "contactedAt" TEXT,
             "createdAt" TEXT, outcome TEXT, "nextContactAt" TEXT);`);

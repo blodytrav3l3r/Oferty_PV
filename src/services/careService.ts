@@ -30,6 +30,8 @@ export interface CareQueueItem {
     nextContactAt: string | null;
     lastContactAt: string | null;
     bucketWeight: number;
+    snoozedUntil: string | null;
+    doneAt: string | null;
 }
 
 export interface CareQueueResult {
@@ -155,18 +157,24 @@ export function buildCareQueueQueries(
         FROM offer_follow_ups f WHERE ${fuScope}
     ), base AS (
         SELECT 'rury' AS "offerKind", o."id" AS "offerId", l."outcome" AS "outcome",
-            l."nextContactAt" AS "next", l."contactedAt" AS "last"
+            l."nextContactAt" AS "next", l."contactedAt" AS "last",
+            cs."snoozedUntil" AS "snoozed", cs."doneAt" AS "done"
         FROM offers_rel o LEFT JOIN latest l
             ON l."offerKind" = 'rury' AND l."offerId" = o."id" AND l."rn" = 1
+        LEFT JOIN care_states cs
+            ON cs."offerKind" = 'rury' AND cs."offerId" = o."id"
         WHERE ${scopeRury}
         UNION ALL
         SELECT 'studnie' AS "offerKind", s."id" AS "offerId", l."outcome" AS "outcome",
-            l."nextContactAt" AS "next", l."contactedAt" AS "last"
+            l."nextContactAt" AS "next", l."contactedAt" AS "last",
+            cs."snoozedUntil" AS "snoozed", cs."doneAt" AS "done"
         FROM offers_studnie_rel s LEFT JOIN latest l
             ON l."offerKind" = 'studnie' AND l."offerId" = s."id" AND l."rn" = 1
+        LEFT JOIN care_states cs
+            ON cs."offerKind" = 'studnie' AND cs."offerId" = s."id"
         WHERE ${scopeStudnie}
     ), ranked AS (
-        SELECT "offerKind", "offerId", "outcome", "next", "last",
+        SELECT "offerKind", "offerId", "outcome", "next", "last", "snoozed", "done",
             ${BUCKET_CASE(opts.nowIso)} AS "bucketWeight"
         FROM base
     )`;
@@ -182,7 +190,7 @@ export function buildCareQueueQueries(
     }
 
     const data = Prisma.sql`${withSql}
-        SELECT "offerKind", "offerId", "outcome", "next", "last", "bucketWeight" FROM ranked
+        SELECT "offerKind", "offerId", "outcome", "next", "last", "snoozed", "done", "bucketWeight" FROM ranked
         WHERE ${cursorSql}
         ORDER BY "bucketWeight" ASC, COALESCE("next", ${NULL_NEXT}) ASC, "offerKind" ASC, "offerId" ASC
         LIMIT ${limit + 1}`;
@@ -263,6 +271,8 @@ export async function getCareQueue(
                 outcome: string | null;
                 next: string | null;
                 last: string | null;
+                snoozed: string | null;
+                done: string | null;
                 bucketWeight: number | bigint;
             }>
         >(data),
@@ -288,9 +298,112 @@ export async function getCareQueue(
             outcome: r.outcome,
             nextContactAt: r.next,
             lastContactAt: r.last,
-            bucketWeight: num(r.bucketWeight)
+            bucketWeight: num(r.bucketWeight),
+            snoozedUntil: r.snoozed,
+            doneAt: r.done
         })),
         nextCursor,
         totalCount
+    };
+}
+
+// ─── P1: stan pilnowania (snooze/done) + konfiguracja SLA ─────────────
+// Stan bieżący w care_states, osobno od historii append-only.
+// Raw SQL (nie prisma.care_states) — działa bez regen klienta/restartu.
+// Snooze i done rozłączne: ustawienie jednego czyści drugie.
+
+export type CareKind = 'rury' | 'studnie';
+
+export interface CareState {
+    offerKind: string;
+    offerId: string;
+    snoozedUntil: string | null;
+    doneAt: string | null;
+    updatedBy: string | null;
+    updatedAt: string;
+}
+
+export interface SlaConfig {
+    firstContactH: number;
+    staleD: number;
+    escalationH: number;
+}
+
+export const DEFAULT_SLA: SlaConfig = { firstContactH: 24, staleD: 7, escalationH: 72 };
+export const MAX_SNOOZE_DAYS = 14;
+
+type RawDb = QueryRawDb;
+
+export async function getCareState(
+    db: RawDb,
+    offerKind: CareKind,
+    offerId: string
+): Promise<CareState | null> {
+    const rows = await db.$queryRaw<CareState[]>(
+        Prisma.sql`SELECT "offerKind", "offerId", "snoozedUntil", "doneAt", "updatedBy", "updatedAt" FROM "care_states" WHERE "offerKind" = ${offerKind} AND "offerId" = ${offerId}`
+    );
+    return rows[0] ?? null;
+}
+
+/** Upsert stanu: dokładnie jedno z snoozedUntil/doneAt (drugie NULL). */
+export async function setCareState(
+    db: RawDb,
+    args: {
+        offerKind: CareKind;
+        offerId: string;
+        snoozedUntil: string | null;
+        doneAt: string | null;
+        updatedBy: string;
+        nowIso: string;
+    }
+): Promise<CareState> {
+    const state: CareState = {
+        offerKind: args.offerKind,
+        offerId: args.offerId,
+        snoozedUntil: args.snoozedUntil,
+        doneAt: args.doneAt,
+        updatedBy: args.updatedBy,
+        updatedAt: args.nowIso
+    };
+    await db.$queryRaw(
+        Prisma.sql`INSERT INTO "care_states" ("offerKind", "offerId", "snoozedUntil", "doneAt", "updatedBy", "updatedAt") VALUES (${state.offerKind}, ${state.offerId}, ${state.snoozedUntil}, ${state.doneAt}, ${state.updatedBy}, ${state.updatedAt}) ON CONFLICT ("offerKind", "offerId") DO UPDATE SET "snoozedUntil" = ${state.snoozedUntil}, "doneAt" = ${state.doneAt}, "updatedBy" = ${state.updatedBy}, "updatedAt" = ${state.updatedAt}`
+    );
+    return state;
+}
+
+export async function clearCareState(
+    db: RawDb,
+    offerKind: CareKind,
+    offerId: string
+): Promise<void> {
+    await db.$queryRaw(
+        Prisma.sql`DELETE FROM "care_states" WHERE "offerKind" = ${offerKind} AND "offerId" = ${offerId}`
+    );
+}
+
+export async function getSlaConfig(db: RawDb): Promise<SlaConfig> {
+    const rows = await db.$queryRaw<Array<SlaConfig>>(
+        Prisma.sql`SELECT "firstContactH", "staleD", "escalationH" FROM "care_sla_config" WHERE "id" = 'global'`
+    );
+    const r = rows[0];
+    if (!r) return { ...DEFAULT_SLA };
+    return {
+        firstContactH: Number(r.firstContactH) || DEFAULT_SLA.firstContactH,
+        staleD: Number(r.staleD) || DEFAULT_SLA.staleD,
+        escalationH: Number(r.escalationH) || DEFAULT_SLA.escalationH
+    };
+}
+
+export async function setSlaConfig(
+    db: RawDb,
+    cfg: SlaConfig & { updatedBy: string; nowIso: string }
+): Promise<SlaConfig> {
+    await db.$queryRaw(
+        Prisma.sql`INSERT INTO "care_sla_config" ("id", "firstContactH", "staleD", "escalationH", "updatedBy", "updatedAt") VALUES ('global', ${cfg.firstContactH}, ${cfg.staleD}, ${cfg.escalationH}, ${cfg.updatedBy}, ${cfg.nowIso}) ON CONFLICT ("id") DO UPDATE SET "firstContactH" = ${cfg.firstContactH}, "staleD" = ${cfg.staleD}, "escalationH" = ${cfg.escalationH}, "updatedBy" = ${cfg.updatedBy}, "updatedAt" = ${cfg.nowIso}`
+    );
+    return {
+        firstContactH: cfg.firstContactH,
+        staleD: cfg.staleD,
+        escalationH: cfg.escalationH
     };
 }

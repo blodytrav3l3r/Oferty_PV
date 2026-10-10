@@ -1070,3 +1070,29 @@ model PricelistItemPrecoZakresy {
 
   @@index([versionId])
 }
+
+// P1 opieka: stan bieżący pilnowania — osobno od historii kontaktów
+// (offer_follow_ups append-only). Snooze/done to stan, nie zdarzenie.
+// Każda zmiana = wiersz w audit_logs (entityType care_state).
+model care_states {
+  offerKind    String // 'rury' | 'studnie' (walidacja w API, brak FK polimorficznego)
+  offerId      String
+  snoozedUntil String? // ISO-8601 UTC, null = aktywne pilnowanie
+  doneAt       String? // ISO-8601 UTC, null = nieukończone (snooze/done rozłączne)
+  updatedBy    String?
+  updatedAt    String // ISO-8601 UTC
+
+  @@id([offerKind, offerId])
+  @@index([snoozedUntil], map: "idx_care_snooze")
+  @@index([doneAt], map: "idx_care_done")
+}
+
+// P1 opieka: konfiguracja SLA (1 wiersz global, edycja tylko admin).
+model care_sla_config {
+  id            String @id @default("global")
+  firstContactH Int    @default(24)
+  staleD        Int    @default(7)
+  escalationH   Int    @default(72)
+  updatedBy     String?
+  updatedAt     String?
+}
