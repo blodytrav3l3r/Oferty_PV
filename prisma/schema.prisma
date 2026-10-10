@@ -1096,3 +1096,19 @@ model care_sla_config {
   updatedBy     String?
   updatedAt     String?
 }
+
+// P2 opieka: centrum powiadomień in-app (pochodna stanu, nie event-bus).
+// Wiersz = fakt do pokazania userowi; odczyt = readAt; polling 60 s.
+// SLA_BREACH = przeterminowanie, ESCALATION = próg eskalacji, CALLBACK_DUE = termin dziś.
+model care_notifications {
+  id        String  @id
+  userId    String
+  offerKind String
+  offerId   String
+  type      String
+  readAt    String?
+  createdAt String
+
+  @@index([userId, readAt, createdAt], map: "idx_carenotif_user_read")
+  @@index([offerKind, offerId], map: "idx_carenotif_offer")
+}

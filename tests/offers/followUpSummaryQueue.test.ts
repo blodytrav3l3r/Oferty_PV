@@ -22,6 +22,7 @@ const queueMock = jest.fn();
 jest.mock('../../src/services/careService', () => ({
     getCareSummary: (...a: unknown[]) => summaryMock(...a),
     getCareQueue: (...a: unknown[]) => queueMock(...a),
+    getSlaConfig: jest.fn(async () => ({ firstContactH: 24, staleD: 7, escalationH: 72 })),
     clampCareLimit: jest.requireActual('../../src/services/careService').clampCareLimit
 }));
 

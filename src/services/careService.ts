@@ -407,3 +407,160 @@ export async function setSlaConfig(
         escalationH: cfg.escalationH
     };
 }
+
+// ─── P2: centrum powiadomień (pochodna stanu, sync przy odczycie) ─────
+// Typy: CALLBACK_DUE (termin dziś/przyszłość 24 h, OPEN), SLA_BREACH
+// (zaległość ≥ staleD lub NO_CONTACT starszy niż firstContactH),
+// ESCALATION (zaległość godzinowa ≥ escalationH). Pauza (snooze/done)
+// i terminale nie generują. Sync = INSERT brakujących + auto-read
+// nieaktualnych (terminal/done/pauza), wszystko w SQL bez N+1.
+
+export type CareNotifType = 'CALLBACK_DUE' | 'SLA_BREACH' | 'ESCALATION';
+
+export interface CareNotification {
+    id: string;
+    userId: string;
+    offerKind: string;
+    offerId: string;
+    type: string;
+    readAt: string | null;
+    createdAt: string;
+}
+
+function notifBase(user: CareUser, scope: CareScope): { rury: Prisma.Sql; studnie: Prisma.Sql } {
+    const ownerWhere = resolveOwnerWhere(user, scope);
+    return {
+        rury: ownerCond(user, 'o', 'offer', ownerWhere),
+        studnie: ownerCond(user, 's', 'offer_studnie', ownerWhere)
+    };
+}
+
+/** Kandydaci do powiadomień dla usera: widoczne oferty z typem naruszenia. */
+function notifCandidates(
+    user: CareUser,
+    scope: CareScope,
+    nowIso: string,
+    sla: SlaConfig
+): Prisma.Sql {
+    const { rury, studnie } = notifBase(user, scope);
+    const fuScope = followUpScope(rury, studnie);
+    const dayAhead = new Date(Date.parse(nowIso) + 86400000).toISOString();
+    const staleCut = new Date(Date.parse(nowIso) - sla.staleD * 86400000).toISOString();
+    const escCut = new Date(Date.parse(nowIso) - sla.escalationH * 3600000).toISOString();
+    const fcCut = new Date(Date.parse(nowIso) - sla.firstContactH * 3600000).toISOString();
+    return Prisma.sql`WITH latest AS (
+        SELECT f."offerKind", f."offerId", f."outcome", f."nextContactAt", f."contactedAt",
+            ROW_NUMBER() OVER (PARTITION BY f."offerKind", f."offerId" ORDER BY f."contactedAt" DESC, f."createdAt" DESC, f."id" DESC) AS "rn"
+        FROM offer_follow_ups f WHERE ${fuScope}
+    ), base AS (
+        SELECT 'rury' AS "offerKind", o."id" AS "offerId", o."userId" AS "ownerId",
+            l."outcome" AS "outcome", l."nextContactAt" AS "next", o."createdAt" AS "born"
+        FROM offers_rel o LEFT JOIN latest l
+            ON l."offerKind" = 'rury' AND l."offerId" = o."id" AND l."rn" = 1
+        LEFT JOIN care_states cs ON cs."offerKind" = 'rury' AND cs."offerId" = o."id"
+        WHERE ${rury} AND cs."offerId" IS NULL
+        UNION ALL
+        SELECT 'studnie' AS "offerKind", s."id" AS "offerId", s."userId" AS "ownerId",
+            l."outcome" AS "outcome", l."nextContactAt" AS "next", s."createdAt" AS "born"
+        FROM offers_studnie_rel s LEFT JOIN latest l
+            ON l."offerKind" = 'studnie' AND l."offerId" = s."id" AND l."rn" = 1
+        LEFT JOIN care_states cs ON cs."offerKind" = 'studnie' AND cs."offerId" = s."id"
+        WHERE ${studnie} AND cs."offerId" IS NULL
+    )
+    SELECT "offerKind", "offerId", "ownerId",
+        CASE
+            WHEN ("outcome" IS NULL AND "born" <= ${fcCut}) OR ("outcome" = 'OPEN' AND "next" IS NOT NULL AND "next" <= ${staleCut}) THEN 'SLA_BREACH'
+            WHEN "outcome" = 'OPEN' AND "next" IS NOT NULL AND "next" <= ${escCut} THEN 'ESCALATION'
+            WHEN "outcome" = 'OPEN' AND "next" IS NOT NULL AND "next" <= ${dayAhead} THEN 'CALLBACK_DUE'
+            WHEN "outcome" IS NULL THEN 'CALLBACK_DUE'
+            ELSE NULL
+        END AS "ntype"
+    FROM base`;
+}
+
+export interface CareSyncResult {
+    inserted: number;
+    resolved: number;
+}
+
+/** Sync skrzynki usera: wstaw brakujące + zamknij nieaktualne. Idempotentny. */
+export async function syncCareNotifications(
+    db: RawDb,
+    user: CareUser,
+    scope: CareScope,
+    nowIso: string,
+    sla: SlaConfig
+): Promise<CareSyncResult> {
+    const uid = user.id;
+    const cand = notifCandidates(user, scope, nowIso, sla);
+    const candSel = Prisma.sql`SELECT * FROM (${cand}) WHERE "ntype" IS NOT NULL`;
+    const toInsert = (await db.$queryRaw<
+        Array<{ offerKind: string; offerId: string; ownerId: string; ntype: string | null }>
+    >(candSel)) as Array<{
+        offerKind: string;
+        offerId: string;
+        ntype: string | null;
+    }>;
+    let inserted = 0;
+    for (const c of toInsert) {
+        if (!c.ntype) continue;
+        const dup = (await db.$queryRaw<Array<{ c: number }>>(
+            Prisma.sql`SELECT COUNT(*) AS "c" FROM "care_notifications" WHERE "userId" = ${uid} AND "offerKind" = ${c.offerKind} AND "offerId" = ${c.offerId} AND "type" = ${c.ntype} AND "readAt" IS NULL`
+        )) as Array<{ c: number | bigint }>;
+        if (num(dup[0]?.c) > 0) continue;
+        const { randomUUID } = await import('node:crypto');
+        await db.$queryRaw(
+            Prisma.sql`INSERT INTO "care_notifications" ("id", "userId", "offerKind", "offerId", "type", "readAt", "createdAt") VALUES (${randomUUID()}, ${uid}, ${c.offerKind}, ${c.offerId}, ${c.ntype}, NULL, ${nowIso})`
+        );
+        inserted += 1;
+    }
+    // Auto-read: oferta zniknęła z kandydatów (terminal/pauza/poza scope).
+    const liveSel = Prisma.sql`SELECT "offerKind", "offerId" FROM (${cand}) WHERE "ntype" IS NOT NULL`;
+    const stillDue = (await db.$queryRaw<Array<{ offerKind: string; offerId: string }>>(
+        liveSel
+    )) as Array<{ offerKind: string; offerId: string }>;
+    const open = await db.$queryRaw<Array<CareNotification>>(
+        Prisma.sql`SELECT "id", "userId", "offerKind", "offerId", "type", "readAt", "createdAt" FROM "care_notifications" WHERE "userId" = ${uid} AND "readAt" IS NULL`
+    );
+    const live = new Set(stillDue.map((r) => `${r.offerKind}:${r.offerId}`));
+    let resolved = 0;
+    for (const n of open) {
+        if (!live.has(`${n.offerKind}:${n.offerId}`)) {
+            await db.$queryRaw(
+                Prisma.sql`UPDATE "care_notifications" SET "readAt" = ${nowIso} WHERE "id" = ${n.id} AND "userId" = ${uid} AND "readAt" IS NULL`
+            );
+            resolved += 1;
+        }
+    }
+    return { inserted, resolved };
+}
+
+export async function listCareNotifications(
+    db: RawDb,
+    userId: string,
+    opts: { unreadOnly?: boolean; limit?: unknown }
+): Promise<{ items: CareNotification[]; unreadCount: number }> {
+    const limit = clampCareLimit(opts.limit);
+    const items = (await db.$queryRaw<CareNotification[]>(
+        opts.unreadOnly
+            ? Prisma.sql`SELECT "id", "userId", "offerKind", "offerId", "type", "readAt", "createdAt" FROM "care_notifications" WHERE "userId" = ${userId} AND "readAt" IS NULL ORDER BY "createdAt" DESC LIMIT ${limit}`
+            : Prisma.sql`SELECT "id", "userId", "offerKind", "offerId", "type", "readAt", "createdAt" FROM "care_notifications" WHERE "userId" = ${userId} ORDER BY "createdAt" DESC LIMIT ${limit}`
+    )) as CareNotification[];
+    const cnt = (await db.$queryRaw<Array<{ c: number | bigint }>>(
+        Prisma.sql`SELECT COUNT(*) AS "c" FROM "care_notifications" WHERE "userId" = ${userId} AND "readAt" IS NULL`
+    )) as Array<{ c: number | bigint }>;
+    return { items, unreadCount: num(cnt[0]?.c) };
+}
+
+/** Odczyt własnego powiadomienia (guard owner w WHERE). Zwraca liczbę. */
+export async function markCareNotificationRead(
+    db: RawDb,
+    userId: string,
+    notifId: string,
+    nowIso: string
+): Promise<number> {
+    const rows = (await db.$queryRaw<Array<{ c: number | bigint }>>(
+        Prisma.sql`UPDATE "care_notifications" SET "readAt" = ${nowIso} WHERE "id" = ${notifId} AND "userId" = ${userId} AND "readAt" IS NULL RETURNING 1 AS "c"`
+    )) as Array<{ c: number | bigint }>;
+    return rows.length;
+}

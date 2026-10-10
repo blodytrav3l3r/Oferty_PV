@@ -16,6 +16,9 @@ import {
     clearCareState,
     getSlaConfig,
     setSlaConfig,
+    syncCareNotifications,
+    listCareNotifications,
+    markCareNotificationRead,
     MAX_SNOOZE_DAYS
 } from '../services/careService';
 import { getFollowUpState } from '../utils/careStatus';
@@ -33,7 +36,8 @@ const scopeSchema = z.enum(['mine', 'team', 'all']);
 const queueQuerySchema = z.object({
     scope: scopeSchema.optional(),
     cursor: z.string().max(2000).optional(),
-    limit: z.coerce.number().int().min(1).max(100).optional()
+    limit: z.coerce.number().int().min(1).max(100).optional(),
+    hidePaused: z.coerce.boolean().optional()
 });
 const summaryQuerySchema = z.object({
     scope: scopeSchema.optional()
@@ -79,6 +83,8 @@ router.get('/queue', requireAuth, async (req, res) => {
             cursor: parsed.data.cursor ?? null,
             limit
         });
+        const sla = await getSlaConfig(prisma);
+        const hidePaused = parsed.data.hidePaused ?? false;
         const items = result.items.map((r) => {
             const state = getFollowUpState(
                 { outcome: r.outcome, nextContactAt: r.nextContactAt },
@@ -87,6 +93,7 @@ router.get('/queue', requireAuth, async (req, res) => {
             );
             const snoozedUntil = r.snoozedUntil ?? null;
             const doneAt = r.doneAt ?? null;
+            const paused = (snoozedUntil !== null && snoozedUntil > nowIso) || doneAt !== null;
             return {
                 offerKind: r.offerKind,
                 offerId: r.offerId,
@@ -98,14 +105,16 @@ router.get('/queue', requireAuth, async (req, res) => {
                 overdueDays: state.overdueDays,
                 snoozedUntil,
                 doneAt,
-                paused: (snoozedUntil !== null && snoozedUntil > nowIso) || doneAt !== null
+                paused,
+                escalated:
+                    !paused && state.status === 'DUE' && state.overdueDays * 24 >= sla.escalationH
             };
         });
         return res.json({
             ok: true,
             scope,
             now: nowIso,
-            items,
+            items: hidePaused ? items.filter((i) => !i.paused) : items,
             nextCursor: result.nextCursor,
             totalCount: result.totalCount
         });
@@ -326,6 +335,55 @@ router.put('/sla', requireAuth, WRITE_LIMITER, async (req, res) => {
     } catch (e) {
         if (mapPrismaError(res, e)) return;
         logger.warn('Care', 'Błąd zapisu SLA', String(e));
+        return res.status(500).json({ error: 'Błąd serwera' });
+    }
+});
+
+// ─── P2: centrum powiadomień (sync przy odczycie, polling FE) ──────────
+
+const notifQuerySchema = z.object({
+    scope: scopeSchema.optional(),
+    unreadOnly: z.coerce.boolean().optional(),
+    limit: z.coerce.number().int().min(1).max(100).optional()
+});
+
+router.get('/notifications', requireAuth, async (req, res) => {
+    const authReq = req as AuthenticatedRequest;
+    try {
+        const user = authReq.user;
+        if (!user) return res.status(401).json({ error: 'Nieautoryzowany' });
+        const parsed = notifQuerySchema.safeParse(req.query);
+        if (!parsed.success) return res.status(400).json({ error: 'Nieprawidłowe parametry' });
+        const scope = toScope(parsed.data.scope);
+        const nowIso = new Date().toISOString();
+        const sla = await getSlaConfig(prisma);
+        const sync = await syncCareNotifications(prisma, user, scope, nowIso, sla);
+        const { items, unreadCount } = await listCareNotifications(prisma, user.id, {
+            unreadOnly: parsed.data.unreadOnly ?? true,
+            limit: clampCareLimit(parsed.data.limit)
+        });
+        return res.json({ ok: true, scope, now: nowIso, items, unreadCount, sync });
+    } catch (e) {
+        if ((e as { status?: number }).status === 403) {
+            return res.status(403).json({ error: 'Brak uprawnień do zakresu' });
+        }
+        logger.warn('Care', 'Błąd powiadomień', String(e));
+        return res.status(500).json({ error: 'Błąd serwera' });
+    }
+});
+
+router.post('/notifications/:id/read', requireAuth, WRITE_LIMITER, async (req, res) => {
+    const authReq = req as AuthenticatedRequest;
+    try {
+        const user = authReq.user;
+        if (!user) return res.status(401).json({ error: 'Nieautoryzowany' });
+        const nowIso = new Date().toISOString();
+        const n = await markCareNotificationRead(prisma, user.id, String(req.params.id), nowIso);
+        if (n === 0) return res.status(404).json({ error: 'Nie znaleziono powiadomienia' });
+        return res.json({ ok: true });
+    } catch (e) {
+        if (mapPrismaError(res, e)) return;
+        logger.warn('Care', 'Błąd odczytu powiadomienia', String(e));
         return res.status(500).json({ error: 'Błąd serwera' });
     }
 });
