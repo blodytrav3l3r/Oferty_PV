@@ -2707,14 +2707,22 @@ html[data-theme='light'] body.index-page.logged-in::before {
     display: flex;
     gap: 3px;
     margin-top: 8px;
-    height: 10px;
+    height: 12px;
 }
 .care-segments span {
     display: block;
     border-radius: var(--radius-sm);
-    height: 10px;
-    min-width: 6px;
+    height: 12px;
+    min-width: 10px;
     overflow: hidden;
+}
+.care-segments span:first-child {
+    border-top-left-radius: var(--radius-md);
+    border-bottom-left-radius: var(--radius-md);
+}
+.care-segments span:last-child {
+    border-top-right-radius: var(--radius-md);
+    border-bottom-right-radius: var(--radius-md);
 }
 .care-legend {
     display: flex;
@@ -2731,15 +2739,7 @@ html[data-theme='light'] body.index-page.logged-in::before {
 .care-legend-item {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
     white-space: nowrap;
-}
-.care-legend-dot {
-    display: inline-block;
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    flex-shrink: 0;
 }
 @media (max-width: 1100px) {
     .care-dashboard-grid {

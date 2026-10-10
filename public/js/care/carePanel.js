@@ -155,7 +155,8 @@ function renderBuckets(summary) {
         empty.textContent = 'Brak ofert w opiece.';
         box.appendChild(empty);
     } else {
-        // Legenda tekstowa (zawsze widoczna) + segmentowy pasek na flex.
+        // Legenda tekstowa + jeden słupkowy wykres warstwowy (flex).
+        // Bez kropek: same etykiety + pełny pasek proporcji.
         const legend = document.createElement('div');
         legend.className = 'care-legend';
         rows.forEach((r, i) => {
@@ -167,12 +168,7 @@ function renderBuckets(summary) {
             }
             const item = document.createElement('span');
             item.className = 'care-legend-item';
-            const dot = document.createElement('span');
-            dot.className = 'care-legend-dot';
-            dot.style.background = BUCKET_COLORS[i % BUCKET_COLORS.length];
-            const text = document.createElement('span');
-            text.textContent = r[0] + ': ' + r[1];
-            item.append(dot, text);
+            item.textContent = r[0] + ': ' + r[1];
             legend.appendChild(item);
         });
         box.appendChild(legend);
@@ -181,6 +177,7 @@ function renderBuckets(summary) {
         seg.setAttribute('role', 'img');
         seg.setAttribute('aria-label', rows.map((r) => r[0] + ': ' + r[1]).join(', '));
         rows.forEach((r, i) => {
+            if (r[1] <= 0) return;
             const s = document.createElement('span');
             s.style.flexGrow = String(r[1]);
             s.style.flexShrink = '1';
