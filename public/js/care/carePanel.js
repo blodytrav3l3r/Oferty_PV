@@ -155,14 +155,38 @@ function renderBuckets(summary) {
         empty.textContent = 'Brak ofert w opiece.';
         box.appendChild(empty);
     } else {
+        // Legenda tekstowa (zawsze widoczna) + segmentowy pasek na flex.
+        const legend = document.createElement('div');
+        legend.className = 'care-legend';
+        rows.forEach((r, i) => {
+            if (i > 0) {
+                const sep = document.createElement('span');
+                sep.className = 'care-legend-sep';
+                sep.textContent = '|';
+                legend.appendChild(sep);
+            }
+            const item = document.createElement('span');
+            item.className = 'care-legend-item';
+            const dot = document.createElement('span');
+            dot.className = 'care-legend-dot';
+            dot.style.background = BUCKET_COLORS[i % BUCKET_COLORS.length];
+            const text = document.createElement('span');
+            text.textContent = r[0] + ': ' + r[1];
+            item.append(dot, text);
+            legend.appendChild(item);
+        });
+        box.appendChild(legend);
         const seg = document.createElement('div');
         seg.className = 'care-segments';
         seg.setAttribute('role', 'img');
         seg.setAttribute('aria-label', rows.map((r) => r[0] + ': ' + r[1]).join(', '));
         rows.forEach((r, i) => {
             const s = document.createElement('span');
-            s.style.width = Math.max(2, Math.round((r[1] / total) * 100)) + '%';
+            s.style.flexGrow = String(r[1]);
+            s.style.flexShrink = '1';
+            s.style.flexBasis = '0';
             s.style.background = BUCKET_COLORS[i % BUCKET_COLORS.length];
+            s.title = r[0] + ': ' + r[1];
             seg.appendChild(s);
         });
         box.appendChild(seg);

@@ -171,6 +171,19 @@ describe('carePanel', () => {
         expect(els['care-badge'].textContent).toBe('2');
         expect(els['care-sync-text'].textContent).toContain('Ostatnia synchronizacja:');
         expect(els['care-buckets-total'].textContent).toBe('Razem: 7');
+        expect(els['care-buckets-top'].textContent).toBe('Najwyższy priorytet: Do kontaktu');
+        const findClass = (root: any, cls: string): any[] => {
+            const out: any[] = [];
+            const walk2 = (n: any): void => {
+                if (n.className && String(n.className).split(' ').includes(cls)) out.push(n);
+                for (const c of n.children || []) walk2(c);
+            };
+            walk2(root);
+            return out;
+        };
+        // Legenda tekstowa zawsze widoczna (5 pozycji) + segmenty paska.
+        expect(findClass(els['care-buckets'], 'care-legend-item')).toHaveLength(5);
+        expect(findClass(els['care-buckets'], 'care-segments')).toHaveLength(1);
         const cards = els['care-notif-list'].children;
         expect(cards).toHaveLength(2);
         expect(cards[0].className).toContain('care-notif-card');
