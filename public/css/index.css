@@ -2621,8 +2621,12 @@ html[data-theme='light'] body.index-page.logged-in::before {
     gap: 4px;
     margin-bottom: 8px;
 }
-#care-queue-list,
-#care-notif-list,
+#care-notif-list {
+    max-height: 32rem;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    padding-right: 0;
+}
 #care-buckets {
     max-height: none;
     overflow-y: visible;
