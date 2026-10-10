@@ -135,50 +135,7 @@ async function loadFollowUpWidget() {
             logger.warn('dashboard', 'Failed to load followup KPI', e);
         }
 
-        const topRes = await fetch(
-            '/api/offers/search?followupStatus=needs_contact&limit=5&sort=followup&t=' + Date.now(),
-            { credentials: 'same-origin' }
-        );
-        const list = document.getElementById('followup-top-list');
-        if (!list) return;
-        if (topRes.ok) {
-            const json = await topRes.json();
-            const items = json.data || [];
-            if (items.length === 0) {
-                list.innerHTML =
-                    '<span class="recycled-empty">Brak ofert wymagających kontaktu.</span>';
-            } else {
-                list.innerHTML = items
-                    .map((o) => {
-                        const name = o.clientName || (o.data && o.data.clientName) || 'Brak danych';
-                        const price =
-                            o.data && typeof o.data.totalBrutto === 'number'
-                                ? o.data.totalBrutto.toFixed(2) + ' PLN'
-                                : '';
-                        const overdue =
-                            o.followup && o.followup.nextContactAt
-                                ? Math.max(
-                                      0,
-                                      Math.floor(
-                                          (Date.now() - Date.parse(o.followup.nextContactAt)) /
-                                              86400000
-                                      )
-                                  )
-                                : null;
-                        const when =
-                            overdue === null
-                                ? 'brak kontaktu'
-                                : overdue <= 0
-                                  ? 'termin dzisiaj'
-                                  : overdue + ' dni po terminie';
-                        return (
-                            `<a class="recycled-badge" href="app.html#/kartoteka">` +
-                            `${escapeHtml(name)}${price ? ' • ' + escapeHtml(price) : ''} • ${escapeHtml(when)}</a>`
-                        );
-                    })
-                    .join('');
-            }
-        }
+        // Top-5 przeniesione do kolejki opieki (carePanel.js) — brak dublowania.
     } catch (e) {
         logger.error('dashboard', 'Failed to load followup widget', e);
     }

@@ -1,7 +1,9 @@
-import { escapeHtml } from '../shared/escapeHtml.js';
-
 const POLL_MS = 60000;
+const QUEUE_LIMIT = 50;
 let timer = null;
+let careScope = 'mine';
+let queueFilter = 'all';
+let queueCache = [];
 
 function setText(id, v) {
     const el = document.getElementById(id);
@@ -58,13 +60,19 @@ function renderNotifications(items, unreadCount) {
         chip.type = 'button';
         chip.className = NOTIF_CLASS[n.type] || 'ops-pill';
         chip.setAttribute('data-notif-id', String(n.id));
-        chip.setAttribute('aria-label', 'Oznacz jako przeczytane: ' + String(n.offerId));
+        chip.setAttribute(
+            'aria-label',
+            'Oznacz jako przeczytane (' +
+                (NOTIF_LABEL[n.type] || String(n.type)) +
+                '): ' +
+                String(n.offerId)
+        );
         const label = document.createElement('span');
-        label.innerHTML = escapeHtml(NOTIF_LABEL[n.type] || String(n.type));
+        label.textContent = NOTIF_LABEL[n.type] || String(n.type);
         const sep = document.createElement('span');
         sep.textContent = ' • ';
         const ref = document.createElement('span');
-        ref.innerHTML = escapeHtml(String(n.offerKind) + ' ' + String(n.offerId));
+        ref.textContent = String(n.offerKind) + ' ' + String(n.offerId);
         chip.append(label, sep, ref);
         chip.addEventListener('click', async () => {
             try {
@@ -119,48 +127,192 @@ function renderBuckets(summary) {
     }
 }
 
+function fmtMoney(v) {
+    if (typeof v !== 'number' || !Number.isFinite(v)) return '';
+    return v.toFixed(2) + ' PLN';
+}
+
+function fmtTerm(it) {
+    if (it.nextContactAt) {
+        const d = new Date(it.nextContactAt);
+        if (!Number.isNaN(d.getTime())) return 'Termin: ' + d.toLocaleDateString('pl-PL');
+    }
+    return 'Bez terminu';
+}
+
+function matchFilter(it) {
+    if (queueFilter === 'urgent') return !!it.escalated || it.overdueDays > 0;
+    if (queueFilter === 'today') return it.slaBucket === 'DUE_TODAY';
+    if (queueFilter === 'paused') return !!it.paused;
+    return true;
+}
+
+async function snoozeQuick(offerKind, offerId, days, row) {
+    const until = new Date(Date.now() + days * 86400000).toISOString();
+    try {
+        const resp = await fetch(
+            '/api/care/' +
+                encodeURIComponent(offerKind) +
+                '/' +
+                encodeURIComponent(offerId) +
+                '/snooze?t=' +
+                Date.now(),
+            {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ snoozedUntil: until })
+            }
+        );
+        if (!resp.ok) return;
+    } catch {
+        return;
+    }
+    // Undo inline: podmiana akcji w wierszu na "Cofnij".
+    const actions = row.querySelector('[data-care-actions]');
+    if (!actions) {
+        loadCarePanel();
+        return;
+    }
+    actions.textContent = '';
+    const done = document.createElement('span');
+    done.className = 'ops-pill ops-ok';
+    done.textContent = 'Odłożono o ' + days + 'd';
+    const undo = document.createElement('button');
+    undo.type = 'button';
+    undo.className = 'btn btn-sm btn-secondary';
+    undo.textContent = 'Cofnij';
+    undo.addEventListener('click', async () => {
+        try {
+            await fetch(
+                '/api/care/' +
+                    encodeURIComponent(offerKind) +
+                    '/' +
+                    encodeURIComponent(offerId) +
+                    '/reopen?t=' +
+                    Date.now(),
+                { method: 'POST', credentials: 'same-origin' }
+            );
+        } catch {
+            /* best-effort */
+        }
+        loadCarePanel();
+    });
+    actions.append(done, undo);
+}
+
 function renderQueue(items) {
     const list = document.getElementById('care-queue-list');
     if (!list) return;
     list.textContent = '';
-    if (!items || items.length === 0) {
+    queueCache = Array.isArray(items) ? items : [];
+    const visible = queueCache.filter(matchFilter);
+    if (visible.length === 0) {
         const empty = document.createElement('span');
         empty.className = 'recycled-empty';
-        empty.textContent = 'Kolejka pusta.';
+        empty.textContent =
+            queueCache.length === 0 ? 'Kolejka pusta.' : 'Brak ofert w tym filtrze.';
         list.appendChild(empty);
         return;
     }
-    for (const it of items.slice(0, 10)) {
+    for (const it of visible.slice(0, 20)) {
         const row = document.createElement('div');
         row.className = 'care-queue-row';
-        const main = document.createElement('span');
-        main.textContent =
-            String(it.offerKind) + ' ' + String(it.offerId) + ' • ' + String(it.status);
-        row.appendChild(main);
+        const head = document.createElement('div');
+        head.className = 'care-queue-head';
+        const title = document.createElement('strong');
+        const client = it.clientName ? String(it.clientName) : 'Brak klienta';
+        const value = fmtMoney(it.value);
+        title.textContent =
+            client + (value ? ' — ' + value : '') + ' (' + String(it.offerKind) + ')';
+        head.appendChild(title);
         if (it.escalated) {
             const esc = document.createElement('span');
             esc.className = 'ops-pill ops-err';
             esc.textContent = 'Eskalacja';
-            row.appendChild(esc);
+            head.appendChild(esc);
         } else if (it.overdueDays > 0) {
             const late = document.createElement('span');
             late.className = 'ops-pill ops-warn';
             late.textContent = String(it.overdueDays) + 'd po terminie';
-            row.appendChild(late);
+            head.appendChild(late);
         }
         if (it.paused) {
             const paused = document.createElement('span');
             paused.className = 'ops-pill';
             paused.textContent = it.doneAt ? 'Done' : 'Odłożone';
-            row.appendChild(paused);
+            head.appendChild(paused);
+        }
+        row.appendChild(head);
+        const sub = document.createElement('div');
+        sub.className = 'care-queue-sub';
+        sub.textContent = fmtTerm(it) + (it.lastNote ? ' • ' + String(it.lastNote) : '');
+        row.appendChild(sub);
+        const actions = document.createElement('div');
+        actions.className = 'care-queue-actions';
+        actions.setAttribute('data-care-actions', '1');
+        if (it.phone) {
+            const tel = document.createElement('a');
+            tel.className = 'btn btn-sm btn-secondary';
+            tel.href = 'tel:' + String(it.phone).replace(/[^+\d]/g, '');
+            tel.textContent = 'Zadzwoń: ' + String(it.phone);
+            actions.appendChild(tel);
+        }
+        if (!it.paused) {
+            const snooze = document.createElement('button');
+            snooze.type = 'button';
+            snooze.className = 'btn btn-sm btn-secondary';
+            snooze.textContent = 'Odłóż +3d';
+            snooze.addEventListener('click', () => snoozeQuick(it.offerKind, it.offerId, 3, row));
+            actions.appendChild(snooze);
         }
         const open = document.createElement('a');
         open.href = 'app.html#/kartoteka';
         open.className = 'btn btn-sm btn-secondary';
-        open.textContent = 'Otwórz';
-        row.appendChild(open);
+        open.textContent = 'Kontakt';
+        actions.appendChild(open);
+        row.appendChild(actions);
         list.appendChild(row);
     }
+}
+
+function syncScopeButtons() {
+    document.querySelectorAll('.care-scope-btn').forEach((btn) => {
+        const active = btn.dataset.careScope === careScope;
+        btn.classList.toggle('active', active);
+        btn.classList.toggle('btn-secondary', !active);
+        btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+    });
+}
+
+function syncQueueFilterButtons() {
+    document.querySelectorAll('.care-queue-filter-btn').forEach((btn) => {
+        const active = btn.dataset.queueFilter === queueFilter;
+        btn.classList.toggle('active', active);
+        btn.classList.toggle('btn-secondary', !active);
+        btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+    });
+}
+
+function bindPanelControls() {
+    document.querySelectorAll('.care-scope-btn').forEach((btn) => {
+        if (btn.dataset.bound) return;
+        btn.dataset.bound = '1';
+        btn.addEventListener('click', () => {
+            careScope = btn.dataset.careScope === 'team' ? 'team' : 'mine';
+            syncScopeButtons();
+            loadCarePanel();
+        });
+    });
+    document.querySelectorAll('.care-queue-filter-btn').forEach((btn) => {
+        if (btn.dataset.bound) return;
+        btn.dataset.bound = '1';
+        btn.addEventListener('click', () => {
+            queueFilter = btn.dataset.queueFilter || 'all';
+            syncQueueFilterButtons();
+            renderQueue(queueCache);
+        });
+    });
 }
 
 function isAdmin() {
@@ -217,9 +369,12 @@ async function loadSlaBox() {
 export async function loadCarePanel() {
     const panel = document.getElementById('followup-panel');
     if (!panel) return false;
+    bindPanelControls();
+    syncScopeButtons();
+    syncQueueFilterButtons();
     let summary = null;
     try {
-        summary = await getJson('/api/care/summary?scope=mine&t=' + Date.now());
+        summary = await getJson('/api/care/summary?scope=' + careScope + '&t=' + Date.now());
     } catch {
         showError();
         return false;
@@ -232,8 +387,15 @@ export async function loadCarePanel() {
     renderBuckets(summary);
     try {
         const [notif, queue] = await Promise.all([
-            getJson('/api/care/notifications?scope=mine&unreadOnly=true&limit=20&t=' + Date.now()),
-            getJson('/api/care/queue?scope=mine&limit=10&t=' + Date.now())
+            getJson(
+                '/api/care/notifications?scope=' +
+                    careScope +
+                    '&unreadOnly=true&limit=20&t=' +
+                    Date.now()
+            ),
+            getJson(
+                '/api/care/queue?scope=' + careScope + '&limit=' + QUEUE_LIMIT + '&t=' + Date.now()
+            )
         ]);
         if (notif) renderNotifications(notif.items, notif.unreadCount ?? 0);
         if (queue) renderQueue(queue.items);

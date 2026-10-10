@@ -26,14 +26,14 @@ const U2: CareUser = { id: 'u2', role: 'user', subUsers: [] };
 
 function freshDb(): DatabaseSync {
     const db = new DatabaseSync(':memory:');
-    db.exec(`CREATE TABLE offers_rel (id TEXT PRIMARY KEY, "userId" TEXT, "createdAt" TEXT);
-        CREATE TABLE offers_studnie_rel (id TEXT PRIMARY KEY, "userId" TEXT, "createdAt" TEXT);
+    db.exec(`CREATE TABLE offers_rel (id TEXT PRIMARY KEY, "userId" TEXT, "createdAt" TEXT, "offer_number" TEXT, "clientName" TEXT, "data" TEXT);
+        CREATE TABLE offers_studnie_rel (id TEXT PRIMARY KEY, "userId" TEXT, "createdAt" TEXT, "offer_number" TEXT, "clientName" TEXT, "totalPrice" REAL, "data" TEXT);
         CREATE TABLE document_shares (id TEXT PRIMARY KEY, "sharedWithUserId" TEXT, "documentType" TEXT, "documentId" TEXT);
         CREATE TABLE care_states ("offerKind" TEXT NOT NULL, "offerId" TEXT NOT NULL, "snoozedUntil" TEXT, "doneAt" TEXT, "updatedBy" TEXT, "updatedAt" TEXT NOT NULL,
             CONSTRAINT "care_states_pkey" PRIMARY KEY ("offerKind", "offerId"));
         CREATE TABLE offer_follow_ups (id TEXT PRIMARY KEY, "offerKind" TEXT,
             "offerId" TEXT, "createdByUserId" TEXT, "contactedAt" TEXT,
-            "createdAt" TEXT, outcome TEXT, "nextContactAt" TEXT);`);
+            "createdAt" TEXT, outcome TEXT, "nextContactAt" TEXT, note TEXT);`);
     const offer = (kind: string, id: string, userId: string) =>
         db
             .prepare(
@@ -213,6 +213,40 @@ describe('P0.2 care queue SQL', () => {
             expect(res.items).toHaveLength(3);
             const all = await getCareQueue(fake, U1, { nowIso: NOW, limit: 10 });
             expect(all.totalCount).toBe(4);
+            db.close();
+        } catch (e) {
+            try {
+                db.close();
+            } catch {
+                /* ignore */
+            }
+            throw e;
+        }
+    });
+
+    it('kontekst biznesowy: klient, wartość, telefon, notatka w wierszu', async () => {
+        const db = freshDb();
+        try {
+            db.prepare('UPDATE offers_rel SET "clientName" = ?, "data" = ? WHERE id = ?').run(
+                'Budimex',
+                JSON.stringify({ totalBrutto: 4440.3, clientPhone: '601000111' }),
+                'o1'
+            );
+            db.prepare('UPDATE offer_follow_ups SET note = ? WHERE id = ?').run(
+                'Czeka na decyzję',
+                'f1'
+            );
+            const fake = {
+                $queryRaw: async <T>(...args: unknown[]): Promise<T> => {
+                    return rawAll(db, args[0] as Prisma.Sql) as unknown as T;
+                }
+            };
+            const res = await getCareQueue(fake, U1, { nowIso: NOW, limit: 10 });
+            const o1 = res.items.find((i) => i.offerId === 'o1');
+            expect(o1?.clientName).toBe('Budimex');
+            expect(o1?.value).toBeCloseTo(4440.3);
+            expect(o1?.phone).toBe('601000111');
+            expect(o1?.lastNote).toBe('Czeka na decyzję');
             db.close();
         } catch (e) {
             try {

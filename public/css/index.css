@@ -2550,3 +2550,69 @@ html[data-theme='light'] body.index-page.logged-in::before {
         transition: none !important;
     }
 }
+
+/* Opieka nad ofertami — cockpit (siatka + kolejka z akcjami) */
+.care-dashboard-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+    gap: 12px;
+    align-items: start;
+}
+.care-side-col {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 0;
+}
+.care-scope-group {
+    display: inline-flex;
+    gap: 4px;
+}
+.care-queue-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-bottom: 8px;
+}
+.care-queue-row {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 8px 10px;
+    margin-bottom: 8px;
+}
+.care-queue-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+}
+.care-queue-sub {
+    color: var(--text-secondary);
+    font-size: var(--fs-base);
+    margin-top: 4px;
+}
+.care-queue-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+}
+.care-bucket-row {
+    margin-bottom: 6px;
+}
+.care-bucket-bar {
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-sm);
+    height: 8px;
+    margin-top: 4px;
+}
+.care-bucket-fill {
+    background: var(--accent);
+    border-radius: var(--radius-sm);
+    height: 8px;
+}
+@media (max-width: 900px) {
+    .care-dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+}

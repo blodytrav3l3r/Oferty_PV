@@ -316,11 +316,29 @@
                     </a>
                 </div>
 
-                <!-- Opieka nad ofertami (P2) -->
+                <!-- Opieka nad ofertami (cockpit: akcja + radar) -->
                 <div id="followup-panel" class="admin-container">
                     <div class="admin-section-title">
                         <div class="admin-title-group">
                             <h3><i data-lucide="phone"></i> Opieka nad ofertami</h3>
+                        </div>
+                        <div class="care-scope-group" role="group" aria-label="Zakres opieki">
+                            <button
+                                type="button"
+                                class="btn btn-sm ka-pill care-scope-btn active"
+                                data-care-scope="mine"
+                                aria-pressed="true"
+                            >
+                                Moje
+                            </button>
+                            <button
+                                type="button"
+                                class="btn btn-sm btn-secondary ka-pill care-scope-btn"
+                                data-care-scope="team"
+                                aria-pressed="false"
+                            >
+                                Zespół
+                            </button>
                         </div>
                         <a href="app.html#/kartoteka" class="btn btn-sm btn-secondary"
                             >Otwórz kartotekę</a
@@ -355,14 +373,6 @@
                                 <div class="admin-stat-label">Utracone</div>
                             </div>
                         </div>
-                    </div>
-                    <div class="card system-card recycled-card">
-                        <div class="recycled-subtitle">Najpilniejsze do kontaktu</div>
-                        <div id="followup-top-list" class="recycled-list">
-                            <span class="recycled-empty">Ładowanie…</span>
-                        </div>
-                    </div>
-                    <div class="admin-stats-row" id="followup-kpi-row">
                         <div class="admin-stat-card">
                             <div class="admin-stat-icon user"><i data-lucide="percent"></i></div>
                             <div class="admin-stat-info">
@@ -389,28 +399,67 @@
                             </div>
                         </div>
                     </div>
-                    <div class="card system-card recycled-card">
-                        <div class="recycled-subtitle">
-                            Centrum powiadomień <span id="care-badge" aria-live="polite"></span>
+                    <div class="care-dashboard-grid">
+                        <div class="card system-card recycled-card">
+                            <div class="recycled-subtitle">Kolejka opieki</div>
+                            <div class="care-queue-filters" role="group" aria-label="Filtr kolejki">
+                                <button
+                                    type="button"
+                                    class="btn btn-sm ka-pill care-queue-filter-btn active"
+                                    data-queue-filter="all"
+                                    aria-pressed="true"
+                                >
+                                    Wszystkie
+                                </button>
+                                <button
+                                    type="button"
+                                    class="btn btn-sm btn-secondary ka-pill care-queue-filter-btn"
+                                    data-queue-filter="urgent"
+                                    aria-pressed="false"
+                                >
+                                    Pilne
+                                </button>
+                                <button
+                                    type="button"
+                                    class="btn btn-sm btn-secondary ka-pill care-queue-filter-btn"
+                                    data-queue-filter="today"
+                                    aria-pressed="false"
+                                >
+                                    Dzisiaj
+                                </button>
+                                <button
+                                    type="button"
+                                    class="btn btn-sm btn-secondary ka-pill care-queue-filter-btn"
+                                    data-queue-filter="paused"
+                                    aria-pressed="false"
+                                >
+                                    Wstrzymane
+                                </button>
+                            </div>
+                            <div id="care-queue-list" class="recycled-list">
+                                <span class="recycled-empty">Ładowanie…</span>
+                            </div>
                         </div>
-                        <div id="care-notif-list" class="recycled-list">
-                            <span class="recycled-empty">Brak nowych powiadomień.</span>
+                        <div class="care-side-col">
+                            <div class="card system-card recycled-card">
+                                <div class="recycled-subtitle">
+                                    Centrum powiadomień
+                                    <span id="care-badge" aria-live="polite"></span>
+                                </div>
+                                <div id="care-notif-list" class="recycled-list">
+                                    <span class="recycled-empty">Brak nowych powiadomień.</span>
+                                </div>
+                            </div>
+                            <div class="card system-card recycled-card">
+                                <div class="recycled-subtitle">Pilność kolejek</div>
+                                <div id="care-buckets" class="recycled-list">
+                                    <span class="recycled-empty">Ładowanie…</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div class="card system-card recycled-card">
-                        <div class="recycled-subtitle">Pilność kolejek</div>
-                        <div id="care-buckets" class="recycled-list">
-                            <span class="recycled-empty">Ładowanie…</span>
-                        </div>
-                    </div>
-                    <div class="card system-card recycled-card">
-                        <div class="recycled-subtitle">Kolejka opieki</div>
-                        <div id="care-queue-list" class="recycled-list">
-                            <span class="recycled-empty">Ładowanie…</span>
-                        </div>
-                    </div>
-                    <div class="card system-card recycled-card" id="care-sla-box" hidden>
-                        <div class="recycled-subtitle">Progi SLA (admin)</div>
+                    <details class="card system-card recycled-card" id="care-sla-box" hidden>
+                        <summary class="recycled-subtitle">Progi SLA (admin)</summary>
                         <div class="fu-form-grid">
                             <label>
                                 Pierwszy kontakt (h)
@@ -451,7 +500,7 @@
                                 Zapisz progi
                             </button>
                         </div>
-                    </div>
+                    </details>
                 </div>
 
                 <!-- Recycled Numbers Widget -->

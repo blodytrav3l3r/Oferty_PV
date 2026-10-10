@@ -31,6 +31,11 @@ export interface CareQueueItem {
     nextContactAt: string | null;
     lastContactAt: string | null;
     createdAt: string | null;
+    number: string | null;
+    clientName: string | null;
+    value: number | null;
+    phone: string | null;
+    lastNote: string | null;
     bucketWeight: number;
     snoozedUntil: string | null;
     doneAt: string | null;
@@ -156,12 +161,15 @@ export function buildCareQueueQueries(
 
     // CTE latest: ta sama reguła co followUpStats.ts:52 / searchUtils.ts:241.
     const withSql = Prisma.sql`WITH latest AS (
-        SELECT f."offerKind", f."offerId", f."outcome", f."nextContactAt", f."contactedAt",
+        SELECT f."offerKind", f."offerId", f."outcome", f."nextContactAt", f."contactedAt", f."note",
             ROW_NUMBER() OVER (PARTITION BY f."offerKind", f."offerId" ORDER BY f."contactedAt" DESC, f."createdAt" DESC, f."id" DESC) AS "rn"
         FROM offer_follow_ups f WHERE ${fuScope}
     ), base AS (
         SELECT 'rury' AS "offerKind", o."id" AS "offerId", l."outcome" AS "outcome",
             l."nextContactAt" AS "next", l."contactedAt" AS "last", o."createdAt" AS "born",
+            o."offer_number" AS "number", o."clientName" AS "client",
+            CAST(json_extract(o."data", '$.totalBrutto') AS REAL) AS "value",
+            json_extract(o."data", '$.clientPhone') AS "phone", l."note" AS "note",
             cs."snoozedUntil" AS "snoozed", cs."doneAt" AS "done"
         FROM offers_rel o LEFT JOIN latest l
             ON l."offerKind" = 'rury' AND l."offerId" = o."id" AND l."rn" = 1
@@ -171,6 +179,9 @@ export function buildCareQueueQueries(
         UNION ALL
         SELECT 'studnie' AS "offerKind", s."id" AS "offerId", l."outcome" AS "outcome",
             l."nextContactAt" AS "next", l."contactedAt" AS "last", s."createdAt" AS "born",
+            s."offer_number" AS "number", s."clientName" AS "client",
+            CAST(COALESCE(s."totalPrice", json_extract(s."data", '$.totalBrutto')) AS REAL) AS "value",
+            json_extract(s."data", '$.clientPhone') AS "phone", l."note" AS "note",
             cs."snoozedUntil" AS "snoozed", cs."doneAt" AS "done"
         FROM offers_studnie_rel s LEFT JOIN latest l
             ON l."offerKind" = 'studnie' AND l."offerId" = s."id" AND l."rn" = 1
@@ -178,7 +189,8 @@ export function buildCareQueueQueries(
             ON cs."offerKind" = 'studnie' AND cs."offerId" = s."id"
         WHERE ${scopeStudnie}
     ), ranked AS (
-        SELECT "offerKind", "offerId", "outcome", "next", "last", "born", "snoozed", "done",
+        SELECT "offerKind", "offerId", "outcome", "next", "last", "born",
+            "number", "client", "value", "phone", "note", "snoozed", "done",
             ${BUCKET_CASE(opts.nowIso)} AS "bucketWeight"
         FROM base
     )`;
@@ -194,7 +206,9 @@ export function buildCareQueueQueries(
     }
 
     const data = Prisma.sql`${withSql}
-        SELECT "offerKind", "offerId", "outcome", "next", "last", "born", "snoozed", "done", "bucketWeight" FROM ranked
+        SELECT "offerKind", "offerId", "outcome", "next", "last", "born",
+            "number", "client", "value", "phone", "note",
+            "snoozed", "done", "bucketWeight" FROM ranked
         WHERE ${cursorSql}${opts.hidePaused ? Prisma.sql` AND "done" IS NULL AND ("snoozed" IS NULL OR "snoozed" <= ${opts.nowIso})` : Prisma.empty}
         ORDER BY "bucketWeight" ASC, COALESCE("next", ${NULL_NEXT}) ASC, "offerKind" ASC, "offerId" ASC
         LIMIT ${limit + 1}`;
@@ -290,6 +304,11 @@ export async function getCareQueue(
                 next: string | null;
                 last: string | null;
                 born: string | null;
+                number: string | null;
+                client: string | null;
+                value: number | null;
+                phone: string | null;
+                note: string | null;
                 snoozed: string | null;
                 done: string | null;
                 bucketWeight: number | bigint;
@@ -318,6 +337,11 @@ export async function getCareQueue(
             nextContactAt: r.next,
             lastContactAt: r.last,
             createdAt: r.born,
+            number: r.number,
+            clientName: r.client,
+            value: typeof r.value === 'number' ? r.value : null,
+            phone: r.phone,
+            lastNote: r.note,
             bucketWeight: num(r.bucketWeight),
             snoozedUntil: r.snoozed,
             doneAt: r.done

@@ -64,7 +64,7 @@ describe('dashboard loadFollowUpWidget', () => {
         return els;
     };
 
-    test('tylko KPI + top-5 (liczniki pisze carePanel, jeden pisarz)', async () => {
+    test('tylko KPI (liczniki pisze carePanel, top-5 w kolejce opieki)', async () => {
         const calls: string[] = [];
         const els = load(async (url: string) => {
             calls.push(url);
@@ -73,20 +73,6 @@ describe('dashboard loadFollowUpWidget', () => {
                     ok: true,
                     json: async () => ({
                         stats: { conversion: 0.295, lostValue: 12345.678, avgFirstContactH: 30.5 }
-                    })
-                };
-            }
-            if (url.includes('sort=followup')) {
-                return {
-                    ok: true,
-                    json: async () => ({
-                        data: [
-                            {
-                                clientName: '<b>ACME</b>',
-                                data: { clientName: '<b>ACME</b>', totalBrutto: 100.5 },
-                                followup: { nextContactAt: '2026-10-01T09:00:00.000Z' }
-                            }
-                        ]
                     })
                 };
             }
@@ -100,11 +86,7 @@ describe('dashboard loadFollowUpWidget', () => {
         expect(els['fu-stat-won']).toBeUndefined();
         expect(els['fu-stat-lost']).toBeUndefined();
         expect(calls.filter((u) => u.includes('limit=1'))).toHaveLength(0);
-        expect(calls.some((u) => u.includes('sort=followup'))).toBe(true);
-        const top = els['followup-top-list'].innerHTML as string;
-        expect(top).toContain('&lt;b&gt;ACME&lt;/b&gt;');
-        expect(top).not.toContain('<b>ACME</b>');
-        expect(top).toContain('app.html#/kartoteka');
+        expect(calls.some((u) => u.includes('sort=followup'))).toBe(false);
         expect(els['fu-kpi-conversion'].textContent).toBe('29.5 %');
         expect(els['fu-kpi-lost'].textContent).toBe('12345.68 PLN');
         expect(els['fu-kpi-first'].textContent).toBe('30.5 h');
