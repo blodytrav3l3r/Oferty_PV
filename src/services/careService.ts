@@ -11,6 +11,7 @@
 import { Prisma } from '../../generated/prisma';
 import type { User } from '../helpers';
 import { buildRoleWhereClause } from '../utils/roleFilter';
+import { getFollowUpState, isEscalated } from '../utils/careStatus';
 import { toNum } from '../utils/searchUtils';
 
 export type CareScope = 'mine' | 'team' | 'all';
@@ -348,6 +349,95 @@ export async function getCareQueue(
         nextCursor,
         totalCount
     };
+}
+
+export interface CareQueueViewItem {
+    offerKind: string;
+    offerId: string;
+    outcome: string | null;
+    nextContactAt: string | null;
+    lastContactAt: string | null;
+    number: string | null;
+    clientName: string | null;
+    value: number | null;
+    phone: string | null;
+    lastNote: string | null;
+    status: string;
+    slaBucket: string;
+    overdueDays: number;
+    snoozedUntil: string | null;
+    doneAt: string | null;
+    paused: boolean;
+    escalated: boolean;
+}
+
+/** Mapowanie wierszy kolejki na widok (status/SLA/pauza/eskalacja) — SSoT dla /queue i /panel. */
+export function buildCareQueueView(
+    items: CareQueueResult['items'],
+    sla: SlaConfig,
+    nowIso: string
+): CareQueueViewItem[] {
+    return items.map((r) => {
+        // Brak jakiegokolwiek wpisu = latest null = NO_CONTACT z wiekiem
+        // od utworzenia oferty (kontrakt careStatus, nie puste '').
+        const latest =
+            r.outcome === null && r.nextContactAt === null && r.lastContactAt === null
+                ? null
+                : { outcome: r.outcome, nextContactAt: r.nextContactAt };
+        const state = getFollowUpState(latest, r.createdAt ?? '', nowIso);
+        const snoozedUntil = r.snoozedUntil ?? null;
+        const doneAt = r.doneAt ?? null;
+        const paused = (snoozedUntil !== null && snoozedUntil > nowIso) || doneAt !== null;
+        return {
+            offerKind: r.offerKind,
+            offerId: r.offerId,
+            outcome: r.outcome,
+            nextContactAt: r.nextContactAt,
+            lastContactAt: r.lastContactAt,
+            number: r.number ?? null,
+            clientName: r.clientName ?? null,
+            value: r.value ?? null,
+            phone: r.phone ?? null,
+            lastNote: r.lastNote ?? null,
+            status: state.status,
+            slaBucket: state.slaBucket,
+            overdueDays: state.overdueDays,
+            snoozedUntil,
+            doneAt,
+            paused,
+            escalated: isEscalated(state, nowIso, sla.escalationH, snoozedUntil, doneAt)
+        };
+    });
+}
+
+/** ETag panelu: 1 statement ze skrajnymi znacznikami (scope + user w haśle route).
+ * Nadmiarowy (globalne maksy) — fałszywy 200 nieszkodliwy, brakujący 304 nie istnieje. */
+export async function getCareEtagInput(
+    db: QueryRawDb,
+    userId: string
+): Promise<Array<string | null>> {
+    const rows = (await db.$queryRaw<Array<Record<string, string | null>>>(
+        Prisma.sql`SELECT
+            (SELECT MAX("contactedAt") FROM "offer_follow_ups") AS "a",
+            (SELECT MAX("createdAt") FROM "offer_follow_ups") AS "b",
+            (SELECT MAX("updatedAt") FROM "care_states") AS "c",
+            (SELECT MAX("createdAt") FROM "care_notifications" WHERE "userId" = ${userId}) AS "d",
+            (SELECT MAX("readAt") FROM "care_notifications" WHERE "userId" = ${userId}) AS "e",
+            (SELECT MAX("createdAt") FROM "offers_rel") AS "f",
+            (SELECT MAX("createdAt") FROM "offers_studnie_rel") AS "g",
+            (SELECT "updatedAt" FROM "care_sla_config" WHERE "id" = 'global') AS "h"`
+    )) as Array<Record<string, string | null>>;
+    const r = rows[0] ?? {};
+    return [
+        r.a ?? null,
+        r.b ?? null,
+        r.c ?? null,
+        r.d ?? null,
+        r.e ?? null,
+        r.f ?? null,
+        r.g ?? null,
+        r.h ?? null
+    ];
 }
 
 // ─── P1: stan pilnowania (snooze/done) + konfiguracja SLA ─────────────

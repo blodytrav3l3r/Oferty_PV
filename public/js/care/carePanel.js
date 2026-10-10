@@ -1,9 +1,13 @@
 const POLL_MS = 60000;
+const POLL_MAX_MS = 300000;
 const QUEUE_LIMIT = 50;
 let timer = null;
+let pollMs = POLL_MS;
 let careScope = 'mine';
 let queueFilter = 'all';
 let queueCache = [];
+// ETag pakietu panelu per scope (304 = brak zmian, bez renderu).
+const panelEtags = {};
 
 function setText(id, v) {
     const el = document.getElementById(id);
@@ -180,6 +184,7 @@ function renderNotifications(items, unreadCount) {
             } catch {
                 /* best-effort */
             }
+            careBumpPolling();
             loadCarePanel();
         });
         foot.appendChild(read);
@@ -233,6 +238,7 @@ async function clearNotifications() {
             }
         }
     }
+    careBumpPolling();
     loadCarePanel();
 }
 
@@ -443,6 +449,7 @@ async function snoozeQuick(offerKind, offerId, days, row) {
     // Undo inline: podmiana akcji w wierszu na "Cofnij".
     const actions = row.querySelector('[data-care-actions]');
     if (!actions) {
+        careBumpPolling();
         loadCarePanel();
         return;
     }
@@ -468,6 +475,7 @@ async function snoozeQuick(offerKind, offerId, days, row) {
         } catch {
             /* best-effort */
         }
+        careBumpPolling();
         loadCarePanel();
     });
     actions.append(done, undo);
@@ -792,6 +800,7 @@ async function postCare(offerKind, offerId, action) {
     } catch {
         return;
     }
+    careBumpPolling();
     loadCarePanel();
 }
 
@@ -904,12 +913,49 @@ async function loadSlaBox() {
     }
 }
 
-export async function loadCarePanel() {
-    const panel = document.getElementById('followup-panel');
-    if (!panel) return false;
-    bindPanelControls();
-    syncScopeButtons();
-    syncQueueFilterButtons();
+function renderSummary(summary) {
+    setText('fu-stat-needs', (summary.noContact ?? 0) + (summary.due ?? 0));
+    setText('fu-stat-progress', summary.openOk ?? 0);
+    setText('fu-stat-won', summary.won ?? 0);
+    setText('fu-stat-lost', (summary.lost ?? 0) + (summary.abandoned ?? 0));
+    setText('care-task-count', (summary.totalCount ?? 0) + ' zadań');
+    renderBuckets(summary);
+}
+
+/** Pakiet /panel w 1 requeście. Zwraca 'fresh' | 'stale' | null (błąd). */
+async function loadPanelPacket() {
+    const headers = {};
+    const known = panelEtags[careScope];
+    if (known) headers['If-None-Match'] = known;
+    let resp = null;
+    try {
+        resp = await fetch(
+            '/api/care/panel?scope=' + careScope + '&limit=' + QUEUE_LIMIT + '&t=' + Date.now(),
+            { credentials: 'same-origin', headers }
+        );
+    } catch {
+        return null;
+    }
+    if (!resp) return null;
+    if (resp.status === 304) return 'stale';
+    if (!resp.ok) return null;
+    try {
+        const json = await resp.json();
+        if (!json || !json.ok || !json.summary || !json.queue) return null;
+        if (json.etag) panelEtags[careScope] = json.etag;
+        renderSummary(json.summary);
+        renderQueue(json.queue.items);
+        if (json.notifications)
+            renderNotifications(json.notifications.items, json.notifications.unreadCount ?? 0);
+        setSyncText();
+        return 'fresh';
+    } catch {
+        return null;
+    }
+}
+
+/** Ścieżka legacy (3 requesty) — fallback gdy /panel niedostępny. */
+async function loadCarePanelLegacy() {
     let summary = null;
     try {
         summary = await getJson('/api/care/summary?scope=' + careScope + '&t=' + Date.now());
@@ -918,12 +964,7 @@ export async function loadCarePanel() {
         return false;
     }
     if (!summary) return false;
-    setText('fu-stat-needs', (summary.noContact ?? 0) + (summary.due ?? 0));
-    setText('fu-stat-progress', summary.openOk ?? 0);
-    setText('fu-stat-won', summary.won ?? 0);
-    setText('fu-stat-lost', (summary.lost ?? 0) + (summary.abandoned ?? 0));
-    setText('care-task-count', (summary.totalCount ?? 0) + ' zadań');
-    renderBuckets(summary);
+    renderSummary(summary);
     try {
         const [notif, queue] = await Promise.all([
             getJson(
@@ -942,20 +983,54 @@ export async function loadCarePanel() {
     } catch {
         /* centrum i kolejka best-effort, liczniki już są */
     }
+    return true;
+}
+
+export async function loadCarePanel() {
+    const panel = document.getElementById('followup-panel');
+    if (!panel) return false;
+    bindPanelControls();
+    syncScopeButtons();
+    syncQueueFilterButtons();
+    const packet = await loadPanelPacket();
+    let changed = false;
+    if (packet === 'stale') {
+        changed = false;
+    } else if (packet === 'fresh') {
+        changed = true;
+    } else {
+        changed = await loadCarePanelLegacy();
+    }
     try {
         await loadSlaBox();
     } catch {
         /* SLA best-effort */
     }
-    return true;
+    return changed;
 }
 
 export function startCarePolling() {
     if (timer) return;
-    timer = setInterval(() => {
-        if (document.hidden) return;
-        loadCarePanel();
-    }, POLL_MS);
+    const tick = async () => {
+        timer = null;
+        if (!document.hidden) {
+            try {
+                const changed = await loadCarePanel();
+                // Backoff: brak zmian wydłuża polling do POLL_MAX_MS.
+                pollMs = changed ? POLL_MS : Math.min(POLL_MAX_MS, pollMs * 2);
+            } catch {
+                pollMs = POLL_MS;
+            }
+        }
+        if (timer === null) timer = setTimeout(tick, pollMs);
+    };
+    timer = setTimeout(tick, pollMs);
+}
+
+/** Akcje (snooze/done/read) wołają to, żeby następny polling był świeży. */
+export function careBumpPolling() {
+    pollMs = POLL_MS;
+    delete panelEtags[careScope];
 }
 
 if (typeof document !== 'undefined') {

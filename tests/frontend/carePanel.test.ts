@@ -645,4 +645,60 @@ describe('carePanel', () => {
             calls.filter((c) => c.includes('/api/care/notifications/n9/read')).length
         ).toBeGreaterThanOrEqual(1);
     });
+
+    test('panel: pakiet w 1 requescie, 304 bez renderu', async () => {
+        const calls: string[] = [];
+        const seenHeaders: Array<unknown> = [];
+        const packet = {
+            ok: true,
+            etag: '"etag-1"',
+            summary: {
+                noContact: 1,
+                due: 1,
+                openOk: 0,
+                won: 0,
+                lost: 0,
+                abandoned: 0,
+                totalCount: 2
+            },
+            queue: { items: [], nextCursor: null, totalCount: 2 },
+            notifications: { items: [], unreadCount: 0, sync: { inserted: 0, resolved: 0 } },
+            sla: { firstContactH: 24, staleD: 7, escalationH: 72 }
+        };
+        const { els, context } = load({
+            calls,
+            fetchMock: (url: string, init?: any) => {
+                if (url.includes('/api/care/panel')) {
+                    seenHeaders.push(init?.headers);
+                    if (init?.headers?.['If-None-Match'] === '"etag-1"')
+                        return { ok: false, status: 304, json: async () => ({}) };
+                    return { ok: true, status: 200, json: async () => packet };
+                }
+                return okJson({ noContact: 0, due: 0, openOk: 0, won: 0, lost: 0 });
+            }
+        });
+        els['care-task-count'] = {
+            textContent: '',
+            children: [],
+            dataset: {},
+            classList: { add() {}, remove() {}, toggle() {} },
+            setAttribute() {},
+            appendChild(c: any) {
+                return c;
+            },
+            append() {},
+            addEventListener() {},
+            querySelector: () => null
+        };
+        const first = await context.__careTest.loadCarePanel();
+        expect(first).toBe(true);
+        expect(els['care-task-count'].textContent).toBe('2 zadań');
+        expect(els['care-buckets-total'].textContent).toBe('Razem: 2');
+        const second = await context.__careTest.loadCarePanel();
+        expect(second).toBe(false);
+        expect(seenHeaders).toHaveLength(2);
+        expect(seenHeaders[1]).toEqual({ 'If-None-Match': '"etag-1"' });
+        expect(calls.filter((c) => c.includes('/api/care/panel'))).toHaveLength(2);
+        expect(calls.some((c) => c.includes('/api/care/summary'))).toBe(false);
+    });
 });

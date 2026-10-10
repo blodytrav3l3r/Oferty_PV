@@ -8,6 +8,8 @@ import { canWriteDoc } from '../utils/ownership';
 import {
     getCareQueue,
     getCareSummary,
+    getCareEtagInput,
+    buildCareQueueView,
     CareScope,
     clampCareLimit,
     CareKind,
@@ -22,7 +24,6 @@ import {
     markCareNotificationsRead,
     MAX_SNOOZE_DAYS
 } from '../services/careService';
-import { getFollowUpState, isEscalated } from '../utils/careStatus';
 import {
     claimIdempotencyKey,
     completeIdempotencyKey,
@@ -52,6 +53,9 @@ const summaryQuerySchema = z.object({
 function toScope(v: unknown): CareScope {
     return v === 'team' || v === 'all' ? v : 'mine';
 }
+
+// Limit powiadomień w pakiecie panelu (osobny od limitu kolejki).
+const QUEUE_PANEL_NOTIF_LIMIT = 20;
 
 router.get('/summary', requireAuth, READ_LIMITER, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
@@ -92,37 +96,7 @@ router.get('/queue', requireAuth, READ_LIMITER, async (req, res) => {
             hidePaused
         });
         const sla = await getSlaConfig(prisma);
-        const items = result.items.map((r) => {
-            // Brak jakiegokolwiek wpisu = latest null = NO_CONTACT z wiekiem
-            // od utworzenia oferty (kontrakt careStatus, nie puste '').
-            const latest =
-                r.outcome === null && r.nextContactAt === null && r.lastContactAt === null
-                    ? null
-                    : { outcome: r.outcome, nextContactAt: r.nextContactAt };
-            const state = getFollowUpState(latest, r.createdAt ?? '', nowIso);
-            const snoozedUntil = r.snoozedUntil ?? null;
-            const doneAt = r.doneAt ?? null;
-            const paused = (snoozedUntil !== null && snoozedUntil > nowIso) || doneAt !== null;
-            return {
-                offerKind: r.offerKind,
-                offerId: r.offerId,
-                outcome: r.outcome,
-                nextContactAt: r.nextContactAt,
-                lastContactAt: r.lastContactAt,
-                number: r.number ?? null,
-                clientName: r.clientName ?? null,
-                value: r.value ?? null,
-                phone: r.phone ?? null,
-                lastNote: r.lastNote ?? null,
-                status: state.status,
-                slaBucket: state.slaBucket,
-                overdueDays: state.overdueDays,
-                snoozedUntil,
-                doneAt,
-                paused,
-                escalated: isEscalated(state, nowIso, sla.escalationH, snoozedUntil, doneAt)
-            };
-        });
+        const items = buildCareQueueView(result.items, sla, nowIso);
         return res.json({
             ok: true,
             scope,
@@ -136,6 +110,67 @@ router.get('/queue', requireAuth, READ_LIMITER, async (req, res) => {
             return res.status(403).json({ error: 'Brak uprawnień do zakresu' });
         }
         logger.warn('Care', 'Błąd queue', String(e));
+        return res.status(500).json({ error: 'Błąd serwera' });
+    }
+});
+
+// ─── P2 planu poprawy: cały panel w 1 requeście + ETag/304 ─────────────
+// Stare endpointy (summary/queue/notifications) zostają jako fallback + kompat.
+router.get('/panel', requireAuth, READ_LIMITER, async (req, res) => {
+    const authReq = req as AuthenticatedRequest;
+    try {
+        const user = authReq.user;
+        if (!user) return res.status(401).json({ error: 'Nieautoryzowany' });
+        const parsed = queueQuerySchema.safeParse(req.query);
+        if (!parsed.success) return res.status(400).json({ error: 'Nieprawidłowe parametry' });
+        const scope = toScope(parsed.data.scope);
+        const etag =
+            '"care-' +
+            crypto
+                .createHash('sha1')
+                .update(JSON.stringify([user.id, scope, await getCareEtagInput(prisma, user.id)]))
+                .digest('hex') +
+            '"';
+        res.set('ETag', etag);
+        if (req.headers['if-none-match'] === etag) return res.status(304).end();
+        const nowIso = new Date().toISOString();
+        const limit = clampCareLimit(parsed.data.limit);
+        const hidePaused = parsed.data.hidePaused ?? false;
+        const [summary, queue, sla] = await Promise.all([
+            getCareSummary(prisma, user, scope, nowIso),
+            getCareQueue(prisma, user, {
+                scope,
+                nowIso,
+                cursor: parsed.data.cursor ?? null,
+                limit,
+                hidePaused
+            }),
+            getSlaConfig(prisma)
+        ]);
+        const sync = await syncCareNotifications(prisma, user, scope, nowIso, sla);
+        const { items: notifItems, unreadCount } = await listCareNotifications(prisma, user.id, {
+            unreadOnly: true,
+            limit: QUEUE_PANEL_NOTIF_LIMIT
+        });
+        return res.json({
+            ok: true,
+            scope,
+            now: nowIso,
+            etag,
+            summary,
+            queue: {
+                items: buildCareQueueView(queue.items, sla, nowIso),
+                nextCursor: queue.nextCursor,
+                totalCount: queue.totalCount
+            },
+            notifications: { items: notifItems, unreadCount, sync },
+            sla
+        });
+    } catch (e) {
+        if ((e as { status?: number }).status === 403) {
+            return res.status(403).json({ error: 'Brak uprawnień do zakresu' });
+        }
+        logger.warn('Care', 'Błąd panelu', String(e));
         return res.status(500).json({ error: 'Błąd serwera' });
     }
 });
