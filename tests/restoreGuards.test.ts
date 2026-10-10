@@ -36,18 +36,6 @@ function makeDb(): string {
     return p;
 }
 
-// OOM-guard: live DB bywa duży — porównanie strumieniem (stała pamięć),
-// nigdy readFileSync całości (RangeError pod obciążeniem, fail hooka).
-function sha256File(p: string): Promise<string> {
-    return new Promise((resolve, reject) => {
-        const h = crypto.createHash('sha256');
-        const s = fs.createReadStream(p);
-        s.on('error', reject);
-        s.on('data', (d) => h.update(d as Buffer));
-        s.on('end', () => resolve(h.digest('hex')));
-    });
-}
-
 describe('restore guards (P1.3 / F-001)', () => {
     test('isSqliteFile: prawdziwy sqlite → true, tekst → false, brak pliku → false', () => {
         const db = makeDb();
@@ -126,15 +114,22 @@ describe('restore target guard (P1: brak silent fallback do live DB)', () => {
         expect(p).toEqual({ yes: false, live: true, targetArg: 'c.sqlite', sourceArg: 'b.sqlite' });
     });
 
-    // Jawny timeout: spawn node + hash live DB pod obciążeniem workerów
-    // przekracza defaultowe 10 s (flaky fail hooka, solo ~6 s).
+    // Dowód bez czytania całości: odmowa następuje PRZED jakimkolwiek
+    // copyFileSync, więc rozmiar+mtime wystarczą (hash 1,3 GB live DB
+    // przekraczał timeout pod obciążeniem workerów — flaky fail hooka).
     test('CLI bez celu NIE rusza live DB (fail-closed, exit != 0)', async () => {
         const script = path.join(__dirname, '..', 'scripts', 'restore-db.js');
         // Hermetyczność CI: live DB może nie istnieć (runner używa test-ci.sqlite).
-        // Odmowa następuje przed jakimkolwiek copyFileSync, więc brak pliku też
-        // dowodzi fail-closed; porównanie skrótem tylko gdy plik istnieje.
-        const liveExists = fs.existsSync(liveDbPath());
-        const before = liveExists ? await sha256File(liveDbPath()) : null;
+        // Brak pliku też dowodzi fail-closed; porównanie tylko gdy istnieje.
+        const statOf = (p: string): string | null => {
+            try {
+                const s = fs.statSync(p);
+                return `${s.size}:${s.mtimeMs}`;
+            } catch {
+                return null;
+            }
+        };
+        const before = statOf(liveDbPath());
         const env = { ...process.env };
         delete env.RESTORE_DB_PATH;
         let code = 0;
@@ -148,7 +143,7 @@ describe('restore target guard (P1: brak silent fallback do live DB)', () => {
         expect(code).not.toBe(0);
         expect(stderr).toMatch(/jawnego celu/i);
         if (before !== null) {
-            expect(await sha256File(liveDbPath())).toBe(before);
+            expect(statOf(liveDbPath())).toBe(before);
         }
     }, 60000);
 });
