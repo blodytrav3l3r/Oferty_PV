@@ -5,9 +5,47 @@ let timer = null;
 let pollMs = POLL_MS;
 let careScope = 'mine';
 let queueFilter = 'all';
+let queueSort = 'sla';
+let queueView = 'list';
 let queueCache = [];
+let queueNextCursor = null;
+let queueTotal = 0;
 // ETag pakietu panelu per scope (304 = brak zmian, bez renderu).
 const panelEtags = {};
+
+function careStoreGet(key) {
+    try {
+        if (typeof localStorage === 'undefined') return null;
+        return localStorage.getItem(key);
+    } catch {
+        return null;
+    }
+}
+
+function careStoreSet(key, value) {
+    try {
+        if (typeof localStorage !== 'undefined') localStorage.setItem(key, value);
+    } catch {
+        /* best-effort */
+    }
+}
+
+/** Sort kolejki (test-hook dla harnesu vm). Zwraca znormalizowaną wartość. */
+export function setQueueSort(value) {
+    queueSort = value === 'value' || value === 'client' ? value : 'sla';
+    careStoreSet('sok-care-sort', queueSort);
+    return queueSort;
+}
+
+/** Widok kolejki grid/list (test-hook). Zwraca znormalizowaną wartość. */
+export function setQueueView(value) {
+    queueView = value === 'grid' ? 'grid' : 'list';
+    careStoreSet('sok-care-view', queueView);
+    return queueView;
+}
+
+setQueueSort(careStoreGet('sok-care-sort') || 'sla');
+setQueueView(careStoreGet('sok-care-view') || 'list');
 
 function setText(id, v) {
     const el = document.getElementById(id);
@@ -582,14 +620,28 @@ function queueInfoContent(it) {
     };
 }
 
-function renderQueue(items) {
+function sortQueueItems(items) {
+    if (queueSort === 'value') {
+        return [...items].sort((a, b) => (b.value ?? -Infinity) - (a.value ?? -Infinity));
+    }
+    if (queueSort === 'client') {
+        return [...items].sort((a, b) =>
+            String(a.clientName ?? '').localeCompare(String(b.clientName ?? ''), 'pl')
+        );
+    }
+    return items;
+}
+
+function renderQueue(items, nextCursor, totalCount) {
     const list = document.getElementById('care-queue-list');
     if (!list) return;
     list.textContent = '';
     queueCache = Array.isArray(items) ? items : [];
+    queueNextCursor = nextCursor ?? null;
+    queueTotal = typeof totalCount === 'number' ? totalCount : queueCache.length;
     updateQueueFilterCounts();
     setText('care-queue-count', queueCache.length + ' zadań');
-    const visible = queueCache.filter(matchFilter);
+    const visible = sortQueueItems(queueCache.filter(matchFilter));
     if (visible.length === 0) {
         const empty = document.createElement('span');
         empty.className = 'recycled-empty';
@@ -606,8 +658,8 @@ function renderQueue(items) {
         return;
     }
     const grid = document.createElement('div');
-    grid.className = 'care-queue-cards';
-    for (const it of visible.slice(0, 20)) {
+    grid.className = 'care-queue-cards is-' + queueView;
+    for (const it of visible) {
         const row = document.createElement('div');
         row.className = 'care-queue-card';
         const head = document.createElement('div');
@@ -686,7 +738,43 @@ function renderQueue(items) {
         grid.appendChild(row);
     }
     list.appendChild(grid);
+    if (queueNextCursor) {
+        const moreWrap = document.createElement('div');
+        moreWrap.className = 'care-queue-more';
+        const more = document.createElement('button');
+        more.type = 'button';
+        more.className = 'btn btn-sm btn-secondary';
+        more.textContent = 'Pokaż więcej (widoczne ' + visible.length + ' z ' + queueTotal + ')';
+        more.addEventListener('click', loadMoreQueue);
+        moreWrap.appendChild(more);
+        list.appendChild(moreWrap);
+    }
     refreshCareIcons(list);
+}
+
+/** Dopaginowanie kolejki cursorem (endpoint /queue, dopisanie bez resetu). */
+async function loadMoreQueue() {
+    if (!queueNextCursor) return;
+    const json = await getJson(
+        '/api/care/queue?scope=' +
+            careScope +
+            '&limit=' +
+            QUEUE_LIMIT +
+            '&cursor=' +
+            encodeURIComponent(queueNextCursor) +
+            '&t=' +
+            Date.now()
+    );
+    if (!json || !Array.isArray(json.items)) return;
+    const seen = new Set(queueCache.map((it) => String(it.offerKind) + ':' + String(it.offerId)));
+    for (const it of json.items) {
+        const key = String(it.offerKind) + ':' + String(it.offerId);
+        if (!seen.has(key)) {
+            seen.add(key);
+            queueCache.push(it);
+        }
+    }
+    renderQueue(queueCache, json.nextCursor ?? null, json.totalCount ?? queueTotal);
 }
 
 let openMenu = null;
@@ -822,6 +910,17 @@ function syncQueueFilterButtons() {
     });
 }
 
+function syncSortViewControls() {
+    const sort = document.getElementById('care-sort');
+    if (sort) sort.value = queueSort;
+    document.querySelectorAll('.care-view-btn').forEach((btn) => {
+        const active = btn.dataset.careView === queueView;
+        btn.classList.toggle('active', active);
+        btn.classList.toggle('btn-secondary', !active);
+        btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+    });
+}
+
 function bindPanelControls() {
     document.querySelectorAll('.care-scope-btn').forEach((btn) => {
         if (btn.dataset.bound) return;
@@ -838,7 +937,7 @@ function bindPanelControls() {
         btn.addEventListener('click', () => {
             queueFilter = btn.dataset.queueFilter || 'all';
             syncQueueFilterButtons();
-            renderQueue(queueCache);
+            renderQueue(queueCache, queueNextCursor, queueTotal);
         });
     });
     const clear = document.getElementById('care-notif-clear');
@@ -846,6 +945,23 @@ function bindPanelControls() {
         clear.dataset.bound = '1';
         clear.addEventListener('click', clearNotifications);
     }
+    const sort = document.getElementById('care-sort');
+    if (sort && !sort.dataset.bound) {
+        sort.dataset.bound = '1';
+        sort.addEventListener('change', () => {
+            setQueueSort(sort.value);
+            renderQueue(queueCache, queueNextCursor, queueTotal);
+        });
+    }
+    document.querySelectorAll('.care-view-btn').forEach((btn) => {
+        if (btn.dataset.bound) return;
+        btn.dataset.bound = '1';
+        btn.addEventListener('click', () => {
+            setQueueView(btn.dataset.careView || 'list');
+            syncSortViewControls();
+            renderQueue(queueCache, queueNextCursor, queueTotal);
+        });
+    });
 }
 
 function setSyncText() {
@@ -944,7 +1060,7 @@ async function loadPanelPacket() {
         if (!json || !json.ok || !json.summary || !json.queue) return null;
         if (json.etag) panelEtags[careScope] = json.etag;
         renderSummary(json.summary);
-        renderQueue(json.queue.items);
+        renderQueue(json.queue.items, json.queue.nextCursor, json.queue.totalCount);
         if (json.notifications)
             renderNotifications(json.notifications.items, json.notifications.unreadCount ?? 0);
         setSyncText();
@@ -977,7 +1093,7 @@ async function loadCarePanelLegacy() {
                 '/api/care/queue?scope=' + careScope + '&limit=' + QUEUE_LIMIT + '&t=' + Date.now()
             )
         ]);
-        if (queue) renderQueue(queue.items);
+        if (queue) renderQueue(queue.items, queue.nextCursor, queue.totalCount);
         if (notif) renderNotifications(notif.items, notif.unreadCount ?? 0);
         setSyncText();
     } catch {
@@ -992,6 +1108,7 @@ export async function loadCarePanel() {
     bindPanelControls();
     syncScopeButtons();
     syncQueueFilterButtons();
+    syncSortViewControls();
     const packet = await loadPanelPacket();
     let changed = false;
     if (packet === 'stale') {

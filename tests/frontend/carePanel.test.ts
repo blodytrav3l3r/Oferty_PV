@@ -129,7 +129,11 @@ describe('carePanel', () => {
         };
         context.window.window = context.window;
         vm.createContext(context);
-        vm.runInContext(code + '\nthis.__careTest = { loadCarePanel, careOpenContact };', context);
+        vm.runInContext(
+            code +
+                '\nthis.__careTest = { loadCarePanel, careOpenContact, setQueueSort, setQueueView };',
+            context
+        );
         return { els, listeners, context };
     };
     const okJson = (body: any) => ({ ok: true, json: async () => body });
@@ -700,5 +704,146 @@ describe('carePanel', () => {
         expect(seenHeaders[1]).toEqual({ 'If-None-Match': '"etag-1"' });
         expect(calls.filter((c) => c.includes('/api/care/panel'))).toHaveLength(2);
         expect(calls.some((c) => c.includes('/api/care/summary'))).toBe(false);
+    });
+
+    test('sort: wartość malejąco, klient A-Z', async () => {
+        const packet = (items: any[]) => ({
+            ok: true,
+            etag: '"e1"',
+            summary: {
+                noContact: 0,
+                due: 2,
+                openOk: 0,
+                won: 0,
+                lost: 0,
+                abandoned: 0,
+                totalCount: 2
+            },
+            queue: { items, nextCursor: null, totalCount: 2 },
+            notifications: { items: [], unreadCount: 0 },
+            sla: { firstContactH: 24, staleD: 7, escalationH: 72 }
+        });
+        const mkItem = (offerId: string, clientName: string, value: number) => ({
+            offerKind: 'rury',
+            offerId,
+            status: 'DUE',
+            overdueDays: 0,
+            clientName,
+            value
+        });
+        const namesOf = (root: any): string[] => {
+            const out: string[] = [];
+            const walk2 = (n: any): void => {
+                if (
+                    n.className &&
+                    String(n.className).split(' ').includes('care-queue-name') &&
+                    n.textContent
+                )
+                    out.push(n.textContent);
+                for (const c of n.children || []) walk2(c);
+            };
+            walk2(root);
+            return out;
+        };
+        const mkLoad = () =>
+            load({
+                fetchMock: (url: string) => {
+                    if (url.includes('/api/care/panel'))
+                        return {
+                            ok: true,
+                            status: 200,
+                            json: async () =>
+                                packet([mkItem('o1', 'Zetka', 100), mkItem('o2', 'Ala', 5000)])
+                        };
+                    return okJson({ noContact: 0, due: 0, openOk: 0, won: 0, lost: 0 });
+                }
+            });
+        const t1 = mkLoad();
+        t1.context.__careTest.setQueueSort('value');
+        await t1.context.__careTest.loadCarePanel();
+        expect(namesOf(t1.els['care-queue-list'])).toEqual(['Ala', 'Zetka']);
+        const t2 = mkLoad();
+        t2.context.__careTest.setQueueSort('client');
+        await t2.context.__careTest.loadCarePanel();
+        expect(namesOf(t2.els['care-queue-list'])).toEqual(['Ala', 'Zetka']);
+        const t3 = mkLoad();
+        t3.context.__careTest.setQueueSort('sla');
+        await t3.context.__careTest.loadCarePanel();
+        expect(namesOf(t3.els['care-queue-list'])).toEqual(['Zetka', 'Ala']);
+    });
+
+    test('widok grid/list + dopaginowanie cursorem', async () => {
+        const mkItem = (offerId: string, clientName: string) => ({
+            offerKind: 'rury',
+            offerId,
+            status: 'DUE',
+            overdueDays: 0,
+            clientName,
+            value: 10
+        });
+        const { els, context } = load({
+            fetchMock: (url: string) => {
+                if (url.includes('/api/care/panel'))
+                    return {
+                        ok: true,
+                        status: 200,
+                        json: async () => ({
+                            ok: true,
+                            etag: '"e2"',
+                            summary: {
+                                noContact: 0,
+                                due: 1,
+                                openOk: 0,
+                                won: 0,
+                                lost: 0,
+                                abandoned: 0,
+                                totalCount: 3
+                            },
+                            queue: { items: [mkItem('o1', 'A1')], nextCursor: 'c1', totalCount: 3 },
+                            notifications: { items: [], unreadCount: 0 },
+                            sla: { firstContactH: 24, staleD: 7, escalationH: 72 }
+                        })
+                    };
+                if (url.includes('/api/care/queue') && url.includes('cursor=c1'))
+                    return okJson({
+                        items: [mkItem('o2', 'A2')],
+                        nextCursor: null,
+                        totalCount: 3
+                    });
+                return okJson({ noContact: 0, due: 0, openOk: 0, won: 0, lost: 0 });
+            }
+        });
+        context.__careTest.setQueueView('grid');
+        await context.__careTest.loadCarePanel();
+        const findClass = (root: any, cls: string): any[] => {
+            const out: any[] = [];
+            const walk2 = (n: any): void => {
+                if (n.className && String(n.className).split(' ').includes(cls)) out.push(n);
+                for (const c of n.children || []) walk2(c);
+            };
+            walk2(root);
+            return out;
+        };
+        expect(findClass(els['care-queue-list'], 'is-grid')).toHaveLength(1);
+        const findMore = (root: any): any => {
+            for (const c of root.children || []) {
+                if ((c.textContent || '').startsWith('Pokaż więcej')) return c;
+                const hit = findMore(c);
+                if (hit) return hit;
+            }
+            return null;
+        };
+        const more = findMore(els['care-queue-list']);
+        expect(more).not.toBeNull();
+        for (const fn of more.handlers || []) await fn();
+        const texts: string[] = [];
+        const walk = (n: any): void => {
+            if (n.textContent) texts.push(n.textContent);
+            for (const c of n.children || []) walk(c);
+        };
+        walk(els['care-queue-list']);
+        expect(texts.join(' ')).toContain('A1');
+        expect(texts.join(' ')).toContain('A2');
+        expect(findMore(els['care-queue-list'])).toBeNull();
     });
 });

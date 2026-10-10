@@ -2884,16 +2884,24 @@ html[data-theme='light'] body.index-page.logged-in::before {
     gap: 8px;
     min-width: 0;
 }
-.care-sort-visual {
+.care-sort-wrap {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    cursor: default;
+    color: var(--text-muted);
     white-space: nowrap;
 }
-.care-sort-visual svg {
+.care-sort-wrap svg {
     width: 14px;
     height: 14px;
+}
+.care-queue-cards.is-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.care-queue-more {
+    display: flex;
+    justify-content: center;
+    margin-top: 8px;
 }
 .care-view-visual {
     display: inline-flex;
@@ -3087,7 +3095,7 @@ html[data-theme='light'] body.index-page.logged-in::before {
     .care-dashboard-grid {
         grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     }
-    .care-queue-cards {
+    .care-queue-cards.is-grid {
         grid-template-columns: minmax(0, 1fr);
     }
 }

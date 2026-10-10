@@ -417,24 +417,45 @@
                                     <div class="recycled-sync" id="care-sync-text">
                                         Ostatnia synchronizacja: —
                                     </div>
-                                    <span
-                                        class="btn btn-sm btn-secondary care-sort-visual"
-                                        aria-disabled="true"
-                                        title="Sortowanie: termin SLA"
-                                    >
+                                    <label class="care-sort-wrap" title="Sortowanie kolejki">
                                         <i data-lucide="arrow-down-wide-narrow"></i>
-                                        Termin SLA ↓
-                                    </span>
-                                    <span
+                                        <select
+                                            id="care-sort"
+                                            class="form-input form-input-sm"
+                                            aria-label="Sortowanie kolejki"
+                                        >
+                                            <option value="sla">Termin SLA</option>
+                                            <option value="value">Wartość</option>
+                                            <option value="client">Klient</option>
+                                        </select>
+                                    </label>
+                                    <div
                                         class="care-view-visual"
+                                        id="care-view"
                                         role="group"
-                                        aria-label="Widok kolejki (wizualny)"
-                                        aria-disabled="true"
-                                        title="Widok siatka / lista"
+                                        aria-label="Widok kolejki"
                                     >
-                                        <i data-lucide="layout-grid"></i>
-                                        <i data-lucide="list"></i>
-                                    </span>
+                                        <button
+                                            type="button"
+                                            class="btn btn-sm btn-secondary care-view-btn"
+                                            data-care-view="grid"
+                                            aria-pressed="false"
+                                            aria-label="Widok siatki"
+                                            title="Siatka"
+                                        >
+                                            <i data-lucide="layout-grid"></i>
+                                        </button>
+                                        <button
+                                            type="button"
+                                            class="btn btn-sm care-view-btn"
+                                            data-care-view="list"
+                                            aria-pressed="true"
+                                            aria-label="Widok listy"
+                                            title="Lista"
+                                        >
+                                            <i data-lucide="list"></i>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                             <div class="recycled-desc">
