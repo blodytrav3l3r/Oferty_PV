@@ -832,6 +832,7 @@ html[data-theme='light'] .kartoteka-filter-bar:hover {
 
 .modal--clients .modal-body {
     overflow-y: auto;
+    overflow-x: auto;
     min-height: 0;
 }
 

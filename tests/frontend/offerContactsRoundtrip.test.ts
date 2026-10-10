@@ -88,6 +88,22 @@ describe('frontend: offer contacts roundtrip', () => {
         expect(css).toContain('.td-contact');
     });
 
+    test('popup 3 kolumny: Imie/Telefon/E-mail, sub-wiersze, brak tr.onclick', () => {
+        const src = read('public/js/shared/clientManager.js');
+        expect(src).toContain('Imię i nazwisko');
+        expect(src).toContain('>Telefon<');
+        expect(src).toContain('>E-mail<');
+        expect(src).not.toContain('<th scope="col">Kontakt<');
+        expect(src).not.toContain('tr.onclick');
+        expect(src).not.toContain("tr.title = 'Wczytaj do oferty'");
+        expect(src).toContain('colSpan = 3');
+        expect(src).toContain('ccc-sub');
+        expect(src).toContain('ccc-mail');
+        const css = read('public/css/style.base.css');
+        expect(css).toContain('.ccc-mail');
+        expect(css).toContain('tr.ccc-sub');
+    });
+
     test('katalog N-osob: cache + sync API + stabilne id', () => {
         const src = read('public/js/shared/clientManager.js');
         expect(src).toContain('fetchClientContacts');

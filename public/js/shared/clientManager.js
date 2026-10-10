@@ -672,7 +672,9 @@ function renderClientsDbList(query) {
         <th scope="col">Firma</th>
         <th scope="col" style="width:110px;">NIP</th>
         <th scope="col">Adres</th>
-        <th scope="col">Kontakt</th>
+        <th scope="col" style="min-width:150px;">Imię i nazwisko</th>
+        <th scope="col" style="width:110px;">Telefon</th>
+        <th scope="col" style="min-width:150px;">E-mail</th>
         <th scope="col" class="td-center" style="width:108px;">Akcje</th>
     </tr>`;
     table.appendChild(thead);
@@ -683,9 +685,12 @@ function renderClientsDbList(query) {
         const tr = document.createElement('tr');
         tr.className =
             editingClientId === c.id ? 'clients-row clients-row--editing' : 'clients-row';
+        // Sub-wiersze osób 2..N (tworzone w gałęzi listy, schowane).
+        const subRows = [];
+        let shownList = [];
 
         if (editingClientId === c.id) {
-            // Książka (1 osoba/firma): telefon/e-mail edytowane w komórce Kontakt.
+            // Edycja firmy + edytor N-osób na szerokość 3 kolumn kontaktowych.
             const fields = ['clientNumber', 'name', 'nip', 'address'];
             fields.forEach((field) => {
                 const td = document.createElement('td');
@@ -699,9 +704,11 @@ function renderClientsDbList(query) {
                 td.appendChild(input);
                 tr.appendChild(td);
             });
-            // Edytor N-osób katalogu (imię/telefon/e-mail/stanowisko + ★).
+            // Edytor N-osób katalogu (imię/telefon/e-mail/stanowisko + ★)
+            // na szerokość 3 kolumn kontaktowych.
             const contactTd = document.createElement('td');
             contactTd.className = 'td-edit';
+            contactTd.colSpan = 3;
             const cached = clientContactsCache[c.id];
             // Fallback mirror: łączony "Jan, 600" rozcinany jak w displayu.
             const legacySplit = splitMerged(c.contact || '', c.phone || '');
@@ -745,88 +752,114 @@ function renderClientsDbList(query) {
             addrTd.textContent = c.address || '—';
             tr.appendChild(addrTd);
 
-            // Katalog N-osób: linia 1 primary/[0] + ★, linia 2 telefon,
-            // reszta za "+N" (rozwijane). Fallback mirror legacy z rozcięciem.
-            const contactTd = document.createElement('td');
-            contactTd.className = 'td-muted td-contact';
+            // 3 osobne kolumny: Imię i nazwisko / Telefon / E-mail.
+            // Osoby 2..N jako rozwijane sub-wiersze; fallback mirror legacy.
             const cachedView = clientContactsCache[c.id];
             // Uczciwe źródło: katalog offline → podpowiedź z firmy, nie "dane".
             const fromMirror = !(cachedView && cachedView.ok && cachedView.list.length > 0);
             const list = catalogDisplayList(c);
-            if (list.length === 0) {
-                contactTd.textContent = '—';
-            } else {
-                const primary = list.find((r) => r.isPrimary) || list[0];
-                const contactName = document.createElement('span');
-                contactName.textContent = primary.name || '—';
-                contactTd.appendChild(contactName);
-                if (list.length > 1) {
-                    const star = document.createElement('span');
-                    star.className = 'td-sub';
-                    star.textContent = '★ Główna';
-                    contactTd.appendChild(star);
-                }
-                if (primary.phone) {
-                    const contactPhone = document.createElement('span');
-                    contactPhone.className = 'td-sub';
-                    contactPhone.textContent = primary.phone;
-                    contactTd.appendChild(contactPhone);
-                }
-                contactTd.title =
-                    (fromMirror ? '(podpowiedź z firmy, katalog niedostępny) ' : '') +
-                    list
-                        .map(
-                            (r) =>
-                                r.name +
-                                (r.phone ? ', ' + r.phone : '') +
-                                (r.email ? ', ' + r.email : '')
-                        )
-                        .join(' | ');
-                if (list.length > 1) {
-                    const rest = list.length - 1;
-                    const plus = document.createElement('button');
-                    plus.type = 'button';
-                    plus.className = 'btn btn-sm btn-secondary ccc-plus';
-                    plus.textContent = '+' + rest;
-                    plus.title = 'Pokaż wszystkie osoby';
-                    plus.setAttribute('aria-label', 'Pokaż wszystkie osoby do kontaktu');
-                    const full = document.createElement('div');
-                    full.className = 'ccc-full';
-                    full.hidden = true;
-                    for (const r of list) {
-                        const line = document.createElement('span');
-                        line.className = 'td-sub';
-                        line.textContent =
-                            (r.isPrimary ? '★ ' : '') +
+            shownList = list;
+            const primary = list.find((r) => r.isPrimary) || list[0] || null;
+            const fullTitle =
+                (fromMirror ? '(podpowiedź z firmy, katalog niedostępny) ' : '') +
+                list
+                    .map(
+                        (r) =>
                             r.name +
-                            (r.phone ? ' — ' + r.phone : '') +
-                            (r.email ? ', ' + r.email : '') +
-                            (r.position ? ' (' + r.position + ')' : '');
-                        full.appendChild(line);
-                    }
-                    plus.onclick = (e) => {
-                        e.stopPropagation();
-                        full.hidden = !full.hidden;
-                        plus.textContent = full.hidden ? '+' + rest : '−';
-                    };
-                    contactTd.appendChild(plus);
-                    contactTd.appendChild(full);
-                }
+                            (r.phone ? ', ' + r.phone : '') +
+                            (r.email ? ', ' + r.email : '')
+                    )
+                    .join(' | ');
+
+            const cNameTd = document.createElement('td');
+            cNameTd.className = 'td-contact';
+            const contactName = document.createElement('span');
+            contactName.textContent = (primary && primary.name) || '—';
+            cNameTd.appendChild(contactName);
+            if (list.length > 1) {
+                const star = document.createElement('span');
+                star.className = 'td-sub';
+                star.textContent = '★ Główna';
+                cNameTd.appendChild(star);
             }
-            tr.appendChild(contactTd);
+            cNameTd.title = fullTitle || '—';
+            tr.appendChild(cNameTd);
+
+            const cPhoneTd = document.createElement('td');
+            cPhoneTd.className = 'td-muted';
+            cPhoneTd.textContent = (primary && primary.phone) || '—';
+            cPhoneTd.title = fullTitle || '—';
+            tr.appendChild(cPhoneTd);
+
+            const cMailTd = document.createElement('td');
+            cMailTd.className = 'td-muted';
+            const cMailSpan = document.createElement('span');
+            cMailSpan.className = 'ccc-mail';
+            cMailSpan.textContent = (primary && primary.email) || '—';
+            cMailTd.appendChild(cMailSpan);
+            cMailTd.title = fullTitle || '—';
+            tr.appendChild(cMailTd);
 
             const actionTd = document.createElement('td');
             actionTd.className = 'td-actions';
             actionTd.innerHTML = `<button class="btn-icon btn-icon--accent" data-csp="selectClientFromDb" data-csp-args="${escapeHtmlAttr(JSON.stringify([c.id]))}" data-csp-stop="1" title="Wczytaj do oferty" aria-label="Wczytaj do oferty"><i data-lucide="download" aria-hidden="true"></i></button>
                 <button class="btn-icon btn-icon--dim" data-csp="editClientInDb" data-csp-args="${escapeHtmlAttr(JSON.stringify([c.id]))}" data-csp-stop="1" title="Edytuj" aria-label="Edytuj"><i data-lucide="pencil" aria-hidden="true"></i></button>
                 <button class="btn-icon btn-icon--danger" data-csp="deleteClientFromDb" data-csp-args="${escapeHtmlAttr(JSON.stringify([c.id]))}" data-csp-stop="1" title="Usuń z bazy" aria-label="Usuń z bazy"><i data-lucide="x" aria-hidden="true"></i></button>`;
+            if (list.length > 1) {
+                const rest = list.length - 1;
+                const plus = document.createElement('button');
+                plus.type = 'button';
+                plus.className = 'btn btn-sm btn-secondary ccc-plus';
+                plus.textContent = '+' + rest;
+                plus.title = 'Pokaż wszystkie osoby';
+                plus.setAttribute('aria-label', 'Pokaż wszystkie osoby do kontaktu');
+                plus.onclick = () => {
+                    const show = subRows.length > 0 && subRows[0].hidden;
+                    subRows.forEach((sr) => {
+                        sr.hidden = !show;
+                    });
+                    plus.textContent = show ? '−' : '+' + rest;
+                };
+                actionTd.appendChild(plus);
+            }
             tr.appendChild(actionTd);
-
-            tr.title = 'Wczytaj do oferty';
-            tr.onclick = () => selectClientFromDb(c.id);
         }
 
         tbody.appendChild(tr);
+        // Sub-wiersze osób 2..N (puste komórki firmowe, bez własnych akcji).
+        if (shownList.length > 1) {
+            const shown = shownList.slice(1);
+            for (const r of shown) {
+                const sub = document.createElement('tr');
+                sub.className = 'clients-row ccc-sub';
+                sub.hidden = true;
+                for (let i = 0; i < 4; i++) {
+                    const empty = document.createElement('td');
+                    empty.className = 'td-muted';
+                    sub.appendChild(empty);
+                }
+                const subName = document.createElement('td');
+                subName.className = 'td-contact';
+                subName.textContent = (r.isPrimary ? '★ ' : '') + (r.name || '—');
+                sub.appendChild(subName);
+                const subPhone = document.createElement('td');
+                subPhone.className = 'td-muted';
+                subPhone.textContent = r.phone || '—';
+                sub.appendChild(subPhone);
+                const subMail = document.createElement('td');
+                subMail.className = 'td-muted';
+                const subMailSpan = document.createElement('span');
+                subMailSpan.className = 'ccc-mail';
+                subMailSpan.textContent = r.email || '—';
+                subMail.appendChild(subMailSpan);
+                sub.appendChild(subMail);
+                const subAct = document.createElement('td');
+                subAct.className = 'td-actions';
+                sub.appendChild(subAct);
+                tbody.appendChild(sub);
+                subRows.push(sub);
+            }
+        }
     });
 
     table.appendChild(tbody);

@@ -1610,6 +1610,19 @@ button.btn-order-save:hover {
     font-size: var(--fs-sm);
     color: var(--text-muted);
 }
+/* 3 kolumny kontaktowe: e-mail z ellipsis, sub-wiersze osób 2..N. */
+.clients-table .ccc-mail {
+    display: block;
+    max-width: 190px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.clients-table tr.ccc-sub td {
+    background: rgba(var(--accent-rgb), 0.03);
+    font-size: var(--fs-md);
+    border-bottom: 1px dashed var(--border-glass);
+}
 .clients-table .td-mono {
     font-family: var(--font-mono, monospace);
     font-size: var(--fs-md);
@@ -1681,12 +1694,6 @@ button.btn-order-save:hover {
     margin-top: 0.25rem;
     padding: 0.1rem 0.5rem;
     font-size: var(--fs-sm);
-}
-.ccc-full {
-    display: flex;
-    flex-direction: column;
-    gap: 0.15rem;
-    margin-top: 0.25rem;
 }
 .ccc-picks {
     display: flex;
