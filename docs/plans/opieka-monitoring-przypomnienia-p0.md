@@ -163,3 +163,20 @@ Granice twarde: zero migracji/schematu/POST/PATCH/CRUD/powiadomień. Przekroczen
   Full `test:quick`: 2 flake (pricelistChunk solo PASS, baseline naprawione i PASS).
 - Bramy: typecheck/lint BE+FE PASS, collisions 45/45, prices:verify PASS, version:check 1.41.2.
 - Restart serwera po Twojej stronie (świeży klient Prisma + trasy P1/P2).
+
+## 13. Checkpoint A+B (GO 2026-10-10, tryb build, commit `86bb87c`)
+
+- Faza A (liczby): `lost`/`abandoned` osobno wszędzie (stats: `conversion=won/(won+lost+abandoned)`,
+  `abandoned` + `abandonedReasons` w odpowiedzi); NO_CONTACT żyje w kolejce (latest null +
+  prawdziwy `createdAt`); summary filtruje pauzę jak kolejka; `isEscalated()` SSoT w
+  `careStatus.ts`; liczniki pisze tylko panel (dashboard: same KPI).
+- Faza B (sec): partial UNIQUE `uq_carenotif_unread_per_offer` (migracja `20261010000003`,
+  live + backup + wiersz historii) + catch P2002 w sync; parser bool zamiast
+  `z.coerce.boolean`; `READ_LIMITER` na 4 GET; re-check właściciela w tx (403/404);
+  re-check przed odczytem stanu; opt-lock `expectedUpdatedAt` → 409; retencja
+  leniwa (90d + cap 500); `oldData` w audycie stanu i SLA.
+- Testy: 85/85 w suitach care + stats + panel (nowe: opt-lock, TOCTOU, retencja, uq,
+  bool-parser, NO_CONTACT, abandoned, isEscalated, jeden-pisarz). Full `test:quick`:
+  4471 PASS, tylko flake `pricelistChunk` (solo zielony 3x).
+- Bramy: typecheck/lint BE+FE, collisions 45/45, prices, version 1.41.2.
+- ADR-015 (sync przy odczycie) spisany.
