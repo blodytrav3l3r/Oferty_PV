@@ -42,9 +42,35 @@ const NOTIF_CLASS = {
     CALLBACK_DUE: 'ops-pill ops-warn'
 };
 
+function notifCountText(n) {
+    if (!n || n <= 0) return '';
+    const last = n % 10;
+    const teen = n % 100;
+    if (last === 1 && teen !== 11) return String(n) + ' alert';
+    if (last >= 2 && last <= 4 && (teen < 12 || teen > 14)) return String(n) + ' alerty';
+    return String(n) + ' alertów';
+}
+
+function fmtDelay(overdueDays, createdAt) {
+    if (overdueDays > 0) {
+        if (overdueDays >= 1) return 'Opóźnienie: ' + String(overdueDays) + 'd';
+        return 'Opóźnienie: <1d';
+    }
+    if (createdAt) {
+        const ms = Date.now() - Date.parse(createdAt);
+        if (Number.isFinite(ms) && ms > 0) {
+            const h = Math.floor(ms / 3600000);
+            const m = Math.floor((ms % 3600000) / 60000);
+            if (h > 0) return 'Opóźnienie: ' + String(h) + 'h ' + String(m) + 'm';
+            return 'Opóźnienie: ' + String(m) + 'm';
+        }
+    }
+    return '';
+}
+
 function renderNotifications(items, unreadCount) {
-    const badge = document.getElementById('care-badge');
-    if (badge) badge.textContent = unreadCount > 0 ? String(unreadCount) : '';
+    const badge = document.getElementById('care-notif-count');
+    if (badge) badge.textContent = notifCountText(unreadCount);
     const list = document.getElementById('care-notif-list');
     if (!list) return;
     list.textContent = '';
@@ -71,15 +97,25 @@ function renderNotifications(items, unreadCount) {
             ? String(n.clientName) + (n.number ? ' • ' + String(n.number) : '')
             : String(n.offerKind) + ' ' + String(n.offerId);
         const hit = byOffer.get(String(n.offerKind) + ':' + String(n.offerId));
-        const age =
-            hit && hit.overdueDays > 0 && hit.status !== 'NO_CONTACT'
-                ? ' • ' + String(hit.overdueDays) + 'd po terminie'
-                : '';
+        const delay = fmtDelay(
+            hit && hit.status !== 'NO_CONTACT' ? hit.overdueDays : 0,
+            n.createdAt
+        );
         const lines = document.createElement('div');
         lines.className = 'care-notif-lines';
+        const headRow = document.createElement('div');
+        headRow.className = 'care-notif-head';
         const l1 = document.createElement('div');
-        l1.textContent = who + age;
-        lines.appendChild(l1);
+        l1.className = 'care-notif-who';
+        l1.textContent = who;
+        headRow.appendChild(l1);
+        if (delay) {
+            const dl = document.createElement('div');
+            dl.className = 'care-notif-delay';
+            dl.textContent = delay;
+            headRow.appendChild(dl);
+        }
+        lines.appendChild(headRow);
         if (n.createdAt) {
             const d = new Date(n.createdAt);
             if (!Number.isNaN(d.getTime())) {
@@ -422,6 +458,8 @@ function renderQueue(items) {
             pillRow.appendChild(nc);
         }
         if (pillRow.children.length > 0) row.appendChild(pillRow);
+        const info = document.createElement('div');
+        info.className = 'care-queue-info';
         const lines = [];
         if (it.status === 'NO_CONTACT') {
             const age = it.overdueDays > 0 ? ' • ' + String(it.overdueDays) + 'd bez kontaktu' : '';
@@ -435,8 +473,9 @@ function renderQueue(items) {
             const sub = document.createElement('div');
             sub.className = 'care-queue-line';
             sub.textContent = text;
-            row.appendChild(sub);
+            info.appendChild(sub);
         }
+        row.appendChild(info);
         const actions = document.createElement('div');
         actions.className = 'care-queue-btns';
         actions.setAttribute('data-care-actions', '1');
@@ -455,10 +494,125 @@ function renderQueue(items) {
         open.textContent = 'Kontakt';
         open.addEventListener('click', () => careOpenContact(it.offerKind, it.offerId));
         actions.appendChild(open);
+        actions.appendChild(careMenu(it));
         row.appendChild(actions);
         grid.appendChild(row);
     }
     list.appendChild(grid);
+}
+
+let openMenu = null;
+
+function closeMenu() {
+    if (openMenu) {
+        try {
+            openMenu.menu.remove();
+        } catch {
+            /* best-effort */
+        }
+        try {
+            openMenu.btn.setAttribute('aria-expanded', 'false');
+            openMenu.btn.focus();
+        } catch {
+            /* best-effort */
+        }
+        openMenu = null;
+    }
+}
+
+let menuListenersBound = false;
+if (typeof document !== 'undefined') {
+    try {
+        if (document.documentElement && !document.documentElement.dataset.careMenuBound) {
+            document.documentElement.dataset.careMenuBound = '1';
+            menuListenersBound = true;
+        } else if (!document.documentElement) {
+            menuListenersBound = true;
+        }
+    } catch {
+        menuListenersBound = true;
+    }
+}
+if (menuListenersBound) {
+    document.addEventListener('click', (e) => {
+        const isNode = typeof Node !== 'undefined' ? e.target instanceof Node : !!e.target;
+        if (openMenu && isNode && !openMenu.wrap.contains(e.target)) {
+            closeMenu();
+        }
+    });
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeMenu();
+    });
+}
+
+/** Menu ⋮ karty: Done / Wznów / Otwórz kartotekę (istniejące API, bez modala). */
+function careMenu(it) {
+    const wrap = document.createElement('div');
+    wrap.className = 'care-menu-wrap';
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'btn btn-sm btn-secondary care-menu-btn';
+    btn.textContent = '⋮';
+    btn.setAttribute('aria-label', 'Więcej akcji');
+    btn.setAttribute('aria-expanded', 'false');
+    btn.addEventListener('click', () => {
+        if (openMenu && openMenu.btn === btn) {
+            closeMenu();
+            return;
+        }
+        closeMenu();
+        const menu = document.createElement('div');
+        menu.className = 'care-menu';
+        menu.setAttribute('role', 'menu');
+        const addItem = (label, fn) => {
+            const b = document.createElement('button');
+            b.type = 'button';
+            b.className = 'care-menu-item';
+            b.setAttribute('role', 'menuitem');
+            b.textContent = label;
+            b.addEventListener('click', async () => {
+                closeMenu();
+                await fn();
+            });
+            menu.appendChild(b);
+        };
+        addItem(it.paused ? 'Wznów pilnowanie' : 'Oznacz jako done', () =>
+            postCare(it.offerKind, it.offerId, it.paused ? 'reopen' : 'done')
+        );
+        addItem('Otwórz kartotekę', () => {
+            careOpenContact(it.offerKind, it.offerId);
+        });
+        wrap.appendChild(menu);
+        btn.setAttribute('aria-expanded', 'true');
+        openMenu = { btn, menu, wrap };
+    });
+    wrap.appendChild(btn);
+    return wrap;
+}
+
+async function postCare(offerKind, offerId, action) {
+    try {
+        const resp = await fetch(
+            '/api/care/' +
+                encodeURIComponent(offerKind) +
+                '/' +
+                encodeURIComponent(offerId) +
+                '/' +
+                action +
+                '?t=' +
+                Date.now(),
+            {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({})
+            }
+        );
+        if (!resp.ok) return;
+    } catch {
+        return;
+    }
+    loadCarePanel();
 }
 
 function syncScopeButtons() {
@@ -588,6 +742,7 @@ export async function loadCarePanel() {
     setText('fu-stat-progress', summary.openOk ?? 0);
     setText('fu-stat-won', summary.won ?? 0);
     setText('fu-stat-lost', (summary.lost ?? 0) + (summary.abandoned ?? 0));
+    setText('care-task-count', (summary.totalCount ?? 0) + ' zadań');
     renderBuckets(summary);
     try {
         const [notif, queue] = await Promise.all([

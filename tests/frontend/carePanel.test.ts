@@ -23,7 +23,6 @@ describe('carePanel', () => {
         const mkEl = (id: string) => {
             const self: any = {
                 id,
-                textContent: '',
                 innerHTML: '',
                 value: '',
                 hidden: true,
@@ -49,6 +48,9 @@ describe('carePanel', () => {
                 addEventListener(_t: string, fn: any) {
                     self.handlers = [...(self.handlers || []), fn];
                 },
+                remove() {
+                    self.removed = true;
+                },
                 querySelector: (sel: string): any => {
                     for (const c of self.children || []) {
                         if (
@@ -61,15 +63,25 @@ describe('carePanel', () => {
                         if (hit) return hit;
                     }
                     return null;
-                }
+                },
+                contains: (_other: any) => false
             };
+            // Jak prawdziwy DOM: textContent='' czyści dzieci.
+            let text = '';
+            Object.defineProperty(self, 'textContent', {
+                get: () => text,
+                set: (v: string) => {
+                    text = String(v ?? '');
+                    if (text === '') self.children = [];
+                }
+            });
             return self;
         };
         const el = (id: string) => (els[id] = els[id] || mkEl(id));
         // Kontenery istniejące w index.html.
         for (const id of [
             'followup-panel',
-            'care-badge',
+            'care-notif-count',
             'care-notif-list',
             'care-notif-clear',
             'care-buckets',
@@ -168,7 +180,7 @@ describe('carePanel', () => {
         await context.__careTest.loadCarePanel();
         expect(els['fu-stat-needs'].textContent).toBe('3');
         expect(els['fu-stat-lost'].textContent).toBe('3');
-        expect(els['care-badge'].textContent).toBe('2');
+        expect(els['care-notif-count'].textContent).toBe('2 alerty');
         expect(els['care-sync-text'].textContent).toContain('Ostatnia synchronizacja:');
         expect(els['care-buckets-total'].textContent).toBe('Razem: 7');
         expect(els['care-buckets-top'].textContent).toBe('Najwyższy priorytet: Do kontaktu');
@@ -331,6 +343,120 @@ describe('carePanel', () => {
             expect.objectContaining({ id: 's1', displayType: 'studnia_oferta' })
         );
         expect(context.window.location.href).toBe('app.html#/kartoteka?kontakt=studnie%3As1');
+    });
+
+    test('menu ⋮: otwiera, Done woła API, Escape zamyka', async () => {
+        const calls: string[] = [];
+        const { els, context, listeners } = load({
+            calls,
+            fetchMock: (url: string, _init?: any) => {
+                if (url.includes('/api/care/queue'))
+                    return okJson({
+                        items: [
+                            {
+                                offerKind: 'rury',
+                                offerId: 'o1',
+                                status: 'DUE',
+                                overdueDays: 2,
+                                escalated: false,
+                                paused: false
+                            }
+                        ]
+                    });
+                return okJson({ noContact: 0, due: 1, openOk: 0, won: 0, lost: 0 });
+            }
+        });
+        await context.__careTest.loadCarePanel();
+        const findAll = (root: any, pred: (n: any) => boolean, out: any[] = []): any[] => {
+            for (const c of root.children || []) {
+                if (c.removed) continue;
+                if (pred(c)) out.push(c);
+                findAll(c, pred, out);
+            }
+            return out;
+        };
+        const menus = findAll(
+            els['care-queue-list'],
+            (n) => n.textContent === '⋮' && (n.handlers || []).length > 0
+        );
+        expect(menus).toHaveLength(1);
+        for (const fn of menus[0].handlers || []) await fn();
+        const items = findAll(els['care-queue-list'], (n) =>
+            (n.textContent || '').includes('Oznacz jako done')
+        );
+        expect(items).toHaveLength(1);
+        for (const fn of items[0].handlers || []) await fn();
+        expect(calls.some((c) => c.includes('/api/care/rury/o1/done'))).toBe(true);
+        // Escape zamyka otwarte menu.
+        await context.__careTest.loadCarePanel();
+        const menus2 = findAll(
+            els['care-queue-list'],
+            (n) => n.textContent === '⋮' && (n.handlers || []).length > 0
+        );
+        for (const fn of menus2[0].handlers || []) await fn();
+        for (const fn of listeners['keydown'] || []) await fn({ key: 'Escape' });
+        expect(
+            findAll(els['care-queue-list'], (n) =>
+                (n.textContent || '').includes('Oznacz jako done')
+            )
+        ).toHaveLength(0);
+    });
+
+    test('licznik zadań w nagłówku + box info w karcie', async () => {
+        const { els, context } = load({
+            fetchMock: (url: string) => {
+                if (url.includes('/api/care/summary'))
+                    return okJson({
+                        noContact: 2,
+                        due: 3,
+                        openOk: 0,
+                        won: 0,
+                        lost: 0,
+                        totalCount: 5
+                    });
+                if (url.includes('/api/care/queue'))
+                    return okJson({
+                        items: [
+                            {
+                                offerKind: 'rury',
+                                offerId: 'o1',
+                                status: 'DUE',
+                                overdueDays: 1,
+                                escalated: false,
+                                paused: false,
+                                lastNote: 'Notka'
+                            }
+                        ]
+                    });
+                return okJson({ items: [], unreadCount: 0 });
+            }
+        });
+        // Nagłówek sekcji wymaga kontenera licznika.
+        els['care-task-count'] = {
+            textContent: '',
+            children: [],
+            dataset: {},
+            classList: { add() {}, remove() {}, toggle() {} },
+            setAttribute() {},
+            appendChild(c: any) {
+                return c;
+            },
+            append() {},
+            addEventListener() {},
+            querySelector: () => null
+        };
+        await context.__careTest.loadCarePanel();
+        expect(els['care-task-count'].textContent).toBe('5 zadań');
+        const findClass = (root: any, cls: string): any[] => {
+            const out: any[] = [];
+            const walk2 = (n: any): void => {
+                if (n.className && String(n.className).split(' ').includes(cls)) out.push(n);
+                for (const c of n.children || []) walk2(c);
+            };
+            walk2(root);
+            return out;
+        };
+        expect(findClass(els['care-queue-list'], 'care-queue-info')).toHaveLength(1);
     });
 
     test('snooze +3d z undo (reopen)', async () => {

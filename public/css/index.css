@@ -2712,7 +2712,7 @@ html[data-theme='light'] body.index-page.logged-in::before {
 }
 .care-queue-btns {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr 1fr auto;
     gap: 8px;
     margin-top: auto;
     padding-top: 10px;
@@ -2720,6 +2720,47 @@ html[data-theme='light'] body.index-page.logged-in::before {
 .care-queue-btns .btn {
     justify-content: center;
     width: 100%;
+}
+.care-queue-info {
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-sm);
+    padding: 8px 10px;
+    margin-top: 8px;
+}
+.care-menu-wrap {
+    position: relative;
+}
+.care-menu-btn {
+    padding-left: 8px;
+    padding-right: 8px;
+}
+.care-menu {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 4px);
+    z-index: 30;
+    min-width: 180px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-md);
+    padding: 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.care-menu-item {
+    background: none;
+    border: none;
+    text-align: left;
+    padding: 8px 10px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: var(--fs-base);
+    color: var(--text-primary);
+}
+.care-menu-item:hover {
+    background: var(--bg-tertiary);
 }
 .care-notif-card {
     border: 1px solid var(--border);

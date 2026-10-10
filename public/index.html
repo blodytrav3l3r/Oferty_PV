@@ -321,6 +321,7 @@
                     <div class="admin-section-title">
                         <div class="admin-title-group">
                             <h3><i data-lucide="phone"></i> Opieka nad ofertami</h3>
+                            <span id="care-task-count" class="ops-pill" aria-live="polite"></span>
                         </div>
                         <div class="care-seg" role="group" aria-label="Zakres opieki">
                             <button
@@ -402,10 +403,20 @@
                     <div class="care-dashboard-grid">
                         <div class="card system-card recycled-card care-full-row">
                             <div class="recycled-title-row">
-                                <div class="recycled-subtitle">Kolejka opieki</div>
+                                <div class="recycled-subtitle">
+                                    Kolejka opieki
+                                    <span
+                                        id="care-queue-count"
+                                        class="ops-pill"
+                                        aria-live="polite"
+                                    ></span>
+                                </div>
                                 <div class="recycled-sync" id="care-sync-text">
                                     Ostatnia synchronizacja: —
                                 </div>
+                            </div>
+                            <div class="recycled-desc">
+                                Oferty oczekujące na podjęcie lub kolejny kontakt handlowy
                             </div>
                             <div class="care-queue-filters" role="group" aria-label="Filtr kolejki">
                                 <button
@@ -450,14 +461,18 @@
                                 <div class="recycled-title-row">
                                     <div class="recycled-subtitle">
                                         Centrum powiadomień
-                                        <span id="care-badge" aria-live="polite"></span>
+                                        <span
+                                            id="care-notif-count"
+                                            class="ops-pill ops-err"
+                                            aria-live="polite"
+                                        ></span>
                                     </div>
                                     <button
                                         type="button"
                                         class="care-link-btn"
                                         id="care-notif-clear"
                                     >
-                                        Wyczyść
+                                        Wyczyść wszystko
                                     </button>
                                 </div>
                                 <div id="care-notif-list" class="recycled-list">
