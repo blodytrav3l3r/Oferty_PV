@@ -268,4 +268,25 @@ describe('P2 sync powiadomień', () => {
             throw e;
         }
     });
+
+    it('daty ISO-UTC przechodzą verbatim (kontrakt String, nie DateTime)', async () => {
+        const db = freshDb();
+        try {
+            const f = fake(db);
+            await syncCareNotifications(f, U1, 'mine', NOW, SLA);
+            const rows = db
+                .prepare('SELECT DISTINCT "createdAt" AS c FROM "care_notifications"')
+                .all() as Array<{ c: string }>;
+            expect(rows).toHaveLength(1);
+            expect(rows[0].c).toBe(NOW);
+            db.close();
+        } catch (e) {
+            try {
+                db.close();
+            } catch {
+                /* ignore */
+            }
+            throw e;
+        }
+    });
 });

@@ -812,6 +812,58 @@ describe('carePanel', () => {
         expect(putBody).toEqual(expect.objectContaining({ firstContactH: 24, scopeType: 'team' }));
     });
 
+    test('cena: grupowanie pl-PL + 2 miejsca po przecinku', async () => {
+        const { els, context } = load({
+            fetchMock: (url: string) => {
+                if (url.includes('/api/care/panel'))
+                    return {
+                        ok: true,
+                        status: 200,
+                        json: async () => ({
+                            ok: true,
+                            summary: {
+                                noContact: 0,
+                                due: 1,
+                                openOk: 0,
+                                won: 0,
+                                lost: 0,
+                                abandoned: 0,
+                                totalCount: 1
+                            },
+                            queue: {
+                                items: [
+                                    {
+                                        offerKind: 'rury',
+                                        offerId: 'o1',
+                                        status: 'DUE',
+                                        overdueDays: 0,
+                                        clientName: 'A',
+                                        value: 1234567.895
+                                    }
+                                ],
+                                nextCursor: null,
+                                totalCount: 1
+                            },
+                            notifications: { items: [], unreadCount: 0 },
+                            sla: { firstContactH: 24, staleD: 7, escalationH: 72 }
+                        })
+                    };
+                return okJson({ noContact: 0, due: 0, openOk: 0, won: 0, lost: 0 });
+            }
+        });
+        await context.__careTest.loadCarePanel();
+        const texts: string[] = [];
+        const walk = (n: any): void => {
+            if (n.textContent) texts.push(n.textContent);
+            for (const c of n.children || []) walk(c);
+        };
+        walk(els['care-queue-list']);
+        const joined = texts.join(' ');
+        // Grupowanie spacją (nbsp) + przecinek dziesiętny, PLN osobno.
+        expect(joined).toMatch(/1.234.567,90/);
+        expect(joined).toContain('PLN');
+    });
+
     test('widok grid/list + dopaginowanie cursorem', async () => {
         const mkItem = (offerId: string, clientName: string) => ({
             offerKind: 'rury',

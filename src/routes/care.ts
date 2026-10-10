@@ -160,6 +160,10 @@ router.get('/panel', requireAuth, READ_LIMITER, async (req, res) => {
             getEffectiveSla(prisma, user, scope)
         ]);
         const sync = await syncCareNotifications(prisma, user, scope, nowIso, sla);
+        logger.debug(
+            'Care',
+            `panel scope=${scope} inserted=${sync.inserted} resolved=${sync.resolved}`
+        );
         const { items: notifItems, unreadCount } = await listCareNotifications(prisma, user.id, {
             unreadOnly: true,
             limit: QUEUE_PANEL_NOTIF_LIMIT
@@ -500,6 +504,10 @@ router.get('/notifications', requireAuth, READ_LIMITER, async (req, res) => {
         const nowIso = new Date().toISOString();
         const sla = await getEffectiveSla(prisma, user, scope);
         const sync = await syncCareNotifications(prisma, user, scope, nowIso, sla);
+        logger.debug(
+            'Care',
+            `notifications scope=${scope} inserted=${sync.inserted} resolved=${sync.resolved}`
+        );
         const { items, unreadCount } = await listCareNotifications(prisma, user.id, {
             unreadOnly: parsed.data.unreadOnly ?? true,
             limit: clampCareLimit(parsed.data.limit)
