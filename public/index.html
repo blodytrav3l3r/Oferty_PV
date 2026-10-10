@@ -403,6 +403,55 @@
                             <span class="recycled-empty">Ładowanie…</span>
                         </div>
                     </div>
+                    <div class="card system-card recycled-card">
+                        <div class="recycled-subtitle">Kolejka opieki</div>
+                        <div id="care-queue-list" class="recycled-list">
+                            <span class="recycled-empty">Ładowanie…</span>
+                        </div>
+                    </div>
+                    <div class="card system-card recycled-card" id="care-sla-box" hidden>
+                        <div class="recycled-subtitle">Progi SLA (admin)</div>
+                        <div class="fu-form-grid">
+                            <label>
+                                Pierwszy kontakt (h)
+                                <input
+                                    type="number"
+                                    id="care-sla-first"
+                                    class="form-input form-input-sm"
+                                    min="1"
+                                    max="720"
+                                    step="1"
+                                />
+                            </label>
+                            <label>
+                                Zaległość (dni)
+                                <input
+                                    type="number"
+                                    id="care-sla-stale"
+                                    class="form-input form-input-sm"
+                                    min="1"
+                                    max="90"
+                                    step="1"
+                                />
+                            </label>
+                            <label>
+                                Eskalacja (h)
+                                <input
+                                    type="number"
+                                    id="care-sla-esc"
+                                    class="form-input form-input-sm"
+                                    min="1"
+                                    max="720"
+                                    step="1"
+                                />
+                            </label>
+                        </div>
+                        <div class="fu-form-actions">
+                            <button type="button" class="btn btn-sm btn-primary" id="care-sla-save">
+                                Zapisz progi
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Recycled Numbers Widget -->
