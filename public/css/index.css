@@ -2616,3 +2616,128 @@ html[data-theme='light'] body.index-page.logged-in::before {
         grid-template-columns: 1fr;
     }
 }
+
+/* Kokpit opieki — karty i alerty (tokeny SOK, bez nowych kolorów) */
+.recycled-title-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+}
+.recycled-sync {
+    color: var(--text-muted);
+    font-size: var(--fs-xs);
+    white-space: nowrap;
+}
+.care-link-btn {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    color: var(--accent);
+    font-size: var(--fs-base);
+    font-weight: var(--fw-semibold);
+}
+.care-queue-cards {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+.care-queue-card {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 10px 12px;
+    background: var(--bg-card);
+    min-width: 0;
+}
+.care-queue-title {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+}
+.care-queue-name {
+    font-weight: var(--fw-bold);
+    font-size: var(--fs-md);
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.care-queue-kind {
+    color: var(--text-muted);
+    font-weight: var(--fw-regular, 400);
+    font-size: var(--fs-base);
+}
+.care-queue-line {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-secondary);
+    font-size: var(--fs-base);
+    margin-top: 6px;
+}
+.care-queue-line.danger {
+    color: var(--danger-hover);
+}
+.care-queue-line.info {
+    color: var(--accent2-hover);
+}
+.care-queue-btns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 10px;
+}
+.care-queue-btns .btn {
+    justify-content: center;
+}
+.care-notif-card {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 8px 10px;
+    margin-bottom: 8px;
+}
+.care-notif-card.warn {
+    background: var(--warn-bg);
+    border-color: var(--warn-border);
+}
+.care-notif-card.err {
+    background: var(--danger-bg);
+    border-color: var(--danger-border);
+}
+.care-notif-lines {
+    margin-top: 4px;
+    font-size: var(--fs-base);
+}
+.care-buckets-title {
+    display: inline-block;
+    background: var(--accent);
+    color: #fff;
+    font-size: var(--fs-base);
+    font-weight: var(--fw-bold);
+    border-radius: var(--radius-sm);
+    padding: 2px 10px;
+}
+.care-buckets-foot {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    color: var(--text-muted);
+    font-size: var(--fs-base);
+    margin-top: 8px;
+}
+.care-segments {
+    display: flex;
+    gap: 4px;
+    margin-top: 8px;
+}
+.care-segments span {
+    height: 8px;
+    border-radius: var(--radius-sm);
+    background: var(--bg-tertiary);
+    min-width: 4px;
+}
+@media (max-width: 700px) {
+    .care-queue-cards {
+        grid-template-columns: 1fr;
+    }
+}

@@ -401,7 +401,12 @@
                     </div>
                     <div class="care-dashboard-grid">
                         <div class="card system-card recycled-card">
-                            <div class="recycled-subtitle">Kolejka opieki</div>
+                            <div class="recycled-title-row">
+                                <div class="recycled-subtitle">Kolejka opieki</div>
+                                <div class="recycled-sync" id="care-sync-text">
+                                    Ostatnia synchronizacja: —
+                                </div>
+                            </div>
                             <div class="care-queue-filters" role="group" aria-label="Filtr kolejki">
                                 <button
                                     type="button"
@@ -442,18 +447,36 @@
                         </div>
                         <div class="care-side-col">
                             <div class="card system-card recycled-card">
-                                <div class="recycled-subtitle">
-                                    Centrum powiadomień
-                                    <span id="care-badge" aria-live="polite"></span>
+                                <div class="recycled-title-row">
+                                    <div class="recycled-subtitle">
+                                        Centrum powiadomień
+                                        <span id="care-badge" aria-live="polite"></span>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        class="care-link-btn"
+                                        id="care-notif-clear"
+                                    >
+                                        Wyczyść
+                                    </button>
                                 </div>
                                 <div id="care-notif-list" class="recycled-list">
                                     <span class="recycled-empty">Brak nowych powiadomień.</span>
                                 </div>
                             </div>
                             <div class="card system-card recycled-card">
-                                <div class="recycled-subtitle">Pilność kolejek</div>
+                                <div class="recycled-title-row">
+                                    <div class="care-buckets-title">Pilność kolejek</div>
+                                    <div class="recycled-sync" id="care-buckets-total">
+                                        Razem: —
+                                    </div>
+                                </div>
                                 <div id="care-buckets" class="recycled-list">
                                     <span class="recycled-empty">Ładowanie…</span>
+                                </div>
+                                <div class="care-buckets-foot">
+                                    <span id="care-buckets-top">Najwyższy priorytet: —</span>
+                                    <span id="care-buckets-share"></span>
                                 </div>
                             </div>
                         </div>

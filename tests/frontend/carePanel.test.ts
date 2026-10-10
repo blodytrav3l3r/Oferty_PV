@@ -71,8 +71,13 @@ describe('carePanel', () => {
             'followup-panel',
             'care-badge',
             'care-notif-list',
+            'care-notif-clear',
             'care-buckets',
+            'care-buckets-total',
+            'care-buckets-top',
+            'care-buckets-share',
             'care-queue-list',
+            'care-sync-text',
             'care-sla-box',
             'care-sla-first',
             'care-sla-stale',
@@ -164,12 +169,16 @@ describe('carePanel', () => {
         expect(els['fu-stat-needs'].textContent).toBe('3');
         expect(els['fu-stat-lost'].textContent).toBe('3');
         expect(els['care-badge'].textContent).toBe('2');
-        const chips = els['care-notif-list'].children;
-        expect(chips).toHaveLength(2);
-        expect(chips[0].className).toContain('ops-err');
-        expect(chips[1].className).toContain('ops-warn');
+        expect(els['care-sync-text'].textContent).toContain('Ostatnia synchronizacja:');
+        expect(els['care-buckets-total'].textContent).toBe('Razem: 7');
+        const cards = els['care-notif-list'].children;
+        expect(cards).toHaveLength(2);
+        expect(cards[0].className).toContain('care-notif-card');
+        expect(cards[0].className).toContain('err');
+        expect(cards[1].className).toContain('warn');
         const rows = els['care-queue-list'].children;
         expect(rows).toHaveLength(1);
+        expect(rows[0].className).toContain('care-queue-cards');
         const texts: string[] = [];
         const walk = (n: any): void => {
             if (n.textContent) texts.push(n.textContent);
@@ -304,7 +313,7 @@ describe('carePanel', () => {
         expect(putBody).toEqual({ firstContactH: 24, staleD: 7, escalationH: 72 });
     });
 
-    test('mark-read POST po kliku w chip', async () => {
+    test('mark-read POST po kliku w kartę', async () => {
         const calls: string[] = [];
         const { els, context } = load({
             calls,
@@ -320,8 +329,41 @@ describe('carePanel', () => {
             }
         });
         await context.__careTest.loadCarePanel();
-        const chip = els['care-notif-list'].children[0];
-        for (const fn of chip.handlers || []) await fn();
+        const findRead = (root: any): any => {
+            for (const c of root.children || []) {
+                if (c.tag === 'button' && (c.textContent || '').includes('Oznacz jako')) return c;
+                const hit = findRead(c);
+                if (hit) return hit;
+            }
+            return null;
+        };
+        const read = findRead(els['care-notif-list']);
+        expect(read).not.toBeNull();
+        for (const fn of read.handlers || []) await fn();
         expect(calls.some((c) => c.includes('/api/care/notifications/n9/read'))).toBe(true);
+    });
+
+    test('Wyczyść oznacza wszystkie jako przeczytane', async () => {
+        const calls: string[] = [];
+        const { els, context } = load({
+            calls,
+            fetchMock: (url: string, _init?: any) => {
+                if (url.includes('/notifications/') && url.includes('/read'))
+                    return okJson({ ok: true });
+                if (url.includes('/api/care/notifications'))
+                    return okJson({
+                        items: [{ id: 'n9', offerKind: 'rury', offerId: 'o9', type: 'SLA_BREACH' }],
+                        unreadCount: 1
+                    });
+                return okJson({ noContact: 0, due: 0, openOk: 0, won: 0, lost: 0, items: [] });
+            }
+        });
+        await context.__careTest.loadCarePanel();
+        const clear = els['care-notif-clear'];
+        expect(clear).toBeDefined();
+        for (const fn of clear.handlers || []) await fn();
+        expect(
+            calls.filter((c) => c.includes('/api/care/notifications/n9/read')).length
+        ).toBeGreaterThanOrEqual(1);
     });
 });

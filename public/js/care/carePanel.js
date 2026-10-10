@@ -56,25 +56,39 @@ function renderNotifications(items, unreadCount) {
         return;
     }
     for (const n of items.slice(0, 20)) {
-        const chip = document.createElement('button');
-        chip.type = 'button';
-        chip.className = NOTIF_CLASS[n.type] || 'ops-pill';
-        chip.setAttribute('data-notif-id', String(n.id));
+        const card = document.createElement('div');
+        card.className = 'care-notif-card ' + (n.type === 'CALLBACK_DUE' ? 'warn' : 'err');
+        const pill = document.createElement('span');
+        pill.className = NOTIF_CLASS[n.type] || 'ops-pill';
+        pill.textContent = NOTIF_LABEL[n.type] || String(n.type);
+        card.appendChild(pill);
         const who = n.clientName
             ? String(n.clientName) + (n.number ? ' • ' + String(n.number) : '')
             : String(n.offerKind) + ' ' + String(n.offerId);
-        chip.setAttribute(
+        const lines = document.createElement('div');
+        lines.className = 'care-notif-lines';
+        const l1 = document.createElement('div');
+        l1.textContent = who;
+        lines.appendChild(l1);
+        if (n.createdAt) {
+            const d = new Date(n.createdAt);
+            if (!Number.isNaN(d.getTime())) {
+                const l2 = document.createElement('div');
+                l2.textContent = 'Zgłoszono: ' + d.toLocaleDateString('pl-PL');
+                lines.appendChild(l2);
+            }
+        }
+        card.appendChild(lines);
+        const read = document.createElement('button');
+        read.type = 'button';
+        read.className = 'care-link-btn';
+        read.setAttribute('data-notif-id', String(n.id));
+        read.setAttribute(
             'aria-label',
             'Oznacz jako przeczytane (' + (NOTIF_LABEL[n.type] || String(n.type)) + '): ' + who
         );
-        const label = document.createElement('span');
-        label.textContent = NOTIF_LABEL[n.type] || String(n.type);
-        const sep = document.createElement('span');
-        sep.textContent = ' • ';
-        const ref = document.createElement('span');
-        ref.textContent = who;
-        chip.append(label, sep, ref);
-        chip.addEventListener('click', async () => {
+        read.textContent = 'Oznacz jako przeczytane';
+        read.addEventListener('click', async () => {
             try {
                 await fetch(
                     '/api/care/notifications/' + encodeURIComponent(String(n.id)) + '/read',
@@ -88,9 +102,38 @@ function renderNotifications(items, unreadCount) {
             }
             loadCarePanel();
         });
-        list.appendChild(chip);
+        card.appendChild(read);
+        list.appendChild(card);
     }
 }
+
+async function clearNotifications() {
+    let items = [];
+    try {
+        const json = await getJson(
+            '/api/care/notifications?scope=' +
+                careScope +
+                '&unreadOnly=true&limit=100&t=' +
+                Date.now()
+        );
+        items = (json && json.items) || [];
+    } catch {
+        return;
+    }
+    for (const n of items) {
+        try {
+            await fetch('/api/care/notifications/' + encodeURIComponent(String(n.id)) + '/read', {
+                method: 'POST',
+                credentials: 'same-origin'
+            });
+        } catch {
+            /* best-effort */
+        }
+    }
+    loadCarePanel();
+}
+
+const BUCKET_COLORS = ['#4f46e5', '#60a5fa', '#22c55e', '#f59e0b', '#cbd5e1'];
 
 function renderBuckets(summary) {
     const box = document.getElementById('care-buckets');
@@ -104,26 +147,35 @@ function renderBuckets(summary) {
         ['Porzucone', summary.abandoned ?? 0]
     ];
     const total = rows.reduce((a, r) => a + r[1], 0);
+    const totalEl = document.getElementById('care-buckets-total');
+    if (totalEl) totalEl.textContent = 'Razem: ' + total;
     if (total === 0) {
         const empty = document.createElement('span');
         empty.className = 'recycled-empty';
         empty.textContent = 'Brak ofert w opiece.';
         box.appendChild(empty);
-        return;
+    } else {
+        const seg = document.createElement('div');
+        seg.className = 'care-segments';
+        seg.setAttribute('role', 'img');
+        seg.setAttribute('aria-label', rows.map((r) => r[0] + ': ' + r[1]).join(', '));
+        rows.forEach((r, i) => {
+            const s = document.createElement('span');
+            s.style.width = Math.max(2, Math.round((r[1] / total) * 100)) + '%';
+            s.style.background = BUCKET_COLORS[i % BUCKET_COLORS.length];
+            seg.appendChild(s);
+        });
+        box.appendChild(seg);
     }
-    for (const [name, count] of rows) {
-        const row = document.createElement('div');
-        row.className = 'care-bucket-row';
-        const label = document.createElement('span');
-        label.textContent = name + ': ' + count;
-        const bar = document.createElement('div');
-        bar.className = 'care-bucket-bar';
-        const fill = document.createElement('div');
-        fill.className = 'care-bucket-fill';
-        fill.style.width = Math.round((count / total) * 100) + '%';
-        bar.appendChild(fill);
-        row.append(label, bar);
-        box.appendChild(row);
+    const topEl = document.getElementById('care-buckets-top');
+    if (topEl) {
+        const top = rows.reduce((a, r) => (r[1] > a[1] ? r : a), rows[0]);
+        topEl.textContent = 'Najwyższy priorytet: ' + top[0];
+    }
+    const shareEl = document.getElementById('care-buckets-share');
+    if (shareEl) {
+        shareEl.textContent =
+            total > 0 ? Math.round((rows[0][1] / total) * 100) + '% wolumenu' : '';
     }
 }
 
@@ -206,6 +258,22 @@ function renderQueue(items) {
     if (!list) return;
     list.textContent = '';
     queueCache = Array.isArray(items) ? items : [];
+    const urgentCount = queueCache.filter((it) => !!it.escalated || it.overdueDays > 0).length;
+    document.querySelectorAll('.care-queue-filter-btn').forEach((btn) => {
+        if (btn.dataset.queueFilter !== 'urgent') return;
+        let badge = btn.querySelector('[data-urgent-count]');
+        if (urgentCount > 0) {
+            if (!badge) {
+                badge = document.createElement('span');
+                badge.className = 'ops-pill ops-err';
+                badge.setAttribute('data-urgent-count', '1');
+                btn.appendChild(badge);
+            }
+            badge.textContent = String(urgentCount);
+        } else if (badge) {
+            badge.remove();
+        }
+    });
     const visible = queueCache.filter(matchFilter);
     if (visible.length === 0) {
         const empty = document.createElement('span');
@@ -215,77 +283,89 @@ function renderQueue(items) {
         list.appendChild(empty);
         return;
     }
+    const grid = document.createElement('div');
+    grid.className = 'care-queue-cards';
     for (const it of visible.slice(0, 20)) {
         const row = document.createElement('div');
-        row.className = 'care-queue-row';
+        row.className = 'care-queue-card';
         const head = document.createElement('div');
-        head.className = 'care-queue-head';
-        const title = document.createElement('strong');
+        head.className = 'care-queue-title';
+        const title = document.createElement('span');
+        title.className = 'care-queue-name';
         const client = it.clientName ? String(it.clientName) : 'Brak klienta';
         const value = fmtMoney(it.value);
-        title.textContent =
-            client + (value ? ' — ' + value : '') + ' (' + String(it.offerKind) + ')';
-        head.appendChild(title);
+        title.textContent = client + (value ? ' — ' + value : '');
+        const kind = document.createElement('span');
+        kind.className = 'care-queue-kind';
+        kind.textContent = '(' + String(it.offerKind) + ')';
+        head.append(title, kind);
+        row.appendChild(head);
+        const pillRow = document.createElement('div');
+        pillRow.className = 'care-queue-head';
         if (it.escalated) {
             const esc = document.createElement('span');
             esc.className = 'ops-pill ops-err';
             esc.textContent = 'Eskalacja';
-            head.appendChild(esc);
+            pillRow.appendChild(esc);
         } else if (it.overdueDays > 0 && it.status !== 'NO_CONTACT') {
             const late = document.createElement('span');
             late.className = 'ops-pill ops-warn';
             late.textContent = String(it.overdueDays) + 'd po terminie';
-            head.appendChild(late);
+            pillRow.appendChild(late);
         }
         if (it.paused) {
             const paused = document.createElement('span');
             paused.className = 'ops-pill';
             paused.textContent = it.doneAt ? 'Done' : 'Odłożone';
-            head.appendChild(paused);
+            pillRow.appendChild(paused);
         }
-        row.appendChild(head);
-        const sub = document.createElement('div');
-        sub.className = 'care-queue-sub';
-        // NO_CONTACT: jeden spójny komunikat (wiek od utworzenia),
-        // zamiast sprzecznego "Bez terminu + Nd po terminie".
         if (it.status === 'NO_CONTACT') {
-            const age = it.overdueDays > 0 ? ' • ' + String(it.overdueDays) + 'd bez kontaktu' : '';
-            sub.textContent =
-                'Brak pierwszego kontaktu' + age + (it.lastNote ? ' • ' + String(it.lastNote) : '');
             const nc = document.createElement('span');
             nc.className = 'ops-pill ops-warn';
             nc.textContent = 'Nowy kontakt';
-            head.appendChild(nc);
+            pillRow.appendChild(nc);
+        }
+        if (pillRow.children.length > 0) row.appendChild(pillRow);
+        const lines = [];
+        if (it.status === 'NO_CONTACT') {
+            const age = it.overdueDays > 0 ? ' • ' + String(it.overdueDays) + 'd bez kontaktu' : '';
+            lines.push('Brak pierwszego kontaktu' + age);
         } else {
-            sub.textContent = fmtTerm(it) + (it.lastNote ? ' • ' + String(it.lastNote) : '');
+            lines.push(fmtTerm(it));
         }
-        row.appendChild(sub);
+        if (it.lastNote) lines.push(String(it.lastNote));
+        for (const text of lines) {
+            const sub = document.createElement('div');
+            sub.className = 'care-queue-line';
+            sub.textContent = text;
+            row.appendChild(sub);
+        }
         const actions = document.createElement('div');
-        actions.className = 'care-queue-actions';
+        actions.className = 'care-queue-btns';
         actions.setAttribute('data-care-actions', '1');
-        if (it.phone) {
-            const tel = document.createElement('a');
-            tel.className = 'btn btn-sm btn-secondary';
-            tel.href = 'tel:' + String(it.phone).replace(/[^+\d]/g, '');
-            tel.textContent = 'Zadzwoń: ' + String(it.phone);
-            actions.appendChild(tel);
-        }
-        if (!it.paused) {
-            const snooze = document.createElement('button');
-            snooze.type = 'button';
-            snooze.className = 'btn btn-sm btn-secondary';
-            snooze.textContent = 'Odłóż +3d';
-            snooze.addEventListener('click', () => snoozeQuick(it.offerKind, it.offerId, 3, row));
-            actions.appendChild(snooze);
-        }
+        const snooze = document.createElement('button');
+        snooze.type = 'button';
+        snooze.className = 'btn btn-sm btn-secondary';
+        snooze.textContent = 'Odłóż +3d';
+        if (it.paused) snooze.disabled = true;
+        snooze.addEventListener('click', () => snoozeQuick(it.offerKind, it.offerId, 3, row));
+        actions.appendChild(snooze);
         const open = document.createElement('a');
         open.href = 'app.html#/kartoteka';
-        open.className = 'btn btn-sm btn-secondary';
+        open.className = 'btn btn-sm btn-primary';
         open.textContent = 'Kontakt';
         actions.appendChild(open);
+        if (it.phone) {
+            const tel = document.createElement('a');
+            tel.className = 'care-link-btn';
+            tel.href = 'tel:' + String(it.phone).replace(/[^+\d]/g, '');
+            tel.textContent = String(it.phone);
+            actions.appendChild(tel);
+        }
         row.appendChild(actions);
-        list.appendChild(row);
+        grid.appendChild(row);
     }
+    list.appendChild(grid);
 }
 
 function syncScopeButtons() {
@@ -325,6 +405,25 @@ function bindPanelControls() {
             renderQueue(queueCache);
         });
     });
+    const clear = document.getElementById('care-notif-clear');
+    if (clear && !clear.dataset.bound) {
+        clear.dataset.bound = '1';
+        clear.addEventListener('click', clearNotifications);
+    }
+}
+
+function setSyncText() {
+    const el = document.getElementById('care-sync-text');
+    if (!el) return;
+    const d = new Date();
+    const pad = (n) => String(n).padStart(2, '0');
+    el.textContent =
+        'Ostatnia synchronizacja: ' +
+        pad(d.getHours()) +
+        ':' +
+        pad(d.getMinutes()) +
+        ':' +
+        pad(d.getSeconds());
 }
 
 function isAdmin() {
@@ -411,6 +510,7 @@ export async function loadCarePanel() {
         ]);
         if (notif) renderNotifications(notif.items, notif.unreadCount ?? 0);
         if (queue) renderQueue(queue.items);
+        setSyncText();
     } catch {
         /* centrum i kolejka best-effort, liczniki już są */
     }
