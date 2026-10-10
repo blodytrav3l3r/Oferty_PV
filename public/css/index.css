@@ -2621,11 +2621,17 @@ html[data-theme='light'] body.index-page.logged-in::before {
     gap: 4px;
     margin-bottom: 8px;
 }
+.care-side-col > .card:first-child {
+    flex: 1 1 auto;
+    min-height: 0;
+}
 #care-notif-list {
-    max-height: 32rem;
+    max-height: 48rem;
     overflow-y: auto;
     scrollbar-width: thin;
     padding-right: 0;
+    flex: 1 1 auto;
+    min-height: 0;
 }
 #care-buckets {
     max-height: none;
