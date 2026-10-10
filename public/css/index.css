@@ -2827,19 +2827,27 @@ html[data-theme='light'] body.index-page.logged-in::before {
     gap: 8px;
     margin-top: 4px;
 }
-.care-chart-row {
-    min-width: 0;
-}
 .care-chart-head {
     display: flex;
-    justify-content: space-between;
-    gap: 8px;
+    align-items: center;
+    gap: 6px;
     font-size: var(--fs-base);
     font-weight: var(--fw-semibold);
 }
-.care-chart-count {
+.care-chart-head .care-chart-count {
+    margin-left: auto;
     color: var(--text-muted);
     font-feature-settings: 'tnum';
+    font-weight: var(--fw-regular, 400);
+}
+.care-chart-row.is-zero {
+    opacity: 0.55;
+}
+.care-bar--stacked {
+    margin-top: 10px;
+}
+.care-chart-row {
+    min-width: 0;
 }
 .care-chart-track {
     background: var(--bg-tertiary);

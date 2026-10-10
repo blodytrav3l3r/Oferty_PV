@@ -206,30 +206,16 @@ function renderBuckets(summary) {
         empty.textContent = 'Brak ofert w opiece.';
         box.appendChild(empty);
     } else {
-        // Pasek proporcji całości (flex:N jak w makiecie) + wiersze z udziałami.
-        const bar = document.createElement('div');
-        bar.className = 'care-bar';
-        bar.setAttribute('role', 'img');
-        bar.setAttribute('aria-label', rows.map((r) => r[0] + ': ' + r[1]).join(', '));
-        rows.forEach((r, i) => {
-            if (r[1] <= 0) return;
-            const s = document.createElement('span');
-            s.style.flex = String(r[1]);
-            s.style.background = BUCKET_COLORS[i % BUCKET_COLORS.length];
-            s.title = r[0] + ': ' + r[1];
-            bar.appendChild(s);
-        });
-        box.appendChild(bar);
-        // Wykres wierszowy: etykieta + liczba + pasek udziału (osobno na wiersz).
+        // Wiersze: kropka + etykieta … liczba (procent), pod spodem pasek.
         const chart = document.createElement('div');
         chart.className = 'care-chart';
         chart.setAttribute('role', 'img');
         chart.setAttribute('aria-label', rows.map((r) => r[0] + ': ' + r[1]).join(', '));
         rows.forEach((r, i) => {
-            if (r[1] <= 0) return;
             const pct = Math.round((r[1] / total) * 100);
             const row = document.createElement('div');
             row.className = 'care-chart-row';
+            if (r[1] <= 0) row.classList.add('is-zero');
             const head = document.createElement('div');
             head.className = 'care-chart-head';
             const dot = document.createElement('span');
@@ -253,6 +239,20 @@ function renderBuckets(summary) {
             chart.appendChild(row);
         });
         box.appendChild(chart);
+        // Jeden pasek proporcji całości (flex:N).
+        const bar = document.createElement('div');
+        bar.className = 'care-bar care-bar--stacked';
+        bar.setAttribute('role', 'img');
+        bar.setAttribute('aria-label', rows.map((r) => r[0] + ': ' + r[1]).join(', '));
+        rows.forEach((r, i) => {
+            if (r[1] <= 0) return;
+            const s = document.createElement('span');
+            s.style.flex = String(r[1]);
+            s.style.background = BUCKET_COLORS[i % BUCKET_COLORS.length];
+            s.title = r[0] + ': ' + r[1];
+            bar.appendChild(s);
+        });
+        box.appendChild(bar);
     }
     const topEl = document.getElementById('care-buckets-top');
     if (topEl) {

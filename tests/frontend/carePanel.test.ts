@@ -193,11 +193,11 @@ describe('carePanel', () => {
             walk2(root);
             return out;
         };
-        // Wykres wierszowy: tylko niezerowe (Wygrane 0 ukryte) + pasek proporcji.
+        // Wykres wierszowy: 5 wierszy (zera przygaszone klasą is-zero).
         expect(findClass(els['care-buckets'], 'care-chart')).toHaveLength(1);
-        expect(findClass(els['care-buckets'], 'care-chart-row')).toHaveLength(4);
-        expect(findClass(els['care-buckets'], 'care-chart-fill')).toHaveLength(4);
-        expect(findClass(els['care-buckets'], 'care-chart-dot')).toHaveLength(4);
+        expect(findClass(els['care-buckets'], 'care-chart-row')).toHaveLength(5);
+        expect(findClass(els['care-buckets'], 'care-chart-fill')).toHaveLength(5);
+        expect(findClass(els['care-buckets'], 'care-chart-dot')).toHaveLength(5);
         // Pasek proporcji całości (flex:N, tylko niezerowe).
         const bars = findClass(els['care-buckets'], 'care-bar');
         expect(bars).toHaveLength(1);
