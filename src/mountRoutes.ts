@@ -33,6 +33,7 @@ import exportCombinedRoutes from './routes/exportCombined';
 import sharesRoutes from './routes/shares';
 import adminRoutes from './routes/admin';
 import locksRoutes from './routes/locks';
+import careRoutes from './routes/care';
 
 /**
  * Montuje wszystkie trasy API + raport CSP + globalny error handler.
@@ -107,6 +108,7 @@ export function mountRoutes(app: express.Express, apiLimiter: express.RequestHan
     app.use('/api/shares', apiLimiter, smallJson, sharesRoutes);
     app.use('/api/admin', apiLimiter, smallJson, adminRoutes);
     app.use('/api/locks', apiLimiter, smallJson, locksRoutes);
+    app.use('/api/care', apiLimiter, smallJson, careRoutes);
 
     /* ===== RAPORTY VIOLACJI CSP (Faza 1 planu CSP — monitoring) ===== */
     // apiLimiter: endpoint anonimowy, bez niego curl w pętli = log-spam/dysk.
