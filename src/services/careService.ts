@@ -8,7 +8,6 @@
  * (offerKind,offerId), deterministyczna paginacja cursorem (nie OFFSET).
  * getCareQueue wykonuje max 2 SELECT (data + COUNT DISTINCT).
  */
-import { randomUUID } from 'node:crypto';
 import { Prisma } from '../../generated/prisma';
 import type { User } from '../helpers';
 import { buildRoleWhereClause } from '../utils/roleFilter';
@@ -553,7 +552,11 @@ export interface CareSyncResult {
     resolved: number;
 }
 
-/** Sync skrzynki usera: wstaw brakujące + zamknij nieaktualne. Idempotentny. */
+/** Sync skrzynki usera: wstaw brakujące + zamknij nieaktualne. Idempotentny.
+ * Set-based: stała liczba statementów niezależna od liczby kandydatów
+ * (P1 planu poprawy; baseline N+1: ~2 stmt/ofertę w careSyncLoad.test.ts).
+ * Wyścig dwóch synców rozstrzyga uq_carenotif_unread_per_offer + OR IGNORE
+ * (jak terminale w followUps) — przegrany wstawia 0, nie rzuca. */
 export async function syncCareNotifications(
     db: RawDb,
     user: CareUser,
@@ -563,53 +566,26 @@ export async function syncCareNotifications(
 ): Promise<CareSyncResult> {
     const uid = user.id;
     const cand = notifCandidates(user, scope, nowIso, sla);
-    const candSel = Prisma.sql`SELECT * FROM (${cand}) WHERE "ntype" IS NOT NULL`;
-    const toInsert = (await db.$queryRaw<
-        Array<{ offerKind: string; offerId: string; ownerId: string; ntype: string | null }>
-    >(candSel)) as Array<{
-        offerKind: string;
-        offerId: string;
-        ntype: string | null;
-    }>;
-    let inserted = 0;
-    for (const c of toInsert) {
-        if (!c.ntype) continue;
-        const dup = (await db.$queryRaw<Array<{ c: number }>>(
-            Prisma.sql`SELECT COUNT(*) AS "c" FROM "care_notifications" WHERE "userId" = ${uid} AND "offerKind" = ${c.offerKind} AND "offerId" = ${c.offerId} AND "type" = ${c.ntype} AND "readAt" IS NULL`
-        )) as Array<{ c: number | bigint }>;
-        if (num(dup[0]?.c) > 0) continue;
-        try {
-            await db.$queryRaw(
-                Prisma.sql`INSERT INTO "care_notifications" ("id", "userId", "offerKind", "offerId", "type", "readAt", "createdAt") VALUES (${randomUUID()}, ${uid}, ${c.offerKind}, ${c.offerId}, ${c.ntype}, NULL, ${nowIso})`
-            );
-        } catch (e) {
-            // Wyścig dwóch synców rozstrzyga uq_carenotif_unread_per_offer
-            // (jak terminale w followUps) — przegrany pomija, nie rzuca.
-            if ((e as { code?: string })?.code === 'P2002') continue;
-            const msg = e instanceof Error ? e.message : String(e);
-            if (/uq_carenotif_unread_per_offer|UNIQUE constraint failed/i.test(msg)) continue;
-            throw e;
-        }
-        inserted += 1;
-    }
-    // Auto-read: oferta zniknęła z kandydatów (terminal/pauza/poza scope).
-    const liveSel = Prisma.sql`SELECT "offerKind", "offerId" FROM (${cand}) WHERE "ntype" IS NOT NULL`;
-    const stillDue = (await db.$queryRaw<Array<{ offerKind: string; offerId: string }>>(
-        liveSel
-    )) as Array<{ offerKind: string; offerId: string }>;
-    const open = await db.$queryRaw<Array<CareNotification>>(
-        Prisma.sql`SELECT "id", "userId", "offerKind", "offerId", "type", "readAt", "createdAt" FROM "care_notifications" WHERE "userId" = ${uid} AND "readAt" IS NULL`
+    // 1: wstaw brakujące (deduplikacja w SQL, nie pętla w JS).
+    await db.$queryRaw(
+        Prisma.sql`INSERT OR IGNORE INTO "care_notifications" ("id", "userId", "offerKind", "offerId", "type", "readAt", "createdAt")
+            SELECT lower(hex(randomblob(16))), ${uid}, c."offerKind", c."offerId", c."ntype", NULL, ${nowIso}
+            FROM (${cand}) AS c
+            WHERE c."ntype" IS NOT NULL
+            AND NOT EXISTS (SELECT 1 FROM "care_notifications" n WHERE n."userId" = ${uid} AND n."offerKind" = c."offerKind" AND n."offerId" = c."offerId" AND n."type" = c."ntype" AND n."readAt" IS NULL)`
     );
-    const live = new Set(stillDue.map((r) => `${r.offerKind}:${r.offerId}`));
-    let resolved = 0;
-    for (const n of open) {
-        if (!live.has(`${n.offerKind}:${n.offerId}`)) {
-            await db.$queryRaw(
-                Prisma.sql`UPDATE "care_notifications" SET "readAt" = ${nowIso} WHERE "id" = ${n.id} AND "userId" = ${uid} AND "readAt" IS NULL`
-            );
-            resolved += 1;
-        }
-    }
+    const insCnt = (await db.$queryRaw<Array<{ c: number | bigint }>>(
+        Prisma.sql`SELECT COUNT(*) AS "c" FROM "care_notifications" WHERE "userId" = ${uid} AND "createdAt" = ${nowIso} AND "readAt" IS NULL`
+    )) as Array<{ c: number | bigint }>;
+    const inserted = num(insCnt[0]?.c);
+    // 2: auto-read jednym UPDATE (oferta zniknęła z kandydatów:
+    // terminal/pauza/poza scope) — liczba zamkniętych z RETURNING.
+    const resolvedRows = (await db.$queryRaw<Array<{ id: string }>>(
+        Prisma.sql`UPDATE "care_notifications" SET "readAt" = ${nowIso} WHERE "userId" = ${uid} AND "readAt" IS NULL
+            AND ("offerKind", "offerId") NOT IN (SELECT "offerKind", "offerId" FROM (${cand}) WHERE "ntype" IS NOT NULL)
+            RETURNING "id"`
+    )) as Array<{ id: string }>;
+    const resolved = resolvedRows.length;
     // Retencja leniwa (brak workera w S.O.K.): przeczytane >90d precz,
     // skrzynka maks. 500 wierszy (najświeższe). Bounded inbox.
     const cutoff = new Date(Date.parse(nowIso) - 90 * 86400000).toISOString();
@@ -655,6 +631,20 @@ export async function markCareNotificationRead(
 ): Promise<number> {
     const rows = (await db.$queryRaw<Array<{ c: number | bigint }>>(
         Prisma.sql`UPDATE "care_notifications" SET "readAt" = ${nowIso} WHERE "id" = ${notifId} AND "userId" = ${userId} AND "readAt" IS NULL RETURNING 1 AS "c"`
+    )) as Array<{ c: number | bigint }>;
+    return rows.length;
+}
+
+/** Zbiorczy odczyt własnych powiadomień (1 UPDATE; „Wyczyść wszystko" w 1 requeście). */
+export async function markCareNotificationsRead(
+    db: RawDb,
+    userId: string,
+    notifIds: string[],
+    nowIso: string
+): Promise<number> {
+    if (notifIds.length === 0) return 0;
+    const rows = (await db.$queryRaw<Array<{ c: number | bigint }>>(
+        Prisma.sql`UPDATE "care_notifications" SET "readAt" = ${nowIso} WHERE "userId" = ${userId} AND "readAt" IS NULL AND "id" IN (${Prisma.join(notifIds)}) RETURNING 1 AS "c"`
     )) as Array<{ c: number | bigint }>;
     return rows.length;
 }

@@ -8,6 +8,7 @@ import {
     syncCareNotifications,
     listCareNotifications,
     markCareNotificationRead,
+    markCareNotificationsRead,
     type CareUser
 } from '../../src/services/careService';
 
@@ -121,7 +122,8 @@ describe('P2 sync powiadomień', () => {
             ).items;
             expect(enriched.find((t) => t.offerId === 'o1')?.clientName).toBe('Budimex');
             expect(enriched.find((t) => t.offerId === 'o1')?.number).toBe('OF-1');
-            const r2 = await syncCareNotifications(f, U1, 'mine', NOW, SLA);
+            // Rerun z późniejszym nowIso (licznik wstawek liczony po createdAt).
+            const r2 = await syncCareNotifications(f, U1, 'mine', '2026-10-10T12:01:00.000Z', SLA);
             expect(r2.inserted).toBe(0);
             db.close();
         } catch (e) {
@@ -222,6 +224,40 @@ describe('P2 sync powiadomień', () => {
             expect(
                 (await listCareNotifications(f, 'u1', { unreadOnly: true, limit: 50 })).unreadCount
             ).toBe(3);
+            db.close();
+        } catch (e) {
+            try {
+                db.close();
+            } catch {
+                /* ignore */
+            }
+            throw e;
+        }
+    });
+
+    it('zbiorczy odczyt: własne zamyka, cudze pomija, puste 0', async () => {
+        const db = freshDb();
+        try {
+            const f = fake(db);
+            await syncCareNotifications(f, U1, 'mine', NOW, SLA);
+            const all = (await listCareNotifications(f, 'u1', { unreadOnly: true, limit: 50 }))
+                .items;
+            expect(all.length).toBe(4);
+            // Cudzy wiersz nie do ruszenia przez u1.
+            db.prepare(
+                'INSERT INTO care_notifications ("id", "userId", "offerKind", "offerId", "type", "readAt", "createdAt") VALUES (?,?,?,?,?,?,?)'
+            ).run('alien', 'u9', 'rury', 'o1', 'SLA_BREACH', null, NOW);
+            const read = await markCareNotificationsRead(
+                f,
+                'u1',
+                [all[0].id, all[1].id, 'alien', 'brak'],
+                NOW
+            );
+            expect(read).toBe(2);
+            expect(
+                (await listCareNotifications(f, 'u1', { unreadOnly: true, limit: 50 })).unreadCount
+            ).toBe(2);
+            expect(await markCareNotificationsRead(f, 'u1', [], NOW)).toBe(0);
             db.close();
         } catch (e) {
             try {

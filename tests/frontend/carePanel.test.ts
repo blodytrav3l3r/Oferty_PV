@@ -594,11 +594,40 @@ describe('carePanel', () => {
         expect(calls.some((c) => c.includes('/api/care/notifications/n9/read'))).toBe(true);
     });
 
-    test('Wyczyść oznacza wszystkie jako przeczytane', async () => {
+    test('Wyczyść: jeden bulk POST zamiast N pojedynczych', async () => {
+        const calls: string[] = [];
+        const posts: Array<{ url: string; body: string }> = [];
+        const { els, context } = load({
+            calls,
+            fetchMock: (url: string, init?: any) => {
+                if (url.endsWith('/api/care/notifications/read')) {
+                    posts.push({ url, body: String(init?.body ?? '') });
+                    return okJson({ ok: true, read: 1 });
+                }
+                if (url.includes('/api/care/notifications'))
+                    return okJson({
+                        items: [{ id: 'n9', offerKind: 'rury', offerId: 'o9', type: 'SLA_BREACH' }],
+                        unreadCount: 1
+                    });
+                return okJson({ noContact: 0, due: 0, openOk: 0, won: 0, lost: 0, items: [] });
+            }
+        });
+        await context.__careTest.loadCarePanel();
+        const clear = els['care-notif-clear'];
+        expect(clear).toBeDefined();
+        for (const fn of clear.handlers || []) await fn();
+        expect(posts).toHaveLength(1);
+        expect(JSON.parse(posts[0].body)).toEqual({ ids: ['n9'] });
+        expect(calls.some((c) => c.includes('/api/care/notifications/n9/read'))).toBe(false);
+    });
+
+    test('Wyczyść fallback: bulk fail → pojedyncze odczyty', async () => {
         const calls: string[] = [];
         const { els, context } = load({
             calls,
             fetchMock: (url: string, _init?: any) => {
+                if (url.endsWith('/api/care/notifications/read'))
+                    return { ok: false, json: async () => ({}) };
                 if (url.includes('/notifications/') && url.includes('/read'))
                     return okJson({ ok: true });
                 if (url.includes('/api/care/notifications'))
@@ -611,7 +640,6 @@ describe('carePanel', () => {
         });
         await context.__careTest.loadCarePanel();
         const clear = els['care-notif-clear'];
-        expect(clear).toBeDefined();
         for (const fn of clear.handlers || []) await fn();
         expect(
             calls.filter((c) => c.includes('/api/care/notifications/n9/read')).length

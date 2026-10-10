@@ -19,6 +19,7 @@ import {
     syncCareNotifications,
     listCareNotifications,
     markCareNotificationRead,
+    markCareNotificationsRead,
     MAX_SNOOZE_DAYS
 } from '../services/careService';
 import { getFollowUpState, isEscalated } from '../utils/careStatus';
@@ -440,6 +441,26 @@ router.get('/notifications', requireAuth, READ_LIMITER, async (req, res) => {
             return res.status(403).json({ error: 'Brak uprawnień do zakresu' });
         }
         logger.warn('Care', 'Błąd powiadomień', String(e));
+        return res.status(500).json({ error: 'Błąd serwera' });
+    }
+});
+
+// Zbiorczy odczyt MUSI być przed '/notifications/:id/read' (inaczej 'read' wpadnie w :id).
+router.post('/notifications/read', requireAuth, WRITE_LIMITER, async (req, res) => {
+    const authReq = req as AuthenticatedRequest;
+    try {
+        const user = authReq.user;
+        if (!user) return res.status(401).json({ error: 'Nieautoryzowany' });
+        const parsed = z
+            .object({ ids: z.array(z.string().min(1).max(200)).min(1).max(100) })
+            .safeParse(req.body);
+        if (!parsed.success) return res.status(400).json({ error: 'Nieprawidłowe parametry' });
+        const nowIso = new Date().toISOString();
+        const read = await markCareNotificationsRead(prisma, user.id, parsed.data.ids, nowIso);
+        return res.json({ ok: true, read });
+    } catch (e) {
+        if (mapPrismaError(res, e)) return;
+        logger.warn('Care', 'Błąd zbiorczego odczytu powiadomień', String(e));
         return res.status(500).json({ error: 'Błąd serwera' });
     }
 });

@@ -24,6 +24,7 @@ jest.mock('../../src/utils/logger', () => ({
 const syncMock = jest.fn();
 const listMock = jest.fn();
 const markMock = jest.fn();
+const markBulkMock = jest.fn();
 
 jest.mock('../../src/services/careService', () => {
     const actual = jest.requireActual('../../src/services/careService');
@@ -32,7 +33,8 @@ jest.mock('../../src/services/careService', () => {
         getSlaConfig: jest.fn(async () => ({ firstContactH: 24, staleD: 7, escalationH: 72 })),
         syncCareNotifications: (...a: unknown[]) => syncMock(...a),
         listCareNotifications: (...a: unknown[]) => listMock(...a),
-        markCareNotificationRead: (...a: unknown[]) => markMock(...a)
+        markCareNotificationRead: (...a: unknown[]) => markMock(...a),
+        markCareNotificationsRead: (...a: unknown[]) => markBulkMock(...a)
     };
 });
 
@@ -80,6 +82,27 @@ describe('P2 notifications routes', () => {
         expect((await request(app()).post('/api/care/notifications/n1/read')).status).toBe(200);
         markMock.mockResolvedValueOnce(0);
         expect((await request(app()).post('/api/care/notifications/n1/read')).status).toBe(404);
+    });
+
+    it('POST read (bulk) → 200 z liczbą; puste/za dużo → 400', async () => {
+        markBulkMock.mockResolvedValueOnce(2);
+        const ok = await request(app())
+            .post('/api/care/notifications/read')
+            .send({ ids: ['n1', 'n2'] });
+        expect(ok.status).toBe(200);
+        expect(ok.body).toEqual({ ok: true, read: 2 });
+        expect(markBulkMock).toHaveBeenCalledWith(
+            expect.anything(),
+            'u1',
+            ['n1', 'n2'],
+            expect.any(String)
+        );
+        expect(
+            (await request(app()).post('/api/care/notifications/read').send({ ids: [] })).status
+        ).toBe(400);
+        expect((await request(app()).post('/api/care/notifications/read').send({})).status).toBe(
+            400
+        );
     });
 
     it('scope=all nie-admin → 403 z serwisu', async () => {

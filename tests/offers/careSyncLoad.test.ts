@@ -1,15 +1,17 @@
 /*
  * tests/offers/careSyncLoad.test.ts
- * P0 planu poprawy opieki: baseline pomiaru syncCareNotifications.
+ * P0+P1 planu poprawy opieki: pomiar syncCareNotifications.
  * Seed 400 ofert (in-memory, poniżej capa retencji 500), licznik
- * statementów + czas. Same asercje poprawnościowe (inserted), liczby służą
- * jako dowód przed/po P1.
+ * statementów + czas. P1: set-based => stała liczba statementów
+ * niezależna od N (bound) + wyścig równoległych synców bez duplikatów.
  */
 import { DatabaseSync } from 'node:sqlite';
 import type { Prisma } from '../../generated/prisma';
 import { syncCareNotifications, type CareUser } from '../../src/services/careService';
 
 const NOW = '2026-10-10T12:00:00.000Z';
+const NOW2 = '2026-10-10T12:01:00.000Z';
+const NOW3 = '2026-10-10T12:02:00.000Z';
 const U1: CareUser = { id: 'u1', role: 'user', subUsers: [] };
 const SLA = { firstContactH: 24, staleD: 7, escalationH: 72 };
 const N = 400;
@@ -55,8 +57,8 @@ function seedDb(): DatabaseSync {
     return db;
 }
 
-describe('P0 baseline: sync 400 ofert', () => {
-    it('inserted=N, rerun=0, raport statementów/ms', async () => {
+describe('P0+P1: sync 400 ofert set-based', () => {
+    it('inserted=N, rerun=0, stała liczba statementów', async () => {
         const db = seedDb();
         let statements = 0;
         const f = {
@@ -72,19 +74,48 @@ describe('P0 baseline: sync 400 ofert', () => {
             const r1 = await syncCareNotifications(f, U1, 'mine', NOW, SLA);
             const ms1 = Date.now() - t0;
             expect(r1.inserted).toBe(N);
+            // P1: INSERT + COUNT + UPDATE..RETURNING + 2×retencja = 5, margines 3.
+            expect(statements).toBeLessThanOrEqual(8);
 
             console.log(
                 `BASELINE sync1: inserted=${r1.inserted} statements=${statements} ms=${ms1}`
             );
             const before = statements;
             const t1 = Date.now();
-            const r2 = await syncCareNotifications(f, U1, 'mine', NOW, SLA);
+            const r2 = await syncCareNotifications(f, U1, 'mine', NOW2, SLA);
             const ms2 = Date.now() - t1;
             expect(r2.inserted).toBe(0);
+            expect(statements - before).toBeLessThanOrEqual(8);
 
             console.log(
                 `BASELINE sync2-rerun: inserted=0 statements=${statements - before} ms=${ms2}`
             );
+        } finally {
+            db.close();
+        }
+    }, 120000);
+
+    it('wyścig dwóch synców: suma inserted=N, brak błędów i duplikatów', async () => {
+        const db = seedDb();
+        const f = {
+            $queryRaw: async <T>(...args: any[]): Promise<T> => {
+                const q = args[0] as Prisma.Sql;
+                const raw = q as unknown as { sql: string; values: unknown[] };
+                return db.prepare(raw.sql).all(...(raw.values as never[])) as unknown as T;
+            }
+        };
+        try {
+            const [a, b] = await Promise.all([
+                syncCareNotifications(f, U1, 'mine', NOW2, SLA),
+                syncCareNotifications(f, U1, 'mine', NOW3, SLA)
+            ]);
+            expect(a.inserted + b.inserted).toBe(N);
+            const cnt = db
+                .prepare(
+                    'SELECT COUNT(*) AS c FROM "care_notifications" WHERE "userId" = ? AND "readAt" IS NULL'
+                )
+                .get('u1') as unknown as { c: number };
+            expect(cnt.c).toBe(N);
         } finally {
             db.close();
         }

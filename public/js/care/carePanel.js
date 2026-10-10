@@ -203,14 +203,34 @@ async function clearNotifications() {
     } catch {
         return;
     }
-    for (const n of items) {
-        try {
-            await fetch('/api/care/notifications/' + encodeURIComponent(String(n.id)) + '/read', {
-                method: 'POST',
-                credentials: 'same-origin'
-            });
-        } catch {
-            /* best-effort */
+    if (items.length === 0) {
+        loadCarePanel();
+        return;
+    }
+    const ids = items.map((n) => String(n.id));
+    let bulkOk = false;
+    try {
+        const resp = await fetch('/api/care/notifications/read', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ids })
+        });
+        bulkOk = !!resp && resp.ok;
+    } catch {
+        bulkOk = false;
+    }
+    if (!bulkOk) {
+        // Fallback: pojedyncze odczyty (stary kontrakt API).
+        for (const id of ids) {
+            try {
+                await fetch('/api/care/notifications/' + encodeURIComponent(id) + '/read', {
+                    method: 'POST',
+                    credentials: 'same-origin'
+                });
+            } catch {
+                /* best-effort */
+            }
         }
     }
     loadCarePanel();
