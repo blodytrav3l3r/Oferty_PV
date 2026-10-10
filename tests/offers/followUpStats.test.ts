@@ -62,7 +62,8 @@ describe('P3 GET /followups/stats', () => {
         q.mockResolvedValueOnce([
             { outcome: 'OPEN', c: 5 },
             { outcome: 'WON', c: 3n },
-            { outcome: 'LOST_COMPETITION', c: 2 }
+            { outcome: 'LOST_COMPETITION', c: 2 },
+            { outcome: 'ABANDONED', c: 1 }
         ]);
         q.mockResolvedValueOnce([{ total: 8, nocontact: 1 }]);
         q.mockResolvedValueOnce([{ total: 2, nocontact: 0 }]);
@@ -70,6 +71,7 @@ describe('P3 GET /followups/stats', () => {
             { r: 'cena', c: 2 },
             { r: null, c: 1 }
         ]);
+        q.mockResolvedValueOnce([{ r: null, c: 1 }]);
         q.mockResolvedValueOnce([{ cp: 'Firma A', c: 2, avg: 1500.5 }]);
         q.mockResolvedValueOnce([
             { k: 'won', v: 9000 },
@@ -87,23 +89,26 @@ describe('P3 GET /followups/stats', () => {
         expect(res.status).toBe(200);
         expect(res.body.ok).toBe(true);
         const s = res.body.stats;
-        expect(s.outcomes).toEqual({ OPEN: 5, WON: 3, LOST_COMPETITION: 2 });
+        expect(s.outcomes).toEqual({ OPEN: 5, WON: 3, LOST_COMPETITION: 2, ABANDONED: 1 });
         expect(s.offersTotal).toBe(10);
         expect(s.noContact).toBe(1);
-        expect(s.conversion).toBeCloseTo(0.3);
+        // Konwersja z domkniętych: 3/(3+2+1) — noContact i OPEN poza mianownikiem.
+        expect(s.conversion).toBeCloseTo(0.5);
+        expect(s.abandoned).toBe(1);
         expect(s.wonValue).toBe(10000);
         expect(s.lostValue).toBe(2500.25);
         expect(s.lossReasons).toEqual([
             { reason: 'cena', count: 2 },
             { reason: 'Nie podano', count: 1 }
         ]);
+        expect(s.abandonedReasons).toEqual([{ reason: 'Nie podano', count: 1 }]);
         expect(s.competitors).toEqual([{ competitor: 'Firma A', count: 2, avgPrice: 1500.5 }]);
         expect(s.perRep).toEqual([
             { userId: 'rep-1', contacts: 6, offers: 4, wins: 2 },
             { userId: 'rep-2', contacts: 1, offers: 1, wins: 0 }
         ]);
         expect(s.avgFirstContactH).toBe(30.5);
-        expect(q).toHaveBeenCalledTimes(8);
+        expect(q).toHaveBeenCalledTimes(9);
     });
 
     it('pusta baza: zera bez dzielenia przez zero', async () => {
@@ -115,11 +120,14 @@ describe('P3 GET /followups/stats', () => {
         q.mockResolvedValueOnce([]);
         q.mockResolvedValueOnce([]);
         q.mockResolvedValueOnce([]);
+        q.mockResolvedValueOnce([]);
         q.mockResolvedValueOnce([{ h: null }]);
 
         const res = await request(createApp()).get('/api/offers/followups/stats');
         expect(res.status).toBe(200);
         expect(res.body.stats.conversion).toBe(0);
+        expect(res.body.stats.abandoned).toBe(0);
+        expect(res.body.stats.abandonedReasons).toEqual([]);
         expect(res.body.stats.avgFirstContactH).toBeNull();
         expect(res.body.stats.perRep).toEqual([]);
     });
@@ -217,6 +225,7 @@ describe('P3 GET /followups/stats', () => {
         q.mockResolvedValueOnce([{ total: 0, nocontact: 0 }]);
         q.mockResolvedValueOnce([]);
         q.mockResolvedValueOnce([]);
+        q.mockResolvedValueOnce([]);
         q.mockResolvedValueOnce([{ k: 'won', v: 500 }]);
         q.mockResolvedValueOnce([
             { u: 'rep-a', contacts: 3, offers: 1, wins: 0 },
@@ -232,7 +241,7 @@ describe('P3 GET /followups/stats', () => {
         ]);
     });
 
-    it('user nie-admin: scope bez 1=1 (8 zapytan z filtrem)', async () => {
+    it('user nie-admin: scope bez 1=1 (9 zapytan z filtrem)', async () => {
         mockUser.role = 'user';
         mockUser.id = 'rep-9';
         const q = prisma.$queryRaw as jest.Mock;

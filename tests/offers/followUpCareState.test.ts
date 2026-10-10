@@ -84,6 +84,52 @@ describe('P1 care state', () => {
         }
     });
 
+    it('opt-lock: nieaktualne expectedUpdatedAt → 409, świeże przechodzi', async () => {
+        const db = freshDb();
+        try {
+            const f = fake(db);
+            const s1 = await setCareState(f, {
+                offerKind: 'rury',
+                offerId: 'o1',
+                snoozedUntil: '2026-10-12T00:00:00.000Z',
+                doneAt: null,
+                updatedBy: 'u1',
+                nowIso: NOW
+            });
+            await expect(
+                setCareState(f, {
+                    offerKind: 'rury',
+                    offerId: 'o1',
+                    snoozedUntil: null,
+                    doneAt: NOW,
+                    updatedBy: 'u2',
+                    nowIso: NOW,
+                    expectedUpdatedAt: '2000-01-01T00:00:00.000Z'
+                })
+            ).rejects.toMatchObject({ status: 409 });
+            // Przegrany nie nadpisał.
+            expect((await getCareState(f, 'rury', 'o1'))?.updatedBy).toBe('u1');
+            const s2 = await setCareState(f, {
+                offerKind: 'rury',
+                offerId: 'o1',
+                snoozedUntil: null,
+                doneAt: NOW,
+                updatedBy: 'u2',
+                nowIso: NOW,
+                expectedUpdatedAt: s1.updatedAt
+            });
+            expect(s2.doneAt).toBe(NOW);
+            db.close();
+        } catch (e) {
+            try {
+                db.close();
+            } catch {
+                /* ignore */
+            }
+            throw e;
+        }
+    });
+
     it('SLA: default bez wiersza, upsert zapisuje', async () => {
         const db = freshDb();
         try {

@@ -125,6 +125,77 @@ describe('P2 sync powiadomień', () => {
         }
     });
 
+    it('uq_carenotif_unread_per_offer: duplikat odrzucany przez constraint', async () => {
+        const db = freshDb();
+        try {
+            db.exec(
+                'CREATE UNIQUE INDEX "uq_carenotif_unread_per_offer" ON "care_notifications"("userId", "offerKind", "offerId", "type") WHERE "readAt" IS NULL;'
+            );
+            db.prepare(
+                'INSERT INTO care_notifications ("id", "userId", "offerKind", "offerId", "type", "readAt", "createdAt") VALUES (?,?,?,?,?,?,?)'
+            ).run('a', 'u1', 'rury', 'o1', 'SLA_BREACH', null, NOW);
+            expect(() =>
+                db
+                    .prepare(
+                        'INSERT INTO care_notifications ("id", "userId", "offerKind", "offerId", "type", "readAt", "createdAt") VALUES (?,?,?,?,?,?,?)'
+                    )
+                    .run('b', 'u1', 'rury', 'o1', 'SLA_BREACH', null, NOW)
+            ).toThrow(/UNIQUE constraint failed/i);
+            // Po oznaczeniu jako przeczytane ten sam typ może powstać na nowo.
+            db.prepare('UPDATE care_notifications SET "readAt" = ? WHERE "id" = ?').run(NOW, 'a');
+            db.prepare(
+                'INSERT INTO care_notifications ("id", "userId", "offerKind", "offerId", "type", "readAt", "createdAt") VALUES (?,?,?,?,?,?,?)'
+            ).run('c', 'u1', 'rury', 'o1', 'SLA_BREACH', null, NOW);
+            db.close();
+        } catch (e) {
+            try {
+                db.close();
+            } catch {
+                /* ignore */
+            }
+            throw e;
+        }
+    });
+
+    it('retencja leniwa: stare przeczytane precz, cap 500', async () => {
+        const db = freshDb();
+        try {
+            const f = fake(db);
+            const ins = db.prepare(
+                'INSERT INTO care_notifications ("id", "userId", "offerKind", "offerId", "type", "readAt", "createdAt") VALUES (?,?,?,?,?,?,?)'
+            );
+            ins.run(
+                'old1',
+                'u1',
+                'rury',
+                'ox',
+                'SLA_BREACH',
+                '2026-01-01T00:00:00.000Z',
+                '2026-01-01T00:00:00.000Z'
+            );
+            for (let i = 0; i < 505; i++) {
+                ins.run('u' + i, 'u1', 'rury', 'o' + i, 'CALLBACK_DUE', null, NOW);
+            }
+            await syncCareNotifications(f, U1, 'mine', NOW, SLA);
+            const n = db
+                .prepare('SELECT COUNT(*) AS c FROM care_notifications WHERE "userId" = ?')
+                .get('u1') as { c: number };
+            expect(n.c).toBeLessThanOrEqual(500);
+            const old = db
+                .prepare('SELECT COUNT(*) AS c FROM care_notifications WHERE "id" = ?')
+                .get('old1') as { c: number };
+            expect(old.c).toBe(0);
+            db.close();
+        } catch (e) {
+            try {
+                db.close();
+            } catch {
+                /* ignore */
+            }
+            throw e;
+        }
+    });
+
     it('lista unread + odczyt własnego, cudze 0', async () => {
         const db = freshDb();
         try {

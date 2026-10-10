@@ -13,7 +13,8 @@ jest.mock('../../src/middleware/auth', () => ({
 }));
 
 jest.mock('../../src/middleware/rateLimiters', () => ({
-    WRITE_LIMITER: (_req: any, _res: any, next: any) => next()
+    WRITE_LIMITER: (_req: any, _res: any, next: any) => next(),
+    READ_LIMITER: (_req: any, _res: any, next: any) => next()
 }));
 
 jest.mock('../../src/utils/logger', () => ({
@@ -65,7 +66,25 @@ jest.mock('../../src/prismaClient', () => ({
             findUnique: jest.fn(async ({ where }: any) => ({ id: where.id, userId: 'u1' }))
         },
         $transaction: jest.fn(async (fn: any) =>
-            fn({ audit_logs: { create: auditCreate }, care_states: {} })
+            fn({
+                audit_logs: { create: auditCreate },
+                care_states: {},
+                offers_rel: {
+                    findUnique: jest.fn(async ({ where }: any) =>
+                        where.id === 'nope' || (globalThis as any).__txGone === where.id
+                            ? null
+                            : {
+                                  id: where.id,
+                                  userId:
+                                      (globalThis as any).__txOwner?.[where.id] ??
+                                      (where.id === 'cudza' ? 'u9' : 'u1')
+                              }
+                    )
+                },
+                offers_studnie_rel: {
+                    findUnique: jest.fn(async ({ where }: any) => ({ id: where.id, userId: 'u1' }))
+                }
+            })
         )
     }
 }));
@@ -116,6 +135,37 @@ describe('P1 care routes guardy', () => {
             .post('/api/care/rury/o1/snooze')
             .send({ snoozedUntil: '2026-12-01T00:00:00.000Z' });
         expect(res.status).toBe(400);
+    });
+
+    it('TOCTOU: właściciel zmieniony w tx → 403, brak zapisu', async () => {
+        (globalThis as any).__txOwner = { o1: 'u9' };
+        try {
+            const res = await request(app())
+                .post('/api/care/rury/o1/snooze')
+                .send({ snoozedUntil: '2026-10-12T00:00:00.000Z' });
+            expect(res.status).toBe(403);
+            expect(stateUpsert).not.toHaveBeenCalled();
+        } finally {
+            delete (globalThis as any).__txOwner;
+        }
+    });
+
+    it('TOCTOU: oferta zniknęła w tx → 404', async () => {
+        (globalThis as any).__txGone = 'o1';
+        try {
+            const res = await request(app()).post('/api/care/rury/o1/done').send({});
+            expect(res.status).toBe(404);
+        } finally {
+            delete (globalThis as any).__txGone;
+        }
+    });
+
+    it('audyt niesie oldData (before-image stanu)', async () => {
+        await request(app()).post('/api/care/rury/o1/done').send({});
+        expect(auditCreate).toHaveBeenCalled();
+        const arg = auditCreate.mock.calls[auditCreate.mock.calls.length - 1][0];
+        expect(arg.data.entityType).toBe('care_state');
+        expect('oldData' in arg.data).toBe(true);
     });
 
     it('PUT sla nie-admin → 403, admin OK', async () => {

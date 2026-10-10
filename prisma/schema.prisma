@@ -1100,6 +1100,8 @@ model care_sla_config {
 // P2 opieka: centrum powiadomień in-app (pochodna stanu, nie event-bus).
 // Wiersz = fakt do pokazania userowi; odczyt = readAt; polling 60 s.
 // SLA_BREACH = przeterminowanie, ESCALATION = próg eskalacji, CALLBACK_DUE = termin dziś.
+// Max 1 nieprzeczytane na (user, oferta, typ) wymusza migracja SQL
+// (partial unique index, niewidzialny dla `prisma migrate diff`).
 model care_notifications {
   id        String  @id
   userId    String

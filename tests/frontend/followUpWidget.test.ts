@@ -64,7 +64,7 @@ describe('dashboard loadFollowUpWidget', () => {
         return els;
     };
 
-    test('liczniki z totalCount + top-5 z escapem + KPI', async () => {
+    test('tylko KPI + top-5 (liczniki pisze carePanel, jeden pisarz)', async () => {
         const calls: string[] = [];
         const els = load(async (url: string) => {
             calls.push(url);
@@ -90,24 +90,16 @@ describe('dashboard loadFollowUpWidget', () => {
                     })
                 };
             }
-            const totals: Record<string, number> = {
-                needs_contact: 3,
-                in_progress: 5,
-                won: 7,
-                lost: 2
-            };
-            const st = new URL(
-                'http://x/' + url.replace('/api/offers/search?', '?')
-            ).searchParams.get('followupStatus');
-            return { ok: true, json: async () => ({ totalCount: totals[st || ''] ?? 0 }) };
+            return { ok: true, json: async () => ({ totalCount: 0 }) };
         });
 
         await context.loadFollowUpWidget();
-        expect(els['fu-stat-needs'].textContent).toBe('3');
-        expect(els['fu-stat-progress'].textContent).toBe('5');
-        expect(els['fu-stat-won'].textContent).toBe('7');
-        expect(els['fu-stat-lost'].textContent).toBe('2');
-        expect(calls.filter((u) => u.includes('limit=1'))).toHaveLength(4);
+        // Liczników dashboard NIE rusza (brak elementów w els) — SSoT to carePanel.
+        expect(els['fu-stat-needs']).toBeUndefined();
+        expect(els['fu-stat-progress']).toBeUndefined();
+        expect(els['fu-stat-won']).toBeUndefined();
+        expect(els['fu-stat-lost']).toBeUndefined();
+        expect(calls.filter((u) => u.includes('limit=1'))).toHaveLength(0);
         expect(calls.some((u) => u.includes('sort=followup'))).toBe(true);
         const top = els['followup-top-list'].innerHTML as string;
         expect(top).toContain('&lt;b&gt;ACME&lt;/b&gt;');

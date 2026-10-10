@@ -67,6 +67,24 @@ export function getSla(latest: LatestFu | null, offerCreatedAt: string, nowIso: 
     return getFollowUpState(latest, offerCreatedAt, nowIso).slaBucket;
 }
 
+/**
+ * Jedyny predykat eskalacji (SSoT dla kolejki i powiadomień):
+ * otwarta obsługa z przekroczonym progiem godzinowym. OPEN bez terminu
+ * i NO_CONTACT nigdy nie eskalują (tylko DUE_TODAY / slaBucket).
+ */
+export function isEscalated(
+    state: FollowUpState,
+    nowIso: string,
+    escalationH: number,
+    snoozedUntil: string | null,
+    doneAt: string | null
+): boolean {
+    if (state.status !== 'DUE') return false;
+    if (doneAt !== null) return false;
+    if (snoozedUntil !== null && snoozedUntil > nowIso) return false;
+    return state.overdueDays * 24 >= escalationH;
+}
+
 export function getFollowUpState(
     latest: LatestFu | null,
     offerCreatedAt: string,

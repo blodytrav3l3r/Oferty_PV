@@ -3,7 +3,7 @@ import express from 'express';
 import { z } from 'zod';
 import prisma from '../prismaClient';
 import { requireAuth, AuthenticatedRequest } from '../middleware/auth';
-import { WRITE_LIMITER } from '../middleware/rateLimiters';
+import { WRITE_LIMITER, READ_LIMITER } from '../middleware/rateLimiters';
 import { canWriteDoc } from '../utils/ownership';
 import {
     getCareQueue,
@@ -21,7 +21,7 @@ import {
     markCareNotificationRead,
     MAX_SNOOZE_DAYS
 } from '../services/careService';
-import { getFollowUpState } from '../utils/careStatus';
+import { getFollowUpState, isEscalated } from '../utils/careStatus';
 import {
     claimIdempotencyKey,
     completeIdempotencyKey,
@@ -33,11 +33,16 @@ import { mapPrismaError } from '../utils/prismaErrors';
 const router = express.Router();
 
 const scopeSchema = z.enum(['mine', 'team', 'all']);
+// z.coerce.boolean() kłamie: Boolean('false') === true. Jawny parser.
+const queryBool = z
+    .union([z.boolean(), z.enum(['true', 'false', '1', '0'])])
+    .transform((v) => v === true || v === 'true' || v === '1')
+    .optional();
 const queueQuerySchema = z.object({
     scope: scopeSchema.optional(),
     cursor: z.string().max(2000).optional(),
     limit: z.coerce.number().int().min(1).max(100).optional(),
-    hidePaused: z.coerce.boolean().optional()
+    hidePaused: queryBool
 });
 const summaryQuerySchema = z.object({
     scope: scopeSchema.optional()
@@ -47,7 +52,7 @@ function toScope(v: unknown): CareScope {
     return v === 'team' || v === 'all' ? v : 'mine';
 }
 
-router.get('/summary', requireAuth, async (req, res) => {
+router.get('/summary', requireAuth, READ_LIMITER, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
         const user = authReq.user;
@@ -67,7 +72,7 @@ router.get('/summary', requireAuth, async (req, res) => {
     }
 });
 
-router.get('/queue', requireAuth, async (req, res) => {
+router.get('/queue', requireAuth, READ_LIMITER, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
         const user = authReq.user;
@@ -87,11 +92,13 @@ router.get('/queue', requireAuth, async (req, res) => {
         });
         const sla = await getSlaConfig(prisma);
         const items = result.items.map((r) => {
-            const state = getFollowUpState(
-                { outcome: r.outcome, nextContactAt: r.nextContactAt },
-                '',
-                nowIso
-            );
+            // Brak jakiegokolwiek wpisu = latest null = NO_CONTACT z wiekiem
+            // od utworzenia oferty (kontrakt careStatus, nie puste '').
+            const latest =
+                r.outcome === null && r.nextContactAt === null && r.lastContactAt === null
+                    ? null
+                    : { outcome: r.outcome, nextContactAt: r.nextContactAt };
+            const state = getFollowUpState(latest, r.createdAt ?? '', nowIso);
             const snoozedUntil = r.snoozedUntil ?? null;
             const doneAt = r.doneAt ?? null;
             const paused = (snoozedUntil !== null && snoozedUntil > nowIso) || doneAt !== null;
@@ -107,8 +114,7 @@ router.get('/queue', requireAuth, async (req, res) => {
                 snoozedUntil,
                 doneAt,
                 paused,
-                escalated:
-                    !paused && state.status === 'DUE' && state.overdueDays * 24 >= sla.escalationH
+                escalated: isEscalated(state, nowIso, sla.escalationH, snoozedUntil, doneAt)
             };
         });
         return res.json({
@@ -149,7 +155,11 @@ function isStrictIsoDateTime(s: string): boolean {
 const isoDateTime = z.string().refine(isStrictIsoDateTime, {
     message: 'Nieprawidłowa data ISO-8601 ze strefą'
 });
-const snoozeSchema = z.object({ snoozedUntil: isoDateTime });
+const snoozeSchema = z.object({
+    snoozedUntil: isoDateTime,
+    expectedUpdatedAt: isoDateTime.nullish()
+});
+const doneSchema = z.object({ expectedUpdatedAt: isoDateTime.nullish() });
 const slaSchema = z.object({
     firstContactH: z.number().int().min(1).max(720),
     staleD: z.number().int().min(1).max(90),
@@ -165,6 +175,32 @@ async function loadOffer(kind: CareKind, id: string) {
     return prisma.offers_studnie_rel.findUnique({ where: { id } });
 }
 
+type TxClient = Parameters<Parameters<typeof prisma.$transaction>[0]>[0];
+
+async function loadOfferTx(tx: TxClient, kind: CareKind, id: string) {
+    if (kind === 'rury') return tx.offers_rel.findUnique({ where: { id } });
+    return tx.offers_studnie_rel.findUnique({ where: { id } });
+}
+
+function forbid(e: unknown): { status: number } | null {
+    const s = (e as { status?: number })?.status;
+    return s === 403 || s === 404 ? { status: s } : null;
+}
+
+/** Odczyt stanu po zapisie z re-checkiem uprawnień (getCareState sam nie sprawdza). */
+async function readStateChecked(
+    canWrite: (ownerUserId: string | null) => boolean,
+    kind: CareKind,
+    id: string
+) {
+    const offer = await loadOffer(kind, id);
+    if (!offer) throw Object.assign(new Error('Oferta nie istnieje'), { status: 404 });
+    if (!canWrite(offer.userId)) {
+        throw Object.assign(new Error('Brak uprawnień do zapisu'), { status: 403 });
+    }
+    return getCareState(prisma, kind, id);
+}
+
 async function writeCareState(
     req: express.Request,
     res: express.Response,
@@ -176,9 +212,11 @@ async function writeCareState(
         if (!user) return res.status(401).json({ error: 'Nieautoryzowany' });
         const { kind, id } = req.params;
         if (!checkKind(kind)) return res.status(400).json({ error: 'Nieprawidłowy typ oferty' });
-        const offer = await loadOffer(kind, id);
-        if (!offer) return res.status(404).json({ error: 'Oferta nie istnieje' });
-        if (!canWriteDoc(user, offer.userId)) {
+        // Wstępny check (szybki 404/403) + TWARDY re-check w transakcji
+        // (TOCTOU: właściciel mógł się zmienić między odczytem a zapisem).
+        const pre = await loadOffer(kind, id);
+        if (!pre) return res.status(404).json({ error: 'Oferta nie istnieje' });
+        if (!canWriteDoc(user, pre.userId)) {
             return res.status(403).json({ error: 'Brak uprawnień do zapisu' });
         }
         const key = idempotencyKeyFrom(req);
@@ -194,9 +232,19 @@ async function writeCareState(
             }
         }
         const nowIso = new Date().toISOString();
+        const prevState = await getCareState(prisma, kind, id);
+        const prevJson = prevState ? JSON.stringify(prevState) : null;
+        const guardTx = async (tx: TxClient) => {
+            const offer = await loadOfferTx(tx, kind, id);
+            if (!offer) throw Object.assign(new Error('Oferta nie istnieje'), { status: 404 });
+            if (!canWriteDoc(user, offer.userId)) {
+                throw Object.assign(new Error('Brak uprawnień do zapisu'), { status: 403 });
+            }
+        };
         let state;
         if (mode === 'reopen') {
             await prisma.$transaction(async (tx) => {
+                await guardTx(tx);
                 await clearCareState(tx, kind, id);
                 await tx.audit_logs.create({
                     data: {
@@ -205,22 +253,28 @@ async function writeCareState(
                         entityId: `${kind}:${id}`,
                         userId: user.id,
                         action: 'reopen',
-                        oldData: null,
+                        oldData: prevJson,
                         newData: null,
                         createdAt: nowIso
                     }
                 });
             });
-            state = await getCareState(prisma, kind, id);
+            state = await readStateChecked((o) => canWriteDoc(user, o), kind, id);
         } else if (mode === 'done') {
+            const parsed = doneSchema.safeParse(req.body ?? {});
+            if (!parsed.success) {
+                return res.status(400).json({ error: 'Nieprawidłowe parametry' });
+            }
             await prisma.$transaction(async (tx) => {
+                await guardTx(tx);
                 await setCareState(tx, {
                     offerKind: kind,
                     offerId: id,
                     snoozedUntil: null,
                     doneAt: nowIso,
                     updatedBy: user.id,
-                    nowIso
+                    nowIso,
+                    expectedUpdatedAt: parsed.data.expectedUpdatedAt ?? undefined
                 });
                 await tx.audit_logs.create({
                     data: {
@@ -229,13 +283,13 @@ async function writeCareState(
                         entityId: `${kind}:${id}`,
                         userId: user.id,
                         action: 'done',
-                        oldData: null,
+                        oldData: prevJson,
                         newData: JSON.stringify({ doneAt: nowIso }),
                         createdAt: nowIso
                     }
                 });
             });
-            state = await getCareState(prisma, kind, id);
+            state = await readStateChecked((o) => canWriteDoc(user, o), kind, id);
         } else {
             const parsed = snoozeSchema.safeParse(req.body);
             if (!parsed.success) {
@@ -249,13 +303,15 @@ async function writeCareState(
                     .json({ error: `Odroczenie: przyszłość, max ${MAX_SNOOZE_DAYS} dni` });
             }
             await prisma.$transaction(async (tx) => {
+                await guardTx(tx);
                 await setCareState(tx, {
                     offerKind: kind,
                     offerId: id,
                     snoozedUntil: until,
                     doneAt: null,
                     updatedBy: user.id,
-                    nowIso
+                    nowIso,
+                    expectedUpdatedAt: parsed.data.expectedUpdatedAt ?? undefined
                 });
                 await tx.audit_logs.create({
                     data: {
@@ -264,18 +320,27 @@ async function writeCareState(
                         entityId: `${kind}:${id}`,
                         userId: user.id,
                         action: 'snooze',
-                        oldData: null,
+                        oldData: prevJson,
                         newData: JSON.stringify({ snoozedUntil: until }),
                         createdAt: nowIso
                     }
                 });
             });
-            state = await getCareState(prisma, kind, id);
+            state = await readStateChecked((o) => canWriteDoc(user, o), kind, id);
         }
         const body = { ok: true, state };
         if (key) await completeIdempotencyKey(user.id, endpoint, key, 200, body);
         return res.json(body);
     } catch (e) {
+        const f = forbid(e);
+        if (f) {
+            return res
+                .status(f.status)
+                .json({ error: f.status === 404 ? 'Oferta nie istnieje' : 'Brak uprawnień' });
+        }
+        if ((e as { code?: string })?.code === 'CARE_STATE_CONFLICT') {
+            return res.status(409).json({ error: 'Stan zmieniony przez kogoś innego' });
+        }
         if (mapPrismaError(res, e)) return;
         logger.warn('Care', 'Błąd zapisu stanu', String(e));
         return res.status(500).json({ error: 'Błąd serwera' });
@@ -292,7 +357,7 @@ router.post('/:kind/:id/reopen', requireAuth, WRITE_LIMITER, (req, res) =>
     writeCareState(req, res, 'reopen')
 );
 
-router.get('/sla', requireAuth, async (req, res) => {
+router.get('/sla', requireAuth, READ_LIMITER, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     if (!authReq.user) return res.status(401).json({ error: 'Nieautoryzowany' });
     try {
@@ -312,6 +377,7 @@ router.put('/sla', requireAuth, WRITE_LIMITER, async (req, res) => {
     if (!parsed.success) return res.status(400).json({ error: 'Nieprawidłowa konfiguracja SLA' });
     try {
         const nowIso = new Date().toISOString();
+        const prevSla = await getSlaConfig(prisma);
         const sla = await prisma.$transaction(async (tx) => {
             const next = await setSlaConfig(tx, {
                 ...parsed.data,
@@ -325,7 +391,7 @@ router.put('/sla', requireAuth, WRITE_LIMITER, async (req, res) => {
                     entityId: 'global',
                     userId: user.id,
                     action: 'update',
-                    oldData: null,
+                    oldData: JSON.stringify(prevSla),
                     newData: JSON.stringify(parsed.data),
                     createdAt: nowIso
                 }
@@ -344,11 +410,11 @@ router.put('/sla', requireAuth, WRITE_LIMITER, async (req, res) => {
 
 const notifQuerySchema = z.object({
     scope: scopeSchema.optional(),
-    unreadOnly: z.coerce.boolean().optional(),
+    unreadOnly: queryBool,
     limit: z.coerce.number().int().min(1).max(100).optional()
 });
 
-router.get('/notifications', requireAuth, async (req, res) => {
+router.get('/notifications', requireAuth, READ_LIMITER, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
         const user = authReq.user;

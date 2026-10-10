@@ -2,6 +2,7 @@ import {
     getFollowUpState,
     getSla,
     getStatus,
+    isEscalated,
     FollowUpState,
     LatestFu
 } from '../../src/utils/careStatus';
@@ -170,5 +171,43 @@ describe('P0.1 getStatus/getSla + granice bucketow', () => {
         expect(getStatus(null, NOW)).toBe('NO_CONTACT');
         expect(getStatus(open('2026-10-15T09:00:00.000Z'), NOW)).toBe('OPEN_OK');
         expect(getStatus({ outcome: 'WON', nextContactAt: null }, NOW)).toBe('WON');
+    });
+});
+
+describe('isEscalated — jeden predykat (SSoT kolejki i powiadomień)', () => {
+    const due = (days: number) =>
+        getFollowUpState(
+            open(new Date(Date.parse(NOW) - days * 86400000).toISOString()),
+            CREATED,
+            NOW
+        );
+    it('DUE + próg godzinowy → true; poniżej progu → false', () => {
+        expect(isEscalated(due(5), NOW, 72, null, null)).toBe(true);
+        expect(isEscalated(due(1), NOW, 72, null, null)).toBe(false);
+    });
+    it('OPEN_OK / terminal / NO_CONTACT nigdy', () => {
+        expect(
+            isEscalated(
+                getFollowUpState(open('2026-10-15T09:00:00.000Z'), CREATED, NOW),
+                NOW,
+                1,
+                null,
+                null
+            )
+        ).toBe(false);
+        expect(
+            isEscalated(
+                getFollowUpState({ outcome: 'WON', nextContactAt: null }, CREATED, NOW),
+                NOW,
+                1,
+                null,
+                null
+            )
+        ).toBe(false);
+        expect(isEscalated(getFollowUpState(null, CREATED, NOW), NOW, 1, null, null)).toBe(false);
+    });
+    it('pauza (snooze/done) tłumi', () => {
+        expect(isEscalated(due(10), NOW, 72, '2026-10-12T00:00:00.000Z', null)).toBe(false);
+        expect(isEscalated(due(10), NOW, 72, null, NOW)).toBe(false);
     });
 });

@@ -42,20 +42,22 @@ describe('P0.3 care API read-only', () => {
         (globalThis as any).__careUser = { id: 'u1', role: 'user', subUsers: [] };
     });
 
-    it('GET summary → DTO + 200', async () => {
+    it('GET summary → DTO + 200 (z abandoned)', async () => {
         summaryMock.mockResolvedValue({
             noContact: 1,
             due: 2,
             openOk: 0,
             won: 1,
             lost: 0,
-            totalCount: 4
+            abandoned: 1,
+            totalCount: 5
         });
         const res = await request(app()).get('/api/care/summary?scope=mine');
         expect(res.status).toBe(200);
         expect(res.body.ok).toBe(true);
-        expect(res.body.totalCount).toBe(4);
+        expect(res.body.totalCount).toBe(5);
         expect(res.body.due).toBe(2);
+        expect(res.body.abandoned).toBe(1);
     });
 
     it('GET queue → items ze statusem + totalCount', async () => {
@@ -67,6 +69,7 @@ describe('P0.3 care API read-only', () => {
                     outcome: 'OPEN',
                     nextContactAt: '2026-10-09T10:00:00.000Z',
                     lastContactAt: '2026-10-09T10:00:00.000Z',
+                    createdAt: '2026-10-01T00:00:00.000Z',
                     bucketWeight: 0
                 }
             ],
@@ -78,6 +81,40 @@ describe('P0.3 care API read-only', () => {
         expect(res.body.items).toHaveLength(1);
         expect(res.body.items[0].status).toBe('DUE');
         expect(res.body.totalCount).toBe(1);
+    });
+
+    it('GET queue → brak wpisów to NO_CONTACT z wiekiem od createdAt', async () => {
+        queueMock.mockResolvedValue({
+            items: [
+                {
+                    offerKind: 'rury',
+                    offerId: 'o9',
+                    outcome: null,
+                    nextContactAt: null,
+                    lastContactAt: null,
+                    createdAt: '2026-10-01T00:00:00.000Z',
+                    bucketWeight: 0
+                }
+            ],
+            nextCursor: null,
+            totalCount: 1
+        });
+        const res = await request(app()).get('/api/care/queue?scope=mine&limit=10');
+        expect(res.status).toBe(200);
+        expect(res.body.items[0].status).toBe('NO_CONTACT');
+        expect(res.body.items[0].overdueDays).toBeGreaterThan(0);
+    });
+
+    it('parser bool: hidePaused=false stringiem to false (nie Boolean)', async () => {
+        queueMock.mockResolvedValue({ items: [], nextCursor: null, totalCount: 0 });
+        await request(app()).get('/api/care/queue?scope=mine&hidePaused=false');
+        expect(queueMock).toHaveBeenCalled();
+        const opts = queueMock.mock.calls[0][2] as { hidePaused: boolean };
+        expect(opts.hidePaused).toBe(false);
+        queueMock.mockClear();
+        await request(app()).get('/api/care/queue?scope=mine&hidePaused=true');
+        const opts2 = queueMock.mock.calls[0][2] as { hidePaused: boolean };
+        expect(opts2.hidePaused).toBe(true);
     });
 
     it('scope=all nie-admin → 403 (nie silent downgrade)', async () => {

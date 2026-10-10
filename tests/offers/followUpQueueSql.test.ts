@@ -26,8 +26,8 @@ const U2: CareUser = { id: 'u2', role: 'user', subUsers: [] };
 
 function freshDb(): DatabaseSync {
     const db = new DatabaseSync(':memory:');
-    db.exec(`CREATE TABLE offers_rel (id TEXT PRIMARY KEY, "userId" TEXT);
-        CREATE TABLE offers_studnie_rel (id TEXT PRIMARY KEY, "userId" TEXT);
+    db.exec(`CREATE TABLE offers_rel (id TEXT PRIMARY KEY, "userId" TEXT, "createdAt" TEXT);
+        CREATE TABLE offers_studnie_rel (id TEXT PRIMARY KEY, "userId" TEXT, "createdAt" TEXT);
         CREATE TABLE document_shares (id TEXT PRIMARY KEY, "sharedWithUserId" TEXT, "documentType" TEXT, "documentId" TEXT);
         CREATE TABLE care_states ("offerKind" TEXT NOT NULL, "offerId" TEXT NOT NULL, "snoozedUntil" TEXT, "doneAt" TEXT, "updatedBy" TEXT, "updatedAt" TEXT NOT NULL,
             CONSTRAINT "care_states_pkey" PRIMARY KEY ("offerKind", "offerId"));
@@ -38,10 +38,10 @@ function freshDb(): DatabaseSync {
         db
             .prepare(
                 kind === 'rury'
-                    ? 'INSERT INTO offers_rel (id, "userId") VALUES (?, ?)'
-                    : 'INSERT INTO offers_studnie_rel (id, "userId") VALUES (?, ?)'
+                    ? 'INSERT INTO offers_rel (id, "userId", "createdAt") VALUES (?, ?, ?)'
+                    : 'INSERT INTO offers_studnie_rel (id, "userId", "createdAt") VALUES (?, ?, ?)'
             )
-            .run(id, userId);
+            .run(id, userId, '2026-10-01T00:00:00.000Z');
     // u1: o1 rury OPEN overdue, o2 rury OPEN future (3 wpisy = dedup),
     //     o3 studnie WON (remis czasow, wyzsze id wygrywa), o4 rury NO_CONTACT.
     // u2: o9 rury OPEN overdue (niewidoczne dla u1). pro1: o5 rury OPEN overdue.
@@ -213,6 +213,28 @@ describe('P0.2 care queue SQL', () => {
             expect(res.items).toHaveLength(3);
             const all = await getCareQueue(fake, U1, { nowIso: NOW, limit: 10 });
             expect(all.totalCount).toBe(4);
+            db.close();
+        } catch (e) {
+            try {
+                db.close();
+            } catch {
+                /* ignore */
+            }
+            throw e;
+        }
+    });
+
+    it('born: kolejka niesie createdAt oferty (wiek NO_CONTACT)', async () => {
+        const db = freshDb();
+        try {
+            const fake = {
+                $queryRaw: async <T>(...args: unknown[]): Promise<T> => {
+                    return rawAll(db, args[0] as Prisma.Sql) as unknown as T;
+                }
+            };
+            const res = await getCareQueue(fake, U1, { nowIso: NOW, limit: 10 });
+            const o4 = res.items.find((i) => i.offerId === 'o4');
+            expect(o4?.createdAt).toBe('2026-10-01T00:00:00.000Z');
             db.close();
         } catch (e) {
             try {

@@ -30,6 +30,7 @@ export interface CareQueueItem {
     outcome: string | null;
     nextContactAt: string | null;
     lastContactAt: string | null;
+    createdAt: string | null;
     bucketWeight: number;
     snoozedUntil: string | null;
     doneAt: string | null;
@@ -160,7 +161,7 @@ export function buildCareQueueQueries(
         FROM offer_follow_ups f WHERE ${fuScope}
     ), base AS (
         SELECT 'rury' AS "offerKind", o."id" AS "offerId", l."outcome" AS "outcome",
-            l."nextContactAt" AS "next", l."contactedAt" AS "last",
+            l."nextContactAt" AS "next", l."contactedAt" AS "last", o."createdAt" AS "born",
             cs."snoozedUntil" AS "snoozed", cs."doneAt" AS "done"
         FROM offers_rel o LEFT JOIN latest l
             ON l."offerKind" = 'rury' AND l."offerId" = o."id" AND l."rn" = 1
@@ -169,7 +170,7 @@ export function buildCareQueueQueries(
         WHERE ${scopeRury}
         UNION ALL
         SELECT 'studnie' AS "offerKind", s."id" AS "offerId", l."outcome" AS "outcome",
-            l."nextContactAt" AS "next", l."contactedAt" AS "last",
+            l."nextContactAt" AS "next", l."contactedAt" AS "last", s."createdAt" AS "born",
             cs."snoozedUntil" AS "snoozed", cs."doneAt" AS "done"
         FROM offers_studnie_rel s LEFT JOIN latest l
             ON l."offerKind" = 'studnie' AND l."offerId" = s."id" AND l."rn" = 1
@@ -177,7 +178,7 @@ export function buildCareQueueQueries(
             ON cs."offerKind" = 'studnie' AND cs."offerId" = s."id"
         WHERE ${scopeStudnie}
     ), ranked AS (
-        SELECT "offerKind", "offerId", "outcome", "next", "last", "snoozed", "done",
+        SELECT "offerKind", "offerId", "outcome", "next", "last", "born", "snoozed", "done",
             ${BUCKET_CASE(opts.nowIso)} AS "bucketWeight"
         FROM base
     )`;
@@ -193,7 +194,7 @@ export function buildCareQueueQueries(
     }
 
     const data = Prisma.sql`${withSql}
-        SELECT "offerKind", "offerId", "outcome", "next", "last", "snoozed", "done", "bucketWeight" FROM ranked
+        SELECT "offerKind", "offerId", "outcome", "next", "last", "born", "snoozed", "done", "bucketWeight" FROM ranked
         WHERE ${cursorSql}${opts.hidePaused ? Prisma.sql` AND "done" IS NULL AND ("snoozed" IS NULL OR "snoozed" <= ${opts.nowIso})` : Prisma.empty}
         ORDER BY "bucketWeight" ASC, COALESCE("next", ${NULL_NEXT}) ASC, "offerKind" ASC, "offerId" ASC
         LIMIT ${limit + 1}`;
@@ -209,6 +210,7 @@ export interface CareSummary {
     openOk: number;
     won: number;
     lost: number;
+    abandoned: number;
     totalCount: number;
 }
 
@@ -231,29 +233,42 @@ export async function getCareSummary(
             l."nextContactAt" AS "next", l."contactedAt" AS "last"
         FROM offers_rel o LEFT JOIN latest l
             ON l."offerKind" = 'rury' AND l."offerId" = o."id" AND l."rn" = 1
-        WHERE ${scopeRury}
+        LEFT JOIN care_states cs ON cs."offerKind" = 'rury' AND cs."offerId" = o."id"
+        WHERE ${scopeRury} AND (cs."offerId" IS NULL OR (cs."doneAt" IS NULL AND (cs."snoozedUntil" IS NULL OR cs."snoozedUntil" <= ${nowIso})))
         UNION ALL
         SELECT 'studnie' AS "offerKind", s."id" AS "offerId", l."outcome" AS "outcome",
             l."nextContactAt" AS "next", l."contactedAt" AS "last"
         FROM offers_studnie_rel s LEFT JOIN latest l
             ON l."offerKind" = 'studnie' AND l."offerId" = s."id" AND l."rn" = 1
-        WHERE ${scopeStudnie}
+        LEFT JOIN care_states cs ON cs."offerKind" = 'studnie' AND cs."offerId" = s."id"
+        WHERE ${scopeStudnie} AND (cs."offerId" IS NULL OR (cs."doneAt" IS NULL AND (cs."snoozedUntil" IS NULL OR cs."snoozedUntil" <= ${nowIso})))
     )`;
     const rows = await db.$queryRaw<
         Array<{ k: string; c: number | bigint }>
-    >`${withSql} SELECT CASE WHEN "outcome" IS NULL THEN 'noContact' WHEN "outcome" = 'WON' THEN 'won' WHEN "outcome" IN ('LOST_COMPETITION','LOST_OTHER') THEN 'lost' WHEN "outcome" = 'ABANDONED' THEN 'lost' WHEN "outcome" = 'OPEN' AND ("next" IS NULL OR "next" <= ${nowIso}) THEN 'due' ELSE 'openOk' END AS "k", COUNT(*) AS "c" FROM base GROUP BY "k"`;
+    >`${withSql} SELECT CASE WHEN "outcome" IS NULL THEN 'noContact' WHEN "outcome" = 'WON' THEN 'won' WHEN "outcome" IN ('LOST_COMPETITION','LOST_OTHER') THEN 'lost' WHEN "outcome" = 'ABANDONED' THEN 'abandoned' WHEN "outcome" = 'OPEN' AND ("next" IS NULL OR "next" <= ${nowIso}) THEN 'due' ELSE 'openOk' END AS "k", COUNT(*) AS "c" FROM base GROUP BY "k"`;
     const m = new Map(rows.map((r) => [r.k, num(r.c)]));
     const noContact = m.get('noContact') ?? 0;
     const due = m.get('due') ?? 0;
     const openOk = m.get('openOk') ?? 0;
     const won = m.get('won') ?? 0;
     const lost = m.get('lost') ?? 0;
-    return { noContact, due, openOk, won, lost, totalCount: noContact + due + openOk + won + lost };
+    const abandoned = m.get('abandoned') ?? 0;
+    return {
+        noContact,
+        due,
+        openOk,
+        won,
+        lost,
+        abandoned,
+        totalCount: noContact + due + openOk + won + lost + abandoned
+    };
 }
 
 export interface QueryRawDb {
     // biome-ignore lint/suspicious/noExplicitAny: minimal $queryRaw structural (Sql | template tag)
     $queryRaw: <T>(...args: any[]) => Promise<T>;
+    // biome-ignore lint/suspicious/noExplicitAny: $executeRaw jak w Prisma (liczba wierszy)
+    $executeRaw?: (...args: any[]) => Promise<number>;
 }
 
 const num = (v: unknown): number => toNum(v as number | bigint | string | null | undefined) ?? 0;
@@ -274,6 +289,7 @@ export async function getCareQueue(
                 outcome: string | null;
                 next: string | null;
                 last: string | null;
+                born: string | null;
                 snoozed: string | null;
                 done: string | null;
                 bucketWeight: number | bigint;
@@ -301,6 +317,7 @@ export async function getCareQueue(
             outcome: r.outcome,
             nextContactAt: r.next,
             lastContactAt: r.last,
+            createdAt: r.born,
             bucketWeight: num(r.bucketWeight),
             snoozedUntil: r.snoozed,
             doneAt: r.done
@@ -348,7 +365,9 @@ export async function getCareState(
     return rows[0] ?? null;
 }
 
-/** Upsert stanu: dokładnie jedno z snoozedUntil/doneAt (drugie NULL). */
+/** Upsert stanu: dokładnie jedno z snoozedUntil/doneAt (drugie NULL).
+ * Z expectedUpdatedAt: optimistic concurrency — brak dopasowania to 409
+ * (osobny błąd ze status, mapowany przez route). Bez niego: blind upsert. */
 export async function setCareState(
     db: RawDb,
     args: {
@@ -358,6 +377,7 @@ export async function setCareState(
         doneAt: string | null;
         updatedBy: string;
         nowIso: string;
+        expectedUpdatedAt?: string | null;
     }
 ): Promise<CareState> {
     const state: CareState = {
@@ -368,6 +388,27 @@ export async function setCareState(
         updatedBy: args.updatedBy,
         updatedAt: args.nowIso
     };
+    if (args.expectedUpdatedAt !== undefined && args.expectedUpdatedAt !== null) {
+        const exec = db.$executeRaw?.bind(db);
+        if (!exec) {
+            throw Object.assign(new Error('Brak obsługi concurrency'), { status: 500 });
+        }
+        const n = await exec(
+            Prisma.sql`UPDATE "care_states" SET "snoozedUntil" = ${state.snoozedUntil}, "doneAt" = ${state.doneAt}, "updatedBy" = ${state.updatedBy}, "updatedAt" = ${state.updatedAt} WHERE "offerKind" = ${state.offerKind} AND "offerId" = ${state.offerId} AND "updatedAt" = ${args.expectedUpdatedAt}`
+        );
+        if (n === 0) {
+            const cur = await getCareState(db, args.offerKind, args.offerId);
+            if (cur) {
+                throw Object.assign(new Error('Stan zmieniony przez kogoś innego'), {
+                    status: 409,
+                    code: 'CARE_STATE_CONFLICT'
+                });
+            }
+            // Brak wiersza = pierwszy zapis (tworzymy, expected był fantomem).
+        } else {
+            return state;
+        }
+    }
     await db.$queryRaw(
         Prisma.sql`INSERT INTO "care_states" ("offerKind", "offerId", "snoozedUntil", "doneAt", "updatedBy", "updatedAt") VALUES (${state.offerKind}, ${state.offerId}, ${state.snoozedUntil}, ${state.doneAt}, ${state.updatedBy}, ${state.updatedAt}) ON CONFLICT ("offerKind", "offerId") DO UPDATE SET "snoozedUntil" = ${state.snoozedUntil}, "doneAt" = ${state.doneAt}, "updatedBy" = ${state.updatedBy}, "updatedAt" = ${state.updatedAt}`
     );
@@ -511,9 +552,18 @@ export async function syncCareNotifications(
             Prisma.sql`SELECT COUNT(*) AS "c" FROM "care_notifications" WHERE "userId" = ${uid} AND "offerKind" = ${c.offerKind} AND "offerId" = ${c.offerId} AND "type" = ${c.ntype} AND "readAt" IS NULL`
         )) as Array<{ c: number | bigint }>;
         if (num(dup[0]?.c) > 0) continue;
-        await db.$queryRaw(
-            Prisma.sql`INSERT INTO "care_notifications" ("id", "userId", "offerKind", "offerId", "type", "readAt", "createdAt") VALUES (${randomUUID()}, ${uid}, ${c.offerKind}, ${c.offerId}, ${c.ntype}, NULL, ${nowIso})`
-        );
+        try {
+            await db.$queryRaw(
+                Prisma.sql`INSERT INTO "care_notifications" ("id", "userId", "offerKind", "offerId", "type", "readAt", "createdAt") VALUES (${randomUUID()}, ${uid}, ${c.offerKind}, ${c.offerId}, ${c.ntype}, NULL, ${nowIso})`
+            );
+        } catch (e) {
+            // Wyścig dwóch synców rozstrzyga uq_carenotif_unread_per_offer
+            // (jak terminale w followUps) — przegrany pomija, nie rzuca.
+            if ((e as { code?: string })?.code === 'P2002') continue;
+            const msg = e instanceof Error ? e.message : String(e);
+            if (/uq_carenotif_unread_per_offer|UNIQUE constraint failed/i.test(msg)) continue;
+            throw e;
+        }
         inserted += 1;
     }
     // Auto-read: oferta zniknęła z kandydatów (terminal/pauza/poza scope).
@@ -534,6 +584,15 @@ export async function syncCareNotifications(
             resolved += 1;
         }
     }
+    // Retencja leniwa (brak workera w S.O.K.): przeczytane >90d precz,
+    // skrzynka maks. 500 wierszy (najświeższe). Bounded inbox.
+    const cutoff = new Date(Date.parse(nowIso) - 90 * 86400000).toISOString();
+    await db.$queryRaw(
+        Prisma.sql`DELETE FROM "care_notifications" WHERE "userId" = ${uid} AND "readAt" IS NOT NULL AND "readAt" <= ${cutoff}`
+    );
+    await db.$queryRaw(
+        Prisma.sql`DELETE FROM "care_notifications" WHERE "userId" = ${uid} AND "id" NOT IN (SELECT "id" FROM "care_notifications" WHERE "userId" = ${uid} ORDER BY "createdAt" DESC LIMIT 500)`
+    );
     return { inserted, resolved };
 }
 

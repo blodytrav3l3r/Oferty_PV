@@ -99,8 +99,8 @@ async function loadRecycledNumbers(user) {
 }
 
 /**
- * Opieka nad ofertami (P2): agregat z istniejącego search API (limit=1 czyta
- * tylko totalCount). Brak nowego endpointu — 4 lekkie requesty.
+ * Opieka nad ofertami: TYLKO KPI z analityki. Liczniki fu-stat-* pisze
+ * wyłącznie carePanel.js (jeden pisarz — SSoT /api/care/summary).
  */
 async function loadFollowUpWidget() {
     const panel = document.getElementById('followup-panel');
@@ -110,22 +110,6 @@ async function loadFollowUpWidget() {
         if (el) el.textContent = String(v);
     };
     try {
-        // P4.2: niezależne requesty współbieżnie (kolejność z destrukturyzacji).
-        const countFetch = (st) =>
-            fetch('/api/offers/search?followupStatus=' + st + '&limit=1&t=' + Date.now(), {
-                credentials: 'same-origin'
-            })
-                .then((res) => (res.ok ? res.json() : { totalCount: 0 }))
-                .then((json) => json.totalCount ?? 0)
-                .catch(() => 0);
-        const [needs, progress, won, lost] = await Promise.all(
-            ['needs_contact', 'in_progress', 'won', 'lost'].map(countFetch)
-        );
-        set('fu-stat-needs', needs);
-        set('fu-stat-progress', progress);
-        set('fu-stat-won', won);
-        set('fu-stat-lost', lost);
-
         // P3: KPI z endpointu analityki (jeden request, scope roli po stronie BE).
         try {
             const statsRes = await fetch('/api/offers-rury/followups/stats?t=' + Date.now(), {

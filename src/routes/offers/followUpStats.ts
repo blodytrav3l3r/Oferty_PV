@@ -113,13 +113,14 @@ router.get('/followups/stats', requireAuth, async (req, res) => {
 
         const latestCte = buildLatestCte(fuScope);
 
-        // P4.2: 8 niezależnych SELECTów współbieżnie (brak zależności
+        // P4.2: 9 niezależnych SELECTów współbieżnie (brak zależności
         // wynikowych, read-only). Kolejność wyników z destrukturyzacji.
         const [
             outcomeRows,
             totalsRury,
             totalsStudnie,
             reasonRows,
+            abandonedReasonRows,
             competitorRows,
             valueRows,
             repRows,
@@ -141,6 +142,10 @@ router.get('/followups/stats', requireAuth, async (req, res) => {
             prisma.$queryRaw(
                 Prisma.sql`WITH ${latestCte} SELECT "loseReason" AS "r", COUNT(*) AS "c" FROM latest
                     WHERE "outcome" IN ('LOST_COMPETITION', 'LOST_OTHER') GROUP BY "loseReason" ORDER BY "c" DESC`
+            ),
+            prisma.$queryRaw(
+                Prisma.sql`WITH ${latestCte} SELECT "loseReason" AS "r", COUNT(*) AS "c" FROM latest
+                    WHERE "outcome" = 'ABANDONED' GROUP BY "loseReason" ORDER BY "c" DESC`
             ),
             prisma.$queryRaw(
                 Prisma.sql`WITH ${latestCte} SELECT "competitor" AS "cp", COUNT(*) AS "c", AVG("competitorPrice") AS "avg"
@@ -186,6 +191,7 @@ router.get('/followups/stats', requireAuth, async (req, res) => {
             Array<{ total: number | bigint; nocontact: number | bigint | null }>,
             Array<{ total: number | bigint; nocontact: number | bigint | null }>,
             Array<{ r: string | null; c: number | bigint }>,
+            Array<{ r: string | null; c: number | bigint }>,
             Array<{ cp: string | null; c: number | bigint; avg: number | null }>,
             Array<{ k: string; v: number | null }>,
             Array<{
@@ -202,6 +208,11 @@ router.get('/followups/stats', requireAuth, async (req, res) => {
         const offersTotal = num(totalsRury[0]?.total) + num(totalsStudnie[0]?.total);
         const noContact = num(totalsRury[0]?.nocontact) + num(totalsStudnie[0]?.nocontact);
         const won = outcomes['WON'] ?? 0;
+        // Jedna definicja domknięć: lost = LOST_* (osobno), abandoned = ABANDONED
+        // (osobno) — spójnie z careStatus (osobne statusy) i care summary.
+        const lost = (outcomes['LOST_COMPETITION'] ?? 0) + (outcomes['LOST_OTHER'] ?? 0);
+        const abandoned = outcomes['ABANDONED'] ?? 0;
+        const closed = won + lost + abandoned;
 
         let wonValue = 0;
         let lostValue = 0;
@@ -216,10 +227,15 @@ router.get('/followups/stats', requireAuth, async (req, res) => {
                 outcomes,
                 offersTotal,
                 noContact,
-                conversion: offersTotal > 0 ? won / offersTotal : 0,
+                conversion: closed > 0 ? won / closed : 0,
+                abandoned,
                 wonValue,
                 lostValue,
                 lossReasons: reasonRows.map((r) => ({
+                    reason: r.r ?? 'Nie podano',
+                    count: num(r.c)
+                })),
+                abandonedReasons: abandonedReasonRows.map((r) => ({
                     reason: r.r ?? 'Nie podano',
                     count: num(r.c)
                 })),

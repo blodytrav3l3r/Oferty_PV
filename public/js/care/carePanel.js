@@ -92,7 +92,8 @@ function renderBuckets(summary) {
         ['Do kontaktu', (summary.noContact ?? 0) + (summary.due ?? 0)],
         ['W toku', summary.openOk ?? 0],
         ['Wygrane', summary.won ?? 0],
-        ['Utracone', summary.lost ?? 0]
+        ['Utracone', summary.lost ?? 0],
+        ['Porzucone', summary.abandoned ?? 0]
     ];
     const total = rows.reduce((a, r) => a + r[1], 0);
     if (total === 0) {
@@ -227,7 +228,7 @@ export async function loadCarePanel() {
     setText('fu-stat-needs', (summary.noContact ?? 0) + (summary.due ?? 0));
     setText('fu-stat-progress', summary.openOk ?? 0);
     setText('fu-stat-won', summary.won ?? 0);
-    setText('fu-stat-lost', summary.lost ?? 0);
+    setText('fu-stat-lost', (summary.lost ?? 0) + (summary.abandoned ?? 0));
     renderBuckets(summary);
     try {
         const [notif, queue] = await Promise.all([
