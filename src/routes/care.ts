@@ -77,14 +77,15 @@ router.get('/queue', requireAuth, async (req, res) => {
         const scope = toScope(parsed.data.scope);
         const nowIso = new Date().toISOString();
         const limit = clampCareLimit(parsed.data.limit);
+        const hidePaused = parsed.data.hidePaused ?? false;
         const result = await getCareQueue(prisma, user, {
             scope,
             nowIso,
             cursor: parsed.data.cursor ?? null,
-            limit
+            limit,
+            hidePaused
         });
         const sla = await getSlaConfig(prisma);
-        const hidePaused = parsed.data.hidePaused ?? false;
         const items = result.items.map((r) => {
             const state = getFollowUpState(
                 { outcome: r.outcome, nextContactAt: r.nextContactAt },
@@ -114,7 +115,7 @@ router.get('/queue', requireAuth, async (req, res) => {
             ok: true,
             scope,
             now: nowIso,
-            items: hidePaused ? items.filter((i) => !i.paused) : items,
+            items,
             nextCursor: result.nextCursor,
             totalCount: result.totalCount
         });

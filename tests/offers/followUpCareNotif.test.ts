@@ -52,6 +52,11 @@ function freshDb(): DatabaseSync {
         'u1',
         '2026-10-09T00:00:00.000Z'
     );
+    db.prepare('INSERT INTO offers_rel (id, "userId", "createdAt") VALUES (?,?,?)').run(
+        'o6',
+        'u1',
+        '2026-09-01T00:00:00.000Z'
+    );
     const fu = (
         id: string,
         offerId: string,
@@ -68,9 +73,14 @@ function freshDb(): DatabaseSync {
     fu('f2', 'o2', 'OPEN', '2026-10-10T14:00:00.000Z', '2026-10-09T10:00:00.000Z');
     fu('f4', 'o4', 'WON', null, '2026-10-09T10:00:00.000Z');
     fu('f5', 'o5', 'OPEN', '2026-09-30T10:00:00.000Z', '2026-09-30T10:00:00.000Z');
+    fu('f6', 'o6', 'OPEN', '2026-09-30T10:00:00.000Z', '2026-09-30T10:00:00.000Z');
     db.prepare(
         'INSERT INTO care_states ("offerKind", "offerId", "snoozedUntil", "doneAt", "updatedBy", "updatedAt") VALUES (?,?,?,?,?,?)'
     ).run('rury', 'o5', '2026-10-12T00:00:00.000Z', null, 'u1', NOW);
+    // o6: snooze wygasły wczoraj -> wraca do kandydatów.
+    db.prepare(
+        'INSERT INTO care_states ("offerKind", "offerId", "snoozedUntil", "doneAt", "updatedBy", "updatedAt") VALUES (?,?,?,?,?,?)'
+    ).run('rury', 'o6', '2026-10-09T10:00:00.000Z', null, 'u1', NOW);
     return db;
 }
 
@@ -92,7 +102,7 @@ describe('P2 sync powiadomień', () => {
         try {
             const f = fake(db);
             const r1 = await syncCareNotifications(f, U1, 'mine', NOW, SLA);
-            expect(r1.inserted).toBe(3);
+            expect(r1.inserted).toBe(4);
             const types = (await listCareNotifications(f, 'u1', { unreadOnly: false, limit: 50 }))
                 .items;
             expect(types.find((t) => t.offerId === 'o1')?.type).toBe('SLA_BREACH');
@@ -100,6 +110,8 @@ describe('P2 sync powiadomień', () => {
             expect(types.find((t) => t.offerId === 'o3')?.type).toBe('CALLBACK_DUE');
             expect(types.find((t) => t.offerId === 'o4')).toBeUndefined();
             expect(types.find((t) => t.offerId === 'o5')).toBeUndefined();
+            // o6: wygasły snooze wraca do pilnowania.
+            expect(types.find((t) => t.offerId === 'o6')?.type).toBe('SLA_BREACH');
             const r2 = await syncCareNotifications(f, U1, 'mine', NOW, SLA);
             expect(r2.inserted).toBe(0);
             db.close();
@@ -122,14 +134,14 @@ describe('P2 sync powiadomień', () => {
                 unreadOnly: true,
                 limit: 50
             });
-            expect(unreadCount).toBe(3);
+            expect(unreadCount).toBe(4);
             const first = (await listCareNotifications(f, 'u1', { unreadOnly: true, limit: 1 }))
                 .items[0];
             expect(await markCareNotificationRead(f, 'u1', first.id, NOW)).toBe(1);
             expect(await markCareNotificationRead(f, 'u9', first.id, NOW)).toBe(0);
             expect(
                 (await listCareNotifications(f, 'u1', { unreadOnly: true, limit: 50 })).unreadCount
-            ).toBe(2);
+            ).toBe(3);
             db.close();
         } catch (e) {
             try {

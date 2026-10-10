@@ -194,6 +194,36 @@ describe('P0.2 care queue SQL', () => {
         }
     });
 
+    it('hidePaused w SQL: pełna strona + zgodny count (fix paginacji)', async () => {
+        const db = freshDb();
+        try {
+            db.exec(`CREATE TABLE IF NOT EXISTS care_states ("offerKind" TEXT NOT NULL, "offerId" TEXT NOT NULL, "snoozedUntil" TEXT, "doneAt" TEXT, "updatedBy" TEXT, "updatedAt" TEXT NOT NULL,
+                CONSTRAINT "care_states_pkey" PRIMARY KEY ("offerKind", "offerId"));`);
+            db.prepare(
+                'INSERT INTO care_states ("offerKind", "offerId", "snoozedUntil", "doneAt", "updatedBy", "updatedAt") VALUES (?,?,?,?,?,?)'
+            ).run('rury', 'o1', '2026-10-12T00:00:00.000Z', null, 'u1', NOW);
+            const fake = {
+                $queryRaw: async <T>(...args: unknown[]): Promise<T> => {
+                    return rawAll(db, args[0] as Prisma.Sql) as unknown as T;
+                }
+            };
+            const res = await getCareQueue(fake, U1, { nowIso: NOW, limit: 10, hidePaused: true });
+            expect(res.items.find((i) => i.offerId === 'o1')).toBeUndefined();
+            expect(res.totalCount).toBe(3);
+            expect(res.items).toHaveLength(3);
+            const all = await getCareQueue(fake, U1, { nowIso: NOW, limit: 10 });
+            expect(all.totalCount).toBe(4);
+            db.close();
+        } catch (e) {
+            try {
+                db.close();
+            } catch {
+                /* ignore */
+            }
+            throw e;
+        }
+    });
+
     it('cursor: strony lacznie daja calosc bez powtorzen; limit clamp', () => {
         const db = freshDb();
         try {

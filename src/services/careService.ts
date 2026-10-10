@@ -8,6 +8,7 @@
  * (offerKind,offerId), deterministyczna paginacja cursorem (nie OFFSET).
  * getCareQueue wykonuje max 2 SELECT (data + COUNT DISTINCT).
  */
+import { randomUUID } from 'node:crypto';
 import { Prisma } from '../../generated/prisma';
 import type { User } from '../helpers';
 import { buildRoleWhereClause } from '../utils/roleFilter';
@@ -46,6 +47,8 @@ export interface CareQueueOptions {
     nowIso: string;
     cursor?: string | null;
     limit?: unknown;
+    /** P2-fix: filtr w SQL (przed paginacją), nie po — strona pełna, count zgodny. */
+    hidePaused?: boolean;
 }
 
 interface CareCursor {
@@ -191,11 +194,11 @@ export function buildCareQueueQueries(
 
     const data = Prisma.sql`${withSql}
         SELECT "offerKind", "offerId", "outcome", "next", "last", "snoozed", "done", "bucketWeight" FROM ranked
-        WHERE ${cursorSql}
+        WHERE ${cursorSql}${opts.hidePaused ? Prisma.sql` AND "done" IS NULL AND ("snoozed" IS NULL OR "snoozed" <= ${opts.nowIso})` : Prisma.empty}
         ORDER BY "bucketWeight" ASC, COALESCE("next", ${NULL_NEXT}) ASC, "offerKind" ASC, "offerId" ASC
         LIMIT ${limit + 1}`;
     const count = Prisma.sql`${withSql}
-        SELECT COUNT(DISTINCT "offerKind" || ':' || "offerId") AS "c" FROM ranked`;
+        SELECT COUNT(DISTINCT "offerKind" || ':' || "offerId") AS "c" FROM ranked${opts.hidePaused ? Prisma.sql` WHERE "done" IS NULL AND ("snoozed" IS NULL OR "snoozed" <= ${opts.nowIso})` : Prisma.empty}`;
     return { data, count };
 }
 
@@ -458,14 +461,14 @@ function notifCandidates(
         FROM offers_rel o LEFT JOIN latest l
             ON l."offerKind" = 'rury' AND l."offerId" = o."id" AND l."rn" = 1
         LEFT JOIN care_states cs ON cs."offerKind" = 'rury' AND cs."offerId" = o."id"
-        WHERE ${rury} AND cs."offerId" IS NULL
+        WHERE ${rury} AND (cs."offerId" IS NULL OR (cs."doneAt" IS NULL AND (cs."snoozedUntil" IS NULL OR cs."snoozedUntil" <= ${nowIso})))
         UNION ALL
         SELECT 'studnie' AS "offerKind", s."id" AS "offerId", s."userId" AS "ownerId",
             l."outcome" AS "outcome", l."nextContactAt" AS "next", s."createdAt" AS "born"
         FROM offers_studnie_rel s LEFT JOIN latest l
             ON l."offerKind" = 'studnie' AND l."offerId" = s."id" AND l."rn" = 1
         LEFT JOIN care_states cs ON cs."offerKind" = 'studnie' AND cs."offerId" = s."id"
-        WHERE ${studnie} AND cs."offerId" IS NULL
+        WHERE ${studnie} AND (cs."offerId" IS NULL OR (cs."doneAt" IS NULL AND (cs."snoozedUntil" IS NULL OR cs."snoozedUntil" <= ${nowIso})))
     )
     SELECT "offerKind", "offerId", "ownerId",
         CASE
@@ -508,7 +511,6 @@ export async function syncCareNotifications(
             Prisma.sql`SELECT COUNT(*) AS "c" FROM "care_notifications" WHERE "userId" = ${uid} AND "offerKind" = ${c.offerKind} AND "offerId" = ${c.offerId} AND "type" = ${c.ntype} AND "readAt" IS NULL`
         )) as Array<{ c: number | bigint }>;
         if (num(dup[0]?.c) > 0) continue;
-        const { randomUUID } = await import('node:crypto');
         await db.$queryRaw(
             Prisma.sql`INSERT INTO "care_notifications" ("id", "userId", "offerKind", "offerId", "type", "readAt", "createdAt") VALUES (${randomUUID()}, ${uid}, ${c.offerKind}, ${c.offerId}, ${c.ntype}, NULL, ${nowIso})`
         );
