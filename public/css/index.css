@@ -2575,14 +2575,15 @@ html[data-theme='light'] body.index-page.logged-in::before {
     margin-bottom: 8px;
 }
 #care-queue-list {
-    max-height: 560px;
-    overflow-y: auto;
-    padding-right: 4px;
+    padding-right: 0;
 }
 #care-notif-list {
-    max-height: 340px;
-    overflow-y: auto;
-    padding-right: 4px;
+    padding-right: 0;
+}
+.care-notif-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
 }
 @media (max-width: 900px) {
     .care-dashboard-grid {
@@ -2742,6 +2743,9 @@ html[data-theme='light'] body.index-page.logged-in::before {
 }
 @media (max-width: 700px) {
     .care-queue-cards {
+        grid-template-columns: 1fr;
+    }
+    .care-notif-grid {
         grid-template-columns: 1fr;
     }
 }

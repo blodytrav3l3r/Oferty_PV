@@ -185,7 +185,10 @@ describe('carePanel', () => {
         expect(findClass(els['care-buckets'], 'care-chart')).toHaveLength(1);
         expect(findClass(els['care-buckets'], 'care-chart-row')).toHaveLength(5);
         expect(findClass(els['care-buckets'], 'care-chart-fill')).toHaveLength(5);
-        const cards = els['care-notif-list'].children;
+        const grid = els['care-notif-list'].children;
+        expect(grid).toHaveLength(1);
+        expect(grid[0].className).toContain('care-notif-grid');
+        const cards = grid[0].children;
         expect(cards).toHaveLength(2);
         expect(cards[0].className).toContain('care-notif-card');
         expect(cards[0].className).toContain('err');

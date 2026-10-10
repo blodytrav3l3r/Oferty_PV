@@ -55,6 +55,8 @@ function renderNotifications(items, unreadCount) {
         list.appendChild(empty);
         return;
     }
+    const grid = document.createElement('div');
+    grid.className = 'care-notif-grid';
     for (const n of items.slice(0, 20)) {
         const card = document.createElement('div');
         card.className = 'care-notif-card ' + (n.type === 'CALLBACK_DUE' ? 'warn' : 'err');
@@ -103,8 +105,9 @@ function renderNotifications(items, unreadCount) {
             loadCarePanel();
         });
         card.appendChild(read);
-        list.appendChild(card);
+        grid.appendChild(card);
     }
+    list.appendChild(grid);
 }
 
 async function clearNotifications() {
