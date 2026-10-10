@@ -155,38 +155,35 @@ function renderBuckets(summary) {
         empty.textContent = 'Brak ofert w opiece.';
         box.appendChild(empty);
     } else {
-        // Legenda tekstowa + jeden słupkowy wykres warstwowy (flex).
-        // Bez kropek: same etykiety + pełny pasek proporcji.
-        const legend = document.createElement('div');
-        legend.className = 'care-legend';
+        // Wykres wierszowy: etykieta + liczba + pasek udziału (osobno na wiersz).
+        const chart = document.createElement('div');
+        chart.className = 'care-chart';
+        chart.setAttribute('role', 'img');
+        chart.setAttribute('aria-label', rows.map((r) => r[0] + ': ' + r[1]).join(', '));
         rows.forEach((r, i) => {
-            if (i > 0) {
-                const sep = document.createElement('span');
-                sep.className = 'care-legend-sep';
-                sep.textContent = '|';
-                legend.appendChild(sep);
-            }
-            const item = document.createElement('span');
-            item.className = 'care-legend-item';
-            item.textContent = r[0] + ': ' + r[1];
-            legend.appendChild(item);
+            const pct = Math.round((r[1] / total) * 100);
+            const row = document.createElement('div');
+            row.className = 'care-chart-row';
+            const head = document.createElement('div');
+            head.className = 'care-chart-head';
+            const name = document.createElement('span');
+            name.textContent = r[0];
+            const count = document.createElement('span');
+            count.className = 'care-chart-count';
+            count.textContent = String(r[1]) + ' (' + pct + '%)';
+            head.append(name, count);
+            const track = document.createElement('div');
+            track.className = 'care-chart-track';
+            const fill = document.createElement('div');
+            fill.className = 'care-chart-fill';
+            fill.style.width = pct + '%';
+            fill.style.background = BUCKET_COLORS[i % BUCKET_COLORS.length];
+            fill.title = r[0] + ': ' + r[1];
+            track.appendChild(fill);
+            row.append(head, track);
+            chart.appendChild(row);
         });
-        box.appendChild(legend);
-        const seg = document.createElement('div');
-        seg.className = 'care-segments';
-        seg.setAttribute('role', 'img');
-        seg.setAttribute('aria-label', rows.map((r) => r[0] + ': ' + r[1]).join(', '));
-        rows.forEach((r, i) => {
-            if (r[1] <= 0) return;
-            const s = document.createElement('span');
-            s.style.flexGrow = String(r[1]);
-            s.style.flexShrink = '1';
-            s.style.flexBasis = '0';
-            s.style.background = BUCKET_COLORS[i % BUCKET_COLORS.length];
-            s.title = r[0] + ': ' + r[1];
-            seg.appendChild(s);
-        });
-        box.appendChild(seg);
+        box.appendChild(chart);
     }
     const topEl = document.getElementById('care-buckets-top');
     if (topEl) {

@@ -181,9 +181,10 @@ describe('carePanel', () => {
             walk2(root);
             return out;
         };
-        // Legenda tekstowa zawsze widoczna (5 pozycji) + segmenty paska.
-        expect(findClass(els['care-buckets'], 'care-legend-item')).toHaveLength(5);
-        expect(findClass(els['care-buckets'], 'care-segments')).toHaveLength(1);
+        // Wykres wierszowy: 5 wierszy z etykietą, liczbą i paskiem.
+        expect(findClass(els['care-buckets'], 'care-chart')).toHaveLength(1);
+        expect(findClass(els['care-buckets'], 'care-chart-row')).toHaveLength(5);
+        expect(findClass(els['care-buckets'], 'care-chart-fill')).toHaveLength(5);
         const cards = els['care-notif-list'].children;
         expect(cards).toHaveLength(2);
         expect(cards[0].className).toContain('care-notif-card');
