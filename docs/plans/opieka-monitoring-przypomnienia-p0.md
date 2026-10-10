@@ -129,3 +129,20 @@ Granice twarde: zero migracji/schematu/POST/PATCH/CRUD/powiadomień. Przekroczen
 - Bramy: typecheck BE/FE PASS, lint BE/FE PASS, collisions 45/45, new tests 27/27 PASS, `test:quick` 4440 PASS + 1 flaky `pricelistChunk` (solo PASS, znany flake workerów, brak związku z care), `prices:verify` PASS, `version:check` 1.41.2 PASS.
 - Granice dotrzymane: zero migracji, zero POST/PATCH, `followUps/stats/searchUtils` diff=0.
 - Status: **P0 GOTOWE DO COMMIT** (bez pusha — push osobne GO). **P1/P2 nadal CZEKAJĄ NA GO**.
+
+## 11. Checkpoint P1 (GO 2026-10-10, tryb build, commit `7d4a669`)
+
+- Schema: `care_states` (PK kind+id, snooze/done rozłączne) + `care_sla_config` (1 wiersz global).
+  Migracja `20261010000000_care_p1_states_sla` additive IF NOT EXISTS (drift-safe, rerun-safe);
+  `migrate dev` żądał resetu (drift FTS) → zastosowana ręcznie na live DB + backup + wiersz
+  w `_prisma_migrations`. `generate` wymaga restartu serwera (DLL trzymane) — kod P1 idzie
+  przez `$queryRaw`, działa bez restartu.
+- Service: `get/set/clearCareState`, `get/setSlaConfig` (default 24/7/72), queue LEFT JOIN
+  `care_states` (pola `snoozedUntil/doneAt/paused`, bez N+1).
+- API: `POST /:kind/:id/snooze` (ISO strict, przyszłość, max 14d) + `/done` + `/reopen`
+  (guard `canWriteDoc`, 404, Idempotency-Key reuse/in-progress, audyt `care_state` w tx);
+  `GET/PUT /sla` (PUT tylko admin, audyt `care_sla`).
+- Testy: state 2/2, routes 5/5, queue+summary+status 27/27, migracja 1/1.
+- Bramy: typecheck/lint BE+FE PASS, collisions 45/45, prices:verify PASS, version:check 1.41.2.
+- Uwaga: restart serwera po dogodnym momencie (świeży klient Prisma + nowy kod tras).
+  **P2 (centrum powiadomień) nadal CZEKA NA GO**.
