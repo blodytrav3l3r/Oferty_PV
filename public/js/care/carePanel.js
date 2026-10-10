@@ -455,15 +455,6 @@ function renderQueue(items) {
         open.textContent = 'Kontakt';
         open.addEventListener('click', () => careOpenContact(it.offerKind, it.offerId));
         actions.appendChild(open);
-        if (it.phone) {
-            const tel = document.createElement('a');
-            tel.className = 'btn btn-sm btn-secondary';
-            tel.href = 'tel:' + String(it.phone).replace(/[^+\d]/g, '');
-            tel.textContent = 'Zadzwoń';
-            tel.setAttribute('aria-label', 'Zadzwoń: ' + String(it.phone));
-            tel.title = String(it.phone);
-            actions.appendChild(tel);
-        }
         row.appendChild(actions);
         grid.appendChild(row);
     }
