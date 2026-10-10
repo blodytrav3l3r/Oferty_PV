@@ -2861,6 +2861,185 @@ html[data-theme='light'] body.index-page.logged-in::before {
     height: 10px;
     min-width: 4px;
 }
+/* Dopasowanie do projektu (screen 2): nagłówek kolejki, karty, notif 1-kol, wykresy. */
+.care-queue-head-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+.care-sort-visual {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: default;
+    white-space: nowrap;
+}
+.care-sort-visual svg {
+    width: 14px;
+    height: 14px;
+}
+.care-view-visual {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 4px 6px;
+    color: var(--text-muted);
+    cursor: default;
+}
+.care-view-visual svg {
+    width: 14px;
+    height: 14px;
+}
+.care-count-pill {
+    background: var(--accent-bg);
+    color: var(--accent-text);
+    border-color: var(--accent-border-dim);
+}
+.care-queue-filters .care-queue-filter-btn.active {
+    background: var(--slate-900);
+    color: var(--white);
+    border-color: var(--slate-900);
+}
+.care-count--urgent {
+    background: var(--danger-bg);
+    color: var(--danger-hover);
+}
+.care-count--today {
+    background: var(--bg-tertiary);
+    color: var(--text-muted);
+}
+.care-count--paused {
+    background: var(--warn-bg);
+    color: var(--warn-hover);
+}
+.care-kind-pill {
+    background: var(--bg-tertiary);
+    color: var(--text-muted);
+    border-color: var(--border);
+    text-transform: lowercase;
+    font-weight: var(--fw-regular, 400);
+}
+.care-status-pill {
+    text-transform: uppercase;
+    font-size: var(--fs-xs);
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    margin-left: auto;
+}
+.care-status-paused {
+    background: var(--bg-tertiary);
+    color: var(--text-muted);
+}
+.care-status-today,
+.care-status-term {
+    background: var(--accent-bg);
+    color: var(--accent-text);
+    border-color: var(--accent-border-dim);
+}
+.care-queue-price {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+}
+.care-queue-no {
+    color: var(--text-muted);
+    font-weight: var(--fw-regular, 400);
+    font-size: var(--fs-base);
+}
+.care-queue-text {
+    min-width: 0;
+}
+.care-queue-title-text {
+    font-weight: var(--fw-semibold);
+    color: var(--text-primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.care-queue-sub {
+    color: var(--text-muted);
+    font-size: var(--fs-base);
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.care-queue-line svg {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+    color: var(--warn);
+}
+.care-contact-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.care-contact-btn svg {
+    width: 14px;
+    height: 14px;
+}
+.care-notif-grid {
+    grid-template-columns: minmax(0, 1fr);
+}
+.care-notif-card .ops-pill {
+    text-transform: uppercase;
+    font-size: var(--fs-xs);
+    letter-spacing: 0.02em;
+}
+.care-notif-no {
+    color: var(--text-muted);
+    font-size: var(--fs-base);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.care-notif-date {
+    color: var(--text-muted);
+    font-size: var(--fs-base);
+}
+.care-chart-track {
+    height: 8px;
+}
+.care-chart-fill {
+    height: 8px;
+}
+.care-bar--stacked {
+    height: 10px;
+    border-radius: var(--radius-pill);
+    overflow: hidden;
+}
+.care-bar--stacked > span {
+    height: 10px;
+    border-radius: 0;
+    min-width: 4px;
+}
+.care-buckets-foot svg {
+    width: 14px;
+    height: 14px;
+    color: var(--warn);
+    flex-shrink: 0;
+}
+#care-buckets-top {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+}
+#care-buckets-share {
+    color: var(--blue);
+    font-weight: var(--fw-semibold);
+    white-space: nowrap;
+}
+.care-sla-hint {
+    margin-left: auto;
+}
+#care-sla-box summary {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    list-style: none;
+}
 @media (max-width: 1100px) {
     .care-dashboard-grid {
         grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);

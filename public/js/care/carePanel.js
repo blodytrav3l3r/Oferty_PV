@@ -10,6 +10,26 @@ function setText(id, v) {
     if (el) el.textContent = String(v);
 }
 
+function refreshCareIcons(root) {
+    try {
+        if (
+            typeof window !== 'undefined' &&
+            window.lucide &&
+            typeof window.lucide.createIcons === 'function'
+        ) {
+            window.lucide.createIcons({ root: root || document });
+        } else if (
+            typeof lucide !== 'undefined' &&
+            lucide &&
+            typeof lucide.createIcons === 'function'
+        ) {
+            lucide.createIcons({ root: root || document });
+        }
+    } catch {
+        /* ikony best-effort */
+    }
+}
+
 function showError() {
     const panel = document.getElementById('followup-panel');
     if (!panel || panel.querySelector('[data-care-error]')) return;
@@ -94,8 +114,13 @@ function renderNotifications(items, unreadCount) {
         pill.textContent = NOTIF_LABEL[n.type] || String(n.type);
         card.appendChild(pill);
         const who = n.clientName
-            ? String(n.clientName) + (n.number ? ' • ' + String(n.number) : '')
+            ? String(n.clientName)
             : String(n.offerKind) + ' ' + String(n.offerId);
+        const offerNo = n.number
+            ? String(n.number)
+            : n.clientName
+              ? ''
+              : String(n.offerKind) + ' ' + String(n.offerId);
         const hit = byOffer.get(String(n.offerKind) + ':' + String(n.offerId));
         const delay = fmtDelay(
             hit && hit.status !== 'NO_CONTACT' ? hit.overdueDays : 0,
@@ -109,6 +134,12 @@ function renderNotifications(items, unreadCount) {
         l1.className = 'care-notif-who';
         l1.textContent = who;
         headRow.appendChild(l1);
+        if (offerNo && offerNo !== who) {
+            const num = document.createElement('div');
+            num.className = 'care-notif-no';
+            num.textContent = offerNo;
+            headRow.appendChild(num);
+        }
         if (delay) {
             const dl = document.createElement('div');
             dl.className = 'care-notif-delay';
@@ -156,6 +187,7 @@ function renderNotifications(items, unreadCount) {
         grid.appendChild(card);
     }
     list.appendChild(grid);
+    refreshCareIcons(list);
 }
 
 async function clearNotifications() {
@@ -184,7 +216,13 @@ async function clearNotifications() {
     loadCarePanel();
 }
 
-const BUCKET_COLORS = ['#4f46e5', '#60a5fa', '#22c55e', '#f59e0b', '#cbd5e1'];
+const BUCKET_COLORS = [
+    'var(--accent-strong)',
+    'var(--blue)',
+    'var(--success)',
+    'var(--warn)',
+    'var(--slate-300)'
+];
 
 function renderBuckets(summary) {
     const box = document.getElementById('care-buckets');
@@ -257,7 +295,14 @@ function renderBuckets(summary) {
     const topEl = document.getElementById('care-buckets-top');
     if (topEl) {
         const top = rows.reduce((a, r) => (r[1] > a[1] ? r : a), rows[0]);
-        topEl.textContent = 'Najwyższy priorytet: ' + top[0];
+        topEl.textContent = '';
+        const icon = document.createElement('i');
+        icon.setAttribute('data-lucide', 'circle-alert');
+        icon.setAttribute('aria-hidden', 'true');
+        const label = document.createElement('span');
+        label.textContent = 'Najwyższy priorytet: ' + top[0];
+        topEl.append(icon, label);
+        refreshCareIcons(topEl);
     }
     const shareEl = document.getElementById('care-buckets-share');
     if (shareEl) {
@@ -275,7 +320,16 @@ function fmtDate(iso) {
 
 function fmtMoney(v) {
     if (typeof v !== 'number' || !Number.isFinite(v)) return '';
-    return v.toFixed(2) + ' PLN';
+    try {
+        return (
+            v.toLocaleString('pl-PL', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }) + ' PLN'
+        );
+    } catch {
+        return v.toFixed(2) + ' PLN';
+    }
 }
 
 function updateQueueFilterCounts() {
@@ -291,7 +345,7 @@ function updateQueueFilterCounts() {
         if (!(key in counts)) return;
         if (!badge) {
             badge = document.createElement('span');
-            badge.className = 'care-count';
+            badge.className = 'care-count care-count--' + key;
             badge.setAttribute('data-queue-count', '1');
             btn.appendChild(badge);
         }
@@ -399,7 +453,35 @@ async function snoozeQuick(offerKind, offerId, days, row) {
     actions.append(done, undo);
 }
 
-/** Jeden pill statusu na kartę (priorytet: pauza > eskalacja > zaległość > nowy). */
+function fmtTermDate(iso) {
+    if (!iso) return '';
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return '';
+    const pad = (n) => String(n).padStart(2, '0');
+    return pad(d.getDate()) + '.' + pad(d.getMonth() + 1);
+}
+
+function fmtTermTime(iso) {
+    if (!iso) return '';
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return '';
+    const pad = (n) => String(n).padStart(2, '0');
+    return pad(d.getHours()) + ':' + pad(d.getMinutes());
+}
+
+function isToday(iso) {
+    if (!iso) return false;
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return false;
+    const now = new Date();
+    return (
+        d.getFullYear() === now.getFullYear() &&
+        d.getMonth() === now.getMonth() &&
+        d.getDate() === now.getDate()
+    );
+}
+
+/** Jeden pill statusu na kartę (priorytet: pauza > eskalacja > dziś > termin > zaległość > nowy). */
 function statusPill(it) {
     const pill = (cls, text) => {
         const s = document.createElement('span');
@@ -407,12 +489,69 @@ function statusPill(it) {
         s.textContent = text;
         return s;
     };
-    if (it.paused) return pill('ops-pill', it.doneAt ? 'Done' : 'Odłożone');
-    if (it.escalated) return pill('ops-pill ops-err', 'Eskalacja');
+    if (it.paused) return pill('ops-pill care-status-pill care-status-paused', 'Odłożone');
+    if (it.escalated) return pill('ops-pill ops-err care-status-pill', 'Eskalacja');
+    if (it.nextContactAt && isToday(it.nextContactAt))
+        return pill(
+            'ops-pill care-status-pill care-status-today',
+            'Dziś do ' + fmtTermTime(it.nextContactAt)
+        );
+    if (it.nextContactAt)
+        return pill(
+            'ops-pill care-status-pill care-status-term',
+            'Termin: ' + fmtTermDate(it.nextContactAt)
+        );
     if (it.overdueDays > 0 && it.status !== 'NO_CONTACT')
-        return pill('ops-pill ops-warn', String(it.overdueDays) + 'd po terminie');
-    if (it.status === 'NO_CONTACT') return pill('ops-pill ops-warn', 'Nowy kontakt');
+        return pill(
+            'ops-pill ops-warn care-status-pill',
+            '● ' + String(it.overdueDays) + 'd po terminie'
+        );
+    if (it.status === 'NO_CONTACT')
+        return pill('ops-pill ops-warn care-status-pill', 'Nowy kontakt');
     return null;
+}
+
+/** Ikona + tytuł + sub do szarego boxu karty (jak na projekcie: ⚠/📄/◷/✓). */
+function queueInfoContent(it) {
+    const last = fmtDate(it.lastContactAt);
+    if (it.status === 'NO_CONTACT') {
+        const age = it.overdueDays > 0 ? String(it.overdueDays) + 'd bez kontaktu' : 'bez historii';
+        return {
+            icon: 'triangle-alert',
+            title: it.paused ? 'Odłożone — brak pierwszego kontaktu' : 'Brak pierwszego kontaktu',
+            sub: age + ' • bez jakiejkolwiek interakcji'
+        };
+    }
+    if (it.paused) {
+        return {
+            icon: 'pause',
+            title: 'Odłożone',
+            sub: (last ? 'Ost. kontakt: ' + last : 'Bez terminu') + ' • wymaga ponowienia'
+        };
+    }
+    if (it.nextContactAt) {
+        return {
+            icon: 'check',
+            title: 'Zaplanowano kontakt telefoniczny',
+            sub:
+                'Termin: ' +
+                fmtDate(it.nextContactAt) +
+                (last ? ' • ost. kontakt: ' + last : '') +
+                (it.lastNote ? ' • ' + String(it.lastNote) : '')
+        };
+    }
+    if (it.lastNote) {
+        return {
+            icon: 'file-text',
+            title: String(it.lastNote),
+            sub: last ? 'Ost. kontakt: ' + last : fmtTerm(it)
+        };
+    }
+    return {
+        icon: 'clock',
+        title: fmtTerm(it),
+        sub: last ? 'Ost. kontakt: ' + last : 'Wycena w toku'
+    };
 }
 
 function renderQueue(items) {
@@ -451,7 +590,7 @@ function renderQueue(items) {
         head.appendChild(title);
         const kind = document.createElement('span');
         kind.className = 'ops-pill care-kind-pill';
-        kind.textContent = String(it.offerKind);
+        kind.textContent = String(it.offerKind).toLowerCase();
         head.appendChild(kind);
         const status = statusPill(it);
         if (status) head.appendChild(status);
@@ -459,26 +598,36 @@ function renderQueue(items) {
         const valueLine = document.createElement('div');
         valueLine.className = 'care-queue-value';
         const value = fmtMoney(it.value);
-        valueLine.textContent =
-            (value ? value : '0.00 PLN') + (it.number ? ' • ' + String(it.number) : '');
+        const valueStrong = document.createElement('span');
+        valueStrong.className = 'care-queue-price';
+        valueStrong.textContent = value ? value : '0,00 PLN';
+        valueLine.appendChild(valueStrong);
+        if (it.number) {
+            const no = document.createElement('span');
+            no.className = 'care-queue-no';
+            no.textContent = ' • ' + String(it.number);
+            valueLine.appendChild(no);
+        }
         row.appendChild(valueLine);
         const info = document.createElement('div');
         info.className = 'care-queue-info';
-        const lines = [];
-        if (it.status === 'NO_CONTACT') {
-            const age = it.overdueDays > 0 ? ' • ' + String(it.overdueDays) + 'd bez kontaktu' : '';
-            lines.push('Brak pierwszego kontaktu' + age);
-        } else {
-            const last = fmtDate(it.lastContactAt);
-            lines.push(fmtTerm(it) + (last ? ' • ost. kontakt: ' + last : ''));
-        }
-        if (it.lastNote) lines.push(String(it.lastNote));
-        for (const text of lines) {
-            const sub = document.createElement('div');
-            sub.className = 'care-queue-line';
-            sub.textContent = text;
-            info.appendChild(sub);
-        }
+        const content = queueInfoContent(it);
+        const line = document.createElement('div');
+        line.className = 'care-queue-line';
+        const icon = document.createElement('i');
+        icon.setAttribute('data-lucide', content.icon);
+        icon.setAttribute('aria-hidden', 'true');
+        const titleWrap = document.createElement('div');
+        titleWrap.className = 'care-queue-text';
+        const heading = document.createElement('div');
+        heading.className = 'care-queue-title-text';
+        heading.textContent = content.title;
+        const sub = document.createElement('div');
+        sub.className = 'care-queue-sub';
+        sub.textContent = content.sub;
+        titleWrap.append(heading, sub);
+        line.append(icon, titleWrap);
+        info.appendChild(line);
         row.appendChild(info);
         const actions = document.createElement('div');
         actions.className = 'care-queue-btns';
@@ -494,8 +643,14 @@ function renderQueue(items) {
         open.href =
             'app.html#/kartoteka?kontakt=' +
             encodeURIComponent(String(it.offerKind) + ':' + String(it.offerId));
-        open.className = 'btn btn-sm btn-primary';
-        open.textContent = 'Kontakt';
+        open.className = 'btn btn-sm btn-primary care-contact-btn';
+        const phoneIcon = document.createElement('i');
+        phoneIcon.setAttribute('data-lucide', 'phone');
+        phoneIcon.setAttribute('aria-hidden', 'true');
+        const openLabel = document.createElement('span');
+        openLabel.textContent =
+            (it.nextContactAt && isToday(it.nextContactAt)) || it.phone ? 'Zadzwoń' : 'Kontakt';
+        open.append(phoneIcon, openLabel);
         open.addEventListener('click', () => careOpenContact(it.offerKind, it.offerId));
         actions.appendChild(open);
         actions.appendChild(careMenu(it));
@@ -503,6 +658,7 @@ function renderQueue(items) {
         grid.appendChild(row);
     }
     list.appendChild(grid);
+    refreshCareIcons(list);
 }
 
 let openMenu = null;

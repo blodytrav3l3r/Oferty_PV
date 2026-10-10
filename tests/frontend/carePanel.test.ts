@@ -183,7 +183,13 @@ describe('carePanel', () => {
         expect(els['care-notif-count'].textContent).toBe('2 alerty');
         expect(els['care-sync-text'].textContent).toContain('Ostatnia synchronizacja:');
         expect(els['care-buckets-total'].textContent).toBe('Razem: 7');
-        expect(els['care-buckets-top'].textContent).toBe('Najwyższy priorytet: Do kontaktu');
+        const topTexts: string[] = [];
+        const walkTop = (n: any): void => {
+            if (n.textContent) topTexts.push(n.textContent);
+            for (const c of n.children || []) walkTop(c);
+        };
+        walkTop(els['care-buckets-top']);
+        expect(topTexts.join(' ')).toContain('Najwyższy priorytet: Do kontaktu');
         const findClass = (root: any, cls: string): any[] => {
             const out: any[] = [];
             const walk2 = (n: any): void => {
@@ -219,7 +225,8 @@ describe('carePanel', () => {
         };
         walk(rows[0]);
         expect(texts.join(' ')).toContain('Budimex');
-        expect(texts.join(' ')).toContain('4440.30 PLN');
+        expect(texts.join(' ')).toContain('440,30');
+        expect(texts.join(' ')).toContain('PLN');
         expect(texts.join(' ')).toContain('Eskalacja');
         expect(texts.join(' ')).toContain('Czeka');
         // Pill rodzaju + numer oferty w nagłówku karty.

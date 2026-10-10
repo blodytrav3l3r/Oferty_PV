@@ -407,12 +407,32 @@
                                     Kolejka opieki
                                     <span
                                         id="care-queue-count"
-                                        class="ops-pill"
+                                        class="ops-pill care-count-pill"
                                         aria-live="polite"
                                     ></span>
                                 </div>
-                                <div class="recycled-sync" id="care-sync-text">
-                                    Ostatnia synchronizacja: —
+                                <div class="care-queue-head-controls">
+                                    <div class="recycled-sync" id="care-sync-text">
+                                        Ostatnia synchronizacja: —
+                                    </div>
+                                    <span
+                                        class="btn btn-sm btn-secondary care-sort-visual"
+                                        aria-disabled="true"
+                                        title="Sortowanie: termin SLA"
+                                    >
+                                        <i data-lucide="arrow-down-wide-narrow"></i>
+                                        Termin SLA ↓
+                                    </span>
+                                    <span
+                                        class="care-view-visual"
+                                        role="group"
+                                        aria-label="Widok kolejki (wizualny)"
+                                        aria-disabled="true"
+                                        title="Widok siatka / lista"
+                                    >
+                                        <i data-lucide="layout-grid"></i>
+                                        <i data-lucide="list"></i>
+                                    </span>
                                 </div>
                             </div>
                             <div class="recycled-desc">
@@ -494,14 +514,23 @@
                                     <span class="recycled-empty">Ładowanie…</span>
                                 </div>
                                 <div class="care-buckets-foot">
-                                    <span id="care-buckets-top">Najwyższy priorytet: —</span>
+                                    <span id="care-buckets-top"
+                                        ><i data-lucide="circle-alert"></i> Najwyższy priorytet:
+                                        —</span
+                                    >
                                     <span id="care-buckets-share"></span>
                                 </div>
                             </div>
                         </div>
                     </div>
                     <details class="card system-card recycled-card" id="care-sla-box" hidden>
-                        <summary class="recycled-subtitle">Progi SLA (admin)</summary>
+                        <summary class="recycled-subtitle">
+                            Progi SLA (konfiguracja admin)
+                            <span class="ops-pill">Parametry systemu CRM</span>
+                            <span class="recycled-sync care-sla-hint"
+                                >Kliknij, aby rozwinąć ustawienia eskalacji</span
+                            >
+                        </summary>
                         <div class="fu-form-grid">
                             <label>
                                 Pierwszy kontakt (h)
