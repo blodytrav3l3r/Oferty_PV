@@ -16,8 +16,8 @@ const U1: CareUser = { id: 'u1', role: 'user', subUsers: [] };
 
 function freshDb(): DatabaseSync {
     const db = new DatabaseSync(':memory:');
-    db.exec(`CREATE TABLE offers_rel (id TEXT PRIMARY KEY, "userId" TEXT, "createdAt" TEXT);
-        CREATE TABLE offers_studnie_rel (id TEXT PRIMARY KEY, "userId" TEXT, "createdAt" TEXT);
+    db.exec(`CREATE TABLE offers_rel (id TEXT PRIMARY KEY, "userId" TEXT, "createdAt" TEXT, "offer_number" TEXT, "clientName" TEXT, "data" TEXT);
+        CREATE TABLE offers_studnie_rel (id TEXT PRIMARY KEY, "userId" TEXT, "createdAt" TEXT, "offer_number" TEXT, "clientName" TEXT, "totalPrice" REAL, "data" TEXT);
         CREATE TABLE document_shares (id TEXT PRIMARY KEY, "sharedWithUserId" TEXT, "documentType" TEXT, "documentId" TEXT);
         CREATE TABLE care_states ("offerKind" TEXT NOT NULL, "offerId" TEXT NOT NULL, "snoozedUntil" TEXT, "doneAt" TEXT, "updatedBy" TEXT, "updatedAt" TEXT NOT NULL,
             CONSTRAINT "care_states_pkey" PRIMARY KEY ("offerKind", "offerId"));
@@ -112,6 +112,15 @@ describe('P2 sync powiadomień', () => {
             expect(types.find((t) => t.offerId === 'o5')).toBeUndefined();
             // o6: wygasły snooze wraca do pilnowania.
             expect(types.find((t) => t.offerId === 'o6')?.type).toBe('SLA_BREACH');
+            // Wzbogacenie: klient zamiast surowego ID.
+            db.prepare(
+                'UPDATE offers_rel SET "clientName" = ?, "offer_number" = ? WHERE id = ?'
+            ).run('Budimex', 'OF-1', 'o1');
+            const enriched = (
+                await listCareNotifications(f, 'u1', { unreadOnly: false, limit: 50 })
+            ).items;
+            expect(enriched.find((t) => t.offerId === 'o1')?.clientName).toBe('Budimex');
+            expect(enriched.find((t) => t.offerId === 'o1')?.number).toBe('OF-1');
             const r2 = await syncCareNotifications(f, U1, 'mine', NOW, SLA);
             expect(r2.inserted).toBe(0);
             db.close();

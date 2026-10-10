@@ -184,6 +184,63 @@ describe('carePanel', () => {
         expect(calls.filter((c) => c.includes('/api/care/')).length).toBeGreaterThanOrEqual(3);
     });
 
+    test('NO_CONTACT: jeden pill zamiast sprzecznych + klient w notyfikacji', async () => {
+        const { els, context } = load({
+            fetchMock: (url: string) => {
+                if (url.includes('/api/care/notifications'))
+                    return okJson({
+                        items: [
+                            {
+                                id: 'n1',
+                                offerKind: 'studnie',
+                                offerId: 'x1',
+                                type: 'CALLBACK_DUE',
+                                clientName: 'Op olkan',
+                                number: 'ST-7'
+                            }
+                        ],
+                        unreadCount: 1
+                    });
+                if (url.includes('/api/care/queue'))
+                    return okJson({
+                        items: [
+                            {
+                                offerKind: 'rury',
+                                offerId: 'o9',
+                                status: 'NO_CONTACT',
+                                overdueDays: 9,
+                                escalated: false,
+                                paused: false,
+                                clientName: 'Budimex',
+                                value: null,
+                                phone: null,
+                                lastNote: null,
+                                nextContactAt: null
+                            }
+                        ]
+                    });
+                return okJson({ noContact: 1, due: 0, openOk: 0, won: 0, lost: 0 });
+            }
+        });
+        await context.__careTest.loadCarePanel();
+        const texts: string[] = [];
+        const walk = (n: any): void => {
+            if (n.textContent) texts.push(n.textContent);
+            for (const c of n.children || []) walk(c);
+        };
+        walk(els['care-queue-list']);
+        const joined = texts.join(' ');
+        expect(joined).toContain('Brak pierwszego kontaktu');
+        expect(joined).toContain('9d bez kontaktu');
+        expect(joined).not.toContain('Bez terminu');
+        expect(joined).not.toContain('po terminie');
+        walk(els['care-notif-list']);
+        const nj = texts.join(' ');
+        expect(nj).toContain('Op olkan');
+        expect(nj).toContain('ST-7');
+        expect(nj).not.toContain('STUDNIE_OFFER');
+    });
+
     test('snooze +3d z undo (reopen)', async () => {
         const calls: string[] = [];
         const { els, context } = load({

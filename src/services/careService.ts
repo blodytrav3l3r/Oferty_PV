@@ -493,6 +493,8 @@ export interface CareNotification {
     type: string;
     readAt: string | null;
     createdAt: string;
+    clientName: string | null;
+    number: string | null;
 }
 
 function notifBase(user: CareUser, scope: CareScope): { rury: Prisma.Sql; studnie: Prisma.Sql } {
@@ -626,10 +628,17 @@ export async function listCareNotifications(
     opts: { unreadOnly?: boolean; limit?: unknown }
 ): Promise<{ items: CareNotification[]; unreadCount: number }> {
     const limit = clampCareLimit(opts.limit);
+    // Wzbogacenie o klienta/numer (JOIN warunkowy kind) — żadnych surowych ID w UI.
+    const cols = Prisma.sql`n."id", n."userId", n."offerKind", n."offerId", n."type", n."readAt", n."createdAt",
+        COALESCE(o."clientName", s."clientName") AS "clientName",
+        COALESCE(o."offer_number", s."offer_number") AS "number"
+        FROM "care_notifications" n
+        LEFT JOIN offers_rel o ON n."offerKind" = 'rury' AND o."id" = n."offerId"
+        LEFT JOIN offers_studnie_rel s ON n."offerKind" = 'studnie' AND s."id" = n."offerId"`;
     const items = (await db.$queryRaw<CareNotification[]>(
         opts.unreadOnly
-            ? Prisma.sql`SELECT "id", "userId", "offerKind", "offerId", "type", "readAt", "createdAt" FROM "care_notifications" WHERE "userId" = ${userId} AND "readAt" IS NULL ORDER BY "createdAt" DESC LIMIT ${limit}`
-            : Prisma.sql`SELECT "id", "userId", "offerKind", "offerId", "type", "readAt", "createdAt" FROM "care_notifications" WHERE "userId" = ${userId} ORDER BY "createdAt" DESC LIMIT ${limit}`
+            ? Prisma.sql`SELECT ${cols} WHERE n."userId" = ${userId} AND n."readAt" IS NULL ORDER BY n."createdAt" DESC LIMIT ${limit}`
+            : Prisma.sql`SELECT ${cols} WHERE n."userId" = ${userId} ORDER BY n."createdAt" DESC LIMIT ${limit}`
     )) as CareNotification[];
     const cnt = (await db.$queryRaw<Array<{ c: number | bigint }>>(
         Prisma.sql`SELECT COUNT(*) AS "c" FROM "care_notifications" WHERE "userId" = ${userId} AND "readAt" IS NULL`

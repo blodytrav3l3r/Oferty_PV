@@ -60,19 +60,19 @@ function renderNotifications(items, unreadCount) {
         chip.type = 'button';
         chip.className = NOTIF_CLASS[n.type] || 'ops-pill';
         chip.setAttribute('data-notif-id', String(n.id));
+        const who = n.clientName
+            ? String(n.clientName) + (n.number ? ' • ' + String(n.number) : '')
+            : String(n.offerKind) + ' ' + String(n.offerId);
         chip.setAttribute(
             'aria-label',
-            'Oznacz jako przeczytane (' +
-                (NOTIF_LABEL[n.type] || String(n.type)) +
-                '): ' +
-                String(n.offerId)
+            'Oznacz jako przeczytane (' + (NOTIF_LABEL[n.type] || String(n.type)) + '): ' + who
         );
         const label = document.createElement('span');
         label.textContent = NOTIF_LABEL[n.type] || String(n.type);
         const sep = document.createElement('span');
         sep.textContent = ' • ';
         const ref = document.createElement('span');
-        ref.textContent = String(n.offerKind) + ' ' + String(n.offerId);
+        ref.textContent = who;
         chip.append(label, sep, ref);
         chip.addEventListener('click', async () => {
             try {
@@ -231,7 +231,7 @@ function renderQueue(items) {
             esc.className = 'ops-pill ops-err';
             esc.textContent = 'Eskalacja';
             head.appendChild(esc);
-        } else if (it.overdueDays > 0) {
+        } else if (it.overdueDays > 0 && it.status !== 'NO_CONTACT') {
             const late = document.createElement('span');
             late.className = 'ops-pill ops-warn';
             late.textContent = String(it.overdueDays) + 'd po terminie';
@@ -246,7 +246,19 @@ function renderQueue(items) {
         row.appendChild(head);
         const sub = document.createElement('div');
         sub.className = 'care-queue-sub';
-        sub.textContent = fmtTerm(it) + (it.lastNote ? ' • ' + String(it.lastNote) : '');
+        // NO_CONTACT: jeden spójny komunikat (wiek od utworzenia),
+        // zamiast sprzecznego "Bez terminu + Nd po terminie".
+        if (it.status === 'NO_CONTACT') {
+            const age = it.overdueDays > 0 ? ' • ' + String(it.overdueDays) + 'd bez kontaktu' : '';
+            sub.textContent =
+                'Brak pierwszego kontaktu' + age + (it.lastNote ? ' • ' + String(it.lastNote) : '');
+            const nc = document.createElement('span');
+            nc.className = 'ops-pill ops-warn';
+            nc.textContent = 'Nowy kontakt';
+            head.appendChild(nc);
+        } else {
+            sub.textContent = fmtTerm(it) + (it.lastNote ? ' • ' + String(it.lastNote) : '');
+        }
         row.appendChild(sub);
         const actions = document.createElement('div');
         actions.className = 'care-queue-actions';

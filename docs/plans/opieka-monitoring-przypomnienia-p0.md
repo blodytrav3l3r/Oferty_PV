@@ -180,3 +180,13 @@ Granice twarde: zero migracji/schematu/POST/PATCH/CRUD/powiadomień. Przekroczen
   4471 PASS, tylko flake `pricelistChunk` (solo zielony 3x).
 - Bramy: typecheck/lint BE+FE, collisions 45/45, prices, version 1.41.2.
 - ADR-015 (sync przy odczycie) spisany.
+
+## 14. Decyzje produktowe (GO 2026-10-10, status quo)
+
+- D1 ABANDONED = porażka w mianowniku (`won/(won+lost+abandoned)`), osobna kategoria
+  w odpowiedziach (`abandoned`, `abandonedReasons`); filtr Kartoteki `lost` obejmuje
+  ABANDONED (najbliższy sens operacyjny „do zamknięcia").
+- D2 Win dla domykającego wpis (autor latest WON); bez zmian w `perRep`.
+- D3 Progi 24/7/72 + sync-przy-odczycie + retencja 90d/cap 500 — zatwierdzone.
+- Screenshot-fixe: powiadomienia z klientem/numerem (JOIN w `listCareNotifications`,
+  zero surowych ID w UI); NO_CONTACT = jeden pill „Brak pierwszego kontaktu • Xd".
