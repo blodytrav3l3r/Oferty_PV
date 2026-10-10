@@ -55,6 +55,9 @@ function renderNotifications(items, unreadCount) {
         list.appendChild(empty);
         return;
     }
+    const byOffer = new Map(
+        queueCache.map((it) => [String(it.offerKind) + ':' + String(it.offerId), it])
+    );
     const grid = document.createElement('div');
     grid.className = 'care-notif-grid';
     for (const n of items.slice(0, 20)) {
@@ -67,10 +70,15 @@ function renderNotifications(items, unreadCount) {
         const who = n.clientName
             ? String(n.clientName) + (n.number ? ' • ' + String(n.number) : '')
             : String(n.offerKind) + ' ' + String(n.offerId);
+        const hit = byOffer.get(String(n.offerKind) + ':' + String(n.offerId));
+        const age =
+            hit && hit.overdueDays > 0 && hit.status !== 'NO_CONTACT'
+                ? ' • ' + String(hit.overdueDays) + 'd po terminie'
+                : '';
         const lines = document.createElement('div');
         lines.className = 'care-notif-lines';
         const l1 = document.createElement('div');
-        l1.textContent = who;
+        l1.textContent = who + age;
         lines.appendChild(l1);
         if (n.createdAt) {
             const d = new Date(n.createdAt);
@@ -200,9 +208,37 @@ function renderBuckets(summary) {
     }
 }
 
+function fmtDate(iso) {
+    if (!iso) return '';
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return '';
+    return d.toLocaleDateString('pl-PL');
+}
+
 function fmtMoney(v) {
     if (typeof v !== 'number' || !Number.isFinite(v)) return '';
     return v.toFixed(2) + ' PLN';
+}
+
+function updateQueueFilterCounts() {
+    const counts = { all: queueCache.length, urgent: 0, today: 0, paused: 0 };
+    for (const it of queueCache) {
+        if (it.escalated || it.overdueDays > 0) counts.urgent += 1;
+        if (it.slaBucket === 'DUE_TODAY') counts.today += 1;
+        if (it.paused) counts.paused += 1;
+    }
+    document.querySelectorAll('.care-queue-filter-btn').forEach((btn) => {
+        const key = btn.dataset.queueFilter || 'all';
+        let badge = btn.querySelector('[data-queue-count]');
+        if (!(key in counts)) return;
+        if (!badge) {
+            badge = document.createElement('span');
+            badge.className = 'ops-pill';
+            badge.setAttribute('data-queue-count', '1');
+            btn.appendChild(badge);
+        }
+        badge.textContent = String(counts[key]);
+    });
 }
 
 function fmtTerm(it) {
@@ -211,6 +247,34 @@ function fmtTerm(it) {
         if (!Number.isNaN(d.getTime())) return 'Termin: ' + d.toLocaleDateString('pl-PL');
     }
     return 'Bez terminu';
+}
+
+/**
+ * Handoff do modala opieki w Kartotece: zapis w sessionStorage + nawigacja.
+ * Konsument: kartotekaInit.js (odczyt + openFollowUpModal + czyszczenie).
+ */
+export function careOpenContact(offerKind, offerId) {
+    try {
+        if (typeof sessionStorage !== 'undefined') {
+            sessionStorage.setItem(
+                'care-open-followup',
+                JSON.stringify({
+                    id: String(offerId),
+                    displayType: offerKind === 'studnie' ? 'studnia_oferta' : 'oferta',
+                    at: Date.now()
+                })
+            );
+        }
+    } catch {
+        /* best-effort */
+    }
+    try {
+        if (typeof window !== 'undefined' && window.location) {
+            window.location.href = 'app.html#/kartoteka';
+        }
+    } catch {
+        /* best-effort */
+    }
 }
 
 function matchFilter(it) {
@@ -279,22 +343,7 @@ function renderQueue(items) {
     if (!list) return;
     list.textContent = '';
     queueCache = Array.isArray(items) ? items : [];
-    const urgentCount = queueCache.filter((it) => !!it.escalated || it.overdueDays > 0).length;
-    document.querySelectorAll('.care-queue-filter-btn').forEach((btn) => {
-        if (btn.dataset.queueFilter !== 'urgent') return;
-        let badge = btn.querySelector('[data-urgent-count]');
-        if (urgentCount > 0) {
-            if (!badge) {
-                badge = document.createElement('span');
-                badge.className = 'ops-pill ops-err';
-                badge.setAttribute('data-urgent-count', '1');
-                btn.appendChild(badge);
-            }
-            badge.textContent = String(urgentCount);
-        } else if (badge) {
-            badge.remove();
-        }
-    });
+    updateQueueFilterCounts();
     const visible = queueCache.filter(matchFilter);
     if (visible.length === 0) {
         const empty = document.createElement('span');
@@ -302,6 +351,13 @@ function renderQueue(items) {
         empty.textContent =
             queueCache.length === 0 ? 'Kolejka pusta.' : 'Brak ofert w tym filtrze.';
         list.appendChild(empty);
+        if (queueCache.length === 0) {
+            const cta = document.createElement('a');
+            cta.href = 'app.html#/kartoteka';
+            cta.className = 'btn btn-sm btn-secondary';
+            cta.textContent = 'Otwórz kartotekę';
+            list.appendChild(cta);
+        }
         return;
     }
     const grid = document.createElement('div');
@@ -352,7 +408,8 @@ function renderQueue(items) {
             const age = it.overdueDays > 0 ? ' • ' + String(it.overdueDays) + 'd bez kontaktu' : '';
             lines.push('Brak pierwszego kontaktu' + age);
         } else {
-            lines.push(fmtTerm(it));
+            const last = fmtDate(it.lastContactAt);
+            lines.push(fmtTerm(it) + (last ? ' • ost. kontakt: ' + last : ''));
         }
         if (it.lastNote) lines.push(String(it.lastNote));
         for (const text of lines) {
@@ -375,6 +432,7 @@ function renderQueue(items) {
         open.href = 'app.html#/kartoteka';
         open.className = 'btn btn-sm btn-primary';
         open.textContent = 'Kontakt';
+        open.addEventListener('click', () => careOpenContact(it.offerKind, it.offerId));
         actions.appendChild(open);
         if (it.phone) {
             const tel = document.createElement('a');
@@ -529,8 +587,8 @@ export async function loadCarePanel() {
                 '/api/care/queue?scope=' + careScope + '&limit=' + QUEUE_LIMIT + '&t=' + Date.now()
             )
         ]);
-        if (notif) renderNotifications(notif.items, notif.unreadCount ?? 0);
         if (queue) renderQueue(queue.items);
+        if (notif) renderNotifications(notif.items, notif.unreadCount ?? 0);
         setSyncText();
     } catch {
         /* centrum i kolejka best-effort, liczniki już są */

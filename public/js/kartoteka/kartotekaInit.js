@@ -99,6 +99,41 @@ window.addEventListener('pagehide', () => {
     }
 });
 
+/* ===== Handoff z kokpitu opieki: otwarcie modala kontaktu ===== */
+function consumeCareHandoff() {
+    let payload = null;
+    try {
+        const raw =
+            typeof sessionStorage !== 'undefined'
+                ? sessionStorage.getItem('care-open-followup')
+                : null;
+        if (!raw) return;
+        sessionStorage.removeItem('care-open-followup');
+        payload = JSON.parse(raw);
+    } catch (_e) {
+        return;
+    }
+    if (!payload || !payload.id) return;
+    // Świeżość 5 minut — stary wpis to najpewniej porzucona nawigacja.
+    if (typeof payload.at === 'number' && Date.now() - payload.at > 5 * 60 * 1000) return;
+    const type = payload.displayType === 'studnia_oferta' ? 'studnia_oferta' : 'oferta';
+    let tries = 0;
+    const tick = () => {
+        tries += 1;
+        const ui = window.kartotekaUI;
+        if (ui && typeof ui.openFollowUpModal === 'function') {
+            ui.openFollowUpModal(String(payload.id), type);
+            return;
+        }
+        if (tries < 50) setTimeout(tick, 100);
+    };
+    tick();
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    consumeCareHandoff();
+});
+
 /* ===== Statyczne akcje CSP-B (data-ka zamiast onclick) ===== */
 function bindStaticActions() {
     document.querySelectorAll('.ka-type-filter-btn').forEach((btn) => {

@@ -117,7 +117,7 @@ describe('carePanel', () => {
         };
         context.window.window = context.window;
         vm.createContext(context);
-        vm.runInContext(code + '\nthis.__careTest = { loadCarePanel };', context);
+        vm.runInContext(code + '\nthis.__careTest = { loadCarePanel, careOpenContact };', context);
         return { els, listeners, context };
     };
     const okJson = (body: any) => ({ ok: true, json: async () => body });
@@ -265,6 +265,60 @@ describe('carePanel', () => {
         expect(nj).toContain('Op olkan');
         expect(nj).toContain('ST-7');
         expect(nj).not.toContain('STUDNIE_OFFER');
+    });
+
+    test('filtry z licznikami + ost. kontakt + Kontakt zapisuje handoff', async () => {
+        const store: Record<string, string> = {};
+        const { els, context } = load({
+            fetchMock: (url: string) => {
+                if (url.includes('/api/care/queue'))
+                    return okJson({
+                        items: [
+                            {
+                                offerKind: 'rury',
+                                offerId: 'o1',
+                                status: 'DUE',
+                                overdueDays: 2,
+                                escalated: false,
+                                paused: false,
+                                slaBucket: 'OVERDUE_D1',
+                                clientName: 'A',
+                                value: null,
+                                phone: null,
+                                lastNote: null,
+                                lastContactAt: '2026-10-08T10:00:00.000Z',
+                                nextContactAt: '2026-10-09T10:00:00.000Z'
+                            }
+                        ]
+                    });
+                return okJson({ noContact: 0, due: 1, openOk: 0, won: 0, lost: 0 });
+            }
+        });
+        context.sessionStorage = {
+            getItem: (k: string) => store[k] ?? null,
+            setItem: (k: string, v: string) => {
+                store[k] = String(v);
+            },
+            removeItem: (k: string) => {
+                delete store[k];
+            }
+        };
+        context.window.location = { href: '' };
+        await context.__careTest.loadCarePanel();
+        // Wiersz pokazuje ost. kontakt.
+        const texts: string[] = [];
+        const walk = (n: any): void => {
+            if (n.textContent) texts.push(n.textContent);
+            for (const c of n.children || []) walk(c);
+        };
+        walk(els['care-queue-list']);
+        expect(texts.join(' ')).toContain('ost. kontakt:');
+        // careOpenContact zapisuje handoff (Konsument: kartotekaInit).
+        await context.__careTest.careOpenContact('studnie', 's1');
+        expect(JSON.parse(store['care-open-followup'])).toEqual(
+            expect.objectContaining({ id: 's1', displayType: 'studnia_oferta' })
+        );
+        expect(context.window.location.href).toBe('app.html#/kartoteka');
     });
 
     test('snooze +3d z undo (reopen)', async () => {

@@ -2687,15 +2687,6 @@ html[data-theme='light'] body.index-page.logged-in::before {
     margin-top: 4px;
     font-size: var(--fs-base);
 }
-.care-buckets-title {
-    display: inline-block;
-    background: var(--accent);
-    color: #fff;
-    font-size: var(--fs-base);
-    font-weight: var(--fw-bold);
-    border-radius: var(--radius-sm);
-    padding: 2px 10px;
-}
 .care-buckets-foot {
     display: flex;
     justify-content: space-between;
