@@ -2556,13 +2556,17 @@ html[data-theme='light'] body.index-page.logged-in::before {
     display: grid;
     grid-template-columns: minmax(0, 8fr) minmax(0, 5fr);
     gap: 12px;
-    align-items: start;
+    align-items: stretch;
+}
+.care-dashboard-grid > .card {
+    height: 100%;
 }
 .care-side-col {
     display: flex;
     flex-direction: column;
     gap: 12px;
     min-width: 0;
+    height: 100%;
 }
 .care-scope-group {
     display: inline-flex;
@@ -2625,9 +2629,11 @@ html[data-theme='light'] body.index-page.logged-in::before {
     padding-right: 0;
 }
 #care-queue-list {
-    max-height: 44rem;
+    max-height: 64rem;
     overflow-y: auto;
     scrollbar-width: thin;
+    flex: 1 1 auto;
+    min-height: 0;
 }
 .care-notif-grid {
     display: grid;
