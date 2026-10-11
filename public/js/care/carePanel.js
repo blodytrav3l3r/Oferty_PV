@@ -1351,6 +1351,18 @@ async function syncRepUI() {
             sel.dataset.bound = '1';
             sel.addEventListener('change', () => {
                 careRep = sel.value || '';
+                // Moje + cudzy handlowiec = zawsze pusto (mine ∩ rep≠self).
+                // Poszerz zakres do najmniejszego mieszczącego repa (BE i tak
+                // broni 403 — pro spoza subów i user nic nie zobaczą).
+                if (careRep && careRep !== careUserId()) {
+                    const role = careRole();
+                    if (role === 'admin') careScope = 'all';
+                    else if (role === 'pro') careScope = 'team';
+                    else {
+                        careRep = '';
+                        sel.value = '';
+                    }
+                }
                 careBumpPolling();
                 syncScopeButtons();
                 notifyRangeChange();
