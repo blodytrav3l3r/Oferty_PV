@@ -9,6 +9,7 @@ import {
     buildCareQueueQueries,
     getCareEtagInput,
     getCareQueue,
+    getCareSummary,
     type CareUser
 } from '../../src/services/careService';
 
@@ -41,12 +42,41 @@ function freshDb(): DatabaseSync {
     return db;
 }
 
+function flatSql(
+    strings: TemplateStringsArray,
+    values: unknown[]
+): { sql: string; values: unknown[] } {
+    let sql = '';
+    const out: unknown[] = [];
+    strings.forEach((s: string, i: number) => {
+        sql += s;
+        if (i < values.length) {
+            const v = values[i] as unknown as { sql?: unknown; values?: unknown };
+            if (v && typeof v === 'object' && typeof v.sql === 'string') {
+                sql += v.sql;
+                out.push(...((v.values as unknown[]) ?? []));
+            } else {
+                sql += '?';
+                out.push(values[i]);
+            }
+        }
+    });
+    return { sql, values: out };
+}
+
 function fake(db: DatabaseSync) {
     return {
         $queryRaw: async <T>(...args: unknown[]): Promise<T> => {
-            const q = args[0] as Prisma.Sql;
-            const raw = q as unknown as { sql: string; values: unknown[] };
-            return db.prepare(raw.sql).all(...(raw.values as never[])) as unknown as T;
+            const a0 = args[0] as Prisma.Sql;
+            const maybe = a0 as unknown as { sql?: unknown; values?: unknown };
+            if (maybe && typeof maybe.sql === 'string') {
+                const raw = maybe as unknown as { sql: string; values: unknown[] };
+                return db.prepare(raw.sql).all(...(raw.values as never[])) as unknown as T;
+            }
+            // Wywołanie tag-template (db.$queryRaw`...${v}...`): strings + values,
+            // zagnieżdżone Prisma.Sql spłaszczane (ten sam styl ? co sterownik).
+            const flat = flatSql(a0 as unknown as TemplateStringsArray, args.slice(1));
+            return db.prepare(flat.sql).all(...(flat.values as never[])) as unknown as T;
         }
     };
 }
@@ -124,6 +154,34 @@ describe('ETag panelu a zmiana opiekuna', () => {
                 offerId: string;
             }>;
             expect(rows.map((r) => r.offerId)).toEqual(['o1']);
+            db.close();
+        } catch (e) {
+            try {
+                db.close();
+            } catch {
+                /* ignore */
+            }
+            throw e;
+        }
+    });
+
+    it('hidePaused: jeden flag w summary i kolejce (parzystość liczników)', async () => {
+        const db = freshDb();
+        try {
+            const f = fake(db);
+            db.prepare(
+                'INSERT INTO care_states ("offerKind", "offerId", "snoozedUntil", "doneAt", "updatedBy", "updatedAt") VALUES (?,?,?,?,?,?)'
+            ).run('rury', 'o1', null, NOW, 'u1', NOW);
+            // Default false: pauza widoczna w obu (totalCount zgodny).
+            const s = await getCareSummary(f, U1, 'mine', NOW, {});
+            const q = await getCareQueue(fake(db), U1, { nowIso: NOW });
+            expect(s.totalCount).toBe(1);
+            expect(q.totalCount).toBe(1);
+            // hidePaused=true: oba wycinają pauzę.
+            const s2 = await getCareSummary(f, U1, 'mine', NOW, { hidePaused: true });
+            const q2 = await getCareQueue(fake(db), U1, { nowIso: NOW, hidePaused: true });
+            expect(s2.totalCount).toBe(0);
+            expect(q2.totalCount).toBe(0);
             db.close();
         } catch (e) {
             try {

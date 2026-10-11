@@ -1,6 +1,8 @@
 import request from 'supertest';
 import express from 'express';
+import { DatabaseSync } from 'node:sqlite';
 import offerRoutes from '../../src/routes/offers/index';
+import { buildOfferScopeCondition } from '../../src/routes/offers/followUpStats';
 import prisma from '../../src/prismaClient';
 
 const mockUser: any = { id: 'admin-1', role: 'admin', subUsers: [] };
@@ -303,5 +305,110 @@ describe('P3 GET /followups/stats', () => {
         const res = await request(createApp()).get('/api/offers/followups/stats');
         expect(res.status).toBe(200);
         expect(q).toHaveBeenCalled();
+    });
+
+    it('scope jawny: team/all tylko pro/admin (fail-closed 403)', async () => {
+        const app = createApp();
+        mockUser.role = 'user';
+        mockUser.id = 'u1';
+        expect((await request(app).get('/api/offers/followups/stats?scope=team')).status).toBe(403);
+        expect((await request(app).get('/api/offers/followups/stats?scope=all')).status).toBe(403);
+        mockUser.role = 'pro';
+        mockUser.subUsers = ['u2'];
+        const q = prisma.$queryRaw as jest.Mock;
+        q.mockResolvedValue([]);
+        expect((await request(app).get('/api/offers/followups/stats?scope=team')).status).toBe(200);
+        expect((await request(app).get('/api/offers/followups/stats?scope=zzz')).status).toBe(400);
+    });
+
+    it('repId: user cudzy 403, pro sub 200, admin 200', async () => {
+        const app = createApp();
+        const q = prisma.$queryRaw as jest.Mock;
+        q.mockResolvedValue([]);
+        mockUser.role = 'user';
+        mockUser.id = 'u1';
+        mockUser.subUsers = [];
+        expect(
+            (await request(app).get('/api/offers/followups/stats?scope=mine&repId=obcy')).status
+        ).toBe(403);
+        expect(
+            (await request(app).get('/api/offers/followups/stats?scope=mine&repId=u1')).status
+        ).toBe(200);
+        mockUser.role = 'pro';
+        mockUser.subUsers = ['u2'];
+        expect(
+            (await request(app).get('/api/offers/followups/stats?scope=team&repId=obcy')).status
+        ).toBe(403);
+        expect(
+            (await request(app).get('/api/offers/followups/stats?scope=team&repId=u2')).status
+        ).toBe(200);
+        mockUser.role = 'admin';
+        expect(
+            (await request(app).get('/api/offers/followups/stats?scope=all&repId=ktokolwiek'))
+                .status
+        ).toBe(200);
+    });
+});
+
+describe('buildOfferScopeCondition (wykonanie SQL)', () => {
+    function dbWithOffers(): DatabaseSync {
+        const db = new DatabaseSync(':memory:');
+        db.exec('CREATE TABLE offers_rel (id TEXT PRIMARY KEY, "userId" TEXT)');
+        db.prepare('INSERT INTO offers_rel (id, "userId") VALUES (?, ?)').run('o1', 'u1');
+        db.prepare('INSERT INTO offers_rel (id, "userId") VALUES (?, ?)').run('o2', 'u2');
+        return db;
+    }
+
+    function ids(db: DatabaseSync, cond: unknown): string[] {
+        const raw = cond as unknown as { sql: string; values: unknown[] };
+        const rows = db
+            .prepare(`SELECT id FROM offers_rel o WHERE ${raw.sql}`)
+            .all(...(raw.values as never[])) as Array<{ id: string }>;
+        return rows.map((r) => r.id).sort();
+    }
+
+    test('narrowOwner: tylko 1 wlasciciel', () => {
+        const db = dbWithOffers();
+        try {
+            expect(
+                ids(
+                    db,
+                    buildOfferScopeCondition({ id: 'a', role: 'admin' }, 'o', [], {
+                        allowedIds: null,
+                        narrowOwner: 'u1'
+                    })
+                )
+            ).toEqual(['o1']);
+            db.close();
+        } catch (e) {
+            try {
+                db.close();
+            } catch {
+                /* ignore */
+            }
+            throw e;
+        }
+    });
+
+    test('mine: tylko wlasne (bez subUsers pro)', () => {
+        const db = dbWithOffers();
+        try {
+            expect(
+                ids(
+                    db,
+                    buildOfferScopeCondition({ id: 'u1', role: 'pro', subUsers: ['u2'] }, 'o', [], {
+                        allowedIds: ['u1']
+                    })
+                )
+            ).toEqual(['o1']);
+            db.close();
+        } catch (e) {
+            try {
+                db.close();
+            } catch {
+                /* ignore */
+            }
+            throw e;
+        }
     });
 });

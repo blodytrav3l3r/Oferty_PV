@@ -3,7 +3,7 @@ import express from 'express';
 import { z } from 'zod';
 import prisma from '../../prismaClient';
 import { requireAuth, AuthenticatedRequest } from '../../middleware/auth';
-import { WRITE_LIMITER } from '../../middleware/rateLimiters';
+import { WRITE_LIMITER, READ_LIMITER } from '../../middleware/rateLimiters';
 import { validateData } from '../../validators/authSchema';
 import { canReadWithShare, canWriteDoc } from '../../utils/ownership';
 import { logger } from '../../utils/logger';
@@ -404,7 +404,7 @@ router.delete('/:kind/:id/followups/:fuId', requireAuth, writeFollowUpLimiter, a
     }
 });
 
-router.get('/:kind/:id/followups', requireAuth, async (req, res) => {
+router.get('/:kind/:id/followups', requireAuth, READ_LIMITER, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
         const { kind, id } = req.params;

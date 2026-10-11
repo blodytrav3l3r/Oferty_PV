@@ -120,6 +120,29 @@ function followUpRangeQuery() {
 
 const moneyPln = (v) => (typeof v === 'number' ? v.toFixed(2) + ' PLN' : '–');
 
+/* KPI idą za zakresem panelu opieki (sok-care-* pisze carePanel.js).
+ * Bez tego pro/admin widziałby inne liczby niż panel (mine vs team/all). */
+function followUpScopeQuery() {
+    try {
+        const s =
+            typeof localStorage !== 'undefined' ? localStorage.getItem('sok-care-scope') : null;
+        if (s === 'team' || s === 'all') return '&scope=' + s;
+    } catch {
+        /* ignore */
+    }
+    return '&scope=mine';
+}
+
+function followUpRepQuery() {
+    try {
+        const r = typeof localStorage !== 'undefined' ? localStorage.getItem('sok-care-rep') : null;
+        if (r) return '&repId=' + encodeURIComponent(r);
+    } catch {
+        /* ignore */
+    }
+    return '';
+}
+
 async function loadFollowUpWidget() {
     const panel = document.getElementById('followup-panel');
     if (!panel) return;
@@ -131,7 +154,11 @@ async function loadFollowUpWidget() {
         // P3: KPI z endpointu analityki (jeden request, scope roli po stronie BE).
         try {
             const statsRes = await fetch(
-                '/api/offers-rury/followups/stats?t=' + Date.now() + followUpRangeQuery(),
+                '/api/offers-rury/followups/stats?t=' +
+                    Date.now() +
+                    followUpRangeQuery() +
+                    followUpScopeQuery() +
+                    followUpRepQuery(),
                 {
                     credentials: 'same-origin'
                 }
@@ -155,6 +182,16 @@ async function loadFollowUpWidget() {
                 set('fu-kpi-open-value', moneyPln(s.openValue));
                 set('fu-kpi-total-value', moneyPln(s.totalValue));
                 set('fu-kpi-orders-value', moneyPln(s.ordersValue));
+            } else {
+                // 403 (np. zakres spoza roli) nie może zostawić starych liczb
+                // jako świeżych — czyść jawnie.
+                set('fu-kpi-conversion', '–');
+                set('fu-kpi-lost', '–');
+                set('fu-kpi-first', '–');
+                set('fu-kpi-won-value', '–');
+                set('fu-kpi-open-value', '–');
+                set('fu-kpi-total-value', '–');
+                set('fu-kpi-orders-value', '–');
             }
         } catch (e) {
             logger.warn('dashboard', 'Failed to load followup KPI', e);

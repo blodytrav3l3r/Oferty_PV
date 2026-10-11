@@ -227,4 +227,22 @@ describe('P1 care routes guardy', () => {
             'mine'
         );
     });
+
+    it('reopen niesie expectedUpdatedAt do clearCareState; zły format → 400', async () => {
+        const ok = await request(app())
+            .post('/api/care/rury/o1/reopen')
+            .send({ expectedUpdatedAt: '2026-10-09T00:00:00.000Z' });
+        expect(ok.status).toBe(200);
+        expect(stateDelete).toHaveBeenCalled();
+        const args = stateDelete.mock.calls[stateDelete.mock.calls.length - 1] as unknown[];
+        expect(args[3]).toBe('2026-10-09T00:00:00.000Z');
+        stateDelete.mockClear();
+        const bare = await request(app()).post('/api/care/rury/o1/reopen').send({});
+        expect(bare.status).toBe(200);
+        expect((stateDelete.mock.calls[0] as unknown[])[3]).toBeUndefined();
+        const bad = await request(app())
+            .post('/api/care/rury/o1/reopen')
+            .send({ expectedUpdatedAt: 123 });
+        expect(bad.status).toBe(400);
+    });
 });

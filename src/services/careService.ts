@@ -39,6 +39,8 @@ export interface CareQueueItem {
     bucketWeight: number;
     snoozedUntil: string | null;
     doneAt: string | null;
+    /** updatedAt wiersza care_states (null = brak stanu) — opt-lock zapisów. */
+    careUpdatedAt: string | null;
 }
 
 export interface CareQueueResult {
@@ -215,7 +217,8 @@ export function buildCareQueueQueries(
             o."offer_number" AS "number", o."clientName" AS "client",
             CAST(json_extract(o."data", '$.totalBrutto') AS REAL) AS "value",
             json_extract(o."data", '$.clientPhone') AS "phone", l."note" AS "note",
-            cs."snoozedUntil" AS "snoozed", cs."doneAt" AS "done"
+            cs."snoozedUntil" AS "snoozed", cs."doneAt" AS "done",
+            cs."updatedAt" AS "careUpdatedAt"
         FROM offers_rel o LEFT JOIN latest l
             ON l."offerKind" = 'rury' AND l."offerId" = o."id" AND l."rn" = 1
         LEFT JOIN care_states cs
@@ -231,7 +234,8 @@ export function buildCareQueueQueries(
                 (SELECT CAST(ROUND(COALESCE(SUM(value->>'totalPrice'), 0), 2) AS REAL)
                     FROM json_each(s."data", '$.wellsExport'))) AS REAL) AS "value",
             json_extract(s."data", '$.clientPhone') AS "phone", l."note" AS "note",
-            cs."snoozedUntil" AS "snoozed", cs."doneAt" AS "done"
+            cs."snoozedUntil" AS "snoozed", cs."doneAt" AS "done",
+            cs."updatedAt" AS "careUpdatedAt"
         FROM offers_studnie_rel s LEFT JOIN latest l
             ON l."offerKind" = 'studnie' AND l."offerId" = s."id" AND l."rn" = 1
         LEFT JOIN care_states cs
@@ -239,7 +243,7 @@ export function buildCareQueueQueries(
         WHERE ${scopeStudnie}${andBornStudnie}
     ), ranked AS (
         SELECT "offerKind", "offerId", "outcome", "next", "last", "born",
-            "number", "client", "value", "phone", "note", "snoozed", "done",
+            "number", "client", "value", "phone", "note", "snoozed", "done", "careUpdatedAt",
             ${BUCKET_CASE(opts.nowIso)} AS "bucketWeight"
         FROM base
     )`;
@@ -257,7 +261,7 @@ export function buildCareQueueQueries(
     const data = Prisma.sql`${withSql}
         SELECT "offerKind", "offerId", "outcome", "next", "last", "born",
             "number", "client", "value", "phone", "note",
-            "snoozed", "done", "bucketWeight" FROM ranked
+            "snoozed", "done", "careUpdatedAt", "bucketWeight" FROM ranked
         WHERE ${cursorSql}${opts.hidePaused ? Prisma.sql` AND "done" IS NULL AND ("snoozed" IS NULL OR "snoozed" <= ${opts.nowIso})` : Prisma.empty}
         ORDER BY "bucketWeight" ASC, COALESCE("next", ${NULL_NEXT}) ASC, "offerKind" ASC, "offerId" ASC
         LIMIT ${limit + 1}`;
@@ -282,7 +286,7 @@ export async function getCareSummary(
     user: CareUser,
     scope: CareScope,
     nowIso: string,
-    opts?: { from?: string; to?: string; repOwner?: string | null }
+    opts?: { from?: string; to?: string; repOwner?: string | null; hidePaused?: boolean }
 ): Promise<CareSummary> {
     const ownerWhere = resolveOwnerWhere(user, scope);
     const scopeRury = ownerCond(user, 'o', 'offer', ownerWhere, opts?.repOwner);
@@ -292,6 +296,14 @@ export async function getCareSummary(
     const bornStudnie = bornRange('s', opts?.from, opts?.to);
     const andBornRury = bornRury ? Prisma.sql` AND ${bornRury}` : Prisma.empty;
     const andBornStudnie = bornStudnie ? Prisma.sql` AND ${bornStudnie}` : Prisma.empty;
+    // Jeden flag hidePaused jak kolejka (default false = pauza widoczna).
+    // Wcześniej summary zawsze cicho wycinało pauzę — liczniki ≠ kolejka.
+    const pauseRury = opts?.hidePaused
+        ? Prisma.sql` AND (cs."offerId" IS NULL OR (cs."doneAt" IS NULL AND (cs."snoozedUntil" IS NULL OR cs."snoozedUntil" <= ${nowIso})))`
+        : Prisma.empty;
+    const pauseStudnie = opts?.hidePaused
+        ? Prisma.sql` AND (cs."offerId" IS NULL OR (cs."doneAt" IS NULL AND (cs."snoozedUntil" IS NULL OR cs."snoozedUntil" <= ${nowIso})))`
+        : Prisma.empty;
     const withSql = Prisma.sql`WITH latest AS (
         SELECT f."offerKind", f."offerId", f."outcome", f."nextContactAt", f."contactedAt",
             ROW_NUMBER() OVER (PARTITION BY f."offerKind", f."offerId" ORDER BY f."contactedAt" DESC, f."createdAt" DESC, f."id" DESC) AS "rn"
@@ -302,14 +314,14 @@ export async function getCareSummary(
         FROM offers_rel o LEFT JOIN latest l
             ON l."offerKind" = 'rury' AND l."offerId" = o."id" AND l."rn" = 1
         LEFT JOIN care_states cs ON cs."offerKind" = 'rury' AND cs."offerId" = o."id"
-        WHERE ${scopeRury} AND (cs."offerId" IS NULL OR (cs."doneAt" IS NULL AND (cs."snoozedUntil" IS NULL OR cs."snoozedUntil" <= ${nowIso})))${andBornRury}
+        WHERE ${scopeRury}${pauseRury}${andBornRury}
         UNION ALL
         SELECT 'studnie' AS "offerKind", s."id" AS "offerId", l."outcome" AS "outcome",
             l."nextContactAt" AS "next", l."contactedAt" AS "last"
         FROM offers_studnie_rel s LEFT JOIN latest l
             ON l."offerKind" = 'studnie' AND l."offerId" = s."id" AND l."rn" = 1
         LEFT JOIN care_states cs ON cs."offerKind" = 'studnie' AND cs."offerId" = s."id"
-        WHERE ${scopeStudnie} AND (cs."offerId" IS NULL OR (cs."doneAt" IS NULL AND (cs."snoozedUntil" IS NULL OR cs."snoozedUntil" <= ${nowIso})))${andBornStudnie}
+        WHERE ${scopeStudnie}${pauseStudnie}${andBornStudnie}
     )`;
     const rows = await db.$queryRaw<
         Array<{ k: string; c: number | bigint }>
@@ -365,6 +377,7 @@ export async function getCareQueue(
                 note: string | null;
                 snoozed: string | null;
                 done: string | null;
+                careUpdatedAt: string | null;
                 bucketWeight: number | bigint;
             }>
         >(data),
@@ -398,7 +411,8 @@ export async function getCareQueue(
             lastNote: r.note,
             bucketWeight: num(r.bucketWeight),
             snoozedUntil: r.snoozed,
-            doneAt: r.done
+            doneAt: r.done,
+            careUpdatedAt: r.careUpdatedAt ?? null
         })),
         nextCursor,
         totalCount
@@ -423,6 +437,8 @@ export interface CareQueueViewItem {
     doneAt: string | null;
     paused: boolean;
     escalated: boolean;
+    /** updatedAt wiersza care_states (null = brak stanu) — opt-lock zapisów. */
+    careUpdatedAt: string | null;
 }
 
 /** Mapowanie wierszy kolejki na widok (status/SLA/pauza/eskalacja) — SSoT dla /queue i /panel. */
@@ -459,7 +475,8 @@ export function buildCareQueueView(
             snoozedUntil,
             doneAt,
             paused,
-            escalated: isEscalated(state, nowIso, sla.escalationH, snoozedUntil, doneAt)
+            escalated: isEscalated(state, nowIso, sla.escalationH, snoozedUntil, doneAt),
+            careUpdatedAt: r.careUpdatedAt ?? null
         };
     });
 }
@@ -599,8 +616,25 @@ export async function setCareState(
 export async function clearCareState(
     db: RawDb,
     offerKind: CareKind,
-    offerId: string
+    offerId: string,
+    expectedUpdatedAt?: string | null
 ): Promise<void> {
+    if (expectedUpdatedAt !== undefined && expectedUpdatedAt !== null) {
+        const exec = db.$executeRaw?.bind(db);
+        if (!exec) {
+            throw Object.assign(new Error('Brak obsługi concurrency'), { status: 500 });
+        }
+        const n = await exec(
+            Prisma.sql`DELETE FROM "care_states" WHERE "offerKind" = ${offerKind} AND "offerId" = ${offerId} AND "updatedAt" = ${expectedUpdatedAt}`
+        );
+        if (n === 0) {
+            throw Object.assign(new Error('Stan zmieniony przez kogoś innego'), {
+                status: 409,
+                code: 'CARE_STATE_CONFLICT'
+            });
+        }
+        return;
+    }
     await db.$queryRaw(
         Prisma.sql`DELETE FROM "care_states" WHERE "offerKind" = ${offerKind} AND "offerId" = ${offerId}`
     );

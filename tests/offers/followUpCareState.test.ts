@@ -194,4 +194,36 @@ describe('P1 care state', () => {
             throw e;
         }
     });
+
+    it('reopen lock: niezgodny expected → 409, zgodny kasuje', async () => {
+        const db = freshDb();
+        try {
+            const f = fake(db);
+            await setCareState(f, {
+                offerKind: 'rury',
+                offerId: 'o1',
+                snoozedUntil: '2026-10-12T00:00:00.000Z',
+                doneAt: null,
+                updatedBy: 'u1',
+                nowIso: NOW
+            });
+            await expect(
+                clearCareState(f, 'rury', 'o1', '2000-01-01T00:00:00.000Z')
+            ).rejects.toMatchObject({ status: 409, code: 'CARE_STATE_CONFLICT' });
+            // Przegrany nie skasował.
+            expect(await getCareState(f, 'rury', 'o1')).not.toBeNull();
+            await clearCareState(f, 'rury', 'o1', NOW);
+            expect(await getCareState(f, 'rury', 'o1')).toBeNull();
+            // Bez expected brak wiersza to no-op (legacy reopen na czystym).
+            await clearCareState(f, 'rury', 'o1');
+            db.close();
+        } catch (e) {
+            try {
+                db.close();
+            } catch {
+                /* ignore */
+            }
+            throw e;
+        }
+    });
 });

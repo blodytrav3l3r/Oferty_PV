@@ -2,6 +2,7 @@ import express from 'express';
 import { z } from 'zod';
 import prisma, { Prisma } from '../../prismaClient';
 import { requireAuth, AuthenticatedRequest } from '../../middleware/auth';
+import { READ_LIMITER } from '../../middleware/rateLimiters';
 import { getSharedIdsForUser } from '../../utils/ownership';
 import { normalizedCreatedAtSql, toNum } from '../../utils/searchUtils';
 import { logger } from '../../utils/logger';
@@ -18,17 +19,23 @@ interface StatsUser {
 /**
  * Warunek przynależności oferty (alias o/s, bez WHERE) — owner + pro subUsers
  * + udostępnione (spójnie z search). Admin dostaje 1=1.
+ * opts.allowedIds: jawny zakres (mine/team/all z query) — null = wszystko.
+ * opts.narrowOwner: zawężenie do 1 handlowca (repId po walidacji w route),
+ *   AND wewnątrz scope — nigdy zamiast scope.
  */
 export function buildOfferScopeCondition(
     user: StatsUser,
     alias: string,
-    sharedIds: string[]
+    sharedIds: string[],
+    opts?: { allowedIds?: string[] | null; narrowOwner?: string | null }
 ): Prisma.Sql {
     const a = Prisma.raw(alias);
-    if (user.role === 'admin') return Prisma.sql`1=1`;
+    if (opts?.narrowOwner) return Prisma.sql`${a}."userId" = ${opts.narrowOwner}`;
+    if (opts && opts.allowedIds === null) return Prisma.sql`1=1`;
     const allowedIds = (
-        user.role === 'pro' ? [user.id, ...(user.subUsers || [])] : [user.id]
+        opts?.allowedIds ?? (user.role === 'pro' ? [user.id, ...(user.subUsers || [])] : [user.id])
     ).filter((v) => typeof v === 'string' && v !== '');
+    if (user.role === 'admin' && opts?.allowedIds === undefined) return Prisma.sql`1=1`;
     const parts: Prisma.Sql[] = [];
     if (allowedIds.length > 0) {
         parts.push(Prisma.sql`${a}."userId" IN (${Prisma.join(allowedIds)})`);
@@ -105,6 +112,8 @@ const MAX_RANGE_MS = 366 * 86400000;
 
 const statsQuerySchema = z
     .object({
+        scope: z.enum(['mine', 'team', 'all']).optional(),
+        repId: z.string().min(1).max(50).optional(),
         from: z
             .string()
             .refine(isStrictIsoDateTime, { message: 'Nieprawidłowa data ISO-8601' })
@@ -150,7 +159,7 @@ function buildBornRange(col: string, from?: string, to?: string): Prisma.Sql | n
  * latest = ROW_NUMBER() OVER (PARTITION BY offerKind, offerId
  *   ORDER BY contactedAt DESC, createdAt DESC) — ta sama definicja co search.
  */
-router.get('/followups/stats', requireAuth, async (req, res) => {
+router.get('/followups/stats', requireAuth, READ_LIMITER, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
         const user = authReq.user as StatsUser | undefined;
@@ -166,23 +175,51 @@ router.get('/followups/stats', requireAuth, async (req, res) => {
                       getSharedIdsForUser(user.id, 'offer'),
                       getSharedIdsForUser(user.id, 'offer_studnie')
                   ]).catch(() => [[], []])) as string[][]);
-        const scopeRury = buildOfferScopeCondition(user, 'o', sharedRury);
-        const scopeStudnie = buildOfferScopeCondition(user, 's', sharedStudnie);
+
+        const parsed = statsQuerySchema.safeParse(req.query);
+        if (!parsed.success) return res.status(400).json({ error: 'Nieprawidłowy zakres dat' });
+        const { from, to, scope, repId } = parsed.data;
+        // Jawny scope jak w opiece (mine/team/all, fail-closed 403).
+        // Brak scope = legacy: rola decyduje (user→własne, pro→+sub, admin→wszystko).
+        let allowed: string[] | null | undefined;
+        if (scope === 'all') {
+            if (user.role !== 'admin')
+                return res.status(403).json({ error: 'Brak uprawnień do zakresu' });
+            allowed = null;
+        } else if (scope === 'team') {
+            if (user.role !== 'pro' && user.role !== 'admin')
+                return res.status(403).json({ error: 'Brak uprawnień do zakresu' });
+            allowed = [user.id, ...(user.subUsers || [])];
+        } else if (scope === 'mine') {
+            allowed = [user.id];
+        }
+        // repId po tej samej regule co opieka (resolveRepOwner): user tylko
+        // siebie, pro siebie + subUsers, admin każdego. Fail-closed 403.
+        let narrow: string | null = null;
+        if (repId) {
+            if (repId === user.id) narrow = user.id;
+            else if (user.role === 'admin') narrow = repId;
+            else if (user.role === 'pro' && (user.subUsers || []).includes(repId)) narrow = repId;
+            else return res.status(403).json({ error: 'Brak uprawnień do zakresu' });
+        }
+        const condOpts =
+            allowed === undefined && narrow === null
+                ? undefined
+                : { allowedIds: allowed, narrowOwner: narrow };
+        const scopeRury = buildOfferScopeCondition(user, 'o', sharedRury, condOpts);
+        const scopeStudnie = buildOfferScopeCondition(user, 's', sharedStudnie, condOpts);
         const fuScope = followUpScope(scopeRury, scopeStudnie);
 
         const latestCte = buildLatestCte(fuScope);
 
-        const parsed = statsQuerySchema.safeParse(req.query);
-        if (!parsed.success) return res.status(400).json({ error: 'Nieprawidłowy zakres dat' });
-        const { from, to } = parsed.data;
         const bornRury = buildBornRange('o."createdAt"', from, to);
         const bornStudnie = buildBornRange('s."createdAt"', from, to);
         const andBornRury = bornRury ? Prisma.sql` AND ${bornRury}` : Prisma.empty;
         const andBornStudnie = bornStudnie ? Prisma.sql` AND ${bornStudnie}` : Prisma.empty;
         // Zamówienia: scope tylko po userId (allowedIds jak oferty, bez shares
         // po ID ofert — osobny byt, osobny kafelek). SELECT-only, bez migracji.
-        const orderScopeRury = buildOfferScopeCondition(user, 'o', []);
-        const orderScopeStudnie = buildOfferScopeCondition(user, 's', []);
+        const orderScopeRury = buildOfferScopeCondition(user, 'o', [], condOpts);
+        const orderScopeStudnie = buildOfferScopeCondition(user, 's', [], condOpts);
         // Konwersja robi się zakresowa (licznik i mianownik z ofert w zakresie),
         // nie globalna: latest jest scoped, born dokładamy JOINem do ofert.
         const outcomeSql =

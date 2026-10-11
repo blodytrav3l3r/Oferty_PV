@@ -73,10 +73,10 @@ function rangeQuery() {
     return '&from=' + encodeURIComponent(r.from) + '&to=' + encodeURIComponent(r.to);
 }
 
-/* ETag per scope+zakres+rep (osobny hash na BE też niesie from/to/rep). */
+/* ETag per scope+preset+rep (klucz stabilny — minutowe from/to w URL i tak
+ * wchodzą do hasła BE; klucz po timestampach rotował co minutę i 304 nie trafiał). */
 function panelKey() {
-    const r = resolveQueueRange();
-    return careScope + '|' + (r.from || '') + '|' + (r.to || '') + '|' + (careRep || '');
+    return careScope + '|' + queueRange + '|' + (careRep || '');
 }
 
 /* Zawężenie do 1 handlowca (repId waliduje BE via resolveRepOwner, fail-closed 403). */
@@ -327,6 +327,14 @@ async function clearNotifications() {
         loadCarePanel();
         return;
     }
+    const confirmed =
+        typeof window !== 'undefined' && typeof window.appConfirm === 'function'
+            ? await window.appConfirm(
+                  'Oznaczyć ' + items.length + ' powiadomień jako przeczytane?',
+                  { title: 'Powiadomienia', okText: 'Oznacz', type: 'info' }
+              )
+            : true;
+    if (!confirmed) return;
     const ids = items.map((n) => String(n.id));
     let failed = 0;
     try {
@@ -551,9 +559,15 @@ function matchFilter(it) {
     return true;
 }
 
-async function snoozeQuick(offerKind, offerId, days, row) {
+async function snoozeQuick(it, days, row) {
+    const offerKind = it.offerKind;
+    const offerId = it.offerId;
     const until = new Date(Date.now() + days * 86400000).toISOString();
+    const body = { snoozedUntil: until };
+    if (it.careUpdatedAt) body.expectedUpdatedAt = it.careUpdatedAt;
     let ok = false;
+    let conflict = false;
+    let freshUpdatedAt = null;
     try {
         const resp = await fetch(
             '/api/care/' +
@@ -566,14 +580,28 @@ async function snoozeQuick(offerKind, offerId, days, row) {
                 method: 'POST',
                 credentials: 'same-origin',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ snoozedUntil: until })
+                body: JSON.stringify(body)
             }
         );
         ok = !!resp && resp.ok;
+        conflict = !!resp && resp.status === 409;
+        if (ok) {
+            try {
+                const json = await resp.json();
+                if (json && json.state && json.state.updatedAt)
+                    freshUpdatedAt = json.state.updatedAt;
+            } catch {
+                /* brak świeżego znacznika — undo bez opt-lock */
+            }
+        }
     } catch {
         ok = false;
     }
     if (!ok) {
+        if (conflict) {
+            careBumpPolling();
+            loadCarePanel();
+        }
         careToastError('Nie odłożono kontaktu — spróbuj ponownie.');
         return;
     }
@@ -594,7 +622,10 @@ async function snoozeQuick(offerKind, offerId, days, row) {
     undo.textContent = 'Cofnij';
     undo.addEventListener('click', async () => {
         let ok = false;
+        let conflict = false;
         try {
+            const undoBody = {};
+            if (freshUpdatedAt) undoBody.expectedUpdatedAt = freshUpdatedAt;
             const resp = await fetch(
                 '/api/care/' +
                     encodeURIComponent(offerKind) +
@@ -602,13 +633,23 @@ async function snoozeQuick(offerKind, offerId, days, row) {
                     encodeURIComponent(offerId) +
                     '/reopen?t=' +
                     Date.now(),
-                { method: 'POST', credentials: 'same-origin' }
+                {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(undoBody)
+                }
             );
             ok = !!resp && resp.ok;
+            conflict = !!resp && resp.status === 409;
         } catch {
             ok = false;
         }
         if (!ok) {
+            if (conflict) {
+                careBumpPolling();
+                loadCarePanel();
+            }
             careToastError('Nie wznowiono pilnowania — spróbuj ponownie.');
             return;
         }
@@ -816,7 +857,7 @@ function renderQueue(items, nextCursor, totalCount) {
         snooze.className = 'btn btn-sm btn-secondary';
         snooze.textContent = 'Odłóż +3d';
         if (it.paused) snooze.disabled = true;
-        snooze.addEventListener('click', () => snoozeQuick(it.offerKind, it.offerId, 3, row));
+        snooze.addEventListener('click', () => snoozeQuick(it, 3, row));
         actions.appendChild(snooze);
         const open = document.createElement('a');
         open.href =
@@ -955,7 +996,7 @@ function careMenu(it) {
             menu.appendChild(b);
         };
         addItem(it.paused ? 'Wznów pilnowanie' : 'Oznacz jako done', () =>
-            postCare(it.offerKind, it.offerId, it.paused ? 'reopen' : 'done')
+            postCare(it, it.paused ? 'reopen' : 'done')
         );
         addItem('Otwórz kartotekę', () => {
             careOpenContact(it.offerKind, it.offerId);
@@ -968,8 +1009,13 @@ function careMenu(it) {
     return wrap;
 }
 
-async function postCare(offerKind, offerId, action) {
+async function postCare(it, action) {
+    const offerKind = it.offerKind;
+    const offerId = it.offerId;
+    const body = {};
+    if (it.careUpdatedAt) body.expectedUpdatedAt = it.careUpdatedAt;
     let ok = false;
+    let conflict = false;
     try {
         const resp = await fetch(
             '/api/care/' +
@@ -984,14 +1030,20 @@ async function postCare(offerKind, offerId, action) {
                 method: 'POST',
                 credentials: 'same-origin',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({})
+                body: JSON.stringify(body)
             }
         );
         ok = !!resp && resp.ok;
+        conflict = !!resp && resp.status === 409;
     } catch {
         ok = false;
     }
     if (!ok) {
+        // 409 = ktoś zmienił stan w międzyczasie: odśwież do prawdy.
+        if (conflict) {
+            careBumpPolling();
+            loadCarePanel();
+        }
         careToastError('Nie zapisano zmiany — spróbuj ponownie.');
         return;
     }
@@ -1071,6 +1123,9 @@ function syncScopeButtons() {
         btn.classList.toggle('btn-secondary', !active);
         btn.setAttribute('aria-pressed', active ? 'true' : 'false');
     });
+    // Widget KPI (dashboard.js) czyta zakres z localStorage — trzymaj w sync.
+    careStoreSet('sok-care-scope', careScope);
+    careStoreSet('sok-care-rep', careRep || '');
     syncRepUI();
 }
 
@@ -1109,6 +1164,7 @@ function bindPanelControls() {
             const sel = document.getElementById('care-rep');
             if (sel) sel.value = '';
             syncScopeButtons();
+            notifyRangeChange();
             loadCarePanel();
         });
     });
@@ -1257,6 +1313,8 @@ async function syncRepUI() {
             sel.addEventListener('change', () => {
                 careRep = sel.value || '';
                 careBumpPolling();
+                syncScopeButtons();
+                notifyRangeChange();
                 loadCarePanel();
             });
         }
@@ -1340,12 +1398,32 @@ async function loadSlaBox() {
             const first = document.getElementById('care-sla-first');
             const stale = document.getElementById('care-sla-stale');
             const esc = document.getElementById('care-sla-esc');
-            const sel = document.getElementById('care-sla-scope');
+            const firstH = Number(first && first.value);
+            const staleD = Number(stale && stale.value);
+            const escH = Number(esc && esc.value);
+            const valid =
+                Number.isInteger(firstH) &&
+                firstH >= 1 &&
+                firstH <= 720 &&
+                Number.isInteger(staleD) &&
+                staleD >= 1 &&
+                staleD <= 90 &&
+                Number.isInteger(escH) &&
+                escH >= 1 &&
+                escH <= 720;
+            if (!valid) {
+                save.textContent = 'Nieprawidłowe progi';
+                setTimeout(() => {
+                    save.textContent = 'Zapisz progi';
+                }, 2000);
+                return;
+            }
             const payload = {
-                firstContactH: Number(first && first.value) || 24,
-                staleD: Number(stale && stale.value) || 7,
-                escalationH: Number(esc && esc.value) || 72
+                firstContactH: firstH,
+                staleD,
+                escalationH: escH
             };
+            const sel = document.getElementById('care-sla-scope');
             if (sel && sel.value !== 'global') {
                 payload.scopeType = sel.value === 'team' ? 'team' : 'user';
             }
@@ -1414,6 +1492,16 @@ async function loadPanelPacket() {
     }
     if (!resp) return null;
     if (resp.status === 304) return 'stale';
+    if (resp.status === 403) {
+        // Zakres spoza roli (np. rola cofnięta w trakcie sesji): wróć do
+        // Moje zamiast kłamać starymi liczbami. Następny tick dociągnie.
+        careScope = 'mine';
+        careRep = '';
+        const sel = document.getElementById('care-rep');
+        if (sel) sel.value = '';
+        syncScopeButtons();
+        return null;
+    }
     if (!resp.ok) return null;
     try {
         const json = await resp.json();
@@ -1473,30 +1561,41 @@ async function loadCarePanelLegacy() {
     return true;
 }
 
+let panelLoading = false;
+let careLoadError = false;
+
 export async function loadCarePanel() {
+    if (panelLoading) return false;
     const panel = document.getElementById('followup-panel');
     if (!panel) return false;
-    bindPanelControls();
-    ensureRangeUI();
-    syncScopeButtons();
-    syncQueueFilterButtons();
-    syncRangeButtons();
-    syncSortViewControls();
-    const packet = await loadPanelPacket();
-    let changed = false;
-    if (packet === 'stale') {
-        changed = false;
-    } else if (packet === 'fresh') {
-        changed = true;
-    } else {
-        changed = await loadCarePanelLegacy();
-    }
+    panelLoading = true;
     try {
-        await loadSlaBox();
-    } catch {
-        /* SLA best-effort */
+        bindPanelControls();
+        ensureRangeUI();
+        syncScopeButtons();
+        syncQueueFilterButtons();
+        syncRangeButtons();
+        syncSortViewControls();
+        const packet = await loadPanelPacket();
+        let changed = false;
+        careLoadError = false;
+        if (packet === 'stale') {
+            changed = false;
+        } else if (packet === 'fresh') {
+            changed = true;
+        } else {
+            changed = await loadCarePanelLegacy();
+            if (!changed) careLoadError = true;
+        }
+        try {
+            await loadSlaBox();
+        } catch {
+            /* SLA best-effort */
+        }
+        return changed;
+    } finally {
+        panelLoading = false;
     }
-    return changed;
 }
 
 export function startCarePolling() {
@@ -1507,7 +1606,8 @@ export function startCarePolling() {
             try {
                 const changed = await loadCarePanel();
                 // Backoff: brak zmian wydłuża polling do POLL_MAX_MS.
-                pollMs = changed ? POLL_MS : Math.min(POLL_MAX_MS, pollMs * 2);
+                // Błąd NIE wydłuża (szybki retry), tylko czysty brak zmian.
+                pollMs = changed || careLoadError ? POLL_MS : Math.min(POLL_MAX_MS, pollMs * 2);
             } catch {
                 pollMs = POLL_MS;
             }
@@ -1534,7 +1634,17 @@ if (typeof document !== 'undefined') {
     // po gotowości użytkownika (ten sam wzorzec co opsDashboard.js).
     // Polling startuje ZAWSZE (też po nieudanym pierwszym loadzie) —
     // inaczej panel umiera po cichu do przeładowania strony.
+    // Zmiana użytkownika resetuje zakres (poprzedni nie dziedziczy cudzego).
+    let lastCareUserId = '';
     document.addEventListener('sok:user-ready', () => {
+        const uid = careUserId();
+        if (uid && uid !== lastCareUserId) {
+            lastCareUserId = uid;
+            careScope = 'mine';
+            careRep = '';
+            const sel = document.getElementById('care-rep');
+            if (sel) sel.value = '';
+        }
         syncScopeButtons();
         loadCarePanel();
         startCarePolling();

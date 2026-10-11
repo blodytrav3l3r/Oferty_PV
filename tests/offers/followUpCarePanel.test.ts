@@ -113,7 +113,8 @@ describe('P2 GET /api/care/panel', () => {
         expect(summaryMock.mock.calls[0][4]).toEqual({
             from: '2026-09-01T00:00:00.000Z',
             to: '2026-09-10T00:00:00.000Z',
-            repOwner: null
+            repOwner: null,
+            hidePaused: false
         });
         expect(queueMock.mock.calls[0][2]).toEqual(
             expect.objectContaining({

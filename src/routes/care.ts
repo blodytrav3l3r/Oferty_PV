@@ -91,6 +91,7 @@ const queueQuerySchema = z
 const summaryQuerySchema = z
     .object({
         scope: scopeSchema.optional(),
+        hidePaused: queryBool,
         ...rangeFields,
         ...repField
     })
@@ -116,7 +117,8 @@ router.get('/summary', requireAuth, READ_LIMITER, async (req, res) => {
         const counts = await getCareSummary(prisma, user, scope, nowIso, {
             from: parsed.data.from,
             to: parsed.data.to,
-            repOwner
+            repOwner,
+            hidePaused: parsed.data.hidePaused ?? false
         });
         return res.json({ ok: true, scope, now: nowIso, ...counts });
     } catch (e) {
@@ -194,6 +196,7 @@ router.get('/panel', requireAuth, READ_LIMITER, async (req, res) => {
                             parsed.data.from ?? null,
                             parsed.data.to ?? null,
                             repOwner,
+                            parsed.data.hidePaused ?? false,
                             await getCareEtagInput(prisma, user.id)
                         ])
                     )
@@ -213,7 +216,8 @@ router.get('/panel', requireAuth, READ_LIMITER, async (req, res) => {
             getCareSummary(prisma, user, scope, nowIso, {
                 from: parsed.data.from,
                 to: parsed.data.to,
-                repOwner
+                repOwner,
+                hidePaused
             }),
             getCareQueue(prisma, user, {
                 scope,
@@ -342,8 +346,6 @@ async function writeCareState(
             }
         }
         const nowIso = new Date().toISOString();
-        const prevState = await getCareState(prisma, kind, id);
-        const prevJson = prevState ? JSON.stringify(prevState) : null;
         const guardTx = async (tx: TxClient) => {
             const offer = await loadOfferTx(tx, kind, id);
             if (!offer) throw Object.assign(new Error('Oferta nie istnieje'), { status: 404 });
@@ -351,11 +353,21 @@ async function writeCareState(
                 throw Object.assign(new Error('Brak uprawnień do zapisu'), { status: 403 });
             }
         };
+        // prevJson (before-image audytu) czytany WEWNĄTRZ tx — odczyt sprzed
+        // transakcji kłamał przy współbieżnym zapisie.
+        const prevJsonTx = async (tx: TxClient): Promise<string | null> => {
+            const prev = await getCareState(tx, kind, id);
+            return prev ? JSON.stringify(prev) : null;
+        };
         let state;
         if (mode === 'reopen') {
+            const parsed = doneSchema.safeParse(req.body ?? {});
+            if (!parsed.success) {
+                return res.status(400).json({ error: 'Nieprawidłowe parametry' });
+            }
             await prisma.$transaction(async (tx) => {
                 await guardTx(tx);
-                await clearCareState(tx, kind, id);
+                await clearCareState(tx, kind, id, parsed.data.expectedUpdatedAt ?? undefined);
                 await tx.audit_logs.create({
                     data: {
                         id: crypto.randomUUID(),
@@ -363,7 +375,7 @@ async function writeCareState(
                         entityId: `${kind}:${id}`,
                         userId: user.id,
                         action: 'reopen',
-                        oldData: prevJson,
+                        oldData: await prevJsonTx(tx),
                         newData: null,
                         createdAt: nowIso
                     }
@@ -393,7 +405,7 @@ async function writeCareState(
                         entityId: `${kind}:${id}`,
                         userId: user.id,
                         action: 'done',
-                        oldData: prevJson,
+                        oldData: await prevJsonTx(tx),
                         newData: JSON.stringify({ doneAt: nowIso }),
                         createdAt: nowIso
                     }
@@ -430,7 +442,7 @@ async function writeCareState(
                         entityId: `${kind}:${id}`,
                         userId: user.id,
                         action: 'snooze',
-                        oldData: prevJson,
+                        oldData: await prevJsonTx(tx),
                         newData: JSON.stringify({ snoozedUntil: until }),
                         createdAt: nowIso
                     }
