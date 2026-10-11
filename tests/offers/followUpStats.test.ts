@@ -390,6 +390,24 @@ describe('buildOfferScopeCondition (wykonanie SQL)', () => {
         }
     });
 
+    test('admin: domyslnie wszystko (1=1)', () => {
+        const db = dbWithOffers();
+        try {
+            expect(ids(db, buildOfferScopeCondition({ id: 'a', role: 'admin' }, 'o', []))).toEqual([
+                'o1',
+                'o2'
+            ]);
+            db.close();
+        } catch (e) {
+            try {
+                db.close();
+            } catch {
+                /* ignore */
+            }
+            throw e;
+        }
+    });
+
     test('mine: tylko wlasne (bez subUsers pro)', () => {
         const db = dbWithOffers();
         try {

@@ -862,6 +862,32 @@ WHERE c."ntype" IS NOT NULL
 AND NOT EXISTS (SELECT 1 FROM "care_notifications" n WHERE n."userId" = ${uid} AND n."offerKind" = c."offerKind" AND n."offerId" = c."offerId" AND n."type" = c."ntype" AND n."readAt" IS NULL)${returning}`;
 }
 
+/** UPDATE zliczany: RETURNING, potem $executeRaw (changes), potem 0.
+ * Ten sam wzorzec co deleteCounted (drivery bez RETURNING). */
+async function updateCounted(
+    db: RawDb,
+    sqlReturning: Prisma.Sql,
+    sqlPlain: Prisma.Sql
+): Promise<number> {
+    try {
+        const rows = (await db.$queryRaw<Array<{ id: string }>>(sqlReturning)) as unknown;
+        if (Array.isArray(rows)) return rows.length;
+    } catch (e) {
+        // Statement padł w całości (nie "wykonany bez zwrotki") — fallback.
+        logger.debug('Care', 'Sync auto-read bez RETURNING, fallback changes', String(e));
+    }
+    const exec = db.$executeRaw?.bind(db);
+    if (exec) {
+        try {
+            return await exec(sqlPlain);
+        } catch (e) {
+            logger.debug('Care', 'Sync auto-read fallback nieudany', String(e));
+            return 0;
+        }
+    }
+    return 0;
+}
+
 /** DELETE zliczany: RETURNING, potem $executeRaw (changes), potem 0.
  * Hoist na scope modułu — jedna definicja na wszystkie synci. */
 async function deleteCounted(
@@ -947,22 +973,18 @@ export async function syncCareNotifications(
         inserted = num(insCnt[0]?.c);
     }
     // 2: auto-read jednym UPDATE (oferta zniknęła z kandydatów:
-    // terminal/pauza/poza scope) — liczba zamkniętych z RETURNING.
-    // Z repOwner funkcja wraca wcześniej (patrz początek) — sprzątanie
-    // robi pełny sync bez filtra, więc ten blok zawsze działa bez filtra.
-    let resolved = 0;
-    try {
-        const resolvedRows = (await db.$queryRaw<Array<{ id: string }>>(
-            Prisma.sql`UPDATE "care_notifications" SET "readAt" = ${nowIso} WHERE "userId" = ${uid} AND "readAt" IS NULL
+    // terminal/pauza/poza scope) — liczba zamkniętych zliczana jak reszta
+    // syncu (RETURNING, potem changes, potem 0). Z repOwner funkcja wraca
+    // wcześniej (patrz początek) — sprzątanie robi pełny sync bez filtra,
+    // więc ten blok zawsze działa bez filtra.
+    const resolved = await updateCounted(
+        db,
+        Prisma.sql`UPDATE "care_notifications" SET "readAt" = ${nowIso} WHERE "userId" = ${uid} AND "readAt" IS NULL
             AND ("offerKind", "offerId") NOT IN (SELECT "offerKind", "offerId" FROM (${cand}) WHERE "ntype" IS NOT NULL)
-            RETURNING "id"`
-        )) as Array<{ id: string }>;
-        resolved = resolvedRows.length;
-    } catch (e) {
-        // Driver bez RETURNING: auto-read wykonany (UPDATE bez zwrotki),
-        // licznik nieznany — resolved zostaje 0, nie kłamiemy.
-        logger.debug('Care', 'Sync auto-read bez RETURNING, licznik 0', String(e));
-    }
+            RETURNING "id"`,
+        Prisma.sql`UPDATE "care_notifications" SET "readAt" = ${nowIso} WHERE "userId" = ${uid} AND "readAt" IS NULL
+            AND ("offerKind", "offerId") NOT IN (SELECT "offerKind", "offerId" FROM (${cand}) WHERE "ntype" IS NOT NULL)`
+    );
     // Retencja leniwa (brak workera w S.O.K.): przeczytane >90d precz,
     // skrzynka maks. 500 wierszy (najświeższe). Bounded inbox.
     const cutoff = new Date(Date.parse(nowIso) - 90 * 86400000).toISOString();
