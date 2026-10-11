@@ -228,6 +228,21 @@ function renderNotifications(items, unreadCount) {
     const list = document.getElementById('care-notif-list');
     if (!list) return;
     list.textContent = '';
+    if (careRep) {
+        // A+C: podgląd repa — kolejka za repem, skrzynka własna.
+        // textContent (bez innerHTML) = brak powierzchni XSS.
+        const banner = document.createElement('div');
+        banner.className = 'care-notif-preview';
+        banner.setAttribute('role', 'status');
+        const sel = document.getElementById('care-rep');
+        const label =
+            (sel && sel.selectedOptions && sel.selectedOptions[0]
+                ? sel.selectedOptions[0].textContent
+                : '') || careRep;
+        banner.textContent =
+            'Podgląd ofert: ' + String(label).trim() + ' — powiadomienia dotyczą Twojej skrzynki.';
+        list.appendChild(banner);
+    }
     if (!items || items.length === 0) {
         const empty = document.createElement('span');
         empty.className = 'recycled-empty';

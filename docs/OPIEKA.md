@@ -52,8 +52,25 @@ Pulpit (widget: liczniki + top wiersze)
 | GET    | `/api/care/queue?scope=&status=…` | read, scope wg roli   |
 | POST   | `/api/offers/:kind/:id/followups` | write (`canWriteDoc`) |
 | GET    | `/api/offers/:kind/:id/followups` | read (timeline)       |
+| GET    | `/api/care/notifications`         | read, skrzynka self   |
+| POST   | `/api/care/notifications/read`    | write, self-only      |
 
 Autoryzacja: cookie `authToken` (HttpOnly). Pełna spec: Swagger `/api/docs`.
+
+## Centrum powiadomień (kontrakt A+C, decyzja 2026-10-11)
+
+Mailbox = zawsze `userId` zalogowanego. `list` i `markRead` filtrują po self
+(`care.ts:591`, `careService.ts:888-923`); cudze id → 404 / `{read:0}`.
+
+`repId` to filtr podglądu, nie zmiana właściciela skrzynki:
+
+- Kolejka i pilność idą za repem (`repOwner` AND w scope, fail-closed 403).
+- Centrum pokazuje własną skrzynkę; banner FE informuje o podglądzie repa.
+- Sync z `repOwner` NIE dopisuje do własnej skrzynki (zero INSERT/DELETE
+  na podstawie ofert repa). Pełny sync bez filtra robi INSERT + auto-read
+    - retencję (90d / cap 500) jak dotąd (ADR-015).
+- Retencja: bez zmian zachowania; działa wyłącznie w pełnym syncu.
+  Punkt kontroli: sync z filtrem nie może mieć efektów ubocznych w DB.
 
 ## Fix F4-krytyczne
 

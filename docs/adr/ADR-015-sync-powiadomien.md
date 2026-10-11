@@ -42,3 +42,11 @@ Sync przy odczycie zostaje:
 | Czysty odczyt bez tabeli | Brak historii/odczytania (badge bez „przeczytane"), liczenie przy każdym pollingu |
 | Osobny POST /sync        | Drugi round-trip co 60 s bez zysku; sync i tak musi biec przed listą              |
 | Cron/worker              | Brak schedulera w projekcie; single-node SQLite, polling wystarcza                |
+
+## Suplement 2026-10-11 (decyzja A+C: podgląd repa)
+
+`repId` (`resolveRepOwner`, fail-closed 403) filtruje kolejkę/summary, nie
+zmienia właściciela skrzynki. Sync z `repOwner` nie wykonuje INSERT ani DELETE
+w skrzynce zalogowanego (zero zapisów między skrzynkami); pełny sync bez filtra
+zachowuje dotychczasowe zachowanie (INSERT + auto-read + retencja 90d/500).
+Odrzucono: odczyt/zapis skrzynki repa (confused-deputy, I-003).

@@ -374,3 +374,7 @@ per-trasa: `docs/security/permission-matrix.md`.
 `*` pro: własne + oferty przypisanych sub-userów. Write = `canWriteDoc`
 (owner / pro-parent / admin); rekord bez właściciela = fail-closed.
 Read = `canReadDoc` / `canReadWithShare`. Hub opieki: `docs/OPIEKA.md`.
+
+Centrum powiadomień: mailbox zawsze self (`list`/`markRead` po `user.id`,
+cudze id → 404); `repId` to filtr podglądu kolejki/summary, sync z `repOwner`
+nie dopisuje do własnej skrzynki (kontrakt A+C, `docs/OPIEKA.md`).

@@ -832,6 +832,10 @@ export async function syncCareNotifications(
     // Skrzynka wybranego handlowca (podgląd przełożonego); zapis/odczyt
     // pojedynczych powiadomień zostaje self-only (guard w route).
     const uid = opts?.mailboxUserId ?? user.id;
+    // A+C: podgląd repa = zero efektów ubocznych w DB. Sync z repOwner
+    // dopisywał kandydatów o ofertach repa do skrzynki viewera (i kasował
+    // retencją) — filtrowany sync nie persistuje; sprząta pełny sync bez filtra.
+    if (opts?.repOwner) return { inserted: 0, resolved: 0 };
     const cand = notifCandidates(user, scope, nowIso, sla, opts?.repOwner);
     // 1: wstaw brakujące (deduplikacja w SQL, nie pętla w JS).
     await db.$queryRaw(
