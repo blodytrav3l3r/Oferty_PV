@@ -234,7 +234,7 @@ export function buildOrderStatusSql(orderStatus: SearchParams['orderStatus']): {
 
 /**
  * Opieka nad ofertą (P0.4): kolumny latest follow-up dla gałęzi UNION.
- * latest = ORDER BY contactedAt DESC, createdAt DESC LIMIT 1 (nie MAX —
+ * latest = ORDER BY contactedAt DESC, createdAt DESC, id DESC LIMIT 1 (nie MAX —
  * późniejszy zapis z wcześniejszą datą nie może nadpisać terminu).
  * Zwraca fragment listy SELECT z wiodącym przecinkiem.
  */

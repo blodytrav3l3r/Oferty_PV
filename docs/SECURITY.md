@@ -375,6 +375,6 @@ per-trasa: `docs/security/permission-matrix.md`.
 (owner / pro-parent / admin); rekord bez właściciela = fail-closed.
 Read = `canReadDoc` / `canReadWithShare`. Hub opieki: `docs/OPIEKA.md`.
 
-Centrum powiadomień: mailbox zawsze self (`list`/`markRead` po `user.id`,
-cudze id → 404); `repId` to filtr podglądu kolejki/summary, sync z `repOwner`
-nie dopisuje do własnej skrzynki (kontrakt A+C, `docs/OPIEKA.md`).
+Centrum powiadomień: `list` per mailbox `repOwner ?? self` (podgląd repa
+read-only, zapis `markRead` zawsze self-only — cudze id → 404); sync
+z `repOwner` nie persistuje (kontrakt A+C, `docs/OPIEKA.md`).

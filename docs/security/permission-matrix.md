@@ -144,15 +144,16 @@ przez te same trasy batch co powyżej, więc dziedziczy ich uprawnienia:
 
 ## 10. Opieka — powiadomienia (`/api/care/notifications`, pliki `src/routes/care.ts`, `src/services/careService.ts`)
 
-Mailbox zawsze self. `repId` (po `resolveRepOwner`, fail-closed 403) filtruje
-kolejkę/summary, nie zmienia właściciela skrzynki. Sync z `repOwner` nie
+Mailbox: `/panel` i `/notifications` listują skrzynkę `repOwner ?? self`
+(po `resolveRepOwner`, fail-closed 403). Sync z `repOwner` nie
 dopisuje do własnej skrzynki (kontrakt A+C, `docs/OPIEKA.md`).
 
-| route                        | operation | required permission                  | owner required | userId source | body userId allowed? | expected 200 | expected 401 | expected 403 | expected 404         |
-| ---------------------------- | --------- | ------------------------------------ | -------------- | ------------- | -------------------- | ------------ | ------------ | ------------ | -------------------- |
-| GET /notifications           | READ      | `requireAuth` + scope/rep wg roli    | NIE (self box) | self          | N/A                  | TAK          | TAK          | TAK (repId)  | NIE                  |
-| POST /notifications/read     | UPDATE    | `requireAuth`, tylko własna skrzynka | NIE (self box) | self          | N/A (`ids`)          | TAK          | TAK          | NIE          | NIE (`{read:0}`)     |
-| POST /notifications/:id/read | UPDATE    | `requireAuth`, tylko własna skrzynka | NIE (self box) | self          | N/A                  | TAK          | TAK          | NIE          | TAK (cudze id → 404) |
+| route                        | operation | required permission                  | owner required                   | userId source | body userId allowed? | expected 200 | expected 401 | expected 403 | expected 404         |
+| ---------------------------- | --------- | ------------------------------------ | -------------------------------- | ------------- | -------------------- | ------------ | ------------ | ------------ | -------------------- |
+| GET /panel                   | READ      | `requireAuth` + scope/rep wg roli    | NIE (mailbox `repOwner ?? self`) | self/rep      | N/A                  | TAK          | TAK          | TAK (repId)  | NIE                  |
+| GET /notifications           | READ      | `requireAuth` + scope/rep wg roli    | NIE (self box)                   | self          | N/A                  | TAK          | TAK          | TAK (repId)  | NIE                  |
+| POST /notifications/read     | UPDATE    | `requireAuth`, tylko własna skrzynka | NIE (self box)                   | self          | N/A (`ids`)          | TAK          | TAK          | NIE          | NIE (`{read:0}`)     |
+| POST /notifications/:id/read | UPDATE    | `requireAuth`, tylko własna skrzynka | NIE (self box)                   | self          | N/A                  | TAK          | TAK          | NIE          | TAK (cudze id → 404) |
 
 ## Uwagi (rozjazdy kod vs SSoT)
 

@@ -206,7 +206,8 @@ router.get('/panel', requireAuth, READ_LIMITER, async (req, res) => {
                     )
                     .digest('hex') +
                 '"';
-        } catch {
+        } catch (e) {
+            logger.debug('Care', 'ETag best-effort pominięty', String(e));
             etag = null;
         }
         if (etag) {

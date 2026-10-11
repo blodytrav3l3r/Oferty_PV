@@ -164,6 +164,72 @@ function clearError() {
     }
 }
 
+/* Wskaźnik odświeżania (P0-1): aria-busy + status na żywo, jeden na panel. */
+function showLoading() {
+    try {
+        const panel = document.getElementById('followup-panel');
+        if (!panel) return;
+        try {
+            panel.setAttribute('aria-busy', 'true');
+        } catch {
+            /* best-effort */
+        }
+        try {
+            if (panel.querySelector && panel.querySelector('[data-care-loading]')) return;
+        } catch {
+            /* best-effort */
+        }
+        try {
+            for (const c of panel.children || []) {
+                if (c && c.dataset && 'careLoading' in c.dataset && !c.removed) return;
+            }
+        } catch {
+            /* best-effort */
+        }
+        const div = document.createElement('div');
+        div.setAttribute('data-care-loading', '1');
+        div.setAttribute('role', 'status');
+        div.textContent = 'Odświeżanie opieki…';
+        panel.appendChild(div);
+    } catch {
+        /* best-effort */
+    }
+}
+
+/* Znika po renderze (finally), też gdy fetch padnie. */
+function clearLoading() {
+    try {
+        const panel = document.getElementById('followup-panel');
+        if (!panel) return;
+        try {
+            if (typeof panel.removeAttribute === 'function') panel.removeAttribute('aria-busy');
+        } catch {
+            /* best-effort */
+        }
+        try {
+            const el = panel.querySelector && panel.querySelector('[data-care-loading]');
+            if (el) el.remove();
+        } catch {
+            /* best-effort */
+        }
+        try {
+            for (const c of [...(panel.children || [])]) {
+                if (c && c.dataset && 'careLoading' in c.dataset) {
+                    try {
+                        c.remove();
+                    } catch {
+                        /* best-effort */
+                    }
+                }
+            }
+        } catch {
+            /* best-effort */
+        }
+    } catch {
+        /* best-effort */
+    }
+}
+
 /* Błąd zapisu nigdy nie jest cichy: toast zamiast udawanego sukcesu. */
 function careToastError(msg) {
     try {
@@ -238,7 +304,7 @@ function renderNotifications(items, unreadCount, mailboxUserId) {
             /* best-effort */
         }
     }
-    // A+C: podgląd repa — kolejka za repem, skrzynka własna.
+    // A+C: podgląd repa — kolejka i skrzynka za repem (read-only gdy cudzy).
     // textContent (bez innerHTML) = brak powierzchni XSS.
     let repLabel = '';
     if (careRep) {
@@ -1262,7 +1328,7 @@ function bindPanelControls() {
     });
 }
 
-function setSyncText() {
+function setSyncText(skipped) {
     const el = document.getElementById('care-sync-text');
     if (!el) return;
     const d = new Date();
@@ -1273,7 +1339,8 @@ function setSyncText() {
         ':' +
         pad(d.getMinutes()) +
         ':' +
-        pad(d.getSeconds());
+        pad(d.getSeconds()) +
+        (skipped ? ' (podgląd — bez synchronizacji)' : '');
 }
 
 function careRole() {
@@ -1596,7 +1663,11 @@ async function loadPanelPacket() {
                 json.notifications.unreadCount ?? 0,
                 json.notifications.mailboxUserId
             );
-        setSyncText();
+        setSyncText(
+            json.notifications && json.notifications.sync
+                ? json.notifications.sync.skipped
+                : undefined
+        );
         clearError();
         return 'fresh';
     } catch {
@@ -1640,7 +1711,7 @@ async function loadCarePanelLegacy() {
         ]);
         if (queue) renderQueue(queue.items, queue.nextCursor, queue.totalCount);
         if (notif) renderNotifications(notif.items, notif.unreadCount ?? 0, notif.mailboxUserId);
-        setSyncText();
+        setSyncText(notif && notif.sync ? notif.sync.skipped : undefined);
         clearError();
     } catch {
         /* centrum i kolejka best-effort, liczniki już są */
@@ -1656,6 +1727,7 @@ export async function loadCarePanel() {
     const panel = document.getElementById('followup-panel');
     if (!panel) return false;
     panelLoading = true;
+    showLoading();
     try {
         bindPanelControls();
         ensureRangeUI();
@@ -1681,6 +1753,7 @@ export async function loadCarePanel() {
         }
         return changed;
     } finally {
+        clearLoading();
         panelLoading = false;
     }
 }

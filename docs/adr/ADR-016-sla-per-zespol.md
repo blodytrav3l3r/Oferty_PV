@@ -34,3 +34,11 @@ został osiągnięty.
 
 - Hierarchie głębsze niż pro → subUsers (wtedy drzewo zespołów, nie płaski owner).
 - Progi per oferta / per klient (wtedy reguły, nie konfiguracja).
+
+## Suplement 2026-10-11 (efektywny próg w powiadomieniach)
+
+Eskalacja i progi naruszeń liczone z progu efektywnego w scope requeścia
+(`getEffectiveSla` w `careService.ts:727-742`, sync w scope panelu).
+Buckety zdrowia stałe, niezależne od progu (`careStatus.ts:40-46`):
+D+1/D+3/D+7/D+14. CASE w `notifCandidates` (`careService.ts:825-827`):
+SLA_BREACH wygrywa z ESCALATION (pierwszy WHEN rozstrzyga).

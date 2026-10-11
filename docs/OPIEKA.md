@@ -39,21 +39,28 @@ Pulpit (widget: liczniki + top wiersze)
       → WON / LOST_* / ABANDONED (outcome terminalny; ponowne otwarcie tylko jawnym reopen)
 ```
 
-- Status karty = **latest** follow-up wg `(contactedAt, createdAt, id)`, nie `MAX(nextContactAt)`.
+- Status karty = **latest** follow-up wg `(contactedAt DESC, createdAt DESC, id DESC)`, nie `MAX(nextContactAt)`.
 - Jeden wpis terminalny zamyka cykl; `reopen: true` startuje nowy cykl (limit DB 1 terminal na cykl, wyścig → 409).
 - Zdrowie liczone na żądanie (`getFollowUpState` / `calculateFollowUpHealth`, progi D+1/D+3/D+7/D+14), bez crona/maili w v1.
 - Daty: frontend ISO z offsetem → backend UTC → DB UTC → porównania w UTC.
 
 ## Endpointy
 
-| Metoda | Trasa                             | Rola                  |
-| ------ | --------------------------------- | --------------------- |
-| GET    | `/api/care/summary?scope=`        | read, scope wg roli   |
-| GET    | `/api/care/queue?scope=&status=…` | read, scope wg roli   |
-| POST   | `/api/offers/:kind/:id/followups` | write (`canWriteDoc`) |
-| GET    | `/api/offers/:kind/:id/followups` | read (timeline)       |
-| GET    | `/api/care/notifications`         | read, skrzynka self   |
-| POST   | `/api/care/notifications/read`    | write, self-only      |
+| Metoda | Trasa                              | Rola                                                      |
+| ------ | ---------------------------------- | --------------------------------------------------------- |
+| GET    | `/api/care/summary?scope=`         | read, scope wg roli                                       |
+| GET    | `/api/care/queue?scope=&status=…`  | read, scope wg roli                                       |
+| POST   | `/api/offers/:kind/:id/followups`  | write (`canWriteDoc`)                                     |
+| GET    | `/api/offers/:kind/:id/followups`  | read (timeline)                                           |
+| GET    | `/api/care/panel?scope=&repId=`    | read, mailbox `repOwner ?? self`                          |
+| GET    | `/api/care/sla?scope=`             | read, próg efektywny + `source`                           |
+| PUT    | `/api/care/sla`                    | zapis progu (global admin; `team` pro/admin; `user` self) |
+| POST   | `/api/care/:kind/:id/snooze`       | write (`canWriteDoc`), pauza                              |
+| POST   | `/api/care/:kind/:id/done`         | write (`canWriteDoc`), zakończenie                        |
+| POST   | `/api/care/:kind/:id/reopen`       | write (`canWriteDoc`), wznowienie                         |
+| GET    | `/api/care/notifications`          | read, mailbox `repOwner ?? self`                          |
+| POST   | `/api/care/notifications/read`     | write, self-only                                          |
+| POST   | `/api/care/notifications/:id/read` | write, self-only (cudze id → 404)                         |
 
 Autoryzacja: cookie `authToken` (HttpOnly). Pełna spec: Swagger `/api/docs`.
 
@@ -96,7 +103,9 @@ FE carePanel.js (polling 60 s, backoff do 300 s)
 ├─ renderNotifications: badge ← unreadCount, banner ← careRep,
 │    karty (max 20) + POST :id/read → markRead(user.id)
 └─ clearNotifications: POST /read {ids} + fallback pojedynczych
-BE care.ts: /panel i /notifications (sync + list self-only),
+BE care.ts: /panel (ETag per mailbox `repOwner ?? user.id`, COUNT shares
+  w haśle) i /notifications (sync self-only + list per mailbox
+  `repOwner ?? user.id`),
   POST /read bulk/single (guard WHERE userId)
 SERWIS careService.ts: notifCandidates (CTE latest + CASE ntype:
   SLA_BREACH / ESCALATION / CALLBACK_DUE) → sync (INSERT OR IGNORE
@@ -106,8 +115,10 @@ DB care_notifications(id, userId, offerKind, offerId, type, readAt, createdAt)
 
 Znane rysy (nie bugi krytyczne): treść niezależna od repa (decyzja, nie
 defekt); guard `panelLoading` gubi szybkie podwójne kliknięcia; wyjątek
-w `renderSummary/renderQueue` blokuje `renderNotifications`; ETag ślepy
-na edycję outcome w miejscu i shares (hipotezy do testów z planu paska).
+w `renderSummary/renderQueue` blokuje `renderNotifications`; ETag już
+unieważniają shares (COUNT + MAX(rowid) `document_shares` w `getCareEtagInput`,
+`careService.ts:497-518`) — ślepa została edycja outcome w miejscu
+(PUT follow-up bez dotknięcia znaczników ETag).
 
 ## Progi SLA (F8: default 24/7/72)
 
@@ -116,6 +127,16 @@ Brak wiersza `care_sla_config.global` = progi domyślne (`firstContactH: 24`,
 wiersz (wartość `< 1` lub nieliczbowa) = głośny błąd `INVALID_SLA_CONFIG`
 (500), nie ciche maskowanie. Zapis przez `PUT /api/care/sla` waliduje zakresy
 (Zod `min(1)`).
+
+Próg efektywny (ADR-016, `getEffectiveSla` w `careService.ts:727-742`):
+scope `team` u pro/admin bierze wiersz `('team', user.id)`, scope `mine`
+bierze `('user', user.id)`, inaczej global. `GET /sla?scope=` i `GET /panel`
+zwracają `source: global | team | user` (UI pokazuje, co edytuje).
+Eskalacja i progi naruszeń liczone z progu efektywnego w scope requeścia
+(CASE w `notifCandidates`: SLA_BREACH przed ESCALATION). Buckety zdrowia
+stałe, niezależne od progu (`careStatus.ts:40-46`): D+1 (`OVERDUE_D1`
+do 2 dób), D+3 (`OVERDUE_D3` do 6 dób), D+7 (`OVERDUE_D7` do 13 dób),
+D+14 (`OVERDUE_D14` powyżej).
 
 ## Fix F4-krytyczne
 

@@ -160,7 +160,7 @@ function buildBornRange(col: string, from?: string, to?: string): Prisma.Sql | n
 /**
  * GET /followups/stats — analityka opieki nad ofertą (P3, read-only).
  * latest = ROW_NUMBER() OVER (PARTITION BY offerKind, offerId
- *   ORDER BY contactedAt DESC, createdAt DESC) — ta sama definicja co search.
+ *   ORDER BY contactedAt DESC, createdAt DESC, id DESC) — ta sama definicja co search.
  */
 router.get('/followups/stats', requireAuth, READ_LIMITER, async (req, res) => {
     const authReq = req as AuthenticatedRequest;

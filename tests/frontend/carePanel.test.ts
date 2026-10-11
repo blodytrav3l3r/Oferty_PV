@@ -1549,4 +1549,53 @@ describe('carePanel', () => {
         expect(joined).toContain('Brak nowych powiadomień.');
         expect(joined).not.toContain('moja skrzynka');
     });
+
+    test('loading: aria-busy + status w trakcie fetch, znika po renderze', async () => {
+        let resolvePanel: ((v: any) => void) | null = null;
+        const gate = new Promise((r) => {
+            resolvePanel = r;
+        });
+        const packet = {
+            ok: true,
+            etag: '"eload"',
+            summary: {
+                noContact: 0,
+                due: 1,
+                openOk: 0,
+                won: 0,
+                lost: 0,
+                abandoned: 0,
+                totalCount: 1
+            },
+            queue: { items: [], nextCursor: null, totalCount: 1 },
+            notifications: { items: [], unreadCount: 0 },
+            sla: { firstContactH: 24, staleD: 7, escalationH: 72 }
+        };
+        const { els, context } = load({
+            fetchMock: (url: string) => {
+                if (url.includes('/api/care/panel')) return gate;
+                return okJson({ noContact: 0, due: 0, openOk: 0, won: 0, lost: 0 });
+            }
+        });
+        // Harness mkEl gubi atrybuty aria-* (setAttribute trzyma tylko data-*),
+        // więc status wykrywamy po [data-care-loading], nie po aria-busy.
+        const findLoading = (root: any): any[] => {
+            const out: any[] = [];
+            const walk2 = (n: any): void => {
+                if (n.dataset && 'careLoading' in n.dataset && !n.removed) out.push(n);
+                for (const c of n.children || []) walk2(c);
+            };
+            walk2(root);
+            return out;
+        };
+        const pending = context.__careTest.loadCarePanel();
+        for (let i = 0; i < 10; i++) await new Promise((r) => setTimeout(r, 0));
+        const during = findLoading(els['followup-panel']);
+        expect(during.length).toBeGreaterThanOrEqual(1);
+        expect(String(during[0].textContent)).toContain('Odświeżanie opieki');
+        resolvePanel!({ ok: true, status: 200, json: async () => packet });
+        await pending;
+        for (let i = 0; i < 10; i++) await new Promise((r) => setTimeout(r, 0));
+        expect(findLoading(els['followup-panel'])).toHaveLength(0);
+    });
 });

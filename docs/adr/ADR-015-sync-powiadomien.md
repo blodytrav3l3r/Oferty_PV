@@ -45,8 +45,15 @@ Sync przy odczycie zostaje:
 
 ## Suplement 2026-10-11 (decyzja A+C: podgląd repa)
 
-`repId` (`resolveRepOwner`, fail-closed 403) filtruje kolejkę/summary, nie
-zmienia właściciela skrzynki. Sync z `repOwner` nie wykonuje INSERT ani DELETE
+`repId` (`resolveRepOwner`, fail-closed 403) filtruje kolejkę/summary oraz
+wybiera czytaną skrzynkę (`list` per mailbox `repOwner ?? self`, podgląd
+read-only). Sync z `repOwner` nie wykonuje INSERT ani DELETE
 w skrzynce zalogowanego (zero zapisów między skrzynkami); pełny sync bez filtra
 zachowuje dotychczasowe zachowanie (INSERT + auto-read + retencja 90d/500).
 Odrzucono: odczyt/zapis skrzynki repa (confused-deputy, I-003).
+
+## Suplement 2026-10-11 (eskalacja z progu efektywnego, ADR-016)
+
+Od ADR-016 eskalacja progowa liczona z progu efektywnego w scope requeścia
+(`getEffectiveSla`: team/user z fallbackiem do globalnej), nie z samej
+globalnej. CASE w `notifCandidates` bez zmian (SLA_BREACH przed ESCALATION).

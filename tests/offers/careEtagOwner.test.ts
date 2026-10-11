@@ -134,6 +134,34 @@ describe('ETag panelu a zmiana opiekuna', () => {
         }
     });
 
+    it('nadanie shares zmienia wejscie ETag (brak wiecznego 304)', async () => {
+        const db = freshDb();
+        try {
+            const f = fake(db);
+            const before = await getCareEtagInput(f, 'u2');
+            // Udostępnienie o1 (u1) dla u2 — u2 widzi nowy wiersz w kolejce.
+            db.prepare(
+                'INSERT INTO document_shares (id, "sharedWithUserId", "documentType", "documentId") VALUES (?, ?, ?, ?)'
+            ).run('sh1', 'u2', 'offer', 'o1');
+            const after = await getCareEtagInput(f, 'u2');
+            expect(after).not.toEqual(before);
+            expect(await queueIds(db, U2)).toEqual(['rury:o1']);
+            // Revoke też unieważnia (COUNT spada) — brak wiecznego 304.
+            db.prepare('DELETE FROM document_shares WHERE id = ?').run('sh1');
+            const afterRevoke = await getCareEtagInput(f, 'u2');
+            expect(afterRevoke).not.toEqual(after);
+            expect(await queueIds(db, U2)).toEqual([]);
+            db.close();
+        } catch (e) {
+            try {
+                db.close();
+            } catch {
+                /* ignore */
+            }
+            throw e;
+        }
+    });
+
     it('scope=all + repOwner: tylko oferty repa (nie 1=1)', () => {
         const db = freshDb();
         try {

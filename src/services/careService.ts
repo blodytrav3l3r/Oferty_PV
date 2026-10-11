@@ -13,6 +13,7 @@ import type { User } from '../helpers';
 import { buildRoleWhereClause } from '../utils/roleFilter';
 import { getFollowUpState, isEscalated } from '../utils/careStatus';
 import { toNum, normalizedCreatedAtSql } from '../utils/searchUtils';
+import { logger } from '../utils/logger';
 
 export type CareScope = 'mine' | 'team' | 'all';
 
@@ -493,7 +494,9 @@ export function buildCareQueueView(
 
 /** ETag panelu: 1 statement ze skrajnymi znacznikami (scope + user w haśle route).
  * Nadmiarowy (globalne maksy) — fałszywy 200 nieszkodliwy, brakujący 304 nie istnieje.
- * j/k: MAX(updatedAt) ofert — każda edycja (w tym zmiana opiekuna) unieważnia 304. */
+ * j/k: MAX(updatedAt) ofert — każda edycja (w tym zmiana opiekuna) unieważnia 304.
+ * l: COUNT shares — nadanie/odebranie udostępnienia unieważnia 304
+ * (udziałowiec widzi nowy wiersz w kolejce). */
 export async function getCareEtagInput(
     db: QueryRawDb,
     userId: string
@@ -510,7 +513,12 @@ export async function getCareEtagInput(
             (SELECT "updatedAt" FROM "care_sla_config" WHERE "id" = 'global') AS "h",
             (SELECT MAX("updatedAt") FROM "care_sla_scopes") AS "i",
             (SELECT MAX("updatedAt") FROM "offers_rel") AS "j",
-            (SELECT MAX("updatedAt") FROM "offers_studnie_rel") AS "k"`
+            (SELECT MAX("updatedAt") FROM "offers_studnie_rel") AS "k",
+            -- COUNT jako TEXT: sterownik zwraca BigInt/number, a JSON.stringify
+            -- w haśle ETag (care.ts) rzuca na BigInt — TEXT zawsze string.
+            -- Para COUNT + MAX(rowid): sam COUNT aliasuje swap grant+revoke
+            -- (netto 0 → fałszywy 304); rowid rośnie z każdym INSERTem.
+            (SELECT CAST(COUNT(*) AS TEXT) || '|' || COALESCE(CAST(MAX(rowid) AS TEXT), '0') FROM "document_shares") AS "l"`
     )) as Array<Record<string, string | null>>;
     const r = rows[0] ?? {};
     return [
@@ -524,7 +532,8 @@ export async function getCareEtagInput(
         r.h ?? null,
         r.i ?? null,
         r.j ?? null,
-        r.k ?? null
+        r.k ?? null,
+        r.l ?? null
     ];
 }
 
@@ -670,7 +679,10 @@ export async function getSlaConfig(db: RawDb): Promise<SlaConfig> {
     const r = rows[0];
     // F8: brak wiersza = default 24/7/72 (pusta/legacy DB działa).
     // Uszkodzony wiersz = głośny błąd, nie ciche maskowanie defaultem.
-    if (!r) return { ...DEFAULT_SLA };
+    if (!r) {
+        logger.warn('Care', 'Brak wiersza SLA (default 24/7/72)');
+        return { ...DEFAULT_SLA };
+    }
     return {
         firstContactH: strictSlaField(r.firstContactH, 'firstContactH'),
         staleD: strictSlaField(r.staleD, 'staleD'),
@@ -829,6 +841,7 @@ function notifCandidates(
 export interface CareSyncResult {
     inserted: number;
     resolved: number;
+    skipped?: 'rep-preview';
 }
 
 /** Sync skrzynki usera: wstaw brakujące + zamknij nieaktualne. Idempotentny.
@@ -844,14 +857,14 @@ export async function syncCareNotifications(
     sla: SlaConfig,
     opts?: { repOwner?: string | null }
 ): Promise<CareSyncResult> {
-    // Skrzynka zawsze własna (self-only); zapis/odczyt pojedynczych
-    // powiadomień też self-only (guard w route). Martwy mailboxUserId
-    // usunięty (confused-deputy: zapis do cudzej skrzynki).
+    // Sync (zapisy) zawsze do własnej skrzynki (self-only); odczyt listy
+    // (`listCareNotifications`) per mailbox `repOwner ?? self` (podgląd repa
+    // read-only, route). Martwy mailboxUserId usunięty (confused-deputy).
     const uid = user.id;
     // A+C: podgląd repa = zero efektów ubocznych w DB. Sync z repOwner
     // dopisywał kandydatów o ofertach repa do skrzynki viewera (i kasował
     // retencją) — filtrowany sync nie persistuje; sprząta pełny sync bez filtra.
-    if (opts?.repOwner) return { inserted: 0, resolved: 0 };
+    if (opts?.repOwner) return { inserted: 0, resolved: 0, skipped: 'rep-preview' };
     const cand = notifCandidates(user, scope, nowIso, sla, opts?.repOwner);
     // 1: wstaw brakujące (deduplikacja w SQL, nie pętla w JS).
     await db.$queryRaw(
