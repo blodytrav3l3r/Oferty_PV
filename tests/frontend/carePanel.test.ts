@@ -660,6 +660,106 @@ describe('carePanel', () => {
         ).toBeGreaterThanOrEqual(1);
     });
 
+    test('mark-read fail: brak udawanego przeładowania', async () => {
+        const calls: string[] = [];
+        const { els, context } = load({
+            calls,
+            fetchMock: (url: string, _init?: any) => {
+                if (url.includes('/notifications/') && url.includes('/read'))
+                    return { ok: false, json: async () => ({}) };
+                if (url.includes('/api/care/notifications'))
+                    return okJson({
+                        items: [{ id: 'n9', offerKind: 'rury', offerId: 'o9', type: 'SLA_BREACH' }],
+                        unreadCount: 1
+                    });
+                return okJson({ noContact: 0, due: 0, openOk: 0, won: 0, lost: 0, items: [] });
+            }
+        });
+        await context.__careTest.loadCarePanel();
+        const before = calls.filter((c) => c.includes('/api/care/panel')).length;
+        const findRead = (root: any): any => {
+            for (const c of root.children || []) {
+                if (c.tag === 'button' && (c.textContent || '').includes('Oznacz jako')) return c;
+                const hit = findRead(c);
+                if (hit) return hit;
+            }
+            return null;
+        };
+        const read = findRead(els['care-notif-list']);
+        expect(read).not.toBeNull();
+        for (const fn of read.handlers || []) await fn();
+        expect(calls.filter((c) => c.includes('/api/care/panel')).length).toBe(before);
+    });
+
+    test('Wyczyść total fail: brak udawanego przeładowania', async () => {
+        const calls: string[] = [];
+        const { els, context } = load({
+            calls,
+            fetchMock: (url: string, _init?: any) => {
+                if (url.includes('/read')) return { ok: false, json: async () => ({}) };
+                if (url.includes('/api/care/notifications'))
+                    return okJson({
+                        items: [{ id: 'n9', offerKind: 'rury', offerId: 'o9', type: 'SLA_BREACH' }],
+                        unreadCount: 1
+                    });
+                return okJson({ noContact: 0, due: 0, openOk: 0, won: 0, lost: 0, items: [] });
+            }
+        });
+        await context.__careTest.loadCarePanel();
+        const before = calls.filter((c) => c.includes('/api/care/panel')).length;
+        const clear = els['care-notif-clear'];
+        for (const fn of clear.handlers || []) await fn();
+        expect(calls.filter((c) => c.includes('/api/care/panel')).length).toBe(before);
+    });
+
+    test('postCare fail: brak udawanego przeładowania', async () => {
+        const calls: string[] = [];
+        const { els, context } = load({
+            calls,
+            fetchMock: (url: string, _init?: any) => {
+                if (url.includes('/api/care/rury/o1/done'))
+                    return { ok: false, json: async () => ({}) };
+                if (url.includes('/api/care/queue'))
+                    return okJson({
+                        items: [
+                            {
+                                offerKind: 'rury',
+                                offerId: 'o1',
+                                status: 'DUE',
+                                overdueDays: 2,
+                                escalated: false,
+                                paused: false
+                            }
+                        ]
+                    });
+                return okJson({ noContact: 0, due: 1, openOk: 0, won: 0, lost: 0 });
+            }
+        });
+        await context.__careTest.loadCarePanel();
+        const before = calls.filter((c) => c.includes('/api/care/panel')).length;
+        const findAll = (root: any, pred: (n: any) => boolean, out: any[] = []): any[] => {
+            for (const c of root.children || []) {
+                if (c.removed) continue;
+                if (pred(c)) out.push(c);
+                findAll(c, pred, out);
+            }
+            return out;
+        };
+        const menus = findAll(
+            els['care-queue-list'],
+            (n) => n.textContent === '⋮' && (n.handlers || []).length > 0
+        );
+        expect(menus).toHaveLength(1);
+        for (const fn of menus[0].handlers || []) await fn();
+        const items = findAll(els['care-queue-list'], (n) =>
+            (n.textContent || '').includes('Oznacz jako done')
+        );
+        expect(items).toHaveLength(1);
+        for (const fn of items[0].handlers || []) await fn();
+        expect(calls.some((c) => c.includes('/api/care/rury/o1/done'))).toBe(true);
+        expect(calls.filter((c) => c.includes('/api/care/panel')).length).toBe(before);
+    });
+
     test('panel: pakiet w 1 requescie, 304 bez renderu', async () => {
         const calls: string[] = [];
         const seenHeaders: Array<unknown> = [];

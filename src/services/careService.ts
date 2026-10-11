@@ -572,13 +572,20 @@ export async function setCareState(
         );
         if (n === 0) {
             const cur = await getCareState(db, args.offerKind, args.offerId);
-            if (cur) {
-                throw Object.assign(new Error('Stan zmieniony przez kogoś innego'), {
+            // Brak wiersza + podany expected = ktoś w międzyczasie wznowił
+            // (reopen kasuje wiersz). Cichy insert wskrzesiłby stan i
+            // nadpisał cudzą decyzję — fail-closed 409 jak przy konflikcie.
+            throw Object.assign(
+                new Error(
+                    cur
+                        ? 'Stan zmieniony przez kogoś innego'
+                        : 'Stan wygasł — odśwież i spróbuj ponownie'
+                ),
+                {
                     status: 409,
                     code: 'CARE_STATE_CONFLICT'
-                });
-            }
-            // Brak wiersza = pierwszy zapis (tworzymy, expected był fantomem).
+                }
+            );
         } else {
             return state;
         }
@@ -815,7 +822,7 @@ export async function syncCareNotifications(
         Prisma.sql`DELETE FROM "care_notifications" WHERE "userId" = ${uid} AND "readAt" IS NOT NULL AND "readAt" <= ${cutoff}`
     );
     await db.$queryRaw(
-        Prisma.sql`DELETE FROM "care_notifications" WHERE "userId" = ${uid} AND "id" NOT IN (SELECT "id" FROM "care_notifications" WHERE "userId" = ${uid} ORDER BY "createdAt" DESC LIMIT 500)`
+        Prisma.sql`DELETE FROM "care_notifications" WHERE "userId" = ${uid} AND "readAt" IS NOT NULL AND "id" NOT IN (SELECT "id" FROM "care_notifications" WHERE "userId" = ${uid} ORDER BY "createdAt" DESC LIMIT 500)`
     );
     return { inserted, resolved };
 }

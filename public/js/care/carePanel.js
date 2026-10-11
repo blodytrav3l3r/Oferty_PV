@@ -142,6 +142,16 @@ function showError() {
     panel.appendChild(div);
 }
 
+/* Błąd zapisu nigdy nie jest cichy: toast zamiast udawanego sukcesu. */
+function careToastError(msg) {
+    try {
+        if (typeof window !== 'undefined' && typeof window.showToast === 'function')
+            window.showToast(msg, 'error');
+    } catch {
+        /* best-effort */
+    }
+}
+
 async function getJson(url) {
     const res = await fetch(url, { credentials: 'same-origin' });
     if (!res.ok) return null;
@@ -271,16 +281,22 @@ function renderNotifications(items, unreadCount) {
         );
         read.textContent = 'Oznacz jako przeczytane';
         read.addEventListener('click', async () => {
+            let ok = false;
             try {
-                await fetch(
+                const resp = await fetch(
                     '/api/care/notifications/' + encodeURIComponent(String(n.id)) + '/read',
                     {
                         method: 'POST',
                         credentials: 'same-origin'
                     }
                 );
+                ok = !!resp && resp.ok;
             } catch {
-                /* best-effort */
+                ok = false;
+            }
+            if (!ok) {
+                careToastError('Nie oznaczono jako przeczytane — spróbuj ponownie.');
+                return;
             }
             careBumpPolling();
             loadCarePanel();
@@ -312,7 +328,7 @@ async function clearNotifications() {
         return;
     }
     const ids = items.map((n) => String(n.id));
-    let bulkOk = false;
+    let failed = 0;
     try {
         const resp = await fetch('/api/care/notifications/read', {
             method: 'POST',
@@ -320,22 +336,33 @@ async function clearNotifications() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ ids })
         });
-        bulkOk = !!resp && resp.ok;
+        if (!resp || !resp.ok) failed = ids.length;
     } catch {
-        bulkOk = false;
+        failed = ids.length;
     }
-    if (!bulkOk) {
-        // Fallback: pojedyncze odczyty (stary kontrakt API).
+    if (failed > 0) {
+        // Fallback: pojedyncze odczyty (stary kontrakt API), z liczeniem strat.
+        failed = 0;
         for (const id of ids) {
             try {
-                await fetch('/api/care/notifications/' + encodeURIComponent(id) + '/read', {
-                    method: 'POST',
-                    credentials: 'same-origin'
-                });
+                const resp = await fetch(
+                    '/api/care/notifications/' + encodeURIComponent(id) + '/read',
+                    {
+                        method: 'POST',
+                        credentials: 'same-origin'
+                    }
+                );
+                if (!resp || !resp.ok) failed += 1;
             } catch {
-                /* best-effort */
+                failed += 1;
             }
         }
+    }
+    if (failed > 0) {
+        careToastError(
+            'Nie oznaczono ' + failed + ' z ' + ids.length + ' powiadomień — spróbuj ponownie.'
+        );
+        return;
     }
     careBumpPolling();
     loadCarePanel();
@@ -526,6 +553,7 @@ function matchFilter(it) {
 
 async function snoozeQuick(offerKind, offerId, days, row) {
     const until = new Date(Date.now() + days * 86400000).toISOString();
+    let ok = false;
     try {
         const resp = await fetch(
             '/api/care/' +
@@ -541,8 +569,12 @@ async function snoozeQuick(offerKind, offerId, days, row) {
                 body: JSON.stringify({ snoozedUntil: until })
             }
         );
-        if (!resp.ok) return;
+        ok = !!resp && resp.ok;
     } catch {
+        ok = false;
+    }
+    if (!ok) {
+        careToastError('Nie odłożono kontaktu — spróbuj ponownie.');
         return;
     }
     // Undo inline: podmiana akcji w wierszu na "Cofnij".
@@ -561,8 +593,9 @@ async function snoozeQuick(offerKind, offerId, days, row) {
     undo.className = 'btn btn-sm btn-secondary';
     undo.textContent = 'Cofnij';
     undo.addEventListener('click', async () => {
+        let ok = false;
         try {
-            await fetch(
+            const resp = await fetch(
                 '/api/care/' +
                     encodeURIComponent(offerKind) +
                     '/' +
@@ -571,8 +604,13 @@ async function snoozeQuick(offerKind, offerId, days, row) {
                     Date.now(),
                 { method: 'POST', credentials: 'same-origin' }
             );
+            ok = !!resp && resp.ok;
         } catch {
-            /* best-effort */
+            ok = false;
+        }
+        if (!ok) {
+            careToastError('Nie wznowiono pilnowania — spróbuj ponownie.');
+            return;
         }
         careBumpPolling();
         loadCarePanel();
@@ -931,6 +969,7 @@ function careMenu(it) {
 }
 
 async function postCare(offerKind, offerId, action) {
+    let ok = false;
     try {
         const resp = await fetch(
             '/api/care/' +
@@ -948,8 +987,12 @@ async function postCare(offerKind, offerId, action) {
                 body: JSON.stringify({})
             }
         );
-        if (!resp.ok) return;
+        ok = !!resp && resp.ok;
     } catch {
+        ok = false;
+    }
+    if (!ok) {
+        careToastError('Nie zapisano zmiany — spróbuj ponownie.');
         return;
     }
     careBumpPolling();

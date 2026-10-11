@@ -130,6 +130,43 @@ describe('P1 care state', () => {
         }
     });
 
+    it('opt-lock: expected na nieistniejący wiersz → 409 (nie cichy insert)', async () => {
+        const db = freshDb();
+        try {
+            const f = fake(db);
+            await expect(
+                setCareState(f, {
+                    offerKind: 'rury',
+                    offerId: 'o9',
+                    snoozedUntil: '2026-10-12T00:00:00.000Z',
+                    doneAt: null,
+                    updatedBy: 'u1',
+                    nowIso: NOW,
+                    expectedUpdatedAt: '2026-10-09T00:00:00.000Z'
+                })
+            ).rejects.toMatchObject({ status: 409, code: 'CARE_STATE_CONFLICT' });
+            expect(await getCareState(f, 'rury', 'o9')).toBeNull();
+            // Bez expected zwykły pierwszy zapis działa.
+            await setCareState(f, {
+                offerKind: 'rury',
+                offerId: 'o9',
+                snoozedUntil: '2026-10-12T00:00:00.000Z',
+                doneAt: null,
+                updatedBy: 'u1',
+                nowIso: NOW
+            });
+            expect((await getCareState(f, 'rury', 'o9'))?.updatedBy).toBe('u1');
+            db.close();
+        } catch (e) {
+            try {
+                db.close();
+            } catch {
+                /* ignore */
+            }
+            throw e;
+        }
+    });
+
     it('SLA: default bez wiersza, upsert zapisuje', async () => {
         const db = freshDb();
         try {

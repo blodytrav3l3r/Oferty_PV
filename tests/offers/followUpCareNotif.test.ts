@@ -168,7 +168,7 @@ describe('P2 sync powiadomień', () => {
         }
     });
 
-    it('retencja leniwa: stare przeczytane precz, cap 500', async () => {
+    it('retencja leniwa: stare przeczytane precz, cap 500 tnie najstarsze', async () => {
         const db = freshDb();
         try {
             const f = fake(db);
@@ -184,18 +184,34 @@ describe('P2 sync powiadomień', () => {
                 '2026-01-01T00:00:00.000Z',
                 '2026-01-01T00:00:00.000Z'
             );
+            // 505 PRZECZYTANYCH z rozstrzygniętym createdAt (deterministyczny cap).
             for (let i = 0; i < 505; i++) {
-                ins.run('u' + i, 'u1', 'rury', 'o' + i, 'CALLBACK_DUE', null, NOW);
+                const ts = new Date(Date.parse('2026-10-01T00:00:00.000Z') + i * 1000)
+                    .toISOString()
+                    .replace('.000Z', 'Z');
+                ins.run('u' + i, 'u1', 'rury', 'o' + i, 'CALLBACK_DUE', NOW, ts);
             }
             await syncCareNotifications(f, U1, 'mine', NOW, SLA);
-            const n = db
-                .prepare('SELECT COUNT(*) AS c FROM care_notifications WHERE "userId" = ?')
-                .get('u1') as { c: number };
-            expect(n.c).toBeLessThanOrEqual(500);
+            // old1 (90d) precz; cap tnie najstarsze PRZECZYTANE (u0 gone,
+            // u499 zostaje — wstawki sync z NOW są nowsze i nie kolidują).
             const old = db
                 .prepare('SELECT COUNT(*) AS c FROM care_notifications WHERE "id" = ?')
                 .get('old1') as { c: number };
             expect(old.c).toBe(0);
+            expect(
+                (
+                    db
+                        .prepare('SELECT COUNT(*) AS c FROM care_notifications WHERE "id" = ?')
+                        .get('u0') as { c: number }
+                ).c
+            ).toBe(0);
+            expect(
+                (
+                    db
+                        .prepare('SELECT COUNT(*) AS c FROM care_notifications WHERE "id" = ?')
+                        .get('u499') as { c: number }
+                ).c
+            ).toBe(1);
             db.close();
         } catch (e) {
             try {
@@ -347,6 +363,55 @@ describe('P2 sync powiadomień', () => {
             ).items.map((n) => n.offerId);
             expect(unreadAfterFull).toContain('oA');
             expect(unreadAfterFull).not.toContain('oB');
+            db.close();
+        } catch (e) {
+            try {
+                db.close();
+            } catch {
+                /* ignore */
+            }
+            throw e;
+        }
+    });
+
+    it('cap 500: tnie tylko przeczytane, nieprzeczytane nietknięte', async () => {
+        const db = new DatabaseSync(':memory:');
+        db.exec(`CREATE TABLE offers_rel (id TEXT PRIMARY KEY, "userId" TEXT, "createdAt" TEXT, "offer_number" TEXT, "clientName" TEXT);
+        CREATE TABLE offers_studnie_rel (id TEXT PRIMARY KEY, "userId" TEXT, "createdAt" TEXT, "offer_number" TEXT, "clientName" TEXT, "totalPrice" REAL);
+        CREATE TABLE document_shares (id TEXT PRIMARY KEY, "sharedWithUserId" TEXT, "documentType" TEXT, "documentId" TEXT);
+        CREATE TABLE care_states ("offerKind" TEXT NOT NULL, "offerId" TEXT NOT NULL, "snoozedUntil" TEXT, "doneAt" TEXT, "updatedBy" TEXT, "updatedAt" TEXT NOT NULL,
+            CONSTRAINT "care_states_pkey" PRIMARY KEY ("offerKind", "offerId"));
+        CREATE TABLE care_notifications ("id" TEXT NOT NULL, "userId" TEXT NOT NULL, "offerKind" TEXT NOT NULL, "offerId" TEXT NOT NULL, "type" TEXT NOT NULL, "readAt" TEXT, "createdAt" TEXT NOT NULL,
+            CONSTRAINT "care_notifications_pkey" PRIMARY KEY ("id"));
+        CREATE TABLE offer_follow_ups (id TEXT PRIMARY KEY, "offerKind" TEXT, "offerId" TEXT, "createdByUserId" TEXT, "contactedAt" TEXT, "createdAt" TEXT, outcome TEXT, "nextContactAt" TEXT);`);
+        try {
+            const f = fake(db);
+            const past = '2026-09-30T10:00:00.000Z';
+            const insOffer = db.prepare(
+                'INSERT INTO offers_rel (id, "userId", "createdAt") VALUES (?,?,?)'
+            );
+            const insFu = db.prepare(
+                'INSERT INTO offer_follow_ups (id, "offerKind", "offerId", "createdByUserId", "contactedAt", "createdAt", outcome, "nextContactAt") VALUES (?,?,?,?,?,?,?,?)'
+            );
+            const insNotif = db.prepare(
+                'INSERT INTO care_notifications ("id", "userId", "offerKind", "offerId", "type", "readAt", "createdAt") VALUES (?,?,?,?,?,?,?)'
+            );
+            // 502 oferty OPEN due (żywi kandydaci: wiersze zostają
+            // nieprzeczytane; cap nie rusza nieprzeczytanych).
+            // Typ SLA_BREACH = ten sam, który sync by wstawił (brak duplikatów).
+            // createdAt stare: licznik wstawek (createdAt = nowIso) ma być 0.
+            const seedTs = '2026-10-09T00:00:00.000Z';
+            for (let i = 0; i < 502; i++) {
+                const oid = 'o' + i;
+                insOffer.run(oid, 'u1', past);
+                insFu.run('f' + i, 'rury', oid, 'u1', past, past, 'OPEN', past);
+                insNotif.run('n' + i, 'u1', 'rury', oid, 'SLA_BREACH', null, seedTs);
+            }
+            const r = await syncCareNotifications(f, U1, 'mine', NOW, SLA);
+            expect(r.inserted).toBe(0);
+            expect(
+                (await listCareNotifications(f, 'u1', { unreadOnly: true, limit: 100 })).unreadCount
+            ).toBe(502);
             db.close();
         } catch (e) {
             try {
