@@ -42,15 +42,52 @@ const queryBool = z
     .union([z.boolean(), z.enum(['true', 'false', '1', '0'])])
     .transform((v) => v === true || v === 'true' || v === '1')
     .optional();
-const queueQuerySchema = z.object({
-    scope: scopeSchema.optional(),
-    cursor: z.string().max(2000).optional(),
-    limit: z.coerce.number().int().min(1).max(100).optional(),
-    hidePaused: queryBool
+const ISO_DATETIME_RE =
+    /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2})(?:\.(\d{1,3}))?)?(Z|[+-](\d{2}):?(\d{2}))$/;
+
+function isStrictIsoDateTime(s: string): boolean {
+    const m = ISO_DATETIME_RE.exec(s);
+    if (!m) return false;
+    const mo = Number(m[2]);
+    const d = Number(m[3]);
+    const hh = Number(m[4]);
+    const mi = Number(m[5]);
+    if (mo < 1 || mo > 12 || d < 1 || d > 31 || hh > 23 || mi > 59) return false;
+    return Number.isFinite(Date.parse(s));
+}
+
+const isoDateTime = z.string().refine(isStrictIsoDateTime, {
+    message: 'Nieprawidłowa data ISO-8601 ze strefą'
 });
-const summaryQuerySchema = z.object({
-    scope: scopeSchema.optional()
-});
+const rangeFields = {
+    from: isoDateTime.optional(),
+    to: isoDateTime.optional()
+};
+function rangeOk(d: { from?: string; to?: string }): boolean {
+    return !d.from || !d.to || Date.parse(d.from) <= Date.parse(d.to);
+}
+// Ten sam cap co followUpStats.ts (MAX_RANGE_MS) — spójny kontrakt zakresów.
+const MAX_RANGE_MS = 366 * 86400000;
+function rangeSpanOk(d: { from?: string; to?: string }): boolean {
+    return (
+        rangeOk(d) && (!d.from || !d.to || Date.parse(d.to) - Date.parse(d.from) <= MAX_RANGE_MS)
+    );
+}
+const queueQuerySchema = z
+    .object({
+        scope: scopeSchema.optional(),
+        cursor: z.string().max(2000).optional(),
+        limit: z.coerce.number().int().min(1).max(100).optional(),
+        hidePaused: queryBool,
+        ...rangeFields
+    })
+    .refine(rangeSpanOk, { message: 'Zakres dat: from <= to, maksymalnie 366 dni' });
+const summaryQuerySchema = z
+    .object({
+        scope: scopeSchema.optional(),
+        ...rangeFields
+    })
+    .refine(rangeSpanOk, { message: 'Zakres dat: from <= to, maksymalnie 366 dni' });
 
 function toScope(v: unknown): CareScope {
     return v === 'team' || v === 'all' ? v : 'mine';
@@ -68,7 +105,10 @@ router.get('/summary', requireAuth, READ_LIMITER, async (req, res) => {
         if (!parsed.success) return res.status(400).json({ error: 'Nieprawidłowe parametry' });
         const scope = toScope(parsed.data.scope);
         const nowIso = new Date().toISOString();
-        const counts = await getCareSummary(prisma, user, scope, nowIso);
+        const counts = await getCareSummary(prisma, user, scope, nowIso, {
+            from: parsed.data.from,
+            to: parsed.data.to
+        });
         return res.json({ ok: true, scope, now: nowIso, ...counts });
     } catch (e) {
         if ((e as { status?: number }).status === 403) {
@@ -95,7 +135,9 @@ router.get('/queue', requireAuth, READ_LIMITER, async (req, res) => {
             nowIso,
             cursor: parsed.data.cursor ?? null,
             limit,
-            hidePaused
+            hidePaused,
+            from: parsed.data.from,
+            to: parsed.data.to
         });
         const sla = await getEffectiveSla(prisma, user, scope);
         const items = buildCareQueueView(result.items, sla, nowIso);
@@ -134,7 +176,13 @@ router.get('/panel', requireAuth, READ_LIMITER, async (req, res) => {
                 crypto
                     .createHash('sha1')
                     .update(
-                        JSON.stringify([user.id, scope, await getCareEtagInput(prisma, user.id)])
+                        JSON.stringify([
+                            user.id,
+                            scope,
+                            parsed.data.from ?? null,
+                            parsed.data.to ?? null,
+                            await getCareEtagInput(prisma, user.id)
+                        ])
                     )
                     .digest('hex') +
                 '"';
@@ -149,13 +197,18 @@ router.get('/panel', requireAuth, READ_LIMITER, async (req, res) => {
         const limit = clampCareLimit(parsed.data.limit);
         const hidePaused = parsed.data.hidePaused ?? false;
         const [summary, queue, sla] = await Promise.all([
-            getCareSummary(prisma, user, scope, nowIso),
+            getCareSummary(prisma, user, scope, nowIso, {
+                from: parsed.data.from,
+                to: parsed.data.to
+            }),
             getCareQueue(prisma, user, {
                 scope,
                 nowIso,
                 cursor: parsed.data.cursor ?? null,
                 limit,
-                hidePaused
+                hidePaused,
+                from: parsed.data.from,
+                to: parsed.data.to
             }),
             getEffectiveSla(prisma, user, scope)
         ]);
@@ -195,23 +248,6 @@ export default router;
 
 // ─── P1: snooze / done / reopen + konfiguracja SLA ─────────────────────
 
-const ISO_DATETIME_RE =
-    /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2})(?:\.(\d{1,3}))?)?(Z|[+-](\d{2}):?(\d{2}))$/;
-
-function isStrictIsoDateTime(s: string): boolean {
-    const m = ISO_DATETIME_RE.exec(s);
-    if (!m) return false;
-    const mo = Number(m[2]);
-    const d = Number(m[3]);
-    const hh = Number(m[4]);
-    const mi = Number(m[5]);
-    if (mo < 1 || mo > 12 || d < 1 || d > 31 || hh > 23 || mi > 59) return false;
-    return Number.isFinite(Date.parse(s));
-}
-
-const isoDateTime = z.string().refine(isStrictIsoDateTime, {
-    message: 'Nieprawidłowa data ISO-8601 ze strefą'
-});
 const snoozeSchema = z.object({
     snoozedUntil: isoDateTime,
     expectedUpdatedAt: isoDateTime.nullish()

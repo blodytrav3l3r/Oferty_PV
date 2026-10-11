@@ -1,4 +1,5 @@
 import express from 'express';
+import { z } from 'zod';
 import prisma, { Prisma } from '../../prismaClient';
 import { requireAuth, AuthenticatedRequest } from '../../middleware/auth';
 import { getSharedIdsForUser } from '../../utils/ownership';
@@ -86,6 +87,64 @@ export function buildPerRepSql(fuScope: Prisma.Sql, latestCte: Prisma.Sql): Pris
 // P4.2: jeden kontrakt konwersji (toNum z searchUtils), brak lokalnych wariantów.
 const num = (v: unknown): number => toNum(v as number | bigint | string | null | undefined) ?? 0;
 
+const ISO_DATETIME_RE =
+    /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2})(?:\.(\d{1,3}))?)?(Z|[+-](\d{2}):?(\d{2}))$/;
+
+function isStrictIsoDateTime(s: string): boolean {
+    const m = ISO_DATETIME_RE.exec(s);
+    if (!m) return false;
+    const mo = Number(m[2]);
+    const d = Number(m[3]);
+    const hh = Number(m[4]);
+    const mi = Number(m[5]);
+    if (mo < 1 || mo > 12 || d < 1 || d > 31 || hh > 23 || mi > 59) return false;
+    return Number.isFinite(Date.parse(s));
+}
+
+const MAX_RANGE_MS = 366 * 86400000;
+
+const statsQuerySchema = z
+    .object({
+        from: z
+            .string()
+            .refine(isStrictIsoDateTime, { message: 'Nieprawidłowa data ISO-8601' })
+            .optional(),
+        to: z
+            .string()
+            .refine(isStrictIsoDateTime, { message: 'Nieprawidłowa data ISO-8601' })
+            .optional()
+    })
+    .refine((d) => !d.from || !d.to || Date.parse(d.from) <= Date.parse(d.to), {
+        message: 'Zakres dat: from musi być <= to'
+    })
+    .refine((d) => !d.from || !d.to || Date.parse(d.to) - Date.parse(d.from) <= MAX_RANGE_MS, {
+        message: 'Zakres dat: maksymalnie 366 dni'
+    });
+
+/** Rury: tylko blob.totalBrutto (brak kolumny ceny — jak search). */
+function ruryValueSql(alias: string): Prisma.Sql {
+    const d = Prisma.raw(`${alias}."data"`);
+    return Prisma.sql`CAST(json_extract(${d}, '$.totalBrutto') AS REAL)`;
+}
+
+/** Studnie: ten sam guard co kolejka opieki (kolumna > blob > wellsExport). */
+function studnieValueSql(alias: string): Prisma.Sql {
+    const t = Prisma.raw(`${alias}."totalPrice"`);
+    const d = Prisma.raw(`${alias}."data"`);
+    return Prisma.sql`CAST(COALESCE(NULLIF(${t}, 0), json_extract(${d}, '$.totalBrutto'), (SELECT CAST(ROUND(COALESCE(SUM(value->>'totalPrice'), 0), 2) AS REAL) FROM json_each(${d}, '$.wellsExport'))) AS REAL)`;
+}
+
+/** Zakres po dacie utworzenia oferty (born). Zawsze przez normalizedCreatedAtSql
+ *  (istnieją wiersze epoch-ms) + parametryzacja Prisma.sql — nigdy raw >= . */
+function buildBornRange(col: string, from?: string, to?: string): Prisma.Sql | null {
+    if (!from && !to) return null;
+    const norm = normalizedCreatedAtSql(col);
+    const parts: Prisma.Sql[] = [];
+    if (from) parts.push(Prisma.sql`${norm} >= ${from}`);
+    if (to) parts.push(Prisma.sql`${norm} <= ${to}`);
+    return parts.length === 2 ? Prisma.sql`(${parts[0]} AND ${parts[1]})` : parts[0];
+}
+
 /**
  * GET /followups/stats — analityka opieki nad ofertą (P3, read-only).
  * latest = ROW_NUMBER() OVER (PARTITION BY offerKind, offerId
@@ -113,7 +172,25 @@ router.get('/followups/stats', requireAuth, async (req, res) => {
 
         const latestCte = buildLatestCte(fuScope);
 
-        // P4.2: 9 niezależnych SELECTów współbieżnie (brak zależności
+        const parsed = statsQuerySchema.safeParse(req.query);
+        if (!parsed.success) return res.status(400).json({ error: 'Nieprawidłowy zakres dat' });
+        const { from, to } = parsed.data;
+        const bornRury = buildBornRange('o."createdAt"', from, to);
+        const bornStudnie = buildBornRange('s."createdAt"', from, to);
+        const andBornRury = bornRury ? Prisma.sql` AND ${bornRury}` : Prisma.empty;
+        const andBornStudnie = bornStudnie ? Prisma.sql` AND ${bornStudnie}` : Prisma.empty;
+        // Zamówienia: scope tylko po userId (allowedIds jak oferty, bez shares
+        // po ID ofert — osobny byt, osobny kafelek). SELECT-only, bez migracji.
+        const orderScopeRury = buildOfferScopeCondition(user, 'o', []);
+        const orderScopeStudnie = buildOfferScopeCondition(user, 's', []);
+        // Konwersja robi się zakresowa (licznik i mianownik z ofert w zakresie),
+        // nie globalna: latest jest scoped, born dokładamy JOINem do ofert.
+        const outcomeSql =
+            !bornRury || !bornStudnie
+                ? Prisma.sql`WITH ${latestCte} SELECT "outcome", COUNT(*) AS "c" FROM latest GROUP BY "outcome"`
+                : Prisma.sql`WITH ${latestCte} SELECT l."outcome", COUNT(*) AS "c" FROM latest l WHERE ((l."offerKind" = 'rury' AND EXISTS (SELECT 1 FROM offers_rel o WHERE o."id" = l."offerId" AND ${bornRury})) OR (l."offerKind" = 'studnie' AND EXISTS (SELECT 1 FROM offers_studnie_rel s WHERE s."id" = l."offerId" AND ${bornStudnie}))) GROUP BY l."outcome"`;
+
+        // P4.2: 11 niezależnych SELECTów współbieżnie (brak zależności
         // wynikowych, read-only). Kolejność wyników z destrukturyzacji.
         const [
             outcomeRows,
@@ -124,20 +201,20 @@ router.get('/followups/stats', requireAuth, async (req, res) => {
             competitorRows,
             valueRows,
             repRows,
-            firstRows
+            firstRows,
+            ordersRury,
+            ordersStudnie
         ] = (await Promise.all([
-            prisma.$queryRaw(
-                Prisma.sql`WITH ${latestCte} SELECT "outcome", COUNT(*) AS "c" FROM latest GROUP BY "outcome"`
-            ),
+            prisma.$queryRaw(outcomeSql),
             prisma.$queryRaw(
                 Prisma.sql`SELECT COUNT(*) AS "total",
                     SUM(CASE WHEN EXISTS (SELECT 1 FROM offer_follow_ups f WHERE f."offerKind" = 'rury' AND f."offerId" = o."id") THEN 0 ELSE 1 END) AS "nocontact"
-                    FROM offers_rel o WHERE ${scopeRury}`
+                    FROM offers_rel o WHERE ${scopeRury}${andBornRury}`
             ),
             prisma.$queryRaw(
                 Prisma.sql`SELECT COUNT(*) AS "total",
                     SUM(CASE WHEN EXISTS (SELECT 1 FROM offer_follow_ups f WHERE f."offerKind" = 'studnie' AND f."offerId" = s."id") THEN 0 ELSE 1 END) AS "nocontact"
-                    FROM offers_studnie_rel s WHERE ${scopeStudnie}`
+                    FROM offers_studnie_rel s WHERE ${scopeStudnie}${andBornStudnie}`
             ),
             prisma.$queryRaw(
                 Prisma.sql`WITH ${latestCte} SELECT "loseReason" AS "r", COUNT(*) AS "c" FROM latest
@@ -152,23 +229,39 @@ router.get('/followups/stats', requireAuth, async (req, res) => {
                     FROM latest WHERE "outcome" = 'LOST_COMPETITION' GROUP BY "competitor" ORDER BY "c" DESC`
             ),
             // CTE latest już scoped — join nie dokleja scope drugi raz (P4.2).
+            // 'total' = wszystkie scoped oferty w zakresie; 'open' = brak latest
+            // lub latest OPEN w zakresie (LEFT JOIN — oferty bez wpisu też otwarte).
             prisma.$queryRaw(
                 Prisma.sql`WITH ${latestCte}
-                    SELECT 'won' AS "k", SUM(CAST(json_extract(o."data", '$.totalBrutto') AS REAL)) AS "v"
+                    SELECT 'won' AS "k", SUM(${ruryValueSql('o')}) AS "v"
                     FROM offers_rel o JOIN latest l ON l."offerKind" = 'rury' AND l."offerId" = o."id"
-                    WHERE l."outcome" = 'WON'
+                    WHERE l."outcome" = 'WON'${andBornRury}
                     UNION ALL
-                    SELECT 'won', SUM(CAST(json_extract(s."data", '$.totalBrutto') AS REAL))
+                    SELECT 'won', SUM(${studnieValueSql('s')})
                     FROM offers_studnie_rel s JOIN latest l ON l."offerKind" = 'studnie' AND l."offerId" = s."id"
-                    WHERE l."outcome" = 'WON'
+                    WHERE l."outcome" = 'WON'${andBornStudnie}
                     UNION ALL
-                    SELECT 'lost', SUM(CAST(json_extract(o."data", '$.totalBrutto') AS REAL))
+                    SELECT 'lost', SUM(${ruryValueSql('o')})
                     FROM offers_rel o JOIN latest l ON l."offerKind" = 'rury' AND l."offerId" = o."id"
-                    WHERE l."outcome" IN ('LOST_COMPETITION', 'LOST_OTHER')
+                    WHERE l."outcome" IN ('LOST_COMPETITION', 'LOST_OTHER')${andBornRury}
                     UNION ALL
-                    SELECT 'lost', SUM(CAST(json_extract(s."data", '$.totalBrutto') AS REAL))
+                    SELECT 'lost', SUM(${studnieValueSql('s')})
                     FROM offers_studnie_rel s JOIN latest l ON l."offerKind" = 'studnie' AND l."offerId" = s."id"
-                    WHERE l."outcome" IN ('LOST_COMPETITION', 'LOST_OTHER')`
+                    WHERE l."outcome" IN ('LOST_COMPETITION', 'LOST_OTHER')${andBornStudnie}
+                    UNION ALL
+                    SELECT 'total', SUM(${ruryValueSql('o')})
+                    FROM offers_rel o WHERE ${scopeRury}${andBornRury}
+                    UNION ALL
+                    SELECT 'total', SUM(${studnieValueSql('s')})
+                    FROM offers_studnie_rel s WHERE ${scopeStudnie}${andBornStudnie}
+                    UNION ALL
+                    SELECT 'open', SUM(${ruryValueSql('o')})
+                    FROM offers_rel o LEFT JOIN latest l ON l."offerKind" = 'rury' AND l."offerId" = o."id"
+                    WHERE (l."outcome" IS NULL OR l."outcome" = 'OPEN') AND ${scopeRury}${andBornRury}
+                    UNION ALL
+                    SELECT 'open', SUM(${studnieValueSql('s')})
+                    FROM offers_studnie_rel s LEFT JOIN latest l ON l."offerKind" = 'studnie' AND l."offerId" = s."id"
+                    WHERE (l."outcome" IS NULL OR l."outcome" = 'OPEN') AND ${scopeStudnie}${andBornStudnie}`
             ),
             prisma.$queryRaw(buildPerRepSql(fuScope, latestCte)),
             // Średni czas do pierwszego kontaktu (globalnie): pierwszy kontakt
@@ -178,13 +271,19 @@ router.get('/followups/stats', requireAuth, async (req, res) => {
                     SELECT (SELECT MIN(f2."contactedAt") FROM offer_follow_ups f2
                             WHERE f2."offerKind" = 'rury' AND f2."offerId" = o."id") AS "first_c",
                         ${normalizedCreatedAtSql('o."createdAt"')} AS "oc"
-                    FROM offers_rel o WHERE ${scopeRury}
+                    FROM offers_rel o WHERE ${scopeRury}${andBornRury}
                     UNION ALL
                     SELECT (SELECT MIN(f2."contactedAt") FROM offer_follow_ups f2
                             WHERE f2."offerKind" = 'studnie' AND f2."offerId" = s."id"),
                         ${normalizedCreatedAtSql('s."createdAt"')}
-                    FROM offers_studnie_rel s WHERE ${scopeStudnie}
+                    FROM offers_studnie_rel s WHERE ${scopeStudnie}${andBornStudnie}
                 ) WHERE "first_c" IS NOT NULL AND "oc" IS NOT NULL`
+            ),
+            prisma.$queryRaw(
+                Prisma.sql`SELECT SUM(CAST(COALESCE(json_extract(o."data", '$.totalBrutto'), json_extract(o."data", '$.summary.totalBrutto')) AS REAL)) AS "ovr" FROM orders_rury_rel o WHERE ${orderScopeRury}${andBornRury}`
+            ),
+            prisma.$queryRaw(
+                Prisma.sql`SELECT SUM(CAST(COALESCE(json_extract(s."data", '$.totalBrutto'), json_extract(s."data", '$.summary.totalBrutto')) AS REAL)) AS "ovs" FROM orders_studnie_rel s WHERE ${orderScopeStudnie}${andBornStudnie}`
             )
         ])) as [
             Array<{ outcome: string; c: number | bigint }>,
@@ -200,7 +299,9 @@ router.get('/followups/stats', requireAuth, async (req, res) => {
                 offers: number | bigint;
                 wins: number | bigint | null;
             }>,
-            Array<{ h: number | null }>
+            Array<{ h: number | null }>,
+            Array<{ ovr: number | null }>,
+            Array<{ ovs: number | null }>
         ];
 
         const outcomes: Record<string, number> = {};
@@ -216,10 +317,16 @@ router.get('/followups/stats', requireAuth, async (req, res) => {
 
         let wonValue = 0;
         let lostValue = 0;
+        let openValue = 0;
+        let totalValue = 0;
         for (const r of valueRows) {
             if (r.k === 'won') wonValue += num(r.v);
+            else if (r.k === 'open') openValue += num(r.v);
+            else if (r.k === 'total') totalValue += num(r.v);
             else lostValue += num(r.v);
         }
+        // Zamówienia osobno: nigdy nie sumowane z ofertami (osobny kafelek).
+        const ordersValue = num(ordersRury[0]?.ovr) + num(ordersStudnie[0]?.ovs);
 
         return res.json({
             ok: true,
@@ -231,6 +338,9 @@ router.get('/followups/stats', requireAuth, async (req, res) => {
                 abandoned,
                 wonValue,
                 lostValue,
+                openValue,
+                totalValue,
+                ordersValue,
                 lossReasons: reasonRows.map((r) => ({
                     reason: r.r ?? 'Nie podano',
                     count: num(r.c)

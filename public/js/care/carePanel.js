@@ -7,6 +7,7 @@ let careScope = 'mine';
 let queueFilter = 'all';
 let queueSort = 'sla';
 let queueView = 'list';
+let queueRange = 'all';
 let queueCache = [];
 let queueNextCursor = null;
 let queueTotal = 0;
@@ -44,8 +45,61 @@ export function setQueueView(value) {
     return queueView;
 }
 
+/* Zakres dat panelu/kolejki (test-hook jak setQueueSort). Wszystko = brak filtra. */
+export function setQueueRange(value) {
+    queueRange = value === '7d' || value === '30d' || value === '90d' ? value : 'all';
+    careStoreSet('sok-care-range', queueRange);
+    return queueRange;
+}
+
+const RANGE_DAYS = { '7d': 7, '30d': 30, '90d': 90 };
+
+/* ISO from/to z presetu (All = brak filtra, zachowanie jak dotąd). */
+function resolveQueueRange() {
+    const days = RANGE_DAYS[queueRange];
+    if (!days) return {};
+    // Klucz ETag musi być stabilny między pollingami: minuta w dół.
+    const nowMin = Math.floor(Date.now() / 60000) * 60000;
+    return {
+        from: new Date(nowMin - days * 86400000).toISOString(),
+        to: new Date(nowMin).toISOString()
+    };
+}
+
+function rangeQuery() {
+    const r = resolveQueueRange();
+    if (!r.from) return '';
+    return '&from=' + encodeURIComponent(r.from) + '&to=' + encodeURIComponent(r.to);
+}
+
+/* ETag per scope+zakres (osobny hash na BE też niesie from/to). */
+function panelKey() {
+    const r = resolveQueueRange();
+    return careScope + '|' + (r.from || '') + '|' + (r.to || '');
+}
+
+/* hidePaused bez kontrolki UI (zawsze false) — ścieżka pod przyszły filtr. */
+function hidePausedQuery() {
+    return '';
+}
+
+function notifyRangeChange() {
+    try {
+        if (
+            typeof document !== 'undefined' &&
+            typeof document.dispatchEvent === 'function' &&
+            typeof CustomEvent !== 'undefined'
+        ) {
+            document.dispatchEvent(new CustomEvent('care-range-change'));
+        }
+    } catch {
+        /* best-effort */
+    }
+}
+
 setQueueSort(careStoreGet('sok-care-sort') || 'sla');
 setQueueView(careStoreGet('sok-care-view') || 'list');
+setQueueRange(careStoreGet('sok-care-range') || 'all');
 
 function setText(id, v) {
     const el = document.getElementById(id);
@@ -762,6 +816,8 @@ async function loadMoreQueue() {
             QUEUE_LIMIT +
             '&cursor=' +
             encodeURIComponent(queueNextCursor) +
+            rangeQuery() +
+            hidePausedQuery() +
             '&t=' +
             Date.now()
     );
@@ -890,6 +946,60 @@ async function postCare(offerKind, offerId, action) {
     }
     careBumpPolling();
     loadCarePanel();
+}
+
+const RANGE_LABELS = [
+    ['7d', '7D'],
+    ['30d', '30D'],
+    ['90d', '90D'],
+    ['all', 'Wszystko']
+];
+
+function syncRangeButtons() {
+    document.querySelectorAll('.care-range-btn').forEach((btn) => {
+        const active = btn.dataset.careRange === queueRange;
+        btn.classList.toggle('active', active);
+        btn.classList.toggle('btn-secondary', !active);
+        btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+    });
+}
+
+/* Pigułki zakresu obok filtrów kolejki (osobna grupa, tworzona raz). */
+function ensureRangeUI() {
+    try {
+        if (typeof document.querySelector !== 'function') return;
+        const filters = document.querySelector('.care-queue-filters');
+        if (
+            !filters ||
+            !filters.parentNode ||
+            filters.parentNode.querySelector('[data-care-range]')
+        )
+            return;
+        const group = document.createElement('div');
+        group.className = 'care-range-group';
+        group.setAttribute('role', 'group');
+        group.setAttribute('aria-label', 'Zakres dat');
+        for (const [value, label] of RANGE_LABELS) {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'btn btn-sm ka-pill care-range-btn';
+            btn.setAttribute('data-care-range', value);
+            btn.textContent = label;
+            btn.addEventListener('click', () => {
+                setQueueRange(value);
+                queueCache = [];
+                queueNextCursor = null;
+                careBumpPolling();
+                syncRangeButtons();
+                notifyRangeChange();
+                loadCarePanel();
+            });
+            group.appendChild(btn);
+        }
+        filters.parentNode.insertBefore(group, filters.nextSibling);
+    } catch {
+        /* best-effort */
+    }
 }
 
 function syncScopeButtons() {
@@ -1097,12 +1207,19 @@ function renderSummary(summary) {
 /** Pakiet /panel w 1 requeście. Zwraca 'fresh' | 'stale' | null (błąd). */
 async function loadPanelPacket() {
     const headers = {};
-    const known = panelEtags[careScope];
+    const known = panelEtags[panelKey()];
     if (known) headers['If-None-Match'] = known;
     let resp = null;
     try {
         resp = await fetch(
-            '/api/care/panel?scope=' + careScope + '&limit=' + QUEUE_LIMIT + '&t=' + Date.now(),
+            '/api/care/panel?scope=' +
+                careScope +
+                '&limit=' +
+                QUEUE_LIMIT +
+                rangeQuery() +
+                hidePausedQuery() +
+                '&t=' +
+                Date.now(),
             { credentials: 'same-origin', headers }
         );
     } catch {
@@ -1114,7 +1231,7 @@ async function loadPanelPacket() {
     try {
         const json = await resp.json();
         if (!json || !json.ok || !json.summary || !json.queue) return null;
-        if (json.etag) panelEtags[careScope] = json.etag;
+        if (json.etag) panelEtags[panelKey()] = json.etag;
         renderSummary(json.summary);
         renderQueue(json.queue.items, json.queue.nextCursor, json.queue.totalCount);
         if (json.notifications)
@@ -1130,7 +1247,9 @@ async function loadPanelPacket() {
 async function loadCarePanelLegacy() {
     let summary = null;
     try {
-        summary = await getJson('/api/care/summary?scope=' + careScope + '&t=' + Date.now());
+        summary = await getJson(
+            '/api/care/summary?scope=' + careScope + rangeQuery() + '&t=' + Date.now()
+        );
     } catch {
         showError();
         return false;
@@ -1146,7 +1265,14 @@ async function loadCarePanelLegacy() {
                     Date.now()
             ),
             getJson(
-                '/api/care/queue?scope=' + careScope + '&limit=' + QUEUE_LIMIT + '&t=' + Date.now()
+                '/api/care/queue?scope=' +
+                    careScope +
+                    '&limit=' +
+                    QUEUE_LIMIT +
+                    rangeQuery() +
+                    hidePausedQuery() +
+                    '&t=' +
+                    Date.now()
             )
         ]);
         if (queue) renderQueue(queue.items, queue.nextCursor, queue.totalCount);
@@ -1162,8 +1288,10 @@ export async function loadCarePanel() {
     const panel = document.getElementById('followup-panel');
     if (!panel) return false;
     bindPanelControls();
+    ensureRangeUI();
     syncScopeButtons();
     syncQueueFilterButtons();
+    syncRangeButtons();
     syncSortViewControls();
     const packet = await loadPanelPacket();
     let changed = false;
@@ -1203,7 +1331,7 @@ export function startCarePolling() {
 /** Akcje (snooze/done/read) wołają to, żeby następny polling był świeży. */
 export function careBumpPolling() {
     pollMs = POLL_MS;
-    delete panelEtags[careScope];
+    delete panelEtags[panelKey()];
 }
 
 if (typeof document !== 'undefined') {

@@ -12,7 +12,7 @@ import { Prisma } from '../../generated/prisma';
 import type { User } from '../helpers';
 import { buildRoleWhereClause } from '../utils/roleFilter';
 import { getFollowUpState, isEscalated } from '../utils/careStatus';
-import { toNum } from '../utils/searchUtils';
+import { toNum, normalizedCreatedAtSql } from '../utils/searchUtils';
 
 export type CareScope = 'mine' | 'team' | 'all';
 
@@ -55,6 +55,19 @@ export interface CareQueueOptions {
     limit?: unknown;
     /** P2-fix: filtr w SQL (przed paginacją), nie po — strona pełna, count zgodny. */
     hidePaused?: boolean;
+    /** Zakres po dacie utworzenia oferty (ISO-8601, walidowane w route). */
+    from?: string;
+    to?: string;
+}
+
+/** Zakres born (o./s.createdAt) doklejany AND do scope WHERE — nigdy go nie luzuje. */
+function bornRange(alias: 'o' | 's', from?: string, to?: string): Prisma.Sql | null {
+    if (!from && !to) return null;
+    const norm = normalizedCreatedAtSql(`${alias}."createdAt"`);
+    const parts: Prisma.Sql[] = [];
+    if (from) parts.push(Prisma.sql`${norm} >= ${from}`);
+    if (to) parts.push(Prisma.sql`${norm} <= ${to}`);
+    return parts.length === 2 ? Prisma.sql`(${parts[0]} AND ${parts[1]})` : parts[0];
 }
 
 interface CareCursor {
@@ -158,6 +171,10 @@ export function buildCareQueueQueries(
     const scopeStudnie = ownerCond(user, 's', 'offer_studnie', ownerWhere);
     const fuScope = followUpScope(scopeRury, scopeStudnie);
     const limit = clampCareLimit(opts.limit);
+    const bornRury = bornRange('o', opts.from, opts.to);
+    const bornStudnie = bornRange('s', opts.from, opts.to);
+    const andBornRury = bornRury ? Prisma.sql` AND ${bornRury}` : Prisma.empty;
+    const andBornStudnie = bornStudnie ? Prisma.sql` AND ${bornStudnie}` : Prisma.empty;
 
     // CTE latest: ta sama reguła co followUpStats.ts:52 / searchUtils.ts:241.
     const withSql = Prisma.sql`WITH latest AS (
@@ -175,7 +192,7 @@ export function buildCareQueueQueries(
             ON l."offerKind" = 'rury' AND l."offerId" = o."id" AND l."rn" = 1
         LEFT JOIN care_states cs
             ON cs."offerKind" = 'rury' AND cs."offerId" = o."id"
-        WHERE ${scopeRury}
+        WHERE ${scopeRury}${andBornRury}
         UNION ALL
         SELECT 'studnie' AS "offerKind", s."id" AS "offerId", l."outcome" AS "outcome",
             l."nextContactAt" AS "next", l."contactedAt" AS "last", s."createdAt" AS "born",
@@ -191,7 +208,7 @@ export function buildCareQueueQueries(
             ON l."offerKind" = 'studnie' AND l."offerId" = s."id" AND l."rn" = 1
         LEFT JOIN care_states cs
             ON cs."offerKind" = 'studnie' AND cs."offerId" = s."id"
-        WHERE ${scopeStudnie}
+        WHERE ${scopeStudnie}${andBornStudnie}
     ), ranked AS (
         SELECT "offerKind", "offerId", "outcome", "next", "last", "born",
             "number", "client", "value", "phone", "note", "snoozed", "done",
@@ -236,12 +253,17 @@ export async function getCareSummary(
     db: QueryRawDb,
     user: CareUser,
     scope: CareScope,
-    nowIso: string
+    nowIso: string,
+    opts?: { from?: string; to?: string }
 ): Promise<CareSummary> {
     const ownerWhere = resolveOwnerWhere(user, scope);
     const scopeRury = ownerCond(user, 'o', 'offer', ownerWhere);
     const scopeStudnie = ownerCond(user, 's', 'offer_studnie', ownerWhere);
     const fuScope = followUpScope(scopeRury, scopeStudnie);
+    const bornRury = bornRange('o', opts?.from, opts?.to);
+    const bornStudnie = bornRange('s', opts?.from, opts?.to);
+    const andBornRury = bornRury ? Prisma.sql` AND ${bornRury}` : Prisma.empty;
+    const andBornStudnie = bornStudnie ? Prisma.sql` AND ${bornStudnie}` : Prisma.empty;
     const withSql = Prisma.sql`WITH latest AS (
         SELECT f."offerKind", f."offerId", f."outcome", f."nextContactAt", f."contactedAt",
             ROW_NUMBER() OVER (PARTITION BY f."offerKind", f."offerId" ORDER BY f."contactedAt" DESC, f."createdAt" DESC, f."id" DESC) AS "rn"
@@ -252,14 +274,14 @@ export async function getCareSummary(
         FROM offers_rel o LEFT JOIN latest l
             ON l."offerKind" = 'rury' AND l."offerId" = o."id" AND l."rn" = 1
         LEFT JOIN care_states cs ON cs."offerKind" = 'rury' AND cs."offerId" = o."id"
-        WHERE ${scopeRury} AND (cs."offerId" IS NULL OR (cs."doneAt" IS NULL AND (cs."snoozedUntil" IS NULL OR cs."snoozedUntil" <= ${nowIso})))
+        WHERE ${scopeRury} AND (cs."offerId" IS NULL OR (cs."doneAt" IS NULL AND (cs."snoozedUntil" IS NULL OR cs."snoozedUntil" <= ${nowIso})))${andBornRury}
         UNION ALL
         SELECT 'studnie' AS "offerKind", s."id" AS "offerId", l."outcome" AS "outcome",
             l."nextContactAt" AS "next", l."contactedAt" AS "last"
         FROM offers_studnie_rel s LEFT JOIN latest l
             ON l."offerKind" = 'studnie' AND l."offerId" = s."id" AND l."rn" = 1
         LEFT JOIN care_states cs ON cs."offerKind" = 'studnie' AND cs."offerId" = s."id"
-        WHERE ${scopeStudnie} AND (cs."offerId" IS NULL OR (cs."doneAt" IS NULL AND (cs."snoozedUntil" IS NULL OR cs."snoozedUntil" <= ${nowIso})))
+        WHERE ${scopeStudnie} AND (cs."offerId" IS NULL OR (cs."doneAt" IS NULL AND (cs."snoozedUntil" IS NULL OR cs."snoozedUntil" <= ${nowIso})))${andBornStudnie}
     )`;
     const rows = await db.$queryRaw<
         Array<{ k: string; c: number | bigint }>

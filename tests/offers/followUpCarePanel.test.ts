@@ -104,4 +104,32 @@ describe('P2 GET /api/care/panel', () => {
         summaryMock.mockRejectedValueOnce(err);
         expect((await request(app()).get('/api/care/panel?scope=all')).status).toBe(403);
     });
+
+    it('from/to: przekazywane do summary/queue, ETag zale\u017cy od zakresu, z\u0142y from \u2192 400', async () => {
+        const res = await request(app()).get(
+            '/api/care/panel?scope=mine&from=2026-09-01T00:00:00.000Z&to=2026-09-10T00:00:00.000Z'
+        );
+        expect(res.status).toBe(200);
+        expect(summaryMock.mock.calls[0][4]).toEqual({
+            from: '2026-09-01T00:00:00.000Z',
+            to: '2026-09-10T00:00:00.000Z'
+        });
+        expect(queueMock.mock.calls[0][2]).toEqual(
+            expect.objectContaining({
+                from: '2026-09-01T00:00:00.000Z',
+                to: '2026-09-10T00:00:00.000Z'
+            })
+        );
+        const plain = await request(app()).get('/api/care/panel?scope=mine');
+        expect(plain.status).toBe(200);
+        expect(plain.headers.etag).not.toBe(res.headers.etag);
+        expect((await request(app()).get('/api/care/panel?scope=mine&from=zla')).status).toBe(400);
+        expect(
+            (
+                await request(app()).get(
+                    '/api/care/panel?scope=mine&from=2026-09-10T00:00:00.000Z&to=2026-09-01T00:00:00.000Z'
+                )
+            ).status
+        ).toBe(400);
+    });
 });

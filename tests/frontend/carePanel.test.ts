@@ -98,7 +98,11 @@ describe('carePanel', () => {
             'fu-stat-needs',
             'fu-stat-progress',
             'fu-stat-won',
-            'fu-stat-lost'
+            'fu-stat-lost',
+            'fu-kpi-won-value',
+            'fu-kpi-open-value',
+            'fu-kpi-total-value',
+            'fu-kpi-orders-value'
         ])
             el(id);
         const listeners: Record<string, any[]> = {};
@@ -131,7 +135,7 @@ describe('carePanel', () => {
         vm.createContext(context);
         vm.runInContext(
             code +
-                '\nthis.__careTest = { loadCarePanel, careOpenContact, setQueueSort, setQueueView };',
+                '\nthis.__careTest = { loadCarePanel, careOpenContact, setQueueSort, setQueueView, setQueueRange };',
             context
         );
         return { els, listeners, context };
@@ -862,6 +866,121 @@ describe('carePanel', () => {
         // Grupowanie spacją (nbsp) + przecinek dziesiętny, PLN osobno.
         expect(joined).toMatch(/1.234.567,90/);
         expect(joined).toContain('PLN');
+    });
+
+    test('preset zakresu: from/to w URL panelu, All bez parametr\u00f3w', async () => {
+        const calls: string[] = [];
+        const packet = {
+            ok: true,
+            etag: '"e7"',
+            summary: {
+                noContact: 0,
+                due: 1,
+                openOk: 0,
+                won: 0,
+                lost: 0,
+                abandoned: 0,
+                totalCount: 1
+            },
+            queue: { items: [], nextCursor: null, totalCount: 1 },
+            notifications: { items: [], unreadCount: 0, sync: { inserted: 0, resolved: 0 } },
+            sla: { firstContactH: 24, staleD: 7, escalationH: 72 }
+        };
+        const { context } = load({
+            calls,
+            fetchMock: (url: string) => {
+                if (url.includes('/api/care/panel'))
+                    return { ok: true, status: 200, json: async () => packet };
+                return okJson({ noContact: 0, due: 1, openOk: 0, won: 0, lost: 0 });
+            }
+        });
+        expect(context.__careTest.setQueueRange('7d')).toBe('7d');
+        expect(context.__careTest.setQueueRange('xx')).toBe('all');
+        context.__careTest.setQueueRange('30d');
+        await context.__careTest.loadCarePanel();
+        const panelCalls = calls.filter((c) => c.includes('/api/care/panel'));
+        expect(panelCalls).toHaveLength(1);
+        expect(panelCalls[0]).toContain('from=');
+        expect(panelCalls[0]).toContain('to=');
+        context.__careTest.setQueueRange('all');
+        await context.__careTest.loadCarePanel();
+        const panelCalls2 = calls.filter((c) => c.includes('/api/care/panel'));
+        expect(panelCalls2).toHaveLength(2);
+        expect(panelCalls2[1]).not.toContain('from=');
+    });
+
+    test('ETag osobny na zakres: zmiana presetu nie wysy\u0142a cudzego If-None-Match', async () => {
+        const calls: string[] = [];
+        const seenHeaders: Array<unknown> = [];
+        const { context } = load({
+            calls,
+            fetchMock: (url: string, init?: any) => {
+                if (url.includes('/api/care/panel')) {
+                    seenHeaders.push(init?.headers);
+                    if (init?.headers?.['If-None-Match'] === '"e7"')
+                        return { ok: false, status: 304, json: async () => ({}) };
+                    return {
+                        ok: true,
+                        status: 200,
+                        json: async () => ({
+                            ok: true,
+                            etag: '"e7"',
+                            summary: {
+                                noContact: 0,
+                                due: 1,
+                                openOk: 0,
+                                won: 0,
+                                lost: 0,
+                                abandoned: 0,
+                                totalCount: 1
+                            },
+                            queue: { items: [], nextCursor: null, totalCount: 1 },
+                            notifications: { items: [], unreadCount: 0 },
+                            sla: { firstContactH: 24, staleD: 7, escalationH: 72 }
+                        })
+                    };
+                }
+                return okJson({ noContact: 0, due: 1, openOk: 0, won: 0, lost: 0 });
+            }
+        });
+        context.__careTest.setQueueRange('7d');
+        await context.__careTest.loadCarePanel();
+        await context.__careTest.loadCarePanel();
+        expect(seenHeaders[1]).toEqual({ 'If-None-Match': '"e7"' });
+        context.__careTest.setQueueRange('90d');
+        await context.__careTest.loadCarePanel();
+        expect(seenHeaders[2]).toEqual({});
+        expect(calls.filter((c) => c.includes('/api/care/panel'))).toHaveLength(3);
+    });
+
+    test('legacy fallback niesie from/to w summary i queue (nie w notif)', async () => {
+        const calls: string[] = [];
+        const { context } = load({
+            calls,
+            fetchMock: (url: string) => {
+                if (url.includes('/api/care/panel')) return { ok: false, status: 500 };
+                if (url.includes('/api/care/summary'))
+                    return okJson({ noContact: 0, due: 1, openOk: 0, won: 0, lost: 0 });
+                if (url.includes('/api/care/queue')) return okJson({ items: [] });
+                return okJson({ items: [], unreadCount: 0 });
+            }
+        });
+        context.__careTest.setQueueRange('30d');
+        await context.__careTest.loadCarePanel();
+        const summary = calls.filter((c) => c.includes('/api/care/summary'));
+        const queue = calls.filter((c) => c.includes('/api/care/queue'));
+        const notif = calls.filter((c) => c.includes('/api/care/notifications'));
+        expect(summary).toHaveLength(1);
+        expect(queue).toHaveLength(1);
+        expect(notif).toHaveLength(1);
+        for (const u of [...summary, ...queue]) {
+            expect(u).toContain('from=');
+            expect(u).toContain('to=');
+        }
+        // Skrzynka powiadomień = stan bieżący, bez filtra dat.
+        for (const u of [...notif]) {
+            expect(u).not.toContain('from=');
+        }
     });
 
     test('widok grid/list + dopaginowanie cursorem', async () => {

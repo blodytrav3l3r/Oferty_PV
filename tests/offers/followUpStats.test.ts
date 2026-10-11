@@ -77,13 +77,18 @@ describe('P3 GET /followups/stats', () => {
             { k: 'won', v: 9000 },
             { k: 'won', v: 1000 },
             { k: 'lost', v: 2500.25 },
-            { k: 'lost', v: null }
+            { k: 'lost', v: null },
+            { k: 'open', v: 700 },
+            { k: 'open', v: null },
+            { k: 'total', v: 20000 }
         ]);
         q.mockResolvedValueOnce([
             { u: 'rep-1', contacts: 6, offers: 4n, wins: 2 },
             { u: 'rep-2', contacts: 1, offers: 1, wins: null }
         ]);
         q.mockResolvedValueOnce([{ h: 30.5 }]);
+        q.mockResolvedValueOnce([{ ovr: 4000 }]);
+        q.mockResolvedValueOnce([{ ovs: 500 }]);
 
         const res = await request(createApp()).get('/api/offers/followups/stats');
         expect(res.status).toBe(200);
@@ -97,6 +102,10 @@ describe('P3 GET /followups/stats', () => {
         expect(s.abandoned).toBe(1);
         expect(s.wonValue).toBe(10000);
         expect(s.lostValue).toBe(2500.25);
+        expect(s.openValue).toBe(700);
+        expect(s.totalValue).toBe(20000);
+        expect(s.ordersValue).toBe(4500);
+        expect(q).toHaveBeenCalledTimes(11);
         expect(s.lossReasons).toEqual([
             { reason: 'cena', count: 2 },
             { reason: 'Nie podano', count: 1 }
@@ -108,7 +117,7 @@ describe('P3 GET /followups/stats', () => {
             { userId: 'rep-2', contacts: 1, offers: 1, wins: 0 }
         ]);
         expect(s.avgFirstContactH).toBe(30.5);
-        expect(q).toHaveBeenCalledTimes(9);
+        expect(q).toHaveBeenCalledTimes(11);
     });
 
     it('pusta baza: zera bez dzielenia przez zero', async () => {
@@ -122,9 +131,15 @@ describe('P3 GET /followups/stats', () => {
         q.mockResolvedValueOnce([]);
         q.mockResolvedValueOnce([]);
         q.mockResolvedValueOnce([{ h: null }]);
+        q.mockResolvedValueOnce([]);
+        q.mockResolvedValueOnce([]);
 
         const res = await request(createApp()).get('/api/offers/followups/stats');
         expect(res.status).toBe(200);
+        expect(res.body.stats.openValue).toBe(0);
+        expect(res.body.stats.totalValue).toBe(0);
+        expect(res.body.stats.ordersValue).toBe(0);
+        expect(q).toHaveBeenCalledTimes(11);
         expect(res.body.stats.conversion).toBe(0);
         expect(res.body.stats.abandoned).toBe(0);
         expect(res.body.stats.abandonedReasons).toEqual([]);
@@ -190,6 +205,12 @@ describe('P3 GET /followups/stats', () => {
             if (s.includes('AS "k"')) {
                 return Promise.resolve([{ k: 'won', v: who === 'rep-a' ? 100 : 200 }]);
             }
+            if (s.includes('AS "ovr"')) {
+                return Promise.resolve([{ ovr: who === 'rep-a' ? 50 : 60 }]);
+            }
+            if (s.includes('AS "ovs"')) {
+                return Promise.resolve([{ ovs: who === 'rep-a' ? 5 : 6 }]);
+            }
             if (s.includes('AS "u"')) {
                 return Promise.resolve([{ u: who, contacts: 1, offers: 1, wins: 0 }]);
             }
@@ -202,6 +223,7 @@ describe('P3 GET /followups/stats', () => {
         expect(resA.status).toBe(200);
         expect(resA.body.stats.outcomes).toEqual({ OPEN: 1 });
         expect(resA.body.stats.offersTotal).toBe(1);
+        expect(resA.body.stats.ordersValue).toBe(55);
         expect(resA.body.stats.wonValue).toBe(100);
         expect(resA.body.stats.perRep).toEqual([
             { userId: 'rep-a', contacts: 1, offers: 1, wins: 0 }
@@ -210,6 +232,7 @@ describe('P3 GET /followups/stats', () => {
         mockUser.id = 'rep-b';
         const resB = await request(createApp()).get('/api/offers/followups/stats');
         expect(resB.status).toBe(200);
+        expect(resB.body.stats.ordersValue).toBe(66);
         expect(resB.body.stats.wonValue).toBe(200);
         expect(resB.body.stats.perRep).toEqual([
             { userId: 'rep-b', contacts: 1, offers: 1, wins: 0 }
@@ -232,6 +255,8 @@ describe('P3 GET /followups/stats', () => {
             { u: 'rep-b', contacts: 1, offers: 1, wins: 1 }
         ]);
         q.mockResolvedValueOnce([{ h: null }]);
+        q.mockResolvedValueOnce([{ ovr: 10 }]);
+        q.mockResolvedValueOnce([{ ovs: 20 }]);
 
         const res = await request(createApp()).get('/api/offers/followups/stats');
         expect(res.status).toBe(200);
@@ -241,7 +266,35 @@ describe('P3 GET /followups/stats', () => {
         ]);
     });
 
-    it('user nie-admin: scope bez 1=1 (9 zapytan z filtrem)', async () => {
+    it('zakres dat: 400 na zly ISO / from>to / span>366d', async () => {
+        const q = prisma.$queryRaw as jest.Mock;
+        q.mockResolvedValue([]);
+        const app = createApp();
+        expect((await request(app).get('/api/offers/followups/stats?from=nie-data')).status).toBe(
+            400
+        );
+        expect(
+            (
+                await request(app).get(
+                    '/api/offers/followups/stats?from=2026-09-10T00:00:00.000Z&to=2026-09-01T00:00:00.000Z'
+                )
+            ).status
+        ).toBe(400);
+        expect(
+            (
+                await request(app).get(
+                    '/api/offers/followups/stats?from=2024-01-01T00:00:00.000Z&to=2026-01-01T00:00:00.000Z'
+                )
+            ).status
+        ).toBe(400);
+        const ok = await request(app).get(
+            '/api/offers/followups/stats?from=2026-09-01T00:00:00.000Z&to=2026-09-10T00:00:00.000Z'
+        );
+        expect(ok.status).toBe(200);
+        expect(q).toHaveBeenCalledTimes(11);
+    });
+
+    it('user nie-admin: scope bez 1=1 (11 zapytan z filtrem)', async () => {
         mockUser.role = 'user';
         mockUser.id = 'rep-9';
         const q = prisma.$queryRaw as jest.Mock;
