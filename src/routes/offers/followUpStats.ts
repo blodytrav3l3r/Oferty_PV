@@ -30,12 +30,14 @@ export function buildOfferScopeCondition(
     opts?: { allowedIds?: string[] | null; narrowOwner?: string | null }
 ): Prisma.Sql {
     const a = Prisma.raw(alias);
-    if (opts?.narrowOwner) return Prisma.sql`${a}."userId" = ${opts.narrowOwner}`;
-    if (opts && opts.allowedIds === null) return Prisma.sql`1=1`;
+    const narrow = opts?.narrowOwner;
+    if (opts && opts.allowedIds === null)
+        return narrow ? Prisma.sql`${a}."userId" = ${narrow}` : Prisma.sql`1=1`;
     const allowedIds = (
         opts?.allowedIds ?? (user.role === 'pro' ? [user.id, ...(user.subUsers || [])] : [user.id])
     ).filter((v) => typeof v === 'string' && v !== '');
-    if (user.role === 'admin' && opts?.allowedIds === undefined) return Prisma.sql`1=1`;
+    if (user.role === 'admin' && opts?.allowedIds === undefined)
+        return narrow ? Prisma.sql`${a}."userId" = ${narrow}` : Prisma.sql`1=1`;
     const parts: Prisma.Sql[] = [];
     if (allowedIds.length > 0) {
         parts.push(Prisma.sql`${a}."userId" IN (${Prisma.join(allowedIds)})`);
@@ -44,8 +46,9 @@ export function buildOfferScopeCondition(
         parts.push(Prisma.sql`${a}."id" IN (${Prisma.join(sharedIds)})`);
     }
     if (parts.length === 0) return Prisma.sql`1=0`;
-    if (parts.length === 1) return parts[0];
-    return Prisma.sql`(${parts[0]} OR ${parts[1]})`;
+    const base = parts.length === 1 ? parts[0] : Prisma.sql`(${parts[0]} OR ${parts[1]})`;
+    if (narrow) return Prisma.sql`(${base} AND ${a}."userId" = ${narrow})`;
+    return base;
 }
 
 /**

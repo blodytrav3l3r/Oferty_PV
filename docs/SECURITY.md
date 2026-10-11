@@ -356,3 +356,21 @@ Pilnują tego testy `tests/security/cspInventory.test.ts` (sufit `onclick: 0`,
 zero `on*` w partialach/szablonach) i `tests/security/cspEnforce.test.ts`
 (brak `javascript:`-URLi, nonce na każdym inline `<script>`). Raporty
 z `/api/csp-report` (Report-Only) służą jako monitoring po enforce.
+
+---
+
+## 15. Macierz ról × zakres (opieka / oferty / zamówienia)
+
+Scope wymuszany w SQL przed agregacją. `all` tylko admin (nie-admin → 403, nie silent downgrade).
+`team` tylko pro/admin. Share = read-only. SSoT: `src/utils/ownership.ts`;
+per-trasa: `docs/security/permission-matrix.md`.
+
+| Rola    | `mine`       | `team`        | `all`        |
+| ------- | ------------ | ------------- | ------------ |
+| `user`  | read + write | — (403)       | — (403)      |
+| `pro`   | read + write | read + write* | — (403)      |
+| `admin` | read + write | read + write  | read + write |
+
+`*` pro: własne + oferty przypisanych sub-userów. Write = `canWriteDoc`
+(owner / pro-parent / admin); rekord bez właściciela = fail-closed.
+Read = `canReadDoc` / `canReadWithShare`. Hub opieki: `docs/OPIEKA.md`.

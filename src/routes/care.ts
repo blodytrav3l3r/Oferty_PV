@@ -367,6 +367,7 @@ async function writeCareState(
             }
             await prisma.$transaction(async (tx) => {
                 await guardTx(tx);
+                const prevJson = await prevJsonTx(tx);
                 await clearCareState(tx, kind, id, parsed.data.expectedUpdatedAt ?? undefined);
                 await tx.audit_logs.create({
                     data: {
@@ -375,7 +376,7 @@ async function writeCareState(
                         entityId: `${kind}:${id}`,
                         userId: user.id,
                         action: 'reopen',
-                        oldData: await prevJsonTx(tx),
+                        oldData: prevJson,
                         newData: null,
                         createdAt: nowIso
                     }
@@ -389,6 +390,7 @@ async function writeCareState(
             }
             await prisma.$transaction(async (tx) => {
                 await guardTx(tx);
+                const prevJson = await prevJsonTx(tx);
                 await setCareState(tx, {
                     offerKind: kind,
                     offerId: id,
@@ -405,7 +407,7 @@ async function writeCareState(
                         entityId: `${kind}:${id}`,
                         userId: user.id,
                         action: 'done',
-                        oldData: await prevJsonTx(tx),
+                        oldData: prevJson,
                         newData: JSON.stringify({ doneAt: nowIso }),
                         createdAt: nowIso
                     }
@@ -426,6 +428,7 @@ async function writeCareState(
             }
             await prisma.$transaction(async (tx) => {
                 await guardTx(tx);
+                const prevJson = await prevJsonTx(tx);
                 await setCareState(tx, {
                     offerKind: kind,
                     offerId: id,
@@ -442,7 +445,7 @@ async function writeCareState(
                         entityId: `${kind}:${id}`,
                         userId: user.id,
                         action: 'snooze',
-                        oldData: await prevJsonTx(tx),
+                        oldData: prevJson,
                         newData: JSON.stringify({ snoozedUntil: until }),
                         createdAt: nowIso
                     }
