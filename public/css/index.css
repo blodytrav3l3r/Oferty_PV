@@ -3076,6 +3076,11 @@ html[data-theme='light'] body.index-page.logged-in::before {
     flex-wrap: wrap;
     row-gap: 0.5rem;
 }
+#followup-panel .recycled-subtitle {
+    font-size: var(--fs-xl);
+    font-weight: var(--fw-bold);
+    color: var(--text-primary);
+}
 #followup-panel .admin-title-group {
     display: flex;
     align-items: center;
