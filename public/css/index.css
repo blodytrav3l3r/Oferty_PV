@@ -3102,16 +3102,8 @@ html[data-theme='light'] body.index-page.logged-in::before {
     gap: 0.5rem;
     flex-wrap: wrap;
 }
-.care-rep-wrap {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-}
-.care-rep-label {
-    font-size: 0.78rem;
-    color: var(--text-secondary);
-}
-.care-rep-select {
+/* Select handlowca: geometria z .form-input-sm, tu tylko szerokość (scoped, §10). */
+#care-rep {
     max-width: 12rem;
 }
 @media (max-width: 1100px) {
