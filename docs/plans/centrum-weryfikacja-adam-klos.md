@@ -93,9 +93,13 @@ Dodatkowo Q3 rozstrzyga zgłoszenie: `0/0` = Adam faktycznie nie ma ofert
 
 ## Checkpoint (wypełnić wynikami)
 
-- [ ] Q1: ADAM_ID = …
-- [ ] Q2: właściciele 4 ofert = …
-- [ ] Q3: oferty Adama rury/studnie = …
-- [ ] Q4: shares = …
-- [ ] Q5: skrzynki = …
-- [ ] Werdykt: OK / ZANIECZYSZCZENIE (z datami `createdAt` wierszy vs data wdrożenia `f5ea612`)
+Wyniki z backupu `backup_2026-10-11_1791745158286.sqlite` (kopia read-only,
+live DB nietknięte), 2026-10-11:
+
+- [x] Q1: ADAM_ID = `user_1787942816223` (`adamklos`, role `user`); Dawid = `user_1787946247137` (`dawidplociennik`, role `user`).
+- [x] Q2: właściciele 4 ofert = `usr_admin` (wszystkie: OS/000001,2,3,8); OS/000010 = Dawid.
+- [x] Q3: oferty Adama rury/studnie = 1/2 (żadna to OS/00000x; pusta kolejka przy `Moje + Adam` poprawna — brak share do viewera).
+- [x] Q4: shares = ∅ (brak udostępnień tych 4 ofert).
+- [x] Q5: skrzynki = wyłącznie `usr_admin` (68 wierszy, w tym 4 unread) — zero wierszy cudzych.
+- [x] Q6: care_states = ∅ (brak pauz/terminali — alerty regenerują się przy każdym odczycie).
+- [x] Werdykt: OK — prawłowa własna skrzynka, zero zanieczyszczenia. Kolejka/pilność za repem, centrum za mailboxem (kontrakt A+C).
