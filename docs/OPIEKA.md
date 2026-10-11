@@ -46,21 +46,21 @@ Pulpit (widget: liczniki + top wiersze)
 
 ## Endpointy
 
-| Metoda | Trasa                              | Rola                                                      |
-| ------ | ---------------------------------- | --------------------------------------------------------- |
-| GET    | `/api/care/summary?scope=`         | read, scope wg roli                                       |
-| GET    | `/api/care/queue?scope=&status=…`  | read, scope wg roli                                       |
-| POST   | `/api/offers/:kind/:id/followups`  | write (`canWriteDoc`)                                     |
-| GET    | `/api/offers/:kind/:id/followups`  | read (timeline)                                           |
-| GET    | `/api/care/panel?scope=&repId=`    | read, mailbox `repOwner ?? self`                          |
-| GET    | `/api/care/sla?scope=`             | read, próg efektywny + `source`                           |
-| PUT    | `/api/care/sla`                    | zapis progu (global admin; `team` pro/admin; `user` self) |
-| POST   | `/api/care/:kind/:id/snooze`       | write (`canWriteDoc`), pauza                              |
-| POST   | `/api/care/:kind/:id/done`         | write (`canWriteDoc`), zakończenie                        |
-| POST   | `/api/care/:kind/:id/reopen`       | write (`canWriteDoc`), wznowienie                         |
-| GET    | `/api/care/notifications`          | read, mailbox `repOwner ?? self`                          |
-| POST   | `/api/care/notifications/read`     | write, self-only                                          |
-| POST   | `/api/care/notifications/:id/read` | write, self-only (cudze id → 404)                         |
+| Metoda | Trasa                                   | Rola                                                      |
+| ------ | --------------------------------------- | --------------------------------------------------------- |
+| GET    | `/api/care/summary?scope=`              | read, scope wg roli                                       |
+| GET    | `/api/care/queue?scope=&status=…`       | read, scope wg roli                                       |
+| POST   | `/api/offers/:kind/:id/followups`       | write (`canWriteDoc`)                                     |
+| GET    | `/api/offers/:kind/:id/followups`       | read (timeline)                                           |
+| GET    | `/api/care/panel?scope=&repId=`         | read, mailbox `repOwner ?? self`                          |
+| GET    | `/api/care/sla?scope=`                  | read, próg efektywny + `source`                           |
+| PUT    | `/api/care/sla`                         | zapis progu (global admin; `team` pro/admin; `user` self) |
+| POST   | `/api/care/:kind/:id/snooze`            | write (`canWriteDoc`), pauza                              |
+| POST   | `/api/care/:kind/:id/done`              | write (`canWriteDoc`), zakończenie                        |
+| POST   | `/api/care/:kind/:id/reopen`            | write (`canWriteDoc`), wznowienie                         |
+| GET    | `/api/care/notifications?scope=&repId=` | read, mailbox `repOwner ?? self`, sync w scope            |
+| POST   | `/api/care/notifications/read`          | write, self-only                                          |
+| POST   | `/api/care/notifications/:id/read`      | write, self-only (cudze id → 404)                         |
 
 Autoryzacja: cookie `authToken` (HttpOnly). Pełna spec: Swagger `/api/docs`.
 
@@ -103,8 +103,8 @@ FE carePanel.js (polling 60 s, backoff do 300 s)
 ├─ renderNotifications: badge ← unreadCount, banner ← careRep,
 │    karty (max 20) + POST :id/read → markRead(user.id)
 └─ clearNotifications: POST /read {ids} + fallback pojedynczych
-BE care.ts: /panel (ETag per mailbox `repOwner ?? user.id`, COUNT shares
-  w haśle) i /notifications (sync self-only + list per mailbox
+BE care.ts: /panel (ETag per mailbox `repOwner ?? user.id`, COUNT||MAX(rowid)
+  shares w haśle) i /notifications (sync self-only + list per mailbox
   `repOwner ?? user.id`),
   POST /read bulk/single (guard WHERE userId)
 SERWIS careService.ts: notifCandidates (CTE latest + CASE ntype:
@@ -113,12 +113,12 @@ SERWIS careService.ts: notifCandidates (CTE latest + CASE ntype:
 DB care_notifications(id, userId, offerKind, offerId, type, readAt, createdAt)
 ```
 
-Znane rysy (nie bugi krytyczne): treść niezależna od repa (decyzja, nie
-defekt); guard `panelLoading` gubi szybkie podwójne kliknięcia; wyjątek
-w `renderSummary/renderQueue` blokuje `renderNotifications`; ETag już
-unieważniają shares (COUNT + MAX(rowid) `document_shares` w `getCareEtagInput`,
-`careService.ts:497-518`) — ślepa została edycja outcome w miejscu
-(PUT follow-up bez dotknięcia znaczników ETag).
+Znane rysy (nie bugi krytyczne): treść Centrum zależy od repa (mailbox
+`repOwner ?? self`, kontrakt A+C); guard `panelLoading` gubi szybkie podwójne
+kliknięcia; wyjątek w `renderSummary/renderQueue` blokuje `renderNotifications`;
+ETag już unieważniają shares (COUNT + MAX(rowid) `document_shares`
+w `getCareEtagInput`, `careService.ts:495-538`) — ślepa została edycja
+follow-up w miejscu (POST bez dotknięcia znaczników ETag a/b).
 
 ## Progi SLA (F8: default 24/7/72)
 
@@ -128,13 +128,13 @@ wiersz (wartość `< 1` lub nieliczbowa) = głośny błąd `INVALID_SLA_CONFIG`
 (500), nie ciche maskowanie. Zapis przez `PUT /api/care/sla` waliduje zakresy
 (Zod `min(1)`).
 
-Próg efektywny (ADR-016, `getEffectiveSla` w `careService.ts:727-742`):
+Próg efektywny (ADR-016, `getEffectiveSla` w `careService.ts:734-748`):
 scope `team` u pro/admin bierze wiersz `('team', user.id)`, scope `mine`
 bierze `('user', user.id)`, inaczej global. `GET /sla?scope=` i `GET /panel`
 zwracają `source: global | team | user` (UI pokazuje, co edytuje).
 Eskalacja i progi naruszeń liczone z progu efektywnego w scope requeścia
 (CASE w `notifCandidates`: SLA_BREACH przed ESCALATION). Buckety zdrowia
-stałe, niezależne od progu (`careStatus.ts:40-46`): D+1 (`OVERDUE_D1`
+stałe, niezależne od progu (`src/utils/careStatus.ts:40-46`): D+1 (`OVERDUE_D1`
 do 2 dób), D+3 (`OVERDUE_D3` do 6 dób), D+7 (`OVERDUE_D7` do 13 dób),
 D+14 (`OVERDUE_D14` powyżej).
 

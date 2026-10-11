@@ -38,7 +38,7 @@ został osiągnięty.
 ## Suplement 2026-10-11 (efektywny próg w powiadomieniach)
 
 Eskalacja i progi naruszeń liczone z progu efektywnego w scope requeścia
-(`getEffectiveSla` w `careService.ts:727-742`, sync w scope panelu).
-Buckety zdrowia stałe, niezależne od progu (`careStatus.ts:40-46`):
-D+1/D+3/D+7/D+14. CASE w `notifCandidates` (`careService.ts:825-827`):
+(`getEffectiveSla` w `careService.ts:734-748`, sync w scope panelu).
+Buckety zdrowia stałe, niezależne od progu (`src/utils/careStatus.ts:40-46`):
+D+1/D+3/D+7/D+14. CASE w `notifCandidates` (`careService.ts:831-834`):
 SLA_BREACH wygrywa z ESCALATION (pierwszy WHEN rozstrzyga).

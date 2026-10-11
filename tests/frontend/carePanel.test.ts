@@ -1617,16 +1617,17 @@ describe('carePanel', () => {
     });
 
     test('badge powiadomień ogłasza zmiany (aria-live polite)', async () => {
-        const { els, context } = load({
-            fetchMock: (url: string) => {
-                if (url.includes('/api/care/notifications'))
-                    return okJson({ items: [], unreadCount: 3 });
-                if (url.includes('/api/care/queue')) return okJson({ items: [] });
-                return okJson({ noContact: 0, due: 0, openOk: 0, won: 0, lost: 0 });
-            }
-        });
-        await context.__careTest.loadCarePanel();
-        expect(els['care-notif-count'].attrs['aria-live']).toBe('polite');
+        // Atrybut statycznie w index.html (nie z JS — harness vm nie widzi
+        // prawdziwego DOM, więc asercja czyta plik, nie mock elementu).
+        const fs = await import('node:fs');
+        const path = await import('node:path');
+        const html = fs.readFileSync(
+            path.join(__dirname, '..', '..', 'public', 'index.html'),
+            'utf8'
+        );
+        const m = html.match(/<span[^>]*id="care-notif-count"[^>]*>/);
+        if (!m) throw new Error('brak #care-notif-count w index.html');
+        expect(m[0]).toContain('aria-live="polite"');
     });
 
     test('double-submit: snooze i done raz na lot + powrót przycisku', async () => {

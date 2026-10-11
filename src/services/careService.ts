@@ -846,6 +846,48 @@ export interface CareSyncResult {
     deleted?: number;
 }
 
+/** INSERT brakujących powiadomień (SSoT — jeden SQL na oba warianty).
+ * Z `forCount` dokleja RETURNING (realna liczba wstawek). */
+function insertMissingSql(
+    uid: string,
+    nowIso: string,
+    cand: Prisma.Sql,
+    forCount: boolean
+): Prisma.Sql {
+    const returning = forCount ? Prisma.sql` RETURNING "id"` : Prisma.empty;
+    return Prisma.sql`INSERT OR IGNORE INTO "care_notifications" ("id", "userId", "offerKind", "offerId", "type", "readAt", "createdAt")
+SELECT lower(hex(randomblob(16))), ${uid}, c."offerKind", c."offerId", c."ntype", NULL, ${nowIso}
+FROM (${cand}) AS c
+WHERE c."ntype" IS NOT NULL
+AND NOT EXISTS (SELECT 1 FROM "care_notifications" n WHERE n."userId" = ${uid} AND n."offerKind" = c."offerKind" AND n."offerId" = c."offerId" AND n."type" = c."ntype" AND n."readAt" IS NULL)${returning}`;
+}
+
+/** DELETE zliczany: RETURNING, potem $executeRaw (changes), potem 0.
+ * Hoist na scope modułu — jedna definicja na wszystkie synci. */
+async function deleteCounted(
+    db: RawDb,
+    sqlReturning: Prisma.Sql,
+    sqlPlain: Prisma.Sql
+): Promise<number> {
+    try {
+        const rows = (await db.$queryRaw<Array<{ id: string }>>(sqlReturning)) as unknown;
+        if (Array.isArray(rows)) return rows.length;
+    } catch (e) {
+        // Driver bez RETURNING -> fallback $executeRaw (changes) ponizej.
+        logger.debug('Care', 'Sync DELETE bez RETURNING, fallback changes', String(e));
+    }
+    const exec = db.$executeRaw?.bind(db);
+    if (exec) {
+        try {
+            return await exec(sqlPlain);
+        } catch (e) {
+            logger.debug('Care', 'Sync DELETE fallback nieudany', String(e));
+            return 0;
+        }
+    }
+    return 0;
+}
+
 /** Sync skrzynki usera: wstaw brakujące + zamknij nieaktualne. Idempotentny.
  * Set-based: stała liczba statementów niezależna od liczby kandydatów
  * (P1 planu poprawy; baseline N+1: ~2 stmt/ofertę w careSyncLoad.test.ts).
@@ -866,7 +908,7 @@ export async function syncCareNotifications(
     // A+C: podgląd repa = zero efektów ubocznych w DB. Sync z repOwner
     // dopisywał kandydatów o ofertach repa do skrzynki viewera (i kasował
     // retencją) — filtrowany sync nie persistuje; sprząta pełny sync bez filtra.
-    if (opts?.repOwner) return { inserted: 0, resolved: 0, skipped: 'rep-preview' };
+    if (opts?.repOwner) return { inserted: 0, resolved: 0, deleted: 0, skipped: 'rep-preview' };
     const cand = notifCandidates(user, scope, nowIso, sla, opts?.repOwner);
     // 1: wstaw brakujace (deduplikacja w SQL, nie petla w JS).
     // F2: inserted liczony realnie z RETURNING, nie COUNT createdAt=nowIso
@@ -875,12 +917,7 @@ export async function syncCareNotifications(
     let insertCounted = false;
     try {
         const insRows = (await db.$queryRaw<Array<{ id: string }>>(
-            Prisma.sql`INSERT OR IGNORE INTO "care_notifications" ("id", "userId", "offerKind", "offerId", "type", "readAt", "createdAt")
-SELECT lower(hex(randomblob(16))), ${uid}, c."offerKind", c."offerId", c."ntype", NULL, ${nowIso}
-FROM (${cand}) AS c
-WHERE c."ntype" IS NOT NULL
-AND NOT EXISTS (SELECT 1 FROM "care_notifications" n WHERE n."userId" = ${uid} AND n."offerKind" = c."offerKind" AND n."offerId" = c."offerId" AND n."type" = c."ntype" AND n."readAt" IS NULL)
-RETURNING "id"`
+            insertMissingSql(uid, nowIso, cand, true)
         )) as Array<{ id: string }>;
         if (Array.isArray(insRows)) {
             inserted = insRows.length;
@@ -891,13 +928,19 @@ RETURNING "id"`
         logger.debug('Care', 'Sync INSERT bez RETURNING, fallback COUNT', String(e));
     }
     if (!insertCounted) {
-        await db.$queryRaw(
-            Prisma.sql`INSERT OR IGNORE INTO "care_notifications" ("id", "userId", "offerKind", "offerId", "type", "readAt", "createdAt")
-SELECT lower(hex(randomblob(16))), ${uid}, c."offerKind", c."offerId", c."ntype", NULL, ${nowIso}
-FROM (${cand}) AS c
-WHERE c."ntype" IS NOT NULL
-AND NOT EXISTS (SELECT 1 FROM "care_notifications" n WHERE n."userId" = ${uid} AND n."offerKind" = c."offerKind" AND n."offerId" = c."offerId" AND n."type" = c."ntype" AND n."readAt" IS NULL)`
-        );
+        // Fallback: changes() z $executeRaw liczy realne wstawienia (bez wyścigu
+        // same-nowIso jak COUNT); COUNT tylko gdy driver nie wspiera execute.
+        const execIns = db.$executeRaw?.bind(db);
+        if (execIns) {
+            try {
+                inserted = await execIns(insertMissingSql(uid, nowIso, cand, false));
+                insertCounted = true;
+            } catch (e) {
+                logger.debug('Care', 'Sync INSERT fallback nieudany', String(e));
+            }
+        }
+    }
+    if (!insertCounted) {
         const insCnt = (await db.$queryRaw<Array<{ c: number | bigint }>>(
             Prisma.sql`SELECT COUNT(*) AS "c" FROM "care_notifications" WHERE "userId" = ${uid} AND "createdAt" = ${nowIso} AND "readAt" IS NULL`
         )) as Array<{ c: number | bigint }>;
@@ -905,10 +948,10 @@ AND NOT EXISTS (SELECT 1 FROM "care_notifications" n WHERE n."userId" = ${uid} A
     }
     // 2: auto-read jednym UPDATE (oferta zniknęła z kandydatów:
     // terminal/pauza/poza scope) — liczba zamkniętych z RETURNING.
-    // Z repOwner funkcja wraca wcześniej ({inserted:0, resolved:0}, patrz
-    // początek) — sprzątanie robi pełny sync bez filtra.
+    // Z repOwner funkcja wraca wcześniej (patrz początek) — sprzątanie
+    // robi pełny sync bez filtra, więc ten blok zawsze działa bez filtra.
     let resolved = 0;
-    if (!opts?.repOwner) {
+    {
         const resolvedRows = (await db.$queryRaw<Array<{ id: string }>>(
             Prisma.sql`UPDATE "care_notifications" SET "readAt" = ${nowIso} WHERE "userId" = ${uid} AND "readAt" IS NULL
             AND ("offerKind", "offerId") NOT IN (SELECT "offerKind", "offerId" FROM (${cand}) WHERE "ntype" IS NOT NULL)
@@ -919,30 +962,13 @@ AND NOT EXISTS (SELECT 1 FROM "care_notifications" n WHERE n."userId" = ${uid} A
     // Retencja leniwa (brak workera w S.O.K.): przeczytane >90d precz,
     // skrzynka maks. 500 wierszy (najświeższe). Bounded inbox.
     const cutoff = new Date(Date.parse(nowIso) - 90 * 86400000).toISOString();
-    async function deleteCounted(sqlReturning: Prisma.Sql, sqlPlain: Prisma.Sql): Promise<number> {
-        try {
-            const rows = (await db.$queryRaw<Array<{ id: string }>>(sqlReturning)) as unknown;
-            if (Array.isArray(rows)) return rows.length;
-        } catch (e) {
-            // Driver bez RETURNING -> fallback $executeRaw (changes) ponizej.
-            logger.debug('Care', 'Sync DELETE bez RETURNING, fallback changes', String(e));
-        }
-        const exec = db.$executeRaw?.bind(db);
-        if (exec) {
-            try {
-                return await exec(sqlPlain);
-            } catch (e) {
-                logger.debug('Care', 'Sync DELETE fallback nieudany', String(e));
-                return 0;
-            }
-        }
-        return 0;
-    }
     const delOld = await deleteCounted(
+        db,
         Prisma.sql`DELETE FROM "care_notifications" WHERE "userId" = ${uid} AND "readAt" IS NOT NULL AND "readAt" <= ${cutoff} RETURNING "id"`,
         Prisma.sql`DELETE FROM "care_notifications" WHERE "userId" = ${uid} AND "readAt" IS NOT NULL AND "readAt" <= ${cutoff}`
     );
     const delCap = await deleteCounted(
+        db,
         Prisma.sql`DELETE FROM "care_notifications" WHERE "userId" = ${uid} AND "readAt" IS NOT NULL AND "id" NOT IN (SELECT "id" FROM "care_notifications" WHERE "userId" = ${uid} ORDER BY "createdAt" DESC LIMIT 500) RETURNING "id"`,
         Prisma.sql`DELETE FROM "care_notifications" WHERE "userId" = ${uid} AND "readAt" IS NOT NULL AND "id" NOT IN (SELECT "id" FROM "care_notifications" WHERE "userId" = ${uid} ORDER BY "createdAt" DESC LIMIT 500)`
     );

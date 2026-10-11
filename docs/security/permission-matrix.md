@@ -151,7 +151,7 @@ dopisuje do własnej skrzynki (kontrakt A+C, `docs/OPIEKA.md`).
 | route                        | operation | required permission                  | owner required                   | userId source | body userId allowed? | expected 200 | expected 401 | expected 403 | expected 404         |
 | ---------------------------- | --------- | ------------------------------------ | -------------------------------- | ------------- | -------------------- | ------------ | ------------ | ------------ | -------------------- |
 | GET /panel                   | READ      | `requireAuth` + scope/rep wg roli    | NIE (mailbox `repOwner ?? self`) | self/rep      | N/A                  | TAK          | TAK          | TAK (repId)  | NIE                  |
-| GET /notifications           | READ      | `requireAuth` + scope/rep wg roli    | NIE (self box)                   | self          | N/A                  | TAK          | TAK          | TAK (repId)  | NIE                  |
+| GET /notifications           | READ      | `requireAuth` + scope/rep wg roli    | NIE (mailbox `repOwner ?? self`) | self/rep      | N/A                  | TAK          | TAK          | TAK (repId)  | NIE                  |
 | POST /notifications/read     | UPDATE    | `requireAuth`, tylko własna skrzynka | NIE (self box)                   | self          | N/A (`ids`)          | TAK          | TAK          | NIE          | NIE (`{read:0}`)     |
 | POST /notifications/:id/read | UPDATE    | `requireAuth`, tylko własna skrzynka | NIE (self box)                   | self          | N/A                  | TAK          | TAK          | NIE          | TAK (cudze id → 404) |
 

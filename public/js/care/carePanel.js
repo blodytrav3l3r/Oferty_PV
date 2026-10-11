@@ -294,12 +294,7 @@ function fmtDelay(overdueDays, createdAt) {
 function renderNotifications(items, unreadCount, mailboxUserId) {
     const badge = document.getElementById('care-notif-count');
     if (badge) {
-        // Licznik ogłasza zmiany czytnikom (istniejący element, bez nowych kontenerów).
-        try {
-            badge.setAttribute('aria-live', 'polite');
-        } catch {
-            /* best-effort */
-        }
+        // aria-live statycznie w index.html (#care-notif-count); tu tylko tekst.
         badge.textContent = notifCountText(unreadCount);
     }
     const list = document.getElementById('care-notif-list');
@@ -773,7 +768,7 @@ async function snoozeQuick(it, days, row) {
         return;
     }
     // Undo inline: podmiana akcji w wierszu na "Cofnij".
-    const actions = row.querySelector('[data-care-actions]');
+    const actions = row && row.querySelector ? row.querySelector('[data-care-actions]') : null;
     if (!actions) {
         careBumpPolling();
         loadCarePanel();
