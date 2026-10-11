@@ -827,11 +827,12 @@ export async function syncCareNotifications(
     scope: CareScope,
     nowIso: string,
     sla: SlaConfig,
-    opts?: { repOwner?: string | null; mailboxUserId?: string }
+    opts?: { repOwner?: string | null }
 ): Promise<CareSyncResult> {
-    // Skrzynka wybranego handlowca (podgląd przełożonego); zapis/odczyt
-    // pojedynczych powiadomień zostaje self-only (guard w route).
-    const uid = opts?.mailboxUserId ?? user.id;
+    // Skrzynka zawsze własna (self-only); zapis/odczyt pojedynczych
+    // powiadomień też self-only (guard w route). Martwy mailboxUserId
+    // usunięty (confused-deputy: zapis do cudzej skrzynki).
+    const uid = user.id;
     // A+C: podgląd repa = zero efektów ubocznych w DB. Sync z repOwner
     // dopisywał kandydatów o ofertach repa do skrzynki viewera (i kasował
     // retencją) — filtrowany sync nie persistuje; sprząta pełny sync bez filtra.
@@ -851,9 +852,8 @@ export async function syncCareNotifications(
     const inserted = num(insCnt[0]?.c);
     // 2: auto-read jednym UPDATE (oferta zniknęła z kandydatów:
     // terminal/pauza/poza scope) — liczba zamkniętych z RETURNING.
-    // Z repOwner (podgląd przełożonego): TYLKO dopisywanie. Auto-read
-    // zamknąłby wiersze spoza aktywnego filtra (niszczenie cudzych
-    // powiadomień) — sprzątanie robi pełny sync bez filtra.
+    // Z repOwner funkcja wraca wcześniej ({inserted:0, resolved:0}, patrz
+    // początek) — sprzątanie robi pełny sync bez filtra.
     let resolved = 0;
     if (!opts?.repOwner) {
         const resolvedRows = (await db.$queryRaw<Array<{ id: string }>>(

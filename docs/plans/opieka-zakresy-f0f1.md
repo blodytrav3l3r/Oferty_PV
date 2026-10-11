@@ -72,3 +72,10 @@ GO tej paczki obejmuje **tylko F0+F1 docs-only**. F2–F4 opisane dla kontekstu,
 - DEFERRED: F1/F5/F8 — fail-open vs fail-closed to decyzja produktowa (ciche `[]` / best-effort 200 / silent DEFAULT mogą być zamierzone), nie technikaliom.
 - DEFERRED: UX toggles (portfel/zespół/udostępnione/firma) — osobna paczka frontend, po kontrakcie F1.
 - BRAMA: GREEN F7+F4+F3 + `test:quick` → werdykt o commicie; bez pusha (Tier czerwony).
+
+## Decyzja batcha (2026-10-11, append)
+
+- Martwy `mailboxUserId` usunięty — pułapka confused-deputy, zero callerów.
+- F1/F5/F8 nadal deferred — decyzja produktowa, nie techniczna.
+- UX toggles wg specu architekta — osobna paczka, bez kodu tutaj.
+- Bez commita/pusha w tym kroku.

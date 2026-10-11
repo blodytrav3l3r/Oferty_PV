@@ -61,6 +61,7 @@ Autoryzacja: cookie `authToken` (HttpOnly). Pełna spec: Swagger `/api/docs`.
 
 Mailbox = zawsze `userId` zalogowanego. `list` i `markRead` filtrują po self
 (`care.ts:591`, `careService.ts:888-923`); cudze id → 404 / `{read:0}`.
+Parametr `mailboxUserId` usunięty (martwy, ryzyko confused-deputy); skrzynka zawsze self.
 
 `repId` to filtr podglądu, nie zmiana właściciela skrzynki:
 
