@@ -13,7 +13,18 @@ let queueCache = [];
 let queueNextCursor = null;
 let queueTotal = 0;
 // ETag pakietu panelu per scope (304 = brak zmian, bez renderu).
+// Bounded: kombinacji scope|preset|rep może być wiele (admin) — trzymaj max 20.
 const panelEtags = {};
+
+function rememberPanelEtag(key, etag) {
+    panelEtags[key] = etag;
+    try {
+        const keys = Object.keys(panelEtags);
+        while (keys.length > 20) delete panelEtags[keys.shift()];
+    } catch {
+        /* best-effort */
+    }
+}
 
 function careStoreGet(key) {
     try {
@@ -140,6 +151,17 @@ function showError() {
     div.setAttribute('role', 'alert');
     div.textContent = 'Nie udało się odświeżyć opieki — spróbuj ponownie.';
     panel.appendChild(div);
+}
+
+/* Po udanym odświeżeniu alert znika (nie wisi po starej awarii). */
+function clearError() {
+    try {
+        const panel = document.getElementById('followup-panel');
+        const err = panel && panel.querySelector('[data-care-error]');
+        if (err) err.remove();
+    } catch {
+        /* best-effort */
+    }
 }
 
 /* Błąd zapisu nigdy nie jest cichy: toast zamiast udawanego sukcesu. */
@@ -493,7 +515,9 @@ function fmtMoney(v) {
 }
 
 function updateQueueFilterCounts() {
-    const counts = { all: queueCache.length, urgent: 0, today: 0, paused: 0 };
+    // 'all' z serwera (queueTotal), reszta z załadowanej strony — filtry
+    // tną cache, nie dopytują serwera.
+    const counts = { all: queueTotal, urgent: 0, today: 0, paused: 0 };
     for (const it of queueCache) {
         if (it.escalated || it.overdueDays > 0) counts.urgent += 1;
         if (it.slaBucket === 'DUE_TODAY') counts.today += 1;
@@ -1390,6 +1414,14 @@ async function loadSlaBox() {
         }
     }
     box.hidden = false;
+    try {
+        // Użytkownik edytuje progi (focus w boxie) — odświeżenie wartości
+        // nadpisałoby wpisywanie przy każdym pollingu. Opcje powyżej już zsyncowane.
+        const active = typeof document !== 'undefined' ? document.activeElement : null;
+        if (box.contains && active && box.contains(active)) return;
+    } catch {
+        /* best-effort */
+    }
     await loadSlaBoxValues();
     const save = document.getElementById('care-sla-save');
     if (save && !save.dataset.bound) {
@@ -1506,12 +1538,13 @@ async function loadPanelPacket() {
     try {
         const json = await resp.json();
         if (!json || !json.ok || !json.summary || !json.queue) return null;
-        if (json.etag) panelEtags[panelKey()] = json.etag;
+        if (json.etag) rememberPanelEtag(panelKey(), json.etag);
         renderSummary(json.summary);
         renderQueue(json.queue.items, json.queue.nextCursor, json.queue.totalCount);
         if (json.notifications)
             renderNotifications(json.notifications.items, json.notifications.unreadCount ?? 0);
         setSyncText();
+        clearError();
         return 'fresh';
     } catch {
         return null;
@@ -1555,6 +1588,7 @@ async function loadCarePanelLegacy() {
         if (queue) renderQueue(queue.items, queue.nextCursor, queue.totalCount);
         if (notif) renderNotifications(notif.items, notif.unreadCount ?? 0);
         setSyncText();
+        clearError();
     } catch {
         /* centrum i kolejka best-effort, liczniki już są */
     }
@@ -1602,6 +1636,8 @@ export function startCarePolling() {
     if (timer) return;
     const tick = async () => {
         timer = null;
+        // Panel zdjęty z DOM (nawigacja) — koniec pętli, nie fetchuj w próżnię.
+        if (typeof document === 'undefined' || !document.getElementById('followup-panel')) return;
         if (!document.hidden) {
             try {
                 const changed = await loadCarePanel();
@@ -1621,6 +1657,16 @@ export function startCarePolling() {
 export function careBumpPolling() {
     pollMs = POLL_MS;
     delete panelEtags[panelKey()];
+    try {
+        // Przestaw licznik od nowa (akcja + stary tick nie kumulują się).
+        if (timer !== null && typeof clearTimeout === 'function') {
+            clearTimeout(timer);
+            timer = null;
+            startCarePolling();
+        }
+    } catch {
+        /* best-effort */
+    }
 }
 
 if (typeof document !== 'undefined') {
@@ -1648,5 +1694,16 @@ if (typeof document !== 'undefined') {
         syncScopeButtons();
         loadCarePanel();
         startCarePolling();
+    });
+    // Powrót na kartę: dane mogły się zestarzeć (hidden pauzuje polling).
+    document.addEventListener('visibilitychange', () => {
+        try {
+            if (!document.hidden && document.getElementById('followup-panel')) {
+                careBumpPolling();
+                loadCarePanel();
+            }
+        } catch {
+            /* best-effort */
+        }
     });
 }

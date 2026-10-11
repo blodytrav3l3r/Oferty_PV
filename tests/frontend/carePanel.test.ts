@@ -1292,4 +1292,23 @@ describe('carePanel', () => {
             calls.filter((c) => c.includes('/api/users-for-assignment')).length
         ).toBeGreaterThanOrEqual(1);
     });
+
+    test('visibilitychange: powrót na kartę odświeża panel', async () => {
+        const calls: string[] = [];
+        const { context, listeners } = load({
+            calls,
+            fetchMock: (url: string) => {
+                if (url.includes('/api/care/notifications'))
+                    return okJson({ items: [], unreadCount: 0 });
+                if (url.includes('/api/care/queue')) return okJson({ items: [] });
+                return okJson({ noContact: 0, due: 0, openOk: 0, won: 0, lost: 0 });
+            }
+        });
+        await context.__careTest.loadCarePanel();
+        const before = calls.filter((c) => c.includes('/api/care/summary')).length;
+        expect(before).toBeGreaterThanOrEqual(1);
+        for (const fn of listeners['visibilitychange'] || []) fn();
+        for (let i = 0; i < 10; i++) await new Promise((r) => setTimeout(r, 0));
+        expect(calls.filter((c) => c.includes('/api/care/summary')).length).toBeGreaterThan(before);
+    });
 });
