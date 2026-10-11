@@ -84,6 +84,29 @@ odświeżania od słusznie niezmienionej treści:
 - Treść ta sama + banner/timestamp świeże = OK (własna skrzynka).
 - Brak requestu albo stary banner = bug FE (guard, cache, wyjątek w renderze).
 
+## Graf przepływu Centrum
+
+```text
+FE carePanel.js (polling 60 s, backoff do 300 s)
+├─ loadCarePanel → loadPanelPacket: GET /panel?scope&repId
+│    If-None-Match per scope|range|rep → 304 stale / 200 render
+├─ fallback legacy: /summary + /queue + /notifications (wszystkie z repId)
+├─ renderNotifications: badge ← unreadCount, banner ← careRep,
+│    karty (max 20) + POST :id/read → markRead(user.id)
+└─ clearNotifications: POST /read {ids} + fallback pojedynczych
+BE care.ts: /panel i /notifications (sync + list self-only),
+  POST /read bulk/single (guard WHERE userId)
+SERWIS careService.ts: notifCandidates (CTE latest + CASE ntype:
+  SLA_BREACH / ESCALATION / CALLBACK_DUE) → sync (INSERT OR IGNORE
+  + auto-read + retencja 90d/500; z repOwner no-op) → list/markRead self
+DB care_notifications(id, userId, offerKind, offerId, type, readAt, createdAt)
+```
+
+Znane rysy (nie bugi krytyczne): treść niezależna od repa (decyzja, nie
+defekt); guard `panelLoading` gubi szybkie podwójne kliknięcia; wyjątek
+w `renderSummary/renderQueue` blokuje `renderNotifications`; ETag ślepy
+na edycję outcome w miejscu i shares (hipotezy do testów z planu paska).
+
 ## Progi SLA (F8: default 24/7/72)
 
 Brak wiersza `care_sla_config.global` = progi domyślne (`firstContactH: 24`,
