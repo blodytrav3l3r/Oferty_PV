@@ -2578,20 +2578,9 @@ html[data-theme='light'] body.index-page.logged-in::before {
     display: inline-flex;
     gap: 4px;
 }
-/* Segment Moje/Zespół (ślad: .zlecenia-filter-tab.active) */
-.care-seg {
-    display: inline-flex;
-    gap: 2px;
-    background: var(--bg-tertiary);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-pill);
-    padding: 2px;
-}
-.care-seg .btn {
-    border: none;
-    border-radius: var(--radius-pill);
-}
-.care-seg .btn[aria-pressed='true'] {
+/* Zakres Moje/Zespół/Wszystkie: osobne kafelki jak .btn (Otwórz kartotekę),
+ * active w akcencie (ślad: .zlecenia-filter-tab.active). Bez obwódki grupy. */
+.care-scope-group .care-scope-btn[aria-pressed='true'] {
     background: var(--accent);
     border-color: var(--accent);
     color: var(--white);
