@@ -42,6 +42,10 @@ describe('iconsSlim pokrycie ikon shared', () => {
         expect(keys.has('moon')).toBe(true);
     });
 
+    test('opieka: trophy (Wygrana wartosc) istnieje', () => {
+        expect(iconKeys().has('trophy')).toBe(true);
+    });
+
     test('theme.js uzywa tylko ikon z ICONS', () => {
         const keys = iconKeys();
         const missing = [...usedIcons('theme.js')].filter((n) => !keys.has(n));
