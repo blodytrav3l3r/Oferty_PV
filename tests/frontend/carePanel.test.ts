@@ -27,17 +27,23 @@ describe('carePanel', () => {
                 innerHTML: '',
                 value: '',
                 hidden: true,
+                disabled: false,
                 style: {},
                 dataset: {},
+                attrs: {} as Record<string, string>,
                 className: '',
                 classList: { add() {}, remove() {}, toggle() {} },
                 setAttribute(name: string, value: string) {
+                    self.attrs[name] = String(value);
                     if (name.startsWith('data-')) {
                         const key = name
                             .slice(5)
                             .replace(/-([a-z])/g, (_m, c: string) => c.toUpperCase());
                         self.dataset[key] = value;
                     }
+                },
+                getAttribute(name: string) {
+                    return self.attrs[name] ?? null;
                 },
                 appendChild(c: any) {
                     self.children = [...(self.children || []), c];
@@ -64,6 +70,17 @@ describe('carePanel', () => {
                         if (hit) return hit;
                     }
                     return null;
+                },
+                querySelectorAll: (sel: string): any[] => {
+                    const out: any[] = [];
+                    const walkQ = (n: any): void => {
+                        for (const c of n.children || []) {
+                            if (sel === 'button' && c.tag === 'button') out.push(c);
+                            walkQ(c);
+                        }
+                    };
+                    walkQ(self);
+                    return out;
                 },
                 contains: (_other: any) => false
             };
@@ -1597,5 +1614,103 @@ describe('carePanel', () => {
         await pending;
         for (let i = 0; i < 10; i++) await new Promise((r) => setTimeout(r, 0));
         expect(findLoading(els['followup-panel'])).toHaveLength(0);
+    });
+
+    test('badge powiadomień ogłasza zmiany (aria-live polite)', async () => {
+        const { els, context } = load({
+            fetchMock: (url: string) => {
+                if (url.includes('/api/care/notifications'))
+                    return okJson({ items: [], unreadCount: 3 });
+                if (url.includes('/api/care/queue')) return okJson({ items: [] });
+                return okJson({ noContact: 0, due: 0, openOk: 0, won: 0, lost: 0 });
+            }
+        });
+        await context.__careTest.loadCarePanel();
+        expect(els['care-notif-count'].attrs['aria-live']).toBe('polite');
+    });
+
+    test('double-submit: snooze i done raz na lot + powrót przycisku', async () => {
+        let snoozeRes: ((v: any) => void) | null = null;
+        let doneRes: ((v: any) => void) | null = null;
+        const snoozeGate = new Promise((r) => {
+            snoozeRes = r;
+        });
+        const doneGate = new Promise((r) => {
+            doneRes = r;
+        });
+        const calls: string[] = [];
+        const { els, context } = load({
+            calls,
+            fetchMock: (url: string) => {
+                if (url.includes('/snooze')) return snoozeGate;
+                if (url.includes('/api/care/rury/o1/done')) return doneGate;
+                if (url.includes('/api/care/queue'))
+                    return okJson({
+                        items: [
+                            {
+                                offerKind: 'rury',
+                                offerId: 'o1',
+                                status: 'DUE',
+                                overdueDays: 1,
+                                escalated: false,
+                                paused: false
+                            }
+                        ]
+                    });
+                return okJson({ noContact: 0, due: 1, openOk: 0, won: 0, lost: 0 });
+            }
+        });
+        await context.__careTest.loadCarePanel();
+        // Snooze: drugi klik w locie nie fetchuje, przycisk wraca po finally.
+        const row = els['care-queue-list'].children[0];
+        const findBtn = (root: any, label: string): any => {
+            for (const c of root.children || []) {
+                if (c.textContent === label) return c;
+                const hit = findBtn(c, label);
+                if (hit) return hit;
+            }
+            return null;
+        };
+        const snooze = findBtn(row, 'Odłóż +3d');
+        const p1 = (snooze.handlers || [])[0]();
+        for (let i = 0; i < 5; i++) await new Promise((r) => setTimeout(r, 0));
+        expect(snooze.disabled).toBe(true);
+        const p2 = (snooze.handlers || [])[0]();
+        for (let i = 0; i < 5; i++) await new Promise((r) => setTimeout(r, 0));
+        expect(calls.filter((c) => c.includes('/snooze'))).toHaveLength(1);
+        snoozeRes!(okJson({ ok: true }));
+        await p1;
+        await p2;
+        expect(snooze.disabled).toBe(false);
+        // Done z menu: świeży wiersz (snooze podmienia akcje na undo).
+        await context.__careTest.loadCarePanel();
+        for (let i = 0; i < 5; i++) await new Promise((r) => setTimeout(r, 0));
+        // Done z menu: drugi klik w locie nie fetchuje.
+        const findAll = (root: any, pred: (n: any) => boolean, out: any[] = []): any[] => {
+            for (const c of root.children || []) {
+                if (c.removed) continue;
+                if (pred(c)) out.push(c);
+                findAll(c, pred, out);
+            }
+            return out;
+        };
+        const menus = findAll(
+            els['care-queue-list'],
+            (n) => n.textContent === '⋮' && (n.handlers || []).length > 0
+        );
+        for (const fn of menus[0].handlers || []) await fn();
+        const items = findAll(els['care-queue-list'], (n) =>
+            (n.textContent || '').includes('Oznacz jako done')
+        );
+        const d1 = (items[0].handlers || [])[0]();
+        for (let i = 0; i < 5; i++) await new Promise((r) => setTimeout(r, 0));
+        expect(items[0].disabled).toBe(true);
+        const d2 = (items[0].handlers || [])[0]();
+        for (let i = 0; i < 5; i++) await new Promise((r) => setTimeout(r, 0));
+        expect(calls.filter((c) => c.includes('/api/care/rury/o1/done'))).toHaveLength(1);
+        doneRes!(okJson({ ok: true }));
+        await d1;
+        await d2;
+        expect(items[0].disabled).toBe(false);
     });
 });

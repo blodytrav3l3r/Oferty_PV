@@ -12,6 +12,9 @@ let queueRange = 'all';
 let queueCache = [];
 let queueNextCursor = null;
 let queueTotal = 0;
+// Flagi in-flight przeciw double-submit (odblokowanie zawsze w finally).
+const snoozeInFlight = new Set();
+const postCareInFlight = new Set();
 // ETag pakietu panelu per scope (304 = brak zmian, bez renderu).
 // Bounded: kombinacji scope|preset|rep może być wiele (admin) — trzymaj max 20.
 const panelEtags = {};
@@ -290,7 +293,15 @@ function fmtDelay(overdueDays, createdAt) {
 
 function renderNotifications(items, unreadCount, mailboxUserId) {
     const badge = document.getElementById('care-notif-count');
-    if (badge) badge.textContent = notifCountText(unreadCount);
+    if (badge) {
+        // Licznik ogłasza zmiany czytnikom (istniejący element, bez nowych kontenerów).
+        try {
+            badge.setAttribute('aria-live', 'polite');
+        } catch {
+            /* best-effort */
+        }
+        badge.textContent = notifCountText(unreadCount);
+    }
     const list = document.getElementById('care-notif-list');
     if (!list) return;
     list.textContent = '';
@@ -689,6 +700,28 @@ function matchFilter(it) {
 async function snoozeQuick(it, days, row) {
     const offerKind = it.offerKind;
     const offerId = it.offerId;
+    const key = String(offerKind) + ':' + String(offerId);
+    // Drugi klik w locie — ignoruj (BE i tak broni Idempotency-Key).
+    if (snoozeInFlight.has(key)) return;
+    // Blokada przycisków wiersza na czas fetcha (powrót w finally).
+    const locked = [];
+    try {
+        snoozeInFlight.add(key);
+        const btns =
+            row && typeof row.querySelectorAll === 'function' ? row.querySelectorAll('button') : [];
+        for (const b of btns || []) {
+            try {
+                if (!b.disabled) {
+                    b.disabled = true;
+                    locked.push(b);
+                }
+            } catch {
+                /* best-effort */
+            }
+        }
+    } catch {
+        /* best-effort */
+    }
     const until = new Date(Date.now() + days * 86400000).toISOString();
     const body = { snoozedUntil: until };
     if (it.careUpdatedAt) body.expectedUpdatedAt = it.careUpdatedAt;
@@ -723,6 +756,13 @@ async function snoozeQuick(it, days, row) {
         }
     } catch {
         ok = false;
+    } finally {
+        snoozeInFlight.delete(key);
+        try {
+            for (const b of locked) b.disabled = false;
+        } catch {
+            /* best-effort */
+        }
     }
     if (!ok) {
         if (conflict) {
@@ -1117,8 +1157,19 @@ function careMenu(it) {
             b.setAttribute('role', 'menuitem');
             b.textContent = label;
             b.addEventListener('click', async () => {
-                closeMenu();
-                await fn();
+                // Blokada przycisku na czas fetcha (powrót w finally).
+                if (b.disabled) return;
+                b.disabled = true;
+                try {
+                    closeMenu();
+                    await fn();
+                } finally {
+                    try {
+                        b.disabled = false;
+                    } catch {
+                        /* best-effort */
+                    }
+                }
             });
             menu.appendChild(b);
         };
@@ -1139,11 +1190,15 @@ function careMenu(it) {
 async function postCare(it, action) {
     const offerKind = it.offerKind;
     const offerId = it.offerId;
+    const key = String(offerKind) + ':' + String(offerId) + ':' + String(action);
+    // Drugi klik w locie — ignoruj (BE i tak broni Idempotency-Key).
+    if (postCareInFlight.has(key)) return;
     const body = {};
     if (it.careUpdatedAt) body.expectedUpdatedAt = it.careUpdatedAt;
     let ok = false;
     let conflict = false;
     try {
+        postCareInFlight.add(key);
         const resp = await fetch(
             '/api/care/' +
                 encodeURIComponent(offerKind) +
@@ -1164,6 +1219,8 @@ async function postCare(it, action) {
         conflict = !!resp && resp.status === 409;
     } catch {
         ok = false;
+    } finally {
+        postCareInFlight.delete(key);
     }
     if (!ok) {
         // 409 = ktoś zmienił stan w międzyczasie: odśwież do prawdy.
