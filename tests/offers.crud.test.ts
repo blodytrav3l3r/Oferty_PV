@@ -61,6 +61,11 @@ jest.mock('../src/prismaClient', () => ({
         orders_studnie_rel: {
             count: jest.fn()
         },
+        // F1: tabela istnieje w prod — mock bez niej udawałby pad shares.
+        document_shares: {
+            findMany: jest.fn(),
+            findFirst: jest.fn()
+        },
         $queryRaw: jest.fn().mockResolvedValue([]),
         $queryRawUnsafe: jest.fn().mockResolvedValue([]),
         $executeRaw: jest.fn(),
@@ -122,6 +127,8 @@ describe('Offers CRUD Routes', () => {
 
     beforeEach(() => {
         jest.resetAllMocks();
+        (prisma.document_shares.findMany as jest.Mock).mockResolvedValue([]);
+        (prisma.document_shares.findFirst as jest.Mock).mockResolvedValue(null);
         (prisma.$transaction as jest.Mock).mockImplementation(async (arg: any) => {
             if (typeof arg === 'function') return arg(prisma);
             if (Array.isArray(arg)) return Promise.all(arg);
