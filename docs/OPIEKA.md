@@ -73,6 +73,14 @@ Parametr `mailboxUserId` usunięty (martwy, ryzyko confused-deputy); skrzynka za
 - Retencja: bez zmian zachowania; działa wyłącznie w pełnym syncu.
   Punkt kontroli: sync z filtrem nie może mieć efektów ubocznych w DB.
 
+## Progi SLA (F8: default 24/7/72)
+
+Brak wiersza `care_sla_config.global` = progi domyślne (`firstContactH: 24`,
+`staleD: 7`, `escalationH: 72`) — opieka działa na pustej bazie. Uszkodzony
+wiersz (wartość `< 1` lub nieliczbowa) = głośny błąd `INVALID_SLA_CONFIG`
+(500), nie ciche maskowanie. Zapis przez `PUT /api/care/sla` waliduje zakresy
+(Zod `min(1)`).
+
 ## Fix F4-krytyczne
 
 - F2 narrow: filtr terminów tylko in-scope (AND), brak wycieku między zakresami.

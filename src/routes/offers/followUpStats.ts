@@ -170,14 +170,15 @@ router.get('/followups/stats', requireAuth, READ_LIMITER, async (req, res) => {
             return res.status(401).json({ error: 'Nieautoryzowany' });
         }
 
-        // Fail-closed: współdzielenie niedostępne = tylko własne (nigdy crash).
+        // F1: awaria shares = 500 z diagnostyką serwera (outer catch),
+        // nie ciche [] gubiące udostępnienia.
         const [sharedRury = [], sharedStudnie = []] =
             user.role === 'admin'
                 ? [[], []]
                 : ((await Promise.all([
                       getSharedIdsForUser(user.id, 'offer'),
                       getSharedIdsForUser(user.id, 'offer_studnie')
-                  ]).catch(() => [[], []])) as string[][]);
+                  ])) as string[][]);
 
         const parsed = statsQuerySchema.safeParse(req.query);
         if (!parsed.success) return res.status(400).json({ error: 'Nieprawidłowy zakres dat' });

@@ -551,6 +551,19 @@ export interface SlaConfig {
 }
 
 export const DEFAULT_SLA: SlaConfig = { firstContactH: 24, staleD: 7, escalationH: 72 };
+
+/** F8: wartość pola SLA z DB musi być dodatnią liczbą (jak w slaSchema PUT).
+ * Uszkodzony wiersz = throw (widoczny 500), nie ciche maskowanie defaultem. */
+function strictSlaField(v: unknown, name: string): number {
+    const n = Number(v);
+    if (!Number.isFinite(n) || n < 1) {
+        throw Object.assign(new Error(`Nieprawidłowa konfiguracja SLA: ${name}`), {
+            status: 500,
+            code: 'INVALID_SLA_CONFIG'
+        });
+    }
+    return n;
+}
 export const MAX_SNOOZE_DAYS = 14;
 
 type RawDb = QueryRawDb;
@@ -655,11 +668,13 @@ export async function getSlaConfig(db: RawDb): Promise<SlaConfig> {
         Prisma.sql`SELECT "firstContactH", "staleD", "escalationH" FROM "care_sla_config" WHERE "id" = 'global'`
     );
     const r = rows[0];
+    // F8: brak wiersza = default 24/7/72 (pusta/legacy DB działa).
+    // Uszkodzony wiersz = głośny błąd, nie ciche maskowanie defaultem.
     if (!r) return { ...DEFAULT_SLA };
     return {
-        firstContactH: Number(r.firstContactH) || DEFAULT_SLA.firstContactH,
-        staleD: Number(r.staleD) || DEFAULT_SLA.staleD,
-        escalationH: Number(r.escalationH) || DEFAULT_SLA.escalationH
+        firstContactH: strictSlaField(r.firstContactH, 'firstContactH'),
+        staleD: strictSlaField(r.staleD, 'staleD'),
+        escalationH: strictSlaField(r.escalationH, 'escalationH')
     };
 }
 
@@ -697,9 +712,9 @@ async function getScopedSlaRow(
     const r = rows[0];
     if (!r) return null;
     return {
-        firstContactH: Number(r.firstContactH) || DEFAULT_SLA.firstContactH,
-        staleD: Number(r.staleD) || DEFAULT_SLA.staleD,
-        escalationH: Number(r.escalationH) || DEFAULT_SLA.escalationH
+        firstContactH: strictSlaField(r.firstContactH, 'firstContactH'),
+        staleD: strictSlaField(r.staleD, 'staleD'),
+        escalationH: strictSlaField(r.escalationH, 'escalationH')
     };
 }
 

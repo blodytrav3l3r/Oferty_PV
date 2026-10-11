@@ -134,4 +134,14 @@ describe('P2 GET /api/care/panel', () => {
             ).status
         ).toBe(400);
     });
+
+    it('F5 lock-in: pad ETag = pełny 200 bez ETag aplikacji (best-effort, legacy DB)', async () => {
+        etagMock.mockRejectedValueOnce(new Error('legacy DB bez tabeli'));
+        const res = await request(app()).get('/api/care/panel?scope=mine');
+        expect(res.status).toBe(200);
+        // Brak ETag aplikacji w body (null zamiast hasha; expressowy weak ETag nie liczy się).
+        expect(res.body.etag).toBeNull();
+        expect(res.body.ok).toBe(true);
+        expect(res.body.queue.totalCount).toBe(1);
+    });
 });

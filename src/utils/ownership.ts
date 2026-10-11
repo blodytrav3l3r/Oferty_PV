@@ -159,8 +159,10 @@ export async function getSharedIdsForUser(userId: string, documentType: string):
         if (!rows) return [];
         return rows.map((r: any) => r.documentId);
     } catch (e) {
-        logger.warn('Ownership', 'Błąd getSharedIdsForUser (fail-closed)', String(e));
-        return [];
+        // F1: awaria odczytu shares = widoczny błąd (500 w route), nie ciche [].
+        // Ciche [] gubiło udostępnienia bez śladu w UI.
+        logger.error('Ownership', 'Błąd getSharedIdsForUser (fail-visible)', String(e));
+        throw e;
     }
 }
 

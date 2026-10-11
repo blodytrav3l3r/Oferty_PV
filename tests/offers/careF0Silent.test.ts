@@ -113,7 +113,7 @@ describe('F0 silent-failure hunt', () => {
         mockedPrisma.$queryRaw.mockResolvedValue([]);
     });
 
-    test.skip('F1 shares catch [DEFERRED next batch]: blad DB musi propagowac, nie cicho []', async () => {
+    test('F1 shares catch [F1-500]: blad DB propaguje jako 500, nie cicho []', async () => {
         mockedPrisma.document_shares.findMany.mockRejectedValueOnce(new Error('DB down'));
         await expect(getSharedIdsForUser('u1', 'offer')).rejects.toThrow();
     });
@@ -156,7 +156,7 @@ describe('F0 silent-failure hunt', () => {
         expect(sql.sql).toMatch(/IS NOT NULL/i);
     });
 
-    test.skip('F5 etag catch [DEFERRED next batch]: blad ETag nie moze cicho dac 200 z etag null', async () => {
+    test.skip('F5 etag [DOCUMENTED best-effort, patrz followUpCarePanel F5 lock-in]: blad ETag daje 200 bez naglowka', async () => {
         mockedPrisma.$queryRaw.mockImplementation(async (...a: unknown[]) => {
             const first = a[0] as unknown as { sql?: string };
             if (
@@ -193,8 +193,16 @@ describe('F0 silent-failure hunt', () => {
         ).toThrow();
     });
 
-    test.skip('F8 SLA default [DEFERRED next batch]: brak konfiguracji nie moze cicho wrocic defaultu', async () => {
-        const fakeDb = { $queryRaw: async () => [] as never };
-        await expect(getSlaConfig(fakeDb)).rejects.toThrow();
+    test('F8 SLA [F8-strict]: brak wiersza = default, uszkodzony wiersz = throw', async () => {
+        const emptyDb = { $queryRaw: async () => [] as never };
+        await expect(getSlaConfig(emptyDb)).resolves.toEqual({
+            firstContactH: 24,
+            staleD: 7,
+            escalationH: 72
+        });
+        const corruptDb = {
+            $queryRaw: async () => [{ firstContactH: 0, staleD: 'x', escalationH: null }] as never
+        };
+        await expect(getSlaConfig(corruptDb)).rejects.toThrow('Nieprawidłowa konfiguracja SLA');
     });
 });
