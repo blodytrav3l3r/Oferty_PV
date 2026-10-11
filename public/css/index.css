@@ -2592,8 +2592,9 @@ html[data-theme='light'] body.index-page.logged-in::before {
     border-radius: var(--radius-pill);
 }
 .care-seg .btn[aria-pressed='true'] {
-    background: var(--bg-card);
-    color: var(--text-primary);
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--white);
     box-shadow: var(--shadow-sm);
 }
 /* Słupek proporcji (flex:N z JS) */

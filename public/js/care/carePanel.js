@@ -1486,4 +1486,11 @@ if (typeof document !== 'undefined') {
             if (ok) startCarePolling();
         });
     });
+    // Sesja async (/api/auth/me) — init na DOMContentLoaded widzi pusty
+    // window.currentUser (rola user: select ukryty, brak opcji). Dociągnij
+    // po gotowości użytkownika (ten sam wzorzec co opsDashboard.js).
+    document.addEventListener('sok:user-ready', () => {
+        syncScopeButtons();
+        loadCarePanel();
+    });
 }
