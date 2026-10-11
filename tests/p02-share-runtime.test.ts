@@ -20,6 +20,7 @@ jest.mock('../src/middleware/auth', () => ({
 
 jest.mock('../src/middleware/rateLimiters', () => ({
     WRITE_LIMITER: (_req: any, _res: any, next: any) => next(),
+    READ_LIMITER: (_req: any, _res: any, next: any) => next(),
     EXPORT_LIMITER: (_req: any, _res: any, next: any) => next()
 }));
 
