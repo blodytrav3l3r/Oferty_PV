@@ -1363,5 +1363,93 @@ describe('carePanel', () => {
         );
         expect(banner).toBeDefined();
         expect(String(banner.textContent)).toContain('h1');
+        expect(String(banner.textContent)).toContain('moja skrzynka');
+    });
+
+    test('podgląd repa bez alertów: pusty stan mówi o własnej skrzynce', async () => {
+        const { els, context } = load({
+            role: 'admin',
+            fetchMock: (url: string) => {
+                if (url.includes('/api/users-for-assignment'))
+                    return okJson({
+                        data: [{ id: 'h1', username: 'adam', role: 'user' }]
+                    });
+                if (url.includes('/api/care/panel'))
+                    return {
+                        ok: true,
+                        status: 200,
+                        json: async () => ({
+                            ok: true,
+                            summary: {
+                                noContact: 0,
+                                due: 0,
+                                openOk: 0,
+                                won: 0,
+                                lost: 0,
+                                abandoned: 0,
+                                totalCount: 0
+                            },
+                            queue: { items: [], nextCursor: null, totalCount: 0 },
+                            notifications: { items: [], unreadCount: 0 },
+                            sla: { firstContactH: 24, staleD: 7, escalationH: 72 }
+                        })
+                    };
+                return okJson({ noContact: 0, due: 0, openOk: 0, won: 0, lost: 0 });
+            }
+        });
+        context.window.currentUser = { role: 'admin', id: 'a1' };
+        await context.__careTest.loadCarePanel();
+        for (let i = 0; i < 10; i++) await new Promise((r) => setTimeout(r, 0));
+        const sel = els['care-rep'];
+        sel.value = 'h1';
+        for (const fn of sel.handlers || []) await fn();
+        for (let i = 0; i < 10; i++) await new Promise((r) => setTimeout(r, 0));
+        const texts: string[] = [];
+        const walk = (n: any): void => {
+            if (n.textContent) texts.push(n.textContent);
+            for (const c of n.children || []) walk(c);
+        };
+        walk(els['care-notif-list']);
+        const joined = texts.join(' ');
+        expect(joined).toContain('moja skrzynka');
+        expect(joined).toContain('Brak Twoich powiadomień');
+    });
+
+    test('bez repa: pusty stan bez wzmianki o podglądzie', async () => {
+        const { els, context } = load({
+            fetchMock: (url: string) => {
+                if (url.includes('/api/care/panel'))
+                    return {
+                        ok: true,
+                        status: 200,
+                        json: async () => ({
+                            ok: true,
+                            summary: {
+                                noContact: 0,
+                                due: 0,
+                                openOk: 0,
+                                won: 0,
+                                lost: 0,
+                                abandoned: 0,
+                                totalCount: 0
+                            },
+                            queue: { items: [], nextCursor: null, totalCount: 0 },
+                            notifications: { items: [], unreadCount: 0 },
+                            sla: { firstContactH: 24, staleD: 7, escalationH: 72 }
+                        })
+                    };
+                return okJson({ noContact: 0, due: 0, openOk: 0, won: 0, lost: 0 });
+            }
+        });
+        await context.__careTest.loadCarePanel();
+        const texts: string[] = [];
+        const walk = (n: any): void => {
+            if (n.textContent) texts.push(n.textContent);
+            for (const c of n.children || []) walk(c);
+        };
+        walk(els['care-notif-list']);
+        const joined = texts.join(' ');
+        expect(joined).toContain('Brak nowych powiadomień.');
+        expect(joined).not.toContain('moja skrzynka');
     });
 });

@@ -228,25 +228,31 @@ function renderNotifications(items, unreadCount) {
     const list = document.getElementById('care-notif-list');
     if (!list) return;
     list.textContent = '';
+    // A+C: podgląd repa — kolejka za repem, skrzynka własna.
+    // textContent (bez innerHTML) = brak powierzchni XSS.
+    let repLabel = '';
     if (careRep) {
-        // A+C: podgląd repa — kolejka za repem, skrzynka własna.
-        // textContent (bez innerHTML) = brak powierzchni XSS.
-        const banner = document.createElement('div');
-        banner.className = 'care-notif-preview';
-        banner.setAttribute('role', 'status');
         const sel = document.getElementById('care-rep');
-        const label =
+        repLabel =
             (sel && sel.selectedOptions && sel.selectedOptions[0]
                 ? sel.selectedOptions[0].textContent
                 : '') || careRep;
+        repLabel = String(repLabel).trim();
+        const banner = document.createElement('div');
+        banner.className = 'care-notif-preview';
+        banner.setAttribute('role', 'status');
         banner.textContent =
-            'Podgląd ofert: ' + String(label).trim() + ' — powiadomienia dotyczą Twojej skrzynki.';
+            'Podgląd ofert: ' +
+            repLabel +
+            ' — poniżej Twoje powiadomienia (moja skrzynka), nie wybranego handlowca.';
         list.appendChild(banner);
     }
     if (!items || items.length === 0) {
         const empty = document.createElement('span');
         empty.className = 'recycled-empty';
-        empty.textContent = 'Brak nowych powiadomień.';
+        empty.textContent = careRep
+            ? 'Brak Twoich powiadomień (podgląd ofert: ' + repLabel + ').'
+            : 'Brak nowych powiadomień.';
         list.appendChild(empty);
         return;
     }
