@@ -324,6 +324,37 @@ describe('P0.2 care queue SQL', () => {
         }
     });
 
+    it('getCareQueue: max 2 SELECT (data + count)', async () => {
+        let calls = 0;
+        const db = freshDb();
+        try {
+            const fake = {
+                $queryRaw: async <T>(...args: unknown[]): Promise<T> => {
+                    calls += 1;
+                    return rawAll(db, args[0] as Prisma.Sql) as unknown as T;
+                }
+            };
+            const res = await getCareQueue(fake, U1, { nowIso: NOW, limit: 2 });
+            expect(calls).toBe(2);
+            expect(res.items).toHaveLength(2);
+            expect(res.totalCount).toBe(4);
+            expect(typeof res.nextCursor).toBe('string');
+            const tail = await getCareQueue(fake, U1, {
+                nowIso: NOW,
+                limit: 10
+            });
+            expect(tail.nextCursor).toBeNull();
+            db.close();
+        } catch (e) {
+            try {
+                db.close();
+            } catch {
+                /* ignore */
+            }
+            throw e;
+        }
+    });
+
     it('cursor !!!: INVALID_CURSOR 400 z code (luka #9, poziom serwisu)', async () => {
         const db = freshDb();
         try {

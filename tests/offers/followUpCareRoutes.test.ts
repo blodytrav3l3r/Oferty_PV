@@ -245,4 +245,19 @@ describe('P1 care routes guardy', () => {
             .send({ expectedUpdatedAt: 123 });
         expect(bad.status).toBe(400);
     });
+
+    it('snooze z przestarzałym expectedUpdatedAt → 409', async () => {
+        stateUpsert.mockRejectedValueOnce(
+            Object.assign(new Error('Stan zmieniony przez kogoś innego'), {
+                status: 409,
+                code: 'CARE_STATE_CONFLICT'
+            })
+        );
+        const res = await request(app()).post('/api/care/rury/o1/snooze').send({
+            snoozedUntil: '2026-10-12T00:00:00.000Z',
+            expectedUpdatedAt: '2026-10-09T00:00:00.000Z'
+        });
+        expect(res.status).toBe(409);
+        expect(res.body.error).toBe('Stan zmieniony przez kogoś innego');
+    });
 });

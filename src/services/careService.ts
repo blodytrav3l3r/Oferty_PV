@@ -951,13 +951,17 @@ export async function syncCareNotifications(
     // Z repOwner funkcja wraca wcześniej (patrz początek) — sprzątanie
     // robi pełny sync bez filtra, więc ten blok zawsze działa bez filtra.
     let resolved = 0;
-    {
+    try {
         const resolvedRows = (await db.$queryRaw<Array<{ id: string }>>(
             Prisma.sql`UPDATE "care_notifications" SET "readAt" = ${nowIso} WHERE "userId" = ${uid} AND "readAt" IS NULL
             AND ("offerKind", "offerId") NOT IN (SELECT "offerKind", "offerId" FROM (${cand}) WHERE "ntype" IS NOT NULL)
             RETURNING "id"`
         )) as Array<{ id: string }>;
         resolved = resolvedRows.length;
+    } catch (e) {
+        // Driver bez RETURNING: auto-read wykonany (UPDATE bez zwrotki),
+        // licznik nieznany — resolved zostaje 0, nie kłamiemy.
+        logger.debug('Care', 'Sync auto-read bez RETURNING, licznik 0', String(e));
     }
     // Retencja leniwa (brak workera w S.O.K.): przeczytane >90d precz,
     // skrzynka maks. 500 wierszy (najświeższe). Bounded inbox.
