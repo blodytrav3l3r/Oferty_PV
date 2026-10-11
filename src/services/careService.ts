@@ -461,7 +461,8 @@ export function buildCareQueueView(
 }
 
 /** ETag panelu: 1 statement ze skrajnymi znacznikami (scope + user w haśle route).
- * Nadmiarowy (globalne maksy) — fałszywy 200 nieszkodliwy, brakujący 304 nie istnieje. */
+ * Nadmiarowy (globalne maksy) — fałszywy 200 nieszkodliwy, brakujący 304 nie istnieje.
+ * j/k: MAX(updatedAt) ofert — każda edycja (w tym zmiana opiekuna) unieważnia 304. */
 export async function getCareEtagInput(
     db: QueryRawDb,
     userId: string
@@ -476,7 +477,9 @@ export async function getCareEtagInput(
             (SELECT MAX("createdAt") FROM "offers_rel") AS "f",
             (SELECT MAX("createdAt") FROM "offers_studnie_rel") AS "g",
             (SELECT "updatedAt" FROM "care_sla_config" WHERE "id" = 'global') AS "h",
-            (SELECT MAX("updatedAt") FROM "care_sla_scopes") AS "i"`
+            (SELECT MAX("updatedAt") FROM "care_sla_scopes") AS "i",
+            (SELECT MAX("updatedAt") FROM "offers_rel") AS "j",
+            (SELECT MAX("updatedAt") FROM "offers_studnie_rel") AS "k"`
     )) as Array<Record<string, string | null>>;
     const r = rows[0] ?? {};
     return [
@@ -488,7 +491,9 @@ export async function getCareEtagInput(
         r.f ?? null,
         r.g ?? null,
         r.h ?? null,
-        r.i ?? null
+        r.i ?? null,
+        r.j ?? null,
+        r.k ?? null
     ];
 }
 
