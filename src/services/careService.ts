@@ -158,7 +158,11 @@ function ownerCond(
     const col = Prisma.raw(`"${alias}"."userId"`);
     const idCol = Prisma.raw(`"${alias}"."id"`);
     const shareCond = Prisma.sql`EXISTS (SELECT 1 FROM "document_shares" ds WHERE ds."sharedWithUserId" = ${user.id} AND ds."documentType" = ${docType} AND ds."documentId" = ${idCol})`;
-    if (!where) return Prisma.sql`1=1`;
+    if (!where) {
+        // scope=all (tylko admin): repId zawęża do ofert handlowca, nigdy 1=1.
+        if (narrowOwner) return Prisma.sql`${col} = ${narrowOwner}`;
+        return Prisma.sql`1=1`;
+    }
     const uid = (where as { userId?: unknown }).userId;
     if (typeof uid === 'string')
         return narrowOwner
@@ -792,12 +796,18 @@ export async function syncCareNotifications(
     const inserted = num(insCnt[0]?.c);
     // 2: auto-read jednym UPDATE (oferta zniknęła z kandydatów:
     // terminal/pauza/poza scope) — liczba zamkniętych z RETURNING.
-    const resolvedRows = (await db.$queryRaw<Array<{ id: string }>>(
-        Prisma.sql`UPDATE "care_notifications" SET "readAt" = ${nowIso} WHERE "userId" = ${uid} AND "readAt" IS NULL
+    // Z repOwner (podgląd przełożonego): TYLKO dopisywanie. Auto-read
+    // zamknąłby wiersze spoza aktywnego filtra (niszczenie cudzych
+    // powiadomień) — sprzątanie robi pełny sync bez filtra.
+    let resolved = 0;
+    if (!opts?.repOwner) {
+        const resolvedRows = (await db.$queryRaw<Array<{ id: string }>>(
+            Prisma.sql`UPDATE "care_notifications" SET "readAt" = ${nowIso} WHERE "userId" = ${uid} AND "readAt" IS NULL
             AND ("offerKind", "offerId") NOT IN (SELECT "offerKind", "offerId" FROM (${cand}) WHERE "ntype" IS NOT NULL)
             RETURNING "id"`
-    )) as Array<{ id: string }>;
-    const resolved = resolvedRows.length;
+        )) as Array<{ id: string }>;
+        resolved = resolvedRows.length;
+    }
     // Retencja leniwa (brak workera w S.O.K.): przeczytane >90d precz,
     // skrzynka maks. 500 wierszy (najświeższe). Bounded inbox.
     const cutoff = new Date(Date.parse(nowIso) - 90 * 86400000).toISOString();

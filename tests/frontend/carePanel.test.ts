@@ -10,6 +10,7 @@ describe('carePanel', () => {
         fetchMock: (url: string, _init?: any) => any;
         role?: string;
         calls?: string[];
+        timers?: number[];
     }) => {
         const file = path.join(__dirname, '../../public/js/care/carePanel.js');
         let code = fs.readFileSync(file, 'utf8');
@@ -109,7 +110,10 @@ describe('carePanel', () => {
         const listeners: Record<string, any[]> = {};
         const context: any = {
             console,
-            setTimeout: (_fn: any) => 0 as unknown as NodeJS.Timeout,
+            setTimeout: (..._a: any[]) => {
+                opts.timers?.push(1);
+                return 0 as unknown as NodeJS.Timeout;
+            },
             clearTimeout: () => {},
             setInterval: () => 0,
             clearInterval: () => {},
@@ -1057,6 +1061,19 @@ describe('carePanel', () => {
         expect(texts.join(' ')).toContain('A1');
         expect(texts.join(' ')).toContain('A2');
         expect(findMore(els['care-queue-list'])).toBeNull();
+    });
+
+    test('martwy polling: start nawet po nieudanym pierwszym loadzie', async () => {
+        const timers: number[] = [];
+        const { listeners } = load({
+            timers,
+            fetchMock: () => {
+                throw new Error('sieć padła');
+            }
+        });
+        for (const fn of listeners['DOMContentLoaded'] || []) fn();
+        for (let i = 0; i < 10; i++) await new Promise((r) => setTimeout(r, 0));
+        expect(timers.length).toBeGreaterThanOrEqual(1);
     });
 
     test('sok:user-ready doczytuje select handlowca (wyscig sesji)', async () => {

@@ -289,4 +289,72 @@ describe('P2 sync powiadomień', () => {
             throw e;
         }
     });
+
+    it('repOwner: podgląd nie zamyka wierszy spoza filtra', async () => {
+        const ADMIN: CareUser = { id: 'admin', role: 'admin', subUsers: [] };
+        const db = new DatabaseSync(':memory:');
+        db.exec(`CREATE TABLE offers_rel (id TEXT PRIMARY KEY, "userId" TEXT, "createdAt" TEXT, "offer_number" TEXT, "clientName" TEXT);
+        CREATE TABLE offers_studnie_rel (id TEXT PRIMARY KEY, "userId" TEXT, "createdAt" TEXT, "offer_number" TEXT, "clientName" TEXT, "totalPrice" REAL);
+        CREATE TABLE document_shares (id TEXT PRIMARY KEY, "sharedWithUserId" TEXT, "documentType" TEXT, "documentId" TEXT);
+        CREATE TABLE care_states ("offerKind" TEXT NOT NULL, "offerId" TEXT NOT NULL, "snoozedUntil" TEXT, "doneAt" TEXT, "updatedBy" TEXT, "updatedAt" TEXT NOT NULL,
+            CONSTRAINT "care_states_pkey" PRIMARY KEY ("offerKind", "offerId"));
+        CREATE TABLE care_notifications ("id" TEXT NOT NULL, "userId" TEXT NOT NULL, "offerKind" TEXT NOT NULL, "offerId" TEXT NOT NULL, "type" TEXT NOT NULL, "readAt" TEXT, "createdAt" TEXT NOT NULL,
+            CONSTRAINT "care_notifications_pkey" PRIMARY KEY ("id"));
+        CREATE TABLE offer_follow_ups (id TEXT PRIMARY KEY, "offerKind" TEXT, "offerId" TEXT, "createdByUserId" TEXT, "contactedAt" TEXT, "createdAt" TEXT, outcome TEXT, "nextContactAt" TEXT);`);
+        try {
+            const f = fake(db);
+            const past = '2026-09-30T10:00:00.000Z';
+            // oA (u1, OPEN due) + oB (u2, OPEN due ale done = stale).
+            db.prepare('INSERT INTO offers_rel (id, "userId", "createdAt") VALUES (?,?,?)').run(
+                'oA',
+                'u1',
+                past
+            );
+            db.prepare('INSERT INTO offers_rel (id, "userId", "createdAt") VALUES (?,?,?)').run(
+                'oB',
+                'u2',
+                past
+            );
+            for (const [fid, oid] of [
+                ['fA', 'oA'],
+                ['fB', 'oB']
+            ]) {
+                db.prepare(
+                    'INSERT INTO offer_follow_ups (id, "offerKind", "offerId", "createdByUserId", "contactedAt", "createdAt", outcome, "nextContactAt") VALUES (?,?,?,?,?,?,?,?)'
+                ).run(fid, 'rury', oid, 'u1', past, past, 'OPEN', past);
+            }
+            db.prepare(
+                'INSERT INTO care_states ("offerKind", "offerId", "snoozedUntil", "doneAt", "updatedBy", "updatedAt") VALUES (?,?,?,?,?,?)'
+            ).run('rury', 'oB', null, NOW, 'u2', NOW);
+            const old = '2026-10-09T00:00:00.000Z';
+            db.prepare(
+                'INSERT INTO care_notifications ("id", "userId", "offerKind", "offerId", "type", "readAt", "createdAt") VALUES (?,?,?,?,?,?,?)'
+            ).run('nA', 'admin', 'rury', 'oA', 'CALLBACK_DUE', null, old);
+            db.prepare(
+                'INSERT INTO care_notifications ("id", "userId", "offerKind", "offerId", "type", "readAt", "createdAt") VALUES (?,?,?,?,?,?,?)'
+            ).run('nB', 'admin', 'rury', 'oB', 'CALLBACK_DUE', null, old);
+            // Podgląd repa u1: wiersz oB (stale, spoza filtra) ZOSTAJE nieprzeczytany.
+            await syncCareNotifications(f, ADMIN, 'all', NOW, SLA, { repOwner: 'u1' });
+            const unreadAfterRep = (
+                await listCareNotifications(f, 'admin', { unreadOnly: true, limit: 50 })
+            ).items.map((n) => n.offerId);
+            expect(unreadAfterRep).toContain('oA');
+            expect(unreadAfterRep).toContain('oB');
+            // Pełny sync bez filtra: stale oB zamyka, żywe oA zostaje.
+            await syncCareNotifications(f, ADMIN, 'all', '2026-10-10T13:00:00.000Z', SLA);
+            const unreadAfterFull = (
+                await listCareNotifications(f, 'admin', { unreadOnly: true, limit: 50 })
+            ).items.map((n) => n.offerId);
+            expect(unreadAfterFull).toContain('oA');
+            expect(unreadAfterFull).not.toContain('oB');
+            db.close();
+        } catch (e) {
+            try {
+                db.close();
+            } catch {
+                /* ignore */
+            }
+            throw e;
+        }
+    });
 });

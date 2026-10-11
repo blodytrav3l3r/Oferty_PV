@@ -5,13 +5,19 @@
  */
 import { DatabaseSync } from 'node:sqlite';
 import type { Prisma } from '../../generated/prisma';
-import { getCareEtagInput, getCareQueue, type CareUser } from '../../src/services/careService';
+import {
+    buildCareQueueQueries,
+    getCareEtagInput,
+    getCareQueue,
+    type CareUser
+} from '../../src/services/careService';
 
 const NOW = '2026-10-10T00:00:00.000Z';
 const T0 = '2026-10-01T00:00:00.000Z';
 const T1 = '2026-10-11T00:00:00.000Z';
 const U1: CareUser = { id: 'u1', role: 'user', subUsers: [] };
 const U2: CareUser = { id: 'u2', role: 'user', subUsers: [] };
+const ADMIN: CareUser = { id: 'admin', role: 'admin', subUsers: [] };
 
 function freshDb(): DatabaseSync {
     const db = new DatabaseSync(':memory:');
@@ -87,6 +93,37 @@ describe('ETag panelu a zmiana opiekuna', () => {
             );
             const after = await getCareEtagInput(f, 'u1');
             expect(after).not.toEqual(before);
+            db.close();
+        } catch (e) {
+            try {
+                db.close();
+            } catch {
+                /* ignore */
+            }
+            throw e;
+        }
+    });
+
+    it('scope=all + repOwner: tylko oferty repa (nie 1=1)', () => {
+        const db = freshDb();
+        try {
+            db.prepare(
+                'INSERT INTO offers_rel (id, "userId", "createdAt", "updatedAt") VALUES (?, ?, ?, ?)'
+            ).run('o2', 'u2', T0, T0);
+            db.prepare(
+                `INSERT INTO offer_follow_ups (id, "offerKind", "offerId", "createdByUserId",
+                 "contactedAt", "createdAt", outcome, "nextContactAt") VALUES (?,?,?,?,?,?,?,?)`
+            ).run('f2', 'rury', 'o2', 'u2', T0, T0, 'OPEN', null);
+            const { data } = buildCareQueueQueries(ADMIN, {
+                nowIso: NOW,
+                scope: 'all',
+                repOwner: 'u1'
+            });
+            const raw = data as unknown as { sql: string; values: unknown[] };
+            const rows = db.prepare(raw.sql).all(...(raw.values as never[])) as Array<{
+                offerId: string;
+            }>;
+            expect(rows.map((r) => r.offerId)).toEqual(['o1']);
             db.close();
         } catch (e) {
             try {

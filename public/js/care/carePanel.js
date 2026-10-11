@@ -1482,15 +1482,18 @@ export function careBumpPolling() {
 
 if (typeof document !== 'undefined') {
     document.addEventListener('DOMContentLoaded', () => {
-        loadCarePanel().then((ok) => {
-            if (ok) startCarePolling();
+        loadCarePanel().then(() => {
+            startCarePolling();
         });
     });
     // Sesja async (/api/auth/me) — init na DOMContentLoaded widzi pusty
     // window.currentUser (rola user: select ukryty, brak opcji). Dociągnij
     // po gotowości użytkownika (ten sam wzorzec co opsDashboard.js).
+    // Polling startuje ZAWSZE (też po nieudanym pierwszym loadzie) —
+    // inaczej panel umiera po cichu do przeładowania strony.
     document.addEventListener('sok:user-ready', () => {
         syncScopeButtons();
         loadCarePanel();
+        startCarePolling();
     });
 }
