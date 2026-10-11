@@ -3102,6 +3102,18 @@ html[data-theme='light'] body.index-page.logged-in::before {
     gap: 0.5rem;
     flex-wrap: wrap;
 }
+.care-rep-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+.care-rep-label {
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+}
+.care-rep-select {
+    max-width: 12rem;
+}
 @media (max-width: 1100px) {
     .care-dashboard-grid {
         grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);

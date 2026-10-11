@@ -58,6 +58,8 @@ export interface CareQueueOptions {
     /** Zakres po dacie utworzenia oferty (ISO-8601, walidowane w route). */
     from?: string;
     to?: string;
+    /** Zawężenie do 1 handlowca (repId po resolveRepOwner, AND wewnątrz scope). */
+    repOwner?: string | null;
 }
 
 /** Zakres born (o./s.createdAt) doklejany AND do scope WHERE — nigdy go nie luzuje. */
@@ -129,27 +131,49 @@ function resolveOwnerWhere(user: CareUser, scope: CareScope): Record<string, unk
     return buildRoleWhereClause({ id: user.id, role: 'user', subUsers: [] } as unknown as User);
 }
 
+/**
+ * Walidacja wyboru handlowca (kafelki REP). Zwraca efektywne owner-id albo
+ * null (brak zawężenia). Fail-closed 403 — nigdy silent downgrade:
+ * user tylko siebie, pro siebie + subUsers, admin każdego.
+ */
+export function resolveRepOwner(user: CareUser, repId: string | undefined | null): string | null {
+    if (!repId) return null;
+    if (repId === user.id) return user.id;
+    if (user.role === 'admin') return repId;
+    if (user.role === 'pro' && (user.subUsers || []).includes(repId)) return repId;
+    throw forbidden('repId spoza dozwolonego zakresu');
+}
+
 /** Tłumaczy where z buildRoleWhereClause na warunek SQL dla aliasu tabeli ofert.
- * Zawiera shares via EXISTS (jak buildRoleWhereConditionWithShares) — nie JOIN. */
+ * Zawiera shares via EXISTS (jak buildRoleWhereConditionWithShares) — nie JOIN.
+ * narrowOwner (repId po walidacji resolveRepOwner) dokłada AND na właściciela
+ * wewnątrz scope — nigdy zamiast scope (brak poszerzania uprawnień). */
 function ownerCond(
     user: CareUser,
     alias: 'o' | 's',
     docType: 'offer' | 'offer_studnie',
-    where: Record<string, unknown> | undefined
+    where: Record<string, unknown> | undefined,
+    narrowOwner?: string | null
 ): Prisma.Sql {
     const col = Prisma.raw(`"${alias}"."userId"`);
     const idCol = Prisma.raw(`"${alias}"."id"`);
     const shareCond = Prisma.sql`EXISTS (SELECT 1 FROM "document_shares" ds WHERE ds."sharedWithUserId" = ${user.id} AND ds."documentType" = ${docType} AND ds."documentId" = ${idCol})`;
     if (!where) return Prisma.sql`1=1`;
     const uid = (where as { userId?: unknown }).userId;
-    if (typeof uid === 'string') return Prisma.sql`(${col} = ${uid} OR ${shareCond})`;
+    if (typeof uid === 'string')
+        return narrowOwner
+            ? Prisma.sql`(${col} = ${uid} OR ${shareCond}) AND ${col} = ${narrowOwner}`
+            : Prisma.sql`(${col} = ${uid} OR ${shareCond})`;
     if (uid !== null && typeof uid === 'object' && Array.isArray((uid as { in?: unknown }).in)) {
         const ids = ((uid as { in: unknown[] }).in as unknown[]).filter(
             (v): v is string => typeof v === 'string' && v !== ''
         );
         if (ids.length === 0) return Prisma.sql`${shareCond}`;
-        return Prisma.sql`(${col} IN (${Prisma.join(ids)}) OR ${shareCond})`;
+        return narrowOwner
+            ? Prisma.sql`(${col} IN (${Prisma.join(ids)}) OR ${shareCond}) AND ${col} = ${narrowOwner}`
+            : Prisma.sql`(${col} IN (${Prisma.join(ids)}) OR ${shareCond})`;
     }
+    if (narrowOwner) return Prisma.sql`(${shareCond}) AND ${col} = ${narrowOwner}`;
     return Prisma.sql`${shareCond}`;
 }
 
@@ -167,8 +191,8 @@ export function buildCareQueueQueries(
 ): { data: Prisma.Sql; count: Prisma.Sql } {
     const scope = opts.scope ?? 'mine';
     const ownerWhere = resolveOwnerWhere(user, scope);
-    const scopeRury = ownerCond(user, 'o', 'offer', ownerWhere);
-    const scopeStudnie = ownerCond(user, 's', 'offer_studnie', ownerWhere);
+    const scopeRury = ownerCond(user, 'o', 'offer', ownerWhere, opts.repOwner);
+    const scopeStudnie = ownerCond(user, 's', 'offer_studnie', ownerWhere, opts.repOwner);
     const fuScope = followUpScope(scopeRury, scopeStudnie);
     const limit = clampCareLimit(opts.limit);
     const bornRury = bornRange('o', opts.from, opts.to);
@@ -254,11 +278,11 @@ export async function getCareSummary(
     user: CareUser,
     scope: CareScope,
     nowIso: string,
-    opts?: { from?: string; to?: string }
+    opts?: { from?: string; to?: string; repOwner?: string | null }
 ): Promise<CareSummary> {
     const ownerWhere = resolveOwnerWhere(user, scope);
-    const scopeRury = ownerCond(user, 'o', 'offer', ownerWhere);
-    const scopeStudnie = ownerCond(user, 's', 'offer_studnie', ownerWhere);
+    const scopeRury = ownerCond(user, 'o', 'offer', ownerWhere, opts?.repOwner);
+    const scopeStudnie = ownerCond(user, 's', 'offer_studnie', ownerWhere, opts?.repOwner);
     const fuScope = followUpScope(scopeRury, scopeStudnie);
     const bornRury = bornRange('o', opts?.from, opts?.to);
     const bornStudnie = bornRange('s', opts?.from, opts?.to);
@@ -671,11 +695,15 @@ export interface CareNotification {
     number: string | null;
 }
 
-function notifBase(user: CareUser, scope: CareScope): { rury: Prisma.Sql; studnie: Prisma.Sql } {
+function notifBase(
+    user: CareUser,
+    scope: CareScope,
+    repOwner?: string | null
+): { rury: Prisma.Sql; studnie: Prisma.Sql } {
     const ownerWhere = resolveOwnerWhere(user, scope);
     return {
-        rury: ownerCond(user, 'o', 'offer', ownerWhere),
-        studnie: ownerCond(user, 's', 'offer_studnie', ownerWhere)
+        rury: ownerCond(user, 'o', 'offer', ownerWhere, repOwner),
+        studnie: ownerCond(user, 's', 'offer_studnie', ownerWhere, repOwner)
     };
 }
 
@@ -684,9 +712,10 @@ function notifCandidates(
     user: CareUser,
     scope: CareScope,
     nowIso: string,
-    sla: SlaConfig
+    sla: SlaConfig,
+    repOwner?: string | null
 ): Prisma.Sql {
-    const { rury, studnie } = notifBase(user, scope);
+    const { rury, studnie } = notifBase(user, scope, repOwner);
     const fuScope = followUpScope(rury, studnie);
     const dayAhead = new Date(Date.parse(nowIso) + 86400000).toISOString();
     const staleCut = new Date(Date.parse(nowIso) - sla.staleD * 86400000).toISOString();
@@ -737,10 +766,13 @@ export async function syncCareNotifications(
     user: CareUser,
     scope: CareScope,
     nowIso: string,
-    sla: SlaConfig
+    sla: SlaConfig,
+    opts?: { repOwner?: string | null; mailboxUserId?: string }
 ): Promise<CareSyncResult> {
-    const uid = user.id;
-    const cand = notifCandidates(user, scope, nowIso, sla);
+    // Skrzynka wybranego handlowca (podgląd przełożonego); zapis/odczyt
+    // pojedynczych powiadomień zostaje self-only (guard w route).
+    const uid = opts?.mailboxUserId ?? user.id;
+    const cand = notifCandidates(user, scope, nowIso, sla, opts?.repOwner);
     // 1: wstaw brakujące (deduplikacja w SQL, nie pętla w JS).
     await db.$queryRaw(
         Prisma.sql`INSERT OR IGNORE INTO "care_notifications" ("id", "userId", "offerKind", "offerId", "type", "readAt", "createdAt")

@@ -4,6 +4,7 @@ const QUEUE_LIMIT = 50;
 let timer = null;
 let pollMs = POLL_MS;
 let careScope = 'mine';
+let careRep = '';
 let queueFilter = 'all';
 let queueSort = 'sla';
 let queueView = 'list';
@@ -72,10 +73,15 @@ function rangeQuery() {
     return '&from=' + encodeURIComponent(r.from) + '&to=' + encodeURIComponent(r.to);
 }
 
-/* ETag per scope+zakres (osobny hash na BE też niesie from/to). */
+/* ETag per scope+zakres+rep (osobny hash na BE też niesie from/to/rep). */
 function panelKey() {
     const r = resolveQueueRange();
-    return careScope + '|' + (r.from || '') + '|' + (r.to || '');
+    return careScope + '|' + (r.from || '') + '|' + (r.to || '') + '|' + (careRep || '');
+}
+
+/* Zawężenie do 1 handlowca (repId waliduje BE via resolveRepOwner, fail-closed 403). */
+function repQuery() {
+    return careRep ? '&repId=' + encodeURIComponent(careRep) : '';
 }
 
 /* hidePaused bez kontrolki UI (zawsze false) — ścieżka pod przyszły filtr. */
@@ -293,6 +299,7 @@ async function clearNotifications() {
         const json = await getJson(
             '/api/care/notifications?scope=' +
                 careScope +
+                repQuery() +
                 '&unreadOnly=true&limit=100&t=' +
                 Date.now()
         );
@@ -812,6 +819,7 @@ async function loadMoreQueue() {
     const json = await getJson(
         '/api/care/queue?scope=' +
             careScope +
+            repQuery() +
             '&limit=' +
             QUEUE_LIMIT +
             '&cursor=' +
@@ -1003,12 +1011,24 @@ function ensureRangeUI() {
 }
 
 function syncScopeButtons() {
+    const role = careRole();
     document.querySelectorAll('.care-scope-btn').forEach((btn) => {
+        const s = btn.dataset.careScope;
+        // user: tylko Moje; pro: Moje+Zespół; admin: +Wszystkie.
+        const visible =
+            s === 'mine' || (s === 'team' && role !== 'user') || (s === 'all' && role === 'admin');
+        try {
+            btn.hidden = !visible;
+        } catch {
+            /* best-effort */
+        }
+        if (!visible && careScope === s) careScope = 'mine';
         const active = btn.dataset.careScope === careScope;
         btn.classList.toggle('active', active);
         btn.classList.toggle('btn-secondary', !active);
         btn.setAttribute('aria-pressed', active ? 'true' : 'false');
     });
+    syncRepUI();
 }
 
 function syncQueueFilterButtons() {
@@ -1036,7 +1056,15 @@ function bindPanelControls() {
         if (btn.dataset.bound) return;
         btn.dataset.bound = '1';
         btn.addEventListener('click', () => {
-            careScope = btn.dataset.careScope === 'team' ? 'team' : 'mine';
+            const want = btn.dataset.careScope;
+            const role = careRole();
+            if (want === 'all' && role !== 'admin') return;
+            if (want === 'team' && role === 'user') return;
+            careScope = want === 'team' ? 'team' : want === 'all' ? 'all' : 'mine';
+            // Zmiana zakresu czyści rep spoza nowego zakresu (fail-closed BE i tak broni).
+            careRep = '';
+            const sel = document.getElementById('care-rep');
+            if (sel) sel.value = '';
             syncScopeButtons();
             loadCarePanel();
         });
@@ -1096,6 +1124,121 @@ function careRole() {
         /* ignore */
     }
     return 'user';
+}
+
+function careUserId() {
+    try {
+        if (typeof window !== 'undefined' && window.currentUser && window.currentUser.id)
+            return String(window.currentUser.id);
+    } catch {
+        /* ignore */
+    }
+    return '';
+}
+
+function careSubUsers() {
+    try {
+        const s =
+            typeof window !== 'undefined' && window.currentUser
+                ? window.currentUser.subUsers
+                : null;
+        if (Array.isArray(s)) return s.map(String);
+    } catch {
+        /* ignore */
+    }
+    return [];
+}
+
+/* Select handlowca: user ukryty, pro self+subUsers, admin wszyscy.
+ * Opcje z /api/users-for-assignment (bez hasła/subUsers na drucie). */
+let repLoading = false;
+async function syncRepUI() {
+    const sel = document.getElementById('care-rep');
+    let wrap = null;
+    try {
+        wrap =
+            (sel && sel.closest && sel.closest('.care-rep-wrap')) ||
+            (typeof document.querySelector === 'function'
+                ? document.querySelector('.care-rep-wrap')
+                : null);
+    } catch {
+        wrap = null;
+    }
+    const role = careRole();
+    if (!sel) return;
+    const show = role === 'admin' || role === 'pro';
+    try {
+        if (wrap) wrap.hidden = !show;
+        else sel.hidden = !show;
+    } catch {
+        /* best-effort */
+    }
+    if (!show) {
+        careRep = '';
+        return;
+    }
+    if (sel.options && sel.options.length > 1) {
+        // Opcje już załadowane — tylko przytnij do zakresu roli.
+        filterRepOptions(sel, role);
+        return;
+    }
+    if (repLoading) return;
+    repLoading = true;
+    try {
+        const json = await getJson('/api/users-for-assignment?t=' + Date.now());
+        const users = (json && json.data) || [];
+        sel.textContent = '';
+        const all = document.createElement('option');
+        all.value = '';
+        all.textContent = 'Wszyscy';
+        sel.appendChild(all);
+        for (const u of users) {
+            if (!u || !u.id) continue;
+            if (role === 'pro') {
+                const allowed = [careUserId(), ...careSubUsers()];
+                if (!allowed.includes(String(u.id))) continue;
+            }
+            const opt = document.createElement('option');
+            opt.value = String(u.id);
+            const name =
+                (u.firstName || u.lastName
+                    ? String(u.firstName || '') + ' ' + String(u.lastName || '')
+                    : u.username || u.id
+                ).trim() || String(u.id);
+            opt.textContent = name + ' (' + String(u.role || 'user').toUpperCase() + ')';
+            sel.appendChild(opt);
+        }
+        sel.value = careRep || '';
+        if (!sel.dataset.bound) {
+            sel.dataset.bound = '1';
+            sel.addEventListener('change', () => {
+                careRep = sel.value || '';
+                careBumpPolling();
+                loadCarePanel();
+            });
+        }
+    } catch {
+        /* best-effort: select zostaje z samą opcją Wszyscy */
+    } finally {
+        repLoading = false;
+    }
+}
+
+function filterRepOptions(sel, role) {
+    try {
+        if (role === 'admin') return;
+        const allowed = new Set([careUserId(), ...careSubUsers(), '']);
+        for (const opt of sel.options || []) {
+            if (opt.value === '') continue;
+            if (!allowed.has(String(opt.value))) opt.hidden = true;
+        }
+        if (careRep && !allowed.has(careRep)) {
+            careRep = '';
+            sel.value = '';
+        }
+    } catch {
+        /* best-effort */
+    }
 }
 
 function slaScopeForRole(role) {
@@ -1214,6 +1357,7 @@ async function loadPanelPacket() {
         resp = await fetch(
             '/api/care/panel?scope=' +
                 careScope +
+                repQuery() +
                 '&limit=' +
                 QUEUE_LIMIT +
                 rangeQuery() +
@@ -1248,7 +1392,7 @@ async function loadCarePanelLegacy() {
     let summary = null;
     try {
         summary = await getJson(
-            '/api/care/summary?scope=' + careScope + rangeQuery() + '&t=' + Date.now()
+            '/api/care/summary?scope=' + careScope + repQuery() + rangeQuery() + '&t=' + Date.now()
         );
     } catch {
         showError();
@@ -1261,12 +1405,14 @@ async function loadCarePanelLegacy() {
             getJson(
                 '/api/care/notifications?scope=' +
                     careScope +
+                    repQuery() +
                     '&unreadOnly=true&limit=20&t=' +
                     Date.now()
             ),
             getJson(
                 '/api/care/queue?scope=' +
                     careScope +
+                    repQuery() +
                     '&limit=' +
                     QUEUE_LIMIT +
                     rangeQuery() +

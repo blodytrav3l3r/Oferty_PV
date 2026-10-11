@@ -10,6 +10,7 @@ import {
     getCareSummary,
     getCareEtagInput,
     buildCareQueueView,
+    resolveRepOwner,
     CareScope,
     clampCareLimit,
     CareKind,
@@ -63,6 +64,10 @@ const rangeFields = {
     from: isoDateTime.optional(),
     to: isoDateTime.optional()
 };
+// Kafelek handlowca (repId po resolveRepOwner, AND wewnątrz scope).
+const repField = {
+    repId: z.string().min(1).max(50).optional()
+};
 function rangeOk(d: { from?: string; to?: string }): boolean {
     return !d.from || !d.to || Date.parse(d.from) <= Date.parse(d.to);
 }
@@ -79,13 +84,15 @@ const queueQuerySchema = z
         cursor: z.string().max(2000).optional(),
         limit: z.coerce.number().int().min(1).max(100).optional(),
         hidePaused: queryBool,
-        ...rangeFields
+        ...rangeFields,
+        ...repField
     })
     .refine(rangeSpanOk, { message: 'Zakres dat: from <= to, maksymalnie 366 dni' });
 const summaryQuerySchema = z
     .object({
         scope: scopeSchema.optional(),
-        ...rangeFields
+        ...rangeFields,
+        ...repField
     })
     .refine(rangeSpanOk, { message: 'Zakres dat: from <= to, maksymalnie 366 dni' });
 
@@ -104,10 +111,12 @@ router.get('/summary', requireAuth, READ_LIMITER, async (req, res) => {
         const parsed = summaryQuerySchema.safeParse(req.query);
         if (!parsed.success) return res.status(400).json({ error: 'Nieprawidłowe parametry' });
         const scope = toScope(parsed.data.scope);
+        const repOwner = resolveRepOwner(user, parsed.data.repId);
         const nowIso = new Date().toISOString();
         const counts = await getCareSummary(prisma, user, scope, nowIso, {
             from: parsed.data.from,
-            to: parsed.data.to
+            to: parsed.data.to,
+            repOwner
         });
         return res.json({ ok: true, scope, now: nowIso, ...counts });
     } catch (e) {
@@ -127,6 +136,7 @@ router.get('/queue', requireAuth, READ_LIMITER, async (req, res) => {
         const parsed = queueQuerySchema.safeParse(req.query);
         if (!parsed.success) return res.status(400).json({ error: 'Nieprawidłowe parametry' });
         const scope = toScope(parsed.data.scope);
+        const repOwner = resolveRepOwner(user, parsed.data.repId);
         const nowIso = new Date().toISOString();
         const limit = clampCareLimit(parsed.data.limit);
         const hidePaused = parsed.data.hidePaused ?? false;
@@ -137,7 +147,8 @@ router.get('/queue', requireAuth, READ_LIMITER, async (req, res) => {
             limit,
             hidePaused,
             from: parsed.data.from,
-            to: parsed.data.to
+            to: parsed.data.to,
+            repOwner
         });
         const sla = await getEffectiveSla(prisma, user, scope);
         const items = buildCareQueueView(result.items, sla, nowIso);
@@ -168,6 +179,7 @@ router.get('/panel', requireAuth, READ_LIMITER, async (req, res) => {
         const parsed = queueQuerySchema.safeParse(req.query);
         if (!parsed.success) return res.status(400).json({ error: 'Nieprawidłowe parametry' });
         const scope = toScope(parsed.data.scope);
+        const repOwner = resolveRepOwner(user, parsed.data.repId);
         // ETag best-effort: brak tabeli na legacy DB nie może wywalić panelu.
         let etag: string | null = null;
         try {
@@ -181,6 +193,7 @@ router.get('/panel', requireAuth, READ_LIMITER, async (req, res) => {
                             scope,
                             parsed.data.from ?? null,
                             parsed.data.to ?? null,
+                            repOwner,
                             await getCareEtagInput(prisma, user.id)
                         ])
                     )
@@ -199,7 +212,8 @@ router.get('/panel', requireAuth, READ_LIMITER, async (req, res) => {
         const [summary, queue, sla] = await Promise.all([
             getCareSummary(prisma, user, scope, nowIso, {
                 from: parsed.data.from,
-                to: parsed.data.to
+                to: parsed.data.to,
+                repOwner
             }),
             getCareQueue(prisma, user, {
                 scope,
@@ -208,11 +222,14 @@ router.get('/panel', requireAuth, READ_LIMITER, async (req, res) => {
                 limit,
                 hidePaused,
                 from: parsed.data.from,
-                to: parsed.data.to
+                to: parsed.data.to,
+                repOwner
             }),
             getEffectiveSla(prisma, user, scope)
         ]);
-        const sync = await syncCareNotifications(prisma, user, scope, nowIso, sla);
+        const sync = await syncCareNotifications(prisma, user, scope, nowIso, sla, {
+            repOwner
+        });
         logger.debug(
             'Care',
             `panel scope=${scope} inserted=${sync.inserted} resolved=${sync.resolved}`
@@ -526,7 +543,8 @@ router.put('/sla', requireAuth, WRITE_LIMITER, async (req, res) => {
 const notifQuerySchema = z.object({
     scope: scopeSchema.optional(),
     unreadOnly: queryBool,
-    limit: z.coerce.number().int().min(1).max(100).optional()
+    limit: z.coerce.number().int().min(1).max(100).optional(),
+    ...repField
 });
 
 router.get('/notifications', requireAuth, READ_LIMITER, async (req, res) => {
@@ -537,9 +555,12 @@ router.get('/notifications', requireAuth, READ_LIMITER, async (req, res) => {
         const parsed = notifQuerySchema.safeParse(req.query);
         if (!parsed.success) return res.status(400).json({ error: 'Nieprawidłowe parametry' });
         const scope = toScope(parsed.data.scope);
+        const repOwner = resolveRepOwner(user, parsed.data.repId);
         const nowIso = new Date().toISOString();
         const sla = await getEffectiveSla(prisma, user, scope);
-        const sync = await syncCareNotifications(prisma, user, scope, nowIso, sla);
+        const sync = await syncCareNotifications(prisma, user, scope, nowIso, sla, {
+            repOwner
+        });
         logger.debug(
             'Care',
             `notifications scope=${scope} inserted=${sync.inserted} resolved=${sync.resolved}`

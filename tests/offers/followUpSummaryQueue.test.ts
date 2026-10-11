@@ -23,6 +23,7 @@ jest.mock('../../src/services/careService', () => ({
     getCareSummary: (...a: unknown[]) => summaryMock(...a),
     getCareQueue: (...a: unknown[]) => queueMock(...a),
     getSlaConfig: jest.fn(async () => ({ firstContactH: 24, staleD: 7, escalationH: 72 })),
+    resolveRepOwner: jest.requireActual('../../src/services/careService').resolveRepOwner,
     getEffectiveSla: jest.requireActual('../../src/services/careService').getEffectiveSla,
     buildCareQueueView: jest.requireActual('../../src/services/careService').buildCareQueueView,
     clampCareLimit: jest.requireActual('../../src/services/careService').clampCareLimit
@@ -130,5 +131,53 @@ describe('P0.3 care API read-only', () => {
     it('zły scope → 400', async () => {
         const res = await request(app()).get('/api/care/summary?scope=xxx');
         expect(res.status).toBe(400);
+    });
+
+    it('repId: user cudzy → 403 (fail-closed)', async () => {
+        (globalThis as any).__careUser = { id: 'u1', role: 'user', subUsers: [] };
+        summaryMock.mockResolvedValue({
+            noContact: 0,
+            due: 0,
+            openOk: 0,
+            won: 0,
+            lost: 0,
+            abandoned: 0,
+            totalCount: 0
+        });
+        const res = await request(app()).get('/api/care/summary?scope=mine&repId=obcy');
+        expect(res.status).toBe(403);
+    });
+
+    it('repId: pro spoza subUsers → 403, własny sub → 200 z repOwner', async () => {
+        (globalThis as any).__careUser = { id: 'p1', role: 'pro', subUsers: ['s1'] };
+        summaryMock.mockResolvedValue({
+            noContact: 0,
+            due: 0,
+            openOk: 0,
+            won: 0,
+            lost: 0,
+            abandoned: 0,
+            totalCount: 0
+        });
+        expect((await request(app()).get('/api/care/summary?scope=team&repId=obcy')).status).toBe(
+            403
+        );
+        const ok = await request(app()).get('/api/care/summary?scope=team&repId=s1');
+        expect(ok.status).toBe(200);
+        const opts = summaryMock.mock.calls[summaryMock.mock.calls.length - 1][4] as {
+            repOwner: string | null;
+        };
+        expect(opts.repOwner).toBe('s1');
+    });
+
+    it('repId: admin dowolny → 200 z repOwner (queue + panel)', async () => {
+        (globalThis as any).__careUser = { id: 'a1', role: 'admin', subUsers: [] };
+        queueMock.mockResolvedValue({ items: [], nextCursor: null, totalCount: 0 });
+        const res = await request(app()).get('/api/care/queue?scope=all&repId=dowolny&limit=10');
+        expect(res.status).toBe(200);
+        const opts = queueMock.mock.calls[queueMock.mock.calls.length - 1][2] as {
+            repOwner: string | null;
+        };
+        expect(opts.repOwner).toBe('dowolny');
     });
 });
