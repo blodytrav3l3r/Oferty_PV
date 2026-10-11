@@ -163,6 +163,10 @@ router.get('/queue', requireAuth, READ_LIMITER, async (req, res) => {
             totalCount: result.totalCount
         });
     } catch (e) {
+        const se = e as { status?: number; code?: string };
+        if (se.status === 400 && se.code === 'INVALID_CURSOR') {
+            return res.status(400).json({ error: 'Nieprawidłowy cursor', code: 'INVALID_CURSOR' });
+        }
         if ((e as { status?: number }).status === 403) {
             return res.status(403).json({ error: 'Brak uprawnień do zakresu' });
         }
@@ -257,6 +261,10 @@ router.get('/panel', requireAuth, READ_LIMITER, async (req, res) => {
             sla
         });
     } catch (e) {
+        const se = e as { status?: number; code?: string };
+        if (se.status === 400 && se.code === 'INVALID_CURSOR') {
+            return res.status(400).json({ error: 'Nieprawidłowy cursor', code: 'INVALID_CURSOR' });
+        }
         if ((e as { status?: number }).status === 403) {
             return res.status(403).json({ error: 'Brak uprawnień do zakresu' });
         }

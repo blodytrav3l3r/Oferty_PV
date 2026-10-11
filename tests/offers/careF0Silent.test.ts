@@ -131,7 +131,7 @@ describe('F0 silent-failure hunt', () => {
         }
     });
 
-    test.skip('F3 lostValue fallback [DEFERRED next batch]: nieznany klucz nie moze pompowac lost', async () => {
+    test('F3 lostValue fallback: nieznany klucz nie moze pompowac lost', async () => {
         const q = mockedPrisma.$queryRaw;
         q.mockResolvedValueOnce([]);
         q.mockResolvedValueOnce([{ total: 1, nocontact: 0 }]);
@@ -149,7 +149,7 @@ describe('F0 silent-failure hunt', () => {
         expect(res.body.stats.lostValue).toBe(0);
     });
 
-    test.skip('F4 perRep NULL [DEFERRED next batch]: wiersze bez autora nie moga tworzyc repa null', () => {
+    test('F4 perRep NULL: wiersze bez autora nie moga tworzyc repa null', () => {
         const scope = realPrisma.sql`1=1`;
         const cte = buildLatestCte(scope);
         const sql = buildPerRepSql(scope, cte) as unknown as { sql: string };
@@ -183,7 +183,7 @@ describe('F0 silent-failure hunt', () => {
         expect(oldData).toBeNull();
     });
 
-    test.skip('F7 cursor [DEFERRED next batch]: uszkodzony cursor musi byc 400, nie cichy restart od zera', () => {
+    test('F7 cursor: uszkodzony cursor musi byc 400, nie cichy restart od zera', () => {
         expect(decodeCareCursor('!!!not-valid!!!')).toBeNull();
         expect(() =>
             buildCareQueueQueries({ id: 'u1', role: 'user', subUsers: [] } as any, {

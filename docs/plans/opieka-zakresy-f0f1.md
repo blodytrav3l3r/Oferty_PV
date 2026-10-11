@@ -64,3 +64,11 @@ GO tej paczki obejmuje **tylko F0+F1 docs-only**. F2–F4 opisane dla kontekstu,
 - ODKLADAM: F1/F3/F5/F7/F8 (HIGH/MED, fallback/UX/liczniki) — osobna paczka, nie blokuja F4.
 - BRAMA: fixy F2+F6 → GREEN F2+F6 w `careF0Silent` + `test:quick` + e2e → commit `commit.mjs`, bez pusha.
 - DOWOD: `tests/offers/careF0Silent.test.ts:113-124` (F2), `:163-170` (F6); ledger `_active-evidence.md` E-004/E-007.
+
+## Decyzja F7+F4+F3 (2026-10-11, append, batch GO)
+
+- TERAZ: F7+F4+F3 — małe, bezpieczne, zero decyzji produktowej; RED proof czeka (FAIL najpierw, potem GREEN).
+- DLACZEGO: mały diff BE (reuse istniejących filtrów/scope), fail-closed bez zmiany semantyki, test regresji dowodzi naprawy.
+- DEFERRED: F1/F5/F8 — fail-open vs fail-closed to decyzja produktowa (ciche `[]` / best-effort 200 / silent DEFAULT mogą być zamierzone), nie technikaliom.
+- DEFERRED: UX toggles (portfel/zespół/udostępnione/firma) — osobna paczka frontend, po kontrakcie F1.
+- BRAMA: GREEN F7+F4+F3 + `test:quick` → werdykt o commicie; bez pusha (Tier czerwony).

@@ -59,6 +59,9 @@ Autoryzacja: cookie `authToken` (HttpOnly). Pełna spec: Swagger `/api/docs`.
 
 - F2 narrow: filtr terminów tylko in-scope (AND), brak wycieku między zakresami.
 - F6 audyt: prev-przed-write (odczyt stanu przed zapisem terminalu).
+- F7 cursor: nieprawidłowy cursor w kolejce → 400 (nie 500), bez wycieku scope.
+- F4 perRep: raport per-rep bez wierszy NULL (JOIN po ownership, brak sierot w agregacji).
+- F3 lost: status LOST tylko z jawnego outcome LOST_* (nie z braku kontaktu).
 
 ## Linki
 

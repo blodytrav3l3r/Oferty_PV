@@ -91,7 +91,7 @@ export function buildPerRepSql(fuScope: Prisma.Sql, latestCte: Prisma.Sql): Pris
         LEFT JOIN latest l ON l."offerKind" = f."offerKind"
             AND l."offerId" = f."offerId"
             AND l."createdByUserId" = f."createdByUserId"
-        WHERE ${fuScope} GROUP BY f."createdByUserId" ORDER BY "contacts" DESC`;
+        WHERE (${fuScope} AND f."createdByUserId" IS NOT NULL) GROUP BY f."createdByUserId" ORDER BY "contacts" DESC`;
 }
 
 // P4.2: jeden kontrakt konwersji (toNum z searchUtils), brak lokalnych wariantów.
@@ -363,7 +363,7 @@ router.get('/followups/stats', requireAuth, READ_LIMITER, async (req, res) => {
             if (r.k === 'won') wonValue += num(r.v);
             else if (r.k === 'open') openValue += num(r.v);
             else if (r.k === 'total') totalValue += num(r.v);
-            else lostValue += num(r.v);
+            else if (r.k === 'lost') lostValue += num(r.v);
         }
         // Zamówienia osobno: nigdy nie sumowane z ofertami (osobny kafelek).
         const ordersValue = num(ordersRury[0]?.ovr) + num(ordersStudnie[0]?.ovs);

@@ -111,6 +111,13 @@ function forbidden(msg: string): Error {
     return e;
 }
 
+function invalidCursor(msg: string): Error {
+    const e = new Error(msg) as Error & { status: number; code: string };
+    e.status = 400;
+    e.code = 'INVALID_CURSOR';
+    return e;
+}
+
 /**
  * Przynależność ofert via buildRoleWhereClause (SSoT reguły ról).
  * mine = tylko własne; team = własne + subUsers (pro/admin, inaczej 403);
@@ -249,10 +256,13 @@ export function buildCareQueueQueries(
     )`;
 
     let cursorSql: Prisma.Sql = Prisma.sql`1=1`;
-    const cursor =
-        typeof opts.cursor === 'string' && opts.cursor !== ''
-            ? decodeCareCursor(opts.cursor)
-            : null;
+    const rawCursor = typeof opts.cursor === 'string' ? opts.cursor : null;
+    let cursor: CareCursor | null = null;
+    if (rawCursor !== null && rawCursor !== '') {
+        const decoded = decodeCareCursor(rawCursor);
+        if (!decoded) throw invalidCursor('Nieprawidłowy cursor');
+        cursor = decoded;
+    }
     if (cursor) {
         const cn = cursor.n ?? NULL_NEXT;
         cursorSql = Prisma.sql`(("bucketWeight" > ${cursor.w}) OR ("bucketWeight" = ${cursor.w} AND ((COALESCE("next", ${NULL_NEXT}) > ${cn}) OR (COALESCE("next", ${NULL_NEXT}) = ${cn} AND (("offerKind" > ${cursor.k}) OR ("offerKind" = ${cursor.k} AND "offerId" > ${cursor.i}))))))`;
