@@ -201,7 +201,7 @@ router.get('/panel', requireAuth, READ_LIMITER, async (req, res) => {
                             parsed.data.to ?? null,
                             repOwner,
                             parsed.data.hidePaused ?? false,
-                            await getCareEtagInput(prisma, user.id)
+                            await getCareEtagInput(prisma, repOwner ?? user.id)
                         ])
                     )
                     .digest('hex') +
@@ -242,10 +242,14 @@ router.get('/panel', requireAuth, READ_LIMITER, async (req, res) => {
             'Care',
             `panel scope=${scope} inserted=${sync.inserted} resolved=${sync.resolved}`
         );
-        const { items: notifItems, unreadCount } = await listCareNotifications(prisma, user.id, {
-            unreadOnly: true,
-            limit: QUEUE_PANEL_NOTIF_LIMIT
-        });
+        const { items: notifItems, unreadCount } = await listCareNotifications(
+            prisma,
+            repOwner ?? user.id,
+            {
+                unreadOnly: true,
+                limit: QUEUE_PANEL_NOTIF_LIMIT
+            }
+        );
         return res.json({
             ok: true,
             scope,
@@ -257,7 +261,12 @@ router.get('/panel', requireAuth, READ_LIMITER, async (req, res) => {
                 nextCursor: queue.nextCursor,
                 totalCount: queue.totalCount
             },
-            notifications: { items: notifItems, unreadCount, sync },
+            notifications: {
+                items: notifItems,
+                unreadCount,
+                sync,
+                mailboxUserId: repOwner ?? user.id
+            },
             sla
         });
     } catch (e) {
@@ -588,11 +597,19 @@ router.get('/notifications', requireAuth, READ_LIMITER, async (req, res) => {
             'Care',
             `notifications scope=${scope} inserted=${sync.inserted} resolved=${sync.resolved}`
         );
-        const { items, unreadCount } = await listCareNotifications(prisma, user.id, {
+        const { items, unreadCount } = await listCareNotifications(prisma, repOwner ?? user.id, {
             unreadOnly: parsed.data.unreadOnly ?? true,
             limit: clampCareLimit(parsed.data.limit)
         });
-        return res.json({ ok: true, scope, now: nowIso, items, unreadCount, sync });
+        return res.json({
+            ok: true,
+            scope,
+            now: nowIso,
+            items,
+            unreadCount,
+            sync,
+            mailboxUserId: repOwner ?? user.id
+        });
     } catch (e) {
         if ((e as { status?: number }).status === 403) {
             return res.status(403).json({ error: 'Brak uprawnień do zakresu' });

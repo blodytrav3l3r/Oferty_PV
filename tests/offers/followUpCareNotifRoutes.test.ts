@@ -105,6 +105,24 @@ describe('P2 notifications routes', () => {
         );
     });
 
+    it('GET z repId (admin) → lista cudzej skrzynki + mailboxUserId', async () => {
+        (globalThis as any).__careUser = { id: 'a1', role: 'admin', subUsers: [] };
+        const res = await request(app()).get('/api/care/notifications?scope=all&repId=h1');
+        expect(res.status).toBe(200);
+        expect(listMock).toHaveBeenCalledWith(
+            expect.anything(),
+            'h1',
+            expect.objectContaining({ unreadOnly: true })
+        );
+        expect(res.body.mailboxUserId).toBe('h1');
+    });
+
+    it('GET z cudzym repId (user) → 403, lista nie wołana', async () => {
+        const res = await request(app()).get('/api/care/notifications?scope=mine&repId=h1');
+        expect(res.status).toBe(403);
+        expect(listMock).not.toHaveBeenCalled();
+    });
+
     it('scope=all nie-admin → 403 z serwisu', async () => {
         const err = new Error('scope=all tylko dla admin') as Error & { status: number };
         err.status = 403;

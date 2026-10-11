@@ -222,12 +222,22 @@ function fmtDelay(overdueDays, createdAt) {
     return '';
 }
 
-function renderNotifications(items, unreadCount) {
+function renderNotifications(items, unreadCount, mailboxUserId) {
     const badge = document.getElementById('care-notif-count');
     if (badge) badge.textContent = notifCountText(unreadCount);
     const list = document.getElementById('care-notif-list');
     if (!list) return;
     list.textContent = '';
+    // Skrzynka podąża za repem; cudza = podgląd read-only (zapis tylko własny, I-003).
+    const foreign = !!careRep && !!mailboxUserId && String(mailboxUserId) !== careUserId();
+    const clear = document.getElementById('care-notif-clear');
+    if (clear) {
+        try {
+            clear.hidden = foreign;
+        } catch {
+            /* best-effort */
+        }
+    }
     // A+C: podgląd repa — kolejka za repem, skrzynka własna.
     // textContent (bez innerHTML) = brak powierzchni XSS.
     let repLabel = '';
@@ -241,18 +251,21 @@ function renderNotifications(items, unreadCount) {
         const banner = document.createElement('div');
         banner.className = 'care-notif-preview';
         banner.setAttribute('role', 'status');
-        banner.textContent =
-            'Podgląd ofert: ' +
-            repLabel +
-            ' — poniżej Twoje powiadomienia (moja skrzynka), nie wybranego handlowca.';
+        banner.textContent = foreign
+            ? 'Skrzynka: ' + repLabel + ' — powiadomienia wybranego handlowca (podgląd read-only).'
+            : 'Podgląd ofert: ' +
+              repLabel +
+              ' — poniżej Twoje powiadomienia (moja skrzynka), nie wybranego handlowca.';
         list.appendChild(banner);
     }
     if (!items || items.length === 0) {
         const empty = document.createElement('span');
         empty.className = 'recycled-empty';
-        empty.textContent = careRep
-            ? 'Brak Twoich powiadomień (podgląd ofert: ' + repLabel + ').'
-            : 'Brak nowych powiadomień.';
+        empty.textContent = foreign
+            ? 'Brak powiadomień (skrzynka: ' + repLabel + ').'
+            : careRep
+              ? 'Brak Twoich powiadomień (podgląd ofert: ' + repLabel + ').'
+              : 'Brak nowych powiadomień.';
         list.appendChild(empty);
         return;
     }
@@ -314,37 +327,40 @@ function renderNotifications(items, unreadCount) {
             }
         }
         card.appendChild(lines);
-        const read = document.createElement('button');
-        read.type = 'button';
-        read.className = 'care-link-btn';
-        read.setAttribute('data-notif-id', String(n.id));
-        read.setAttribute(
-            'aria-label',
-            'Oznacz jako przeczytane (' + (NOTIF_LABEL[n.type] || String(n.type)) + '): ' + who
-        );
-        read.textContent = 'Oznacz jako przeczytane';
-        read.addEventListener('click', async () => {
-            let ok = false;
-            try {
-                const resp = await fetch(
-                    '/api/care/notifications/' + encodeURIComponent(String(n.id)) + '/read',
-                    {
-                        method: 'POST',
-                        credentials: 'same-origin'
-                    }
-                );
-                ok = !!resp && resp.ok;
-            } catch {
-                ok = false;
-            }
-            if (!ok) {
-                careToastError('Nie oznaczono jako przeczytane — spróbuj ponownie.');
-                return;
-            }
-            careBumpPolling();
-            loadCarePanel();
-        });
-        foot.appendChild(read);
+        // Cudza skrzynka = read-only: brak przycisku zapisu (BE i tak broni 404, I-003).
+        if (!foreign) {
+            const read = document.createElement('button');
+            read.type = 'button';
+            read.className = 'care-link-btn';
+            read.setAttribute('data-notif-id', String(n.id));
+            read.setAttribute(
+                'aria-label',
+                'Oznacz jako przeczytane (' + (NOTIF_LABEL[n.type] || String(n.type)) + '): ' + who
+            );
+            read.textContent = 'Oznacz jako przeczytane';
+            read.addEventListener('click', async () => {
+                let ok = false;
+                try {
+                    const resp = await fetch(
+                        '/api/care/notifications/' + encodeURIComponent(String(n.id)) + '/read',
+                        {
+                            method: 'POST',
+                            credentials: 'same-origin'
+                        }
+                    );
+                    ok = !!resp && resp.ok;
+                } catch {
+                    ok = false;
+                }
+                if (!ok) {
+                    careToastError('Nie oznaczono jako przeczytane — spróbuj ponownie.');
+                    return;
+                }
+                careBumpPolling();
+                loadCarePanel();
+            });
+            foot.appendChild(read);
+        }
         card.appendChild(foot);
         grid.appendChild(card);
     }
@@ -1575,7 +1591,11 @@ async function loadPanelPacket() {
         renderSummary(json.summary);
         renderQueue(json.queue.items, json.queue.nextCursor, json.queue.totalCount);
         if (json.notifications)
-            renderNotifications(json.notifications.items, json.notifications.unreadCount ?? 0);
+            renderNotifications(
+                json.notifications.items,
+                json.notifications.unreadCount ?? 0,
+                json.notifications.mailboxUserId
+            );
         setSyncText();
         clearError();
         return 'fresh';
@@ -1619,7 +1639,7 @@ async function loadCarePanelLegacy() {
             )
         ]);
         if (queue) renderQueue(queue.items, queue.nextCursor, queue.totalCount);
-        if (notif) renderNotifications(notif.items, notif.unreadCount ?? 0);
+        if (notif) renderNotifications(notif.items, notif.unreadCount ?? 0, notif.mailboxUserId);
         setSyncText();
         clearError();
     } catch {

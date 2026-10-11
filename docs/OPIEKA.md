@@ -57,32 +57,34 @@ Pulpit (widget: liczniki + top wiersze)
 
 Autoryzacja: cookie `authToken` (HttpOnly). Pełna spec: Swagger `/api/docs`.
 
-## Centrum powiadomień (kontrakt A+C, decyzja 2026-10-11)
+## Centrum powiadomień (skrzynka za repem, decyzja 2026-10-11, zmiana kontraktu A+C)
 
-Mailbox = zawsze `userId` zalogowanego. `list` i `markRead` filtrują po self
-(`care.ts:591`, `careService.ts:888-923`); cudze id → 404 / `{read:0}`.
-Parametr `mailboxUserId` usunięty (martwy, ryzyko confused-deputy); skrzynka zawsze self.
+Mailbox = `repOwner ?? user.id` (wybrany handlowiec albo własna).
+`list` w `/panel` i `/notifications` czyta skrzynkę repa; `repId` waliduje
+`resolveRepOwner` (user tylko siebie, pro siebie + subUsers, admin każdego,
+fail-closed 403 — jak kolejka). ETag per mailbox (`getCareEtagInput` po repu).
 
-`repId` to filtr podglądu, nie zmiana właściciela skrzynki:
+Zasady bezpieczeństwa (I-003):
 
-- Kolejka i pilność idą za repem (`repOwner` AND w scope, fail-closed 403).
-- Centrum pokazuje własną skrzynkę; banner FE informuje o podglądzie repa.
-- Sync z `repOwner` NIE dopisuje do własnej skrzynki (zero INSERT/DELETE
-  na podstawie ofert repa). Pełny sync bez filtra robi INSERT + auto-read
-    - retencję (90d / cap 500) jak dotąd (ADR-015).
-- Retencja: bez zmian zachowania; działa wyłącznie w pełnym syncu.
-  Punkt kontroli: sync z filtrem nie może mieć efektów ubocznych w DB.
+- Sync z `repOwner` NIE persistuje (zero INSERT/DELETE/retencji na cudzej
+  skrzynki — podgląd nie brudzi; sprząta pełny sync właściciela).
+- Zapis (`markRead` single/bulk) zawsze self-only (guard `WHERE userId`);
+  cudza skrzynka w FE jest read-only (brak przycisków odczytu i „Wyczyść
+  wszystko", BE i tak broni 404).
+
+FE: banner `Skrzynka: {rep} (podgląd read-only)` albo `moja skrzynka`
+przy własnej; akcje widoczne tylko dla własnej.
 
 ## Odświeżanie centrum po zmianie repa
 
-Zmiana repa NIE zmienia treści Centrum (skrzynka self-only) — zmienia
-kolejkę, liczniki, banner i timestamp synchronizacji. Jak odróżnić brak
+Zmiana repa ZMIENIA treść Centrum (skrzynka repa). Jak odróżnić brak
 odświeżania od słusznie niezmienionej treści:
 
-- Network: nowy fetch `/api/care/panel?...&repId={nowy}` (klucz ETag per rep).
-- Banner `.care-notif-preview` z nową nazwą; `#care-sync-text` z nowym czasem.
-- Treść ta sama + banner/timestamp świeże = OK (własna skrzynka).
-- Brak requestu albo stary banner = bug FE (guard, cache, wyjątek w renderze).
+- Network: nowy fetch `/api/care/panel?...&repId={nowy}` (klucz ETag per rep
+  i per mailbox) + `notifications.mailboxUserId = {nowy}` w body.
+- Banner `.care-notif-preview` z nazwą skrzynki; `#care-sync-text` z nowym czasem.
+- Stary banner albo `mailboxUserId` spoza repa = bug FE/BE.
+- Cudza skrzynka: brak przycisków odczytu (read-only); własna: akcje widoczne.
 
 ## Graf przepływu Centrum
 

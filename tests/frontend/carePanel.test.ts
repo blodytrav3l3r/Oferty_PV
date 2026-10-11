@@ -1322,7 +1322,8 @@ describe('carePanel', () => {
                     return okJson({
                         data: [{ id: 'h1', username: 'adam', role: 'user' }]
                     });
-                if (url.includes('/api/care/panel'))
+                if (url.includes('/api/care/panel')) {
+                    const foreign = url.includes('repId=h1');
                     return {
                         ok: true,
                         status: 200,
@@ -1338,10 +1339,25 @@ describe('carePanel', () => {
                                 totalCount: 0
                             },
                             queue: { items: [], nextCursor: null, totalCount: 0 },
-                            notifications: { items: [], unreadCount: 0 },
+                            notifications: {
+                                items: foreign
+                                    ? [
+                                          {
+                                              id: 'n1',
+                                              offerKind: 'rury',
+                                              offerId: 'o1',
+                                              type: 'SLA_BREACH',
+                                              clientName: 'Budimex'
+                                          }
+                                      ]
+                                    : [],
+                                unreadCount: foreign ? 1 : 0,
+                                mailboxUserId: foreign ? 'h1' : 'a1'
+                            },
                             sla: { firstContactH: 24, staleD: 7, escalationH: 72 }
                         })
                     };
+                }
                 return okJson({ noContact: 0, due: 0, openOk: 0, won: 0, lost: 0 });
             }
         });
@@ -1356,23 +1372,37 @@ describe('carePanel', () => {
         for (const fn of sel.handlers || []) await fn();
         for (let i = 0; i < 10; i++) await new Promise((r) => setTimeout(r, 0));
         expect(calls.some((c) => c.includes('/api/care/panel?scope=all&repId=h1'))).toBe(true);
-        // Centrum prze-renderowane: banner z nowym repem (treść skrzynki własna).
+        // Centrum prze-renderowane: banner cudzej skrzynki (read-only, bez akcji zapisu).
         const notifList = els['care-notif-list'];
         const banner = (notifList.children || []).find(
             (c: any) => c.className === 'care-notif-preview'
         );
         expect(banner).toBeDefined();
         expect(String(banner.textContent)).toContain('h1');
-        expect(String(banner.textContent)).toContain('moja skrzynka');
+        expect(String(banner.textContent)).toContain('Skrzynka:');
+        expect(String(banner.textContent)).toContain('read-only');
+        const texts: string[] = [];
+        const walk = (n: any): void => {
+            if (n.textContent) texts.push(n.textContent);
+            for (const c of n.children || []) walk(c);
+        };
+        walk(notifList);
+        const joined = texts.join(' ');
+        expect(joined).toContain('Budimex');
+        expect(joined).not.toContain('Oznacz jako przeczytane');
+        expect(els['care-notif-clear'].hidden).toBe(true);
     });
 
-    test('podgląd repa bez alertów: pusty stan mówi o własnej skrzynce', async () => {
+    test('podgląd własnej skrzynki (rep = self): akcje zapisu widoczne', async () => {
         const { els, context } = load({
             role: 'admin',
             fetchMock: (url: string) => {
                 if (url.includes('/api/users-for-assignment'))
                     return okJson({
-                        data: [{ id: 'h1', username: 'adam', role: 'user' }]
+                        data: [
+                            { id: 'a1', username: 'szef', role: 'admin' },
+                            { id: 'h1', username: 'adam', role: 'user' }
+                        ]
                     });
                 if (url.includes('/api/care/panel'))
                     return {
@@ -1390,10 +1420,77 @@ describe('carePanel', () => {
                                 totalCount: 0
                             },
                             queue: { items: [], nextCursor: null, totalCount: 0 },
-                            notifications: { items: [], unreadCount: 0 },
+                            notifications: {
+                                items: [
+                                    {
+                                        id: 'n1',
+                                        offerKind: 'rury',
+                                        offerId: 'o1',
+                                        type: 'SLA_BREACH'
+                                    }
+                                ],
+                                unreadCount: 1,
+                                mailboxUserId: 'a1'
+                            },
                             sla: { firstContactH: 24, staleD: 7, escalationH: 72 }
                         })
                     };
+                return okJson({ noContact: 0, due: 0, openOk: 0, won: 0, lost: 0 });
+            }
+        });
+        context.window.currentUser = { role: 'admin', id: 'a1' };
+        await context.__careTest.loadCarePanel();
+        for (let i = 0; i < 10; i++) await new Promise((r) => setTimeout(r, 0));
+        const sel = els['care-rep'];
+        sel.value = 'a1';
+        for (const fn of sel.handlers || []) await fn();
+        for (let i = 0; i < 10; i++) await new Promise((r) => setTimeout(r, 0));
+        const texts: string[] = [];
+        const walk = (n: any): void => {
+            if (n.textContent) texts.push(n.textContent);
+            for (const c of n.children || []) walk(c);
+        };
+        walk(els['care-notif-list']);
+        const joined = texts.join(' ');
+        expect(joined).toContain('moja skrzynka');
+        expect(joined).toContain('Oznacz jako przeczytane');
+        expect(els['care-notif-clear'].hidden).toBe(false);
+    });
+
+    test('podgląd repa bez alertów: pusty stan z nazwą skrzynki', async () => {
+        const { els, context } = load({
+            role: 'admin',
+            fetchMock: (url: string) => {
+                if (url.includes('/api/users-for-assignment'))
+                    return okJson({
+                        data: [{ id: 'h1', username: 'adam', role: 'user' }]
+                    });
+                if (url.includes('/api/care/panel')) {
+                    const foreign = url.includes('repId=h1');
+                    return {
+                        ok: true,
+                        status: 200,
+                        json: async () => ({
+                            ok: true,
+                            summary: {
+                                noContact: 0,
+                                due: 0,
+                                openOk: 0,
+                                won: 0,
+                                lost: 0,
+                                abandoned: 0,
+                                totalCount: 0
+                            },
+                            queue: { items: [], nextCursor: null, totalCount: 0 },
+                            notifications: {
+                                items: [],
+                                unreadCount: 0,
+                                mailboxUserId: foreign ? 'h1' : 'a1'
+                            },
+                            sla: { firstContactH: 24, staleD: 7, escalationH: 72 }
+                        })
+                    };
+                }
                 return okJson({ noContact: 0, due: 0, openOk: 0, won: 0, lost: 0 });
             }
         });
@@ -1411,8 +1508,8 @@ describe('carePanel', () => {
         };
         walk(els['care-notif-list']);
         const joined = texts.join(' ');
-        expect(joined).toContain('moja skrzynka');
-        expect(joined).toContain('Brak Twoich powiadomień');
+        expect(joined).toContain('Brak powiadomień (skrzynka:');
+        expect(joined).not.toContain('Brak Twoich powiadomień');
     });
 
     test('bez repa: pusty stan bez wzmianki o podglądzie', async () => {

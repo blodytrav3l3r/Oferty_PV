@@ -144,4 +144,38 @@ describe('P2 GET /api/care/panel', () => {
         expect(res.body.ok).toBe(true);
         expect(res.body.queue.totalCount).toBe(1);
     });
+
+    it('skrzynka za repem: admin + repId czyta cudzą, ETag i lista po repu', async () => {
+        (globalThis as any).__careUser = { id: 'a1', role: 'admin', subUsers: [] };
+        const res = await request(app()).get('/api/care/panel?scope=all&repId=h1');
+        expect(res.status).toBe(200);
+        expect(listMock).toHaveBeenCalledWith(
+            expect.anything(),
+            'h1',
+            expect.objectContaining({ unreadOnly: true })
+        );
+        expect(etagMock).toHaveBeenCalledWith(expect.anything(), 'h1');
+        expect(res.body.notifications.mailboxUserId).toBe('h1');
+        expect(syncMock).toHaveBeenCalledWith(
+            expect.anything(),
+            expect.objectContaining({ id: 'a1' }),
+            'all',
+            expect.anything(),
+            expect.anything(),
+            { repOwner: 'h1' }
+        );
+    });
+
+    it('skrzynka za repem: bez repa czyta własną', async () => {
+        const res = await request(app()).get('/api/care/panel?scope=mine');
+        expect(res.status).toBe(200);
+        expect(listMock).toHaveBeenCalledWith(expect.anything(), 'u1', expect.anything());
+        expect(res.body.notifications.mailboxUserId).toBe('u1');
+    });
+
+    it('skrzynka za repem: user + cudzy repId → 403 (fail-closed)', async () => {
+        const res = await request(app()).get('/api/care/panel?scope=mine&repId=h1');
+        expect(res.status).toBe(403);
+        expect(listMock).not.toHaveBeenCalled();
+    });
 });
