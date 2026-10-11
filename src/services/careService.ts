@@ -180,7 +180,11 @@ export function buildCareQueueQueries(
         SELECT 'studnie' AS "offerKind", s."id" AS "offerId", l."outcome" AS "outcome",
             l."nextContactAt" AS "next", l."contactedAt" AS "last", s."createdAt" AS "born",
             s."offer_number" AS "number", s."clientName" AS "client",
-            CAST(COALESCE(s."totalPrice", json_extract(s."data", '$.totalBrutto')) AS REAL) AS "value",
+            -- Guard 0-kolumny (zapis studni bez totalPrice): niezerowa kolumna
+            -- > blob.totalBrutto > suma wellsExport (jak search.ts d_wellsExportTotal).
+            CAST(COALESCE(NULLIF(s."totalPrice", 0), json_extract(s."data", '$.totalBrutto'),
+                (SELECT CAST(ROUND(COALESCE(SUM(value->>'totalPrice'), 0), 2) AS REAL)
+                    FROM json_each(s."data", '$.wellsExport'))) AS REAL) AS "value",
             json_extract(s."data", '$.clientPhone') AS "phone", l."note" AS "note",
             cs."snoozedUntil" AS "snoozed", cs."doneAt" AS "done"
         FROM offers_studnie_rel s LEFT JOIN latest l

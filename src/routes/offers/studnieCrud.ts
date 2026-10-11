@@ -206,6 +206,22 @@ function extractWellsFromIncoming(o: Record<string, unknown>): Array<Record<stri
 }
 
 /**
+ * Kolumna totalPrice z kształtu incoming (create i PUT współdzielą).
+ * FE (offerSave) niesie totalBrutto/totalNetto bez totalPrice — bez tego
+ * gałąź kolumna lądowała na 0 mimo żywych danych (kolejka opieki: 0,00 PLN).
+ * Kolejność: jawny totalPrice/price > totalBrutto (top/data) > data.totalPrice.
+ */
+export function deriveStudnieTotalPrice(o: Record<string, unknown>): number {
+    const d =
+        o.data && typeof o.data === 'object' && !Array.isArray(o.data)
+            ? (o.data as Record<string, unknown>)
+            : undefined;
+    const raw = o.totalPrice ?? o.price ?? o.totalBrutto ?? d?.totalBrutto ?? d?.totalPrice ?? 0;
+    const n = Number(raw);
+    return isNaN(n) ? 0 : n;
+}
+
+/**
  * Batch wariant guard ordered-well (P4-P0): jedno zapytanie zamiast
  * N× query+parse w pętlach batch POST/PUT. Semantyka potrójnego OR identyczna.
  */
@@ -817,16 +833,7 @@ router.post(
                 // incoming) — inaczej LIST pokazywal "0 studni" przy zywych danych.
                 const wellCount = extractWellsFromOfferData(dataStr).length;
                 // E-2: derived persisted metadata — klient nie ustawia autorytatywnie
-                const rawPrice =
-                    (o as Record<string, unknown>).totalPrice ??
-                    (o as Record<string, unknown>).price ??
-                    ((o as Record<string, unknown>).data &&
-                        ((o as Record<string, unknown>).data as Record<string, unknown>)
-                            .totalPrice);
-                const totalPrice = (() => {
-                    const n = Number(rawPrice);
-                    return isNaN(n) ? 0 : n;
-                })();
+                const totalPrice = deriveStudnieTotalPrice(o as Record<string, unknown>);
 
                 pending.push({
                     docId,
@@ -1063,14 +1070,7 @@ router.put(
                 const clientNumber =
                     (o.clientNumber as string) || (dataPayload.clientNumber as string) || null;
                 const created = normalizeDate(o.createdAt, { exactMs: true });
-                const rawPricePut =
-                    (o as Record<string, unknown>).totalPrice ??
-                    (o as Record<string, unknown>).price ??
-                    (dataPayload as Record<string, unknown>).totalPrice;
-                const totalPricePut = (() => {
-                    const n = Number(rawPricePut);
-                    return isNaN(n) ? 0 : n;
-                })();
+                const totalPricePut = deriveStudnieTotalPrice(o as Record<string, unknown>);
 
                 // P0-D2: version to kolumna (top-level o.version), nie blob o.data.
                 const putClientVersion = typeof o.version === 'number' ? o.version : null;
