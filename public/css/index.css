@@ -537,6 +537,12 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
     color: var(--text-muted);
 }
 
+/* Rząd cen opieki: wartości jednowierszowo, cyfry tabularne. */
+#followup-stats-values .admin-stat-value {
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
 /* ── User Table ── */
 .admin-table-wrap {
     overflow-x: auto;
