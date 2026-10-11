@@ -73,6 +73,17 @@ Parametr `mailboxUserId` usunięty (martwy, ryzyko confused-deputy); skrzynka za
 - Retencja: bez zmian zachowania; działa wyłącznie w pełnym syncu.
   Punkt kontroli: sync z filtrem nie może mieć efektów ubocznych w DB.
 
+## Odświeżanie centrum po zmianie repa
+
+Zmiana repa NIE zmienia treści Centrum (skrzynka self-only) — zmienia
+kolejkę, liczniki, banner i timestamp synchronizacji. Jak odróżnić brak
+odświeżania od słusznie niezmienionej treści:
+
+- Network: nowy fetch `/api/care/panel?...&repId={nowy}` (klucz ETag per rep).
+- Banner `.care-notif-preview` z nową nazwą; `#care-sync-text` z nowym czasem.
+- Treść ta sama + banner/timestamp świeże = OK (własna skrzynka).
+- Brak requestu albo stary banner = bug FE (guard, cache, wyjątek w renderze).
+
 ## Progi SLA (F8: default 24/7/72)
 
 Brak wiersza `care_sla_config.global` = progi domyślne (`firstContactH: 24`,

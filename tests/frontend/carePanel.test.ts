@@ -1356,5 +1356,12 @@ describe('carePanel', () => {
         for (const fn of sel.handlers || []) await fn();
         for (let i = 0; i < 10; i++) await new Promise((r) => setTimeout(r, 0));
         expect(calls.some((c) => c.includes('/api/care/panel?scope=all&repId=h1'))).toBe(true);
+        // Centrum prze-renderowane: banner z nowym repem (treść skrzynki własna).
+        const notifList = els['care-notif-list'];
+        const banner = (notifList.children || []).find(
+            (c: any) => c.className === 'care-notif-preview'
+        );
+        expect(banner).toBeDefined();
+        expect(String(banner.textContent)).toContain('h1');
     });
 });
