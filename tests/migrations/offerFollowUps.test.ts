@@ -52,7 +52,9 @@ describe('P0.2 migracja offer_follow_ups', () => {
                 'competitorPrice',
                 // Cykle obslugi (20261009000000_fu_cycles): reopen startuje
                 // nowy cykl, limit terminalnosci per cykl.
-                'cycle'
+                'cycle',
+                // Znacznik edycji (20261012000000_care_followups_updatedAt).
+                'updatedAt'
             ]);
 
             const idx = db
