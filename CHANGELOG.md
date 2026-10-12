@@ -4,6 +4,14 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+### [1.42.1](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.42.0...v1.42.1) (2026-10-12)
+
+### Bug Fixes
+
+- **test:** kolumna updated-at w tescie migracji follow-ups ([3ec4ff5](https://github.com/blodytrav3l3r/Oferty_PV/commit/3ec4ff521977635374d8fd1ca1b71c0e2714286a))
+- **ui:** filtry kolejki w stylu kontakt ([6888a2a](https://github.com/blodytrav3l3r/Oferty_PV/commit/6888a2a38263cce0a7427b61d811d4b6a86d6e33))
+- **ui:** hierarchia typo w kokpicie opieki ([9e3b6df](https://github.com/blodytrav3l3r/Oferty_PV/commit/9e3b6df3d37313198b87502f4e1dbe41621f0889))
+
 ## [1.42.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.41.2...v1.42.0) (2026-10-12)
 
 ### Features
