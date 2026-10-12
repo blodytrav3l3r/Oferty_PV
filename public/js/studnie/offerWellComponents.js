@@ -308,6 +308,17 @@ function renderComponentSubItems(well, p, item, itemPrzejscia, disc, wellTranspo
               ? getItemPriceBreakdown(well, p, true, item)
               : null;
     if (bd) {
+        // Dopłaty żelbet/nierdzewna biorą rabat hosta (jak baza) — badge jak w innych podwierszach.
+        const surchargePct =
+            typeof getWellDiscountPctSafe === 'function'
+                ? getWellDiscountPctSafe(well, p, disc)
+                : 0;
+        const surchargeBadge =
+            typeof isWellDiscountCorrupt === 'function' && isWellDiscountCorrupt(well)
+                ? typeof discountCorruptBadge === 'function'
+                    ? discountCorruptBadge()
+                    : subDiscountStr(surchargePct)
+                : subDiscountStr(surchargePct);
         let pehdLabel = '';
         if (bd.pehd > 0) {
             pehdLabel = getPehdTypeForComponent(well, p.componentType) || '';
@@ -334,13 +345,17 @@ function renderComponentSubItems(well, p, item, itemPrzejscia, disc, wellTranspo
         }
         if (bd.zelbet > 0) {
             html +=
-                '<tr class="included-row-warn"><td colspan="3" class="pl-lg">w cenie: dopłata żelbet</td><td class="text-right">' +
+                '<tr class="included-row-warn"><td colspan="3" class="pl-lg">w cenie: dopłata żelbet' +
+                surchargeBadge +
+                '</td><td class="text-right">' +
                 fmt(bd.zelbet) +
                 ' PLN</td></tr>';
         }
         if (bd.nierdzewna > 0) {
             html +=
-                '<tr class="included-row-accent"><td colspan="3" class="pl-lg">w cenie: drabinka nierdzewna</td><td class="text-right">' +
+                '<tr class="included-row-accent"><td colspan="3" class="pl-lg">w cenie: drabinka nierdzewna' +
+                surchargeBadge +
+                '</td><td class="text-right">' +
                 fmt(bd.nierdzewna) +
                 ' PLN</td></tr>';
         }
