@@ -334,6 +334,7 @@
                 })
                 .then(function (res) {
                     var dirtyAfter = null;
+                    var dirtySrc = { wizardFlag: null, excelFlag: null, draftDiff: null };
                     try {
                         if (typeof w.__sokIsDirty === 'function') dirtyAfter = w.__sokIsDirty();
                         else if (
@@ -342,12 +343,31 @@
                         )
                             dirtyAfter = w.draftAutosave.hasUnsavedChanges();
                     } catch (_e2) {}
+                    // Diagnostyka źródła: flaga kreatora / flaga excela / diff draftu.
+                    try {
+                        dirtySrc.wizardFlag = !!(w && w._wizardDirty);
+                    } catch (_eF1) {}
+                    try {
+                        dirtySrc.excelFlag = !!(
+                            w &&
+                            (w._excelDirty || (w.window && w.window._excelDirty))
+                        );
+                    } catch (_eF2) {}
+                    try {
+                        if (
+                            w &&
+                            w.draftAutosave &&
+                            typeof w.draftAutosave.hasUnsavedChanges === 'function'
+                        )
+                            dirtySrc.draftDiff = w.draftAutosave.hasUnsavedChanges() === true;
+                    } catch (_eF3) {}
                     try {
                         if (typeof console !== 'undefined' && console.debug)
                             console.debug('[sokDirty] save-done', {
                                 saver: saverName,
                                 result: res,
-                                dirtyAfter: dirtyAfter
+                                dirtyAfter: dirtyAfter,
+                                dirtySrc: dirtySrc
                             });
                     } catch (_eD) {}
                     if (dirtyAfter === true) {

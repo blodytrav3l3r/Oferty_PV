@@ -1040,10 +1040,20 @@ async function saveCurrentOrder(options = {}) {
         showToast('Brak trybu zamówienia', 'error');
         return;
     }
-    if (isSavingCurrentOrder) return;
+    if (isSavingCurrentOrder) {
+        try {
+            if (typeof console !== 'undefined' && console.debug)
+                console.debug('[orderCrud] save-skip: zapis już w locie (wyścig)');
+        } catch (_e) {}
+        return;
+    }
     isSavingCurrentOrder = true;
     try {
         await saveCurrentOrderUnsafe(options);
+        try {
+            if (typeof console !== 'undefined' && console.debug)
+                console.debug('[orderCrud] save-done: unsafe zakończone bez wyjątku');
+        } catch (_e2) {}
     } finally {
         isSavingCurrentOrder = false;
     }
@@ -1210,7 +1220,15 @@ async function saveCurrentOrderUnsafe(options = {}) {
             paymentTerms: order.paymentTerms,
             validity: order.validity
         });
-        if (!saved) return;
+        if (!saved) {
+            try {
+                if (typeof console !== 'undefined' && console.debug)
+                    console.debug(
+                        '[orderCrud] save-exit: konflikt/odmowa (saved=false), stan zapisany w modalu'
+                    );
+            } catch (_e) {}
+            return;
+        }
     } else {
         // P4: fallback na tym samym standardzie co patchSingleOrderStudnie —
         // baseUpdatedAt + version + obsługa 409 + sync z odpowiedzi serwera.
@@ -1266,6 +1284,12 @@ async function saveCurrentOrderUnsafe(options = {}) {
             if (typeof syncOrdersStudnieEntry === 'function') syncOrdersStudnieEntry(order);
         } catch (err) {
             logger.error('orderManager', 'Błąd zapisu zamówienia:', err);
+            try {
+                if (typeof console !== 'undefined' && console.debug)
+                    console.debug('[orderCrud] save-exit: wyjątek zapisu', {
+                        error: err && err.message ? err.message : String(err)
+                    });
+            } catch (_e) {}
             // A1: offline/network — draft zachowany, jasny komunikat.
             var _kind = typeof saveErrorKind === 'function' ? saveErrorKind(err) : 'unknown';
             var _off = typeof saveOfflineMessage === 'function' ? saveOfflineMessage(_kind) : null;
