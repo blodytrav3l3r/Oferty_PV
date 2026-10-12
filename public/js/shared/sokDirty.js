@@ -317,23 +317,60 @@
     function __sokSaveDirty(w) {
         var fn = _sokSaverFor(w);
         try {
-            if (!w || !fn) return Promise.resolve(false);
+            if (!w || !fn) {
+                try {
+                    if (typeof console !== 'undefined' && console.debug)
+                        console.debug('[sokDirty] save-skip: brak okna lub savera');
+                } catch (_e0) {}
+                return Promise.resolve(false);
+            }
+            var saverName = 'anonymous';
+            try {
+                saverName = fn.name || 'anonymous';
+            } catch (_eN) {}
             return Promise.resolve()
                 .then(function () {
                     return fn.call(w);
                 })
-                .then(function () {
+                .then(function (res) {
+                    var dirtyAfter = null;
                     try {
-                        if (typeof w.__sokIsDirty === 'function') return !w.__sokIsDirty();
-                        if (
+                        if (typeof w.__sokIsDirty === 'function') dirtyAfter = w.__sokIsDirty();
+                        else if (
                             w.draftAutosave &&
                             typeof w.draftAutosave.hasUnsavedChanges === 'function'
                         )
-                            return !w.draftAutosave.hasUnsavedChanges();
+                            dirtyAfter = w.draftAutosave.hasUnsavedChanges();
                     } catch (_e2) {}
-                    return true;
+                    try {
+                        if (typeof console !== 'undefined' && console.debug)
+                            console.debug('[sokDirty] save-done', {
+                                saver: saverName,
+                                result: res,
+                                dirtyAfter: dirtyAfter
+                            });
+                    } catch (_eD) {}
+                    if (dirtyAfter === true) {
+                        try {
+                            if (typeof console !== 'undefined' && console.warn)
+                                console.warn(
+                                    '[sokDirty] save-unclean: saver zakonczyl bez wyjatku, ale flaga dirty nadal true',
+                                    { saver: saverName, result: res }
+                                );
+                        } catch (_eW) {}
+                        return false;
+                    }
+                    if (dirtyAfter === null) return true;
+                    return !dirtyAfter;
                 })
-                .catch(function () {
+                .catch(function (err) {
+                    try {
+                        if (typeof console !== 'undefined' && console.warn)
+                            console.warn('[sokDirty] save-throw', {
+                                saver: saverName,
+                                error: err && err.message ? err.message : String(err)
+                            });
+                    } catch (_eW2) {}
                     return false;
                 });
         } catch (_e3) {

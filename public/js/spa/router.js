@@ -147,14 +147,36 @@
 
     async function _saveDirtyPrev() {
         try {
-            if (typeof window.__sokSaveDirty !== 'function') return false;
+            if (typeof window.__sokSaveDirty !== 'function') {
+                try {
+                    if (typeof console !== 'undefined' && console.debug)
+                        console.debug('[router] save-skip: brak __sokSaveDirty');
+                } catch (_e0) {}
+                return false;
+            }
             const prevWin =
                 currentModule && iframes[currentModule]
                     ? iframes[currentModule].contentWindow
                     : null;
             // Fallback: brak żywego iframe (np. kontekst testowy) — próba na sobie,
             // w rodzicu SPA saverów nie ma więc kończy się szybkim false.
-            return (await window.__sokSaveDirty(prevWin || window)) === true;
+            if (!prevWin) {
+                try {
+                    if (typeof console !== 'undefined' && console.debug)
+                        console.debug('[router] save-skip: brak contentWindow modulu', {
+                            currentModule: currentModule
+                        });
+                } catch (_e1) {}
+            }
+            const saved = (await window.__sokSaveDirty(prevWin || window)) === true;
+            try {
+                if (typeof console !== 'undefined' && console.debug)
+                    console.debug('[router] save-result', {
+                        currentModule: currentModule,
+                        saved: saved
+                    });
+            } catch (_e2) {}
+            return saved;
         } catch (_e) {
             return false;
         }
@@ -198,6 +220,13 @@
             if (choice === 'save') {
                 const saved = await _saveDirtyPrev();
                 if (!saved) {
+                    try {
+                        if (typeof console !== 'undefined' && console.warn)
+                            console.warn('[router] save-failed: szczegoly w logach [sokDirty]', {
+                                currentModule: currentModule,
+                                targetHash: targetHash
+                            });
+                    } catch (_eW) {}
                     if (typeof window.showToast === 'function')
                         window.showToast(
                             'Nie udało się zapisać automatycznie — zapisz ręcznie i spróbuj ponownie.',
