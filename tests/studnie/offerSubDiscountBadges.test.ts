@@ -97,6 +97,10 @@ describe('Badge rabatów podpozycji oferty (offerWellComponents)', () => {
         return ctx.renderComponentSubItems(well, p, well.config[0], itemPrzejscia, disc, 0, 0);
     }
 
+    function product(id: string) {
+        return studnieProducts.find((pr) => pr.id === id);
+    }
+
     beforeAll(() => {
         ctx = loadContext();
     });
@@ -211,5 +215,41 @@ describe('Badge rabatów podpozycji oferty (offerWellComponents)', () => {
             expect(html).toContain('Kineta bazowa');
             expect(html).not.toContain('(-');
         });
+    });
+
+    test('8. Wkładka PEHD (rabat PEHD 20%) → badge (-20%)', () => {
+        const disc = { dennica: 0, nadbudowa: 0 };
+        const well = makeWell({ wkladkaDennica: '3mm', pehdDiscount: 20 });
+        const p = { ...product('DDD-1000-300'), doplataPEHD: 500 };
+        const html = ctx.renderComponentSubItems(
+            well,
+            p,
+            { productId: 'DDD-1000-300', quantity: 1 },
+            [],
+            disc,
+            0,
+            0
+        );
+        expect(html).toContain('wkładka PEHD');
+        expect(html).toContain('(-20%)');
+        expect(html).toContain('400'); // 500 × 0.8
+    });
+
+    test('9. Wkładka PEHD bez rabatu → brak badge', () => {
+        const disc = { dennica: 0, nadbudowa: 0 };
+        const well = makeWell({ wkladkaDennica: '3mm' });
+        const p = { ...product('DDD-1000-300'), doplataPEHD: 500 };
+        const html = ctx.renderComponentSubItems(
+            well,
+            p,
+            { productId: 'DDD-1000-300', quantity: 1 },
+            [],
+            disc,
+            0,
+            0
+        );
+        expect(html).toContain('wkładka PEHD');
+        // Uwaga: styl wiersza zawiera "var(--...)", więc matchujemy badge liczbowy.
+        expect(html).not.toMatch(/\(-\d/);
     });
 });

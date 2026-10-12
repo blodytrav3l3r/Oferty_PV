@@ -324,9 +324,12 @@ function renderComponentSubItems(well, p, item, itemPrzejscia, disc, wellTranspo
             pehdLabel = getPehdTypeForComponent(well, p.componentType) || '';
         }
         if (bd.pehd > 0 && pehdLabel) {
+            // Wkładka PEHD ma własny rabat globalny (well.pehdDiscount) —
+            // badge pokazuje zastosowany %, jak w kafelku PEHD.
             html +=
                 '<tr style="opacity:0.5; font-size: var(--fs-xs); color:var(--blue-alt);"><td colspan="3" class="pl-lg">w cenie: wkładka PEHD ' +
                 escapeHtml(pehdLabel) +
+                subDiscountStr(well.pehdDiscount || 0) +
                 '</td><td class="text-right">' +
                 fmt(bd.pehd) +
                 ' PLN</td></tr>';
