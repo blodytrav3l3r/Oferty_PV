@@ -361,6 +361,10 @@
                         )
                             dirtySrc.draftDiff = w.draftAutosave.hasUnsavedChanges() === true;
                     } catch (_eF3) {}
+                    // Szczegół diffu (nazwy sekcji/pól, bez wartości) z draftAutosave.
+                    try {
+                        dirtySrc.detail = (w && w.__sokLastDirtyDetail) || null;
+                    } catch (_eF4) {}
                     try {
                         if (typeof console !== 'undefined' && console.debug)
                             console.debug('[sokDirty] save-done', {
@@ -375,7 +379,7 @@
                             if (typeof console !== 'undefined' && console.warn)
                                 console.warn(
                                     '[sokDirty] save-unclean: saver zakonczyl bez wyjatku, ale flaga dirty nadal true',
-                                    { saver: saverName, result: res }
+                                    { saver: saverName, result: res, dirtySrc: dirtySrc }
                                 );
                         } catch (_eW) {}
                         return false;

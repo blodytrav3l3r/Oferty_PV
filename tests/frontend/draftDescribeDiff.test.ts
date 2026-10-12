@@ -177,3 +177,46 @@ describe('draft describeDiff — kontrakt SSoT', () => {
         expect(da.describeDiff('offer_rury', { items: [] }, { items: [] }, true)).toEqual([]);
     });
 });
+
+describe('hasUnsavedChanges stashuje __sokLastDirtyDetail (diagnostyka)', () => {
+    function loadDirtyCtx() {
+        const sandbox: any = {
+            console,
+            document: { getElementById: () => null, addEventListener: () => {} },
+            addEventListener: () => {},
+            localStorage: {}
+        };
+        sandbox.window = sandbox;
+        vm.createContext(sandbox);
+        vm.runInContext(readJs('shared/draftStore.js'), sandbox, { filename: 'draftStore.js' });
+        vm.runInContext(readJs('shared/draftAutosave.js'), sandbox, {
+            filename: 'draftAutosave.js'
+        });
+        return sandbox;
+    }
+
+    function seedRury(s: any, liveClient: string, savedClient: string) {
+        s.editingOfferId = 'd1';
+        s.getOfferFormFields = () => ({ number: 'OF/1', clientName: liveClient });
+        s.offers = [{ id: 'd1', number: 'OF/1', clientName: savedClient, items: [] }];
+        s.currentOfferItems = [];
+        s.window.draftAutosave.initKind('offer_rury');
+    }
+
+    it('brudne pola → stash z nazwami, bez wartości', () => {
+        const s = loadDirtyCtx();
+        seedRury(s, 'ACME Tajne', '');
+        expect(s.window.draftAutosave.hasUnsavedChanges()).toBe(true);
+        const stash = s.window.__sokLastDirtyDetail;
+        expect(stash.kind).toBe('offer_rury');
+        expect(stash.docId).toBe('d1');
+        expect(stash.desc.join(' ')).toContain('clientName');
+        expect(stash.desc.join(' ')).not.toContain('ACME');
+    });
+
+    it('czysto → false', () => {
+        const s = loadDirtyCtx();
+        seedRury(s, 'ACME', 'ACME');
+        expect(s.window.draftAutosave.hasUnsavedChanges()).toBe(false);
+    });
+});

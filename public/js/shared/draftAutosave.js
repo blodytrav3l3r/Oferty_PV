@@ -1353,7 +1353,14 @@ function _draftLogRecoveryDiff(kind, draftPayload, savedPayload, isNewDoc) {
         });
         log.warn('draft', 'recovery modal — rozniące sekcje', {
             kind: kind,
-            diff: diffs.join(', ') || '(puste)'
+            diff: diffs.join(', ') || '(puste)',
+            pola: (function () {
+                try {
+                    return _draftDescribeDiff(kind, draftPayload, savedPayload, isNewDoc) || [];
+                } catch (_e3) {
+                    return [];
+                }
+            })()
         });
     } catch (_e) {}
 }
@@ -1647,7 +1654,22 @@ function _draftHasUnsavedChanges() {
             continue;
         }
         try {
-            if (!_draftEquivalent(kind, live, cur.payload, cur.isNew)) return true;
+            if (!_draftEquivalent(kind, live, cur.payload, cur.isNew)) {
+                // Diagnostyka wiecznego brudu: co się różni (same nazwy, bez wartości).
+                // Czyta to log save-unclean w sokDirty (__sokLastDirtyDetail).
+                try {
+                    var _desc =
+                        typeof _draftDescribeDiff === 'function'
+                            ? _draftDescribeDiff(kind, live, cur.payload, cur.isNew) || []
+                            : [];
+                    window.__sokLastDirtyDetail = {
+                        kind: kind,
+                        docId: String(docId),
+                        desc: _desc.slice(0, 12)
+                    };
+                } catch (_eD) {}
+                return true;
+            }
         } catch (_e4) {}
     }
     return false;
