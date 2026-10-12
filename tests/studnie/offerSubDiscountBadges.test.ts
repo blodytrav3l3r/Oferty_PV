@@ -165,4 +165,51 @@ describe('Badge rabatów podpozycji oferty (offerWellComponents)', () => {
         ]);
         expect(html).not.toContain('(-');
     });
+
+    function withPrecoStubs(preco: number, fn: () => void) {
+        vm.runInContext(
+            `wellDiscounts = ${JSON.stringify({ 1000: { dennica: 0, nadbudowa: 0, preco } })}`,
+            ctx
+        );
+        vm.runInContext(
+            `calculatePrecoAllocationForItem = () => ({ hasPreco: true, allocatedCost: 800, fraction: 1, isBottomMostDennica: true })`,
+            ctx
+        );
+        vm.runInContext(
+            `calcPrecoPricing = () => ({ suma: 1000, bazowa: 600, kinetaGlowna: { dn: ['400'], etykiety: ['A'] }, uniesienie: 100 })`,
+            ctx
+        );
+        try {
+            fn();
+        } finally {
+            vm.runInContext(
+                `calculatePrecoAllocationForItem = () => ({ hasPreco: false, error: null, allocatedCost: 0, fraction: 0, isBottomMostDennica: false })`,
+                ctx
+            );
+            vm.runInContext('wellDiscounts = {}', ctx);
+        }
+    }
+
+    test('6. Rozbicie PRECO (preco 10%) → badge (-10%) na każdej pozycji', () => {
+        const disc = { dennica: 0, nadbudowa: 0 };
+        const well = makeWell();
+        withPrecoStubs(10, () => {
+            const html = renderSub(well, disc, []);
+            expect(html).toContain('Kineta bazowa');
+            expect(html).toContain('uniesienie');
+            const hits = html.match(/\(-10%\)/g) || [];
+            // Wiersz alokacji + kineta bazowa + uniesienie.
+            expect(hits.length).toBeGreaterThanOrEqual(3);
+        });
+    });
+
+    test('7. PRECO bez rabatu → brak badge na rozbiciu', () => {
+        const disc = { dennica: 0, nadbudowa: 0 };
+        const well = makeWell();
+        withPrecoStubs(0, () => {
+            const html = renderSub(well, disc, []);
+            expect(html).toContain('Kineta bazowa');
+            expect(html).not.toContain('(-');
+        });
+    });
 });

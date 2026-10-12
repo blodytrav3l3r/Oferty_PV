@@ -545,6 +545,8 @@ function renderComponentSubItems(well, p, item, itemPrzejscia, disc, wellTranspo
                     ? safePrecoPct(well, _discPrecoObj)
                     : _discPrecoObj.preco || 0;
             const precoMult = 1 - discPreco / 100;
+            // Rabat liczony w każdej pozycji rozbicia — badge jak w innych podwierszach.
+            const precoBadge = subDiscountStr(discPreco);
             const precoCost = precoAlloc.allocatedCost * precoMult;
             const fracPerc =
                 precoAlloc.fraction > 0 && precoAlloc.fraction < 1
@@ -607,6 +609,7 @@ function renderComponentSubItems(well, p, item, itemPrzejscia, disc, wellTranspo
                             dnParts.join(' / ') +
                             ') ' +
                             etyParts.join(' / ') +
+                            precoBadge +
                             '</td><td class="text-right">' +
                             fmt(precoCalc.bazowa * precoMult) +
                             ' PLN</td></tr>';
@@ -617,19 +620,25 @@ function renderComponentSubItems(well, p, item, itemPrzejscia, disc, wellTranspo
                             precoCalc.skrzynki.ilosc +
                             ' × ' +
                             fmt(precoCalc.skrzynki.cenaSzt) +
-                            ' PLN)</td><td class="text-right">' +
+                            ' PLN)' +
+                            precoBadge +
+                            '</td><td class="text-right">' +
                             fmt(precoCalc.skrzynki.suma * precoMult) +
                             ' PLN</td></tr>';
                     }
                     if (precoCalc.spadekKineta > 0) {
                         html +=
-                            '<tr class="included-row-danger"><td colspan="3" class="pl-xl">↳ + spadek kinety</td><td class="text-right">' +
+                            '<tr class="included-row-danger"><td colspan="3" class="pl-xl">↳ + spadek kinety' +
+                            precoBadge +
+                            '</td><td class="text-right">' +
                             fmt(precoCalc.spadekKineta * precoMult) +
                             ' PLN</td></tr>';
                     }
                     if (precoCalc.spadekMufa > 0) {
                         html +=
-                            '<tr class="included-row-danger"><td colspan="3" class="pl-xl">↳ + spadek mufy</td><td class="text-right">' +
+                            '<tr class="included-row-danger"><td colspan="3" class="pl-xl">↳ + spadek mufy' +
+                            precoBadge +
+                            '</td><td class="text-right">' +
                             fmt(precoCalc.spadekMufa * precoMult) +
                             ' PLN</td></tr>';
                     }
@@ -642,6 +651,7 @@ function renderComponentSubItems(well, p, item, itemPrzejscia, disc, wellTranspo
                         html +=
                             '<tr class="included-row-danger"><td colspan="3" class="pl-xl">↳ + uniesienie' +
                             (mm ? ' (' + mm + ' mm)' : '') +
+                            precoBadge +
                             '</td><td class="text-right">' +
                             fmt(precoCalc.uniesienie * precoMult) +
                             ' PLN</td></tr>';
@@ -650,6 +660,7 @@ function renderComponentSubItems(well, p, item, itemPrzejscia, disc, wellTranspo
                         html +=
                             '<tr class="included-row-danger"><td colspan="3" class="pl-xl">↳ + redukcja' +
                             (precoCalc.redukcjaOpis ? ' ' + precoCalc.redukcjaOpis : '') +
+                            precoBadge +
                             '</td><td class="text-right">' +
                             fmt(precoCalc.redukcja * precoMult) +
                             ' PLN</td></tr>';
@@ -671,7 +682,9 @@ function renderComponentSubItems(well, p, item, itemPrzejscia, disc, wellTranspo
                                 (dwTyp ? ' (' + dwTyp + ')' : '') +
                                 ' [' +
                                 (dw.label || '') +
-                                ']</td><td class="text-right">' +
+                                ']' +
+                                precoBadge +
+                                '</td><td class="text-right">' +
                                 fmt(dw.cena * precoMult) +
                                 ' PLN</td></tr>';
                         }
@@ -680,7 +693,9 @@ function renderComponentSubItems(well, p, item, itemPrzejscia, disc, wellTranspo
                         html +=
                             '<tr class="included-row-danger"><td colspan="3" class="pl-xl">↳ + pełna wysokość (' +
                             precoCalc.pelnaWysokosc.metry.toFixed(2) +
-                            ' m)</td><td class="text-right">' +
+                            ' m)' +
+                            precoBadge +
+                            '</td><td class="text-right">' +
                             fmt(precoCalc.pelnaWysokosc.cena * precoMult) +
                             ' PLN</td></tr>';
                     }
