@@ -343,28 +343,30 @@
                         )
                             dirtyAfter = w.draftAutosave.hasUnsavedChanges();
                     } catch (_e2) {}
-                    // Diagnostyka źródła: flaga kreatora / flaga excela / diff draftu.
-                    try {
-                        dirtySrc.wizardFlag = !!(w && w._wizardDirty);
-                    } catch (_eF1) {}
-                    try {
-                        dirtySrc.excelFlag = !!(
-                            w &&
-                            (w._excelDirty || (w.window && w.window._excelDirty))
-                        );
-                    } catch (_eF2) {}
-                    try {
-                        if (
-                            w &&
-                            w.draftAutosave &&
-                            typeof w.draftAutosave.hasUnsavedChanges === 'function'
-                        )
-                            dirtySrc.draftDiff = w.draftAutosave.hasUnsavedChanges() === true;
-                    } catch (_eF3) {}
-                    // Szczegół diffu (nazwy sekcji/pól, bez wartości) z draftAutosave.
-                    try {
-                        dirtySrc.detail = (w && w.__sokLastDirtyDetail) || null;
-                    } catch (_eF4) {}
+                    // Diagnostyka źródła tylko przy brudzie (pełny diff drogi).
+                    if (dirtyAfter === true) {
+                        try {
+                            dirtySrc.wizardFlag = !!(w && w._wizardDirty);
+                        } catch (_eF1) {}
+                        try {
+                            dirtySrc.excelFlag = !!(
+                                w &&
+                                (w._excelDirty || (w.window && w.window._excelDirty))
+                            );
+                        } catch (_eF2) {}
+                        try {
+                            if (
+                                w &&
+                                w.draftAutosave &&
+                                typeof w.draftAutosave.hasUnsavedChanges === 'function'
+                            )
+                                dirtySrc.draftDiff = w.draftAutosave.hasUnsavedChanges() === true;
+                        } catch (_eF3) {}
+                        // Szczegół diffu (nazwy sekcji/pól, bez wartości) z draftAutosave.
+                        try {
+                            dirtySrc.detail = (w && w.__sokLastDirtyDetail) || null;
+                        } catch (_eF4) {}
+                    }
                     try {
                         if (typeof console !== 'undefined' && console.debug)
                             console.debug('[sokDirty] save-done', {
