@@ -2923,10 +2923,24 @@ html[data-theme='light'] body.index-page.logged-in::before {
     color: var(--accent-text);
     border-color: var(--accent-border-dim);
 }
+/* Filtry kolejki: kształt .btn (jak Kontakt), równa szerokość, accent zamiast czerni. */
+.care-queue-filters .care-queue-filter-btn {
+    flex: 1 1 0;
+    min-width: 9rem;
+    justify-content: center;
+    white-space: nowrap;
+    border-radius: var(--radius-sm);
+}
 .care-queue-filters .care-queue-filter-btn.active {
-    background: var(--slate-900);
+    background: var(--accent);
     color: var(--white);
-    border-color: var(--slate-900);
+    border-color: var(--accent);
+}
+/* Badge licznika: rezerwa na 5 cyfr (99999), cyfry tabularne. */
+.care-queue-filters .care-count {
+    display: inline-block;
+    min-width: 5ch;
+    text-align: center;
 }
 .care-count--urgent {
     background: var(--danger-bg);
