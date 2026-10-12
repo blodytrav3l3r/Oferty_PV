@@ -855,6 +855,18 @@ async function enterOrderEditMode(orderId) {
         setVal('client-number', order.clientNumber || '');
         setVal('client-address', order.clientAddress || '');
         setVal('client-contact', order.clientContact || '');
+        // Edytor osób z danych zamówienia (nie śmieć po poprzednim dokumencie)
+        // + sync baseline: SAVED ma widzieć to samo co formularz.
+        if (typeof renderClientContactsList === 'function') {
+            try {
+                renderClientContactsList(order.clientContacts, order);
+            } catch (_e) {}
+        }
+        if (typeof syncOrderContactsFromForm === 'function') {
+            try {
+                syncOrderContactsFromForm(order);
+            } catch (_e2) {}
+        }
         setVal('invest-name', order.investName || '');
         setVal('invest-address', order.investAddress || '');
         setVal('invest-contractor', order.investContractor || '');
@@ -1298,6 +1310,13 @@ async function saveCurrentOrderUnsafe(options = {}) {
         }
     }
     showToast('<i data-lucide="package"></i> Zamówienie zapisane', 'success');
+    // Sync baseline z formularza (in-memory): SAVED ma widzieć to samo co
+    // formularz, inaczej diff live-vs-SAVED wiesza flagę dirty po zapisie.
+    if (typeof syncOrderContactsFromForm === 'function') {
+        try {
+            syncOrderContactsFromForm(order);
+        } catch (_e) {}
+    }
     // P1.1b: sukces SAVED kasuje draft zamówienia.
     if (window.draftAutosave) window.draftAutosave.clearContext('order_studnie', order.id);
     renderOrderModeBanner();

@@ -375,6 +375,10 @@
                             });
                     } catch (_eD) {}
                     if (dirtyAfter === true) {
+                        // Kontrakt save-unclean: saver bez wyjątku, dirty nadal true
+                        // = NIE zapisano (do weryfikacji). Modal zostaje otwarty,
+                        // nawigacja zablokowana (return false). Diagnostyka:
+                        // __sokLastDirtyDetail (sekcje/pola bez wartości) + dirtySrc.
                         try {
                             if (typeof console !== 'undefined' && console.warn)
                                 console.warn(

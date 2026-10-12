@@ -5,6 +5,9 @@
  * Klucze legacy (contactPerson/clientPhone/clientEmail/clientContact) to
  * mirror pierwszego wpisu — PDF/search/DOCX czytają je jak dotąd.
  * Oferty legacy bez tablicy: jeden wpis wyprowadzony z kluczy legacy.
+ * Kontrakt mirroru: contactsToLegacy wyprowadza split [0], contactsToMirrorString
+ * display (bez e-maili, nie odtwarza ich też parseLegacyMirror). Przy rozjeździe
+ * hidden client-contact vs tablica wygrywa tablica.
  */
 
 export const MAX_CONTACTS = 10;

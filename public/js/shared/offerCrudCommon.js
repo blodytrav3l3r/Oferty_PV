@@ -110,6 +110,27 @@ function setOfferFormFields(data) {
 }
 
 /**
+ * Przepisuje kontakty z formularza do obiektu SAVED (in-memory, bez sieci).
+ * Wołane przy wejściu w edycję zamówienia i po udanym zapisie — baseline
+ * ma odzwierciedlać to co widzi user, inaczej diff live-vs-SAVED wiesza się
+ * na duchach (pusty edytor vs mirror, brak tablicy vs []). No-op bez edytora.
+ */
+function syncOrderContactsFromForm(order) {
+    if (!order || typeof document === 'undefined') return;
+    try {
+        if (!document.getElementById('client-contacts')) return;
+        const list = getClientContactsList();
+        order.clientContacts = list;
+        const first = Array.isArray(list) ? list[0] || {} : {};
+        order.contactPerson = String(first.name || '');
+        order.clientPhone = String(first.phone || '');
+        order.clientEmail = String(first.email || '');
+        const mirror = document.getElementById('client-contact');
+        if (mirror) order.clientContact = mirror.value ?? '';
+    } catch (_e) {}
+}
+
+/**
  * Resetuje standardowe pola formularza oferty do wartości domyślnych.
  * @param {function} [numberGenerator] - opcjonalnie generuje numer oferty
  */
@@ -396,3 +417,4 @@ window.buildBaseOfferDoc = buildBaseOfferDoc;
 window.isVersionConflict = isVersionConflict;
 window.normalizeValidityValue = normalizeValidityValue;
 window.syncOfferTabFields = syncOfferTabFields;
+window.syncOrderContactsFromForm = syncOrderContactsFromForm;

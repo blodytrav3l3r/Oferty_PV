@@ -475,6 +475,26 @@ function _draftItemSortKey(it) {
 }
 
 /**
+ * Kanoniczny kształt listy kontaktów do diffu: trim, drop pustych wierszy,
+ * limit 10 (jak MAX_CONTACTS w clientContacts.js), dokładnie klucze
+ * {name,phone,email}. Symetryczny po obu stronach (live-tablica i SAVED-legacy).
+ * Deterministyczny, bez zależności od kolejności ładowania modułu ESM.
+ */
+function _draftNormContacts(list) {
+    var out = [];
+    if (!Array.isArray(list)) return out;
+    for (var i = 0; i < list.length && out.length < 10; i++) {
+        var r = list[i] || {};
+        var nm = String(r.name ?? '').trim();
+        var ph = String(r.phone ?? '').trim();
+        var em = String(r.email ?? '').trim();
+        if (!nm && !ph && !em) continue;
+        out.push({ name: nm, phone: ph, email: em });
+    }
+    return out;
+}
+
+/**
  * Payload w przestrzeni porównywalnej (obie strony tą samą projekcją).
  * order_studnie: DTO (allowlist SSoT) + strip _elemId w pozycjach (PZ-id to nie
  * tresc zmiany); offer_studnie: strip efemerycznych (DTO nie obowiazuje ofert);
@@ -484,6 +504,10 @@ function _draftItemSortKey(it) {
  * B1: liczby z allowlisty (number ↔ numeric string). B2: items sortowane
  * (kolejność pozycji nie jest semantyką — render rur i tak sortuje).
  * B3: brak wellDiscounts/visiblePrzejsciaTypes = {}/[] (szum w diffie).
+ * Kontakty: clientContacts [] = brak klucza = '' (szum kolekcji/edytora,
+ * nie brud); wiersze kanonizowane _draftNormContacts. Mirror/split
+ * (clientContact/contactPerson/clientPhone/clientEmail) porównuj surowo —
+ * sync z edytora (syncOrderContactsFromForm) trzyma je w zgodzie z tablicą.
  * @param {string} kind
  * @param {*} payload
  * @returns {object}
@@ -536,6 +560,15 @@ function _draftComparablePayload(kind, payload) {
         _DRAFT_NUMERIC_FIELD_KEYS.forEach(function (k) {
             if (fields[k] !== undefined) fields[k] = _draftNumOrKeep(fields[k]);
         });
+        // Kontakty: brak/''/null tablicy = [] (edytor zawsze niesie Array).
+        if (
+            fields.clientContacts === undefined ||
+            fields.clientContacts === null ||
+            fields.clientContacts === ''
+        )
+            fields.clientContacts = [];
+        else if (Array.isArray(fields.clientContacts))
+            fields.clientContacts = _draftNormContacts(fields.clientContacts);
         out.fields = fields;
     }
     if (Array.isArray(out.items)) {
