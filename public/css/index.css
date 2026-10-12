@@ -2933,7 +2933,7 @@ html[data-theme='light'] body.index-page.logged-in::before {
 .care-count-pill {
     background: var(--accent-bg);
     color: var(--accent-text);
-    border-color: var(--accent-border-dim);
+    border: 1px solid var(--accent-border-dim);
 }
 /* Filtry kolejki: kształt .btn (jak Kontakt), równa szerokość, accent zamiast czerni. */
 .care-queue-filters .care-queue-filter-btn {
@@ -3107,6 +3107,9 @@ html[data-theme='light'] body.index-page.logged-in::before {
     font-size: var(--fs-2xl);
     font-weight: var(--fw-bold);
     color: var(--text-primary);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
 }
 #followup-panel .admin-title-group {
     display: flex;
