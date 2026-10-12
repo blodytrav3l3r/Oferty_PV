@@ -66,7 +66,10 @@ retencja/sync bez zmian); FE badge cap `99+` + stopka `+N więcej`
 (`carePanel.js:294-299,443-451`, podpięcie `1729,1783`); testy
 `followUpCareNotifRoutes.test.ts:80-91` (overflow true/false) i
 `frontend/carePanel.test.ts:1718-1775` (badge 99+). Cap tylko prezentacja,
-licznik `unreadCount` bez limitu — bez wpływu na decyzję sync-przy-odczycie.
+retencja/sync bez zmian; licznik `unreadCount` capped na 101
+(`CARE_UNREAD_CAP=100` + 1, subquery `LIMIT 101` zamiast full COUNT —
+`careService.ts`, test granic w `followUpCareNotif.test.ts`).
+Bez wpływu na decyzję sync-przy-odczycie.
 
 R3 VERIFIED (`76904fa`): marker `m = MAX(updatedAt)` w `getCareEtagInput`
 (`careService.ts:524-551`, slot 13., guarded `m=null` na legacy DB);

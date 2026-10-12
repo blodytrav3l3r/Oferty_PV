@@ -409,9 +409,50 @@ describe('P2 sync powiadomień', () => {
             }
             const r = await syncCareNotifications(f, U1, 'mine', NOW, SLA);
             expect(r.inserted).toBe(0);
+            // R2A: licznik capped na 101 (CAP 100 + 1) zamiast pełnych 502 —
+            // badge ma 99+, a retencja dalej nie rusza nieprzeczytanych
+            // (surowy COUNT to dowód braku kasowania, nie lista).
             expect(
                 (await listCareNotifications(f, 'u1', { unreadOnly: true, limit: 100 })).unreadCount
-            ).toBe(502);
+            ).toBe(101);
+            const raw = db
+                .prepare(
+                    'SELECT COUNT(*) AS c FROM "care_notifications" WHERE "userId" = ? AND "readAt" IS NULL'
+                )
+                .get('u1') as unknown as { c: number };
+            expect(raw.c).toBe(502);
+            db.close();
+        } catch (e) {
+            try {
+                db.close();
+            } catch {
+                /* ignore */
+            }
+            throw e;
+        }
+    });
+
+    it('R2A: granice capa licznika (0/1/100/101)', async () => {
+        const db = new DatabaseSync(':memory:');
+        db.exec(`CREATE TABLE offers_rel (id TEXT PRIMARY KEY, "userId" TEXT, "createdAt" TEXT, "offer_number" TEXT, "clientName" TEXT);
+        CREATE TABLE offers_studnie_rel (id TEXT PRIMARY KEY, "userId" TEXT, "createdAt" TEXT, "offer_number" TEXT, "clientName" TEXT, "totalPrice" REAL);
+        CREATE TABLE care_notifications ("id" TEXT NOT NULL, "userId" TEXT NOT NULL, "offerKind" TEXT NOT NULL, "offerId" TEXT NOT NULL, "type" TEXT NOT NULL, "readAt" TEXT, "createdAt" TEXT NOT NULL,
+            CONSTRAINT "care_notifications_pkey" PRIMARY KEY ("id"));`);
+        try {
+            const f = fake(db);
+            const ins = db.prepare(
+                'INSERT INTO care_notifications ("id", "userId", "offerKind", "offerId", "type", "readAt", "createdAt") VALUES (?,?,?,?,?,?,?)'
+            );
+            const count = async () =>
+                (await listCareNotifications(f, 'u1', { unreadOnly: true, limit: 100 }))
+                    .unreadCount;
+            expect(await count()).toBe(0);
+            for (let i = 0; i < 100; i++) {
+                ins.run('n' + i, 'u1', 'rury', 'o' + i, 'CALLBACK_DUE', null, NOW);
+            }
+            expect(await count()).toBe(100);
+            ins.run('n100', 'u1', 'rury', 'o100', 'CALLBACK_DUE', null, NOW);
+            expect(await count()).toBe(101);
             db.close();
         } catch (e) {
             try {

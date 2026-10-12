@@ -20,6 +20,11 @@ export type CareScope = 'mine' | 'team' | 'all';
 export const CARE_DEFAULT_LIMIT = 50;
 export const CARE_MAX_LIMIT = 100;
 
+/** Cap licznika nieprzeczytanych (R2A): badge ma już `99+`, a pełny COUNT
+ * na dużej skrzynce to full scan za każdym pollingiem. Licznik capped na
+ * CAP+1 (101 rozróżnia 100 od "więcej"), semantyka reszty bez zmian. */
+export const CARE_UNREAD_CAP = 100;
+
 /** Sentinel dla braku terminu — sortuje ostatnie (ISO-UTC zawsze < '9999'). */
 const NULL_NEXT = '9999';
 
@@ -1107,7 +1112,7 @@ export async function listCareNotifications(
             : Prisma.sql`SELECT ${cols} WHERE n."userId" = ${userId} ORDER BY n."createdAt" DESC LIMIT ${limit}`
     )) as CareNotification[];
     const cnt = (await db.$queryRaw<Array<{ c: number | bigint }>>(
-        Prisma.sql`SELECT COUNT(*) AS "c" FROM "care_notifications" WHERE "userId" = ${userId} AND "readAt" IS NULL`
+        Prisma.sql`SELECT COUNT(*) AS "c" FROM (SELECT 1 FROM "care_notifications" WHERE "userId" = ${userId} AND "readAt" IS NULL LIMIT ${CARE_UNREAD_CAP + 1})`
     )) as Array<{ c: number | bigint }>;
     return { items, unreadCount: num(cnt[0]?.c) };
 }
