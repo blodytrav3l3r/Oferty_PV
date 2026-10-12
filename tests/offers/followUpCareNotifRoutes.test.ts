@@ -77,6 +77,19 @@ describe('P2 notifications routes', () => {
         expect(res.body.items[0].type).toBe('SLA_BREACH');
     });
 
+    it('GET → hasOverflow z listy (cap tylko prezentacja)', async () => {
+        // Przepełnienie: licznik większy niż zwrócona lista.
+        listMock.mockResolvedValueOnce({ items: [{ id: 'n1' }], unreadCount: 5 });
+        const over = await request(app()).get('/api/care/notifications?scope=mine');
+        expect(over.status).toBe(200);
+        expect(over.body.hasOverflow).toBe(true);
+        // Brak przepełnienia: licznik równy liście.
+        listMock.mockResolvedValueOnce({ items: [{ id: 'n1' }], unreadCount: 1 });
+        const fit = await request(app()).get('/api/care/notifications?scope=mine');
+        expect(fit.status).toBe(200);
+        expect(fit.body.hasOverflow).toBe(false);
+    });
+
     it('POST read → 200; cudze/brak → 404', async () => {
         markMock.mockResolvedValueOnce(1);
         expect((await request(app()).post('/api/care/notifications/n1/read')).status).toBe(200);

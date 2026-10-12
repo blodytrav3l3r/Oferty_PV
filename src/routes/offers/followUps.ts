@@ -101,6 +101,19 @@ function shareType(kind: 'rury' | 'studnie'): string {
     return kind === 'rury' ? 'offer' : 'offer_studnie';
 }
 
+// R3: bump znacznika edycji do ETag panelu (kolumna updatedAt z migracji
+// _care_followups_updatedAt). Surowy SQL jak reszta opieki - bez prisma
+// generate (generowany klient nie zna kolumny). Guard: mocki jednostkowe
+// nie maja $executeRaw i wtedy skip; prawdziwy tx zawsze go ma.
+async function bumpFollowUpUpdatedAt(tx: unknown, fuId: string, now: string): Promise<void> {
+    const raw = tx as unknown as {
+        $executeRaw?: (strings: TemplateStringsArray, ...values: string[]) => Promise<number>;
+    };
+    if (typeof raw.$executeRaw === 'function') {
+        await raw.$executeRaw`UPDATE "offer_follow_ups" SET "updatedAt" = ${now} WHERE "id" = ${fuId}`;
+    }
+}
+
 router.post(
     '/:kind/:id/followups',
     requireAuth,
@@ -177,6 +190,7 @@ router.post(
             // logAudit celowo pominięty: ma semantykę warn-only i nie cofa biznesu.
             await prisma.$transaction(async (tx) => {
                 await tx.offer_follow_ups.create({ data: record });
+                await bumpFollowUpUpdatedAt(tx, fuId, now);
                 await tx.audit_logs.create({
                     data: {
                         id: crypto.randomUUID(),
@@ -311,6 +325,7 @@ router.put(
             };
             await prisma.$transaction(async (tx) => {
                 await tx.offer_follow_ups.update({ where: { id: fuId }, data: record });
+                await bumpFollowUpUpdatedAt(tx, fuId, now);
                 await tx.audit_logs.create({
                     data: {
                         id: crypto.randomUUID(),

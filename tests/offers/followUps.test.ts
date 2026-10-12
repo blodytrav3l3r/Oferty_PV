@@ -380,3 +380,23 @@ describe('P0.3 OfferFollowUp — POST/GET', () => {
         expect(missing.status).toBe(404);
     });
 });
+
+import { followUpCreateSchema } from '../../src/routes/offers/followUps';
+
+describe('P0.3 isoDateTime — publiczny zod schema odrzuca kalendarz/format/strefe', () => {
+    it.each([
+        ['nieistniejacy dzien', '2026-02-30T10:00:00.000Z'],
+        ['format US', '10/10/2026'],
+        ['godzina 25', '2026-10-10T25:00:00.000Z'],
+        ['strefa +25:00', '2026-10-10T09:00:00+25:00']
+    ])('odrzuca %s (%s)', (_name: string, contactedAt: string) => {
+        expect(followUpCreateSchema.safeParse({ ...validBody, contactedAt }).success).toBe(false);
+    });
+    it('odrzuca +25:00 takze w nextContactAt', () => {
+        const r = followUpCreateSchema.safeParse({
+            ...validBody,
+            nextContactAt: '2026-10-10T09:00:00+25:00'
+        });
+        expect(r.success).toBe(false);
+    });
+});

@@ -384,3 +384,48 @@ describe('P0.2 care queue SQL', () => {
         }
     });
 });
+
+describe('P0.2 KEEP-guard sortowania i cursora (assert, zero kodu)', () => {
+    it('NULLS-last sentinelem: SQL ma COALESCE(next), parametry niosa 9999', () => {
+        const { data } = buildCareQueueQueries(U1, { nowIso: NOW });
+        const raw = data as unknown as { sql: string; values: unknown[] };
+        expect(raw.sql).toContain('COALESCE');
+        expect(raw.values).toContain('9999');
+    });
+
+    it('cursor tiebreak: ten sam bucket+termin -> kind/id, strony bez dubli', () => {
+        const db = freshDb();
+        try {
+            // o0 = bliźniak o1: ten sam bucket 0 i termin PAST -> tiebreak po id.
+            db.prepare('INSERT INTO offers_rel (id, "userId", "createdAt") VALUES (?, ?, ?)').run(
+                'o0',
+                'u1',
+                '2026-10-01T00:00:00.000Z'
+            );
+            db.prepare(
+                `INSERT INTO offer_follow_ups (id, "offerKind", "offerId", "createdByUserId",
+                 "contactedAt", "createdAt", outcome, "nextContactAt") VALUES (?,?,?,?,?,?,?,?)`
+            ).run('f0', 'rury', 'o0', 'u1', PAST, PAST, 'OPEN', PAST);
+            expect(dataIds(db, U1).slice(0, 2)).toEqual(['rury:o0', 'rury:o1']);
+            const p1 = buildCareQueueQueries(U1, { nowIso: NOW, limit: 1 });
+            const first = rawAll(db, p1.data).slice(0, 1)[0] as Record<string, unknown>;
+            const cursor = encodeCareCursor({
+                w: Number(first.bucketWeight),
+                n: first.next as string | null,
+                k: first.offerKind as string,
+                i: first.offerId as string
+            });
+            const p2 = buildCareQueueQueries(U1, { nowIso: NOW, limit: 1, cursor });
+            const second = rawAll(db, p2.data).slice(0, 1)[0] as Record<string, unknown>;
+            expect(`${second.offerKind}:${second.offerId}`).toBe('rury:o1');
+            db.close();
+        } catch (e) {
+            try {
+                db.close();
+            } catch {
+                /* ignore */
+            }
+            throw e;
+        }
+    });
+});

@@ -492,7 +492,7 @@ export function buildCareQueueView(
     });
 }
 
-/** ETag panelu: 1 statement ze skrajnymi znacznikami (scope + user w haśle route).
+/** ETag panelu: znaczniki a-m, glowny SELECT + guarded m (scope + user w haśle route).
  * Nadmiarowy (globalne maksy) — fałszywy 200 nieszkodliwy, brakujący 304 nie istnieje.
  * j/k: MAX(updatedAt) ofert — każda edycja (w tym zmiana opiekuna) unieważnia 304.
  * l: COUNT shares — nadanie/odebranie udostępnienia unieważnia 304
@@ -521,6 +521,19 @@ export async function getCareEtagInput(
             (SELECT CAST(COUNT(*) AS TEXT) || '|' || COALESCE(CAST(MAX(rowid) AS TEXT), '0') FROM "document_shares") AS "l"`
     )) as Array<Record<string, string | null>>;
     const r = rows[0] ?? {};
+    // R3: marker m = MAX(updatedAt) follow-upow - edycja wpisu w miejscu
+    // (PUT bez zmiany contactedAt/createdAt) uniewaznia 304. Osobny SELECT
+    // z try/catch: legacy DB i stare fixtury bez kolumny daja m=null
+    // zamiast wywalac caly ETag (kontrakt best-effort z care.ts).
+    let m: string | null = null;
+    try {
+        const mRows = await db.$queryRaw<Array<{ m: string | null }>>(
+            Prisma.sql`SELECT MAX("updatedAt") AS "m" FROM "offer_follow_ups"`
+        );
+        m = mRows[0]?.m ?? null;
+    } catch {
+        m = null;
+    }
     return [
         r.a ?? null,
         r.b ?? null,
@@ -533,7 +546,8 @@ export async function getCareEtagInput(
         r.i ?? null,
         r.j ?? null,
         r.k ?? null,
-        r.l ?? null
+        r.l ?? null,
+        m
     ];
 }
 

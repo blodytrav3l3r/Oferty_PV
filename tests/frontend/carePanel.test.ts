@@ -1714,4 +1714,83 @@ describe('carePanel', () => {
         await d2;
         expect(items[0].disabled).toBe(false);
     });
+
+    test('badge 99+ i stopka przepełnienia (+N więcej)', async () => {
+        const packet = {
+            ok: true,
+            etag: '"e99"',
+            summary: {
+                noContact: 0,
+                due: 1,
+                openOk: 0,
+                won: 0,
+                lost: 0,
+                abandoned: 0,
+                totalCount: 1
+            },
+            queue: { items: [], nextCursor: null, totalCount: 1 },
+            notifications: {
+                items: [{ id: 'n1', offerKind: 'rury', offerId: 'o1', type: 'SLA_BREACH' }],
+                unreadCount: 150,
+                hasOverflow: true
+            },
+            sla: { firstContactH: 24, staleD: 7, escalationH: 72 }
+        };
+        const { els, context } = load({
+            fetchMock: (url: string) => {
+                if (url.includes('/api/care/panel'))
+                    return { ok: true, status: 200, json: async () => packet };
+                return okJson({ noContact: 0, due: 0, openOk: 0, won: 0, lost: 0 });
+            }
+        });
+        await context.__careTest.loadCarePanel();
+        // Cap tylko prezentacja: badge stoi na 99+.
+        expect(els['care-notif-count'].textContent).toBe('99+');
+        const texts: string[] = [];
+        const walk = (n: any): void => {
+            if (n.textContent) texts.push(n.textContent);
+            for (const c of n.children || []) walk(c);
+        };
+        walk(els['care-notif-list']);
+        expect(texts.join(' ')).toContain('+149 więcej');
+    });
+
+    test('bez przepełnienia: zwykły badge i brak stopki', async () => {
+        const packet = {
+            ok: true,
+            etag: '"e100"',
+            summary: {
+                noContact: 0,
+                due: 1,
+                openOk: 0,
+                won: 0,
+                lost: 0,
+                abandoned: 0,
+                totalCount: 1
+            },
+            queue: { items: [], nextCursor: null, totalCount: 1 },
+            notifications: {
+                items: [{ id: 'n1', offerKind: 'rury', offerId: 'o1', type: 'SLA_BREACH' }],
+                unreadCount: 1,
+                hasOverflow: false
+            },
+            sla: { firstContactH: 24, staleD: 7, escalationH: 72 }
+        };
+        const { els, context } = load({
+            fetchMock: (url: string) => {
+                if (url.includes('/api/care/panel'))
+                    return { ok: true, status: 200, json: async () => packet };
+                return okJson({ noContact: 0, due: 0, openOk: 0, won: 0, lost: 0 });
+            }
+        });
+        await context.__careTest.loadCarePanel();
+        expect(els['care-notif-count'].textContent).toBe('1 alert');
+        const texts: string[] = [];
+        const walk = (n: any): void => {
+            if (n.textContent) texts.push(n.textContent);
+            for (const c of n.children || []) walk(c);
+        };
+        walk(els['care-notif-list']);
+        expect(texts.join(' ')).not.toContain('więcej');
+    });
 });

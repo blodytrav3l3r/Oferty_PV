@@ -165,3 +165,64 @@ describe('P4 SLA per zespół/user', () => {
         }
     });
 });
+
+describe('P4 fallback user+team i szczelnosc team-row', () => {
+    it('user ze scope team -> global 24/7/72 (team tylko pro/admin)', async () => {
+        const db = freshDb();
+        try {
+            const f = fake(db);
+            expect(await getEffectiveSla(f, U1, 'team')).toEqual({
+                firstContactH: 24,
+                staleD: 7,
+                escalationH: 72,
+                source: 'global'
+            });
+            db.close();
+        } catch (e) {
+            try {
+                db.close();
+            } catch {
+                /* ignore */
+            }
+            throw e;
+        }
+    });
+
+    it('team-row p1 nie wycieka: czlonek zespolu i obcy pro -> global 24/7/72', async () => {
+        const db = freshDb();
+        try {
+            const f = fake(db);
+            await setScopedSla(f, {
+                scopeType: 'team',
+                scopeId: 'p1',
+                firstContactH: 12,
+                staleD: 3,
+                escalationH: 36,
+                updatedBy: 'p1',
+                nowIso: NOW
+            });
+            // u1 jest w subUsers p1, ale scope team dla roli user zawsze spada do global.
+            expect(await getEffectiveSla(f, U1, 'team')).toEqual({
+                firstContactH: 24,
+                staleD: 7,
+                escalationH: 72,
+                source: 'global'
+            });
+            const other: CareUser = { id: 'p9', role: 'pro', subUsers: [] };
+            expect(await getEffectiveSla(f, other, 'team')).toEqual({
+                firstContactH: 24,
+                staleD: 7,
+                escalationH: 72,
+                source: 'global'
+            });
+            db.close();
+        } catch (e) {
+            try {
+                db.close();
+            } catch {
+                /* ignore */
+            }
+            throw e;
+        }
+    });
+});

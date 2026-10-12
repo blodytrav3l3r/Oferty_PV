@@ -42,3 +42,11 @@ Eskalacja i progi naruszeń liczone z progu efektywnego w scope requeścia
 Buckety zdrowia stałe, niezależne od progu (`src/utils/careStatus.ts:40-46`):
 D+1/D+3/D+7/D+14. CASE w `notifCandidates` (`careService.ts:831-834`):
 SLA_BREACH wygrywa z ESCALATION (pierwszy WHEN rozstrzyga).
+
+## Suplement 2026-10-12 (fala R3 bez wpływu na SLA)
+
+R3 HYPOTHESIS (brak diff w worktree): zmiana ETag/follow-ups nie dotyka progu
+efektywnego — `getEffectiveSla` (`careService.ts:734-748`), tabela
+`care_sla_scopes` i CASE `notifCandidates` bez zmian; `source: global|team|user`
+bez zmian. Weryfikacja po lądowaniu R3: `getEffectiveSla` + test
+`followUpCareSlaScopes.test.ts` zielone.

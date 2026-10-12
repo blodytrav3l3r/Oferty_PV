@@ -291,11 +291,12 @@ function fmtDelay(overdueDays, createdAt) {
     return '';
 }
 
-function renderNotifications(items, unreadCount, mailboxUserId) {
+function renderNotifications(items, unreadCount, mailboxUserId, hasOverflow) {
     const badge = document.getElementById('care-notif-count');
     if (badge) {
         // aria-live statycznie w index.html (#care-notif-count); tu tylko tekst.
-        badge.textContent = notifCountText(unreadCount);
+        // Cap tylko prezentacja: licznik rośnie bez limitu, badge stoi na 99+.
+        badge.textContent = unreadCount > 99 ? '99+' : notifCountText(unreadCount);
     }
     const list = document.getElementById('care-notif-list');
     if (!list) return;
@@ -437,6 +438,15 @@ function renderNotifications(items, unreadCount, mailboxUserId) {
         grid.appendChild(card);
     }
     list.appendChild(grid);
+    // Stopka przepełnienia: cap tylko prezentacja (BE tnie listę, licznik cały).
+    const overflow =
+        typeof hasOverflow === 'boolean' ? hasOverflow : unreadCount > (items ? items.length : 0);
+    if (overflow && unreadCount > (items ? items.length : 0)) {
+        const more = document.createElement('div');
+        more.className = 'care-notif-more';
+        more.textContent = '+' + (unreadCount - items.length) + ' więcej';
+        list.appendChild(more);
+    }
     refreshCareIcons(list);
 }
 
@@ -1713,7 +1723,8 @@ async function loadPanelPacket() {
             renderNotifications(
                 json.notifications.items,
                 json.notifications.unreadCount ?? 0,
-                json.notifications.mailboxUserId
+                json.notifications.mailboxUserId,
+                json.notifications.hasOverflow
             );
         setSyncText(
             json.notifications && json.notifications.sync
@@ -1762,7 +1773,13 @@ async function loadCarePanelLegacy() {
             )
         ]);
         if (queue) renderQueue(queue.items, queue.nextCursor, queue.totalCount);
-        if (notif) renderNotifications(notif.items, notif.unreadCount ?? 0, notif.mailboxUserId);
+        if (notif)
+            renderNotifications(
+                notif.items,
+                notif.unreadCount ?? 0,
+                notif.mailboxUserId,
+                notif.hasOverflow
+            );
         setSyncText(notif && notif.sync ? notif.sync.skipped : undefined);
         clearError();
     } catch {

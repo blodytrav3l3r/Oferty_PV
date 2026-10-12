@@ -27,7 +27,7 @@ function freshDb(): DatabaseSync {
         CREATE TABLE document_shares (id TEXT PRIMARY KEY, "sharedWithUserId" TEXT, "documentType" TEXT, "documentId" TEXT);
         CREATE TABLE care_states ("offerKind" TEXT NOT NULL, "offerId" TEXT NOT NULL, "snoozedUntil" TEXT, "doneAt" TEXT, "updatedBy" TEXT, "updatedAt" TEXT NOT NULL,
             CONSTRAINT "care_states_pkey" PRIMARY KEY ("offerKind", "offerId"));
-        CREATE TABLE offer_follow_ups (id TEXT PRIMARY KEY, "offerKind" TEXT, "offerId" TEXT, "createdByUserId" TEXT, "contactedAt" TEXT, "createdAt" TEXT, outcome TEXT, "nextContactAt" TEXT, note TEXT);
+        CREATE TABLE offer_follow_ups (id TEXT PRIMARY KEY, "offerKind" TEXT, "offerId" TEXT, "createdByUserId" TEXT, "contactedAt" TEXT, "createdAt" TEXT, outcome TEXT, "nextContactAt" TEXT, note TEXT, "updatedAt" TEXT);
         CREATE TABLE care_notifications ("id" TEXT PRIMARY KEY, "userId" TEXT NOT NULL, "offerKind" TEXT NOT NULL, "offerId" TEXT NOT NULL, "type" TEXT NOT NULL, "readAt" TEXT, "createdAt" TEXT NOT NULL);
         CREATE TABLE care_sla_config (id TEXT PRIMARY KEY, "firstContactH" INTEGER, "staleD" INTEGER, "escalationH" INTEGER, "updatedBy" TEXT, "updatedAt" TEXT);
         CREATE TABLE care_sla_scopes ("scopeType" TEXT NOT NULL, "scopeId" TEXT NOT NULL, "firstContactH" INTEGER NOT NULL, "staleD" INTEGER NOT NULL, "escalationH" INTEGER NOT NULL, "updatedBy" TEXT, "updatedAt" TEXT,
@@ -37,8 +37,8 @@ function freshDb(): DatabaseSync {
     ).run('o1', 'u1', T0, T0);
     db.prepare(
         `INSERT INTO offer_follow_ups (id, "offerKind", "offerId", "createdByUserId",
-         "contactedAt", "createdAt", outcome, "nextContactAt") VALUES (?,?,?,?,?,?,?,?)`
-    ).run('f1', 'rury', 'o1', 'u1', T0, T0, 'OPEN', null);
+         "contactedAt", "createdAt", "updatedAt", outcome, "nextContactAt") VALUES (?,?,?,?,?,?,?,?,?)`
+    ).run('f1', 'rury', 'o1', 'u1', T0, T0, T0, 'OPEN', null);
     return db;
 }
 
@@ -210,6 +210,31 @@ describe('ETag panelu a zmiana opiekuna', () => {
             const q2 = await getCareQueue(fake(db), U1, { nowIso: NOW, hidePaused: true });
             expect(s2.totalCount).toBe(0);
             expect(q2.totalCount).toBe(0);
+            db.close();
+        } catch (e) {
+            try {
+                db.close();
+            } catch {
+                /* ignore */
+            }
+            throw e;
+        }
+    });
+    it('edycja w miejscu zmienia ETag (marker updatedAt), brak edycji nie', async () => {
+        const db = freshDb();
+        try {
+            const f = fake(db);
+            const before = await getCareEtagInput(f, 'u1');
+            // Bez edycji: ten sam snapshot.
+            expect(await getCareEtagInput(f, 'u1')).toEqual(before);
+            // PUT w miejscu: note/outcome ruszone, contactedAt/createdAt stoja.
+            // Stare markery a/b slepe - tylko m (MAX updatedAt) uniewaznia 304.
+            db.prepare(
+                'UPDATE offer_follow_ups SET note = ?, outcome = ?, "updatedAt" = ? WHERE id = ?'
+            ).run('poprawiona notatka', 'WON', T1, 'f1');
+            const after = await getCareEtagInput(f, 'u1');
+            expect(after).not.toEqual(before);
+            expect(after[after.length - 1]).toBe(T1);
             db.close();
         } catch (e) {
             try {

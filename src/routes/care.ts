@@ -265,6 +265,8 @@ router.get('/panel', requireAuth, READ_LIMITER, async (req, res) => {
             notifications: {
                 items: notifItems,
                 unreadCount,
+                // Cap tylko prezentacja: retencja i sync bez zmian.
+                hasOverflow: unreadCount > notifItems.length,
                 sync,
                 mailboxUserId: repOwner ?? user.id
             },
@@ -608,6 +610,8 @@ router.get('/notifications', requireAuth, READ_LIMITER, async (req, res) => {
             now: nowIso,
             items,
             unreadCount,
+            // Cap tylko prezentacja: liczony z istniejącej listy, zero zmian SQL.
+            hasOverflow: unreadCount > items.length,
             sync,
             mailboxUserId: repOwner ?? user.id
         });

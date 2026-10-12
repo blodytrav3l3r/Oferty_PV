@@ -100,8 +100,8 @@ FE carePanel.js (polling 60 s, backoff do 300 s)
 ├─ loadCarePanel → loadPanelPacket: GET /panel?scope&repId
 │    If-None-Match per scope|range|rep → 304 stale / 200 render
 ├─ fallback legacy: /summary + /queue + /notifications (wszystkie z repId)
-├─ renderNotifications: badge ← unreadCount, banner ← careRep,
-│    karty (max 20) + POST :id/read → markRead(user.id)
+├─ renderNotifications: badge ← unreadCount (cap 99+), banner ← careRep,
+│    karty (max 20) + stopka `+N więcej` (hasOverflow) + POST :id/read → markRead(user.id)
 └─ clearNotifications: POST /read {ids} + fallback pojedynczych
 BE care.ts: /panel (ETag per mailbox `repOwner ?? user.id`, COUNT||MAX(rowid)
   shares w haśle) i /notifications (sync self-only + list per mailbox
@@ -119,6 +119,13 @@ kliknięcia; wyjątek w `renderSummary/renderQueue` blokuje `renderNotifications
 ETag już unieważniają shares (COUNT + MAX(rowid) `document_shares`
 w `getCareEtagInput`, `careService.ts:495-538`) — ślepa została edycja
 follow-up w miejscu (POST bez dotknięcia znaczników ETag a/b).
+Cap przepełnienia tylko prezentacja (R2, VERIFIED 2026-10-12): BE tnie listę,
+licznik cały — `hasOverflow` w `/panel` (`care.ts:269`) i `/notifications`
+(`care.ts:614`), FE badge `99+` + stopka `+N więcej`
+(`carePanel.js:294-299,443-451`); retencja/sync bez zmian.
+Marker `m` ETag (R3, HYPOTHESIS 2026-10-12): brak w worktree
+(`getCareEtagInput` kończy na `l`, `careService.ts:500-537`) — po lądowaniu
+dopisać tu linię znacznika.
 
 ## Progi SLA (F8: default 24/7/72)
 

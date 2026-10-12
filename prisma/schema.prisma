@@ -420,6 +420,9 @@ model offer_follow_ups {
   cycle           Int     @default(0)
   createdByUserId String
   createdAt       String?
+  // R3: znacznik edycji wpisu w miejscu (PUT nie rusza contactedAt/createdAt,
+  // a ETag panelu musi sie zmienic). Ustawiane przy POST i PUT (surowy SQL).
+  updatedAt       String?
   contactedAt     String
   channel         OfferFollowUpChannel
   result          OfferFollowUpResult

@@ -211,3 +211,31 @@ describe('isEscalated — jeden predykat (SSoT kolejki i powiadomień)', () => {
         expect(isEscalated(due(10), NOW, 72, null, NOW)).toBe(false);
     });
 });
+
+describe('P0.1 granice bucketow 0/1/2/3/6/7/13/14 + sameUtcDay', () => {
+    const dueDaysAgo = (d: number) => open(new Date(Date.parse(NOW) - d * 86400000).toISOString());
+    it.each([
+        [0, 'DUE_TODAY'],
+        [1, 'OVERDUE_D1'],
+        [2, 'OVERDUE_D1'],
+        [3, 'OVERDUE_D3'],
+        [6, 'OVERDUE_D3'],
+        [7, 'OVERDUE_D7'],
+        [13, 'OVERDUE_D7'],
+        [14, 'OVERDUE_D14']
+    ] as [number, string][])('overdue %i dni -> %s', (days, bucket) => {
+        expect(getSla(dueDaysAgo(days), CREATED, NOW)).toBe(bucket);
+    });
+    it('sameUtcDay: przyszlosc ta sama doba -> DUE_TODAY, inna doba -> OK', () => {
+        expect(getSla(open('2026-10-10T12:00:01.000Z'), CREATED, NOW)).toBe('DUE_TODAY');
+        expect(getSla(open('2026-10-11T00:00:00.000Z'), CREATED, NOW)).toBe('OK');
+    });
+    it('przeszlosc ta sama doba (polnoc) -> DUE/DUE_TODAY/0d', () => {
+        expect(getFollowUpState(open('2026-10-10T00:00:00.000Z'), CREATED, NOW)).toEqual({
+            status: 'DUE',
+            slaBucket: 'DUE_TODAY',
+            overdueDays: 0,
+            slaDueAt: '2026-10-10T00:00:00.000Z'
+        });
+    });
+});

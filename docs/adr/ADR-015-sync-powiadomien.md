@@ -57,3 +57,19 @@ Odrzucono: odczyt/zapis skrzynki repa (confused-deputy, I-003).
 Od ADR-016 eskalacja progowa liczona z progu efektywnego w scope requeścia
 (`getEffectiveSla`: team/user z fallbackiem do globalnej), nie z samej
 globalnej. CASE w `notifCandidates` bez zmian (SLA_BREACH przed ESCALATION).
+
+## Suplement 2026-10-12 (fala R3+R2: ETag marker m + hasOverflow)
+
+R2 VERIFIED (worktree dirty, bez commit): `hasOverflow` liczony z istniejącej
+listy (`care.ts:269` panel, `care.ts:614` notifications — zero zmian SQL,
+retencja/sync bez zmian); FE badge cap `99+` + stopka `+N więcej`
+(`carePanel.js:294-299,443-451`, podpięcie `1729,1783`); testy
+`followUpCareNotifRoutes.test.ts:80-91` (overflow true/false) i
+`frontend/carePanel.test.ts:1718-1775` (badge 99+). Cap tylko prezentacja,
+licznik `unreadCount` bez limitu — bez wpływu na decyzję sync-przy-odczycie.
+
+R3 HYPOTHESIS (brak diff w worktree 2026-10-12): marker `m` w `getCareEtagInput`
+(schema/migracja/followUps/ETag/careEtagOwner) — nie zweryfikowano,
+`getCareEtagInput` kończy na `l` (`careService.ts:500-537`). Po lądowaniu:
+dopisać wpływ na 304 i test `careEtagOwner.test.ts`; decyzja sync-przy-odczycie
+bez zmian.
