@@ -38,6 +38,10 @@ const scopedSlaUpsert = jest.fn();
 const effectiveSlaMock = jest.fn();
 const stateDelete = jest.fn();
 
+/** Daty wzgledem realnego now (route waliduje snoozedUntil w (now, now+14d]).
+ * Sztywne daty gniły — testy HTTP przechodzily wczoraj, dziś 400. */
+const futureIso = (days: number): string => new Date(Date.now() + days * 86400000).toISOString();
+
 jest.mock('../../src/services/careService', () => {
     const actual = jest.requireActual('../../src/services/careService');
     return {
@@ -112,14 +116,14 @@ describe('P1 care routes guardy', () => {
     it('snooze cudzej oferty → 403', async () => {
         const res = await request(app())
             .post('/api/care/rury/cudza/snooze')
-            .send({ snoozedUntil: '2026-10-12T00:00:00.000Z' });
+            .send({ snoozedUntil: futureIso(3) });
         expect(res.status).toBe(403);
     });
 
     it('snooze nieistniejącej → 404', async () => {
         const res = await request(app())
             .post('/api/care/rury/nope/snooze')
-            .send({ snoozedUntil: '2026-10-12T00:00:00.000Z' });
+            .send({ snoozedUntil: futureIso(3) });
         expect(res.status).toBe(404);
     });
 
@@ -137,7 +141,7 @@ describe('P1 care routes guardy', () => {
     it('snooze >14d → 400', async () => {
         const res = await request(app())
             .post('/api/care/rury/o1/snooze')
-            .send({ snoozedUntil: '2026-12-01T00:00:00.000Z' });
+            .send({ snoozedUntil: futureIso(30) });
         expect(res.status).toBe(400);
     });
 
@@ -146,7 +150,7 @@ describe('P1 care routes guardy', () => {
         try {
             const res = await request(app())
                 .post('/api/care/rury/o1/snooze')
-                .send({ snoozedUntil: '2026-10-12T00:00:00.000Z' });
+                .send({ snoozedUntil: futureIso(3) });
             expect(res.status).toBe(403);
             expect(stateUpsert).not.toHaveBeenCalled();
         } finally {
@@ -253,10 +257,12 @@ describe('P1 care routes guardy', () => {
                 code: 'CARE_STATE_CONFLICT'
             })
         );
-        const res = await request(app()).post('/api/care/rury/o1/snooze').send({
-            snoozedUntil: '2026-10-12T00:00:00.000Z',
-            expectedUpdatedAt: '2026-10-09T00:00:00.000Z'
-        });
+        const res = await request(app())
+            .post('/api/care/rury/o1/snooze')
+            .send({
+                snoozedUntil: futureIso(3),
+                expectedUpdatedAt: '2026-10-09T00:00:00.000Z'
+            });
         expect(res.status).toBe(409);
         expect(res.body.error).toBe('Stan zmieniony przez kogoś innego');
     });

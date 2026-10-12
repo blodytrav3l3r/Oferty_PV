@@ -36,6 +36,9 @@ jest.mock('../../src/utils/idempotency', () => ({
 const auditCreate = jest.fn();
 const PRE_IMAGE = { snoozedUntil: '2026-10-20T00:00:00.000Z', doneAt: null };
 
+/** Jak w followUpCareRoutes: route wymaga snoozedUntil w (now, now+14d]. */
+const futureIso = (days: number): string => new Date(Date.now() + days * 86400000).toISOString();
+
 jest.mock('../../src/services/careService', () => {
     const actual = jest.requireActual('../../src/services/careService');
     return {
@@ -114,7 +117,7 @@ describe('F6 audyt before-image', () => {
     it('snooze niesie oldData sprzed write', async () => {
         const res = await request(app())
             .post('/api/care/rury/o1/snooze')
-            .send({ snoozedUntil: '2026-10-12T00:00:00.000Z' });
+            .send({ snoozedUntil: futureIso(3) });
         expect(res.status).toBe(200);
         const arg = auditCreate.mock.calls[auditCreate.mock.calls.length - 1][0];
         expect(arg.data.action).toBe('snooze');
