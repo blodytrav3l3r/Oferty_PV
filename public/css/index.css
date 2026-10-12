@@ -2664,6 +2664,11 @@ html[data-theme='light'] body.index-page.logged-in::before {
     font-size: var(--fs-xs);
     white-space: nowrap;
 }
+/* Opis pod tytułem sekcji: mniejszy od tytułu, hierarchia tytuł > opis. */
+.care-dashboard-grid .recycled-desc {
+    font-size: var(--fs-base);
+    color: var(--text-secondary);
+}
 .care-link-btn {
     background: none;
     border: none;
@@ -3073,7 +3078,7 @@ html[data-theme='light'] body.index-page.logged-in::before {
     row-gap: 0.5rem;
 }
 #followup-panel .recycled-subtitle {
-    font-size: var(--fs-xl);
+    font-size: var(--fs-2xl);
     font-weight: var(--fw-bold);
     color: var(--text-primary);
 }
