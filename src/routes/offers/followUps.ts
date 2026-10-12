@@ -109,8 +109,12 @@ async function bumpFollowUpUpdatedAt(tx: unknown, fuId: string, now: string): Pr
     const raw = tx as unknown as {
         $executeRaw?: (strings: TemplateStringsArray, ...values: string[]) => Promise<number>;
     };
-    if (typeof raw.$executeRaw === 'function') {
+    if (typeof raw.$executeRaw !== 'function') return;
+    try {
         await raw.$executeRaw`UPDATE "offer_follow_ups" SET "updatedAt" = ${now} WHERE "id" = ${fuId}`;
+    } catch {
+        // Legacy DB bez kolumny updatedAt (migracja niezaaplikowana): zapis
+        // follow-up ma pierwszeństwo, ETag najwyżej zostanie stale (marker m).
     }
 }
 
