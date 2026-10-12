@@ -108,6 +108,13 @@ function getWellDiscountPct(well, p, disc) {
         p.componentType === 'kineta' ||
         p.componentType === 'styczna'
     ) {
+        // Jawnie betonowa dennica zawsze z klucza D400: E600/F900 wymaga żelbetu
+        // (wymusza UI), więc beton przy klasowym korpusie to stan spoza kontraktu;
+        // rabat klasowy należy się tylko żelbetowi. Brak pola (undefined) = reguła klasowa.
+        const denMat = well.dennicaMaterial != null ? well.dennicaMaterial : well.material;
+        if (denMat === 'betonowa' || denMat === 'beton') {
+            return readDiscountPct(disc, 'dennica');
+        }
         if (kCls !== 'D400') return readDiscountPct(disc, 'dennica' + kCls);
         return readDiscountPct(disc, 'dennica');
     }

@@ -344,6 +344,13 @@ describe('Rabaty klasowe studni (E600/F900) — getWellDiscountPct przez getItem
         expect(ctx.getTransitionHostPct(wellF900, disc, 'krag')).toBe(0);
     });
 
+    test('15. Korpus E600 + jawnie betonowa dennica → klucz D400 (dennica=10 → 666)', () => {
+        setDiscounts({ dennica: 10, dennicaE600: 15 });
+        const well = makeWell({ klasaNosnosci_korpus: 'E600', dennicaMaterial: 'betonowa' });
+        const p = product('DDD-1000-300');
+        expect(ctx.getItemAssessedPrice(well, p, true, well.config[0])).toBe(666);
+    });
+
     test('14. Przejście w dennicy stycznej → rabat dennica z wiersza styczne', () => {
         setDiscountsFor('styczne', { dennica: 7, nadbudowa: 3 });
         const well = makeWell({
