@@ -119,6 +119,8 @@ function syncOrderContactsFromForm(order) {
     if (!order || typeof document === 'undefined') return;
     try {
         if (!document.getElementById('client-contacts')) return;
+        // Bez mostka ESM collect zwróciłby [] i wyzerował baseline — nie ruszaj.
+        if (typeof window === 'undefined' || typeof window.ClientContacts === 'undefined') return;
         const list = getClientContactsList();
         order.clientContacts = list;
         const first = Array.isArray(list) ? list[0] || {} : {};
@@ -127,7 +129,30 @@ function syncOrderContactsFromForm(order) {
         order.clientEmail = String(first.email || '');
         const mirror = document.getElementById('client-contact');
         if (mirror) order.clientContact = mirror.value ?? '';
+        else if (
+            window.ClientContacts &&
+            typeof window.ClientContacts.contactsToMirrorString === 'function'
+        ) {
+            try {
+                order.clientContact = window.ClientContacts.contactsToMirrorString(list);
+            } catch (_e2) {}
+        } else order.clientContact = '';
     } catch (_e) {}
+}
+
+/**
+ * Jawna piątka pól kontaktowych do PATCH zamówienia (persist, nie in-memory).
+ * Czysta i testowalna: tablica tylko gdy Array, reszta stringi.
+ */
+function pickOrderContactFields(f) {
+    const src = f && typeof f === 'object' ? f : {};
+    return {
+        clientContacts: Array.isArray(src.clientContacts) ? src.clientContacts : [],
+        clientContact: src.clientContact || '',
+        contactPerson: src.contactPerson || '',
+        clientPhone: src.clientPhone || '',
+        clientEmail: src.clientEmail || ''
+    };
 }
 
 /**
@@ -418,3 +443,4 @@ window.isVersionConflict = isVersionConflict;
 window.normalizeValidityValue = normalizeValidityValue;
 window.syncOfferTabFields = syncOfferTabFields;
 window.syncOrderContactsFromForm = syncOrderContactsFromForm;
+window.pickOrderContactFields = pickOrderContactFields;

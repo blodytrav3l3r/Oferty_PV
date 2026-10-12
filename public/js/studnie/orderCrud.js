@@ -1171,6 +1171,17 @@ async function saveCurrentOrderUnsafe(options = {}) {
         order.validity ||
         '7 dni';
 
+    // Persist kontaktów: sync baseline z formularza, potem te same wartości
+    // do PATCH (PATCH ≡ baseline). Bez tego edycja kontaktów ginęła przy F5,
+    // a diff live-vs-SAVED wieszał flagę dirty po zapisie.
+    if (typeof syncOrderContactsFromForm === 'function') {
+        try {
+            syncOrderContactsFromForm(order);
+        } catch (_e) {}
+    }
+    const orderContactFields =
+        typeof pickOrderContactFields === 'function' ? pickOrderContactFields(order) : {};
+
     // RAZEM z zamrozonych udzialow (nie z proporcji na zywo) — suma
     // zamrozonych = to co widzi tabela; teoretyczny w linii rozliczenia.
     let frozenTotal = 0;
@@ -1230,7 +1241,8 @@ async function saveCurrentOrderUnsafe(options = {}) {
             transportMode: order.transportMode,
             transportSeparate: !!order.transportSeparate,
             paymentTerms: order.paymentTerms,
-            validity: order.validity
+            validity: order.validity,
+            ...orderContactFields
         });
         if (!saved) {
             try {
@@ -1245,6 +1257,7 @@ async function saveCurrentOrderUnsafe(options = {}) {
         // P4: fallback na tym samym standardzie co patchSingleOrderStudnie —
         // baseUpdatedAt + version + obsługa 409 + sync z odpowiedzi serwera.
         try {
+            /** @type {any} dynamiczny PATCH body (pola kontaktów dokładane spreadem) */
             const fallbackBody = {
                 wells: order.wells,
                 wellDiscounts: order.wellDiscounts,
@@ -1260,6 +1273,7 @@ async function saveCurrentOrderUnsafe(options = {}) {
                 transportSeparate: !!order.transportSeparate,
                 paymentTerms: order.paymentTerms,
                 validity: order.validity,
+                ...orderContactFields,
                 baseUpdatedAt:
                     typeof getOrderBaseUpdatedAt === 'function'
                         ? getOrderBaseUpdatedAt(order)
@@ -1310,13 +1324,6 @@ async function saveCurrentOrderUnsafe(options = {}) {
         }
     }
     showToast('<i data-lucide="package"></i> Zamówienie zapisane', 'success');
-    // Sync baseline z formularza (in-memory): SAVED ma widzieć to samo co
-    // formularz, inaczej diff live-vs-SAVED wiesza flagę dirty po zapisie.
-    if (typeof syncOrderContactsFromForm === 'function') {
-        try {
-            syncOrderContactsFromForm(order);
-        } catch (_e) {}
-    }
     // P1.1b: sukces SAVED kasuje draft zamówienia.
     if (window.draftAutosave) window.draftAutosave.clearContext('order_studnie', order.id);
     renderOrderModeBanner();
