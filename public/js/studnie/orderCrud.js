@@ -594,7 +594,9 @@ function _clearOrderUrlParam(orderId) {
 /* 404/brak zamówienia: czyść tryb + URL + cache, odmaluj bieżący widok. Wells nietknięte. */
 function _handleMissingOrder(orderId) {
     orderEditMode = null;
-    if (window.lockService) window.lockService.releaseOf('order_studnie', orderId);
+    // Brak release z premedytacją: zamówienie nieznane (404/brak), więc
+    // POST /api/locks/release wróciłby z celowym 404 guarda P1.5,
+    // nic nie zwalniając. Wygasłe blokady czyszczą się same.
     _clearOrderUrlParam(orderId);
     if (typeof _invalidateOrdersLookupCache === 'function') _invalidateOrdersLookupCache();
     showToast('Zamówienie nie znalezione', 'error');
@@ -658,7 +660,9 @@ async function deleteOrderStudnie(orderId) {
     showToast('Zamówienie usunięte. Studnie odblokowane do ponownego zamówienia.', 'info');
 
     if (typeof renderWellConfig === 'function') renderWellConfig();
-    if (window.lockService) window.lockService.releaseOf('order_studnie', orderId);
+    // Brak release po DELETE z premedytacją: dokumentu nie ma, więc
+    // POST /api/locks/release wróciłby z celowym 404 guarda P1.5,
+    // nic nie zwalniając. Wygasłe blokady czyszczą się same.
 
     // Usunięte zamówienie było otwarte (tryb edycji lub ?order= w URL):
     // wyjdź z trybu i wróć do widoku oferty. Źródłem są dane OFERTY

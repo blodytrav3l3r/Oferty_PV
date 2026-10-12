@@ -475,11 +475,10 @@ export default {
             }
 
             await this.loadLocalOffers();
-            // Sprzatanie blokady usunietego dokumentu (tylko po sukcesie DELETE).
-            if (window.lockService) {
-                const docType = offerType === 'studnia_oferta' ? 'order_studnie' : 'order_rury';
-                window.lockService.releaseOf(docType, orderId);
-            }
+            // Brak release po DELETE z premedytacją: dokumentu nie ma, więc
+            // POST /api/locks/release wróciłby z celowym 404 guarda P1.5
+            // (nierozróżnialne: brak dokumentu vs brak uprawnień), nic nie
+            // zwalniając. Wygasłe blokady czyszczą się same (heartbeat timeout).
         } catch (error) {
             logger.error('kartotekaUi', 'Błąd podczas usuwania zamówienia:', error);
             if (typeof window.showToast === 'function') {
@@ -500,13 +499,10 @@ export default {
 
         try {
             const deleteResult = await storageService.deleteOffer(id);
-            // Sprzatanie blokady usunietego dokumentu (tylko po faktycznym DELETE).
-            // Przy 'already-gone' dokumentu nie ma na serwerze, więc release
-            // też zwróciłby 404 — pomijamy (wygasłe blokady czyszczą się same).
-            if (deleteResult === true && window.lockService) {
-                const docType = String(id).startsWith('offer_studnie_') ? 'offer_studnie' : 'offer';
-                window.lockService.releaseOf(docType, id);
-            }
+            // Brak release po DELETE z premedytacją (jak przy 'already-gone'):
+            // dokumentu nie ma na serwerze, więc POST /api/locks/release
+            // wróciłby z celowym 404 guarda P1.5, nic nie zwalniając.
+            // Wygasłe blokady czyszczą się same (heartbeat timeout).
             if (typeof window.showToast === 'function') {
                 window.showToast(
                     deleteResult === 'already-gone'

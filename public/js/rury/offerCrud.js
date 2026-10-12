@@ -547,7 +547,9 @@ async function deleteOffer(id) {
         offers = offers.filter((o) => o.id !== id);
         // P1.1b: DELETE dokumentu sprząta jego draft (bez omijania blokad).
         if (window.draftAutosave) window.draftAutosave.clearContext('offer_rury', id);
-        if (window.lockService) window.lockService.releaseOf('offer', id);
+        // Brak release po DELETE z premedytacją: dokumentu nie ma, więc
+        // POST /api/locks/release wróciłby z celowym 404 guarda P1.5,
+        // nic nie zwalniając. Wygasłe blokady czyszczą się same.
         renderSavedOffers();
         showToast('Oferta usunięta', 'info');
     } catch (err) {
