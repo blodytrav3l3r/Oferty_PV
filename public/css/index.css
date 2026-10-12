@@ -2904,15 +2904,22 @@ html[data-theme='light'] body.index-page.logged-in::before {
     justify-content: center;
     margin-top: 8px;
 }
+/* Przełącznik siatka/lista: osobne kafelki .btn-icon jak zakres Moje/Zespół,
+ * active w akcencie. Bez obwódki grupy (ślad: .care-scope-group). */
 .care-view-visual {
     display: inline-flex;
     align-items: center;
-    gap: 2px;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    padding: 4px 6px;
+    gap: 4px;
+    border: 0;
+    padding: 0;
     color: var(--text-muted);
     cursor: default;
+}
+.care-view-visual .care-view-btn[aria-pressed='true'] {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--white);
+    box-shadow: var(--shadow-sm);
 }
 .care-view-visual svg {
     width: 14px;
