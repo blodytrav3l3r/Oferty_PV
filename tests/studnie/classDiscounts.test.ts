@@ -351,6 +351,51 @@ describe('Rabaty klasowe studni (E600/F900) — getWellDiscountPct przez getItem
         expect(ctx.getItemAssessedPrice(well, p, true, well.config[0])).toBe(666);
     });
 
+    test('16. Przejście w dennicy (F900) → rabat dennicaF900, kubełek dennica', () => {
+        setDiscounts({ dennica: 10, dennicaF900: 40, nadbudowa: 5, nadbudowaF900: 25 });
+        const well = makeWell({
+            klasaNosnosci_korpus: 'F900',
+            dennicaMaterial: 'zelbetowa',
+            przejscia: [
+                { productId: 'przejscie-1000', quantity: 1, rzednaWlaczenia: '1', dn: '1000' }
+            ]
+        });
+        const stats = ctx.calcWellStats(well);
+        // dennica 740*0.6=444 + przejście 200*0.6=120 → wszystko w dennicy
+        expect(stats.priceDennica).toBe(444 + 120);
+        expect(stats.priceNadbudowa).toBe(0);
+    });
+
+    test('17. Przejście w kręgu (F900) → rabat nadbudowaF900, kubełek nadbudowa', () => {
+        setDiscounts({ dennica: 10, dennicaF900: 40, nadbudowa: 5, nadbudowaF900: 25 });
+        const well = makeWell({
+            klasaNosnosci_korpus: 'F900',
+            config: [{ productId: 'krag-1000-500', quantity: 1 }],
+            przejscia: [
+                { productId: 'przejscie-1000', quantity: 1, rzednaWlaczenia: '1', dn: '1000' }
+            ]
+        });
+        const stats = ctx.calcWellStats(well);
+        // krąg 400*0.75=300 + przejście 200*0.75=150 → wszystko w nadbudowie
+        expect(stats.priceNadbudowa).toBe(300 + 150);
+        expect(stats.priceDennica).toBe(0);
+    });
+
+    test('18. Przejście w jawnie betonowej dennicy (E600) → rabat D400 jak dennica', () => {
+        setDiscounts({ dennica: 10, dennicaE600: 15 });
+        const well = makeWell({
+            klasaNosnosci_korpus: 'E600',
+            dennicaMaterial: 'betonowa',
+            przejscia: [
+                { productId: 'przejscie-1000', quantity: 1, rzednaWlaczenia: '1', dn: '1000' }
+            ]
+        });
+        const stats = ctx.calcWellStats(well);
+        // dennica 740*0.9=666 + przejście 200*0.9=180 → wszystko w dennicy
+        expect(stats.priceDennica).toBe(666 + 180);
+        expect(stats.priceNadbudowa).toBe(0);
+    });
+
     test('14. Przejście w dennicy stycznej → rabat dennica z wiersza styczne', () => {
         setDiscountsFor('styczne', { dennica: 7, nadbudowa: 3 });
         const well = makeWell({
