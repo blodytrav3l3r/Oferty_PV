@@ -118,11 +118,24 @@
             el.dataset[k] = el.value;
             el.value = '';
         } else if (name === '$discountBlur') {
+            // Blur finalizuje: kasuj wiszący live-debounce (uniknij podwójnego commita).
+            try {
+                if (typeof window.cancelOfferDiscountLive === 'function')
+                    window.cancelOfferDiscountLive(el);
+                else if (el && el._discountTimer !== null && el._discountTimer !== undefined) {
+                    clearTimeout(el._discountTimer);
+                    el._discountTimer = null;
+                }
+            } catch (_e) {}
             if (!el.value) {
                 el.value = el.dataset.oldValue || '';
             } else if (typeof window.handleOfferDiscountChange === 'function') {
                 window.handleOfferDiscountChange(args[0], args[1], el.value);
             }
+        } else if (name === '$discountLive') {
+            // Debounced live-commit rabatu DN (szczegóły w scheduleOfferDiscountLive).
+            if (typeof window.scheduleOfferDiscountLive === 'function')
+                window.scheduleOfferDiscountLive(el, args[0], args[1]);
         } else if (name === '$wellParamRefresh') {
             // P2: śmieć (niepuste, nie-finite) nie wchodzi do modelu jako ciche 0 —
             // toast + skip; puste = 0 (legacy czyszczenie pola).

@@ -68,6 +68,11 @@ function openOfferDiscountsPopup() {
 
 function closeOfferDiscountsPopup() {
     const modal = document.getElementById('offer-discounts-modal');
+    // Live-commit nie strzela po zamknięciu: kasuj wiszące debounce-timery.
+    try {
+        if (modal && modal.querySelectorAll && typeof cancelOfferDiscountLive === 'function')
+            modal.querySelectorAll('.offer-discount-input').forEach(cancelOfferDiscountLive);
+    } catch (_e) {}
     if (modal) modal.classList.remove('active');
 }
 
@@ -190,6 +195,46 @@ function handleOfferDiscountChange(dn, type, value) {
     if (typeof renderOfferSummary === 'function') {
         renderOfferSummary();
     }
+}
+
+// Pauza w pisaniu, po której live-commit rabatu robi pełne przeliczenie.
+// Ogranicza migotanie: bez tego każdy klawisz = rendery + refreeze mrożonki.
+const OFFER_DISCOUNT_LIVE_MS = 400;
+
+// Debounced live-commit rabatu DN (event input): invalid i brak-zmian
+// pomijane po cichu — model i rendery tykane tylko realną zmianą.
+function scheduleOfferDiscountLive(el, dn, type) {
+    if (!el) return;
+    try {
+        // Uwaga: id timera bywa falsy (0) — sprawdzaj null, nie truthiness.
+        if (el._discountTimer !== null && el._discountTimer !== undefined)
+            clearTimeout(el._discountTimer);
+    } catch (_e) {}
+    el._discountTimer = setTimeout(function () {
+        try {
+            el._discountTimer = null;
+            handleOfferDiscountLive(dn, type, el.value);
+        } catch (_e2) {}
+    }, OFFER_DISCOUNT_LIVE_MS);
+}
+
+function cancelOfferDiscountLive(el) {
+    try {
+        if (el && el._discountTimer !== null && el._discountTimer !== undefined) {
+            clearTimeout(el._discountTimer);
+            el._discountTimer = null;
+        }
+    } catch (_e) {}
+}
+
+function handleOfferDiscountLive(dn, type, value) {
+    const numVal = typeof parseLiveDiscount === 'function' ? parseLiveDiscount(value) : null;
+    if (numVal === null) return;
+    const cur =
+        (typeof wellDiscounts !== 'undefined' && wellDiscounts[dn] ? wellDiscounts[dn][type] : 0) ||
+        0;
+    if (numVal === cur) return;
+    handleOfferDiscountChange(dn, type, numVal);
 }
 
 function updateOfferDiscountsPopupPrices() {
@@ -320,8 +365,9 @@ function renderOfferDiscountsPopupContent() {
                 <input type="number" class="text-center offer-discount-input disc-input"
                        value="${value}"
                        data-csp="$stashValue" data-csp-args="[&quot;oldValue&quot;]" data-csp-on="focus"
-                       data-csp-2="$discountBlur" data-csp-2-on="blur" data-csp-2-args="${escapeHtmlAttr(JSON.stringify([dn, type]))}"
-                       data-csp-3="$dom" data-csp-3-args="[&quot;blur&quot;, &quot;$el&quot;]" data-csp-3-on="keydown" data-csp-3-key="Enter">
+                        data-csp-2="$discountBlur" data-csp-2-on="blur" data-csp-2-args="${escapeHtmlAttr(JSON.stringify([dn, type]))}"
+                        data-csp-3="$dom" data-csp-3-args="[&quot;blur&quot;, &quot;$el&quot;]" data-csp-3-on="keydown" data-csp-3-key="Enter"
+                        data-csp-4="$discountLive" data-csp-4-on="input" data-csp-4-args="${escapeHtmlAttr(JSON.stringify([dn, type]))}">
                 <span class="disc-pct">%</span>
             </div>
         </div>`;
@@ -619,6 +665,9 @@ window.handleOfferPehdDiscountChange = function (value) {
 window.openOfferDiscountsPopup = openOfferDiscountsPopup;
 window.closeOfferDiscountsPopup = closeOfferDiscountsPopup;
 window.handleOfferDiscountChange = handleOfferDiscountChange;
+window.scheduleOfferDiscountLive = scheduleOfferDiscountLive;
+window.cancelOfferDiscountLive = cancelOfferDiscountLive;
+window.handleOfferDiscountLive = handleOfferDiscountLive;
 window.handleOfferPaintingCostChange = handleOfferPaintingCostChange;
 window.handleOfferPehdDiscountChange = handleOfferPehdDiscountChange;
 window.handleOfferDiscountsSave = handleOfferDiscountsSave;

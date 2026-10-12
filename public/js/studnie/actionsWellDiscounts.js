@@ -21,6 +21,19 @@ async function confirmApp(message, callback, cancelCallback) {
     }
 }
 
+// Live-commit rabatu w trakcie pisania (debounce w UI): puste i niekompletne
+// wartości pomijane po cichu (null) — bez toastów i bez zapisu do modelu.
+// Kontrakt applyDiscount (throw) obsługuje finalny commit z blur.
+function parseLiveDiscount(value) {
+    const raw = String(value ?? '')
+        .trim()
+        .replace(',', '.');
+    if (raw === '') return null;
+    const n = Number(raw);
+    if (!Number.isFinite(n) || n < 0 || n > 100) return null;
+    return n;
+}
+
 function updateDiscount(dn, type, value) {
     // Granica UI: input DOM daje string. Numeryczny string parsuj, resztę
     // waliduje applyDiscount (throw, brak zapisu). '' = pusty input → 0
@@ -226,6 +239,7 @@ function getDiscountedTotal() {
 
 /* ===== Rejestracja globali ===== */
 window.handleAppConfirm = handleAppConfirm;
+window.parseLiveDiscount = parseLiveDiscount;
 window.updateDiscount = updateDiscount;
 window.updateGlobalPaintingCost = updateGlobalPaintingCost;
 window.updateGlobalPehdDiscount = updateGlobalPehdDiscount;
