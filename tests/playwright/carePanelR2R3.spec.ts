@@ -13,6 +13,7 @@
  *
  * Scenariusze:
  *   (f) PUT followup zmieniający contactedAt → ETag panelu zmienia się (200 nie 304)
+ *   (f2) PUT samej notatki → ETag zmienia się (dowód markera m, brak fałszywego 304)
  *   (g) ~25 overdue ofert → unreadCount pełny, items<=20, hasOverflow true
  *   (h) skeleton [data-care-loading] przy opóźnionym panelu (page.route delay)
  *   (i) błąd panelu → [data-care-error], potem retry znika
@@ -101,10 +102,8 @@ test.describe.serial('e2e: panel opieki R2R3', () => {
         const first = await request.get(`${BASE}/api/care/panel?scope=mine`);
         expect(first.status(), 'GET /api/care/panel failed').toBe(200);
         const etag1 = first.headers()['etag'];
-        if (!etag1) {
-            test.fixme(true, 'R3: brak nagłówka ETag — kod panelu niezaaplikowany');
-            return;
-        }
+        // Twardo: brak ETag to realny bug (care.ts zawsze stawia nagłówek).
+        expect(etag1, 'brak nagłówka ETag w /panel').toBeTruthy();
 
         // Pełny obiekt do PUT (schemat edycji wymaga wszystkich pól).
         const list = await request.get(`${BASE}/api/offers-rury/${KIND}/${offerId}/followups`);
@@ -132,13 +131,8 @@ test.describe.serial('e2e: panel opieki R2R3', () => {
                 }
             }
         );
-        if (put.status() === 500) {
-            test.fixme(
-                true,
-                'R3-kolumny: PUT followup 500 — migracja niezaaplikowana w testowej DB'
-            );
-            return;
-        }
+        // Guard w followUps połyka brak kolumny updatedAt (legacy DB),
+        // więc 500 to realny bug, nie migracja.
         expect(put.status(), 'PUT followup failed').toBe(200);
 
         // Stary ETag po zmianie contactedAt (MAX w haśle ETag) musi dać 200, nie 304.
@@ -151,6 +145,48 @@ test.describe.serial('e2e: panel opieki R2R3', () => {
         const etag2 = stale.headers()['etag'];
         expect(etag2, 'brak ETag po zmianie').toBeTruthy();
         expect(etag2, 'ETag identyczny mimo zmiany contactedAt').not.toBe(etag1);
+    });
+
+    test('(f2) PUT samej notatki → ETag zmienia się (marker m)', async ({ request }) => {
+        // Dowód markera m: contactedAt/createdAt stoją, tylko note się zmienia.
+        // Bez m byłby fałszywy 304 (a/b ślepe na edycję w miejscu).
+        const list = await request.get(`${BASE}/api/offers-rury/${KIND}/${offerId}/followups`);
+        expect(list.status(), 'GET followups failed').toBe(200);
+        const items = (await list.json()).items || [];
+        const cur = items.find((i) => i.id === fuId) || items[0];
+        expect(cur, 'brak follow-up do edycji').toBeTruthy();
+
+        const before = await request.get(`${BASE}/api/care/panel?scope=mine`);
+        expect(before.status()).toBe(200);
+        const etagBefore = before.headers()['etag'];
+        expect(etagBefore, 'brak ETag przed edycją').toBeTruthy();
+
+        const put = await request.put(
+            `${BASE}/api/offers-rury/${KIND}/${offerId}/followups/${cur.id}`,
+            {
+                headers: { ...ORIGIN, 'Content-Type': 'application/json' },
+                data: {
+                    channel: cur.channel,
+                    result: cur.result,
+                    contactedAt: cur.contactedAt,
+                    durationMin: cur.durationMin ?? null,
+                    note: `R3-marker-${Date.now()}`,
+                    nextContactAt:
+                        cur.nextContactAt || new Date(Date.now() + 86400000).toISOString(),
+                    outcome: cur.outcome,
+                    loseReason: cur.loseReason ?? null,
+                    competitor: cur.competitor ?? null,
+                    competitorPrice: cur.competitorPrice ?? null
+                }
+            }
+        );
+        expect(put.status(), 'PUT samej notatki failed').toBe(200);
+
+        const stale = await request.get(`${BASE}/api/care/panel?scope=mine`, {
+            headers: { 'If-None-Match': etagBefore }
+        });
+        expect(stale.status(), 'fałszywy 304 po edycji notatki (marker m nie działa)').toBe(200);
+        expect(stale.headers()['etag'], 'ETag identyczny mimo edycji notatki').not.toBe(etagBefore);
     });
 
     test('(g) ~25 overdue → unreadCount pełny, items<=20, hasOverflow', async ({ request }) => {
@@ -176,23 +212,12 @@ test.describe.serial('e2e: panel opieki R2R3', () => {
         const resp = await request.get(
             `${BASE}/api/care/notifications?scope=mine&unreadOnly=true&limit=20`
         );
-        if (resp.status() === 500) {
-            test.fixme(
-                true,
-                'R3-kolumny: notifications 500 — migracja niezaaplikowana w testowej DB'
-            );
-            return;
-        }
         expect(resp.status(), 'GET /api/care/notifications failed').toBe(200);
         const body = await resp.json();
         // Licznik pełny (cap tylko prezentacja, retencja/sync bez zmian).
         expect(body.unreadCount, 'unreadCount nie pokrywa ~25 overdue').toBeGreaterThanOrEqual(N);
         expect(body.items?.length, 'items ponad limit 20').toBeLessThanOrEqual(20);
-        if (!('hasOverflow' in body)) {
-            test.fixme(true, 'R3: brak hasOverflow — kod R3 niezaaplikowany');
-            return;
-        }
-        expect(body.hasOverflow, 'hasOverflow nie true przy przepełnieniu').toBe(true);
+        expect(body, 'brak hasOverflow w odpowiedzi').toHaveProperty('hasOverflow', true);
     });
 
     test('(h) skeleton przy opóźnionym panelu', async ({ page }) => {
