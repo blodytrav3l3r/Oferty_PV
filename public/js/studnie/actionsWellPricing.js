@@ -279,7 +279,7 @@ function getItemAssessedPrice(well, p, applyDiscount = true, item = null) {
         p.componentType === 'dennica' &&
         p.doplataZelbet
     ) {
-        itemPrice += parseFloat(p.doplataZelbet);
+        itemPrice += parseFloat(p.doplataZelbet) * mult;
     }
 
     if (
@@ -287,7 +287,7 @@ function getItemAssessedPrice(well, p, applyDiscount = true, item = null) {
         (p.componentType === 'krag_ot' || p.componentType === 'dennica') &&
         p.doplataDrabNierdzewna
     ) {
-        itemPrice += parseFloat(p.doplataDrabNierdzewna);
+        itemPrice += parseFloat(p.doplataDrabNierdzewna) * mult;
     }
 
     return itemPrice;
@@ -443,7 +443,7 @@ function getItemPriceBreakdown(well, p, applyDiscount, item) {
         p.componentType === 'dennica' &&
         p.doplataZelbet
     ) {
-        zelbet = parseFloat(p.doplataZelbet);
+        zelbet = parseFloat(p.doplataZelbet) * mult;
     }
 
     if (
@@ -451,7 +451,7 @@ function getItemPriceBreakdown(well, p, applyDiscount, item) {
         (p.componentType === 'krag_ot' || p.componentType === 'dennica') &&
         p.doplataDrabNierdzewna
     ) {
-        nierdzewna = parseFloat(p.doplataDrabNierdzewna);
+        nierdzewna = parseFloat(p.doplataDrabNierdzewna) * mult;
     }
 
     return {
