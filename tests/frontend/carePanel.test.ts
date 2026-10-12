@@ -595,6 +595,39 @@ describe('carePanel', () => {
         expect(putBody).toEqual({ firstContactH: 24, staleD: 7, escalationH: 72 });
     });
 
+    test('SLA PUT niesie expectedUpdatedAt, 409 odświeża wartości', async () => {
+        let putBody: any = null;
+        let gets = 0;
+        const { els, context } = load({
+            role: 'admin',
+            fetchMock: (url: string, init?: any) => {
+                if (url.includes('/api/care/sla') && (init?.method || 'GET') === 'GET') {
+                    gets += 1;
+                    return okJson({
+                        sla: { firstContactH: 24, staleD: 7, escalationH: 72 },
+                        slaUpdatedAt: '2026-10-12T10:00:00.000Z'
+                    });
+                }
+                if (url.includes('/api/care/sla')) {
+                    putBody = JSON.parse(init.body);
+                    return { ok: false, status: 409, json: async () => ({ ok: false }) };
+                }
+                return okJson({ noContact: 0, due: 0, openOk: 0, won: 0, lost: 0 });
+            }
+        });
+        await context.__careTest.loadCarePanel();
+        const save = els['care-sla-save'];
+        for (const fn of save.handlers || []) await fn();
+        expect(putBody).toEqual({
+            firstContactH: 24,
+            staleD: 7,
+            escalationH: 72,
+            expectedUpdatedAt: '2026-10-12T10:00:00.000Z'
+        });
+        expect(String(save.textContent)).toContain('Konflikt');
+        expect(gets).toBeGreaterThanOrEqual(2);
+    });
+
     test('SLA: śmieci nie lecą PUT (walidacja klienta)', async () => {
         let puts = 0;
         const { els, context } = load({

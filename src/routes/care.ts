@@ -18,6 +18,7 @@ import {
     setCareState,
     clearCareState,
     getSlaConfig,
+    getSlaUpdatedAt,
     setSlaConfig,
     getEffectiveSla,
     setScopedSla,
@@ -510,7 +511,12 @@ router.get('/sla', requireAuth, READ_LIMITER, async (req, res) => {
         if (!parsed.success) return res.status(400).json({ error: 'Nieprawidłowe parametry' });
         const eff = await getEffectiveSla(prisma, authReq.user, toScope(parsed.data.scope));
         const { source, ...sla } = eff;
-        return res.json({ ok: true, scope: toScope(parsed.data.scope), source, sla });
+        const slaUpdatedAt = await getSlaUpdatedAt(
+            prisma,
+            authReq.user,
+            toScope(parsed.data.scope)
+        );
+        return res.json({ ok: true, scope: toScope(parsed.data.scope), source, sla, slaUpdatedAt });
     } catch (e) {
         logger.warn('Care', 'Błąd odczytu SLA', String(e));
         return res.status(500).json({ error: 'Błąd serwera' });
@@ -518,7 +524,8 @@ router.get('/sla', requireAuth, READ_LIMITER, async (req, res) => {
 });
 
 const slaPutSchema = slaSchema.extend({
-    scopeType: z.enum(['team', 'user']).optional()
+    scopeType: z.enum(['team', 'user']).optional(),
+    expectedUpdatedAt: isoDateTime.nullish()
 });
 
 router.put('/sla', requireAuth, WRITE_LIMITER, async (req, res) => {
@@ -527,7 +534,7 @@ router.put('/sla', requireAuth, WRITE_LIMITER, async (req, res) => {
     if (!user) return res.status(401).json({ error: 'Nieautoryzowany' });
     const parsed = slaPutSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ error: 'Nieprawidłowa konfiguracja SLA' });
-    const { scopeType, ...cfg } = parsed.data;
+    const { scopeType, expectedUpdatedAt, ...cfg } = parsed.data;
     // Global: tylko admin. Team: pro/admin (własny zespół). User: każdy dla siebie.
     if (!scopeType && user.role !== 'admin') {
         return res.status(403).json({ error: 'Tylko administrator' });
@@ -543,13 +550,19 @@ router.put('/sla', requireAuth, WRITE_LIMITER, async (req, res) => {
                 ? await getSlaConfig(tx)
                 : await getEffectiveSla(tx, user, scopeType === 'team' ? 'team' : 'mine');
             const next = !scopeType
-                ? await setSlaConfig(tx, { ...cfg, updatedBy: user.id, nowIso })
+                ? await setSlaConfig(tx, {
+                      ...cfg,
+                      updatedBy: user.id,
+                      nowIso,
+                      expectedUpdatedAt: expectedUpdatedAt ?? undefined
+                  })
                 : await setScopedSla(tx, {
                       ...cfg,
                       scopeType,
                       scopeId: user.id,
                       updatedBy: user.id,
-                      nowIso
+                      nowIso,
+                      expectedUpdatedAt: expectedUpdatedAt ?? undefined
                   });
             await tx.audit_logs.create({
                 data: {
@@ -567,6 +580,9 @@ router.put('/sla', requireAuth, WRITE_LIMITER, async (req, res) => {
         });
         return res.json({ ok: true, sla, scopeType: scopeType ?? 'global' });
     } catch (e) {
+        if ((e as { code?: string })?.code === 'CARE_STATE_CONFLICT') {
+            return res.status(409).json({ error: 'Progi zmienione przez kogoś innego' });
+        }
         if (mapPrismaError(res, e)) return;
         logger.warn('Care', 'Błąd zapisu SLA', String(e));
         return res.status(500).json({ error: 'Błąd serwera' });

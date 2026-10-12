@@ -18,6 +18,8 @@ const postCareInFlight = new Set();
 // ETag pakietu panelu per scope (304 = brak zmian, bez renderu).
 // Bounded: kombinacji scope|preset|rep może być wiele (admin) — trzymaj max 20.
 const panelEtags = {};
+// Wersje progów SLA per scope boxu do opt-lock PUT (null = brak wiersza).
+const slaUpdatedAtByScope = {};
 
 function rememberPanelEtag(key, etag) {
     panelEtags[key] = etag;
@@ -1637,6 +1639,9 @@ async function loadSlaBox() {
             if (sel && sel.value !== 'global') {
                 payload.scopeType = sel.value === 'team' ? 'team' : 'user';
             }
+            // Opt-lock jak przy snooze/done: wersja z ostatniego odczytu boxu.
+            const knownUpdatedAt = slaUpdatedAtByScope[sel ? sel.value : 'global'];
+            if (knownUpdatedAt) payload.expectedUpdatedAt = knownUpdatedAt;
             try {
                 const resp = await fetch('/api/care/sla', {
                     method: 'PUT',
@@ -1644,7 +1649,14 @@ async function loadSlaBox() {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
-                save.textContent = resp.ok ? 'Zapisano' : 'Błąd zapisu';
+                if (resp.status === 409) {
+                    // Ktoś zmienił progi w międzyczasie: odśwież do prawdy.
+                    save.textContent = 'Konflikt — odświeżono';
+                    await loadSlaBoxValues();
+                } else {
+                    save.textContent = resp.ok ? 'Zapisano' : 'Błąd zapisu';
+                    if (resp.ok) await loadSlaBoxValues();
+                }
             } catch {
                 save.textContent = 'Błąd zapisu';
             }
@@ -1661,6 +1673,7 @@ async function loadSlaBoxValues() {
         '/api/care/sla?scope=' + slaScopeToQuery(sel ? sel.value : 'mine') + '&t=' + Date.now()
     );
     if (!sla || !sla.sla) return;
+    slaUpdatedAtByScope[sel ? sel.value : 'global'] = sla.slaUpdatedAt ?? null;
     const first = document.getElementById('care-sla-first');
     const stale = document.getElementById('care-sla-stale');
     const esc = document.getElementById('care-sla-esc');

@@ -56,7 +56,8 @@ jest.mock('../../src/services/careService', () => {
             escalationH: cfg.escalationH
         })),
         setScopedSla: (...a: unknown[]) => scopedSlaUpsert(...a),
-        getEffectiveSla: (...a: unknown[]) => effectiveSlaMock(...a)
+        getEffectiveSla: (...a: unknown[]) => effectiveSlaMock(...a),
+        getSlaUpdatedAt: jest.fn(async () => null)
     };
 });
 
@@ -230,6 +231,29 @@ describe('P1 care routes guardy', () => {
             expect.objectContaining({ id: 'u1' }),
             'mine'
         );
+    });
+
+    it('PUT sla ze starym expectedUpdatedAt → 409', async () => {
+        (globalThis as any).__careUser = { id: 'admin', role: 'admin', subUsers: [] };
+        try {
+            scopedSlaUpsert.mockRejectedValueOnce(
+                Object.assign(new Error('Progi zmienione przez kogoś innego'), {
+                    status: 409,
+                    code: 'CARE_STATE_CONFLICT'
+                })
+            );
+            const res = await request(app()).put('/api/care/sla').send({
+                firstContactH: 12,
+                staleD: 3,
+                escalationH: 36,
+                scopeType: 'team',
+                expectedUpdatedAt: '2020-01-01T00:00:00.000Z'
+            });
+            expect(res.status).toBe(409);
+            expect(res.body.error).toBe('Progi zmienione przez kogoś innego');
+        } finally {
+            (globalThis as any).__careUser = { id: 'u1', role: 'user', subUsers: [] };
+        }
     });
 
     it('reopen niesie expectedUpdatedAt do clearCareState; zły format → 400', async () => {

@@ -706,8 +706,30 @@ export async function getSlaConfig(db: RawDb): Promise<SlaConfig> {
 
 export async function setSlaConfig(
     db: RawDb,
-    cfg: SlaConfig & { updatedBy: string; nowIso: string }
+    cfg: SlaConfig & { updatedBy: string; nowIso: string; expectedUpdatedAt?: string | null }
 ): Promise<SlaConfig> {
+    // Opt-lock jak w setCareState: z expectedUpdatedAt tylko warunkowy UPDATE.
+    // Brak wiersza + podany expected = ktoś w międzyczasie usunął (fail-closed 409).
+    if (cfg.expectedUpdatedAt !== undefined && cfg.expectedUpdatedAt !== null) {
+        const exec = db.$executeRaw?.bind(db);
+        if (!exec) {
+            throw Object.assign(new Error('Brak obsługi concurrency'), { status: 500 });
+        }
+        const n = await exec(
+            Prisma.sql`UPDATE "care_sla_config" SET "firstContactH" = ${cfg.firstContactH}, "staleD" = ${cfg.staleD}, "escalationH" = ${cfg.escalationH}, "updatedBy" = ${cfg.updatedBy}, "updatedAt" = ${cfg.nowIso} WHERE "id" = 'global' AND "updatedAt" = ${cfg.expectedUpdatedAt}`
+        );
+        if (n === 0) {
+            throw Object.assign(new Error('Progi zmienione przez kogoś innego'), {
+                status: 409,
+                code: 'CARE_STATE_CONFLICT'
+            });
+        }
+        return {
+            firstContactH: cfg.firstContactH,
+            staleD: cfg.staleD,
+            escalationH: cfg.escalationH
+        };
+    }
     await db.$queryRaw(
         Prisma.sql`INSERT INTO "care_sla_config" ("id", "firstContactH", "staleD", "escalationH", "updatedBy", "updatedAt") VALUES ('global', ${cfg.firstContactH}, ${cfg.staleD}, ${cfg.escalationH}, ${cfg.updatedBy}, ${cfg.nowIso}) ON CONFLICT ("id") DO UPDATE SET "firstContactH" = ${cfg.firstContactH}, "staleD" = ${cfg.staleD}, "escalationH" = ${cfg.escalationH}, "updatedBy" = ${cfg.updatedBy}, "updatedAt" = ${cfg.nowIso}`
     );
@@ -761,10 +783,61 @@ export async function getEffectiveSla(
     return { ...(await getSlaConfig(db)), source: 'global' };
 }
 
+/** Znacznik wersji wiersza progu do opt-lock PUT (null = brak wiersza). */
+export async function getSlaUpdatedAt(
+    db: RawDb,
+    user: CareUser,
+    scope: CareScope
+): Promise<string | null> {
+    if (scope === 'team' && (user.role === 'pro' || user.role === 'admin')) {
+        const rows = await db.$queryRaw<Array<{ updatedAt: string }>>(
+            Prisma.sql`SELECT "updatedAt" FROM "care_sla_scopes" WHERE "scopeType" = 'team' AND "scopeId" = ${user.id}`
+        );
+        if (rows[0]) return rows[0].updatedAt;
+    }
+    if (scope === 'mine') {
+        const rows = await db.$queryRaw<Array<{ updatedAt: string }>>(
+            Prisma.sql`SELECT "updatedAt" FROM "care_sla_scopes" WHERE "scopeType" = 'user' AND "scopeId" = ${user.id}`
+        );
+        if (rows[0]) return rows[0].updatedAt;
+    }
+    const rows = await db.$queryRaw<Array<{ updatedAt: string }>>(
+        Prisma.sql`SELECT "updatedAt" FROM "care_sla_config" WHERE "id" = 'global'`
+    );
+    return rows[0]?.updatedAt ?? null;
+}
+
 export async function setScopedSla(
     db: RawDb,
-    cfg: SlaConfig & { scopeType: SlaScopeType; scopeId: string; updatedBy: string; nowIso: string }
+    cfg: SlaConfig & {
+        scopeType: SlaScopeType;
+        scopeId: string;
+        updatedBy: string;
+        nowIso: string;
+        expectedUpdatedAt?: string | null;
+    }
 ): Promise<SlaConfig> {
+    // Opt-lock jak wyżej; blind upsert tylko bez expected (pierwszy zapis).
+    if (cfg.expectedUpdatedAt !== undefined && cfg.expectedUpdatedAt !== null) {
+        const exec = db.$executeRaw?.bind(db);
+        if (!exec) {
+            throw Object.assign(new Error('Brak obsługi concurrency'), { status: 500 });
+        }
+        const n = await exec(
+            Prisma.sql`UPDATE "care_sla_scopes" SET "firstContactH" = ${cfg.firstContactH}, "staleD" = ${cfg.staleD}, "escalationH" = ${cfg.escalationH}, "updatedBy" = ${cfg.updatedBy}, "updatedAt" = ${cfg.nowIso} WHERE "scopeType" = ${cfg.scopeType} AND "scopeId" = ${cfg.scopeId} AND "updatedAt" = ${cfg.expectedUpdatedAt}`
+        );
+        if (n === 0) {
+            throw Object.assign(new Error('Progi zmienione przez kogoś innego'), {
+                status: 409,
+                code: 'CARE_STATE_CONFLICT'
+            });
+        }
+        return {
+            firstContactH: cfg.firstContactH,
+            staleD: cfg.staleD,
+            escalationH: cfg.escalationH
+        };
+    }
     await db.$queryRaw(
         Prisma.sql`INSERT INTO "care_sla_scopes" ("scopeType", "scopeId", "firstContactH", "staleD", "escalationH", "updatedBy", "updatedAt") VALUES (${cfg.scopeType}, ${cfg.scopeId}, ${cfg.firstContactH}, ${cfg.staleD}, ${cfg.escalationH}, ${cfg.updatedBy}, ${cfg.nowIso}) ON CONFLICT ("scopeType", "scopeId") DO UPDATE SET "firstContactH" = ${cfg.firstContactH}, "staleD" = ${cfg.staleD}, "escalationH" = ${cfg.escalationH}, "updatedBy" = ${cfg.updatedBy}, "updatedAt" = ${cfg.nowIso}`
     );
