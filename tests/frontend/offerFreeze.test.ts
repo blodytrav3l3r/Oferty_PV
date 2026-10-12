@@ -226,6 +226,107 @@ describe('frontend vm: zmiana rabatu w edycji oferty odświeża frozen* (refreez
     });
 });
 
+describe('frontend vm: freeze przejść studni zamówionej piecze snapshot (nie live)', () => {
+    const products = [
+        {
+            id: 'DDD-1000-300',
+            componentType: 'dennica',
+            dn: '1000',
+            height: 300,
+            price: 740,
+            name: 'Dennica DN1000'
+        },
+        {
+            id: 'PRZ-400',
+            componentType: 'przejscie',
+            dn: '400',
+            price: 200,
+            name: 'Przejście PVC SN8 400'
+        }
+    ];
+
+    function loadCtx(snapshotDisc: Record<string, unknown>) {
+        const sandbox = {
+            window: {},
+            console,
+            studnieProducts: products,
+            wellDiscounts: {},
+            precoPricing: {},
+            FLOW_TYPES: { WYLOT: 'wylot', WLOT: 'wlot', DOLOT: 'dolot' },
+            calcPrecoPricingPure: () => ({ suma: 0, error: null }),
+            showToast: () => {},
+            resolveEffectiveProduct: (_well: any, productId: string) =>
+                products.find((pr) => pr.id === productId),
+            getStudnieProductById: (id: string) => products.find((pr) => pr.id === id),
+            findAssignedElement: () => ({ entry: { componentType: 'dennica' } }),
+            buildConfigMap: () => [{}],
+            structuredClone: (v: unknown) => JSON.parse(JSON.stringify(v))
+        };
+        sandbox.window.isPreviewMode = false;
+        vm.createContext(sandbox);
+        vm.runInContext(readPub('js/studnie/globals.js'), sandbox, { filename: 'globals.js' });
+        sandbox.window.studnieProducts = products;
+        vm.runInContext(readPub('js/studnie/actionsWellPainting.js'), sandbox, {
+            filename: 'actionsWellPainting.js'
+        });
+        vm.runInContext(readPub('js/studnie/actionsWellPricing.js'), sandbox, {
+            filename: 'actionsWellPricing.js'
+        });
+        vm.runInContext(readPub('js/studnie/orderHelpers.js'), sandbox, {
+            filename: 'orderHelpers.js'
+        });
+        // orderHelpers definiuje własne isWellOrdered/getOrderForWellId —
+        // podpinamy stuby PO wczytaniu plików (studnia zamówiona ze snapshotem).
+        // editingOfferIdStudnie jak w edycji oferty (bez niego snapshot nieczytany).
+        vm.runInContext('isWellOrdered = () => true', sandbox);
+        vm.runInContext(`editingOfferIdStudnie = 'offer1'`, sandbox);
+        // Snapshot trzyma mapę {DN: rabaty} jak globalny wellDiscounts.
+        vm.runInContext(
+            `getOrderForWellId = () => ({ originalSnapshot: { wellDiscounts: { 1000: ${JSON.stringify(snapshotDisc)} } } })`,
+            sandbox
+        );
+        return sandbox;
+    }
+
+    function seedOrdered(sb: any, korpus: string, liveDisc: Record<string, unknown>) {
+        vm.runInContext(
+            `wells = ${JSON.stringify([
+                {
+                    id: 'w1',
+                    dn: '1000',
+                    klasaNosnosci_korpus: korpus,
+                    dennicaMaterial: 'zelbetowa',
+                    config: [{ productId: 'DDD-1000-300', quantity: 1 }],
+                    przejscia: [
+                        { productId: 'PRZ-400', quantity: 1, rzednaWlaczenia: '1', dn: '400' }
+                    ]
+                }
+            ])}`,
+            sb
+        );
+        vm.runInContext(`wellDiscounts = ${JSON.stringify({ 1000: liveDisc })}`, sb);
+        vm.runInContext('freezeWellPrices(wells)', sb);
+        return vm.runInContext('wells[0]', sb);
+    }
+
+    test('D400 zamówiona: live 30, snapshot 40 → przejście i pozycja ze snapshotu', () => {
+        const sb = loadCtx({ dennica: 40, nadbudowa: 40 });
+        const w = seedOrdered(sb, 'D400', { dennica: 30, nadbudowa: 30 });
+        // Przejście w dennicy: 200 × 0.6 (snapshot), nie 200 × 0.7 (live).
+        expect(w.przejscia[0].frozenTransitionPrice).toBe(120);
+        expect(w.przejscia[0].frozenPrice).toBe(120);
+        // Pozycja tak samo (jak dotąd): 740 × 0.6.
+        expect(w.config[0].frozenPrice).toBe(444);
+    });
+
+    test('E600 zamówiona: live dennicaE600=30, snapshot 40 → przejście ze snapshotu', () => {
+        const sb = loadCtx({ dennicaE600: 40, nadbudowaE600: 40 });
+        const w = seedOrdered(sb, 'E600', { dennicaE600: 30, nadbudowaE600: 30 });
+        expect(w.przejscia[0].frozenTransitionPrice).toBe(120);
+        expect(w.config[0].frozenPrice).toBe(444);
+    });
+});
+
 describe('frontend static: mrożenie studni end-to-end w źródle', () => {
     const pricing = readPub('js/studnie/actionsWellPricing.js');
     const calc = readPub('js/studnie/offerPricingCalc.js');

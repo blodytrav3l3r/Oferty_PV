@@ -503,7 +503,14 @@ function freezeWellPrices(wellsArr, preserveExisting = false) {
         });
 
         const discountKey = well.dn === 'styczna' ? 'styczne' : well.dn;
-        const disc = wellDiscounts[discountKey] || {};
+        // Snapshot dla zamówionych (jak pozycje przez getItemAssessedPrice):
+        // pieczenie z live rozjeżdżało przejścia z dennicą po zmianie rabatu
+        // (dennica -40% ze snapshotu, przejścia -30% z live).
+        const activeDiscounts =
+            typeof getWellActiveDiscounts === 'function'
+                ? getWellActiveDiscounts(well)
+                : wellDiscounts;
+        const disc = activeDiscounts[discountKey] || {};
 
         const configMap =
             typeof buildConfigMap !== 'undefined'
