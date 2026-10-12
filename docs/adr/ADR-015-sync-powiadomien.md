@@ -68,8 +68,8 @@ retencja/sync bez zmian); FE badge cap `99+` + stopka `+N więcej`
 `frontend/carePanel.test.ts:1718-1775` (badge 99+). Cap tylko prezentacja,
 licznik `unreadCount` bez limitu — bez wpływu na decyzję sync-przy-odczycie.
 
-R3 HYPOTHESIS (brak diff w worktree 2026-10-12): marker `m` w `getCareEtagInput`
-(schema/migracja/followUps/ETag/careEtagOwner) — nie zweryfikowano,
-`getCareEtagInput` kończy na `l` (`careService.ts:500-537`). Po lądowaniu:
-dopisać wpływ na 304 i test `careEtagOwner.test.ts`; decyzja sync-przy-odczycie
-bez zmian.
+R3 VERIFIED (`76904fa`): marker `m = MAX(updatedAt)` w `getCareEtagInput`
+(`careService.ts:524-551`, slot 13., guarded `m=null` na legacy DB);
+POST/PUT bumpują `updatedAt` (`followUps.ts:108-119,193,328`, migracja
+`20261012000000_care_followups_updatedAt`); test `careEtagOwner.test.ts`
+(edit→ETag inny). Decyzja sync-przy-odczycie bez zmian.

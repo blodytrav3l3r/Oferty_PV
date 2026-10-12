@@ -112,9 +112,10 @@ async function bumpFollowUpUpdatedAt(tx: unknown, fuId: string, now: string): Pr
     if (typeof raw.$executeRaw !== 'function') return;
     try {
         await raw.$executeRaw`UPDATE "offer_follow_ups" SET "updatedAt" = ${now} WHERE "id" = ${fuId}`;
-    } catch {
-        // Legacy DB bez kolumny updatedAt (migracja niezaaplikowana): zapis
-        // follow-up ma pierwszeństwo, ETag najwyżej zostanie stale (marker m).
+    } catch (e) {
+        // Legacy DB bez kolumny updatedAt: zapis follow-up ma pierwszeństwo,
+        // ETag najwyżej zostanie stale (marker m guardowany w careService).
+        logger.debug('FollowUps', 'Bump updatedAt pominięty', String(e));
     }
 }
 

@@ -123,9 +123,10 @@ Cap przepełnienia tylko prezentacja (R2, VERIFIED 2026-10-12): BE tnie listę,
 licznik cały — `hasOverflow` w `/panel` (`care.ts:269`) i `/notifications`
 (`care.ts:614`), FE badge `99+` + stopka `+N więcej`
 (`carePanel.js:294-299,443-451`); retencja/sync bez zmian.
-Marker `m` ETag (R3, HYPOTHESIS 2026-10-12): brak w worktree
-(`getCareEtagInput` kończy na `l`, `careService.ts:500-537`) — po lądowaniu
-dopisać tu linię znacznika.
+Marker `m` ETag (R3, VERIFIED 2026-10-12): `MAX(updatedAt)` follow-upów
+(`careService.ts:524-551`, guarded — legacy DB daje `m=null` bez wywalania
+ETag); POST/PUT bumpują `updatedAt` (`followUps.ts:108-119`) — edycja w miejscu
+unieważnia 304, test w `careEtagOwner.test.ts`.
 
 ## Progi SLA (F8: default 24/7/72)
 

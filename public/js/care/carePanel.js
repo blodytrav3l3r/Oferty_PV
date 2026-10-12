@@ -439,12 +439,12 @@ function renderNotifications(items, unreadCount, mailboxUserId, hasOverflow) {
     }
     list.appendChild(grid);
     // Stopka przepełnienia: cap tylko prezentacja (BE tnie listę, licznik cały).
-    const overflow =
-        typeof hasOverflow === 'boolean' ? hasOverflow : unreadCount > (items ? items.length : 0);
-    if (overflow && unreadCount > (items ? items.length : 0)) {
+    const itemCount = items ? items.length : 0;
+    const overflow = typeof hasOverflow === 'boolean' ? hasOverflow : unreadCount > itemCount;
+    if (overflow && unreadCount > itemCount) {
         const more = document.createElement('div');
         more.className = 'care-notif-more';
-        more.textContent = '+' + (unreadCount - items.length) + ' więcej';
+        more.textContent = '+' + (unreadCount - itemCount) + ' więcej';
         list.appendChild(more);
     }
     refreshCareIcons(list);
