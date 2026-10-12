@@ -141,7 +141,13 @@ async function handleOfferDiscountsCancel() {
                     w.malowanieZewManual = s.malowanieZewManual;
                 });
             }
-            if (typeof orderEditMode !== 'undefined' && orderEditMode) {
+            // Rollback cofa też snapshot frozen* (jak zmiana rabatu): inaczej
+            // w edycji oferty mrożonka zostałaby z odrzuconymi wartościami.
+            const refreezeRollback =
+                typeof _shouldRefreezePrices === 'function'
+                    ? _shouldRefreezePrices()
+                    : typeof orderEditMode !== 'undefined' && orderEditMode;
+            if (refreezeRollback) {
                 if (typeof freezeWellPrices === 'function') {
                     freezeWellPrices(wells);
                 }

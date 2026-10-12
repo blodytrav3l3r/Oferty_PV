@@ -115,6 +115,117 @@ describe('frontend vm: freezeWellPrices snapshotuje live (reuse w edycji)', () =
     });
 });
 
+describe('frontend vm: zmiana rabatu w edycji oferty odświeża frozen* (refreeze)', () => {
+    const products = [
+        {
+            id: 'DDD-1000-300',
+            componentType: 'dennica',
+            dn: '1000',
+            height: 300,
+            price: 740,
+            name: 'Dennica DN1000'
+        },
+        {
+            id: 'PRZ-400',
+            componentType: 'przejscie',
+            dn: '400',
+            price: 200,
+            name: 'Przejście PVC SN8 400'
+        }
+    ];
+
+    function loadCtx() {
+        const sandbox = {
+            window: {},
+            console,
+            studnieProducts: products,
+            wellDiscounts: {},
+            precoPricing: {},
+            FLOW_TYPES: { WYLOT: 'wylot', WLOT: 'wlot', DOLOT: 'dolot' },
+            calcPrecoPricingPure: () => ({ suma: 0, error: null }),
+            showToast: () => {},
+            isWellOrdered: () => false,
+            getOrderForWellId: () => null,
+            resolveEffectiveProduct: (_well: any, productId: string) =>
+                products.find((pr) => pr.id === productId),
+            getStudnieProductById: (id: string) => products.find((pr) => pr.id === id),
+            findAssignedElement: () => ({ entry: { componentType: 'dennica' } }),
+            buildConfigMap: () => [{}],
+            structuredClone: (v: unknown) => JSON.parse(JSON.stringify(v)),
+            renderDiscountPanel: () => {},
+            updateSummary: () => {},
+            renderOfferSummary: () => {},
+            renderWellConfig: () => {}
+        };
+        sandbox.window.isPreviewMode = false;
+        vm.createContext(sandbox);
+        vm.runInContext(readPub('js/studnie/globals.js'), sandbox, { filename: 'globals.js' });
+        sandbox.window.studnieProducts = products;
+        vm.runInContext(readPub('js/studnie/actionsWellPainting.js'), sandbox, {
+            filename: 'actionsWellPainting.js'
+        });
+        vm.runInContext(readPub('js/studnie/actionsWellPricing.js'), sandbox, {
+            filename: 'actionsWellPricing.js'
+        });
+        vm.runInContext(readPub('js/studnie/orderHelpers.js'), sandbox, {
+            filename: 'orderHelpers.js'
+        });
+        vm.runInContext(readPub('js/studnie/actionsWellDiscounts.js'), sandbox, {
+            filename: 'actionsWellDiscounts.js'
+        });
+        return sandbox;
+    }
+
+    function seedOfferAt40(sb: any) {
+        // wells/wellDiscounts przez runInContext (let-bindings z globals.js).
+        vm.runInContext(
+            `wells = ${JSON.stringify([
+                {
+                    dn: '1000',
+                    klasaNosnosci_korpus: 'D400',
+                    dennicaMaterial: 'zelbetowa',
+                    config: [{ productId: 'DDD-1000-300', quantity: 1 }],
+                    przejscia: [
+                        { productId: 'PRZ-400', quantity: 1, rzednaWlaczenia: '1', dn: '400' }
+                    ]
+                }
+            ])}`,
+            sb
+        );
+        vm.runInContext(
+            `wellDiscounts = ${JSON.stringify({ 1000: { dennica: 40, nadbudowa: 40 } })}`,
+            sb
+        );
+        vm.runInContext('freezeWellPrices(wells)', sb);
+        return vm.runInContext('wells[0]', sb);
+    }
+
+    test('freeze przy 40% → zmiana na 50% w edycji oferty przemraża przejście i pozycję', () => {
+        const sb = loadCtx();
+        const w = seedOfferAt40(sb);
+        expect(w.przejscia[0].frozenTransitionPrice).toBe(120); // 200 × 0.6, host dennica
+        // Sesja edycji oferty + zmiana rabatu na żywo.
+        vm.runInContext('isOfferEditFrozen = true', sb);
+        vm.runInContext(`applyDiscount('1000', 'dennica', 50)`, sb);
+        const wAfter = vm.runInContext('wells[0]', sb);
+        expect(wAfter.przejscia[0].frozenTransitionPrice).toBe(100); // 200 × 0.5
+        expect(wAfter.config[0].frozenPrice).toBe(370); // 740 × 0.5
+        // Badge z mrożonego stosunku pokazuje nowy rabat, nie stare 40%.
+        const pr = wAfter.przejscia[0];
+        expect((1 - pr.frozenPrice / pr.frozenPriceBase) * 100).toBe(50);
+    });
+
+    test('poza edycją oferty i zamówieniem zmiana rabatu nie tyka frozen*', () => {
+        const sb = loadCtx();
+        const w = seedOfferAt40(sb);
+        vm.runInContext(`applyDiscount('1000', 'dennica', 50)`, sb);
+        const wAfter = vm.runInContext('wells[0]', sb);
+        expect(wAfter.przejscia[0].frozenTransitionPrice).toBe(120);
+        expect(wAfter.config[0].frozenPrice).toBe(444); // 740 × 0.6 stoi
+        expect(w).toBe(wAfter);
+    });
+});
+
 describe('frontend static: mrożenie studni end-to-end w źródle', () => {
     const pricing = readPub('js/studnie/actionsWellPricing.js');
     const calc = readPub('js/studnie/offerPricingCalc.js');

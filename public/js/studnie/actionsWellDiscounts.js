@@ -50,6 +50,17 @@ function updateDiscount(dn, type, value) {
     applyDiscount(dn, type, newValue);
 }
 
+// Snapshot frozen* trzeba odświeżyć po zmianie rabatu/kosztu nie tylko
+// w trybie zamówienia, lecz także w edycji oferty (isOfferEditFrozen).
+// Bez tego w edycji oferty przejścia/ceny/sumy pokazują stan z wczytania,
+// a badge'e już nowy rabat (rozjazd znikał dopiero po zapisie i ponownym
+// otwarciu, które piecze mrożonkę na nowo).
+function _shouldRefreezePrices() {
+    if (typeof orderEditMode !== 'undefined' && orderEditMode) return true;
+    if (typeof isOfferEditFrozen !== 'undefined' && isOfferEditFrozen) return true;
+    return false;
+}
+
 function applyDiscount(dn, type, value) {
     // Kontrakt: discountPct ∈ [0,100] finite number, inaczej throw RangeError.
     // Nigdy nie zapisuj invalid do wellDiscounts (typeof check odrzuca też
@@ -62,7 +73,7 @@ function applyDiscount(dn, type, value) {
     if (!wellDiscounts[dn]) wellDiscounts[dn] = { dennica: 0, nadbudowa: 0, preco: 0, pehd: 0 };
     wellDiscounts[dn][type] = value;
 
-    if (typeof orderEditMode !== 'undefined' && orderEditMode) {
+    if (_shouldRefreezePrices()) {
         if (typeof freezeWellPrices === 'function') {
             freezeWellPrices(wells);
         }
@@ -110,7 +121,7 @@ function updateGlobalPaintingCost(field, value) {
             );
     }
 
-    if (typeof orderEditMode !== 'undefined' && orderEditMode) {
+    if (_shouldRefreezePrices()) {
         if (typeof freezeWellPrices === 'function') {
             freezeWellPrices(wells);
         }
@@ -164,7 +175,7 @@ function updateGlobalPehdDiscount(value) {
             );
     }
 
-    if (typeof orderEditMode !== 'undefined' && orderEditMode) {
+    if (_shouldRefreezePrices()) {
         if (typeof freezeWellPrices === 'function') {
             freezeWellPrices(wells);
         }
