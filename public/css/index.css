@@ -2815,15 +2815,38 @@ html[data-theme='light'] body.index-page.logged-in::before {
     color: var(--accent2-hover);
 }
 .care-queue-btns {
-    display: grid;
-    grid-template-columns: 1fr 1fr auto;
-    gap: 8px;
+    display: flex;
+    gap: 6px;
     margin-top: auto;
     padding-top: 10px;
 }
 .care-queue-btns .btn {
     justify-content: center;
-    width: 100%;
+    white-space: nowrap;
+}
+/* Presety w jednej linii z Kontakt/⋮ (spłaszczone do flexa rodzica). */
+.care-queue-snooze {
+    display: contents;
+}
+.care-snooze-preset {
+    flex: 0 0 auto;
+}
+.care-snooze-custom {
+    width: 4.5ch;
+    flex: 0 0 auto;
+    text-align: center;
+}
+.care-snooze-ok {
+    flex: 0 0 auto;
+}
+.care-contact-btn {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.care-menu-wrap {
+    flex: 0 0 auto;
 }
 .care-queue-info {
     background: var(--bg-tertiary);

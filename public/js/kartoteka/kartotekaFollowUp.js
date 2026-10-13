@@ -217,7 +217,7 @@ export default {
                     ? `<label class="fu-full"><input type="checkbox" id="fu-reopen" /> Ponownie otwórz zamkniętą ofertę</label>`
                     : '') +
                 `<div class="fu-full fu-error" id="fu-error" role="alert" hidden></div>` +
-                `<div class="fu-full fu-form-actions"><button type="submit" class="btn btn-sm btn-primary" id="fu-submit-btn">Zapisz kontakt</button><button type="button" class="btn btn-sm btn-secondary" id="fu-cancel-edit" hidden>Anuluj edycję</button><button type="button" class="btn btn-sm btn-secondary" id="fu-snooze-btn" title="Odłóż pilnowanie (max 14 dni)">Odłóż</button><button type="button" class="btn btn-sm btn-secondary" id="fu-done-btn" title="Przestań pilnować tę ofertę">Done</button><button type="button" class="btn btn-sm btn-secondary" id="fu-reopen-care-btn" title="Wznów pilnowanie (cofnij odłożenie/done)">Wznów</button></div>` +
+                `<div class="fu-full fu-form-actions"><button type="submit" class="btn btn-sm btn-primary" id="fu-submit-btn">Zapisz kontakt</button><button type="button" class="btn btn-sm btn-secondary" id="fu-cancel-edit" hidden>Anuluj edycję</button><button type="button" class="btn btn-sm btn-secondary" id="fu-snooze-btn" title="Odłóż pilnowanie (max 28 dni)">Odłóż</button><button type="button" class="btn btn-sm btn-secondary" id="fu-done-btn" title="Przestań pilnować tę ofertę">Done</button><button type="button" class="btn btn-sm btn-secondary" id="fu-reopen-care-btn" title="Wznów pilnowanie (cofnij odłożenie/done)">Wznów</button></div>` +
                 `</form>` +
                 `<h4>Historia kontaktów</h4>` +
                 `<div class="fu-timeline" id="fu-timeline">${this.renderFollowUpTimeline(items)}</div>` +

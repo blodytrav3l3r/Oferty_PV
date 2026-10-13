@@ -38,7 +38,7 @@ const scopedSlaUpsert = jest.fn();
 const effectiveSlaMock = jest.fn();
 const stateDelete = jest.fn();
 
-/** Daty wzgledem realnego now (route waliduje snoozedUntil w (now, now+14d]).
+/** Daty wzgledem realnego now (route waliduje snoozedUntil w (now, now+28d]).
  * Sztywne daty gniły — testy HTTP przechodzily wczoraj, dziś 400. */
 const futureIso = (days: number): string => new Date(Date.now() + days * 86400000).toISOString();
 
@@ -139,11 +139,15 @@ describe('P1 care routes guardy', () => {
         expect(past.status).toBe(400);
     });
 
-    it('snooze >14d → 400', async () => {
+    it('snooze >28d → 400, 28d przechodzi', async () => {
         const res = await request(app())
             .post('/api/care/rury/o1/snooze')
             .send({ snoozedUntil: futureIso(30) });
         expect(res.status).toBe(400);
+        const ok = await request(app())
+            .post('/api/care/rury/o1/snooze')
+            .send({ snoozedUntil: futureIso(28) });
+        expect(ok.status).toBe(200);
     });
 
     it('TOCTOU: właściciel zmieniony w tx → 403, brak zapisu', async () => {

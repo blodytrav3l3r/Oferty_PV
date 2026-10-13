@@ -648,7 +648,7 @@ function strictSlaField(v: unknown, name: string): number {
     }
     return n;
 }
-export const MAX_SNOOZE_DAYS = 14;
+export const MAX_SNOOZE_DAYS = 28;
 
 type RawDb = QueryRawDb;
 

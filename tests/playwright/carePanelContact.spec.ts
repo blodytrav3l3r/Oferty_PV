@@ -12,6 +12,7 @@
  *   (l) DOM: karta goła chowa linie (brak data-care-*)
  *   (m) DOM: karta powiadomienia niesie obiekt + tel:
  *   (n) DOM: Kontakt z kafelka otwiera modal opieki w miejscu (bez kartoteki)
+ *   (o) DOM: presety +9d i custom 28d odkładają (pill), 99 odrzucone
  */
 import { test, expect } from '@playwright/test';
 
@@ -148,6 +149,35 @@ test.describe.serial('e2e: panel opieki — obiekt i kontakt', () => {
         await expect(card, 'powiadomienia pełnej brak').toHaveCount(1, { timeout: 15000 });
         await expect(card.locator('[data-care-object]'), 'obiektu brak').toBeVisible();
         await expect(card.locator('a[href="tel:601000111"]'), 'tel: brak').toHaveCount(1);
+    });
+
+    test('(o) presety snooze + custom 28d, odrzut 99', async ({ page }) => {
+        await openPanel(page);
+        const full = page.locator('.care-queue-card', { hasText: `${CLIENT_TAG}-full` });
+        await expect(full, 'karty pełnej brak').toHaveCount(1, { timeout: 15000 });
+        await full.locator('[aria-label="Odłóż o 9 dni"]').click();
+        await expect(full, 'brak pilla Odłożono o 9d').toContainText('Odłożono o 9d', {
+            timeout: 15000
+        });
+        const bare = page.locator('.care-queue-card', { hasText: `${CLIENT_TAG}-bare` });
+        await expect(bare, 'karty gołej brak').toHaveCount(1, { timeout: 15000 });
+        await bare.locator('.care-snooze-custom').fill('28');
+        await bare.locator('[aria-label="Odłóż o własną liczbę dni"]').click();
+        await expect(bare, 'brak pilla Odłożono o 28d').toContainText('Odłożono o 28d', {
+            timeout: 15000
+        });
+        await bare.locator('button', { hasText: 'Cofnij' }).click();
+        await expect(
+            bare.locator('[aria-label="Odłóż o 9 dni"]'),
+            'brak powrotu presetów po Cofnij'
+        ).toBeVisible({ timeout: 15000 });
+        await bare.locator('.care-snooze-custom').fill('99');
+        await bare.locator('[aria-label="Odłóż o własną liczbę dni"]').click();
+        await expect(bare, 'śmieci 99 nie mogą odłożyć').not.toContainText('Odłożono o 99d');
+        await expect(
+            bare.locator('[aria-label="Odłóż o 9 dni"]'),
+            'presety zniknęły po odrzucie'
+        ).toBeVisible();
     });
 
     test('(n) Kontakt otwiera modal opieki bez nawigacji do kartoteki', async ({ page }) => {

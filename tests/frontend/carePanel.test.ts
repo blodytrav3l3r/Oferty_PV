@@ -467,7 +467,7 @@ describe('carePanel', () => {
         expect(menus).toHaveLength(1);
         for (const fn of menus[0].handlers || []) await fn();
         const items = findAll(els['care-queue-list'], (n) =>
-            (n.textContent || '').includes('Oznacz jako done')
+            (n.textContent || '').includes('Oznacz jako zrobione')
         );
         expect(items).toHaveLength(1);
         for (const fn of items[0].handlers || []) await fn();
@@ -482,7 +482,7 @@ describe('carePanel', () => {
         for (const fn of listeners['keydown'] || []) await fn({ key: 'Escape' });
         expect(
             findAll(els['care-queue-list'], (n) =>
-                (n.textContent || '').includes('Oznacz jako done')
+                (n.textContent || '').includes('Oznacz jako zrobione')
             )
         ).toHaveLength(0);
     });
@@ -544,7 +544,7 @@ describe('carePanel', () => {
         expect(findClass(els['care-queue-list'], 'care-queue-info')).toHaveLength(1);
     });
 
-    test('snooze +3d z undo (reopen)', async () => {
+    test('snooze presety z undo (reopen)', async () => {
         const calls: string[] = [];
         const { els, context } = load({
             calls,
@@ -576,7 +576,7 @@ describe('carePanel', () => {
             }
             return null;
         };
-        const snooze = findBtn(row, 'Odłóż +3d');
+        const snooze = findBtn(row, '+3d');
         expect(snooze).not.toBeNull();
         for (const fn of snooze.handlers || []) await fn();
         expect(calls.some((c) => c.includes('/api/care/rury/o1/snooze'))).toBe(true);
@@ -837,7 +837,7 @@ describe('carePanel', () => {
         expect(menus).toHaveLength(1);
         for (const fn of menus[0].handlers || []) await fn();
         const items = findAll(els['care-queue-list'], (n) =>
-            (n.textContent || '').includes('Oznacz jako done')
+            (n.textContent || '').includes('Oznacz jako zrobione')
         );
         expect(items).toHaveLength(1);
         for (const fn of items[0].handlers || []) await fn();
@@ -887,7 +887,7 @@ describe('carePanel', () => {
         expect(menus).toHaveLength(1);
         for (const fn of menus[0].handlers || []) await fn();
         const items = findAll(els['care-queue-list'], (n) =>
-            (n.textContent || '').includes('Oznacz jako done')
+            (n.textContent || '').includes('Oznacz jako zrobione')
         );
         expect(items).toHaveLength(1);
         for (const fn of items[0].handlers || []) await fn();
@@ -1723,7 +1723,7 @@ describe('carePanel', () => {
             }
             return null;
         };
-        const snooze = findBtn(row, 'Odłóż +3d');
+        const snooze = findBtn(row, '+3d');
         const p1 = (snooze.handlers || [])[0]();
         for (let i = 0; i < 5; i++) await new Promise((r) => setTimeout(r, 0));
         expect(snooze.disabled).toBe(true);
@@ -1752,7 +1752,7 @@ describe('carePanel', () => {
         );
         for (const fn of menus[0].handlers || []) await fn();
         const items = findAll(els['care-queue-list'], (n) =>
-            (n.textContent || '').includes('Oznacz jako done')
+            (n.textContent || '').includes('Oznacz jako zrobione')
         );
         const d1 = (items[0].handlers || [])[0]();
         for (let i = 0; i < 5; i++) await new Promise((r) => setTimeout(r, 0));
@@ -2402,5 +2402,177 @@ describe('carePanel', () => {
         expect(calls.filter((c) => c.includes('/api/care/panel')).length).toBeGreaterThan(
             panelBefore
         );
+    });
+
+    test('snooze: presety +6d/+9d niosą właściwy until, custom 1–28, śmieci bez fetcha', async () => {
+        const calls: string[] = [];
+        const posts: Array<{ url: string; body: string }> = [];
+        const packet = (paused: boolean) => ({
+            ok: true,
+            etag: '"esnz"',
+            summary: {
+                noContact: 0,
+                due: 1,
+                openOk: 0,
+                won: 0,
+                lost: 0,
+                abandoned: 0,
+                totalCount: 1
+            },
+            queue: {
+                items: [
+                    {
+                        offerKind: 'rury',
+                        offerId: 'o1',
+                        status: 'DUE',
+                        overdueDays: 1,
+                        escalated: false,
+                        paused,
+                        clientName: 'A',
+                        value: null,
+                        phone: null,
+                        lastNote: null,
+                        nextContactAt: null,
+                        lastContactAt: null
+                    }
+                ],
+                nextCursor: null,
+                totalCount: 1
+            },
+            notifications: { items: [], unreadCount: 0, hasOverflow: false },
+            sla: { firstContactH: 24, staleD: 7, escalationH: 72 }
+        });
+        const { els, context } = load({
+            calls,
+            fetchMock: (url: string, init?: any) => {
+                if (url.includes('/snooze') && (init?.method || 'GET') === 'POST') {
+                    posts.push({ url, body: String(init?.body ?? '') });
+                    return okJson({ ok: true, state: { updatedAt: '2026-10-13T00:00:00.000Z' } });
+                }
+                if (url.includes('/api/care/panel'))
+                    return { ok: true, status: 200, json: async () => packet(false) };
+                return okJson({ noContact: 0, due: 1, openOk: 0, won: 0, lost: 0 });
+            }
+        });
+        await context.__careTest.loadCarePanel();
+        const row = els['care-queue-list'].children[0];
+        const findBtn = (root: any, label: string): any => {
+            for (const c of root.children || []) {
+                if (c.textContent === label) return c;
+                const hit = findBtn(c, label);
+                if (hit) return hit;
+            }
+            return null;
+        };
+        const findInput = (root: any): any => {
+            for (const c of root.children || []) {
+                if (c.tag === 'input') return c;
+                const hit = findInput(c);
+                if (hit) return hit;
+            }
+            return null;
+        };
+        const daysOf = (body: string) =>
+            (Date.parse(JSON.parse(body).snoozedUntil) - Date.now()) / 86400000;
+        // Po udanym snooze akcje podmieniają się na undo — świeży wiersz.
+        const freshRow = async () => {
+            await context.__careTest.loadCarePanel();
+            return els['care-queue-list'].children[0];
+        };
+        // +6d i +9d: until ≈ 6 i 9 dni.
+        for (const fn of findBtn(row, '+6d').handlers || []) await fn();
+        const row9 = await freshRow();
+        for (const fn of findBtn(row9, '+9d').handlers || []) await fn();
+        expect(posts).toHaveLength(2);
+        expect(daysOf(posts[0].body)).toBeGreaterThan(5.9);
+        expect(daysOf(posts[0].body)).toBeLessThan(6.1);
+        expect(daysOf(posts[1].body)).toBeGreaterThan(8.9);
+        expect(daysOf(posts[1].body)).toBeLessThan(9.1);
+        // Custom OK: 12d przechodzi, śmieci nie fetchują.
+        const row12 = await freshRow();
+        const input = findInput(row12);
+        expect(input).not.toBeNull();
+        input.value = '12';
+        for (const fn of findBtn(row12, 'OK').handlers || []) await fn();
+        expect(posts).toHaveLength(3);
+        expect(daysOf(posts[2].body)).toBeGreaterThan(11.9);
+        expect(daysOf(posts[2].body)).toBeLessThan(12.1);
+        const rowBad = await freshRow();
+        const badInput = findInput(rowBad);
+        const before = posts.length;
+        badInput.value = '99';
+        for (const fn of findBtn(rowBad, 'OK').handlers || []) await fn();
+        badInput.value = 'abc';
+        for (const fn of badInput.handlers || []) await fn({ key: 'Enter', preventDefault() {} });
+        expect(posts).toHaveLength(before);
+    });
+
+    test('snooze: pauza blokuje presety i custom', async () => {
+        const { els, context } = load({
+            fetchMock: (url: string) => {
+                if (url.includes('/api/care/panel'))
+                    return {
+                        ok: true,
+                        status: 200,
+                        json: async () => ({
+                            ok: true,
+                            etag: '"epaused"',
+                            summary: {
+                                noContact: 0,
+                                due: 0,
+                                openOk: 0,
+                                won: 0,
+                                lost: 0,
+                                abandoned: 0,
+                                totalCount: 1
+                            },
+                            queue: {
+                                items: [
+                                    {
+                                        offerKind: 'rury',
+                                        offerId: 'o1',
+                                        status: 'DUE',
+                                        overdueDays: 0,
+                                        escalated: false,
+                                        paused: true,
+                                        clientName: 'A',
+                                        value: null,
+                                        phone: null,
+                                        lastNote: null,
+                                        nextContactAt: null,
+                                        lastContactAt: null
+                                    }
+                                ],
+                                nextCursor: null,
+                                totalCount: 1
+                            },
+                            notifications: { items: [], unreadCount: 0, hasOverflow: false },
+                            sla: { firstContactH: 24, staleD: 7, escalationH: 72 }
+                        })
+                    };
+                return okJson({ noContact: 0, due: 0, openOk: 0, won: 0, lost: 0 });
+            }
+        });
+        await context.__careTest.loadCarePanel();
+        const card = els['care-queue-list'].children[0].children[0];
+        const walk = (root: any, out: any[] = []): any[] => {
+            for (const c of root.children || []) {
+                if ((c.tag === 'button' || c.tag === 'input') && c.disabled) out.push(c);
+                walk(c, out);
+            }
+            return out;
+        };
+        const disabledCount = walk(card).length;
+        expect(disabledCount).toBeGreaterThanOrEqual(5);
+        // Kontakt celowo aktywny także przy pauzie.
+        const findBtn = (root: any, label: string): any => {
+            for (const c of root.children || []) {
+                if (c.textContent === label) return c;
+                const hit = findBtn(c, label);
+                if (hit) return hit;
+            }
+            return null;
+        };
+        expect(findBtn(card, 'Kontakt').disabled).toBe(false);
     });
 });

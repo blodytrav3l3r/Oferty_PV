@@ -931,10 +931,14 @@ function matchFilter(it) {
 }
 
 async function snoozeQuick(it, days, row) {
+    if (!Number.isInteger(days) || days < 1 || days > 28) {
+        careToastError('Podaj liczbę dni 1–28.');
+        return;
+    }
     const offerKind = it.offerKind;
     const offerId = it.offerId;
     const key = String(offerKind) + ':' + String(offerId);
-    // Drugi klik w locie — ignoruj (BE i tak broni Idempotency-Key).
+    // Drugi klik w locie — ignoruj (guard in-flight + opt-lock expectedUpdatedAt w BE).
     if (snoozeInFlight.has(key)) return;
     // Blokada przycisków wiersza na czas fetcha (powrót w finally).
     const locked = [];
@@ -1300,13 +1304,54 @@ function renderQueue(items, nextCursor, totalCount) {
         const actions = document.createElement('div');
         actions.className = 'care-queue-btns';
         actions.setAttribute('data-care-actions', '1');
-        const snooze = document.createElement('button');
-        snooze.type = 'button';
-        snooze.className = 'btn btn-sm btn-secondary';
-        snooze.textContent = 'Odłóż +3d';
-        if (it.paused) snooze.disabled = true;
-        snooze.addEventListener('click', () => snoozeQuick(it, 3, row));
-        actions.appendChild(snooze);
+        // Presety odłożenia + własna liczba dni (limit BE: 28).
+        const snoozeRow = document.createElement('div');
+        snoozeRow.className = 'care-queue-snooze';
+        for (const d of [3, 6, 9]) {
+            const preset = document.createElement('button');
+            preset.type = 'button';
+            preset.className = 'btn btn-sm btn-secondary care-snooze-preset';
+            preset.textContent = '+' + d + 'd';
+            preset.setAttribute('aria-label', 'Odłóż o ' + d + ' dni');
+            if (it.paused) preset.disabled = true;
+            preset.addEventListener('click', () => snoozeQuick(it, d, row));
+            snoozeRow.appendChild(preset);
+        }
+        const custom = document.createElement('input');
+        custom.type = 'number';
+        custom.min = '1';
+        custom.max = '28';
+        custom.step = '1';
+        custom.inputMode = 'numeric';
+        custom.placeholder = 'd';
+        custom.className = 'form-input form-input-sm care-snooze-custom';
+        custom.setAttribute('aria-label', 'Własna liczba dni odłożenia (1–28)');
+        // Pauza blokuje tylko odłożenia; Kontakt celowo aktywny.
+        if (it.paused) custom.disabled = true;
+        const applyCustom = () => {
+            const raw = String(custom.value ?? '').trim();
+            if (!/^\d+$/.test(raw)) {
+                careToastError('Podaj liczbę dni 1–28.');
+                return;
+            }
+            snoozeQuick(it, Number(raw), row);
+        };
+        custom.addEventListener('keydown', (e) => {
+            if (e && e.key === 'Enter') {
+                if (typeof e.preventDefault === 'function') e.preventDefault();
+                applyCustom();
+            }
+        });
+        snoozeRow.appendChild(custom);
+        const customOk = document.createElement('button');
+        customOk.type = 'button';
+        customOk.className = 'btn btn-sm btn-secondary care-snooze-ok';
+        customOk.textContent = 'OK';
+        customOk.setAttribute('aria-label', 'Odłóż o własną liczbę dni');
+        if (it.paused) customOk.disabled = true;
+        customOk.addEventListener('click', applyCustom);
+        snoozeRow.appendChild(customOk);
+        actions.appendChild(snoozeRow);
         const contactBtn = document.createElement('button');
         contactBtn.type = 'button';
         contactBtn.className = 'btn btn-sm btn-primary care-contact-btn';
@@ -1458,7 +1503,7 @@ function careMenu(it) {
             });
             menu.appendChild(b);
         };
-        addItem(it.paused ? 'Wznów pilnowanie' : 'Oznacz jako done', () =>
+        addItem(it.paused ? 'Wznów pilnowanie' : 'Oznacz jako zrobione', () =>
             postCare(it, it.paused ? 'reopen' : 'done')
         );
         addItem('Otwórz kartotekę', () => {
@@ -1476,7 +1521,7 @@ async function postCare(it, action) {
     const offerKind = it.offerKind;
     const offerId = it.offerId;
     const key = String(offerKind) + ':' + String(offerId) + ':' + String(action);
-    // Drugi klik w locie — ignoruj (BE i tak broni Idempotency-Key).
+    // Drugi klik w locie — ignoruj (guard in-flight + opt-lock expectedUpdatedAt w BE).
     if (postCareInFlight.has(key)) return;
     const body = {};
     if (it.careUpdatedAt) body.expectedUpdatedAt = it.careUpdatedAt;

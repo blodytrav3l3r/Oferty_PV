@@ -81,6 +81,10 @@ pochodne ze snapshotu `offers_*.data` (bez migracji, `json_extract`):
 | `authorName`    | `$.createdByUserName` z bloba (oryginalny autor)             | tylko kolejka: `• Przygotował`, gdy ≠ opiekun         |
 | `value`         | rury `$.totalBrutto`, studnie guard 0-kolumny jak kolejka    | L1 kafelka, format kolejki (`PLN`), brak → `0,00 PLN` |
 
+Odłożenie (snooze): presety `+3d/+6d/+9d` + własna liczba dni (OK lub Enter),
+limit 28 dni (`MAX_SNOOZE_DAYS`, BE zwraca 400 powyżej). Pauza blokuje cały
+wiersz odłożeń. Undo podmienia akcje na `Odłożono o Xd` + `Cofnij` (reopen).
+
 Karta kolejki i karta powiadomienia pokazują `Obiekt/Adres/Kontakt + tel:/mailto:`.
 Dane w scope requesta (jak `clientName`); brak wiersza w blobie = `null`, nie 404.
 

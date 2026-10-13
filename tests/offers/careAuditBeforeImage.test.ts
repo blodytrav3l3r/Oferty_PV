@@ -36,7 +36,7 @@ jest.mock('../../src/utils/idempotency', () => ({
 const auditCreate = jest.fn();
 const PRE_IMAGE = { snoozedUntil: '2026-10-20T00:00:00.000Z', doneAt: null };
 
-/** Jak w followUpCareRoutes: route wymaga snoozedUntil w (now, now+14d]. */
+/** Jak w followUpCareRoutes: route wymaga snoozedUntil w (now, now+28d]. */
 const futureIso = (days: number): string => new Date(Date.now() + days * 86400000).toISOString();
 
 jest.mock('../../src/services/careService', () => {
