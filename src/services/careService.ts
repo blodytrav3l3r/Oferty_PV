@@ -306,8 +306,23 @@ export function buildCareQueueQueries(
         WHERE ${cursorSql}${opts.hidePaused ? Prisma.sql` AND "done" IS NULL AND ("snoozed" IS NULL OR "snoozed" <= ${opts.nowIso})` : Prisma.empty}
         ORDER BY "bucketWeight" ASC, COALESCE("next", ${NULL_NEXT}) ASC, "offerKind" ASC, "offerId" ASC
         LIMIT ${limit + 1}`;
-    const count = Prisma.sql`${withSql}
-        SELECT COUNT(DISTINCT "offerKind" || ':' || "offerId") AS "c" FROM ranked${opts.hidePaused ? Prisma.sql` WHERE "done" IS NULL AND ("snoozed" IS NULL OR "snoozed" <= ${opts.nowIso})` : Prisma.empty}`;
+    // P0.4: count bez CTE latest — liczba wierszy nie zależy od follow-upów
+    // (LEFT JOIN) ani od users (LEFT JOIN), więc liczymy tylko oferty +
+    // care_states (ten sam predykat pauzy). Dokładny totalCount bez zmiany
+    // kontraktu; sortowanie okna zostaje tylko w zapytaniu danych.
+    const pauseRury = opts.hidePaused
+        ? Prisma.sql` AND (cs."doneAt" IS NULL AND (cs."snoozedUntil" IS NULL OR cs."snoozedUntil" <= ${opts.nowIso}))`
+        : Prisma.empty;
+    const pauseStudnie = opts.hidePaused
+        ? Prisma.sql` AND (cs."doneAt" IS NULL AND (cs."snoozedUntil" IS NULL OR cs."snoozedUntil" <= ${opts.nowIso}))`
+        : Prisma.empty;
+    const count = Prisma.sql`SELECT
+        (SELECT COUNT(*) FROM offers_rel o
+            LEFT JOIN care_states cs ON cs."offerKind" = 'rury' AND cs."offerId" = o."id"
+            WHERE ${scopeRury}${andBornRury}${pauseRury})
+        + (SELECT COUNT(*) FROM offers_studnie_rel s
+            LEFT JOIN care_states cs ON cs."offerKind" = 'studnie' AND cs."offerId" = s."id"
+            WHERE ${scopeStudnie}${andBornStudnie}${pauseStudnie}) AS "c"`;
     return { data, count };
 }
 

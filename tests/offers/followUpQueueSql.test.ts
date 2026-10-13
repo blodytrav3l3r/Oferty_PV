@@ -386,6 +386,65 @@ describe('P0.2 care queue SQL', () => {
     });
 });
 
+describe('P0.4 count bez CTE latest (KEEP-guard)', () => {
+    function queueAdapter(db: DatabaseSync) {
+        return {
+            $queryRaw: async <T>(...args: any[]): Promise<T> => {
+                const q = args[0] as Prisma.Sql;
+                return rawAll(db, q) as unknown as T;
+            }
+        };
+    }
+
+    it('count SQL nie tyka follow-upów (brak okna analitycznego)', () => {
+        const { count } = buildCareQueueQueries(U1, { nowIso: NOW });
+        const raw = count as unknown as { sql: string };
+        expect(raw.sql).not.toContain('ROW_NUMBER');
+        expect(raw.sql).not.toContain('offer_follow_ups');
+        expect(raw.sql).not.toContain('WITH latest');
+    });
+
+    it('parzystość: count = liczba wierszy kolejki (mine/all/hidePaused)', async () => {
+        const db = freshDb();
+        try {
+            const f = queueAdapter(db);
+            const mine = await getCareQueue(f, U1, { nowIso: NOW, scope: 'mine', limit: 50 });
+            expect(mine.totalCount).toBe(4);
+            const minePaused = await getCareQueue(f, U1, {
+                nowIso: NOW,
+                scope: 'mine',
+                limit: 50,
+                hidePaused: true
+            });
+            expect(minePaused.totalCount).toBe(4);
+            const all = await getCareQueue(f, ADMIN, { nowIso: NOW, scope: 'all', limit: 50 });
+            expect(all.totalCount).toBe(6);
+        } finally {
+            db.close();
+        }
+    });
+
+    it('hidePaused wycina spauzowane tak samo w data i count', async () => {
+        const db = freshDb();
+        try {
+            db.prepare(
+                'INSERT INTO care_states ("offerKind", "offerId", "snoozedUntil", "updatedAt") VALUES (?,?,?,?)'
+            ).run('rury', 'o1', '2026-12-31T00:00:00.000Z', '2026-10-02T00:00:00.000Z');
+            const f = queueAdapter(db);
+            const q = await getCareQueue(f, U1, {
+                nowIso: NOW,
+                scope: 'mine',
+                limit: 50,
+                hidePaused: true
+            });
+            expect(q.totalCount).toBe(3);
+            expect(q.items.some((r) => r.offerId === 'o1')).toBe(false);
+        } finally {
+            db.close();
+        }
+    });
+});
+
 describe('P0.2 KEEP-guard sortowania i cursora (assert, zero kodu)', () => {
     it('NULLS-last sentinelem: SQL ma COALESCE(next), parametry niosa 9999', () => {
         const { data } = buildCareQueueQueries(U1, { nowIso: NOW });

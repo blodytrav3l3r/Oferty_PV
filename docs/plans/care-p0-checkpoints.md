@@ -56,7 +56,17 @@ tylko dla `rep-preview`. Testy `careSyncLoad.test.ts` 5/5 (3 nowe,
 RED-dyskryminacja strukturalna: stary kod nie ma ścieżki `throttled`).
 Tradeoff: świeżość powiadomień ≤60 s (suplement ADR-015 w P0.5).
 
-## P0.4-QUEUE (następny)
+## P0.4-QUEUE — DONE (count), enrich SKIP z pomiaru
+
+Count przepisany bez CTE `latest` (oferty + care_states, ten sam predykat
+pauzy): 232 ms → 3 ms na 20k (~77×), `totalCount` dokładny — zero zmian
+kontraktu (brak `hasMore`, FE/API nietknięte). Testy parzystości
+mine/all/hidePaused w `followUpQueueSql.test.ts` (16/16).
+Enrich `json_extract` po LIMIT: pomiar na kopii z `data=NULL` dał tylko
+~14% (191 vs 222 ms) — dominuje sort okna, nie enrich. SKIP (słaby
+stosunek zysk/ryzyko kursora); sort okna to temat bramki P1.
+
+## P0.5-VERIFY (następny)
 
 ## P0.3-SYNC-THROTTLE
 
