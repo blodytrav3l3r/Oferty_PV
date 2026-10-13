@@ -401,3 +401,10 @@
 **Objaw**: `Błąd zapisu draftu PRECO: Nieprawidłowe wiersze: preco.kinety[0].dn — Invalid input: expected number, received string; …` (draft studni zapisany, PRECO nie).
 **Fix**: `precoNum()` w `collectPrecoRows` — reuse `coerceNumerics` (spacje precz, `,` → `.`, puste/placeholder → `null` → jawny 422 z BE, nigdy ciche 0); obejmuje kinety, zakresy `min/max`, ceny w `grupy` i skalary Dodatkowe (konsumenci mają guardy `|| 0`). Opcja `z.coerce` po stronie BE odrzucona (reaktywuje ciche `Number('')===0`, łamie D-FIX-2, szerszy blast radius).
 **Testy**: `tests/frontend/pricelistXlsx.test.ts` — wariant tekstowy (`'160'`, `'500,00'`, `''`/`'—'` → `null`, `typeof flat == 'number'`); RED-na-starym, GREEN-po-fixie.
+
+## 60. Zapis klienta po failed-load katalogu kasował kontakty (full-wipe)
+
+**Problem**: Edytor klienta po nieudanym `GET /:id/contacts` pokazywał tylko mirror legacy (`renderClientsDbList`), a `saveEditedClientInDb` syncował widoczne wiersze (albo `[]`) przez `PUT /contacts/sync` — BE usuwa brakujące na liście (`toDelete`), więc transient fail odczytu zamieniał się w trwałe skasowanie katalogu.
+**Objaw**: Chwilowy błąd sieci/500 przy odczycie + klik Zapisz → pusty lub okrojony katalog kontaktów.
+**Fix** (wzorzec C1 `requireClientsLoaded`): guard w `saveEditedClientInDb` wymaga świeżego cache; brak → jeden re-fetch + re-render edytora do weryfikacji (zapis dopiero po ponownym kliku); dalej fail → blokada + toast, zero PUT. Celowy wipe po wczytanym katalogu działa bez zmian.
+**Testy**: `tests/frontend/clientContactsFailClosed.test.ts` (blokada + re-fetch/re-render; RED-na-starym 2/2).

@@ -888,6 +888,25 @@ async function saveEditedClientInDb(id) {
 
     const client = clientsDb.find((c) => c.id === id);
     if (!client) return;
+    // Fail-closed katalogu (jak C1 dla firm): sync wysyła PEŁNY zestaw,
+    // więc zapis na niewidzianym katalogu (fetch fail → edytor pokazuje
+    // tylko mirror) skasowałby kontakty w bazie. Bez świeżego cache:
+    // jeden re-fetch → re-render do weryfikacji; dalej fail → blokada.
+    const cachedContacts = clientContactsCache[id];
+    if (!cachedContacts || !cachedContacts.ok) {
+        const fresh = await fetchClientContacts(id, true);
+        if (fresh.ok) {
+            const edBox = document.getElementById('edit-client-contacts');
+            if (edBox) renderCatalogEditor(edBox, id, fresh.list.map(splitCachedRow));
+            showToast('Wczytano aktualny katalog kontaktów — sprawdź i zapisz ponownie', 'warning');
+        } else {
+            showToast(
+                'Nie wczytano katalogu kontaktów — zapis zablokowany, spróbuj ponownie',
+                'error'
+            );
+        }
+        return;
+    }
     // Kontakty: pełny sync (nie batch firm). Imię wymagane (BE 400).
     const rows = ensureContactIds(
         collectCatalogEditor(document.getElementById('edit-client-contacts'), id)
