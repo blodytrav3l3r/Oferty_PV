@@ -41,6 +41,10 @@ export interface CareQueueItem {
     clientName: string | null;
     value: number | null;
     phone: string | null;
+    investName: string | null;
+    investAddress: string | null;
+    contactPerson: string | null;
+    email: string | null;
     lastNote: string | null;
     bucketWeight: number;
     snoozedUntil: string | null;
@@ -229,7 +233,11 @@ export function buildCareQueueQueries(
             l."nextContactAt" AS "next", l."contactedAt" AS "last", o."createdAt" AS "born",
             o."offer_number" AS "number", o."clientName" AS "client",
             CAST(json_extract(o."data", '$.totalBrutto') AS REAL) AS "value",
-            json_extract(o."data", '$.clientPhone') AS "phone", l."note" AS "note",
+            COALESCE(json_extract(o."data", '$.clientPhone'), json_extract(o."data", '$.clientContacts[0].phone')) AS "phone", l."note" AS "note",
+            COALESCE(NULLIF(o."investName", ''), json_extract(o."data", '$.investName'), json_extract(o."data", '$.budowa')) AS "invest",
+            json_extract(o."data", '$.investAddress') AS "address",
+            COALESCE(json_extract(o."data", '$.contactPerson'), json_extract(o."data", '$.clientContacts[0].name')) AS "contact",
+            COALESCE(json_extract(o."data", '$.clientEmail'), json_extract(o."data", '$.clientContacts[0].email')) AS "email",
             cs."snoozedUntil" AS "snoozed", cs."doneAt" AS "done",
             cs."updatedAt" AS "careUpdatedAt"
         FROM offers_rel o LEFT JOIN latest l
@@ -246,7 +254,11 @@ export function buildCareQueueQueries(
             CAST(COALESCE(NULLIF(s."totalPrice", 0), json_extract(s."data", '$.totalBrutto'),
                 (SELECT CAST(ROUND(COALESCE(SUM(value->>'totalPrice'), 0), 2) AS REAL)
                     FROM json_each(s."data", '$.wellsExport'))) AS REAL) AS "value",
-            json_extract(s."data", '$.clientPhone') AS "phone", l."note" AS "note",
+            COALESCE(json_extract(s."data", '$.clientPhone'), json_extract(s."data", '$.clientContacts[0].phone')) AS "phone", l."note" AS "note",
+            COALESCE(NULLIF(s."investName", ''), json_extract(s."data", '$.investName'), json_extract(s."data", '$.budowa')) AS "invest",
+            json_extract(s."data", '$.investAddress') AS "address",
+            COALESCE(json_extract(s."data", '$.contactPerson'), json_extract(s."data", '$.clientContacts[0].name')) AS "contact",
+            COALESCE(json_extract(s."data", '$.clientEmail'), json_extract(s."data", '$.clientContacts[0].email')) AS "email",
             cs."snoozedUntil" AS "snoozed", cs."doneAt" AS "done",
             cs."updatedAt" AS "careUpdatedAt"
         FROM offers_studnie_rel s LEFT JOIN latest l
@@ -257,6 +269,7 @@ export function buildCareQueueQueries(
     ), ranked AS (
         SELECT "offerKind", "offerId", "outcome", "next", "last", "born",
             "number", "client", "value", "phone", "note", "snoozed", "done", "careUpdatedAt",
+            "invest", "address", "contact", "email",
             ${BUCKET_CASE(opts.nowIso)} AS "bucketWeight"
         FROM base
     )`;
@@ -277,6 +290,7 @@ export function buildCareQueueQueries(
     const data = Prisma.sql`${withSql}
         SELECT "offerKind", "offerId", "outcome", "next", "last", "born",
             "number", "client", "value", "phone", "note",
+            "invest", "address", "contact", "email",
             "snoozed", "done", "careUpdatedAt", "bucketWeight" FROM ranked
         WHERE ${cursorSql}${opts.hidePaused ? Prisma.sql` AND "done" IS NULL AND ("snoozed" IS NULL OR "snoozed" <= ${opts.nowIso})` : Prisma.empty}
         ORDER BY "bucketWeight" ASC, COALESCE("next", ${NULL_NEXT}) ASC, "offerKind" ASC, "offerId" ASC
@@ -390,6 +404,10 @@ export async function getCareQueue(
                 client: string | null;
                 value: number | null;
                 phone: string | null;
+                invest: string | null;
+                address: string | null;
+                contact: string | null;
+                email: string | null;
                 note: string | null;
                 snoozed: string | null;
                 done: string | null;
@@ -424,6 +442,10 @@ export async function getCareQueue(
             clientName: r.client,
             value: typeof r.value === 'number' ? r.value : null,
             phone: r.phone,
+            investName: typeof r.invest === 'string' ? r.invest : null,
+            investAddress: typeof r.address === 'string' ? r.address : null,
+            contactPerson: typeof r.contact === 'string' ? r.contact : null,
+            email: typeof r.email === 'string' ? r.email : null,
             lastNote: r.note,
             bucketWeight: num(r.bucketWeight),
             snoozedUntil: r.snoozed,
@@ -445,6 +467,10 @@ export interface CareQueueViewItem {
     clientName: string | null;
     value: number | null;
     phone: string | null;
+    investName: string | null;
+    investAddress: string | null;
+    contactPerson: string | null;
+    email: string | null;
     lastNote: string | null;
     status: string;
     slaBucket: string;
@@ -484,6 +510,10 @@ export function buildCareQueueView(
             clientName: r.clientName ?? null,
             value: r.value ?? null,
             phone: r.phone ?? null,
+            investName: r.investName ?? null,
+            investAddress: r.investAddress ?? null,
+            contactPerson: r.contactPerson ?? null,
+            email: r.email ?? null,
             lastNote: r.lastNote ?? null,
             status: state.status,
             slaBucket: state.slaBucket,
@@ -872,6 +902,11 @@ export interface CareNotification {
     createdAt: string;
     clientName: string | null;
     number: string | null;
+    investName: string | null;
+    investAddress: string | null;
+    contactPerson: string | null;
+    phone: string | null;
+    email: string | null;
 }
 
 function notifBase(
@@ -1102,7 +1137,12 @@ export async function listCareNotifications(
     // Wzbogacenie o klienta/numer (JOIN warunkowy kind) — żadnych surowych ID w UI.
     const cols = Prisma.sql`n."id", n."userId", n."offerKind", n."offerId", n."type", n."readAt", n."createdAt",
         COALESCE(o."clientName", s."clientName") AS "clientName",
-        COALESCE(o."offer_number", s."offer_number") AS "number"
+        COALESCE(o."offer_number", s."offer_number") AS "number",
+        COALESCE(NULLIF(o."investName", ''), NULLIF(s."investName", ''), json_extract(o."data", '$.investName'), json_extract(s."data", '$.investName'), json_extract(o."data", '$.budowa'), json_extract(s."data", '$.budowa')) AS "investName",
+        COALESCE(json_extract(o."data", '$.investAddress'), json_extract(s."data", '$.investAddress')) AS "investAddress",
+        COALESCE(json_extract(o."data", '$.contactPerson'), json_extract(s."data", '$.contactPerson'), json_extract(o."data", '$.clientContacts[0].name'), json_extract(s."data", '$.clientContacts[0].name')) AS "contactPerson",
+        COALESCE(json_extract(o."data", '$.clientPhone'), json_extract(s."data", '$.clientPhone'), json_extract(o."data", '$.clientContacts[0].phone'), json_extract(s."data", '$.clientContacts[0].phone')) AS "phone",
+        COALESCE(json_extract(o."data", '$.clientEmail'), json_extract(s."data", '$.clientEmail'), json_extract(o."data", '$.clientContacts[0].email'), json_extract(s."data", '$.clientContacts[0].email')) AS "email"
         FROM "care_notifications" n
         LEFT JOIN offers_rel o ON n."offerKind" = 'rury' AND o."id" = n."offerId"
         LEFT JOIN offers_studnie_rel s ON n."offerKind" = 'studnie' AND s."id" = n."offerId"`;

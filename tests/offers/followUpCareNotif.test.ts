@@ -17,8 +17,8 @@ const U1: CareUser = { id: 'u1', role: 'user', subUsers: [] };
 
 function freshDb(): DatabaseSync {
     const db = new DatabaseSync(':memory:');
-    db.exec(`CREATE TABLE offers_rel (id TEXT PRIMARY KEY, "userId" TEXT, "createdAt" TEXT, "offer_number" TEXT, "clientName" TEXT, "data" TEXT);
-        CREATE TABLE offers_studnie_rel (id TEXT PRIMARY KEY, "userId" TEXT, "createdAt" TEXT, "offer_number" TEXT, "clientName" TEXT, "totalPrice" REAL, "data" TEXT);
+    db.exec(`CREATE TABLE offers_rel (id TEXT PRIMARY KEY, "userId" TEXT, "createdAt" TEXT, "offer_number" TEXT, "clientName" TEXT, "investName" TEXT, "data" TEXT);
+        CREATE TABLE offers_studnie_rel (id TEXT PRIMARY KEY, "userId" TEXT, "createdAt" TEXT, "offer_number" TEXT, "clientName" TEXT, "investName" TEXT, "totalPrice" REAL, "data" TEXT);
         CREATE TABLE document_shares (id TEXT PRIMARY KEY, "sharedWithUserId" TEXT, "documentType" TEXT, "documentId" TEXT);
         CREATE TABLE care_states ("offerKind" TEXT NOT NULL, "offerId" TEXT NOT NULL, "snoozedUntil" TEXT, "doneAt" TEXT, "updatedBy" TEXT, "updatedAt" TEXT NOT NULL,
             CONSTRAINT "care_states_pkey" PRIMARY KEY ("offerKind", "offerId"));
@@ -309,8 +309,8 @@ describe('P2 sync powiadomień', () => {
     it('repOwner: podgląd nie zamyka wierszy spoza filtra', async () => {
         const ADMIN: CareUser = { id: 'admin', role: 'admin', subUsers: [] };
         const db = new DatabaseSync(':memory:');
-        db.exec(`CREATE TABLE offers_rel (id TEXT PRIMARY KEY, "userId" TEXT, "createdAt" TEXT, "offer_number" TEXT, "clientName" TEXT);
-        CREATE TABLE offers_studnie_rel (id TEXT PRIMARY KEY, "userId" TEXT, "createdAt" TEXT, "offer_number" TEXT, "clientName" TEXT, "totalPrice" REAL);
+        db.exec(`CREATE TABLE offers_rel (id TEXT PRIMARY KEY, "userId" TEXT, "createdAt" TEXT, "offer_number" TEXT, "clientName" TEXT, "investName" TEXT, "data" TEXT);
+        CREATE TABLE offers_studnie_rel (id TEXT PRIMARY KEY, "userId" TEXT, "createdAt" TEXT, "offer_number" TEXT, "clientName" TEXT, "investName" TEXT, "totalPrice" REAL, "data" TEXT);
         CREATE TABLE document_shares (id TEXT PRIMARY KEY, "sharedWithUserId" TEXT, "documentType" TEXT, "documentId" TEXT);
         CREATE TABLE care_states ("offerKind" TEXT NOT NULL, "offerId" TEXT NOT NULL, "snoozedUntil" TEXT, "doneAt" TEXT, "updatedBy" TEXT, "updatedAt" TEXT NOT NULL,
             CONSTRAINT "care_states_pkey" PRIMARY KEY ("offerKind", "offerId"));
@@ -376,8 +376,8 @@ describe('P2 sync powiadomień', () => {
 
     it('cap 500: tnie tylko przeczytane, nieprzeczytane nietknięte', async () => {
         const db = new DatabaseSync(':memory:');
-        db.exec(`CREATE TABLE offers_rel (id TEXT PRIMARY KEY, "userId" TEXT, "createdAt" TEXT, "offer_number" TEXT, "clientName" TEXT);
-        CREATE TABLE offers_studnie_rel (id TEXT PRIMARY KEY, "userId" TEXT, "createdAt" TEXT, "offer_number" TEXT, "clientName" TEXT, "totalPrice" REAL);
+        db.exec(`CREATE TABLE offers_rel (id TEXT PRIMARY KEY, "userId" TEXT, "createdAt" TEXT, "offer_number" TEXT, "clientName" TEXT, "investName" TEXT, "data" TEXT);
+        CREATE TABLE offers_studnie_rel (id TEXT PRIMARY KEY, "userId" TEXT, "createdAt" TEXT, "offer_number" TEXT, "clientName" TEXT, "investName" TEXT, "totalPrice" REAL, "data" TEXT);
         CREATE TABLE document_shares (id TEXT PRIMARY KEY, "sharedWithUserId" TEXT, "documentType" TEXT, "documentId" TEXT);
         CREATE TABLE care_states ("offerKind" TEXT NOT NULL, "offerId" TEXT NOT NULL, "snoozedUntil" TEXT, "doneAt" TEXT, "updatedBy" TEXT, "updatedAt" TEXT NOT NULL,
             CONSTRAINT "care_states_pkey" PRIMARY KEY ("offerKind", "offerId"));
@@ -434,8 +434,8 @@ describe('P2 sync powiadomień', () => {
 
     it('R2A: granice capa licznika (0/1/100/101)', async () => {
         const db = new DatabaseSync(':memory:');
-        db.exec(`CREATE TABLE offers_rel (id TEXT PRIMARY KEY, "userId" TEXT, "createdAt" TEXT, "offer_number" TEXT, "clientName" TEXT);
-        CREATE TABLE offers_studnie_rel (id TEXT PRIMARY KEY, "userId" TEXT, "createdAt" TEXT, "offer_number" TEXT, "clientName" TEXT, "totalPrice" REAL);
+        db.exec(`CREATE TABLE offers_rel (id TEXT PRIMARY KEY, "userId" TEXT, "createdAt" TEXT, "offer_number" TEXT, "clientName" TEXT, "investName" TEXT, "data" TEXT);
+        CREATE TABLE offers_studnie_rel (id TEXT PRIMARY KEY, "userId" TEXT, "createdAt" TEXT, "offer_number" TEXT, "clientName" TEXT, "investName" TEXT, "totalPrice" REAL, "data" TEXT);
         CREATE TABLE care_notifications ("id" TEXT NOT NULL, "userId" TEXT NOT NULL, "offerKind" TEXT NOT NULL, "offerId" TEXT NOT NULL, "type" TEXT NOT NULL, "readAt" TEXT, "createdAt" TEXT NOT NULL,
             CONSTRAINT "care_notifications_pkey" PRIMARY KEY ("id"));`);
         try {
@@ -453,6 +453,51 @@ describe('P2 sync powiadomień', () => {
             expect(await count()).toBe(100);
             ins.run('n100', 'u1', 'rury', 'o100', 'CALLBACK_DUE', null, NOW);
             expect(await count()).toBe(101);
+            db.close();
+        } catch (e) {
+            try {
+                db.close();
+            } catch {
+                /* ignore */
+            }
+            throw e;
+        }
+    });
+
+    it('lista niesie obiekt i kontakt z oferty (kolumna + blob)', async () => {
+        const db = new DatabaseSync(':memory:');
+        db.exec(`CREATE TABLE offers_rel (id TEXT PRIMARY KEY, "userId" TEXT, "createdAt" TEXT, "offer_number" TEXT, "clientName" TEXT, "investName" TEXT, "data" TEXT);
+        CREATE TABLE offers_studnie_rel (id TEXT PRIMARY KEY, "userId" TEXT, "createdAt" TEXT, "offer_number" TEXT, "clientName" TEXT, "investName" TEXT, "totalPrice" REAL, "data" TEXT);
+        CREATE TABLE care_notifications ("id" TEXT NOT NULL, "userId" TEXT NOT NULL, "offerKind" TEXT NOT NULL, "offerId" TEXT NOT NULL, "type" TEXT NOT NULL, "readAt" TEXT, "createdAt" TEXT NOT NULL,
+            CONSTRAINT "care_notifications_pkey" PRIMARY KEY ("id"));`);
+        try {
+            const f = fake(db);
+            db.prepare(
+                'INSERT INTO offers_rel (id, "userId", "createdAt", "clientName", "investName", "data") VALUES (?,?,?,?,?,?)'
+            ).run(
+                'o1',
+                'u1',
+                '2026-10-01T00:00:00.000Z',
+                'Klient SA',
+                'Obiekt Kolumna',
+                JSON.stringify({
+                    investAddress: 'ul. Testowa 1',
+                    contactPerson: 'Jan Kowalski',
+                    clientPhone: '601000111',
+                    clientEmail: 'jan@example.com'
+                })
+            );
+            db.prepare(
+                'INSERT INTO care_notifications ("id", "userId", "offerKind", "offerId", "type", "readAt", "createdAt") VALUES (?,?,?,?,?,?,?)'
+            ).run('n1', 'u1', 'rury', 'o1', 'CALLBACK_DUE', null, NOW);
+            const { items } = await listCareNotifications(f, 'u1', { unreadOnly: true, limit: 50 });
+            expect(items).toHaveLength(1);
+            expect(items[0].clientName).toBe('Klient SA');
+            expect(items[0].investName).toBe('Obiekt Kolumna');
+            expect(items[0].investAddress).toBe('ul. Testowa 1');
+            expect(items[0].contactPerson).toBe('Jan Kowalski');
+            expect(items[0].phone).toBe('601000111');
+            expect(items[0].email).toBe('jan@example.com');
             db.close();
         } catch (e) {
             try {
