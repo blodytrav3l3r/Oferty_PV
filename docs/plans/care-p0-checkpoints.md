@@ -36,12 +36,17 @@ Evidence ledger:
 | E-004 | Skalowanie ~liniowe do 20k          | bench 400/5k/20k wyżej                       | VERIFIED   |
 | E-005 | 1M = dziesiątki sekund/panel        | ekstrapolacja liniowa                        | HYPOTHESIS |
 
-## P0.2-ETAG (następny)
+## P0.2-ETAG — DONE jako pomiar + macierz (bez zmian kodu prod)
 
-Macierz unieważnień (9 źródeł `a-m`, `careService.ts:566-593`, w tym
-share-`l` globalne celowo). Kroki: EXPLAIN per agregat → zawężanie MAXów
-bez utraty share-invalidation → testy regresji ETag → ponowny pomiar.
-NO-GO: fałszywy 304 / utrata unieważnienia / regresja uprawnień.
+Per-agregat na 20k (MAX a–m): wszystko ≤4 ms, covering index
+(`idx_followups_offer_contacted`, `idx_offers_updated`, …); łącznie 17 ms
+= 2 roundtripy + JS. Wniosek: agregaty tanie dzięki indeksom — brak
+optymalizacji kodu (rozdzielenie zapytania `m` to celowy guard legacy DB).
+Macierz unieważnień zablokowana testem `careEtagMarkers.test.ts` (5/5):
+nowy follow-up→a/b/m, snooze→c, sync→d, odczyt→e, cudzy odczyt nie rusza
+mojego e, nowa oferta→f, edycja→j, share→l, SLA→h.
+
+## P0.3-SYNC-THROTTLE (następny)
 
 ## P0.3-SYNC-THROTTLE
 
