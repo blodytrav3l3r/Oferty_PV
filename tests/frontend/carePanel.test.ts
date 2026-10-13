@@ -1681,6 +1681,26 @@ describe('carePanel', () => {
         expect(m[0]).toContain('aria-live="polite"');
     });
 
+    test('Wyczyść wszystko to kafelek (nie tekst): id, klasa, ikona, [hidden]', async () => {
+        const fs = await import('node:fs');
+        const path = await import('node:path');
+        const html = fs.readFileSync(
+            path.join(__dirname, '..', '..', 'public', 'index.html'),
+            'utf8'
+        );
+        const m = html.match(/<button[^>]*id="care-notif-clear"[^>]*>([\s\S]*?)<\/button>/);
+        if (!m) throw new Error('brak #care-notif-clear w index.html');
+        expect(m[0]).toContain('admin-stat-card');
+        expect(m[0]).toContain('aria-label="Wyczyść wszystko"');
+        expect(m[1]).toContain('data-lucide="check-check"');
+        const css = fs.readFileSync(
+            path.join(__dirname, '..', '..', 'public', 'css', 'index.css'),
+            'utf8'
+        );
+        // display:flex kafelka przykryłby [hidden] (podgląd cudzej skrzynki).
+        expect(css).toContain('.care-notif-clear-tile[hidden]');
+    });
+
     test('double-submit: snooze i done raz na lot + powrót przycisku', async () => {
         let snoozeRes: ((v: any) => void) | null = null;
         let doneRes: ((v: any) => void) | null = null;

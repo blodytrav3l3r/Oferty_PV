@@ -2674,14 +2674,24 @@ html[data-theme='light'] body.index-page.logged-in::before {
     font-size: var(--fs-base);
     color: var(--text-secondary);
 }
-.care-link-btn {
-    background: none;
-    border: none;
-    padding: 0;
+/* Kafelek "Wyczyść wszystko" w nagłówku Centrum powiadomień
+   (klikany .admin-stat-card; display:flex wymaga jawnego [hidden]). */
+.care-notif-clear-tile {
+    flex: 0 0 auto;
+    min-width: 0;
+    padding: 0.3rem 0.6rem;
+    font: inherit;
+    color: inherit;
+    text-align: left;
     cursor: pointer;
-    color: var(--accent);
-    font-size: var(--fs-base);
-    font-weight: var(--fw-semibold);
+}
+.care-notif-clear-tile[hidden] {
+    display: none;
+}
+.care-notif-clear-tile .admin-stat-icon {
+    width: 26px;
+    height: 26px;
+    font-size: var(--fs-lg);
 }
 .care-queue-cards {
     display: grid;
