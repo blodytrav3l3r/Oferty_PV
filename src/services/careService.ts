@@ -997,9 +997,27 @@ function notifCandidates(
 export interface CareSyncResult {
     inserted: number;
     resolved: number;
-    skipped?: 'rep-preview';
+    skipped?: 'rep-preview' | 'throttled';
     /** F3: ile wierszy zdjela retencja w tym syncu (additive). */
     deleted?: number;
+}
+
+/**
+ * P0.3: throttle syncu per skrzynka (in-request, zgodnie z ADR-015 —
+ * placement sync-przed-listą bez zmian, tylko skip świeżo po udanym syncu).
+ * Okno 60 s = polling FE; restart procesu gubi znacznik = pełny sync
+ * (bezpieczne). Fail nie stempluje (retry dozwolony); współbieżne żądania
+ * serializują się (drugi po udanym pierwszym dostaje skip).
+ * rep-preview omija throttle (zero side-effectów tak czy owak).
+ */
+export const CARE_SYNC_THROTTLE_MS = 60_000;
+const syncInflight = new Map<string, Promise<CareSyncResult>>();
+const syncLastOk = new Map<string, number>();
+
+/** Reset stanu throttle (tylko testy — izolacja między przypadkami). */
+export function resetCareSyncThrottleForTests(): void {
+    syncInflight.clear();
+    syncLastOk.clear();
 }
 
 /** INSERT brakujących powiadomień (SSoT — jeden SQL na oba warianty).
@@ -1076,6 +1094,41 @@ async function deleteCounted(
  * Wyścig dwóch synców rozstrzyga uq_carenotif_unread_per_offer + OR IGNORE
  * (jak terminale w followUps) — przegrany wstawia 0, nie rzuca. */
 export async function syncCareNotifications(
+    db: RawDb,
+    user: CareUser,
+    scope: CareScope,
+    nowIso: string,
+    sla: SlaConfig,
+    opts?: { repOwner?: string | null }
+): Promise<CareSyncResult> {
+    // Podgląd repa: zero efektów ubocznych, zero interakcji z throttlem.
+    if (opts?.repOwner) return runSyncCareNotifications(db, user, scope, nowIso, sla, opts);
+    const uid = user.id;
+    const prev = syncInflight.get(uid);
+    if (prev) {
+        try {
+            await prev;
+        } catch {
+            // Poprzedni padł bez stempla — próbujemy sami poniżej.
+        }
+    }
+    const last = syncLastOk.get(uid);
+    if (last !== undefined && Date.now() - last < CARE_SYNC_THROTTLE_MS) {
+        return { inserted: 0, resolved: 0, deleted: 0, skipped: 'throttled' };
+    }
+    const p = runSyncCareNotifications(db, user, scope, nowIso, sla, opts).then((r) => {
+        if (r.skipped !== 'rep-preview') syncLastOk.set(uid, Date.now());
+        return r;
+    });
+    syncInflight.set(uid, p);
+    try {
+        return await p;
+    } finally {
+        if (syncInflight.get(uid) === p) syncInflight.delete(uid);
+    }
+}
+
+async function runSyncCareNotifications(
     db: RawDb,
     user: CareUser,
     scope: CareScope,

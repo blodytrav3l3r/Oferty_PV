@@ -1727,7 +1727,7 @@ function setSyncText(skipped) {
         pad(d.getMinutes()) +
         ':' +
         pad(d.getSeconds()) +
-        (skipped ? ' (podgląd — bez synchronizacji)' : '');
+        (skipped === 'rep-preview' ? ' (podgląd — bez synchronizacji)' : '');
 }
 
 function careRole() {

@@ -7,7 +7,11 @@
  */
 import { DatabaseSync } from 'node:sqlite';
 import type { Prisma } from '../../generated/prisma';
-import { syncCareNotifications, type CareUser } from '../../src/services/careService';
+import {
+    syncCareNotifications,
+    resetCareSyncThrottleForTests,
+    type CareUser
+} from '../../src/services/careService';
 
 const NOW = '2026-10-10T12:00:00.000Z';
 const NOW2 = '2026-10-10T12:01:00.000Z';
@@ -57,6 +61,12 @@ function seedDb(): DatabaseSync {
     return db;
 }
 
+// P0.3: throttle trzyma stan w module — reset przed każdym przypadkiem
+// (również dla starszych testów, inaczej stan wycieka między nimi).
+beforeEach(() => {
+    resetCareSyncThrottleForTests();
+});
+
 describe('P0+P1: sync 400 ofert set-based', () => {
     it('inserted=N, rerun=0, stała liczba statementów', async () => {
         const db = seedDb();
@@ -96,6 +106,88 @@ describe('P0+P1: sync 400 ofert set-based', () => {
     }, 120000);
 
     it('wyścig dwóch synców: suma inserted=N, brak błędów i duplikatów', async () => {
+        const db = seedDb();
+        const f = {
+            $queryRaw: async <T>(...args: any[]): Promise<T> => {
+                const q = args[0] as Prisma.Sql;
+                const raw = q as unknown as { sql: string; values: unknown[] };
+                return db.prepare(raw.sql).all(...(raw.values as never[])) as unknown as T;
+            }
+        };
+        try {
+            const [a, b] = await Promise.all([
+                syncCareNotifications(f, U1, 'mine', NOW2, SLA),
+                syncCareNotifications(f, U1, 'mine', NOW3, SLA)
+            ]);
+            expect(a.inserted + b.inserted).toBe(N);
+            const cnt = db
+                .prepare(
+                    'SELECT COUNT(*) AS c FROM "care_notifications" WHERE "userId" = ? AND "readAt" IS NULL'
+                )
+                .get('u1') as unknown as { c: number };
+            expect(cnt.c).toBe(N);
+        } finally {
+            db.close();
+        }
+    }, 120000);
+});
+
+describe('P0.3: throttle syncu per skrzynka', () => {
+    it('natychmiastowy rerun: skip bez statementów (throttled)', async () => {
+        const db = seedDb();
+        let statements = 0;
+        const f = {
+            $queryRaw: async <T>(...args: any[]): Promise<T> => {
+                statements += 1;
+                const q = args[0] as Prisma.Sql;
+                const raw = q as unknown as { sql: string; values: unknown[] };
+                return db.prepare(raw.sql).all(...(raw.values as never[])) as unknown as T;
+            }
+        };
+        try {
+            const r1 = await syncCareNotifications(f, U1, 'mine', NOW, SLA);
+            expect(r1.inserted).toBe(N);
+            expect(r1.skipped).toBeUndefined();
+            const before = statements;
+            const r2 = await syncCareNotifications(f, U1, 'mine', NOW2, SLA);
+            expect(r2.inserted).toBe(0);
+            expect(r2.skipped).toBe('throttled');
+            expect(statements - before).toBe(0);
+        } finally {
+            db.close();
+        }
+    }, 120000);
+
+    it('degraded run (błędy wewnątrz) też stempluje: rerun to skip', async () => {
+        const db = seedDb();
+        let statements = 0;
+        let calls = 0;
+        const f = {
+            $queryRaw: async <T>(...args: any[]): Promise<T> => {
+                statements += 1;
+                calls += 1;
+                // Pierwszy statement pada — sync degraduje do zer (fallbacks),
+                // ale przebieg liczy się jako wykonany (stempel).
+                if (calls === 1) throw new Error('boom');
+                const q = args[0] as Prisma.Sql;
+                const raw = q as unknown as { sql: string; values: unknown[] };
+                return db.prepare(raw.sql).all(...(raw.values as never[])) as unknown as T;
+            }
+        };
+        try {
+            const r1 = await syncCareNotifications(f, U1, 'mine', NOW, SLA);
+            expect(r1.inserted).toBe(0);
+            expect(r1.skipped).toBeUndefined();
+            const before = statements;
+            const r2 = await syncCareNotifications(f, U1, 'mine', NOW2, SLA);
+            expect(r2.skipped).toBe('throttled');
+            expect(statements - before).toBe(0);
+        } finally {
+            db.close();
+        }
+    }, 120000);
+
+    it('współbieżne synci: drugi czeka i dostaje skip, suma inserted=N', async () => {
         const db = seedDb();
         const f = {
             $queryRaw: async <T>(...args: any[]): Promise<T> => {

@@ -46,7 +46,17 @@ Macierz unieważnień zablokowana testem `careEtagMarkers.test.ts` (5/5):
 nowy follow-up→a/b/m, snooze→c, sync→d, odczyt→e, cudzy odczyt nie rusza
 mojego e, nowa oferta→f, edycja→j, share→l, SLA→h.
 
-## P0.3-SYNC-THROTTLE (następny)
+## P0.3-SYNC-THROTTLE — DONE
+
+Throttle per skrzynka w requeście (`CARE_SYNC_THROTTLE_MS = 60 s`,
+`careService.ts`): serializacja współbieżnych + skip świeżo po udanym
+syncu (`skipped: 'throttled'`), fail nie stempluje, rep-preview omija.
+Efekt na 20k: `sync_hot` 362 ms → 0 ms (3/3 runy). FE: suffix dopiski
+tylko dla `rep-preview`. Testy `careSyncLoad.test.ts` 5/5 (3 nowe,
+RED-dyskryminacja strukturalna: stary kod nie ma ścieżki `throttled`).
+Tradeoff: świeżość powiadomień ≤60 s (suplement ADR-015 w P0.5).
+
+## P0.4-QUEUE (następny)
 
 ## P0.3-SYNC-THROTTLE
 
