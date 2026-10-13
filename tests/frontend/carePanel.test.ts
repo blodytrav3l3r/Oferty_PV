@@ -146,6 +146,12 @@ describe('carePanel', () => {
                     e.tag = tag;
                     return e;
                 },
+                createTextNode: (t: string) => {
+                    const e: any = mkEl('dyn-text');
+                    e.tag = '#text';
+                    e.textContent = String(t ?? '');
+                    return e;
+                },
                 addEventListener: (t: string, fn: any) => {
                     listeners[t] = [...(listeners[t] || []), fn];
                 },
@@ -1824,6 +1830,148 @@ describe('carePanel', () => {
             for (const c of n.children || []) walk(c);
         };
         walk(els['care-notif-list']);
-        expect(texts.join(' ')).not.toContain('więcej');
+        expect(texts.join(' ')).not.toContain('więtcej');
+    });
+
+    test('meta kart: obiekt+kontakt z tel:/mailto:, braki i śmieci bez linków', async () => {
+        const packet = {
+            ok: true,
+            etag: '"emeta"',
+            summary: {
+                noContact: 0,
+                due: 1,
+                openOk: 0,
+                won: 0,
+                lost: 0,
+                abandoned: 0,
+                totalCount: 2
+            },
+            queue: {
+                items: [
+                    {
+                        offerKind: 'rury',
+                        offerId: 'o1',
+                        status: 'DUE',
+                        overdueDays: 0,
+                        escalated: false,
+                        paused: false,
+                        clientName: 'Budimex',
+                        number: 'OF/1',
+                        value: 100,
+                        investName: 'Obiekt Testowy',
+                        investAddress: 'ul. Testowa 1',
+                        contactPerson: 'Jan Kowalski',
+                        phone: '601 000 111',
+                        email: 'jan@example.com',
+                        nextContactAt: null,
+                        lastContactAt: null,
+                        lastNote: null
+                    },
+                    {
+                        offerKind: 'studnie',
+                        offerId: 'o2',
+                        status: 'NO_CONTACT',
+                        overdueDays: 0,
+                        escalated: false,
+                        paused: false,
+                        clientName: 'K2',
+                        number: null,
+                        value: null,
+                        investName: null,
+                        investAddress: null,
+                        contactPerson: null,
+                        phone: null,
+                        email: null,
+                        nextContactAt: null,
+                        lastContactAt: null,
+                        lastNote: null
+                    }
+                ],
+                nextCursor: null,
+                totalCount: 2
+            },
+            notifications: {
+                items: [
+                    {
+                        id: 'n1',
+                        offerKind: 'rury',
+                        offerId: 'o1',
+                        type: 'CALLBACK_DUE',
+                        clientName: 'Budimex',
+                        number: 'OF/1',
+                        createdAt: '2026-10-10T12:00:00.000Z',
+                        investName: 'Obiekt Testowy',
+                        investAddress: null,
+                        contactPerson: '"><img src=x onerror=1>',
+                        phone: 'javascript:alert(1)',
+                        email: 'nie-mail'
+                    }
+                ],
+                unreadCount: 1,
+                hasOverflow: false
+            },
+            sla: { firstContactH: 24, staleD: 7, escalationH: 72 }
+        };
+        const { els, context } = load({
+            fetchMock: (url: string) => {
+                if (url.includes('/api/care/panel'))
+                    return { ok: true, status: 200, json: async () => packet };
+                return okJson({ noContact: 0, due: 0, openOk: 0, won: 0, lost: 0 });
+            }
+        });
+        await context.__careTest.loadCarePanel();
+        const byAttr = (root: any, name: string): any[] => {
+            const out: any[] = [];
+            const walk2 = (n: any): void => {
+                if (n.attrs && name in n.attrs) out.push(n);
+                for (const c of n.children || []) walk2(c);
+            };
+            walk2(root);
+            return out;
+        };
+        const byTag = (root: any, tag: string): any[] => {
+            const out: any[] = [];
+            const walk2 = (n: any): void => {
+                if (n.tag === tag) out.push(n);
+                for (const c of n.children || []) walk2(c);
+            };
+            walk2(root);
+            return out;
+        };
+        // Kolejka: karta o1 z metą, karta o2 bez.
+        const qcards = els['care-queue-list'].children[0].children;
+        expect(qcards).toHaveLength(2);
+        const objs = byAttr(qcards[0], 'data-care-object');
+        expect(objs).toHaveLength(1);
+        expect(objs[0].textContent).toContain('Obiekt Testowy');
+        expect(objs[0].textContent).toContain('ul. Testowa 1');
+        const contacts = byAttr(qcards[0], 'data-care-contact');
+        expect(contacts).toHaveLength(1);
+        const ctexts: string[] = [];
+        const walkC = (n: any): void => {
+            if (n.textContent) ctexts.push(n.textContent);
+            for (const c of n.children || []) walkC(c);
+        };
+        walkC(contacts[0]);
+        expect(ctexts.join(' ')).toContain('Jan Kowalski');
+        const links = byTag(qcards[0], 'a').map((a: any) => a.href);
+        expect(links).toContain('tel:601000111');
+        expect(links).toContain('mailto:jan@example.com');
+        expect(byAttr(qcards[1], 'data-care-object')).toHaveLength(0);
+        expect(byAttr(qcards[1], 'data-care-contact')).toHaveLength(0);
+        // Powiadomienie: XSS jako martwy tekst, tel:/mailto: bez linków.
+        const ncard = els['care-notif-list'].children[0].children[0];
+        expect(byTag(ncard, 'img')).toHaveLength(0);
+        const ntexts: string[] = [];
+        const walkN = (n: any): void => {
+            if (n.textContent) ntexts.push(n.textContent);
+            for (const c of n.children || []) walkN(c);
+        };
+        walkN(ncard);
+        expect(ntexts.join(' ')).toContain('<img src=x onerror=1>');
+        const nhrefs = byTag(ncard, 'a').map((a: any) => String(a.href || ''));
+        expect(nhrefs.filter((h: string) => h.startsWith('tel:'))).toHaveLength(0);
+        expect(nhrefs.filter((h: string) => h.startsWith('mailto:'))).toHaveLength(0);
+        expect(ntexts.join(' ')).toContain('javascript:alert(1)');
     });
 });

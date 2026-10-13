@@ -2715,6 +2715,31 @@ html[data-theme='light'] body.index-page.logged-in::before {
     font-feature-settings: 'tnum';
     margin-top: 2px;
 }
+/* Meta karty: Obiekt/Adres + kontakt ( stałye tokeny, ellipsis na obiekcie). */
+.care-queue-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-top: 4px;
+    min-width: 0;
+    font-size: var(--fs-base);
+    color: var(--text-secondary);
+}
+.care-queue-obj {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.care-queue-contact {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    min-width: 0;
+}
+.care-queue-contact a,
+.care-notif-contact a {
+    color: var(--accent);
+}
 .care-queue-kind {
     color: var(--text-muted);
     font-weight: var(--fw-regular, 400);
@@ -3049,6 +3074,26 @@ html[data-theme='light'] body.index-page.logged-in::before {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+/* Meta powiadomienia: lustro .care-queue-meta (mniejszy kontekst karty). */
+.care-notif-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    font-size: var(--fs-base);
+    color: var(--text-secondary);
+}
+.care-notif-obj {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.care-notif-contact {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    min-width: 0;
 }
 .care-notif-date {
     color: var(--text-muted);

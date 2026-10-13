@@ -293,6 +293,93 @@ function fmtDelay(overdueDays, createdAt) {
     return '';
 }
 
+const CARE_TEXT_CAP = 120;
+const CARE_PHONE_RE = /^\+?[0-9][0-9 ()/-]{2,24}$/;
+const CARE_EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function careNormStr(v) {
+    return typeof v === 'string' ? v.trim() : '';
+}
+
+function careCap(s) {
+    return s.length > CARE_TEXT_CAP ? s.slice(0, CARE_TEXT_CAP) + '…' : s;
+}
+
+/**
+ * Wspólna linia Obiekt/Adres + kontakt dla kart kolejki i powiadomień.
+ * Wszystko przez textContent/DOM (brak powierzchni XSS), tel:/mailto:
+ * tylko po allowliście (inaczej zwykły tekst). Zwraca element albo null
+ * (brak danych = brak linii, nie placeholder).
+ */
+function buildCareMeta(src, prefix) {
+    const invest = careNormStr(src && src.investName);
+    const address = careNormStr(src && src.investAddress);
+    const person = careNormStr(src && src.contactPerson);
+    const phone = careNormStr(src && src.phone);
+    const email = careNormStr(src && src.email);
+    if (!invest && !address && !person && !phone && !email) return null;
+    const meta = document.createElement('div');
+    meta.className = prefix + '-meta';
+    if (invest || address) {
+        const obj = document.createElement('div');
+        obj.className = prefix + '-obj';
+        obj.setAttribute('data-care-object', '1');
+        const full = 'Obiekt: ' + (invest || '—') + (address ? ' • Adres: ' + address : '');
+        obj.textContent = careCap(full);
+        obj.title = full;
+        meta.appendChild(obj);
+    }
+    if (person || phone || email) {
+        const line = document.createElement('div');
+        line.className = prefix + '-contact';
+        line.setAttribute('data-care-contact', '1');
+        let needSep = false;
+        const sep = () => {
+            if (needSep) line.appendChild(document.createTextNode(' • '));
+            needSep = true;
+        };
+        if (person) {
+            const nm = document.createElement('span');
+            nm.textContent = careCap(person);
+            nm.title = person;
+            line.appendChild(nm);
+            needSep = true;
+        }
+        if (phone) {
+            sep();
+            if (CARE_PHONE_RE.test(phone)) {
+                const a = document.createElement('a');
+                a.href = 'tel:' + phone.replace(/[^+0-9]/g, '');
+                a.textContent = careCap(phone);
+                a.setAttribute('aria-label', 'Zadzwoń: ' + phone);
+                line.appendChild(a);
+            } else {
+                const t = document.createElement('span');
+                t.textContent = careCap(phone);
+                t.title = phone;
+                line.appendChild(t);
+            }
+        }
+        if (email) {
+            sep();
+            if (email.length <= 254 && CARE_EMAIL_RE.test(email)) {
+                const a = document.createElement('a');
+                a.href = 'mailto:' + email;
+                a.textContent = careCap(email);
+                a.setAttribute('aria-label', 'Napisz: ' + email);
+                line.appendChild(a);
+            } else {
+                const t = document.createElement('span');
+                t.textContent = careCap(email);
+                t.title = email;
+                line.appendChild(t);
+            }
+        }
+        meta.appendChild(line);
+    }
+    return meta;
+}
+
 function renderNotifications(items, unreadCount, mailboxUserId, hasOverflow) {
     const badge = document.getElementById('care-notif-count');
     if (badge) {
@@ -390,6 +477,8 @@ function renderNotifications(items, unreadCount, mailboxUserId, hasOverflow) {
             headRow.appendChild(dl);
         }
         lines.appendChild(headRow);
+        const nmeta = buildCareMeta(n, 'care-notif');
+        if (nmeta) lines.appendChild(nmeta);
         const foot = document.createElement('div');
         foot.className = 'care-notif-foot';
         if (n.createdAt) {
@@ -1003,6 +1092,8 @@ function renderQueue(items, nextCursor, totalCount) {
             valueLine.appendChild(no);
         }
         row.appendChild(valueLine);
+        const meta = buildCareMeta(it, 'care-queue');
+        if (meta) row.appendChild(meta);
         const info = document.createElement('div');
         info.className = 'care-queue-info';
         const content = queueInfoContent(it);
