@@ -13,8 +13,9 @@ const U1: CareUser = { id: 'u1', role: 'user', subUsers: [] };
 
 function freshDb(): DatabaseSync {
     const db = new DatabaseSync(':memory:');
-    db.exec(`CREATE TABLE offers_rel (id TEXT PRIMARY KEY, "userId" TEXT, "createdAt" TEXT, "offer_number" TEXT, "clientName" TEXT, "investName" TEXT, "data" TEXT);
-        CREATE TABLE offers_studnie_rel (id TEXT PRIMARY KEY, "userId" TEXT, "createdAt" TEXT, "offer_number" TEXT, "clientName" TEXT, "investName" TEXT, "totalPrice" REAL, "data" TEXT);
+    db.exec(`CREATE TABLE offers_rel (id TEXT PRIMARY KEY, "userId" TEXT, "createdAt" TEXT, "offer_number" TEXT, "clientName" TEXT, "clientNumber" TEXT, "investName" TEXT, "data" TEXT);
+        CREATE TABLE offers_studnie_rel (id TEXT PRIMARY KEY, "userId" TEXT, "createdAt" TEXT, "offer_number" TEXT, "clientName" TEXT, "clientNumber" TEXT, "investName" TEXT, "totalPrice" REAL, "data" TEXT);
+        CREATE TABLE users (id TEXT PRIMARY KEY, username TEXT, "firstName" TEXT, "lastName" TEXT);
         CREATE TABLE document_shares (id TEXT PRIMARY KEY, "sharedWithUserId" TEXT, "documentType" TEXT, "documentId" TEXT);
         CREATE TABLE care_states ("offerKind" TEXT NOT NULL, "offerId" TEXT NOT NULL, "snoozedUntil" TEXT, "doneAt" TEXT, "updatedBy" TEXT, "updatedAt" TEXT NOT NULL,
             CONSTRAINT "care_states_pkey" PRIMARY KEY ("offerKind", "offerId"));
@@ -74,18 +75,23 @@ describe('wartość studni w kolejce (guard 0-kolumny)', () => {
         const db = freshDb();
         try {
             db.prepare(
-                'INSERT INTO offers_rel (id, "userId", "createdAt", "investName", "data") VALUES (?,?,?,?,?)'
+                'INSERT INTO users (id, username, "firstName", "lastName") VALUES (?,?,?,?)'
+            ).run('u1', 'jkowalski', 'Jan', 'Kowalski');
+            db.prepare(
+                'INSERT INTO offers_rel (id, "userId", "createdAt", "investName", "clientNumber", "data") VALUES (?,?,?,?,?,?)'
             ).run(
                 'r1',
                 'u1',
                 '2026-10-01T00:00:00.000Z',
                 'Obiekt Kolumna',
+                'K-7',
                 JSON.stringify({
                     investName: 'Obiekt Blob',
                     investAddress: 'ul. Testowa 1',
                     contactPerson: 'Jan Kowalski',
                     clientPhone: '601000111',
-                    clientEmail: 'jan@example.com'
+                    clientEmail: 'jan@example.com',
+                    createdByUserName: 'Ewa Nowak'
                 })
             );
             db.prepare(
@@ -106,12 +112,16 @@ describe('wartość studni w kolejce (guard 0-kolumny)', () => {
             const { items } = await getCareQueue(fake(db), U1, { nowIso: NOW, limit: 50 });
             const byId = new Map(items.map((r) => [r.offerId, r]));
             const r1 = byId.get('r1');
+            expect(r1?.clientNumber).toBe('K-7');
+            expect(r1?.ownerName).toBe('Jan Kowalski');
+            expect(r1?.authorName).toBe('Ewa Nowak');
             expect(r1?.investName).toBe('Obiekt Kolumna');
             expect(r1?.investAddress).toBe('ul. Testowa 1');
             expect(r1?.contactPerson).toBe('Jan Kowalski');
             expect(r1?.phone).toBe('601000111');
             expect(r1?.email).toBe('jan@example.com');
             const s1 = byId.get('s1');
+            expect(s1?.clientNumber).toBeNull();
             expect(s1?.investName).toBe('Obiekt Budowa');
             expect(s1?.investAddress).toBeNull();
             expect(s1?.contactPerson).toBe('Anna Nowak');

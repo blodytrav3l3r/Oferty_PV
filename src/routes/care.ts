@@ -25,6 +25,7 @@ import {
     syncCareNotifications,
     listCareNotifications,
     markCareNotificationRead,
+    markCareNotificationUnread,
     markCareNotificationsRead,
     MAX_SNOOZE_DAYS
 } from '../services/careService';
@@ -672,6 +673,21 @@ router.post('/notifications/:id/read', requireAuth, WRITE_LIMITER, async (req, r
     } catch (e) {
         if (mapPrismaError(res, e)) return;
         logger.warn('Care', 'Błąd odczytu powiadomienia', String(e));
+        return res.status(500).json({ error: 'Błąd serwera' });
+    }
+});
+
+router.post('/notifications/:id/unread', requireAuth, WRITE_LIMITER, async (req, res) => {
+    const authReq = req as AuthenticatedRequest;
+    try {
+        const user = authReq.user;
+        if (!user) return res.status(401).json({ error: 'Nieautoryzowany' });
+        const n = await markCareNotificationUnread(prisma, user.id, String(req.params.id));
+        if (n === 0) return res.status(404).json({ error: 'Nie znaleziono powiadomienia' });
+        return res.json({ ok: true });
+    } catch (e) {
+        if (mapPrismaError(res, e)) return;
+        logger.warn('Care', 'Błąd cofnięcia odczytu powiadomienia', String(e));
         return res.status(500).json({ error: 'Błąd serwera' });
     }
 });

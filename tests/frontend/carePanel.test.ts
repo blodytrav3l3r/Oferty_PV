@@ -11,12 +11,17 @@ describe('carePanel', () => {
         role?: string;
         calls?: string[];
         timers?: number[];
+        fuStub?: any;
     }) => {
         const file = path.join(__dirname, '../../public/js/care/carePanel.js');
         let code = fs.readFileSync(file, 'utf8');
         code = code.replace(
             "import { escapeHtml } from '../shared/escapeHtml.js';",
             'const escapeHtml = (s) => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");'
+        );
+        code = code.replace(
+            "import followUpMixin from '../kartoteka/kartotekaFollowUp.js';",
+            'const followUpMixin = __fuStub;'
         );
         // Harness vm = classic script: rozbrojenie składni ESM.
         code = code.replace(/^export\s+/gm, '');
@@ -126,6 +131,7 @@ describe('carePanel', () => {
             el(id);
         const listeners: Record<string, any[]> = {};
         const context: any = {
+            __fuStub: opts.fuStub ?? { openFollowUpModal: async () => {} },
             console,
             setTimeout: (..._a: any[]) => {
                 opts.timers?.push(1);
@@ -273,7 +279,7 @@ describe('carePanel', () => {
             for (const c of n.children || []) collectPills(c);
         };
         collectPills(rows[0]);
-        expect(pills).toContain('rury');
+        expect(pills).toContain('RURY');
         // P4: SLA-box dla każdej roli (user edytuje własne progi).
         expect(els['care-sla-box'].hidden).toBe(false);
         expect(calls.filter((c) => c.includes('/api/care/')).length).toBeGreaterThanOrEqual(3);
@@ -674,7 +680,7 @@ describe('carePanel', () => {
         await context.__careTest.loadCarePanel();
         const findRead = (root: any): any => {
             for (const c of root.children || []) {
-                if (c.tag === 'button' && (c.textContent || '').includes('Oznacz jako')) return c;
+                if (c.tag === 'button' && c.attrs && 'data-notif-read' in c.attrs) return c;
                 const hit = findRead(c);
                 if (hit) return hit;
             }
@@ -757,7 +763,7 @@ describe('carePanel', () => {
         const before = calls.filter((c) => c.includes('/api/care/panel')).length;
         const findRead = (root: any): any => {
             for (const c of root.children || []) {
-                if (c.tag === 'button' && (c.textContent || '').includes('Oznacz jako')) return c;
+                if (c.tag === 'button' && c.attrs && 'data-notif-read' in c.attrs) return c;
                 const hit = findRead(c);
                 if (hit) return hit;
             }
@@ -1506,10 +1512,16 @@ describe('carePanel', () => {
             if (n.textContent) texts.push(n.textContent);
             for (const c of n.children || []) walk(c);
         };
+        const labels: string[] = [];
+        const walkA = (n: any): void => {
+            if (n.attrs && n.attrs['aria-label']) labels.push(String(n.attrs['aria-label']));
+            for (const c of n.children || []) walkA(c);
+        };
         walk(els['care-notif-list']);
+        walkA(els['care-notif-list']);
         const joined = texts.join(' ');
         expect(joined).toContain('moja skrzynka');
-        expect(joined).toContain('Oznacz jako przeczytane');
+        expect(labels.some((l) => l.includes('Oznacz jako przeczytane'))).toBe(true);
         expect(els['care-notif-clear'].hidden).toBe(false);
     });
 
@@ -1973,5 +1985,422 @@ describe('carePanel', () => {
         expect(nhrefs.filter((h: string) => h.startsWith('tel:'))).toHaveLength(0);
         expect(nhrefs.filter((h: string) => h.startsWith('mailto:'))).toHaveLength(0);
         expect(ntexts.join(' ')).toContain('javascript:alert(1)');
+    });
+
+    test('kafelek 3-liniowy: L1 numer+status/rodzaj, L2 klient+obiekt+cena, L3 kontakt', async () => {
+        const packet = {
+            ok: true,
+            etag: '"e3line"',
+            summary: {
+                noContact: 1,
+                due: 0,
+                openOk: 0,
+                won: 0,
+                lost: 0,
+                abandoned: 0,
+                totalCount: 1
+            },
+            queue: {
+                items: [
+                    {
+                        offerKind: 'studnie',
+                        offerId: 's1',
+                        status: 'NO_CONTACT',
+                        overdueDays: 17,
+                        escalated: false,
+                        paused: false,
+                        number: 'OS/000001/SA/2026',
+                        clientNumber: 'K-7',
+                        clientName: 'Budimex S.A.',
+                        ownerName: 'Adam Klos',
+                        authorName: 'Ewa Nowak',
+                        value: 18469.68,
+                        investName: 'Opole',
+                        investAddress: 'Konopnickiej 6b/9',
+                        contactPerson: 'kamil kopiec',
+                        phone: '795620027',
+                        email: 'phenx@o2.pl',
+                        nextContactAt: null,
+                        lastContactAt: null,
+                        lastNote: null
+                    }
+                ],
+                nextCursor: null,
+                totalCount: 1
+            },
+            notifications: { items: [], unreadCount: 0, hasOverflow: false },
+            sla: { firstContactH: 24, staleD: 7, escalationH: 72 }
+        };
+        const { els, context } = load({
+            fetchMock: (url: string) => {
+                if (url.includes('/api/care/panel'))
+                    return { ok: true, status: 200, json: async () => packet };
+                return okJson({ noContact: 0, due: 0, openOk: 0, won: 0, lost: 0 });
+            }
+        });
+        await context.__careTest.loadCarePanel();
+        const card = els['care-queue-list'].children[0].children[0];
+        expect(card.className).toContain('is-studnie');
+        const byClass = (root: any, cls: string): any[] => {
+            const out: any[] = [];
+            const walk2 = (n: any): void => {
+                if (n.className && String(n.className).split(' ').includes(cls)) out.push(n);
+                for (const c of n.children || []) walk2(c);
+            };
+            walk2(root);
+            return out;
+        };
+        // L1: numer bold + status + rodzaj dużymi literami.
+        const l1 = byClass(card, 'care-queue-l1');
+        expect(l1).toHaveLength(1);
+        expect(byClass(l1[0], 'care-queue-no')[0].textContent).toContain('OS/000001/SA/2026');
+        const pills = byClass(l1[0], 'ops-pill').map((p: any) => p.textContent);
+        expect(pills).toContain('Nowy kontakt');
+        expect(pills).toContain('STUDNIE');
+        // L2: nr klienta + nazwa + obiekt, wartość z prawej.
+        const l2 = byClass(card, 'care-queue-l2');
+        expect(l2).toHaveLength(1);
+        expect(byClass(l2[0], 'care-queue-client-no')[0].textContent).toContain('K-7');
+        expect(byClass(l2[0], 'care-queue-name')[0].textContent).toContain('Budimex S.A.');
+        expect(byClass(l2[0], 'care-queue-obj')[0].textContent).toContain('Opole');
+        expect(byClass(l2[0], 'care-queue-price')[0].textContent).toContain('PLN');
+        // L3: kontakt.
+        expect(byClass(card, 'care-queue-contact')).toHaveLength(1);
+        // Staff nad przyciskami: opiekun + autor (różni).
+        const staff = byClass(card, 'care-queue-staff');
+        expect(staff).toHaveLength(1);
+        expect(staff[0].textContent).toContain('Opiekun: Adam Klos');
+        expect(staff[0].textContent).toContain('Przygotował: Ewa Nowak');
+    });
+
+    test('kolejka: autor = opiekun ukryty, sam opiekun bez autora', async () => {
+        const mkPacket = (ownerName: string | null, authorName: string | null) => ({
+            ok: true,
+            etag: '"estaff"',
+            summary: {
+                noContact: 0,
+                due: 0,
+                openOk: 0,
+                won: 0,
+                lost: 0,
+                abandoned: 0,
+                totalCount: 1
+            },
+            queue: {
+                items: [
+                    {
+                        offerKind: 'rury',
+                        offerId: 'o1',
+                        status: 'DUE',
+                        overdueDays: 0,
+                        escalated: false,
+                        paused: false,
+                        number: 'OF/1',
+                        clientName: 'Budimex',
+                        ownerName,
+                        authorName,
+                        value: 100,
+                        nextContactAt: null,
+                        lastContactAt: null,
+                        lastNote: null
+                    }
+                ],
+                nextCursor: null,
+                totalCount: 1
+            },
+            notifications: { items: [], unreadCount: 0, hasOverflow: false },
+            sla: { firstContactH: 24, staleD: 7, escalationH: 72 }
+        });
+        const byClass = (root: any, cls: string): any[] => {
+            const out: any[] = [];
+            const walk2 = (n: any): void => {
+                if (n.className && String(n.className).split(' ').includes(cls)) out.push(n);
+                for (const c of n.children || []) walk2(c);
+            };
+            walk2(root);
+            return out;
+        };
+        // Ten sam człowiek: tylko opiekun.
+        const same = load({
+            fetchMock: (url: string) => {
+                if (url.includes('/api/care/panel'))
+                    return {
+                        ok: true,
+                        status: 200,
+                        json: async () => mkPacket('Adam Klos', 'Adam Klos')
+                    };
+                return okJson({ noContact: 0, due: 0, openOk: 0, won: 0, lost: 0 });
+            }
+        });
+        await same.context.__careTest.loadCarePanel();
+        const cardSame = same.els['care-queue-list'].children[0].children[0];
+        const staffSame = byClass(cardSame, 'care-queue-staff');
+        expect(staffSame).toHaveLength(1);
+        expect(staffSame[0].textContent).toContain('Opiekun: Adam Klos');
+        expect(staffSame[0].textContent).not.toContain('Przygotował');
+        // Brak obu: brak linii.
+        const none = load({
+            fetchMock: (url: string) => {
+                if (url.includes('/api/care/panel'))
+                    return {
+                        ok: true,
+                        status: 200,
+                        json: async () => mkPacket(null, null)
+                    };
+                return okJson({ noContact: 0, due: 0, openOk: 0, won: 0, lost: 0 });
+            }
+        });
+        await none.context.__careTest.loadCarePanel();
+        const cardNone = none.els['care-queue-list'].children[0].children[0];
+        expect(byClass(cardNone, 'care-queue-staff')).toHaveLength(0);
+    });
+
+    test('centrum: L1 numer+cena+rodzaj+typ, L2 klient+obiekt+delay, L4 zgłoszono+ikony', async () => {
+        const item = {
+            id: 'n1',
+            offerKind: 'studnie',
+            offerId: 's1',
+            type: 'CALLBACK_DUE',
+            readAt: null,
+            createdAt: new Date(Date.now() - (23 * 60 + 28) * 60000).toISOString(),
+            clientName: 'Budimex S.A.',
+            clientNumber: 'K-7',
+            number: 'OS/000011/SA/2026',
+            ownerName: 'Adam Klos',
+            value: 18469.68,
+            investName: 'Opole',
+            investAddress: 'Konopnickiej 6b/9',
+            contactPerson: 'kamil kopiec',
+            phone: '795620027',
+            email: 'phenx@o2.pl'
+        };
+        const packet = {
+            ok: true,
+            etag: '"enotif"',
+            summary: {
+                noContact: 0,
+                due: 0,
+                openOk: 0,
+                won: 0,
+                lost: 0,
+                abandoned: 0,
+                totalCount: 0
+            },
+            queue: { items: [], nextCursor: null, totalCount: 0 },
+            notifications: { items: [item], unreadCount: 1, hasOverflow: false },
+            sla: { firstContactH: 24, staleD: 7, escalationH: 72 }
+        };
+        const { els, context } = load({
+            fetchMock: (url: string) => {
+                if (url.includes('/api/care/panel'))
+                    return { ok: true, status: 200, json: async () => packet };
+                return okJson({ noContact: 0, due: 0, openOk: 0, won: 0, lost: 0 });
+            }
+        });
+        await context.__careTest.loadCarePanel();
+        const card = els['care-notif-list'].children[0].children[0];
+        const byClass = (root: any, cls: string): any[] => {
+            const out: any[] = [];
+            const walk2 = (n: any): void => {
+                if (n.className && String(n.className).split(' ').includes(cls)) out.push(n);
+                for (const c of n.children || []) walk2(c);
+            };
+            walk2(root);
+            return out;
+        };
+        const texts = (root: any): string => {
+            const out: string[] = [];
+            const walk2 = (n: any): void => {
+                if (n.textContent) out.push(n.textContent);
+                for (const c of n.children || []) walk2(c);
+            };
+            walk2(root);
+            return out.join(' ');
+        };
+        // L1: numer bold + cena + RURY/STUDNIE + typ.
+        const l1 = byClass(card, 'care-notif-l1');
+        expect(l1).toHaveLength(1);
+        expect(texts(l1[0])).toContain('OS/000011/SA/2026');
+        expect(texts(l1[0])).toContain('PLN');
+        expect(texts(l1[0])).toContain('STUDNIE');
+        expect(texts(l1[0])).toContain('Termin kontaktu');
+        // L2: nr klienta + nazwa + obiekt, delay w h/m z prawej.
+        const l2 = byClass(card, 'care-notif-l2');
+        expect(l2).toHaveLength(1);
+        expect(texts(l2[0])).toContain('K-7');
+        expect(texts(l2[0])).toContain('Budimex S.A.');
+        expect(texts(l2[0])).toContain('Opole');
+        expect(texts(l2[0])).toMatch(/Opóźnienie: 23h 28m/);
+        // L3 kontakt + L4 zgłoszono z opiekunem i ikoną odczytu (bez ikony cofnij).
+        expect(byClass(card, 'care-notif-contact')).toHaveLength(1);
+        expect(texts(card)).toContain('Zgłoszono:');
+        const owner = byClass(card, 'care-notif-owner');
+        expect(owner).toHaveLength(1);
+        expect(owner[0].textContent).toContain('Adam Klos');
+        expect(texts(card)).toContain('phenx@o2.pl');
+        const btns = byClass(card, 'care-icon-btn');
+        expect(btns).toHaveLength(1);
+        expect(btns[0].attrs['data-notif-read']).toBe('1');
+        expect(String(btns[0].attrs['aria-label'])).toContain('Oznacz jako przeczytane');
+    });
+
+    test('centrum: read zostawia kartę ze stanem + ikona cofnij woła /unread', async () => {
+        const calls: string[] = [];
+        const item = {
+            id: 'n2',
+            offerKind: 'rury',
+            offerId: 'o2',
+            type: 'ESCALATION',
+            readAt: null,
+            createdAt: '2026-10-10T12:00:00.000Z',
+            clientName: 'Budimex',
+            number: 'OF/2',
+            value: 100
+        };
+        const packet = {
+            ok: true,
+            etag: '"eread"',
+            summary: {
+                noContact: 0,
+                due: 0,
+                openOk: 0,
+                won: 0,
+                lost: 0,
+                abandoned: 0,
+                totalCount: 0
+            },
+            queue: { items: [], nextCursor: null, totalCount: 0 },
+            notifications: { items: [item], unreadCount: 1, hasOverflow: false },
+            sla: { firstContactH: 24, staleD: 7, escalationH: 72 }
+        };
+        const { els, context } = load({
+            calls,
+            fetchMock: (url: string) => {
+                if (url.includes('/unread')) return okJson({ ok: true });
+                if (url.includes('/notifications/') && url.includes('/read'))
+                    return okJson({ ok: true });
+                if (url.includes('/api/care/panel'))
+                    return { ok: true, status: 200, json: async () => packet };
+                return okJson({ noContact: 0, due: 0, openOk: 0, won: 0, lost: 0 });
+            }
+        });
+        await context.__careTest.loadCarePanel();
+        const findBtn = (root: any, attr: string): any => {
+            for (const c of root.children || []) {
+                if (c.tag === 'button' && c.attrs && attr in c.attrs) return c;
+                const hit = findBtn(c, attr);
+                if (hit) return hit;
+            }
+            return null;
+        };
+        const read = findBtn(els['care-notif-list'], 'data-notif-read');
+        expect(read).not.toBeNull();
+        for (const fn of read.handlers || []) await fn();
+        expect(calls.some((c) => c.includes('/api/care/notifications/n2/read'))).toBe(true);
+        // Karta zostaje ze stanem przeczytane + ikona cofnij (bez pełnego refetchu).
+        expect(calls.some((c) => c.includes('/api/care/panel') && calls.indexOf(c) > 0)).toBe(
+            false
+        );
+        const card = els['care-notif-list'].children[0].children[0];
+        expect(String(card.className)).toContain('is-read');
+        const undo = findBtn(els['care-notif-list'], 'data-notif-unread');
+        expect(undo).not.toBeNull();
+        for (const fn of undo.handlers || []) await fn();
+        expect(calls.some((c) => c.includes('/api/care/notifications/n2/unread'))).toBe(true);
+        expect(String(els['care-notif-count'].textContent)).toContain('1 alert');
+    });
+
+    test('kontakt z kafelka otwiera modal opieki w miejscu (bez nawigacji)', async () => {
+        const calls: string[] = [];
+        const opened: any[] = [];
+        const packet = (etag: string) => ({
+            ok: true,
+            etag,
+            summary: {
+                noContact: 0,
+                due: 1,
+                openOk: 0,
+                won: 0,
+                lost: 0,
+                abandoned: 0,
+                totalCount: 1
+            },
+            queue: {
+                items: [
+                    {
+                        offerKind: 'studnie',
+                        offerId: 's9',
+                        status: 'NO_CONTACT',
+                        overdueDays: 3,
+                        escalated: false,
+                        paused: false,
+                        number: 'OS/9/SA/2026',
+                        clientName: 'Budimex',
+                        value: 100,
+                        nextContactAt: null,
+                        lastContactAt: null,
+                        lastNote: null
+                    }
+                ],
+                nextCursor: null,
+                totalCount: 1
+            },
+            notifications: { items: [], unreadCount: 0, hasOverflow: false },
+            sla: { firstContactH: 24, staleD: 7, escalationH: 72 }
+        });
+        const { els, context } = load({
+            calls,
+            fuStub: {
+                renderFollowUpTimeline: () => '',
+                openFollowUpModal: async function (id: string, type: string, opts: any) {
+                    opened.push({ id, type, title: opts?.title, opts, self: this });
+                }
+            },
+            fetchMock: (url: string) => {
+                if (url.includes('/api/care/panel'))
+                    return {
+                        ok: true,
+                        status: 200,
+                        json: async () => packet('"e" + calls.length')
+                    };
+                return okJson({ noContact: 0, due: 0, openOk: 0, won: 0, lost: 0 });
+            }
+        });
+        context.window.location = { href: 'index.html' };
+        await context.__careTest.loadCarePanel();
+        const findOpen = (root: any): any => {
+            for (const c of root.children || []) {
+                if (c.tag === 'button' && c.attrs && 'data-care-contact-open' in c.attrs) return c;
+                const hit = findOpen(c);
+                if (hit) return hit;
+            }
+            return null;
+        };
+        const btn = findOpen(els['care-queue-list']);
+        expect(btn).not.toBeNull();
+        expect(btn.tag).toBe('button');
+        for (const fn of btn.handlers || []) await fn();
+        expect(opened).toHaveLength(1);
+        expect(opened[0].id).toBe('s9');
+        expect(opened[0].type).toBe('studnia_oferta');
+        expect(opened[0].title).toBe('OS/9/SA/2026');
+        expect(typeof opened[0].opts?.onSaved).toBe('function');
+        expect(context.window.location.href).toBe('index.html');
+        // Regresja martwego klika: kontekst modala dziedziczy metody mixina
+        // (renderFollowUpTimeline wołany przez this.*), odświeża kolejkę.
+        // onSaved/loadLocalOffers zwracają promisa loada — await czeka pełny
+        // łańcuch (fetch + render), więc kolejny refresh nie wpada w guard.
+        expect(typeof opened[0].self?.renderFollowUpTimeline).toBe('function');
+        const staffBefore = calls.filter((c) => c.includes('/api/care/panel')).length;
+        await opened[0].self?.loadLocalOffers();
+        expect(calls.filter((c) => c.includes('/api/care/panel')).length).toBeGreaterThan(
+            staffBefore
+        );
+        // Zapis w modalu odświeża kolejkę (onSaved → ponowny fetch panelu).
+        const panelBefore = calls.filter((c) => c.includes('/api/care/panel')).length;
+        await opened[0].opts.onSaved();
+        expect(calls.filter((c) => c.includes('/api/care/panel')).length).toBeGreaterThan(
+            panelBefore
+        );
     });
 });

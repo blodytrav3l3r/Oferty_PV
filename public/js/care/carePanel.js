@@ -1,3 +1,5 @@
+import followUpMixin from '../kartoteka/kartotekaFollowUp.js';
+
 const POLL_MS = 60000;
 const POLL_MAX_MS = 300000;
 const QUEUE_LIMIT = 50;
@@ -305,82 +307,83 @@ function careCap(s) {
     return s.length > CARE_TEXT_CAP ? s.slice(0, CARE_TEXT_CAP) + '…' : s;
 }
 
-/**
- * Wspólna linia Obiekt/Adres + kontakt dla kart kolejki i powiadomień.
- * Wszystko przez textContent/DOM (brak powierzchni XSS), tel:/mailto:
- * tylko po allowliście (inaczej zwykły tekst). Zwraca element albo null
- * (brak danych = brak linii, nie placeholder).
- */
-function buildCareMeta(src, prefix) {
-    const invest = careNormStr(src && src.investName);
-    const address = careNormStr(src && src.investAddress);
+/** Sama linia kontaktowa kafelka (osoba • tel • mail, DOM bez innerHTML). */
+function buildCareContactLine(src, prefix) {
+    const cls = (prefix || 'care-queue') + '-contact';
     const person = careNormStr(src && src.contactPerson);
     const phone = careNormStr(src && src.phone);
     const email = careNormStr(src && src.email);
-    if (!invest && !address && !person && !phone && !email) return null;
-    const meta = document.createElement('div');
-    meta.className = prefix + '-meta';
-    if (invest || address) {
-        const obj = document.createElement('div');
-        obj.className = prefix + '-obj';
-        obj.setAttribute('data-care-object', '1');
-        const full = 'Obiekt: ' + (invest || '—') + (address ? ' • Adres: ' + address : '');
-        obj.textContent = careCap(full);
-        obj.title = full;
-        meta.appendChild(obj);
+    if (!person && !phone && !email) return null;
+    const line = document.createElement('div');
+    line.className = cls;
+    line.setAttribute('data-care-contact', '1');
+    let needSep = false;
+    const sep = () => {
+        if (needSep) line.appendChild(document.createTextNode(' • '));
+        needSep = true;
+    };
+    if (person) {
+        const nm = document.createElement('span');
+        nm.textContent = careCap(person);
+        nm.title = person;
+        line.appendChild(nm);
+        needSep = true;
     }
-    if (person || phone || email) {
-        const line = document.createElement('div');
-        line.className = prefix + '-contact';
-        line.setAttribute('data-care-contact', '1');
-        let needSep = false;
-        const sep = () => {
-            if (needSep) line.appendChild(document.createTextNode(' • '));
-            needSep = true;
-        };
-        if (person) {
-            const nm = document.createElement('span');
-            nm.textContent = careCap(person);
-            nm.title = person;
-            line.appendChild(nm);
-            needSep = true;
+    if (phone) {
+        sep();
+        if (CARE_PHONE_RE.test(phone)) {
+            const a = document.createElement('a');
+            a.href = 'tel:' + phone.replace(/[^+0-9]/g, '');
+            a.textContent = careCap(phone);
+            a.setAttribute('aria-label', 'Zadzwoń: ' + phone);
+            line.appendChild(a);
+        } else {
+            const t = document.createElement('span');
+            t.textContent = careCap(phone);
+            t.title = phone;
+            line.appendChild(t);
         }
-        if (phone) {
-            sep();
-            if (CARE_PHONE_RE.test(phone)) {
-                const a = document.createElement('a');
-                a.href = 'tel:' + phone.replace(/[^+0-9]/g, '');
-                a.textContent = careCap(phone);
-                a.setAttribute('aria-label', 'Zadzwoń: ' + phone);
-                line.appendChild(a);
-            } else {
-                const t = document.createElement('span');
-                t.textContent = careCap(phone);
-                t.title = phone;
-                line.appendChild(t);
-            }
-        }
-        if (email) {
-            sep();
-            if (email.length <= 254 && CARE_EMAIL_RE.test(email)) {
-                const a = document.createElement('a');
-                a.href = 'mailto:' + email;
-                a.textContent = careCap(email);
-                a.setAttribute('aria-label', 'Napisz: ' + email);
-                line.appendChild(a);
-            } else {
-                const t = document.createElement('span');
-                t.textContent = careCap(email);
-                t.title = email;
-                line.appendChild(t);
-            }
-        }
-        meta.appendChild(line);
     }
-    return meta;
+    if (email) {
+        sep();
+        if (email.length <= 254 && CARE_EMAIL_RE.test(email)) {
+            const a = document.createElement('a');
+            a.href = 'mailto:' + email;
+            a.textContent = careCap(email);
+            a.setAttribute('aria-label', 'Napisz: ' + email);
+            line.appendChild(a);
+        } else {
+            const t = document.createElement('span');
+            t.textContent = careCap(email);
+            t.title = email;
+            line.appendChild(t);
+        }
+    }
+    return line;
+}
+
+/** Ostatni stan Centrum do lokalnego prze-renderu po read/unread (bez fetch). */
+let notifCache = { items: [], unreadCount: 0, mailboxUserId: null, hasOverflow: false };
+
+/** Prze-render Centrum po lokalnej zmianie readAt (delta licznika +/-1). */
+function rerenderNotifications(delta) {
+    const next = Math.max(0, (notifCache.unreadCount || 0) + delta);
+    notifCache.unreadCount = next;
+    renderNotifications(
+        notifCache.items,
+        notifCache.unreadCount,
+        notifCache.mailboxUserId,
+        notifCache.hasOverflow
+    );
 }
 
 function renderNotifications(items, unreadCount, mailboxUserId, hasOverflow) {
+    notifCache = {
+        items: Array.isArray(items) ? items : [],
+        unreadCount: typeof unreadCount === 'number' ? unreadCount : 0,
+        mailboxUserId: mailboxUserId ?? null,
+        hasOverflow: !!hasOverflow
+    };
     const badge = document.getElementById('care-notif-count');
     if (badge) {
         // aria-live statycznie w index.html (#care-notif-count); tu tylko tekst.
@@ -437,93 +440,199 @@ function renderNotifications(items, unreadCount, mailboxUserId, hasOverflow) {
     const grid = document.createElement('div');
     grid.className = 'care-notif-grid';
     for (const n of items.slice(0, 20)) {
+        const kindKey = String(n.offerKind || '').toLowerCase() === 'studnie' ? 'studnie' : 'rury';
+        const isRead = !!n.readAt;
         const card = document.createElement('div');
-        card.className = 'care-notif-card ' + (n.type === 'CALLBACK_DUE' ? 'warn' : 'err');
-        const pill = document.createElement('span');
-        pill.className = NOTIF_CLASS[n.type] || 'ops-pill';
-        pill.textContent = NOTIF_LABEL[n.type] || String(n.type);
-        card.appendChild(pill);
+        card.className =
+            'care-notif-card ' +
+            (n.type === 'CALLBACK_DUE' ? 'warn' : 'err') +
+            (isRead ? ' is-read' : '');
         const who = n.clientName
             ? String(n.clientName)
             : String(n.offerKind) + ' ' + String(n.offerId);
-        const offerNo = n.number
-            ? String(n.number)
-            : n.clientName
-              ? ''
-              : String(n.offerKind) + ' ' + String(n.offerId);
+        const offerNo = n.number ? String(n.number) : '';
         const hit = byOffer.get(String(n.offerKind) + ':' + String(n.offerId));
         const delay = fmtDelay(
             hit && hit.status !== 'NO_CONTACT' ? hit.overdueDays : 0,
             n.createdAt
         );
-        const lines = document.createElement('div');
-        lines.className = 'care-notif-lines';
-        const headRow = document.createElement('div');
-        headRow.className = 'care-notif-head';
+        // L1: numer oferty (bold, lewo) + kwota + rodzaj + typ (prawo).
         const l1 = document.createElement('div');
-        l1.className = 'care-notif-who';
-        l1.textContent = who;
-        headRow.appendChild(l1);
-        if (offerNo && offerNo !== who) {
-            const num = document.createElement('div');
-            num.className = 'care-notif-no';
-            num.textContent = offerNo;
-            headRow.appendChild(num);
+        l1.className = 'care-notif-l1';
+        const num = document.createElement('span');
+        num.className = 'care-notif-no';
+        num.textContent = offerNo || who;
+        num.title = offerNo || who;
+        l1.appendChild(num);
+        const badges = document.createElement('div');
+        badges.className = 'care-notif-badges';
+        const value = fmtMoney(n.value);
+        const price = document.createElement('span');
+        price.className = 'care-notif-price';
+        price.textContent = value ? value : '0,00 PLN';
+        badges.appendChild(price);
+        const kind = document.createElement('span');
+        kind.className = 'ops-pill care-kind-pill is-' + kindKey;
+        kind.textContent = kindKey === 'studnie' ? 'STUDNIE' : 'RURY';
+        badges.appendChild(kind);
+        const pill = document.createElement('span');
+        pill.className = NOTIF_CLASS[n.type] || 'ops-pill';
+        pill.textContent = NOTIF_LABEL[n.type] || String(n.type);
+        badges.appendChild(pill);
+        l1.appendChild(badges);
+        card.appendChild(l1);
+        // L2: nr klienta + nazwa (bold) + obiekt (lewo), opóźnienie (prawo).
+        const l2 = document.createElement('div');
+        l2.className = 'care-notif-l2';
+        const clientWrap = document.createElement('div');
+        clientWrap.className = 'care-notif-client';
+        const clientNo = careNormStr(n.clientNumber);
+        if (clientNo) {
+            const noEl = document.createElement('span');
+            noEl.className = 'care-notif-client-no';
+            noEl.textContent = clientNo;
+            noEl.title = clientNo;
+            clientWrap.appendChild(noEl);
         }
+        const nameEl = document.createElement('span');
+        nameEl.className = 'care-notif-who';
+        nameEl.textContent = who;
+        nameEl.title = who;
+        clientWrap.appendChild(nameEl);
+        const invest = careNormStr(n.investName);
+        const address = careNormStr(n.investAddress);
+        if (invest || address) {
+            const obj = document.createElement('span');
+            obj.className = 'care-notif-obj';
+            obj.setAttribute('data-care-object', '1');
+            const full = 'Obiekt: ' + (invest || '—') + (address ? ' • Adres: ' + address : '');
+            obj.textContent = careCap(full);
+            obj.title = full;
+            clientWrap.appendChild(obj);
+        }
+        l2.appendChild(clientWrap);
         if (delay) {
-            const dl = document.createElement('div');
+            const dl = document.createElement('span');
             dl.className = 'care-notif-delay';
             dl.textContent = delay;
-            headRow.appendChild(dl);
+            l2.appendChild(dl);
         }
-        lines.appendChild(headRow);
-        const nmeta = buildCareMeta(n, 'care-notif');
-        if (nmeta) lines.appendChild(nmeta);
+        card.appendChild(l2);
+        // L3: dane kontaktowe.
+        const contact = buildCareContactLine(n, 'care-notif');
+        if (contact) card.appendChild(contact);
+        // L4: zgłoszono + ikony odczyt/cofnij.
         const foot = document.createElement('div');
         foot.className = 'care-notif-foot';
         if (n.createdAt) {
             const d = new Date(n.createdAt);
             if (!Number.isNaN(d.getTime())) {
-                const l2 = document.createElement('div');
-                l2.className = 'care-notif-date';
-                l2.textContent = 'Zgłoszono: ' + d.toLocaleDateString('pl-PL');
-                foot.appendChild(l2);
+                const date = document.createElement('span');
+                date.className = 'care-notif-date';
+                date.textContent = 'Zgłoszono: ' + d.toLocaleDateString('pl-PL');
+                foot.appendChild(date);
             }
         }
-        card.appendChild(lines);
-        // Cudza skrzynka = read-only: brak przycisku zapisu (BE i tak broni 404, I-003).
+        // Cudza skrzynka = read-only: brak przycisków zapisu (BE i tak broni 404, I-003).
         if (!foreign) {
-            const read = document.createElement('button');
-            read.type = 'button';
-            read.className = 'care-link-btn';
-            read.setAttribute('data-notif-id', String(n.id));
-            read.setAttribute(
-                'aria-label',
-                'Oznacz jako przeczytane (' + (NOTIF_LABEL[n.type] || String(n.type)) + '): ' + who
-            );
-            read.textContent = 'Oznacz jako przeczytane';
-            read.addEventListener('click', async () => {
-                let ok = false;
-                try {
-                    const resp = await fetch(
-                        '/api/care/notifications/' + encodeURIComponent(String(n.id)) + '/read',
-                        {
-                            method: 'POST',
-                            credentials: 'same-origin'
-                        }
-                    );
-                    ok = !!resp && resp.ok;
-                } catch {
-                    ok = false;
-                }
-                if (!ok) {
-                    careToastError('Nie oznaczono jako przeczytane — spróbuj ponownie.');
-                    return;
-                }
-                careBumpPolling();
-                loadCarePanel();
-            });
-            foot.appendChild(read);
+            const actions = document.createElement('div');
+            actions.className = 'care-notif-actions';
+            const owner = careNormStr(n.ownerName);
+            if (owner) {
+                const ownerEl = document.createElement('span');
+                ownerEl.className = 'care-notif-owner';
+                ownerEl.textContent = 'Opiekun: ' + careCap(owner);
+                ownerEl.title = 'Opiekun oferty: ' + owner;
+                actions.appendChild(ownerEl);
+            }
+            const mkIconBtn = (icon, label, attr) => {
+                const b = document.createElement('button');
+                b.type = 'button';
+                b.className = 'btn-icon care-icon-btn';
+                b.setAttribute('data-notif-id', String(n.id));
+                b.setAttribute(attr, '1');
+                b.setAttribute('aria-label', label);
+                b.title = label;
+                const ic = document.createElement('i');
+                ic.setAttribute('data-lucide', icon);
+                ic.setAttribute('aria-hidden', 'true');
+                b.appendChild(ic);
+                return b;
+            };
+            // Karta po odczycie zostaje ze stanem „przeczytane" + ikona cofnij.
+            if (!isRead) {
+                const read = mkIconBtn(
+                    'check',
+                    'Oznacz jako przeczytane (' +
+                        (NOTIF_LABEL[n.type] || String(n.type)) +
+                        '): ' +
+                        who,
+                    'data-notif-read'
+                );
+                read.addEventListener('click', async () => {
+                    if (read.disabled) return;
+                    read.disabled = true;
+                    let ok = false;
+                    try {
+                        const resp = await fetch(
+                            '/api/care/notifications/' + encodeURIComponent(String(n.id)) + '/read',
+                            { method: 'POST', credentials: 'same-origin' }
+                        );
+                        ok = !!resp && resp.ok;
+                    } catch {
+                        ok = false;
+                    }
+                    if (!ok) {
+                        read.disabled = false;
+                        careToastError('Nie oznaczono jako przeczytane — spróbuj ponownie.');
+                        return;
+                    }
+                    try {
+                        n.readAt = new Date().toISOString();
+                    } catch {
+                        /* best-effort */
+                    }
+                    careBumpPolling();
+                    rerenderNotifications(-1);
+                });
+                actions.appendChild(read);
+            } else {
+                const undo = mkIconBtn(
+                    'undo-2',
+                    'Cofnij oznaczenie jako przeczytane: ' + who,
+                    'data-notif-unread'
+                );
+                undo.addEventListener('click', async () => {
+                    if (undo.disabled) return;
+                    undo.disabled = true;
+                    let ok = false;
+                    try {
+                        const resp = await fetch(
+                            '/api/care/notifications/' +
+                                encodeURIComponent(String(n.id)) +
+                                '/unread',
+                            { method: 'POST', credentials: 'same-origin' }
+                        );
+                        ok = !!resp && resp.ok;
+                    } catch {
+                        ok = false;
+                    }
+                    if (!ok) {
+                        undo.disabled = false;
+                        careToastError('Nie cofnięto oznaczenia — spróbuj ponownie.');
+                        return;
+                    }
+                    try {
+                        n.readAt = null;
+                    } catch {
+                        /* best-effort */
+                    }
+                    careBumpPolling();
+                    rerenderNotifications(1);
+                });
+                actions.appendChild(undo);
+            }
+            foot.appendChild(actions);
         }
         card.appendChild(foot);
         grid.appendChild(card);
@@ -784,6 +893,34 @@ export function careOpenContact(offerKind, offerId) {
         /* best-effort */
     }
     return target;
+}
+
+/**
+ * Kontakt z kafelka: modal opieki w miejscu (bez nawigacji do kartoteki).
+ * Zapis w modalu zamyka go i odświeża kolejkę (onSaved) — ETag panelu
+ * zawiera MAX(contactedAt), więc loadCarePanel pobierze świeże dane.
+ * Furtka do pełnej kartoteki zostaje w menu ⋮ (careOpenContact).
+ */
+function openCareContactModal(it) {
+    const kind = String(it.offerKind);
+    const displayType = kind === 'studnie' ? 'studnia_oferta' : 'oferta';
+    const refreshQueue = () => {
+        careBumpPolling();
+        return loadCarePanel();
+    };
+    const title = it.number
+        ? String(it.number)
+        : it.clientName
+          ? String(it.clientName)
+          : kind + ':' + String(it.offerId);
+    // Mixin woła sam siebie przez this.* (timeline, submit, _fuRefresh) —
+    // goły obiekt rzucał TypeError i modal nie wstawał. Kontekst dziedziczy
+    // z mixina, nadpisane tylko odświeżanie listy (kolejka zamiast kartoteki).
+    const ctx = Object.assign(Object.create(followUpMixin), { loadLocalOffers: refreshQueue });
+    return followUpMixin.openFollowUpModal.call(ctx, it.offerId, displayType, {
+        title,
+        onSaved: refreshQueue
+    });
 }
 
 function matchFilter(it) {
@@ -1063,37 +1200,68 @@ function renderQueue(items, nextCursor, totalCount) {
     const grid = document.createElement('div');
     grid.className = 'care-queue-cards is-' + queueView;
     for (const it of visible) {
+        const kindKey = String(it.offerKind || '').toLowerCase() === 'studnie' ? 'studnie' : 'rury';
         const row = document.createElement('div');
-        row.className = 'care-queue-card';
-        const head = document.createElement('div');
-        head.className = 'care-queue-title';
-        const title = document.createElement('span');
-        title.className = 'care-queue-name';
-        title.textContent = it.clientName ? String(it.clientName) : 'Brak klienta';
-        head.appendChild(title);
-        const kind = document.createElement('span');
-        kind.className = 'ops-pill care-kind-pill';
-        kind.textContent = String(it.offerKind).toLowerCase();
-        head.appendChild(kind);
+        row.className = 'care-queue-card is-' + kindKey;
+        // L1: numer oferty (bold, lewo) + status + rodzaj (prawo).
+        const l1 = document.createElement('div');
+        l1.className = 'care-queue-l1';
+        const no = document.createElement('span');
+        no.className = 'care-queue-no';
+        const noText = it.number ? String(it.number) : '—';
+        no.textContent = noText;
+        no.title = noText;
+        l1.appendChild(no);
+        const badges = document.createElement('div');
+        badges.className = 'care-queue-badges';
         const status = statusPill(it);
-        if (status) head.appendChild(status);
-        row.appendChild(head);
-        const valueLine = document.createElement('div');
-        valueLine.className = 'care-queue-value';
+        if (status) badges.appendChild(status);
+        const kind = document.createElement('span');
+        kind.className = 'ops-pill care-kind-pill is-' + kindKey;
+        kind.textContent = kindKey === 'studnie' ? 'STUDNIE' : 'RURY';
+        badges.appendChild(kind);
+        l1.appendChild(badges);
+        row.appendChild(l1);
+        // L2: nr klienta + nazwa (bold, lewo) + obiekt, wartość (prawo).
+        const l2 = document.createElement('div');
+        l2.className = 'care-queue-l2';
+        const clientWrap = document.createElement('div');
+        clientWrap.className = 'care-queue-client';
+        const clientNo = careNormStr(it.clientNumber);
+        if (clientNo) {
+            const noEl = document.createElement('span');
+            noEl.className = 'care-queue-client-no';
+            noEl.textContent = clientNo;
+            noEl.title = clientNo;
+            clientWrap.appendChild(noEl);
+        }
+        const nameEl = document.createElement('span');
+        nameEl.className = 'care-queue-name';
+        const nameText = it.clientName ? String(it.clientName) : 'Brak klienta';
+        nameEl.textContent = nameText;
+        nameEl.title = nameText;
+        clientWrap.appendChild(nameEl);
+        const invest = careNormStr(it.investName);
+        const address = careNormStr(it.investAddress);
+        if (invest || address) {
+            const obj = document.createElement('span');
+            obj.className = 'care-queue-obj';
+            obj.setAttribute('data-care-object', '1');
+            const full = 'Obiekt: ' + (invest || '—') + (address ? ' • Adres: ' + address : '');
+            obj.textContent = careCap(full);
+            obj.title = full;
+            clientWrap.appendChild(obj);
+        }
+        l2.appendChild(clientWrap);
         const value = fmtMoney(it.value);
         const valueStrong = document.createElement('span');
         valueStrong.className = 'care-queue-price';
         valueStrong.textContent = value ? value : '0,00 PLN';
-        valueLine.appendChild(valueStrong);
-        if (it.number) {
-            const no = document.createElement('span');
-            no.className = 'care-queue-no';
-            no.textContent = ' • ' + String(it.number);
-            valueLine.appendChild(no);
-        }
-        row.appendChild(valueLine);
-        const meta = buildCareMeta(it, 'care-queue');
-        if (meta) row.appendChild(meta);
+        l2.appendChild(valueStrong);
+        row.appendChild(l2);
+        // L3: dane kontaktowe klienta (osoba • tel • mail).
+        const contact = buildCareContactLine(it);
+        if (contact) row.appendChild(contact);
         const info = document.createElement('div');
         info.className = 'care-queue-info';
         const content = queueInfoContent(it);
@@ -1114,6 +1282,21 @@ function renderQueue(items, nextCursor, totalCount) {
         line.append(icon, titleWrap);
         info.appendChild(line);
         row.appendChild(info);
+        // Opiekun + autor nad przyciskami (autor tylko gdy inny niż opiekun).
+        const owner = careNormStr(it.ownerName);
+        const authorRaw = careNormStr(it.authorName);
+        const author = authorRaw && authorRaw !== owner ? authorRaw : '';
+        if (owner || author) {
+            const staff = document.createElement('div');
+            staff.className = 'care-queue-staff';
+            staff.setAttribute('data-care-staff', '1');
+            const full = owner
+                ? 'Opiekun: ' + owner + (author ? ' • Przygotował: ' + author : '')
+                : 'Przygotował: ' + author;
+            staff.textContent = careCap(full);
+            staff.title = full;
+            row.appendChild(staff);
+        }
         const actions = document.createElement('div');
         actions.className = 'care-queue-btns';
         actions.setAttribute('data-care-actions', '1');
@@ -1124,20 +1307,24 @@ function renderQueue(items, nextCursor, totalCount) {
         if (it.paused) snooze.disabled = true;
         snooze.addEventListener('click', () => snoozeQuick(it, 3, row));
         actions.appendChild(snooze);
-        const open = document.createElement('a');
-        open.href =
-            'app.html#/kartoteka?kontakt=' +
-            encodeURIComponent(String(it.offerKind) + ':' + String(it.offerId));
-        open.className = 'btn btn-sm btn-primary care-contact-btn';
+        const contactBtn = document.createElement('button');
+        contactBtn.type = 'button';
+        contactBtn.className = 'btn btn-sm btn-primary care-contact-btn';
+        contactBtn.setAttribute('data-care-contact-open', '1');
         const phoneIcon = document.createElement('i');
         phoneIcon.setAttribute('data-lucide', 'phone');
         phoneIcon.setAttribute('aria-hidden', 'true');
-        const openLabel = document.createElement('span');
-        openLabel.textContent =
+        const contactLabel =
             (it.nextContactAt && isToday(it.nextContactAt)) || it.phone ? 'Zadzwoń' : 'Kontakt';
-        open.append(phoneIcon, openLabel);
-        open.addEventListener('click', () => careOpenContact(it.offerKind, it.offerId));
-        actions.appendChild(open);
+        const openLabel = document.createElement('span');
+        openLabel.textContent = contactLabel;
+        contactBtn.append(phoneIcon, openLabel);
+        contactBtn.setAttribute(
+            'aria-label',
+            contactLabel + ' — ' + (it.number ? String(it.number) : 'oferta')
+        );
+        contactBtn.addEventListener('click', () => openCareContactModal(it));
+        actions.appendChild(contactBtn);
         actions.appendChild(careMenu(it));
         row.appendChild(actions);
         grid.appendChild(row);

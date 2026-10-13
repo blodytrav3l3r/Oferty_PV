@@ -69,13 +69,17 @@ Autoryzacja: cookie `authToken` (HttpOnly). Pełna spec: Swagger `/api/docs`.
 `GET /queue`, `GET /panel.queue`, `GET /notifications` zwracają pola
 pochodne ze snapshotu `offers_*.data` (bez migracji, `json_extract`):
 
-| Pole            | Źródło                                                 | Uwagi                                                |
-| --------------- | ------------------------------------------------------ | ---------------------------------------------------- |
-| `investName`    | kolumna, fallback `$.investName`, `$.budowa`           | label UI `Obiekt`, `null` → wiersz ukryty            |
-| `investAddress` | `$.investAddress`                                      | label `Adres`, `null` → wiersz ukryty                |
-| `contactPerson` | `$.contactPerson`, fallback `$.clientContacts[0].name` | label `Kontakt`, escapowany                          |
-| `phone`         | `$.clientPhone`, fallback `$.clientContacts[0].phone`  | link `tel:` po sanitacji cyfr/`+`, brak → brak linku |
-| `email`         | `$.clientEmail`, fallback `$.clientContacts[0].email`  | link `mailto:` po walidacji, brak → brak linku       |
+| Pole            | Źródło                                                       | Uwagi                                                 |
+| --------------- | ------------------------------------------------------------ | ----------------------------------------------------- |
+| `investName`    | kolumna, fallback `$.investName`, `$.budowa`                 | label UI `Obiekt`, `null` → wiersz ukryty             |
+| `investAddress` | `$.investAddress`                                            | label `Adres`, `null` → wiersz ukryty                 |
+| `contactPerson` | `$.contactPerson`, fallback `$.clientContacts[0].name`       | label `Kontakt`, escapowany                           |
+| `phone`         | `$.clientPhone`, fallback `$.clientContacts[0].phone`        | link `tel:` po sanitacji cyfr/`+`, brak → brak linku  |
+| `email`         | `$.clientEmail`, fallback `$.clientContacts[0].email`        | link `mailto:` po walidacji, brak → brak linku        |
+| `clientNumber`  | kolumna `offers_*/clientNumber`                              | L2 kafelka, `null` → bez prefixu                      |
+| `ownerName`     | `users` po `offers_*.userId` (imię+nazwisko, fallback login) | L4 centrum / linia staff kolejki, brak → ukryte       |
+| `authorName`    | `$.createdByUserName` z bloba (oryginalny autor)             | tylko kolejka: `• Przygotował`, gdy ≠ opiekun         |
+| `value`         | rury `$.totalBrutto`, studnie guard 0-kolumny jak kolejka    | L1 kafelka, format kolejki (`PLN`), brak → `0,00 PLN` |
 
 Karta kolejki i karta powiadomienia pokazują `Obiekt/Adres/Kontakt + tel:/mailto:`.
 Dane w scope requesta (jak `clientName`); brak wiersza w blobie = `null`, nie 404.
@@ -97,6 +101,17 @@ Zasady bezpieczeństwa (I-003):
 
 FE: banner `Skrzynka: {rep} (podgląd read-only)` albo `moja skrzynka`
 przy własnej; akcje widoczne tylko dla własnej.
+
+## Modal opieki z kafelka (bez nawigacji)
+
+Przycisk Kontakt/Zadzwoń w kafelku kolejki otwiera ten sam modal co kartoteka
+(`openCareContactModal` → `kartotekaFollowUp.openFollowUpModal` z ctx na
+prototypie mixina i `opts {title: numer, onSaved: refresh kolejki}`).
+Mixin woła sam siebie przez `this.*`, więc goły kontekst rzuca TypeError
+i modal nie wstaje — ctx MUSI dziedziczyć z mixina. `onSaved` zwraca promis
+pełnego reloadu panelu (ETag zawiera `MAX(contactedAt)`, więc dane wracają
+świeże). Furtka do pełnej kartoteki zostaje w menu ⋮ (`careOpenContact`,
+handoff `?kontakt=` + sessionStorage).
 
 ## Odświeżanie centrum po zmianie repa
 

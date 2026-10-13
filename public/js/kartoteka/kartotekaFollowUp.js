@@ -89,8 +89,10 @@ export default {
 
     /**
      * Otwiera modal opieki: formularz kontaktu + historia kontaktów oferty.
+     * opts.title — nadpisuje tytuł z searchResults (osadzenie spoza kartoteki).
+     * opts.onSaved — odświeżenie po zapisie (domyślnie loadLocalOffers hosta).
      */
-    async openFollowUpModal(offerId, offerType) {
+    async openFollowUpModal(offerId, offerType, opts) {
         const id = String(offerId || '');
         if (!id) return;
         const kind =
@@ -99,9 +101,12 @@ export default {
                 : offerType === 'studnia_oferta'
                   ? 'studnie'
                   : 'rury';
-
+        this._fuOnSaved = opts && typeof opts.onSaved === 'function' ? opts.onSaved : null;
+        const optTitle = opts && typeof opts.title === 'string' ? opts.title.trim() : '';
         const offer = (this.searchResults?.items || []).find((o) => String(o.id) === id);
-        const title = offer ? offer.number || offer.title || offer.offerName || 'Oferta' : 'Oferta';
+        const title =
+            optTitle ||
+            (offer ? offer.number || offer.title || offer.offerName || 'Oferta' : 'Oferta');
 
         const headers =
             typeof authHeaders === 'function'
@@ -246,6 +251,22 @@ export default {
                 hint.textContent = 'Brak osób w tej ofercie — dopisz powyżej.';
                 ccBox.appendChild(hint);
             }
+            // Przebudowa edytora odpinała sfocusowany przycisk z DOM
+            // (focus spadał na body i Escape nie docierał do overlaya).
+            // Focus na pierwsze pole imienia = od razu gotowe do uzupełniania.
+            try {
+                const firstName =
+                    typeof ccBox.querySelector === 'function'
+                        ? ccBox.querySelector('[data-cc="name"]')
+                        : null;
+                if (firstName && typeof firstName.focus === 'function') firstName.focus();
+                else {
+                    const saveBtn = overlay.querySelector('#fu-client-save');
+                    if (saveBtn && typeof saveBtn.focus === 'function') saveBtn.focus();
+                }
+            } catch {
+                /* best-effort */
+            }
         }
 
         if (window.lucide) window.lucide.createIcons({ root: overlay });
@@ -308,6 +329,16 @@ export default {
         }
     },
 
+    /** Odświeżenie listy po zapisie: hook osadzenia albo lista kartoteki. */
+    async _fuRefresh() {
+        const fn = this._fuOnSaved;
+        if (typeof fn === 'function') {
+            await fn();
+            return;
+        }
+        if (typeof this.loadLocalOffers === 'function') await this.loadLocalOffers();
+    },
+
     async refreshFollowUpTimeline(overlay, kind, offerId) {
         const items = await this.loadFollowUpItems(kind, offerId);
         if (items === null) return;
@@ -317,7 +348,7 @@ export default {
             box.innerHTML = this.renderFollowUpTimeline(items);
             if (window.lucide) window.lucide.createIcons({ root: box });
         }
-        await this.loadLocalOffers();
+        await this._fuRefresh();
     },
 
     renderFollowUpTimeline(items) {
@@ -481,7 +512,7 @@ export default {
             }
             if (typeof window.showToast === 'function')
                 window.showToast('Kontakt do klienta zapisany.', 'success');
-            await this.loadLocalOffers();
+            await this._fuRefresh();
         } catch (e) {
             logger.error('kartotekaUi', 'Błąd zapisu kontaktu klienta:', e);
             if (typeof window.showToast === 'function')
@@ -525,7 +556,7 @@ export default {
                       : 'Odłożono pilnowanie.',
                 false
             );
-            await this.loadLocalOffers();
+            await this._fuRefresh();
         } catch (e) {
             logger.warn('kartotekaUi', 'Błąd stanu opieki:', e);
             this.careNote(overlay, 'Błąd sieci — spróbuj ponownie.', true);
@@ -651,7 +682,7 @@ export default {
             window.closeModal();
             if (typeof window.showToast === 'function')
                 window.showToast('Kontakt zapisany.', 'success');
-            await this.loadLocalOffers();
+            await this._fuRefresh();
         } catch (e) {
             logger.error('kartotekaUi', 'Błąd zapisu kontaktu:', e);
             fail('Błąd sieci — spróbuj ponownie.');

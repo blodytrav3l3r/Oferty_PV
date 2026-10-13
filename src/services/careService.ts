@@ -39,6 +39,9 @@ export interface CareQueueItem {
     createdAt: string | null;
     number: string | null;
     clientName: string | null;
+    clientNumber: string | null;
+    ownerName: string | null;
+    authorName: string | null;
     value: number | null;
     phone: string | null;
     investName: string | null;
@@ -232,6 +235,9 @@ export function buildCareQueueQueries(
         SELECT 'rury' AS "offerKind", o."id" AS "offerId", l."outcome" AS "outcome",
             l."nextContactAt" AS "next", l."contactedAt" AS "last", o."createdAt" AS "born",
             o."offer_number" AS "number", o."clientName" AS "client",
+            o."clientNumber" AS "clientNumber",
+            COALESCE(NULLIF(TRIM(COALESCE(ou."firstName", '') || ' ' || COALESCE(ou."lastName", '')), ''), ou."username") AS "owner",
+            json_extract(o."data", '$.createdByUserName') AS "author",
             CAST(json_extract(o."data", '$.totalBrutto') AS REAL) AS "value",
             COALESCE(json_extract(o."data", '$.clientPhone'), json_extract(o."data", '$.clientContacts[0].phone')) AS "phone", l."note" AS "note",
             COALESCE(NULLIF(o."investName", ''), json_extract(o."data", '$.investName'), json_extract(o."data", '$.budowa')) AS "invest",
@@ -244,11 +250,15 @@ export function buildCareQueueQueries(
             ON l."offerKind" = 'rury' AND l."offerId" = o."id" AND l."rn" = 1
         LEFT JOIN care_states cs
             ON cs."offerKind" = 'rury' AND cs."offerId" = o."id"
+        LEFT JOIN users ou ON o."userId" = ou."id"
         WHERE ${scopeRury}${andBornRury}
         UNION ALL
         SELECT 'studnie' AS "offerKind", s."id" AS "offerId", l."outcome" AS "outcome",
             l."nextContactAt" AS "next", l."contactedAt" AS "last", s."createdAt" AS "born",
             s."offer_number" AS "number", s."clientName" AS "client",
+            s."clientNumber" AS "clientNumber",
+            COALESCE(NULLIF(TRIM(COALESCE(su."firstName", '') || ' ' || COALESCE(su."lastName", '')), ''), su."username") AS "owner",
+            json_extract(s."data", '$.createdByUserName') AS "author",
             -- Guard 0-kolumny (zapis studni bez totalPrice): niezerowa kolumna
             -- > blob.totalBrutto > suma wellsExport (jak search.ts d_wellsExportTotal).
             CAST(COALESCE(NULLIF(s."totalPrice", 0), json_extract(s."data", '$.totalBrutto'),
@@ -265,10 +275,11 @@ export function buildCareQueueQueries(
             ON l."offerKind" = 'studnie' AND l."offerId" = s."id" AND l."rn" = 1
         LEFT JOIN care_states cs
             ON cs."offerKind" = 'studnie' AND cs."offerId" = s."id"
+        LEFT JOIN users su ON s."userId" = su."id"
         WHERE ${scopeStudnie}${andBornStudnie}
     ), ranked AS (
         SELECT "offerKind", "offerId", "outcome", "next", "last", "born",
-            "number", "client", "value", "phone", "note", "snoozed", "done", "careUpdatedAt",
+            "number", "client", "clientNumber", "owner", "author", "value", "phone", "note", "snoozed", "done", "careUpdatedAt",
             "invest", "address", "contact", "email",
             ${BUCKET_CASE(opts.nowIso)} AS "bucketWeight"
         FROM base
@@ -289,7 +300,7 @@ export function buildCareQueueQueries(
 
     const data = Prisma.sql`${withSql}
         SELECT "offerKind", "offerId", "outcome", "next", "last", "born",
-            "number", "client", "value", "phone", "note",
+            "number", "client", "clientNumber", "owner", "author", "value", "phone", "note",
             "invest", "address", "contact", "email",
             "snoozed", "done", "careUpdatedAt", "bucketWeight" FROM ranked
         WHERE ${cursorSql}${opts.hidePaused ? Prisma.sql` AND "done" IS NULL AND ("snoozed" IS NULL OR "snoozed" <= ${opts.nowIso})` : Prisma.empty}
@@ -402,6 +413,9 @@ export async function getCareQueue(
                 born: string | null;
                 number: string | null;
                 client: string | null;
+                clientNumber: string | null;
+                owner: string | null;
+                author: string | null;
                 value: number | null;
                 phone: string | null;
                 invest: string | null;
@@ -440,6 +454,12 @@ export async function getCareQueue(
             createdAt: r.born,
             number: r.number,
             clientName: r.client,
+            clientNumber:
+                typeof r.clientNumber === 'string' && r.clientNumber.trim() !== ''
+                    ? r.clientNumber
+                    : null,
+            ownerName: typeof r.owner === 'string' && r.owner.trim() !== '' ? r.owner : null,
+            authorName: typeof r.author === 'string' && r.author.trim() !== '' ? r.author : null,
             value: typeof r.value === 'number' ? r.value : null,
             phone: r.phone,
             investName: typeof r.invest === 'string' ? r.invest : null,
@@ -465,6 +485,9 @@ export interface CareQueueViewItem {
     lastContactAt: string | null;
     number: string | null;
     clientName: string | null;
+    clientNumber: string | null;
+    ownerName: string | null;
+    authorName: string | null;
     value: number | null;
     phone: string | null;
     investName: string | null;
@@ -508,6 +531,9 @@ export function buildCareQueueView(
             lastContactAt: r.lastContactAt,
             number: r.number ?? null,
             clientName: r.clientName ?? null,
+            clientNumber: r.clientNumber ?? null,
+            ownerName: r.ownerName ?? null,
+            authorName: r.authorName ?? null,
             value: r.value ?? null,
             phone: r.phone ?? null,
             investName: r.investName ?? null,
@@ -901,7 +927,10 @@ export interface CareNotification {
     readAt: string | null;
     createdAt: string;
     clientName: string | null;
+    clientNumber: string | null;
     number: string | null;
+    ownerName: string | null;
+    value: number | null;
     investName: string | null;
     investAddress: string | null;
     contactPerson: string | null;
@@ -1137,7 +1166,13 @@ export async function listCareNotifications(
     // Wzbogacenie o klienta/numer (JOIN warunkowy kind) — żadnych surowych ID w UI.
     const cols = Prisma.sql`n."id", n."userId", n."offerKind", n."offerId", n."type", n."readAt", n."createdAt",
         COALESCE(o."clientName", s."clientName") AS "clientName",
+        COALESCE(NULLIF(o."clientNumber", ''), NULLIF(s."clientNumber", '')) AS "clientNumber",
         COALESCE(o."offer_number", s."offer_number") AS "number",
+        COALESCE(NULLIF(TRIM(COALESCE(ou."firstName", '') || ' ' || COALESCE(ou."lastName", '')), ''), ou."username", NULLIF(TRIM(COALESCE(su."firstName", '') || ' ' || COALESCE(su."lastName", '')), ''), su."username") AS "ownerName",
+        COALESCE(CAST(json_extract(o."data", '$.totalBrutto') AS REAL),
+            CAST(COALESCE(NULLIF(s."totalPrice", 0), json_extract(s."data", '$.totalBrutto'),
+                (SELECT CAST(ROUND(COALESCE(SUM(value->>'totalPrice'), 0), 2) AS REAL)
+                    FROM json_each(s."data", '$.wellsExport'))) AS REAL)) AS "value",
         COALESCE(NULLIF(o."investName", ''), NULLIF(s."investName", ''), json_extract(o."data", '$.investName'), json_extract(s."data", '$.investName'), json_extract(o."data", '$.budowa'), json_extract(s."data", '$.budowa')) AS "investName",
         COALESCE(json_extract(o."data", '$.investAddress'), json_extract(s."data", '$.investAddress')) AS "investAddress",
         COALESCE(json_extract(o."data", '$.contactPerson'), json_extract(s."data", '$.contactPerson'), json_extract(o."data", '$.clientContacts[0].name'), json_extract(s."data", '$.clientContacts[0].name')) AS "contactPerson",
@@ -1145,7 +1180,9 @@ export async function listCareNotifications(
         COALESCE(json_extract(o."data", '$.clientEmail'), json_extract(s."data", '$.clientEmail'), json_extract(o."data", '$.clientContacts[0].email'), json_extract(s."data", '$.clientContacts[0].email')) AS "email"
         FROM "care_notifications" n
         LEFT JOIN offers_rel o ON n."offerKind" = 'rury' AND o."id" = n."offerId"
-        LEFT JOIN offers_studnie_rel s ON n."offerKind" = 'studnie' AND s."id" = n."offerId"`;
+        LEFT JOIN offers_studnie_rel s ON n."offerKind" = 'studnie' AND s."id" = n."offerId"
+        LEFT JOIN users ou ON o."userId" = ou."id"
+        LEFT JOIN users su ON s."userId" = su."id"`;
     const items = (await db.$queryRaw<CareNotification[]>(
         opts.unreadOnly
             ? Prisma.sql`SELECT ${cols} WHERE n."userId" = ${userId} AND n."readAt" IS NULL ORDER BY n."createdAt" DESC LIMIT ${limit}`
@@ -1166,6 +1203,18 @@ export async function markCareNotificationRead(
 ): Promise<number> {
     const rows = (await db.$queryRaw<Array<{ c: number | bigint }>>(
         Prisma.sql`UPDATE "care_notifications" SET "readAt" = ${nowIso} WHERE "id" = ${notifId} AND "userId" = ${userId} AND "readAt" IS NULL RETURNING 1 AS "c"`
+    )) as Array<{ c: number | bigint }>;
+    return rows.length;
+}
+
+/** Cofnięcie odczytu własnego powiadomienia (guard owner w WHERE). Zwraca liczbę. */
+export async function markCareNotificationUnread(
+    db: RawDb,
+    userId: string,
+    notifId: string
+): Promise<number> {
+    const rows = (await db.$queryRaw<Array<{ c: number | bigint }>>(
+        Prisma.sql`UPDATE "care_notifications" SET "readAt" = NULL WHERE "id" = ${notifId} AND "userId" = ${userId} AND "readAt" IS NOT NULL RETURNING 1 AS "c"`
     )) as Array<{ c: number | bigint }>;
     return rows.length;
 }

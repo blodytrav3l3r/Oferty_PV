@@ -187,6 +187,81 @@ describe('kartotekaFollowUp — edycja, usuwanie, rozmiar, klient', () => {
         expect(captured).toContain('Zapisz kontakt do klienta');
     });
 
+    test('osadzenie spoza kartoteki: goły ctx rzuca, prototypowy otwiera modal', async () => {
+        let captured = '';
+        const fetchMock = async (url: string) => {
+            if (String(url).includes('/followups')) {
+                return { ok: true, json: async () => ({ items: [] }) };
+            }
+            return {
+                ok: true,
+                json: async () => ({
+                    data: { contactPerson: 'Jan Kowalski', clientPhone: '600', clientEmail: '' }
+                })
+            };
+        };
+        const overlayStub: any = { querySelector: () => null, querySelectorAll: () => [] };
+        const cc = ccStub();
+        const baseCtx: any = {
+            fetch: fetchMock,
+            authHeaders: () => ({}),
+            logger: { info() {}, warn() {}, error() {} },
+            legacyToContacts: cc.legacyToContacts,
+            normalizeContacts: cc.normalizeContacts,
+            renderEditor: cc.renderEditor,
+            collectContacts: cc.collectContacts,
+            bindEditor: cc.bindEditor,
+            window: {
+                escapeHtml: (s: unknown) => String(s ?? ''),
+                escapeHtmlAttr: (s: unknown) => String(s ?? ''),
+                offerTypeForApi: () => 'rury',
+                showModal: (opts: any) => {
+                    captured = opts.html;
+                    return overlayStub;
+                },
+                showToast() {},
+                closeModal() {},
+                lucide: null
+            },
+            document: { createElement: () => ({}) },
+            Event: function () {},
+            console,
+            module: { exports: {} }
+        };
+        overlayStub.querySelector = (sel: string) => {
+            if (sel === '#fu-timeline') return { addEventListener() {}, innerHTML: '' };
+            if (sel === '#fu-cc-list')
+                return {
+                    addEventListener() {},
+                    hidden: false,
+                    appendChild() {},
+                    querySelector: () => null
+                };
+            return { addEventListener() {}, hidden: false };
+        };
+        const file = path.join(__dirname, '../../public/js/kartoteka/kartotekaFollowUp.js');
+        const code = stripEsm(fs.readFileSync(file, 'utf8'));
+        vm.createContext(baseCtx);
+        vm.runInContext(code, baseCtx);
+        const m = baseCtx.module.exports;
+        // Goły obiekt (stary błąd martwego klika): brak this.* → reject.
+        const bareCtx: any = { loadLocalOffers: async () => {} };
+        await expect(
+            m.openFollowUpModal.call(bareCtx, 'o-1', 'oferta', { title: 'OF/1' })
+        ).rejects.toThrow();
+        // Kontekst z prototypem mixina (jak openCareContactModal): modal wstaje.
+        const saved: string[] = [];
+        const protoCtx: any = Object.assign(Object.create(m), {
+            loadLocalOffers: async () => void saved.push('refresh')
+        });
+        await m.openFollowUpModal.call(protoCtx, 'o-1', 'oferta', {
+            title: 'OF/1',
+            onSaved: async () => void saved.push('refresh')
+        });
+        expect(captured).toContain('OF/1');
+        expect(protoCtx._fuOnSaved).not.toBeNull();
+    });
+
     test('startFollowUpEdit wypełnia formularz i przełącza przycisk', () => {
         const vals: Record<string, any> = {};
         const overlay = {

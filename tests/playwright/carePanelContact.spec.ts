@@ -11,6 +11,7 @@
  *   (k) DOM: karta pełna pokazuje obiekt + tel: + mailto:
  *   (l) DOM: karta goła chowa linie (brak data-care-*)
  *   (m) DOM: karta powiadomienia niesie obiekt + tel:
+ *   (n) DOM: Kontakt z kafelka otwiera modal opieki w miejscu (bez kartoteki)
  */
 import { test, expect } from '@playwright/test';
 
@@ -147,5 +148,22 @@ test.describe.serial('e2e: panel opieki — obiekt i kontakt', () => {
         await expect(card, 'powiadomienia pełnej brak').toHaveCount(1, { timeout: 15000 });
         await expect(card.locator('[data-care-object]'), 'obiektu brak').toBeVisible();
         await expect(card.locator('a[href="tel:601000111"]'), 'tel: brak').toHaveCount(1);
+    });
+
+    test('(n) Kontakt otwiera modal opieki bez nawigacji do kartoteki', async ({ page }) => {
+        await openPanel(page);
+        const card = page.locator('.care-queue-card', { hasText: `${CLIENT_TAG}-full` });
+        await expect(card, 'karty pełnej brak').toHaveCount(1, { timeout: 15000 });
+        await card.locator('[data-care-contact-open]').click();
+        await expect(page.locator('#offer-followup-title'), 'modal opieki nie otwarty').toBeVisible(
+            { timeout: 15000 }
+        );
+        expect(page.url(), 'nawigacja do kartoteki zamiast modala').not.toContain('kartoteka');
+        // Modal sam stawia focus w dialogu → Escape dociera do overlaya.
+        await page.keyboard.press('Escape');
+        await expect(page.locator('#offer-followup-title'), 'modal nie zamknięty').toHaveCount(0, {
+            timeout: 15000
+        });
+        await expect(card, 'kolejka zniknęła po modalu').toHaveCount(1);
     });
 });

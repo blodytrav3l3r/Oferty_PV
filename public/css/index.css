@@ -2703,6 +2703,50 @@ html[data-theme='light'] body.index-page.logged-in::before {
     justify-content: space-between;
     gap: 8px;
 }
+/* L1: numer oferty + badgsy; L2: klient + obiekt + wartość; L3 = .care-queue-contact. */
+.care-queue-l1 {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    min-width: 0;
+}
+.care-queue-no {
+    font-weight: var(--fw-bold);
+    font-size: var(--fs-md);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+}
+.care-queue-badges {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: auto;
+    flex-shrink: 0;
+}
+.care-queue-l2 {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 4px;
+    min-width: 0;
+}
+.care-queue-client {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    column-gap: 8px;
+    row-gap: 2px;
+    min-width: 0;
+}
+.care-queue-client-no {
+    color: var(--text-muted);
+    font-size: var(--fs-base);
+    white-space: nowrap;
+}
 .care-queue-name {
     font-weight: var(--fw-bold);
     font-size: var(--fs-md);
@@ -2735,6 +2779,16 @@ html[data-theme='light'] body.index-page.logged-in::before {
     flex-wrap: wrap;
     gap: 8px;
     min-width: 0;
+    margin-top: 2px;
+    font-size: var(--fs-base);
+    color: var(--text-secondary);
+}
+/* Ten sam rozmiar, inny kolor rodzaju ( pasek + badge). */
+.care-queue-card.is-rury {
+    border-left: 4px solid var(--warn, #d97706);
+}
+.care-queue-card.is-studnie {
+    border-left: 4px solid var(--accent);
 }
 .care-queue-contact a,
 .care-notif-contact a {
@@ -2836,6 +2890,109 @@ html[data-theme='light'] body.index-page.logged-in::before {
     align-items: baseline;
     justify-content: space-between;
     gap: 8px;
+}
+/* Karta 4-liniowa: L1 numer+cena+badgsy, L2 klient+obiekt+delay, L3 kontakt, L4 zgłoszono+ikony. */
+.care-notif-l1 {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    min-width: 0;
+}
+.care-notif-no {
+    font-weight: var(--fw-bold);
+    font-size: var(--fs-md);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+}
+.care-notif-badges {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: auto;
+    flex-shrink: 0;
+}
+.care-notif-price {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    font-weight: var(--fw-semibold);
+    white-space: nowrap;
+    color: var(--warn-hover, var(--warn));
+}
+.care-notif-card.err .care-notif-price {
+    color: var(--danger-hover);
+}
+.care-notif-l2 {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 4px;
+    min-width: 0;
+}
+.care-notif-client {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    column-gap: 8px;
+    row-gap: 2px;
+    min-width: 0;
+}
+.care-notif-client-no {
+    color: var(--text-muted);
+    font-size: var(--fs-base);
+    white-space: nowrap;
+}
+.care-notif-obj {
+    color: var(--text-secondary);
+    font-size: var(--fs-base);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.care-notif-contact {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    min-width: 0;
+    margin-top: 2px;
+    font-size: var(--fs-base);
+    color: var(--text-secondary);
+}
+.care-notif-foot {
+    margin-top: 4px;
+}
+.care-notif-date {
+    color: var(--text-muted);
+    font-size: var(--fs-base);
+}
+.care-notif-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: auto;
+    flex-shrink: 0;
+}
+.care-notif-owner {
+    color: var(--text-muted);
+    font-size: var(--fs-sm);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 140px;
+    margin-right: 2px;
+}
+.care-icon-btn {
+    padding: 4px;
+}
+.care-icon-btn svg {
+    width: 16px;
+    height: 16px;
+}
+.care-notif-card.is-read {
+    opacity: 0.65;
 }
 .care-notif-who {
     font-weight: var(--fw-bold);
@@ -2995,15 +3152,27 @@ html[data-theme='light'] body.index-page.logged-in::before {
     background: var(--bg-tertiary);
     color: var(--text-muted);
     border-color: var(--border);
-    text-transform: lowercase;
-    font-weight: var(--fw-regular, 400);
+    text-transform: uppercase;
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-bold);
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+}
+.care-kind-pill.is-rury {
+    background: var(--warn-bg);
+    color: var(--warn-hover, var(--warn));
+    border-color: var(--warn-border);
+}
+.care-kind-pill.is-studnie {
+    background: var(--accent-bg);
+    color: var(--accent-text);
+    border-color: var(--accent-border-dim);
 }
 .care-status-pill {
     text-transform: uppercase;
     font-size: var(--fs-xs);
     letter-spacing: 0.02em;
     white-space: nowrap;
-    margin-left: auto;
 }
 .care-status-paused {
     background: var(--bg-tertiary);
@@ -3018,10 +3187,21 @@ html[data-theme='light'] body.index-page.logged-in::before {
 .care-queue-price {
     font-family: var(--font-mono);
     font-variant-numeric: tabular-nums;
+    font-weight: var(--fw-bold);
+    margin-left: auto;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
-.care-queue-no {
+.care-queue-staff {
     color: var(--text-muted);
-    font-weight: var(--fw-regular, 400);
+    font-size: var(--fs-sm);
+    margin-top: 6px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.care-queue-l2 .care-queue-obj {
+    color: var(--text-muted);
     font-size: var(--fs-base);
 }
 .care-queue-text {
