@@ -267,8 +267,11 @@ async function diagnoseSync404(clientId) {
  * Dokleja pełną listę osób z edytora oferty do katalogu (PUT sync).
  * Bez bazy updatedAt — wołane TUŻ PO udanym zapisie firmy (semantyka
  * last-write-wins jak batch PUT). Fetch-fail = toast, nigdy pusty sync.
+ * Unia z katalogiem (nie replace): sync pełnym zestawem skasowałby osoby
+ * spoza oferty. Brak katalogu (fetch fail) = skip, nigdy delete. Nowi
+ * powyżej limitu 10 odpadają z warningiem (BE i tak odrzuciłby całość).
  */
-function syncOfferEditorToCatalog(clientId, baseUpdatedAt) {
+async function syncOfferEditorToCatalog(clientId, baseUpdatedAt) {
     try {
         const box = document.getElementById('client-contacts');
         const CC = window.ClientContacts;
@@ -286,8 +289,42 @@ function syncOfferEditorToCatalog(clientId, baseUpdatedAt) {
         if (named.length === 0) return;
         if (named.length < rows.length)
             showToast('Pominięto osoby bez imienia (katalog wymaga nazwy)', 'warning');
-        named[0].isPrimary = true;
-        syncClientContacts(clientId, named, baseUpdatedAt || null).then(async (r) => {
+        let base = null;
+        const hit = clientContactsCache[clientId];
+        if (hit && hit.ok) base = hit.list;
+        else {
+            const fresh = await fetchClientContacts(clientId);
+            if (!fresh.ok) {
+                showToast('Kontakty nie dopisane do katalogu: brak połączenia', 'warning');
+                return;
+            }
+            base = fresh.list;
+        }
+        const key = (r) =>
+            `${String(r.name || '')
+                .trim()
+                .toLowerCase()}|${String(r.phone || '').replace(/\D/g, '')}`;
+        const seen = new Set(base.map(key));
+        const merged = base.map((r) => ({ ...r }));
+        let skipped = 0;
+        for (const n of named) {
+            if (seen.has(key(n))) continue;
+            if (merged.length >= MAX_CATALOG_CONTACTS) {
+                skipped++;
+                continue;
+            }
+            seen.add(key(n));
+            // Pierwsza ★ tylko na pustym katalogu; istniejącej nie ruszamy.
+            n.isPrimary = merged.length === 0;
+            merged.push(n);
+        }
+        if (skipped > 0)
+            showToast(
+                `Katalog pełny (${MAX_CATALOG_CONTACTS} osób) — pominięto ${skipped}`,
+                'warning'
+            );
+        if (merged.length === base.length) return;
+        syncClientContacts(clientId, merged, baseUpdatedAt || null).then(async (r) => {
             if (!r.ok) {
                 if (r.status === 404) {
                     const cause = await diagnoseSync404(clientId);

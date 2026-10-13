@@ -408,3 +408,6 @@
 **Objaw**: Chwilowy błąd sieci/500 przy odczycie + klik Zapisz → pusty lub okrojony katalog kontaktów.
 **Fix** (wzorzec C1 `requireClientsLoaded`): guard w `saveEditedClientInDb` wymaga świeżego cache; brak → jeden re-fetch + re-render edytora do weryfikacji (zapis dopiero po ponownym kliku); dalej fail → blokada + toast, zero PUT. Celowy wipe po wczytanym katalogu działa bez zmian.
 **Testy**: `tests/frontend/clientContactsFailClosed.test.ts` (blokada + re-fetch/re-render; RED-na-starym 2/2).
+
+**Dopiska (ta sama klasa, ścieżka oferta→katalog)**: `syncOfferEditorToCatalog` „doklejał" osoby z edytora oferty przez replace-sync — oferta z 1 osobą kasowała resztę katalogu.
+**Fix**: unia z katalogiem po kluczu `imię|telefon` (append-only, ★ tylko na pustym, cap 10 z warningiem); brak zmian → zero PUT; fetch fail → skip + toast.
