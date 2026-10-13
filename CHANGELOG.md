@@ -4,6 +4,26 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.43.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.42.1...v1.43.0) (2026-10-13)
+
+### Features
+
+- **offers:** modal opieki z kafelka kolejki w miejscu ([45e7a9d](https://github.com/blodytrav3l3r/Oferty_PV/commit/45e7a9d2bcee6daef1d055a49e99f5dc2a1f82f8))
+- **offers:** obiekt-adres-kontakt w kolejce i powiadomienia ([c88b94a](https://github.com/blodytrav3l3r/Oferty_PV/commit/c88b94af3120738682ee4e34fe85dfac76b57c52))
+- **offers:** presety snooze +3/+6/+9d, custom 1-28d ([5cf788b](https://github.com/blodytrav3l3r/Oferty_PV/commit/5cf788ba8cb4d5d48e4662b879c1caac853e3e78))
+- **ui:** kafelek wyczysc wszystko w centrum powiadomien ([c85fbf6](https://github.com/blodytrav3l3r/Oferty_PV/commit/c85fbf6ede4ccb683434c4fd27678cc80c08ba8f))
+- **ui:** karty opieki z obiektem i klikalnym kontaktem ([2816b8f](https://github.com/blodytrav3l3r/Oferty_PV/commit/2816b8f77744cfb4da7d5828d3b3a05c101d7509))
+
+### Bug Fixes
+
+- **clients:** doklejanie oferty do katalogu zamiast replace ([b07a352](https://github.com/blodytrav3l3r/Oferty_PV/commit/b07a352523dbe648c2a0a247d29e726f3f6766e0))
+- **clients:** fail-closed zapisu katalogu po failed-load ([23d5e5c](https://github.com/blodytrav3l3r/Oferty_PV/commit/23d5e5cb27481ba757ba0eb0091e83f8d21f992d))
+- **preco:** koercja tekstowych komorek arkusza w imporcie ([19f475a](https://github.com/blodytrav3l3r/Oferty_PV/commit/19f475a67ce09329c9cd48af9a8f2d4d3d7fe738))
+- **ui:** ikona layout-grid w iconslim ([714fdb2](https://github.com/blodytrav3l3r/Oferty_PV/commit/714fdb214b1a1dbcc4ffab7d77d551725f8fb18d))
+- **ui:** mniejszy banner skrzynki w powiadomieniach ([65a69b3](https://github.com/blodytrav3l3r/Oferty_PV/commit/65a69b312da956ee84235c07e989946ce8e7ced3))
+- **ui:** przelacznik widoku kolejki w stylu kafli ([825ea9b](https://github.com/blodytrav3l3r/Oferty_PV/commit/825ea9b0d7adf12ad3377e1efa6659fbf9ccd7fd))
+- **ui:** wyrownanie kafli licznikow przy tytulach ([393bcc8](https://github.com/blodytrav3l3r/Oferty_PV/commit/393bcc834732111fd4c0a01e8af447ffed5f072e))
+
 ### [1.42.1](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.42.0...v1.42.1) (2026-10-12)
 
 ### Bug Fixes
