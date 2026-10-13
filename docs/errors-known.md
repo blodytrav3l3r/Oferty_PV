@@ -394,3 +394,10 @@
 **Fix**: `_excelSyncRowSelect` w handlerach modelu (Rodzaj, Średnica, Właz, Kineta) — value + labelka z tekstu wybranej opcji, in-place, bez ruszania fokusa. Dyspozytora nie tykać (globalny blast radius).
 **Testy**: `tests/frontend/excelSelectLiveLabel.test.ts` (prawdziwy DOM jsdom, RED-na-starym 3/3).
 **Testy**: `cspInventory` 14/14, `typecheck:frontend` + ESLint czyste.
+
+## 59. Draft PRECO 422: tekstowe komórki Excela jako stringi pod strict zod
+
+**Problem**: `collectPrecoRows` (`pricelistXlsx.js`) kopiował surowe wartości `sheet_to_json` (`row['DN Rury'] || 0` — string `"160"` przechodził, `''`/`'—'` cicho na `0`), a `precoNestedToFlat` forwardował je 1:1 do `POST /api/pricelist-versions/preco/drafts`, gdzie `precoKinetyRowSchema`/`precoZakresyRowSchema` to strict `z.number()` → 422 `expected number, received string`. Ścieżka live działała, bo `flattenAndSave` używa `requireFinitePrice` (numeryczne stringi akceptuje).
+**Objaw**: `Błąd zapisu draftu PRECO: Nieprawidłowe wiersze: preco.kinety[0].dn — Invalid input: expected number, received string; …` (draft studni zapisany, PRECO nie).
+**Fix**: `precoNum()` w `collectPrecoRows` — reuse `coerceNumerics` (spacje precz, `,` → `.`, puste/placeholder → `null` → jawny 422 z BE, nigdy ciche 0); obejmuje kinety, zakresy `min/max`, ceny w `grupy` i skalary Dodatkowe (konsumenci mają guardy `|| 0`). Opcja `z.coerce` po stronie BE odrzucona (reaktywuje ciche `Number('')===0`, łamie D-FIX-2, szerszy blast radius).
+**Testy**: `tests/frontend/pricelistXlsx.test.ts` — wariant tekstowy (`'160'`, `'500,00'`, `''`/`'—'` → `null`, `typeof flat == 'number'`); RED-na-starym, GREEN-po-fixie.

@@ -92,6 +92,18 @@
     }
 
     /**
+     * Liczba z surowej komórki XLSX dla ścieżki PRECO (1:1 z coerceNumerics:
+     * spacje precz, przecinek na kropkę, puste/'-'/'—' → null).
+     * Reuse zamiast dubla logiki; null przepuszcza dalej by BE zwrócił
+     * jawny 422 (D-FIX-2: zakaz cichego 0).
+     */
+    function precoNum(val) {
+        var o = { v: val };
+        coerceNumerics(o, ['v']);
+        return o.v;
+    }
+
+    /**
      * Wiersz arkusza PRECO_* do precoDataMap. Logika 1:1 ze studniowym importem
      * (PRECO_Kinety / PRECO_Dodatki / PRECO_Zakresy, grupowanie po 'DN Studni').
      */
@@ -114,21 +126,21 @@
 
             if (sheetName === 'PRECO_Kinety') {
                 precoDataMap[dn].kinety.push({
-                    dn: row['DN Rury'] || 0,
-                    prosta: row['Cena prosta (PLN)'] || 0,
-                    dodWlot: row['Dod. wlot (PLN)'] || 0
+                    dn: precoNum(row['DN Rury']),
+                    prosta: precoNum(row['Cena prosta (PLN)']),
+                    dodWlot: precoNum(row['Dod. wlot (PLN)'])
                 });
             } else if (sheetName === 'PRECO_Dodatki') {
-                precoDataMap[dn].skrzynkaWlazowa = row['Skrzynka włazowa'] || 0;
-                precoDataMap[dn].cenaPelnaWysMB = row['Cena pełna wys MB'] || 0;
-                precoDataMap[dn].cenaDnoOsadnika = row['Cena dna osadnika'] || 0;
+                precoDataMap[dn].skrzynkaWlazowa = precoNum(row['Skrzynka włazowa']);
+                precoDataMap[dn].cenaPelnaWysMB = precoNum(row['Cena pełna wys MB']);
+                precoDataMap[dn].cenaDnoOsadnika = precoNum(row['Cena dna osadnika']);
             } else if (sheetName === 'PRECO_Zakresy') {
                 var typ = row['Typ'];
                 if (typ && precoDataMap[dn][typ]) {
-                    var min = row['Min'] || 0;
-                    var max = row['Max'] || 0;
+                    var min = precoNum(row['Min']);
+                    var max = precoNum(row['Max']);
                     var g = row['Grupa DN'];
-                    var cena = row['Cena (PLN)'] || 0;
+                    var cena = precoNum(row['Cena (PLN)']);
 
                     var table = precoDataMap[dn][typ];
                     var existingRow = null;

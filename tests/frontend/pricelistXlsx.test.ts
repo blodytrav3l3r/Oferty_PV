@@ -131,6 +131,62 @@ describe('pricelistXlsx: parseWorkbookToJson', () => {
         expect(preco.cenaPelnaWysMB).toBe(300);
     });
 
+    test('studnie: PRECO_* z tekstowymi komórkami Excela (stringi) → liczby', () => {
+        const { PX } = loadPX();
+        const wb = workbook({
+            PRECO_Kinety: [
+                {
+                    'DN Studni': '1000',
+                    'DN Rury': '160',
+                    'Cena prosta (PLN)': '500,00',
+                    'Dod. wlot (PLN)': '50'
+                },
+                {
+                    'DN Studni': '1000',
+                    'DN Rury': '',
+                    'Cena prosta (PLN)': '',
+                    'Dod. wlot (PLN)': '—'
+                }
+            ],
+            PRECO_Zakresy: [
+                {
+                    Typ: 'spadekKineta',
+                    'DN Studni': '1000',
+                    Min: '0',
+                    Max: '100',
+                    'Grupa DN': '160',
+                    'Cena (PLN)': '10,5'
+                }
+            ],
+            PRECO_Dodatki: [
+                {
+                    'DN Studni': '1000',
+                    'Skrzynka włazowa': '100',
+                    'Cena dna osadnika': '200',
+                    'Cena pełna wys MB': '300'
+                }
+            ]
+        });
+        const out = PX.parseWorkbookToJson(fakeXlsx(), wb, { includePreco: true });
+        const preco = out.precoDataMap[1000];
+        expect(preco.kinety).toEqual([
+            { dn: 160, prosta: 500, dodWlot: 50 },
+            // D-FIX-2: puste/placeholder → null (jawny 422 z BE), nigdy ciche 0.
+            { dn: null, prosta: null, dodWlot: null }
+        ]);
+        expect(preco.spadekKineta).toEqual([{ min: 0, max: 100, grupy: { 160: 10.5 } }]);
+        expect(preco.skrzynkaWlazowa).toBe(100);
+        expect(preco.cenaDnoOsadnika).toBe(200);
+        expect(preco.cenaPelnaWysMB).toBe(300);
+        // Koniec łańcucha: flat gotowy pod strict zod draftu (liczby, nie stringi).
+        const flat = PX.precoNestedToFlat(out.precoDataMap);
+        expect(typeof flat.kinety[0].dn).toBe('number');
+        expect(typeof flat.kinety[0].height).toBe('number');
+        expect(typeof flat.kinety[0].cena).toBe('number');
+        expect(typeof flat.zakresy[0].min).toBe('number');
+        expect(typeof flat.zakresy[0].max).toBe('number');
+    });
+
     test('studnie: arkusz Styczna łączony jak reszta (nie PRECO_*)', () => {
         const { PX } = loadPX();
         const wb = workbook({

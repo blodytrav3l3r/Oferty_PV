@@ -586,7 +586,7 @@ Odpowiedź po przekroczeniu: `429` + nagłówek `Retry-After`.
 
 ## Walidacja liczb (finite numbers)
 
-Pola cenowe, ilości i wymiary nie przyjmują cichych zer. Endpointy `PUT /api/products`, `PUT /api/products-studnie` oraz `PUT/PATCH /api/preco-pricing` odrzucają wartości `null`, `undefined`, pusty string, stringi nienumeryczne, `NaN`, `Infinity`, `-Infinity` oraz liczby ujemne — odpowiedzią jest **HTTP 400 i brak jakiegokolwiek zapisu do DB**. Poprawne liczby oraz numeryczne stringi (np. `"13"`) przechodzą (200). Schematy Zod dla ofert i snapshotów wymagają dodatkowo `.finite()` na polach cen/wymiarów (nie-skończone wartości odrzucane na wejściu).
+Pola cenowe, ilości i wymiary nie przyjmują cichych zer. Endpointy `PUT /api/products`, `PUT /api/products-studnie` oraz `PUT/PATCH /api/preco-pricing` odrzucają wartości `null`, `undefined`, pusty string, stringi nienumeryczne, `NaN`, `Infinity`, `-Infinity` oraz liczby ujemne — odpowiedzią jest **HTTP 400 i brak jakiegokolwiek zapisu do DB**. Poprawne liczby oraz numeryczne stringi (np. `"13"`) przechodzą (200). Schematy Zod dla ofert i snapshotów wymagają dodatkowo `.finite()` na polach cen/wymiarów (nie-skończone wartości odrzucane na wejściu). Import XLSX PRECO normalizuje komórki tekstowe po stronie FE (`precoNum` w `pricelistXlsx.js`: trim, spacje precz, `,` → `.`, puste/placeholder → `null` → jawny 422 zamiast cichego 0); BE pozostaje SSoT.
 
 ---
 

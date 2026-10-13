@@ -81,3 +81,4 @@ Jedyne źródło prawdy: `docs/UI_GUIDELINES.md`. Kluczowe reguły:
 - Kod: `public/js/import-export/` (toolbar `window.importExportToolbar`), flaga `feature_import_export_enabled` w `settings`, init w `kartotekaInit.js:89`, API kartoteki `window.kartotekaUI`.
 - Zakaz modyfikacji rdzenia: `offerCrud.js`, `offerManager.js`, `offerItems.js`, `wizard.js`, `router.js`.
 - XLSX: 12 wspólnych kolumn; `NR_STUDNI` = typ PEHD (rury) / nazwa własna (studnie).
+- Import cennika studni z PRECO: `PRECO_*` → `collectPrecoRows` → `splitStudnieImport` → draft: `precoNestedToFlat` (1:1 z BE `flattenAndSave`) + `buildDraftPayload` → 2× POST (`studnie/drafts`, `preco/drafts`); live: prosto do `precoPricing`. Koercja liczb PRECO w `collectPrecoRows` przez `precoNum` (reuse `coerceNumerics`); cel importu wybiera `openImportTargetModal` (live/draft + nota).
