@@ -64,6 +64,22 @@ Pulpit (widget: liczniki + top wiersze)
 
 Autoryzacja: cookie `authToken` (HttpOnly). Pełna spec: Swagger `/api/docs`.
 
+## Payload kolejki i powiadomień (Obiekt/kontakt)
+
+`GET /queue`, `GET /panel.queue`, `GET /notifications` zwracają pola
+pochodne ze snapshotu `offers_*.data` (bez migracji, `json_extract`):
+
+| Pole            | Źródło                                                 | Uwagi                                                |
+| --------------- | ------------------------------------------------------ | ---------------------------------------------------- |
+| `investName`    | kolumna, fallback `$.investName`, `$.budowa`           | label UI `Obiekt`, `null` → wiersz ukryty            |
+| `investAddress` | `$.investAddress`                                      | label `Adres`, `null` → wiersz ukryty                |
+| `contactPerson` | `$.contactPerson`, fallback `$.clientContacts[0].name` | label `Kontakt`, escapowany                          |
+| `phone`         | `$.clientPhone`, fallback `$.clientContacts[0].phone`  | link `tel:` po sanitacji cyfr/`+`, brak → brak linku |
+| `email`         | `$.clientEmail`, fallback `$.clientContacts[0].email`  | link `mailto:` po walidacji, brak → brak linku       |
+
+Karta kolejki i karta powiadomienia pokazują `Obiekt/Adres/Kontakt + tel:/mailto:`.
+Dane w scope requesta (jak `clientName`); brak wiersza w blobie = `null`, nie 404.
+
 ## Centrum powiadomień (skrzynka za repem, decyzja 2026-10-11, zmiana kontraktu A+C)
 
 Mailbox = `repOwner ?? user.id` (wybrany handlowiec albo własna).

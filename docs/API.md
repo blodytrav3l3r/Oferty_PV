@@ -537,6 +537,15 @@ Sonda CSP dashboardu Operacje czyta `Content-Security-Policy` z `/api/telemetry/
 
 ---
 
+## Opieka (`/api/care`)
+
+Kontrakt w `docs/OPIEKA.md` + Swagger `/api/docs` (autorytatywny).
+`GET /queue`, `GET /panel`, `GET /notifications` zwracają dodatkowo
+`investName/investAddress/contactPerson/phone/email` (derived z `offers_*.data`
+via `json_extract`, `null` gdy brak; zero migracji). Szczegóły pól: `docs/OPIEKA.md §Payload`.
+
+---
+
 ## Rate Limiting
 
 Odpowiedź po przekroczeniu: `429` + nagłówek `Retry-After`.

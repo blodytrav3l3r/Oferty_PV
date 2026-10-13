@@ -154,6 +154,10 @@ Zamiast inline style używaj istniejących utility. Najczęściej używane:
 - Każda interpolacja danych do `innerHTML` przez `escapeHtml(str)`; atrybuty
   (`title`, `aria-label`) przez `escapeHtmlAttr`/`escapeJsStr`.
 - Przyciski ikonowe bez tekstu MUSZĄ mieć `aria-label`.
+- Kontakt care (`tel:/mailto:`): buduj przez `createElement('a')`, nigdy `innerHTML`.
+  Tekst przez `textContent`, href po sanitacji (`tel:` tylko cyfry/`+`/spacje/`()-/`;
+  `mailto:` tylko poprawny e-mail), `aria-label` z kontekstem. Brak telefonu/maila
+  = brak linku (nie pusty `href`).
 
 ## 8a. Dashboard Operacje / Transfer Center (kontrakt)
 
