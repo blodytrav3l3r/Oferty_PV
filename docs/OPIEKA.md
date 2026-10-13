@@ -144,7 +144,9 @@ BE care.ts: /panel (ETag per mailbox `repOwner ?? user.id`, COUNT||MAX(rowid)
   POST /read bulk/single (guard WHERE userId)
 SERWIS careService.ts: notifCandidates (CTE latest + CASE ntype:
   SLA_BREACH / ESCALATION / CALLBACK_DUE) → sync (INSERT OR IGNORE
-  + auto-read + retencja 90d/500; z repOwner no-op) → list/markRead self
+  + auto-read + retencja 90d/500; z repOwner no-op; throttle 60 s per
+  skrzynka od P0.3 — rerun w oknie zwraca `skipped: 'throttled'`)
+  → list/markRead self
 DB care_notifications(id, userId, offerKind, offerId, type, readAt, createdAt)
 ```
 

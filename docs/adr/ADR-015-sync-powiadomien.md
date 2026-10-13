@@ -76,3 +76,13 @@ R3 VERIFIED (`76904fa`): marker `m = MAX(updatedAt)` w `getCareEtagInput`
 POST/PUT bumpują `updatedAt` (`followUps.ts:108-119,193,328`, migracja
 `20261012000000_care_followups_updatedAt`); test `careEtagOwner.test.ts`
 (edit→ETag inny). Decyzja sync-przy-odczycie bez zmian.
+
+## Suplement 2026-10-14 (P0.3: throttle syncu per skrzynka)
+
+Sync zostaje w requeście (decyzja wyżej bez zmian — brak workera/crona),
+ale nie na każdy odczyt: skip do 60 s po udanym syncu tej skrzynki
+(`CARE_SYNC_THROTTLE_MS`, `careService.ts`, odpowiedź `skipped:
+'throttled'`). Fail nie stempluje (retry dozwolony); współbieżne żądania
+serializują się; restart procesu gubi znacznik = pełny sync (bezpieczne).
+Świeżość powiadomień gorsza o ≤60 s (granica pollingu FE). Testy:
+`careSyncLoad.test.ts` (skip bez statementów, fail-retry, wyścig a+b=N).

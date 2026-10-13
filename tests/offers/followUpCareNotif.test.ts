@@ -10,6 +10,7 @@ import {
     markCareNotificationRead,
     markCareNotificationUnread,
     markCareNotificationsRead,
+    resetCareSyncThrottleForTests,
     type CareUser
 } from '../../src/services/careService';
 
@@ -100,6 +101,11 @@ function fake(db: DatabaseSync) {
 const SLA = { firstContactH: 24, staleD: 7, escalationH: 72 };
 
 describe('P2 sync powiadomień', () => {
+    // P0.3: throttle trzyma stan w module (per skrzynka) — izolacja testów.
+    beforeEach(() => {
+        resetCareSyncThrottleForTests();
+    });
+
     it('tworzy typy, pauza/terminal nic, rerun bez duplikatów', async () => {
         const db = freshDb();
         try {

@@ -66,7 +66,23 @@ Enrich `json_extract` po LIMIT: pomiar na kopii z `data=NULL` dał tylko
 ~14% (191 vs 222 ms) — dominuje sort okna, nie enrich. SKIP (słaby
 stosunek zysk/ryzyko kursora); sort okna to temat bramki P1.
 
-## P0.5-VERIFY (następny)
+## P0.5-VERIFY — DONE (2026-10-14)
+
+`validate`: 4681 pass; jedyny fail to znany flake `pricelistChunk`
+(timeout pod obciążeniem, solo zielony). Docs: suplement ADR-015
+(2026-10-14, throttle), `OPIEKA.md` (throttle w grafie), `API.md`
+(`sync.skipped`), `PERF_BASELINE.md` (tabela P0).
+
+Raport przed/po na 20k (mediany): panel ~824 ms → ~470 ms (etag 17 +
+summary 177 + queue 228 + sync_hot 0 + list 1; równolegle). Sync_hot:
+362 ms → 0 ms. Count: 232 ms → 3 ms.
+
+## Bramka P1 — WERDYKT: breach potwierdzony pomiarem
+
+Po P0 dominuje sort CTE `latest`: data ~226 ms + summary ~177 ms na 20k
+(liniowo → ~20 s na 1M). `latest_followup` + triggery UZASADNIONE.
+Mapa zapisów gotowa (tylko `followUps.ts:114,197,332,402`, brak bulk).
+Wejście w P1 wymaga osobnego GO (migracja = tier czerwony).
 
 ## P0.3-SYNC-THROTTLE
 

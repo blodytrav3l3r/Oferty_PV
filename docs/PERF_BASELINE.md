@@ -78,3 +78,21 @@ Prod: `max-age 7d` + `?v=` → 2. pass z disk cache. Brak akcji.
 - P0: claim numerów 1× `count=N` → chunki 200 (2920 → 15 claimów).
 - P1-C: `chunkedCreateMany` 25 (seed + priceOverrideService).
 - Bramy load/E5: `docs/plans/archive/e3-perf.md`, werdykty E5: `docs/plans/archive/e5-decision.md`.
+
+## Baseline opieki P0 (2026-10-14, syntetyczne SQLite, scope=all)
+
+Mediany per-op na `careService.ts` (user admin, limit 50):
+
+| op                      | 400 ofert | 5 000 | 20 000 | po P0 (20k)                    |
+| ----------------------- | --------- | ----- | ------ | ------------------------------ |
+| `getCareEtagInput`      | 1 ms      | 3 ms  | 17 ms  | 17 ms (bez zmian — tanio)      |
+| `getCareSummary`        | 4 ms      | 39 ms | 177 ms | 177 ms (bez zmian)             |
+| `getCareQueue`          | 16 ms     | 74 ms | 274 ms | 228 ms                         |
+| w tym count             | —         | —     | 232 ms | 3 ms (bez CTE latest, P0.4)    |
+| `syncCareNotifications` | 8 ms      | 85 ms | 355 ms | 0 ms hot (throttle 60 s, P0.3) |
+| `listCareNotifications` | 1 ms      | 1 ms  | 1 ms   | 1 ms (capped)                  |
+
+Wzrost w przybliżeniu liniowy. Ekstrapolacja 1M (INFERENCE, nie pomiar):
+panel ~40 s przed P0; po P0 dominuje sort CTE `latest` w data+summary —
+temat bramki P1 (`latest_followup`). Enrich po LIMIT odrzucony pomiarem
+(14% na kopii z `data=NULL`).
