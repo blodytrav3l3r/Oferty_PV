@@ -240,3 +240,11 @@ modyfikator `--<moduł>`. Przy scoped wyrównuj jedynie wartości do tokenów
 - [ ] Brak poziomego scrolla w 375/768/1024/1440.
 - [ ] Toasty z auto-dismiss; empty states z komunikatem i akcją.
 - [ ] `npm run format` + `npm run lint:frontend` + `node -c <plik.js>`.
+
+## 13. Excel (tabela studni) — kontrakt UI
+
+- Powierzchnie wyłącznie przez tokeny `--excel-*` (§2); sticky `td:nth-child(-n+7)` z tłem `_excelStickyCellBg`; status wiersza z `_excelGetRowStatus` (duplikat > ERROR > WARNING > aktywny > base), nie klasami `.well-row-*`.
+- Edycja komórki: patch in-place wiersza (L0) + panele sync (L1), NIGDY full-render; full-render tylko strukturalny (tab, kolumny, redukcja, solver AUTO, paste/undo/filtr/sort). Scroll preserve + `preventScroll` przy restore fokusa; kursor na koniec (`setSelectionRange`), nie `select()`.
+- Overlay-selecty: labelka sync in-place (`_excelSyncRowSelect`, tekst wybranej opcji); pusty wiersz przez `_excelOverlaySelectHtml(..., disabled)` + `.excel-sel-wrap.disabled`.
+- Paste: tryb quiet bez toastów; niedopasowania (rodzaj/średnica) → modal `excel-paste-mismatch-modal` (1 wiersz = 1 studnia + 1 pole, bulk per grupa, filtr, licznik); błąd ilości → `inp-error` na polu.
+- Wyszukiwarka `#excel-search-input` 220px + `#excel-search-clear`; suma selekcji `Σ` w nagłówku (`_excelSumNumericValues`, przecinek → kropka).

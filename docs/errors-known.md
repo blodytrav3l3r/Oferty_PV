@@ -411,3 +411,9 @@
 
 **Dopiska (ta sama klasa, ścieżka oferta→katalog)**: `syncOfferEditorToCatalog` „doklejał" osoby z edytora oferty przez replace-sync — oferta z 1 osobą kasowała resztę katalogu.
 **Fix**: unia z katalogiem po kluczu `imię|telefon` (append-only, ★ tylko na pustym, cap 10 z warningiem); brak zmian → zero PUT; fetch fail → skip + toast.
+
+## 61. `parseFloat` bez obsługi przecinka w Excelu (rzędne/kąty/ilości)
+
+**Problem**: `excelOnRzednaChange` parsował `parseFloat(input.value)` bez zamiany `,` → `.` — polskie „2,5" dawało `2` (ucięcie po przecinku); kąt `parseFloat(value) || 0` zamieniał pusty/nie-liczbę w ciche `0`; ilość `parseInt(value) || 0` tak samo cichła na `0`.
+**Objaw**: Zanięte rzędne po wklejeniu z polskiego Excela; puste kąty/ilości cicho zerowane zamiast błędu/pustki.
+**Fix** (`public/js/studnie/excelChangeHandlers.js`): `_excelParseNum(v)` — SSoT parse (delegacja do `window.parseNum` gdy dostępny, fallback `trim` + `,` → `.`, pusto/NaN → `null`) dla rzędnych (`excelOnRzednaChange`) i przejść (`angle` → `?? 0`, `rzednaWlaczenia` → `null`); `_excelParseIntStrict(v)` dla ilości (`_excelCompModelUpdate`) — nie-liczba → `null` + `inp-error` na aktywnym polu, bez cichego 0. Paste (`excelCopyPaste.js`) parsuje tak samo (`,` → `.`, clamp `clampRzednaWlaczenia` w quiet bez toastów).

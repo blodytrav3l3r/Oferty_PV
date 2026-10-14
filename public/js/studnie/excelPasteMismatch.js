@@ -519,7 +519,12 @@ function _excelMismatchRowHtml(entry, flatIdx, visIdx) {
         typeof escapeHtml === 'function'
             ? escapeHtml
             : function (s) {
-                  return s;
+                  return String(s == null ? '' : s)
+                      .replace(/&/g, '&amp;')
+                      .replace(/"/g, '&quot;')
+                      .replace(/'/g, '&#39;')
+                      .replace(/</g, '&lt;')
+                      .replace(/>/g, '&gt;');
               };
     const escAttr =
         typeof escapeHtmlAttr === 'function'
@@ -653,13 +658,23 @@ function _excelMismatchExpand(btn) {
         typeof escapeHtmlAttr === 'function'
             ? escapeHtmlAttr
             : function (s) {
-                  return s;
+                  return String(s == null ? '' : s)
+                      .replace(/&/g, '&amp;')
+                      .replace(/"/g, '&quot;')
+                      .replace(/'/g, '&#39;')
+                      .replace(/</g, '&lt;')
+                      .replace(/>/g, '&gt;');
               };
     const esc =
         typeof escapeHtml === 'function'
             ? escapeHtml
             : function (s) {
-                  return s;
+                  return String(s == null ? '' : s)
+                      .replace(/&/g, '&amp;')
+                      .replace(/"/g, '&quot;')
+                      .replace(/'/g, '&#39;')
+                      .replace(/</g, '&lt;')
+                      .replace(/>/g, '&gt;');
               };
     let selHtml =
         '<select class="excel-mismatch-select" data-m-idx="' +

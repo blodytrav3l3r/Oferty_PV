@@ -2,6 +2,24 @@
 /* ===== EXCEL CHANGE HANDLERS — Handlery zmian wartości w tabeli studni ===== */
 
 /* ===== HANDLERS ===== */
+/* Lokalny fallback gdy shared/parseNum.js (window.parseNum) jeszcze niezaładowany. */
+function _excelParseNum(v) {
+    if (typeof window !== 'undefined' && typeof window.parseNum === 'function')
+        return window.parseNum(v);
+    if (v == null) return null;
+    const s = String(v).trim().replace(',', '.');
+    if (s === '') return null;
+    const n = parseFloat(s);
+    return isNaN(n) ? null : n;
+}
+function _excelParseIntStrict(v) {
+    if (v == null) return null;
+    const s = String(v).trim();
+    if (s === '') return 0;
+    if (!/^[+-]?\d+$/.test(s)) return null;
+    const n = parseInt(s, 10);
+    return isNaN(n) ? null : n;
+}
 /* Cichy tryb paste: model+dirty+remap, ZERO renderów — jeden finalny render robi doneCallback. */
 function _excelPasteQuiet() {
     return typeof _excelPasteInProgress !== 'undefined' && _excelPasteInProgress;
@@ -15,10 +33,8 @@ function excelOnRzednaChange(wIdx) {
     _excelClearResCache(well);
     const rzWlazuInput = row.querySelector('input[data-field="rzednaWlazu"]');
     const rzDnaInput = row.querySelector('input[data-field="rzednaDna"]');
-    const rzWlazuRaw = rzWlazuInput ? parseFloat(rzWlazuInput.value) : null;
-    const rzWlazu = rzWlazuRaw !== null && !isNaN(rzWlazuRaw) ? rzWlazuRaw : null;
-    const rzDnaRaw = rzDnaInput ? parseFloat(rzDnaInput.value) : null;
-    const rzDna = rzDnaRaw !== null && !isNaN(rzDnaRaw) ? rzDnaRaw : null;
+    const rzWlazu = rzWlazuInput ? _excelParseNum(rzWlazuInput.value) : null;
+    const rzDna = rzDnaInput ? _excelParseNum(rzDnaInput.value) : null;
 
     if (rzWlazu !== null && rzDna !== null && rzWlazu <= rzDna) {
         rzWlazuInput.classList.add('inp-error');
@@ -189,11 +205,9 @@ function excelOnPrzejscieChange(wIdx, trIdx, field, value) {
     const prz = wells[wIdx].przejscia[trIdx];
     prz[field] =
         field === 'angle'
-            ? parseFloat(value) || 0
+            ? (_excelParseNum(value) ?? 0)
             : field === 'rzednaWlaczenia'
-              ? value !== '' && !isNaN(parseFloat(String(value).replace(',', '.')))
-                  ? parseFloat(String(value).replace(',', '.'))
-                  : null
+              ? _excelParseNum(value)
               : value || null;
     // Clamp rzędnej do zakresu dno–właz (jak quick-edit w konfiguratorze).
     // null przechodzi bez zmian; fill/paste (quiet) clampuje cicho, bez powiadomień.
@@ -220,6 +234,8 @@ function excelOnPrzejscieChange(wIdx, trIdx, field, value) {
         prz.angleGony = (parseFloat(prz.angle) || 0).toFixed(2);
         prz.flowType = (parseFloat(prz.angle) || 0) === 0 ? 'WYLOT' : 'WLOT';
     }
+    if (isGeometryField && typeof invalidateFrozenPricesForWell === 'function')
+        invalidateFrozenPricesForWell(well);
     wells[wIdx].przejscia.forEach((p, i) => {
         p.displayIndex = i;
     });
@@ -413,13 +429,23 @@ function _excelRefreshTransitionDnOptions(wIdx, trIdx) {
             typeof escapeHtml === 'function'
                 ? escapeHtml
                 : function (s) {
-                      return String(s);
+                      return String(s == null ? '' : s)
+                          .replace(/&/g, '&amp;')
+                          .replace(/"/g, '&quot;')
+                          .replace(/'/g, '&#39;')
+                          .replace(/</g, '&lt;')
+                          .replace(/>/g, '&gt;');
                   };
         var escA =
             typeof escapeHtmlAttr === 'function'
                 ? escapeHtmlAttr
                 : function (s) {
-                      return String(s == null ? '' : s).replace(/"/g, '&quot;');
+                      return String(s == null ? '' : s)
+                          .replace(/&/g, '&amp;')
+                          .replace(/"/g, '&quot;')
+                          .replace(/'/g, '&#39;')
+                          .replace(/</g, '&lt;')
+                          .replace(/>/g, '&gt;');
                   };
         var labelFor = function (pid) {
             if (!pid) return '—';
@@ -617,7 +643,27 @@ function _excelWellHasHoles(well) {
 function _excelCompModelUpdate(wIdx, componentType, height, value, productId, redDn) {
     _excelMarkAsManual(wIdx);
     const well = wells[wIdx];
-    const newQty = parseInt(value) || 0;
+    const newQtyRaw = _excelParseIntStrict(value);
+    if (newQtyRaw === null) {
+        try {
+            if (
+                typeof document !== 'undefined' &&
+                document.activeElement &&
+                document.activeElement.classList
+            )
+                document.activeElement.classList.add('inp-error');
+        } catch (_eQty) {}
+        return false;
+    }
+    const newQty = newQtyRaw;
+    try {
+        if (
+            typeof document !== 'undefined' &&
+            document.activeElement &&
+            document.activeElement.classList
+        )
+            document.activeElement.classList.remove('inp-error');
+    } catch (_eQtyOk) {}
     _excelClearResCache(well);
 
     const filterDn = redDn
@@ -757,6 +803,8 @@ function _excelCompModelUpdate(wIdx, componentType, height, value, productId, re
             _excelClearResCache(well);
         } catch (_e) {}
     }
+    if (well && typeof invalidateFrozenPricesForWell === 'function')
+        invalidateFrozenPricesForWell(well);
     return otMutated || reliefMutated;
 }
 

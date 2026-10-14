@@ -161,7 +161,12 @@ window.RuryExternalExportTemplate = {
         }
 
         const wb = await XlsxImportShared.generateExternalXlsx('rury', rows);
-        const safeNumber = (full.orderNumber || 'zamowienie').replace(/[^a-zA-Z0-9_-]/g, '_');
+        const safeNumber =
+            typeof window !== 'undefined' &&
+            window.ExportFilenames &&
+            window.ExportFilenames.pickPart
+                ? window.ExportFilenames.pickPart([full.orderNumber, 'zamowienie'])
+                : String(full.orderNumber || 'zamowienie').replace(/[^a-zA-Z0-9_-]/g, '_');
         XLSX.writeFile(wb, 'eksport_zamowienie_rury_' + safeNumber + '.xlsx');
     }
 };

@@ -242,7 +242,12 @@ window.StudnieExternalExportTemplate = {
         }
 
         const wb = await XlsxImportShared.generateExternalXlsx('studnie', rows);
-        const safeNumber = (data.orderNumber || 'zamowienie').replace(/[^a-zA-Z0-9_-]/g, '_');
+        const safeNumber =
+            typeof window !== 'undefined' &&
+            window.ExportFilenames &&
+            window.ExportFilenames.pickPart
+                ? window.ExportFilenames.pickPart([data.orderNumber, 'zamowienie'])
+                : String(data.orderNumber || 'zamowienie').replace(/[^a-zA-Z0-9_-]/g, '_');
         XLSX.writeFile(wb, 'eksport_zamowienie_studnie_' + safeNumber + '.xlsx');
     }
 };

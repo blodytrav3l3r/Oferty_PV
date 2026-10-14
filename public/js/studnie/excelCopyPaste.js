@@ -34,18 +34,18 @@ function _excelDetectHeader(firstParts) {
     let hits = 0;
     for (const n of norms) {
         if (!n) continue;
-        for (const kw of kws)
-            if (n.includes(kw) || kw.includes(n)) {
+        for (const kw of kws) {
+            const isShortToken = kw === 'nr' || kw === 'stu' || kw === 'kat';
+            const hit = isShortToken
+                ? n === kw || n.split(' ').includes(kw)
+                : n.includes(kw) || (n.length >= 4 && kw.includes(n));
+            if (hit) {
                 hits++;
                 break;
             }
+        }
     }
-    if (hits >= 2) return true;
-    if (firstParts.length === 1 && hits >= 1) return true;
-    if (hits >= 1 && firstParts.length >= 3) {
-        const nonNum = norms.filter((v) => v && isNaN(parseFloat(v.replace(',', '.')))).length;
-        if (nonNum >= 2) return true;
-    }
+    if (hits >= 3) return true;
     return false;
 }
 function _excelBuildSemanticMap(headerParts, dn) {
@@ -75,7 +75,12 @@ function _excelBuildSemanticMap(headerParts, dn) {
         const e = norms[extIdx];
         if (!e) continue;
         let f = wew.find((x) => x.norm === e);
-        if (!f) f = wew.find((x) => e.includes(x.norm) || x.norm.includes(e));
+        if (!f)
+            f = wew.find((x) => {
+                if (x.norm === 'stu' || x.norm === 'nr')
+                    return e === x.norm || e.split(' ').includes(x.norm);
+                return e.startsWith(x.norm) || x.norm.startsWith(e);
+            });
         if (!f) {
             const mS = e.match(/srednica\s*(\d+)/);
             if (mS) f = wew.find((x) => x.col === 10 + parseInt(mS[1], 10) * 4);
@@ -367,6 +372,8 @@ function _excelHandlePaste(e) {
     e.preventDefault();
     e.stopPropagation();
 
+    const _pasteNotes = []; // 1 toast zbiorczy: notatki doklejane do raportu paste
+
     /* Ukryta sekcja PRZ nie ma komórek docelowych — najpierw ją odkryj */
     if (typeof _excelTransitionsHidden === 'function' && _excelTransitionsHidden()) {
         try {
@@ -377,8 +384,7 @@ function _excelHandlePaste(e) {
             _excelSyncTransitionsToggleBtn(false);
         if (typeof _excelRenderTable === 'function' && typeof _excelActiveTab !== 'undefined')
             _excelRenderTable(_excelActiveTab);
-        if (typeof showToast === 'function')
-            showToast('Odkryto sekcję przejść do wklejenia', 'info');
+        _pasteNotes.push('odkryto sekcję przejść');
     }
 
     /* Paste w pusty wiersz → utwórz nowe studnie */
@@ -505,6 +511,7 @@ function _excelHandlePaste(e) {
                 const _extra = [];
                 if (_st.locked > 0) _extra.push('zablokowanych: ' + _st.locked);
                 if (_st.unsupported > 0) _extra.push('pominiętych: ' + _st.unsupported);
+                for (const _pn of _pasteNotes) _extra.push(_pn);
                 showToast(
                     'Wklejono ' +
                         _st.applied +
@@ -682,7 +689,7 @@ function _excelHandlePaste(e) {
                     showToast('Kliknij w istniejący wiersz — tu nie ma miejsca', 'warning');
                     return;
                 }
-                showToast('Wklejono ' + lines.length + ' (obcięte — koniec tabeli)', 'warning');
+                _pasteNotes.push('obcięte do ' + lines.length + ' wierszy (koniec tabeli)');
             }
             // Faza A: base row min (nie global) — globalMin dawał poziomy shift przy nieprostokątnej selekcji (H2)
             const _firstCol =
@@ -733,7 +740,7 @@ function _excelHandlePaste(e) {
                     showToast('Brak studni na tej zakładce', 'warning');
                     return;
                 }
-                showToast('Wklejono ' + lines.length + ' (obcięte — koniec tabeli)', 'warning');
+                _pasteNotes.push('obcięte do ' + lines.length + ' wierszy (koniec tabeli)');
             }
             const visibleRows = _excelGetVisibleRows();
             _batched = lines.length > 100;
@@ -926,7 +933,7 @@ function _excelHandlePaste(e) {
                         showToast('Kliknij w istniejący wiersz — tu nie ma miejsca', 'warning');
                         return;
                     }
-                    showToast('Wklejono ' + lines.length + ' (obcięte — koniec tabeli)', 'warning');
+                    _pasteNotes.push('obcięte do ' + lines.length + ' wierszy (koniec tabeli)');
                 }
             }
             /* Użyj batch/sync paste — obsłuż duże zestawy; header-aware via semantic map (F1 ctx) */
@@ -998,8 +1005,6 @@ function _excelHandlePaste(e) {
            pierwszym tickiem i każda komórka pchała osobny snapshot undo. */
         if (!_batched) _finishPaste();
     }
-    /* Ścieżka sync raportuje szczegółowo w _finishPaste; tu tylko sygnał startu batcha async. */
-    if (_batched) showToast('Wklejanie w tle...', 'info');
 }
 
 /* ===== BATCH PASTE (async chunked) ===== */
@@ -1214,6 +1219,7 @@ function _excelSetModelCellValue(wIdx, effLogical, val, ctx, targetElement) {
         const trIdx = Math.floor((effLogical - 7) / 4);
         if (trIdx < maxTr) {
             const subType = (effLogical - 7) % 4;
+            if ((subType === 0 || subType === 1) && !valStr) return 'unsupported';
             if (!well.przejscia) well.przejscia = [];
             while (well.przejscia.length <= trIdx) {
                 if (typeof _excelCreatePrzejscie === 'function')
@@ -1434,6 +1440,7 @@ function _excelSetModelCellValue(wIdx, effLogical, val, ctx, targetElement) {
         } else if (_desc.kind === 'comp' && _desc.col) {
             if (typeof _excelCompModelUpdate !== 'function') return 'unsupported';
             const _c = _desc.col;
+            if (!/^[+-]?\d+$/.test(valStr)) return 'unsupported';
             _excelCompModelUpdate(
                 wIdx,
                 _c.componentType,
@@ -1498,6 +1505,8 @@ function _excelSetCellValue(target, val, ctx, logicalCol) {
        Obejmuje paste, Delete, Ctrl+X, Ctrl+D, Ctrl+R (wszystkie ida przez to miejsce). */
     const tr = target && target.closest ? target.closest('tr[data-widx]') : null;
     const wIdx = tr ? parseInt(tr.getAttribute('data-widx'), 10) : -1;
+    if (isNaN(wIdx) || wIdx < 0 || typeof wells === 'undefined' || !wells[wIdx])
+        return 'unsupported';
     if (!isNaN(wIdx) && _excelIsWellLocked(wIdx)) return 'locked';
     const td = target && target.closest ? target.closest('td') : null;
     const colIdx =

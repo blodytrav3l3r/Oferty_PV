@@ -89,7 +89,14 @@
         if (str === '') return null;
         str = str.replace(/,/g, '.');
 
-        if (!str.startsWith('=')) return parseFloat(str);
+        if (!str.startsWith('=')) {
+            /* SSoT: shared/parseNum.js; fallback lokalny gdy modul jeszcze niezaladowany. */
+            const sokParse =
+                typeof window !== 'undefined' && window.SokParse ? window.SokParse.parseNum : null;
+            if (typeof sokParse === 'function') return sokParse(str);
+            const n = parseFloat(str);
+            return Number.isNaN(n) ? null : n;
+        }
 
         const expr = str.slice(1).trim();
         if (expr === '') return null;

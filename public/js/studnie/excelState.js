@@ -50,6 +50,16 @@ let _excelFilteredCacheQuery = null;
 let _excelFilteredCacheWellsLen = -1;
 /* eslint-enable prefer-const */
 
+/* ===== DIRTY FLAG — SSoT mutacji (emitExcelMutated) =====
+   Ustawia _excelDirty; konsumują: sokDirty/draftAutosave/ui (guardy typeof).
+   Wołaj zamiast bezpośredniego `_excelDirty = true` (max 3 call-sites). */
+function emitExcelMutated() {
+    _excelDirty = true;
+}
+if (typeof window !== 'undefined') {
+    window.emitExcelMutated = emitExcelMutated;
+}
+
 // eslint-disable-next-line no-unused-vars -- eksportowany przez window.KINETA_OPTIONS
 const KINETA_OPTIONS = [
     ['brak', 'Brak'],

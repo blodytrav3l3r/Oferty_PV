@@ -23,6 +23,7 @@
   właściwości: `tests/studnie/solverInvariants.test.ts`.
 - **Tests:** `tests/studnie/solverInvariants.test.ts`,
   `tests/studnie/excelDrilledRings.test.ts`.
+- **Dopiska (kontrakt L0/L2, baza #58):** L0 odświeża wiersz sync (auto-komórki, kręgi, relief, status) bez czekania; L2 (`_excelDebouncedRefresh` 800 ms / maxWait 1200 ms) liczy TYLKO kolejkę błędów + kolory — panele pomija, bo L1 już je policzył. Paste finalizuje błędy PRZED re-renderem (`_excelFinalizePasteAffected` → `recalculateWellErrors` → `_excelRenderTable`), więc tabela nigdy nie czyta starego `configStatus`.
 
 ## I-003 — Użytkownik nie mutuje cudzych zasobów
 

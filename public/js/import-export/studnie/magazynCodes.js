@@ -18,12 +18,16 @@
     var _cache = null;
     var _promise = null;
 
+    function normalizeCode(code) {
+        return (code == null ? '' : String(code)).trim().toUpperCase();
+    }
+
     function withDefaults(codes) {
         var out = {};
         for (var k in DEFAULTS) {
             out[k] =
                 codes && typeof codes[k] === 'string' && codes[k].trim() !== ''
-                    ? codes[k].trim().toUpperCase()
+                    ? normalizeCode(codes[k])
                     : DEFAULTS[k];
         }
         return out;
@@ -50,10 +54,6 @@
                 });
         }
         return _promise;
-    }
-
-    function normalizeCode(code) {
-        return (code == null ? '' : String(code)).trim().toUpperCase();
     }
 
     function isWloclawek(warehouse) {

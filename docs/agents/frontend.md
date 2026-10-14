@@ -75,6 +75,10 @@ Jedyne źródło prawdy: `docs/UI_GUIDELINES.md`. Kluczowe reguły:
 - Szerokości kolumn: `_excelColWidths` w localStorage (klucz `tab-colId`, split na pierwszym myślniku), try/catch + walidacja; kanoniczny nagłówek to h1 z `data-excel-col`; wiersz h3 ma `colspan=4` — nie mapuj po `first-child`.
 - Tła błędów: `_excelGetRowStatus(well)` (duplikat > ERROR > WARNING > aktywny > base); sticky `td:nth-child(-n+7)` przez `_excelStickyCellBg`; nie używać `.well-row-error/.well-row-warning`.
 - Wyszukiwarka: `#excel-search-input` 220px + `#excel-search-clear` (widoczny przy filtrze); `excelClearSearch()`.
+- Kontrakt refresha L0/L1/L2 (baza #58, SSoT `excelChangeHandlers.js:275-287`): L0 sync wiersza (`_excelRefreshAutoCells`, `_excelRefreshKragCells`, `_excelRefreshReliefCells`, opcje DN, kody h3, paint statusu); L1 sync paneli (`_excelUpdateLeftPreview`, `_excelImmediatePreview`); L2 async kolejka (`_excelDebouncedRefresh` 800 ms / maxWait 1200 ms — tylko kolejka błędów + kolory duplikatów). Edycja komórki NIGDY nie robi full-rendera; full-render tylko strukturalny (tab, kolumny, redukcja, solver AUTO, paste/undo/filtr/sort).
+- Parse liczb: `_excelParseNum(v)` (przecinek → kropka, pusto/NaN → `null`; deleguje do `window.parseNum` gdy dostępny) dla rzędnych/kątów; `_excelParseIntStrict(v)` dla ilości (nie-liczba → `null` + `inp-error`, nie ciche 0). Labelka overlay-selecta sync in-place przez `_excelSyncRowSelect` (dyspozytor CSP odpala tylko pierwszy slot).
+- Paste: tryb quiet `_excelPasteQuiet()` (`_excelPasteInProgress`) — model+dirty+remap bez renderów/toastów; jeden snapshot undo na całe wklejenie (`_excelHandlePaste`); finalizacja raz w doneCallback (`_excelFinalizePasteAffected`, `recalculateWellErrors` PRZED re-renderem, reset selekcji, `_excelRenderTable`, `_excelMarkDirty`). Nazwa (`colIdx 3`) nigdy nie kasowana/kopiowana.
+- Mismatch: `_excelPasteMismatches` + indeks O(1) (`_excelMismatchIndex`, klucz `wIdx_colIdx`); grupowanie po `(colKind, originalVal_norm, matchedVal)`; modal `excel-paste-mismatch-modal` (bulk per grupa, filtr, soft-cap bez cichego auto-accept).
 
 ### Import/Eksport (Kartoteka)
 

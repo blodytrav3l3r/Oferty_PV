@@ -25,7 +25,7 @@ function _excelStartPolling() {
             _excelSyncAutoManualUI();
             /* Tła wierszy zależne od configStatus (zmiana statusu z głównego panelu) */
             if (typeof _excelRefreshDupColors === 'function') _excelRefreshDupColors();
-            _excelDirty = true;
+            emitExcelMutated();
         } else if (_excelDirty) {
             // brak zmian mimo dirty—wyczyszcz flagę (watchdog)
             _excelDirty = false;

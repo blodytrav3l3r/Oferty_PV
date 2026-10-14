@@ -95,7 +95,12 @@ window.StudnieExternalImport = {
         const number = offerGroup.number;
         // Wiersz osobnej pozycji transportu (TR-STUDNIE) nie jest elementem studni.
         const rows = (offerGroup.rows || []).filter(
-            (r) => (r['INDEKS_CZESCI'] || '').trim().toUpperCase() !== 'TR-STUDNIE'
+            (r) =>
+                (typeof XlsxImportShared !== 'undefined' && XlsxImportShared.normalizeHeader
+                    ? XlsxImportShared.normalizeHeader(r['INDEKS_CZESCI'])
+                    : String(r['INDEKS_CZESCI'] || '')
+                          .trim()
+                          .toUpperCase()) !== 'TR-STUDNIE'
         );
         const hasTransportRow = (offerGroup.rows || []).length !== rows.length;
 

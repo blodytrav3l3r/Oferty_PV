@@ -816,7 +816,7 @@ function excelToggleFullscreen() {
 
 /* ===== DIRTY FLAG ===== */
 function _excelMarkDirty() {
-    _excelDirty = true;
+    emitExcelMutated();
 }
 
 /* ===== SEARCH / FILTER ===== */

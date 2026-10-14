@@ -246,7 +246,7 @@ function excelOpenWellParams(wIdx) {
                 bodyHtml += `</div>`;
                 bodyHtml += `<div class="well-param-row">`;
                 bodyHtml += `<span class="well-param-label">Koszt p. wew.</span>`;
-                bodyHtml += `<input type="number" step="0.01" value="${well.malowanieWewCena || ''}" data-csp-2="$select" data-csp-3="$wellParamRefresh" data-csp-3-args="${escapeHtmlAttr(JSON.stringify([wIdx, 'malowanieWewCena', 1]))}" data-csp-3-on="change" placeholder="PLN / m²" style="width:120px;height:34px;background:var(--excel-input-bg);border:1px solid var(--excel-input-border);color:var(--text-primary);padding:0 0.7rem;font-size: var(--fs-lg);border-radius: var(--radius-sm);">`;
+                bodyHtml += `<input type="number" step="0.01" value="${Number.isFinite(Number(well.malowanieWewCena)) && String(well.malowanieWewCena).trim() !== '' ? escapeHtmlAttr(String(well.malowanieWewCena)) : ''}" data-csp-2="$select" data-csp-3="$wellParamRefresh" data-csp-3-args="${escapeHtmlAttr(JSON.stringify([wIdx, 'malowanieWewCena', 1]))}" data-csp-3-on="change" placeholder="PLN / m²" style="width:120px;height:34px;background:var(--excel-input-bg);border:1px solid var(--excel-input-border);color:var(--text-primary);padding:0 0.7rem;font-size: var(--fs-lg);border-radius: var(--radius-sm);">`;
                 bodyHtml += `</div>`;
             }
             if (def.key === 'malowanieZ' && well.malowanieZ && well.malowanieZ !== 'brak') {
@@ -256,7 +256,7 @@ function excelOpenWellParams(wIdx) {
                 bodyHtml += `</div>`;
                 bodyHtml += `<div class="well-param-row">`;
                 bodyHtml += `<span class="well-param-label">Koszt p. zew.</span>`;
-                bodyHtml += `<input type="number" step="0.01" value="${well.malowanieZewCena || ''}" data-csp-2="$select" data-csp-3="$wellParamRefresh" data-csp-3-args="${escapeHtmlAttr(JSON.stringify([wIdx, 'malowanieZewCena', 1]))}" data-csp-3-on="change" placeholder="PLN / m²" style="width:120px;height:34px;background:var(--excel-input-bg);border:1px solid var(--excel-input-border);color:var(--text-primary);padding:0 0.7rem;font-size: var(--fs-lg);border-radius: var(--radius-sm);">`;
+                bodyHtml += `<input type="number" step="0.01" value="${Number.isFinite(Number(well.malowanieZewCena)) && String(well.malowanieZewCena).trim() !== '' ? escapeHtmlAttr(String(well.malowanieZewCena)) : ''}" data-csp-2="$select" data-csp-3="$wellParamRefresh" data-csp-3-args="${escapeHtmlAttr(JSON.stringify([wIdx, 'malowanieZewCena', 1]))}" data-csp-3-on="change" placeholder="PLN / m²" style="width:120px;height:34px;background:var(--excel-input-bg);border:1px solid var(--excel-input-border);color:var(--text-primary);padding:0 0.7rem;font-size: var(--fs-lg);border-radius: var(--radius-sm);">`;
                 bodyHtml += `</div>`;
             }
         });

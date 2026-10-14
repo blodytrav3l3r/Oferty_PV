@@ -74,7 +74,7 @@ describe('P1-FE-ESCAPE: excel, zlecenia, modal, kopie DOM (kroki 2-5)', () => {
     it('10. excel: well.name escapowany, fallback uwagi tez escapuje', () => {
         const c = read('public/js/studnie/excelTableBody.js');
         expect(c).toMatch(/escapeHtmlAttr\(well\.name\)/);
-        expect(c).toMatch(/escapeHtml\(String\(well\.uwagi\)/);
+        expect(c).toMatch(/escapeHtmlAttr\(String\(well\.uwagi\)/);
         const h = read('public/js/studnie/excelHelpers.js');
         expect(h).toMatch(/escapeHtml\(opts\[i\]\[1\]\)/);
     });
@@ -91,6 +91,30 @@ describe('P1-FE-ESCAPE: excel, zlecenia, modal, kopie DOM (kroki 2-5)', () => {
         const c = read('public/js/studnie/orderZleceniaRender.js');
         expect(c).toMatch(/escapeHtml\(String\(group\.wellDn/);
         expect(c).toMatch(/escapeHtml\(group\.wellName\)/);
+    });
+
+    it('13. excelTableBody: fallback uwag pelnym lancuchem', () => {
+        const c = read('public/js/studnie/excelTableBody.js');
+        expect(c).not.toMatch(/: escapeHtml\(String\(well\.uwagi\)/);
+        expect(c).toMatch(/slice\(0,\s*40\)[\s\S]*?\.replace\(\/&\/g/);
+    });
+    it('14. excelPasteMismatch: brak surowego return s', () => {
+        const c = read('public/js/studnie/excelPasteMismatch.js');
+        expect(c).not.toMatch(/return s;/);
+        expect(c).toMatch(/String\(s == null \? /);
+    });
+    it('15. excelChangeHandlers: esc i escA pelnym lancuchem', () => {
+        const c = read('public/js/studnie/excelChangeHandlers.js');
+        expect(c).not.toMatch(/return String\(s\);/);
+        expect(c).not.toMatch(/: s\)\.replace\(\/"\/g, /);
+        expect(c).toMatch(/replace\(\/&\/g/);
+    });
+    it('16. excelWellActions: ceny malowania guardowane', () => {
+        const c = read('public/js/studnie/excelWellActions.js');
+        expect(c).toMatch(/Number\.isFinite\(Number\(well\.malowanieWewCena\)\)/);
+        expect(c).toMatch(/Number\.isFinite\(Number\(well\.malowanieZewCena\)\)/);
+        expect(c).not.toMatch(/malowanieWewCena \|\| /);
+        expect(c).not.toMatch(/malowanieZewCena \|\| /);
     });
 
     it('5. modalCore: kontrakt caller-escapuje (pin + callers)', () => {

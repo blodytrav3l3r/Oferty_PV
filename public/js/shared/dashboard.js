@@ -714,6 +714,11 @@ function initAiMlToggle() {
 }
 
 /* ===== YEAR LETTER MANAGEMENT ===== */
+/* SSoT normalizacji kodów w dashboardzie (litera roku + kody magazynów). */
+function normUpperCode(v) {
+    return (v == null ? '' : String(v)).trim().toUpperCase();
+}
+
 async function loadYearLetter() {
     try {
         const res = await fetch('/api/settings/year-letter', {
@@ -732,7 +737,7 @@ async function loadYearLetter() {
 }
 
 async function saveYearLetter() {
-    const letter = (document.getElementById('year-letter-input').value || '').trim().toUpperCase();
+    const letter = normUpperCode(document.getElementById('year-letter-input').value);
     if (!letter || letter.length !== 1) {
         await appAlert('Litera musi być pojedynczym znakiem (A-Z)', { type: 'warning' });
         return;
@@ -761,7 +766,7 @@ async function saveYearLetter() {
 const MAGAZYN_CODE_IDS = ['mag-den-wl', 'mag-den-klb', 'mag-nad-wl', 'mag-nad-klb'];
 
 function readMagazynCodes() {
-    const get = (id) => (document.getElementById(id).value || '').trim().toUpperCase();
+    const get = (id) => normUpperCode(document.getElementById(id).value);
     return {
         dennicaWl: get('mag-den-wl'),
         dennicaKlb: get('mag-den-klb'),

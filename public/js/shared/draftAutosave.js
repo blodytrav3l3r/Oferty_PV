@@ -1070,7 +1070,8 @@ function _draftApply(kind, draft) {
             window._wizardDirty = true;
         } catch (_e8) {}
         try {
-            _excelDirty = true;
+            if (typeof emitExcelMutated === 'function') emitExcelMutated();
+            else _excelDirty = true;
         } catch (_e9) {}
         if (typeof refreshAll === 'function') {
             try {

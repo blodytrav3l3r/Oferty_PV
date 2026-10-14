@@ -605,8 +605,13 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
         const _uwagiPrev = _hasUwagi
             ? (typeof escapeHtmlAttr === 'function'
                   ? escapeHtmlAttr(String(well.uwagi).slice(0, 40))
-                  : escapeHtml(String(well.uwagi).slice(0, 40))) +
-              (String(well.uwagi).length > 40 ? '…' : '')
+                  : String(well.uwagi)
+                        .slice(0, 40)
+                        .replace(/&/g, '&amp;')
+                        .replace(/"/g, '&quot;')
+                        .replace(/'/g, '&#39;')
+                        .replace(/</g, '&lt;')
+                        .replace(/>/g, '&gt;')) + (String(well.uwagi).length > 40 ? '…' : '')
             : '';
         const _uwagiTitle = _hasUwagi
             ? 'Uwagi: ' + _uwagiPrev + ' \u2014 kliknij aby edytowa\u0107'

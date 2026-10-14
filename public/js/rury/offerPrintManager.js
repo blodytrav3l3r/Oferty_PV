@@ -331,7 +331,7 @@ async function exportRuryOrderAsOffer_action(orderId, format) {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        const safeNumber = String(orderNumber).replace(/[^a-zA-Z0-9_-]/g, '_');
+        const safeNumber = window.ExportFilenames.safePart(orderNumber);
         a.download = window.ExportFilenames.serverFilename(
             res,
             `oferta_rury_zamowienie_${safeNumber}.${format}`

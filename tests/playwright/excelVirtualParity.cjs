@@ -3,7 +3,9 @@
  * SSoT: wells + undo. Operacje na logicznych indeksach, nie na elementach DOM.
  *
  * Pokrycie macierzy: render slice (logicalRow<->wIdx), scroll, edit widocznego
- * wiersza, undo. Paste/selection/sort/filter/search/sticky: osobne case'y (TODO).
+ * wiersza, undo (Faza 1) + selection/copy/paste (Faza 2) + search/tab/sort
+ * + selection-po-filtrze/edit-po-sorcie (Faza 3/3b). Sticky: przez parytet
+ * DOM (slice == prefiks OFF), nie osobny case.
  *
  * Run:   node tests/playwright/excelVirtualParity.cjs
  * Wymaga: backend na localhost:3000

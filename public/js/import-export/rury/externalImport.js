@@ -11,7 +11,12 @@ window.RuryExternalImport = {
         const number = offerGroup.number;
         // Wiersz osobnej pozycji transportu (TR-RURY) nie jest pozycją oferty.
         const rows = (offerGroup.rows || []).filter(
-            (r) => (r['INDEKS_CZESCI'] || '').trim().toUpperCase() !== 'TR-RURY'
+            (r) =>
+                (typeof XlsxImportShared !== 'undefined' && XlsxImportShared.normalizeHeader
+                    ? XlsxImportShared.normalizeHeader(r['INDEKS_CZESCI'])
+                    : String(r['INDEKS_CZESCI'] || '')
+                          .trim()
+                          .toUpperCase()) !== 'TR-RURY'
         );
         const hasTransportRow = (offerGroup.rows || []).length !== rows.length;
 

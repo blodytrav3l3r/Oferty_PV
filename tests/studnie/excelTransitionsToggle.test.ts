@@ -84,7 +84,7 @@ describe('excelTransitionsToggle ukrywanie sekcji PRZ', () => {
     });
 
     test('paste auto-odkrywa sekcje', () => {
-        expect(readJs('excelCopyPaste.js')).toContain('Odkryto sekcję przejść');
+        expect(readJs('excelCopyPaste.js')).toMatch(/odkryto sekcj[ęe] przejść/i);
     });
 
     test('_excelGlobalHotkeys przelacza bez fokusu w tabeli', () => {

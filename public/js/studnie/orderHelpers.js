@@ -629,9 +629,11 @@ function freezeWellPreco(well, preserveExisting = false) {
 /**
  * Unieważnia snapshot cen pozycji studni po edycji parametru wpływającego
  * na cenę (krąg/dennica Beton<->Żelbet, PEHD, klasa betonu, agresje, klasy
- * nośności, malowanie, kineta/spocznik, redukcja, stopnie, uszczelka...).
+ * nośności, malowanie, kineta/spocznik, redukcja, stopnie, uszczelka,
+ * geometria przejścia...).
  * Bez tego calcWellStats bierze item.frozenPrice (isFrozenPriceCtx) i cena
- * stoi mimo zmiany elementu. Przejścia nietknięte (osobna ścieżka popup).
+ * stoi mimo zmiany elementu. Obejmuje config i przejścia (7 kluczy frozen*
+ * jak freeze: Price/Base/Name/Transition/DrillingPrice/DrillingName/DrillingDn).
  */
 function invalidateFrozenPricesForWell(well) {
     if (!well) return;
@@ -639,6 +641,15 @@ function invalidateFrozenPricesForWell(well) {
         delete item.frozenPrice;
         delete item.frozenPriceBase;
         delete item.frozenName;
+    });
+    (well.przejscia || []).forEach((item) => {
+        delete item.frozenPrice;
+        delete item.frozenPriceBase;
+        delete item.frozenName;
+        delete item.frozenTransitionPrice;
+        delete item.frozenDrillingPrice;
+        delete item.frozenDrillingName;
+        delete item.frozenDrillingDn;
     });
     delete well.frozenPrecoSuma;
 }

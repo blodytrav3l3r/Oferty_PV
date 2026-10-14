@@ -3,10 +3,15 @@ window.StudnieTransferJson = {
         const offer = await JsonOfferTransfer.fetchOffer('studnie', offerId);
         const orders = await JsonOfferTransfer.fetchOrders('studnie', offerId);
         const payload = JsonOfferTransfer.buildPayload('studnie', offer, orders);
-        const safeNumber = (offer.offer_number || offer.number || offerId).replace(
-            /[^a-zA-Z0-9_-]/g,
-            '_'
-        );
+        const safeNumber =
+            typeof window !== 'undefined' &&
+            window.ExportFilenames &&
+            window.ExportFilenames.pickPart
+                ? window.ExportFilenames.pickPart([offer.offer_number, offer.number, offerId])
+                : String(offer.offer_number || offer.number || offerId).replace(
+                      /[^a-zA-Z0-9_-]/g,
+                      '_'
+                  );
         const date = (offer.createdAt || '').slice(0, 10) || 'unknown';
         JsonOfferTransfer.downloadFile(payload, 'studnie_' + safeNumber + '_' + date + '.json');
 
@@ -124,7 +129,12 @@ window.StudnieTransferJson = {
     async exportOrder(orderId) {
         const order = await JsonOfferTransfer.fetchOrder('studnie', orderId);
         const payload = JsonOfferTransfer.buildOrderPayload('studnie', order);
-        const safeNumber = (order.orderNumber || orderId).replace(/[^a-zA-Z0-9_-]/g, '_');
+        const safeNumber =
+            typeof window !== 'undefined' &&
+            window.ExportFilenames &&
+            window.ExportFilenames.pickPart
+                ? window.ExportFilenames.pickPart([order.orderNumber, orderId])
+                : String(order.orderNumber || orderId).replace(/[^a-zA-Z0-9_-]/g, '_');
         const date = (order.createdAt || '').slice(0, 10) || 'unknown';
         JsonOfferTransfer.downloadFile(
             payload,
