@@ -357,6 +357,10 @@ data/
 
 ### Standardowa aktualizacja:
 
+> Kanonicznie: `node scripts/deploy.mjs windows vX.Y.Z` (backup → migrate →
+> build → health, szczegóły: `docs/DEPLOY_UPDATE.md`). Ręczna sekwencja poniżej
+> tylko gdy deploy.mjs niedostępny.
+
 ```powershell
 # 1. Backup (ZAWSZE najpierw!):
 npm run backup

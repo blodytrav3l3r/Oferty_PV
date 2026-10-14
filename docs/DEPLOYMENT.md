@@ -275,12 +275,15 @@ npm run build
 # Linux: po surowym `npm run build` (bez build.sh) skopiuj klienta Prisma:
 mkdir -p dist/generated && cp -r generated/prisma dist/generated/
 
-# 8. Uruchomienie przez PM2
-npm install -g pm2
-pm2 start dist/server.js --name sok-oferty
+# 8. Uruchomienie przez PM2 (konfig kanoniczny z limitami/autorestartem)
+pm2 start ecosystem.config.cjs
 pm2 save
 pm2 startup
 ```
+
+> Ręczny `pm2 start dist/server.js` omija limity (`ecosystem.config.cjs`).
+> Aktualizacje tylko przez `node scripts/deploy.mjs linux vX.Y.Z`
+> (backup → migrate → build → health), szczegóły: `docs/DEPLOY_UPDATE.md`.
 
 > W produkcji serwer binduje się domyślnie do `127.0.0.1` — nie jest dostępny z sieci
 > bezpośrednio. Jawnie ustawiony `HOST` (np. w Dockerze) ma pierwszeństwo.

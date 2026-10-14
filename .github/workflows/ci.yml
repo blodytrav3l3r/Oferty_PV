@@ -204,7 +204,7 @@ jobs:
                   docker run -d --name test-container -e DEFAULT_ADMIN_PASSWORD=test-admin-pass sok-oferty:${{ github.sha }}
                   echo "Sprawdzanie stanu kontenera..."
                   for i in $(seq 1 15); do
-                    if docker exec test-container node -e "require('http').get('http://localhost:10000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})" 2>/dev/null; then
+                    if docker exec test-container node -e "require('http').get('http://localhost:10000/health/ready', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})" 2>/dev/null; then
                       echo "[OK] Health check OK (proba $i)"
                       break
                     fi
@@ -381,11 +381,11 @@ jobs:
                   npm run build
                   PORT=3198 NODE_ENV=test DATABASE_URL='file:./test-e2e-extended.sqlite?connection_limit=1&busy_timeout=30000' nohup node dist/server.js > e2e-extended-server.log 2>&1 &
                   echo $! > e2e-extended-server.pid
-                  for i in $(seq 1 30); do
-                    curl -sf http://localhost:3198/health && break
-                    sleep 2
-                  done
-                  curl -sf http://localhost:3198/health
+                   for i in $(seq 1 30); do
+                     curl -sf http://localhost:3198/health/ready && break
+                     sleep 2
+                   done
+                   curl -sf http://localhost:3198/health/ready
 
             - name: Excel relief/empty-row + partial order (BASE :3198)
               env:
@@ -435,10 +435,10 @@ jobs:
                   nohup node dist/server.js > /tmp/sok-load.log 2>&1 &
                   echo $! > /tmp/sok-load.pid
 
-            - name: Czekaj na /health (brak serwera = FAIL)
+            - name: Czekaj na /health/ready (brak serwera = FAIL)
               run: |
                   for i in $(seq 1 30); do
-                    if curl -sf http://localhost:3000/health >/dev/null 2>&1; then
+                    if curl -sf http://localhost:3000/health/ready >/dev/null 2>&1; then
                       echo "[OK] Serwer gotowy (proba $i)"
                       echo "LOAD_STATUS=PASS (serwer gotowy)" >> "$GITHUB_STEP_SUMMARY"
                       exit 0

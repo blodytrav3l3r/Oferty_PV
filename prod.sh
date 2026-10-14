@@ -75,6 +75,32 @@ if [ -n "$STALE_PIDS" ]; then
     fi
 fi
 
+# Schema DB (fail-fast: prod bez db push --accept-data-loss).
+log STEP "Sprawdzanie schematu..."
+CHECK_EXIT=0
+node scripts/check-db.js >/dev/null 2>&1 || CHECK_EXIT=$?
+if [ "$CHECK_EXIT" -eq 0 ]; then
+    log OK "Schema OK - migrate deploy..."
+    for i in 1 2 3; do
+        if npx prisma migrate deploy; then
+            break
+        fi
+        if [ "$i" -eq 3 ]; then
+            log ERR "migrate deploy nie powiodl sie 3x - przerwij i sprawdz lock DB."
+            exit 1
+        fi
+        log WARN "migrate deploy nieudany (proba $i/3) - ponawiam za 5 s..."
+        sleep 5
+    done
+elif [ "$CHECK_EXIT" -eq 2 ]; then
+    log WARN "Baza pusta - uruchamiam seed..."
+    npx ts-node prisma/seed.ts
+    log OK "Seed zakonczony"
+else
+    log ERR "Schema niezgodny (kod $CHECK_EXIT) - przerwij i napraw recznie (bez db push na prod)."
+    exit 1
+fi
+
 log STEP "Uruchamiam: npm start (Ctrl+C stop)..."
 echo "  Endpoint: http://localhost:3000"
 echo
