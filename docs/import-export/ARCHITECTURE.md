@@ -141,3 +141,23 @@ Wszystkie akcje logowane do `audit_logs`:
 | Import XLSX | `import.external` | Utworzenie/zaktualizowanie oferty z XLSX |
 | Eksport 1:1 | `export.transfer` | Pobranie JSON 1:1                        |
 | Import 1:1  | `import.transfer` | Import JSON 1:1 (z innego urządzenia)    |
+
+## CLI import ofert (duże pliki)
+
+Skrypt `scripts/import-offers.ts` (`npm run import:offers -- --file ...`) dla plików
+powyżej limitów UI (5 MB / 5 tys. wierszy). Logika biznesowa wyłącznie na serwerze
+(sekwencyjny `POST /api/offers-*`, 1 oferta = 1 żądanie, jak frontend); skrypt tylko
+parsuje, mapuje i raportuje. Zero nowych zależności (vendored SheetJS 0.20.3, CSV
+przez `readline`).
+
+- Format wejścia i kolumny: identyczne jak wyżej. `RABAT` w skali 0–100 (bez `/100`).
+  Pusta `SREDNICA` pomija klucz `dn` (serwer wymaga `min(1)` gdy klucz obecny).
+- `XLSX > 100 tys.` wierszy → odrzuć z komunikatem (podziel na CSV; SheetJS CE nie
+  streamuje). CSV bez limitu wierszy (strumień).
+- Błędny wiersz (zła liczba, rabat spoza 0–100) odrzuca grupę z wpisem
+  `{sheet, row, col, value, reason}`; `--on-error skip|abort` (domyślnie `skip`).
+- Konflikt numeru: `--conflict skip|overwrite|clone` (domyślnie `skip`); klon szuka
+  wolnego `{numer}-N`. `Idempotency-Key: cli-<sha256>` per oferta — retry nie dubluje.
+- Checkpoint `<plik>.import-checkpoint.json` + `--resume-from`; SIGINT kończy bieżący
+  POST i zapisuje checkpoint (exit 130). Raport JSON `--report-out`.
+- Exit: `0` ok/skip, `1` błędy rekordów, `2` błąd wejścia, `3` błąd serwera, `130` SIGINT.
