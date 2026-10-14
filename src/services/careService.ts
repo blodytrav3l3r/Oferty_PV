@@ -226,56 +226,32 @@ export function buildCareQueueQueries(
     // nie CTE ROW_NUMBER — ta sama reguła (contactedAt DESC, createdAt DESC,
     // id DESC), parzystość pilnuje tests/offers/careLatestParity.test.ts.
     // followUpStats.ts i searchUtils.ts liczą latest po staremu (osobny kontrakt).
+    // P2.2: baza niesie tylko skalary sortowania/filtra; drogie kolumny
+    // (json_extract, users, note) dokłada faza 2 dla ≤51 wierszy strony
+    // (buildCareEnrichQuery niżej) — ta sama treść, inny moment.
     const withSql = Prisma.sql`WITH base AS (
         SELECT 'rury' AS "offerKind", o."id" AS "offerId", lf."outcome" AS "outcome",
             lf."nextContactAt" AS "next", lf."contactedAt" AS "last", o."createdAt" AS "born",
-            o."offer_number" AS "number", o."clientName" AS "client",
-            o."clientNumber" AS "clientNumber",
-            COALESCE(NULLIF(TRIM(COALESCE(ou."firstName", '') || ' ' || COALESCE(ou."lastName", '')), ''), ou."username") AS "owner",
-            json_extract(o."data", '$.createdByUserName') AS "author",
-            CAST(json_extract(o."data", '$.totalBrutto') AS REAL) AS "value",
-            COALESCE(json_extract(o."data", '$.clientPhone'), json_extract(o."data", '$.clientContacts[0].phone')) AS "phone", lf."note" AS "note",
-            COALESCE(NULLIF(o."investName", ''), json_extract(o."data", '$.investName'), json_extract(o."data", '$.budowa')) AS "invest",
-            json_extract(o."data", '$.investAddress') AS "address",
-            COALESCE(json_extract(o."data", '$.contactPerson'), json_extract(o."data", '$.clientContacts[0].name')) AS "contact",
-            COALESCE(json_extract(o."data", '$.clientEmail'), json_extract(o."data", '$.clientContacts[0].email')) AS "email",
             cs."snoozedUntil" AS "snoozed", cs."doneAt" AS "done",
             cs."updatedAt" AS "careUpdatedAt"
         FROM offers_rel o LEFT JOIN latest_followup lf
             ON lf."offerKind" = 'rury' AND lf."offerId" = o."id"
         LEFT JOIN care_states cs
             ON cs."offerKind" = 'rury' AND cs."offerId" = o."id"
-        LEFT JOIN users ou ON o."userId" = ou."id"
         WHERE ${scopeRury}${andBornRury}
         UNION ALL
         SELECT 'studnie' AS "offerKind", s."id" AS "offerId", lf."outcome" AS "outcome",
             lf."nextContactAt" AS "next", lf."contactedAt" AS "last", s."createdAt" AS "born",
-            s."offer_number" AS "number", s."clientName" AS "client",
-            s."clientNumber" AS "clientNumber",
-            COALESCE(NULLIF(TRIM(COALESCE(su."firstName", '') || ' ' || COALESCE(su."lastName", '')), ''), su."username") AS "owner",
-            json_extract(s."data", '$.createdByUserName') AS "author",
-            -- Guard 0-kolumny (zapis studni bez totalPrice): niezerowa kolumna
-            -- > blob.totalBrutto > suma wellsExport (jak search.ts d_wellsExportTotal).
-            CAST(COALESCE(NULLIF(s."totalPrice", 0), json_extract(s."data", '$.totalBrutto'),
-                (SELECT CAST(ROUND(COALESCE(SUM(value->>'totalPrice'), 0), 2) AS REAL)
-                    FROM json_each(s."data", '$.wellsExport'))) AS REAL) AS "value",
-            COALESCE(json_extract(s."data", '$.clientPhone'), json_extract(s."data", '$.clientContacts[0].phone')) AS "phone", lf."note" AS "note",
-            COALESCE(NULLIF(s."investName", ''), json_extract(s."data", '$.investName'), json_extract(s."data", '$.budowa')) AS "invest",
-            json_extract(s."data", '$.investAddress') AS "address",
-            COALESCE(json_extract(s."data", '$.contactPerson'), json_extract(s."data", '$.clientContacts[0].name')) AS "contact",
-            COALESCE(json_extract(s."data", '$.clientEmail'), json_extract(s."data", '$.clientContacts[0].email')) AS "email",
             cs."snoozedUntil" AS "snoozed", cs."doneAt" AS "done",
             cs."updatedAt" AS "careUpdatedAt"
         FROM offers_studnie_rel s LEFT JOIN latest_followup lf
             ON lf."offerKind" = 'studnie' AND lf."offerId" = s."id"
         LEFT JOIN care_states cs
             ON cs."offerKind" = 'studnie' AND cs."offerId" = s."id"
-        LEFT JOIN users su ON s."userId" = su."id"
         WHERE ${scopeStudnie}${andBornStudnie}
     ), ranked AS (
         SELECT "offerKind", "offerId", "outcome", "next", "last", "born",
-            "number", "client", "clientNumber", "owner", "author", "value", "phone", "note", "snoozed", "done", "careUpdatedAt",
-            "invest", "address", "contact", "email",
+            "snoozed", "done", "careUpdatedAt",
             ${BUCKET_CASE(opts.nowIso)} AS "bucketWeight"
         FROM base
     )`;
@@ -295,8 +271,6 @@ export function buildCareQueueQueries(
 
     const data = Prisma.sql`${withSql}
         SELECT "offerKind", "offerId", "outcome", "next", "last", "born",
-            "number", "client", "clientNumber", "owner", "author", "value", "phone", "note",
-            "invest", "address", "contact", "email",
             "snoozed", "done", "careUpdatedAt", "bucketWeight" FROM ranked
         WHERE ${cursorSql}${opts.hidePaused ? Prisma.sql` AND "done" IS NULL AND ("snoozed" IS NULL OR "snoozed" <= ${opts.nowIso})` : Prisma.empty}
         ORDER BY "bucketWeight" ASC, COALESCE("next", ${NULL_NEXT}) ASC, "offerKind" ASC, "offerId" ASC
@@ -319,6 +293,78 @@ export function buildCareQueueQueries(
             LEFT JOIN care_states cs ON cs."offerKind" = 'studnie' AND cs."offerId" = s."id"
             WHERE ${scopeStudnie}${andBornStudnie}${pauseStudnie}) AS "c"`;
     return { data, count };
+}
+
+/** Wiersz wzbogacenia strony (faza 2): pełne kolumny dla 1 oferty. */
+export interface CareEnrichRow {
+    offerKind: string;
+    offerId: string;
+    number: string | null;
+    client: string | null;
+    clientNumber: string | null;
+    owner: string | null;
+    author: string | null;
+    value: number | null;
+    phone: string | null;
+    note: string | null;
+    invest: string | null;
+    address: string | null;
+    contact: string | null;
+    email: string | null;
+}
+
+/**
+ * P2.2, faza 2: drogie kolumny prezentacyjne TYLKO dla par (kind,id) ze
+ * strony (≤51). Wyrażenia 1:1 z dawnym base CTE (guard 0-kolumny studni
+ * i fallbacki blobów bez zmian) — ta sama treść, inny moment. Pusta
+ * lista z obu stron → null (brak zapytania). Kolejność wyników dowolna
+ * (merge po kluczu w getCareQueue zachowuje kolejność strony).
+ */
+export function buildCareEnrichQuery(ruryIds: string[], studnieIds: string[]): Prisma.Sql | null {
+    const parts: Prisma.Sql[] = [];
+    if (ruryIds.length > 0) {
+        parts.push(Prisma.sql`SELECT 'rury' AS "offerKind", o."id" AS "offerId",
+            o."offer_number" AS "number", o."clientName" AS "client",
+            o."clientNumber" AS "clientNumber",
+            COALESCE(NULLIF(TRIM(COALESCE(ou."firstName", '') || ' ' || COALESCE(ou."lastName", '')), ''), ou."username") AS "owner",
+            json_extract(o."data", '$.createdByUserName') AS "author",
+            CAST(json_extract(o."data", '$.totalBrutto') AS REAL) AS "value",
+            COALESCE(json_extract(o."data", '$.clientPhone'), json_extract(o."data", '$.clientContacts[0].phone')) AS "phone",
+            lf."note" AS "note",
+            COALESCE(NULLIF(o."investName", ''), json_extract(o."data", '$.investName'), json_extract(o."data", '$.budowa')) AS "invest",
+            json_extract(o."data", '$.investAddress') AS "address",
+            COALESCE(json_extract(o."data", '$.contactPerson'), json_extract(o."data", '$.clientContacts[0].name')) AS "contact",
+            COALESCE(json_extract(o."data", '$.clientEmail'), json_extract(o."data", '$.clientContacts[0].email')) AS "email"
+        FROM offers_rel o LEFT JOIN latest_followup lf
+            ON lf."offerKind" = 'rury' AND lf."offerId" = o."id"
+        LEFT JOIN users ou ON ou."id" = o."userId"
+        WHERE o."id" IN (${Prisma.join(ruryIds)})`);
+    }
+    if (studnieIds.length > 0) {
+        parts.push(Prisma.sql`SELECT 'studnie' AS "offerKind", s."id" AS "offerId",
+            s."offer_number" AS "number", s."clientName" AS "client",
+            s."clientNumber" AS "clientNumber",
+            COALESCE(NULLIF(TRIM(COALESCE(su."firstName", '') || ' ' || COALESCE(su."lastName", '')), ''), su."username") AS "owner",
+            json_extract(s."data", '$.createdByUserName') AS "author",
+            -- Guard 0-kolumny (zapis studni bez totalPrice): niezerowa kolumna
+            -- > blob.totalBrutto > suma wellsExport (jak search.ts d_wellsExportTotal).
+            CAST(COALESCE(NULLIF(s."totalPrice", 0), json_extract(s."data", '$.totalBrutto'),
+                (SELECT CAST(ROUND(COALESCE(SUM(value->>'totalPrice'), 0), 2) AS REAL)
+                    FROM json_each(s."data", '$.wellsExport'))) AS REAL) AS "value",
+            COALESCE(json_extract(s."data", '$.clientPhone'), json_extract(s."data", '$.clientContacts[0].phone')) AS "phone",
+            lf."note" AS "note",
+            COALESCE(NULLIF(s."investName", ''), json_extract(s."data", '$.investName'), json_extract(s."data", '$.budowa')) AS "invest",
+            json_extract(s."data", '$.investAddress') AS "address",
+            COALESCE(json_extract(s."data", '$.contactPerson'), json_extract(s."data", '$.clientContacts[0].name')) AS "contact",
+            COALESCE(json_extract(s."data", '$.clientEmail'), json_extract(s."data", '$.clientContacts[0].email')) AS "email"
+        FROM offers_studnie_rel s LEFT JOIN latest_followup lf
+            ON lf."offerKind" = 'studnie' AND lf."offerId" = s."id"
+        LEFT JOIN users su ON su."id" = s."userId"
+        WHERE s."id" IN (${Prisma.join(studnieIds)})`);
+    }
+    if (parts.length === 0) return null;
+    if (parts.length === 1) return parts[0];
+    return Prisma.sql`${parts[0]} UNION ALL ${parts[1]}`;
 }
 
 /** Podsumowanie opieki: 1 SELECT GROUP BY (ten sam WHERE co kolejka). */
@@ -400,7 +446,8 @@ export interface QueryRawDb {
 
 const num = (v: unknown): number => toNum(v as number | bigint | string | null | undefined) ?? 0;
 
-/** Kolejka opieki: max 2 SELECT (data + COUNT DISTINCT). Scope 403 rzuca przed SQL. */
+/** Kolejka opieki: strona (skalary) + COUNT równolegle, potem enrich strony.
+ * Scope 403 rzuca przed SQL. Kolejność i cursor z fazy 1 (bez zmian). */
 export async function getCareQueue(
     db: QueryRawDb,
     user: CareUser,
@@ -417,18 +464,6 @@ export async function getCareQueue(
                 next: string | null;
                 last: string | null;
                 born: string | null;
-                number: string | null;
-                client: string | null;
-                clientNumber: string | null;
-                owner: string | null;
-                author: string | null;
-                value: number | null;
-                phone: string | null;
-                invest: string | null;
-                address: string | null;
-                contact: string | null;
-                email: string | null;
-                note: string | null;
                 snoozed: string | null;
                 done: string | null;
                 careUpdatedAt: string | null;
@@ -450,34 +485,69 @@ export async function getCareQueue(
             i: lastItem.offerId
         });
     }
+    // P2.2, faza 2: wzbogacenie TYLKO wierszy strony (≤limit). Merge po
+    // kluczu zachowuje kolejność fazy 1; brak wiersza (wyścig z DELETE
+    // oferty) = same nulle, znika przy następnym odświeżeniu.
+    const enrichByKey = new Map<string, CareEnrichRow>();
+    if (items.length > 0) {
+        const ruryIds = items.filter((r) => r.offerKind === 'rury').map((r) => r.offerId);
+        const studnieIds = items.filter((r) => r.offerKind === 'studnie').map((r) => r.offerId);
+        const enrichQuery = buildCareEnrichQuery(ruryIds, studnieIds);
+        if (enrichQuery) {
+            const enrichRows = await db.$queryRaw<CareEnrichRow[]>(enrichQuery);
+            for (const e of enrichRows) {
+                enrichByKey.set(`${e.offerKind}:${e.offerId}`, e);
+            }
+        }
+    }
+    const emptyEnrich: CareEnrichRow = {
+        offerKind: '',
+        offerId: '',
+        number: null,
+        client: null,
+        clientNumber: null,
+        owner: null,
+        author: null,
+        value: null,
+        phone: null,
+        note: null,
+        invest: null,
+        address: null,
+        contact: null,
+        email: null
+    };
     return {
-        items: items.map((r) => ({
-            offerKind: r.offerKind,
-            offerId: r.offerId,
-            outcome: r.outcome,
-            nextContactAt: r.next,
-            lastContactAt: r.last,
-            createdAt: r.born,
-            number: r.number,
-            clientName: r.client,
-            clientNumber:
-                typeof r.clientNumber === 'string' && r.clientNumber.trim() !== ''
-                    ? r.clientNumber
-                    : null,
-            ownerName: typeof r.owner === 'string' && r.owner.trim() !== '' ? r.owner : null,
-            authorName: typeof r.author === 'string' && r.author.trim() !== '' ? r.author : null,
-            value: typeof r.value === 'number' ? r.value : null,
-            phone: r.phone,
-            investName: typeof r.invest === 'string' ? r.invest : null,
-            investAddress: typeof r.address === 'string' ? r.address : null,
-            contactPerson: typeof r.contact === 'string' ? r.contact : null,
-            email: typeof r.email === 'string' ? r.email : null,
-            lastNote: r.note,
-            bucketWeight: num(r.bucketWeight),
-            snoozedUntil: r.snoozed,
-            doneAt: r.done,
-            careUpdatedAt: r.careUpdatedAt ?? null
-        })),
+        items: items.map((r) => {
+            const e = enrichByKey.get(`${r.offerKind}:${r.offerId}`) ?? emptyEnrich;
+            return {
+                offerKind: r.offerKind,
+                offerId: r.offerId,
+                outcome: r.outcome,
+                nextContactAt: r.next,
+                lastContactAt: r.last,
+                createdAt: r.born,
+                number: e.number,
+                clientName: e.client,
+                clientNumber:
+                    typeof e.clientNumber === 'string' && e.clientNumber.trim() !== ''
+                        ? e.clientNumber
+                        : null,
+                ownerName: typeof e.owner === 'string' && e.owner.trim() !== '' ? e.owner : null,
+                authorName:
+                    typeof e.author === 'string' && e.author.trim() !== '' ? e.author : null,
+                value: typeof e.value === 'number' ? e.value : null,
+                phone: e.phone,
+                investName: typeof e.invest === 'string' ? e.invest : null,
+                investAddress: typeof e.address === 'string' ? e.address : null,
+                contactPerson: typeof e.contact === 'string' ? e.contact : null,
+                email: typeof e.email === 'string' ? e.email : null,
+                lastNote: e.note,
+                bucketWeight: num(r.bucketWeight),
+                snoozedUntil: r.snoozed,
+                doneAt: r.done,
+                careUpdatedAt: r.careUpdatedAt ?? null
+            };
+        }),
         nextCursor,
         totalCount
     };

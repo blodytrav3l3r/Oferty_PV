@@ -8,6 +8,7 @@ import { DatabaseSync } from 'node:sqlite';
 import { ensureLatestFollowupFixture } from './careLatestFixture';
 import type { Prisma } from '../../generated/prisma';
 import {
+    buildCareEnrichQuery,
     buildCareQueueQueries,
     clampCareLimit,
     decodeCareCursor,
@@ -328,18 +329,22 @@ describe('P0.2 care queue SQL', () => {
         }
     });
 
-    it('getCareQueue: max 2 SELECT (data + count)', async () => {
+    it('getCareQueue: strona + count równolegle, enrich tylko niepustej strony', async () => {
         let calls = 0;
+        const seen: string[] = [];
         const db = freshDb();
         try {
             const fake = {
                 $queryRaw: async <T>(...args: unknown[]): Promise<T> => {
                     calls += 1;
-                    return rawAll(db, args[0] as Prisma.Sql) as unknown as T;
+                    const raw = args[0] as Prisma.Sql;
+                    seen.push((raw as unknown as { sql: string }).sql.slice(0, 60));
+                    return rawAll(db, raw) as unknown as T;
                 }
             };
             const res = await getCareQueue(fake, U1, { nowIso: NOW, limit: 2 });
-            expect(calls).toBe(2);
+            // data + count równolegle, potem enrich strony = 3.
+            expect(calls).toBe(3);
             expect(res.items).toHaveLength(2);
             expect(res.totalCount).toBe(4);
             expect(typeof res.nextCursor).toBe('string');
@@ -445,6 +450,11 @@ describe('P0.4 count bez CTE latest (KEEP-guard)', () => {
         } finally {
             db.close();
         }
+    });
+    it('pusta strona: buildCareEnrichQuery([], []) to null (brak zapytania)', () => {
+        expect(buildCareEnrichQuery([], [])).toBeNull();
+        const one = buildCareEnrichQuery(['o1'], []);
+        expect(one).not.toBeNull();
     });
 });
 

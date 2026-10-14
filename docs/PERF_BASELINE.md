@@ -109,3 +109,18 @@ Równoważność: dump 20 000 wierszy + summary + sync + notifs IDENTYCZNY
 bajt-w-bajt (stary CTE vs tabela). Ekstrapolacja 1M: ~7 s (dominuje sort
 `ORDER BY` pełnego zbioru + GROUP BY summary — sufit bez zmiany architektury).
 Ocena przy 1M: 5/10 (było 3/10).
+
+## Opieka P2.2 (2026-10-14): leniwe wzbogacanie strony
+
+Pomiar pokazał: sort ~3 ms, enrich JSON ~60 ms ze 105 ms data query.
+Faza 1 (skalary + ORDER + LIMIT 51) + faza 2 (pełne kolumny dla ≤51 par
+`(kind,id)`, merge w JS). Bez zmian DTO/kursora/totalCount.
+
+| op (20k)     | przed P2.2 | po P2.2      |
+| ------------ | ---------- | ------------ |
+| `queue_data` | 226 ms     | 41 ms (5.5×) |
+| panel ≈ suma | ~140 ms    | ~100 ms      |
+
+Ekstrapolacja 1M: ~7 s → ~2.5 s. Ocena przy 1M: 6/10 (zostaje skan
+pełnego zbioru + GROUP BY summary; sufit SQLite).
+Rozrzut pomiarów do ~2× pod obciążeniem hosta — mediany 3–5 powtórzeń.
