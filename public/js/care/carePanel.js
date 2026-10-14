@@ -1823,6 +1823,17 @@ function ensureRangeUI() {
             });
             group.appendChild(btn);
         }
+        // Szukaj w linii z 7D/30D/90D/Wszystko: przenieś istniejący label
+        // z wiersza filtrów (listener/value/dataset.bound wędrują z nodem).
+        try {
+            const searchLabel =
+                filters.querySelector && typeof filters.querySelector === 'function'
+                    ? filters.querySelector('.care-search-wrap')
+                    : null;
+            if (searchLabel) group.appendChild(searchLabel);
+        } catch {
+            /* fallback: szukaj zostaje w wierszu filtrów */
+        }
         filters.parentNode.insertBefore(group, filters.nextSibling);
     } catch {
         /* best-effort */

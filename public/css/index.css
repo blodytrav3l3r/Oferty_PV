@@ -3132,8 +3132,20 @@ html[data-theme='light'] body.index-page.logged-in::before {
     justify-content: center;
     margin-top: 8px;
 }
-/* Wyszukiwanie w tym samym wierszu co filtry (obok Wszystkie). */
+/* Wyszukiwanie w wierszu filtrów (fallback gdyby JS nie przeniósł do zakresów). */
 .care-queue-filters .care-search-wrap {
+    flex: 2 1 12rem;
+    min-width: 10rem;
+}
+/* Wiersz zakresów 7D/30D/90D/Wszystko + szukaj w jednej linii. */
+.care-range-group {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+    margin: 8px 0;
+}
+.care-range-group .care-search-wrap {
     flex: 2 1 12rem;
     min-width: 10rem;
 }
