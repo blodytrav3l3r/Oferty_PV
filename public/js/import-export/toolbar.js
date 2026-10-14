@@ -505,6 +505,35 @@ window.importExportToolbar = /** @type {any} */ ({
         });
     },
 
+    // Limity importu XLSX w UI (F0/F2, uzasadnienie: tests/importBatchLimits.test.ts).
+    // Przegladarka parsuje na glownym watku (~2-3x wolniej niz node + presja
+    // pamieci taba): 5 MB / 5 tys. wierszy to konserwatywny cap. Wiecej ->
+    // CLI (npm run import:offers) lub podzial na CSV. Czyste, testowalne.
+    XLSX_IMPORT_MAX_BYTES: 5 * 1024 * 1024,
+    XLSX_IMPORT_MAX_ROWS: 5000,
+
+    _checkXlsxImportLimits(fileSizeBytes, totalRows) {
+        if (typeof fileSizeBytes === 'number' && fileSizeBytes > this.XLSX_IMPORT_MAX_BYTES) {
+            return {
+                kind: 'file',
+                message:
+                    'Plik ma ' +
+                    (fileSizeBytes / 1048576).toFixed(1) +
+                    ' MB (limit UI: 5 MB). Podziel na mniejsze pliki/CSV albo uzyj CLI: npm run import:offers -- --file <plik>.'
+            };
+        }
+        if (typeof totalRows === 'number' && totalRows > this.XLSX_IMPORT_MAX_ROWS) {
+            return {
+                kind: 'rows',
+                message:
+                    'Arkusz ma ' +
+                    totalRows +
+                    ' wierszy (limit UI: 5000). Podziel na mniejsze pliki/CSV albo uzyj CLI: npm run import:offers -- --file <plik>.'
+            };
+        }
+        return null;
+    },
+
     showImportXlsxDialog() {
         const uid = 'xlsx-import';
         const modalId = 'ie-import-xlsx-modal';
@@ -540,7 +569,21 @@ window.importExportToolbar = /** @type {any} */ ({
             const confirmBtn = document.querySelector('#' + modalId + ' [data-ie-confirm]');
             if (confirmBtn) confirmBtn.disabled = true;
             try {
+                const sizeHit = this._checkXlsxImportLimits(input.files[0].size, null);
+                if (sizeHit) {
+                    await appAlert(sizeHit.message, { type: 'warning', title: 'Za duży plik' });
+                    progress.style.display = 'none';
+                    if (confirmBtn) confirmBtn.disabled = false;
+                    return;
+                }
                 const parsed = await XlsxImportShared.parseExternalXlsx(input.files[0]);
+                const rowsHit = this._checkXlsxImportLimits(null, parsed.totalRows);
+                if (rowsHit) {
+                    await appAlert(rowsHit.message, { type: 'warning', title: 'Za dużo wierszy' });
+                    progress.style.display = 'none';
+                    if (confirmBtn) confirmBtn.disabled = false;
+                    return;
+                }
                 const sets = await this._ensureProductIdSets();
                 let importedRury = 0;
                 let importedStudnie = 0;
