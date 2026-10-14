@@ -10,6 +10,7 @@ import * as Sentry from '@sentry/node';
 import { logger } from './src/utils/logger';
 import { cronService } from './src/utils/cronService';
 import { APP_NAME } from './src/constants/appMeta';
+import { shouldWarnPublicBind } from './src/utils/bindGuard';
 import prisma from './src/prismaClient';
 
 const PORT = parseInt(process.env.PORT || '3000', 10);
@@ -78,6 +79,12 @@ process.on('uncaughtException', (err: Error) => {
         logger.info('Server', `${APP_NAME} — serwer działa na: http://localhost:${PORT}`);
         logger.info('Server', `Tryb: ${NODE_ENV === 'production' ? 'PRODUKCJA' : 'DEVELOPMENT'}`);
         logger.info('Server', 'Baza: SQLite (lokalna)');
+        if (shouldWarnPublicBind(NODE_ENV, HOST)) {
+            logger.warn(
+                'Server',
+                'Nasłuch na 0.0.0.0 w produkcji bez reverse proxy wystawia surowy HTTP — ustaw HOST=127.0.0.1 za Caddy/Nginx.'
+            );
+        }
     });
 
     // EADDRINUSE — czytelny komunikat PL zamiast surowego stack trace.
