@@ -2628,6 +2628,11 @@ html[data-theme='light'] body.index-page.logged-in::before {
     padding-right: 0;
     flex: 1 1 auto;
     min-height: 0;
+    /* Banner + siatka + stopka zawsze w kolumnie (flex-row z .recycled-list
+     * rozpychał banner obok siatki i robił pusty pas pod podglądem). */
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: stretch;
 }
 #care-buckets {
     max-height: none;
@@ -2650,6 +2655,9 @@ html[data-theme='light'] body.index-page.logged-in::before {
 .care-notif-preview {
     font-size: var(--fs-base);
     color: var(--text-secondary);
+    flex: 0 0 auto;
+    width: 100%;
+    margin: 0 0 8px;
 }
 @media (max-width: 900px) {
     .care-dashboard-grid {
@@ -3124,14 +3132,10 @@ html[data-theme='light'] body.index-page.logged-in::before {
     justify-content: center;
     margin-top: 8px;
 }
-/* Wyszukiwanie kolejki: wiersz pod filtrami (pełna szerokość, bez tłoku w head). */
-.care-queue-search-row {
-    display: flex;
-    margin: 8px 0;
-}
-.care-search-wrap {
-    flex: 1 1 auto;
-    min-width: 0;
+/* Wyszukiwanie w tym samym wierszu co filtry (obok Wszystkie). */
+.care-queue-filters .care-search-wrap {
+    flex: 2 1 12rem;
+    min-width: 10rem;
 }
 .care-search-wrap input[type='search'] {
     flex: 1 1 auto;
