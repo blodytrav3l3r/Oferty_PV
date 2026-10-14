@@ -28,6 +28,12 @@ function excelCellBlur(el) {
     }
     _excelUserEditing = false; /* wznawia polling */
 }
+/* Ruch klawiatury zwija selekcje myszy (Excel-like): kliknieta komorka nie
+   trzyma cell-selected po przejsciu strzalka w inne miejsce. Guard typeof:
+   modul selekcji nie jest ladowany w kazdym kontekscie (kartoteka). */
+function _excelCollapseStaleSelection() {
+    if (typeof _excelDeselectAllCells === 'function') _excelDeselectAllCells();
+}
 
 /* ===== ARROW KEY NAVIGATION — virtual-aware (excelVirtualActiveCell SSoT) ===== */
 function _excelVirtualHandleArrow(e) {
@@ -137,6 +143,7 @@ function _excelVirtualHandleArrow(e) {
             _excelVirtualActiveCell.logicalColId = ids[nextPos];
         }
         if (inEmpty) {
+            _excelCollapseStaleSelection();
             if (typeof _excelVirtualFocusCell === 'function')
                 _excelVirtualFocusCell(_excelVirtualActiveCell);
             return true;
@@ -145,6 +152,7 @@ function _excelVirtualHandleArrow(e) {
         const inView =
             _excelVirtualActiveCell.logicalRow >= _excelVirtualStart &&
             _excelVirtualActiveCell.logicalRow < _excelVirtualEnd;
+        _excelCollapseStaleSelection();
         if (inView) {
             if (typeof _excelVirtualFocusCell === 'function')
                 _excelVirtualFocusCell(_excelVirtualActiveCell);
@@ -185,6 +193,7 @@ function _excelVirtualHandleArrow(e) {
         // active already has logicalColId from empty, keep it
     }
     _excelVirtualActiveCell.logicalRow = nextRow;
+    _excelCollapseStaleSelection();
     // jeśli target w viewport — fokus bez scrolla (kluczowe doprecyzowanie 1)
     const needsScroll = !(nextRow >= _excelVirtualStart && nextRow < _excelVirtualEnd);
     // empty row poza normalnym zakresem: zawsze wymaga render jeśli nie na dole
@@ -309,7 +318,10 @@ function _excelHandleArrow(e) {
                         emptyEls[Math.min(colIdx, emptyEls.length - 1)] || emptyEls[0] || null;
                     targetEl = _excelSkipDisabled(targetEl, emptyEls, colIdx, 1) || targetEl;
                 }
-                if (targetEl) _excelFocusNavEl(targetEl, emptyEls, 'down');
+                if (targetEl) {
+                    _excelCollapseStaleSelection();
+                    _excelFocusNavEl(targetEl, emptyEls, 'down');
+                }
             }
             return;
         }
@@ -344,6 +356,7 @@ function _excelHandleArrow(e) {
     }
 
     if (next) {
+        _excelCollapseStaleSelection();
         _excelFocusNavEl(next, targetEls, e.key.replace('Arrow', '').toLowerCase());
     }
 }
@@ -380,6 +393,7 @@ function _excelHandleEmptyRowArrow(e) {
         if (targetEl) {
             // zapamiętaj kolumnę dla ArrowUp z pustego
             _excelLastDataCol = tdIdx;
+            _excelCollapseStaleSelection();
             _excelFocusNavEl(targetEl, lastElsUp, 'up');
         }
         return;
@@ -387,13 +401,19 @@ function _excelHandleEmptyRowArrow(e) {
     if (e.key === 'ArrowRight') {
         let next = rowEls[colIdx + 1] || null;
         next = _excelSkipDisabled(next, rowEls, colIdx, 1);
-        if (next) _excelFocusNavEl(next, rowEls, 'right');
+        if (next) {
+            _excelCollapseStaleSelection();
+            _excelFocusNavEl(next, rowEls, 'right');
+        }
         return;
     }
     if (e.key === 'ArrowLeft') {
         let prev = rowEls[colIdx - 1] || null;
         prev = _excelSkipDisabled(prev, rowEls, colIdx, -1);
-        if (prev) _excelFocusNavEl(prev, rowEls, 'left');
+        if (prev) {
+            _excelCollapseStaleSelection();
+            _excelFocusNavEl(prev, rowEls, 'left');
+        }
         return;
     }
 }

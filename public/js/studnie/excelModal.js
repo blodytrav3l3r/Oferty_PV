@@ -670,13 +670,15 @@ function excelSelectRow(wIdx) {
         }
     }
 
-    // Zaznacz nowy aktywny wiersz - tylko tło, zero ramek
+    // Zaznacz nowy aktywny wiersz - tylko tło, zero ramek.
+    // Celowo NIE nadpisujemy data-orig-bg kolorem active: mouseout (hover)
+    // maluje z data-orig-bg i przykleilby niebieski na stale (data-base-bg
+    // zostaje zrodlem prawdy dla restore).
     const newRow = container.querySelector(`tr[data-widx="${wIdx}"]`);
     if (newRow) {
         const activeBg = newRow.getAttribute('data-active-bg');
         if (activeBg) {
             newRow.style.background = activeBg;
-            newRow.setAttribute('data-orig-bg', activeBg);
             /* Zaktualizuj tło sticky kolumn (Lp, NrStudni, RzWlazu, RzDna, Wys) */
             const stickyTds = newRow.querySelectorAll(EXCEL_STICKY_CELL_SELECTOR);
             const solidBg = newRow.getAttribute('data-solid-bg') || 'var(--excel-row-even)';
