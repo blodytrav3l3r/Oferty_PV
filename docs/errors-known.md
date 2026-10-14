@@ -417,3 +417,15 @@
 **Problem**: `excelOnRzednaChange` parsował `parseFloat(input.value)` bez zamiany `,` → `.` — polskie „2,5" dawało `2` (ucięcie po przecinku); kąt `parseFloat(value) || 0` zamieniał pusty/nie-liczbę w ciche `0`; ilość `parseInt(value) || 0` tak samo cichła na `0`.
 **Objaw**: Zanięte rzędne po wklejeniu z polskiego Excela; puste kąty/ilości cicho zerowane zamiast błędu/pustki.
 **Fix** (`public/js/studnie/excelChangeHandlers.js`): `_excelParseNum(v)` — SSoT parse (delegacja do `window.parseNum` gdy dostępny, fallback `trim` + `,` → `.`, pusto/NaN → `null`) dla rzędnych (`excelOnRzednaChange`) i przejść (`angle` → `?? 0`, `rzednaWlaczenia` → `null`); `_excelParseIntStrict(v)` dla ilości (`_excelCompModelUpdate`) — nie-liczba → `null` + `inp-error` na aktywnym polu, bez cichego 0. Paste (`excelCopyPaste.js`) parsuje tak samo (`,` → `.`, clamp `clampRzednaWlaczenia` w quiet bez toastów).
+
+## 62. `icacls (OI)(CI)` na pliku cicho gubi wpis (pusty DACL, lockout)
+
+**Problem**: `icacls .env /grant "user:(OI)(CI)(F)"` na PLIKU przechodzi z exit 0,
+ale wpis z flagami dziedziczenia `(OI)(CI)` jest nieaplikowalny do pliku i znika
+po cichu — po `/inheritance:r` plik ma pusty DACL: nikt (w tym właściciel
+w sesji bez SeSecurityPrivilege) nie otworzy, `Set-Acl`/`icacls /restore`
+padają na braku uprawnień. Na katalogach te same flagi działają poprawnie.
+**Objaw**: `Odmowa dostępu` do `.env` dla wszystkich; restore ze snapshotu niemożliwy bez uprawnień.
+**Fix**: pliki dostają jawny `(F)` BEZ `(OI)(CI)`, katalogi z `(OI)(CI)(F)`;
+ratunek właściciela: `icacls .env /grant "DOMAIN\\user:(F)"` (działa bez flag).
+Wzorcowo: `scripts/harden-local-perms.bat` (grant per-typ + snapshot + `--restore-dir`).
