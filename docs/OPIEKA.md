@@ -40,6 +40,8 @@ Pulpit (widget: liczniki + top wiersze)
 ```
 
 - Status karty = **latest** follow-up wg `(contactedAt DESC, createdAt DESC, id DESC)`, nie `MAX(nextContactAt)`.
+  Fizycznie z tabeli `latest_followup` (triggery `trg_fu_latest_*`, P1) — ta sama reguła co CTE;
+  `followUpStats`/`searchUtils` liczą latest niezależnie (osobny kontrakt).
 - Jeden wpis terminalny zamyka cykl; `reopen: true` startuje nowy cykl (limit DB 1 terminal na cykl, wyścig → 409).
 - Zdrowie liczone na żądanie (`getFollowUpState` / `calculateFollowUpHealth`, progi D+1/D+3/D+7/D+14), bez crona/maili w v1.
 - Daty: frontend ISO z offsetem → backend UTC → DB UTC → porównania w UTC.
@@ -142,7 +144,8 @@ BE care.ts: /panel (ETag per mailbox `repOwner ?? user.id`, COUNT||MAX(rowid)
   shares w haśle) i /notifications (sync self-only + list per mailbox
   `repOwner ?? user.id`),
   POST /read bulk/single (guard WHERE userId)
-SERWIS careService.ts: notifCandidates (CTE latest + CASE ntype:
+SERWIS careService.ts: notifCandidates (latest z tabeli `latest_followup`
++ CASE ntype:
   SLA_BREACH / ESCALATION / CALLBACK_DUE) → sync (INSERT OR IGNORE
   + auto-read + retencja 90d/500; z repOwner no-op; throttle 60 s per
   skrzynka od P0.3 — rerun w oknie zwraca `skipped: 'throttled'`)

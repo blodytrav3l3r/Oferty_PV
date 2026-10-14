@@ -96,3 +96,16 @@ Wzrost w przybliżeniu liniowy. Ekstrapolacja 1M (INFERENCE, nie pomiar):
 panel ~40 s przed P0; po P0 dominuje sort CTE `latest` w data+summary —
 temat bramki P1 (`latest_followup`). Enrich po LIMIT odrzucony pomiarem
 (14% na kopii z `data=NULL`).
+
+## Opieka P1 (2026-10-14): latest_followup zamiast CTE (20k, scope=all)
+
+| op                             | przed P1 | po P1                                |
+| ------------------------------ | -------- | ------------------------------------ |
+| `getCareSummary`               | 177 ms   | 30 ms (5.9×)                         |
+| `getCareQueue` p1 (data+count) | 228 ms   | 92 ms (2.5×; count 3 ms, data 81 ms) |
+| panel ≈ suma                   | ~470 ms  | ~140 ms (3.4×)                       |
+
+Równoważność: dump 20 000 wierszy + summary + sync + notifs IDENTYCZNY
+bajt-w-bajt (stary CTE vs tabela). Ekstrapolacja 1M: ~7 s (dominuje sort
+`ORDER BY` pełnego zbioru + GROUP BY summary — sufit bez zmiany architektury).
+Ocena przy 1M: 5/10 (było 3/10).

@@ -6,6 +6,7 @@
  * niezależna od N (bound) + wyścig równoległych synców bez duplikatów.
  */
 import { DatabaseSync } from 'node:sqlite';
+import { ensureLatestFollowupFixture } from './careLatestFixture';
 import type { Prisma } from '../../generated/prisma';
 import {
     syncCareNotifications,
@@ -58,6 +59,8 @@ function seedDb(): DatabaseSync {
         }
         // Nieparzyste: brak historii -> CALLBACK_DUE.
     }
+    // P1: cache latest (triggery + backfill).
+    ensureLatestFollowupFixture(db);
     return db;
 }
 

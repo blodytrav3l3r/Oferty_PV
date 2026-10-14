@@ -3,6 +3,7 @@
  * P2: sync powiadomień (typy, dedup, auto-read) + lista/odczyt.
  */
 import { DatabaseSync } from 'node:sqlite';
+import { ensureLatestFollowupFixture } from './careLatestFixture';
 import type { Prisma } from '../../generated/prisma';
 import {
     syncCareNotifications,
@@ -13,6 +14,11 @@ import {
     resetCareSyncThrottleForTests,
     type CareUser
 } from '../../src/services/careService';
+
+// P0.3: throttle trzyma stan w module (per skrzynka) — izolacja testów.
+beforeEach(() => {
+    resetCareSyncThrottleForTests();
+});
 
 const NOW = '2026-10-10T12:00:00.000Z';
 const U1: CareUser = { id: 'u1', role: 'user', subUsers: [] };
@@ -85,6 +91,8 @@ function freshDb(): DatabaseSync {
     db.prepare(
         'INSERT INTO care_states ("offerKind", "offerId", "snoozedUntil", "doneAt", "updatedBy", "updatedAt") VALUES (?,?,?,?,?,?)'
     ).run('rury', 'o6', '2026-10-09T10:00:00.000Z', null, 'u1', NOW);
+    // P1: cache latest (triggery + backfill).
+    ensureLatestFollowupFixture(db);
     return db;
 }
 
@@ -326,6 +334,8 @@ describe('P2 sync powiadomień', () => {
         CREATE TABLE care_notifications ("id" TEXT NOT NULL, "userId" TEXT NOT NULL, "offerKind" TEXT NOT NULL, "offerId" TEXT NOT NULL, "type" TEXT NOT NULL, "readAt" TEXT, "createdAt" TEXT NOT NULL,
             CONSTRAINT "care_notifications_pkey" PRIMARY KEY ("id"));
         CREATE TABLE offer_follow_ups (id TEXT PRIMARY KEY, "offerKind" TEXT, "offerId" TEXT, "createdByUserId" TEXT, "contactedAt" TEXT, "createdAt" TEXT, outcome TEXT, "nextContactAt" TEXT);`);
+        // P1: cache latest (triggery utrzymują wstawiane niżej follow-upy).
+        ensureLatestFollowupFixture(db);
         try {
             const f = fake(db);
             const past = '2026-09-30T10:00:00.000Z';
@@ -394,6 +404,8 @@ describe('P2 sync powiadomień', () => {
         CREATE TABLE care_notifications ("id" TEXT NOT NULL, "userId" TEXT NOT NULL, "offerKind" TEXT NOT NULL, "offerId" TEXT NOT NULL, "type" TEXT NOT NULL, "readAt" TEXT, "createdAt" TEXT NOT NULL,
             CONSTRAINT "care_notifications_pkey" PRIMARY KEY ("id"));
         CREATE TABLE offer_follow_ups (id TEXT PRIMARY KEY, "offerKind" TEXT, "offerId" TEXT, "createdByUserId" TEXT, "contactedAt" TEXT, "createdAt" TEXT, outcome TEXT, "nextContactAt" TEXT);`);
+        // P1: cache latest (triggery utrzymują wstawiane niżej follow-upy).
+        ensureLatestFollowupFixture(db);
         try {
             const f = fake(db);
             const past = '2026-09-30T10:00:00.000Z';

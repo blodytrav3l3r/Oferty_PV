@@ -5,6 +5,7 @@
  * top-level totalPrice; zapis lądował na 0, a COALESCE brał kolumnę).
  */
 import { DatabaseSync } from 'node:sqlite';
+import { ensureLatestFollowupFixture } from './careLatestFixture';
 import type { Prisma } from '../../generated/prisma';
 import { getCareQueue, type CareUser } from '../../src/services/careService';
 
@@ -20,6 +21,8 @@ function freshDb(): DatabaseSync {
         CREATE TABLE care_states ("offerKind" TEXT NOT NULL, "offerId" TEXT NOT NULL, "snoozedUntil" TEXT, "doneAt" TEXT, "updatedBy" TEXT, "updatedAt" TEXT NOT NULL,
             CONSTRAINT "care_states_pkey" PRIMARY KEY ("offerKind", "offerId"));
         CREATE TABLE offer_follow_ups (id TEXT PRIMARY KEY, "offerKind" TEXT, "offerId" TEXT, "createdByUserId" TEXT, "contactedAt" TEXT, "createdAt" TEXT, outcome TEXT, "nextContactAt" TEXT, note TEXT);`);
+    // P1: cache latest (puste follow-upy, tabela musi istnieć dla JOIN).
+    ensureLatestFollowupFixture(db);
     const ins = db.prepare(
         'INSERT INTO offers_studnie_rel (id, "userId", "createdAt", "totalPrice", "data") VALUES (?,?,?,?,?)'
     );

@@ -4,6 +4,7 @@
  * dostaje 304 w kółko i nie widać przeniesienia oferty).
  */
 import { DatabaseSync } from 'node:sqlite';
+import { ensureLatestFollowupFixture } from './careLatestFixture';
 import type { Prisma } from '../../generated/prisma';
 import {
     buildCareQueueQueries,
@@ -40,6 +41,8 @@ function freshDb(): DatabaseSync {
         `INSERT INTO offer_follow_ups (id, "offerKind", "offerId", "createdByUserId",
          "contactedAt", "createdAt", "updatedAt", outcome, "nextContactAt") VALUES (?,?,?,?,?,?,?,?,?)`
     ).run('f1', 'rury', 'o1', 'u1', T0, T0, T0, 'OPEN', null);
+    // P1: cache latest (triggery + backfill).
+    ensureLatestFollowupFixture(db);
     return db;
 }
 

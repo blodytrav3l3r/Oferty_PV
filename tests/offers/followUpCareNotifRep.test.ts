@@ -6,6 +6,7 @@
  * T2/T4 to kotwice (GREEN przed i po): pełny sync działa, lista self-only.
  */
 import { DatabaseSync } from 'node:sqlite';
+import { ensureLatestFollowupFixture } from './careLatestFixture';
 import type { Prisma } from '../../generated/prisma';
 import {
     syncCareNotifications,
@@ -28,6 +29,8 @@ function freshDb(): DatabaseSync {
         CREATE TABLE care_notifications ("id" TEXT NOT NULL, "userId" TEXT NOT NULL, "offerKind" TEXT NOT NULL, "offerId" TEXT NOT NULL, "type" TEXT NOT NULL, "readAt" TEXT, "createdAt" TEXT NOT NULL,
             CONSTRAINT "care_notifications_pkey" PRIMARY KEY ("id"));
         CREATE TABLE offer_follow_ups (id TEXT PRIMARY KEY, "offerKind" TEXT, "offerId" TEXT, "createdByUserId" TEXT, "contactedAt" TEXT, "createdAt" TEXT, outcome TEXT, "nextContactAt" TEXT);`);
+    // P1: cache latest (triggery + backfill).
+    ensureLatestFollowupFixture(db);
     // oA: oferta suba s1 bez kontaktu, stara -> kandydat SLA_BREACH dla repa s1.
     db.prepare('INSERT INTO offers_rel (id, "userId", "createdAt") VALUES (?,?,?)').run(
         'oA',

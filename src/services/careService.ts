@@ -1,12 +1,14 @@
 /**
- * careService — P0.2 SQL kolejki opieki (read-only, zero migracji, zero POST).
+ * careService — P0.2 SQL kolejki opieki (read-only, zero POST) + P1
+ * materializacja latest (tabela latest_followup, triggery trg_fu_latest_*).
  *
- * Jeden CTE `latest` (ROW_NUMBER PARTITION BY offerKind,offerId — ta sama
- * reguła co followUpStats.ts:52 i searchUtils.ts:241, pliki nietknięte),
- * scope mine/team/all w SQL PRZED agregacją via EXISTS (reguła przynależności
+ * Latest z tabeli (ta sama reguła co CTE ROW_NUMBER: contactedAt DESC,
+ * createdAt DESC, id DESC — parzystość: careLatestParity.test.ts);
+ * followUpStats.ts i searchUtils.ts liczą latest po staremu (osobny kontrakt).
+ * Scope mine/team/all w SQL PRZED agregacją via EXISTS (reguła przynależności
  * z buildRoleWhereClause, bez mnożenia wierszy JOINem), dedup kluczem
  * (offerKind,offerId), deterministyczna paginacja cursorem (nie OFFSET).
- * getCareQueue wykonuje max 2 SELECT (data + COUNT DISTINCT).
+ * getCareQueue wykonuje max 2 SELECT (data + COUNT).
  */
 import { Prisma } from '../../generated/prisma';
 import type { User } from '../helpers';
@@ -203,11 +205,6 @@ function ownerCond(
     return Prisma.sql`${shareCond}`;
 }
 
-/** Scope follow-upów via EXISTS (nie JOIN — nie mnoży wierszy). */
-function followUpScope(scopeRury: Prisma.Sql, scopeStudnie: Prisma.Sql): Prisma.Sql {
-    return Prisma.sql`((f."offerKind" = 'rury' AND EXISTS (SELECT 1 FROM offers_rel o WHERE o."id" = f."offerId" AND ${scopeRury})) OR (f."offerKind" = 'studnie' AND EXISTS (SELECT 1 FROM offers_studnie_rel s WHERE s."id" = f."offerId" AND ${scopeStudnie})))`;
-}
-
 const BUCKET_CASE = (nowIso: string): Prisma.Sql =>
     Prisma.sql`CASE WHEN "outcome" IS NULL OR ("outcome" = 'OPEN' AND ("next" IS NULL OR "next" <= ${nowIso})) THEN 0 WHEN "outcome" = 'OPEN' THEN 1 ELSE 2 END`;
 
@@ -219,42 +216,40 @@ export function buildCareQueueQueries(
     const ownerWhere = resolveOwnerWhere(user, scope);
     const scopeRury = ownerCond(user, 'o', 'offer', ownerWhere, opts.repOwner);
     const scopeStudnie = ownerCond(user, 's', 'offer_studnie', ownerWhere, opts.repOwner);
-    const fuScope = followUpScope(scopeRury, scopeStudnie);
     const limit = clampCareLimit(opts.limit);
     const bornRury = bornRange('o', opts.from, opts.to);
     const bornStudnie = bornRange('s', opts.from, opts.to);
     const andBornRury = bornRury ? Prisma.sql` AND ${bornRury}` : Prisma.empty;
     const andBornStudnie = bornStudnie ? Prisma.sql` AND ${bornStudnie}` : Prisma.empty;
 
-    // CTE latest: ta sama reguła co followUpStats.ts:52 / searchUtils.ts:241.
-    const withSql = Prisma.sql`WITH latest AS (
-        SELECT f."offerKind", f."offerId", f."outcome", f."nextContactAt", f."contactedAt", f."note",
-            ROW_NUMBER() OVER (PARTITION BY f."offerKind", f."offerId" ORDER BY f."contactedAt" DESC, f."createdAt" DESC, f."id" DESC) AS "rn"
-        FROM offer_follow_ups f WHERE ${fuScope}
-    ), base AS (
-        SELECT 'rury' AS "offerKind", o."id" AS "offerId", l."outcome" AS "outcome",
-            l."nextContactAt" AS "next", l."contactedAt" AS "last", o."createdAt" AS "born",
+    // P1: latest z tabeli latest_followup (triggery trg_fu_latest_*),
+    // nie CTE ROW_NUMBER — ta sama reguła (contactedAt DESC, createdAt DESC,
+    // id DESC), parzystość pilnuje tests/offers/careLatestParity.test.ts.
+    // followUpStats.ts i searchUtils.ts liczą latest po staremu (osobny kontrakt).
+    const withSql = Prisma.sql`WITH base AS (
+        SELECT 'rury' AS "offerKind", o."id" AS "offerId", lf."outcome" AS "outcome",
+            lf."nextContactAt" AS "next", lf."contactedAt" AS "last", o."createdAt" AS "born",
             o."offer_number" AS "number", o."clientName" AS "client",
             o."clientNumber" AS "clientNumber",
             COALESCE(NULLIF(TRIM(COALESCE(ou."firstName", '') || ' ' || COALESCE(ou."lastName", '')), ''), ou."username") AS "owner",
             json_extract(o."data", '$.createdByUserName') AS "author",
             CAST(json_extract(o."data", '$.totalBrutto') AS REAL) AS "value",
-            COALESCE(json_extract(o."data", '$.clientPhone'), json_extract(o."data", '$.clientContacts[0].phone')) AS "phone", l."note" AS "note",
+            COALESCE(json_extract(o."data", '$.clientPhone'), json_extract(o."data", '$.clientContacts[0].phone')) AS "phone", lf."note" AS "note",
             COALESCE(NULLIF(o."investName", ''), json_extract(o."data", '$.investName'), json_extract(o."data", '$.budowa')) AS "invest",
             json_extract(o."data", '$.investAddress') AS "address",
             COALESCE(json_extract(o."data", '$.contactPerson'), json_extract(o."data", '$.clientContacts[0].name')) AS "contact",
             COALESCE(json_extract(o."data", '$.clientEmail'), json_extract(o."data", '$.clientContacts[0].email')) AS "email",
             cs."snoozedUntil" AS "snoozed", cs."doneAt" AS "done",
             cs."updatedAt" AS "careUpdatedAt"
-        FROM offers_rel o LEFT JOIN latest l
-            ON l."offerKind" = 'rury' AND l."offerId" = o."id" AND l."rn" = 1
+        FROM offers_rel o LEFT JOIN latest_followup lf
+            ON lf."offerKind" = 'rury' AND lf."offerId" = o."id"
         LEFT JOIN care_states cs
             ON cs."offerKind" = 'rury' AND cs."offerId" = o."id"
         LEFT JOIN users ou ON o."userId" = ou."id"
         WHERE ${scopeRury}${andBornRury}
         UNION ALL
-        SELECT 'studnie' AS "offerKind", s."id" AS "offerId", l."outcome" AS "outcome",
-            l."nextContactAt" AS "next", l."contactedAt" AS "last", s."createdAt" AS "born",
+        SELECT 'studnie' AS "offerKind", s."id" AS "offerId", lf."outcome" AS "outcome",
+            lf."nextContactAt" AS "next", lf."contactedAt" AS "last", s."createdAt" AS "born",
             s."offer_number" AS "number", s."clientName" AS "client",
             s."clientNumber" AS "clientNumber",
             COALESCE(NULLIF(TRIM(COALESCE(su."firstName", '') || ' ' || COALESCE(su."lastName", '')), ''), su."username") AS "owner",
@@ -264,15 +259,15 @@ export function buildCareQueueQueries(
             CAST(COALESCE(NULLIF(s."totalPrice", 0), json_extract(s."data", '$.totalBrutto'),
                 (SELECT CAST(ROUND(COALESCE(SUM(value->>'totalPrice'), 0), 2) AS REAL)
                     FROM json_each(s."data", '$.wellsExport'))) AS REAL) AS "value",
-            COALESCE(json_extract(s."data", '$.clientPhone'), json_extract(s."data", '$.clientContacts[0].phone')) AS "phone", l."note" AS "note",
+            COALESCE(json_extract(s."data", '$.clientPhone'), json_extract(s."data", '$.clientContacts[0].phone')) AS "phone", lf."note" AS "note",
             COALESCE(NULLIF(s."investName", ''), json_extract(s."data", '$.investName'), json_extract(s."data", '$.budowa')) AS "invest",
             json_extract(s."data", '$.investAddress') AS "address",
             COALESCE(json_extract(s."data", '$.contactPerson'), json_extract(s."data", '$.clientContacts[0].name')) AS "contact",
             COALESCE(json_extract(s."data", '$.clientEmail'), json_extract(s."data", '$.clientContacts[0].email')) AS "email",
             cs."snoozedUntil" AS "snoozed", cs."doneAt" AS "done",
             cs."updatedAt" AS "careUpdatedAt"
-        FROM offers_studnie_rel s LEFT JOIN latest l
-            ON l."offerKind" = 'studnie' AND l."offerId" = s."id" AND l."rn" = 1
+        FROM offers_studnie_rel s LEFT JOIN latest_followup lf
+            ON lf."offerKind" = 'studnie' AND lf."offerId" = s."id"
         LEFT JOIN care_states cs
             ON cs."offerKind" = 'studnie' AND cs."offerId" = s."id"
         LEFT JOIN users su ON s."userId" = su."id"
@@ -347,7 +342,6 @@ export async function getCareSummary(
     const ownerWhere = resolveOwnerWhere(user, scope);
     const scopeRury = ownerCond(user, 'o', 'offer', ownerWhere, opts?.repOwner);
     const scopeStudnie = ownerCond(user, 's', 'offer_studnie', ownerWhere, opts?.repOwner);
-    const fuScope = followUpScope(scopeRury, scopeStudnie);
     const bornRury = bornRange('o', opts?.from, opts?.to);
     const bornStudnie = bornRange('s', opts?.from, opts?.to);
     const andBornRury = bornRury ? Prisma.sql` AND ${bornRury}` : Prisma.empty;
@@ -360,22 +354,19 @@ export async function getCareSummary(
     const pauseStudnie = opts?.hidePaused
         ? Prisma.sql` AND (cs."offerId" IS NULL OR (cs."doneAt" IS NULL AND (cs."snoozedUntil" IS NULL OR cs."snoozedUntil" <= ${nowIso})))`
         : Prisma.empty;
-    const withSql = Prisma.sql`WITH latest AS (
-        SELECT f."offerKind", f."offerId", f."outcome", f."nextContactAt", f."contactedAt",
-            ROW_NUMBER() OVER (PARTITION BY f."offerKind", f."offerId" ORDER BY f."contactedAt" DESC, f."createdAt" DESC, f."id" DESC) AS "rn"
-        FROM offer_follow_ups f WHERE ${fuScope}
-    ), base AS (
-        SELECT 'rury' AS "offerKind", o."id" AS "offerId", l."outcome" AS "outcome",
-            l."nextContactAt" AS "next", l."contactedAt" AS "last"
-        FROM offers_rel o LEFT JOIN latest l
-            ON l."offerKind" = 'rury' AND l."offerId" = o."id" AND l."rn" = 1
+    // P1: latest z tabeli latest_followup (jak kolejka wyżej).
+    const withSql = Prisma.sql`WITH base AS (
+        SELECT 'rury' AS "offerKind", o."id" AS "offerId", lf."outcome" AS "outcome",
+            lf."nextContactAt" AS "next", lf."contactedAt" AS "last"
+        FROM offers_rel o LEFT JOIN latest_followup lf
+            ON lf."offerKind" = 'rury' AND lf."offerId" = o."id"
         LEFT JOIN care_states cs ON cs."offerKind" = 'rury' AND cs."offerId" = o."id"
         WHERE ${scopeRury}${pauseRury}${andBornRury}
         UNION ALL
-        SELECT 'studnie' AS "offerKind", s."id" AS "offerId", l."outcome" AS "outcome",
-            l."nextContactAt" AS "next", l."contactedAt" AS "last"
-        FROM offers_studnie_rel s LEFT JOIN latest l
-            ON l."offerKind" = 'studnie' AND l."offerId" = s."id" AND l."rn" = 1
+        SELECT 'studnie' AS "offerKind", s."id" AS "offerId", lf."outcome" AS "outcome",
+            lf."nextContactAt" AS "next", lf."contactedAt" AS "last"
+        FROM offers_studnie_rel s LEFT JOIN latest_followup lf
+            ON lf."offerKind" = 'studnie' AND lf."offerId" = s."id"
         LEFT JOIN care_states cs ON cs."offerKind" = 'studnie' AND cs."offerId" = s."id"
         WHERE ${scopeStudnie}${pauseStudnie}${andBornStudnie}
     )`;
@@ -974,27 +965,23 @@ function notifCandidates(
     repOwner?: string | null
 ): Prisma.Sql {
     const { rury, studnie } = notifBase(user, scope, repOwner);
-    const fuScope = followUpScope(rury, studnie);
     const dayAhead = new Date(Date.parse(nowIso) + 86400000).toISOString();
     const staleCut = new Date(Date.parse(nowIso) - sla.staleD * 86400000).toISOString();
     const escCut = new Date(Date.parse(nowIso) - sla.escalationH * 3600000).toISOString();
     const fcCut = new Date(Date.parse(nowIso) - sla.firstContactH * 3600000).toISOString();
-    return Prisma.sql`WITH latest AS (
-        SELECT f."offerKind", f."offerId", f."outcome", f."nextContactAt", f."contactedAt",
-            ROW_NUMBER() OVER (PARTITION BY f."offerKind", f."offerId" ORDER BY f."contactedAt" DESC, f."createdAt" DESC, f."id" DESC) AS "rn"
-        FROM offer_follow_ups f WHERE ${fuScope}
-    ), base AS (
+    // P1: latest z tabeli latest_followup (jak kolejka/summary wyżej).
+    return Prisma.sql`WITH base AS (
         SELECT 'rury' AS "offerKind", o."id" AS "offerId", o."userId" AS "ownerId",
-            l."outcome" AS "outcome", l."nextContactAt" AS "next", o."createdAt" AS "born"
-        FROM offers_rel o LEFT JOIN latest l
-            ON l."offerKind" = 'rury' AND l."offerId" = o."id" AND l."rn" = 1
+            lf."outcome" AS "outcome", lf."nextContactAt" AS "next", o."createdAt" AS "born"
+        FROM offers_rel o LEFT JOIN latest_followup lf
+            ON lf."offerKind" = 'rury' AND lf."offerId" = o."id"
         LEFT JOIN care_states cs ON cs."offerKind" = 'rury' AND cs."offerId" = o."id"
         WHERE ${rury} AND (cs."offerId" IS NULL OR (cs."doneAt" IS NULL AND (cs."snoozedUntil" IS NULL OR cs."snoozedUntil" <= ${nowIso})))
         UNION ALL
         SELECT 'studnie' AS "offerKind", s."id" AS "offerId", s."userId" AS "ownerId",
-            l."outcome" AS "outcome", l."nextContactAt" AS "next", s."createdAt" AS "born"
-        FROM offers_studnie_rel s LEFT JOIN latest l
-            ON l."offerKind" = 'studnie' AND l."offerId" = s."id" AND l."rn" = 1
+            lf."outcome" AS "outcome", lf."nextContactAt" AS "next", s."createdAt" AS "born"
+        FROM offers_studnie_rel s LEFT JOIN latest_followup lf
+            ON lf."offerKind" = 'studnie' AND lf."offerId" = s."id"
         LEFT JOIN care_states cs ON cs."offerKind" = 'studnie' AND cs."offerId" = s."id"
         WHERE ${studnie} AND (cs."offerId" IS NULL OR (cs."doneAt" IS NULL AND (cs."snoozedUntil" IS NULL OR cs."snoozedUntil" <= ${nowIso})))
     )

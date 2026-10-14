@@ -3,6 +3,7 @@
  * wydzielone z src/app.ts. Kolejność wywołań w initApp NIE zmieniona.
  */
 import prisma from './prismaClient';
+import { Prisma } from '../generated/prisma';
 import { logger } from './utils/logger';
 import { splitMergedContact } from './utils/contactSplit';
 import crypto from 'crypto';
@@ -125,6 +126,7 @@ export async function ensureDatabaseIndexes(): Promise<void> {
     }
 
     await ensureClientContactsTable();
+    await ensureLatestFollowup();
 }
 
 /**
@@ -222,6 +224,88 @@ export async function ensureClientContactsTable(): Promise<void> {
         logger.warn(
             'Server',
             'Nie udało się wykonać re-split client_contacts_rel:',
+            e instanceof Error ? e.message : String(e)
+        );
+    }
+}
+
+/**
+ * Auto-heal materializacji latest follow-up (P1): CREATE TABLE IF NOT EXISTS
+ * + triggery trg_fu_latest_* (DROP+CREATE, deterministyczny rerun) + backfill
+ * brakujących top-1 regułą latest. Idempotentne. Bazy legacy db push nie
+ * mają triggerów (Prisma ich nie widzi) — bez heala cache byłby pusty,
+ * a odczyt (LEFT JOIN) zwróciłby NULL zamiast latest.
+ */
+export async function ensureLatestFollowup(): Promise<void> {
+    try {
+        await prisma.$executeRaw`CREATE TABLE IF NOT EXISTS "latest_followup" ("offerKind" TEXT NOT NULL, "offerId" TEXT NOT NULL, "followupId" TEXT NOT NULL, "outcome" TEXT, "nextContactAt" TEXT, "contactedAt" TEXT, "createdAt" TEXT, "note" TEXT, CONSTRAINT "latest_followup_pkey" PRIMARY KEY ("offerKind", "offerId"))`;
+        // UWAGA: wyłącznie statyczne literaly DDL z tablicy poniżej
+        // (kontrakt tests/sqlInjection.test.ts: Unsafe/interpolacja = fail).
+        // Prisma.sql z gotowego stringa bez values = static, jak tag bez ${}.
+        const ddls: string[] = [
+            `DROP TRIGGER IF EXISTS "trg_fu_latest_ai"`,
+            `CREATE TRIGGER "trg_fu_latest_ai" AFTER INSERT ON "offer_follow_ups" BEGIN
+                DELETE FROM "latest_followup" WHERE "offerKind" = NEW."offerKind" AND "offerId" = NEW."offerId";
+                INSERT INTO "latest_followup" ("offerKind", "offerId", "followupId", "outcome", "nextContactAt", "contactedAt", "createdAt", "note")
+                    SELECT "offerKind", "offerId", "id", "outcome", "nextContactAt", "contactedAt", "createdAt", "note" FROM "offer_follow_ups"
+                    WHERE "offerKind" = NEW."offerKind" AND "offerId" = NEW."offerId"
+                    ORDER BY "contactedAt" DESC, "createdAt" DESC, "id" DESC LIMIT 1;
+            END`,
+            `DROP TRIGGER IF EXISTS "trg_fu_latest_au"`,
+            `CREATE TRIGGER "trg_fu_latest_au" AFTER UPDATE ON "offer_follow_ups" BEGIN
+                DELETE FROM "latest_followup" WHERE ("offerKind" = NEW."offerKind" AND "offerId" = NEW."offerId") OR ("offerKind" = OLD."offerKind" AND "offerId" = OLD."offerId");
+                INSERT INTO "latest_followup" ("offerKind", "offerId", "followupId", "outcome", "nextContactAt", "contactedAt", "createdAt", "note")
+                    SELECT "offerKind", "offerId", "id", "outcome", "nextContactAt", "contactedAt", "createdAt", "note" FROM "offer_follow_ups"
+                    WHERE "offerKind" = NEW."offerKind" AND "offerId" = NEW."offerId"
+                    ORDER BY "contactedAt" DESC, "createdAt" DESC, "id" DESC LIMIT 1;
+                INSERT INTO "latest_followup" ("offerKind", "offerId", "followupId", "outcome", "nextContactAt", "contactedAt", "createdAt", "note")
+                    SELECT "offerKind", "offerId", "id", "outcome", "nextContactAt", "contactedAt", "createdAt", "note" FROM "offer_follow_ups"
+                    WHERE ("offerKind" = OLD."offerKind" AND "offerId" = OLD."offerId")
+                        AND (OLD."offerKind" <> NEW."offerKind" OR OLD."offerId" <> NEW."offerId")
+                    ORDER BY "contactedAt" DESC, "createdAt" DESC, "id" DESC LIMIT 1;
+            END`,
+            `DROP TRIGGER IF EXISTS "trg_fu_latest_ad"`,
+            `CREATE TRIGGER "trg_fu_latest_ad" AFTER DELETE ON "offer_follow_ups" BEGIN
+                DELETE FROM "latest_followup" WHERE "offerKind" = OLD."offerKind" AND "offerId" = OLD."offerId";
+                INSERT INTO "latest_followup" ("offerKind", "offerId", "followupId", "outcome", "nextContactAt", "contactedAt", "createdAt", "note")
+                    SELECT "offerKind", "offerId", "id", "outcome", "nextContactAt", "contactedAt", "createdAt", "note" FROM "offer_follow_ups"
+                    WHERE "offerKind" = OLD."offerKind" AND "offerId" = OLD."offerId"
+                    ORDER BY "contactedAt" DESC, "createdAt" DESC, "id" DESC LIMIT 1;
+            END`,
+            `DROP TRIGGER IF EXISTS "trg_offers_latest_ad"`,
+            `CREATE TRIGGER "trg_offers_latest_ad" AFTER DELETE ON "offers_rel" BEGIN
+                DELETE FROM "latest_followup" WHERE "offerKind" = 'rury' AND "offerId" = OLD."id";
+            END`,
+            `DROP TRIGGER IF EXISTS "trg_offersstud_latest_ad"`,
+            `CREATE TRIGGER "trg_offersstud_latest_ad" AFTER DELETE ON "offers_studnie_rel" BEGIN
+                DELETE FROM "latest_followup" WHERE "offerKind" = 'studnie' AND "offerId" = OLD."id";
+            END`
+        ];
+        for (const sql of ddls) {
+            await prisma.$executeRaw(Prisma.sql([sql]));
+        }
+    } catch (e) {
+        logger.warn(
+            'Server',
+            'Nie udało się upewnić schematu latest_followup:',
+            e instanceof Error ? e.message : String(e)
+        );
+        return;
+    }
+    try {
+        await prisma.$executeRaw`INSERT OR IGNORE INTO "latest_followup" ("offerKind", "offerId", "followupId", "outcome", "nextContactAt", "contactedAt", "createdAt", "note") SELECT "offerKind", "offerId", "id", "outcome", "nextContactAt", "contactedAt", "createdAt", "note" FROM (SELECT "offerKind", "offerId", "id", "outcome", "nextContactAt", "contactedAt", "createdAt", "note", ROW_NUMBER() OVER (PARTITION BY "offerKind", "offerId" ORDER BY "contactedAt" DESC, "createdAt" DESC, "id" DESC) AS "rn" FROM "offer_follow_ups") WHERE "rn" = 1`;
+        const missing =
+            (await prisma.$queryRaw`SELECT COUNT(*) AS "c" FROM "offer_follow_ups" AS "f" LEFT JOIN "latest_followup" AS "l" ON "l"."offerKind" = "f"."offerKind" AND "l"."offerId" = "f"."offerId" WHERE "l"."followupId" IS NULL`) as Array<{
+                c: number | bigint;
+            }>;
+        const n = Number(missing[0]?.c ?? 0);
+        if (n > 0) {
+            logger.warn('Server', `Auto-heal: latest_followup bez wpisu dla ${n} follow-upów`);
+        }
+    } catch (e) {
+        logger.warn(
+            'Server',
+            'Nie udało się wykonać backfillu latest_followup:',
             e instanceof Error ? e.message : String(e)
         );
     }

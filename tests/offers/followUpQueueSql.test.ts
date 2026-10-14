@@ -5,6 +5,7 @@
  * cursor base64, limit clamp, max 2 SELECT.
  */
 import { DatabaseSync } from 'node:sqlite';
+import { ensureLatestFollowupFixture } from './careLatestFixture';
 import type { Prisma } from '../../generated/prisma';
 import {
     buildCareQueueQueries,
@@ -74,6 +75,8 @@ function freshDb(): DatabaseSync {
     fu('zzz', 'studnie', 'o3', 'WON', PAST);
     fu('f9', 'rury', 'o9', 'OPEN', PAST);
     fu('f5', 'rury', 'o5', 'OPEN', PAST);
+    // P1: cache latest (triggery utrzymują przy INSERTach, backfill kryje powyższe).
+    ensureLatestFollowupFixture(db);
     return db;
 }
 

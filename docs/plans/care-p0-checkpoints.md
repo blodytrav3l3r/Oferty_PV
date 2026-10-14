@@ -82,6 +82,19 @@ summary 177 + queue 228 + sync_hot 0 + list 1; równolegle). Sync_hot:
 Po P0 dominuje sort CTE `latest`: data ~226 ms + summary ~177 ms na 20k
 (liniowo → ~20 s na 1M). `latest_followup` + triggery UZASADNIONE.
 Mapa zapisów gotowa (tylko `followUps.ts:114,197,332,402`, brak bulk).
+
+## P1.1-latest_followup — DONE (2026-10-14)
+
+Tabela + 5 triggerów (insert/update/delete follow-up, cleanup po DELETE
+oferty) + backfill ROW_NUMBER + heal `ensureLatestFollowup()` dla baz
+db-push (tabela + triggery + backfill; warn-bez-rzucania). Odczyty
+kolejka/summary/notifCandidates na `LEFT JOIN latest_followup`;
+`followUpStats`/`searchUtils` nietknięte (osobny kontrakt).
+Efekt na 20k: summary 177→30 ms, queue 274→92 ms, panel ~470→140 ms.
+Równoważność: dump 20k IDENTYCZNY bajt-w-bajt + testy parzystości.
+Ocena przy 1M: 5/10 (sort ORDER BY + GROUP BY zostają; sufit SQLite).
+P1.2 (partial index): odrzucony — istniejący indeks pokrywa, brak dowodu
+potrzeby. P1.3 (90D): bez zmian semantyki (decyzja).
 Wejście w P1 wymaga osobnego GO (migracja = tier czerwony).
 
 ## P0.3-SYNC-THROTTLE

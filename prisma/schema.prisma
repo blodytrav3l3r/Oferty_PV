@@ -438,6 +438,24 @@ model offer_follow_ups {
   @@index([createdByUserId, nextContactAt], map: "idx_followups_user_next")
 }
 
+// P1 opieka: materializacja latest follow-up (reguła contactedAt DESC,
+// createdAt DESC, id DESC). Utrzymanie: triggery trg_fu_latest_* w migracji
+// 20261014000000 (niewidzialne dla `prisma migrate diff`, jak partial UQ).
+// Odczyt tylko przez careService (kolejka/summary/notif); followUpStats
+// i searchUtils liczą latest po staremu (osobny kontrakt).
+model latest_followup {
+  offerKind     String
+  offerId       String
+  followupId    String
+  outcome       String?
+  nextContactAt String?
+  contactedAt   String?
+  createdAt     String?
+  note          String?
+
+  @@id([offerKind, offerId])
+}
+
 // Liczniki numeracji ofert
 model order_counters {
   userId     String
