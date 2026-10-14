@@ -17,7 +17,10 @@ export class RewardCalculator {
     /**
      * Zapisuje nagrodę atomowo. Dedup per (wellId, action) wymusza unikalny
      * indeks uq_reward_well_action (nie findFirst→create — TOCTOU).
-     * @returns {Promise<{ applied: boolean }>} applied=false = duplikat (P2002)
+     * Pre-check findUnique wycina powtarzalne duplikaty PRZED transakcja,
+     * zeby silnik Prisma nie logowal prisma:error przy kazdym retry
+     * (P2002 w catch zostaje jako backstop wyscigu).
+     * @returns {Promise<{ applied: boolean }>} applied=false = duplikat
      */
     async processAction(event: RewardEvent): Promise<{ applied: boolean }> {
         let reward = 0;
@@ -47,13 +50,34 @@ export class RewardCalculator {
                 throw new Error(`Nieznana akcja reward: ${String(event.action)}`);
         }
 
+        const wellId = event.wellId || 'unknown';
+        try {
+            const dupe = await prisma.aiRewardLog.findUnique({
+                where: { wellId_action: { wellId, action: event.action } },
+                select: { id: true }
+            });
+            if (dupe) {
+                logger.info(
+                    'RewardCalculator',
+                    `Duplikat reward ${event.action} dla well ${event.wellId} — pomijam`
+                );
+                return { applied: false };
+            }
+        } catch (e) {
+            logger.debug(
+                'RewardCalculator',
+                'pre-check ignore',
+                e instanceof Error ? e.message : String(e)
+            );
+        }
+
         try {
             await prisma.$transaction(async (tx) => {
                 await tx.aiRewardLog.create({
                     data: {
                         id: crypto.randomUUID(),
                         userId: event.userId,
-                        wellId: event.wellId || 'unknown',
+                        wellId,
                         dn: event.dn ?? 0,
                         action: event.action,
                         reward,

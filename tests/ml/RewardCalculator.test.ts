@@ -5,17 +5,20 @@ jest.mock('../../src/utils/logger', () => ({
     logger: {
         info: jest.fn(),
         warn: jest.fn(),
-        error: jest.fn()
+        error: jest.fn(),
+        debug: jest.fn()
     }
 }));
 
 const mockCreate = jest.fn<any>();
+const mockFindUnique = jest.fn<any>();
 const mockUpdateMany = jest.fn<any>().mockResolvedValue({ count: 1 });
 const mockTransaction = jest.fn<any>();
 
 jest.mock('../../src/prismaClient', () => ({
     __esModule: true,
     default: {
+        aiRewardLog: { findUnique: (...args: any[]) => mockFindUnique(...args) },
         $transaction: (...args: any[]) => mockTransaction(...args)
     }
 }));
@@ -29,6 +32,7 @@ function buildP2002(): { code: string } {
 beforeEach(() => {
     jest.clearAllMocks();
     mockCreate.mockResolvedValue({ id: 'reward' });
+    mockFindUnique.mockResolvedValue(null);
     mockTransaction.mockImplementation((fn: (tx: unknown) => Promise<void>) =>
         fn({ aiRewardLog: { create: mockCreate }, users: { updateMany: mockUpdateMany } })
     );
@@ -113,5 +117,38 @@ describe('RewardCalculator.processAction — A-19', () => {
         expect(createArgs.data.reward).toBeCloseTo(0.04, 5);
         expect(createArgs.data.scoreBefore).toBe(0.5);
         expect(createArgs.data.scoreAfter).toBe(0.9);
+    });
+});
+
+describe('RewardCalculator.processAction — pre-check dedup (koniec prisma:error)', () => {
+    it('powtorka: findUnique trafia -> brak transakcji, applied:false', async () => {
+        mockFindUnique.mockResolvedValue({ id: 'stary' });
+
+        const result = await rewardCalculator.processAction({
+            userId: 'u1',
+            wellId: 'w1',
+            action: 'MODIFY'
+        });
+
+        expect(result).toEqual({ applied: false });
+        expect(mockFindUnique).toHaveBeenCalledWith({
+            where: { wellId_action: { wellId: 'w1', action: 'MODIFY' } },
+            select: { id: true }
+        });
+        expect(mockTransaction).not.toHaveBeenCalled();
+        expect(mockCreate).not.toHaveBeenCalled();
+    });
+
+    it('pierwszy zapis pyta findUnique przed transakcja', async () => {
+        const result = await rewardCalculator.processAction({
+            userId: 'u1',
+            wellId: 'w1',
+            action: 'ACCEPT',
+            wasAiRanked: false
+        });
+
+        expect(result).toEqual({ applied: true });
+        expect(mockFindUnique).toHaveBeenCalledTimes(1);
+        expect(mockTransaction).toHaveBeenCalledTimes(1);
     });
 });
