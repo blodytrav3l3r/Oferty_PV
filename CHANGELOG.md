@@ -4,6 +4,16 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.45.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.44.1...v1.45.0) (2026-10-14)
+
+### Features
+
+- **security:** ostrzezenie o publicznym bindzie ([300e180](https://github.com/blodytrav3l3r/Oferty_PV/commit/300e18044f82a93e9fe00a53c1501266f1e73fea))
+
+### Bug Fixes
+
+- **auth:** odrzucenie fallbacku w kazdym srodowisku ([7d3ba59](https://github.com/blodytrav3l3r/Oferty_PV/commit/7d3ba592521e895b50d63b75bb7fce3342e9aeb5))
+
 ### [1.44.1](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.44.0...v1.44.1) (2026-10-14)
 
 ### Bug Fixes
