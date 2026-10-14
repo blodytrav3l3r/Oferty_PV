@@ -186,6 +186,116 @@ Indeksy: `idx_ordstud_user` na `userId`, `idx_ordstud_offer` na `offerStudnieId`
 
 ---
 
+### Modele opieki (care)
+
+#### `offer_follow_ups` — Historia kontaktów (append-only)
+
+| Kolumna         | Typ        | Opis                                                                 |
+| --------------- | ---------- | -------------------------------------------------------------------- |
+| id              | String @id | Unikalny identyfikator                                               |
+| offerKind       | String     | `rury` / `studnie` (brak FK polimorficznego)                         |
+| offerId         | String     | ID oferty                                                            |
+| cycle           | Int        | Cykl obsługi; reopen po wyniku terminalnym = cykl nr+1 (@default(0)) |
+| createdByUserId | String     | Kto odnotował kontakt                                                |
+| createdAt       | String?    | Data utworzenia                                                      |
+| updatedAt       | String?    | Znacznik edycji wpisu w miejscu (PUT, surowy SQL)                    |
+| contactedAt     | String     | Data kontaktu (wymagana)                                             |
+| channel         | Enum       | Kanał kontaktu (`OfferFollowUpChannel`)                              |
+| result          | Enum       | Rezultat (`OfferFollowUpResult`)                                     |
+| durationMin     | Int?       | Czas trwania (min)                                                   |
+| note            | String?    | Notatka                                                              |
+| nextContactAt   | String?    | Planowany następny kontakt                                           |
+| outcome         | Enum       | Status rozliczenia (`OfferFollowUpOutcome`, @default(OPEN))          |
+| loseReason      | String?    | Powód utraty                                                         |
+| competitor      | String?    | Konkurent                                                            |
+| competitorPrice | Float?     | Cena konkurenta                                                      |
+
+Append-only: edycja notatki przez PUT nie rusza `contactedAt`/`createdAt`.
+Reguła latest: `contactedAt DESC, createdAt DESC, id DESC`. Indeksy:
+`idx_followups_offer_contacted` na `(offerKind, offerId, contactedAt)`,
+`idx_followups_user_next` na `(createdByUserId, nextContactAt)`.
+Max 1 wynik terminalny na `(offerKind, offerId, cycle)` — partial index
+z migracji SQL (niewidzialny dla `prisma migrate diff`).
+
+#### `latest_followup` — Ostatni kontakt (materializacja P1)
+
+| Kolumna       | Typ     | Opis                                       |
+| ------------- | ------- | ------------------------------------------ |
+| offerKind     | String  | `rury` / `studnie` (część PK)              |
+| offerId       | String  | ID oferty (część PK)                       |
+| followupId    | String  | ID wiersza źródłowego z `offer_follow_ups` |
+| outcome       | String? | Kopia rozliczenia                          |
+| nextContactAt | String? | Kopia terminu                              |
+| contactedAt   | String? | Kopia daty kontaktu                        |
+| createdAt     | String? | Kopia daty utworzenia                      |
+| note          | String? | Kopia notatki                              |
+
+Klucz główny: `(offerKind, offerId)`. Utrzymanie: triggery
+`trg_fu_latest_ai/au/ad` na `offer_follow_ups` (INSERT/UPDATE/DELETE
+przeliczają wiersz wg reguły latest) + backfill w migracji
+`20261014000000_care_latest_followup`. Heal przy starcie:
+`ensureLatestFollowup()` w `src/initDatabase.ts`. Odczyt tylko przez
+`careService` (kolejka/summary/notif); `followUpStats` i `searchUtils`
+liczą latest po staremu (osobny kontrakt).
+
+#### `care_states` — Stan pilnowania oferty
+
+| Kolumna      | Typ     | Opis                                                      |
+| ------------ | ------- | --------------------------------------------------------- |
+| offerKind    | String  | `rury` / `studnie` (część PK)                             |
+| offerId      | String  | ID oferty (część PK)                                      |
+| snoozedUntil | String? | ISO-8601 UTC; null = aktywne pilnowanie                   |
+| doneAt       | String? | ISO-8601 UTC; null = nieukończone (snooze/done rozłączne) |
+| updatedBy    | String? | Kto zmienił                                               |
+| updatedAt    | String  | Data zmiany (wymagana)                                    |
+
+Klucz główny: `(offerKind, offerId)`. Snooze/done to stan, nie zdarzenie
+(osobno od `offer_follow_ups`). Każda zmiana = wiersz w `audit_logs`
+(`entityType care_state`). Indeksy: `idx_care_snooze` na `snoozedUntil`,
+`idx_care_done` na `doneAt`.
+
+#### `care_sla_config` / `care_sla_scopes` — Progi SLA
+
+| Kolumna       | Typ        | Opis                                                |
+| ------------- | ---------- | --------------------------------------------------- |
+| id            | String @id | `care_sla_config`: zawsze `global` (@default)       |
+| scopeType     | String     | `care_sla_scopes`: `team` / `user` (część PK)       |
+| scopeId       | String     | ID zakresu (część PK)                               |
+| firstContactH | Int        | Godziny na pierwszy kontakt (@default(24) w global) |
+| staleD        | Int        | Dni do przeterminowania (@default(7) w global)      |
+| escalationH   | Int        | Godziny do eskalacji (@default(72) w global)        |
+| updatedBy     | String?    | Kto zmienił                                         |
+| updatedAt     | String?    | Data zmiany                                         |
+
+`care_sla_config` = 1 wiersz globalny (edycja tylko admin).
+`care_sla_scopes` = nadpisania per zespół/user (PK `(scopeType, scopeId)`,
+indeks `idx_caresla_scope`); brak wiersza = fallback do globalnych.
+
+#### `care_notifications` — Powiadomienia in-app (pochodna stanu)
+
+| Kolumna   | Typ        | Opis                                         |
+| --------- | ---------- | -------------------------------------------- |
+| id        | String @id | Identyfikator                                |
+| userId    | String     | Adresat                                      |
+| offerKind | String     | `rury` / `studnie`                           |
+| offerId   | String     | ID oferty                                    |
+| type      | String     | `SLA_BREACH` / `ESCALATION` / `CALLBACK_DUE` |
+| readAt    | String?    | Data odczytu (null = nieprzeczytane)         |
+| createdAt | String     | Data utworzenia (wymagana)                   |
+
+Bounded inbox (retencja leniwa w syncu, brak workera): przeczytane starsze
+niż 90 dni usuwane, skrzynka max 500 wierszy. Max 1 nieprzeczytane na
+`(userId, offerKind, offerId, type)` — partial unique index z migracji SQL
+(niewidzialny dla `prisma migrate diff`). Indeksy: `idx_carenotif_user_read`
+na `(userId, readAt, createdAt)`, `idx_carenotif_offer` na `(offerKind, offerId)`.
+
+Uwaga (throttle, nie w DB): znacznik ostatniego udanego syncu (okno 60 s =
+polling FE) trzymany jest w pamięci procesu (`careService.ts`) — restart
+gubi znacznik = pełny sync (bezpieczne); fail nie stempluje; podgląd repa
+omija throttle.
+
+---
+
 ### 3. Modele danych — produkty i cenniki
 
 #### `ProductsRury` — Produkty (rury)
