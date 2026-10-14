@@ -113,6 +113,23 @@ function validateCollisionsLive(well, segments) {
 }
 
 /* ===== WALIDACJA LUZÓW PRZEJŚĆ ===== */
+// Notki jednorazowe solvera (runJsAutoSelection): opisuja konkretny przebieg,
+// nie biezacy stan. Po recznej edycji configu robia sie stale (np. stara
+// odchyłka +27mm), wiec recalculate je odrzuca — ALE tylko gdy config rozni
+// sie od zapieczetowanego przy solverze (well._solverErrorsGen). Bez pieczatki
+// (stare dane/import) zachowanie legacy: preserve. Brak kregu wierconego to
+// blad asortymentu wlasciciela — celowo poza lista, zawsze zachowywany.
+function wellConfigFingerprint(config) {
+    if (!Array.isArray(config)) return '';
+    return config
+        .map((it) => (it && it.productId ? it.productId : '?') + 'x' + (it.quantity || 1))
+        .join('|');
+}
+const SOLVER_NOTE_MARKERS = [
+    'Wymuszono tolerancję wysokości',
+    'Zastosowana rozszerzona tolerancja',
+    'Nie znaleziono pasującej kombinacji'
+];
 function recalculateWellErrors(well) {
     if (!well || well.configStatus === 'LOADING') return;
 
@@ -287,6 +304,8 @@ function recalculateWellErrors(well) {
     // --- WALIDACJA DOPŁATY PEHD (wkładka wybrana, ale brak dopłaty w cenniku) ---
     // Cichy brak dopłaty: jeśli parametr wkładki != 'brak', ale produkt nie ma dopłatyPEHD,
     // wycena nie dolicza nic — zgłoś ostrzeżenie WARNING (nie twardy błąd).
+    // Drop starych notek solvera: config recznie zmieniony po solverze uniewaznia
+    // jego jednorazowe komunikaty (stala odchyłka). Bez pieczatki: preserve.
     if (typeof getPehdTypeForComponent === 'function' && well.config && well.config.length > 0) {
         for (const item of well.config) {
             const p = resolveStudnieProduct(item.productId);
@@ -306,11 +325,23 @@ function recalculateWellErrors(well) {
     }
 
     well.configErrors = [...new Set(liveErrors)];
+    // Drop starych notek solvera: config rozni sie od zapieczetowanego przy
+    // solverze, wiec jednorazowe komunikaty (stala odchyłka) sa nieaktualne.
+    // Nastepny przebieg solvera dopisze swieze. Bez pieczatki: preserve.
+    if (
+        well._solverErrorsGen != null &&
+        wellConfigFingerprint(well.config) !== well._solverErrorsGen
+    ) {
+        well.configErrors = well.configErrors.filter(
+            (e) => !SOLVER_NOTE_MARKERS.some((m) => e.includes(m))
+        );
+    }
     // Ustal status: twarde błędy → ERROR; same notki (tolerancja / luzy minimalne /
     // brak dopłaty PEHD) → WARNING
     const hasHardError = well.configErrors.some(
         (e) =>
             !e.includes('Zastosowana rozszerzona tolerancja') &&
+            !e.includes('Wymuszono tolerancję wysokości') &&
             !e.includes('luzy minimalne') &&
             !e.includes('brak dopłaty PEHD')
     );

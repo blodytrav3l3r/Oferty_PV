@@ -114,3 +114,63 @@ describe('P1.4 solver invariants (seed 20260927, 200 prób/właściwość)', () 
         }
     });
 });
+
+describe('solver notes staleness (pieczatka _solverErrorsGen)', () => {
+    const recalc = loadValidator();
+    const NOTE = 'Uwaga: Wymuszono tolerancję wysokości (odchyłka +27mm)';
+    const cfg = () => [{ productId: 'KR-1', quantity: 2 }];
+    const well = (over: any = {}) => ({
+        rzednaWlazu: 105,
+        rzednaDna: 100,
+        config: cfg(),
+        configErrors: [NOTE],
+        configSource: 'AUTO_JS',
+        ...over
+    });
+
+    test('swieza notka (config == pieczatka) zostaje, status WARNING nie ERROR', () => {
+        const w: any = well({ _solverErrorsGen: 'KR-1x2' });
+        recalc(w);
+        expect(w.configErrors).toContain(NOTE);
+        expect(w.configStatus).toBe('WARNING');
+    });
+
+    test('reczna edycja configu (inna pieczatka) odrzuca notke', () => {
+        const w: any = well({
+            _solverErrorsGen: 'KR-1x2',
+            config: [{ productId: 'KR-1', quantity: 3 }]
+        });
+        recalc(w);
+        expect(w.configErrors).not.toContain(NOTE);
+        expect(w.configErrors).toHaveLength(0);
+        expect(w.configStatus).toBe('OK');
+    });
+
+    test('zywe bledy (zedna dna) przezywaja drop notek', () => {
+        const w: any = well({
+            _solverErrorsGen: 'KR-1x2',
+            config: [{ productId: 'KR-1', quantity: 3 }],
+            rzednaDna: 106
+        });
+        recalc(w);
+        expect(w.configErrors).not.toContain(NOTE);
+        expect(w.configErrors.some((e: string) => e.includes('Rzędna dna'))).toBe(true);
+        expect(w.configStatus).toBe('ERROR');
+    });
+
+    test('brak pieczatki (legacy/import) => preserve jak dawniej', () => {
+        const w: any = well();
+        recalc(w);
+        expect(w.configErrors).toContain(NOTE);
+    });
+
+    test('notka bledu solvera tez wygasa po recznej edycji', () => {
+        const w: any = well({
+            _solverErrorsGen: '',
+            config: [{ productId: 'KR-1', quantity: 1 }],
+            configErrors: ['Nie znaleziono pasującej kombinacji elementów dla tej wysokości']
+        });
+        recalc(w);
+        expect(w.configErrors).toHaveLength(0);
+    });
+});

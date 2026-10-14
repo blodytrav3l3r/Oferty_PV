@@ -170,6 +170,10 @@ window.autoSelectComponents = async function autoSelectComponents(autoTriggered 
         if (jsResult.error) {
             well.configStatus = 'ERROR';
             well.configErrors = [jsResult.error];
+            try {
+                if (typeof wellConfigFingerprint === 'function')
+                    well._solverErrorsGen = wellConfigFingerprint(well.config);
+            } catch (_e) {}
             if (__bulkQuiet) {
                 // Bulk liczy błędy sam (fail++); toast i render na końcu.
                 if (__bulkStats) __bulkStats.rendersSkipped += 2;
@@ -228,6 +232,13 @@ window.autoSelectComponents = async function autoSelectComponents(autoTriggered 
         }
         well.configErrors = errors;
         well.configSource = jsResult.aiUsed ? 'AUTO_AI' : 'AUTO_JS';
+        // Pieczatka configu dla recalculateWellErrors: reczna edycja po solverze
+        // uniewaznia jednorazowe notki solvera (stala odchyłka). Guard typeof:
+        // solverValidation laduje sie po tym pliku (studnie.html).
+        try {
+            if (typeof wellConfigFingerprint === 'function')
+                well._solverErrorsGen = wellConfigFingerprint(well.config);
+        } catch (_e) {}
 
         try {
             // Stan (sort/uszczelki/kineta) ZAWSZE — to logika, nie UI (invariant P1a).
