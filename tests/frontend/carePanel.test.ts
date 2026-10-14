@@ -169,7 +169,7 @@ describe('carePanel', () => {
         vm.createContext(context);
         vm.runInContext(
             code +
-                '\nthis.__careTest = { loadCarePanel, careOpenContact, setQueueSort, setQueueView, setQueueRange };',
+                '\nthis.__careTest = { loadCarePanel, careOpenContact, setQueueSort, setQueueView, setQueueRange, setQueueSearch, normalizeCareSearch, matchCareSearch, findOfferInQueue };',
             context
         );
         return { els, listeners, context };
@@ -2259,9 +2259,13 @@ describe('carePanel', () => {
         expect(owner[0].textContent).toContain('Adam Klos');
         expect(texts(card)).toContain('phenx@o2.pl');
         const btns = byClass(card, 'care-icon-btn');
-        expect(btns).toHaveLength(1);
-        expect(btns[0].attrs['data-notif-read']).toBe('1');
-        expect(String(btns[0].attrs['aria-label'])).toContain('Oznacz jako przeczytane');
+        expect(btns).toHaveLength(2);
+        const read = btns.find((b: any) => 'data-notif-read' in (b.attrs || {}));
+        const find = btns.find((b: any) => 'data-notif-find' in (b.attrs || {}));
+        expect(read).toBeTruthy();
+        expect(String(read.attrs['aria-label'])).toContain('Oznacz jako przeczytane');
+        expect(find).toBeTruthy();
+        expect(String(find.attrs['aria-label'])).toContain('Znajdź w kolejce');
     });
 
     test('centrum: read zostawia kartę ze stanem + ikona cofnij woła /unread', async () => {
@@ -2594,5 +2598,179 @@ describe('carePanel', () => {
             return null;
         };
         expect(findBtn(card, 'Kontakt').disabled).toBe(false);
+    });
+
+    test('search kolejki: normalize + match po kliencie/obiekcie/telefonie', async () => {
+        const { context } = load({ fetchMock: () => okJson({}) });
+        const t = context.__careTest;
+        expect(t.normalizeCareSearch('ŁÓDŹ  Test')).toBe('lodz test');
+        expect(t.setQueueSearch('x'.repeat(200)).length).toBe(100);
+        t.setQueueSearch('budimex');
+        expect(t.matchCareSearch({ clientName: 'Budimex', phone: null })).toBe(true);
+        expect(t.matchCareSearch({ clientName: 'Inny', phone: null })).toBe(false);
+        t.setQueueSearch('lodz');
+        expect(t.matchCareSearch({ investName: 'Łódź Centrum' })).toBe(true);
+        t.setQueueSearch('+48 601 000 111');
+        expect(t.matchCareSearch({ clientName: 'X', phone: '+48 601-000-111' })).toBe(true);
+        expect(t.matchCareSearch({ clientName: 'X', phone: '602000000' })).toBe(false);
+        t.setQueueSearch('');
+        expect(t.matchCareSearch({ clientName: 'Cokolwiek' })).toBe(true);
+    });
+
+    test('search filtruje karty kolejki + miss tekst ze statusem', async () => {
+        const { els, context } = load({
+            fetchMock: (url: string) => {
+                if (url.includes('/api/care/panel'))
+                    return okJson({
+                        ok: true,
+                        summary: {
+                            noContact: 0,
+                            due: 2,
+                            openOk: 0,
+                            won: 0,
+                            lost: 0,
+                            abandoned: 0,
+                            totalCount: 2
+                        },
+                        queue: {
+                            items: [
+                                {
+                                    offerKind: 'rury',
+                                    offerId: 'o1',
+                                    status: 'DUE',
+                                    overdueDays: 0,
+                                    escalated: false,
+                                    paused: false,
+                                    clientName: 'Budimex',
+                                    number: 'OF/1',
+                                    value: 100,
+                                    phone: '601000111',
+                                    lastNote: null,
+                                    nextContactAt: null,
+                                    lastContactAt: null
+                                },
+                                {
+                                    offerKind: 'studnie',
+                                    offerId: 'o2',
+                                    status: 'DUE',
+                                    overdueDays: 0,
+                                    escalated: false,
+                                    paused: false,
+                                    clientName: 'Łódź Bud',
+                                    number: 'OF/2',
+                                    value: 200,
+                                    phone: null,
+                                    lastNote: null,
+                                    nextContactAt: null,
+                                    lastContactAt: null
+                                }
+                            ],
+                            nextCursor: null,
+                            totalCount: 2
+                        },
+                        notifications: { items: [], unreadCount: 0, hasOverflow: false },
+                        sla: { firstContactH: 24, staleD: 7, escalationH: 72 }
+                    });
+                return okJson({ noContact: 0, due: 0, openOk: 0, won: 0, lost: 0 });
+            }
+        });
+        const countCards = (root: any): number => {
+            let n = 0;
+            const walk = (x: any): void => {
+                if (x.className && String(x.className).split(' ').includes('care-queue-card'))
+                    n += 1;
+                for (const c of x.children || []) walk(c);
+            };
+            walk(root);
+            return n;
+        };
+        const texts = (root: any): string => {
+            const out: string[] = [];
+            const walk = (x: any): void => {
+                if (x.textContent) out.push(String(x.textContent));
+                for (const c of x.children || []) walk(c);
+            };
+            walk(root);
+            return out.join(' | ');
+        };
+        await context.__careTest.loadCarePanel();
+        expect(countCards(els['care-queue-list'])).toBe(2);
+        context.__careTest.setQueueSearch('budimex');
+        await context.__careTest.loadCarePanel();
+        expect(countCards(els['care-queue-list'])).toBe(1);
+        context.__careTest.setQueueSearch('nieistniejefraza');
+        await context.__careTest.loadCarePanel();
+        expect(countCards(els['care-queue-list'])).toBe(0);
+        expect(texts(els['care-queue-list'])).toContain('Brak wyników dla frazy');
+    });
+
+    test('centrum: kafelek ma Znajdź w kolejce + miss zwraca false', async () => {
+        const { els, context } = load({
+            fetchMock: (url: string) => {
+                if (url.includes('/api/care/panel'))
+                    return okJson({
+                        ok: true,
+                        summary: {
+                            noContact: 0,
+                            due: 1,
+                            openOk: 0,
+                            won: 0,
+                            lost: 0,
+                            abandoned: 0,
+                            totalCount: 1
+                        },
+                        queue: {
+                            items: [
+                                {
+                                    offerKind: 'rury',
+                                    offerId: 'o1',
+                                    status: 'DUE',
+                                    overdueDays: 1,
+                                    escalated: false,
+                                    paused: false,
+                                    clientName: 'Budimex',
+                                    number: 'OF/1',
+                                    value: 100,
+                                    phone: null,
+                                    lastNote: null,
+                                    nextContactAt: null,
+                                    lastContactAt: null
+                                }
+                            ],
+                            nextCursor: null,
+                            totalCount: 1
+                        },
+                        notifications: {
+                            items: [
+                                {
+                                    id: 'n1',
+                                    offerKind: 'rury',
+                                    offerId: 'o9',
+                                    type: 'ESCALATION',
+                                    clientName: 'Spoza',
+                                    number: 'OF/9'
+                                }
+                            ],
+                            unreadCount: 1,
+                            hasOverflow: false
+                        },
+                        sla: { firstContactH: 24, staleD: 7, escalationH: 72 }
+                    });
+                return okJson({ noContact: 0, due: 0, openOk: 0, won: 0, lost: 0 });
+            }
+        });
+        await context.__careTest.loadCarePanel();
+        const findAttr = (root: any): any[] => {
+            const out: any[] = [];
+            const walk = (x: any): void => {
+                if (x.attrs && 'data-notif-find' in x.attrs) out.push(x);
+                for (const c of x.children || []) walk(c);
+            };
+            walk(root);
+            return out;
+        };
+        expect(findAttr(els['care-notif-list']).length).toBe(1);
+        // Oferta spoza cache (o9): miss -> false, filtr schodzi do all.
+        expect(context.__careTest.findOfferInQueue('rury', 'o9', 'OF/9')).toBe(false);
     });
 });

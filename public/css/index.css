@@ -3124,6 +3124,41 @@ html[data-theme='light'] body.index-page.logged-in::before {
     justify-content: center;
     margin-top: 8px;
 }
+/* Wyszukiwanie kolejki: wiersz pod filtrami (pełna szerokość, bez tłoku w head). */
+.care-queue-search-row {
+    display: flex;
+    margin: 8px 0;
+}
+.care-search-wrap {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+.care-search-wrap input[type='search'] {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+/* Pasek miss search: soft (Dociągnij) / hard (Kartoteka), ręczny — brak auto-pętli. */
+.care-queue-miss {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin: 8px 0;
+    padding: 8px 10px;
+    border: 1px dashed var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--bg-tertiary);
+    color: var(--text-muted);
+    font-size: var(--fs-sm);
+}
+.care-queue-miss[hidden] {
+    display: none;
+}
+/* Trafienie Znajdź w kolejce: outline + nie sam kolor (a11y). */
+.care-queue-card.is-found {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
 /* Przełącznik siatka/lista: osobne kafelki .btn-icon jak zakres Moje/Zespół,
  * active w akcencie. Bez obwódki grupy (ślad: .care-scope-group). */
 .care-view-visual {

@@ -8,6 +8,7 @@ let pollMs = POLL_MS;
 let careScope = 'mine';
 let careRep = '';
 let queueFilter = 'all';
+let queueSearch = '';
 let queueSort = 'sla';
 let queueView = 'list';
 let queueRange = 'all';
@@ -69,6 +70,74 @@ export function setQueueRange(value) {
     queueRange = value === '7d' || value === '30d' || value === '90d' ? value : 'all';
     careStoreSet('sok-care-range', queueRange);
     return queueRange;
+}
+
+/** Fraza wyszukiwania kolejki (test-hook). Cap 100 znaków, in-memory (bez persist). */
+export function setQueueSearch(value) {
+    queueSearch = typeof value === 'string' ? value.trim().slice(0, 100) : '';
+    return queueSearch;
+}
+
+/* Licznik miss-rate (memory-only, bez PII/BE): gate do ewentualnego search serwerowego. */
+const careSearchStats = { searches: 0, miss: 0, moreClicks: 0, hitAfterMore: 0 };
+
+/** Normalizacja frazy/rekordu: lower + NFD strip + ł→l. Jeden helper, brak duplikatów. */
+export function normalizeCareSearch(s) {
+    return String(s ?? '')
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[̀-ͯ]/g, '')
+        .replace(/ł/g, 'l')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
+/** Predykat search kolejki (OR po polach karty). Pusty query = pass. */
+export function matchCareSearch(it) {
+    const q = normalizeCareSearch(queueSearch);
+    if (!q) return true;
+    const qDigits = q.replace(/\D/g, '');
+    const hay = normalizeCareSearch(
+        [
+            it.number,
+            it.clientName,
+            it.clientNumber,
+            it.investName,
+            it.investAddress,
+            it.contactPerson,
+            it.email,
+            it.ownerName,
+            it.offerId
+        ]
+            .filter(Boolean)
+            .join(' ')
+    );
+    if (hay.includes(q)) return true;
+    if (qDigits.length >= 3) {
+        const hayDigits = String(it.phone ?? '').replace(/\D/g, '');
+        if (hayDigits.includes(qDigits)) return true;
+    }
+    return false;
+}
+
+/** Statystyka search (tylko akcje usera, nie re-rendery pollingu). */
+function trackCareSearch(visibleCount) {
+    const q = normalizeCareSearch(queueSearch);
+    if (q.length < 2) return;
+    careSearchStats.searches += 1;
+    if (visibleCount === 0) careSearchStats.miss += 1;
+    try {
+        if (typeof console !== 'undefined' && typeof console.debug === 'function') {
+            console.debug(
+                '[care-search] searches=' +
+                    careSearchStats.searches +
+                    ' miss=' +
+                    careSearchStats.miss
+            );
+        }
+    } catch {
+        /* best-effort */
+    }
 }
 
 const RANGE_DAYS = { '7d': 7, '30d': 30, '90d': 90 };
@@ -560,6 +629,11 @@ function renderNotifications(items, unreadCount, mailboxUserId, hasOverflow) {
                 return b;
             };
             // Karta po odczycie zostaje ze stanem „przeczytane" + ikona cofnij.
+            const find = mkIconBtn('search', 'Znajdź w kolejce: ' + who, 'data-notif-find');
+            find.addEventListener('click', () => {
+                findOfferInQueue(n.offerKind, n.offerId, offerNo || who);
+            });
+            actions.appendChild(find);
             if (!isRead) {
                 const read = mkIconBtn(
                     'check',
@@ -1185,12 +1259,19 @@ function renderQueue(items, nextCursor, totalCount) {
     queueTotal = typeof totalCount === 'number' ? totalCount : queueCache.length;
     updateQueueFilterCounts();
     setText('care-queue-count', queueCache.length + ' zadań');
-    const visible = sortQueueItems(queueCache.filter(matchFilter));
+    const visible = sortQueueItems(queueCache.filter(matchFilter).filter(matchCareSearch));
+    syncMissBar(visible.length);
     if (visible.length === 0) {
         const empty = document.createElement('span');
         empty.className = 'recycled-empty';
+        const q = normalizeCareSearch(queueSearch);
         empty.textContent =
-            queueCache.length === 0 ? 'Kolejka pusta.' : 'Brak ofert w tym filtrze.';
+            queueCache.length === 0
+                ? 'Kolejka pusta.'
+                : q
+                  ? 'Brak wyników dla frazy w załadowanej stronie.'
+                  : 'Brak ofert w tym filtrze.';
+        empty.setAttribute('role', 'status');
         list.appendChild(empty);
         if (queueCache.length === 0) {
             const cta = document.createElement('a');
@@ -1207,6 +1288,11 @@ function renderQueue(items, nextCursor, totalCount) {
         const kindKey = String(it.offerKind || '').toLowerCase() === 'studnie' ? 'studnie' : 'rury';
         const row = document.createElement('div');
         row.className = 'care-queue-card is-' + kindKey;
+        try {
+            row.setAttribute('data-offer', String(it.offerKind) + ':' + String(it.offerId));
+        } catch {
+            /* best-effort */
+        }
         // L1: numer oferty (bold, lewo) + status + rodzaj (prawo).
         const l1 = document.createElement('div');
         l1.className = 'care-queue-l1';
@@ -1387,6 +1473,130 @@ function renderQueue(items, nextCursor, totalCount) {
         list.appendChild(moreWrap);
     }
     refreshCareIcons(list);
+}
+
+/** Pasek miss search (soft/hard): ręczne Dociągnij + Kartoteka, brak auto-pętli. */
+function syncMissBar(visibleCount) {
+    let bar = null;
+    try {
+        bar = document.getElementById('care-queue-miss');
+    } catch {
+        bar = null;
+    }
+    if (!bar) return;
+    try {
+        bar.textContent = '';
+        const q = normalizeCareSearch(queueSearch);
+        if (!q || visibleCount > 0 || queueCache.length === 0) {
+            bar.hidden = true;
+            return;
+        }
+        bar.hidden = false;
+        const msg = document.createElement('span');
+        msg.textContent = queueNextCursor
+            ? 'Brak w załadowanych (' +
+              queueCache.length +
+              ' z ' +
+              queueTotal +
+              '). Dociągnij stronę albo szukaj w Kartotece.'
+            : 'Brak w kolejce — sprawdź Kartotekę.';
+        bar.appendChild(msg);
+        if (queueNextCursor) {
+            const more = document.createElement('button');
+            more.type = 'button';
+            more.className = 'btn btn-sm btn-secondary';
+            more.textContent = 'Dociągnij';
+            more.setAttribute('aria-label', 'Dociągnij kolejną stronę kolejki');
+            more.addEventListener('click', async () => {
+                if (more.disabled) return;
+                more.disabled = true;
+                careSearchStats.moreClicks += 1;
+                try {
+                    await loadMoreQueue();
+                } finally {
+                    try {
+                        more.disabled = false;
+                    } catch {
+                        /* best-effort */
+                    }
+                }
+            });
+            bar.appendChild(more);
+        }
+        const kart = document.createElement('a');
+        kart.href = 'app.html#/kartoteka';
+        kart.className = 'btn btn-sm btn-secondary';
+        kart.textContent = 'Kartoteka';
+        bar.appendChild(kart);
+    } catch {
+        /* best-effort */
+    }
+}
+
+/** Highlight karty kolejki po Znajdź (outline + aria-current, timeout 2,5 s). */
+function highlightQueueCard(key) {
+    try {
+        const list = document.getElementById('care-queue-list');
+        if (!list || !list.querySelector) return false;
+        const card = list.querySelector('[data-offer="' + key.replace(/"/g, '') + '"]');
+        if (!card) return false;
+        try {
+            card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        } catch {
+            /* best-effort */
+        }
+        try {
+            card.classList.add('is-found');
+            card.setAttribute('aria-current', 'true');
+            setTimeout(() => {
+                try {
+                    card.classList.remove('is-found');
+                    card.removeAttribute('aria-current');
+                } catch {
+                    /* best-effort */
+                }
+            }, 2500);
+        } catch {
+            /* best-effort */
+        }
+        return true;
+    } catch {
+        return false;
+    }
+}
+
+/**
+ * Znajdź ofertę z Centrum w Kolejce: filtr=all + fraza + scroll + highlight.
+ * Miss = pasek syncMissBar + scroll do kolejki (ręczne Dociągnij, brak auto-pętli).
+ */
+export function findOfferInQueue(offerKind, offerId, fallbackLabel) {
+    const key = String(offerKind) + ':' + String(offerId);
+    queueFilter = 'all';
+    syncQueueFilterButtons();
+    const label = careNormStr(fallbackLabel) || String(offerId || '');
+    setQueueSearch(label.slice(0, 100));
+    try {
+        const input = document.getElementById('care-queue-search');
+        if (input) input.value = queueSearch;
+    } catch {
+        /* best-effort */
+    }
+    renderQueue(queueCache, queueNextCursor, queueTotal);
+    const visible = sortQueueItems(queueCache.filter(matchFilter).filter(matchCareSearch));
+    trackCareSearch(visible.length);
+    if (highlightQueueCard(key)) {
+        careSearchStats.hitAfterMore += 1;
+        return true;
+    }
+    try {
+        const target =
+            document.getElementById('care-queue-miss') ||
+            document.getElementById('care-queue-list');
+        if (target && target.scrollIntoView) target.scrollIntoView({ behavior: 'smooth' });
+    } catch {
+        /* best-effort */
+    }
+    return false;
 }
 
 /** Dopaginowanie kolejki cursorem (endpoint /queue, dopisanie bez resetu). */
@@ -1655,6 +1865,12 @@ function syncQueueFilterButtons() {
 function syncSortViewControls() {
     const sort = document.getElementById('care-sort');
     if (sort) sort.value = queueSort;
+    try {
+        const search = document.getElementById('care-queue-search');
+        if (search && search.value !== queueSearch) search.value = queueSearch;
+    } catch {
+        /* best-effort */
+    }
     document.querySelectorAll('.care-view-btn').forEach((btn) => {
         const active = btn.dataset.careView === queueView;
         btn.classList.toggle('active', active);
@@ -1713,6 +1929,33 @@ function bindPanelControls() {
             renderQueue(queueCache, queueNextCursor, queueTotal);
         });
     });
+    const search = document.getElementById('care-queue-search');
+    if (search && !search.dataset.bound) {
+        search.dataset.bound = '1';
+        let searchTimer = null;
+        search.addEventListener('input', () => {
+            try {
+                if (searchTimer !== null && typeof clearTimeout === 'function')
+                    clearTimeout(searchTimer);
+            } catch {
+                /* best-effort */
+            }
+            searchTimer = setTimeout(() => {
+                searchTimer = null;
+                setQueueSearch(search.value || '');
+                renderQueue(queueCache, queueNextCursor, queueTotal);
+                const vis = sortQueueItems(queueCache.filter(matchFilter).filter(matchCareSearch));
+                trackCareSearch(vis.length);
+            }, 150);
+        });
+        search.addEventListener('keydown', (e) => {
+            if (e && e.key === 'Escape') {
+                search.value = '';
+                setQueueSearch('');
+                renderQueue(queueCache, queueNextCursor, queueTotal);
+            }
+        });
+    }
 }
 
 function setSyncText(skipped) {

@@ -547,6 +547,30 @@
                                     Wstrzymane
                                 </button>
                             </div>
+                            <div class="care-queue-search-row">
+                                <label
+                                    class="care-sort-wrap care-search-wrap"
+                                    title="Szukaj w kolejce"
+                                >
+                                    <i data-lucide="search"></i>
+                                    <input
+                                        id="care-queue-search"
+                                        class="form-input form-input-sm"
+                                        type="search"
+                                        placeholder="Szukaj: numer, klient, obiekt…"
+                                        aria-label="Szukaj w kolejce opieki"
+                                        aria-controls="care-queue-list"
+                                        autocomplete="off"
+                                        maxlength="100"
+                                    />
+                                </label>
+                            </div>
+                            <div
+                                id="care-queue-miss"
+                                class="care-queue-miss"
+                                role="status"
+                                hidden
+                            ></div>
                             <div id="care-queue-list" class="recycled-list">
                                 <span class="recycled-empty">Ładowanie…</span>
                             </div>
