@@ -4,6 +4,18 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.44.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.43.0...v1.44.0) (2026-10-14)
+
+> Aktualizacja wymaga migracji schematu: `npm run backup`, `git pull`,
+> `npx prisma migrate deploy` (migracja `20261014000000_care_latest_followup`:
+> tabela + triggery + backfill; bazy legacy `db push` healuje start serwera).
+
+### Features
+
+- **offers:** count kolejki bez cte latest p0.4 ([4c3d600](https://github.com/blodytrav3l3r/Oferty_PV/commit/4c3d600176c710e7fd685bd30026cc46a5a31ae8))
+- **offers:** materializacja latest follow-up p1 ([ac09a47](https://github.com/blodytrav3l3r/Oferty_PV/commit/ac09a474e95f91079997957c3edc901e34352361))
+- **offers:** throttle syncu opieki p0.3 ([e9c3f7c](https://github.com/blodytrav3l3r/Oferty_PV/commit/e9c3f7ceb171108d3e3b938e75ada6bc245ef8da))
+
 ## [1.43.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.42.1...v1.43.0) (2026-10-13)
 
 ### Features
