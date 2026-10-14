@@ -43,6 +43,38 @@ fi
 
 mkdir -p data
 
+# Stare instancje serwera (DB lock): martwy node bez listenera trzyma
+# -shm/-wal i wywala "database is locked" w migracji. Wykryj przed startem.
+STALE_PIDS=$(bash scripts/find-stale-server.sh 2>/dev/null || true)
+if [ -n "$STALE_PIDS" ]; then
+    log WARN "Znaleziono procesy node serwera S.O.K.: $(echo $STALE_PIDS | tr '\n' ' ')"
+    log WARN "Stara instancja blokuje baze (blad database is locked)."
+    if [ "${SOK_KILL_STALE:-}" = "1" ]; then
+        STO="T"
+    elif [ ! -t 0 ] || [ -n "${CI:-}" ]; then
+        log ERR "Tryb nieinteraktywny - nie zabijam. Zamknij stare procesy recznie (kill PID) i sprobuj ponownie."
+        exit 1
+    else
+        read -p "Zatrzymac te procesy i kontynuowac? [N]: " STO
+    fi
+    if [ "$STO" = "T" ] || [ "$STO" = "t" ]; then
+        # TERM, potem KILL ocalalych (supervisor + dziecko naraz).
+        # shellcheck disable=SC2086
+        kill $STALE_PIDS 2>/dev/null || true
+        sleep 3
+        LEFT=$(bash scripts/find-stale-server.sh 2>/dev/null || true)
+        if [ -n "$LEFT" ]; then
+            # shellcheck disable=SC2086
+            kill -9 $LEFT 2>/dev/null || true
+            sleep 2
+        fi
+        log OK "Stare procesy zatrzymane"
+    else
+        log ERR "Anulowane - zamknij stare procesy recznie i sprobuj ponownie."
+        exit 1
+    fi
+fi
+
 log STEP "Uruchamiam: npm start (Ctrl+C stop)..."
 echo "  Endpoint: http://localhost:3000"
 echo

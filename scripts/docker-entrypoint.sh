@@ -29,15 +29,23 @@ if [ ! -f "$DB_FILE" ]; then
     echo "[INFO] Baza danych nie istnieje — zostanie utworzona przez prisma migrate deploy."
 fi
 
-# Stosujemy migracje (klient Prisma jest już wygenerowany w obrazie)
+# Stosujemy migracje (klient Prisma jest już wygenerowany w obrazie).
+# Retry: krótki lock przy równoległym starcie nie może wywracać kontenera.
 echo "[INFO] Synchronizacja schematu bazy danych Prisma (migrate deploy)..."
-npx prisma migrate deploy
+for i in 1 2 3; do
+    if npx prisma migrate deploy; then
+        break
+    fi
+    if [ "$i" -eq 3 ]; then
+        echo "[BLAD] migrate deploy nie powiodl sie 3x - sprawdz logi i lock DB."
+        exit 1
+    fi
+    echo "[WARN] migrate deploy nieudany (proba $i/3) - ponawiam za 5 s..."
+    sleep 5
+done
 
-# check-db.js szuka bazy w ./data - wskazujemy ja na baze z wolumenu (/var/data).
-# seed_*.json pozostaja w /app/data (z obrazu), wiec symlink dotyczy tylko pliku bazy.
-if [ -f "$DB_FILE" ] && [ ! -e /app/data/app_database.sqlite ]; then
-    ln -s "$DB_FILE" /app/data/app_database.sqlite
-fi
+# check-db.js czyta DATABASE_URL wprost (jak backend) - koniec z symlinkiem
+# pojedynczego pliku (WAL ladowal w ephemeral /app/data zamiast w wolumenie).
 
 # Seedowanie przy pustej bazie (kod 2 = puste tabele produktow).
 # --experimental-sqlite: node:sqlite w Node 22 wymaga flagi (w Node 24+ jest domyslna).

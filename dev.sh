@@ -111,6 +111,35 @@ else
     log OK "Port 3000 wolny"
 fi
 
+# Stare instancje bez listenera (DB lock) - jak wyzej, przed migracja/seedem.
+STALE_PIDS=$(bash scripts/find-stale-server.sh 2>/dev/null || true)
+if [ -n "$STALE_PIDS" ]; then
+    log WARN "Znaleziono procesy node serwera S.O.K.: $(echo $STALE_PIDS | tr '\n' ' ')"
+    if [ "${SOK_KILL_STALE:-}" = "1" ]; then
+        STO="T"
+    elif [ ! -t 0 ] || [ -n "${CI:-}" ]; then
+        log ERR "Tryb nieinteraktywny - zamknij stare procesy recznie i sprobuj ponownie."
+        exit 1
+    else
+        read -p "Zatrzymac te procesy i kontynuowac? [N]: " STO
+    fi
+    if [ "$STO" = "T" ] || [ "$STO" = "t" ]; then
+        # shellcheck disable=SC2086
+        kill $STALE_PIDS 2>/dev/null || true
+        sleep 3
+        LEFT=$(bash scripts/find-stale-server.sh 2>/dev/null || true)
+        if [ -n "$LEFT" ]; then
+            # shellcheck disable=SC2086
+            kill -9 $LEFT 2>/dev/null || true
+            sleep 2
+        fi
+        log OK "Stare procesy zatrzymane"
+    else
+        log ERROR "Anulowane - zamknij stare procesy recznie i sprobuj ponownie."
+        exit 1
+    fi
+fi
+
 # 6. Start aplikacji
 log STEP "Krok 6/6 - Uruchamiam npm run dev (Ctrl+C stop)"
 echo

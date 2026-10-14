@@ -3,7 +3,21 @@
 const path = require('path');
 const fs = require('fs');
 
-const DB_PATH = path.resolve(__dirname, '..', 'data', 'app_database.sqlite');
+// Ścieżka DB jak backend (src/prismaClient.ts normalizeDatabaseUrl):
+// DATABASE_URL file: absolutne wprost; względne wobec katalogu prisma/
+// (semantyka Prisma); brak/zły format -> klasyczne ./data/*.sqlite.
+function resolveDbPath() {
+    const fallback = path.resolve(__dirname, '..', 'data', 'app_database.sqlite');
+    const raw = process.env.DATABASE_URL || '';
+    if (!raw.startsWith('file:')) return fallback;
+    const rest = raw.slice('file:'.length);
+    const q = rest.indexOf('?');
+    const rel = q === -1 ? rest : rest.slice(0, q);
+    if (!rel || path.isAbsolute(rel)) return rel || fallback;
+    return path.resolve(__dirname, '..', 'prisma', rel);
+}
+
+const DB_PATH = resolveDbPath();
 
 const REQUIRED_TABLES = [
     'ai_telemetry_logs',

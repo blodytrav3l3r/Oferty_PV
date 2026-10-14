@@ -45,6 +45,8 @@ echo [OK] Prisma client
 
 REM TypeScript compile
 echo [INFO] TypeScript compile...
+REM Clean dist: tsc nigdy nie usuwa, stare .js po rename/delete wisialyby w prod.
+if exist "dist" rmdir /s /q "dist"
 call npx tsc
 if errorlevel 1 (
     echo [BLAD] TypeScript compile.

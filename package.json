@@ -9,7 +9,7 @@
         "bundle:scripts": "node scripts/bundle-scripts.mjs",
         "dev": "npm run dev:backend",
         "dev:backend": "ts-node-dev --respawn --transpile-only ./server.ts",
-        "build": "tsc && node scripts/copy-prisma-client.mjs",
+        "build": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\" && tsc && node scripts/copy-prisma-client.mjs",
         "build:watch": "tsc --watch",
         "test": "jest --coverage --testPathIgnorePatterns=git-safety",
         "test:watch": "jest --watch",

@@ -19,7 +19,8 @@ if defined STALE_PIDS (
     echo [UWAGA] Znaleziono dzialajace procesy node serwera S.O.K. - PID:!STALE_PIDS!
     echo [UWAGA] Stara instancja blokuje baze - blad "database is locked" w migracji.
     set "KILLSTALE="
-    set /p "KILLSTALE=Czy zatrzymac te procesy i kontynuowac? T/N [N]: "
+    if /i "%SOK_KILL_STALE%"=="1" set "KILLSTALE=T"
+    if not defined KILLSTALE set /p "KILLSTALE=Czy zatrzymac te procesy i kontynuowac? T/N [N]: "
     if /i "!KILLSTALE!"=="T" (
         for %%p in (!STALE_PIDS!) do (
             echo [INFO] Zatrzymuje PID %%p...

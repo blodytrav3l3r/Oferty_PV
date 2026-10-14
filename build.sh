@@ -28,6 +28,8 @@ log STEP "Prisma generate..."
 npx prisma generate
 
 log STEP "TypeScript compile..."
+# Clean dist: tsc nigdy nie usuwa, stare .js po rename/delete wisialyby w prod.
+rm -rf dist
 npx tsc
 
 log STEP "Kopiowanie Prisma Client do dist..."

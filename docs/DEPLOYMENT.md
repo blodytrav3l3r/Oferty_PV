@@ -61,6 +61,11 @@ npm start
 
 Serwer dostępny pod adresem: `http://localhost:3000`
 
+> `database is locked` przy starcie = martwa instancja serwera trzyma DB.
+> `start.bat` / `prod.sh` / `dev.sh` wykrywają takie procesy przed migracją
+> i pytają o zatrzymanie (domyślnie NIE). W CI/headless: zamknij stare
+> procesy ręcznie (`kill PID`) albo ustaw `SOK_KILL_STALE=1` (tylko Linux).
+
 ### Skrypty startowe
 
 Projekt zawiera wygodne skrypty startowe:
