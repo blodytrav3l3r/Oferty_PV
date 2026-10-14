@@ -39,3 +39,32 @@ Scope: read-only audyt plus kontrakt 4 widokow. Bez zmian src, schema.prisma, mi
 - H-2: ~~team u pro zawiera shared podwladnych czy tylko wlasne shared.~~ VERIFIED: tylko wlasne shared viewera (shareCond na sharedWithUserId to user.id) plus owned zespolu — careService.ts:170 plus :186-188, followUpStats.ts:36-50 (sharedIds to getSharedIdsForUser user.id). Z repId: owned repa plus wlasne shared viewera na ofertach repa (AND col to narrowOwner), nie shared repa.
 - H-3: ~~all u admina z narrowOwner repId pokazuje tez shared tego repa czy tylko owned.~~ VERIFIED: tylko owned repa — careService.ts:172-173 (all plus narrowOwner to sam col to narrowOwner, bez shareCond), followUpStats.ts:34-35 (allowedIds null plus narrow to userId to narrow).
 - H-4: ~~pro bez subUsers widzi w mine tylko shares (careService.ts:177: puste ids to sam shareCond).~~ REJECTED jako sformułowana: pusty zespół to nadal owner (własne oferty) plus shares, nie same shares — `mine` to owner plus shares (E-001), nie sam shareCond.
+
+## P0.0 baseline Excel (2026-10-14, BUILD MODE P0.0 only, docs-only)
+
+Scope: dopisane na koncu, historia E-001..E-015+E-005a nietknieta. Nowe ID E-100+ rozlaczne (zajete E-001..E-015, E-005a per odczyt 2026-10-14). Kod prod nietkniety.
+
+## Ledger P0.0
+
+| ID    | Twierdzenie                                                                                                       | Dowod                                                                                                                      | Status     |
+| ----- | ----------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- | ---------- |
+| E-100 | HEAD to 6fdb3a0 fix(studnie): parity excel manual paste ceny naglowki xss                                         | `git rev-parse HEAD` = 6fdb3a0209dafa8c700ebd0bb6ef9277221d4778; `git log --oneline -3` (6fdb3a0/d6d1737/ac09a47)          | VERIFIED   |
+| E-101 | branch main ahead 1, tracked clean, 1 untracked plan P0.0                                                         | `git status`: main...origin/main [ahead 1], ?? docs/plans/P0.0-baseline-excel.md, zero modified                            | VERIFIED   |
+| E-102 | diff tracked pusty (brak cudzych zmian w worktree)                                                                | `git diff HEAD --stat` pusty; `git diff --stat` pusty (2026-10-14)                                                         | VERIFIED   |
+| E-103 | plan P0.0 istnieje: v1.0, Q1-Q3 zamrozone, 4 warunki, bramka 8/8, STOP przed P0.1                                 | docs/plans/P0.0-baseline-excel.md (55 linii): :4 HEAD 6fdb3a0, :5 STOP przed P0.1, :9-11 Q1-Q3, :23-27 warunki, :36 bramka | VERIFIED   |
+| E-104 | nowe ID E-100+ rozlaczne, zero kolizji z historia                                                                 | historia zajmuje E-001..E-015 + E-005a; E-100+ poza zakresem                                                               | VERIFIED   |
+| E-105 | mapowanie Zod wejscie-vs-zapisane + RED z wlasciwego powodu + macierze (regresja/cache/rozliczenia/perf) wykonane | brak artefaktu wykonania w planie (tylko spec :15-16, :36); brak FAIL log, brak bench artefaktu                            | HYPOTHESIS |
+| E-106 | P0.0 pozwala na zmiany kodu prod / przejscie do P0.1                                                              | plan :5 STOP przed P0.1, :15 P0.0 GO reszta czeka na bramki, :55 bez nich brak GO na P0.1                                  | REJECTED   |
+
+## Checkpoint P0.0
+
+- CLAIM: ledger P0.0 dopisany na koncu _active-evidence.md, historia nietknieta, kod prod nietkniety.
+- EVIDENCE: docs/plans/_active-evidence.md (sekcja P0.0, E-100..E-106); docs/plans/P0.0-baseline-excel.md:4-5,9-11,23-27,36,55; HEAD 6fdb3a0209dafa8c700ebd0bb6ef9277221d4778.
+- REPRODUCTION: git rev-parse HEAD, git status --short --branch, git diff HEAD --stat, git log --oneline -3 (2026-10-14, EXIT 0).
+- BEFORE: HEAD 6fdb3a0, main...origin/main [ahead 1], tracked clean, untracked docs/plans/P0.0-baseline-excel.md.
+- AFTER: tylko _active-evidence.md modified (sekcja P0.0); kod prod bez zmian.
+- CHANGE: append-only, E-100..E-106 (5x VERIFIED, 1x HYPOTHESIS, 1x REJECTED).
+- TESTS: brak runtime w P0.0-docs (validate/test:quick nie uruchamiane; docs-only, zero zmian kodu). E-105 HYPOTHESIS czeka na RED/bench.
+- DIFF: git diff -- docs/plans/_active-evidence.md (ponizej w raporcie).
+- COMMIT: brak (zadanie: zwroc diff, nie commituj).
+- VERIFIED: YES dla E-100..E-104, NO dla E-105 (HYPOTHESIS), REJECTED E-106.

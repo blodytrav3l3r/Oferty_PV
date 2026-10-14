@@ -4,6 +4,16 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+### [1.44.1](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.44.0...v1.44.1) (2026-10-14)
+
+### Bug Fixes
+
+- **deploy:** parzystosc prod i readiness w ci ([0789139](https://github.com/blodytrav3l3r/Oferty_PV/commit/078913903821d36308e3135a36cd3b58525189b8))
+- **deploy:** pre-flight martwych serwerow w ensure-db ([5ef090c](https://github.com/blodytrav3l3r/Oferty_PV/commit/5ef090c279b4605050b0c20b4e81e34ac06eec51))
+- **deploy:** pre-flight zombie plus retry i wal ([fd4c1b6](https://github.com/blodytrav3l3r/Oferty_PV/commit/fd4c1b6a6fa6ab1a6582b57c83d069b5c130d132))
+- **security:** sekrety ze skryptow plus straznik ([ebbf440](https://github.com/blodytrav3l3r/Oferty_PV/commit/ebbf440327f4b826e8d161628d94da62d2205df3))
+- **studnie:** parity excel manual paste ceny naglowki xss ([6fdb3a0](https://github.com/blodytrav3l3r/Oferty_PV/commit/6fdb3a0209dafa8c700ebd0bb6ef9277221d4778))
+
 ## [1.44.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.43.0...v1.44.0) (2026-10-14)
 
 > Aktualizacja wymaga migracji schematu: `npm run backup`, `git pull`,
