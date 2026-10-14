@@ -173,4 +173,15 @@ describe('solver notes staleness (pieczatka _solverErrorsGen)', () => {
         recalc(w);
         expect(w.configErrors).toHaveLength(0);
     });
+
+    test('usuniecie wszystkich elementow gasi notke (banner znika)', () => {
+        const w: any = well({
+            _solverErrorsGen: 'KR-1x2',
+            config: [],
+            configErrors: ['Uwaga: Wymuszono tolerancję wysokości (odchyłka +29mm)']
+        });
+        recalc(w);
+        expect(w.configErrors).toHaveLength(0);
+        expect(w.configStatus).toBe('OK');
+    });
 });
