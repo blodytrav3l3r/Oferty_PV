@@ -57,8 +57,9 @@ Middleware autoryzacji:
 Sekrety nie w kodzie: skrypty dev (`benchmark*.mjs`, `load-100.mjs`,
 `test-app-views.cjs`) wymagają `DEFAULT_ADMIN_PASSWORD` w env/`.env`
 i padają z jawnym błędem bez niego (fail-fast, exit 2); strażnik
-`tests/security/noHardcodedSecrets.test.ts`. Wyjątek z jawną decyzją:
-fallback w `src/middleware/auth.ts` (dev/test; prod rzuca bez hasła).
+`tests/security/noHardcodedSecrets.test.ts`. Znane współdzielone sekrety
+(`anim123456`, placeholder z `.env.example`) są odrzucane przy tworzeniu
+admina w KAŻDYM środowisku — brak cichego fallbacku (W1).
 
 ---
 

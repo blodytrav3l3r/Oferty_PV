@@ -21,10 +21,9 @@ export type SessionExpiredReason = 'idle' | 'absolute';
 // P1-D: limit aktywnych sesji na użytkownika (rotacja najstarszych).
 export const SESSION_MAX_PER_USER = 10;
 
-// Fallback hasła admina z .env.example — instalatory (install.bat/install.sh) generują
-// losowe hasło przy świeżej instalacji; ta wartość to wyłącznie tryb dev/awaryjny.
-const DEFAULT_ADMIN_FALLBACK_PASSWORD = 'anim123456';
-// Placeholder z .env.example — równie niebezpieczny w produkcji.
+// Placeholder z .env.example — nigdy nie tworzy admina (deny-lista poniżej).
+// Znany wycieknięty sekret 'anim123456' też jest zawsze odrzucany
+// (inline w guardzie, nie stała) — brak cichego tworzenia admina.
 const DEFAULT_ADMIN_PLACEHOLDER_PASSWORD = 'CHANGE_ME_PLEASE';
 
 export interface Session {
@@ -361,23 +360,18 @@ export async function ensureAdminExists(): Promise<void> {
                     'DEFAULT_ADMIN_PASSWORD must be set - cannot create default admin account'
                 );
             }
+            // W1: znane współdzielone sekrety odrzucane w KAŻDYM środowisku
+            // (wcześniej dev ostrzegał i tworzył admina). Hasło trzeba
+            // ustawić jawnie w env — brak cichego fallbacku.
             if (
-                defaultPassword === DEFAULT_ADMIN_FALLBACK_PASSWORD ||
+                defaultPassword === 'anim123456' ||
                 defaultPassword === DEFAULT_ADMIN_PLACEHOLDER_PASSWORD
             ) {
-                if (process.env.NODE_ENV === 'production') {
-                    logger.error(
-                        'Auth',
-                        'BŁĄD KRYTYCZNY: w produkcji użyto domyślnego hasła administratora. Ustaw losowe hasło w DEFAULT_ADMIN_PASSWORD.'
-                    );
-                    throw new Error(
-                        'DEFAULT_ADMIN_PASSWORD must not be the default/placeholder value in production'
-                    );
-                }
-                logger.warn(
+                logger.error(
                     'Auth',
-                    'Użyto DOMYŚLNEGO hasła administratora. Zaleca się natychmiastową zmianę hasła po pierwszym logowaniu.'
+                    'BŁĄD KRYTYCZNY: użyto domyślnego hasła administratora. Ustaw losowe hasło w DEFAULT_ADMIN_PASSWORD.'
                 );
+                throw new Error('DEFAULT_ADMIN_PASSWORD must not be the default/placeholder value');
             }
             const hash = await bcrypt.hash(defaultPassword, 10);
             await prisma.users.create({

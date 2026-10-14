@@ -311,4 +311,18 @@ describe('ensureAdminExists', () => {
         await expect(ensureAdminExists()).rejects.toThrow(/must not be the default/);
         expect(mockPrisma.users.create).not.toHaveBeenCalled();
     });
+
+    // W1 (kontrakt docelowy): fallback/placeholder odrzucane niezależnie
+    // od NODE_ENV — brak cichego tworzenia admina ze wspólnym sekretem.
+    it.each(['anim123456', 'CHANGE_ME_PLEASE'])(
+        'poza produkcją też rzuca przy haśle domyślnym (%s), admin nie powstaje',
+        async (pw) => {
+            process.env.NODE_ENV = 'development';
+            process.env.DEFAULT_ADMIN_PASSWORD = pw;
+            mockPrisma.users.findUnique.mockResolvedValue(null);
+
+            await expect(ensureAdminExists()).rejects.toThrow(/must not be the default/);
+            expect(mockPrisma.users.create).not.toHaveBeenCalled();
+        }
+    );
 });
