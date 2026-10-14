@@ -1,8 +1,14 @@
 const { spawn } = require('child_process');
 const { chromium } = require('playwright');
 
+const ADMIN_PW = process.env.DEFAULT_ADMIN_PASSWORD || process.env.TEST_ADMIN_PASSWORD;
+if (!ADMIN_PW) {
+    console.error('Brak DEFAULT_ADMIN_PASSWORD/TEST_ADMIN_PASSWORD w env - dev-only skrypt wymaga hasla.');
+    process.exit(2);
+}
+
 (async () => {
-    const env = { ...process.env, PORT: '3005', DEFAULT_ADMIN_PASSWORD: 'anim123456' };
+    const env = { ...process.env, PORT: '3005', DEFAULT_ADMIN_PASSWORD: ADMIN_PW };
     const srv = spawn('node', ['dist/server.js'], { env, stdio: 'pipe' });
 
     let started = false;
@@ -44,9 +50,9 @@ const { chromium } = require('playwright');
         consoleLogs.push({ type: 'pageerror', text: err.message, stack: err.stack })
     );
 
-    // login (hasło ze zmiennej, fallback dev — nie prod)
+    // login (hasło ze zmiennej, brak = fail-fast na starcie)
     const loginRes = await page.request.post('http://localhost:3005/api/auth/login', {
-        data: { username: 'admin', password: process.env.TEST_ADMIN_PASSWORD || 'anim123456' }
+        data: { username: 'admin', password: ADMIN_PW }
     });
     console.log('Login status:', loginRes.status());
     const viewsSetCookie = loginRes.headers()['set-cookie'] || '';

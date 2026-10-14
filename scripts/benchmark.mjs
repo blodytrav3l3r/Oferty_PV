@@ -7,7 +7,7 @@ import { resolve } from 'node:path';
 
 const BASE = process.env.BENCH_BASE_URL || 'http://localhost:3000';
 const SAMPLES = parseInt(process.argv[2] || '20', 10);
-const ADMIN_PASSWORD = (process.env.DEFAULT_ADMIN_PASSWORD || 'anim123456').trim();
+const ADMIN_PASSWORD = (process.env.DEFAULT_ADMIN_PASSWORD || '').trim();
 
 function parseEnv(path) {
     const out = {};
@@ -55,6 +55,12 @@ function summarize(label, times) {
 async function main() {
     const env = parseEnv(resolve('.env'));
     const password = (env.DEFAULT_ADMIN_PASSWORD || ADMIN_PASSWORD).trim();
+    if (!password) {
+        console.error(
+            '[benchmark] Brak DEFAULT_ADMIN_PASSWORD w env ani .env — ustaw i sprobuj ponownie.'
+        );
+        process.exit(2);
+    }
 
     const login = await timeFetch('/api/auth/login', {
         method: 'POST',

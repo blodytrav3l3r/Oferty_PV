@@ -56,7 +56,7 @@ if (USERS_RAW !== null) {
 }
 // --sustained wygrywa z --quick (celowo dłuższy pomiar ma pierwszeństwo).
 const STEADY_MS = SUSTAINED ? 900_000 : QUICK ? 60_000 : 300_000;
-const ADMIN_PASSWORD = (process.env.DEFAULT_ADMIN_PASSWORD || 'anim123456').trim();
+const ADMIN_PASSWORD = (process.env.DEFAULT_ADMIN_PASSWORD || '').trim();
 
 function parseEnv(path) {
     const out = {};
@@ -180,6 +180,12 @@ function rec(op, r) {
 async function main() {
     const env = parseEnv('I:\\GitHub\\Oferty_PV\\.env');
     const password = (env.DEFAULT_ADMIN_PASSWORD || ADMIN_PASSWORD).trim();
+    if (!password) {
+        console.error(
+            '[load-100] Brak DEFAULT_ADMIN_PASSWORD w env ani .env — ustaw i sprobuj ponownie.'
+        );
+        process.exit(2);
+    }
     const login = await timeFetch('/api/auth/login', {
         method: 'POST',
         headers: {

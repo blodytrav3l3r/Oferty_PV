@@ -5,7 +5,7 @@
  * Zasady:
  * - jesli .env nie istnieje -> kopiuje .env.example do .env;
  * - jesli DEFAULT_ADMIN_PASSWORD w .env jest puste LUB rowne domyslnej
- *   wartosci (anim123456) -> generuje losowe haslo
+ *   wartosci fabrycznej -> generuje losowe haslo
  *   (crypto.randomBytes(12).toString('base64url')) i nadpisuje zmienna w .env;
  * - w pozostalych przypadkach .env NIE jest nadpisywany.
  *

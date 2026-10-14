@@ -54,6 +54,12 @@ Middleware autoryzacji:
 - `requireAuth` — wymaga ważnej sesji (kod 401 w razie braku)
 - `requireAdmin` — wymaga roli `admin` (kod 403 w razie braku)
 
+Sekrety nie w kodzie: skrypty dev (`benchmark*.mjs`, `load-100.mjs`,
+`test-app-views.cjs`) wymagają `DEFAULT_ADMIN_PASSWORD` w env/`.env`
+i padają z jawnym błędem bez niego (fail-fast, exit 2); strażnik
+`tests/security/noHardcodedSecrets.test.ts`. Wyjątek z jawną decyzją:
+fallback w `src/middleware/auth.ts` (dev/test; prod rzuca bez hasła).
+
 ---
 
 ## 2. Haszowanie haseł

@@ -15,6 +15,10 @@ services:
             - HOST=0.0.0.0
             # Wymagane przy pierwszym starcie - bez tej zmiennej konto admina nie zostanie utworzone (wyjatek jest logowany, start kontynuowany)
             - 'DEFAULT_ADMIN_PASSWORD=${DEFAULT_ADMIN_PASSWORD:?Wymagane: ustaw DEFAULT_ADMIN_PASSWORD w .env}'
+            # Opcjonalne dostrojenie bez rebuildu (defaulty = wartosci wbudowane w obraz):
+            - 'SENTRY_DSN=${SENTRY_DSN:-}'
+            - 'TRUST_PROXY=${TRUST_PROXY:-1}'
+            - 'COOKIE_SECURE=${COOKIE_SECURE:-true}'
             # Snapshot cen domyslnych z ./data (price_defaults.json) - przywracany przy starcie
             - 'PRICE_DEFAULTS_PATH=/var/data/price_defaults.json'
         # /dev/shm dla Chromium (generowanie PDF) — domyślne 64 MB
