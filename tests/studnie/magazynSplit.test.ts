@@ -96,6 +96,13 @@ function loadSolverCtx(catalog: any[]) {
 
 function loadIeCtx() {
     const sb = baseSandbox();
+    // xlsxImportShared PRZED importerami (jak kartoteka.html:454 przed 461;
+    // _groupRowsStrict uzywa XlsxImportShared.parsePlNumber).
+    vm.runInContext(
+        fs.readFileSync(path.join(JS_IE, '..', 'shared', 'xlsxImportShared.js'), 'utf8'),
+        sb,
+        { filename: 'xlsxImportShared.js' }
+    );
     for (const f of ['magazynCodes.js', 'externalImport.js', 'externalExportTemplate.js']) {
         vm.runInContext(fs.readFileSync(path.join(JS_IE, f), 'utf8'), sb, { filename: f });
     }

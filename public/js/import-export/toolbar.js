@@ -590,6 +590,7 @@ window.importExportToolbar = /** @type {any} */ ({
                 let skipped = 0;
                 const errors = [];
                 const unknownNums = [];
+                const rowErrors = [];
                 for (const offer of parsed.offers) {
                     const module = this._detectImportModule(offer, sets);
                     if (module === 'unknown') {
@@ -607,8 +608,16 @@ window.importExportToolbar = /** @type {any} */ ({
                     if (result.success) {
                         if (module === 'studnie') importedStudnie++;
                         else importedRury++;
+                        if (result.rowErrors && result.rowErrors.length)
+                            rowErrors.push(...result.rowErrors);
                     } else if (result.skipped) skipped++;
-                    else errors.push((result.number || '?') + ': ' + result.message);
+                    else if (result.invalid) {
+                        skipped++;
+                        if (result.errors && result.errors.length) rowErrors.push(...result.errors);
+                        errors.push(
+                            (result.number || '?') + ': wszystkie wiersze odrzucone (bledne liczby)'
+                        );
+                    } else errors.push((result.number || '?') + ': ' + result.message);
                 }
                 window.closeModal(modalId);
                 let message =
@@ -618,6 +627,8 @@ window.importExportToolbar = /** @type {any} */ ({
                     importedStudnie +
                     '.';
                 if (skipped) message += ' Pominięto: ' + skipped + '.';
+                if (rowErrors.length)
+                    message += ' Odrzuconych wierszy (bledne liczby): ' + rowErrors.length + '.';
                 if (unknownNums.length)
                     message +=
                         '\nNierozpoznany moduł (pominięto): ' +
@@ -625,9 +636,22 @@ window.importExportToolbar = /** @type {any} */ ({
                         ' — brak wiersza TR-RURY/TR-STUDNIE i brak indeksów z cennika.';
                 if (errors.length) message += '\nBłędy:\n' + errors.join('\n');
                 await appAlert(message, {
-                    type: errors.length ? 'warning' : 'info',
-                    title: errors.length ? 'Import z błędami' : 'Import zakończony'
+                    type: errors.length || rowErrors.length ? 'warning' : 'info',
+                    title:
+                        errors.length || rowErrors.length ? 'Import z błędami' : 'Import zakończony'
                 });
+                if (rowErrors.length) {
+                    await XlsxImportShared.showRowErrors(
+                        rowErrors,
+                        'Zaimportowano Rury ' +
+                            importedRury +
+                            ', Studnie ' +
+                            importedStudnie +
+                            '; pominieto ofert: ' +
+                            skipped +
+                            '.'
+                    );
+                }
                 if (window.kartotekaUI) {
                     window.kartotekaUI.loadLocalOffers();
                 }

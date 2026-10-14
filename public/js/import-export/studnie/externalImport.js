@@ -27,7 +27,18 @@ window.StudnieExternalImport = {
 
     // Czyste grupowanie wierszy XLSX w studnie (bez I/O — testowalne).
     // Wejście: wiersze po odfiltrowaniu TR-STUDNIE, słownik kodów, mapa indeks→typ.
+    // LEGACY (ciche 0): zachowane dla zgodnosci testow magazynSplit;
+    // import() uzywa _groupRowsStrict.
     _groupRows(rows, codes, typeMap) {
+        return this._groupRowsStrict(rows, codes, typeMap, { legacyZeros: true }).wells;
+    },
+
+    // Strict: bledne liczby pomijane z wpisem bledu (D-FIX-2: zakaz cichego 0).
+    // Rabat w skali 0-100 (jak wellComponentSchema i rury, bez /100).
+    // opts.legacyZeros: true odtwarza stare ||0 (tylko testy legacy).
+    _groupRowsStrict(rows, codes, typeMap, opts) {
+        const legacy = !!(opts && opts.legacyZeros);
+        const P = XlsxImportShared.parsePlNumber;
         const MC = window.MagazynCodes;
         const partOf = (indeks) => {
             const ct = typeMap ? typeMap.get((indeks || '').trim()) : undefined;
@@ -38,8 +49,11 @@ window.StudnieExternalImport = {
             return 'nadbudowa';
         };
 
+        const errors = [];
         const wellMap = {};
-        for (const r of rows) {
+        for (let ri = 0; ri < rows.length; ri++) {
+            const r = rows[ri];
+            const rowNo = ri + 2;
             const wellName = r['NR_STUDNI'] || 'Studnia_1';
             if (!wellMap[wellName]) {
                 wellMap[wellName] = {
@@ -65,21 +79,53 @@ window.StudnieExternalImport = {
             else if (part === 'nadbudowa') well.magazynNadbudowa = wh;
             else if (well.magazynDennica == null && well.magazynNadbudowa == null)
                 well.magazyn = wh;
-            const unitPrice = parseFloat(r['CENA_JEDNOSTKOWA']) || 0;
-            const qty = parseInt(r['ILOSC']) || 0;
-            const hasDiscount = r['RABAT'] !== '';
-            const discount = hasDiscount ? parseFloat(r['RABAT']) / 100 || 0 : 0;
-            const finalPrice = hasDiscount ? unitPrice * (1 - discount) : unitPrice;
+            const err = (col, value, reason) => {
+                errors.push({
+                    sheet: 'Import',
+                    row: rowNo,
+                    col: col,
+                    value: String(value ?? ''),
+                    reason: reason
+                });
+            };
+            const unitPrice = legacy
+                ? parseFloat(r['CENA_JEDNOSTKOWA']) || 0
+                : P(r['CENA_JEDNOSTKOWA']);
+            const qty = legacy ? parseInt(r['ILOSC']) || 0 : P(r['ILOSC']);
+            let discount = 0;
+            let finalPrice = unitPrice;
+            if (!legacy) {
+                if (qty === null || !Number.isInteger(qty) || qty <= 0) {
+                    err('ILOSC', r['ILOSC'], 'ilosc-calkowita-dodatnia');
+                    continue;
+                }
+                if (unitPrice === null || unitPrice < 0) {
+                    err('CENA_JEDNOSTKOWA', r['CENA_JEDNOSTKOWA'], 'cena-nieujemna');
+                    continue;
+                }
+                if (r['RABAT'] !== '') {
+                    const d = P(r['RABAT']);
+                    if (d === null || d < 0 || d > 100) {
+                        err('RABAT', r['RABAT'], 'rabat-0-100');
+                        continue;
+                    }
+                    discount = d;
+                }
+            } else {
+                const hasDiscount = r['RABAT'] !== '';
+                discount = hasDiscount ? parseFloat(r['RABAT']) / 100 || 0 : 0;
+                finalPrice = hasDiscount ? unitPrice * (1 - discount) : unitPrice;
+            }
 
             wellMap[wellName].components.push({
                 indeks: r['INDEKS_CZESCI'] || '',
                 ilosc: qty,
-                rabat: hasDiscount ? discount : 0,
-                cenaJednostkowa: hasDiscount ? unitPrice : finalPrice
+                rabat: discount,
+                cenaJednostkowa: legacy ? (r['RABAT'] !== '' ? unitPrice : finalPrice) : unitPrice
             });
         }
 
-        return Object.values(wellMap)
+        const wells = Object.values(wellMap)
             .map((w) => {
                 // Domknięcie: brakujące części dziedziczą legacy magazyn.
                 // Legacy magazyn = magazyn nadbudowy (jedno źródło, nigdy trzecia wartość).
@@ -89,6 +135,7 @@ window.StudnieExternalImport = {
                 return w;
             })
             .sort((a, b) => (a.lp || 0) - (b.lp || 0));
+        return { wells, errors };
     },
 
     async import(offerGroup) {
@@ -108,7 +155,12 @@ window.StudnieExternalImport = {
         const codes = MC && typeof MC.get === 'function' ? await MC.get() : null;
         const typeMap = await this._ensureTypeMap();
 
-        const wells = this._groupRows(rows, codes, typeMap);
+        const grouped = this._groupRowsStrict(rows, codes, typeMap);
+        const wells = grouped.wells;
+        // Zero poprawnych komponentow: brak POST (blokada), bledy do raportu.
+        if (!wells.length || !wells.some((w) => (w.components || []).length)) {
+            return { invalid: true, number, errors: grouped.errors };
+        }
 
         const existing = await this.findOfferByNumber(number);
         let action = 'create';
@@ -168,7 +220,7 @@ window.StudnieExternalImport = {
                 })
             });
 
-            return { success: true, number, action };
+            return { success: true, number, action, rowErrors: grouped.errors };
         } catch (err) {
             return { error: true, number, message: err.message };
         }
