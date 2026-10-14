@@ -185,3 +185,58 @@ describe('solver notes staleness (pieczatka _solverErrorsGen)', () => {
         expect(w.configStatus).toBe('OK');
     });
 });
+
+describe('backfillSolverStamps (stare dane bez pieczatki)', () => {
+    const sb = (() => {
+        const sandbox: any = {
+            window: {},
+            logger: { info: () => {}, warn: () => {}, error: () => {} },
+            resolveStudnieProduct: () => null
+        };
+        vm.createContext(sandbox);
+        vm.runInContext(
+            fs.readFileSync(
+                path.join(__dirname, '../../public/js/studnie/solverValidation.js'),
+                'utf8'
+            ),
+            sandbox
+        );
+        return sandbox;
+    })();
+    const recalc2 = sb.recalculateWellErrors || sb.window.recalculateWellErrors;
+    const backfill = sb.backfillSolverStamps || sb.window.backfillSolverStamps;
+    const NOTE = 'Uwaga: Wymuszono tolerancję wysokości (odchyłka +29mm)';
+
+    test('stempluje tylko studnie z notkami bez pieczatki', () => {
+        expect(typeof backfill).toBe('function');
+        const Wells: any[] = [
+            { config: [{ productId: 'KR-1', quantity: 2 }], configErrors: [NOTE] },
+            { config: [{ productId: 'KR-1', quantity: 2 }], configErrors: ['Bład zapasu x'] },
+            {
+                config: [{ productId: 'KR-1', quantity: 2 }],
+                configErrors: [NOTE],
+                _solverErrorsGen: 'stara'
+            }
+        ];
+        expect(backfill(Wells)).toBe(1);
+        expect(Wells[0]._solverErrorsGen).toBe('KR-1x2');
+        expect(Wells[1]._solverErrorsGen).toBeUndefined();
+        expect(Wells[2]._solverErrorsGen).toBe('stara');
+    });
+
+    test('end-to-end: load starej oferty -> edycja -> notka znika na zywo', () => {
+        const w: any = {
+            rzednaWlazu: 105,
+            rzednaDna: 100,
+            config: [{ productId: 'KR-1', quantity: 2 }],
+            configErrors: [NOTE],
+            configSource: 'AUTO_JS'
+        };
+        expect(backfill([w])).toBe(1);
+        recalc2(w);
+        expect(w.configErrors).toContain(NOTE); // nietknieta trzyma
+        w.config = [{ productId: 'KR-1', quantity: 3 }]; // reczna edycja
+        recalc2(w);
+        expect(w.configErrors).not.toContain(NOTE); // po edycji znika
+    });
+});

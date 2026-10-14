@@ -130,6 +130,30 @@ const SOLVER_NOTE_MARKERS = [
     'Zastosowana rozszerzona tolerancja',
     'Nie znaleziono pasującej kombinacji'
 ];
+// Backfill pieczatki przy wczytaniu oferty (stare dane z bazy nie maja
+// _solverErrorsGen — bez tego kazda edycja zachowywalaby notki w trybie
+// preserve). Stempluje BIEZACY config: notka zyje do pierwszej recznej
+// edycji, potem live-walidacja decyduje. Global classic-scope (bez window.*).
+// Wywoluje offerManager/orderCrud (guard typeof) — stad warning unused.
+// eslint-disable-next-line no-unused-vars
+function backfillSolverStamps(wellsArr) {
+    if (!Array.isArray(wellsArr)) return 0;
+    let n = 0;
+    for (const w of wellsArr) {
+        if (!w || w._solverErrorsGen != null) continue;
+        const errs = w.configErrors;
+        if (
+            !Array.isArray(errs) ||
+            !errs.some((e) => SOLVER_NOTE_MARKERS.some((m) => String(e).includes(m)))
+        )
+            continue;
+        try {
+            w._solverErrorsGen = wellConfigFingerprint(w.config);
+            n++;
+        } catch (_e) {}
+    }
+    return n;
+}
 function recalculateWellErrors(well) {
     if (!well || well.configStatus === 'LOADING') return;
 

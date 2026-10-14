@@ -181,6 +181,10 @@ async function loadSavedOfferStudnie(id_or_doc, optionalId, targetSection, preve
 
     wells = structuredClone(normalized.wells || []);
     migrateWellData(wells);
+    // Backfill pieczatki solvera dla starych danych (notki bez _solverErrorsGen
+    // inaczej znikalyby nigdy — preserve). Pierwsza reczna edycja po loadzie
+    // uniewaznia nieaktualne notki; nietkniete trzymaja.
+    if (typeof backfillSolverStamps === 'function') backfillSolverStamps(wells);
 
     // Mrożenie cen edycji: snapshot live cennika do frozen* (reuse
     // freezeWellPrices z zamówień); recalc omija zamrożone przez

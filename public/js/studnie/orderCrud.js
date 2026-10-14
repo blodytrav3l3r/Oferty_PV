@@ -780,6 +780,7 @@ async function enterOrderEditMode(orderId) {
 
         wells = Array.isArray(order.wells) ? structuredClone(order.wells) : [];
         migrateWellData(wells);
+        if (typeof backfillSolverStamps === 'function') backfillSolverStamps(wells);
 
         if (order.wellDiscounts) {
             window.wellDiscounts = structuredClone(order.wellDiscounts);
@@ -992,6 +993,7 @@ async function loadOrderSnapshot(rebuiltData, orderId) {
 
         wells = Array.isArray(order.wells) ? structuredClone(order.wells) : [];
         if (typeof migrateWellData === 'function') migrateWellData(wells);
+        if (typeof backfillSolverStamps === 'function') backfillSolverStamps(wells);
         wells.forEach((w) => {
             if (!Array.isArray(w.config)) w.config = [];
             if (!Array.isArray(w.przejscia)) w.przejscia = [];
