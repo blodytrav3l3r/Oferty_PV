@@ -199,3 +199,30 @@ Scope: dopisane na koncu, historia E-001..E-015, E-005a, E-100..E-106, E-200..E-
 - DIFF: git diff -- docs/plans/_active-evidence.md.
 - COMMIT: brak, zadanie mowi nie commituj.
 - VERIFIED: NO (czeka na login-200 u buildera).
+
+## Start Fazy 2 (2026-10-15, BUILD MODE Faza 2, docs-only, zero kodu)
+
+Scope: dopisane na koncu, historia E-001..E-015, E-005a, E-100..E-106, E-200..E-211, E-107, E-108, E-109 nietknieta. Nowe ID E-110, rozlaczne. Tylko ten plik docs. Nie dotyka kodu prod, harnessow, .env ani DB. Bez commita, bez pusha.
+
+## Ledger E-110
+
+| ID     | Twierdzenie                                                                                                           | Dowod                                                                                  | Status     |
+| ------ | --------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- | ---------- |
+| E-110a | Start Fazy 2: Batch GO, jeden PR laczacy A + dedup + E-half                                                           | decyzja sesji 2026-10-15; brak kodu tym dopiskiem                                      | HYPOTHESIS |
+| E-110b | Zakres plikow: public/js/excelModal.js + public/js/excelChangeHandlers.js + testy (parity/bench/golden/openPerf)      | decyzja sesji; kod nietkniety tym dopiskiem                                            | HYPOTHESIS |
+| E-110c | Zamrozone decyzje: edit-sync + race 800 + L0 sync; warianty B/D odrzucone                                             | decyzja sesji 2026-10-15; do weryfikacji diffem PR Fazy 2                              | HYPOTHESIS |
+| E-110d | Metryki bramki PR: key-to-paint P95 down + zero longtask>50ms@50 + bench +15% pod throttle-x4 + Golden + Parity GREEN | bramka sesji 2026-10-15; do potwierdzenia artefaktami runtime (OUT *-throttle-x4.json) | HYPOTHESIS |
+| E-110e | Wlasciciele plikow: builder = excelModal.js, general = excelChangeHandlers.js, explore = testy/harnessy               | podzial sesji 2026-10-15; bez zmian kodu tym dopiskiem                                 | HYPOTHESIS |
+
+## Checkpoint E-110
+
+- CLAIM: dopisek E-110 append-only, historia nietknieta, kod + harnessy + .env + DB nietkniete tym dopiskiem.
+- EVIDENCE: ta sekcja E-110a..E-110e; decyzje + zakres + bramka + wlasciciele z zadania sesji 2026-10-15.
+- REPRODUCTION: odczyt docs/plans/_active-evidence.md koniec (E-109); brak runtime w tym dopisku (docs-only).
+- BEFORE: koniec E-109; kod + harnessy + .env + DB bez zmian.
+- AFTER: tylko docs/plans/_active-evidence.md + ta sekcja; kod + harnessy + .env + DB bez zmian tym dopiskiem.
+- CHANGE: append-only, E-110 5x HYPOTHESIS (start Batch GO + zakres + decyzje + bramka + wlasciciele).
+- TESTS: brak runtime w docs; bramka czeka na PR Fazy 2 (key-paint P95, longtask, bench throttle-x4, Golden + Parity).
+- DIFF: git diff -- docs/plans/_active-evidence.md.
+- COMMIT: brak, zadanie mowi nie commituj.
+- VERIFIED: NO (czeka na jeden PR A + dedup + E-half + artefakty bramki).

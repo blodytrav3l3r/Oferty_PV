@@ -2,6 +2,21 @@
 /* ===== EXCEL CHANGE HANDLERS — Handlery zmian wartości w tabeli studni ===== */
 
 /* ===== HANDLERS ===== */
+/* Debounce solvera AUTO per wIdx (E-half, 200ms) - model-commit zostaje sync. */
+var _solverDeb = {};
+/* Guard typeof: sandboxy testowe (vm) nie maja timerow - wtedy sync fallback. */
+function _excelScheduleAutoSelect(wIdx) {
+    if (typeof _excelAutoSelectForWell !== 'function') return;
+    if (typeof clearTimeout === 'function' && typeof setTimeout === 'function') {
+        clearTimeout(_solverDeb[wIdx]);
+        _solverDeb[wIdx] = setTimeout(function () {
+            _solverDeb[wIdx] = null;
+            _excelAutoSelectForWell(wIdx);
+        }, 200);
+    } else {
+        _excelAutoSelectForWell(wIdx);
+    }
+}
 /* Lokalny fallback gdy shared/parseNum.js (window.parseNum) jeszcze niezaładowany. */
 function _excelParseNum(v) {
     if (typeof window !== 'undefined' && typeof window.parseNum === 'function')
@@ -65,7 +80,6 @@ function excelOnRzednaChange(wIdx) {
         return;
     }
     _excelRefreshAutoCells(wIdx, row);
-    _excelUpdateLeftPreview(wIdx);
     if (typeof _excelImmediatePreview === 'function') _excelImmediatePreview(wIdx);
 
     if (
@@ -76,7 +90,7 @@ function excelOnRzednaChange(wIdx) {
         rzWlazu > rzDna &&
         typeof autoSelectComponents === 'function'
     ) {
-        _excelAutoSelectForWell(wIdx);
+        _excelScheduleAutoSelect(wIdx);
     } else {
         _excelMarkAsManual(wIdx);
         if (typeof _excelSyncActiveRowErrors === 'function') _excelSyncActiveRowErrors(wIdx);
@@ -249,10 +263,9 @@ function excelOnPrzejscieChange(wIdx, trIdx, field, value) {
         well.rzednaDna != null &&
         typeof autoSelectComponents === 'function'
     ) {
-        _excelAutoSelectForWell(wIdx);
+        _excelScheduleAutoSelect(wIdx);
         return;
     }
-    _excelUpdateLeftPreview(wIdx);
     if (typeof _excelImmediatePreview === 'function') _excelImmediatePreview(wIdx);
     if (typeof _excelSyncActiveRowErrors === 'function') _excelSyncActiveRowErrors(wIdx);
     /* Natychmiastowy refresh wiersza (bez czekania na debounce 800 ms):
@@ -536,7 +549,7 @@ function excelOnPrzejscieTypeChange(wIdx, trIdx, value) {
         typeof autoSelectComponents === 'function' &&
         !_excelPasteQuiet()
     ) {
-        _excelAutoSelectForWell(wIdx);
+        _excelScheduleAutoSelect(wIdx);
         return;
     }
     /* Baza #58: brak full-rendera — liczba kolumn się nie zmienia, więc wystarczy
@@ -601,7 +614,6 @@ function excelOnWlazChange(wIdx, productId) {
     else _excelMarkManual(well);
     if (typeof _excelSyncRowSelect === 'function')
         _excelSyncRowSelect(wIdx, 'excelOnWlazChange', [wIdx], productId || '');
-    _excelUpdateLeftPreview(wIdx);
     if (typeof _excelImmediatePreview === 'function') _excelImmediatePreview(wIdx);
     if (typeof _excelSyncActiveRowErrors === 'function') _excelSyncActiveRowErrors(wIdx);
     _excelDebouncedRefresh(wIdx);
@@ -1046,7 +1058,6 @@ function excelOnKinetaChange(wIdx, value) {
     /* Baza #58: labelka selecta Kinety (single-slot dyspozytora) — in-place. */
     if (typeof _excelSyncRowSelect === 'function')
         _excelSyncRowSelect(wIdx, 'excelOnKinetaChange', [wIdx], value || '');
-    _excelUpdateLeftPreview(wIdx);
     if (typeof _excelImmediatePreview === 'function') _excelImmediatePreview(wIdx);
     if (typeof _excelSyncActiveRowErrors === 'function') _excelSyncActiveRowErrors(wIdx);
     _excelDebouncedRefresh(wIdx);
@@ -1083,7 +1094,6 @@ function excelOnPsiaBudaChange(wIdx, checked) {
     if (_excelPasteQuiet()) return; /* model gotowy; preview/refresh raz w doneCallback */
     const row = document.querySelector(`tr[data-widx="${wIdx}"]`);
     if (row) _excelRefreshAutoCells(wIdx, row);
-    _excelUpdateLeftPreview(wIdx);
     if (typeof _excelImmediatePreview === 'function') _excelImmediatePreview(wIdx);
     if (typeof _excelSyncActiveRowErrors === 'function') _excelSyncActiveRowErrors(wIdx);
     _excelDebouncedRefresh(wIdx);

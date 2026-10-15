@@ -534,6 +534,7 @@ let _excelOpenSnapshot = null;
 
 /* Fizyczne zamknięcie overlayu — wydzielone, by excelSaveAll mógł je wywołać bez rekurencji */
 function _excelCloseOverlay() {
+    if (typeof _excelFlushPreview === 'function') _excelFlushPreview();
     if (typeof _excelCancelPasteBatch === 'function') _excelCancelPasteBatch();
     _excelStopPolling();
     _excelUnregisterExcelListeners();
@@ -637,6 +638,63 @@ function _excelUpdateLeftPreview(wIdx) {
     _excelSyncMainPreview(wIdx);
 }
 
+/* Podgląd główny z opóźnieniem: szybkie kliknięcia wierszy nie liczą
+   updateSummary/diagram per klik, tylko trailing dla ostatniego wiersza. */
+var _excelPendingPreview = -1;
+var _excelPreviewTimer = 0;
+var _excelPreviewRaf = 0;
+
+function _excelClearPreviewTimers() {
+    if (_excelPreviewTimer) {
+        clearTimeout(_excelPreviewTimer);
+        _excelPreviewTimer = 0;
+    }
+    if (_excelPreviewRaf) {
+        if (typeof cancelAnimationFrame === 'function') cancelAnimationFrame(_excelPreviewRaf);
+        _excelPreviewRaf = 0;
+    }
+}
+
+function _excelSchedulePreview(wIdx, urgent) {
+    if (urgent) {
+        _excelClearPreviewTimers();
+        _excelPendingPreview = -1;
+        _excelSyncMainPreview(wIdx);
+        return;
+    }
+    if (typeof wIdx !== 'number' || isNaN(wIdx)) return;
+    _excelPendingPreview = wIdx;
+    _excelClearPreviewTimers();
+    _excelPreviewTimer = setTimeout(function () {
+        _excelPreviewTimer = 0;
+        if (typeof requestAnimationFrame === 'function') {
+            _excelPreviewRaf = requestAnimationFrame(function () {
+                _excelPreviewRaf = 0;
+                var target = _excelPendingPreview;
+                _excelPendingPreview = -1;
+                /* Strzał tylko dla wiersza nadal aktywnego — szybszy klik
+                   w inny wiersz unieważnia starszy trailing. */
+                if (typeof currentWellIndex !== 'undefined' && target !== currentWellIndex) return;
+                _excelSyncMainPreview(target);
+            });
+        } else {
+            var target = _excelPendingPreview;
+            _excelPendingPreview = -1;
+            if (typeof currentWellIndex !== 'undefined' && target !== currentWellIndex) return;
+            _excelSyncMainPreview(target);
+        }
+    }, 90);
+}
+
+/* Natychmiastowy trailing fire — close modala / tab-switch / koniec solvera. */
+function _excelFlushPreview() {
+    if (_excelPendingPreview < 0 && !_excelPreviewTimer && !_excelPreviewRaf) return;
+    var target = _excelPendingPreview;
+    _excelClearPreviewTimers();
+    _excelPendingPreview = -1;
+    if (typeof target === 'number' && !isNaN(target)) _excelSyncMainPreview(target);
+}
+
 /* Alias wstecznej kompatybilności: excelChangeHandlers woła _excelImmediatePreview
  * w 8 miejscach, a funkcja nigdy nie istniała (tylko declare w types.d.ts) —
  * wszystkie guardy typeof były no-opem. Teraz wskazuje na SSoT. */
@@ -688,13 +746,15 @@ function excelSelectRow(wIdx) {
         }
     }
 
-    _excelSyncMainPreview(wIdx);
+    _excelSchedulePreview(wIdx, false);
     /* Selekcja bez edycji: sam pasek z cache, bez recalc. */
     if (typeof _excelScheduleActiveRowPaint === 'function') _excelScheduleActiveRowPaint(wIdx);
 }
 
 /* ===== Rejestracja globali ===== */
 window._excelSyncMainPreview = _excelSyncMainPreview;
+window._excelSchedulePreview = _excelSchedulePreview;
+window._excelFlushPreview = _excelFlushPreview;
 window._excelUpdateLeftPreview = _excelUpdateLeftPreview;
 window._excelImmediatePreview = _excelImmediatePreview;
 window.openExcelTableModal = openExcelTableModal;

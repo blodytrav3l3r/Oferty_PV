@@ -1,11 +1,11 @@
 {
-    "generated": "2026-10-15T08:11:58.598Z",
+    "generated": "2026-10-15T09:50:14.941Z",
     "throttleX4": true,
     "rows": [
         {
             "n": 5000,
             "mode": "OFF",
-            "openMs": 275521,
+            "openMs": 300412,
             "rows": 5000,
             "nodesByScroll": {
                 "0": 679511,
@@ -16,13 +16,13 @@
             },
             "cycleMin": 679511,
             "cycleMax": 679511,
-            "editMs": 193341,
+            "editMs": 201509,
             "ok": true
         },
         {
             "n": 5000,
             "mode": "ON",
-            "openMs": 4583,
+            "openMs": 4899,
             "rows": 48,
             "nodesByScroll": {
                 "0": 10753,
@@ -33,7 +33,7 @@
             },
             "cycleMin": 10753,
             "cycleMax": 10753,
-            "editMs": 1649,
+            "editMs": 1654,
             "ok": true
         }
     ]

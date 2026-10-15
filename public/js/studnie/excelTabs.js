@@ -43,6 +43,8 @@ function _excelUpdateWellCount() {
 }
 
 function excelSwitchTab(tab) {
+    /* A4-F2: porzuć oczekujący debounce preview ze starej zakładki. */
+    if (typeof _excelFlushPreview === 'function') _excelFlushPreview();
     _excelActiveTab = tab;
     /* F2b: wchodząca zakładka dostaje świeże błędy PRZED renderem (open liczy
        tylko pierwszy tab). Bez tego wiersze miałyby stale tinty. */

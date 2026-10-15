@@ -97,6 +97,8 @@ async function _excelAutoSelectForWell(wIdx) {
                 /* Solver pracował na wIdx — po przywróceniu zaznaczenia preview
                  * (kafelki + diagram) musi wrócić na zaznaczony wiersz. */
                 try {
+                    /* A4-F3: najpierw domknij oczekujący debounce preview. */
+                    if (typeof _excelFlushPreview === 'function') _excelFlushPreview();
                     if (typeof _excelSyncMainPreview === 'function')
                         _excelSyncMainPreview(currentWellIndex);
                 } catch (_e) {}
