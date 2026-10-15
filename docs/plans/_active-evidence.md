@@ -340,3 +340,58 @@ Scope: dopisane na koncu, historia E-001..E-015, E-005a, E-100..E-106, E-200..E-
 - DIFF: git status --short + diff --stat w raporcie.
 - COMMIT: node scripts/commit.mjs (ponizej), BEZ push.
 - VERIFIED: YES (po zielonym validate) / NO - patrz SHA lub STOP w raporcie.
+
+## Start Batch 1 jako 3 osobne PR-y (2026-10-15, BUILD MODE docs-only, zero kodu)
+
+Scope: dopisane na koncu, historia E-001..E-015, E-005a, E-100..E-106, E-200..E-211, E-107..E-113, E-111g..E-111h nietknieta. Nowe ID E-114, rozlaczne. Tylko ten plik docs. Nie dotyka kodu prod, harnessow, .env ani DB. Bez commita, bez pusha.
+
+## Ledger E-114
+
+| ID     | Twierdzenie                                                                                                              | Dowod                                                           | Status     |
+| ------ | ------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------- | ---------- |
+| E-114a | PR 1a excel-gates CI: bramki excel (parity/golden/bench) jako gate CI, bez zmian prod                                    | decyzja sesji 2026-10-15; kod nietkniety tym dopiskiem          | HYPOTHESIS |
+| E-114b | PR 1b XSS errorTitle: fix errorTitle przez escapeHtml/escapeHtmlAttr, bez nowych inline handlerow                        | decyzja sesji 2026-10-15; kod nietkniety; do weryfikacji diffem | HYPOTHESIS |
+| E-114c | PR 1c logger catch: puste catch zamiana na logger (warn/debug), zero silent fail                                         | decyzja sesji 2026-10-15; kod nietkniety; do weryfikacji diffem | HYPOTHESIS |
+| E-114d | Wlasciciele plikow: builder = .github/workflows/ci.yml (1a), general = excelTableBody + test (1b), explore = logger (1c) | podzial sesji 2026-10-15; bez zmian kodu tym dopiskiem          | HYPOTHESIS |
+| E-114e | Kolejnosc: 3 osobne PR-y (1a, 1b, 1c), kazdy z wlasna bramka ponizej; brak laczenia w jeden PR                           | decyzja sesji 2026-10-15; merge kazdego tylko po swojej bramce  | HYPOTHESIS |
+
+## Bramki per PR (po kodzie PR, przed merge)
+
+- PR 1a (builder, ci.yml): version:check PASS + validate PASS + CI GREEN (w tym e2e-appname z TEST_ADMIN_PASSWORD, brak regresji E-111g/h).
+- PR 1b (general, excelTableBody + test): lint:frontend PASS + unit PASS + escapeHtml/escapeHtmlAttr audyt (innerHTML + atrybuty) + parity GREEN + golden GREEN (bez --update).
+- PR 1c (explore, logger): lint PASS + test:quick PASS + grep pustych catch zero + brak sekretow w logach (bez wyciekow .env/JWT/hasel).
+  Bez bramki danego PR brak merge tego PR; PR-y niezalezne (FAIL jednego nie blokuje review pozostalych).
+
+## Checkpoint E-114
+
+- CLAIM: dopisek E-114 append-only, historia nietknieta, kod + harnessy + .env + DB nietkniete tym dopiskiem.
+- EVIDENCE: ta sekcja E-114a..E-114e; start Batch 1 jako 3 PR-y + wlasciciele + bramki per PR z zadania sesji 2026-10-15.
+- REPRODUCTION: odczyt docs/plans/_active-evidence.md koniec (E-113, 342 linie); brak runtime w tym dopisku (docs-only).
+- BEFORE: koniec E-113; kod + harnessy + .env + DB bez zmian.
+- AFTER: tylko docs/plans/_active-evidence.md + ta sekcja; kod + harnessy + .env + DB bez zmian tym dopiskiem.
+- CHANGE: append-only, E-114 5x HYPOTHESIS (3x PR + wlasciciele + kolejnosc).
+- TESTS: brak runtime w docs; bramki czekaja (1a CI, 1b XSS+parity+golden, 1c logger+quick).
+- DIFF: git diff -- docs/plans/_active-evidence.md.
+- COMMIT: brak, zadanie mowi nie commituj.
+- VERIFIED: NO (czeka na 3 PR-y + artefakty bramek).
+
+## E-114f statusy batch 1 (2026-10-15, BUILD MODE, BEZ PUSH)
+
+| ID        | Twierdzenie                                     | Dowod                                                                                                                                                                          | Status   |
+| --------- | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------- |
+| E-114f-1a | PR 1a excel-gates CI zmergowany jako commit     | 7759c56b93b4bb8441c24501ceac4bfdb025baad chore(ci): job excel-gates parity golden align                                                                                        | VERIFIED |
+| E-114f-1b | PR 1b XSS errorTitle fix zmergowany jako commit | c49c6fa20c8305570c79c536069d502800d47b82 fix(studnie): escapehtmlattr w tytule bledu excel; jest excelErrorTitleXss + excelBulkProgressXss GREEN + eslint excelTableBody GREEN | VERIFIED |
+| E-114f-1c | PR 1c logger catch zmergowany jako commit       | 9b7ef227f3d2b72e2e4ad954432b0155d4038496 chore(studnie): logger warn w pustych catch excel; node --check x3 + eslint x3 GREEN + jest excelUndoLifecycle 7/7 GREEN              | VERIFIED |
+
+## Checkpoint E-114f
+
+- CLAIM: batch 1 (1a+1b+1c) skommitowany jako 3 osobne SHA, ledger dopisany append-only.
+- EVIDENCE: ta sekcja E-114f; git log --oneline -4 (9b7ef22/c49c6fa/7759c56/46285d0).
+- REPRODUCTION: git rev-parse HEAD x3 + jest + eslint + node --check (2026-10-15, EXIT 0).
+- BEFORE: koniec E-114; 3 commity batch 1 w HEAD, ledger bez E-114f.
+- AFTER: tylko docs/plans/_active-evidence.md + ta sekcja; kod batch 1 juz w HEAD.
+- CHANGE: append-only, E-114f 3x VERIFIED.
+- TESTS: bramek per PR jak w dowodach E-114f-1a..1c.
+- DIFF: git diff -- docs/plans/_active-evidence.md.
+- COMMIT: node scripts/commit.mjs docs(studnie) (ponizej), BEZ push.
+- VERIFIED: YES.
