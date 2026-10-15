@@ -902,34 +902,155 @@ function _excelPaintRowStatus(row, well) {
 }
 
 /* ===== NATYCHMIASTOWE ODŚWIEŻENIE KOLORÓW DUPLIKATÓW (bez re-rendera) ===== */
+/* Inkrementalna mapa duplikatow (var w scope pliku): nazwa -> count oraz
+   nazwa -> Set(dn). Full-pass jest domyslny (fallback) i przebudowuje obie
+   mapy od zera; szybka sciezka aktualizuje przyrostowo tylko dotkniete nazwy
+   i maluje tylko affected + wiersze o tej samej nazwie. Szybka sciezka wlacza
+   sie tylko gdy istnieje global _pasteCtx.affected (wklejka) - inaczej zawsze
+   full-pass jak dzis. Kolor to paint (liczony z wells), nigdy zrodlo statusu;
+   sticky zawsze przez _excelApplyRowStatusDom -> _excelStickyCellBg. */
+var _excelDupNameCounts = new Map();
+var _excelDupNameDnSets = new Map();
+var _excelDupWellKeys = new Map();
+var _excelDupKnownLen = -1;
+
+/* Normalizacja nazw IDENTYCZNA jak w renderze TBODY i wczesniejszym full-pass. */
+function _excelDupNormName(w) {
+    var raw = w.numer != null && String(w.numer).trim() !== '' ? String(w.numer) : w.name || '';
+    return raw
+        .trim()
+        .replace(/ (PRE|UTH)$/i, '')
+        .trim()
+        .toLowerCase();
+}
+
+/* Klucz DN IDENTYCZNY jak we wczesniejszym full-pass. */
+function _excelDupDnKey(w) {
+    return w.dn === 'styczna' ? 'styczne' : String(w.dn);
+}
+
+function _excelDupWellKey(w, wIdx) {
+    return w && w.id != null ? 'id:' + String(w.id) : 'idx:' + String(wIdx);
+}
+
+/* Pelna przebudowa map (full-pass). */
+function _excelDupRebuildMaps() {
+    var counts = new Map();
+    var dnSets = new Map();
+    var wellKeys = new Map();
+    for (var i = 0; i < wells.length; i++) {
+        var w = wells[i];
+        if (!w) continue;
+        var n = _excelDupNormName(w);
+        if (!n) continue;
+        counts.set(n, (counts.get(n) || 0) + 1);
+        var dk = _excelDupDnKey(w);
+        var s = dnSets.get(n);
+        if (!s) {
+            s = new Set();
+            dnSets.set(n, s);
+        }
+        s.add(dk);
+        wellKeys.set(_excelDupWellKey(w, i), { n: n, dn: dk });
+    }
+    _excelDupNameCounts = counts;
+    _excelDupNameDnSets = dnSets;
+    _excelDupWellKeys = wellKeys;
+    _excelDupKnownLen = wells.length;
+}
+
+/* Global _pasteCtx.affected (wklejka) albo null -> full-pass. Sygnatura
+   _excelRefreshDupColors BEZ ZMIAN: affected wykrywane, nie przekazywane. */
+function _excelDupAffectedIdxs() {
+    /* Global wklejki (window._pasteCtx) - tsc: Window ma [key: string]: any. */
+    var aff = null;
+    try {
+        if (typeof window !== 'undefined' && window._pasteCtx && window._pasteCtx.affected) {
+            aff = window._pasteCtx.affected;
+        }
+    } catch (_e) {
+        aff = null;
+    }
+    if (!aff) return null;
+    var out = [];
+    try {
+        aff.forEach(function (wIdx) {
+            if (Number.isInteger(wIdx) && wIdx >= 0 && wIdx < wells.length) out.push(wIdx);
+        });
+    } catch (_e2) {
+        return null;
+    }
+    return out.length > 0 ? out : null;
+}
+
+/* Proba szybkiej sciezki: { idxSet, touched } albo null (= full-pass).
+   Przyrostowo przelicza tylko nazwy dotkniete przez affected (stare + nowe);
+   brak starego wpisu lub zmiana rozmiaru wells -> null (bezpieczny fallback). */
+function _excelDupTryFast(affIdxs) {
+    if (!affIdxs || _excelDupKnownLen !== wells.length || _excelDupKnownLen < 0) return null;
+    if (wells.length > 0 && _excelDupWellKeys.size === 0) return null;
+    var touched = new Set();
+    var ok = true;
+    affIdxs.forEach(function (wIdx) {
+        if (!ok) return;
+        var w = wells[wIdx];
+        if (!w) {
+            ok = false;
+            return;
+        }
+        var old = _excelDupWellKeys.get(_excelDupWellKey(w, wIdx));
+        if (!old) {
+            ok = false;
+            return;
+        }
+        if (old.n) touched.add(old.n);
+        var cur = _excelDupNormName(w);
+        if (cur) touched.add(cur);
+    });
+    if (!ok) return null;
+    var recCounts = new Map();
+    var recDns = new Map();
+    for (var i = 0; i < wells.length; i++) {
+        var w = wells[i];
+        if (!w) continue;
+        var n = _excelDupNormName(w);
+        if (!n || !touched.has(n)) continue;
+        recCounts.set(n, (recCounts.get(n) || 0) + 1);
+        var dk = _excelDupDnKey(w);
+        var s = recDns.get(n);
+        if (!s) {
+            s = new Set();
+            recDns.set(n, s);
+        }
+        s.add(dk);
+    }
+    touched.forEach(function (t) {
+        if (recCounts.has(t)) {
+            _excelDupNameCounts.set(t, recCounts.get(t));
+            _excelDupNameDnSets.set(t, recDns.get(t));
+        } else {
+            _excelDupNameCounts.delete(t);
+            _excelDupNameDnSets.delete(t);
+        }
+    });
+    affIdxs.forEach(function (wIdx) {
+        var w = wells[wIdx];
+        if (!w) return;
+        _excelDupWellKeys.set(_excelDupWellKey(w, wIdx), {
+            n: _excelDupNormName(w),
+            dn: _excelDupDnKey(w)
+        });
+    });
+    return { idxSet: new Set(affIdxs), touched: touched };
+}
+
 function _excelRefreshDupColors() {
     const container = document.getElementById('excel-table-container');
     if (!container) return;
     const dn = _excelActiveTab === 'styczne' ? 'styczne' : _excelActiveTab;
     const dnKey = dn === 'styczne' ? 'styczne' : dn;
 
-    const nameCounts = {};
-    const nameDnMap = {};
-    wells.forEach((w) => {
-        const raw =
-            w.numer != null && String(w.numer).trim() !== '' ? String(w.numer) : w.name || '';
-        const n = raw
-            .trim()
-            .replace(/ (PRE|UTH)$/i, '')
-            .trim()
-            .toLowerCase();
-        if (n) {
-            nameCounts[n] = (nameCounts[n] || 0) + 1;
-            const wDn = w.dn === 'styczna' ? 'styczne' : String(w.dn);
-            if (!nameDnMap[n]) nameDnMap[n] = [];
-            if (!nameDnMap[n].find((x) => x.dn === wDn)) {
-                nameDnMap[n].push({ dn: wDn });
-            }
-        }
-    });
-    const dupNames = new Set(Object.keys(nameCounts).filter((n) => nameCounts[n] > 1));
-
-    /* Tinty duplikatów per motyw (DRY z renderem TBODY powyżej) — klucze rgb
+    /* Tinty duplikatow per motyw (DRY z renderem TBODY powyzej) - klucze rgb
        identyczne, alfa wzmocniona w light (patrz _excelAlpha). */
     const _dupMap = (darkAlpha, lightAlpha) => ({
         1000: 'rgba(var(--blue-rgb), ' + _excelAlpha(darkAlpha, lightAlpha) + ')',
@@ -944,6 +1065,10 @@ function _excelRefreshDupColors() {
     const hoverDupSolid = _dupMap('0.25', '0.32');
     const hoverActiveDupSolid = _dupMap('0.35', '0.4');
 
+    /* Domyslnie full-pass (fallback); szybka sciezka tylko z affected. */
+    var _fast = _excelDupTryFast(_excelDupAffectedIdxs());
+    if (!_fast) _excelDupRebuildMaps();
+
     const tabWells = wells.filter((w) => _excelWellMatchesTab(w, dn));
     tabWells.forEach((well, idx) => {
         const wIdx =
@@ -955,22 +1080,20 @@ function _excelRefreshDupColors() {
                 console.warn('[Excel] brak wpisu wellIndexById:', well && well.id);
             return;
         }
-        const row = container.querySelector(`tr[data-widx="${wIdx}"]`);
+        const nameKey = _excelDupNormName(well);
+        if (_fast && !_fast.touched.has(nameKey) && !_fast.idxSet.has(wIdx)) return;
+        const row = container.querySelector('tr[data-widx="' + wIdx + '"]');
         if (!row) return;
 
         const isEven = idx % 2 === 0;
         const isActive = typeof currentWellIndex !== 'undefined' && wIdx === currentWellIndex;
-        const rawKey2 =
-            well.numer != null && String(well.numer).trim() !== ''
-                ? String(well.numer)
-                : well.name || '';
-        const nameKey = rawKey2
-            .trim()
-            .replace(/ (PRE|UTH)$/i, '')
-            .trim()
-            .toLowerCase();
-        const isDup = dupNames.has(nameKey);
-        const nameDnList = nameDnMap[nameKey] || [];
+        const isDup = (_excelDupNameCounts.get(nameKey) || 0) > 1;
+        const _dnSet = _excelDupNameDnSets.get(nameKey);
+        const nameDnList = _dnSet
+            ? Array.from(_dnSet).map(function (d) {
+                  return { dn: d };
+              })
+            : [];
         const otherDns = nameDnList.filter((d) => d.dn !== dnKey);
         const dupColorKey = isDup && otherDns.length > 0 ? otherDns[0].dn : dnKey;
         const baseBg = isEven ? 'var(--excel-row-even)' : 'var(--excel-row-odd)';

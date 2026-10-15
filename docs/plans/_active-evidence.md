@@ -395,3 +395,47 @@ Scope: dopisane na koncu, historia E-001..E-015, E-005a, E-100..E-106, E-200..E-
 - DIFF: git diff -- docs/plans/_active-evidence.md.
 - COMMIT: node scripts/commit.mjs docs(studnie) (ponizej), BEZ push.
 - VERIFIED: YES.
+
+## Start Batch 2 (paste-6->1 + DupColors-inc + updateSummary-cache) (2026-10-15, BUILD MODE docs-only, zero kodu)
+
+Scope: dopisane na koncu, historia E-001..E-015, E-005a, E-100..E-106, E-200..E-211, E-107..E-114, E-111g..E-111h, E-114f nietknieta. Nowe ID E-115, rozlaczne. Tylko ten plik docs. Nie dotyka kodu prod, harnessow, .env ani DB. Bez commita, bez pusha.
+
+## Ledger E-115
+
+| ID     | Twierdzenie                                                                                                   | Dowod                                                           | Status     |
+| ------ | ------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------- | ---------- |
+| E-115a | PR 2a paste-6->1: konsolidacja 6 sciezek paste w 1 (excelCopyPaste), wlasciciel builder                       | decyzja sesji 2026-10-15; kod nietkniety tym dopiskiem          | HYPOTHESIS |
+| E-115b | PR 2b DupColors-inc: inkrementalne kolory duplikatow zamiast full rescan (excelTableBody), wlasciciel general | decyzja sesji 2026-10-15; kod nietkniety; do weryfikacji diffem | HYPOTHESIS |
+| E-115c | PR 2c updateSummary-cache: cache podsumowania, uniewaznienie przy danych (wellUI), wlasciciel explore         | decyzja sesji 2026-10-15; kod nietkniety; do weryfikacji diffem | HYPOTHESIS |
+| E-115d | Wlasciciele: builder = excelCopyPaste (2a), general = excelTableBody (2b), explore = wellUI (2c)              | podzial sesji 2026-10-15; bez zmian kodu tym dopiskiem          | HYPOTHESIS |
+| E-115e | Kolejnosc: 3 osobne PR-y (2a, 2b, 2c), kazdy z wlasna bramka ponizej; brak laczenia w jeden PR                | decyzja sesji 2026-10-15; merge kazdego tylko po swojej bramce  | HYPOTHESIS |
+
+## Bramki Batch 2 (po kodzie PR, przed merge)
+
+- parity GREEN: npm run test:parity (OFF vs ON, SSoT wells+undo, w tym sciezki paste z 2a).
+- golden GREEN: node tests/playwright/excelDomGolden.cjs (bez --update; update tylko za autoryzacja nowego stanu).
+- bench: brak regresji vs baseline (OUT *-throttle-x4.json, open/modal/DOM/scroll/edit; 2b + 2c maja nie pogarszac).
+- kwoty: parity kwot bez roznic (I-007; cache 2b/2c nie zmienia cen ani sum).
+- longtask: zero longtask>50ms (2c celuje w drop; 2a/2b bez nowych).
+  Bez 5/5 brak merge danego PR; PR-y niezalezne (FAIL jednego nie blokuje review pozostalych).
+
+## BLOCKi reviewera - checklista STOP bez merge
+
+- [ ] I-001 ownership: zmiana nie rozszerza odczytu ani zapisu, fail-closed 403 przy watpliwosci.
+- [ ] I-002 zakres: kazdy PR tylko swoj plik (2a excelCopyPaste, 2b excelTableBody, 2c wellUI), zero dotyku schema/migracji/auth.
+- [ ] I-007 rozliczenia: cache/konsolidacja nie zmienia cen ani sum, parity kwot bez roznic.
+- [ ] XSS: kazda interpolacja do innerHTML przez escapeHtml, atrybuty przez escapeHtmlAttr, brak nowych inline handlerow.
+- [ ] undo: kazda sciezka edycji/paste odwracalna, SSoT wells+undo zielony w parity.
+
+## Checkpoint E-115
+
+- CLAIM: dopisek E-115 append-only, historia nietknieta, kod + harnessy + .env + DB nietkniete tym dopiskiem.
+- EVIDENCE: ta sekcja E-115a..E-115e; start Batch 2 (paste-6->1 + DupColors-inc + updateSummary-cache) + wlasciciele + bramki + BLOCKi z zadania sesji 2026-10-15.
+- REPRODUCTION: odczyt docs/plans/_active-evidence.md koniec (E-114f, 397 linii); brak runtime w tym dopisku (docs-only).
+- BEFORE: koniec E-114f; kod + harnessy + .env + DB bez zmian.
+- AFTER: tylko docs/plans/_active-evidence.md + ta sekcja; kod + harnessy + .env + DB bez zmian tym dopiskiem.
+- CHANGE: append-only, E-115 5x HYPOTHESIS (3x PR + wlasciciele + kolejnosc).
+- TESTS: brak runtime w docs; bramki czekaja (parity + golden + bench + kwoty + longtask).
+- DIFF: git diff -- docs/plans/_active-evidence.md.
+- COMMIT: brak, zadanie mowi nie commituj.
+- VERIFIED: NO (czeka na 3 PR-y + artefakty bramek + odhaczenie BLOCKow).

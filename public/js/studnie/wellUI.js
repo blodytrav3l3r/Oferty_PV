@@ -6,6 +6,134 @@
 // Debounce + per-tick cache (Faza 0 visual-safe): nie zmienia wyglądu, tylko koszt renderu.
 let _wellSearchDebounce = null;
 let _wellStatsCache = null;
+// Per-sesja cache wag i cen dla updateSummary (klucz well.id): jeden safeCalcWellStats
+// per well + jeden calculateOfferTotals per fingerprint zamiast O(N) per wywolanie.
+// Uniewaznianie: (1) wrappery open/close modala excela i _excelClearResCache (lazy patch,
+// bez dotykania innych plikow), (2) fingerprint oferty przy wejsciu updateSummary
+// (_excelClearResCache nie mieszka w tym pliku). Sygnatura updateSummary bez zmian.
+const _sumStatsCache = new Map();
+let _sumFp = null;
+let _sumTotalsCache = null;
+let _sumPatchDone = false;
+
+function _wellUIClearSumCache() {
+    _sumStatsCache.clear();
+    _sumFp = null;
+    _sumTotalsCache = null;
+}
+
+// ponytail: pelny JSON wells w fingerprint; lzejsza sygnatura gdyby to mierzalnie cielo.
+function _wellUISumFp() {
+    try {
+        const _km = document.getElementById('transport-km')?.value || '';
+        const _rate = document.getElementById('transport-rate')?.value || '';
+        const _mode = typeof currentTransportMode !== 'undefined' ? currentTransportMode : '';
+        const _fz = typeof isFrozenPriceCtx === 'function' ? (isFrozenPriceCtx() ? 'F' : 'L') : '';
+        const _om =
+            typeof orderEditMode !== 'undefined' && orderEditMode && orderEditMode.order
+                ? 'O' + orderEditMode.order.offerId + '|' + orderEditMode.order.transportMode
+                : 'no';
+        const _disc = typeof wellDiscounts !== 'undefined' ? JSON.stringify(wellDiscounts) : '';
+        let _cen = '';
+        if (typeof studnieProducts !== 'undefined' && Array.isArray(studnieProducts)) {
+            _cen =
+                studnieProducts.length +
+                '|' +
+                studnieProducts
+                    .map(
+                        (p) =>
+                            p.id +
+                            ':' +
+                            p.price +
+                            ':' +
+                            p.weight +
+                            ':' +
+                            p.height +
+                            ':' +
+                            p.area +
+                            ':' +
+                            p.areaExt
+                    )
+                    .join(',');
+        }
+        const _ws =
+            typeof wells !== 'undefined' && Array.isArray(wells)
+                ? JSON.stringify(wells, function (k, v) {
+                      return k === '__resCache' || k === '__availCache' ? undefined : v;
+                  })
+                : '[]';
+        return (
+            _ws +
+            '#' +
+            _km +
+            '#' +
+            _rate +
+            '#' +
+            _mode +
+            '#' +
+            _fz +
+            '#' +
+            _om +
+            '#' +
+            _disc +
+            '#' +
+            _cen
+        );
+    } catch (_e) {
+        return null;
+    }
+}
+
+function _wellUIPatchInvalidation() {
+    if (_sumPatchDone) return;
+    if (typeof window === 'undefined') return;
+    let _all = true;
+    const _wrap = function (name, onCall) {
+        const _fn = /** @type {any} */ (window)[name];
+        if (typeof _fn !== 'function') return false;
+        if (/** @type {any} */ (_fn)._wellUISumWrapped) return true;
+        const _orig = _fn;
+        const _w = function (...args) {
+            try {
+                onCall(args);
+            } catch (_eCb) {}
+            return _orig.apply(this, args);
+        };
+        /** @type {any} */ (_w)._wellUISumWrapped = true;
+        /** @type {any} */ (window)[name] = _w;
+        return true;
+    };
+    if (
+        !_wrap('openExcelTableModal', function () {
+            _wellUIClearSumCache();
+        })
+    )
+        _all = false;
+    if (
+        !_wrap('closeExcelTableModal', function () {
+            _wellUIClearSumCache();
+        })
+    )
+        _all = false;
+    if (
+        !_wrap('_excelCloseOverlay', function () {
+            _wellUIClearSumCache();
+        })
+    )
+        _all = false;
+    if (
+        !_wrap('_excelClearResCache', function (args) {
+            try {
+                const _one = args && args[0];
+                if (_one && _one.id != null) _sumStatsCache.delete(_one.id);
+                _sumTotalsCache = null;
+            } catch (_eEv) {}
+        })
+    )
+        _all = false;
+    _sumPatchDone = _all;
+}
+window._wellUIClearSumCache = _wellUIClearSumCache;
 // G2: legacy pod dwoma nazwami — window.renderWellsList przejmuje wellVirtual.js
 // (jeden delegat, dispatcher z fallbackiem); bezpośrednie wołania legacy używają renderWellsListLegacy.
 window.renderWellsListLegacy = window.renderWellsList = function renderWellsList() {
@@ -150,6 +278,16 @@ function _wellFmtHWithSign(mm) {
 
 /* ===== PODSUMOWANIE ===== */
 window.updateSummary = function updateSummary() {
+    try {
+        _wellUIPatchInvalidation();
+    } catch (_ePatch) {}
+    // Per-tick totals + per-sesja stats: fingerprint uniewaznia przy zmianie oferty i cennika.
+    const _fp = _wellUISumFp();
+    if (_fp !== null && _fp !== _sumFp) {
+        _sumStatsCache.clear();
+        _sumTotalsCache = null;
+        _sumFp = _fp;
+    }
     const well = getCurrentWell();
     if (!well) {
         const el = (id) => document.getElementById(id);
@@ -182,12 +320,23 @@ window.updateSummary = function updateSummary() {
     // Kafelek Ceny nie może zależeć od czystości rabatów — corrupt stored
     // (RangeError z assertDiscountPct) dawałby martwy kafelek ze starą ceną.
     // safeCalcWellStats robi fallback 0% + badge, jak lista i pipeline.
-    const stats =
-        typeof safeCalcWellStats === 'function' ? safeCalcWellStats(well) : calcWellStats(well);
+    const _csSum = typeof safeCalcWellStats === 'function' ? safeCalcWellStats : calcWellStats;
+    const _ckSum = well && well.id != null ? well.id : well;
+    let stats = _fp !== null ? _sumStatsCache.get(_ckSum) : undefined;
+    if (!stats) {
+        stats = _csSum(well);
+        if (_fp !== null) _sumStatsCache.set(_ckSum, stats);
+    }
 
     let wellTransportCost = 0;
     if (typeof calculateOfferTotals === 'function') {
-        const totals = calculateOfferTotals();
+        const _ordered =
+            typeof orderEditMode !== 'undefined' && orderEditMode && orderEditMode.order;
+        let totals = _fp !== null && !_ordered ? _sumTotalsCache : null;
+        if (!totals) {
+            totals = calculateOfferTotals();
+            if (_fp !== null && !_ordered) _sumTotalsCache = totals;
+        }
         if (totals && totals.globalWeight > 0 && totals.totalTransportCost > 0) {
             wellTransportCost = totals.totalTransportCost * (stats.weight / totals.globalWeight);
         }

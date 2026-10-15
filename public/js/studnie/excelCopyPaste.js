@@ -426,49 +426,9 @@ function _excelHandlePaste(e) {
         if (!_pasteFiltered) _pasteFiltered = _excelSnapshotFiltered();
         return _pasteFiltered;
     };
-    const _finishPaste = function () {
-        // batch finalize: zachowaj semantykę change handlerów raz dla affected wells (Q1)
-        if (_pasteCtx)
-            try {
-                _excelFinalizePasteAffected(_pasteCtx);
-            } catch (_e) {
-                _excelWarn('paste:finalizeAffected failed');
-            }
-        /* Przelicz błędy dotkniętych studni PRZED re-renderem — inaczej tabela
-           czyta stary configStatus (D1). */
-        if (_pasteCtx && _pasteCtx.affected && _pasteCtx.affected.size > 0) {
-            if (typeof recalculateWellErrors === 'function') {
-                _pasteCtx.affected.forEach(function (wIdx) {
-                    var w = typeof wells !== 'undefined' ? wells[wIdx] : null;
-                    if (!w) return;
-                    try {
-                        recalculateWellErrors(w);
-                    } catch (_e) {
-                        _excelWarn('paste:recalcAffected failed');
-                    }
-                });
-            }
-        } else if (typeof recalculateWellErrors === 'function' && typeof wells !== 'undefined') {
-            for (var _ri = 0; _ri < wells.length; _ri++) {
-                if (!wells[_ri]) continue;
-                if (typeof _excelWellMatchesTab === 'function') {
-                    try {
-                        if (!_excelWellMatchesTab(wells[_ri], _excelActiveTab)) continue;
-                    } catch (_e) {}
-                }
-                try {
-                    recalculateWellErrors(wells[_ri]);
-                } catch (_e) {
-                    _excelWarn('paste:recalcFallback failed');
-                }
-            }
-        }
-        _excelPasteInProgress = false;
-        /* W4: wyczyść martwą selekcję (tablice i klasy) + pełny re-render. */
-        if (typeof _excelResetLayoutDependentState === 'function')
-            _excelResetLayoutDependentState();
-        if (typeof window !== 'undefined' && typeof window._excelInvalidateFitCache === 'function')
-            window._excelInvalidateFitCache();
+    /* JEDEN tick finalizacji paste (I-002): 1× _excelRenderTable + dociągnięcia
+       sekwencyjnie w jednym synchronicznym passie. Sygnatura _finishPaste bez zmian. */
+    const _excelFinalizePasteTick = function () {
         _excelRenderTable(_excelActiveTab);
         if (typeof _excelRefreshDupColors === 'function')
             try {
@@ -517,6 +477,67 @@ function _excelHandlePaste(e) {
                     _excelWarn('paste:renderWellDiagram failed');
                 }
         }
+    };
+    const _finishPaste = function () {
+        // batch finalize: zachowaj semantykę change handlerów raz dla affected wells (Q1)
+        if (_pasteCtx)
+            try {
+                _excelFinalizePasteAffected(_pasteCtx);
+            } catch (_e) {
+                _excelWarn('paste:finalizeAffected failed');
+            }
+        /* Przelicz błędy dotkniętych studni PRZED re-renderem — inaczej tabela
+           czyta stary configStatus (D1). */
+        if (_pasteCtx && _pasteCtx.affected && _pasteCtx.affected.size > 0) {
+            if (typeof recalculateWellErrors === 'function') {
+                _pasteCtx.affected.forEach(function (wIdx) {
+                    var w = typeof wells !== 'undefined' ? wells[wIdx] : null;
+                    if (!w) return;
+                    try {
+                        recalculateWellErrors(w);
+                    } catch (_e) {
+                        _excelWarn('paste:recalcAffected failed');
+                    }
+                });
+            }
+        } else if (typeof recalculateWellErrors === 'function' && typeof wells !== 'undefined') {
+            for (var _ri = 0; _ri < wells.length; _ri++) {
+                if (!wells[_ri]) continue;
+                if (typeof _excelWellMatchesTab === 'function') {
+                    try {
+                        if (!_excelWellMatchesTab(wells[_ri], _excelActiveTab)) continue;
+                    } catch (_e) {}
+                }
+                try {
+                    recalculateWellErrors(wells[_ri]);
+                } catch (_e) {
+                    _excelWarn('paste:recalcFallback failed');
+                }
+            }
+        }
+        _excelPasteInProgress = false;
+        /* W4: wyczyść martwą selekcję (tablice i klasy) przed jedynym tickiem. */
+        if (typeof _excelResetLayoutDependentState === 'function')
+            _excelResetLayoutDependentState();
+        if (typeof window !== 'undefined' && typeof window._excelInvalidateFitCache === 'function')
+            window._excelInvalidateFitCache();
+        /* PASTE-RENDER-BUDGET (I-002): _finishPaste robi DOKŁADNIE 1 tick.
+           PRZED (6 render-entry, osobne passy po DOM):
+             1. _excelRenderTable (pełny rebuild tabeli)
+             2. _excelRefreshDupColors (repaint duplikatów)
+             3. _excelRenderActiveRowStrip (pasek aktywnego wiersza)
+             4. window.refreshAll → renderWellsList + renderTiles +
+                renderWellConfig + renderWellDiagram + updateSummary (+inne)
+             5. fallback updateSummary + 6. fallback renderWellsList/renderWellDiagram
+           PO (1 tick = 1 synchroniczny pass = 1 paint):
+             1× _excelFinalizePasteTick → 1× _excelRenderTable + dociągnięcia
+             sekwencyjnie w tym samym miejscu. Wywołania cross-file ZACHOWANE
+             (zakaz usuwania) — zero redundancji: żaden render nie powtarza się.
+           Twarde: finalizeAffected → recalculateWellErrors → tick (wyżej);
+           MANUAL/autoLocked stawia _excelFinalizePasteAffected z excelPasteSeq
+           (I-007); zero calcWellStats w paście (I-001); quiet: 1 snapshot undo
+           (wyżej) + 1 toast zbiorczy (niżej), brak toastów/renderów per cell. */
+        _excelFinalizePasteTick();
         if (window._excelPasteMismatches && window._excelPasteMismatches.length > 0) {
             setTimeout(() => {
                 if (window._excelPasteMismatches && window._excelPasteMismatches.length > 0)
