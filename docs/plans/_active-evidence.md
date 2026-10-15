@@ -453,3 +453,58 @@ Scope: dopisane na koncu, historia E-001..E-015, E-005a, E-100..E-106, E-200..E-
 - DIFF: git diff -- public/js/studnie/excelTableBody.js tests/playwright/excelHang2000.cjs docs/plans/_active-evidence.md (artefakty parity/hang poza commitem).
 - COMMIT: node scripts/commit.mjs fix(studnie) (ponizej), BEZ push.
 - VERIFIED: YES.
+
+## Start Batch 3 test-only (Tab-focus testy + throttle-nightly + aliasy golden/openPerf) (2026-10-15, BUILD MODE docs-only, zero prod)
+
+Scope: dopisane na koncu, historia E-001..E-015, E-005a, E-100..E-106, E-200..E-211, E-107..E-115, E-111g..E-111h, E-114f, E-115f nietknieta. Nowe ID E-116, rozlaczne. Tylko ten plik docs. Nie dotyka kodu prod, .env ani DB. Bez commita, bez pusha.
+
+## Ledger E-116
+
+| ID     | Twierdzenie                                                                                                                                                               | Dowod                                                                    | Status     |
+| ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ | ---------- |
+| E-116a | PR 3a Tab-focus testy: nowy test test-only (focus/zakladki excel), bez zmian prod                                                                                         | decyzja sesji 2026-10-15; kod nietkniety tym dopiskiem                   | HYPOTHESIS |
+| E-116b | PR 3b throttle-nightly: nocny job CI z THROTTLE_X4=1 (parity/bench/golden/openPerf pod throttle-x4), OUT *-throttle-x4.json bez nadpisywania F1                           | decyzja sesji 2026-10-15; kod nietkniety; do weryfikacji diffem          | HYPOTHESIS |
+| E-116c | PR 3c aliasy golden/openPerf: npm aliasy test:golden + test:openperf (dotad tylko direct node), bez zmian prod                                                            | decyzja sesji 2026-10-15; E-210 brak aliasu; do weryfikacji package.json | HYPOTHESIS |
+| E-116d | Zakres test-only, zero prod: tylko tests/playwright + tests/studnie + package.json (aliasy) + .github/workflows/ci.yml (nightly); brak src/public/js/schema/migracji/auth | decyzja sesji 2026-10-15; bez zmian kodu tym dopiskiem                   | HYPOTHESIS |
+| E-116e | Kolejnosc: 3a + 3b + 3c jako Batch 3 (osobne PR-y albo 1 commit test-only), merge kazdego tylko po swojej bramce ponizej                                                  | decyzja sesji 2026-10-15; merge tylko po bramce                          | HYPOTHESIS |
+
+## Bramki Batch 3 (po kodzie, przed merge)
+
+- jest GREEN: Tab-focus (3a) + throttle-nightly sciezka (3b) + golden/openPerf via aliasy (3c) - npx jest sciezki batch 3.
+- CI YAML parse: .github/workflows/ci.yml parsuje sie (yaml.safe_load / npx --check workflow), zero bledow skladni po dopisaniu throttle-nightly.
+- cron skladnia: schedule throttle-nightly to poprawny cron (5-polowy, nocne okno), bez kolizji z istniejacymi jobami.
+  Bez 3/3 brak merge danego PR; PR-y niezalezne (FAIL jednego nie blokuje review pozostalych).
+
+## Checkpoint E-116
+
+- CLAIM: dopisek E-116 append-only, historia nietknieta, kod prod + .env + DB nietkniete tym dopiskiem.
+- EVIDENCE: ta sekcja E-116a..E-116e; start Batch 3 test-only (Tab-focus + throttle-nightly + aliasy golden/openPerf) + bramki z zadania sesji 2026-10-15.
+- REPRODUCTION: odczyt docs/plans/_active-evidence.md koniec (E-115f, 455 linii); brak runtime w tym dopisku (docs-only).
+- BEFORE: koniec E-115f; kod prod + .env + DB bez zmian.
+- AFTER: tylko docs/plans/_active-evidence.md + ta sekcja; kod prod + .env + DB bez zmian tym dopiskiem.
+- CHANGE: append-only, E-116 5x HYPOTHESIS (Tab-focus + throttle-nightly + aliasy + zakres test-only + kolejnosc).
+- TESTS: brak runtime w docs; bramki czekaja (jest GREEN + CI YAML parse + cron skladnia).
+- DIFF: git diff -- docs/plans/_active-evidence.md.
+- COMMIT: brak, zadanie mowi nie commituj.
+- VERIFIED: NO (czeka na PR-y Batch 3 + artefakty bramek).
+
+## Ledger E-116f - statusy Batch 3 (releaser, BEZ push)
+
+Scope: dopisane na koncu, historia E-001..E-116e nietknieta. Tylko ten plik docs w tym dopisku.
+
+| ID     | Twierdzenie                                                                                                                                                            | Dowod                                                                                                                                                                     | Status   |
+| ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| E-116f | Batch 3 releaser: Commit A test Tab-focus + Commit B throttle-nightly/aliasy + ten ledger docs; test 6/6 GREEN, YAML-parse OK, prettier fix, version:check 0, BEZ push | Commit A 4910fb9b067c5e625ccd9119c336ed98f9bf7089; Commit B 9fd3afbe7945850cc788c6ce37181a9631febd22; jest tests/frontend/excelTabFocus.test.ts 6/6; version:check EXIT 0 | VERIFIED |
+
+## Checkpoint E-116f
+
+- CLAIM: Batch 3 dowieziony w 3 commitach (test + ci + docs), zero prod, BEZ push.
+- EVIDENCE: Commit A 4910fb9b067c5e625ccd9119c336ed98f9bf7089 (test); Commit B 9fd3afbe7945850cc788c6ce37181a9631febd22 (workflow + package.json); ten dopisek ledger.
+- REPRODUCTION: npx jest tests/frontend/excelTabFocus.test.ts --no-coverage (6/6); npm run version:check (EXIT 0).
+- BEFORE: prettier FAIL na tests/frontend/excelTabFocus.test.ts + docs/plans/_active-evidence.md; test 6/6 GREEN; YAML-parse OK.
+- AFTER: prettier --write na 2 sciezkach; 3 commity test/ci/docs; worktree: parity/hang JSON poza commitem; push nie wykonany.
+- CHANGE: append-only E-116f (1 wiersz ledger + ten checkpoint).
+- TESTS: jest 6/6 GREEN; version:check EXIT 0; prettier write GREEN.
+- DIFF: git diff -- docs/plans/_active-evidence.md.
+- COMMIT: 3x node scripts/commit.mjs (test, chore, docs), BEZ push.
+- VERIFIED: YES.
