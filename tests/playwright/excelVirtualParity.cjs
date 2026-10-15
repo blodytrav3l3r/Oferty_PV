@@ -454,11 +454,13 @@ async function runMode(frame, page, virtualOn, wellsData) {
 }
 
 (async () => {
-    const browser = await chromium.launch({
+    const launchOptions = {
         headless: true,
-        executablePath: CHROME_PATH,
         args: getLaunchArgs(['--no-sandbox', '--disable-setuid-sandbox'])
-    });
+    };
+    // Tylko jawny override ze zmiennej; twarda sciezka Windows psulaby CI na Linuksie.
+    if (process.env.CHROME_PATH) launchOptions.executablePath = CHROME_PATH;
+    const browser = await chromium.launch(launchOptions);
     let failed = false;
     const problems = [];
     const check = (name, cond, detail) => {
