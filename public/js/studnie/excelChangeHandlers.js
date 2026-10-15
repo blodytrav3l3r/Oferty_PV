@@ -39,6 +39,20 @@ function _excelParseIntStrict(v) {
 function _excelPasteQuiet() {
     return typeof _excelPasteInProgress !== 'undefined' && _excelPasteInProgress;
 }
+
+/* E5: ciche catche maskowaly pad modelu - 1-linery warn, zero semantyki. */
+function _excelWarn(msg) {
+    try {
+        if (typeof logger !== 'undefined' && logger && typeof logger.warn === 'function')
+            logger.warn('excelChange', msg);
+        else if (
+            typeof window !== 'undefined' &&
+            window.logger &&
+            typeof window.logger.warn === 'function'
+        )
+            window.logger.warn('excelChange', msg);
+    } catch (_eWarn) {}
+}
 function excelOnRzednaChange(wIdx) {
     const row = document.querySelector(`tr[data-widx="${wIdx}"]`);
     if (!row) return;
@@ -297,7 +311,9 @@ function excelOnPrzejscieChange(wIdx, trIdx, field, value) {
                 wells[wIdx].przejscia[trIdx].productId || ''
             );
         if (typeof _excelUpdateHeaderProdCodes === 'function') _excelUpdateHeaderProdCodes();
-    } catch (_ePrzRefresh) {}
+    } catch (_ePrzRefresh) {
+        _excelWarn('change:przRefresh failed');
+    }
     _excelDebouncedRefresh(wIdx);
 }
 
@@ -560,7 +576,9 @@ function excelOnPrzejscieTypeChange(wIdx, trIdx, value) {
         if (typeof recalculateWellErrors === 'function' && wells[wIdx]) {
             try {
                 recalculateWellErrors(wells[wIdx]);
-            } catch (_e) {}
+            } catch (_e) {
+                _excelWarn('change:przejscieRecalc failed');
+            }
         }
         if (typeof _excelSyncRowSelect === 'function')
             _excelSyncRowSelect(wIdx, 'excelOnPrzejscieTypeChange', [wIdx, trIdx], value || '');
@@ -592,7 +610,9 @@ function _excelWlazModelUpdate(wIdx, productId) {
         try {
             recalcGaskets(well);
             _excelClearResCache(well);
-        } catch (_e) {}
+        } catch (_e) {
+            _excelWarn('change:wlazGaskets failed');
+        }
     }
     _excelMarkAsManual(wIdx);
 }
@@ -606,7 +626,9 @@ function excelOnWlazChange(wIdx, productId) {
     if (typeof recalculateWellErrors === 'function' && well) {
         try {
             recalculateWellErrors(well);
-        } catch (_e) {}
+        } catch (_e) {
+            _excelWarn('change:wlazRecalc failed');
+        }
     }
     /* Baza #58: sam model — kolumny stałe; labelkę selecta synchronizuje
        _excelSyncRowSelect (single-slot dyspozytora), panele robi L1 poniżej. */
@@ -787,7 +809,9 @@ function _excelCompModelUpdate(wIdx, componentType, height, value, productId, re
         if (typeof enforceOtRings === 'function') {
             try {
                 otMutated = enforceOtRings(well);
-            } catch (_e) {}
+            } catch (_e) {
+                _excelWarn('change:enforceOtRings failed');
+            }
         }
         if (otMutated && typeof _excelClearResCache === 'function') _excelClearResCache(well);
     }
@@ -799,7 +823,9 @@ function _excelCompModelUpdate(wIdx, componentType, height, value, productId, re
         if (typeof _excelSyncReliefPair === 'function') {
             try {
                 reliefMutated = _excelSyncReliefPair(well, componentType, newQty, hadReliefSide);
-            } catch (_e) {}
+            } catch (_e) {
+                _excelWarn('change:reliefPair failed');
+            }
         }
         if (reliefMutated) {
             if (typeof _excelClearResCache === 'function') _excelClearResCache(well);
@@ -813,7 +839,9 @@ function _excelCompModelUpdate(wIdx, componentType, height, value, productId, re
         try {
             recalcGaskets(well);
             _excelClearResCache(well);
-        } catch (_e) {}
+        } catch (_e) {
+            _excelWarn('change:compGaskets failed');
+        }
     }
     if (well && typeof invalidateFrozenPricesForWell === 'function')
         invalidateFrozenPricesForWell(well);
@@ -988,7 +1016,9 @@ function excelOnCompChange(wIdx, componentType, height, value, productId, redDn)
         if (typeof recalculateWellErrors === 'function' && well) {
             try {
                 recalculateWellErrors(well);
-            } catch (_e) {}
+            } catch (_e) {
+                _excelWarn('change:compRecalc failed');
+            }
         }
         if (typeof _excelMarkManualModel === 'function') _excelMarkManualModel(well);
         else _excelMarkManual(well);
@@ -1131,7 +1161,9 @@ async function excelOnReductionSelectChange(wIdx, value) {
     if (typeof recalculateWellErrors === 'function' && well) {
         try {
             recalculateWellErrors(well);
-        } catch (_e) {}
+        } catch (_e) {
+            _excelWarn('change:reductionRecalc failed');
+        }
     }
     _excelRenderTable(_excelActiveTab);
     if (typeof _excelImmediatePreview === 'function') _excelImmediatePreview(wIdx);

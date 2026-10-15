@@ -11,6 +11,20 @@ let _calcRunning = false;
 let _calcRaf = 0;
 const CALC_CHUNK = 200;
 
+/* E5: ciche catche kladly tick po cichu - 1-liner warn, zero semantyki. */
+function _excelWarn(msg) {
+    try {
+        if (typeof logger !== 'undefined' && logger && typeof logger.warn === 'function')
+            logger.warn('calcPipeline', msg);
+        else if (
+            typeof window !== 'undefined' &&
+            window.logger &&
+            typeof window.logger.warn === 'function'
+        )
+            window.logger.warn('calcPipeline', msg);
+    } catch (_eWarn) {}
+}
+
 function _calcYield() {
     return new Promise(function (resolve) {
         if (typeof scheduler !== 'undefined' && scheduler.postTask) {
@@ -57,12 +71,16 @@ async function processDirtySet() {
                         (typeof safeCalcWellStats === 'function'
                             ? safeCalcWellStats
                             : calcWellStats)(w);
-                    } catch (_e) {}
+                    } catch (_e) {
+                        _excelWarn('calc:wellStats failed');
+                    }
                 }
                 if (typeof recalculateWellErrors === 'function') {
                     try {
                         recalculateWellErrors(w);
-                    } catch (_e) {}
+                    } catch (_e) {
+                        _excelWarn('calc:wellErrors failed');
+                    }
                 }
             }
             // yield jeśli jeszcze praca

@@ -2,6 +2,20 @@
 /* ===== EXCEL COPY / PASTE (schowek, wklejanie, batch, fill zaznaczenia) ===== */
 let _excelPasteRafId = null;
 
+/* E5: ciche catche _finishPaste maskowaly pad refreshy - 1-linery warn, zero semantyki. */
+function _excelWarn(msg) {
+    try {
+        if (typeof logger !== 'undefined' && logger && typeof logger.warn === 'function')
+            logger.warn('excelPaste', msg);
+        else if (
+            typeof window !== 'undefined' &&
+            window.logger &&
+            typeof window.logger.warn === 'function'
+        )
+            window.logger.warn('excelPaste', msg);
+    } catch (_eWarn) {}
+}
+
 function _excelNormalizeHeader(s) {
     return String(s || '')
         .toLowerCase()
@@ -417,7 +431,9 @@ function _excelHandlePaste(e) {
         if (_pasteCtx)
             try {
                 _excelFinalizePasteAffected(_pasteCtx);
-            } catch (_e) {}
+            } catch (_e) {
+                _excelWarn('paste:finalizeAffected failed');
+            }
         /* Przelicz błędy dotkniętych studni PRZED re-renderem — inaczej tabela
            czyta stary configStatus (D1). */
         if (_pasteCtx && _pasteCtx.affected && _pasteCtx.affected.size > 0) {
@@ -427,7 +443,9 @@ function _excelHandlePaste(e) {
                     if (!w) return;
                     try {
                         recalculateWellErrors(w);
-                    } catch (_e) {}
+                    } catch (_e) {
+                        _excelWarn('paste:recalcAffected failed');
+                    }
                 });
             }
         } else if (typeof recalculateWellErrors === 'function' && typeof wells !== 'undefined') {
@@ -440,7 +458,9 @@ function _excelHandlePaste(e) {
                 }
                 try {
                     recalculateWellErrors(wells[_ri]);
-                } catch (_e) {}
+                } catch (_e) {
+                    _excelWarn('paste:recalcFallback failed');
+                }
             }
         }
         _excelPasteInProgress = false;
@@ -453,7 +473,9 @@ function _excelHandlePaste(e) {
         if (typeof _excelRefreshDupColors === 'function')
             try {
                 _excelRefreshDupColors();
-            } catch (_e) {}
+            } catch (_e) {
+                _excelWarn('paste:dupColors failed');
+            }
         /* Pasek aktywnego wiersza po wklejeniu (pełny render już przemalował tła). */
         if (_pasteCtx && _pasteCtx.affected && _pasteCtx.affected.size > 0) {
             var _lastAffected = -1;
@@ -466,24 +488,34 @@ function _excelHandlePaste(e) {
         if (typeof _excelMarkDirty === 'function')
             try {
                 _excelMarkDirty();
-            } catch (_e) {}
+            } catch (_e) {
+                _excelWarn('paste:markDirty failed');
+            }
         if (typeof window.refreshAll === 'function') {
             try {
                 window.refreshAll();
-            } catch (_e) {}
+            } catch (_e) {
+                _excelWarn('paste:refreshAll failed');
+            }
         } else {
             if (typeof window.updateSummary === 'function')
                 try {
                     window.updateSummary();
-                } catch (_e) {}
+                } catch (_e) {
+                    _excelWarn('paste:updateSummary failed');
+                }
             if (typeof window.renderWellsList === 'function')
                 try {
                     window.renderWellsList();
-                } catch (_e) {}
+                } catch (_e) {
+                    _excelWarn('paste:renderWellsList failed');
+                }
             if (typeof window.renderWellDiagram === 'function')
                 try {
                     window.renderWellDiagram();
-                } catch (_e) {}
+                } catch (_e) {
+                    _excelWarn('paste:renderWellDiagram failed');
+                }
         }
         if (window._excelPasteMismatches && window._excelPasteMismatches.length > 0) {
             setTimeout(() => {
@@ -502,12 +534,16 @@ function _excelHandlePaste(e) {
             ) {
                 try {
                     console.warn('[Excel paste] invariant applied+locked+unsupported!==total', _st);
-                } catch (_e) {}
+                } catch (_e) {
+                    _excelWarn('paste:invariantWarn failed');
+                }
             }
             if (typeof _excelInvalidateFilteredIndexes === 'function') {
                 try {
                     _excelInvalidateFilteredIndexes();
-                } catch (_e) {}
+                } catch (_e) {
+                    _excelWarn('paste:invalidateIndexes failed');
+                }
             }
             if (typeof showToast === 'function') {
                 const _extra = [];
@@ -540,7 +576,9 @@ function _excelHandlePaste(e) {
                 setTimeout(
                     () => {
                         if (typeof _excelAutoSelectForWell === 'function')
-                            _excelAutoSelectForWell(wIdx).catch(() => {});
+                            _excelAutoSelectForWell(wIdx).catch(() => {
+                                _excelWarn('paste:autoSelect failed');
+                            });
                     },
                     200 + k * 300
                 );
