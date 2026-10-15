@@ -903,16 +903,9 @@ function _excelPaintRowStatus(row, well) {
 
 /* ===== NATYCHMIASTOWE ODŚWIEŻENIE KOLORÓW DUPLIKATÓW (bez re-rendera) ===== */
 /* Inkrementalna mapa duplikatow (var w scope pliku): nazwa -> count oraz
-   nazwa -> Set(dn). Full-pass jest domyslny (fallback) i przebudowuje obie
-   mapy od zera; szybka sciezka aktualizuje przyrostowo tylko dotkniete nazwy
-   i maluje tylko affected + wiersze o tej samej nazwie. Szybka sciezka wlacza
-   sie tylko gdy istnieje global _pasteCtx.affected (wklejka) - inaczej zawsze
-   full-pass jak dzis. Kolor to paint (liczony z wells), nigdy zrodlo statusu;
-   sticky zawsze przez _excelApplyRowStatusDom -> _excelStickyCellBg. */
+   nazwa -> Set(dn). Przebudowa od zera przy kazdym refresh (full-pass). */
 var _excelDupNameCounts = new Map();
 var _excelDupNameDnSets = new Map();
-var _excelDupWellKeys = new Map();
-var _excelDupKnownLen = -1;
 
 /* Normalizacja nazw IDENTYCZNA jak w renderze TBODY i wczesniejszym full-pass. */
 function _excelDupNormName(w) {
@@ -929,15 +922,10 @@ function _excelDupDnKey(w) {
     return w.dn === 'styczna' ? 'styczne' : String(w.dn);
 }
 
-function _excelDupWellKey(w, wIdx) {
-    return w && w.id != null ? 'id:' + String(w.id) : 'idx:' + String(wIdx);
-}
-
 /* Pelna przebudowa map (full-pass). */
 function _excelDupRebuildMaps() {
     var counts = new Map();
     var dnSets = new Map();
-    var wellKeys = new Map();
     for (var i = 0; i < wells.length; i++) {
         var w = wells[i];
         if (!w) continue;
@@ -951,97 +939,9 @@ function _excelDupRebuildMaps() {
             dnSets.set(n, s);
         }
         s.add(dk);
-        wellKeys.set(_excelDupWellKey(w, i), { n: n, dn: dk });
     }
     _excelDupNameCounts = counts;
     _excelDupNameDnSets = dnSets;
-    _excelDupWellKeys = wellKeys;
-    _excelDupKnownLen = wells.length;
-}
-
-/* Global _pasteCtx.affected (wklejka) albo null -> full-pass. Sygnatura
-   _excelRefreshDupColors BEZ ZMIAN: affected wykrywane, nie przekazywane. */
-function _excelDupAffectedIdxs() {
-    /* Global wklejki (window._pasteCtx) - tsc: Window ma [key: string]: any. */
-    var aff = null;
-    try {
-        if (typeof window !== 'undefined' && window._pasteCtx && window._pasteCtx.affected) {
-            aff = window._pasteCtx.affected;
-        }
-    } catch (_e) {
-        aff = null;
-    }
-    if (!aff) return null;
-    var out = [];
-    try {
-        aff.forEach(function (wIdx) {
-            if (Number.isInteger(wIdx) && wIdx >= 0 && wIdx < wells.length) out.push(wIdx);
-        });
-    } catch (_e2) {
-        return null;
-    }
-    return out.length > 0 ? out : null;
-}
-
-/* Proba szybkiej sciezki: { idxSet, touched } albo null (= full-pass).
-   Przyrostowo przelicza tylko nazwy dotkniete przez affected (stare + nowe);
-   brak starego wpisu lub zmiana rozmiaru wells -> null (bezpieczny fallback). */
-function _excelDupTryFast(affIdxs) {
-    if (!affIdxs || _excelDupKnownLen !== wells.length || _excelDupKnownLen < 0) return null;
-    if (wells.length > 0 && _excelDupWellKeys.size === 0) return null;
-    var touched = new Set();
-    var ok = true;
-    affIdxs.forEach(function (wIdx) {
-        if (!ok) return;
-        var w = wells[wIdx];
-        if (!w) {
-            ok = false;
-            return;
-        }
-        var old = _excelDupWellKeys.get(_excelDupWellKey(w, wIdx));
-        if (!old) {
-            ok = false;
-            return;
-        }
-        if (old.n) touched.add(old.n);
-        var cur = _excelDupNormName(w);
-        if (cur) touched.add(cur);
-    });
-    if (!ok) return null;
-    var recCounts = new Map();
-    var recDns = new Map();
-    for (var i = 0; i < wells.length; i++) {
-        var w = wells[i];
-        if (!w) continue;
-        var n = _excelDupNormName(w);
-        if (!n || !touched.has(n)) continue;
-        recCounts.set(n, (recCounts.get(n) || 0) + 1);
-        var dk = _excelDupDnKey(w);
-        var s = recDns.get(n);
-        if (!s) {
-            s = new Set();
-            recDns.set(n, s);
-        }
-        s.add(dk);
-    }
-    touched.forEach(function (t) {
-        if (recCounts.has(t)) {
-            _excelDupNameCounts.set(t, recCounts.get(t));
-            _excelDupNameDnSets.set(t, recDns.get(t));
-        } else {
-            _excelDupNameCounts.delete(t);
-            _excelDupNameDnSets.delete(t);
-        }
-    });
-    affIdxs.forEach(function (wIdx) {
-        var w = wells[wIdx];
-        if (!w) return;
-        _excelDupWellKeys.set(_excelDupWellKey(w, wIdx), {
-            n: _excelDupNormName(w),
-            dn: _excelDupDnKey(w)
-        });
-    });
-    return { idxSet: new Set(affIdxs), touched: touched };
 }
 
 function _excelRefreshDupColors() {
@@ -1065,9 +965,9 @@ function _excelRefreshDupColors() {
     const hoverDupSolid = _dupMap('0.25', '0.32');
     const hoverActiveDupSolid = _dupMap('0.35', '0.4');
 
-    /* Domyslnie full-pass (fallback); szybka sciezka tylko z affected. */
-    var _fast = _excelDupTryFast(_excelDupAffectedIdxs());
-    if (!_fast) _excelDupRebuildMaps();
+    /* Zawsze full-pass: martwa szybka sciezka usunieta (window._pasteCtx
+       nigdy nie istnial) — malowanie wszystkich wierszy taba. */
+    _excelDupRebuildMaps();
 
     const tabWells = wells.filter((w) => _excelWellMatchesTab(w, dn));
     tabWells.forEach((well, idx) => {
@@ -1081,7 +981,6 @@ function _excelRefreshDupColors() {
             return;
         }
         const nameKey = _excelDupNormName(well);
-        if (_fast && !_fast.touched.has(nameKey) && !_fast.idxSet.has(wIdx)) return;
         const row = container.querySelector('tr[data-widx="' + wIdx + '"]');
         if (!row) return;
 

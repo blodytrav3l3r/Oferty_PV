@@ -402,13 +402,14 @@ Scope: dopisane na koncu, historia E-001..E-015, E-005a, E-100..E-106, E-200..E-
 
 ## Ledger E-115
 
-| ID     | Twierdzenie                                                                                                   | Dowod                                                           | Status     |
-| ------ | ------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------- | ---------- |
-| E-115a | PR 2a paste-6->1: konsolidacja 6 sciezek paste w 1 (excelCopyPaste), wlasciciel builder                       | decyzja sesji 2026-10-15; kod nietkniety tym dopiskiem          | HYPOTHESIS |
-| E-115b | PR 2b DupColors-inc: inkrementalne kolory duplikatow zamiast full rescan (excelTableBody), wlasciciel general | decyzja sesji 2026-10-15; kod nietkniety; do weryfikacji diffem | HYPOTHESIS |
-| E-115c | PR 2c updateSummary-cache: cache podsumowania, uniewaznienie przy danych (wellUI), wlasciciel explore         | decyzja sesji 2026-10-15; kod nietkniety; do weryfikacji diffem | HYPOTHESIS |
-| E-115d | Wlasciciele: builder = excelCopyPaste (2a), general = excelTableBody (2b), explore = wellUI (2c)              | podzial sesji 2026-10-15; bez zmian kodu tym dopiskiem          | HYPOTHESIS |
-| E-115e | Kolejnosc: 3 osobne PR-y (2a, 2b, 2c), kazdy z wlasna bramka ponizej; brak laczenia w jeden PR                | decyzja sesji 2026-10-15; merge kazdego tylko po swojej bramce  | HYPOTHESIS |
+| ID     | Twierdzenie                                                                                                                                                                                                                                                                          | Dowod                                                                                                                                                                             | Status     |
+| ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- |
+| E-115a | PR 2a paste-6->1: konsolidacja 6 sciezek paste w 1 (excelCopyPaste), wlasciciel builder                                                                                                                                                                                              | decyzja sesji 2026-10-15; kod nietkniety tym dopiskiem                                                                                                                            | HYPOTHESIS |
+| E-115b | PR 2b DupColors-inc: inkrementalne kolory duplikatow zamiast full rescan (excelTableBody), wlasciciel general                                                                                                                                                                        | decyzja sesji 2026-10-15; kod nietkniety; do weryfikacji diffem                                                                                                                   | HYPOTHESIS |
+| E-115c | PR 2c updateSummary-cache: cache podsumowania, uniewaznienie przy danych (wellUI), wlasciciel explore                                                                                                                                                                                | decyzja sesji 2026-10-15; kod nietkniety; do weryfikacji diffem                                                                                                                   | HYPOTHESIS |
+| E-115d | Wlasciciele: builder = excelCopyPaste (2a), general = excelTableBody (2b), explore = wellUI (2c)                                                                                                                                                                                     | podzial sesji 2026-10-15; bez zmian kodu tym dopiskiem                                                                                                                            | HYPOTHESIS |
+| E-115e | Kolejnosc: 3 osobne PR-y (2a, 2b, 2c), kazdy z wlasna bramka ponizej; brak laczenia w jeden PR                                                                                                                                                                                       | decyzja sesji 2026-10-15; merge kazdego tylko po swojej bramce                                                                                                                    | HYPOTHESIS |
+| E-115f | Dead fast-path DupColors usuniety (window._pasteCtx nigdy nie istnial) - zawsze full-pass; harness excelHang2000.cjs env-only fail-fast; fingerprint parity AKCEPT z dlugiem lzejszej sygnatury; odchylenie od E-115e: 1 commit zamiast 3 (niezalezny review 6 agentow zamiast tego) | diff public/js/studnie/excelTableBody.js + tests/playwright/excelHang2000.cjs; unit excelRefreshContract+excelErrorRefresh+excelEditGuards 22/22; parity plain 31/31; ten dopisek | VERIFIED   |
 
 ## Bramki Batch 2 (po kodzie PR, przed merge)
 
@@ -439,3 +440,16 @@ Scope: dopisane na koncu, historia E-001..E-015, E-005a, E-100..E-106, E-200..E-
 - DIFF: git diff -- docs/plans/_active-evidence.md.
 - COMMIT: brak, zadanie mowi nie commituj.
 - VERIFIED: NO (czeka na 3 PR-y + artefakty bramek + odhaczenie BLOCKow).
+
+## Checkpoint E-115f
+
+- CLAIM: E-115f append-only; (a) martwy fast-path DupColors usuniety - window._pasteCtx nigdy nie istnial, _excelRefreshDupColors zawsze full-pass; (b) harness excelHang2000.cjs env-only fail-fast (brak TEST_ADMIN_PASSWORD = throw, zero fallbacku); (c) fingerprint parity AKCEPT, dlug: lzejsza sygnatura pozniej; (d) odchylenie od E-115e: 1 commit zamiast 3 - niezalezny review 6 agentow zamiast tego.
+- EVIDENCE: git diff -- public/js/studnie/excelTableBody.js (fast-path -109/+~10, tylko full-pass); tests/playwright/excelHang2000.cjs:114-117 env-only throw; parity plain 31/31 EXIT 0; unit 22/22 (contract+error+guards).
+- REPRODUCTION: node --check obu plikow; npx eslint public/js/studnie/excelTableBody.js; npx jest tests/studnie/excelRefreshContract.test.ts tests/studnie/excelErrorRefresh.test.ts tests/studnie/excelEditGuards.test.ts; node tests/playwright/excelVirtualParity.cjs (plain, bez THROTTLE_X4).
+- BEFORE: worktree z martwym fast-path w poprzednich commitach; E-115e wymagal 3 osobnych PR-ow.
+- AFTER: fast-path usuniety, full-pass zawsze; E-115f dopisany append-only; historia E-001..E-115e nietknieta.
+- CHANGE: append-only E-115f (1 wiersz ledger + ten checkpoint); kod: excelTableBody.js full-pass; harness: env-only login.
+- TESTS: node --check 2/2 GREEN; eslint excelTableBody GREEN (harness .cjs poza zakresem lint/lint:frontend - brak regul tests/**/*.cjs, pre-existing); unit 22/22 GREEN; parity plain 31/31 GREEN.
+- DIFF: git diff -- public/js/studnie/excelTableBody.js tests/playwright/excelHang2000.cjs docs/plans/_active-evidence.md (artefakty parity/hang poza commitem).
+- COMMIT: node scripts/commit.mjs fix(studnie) (ponizej), BEZ push.
+- VERIFIED: YES.
