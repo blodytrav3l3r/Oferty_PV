@@ -43,9 +43,11 @@ describe('_excelErrorTitle XSS (title attr)', () => {
         expect(title).toContain('&quot;');
     });
 
-    test('fail-closed: brak escapeHtmlAttr = throw, nie fallback', () => {
+    test('fail-closed: brak escapeHtmlAttr = lokalny escaper, nadal &quot;', () => {
         const sb = loadTableBody({ withAttr: false });
         const payload = '\'" onmouseover="alert(1)';
-        expect(() => sb._excelErrorTitle({ configErrors: [payload] })).toThrow();
+        const title = sb._excelErrorTitle({ configErrors: [payload] });
+        expect(title).not.toContain('" onmouseover=');
+        expect(title).toContain('&quot;');
     });
 });

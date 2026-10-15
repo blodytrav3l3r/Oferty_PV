@@ -15,12 +15,21 @@ function _excelFormatHeight(mm) {
     prawdy dla renderu i _excelRefreshDupColors (DRY, priorytet:
     duplikat > ERROR > WARNING > aktywny > base). */
 /* Tooltip wiersza z błędami — DRY dla renderu i _excelRefreshDupColors. */
+/* Lokalny escaper atrybutu (fail-closed, bez zaleznosci od window):
+   ten sam kontrakt co shared escapeHtmlAttr — cudzyslowy musza byc kodowane. */
+function _excelEscapeAttr(s) {
+    if (typeof escapeHtmlAttr === 'function') return escapeHtmlAttr(s);
+    return String(s == null ? '' : s)
+        .replace(/&/g, '&amp;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+}
 function _excelErrorTitle(well) {
     if (!well || !well.configErrors || well.configErrors.length === 0) return '';
-    if (typeof escapeHtmlAttr !== 'function')
-        throw new Error('_excelErrorTitle: missing escapeHtmlAttr');
     return (
-        escapeHtmlAttr(String(well.configErrors[0])) +
+        _excelEscapeAttr(String(well.configErrors[0])) +
         (well.configErrors.length > 1 ? ' (+' + (well.configErrors.length - 1) + ')' : '')
     );
 }
