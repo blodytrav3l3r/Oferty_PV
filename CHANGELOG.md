@@ -4,6 +4,24 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.46.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.45.0...v1.46.0) (2026-10-15)
+
+### Features
+
+- **offers:** cli import ofert xlsx/csv dla duzych plikow ([f159fe5](https://github.com/blodytrav3l3r/Oferty_PV/commit/f159fe5769225fcc5f6abbeb185b231b49321204))
+- **offers:** guard limitow xlsx w ui importu ([ac23b52](https://github.com/blodytrav3l3r/Oferty_PV/commit/ac23b52ab57e23d3fc23ce6d8c9449918122cd71))
+- **offers:** scisle liczby importu xlsx bez cichego 0 ([5ed206c](https://github.com/blodytrav3l3r/Oferty_PV/commit/5ed206c5bc53566343e34b1e34e59a20092ede6b))
+- **offers:** wyszukiwanie w kolejce opieki i znajdz w kolejce z centrum ([ceb0601](https://github.com/blodytrav3l3r/Oferty_PV/commit/ceb0601a7f294adafff3d00528a22b89e7c49891))
+
+### Bug Fixes
+
+- **studnie:** backfill pieczatki solvera dla starych ofert ([385c4f7](https://github.com/blodytrav3l3r/Oferty_PV/commit/385c4f712e1c9837638b913682620b58d67ecec8))
+- **studnie:** stale notki tolerancji solvera po recznej edycji ([b083626](https://github.com/blodytrav3l3r/Oferty_PV/commit/b0836266d3edae7f8e0b51bc1405a787267aee3c))
+- **studnie:** zwijanie highlightu komorek przy strzalkach ([f962772](https://github.com/blodytrav3l3r/Oferty_PV/commit/f96277292128a9b362b891c8ff615275600403f1))
+- **telemetry:** pre-check dedup reward przed transakcja ([5fa63e0](https://github.com/blodytrav3l3r/Oferty_PV/commit/5fa63e0c32edcca6b94248bcb59cae6507cd9dce))
+- **ui:** szukaj obok wszystkie i zwarty odstep w centrum ([b13511c](https://github.com/blodytrav3l3r/Oferty_PV/commit/b13511c3381d47d2daf8725c89229b38d3aab7a1))
+- **ui:** szukaj w linii z 7d 30d 90d wszystko ([c966bfd](https://github.com/blodytrav3l3r/Oferty_PV/commit/c966bfdcdfbce7ce3cc84cae1d1c375242c0b72b))
+
 ## [1.45.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.44.1...v1.45.0) (2026-10-14)
 
 ### Features
