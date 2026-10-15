@@ -17,8 +17,10 @@ function _excelFormatHeight(mm) {
 /* Tooltip wiersza z błędami — DRY dla renderu i _excelRefreshDupColors. */
 function _excelErrorTitle(well) {
     if (!well || !well.configErrors || well.configErrors.length === 0) return '';
+    if (typeof escapeHtmlAttr !== 'function')
+        throw new Error('_excelErrorTitle: missing escapeHtmlAttr');
     return (
-        escapeHtml(String(well.configErrors[0])) +
+        escapeHtmlAttr(String(well.configErrors[0])) +
         (well.configErrors.length > 1 ? ' (+' + (well.configErrors.length - 1) + ')' : '')
     );
 }
