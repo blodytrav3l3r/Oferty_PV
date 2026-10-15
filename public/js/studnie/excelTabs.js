@@ -43,6 +43,8 @@ function _excelUpdateWellCount() {
 }
 
 function excelSwitchTab(tab) {
+    /* Same-tab: aktywna zakładka już wyrenderowana — pomiń przełączenie. */
+    if (typeof _excelActiveTab !== 'undefined' && tab === _excelActiveTab) return;
     /* A4-F2: porzuć oczekujący debounce preview ze starej zakładki. */
     if (typeof _excelFlushPreview === 'function') _excelFlushPreview();
     _excelActiveTab = tab;

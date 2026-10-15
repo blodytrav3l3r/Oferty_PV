@@ -268,3 +268,75 @@ Scope: dopisane na koncu, historia E-001..E-015, E-005a, E-100..E-106, E-200..E-
 | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- | -------- |
 | E-111g | Root cause: harness fallback anim123456 odrzucany przez guard leaked-secret (auth.ts:366-374); CI job e2e-appname bez TEST_ADMIN_PASSWORD = deterministyczny 401 | repro lokalne: FATAL Login failed 401 bez env; PASS T1-T6 z TEST_ADMIN_PASSWORD=test-admin-pass | VERIFIED |
 | E-111h | Fix: TEST_ADMIN_PASSWORD + DEFAULT_ADMIN_PASSWORD = test-admin-pass w jobie e2e-appname (wzorzec z 3 innych jobow CI)                                            | .github/workflows/ci.yml e2e-appname env; brak zwiazku z e66f7af (diff 0 w powierzchni checka)  | VERIFIED |
+
+## Start mikro-PR Batch GO (2026-10-15, BUILD MODE docs-only, zero kodu)
+
+Scope: dopisane na koncu, historia E-001..E-015, E-005a, E-100..E-106, E-200..E-211, E-107, E-108, E-109, E-110, E-111, E-111g..E-111h nietknieta. Nowe ID E-112, rozlaczne. Tylko ten plik docs. Nie dotyka kodu prod, harnessow, .env ani DB. Bez commita, bez pusha.
+
+## Ledger E-112
+
+| ID     | Twierdzenie                                                                               | Dowod                                                                                        | Status     |
+| ------ | ----------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- | ---------- |
+| E-112a | (1) same-tab guard excelTabs.js:45 - wyjscie przy tym samym tabie, zero przeladowania     | decyzja sesji 2026-10-15; kod nietkniety tym dopiskiem; do weryfikacji diffem mikro-PR       | HYPOTHESIS |
+| E-112b | (2) select early-return wariant bezpieczny excelModal.js:706 - skip DOM, keep schedule    | decyzja sesji 2026-10-15; wariant ryzykowny (drop schedule) odrzucony; do weryfikacji diffem | HYPOTHESIS |
+| E-112c | (3) autofit-cache excelTableRenderer.js:491 - cache szerokosci, uniewaznienie przy danych | decyzja sesji 2026-10-15; kod nietkniety; do weryfikacji diffem + bench                      | HYPOTHESIS |
+| E-112d | recalc-skip ODROCZONY - poza zakresem mikro-PR, czeka na wynik cache                      | decyzja sesji 2026-10-15; brak kodu tym dopiskiem                                            | HYPOTHESIS |
+| E-112e | C-lite ODLOZONE - poza zakresem mikro-PR                                                  | decyzja sesji 2026-10-15; brak kodu tym dopiskiem                                            | HYPOTHESIS |
+| E-112f | gate mikro-PR: parity GREEN + golden GREEN + unit PASS + re-run S2+S3                     | bramka sesji 2026-10-15; do potwierdzenia artefaktami runtime po PR                          | HYPOTHESIS |
+| E-112g | BLOCKi reviewera jako checklista: I-001 + I-002 + I-007 + XSS + undo                      | lista ponizej; kazdy BLOCK = STOP bez merge                                                  | HYPOTHESIS |
+
+## Gate mikro-PR (kolejnosc, po kodzie PR)
+
+1. unit PASS (szybkie, bez serwera).
+2. parity GREEN: npm run test:parity (scenariusz OFF vs ON, SSoT wells+undo).
+3. golden GREEN: node tests/playwright/excelDomGolden.cjs (bez --update; update tylko za autoryzacja nowego stanu).
+4. re-run S2+S3 (scenariusze select + autofit z planu PR) - potwierdzenie braku regresji sciezek z E-112a..E-112c.
+   Bez 1-4 brak GO na merge mikro-PR.
+
+## BLOCKi reviewera - checklista STOP bez merge
+
+- [ ] I-001 ownership: guard nie rozszerza odczytu ani zapisu, fail-closed 403 przy watpliwosci.
+- [ ] I-002 zakres: zmiana tylko 3 punkty (excelTabs.js:45, excelModal.js:706, excelTableRenderer.js:491), zero dotyku schema/migracji/auth.
+- [ ] I-007 rozliczenia: cache/guard nie zmienia cen ani sum, parity kwot bez roznic.
+- [ ] XSS: kazda interpolacja do innerHTML przez escapeHtml, atrybuty przez escapeHtmlAttr, brak nowych inline handlerow.
+- [ ] undo: kazda sciezka edycji odwracalna, SSoT wells+undo zielony w parity.
+
+## Checkpoint E-112
+
+- CLAIM: dopisek E-112 append-only, historia nietknieta, kod + harnessy + .env + DB nietkniete tym dopiskiem.
+- EVIDENCE: ta sekcja E-112a..E-112g; decyzje + zakres 3 punktow + gate + BLOCKi z zadania sesji 2026-10-15.
+- REPRODUCTION: odczyt docs/plans/_active-evidence.md koniec (E-111h, 270 linii); brak runtime w tym dopisku (docs-only).
+- BEFORE: koniec E-111h; kod + harnessy + .env + DB bez zmian.
+- AFTER: tylko docs/plans/_active-evidence.md + ta sekcja; kod + harnessy + .env + DB bez zmian tym dopiskiem.
+- CHANGE: append-only, E-112 7x HYPOTHESIS (3x zakres + 2x odroczone + gate + BLOCKi).
+- TESTS: brak runtime w docs; gate czeka na PR (unit + parity + golden + re-run S2+S3).
+- DIFF: git diff -- docs/plans/_active-evidence.md.
+- COMMIT: brak, zadanie mowi nie commituj.
+- VERIFIED: NO (czeka na mikro-PR + artefakty gate + odhaczenie BLOCKow).
+
+## Finalizacja mikro-PR switch-select-autofit (2026-10-15, BUILD MODE, BEZ PUSH)
+
+Scope: dopisane na koncu, historia E-001..E-015, E-005a, E-100..E-106, E-200..E-211, E-107..E-112, E-111g..E-111h nietknieta. Nowe ID E-113, rozlaczne.
+
+## Ledger E-113
+
+| ID     | Twierdzenie                                                                                                                                                                                                                                    | Dowod                                                                                                                                                                                             | Status   |
+| ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| E-113a | Zakres finalny: same-tab guard (excelTabs.js) + autofit-cache + invalidator w solver/paste; BEZ select early-return; BEZ recalc-skip                                                                                                           | diff: excelTabs.js (+3), excelTableRenderer.js (+28/-0 cache+klucz), excelAutoSelect.js (+2 invalidator x2), excelCopyPaste.js (+1 invalidator); excelModal.js nietkniety (early-return WYCOFANY) | VERIFIED |
+| E-113b | Root-cause parity-FAIL: hash obejmowal transient __availCache (1 well, 116KB); fix strip kluczy `__*` w 5 miejscach hash w excelVirtualParity.cjs (test-only, prod nietkniety)                                                                 | diff tests/playwright/excelVirtualParity.cjs (5x replacer `__`); bisekcja mylaca - winny cache, nie guard; quiescence-eksperyment wycofany                                                        | VERIFIED |
+| E-113c | Bramki: unit 43/43 (debounce/rzednaParity/transitionJoints/solverInvariants/mlGate), parity 31/31 x2, throttle-golden PASS, golden base odswiezony (--update po dryfie UI od 30.09, 9 linii SHA), bench-1000 ON openMs=1504/editMs=1211 zdrowe | artefakty: bench-excel-virtual-1000.json (nowy), golden-excel-dom-1200.json (base-update); validate EXIT w checkpoincie                                                                           | VERIFIED |
+| E-113d | Histogram: real max=3 - N=2000 laboratoryjne (hang-2000-harness artefakt poza commitem, nie mergowany)                                                                                                                                         | docs/plans/hang-2000-harness-A-B.json untracked, poza zakresem add; excelHang2000.cjs untracked, poza commitem                                                                                    | VERIFIED |
+| E-113e | Artefakt FAIL-runa parity-excel-virtual-600.json usuniety (untracked, nie z baseline); throttle-x4 tracked+modified pomiarem - zostawiony, nie commitowany                                                                                     | git ls-files pusty przed usunieciem; git status po: brak w worktree; throttle-x4 poza lista add                                                                                                   | VERIFIED |
+
+## Checkpoint E-113
+
+- CLAIM: mikro-PR finalny (E-113a..E-113e), brak select early-return, brak recalc-skip, brak debug-dumpow, brak .env/data w zmianach.
+- EVIDENCE: diff 4 plikow prod + harness test-only; bench + golden artefakty; ta sekcja E-113.
+- REPRODUCTION: git status --short + git ls-files (2026-10-15, przed commitem).
+- BEFORE: 8 modified + 4 untracked (w tym artefakt FAIL-runa).
+- AFTER: commit fix(studnie) zakresem: 4 prod + parity-harness + _active-evidence.md + golden + bench; throttle-x4 + hang-artefakty poza commitem.
+- CHANGE: append-only, E-113 5x VERIFIED.
+- TESTS: validate EXIT ponizej; flaky pricelistChunk-B2 tylko przy izolowanym PASS.
+- DIFF: git status --short + diff --stat w raporcie.
+- COMMIT: node scripts/commit.mjs (ponizej), BEZ push.
+- VERIFIED: YES (po zielonym validate) / NO - patrz SHA lub STOP w raporcie.

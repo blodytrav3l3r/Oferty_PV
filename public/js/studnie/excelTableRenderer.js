@@ -488,6 +488,14 @@ function _excelFitPadX(el) {
 /* Autofit: domyślna szerokość kolumn bez zapisanego draga = najszerszy tekst
    (nagłówki h1/h2/h3-single + wiersze w DOM). Zapisany drag nietknięty.
    onlyCi != null → dopasuj tylko tę kolumnę (dblclick na uchwycie). */
+/* Cache autofit: ostatni klucz strukturalny dn|cols|rows. Hit = struktura bez zmian, miss = nowy fit. */
+/* Drag (saved widths) zawsze wygrywa w fitOne i _excelApplyColWidths - cache go nie rusza. */
+/* Edycja tekstu przy tym samym dn|cols|rows uniewaznia solver i paste
+   (wola _excelInvalidateFitCache); odswieza tez dblclick (onlyCi). */
+let _excelLastFitKey = null;
+function _excelInvalidateFitCache() {
+    _excelLastFitKey = null;
+}
 function _excelAutoFitColumns(dn, onlyCi) {
     if (typeof _excelColWidths === 'undefined') return;
     const container = document.getElementById('excel-table-container');
@@ -509,6 +517,28 @@ function _excelAutoFitColumns(dn, onlyCi) {
     const rows = tbl.querySelectorAll('tbody tr[data-widx]');
     const hideTr = typeof _excelTransitionsHidden === 'function' && _excelTransitionsHidden();
     const cols = onlyCi != null && onlyCi >= 0 ? [onlyCi] : null;
+    /* Klucz cache: dn|cols|rows; cols = efektywna liczba kolumn (ukryte PRZ odjete), rows = liczba wierszy. */
+    let _effCols = h1ths.length;
+    if (hideTr) {
+        let _vis = 0;
+        for (let _ci = 0; _ci < h1ths.length; _ci++) {
+            const _cid =
+                typeof h1ths[_ci].getAttribute === 'function'
+                    ? h1ths[_ci].getAttribute('data-excel-col')
+                    : null;
+            if (_cid && (_cid.indexOf('trz-') === 0 || _cid === 'tr-minus' || _cid === 'tr-plus'))
+                continue;
+            _vis++;
+        }
+        _effCols = _vis;
+    }
+    const _fitKey = tab + '|' + _effCols + '|' + rows.length;
+    /* Hit: ta sama struktura co ostatni fit - pomin pomiar fitOne, naloz zapisany fit. */
+    if (onlyCi == null && _fitKey === _excelLastFitKey) {
+        if (typeof _excelApplyColWidths === 'function') _excelApplyColWidths(tab);
+        if (typeof _excelApplyStickyColumns === 'function') _excelApplyStickyColumns();
+        return;
+    }
     const fitOne = function (ci) {
         const h1th = h1ths[ci];
         if (!h1th) return;
@@ -581,9 +611,12 @@ function _excelAutoFitColumns(dn, onlyCi) {
         });
     };
     if (cols) {
+        /* onlyCi (dblclick) omija cache i nie rusza klucza. */
         fitOne(cols[0]);
     } else {
         for (let ci = 0; ci < h1ths.length; ci++) fitOne(ci);
+        /* Miss: zapamietaj klucz po pelnym fit; _excelRenderTable wola fit po kazdym renderze. */
+        _excelLastFitKey = _fitKey;
     }
     if (typeof _excelApplyStickyColumns === 'function') _excelApplyStickyColumns();
 }
@@ -593,6 +626,7 @@ if (typeof window !== 'undefined') {
     window._excelMeasureTextWidth = _excelMeasureTextWidth;
     window._excelStackedMaxWidth = _excelStackedMaxWidth;
     window._excelAutoFitColumns = _excelAutoFitColumns;
+    window._excelInvalidateFitCache = _excelInvalidateFitCache;
 }
 function _excelApplyColWidths(dn) {
     if (typeof _excelColWidths === 'undefined' || !_excelColWidths) return;

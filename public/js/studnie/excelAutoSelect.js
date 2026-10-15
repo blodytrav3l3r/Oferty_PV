@@ -48,6 +48,11 @@ async function _excelAutoSelectForWell(wIdx) {
                 _excelMarkDirty();
                 await autoSelectComponents(true);
                 _excelClearResCache(well);
+                if (
+                    typeof window !== 'undefined' &&
+                    typeof window._excelInvalidateFitCache === 'function'
+                )
+                    window._excelInvalidateFitCache();
                 _excelRenderTable(_excelActiveTab);
                 _excelUpdateHeaderProdCodes();
                 if (typeof _excelSyncActiveRowErrors === 'function')
@@ -208,6 +213,8 @@ async function _excelRunAutoSelectForWell(wIdx) {
         well.config = [];
         await autoSelectComponents(true);
         _excelClearResCache(well);
+        if (typeof window !== 'undefined' && typeof window._excelInvalidateFitCache === 'function')
+            window._excelInvalidateFitCache();
         _excelRenderTable(_excelActiveTab);
         _excelUpdateHeaderProdCodes();
         if (typeof _excelSyncActiveRowErrors === 'function') _excelSyncActiveRowErrors(wIdx);

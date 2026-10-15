@@ -149,7 +149,11 @@ async function runSelectionPhase(frame, page) {
             return String(h >>> 0);
         };
         return {
-            wellsHashAfterPaste: djb2(JSON.stringify(wells)),
+            wellsHashAfterPaste: djb2(
+                JSON.stringify(wells, function (k, v) {
+                    return k && k.indexOf('__') === 0 ? undefined : v;
+                })
+            ),
             undoLen: typeof _excelUndoStack !== 'undefined' ? _excelUndoStack.length : -1,
             pastedNames: [10, 11, 12, 13].map((i) => wells[i] && wells[i].name)
         };
@@ -164,7 +168,13 @@ async function runSelectionPhase(frame, page) {
             for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0;
             return String(h >>> 0);
         };
-        return { wellsHashAfterUndo2: djb2(JSON.stringify(wells)) };
+        return {
+            wellsHashAfterUndo2: djb2(
+                JSON.stringify(wells, function (k, v) {
+                    return k && k.indexOf('__') === 0 ? undefined : v;
+                })
+            )
+        };
     });
     return { ...selState, copyText, ...after, ...undone };
 }
@@ -341,7 +351,11 @@ async function runFilterSortInteract(frame, page) {
             return String(h >>> 0);
         };
         return {
-            wellsHash: djb2(JSON.stringify(wells)),
+            wellsHash: djb2(
+                JSON.stringify(wells, function (k, v) {
+                    return k && k.indexOf('__') === 0 ? undefined : v;
+                })
+            ),
             selCells: (typeof _excelSelectedCells !== 'undefined' ? _excelSelectedCells : [])
                 .map((cl) => cl.wIdx + ':' + cl.colIdx)
                 .sort()
@@ -414,12 +428,20 @@ async function runMode(frame, page, virtualOn, wellsData) {
                 out.undoAfterEdit =
                     typeof _excelUndoStack !== 'undefined' ? _excelUndoStack.length : -1;
                 out.undoBefore = undoBefore;
-                out.wellsHashAfterEdit = djb2(JSON.stringify(wells));
+                out.wellsHashAfterEdit = djb2(
+                    JSON.stringify(wells, function (k, v) {
+                        return k && k.indexOf('__') === 0 ? undefined : v;
+                    })
+                );
                 out.editedWell = { rzednaWlazu: wells[wIdx] && wells[wIdx].rzednaWlazu };
 
                 _excelUndo();
                 await new Promise((r) => setTimeout(r, 600));
-                out.wellsHashAfterUndo = djb2(JSON.stringify(wells));
+                out.wellsHashAfterUndo = djb2(
+                    JSON.stringify(wells, function (k, v) {
+                        return k && k.indexOf('__') === 0 ? undefined : v;
+                    })
+                );
                 out.wellsHashInitial = null; // liczone na swiezych danych przed modalem
             } catch (e) {
                 out.errors.push(String((e && e.stack) || (e && e.message) || e));

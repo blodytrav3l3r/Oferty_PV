@@ -447,6 +447,8 @@ function _excelHandlePaste(e) {
         /* W4: wyczyść martwą selekcję (tablice i klasy) + pełny re-render. */
         if (typeof _excelResetLayoutDependentState === 'function')
             _excelResetLayoutDependentState();
+        if (typeof window !== 'undefined' && typeof window._excelInvalidateFitCache === 'function')
+            window._excelInvalidateFitCache();
         _excelRenderTable(_excelActiveTab);
         if (typeof _excelRefreshDupColors === 'function')
             try {
