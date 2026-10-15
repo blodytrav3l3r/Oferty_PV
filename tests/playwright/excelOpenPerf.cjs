@@ -19,11 +19,18 @@
 const fs = require('fs');
 const path = require('path');
 const { buildPerfWells } = require('./excelPerfFixture.cjs');
+const {
+    resolveChromePath,
+    getLaunchArgs,
+    resolveOutPath,
+    applyThrottle
+} = require('./throttleHelper.cjs');
 
 const BASE = 'http://localhost:3000';
 const RUNS_COLD = 5;
 const RUNS_WARM = 5;
-const OUT = path.join(__dirname, '../../docs/plans/baseline-excel-open-1200-f1.json');
+const OUT_DEFAULT = path.join(__dirname, '../../docs/plans/baseline-excel-open-1200-f1.json');
+const OUT = resolveOutPath(OUT_DEFAULT);
 
 function resolvePlaywright() {
     try {
@@ -35,9 +42,9 @@ function resolvePlaywright() {
 }
 
 const { chromium } = resolvePlaywright();
-const CHROME_PATH =
-    process.env.CHROME_PATH ||
+const CHROME_FALLBACK =
     'C:\\Users\\blody\\AppData\\Local\\ms-playwright\\chromium_headless_shell-1234\\chrome-headless-shell-win64\\chrome-headless-shell.exe';
+const CHROME_PATH = resolveChromePath(CHROME_FALLBACK);
 
 function sleep(ms) {
     return new Promise((r) => setTimeout(r, ms));
@@ -138,6 +145,7 @@ async function measureRun(frame, fixture) {
 async function openFrame(browser, token) {
     const context = await browser.newContext({ viewport: { width: 1600, height: 1000 } });
     const page = await context.newPage();
+    await applyThrottle(page);
     // Wariant A: cookie httpOnly do jara kontekstu (localStorage nieużywany).
     await context.addCookies([{ name: 'authToken', value: token, domain: 'localhost', path: '/' }]);
     await page.addInitScript(() => {
@@ -174,11 +182,12 @@ async function openFrame(browser, token) {
     const browser = await chromium.launch({
         headless: true,
         executablePath: CHROME_PATH,
-        args: ['--no-sandbox', '--disable-setuid-sandbox']
+        args: getLaunchArgs(['--no-sandbox', '--disable-setuid-sandbox'])
     });
     try {
         const loginCtx = await browser.newContext();
         const loginPage = await loginCtx.newPage();
+        await applyThrottle(loginPage);
         const loginResp = await loginPage.request.post(`${BASE}/api/auth/login`, {
             data: { username: 'admin', password: process.env.TEST_ADMIN_PASSWORD || 'anim123456' }
         });

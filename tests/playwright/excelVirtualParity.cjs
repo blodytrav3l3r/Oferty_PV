@@ -15,6 +15,15 @@
 const BASE = 'http://localhost:3000';
 const N = 600; // >500 = virtual auto-ON (bez flagi)
 
+const fs = require('fs');
+const path = require('path');
+const {
+    resolveChromePath,
+    getLaunchArgs,
+    resolveOutPath,
+    applyThrottle
+} = require('./throttleHelper.cjs');
+
 function resolvePlaywright() {
     try {
         return require('playwright');
@@ -26,9 +35,11 @@ function resolvePlaywright() {
 
 const { chromium } = resolvePlaywright();
 
-const CHROME_PATH =
-    process.env.CHROME_PATH ||
+const CHROME_FALLBACK =
     'C:\\Users\\blody\\AppData\\Local\\ms-playwright\\chromium_headless_shell-1234\\chrome-headless-shell-win64\\chrome-headless-shell.exe';
+const CHROME_PATH = resolveChromePath(CHROME_FALLBACK);
+const OUT_DEFAULT = path.join(__dirname, '../../docs/plans/parity-excel-virtual-600.json');
+const OUT = resolveOutPath(OUT_DEFAULT);
 
 function sleep(ms) {
     return new Promise((r) => setTimeout(r, ms));
@@ -424,7 +435,7 @@ async function runMode(frame, page, virtualOn, wellsData) {
     const browser = await chromium.launch({
         headless: true,
         executablePath: CHROME_PATH,
-        args: ['--no-sandbox', '--disable-setuid-sandbox']
+        args: getLaunchArgs(['--no-sandbox', '--disable-setuid-sandbox'])
     });
     let failed = false;
     const problems = [];
@@ -443,6 +454,7 @@ async function runMode(frame, page, virtualOn, wellsData) {
         // czyste dokumenty + czysty localStorage (decyzja load-time patcha).
         const loginCtx = await browser.newContext();
         const loginPage = await loginCtx.newPage();
+        await applyThrottle(loginPage);
         const loginResp = await loginPage.request.post(`${BASE}/api/auth/login`, {
             data: { username: 'admin', password: process.env.TEST_ADMIN_PASSWORD || 'anim123456' }
         });
@@ -463,6 +475,7 @@ async function runMode(frame, page, virtualOn, wellsData) {
                     viewport: { width: 1600, height: 1000 }
                 });
                 const page = await context.newPage();
+                await applyThrottle(page);
                 try {
                     // Wariant A: cookie httpOnly do jara kontekstu; flaga
                     // virtual zostaje w localStorage (nie-auth, bez zmian).
@@ -694,6 +707,21 @@ async function runMode(frame, page, virtualOn, wellsData) {
             bOff.wellsHash === bOn.wellsHash,
             bOff.wellsHash + ' vs ' + bOn.wellsHash
         );
+        try {
+            fs.writeFileSync(
+                OUT,
+                JSON.stringify(
+                    {
+                        generated: new Date().toISOString(),
+                        throttleX4: process.env.THROTTLE_X4 === '1',
+                        results
+                    },
+                    null,
+                    2
+                ) + '\n'
+            );
+            console.log('PARITY zapisany: ' + OUT);
+        } catch (_) {}
     } catch (e) {
         failed = true;
         problems.push('fatal: ' + ((e && e.message) || e));

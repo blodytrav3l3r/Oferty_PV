@@ -30,6 +30,9 @@ function resolvePlaywright() {
     }
 }
 const { chromium } = resolvePlaywright();
+const { resolveChromePath, resolveOutPath } = require('./throttleHelper.cjs');
+
+const CHROME_PATH = resolveChromePath(undefined);
 
 const PAGES = [
     ['index', '/index.html'],
@@ -229,6 +232,7 @@ function median(a) {
     }
     const browser = await chromium.launch({
         headless: true,
+        ...(CHROME_PATH ? { executablePath: CHROME_PATH } : {}),
         args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
     const pages = ONLY ? PAGES.filter(([n]) => ONLY.includes(n)) : PAGES;
@@ -268,8 +272,8 @@ function median(a) {
             };
         }
     }
-    const outPath =
-        process.env.PERF_OUT || 'C:/Users/blody/AppData/Local/Temp/opencode/p16-baseline.json';
+    const OUT_DEFAULT = 'C:/Users/blody/AppData/Local/Temp/opencode/p16-baseline.json';
+    const outPath = resolveOutPath(process.env.PERF_OUT || OUT_DEFAULT);
     fs.writeFileSync(
         outPath,
         JSON.stringify({ base: BASE, runs: RUNS, summary, raw: result }, null, 1)

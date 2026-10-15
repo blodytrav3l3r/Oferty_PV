@@ -68,3 +68,134 @@ Scope: dopisane na koncu, historia E-001..E-015+E-005a nietknieta. Nowe ID E-100
 - DIFF: git diff -- docs/plans/_active-evidence.md (ponizej w raporcie).
 - COMMIT: brak (zadanie: zwroc diff, nie commituj).
 - VERIFIED: YES dla E-100..E-104, NO dla E-105 (HYPOTHESIS), REJECTED E-106.
+
+## Baseline throttle-x4 Faza 1 (2026-10-15, BUILD MODE F1 docs-only, zero kodu prod)
+
+Scope: odczyt PERF_BASELINE + F1 JSON + naglowki 4 harnessow. Bez zmian public/js, src, prisma. Historia E-001..E-015, E-005a, E-100..E-106 nietknieta. Nowe ID E-200+ rozlaczne.
+
+## Ledger Faza 1
+
+| ID    | Twierdzenie                                                                                                              | Dowod                                                                          | Status     |
+| ----- | ------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------ | ---------- |
+| E-200 | DEFAULT ON TRUE, OFF tylko via param lub localStorage, bramy parity 31/31 + bench                                        | docs/PERF_BASELINE.md:6-22                                                     | VERIFIED   |
+| E-201 | Baseline 1k/5k: ON 0.6 s vs OFF 6.4 s / 32 s, DOM 12k vs 139k / 679k                                                     | docs/PERF_BASELINE.md:24-35                                                    | VERIFIED   |
+| E-202 | F1 JSON 1200: fixture 1200 seed 20260912, cold 5 + warm 5, cold openMs 530, warm openMs 468, sticky dominuje 156/151 ms  | docs/plans/baseline-excel-open-1200-f1.json:2-9, cold:155, warm:161            | VERIFIED   |
+| E-203 | Parity: OFF vs ON ten sam scenariusz, SSoT wells+undo, N 600, macierz render/scroll/edit/undo + F2/F3                    | tests/playwright/excelVirtualParity.cjs:1-16, N :16, launch :424-427           | VERIFIED   |
+| E-204 | Bench: OFF vs ON 1k/5k, open/modal/DOM/scroll/edit                                                                       | tests/playwright/excelVirtualBench.cjs:1-9, launch :106-109                    | VERIFIED   |
+| E-205 | Golden: kontrakt DOM view-only, SHA-256 thead+tbody per tab x6, OUT golden-excel-dom-1200.json, update tylko autoryzacja | tests/playwright/excelDomGolden.cjs:1-15, OUT :24, launch :121-124             | VERIFIED   |
+| E-206 | OpenPerf: fixture 1200, cold 5 swiezy kontekst + warm 5 close-reopen, OUT baseline-excel-open-1200-f1.json               | tests/playwright/excelOpenPerf.cjs:1-16, OUT :26, RUNS :24-25, launch :174-177 | VERIFIED   |
+| E-207 | CHROME_PATH env fallback we wszystkich 4 (process.env.CHROME_PATH lub wbudowany headless-shell)                          | parity :29-31, bench :22-24, golden :38-40, openPerf :38-40                    | VERIFIED   |
+| E-208 | throttle-x4 BRAK w kodzie: launch args tylko no-sandbox + disable-setuid-sandbox, grep throttle/CPU zero trafien         | 4x launch (E-203..E-206), grep tests/playwright                                | VERIFIED   |
+| E-209 | disable-gpu BRAK w kodzie: grep zero trafien w tests/playwright                                                          | launch args jw.                                                                | VERIFIED   |
+| E-210 | Npm aliasy: test:parity + test:bench istnieja; golden/openPerf tylko direct node, brak aliasu                            | package.json:20-21                                                             | VERIFIED   |
+| E-211 | Repro F2 z throttle-x4 + disable-gpu: HYPOTHESIS, F1 bez runtime, harnessy nie uruchomione                               | brak logu wykonania                                                            | HYPOTHESIS |
+
+## Repro baseline (F2 target, GO baseline-throttle-x4)
+
+Wymaga: backend na localhost:3000 (kazdy harness). CHROME_PATH: jesli env pusty, harness uzywa wbudowanego headless-shell; jawny override: SET CHROME_PATH=sciezka przed node.
+
+1. npm run test:parity [tests/playwright/excelVirtualParity.cjs]
+2. npm run test:bench [tests/playwright/excelVirtualBench.cjs]
+3. node tests/playwright/excelDomGolden.cjs [porownanie; z flaga --update tylko autoryzacja nowego stanu]
+4. node tests/playwright/excelOpenPerf.cjs [zapis docs/plans/baseline-excel-open-1200-f1.json]
+   F2 dopisuje (kod harnessow, nie F1): args + disable-gpu + CDP setCPUThrottlingRate rate 4; wtedy powyzsze 4 komendy sa pelnym repro throttle-x4.
+
+## Checkpoint Faza 1
+
+CLAIM: ledger F1 dopisany append-only, kod prod nietkniety. EVIDENCE: ta sekcja E-200..E-211 + pliki:linie w kolumnie Dowod. REPRODUCTION: odczyt 6 plikow (PERF_BASELINE, F1 JSON, 4 naglowki + 4 launch + package.json), grep throttle/CPU/disable-gpu/CHROME_PATH. BEFORE: _active-evidence.md 70 linii (F0+F1+P0.0). AFTER: + ta sekcja. CHANGE: docs-only. TESTS: brak runtime w F1 (E-211 HYPOTHESIS czeka na F2). DIFF: git diff -- docs/plans/_active-evidence.md. COMMIT: brak (Faza 1 zwraca artefakt, nie commituje). VERIFIED: YES dla E-200..E-210, NO dla E-211.
+Gotowosc do Fazy 2: TAK. Faza 2 = dopisac throttle-x4 + disable-gpu do 4 harnessow, odpalic 4 komendy repro, mediany do JSON, potem GO na kod.
+
+## GO-2 throttle-x4 wrapper (2026-10-15, BUILD MODE GO-2 docs-only, zero kodu prod)
+
+Scope: dopisane na koncu, historia E-001..E-015, E-005a, E-100..E-106, E-200..E-211 nietknieta. Nowe ID E-107 (jedno, rozlaczne - E-100+ zajete przez P0.0, E-200+ przez Faze 1). Kod prod nietkniety, harnessy nietkniete (to robi architect/builder).
+
+## Ledger GO-2
+
+| ID    | Twierdzenie                                                                                                                                                       | Dowod                                                                                                                                                                                                                                                                                                                                                                               | Status   |
+| ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| E-107 | HEAD to 4ed4eab chore(release): 1.46.0 (drift od E-100 6fdb3a0); decyzja GO-2: wrapper THROTTLE_X4=1 + --disable-gpu + CHROME_PATH z env + OUT *-throttle-x4.json | git rev-parse HEAD = 4ed4eab98f759f3c84da9971ee69624709dd3e88; git log --oneline -5 = 4ed4eab/385c4f7/5fa63e0/c633590/b083626; 6fdb3a0 w historii (git log --all); grep THROTTLE/throttle/setCPUThrottling/disable-gpu w tests/playwright/*.cjs = zero trafien (wrapper niezaimplementowany, czeka na architect/builder); CHROME_PATH env pusty (fallback headless-shell per E-207) | VERIFIED |
+
+## Repro throttle-x4 (F2 target, czeka na architect/builder)
+
+Wymaga: backend na localhost:3000; wrapper w 4 harnessach: process.env.THROTTLE_X4 === "1" doklada --disable-gpu do launch args + CDP Emulation.setCPUThrottlingRate rate 4; CHROME_PATH z env (pusty = wbudowany headless-shell per E-207); OUT obok baseline, bez nadpisywania F1 (*-throttle-x4.json).
+
+1. $env:THROTTLE_X4=1; npm run test:parity [tests/playwright/excelVirtualParity.cjs -> OUT *-throttle-x4.json]
+2. $env:THROTTLE_X4=1; npm run test:bench [tests/playwright/excelVirtualBench.cjs -> OUT *-throttle-x4.json]
+3. $env:THROTTLE_X4=1; node tests/playwright/excelDomGolden.cjs [porownanie; OUT golden-excel-dom-1200-throttle-x4.json]
+4. $env:THROTTLE_X4=1; node tests/playwright/excelOpenPerf.cjs [zapis baseline-excel-open-1200-f1-throttle-x4.json, bez nadpisywania F1 JSON]
+   Bez THROTTLE_X4=1 harnessy zachowuja sie jak dzis (F1 baseline, E-211).
+
+## Checkpoint GO-2
+
+- CLAIM: ledger GO-2 dopisany append-only (E-107), historia nietknieta, kod prod + harnessy nietkniete.
+- EVIDENCE: ta sekcja E-107; HEAD 4ed4eab98f759f3c84da9971ee69624709dd3e88; drift E-100 6fdb3a0 nadal w historii.
+- REPRODUCTION: git rev-parse HEAD, git log --oneline -5, git status --short --branch (M docs/plans/_active-evidence.md, ?? docs/plans/P0.0-baseline-excel.md), grep THROTTLE/disable-gpu zero, echo CHROME_PATH pusty (2026-10-15, EXIT 0).
+- BEFORE: HEAD 4ed4eab, E-211 HYPOTHESIS (repro F2 bez runtime).
+- AFTER: tylko docs/plans/_active-evidence.md modified (sekcja GO-2); kod prod + harnessy bez zmian.
+- CHANGE: append-only, E-107 VERIFIED.
+- TESTS: brak runtime w GO-2-docs (validate/test:quick nie uruchamiane; docs-only). E-211 nadal HYPOTHESIS do odpalenia 4 komend po wrapperze.
+- DIFF: git diff -- docs/plans/_active-evidence.md.
+- COMMIT: brak (zadanie: nie commituj, nie pushuj).
+- VERIFIED: YES dla E-107.
+
+## Diagnoza login-500 (2026-10-15, BUILD MODE diagnoza, docs-only, zero kodu)
+
+Scope: dopisane na koncu, historia E-001 do E-015, E-005a, E-100 do E-106, E-200 do E-211, E-107 nietknieta. Nowe ID E-108, jedno, rozlaczne. Kod prod plus harnessy nietkniete tym dopiskiem. Bez commita, bez pusha.
+
+## Ledger E-108
+
+| ID     | Twierdzenie                                                                                              | Dowod                                                                                                                                                                                                       | Status     |
+| ------ | -------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- |
+| E-108a | Symptom: POST /api/auth/login 500, GET /health 200, brak OUT z danymi 0 z 4 harnessow                    | zgloszenie sesji: OUT 0 z 4, login 500 blokuje repro throttle-x4; brak logu serwera w repo                                                                                                                  | HYPOTHESIS |
+| E-108b | Zamrozone: HEAD 4ed4eab chore(release) 1.46.0, log -3 4ed4eab/385c4f7/5fa63e0                            | git rev-parse HEAD daje 4ed4eab98f759f3c84da9971ee69624709dd3e88, git log --oneline -3 z 2026-10-15                                                                                                         | VERIFIED   |
+| E-108c | Zamrozone: version check PASS 1.46.0 we wszystkich zrodlach                                              | npm run version check: VERSION plus package.json plus package-lock plus CHANGELOG plus bat plus README plus docs plus HTML v daje 1.46.0, status Spojne                                                     | VERIFIED   |
+| E-108d | Zamrozone: wrapper throttle DONE w worktree, uncommitted: throttleHelper plus 5 harnessow M              | git status: M _active-evidence plus 5 harnessow parity bench golden openPerf perfBaseline, nowe throttleHelper plus P0.0 plan; grep THROTTLE_X4 daje throttleHelper 12 21 35 plus parity 716 plus bench 208 | VERIFIED   |
+| E-108e | Przyczyna P1: env lub DATABASE_URL lub JWT brak albo zly, login 500 a health 200                         | brak odczytu env i logu w sesji docs-only, do weryfikacji krokiem D2                                                                                                                                        | HYPOTHESIS |
+| E-108f | Przyczyna P2: dryf schematu DB, migrate status, baza legacy db-push bez historii, login query 500        | brak prisma migrate status w sesji, do weryfikacji krokiem D3                                                                                                                                               | HYPOTHESIS |
+| E-108g | Przyczyna P3: brak seeda admina, users pusty albo zle haslo, login 500 lub 401 maskowany jako 500        | brak odczytu seed w sesji, do weryfikacji krokiem D4                                                                                                                                                        | HYPOTHESIS |
+| E-108h | Przyczyna P4: regresja kodu auth po 385c4f7 albo 5fa63e0, validator albo service rzuca na kazdym loginie | brak stack trace z logu serwera, do weryfikacji krokiem D1 plus D5                                                                                                                                          | HYPOTHESIS |
+
+## Plan diagnozy D1-D5, kolejnosc, read-first, zero kodu
+
+1. D1 log serwera: odpalic backend na localhost 3000, spisac stack trace POST login 500 plus potwierdzic GET health 200.
+2. D2 env: sprawdzic istnienie env, DATABASE_URL, JWT secret, haslo admina, bez wklejania sekretow, porownac z env example.
+3. D3 prisma status: npx prisma migrate status plus read-only select count z users, wykryc baze legacy db-push vs migrate deploy.
+4. D4 seed: jesli users pusty to sciezka ensure-db albo seed z docs, potem retry login.
+5. D5 repro curl: curl POST login plus GET health, zapisac kody plus body bez hasla, potem decyzja GO na repro throttle-x4 z E-211.
+   Bez D1-D5 brak zmiany statusu E-108a plus E-108e plus E-108f plus E-108g plus E-108h z HYPOTHESIS na VERIFIED albo REJECTED.
+
+## Checkpoint E-108
+
+- CLAIM: dopisek E-108 append-only, historia nietknieta, kod plus harnessy nietkniete tym dopiskiem.
+- EVIDENCE: ta sekcja E-108a do E-108h; HEAD 4ed4eab98f759f3c84da9971ee69624709dd3e88; version check PASS 1.46.0; status worktree jak w E-108d.
+- REPRODUCTION: git log --oneline -3, git status --short --branch, git rev-parse HEAD, npm run version check, grep THROTTLE_X4, z 2026-10-15.
+- BEFORE: _active-evidence.md 133 linie, koniec E-107; worktree M 6 plus nowe 2, wrapper throttle w toku.
+- AFTER: tylko docs/plans/_active-evidence.md plus ta sekcja; kod prod plus harnessy bez zmian tym dopiskiem.
+- CHANGE: append-only, E-108, 3x VERIFIED zamrozone plus 1x HYPOTHESIS symptom plus 4x HYPOTHESIS przyczyny.
+- TESTS: brak runtime w diagnozie-docs, validate i test quick nie uruchamiane, docs-only. D1-D5 czeka na runtime.
+- DIFF: git diff -- docs/plans/_active-evidence.md.
+- COMMIT: brak, zadanie mowi nie commituj, nie pushuj.
+- VERIFIED: YES dla E-108b plus E-108c plus E-108d; NO dla E-108a plus E-108e plus E-108f plus E-108g plus E-108h.
+
+## Decyzja haslo testowe dev (2026-10-15, BUILD MODE docs-only, zero kodu)
+
+Scope: dopisane na koncu, historia E-001..E-015, E-005a, E-100..E-106, E-200..E-211, E-107, E-108 nietknieta. Nowe ID E-109, jedno, rozlaczne. Tylko ten plik. Nie dotyka .env ani DB ani harnessow. Bez commita, bez pusha.
+
+## Ledger E-109
+
+| ID    | Twierdzenie                                                                                                                                                                                                     | Dowod                                                                                                            | Status     |
+| ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- | ---------- |
+| E-109 | Decyzja uzytkownika: haslo testowe anim123456 na czas dev/testow (wersja z 2026-10-15); zakres tylko lokalny .env + hash admina w lokalnej SQLite, NIGDY prod/commit; do potwierdzenia login-200 przez buildera | decyzja sesji 2026-10-15; brak zmiany .env/DB/harnessow tym dopiskiem; weryfikacja: login-200 runtime u buildera | HYPOTHESIS |
+
+## Checkpoint E-109
+
+- CLAIM: dopisek E-109 append-only, historia nietknieta, .env + DB + harnessy nietkniete tym dopiskiem.
+- EVIDENCE: ta sekcja E-109; decyzja sesji 2026-10-15 (haslo testowe dev, zakres lokalny .env + SQLite, NIGDY prod/commit).
+- REPRODUCTION: odczyt docs/plans/_active-evidence.md koniec; brak runtime w tym dopisku (docs-only).
+- BEFORE: koniec E-108; .env + DB + harnessy bez zmian.
+- AFTER: tylko docs/plans/_active-evidence.md + ta sekcja; .env + DB + harnessy bez zmian tym dopiskiem.
+- CHANGE: append-only, E-109 1x HYPOTHESIS.
+- TESTS: brak runtime w docs; potwierdzenie login-200 po stronie buildera (D5 z E-108).
+- DIFF: git diff -- docs/plans/_active-evidence.md.
+- COMMIT: brak, zadanie mowi nie commituj.
+- VERIFIED: NO (czeka na login-200 u buildera).

@@ -9,6 +9,15 @@
  */
 const BASE = 'http://localhost:3000';
 
+const fs = require('fs');
+const path = require('path');
+const {
+    resolveChromePath,
+    getLaunchArgs,
+    resolveOutPath,
+    applyThrottle
+} = require('./throttleHelper.cjs');
+
 function resolvePlaywright() {
     try {
         return require('playwright');
@@ -19,9 +28,21 @@ function resolvePlaywright() {
 }
 
 const { chromium } = resolvePlaywright();
-const CHROME_PATH =
-    process.env.CHROME_PATH ||
+const CHROME_FALLBACK =
     'C:\\Users\\blody\\AppData\\Local\\ms-playwright\\chromium_headless_shell-1234\\chrome-headless-shell-win64\\chrome-headless-shell.exe';
+const CHROME_PATH = resolveChromePath(CHROME_FALLBACK);
+const BENCH_NS_LIST = process.env.BENCH_NS
+    ? process.env.BENCH_NS.split(',')
+          .map(Number)
+          .filter((v) => Number.isFinite(v) && v > 0)
+    : [1000, 5000];
+const OUT_DEFAULT = path.join(
+    __dirname,
+    '../../docs/plans/bench-excel-virtual-' +
+        (process.env.BENCH_NS ? BENCH_NS_LIST.join('-') : '1k5k') +
+        '.json'
+);
+const OUT = resolveOutPath(OUT_DEFAULT);
 
 function sleep(ms) {
     return new Promise((r) => setTimeout(r, ms));
@@ -106,11 +127,12 @@ async function measure(frame, n) {
     const browser = await chromium.launch({
         headless: true,
         executablePath: CHROME_PATH,
-        args: ['--no-sandbox', '--disable-setuid-sandbox']
+        args: getLaunchArgs(['--no-sandbox', '--disable-setuid-sandbox'])
     });
     try {
         const loginCtx = await browser.newContext();
         const loginPage = await loginCtx.newPage();
+        await applyThrottle(loginPage);
         const loginResp = await loginPage.request.post(`${BASE}/api/auth/login`, {
             data: { username: 'admin', password: process.env.TEST_ADMIN_PASSWORD || 'anim123456' }
         });
@@ -120,12 +142,16 @@ async function measure(frame, n) {
         if (!token) throw new Error('Login failed');
         await loginCtx.close();
 
-        for (const n of [1000, 5000]) {
+        const benchRows = [];
+        for (const n of process.env.BENCH_NS
+            ? process.env.BENCH_NS.split(',').map(Number)
+            : [1000, 5000]) {
             for (const mode of ['OFF', 'ON']) {
                 const context = await browser.newContext({
                     viewport: { width: 1600, height: 1000 }
                 });
                 const page = await context.newPage();
+                await applyThrottle(page);
                 // Wariant A: cookie httpOnly do jara kontekstu; flaga virtual
                 // zostaje w localStorage (nie-auth, bez zmian).
                 await context.addCookies([
@@ -175,6 +201,7 @@ async function measure(frame, n) {
                     wells = d;
                 }, buildWells(n));
                 const r = await measure(frame, n);
+                benchRows.push({ n, mode, ...r });
                 console.log(
                     `BENCH n=${n} ${mode} rows=${r.rows} openMs=${r.openMs} editMs=${r.editMs} ok=${r.ok}`
                 );
@@ -184,6 +211,21 @@ async function measure(frame, n) {
                 await context.close();
             }
         }
+        try {
+            fs.writeFileSync(
+                OUT,
+                JSON.stringify(
+                    {
+                        generated: new Date().toISOString(),
+                        throttleX4: process.env.THROTTLE_X4 === '1',
+                        rows: benchRows
+                    },
+                    null,
+                    2
+                ) + '\n'
+            );
+            console.log('BENCH zapisany: ' + OUT);
+        } catch (_) {}
     } finally {
         await browser.close();
     }
