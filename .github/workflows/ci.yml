@@ -268,6 +268,86 @@ jobs:
                       e2e-appname-server.log
                   if-no-files-found: warn
 
+    excel-gates:
+        name: Excel — parity + golden + align (blokuje)
+        runs-on: ubuntu-latest
+        needs: test
+        timeout-minutes: 15
+        env:
+            DATABASE_URL: 'file:./test-excel.sqlite?connection_limit=1&busy_timeout=30000'
+            TEST_ADMIN_PASSWORD: test-admin-pass
+            DEFAULT_ADMIN_PASSWORD: test-admin-pass
+            PORT: '3000'
+        steps:
+            - uses: actions/checkout@v7
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v7
+              with:
+                  node-version: '22'
+                  cache: 'npm'
+
+            - name: Install dependencies
+              run: npm ci
+
+            - name: Generate Prisma client
+              run: npx prisma generate
+
+            - name: Przygotuj testową bazę SQLite
+              run: npx prisma db push --skip-generate
+
+            - name: Seed bazy (produkty + preco)
+              run: npm run prisma:seed
+
+            - name: Setup Chromium (Playwright)
+              run: npx playwright install --with-deps chromium
+
+            - name: Start serwera :3000 w tle
+              run: |
+                  npm run build
+                  PORT=3000 NODE_ENV=test DATABASE_URL='file:./test-excel.sqlite?connection_limit=1&busy_timeout=30000' nohup node dist/server.js > excel-gates-server.log 2>&1 &
+                  echo $! > /tmp/excel-gates-server.pid
+
+            - name: Czekaj na /health/ready (brak serwera = FAIL)
+              run: |
+                  for i in $(seq 1 30); do
+                    if curl -sf http://localhost:3000/health/ready >/dev/null 2>&1; then
+                      echo "[OK] Serwer gotowy (proba $i)"
+                      exit 0
+                    fi
+                    sleep 2
+                  done
+                  echo "[BLOCKED] Serwer nie wystartowal po 60 s — excel-gates FAIL (nie SKIP)."
+                  tail -n 50 excel-gates-server.log || true
+                  exit 1
+
+            - name: Parity OFF vs ON (rozjazd = FAIL)
+              run: npm run test:parity
+
+            - name: Golden DOM (BEZ --update)
+              run: node tests/playwright/excelDomGolden.cjs
+
+            - name: Align empty-row (BASE :3000)
+              env:
+                  BASE_URL: 'http://localhost:3000'
+              run: npm run test:alignment
+
+            - name: Zatrzymaj serwer
+              if: always()
+              run: kill "$(cat /tmp/excel-gates-server.pid)" || true
+
+            - name: Upload Excel forensics
+              if: always()
+              uses: actions/upload-artifact@v4
+              with:
+                  name: excel-gates-forensics
+                  path: |
+                      docs/plans/parity-excel-virtual-600.json
+                      docs/plans/golden-excel-dom-1200.json
+                      excel-gates-server.log
+                  if-no-files-found: warn
+                  retention-days: 30
+
     axe-a11y:
         # P1.7: BLOCKING dla critical/serious (spec filtruje tylko te impakty;
         # minor/moderate nie failują). Extended E2E celowo advisory (continue-on-error).
