@@ -226,3 +226,45 @@ Scope: dopisane na koncu, historia E-001..E-015, E-005a, E-100..E-106, E-200..E-
 - DIFF: git diff -- docs/plans/_active-evidence.md.
 - COMMIT: brak, zadanie mowi nie commituj.
 - VERIFIED: NO (czeka na jeden PR A + dedup + E-half + artefakty bramki).
+
+## CI FAIL E2E - spojnosc nazwy aplikacji (2026-10-15, BUILD MODE diagnoza CI, docs-only, zero kodu)
+
+Scope: dopisane na koncu, historia E-001..E-015, E-005a, E-100..E-106, E-200..E-211, E-107, E-108, E-109, E-110 nietknieta. Nowe ID E-111, rozlaczne. Tylko ten plik docs. Nie dotyka kodu prod, harnessow, .env ani DB. Bez commita, bez pusha.
+
+## Ledger E-111
+
+| ID     | Twierdzenie                                                                                                                                  | Dowod                                                                                                                      | Status     |
+| ------ | -------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- | ---------- |
+| E-111a | Symptom: CI FAIL E2E-spojnosc nazwy aplikacji na commicie e66f7af; bilans 1 FAIL / 13 PASS / 2 skipped; job FAIL po 2m                       | zgloszenie sesji 2026-10-15 (commit e66f7af); brak logu CI w repo w tym dopisku; do weryfikacji zakladka Checks i log joba | HYPOTHESIS |
+| E-111b | Zamrozone: 13 jobow zielonych, w tym Test / Typecheck / Lint / Load / Smoke / Axe / Migrate                                                  | zgloszenie sesji 2026-10-15; brak artefaktu logu w tym dopisku; do potwierdzenia lista jobow z runa e66f7af                | HYPOTHESIS |
+| E-111c | Hipoteza H-flaky: FAIL jednorazowy albo timeout albo runner, do weryfikacji re-run joba bez zmian kodu                                       | brak re-runa w sesji docs-only; krok P2 planu                                                                              | HYPOTHESIS |
+| E-111d | Hipoteza H-mismatch: rozjazd nazwy aplikacji (APP_NAME vs title vs cache-bust vs docs), FAIL deterministyczny, do weryfikacji logiem asercji | brak logu asercji w sesji; krok P1 planu                                                                                   | HYPOTHESIS |
+| E-111e | Hipoteza H-infra: srodowisko CI (artefakt albo cache albo serwis), do weryfikacji logiem setup plus re-run na czysto                         | brak logu setup w sesji; krok P1-P2 planu                                                                                  | HYPOTHESIS |
+| E-111f | Plan: P1 repro lokalne, P2 logi, P3 fix albo retest; bez zmiany statusu E-111a..E-111e bez dowodu                                            | decyzja sesji 2026-10-15; brak runtime w tym dopisku (docs-only)                                                           | HYPOTHESIS |
+
+## Plan P1-P3 (kolejnosc, read-first, zero kodu tym dopiskiem)
+
+1. P1 repro lokalne: wyciagnac nazwe kroku plus asercje z workflow E2E, odpalic ten sam test lokalnie na HEAD e66f7af, zapisac PASS albo FAIL plus komunikat asercji.
+2. P2 logi: pobrac log joba FAIL (2m) plus liste 13 PASS i 2 skipped z runa e66f7af; rozstrzygnac H-flaky (zielony re-run) vs H-mismatch (ta sama asercja lokalnie) vs H-infra (blad setup albo runner).
+3. P3 fix albo retest: przy H-mismatch minimalny fix nazwy plus version:check plus validate; przy H-flaky albo H-infra sam re-run; dopisac wynik jako E-111g (VERIFIED albo REJECTED per hipoteza).
+   Bez P1-P3 brak zmiany statusu E-111a..E-111e z HYPOTHESIS na VERIFIED albo REJECTED.
+
+## Checkpoint E-111
+
+- CLAIM: dopisek E-111 append-only, historia nietknieta, kod plus harnessy plus .env plus DB nietkniete tym dopiskiem.
+- EVIDENCE: ta sekcja E-111a..E-111f; commit e66f7af plus bilans 1/13/2 plus job 2m ze zgloszenia sesji 2026-10-15 (bez logu CI w repo).
+- REPRODUCTION: odczyt docs/plans/_active-evidence.md koniec (E-110, 228 linii); brak runtime w tym dopisku (docs-only).
+- BEFORE: koniec E-110; kod plus harnessy plus .env plus DB bez zmian.
+- AFTER: tylko docs/plans/_active-evidence.md plus ta sekcja; kod plus harnessy plus .env plus DB bez zmian tym dopiskiem.
+- CHANGE: append-only, E-111 6x HYPOTHESIS (symptom plus zamrozone plus 3 hipotezy plus plan).
+- TESTS: brak runtime w docs; P1-P3 czeka (repro lokalne, logi, fix albo retest plus E-111g).
+- DIFF: git diff -- docs/plans/_active-evidence.md.
+- COMMIT: brak, zadanie mowi nie commituj.
+- VERIFIED: NO (czeka na log joba FAIL plus re-run plus E-111g).
+
+## E-111g FIX VERIFIED (2026-10-15, BUILD MODE)
+
+| ID     | Twierdzenie                                                                                                                                                      | Dowod                                                                                           | Status   |
+| ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- | -------- |
+| E-111g | Root cause: harness fallback anim123456 odrzucany przez guard leaked-secret (auth.ts:366-374); CI job e2e-appname bez TEST_ADMIN_PASSWORD = deterministyczny 401 | repro lokalne: FATAL Login failed 401 bez env; PASS T1-T6 z TEST_ADMIN_PASSWORD=test-admin-pass | VERIFIED |
+| E-111h | Fix: TEST_ADMIN_PASSWORD + DEFAULT_ADMIN_PASSWORD = test-admin-pass w jobie e2e-appname (wzorzec z 3 innych jobow CI)                                            | .github/workflows/ci.yml e2e-appname env; brak zwiazku z e66f7af (diff 0 w powierzchni checka)  | VERIFIED |
