@@ -1,0 +1,95 @@
+# Excel throttle-x4 - parity + bench + golden pod CPU 4x slowdown (advisory, nie blokuje).
+# Osobny workflow jak load-nightly: brak needs, wynik nie wplywa na CI/CD Pipeline.
+# Uruchomienia: nightly (cron) + recznie (workflow_dispatch).
+# 5k-throttle ~8 min, timeout 30 starcza z zapasem.
+
+name: Excel throttle-x4 nightly
+
+on:
+    workflow_dispatch:
+    schedule:
+        - cron: 0 3 * * *
+
+jobs:
+    excel-throttle-x4:
+        name: Excel throttle-x4 (parity + bench + golden, advisory)
+        runs-on: ubuntu-latest
+        timeout-minutes: 30
+        env:
+            DATABASE_URL: file:./test-throttle.sqlite?connection_limit=1&busy_timeout=30000
+            TEST_ADMIN_PASSWORD: test-admin-pass
+            DEFAULT_ADMIN_PASSWORD: test-admin-pass
+            PORT: 3000
+        steps:
+            - uses: actions/checkout@v7
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v7
+              with:
+                  node-version: 22
+                  cache: npm
+
+            - name: Install dependencies
+              run: npm ci
+
+            - name: Generate Prisma client
+              run: npx prisma generate
+
+            - name: Przygotuj testowa baze SQLite
+              run: npx prisma db push --skip-generate
+
+            - name: Seed bazy (produkty + preco)
+              run: npm run prisma:seed
+
+            - name: Setup Chromium (Playwright)
+              run: npx playwright install --with-deps chromium
+
+            - name: Start serwera :3000 w tle
+              run: |
+                  npm run build
+                  PORT=3000 NODE_ENV=test DATABASE_URL=file:./test-throttle.sqlite?connection_limit=1&busy_timeout=30000 nohup node dist/server.js > excel-throttle-server.log 2>&1 &
+                  echo $! > /tmp/excel-throttle-server.pid
+
+            - name: Czekaj na /health/ready (brak serwera = FAIL)
+              run: |
+                  for i in $(seq 1 30); do
+                    if curl -sf http://localhost:3000/health/ready >/dev/null 2>&1; then
+                      echo Serwer gotowy, proba $i
+                      exit 0
+                    fi
+                    sleep 2
+                  done
+                  echo Serwer nie wystartowal po 60 s, excel-throttle-x4 FAIL (nie SKIP).
+                  tail -n 50 excel-throttle-server.log || true
+                  exit 1
+
+            - name: Parity OFF vs ON pod throttle-x4 (rozjazd = FAIL)
+              env:
+                  THROTTLE_X4: 1
+              run: npm run test:parity
+
+            - name: Bench 1k/5k pod throttle-x4
+              env:
+                  THROTTLE_X4: 1
+                  BENCH_NS: 1000,5000
+              run: npm run test:bench
+
+            - name: Golden DOM pod throttle-x4 (BEZ --update)
+              env:
+                  THROTTLE_X4: 1
+              run: npm run test:golden
+
+            - name: Stop serwera
+              if: always()
+              run: kill $(cat /tmp/excel-throttle-server.pid) || true
+
+            - name: Upload throttle-x4 forensics
+              if: always()
+              uses: actions/upload-artifact@v4
+              with:
+                  name: excel-throttle-x4-forensics
+                  path: |
+                      docs/plans/*-throttle-x4.json
+                      excel-throttle-server.log
+                  if-no-files-found: warn
+                  retention-days: 30
