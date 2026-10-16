@@ -157,3 +157,9 @@ P-1.1 heap snapshot przed/po 10 klikach (delta/klik + detached). P-1.2 Performan
 - Paczka 2: F5 + F7 (visible-only + lucide scope, niskie ryzyko).
 - Paczka 3: F2 + F3 + F4 (preview/discount/diagram, nisko-średnie ryzyko).
 - Progi: open 1k <2s, 5k-throttle <6s, DOM ON ~12k. Bramy: `version:check` + `validate`, commit `scripts/commit.mjs`.
+
+## 10. Dyspozycja paczki 3 (2026-10-16, po batchu 6 agentów)
+
+- F3 SHIP: skip `renderDiscountPanel` za overlayem + `_excelListStale`, flush przy close (`_excelCloseOverlay` → `refreshAll`). Panel maluje tylko DOM (save czyta model) — bezpieczne.
+- F2 DROP: save (`excelSaveAll` → `refreshAll` → dispatcher) nie ma własnego full-N recalc (tylko per-row 147/299) — skip zatrułby świeżość błędów w zapisie. Zysk i tak mały (per klik już 0×, batch udowodnił).
+- F4 DROP: tryb dokowany = diagram widoczny (skip = stale widoczne); guard na `offsetParent` nie działa w jsdom (zawsze null); guard na fladze `let` niewidoczny w harnessie vm (empirycznie). Zysk niezmierzony (jeden mały SVG per settled klik, już debounced 90 ms). Wrócić gdy trace P-1.2 pokaże gorąco.

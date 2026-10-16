@@ -516,7 +516,18 @@ function _wellVirtualRenderBody() {
         _wellVirtualRenderBody();
         const counter = document.getElementById('wells-counter');
         if (counter) counter.textContent = '(' + wells.length + ')';
-        if (typeof renderDiscountPanel === 'function') {
+        // F3: panel rabatów za overlayem Excela niewidoczny (sidebar pod modalem) —
+        // skip paint + wspólna flaga _excelListStale, flush przy close
+        // (_excelCloseOverlay → renderWellsList, closeExcelTableModal → refreshAll).
+        if (
+            typeof document !== 'undefined' &&
+            document.getElementById('excel-table-overlay') &&
+            typeof _excelListStale !== 'undefined'
+        ) {
+            try {
+                _excelListStale = true;
+            } catch (_eStale) {}
+        } else if (typeof renderDiscountPanel === 'function') {
             try {
                 renderDiscountPanel();
             } catch (_e) {}
