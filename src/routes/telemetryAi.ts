@@ -18,6 +18,7 @@ import {
     type TelemetryConfigInput,
     type TelemetryEventInputType,
     type TelemetryVersionInput,
+    telemetryAcceptanceBatchSchema,
     telemetryAcceptanceFullSchema,
     telemetryConfigBatchSchema,
     telemetryConfigSchema,
@@ -131,6 +132,87 @@ router.post('/ai/config-batch', requireAuth, TELEMETRY_WRITE_LIMITER, async (req
         const message = e instanceof Error ? e.message : String(e);
         logger.error('Telemetry', `Błąd zapisu ai/config-batch: ${message}`);
         return res.status(500).json({ error: 'Nie udało się zapisać batch telemetry' });
+    }
+});
+
+/**
+ * POST /api/telemetry/ai/acceptance-batch
+ * Batchowy acceptance: 1 request + 1 transakcja zamiast N× /ai/acceptance-full.
+ * Semantyka per-item jak single (id → repetycja → latest per well, MANUAL-capture,
+ * etykiety). Pozycje w odpowiedzi odnoszą się do indeksów wejściowych `items`.
+ */
+router.post('/ai/acceptance-batch', requireAuth, TELEMETRY_WRITE_LIMITER, async (req, res) => {
+    const authReq = req as AuthenticatedRequest;
+    const userId = authReq.user?.id;
+
+    const parse = telemetryAcceptanceBatchSchema.safeParse(req.body);
+    if (!parse.success) {
+        logger.warn('Telemetry', `Błędny payload ai/acceptance-batch: ${parse.error.message}`);
+        return res.status(400).json({
+            error: 'Nieprawidłowy payload batch',
+            details: parse.error.issues
+        });
+    }
+
+    try {
+        const items = parse.data.items;
+        // Ownership jak single: wiersz po telemetryId/wellId + oferta (cache per distinct).
+        const offerOk = new Map<string, boolean>();
+        const allowed: { item: TelemetryAcceptanceFullInput; index: number }[] = [];
+        const rejected: { index: number; wellId?: string; reason: string }[] = [];
+        for (let i = 0; i < items.length; i++) {
+            const data = items[i];
+            let ok = await assertTelemetryIdWritable(authReq.user, data.telemetryId, data.wellId);
+            let offerId = data.offerId;
+            if (ok) {
+                if (!offerId) {
+                    ok = true;
+                } else if (offerOk.has(offerId)) {
+                    ok = offerOk.get(offerId) as boolean;
+                } else {
+                    ok = await assertOfferReadable(authReq.user, offerId);
+                    offerOk.set(offerId, ok);
+                }
+            }
+            if (!ok) {
+                rejected.push({ index: i, wellId: data.wellId, reason: 'FORBIDDEN' });
+            } else {
+                allowed.push({ item: data, index: i });
+            }
+        }
+        if (allowed.length === 0) {
+            return res.json({
+                updated: [],
+                duplicates: [],
+                manual: [],
+                eventsCreated: 0,
+                rejected
+            });
+        }
+        const r = await telemetryService.recordAcceptances(
+            allowed.map((a) => a.item),
+            userId
+        );
+        return res.json({
+            updated: r.updated.map((u) => ({
+                index: allowed[u.index].index,
+                telemetryId: u.telemetryId
+            })),
+            duplicates: r.duplicates.map((d) => ({
+                index: allowed[d.index].index,
+                telemetryId: d.telemetryId
+            })),
+            manual: r.manual.map((m) => ({
+                index: allowed[m.index].index,
+                telemetryId: m.telemetryId
+            })),
+            eventsCreated: r.eventsCreated,
+            rejected
+        });
+    } catch (e) {
+        const message = e instanceof Error ? e.message : String(e);
+        logger.error('Telemetry', `Błąd zapisu ai/acceptance-batch: ${message}`);
+        return res.status(500).json({ error: 'Nie udało się zapisać batch acceptance' });
     }
 });
 

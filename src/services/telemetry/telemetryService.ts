@@ -18,12 +18,14 @@ import { APP_NAME } from '../../constants/appMeta';
 import { createModuleLock } from '../../middleware/writeLock';
 import prisma from '../../prismaClient';
 import {
+    type TelemetryAcceptanceBatchResponse,
     type TelemetryConfigBatchResponse,
     type TelemetryConfigPayload,
     type TelemetryEventInput,
     type TelemetryRecordResponse,
     type VersionRegistrationInput
 } from './telemetryTypes';
+import type { TelemetryAcceptanceFullInput } from '../../validators/telemetrySchemas';
 
 /* ===== SERWIS GŁÓWNY ===== */
 
@@ -691,6 +693,240 @@ class TelemetryService {
         });
         if (!r.acquired) return { created: false };
         return r.value;
+    }
+
+    /**
+     * Buduje MANUAL payload z acceptance itemu (studnia w pełni ręczna).
+     * Mapowanie 1:1 ze ścieżki single w route (acceptance-full) — zmiana tutaj
+     * wymaga zmiany tam (i odwrotnie); testy pinują oba kształty.
+     */
+    private _buildManualPayload(data: TelemetryAcceptanceFullInput): TelemetryConfigPayload {
+        const snap = (data.configSnapshot ?? {}) as Record<string, unknown>;
+        return {
+            solverSource: 'MANUAL',
+            wasAccepted: true,
+            wasRejected: false,
+            wasModified: false,
+            offerId: data.offerId,
+            wellId: data.wellId,
+            warehouse: data.warehouse,
+            dn: snap.dn != null ? String(snap.dn) : undefined,
+            dennicaHeight: typeof snap.dennicaHeight === 'number' ? snap.dennicaHeight : undefined,
+            ringCount: typeof snap.ringCount === 'number' ? snap.ringCount : undefined,
+            allComponentIds: Array.isArray(snap.allComponentIds)
+                ? (snap.allComponentIds as string[])
+                : undefined,
+            appliedReductions: Array.isArray(snap.appliedReductions)
+                ? (snap.appliedReductions as never[])
+                : undefined,
+            appliedKonus: Array.isArray(snap.appliedKonus)
+                ? (snap.appliedKonus as never[])
+                : undefined,
+            appliedHatches: Array.isArray(snap.appliedHatches)
+                ? (snap.appliedHatches as never[])
+                : undefined,
+            appliedSeals: Array.isArray(snap.appliedSeals)
+                ? (snap.appliedSeals as never[])
+                : undefined,
+            originalConfig: data.originalConfig as never[] | undefined,
+            finalConfig: data.finalConfig as never[] | undefined,
+            transitions: data.transitions as never[] | undefined,
+            selectionReason: 'user_accepted_post_solver',
+            featureSnapshot:
+                typeof snap.featureSnapshot === 'object' && snap.featureSnapshot
+                    ? (snap.featureSnapshot as Record<string, unknown>)
+                    : undefined,
+            labelSnapshot:
+                typeof snap.labelSnapshot === 'object' && snap.labelSnapshot
+                    ? (snap.labelSnapshot as Record<string, unknown>)
+                    : undefined
+        };
+    }
+
+    /**
+     * Batchowy acceptance: 1 lock + 1 transakcja (updateMany grupowane po fladze
+     * z predykatem idempotentnym + createMany eventów) zamiast N× ścieżki single.
+     * Semantyka identyczna: resolve id → repetycja → latest per well; MANUAL-capture
+     * dla nowych studni; etykiety poza tx. MANUAL-e przez recordManualIfAbsent
+     * PO zwolnieniu locka (D-FIX-3: manualLock → recordConfig → this.lock).
+     * Pozycje w odpowiedzi odnoszą się do indeksów wejściowych `items`.
+     */
+    async recordAcceptances(
+        items: TelemetryAcceptanceFullInput[],
+        userId?: string
+    ): Promise<TelemetryAcceptanceBatchResponse> {
+        const now = new Date().toISOString();
+        const updated: { index: number; telemetryId: string }[] = [];
+        const duplicates: { index: number; telemetryId: string }[] = [];
+        const manual: { index: number; telemetryId: string }[] = [];
+        type PendingUpdate = { id: string; accepted: boolean };
+        const updates: PendingUpdate[] = [];
+        type PendingLabel = { id: string; accepted: boolean };
+        const labelSync: PendingLabel[] = [];
+        type EventRow = {
+            id: string;
+            telemetryId: string | null;
+            eventType: string;
+            userId: string | null;
+            wellId: string | null;
+            changeReason: string;
+            createdAt: string;
+        };
+        const eventRows: EventRow[] = [];
+        type ManualPlan = { index: number; payload: TelemetryConfigPayload };
+        const manualPlans: ManualPlan[] = [];
+        const lock = await this.lock.acquireLock();
+        try {
+            // Prefetch: wiersze po id + latest per wellId (2 zapytania zamiast N×3).
+            const ids = [...new Set(items.map((i) => i.telemetryId))];
+            const wellIds = [
+                ...new Set(items.map((i) => i.wellId).filter((w): w is string => !!w))
+            ];
+            const [byIdRows, latestRows] = await Promise.all([
+                prisma.ai_telemetry_logs.findMany({
+                    where: { id: { in: ids } },
+                    select: { id: true, wasAccepted: true }
+                }),
+                wellIds.length > 0
+                    ? prisma.ai_telemetry_logs.findMany({
+                          where: { wellId: { in: wellIds } },
+                          orderBy: { createdAt: 'desc' },
+                          select: { id: true, wellId: true, wasAccepted: true }
+                      })
+                    : []
+            ]);
+            const byId = new Map(byIdRows.map((r) => [r.id, r]));
+            const latestByWell = new Map<string, { id: string; wasAccepted: boolean }>();
+            for (const r of latestRows) {
+                if (r.wellId && !latestByWell.has(r.wellId))
+                    latestByWell.set(r.wellId, { id: r.id, wasAccepted: r.wasAccepted });
+            }
+            const seenManual = new Set<string>();
+
+            items.forEach((data, index) => {
+                const accepted = data.accepted;
+                // Resolve jak single: id → repetycja → latest per well.
+                let target: { id: string; wasAccepted: boolean } | undefined;
+                const row = byId.get(data.telemetryId);
+                if (row) {
+                    target = { id: row.id, wasAccepted: row.wasAccepted };
+                } else if (data.wellId) {
+                    const latest = latestByWell.get(data.wellId);
+                    if (latest) target = latest;
+                }
+                if (target) {
+                    if (target.wasAccepted !== accepted) {
+                        updates.push({ id: target.id, accepted });
+                        updated.push({ index, telemetryId: target.id });
+                    } else {
+                        duplicates.push({ index, telemetryId: target.id });
+                    }
+                    labelSync.push({ id: target.id, accepted });
+                }
+                // Event zawsze (jak single recordEvent po acceptance).
+                eventRows.push({
+                    id: crypto.randomUUID(),
+                    telemetryId: data.telemetryId || null,
+                    eventType: accepted ? 'accept' : 'reject',
+                    userId: userId || null,
+                    wellId: data.wellId || null,
+                    changeReason: accepted ? 'offer_saved_user_accept' : 'offer_rejected',
+                    createdAt: now
+                });
+                // MANUAL-capture jak route: accepted + snapshot + wellId + brak rekordu.
+                if (
+                    data.accepted &&
+                    data.configSnapshot &&
+                    data.wellId &&
+                    !latestByWell.has(data.wellId) &&
+                    !seenManual.has(data.wellId)
+                ) {
+                    seenManual.add(data.wellId);
+                    manualPlans.push({ index, payload: this._buildManualPayload(data) });
+                }
+            });
+
+            await prisma.$transaction(async (tx) => {
+                // Grupuj update po fladze — predykat idempotentny zachowany.
+                for (const acc of [true, false]) {
+                    const accIds = updates.filter((u) => u.accepted === acc).map((u) => u.id);
+                    if (accIds.length === 0) continue;
+                    await tx.ai_telemetry_logs.updateMany({
+                        where: { id: { in: accIds }, wasAccepted: { not: acc } },
+                        data: {
+                            wasAccepted: acc,
+                            wasRejected: !acc,
+                            lastAcceptedAt: acc ? now : null,
+                            lastRejectedAt: !acc ? now : null,
+                            usageCount: { increment: 1 },
+                            lastUsedAt: now
+                        }
+                    });
+                }
+                if (eventRows.length > 0) {
+                    await tx.ai_telemetry_events.createMany({
+                        data: eventRows.map((e) => ({
+                            ...e,
+                            componentId: null,
+                            previousValue: null,
+                            newValue: null,
+                            msSinceConfig: null,
+                            orderInSession: null,
+                            sequenceNo: 0
+                        }))
+                    });
+                }
+            });
+
+            logger.info(
+                'Telemetry',
+                `Zapisano batch acceptance: ${updated.length} update, ` +
+                    `${duplicates.length} duplikatów, ${eventRows.length} eventów, ` +
+                    `${manualPlans.length} MANUAL do capture`
+            );
+
+            // Etykiety poza tx (jak single — błąd nie psuje sukcesu).
+            for (const l of labelSync) {
+                try {
+                    const { featureExtractor } = await import('../ml/FeatureExtractor');
+                    await featureExtractor.updateLabelByTelemetry(
+                        l.id,
+                        l.accepted ? 'ACCEPTED' : 'REJECTED'
+                    );
+                } catch (labelErr) {
+                    logger.error(
+                        'Telemetry',
+                        `Nie udało się zsynchronizować etykiety dla ${l.id}: ${labelErr}`
+                    );
+                }
+            }
+        } catch (e) {
+            const message = e instanceof Error ? e.message : String(e);
+            logger.error('Telemetry', `Błąd zapisu batch acceptance: ${message}`);
+            throw e;
+        } finally {
+            lock?.release();
+        }
+
+        // MANUAL-capture PO zwolnieniu locka batcha (D-FIX-3: recordManualIfAbsent
+        // bierze manualLock i woła recordConfig z this.lock — zagnieżdżenie
+        // pod trzymanym lockiem to self-deadlock/timeout).
+        for (const m of manualPlans) {
+            try {
+                const r = await this.recordManualIfAbsent(
+                    m.payload.wellId as string,
+                    m.payload,
+                    userId
+                );
+                if (r.created && r.telemetryId) {
+                    manual.push({ index: m.index, telemetryId: r.telemetryId });
+                }
+            } catch (manualErr) {
+                logger.error('Telemetry', `Batch acceptance MANUAL skip: ${manualErr}`);
+            }
+        }
+
+        return { updated, duplicates, manual, eventsCreated: eventRows.length };
     }
 
     /**

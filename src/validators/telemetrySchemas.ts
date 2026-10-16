@@ -224,3 +224,13 @@ export const telemetryAcceptanceFullSchema = z.object({
 });
 
 export type TelemetryAcceptanceFullInput = z.infer<typeof telemetryAcceptanceFullSchema>;
+
+// =============================================================================
+// Batch acceptance — 1 POST zamiast N× /ai/acceptance-full (zapis oferty)
+// =============================================================================
+
+export const telemetryAcceptanceBatchSchema = z.object({
+    items: z.array(telemetryAcceptanceFullSchema).min(1).max(50)
+});
+
+export type TelemetryAcceptanceBatchInput = z.infer<typeof telemetryAcceptanceBatchSchema>;

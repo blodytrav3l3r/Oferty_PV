@@ -768,6 +768,98 @@
         }
     };
 
+    /* ===== BATCH ACCEPTANCE (1 POST zamiast N) ===== */
+    // Jak config-batch: sonda 404 → fallback na single, flaga w sessionStorage.
+    // Odpowiedź batcha nie niesie łańcucha (acceptance zwraca {success}),
+    // więc mapowanie per-index niepotrzebne — liczy się dostarczenie.
+    const ACCEPTANCE_BATCH_URL = '/api/telemetry/ai/acceptance-batch';
+    let acceptanceBatchSupport = 0; // 0 nieznany, 1 tak, 2 nie (stary BE)
+
+    function acceptanceBatchSupported() {
+        if (acceptanceBatchSupport === 1) return Promise.resolve(true);
+        if (acceptanceBatchSupport === 2) return Promise.resolve(false);
+        try {
+            if (
+                typeof sessionStorage !== 'undefined' &&
+                sessionStorage.getItem('telemetry_acceptbatch_off') === '1'
+            ) {
+                acceptanceBatchSupport = 2;
+                return Promise.resolve(false);
+            }
+        } catch (_e) {}
+        if (typeof fetch !== 'function') return Promise.resolve(false);
+        try {
+            const authPart = typeof authHeaders === 'function' ? authHeaders() : {};
+            return fetch(ACCEPTANCE_BATCH_URL, {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: Object.assign({ 'Content-Type': 'application/json' }, authPart),
+                body: '{"items":[]}'
+            }).then(
+                function (res) {
+                    const ok = !!res && res.status !== 404;
+                    if (!ok) {
+                        acceptanceBatchSupport = 2;
+                        try {
+                            if (typeof sessionStorage !== 'undefined')
+                                sessionStorage.setItem('telemetry_acceptbatch_off', '1');
+                        } catch (_e2) {}
+                    } else {
+                        acceptanceBatchSupport = 1;
+                    }
+                    return ok;
+                },
+                function () {
+                    return false;
+                }
+            );
+        } catch (_e) {
+            return Promise.resolve(false);
+        }
+    }
+
+    function acceptanceSingleFallback(items) {
+        (items || []).forEach(function (options) {
+            try {
+                if (window.telemetryRecordAcceptanceFull)
+                    window.telemetryRecordAcceptanceFull(options);
+            } catch (_e) {}
+        });
+    }
+
+    /**
+     * Batchowy acceptance (1 POST zamiast N).
+     * @param {Array} items - tablica opcji jak do telemetryRecordAcceptanceFull
+     */
+    window.telemetryRecordAcceptanceFullBatch = function (items) {
+        if (!Array.isArray(items) || items.length === 0) return;
+        const payloads = [];
+        for (let i = 0; i < items.length; i++) {
+            const options = items[i];
+            if (!options || !options.telemetryId) continue;
+            payloads.push({
+                telemetryId: options.telemetryId,
+                accepted: !!options.accepted,
+                offerId: options.offerId || undefined,
+                wellId: options.wellId || undefined,
+                warehouse: options.warehouse || undefined,
+                configSnapshot: options.configSnapshot || undefined
+            });
+        }
+        if (payloads.length === 0) return;
+        acceptanceBatchSupported().then(function (ok) {
+            if (!ok) {
+                acceptanceSingleFallback(items);
+                return;
+            }
+            safeFetch(ACCEPTANCE_BATCH_URL, { items: payloads }).then(function (res) {
+                if (!res || (!Array.isArray(res.updated) && !Array.isArray(res.duplicates))) {
+                    acceptanceSingleFallback(items);
+                }
+            });
+        });
+    };
+
     /**
      * Rejestruje wersję solvera (raz na sesję — dedup, żeby nie spamować 429).
      */

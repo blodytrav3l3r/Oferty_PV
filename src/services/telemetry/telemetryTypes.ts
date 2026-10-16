@@ -194,6 +194,20 @@ export interface TelemetryConfigBatchResponse {
     duplicates: TelemetryConfigBatchItemResult[];
 }
 
+/** Wynik pojedynczego itemu w batchu acceptance (pozycja = indeks wejścia) */
+export interface TelemetryAcceptanceBatchItemResult {
+    index: number;
+    telemetryId: string;
+}
+
+/** Odpowiedź API z batchowego zapisu acceptance */
+export interface TelemetryAcceptanceBatchResponse {
+    updated: TelemetryAcceptanceBatchItemResult[];
+    duplicates: TelemetryAcceptanceBatchItemResult[];
+    manual: TelemetryAcceptanceBatchItemResult[];
+    eventsCreated: number;
+}
+
 /** Odpowiedź API z list telemetry */
 export interface TelemetryListResponse<T = unknown> {
     items: T[];

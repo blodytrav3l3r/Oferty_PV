@@ -222,26 +222,39 @@ async function saveOfferStudnie() {
                 });
             });
         }
+        // Batch: 1 POST acceptance zamiast N (fallback na single w bridge).
+        const acceptanceBatch = [];
         acceptanceSample.forEach(function (w) {
             // Wyślij acceptance-full do backendu tylko dla studni zaakceptowanych
             // (AUTO/AI bez modyfikacji). Dla MANUAL pomijamy — patrz komentarz wyżej.
-            if (typeof window.telemetryRecordAcceptanceFull === 'function') {
-                try {
-                    window.telemetryRecordAcceptanceFull({
-                        telemetryId: w.id || 'well_' + Date.now(),
-                        accepted: true,
-                        offerId: editingOfferIdStudnie,
-                        wellId: w.id,
-                        warehouse: w.magazyn,
-                        configSnapshot: {
-                            dn: w.dn,
-                            ringCount: (w.config || []).length,
-                            warehouse: w.magazyn
-                        }
-                    });
-                } catch (_e) {}
-            }
+            acceptanceBatch.push({
+                telemetryId: w.id || 'well_' + Date.now(),
+                accepted: true,
+                offerId: editingOfferIdStudnie,
+                wellId: w.id,
+                warehouse: w.magazyn,
+                configSnapshot: {
+                    dn: w.dn,
+                    ringCount: (w.config || []).length,
+                    warehouse: w.magazyn
+                }
+            });
         });
+        if (typeof window.telemetryRecordAcceptanceFullBatch === 'function') {
+            try {
+                window.telemetryRecordAcceptanceFullBatch(acceptanceBatch);
+            } catch (_e) {
+                // silent
+            }
+        } else if (typeof window.telemetryRecordAcceptanceFull === 'function') {
+            acceptanceBatch.forEach(function (opts) {
+                try {
+                    window.telemetryRecordAcceptanceFull(opts);
+                } catch (_e) {
+                    // silent
+                }
+            });
+        }
 
         return true;
     } catch (err) {
