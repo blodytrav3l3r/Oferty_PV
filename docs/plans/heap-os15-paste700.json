@@ -1,0 +1,27 @@
+{
+    "offer": "OS/000015/SA/2026",
+    "mode": "paste700-real",
+    "steps": [
+        {
+            "label": "po-paste",
+            "heapMB": 43.6
+        },
+        {
+            "label": "po-GC",
+            "heapMB": 19
+        }
+    ],
+    "errors": [],
+    "paste": {
+        "dispatched": true,
+        "ms": 13227,
+        "heapDeltaMB": 11,
+        "done": "model-ok"
+    },
+    "names": {
+        "w0": "T1",
+        "w699": "T700",
+        "w700": "s701"
+    },
+    "ok": true
+}

@@ -1,0 +1,79 @@
+{
+    "offer": "OS/000015/SA/2026",
+    "wells": 920,
+    "steps": [
+        {
+            "label": "1-po-wstrzyknieciu",
+            "heapUsed": 22764270,
+            "heapTotal": 26864910,
+            "nodes": 3990,
+            "excelRows": 0,
+            "wellsLen": 920,
+            "virtual": true,
+            "lsVirtual": null
+        },
+        {
+            "label": "2-modal-otwarty",
+            "heapUsed": 26778209,
+            "heapTotal": 44985157,
+            "nodes": 14080,
+            "excelRows": 68,
+            "wellsLen": 920,
+            "virtual": true,
+            "lsVirtual": null
+        },
+        {
+            "label": "3-po-10-klikach",
+            "heapUsed": 47136742,
+            "heapTotal": 64113390,
+            "nodes": 14084,
+            "excelRows": 68,
+            "wellsLen": 920,
+            "virtual": true,
+            "lsVirtual": null
+        },
+        {
+            "label": "4-scroll-dol",
+            "heapUsed": 55137863,
+            "heapTotal": 69186431,
+            "nodes": 13960,
+            "excelRows": 67,
+            "wellsLen": 920,
+            "virtual": true,
+            "lsVirtual": null
+        },
+        {
+            "label": "5-scroll-gora",
+            "heapUsed": 36642104,
+            "heapTotal": 96538848,
+            "nodes": 13943,
+            "excelRows": 67,
+            "wellsLen": 920,
+            "virtual": true,
+            "lsVirtual": null
+        },
+        {
+            "label": "6-po-20-klikach-scroll",
+            "heapUsed": 90783963,
+            "heapTotal": 139769331,
+            "nodes": 13960,
+            "excelRows": 67,
+            "wellsLen": 920,
+            "virtual": true,
+            "lsVirtual": null
+        },
+        {
+            "label": "7-po-GC",
+            "heapUsed": 21251391,
+            "heapTotal": 21850087,
+            "nodes": 13970,
+            "excelRows": 67,
+            "wellsLen": 920,
+            "virtual": true,
+            "lsVirtual": null
+        }
+    ],
+    "errors": [],
+    "clickMs": [708, 714, 728, 711, 707, 723, 716, 715, 713, 728],
+    "ok": true
+}
