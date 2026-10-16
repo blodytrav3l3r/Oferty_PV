@@ -632,6 +632,16 @@ function _excelUpdateHeaderProdCodes() {
             ? wells[currentWellIndex]
             : null;
     const well = curWell || tabWell;
+    // F8: lokalna mapa id→produkt (first-match jak .find) — 1× O(P) zamiast O(K×P).
+    // Celowo lokalna per wywołanie: zawsze świeża, zero shared state; semantyka
+    // identyczna (===, pierwszy wygrywa; surowy _prod.price jak dotąd — bez zmian cen).
+    const _prodById = new Map();
+    if (typeof studnieProducts !== 'undefined' && Array.isArray(studnieProducts)) {
+        for (let _pi = 0; _pi < studnieProducts.length; _pi++) {
+            const _pp = studnieProducts[_pi];
+            if (_pp && !_prodById.has(_pp.id)) _prodById.set(_pp.id, _pp);
+        }
+    }
     codes.forEach(function (span, idx) {
         const isPerProduct = span.getAttribute('data-per-product') === '1';
         const ct = span.getAttribute('data-ct');
@@ -643,11 +653,7 @@ function _excelUpdateHeaderProdCodes() {
             if (prices && prices[idx]) {
                 const ppid = span.textContent && span.textContent.trim();
                 if (ppid) {
-                    const _prod = (
-                        typeof studnieProducts !== 'undefined' ? studnieProducts : []
-                    ).find(function (pr) {
-                        return pr.id === ppid;
-                    });
+                    const _prod = _prodById.get(ppid);
                     if (_prod && _prod.price) {
                         const _fmt =
                             typeof fmtInt === 'function'

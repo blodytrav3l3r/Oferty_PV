@@ -199,6 +199,11 @@ window._wellUIClearSumCache = _wellUIClearSumCache;
 // G2: legacy pod dwoma nazwami — window.renderWellsList przejmuje wellVirtual.js
 // (jeden delegat, dispatcher z fallbackiem); bezpośrednie wołania legacy używają renderWellsListLegacy.
 window.renderWellsListLegacy = window.renderWellsList = function renderWellsList() {
+    // F1-net: jak w dispatcherze virtual — render listy unieważnia cache kafelków.
+    try {
+        if (typeof window !== 'undefined' && typeof window._wellUIClearSumCache === 'function')
+            window._wellUIClearSumCache();
+    } catch (_eSum) {}
     const container = document.getElementById('wells-list');
     if (!container) return;
 

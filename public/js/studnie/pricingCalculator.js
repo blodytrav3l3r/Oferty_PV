@@ -36,10 +36,9 @@ function calculateOfferPricing(wells, transportKm, transportRate, transportMode)
         totalWeight += stats.weight;
     });
 
-    let globalWeightForTransport = 0;
-    wells.forEach(function (w) {
-        globalWeightForTransport += _calcStats(w).weight;
-    });
+    // F8: drugi pass wag skasowany — ta sama suma w tej samej kolejności co wyżej
+    // (brak mutacji pomiędzy), więc bit-identyczna; _calcStats determinystyczny per tick.
+    const globalWeightForTransport = totalWeight;
     let totalTransportCostForOffer = 0;
     if (transportKm > 0 && transportRate > 0) {
         const totalTransportsCount =

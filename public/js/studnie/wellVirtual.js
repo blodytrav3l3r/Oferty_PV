@@ -503,6 +503,13 @@ function _wellVirtualRenderBody() {
     // G2: jeden delegat — virtual gdy włączony, inaczej legacy z wellUI.js.
     // IIFE instaluje dispatcher tylko gdy enabled (early-return wyżej zostawia legacy).
     window.renderWellsList = function () {
+        // F1-net: render listy = potencjalna zmiana treści — unieważnij cache kafelków
+        // (następny updateSummary policzy slow path). Scroll-slice woła
+        // _wellVirtualRenderBody wprost, więc fast path per klik nietknięty.
+        try {
+            if (typeof window !== 'undefined' && typeof window._wellUIClearSumCache === 'function')
+                window._wellUIClearSumCache();
+        } catch (_eSum) {}
         if (!_wellVirtualEnabled && typeof window.renderWellsListLegacy === 'function') {
             return window.renderWellsListLegacy.apply(this, arguments);
         }
