@@ -19,10 +19,12 @@ import {
     type TelemetryEventInputType,
     type TelemetryVersionInput,
     telemetryAcceptanceFullSchema,
+    telemetryConfigBatchSchema,
     telemetryConfigSchema,
     telemetryEventSchema,
     telemetryVersionSchema
 } from '../validators/telemetrySchemas';
+import type { TelemetryConfigPayload } from '../services/telemetry/telemetryTypes';
 
 const router = express.Router();
 
@@ -58,6 +60,77 @@ router.post('/ai/config', requireAuth, TELEMETRY_WRITE_LIMITER, async (req, res)
         const message = e instanceof Error ? e.message : String(e);
         logger.error('Telemetry', `Błąd zapisu ai/config: ${message}`);
         return res.status(500).json({ error: 'Nie udało się zapisać telemetry' });
+    }
+});
+
+/**
+ * POST /api/telemetry/ai/config-batch
+ * Batchowy zapis konfiguracji: 1 request + 1 transakcja zamiast N× /ai/config.
+ * Semantyka per-item jak single (dedup, usageCount, etykiety); odpowiedź
+ * niesie telemetryId per indeks wejściowy (łańcuch sugestia→decyzja na FE).
+ */
+router.post('/ai/config-batch', requireAuth, TELEMETRY_WRITE_LIMITER, async (req, res) => {
+    const authReq = req as AuthenticatedRequest;
+    const userId = authReq.user?.id;
+
+    const parse = telemetryConfigBatchSchema.safeParse(req.body);
+    if (!parse.success) {
+        logger.warn('Telemetry', `Błędny payload ai/config-batch: ${parse.error.message}`);
+        return res.status(400).json({
+            error: 'Nieprawidłowy payload batch',
+            details: parse.error.issues
+        });
+    }
+
+    try {
+        const items = parse.data.items as TelemetryConfigInput[];
+        // Ownership raz per distinct offerId (jak single, mniej zapytań).
+        // Nieznane offerId (draft) przepuszczamy jak assertOfferReadable.
+        const offerOk = new Map<string, boolean>();
+        const allowed: { payload: TelemetryConfigPayload; index: number }[] = [];
+        const rejected: { index: number; wellId?: string; reason: string }[] = [];
+        for (let i = 0; i < items.length; i++) {
+            const offerId = items[i].offerId;
+            let ok: boolean;
+            if (!offerId) {
+                ok = true;
+            } else if (offerOk.has(offerId)) {
+                ok = offerOk.get(offerId) as boolean;
+            } else {
+                ok = await assertOfferReadable(authReq.user, offerId);
+                offerOk.set(offerId, ok);
+            }
+            if (!ok) {
+                rejected.push({ index: i, wellId: items[i].wellId, reason: 'FORBIDDEN' });
+            } else {
+                allowed.push({
+                    payload: items[i] as unknown as TelemetryConfigPayload,
+                    index: i
+                });
+            }
+        }
+        if (allowed.length === 0) {
+            return res.json({ created: [], duplicates: [], rejected });
+        }
+        const r = await telemetryService.recordConfigs(
+            allowed.map((a) => a.payload),
+            userId
+        );
+        return res.json({
+            created: r.created.map((c) => ({
+                index: allowed[c.index].index,
+                telemetryId: c.telemetryId
+            })),
+            duplicates: r.duplicates.map((d) => ({
+                index: allowed[d.index].index,
+                telemetryId: d.telemetryId
+            })),
+            rejected
+        });
+    } catch (e) {
+        const message = e instanceof Error ? e.message : String(e);
+        logger.error('Telemetry', `Błąd zapisu ai/config-batch: ${message}`);
+        return res.status(500).json({ error: 'Nie udało się zapisać batch telemetry' });
     }
 });
 

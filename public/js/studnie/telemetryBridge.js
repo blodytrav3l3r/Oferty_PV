@@ -352,8 +352,15 @@
      * @param {boolean} [options.wasAccepted] - czy konfiguracja została zaakceptowana (default false)
      * @param {string} [options.overrideReason] - powód ręcznej zmiany (override)
      */
-    window.telemetryRecordConfig = function (options) {
-        if (!options || !options.well) return;
+    /**
+     * Buduje payload /ai/config z opcji (null przy braku danych lub trafieniu
+     * sesyjnego dedupa AUTO_JS). Współdzielony przez single i batch —
+     * jeden kształt payloadu, jedna deduplikacja.
+     * @param {Object} options (jak telemetryRecordConfig)
+     * @returns {Object|null} payload gotowy do POST
+     */
+    function buildConfigPayload(options) {
+        if (!options || !options.well) return null;
         const well = options.well;
         const configItems = options.configItems || [];
 
@@ -432,7 +439,7 @@
             // Deduplikacja AUTO_JS: pomiń powtórkę identycznej treści w bieżącej sesji.
             // MANUAL/AI_SUGGEST zawsze przechodzą — to sygnały decyzji użytkownika.
             if (solverSource === 'AUTO_JS' && !shouldSendAutoJs(well, configItems)) {
-                return;
+                return null;
             }
 
             const wellHeight = safeHeightMm(well.rzednaWlazu, well.rzednaDna);
@@ -540,21 +547,181 @@
                 payload.parentConfigId = well._lastAutoTelemetryId;
             }
 
+            return payload;
+        } catch (_e) {
+            /* pasywne — ignore */
+            return null;
+        }
+    }
+
+    window.telemetryRecordConfig = function (options) {
+        if (!options || !options.well) return;
+        let payload = null;
+        try {
+            payload = buildConfigPayload(options);
+        } catch (_e) {
+            return;
+        }
+        if (!payload) return;
+        try {
+            const src = normalizeSolverSource(options.solverSource);
             // Sugestia AUTO: przechwyć telemetryId z odpowiedzi, by późniejsze
             // decyzje (edycja/akceptacja) mogły wskazać ten właśnie rekord.
-            if (solverSource !== 'MANUAL') {
+            if (src !== 'MANUAL') {
                 safeFetch(TELEMETRY_URL, payload).then(function (res) {
                     if (res && res.telemetryId) {
-                        well._lastAutoTelemetryId = res.telemetryId;
+                        options.well._lastAutoTelemetryId = res.telemetryId;
                     }
                 });
             } else {
                 // Wyślij pasywnie (bez oczekiwania na response)
                 safeFetch(TELEMETRY_URL, payload);
             }
-        } catch (_e) {
+        } catch (_e2) {
             /* pasywne — ignore */
         }
+    };
+
+    /* ===== BATCH CONFIG (1 POST zamiast N) ===== */
+    // Fire-and-forget jak single; przy braku endpointu (stary BE) lub błędzie
+    // fallback na pojedyncze wysyłki przez istniejącą kolejkę.
+    const CONFIG_BATCH_URL = '/api/telemetry/ai/config-batch';
+    // Cap 50 należy do callera (offerSave slice); tu tylko guard rozmiaru 413.
+    const CONFIG_BATCH_SIZE_GUARD = 900000;
+    const CONFIG_BATCH_CHUNK = 25;
+    // 0 = nieznany, 1 = wspierany, 2 = brak (stary BE, flaga też w sessionStorage).
+    let configBatchSupport = 0;
+
+    function configBatchSupported() {
+        if (configBatchSupport === 1) return Promise.resolve(true);
+        if (configBatchSupport === 2) return Promise.resolve(false);
+        try {
+            if (
+                typeof sessionStorage !== 'undefined' &&
+                sessionStorage.getItem('telemetry_configbatch_off') === '1'
+            ) {
+                configBatchSupport = 2;
+                return Promise.resolve(false);
+            }
+        } catch (_e) {}
+        if (typeof fetch !== 'function') return Promise.resolve(false);
+        try {
+            const authPart = typeof authHeaders === 'function' ? authHeaders() : {};
+            // Sonda: puste items → 400 gdy endpoint istnieje, 404 na starym BE.
+            // Jeden warn 400/sesję po stronie serwera zamiast N requestów.
+            return fetch(CONFIG_BATCH_URL, {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: Object.assign({ 'Content-Type': 'application/json' }, authPart),
+                body: '{"items":[]}'
+            }).then(
+                function (res) {
+                    const ok = !!res && res.status !== 404;
+                    if (!ok) {
+                        configBatchSupport = 2;
+                        try {
+                            if (typeof sessionStorage !== 'undefined')
+                                sessionStorage.setItem('telemetry_configbatch_off', '1');
+                        } catch (_e2) {}
+                    } else {
+                        configBatchSupport = 1;
+                    }
+                    return ok;
+                },
+                function () {
+                    return false;
+                }
+            );
+        } catch (_e) {
+            return Promise.resolve(false);
+        }
+    }
+
+    function sendConfigChunk(chunk) {
+        const payloads = chunk.map(function (b) {
+            return b.payload;
+        });
+        return safeFetch(CONFIG_BATCH_URL, { items: payloads }).then(function (res) {
+            if (!res || (!Array.isArray(res.created) && !Array.isArray(res.duplicates))) {
+                singleFallback(chunk);
+                return;
+            }
+            const byIdx = {};
+            (res.created || []).concat(res.duplicates || []).forEach(function (e) {
+                if (e && typeof e.index === 'number' && e.telemetryId)
+                    byIdx[e.index] = e.telemetryId;
+            });
+            chunk.forEach(function (b, k) {
+                const tid = byIdx[k];
+                if (tid && b.payload && b.payload.solverSource !== 'MANUAL' && b.well) {
+                    try {
+                        b.well._lastAutoTelemetryId = tid;
+                    } catch (_e) {}
+                }
+            });
+        });
+    }
+
+    function singleFallback(built) {
+        // Prezbudowane payloady (bez odbudowy — sesyjny dedup już zaznaczony).
+        built.forEach(function (b) {
+            try {
+                if (b.payload && b.payload.solverSource !== 'MANUAL' && b.well) {
+                    (function (_well) {
+                        safeFetch(TELEMETRY_URL, b.payload).then(function (res) {
+                            if (res && res.telemetryId) {
+                                try {
+                                    _well._lastAutoTelemetryId = res.telemetryId;
+                                } catch (_e2) {}
+                            }
+                        });
+                    })(b.well);
+                } else if (b.payload) {
+                    safeFetch(TELEMETRY_URL, b.payload);
+                }
+            } catch (_e) {}
+        });
+    }
+
+    /**
+     * Batchowy zapis konfiguracji (1 POST zamiast N).
+     * @param {Array} items - tablica opcji jak do telemetryRecordConfig
+     */
+    window.telemetryRecordConfigBatch = function (items) {
+        if (!Array.isArray(items) || items.length === 0) return;
+        const built = [];
+        for (let i = 0; i < items.length; i++) {
+            try {
+                const p = buildConfigPayload(items[i]);
+                if (p)
+                    built.push({ options: items[i], well: items[i] && items[i].well, payload: p });
+            } catch (_e) {}
+        }
+        if (built.length === 0) return;
+        // Guard 413: przybliżony rozmiar → chunki po 25 (nadal 25× mniej req niż single).
+        let chunks = [built];
+        try {
+            let approx = 0;
+            for (let j = 0; j < built.length; j++)
+                approx += JSON.stringify(built[j].payload).length;
+            if (approx > CONFIG_BATCH_SIZE_GUARD && built.length > 1) {
+                chunks = [];
+                for (let j = 0; j < built.length; j += CONFIG_BATCH_CHUNK)
+                    chunks.push(built.slice(j, j + CONFIG_BATCH_CHUNK));
+            }
+        } catch (_eSize) {}
+        configBatchSupported().then(function (ok) {
+            if (!ok) {
+                singleFallback(built);
+                return;
+            }
+            let chain = Promise.resolve();
+            chunks.forEach(function (ch) {
+                chain = chain.then(function () {
+                    return sendConfigChunk(ch);
+                });
+            });
+        });
     };
 
     /**

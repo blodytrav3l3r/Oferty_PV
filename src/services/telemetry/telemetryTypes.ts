@@ -175,6 +175,25 @@ export interface TelemetryRecordResponse {
     transitionsCreated?: number;
 }
 
+/** Wynik pojedynczego itemu w batchu konfiguracji (pozycja = indeks wejścia) */
+export interface TelemetryConfigBatchItemResult {
+    index: number;
+    telemetryId: string;
+}
+
+/** Odrzucony item batcha (gate własności, nigdy nie trafił do serwisu) */
+export interface TelemetryConfigBatchRejected {
+    index: number;
+    wellId?: string;
+    reason: string;
+}
+
+/** Odpowiedź API z batchowego zapisu konfiguracji */
+export interface TelemetryConfigBatchResponse {
+    created: TelemetryConfigBatchItemResult[];
+    duplicates: TelemetryConfigBatchItemResult[];
+}
+
 /** Odpowiedź API z list telemetry */
 export interface TelemetryListResponse<T = unknown> {
     items: T[];

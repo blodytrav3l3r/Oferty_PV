@@ -149,6 +149,16 @@ export type TelemetryConfigInput = Omit<
 };
 
 // =============================================================================
+// Batch konfiguracji — 1 POST zamiast N× /ai/config (zapis oferty, cap 50)
+// =============================================================================
+
+export const telemetryConfigBatchSchema = z.object({
+    items: z.array(telemetryConfigSchema).min(1).max(50)
+});
+
+export type TelemetryConfigBatchInput = z.infer<typeof telemetryConfigBatchSchema>;
+
+// =============================================================================
 // Event telemetry
 // =============================================================================
 

@@ -334,27 +334,41 @@ async function saveOfferStudnie() {
  */
 function _sendAcceptanceTelemetry(wellsArr, signalType) {
     if (!Array.isArray(wellsArr) || wellsArr.length === 0) return;
-    if (typeof window.telemetryRecordConfig !== 'function') return;
     // Próbka max 50 studni przy hurtowych ofertach — zapobiega nadmiarowemu próbowaniu
     // i głodzeniu sieci/backendu.
     const sample = wellsArr.length > 50 ? wellsArr.slice(0, 50) : wellsArr;
+    const batch = [];
     sample.forEach(function (w) {
         if (!w.config || w.config.length === 0) return;
+        batch.push({
+            well: w,
+            configItems: w.config || [],
+            solverSource: w.configSource || 'MANUAL',
+            wasAccepted: signalType === 'ORDER_CONFIRM',
+            wasModified: w.configSource && w.configSource.startsWith('MANUAL'),
+            originalConfig:
+                typeof window.buildOriginalConfigFromWell === 'function'
+                    ? window.buildOriginalConfigFromWell(w)
+                    : undefined,
+            computationMs: 0,
+            iterationCount: 0,
+            checkedVariants: 0
+        });
+    });
+    if (batch.length === 0) return;
+    // Batch: 1 POST zamiast N (fallback na single w bridge przy starym BE).
+    if (typeof window.telemetryRecordConfigBatch === 'function') {
         try {
-            window.telemetryRecordConfig({
-                well: w,
-                configItems: w.config || [],
-                solverSource: w.configSource || 'MANUAL',
-                wasAccepted: signalType === 'ORDER_CONFIRM',
-                wasModified: w.configSource && w.configSource.startsWith('MANUAL'),
-                originalConfig:
-                    typeof window.buildOriginalConfigFromWell === 'function'
-                        ? window.buildOriginalConfigFromWell(w)
-                        : undefined,
-                computationMs: 0,
-                iterationCount: 0,
-                checkedVariants: 0
-            });
+            window.telemetryRecordConfigBatch(batch);
+        } catch (_e) {
+            // silent
+        }
+        return;
+    }
+    if (typeof window.telemetryRecordConfig !== 'function') return;
+    batch.forEach(function (opts) {
+        try {
+            window.telemetryRecordConfig(opts);
         } catch (_e) {
             // silent
         }
