@@ -63,13 +63,47 @@ export async function getVersionExport(id: string): Promise<VersionExport> {
     return { version, sections };
 }
 
+export interface VersionDiffChange {
+    section: string;
+    id: string;
+    name: string | null;
+    /** 'added' | 'removed' | 'changed' — changed tylko gdy różni się cena. */
+    kind: 'added' | 'removed' | 'changed';
+    before: number | null;
+    after: number | null;
+    /** (after-before)/before*100, null gdy niepoliczalna. */
+    deltaPct: number | null;
+}
+
 export interface VersionDiff {
     version: string;
     previousVersion: string | null;
     sections: Record<string, { added: number; removed: number; changed: number }>;
+    /** Top zmian cenowych (max 100, sort po |deltaPct| malejąco). */
+    changes: VersionDiffChange[];
+    truncated: boolean;
 }
 
-/** Diff wersji względem poprzedniej (seq-1) przez diffById. */
+/** Pierwsze pole cenowe wiersza (rury/studnie: price, preco kinety: cena). */
+function rowPrice(row: Record<string, unknown>): number | null {
+    for (const key of ['price', 'cena']) {
+        const v = row[key];
+        if (typeof v === 'number' && Number.isFinite(v)) return v;
+    }
+    return null;
+}
+
+function rowName(row: Record<string, unknown>): string | null {
+    for (const key of ['name', 'key', 'label']) {
+        const v = row[key];
+        if (typeof v === 'string' && v.length > 0) return v;
+    }
+    return null;
+}
+
+const DIFF_CHANGES_LIMIT = 100;
+
+/** Diff wersji względem poprzedniej (seq-1) przez diffById + top zmian cen. */
 export async function getVersionDiff(id: string): Promise<VersionDiff> {
     const current = await prisma.pricelistVersion.findUnique({ where: { id } });
     if (!current) {
@@ -87,13 +121,67 @@ export async function getVersionDiff(id: string): Promise<VersionDiff> {
         ? await loadVersionItems(prisma, type, previous.id)
         : Object.fromEntries(Object.keys(curItems).map((k) => [k, []]));
     const sections: VersionDiff['sections'] = {};
+    const changes: VersionDiffChange[] = [];
     for (const key of Object.keys(curItems)) {
-        sections[key] = diffById(
-            toComparable(prevItems[key] ?? [], previous?.id ?? ''),
-            toComparable(curItems[key], current.id)
-        );
+        const prevRows = toComparable(prevItems[key] ?? [], previous?.id ?? '');
+        const curRows = toComparable(curItems[key], current.id);
+        sections[key] = diffById(prevRows, curRows);
+        const prevById = new Map(prevRows.map((r) => [String(r.id), r]));
+        const curById = new Map(curRows.map((r) => [String(r.id), r]));
+        for (const [rowId, cur] of curById) {
+            const prev = prevById.get(rowId);
+            if (!prev) {
+                changes.push({
+                    section: key,
+                    id: rowId,
+                    name: rowName(cur),
+                    kind: 'added',
+                    before: null,
+                    after: rowPrice(cur),
+                    deltaPct: null
+                });
+            } else {
+                const before = rowPrice(prev);
+                const after = rowPrice(cur);
+                if (before !== after) {
+                    changes.push({
+                        section: key,
+                        id: rowId,
+                        name: rowName(cur) ?? rowName(prev),
+                        kind: 'changed',
+                        before,
+                        after,
+                        deltaPct:
+                            before !== null && after !== null && before !== 0
+                                ? Math.round(((after - before) / before) * 1000) / 10
+                                : null
+                    });
+                }
+            }
+        }
+        for (const [rowId, prev] of prevById) {
+            if (!curById.has(rowId)) {
+                changes.push({
+                    section: key,
+                    id: rowId,
+                    name: rowName(prev),
+                    kind: 'removed',
+                    before: rowPrice(prev),
+                    after: null,
+                    deltaPct: null
+                });
+            }
+        }
     }
-    return { version: current.version, previousVersion: previous?.version ?? null, sections };
+    changes.sort((a, b) => Math.abs(b.deltaPct ?? 0) - Math.abs(a.deltaPct ?? 0));
+    const truncated = changes.length > DIFF_CHANGES_LIMIT;
+    return {
+        version: current.version,
+        previousVersion: previous?.version ?? null,
+        sections,
+        changes: changes.slice(0, DIFF_CHANGES_LIMIT),
+        truncated
+    };
 }
 
 /**
@@ -115,12 +203,22 @@ export async function getVersionExportSheets(
     const type: PricelistType = version.type;
     const sheets = projectVersionToLiveShape(type, sections);
     if (type !== 'studnie') return { version, sheets, precoIncluded: true };
-    // PRECO: najnowsza wersja nie nowsza niż eksportowana (seq <=) — parowanie
-    // po equal-seq gubiło PRECO zawsze gdy typy miały rozjechane seq.
-    const precoVersion = await prisma.pricelistVersion.findFirst({
-        where: { type: 'preco', seq: { lte: version.seq } },
-        orderBy: { seq: 'desc' }
-    });
+    // PRECO: najnowsza wersja obowiązująca w dacie eksportowanej studni
+    // (effectiveFrom <=, sort eff DESC, seq DESC). Fallback seq <= dla
+    // wersji bez effectiveFrom (legacy / mocki testowe).
+    let precoVersion = null as Awaited<ReturnType<typeof prisma.pricelistVersion.findFirst>>;
+    if (version.effectiveFrom) {
+        precoVersion = await prisma.pricelistVersion.findFirst({
+            where: { type: 'preco', effectiveFrom: { lte: version.effectiveFrom } },
+            orderBy: [{ effectiveFrom: 'desc' }, { seq: 'desc' }]
+        });
+    }
+    if (!precoVersion) {
+        precoVersion = await prisma.pricelistVersion.findFirst({
+            where: { type: 'preco', seq: { lte: version.seq } },
+            orderBy: { seq: 'desc' }
+        });
+    }
     if (!precoVersion) return { version, sheets, precoIncluded: false };
     const preco = await getVersionExport(precoVersion.id);
     return {

@@ -287,8 +287,10 @@ describe('F2 activate', () => {
         expect(active.status).toBe('ACTIVE');
         expect(versions.find((v) => v.seq === 1)?.status).toBe('ARCHIVED');
         expect(settings.get('pricelist_defaults_updated_at')).toBeTruthy();
-        expect(audits).toHaveLength(1);
-        expect(audits[0]).toMatchObject({ entityType: 'pricelist_version', action: 'ACTIVATE' });
+        expect(settings.get('pricelist_active_updated_at')).toBeTruthy();
+        expect(audits).toHaveLength(2);
+        expect(audits[0]).toMatchObject({ entityType: 'pricelist_version', action: 'CREATE' });
+        expect(audits[1]).toMatchObject({ entityType: 'pricelist_version', action: 'ACTIVATE' });
     });
 
     test('activate w przeszłość (eff w istniejącym okresie) → 409 PERIOD_OVERLAP', async () => {
@@ -348,10 +350,11 @@ describe('F2 backdate', () => {
         });
         expect(done.status).toBe('BACKDATE');
         expect(done.note).toBe('Korekta historyczna cen wrzesnia');
-        expect(audits).toHaveLength(1);
-        expect(audits[0]).toMatchObject({ action: 'BACKDATE' });
-        expect(JSON.parse(String(audits[0].oldData))).toEqual({ przed: 'BACKDATE_REQUESTED' });
-        expect(JSON.parse(String(audits[0].newData))).toMatchObject({ po: 'BACKDATE' });
+        expect(audits).toHaveLength(2);
+        expect(audits[0]).toMatchObject({ action: 'CREATE' });
+        expect(audits[1]).toMatchObject({ action: 'BACKDATE' });
+        expect(JSON.parse(String(audits[1].oldData))).toEqual({ przed: 'BACKDATE_REQUESTED' });
+        expect(JSON.parse(String(audits[1].newData))).toMatchObject({ po: 'BACKDATE' });
     });
 
     test('nota < 10 znaków → 400, nic nie zapisane', async () => {
@@ -364,7 +367,8 @@ describe('F2 backdate', () => {
             code: 'NOTE_TOO_SHORT'
         });
         expect(versions.find((v) => v.id === draft.id)?.status).toBe('BACKDATE_REQUESTED');
-        expect(audits).toHaveLength(0);
+        expect(audits).toHaveLength(1);
+        expect(audits[0]).toMatchObject({ action: 'CREATE' });
     });
 
     test('kolizja (type, effectiveFrom) → 409 EFFECTIVE_COLLISION', async () => {
@@ -472,8 +476,8 @@ describe('activate z notą (opcjonalna, tylko audit)', () => {
         const active = await activate(draft.id, { userId: 'admin1', note: '  aktywacja ok  ' });
         expect(active.status).toBe('ACTIVE');
         expect(active.note).toBe('nota draftu');
-        expect(audits).toHaveLength(1);
-        expect(JSON.parse(String(audits[0].newData))).toMatchObject({
+        expect(audits).toHaveLength(2);
+        expect(JSON.parse(String(audits[1].newData))).toMatchObject({
             po: 'ACTIVE',
             note: 'aktywacja ok'
         });
@@ -485,8 +489,8 @@ describe('activate z notą (opcjonalna, tylko audit)', () => {
             effectiveFrom: '2026-09-01T00:00:00.000Z'
         });
         await activate(draft.id, { userId: 'admin1' });
-        expect(audits).toHaveLength(1);
-        const newData = JSON.parse(String(audits[0].newData)) as Record<string, unknown>;
+        expect(audits).toHaveLength(2);
+        const newData = JSON.parse(String(audits[1].newData)) as Record<string, unknown>;
         expect('note' in newData).toBe(false);
     });
 

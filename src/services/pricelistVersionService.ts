@@ -34,6 +34,7 @@ export {
     createDraft,
     versionLabel,
     updateDraft,
+    publishDraft,
     activate,
     applyBackdate,
     activateDue,

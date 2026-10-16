@@ -10,11 +10,13 @@ import prisma from '../prismaClient';
 import { buildXlsx } from '../utils/minimalXlsx';
 import {
     PricelistVersionError,
+    getVersionExportSheets,
     liveSheetsToXlsxSheets,
     projectPrecoNestedToSheets,
     projectVersionToLiveShape,
     requireExportSource,
     requirePricingSource,
+    resolveActive,
     resolveActivePricing
 } from '../services/pricelistVersionService';
 import { formatPrecoResponse } from './precoPricingV2';
@@ -378,11 +380,33 @@ router.delete('/:id', requireAuth, requireAdmin, writeLimiter, async (req, res) 
 });
 
 // ──────────────────────────────────────────
-// GET /export.xlsx?source=live|default — XLSX z serwera (Etap C),
+// GET /export.xlsx?source=live|default|active — XLSX z serwera (Etap C),
 // wiersze w shape GET (legacy 1/0, dn liczbowe), shape 1:1 z eksportem FE
 router.get('/export.xlsx', requireAuth, async (req, res) => {
     try {
         const source = requireExportSource(req.query.source);
+        if (source === 'active') {
+            const active = await resolveActive('studnie');
+            if (!active) {
+                res.status(409).json({
+                    error: 'Brak aktywnej wersji cennika studni',
+                    code: 'NO_ACTIVE_VERSION'
+                });
+                return;
+            }
+            const { sheets } = await getVersionExportSheets(active.id);
+            const xlsx = await buildXlsx(liveSheetsToXlsxSheets(sheets, 'Cennik'));
+            res.setHeader(
+                'Content-Type',
+                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            );
+            res.setHeader(
+                'Content-Disposition',
+                `attachment; filename="Cennik_Studni_${active.version}_Export.xlsx"`
+            );
+            res.send(xlsx);
+            return;
+        }
         const rows =
             source === 'live'
                 ? await prisma.productsStudnie.findMany({

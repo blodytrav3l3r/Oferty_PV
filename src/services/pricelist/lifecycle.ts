@@ -35,6 +35,37 @@ const SEQ_RETRY_LIMIT = 3;
 /** Klucz fresh-guarda współdzielony ze starym priceOverrideService. */
 const DEFAULTS_UPDATED_AT_KEY = 'pricelist_defaults_updated_at';
 
+/**
+ * Osobny klucz znacznika aktywacji wersji (rozdzielony od snapshotu
+ * domyślnych — wcześniej obie operacje bumpowały ten sam klucz, więc FE
+ * nie rozróżniało przyczyny odświeżenia).
+ */
+export const ACTIVE_UPDATED_AT_KEY = 'pricelist_active_updated_at';
+
+async function touchActiveTimestamp(
+    tx: {
+        settings: {
+            upsert(args: {
+                where: { key: string };
+                update: { value: string };
+                create: { key: string; value: string };
+            }): Promise<unknown>;
+        };
+    },
+    nowIso: string
+): Promise<void> {
+    await tx.settings.upsert({
+        where: { key: DEFAULTS_UPDATED_AT_KEY },
+        update: { value: nowIso },
+        create: { key: DEFAULTS_UPDATED_AT_KEY, value: nowIso }
+    });
+    await tx.settings.upsert({
+        where: { key: ACTIVE_UPDATED_AT_KEY },
+        update: { value: nowIso },
+        create: { key: ACTIVE_UPDATED_AT_KEY, value: nowIso }
+    });
+}
+
 /** Minimalna długość noty backdate (uzasadnienie zmiany historycznej). */
 const BACKDATE_NOTE_MIN = 10;
 
@@ -122,6 +153,17 @@ async function createDraftTx(
                     }
                 });
                 await insertVersionItems(tx, type, id, rows);
+                await writeAudit(tx, {
+                    entityId: id,
+                    userId: meta.createdBy,
+                    action: 'CREATE',
+                    newData: {
+                        seq,
+                        wersja: version.version,
+                        status,
+                        effectiveFrom: meta.effectiveFrom
+                    }
+                });
                 return version;
             });
         } catch (err) {
@@ -145,7 +187,8 @@ async function createDraftTx(
 export async function updateDraft(
     id: string,
     rowsInput?: unknown,
-    noteInput?: unknown
+    noteInput?: unknown,
+    opts: { userId?: string } = {}
 ): Promise<PricelistVersion> {
     const current = await prisma.pricelistVersion.findUnique({ where: { id } });
     if (!current) {
@@ -182,7 +225,18 @@ export async function updateDraft(
                 data.sha256 = sha256;
             }
             if (note !== undefined) data.note = note;
-            return tx.pricelistVersion.update({ where: { id }, data });
+            const updated = await tx.pricelistVersion.update({ where: { id }, data });
+            await writeAudit(tx, {
+                entityId: id,
+                userId: opts.userId,
+                action: 'UPDATE',
+                oldData: { status: fresh.status },
+                newData: {
+                    ...(rows !== null ? { wiersze: 'podmienione', sha256 } : {}),
+                    ...(note !== undefined ? { note } : {})
+                }
+            });
+            return updated;
         })
     );
     if (!res.acquired) {
@@ -283,11 +337,7 @@ export async function activate(
             if (!updated) {
                 throw new PricelistVersionError(404, 'NOT_FOUND', `Wersja ${id} nie istnieje`);
             }
-            await tx.settings.upsert({
-                where: { key: DEFAULTS_UPDATED_AT_KEY },
-                update: { value: nowIso },
-                create: { key: DEFAULTS_UPDATED_AT_KEY, value: nowIso }
-            });
+            await touchActiveTimestamp(tx, nowIso);
             await writeAudit(tx, {
                 entityId: id,
                 userId: opts.userId,
@@ -377,17 +427,78 @@ export async function applyBackdate(
                 where: { id },
                 data: { status: 'BACKDATE', note }
             });
-            await tx.settings.upsert({
-                where: { key: DEFAULTS_UPDATED_AT_KEY },
-                update: { value: nowIso },
-                create: { key: DEFAULTS_UPDATED_AT_KEY, value: nowIso }
-            });
+            await touchActiveTimestamp(tx, nowIso);
             await writeAudit(tx, {
                 entityId: id,
                 userId: opts.userId,
                 action: 'BACKDATE',
                 oldData: { przed: 'BACKDATE_REQUESTED' },
                 newData: { po: 'BACKDATE', effectiveFrom: fresh.effectiveFrom, note }
+            });
+            return updated;
+        })
+    );
+    if (!res.acquired) {
+        throw new PricelistVersionError(
+            503,
+            'LOCK_BUSY',
+            `Zapis wersji ${type} chwilowo zablokowany`
+        );
+    }
+    return res.value;
+}
+
+/**
+ * Publikuje wersję roboczą (DRAFT → SCHEDULED albo BACKDATE_REQUESTED).
+ * Domyka ślepą uliczkę klonów: cloneAsDraft tworzy DRAFT, a activate
+ * przyjmuje tylko SCHEDULED — bez publish DRAFT nie mógł wejść na oś czasu.
+ * Decyzja o statusie ta sama co w createDraft (effectiveFrom vs max).
+ */
+export async function publishDraft(
+    id: string,
+    opts: { userId?: string } = {}
+): Promise<PricelistVersion> {
+    const current = await prisma.pricelistVersion.findUnique({ where: { id } });
+    if (!current) {
+        throw new PricelistVersionError(404, 'NOT_FOUND', `Wersja ${id} nie istnieje`);
+    }
+    if (!isPricelistType(current.type)) {
+        throw new PricelistVersionError(422, 'INVALID_TYPE', `Wersja ${id} ma nieznany typ`);
+    }
+    const type = current.type;
+    const lock = lockFor(type);
+    const res = await lock.runWithLock(() =>
+        prisma.$transaction(async (tx) => {
+            const fresh = await tx.pricelistVersion.findUnique({ where: { id } });
+            if (!fresh) {
+                throw new PricelistVersionError(404, 'NOT_FOUND', `Wersja ${id} nie istnieje`);
+            }
+            if (fresh.status !== 'DRAFT') {
+                throw new PricelistVersionError(
+                    409,
+                    'PUBLISH_NOT_DRAFT',
+                    `Opublikować można tylko wersję roboczą DRAFT (obecny: ${fresh.status})`
+                );
+            }
+            const agg = await tx.pricelistVersion.aggregate({
+                _max: { effectiveFrom: true },
+                where: { type, id: { not: id } }
+            });
+            const maxEffectiveFrom = (agg._max as { effectiveFrom?: string | null }).effectiveFrom;
+            const next: PricelistStatus =
+                maxEffectiveFrom == null || fresh.effectiveFrom > maxEffectiveFrom
+                    ? 'SCHEDULED'
+                    : 'BACKDATE_REQUESTED';
+            const updated = await tx.pricelistVersion.update({
+                where: { id },
+                data: { status: next }
+            });
+            await writeAudit(tx, {
+                entityId: id,
+                userId: opts.userId,
+                action: 'PUBLISH',
+                oldData: { przed: 'DRAFT' },
+                newData: { po: next, effectiveFrom: fresh.effectiveFrom }
             });
             return updated;
         })

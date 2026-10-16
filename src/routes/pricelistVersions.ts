@@ -24,6 +24,7 @@ import {
     deleteVersion,
     getVersionDiff,
     getVersionExportSheets,
+    publishDraft,
     updateDraft
 } from '../services/pricelistVersionService';
 import prisma from '../prismaClient';
@@ -269,13 +270,33 @@ router.put('/:id', requireAuth, requireAdmin, PRICELIST_WRITE_LIMITER, async (re
         const version = await updateDraft(
             paramsParsed.data.id,
             bodyParsed.data.rows,
-            bodyParsed.data.note
+            bodyParsed.data.note,
+            { userId: userIdOf(req) }
         );
         res.json({ version });
     } catch (err) {
         sendVersionError(res, err);
     }
 });
+
+/**
+ * Publikacja roboczej (DRAFT → SCHEDULED albo BACKDATE_REQUESTED wg daty).
+ * Domyka lukę klonów: DRAFT nie aktywuje się bezpośrednio.
+ */
+router.post(
+    '/:id/publish',
+    requireAuth,
+    requireAdmin,
+    PRICELIST_WRITE_LIMITER,
+    async (req, res) => {
+        try {
+            const version = await publishDraft(req.params.id, { userId: userIdOf(req) });
+            res.json({ version });
+        } catch (err) {
+            sendVersionError(res, err);
+        }
+    }
+);
 
 /** Aktywacja SCHEDULED (due); opcjonalna nota → wpis audytu ACTIVATE. */
 router.post(

@@ -123,6 +123,9 @@ const txMock = {
             return { count: 0 };
         }),
         findMany: jest.fn(async () => [...itemsZakresy])
+    },
+    audit_logs: {
+        create: jest.fn(async ({ data }: { data: Record<string, unknown> }) => ({ ...data }))
     }
 };
 

@@ -11,10 +11,12 @@ import { buildXlsx } from '../utils/minimalXlsx';
 import {
     PricelistVersionError,
     RURY_LIVE_SHEET,
+    getVersionExportSheets,
     liveSheetsToXlsxSheets,
     projectVersionToLiveShape,
     requireExportSource,
     requirePricingSource,
+    resolveActive,
     resolveActivePricing
 } from '../services/pricelistVersionService';
 
@@ -168,11 +170,33 @@ router.delete('/:id', requireAuth, requireAdmin, writeLimiter, async (req, res) 
 });
 
 // ──────────────────────────────────────────
-// GET /export.xlsx?source=live|default — XLSX z serwera (Etap C),
+// GET /export.xlsx?source=live|default|active — XLSX z serwera (Etap C),
 // shape 1:1 z eksportem FE (jak GET /:id/export wersji)
 router.get('/export.xlsx', requireAuth, async (req, res) => {
     try {
         const source = requireExportSource(req.query.source);
+        if (source === 'active') {
+            const active = await resolveActive('rury');
+            if (!active) {
+                res.status(409).json({
+                    error: 'Brak aktywnej wersji cennika rur',
+                    code: 'NO_ACTIVE_VERSION'
+                });
+                return;
+            }
+            const { sheets } = await getVersionExportSheets(active.id);
+            const xlsx = await buildXlsx(liveSheetsToXlsxSheets(sheets, RURY_LIVE_SHEET));
+            res.setHeader(
+                'Content-Type',
+                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            );
+            res.setHeader(
+                'Content-Disposition',
+                `attachment; filename="Cennik_Rury_${active.version}_Export.xlsx"`
+            );
+            res.send(xlsx);
+            return;
+        }
         const rows =
             source === 'live'
                 ? await prisma.productsRury.findMany({

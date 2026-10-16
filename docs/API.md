@@ -369,19 +369,20 @@ Wymaga autoryzacji (bez wymogu administratora).
 
 Wymaga autoryzacji (administrator, oprócz etykiet).
 
-| Metoda | Ścieżka                                   | Auth  | Opis                                      |
-| ------ | ----------------------------------------- | ----- | ----------------------------------------- |
-| GET    | `/api/pricelist-versions`                 | admin | Lista wersji                              |
-| GET    | `/api/pricelist-versions/labels`          | auth  | Etykiety wersji                           |
-| POST   | `/api/pricelist-versions/:type/drafts`    | admin | Nowy szkic wersji (`201` przy utworzeniu) |
-| PUT    | `/api/pricelist-versions/:id`             | admin | Edycja wersji                             |
-| DELETE | `/api/pricelist-versions/:id`             | admin | Usunięcie wersji                          |
-| POST   | `/api/pricelist-versions/:id/activate`    | admin | Aktywacja wersji                          |
-| POST   | `/api/pricelist-versions/:id/backdate`    | admin | Aktywacja wsteczna                        |
-| POST   | `/api/pricelist-versions/:id/clone-draft` | admin | Klonowanie szkicu                         |
-| POST   | `/api/pricelist-versions/activate-due`    | admin | Aktywacja zaplanowanych                   |
-| GET    | `/api/pricelist-versions/:id/diff`        | admin | Różnice wersji                            |
-| GET    | `/api/pricelist-versions/:id/export`      | admin | Eksport zamrożonej wersji                 |
+| Metoda | Ścieżka                                   | Auth  | Opis                                                         |
+| ------ | ----------------------------------------- | ----- | ------------------------------------------------------------ |
+| GET    | `/api/pricelist-versions`                 | admin | Lista wersji                                                 |
+| GET    | `/api/pricelist-versions/labels`          | auth  | Etykiety wersji                                              |
+| POST   | `/api/pricelist-versions/:type/drafts`    | admin | Nowy szkic wersji (`201` przy utworzeniu)                    |
+| PUT    | `/api/pricelist-versions/:id`             | admin | Edycja wersji                                                |
+| DELETE | `/api/pricelist-versions/:id`             | admin | Usunięcie wersji                                             |
+| POST   | `/api/pricelist-versions/:id/publish`     | admin | Publikacja roboczej (DRAFT → SCHEDULED / BACKDATE_REQUESTED) |
+| POST   | `/api/pricelist-versions/:id/activate`    | admin | Aktywacja wersji                                             |
+| POST   | `/api/pricelist-versions/:id/backdate`    | admin | Aktywacja wsteczna                                           |
+| POST   | `/api/pricelist-versions/:id/clone-draft` | admin | Klonowanie szkicu                                            |
+| POST   | `/api/pricelist-versions/activate-due`    | admin | Aktywacja zaplanowanych                                      |
+| GET    | `/api/pricelist-versions/:id/diff`        | admin | Różnice wersji                                               |
+| GET    | `/api/pricelist-versions/:id/export`      | admin | Eksport zamrożonej wersji                                    |
 
 ## Domyślne cenniki (`/api/price-overrides`)
 
@@ -396,15 +397,18 @@ Wymaga autoryzacji (administrator). Zapisuje bieżący stan wszystkich cenników
 Wymaga autoryzacji. Jeden kształt pliku dla warstw LIVE / VERSION / DEFAULT
 (arkusze i kolumny 1:1; plik studni zawiera też arkusze PRECO).
 
-| Metoda | Ścieżka                                                  | Opis                                                                   |
-| ------ | -------------------------------------------------------- | ---------------------------------------------------------------------- |
-| GET    | `/api/products/export.xlsx?source=live\|default`         | Cennik rur (`Cennik_Rury_Export.xlsx`)                                 |
-| GET    | `/api/products-studnie/export.xlsx?source=live\|default` | Cennik studni + PRECO (`Cennik_Studni_Export.xlsx`)                    |
-| GET    | `/api/preco-pricing/export.xlsx?source=live\|default`    | Samo PRECO (`Cennik_Preco_Export.xlsx`)                                |
-| GET    | `/api/pricelist-versions/:id/export` (administrator)     | Zamrożona wersja (`Cennik_{Rury,Studnie,Preco}_{version}_Export.xlsx`) |
+| Metoda | Ścieżka                                                          | Opis                                                                   |
+| ------ | ---------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| GET    | `/api/products/export.xlsx?source=live\|default\|active`         | Cennik rur (`Cennik_Rury_Export.xlsx`)                                 |
+| GET    | `/api/products-studnie/export.xlsx?source=live\|default\|active` | Cennik studni + PRECO (`Cennik_Studni_Export.xlsx`)                    |
+| GET    | `/api/preco-pricing/export.xlsx?source=live\|default\|active`    | Samo PRECO (`Cennik_Preco_Export.xlsx`)                                |
+| GET    | `/api/pricelist-versions/:id/export` (administrator)             | Zamrożona wersja (`Cennik_{Rury,Studnie,Preco}_{version}_Export.xlsx`) |
 
-`source=default` zwraca cennik domyślny (bazowy pod Reset) — w UI dostępny
-wyłącznie przez dopisanie parametru do URL; przyciski eksportują `live`.
+`source=default` zwraca cennik domyślny (bazowy pod Reset), `source=active`
+zamrożoną wersję ACTIVE (nazwa pliku z labelką wersji; `409 NO_ACTIVE_VERSION`
+gdy brak) — w UI dostępne wyłącznie przez dopisanie parametru do URL;
+przyciski eksportują `live`. Diff wersji (`GET /:id/diff`) zwraca też
+`changes` (top zmian cen: sekcja, pozycja, przed/po, Δ%) i flagę `truncated`.
 
 ## Łączny eksport (`/api/export-combined`)
 

@@ -301,7 +301,9 @@ describe('E5.5 gate: role i ownership', () => {
             .set(admin)
             .send({ note: 'nota' });
         expect(ok.status).toBe(200);
-        expect(updateDraftMock).toHaveBeenCalledWith('v1', undefined, 'nota');
+        expect(updateDraftMock).toHaveBeenCalledWith('v1', undefined, 'nota', {
+            userId: 'admin-1'
+        });
         expectNoLeak(ok.body);
     });
 

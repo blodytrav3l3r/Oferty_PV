@@ -10,10 +10,12 @@ import prisma from '../prismaClient';
 import { buildXlsx } from '../utils/minimalXlsx';
 import {
     PricelistVersionError,
+    getVersionExportSheets,
     liveSheetsToXlsxSheets,
     projectPrecoNestedToSheets,
     requireExportSource,
     requirePricingSource,
+    resolveActive,
     resolveActivePricing
 } from '../services/pricelistVersionService';
 
@@ -309,11 +311,33 @@ router.patch(
 );
 
 // ──────────────────────────────────────────
-// GET /export.xlsx?source=live|default — sama część PRECO (Etap C),
+// GET /export.xlsx?source=live|default|active — sama część PRECO (Etap C),
 // projekcja kształtu zagnieżdżonego 1:1 z eksportem FE
 router.get('/export.xlsx', requireAuth, async (req, res) => {
     try {
         const source = requireExportSource(req.query.source);
+        if (source === 'active') {
+            const active = await resolveActive('preco');
+            if (!active) {
+                res.status(409).json({
+                    error: 'Brak aktywnej wersji cennika PRECO',
+                    code: 'NO_ACTIVE_VERSION'
+                });
+                return;
+            }
+            const { sheets } = await getVersionExportSheets(active.id);
+            const xlsx = await buildXlsx(liveSheetsToXlsxSheets(sheets, 'PRECO_Kinety'));
+            res.setHeader(
+                'Content-Type',
+                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            );
+            res.setHeader(
+                'Content-Disposition',
+                `attachment; filename="Cennik_Preco_${active.version}_Export.xlsx"`
+            );
+            res.send(xlsx);
+            return;
+        }
         const result =
             source === 'live'
                 ? await formatPrecoResponse(
