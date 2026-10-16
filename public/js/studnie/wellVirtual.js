@@ -406,14 +406,15 @@ function _wellVirtualRenderBody() {
                 const tm = calculateWellTransportMap(wells);
                 _wellVirtualTransportMap = new Map();
                 if (tm.map) {
-                    // SSoT: wellsById Map O(1) przez getWellIndexById (globals.js)
+                    // SSoT: wellsById Map O(1) przez getWellIndexById (globals.js).
+                    // F6: tylko klucze idx — odczyt wyłącznie po wIdx (linia renderu kart),
+                    // wpisy po obiekcie well nigdy nieczytane i trzymały refy między slicami.
                     for (const [wellObj, cost] of tm.map.entries()) {
                         const idx =
                             wellObj && wellObj.id != null && typeof getWellIndexById === 'function'
                                 ? getWellIndexById(wellObj.id)
                                 : -1;
                         if (idx >= 0) _wellVirtualTransportMap.set(idx, cost);
-                        _wellVirtualTransportMap.set(wellObj, cost);
                     }
                 }
                 _wellTransportFp = _fp;

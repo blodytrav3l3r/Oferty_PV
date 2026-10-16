@@ -15,11 +15,19 @@ const _sumStatsCache = new Map();
 let _sumFp = null;
 let _sumTotalsCache = null;
 let _sumPatchDone = false;
+// F1 rev-counter: tanie unieważnienie cache bez JSON.stringify(wells) per updateSummary.
+// Bump w wrapperach mutacji w _wellUIPatchInvalidation; fast path w updateSummary
+// omija MB stringify gdy rev+len+cheapSig bez zmian. Slow path = dotychczasowa logika.
+let _wellSumRev = 0;
+let _lastSumRevSeen = -1;
+let _lastSumWellsLen = -1;
+let _lastSumCheapSig = null;
 
 function _wellUIClearSumCache() {
     _sumStatsCache.clear();
     _sumFp = null;
     _sumTotalsCache = null;
+    _wellSumRev++;
 }
 
 // ponytail: pelny JSON wells w fingerprint; lzejsza sygnatura gdyby to mierzalnie cielo.
@@ -84,6 +92,37 @@ function _wellUISumFp() {
     }
 }
 
+// F1 cheap-sig: lekkie sygnały zmian bez stringify wells — transport live z DOM,
+// rabaty (mały obiekt), checksum cen cennika (pętla numeryczna, bez alokacji MB).
+// Zwraca null przy błędzie odczytu (caller traktuje jako brak fast path).
+const _wellUISumCheapSig = function () {
+    try {
+        const _km = document.getElementById('transport-km')?.value || '';
+        const _rate = document.getElementById('transport-rate')?.value || '';
+        const _mode = typeof currentTransportMode !== 'undefined' ? currentTransportMode : '';
+        const _fz = typeof isFrozenPriceCtx === 'function' ? (isFrozenPriceCtx() ? 'F' : 'L') : '';
+        const _om =
+            typeof orderEditMode !== 'undefined' && orderEditMode && orderEditMode.order
+                ? 'O' + orderEditMode.order.offerId + '|' + orderEditMode.order.transportMode
+                : 'no';
+        const _disc = typeof wellDiscounts !== 'undefined' ? JSON.stringify(wellDiscounts) : '';
+        let _pc = '0';
+        if (typeof studnieProducts !== 'undefined' && Array.isArray(studnieProducts)) {
+            let _sum = 0;
+            for (let _pi = 0; _pi < studnieProducts.length; _pi++) {
+                const _p = studnieProducts[_pi];
+                if (!_p) continue;
+                _sum +=
+                    (Number(_p.price) || 0) + (Number(_p.weight) || 0) + (Number(_p.height) || 0);
+            }
+            _pc = studnieProducts.length + ':' + Math.round(_sum * 100);
+        }
+        return _km + '#' + _rate + '#' + _mode + '#' + _fz + '#' + _om + '#' + _disc + '#' + _pc;
+    } catch (_e) {
+        return null;
+    }
+};
+
 function _wellUIPatchInvalidation() {
     if (_sumPatchDone) return;
     if (typeof window === 'undefined') return;
@@ -124,10 +163,33 @@ function _wellUIPatchInvalidation() {
     if (
         !_wrap('_excelClearResCache', function (args) {
             try {
+                _wellSumRev++;
                 const _one = args && args[0];
                 if (_one && _one.id != null) _sumStatsCache.delete(_one.id);
                 _sumTotalsCache = null;
             } catch (_eEv) {}
+        })
+    )
+        _all = false;
+    // F1: każdy sygnał mutacji z Excela (paste/edit/undo/solver/tab) bumpuje rev.
+    if (
+        !_wrap('emitExcelMutated', function () {
+            _wellSumRev++;
+        })
+    )
+        _all = false;
+    // F1: każda akcja panelu głównego idzie przez refreshAll — bump na wejściu,
+    // więc updateSummary wołane wewnątrz refreshAll trafia w slow path.
+    if (
+        !_wrap('refreshAll', function () {
+            _wellSumRev++;
+        })
+    )
+        _all = false;
+    // F1: rabaty mutują wellDiscounts in-place (bez zmiany wells) — bump na apply.
+    if (
+        !_wrap('applyDiscount', function () {
+            _wellSumRev++;
         })
     )
         _all = false;
@@ -282,7 +344,25 @@ window.updateSummary = function updateSummary() {
         _wellUIPatchInvalidation();
     } catch (_ePatch) {}
     // Per-tick totals + per-sesja stats: fingerprint uniewaznia przy zmianie oferty i cennika.
-    const _fp = _wellUISumFp();
+    // F1 fast path: rev+len+cheapSig bez zmian → pomiń JSON.stringify(wells) (MB churn
+    // per klik). Slow path = dotychczasowa logika (100% zgodności wstecz).
+    const _wlen = typeof wells !== 'undefined' && Array.isArray(wells) ? wells.length : -1;
+    const _cheap = _wellUISumCheapSig();
+    let _fp;
+    if (
+        _sumFp !== null &&
+        _cheap !== null &&
+        _wellSumRev === _lastSumRevSeen &&
+        _wlen === _lastSumWellsLen &&
+        _cheap === _lastSumCheapSig
+    ) {
+        _fp = _sumFp;
+    } else {
+        _fp = _wellUISumFp();
+        _lastSumRevSeen = _wellSumRev;
+        _lastSumWellsLen = _wlen;
+        _lastSumCheapSig = _cheap;
+    }
     if (_fp !== null && _fp !== _sumFp) {
         _sumStatsCache.clear();
         _sumTotalsCache = null;
