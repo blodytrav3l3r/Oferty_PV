@@ -567,3 +567,70 @@ Scope: dopisane na koncu, historia E-001..E-117e nietknieta. Kod 4a/4b z worktre
 - DIFF: git diff HEAD -- docs/plans/_active-evidence.md (ten dopisek) + git diff HEAD -- public/js/studnie/excelUndo.js public/js/studnie/excelModal.js (4a/4b).
 - COMMIT: 3x node scripts/commit.mjs (fix, fix, docs), BEZ push.
 - VERIFIED: YES.
+
+## Zamkniecie sesji E-118 (2026-10-16, BUILD MODE, tylko ten plik, BEZ COMMIT/BEZ PUSH)
+
+Scope: dopisane na koncu, historia E-001..E-117f nietknieta. Nowe ID E-118, rozlaczne. Tylko ten plik. Nie dotyka kodu prod, harnessow, .env ani DB.
+
+## Ledger E-118
+
+| ID     | Twierdzenie                                                              | Dowod                                                                                                                      | Status   |
+| ------ | ------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------- | -------- |
+| E-118a | Sesja = 20 commitow od v1.46.0 (4ed4eab) do HEAD 4854099 (lista ponizej) | git log 4ed4eab..HEAD, 20 wierszy, 2026-10-16                                                                              | VERIFIED |
+| E-118b | Push: HEAD == origin/main (4854099), tym dopiskiem BEZ commita/pusha     | rev-parse HEAD == rev-parse origin/main = 4854099711ee5675b0e35785178d7fb314ecc509; status main...origin/main in sync      | VERIFIED |
+| E-118c | Worktree dirty: 1x M + 2x untracked (artefakty pomiarow, poza commitem)  | M parity-excel-virtual-600-throttle-x4.json (1064+/1030-); ?? hang-2000-harness-A-B.json; ?? parity-excel-virtual-600.json | VERIFIED |
+| E-118d | Otwarte dlugi: 6 pozycji (lista ponizej), zaden nie blokuje zamkniecia   | E-113d + E-115f + E-117f-4c + E-117f-debt + E-117f-parity + E-118c                                                         | VERIFIED |
+
+### Lista commitow sesji (git log 4ed4eab..HEAD, oldest-first)
+
+- throttle/infra: 3956c09d37e98eab685ec1eb5d4d2245d0ef60d0 chore(deps): regeneracja third-party-notices
+- throttle/infra: 1b12acb516791d51188ecc2639c32a601fc58b3a test(studnie): baseline throttle-x4 i wrapper pomiarowy
+- throttle/infra: e66f7afc3fead055c7f29111a864800bce1b5047 fix(studnie): debounce preview i solvera w excel
+- CI fix (E-111g/h): 3826ed09ea36d482dc9f40fe2cb03cfef4d5d203 fix(ci): haslo testowe w jobie e2e-appname
+- mikro-PR (E-113): 1d1dc3e01a90057446aa7d65dec1810858460590 fix(studnie): mikro-opt switch-select-autofit
+- mikro-PR docs: 46285d0d4b0dd6628797388171ef3077ad656dec docs(studnie): plan napraw priorytetowych z uwagami recenzji
+- Batch 1 (E-114f): 7759c56b93b4bb8441c24501ceac4bfdb025baad chore(ci): job excel-gates parity golden align
+- Batch 1 (E-114f): c49c6fa20c8305570c79c536069d502800d47b82 fix(studnie): escapehtmlattr w tytule bledu excel
+- Batch 1 (E-114f): 9b7ef227f3d2b72e2e4ad954432b0155d4038496 chore(studnie): logger warn w pustych catch excel
+- Batch 1 ledger: 959e02e62cbbdda5606b81b195286f60cca9306b docs(studnie): ledger e-114 statusy batch 1
+- Batch 1 follow-up CI: a929531d4cdf1a0560831e47a70b802ec10ced1e fix(ci): guard chrome path i excel-gates w deploy needs
+- Batch 1 follow-up XSS: 854dc3e852a64dc4afdc6a137b3eed76eaba3fc6 fix(studnie): lokalny escaper atrybutu w tytule bledu
+- Batch 2 (E-115): 20bfc26591d4270767d246574b8a907b41292690 fix(studnie): paste jeden tick i cache podsumowania
+- Batch 2 (E-115f): aced0a00f174f9ffb52d1e92ccbd7f4f77862121 fix(studnie): usuniecie martwego fast-path duplikatow
+- Batch 3 (E-116f-A): 4910fb9b067c5e625ccd9119c336ed98f9bf7089 test(studnie): testy fokusu tab w excelu
+- Batch 3 (E-116f-B): 9fd3afbe7945850cc788c6ce37181a9631febd22 chore(ci): nocny throttle excel i aliasy golden
+- Batch 3 ledger: 979880b1c099d43a315f844700e6810aca1c057e docs(studnie): ledger e-116 statusy batch 3
+- Batch 4 4a (E-117f): 975e36ecd5ebcaa486b97f90abbb24646c04b7f6 fix(studnie): guardy snapshot undo w trakcie paste
+- Batch 4 4b (E-117f): 5a330dfacdacf9f76774c4db44922475171af6c5 fix(studnie): gate klona otwarcia excel do 100 studni
+- Batch 4 ledger: 4854099711ee5675b0e35785178d7fb314ecc509 docs(studnie): ledger e-117 finalizacja batch 4
+- Faza 1 (E-200..E-211) i starty Batch (E-114/E-115/E-116/E-117 docs-only): bez osobnych commitow, weszly w ledgery 959e02e/979880b/4854099.
+
+### Otwarte dlugi (nie commituja sie tym dopiskiem)
+
+1. M docs/plans/parity-excel-virtual-600-throttle-x4.json - pomiar pre-existing, poza commitem (E-113e, E-117f).
+2. Untracked docs/plans/parity-excel-virtual-600.json (OUT parity plain 31/31 z E-117f-parity) - decyzja w nastepnej sesji: commit albo gitignore.
+3. Untracked docs/plans/hang-2000-harness-A-B.json - artefakt laboratoryjny N=2000, real max=3 per E-113d, poza commitem.
+4. PR 4c god-split ODRACZONY - tylko design (E-117f-4c), brak kodu.
+5. Punkty 1-2 reviewera jako follow-up, nie blokowaly 4a/4b (E-117f-debt).
+6. Fingerprint parity AKCEPT z dlugiem lzejszej sygnatury (E-115f).
+
+### Next steps (nastepna sesja, kolejnosc)
+
+1. Decyzja artefakty: commit vs gitignore vs usuniecie dla dlugow 1-3.
+2. Follow-up: punkty 1-2 reviewera + lzejsza sygnatura fingerprint + god-split 4c (osobne PR-y).
+3. Przed commitem: npm run version:check + npm run validate + npm run format.
+4. Commit wylacznie przez node scripts/commit.mjs; push za osobnym GO (tier czerwony).
+5. E-105/E-211: RED/bench throttle-x4 do domkniecia po decyzji wrappera (jesli wznowione).
+
+## Checkpoint E-118
+
+- CLAIM: zamkniecie sesji dopisane append-only (E-118a..E-118d + listy + next steps), historia nietknieta.
+- EVIDENCE: ta sekcja E-118; git log 4ed4eab..HEAD (20 SHA powyzszych); rev-parse HEAD == origin/main 4854099; status/diffstat/untracked jak w E-118c.
+- REPRODUCTION: git log --oneline --decorate 4ed4eab..HEAD; rev-parse HEAD; rev-parse origin/main; status --short --branch; diff --stat (2026-10-16, EXIT 0).
+- BEFORE: koniec E-117f (569 linii); HEAD 4854099 w sync z origin/main; worktree M 1 + ?? 2.
+- AFTER: tylko docs/plans/_active-evidence.md + ta sekcja; kod + harnessy + .env + DB bez zmian tym dopiskiem.
+- CHANGE: append-only, E-118 4x VERIFIED + next steps 1-5.
+- TESTS: brak runtime tym dopiskiem (docs-only); bramki przed nastepnym commitem (next step 3).
+- DIFF: git diff -- docs/plans/_active-evidence.md.
+- COMMIT: brak (zadanie: zostaw do nastepnej sesji).
+- VERIFIED: YES.
