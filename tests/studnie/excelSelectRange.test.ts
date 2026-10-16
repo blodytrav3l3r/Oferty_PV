@@ -112,4 +112,38 @@ describe('P4 range/sticky/create (A6/A7/A8)', () => {
         expect(ctx._excelSelectedCells.length).toBe(15);
         expect(ctx.__summaries).toBe(1);
     });
+
+    test('A9: virtual sticky odświeża tylko nowe wiersze i używa cache offsetów', () => {
+        const ctx: any = {
+            window: {},
+            document,
+            LAYERS_EXCEL: { STICKY_HEADER_TH: 10, STICKY_COLUMN: 5 },
+            __widthReads: 0
+        };
+        vm.createContext(ctx);
+        vm.runInContext(readStudnie('excelTableRenderer.js'), ctx);
+        vm.runInContext(
+            `document.body.innerHTML = '<div id="excel-table-container"><table><thead>' +
+                '<tr><th colspan="7">h3</th></tr>' +
+                '<tr>${'<th style="width:10px">h</th>'.repeat(7)}</tr>' +
+                '<tr><th colspan="7">h2</th></tr></thead><tbody>' +
+                '<tr>${'<td>x</td>'.repeat(7)}</tr></tbody></table></div>';` +
+                `Array.from(document.querySelectorAll('thead tr:nth-child(2) th')).forEach(th => {
+                    Object.defineProperty(th, 'offsetWidth', { configurable: true, get() { __widthReads++; return parseFloat(this.style.width) || 10; } });
+                });` +
+                `_excelApplyStickyColumns(); const readsAfterFull = __widthReads;` +
+                `_excelApplyStickyColumns({ rowsOnly: true });` +
+                `document.querySelector('thead tr:nth-child(2) th').style.width = '20px';` +
+                `_excelApplyStickyColumns({ rowsOnly: true });` +
+                `window.innerWidth = 1200; _excelApplyStickyColumns({ rowsOnly: true });` +
+                `window.__stickyReads = [readsAfterFull, __widthReads];` +
+                `window.__stickyHeaderLeft = document.querySelector('thead tr:nth-child(2) th:nth-child(2)').style.left;` +
+                `window.__stickyBodyLeft = document.querySelector('tbody td:nth-child(2)').style.left;`,
+            ctx
+        );
+        expect(ctx.window.__stickyReads[0]).toBe(13);
+        expect(ctx.window.__stickyReads[1]).toBe(39);
+        expect(ctx.window.__stickyHeaderLeft).toBe('20px');
+        expect(ctx.window.__stickyBodyLeft).toBe('20px');
+    });
 });

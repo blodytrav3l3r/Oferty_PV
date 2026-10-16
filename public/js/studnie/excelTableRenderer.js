@@ -714,8 +714,29 @@ function _excelApplyColWidths(dn) {
 }
 if (typeof window !== 'undefined') window._excelApplyColWidths = _excelApplyColWidths;
 
+const _excelStickyOffsetCache = new WeakMap();
+
+function _excelApplyStickyBodyRows(tbody, offsets) {
+    if (!tbody || !offsets || offsets.length === 0) return;
+    const rows = tbody.children;
+    for (let rowIndex = 0; rowIndex < rows.length; rowIndex++) {
+        const cells = rows[rowIndex].children;
+        const count = Math.min(7, cells.length, offsets.length);
+        for (let colIdx = 0; colIdx < count; colIdx++) {
+            const cell = cells[colIdx];
+            const left = offsets[colIdx] + 'px';
+            if (cell.style.left !== left) cell.style.left = left;
+            if (cell.style.position !== 'sticky') cell.style.position = 'sticky';
+            if (cell.style.zIndex !== String(LAYERS_EXCEL.STICKY_COLUMN))
+                cell.style.zIndex = String(LAYERS_EXCEL.STICKY_COLUMN);
+        }
+    }
+}
+
 /** Wymuś poprawne sticky left — dopasowuje do rzeczywistej szerokości kolumn */
 function _excelApplyStickyColumns(retry) {
+    const rowsOnly = retry && typeof retry === 'object' && retry.rowsOnly === true;
+    retry = typeof retry === 'number' ? retry : 0;
     retry = retry || 0;
     const container = document.getElementById('excel-table-container');
     if (!container) return;
@@ -727,6 +748,19 @@ function _excelApplyStickyColumns(retry) {
     if (!headRow) return;
     const stickyThs = headRow.querySelectorAll('th:nth-child(-n+7)');
     if (stickyThs.length < 2) return;
+    const widthSignature = Array.from(stickyThs)
+        .map((th) => th.style.width + ':' + th.style.minWidth + ':' + th.style.maxWidth)
+        .join('|');
+    const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 0;
+    const cachedOffsets = _excelStickyOffsetCache.get(headRow);
+    const cached =
+        cachedOffsets &&
+        cachedOffsets.viewportWidth === viewportWidth &&
+        cachedOffsets.widthSignature === widthSignature;
+    if (rowsOnly && cached) {
+        _excelApplyStickyBodyRows(table.querySelector('tbody'), cachedOffsets.offsets);
+        return;
+    }
     // rAF retry gdy layout jeszcze 0 (fonty/webview nie przeliczone) — max 5.
     let zeroCount = 0;
     for (let _z = 0; _z < stickyThs.length; _z++) {
@@ -745,6 +779,7 @@ function _excelApplyStickyColumns(retry) {
         leftPos += /** @type {HTMLElement} */ (stickyThs[i]).offsetWidth;
         offsets.push(leftPos);
     }
+    _excelStickyOffsetCache.set(headRow, { viewportWidth, widthSignature, offsets });
     /* Zastosuj do wszystkich th i td w pierwszych 7 kolumnach */
     const sel = 'th:nth-child(-n+7), td:nth-child(-n+7)';
     const cells = table.querySelectorAll(sel);

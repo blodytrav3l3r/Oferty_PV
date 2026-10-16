@@ -686,8 +686,6 @@ function _excelVirtualRenderBody() {
             }
             if (_perf) _excelPerfPush('lucide', _excelPerfNow() - _tLucideStart);
             const _tStickyStart = _perf ? _excelPerfNow() : 0;
-            if (typeof _excelApplyStickyColumns === 'function') _excelApplyStickyColumns();
-            if (typeof _excelApplyLockedRows === 'function') _excelApplyLockedRows();
             /* Virtual podmienia tbody — nałóż zapisane szerokości na nowy slice */
             if (typeof _excelApplyColWidths === 'function') {
                 try {
@@ -696,6 +694,10 @@ function _excelVirtualRenderBody() {
                     );
                 } catch (_e) {}
             }
+            /* Nagłówek pozostał ten sam — użyj cache offsetów i ostyluj tylko nowy slice. */
+            if (typeof _excelApplyStickyColumns === 'function')
+                _excelApplyStickyColumns({ rowsOnly: true });
+            if (typeof _excelApplyLockedRows === 'function') _excelApplyLockedRows();
             // restore logical focus after recycle — only if grid had focus and active still in viewport
             if (_hadGridFocus && _activeBefore) {
                 // use latest active (may have been updated by ensureVisible)

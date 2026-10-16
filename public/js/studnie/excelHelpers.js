@@ -815,6 +815,8 @@ function excelToggleFullscreen() {
     _excelFullscreen = !_excelFullscreen;
     const overlay = document.getElementById('excel-table-overlay');
     _excelPositionOverlay(overlay);
+    /* Układ overlayu zmienia szerokość tabeli bez zmiany viewportu. */
+    if (typeof _excelApplyStickyColumns === 'function') _excelApplyStickyColumns();
     /* Zmieniaj tylko labelkę — btn.textContent skasowałby ikonę Lucide */
     const lbl = document.getElementById('excel-fs-btn-label');
     if (lbl) lbl.textContent = _excelFullscreen ? 'Okno' : 'Pełny';
