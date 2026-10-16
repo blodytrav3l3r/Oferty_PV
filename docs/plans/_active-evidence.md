@@ -508,3 +508,62 @@ Scope: dopisane na koncu, historia E-001..E-116e nietknieta. Tylko ten plik docs
 - DIFF: git diff -- docs/plans/_active-evidence.md.
 - COMMIT: 3x node scripts/commit.mjs (test, chore, docs), BEZ push.
 - VERIFIED: YES.
+
+## Start Batch 4 P2 jako 3 osobne PR-y (2026-10-16, BUILD MODE docs-only, zero kodu)
+
+Scope: dopisane na koncu, historia E-001..E-015, E-005a, E-100..E-106, E-200..E-211, E-107..E-116, E-111g..E-111h, E-114f, E-115f, E-116f nietknieta. Nowe ID E-117, rozlaczne. Tylko ten plik docs. Nie dotyka kodu prod, harnessow, .env ani DB. Bez commita, bez pusha.
+
+## Ledger E-117
+
+| ID     | Twierdzenie                                                                                                                                                                  | Dowod                                                           | Status     |
+| ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------- | ---------- |
+| E-117a | PR 4a undo-paste: odwracalnosc paste (kazda sciezka paste odwracalna, SSoT wells+undo), bez zmian cen/sum                                                                    | decyzja sesji 2026-10-16; kod nietkniety tym dopiskiem          | HYPOTHESIS |
+| E-117b | PR 4b full-clone-open: pelny clone sciezki open (bez skrotow omijajacych init/ETag/SLA), bez regresji open/modal                                                             | decyzja sesji 2026-10-16; kod nietkniety; do weryfikacji diffem | HYPOTHESIS |
+| E-117c | PR 4c god-split: podzial god-file na mniejsze moduly bez zmiany logiki (czysty split, zero zmian zachowania), NEW globals/inline = 0                                         | decyzja sesji 2026-10-16; kod nietkniety; do weryfikacji diffem | HYPOTHESIS |
+| E-117d | Wlasciciele plikow: builder = 4a (public/js/studnie/excelCopyPaste.js + test undo), general = 4b (public/js/studnie/excelModal.js open/clone), explore = 4c (god-split plik) | podzial sesji 2026-10-16; bez zmian kodu tym dopiskiem          | HYPOTHESIS |
+| E-117e | Kolejnosc: 3 osobne PR-y (4a, 4b, 4c), kazdy z wlasna bramka ponizej; brak laczenia w jeden PR; N=2000 ODROCZONE - real max=3 per E-113d (hang-2000 artefakt poza commitem)  | decyzja sesji 2026-10-16; merge kazdego tylko po swojej bramce  | HYPOTHESIS |
+
+## Bramki per PR (po kodzie PR, przed merge)
+
+- PR 4a (builder, undo-paste): unit PASS (undo lifecycle) + parity GREEN (paste/undo, SSoT wells+undo) + golden GREEN (bez --update) + kwoty bez roznic (I-007).
+- PR 4b (general, full-clone-open): unit PASS + parity GREEN (sciezki open/clone) + bench brak regresji (open/modal vs baseline) + longtask zero >50ms.
+- PR 4c (explore, god-split): lint PASS + typecheck PASS + unit PASS + parity GREEN + golden GREEN (bez --update) + zero nowych globali/inline + I-002 zakres (tylko split, zero zmian logiki).
+  Bez bramki danego PR brak merge tego PR; PR-y niezalezne (FAIL jednego nie blokuje review pozostalych).
+
+## Checkpoint E-117
+
+- CLAIM: dopisek E-117 append-only, historia nietknieta, kod + harnessy + .env + DB nietkniete tym dopiskiem.
+- EVIDENCE: ta sekcja E-117a..E-117e; start Batch 4 P2 jako 3 PR-y (4a undo-paste + 4b full-clone-open + 4c god-split, N=2000 odroczone real max=3) + wlasciciele + bramki per PR z zadania sesji 2026-10-16.
+- REPRODUCTION: odczyt docs/plans/_active-evidence.md koniec (E-116f, 510 linii); brak runtime w tym dopisku (docs-only).
+- BEFORE: koniec E-116f; kod + harnessy + .env + DB bez zmian.
+- AFTER: tylko docs/plans/_active-evidence.md + ta sekcja; kod + harnessy + .env + DB bez zmian tym dopiskiem.
+- CHANGE: append-only, E-117 5x HYPOTHESIS (3x PR + wlasciciele + kolejnosc z N=2000 odroczone).
+- TESTS: brak runtime w docs; bramki czekaja (4a undo+parity+golden+kwoty, 4b parity+bench+longtask, 4c lint+typecheck+parity+golden).
+- DIFF: git diff -- docs/plans/_active-evidence.md.
+- COMMIT: brak, zadanie mowi nie commituj.
+- VERIFIED: NO (czeka na 3 PR-y + artefakty bramek).
+
+## Ledger E-117f - finalizacja Batch 4 (releaser, BEZ push)
+
+Scope: dopisane na koncu, historia E-001..E-117e nietknieta. Kod 4a/4b z worktree (diff ponizej), 4c tylko design bez kodu (odroczony).
+
+| ID            | Twierdzenie                                                                              | Dowod                                                                                                                                                                                                                                                                                                                   | Status   |
+| ------------- | ---------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| E-117f-4a     | PR 4a excelUndo.js guardy snapshot undo w trakcie paste DONE                             | diff public/js/studnie/excelUndo.js (+8/-0: 2x early-return per-cell/batch + 1x guard snapshot z idxs w trakcie flagi _excelPasteInProgress); node --check 2/2 + eslint 2/2 GREEN; jest excelUndoLifecycle 7/7 + excelPatchUndo 2/2 + excelPasteBulk 6/6 = 15/15 GREEN                                                  | VERIFIED |
+| E-117f-4b     | PR 4b excelModal.js open-gate N<=100 DONE                                                | diff public/js/studnie/excelModal.js (+13/-1: clone tylko N<=100, flaga _excelOpenSnapshotSkipped + reset, toast przy >100 w Zamknij-bez-zapisu); node --check + eslint GREEN; parity 31/31 (E-117f-parity)                                                                                                             | VERIFIED |
+| E-117f-parity | Parity plain 31/31 GREEN - guardy 4a/4b nie zmieniaja hashy OFF=ON                       | node --dns-result-order=ipv4first tests/playwright/excelVirtualParity.cjs (flaga DNS tylko na IPv4-bind 0.0.0.0 z .env, bez zmian kodu/env/serwera); PARITY OK; OUT docs/plans/parity-excel-virtual-600.json (untracked, poza commitem); hashe OFF=ON: edit 1335549096, undo 2759913017, paste 628354446, 3b 2960316020 | VERIFIED |
+| E-117f-4c     | PR 4c god-split ODRACZONY - tylko design, brak kodu                                      | decyzja sesji 2026-10-16; git diff dla plikow 4c pusty (prod diff to tylko excelUndo.js + excelModal.js)                                                                                                                                                                                                                | VERIFIED |
+| E-117f-debt   | Punkty 1-2 reviewera jako dlug follow-up, nie blokuja 4a/4b (pre-existing, out-of-scope) | lista reviewera z sesji; poza zakresem diff 4a/4b; do osobnego follow-up                                                                                                                                                                                                                                                | VERIFIED |
+
+## Checkpoint E-117f
+
+- CLAIM: Batch 4 zamkniety w 3 commitach (4a kod + 4b kod + docs E-117f), 4c odroczony bez kodu, BEZ push.
+- EVIDENCE: diff --stat 4a/4b (excelUndo.js +8, excelModal.js +13/-1); ta sekcja E-117f; SHA w raporcie releasera.
+- REPRODUCTION: node --check x2 + npx eslint x2 + npx jest 3 sciezki (15/15) + parity plain (31/31, PARITY OK) + npm run version:check (EXIT 0), 2026-10-16.
+- BEFORE: worktree M 4 (ledger E-117 + throttle-x4 pomiar pre-existing + excelModal + excelUndo) + ?? 2 (hang JSON + parity JSON artefakty).
+- AFTER: 3 commity (fix 4a, fix 4b, docs ledger); poza commitem: parity-excel-virtual-600-throttle-x4.json (M pre-existing pomiarem) + hang/parity JSON (untracked artefakty); push nie wykonany.
+- CHANGE: append-only E-117f (5 wierszy + checkpoint); kod: excelUndo.js +8/-0, excelModal.js +13/-1.
+- TESTS: node --check 2/2 GREEN; eslint 2/2 GREEN; jest 15/15 GREEN (7+2+6); parity plain 31/31 GREEN; version:check EXIT 0.
+- DIFF: git diff HEAD -- docs/plans/_active-evidence.md (ten dopisek) + git diff HEAD -- public/js/studnie/excelUndo.js public/js/studnie/excelModal.js (4a/4b).
+- COMMIT: 3x node scripts/commit.mjs (fix, fix, docs), BEZ push.
+- VERIFIED: YES.
