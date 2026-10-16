@@ -75,6 +75,8 @@ function _excelGetRowStatus(well) {
             hover: 'rgba(var(--warn-row-rgb), ' + _excelAlpha('0.16', '0.22') + ')'
         };
     }
+    // LOADING: flaga bez tintu — tła bez zmian, tylko klasa + spinner u konsumentów.
+    if (well._excelLoading === true) return { loading: true };
     return null;
 }
 
@@ -257,10 +259,12 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
         const hoverActiveDupSolid = 'rgba(' + dupRgb + ', ' + _excelAlpha('0.35', '0.4') + ')';
         /* Kolejność: base/active → status (ERROR/WARNING) → duplikat na wierzchu */
         const wellStatus = _excelGetRowStatus(well);
+        // LOADING: { loading: true } nie niesie tintu — tła bez zmian.
+        const isLoading = well._excelLoading === true;
         let rowBg = isActive ? 'var(--excel-row-active)' : baseBg;
         let hoverBg = isActive ? 'rgba(var(--blue-rgb), 0.28)' : 'var(--excel-row-hover)';
         let activeBg = 'var(--excel-row-active)';
-        if (wellStatus) {
+        if (wellStatus && !wellStatus.loading) {
             rowBg = isActive ? wellStatus.active : wellStatus.base;
             hoverBg = wellStatus.hover;
             activeBg = wellStatus.active;
@@ -270,7 +274,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             hoverBg = isActive ? hoverActiveDupSolid : hoverDupSolid;
             activeBg = isDup && isActive ? rowActiveDupSolid : hoverDupSolid;
         }
-        const statusKey = wellStatus ? well.configStatus : null;
+        const statusKey = wellStatus && !wellStatus.loading ? well.configStatus : null;
         const rowTextColor =
             statusKey === 'ERROR'
                 ? 'var(--danger-hover)'
@@ -282,7 +286,10 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
                 ? ' excel-row-error'
                 : statusKey === 'WARNING'
                   ? ' excel-row-warning'
-                  : '') + (isDup ? ' excel-row-dup' : '');
+                  : '') +
+            (isDup ? ' excel-row-dup' : '') +
+            // LOADING: tylko klasa, data-base-bg bez zmian.
+            (isLoading ? ' excel-row-loading' : '');
         const _errTitle = _excelErrorTitle(well);
         const _rowTitle = _excelRowTitle(_errTitle, isLockedRow);
         const statusTitle = _rowTitle ? ' title="' + _rowTitle + '"' : '';
@@ -407,6 +414,10 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             '" /></td>';
         /* Wys auto */
         const height = _excelCalcWellHeight(well);
+        // LOADING: spinner przed wartością (wzorzec istniejących ikon aria-hidden).
+        const heightPrefix = isLoading
+            ? '<span class="loading-spinner-inline" aria-hidden="true" style="margin-right:4px;"></span>'
+            : '';
         html +=
             '<td class="excel-td" style="' +
             'position:sticky;left:318px;z-index:' +
@@ -418,6 +429,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             ';font-weight: var(--fw-semibold);" data-cell="height-' +
             wIdx +
             '">' +
+            heightPrefix +
             _excelFormatHeight(height) +
             '</td>';
         /* Przejscia */
@@ -886,6 +898,36 @@ function _excelApplyRowStatusDom(row, well, eff, isDup, isLocked, solidBg) {
             td.style.background = _excelStickyCellBg(eff.rowBg, _solid);
         });
     }
+    // LOADING: tylko klasa + spinner, data-base-bg bez zmian (tła nietknięte).
+    // Doklejane po gałęziach ERROR/WARNING, więc repaint błędu nie czyści stanu loading.
+    if (well._excelLoading === true) {
+        row.classList.add('excel-row-loading');
+        try {
+            var _wIdxAttr = row.getAttribute ? row.getAttribute('data-widx') : null;
+            var _hCell =
+                _wIdxAttr != null
+                    ? row.querySelector('[data-cell="height-' + _wIdxAttr + '"]')
+                    : null;
+            if (_hCell && !_hCell.querySelector('.loading-spinner-inline')) {
+                var _sp = document.createElement('span');
+                _sp.className = 'loading-spinner-inline';
+                _sp.setAttribute('aria-hidden', 'true');
+                _sp.style.marginRight = '4px';
+                _hCell.prepend(_sp);
+            }
+        } catch (_eLoad) {}
+    } else {
+        row.classList.remove('excel-row-loading');
+        try {
+            var _wIdxAttr2 = row.getAttribute ? row.getAttribute('data-widx') : null;
+            var _hCell2 =
+                _wIdxAttr2 != null
+                    ? row.querySelector('[data-cell="height-' + _wIdxAttr2 + '"]')
+                    : null;
+            var _old = _hCell2 ? _hCell2.querySelector('.loading-spinner-inline') : null;
+            if (_old) _old.remove();
+        } catch (_eLoad2) {}
+    }
 }
 
 /* Fast path: przemaluj JEDEN wiersz po zmianie błędów (bez mapy duplikatów —
@@ -913,7 +955,8 @@ function _excelPaintRowStatus(row, well) {
     var rowBg;
     var hoverBg;
     var activeBg;
-    if (wellStatus) {
+    // LOADING: { loading: true } nie niesie tintu — tła bez zmian.
+    if (wellStatus && !wellStatus.loading) {
         rowBg = isActive ? wellStatus.active : wellStatus.base;
         hoverBg = wellStatus.hover;
         activeBg = wellStatus.active;
@@ -1042,7 +1085,8 @@ function _excelRefreshDupColors() {
         let effRowBg = isActive ? 'var(--excel-row-active)' : baseBg;
         let effHoverBg = isActive ? 'rgba(var(--blue-rgb), 0.28)' : 'var(--excel-row-hover)';
         let effActiveBg = 'var(--excel-row-active)';
-        if (wellStatus) {
+        // LOADING: { loading: true } nie niesie tintu — tła bez zmian.
+        if (wellStatus && !wellStatus.loading) {
             effRowBg = isActive ? wellStatus.active : wellStatus.base;
             effHoverBg = wellStatus.hover;
             effActiveBg = wellStatus.active;
@@ -1070,4 +1114,47 @@ function _excelRefreshDupColors() {
             baseBg
         );
     });
+}
+
+/* LOADING wiersza: flaga na well + klasa/spinner na żywym wierszu + aria-busy kontenera.
+   Flaga jest źródłem prawdy (render i malarze czytają well._excelLoading).
+   Klasa excel-row-loading nie rusza teł; spinner dokładany do td[data-cell height]. */
+function _excelSetRowLoading(wIdx, on) {
+    // Flaga na modelu — render TBODY podniesie klasę i spinner przy następnym renderze.
+    try {
+        if (typeof wells !== 'undefined' && wells[wIdx]) wells[wIdx]._excelLoading = on === true;
+    } catch (_eFlag) {}
+    var container =
+        typeof document !== 'undefined' ? document.getElementById('excel-table-container') : null;
+    // aria-busy kontenera wg dowolnego wiersza w loading (przed guardem — działa też bez TR w DOM).
+    try {
+        var anyLoading =
+            typeof wells !== 'undefined' &&
+            Array.isArray(wells) &&
+            wells.some(function (w) {
+                return w && w._excelLoading === true;
+            });
+        if (container) {
+            if (anyLoading) container.setAttribute('aria-busy', 'true');
+            else container.removeAttribute('aria-busy');
+        }
+    } catch (_eBusy) {}
+    var row = container ? container.querySelector('tr[data-widx="' + wIdx + '"]') : null;
+    if (!row) return;
+    if (on === true) {
+        row.classList.add('excel-row-loading');
+        var hCell = row.querySelector('[data-cell="height-' + wIdx + '"]');
+        if (hCell && !hCell.querySelector('.loading-spinner-inline')) {
+            var sp = document.createElement('span');
+            sp.className = 'loading-spinner-inline';
+            sp.setAttribute('aria-hidden', 'true');
+            sp.style.marginRight = '4px';
+            hCell.prepend(sp);
+        }
+    } else {
+        row.classList.remove('excel-row-loading');
+        var hCellOff = row.querySelector('[data-cell="height-' + wIdx + '"]');
+        var old = hCellOff ? hCellOff.querySelector('.loading-spinner-inline') : null;
+        if (old) old.remove();
+    }
 }

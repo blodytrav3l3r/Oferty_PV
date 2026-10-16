@@ -46,6 +46,8 @@ async function _excelAutoSelectForWell(wIdx) {
             try {
                 currentWellIndex = wIdx;
                 _excelMarkDirty();
+                /* Pokaz spinner wiersza na czas solvera (guard = bezpieczne wywolanie). */
+                if (typeof _excelSetRowLoading === 'function') _excelSetRowLoading(wIdx, true);
                 await autoSelectComponents(true);
                 _excelClearResCache(well);
                 if (
@@ -90,6 +92,8 @@ async function _excelAutoSelectForWell(wIdx) {
                     } catch (_e3) {}
                 }
             } finally {
+                /* Zawsze zdejmij spinner (takze przy throw) - obok resetu quietDepth. */
+                if (typeof _excelSetRowLoading === 'function') _excelSetRowLoading(wIdx, false);
                 if (typeof _excelQuietDepth !== 'undefined') {
                     _excelQuietDepth--;
                     if (_excelQuietDepth !== 0) {

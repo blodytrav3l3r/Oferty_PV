@@ -13,6 +13,7 @@ function stripWellRuntimeFields(wellsArr) {
         '_lastAutoTelemetryId',
         '_aiRankInfo',
         '_lastSolveInputHash',
+        '_excelLoading',
         '__resCache'
     ];
     wellsArr.forEach(function (w) {

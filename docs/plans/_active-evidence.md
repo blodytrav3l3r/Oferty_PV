@@ -693,3 +693,52 @@ Scope: dopisane na koncu, historia E-001..E-015, E-005a, E-100..E-106, E-200..E-
 - DIFF: git diff -- docs/plans/_active-evidence.md.
 - COMMIT: node scripts/commit.mjs "perf(studnie): hoist renderu i pin wierszy excel", BEZ push.
 - VERIFIED: YES (po zielonym version:check w kroku 3).
+
+## Start runda 2 LOADING-tint (2026-10-16, BUILD MODE docs-only, zero kodu)
+
+Scope: dopisane na koncu, historia E-001..E-015, E-005a, E-100..E-106, E-200..E-211, E-107..E-119, E-111g..E-111h, E-114f, E-115f, E-116f, E-117f, E-119f nietknieta. Nowe ID E-120, rozlaczne. Tylko ten plik docs. Nie dotyka kodu prod, harnessow, .env ani DB. Bez commita, bez pusha.
+
+## Ledger E-120
+
+| ID     | Twierdzenie                                                                                        | Dowod                                                  | Status     |
+| ------ | -------------------------------------------------------------------------------------------------- | ------------------------------------------------------ | ---------- |
+| E-120a | Runda 2 LOADING-tint: klasa bez mutacji tla + spinner + aria-busy w finally                        | decyzja sesji 2026-10-16; kod nietkniety tym dopiskiem | HYPOTHESIS |
+| E-120b | Wlasciciele: builder = tableBody, general = autoSelect, explore = css + test                       | podzial sesji 2026-10-16; bez zmian kodu tym dopiskiem | HYPOTHESIS |
+| E-120c | Bramki: errorRefresh rozszerzone + parity GREEN + golden GREEN (bez --update) + aria (busy/status) | bramka sesji 2026-10-16; do potwierdzenia po rundzie 2 | HYPOTHESIS |
+| E-120d | Kolejnosc: runda 2 po B1; merge tylko po bramkach E-120c                                           | decyzja sesji 2026-10-16; LOADING poza zakresem B1     | HYPOTHESIS |
+
+## Checkpoint E-120
+
+- CLAIM: dopisek E-120 append-only, historia nietknieta, kod + harnessy + .env + DB nietkniete tym dopiskiem.
+- EVIDENCE: ta sekcja E-120a..E-120d; runda 2 LOADING-tint (klasa bez mutacji tla, spinner, aria-busy w finally) + wlasciciele + bramki z zadania sesji 2026-10-16.
+- REPRODUCTION: odczyt docs/plans/_active-evidence.md koniec (E-119f, 695 linii); brak runtime w tym dopisku (docs-only).
+- BEFORE: koniec E-119f; kod + harnessy + .env + DB bez zmian.
+- AFTER: tylko docs/plans/_active-evidence.md + ta sekcja; kod + harnessy + .env + DB bez zmian tym dopiskiem.
+- CHANGE: append-only, E-120 4x HYPOTHESIS (tint + wlasciciele + bramki + kolejnosc).
+- TESTS: brak runtime w docs; bramki czekaja (errorRefresh rozszerzone + parity + golden + aria).
+- DIFF: git diff -- docs/plans/_active-evidence.md.
+- COMMIT: brak, zadanie mowi nie commituj.
+- VERIFIED: NO (czeka na runde 2 + artefakty bramek).
+
+## Finalizacja runda 2 LOADING (2026-10-16, BUILD MODE, BEZ PUSH)
+
+Scope: dopisane na koncu, historia E-001..E-120d nietknieta. Nowe ID E-120f, rozlaczne.
+
+## Ledger E-120f
+
+| ID     | Twierdzenie                                                                                                                                                                                             | Dowod                                                                                   | Status   |
+| ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- | -------- |
+| E-120f | Zakres: tableBody tint-guard + helper _excelSetRowLoading + autoSelect set-clear finally + offerSave strip _excelLoading + css klasa-pulse + test +3; bramki GREEN, LOADING off w fixture = ten sam DOM | diff 4 pliki + test; jest 16-16 + invariants + gate; parity 31-31; golden OK bez update | VERIFIED |
+
+## Checkpoint E-120f
+
+- CLAIM: finalizacja rundy 2 LOADING (E-120f), strip w zapisie potwierdzony.
+- EVIDENCE: ta sekcja E-120f; strip _excelLoading w stripWellRuntimeFields.
+- REPRODUCTION: check + eslint + jest + parity + golden (2026-10-16, EXIT 0).
+- BEFORE: koniec Checkpoint E-120; worktree z kodem LOADING.
+- AFTER: + ta sekcja; commit zakresem z zadania, BEZ push.
+- CHANGE: append-only, E-120f 1x VERIFIED.
+- TESTS: check-eslint-unit-parity-green; version-check w kroku 5.
+- DIFF: git diff -- docs/plans/_active-evidence.md.
+- COMMIT: scripts-commit feat-studnie loading, BEZ push.
+- VERIFIED: YES (po zielonym version-check).

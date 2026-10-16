@@ -2992,8 +2992,33 @@ td.excel-tint--plyta_redukcyjna input {
 #excel-table-container tbody tr[data-widx].excel-row-error .excel-sel-wrap > div,
 #excel-table-container tbody tr[data-widx].excel-row-warning input[type='text'],
 #excel-table-container tbody tr[data-widx].excel-row-warning input[type='number'],
-#excel-table-container tbody tr[data-widx].excel-row-warning .excel-sel-wrap > div {
+#excel-table-container tbody tr[data-widx].excel-row-warning .excel-sel-wrap > div,
+#excel-table-container tbody tr[data-widx].excel-row-loading input[type='text'],
+#excel-table-container tbody tr[data-widx].excel-row-loading input[type='number'],
+#excel-table-container tbody tr[data-widx].excel-row-loading .excel-sel-wrap > div {
     background: transparent !important;
+}
+/* Wiersz w trakcie przeliczania (loading) — subtelny outline/pulse bez nowego
+   tla (tint error/warning przeswituje); spinner w komorce przez
+   .loading-spinner-inline (:2517). */
+#excel-table-container tbody tr[data-widx].excel-row-loading {
+    outline: 1px solid rgba(var(--blue-rgb), 0.45);
+    outline-offset: -1px;
+    animation: excel-row-loading-pulse 1.1s ease-in-out infinite;
+}
+@keyframes excel-row-loading-pulse {
+    0%,
+    100% {
+        outline-color: rgba(var(--blue-rgb), 0.25);
+    }
+    50% {
+        outline-color: rgba(var(--blue-rgb), 0.55);
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    #excel-table-container tbody tr[data-widx].excel-row-loading {
+        animation: none;
+    }
 }
 #excel-table-container tbody tr[data-widx] input[type='text']:focus,
 #excel-table-container tbody tr[data-widx] input[type='number']:focus,

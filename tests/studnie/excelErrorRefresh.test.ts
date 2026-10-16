@@ -311,3 +311,53 @@ describe('_excelPaintRowStatus (1 wiersz, bez mapy duplikatow)', () => {
         expect(row.getAttribute('title')).toBe(null);
     });
 });
+
+describe('excel-row-loading: wspolistnienie z tintem bledu i finally guard', () => {
+    test('ERROR+loading: danger tint + klasy error i loading', () => {
+        const ctx = loadBody();
+        const row = fakeRow(1);
+        row.setAttribute('aria-busy', 'true');
+        const fn = vm.runInContext('_excelPaintRowStatus', ctx);
+        fn(row, { configStatus: 'ERROR', configErrors: ['Blad zapasu x'], _excelLoading: true });
+        expect(row._classes.has('excel-row-error')).toBe(true);
+        expect(row._classes.has('excel-row-loading')).toBe(true);
+        expect(row.style.color).toBe('var(--danger-hover)');
+        expect(row._attrs['data-base-bg']).toContain('danger');
+        expect(row.getAttribute('aria-busy')).toBe('true');
+    });
+
+    test('OK+loading: klasa loading bez tintu bledu', () => {
+        const ctx = loadBody();
+        const row = fakeRow(1);
+        row.setAttribute('aria-busy', 'true');
+        const fn = vm.runInContext('_excelPaintRowStatus', ctx);
+        fn(row, { configStatus: 'OK', configErrors: [], _excelLoading: true });
+        expect(row._classes.has('excel-row-loading')).toBe(true);
+        expect(row._classes.has('excel-row-error')).toBe(false);
+        expect(row._classes.has('excel-row-warning')).toBe(false);
+        expect(row.style.color).toBe('');
+        expect(row._attrs['data-base-bg']).not.toContain('danger');
+        expect(row.getAttribute('aria-busy')).toBe('true');
+    });
+
+    test('finally przy throw: klasa loading i aria-busy zdjete', () => {
+        const row = fakeRow(1);
+        const runWithLoading = (r, work) => {
+            r.classList.add('excel-row-loading');
+            r.setAttribute('aria-busy', 'true');
+            try {
+                work();
+            } finally {
+                r.classList.remove('excel-row-loading');
+                r.removeAttribute('aria-busy');
+            }
+        };
+        expect(() =>
+            runWithLoading(row, () => {
+                throw new Error('recalc boom');
+            })
+        ).toThrow('recalc boom');
+        expect(row._classes.has('excel-row-loading')).toBe(false);
+        expect(row.getAttribute('aria-busy')).toBe(null);
+    });
+});
