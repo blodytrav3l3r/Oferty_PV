@@ -303,7 +303,12 @@ function _excelRenderTable(dn) {
     /* Zastosuj aktywne sortowanie (render przywraca naturalną kolejność wells[]) */
     if (typeof _excelApplySortIfActive === 'function') _excelApplySortIfActive();
     /* Odśwież ikony Lucide w kontenerze (nie skanuj całego dokumentu) */
-    if (typeof lucide !== 'undefined' && lucide.createIcons) {
+    /* F7: skip gdy brak nowych <i data-lucide> (po zamianie na <svg> nic do roboty). */
+    if (
+        typeof lucide !== 'undefined' &&
+        lucide.createIcons &&
+        container.querySelector('i[data-lucide]')
+    ) {
         try {
             lucide.createIcons({ root: container });
         } catch (_e) {}

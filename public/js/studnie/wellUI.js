@@ -278,7 +278,9 @@ window.renderWellsListLegacy = window.renderWellsList = function renderWellsList
     }
 
     container.innerHTML = html;
-    if (window.lucide) window.lucide.createIcons({ root: container });
+    // F7: skip skanu lucide bez nowych ikon.
+    if (window.lucide && container.querySelector('i[data-lucide]'))
+        window.lucide.createIcons({ root: container });
 
     const counter = document.getElementById('wells-counter');
     if (counter) counter.textContent = `(${wells.length})`;

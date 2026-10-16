@@ -60,14 +60,13 @@ function _excelBuildWellsSnapshot() {
 /* Synchronizuje przyciski AUTO/MAN w UI bez pelnego re-render */
 function _excelSyncAutoManualUI() {
     if (typeof wells === 'undefined') return;
+    // F5: faza modelu zostaje pełne N (fixup autoSelect<>configSource, bez DOM —
+    // render tylko odczytuje, więc pominięcie zostawiłoby off-screen stale).
     for (let i = 0; i < wells.length; i++) {
         const w = wells[i];
         if (!w) continue;
         if (_excelIsWellLocked(i))
             continue; /* zablokowana — nie synchronizuj, przyciski wylaczone */
-        const btnMode = document.getElementById('excel-mode-btn-' + i);
-        const btnRun = document.getElementById('excel-run-auto-' + i);
-        if (!btnMode) continue; /* wiersz nie widoczny / nie renderowany */
         /* Sync autoSelect z configSource (gdy glowny panel zmieni configSource) */
         if (
             (w.configSource === 'AUTO' ||
@@ -77,6 +76,20 @@ function _excelSyncAutoManualUI() {
         )
             w.autoSelect = true;
         if (w.configSource === 'MANUAL' && w.autoSelect !== false) w.autoSelect = false;
+    }
+    // F5: faza DOM tylko po żywych wierszach (wIdx z atrybutu — niezależne od
+    // kolejności po sorcie). Off-screen domalowuje slice-render przy scrollu.
+    const _container = document.getElementById('excel-table-container');
+    if (!_container) return;
+    const _rows = _container.querySelectorAll('tbody tr[data-widx]');
+    for (let _r = 0; _r < _rows.length; _r++) {
+        const _row = _rows[_r];
+        const i = parseInt(_row.getAttribute('data-widx'), 10);
+        if (isNaN(i) || !wells[i] || _excelIsWellLocked(i)) continue;
+        const w = wells[i];
+        const btnMode = document.getElementById('excel-mode-btn-' + i);
+        const btnRun = document.getElementById('excel-run-auto-' + i);
+        if (!btnMode) continue; /* wiersz nie widoczny / nie renderowany */
         const isAuto = window.isWellAuto(w);
         btnMode.textContent = isAuto ? 'Auto' : 'Manual';
         btnMode.classList.toggle('is-auto', isAuto);

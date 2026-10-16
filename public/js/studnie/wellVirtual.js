@@ -485,7 +485,8 @@ function _wellVirtualRenderBody() {
     container.scrollLeft = prevLeft;
     _wellVirtualIsRendering = false;
 
-    if (window.lucide && window.lucide.createIcons) {
+    // F7: skip skanu lucide bez nowych ikon (<i> zamienione na <svg> = brak pracy).
+    if (window.lucide && window.lucide.createIcons && container.querySelector('i[data-lucide]')) {
         try {
             window.lucide.createIcons({ root: container });
         } catch (_e) {}

@@ -673,7 +673,13 @@ function _excelVirtualRenderBody() {
                 }
             }
             const _tLucideStart = _perf ? _excelPerfNow() : 0;
-            if (typeof lucide !== 'undefined' && lucide.createIcons) {
+            // F7: skip skanu gdy slice nie wniósł nowych ikon (lucide zamienia
+            // <i> na <svg>, więc brak <i> = brak pracy).
+            if (
+                typeof lucide !== 'undefined' &&
+                lucide.createIcons &&
+                tbody.querySelector('i[data-lucide]')
+            ) {
                 try {
                     lucide.createIcons({ root: tbody });
                 } catch (_e) {}

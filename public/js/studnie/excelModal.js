@@ -534,7 +534,9 @@ function openExcelTableModal() {
         });
     }
 
-    if (typeof lucide !== 'undefined') lucide.createIcons({ root: overlay });
+    // F7: typeof guard + skip skanu bez nowych ikon (async ścieżki mają własne call-site).
+    if (typeof lucide !== 'undefined' && overlay.querySelector('i[data-lucide]'))
+        lucide.createIcons({ root: overlay });
 }
 
 /* ===== CLOSE ===== */

@@ -1053,20 +1053,32 @@ function _excelRefreshDupColors() {
         _excelDupRebuildMaps();
     }
 
+    // F5: mapa pozycji w tabie (tania, bez DOM) + malowanie tylko żywych wierszy.
+    // isEven z pozycji w tabie jak dotąd — zebra identyczna. Mapy globalne
+    // (county duplikatów) liczone wyżej z całego wells; off-screen domalowuje slice-render.
     const tabWells = wells.filter((w) => _excelWellMatchesTab(w, dn));
-    tabWells.forEach((well, idx) => {
-        const wIdx =
+    const tabIdxByWIdx = new Map();
+    for (let _ti = 0; _ti < tabWells.length; _ti++) {
+        const _tw = tabWells[_ti];
+        const _twi =
             typeof _excelWellIndexById !== 'undefined'
-                ? _excelWellIndexById.get(well.id)
+                ? _excelWellIndexById.get(_tw.id)
                 : undefined;
-        if (wIdx === undefined) {
+        if (_twi !== undefined) tabIdxByWIdx.set(_twi, _ti);
+    }
+    const liveRows = container.querySelectorAll('tbody tr[data-widx]');
+    liveRows.forEach((row) => {
+        const wIdx = parseInt(row.getAttribute('data-widx'), 10);
+        if (isNaN(wIdx)) return;
+        const well = wells[wIdx];
+        if (!well || !_excelWellMatchesTab(well, dn)) return;
+        const idx = tabIdxByWIdx.has(wIdx) ? tabIdxByWIdx.get(wIdx) : undefined;
+        if (idx === undefined) {
             if (typeof console !== 'undefined')
                 console.warn('[Excel] brak wpisu wellIndexById:', well && well.id);
             return;
         }
         const nameKey = _excelDupNormName(well);
-        const row = container.querySelector('tr[data-widx="' + wIdx + '"]');
-        if (!row) return;
 
         const isEven = idx % 2 === 0;
         const isActive = typeof currentWellIndex !== 'undefined' && wIdx === currentWellIndex;
