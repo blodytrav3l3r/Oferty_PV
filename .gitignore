@@ -170,3 +170,8 @@ test-results/
 # Forensics E2E appname (generowane przy FAIL — tests/playwright/appNameConsistency.cjs)
 e2e-appname-fail.png
 e2e-appname-server.log
+
+# Lokalne artefakty harnessow Excel (pomiary parity/hang — output, nie baseline;
+# patrz docs/plans/_active-evidence.md E-113d/E-113e; baselines bench/golden sa trackowane celowo)
+docs/plans/parity-excel-virtual-*.json
+docs/plans/hang-2000-harness-*.json
