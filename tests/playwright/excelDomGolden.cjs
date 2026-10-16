@@ -28,6 +28,9 @@ const {
 
 const BASE = 'http://localhost:3000';
 const OUT_DEFAULT = path.join(__dirname, '../../docs/plans/golden-excel-dom-1200.json');
+// Pin katalogu do seeda: dev-DB ma kastomizowane ceny/flagi (inne kolumny/ceny
+// w DOM), fresh-seed nie — bez pinu golden zależy od DB, nie od kodu.
+const SEED_STUDNIE = require('../../data/seed_studnie.json');
 const OUT = resolveOutPath(OUT_DEFAULT);
 const UPDATE = process.argv.includes('--update');
 const TABS = ['1000', '1200', '1500', '2000', '2500', 'styczne'];
@@ -51,22 +54,31 @@ function sleep(ms) {
 }
 
 function canon(html) {
-    return String(html)
-        .replace(/\sstyle="([^"]*)"/g, function (m, st) {
-            // Szerokosci/pozycje z pomiaru (autofit/sticky) zaleza od fontow
-            // platformy — wycinamy je z hash, reszta (kolory/bledy) zostaje.
-            var kept = String(st)
-                .split(';')
-                .map(function (s) {
-                    return s.trim();
-                })
-                .filter(function (s) {
-                    return s && !/^(min-|max-)?width\s*:|^left\s*:/i.test(s);
-                });
-            return kept.length ? ' style="' + kept.join('; ') + '"' : '';
-        })
-        .replace(/>\s+</g, '><')
-        .trim();
+    return (
+        String(html)
+            .replace(/\sstyle="([^"]*)"/g, function (m, st) {
+                // Szerokosci/pozycje z pomiaru (autofit/sticky) zaleza od fontow
+                // platformy — wycinamy je z hash, reszta (kolory/bledy) zostaje.
+                var kept = String(st)
+                    .split(';')
+                    .map(function (s) {
+                        return s.trim();
+                    })
+                    .filter(function (s) {
+                        return s && !/^(min-|max-)?width\s*:|^left\s*:/i.test(s);
+                    });
+                return kept.length ? ' style="' + kept.join('; ') + '"' : '';
+            })
+            // Ceny zaleza od danych (dev-DB vs fresh seed) — golden pinuje
+            // strukture/kody, nie kwoty (wartosci strzega headerProdCodes,
+            // configPriceParity, orderTransportDisplay). Kody bez "PLN" nietkniete.
+            // \s kryje spacje zwykla i NBSP waskich odmian (pl-PL grouping);
+            // &nbsp; z recznie sklejanego HTML normalizujemy wczesniej.
+            .replace(/&nbsp;|&#160;/g, ' ')
+            .replace(/\d[\d\s]*,?\d*\s*PLN/g, 'N PLN')
+            .replace(/>\s+</g, '><')
+            .trim()
+    );
 }
 
 function sha(s) {
@@ -107,6 +119,40 @@ async function openFrame(browser, token, fixture) {
         // eslint-disable-next-line no-global-assign
         wells = d;
     }, fixture);
+    // Pin katalogu do seeda w kształcie API (flagi bool→1/0 jak SQLite, dn numeryczne).
+    // Setter window.studnieProducts robi purge+rebuild mapy (ADR-009) + jawny invalidate.
+    await frame.evaluate((seed) => {
+        try {
+            const rows = (Array.isArray(seed) ? seed : seed.items || []).map((p) => {
+                const c = Object.assign({}, p);
+                [
+                    'magazynWL',
+                    'magazynKLB',
+                    'formaStandardowa',
+                    'formaStandardowaKLB',
+                    'active'
+                ].forEach(function (f) {
+                    if (c[f] === true) c[f] = 1;
+                    else if (c[f] === false) c[f] = 0;
+                });
+                if (typeof c.dn === 'string' && /^[0-9]+$/.test(c.dn)) c.dn = parseInt(c.dn, 10);
+                return c;
+            });
+            window.studnieProducts = rows;
+            if (typeof invalidateStudnieProductsMap === 'function') invalidateStudnieProductsMap();
+            return rows.length;
+        } catch (_) {
+            return -1;
+        }
+    }, SEED_STUDNIE);
+    // Motyw z DB user-prefs (light/dev vs dark/seed) wchodzi w tinty wierszy
+    // (_excelAlpha) — pin dark dla determinizmu miedzy srodowiskami.
+    // Fetch preferencji dawno rozliczony (produkty zaladowane), nic go nie ruszy.
+    await frame.evaluate(() => {
+        try {
+            document.documentElement.removeAttribute('data-theme');
+        } catch (_) {}
+    });
     await frame.evaluate(() => {
         openExcelTableModal();
     });
@@ -132,7 +178,7 @@ async function tabHash(frame, tab) {
         const tbody = cont.querySelector('tbody');
         const canonFn = (html) =>
             String(html)
-                .replace(/\sstyle="([^"]*)"/g, function (m, st) {
+                .replace(/\sstyle="([^"]*)"/g, function (mm, st) {
                     var kept = String(st)
                         .split(';')
                         .map(function (s) {
@@ -143,6 +189,8 @@ async function tabHash(frame, tab) {
                         });
                     return kept.length ? ' style="' + kept.join('; ') + '"' : '';
                 })
+                .replace(/&nbsp;|&#160;/g, ' ')
+                .replace(/\d[\d\s]*,?\d*\s*PLN/g, 'N PLN')
                 .replace(/>\s+</g, '><')
                 .trim();
         const rows = [...tbody.querySelectorAll('tr[data-widx]')];
