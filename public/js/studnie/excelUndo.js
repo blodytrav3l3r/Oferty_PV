@@ -4,6 +4,8 @@ const USE_PATCH_UNDO = true; // B+ flag — patch undo, fallback full snapshot p
 
 /* B+ — path-based patch dla pojedynczej komórki (logicalColumnId) */
 function _excelSaveCellPatch(wellId, path, before, after) {
+    // P2-undo: paste ma 1 snapshot na całość — per-cell w trakcie flagi to leak.
+    if (typeof _excelPasteInProgress !== 'undefined' && _excelPasteInProgress) return;
     if (!USE_PATCH_UNDO) return _excelSaveUndoSnapshot();
     if (typeof wells === 'undefined') return;
     _excelUndoStack.push({
@@ -17,6 +19,8 @@ function _excelSaveCellPatch(wellId, path, before, after) {
     _excelRedoStack = [];
 }
 function _excelSaveBatchPatch(changes) {
+    // P2-undo: jak wyżej — batch w trakcie paste przykryty snapshotem całości.
+    if (typeof _excelPasteInProgress !== 'undefined' && _excelPasteInProgress) return;
     if (!USE_PATCH_UNDO || !Array.isArray(changes) || changes.length === 0)
         return _excelSaveUndoSnapshot();
     const batch = changes.map(function (c) {
@@ -103,6 +107,10 @@ function _excelSaveUndoSnapshot() {
         args[0].wellIdx != null
     )
         idxs = [args[0].wellIdx];
+    // P2-undo: 1 snapshot na całe wklejenie (wołany przed flagą, bez idxs);
+    // per-cell (z idxs) w trakcie flagi to leak — przykryty snapshotem całości.
+    if (idxs.length > 0 && typeof _excelPasteInProgress !== 'undefined' && _excelPasteInProgress)
+        return;
     const n = Array.isArray(wells) ? wells.length : 0;
     // v1.1 hard gate: N>100 → structuredClone(wells) FORBIDDEN — bytes budget > entry count
     if (n > 100 && idxs.length === 0) {
