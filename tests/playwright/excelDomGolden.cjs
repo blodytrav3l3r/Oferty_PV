@@ -51,7 +51,22 @@ function sleep(ms) {
 }
 
 function canon(html) {
-    return String(html).replace(/>\s+</g, '><').trim();
+    return String(html)
+        .replace(/\sstyle="([^"]*)"/g, function (m, st) {
+            // Szerokosci/pozycje z pomiaru (autofit/sticky) zaleza od fontow
+            // platformy — wycinamy je z hash, reszta (kolory/bledy) zostaje.
+            var kept = String(st)
+                .split(';')
+                .map(function (s) {
+                    return s.trim();
+                })
+                .filter(function (s) {
+                    return s && !/^(min-|max-)?width\s*:|^left\s*:/i.test(s);
+                });
+            return kept.length ? ' style="' + kept.join('; ') + '"' : '';
+        })
+        .replace(/>\s+</g, '><')
+        .trim();
 }
 
 function sha(s) {
@@ -115,7 +130,21 @@ async function tabHash(frame, tab) {
         const cont = document.getElementById('excel-table-container');
         const thead = cont.querySelector('thead');
         const tbody = cont.querySelector('tbody');
-        const canonFn = (html) => String(html).replace(/>\s+</g, '><').trim();
+        const canonFn = (html) =>
+            String(html)
+                .replace(/\sstyle="([^"]*)"/g, function (m, st) {
+                    var kept = String(st)
+                        .split(';')
+                        .map(function (s) {
+                            return s.trim();
+                        })
+                        .filter(function (s) {
+                            return s && !/^(min-|max-)?width\s*:|^left\s*:/i.test(s);
+                        });
+                    return kept.length ? ' style="' + kept.join('; ') + '"' : '';
+                })
+                .replace(/>\s+</g, '><')
+                .trim();
         const rows = [...tbody.querySelectorAll('tr[data-widx]')];
         return {
             html: canonFn(thead.outerHTML) + canonFn(tbody.outerHTML),
