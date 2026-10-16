@@ -675,6 +675,15 @@
         "area": 9.43
     },
     {
+        "id": "TR-RURY",
+        "name": "Transport rur (kurs)",
+        "category": "Transport",
+        "price": 0,
+        "transport": null,
+        "weight": 0,
+        "area": null
+    },
+    {
         "id": "Y-U-GZ-U-14-BU",
         "name": "USZCZELKA DO RUR WITROS DN 1400",
         "category": "Uszczelki",
@@ -843,15 +852,6 @@
         "price": 220,
         "transport": null,
         "weight": null,
-        "area": null
-    },
-    {
-        "id": "TR-RURY",
-        "name": "Transport rur (kurs)",
-        "category": "Transport",
-        "price": 0,
-        "transport": null,
-        "weight": 0,
         "area": null
     }
 ]
