@@ -317,6 +317,9 @@ function excelOnNameChange(wIdx, value) {
     _excelMarkAsManual(wIdx);
     wells[wIdx].name = name;
     wells[wIdx].numer = name.replace(/ (PRE|UTH)$/i, '').trim();
+    try {
+        _excelDupDirty = true;
+    } catch (_eD) {} /* rename zmienia klucz duplikatu */
     if (typeof autoUpdateWellName === 'function') {
         autoUpdateWellName(wells[wIdx], wIdx);
     }
@@ -351,6 +354,10 @@ function excelDuplicateWell(wIdx) {
     /* Kopia nie dziedziczy cache resolution (wskazywałby nieaktualne produkty) */
     delete copy.__resCache;
     wells.splice(wIdx + 1, 0, copy);
+    try {
+        _excelPrzDirty = true;
+        _excelDupDirty = true;
+    } catch (_eD) {} /* duplikat: nowe pr.id + nazwa */
     if (typeof _excelRebuildWellIndex === 'function') _excelRebuildWellIndex();
     if (typeof _excelInvalidateFilteredIndexes === 'function') _excelInvalidateFilteredIndexes();
     /* Wstawienie przesuwa indeksy studni po wIdx o +1 — przesuń też zaznaczenia
@@ -403,6 +410,10 @@ async function excelDeleteWell(wIdx) {
     if (!(await appConfirm(`Usunąć "${well.name}"?`, { title: 'Usuwanie studni', type: 'danger' })))
         return;
     wells.splice(wIdx, 1);
+    try {
+        _excelPrzDirty = true;
+        _excelDupDirty = true;
+    } catch (_eD) {} /* delete zmienia zbiór id/nazw */
     if (typeof _excelRebuildWellIndex === 'function') _excelRebuildWellIndex();
     if (typeof _excelInvalidateFilteredIndexes === 'function') _excelInvalidateFilteredIndexes();
     if (typeof currentWellIndex !== 'undefined' && currentWellIndex >= wells.length) {

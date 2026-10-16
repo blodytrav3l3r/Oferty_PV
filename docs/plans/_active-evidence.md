@@ -634,3 +634,62 @@ Scope: dopisane na koncu, historia E-001..E-117f nietknieta. Nowe ID E-118, rozl
 - DIFF: git diff -- docs/plans/_active-evidence.md.
 - COMMIT: brak (zadanie: zostaw do nastepnej sesji).
 - VERIFIED: YES.
+
+## Start B1 (2026-10-16, BUILD MODE docs-only, zero kodu)
+
+Scope: dopisane na koncu, historia E-001..E-015, E-005a, E-100..E-106, E-200..E-211, E-107..E-118, E-111g..E-111h, E-114f, E-115f, E-116f, E-117f nietknieta. Nowe ID E-119, rozlaczne. Tylko ten plik docs. Nie dotyka kodu prod, harnessow, .env ani DB. Bez commita, bez pusha.
+
+## Ledger E-119
+
+| ID     | Twierdzenie                                                                                                                  | Dowod                                                     | Status     |
+| ------ | ---------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- | ---------- |
+| E-119a | Start B1: hoist O(N) + pin-height + chunk/rowmap + overscan                                                                  | decyzja sesji 2026-10-16; kod nietkniety tym dopiskiem    | HYPOTHESIS |
+| E-119b | LOADING w nastepnej rundzie, poza zakresem B1                                                                                | decyzja sesji 2026-10-16; brak kodu LOADING tym dopiskiem | HYPOTHESIS |
+| E-119c | Wlasciciele: builder = tableBody/wellVirtual/state+flagi; general = studnie.css; explore = excelCopyPaste+excelVirtual.js:15 | podzial sesji 2026-10-16; bez zmian kodu tym dopiskiem    | HYPOTHESIS |
+| E-119d | Zakaz buildera: BEZ excelCopyPaste ani excelVirtual.js (tylko explore je rusza)                                              | decyzja sesji 2026-10-16; do weryfikacji diffem B1        | HYPOTHESIS |
+| E-119e | Kolejnosc: B1 przed LOADING; merge B1 tylko po bramkach ponizej                                                              | decyzja sesji 2026-10-16; LOADING czeka na runde po B1    | HYPOTHESIS |
+
+## Bramki B1 (po kodzie, przed merge)
+
+- parity GREEN: npm run test:parity (OFF vs ON, SSoT wells+undo).
+- golden GREEN: node tests/playwright/excelDomGolden.cjs (bez --update; update tylko za autoryzacja nowego stanu).
+- bench brak regresji vs baseline (open/modal/DOM/scroll/edit; hoist+overscan maja nie pogarszac).
+- kwoty bez roznic (I-007; chunk/rowmap nie zmienia cen ani sum).
+- longtask zero >50ms; lint+unit PASS sciezek B1.
+  Bez 5/5 brak merge B1.
+
+## Checkpoint E-119
+
+- CLAIM: dopisek E-119 append-only, historia nietknieta, kod + harnessy + .env + DB nietkniete tym dopiskiem.
+- EVIDENCE: ta sekcja E-119a..E-119e; start B1 (hoist O(N) + pin-height + chunk/rowmap + overscan; LOADING w nastepnej rundzie) + wlasciciele + zakaz + bramki z zadania sesji 2026-10-16.
+- REPRODUCTION: odczyt docs/plans/_active-evidence.md koniec (E-118, 636 linii); brak runtime w tym dopisku (docs-only).
+- BEFORE: koniec E-118; kod + harnessy + .env + DB bez zmian.
+- AFTER: tylko docs/plans/_active-evidence.md + ta sekcja; kod + harnessy + .env + DB bez zmian tym dopiskiem.
+- CHANGE: append-only, E-119 5x HYPOTHESIS (zakres B1 + LOADING odroczone + wlasciciele + zakaz + kolejnosc).
+- TESTS: brak runtime w docs; bramki czekaja (parity + golden + bench + kwoty + longtask/lint/unit).
+- DIFF: git diff -- docs/plans/_active-evidence.md.
+- COMMIT: brak, zadanie mowi nie commituj.
+- VERIFIED: NO (czeka na kod B1 + artefakty bramek).
+
+## Finalizacja B1 (2026-10-16, BUILD MODE, BEZ PUSH)
+
+Scope: dopisane na koncu, historia E-001..E-015, E-005a, E-100..E-106, E-200..E-211, E-107..E-119 (E-119a..E-119e) nietknieta. Nowe ID E-119f, rozlaczne.
+
+## Ledger E-119f
+
+| ID     | Twierdzenie                                                                                                                                                                                                                                                                                         | Dowod                                                                                                                                                                                                                                                                   | Status   |
+| ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| E-119f | Zakres B1: hoist renderu + flagi + pin wierszy + chunk/rowmap + overscan; golden-update autoryzowany (slice ~48->~68 + pin-height zmienia SHA x6; scroll-contract + sensitivity OK); bench BENCH_NS=1000 ON 862/1214 vs baseline 1504/1211 (brak regresji, prog +15%); LOADING odroczone do rundy 2 | diff: excelTableBody/wellVirtual/excelState/excelChangeHandlers/excelWellActions/excelModal/excelTabs/excelCopyPaste/excelVirtual/excelUndo + studnie.css; golden-excel-dom-1200.json SHA x6; bench-run 2026-10-16 (baseline JSON zrestorowany, pomiar nie commitowany) | VERIFIED |
+
+## Checkpoint E-119f
+
+- CLAIM: finalizacja B1 (E-119f), historia nietknieta, LOADING poza zakresem.
+- EVIDENCE: ta sekcja E-119f; diff 11 plikow prod + golden; bench ON open -43% / edit +0,2% vs baseline.
+- REPRODUCTION: $env:BENCH_NS="1000"; node tests/playwright/excelVirtualBench.cjs (2026-10-16, ON rows=68 openMs=862 editMs=1214).
+- BEFORE: koniec Checkpoint E-119; worktree z kodem B1 + golden + ledger.
+- AFTER: + ta sekcja; commit zakresem z zadania, BEZ push; bench JSON zrestorowany (poza commitem).
+- CHANGE: append-only, E-119f 1x VERIFIED.
+- TESTS: K1-K3 sesji B1 (check/eslint/unit/parity GREEN); version:check w kroku 3.
+- DIFF: git diff -- docs/plans/_active-evidence.md.
+- COMMIT: node scripts/commit.mjs "perf(studnie): hoist renderu i pin wierszy excel", BEZ push.
+- VERIFIED: YES (po zielonym version:check w kroku 3).

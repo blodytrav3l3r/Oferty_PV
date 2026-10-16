@@ -147,6 +147,10 @@ function excelCreateFromEmpty() {
         _excelSaveUndoSnapshot();
         _excelMarkDirty();
         wells.push(well);
+        try {
+            _excelPrzDirty = true;
+            _excelDupDirty = true;
+        } catch (_eD) {} /* nowa studnia brudzi cache PRZ/dup */
         if (typeof _excelInvalidateFilteredIndexes === 'function')
             _excelInvalidateFilteredIndexes();
         if (typeof _excelRebuildWellIndex === 'function') _excelRebuildWellIndex();

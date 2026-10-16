@@ -159,7 +159,7 @@ function _excelPasteSemantic(lines, visibleRows, map, ctx, snapshot) {
     }
 }
 function _excelPasteSemanticBatch(lines, visibleRows, map, doneCallback, ctx, snapshot) {
-    const CHUNK = 50;
+    const CHUNK = 200; // wiekszy chunk = mniej tickow rAF przy duzym paste
     let idx = 0;
     const total = lines.length;
     if (total < 100) {
@@ -174,6 +174,9 @@ function _excelPasteSemanticBatch(lines, visibleRows, map, doneCallback, ctx, sn
         return;
     }
     const _filtered = Array.isArray(snapshot) ? snapshot : _excelSnapshotFiltered();
+    // Mapa wierszy raz per paste (nie co tick) — w tick tylko odczyt.
+    let _rowMap = _excelBuildRowMap();
+    let _missStreak = 0; // licznik missow z rzedu (guard rebuildu)
     let _startFilteredIdx = 0;
     if (
         visibleRows &&
@@ -191,7 +194,7 @@ function _excelPasteSemanticBatch(lines, visibleRows, map, doneCallback, ctx, sn
             _excelCancelPasteBatch();
             return;
         }
-        const _rowMap = _excelBuildRowMap(); // świeża mapa co tick (chunk 50)
+        // tylko odczyt _rowMap (zbudowana raz przed tick); rebuild tylko via guard ponizej
         const end = Math.min(idx + CHUNK, total);
         for (; idx < end; idx++) {
             const parts = lines[idx].split('\t');
@@ -201,6 +204,20 @@ function _excelPasteSemanticBatch(lines, visibleRows, map, doneCallback, ctx, sn
                 continue;
             }
             const row = _excelResolvePasteRow(_rowMap, visibleRows, idx, modelWIdx);
+            if (!row) {
+                // Guard: seria missow = DOM sie zmienil (rerender/virtual) — jeden rebuild.
+                if (
+                    ++_missStreak >= 10 &&
+                    idx < total &&
+                    (typeof _excelVirtualRenderBody === 'function' ||
+                        typeof _excelRenderTable === 'function')
+                ) {
+                    _missStreak = 0;
+                    _rowMap = _excelBuildRowMap();
+                }
+            } else {
+                _missStreak = 0;
+            }
             for (let ci = 0; ci < parts.length; ci++) {
                 const targetCol = map[ci];
                 if (targetCol == null) {
@@ -486,6 +503,9 @@ function _excelHandlePaste(e) {
             } catch (_e) {
                 _excelWarn('paste:finalizeAffected failed');
             }
+        // Paste mutuje nazwy/przejscia — cache per-render do przebudowy.
+        if (typeof _excelPrzDirty !== 'undefined') _excelPrzDirty = true;
+        if (typeof _excelDupDirty !== 'undefined') _excelDupDirty = true;
         /* Przelicz błędy dotkniętych studni PRZED re-renderem — inaczej tabela
            czyta stary configStatus (D1). */
         if (_pasteCtx && _pasteCtx.affected && _pasteCtx.affected.size > 0) {
@@ -1117,7 +1137,7 @@ function _excelCancelPasteBatch() {
  * @param {number[]|null} [snapshot] - zamrożona mapa adresowania (pasteFiltered)
  */
 function _excelPasteBatch(lines, visibleRows, startColIdx, doneCallback, ctx, snapshot) {
-    const CHUNK = 50;
+    const CHUNK = 200; // wiekszy chunk = mniej tickow rAF przy duzym paste
     let idx = 0;
     const total = lines.length;
     const seqBatch = ctx && ctx.seq ? ctx.seq : null;
@@ -1128,6 +1148,9 @@ function _excelPasteBatch(lines, visibleRows, startColIdx, doneCallback, ctx, sn
         return;
     }
     const _filtered = Array.isArray(snapshot) ? snapshot : _excelSnapshotFiltered();
+    // Mapa wierszy raz per paste (nie co tick) — w tick tylko odczyt.
+    let _rowMap = _excelBuildRowMap();
+    let _missStreak = 0; // licznik missow z rzedu (guard rebuildu)
     let _startFilteredIdx = 0;
     if (visibleRows && visibleRows.length > 0 && visibleRows[0]) {
         const firstWIdx = parseInt(visibleRows[0].getAttribute('data-widx'), 10);
@@ -1140,7 +1163,7 @@ function _excelPasteBatch(lines, visibleRows, startColIdx, doneCallback, ctx, sn
             _excelCancelPasteBatch();
             return;
         }
-        const _rowMap = _excelBuildRowMap(); // świeża mapa co tick (chunk 50)
+        // tylko odczyt _rowMap (zbudowana raz przed tick); rebuild tylko via guard ponizej
         const end = Math.min(idx + CHUNK, total);
         for (; idx < end; idx++) {
             const line = lines[idx];
@@ -1151,6 +1174,20 @@ function _excelPasteBatch(lines, visibleRows, startColIdx, doneCallback, ctx, sn
                 continue;
             }
             const row = _excelResolvePasteRow(_rowMap, visibleRows, idx, modelWIdx);
+            if (!row) {
+                // Guard: seria missow = DOM sie zmienil (rerender/virtual) — jeden rebuild.
+                if (
+                    ++_missStreak >= 10 &&
+                    idx < total &&
+                    (typeof _excelVirtualRenderBody === 'function' ||
+                        typeof _excelRenderTable === 'function')
+                ) {
+                    _missStreak = 0;
+                    _rowMap = _excelBuildRowMap();
+                }
+            } else {
+                _missStreak = 0;
+            }
             parts.forEach(function (v, ci) {
                 let visIdx, logical;
                 if (seqBatch && startPosBatch >= 0) {

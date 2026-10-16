@@ -290,6 +290,8 @@ function _excelUndo() {
         _excelRestoreLockedWells(locked);
     }
     _excelMarkDirty();
+    if (typeof _excelPrzDirty !== 'undefined') _excelPrzDirty = true;
+    if (typeof _excelDupDirty !== 'undefined') _excelDupDirty = true;
     _excelRenderTable(_excelActiveTab);
     if (typeof _excelDebouncedRefresh === 'function') _excelDebouncedRefresh();
     showToast('Cofnięto', 'info');
@@ -413,6 +415,8 @@ function _excelRedo() {
         _excelRestoreLockedWells(locked);
     }
     _excelMarkDirty();
+    if (typeof _excelPrzDirty !== 'undefined') _excelPrzDirty = true;
+    if (typeof _excelDupDirty !== 'undefined') _excelDupDirty = true;
     _excelRenderTable(_excelActiveTab);
     if (typeof _excelDebouncedRefresh === 'function') _excelDebouncedRefresh();
     showToast('Przywrócono', 'info');

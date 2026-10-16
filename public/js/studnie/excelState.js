@@ -45,6 +45,12 @@ let _excelWellIndexById = new Map();
 /* filteredIndexes — SSoT widoku (C1). DOM = tylko widok. Invalidacja centralna. */
 let _excelFilteredIndexes = null;
 let _excelFilteredDirty = true;
+/* Hoist O(N): cache PRZ-ids + duplikatów z dirty-flagą (wzorzec _excelWellIndexById).
+   _excelPrzDirty — true po mutacji przejść (add/remove/edit kolumny, paste, undo).
+   _excelDupDirty — true po zmianie nazwy/numeru lub struktury (add/delete/duplicate/rename).
+   Konsument: _excelRenderTbody robi lazy rebuild tylko gdy dirty, inaczej odczyt cache. */
+let _excelPrzDirty = true;
+let _excelDupDirty = true;
 let _excelFilteredCacheTab = null;
 let _excelFilteredCacheQuery = null;
 let _excelFilteredCacheWellsLen = -1;

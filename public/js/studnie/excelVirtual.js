@@ -9,10 +9,10 @@
  */
 
 const EXCEL_ROW_HEIGHT = 32;
-/* F1: 15→10 — slice ~58→~48 wierszy przy 1000px viewportu. Overscan jest
+/* 10→20 — szerszy bufor pod paste/scroll (chunk 200), slice ~48→~68 wierszy. Overscan
    z definicji niewidzialny (bufor poza viewportem), więc brak zmian wizualnych;
    layout skaluje się z liczbą komórek. Kill-switch ?virtual=0 bez zmian. */
-const EXCEL_OVERSCAN = 10;
+const EXCEL_OVERSCAN = 20;
 const EXCEL_VIEWPORT_ROWS = 35;
 
 let _excelVirtualEnabled = false;

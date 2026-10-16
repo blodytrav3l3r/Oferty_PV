@@ -3319,6 +3319,23 @@ td.excel-tint--plyta_redukcyjna input {
     border-collapse: collapse;
 }
 
+/* Pin wysokosci wierszy - stale wiersze bez skakania (JS liczy spacery wirtualizacji). */
+#excel-table-container tr[data-widx],
+#excel-table-container tr#excel-empty-row {
+    height: var(--excel-row-height);
+}
+/* Wylaczenie spacerow wirtualizacji spod pinu - wysokosc steruje inline style z JS. */
+#excel-table-container tr.excel-spacer-top,
+#excel-table-container tr.excel-spacer-bottom {
+    height: auto;
+}
+#excel-table-container tr.excel-spacer-top > td,
+#excel-table-container tr.excel-spacer-bottom > td {
+    height: auto;
+    padding: 0;
+    border: none;
+}
+
 /* Wcięcia dla sub-elementów w tabeli oferty studni */
 .pl-lg {
     padding-left: 1.5rem !important;

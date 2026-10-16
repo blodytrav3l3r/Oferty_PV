@@ -161,6 +161,9 @@ function excelRemoveTransitionColumn() {
                 w.przejscia.splice(lastIdx, 1);
             }
         });
+        try {
+            _excelPrzDirty = true;
+        } catch (_eD) {} /* kolumna PRZ usunięta */
     }
     _excelResetLayoutDependentState();
     _excelMaxTransitions[tab] = Math.max(1, curMax - 1);
@@ -188,6 +191,9 @@ function excelAddTransitionColumn() {
                 w.przejscia.push(_excelCreatePrzejscie());
             }
         });
+        try {
+            _excelPrzDirty = true;
+        } catch (_eD) {} /* kolumna PRZ dodana */
     }
     _excelRenderTable(tab);
     _excelDebouncedRefresh();
@@ -230,6 +236,9 @@ function excelOnPrzejscieChange(wIdx, trIdx, field, value) {
     while (wells[wIdx].przejscia.length <= trIdx) {
         wells[wIdx].przejscia.push(_excelCreatePrzejscie());
     }
+    try {
+        _excelPrzDirty = true;
+    } catch (_eD) {} /* slot PRZ mógł urosnąć */
     const prz = wells[wIdx].przejscia[trIdx];
     prz[field] =
         field === 'angle'
@@ -539,6 +548,9 @@ function excelOnPrzejscieTypeChange(wIdx, trIdx, value) {
     while (wells[wIdx].przejscia.length <= trIdx) {
         wells[wIdx].przejscia.push(_excelCreatePrzejscie());
     }
+    try {
+        _excelPrzDirty = true;
+    } catch (_eD) {} /* slot PRZ mógł urosnąć */
     wells[wIdx].przejscia[trIdx].tempCategory = value || '';
     if (!value) {
         wells[wIdx].przejscia[trIdx].productId = '';

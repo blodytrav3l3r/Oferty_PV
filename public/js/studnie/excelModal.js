@@ -232,6 +232,10 @@ function openExcelTableModal() {
         if (typeof ensureUniquePrzejsciaIdsAcrossWells === 'function') {
             ensureUniquePrzejsciaIdsAcrossWells(wells);
         }
+        try {
+            _excelPrzDirty = false;
+            _excelDupDirty = true;
+        } catch (_eD) {} /* open: PRZ świeże po dedup, dupy do przebudowy */
         // Normalizacja: uszczelki AUTO (jak w konfiguratorze) + rozbicie legacy qty>1 na N x qty1
         for (let _rwo = 0; _rwo < wells.length; _rwo++) {
             const _w = wells[_rwo];

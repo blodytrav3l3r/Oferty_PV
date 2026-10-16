@@ -78,58 +78,91 @@ function _excelGetRowStatus(well) {
     return null;
 }
 
+/* Hoist O(N): cache mapy duplikatów dla renderu TBODY (lazy rebuild gdy
+   _excelDupDirty; wzorzec _excelWellIndexById — sort nie rebuild, mutacja dirty).
+   Normalizacja nazw i klucz DN identyczne jak w _excelDupNormName/_excelDupDnKey. */
+var _excelDupRenderCache = null;
+function _excelEnsureDupCache() {
+    try {
+        if (typeof _excelDupDirty !== 'undefined' && !_excelDupDirty && _excelDupRenderCache)
+            return _excelDupRenderCache;
+    } catch (_eDupFlag) {}
+    var nameCounts = {};
+    var nameDnMap = {};
+    try {
+        if (typeof wells !== 'undefined' && Array.isArray(wells)) {
+            wells.forEach(function (w) {
+                var raw =
+                    w.numer != null && String(w.numer).trim() !== ''
+                        ? String(w.numer)
+                        : w.name || '';
+                var n = String(raw)
+                    .trim()
+                    .replace(/ (PRE|UTH)$/i, '')
+                    .trim()
+                    .toLowerCase();
+                if (!n) return;
+                nameCounts[n] = (nameCounts[n] || 0) + 1;
+                var dnKey = w.dn === 'styczna' ? 'styczne' : String(w.dn);
+                if (!nameDnMap[n]) nameDnMap[n] = [];
+                var dnC = (typeof DN_COLORS !== 'undefined' &&
+                    (DN_COLORS[dnKey] || DN_COLORS['1000'])) || { border: '' };
+                var found = false;
+                for (var _di = 0; _di < nameDnMap[n].length; _di++) {
+                    if (nameDnMap[n][_di].dn === dnKey) {
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) {
+                    nameDnMap[n].push({
+                        dn: dnKey,
+                        label: dnKey === 'styczne' ? 'Styczne' : 'DN' + dnKey,
+                        color: dnC.border
+                    });
+                }
+            });
+        }
+    } catch (_eDupBuild) {}
+    var dupNames = new Set(
+        Object.keys(nameCounts).filter(function (n) {
+            return nameCounts[n] > 1;
+        })
+    );
+    _excelDupRenderCache = { nameCounts: nameCounts, nameDnMap: nameDnMap, dupNames: dupNames };
+    try {
+        _excelDupDirty = false;
+    } catch (_eDupClear) {}
+    return _excelDupRenderCache;
+}
+
 /* ===== TBODY RENDER ===== */
 function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
     let html = '</thead><tbody>';
     /* Ukryta sekcja PRZ = klasa display:none (kolumny zostają — stabilne indeksy) */
     const hideTr = typeof _excelTransitionsHidden === 'function' && _excelTransitionsHidden();
     const trHideCls = hideTr ? ' excel-tr-hidden' : '';
-    // Legacy dedup: stare klony studni mogą dzielić pr.id między wierszami
-    // (hover SVG podświetlałby wtedy kilka wierszy naraz). Idempotentny —
-    // unikalnych id nie zmienia, więc wielokrotne rendery to no-op.
+    // Hoist O(N): dedup pr.id tylko gdy dirty (mutacja przejść), nie co render.
+    // Po dedup flaga czyszczona — idempotentny no-op między mutacjami.
     // Zakres: pełne wells (nie slice tabWells — virtual tnie wiersze).
-    if (
-        typeof ensureUniquePrzejsciaIdsAcrossWells === 'function' &&
-        typeof wells !== 'undefined' &&
-        Array.isArray(wells)
-    ) {
-        ensureUniquePrzejsciaIdsAcrossWells(wells);
-    }
+    try {
+        if (typeof _excelPrzDirty === 'undefined' || _excelPrzDirty) {
+            if (
+                typeof ensureUniquePrzejsciaIdsAcrossWells === 'function' &&
+                typeof wells !== 'undefined' &&
+                Array.isArray(wells)
+            ) {
+                ensureUniquePrzejsciaIdsAcrossWells(wells);
+            }
+            _excelPrzDirty = false;
+        }
+    } catch (_ePrz) {}
     const dnLabel = dn === 'styczne' ? 'Styczne' : 'DN' + dn;
     const dnColor = (DN_COLORS[dn === 'styczne' ? 'styczne' : dn] || DN_COLORS['1000']).border;
-    const nameCounts = {};
-    const nameDnMap = {};
-    wells.forEach(function (w) {
-        const raw =
-            w.numer != null && String(w.numer).trim() !== '' ? String(w.numer) : w.name || '';
-        const n = raw
-            .trim()
-            .replace(/ (PRE|UTH)$/i, '')
-            .trim()
-            .toLowerCase();
-        if (n) {
-            nameCounts[n] = (nameCounts[n] || 0) + 1;
-            const dnKey = w.dn === 'styczna' ? 'styczne' : String(w.dn);
-            if (!nameDnMap[n]) nameDnMap[n] = [];
-            const dnC = DN_COLORS[dnKey] || DN_COLORS['1000'];
-            if (
-                !nameDnMap[n].find(function (x) {
-                    return x.dn === dnKey;
-                })
-            ) {
-                nameDnMap[n].push({
-                    dn: dnKey,
-                    label: dnKey === 'styczne' ? 'Styczne' : 'DN' + dnKey,
-                    color: dnC.border
-                });
-            }
-        }
-    });
-    const dupNames = new Set(
-        Object.keys(nameCounts).filter(function (n) {
-            return nameCounts[n] > 1;
-        })
-    );
+    // Hoist O(N): mapa duplikatów z cache (lazy rebuild gdy _excelDupDirty).
+    var _dupCache = _excelEnsureDupCache();
+    var nameDnMap = _dupCache.nameDnMap;
+    var dupNames = _dupCache.dupNames;
     /* F2a hoist: lista przejść/kategorie zależą tylko od DN zakładki
        (nie od wiersza) — raz per render zamiast per wiersz per slot.
        DN z pierwszej studni taba (oryginał wołał getMaxPipeDn(well.dn)). */
@@ -965,9 +998,17 @@ function _excelRefreshDupColors() {
     const hoverDupSolid = _dupMap('0.25', '0.32');
     const hoverActiveDupSolid = _dupMap('0.35', '0.4');
 
-    /* Zawsze full-pass: martwa szybka sciezka usunieta (window._pasteCtx
+    /* Hoist O(N): full-pass map tylko gdy dirty (mutacja nazwy/struktury),
+       inaczej malowanie z cache. Martwa szybka sciezka usunieta (window._pasteCtx
        nigdy nie istnial) — malowanie wszystkich wierszy taba. */
-    _excelDupRebuildMaps();
+    try {
+        if (typeof _excelDupDirty === 'undefined' || _excelDupDirty) {
+            _excelDupRebuildMaps();
+            _excelDupDirty = false;
+        }
+    } catch (_eDupLazy) {
+        _excelDupRebuildMaps();
+    }
 
     const tabWells = wells.filter((w) => _excelWellMatchesTab(w, dn));
     tabWells.forEach((well, idx) => {

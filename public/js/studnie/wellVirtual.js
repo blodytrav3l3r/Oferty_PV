@@ -21,6 +21,46 @@ let _wellVirtualEnd = 0;
 let _wellVirtualContainer = null;
 let _wellVirtualTransportMap = null;
 let _wellVirtualStatsMap = null;
+/* Hoist transportu: cache per lekki fingerprint (bez calcWellStats w FP).
+   FP = id|configLen|frozen|dn per studnia + km/rate/mode. Zmiana wag bez zmiany
+   dlugosci configu wymaga jawnego resetu (solver/config量的 mutacje czyszczą FP). */
+let _wellTransportFp = null;
+let _wellTransportCachedMap = null;
+function _wellTransportFingerprint(wellsList) {
+    try {
+        var kmEl = typeof document !== 'undefined' ? document.getElementById('transport-km') : null;
+        var rateEl =
+            typeof document !== 'undefined' ? document.getElementById('transport-rate') : null;
+        var km = kmEl ? String(kmEl.value || '') : '';
+        var rate = rateEl ? String(rateEl.value || '') : '';
+        var mode =
+            typeof currentTransportMode !== 'undefined' && currentTransportMode
+                ? String(currentTransportMode)
+                : 'full';
+        var parts = [km, rate, mode, String(wellsList ? wellsList.length : 0)];
+        if (wellsList) {
+            for (var i = 0; i < wellsList.length; i++) {
+                var w = wellsList[i];
+                if (!w) {
+                    parts.push('x');
+                    continue;
+                }
+                parts.push(
+                    String(w.id || i) +
+                        '|' +
+                        (w.config ? w.config.length : 0) +
+                        '|' +
+                        (w.frozenTransportCost != null ? String(w.frozenTransportCost) : '') +
+                        '|' +
+                        String(w.dn)
+                );
+            }
+        }
+        return parts.join(';');
+    } catch (_eFp) {
+        return null;
+    }
+}
 
 let _wellVirtualMeasuredNoElev = 76;
 let _wellVirtualMeasuredElev = 104;
@@ -356,20 +396,28 @@ function _wellVirtualRenderBody() {
     if (topH > 0) html += '<div style="height:' + topH + 'px;"></div>';
 
     // Pamięć podręczna transportu oraz statystyk dla aktualnego wycinka
+    // Hoist: transport liczony raz per lekki fingerprint, nie co scroll/render.
     try {
         if (typeof calculateWellTransportMap === 'function') {
-            const tm = calculateWellTransportMap(wells);
-            _wellVirtualTransportMap = new Map();
-            if (tm.map) {
-                // SSoT: wellsById Map O(1) przez getWellIndexById (globals.js)
-                for (const [wellObj, cost] of tm.map.entries()) {
-                    const idx =
-                        wellObj && wellObj.id != null && typeof getWellIndexById === 'function'
-                            ? getWellIndexById(wellObj.id)
-                            : -1;
-                    if (idx >= 0) _wellVirtualTransportMap.set(idx, cost);
-                    _wellVirtualTransportMap.set(wellObj, cost);
+            var _fp = _wellTransportFingerprint(wells);
+            if (_fp !== null && _fp === _wellTransportFp && _wellTransportCachedMap) {
+                _wellVirtualTransportMap = _wellTransportCachedMap;
+            } else {
+                const tm = calculateWellTransportMap(wells);
+                _wellVirtualTransportMap = new Map();
+                if (tm.map) {
+                    // SSoT: wellsById Map O(1) przez getWellIndexById (globals.js)
+                    for (const [wellObj, cost] of tm.map.entries()) {
+                        const idx =
+                            wellObj && wellObj.id != null && typeof getWellIndexById === 'function'
+                                ? getWellIndexById(wellObj.id)
+                                : -1;
+                        if (idx >= 0) _wellVirtualTransportMap.set(idx, cost);
+                        _wellVirtualTransportMap.set(wellObj, cost);
+                    }
                 }
+                _wellTransportFp = _fp;
+                _wellTransportCachedMap = _wellVirtualTransportMap;
             }
         }
     } catch (_e) {}
