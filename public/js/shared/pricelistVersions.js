@@ -319,25 +319,73 @@
         return 'v' + seq + '-' + y + m + day;
     }
 
-    /** Etykiety statusów po polsku (klasy badge bez zmian). */
+    /** Etykiety statusów po polsku (klasy badge bez zmian).
+     *  BACKDATE_REQUESTED to szkic z datą wsteczną — labelka mówi wprost,
+     *  że to robocza, nie zatwierdzona historia (BACKDATE). */
     var STATUS_LABELS = {
         ACTIVE: 'Aktywna',
         SCHEDULED: 'Zaplanowana',
         BACKDATE: 'Wsteczna',
-        BACKDATE_REQUESTED: 'Do zatwierdzenia',
+        BACKDATE_REQUESTED: 'Robocza-wsteczna',
         DRAFT: 'Robocza',
         ARCHIVED: 'Archiwalna'
     };
 
+    /** Kody kolizji daty (BE): PERIOD_OVERLAP (activate) i EFFECTIVE_COLLISION
+     *  (backdate) oznaczają to samo — zajęty effectiveFrom. Jeden komunikat. */
+    function dateConflictMessage(err) {
+        if (err && (err.code === 'PERIOD_OVERLAP' || err.code === 'EFFECTIVE_COLLISION')) {
+            return (
+                'Kolizja daty obowiązywania: ' +
+                (err.message || '') +
+                ' Użyj innej daty albo ścieżki wstecznej (backdate).'
+            );
+        }
+        if (err && err.code === 'LOCK_BUSY') {
+            return 'Zapis w toku, spróbuj ponownie za chwilę.';
+        }
+        return null;
+    }
+
+    function friendlyError(prefix, err) {
+        var mapped = dateConflictMessage(err);
+        return prefix + ': ' + (mapped || (err && err.message) || 'nieznany błąd');
+    }
+
     function statusBadge(status) {
-        // Osobny badge BACKDATE (szary) vs ACTIVE (zielony) / SCHEDULED (niebieski).
+        // ACTIVE zielony, SCHEDULED niebieski, BACKDATE_REQUESTED bursztyn
+        // (czeka na decyzję), BACKDATE/DRAFT/ARCHIVED szare.
         var label = STATUS_LABELS[status] || status;
         if (status === 'ACTIVE')
-            return '<span class="badge-ok text-nowrap">' + esc(label) + '</span>';
+            return (
+                '<span class="badge-ok text-nowrap" title="Obowiązuje — wybrana przez resolver dla nowych ofert">' +
+                esc(label) +
+                '</span>'
+            );
         if (status === 'SCHEDULED')
-            return '<span class="badge-info text-nowrap">' + esc(label) + '</span>';
-        if (status === 'BACKDATE' || status === 'BACKDATE_REQUESTED')
-            return '<span class="badge-muted text-nowrap">' + esc(label) + '</span>';
+            return (
+                '<span class="badge-info text-nowrap" title="Zatwierdzona, wejdzie w życie w dacie Obowiązuje od (cron co 5 min)">' +
+                esc(label) +
+                '</span>'
+            );
+        if (status === 'BACKDATE_REQUESTED')
+            return (
+                '<span class="badge-warn text-nowrap" title="Szkic z datą wsteczną — wymaga uzasadnienia (Zatwierdź wstecz)">' +
+                esc(label) +
+                '</span>'
+            );
+        if (status === 'BACKDATE')
+            return (
+                '<span class="badge-muted text-nowrap" title="Zatwierdzona korekta historyczna (tylko odczyt)">' +
+                esc(label) +
+                '</span>'
+            );
+        if (status === 'DRAFT')
+            return (
+                '<span class="badge-muted text-nowrap" title="Wersja robocza — opublikuj aby weszła na oś czasu">' +
+                esc(label) +
+                '</span>'
+            );
         return '<span class="text-muted">' + esc(label) + '</span>';
     }
 
@@ -356,7 +404,34 @@
         } catch (_e) {
             /* zostaw ISO */
         }
-        return '<span title="' + escAttr(iso) + '">' + esc(local) + '</span>';
+        // Jawnie obie strefy bez hovera: lokalna czytelna + krótki UTC.
+        var utcShort = iso;
+        try {
+            utcShort = new Date(iso).toISOString().replace('T', ' ').slice(0, 16) + ' UTC';
+        } catch (_e2) {
+            /* zostaw ISO */
+        }
+        return (
+            '<span title="' +
+            escAttr(iso) +
+            '">' +
+            esc(local) +
+            '<br><span class="text-muted">UTC: ' +
+            esc(utcShort) +
+            '</span></span>'
+        );
+    }
+
+    /** Komórka użycia: ile ofert/zamówień trzyma pieczątkę wersji. */
+    function usedByCell(v) {
+        if (typeof v.usedBy !== 'number') return '<span class="text-muted">—</span>';
+        if (v.usedBy === 0) return '<span class="text-muted">0</span>';
+        return (
+            '<span title="Tyle ofert/zamówień ma pieczątkę tej wersji — zmiana/aktywacja ich nie ruszy (snapshot w ofercie)">' +
+            '<strong>' +
+            esc(String(v.usedBy)) +
+            '</strong></span>'
+        );
     }
 
     /** Wersję można usunąć tylko zanim zacznie żyć (nigdy nie była aktywna). */
@@ -396,7 +471,7 @@
 
     function renderRows(versions, manageable, type) {
         if (versions.length === 0) {
-            return '<tr><td colspan="7" class="text-center text-muted">Brak wersji — zapisz pierwszą powyżej.</td></tr>';
+            return '<tr><td colspan="8" class="text-center text-muted">Brak wersji — zapisz pierwszą powyżej.</td></tr>';
         }
         // Wiersz żyje w kontekście taba (typ znany) — bez sufiksu typu w labelce,
         // sam title/tooltip z typem. Badge poza panelem ZAWSZE z typem.
@@ -406,24 +481,33 @@
                 var eff = v.effectiveFrom
                     ? fmtEff(v.effectiveFrom)
                     : '<span class="text-muted">—</span>';
+                var used = typeof v.usedBy === 'number' ? v.usedBy : null;
                 var activation =
-                    v.status === 'SCHEDULED'
-                        ? '<button class="btn btn-sm btn-primary" data-pv-act="activate" data-pv-id="' +
+                    v.status === 'DRAFT'
+                        ? '<button class="btn btn-sm btn-primary" data-pv-act="publish" data-pv-id="' +
                           escAttr(v.id) +
-                          '">Aktywuj</button>'
-                        : v.status === 'BACKDATE_REQUESTED'
-                          ? '<button class="btn btn-sm btn-primary" data-pv-act="backdate" data-pv-id="' +
+                          '" title="Wyślij roboczą na oś czasu (zaplanowana albo wsteczna wg daty)">Opublikuj roboczą</button>'
+                        : v.status === 'SCHEDULED'
+                          ? '<button class="btn btn-sm btn-primary" data-pv-act="activate" data-pv-id="' +
                             escAttr(v.id) +
-                            '">Zatwierdź wstecz</button>'
-                          : '';
-                // Rollback (Faza B): klon dowolnej wersji do nowej roboczej.
+                            '" data-pv-version="' +
+                            escAttr(v.version || '') +
+                            '" data-pv-used="' +
+                            escAttr(used === null ? '' : String(used)) +
+                            '">Aktywuj</button>'
+                          : v.status === 'BACKDATE_REQUESTED'
+                            ? '<button class="btn btn-sm btn-primary" data-pv-act="backdate" data-pv-id="' +
+                              escAttr(v.id) +
+                              '">Zatwierdź wstecz</button>'
+                            : '';
+                // Klon dowolnej wersji do nowej roboczej (nie rollback — aktywna nietknięta).
                 var cloneBtn =
                     '<button class="btn btn-sm btn-secondary" data-pv-act="clone" data-pv-id="' +
                     escAttr(v.id) +
                     '" title="Utwórz nową wersję roboczą jako kopię wersji ' +
                     escAttr(v.version || '') +
-                    ' (aktywna wersja nie zmieni się)">' +
-                    '<i data-lucide="history"></i> Przywróć jako roboczą</button>';
+                    ' (aktywna wersja nie zmieni się; klon zaczyna jako Robocza — potem Opublikuj roboczą)">' +
+                    '<i data-lucide="history"></i> Klonuj do roboczej</button>';
                 // „Usuń" zawsze widoczny: enabled gdy wolno (allowlist albo
                 // archiwalna/nieznana-przyszła bez użycia), inaczej wyszarzony z powodem.
                 var reason = deleteReason(v);
@@ -436,14 +520,24 @@
                     (reason === null
                         ? ' title="Usuwa wersję i jej pozycje (tylko wersje nigdy nieaktywne)">Usuń</button>'
                         : ' disabled title="' + escAttr(reason) + '">Usuń</button>');
+                var isDraftish =
+                    v.status === 'DRAFT' ||
+                    v.status === 'SCHEDULED' ||
+                    v.status === 'BACKDATE_REQUESTED';
                 var actions = manageable
                     ? '<div class="pv-actions">' +
                       '<button class="btn btn-sm btn-secondary" data-pv-act="diff" data-pv-id="' +
                       escAttr(v.id) +
-                      '">Porównaj</button>' +
+                      '" title="Top zmian cen względem poprzedniej wersji">Porównaj</button>' +
                       '<button class="btn btn-sm btn-secondary" data-pv-act="export" data-pv-id="' +
                       escAttr(v.id) +
-                      '">Eksport</button>' +
+                      '" data-pv-version="' +
+                      escAttr(v.version || '') +
+                      '" data-pv-status="' +
+                      escAttr(v.status || '') +
+                      '" title="Pobierz XLSX tej wersji do review przed publikacją">Eksport' +
+                      (isDraftish ? ' (review)' : '') +
+                      '</button>' +
                       activation +
                       cloneBtn +
                       deleteBtn +
@@ -468,6 +562,9 @@
                     '<td>' +
                     esc(v.createdByName || v.createdBy || '—') +
                     '</td>' +
+                    '<td class="text-right">' +
+                    usedByCell(v) +
+                    '</td>' +
                     '<td>' +
                     noteCell(v, manageable) +
                     '</td>' +
@@ -488,16 +585,18 @@
             '" data-csp-args="[&quot;$event&quot;]"">';
         if (isRury) {
             return (
-                '<div class="pv-row"><span class="pv-row-label">Rury</span><span class="pv-actions">' +
-                '<button class="btn btn-sm btn-secondary" data-csp="exportRuryToExcel" data-csp-args="[]" title="Eksportuj cennik do pliku Excel"><i data-lucide="download"></i> Eksportuj</button>' +
+                '<p class="text-muted">Cennik na żywo (LIVE) — stan roboczy tabel, nie wersja. Do review wersji użyj Eksport (review) w wierszu tabeli.</p>' +
+                '<div class="pv-row"><span class="pv-row-label">Rury (na żywo)</span><span class="pv-actions">' +
+                '<button class="btn btn-sm btn-secondary" data-csp="exportRuryToExcel" data-csp-args="[]" title="Eksportuj cennik na żywo do pliku Excel"><i data-lucide="download"></i> Eksportuj</button>' +
                 '<button class="btn btn-sm btn-secondary" data-csp="$dom" data-csp-args="[&quot;click&quot;, &quot;#pv-import-excel&quot;]" title="Importuj cennik z pliku Excel"><i data-lucide="upload"></i> Importuj</button>' +
                 '</span></div>' +
                 importInput
             );
         }
         return (
-            '<div class="pv-row"><span class="pv-row-label">Studnie + PRECO</span><span class="pv-actions">' +
-            '<button class="btn btn-sm btn-secondary" data-csp="exportStudnieToExcel" data-csp-args="[]" title="Eksportuj cennik do pliku Excel"><i data-lucide="download"></i> Eksportuj</button>' +
+            '<p class="text-muted">Cennik na żywo (LIVE) — stan roboczy tabel, nie wersja. Do review wersji użyj Eksport (review) w wierszu tabeli.</p>' +
+            '<div class="pv-row"><span class="pv-row-label">Studnie + PRECO (na żywo)</span><span class="pv-actions">' +
+            '<button class="btn btn-sm btn-secondary" data-csp="exportStudnieToExcel" data-csp-args="[]" title="Eksportuj cennik na żywo do pliku Excel"><i data-lucide="download"></i> Eksportuj</button>' +
             '<button class="btn btn-sm btn-secondary" data-csp="$dom" data-csp-args="[&quot;click&quot;, &quot;#pv-import-excel&quot;]" title="Importuj cennik z pliku Excel (zawiera arkusze PRECO)"><i data-lucide="upload"></i> Importuj</button>' +
             '</span></div>' +
             importInput
@@ -583,8 +682,10 @@
             '<input class="form-input" type="datetime-local" id="pv-eff"></div>' +
             '</div>' +
             '<div id="pv-past-warn" class="color-warn" style="display:none">Data w przeszłości — zapis jako wersja wsteczna (nota min. 10 znaków, bez auto-aktywacji).</div>' +
+            '<div class="form-group" id="pv-backdate-ack-wrap" style="display:none"><label><input type="checkbox" id="pv-backdate-ack"> Rozumiem, że przepisuję historię cennika (korekta wsteczna, nie zwykła publikacja)</label></div>' +
             '<div class="form-group"><label for="pv-note">Notatki</label>' +
-            '<input class="form-input" id="pv-note" maxlength="500" placeholder="Opis zmiany (dla daty wstecznej: min. 10 znaków)"></div>' +
+            '<input class="form-input" id="pv-note" maxlength="500" placeholder="Opis zmiany (dla daty wstecznej: min. 10 znaków)">' +
+            '<p class="text-muted" id="pv-note-counter"></p></div>' +
             '<div class="form-group"><button type="submit" class="btn btn-primary w-100" title="Zapisuje bieżący stan cennika jako nową wersję (kopia wszystkich pozycji). Nie zmienia cen w ofertach ani cennika na żywo — nowa wersja czeka na aktywację (data przyszła) albo zapisuje się jako wsteczna (data przeszła, wymagana nota min. 10 znaków)."><i data-lucide="save"></i> Zapisz jako wersję</button></div>' +
             '</form>'
         );
@@ -602,9 +703,21 @@
             '<div id="pv-save-wrap">' +
             saveFormHtml(next, manageable) +
             '</div>' +
+            '<p class="text-muted pv-help">Jak to działa: zapis tworzy kopię cennika (nie rusza ofert ani cennika na żywo). ' +
+            'Robocza → Opublikuj roboczą → Zaplanowana (wejdzie sama, cron co 5 min) albo Robocza-wsteczna (wymaga uzasadnienia). ' +
+            'Aktywna wybierana jest po dacie Obowiązuje od; oferty trzymają pieczątkę wersji. ' +
+            'Szczegóły: docs/CENNIKI-INSTRUKCJA-ADMINA.md</p>' +
+            '<div class="pv-actions pv-legend" aria-label="Legenda statusów">' +
+            '<span class="badge-ok text-nowrap">Aktywna</span>' +
+            '<span class="badge-info text-nowrap">Zaplanowana</span>' +
+            '<span class="badge-warn text-nowrap">Robocza-wsteczna</span>' +
+            '<span class="badge-muted text-nowrap">Wsteczna</span>' +
+            '<span class="badge-muted text-nowrap">Robocza</span>' +
+            '<span class="text-muted">Archiwalna</span>' +
+            '</div>' +
             '<div class="table-wrap"><table><thead><tr>' +
             '<th scope="col">Wersja</th><th scope="col">Nr</th><th scope="col">Status</th><th scope="col">Obowiązuje od</th>' +
-            '<th scope="col">Autor</th><th scope="col">Notatki</th><th scope="col">Akcje</th>' +
+            '<th scope="col">Autor</th><th scope="col">Użycie</th><th scope="col">Notatki</th><th scope="col">Akcje</th>' +
             '</tr></thead><tbody id="pv-versions-body"></tbody></table></div>' +
             '<h4 class="pv-section">Transfer plików</h4>' +
             '<div id="pv-transfer">' +
@@ -666,10 +779,70 @@
                 '</button></div></div></div>'
         });
         icons(document.getElementById('pv-note-modal'));
+        var input = document.getElementById('pv-note-input');
+        if (required && input) {
+            var counter = document.createElement('p');
+            counter.className = 'text-muted';
+            counter.id = 'pv-note-counter';
+            input.insertAdjacentElement('afterend', counter);
+            var okBtn = document.getElementById('pv-note-ok');
+            var update = function () {
+                var len = (input.value || '').trim().length;
+                counter.textContent = len + '/10 znaków (uzasadnienie zmiany historycznej)';
+                if (okBtn) okBtn.disabled = len < 10;
+            };
+            input.addEventListener('input', update);
+            update();
+        }
         document.getElementById('pv-note-ok').addEventListener('click', function () {
             var note = document.getElementById('pv-note-input').value || '';
             onSubmit(note);
         });
+    }
+
+    function fmtPrice(v) {
+        if (typeof v !== 'number' || !Number.isFinite(v)) return '—';
+        return v.toLocaleString('pl-PL', { maximumFractionDigits: 2 });
+    }
+
+    function diffChangesHtml(diff) {
+        var list = (diff && diff.changes) || [];
+        if (list.length === 0) return '';
+        var rows = list
+            .map(function (c) {
+                var delta =
+                    c.deltaPct === null || c.deltaPct === undefined
+                        ? '—'
+                        : (c.deltaPct > 0 ? '+' : '') + c.deltaPct + ' %';
+                return (
+                    '<tr><td>' +
+                    esc(c.section || '') +
+                    '</td><td>' +
+                    esc(c.id || '') +
+                    (c.name ? '<br><span class="text-muted">' + esc(c.name) + '</span>' : '') +
+                    '</td><td>' +
+                    esc(c.kind || '') +
+                    '</td><td class="text-right">' +
+                    esc(fmtPrice(c.before)) +
+                    '</td><td class="text-right">' +
+                    esc(fmtPrice(c.after)) +
+                    '</td><td class="text-right">' +
+                    esc(delta) +
+                    '</td></tr>'
+                );
+            })
+            .join('');
+        return (
+            '<h4 class="pv-section">Top zmian cen (max 100, sort po |Δ%|)' +
+            (diff.truncated ? ' — lista ucięta' : '') +
+            '</h4>' +
+            '<div class="table-wrap"><table><thead><tr>' +
+            '<th scope="col">Sekcja</th><th scope="col">Pozycja</th><th scope="col">Typ</th>' +
+            '<th scope="col">Przed</th><th scope="col">Po</th><th scope="col">Δ</th>' +
+            '</tr></thead><tbody>' +
+            rows +
+            '</tbody></table></div>'
+        );
     }
 
     async function openDiff(id) {
@@ -718,7 +891,9 @@
                 '</tr></thead><tbody>' +
                 (rows ||
                     '<tr><td colspan="4" class="text-center text-muted">Brak zmian.</td></tr>') +
-                '</tbody></table></div></div></div>'
+                '</tbody></table></div>' +
+                diffChangesHtml(diff) +
+                '</div></div>'
         });
         icons(document.getElementById('pv-diff-modal'));
     }
@@ -736,7 +911,7 @@
         return 'Cennik_' + label + '_' + version + '_Export.xlsx';
     }
 
-    async function exportVersion(id, type, version) {
+    async function exportVersion(id, type, version, status) {
         try {
             var headers = typeof window.authHeaders === 'function' ? window.authHeaders() : {};
             var res = await fetch(API + '/' + encodeURIComponent(id) + '/export', {
@@ -752,7 +927,10 @@
             var blob = await res.blob();
             var a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
-            a.download = versionExportFilename(type, version || id);
+            var isDraftish =
+                status === 'DRAFT' || status === 'SCHEDULED' || status === 'BACKDATE_REQUESTED';
+            var base = versionExportFilename(type, version || id);
+            a.download = isDraftish ? base.replace(/\.xlsx$/, '_REVIEW.xlsx') : base;
             document.body.appendChild(a);
             a.click();
             setTimeout(function () {
@@ -773,12 +951,17 @@
     function initEff(next) {
         var eff = document.getElementById('pv-eff');
         var warn = document.getElementById('pv-past-warn');
+        var ackWrap = document.getElementById('pv-backdate-ack-wrap');
+        var note = document.getElementById('pv-note');
+        var counter = document.getElementById('pv-note-counter');
         var nextLabel = document.getElementById('pv-next-label');
         if (!eff || !warn) return;
         var check = function () {
             try {
-                warn.style.display =
-                    eff.value && new Date(eff.value).getTime() < Date.now() - 60000 ? '' : 'none';
+                var past =
+                    eff.value && new Date(eff.value).getTime() < Date.now() - 60000 ? true : false;
+                warn.style.display = past ? '' : 'none';
+                if (ackWrap) ackWrap.style.display = past ? '' : 'none';
                 if (nextLabel && eff.value) {
                     nextLabel.value = versionLabel(next, eff.value) + ' (nr ' + next + ')';
                 }
@@ -786,7 +969,18 @@
                 warn.style.display = 'none';
             }
         };
+        var countNote = function () {
+            if (!counter || !note) return;
+            var len = (note.value || '').trim().length;
+            var past =
+                eff.value && new Date(eff.value).getTime() < Date.now() - 60000 ? true : false;
+            counter.textContent = past
+                ? len + '/10 znaków (wymagane dla daty wstecznej)'
+                : len + '/500 znaków';
+        };
         eff.addEventListener('change', check);
+        eff.addEventListener('input', check);
+        if (note) note.addEventListener('input', countNote);
         // Domyślnie: teraz (lokalnie).
         try {
             var now = new Date(Date.now() - new Date().getTimezoneOffset() * 60000);
@@ -904,28 +1098,74 @@
             if (act === 'close') window.closeModal('pv-versions-modal');
             else if (act === 'diff' && id) openDiff(id);
             else if (act === 'export' && id) {
-                exportVersion(id, type, null);
-            } else if (act === 'activate' && id) {
-                openNoteModal(
-                    'Aktywuj wersję',
-                    'Opcjonalne notatki do aktywacji…',
-                    function (note) {
-                        var trimmed = (note || '').trim();
-                        apiJson(
-                            API + '/' + encodeURIComponent(id) + '/activate',
-                            authed('POST', trimmed ? { note: note } : undefined)
-                        )
-                            .then(function () {
-                                window.closeModal('pv-note-modal');
-                                toast('Wersja aktywowana', 'success');
-                                refreshTable(type, true);
-                            })
-                            .catch(function (err) {
-                                toast('Błąd aktywacji: ' + err.message, 'error');
-                            });
-                    },
-                    { required: false, okText: 'Aktywuj' }
+                exportVersion(
+                    id,
+                    type,
+                    btn.getAttribute('data-pv-version'),
+                    btn.getAttribute('data-pv-status')
                 );
+            } else if (act === 'publish' && id) {
+                apiJson(API + '/' + encodeURIComponent(id) + '/publish', authed('POST'))
+                    .then(function (json) {
+                        var v = json.version || {};
+                        toast(
+                            'Opublikowano: ' + (v.version || '') + ' (' + (v.status || '') + ')',
+                            'success'
+                        );
+                        refreshTable(type, true);
+                    })
+                    .catch(function (err) {
+                        toast(friendlyError('Błąd publikacji', err), 'error');
+                    });
+            } else if (act === 'activate' && id) {
+                var pvVersionName = btn.getAttribute('data-pv-version') || id;
+                var usedRaw = btn.getAttribute('data-pv-used');
+                var goActivate = function (summary) {
+                    var msg =
+                        'Aktywować wersję ' +
+                        pvVersionName +
+                        (summary ? ' (' + summary + ')' : '') +
+                        '? Poprzednia aktywna przejdzie do archiwum.' +
+                        (usedRaw ? ' Tę wersję ma już ' + usedRaw + ' ofert/zamówień.' : '');
+                    pvConfirm(msg, {
+                        title: 'Aktywuj wersję',
+                        okText: 'Dalej',
+                        type: 'warning'
+                    }).then(function (ok) {
+                        if (!ok) return;
+                        openNoteModal(
+                            'Aktywuj wersję',
+                            'Opcjonalne notatki do aktywacji…',
+                            function (note) {
+                                var trimmed = (note || '').trim();
+                                apiJson(
+                                    API + '/' + encodeURIComponent(id) + '/activate',
+                                    authed('POST', trimmed ? { note: note } : undefined)
+                                )
+                                    .then(function () {
+                                        window.closeModal('pv-note-modal');
+                                        toast('Wersja aktywowana', 'success');
+                                        refreshTable(type, true);
+                                    })
+                                    .catch(function (err) {
+                                        toast(friendlyError('Błąd aktywacji', err), 'error');
+                                    });
+                            },
+                            { required: false, okText: 'Aktywuj' }
+                        );
+                    });
+                };
+                apiJson(API + '/' + encodeURIComponent(id) + '/diff', authed('GET'))
+                    .then(function (diff) {
+                        var parts = Object.keys(diff.sections || {}).map(function (k) {
+                            var s = diff.sections[k];
+                            return k + ': +' + s.added + '/-' + s.removed + '/~' + s.changed;
+                        });
+                        goActivate(parts.join(', ') || 'brak zmian');
+                    })
+                    .catch(function () {
+                        goActivate('');
+                    });
             } else if (act === 'edit-note' && id) {
                 openNoteModal(
                     'Edytuj notatki',
@@ -974,19 +1214,19 @@
                             toast(
                                 'Utworzono wersję roboczą ' +
                                     (v.version || '') +
-                                    ' jako kopię wersji',
+                                    ' jako kopię wersji — następny krok: Opublikuj roboczą',
                                 'success'
                             );
                             refreshTable(type, true);
                         })
                         .catch(function (err) {
-                            toast('Błąd klonowania: ' + err.message, 'error');
+                            toast(friendlyError('Błąd klonowania', err), 'error');
                         });
                 };
                 var cloneMsg =
-                    'Utworzyć nową wersję roboczą jako kopię tej wersji? Aktywna wersja nie zmieni się.';
+                    'Utworzyć nową wersję roboczą jako kopię tej wersji? Aktywna wersja nie zmieni się. Klon zaczyna jako Robocza — potem użyj Opublikuj roboczą.';
                 pvConfirm(cloneMsg, {
-                    title: 'Przywróć jako roboczą',
+                    title: 'Klonuj do roboczej',
                     okText: 'Klonuj',
                     type: 'warning'
                 }).then(function (ok) {
@@ -1001,7 +1241,7 @@
                             refreshTable(type, true);
                         })
                         .catch(function (err) {
-                            toast('Błąd usuwania: ' + err.message, 'error');
+                            toast(friendlyError('Błąd usuwania', err), 'error');
                         });
                 };
                 var deleteMsg =
@@ -1041,6 +1281,16 @@
                     return;
                 }
                 var isPast = new Date(effectiveFrom).getTime() < Date.now() - 60000;
+                if (isPast) {
+                    var ack = document.getElementById('pv-backdate-ack');
+                    if (ack && !ack.checked) {
+                        toast(
+                            'Zaznacz potwierdzenie korekty wstecznej (przepisujesz historię cennika)',
+                            'warning'
+                        );
+                        return;
+                    }
+                }
                 var doBackdate = function (draftId, backNote) {
                     apiJson(
                         API + '/' + encodeURIComponent(draftId) + '/backdate',
@@ -1090,13 +1340,15 @@
                                     (v.version || '') +
                                     ' zapisana (' +
                                     (v.status || '') +
-                                    ')',
+                                    ') — sprawdź Porównaj przed aktywacją',
                                 'success'
                             );
-                            refreshTable(type, true);
+                            refreshTable(type, true).then(function () {
+                                openDiff(v.id);
+                            });
                         })
                         .catch(function (err) {
-                            toast('Błąd zapisu wersji: ' + err.message, 'error');
+                            toast(friendlyError('Błąd zapisu wersji', err), 'error');
                         });
                 };
                 if (isPast && note.trim().length < 10) {

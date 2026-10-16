@@ -58,8 +58,8 @@
 (function () {
     'use strict';
 
-    var TYPES = ['rury', 'studnie'];
-    var TYPE_LABELS = { rury: 'Rury', studnie: 'Studnie' };
+    var TYPES = ['rury', 'studnie', 'preco'];
+    var TYPE_LABELS = { rury: 'Rury', studnie: 'Studnie', preco: 'Preco' };
 
     function pvHeaders() {
         try {
