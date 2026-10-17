@@ -635,11 +635,15 @@ function _excelPasteCreateWells(text) {
     const dn = _excelActiveTab || '1000';
     _excelSaveUndoSnapshot();
     let added = 0;
+    let skipped = 0;
     const addedIndices = [];
     const _addedIdsParsed = [];
     parsed.forEach(function (row) {
         const name = String(row.name || '').trim();
-        if (!name) return;
+        if (!name) {
+            skipped++;
+            return;
+        }
         // DN z danych steruje routingiem, fallback → aktywna zakładka
         let dnVal = row.dn || String(dn);
         dnVal = dnVal === 'styczne' || dnVal === 'styczna' ? 'styczna' : parseInt(dnVal, 10);
@@ -699,8 +703,17 @@ function _excelPasteCreateWells(text) {
         added++;
     });
     if (added === 0) {
-        showToast('Nie dodano żadnej studni', 'info');
+        showToast(
+            skipped > 0
+                ? 'Pominięto ' + skipped + ' wierszy bez nazwy studni'
+                : 'Nie dodano żadnej studni',
+            skipped > 0 ? 'warning' : 'info'
+        );
         return;
+    }
+    // Raport cichych pominięć: wiersz bez nazwy nie może powstać jako studnia.
+    if (skipped > 0 && typeof showToast === 'function') {
+        showToast('Pominięto ' + skipped + ' wierszy bez nazwy studni', 'warning');
     }
     if (added > 200 && _addedIdsParsed.length > 0 && typeof _excelPushBulkAddUndo === 'function') {
         if (
