@@ -40,12 +40,12 @@
 .badge-muted {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    padding: 2px 8px;
-    border-radius: 5px;
-    font-size: var(--fs-sm, 0.8rem);
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: var(--fs-base, 0.9rem);
     font-weight: 600;
-    line-height: 1.4;
+    line-height: 1.5;
     white-space: nowrap;
 }
 .badge-ok {
@@ -70,8 +70,8 @@
 }
 
 .badge-status-icon {
-    width: 12px;
-    height: 12px;
+    width: 14px;
+    height: 14px;
     flex-shrink: 0;
 }
 
