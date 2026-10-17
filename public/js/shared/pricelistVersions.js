@@ -352,41 +352,66 @@
         return prefix + ': ' + (mapped || (err && err.message) || 'nieznany błąd');
     }
 
+    /** Ikony Lucide inline SVG — badge statusu wersji cennika. */
+    var STATUS_ICONS = {
+        ACTIVE: '<svg class="badge-status-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>',
+        SCHEDULED:
+            '<svg class="badge-status-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>',
+        BACKDATE_REQUESTED:
+            '<svg class="badge-status-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4M12 17h.01"/></svg>',
+        BACKDATE:
+            '<svg class="badge-status-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>',
+        DRAFT: '<svg class="badge-status-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.17 6.83a2.83 2.83 0 0 0-4-4L3.5 16.5 2 22l5.5-1.5Z"/><path d="m15 5 4 4"/></svg>',
+        ARCHIVED:
+            '<svg class="badge-status-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="5" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/></svg>'
+    };
+
     function statusBadge(status) {
         // ACTIVE zielony, SCHEDULED niebieski, BACKDATE_REQUESTED bursztyn
         // (czeka na decyzję), BACKDATE/DRAFT/ARCHIVED szare.
         var label = STATUS_LABELS[status] || status;
+        var icon = STATUS_ICONS[status] || '';
+        var iconHtml = icon
+            ? '<span style="display:inline-flex;align-items:center;gap:3px">' +
+              icon +
+              esc(label) +
+              '</span>'
+            : esc(label);
         if (status === 'ACTIVE')
             return (
-                '<span class="badge-ok text-nowrap" title="Obowiązuje — wybrana przez resolver dla nowych ofert">' +
-                esc(label) +
+                '<span class="badge-ok text-nowrap" style="display:inline-flex;align-items:center;gap:4px" title="Obowiązuje — wybrana przez resolver dla nowych ofert">' +
+                iconHtml +
                 '</span>'
             );
         if (status === 'SCHEDULED')
             return (
-                '<span class="badge-info text-nowrap" title="Zatwierdzona, wejdzie w życie w dacie Obowiązuje od (cron co 5 min)">' +
-                esc(label) +
+                '<span class="badge-info text-nowrap" style="display:inline-flex;align-items:center;gap:4px" title="Zatwierdzona, wejdzie w życie w dacie Obowiązuje od (cron co 5 min)">' +
+                iconHtml +
                 '</span>'
             );
         if (status === 'BACKDATE_REQUESTED')
             return (
-                '<span class="badge-warn text-nowrap" title="Szkic z datą wsteczną — wymaga uzasadnienia (Zatwierdź wstecz)">' +
-                esc(label) +
+                '<span class="badge-warn text-nowrap" style="display:inline-flex;align-items:center;gap:4px" title="Szkic z datą wsteczną — wymaga uzasadnienia (Zatwierdź wstecz)">' +
+                iconHtml +
                 '</span>'
             );
         if (status === 'BACKDATE')
             return (
-                '<span class="badge-muted text-nowrap" title="Zatwierdzona korekta historyczna (tylko odczyt)">' +
-                esc(label) +
+                '<span class="badge-muted text-nowrap" style="display:inline-flex;align-items:center;gap:4px" title="Zatwierdzona korekta historyczna (tylko odczyt)">' +
+                iconHtml +
                 '</span>'
             );
         if (status === 'DRAFT')
             return (
-                '<span class="badge-muted text-nowrap" title="Wersja robocza — opublikuj aby weszła na oś czasu">' +
-                esc(label) +
+                '<span class="badge-muted text-nowrap" style="display:inline-flex;align-items:center;gap:4px" title="Wersja robocza — opublikuj aby weszła na oś czasu">' +
+                iconHtml +
                 '</span>'
             );
-        return '<span class="text-muted">' + esc(label) + '</span>';
+        return (
+            '<span class="text-muted" style="display:inline-flex;align-items:center;gap:4px">' +
+            iconHtml +
+            '</span>'
+        );
     }
 
     /** Nazwa typu cennika wielką literą do tytułu panelu. */
@@ -708,12 +733,12 @@
             'Aktywna wybierana jest po dacie Obowiązuje od; oferty trzymają pieczątkę wersji. ' +
             'Szczegóły: docs/CENNIKI-INSTRUKCJA-ADMINA.md</p>' +
             '<div class="pv-actions pv-legend" aria-label="Legenda statusów">' +
-            '<span class="badge-ok text-nowrap">Aktywna</span>' +
-            '<span class="badge-info text-nowrap">Zaplanowana</span>' +
-            '<span class="badge-warn text-nowrap">Robocza-wsteczna</span>' +
-            '<span class="badge-muted text-nowrap">Wsteczna</span>' +
-            '<span class="badge-muted text-nowrap">Robocza</span>' +
-            '<span class="text-muted">Archiwalna</span>' +
+            statusBadge('ACTIVE') +
+            statusBadge('SCHEDULED') +
+            statusBadge('BACKDATE_REQUESTED') +
+            statusBadge('BACKDATE') +
+            statusBadge('DRAFT') +
+            statusBadge('ARCHIVED') +
             '</div>' +
             '<div class="table-wrap"><table><thead><tr>' +
             '<th scope="col">Wersja</th><th scope="col">Nr</th><th scope="col">Status</th><th scope="col">Obowiązuje od</th>' +
