@@ -407,6 +407,12 @@
                 iconHtml +
                 '</span>'
             );
+        if (status === 'ARCHIVED')
+            return (
+                '<span class="badge-muted text-nowrap" style="display:inline-flex;align-items:center;gap:4px" title="Poprzednia aktywna w archiwum (tylko odczyt)">' +
+                iconHtml +
+                '</span>'
+            );
         return (
             '<span class="text-muted" style="display:inline-flex;align-items:center;gap:4px">' +
             iconHtml +
