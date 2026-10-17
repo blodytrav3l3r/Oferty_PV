@@ -9,6 +9,15 @@
 
 import { z } from 'zod';
 
+// Limity wejścia (security: DoS przez wielkie tablice). Sufit udokumentowany
+// to ~3000 studni (src/mountRoutes.ts); cap 5000 = zapas + zgodny z UI
+// XLSX_IMPORT_MAX_ROWS (public/js/import-export/toolbar.js). Komponenty/przejścia:
+// zapas 50x ponad realne użycie. Egzekwowane na granicy API (validateData).
+const MAX_WELLS_PER_OFFER = 5000;
+const MAX_COMPONENTS_PER_WELL = 5000;
+const MAX_PASSAGES_PER_WELL = 500;
+const MAX_OFFERS_PER_BATCH = 1000;
+
 // Re-export z podzielonych plików dla zachowania zgodności wstecznej
 export {
     productPatchSchema,
@@ -133,8 +142,8 @@ export const wellDataSchema = z
         price: z.number().finite().nonnegative().optional(),
         discount: z.number().min(0).max(100).finite().optional(),
         zwienczenie: z.string().optional(),
-        components: z.array(wellComponentSchema).optional(),
-        passages: z.array(passageConfigSchema).optional(),
+        components: z.array(wellComponentSchema).max(MAX_COMPONENTS_PER_WELL).optional(),
+        passages: z.array(passageConfigSchema).max(MAX_PASSAGES_PER_WELL).optional(),
         height: z.number().finite().positive('Wysokość studni jest wymagana').optional(),
         depth: z.number().finite().nonnegative().optional()
     })
@@ -147,7 +156,7 @@ export const offerStudnieCreateSchema = z
         state: z.enum(['draft', 'final']).default('draft'),
         status: z.enum(['active', 'draft']).optional(),
         transportCost: z.number().finite().min(0).default(0),
-        wells: z.array(wellDataSchema),
+        wells: z.array(wellDataSchema).max(MAX_WELLS_PER_OFFER),
         totalPrice: z.number().finite().nonnegative().optional(),
         data: z.record(z.string(), z.unknown()).optional()
     })
@@ -156,7 +165,9 @@ export const offerStudnieCreateSchema = z
 export const offerStudnieUpdateSchema = offerStudnieCreateSchema.partial();
 
 export const offersStudnieBatchSchema = z.object({
-    data: z.array(offerStudnieCreateSchema.partial({ clientId: true, wells: true }))
+    data: z
+        .array(offerStudnieCreateSchema.partial({ clientId: true, wells: true }))
+        .max(MAX_OFFERS_PER_BATCH)
 });
 
 // =============================================================================

@@ -42,6 +42,16 @@ describe('buildXlsx', () => {
         expect(xml).toContain('&lt;script&gt;');
     });
 
+    it('formuły (=+@) w danych → inlineStr, bez elementu <f> (brak formula injection)', async () => {
+        const buf = await buildXlsx([
+            { name: 'S', headers: ['h'], rows: [['=1+1'], ['+cmd|calc'], ['@X'], ['-2']] }
+        ]);
+        const zip = await JSZip.loadAsync(buf);
+        const xml = await zip.file('xl/worksheets/sheet1.xml')!.async('string');
+        expect(xml).toContain('t="inlineStr"');
+        expect(xml).not.toContain('<f');
+    });
+
     it('wiele arkuszy → wiele plików sheet', async () => {
         const buf = await buildXlsx([
             { name: 'A', headers: ['h'], rows: [] },
