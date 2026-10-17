@@ -89,11 +89,14 @@ async function measureRun(frame, fixture) {
         const o = {};
         const tabs = ['1000', '1200', '1500', '2000', '2500', 'styczne'];
         o.tabMs = {};
+        o.tabStages = {};
         for (const t of tabs) {
+            __excelPerfReset();
             const a = performance.now();
             excelSwitchTab(t);
             await wait(300);
             o.tabMs[t] = Math.round(performance.now() - a);
+            o.tabStages[t] = __excelPerfReport();
         }
         excelSwitchTab('1000');
         await wait(300);
@@ -208,6 +211,7 @@ async function openFrame(browser, token) {
             );
             console.log(`  tabMs=${JSON.stringify(m.tabMs)}`);
             console.log(`  pollSnapMs=${m.pollSnapMs} pollSyncMs=${m.pollSyncMs}`);
+            if (r === 0) console.log('TABSTAGES_RUN1 ' + JSON.stringify(m.tabStages));
             cold.push(m);
             await context.close();
         }

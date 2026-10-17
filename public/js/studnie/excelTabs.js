@@ -47,15 +47,26 @@ function excelSwitchTab(tab) {
     if (typeof _excelActiveTab !== 'undefined' && tab === _excelActiveTab) return;
     /* A4-F2: porzuć oczekujący debounce preview ze starej zakładki. */
     if (typeof _excelFlushPreview === 'function') _excelFlushPreview();
+    /* A4 diagnostyka: rozbicie kosztu przełączenia (additywne, ?perf=1). */
+    const _swPerf = typeof _excelPerfPush === 'function' && typeof _excelPerfNow === 'function';
+    const _tSw0 = _swPerf ? _excelPerfNow() : 0;
     _excelActiveTab = tab;
     /* F2b: wchodząca zakładka dostaje świeże błędy PRZED renderem (open liczy
        tylko pierwszy tab). Bez tego wiersze miałyby stale tinty. */
+    const _tSwRecalc = _swPerf ? _excelPerfNow() : 0;
     if (typeof _excelRecalcTabWellErrors === 'function') _excelRecalcTabWellErrors(tab);
+    if (_swPerf) _excelPerfPush('switch-recalc', _excelPerfNow() - _tSwRecalc);
     if (typeof _excelInvalidateFilteredIndexes === 'function') _excelInvalidateFilteredIndexes();
     _excelResetLayoutDependentState(); /* reset selekcji zależnych od układu */
     if (typeof _excelResetSort === 'function') _excelResetSort();
+    const _tSwRender = _swPerf ? _excelPerfNow() : 0;
     _excelRenderTabs();
     _excelRenderTable(tab);
+    if (_swPerf) {
+        _excelPerfPush('switch-render', _excelPerfNow() - _tSwRender);
+        _excelPerfPush('switch-total', _excelPerfNow() - _tSw0);
+        if (typeof _excelPerfObserveFrame === 'function') _excelPerfObserveFrame();
+    }
     /* F2a: _excelRenderTable kończy się _excelUpdateHeaderProdCodes() —
        drugie wywołanie nadpisywało tym samym. */
     /* Auto-focus na empty row gdy zakładka pusta */
