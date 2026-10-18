@@ -2,7 +2,7 @@
 /* ===== DRAFT STORE (P1.1b) — lokalny draft formularzy, protokół docs/plans/e2-draft-review.md =====
  * Czysta warstwa danych BEZ zależności od DOM i sieci:
  * - klucz: sok_draft_v1_{userId}_{kind}_{docIdOrNew}, schemat v:1, jawny JSON (BEZ szyfrowania),
- * - allowlista pól (bez runtime, bez wellsExport), cap 4 000 000 B, TTL 14 dni sliding,
+ * - allowlista pól (bez runtime, bez wellsExport, bez pól osobowych), cap 4 000 000 B, TTL 14 dni sliding,
  * - SAVED zawsze wygrywa: ten moduł nigdy nie czyta draftu przy zapisie ani go nie wysyła.
  * Wszystkie funkcje przyjmują storage (localStorage lub zamiennik) — testowalne w izolacji.
  * Efekty uboczne (toast, popup recovery, debounce) należą do draftAutosave.js, nie tutaj.
@@ -44,6 +44,40 @@ var DRAFT_FIELD_KEYS = [
     'validity',
     'transportKm',
     'transportRate'
+];
+
+/**
+ * Pola OSOBOWE wykluczone z PERSYSTOWANEGO draftu (localStorage = plaintext,
+ * czytelny dla każdego skryptu tej samej origin i każdego, kto ma dostęp do
+ * profilu przeglądarki). Draft niesie tylko stan nietożsamościowy: studnie/
+ * pozycje, transport, warunki płatności, ważność, numer/datę.
+ *
+ * WAŻNE: strip jest na granicy ZAPISU (`buildDraft`), nie w `pickDraftPayload`.
+ * Projekcja pól musi zostać pełna — `collectLive`/`canonicalPayloadJson` liczą
+ * z niej flagę „niezapisane zmiany" (dirty) i diff live↔SAVED; wycięcie PII
+ * w projekcji gasiło ostrzeżenie przed utratą wpisanej nazwy klienta
+ * (regresja klasy błędu #22, pokryta testami sokDirty/draftLifecycle).
+ *
+ * Cena (świadoma): po odtworzeniu draftu dane klienta/inwestora i notatki trzeba
+ * wpisać ponownie.
+ *
+ * Upgrade path: gdyby odtwarzanie pól osobowych było twardą potrzebą, zapisz nie
+ * wartość, a boolean „pola osobowe różnią się od SAVED" (bez treści).
+ */
+var DRAFT_PII_FIELD_KEYS = [
+    'clientName',
+    'clientNumber',
+    'clientNip',
+    'clientAddress',
+    'clientContact',
+    'clientContacts',
+    'contactPerson',
+    'clientPhone',
+    'clientEmail',
+    'investName',
+    'investAddress',
+    'investContractor',
+    'notes'
 ];
 
 /** Lotne pola runtime studni — nigdy nie trafiają do draftu (jak przy SAVED). */
@@ -168,6 +202,29 @@ function pickDraftPayload(raw) {
 }
 
 /**
+ * Zdejmuje pola osobowe z payloadu przed zapisem (granica persystencji).
+ * Płytka kopia: nie mutuje wejścia. `fields` zostaje jako obiekt (schemat v:1).
+ * @param {object} payload
+ * @returns {object}
+ */
+function stripDraftPiiFields(payload) {
+    var src = payload && typeof payload === 'object' ? payload : {};
+    var out = {};
+    Object.keys(src).forEach(function (k) {
+        out[k] = src[k];
+    });
+    if (out.fields && typeof out.fields === 'object') {
+        var fields = {};
+        Object.keys(out.fields).forEach(function (k) {
+            if (DRAFT_PII_FIELD_KEYS.indexOf(k) !== -1) return;
+            fields[k] = out.fields[k];
+        });
+        out.fields = fields;
+    }
+    return out;
+}
+
+/**
  * Buduje kopertę draftu (expiresAt = updatedAt + 14 dni, sliding).
  * @param {object} spec {userId, kind, docId, baseVersion, payload, now?}
  * @returns {object|null} koperta lub null przy niepoprawnym wejściu
@@ -185,7 +242,7 @@ function buildDraft(spec) {
         baseVersion: typeof s.baseVersion === 'number' ? s.baseVersion : null,
         updatedAt: new Date(now).toISOString(),
         expiresAt: new Date(now + DRAFT_TTL_MS).toISOString(),
-        payload: pickDraftPayload(s.payload)
+        payload: stripDraftPiiFields(pickDraftPayload(s.payload))
     };
 }
 
@@ -485,6 +542,7 @@ window.draftStore = {
     buildDraftKey: buildDraftKey,
     stripDraftWellRuntime: stripDraftWellRuntime,
     pickDraftPayload: pickDraftPayload,
+    stripDraftPiiFields: stripDraftPiiFields,
     buildDraft: buildDraft,
     draftByteSize: draftByteSize,
     isDraftQuotaError: isDraftQuotaError,

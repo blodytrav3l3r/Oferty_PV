@@ -122,6 +122,23 @@ describe('P1.1b draftStore — allowlista', () => {
         expect(payload.wells[0].config[0].quantity).toBe(1);
     });
 
+    it('buildDraft zdejmuje PII — pickDraftPayload zachowuje (projekcja dirtiness)', () => {
+        const ds = loadStore();
+        const raw = {
+            fields: { clientName: 'Jan', clientEmail: 'j@x.pl', notes: 'tajne', validity: '7 dni' },
+            items: []
+        };
+        // projekcja karmi dirty/diff live↔SAVED — PII musi zostać (inaczej gasi ostrzeżenie)
+        const picked = ds.pickDraftPayload(raw);
+        expect(picked.fields.clientName).toBe('Jan');
+        // granica persystencji (localStorage plaintext) — PII zdjęte, pole trwałe zostaje
+        const d = ds.buildDraft({ userId: 'u1', kind: 'offer_rury', docId: 'new', payload: raw });
+        expect(d.payload.fields.clientName).toBeUndefined();
+        expect(d.payload.fields.clientEmail).toBeUndefined();
+        expect(d.payload.fields.notes).toBeUndefined();
+        expect(d.payload.fields.validity).toBe('7 dni');
+    });
+
     it('koperta ma v:1, TTL 14 dni sliding, baseVersion', () => {
         const ds = loadStore();
         const now = Date.parse('2026-09-01T10:00:00.000Z');
@@ -148,7 +165,7 @@ describe('P1.1b draftStore — cap 4 MB', () => {
             userId: 'u1',
             kind: 'offer_rury',
             docId: 'new',
-            payload: { fields: { notes: big }, items: [] }
+            payload: { fields: { validity: big }, items: [] }
         });
         const res = ds.saveDraft(st, d);
         expect(res).toEqual({ ok: false, reason: 'oversize' });
@@ -253,7 +270,7 @@ describe('P1.1b draftStore — quota i last-write-wins', () => {
             userId: 'u1',
             kind: 'offer_rury',
             docId: 'big',
-            payload: { fields: { notes: 'v'.repeat(1000) } }
+            payload: { fields: { validity: 'v'.repeat(1000) } }
         });
         expect(ds.saveDraft(st, victim).ok).toBe(true);
         const next = ds.buildDraft({ userId: 'u1', kind: 'offer_rury', docId: 'new', payload: {} });
@@ -279,7 +296,7 @@ describe('P1.1b draftStore — quota i last-write-wins', () => {
                 userId: 'u1',
                 kind: 'offer_rury',
                 docId: 'new',
-                payload: { fields: { notes: 'v1' } }
+                payload: { fields: { validity: 'v1' } }
             })
         );
         ds.saveDraft(
@@ -288,10 +305,10 @@ describe('P1.1b draftStore — quota i last-write-wins', () => {
                 userId: 'u1',
                 kind: 'offer_rury',
                 docId: 'new',
-                payload: { fields: { notes: 'v2' } }
+                payload: { fields: { validity: 'v2' } }
             })
         );
-        expect(ds.loadDraft(st, key).draft.payload.fields.notes).toBe('v2');
+        expect(ds.loadDraft(st, key).draft.payload.fields.validity).toBe('v2');
     });
 });
 

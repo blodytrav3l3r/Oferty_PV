@@ -609,19 +609,39 @@ function _draftComparablePayload(kind, payload) {
 }
 
 /**
+ * Pola osobowe nie są persystowane w drafcie (DRAFT_PII_FIELD_KEYS w draftStore).
+ * Komparatory ze STORED draftem muszą je zignorować po obu stronach, inaczej
+ * draft zawsze „różni się" od SAVED/live i popup recovery wraca bez końca.
+ * @param {object} p
+ * @returns {object}
+ */
+function _draftStripPiiComparable(p) {
+    try {
+        if (window.draftStore && typeof window.draftStore.stripDraftPiiFields === 'function')
+            return window.draftStore.stripDraftPiiFields(p);
+    } catch (_e) {}
+    return p;
+}
+
+/**
  * Jedyny komparator draft↔SAVED (SSoT recovery i autosave-write).
  * @param {string} kind
  * @param {*} draftPayload
  * @param {*} savedPayload
  * @param {boolean} isNewDoc
+ * @param {{ignorePii?: boolean}} [extra] ignorePii=true gdy draftPayload jest STORED (bez PII)
  * @returns {boolean} true = równoważne (brak recovery, brak zapisu)
  */
-function _draftEquivalent(kind, draftPayload, savedPayload, isNewDoc) {
+function _draftEquivalent(kind, draftPayload, savedPayload, isNewDoc, extra) {
     if (!draftPayload) return true;
     if (!savedPayload) return false;
     var opts = isNewDoc ? { ignoreVolatile: true, ignoreWizard: true } : undefined;
     var a = _draftComparablePayload(kind, draftPayload);
     var b = _draftComparablePayload(kind, savedPayload);
+    if (extra && extra.ignorePii) {
+        a = _draftStripPiiComparable(a);
+        b = _draftStripPiiComparable(b);
+    }
     // date/number: brak po którejkolwiek stronie (legacy, kreacja) = drop obu.
     // Bez tego live (dzisiejsza data z inputa) dryfuje codziennie vs brak.
     ['date', 'number'].forEach(function (k) {
@@ -710,7 +730,12 @@ function _draftRemoveIfDead(key, kind, cur) {
         if (!key || !window.draftStore || !cur || cur.slim || !cur.payload) return false;
         var loaded = window.draftStore.loadDraft(window.localStorage, key);
         if (loaded.status !== 'ok' || !loaded.draft) return false;
-        if (!_draftEquivalent(kind, loaded.draft.payload, cur.payload, cur.isNew)) return false;
+        if (
+            !_draftEquivalent(kind, loaded.draft.payload, cur.payload, cur.isNew, {
+                ignorePii: true
+            })
+        )
+            return false;
         window.draftStore.removeDraft(window.localStorage, key);
         delete _draftLastWritten[key];
         delete _draftOversizeNoted[key];
@@ -1364,8 +1389,8 @@ function _draftLogRecoveryDiff(kind, draftPayload, savedPayload, isNewDoc) {
         var log = _draftG('logger');
         if (!log || typeof log.warn !== 'function') return;
         var opts = isNewDoc ? { ignoreVolatile: true, ignoreWizard: true } : undefined;
-        var a = _draftComparablePayload(kind, draftPayload);
-        var b = _draftComparablePayload(kind, savedPayload);
+        var a = _draftStripPiiComparable(_draftComparablePayload(kind, draftPayload));
+        var b = _draftStripPiiComparable(_draftComparablePayload(kind, savedPayload));
         var keys = {};
         Object.keys(a).forEach(function (k) {
             keys[k] = 1;
@@ -1390,7 +1415,11 @@ function _draftLogRecoveryDiff(kind, draftPayload, savedPayload, isNewDoc) {
             diff: diffs.join(', ') || '(puste)',
             pola: (function () {
                 try {
-                    return _draftDescribeDiff(kind, draftPayload, savedPayload, isNewDoc) || [];
+                    return (
+                        _draftDescribeDiff(kind, draftPayload, savedPayload, isNewDoc, {
+                            ignorePii: true
+                        }) || []
+                    );
                 } catch (_e3) {
                     return [];
                 }
@@ -1407,13 +1436,18 @@ function _draftLogRecoveryDiff(kind, draftPayload, savedPayload, isNewDoc) {
  * @param {*} draftPayload
  * @param {*} savedPayload
  * @param {boolean} isNewDoc
+ * @param {{ignorePii?: boolean}} [extra] ignorePii=true gdy draftPayload jest STORED (bez PII)
  * @returns {string[]}
  */
-function _draftDescribeDiff(kind, draftPayload, savedPayload, isNewDoc) {
+function _draftDescribeDiff(kind, draftPayload, savedPayload, isNewDoc, extra) {
     try {
-        if (_draftEquivalent(kind, draftPayload, savedPayload, isNewDoc)) return [];
+        if (_draftEquivalent(kind, draftPayload, savedPayload, isNewDoc, extra)) return [];
         var a = _draftComparablePayload(kind, draftPayload);
         var b = _draftComparablePayload(kind, savedPayload);
+        if (extra && extra.ignorePii) {
+            a = _draftStripPiiComparable(a);
+            b = _draftStripPiiComparable(b);
+        }
         // Ten sam drop date/number co _draftEquivalent (legacy/kreacja dryf).
         ['date', 'number'].forEach(function (k) {
             if (
@@ -1560,7 +1594,7 @@ function _draftDiffLinesForModal(kind, draft) {
         var docId = (draft && draft.docId) || cfg.getDocId() || 'new';
         var cur = _draftCurrentSaved(kind, cfg, docId);
         if (!cur || cur.slim || !cur.payload) return [];
-        return _draftDescribeDiff(kind, draft.payload, cur.payload, cur.isNew);
+        return _draftDescribeDiff(kind, draft.payload, cur.payload, cur.isNew, { ignorePii: true });
     } catch (_e) {
         return [];
     }
@@ -1585,7 +1619,11 @@ function _draftCheckRecovery(kind) {
         if (loaded.status !== 'ok' || !loaded.draft) return;
         var cur = _draftCurrentSaved(kind, cfg, docId);
         if (!cur || cur.slim) return;
-        if (_draftEquivalent(kind, loaded.draft.payload, cur.payload, cur.isNew)) {
+        if (
+            _draftEquivalent(kind, loaded.draft.payload, cur.payload, cur.isNew, {
+                ignorePii: true
+            })
+        ) {
             // Martwy ghost (payload jak SAVED) — ciche sprzatniecie, bez modala.
             try {
                 window.draftStore.removeDraft(window.localStorage, key);
@@ -1603,7 +1641,12 @@ function _draftCheckRecovery(kind) {
         } catch (_e3) {
             livePayload = null;
         }
-        if (livePayload && _draftEquivalent(kind, loaded.draft.payload, livePayload, cur.isNew))
+        if (
+            livePayload &&
+            _draftEquivalent(kind, loaded.draft.payload, livePayload, cur.isNew, {
+                ignorePii: true
+            })
+        )
             return;
         _draftLogRecoveryDiff(kind, loaded.draft.payload, cur.payload, cur.isNew);
         _draftShowDraftModal(kind, loaded.draft, cur.savedDoc);

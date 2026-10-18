@@ -89,13 +89,17 @@ function setOfferFormFields(data) {
     s('client-nip', data.clientNip);
     s('client-address', data.clientAddress);
     s('client-contact', data.clientContact);
-    // Edytor osób: z tablicy bloba, fallback na klucze legacy/mirror.
-    renderClientContactsList(data.clientContacts, {
-        contactPerson: data.contactPerson,
-        clientPhone: data.clientPhone,
-        clientEmail: data.clientEmail,
-        clientContact: data.clientContact
-    });
+    // PII: draft nie niesie kontaktów (DRAFT_PII_FIELD_KEYS) — brak klucza
+    // MUSI zostawić edytor w spokoju, inaczej restore draftu skasowałby
+    // kontakty wczytane z dokumentu SAVED.
+    if (data.clientContacts !== undefined) {
+        renderClientContactsList(data.clientContacts, {
+            contactPerson: data.contactPerson,
+            clientPhone: data.clientPhone,
+            clientEmail: data.clientEmail,
+            clientContact: data.clientContact
+        });
+    }
     s('invest-name', data.investName);
     s('invest-address', data.investAddress);
     s('invest-contractor', data.investContractor);

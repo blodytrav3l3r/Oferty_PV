@@ -126,7 +126,9 @@ describe('draft lifecycle — SAVE blokuje draft-ducha', () => {
             }
         ];
         expect(sandbox._draftWriteKind('offer_rury', true)).toBe(false);
-        sandbox.getOfferFormFields = () => ({ ...RURY_FIELDS, clientName: 'INNY' });
+        // PII (clientName) nie jest persystowane w drafcie — realna zmiana musi
+        // dotyczyć pola trwałego (validity), inaczej draft == SAVED po reloadzie.
+        sandbox.getOfferFormFields = () => ({ ...RURY_FIELDS, validity: '14 dni' });
         expect(sandbox._draftWriteKind('offer_rury', true)).toBe(true);
         // świeże wejście (reload): live z serwera, draft z poprzedniej sesji
         sandbox.getOfferFormFields = () => ({ ...RURY_FIELDS });
@@ -139,7 +141,7 @@ describe('draft lifecycle — SAVE blokuje draft-ducha', () => {
         try {
             const { sandbox, st } = loadCtx();
             sandbox.window.draftAutosave.initKind('offer_rury');
-            sandbox.getOfferFormFields = () => ({ ...RURY_FIELDS, clientName: 'X' });
+            sandbox.getOfferFormFields = () => ({ ...RURY_FIELDS, validity: '14 dni' });
             sandbox.window.draftAutosave.scheduleSave();
             sandbox.window.draftAutosave.clearContext('offer_rury', 'new');
             jest.advanceTimersByTime(2500);
@@ -278,7 +280,8 @@ describe('draft lifecycle — Odrzuć zabija pending debounce', () => {
         try {
             const { sandbox, st, calls, click } = loadCtx();
             sandbox.window.draftAutosave.initKind('offer_rury');
-            sandbox.getOfferFormFields = () => ({ ...RURY_FIELDS, clientName: 'X' });
+            // pole trwałe (PII nie jest persystowane) — draft≠live po reloadzie
+            sandbox.getOfferFormFields = () => ({ ...RURY_FIELDS, validity: '14 dni' });
             sandbox.window.draftAutosave.scheduleSave();
             jest.advanceTimersByTime(2500);
             const key = 'sok_draft_v1_u1_offer_rury_new';
