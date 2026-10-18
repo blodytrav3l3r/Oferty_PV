@@ -1,16 +1,33 @@
-/* Obsluga plynnego przelaczania modulow SPA. */
+/* Powłoka SPA (app.html): nagłówek + kontener widoków mieszczą się w viewportcie
+   niezależnie od realnej wysokości nagłówka. Nagłówek rośnie ponad --header-h gdy
+   renderują się badge aktywnych cenników (versionDisplay.js), dlatego wysokości NIE
+   liczymy jako calc(100vh - var(--header-h)): body to kolumna flex, a #spa-main
+   dostaje resztę miejsca (min-height: 0 = poprawny scroll wewnątrz). */
+body.spa-shell {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+}
+
+body.spa-shell > .header {
+    flex: 0 0 auto;
+}
+
 #spa-main {
     position: relative;
     background: var(--bg-primary);
     padding: 0;
     margin: 0;
     overflow: hidden;
-    min-height: calc(100vh - var(--header-h));
+    flex: 1 1 auto;
+    min-height: 0;
 }
 
 .spa-module-iframe {
     width: 100%;
-    height: calc(100vh - var(--header-h));
+    height: 100%;
     border: none;
     display: none;
     opacity: 1;
