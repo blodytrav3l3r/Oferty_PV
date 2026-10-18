@@ -608,15 +608,30 @@ function _excelUpdateHeaderProdCodes() {
     const codes = container.querySelectorAll('thead .h3-prodcode');
     if (!codes.length) return;
     const prices = container.querySelectorAll('thead .h3-prodprice');
-    /* Użyj pierwszej studni z AKTYWNEJ zakładki, nie globalnej currentWellIndex */
+    /* Użyj pierwszej studni z AKTYWNEJ zakładki, nie globalnej currentWellIndex.
+       F4#2: SSoT `_excelGetFilteredIndexes()` (cache per tab+query) → O(1) amortyzowane
+       zamiast skanu O(all-wells). Fast-path TYLKO gdy brak zapytania wyszukiwania
+       (wtedy filtered = studnie zakładki w kolejności wells → pierwszy element ===
+       pierwszy trafiony w pętli). Przy niepustym query — fallback skan (semantyka 1:1). */
     let tabWell = null;
-    if (typeof _excelActiveTab !== 'undefined' && _excelActiveTab && typeof wells !== 'undefined') {
-        for (let i = 0; i < wells.length; i++) {
-            if (_excelWellMatchesTab(wells[i], _excelActiveTab)) {
-                tabWell = wells[i];
-                break;
+    if (typeof wells !== 'undefined' && Array.isArray(wells)) {
+        let _idx = null;
+        const _qEl =
+            typeof document !== 'undefined' ? document.getElementById('excel-search-input') : null;
+        const _hasQuery = _qEl ? String(_qEl.value || '').trim() !== '' : false;
+        if (!_hasQuery && typeof _excelGetFilteredIndexes === 'function') {
+            const _fi = _excelGetFilteredIndexes();
+            if (_fi && _fi.length) _idx = _fi[0];
+        }
+        if (_idx === null && typeof _excelActiveTab !== 'undefined' && _excelActiveTab) {
+            for (let i = 0; i < wells.length; i++) {
+                if (_excelWellMatchesTab(wells[i], _excelActiveTab)) {
+                    _idx = i;
+                    break;
+                }
             }
         }
+        if (_idx !== null && _idx >= 0) tabWell = wells[_idx];
     }
     /* currentWellIndex tylko gdy studnia należy do aktywnej zakładki DN —
        po przełączeniu zakładki indeks bywa nieaktualny (stare DN → złe kody/ceny) */
