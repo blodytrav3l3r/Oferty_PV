@@ -108,6 +108,40 @@ Eksperyment (tymczasowy, usunięty; pomiar na realnym HTML kontenera @2000, 3 it
 - **(C) Rewizja SLO** dla 2000+ (np. `ltMax ≤600 ms`) przy zachowaniu płynności — jeśli akceptowalne biznesowo.
 - **(D) Grid canvas/virtual-DOM** (zamiast `<table>`): skokowy zysk, ale największy koszt i ryzyko (a11y/copy). Nie teraz.
 
+## I. DECYZJA (2026-10-18) — ocena A/B/C/D i wybrany kierunek
+
+**Nowy dowód (skład markupu @2000, `innerHTML` kontenera):**
+
+| Składnik                      | bajty         | udział    | szt.     |
+| ----------------------------- | ------------- | --------- | -------- |
+| cały `innerHTML` (thead+body) | 2 871 739     | 100%      | —        |
+| `thead`                       | 84 369        | **2.9%**  | 153 th   |
+| `tbody` (68 wierszy)          | 2 787 370     | **97.1%** | 3 673 td |
+| **`style="..."`**             | **1 337 272** | **46.6%** | 8 130    |
+| `class="..."`                 | 199 953       | 7.0%      | 5 398    |
+| `data-*`                      | 434 500       | 15.1%     | —        |
+| tekst                         | 8 350         | 0.3%      | —        |
+
+**Ocena wariantów:**
+
+| Wariant         | Zysk (dowód)                                                                                                              | Ryzyko                                                                                               | SLO `ltMax≤200`? |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- | ---------------- |
+| A (klasy CSS)   | −40% markupu (`style=` 46.6% bajtów; thead tylko 2.9% → praca w **wierszach**) → render 363→~250 ms, switch ~1.17→~0.95 s | Zmiana golden baseline + visual QA; dotyka **chronionej strefy Excel**                               | ❌ nie           |
+| B (chunked)     | dzieli synchroniczny blok ~1 s na porcje → brak long taska                                                                | Refaktor renderera na async; focus/scroll/sort/autofit po ostatniej porcji → ryzyko regresji i flaky | ✅ tak           |
+| C (rewizja SLO) | 0 kosztu; SLO przestaje być martwe i zaczyna chronić realny próg                                                          | Brak (sama deklaracja)                                                                               | n/d              |
+| D (canvas grid) | Największy                                                                                                                | Przepisanie; a11y/copy/edycja; ADR-002                                                               | ✅ (ale koszt)   |
+
+**Fakty kontekstowe:** p50 ofert = 1 studnia; duży rozmiar dotyczy ~20–25% ofert (prod: 3/14 >4 MB; max 2933). `thead` to 2.9% markupu → **F4#1 ostatecznie zamknięte** (żadna memoizacja nagłówka nie ma sensu).
+
+**DECYZJA (rekomendacja przyjęta jako plan bazowy):**
+
+1. **(C) TERAZ** — zrewidować SLO dla N≥1000 do realnych progów (`ltMax ≤600 ms`, `tabMs ≤700 ms` @2000; bez zmian dla N≤500) i **egzekwować w CI** (F9). Uzasadnienie: `≤200 ms` jest w DOM nieosiągalne (2.87 MB, parse+layout 181 ms, auto-layout nie winny) — martwy próg nie chroni nic.
+2. **(A) JAKO F4#5** — migracja `style="..."`→klasy **w szablonie wiersza** (`excelTableBody.js`), bo to 97.1% markupu i 46.6% bajtów. Weryfikacja: golden (świadoma aktualizacja), parity, jest, **screenshot-diff** (UI/UX), probe przed/po. Rozbicie na 2 paczki: (A1) kolumny sticky/typowe, (A2) reszta.
+3. **(B) TYLKO JEŚLI** po (A) freeze ~1 s przy przełączaniu zakładek nadal boli użytkownika — wtedy chunked jako osobne zadanie.
+4. **(D) ODRZUCONE** — koszt/ryzyko nieuzasadnione wobec zysku; wracać tylko przy wymaganiu np. 10k+ studni.
+
+**Warunek wejścia (A):** zmiana dotyka **chronionej strefy Excel** i aktualizuje golden baseline → wymaga jawnego GO (nie jest „drobna").
+
 ## G. Otwarte (nie-blokujące)
 
 1. **F9:** podpiąć SLO `excelHeapProbe` do CI (nightly istnieje, advisory).
