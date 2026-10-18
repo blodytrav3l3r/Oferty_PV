@@ -824,14 +824,14 @@ function _draftWriteKind(kind, isFlush) {
         _draftOversizeNoted[key] = true;
         if (!isFlush)
             _draftToast(
-                '<i data-lucide="alert-triangle"></i> Draft zbyt duży — chroń się jawnym zapisem',
+                '<i data-lucide="alert-triangle"></i> Draft zbyt duży — NIE zostanie zapisany; chroń się jawnym zapisem (Ctrl+S)',
                 'warning'
             );
     } else if (res.reason === 'quota' && !_draftSessionDisabled) {
         _draftSessionDisabled = true;
         if (!isFlush)
             _draftToast(
-                '<i data-lucide="alert-triangle"></i> Brak miejsca na draft — zapis jawny działa dalej',
+                '<i data-lucide="alert-triangle"></i> Brak miejsca na draft — NIE zostanie zapisany; chroń się jawnym zapisem (Ctrl+S)',
                 'warning'
             );
     }

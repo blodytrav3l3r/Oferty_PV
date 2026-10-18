@@ -24,6 +24,47 @@ function stripWellRuntimeFields(wellsArr) {
     });
 }
 
+/**
+ * F2.5: czy dla bieżącej oferty istnieje zapisany draft. Komunikaty „zmiany
+ * zachowane w drafcie" są prawdziwe tylko wtedy; dla ofert >4 MB (cap
+ * `DRAFT_MAX_BYTES`) draftu nie ma i użytkownik musi wiedzieć, że grozi utrata.
+ * SSoT klucza: draftStore.buildDraftKey (ten sam co draftAutosave._draftWriteKind).
+ * @returns {boolean}
+ */
+function _draftAvailableForOffer() {
+    try {
+        const ds = window.draftStore;
+        const da = window.draftAutosave;
+        if (
+            !ds ||
+            !da ||
+            typeof ds.buildDraftKey !== 'function' ||
+            typeof ds.loadDraft !== 'function'
+        )
+            return false;
+        const uid = typeof da.currentUserId === 'function' ? da.currentUserId() : null;
+        if (!uid) return false;
+        const docId =
+            typeof editingOfferIdStudnie !== 'undefined' && editingOfferIdStudnie
+                ? editingOfferIdStudnie
+                : 'new';
+        const key = ds.buildDraftKey(uid, 'offer_studnie', docId);
+        if (!key) return false;
+        const res = ds.loadDraft(window.localStorage, key);
+        return !!(res && res.status === 'ok');
+    } catch (_e) {
+        return false;
+    }
+}
+
+/** F2.5: komunikat o losie niezapisanych zmian — zależny od realnej dostępności draftu. */
+function _lostWorkMessage(prefix) {
+    return _draftAvailableForOffer()
+        ? prefix + ' Niezapisane zmiany zachowane w drafcie.'
+        : prefix +
+              ' Draft NIEDOSTĘPNY (oferta zbyt duża) — SKOPIUJ zmiany ręcznie, inaczej przepadną.';
+}
+
 async function saveOfferStudnie() {
     if (typeof orderEditMode !== 'undefined' && orderEditMode) {
         if (typeof showToast === 'function') {
@@ -264,9 +305,7 @@ async function saveOfferStudnie() {
         if (window.lockService && window.lockService.isLocked(err)) {
             const info = window.lockService.describeHolder(err.holder);
             showToast(
-                'Zapis odrzucony — dokument edytuje ' +
-                    info.name +
-                    '. Skopiuj swoje zmiany. Niezapisane zmiany zachowane w drafcie.',
+                _lostWorkMessage('Zapis odrzucony — dokument edytuje ' + info.name + '.'),
                 'warning'
             );
             return false;
@@ -278,10 +317,15 @@ async function saveOfferStudnie() {
                 ? isVersionConflict(err)
                 : err?.status === 409 || err?.code === 'VERSION_CONFLICT';
         if (conflict) {
+            const _hasDraft = _draftAvailableForOffer();
             showToast(
-                'Oferta zmieniona przez innego użytkownika — wczytano aktualną wersję. Niezapisane zmiany zachowane w drafcie.',
+                _hasDraft
+                    ? 'Oferta zmieniona przez innego użytkownika — wczytano aktualną wersję. Niezapisane zmiany zachowane w drafcie.'
+                    : 'Oferta zmieniona przez innego użytkownika. Draft NIEDOSTĘPNY (oferta zbyt duża) — formularza NIE podmieniam; SKOPIUJ zmiany ręcznie.',
                 'warning'
             );
+            // F2.5: bez draftu podmiana formularza = cicha utrata pracy → nie robito.
+            if (!_hasDraft) return false;
             try {
                 const { storageService: ss } = await import('../shared/StorageService.js');
                 const fresh = await ss.getOfferById(simpleId);
@@ -322,6 +366,8 @@ async function saveOfferStudnie() {
                 typeof saveSessionIdleMessage === 'function'
                     ? saveSessionIdleMessage(_kind)
                     : 'Sesja wygasła — zaloguj się ponownie. Zmiany zachowane w drafcie.';
+            if (!_draftAvailableForOffer())
+                _msg += ' UWAGA: draft niedostępny (oferta zbyt duża) — skopiuj zmiany ręcznie.';
             showToast(_msg, 'warning');
             try {
                 if (
@@ -332,7 +378,12 @@ async function saveOfferStudnie() {
             } catch (_e) {}
             return false;
         }
-        showToast('Błąd zapisu oferty', 'error');
+        if (_kind === 'server' && err && err.status === 413)
+            showToast(
+                'Oferta za duża dla serwera (limit 50 MB) — podziel ją lub zgłoś problem.',
+                'error'
+            );
+        else showToast('Błąd zapisu oferty', 'error');
         return false;
     } finally {
         isSavingOffer = false;
