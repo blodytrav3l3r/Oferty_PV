@@ -166,18 +166,40 @@ async function runOnce(browser, token, n) {
         }, TABS);
         const heapAfterSwitch = await sampleHeap(cdp);
 
-        const split = await frame.evaluate(() => {
+        const split = await frame.evaluate(async () => {
+            const wait = (ms) => new Promise((r) => setTimeout(r, ms));
             const now = () => performance.now();
             const tab = '2000';
+            // F4-decyzja: rozbicie renderu na etapy (prepare/tbody/innerHTML/
+            // lucide/sticky/total/frame) — rozstrzyga, czy long task to budowa
+            // stringa (P1: chunk markupu) czy post-steps (P2: chunk kroków).
+            try {
+                window.__EXCEL_PERF__ = true;
+                __excelPerfReset();
+            } catch (_) {}
             const a = now();
             if (typeof _excelRecalcTabWellErrors === 'function') _excelRecalcTabWellErrors(tab);
             const recalc = Math.round(now() - a);
             _excelActiveTab = tab;
             const b = now();
             _excelRenderTabs();
+            const tabsMs = Math.round(now() - b);
+            const c = now();
             _excelRenderTable(tab);
+            const tableMs = Math.round(now() - c);
             const render = Math.round(now() - b);
-            return { recalcMs: recalc, renderMs: render };
+            await wait(150); // pozwol na bucket 'frame' (rAF)
+            let stages = null;
+            try {
+                stages = __excelPerfReport();
+            } catch (_) {}
+            return {
+                recalcMs: recalc,
+                renderMs: render,
+                tabsMs,
+                tableMs,
+                stages
+            };
         });
 
         let profile = null;
@@ -350,7 +372,10 @@ function medianRun(runs) {
         tabMedianWarmMs: pick((r) => r.tabMedianWarmMs),
         split: {
             recalcMs: pick((r) => r.split.recalcMs),
-            renderMs: pick((r) => r.split.renderMs)
+            renderMs: pick((r) => r.split.renderMs),
+            tabsMs: pick((r) => r.split.tabsMs),
+            tableMs: pick((r) => r.split.tableMs),
+            stages: runs.map((r) => r.split.stages).find(Boolean) || null
         },
         profile: runs.map((r) => r.profile).find(Boolean) || null,
         editMs: pick((r) => r.editMs),
@@ -529,6 +554,14 @@ async function runCycles(browser, token, n, cycles) {
                 console.log(
                     `openMs=${res.openMs} heapUsed=${(res.heap.afterOpen / 1048576).toFixed(1)}MB ltMax=${res.ltMax} tab1=${res.tabMedianMs} tab2=${res.tabMedianWarmMs}`
                 );
+                if (res.split.stages) {
+                    const st = res.split.stages;
+                    const f = (k) =>
+                        st[k] ? `${k}:p50=${st[k].p50} max=${st[k].max} n=${st[k].count}` : `${k}:-`;
+                    console.log(
+                        `    render=${res.split.renderMs}ms (tabs=${res.split.tabsMs} table=${res.split.tableMs}) | ${f('prepare')} | ${f('tbody')} | ${f('innerHTML')} | ${f('lucide')} | ${f('sticky')} | ${f('total')} | ${f('frame')}`
+                    );
+                }
             }
             results.push(medianRun(runs));
         }

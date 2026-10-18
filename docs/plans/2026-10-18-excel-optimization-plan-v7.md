@@ -177,6 +177,35 @@ Eksperyment (tymczasowy, usunięty; pomiar na realnym HTML kontenera @2000, 3 it
 
 **Weryfikacja bramki:** `npm run test:excel-slo` → **SLO OK** (exit 0) @10/500/2000; przy starym progu `ltMax ≤200` bramka zapala się na 2000 (dowód, że nie jest martwa).
 
+## K. DECYZJA P1 vs P2 — pomiar per-etap (rozstrzygnięcie „na czym stoi long task")
+
+**Narzędzie:** `?perf=1` → `__excelPerfReport()`; odczyt wpięty w `excelHeapProbe.cjs`
+(faza `split`, tab `2000`, 68 kolumn, 68 wierszy). `HEAP_NS=2000 HEAP_RUNS=2`.
+
+**Wynik (ms, dwa przebiegi):**
+
+| etap                             | run1      | run2      | udział   |
+| -------------------------------- | --------- | --------- | -------- |
+| prepare (logical cols)           | 0.8       | 2.5       | ~0%      |
+| **tbody (budowa stringa slice)** | **33.8**  | **34.3**  | ~6%      |
+| **innerHTML (parse + insert)**   | **131.9** | **115.6** | ~22%     |
+| lucide                           | 11        | 4.2       | ~1%      |
+| **sticky (post-steps = cel P2)** | **13.6**  | **10.9**  | ~2%      |
+| total (synchroniczny JS)         | 193.3     | 168.6     | ~31%     |
+| **frame (layout + paint)**       | **305.9** | **351.0** | **~60%** |
+| `renderMs` (wall)                | 544       | 588       | —        |
+| `tabsMs` (`_excelRenderTabs`)    | 1         | 1         | ~0%      |
+| `tableMs` (`_excelRenderTable`)  | 543       | 588       | 100%     |
+
+**Wnioski (FACT):**
+
+1. **P2 (chunkowanie post-steps) = MARTWY.** `sticky` (colWidths+sticky+locked+focus) to 8–14 ms. Nie ma czego dzielić.
+2. **P1 (chunkowanie markupu) adresuje ~150 ms z 544–588 ms** (`tbody` 34 + `innerHTML` 124) — czyli ~27%; osobno rozkłada `frame` (paint) na klatki, co jest realną dźwignią SLO.
+3. **Dominantą jest paint/layout = ~60% czasu renderu** → potwierdza wcześniejszy wniosek a1-a2 („paint-bound”). To **własnie atakuje wariant A** (46.6% markupu = `style="…"`, floor −36%) — i robi to **synchronicznie, bez zmiany kontraktu async na 40+15 callerach**.
+4. `_excelRenderTabs()` = 1 ms → hipoteza „300 ms w tab-barze” **OBALONA**; brakujące ~150–300 ms w przełączeniu siedzi w `_excelRecalcTabWellErrors` + `excelFilterWells` + restore scrolla (do zmierzenia, jeśli A/P1 nie wystarczą).
+
+**KOLEJNOŚĆ (zrewidowana dowodem):** **A pierwsze** (sync, atakuje 60% kosztu = paint, zero ryzyka async) → dopiero jeśli SLO nadal nieosiągnięte, **P1** (chunk markupu; jedyna droga do `ltMax ≤ 200 ms`, koszt = kontrakt async). **P2 skasowane.** Zysk A szacowany na −15…−20% przełączenia (nie osiąga SLO sam — dlatego (C) utrzymuje zrewidowany próg dla N≥1000).
+
 ## G. Otwarte (nie-blokujące)
 
 1. **F9:** podpiąć SLO `excelHeapProbe` do CI (nightly istnieje, advisory).
