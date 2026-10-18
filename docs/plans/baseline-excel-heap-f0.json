@@ -1,0 +1,69 @@
+{
+    "generated": "2026-10-18T06:35:18.354Z",
+    "baseUrl": "http://127.0.0.1:3000",
+    "runs": 3,
+    "throttleX4": false,
+    "metrics": [
+        {
+            "n": 2000,
+            "rows": 68,
+            "openMs": 677,
+            "tabMedianMs": 1167.5,
+            "tabMedianWarmMs": 2392,
+            "split": {
+                "recalcMs": 3,
+                "renderMs": 608
+            },
+            "profile": {
+                "total": 534,
+                "acc": {
+                    "_excelRenderTbody": 28,
+                    "_excelApplyColWidths": 7,
+                    "_excelAutoFitColumns": 8,
+                    "_excelInitColumnResize": 1,
+                    "_excelInitColumnSelect": 0,
+                    "_excelApplyStickyColumns": 15,
+                    "_excelApplyLockedRows": 0,
+                    "_excelApplySortIfActive": 0,
+                    "_excelUpdateHeaderProdCodes": 3,
+                    "_excelVirtualBuildFiltered": 0,
+                    "_excelVirtualRenderBody": 140,
+                    "_excelGetFilteredIndexes": 0,
+                    "_excelRenderTabs": 0,
+                    "excelFilterWells": 0
+                },
+                "cnt": {
+                    "_excelRenderTbody": 1,
+                    "_excelApplyColWidths": 3,
+                    "_excelAutoFitColumns": 1,
+                    "_excelInitColumnResize": 1,
+                    "_excelInitColumnSelect": 1,
+                    "_excelApplyStickyColumns": 3,
+                    "_excelApplyLockedRows": 2,
+                    "_excelApplySortIfActive": 1,
+                    "_excelUpdateHeaderProdCodes": 1,
+                    "_excelVirtualBuildFiltered": 1,
+                    "_excelVirtualRenderBody": 1,
+                    "_excelGetFilteredIndexes": 2,
+                    "_excelRenderTabs": 0,
+                    "excelFilterWells": 0
+                }
+            },
+            "editMs": 167,
+            "editOk": true,
+            "ltCount": 39,
+            "ltMax": 2391,
+            "ltSum": 25058,
+            "serialize": null,
+            "heap": {
+                "baselineLoaded": 5015692,
+                "afterOpen": 11489400,
+                "afterSwitch": 11973820,
+                "afterEdit": 28108120,
+                "afterClose": 10140988,
+                "deltaOpen": 6473756,
+                "retainedAfterClose": 5123220
+            }
+        }
+    ]
+}

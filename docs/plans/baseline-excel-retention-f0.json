@@ -1,0 +1,74 @@
+{
+    "generated": "2026-10-18T05:58:55.885Z",
+    "baseUrl": "http://127.0.0.1:3000",
+    "cycles": 10,
+    "results": [
+        {
+            "n": 2000,
+            "cycles": 10,
+            "baseline": 5013252,
+            "per": [
+                {
+                    "cycle": 0,
+                    "afterOpen": 11501452,
+                    "afterClose": 9645896,
+                    "retained": 4632644
+                },
+                {
+                    "cycle": 1,
+                    "afterOpen": 12132888,
+                    "afterClose": 9713396,
+                    "retained": 4700144
+                },
+                {
+                    "cycle": 2,
+                    "afterOpen": 12320404,
+                    "afterClose": 9862352,
+                    "retained": 4849100
+                },
+                {
+                    "cycle": 3,
+                    "afterOpen": 12365040,
+                    "afterClose": 9896376,
+                    "retained": 4883124
+                },
+                {
+                    "cycle": 4,
+                    "afterOpen": 12461240,
+                    "afterClose": 9978192,
+                    "retained": 4964940
+                },
+                {
+                    "cycle": 5,
+                    "afterOpen": 12506064,
+                    "afterClose": 10013720,
+                    "retained": 5000468
+                },
+                {
+                    "cycle": 6,
+                    "afterOpen": 12486124,
+                    "afterClose": 10018480,
+                    "retained": 5005228
+                },
+                {
+                    "cycle": 7,
+                    "afterOpen": 12514796,
+                    "afterClose": 10159620,
+                    "retained": 5146368
+                },
+                {
+                    "cycle": 8,
+                    "afterOpen": 12717536,
+                    "afterClose": 10309092,
+                    "retained": 5295840
+                },
+                {
+                    "cycle": 9,
+                    "afterOpen": 13233432,
+                    "afterClose": 10304648,
+                    "retained": 5291396
+                }
+            ]
+        }
+    ]
+}
