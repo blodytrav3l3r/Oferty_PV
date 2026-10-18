@@ -82,7 +82,7 @@ function _excelGetRowStatus(well) {
 
 /* Hoist O(N): cache mapy duplikatów dla renderu TBODY (lazy rebuild gdy
    _excelDupDirty; wzorzec _excelWellIndexById — sort nie rebuild, mutacja dirty).
-   Normalizacja nazw i klucz DN identyczne jak w _excelDupNormName/_excelDupDnKey. */
+   Normalizacja nazw identyczna jak w _excelDupNormName (jedno zrodlo prawdy). */
 var _excelDupRenderCache = null;
 function _excelEnsureDupCache() {
     try {
@@ -973,12 +973,8 @@ function _excelPaintRowStatus(row, well) {
 }
 
 /* ===== NATYCHMIASTOWE ODŚWIEŻENIE KOLORÓW DUPLIKATÓW (bez re-rendera) ===== */
-/* Inkrementalna mapa duplikatow (var w scope pliku): nazwa -> count oraz
-   nazwa -> Set(dn). Przebudowa od zera przy kazdym refresh (full-pass). */
-var _excelDupNameCounts = new Map();
-var _excelDupNameDnSets = new Map();
-
-/* Normalizacja nazw IDENTYCZNA jak w renderze TBODY i wczesniejszym full-pass. */
+/* Normalizacja nazw IDENTYCZNA jak w renderze TBODY (jedno zrodlo prawdy
+   duplikatow — mapa liczona w _excelEnsureDupCache, wspoldzielona z renderem). */
 function _excelDupNormName(w) {
     var raw = w.numer != null && String(w.numer).trim() !== '' ? String(w.numer) : w.name || '';
     return raw
@@ -986,33 +982,6 @@ function _excelDupNormName(w) {
         .replace(/ (PRE|UTH)$/i, '')
         .trim()
         .toLowerCase();
-}
-
-/* Klucz DN IDENTYCZNY jak we wczesniejszym full-pass. */
-function _excelDupDnKey(w) {
-    return w.dn === 'styczna' ? 'styczne' : String(w.dn);
-}
-
-/* Pelna przebudowa map (full-pass). */
-function _excelDupRebuildMaps() {
-    var counts = new Map();
-    var dnSets = new Map();
-    for (var i = 0; i < wells.length; i++) {
-        var w = wells[i];
-        if (!w) continue;
-        var n = _excelDupNormName(w);
-        if (!n) continue;
-        counts.set(n, (counts.get(n) || 0) + 1);
-        var dk = _excelDupDnKey(w);
-        var s = dnSets.get(n);
-        if (!s) {
-            s = new Set();
-            dnSets.set(n, s);
-        }
-        s.add(dk);
-    }
-    _excelDupNameCounts = counts;
-    _excelDupNameDnSets = dnSets;
 }
 
 function _excelRefreshDupColors() {
@@ -1036,17 +1005,12 @@ function _excelRefreshDupColors() {
     const hoverDupSolid = _dupMap('0.25', '0.32');
     const hoverActiveDupSolid = _dupMap('0.35', '0.4');
 
-    /* Hoist O(N): full-pass map tylko gdy dirty (mutacja nazwy/struktury),
-       inaczej malowanie z cache. Martwa szybka sciezka usunieta (window._pasteCtx
-       nigdy nie istnial) — malowanie wszystkich wierszy taba. */
-    try {
-        if (typeof _excelDupDirty === 'undefined' || _excelDupDirty) {
-            _excelDupRebuildMaps();
-            _excelDupDirty = false;
-        }
-    } catch (_eDupLazy) {
-        _excelDupRebuildMaps();
-    }
+    /* Jedno zrodlo prawdy duplikatow: ta sama mapa co render TBODY
+       (_excelEnsureDupCache) — brak drugiego cache i drugiego czyszczenia flagi.
+       Dirty-gate zostaje w _excelEnsureDupCache (lazy rebuild). */
+    var _dupCache = _excelEnsureDupCache();
+    var _dupNameCounts = _dupCache.nameCounts;
+    var _dupNameDnMap = _dupCache.nameDnMap;
 
     // F5: mapa pozycji w tabie (tania, bez DOM) + malowanie tylko żywych wierszy.
     // isEven z pozycji w tabie jak dotąd — zebra identyczna. Mapy globalne
@@ -1077,13 +1041,8 @@ function _excelRefreshDupColors() {
 
         const isEven = idx % 2 === 0;
         const isActive = typeof currentWellIndex !== 'undefined' && wIdx === currentWellIndex;
-        const isDup = (_excelDupNameCounts.get(nameKey) || 0) > 1;
-        const _dnSet = _excelDupNameDnSets.get(nameKey);
-        const nameDnList = _dnSet
-            ? Array.from(_dnSet).map(function (d) {
-                  return { dn: d };
-              })
-            : [];
+        const isDup = (_dupNameCounts[nameKey] || 0) > 1;
+        const nameDnList = _dupNameDnMap[nameKey] || [];
         const otherDns = nameDnList.filter((d) => d.dn !== dnKey);
         const dupColorKey = isDup && otherDns.length > 0 ? otherDns[0].dn : dnKey;
         const baseBg = isEven ? 'var(--excel-row-even)' : 'var(--excel-row-odd)';
