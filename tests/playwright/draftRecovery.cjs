@@ -232,8 +232,8 @@ async function dumpDraftVsLive(frame, kind, docId) {
         return 'dump error: ' + String((e && e.message) || e);
     }
 }
-async function seedOfferRuryDraft(frame, clientName) {
-    return await frame.evaluate((name) => {
+async function seedOfferRuryDraft(frame, validity) {
+    return await frame.evaluate((validityValue) => {
         try {
             const uid = window.currentUser && window.currentUser.id;
             const live = window.getOfferFormFields ? window.getOfferFormFields() : {};
@@ -247,7 +247,7 @@ async function seedOfferRuryDraft(frame, clientName) {
                 items = window.currentOfferItems || [];
             }
             const payload = {
-                fields: Object.assign({}, live, { clientName: name }),
+                fields: Object.assign({}, live, { validity: validityValue }),
                 items: JSON.parse(JSON.stringify(items))
             };
             if (window.currentRuryTransportMode !== undefined)
@@ -268,7 +268,7 @@ async function seedOfferRuryDraft(frame, clientName) {
         } catch (e) {
             return { ok: false, reason: String((e && e.message) || e) };
         }
-    }, clientName);
+    }, validity);
 }
 
 /* ── Main ── */
@@ -394,8 +394,8 @@ async function seedOfferRuryDraft(frame, clientName) {
                 const live = window.getOfferFormFields ? window.getOfferFormFields() : {};
                 return {
                     has: true,
-                    draftClient: d.payload && d.payload.fields && d.payload.fields.clientName,
-                    liveClient: live.clientName
+                    draftValidity: d.payload && d.payload.fields && d.payload.fields.validity,
+                    liveValidity: live.validity
                 };
             } catch (e) {
                 return { has: true, error: String((e && e.message) || e) };
@@ -403,7 +403,7 @@ async function seedOfferRuryDraft(frame, clientName) {
         });
         check(
             'T3 brak starych danych (ghost==live albo brak klucza)',
-            !t3ghost.has || t3ghost.draftClient === t3ghost.liveClient,
+            !t3ghost.has || t3ghost.draftValidity === t3ghost.liveValidity,
             JSON.stringify(t3ghost).slice(0, 200)
         );
 
@@ -432,8 +432,8 @@ async function seedOfferRuryDraft(frame, clientName) {
         await frame.evaluate(() => window.draftAutosave.checkRecovery('offer_rury'));
         await frame.waitForSelector('#sok-draft-modal', { state: 'attached', timeout: 5000 });
         await frame.locator('#sok-draft-modal [data-draft-act="restore"]').click();
-        const restoredVal = await frame.locator('#client-name').inputValue();
-        check('T4 restore wypelnil klienta', restoredVal === 'PRZYWROCONY', `val="${restoredVal}"`);
+        const restoredVal = await frame.locator('#offer-validity').inputValue();
+        check('T4 restore wypelnil waznosc', restoredVal === 'PRZYWROCONY', `val="${restoredVal}"`);
         // Symulacja zapisu: live do snapshotu (bezposrednie .value, zero eventow),
         // kasacja kontekstu, reload. Flush przy pagehide pisze wtedy ghost == fresh.
         await frame.evaluate((snap) => {
@@ -600,13 +600,14 @@ async function seedOfferRuryDraft(frame, clientName) {
                         if (!draft) return { ok: false, reason: 'buildDraft null' };
                         const res = window.draftStore.saveDraft(window.localStorage, draft);
                         if (!res.ok) return { ok: false, reason: res.reason };
+                        const key = window.draftStore.buildDraftKey(uid2, 'order_studnie', 'o1');
+                        const keyWritten = !!localStorage.getItem(key);
                         window.draftAutosave.checkRecovery('order_studnie');
                         const modalHere = !!document.getElementById('sok-draft-modal');
-                        const key = window.draftStore.buildDraftKey(uid2, 'order_studnie', 'o1');
                         return {
                             ok: true,
                             modalHere,
-                            keyKept: !!localStorage.getItem(key),
+                            keyWritten,
                             dbg: JSON.stringify({ liveVpt, liveTm }).slice(0, 200)
                         };
                     } catch (e) {
@@ -620,7 +621,7 @@ async function seedOfferRuryDraft(frame, clientName) {
                         t5.modalHere === false,
                         `modal widoczny dbg=${t5.dbg}`
                     );
-                    check('T5 klucz istnieje (nie-wakuum)', t5.keyKept === true, 'brak klucza');
+                    check('T5 klucz zapisany (nie-wakuum)', t5.keyWritten === true, 'brak klucza');
                 }
             }
         }
