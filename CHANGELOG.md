@@ -4,6 +4,12 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+### [1.46.3](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.46.2...v1.46.3) (2026-10-18)
+
+### Bug Fixes
+
+- **studnie:** czytelne oznaczenie aktywnej zakladki dn w excelu ([2d26ac1](https://github.com/blodytrav3l3r/Oferty_PV/commit/2d26ac1afe9507ee675e2ef7a4addedfee1161be))
+
 ### [1.46.2](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.46.1...v1.46.2) (2026-10-18)
 
 ### Bug Fixes
