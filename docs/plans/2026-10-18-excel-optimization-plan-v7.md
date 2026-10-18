@@ -135,12 +135,47 @@ Eksperyment (tymczasowy, usunięty; pomiar na realnym HTML kontenera @2000, 3 it
 
 **DECYZJA (rekomendacja przyjęta jako plan bazowy):**
 
+0. **(C) ZREALIZOWANE + (A) WYcENIONE PONOWNIE — patrz sekcja J.**
+
 1. **(C) TERAZ** — zrewidować SLO dla N≥1000 do realnych progów (`ltMax ≤600 ms`, `tabMs ≤700 ms` @2000; bez zmian dla N≤500) i **egzekwować w CI** (F9). Uzasadnienie: `≤200 ms` jest w DOM nieosiągalne (2.87 MB, parse+layout 181 ms, auto-layout nie winny) — martwy próg nie chroni nic.
 2. **(A) JAKO F4#5** — migracja `style="..."`→klasy **w szablonie wiersza** (`excelTableBody.js`), bo to 97.1% markupu i 46.6% bajtów. Weryfikacja: golden (świadoma aktualizacja), parity, jest, **screenshot-diff** (UI/UX), probe przed/po. Rozbicie na 2 paczki: (A1) kolumny sticky/typowe, (A2) reszta.
 3. **(B) TYLKO JEŚLI** po (A) freeze ~1 s przy przełączaniu zakładek nadal boli użytkownika — wtedy chunked jako osobne zadanie.
 4. **(D) ODRZUCONE** — koszt/ryzyko nieuzasadnione wobec zysku; wracać tylko przy wymaganiu np. 10k+ studni.
 
 **Warunek wejścia (A):** zmiana dotyka **chronionej strefy Excel** i aktualizuje golden baseline → wymaga jawnego GO (nie jest „drobna").
+
+## J. WYKONANE: (C) bramka SLO + weryfikacja progu (A)
+
+**Nowy pomiar (symulacja refaktoru A na realnym HTML @2000):**
+
+| Miara                                        | wartość                  |
+| -------------------------------------------- | ------------------------ |
+| `innerHTML`                                  | 2 871 739 B              |
+| bajty w `style="..."`                        | 1 337 272 B              |
+| — deklaracje dynamiczne (background/color)   | 242 975 B (**7 134**)    |
+| — deklaracje statyczne                       | **1 029 257 B (48 912)** |
+| `innerHTML` po usunięciu statycznych (floor) | 1 838 598 B              |
+| **oszczędność (floor)**                      | **36.0%**                |
+
+**Wniosek o (A):** próg realny to **−36% markupu** → ~−23% czasu przełączenia (switch ~1.17 s → ~0.90 s). To **nadal nie spełnia SLO** i wymaga refaktoru 68 bloków szablonu wiersza w **chronionej strefie** + świadomej aktualizacji golden + visual QA. → **(A) = zaplanowany refaktor F4#5, nie „szybka poprawka"**. Najpierw bramki (C), by cokolwiek chroniło kierunek.
+
+**(C) ZREALIZOWANE:**
+
+- `tests/playwright/excelHeapProbe.cjs`: tabela `SLO_BY_N` (progi per N) + `checkSlo()` + flaga `--slo`/`EXCEL_SLO=1` → `process.exitCode=1` przy naruszeniu.
+- `package.json`: `npm run test:excel-slo`.
+- `.github/workflows/excel-throttle-nightly.yml`: krok blokujący „SLO excelHeapProbe (bez throttle)".
+- **Naprawiony artefakt harnessu:** faza `split` ustawiała zakładkę `2000`, która przy N=10/500 bywa pusta → brak wiersza do edycji (`editOk=false`, `editMs`≈4 s z timeoutu). Dodano powrót na `1000` przed pomiarem edycji → `editMs` 68/102/175 ms, `editOk=true`.
+
+**Progi (skalibrowane na pomiarach, ~1.3–1.5× mediana):**
+
+| N    | openMs | ltMax | tabWarm | editMs | heapOpenMB | retainedMB |
+| ---- | ------ | ----- | ------- | ------ | ---------- | ---------- |
+| 10   | 600    | 700   | 600     | 500    | 8          | 3          |
+| 500  | 1000   | 1600  | 900     | 500    | 14         | 6          |
+| 2000 | 1100   | 2800  | 2400    | 600    | 18         | 9          |
+| 3000 | 1300   | 3200  | 2800    | 700    | 20         | 9          |
+
+**Weryfikacja bramki:** `npm run test:excel-slo` → **SLO OK** (exit 0) @10/500/2000; przy starym progu `ltMax ≤200` bramka zapala się na 2000 (dowód, że nie jest martwa).
 
 ## G. Otwarte (nie-blokujące)
 

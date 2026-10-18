@@ -79,6 +79,12 @@ jobs:
                   THROTTLE_X4: 1
               run: npm run test:golden
 
+            # F9: bramka SLO (progi per N, sekcja C planu v7). Celowo BEZ throttle-x4
+            # (progi skalibrowane na realnym CPU). Regresja klasy "podwojny render"
+            # lub skok heap = czerwony nightly.
+            - name: SLO excelHeapProbe (bramka, bez throttle)
+              run: npm run test:excel-slo
+
             - name: Stop serwera
               if: always()
               run: kill $(cat /tmp/excel-throttle-server.pid) || true

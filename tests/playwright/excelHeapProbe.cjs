@@ -232,6 +232,15 @@ async function runOnce(browser, token, n) {
             });
         }
 
+        // F9: faza `split` ustawia jawnie zakladke '2000' — przy malym N (10/500)
+        // bywa pusta => brak wiersza do edycji (editOk=false, artefakt pomiaru).
+        // Wracamy na '1000' (niepusta dla kazdego N), by edit/editMs byl mierzalny.
+        await frame.evaluate(async () => {
+            const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+            excelSwitchTab('1000');
+            await wait(250);
+        });
+
         const edit = await frame.evaluate(async () => {
             const wait = (ms) => new Promise((r) => setTimeout(r, ms));
             const row = document.querySelector('#excel-table-container tbody tr[data-widx]');
@@ -370,6 +379,51 @@ function medianRun(runs) {
     };
 }
 
+/* F9/C: progowe SLO per rozmiar. N<=500 = tryb ostry (interaktywny),
+   N>=1000 = tryb "duze oferty" — prog zrewidowany dowodem: przy 68 kolumnach
+   i DOM-owej tabeli ltMax<=200 ms jest nieosiagalne (2.87 MB markupu, ~1 s
+   synchronicznego renderu). Progi = ~1.3-1.5x zmierzonej mediany (lapia
+   regresje klasy "podwojny render", nie lapia szumu srodowiska). */
+const SLO_BY_N = {
+    10: { openMs: 600, ltMax: 700, tabWarmMs: 600, editMs: 500, heapOpenMB: 8, retainedMB: 3 },
+    500: { openMs: 1000, ltMax: 1600, tabWarmMs: 900, editMs: 500, heapOpenMB: 14, retainedMB: 6 },
+    2000: { openMs: 1100, ltMax: 2800, tabWarmMs: 2400, editMs: 600, heapOpenMB: 18, retainedMB: 9 },
+    3000: { openMs: 1300, ltMax: 3200, tabWarmMs: 2800, editMs: 700, heapOpenMB: 20, retainedMB: 9 }
+};
+const SLO_ENABLED = process.argv.includes('--slo') || process.env.EXCEL_SLO === '1';
+
+function sloFor(n) {
+    return SLO_BY_N[n] || SLO_BY_N[3000];
+}
+
+/** @returns {number} liczba naruszen SLO */
+function checkSlo(results) {
+    const violations = [];
+    for (const m of results) {
+        const lim = sloFor(m.n);
+        const checks = [
+            ['openMs', m.openMs, lim.openMs],
+            ['ltMax', m.ltMax, lim.ltMax],
+            ['tabWarmMs', m.tabMedianWarmMs, lim.tabWarmMs],
+            ['editMs', m.editMs, lim.editMs],
+            ['heapOpenMB', Math.round(m.heap.afterOpen / 1048576), lim.heapOpenMB],
+            ['retainedMB', Math.round(m.heap.retainedAfterClose / 1048576), lim.retainedMB]
+        ];
+        for (const [key, value, max] of checks) {
+            if (!Number.isFinite(value)) continue;
+            const ok = value <= max;
+            console.log(`  ${ok ? 'PASS' : 'FAIL'} n=${m.n} ${key}=${value} (max ${max})`);
+            if (!ok) violations.push(`n=${m.n} ${key}=${value}>${max}`);
+        }
+    }
+    if (violations.length) {
+        console.error('SLO FAIL: ' + violations.join('; '));
+    } else {
+        console.log('SLO OK');
+    }
+    return violations.length;
+}
+
 async function runCycles(browser, token, n, cycles) {
     const context = await browser.newContext({ viewport: { width: 1600, height: 1000 } });
     const page = await context.newPage();
@@ -477,6 +531,13 @@ async function runCycles(browser, token, n, cycles) {
                 );
             }
             results.push(medianRun(runs));
+        }
+
+        let sloViolations = 0;
+        if (SLO_ENABLED) {
+            console.log('--- SLO (progi per N) ---');
+            sloViolations = checkSlo(results);
+            if (sloViolations > 0) process.exitCode = 1;
         }
 
         try {

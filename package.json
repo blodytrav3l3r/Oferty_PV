@@ -21,6 +21,7 @@
         "test:bench": "node tests/playwright/excelVirtualBench.cjs",
         "test:golden": "node tests/playwright/excelDomGolden.cjs",
         "test:openperf": "node tests/playwright/excelOpenPerf.cjs",
+        "test:excel-slo": "node tests/playwright/excelHeapProbe.cjs --slo",
         "test:e2e-appname": "node tests/playwright/appNameConsistency.cjs",
         "test:e2e-appname:spawn": "npm run build && node tests/playwright/appNameConsistency.cjs --spawn",
         "test:e2e-qe-switch": "node tests/playwright/qeQuickEditSwitch.cjs",
