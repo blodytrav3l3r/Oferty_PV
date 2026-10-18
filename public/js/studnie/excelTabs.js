@@ -17,18 +17,19 @@ function _excelRenderTabs() {
         const c = DN_COLORS[tab] || DN_COLORS['1000'];
         const isActive = tab === _excelActiveTab;
         const tabLabel = tab === 'styczne' ? 'Styczne' : 'DN' + tab;
-        /* Czytelność: tekst to mix koloru DN z tekstem motywu (kontrast w light i dark),
-           zamiast półprzezroczystego textDim / jasnego -hover na jasnym tle. */
-        const tabText =
-            'color-mix(in srgb, ' +
-            c.border +
-            ' ' +
-            (isActive ? '80' : '60') +
-            '%, var(--excel-text))';
-        html += `<button data-csp="excelSwitchTab" data-csp-args="${escapeHtmlAttr(JSON.stringify([tab]))}" style="
-            padding:0.4rem 1rem;border:none;cursor:pointer;font-size: var(--fs-sm);font-weight: var(--fw-semibold);
+        /* Czytelność: nieaktywny tekst to mix koloru DN z tekstem motywu (kontrast w light
+           i dark); aktywny dostaje pełny kolor DN. */
+        const tabText = isActive
+            ? c.text
+            : 'color-mix(in srgb, ' + c.border + ' 60%, var(--excel-text))';
+        /* Aktywna zakładka musi być jednoznaczna: sama różnica alfy tła (0.18 vs 0.25)
+           była nieczytelna. Dodajemy mocne tło DN + górny akcent + pogrubienie. */
+        const activeBg = 'color-mix(in srgb, ' + c.border + ' 38%, transparent)';
+        html += `<button type="button" aria-current="${isActive}" data-csp="excelSwitchTab" data-csp-args="${escapeHtmlAttr(JSON.stringify([tab]))}" style="
+            padding:0.4rem 1rem;border:none;cursor:pointer;font-size: var(--fs-sm);font-weight: ${isActive ? 'var(--fw-bold)' : 'var(--fw-semibold)'};
             border-bottom:2px solid ${isActive ? c.border : c.borderDim};
-            background:${isActive ? c.activeBg : c.bg};
+            box-shadow:${isActive ? 'inset 0 3px 0 0 ' + c.border : 'none'};
+            background:${isActive ? activeBg : c.bg};
             color:${tabText};
             transition:all 0.12s;letter-spacing:0.2px;">
             ${tabLabel}<span style="opacity:0.7;margin-left:0.3rem;font-size: var(--fs-2xs);">${count}</span>
