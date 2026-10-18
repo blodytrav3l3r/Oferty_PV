@@ -274,6 +274,13 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             hoverBg = isActive ? hoverActiveDupSolid : hoverDupSolid;
             activeBg = isDup && isActive ? rowActiveDupSolid : hoverDupSolid;
         }
+        /* data-base-bg trzyma resting bg (NIGDY active) — to zrodlo prawdy dla
+           restore w excelSelectRow; active jest wylacznie visual (rowBg). */
+        const rowBaseBg = isDup
+            ? rowDupSolid
+            : wellStatus && !wellStatus.loading
+              ? wellStatus.base
+              : baseBg;
         const statusKey = wellStatus && !wellStatus.loading ? well.configStatus : null;
         const rowTextColor =
             statusKey === 'ERROR'
@@ -305,7 +312,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             '" class="' +
             rowClass.trim() +
             '" data-base-bg="' +
-            rowBg +
+            rowBaseBg +
             '" data-orig-bg="' +
             rowBg +
             '" data-hover-bg="' +
@@ -843,11 +850,13 @@ function _excelRefreshAutoCells(wIdx, row) {
    style.background + sticky td), title z błędami, klasy excel-row-error/warning
    i kolor czcionki. Używają: _excelRefreshDupColors (pętla) i fast path
    _excelPaintRowStatus (1 wiersz). keepBg=true zachowuje tint duplikatu
-   (dup > ERROR na tle; błąd sygnalizują klasa+kolor+title). */
+   (dup > ERROR na tle; błąd sygnalizują klasa+kolor+title).
+   eff.baseBg (opcjonalne) = resting bg zapisywany do data-base-bg; eff.rowBg
+   to visual (dla aktywnego wiersza = active). Bez baseBg data-base-bg = rowBg. */
 function _excelApplyRowStatusDom(row, well, eff, isDup, isLocked, solidBg) {
     if (!row || !well || !eff) return;
     if (!eff.keepBg) {
-        row.setAttribute('data-base-bg', eff.rowBg);
+        row.setAttribute('data-base-bg', eff.baseBg != null ? eff.baseBg : eff.rowBg);
         row.setAttribute('data-orig-bg', eff.rowBg);
         row.setAttribute('data-hover-bg', eff.hoverBg);
         row.setAttribute('data-active-bg', eff.activeBg);
@@ -936,15 +945,18 @@ function _excelPaintRowStatus(row, well) {
         (row.getAttribute && row.getAttribute('data-solid-bg')) || 'var(--excel-row-even)';
     var wellStatus = _excelGetRowStatus(well);
     var rowBg;
+    var baseBg;
     var hoverBg;
     var activeBg;
     // LOADING: { loading: true } nie niesie tintu — tła bez zmian.
     if (wellStatus && !wellStatus.loading) {
         rowBg = isActive ? wellStatus.active : wellStatus.base;
+        baseBg = wellStatus.base;
         hoverBg = wellStatus.hover;
         activeBg = wellStatus.active;
     } else {
         rowBg = isActive ? 'var(--excel-row-active)' : solidBase;
+        baseBg = solidBase;
         hoverBg = isActive ? 'rgba(var(--blue-rgb), 0.28)' : 'var(--excel-row-hover)';
         activeBg = 'var(--excel-row-active)';
     }
@@ -953,7 +965,7 @@ function _excelPaintRowStatus(row, well) {
     _excelApplyRowStatusDom(
         row,
         well,
-        { rowBg: rowBg, hoverBg: hoverBg, activeBg: activeBg },
+        { rowBg: rowBg, baseBg: baseBg, hoverBg: hoverBg, activeBg: activeBg },
         false,
         isLocked2,
         solidBase
@@ -1078,11 +1090,13 @@ function _excelRefreshDupColors() {
 
         const wellStatus = _excelGetRowStatus(well);
         let effRowBg = isActive ? 'var(--excel-row-active)' : baseBg;
+        let effBaseBg = baseBg;
         let effHoverBg = isActive ? 'rgba(var(--blue-rgb), 0.28)' : 'var(--excel-row-hover)';
         let effActiveBg = 'var(--excel-row-active)';
         // LOADING: { loading: true } nie niesie tintu — tła bez zmian.
         if (wellStatus && !wellStatus.loading) {
             effRowBg = isActive ? wellStatus.active : wellStatus.base;
+            effBaseBg = wellStatus.base;
             effHoverBg = wellStatus.hover;
             effActiveBg = wellStatus.active;
         }
@@ -1091,6 +1105,7 @@ function _excelRefreshDupColors() {
                 isDup && isActive
                     ? rowActiveDupSolid[dupColorKey] || 'rgba(var(--blue-rgb), 0.3)'
                     : rowDupSolid[dupColorKey] || 'rgba(var(--blue-rgb), 0.2)';
+            effBaseBg = rowDupSolid[dupColorKey] || 'rgba(var(--blue-rgb), 0.2)';
             effHoverBg =
                 isDup && isActive
                     ? hoverActiveDupSolid[dupColorKey] || 'rgba(var(--blue-rgb), 0.35)'
@@ -1103,7 +1118,7 @@ function _excelRefreshDupColors() {
         _excelApplyRowStatusDom(
             row,
             well,
-            { rowBg: effRowBg, hoverBg: effHoverBg, activeBg: effActiveBg },
+            { rowBg: effRowBg, baseBg: effBaseBg, hoverBg: effHoverBg, activeBg: effActiveBg },
             isDup,
             typeof _excelIsWellLocked === 'function' ? _excelIsWellLocked(wIdx) : false,
             baseBg

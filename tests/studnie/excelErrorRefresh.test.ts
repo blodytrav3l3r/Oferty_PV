@@ -312,6 +312,42 @@ describe('_excelPaintRowStatus (1 wiersz, bez mapy duplikatow)', () => {
     });
 });
 
+/* Regresja: _excelPaintRowStatus dla AKTYWNEGO wiersza nie moze zapisac koloru
+   active do data-base-bg — inaczej excelSelectRow restore'uje poprzedni wiersz
+   do active i stare wiersze zostaja podswietlone (akumulacja). data-base-bg
+   trzyma resting bg; active jest wylacznie visual (rowBg/style.background). */
+describe('_excelPaintRowStatus: aktywny wiersz nie truje data-base-bg', () => {
+    test('active bez statusu: base-bg zostaje base, orig/style = active', () => {
+        const ctx = loadBody({ currentWellIndex: 0 });
+        const row = fakeRow(0);
+        const fn = vm.runInContext('_excelPaintRowStatus', ctx);
+        fn(row, { configStatus: '', configErrors: [] });
+        expect(row._attrs['data-base-bg']).toBe('var(--excel-row-even)');
+        expect(row._attrs['data-orig-bg']).toBe('var(--excel-row-active)');
+        expect(row.style.background).toBe('var(--excel-row-active)');
+    });
+
+    test('active ERROR: base-bg = danger base (rozny od active), orig = active', () => {
+        const ctx = loadBody({ currentWellIndex: 0 });
+        const row = fakeRow(0);
+        const fn = vm.runInContext('_excelPaintRowStatus', ctx);
+        fn(row, { configStatus: 'ERROR', configErrors: ['Blad zapasu x'] });
+        expect(row._attrs['data-base-bg']).toContain('danger');
+        expect(row._attrs['data-base-bg']).not.toBe(row._attrs['data-active-bg']);
+        expect(row._attrs['data-orig-bg']).toBe(row._attrs['data-active-bg']);
+    });
+
+    test('non-active wiersz: base-bg == rowBg (zachowanie bez zmian)', () => {
+        const ctx = loadBody({ currentWellIndex: -1 });
+        const row = fakeRow(0);
+        const fn = vm.runInContext('_excelPaintRowStatus', ctx);
+        fn(row, { configStatus: '', configErrors: [] });
+        expect(row._attrs['data-base-bg']).toBe('var(--excel-row-even)');
+        expect(row._attrs['data-orig-bg']).toBe('var(--excel-row-even)');
+        expect(row.style.background).toBe('var(--excel-row-even)');
+    });
+});
+
 describe('excel-row-loading: wspolistnienie z tintem bledu i finally guard', () => {
     test('ERROR+loading: danger tint + klasy error i loading', () => {
         const ctx = loadBody();
