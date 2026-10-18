@@ -206,6 +206,33 @@ Eksperyment (tymczasowy, usunięty; pomiar na realnym HTML kontenera @2000, 3 it
 
 **KOLEJNOŚĆ (zrewidowana dowodem):** **A pierwsze** (sync, atakuje 60% kosztu = paint, zero ryzyka async) → dopiero jeśli SLO nadal nieosiągnięte, **P1** (chunk markupu; jedyna droga do `ltMax ≤ 200 ms`, koszt = kontrakt async). **P2 skasowane.** Zysk A szacowany na −15…−20% przełączenia (nie osiąga SLO sam — dlatego (C) utrzymuje zrewidowany próg dla N≥1000).
 
+## L. A1a — `_excelCellInp` → klasa CSS (WYKONANE, dowód)
+
+**Cel (A0):** najtańszy wycinek 48 912 statycznych `style=`. Stała `_excelCellInp(_w)`
+(`excelHelpers.js:734`) była identycznym ~180-znakowym inline `style=` na KAŻDYM
+`<input>` w komórce (`_w` był ignorowany), w 12 miejscach `excelTableBody.js`.
+
+**Zmiana:** stała przeniesiona do reguły CSS `#excel-table-container .excel-td input[type=…]`
+(`studnie.css`); `_excelCellInp()` zwraca `''`; usunięty martwy `_EXCEL_FONT` (`excelState.js`).
+Uwaga: `text-align:right` ze stałej był MARTWY (przykryty `text-align:center !important`,
+`studnie.css:2738`) — piggyback na istniejącej regule `!important`.
+
+**Pomiar (n=2000, `HEAP_NS=2000 HEAP_RUNS=2`; „przed" = 5c092b4):**
+
+| etap            | przed       | po          | Δ           |
+| --------------- | ----------- | ----------- | ----------- |
+| innerHTML       | 131.9/115.6 | 71.5/76.4   | −46% / −34% |
+| tbody           | 33.8/34.3   | 26.1/29.0   | −23% / −15% |
+| total (sync JS) | 193.3/168.6 | 112.5/133.1 | −42% / −21% |
+| frame           | 305.9/351.0 | 240.3/312.4 | −21% / −11% |
+| renderMs (wall) | 544/588     | 396/488     | −27% / −17% |
+
+`openMs` ~612, `ltMax` 895–1175 (SLO 2800), `heapUsed` 9.6 MB (SLO 18).
+**Testy:** `tests/studnie` 142/142 (1739), `typecheck:frontend` + `lint:frontend` czyste.
+
+**Następne (A1b/A2, nie wykonane):** sticky `<td>` `background:stickyBg` → `background:inherit`;
+`<tr>` `background` dynamiczny → klasa/`:nth-child` lub jedna zmienna CSS.
+
 ## G. Otwarte (nie-blokujące)
 
 1. **F9:** podpiąć SLO `excelHeapProbe` do CI (nightly istnieje, advisory).

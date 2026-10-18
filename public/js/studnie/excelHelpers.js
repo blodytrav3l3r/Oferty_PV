@@ -730,9 +730,14 @@ function _excelAutoSetWlaz(well) {
 }
 
 /* ===== CELL STYLES (Excel-like) ===== */
-/** @param {number} [_w] */
+/** A1a: wygląd komórek edycyjnych przeniesiony do CSS
+ *  (#excel-table-container .excel-td input[type=...]) — inline style= na każdym
+ *  inpucie był stałą powtarzaną w każdym wierszu. Kolejne realne różnice
+ *  (szerokość/tekst) doklejane są przez wywołującego w tym samym atrybucie.
+ *  @param {number} [_w]
+ *  @returns {string} */
 function _excelCellInp(_w) {
-    return `background:var(--excel-input-bg);border:1px solid var(--excel-input-border);border-radius:2px;color:var(--text-primary);${_EXCEL_FONT}text-align:right;outline:none;transition:border-color 0.15s,background 0.15s;`;
+    return '';
 }
 
 /* ===== OVERLAY SELECT ===== */

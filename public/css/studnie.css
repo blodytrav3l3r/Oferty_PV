@@ -2738,6 +2738,27 @@ select[id$='-czy'] option {
     text-align: center !important;
 }
 
+/* A1a: stały wygląd komórek edycyjnych Excel w klasie. Wcześniej każdy <input>
+   nosił ~180-znakowy inline style= (stała z _excelCellInp) powtarzany w każdym
+   wierszu — ~3 MB stringa mniej w innerHTML przy 2000 studniach. */
+#excel-table-container .excel-td input[type='text'],
+#excel-table-container .excel-td input[type='number'] {
+    background: var(--excel-input-bg);
+    border: 1px solid var(--excel-input-border);
+    border-radius: 2px;
+    color: var(--text-primary);
+    font-size: var(--fs-sm);
+    font-family:
+        Inter,
+        Segoe UI,
+        sans-serif;
+    letter-spacing: 0.1px;
+    outline: none;
+    transition:
+        border-color 0.15s,
+        background 0.15s;
+}
+
 #excel-table-container select {
     width: 100% !important;
     box-sizing: border-box !important;
