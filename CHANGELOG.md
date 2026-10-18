@@ -4,6 +4,12 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+### [1.46.2](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.46.1...v1.46.2) (2026-10-18)
+
+### Bug Fixes
+
+- **ui:** pasek cenników nie wypycha iframe poza viewport ([4ddb22f](https://github.com/blodytrav3l3r/Oferty_PV/commit/4ddb22fbdf3fc9f1eb0dea78a42a174e6915a49c))
+
 ### [1.46.1](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.46.0...v1.46.1) (2026-10-18)
 
 ### Features
