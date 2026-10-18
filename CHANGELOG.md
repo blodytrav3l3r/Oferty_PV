@@ -4,6 +4,39 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+### [1.46.1](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.46.0...v1.46.1) (2026-10-18)
+
+### Features
+
+- **api:** publikacja roboczej wersji cennika i diff cen ([c687f2e](https://github.com/blodytrav3l3r/Oferty_PV/commit/c687f2e8ef6fd203122a7ded38ea1c260961dce6))
+- **studnie:** wskaznik ladowania wiersza excel ([bc965c0](https://github.com/blodytrav3l3r/Oferty_PV/commit/bc965c04a9262dee29f0aa873360106373a6c87f))
+- **telemetry:** batch acceptance 1 post zamiast 50 ([4c7b371](https://github.com/blodytrav3l3r/Oferty_PV/commit/4c7b3716bab7d6cd7ab4d66f92ed82a5f47d4579))
+- **telemetry:** batch config 1 post zamiast 50 ([6b3a762](https://github.com/blodytrav3l3r/Oferty_PV/commit/6b3a762a30999e6a1003175e38b8f24e8b09f29e))
+- **ui:** archiwalna badge jako kafelek z ramka ([71b8daf](https://github.com/blodytrav3l3r/Oferty_PV/commit/71b8daf17e02fb402ade9f04f0552cb206ec83a6))
+- **ui:** czytelniejszy panel wersji cennikow ([d49377c](https://github.com/blodytrav3l3r/Oferty_PV/commit/d49377c5c69f43fc5af1409109dc71d9068a0fdc))
+- **ui:** ikony i kolory badge statusow w palecie sok ([7d9e1cf](https://github.com/blodytrav3l3r/Oferty_PV/commit/7d9e1cff03a8b474e8ced44885555430ede1abb2))
+
+### Bug Fixes
+
+- **ci:** guard chrome path i excel-gates w deploy needs ([a929531](https://github.com/blodytrav3l3r/Oferty_PV/commit/a929531d4cdf1a0560831e47a70b802ec10ced1e))
+- **ci:** haslo testowe w jobie e2e-appname ([3826ed0](https://github.com/blodytrav3l3r/Oferty_PV/commit/3826ed09ea36d482dc9f40fe2cb03cfef4d5d203))
+- **security:** limity tablic ofert przeciw naduzyciom ([88c9462](https://github.com/blodytrav3l3r/Oferty_PV/commit/88c9462c3e04b24906faee33a2396ea55b25ed11))
+- **security:** wykluczenie pol osobowych z zapisu draftu ([4e29f07](https://github.com/blodytrav3l3r/Oferty_PV/commit/4e29f07fda8aa184e29cf9d5296a914e67b5c7b8))
+- **studnie:** debounce preview i solvera w excel ([e66f7af](https://github.com/blodytrav3l3r/Oferty_PV/commit/e66f7afc3fead055c7f29111a864800bce1b5047))
+- **studnie:** escapehtmlattr w tytule bledu excel ([c49c6fa](https://github.com/blodytrav3l3r/Oferty_PV/commit/c49c6fa20c8305570c79c536069d502800d47b82))
+- **studnie:** gate klona otwarcia excel do 100 studni ([5a330df](https://github.com/blodytrav3l3r/Oferty_PV/commit/5a330dfacdacf9f76774c4db44922475171af6c5))
+- **studnie:** guardy snapshot undo w trakcie paste ([975e36e](https://github.com/blodytrav3l3r/Oferty_PV/commit/975e36ecd5ebcaa486b97f90abbb24646c04b7f6))
+- **studnie:** lokalny escaper atrybutu w tytule bledu ([854dc3e](https://github.com/blodytrav3l3r/Oferty_PV/commit/854dc3e852a64dc4afdc6a137b3eed76eaba3fc6))
+- **studnie:** mikro-opt switch-select-autofit ([1d1dc3e](https://github.com/blodytrav3l3r/Oferty_PV/commit/1d1dc3e01a90057446aa7d65dec1810858460590))
+- **studnie:** naprawa podswietlania poprzednich wierszy w excelu ([86198fb](https://github.com/blodytrav3l3r/Oferty_PV/commit/86198fb4f57bc6dbdc62e9a2afb469172d127be2))
+- **studnie:** nie gub niezapisanych zmian przy 409 bez draftu ([c7da92e](https://github.com/blodytrav3l3r/Oferty_PV/commit/c7da92ef14d0ce0c53a9396abb2b5782acf03816))
+- **studnie:** paste jeden tick i cache podsumowania ([20bfc26](https://github.com/blodytrav3l3r/Oferty_PV/commit/20bfc26591d4270767d246574b8a907b41292690))
+- **studnie:** raportuj pominięte wiersze bez nazwy ([ad979e0](https://github.com/blodytrav3l3r/Oferty_PV/commit/ad979e00516597b8211f5d4fc41ad631b682acfb))
+- **studnie:** usuniecie martwego fast-path duplikatow ([aced0a0](https://github.com/blodytrav3l3r/Oferty_PV/commit/aced0a00f174f9ffb52d1e92ccbd7f4f77862121))
+- **test:** golden dom po synchronizacji seed ([89a2c2b](https://github.com/blodytrav3l3r/Oferty_PV/commit/89a2c2b1dcf7ee02affc97fdba9bcb53e21edd44))
+- **test:** golden excel bez szerokosci z pomiaru ([4e14ec8](https://github.com/blodytrav3l3r/Oferty_PV/commit/4e14ec8d75a4952ef4416430badec760ad033cbe))
+- **test:** golden excel niezależny od danych ([1a5cd3b](https://github.com/blodytrav3l3r/Oferty_PV/commit/1a5cd3b9520dad3eaa7464b27b5c709d5ab13e4f))
+
 ## [1.46.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.45.0...v1.46.0) (2026-10-15)
 
 ### Features
