@@ -1,7 +1,11 @@
 # Web Security (zaadaptowano pod S.O.K.)
 
-> Zrodlo: ECC web/security.md. Zgodne z AGENTS.md projektu (CSP przez Helmet - projekt
-> celowo uzywa `scriptSrc: ["'self'", "'unsafe-inline'"]`, baza bledow #13).
+> Zrodlo: ECC web/security.md. Zgodne z AGENTS.md projektu (CSP przez Helmet).
+> Stan AKTUALNY (zweryfikowany w kodzie): skrypty bez `unsafe-inline` — nonce
+> per-request + `script-src-attr` bez wpisu (inline handlery BLOKOWANE, dyspozytor
+> `data-csp*` je zastepuje); `style-src` nadal ma `unsafe-inline`. Zrodlo:
+> `src/app.ts:215-244`, kontrakt `tests/security/e55gate.test.ts`. Baza bledow #13
+> opisuje stan historyczny (sprzed CSP-E 2026-09-30).
 
 ## XSS Prevention (najwazniejsze dla S.O.K.)
 
@@ -15,9 +19,12 @@ uzytkownika do `innerHTML` musi byc przez `escapeHtml(str)` (baza bledow #3).
 
 ## CSP / Headers
 
-- Helmet skonfigurowany w projekcie: `scriptSrc: ["'self'", "'unsafe-inline'"]`
-  (inline onclick jest celowym wyborem projektu, baza bledow #13)
-- Nie zmieniaj tej konfiguracji bez potrzeby - inline handlers sa wykorzystywane w kodzie
+- Helmet: `scriptSrc: ["'self'", "nonce-..."]` (CSP-E, `src/app.ts:225-229`) — **zero
+  `unsafe-inline` dla skryptów**; `script-src-attr` bez wpisu → inline handlery
+  (`onclick=`) są blokowane i zastąpione dyspozytorem `data-csp*`
+- `styleSrc: ["'self'", "'unsafe-inline'"]` — nadal obecne (style="..." nie wykonuje JS)
+- **NIE dodawaj nowych inline `onclick`/`on*`** — nie zadziałają; nowy kod: `addEventListener`
+  (AGENTS.md: nowe globals/inline = 0)
 
 ## DOM Manipulation
 

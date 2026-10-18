@@ -99,6 +99,7 @@ Aplikacja utrzymuje podwójny mechanizm autoryzacji: token sesji w `localStorage
   logowania; środowisko produkcyjne (HTTPS) i tak już korzysta z cookie `Secure`.
 - **Ryzyko:** token w `localStorage` jest podatny na kradzież przez XSS; w połączeniu
   z CSP `'unsafe-inline'` (dług pokryty planem `docs/plans/archive/csp-nonce-implementation-2026-07-22.md`)
+  **(od 2026-09-30 CSP-E skrypty bez `unsafe-inline` — nonce + brak `script-src-attr`)**
   stanowi realny wektor. Cookie `httpOnly` jest w praktyce redundantne dla autoryzacji,
   bo `requireAuth` czyta header jako pierwszy.
 - **Plan migracji (3 kroki, każdy w osobnym release):**

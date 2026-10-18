@@ -27,6 +27,10 @@ i użytkownikami. Wymagany ORM dla SQLite i prostota utrzymania.
 - **SQLite busy_timeout** — `PRAGMA busy_timeout = 30000` w prismaClient.ts dla operacji współbieżnych.
 - **Rate limiting** — per-route limiter dla wszystkich tras.
 - **Helmet CSP** — `'unsafe-inline'` dozwolone dla legacy inline event handlerów.
+  **Aktualizacja 2026-09-30 (CSP-E):** `unsafe-inline` USUNIĘTE ze skryptów
+  (`scriptSrc: ["'self'", nonce]`, `script-src-attr` bez wpisu) — inline handlery są
+  blokowane i zastąpione dyspozytorem `data-csp*`; `style-src` zostaje z `unsafe-inline`
+  (style="..." nie wykonuje JS). Źródło: `src/app.ts:215-244`.
 - **Logger** — `src/utils/logger.ts` zamiast `console.log`.
 - **Auto-heal indeksów przy starcie** — `src/app.ts` wykonuje idempotentne
   `CREATE INDEX IF NOT EXISTS` (m.in. `idx_audit_created_at` oraz `idx_logs_well`/

@@ -105,8 +105,13 @@
 ## 13. CSP violation z 'unsafe-inline'
 
 **Problem**: Helmet CSP blokuje inline event handlers (`onclick="..."`).
-**Fix** (`server.ts`): `scriptSrc: ["'self'", "'unsafe-inline'"]`.
-**Uwaga**: Konieczne dla vanilla JS legacy patternów. Docelowo: migracja do `addEventListener`.
+**Fix historyczny** (`server.ts`): `scriptSrc: ["'self'", "'unsafe-inline'"]`.
+**Stan AKTUALNY (2026-09-30, CSP-E)**: `unsafe-inline` USUNIĘTE ze skryptów —
+`scriptSrc: ["'self'", nonce]` + `script-src-attr` bez wpisu, więc inline handlery
+są BLOKOWANE i zastąpione dyspozytorem `data-csp*` (`src/app.ts:215-244`, kontrakt
+`tests/security/e55gate.test.ts`). `style-src` nadal ma `unsafe-inline` (style="..."
+nie wykonuje JS). Ten wpis opisuje stan sprzed CSP-E.
+**Uwaga**: nowy kod = `addEventListener`, zero nowych inline `on*` (AGENTS.md).
 
 ## 14. Spinner w input[type=number]
 
