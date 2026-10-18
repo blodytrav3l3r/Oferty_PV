@@ -803,7 +803,13 @@ function _excelVirtualRenderBody() {
             if (_sc1 && _savedTop !== null) {
                 _sc1.scrollTop = _savedTop;
                 if (_savedLeft !== null) _sc1.scrollLeft = _savedLeft;
-                _excelVirtualRenderBody();
+                /* P0-C: re-render tylko gdy przywrocony scroll zmienia widoczny
+                   zakres. Bez tego drugi pelny RenderBody (~50% kosztu
+                   przelaczenia) odtwarzal identyczny slice. */
+                var _r2 = _excelVirtualGetVisibleRange();
+                if (_r2.start !== _excelVirtualStart || _r2.end !== _excelVirtualEnd) {
+                    _excelVirtualRenderBody();
+                }
             }
         } catch (_eSc1) {}
         /* Restore fokusa zgubionego przez wipe — tylko gdy fokus faktycznie uciekł
