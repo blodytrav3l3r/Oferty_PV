@@ -2759,6 +2759,57 @@ select[id$='-czy'] option {
         background 0.15s;
 }
 
+/* A1b: stałe deklaracje kolumn bloku lewego Excel w klasach; inline zostaje
+   tylko dynamiczne background (per wiersz). z-index 5 = LAYERS_EXCEL.STICKY_COLUMN. */
+#excel-table-container .excel-td.excel-col-check {
+    text-align: center;
+    padding: 2px;
+    border-right: 1px solid var(--excel-border-subtle);
+    width: 28px;
+}
+#excel-table-container .excel-td.excel-col-mode {
+    text-align: center;
+    padding: 2px;
+    border-right: 1px solid var(--excel-border-subtle);
+    width: 70px;
+    min-width: 70px;
+}
+#excel-table-container .excel-td.excel-col-lp {
+    position: sticky;
+    left: 0;
+    z-index: 5;
+    text-align: center;
+    color: var(--excel-text-dim);
+    font-size: var(--fs-xs);
+    border-right: 1px solid var(--excel-border);
+    min-width: 32px;
+}
+#excel-table-container .excel-td.excel-col-name {
+    position: sticky;
+    left: 32px;
+    z-index: 5;
+    border-right: 1px solid var(--excel-border);
+}
+#excel-table-container .excel-td.excel-col-rzwl {
+    position: sticky;
+    left: 162px;
+    z-index: 5;
+    text-align: right;
+}
+#excel-table-container .excel-td.excel-col-rzdn {
+    position: sticky;
+    left: 240px;
+    z-index: 5;
+    text-align: right;
+}
+#excel-table-container .excel-td.excel-col-height {
+    position: sticky;
+    left: 318px;
+    z-index: 5;
+    text-align: center;
+    font-weight: var(--fw-semibold);
+}
+
 #excel-table-container select {
     width: 100% !important;
     box-sizing: border-box !important;

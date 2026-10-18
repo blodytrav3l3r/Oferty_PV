@@ -230,8 +230,15 @@ Uwaga: `text-align:right` ze stałej był MARTWY (przykryty `text-align:center !
 `openMs` ~612, `ltMax` 895–1175 (SLO 2800), `heapUsed` 9.6 MB (SLO 18).
 **Testy:** `tests/studnie` 142/142 (1739), `typecheck:frontend` + `lint:frontend` czyste.
 
-**Następne (A1b/A2, nie wykonane):** sticky `<td>` `background:stickyBg` → `background:inherit`;
-`<tr>` `background` dynamiczny → klasa/`:nth-child` lub jedna zmienna CSS.
+**A1b (WYKONANE, wynik NEUTRALNY):** stałe deklaracje 7 kolumn bloku lewego
+(checkbox, tryb, Lp, nazwa, rz. wlazu/dna, wys.) → klasy `.excel-col-*`; inline
+zostaje tylko dynamiczne `background`. Uwaga: sticky `background` **nie może** być
+`inherit` — `_excelStickyCellBg` = `linear-gradient(tint,tint),solidBase`
+(`excelHelpers.js:945`), więc per-wierszowy `background` jest inline. Pomiar (4 przebiegi):
+innerHTML 67–72, total 114.6–115.7, frame 214–257 (A1a: total 112.5–133, frame 240–312)
+→ **brak istotnego zysku czasu**; markup −~1 MB, rozkład frame ciaśniejszy. Zostawione jako higiena.
+
+**Pozostaje (A2):** `<tr>` `background` dynamiczny → klasa/`:nth-child` lub zmienna CSS.
 
 ## G. Otwarte (nie-blokujące)
 

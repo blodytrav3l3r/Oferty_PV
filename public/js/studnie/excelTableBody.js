@@ -323,10 +323,9 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
         /* Checkbox */
         const cbChecked = _excelRowSelectStates[wIdx] ? ' checked' : '';
         html +=
-            '<td class="excel-td" style="' +
-            'background:' +
+            '<td class="excel-td excel-col-check" style="background:' +
             stickyBg +
-            ';text-align:center;padding:2px;border-right:1px solid var(--excel-border-subtle);width:28px;"><input type="checkbox" class="excel-row-select cursor-accent-check" data-widx="' +
+            ';"><input type="checkbox" class="excel-row-select cursor-accent-check" data-widx="' +
             wIdx +
             '"' +
             cbChecked +
@@ -334,10 +333,9 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
         /* AUTO/MANUAL — pill z napisem + przycisk uruchomienia auto-doboru */
         const isAuto = window.isWellAuto(well);
         html +=
-            '<td class="excel-td" style="' +
-            'background:' +
+            '<td class="excel-td excel-col-mode" style="background:' +
             stickyBg +
-            ';text-align:center;padding:2px;border-right:1px solid var(--excel-border-subtle);width:70px;min-width:70px;"><button type="button" id="excel-mode-btn-' +
+            ';"><button type="button" id="excel-mode-btn-' +
             wIdx +
             '" data-widx="' +
             wIdx +
@@ -362,22 +360,16 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             '" title="Uruchom auto-dobór elementów dla tej studni" aria-label="Uruchom auto-dobór elementów"><i data-lucide="play" class="icon-xs" aria-hidden="true"></i></button></td>';
         /* Lp */
         html +=
-            '<td class="excel-td" style="' +
-            'position:sticky;left:0;z-index:' +
-            LAYERS_EXCEL.STICKY_COLUMN +
-            ';background:' +
+            '<td class="excel-td excel-col-lp" style="background:' +
             stickyBg +
-            ';text-align:center;color:var(--excel-text-dim);font-size: var(--fs-xs);border-right:1px solid var(--excel-border);min-width:32px;">' +
+            ';">' +
             (idx + 1) +
             '</td>';
         /* Nazwa */
         html +=
-            '<td class="excel-td" style="' +
-            'position:sticky;left:32px;z-index:' +
-            LAYERS_EXCEL.STICKY_COLUMN +
-            ';background:' +
+            '<td class="excel-td excel-col-name" style="background:' +
             stickyBg +
-            ';border-right:1px solid var(--excel-border);"><input type="text" value="' +
+            ';"><input type="text" value="' +
             escapeHtmlAttr(well.name) +
             '" data-csp="excelOnNameChange" data-csp-on="change" data-csp-args="[' +
             wIdx +
@@ -386,12 +378,9 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             'text-align:left;width:118px;" /></td>';
         /* Rz Wlazu */
         html +=
-            '<td class="excel-td" style="' +
-            'position:sticky;left:162px;z-index:' +
-            LAYERS_EXCEL.STICKY_COLUMN +
-            ';background:' +
+            '<td class="excel-td excel-col-rzwl" style="background:' +
             stickyBg +
-            ';text-align:right;"><input type="number" step="0.01" data-field="rzednaWlazu" value="' +
+            ';"><input type="number" step="0.01" data-field="rzednaWlazu" value="' +
             (well.rzednaWlazu != null ? well.rzednaWlazu : '') +
             '" data-csp="excelOnRzednaChange" data-csp-on="change" data-csp-args="[' +
             wIdx +
@@ -400,12 +389,9 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             '" /></td>';
         /* Rz Dna */
         html +=
-            '<td class="excel-td" style="' +
-            'position:sticky;left:240px;z-index:' +
-            LAYERS_EXCEL.STICKY_COLUMN +
-            ';background:' +
+            '<td class="excel-td excel-col-rzdn" style="background:' +
             stickyBg +
-            ';text-align:right;"><input type="number" step="0.01" data-field="rzednaDna" value="' +
+            ';"><input type="number" step="0.01" data-field="rzednaDna" value="' +
             (well.rzednaDna != null ? well.rzednaDna : '') +
             '" data-csp="excelOnRzednaChange" data-csp-on="change" data-csp-args="[' +
             wIdx +
@@ -419,14 +405,11 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             ? '<span class="loading-spinner-inline" aria-hidden="true" style="margin-right:4px;"></span>'
             : '';
         html +=
-            '<td class="excel-td" style="' +
-            'position:sticky;left:318px;z-index:' +
-            LAYERS_EXCEL.STICKY_COLUMN +
-            ';background:' +
+            '<td class="excel-td excel-col-height" style="background:' +
             stickyBg +
-            ';text-align:center;color:' +
+            ';color:' +
             dnColor +
-            ';font-weight: var(--fw-semibold);" data-cell="height-' +
+            ';" data-cell="height-' +
             wIdx +
             '">' +
             heightPrefix +
