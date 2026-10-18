@@ -4,6 +4,12 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+### [1.46.4](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.46.3...v1.46.4) (2026-10-18)
+
+### Bug Fixes
+
+- **studnie:** tint duplikatu nie ginie po dodaniu studni ([37d0fb2](https://github.com/blodytrav3l3r/Oferty_PV/commit/37d0fb205bf438ec6b6c7071e43be0ee26784cac))
+
 ### [1.46.3](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.46.2...v1.46.3) (2026-10-18)
 
 ### Bug Fixes
