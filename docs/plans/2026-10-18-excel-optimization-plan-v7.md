@@ -81,6 +81,33 @@ Profil `HEAP_PROFILE=1` @2000 (przełączenie zakładki, total 999 ms instrument
 | heap@open      | ≤18    | 11.4 MB               | ✅ PASS                    |
 | retention      | stable | plateau               | ✅ PASS                    |
 
+## H. F4#4/#5 — eksperyment layoutu (HYPOTHESIS ODRZUCONA) + werdykt SLO
+
+Eksperyment (tymczasowy, usunięty; pomiar na realnym HTML kontenera @2000, 3 iteracje):
+
+| Miara                                      | wartość         |
+| ------------------------------------------ | --------------- |
+| `innerHTML.length` (thead + 68 wierszy)    | **2 871 739 B** |
+| średnio na wiersz (68 kolumn)              | **~42 KB**      |
+| parse (`innerHTML`) — `table-layout:auto`  | 42 ms           |
+| layout (`offsetHeight`+`scrollWidth`) auto | **139 ms**      |
+| layout — `table-layout:fixed`              | **130 ms**      |
+| pełny `_excelRenderTable` (referencja)     | 363 ms          |
+
+**Wnioski (FACT):**
+
+1. **`table-layout:auto` NIE jest problemem** — auto 139 ms vs fixed 130 ms (~7%). Hipoteza reflow/auto-layout **ODRZUCONA** → nie ruszamy `table-layout`.
+2. Dominuje **rozmiar markupu**: 2.87 MB / 68 wierszy = ~42 KB na wiersz (inline style per komórka × 68 kolumn). Parse+layout ≈ 181 ms z 363 ms renderu; reszta = budowa stringa (2.87 MB konkatenacji) + post-steps.
+3. Realny (i jedyny duży) lewer = **F4#5: redukcja inline style → klasy CSS** (wiersze + nagłówek). Szacunek: −40–50% renderu → switch ~1.17 s → ~0.7–0.8 s, body 217 ms → ~120 ms.
+4. **F4#4 (`EXCEL_OVERSCAN` 20→6) — nie realizować**: overscan podniesiono świadomie 10→20 (bufor pod paste/scroll chunk 200, `excelVirtual.js:12-15`); oszczędność ~90 ms nie uzasadnia re-litigacji.
+
+**Werdykt architektoniczny (SLO `ltMax ≤200 ms`):** przy 2000–3000 studniach × 68 kolumnach i DOM-owej tabeli **SLO jest nieosiągalne** — nawet po F4#5 (2.87 MB → ~1.5 MB) pojedynczy render to ~200–300 ms synchronicznej pracy + parse/layout przeglądarki. Opcje (wymagają decyzji, wszystkie dotykają chronionego renderera / baseline golden):
+
+- **(A) F4#5** (inline style → klasy CSS): ~40% szybszy render; **zmienia golden hash** (świadoma aktualizacja baseline) + wymaga visual QA (UI/UX).
+- **(B) Render inkrementalny/chunked** (kolumny lub grupy wierszy w `requestIdleCallback`): usuwa **long task** (ltMax ≤200 ms), UX pozostaje responsywny; większy refaktor pętli renderującej.
+- **(C) Rewizja SLO** dla 2000+ (np. `ltMax ≤600 ms`) przy zachowaniu płynności — jeśli akceptowalne biznesowo.
+- **(D) Grid canvas/virtual-DOM** (zamiast `<table>`): skokowy zysk, ale największy koszt i ryzyko (a11y/copy). Nie teraz.
+
 ## G. Otwarte (nie-blokujące)
 
 1. **F9:** podpiąć SLO `excelHeapProbe` do CI (nightly istnieje, advisory).
@@ -88,3 +115,4 @@ Profil `HEAP_PROFILE=1` @2000 (przełączenie zakładki, total 999 ms instrument
 3. **F7.2:** 54 puste `catch{}` w `public/js/studnie`.
 4. **Axe lokalnie:** zaseedować izolowaną E2E DB (`PLAYWRIGHT_DATABASE_URL`) by bramka działała poza CI.
 5. **Q6:** prod snapshot dla `wellcount-stats.mjs` (wciąż HYPOTHESIS: projekt 3000).
+6. **Decyzja H-A/B/C/D** (patrz sekcja H) — blokuje dalszy postęp w kierunku SLO.
