@@ -28,7 +28,15 @@ export default defineConfig({
         url: `http://localhost:${E2E_PORT}/health`,
         reuseExistingServer: process.env.PLAYWRIGHT_REUSE_SERVER === '1',
         timeout: 60_000,
-        env: { NODE_ENV: 'test', PORT: E2E_PORT, DATABASE_URL: E2E_DB }
+        env: {
+            NODE_ENV: 'test',
+            PORT: E2E_PORT,
+            DATABASE_URL: E2E_DB,
+            // Suity care/AI robią setki zapisów i logowań w jednym oknie limiterów.
+            RATE_LIMIT_MULT: '100',
+            // Determinizm unreadCount: bez throttle każdy GET syncuje powiadomienia.
+            CARE_SYNC_THROTTLE_MS: '0'
+        }
     },
     projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }]
 });

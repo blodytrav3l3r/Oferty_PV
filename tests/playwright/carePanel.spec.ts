@@ -7,9 +7,11 @@
  *   seed TYLKO przez publiczne API na izolowanej DB :3199 (test-playwright.sqlite),
  *   zero prod DB, zero migracji z testu (webServer w playwright.config.ts).
  *
- * UWAGA: LOGIN_LIMITER (10/min na IP|login) — spec robi ~7 loginow admin/run.
- * Uruchamiaj pojedynczo (jak CI smoke), bez --repeat-each i bez rownoleglych
- * workerow na tym pliku; parallel repeats dostana 429 (limit, nie flake aplikacji).
+ * UWAGA: LOGIN_LIMITER (10/min na IP|login) i WRITE_LIMITER (60/min na IP) —
+ * spec robi ~7 loginow i setki zapisow admin/run. Serwer E2E (playwright.config
+ * webServer :3199, CI :3198) startuje z RATE_LIMIT_MULT=100, wiec progi sa
+ * skalowane; 429 z tego specu to limit (nie flake aplikacji) tylko gdy serwer
+ * startuje bez tej zmiennej.
  *
  * Scenariusze:
  *   (a) panel laduje liczniki (summary) + kolejke (queue) + centrum (notifications)

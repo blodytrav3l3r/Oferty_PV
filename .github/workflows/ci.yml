@@ -467,7 +467,7 @@ jobs:
             - name: Start serwera :3198 w tle (izolowany)
               run: |
                   npm run build
-                  PORT=3198 NODE_ENV=test DATABASE_URL='file:./test-e2e-extended.sqlite?connection_limit=1&busy_timeout=30000' nohup node dist/server.js > e2e-extended-server.log 2>&1 &
+                  PORT=3198 NODE_ENV=test RATE_LIMIT_MULT=100 CARE_SYNC_THROTTLE_MS=0 DATABASE_URL='file:./test-e2e-extended.sqlite?connection_limit=1&busy_timeout=30000' nohup node dist/server.js > e2e-extended-server.log 2>&1 &
                   echo $! > e2e-extended-server.pid
                    for i in $(seq 1 30); do
                      curl -sf http://localhost:3198/health/ready && break

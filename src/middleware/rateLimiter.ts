@@ -20,6 +20,20 @@ interface HitRecord {
 }
 
 /**
+ * Mnożnik progów dla serwerów E2E (izolowane :3198/:3199), gdzie suity robią
+ * setki zapisów/logowań w jednym oknie i produkcyjne progi dają im fałszywe 429
+ * (limit, nie flake aplikacji). Ustawiany WYŁĄCZNIE przez serwer E2E:
+ * webServer playwright.config.ts i krok CI startu :3198.
+ * Na produkcji zawsze 1 (guard NODE_ENV), domyślnie 1; clamp 1000 chroni przed
+ * `Infinity`/wartością z literówki, która wyłączyłaby limiter.
+ */
+function limitMultiplier(): number {
+    if (process.env.NODE_ENV === 'production') return 1;
+    const raw = Math.floor(Number(process.env.RATE_LIMIT_MULT));
+    return Number.isFinite(raw) && raw > 1 ? Math.min(1000, raw) : 1;
+}
+
+/**
  * Prosty In-Memory Rate Limiter.
  * Ogranicza liczbę żądań z jednego IP w oknie czasowym.
  */
@@ -31,6 +45,7 @@ export function createRateLimiter({
     keyGenerator
 }: RateLimiterOpts = {}): (req: Request, res: Response, next: () => void) => void {
     const hits = new Map<string, HitRecord>();
+    const effectiveMaxHits = Math.floor(maxHits * limitMultiplier());
 
     // Automatyczne czyszczenie starych wpisów co interwał
     const cleanupInterval = setInterval(() => {
@@ -59,10 +74,10 @@ export function createRateLimiter({
         record.count++;
 
         // Dodaj nagłówki informacyjne
-        res.setHeader('X-RateLimit-Limit', maxHits);
-        res.setHeader('X-RateLimit-Remaining', Math.max(0, maxHits - record.count));
+        res.setHeader('X-RateLimit-Limit', effectiveMaxHits);
+        res.setHeader('X-RateLimit-Remaining', Math.max(0, effectiveMaxHits - record.count));
 
-        if (record.count > maxHits) {
+        if (record.count > effectiveMaxHits) {
             const retryAfterSec = Math.ceil((record.resetAt - now) / 1000);
             res.setHeader('Retry-After', retryAfterSec);
             recordRateLimited(name);

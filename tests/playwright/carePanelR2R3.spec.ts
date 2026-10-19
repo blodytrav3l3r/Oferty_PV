@@ -7,9 +7,10 @@
  *   seed TYLKO przez publiczne API na izolowanej DB :3199 (test-playwright.sqlite),
  *   zero prod/dev DB, zero migracji z testu (webServer w playwright.config.ts).
  *
- * UWAGA: LOGIN_LIMITER (10/min na IP|login) — spec robi ~7 loginów admin/run.
- * Uruchamiaj pojedynczo, bez --repeat-each i bez równoległych workerów;
- * parallel repeats dostaną 429 (limit, nie flake aplikacji).
+ * UWAGA: LOGIN_LIMITER (10/min na IP|login) i WRITE_LIMITER (60/min na IP) —
+ * spec robi ~7 loginów i ~50 seedów zapisu. Serwer E2E (webServer :3199,
+ * CI :3198) startuje z RATE_LIMIT_MULT=100, więc progi są skalowane; 429 to
+ * limit (nie flake aplikacji) tylko gdy serwer startuje bez tej zmiennej.
  *
  * Scenariusze:
  *   (f) PUT followup zmieniający contactedAt → ETag panelu zmienia się (200 nie 304)

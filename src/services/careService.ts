@@ -1082,7 +1082,14 @@ export interface CareSyncResult {
  * serializują się (drugi po udanym pierwszym dostaje skip).
  * rep-preview omija throttle (zero side-effectów tak czy owak).
  */
-export const CARE_SYNC_THROTTLE_MS = 60_000;
+// E2E (izolowany serwer :3198/:3199) ustawia 0 -> każdy GET /care/notifications
+// synchronizuje, więc asserty na unreadCount nie zależą od czasu od poprzedniego
+// syncu (carePanelR2R3 (g) czytał 1-3 zamiast >=25, gdy test wpadł w 60 s okno).
+const rawThrottle = process.env.CARE_SYNC_THROTTLE_MS;
+export const CARE_SYNC_THROTTLE_MS =
+    rawThrottle !== undefined && Number.isFinite(Number(rawThrottle)) && Number(rawThrottle) >= 0
+        ? Number(rawThrottle)
+        : 60_000;
 const syncInflight = new Map<string, Promise<CareSyncResult>>();
 const syncLastOk = new Map<string, number>();
 

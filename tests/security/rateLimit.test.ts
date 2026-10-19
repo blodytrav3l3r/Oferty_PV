@@ -36,6 +36,24 @@ describe('P0.6 rate-limit matrix', () => {
         expect((await request(b).post('/write')).status).toBe(200);
     });
 
+    it('RATE_LIMIT_MULT skaluje maxHits (serwer E2E), produkcja ignoruje', async () => {
+        const prevNodeEnv = process.env.NODE_ENV;
+        process.env.RATE_LIMIT_MULT = '3';
+        try {
+            const testApp = buildApp(10);
+            const scaled = await request(testApp).post('/write');
+            expect(scaled.headers['x-ratelimit-limit']).toBe('30');
+
+            process.env.NODE_ENV = 'production';
+            const prodApp = buildApp(10);
+            const prod = await request(prodApp).post('/write');
+            expect(prod.headers['x-ratelimit-limit']).toBe('10');
+        } finally {
+            delete process.env.RATE_LIMIT_MULT;
+            process.env.NODE_ENV = prevNodeEnv;
+        }
+    });
+
     it('P2.2: odrzucenie 429 liczone w /metrics per nazwa', async () => {
         resetMetrics();
         const app = buildApp(1, 'p22-probe');
