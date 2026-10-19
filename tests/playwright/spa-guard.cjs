@@ -265,7 +265,10 @@ async function waitModuleFrame(page, mod) {
         );
 
         // Brudzimy nowa oferte (diff live-vs-SAVED, bez flag — regresja rur).
+        // validity (nie-PII) jest persystowane w drafcie; client-name celowo nie
+        // (DRAFT_PII_FIELD_KEYS) — draft asercje opieramy na validity.
         await frame.fill('#client-name', 'GUARD-E2E');
+        await frame.fill('#offer-validity', 'DRAFT-G4');
         const dirtyNow = await page.evaluate(() =>
             typeof window.__sokIsDirty === 'function' ? window.__sokIsDirty() : 'NO_SSOT'
         );
@@ -354,7 +357,8 @@ async function waitModuleFrame(page, mod) {
         const hashLeft = await page.evaluate(() => window.location.hash);
         check('G3 Opuść bez zapisu: hash kartoteka', /kartoteka/.test(hashLeft), hashLeft);
 
-        // G4: powrot — draft sflushowany przy wyjsciu, pole cale (iframe zyje w tle).
+        // G4: powrot — draft sflushowany przy wyjsciu (pole nie-PII), pole cale
+        // (iframe zyje w tle).
         await page.click('#spa-app-rury');
         // powrot tez przez guard (brud w ukrytym iframe) -> opusc bez zapisu
         try {
@@ -373,7 +377,7 @@ async function waitModuleFrame(page, mod) {
                 const uid = window.currentUser && window.currentUser.id;
                 const k = window.draftStore.buildDraftKey(String(uid), 'offer_rury', 'new');
                 const raw = localStorage.getItem(k);
-                return raw && raw.indexOf('GUARD-E2E') !== -1 ? k : null;
+                return raw && raw.indexOf('DRAFT-G4') !== -1 ? k : null;
             } catch (_) {
                 return null;
             }
@@ -438,6 +442,7 @@ async function waitModuleFrame(page, mod) {
         });
         const frame3 = await waitModuleFrame(page, 'rury');
         await frame3.fill('#client-name', 'GUARD-E2E-F5');
+        await frame3.fill('#offer-validity', 'DRAFT-G8');
         await frame3.click('#client-name');
         await frame3.press('#client-name', 'F5');
         await frame3.waitForSelector('#app-confirm-overlay', { timeout: 8000 });
@@ -481,8 +486,8 @@ async function waitModuleFrame(page, mod) {
         await frame4.waitForFunction(() => !document.getElementById('sok-draft-modal'), null, {
             timeout: 5000
         });
-        const fieldRestored = await frame4.inputValue('#client-name');
-        check('G9 Przywróć: pole z draftu', fieldRestored === 'GUARD-E2E-F5', fieldRestored);
+        const fieldRestored = await frame4.inputValue('#offer-validity');
+        check('G9 Przywróć: pole z draftu', fieldRestored === 'DRAFT-G8', fieldRestored);
         await frame4.evaluate(() => window.draftAutosave.flushAll());
         // :not(#theme-toggle) — przełącznik motywu dzieli klasę .header-logout.
         await page.click('button.header-logout:not(#theme-toggle)');
@@ -524,7 +529,8 @@ async function waitModuleFrame(page, mod) {
                 nativeDialogs.push(d.type());
             } catch (_) {}
         });
-        // Stan po G9: brudny GUARD-E2E w rurach (G9 to był Zostań — nie porzucony).
+        // Stan po G9: brud w rurach niesie validity "DRAFT-G8" (client-name to PII,
+        // nie wraca z draftu — G9 to był Zostań, nie porzucony).
         await page.click('#spa-app-kartoteka');
         await page.waitForSelector('#app-confirm-overlay', { timeout: 8000 });
         await sleep(400); // handlery modala wpinane +50ms po renderze
