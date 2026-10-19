@@ -104,3 +104,13 @@ src/
 | Fastify     | Szybszy od Express, ale mniejszy ekosystem i brak kompatybilności z niektórymi middleware   |
 | Koa         | Mniejsza społeczność, mniej ready-made middleware                                           |
 | Drizzle ORM | Nowy ORM, mniej stabilny niż Prisma. Brak generowanych typów dla SQLite w wersji 0.x        |
+
+## Amendment 2026-10-19 (P1-6)
+
+Stan faktyczny: część routów nadal woła `prisma.*` bezpośrednio (34 pliki, 273 wystąpienia).
+To dług techniczny zaakceptowany czasowo, nie nowy wzorzec.
+
+- Ratchet: `npm run ratchet:check` (`scripts/check-route-db-ratchet.mjs`) blokuje wzrost
+  liczby `prisma.*` w `src/routes` powyżej BASELINE (273). Podniesienie BASELINE = świadoma decyzja.
+- Nowa logika DB: warstwa `src/services`; route = walidacja + mapowanie HTTP.
+- Ekstrakcja istniejących route'ów: inkrementalnie, bez big-bang refaktoru.
