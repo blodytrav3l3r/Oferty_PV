@@ -12,6 +12,12 @@ import { requireAuth, requireAdmin, AuthenticatedRequest } from '../middleware/a
 import { canWriteDoc } from '../utils/ownership';
 import { requireAiMlEnabled, isAiMlEnabled } from '../middleware/aiMlGuard';
 import { logAudit } from '../services/auditService';
+import {
+    getWellSelections,
+    getPredictionStats,
+    getTrainingRuns,
+    getTrainingRunById
+} from '../services/telemetry/aiReadModel';
 import { z } from 'zod';
 import prisma from '../prismaClient';
 import { FEATURE_NAMES, ML_CONSTANTS } from '../config/mlConstants';
@@ -598,70 +604,7 @@ router.get(
     READ_LIMITER,
     async (_req: Request, res: Response) => {
         try {
-            // Indeks idx_logs_source_well (solverSource, wellId) — filtr po solverSource.
-            // Limit 500 najnowszych: jedyny konsument (aiDashboard.js) pokazuje
-            // slice(0, 20) po lastSeenAt desc — paginacja zbędna (YAGNI).
-            const logs = await prisma.ai_telemetry_logs.findMany({
-                where: { solverSource: 'AI_SUGGEST' },
-                select: {
-                    wellId: true,
-                    dn: true,
-                    warehouse: true,
-                    aiVersion: true,
-                    createdAt: true
-                },
-                orderBy: { createdAt: 'desc' },
-                take: 500
-            });
-
-            // Agregacja w pamieci — dane sa male (brak groupBy w Prisma/SQLite dla tego modelu).
-            const byWell = new Map<
-                string,
-                {
-                    wellId: string;
-                    dn: string | null;
-                    warehouse: string | null;
-                    modelVersion: string | null;
-                    count: number;
-                    lastSeenAt: string | null;
-                }
-            >();
-
-            for (const log of logs) {
-                if (!log.wellId) continue;
-                const existing = byWell.get(log.wellId);
-                if (!existing) {
-                    byWell.set(log.wellId, {
-                        wellId: log.wellId,
-                        dn: log.dn ?? null,
-                        warehouse: log.warehouse ?? null,
-                        modelVersion: log.aiVersion ?? null,
-                        count: 1,
-                        lastSeenAt: log.createdAt ?? null
-                    });
-                } else {
-                    existing.count += 1;
-                    if (
-                        log.createdAt &&
-                        (!existing.lastSeenAt ||
-                            Date.parse(log.createdAt) > Date.parse(existing.lastSeenAt))
-                    ) {
-                        existing.lastSeenAt = log.createdAt;
-                    }
-                }
-            }
-
-            const items = Array.from(byWell.values()).sort((a, b) => {
-                const ta = a.lastSeenAt ? Date.parse(a.lastSeenAt) : 0;
-                const tb = b.lastSeenAt ? Date.parse(b.lastSeenAt) : 0;
-                return tb - ta;
-            });
-
-            res.json({
-                totalWells: items.length,
-                totalSelections: items.reduce((sum, w) => sum + w.count, 0),
-                items
-            });
+            res.json(await getWellSelections());
         } catch (e) {
             sendInternalError(res, 'AiWellSelections', e);
         }
@@ -1210,10 +1153,7 @@ router.get(
     READ_LIMITER,
     async (_req: Request, res: Response) => {
         try {
-            const runs = await prisma.aiTrainingRun.findMany({
-                orderBy: { startedAt: 'desc' },
-                take: 20
-            });
+            const runs = await getTrainingRuns(20);
             res.json({ runs });
         } catch (e) {
             sendInternalError(res, 'AiMlRoute', e);
@@ -1228,9 +1168,7 @@ router.get(
     READ_LIMITER,
     async (req: Request, res: Response) => {
         try {
-            const run = await prisma.aiTrainingRun.findUnique({
-                where: { id: req.params.id }
-            });
+            const run = await getTrainingRunById(req.params.id);
             if (!run) {
                 res.status(404).json({ error: 'Run nie istnieje' });
                 return;
@@ -1271,29 +1209,7 @@ router.get(
     READ_LIMITER,
     async (_req: Request, res: Response) => {
         try {
-            const total = await prisma.aiRewardLog.count();
-            const byAction = await prisma.aiRewardLog.groupBy({
-                by: ['action'],
-                _count: { _all: true }
-            });
-            const actions: Record<string, number> = {};
-            for (const row of byAction) {
-                actions[row.action] = row._count._all;
-            }
-            const recent = await prisma.aiRewardLog.findMany({
-                where: { scoreBefore: { not: null } },
-                orderBy: { createdAt: 'desc' },
-                take: 100
-            });
-            const scores = recent
-                .map((r) => r.scoreBefore)
-                .filter((s): s is number => typeof s === 'number');
-            res.json({
-                total,
-                actions,
-                recentScores: scores,
-                recentCount: scores.length
-            });
+            res.json(await getPredictionStats());
         } catch (e) {
             sendInternalError(res, 'AiMlRoute', e);
         }
