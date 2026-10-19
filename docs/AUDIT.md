@@ -34,7 +34,7 @@ Nowa warstwa powyżej historycznego raportu — nie zmienia ocen z 2026-07-09.
 | P2.2 auth fallback: KEEP (prod throw + instalator losuje)                       | DONE                | `7309dc9`            | `authMiddleware` 18/18                                                                               |
 | P2.3 E2E blocking/advisory jawne                                                | DONE                | `0783aed`            | `workflowStatus` 10/10                                                                               |
 | P2.4 notices + express 4.22.3 / helmet 8.3.0                                    | DONE                | `cc34c3e`, `78dee32` | `test:quick` 3832 pass, audit: qs/fast-uri transitivne (akceptowane, fix tylko przez breaking major) |
-| CSP-B…E, Redis limiter, multi-instance                                          | TODO (osobne cykle) | —                    | plany: `docs/plans/csp-hardening.md`, `auth-bootstrap.md`, `e2e-classification.md`                   |
+| CSP-B…E, Redis limiter, multi-instance                                          | TODO (osobne cykle) | —                    | plany: `docs/plans/archive/csp-hardening.md`, `auth-bootstrap.md`, `e2e-classification.md`           |
 
 ---
 

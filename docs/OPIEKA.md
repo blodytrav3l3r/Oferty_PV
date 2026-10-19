@@ -201,4 +201,4 @@ D+14 (`OVERDUE_D14` powyżej).
 - [COMPONENTS](COMPONENTS.md) — katalog komponentów UI (panel/kolejka wg `UI_GUIDELINES.md`)
 - [Macierz uprawnień](security/permission-matrix.md) — per-trasa, SSoT `ownership.ts`
 - [DATABASE](DATABASE.md) — model `offer_follow_ups`
-- Plany: [opieka-nad-oferta](plans/opieka-nad-oferta.md) (follow-up, DONE), [monitoring P0](plans/opieka-monitoring-przypomnienia-p0.md) (care read-only, P0 DONE)
+- Plany: [opieka-nad-oferta](plans/archive/opieka-nad-oferta.md) (follow-up, DONE), [monitoring P0](plans/opieka-monitoring-przypomnienia-p0.md) (care read-only, P0 DONE)
