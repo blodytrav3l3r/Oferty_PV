@@ -1,6 +1,6 @@
 import path from 'path';
 import { DOCX_COLORS } from '../docx/colors';
-import { escapeHtml, formatDatePL } from './helpers';
+import { escapeHtml, formatDatePL, computeUnitPriceNetto } from './helpers';
 import { distributeRuryTransportCost, isRuryTransportSeparateFlag } from '../ruryTransport';
 import { buildContactSectionHTML } from './offerUsers';
 import type { RuryOfferData } from './types';
@@ -138,8 +138,13 @@ export function buildRurySectionHTML(data: RuryOfferData): {
                 const transportShare = shareByItem.get(item) ?? 0;
                 const transportPerUnit =
                     transportShare > 0 && quantity > 0 ? transportShare / quantity : 0;
-                const itemPrice =
-                    unitPrice * (1 - discount / 100) + pehdCost + surcharge + transportPerUnit;
+                const itemPrice = computeUnitPriceNetto({
+                    unitPrice,
+                    discountPct: discount,
+                    pehdCostPerUnit: pehdCost,
+                    surcharge,
+                    transportPerUnit
+                });
                 const netto = itemPrice * quantity;
 
                 catTotal += netto;

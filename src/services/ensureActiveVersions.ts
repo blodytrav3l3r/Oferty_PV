@@ -188,8 +188,15 @@ export async function ensureActivePricelistVersions(): Promise<PricelistType[]> 
         try {
             const done = await ensureOneType(type);
             if (done) created.push(done);
-        } catch {
-            return created; // tabela sprzed migracji — check-db/ensure-db to naprawi
+        } catch (e) {
+            // Tabela sprzed migracji — check-db/ensure-db naprawi. Start nie może
+            // padać, ale musi zostać ślad: bez logu brak ACTIVE byłby niewidoczny.
+            logger.warn(
+                'Pricelist',
+                `ensureActivePricelistVersions(${type}): błąd — przerywam dalsze typy`,
+                String(e)
+            );
+            return created;
         }
     }
     return created;

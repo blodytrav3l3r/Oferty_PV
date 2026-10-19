@@ -301,6 +301,11 @@ Wymaga autoryzacji.
 | POST   | `/api/orders-studnie/production/print-count-batch` | Hurtowe liczniki wydruków                |
 | POST   | `/api/orders-studnie/production/:id/print-count`   | Inkrementacja licznika wydruków          |
 
+> **Uwaga (P2 audytu 2026-10-19):** `GET /api/orders-studnie/production` ciągnie pełną kolumnę
+> `data` (blob na wiersz) — przy dużych tabelach to MB zamiast KB. Do list/scrolla używaj
+> `GET .../production/index` albo `GET .../production/search` (lekkie, `json_extract`).
+> Zewnętrzni konsumenci listy: brak zidentyfikowanych w repo; kontrakt bez zmian.
+
 ## Wyszukiwanie produkcji (`/api/orders-studnie/production/search`)
 
 Wymaga autoryzacji. Wyszukiwanie z kursorem (infinite scroll), paginacja po znormalizowanym `createdAt`.

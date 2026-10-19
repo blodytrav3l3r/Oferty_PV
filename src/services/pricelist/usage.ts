@@ -5,6 +5,7 @@
  */
 
 import prisma from '../../prismaClient';
+import { logger } from '../../utils/logger';
 import type { PricelistVersion } from '../../../generated/prisma';
 import { RESOLVABLE_STATUSES, requireType, toUtcIso } from './validation';
 import type { PricelistType } from './validation';
@@ -77,7 +78,14 @@ export async function resolveVersionIdSafe(typeInput: unknown): Promise<string |
     try {
         const active = await resolveActive(typeInput);
         return active?.id ?? null;
-    } catch {
+    } catch (e) {
+        // Null = brak pieczątki (oferta i tak powstaje). Log, żeby błąd odczytu
+        // wersji nie zniknął całkowicie — bez tego freeze psułby się niemo.
+        logger.warn(
+            'Pricelist',
+            'resolveVersionIdSafe: błąd odczytu aktywnej wersji — brak pieczątki',
+            String(e)
+        );
         return null;
     }
 }

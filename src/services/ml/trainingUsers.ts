@@ -1,4 +1,5 @@
 import prisma from '../../prismaClient';
+import { logger } from '../../utils/logger';
 
 export const TRAINING_USERS_KEY = 'ai_training_user_ids';
 
@@ -17,7 +18,14 @@ export async function getTrainingUserIds(): Promise<string[] | null> {
         const parsed: unknown = JSON.parse(row.value);
         if (!Array.isArray(parsed)) return null;
         return parsed.filter((x): x is string => typeof x === 'string' && x.length > 0);
-    } catch {
+    } catch (e) {
+        // Fail-open (świadomy, patrz komentarz wyżej), ale nie cicho —
+        // brak logu maskowałby np. brak tabeli settings po migracji.
+        logger.warn(
+            'ML',
+            'getTrainingUserIds: błąd odczytu allowlisty — fail-open (wszyscy)',
+            String(e)
+        );
         return null;
     }
 }

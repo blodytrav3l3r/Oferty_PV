@@ -22,6 +22,36 @@ export function escapeHtml(input: unknown): string {
         .replace(/'/g, '&#39;');
 }
 
+/**
+ * SSoT ceny jednostkowej netto pozycji oferty na wydruku:
+ * `unitPrice * (1 - discount/100) + pehd + surcharge + transport/jedn.`
+ * Jedno miejsce dla math ceny na PDF (rury/studnie/łączony) — bez duplikacji
+ * formuły w rendererach.
+ */
+export interface UnitPriceNettoInput {
+    unitPrice: number;
+    discountPct?: number;
+    pehdCostPerUnit?: number;
+    surcharge?: number;
+    transportPerUnit?: number;
+}
+
+export function computeUnitPriceNetto(item: UnitPriceNettoInput): number {
+    // NaN/Infinity nie może wyciec na wydruk (cena "NaN" na ofercie) → 0.
+    const num = (v: unknown): number => {
+        const n = Number(v);
+        return Number.isFinite(n) ? n : 0;
+    };
+    const unitPrice = num(item.unitPrice);
+    const discountPct = num(item.discountPct);
+    return (
+        unitPrice * (1 - discountPct / 100) +
+        num(item.pehdCostPerUnit) +
+        num(item.surcharge) +
+        num(item.transportPerUnit)
+    );
+}
+
 export function mapWellsToItems(
     wells: unknown[],
     separateTransport = false
