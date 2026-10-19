@@ -33,6 +33,18 @@ Rozważano: PostgreSQL (standard dla web apps), SQLite, MySQL.
   starcie serwera (m.in. `idx_audit_created_at`, `idx_logs_well`, `idx_logs_source_well` —
   ten drugi z migracji `20260805100000_telemetry_well_dedup` dla dedup telemetrii AI).
 
+## Znane długi
+
+- **`offers_rel.pricelistVersionId` / `orders_*_rel.pricelistVersionId` bez FK w schemacie**
+  (audyt 2026-10-19, P1-3) — dodanie `@relation` wymaga redefinicji tabel (recepta: `CREATE TABLE
+new_* + INSERT SELECT + DROP + RENAME`) oraz zmian w typach klienta Prisma. Przy bazie ~1.5 GB
+  i 30 backupach koszt/ryzyko przewyższa zysk: freeze wersji jest walidowany aplikacyjnie
+  (`ruryCrud.ts`, `studnieCrud.ts` — `requestedStamp !== active` → odrzucenie), kasowanie
+  wersji jest chronione (`lifecycle.ts` — ACTIVE/BACKDATE → 409, `countUsage > 0` → 409
+  `USED_BY`, re-check w transakcji). Kontrola sierot: `scripts/audit-integrity.mjs`,
+  `scripts/backup.ts`. Decyzja: dług świadomy, FK wraca tylko przy realnym incydencie
+  dangling-ID — wtedy migracja wzorcem `20260929000000_fk_pricelist_version`.
+
 ## Alternatywy odrzucone
 
 | Alternatywa | Powód odrzucenia                                                     |

@@ -1,8 +1,8 @@
-# Aktywny plan — domknięcie audit P1 (2026-10-19)
+# Aktywny plan — domknięcie audytu (2026-10-19)
 
-Wersja: 1.46.4. Push zablokowany do jawnego GO.
+Wersja: 1.46.5. Push zablokowany do jawnego GO.
 
-## Zrobione (bez pusha)
+## Zrobione — P1 (bez pusha)
 
 | Paczka | Commit    | Zakres                                                                               |
 | ------ | --------- | ------------------------------------------------------------------------------------ |
@@ -11,34 +11,51 @@ Wersja: 1.46.4. Push zablokowany do jawnego GO.
 | C      | `44578d4` | PDF escape + JS off, `<thead>`, mobile nav, Excel Ctrl+A >1000                       |
 | D      | `b65d338` | audit POST w tx (rury+studnie), `spa-guard` w CI z BASE_URL, aria-label kafli        |
 | E      | `f36c65d` | wspólny `pricelistLock` (4 moduły), a11y menu kolumn/resize/nagłówka (P1-11)         |
-| F      | `4538bf7` | ratchet ADR-004 (`npm run ratchet:check`, baseline 273) + amendment ADR              |
-| G      | (ten)     | ekstrakcja read-modelu AI (`src/services/telemetry/aiReadModel.ts`); ratchet 273→267 |
+| F      | `4538bf7` | ratchet ADR-004 (`npm run ratchet:check`) + amendment ADR                            |
+| G      | `a91723a` | ekstrakcja read-modelu AI (`src/services/telemetry/aiReadModel.ts`); ratchet 273→267 |
+| H      | `a56c8a4` | serwis cennika (`src/services/precoPricing.ts`); ratchet 267→239                     |
+| I      | `46bd60d` | liczniki wydruków (`src/services/orders/productionPrintCounts.ts`); ratchet 239→237  |
+
+## Zrobione — P2/P3 (paczki J, K, M, N)
+
+| Paczka | Commit    | Zakres                                                                                       |
+| ------ | --------- | -------------------------------------------------------------------------------------------- |
+| J      | `76d53f3` | `PUBLIC_BASE_URL` + walidacja Host (open-redirect), `sanitizeForLog` (log forging), limitery |
+| K      | `b86aad7` | bramka flaky (`--max-flaky`), `BASE_URL` w harnessach, `test:excel-visual`                   |
+| M      | (ten)     | SSoT `computeUnitPriceNetto` (PDF), 4× silent catch → log, nota API dla `GET /production`    |
+| N      | (ten)     | liczby legacy w AGENTS.md (`.onclick` 37→21), amendment ADR-004 (273→237), nota długu FK     |
 
 ## Decyzja produktowa P1-17 (2026-10-19)
 
-- **Ekran klientów: NIE teraz (YAGNI).** Klienci są zarządzani inline w kreatorze oferty
-  (`clientManager.js`), API i katalog kontaktów są dojrzałe; osobny ekran nie ma jeszcze konsumenta.
-  Wrócić, gdy pojawi się realny workflow (np. praca bez oferty, import bazy klientów).
-- **`productionStatus`: NIE.** Kartoteka Zleceń ma statusy `draft|accepted` mapowane w UI na
-  „Oczekujące/Zatwierdzone" — to kolejka akceptacji, nie śledzenie produkcji. Brak w UI obietnicy
-  etapów produkcji, więc nie budujemy maszyny stanów bez wymagania biznesowego.
+- **Ekran klientów: NIE teraz (YAGNI).** Klienci zarządzani inline w kreatorze oferty
+  (`clientManager.js`); osobny ekran nie ma konsumenta. Wrócić przy realnym workflow.
+- **`productionStatus`: NIE.** Kartoteka Zleceń ma `draft|accepted` = kolejka akceptacji,
+  nie śledzenie produkcji; brak obietnicy etapów w UI.
 
 ## Świadomie pominięte (z uzasadnieniem)
 
-- **P1-3 FK `offers_rel.pricelistVersionId`** — SQLite wymaga rebuild tabeli hot; stamp i tak jest
-  walidowany po stronie serwera (tylko ACTIVE, `ruryCrud.ts:184-191`). ROI niskie, ryzyko migracji
-  wysokie → odłożone.
-- **TRUST_PROXY** — domyślnie 1, udokumentowane (README/DEPLOYMENT/ADR-006); zmiana defaultu łamie
-  Secure-cookie detection za proxy. Konfiguracja deployu, nie kod.
-- **P1-17 ekran klientów + `productionStatus`** — decyzja produktowa, wymaga GO użytkownika.
+- **P1-3 FK `offers_rel.pricelistVersionId`** — SQLite wymaga redefinicji tabel; baza ~1.5 GB
+    - 30 backupów, a freeze jest walidowany aplikacyjnie (`ruryCrud.ts`, `studnieCrud.ts`) i
+      chroniony w `lifecycle.ts`. Nota długu: `docs/adr/ADR-001-sqlite.md` → „Znane długi".
+      Kontrola sierot: `scripts/audit-integrity.mjs`.
+- **TRUST_PROXY** — zostaje 1 (TLS terminuje Caddy, Node bind 127.0.0.1); dodana walidacja
+  wartości + WARN (`src/app.ts`). Bez wymuszania env — łamałoby Docker/świeże instalacje.
+- **PII `/api/users/for-assignment`** — zostaje: stopka wydruku renderuje email/telefon
+  (`offerPrintManager.js`); endpoint za `requireAuth` + `apiLimiter`, narzędzie wewnętrzne.
+- **`GET /api/orders-studnie/production` bez `data`** — brak konsumentów w repo, ale kontrakt
+  publiczny: nie zmieniamy odpowiedzi w ciemno; nota deprecacyjna w `docs/API.md`
+  (rekomendacja: `/index` i `/search`).
+- **Frontend price math SSoT** (`unitPrice * (1 - discount/100)` w 8 miejscach legacy) —
+  osobna paczka; SSoT backendowy (wydruk, ścieżka pieniężna) już jest.
+- **Kolizje globals 45 = 45 bez zapasu** — celowe: ratchet ma blokować nowe globalne.
 
-## Następne kandydatury (do wyboru)
+## Następne kandydatury
 
-1. Ekstrakcja 3 najgorętszych route'ów do `src/services` (ratchet już pilnuje kierunku).
-2. Higiena docs: `docs/plans` → `archive/`, liczby legacy w docs vs kod.
-3. P2 z audytu (przegląd `catch`/silent-fail, drobne UX).
+1. Ekstrakcja kolejnych route'ów do `src/services` (ratchet pilnuje kierunku: 237).
+2. Frontend: wspólny helper ceny + redukcja `window.*` w `public/js` (legacy, ostrożnie).
+3. UX/a11y P3: `aria-pressed` PEHD, `aria-label` pól liczbowych, glyphy → Lucide, `<title>` logo.
 
 ## Bramy
 
-`npm run validate` (zawiera `ratchet:check`), `npm run format`, `npm run version:check` — wszystkie
-zielone po ostatnim commicie (test:quick: 4931 pass / 7 skip).
+`npm run validate` (zawiera `ratchet:check`), `npm run format`, `npm run version:check` — zielone;
+`test:quick`: 4941 pass / 7 skip (po paczce M).
