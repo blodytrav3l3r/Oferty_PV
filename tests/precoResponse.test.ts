@@ -2,7 +2,7 @@
  * formatPrecoResponse — unit kształtu nested preco (pokrycie ogona precoPricingV2).
  * Tabele jako mocki; bez DB i HTTP.
  */
-import { formatPrecoResponse } from '../src/routes/precoPricingV2';
+import { formatPrecoResponse } from '../src/services/precoPricing';
 
 function tables(konfig: any[] = [], kinety: any[] = [], zakresy: any[] = []) {
     return {

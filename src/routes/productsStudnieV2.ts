@@ -19,7 +19,7 @@ import {
     resolveActive,
     resolveActivePricing
 } from '../services/pricelistVersionService';
-import { formatPrecoResponse } from './precoPricingV2';
+import { getPrecoDefault, getPrecoLive } from '../services/precoPricing';
 
 const router = express.Router();
 const writeLimiter = PRICELIST_WRITE_LIMITER;
@@ -421,18 +421,7 @@ router.get('/export.xlsx', requireAuth, async (req, res) => {
         });
         // F1: lustrzaność z importem — doklej PRECO z tego samego źródła
         // (live → tabele LIVE, default → *Default), kolejność jak stary eksport FE.
-        const precoResult =
-            source === 'live'
-                ? await formatPrecoResponse(
-                      prisma.precoKonfig,
-                      prisma.precoKinety,
-                      prisma.precoZakresy
-                  )
-                : await formatPrecoResponse(
-                      prisma.precoKonfigDefault,
-                      prisma.precoKinetyDefault,
-                      prisma.precoZakresyDefault
-                  );
+        const precoResult = source === 'live' ? await getPrecoLive() : await getPrecoDefault();
         const precoEntry = (precoResult.data[0] ?? {}) as Record<string, unknown>;
         const merged = { ...live, ...projectPrecoNestedToSheets(precoEntry) };
         const xlsx = await buildXlsx(liveSheetsToXlsxSheets(merged, 'Cennik'));

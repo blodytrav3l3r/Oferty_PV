@@ -4,7 +4,7 @@
 import fs from 'fs';
 import path from 'path';
 
-const BASELINE = 267;
+const BASELINE = 239;
 const ROOT = path.join(process.cwd(), 'src', 'routes');
 
 function walk(dir) {

@@ -21,7 +21,7 @@ import {
     projectVersionToLiveShape,
     requireExportSource
 } from '../src/services/pricelistVersionService';
-import { formatPrecoResponse } from '../src/routes/precoPricingV2';
+import { formatPrecoResponse } from '../src/services/precoPricing';
 
 const RURY_ROW = {
     id: 'R1',
