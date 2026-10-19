@@ -158,6 +158,9 @@ async function renderPdf(html: string): Promise<Buffer> {
 
     try {
         const page = await browser.newPage();
+        // Defence in depth: dane oferty to tekst — żaden skrypt z szablonu
+        // ani z wstrzykniętej wartości nie ma prawa się wykonać.
+        await page.setJavaScriptEnabled(false);
         await page.setContent(html, { waitUntil: 'domcontentloaded', timeout: 30_000 });
         const pdfBuffer = await page.pdf({
             format: 'A4',

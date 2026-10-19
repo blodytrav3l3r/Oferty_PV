@@ -350,6 +350,7 @@
                 (s, i) => `
             <button class="nav-btn nav-tile${i === 0 ? ' active' : ''}"
                 data-section="${s.id}" id="nav-${s.id}"
+                ${i === 0 ? 'aria-current="page"' : ''}
                 ${
                     s.isLink
                         ? `data-csp="$hashLink" data-csp-args="${escapeHtmlAttr(JSON.stringify([s.href]))}"`
@@ -562,7 +563,10 @@
 
         // Aktualizacja stanów aktywności przycisków nawigacji w rodzicu
         document.querySelectorAll('#spa-section-nav .nav-btn').forEach((btn) => {
-            btn.classList.toggle('active', btn.dataset.section === sectionId);
+            const isActive = btn.dataset.section === sectionId;
+            btn.classList.toggle('active', isActive);
+            if (isActive) btn.setAttribute('aria-current', 'page');
+            else btn.removeAttribute('aria-current');
         });
     }
 

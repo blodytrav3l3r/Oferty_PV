@@ -1,4 +1,4 @@
-/**
+﻿/**
  * P0-G: kolejka PDF — concurrency 2, overflow 429, metryki. Chromium mockowane.
  */
 const deferreds: Array<{ resolve: (v: unknown) => void }> = [];
@@ -13,6 +13,7 @@ jest.mock('puppeteer', () => ({
                 livePages++;
                 maxLivePages = Math.max(maxLivePages, livePages);
                 return {
+                    setJavaScriptEnabled: jest.fn(async () => {}),
                     setContent: jest.fn(async () => {}),
                     pdf: jest.fn(
                         () =>

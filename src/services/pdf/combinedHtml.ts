@@ -45,7 +45,7 @@ export async function generateCombinedHTML(
         : `OFERTA HANDLOWA ${combinedNumber}`;
     const validitySection = isOrder
         ? ''
-        : `<div><strong>Data ważności oferty:</strong> ${validityString}</div>`;
+        : `<div><strong>Data ważności oferty:</strong> ${escapeHtml(validityString)}</div>`;
 
     const templatePath = path.join(resolvePublicDir(), 'templates', 'ofertaStudnie.html');
     const template = loadPdfTemplate(templatePath);
@@ -114,9 +114,9 @@ export async function generateCombinedHTML(
     let html = template;
     html = html.replace(/\{\{TYTUL_DOKUMENTU\}\}/g, escapeHtml(titleText));
     html = html.replace(/\{\{VALIDITY_SECTION\}\}/g, validitySection);
-    html = html.replace(/\{\{NR_OFERTY\}\}/g, combinedNumber);
+    html = html.replace(/\{\{NR_OFERTY\}\}/g, escapeHtml(combinedNumber));
     html = html.replace(/\{\{DATA_OFERTY\}\}/g, formatDatePL(studnieData.createdAt));
-    html = html.replace(/\{\{DATA_WAZNOSCI\}\}/g, validityString);
+    html = html.replace(/\{\{DATA_WAZNOSCI\}\}/g, escapeHtml(validityString));
     html = html.replace(/\{\{DANE_KLIENTA\}\}/g, daneKlienta);
     html = html.replace(/\{\{DANE_INWESTYCJI\}\}/g, daneInwestycji);
     // TABELE_DN: same tabele studni (kolejno wg DN, bez nagłówka)

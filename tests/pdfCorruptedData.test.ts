@@ -1,4 +1,4 @@
-/**
+﻿/**
  * D-014 (P2-9): nieparsowalny JSON bloba oferty/zamówienia nie może dać
  * myląco-poprawnego PDF. Kontrakt best-effort (pdfGenerator.test.ts:
  * "fallback dla uszkodzonych danych JSON") zostaje — dokument jest
@@ -26,6 +26,7 @@ jest.mock('fs', () => ({
 jest.mock('puppeteer', () => ({
     launch: jest.fn().mockResolvedValue({
         newPage: jest.fn().mockResolvedValue({
+            setJavaScriptEnabled: jest.fn(),
             setContent: jest.fn(),
             pdf: jest.fn().mockResolvedValue(Buffer.from('mock-pdf'))
         }),
@@ -176,5 +177,43 @@ describe('D-014: corrupt blob → oznaczony dokument, valid → bez zmian', () =
         const studnieCtx = await buildStudnieOfferContextFromOfferId('s-3');
         const html = await generateCombinedHTML(studnieCtx, ruryCtx);
         expect(html).toContain('DANE_USZKODZONE');
+    });
+
+    it('rury: numer oferty i ważność są escapowane (brak HTML injection)', async () => {
+        (prisma.offers_rel.findUnique as jest.Mock).mockResolvedValue({
+            id: 'r-x',
+            offer_number: '<img src=x onerror=alert(1)>',
+            data: JSON.stringify({ validity: '<script>alert(1)</script>' }),
+            clientId: null,
+            userId: 'u1',
+            createdAt: new Date().toISOString()
+        });
+        const ctx = await buildRuryOfferContextFromOfferId('r-x');
+        const html = await generateRuryHTML(ctx);
+        expect(html).not.toContain('<img');
+        expect(html).not.toContain('<script>');
+        expect(html).toContain('&lt;img');
+        expect(html).toContain('&lt;script&gt;');
+    });
+
+    it('studnie: numer oferty i ważność są escapowane (brak HTML injection)', async () => {
+        (prisma.offers_studnie_rel.findUnique as jest.Mock).mockResolvedValue({
+            id: 's-x',
+            offer_number: '<img src=x onerror=alert(1)>',
+            data: JSON.stringify({
+                validity: '<script>alert(1)</script>',
+                clientName: 'Acme',
+                wellsExport: []
+            }),
+            clientId: null,
+            userId: 'u1',
+            createdAt: new Date().toISOString()
+        });
+        const ctx = await buildStudnieOfferContextFromOfferId('s-x');
+        const html = await generateStudnieHTML(ctx);
+        expect(html).not.toContain('<img');
+        expect(html).not.toContain('<script>');
+        expect(html).toContain('&lt;img');
+        expect(html).toContain('&lt;script&gt;');
     });
 });

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * D-018: timeout RUNNING jobu zwalnia slot natychmiast (reclaim).
  * Fake timers — deterministyczne 60 s bez czekania. Chromium mockowane.
  */
@@ -12,6 +12,7 @@ jest.mock('puppeteer', () => ({
             newPage: jest.fn(async () => {
                 newPageCalls++;
                 return {
+                    setJavaScriptEnabled: jest.fn(async () => {}),
                     setContent: jest.fn(async () => {}),
                     pdf: jest.fn(
                         () =>

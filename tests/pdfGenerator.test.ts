@@ -1,4 +1,4 @@
-import * as pdfGen from '../src/services/pdfGenerator';
+﻿import * as pdfGen from '../src/services/pdfGenerator';
 import fs from 'fs';
 import puppeteer from 'puppeteer';
 import prisma from '../src/prismaClient';
@@ -19,6 +19,7 @@ jest.mock('path', () => ({
 jest.mock('puppeteer', () => ({
     launch: jest.fn().mockResolvedValue({
         newPage: jest.fn().mockResolvedValue({
+            setJavaScriptEnabled: jest.fn(),
             setContent: jest.fn(),
             pdf: jest.fn().mockResolvedValue(Buffer.from('mock-pdf'))
         }),

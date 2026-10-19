@@ -653,6 +653,27 @@ function _excelVirtualRenderBody() {
                 if (lpCell) lpCell.textContent = String(logicalRow + 1);
             }
             // przywróć selekcję dla visible slice
+            const _selRange =
+                typeof window !== 'undefined' ? window._excelVirtualSelectionRange : null;
+            if (
+                _selRange &&
+                typeof _excelVirtualIsCellSelected === 'function' &&
+                typeof _excelVirtualLogicalCols !== 'undefined'
+            ) {
+                // Range trzyma logicalRow/logicalColId — po scrollu tbody jest
+                // odtwarzane, więc klasę trzeba nałożyć z modelu (stary array
+                // jest pusty dla Ctrl+A >1000).
+                for (let r = 0; r < rows.length; r++) {
+                    const logicalRow = Number(rows[r].getAttribute('data-logical-row'));
+                    const cells = rows[r].children;
+                    for (let ci = 0; ci < cells.length; ci++) {
+                        const colId = _excelVirtualLogicalCols[ci];
+                        if (colId !== undefined && _excelVirtualIsCellSelected(logicalRow, colId)) {
+                            cells[ci].classList.add('cell-selected');
+                        }
+                    }
+                }
+            }
             if (typeof _excelSelectedCells !== 'undefined' && _excelSelectedCells.length > 0) {
                 for (let s = 0; s < _excelSelectedCells.length; s++) {
                     const c = _excelSelectedCells[s];
@@ -1043,15 +1064,31 @@ function _excelVirtualHandleKeydown(e) {
             // O(1) range — czyść array i oznacz логicznie
             if (typeof _excelSelectedCells !== 'undefined') _excelSelectedCells = [];
             // zapisz jako virtual range w osobnej zmiennej
-            window._excelVirtualSelectionRange = { r1: 0, r2: total - 1, c1: 0, c2: 30 };
-            // wizualnie zaznacz visible slice
+            const maxCol =
+                typeof _excelVirtualLogicalCols !== 'undefined'
+                    ? Math.max(0, _excelVirtualLogicalCols.length - 1)
+                    : 30;
+            window._excelVirtualSelectionRange = { r1: 0, r2: total - 1, c1: 0, c2: maxCol };
+            // wizualnie zaznacz visible slice + wpisy w array dla akcji
+            // zakresowych (Delete) — pełny wybór trzyma range, array = tylko
+            // to, co widać (jak legacy) i nie rośnie do 400k.
             const tbody = document.querySelector('#excel-table-container tbody');
-            if (tbody)
-                tbody.querySelectorAll('td').forEach(function (td) {
-                    td.classList.add('cell-selected');
-                });
+            if (tbody) {
+                const visRows = tbody.querySelectorAll('tr[data-widx]');
+                for (let r = 0; r < visRows.length; r++) {
+                    const wIdx = parseInt(visRows[r].getAttribute('data-widx'), 10);
+                    const cells = visRows[r].querySelectorAll('td');
+                    for (let c = 0; c < cells.length; c++) {
+                        cells[c].classList.add('cell-selected');
+                        if (!isNaN(wIdx) && typeof _excelSelectedCells !== 'undefined')
+                            _excelSelectedCells.push({ wIdx: wIdx, colIdx: c });
+                    }
+                }
+            }
         } else {
-            // małe N — stary sposób
+            // małe N — stary sposób; range z poprzedniego Ctrl+A nie może zostać
+            // (copy preferuje range i skopiowałby stary pełny zakres).
+            window._excelVirtualSelectionRange = null;
             if (typeof _excelSelectedCells !== 'undefined') {
                 _excelSelectedCells = [];
                 for (let i = 0; i < total; i++) {
@@ -1078,6 +1115,14 @@ function _excelVirtualHandleKeydown(e) {
         document.addEventListener('keydown', _excelVirtualHandleKeydown, true);
     }
 })();
+
+// Czyści range Ctrl+A (>1000). Jedno miejsce zapisu window.* — collision gate.
+// Zwraca true, jeśli range faktycznie był ustawiony.
+function _excelVirtualClearSelectionRange() {
+    if (typeof window === 'undefined' || !window._excelVirtualSelectionRange) return false;
+    window._excelVirtualSelectionRange = null;
+    return true;
+}
 
 // Helper: isCellSelected for visible slice (O(1) range check, logical coords)
 function _excelVirtualIsCellSelected(logicalRow, logicalColId) {

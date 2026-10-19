@@ -205,7 +205,7 @@ export async function generateRuryHTML(data: RuryOfferData): Promise<string> {
     const titleText = isOrder ? `ZAMÓWIENIE ${docNumber}` : `OFERTA HANDLOWA ${docNumber}`;
     const validitySection = isOrder
         ? ''
-        : `<div><strong>Data ważności oferty:</strong> ${validityString}</div>`;
+        : `<div><strong>Data ważności oferty:</strong> ${escapeHtml(validityString)}</div>`;
 
     const templatePath = path.join(resolvePublicDir(), 'templates', 'ofertaRury.html');
     const template = loadPdfTemplate(templatePath);
@@ -254,9 +254,9 @@ export async function generateRuryHTML(data: RuryOfferData): Promise<string> {
     let html = template;
     html = html.replace(/\{\{TYTUL_DOKUMENTU\}\}/g, escapeHtml(titleText));
     html = html.replace(/\{\{VALIDITY_SECTION\}\}/g, validitySection);
-    html = html.replace(/\{\{NR_OFERTY\}\}/g, docNumber);
+    html = html.replace(/\{\{NR_OFERTY\}\}/g, escapeHtml(docNumber));
     html = html.replace(/\{\{DATA_OFERTY\}\}/g, formatDatePL(data.createdAt));
-    html = html.replace(/\{\{DATA_WAZNOSCI\}\}/g, validityString);
+    html = html.replace(/\{\{DATA_WAZNOSCI\}\}/g, escapeHtml(validityString));
     html = html.replace(/\{\{DANE_KLIENTA\}\}/g, daneKlienta);
     html = html.replace(/\{\{DANE_INWESTYCJI\}\}/g, daneInwestycji);
     html = html.replace(/\{\{TABELA_POZYCJI\}\}/g, corruptedBanner + tables);

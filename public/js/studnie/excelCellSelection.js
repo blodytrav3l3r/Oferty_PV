@@ -14,7 +14,22 @@ function _excelToggleCellClass(wIdx, colIdx, add) {
 }
 
 function _excelDeselectAllCells() {
-    if (_excelSelectedCells.length === 0) return;
+    // Range z Ctrl+A (>1000) nie ma wpisów w array — wyczyść go i zdejmij
+    // klasy z visible slice, inaczej zaznaczenie „wisi" po kliknięciu komórki.
+    const hadRange =
+        typeof _excelVirtualClearSelectionRange === 'function' &&
+        _excelVirtualClearSelectionRange();
+    if (hadRange) {
+        document
+            .querySelectorAll('#excel-table-container tbody td.cell-selected')
+            .forEach(function (td) {
+                td.classList.remove('cell-selected');
+            });
+    }
+    if (_excelSelectedCells.length === 0) {
+        if (hadRange) _excelUpdateSelectionSummary();
+        return;
+    }
     const copy = [..._excelSelectedCells];
     _excelSelectedCells = [];
     copy.forEach(function (cell) {
@@ -24,6 +39,11 @@ function _excelDeselectAllCells() {
 }
 
 function _excelSelectCell(wIdx, colIdx, ctrl, shift) {
+    // Ctrl+A (>1000) trzyma wybór w range, nie w array — każdy „ręczny"
+    // klik rozpoczyna nowy wybór, więc range musi zniknąć.
+    if (typeof _excelVirtualClearSelectionRange === 'function') {
+        _excelVirtualClearSelectionRange();
+    }
     if (shift && _excelLastClickedCell) {
         _excelDeselectAllCells();
         const minR = Math.min(_excelLastClickedCell.wIdx, wIdx);

@@ -150,6 +150,41 @@ describe('excelVirtual oracle — legacy vs virtual', () => {
         ctx.window._excelVirtualSelectionRange = undefined;
     });
 
+    test('Ctrl+A >1000: range obejmuje wszystkie logical kolumny', () => {
+        ctx.wells = [];
+        for (let i = 0; i < 1500; i++)
+            ctx.wells.push({ id: 'well-' + i, name: 'Ss' + i, dn: '1000' });
+        ctx._excelActiveTab = '1000';
+        ctx._excelVirtualBuildFiltered();
+        ctx._excelVirtualEnabled = true;
+        vm.runInContext(
+            '_excelVirtualLogicalCols = Array.from({length: 34}, function(_,i){ return "c" + i; })',
+            ctx
+        );
+        const origGet = ctx.document.getElementById;
+        ctx.document.getElementById = (id: string) => {
+            if (id === 'excel-table-overlay') return {};
+            if (id === 'excel-table-container') return null;
+            return null;
+        };
+        const fakeEvent = {
+            ctrlKey: true,
+            shiftKey: false,
+            altKey: false,
+            key: 'a',
+            target: { tagName: 'DIV' },
+            preventDefault: () => {}
+        };
+        ctx._excelVirtualHandleKeydown(fakeEvent);
+        const rg = ctx.window._excelVirtualSelectionRange;
+        expect(rg.r1).toBe(0);
+        expect(rg.r2).toBe(1499);
+        expect(rg.c2).toBe(33);
+        ctx.document.getElementById = origGet;
+        ctx.window._excelVirtualSelectionRange = undefined;
+        ctx._excelVirtualEnabled = false;
+    });
+
     test('XL-01: virtual copy pomija wiersze ukryte filtrem', () => {
         ctx.wells = [
             { id: 'well-0', name: 'Alfa', dn: '1000', config: [], przejscia: [] },

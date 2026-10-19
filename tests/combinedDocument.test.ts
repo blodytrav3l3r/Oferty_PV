@@ -1,4 +1,4 @@
-import fs from 'fs';
+﻿import fs from 'fs';
 import { Packer } from 'docx';
 import JSZip from 'jszip';
 import { buildCombinedDocument } from '../src/services/docx/combined';
@@ -14,6 +14,7 @@ jest.mock('fs', () => ({
 jest.mock('puppeteer', () => ({
     launch: jest.fn().mockResolvedValue({
         newPage: jest.fn().mockResolvedValue({
+            setJavaScriptEnabled: jest.fn(),
             setContent: jest.fn(),
             pdf: jest.fn().mockResolvedValue(Buffer.from('mock-pdf'))
         }),

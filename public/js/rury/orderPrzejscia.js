@@ -21,7 +21,7 @@ function renderPrzejsciaDetailsTable(_existingData) {
     }
 
     let html = `<table class="rury-table text-xs" style="white-space:nowrap;" >
-        <th scope="col"ead>
+        <thead>
             <tr>
                 <th scope="col" class="w-22pct">Rodzaj przej\u015Bcia</th>
                 <th scope="col" class="w-12pct">DN OD</th>

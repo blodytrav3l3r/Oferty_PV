@@ -660,6 +660,9 @@ function _excelHandleKeydown(e) {
         // P4-A1: w edytowanym polu natywne select-all tekstu (jak Ctrl+Z/Del).
         if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
         e.preventDefault();
+        /* Virtual (capture) ustawił już range dla >1000 — array to tylko visible
+           slice; nie nadpisuj go wyborem widocznych wierszy i nie czyść range. */
+        if (typeof window !== 'undefined' && window._excelVirtualSelectionRange) return;
         /* Tylko wiersze widoczne (filtr wyszukiwarki) — ukryte pomijamy,
            inaczej Delete/Ctrl+X po Ctrl+A wyczyściłby ukryte studnie. */
         const allRows = _excelGetVisibleRows();
