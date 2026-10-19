@@ -167,7 +167,7 @@ function renderOfferItems() {
             } else if (remaining > 0) {
                 const inputId = 'order-qty-' + item.uid;
                 orderCell = `<td class="text-center text-nowrap" data-csp-stop="1" >
-                  <input type="number" id="${inputId}" class="order-partial-qty" value="${remaining}" min="1" max="${remaining}" title="Ilość do zamówienia (pozostało ${remaining} z ${item.quantity})">
+                  <input type="number" id="${inputId}" class="order-partial-qty" value="${remaining}" min="1" max="${remaining}" title="Ilość do zamówienia (pozostało ${remaining} z ${item.quantity})" aria-label="Ilość do zamówienia (pozostało ${remaining} z ${item.quantity})">
                   <span class="order-qty-max">/ ${item.quantity}</span>
                 </td>`;
             } else {
@@ -186,14 +186,14 @@ function renderOfferItems() {
           <td class="rury-col-num text-right" ><span class="text-center-block">${fmt(item.unitPrice)}</span></td>
           <td class="text-right qty-cell"><span class="text-center-block">${
               hasLength
-                  ? `<input type="number" class="edit-input w-75-c"  min="0" step="0.1" value="${metersVal}" data-csp-2="$select" data-csp-3="updateItemMeters" data-csp-3-args="${escapeHtmlAttr(JSON.stringify([i, '$value']))}" data-csp-3-on="change" title="Metry bieżące"${lockAttr}> m`
+                  ? `<input type="number" class="edit-input w-75-c"  min="0" step="0.1" value="${metersVal}" data-csp-2="$select" data-csp-3="updateItemMeters" data-csp-3-args="${escapeHtmlAttr(JSON.stringify([i, '$value']))}" data-csp-3-on="change" title="Metry bieżące" aria-label="Metry bieżące"${lockAttr}> m`
                   : '—'
           }</span></td>
-          <td class="text-right qty-cell"><span class="text-center-block"><input type="number" class="edit-input w-75-c"  min="1" value="${item.quantity}" data-csp-2="$select" data-csp-3="updateItem" data-csp-3-args="${escapeHtmlAttr(JSON.stringify([i, 'quantity', '$value']))}" data-csp-3-on="change"${lockAttr}> szt.</span></td>
+          <td class="text-right qty-cell"><span class="text-center-block"><input type="number" class="edit-input w-75-c"  min="1" value="${item.quantity}" data-csp-2="$select" data-csp-3="updateItem" data-csp-3-args="${escapeHtmlAttr(JSON.stringify([i, 'quantity', '$value']))}" data-csp-3-on="change" aria-label="Ilość [szt.]"${lockAttr}> szt.</span></td>
           ${orderCell}
-          <td class="text-right qty-cell"><span class="text-center-block"><input type="number" class="edit-input w-75-c"  min="0" max="100" step="0.5" value="${item.discount}" data-csp-2="$select" data-csp-3="updateItem" data-csp-3-args="${escapeHtmlAttr(JSON.stringify([i, 'discount', '$value']))}" data-csp-3-on="change"${lockAttr}>%</span></td>
+          <td class="text-right qty-cell"><span class="text-center-block"><input type="number" class="edit-input w-75-c"  min="0" max="100" step="0.5" value="${item.discount}" data-csp-2="$select" data-csp-3="updateItem" data-csp-3-args="${escapeHtmlAttr(JSON.stringify([i, 'discount', '$value']))}" data-csp-3-on="change" aria-label="Rabat [%]"${lockAttr}>%</span></td>
           <td class="rury-col-num text-right" ><span class="text-center-block">${fmt(unitTotal)}</span></td>
-          <td class="text-right"><span class="text-center-block"><input type="number" class="edit-input w-75-c"  min="0" step="0.01" value="${item.surcharge || 0}" data-csp-2="$select" data-csp-3="updateItem" data-csp-3-args="${escapeHtmlAttr(JSON.stringify([i, 'surcharge', '$value']))}" data-csp-3-on="change"${lockAttr}></span></td>
+          <td class="text-right"><span class="text-center-block"><input type="number" class="edit-input w-75-c"  min="0" step="0.01" value="${item.surcharge || 0}" data-csp-2="$select" data-csp-3="updateItem" data-csp-3-args="${escapeHtmlAttr(JSON.stringify([i, 'surcharge', '$value']))}" data-csp-3-on="change" aria-label="Dopłata [PLN]"${lockAttr}></span></td>
           <td class="rury-col-num" style="text-align:right;color:var(--warn)"><span class="text-center-block">${transportPerUnit > 0 ? fmt(transportPerUnit) : '—'}</span></td>
           <td class="rury-col-num" style="text-align:right;font-weight: var(--fw-semibold)"><span class="text-center-block">${fmt(netto)}</span></td>
           <td class="text-right"><span class="text-center-block"><input type="text" class="edit-input" style="width:200px;text-align:center" value="${escapeHtmlAttr(item.commercialVersion || '')}" data-csp="updateItemText" data-csp-args="${escapeHtmlAttr(JSON.stringify([i, 'commercialVersion', '$value']))}" data-csp-on="change" placeholder="Notatki"${lockAttr}></span></td>
@@ -203,8 +203,8 @@ function renderOfferItems() {
                   getPipeInnerArea(item.productId) > 0 && !item.autoAdded
                       ? `
                 <div class="pehd-btn-stack">
-                  <button class="btn btn-sm btn-secondary pehd-btn ${active3mm}" data-action="addPehdToPipe" data-i="${i}" data-fmt="PEHD-3MM" title="Dolicz wkładkę 3mm">+ PEHD 3mm</button>
-                  <button class="btn btn-sm btn-secondary pehd-btn ${active4mm}" data-action="addPehdToPipe" data-i="${i}" data-fmt="PEHD-4MM" title="Dolicz wkładkę 4mm">+ PEHD 4mm</button>
+                  <button class="btn btn-sm btn-secondary pehd-btn ${active3mm}" data-action="addPehdToPipe" data-i="${i}" data-fmt="PEHD-3MM" title="Dolicz wkładkę 3mm" aria-pressed="${item.pehdType === 'PEHD-3MM'}" aria-label="Wkładka PEHD 3mm">+ PEHD 3mm</button>
+                  <button class="btn btn-sm btn-secondary pehd-btn ${active4mm}" data-action="addPehdToPipe" data-i="${i}" data-fmt="PEHD-4MM" title="Dolicz wkładkę 4mm" aria-pressed="${item.pehdType === 'PEHD-4MM'}" aria-label="Wkładka PEHD 4mm">+ PEHD 4mm</button>
                 </div>
               `
                       : ''

@@ -18,12 +18,13 @@ Wersja: 1.46.5. Push zablokowany do jawnego GO.
 
 ## Zrobione — P2/P3 (paczki J, K, M, N)
 
-| Paczka | Commit    | Zakres                                                                                       |
-| ------ | --------- | -------------------------------------------------------------------------------------------- |
-| J      | `76d53f3` | `PUBLIC_BASE_URL` + walidacja Host (open-redirect), `sanitizeForLog` (log forging), limitery |
-| K      | `b86aad7` | bramka flaky (`--max-flaky`), `BASE_URL` w harnessach, `test:excel-visual`                   |
-| M      | (ten)     | SSoT `computeUnitPriceNetto` (PDF), 4× silent catch → log, nota API dla `GET /production`    |
-| N      | (ten)     | liczby legacy w AGENTS.md (`.onclick` 37→21), amendment ADR-004 (273→237), nota długu FK     |
+| Paczka | Commit    | Zakres                                                                                           |
+| ------ | --------- | ------------------------------------------------------------------------------------------------ |
+| J      | `76d53f3` | `PUBLIC_BASE_URL` + walidacja Host (open-redirect), `sanitizeForLog` (log forging), limitery     |
+| K      | `b86aad7` | bramka flaky (`--max-flaky`), `BASE_URL` w harnessach, `test:excel-visual`                       |
+| M      | `982688b` | SSoT `computeUnitPriceNetto` (PDF, NaN→0), 4× silent catch → log, nota API dla `GET /production` |
+| N      | `aa22808` | liczby legacy w AGENTS.md (`.onclick` 37→21), amendment ADR-004 (273→237), nota długu FK         |
+| O      | (ten)     | a11y P3: `aria-pressed` PEHD, `aria-label` pól oferty, `<title>/<desc>` logo, `aria-hidden` ★    |
 
 ## Decyzja produktowa P1-17 (2026-10-19)
 
@@ -47,15 +48,23 @@ Wersja: 1.46.5. Push zablokowany do jawnego GO.
   (rekomendacja: `/index` i `/search`).
 - **Frontend price math SSoT** (`unitPrice * (1 - discount/100)` w 8 miejscach legacy) —
   osobna paczka; SSoT backendowy (wydruk, ścieżka pieniężna) już jest.
+- **Inline styles w empty states** (`kartotekaSearch.js`, `orderPrzejscia.js`) — wymaga nowych
+  klas CSS i _weryfikacji wizualnej w przeglądarce_, której audyt nie miał; refaktor w ciemno
+  to ryzyko regresji layoutu bez dowodu → odłożone do paczki z runtime (Playwright).
+- **`★` w tekstach** (`clientManager.js` lista/opcje, `carePanel.js` pill) — gwiazdka jest częścią
+  tekstu (`contentText`), nie da się jej zamienić na ikonę Lucide bez zmiany struktury DOM;
+  dodano `aria-hidden` tam, gdzie gwiazdka jest osobnym elementem obok etykiety.
+- **Excel `localStorage` swallow** (`excelState.js`, 7×) — celowy best-effort cache szerokości
+  kolumn (brak zapisu = brak problemu); Excel to protected zone, log nie wnosi wartości.
 - **Kolizje globals 45 = 45 bez zapasu** — celowe: ratchet ma blokować nowe globalne.
 
 ## Następne kandydatury
 
 1. Ekstrakcja kolejnych route'ów do `src/services` (ratchet pilnuje kierunku: 237).
 2. Frontend: wspólny helper ceny + redukcja `window.*` w `public/js` (legacy, ostrożnie).
-3. UX/a11y P3: `aria-pressed` PEHD, `aria-label` pól liczbowych, glyphy → Lucide, `<title>` logo.
+3. Runtime a11y/diff bramka Playwright (kontrast, 375/768/1440) — odblokowuje inline styles.
 
 ## Bramy
 
 `npm run validate` (zawiera `ratchet:check`), `npm run format`, `npm run version:check` — zielone;
-`test:quick`: 4941 pass / 7 skip (po paczce M).
+`test:quick`: 4946 pass / 7 skip (po paczce O).

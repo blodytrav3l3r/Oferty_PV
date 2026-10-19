@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 130" width="100%" height="100%">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 130" width="100%" height="100%" role="img" aria-labelledby="sok-logo-title sok-logo-desc">
+    <title id="sok-logo-title">S.O.K. — System Ofert i Kalkulacji</title>
+    <desc id="sok-logo-desc">Logo aplikacji: sygnet z motywem studni i rur oraz napis S.O.K. — System Ofert i Kalkulacji.</desc>
     <defs>
         <!-- Gradienty dopasowane do modułów z UI -->
         <linearGradient id="uiStudnie" x1="0%" y1="0%" x2="100%" y2="100%">

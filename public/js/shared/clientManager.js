@@ -542,6 +542,9 @@ function catalogEditorRow(container, clientId, r) {
     star.appendChild(radio);
     const starMark = document.createElement('span');
     starMark.textContent = '★';
+    // Dekoracja: radio obok ma już aria-label („Główna osoba do kontaktu”) —
+    // gwiazdka nie może dublować się w nazwie dostępnej.
+    starMark.setAttribute('aria-hidden', 'true');
     star.appendChild(starMark);
 
     // Jawne pola z labelami (placeholder znika przy pisaniu, label nie).
