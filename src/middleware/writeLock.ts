@@ -54,3 +54,10 @@ export function createModuleLock() {
 
     return { acquireLock, runWithLock };
 }
+
+/**
+ * Jeden lock dla całej domeny cenników: edycja produktów (rury/studnie/preco)
+ * i zapis defaults wzajemnie się wykluczają — inaczej buildPricePackage czyta
+ * LIVE w połowie cudzego zapisu (torn snapshot).
+ */
+export const pricelistLock = createModuleLock();

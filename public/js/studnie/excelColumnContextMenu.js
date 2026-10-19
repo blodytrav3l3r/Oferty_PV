@@ -50,7 +50,8 @@ function _excelColMenuActionHtml(action) {
     return (
         '<div class="excel-ctx-item' +
         (action.disabled ? ' is-disabled' : '') +
-        '"' +
+        '" role="menuitem" tabindex="-1"' +
+        (action.disabled ? ' aria-disabled="true"' : '') +
         (datacsp ? ' ' + datacsp : '') +
         ' style="color:' +
         color +
@@ -130,6 +131,33 @@ function _excelOpenColContextMenu(th, x, y) {
         if (e.key === 'Escape') {
             e.stopPropagation();
             _excelCloseColContextMenu();
+            return;
+        }
+        /* A11y: roving focus + aktywacja Enter/Space (klik delegowany przez data-csp). */
+        const items = Array.from(menu.querySelectorAll('[role="menuitem"]'));
+        if (!items.length) return;
+        const current = items.indexOf(document.activeElement);
+        const enabled = items.filter((i) => i.getAttribute('aria-disabled') !== 'true');
+        const moveTo = (idx) => {
+            if (!enabled.length) return;
+            const next = enabled[((idx % enabled.length) + enabled.length) % enabled.length];
+            next.focus();
+        };
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            moveTo(current < 0 ? 0 : enabled.indexOf(items[current]) + 1);
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            moveTo(current < 0 ? -1 : enabled.indexOf(items[current]) - 1);
+        } else if (e.key === 'Home') {
+            e.preventDefault();
+            moveTo(0);
+        } else if (e.key === 'End') {
+            e.preventDefault();
+            moveTo(enabled.length - 1);
+        } else if ((e.key === 'Enter' || e.key === ' ') && current >= 0) {
+            e.preventDefault();
+            items[current].click();
         }
     };
     const onScroll = () => _excelCloseColContextMenu();
@@ -141,6 +169,8 @@ function _excelOpenColContextMenu(th, x, y) {
         document.removeEventListener('keydown', onDocKeydown, true);
         document.removeEventListener('scroll', onScroll, true);
     };
+    const firstEnabled = menu.querySelector('[role="menuitem"]:not([aria-disabled="true"])');
+    if (firstEnabled && typeof firstEnabled.focus === 'function') firstEnabled.focus();
 }
 
 function _excelCloseColContextMenu() {

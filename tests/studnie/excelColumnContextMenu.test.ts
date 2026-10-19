@@ -11,6 +11,7 @@ describe('_excelGetColMenuActions — akcje menu kontekstowego kolumny Excel', (
             studnieProducts: [],
             wells: [],
             window: {},
+            escapeHtml: (s: unknown) => String(s),
             logger: { info: () => {}, warn: () => {}, error: () => {} }
         };
         const base = path.join(__dirname, '../../public/js/studnie');
@@ -78,5 +79,33 @@ describe('_excelGetColMenuActions — akcje menu kontekstowego kolumny Excel', (
         const sorted = ctx._excelGetColMenuActions({ id: 'krag_500', type: 'number' });
         expect(sorted.some((a: any) => a.id === 'sortClear' && !a.disabled)).toBe(true);
         ctx._excelResetSort();
+    });
+
+    test('a11y: pozycje menu mają role=menuitem, tabindex i aria-disabled', () => {
+        const active = ctx._excelColMenuActionHtml({
+            id: 'hide',
+            label: 'Ukryj kolumnę',
+            disabled: false
+        });
+        expect(active).toContain('role="menuitem"');
+        expect(active).toContain('tabindex="-1"');
+        expect(active).not.toContain('aria-disabled');
+        const disabled = ctx._excelColMenuActionHtml({
+            id: 'static',
+            label: 'Kolumna stała',
+            disabled: true
+        });
+        expect(disabled).toContain('aria-disabled="true"');
+    });
+
+    test('a11y: uchwyt resize ma rolę separator i obsługę klawiatury', () => {
+        const src = fs.readFileSync(
+            path.join(__dirname, '../../public/js/studnie/excelColumnResize.js'),
+            'utf8'
+        );
+        expect(src).toContain("setAttribute('role', 'separator')");
+        expect(src).toContain("setAttribute('aria-orientation', 'vertical')");
+        expect(src).toContain("setAttribute('aria-valuenow'");
+        expect(src).toContain("e.key !== 'ArrowLeft' && e.key !== 'ArrowRight'");
     });
 });

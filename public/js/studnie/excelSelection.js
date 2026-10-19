@@ -39,6 +39,23 @@ function _excelInitColumnSelect() {
             e.stopPropagation();
             _excelOpenColContextMenu(th, e.clientX, e.clientY);
         });
+        /* A11y: nagłówek kanoniczny (data-excel-col) fokusowalny; Shift+F10 /
+           klawisz Menu otwiera menu kontekstowe pod nagłówkiem. */
+        if (th.getAttribute('data-excel-col')) {
+            /** @type {HTMLElement} */ (th).tabIndex = 0;
+            th.addEventListener('keydown', (/** @type {KeyboardEvent} */ e) => {
+                if (e.key !== 'ContextMenu' && !(e.shiftKey && e.key === 'F10')) return;
+                if (typeof _excelOpenColContextMenu !== 'function') return;
+                e.preventDefault();
+                e.stopPropagation();
+                const rect = th.getBoundingClientRect();
+                _excelOpenColContextMenu(
+                    th,
+                    Math.round(rect.left + 12),
+                    Math.round(rect.bottom + 2)
+                );
+            });
+        }
     });
 
     // Klik w wiersz/tbody odznacza kolumny

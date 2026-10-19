@@ -1,4 +1,6 @@
-import { createModuleLock } from '../src/middleware/writeLock';
+import { createModuleLock, pricelistLock } from '../src/middleware/writeLock';
+import fs from 'fs';
+import path from 'path';
 
 // ─── T3.2: writeLock ownership + timeout (A-05) ─────────────
 
@@ -113,5 +115,26 @@ describe('runWithLock (helper DRY)', () => {
         const lock = await acquireLock();
         expect(lock).not.toBeNull();
         lock!.release();
+    });
+
+    it('pricelistLock jest jednym współdzielonym mutexem', async () => {
+        const lock = await pricelistLock.acquireLock();
+        expect(lock).not.toBeNull();
+        lock!.release();
+    });
+
+    it('wszystkie trasy cenników używają wspólnego pricelistLock', () => {
+        const routes = [
+            'productsV2.ts',
+            'productsStudnieV2.ts',
+            'precoPricingV2.ts',
+            'priceOverrides.ts'
+        ];
+        for (const file of routes) {
+            const src = fs.readFileSync(path.join(__dirname, '..', 'src', 'routes', file), 'utf8');
+            expect(src).toMatch(/import \{ pricelistLock \} from '\.\.\/middleware\/writeLock'/);
+            expect(src).toMatch(/const \{ runWithLock \} = pricelistLock;/);
+            expect(src).not.toMatch(/createModuleLock\(\)/);
+        }
     });
 });

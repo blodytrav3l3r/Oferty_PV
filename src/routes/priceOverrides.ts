@@ -1,12 +1,12 @@
 import express from 'express';
 import { requireAuth, requireAdmin } from '../middleware/auth';
 import { priceOverrideService } from '../services/priceOverrideService';
-import { createModuleLock } from '../middleware/writeLock';
+import { pricelistLock } from '../middleware/writeLock';
 import { PRICELIST_WRITE_LIMITER } from '../middleware/rateLimiters';
 import { logger } from '../utils/logger';
 
 const router = express.Router();
-const { runWithLock } = createModuleLock();
+const { runWithLock } = pricelistLock;
 
 router.post(
     '/save-defaults',

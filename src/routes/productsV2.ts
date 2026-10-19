@@ -5,7 +5,7 @@ import { validateData } from '../validators/authSchema';
 import { PRICELIST_WRITE_LIMITER } from '../middleware/rateLimiters';
 import { pricelistDataSchema, productPatchSchema } from '../validators/offerSchemas';
 import { requireFinitePrice, InvalidPriceError } from '../validators/finiteNumbers';
-import { createModuleLock } from '../middleware/writeLock';
+import { pricelistLock } from '../middleware/writeLock';
 import prisma from '../prismaClient';
 import { buildXlsx } from '../utils/minimalXlsx';
 import {
@@ -25,7 +25,7 @@ const writeLimiter = PRICELIST_WRITE_LIMITER;
 
 const ALLOWED_FIELDS = ['name', 'category', 'price', 'transport', 'weight', 'area'] as const;
 
-const { runWithLock } = createModuleLock();
+const { runWithLock } = pricelistLock;
 
 // ──────────────────────────────────────────
 // GET / — wszystkie produkty z ProductsRury

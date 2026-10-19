@@ -84,45 +84,95 @@ function _excelInitColumnResize() {
         let startWidth = 0;
         let lastDiff = 0;
 
+        const colIndexInit = Array.from(headers).indexOf(th);
+
+        /* Szerokość trafia na h1 + h2 + h3 + td po indeksie kanonicznym.
+           Wiersz h3 grupuje PRZ (colspan=4) — mapowanie przez helper. */
+        const applyColumnWidth = (ci, newWidth) => {
+            const h2ths = headRows.length > 2 ? headRows[2].querySelectorAll('th') : [];
+            const h3ths = headRows[0].querySelectorAll('th');
+            const bodyRows = table.querySelectorAll('tbody tr');
+            const h1th = headers[ci];
+            if (h1th) {
+                /* TASK-038: szerokości kolumn to dane runtime (resize) —
+                   inline celowo, nie klasa (zgodnie z planem TASK-038).
+                   maxWidth jako twardy klin pod table-layout:auto. */
+                h1th.style.minWidth = newWidth + 'px';
+                h1th.style.width = newWidth + 'px';
+                h1th.style.maxWidth = newWidth + 'px';
+            }
+            if (h2ths[ci]) {
+                h2ths[ci].style.minWidth = newWidth + 'px';
+                h2ths[ci].style.width = newWidth + 'px';
+                h2ths[ci].style.maxWidth = newWidth + 'px';
+            }
+            if (typeof _excelApplyWidthToH3 === 'function')
+                _excelApplyWidthToH3(h3ths, ci, newWidth);
+            bodyRows.forEach((row) => {
+                const cell = row.children[ci];
+                if (cell) {
+                    cell.style.minWidth = newWidth + 'px';
+                    cell.style.width = newWidth + 'px';
+                    cell.style.maxWidth = newWidth + 'px';
+                }
+            });
+        };
+
+        /* Zapis szerokości pod stabilnym colId — przeżywa dodanie/usunięcie
+           kolumny przejścia (indeks nie). */
+        const saveColumnWidth = (ci, newWidth) => {
+            const h1th = headers[ci];
+            const colId =
+                h1th && typeof h1th.getAttribute === 'function'
+                    ? h1th.getAttribute('data-excel-col')
+                    : null;
+            const key =
+                typeof _excelColWidthKey === 'function'
+                    ? _excelColWidthKey(_excelActiveTab, colId || String(ci))
+                    : _excelActiveTab + '-' + (colId || String(ci));
+            _excelColWidths[key] = newWidth;
+            /* Migracja: usuń legacy klucz numeryczny tej kolumny */
+            if (colId) {
+                const legacyKey = _excelActiveTab + '-' + ci;
+                if (legacyKey !== key && legacyKey in _excelColWidths)
+                    delete _excelColWidths[legacyKey];
+            }
+        };
+
+        /* A11y: uchwyt fokusowalny, strzałki zmieniają szerokość (±10 px, Shift ±30). */
+        handle.setAttribute('role', 'separator');
+        handle.setAttribute('aria-orientation', 'vertical');
+        handle.setAttribute('aria-label', 'Zmień szerokość kolumny (strzałki)');
+        handle.setAttribute('aria-valuemin', '20');
+        handle.tabIndex = 0;
+        handle.addEventListener('keydown', (/** @type {KeyboardEvent} */ e) => {
+            if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+            e.preventDefault();
+            e.stopPropagation();
+            const minW = typeof _excelColMinWidth === 'function' ? _excelColMinWidth() : 20;
+            const step = e.shiftKey ? 30 : 10;
+            const delta = e.key === 'ArrowLeft' ? -step : step;
+            const newWidth = Math.max(minW, /** @type {HTMLElement} */ (th).offsetWidth + delta);
+            const colsToResize = _excelSelectedCols.includes(colIndexInit)
+                ? _excelSelectedCols
+                : [colIndexInit];
+            colsToResize.forEach((ci) => {
+                applyColumnWidth(ci, newWidth);
+                saveColumnWidth(ci, newWidth);
+            });
+            handle.setAttribute('aria-valuenow', String(newWidth));
+            if (typeof _excelSaveColWidths === 'function') _excelSaveColWidths();
+            if (typeof _excelApplyStickyColumns === 'function') _excelApplyStickyColumns();
+        });
+        handle.setAttribute('aria-valuenow', String(/** @type {HTMLElement} */ (th).offsetWidth));
+
         handle.addEventListener('mousedown', (/** @type {MouseEvent} */ e) => {
             startX = e.clientX;
             startWidth = /** @type {HTMLElement} */ (th).offsetWidth;
             lastDiff = 0;
             e.preventDefault();
 
-            const colIndex = Array.from(headers).indexOf(th);
-            const h2ths = headRows.length > 2 ? headRows[2].querySelectorAll('th') : [];
-            const h3ths = headRows[0].querySelectorAll('th');
-            const bodyRows = table.querySelectorAll('tbody tr');
-
-            /* Szerokość trafia na h1 + h2 + h3 + td po indeksie kanonicznym.
-               Wiersz h3 grupuje PRZ (colspan=4) — mapowanie przez helper. */
-            const applyWidth = (ci, newWidth) => {
-                const h1th = headers[ci];
-                if (h1th) {
-                    /* TASK-038: szerokości kolumn to dane runtime (resize) —
-                       inline celowo, nie klasa (zgodnie z planem TASK-038).
-                       maxWidth jako twardy klin pod table-layout:auto. */
-                    h1th.style.minWidth = newWidth + 'px';
-                    h1th.style.width = newWidth + 'px';
-                    h1th.style.maxWidth = newWidth + 'px';
-                }
-                if (h2ths[ci]) {
-                    h2ths[ci].style.minWidth = newWidth + 'px';
-                    h2ths[ci].style.width = newWidth + 'px';
-                    h2ths[ci].style.maxWidth = newWidth + 'px';
-                }
-                if (typeof _excelApplyWidthToH3 === 'function')
-                    _excelApplyWidthToH3(h3ths, ci, newWidth);
-                bodyRows.forEach((row) => {
-                    const cell = row.children[ci];
-                    if (cell) {
-                        cell.style.minWidth = newWidth + 'px';
-                        cell.style.width = newWidth + 'px';
-                        cell.style.maxWidth = newWidth + 'px';
-                    }
-                });
-            };
+            const colIndex = colIndexInit;
 
             const onMove = (/** @type {MouseEvent} */ e2) => {
                 const diff = e2.clientX - startX;
@@ -135,7 +185,7 @@ function _excelInitColumnResize() {
                     ? _excelSelectedCols
                     : [colIndex];
 
-                colsToResize.forEach((ci) => applyWidth(ci, newWidth));
+                colsToResize.forEach((ci) => applyColumnWidth(ci, newWidth));
             };
 
             const onUp = () => {
@@ -143,31 +193,13 @@ function _excelInitColumnResize() {
                 document.removeEventListener('mouseup', onUp);
                 document.body.style.cursor = '';
                 document.body.style.userSelect = '';
-                /* Zapisz szerokości pod stabilnym colId — przeżywają
-                   dodanie/usunięcie kolumny przejścia (indeks nie). */
                 const minW = typeof _excelColMinWidth === 'function' ? _excelColMinWidth() : 20;
                 const newWidth = Math.max(minW, startWidth + lastDiff);
+                handle.setAttribute('aria-valuenow', String(newWidth));
                 const colsToResize = _excelSelectedCols.includes(colIndex)
                     ? _excelSelectedCols
                     : [colIndex];
-                colsToResize.forEach((ci) => {
-                    const h1th = headers[ci];
-                    const colId =
-                        h1th && typeof h1th.getAttribute === 'function'
-                            ? h1th.getAttribute('data-excel-col')
-                            : null;
-                    const key =
-                        typeof _excelColWidthKey === 'function'
-                            ? _excelColWidthKey(_excelActiveTab, colId || String(ci))
-                            : _excelActiveTab + '-' + (colId || String(ci));
-                    _excelColWidths[key] = newWidth;
-                    /* Migracja: usuń legacy klucz numeryczny tej kolumny */
-                    if (colId) {
-                        const legacyKey = _excelActiveTab + '-' + ci;
-                        if (legacyKey !== key && legacyKey in _excelColWidths)
-                            delete _excelColWidths[legacyKey];
-                    }
-                });
+                colsToResize.forEach((ci) => saveColumnWidth(ci, newWidth));
                 /* Trwałość szerokości po zakończeniu przeciągania (localStorage) */
                 if (typeof _excelSaveColWidths === 'function') _excelSaveColWidths();
                 /* Sticky left zależy od rzeczywistych szerokości — przelicz */

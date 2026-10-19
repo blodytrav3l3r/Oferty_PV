@@ -5,7 +5,7 @@ import { PRECO_PRICING_LIMITER } from '../middleware/rateLimiters';
 import { validateData } from '../validators/authSchema';
 import { precoPricingUpdateSchema, precoPricingPatchSchema } from '../validators/offerSchemas';
 import { requireFinitePrice, InvalidPriceError } from '../validators/finiteNumbers';
-import { createModuleLock } from '../middleware/writeLock';
+import { pricelistLock } from '../middleware/writeLock';
 import prisma from '../prismaClient';
 import { buildXlsx } from '../utils/minimalXlsx';
 import {
@@ -24,7 +24,7 @@ const writeLimiter = PRECO_PRICING_LIMITER;
 
 const RANGE_TYPES = ['spadekKineta', 'spadekMufa', 'uniesienie', 'redukcja'] as const;
 
-const { runWithLock } = createModuleLock();
+const { runWithLock } = pricelistLock;
 
 // ──────────────────────────────────────────
 // formatPrecoResponse — odczyt z Preco* tables → format zagnieżdżony

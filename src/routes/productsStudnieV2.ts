@@ -5,7 +5,7 @@ import { validateData } from '../validators/authSchema';
 import { PRICELIST_WRITE_LIMITER } from '../middleware/rateLimiters';
 import { pricelistDataSchema, productStudniePatchSchema } from '../validators/offerSchemas';
 import { requireFinitePrice, InvalidPriceError } from '../validators/finiteNumbers';
-import { createModuleLock } from '../middleware/writeLock';
+import { pricelistLock } from '../middleware/writeLock';
 import prisma from '../prismaClient';
 import { buildXlsx } from '../utils/minimalXlsx';
 import {
@@ -24,7 +24,7 @@ import { formatPrecoResponse } from './precoPricingV2';
 const router = express.Router();
 const writeLimiter = PRICELIST_WRITE_LIMITER;
 
-const { runWithLock } = createModuleLock();
+const { runWithLock } = pricelistLock;
 
 const ALLOWED_FIELDS = [
     'name',
