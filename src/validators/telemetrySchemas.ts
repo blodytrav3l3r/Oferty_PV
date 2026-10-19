@@ -7,6 +7,17 @@
 
 import { z } from 'zod';
 
+const finiteNumericInput = z.preprocess(
+    (value) => {
+        if (typeof value === 'string') {
+            const trimmed = value.trim();
+            return trimmed === '' ? Number.NaN : Number(trimmed);
+        }
+        return value;
+    },
+    z.number().finite('Wartość musi być skończoną liczbą')
+);
+
 // =============================================================================
 // Komponent studni (snapshot)
 // =============================================================================
@@ -59,35 +70,15 @@ export const telemetryConfigSchema = z.object({
 
     // Parametry wejściowe studni
     dn: z.string().optional(),
-    rzDna: z
-        .union([z.number(), z.string()])
-        .optional()
-        .transform((v) =>
-            v === undefined ? undefined : typeof v === 'string' ? parseFloat(v) : v
-        ),
-    rzWlazu: z
-        .union([z.number(), z.string()])
-        .optional()
-        .transform((v) =>
-            v === undefined ? undefined : typeof v === 'string' ? parseFloat(v) : v
-        ),
-    wellHeight: z
-        .union([z.number(), z.string()])
-        .optional()
-        .transform((v) =>
-            v === undefined ? undefined : typeof v === 'string' ? parseFloat(v) : v
-        ),
+    rzDna: finiteNumericInput.optional(),
+    rzWlazu: finiteNumericInput.optional(),
+    wellHeight: finiteNumericInput.optional(),
     wellType: z.string().optional(),
     terminationType: z.string().optional(),
     reductionType: z.string().optional(),
     zwiencenieType: z.string().optional(),
     dennicaType: z.string().optional(),
-    dennicaHeight: z
-        .union([z.number(), z.string()])
-        .optional()
-        .transform((v) =>
-            v === undefined ? undefined : typeof v === 'string' ? parseFloat(v) : v
-        ),
+    dennicaHeight: finiteNumericInput.optional(),
     kineta: z.string().optional(),
     ringCount: z.number().int().optional(),
     ringHeights: z.array(z.number()).optional(),
