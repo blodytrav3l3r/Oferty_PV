@@ -4,7 +4,7 @@
  */
 import express from 'express';
 import * as Sentry from '@sentry/node';
-import { logger } from './utils/logger';
+import { logger, sanitizeForLog } from './utils/logger';
 import { errorHandler } from './middleware/errorHandler';
 
 import authRoutes from './routes/auth';
@@ -57,7 +57,12 @@ import careRoutes from './routes/care';
  */
 export function handleCspReport(req: express.Request, res: express.Response): void {
     if (req.body) {
-        logger.warn('CSP', 'Violacja polityki bezpieczeństwa:', String(req.body).slice(0, 2000));
+        // Treść raportu pochodzi od klienta → sanityzacja CRLF (log forging).
+        logger.warn(
+            'CSP',
+            'Violacja polityki bezpieczeństwa:',
+            sanitizeForLog(String(req.body).slice(0, 2000))
+        );
     }
     res.status(204).end();
 }
@@ -99,7 +104,7 @@ export function mountRoutes(app: express.Express, apiLimiter: express.RequestHan
     // Dashboard AI (Knowledge Base, Learning Engine, Recommender) - admin only
     app.use('/api/telemetry', smallJson, telemetryAiDashboardRoutes);
     app.use('/api/preco-pricing', apiLimiter, largeJson, precoPricingRoutes);
-    app.use('/api/feature-flags', smallJson, featureFlagsRoutes);
+    app.use('/api/feature-flags', apiLimiter, smallJson, featureFlagsRoutes);
     app.use('/api/telemetry', smallJson, aiMlRoutes); // ML prediction API
     app.use('/api/telemetry', smallJson, aiTransferRoutes); // P7: AI/ML Transfer Center (.sokml)
     app.use('/api/price-overrides', apiLimiter, smallJson, priceOverridesRoutes);

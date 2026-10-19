@@ -22,6 +22,7 @@ Przed wdrożeniem skonfiguruj plik `.env` (lub zmienne środowiskowe na platform
 | `SENTRY_DSN`             | DSN Sentry do monitorowania błędów                 | Nie      | `https://...@o....ingest.sentry.io/...` |
 | `COOKIE_SECURE`          | Wymuszenie `Secure` flagi na ciastku sesji         | Nie*     | `true`                                  |
 | `TRUST_PROXY`            | Liczba reverse proxy przed aplikacją (1 lub 2)     | Nie      | `1`                                     |
+| `PUBLIC_BASE_URL`        | Publiczny origin do przekierowania HTTP→HTTPS      | Nie      | `https://oferty.example.pl`             |
 
 > \* `COOKIE_SECURE=true` jest wymagane, gdy aplikacja jest serwowana przez HTTPS
 > w trybie innym niż `production` (w `production` flaga jest wymuszana automatycznie).
@@ -401,6 +402,7 @@ checkboxy w §7.1–§7.6 poniżej).
 - [ ] `COOKIE_SECURE=true` ustawione
 - [ ] `HOST` nie jest ustawione na `0.0.0.0` (w produkcji domyślnie `127.0.0.1`)
 - [ ] `TRUST_PROXY=1` (2 tylko przy łańcuchu Cloudflare → Nginx → App)
+- [ ] `PUBLIC_BASE_URL=https://<domena>` (redirect HTTP→HTTPS nie zależy wtedy od nagłówka `Host`)
 
 ### 7.3 Kolejność startu
 

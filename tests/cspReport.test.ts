@@ -2,6 +2,7 @@ import express from 'express';
 import request from 'supertest';
 import { handleCspReport } from '../src/mountRoutes';
 import { createRateLimiter } from '../src/middleware/rateLimiter';
+import { sanitizeForLog } from '../src/utils/logger';
 
 function buildApp(limiter?: express.RequestHandler) {
     const app = express();
@@ -44,5 +45,20 @@ describe('POST /api/csp-report', () => {
         expect(flooded.statusCode).toBe(429);
         expect(typeof flooded.body.retryAfter).toBe('number');
         expect(flooded.body.retryAfter).toBeGreaterThan(0);
+    });
+});
+
+describe('sanitizeForLog (log forging)', () => {
+    it('usuwa CR/LF i znaki sterujące z treści klienta', () => {
+        const raw = `{"a":1}\r\n[2026-01-01] [ERROR] podrobiona linia${String.fromCharCode(0)}`;
+        const out = sanitizeForLog(raw);
+        expect(out.includes('\r')).toBe(false);
+        expect(out.includes('\n')).toBe(false);
+        expect(out.includes(String.fromCharCode(0))).toBe(false);
+        expect(out).toContain('{"a":1}');
+    });
+
+    it('zachowuje polskie znaki i zwykły tekst', () => {
+        expect(sanitizeForLog('Zażółć gęślą jaźń')).toBe('Zażółć gęślą jaźń');
     });
 });

@@ -120,6 +120,51 @@ describe('httpsRedirect', () => {
 
         process.env.NODE_ENV = originalEnv;
     });
+
+    it('preferuje PUBLIC_BASE_URL nad nagłówkiem Host', async () => {
+        const originalEnv = process.env.NODE_ENV;
+        const originalBase = process.env.PUBLIC_BASE_URL;
+        process.env.NODE_ENV = 'production';
+        process.env.PUBLIC_BASE_URL = 'https://oferty.example.pl';
+
+        const app = express();
+        app.set('trust proxy', 1);
+        app.use(httpsRedirect);
+        app.get('/test', (_req, res) => res.json({ ok: true }));
+
+        const res = await request(app)
+            .get('/test')
+            .set('x-forwarded-proto', 'http')
+            .set('host', 'evil.example.com');
+        expect(res.statusCode).toBe(302);
+        expect(res.headers.location).toBe('https://oferty.example.pl/test');
+
+        process.env.NODE_ENV = originalEnv;
+        if (originalBase === undefined) delete process.env.PUBLIC_BASE_URL;
+        else process.env.PUBLIC_BASE_URL = originalBase;
+    });
+
+    it('nie przekierowuje przy nieprawidłowym Host (ochrona przed open-redirect)', async () => {
+        const originalEnv = process.env.NODE_ENV;
+        const originalBase = process.env.PUBLIC_BASE_URL;
+        process.env.NODE_ENV = 'production';
+        delete process.env.PUBLIC_BASE_URL;
+
+        const app = express();
+        app.set('trust proxy', 1);
+        app.use(httpsRedirect);
+        app.get('/test', (_req, res) => res.json({ ok: true }));
+
+        const res = await request(app)
+            .get('/test')
+            .set('x-forwarded-proto', 'http')
+            .set('host', 'evil..com');
+        expect(res.statusCode).toBe(200);
+        expect(res.headers.location).toBeUndefined();
+
+        process.env.NODE_ENV = originalEnv;
+        if (originalBase !== undefined) process.env.PUBLIC_BASE_URL = originalBase;
+    });
 });
 
 // ─── HSTS ─────────────────────────────────────────────────────────────

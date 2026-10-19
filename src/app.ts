@@ -57,8 +57,20 @@ if (process.env.SENTRY_DSN) {
 
 // Liczba hopów reverse proxy przed aplikacją — Express ufa ich nagłówkom.
 // TRUST_PROXY=1 dla Caddy/Nginx; =2 tylko dla łańcucha np. Cloudflare → Nginx → App.
-// Domyślnie 1 — nie ufaj niepotrzebnym hopom.
-app.set('trust proxy', parseInt(process.env.TRUST_PROXY || '1', 10));
+// Domyślnie 1 — nie ufaj niepotrzebnym hopom. Wartość nieprawidłowa → 1 + WARN.
+// TLS terminuje Caddy (Caddyfile), Node binduje 127.0.0.1 — patrz ADR-006.
+const rawTrustProxy = process.env.TRUST_PROXY;
+const parsedTrustProxy = Number.parseInt(rawTrustProxy ?? '1', 10);
+const trustProxyHops =
+    Number.isInteger(parsedTrustProxy) && parsedTrustProxy >= 0 ? parsedTrustProxy : 1;
+if (rawTrustProxy !== undefined && rawTrustProxy !== String(trustProxyHops)) {
+    logger.warn(
+        'Server',
+        `TRUST_PROXY="${rawTrustProxy}" nieprawidłowy — używam ${trustProxyHops}`
+    );
+}
+app.set('trust proxy', trustProxyHops);
+logger.debug('Server', `trust proxy = ${trustProxyHops}`);
 
 // cookieParser globalnie i WCZEŚNIE (przed /metrics i innymi trasami z requireAuth):
 // trasy systemowe rejestrowane są przed middleware bezpieczeństwa, więc parser

@@ -1,5 +1,32 @@
 import { Request, Response, NextFunction } from 'express';
 import crypto from 'crypto';
+import { logger } from '../utils/logger';
+
+// Dozwolony Host: hostname (RFC 1123) z opcjonalnym portem. Blokuje wstrzyknięcia
+// (np. `evil.com`, `a@b`, CRLF) przy budowaniu adresu przekierowania.
+const HOSTNAME_RE =
+    /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*(:[1-9][0-9]{0,4})?$/i;
+
+/**
+ * Bazowy origin do przekierowania HTTP→HTTPS.
+ * Priorytet: PUBLIC_BASE_URL (jawny, odporny na spoof Host). Fallback: Host
+ * zwalidowany regexem. Brak poprawnej wartości → null (fail-safe, brak redirectu).
+ */
+function resolveHttpsBase(req: Request): string | null {
+    const configured = process.env.PUBLIC_BASE_URL;
+    if (configured) {
+        try {
+            return new URL(configured).origin;
+        } catch {
+            logger.warn('Security', 'PUBLIC_BASE_URL nieprawidłowy — fallback do nagłówka Host');
+        }
+    }
+    const host = req.headers.host;
+    if (typeof host === 'string' && HOSTNAME_RE.test(host)) {
+        return `https://${host}`;
+    }
+    return null;
+}
 
 /**
  * Przekierowuje żądania HTTP na HTTPS w środowisku produkcyjnym.
@@ -25,7 +52,17 @@ export function httpsRedirect(req: Request, res: Response, next: NextFunction): 
         req.secure ||
         (typeof forwardedProto === 'string' && forwardedProto.split(',')[0].trim() === 'https');
     if (process.env.NODE_ENV === 'production' && !isHttps) {
-        res.redirect('https://' + req.headers.host + req.url);
+        const base = resolveHttpsBase(req);
+        if (base === null) {
+            // Brak zaufanego originu: nie odbijamy nagłówka Host (open-redirect).
+            logger.warn(
+                'Security',
+                `Brak PUBLIC_BASE_URL i nieprawidłowy Host (${String(req.headers.host)}) — pomijam redirect HTTPS`
+            );
+            next();
+            return;
+        }
+        res.redirect(302, base + req.url);
         return;
     }
     next();

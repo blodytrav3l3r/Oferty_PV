@@ -372,6 +372,7 @@ Podczas aktualizacji do nowszej wersji aplikacji (już wdrożonej, z danymi):
 | `SENTRY_DSN`             | DSN Sentry do monitorowania błędów (opcjonalnie)                                                                  | —                                    | Nie      |
 | `COOKIE_SECURE`          | Wymusza flagę `Secure` na ciastku sesji                                                                           | `true` gdy `NODE_ENV=production`     | Nie      |
 | `TRUST_PROXY`            | Liczba reverse proxy przed aplikacją (Caddy/Nginx = 1, Cloudflare→Nginx→App = 2)                                  | `1`                                  | Nie      |
+| `PUBLIC_BASE_URL`        | Publiczny origin (np. `https://oferty.example.pl`) używany przy przekierowaniu HTTP→HTTPS                         | — (fallback: zwalidowany `Host`)     | Nie      |
 | `APP_NAME`               | Nazwa aplikacji (tytuły stron, branding)                                                                          | `S.O.K.`                             | Nie      |
 | `APP_SUBTITLE`           | Podtytuł aplikacji (aria-label logo, wydruki)                                                                     | `System Ofert i Kalkulacji`          | Nie      |
 
@@ -384,6 +385,7 @@ W środowisku produkcyjnym aplikacja jest serwowana przez **HTTPS** za pośredni
 - Przykładowa konfiguracja Caddy: [`Caddyfile`](Caddyfile) (produkcja) i [`Caddyfile.dev`](Caddyfile.dev) (lokalny HTTPS z mkcert).
 - Przy serwowaniu przez HTTPS ustaw `COOKIE_SECURE=true` w `.env` — wymusi flagę `Secure` na ciastku sesji (w `production` jest to domyślne).
 - W trybie `production` aktywne są automatycznie: HSTS, przekierowanie HTTP→HTTPS (na podstawie `X-Forwarded-Proto`), nagłówki bezpieczeństwa Helmet.
+- Przekierowanie HTTP→HTTPS buduje adres z `PUBLIC_BASE_URL` (jeśli ustawione), inaczej z nagłówka `Host` po walidacji — nieprawidłowy `Host` bez `PUBLIC_BASE_URL` skutkuje pominięciem przekierowania (ochrona przed open-redirect).
 - Szczegóły: [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) oraz [docs/SECURITY.md](docs/SECURITY.md).
 
 ---

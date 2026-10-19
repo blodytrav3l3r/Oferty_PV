@@ -8,6 +8,15 @@
 
 type LogLevel = 'INFO' | 'WARN' | 'ERROR' | 'DEBUG';
 
+/**
+ * Usuwa znaki sterujące (m.in. CR/LF) z treści pochodzącej od klienta —
+ * zapobiega log forging / wstrzykiwaniu fałszywych linii do logów.
+ */
+export function sanitizeForLog(value: string): string {
+    // eslint-disable-next-line no-control-regex
+    return value.replace(/[\u0000-\u001f\u007f]/g, ' ');
+}
+
 function formatMessage(level: LogLevel, tag: string, message: string): string {
     const timestamp = new Date().toISOString();
     return `[${timestamp}] [${level}] [${tag}] ${message}`;

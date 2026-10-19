@@ -79,8 +79,12 @@ Node.js/Express. Node.js pozostaje serwerem HTTP i w produkcji binduje się domy
 
 - `server.ts` — bind do `127.0.0.1` w produkcji (jawnie ustawiony `HOST` ma priorytet).
 - `src/middleware/security.ts` — `httpsRedirect()` uwzględnia listę w `x-forwarded-proto`
-  (wiele proxy), HSTS pozostaje aktywny w produkcji.
-- `src/app.ts` — `trust proxy` sterowany `TRUST_PROXY` (domyślnie 1), CSP `connectSrc`
+  (wiele proxy), HSTS pozostaje aktywny w produkcji. Adres przekierowania z
+  `PUBLIC_BASE_URL` (jeśli ustawione), inaczej z nagłówka `Host` po walidacji regexem;
+  nieprawidłowy `Host` bez `PUBLIC_BASE_URL` = brak przekierowania (ochrona przed
+  open-redirect, P3 audytu 2026-10-19).
+- `src/app.ts` — `trust proxy` sterowany `TRUST_PROXY` (domyślnie 1; wartość
+  nieprawidłowa → 1 + `WARN` w logu), CSP `connectSrc`
   bez twardych `http://` (dev-only `ws://`).
 - `src/routes/auth.ts` — `Secure` flag na ciastku sesji sterowana `COOKIE_SECURE` lub `NODE_ENV`.
 - `Caddyfile` / `Caddyfile.dev` — konfiguracja reverse proxy (produkcja / lokalny dev).
