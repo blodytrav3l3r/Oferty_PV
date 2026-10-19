@@ -2,6 +2,7 @@ import request from 'supertest';
 import express from 'express';
 import offerRoutes from '../../src/routes/offers/index';
 import prisma from '../../src/prismaClient';
+import { logAudit } from '../../src/services/auditService';
 
 const mockUser: any = { id: 'user-id', role: 'user', subUsers: [] };
 
@@ -163,6 +164,56 @@ describe('Rury Offers CRUD — warstwa zapisu', () => {
                 (prisma.offer_items_rel.createMany as jest.Mock).mock.calls.length +
                 (prisma.$transaction as jest.Mock).mock.calls.length;
             expect(createManyCalls).toBeGreaterThan(0);
+        });
+
+        it('brak numeru → NULL w DB (nie pusty string)', async () => {
+            (prisma.offers_rel.findMany as jest.Mock).mockResolvedValue([]);
+            (prisma.offer_items_rel.findMany as jest.Mock).mockResolvedValue([]);
+            (prisma.offers_rel.create as jest.Mock).mockResolvedValue({});
+
+            const res = await request(app)
+                .post('/api/offers')
+                .send({
+                    data: [
+                        {
+                            id: 'o-no-number',
+                            clientId: 'client-1',
+                            clientName: 'ACME',
+                            status: 'draft',
+                            items: []
+                        }
+                    ]
+                });
+
+            expect(res.statusCode).toBe(200);
+            const createCall = (prisma.offers_rel.create as jest.Mock).mock.calls[0][0];
+            expect(createCall.data.offer_number).toBeNull();
+        });
+
+        it('P2002 z DB (wyścig) → 409 DUPLICATE_NUMBER', async () => {
+            (prisma.offers_rel.findMany as jest.Mock).mockResolvedValue([]);
+            (prisma.offer_items_rel.findMany as jest.Mock).mockResolvedValue([]);
+            (prisma.offers_rel.create as jest.Mock).mockRejectedValue(
+                Object.assign(new Error('Unique constraint'), { code: 'P2002' })
+            );
+
+            const res = await request(app)
+                .post('/api/offers')
+                .send({
+                    data: [
+                        {
+                            id: 'o-race',
+                            clientId: 'client-1',
+                            number: 'R-RACE',
+                            clientName: 'ACME',
+                            status: 'draft',
+                            items: []
+                        }
+                    ]
+                });
+
+            expect(res.statusCode).toBe(409);
+            expect(res.body.code).toBe('DUPLICATE_NUMBER');
         });
 
         it('dodaje snapshot do historii przy aktualizacji (max 5 wpisów)', async () => {
@@ -403,6 +454,44 @@ describe('Rury Offers CRUD — warstwa zapisu', () => {
 
             expect(res.statusCode).toBe(403);
             expect(prisma.offers_rel.updateMany).not.toHaveBeenCalled();
+        });
+
+        it('PUT dopisuje history, updatedAt i audit w tx', async () => {
+            (prisma.offers_rel.findMany as jest.Mock).mockResolvedValue([
+                {
+                    id: 'o-1',
+                    userId: 'user-id',
+                    version: 1,
+                    history: '[{"old":1}]',
+                    state: 'draft',
+                    transportCost: 0,
+                    createdAt: '2026-01-01T00:00:00.000Z',
+                    updatedAt: '2026-01-02T00:00:00.000Z'
+                }
+            ]);
+            (prisma.offer_items_rel.findMany as jest.Mock).mockResolvedValue([
+                { offerId: 'o-1', productId: 'p1', quantity: 2, discount: 0, price: 10 }
+            ]);
+            (prisma.offer_items_rel.deleteMany as jest.Mock).mockResolvedValue({});
+            (prisma.offer_items_rel.createMany as jest.Mock).mockResolvedValue({});
+
+            const res = await request(app)
+                .put('/api/offers')
+                .set('x-user-id', 'user-id')
+                .send({ data: [{ id: 'o-1', status: 'draft', version: 1, items: [] }] });
+
+            expect(res.statusCode).toBe(200);
+            const updateCall = (prisma.offers_rel.updateMany as jest.Mock).mock.calls[0][0];
+            const hist = JSON.parse(updateCall.data.history as string);
+            expect(hist).toHaveLength(2);
+            expect(hist[0].items).toEqual([
+                { productId: 'p1', quantity: 2, discount: 0, price: 10 }
+            ]);
+            expect(typeof updateCall.data.updatedAt).toBe('string');
+            const auditCall = (logAudit as jest.Mock).mock.calls[0];
+            expect(auditCall[0]).toBe('offer');
+            expect(auditCall[3]).toBe('update');
+            expect(auditCall[6]).toBeDefined();
         });
     });
 

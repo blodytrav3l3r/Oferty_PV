@@ -18,7 +18,7 @@ import {
 } from '../../utils/ownership';
 import { versionedWrite, mapVersionConflict } from '../../utils/versionWrite';
 import { assertDocLockForWrite, mapDocLockConflict } from '../../utils/docLocks';
-import { mapPrismaError } from '../../utils/prismaErrors';
+import { isUniqueConstraintError, mapPrismaError } from '../../utils/prismaErrors';
 import {
     claimIdempotencyKey,
     completeIdempotencyKey,
@@ -194,7 +194,7 @@ router.post(
             const pendingWrites: Array<{
                 docId: string;
                 effectiveUserId: string;
-                offerNumber: string;
+                offerNumber: string | null;
                 state: string;
                 clientName: string | null;
                 investName: string | null;
@@ -381,7 +381,7 @@ router.post(
                 const clientNumber = o.clientNumber || null;
                 const created = normalizeDate(o.createdAt, { exactMs: true });
                 const updated = new Date().toISOString();
-                const offerNumber = o.offer_number || o.number || '';
+                const offerNumber = o.offer_number || o.number || null;
                 // P0-D2: version to kolumna, nie blob. Pieczątka też poza blobem
                 // (kolumna pricelistVersionId jest źródłem prawdy).
                 const { version: clientVersionRaw, pricelistVersionId: stampReq, ...blobSrc } = o;
@@ -429,7 +429,7 @@ router.post(
                     advanceStamp: !!requestedStamp,
                     fts: {
                         id: docId,
-                        offer_number: offerNumber,
+                        offer_number: offerNumber ?? '',
                         clientName,
                         investName,
                         clientNumber
@@ -543,6 +543,10 @@ router.post(
         } catch (e: unknown) {
             if (mapDocLockConflict(res, e)) return;
             if (mapVersionConflict(res, e)) return;
+            if (isUniqueConstraintError(e))
+                return res
+                    .status(409)
+                    .json({ error: 'Numer oferty już istnieje', code: 'DUPLICATE_NUMBER' });
             if (mapPrismaError(res, e)) return;
             const message = e instanceof Error ? e.message : 'Unknown error';
             if (/locked|busy|timeout|P2028|P2034/i.test(message)) recordDbBusy();
@@ -579,15 +583,64 @@ router.put(
                 .filter(Boolean);
             const putVersions = new Map<string, number>();
             const putUserIds = new Map<string, string>();
+            // Snapshot historii/audytu jak w POST — PUT też jest mutacją dokumentu.
+            const putOldDocs = new Map<
+                string,
+                {
+                    history: string | null;
+                    updatedAt: string | null;
+                    createdAt: string | null;
+                    state: string | null;
+                    transportCost: number | null;
+                }
+            >();
+            const putOldItems = new Map<
+                string,
+                Array<{
+                    productId: string | null;
+                    quantity: number | null;
+                    discount: number | null;
+                    price: number | null;
+                }>
+            >();
             if (incomingIds.length > 0) {
                 const existingDocs =
                     (await prisma.offers_rel.findMany({
                         where: { id: { in: incomingIds } },
-                        select: { id: true, userId: true, version: true }
+                        select: {
+                            id: true,
+                            userId: true,
+                            version: true,
+                            history: true,
+                            updatedAt: true,
+                            createdAt: true,
+                            state: true,
+                            transportCost: true
+                        }
                     })) || [];
-                for (const d of existingDocs) putVersions.set(d.id, d.version ?? 1);
+                for (const d of existingDocs) {
+                    putVersions.set(d.id, d.version ?? 1);
+                    putOldDocs.set(d.id, d);
+                }
                 for (const d of existingDocs) {
                     if (d.userId) putUserIds.set(d.id, d.userId);
+                }
+                const oldItemRows =
+                    (await prisma.offer_items_rel.findMany({
+                        where: { offerId: { in: incomingIds } },
+                        select: {
+                            offerId: true,
+                            productId: true,
+                            quantity: true,
+                            discount: true,
+                            price: true
+                        }
+                    })) || [];
+                for (const it of oldItemRows) {
+                    if (!it.offerId) continue;
+                    const list = putOldItems.get(it.offerId) || [];
+                    list.push(it);
+                    putOldItems.set(it.offerId, list);
                 }
                 // P0.1: każdy modyfikowany dokument musi spełniać
                 // canWriteDoc względem właściciela (edycja + zmiana opiekuna).
@@ -642,6 +695,9 @@ router.put(
                 // Awans pieczątki po „Przelicz do aktywnego" (update + stamp
                 // == ACTIVE; null = pieczątka stoi).
                 stamp: string | null;
+                historyStr: string;
+                updatedAt: string;
+                auditOld: Record<string, unknown> | null;
                 fts: {
                     id: string;
                     offer_number: string | null;
@@ -679,6 +735,36 @@ router.put(
                         code: 'STALE_PRICELIST'
                     });
                 }
+                // Historia jak w POST: snapshot poprzedniego stanu, max 5 wpisów.
+                let historyArr: unknown[] = [];
+                let auditOld: Record<string, unknown> | null = null;
+                const oldDoc = putOldDocs.get(docId);
+                if (oldDoc) {
+                    try {
+                        historyArr = JSON.parse(oldDoc.history || '[]');
+                        if (!Array.isArray(historyArr)) historyArr = [];
+                    } catch {
+                        logger.warn(
+                            'Offers',
+                            'Uszkodzony JSON history podczas PUT oferty rur',
+                            docId
+                        );
+                    }
+                    auditOld = {
+                        updatedAt: oldDoc.updatedAt || oldDoc.createdAt,
+                        state: oldDoc.state,
+                        transportCost: oldDoc.transportCost,
+                        items: (putOldItems.get(docId) || []).map((i) => ({
+                            productId: i.productId,
+                            quantity: i.quantity,
+                            discount: i.discount,
+                            price: i.price
+                        }))
+                    };
+                    historyArr.unshift(auditOld);
+                    if (historyArr.length > 5) historyArr = historyArr.slice(0, 5);
+                }
+                const modifiedAt = new Date().toISOString();
                 // P0.1: opiekun rozstrzygany PRZED transakcją (403 zamiast 500).
                 const putRequested = typeof o.userId === 'string' ? o.userId : '';
                 let effectiveUserId: string;
@@ -721,6 +807,9 @@ router.put(
                     serverVersion,
                     clientVersion,
                     stamp: requestedPutStamp || null,
+                    historyStr: JSON.stringify(historyArr),
+                    updatedAt: modifiedAt,
+                    auditOld,
                     fts: {
                         id: docId,
                         offer_number: o.offer_number || null,
@@ -755,7 +844,9 @@ router.put(
                             clientNip: w.clientNip,
                             clientNumber: w.clientNumber,
                             createdAt: w.created,
+                            updatedAt: w.updatedAt,
                             transportCost: w.transportCost,
+                            history: w.historyStr,
                             data: w.dataStr
                         },
                         updateData: {
@@ -766,7 +857,9 @@ router.put(
                             clientNip: w.clientNip,
                             clientNumber: w.clientNumber,
                             createdAt: w.created,
+                            updatedAt: w.updatedAt,
                             transportCost: w.transportCost,
+                            history: w.historyStr,
                             data: w.dataStr,
                             // Awans pieczątki po „Przelicz do aktywnego"
                             // (tylko update ze stampem == ACTIVE).
@@ -774,6 +867,20 @@ router.put(
                         },
                         conflictMessage: 'Oferta zmieniona przez innego użytkownika'
                     });
+                    // Audit w tej samej tx — rollback biznesu cofa wpis.
+                    await logAudit(
+                        'offer',
+                        w.docId,
+                        authReq.user?.id || '',
+                        w.exists ? 'update' : 'create',
+                        {
+                            state: w.state,
+                            transportCost: w.transportCost,
+                            items: w.items
+                        },
+                        w.auditOld,
+                        tx
+                    );
 
                     // Slim-write (items === undefined) nie rusza relacji (jak w POST).
                     if (w.items !== undefined) {
@@ -817,6 +924,10 @@ router.put(
         } catch (e: unknown) {
             if (mapDocLockConflict(res, e)) return;
             if (mapVersionConflict(res, e)) return;
+            if (isUniqueConstraintError(e))
+                return res
+                    .status(409)
+                    .json({ error: 'Numer oferty już istnieje', code: 'DUPLICATE_NUMBER' });
             if (mapPrismaError(res, e)) return;
             const message = e instanceof Error ? e.message : 'Unknown error';
             if (/locked|busy|timeout|P2028|P2034/i.test(message)) recordDbBusy();
@@ -905,7 +1016,7 @@ router.post('/:id/duplicate', requireAuth, writeOffersLimiter, async (req, res) 
                 data: {
                     id: newId,
                     userId: resolved.effectiveUserId,
-                    offer_number: source.offer_number ? `${source.offer_number}-KOPIA` : '',
+                    offer_number: source.offer_number ? `${source.offer_number}-KOPIA` : null,
                     state: 'draft',
                     clientName: dupClientName,
                     investName: dupInvestName,
@@ -956,6 +1067,10 @@ router.post('/:id/duplicate', requireAuth, writeOffersLimiter, async (req, res) 
         if (idemKey) await completeIdempotencyKey(idemUser, idemEndpoint, idemKey, 200, dupPayload);
         return res.json(dupPayload);
     } catch (e: unknown) {
+        if (isUniqueConstraintError(e))
+            return res
+                .status(409)
+                .json({ error: 'Numer oferty już istnieje', code: 'DUPLICATE_NUMBER' });
         if (mapPrismaError(res, e)) return;
         const message = e instanceof Error ? e.message : 'Unknown error';
         logger.error('Offers', 'Błąd POST /:id/duplicate', message);

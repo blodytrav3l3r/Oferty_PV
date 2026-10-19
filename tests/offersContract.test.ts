@@ -10,7 +10,11 @@ jest.mock('../src/prismaClient', () => ({
         sessions: { findUnique: jest.fn() },
         users: { findUnique: jest.fn() },
         offers_rel: { findMany: jest.fn() },
-        offer_items_rel: { deleteMany: jest.fn(), createMany: jest.fn() },
+        offer_items_rel: {
+            findMany: jest.fn(async () => []),
+            deleteMany: jest.fn(),
+            createMany: jest.fn()
+        },
         $transaction: jest.fn(),
         $executeRaw: jest.fn(),
         $queryRaw: jest.fn()
@@ -23,6 +27,10 @@ jest.mock('../src/middleware/rateLimiters', () => ({
 
 jest.mock('../src/utils/fts5Sync', () => ({
     syncFts5: jest.fn(async () => true)
+}));
+
+jest.mock('../src/services/auditService', () => ({
+    logAudit: jest.fn()
 }));
 
 jest.mock('../src/utils/logger', () => ({

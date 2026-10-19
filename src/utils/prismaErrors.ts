@@ -10,6 +10,11 @@ interface JsonRes {
     status(code: number): { json(body: unknown): unknown };
 }
 
+/** True dla P2002 — pozwala route'om zwrócić domenowy kod zamiast generycznego UNIQUE_CONFLICT. */
+export function isUniqueConstraintError(e: unknown): boolean {
+    return !!e && typeof e === 'object' && (e as { code?: unknown }).code === 'P2002';
+}
+
 export function mapPrismaError(res: JsonRes, e: unknown, extra?: Record<string, unknown>): boolean {
     const code = (e as { code?: string }).code;
     if (code === 'P2025') {

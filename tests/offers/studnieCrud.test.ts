@@ -2,6 +2,7 @@ import request from 'supertest';
 import express from 'express';
 import studnieRoutes from '../../src/routes/offers/index';
 import prisma from '../../src/prismaClient';
+import { logAudit } from '../../src/services/auditService';
 
 const mockUser: any = { id: 'user-id', role: 'user', subUsers: [] };
 
@@ -128,6 +129,36 @@ describe('Studnie Offers CRUD — autoryzacja (IDOR)', () => {
             expect(prisma.offers_studnie_rel.create).toHaveBeenCalledWith({
                 data: expect.objectContaining({ userId: 'user-id', state: 'draft', version: 1 })
             });
+        });
+
+        it('brak numeru → NULL w DB (nie pusty string)', async () => {
+            (prisma.offers_studnie_rel.findMany as jest.Mock).mockResolvedValue([]);
+            (prisma.offers_studnie_rel.create as jest.Mock).mockResolvedValue({});
+
+            const res = await request(app)
+                .post('/api/offers/studnie')
+                .send({ data: [{ id: 's-no-number', clientName: 'ACME', status: 'draft' }] });
+
+            expect(res.statusCode).toBe(200);
+            expect(prisma.offers_studnie_rel.create).toHaveBeenCalledWith({
+                data: expect.objectContaining({ offer_number: null })
+            });
+        });
+
+        it('P2002 z DB (wyścig) → 409 DUPLICATE_NUMBER', async () => {
+            (prisma.offers_studnie_rel.findMany as jest.Mock).mockResolvedValue([]);
+            (prisma.offers_studnie_rel.create as jest.Mock).mockRejectedValue(
+                Object.assign(new Error('Unique constraint'), { code: 'P2002' })
+            );
+
+            const res = await request(app)
+                .post('/api/offers/studnie')
+                .send({
+                    data: [{ id: 's-race', number: 'S-RACE', clientName: 'ACME', status: 'draft' }]
+                });
+
+            expect(res.statusCode).toBe(409);
+            expect(res.body.code).toBe('DUPLICATE_NUMBER');
         });
 
         it('stale version → 409 VERSION_CONFLICT (P0-D2)', async () => {
@@ -299,6 +330,39 @@ describe('Studnie Offers CRUD — autoryzacja (IDOR)', () => {
             expect(res.statusCode).toBe(200);
             const updateCall = (prisma.offers_studnie_rel.updateMany as jest.Mock).mock.calls[0][0];
             expect(updateCall.data.wellCount).toBe(0);
+        });
+
+        it('PUT dopisuje history, updatedAt i audit w tx', async () => {
+            (prisma.offers_studnie_rel.findMany as jest.Mock).mockResolvedValue([
+                {
+                    id: 's-1',
+                    userId: 'user-id',
+                    data: oldBlob,
+                    wellCount: 2,
+                    totalPrice: 500,
+                    version: 1,
+                    history: '[]',
+                    state: 'draft',
+                    createdAt: '2026-01-01T00:00:00.000Z',
+                    updatedAt: '2026-01-02T00:00:00.000Z'
+                }
+            ]);
+            (prisma.offers_studnie_rel.updateMany as jest.Mock).mockResolvedValue({ count: 1 });
+
+            const res = await request(app)
+                .put('/api/offers/studnie')
+                .send({ data: [{ id: 's-1', state: 'draft' }] });
+
+            expect(res.statusCode).toBe(200);
+            const updateCall = (prisma.offers_studnie_rel.updateMany as jest.Mock).mock.calls[0][0];
+            const hist = JSON.parse(updateCall.data.history as string);
+            expect(hist).toHaveLength(1);
+            expect(hist[0]).toMatchObject({ state: 'draft', wellCount: 2, totalPrice: 500 });
+            expect(typeof updateCall.data.updatedAt).toBe('string');
+            const auditCall = (logAudit as jest.Mock).mock.calls[0];
+            expect(auditCall[0]).toBe('studnia_oferta');
+            expect(auditCall[3]).toBe('update');
+            expect(auditCall[6]).toBeDefined();
         });
     });
 });

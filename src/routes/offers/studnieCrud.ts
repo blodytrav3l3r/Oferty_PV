@@ -13,7 +13,7 @@ import { buildRoleWhereConditionWithShares } from '../../utils/roleFilter';
 import { resolveWriteUserId, resolveAssignUserId, canReadWithShare } from '../../utils/ownership';
 import { versionedWrite, mapVersionConflict } from '../../utils/versionWrite';
 import { assertDocLockForWrite, mapDocLockConflict } from '../../utils/docLocks';
-import { mapPrismaError } from '../../utils/prismaErrors';
+import { isUniqueConstraintError, mapPrismaError } from '../../utils/prismaErrors';
 import { HOT_TX_OPTS } from '../../utils/hotTx';
 import {
     claimIdempotencyKey,
@@ -805,7 +805,7 @@ router.post(
                 const clientNumber = o.clientNumber || null;
                 const created = normalizeDate(o.createdAt);
                 const updated = new Date().toISOString();
-                const offerNumber = o.number || o.offer_number || '';
+                const offerNumber = o.number || o.offer_number || null;
                 // P0-D2: version to kolumna (top-level o.version), nie blob o.
                 // Pieczątka też poza blobem (kolumna pricelistVersionId).
                 const {
@@ -877,7 +877,7 @@ router.post(
                     },
                     fts: {
                         id: docId,
-                        offer_number: offerNumber,
+                        offer_number: offerNumber ?? '',
                         clientName,
                         investName,
                         clientNumber
@@ -930,6 +930,10 @@ router.post(
         } catch (e: unknown) {
             if (mapDocLockConflict(res, e)) return;
             if (mapVersionConflict(res, e)) return;
+            if (isUniqueConstraintError(e))
+                return res
+                    .status(409)
+                    .json({ error: 'Numer oferty już istnieje', code: 'DUPLICATE_NUMBER' });
             if (mapPrismaError(res, e)) return;
             const message = e instanceof Error ? e.message : 'Unknown error';
             logger.error('Offers', 'Błąd POST offers/studnie', message);
@@ -958,6 +962,10 @@ router.put(
                 wellCount: number | null;
                 totalPrice: number | null;
                 version: number | null;
+                history: string | null;
+                state: string | null;
+                createdAt: string | null;
+                updatedAt: string | null;
             }> =
                 incomingIds.length > 0
                     ? (await prisma.offers_studnie_rel.findMany({
@@ -968,7 +976,11 @@ router.put(
                               data: true,
                               wellCount: true,
                               totalPrice: true,
-                              version: true
+                              version: true,
+                              history: true,
+                              state: true,
+                              createdAt: true,
+                              updatedAt: true
                           }
                       })) || []
                     : [];
@@ -1013,6 +1025,9 @@ router.put(
                 exists: boolean;
                 serverVersion: number | null;
                 clientVersion: number | null;
+                historyStr: string;
+                updatedAt: string;
+                auditOld: Record<string, unknown> | null;
                 fts: {
                     id: string;
                     offer_number: string | null;
@@ -1106,6 +1121,39 @@ router.put(
                 }
                 // Kolumna liczy finalny blob (po sciezce keep) — nigdy stale 0.
                 const putWellCount = extractWellsFromOfferData(putDataStr).length;
+                // Historia jak w POST: slim snapshot poprzedniego stanu, max 5.
+                let putHistory: unknown[] = [];
+                let putAuditOld: Record<string, unknown> | null = null;
+                if (putOld) {
+                    try {
+                        putHistory = JSON.parse(putOld.history || '[]');
+                        if (!Array.isArray(putHistory)) putHistory = [];
+                    } catch {
+                        logger.warn(
+                            'Offers',
+                            'Uszkodzony JSON history podczas PUT oferty studni',
+                            docId
+                        );
+                    }
+                    putAuditOld = {
+                        updatedAt: putOld.updatedAt || putOld.createdAt,
+                        state: putOld.state,
+                        totalPrice: putOld.totalPrice ?? 0,
+                        wellCount: putOld.wellCount ?? 0,
+                        data: putOld.data
+                    };
+                    putHistory.unshift({
+                        updatedAt: new Date().toISOString(),
+                        timestamp: new Date().toISOString(),
+                        state: putOld.state,
+                        totalPrice: putOld.totalPrice ?? 0,
+                        totalBrutto: putOld.totalPrice ?? 0,
+                        wellCount: extractWellsFromOfferData(putOld.data).length,
+                        lastEditedBy: authReq.user?.username || authReq.user?.id || null
+                    });
+                    if (putHistory.length > 5) putHistory = putHistory.slice(0, 5);
+                }
+                const putModifiedAt = new Date().toISOString();
                 // P0.1: opiekun rozstrzygany PRZED zapisem (403 zamiast cichego przejęcia).
                 const putRequestedUserId = typeof o.userId === 'string' && o.userId ? o.userId : '';
                 let putUserId: string;
@@ -1138,6 +1186,9 @@ router.put(
                     exists: !!putOld,
                     serverVersion: putOld?.version ?? null,
                     clientVersion: putClientVersion,
+                    historyStr: JSON.stringify(putHistory),
+                    updatedAt: putModifiedAt,
+                    auditOld: putAuditOld,
                     create: {
                         id: docId,
                         userId: putUserId,
@@ -1147,6 +1198,8 @@ router.put(
                         clientNip,
                         clientNumber,
                         createdAt: created,
+                        updatedAt: putModifiedAt,
+                        history: JSON.stringify(putHistory),
                         data: putDataStr,
                         wellCount: putWellCount,
                         totalPrice: putTotalPrice
@@ -1159,6 +1212,8 @@ router.put(
                         clientNip,
                         clientNumber,
                         createdAt: created,
+                        updatedAt: putModifiedAt,
+                        history: JSON.stringify(putHistory),
                         data: putDataStr,
                         wellCount: putWellCount,
                         totalPrice: putTotalPrice,
@@ -1193,6 +1248,16 @@ router.put(
                         updateData: w.update,
                         conflictMessage: 'Oferta zmieniona przez innego użytkownika'
                     });
+                    // Audit w tej samej tx — rollback biznesu cofa wpis.
+                    await logAudit(
+                        'studnia_oferta',
+                        w.docId,
+                        authReq.user?.id || '',
+                        w.exists ? 'update' : 'create',
+                        w.exists ? (w.update as Record<string, unknown>) : w.create,
+                        w.auditOld,
+                        tx
+                    );
                 }
             }, HOT_TX_OPTS);
             // B1: FTS w tle (kolejka z retry) — odpowiedź nie czeka na indeks.
@@ -1205,6 +1270,10 @@ router.put(
         } catch (e: unknown) {
             if (mapDocLockConflict(res, e)) return;
             if (mapVersionConflict(res, e)) return;
+            if (isUniqueConstraintError(e))
+                return res
+                    .status(409)
+                    .json({ error: 'Numer oferty już istnieje', code: 'DUPLICATE_NUMBER' });
             if (mapPrismaError(res, e)) return;
             const message = e instanceof Error ? e.message : 'Unknown error';
             logger.error('Offers', 'Błąd serwera', message);
