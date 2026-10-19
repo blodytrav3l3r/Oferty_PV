@@ -8,11 +8,12 @@
  * DOM (slice == prefiks OFF), nie osobny case.
  *
  * Run:   node tests/playwright/excelVirtualParity.cjs
+ * Env:   BASE_URL=http://localhost:3000
  * Wymaga: backend na localhost:3000
  * Exit:  0 = parity OK, 1 = rozjazd lub blad
  */
 
-const BASE = 'http://localhost:3000';
+const BASE = process.env.BASE_URL || 'http://localhost:3000';
 const N = 600; // >500 = virtual auto-ON (bez flagi)
 
 const fs = require('fs');

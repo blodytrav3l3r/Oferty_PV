@@ -82,17 +82,29 @@ describe('flaky-compare (B2)', () => {
         fs.rmSync(tmp, { recursive: true, force: true });
     });
 
-    it('2x pass + 1x fail -> FLAKY', () => {
+    it('2x pass + 1x fail -> FLAKY, brama czerwona (limit 0)', () => {
         const paths = writeFixtures(path.join(tmp, 'flaky1'), [
             makeReport([{ fullName: 'test A', status: 'passed', line: 1 }]),
             makeReport([{ fullName: 'test A', status: 'passed', line: 1 }]),
             makeReport([{ fullName: 'test A', status: 'failed', line: 1 }])
         ]);
         const { stdout, exit } = runCompare(paths);
-        expect(exit).toBe(0);
+        expect(exit).toBe(1);
         expect(stdout).toContain('FLAKY');
         expect(stdout).toContain('test A');
         expect(stdout).toMatch(/FLAKY \(fail w podzbiorze runow\): 1/);
+        expect(stdout).toContain('GATE FAIL');
+    });
+
+    it('--max-flaky=1 toleruje jeden flaky (exit 0)', () => {
+        const paths = writeFixtures(path.join(tmp, 'flaky1b'), [
+            makeReport([{ fullName: 'test A', status: 'passed', line: 1 }]),
+            makeReport([{ fullName: 'test A', status: 'passed', line: 1 }]),
+            makeReport([{ fullName: 'test A', status: 'failed', line: 1 }])
+        ]);
+        const { stdout, exit } = runCompare([...paths, '--max-flaky=1']);
+        expect(exit).toBe(0);
+        expect(stdout).toContain('GATE OK');
     });
 
     it('3x pass -> brak flaky', () => {
@@ -107,14 +119,14 @@ describe('flaky-compare (B2)', () => {
         expect(stdout).toContain('Stable PASS: 1');
     });
 
-    it('3x fail -> STABLE FAIL (nie flaky)', () => {
+    it('3x fail -> STABLE FAIL (nie flaky), brama czerwona', () => {
         const paths = writeFixtures(path.join(tmp, 'flaky3'), [
             makeReport([{ fullName: 'test C', status: 'failed', line: 1 }]),
             makeReport([{ fullName: 'test C', status: 'failed', line: 1 }]),
             makeReport([{ fullName: 'test C', status: 'failed', line: 1 }])
         ]);
         const { stdout, exit } = runCompare(paths);
-        expect(exit).toBe(0);
+        expect(exit).toBe(1);
         expect(stdout).toMatch(/FLAKY \(fail w podzbiorze runow\): 0/);
         expect(stdout).toContain('STABLE FAIL');
         expect(stdout).toContain('test C');
@@ -172,7 +184,7 @@ describe('flaky-compare (B2)', () => {
             makeReport([{ fullName: 'test G', status: 'failed', line: 1 }])
         ]);
         const { stdout, exit } = runCompare(paths);
-        expect(exit).toBe(0);
+        expect(exit).toBe(1);
         expect(stdout).toContain('FLAKY');
         expect(stdout).not.toContain('INFRA FAIL');
     });

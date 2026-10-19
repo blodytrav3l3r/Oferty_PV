@@ -1,6 +1,13 @@
 #!/usr/bin/env node
 'use strict';
 
+/**
+ * Bramka flaky: porownuje 3 runy jest (JSON) i czerwieni CI, gdy
+ *   - test failuje we wszystkich runach (stable FAIL), albo
+ *   - liczba flaky > limit (--max-flaky=N, domyslnie 0).
+ * INFRA FAIL (brak/nieparsowalny raport) tez konczy sie exit 1.
+ */
+
 import fs from 'node:fs';
 
 const RUNS = 3;
@@ -62,10 +69,23 @@ function collect(report) {
 }
 
 function run(argv) {
-    if (argv.length < RUNS) {
-        fail(`Uzycie: node scripts/flaky-compare.mjs <run1.json> <run2.json> <run3.json>`);
+    // --max-flaky=N: ile flaky testów tolerujemy (domyślnie 0 = każdy nowy flake czerwieni bramę).
+    let maxFlaky = 0;
+    const positional = [];
+    for (const arg of argv) {
+        const m = /^--max-flaky=(\d+)$/.exec(arg);
+        if (m) {
+            maxFlaky = Number.parseInt(m[1], 10);
+            continue;
+        }
+        positional.push(arg);
     }
-    const reports = argv.slice(0, RUNS).map(readReport);
+    if (positional.length < RUNS) {
+        fail(
+            `Uzycie: node scripts/flaky-compare.mjs <run1.json> <run2.json> <run3.json> [--max-flaky=N]`
+        );
+    }
+    const reports = positional.slice(0, RUNS).map(readReport);
 
     const perRun = reports.map(collect);
 
@@ -108,9 +128,12 @@ function run(argv) {
             });
         } else if (allPass) {
             stablePass.push(key);
-        } else {
+        } else if (statuses.every((s) => s === 'failed')) {
             // fail we wszystkich 3 runach = STABLE FAIL (to NIE flaky)
             stableFail.push({ key, title: perRun[0].get(key).title });
+        } else {
+            // pending/skipped pomieszane z pass — brak sygnalu faila (nie stable FAIL)
+            stablePass.push(key);
         }
     }
 
@@ -132,7 +155,19 @@ function run(argv) {
         console.log(`[flaky-compare] STABLE FAIL: ${s.title}`);
     }
 
-    // report-only: INFRA FAIL exit 1 (juz w fail()), flaky sam w sobie exit 0
+    // Bramka: stable FAIL = realna czerwien; flaky > limit = nowy flake.
+    // INFRA FAIL (brak/nieparsowalny raport) kończy się w fail() wyżej.
+    if (stableFail.length > 0) {
+        console.error(
+            `[flaky-compare] GATE FAIL: ${stableFail.length} test(ow) failuje w kazdym z ${RUNS} runow`
+        );
+        process.exit(1);
+    }
+    if (flaky.length > maxFlaky) {
+        console.error(`[flaky-compare] GATE FAIL: flaky ${flaky.length} > limit ${maxFlaky}`);
+        process.exit(1);
+    }
+    console.log(`[flaky-compare] GATE OK (flaky ${flaky.length} <= limit ${maxFlaky})`);
     process.exit(0);
 }
 

@@ -5,7 +5,11 @@
  * Run:
  *   node tests/playwright/excelVisualGate.cjs           (porownanie z golden)
  *   node tests/playwright/excelVisualGate.cjs --update  (autoryzacja nowych referencji)
+ * Env:   BASE_URL=http://localhost:3000
  * Wymaga: backend na localhost:3000
+ *
+ * UWAGA: bramka wizualna (screenshoty) — uruchamiana lokalnie, NIE w CI:
+ * golden referencje powstaly na Windows (fonty), runner Linux daje inny render.
  *
  * Elementy dynamiczne: brak (overlay nie zawiera czasu, ID sa stabilne dla
  * fixture, zadnych spinnerow; screenshot bez fokusa w inpucie; reduced-motion;
@@ -19,7 +23,7 @@ const fs = require('fs');
 const path = require('path');
 const { buildPerfWells } = require('./excelPerfFixture.cjs');
 
-const BASE = 'http://localhost:3000';
+const BASE = process.env.BASE_URL || 'http://localhost:3000';
 const OUT_DIR = path.join(__dirname, 'screenshots', 'excel-gate');
 const UPDATE = process.argv.includes('--update');
 const MAX_DIFF = 100;

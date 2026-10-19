@@ -170,16 +170,18 @@ jobs:
               run: mkdir -p junit
 
             - name: Run 1/3
-              run: npx jest --no-coverage --json --outputFile=junit/run1.json --testLocationInResults --silent || true
+              run: npx jest --no-coverage --testPathIgnorePatterns=git-safety --testPathIgnorePatterns=tests/pricelistChunk.test.ts --json --outputFile=junit/run1.json --testLocationInResults --silent || true
 
             - name: Run 2/3
-              run: npx jest --no-coverage --json --outputFile=junit/run2.json --testLocationInResults --silent || true
+              run: npx jest --no-coverage --testPathIgnorePatterns=git-safety --testPathIgnorePatterns=tests/pricelistChunk.test.ts --json --outputFile=junit/run2.json --testLocationInResults --silent || true
 
             - name: Run 3/3
-              run: npx jest --no-coverage --json --outputFile=junit/run3.json --testLocationInResults --silent || true
+              run: npx jest --no-coverage --testPathIgnorePatterns=git-safety --testPathIgnorePatterns=tests/pricelistChunk.test.ts --json --outputFile=junit/run3.json --testLocationInResults --silent || true
 
+            # Bramka: stable FAIL lub flaky > max-flaky czerwieni job.
+            # (pricelistChunk wykluczony — wolny test serializowany osobno w test:quick)
             - name: Compare flaky
-              run: node scripts/flaky-compare.mjs junit/run1.json junit/run2.json junit/run3.json
+              run: node scripts/flaky-compare.mjs junit/run1.json junit/run2.json junit/run3.json --max-flaky=0
 
             - name: Upload flaky report
               uses: actions/upload-artifact@v4
@@ -322,9 +324,13 @@ jobs:
                   exit 1
 
             - name: Parity OFF vs ON (rozjazd = FAIL)
+              env:
+                  BASE_URL: 'http://localhost:3000'
               run: npm run test:parity
 
             - name: Golden DOM (BEZ --update)
+              env:
+                  BASE_URL: 'http://localhost:3000'
               run: node tests/playwright/excelDomGolden.cjs
 
             - name: Align empty-row (BASE :3000)

@@ -26,7 +26,7 @@ const {
     applyThrottle
 } = require('./throttleHelper.cjs');
 
-const BASE = 'http://localhost:3000';
+const BASE = process.env.BASE_URL || 'http://localhost:3000';
 const RUNS_COLD = 5;
 const RUNS_WARM = 5;
 const OUT_DEFAULT = path.join(__dirname, '../../docs/plans/baseline-excel-open-1200-f1.json');
