@@ -52,27 +52,6 @@ async function showSectionRury(id) {
 
     updateRurySummaryBarVisibility();
 
-    if (id === 'offer') {
-        const ctxBanner = document.getElementById('offer-context-banner');
-        const ctxBadge = document.getElementById('offer-context-badge');
-        const ctxText = document.getElementById('offer-context-text');
-        if (ctxBanner && ctxBadge && ctxText) {
-            if (window.orderEditMode) {
-                // Tryb zamówienia identyfikuje banner na górze (renderOrderModeBanner).
-                ctxBanner.style.display = 'none';
-            } else if (window.editingOfferId) {
-                // Edycja oferty ma własny nagłówek sekcji — linia kontekstu zbędna.
-                ctxBanner.style.display = 'none';
-            } else {
-                ctxBanner.style.display = 'block';
-                ctxBadge.textContent = 'Nowa oferta';
-                ctxText.innerHTML =
-                    '— Dodaj produkty w zakładce <a href="#" data-csp="showSection" data-csp-args=\'["builder"]\'>Konfiguracja</a>.';
-            }
-            if (window.lucide) lucide.createIcons();
-        }
-    }
-
     const urlParams = new URLSearchParams(window.location.search);
     urlParams.set('tab', id);
     window.history.replaceState({}, '', `${window.location.pathname}?${urlParams.toString()}`);

@@ -50,9 +50,9 @@ function showPipeLengthModal(productId, editIndex = null) {
       <div class="form-group text-center pipe-length-form">
         <label class="form-label pipe-length-label" for="pipe-custom-length">Wprowadź długość rury (m)</label>
         <div class="pipe-length-stepper">
-          <button class="btn btn-secondary btn-round-44" data-csp="$dom" data-csp-args="[&quot;stepDown&quot;, &quot;#pipe-custom-length&quot;]" aria-label="Zmniejsz">-</button>
-          <input class="form-input pipe-length-input" id="pipe-custom-length" type="number" step="0.1" min="1" max="${maxL}" value="${currentVal}">
-          <button class="btn btn-secondary btn-round-44" data-csp="$dom" data-csp-args="[&quot;stepUp&quot;, &quot;#pipe-custom-length&quot;]" aria-label="Zwiększ">+</button>
+          <button type="button" class="btn btn-secondary btn-round-44" data-csp="$dom" data-csp-args="[&quot;stepDown&quot;, &quot;#pipe-custom-length&quot;]" aria-label="Zmniejsz długość"><i data-lucide="minus" aria-hidden="true"></i></button>
+          <input class="form-input pipe-length-input" id="pipe-custom-length" type="number" step="0.1" min="1" max="${maxL}" value="${currentVal}" aria-label="Długość rury w metrach">
+          <button type="button" class="btn btn-secondary btn-round-44" data-csp="$dom" data-csp-args="[&quot;stepUp&quot;, &quot;#pipe-custom-length&quot;]" aria-label="Zwiększ długość"><i data-lucide="plus" aria-hidden="true"></i></button>
         </div>
         <div class="pipe-length-hints">
           <span class="bg-hover-025">Min: <strong>1.0m</strong></span>

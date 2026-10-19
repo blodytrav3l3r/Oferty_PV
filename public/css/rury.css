@@ -350,11 +350,18 @@ html[data-theme='light'] .rury-table tbody td input[disabled] {
 
 /* Modal długości rury (offerAddItems.js) */
 .modal--pipe-length {
-    max-width: 450px;
+    width: min(640px, 94vw);
+    max-width: 640px;
     border-radius: var(--radius);
     box-shadow:
         0 20px 25px -5px rgba(var(--black-rgb), 0.1),
         var(--shadow-md);
+}
+.modal--pipe-length .modal-header h3 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    line-height: 1.25;
 }
 .pipe-length-info {
     font-size: var(--fs-xl);
@@ -368,6 +375,7 @@ html[data-theme='light'] .rury-table tbody td input[disabled] {
 .pipe-length-info strong {
     color: var(--text-primary);
     font-size: var(--fs-2xl);
+    line-height: 1.35;
 }
 .pipe-length-stepper {
     display: flex;
@@ -385,6 +393,12 @@ html[data-theme='light'] .rury-table tbody td input[disabled] {
     border-radius: var(--radius);
     color: var(--accent-text);
     background: transparent;
+}
+/* Jednostka przy wartości — bez zawijania i bez rozjazdu z polem. */
+.pipe-length-unit {
+    font-size: var(--fs-3xl);
+    font-weight: var(--fw-semibold);
+    color: var(--text-muted);
 }
 .pipe-length-hints {
     margin-top: 1rem;
