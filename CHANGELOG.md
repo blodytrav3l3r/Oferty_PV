@@ -4,6 +4,15 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+### [1.46.5](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.46.4...v1.46.5) (2026-10-19)
+
+### Bug Fixes
+
+- **ci:** odblokowanie bram test:quick i test:e2e ([0628325](https://github.com/blodytrav3l3r/Oferty_PV/commit/06283258d842aaf12f2d1c2bd6df3383e45dbe02))
+- **offers:** audit w tx i brama spa-guard ([b65d338](https://github.com/blodytrav3l3r/Oferty_PV/commit/b65d33810cbbfa56b118f17f476e3a07fee272ad))
+- **prisma:** unikalny numer oferty i historia zapisu ([7a35ca7](https://github.com/blodytrav3l3r/Oferty_PV/commit/7a35ca79c8baa35acb793912bdbd65891bb60dec))
+- **ui:** escape pdf, thead, mobile nav i zaznaczanie excel ([44578d4](https://github.com/blodytrav3l3r/Oferty_PV/commit/44578d4aa221bb46cab23df39c343c137d2bd5cf))
+
 ### [1.46.4](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.46.3...v1.46.4) (2026-10-18)
 
 ### Bug Fixes
