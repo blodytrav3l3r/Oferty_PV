@@ -76,6 +76,9 @@ function canon(html) {
             // &nbsp; z recznie sklejanego HTML normalizujemy wczesniej.
             .replace(/&nbsp;|&#160;/g, ' ')
             .replace(/\d[\d\s]*,?\d*\s*PLN/g, 'N PLN')
+            // aria-valuenow uchwytu resize = offsetWidth (pomiar fontow platformy,
+            // jak width/left wyzej) — normalizujemy wartosc, atrybut zostaje.
+            .replace(/aria-valuenow="[\d.]+"/g, 'aria-valuenow="N"')
             .replace(/>\s+</g, '><')
             .trim()
     );
@@ -191,6 +194,8 @@ async function tabHash(frame, tab) {
                 })
                 .replace(/&nbsp;|&#160;/g, ' ')
                 .replace(/\d[\d\s]*,?\d*\s*PLN/g, 'N PLN')
+                // aria-valuenow resize = offsetWidth (pomiar platformy) — jak width/left.
+                .replace(/aria-valuenow="[\d.]+"/g, 'aria-valuenow="N"')
                 .replace(/>\s+</g, '><')
                 .trim();
         const rows = [...tbody.querySelectorAll('tr[data-widx]')];
