@@ -27,6 +27,19 @@ describe('frontend: modal długości rury + baner kontekstu (rury)', () => {
         expect(css).not.toMatch(/\.modal--pipe-length\s*\{[^}]*max-width:\s*450px/);
     });
 
+    it('przyciski +/- są 48px z ikoną 22px (nie bazowe 44/16)', () => {
+        const stepperRule = css.match(
+            /\.modal--pipe-length \.pipe-length-stepper \.btn-round-44\s*\{[^}]*\}/
+        );
+        expect(stepperRule).not.toBeNull();
+        expect(stepperRule?.[0]).toMatch(/width:\s*48px/);
+        const iconRule = css.match(
+            /\.modal--pipe-length \.pipe-length-stepper \.btn-round-44 svg\s*\{[^}]*\}/
+        );
+        expect(iconRule).not.toBeNull();
+        expect(iconRule?.[0]).toMatch(/width:\s*22px/);
+    });
+
     it('baner kontekstu nowej oferty usunięty', () => {
         expect(offerPartial).not.toContain('offer-context-banner');
         expect(navigation).not.toContain('offer-context-');

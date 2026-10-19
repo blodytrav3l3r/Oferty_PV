@@ -383,6 +383,36 @@ html[data-theme='light'] .rury-table tbody td input[disabled] {
     align-items: center;
     gap: 1rem;
 }
+/* Przyciski krokowe: 48px okrągłe, ikona 22px — bazowe .btn svg (16px) i
+   .btn-round-44 (44px) wyglądały na tym polu jak mikro-znaki. */
+.modal--pipe-length .pipe-length-stepper .btn-round-44 {
+    width: 48px;
+    height: 48px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    color: var(--accent-text);
+    background: rgba(var(--accent-rgb), 0.08);
+    border: 1px solid var(--accent-border-medium);
+    font-size: var(--fs-2xl);
+    line-height: 1;
+}
+.modal--pipe-length .pipe-length-stepper .btn-round-44:hover {
+    color: var(--white);
+    background: var(--accent);
+    border-color: var(--accent);
+}
+.modal--pipe-length .pipe-length-stepper .btn-round-44:active {
+    transform: none;
+    background: var(--accent-strong);
+    border-color: var(--accent-strong);
+}
+.modal--pipe-length .pipe-length-stepper .btn-round-44 svg {
+    width: 22px;
+    height: 22px;
+    stroke-width: 2.5;
+}
 .pipe-length-input {
     font-size: var(--fs-8xl);
     padding: 1rem;
@@ -393,12 +423,6 @@ html[data-theme='light'] .rury-table tbody td input[disabled] {
     border-radius: var(--radius);
     color: var(--accent-text);
     background: transparent;
-}
-/* Jednostka przy wartości — bez zawijania i bez rozjazdu z polem. */
-.pipe-length-unit {
-    font-size: var(--fs-3xl);
-    font-weight: var(--fw-semibold);
-    color: var(--text-muted);
 }
 .pipe-length-hints {
     margin-top: 1rem;
