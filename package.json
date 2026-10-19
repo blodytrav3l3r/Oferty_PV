@@ -24,6 +24,8 @@
         "test:excel-slo": "node tests/playwright/excelHeapProbe.cjs --slo",
         "test:e2e-appname": "node tests/playwright/appNameConsistency.cjs",
         "test:e2e-appname:spawn": "npm run build && node tests/playwright/appNameConsistency.cjs --spawn",
+        "test:spa-guard": "node tests/playwright/spa-guard.cjs",
+        "test:spa-guard:spawn": "npm run build && node tests/playwright/spa-guard.cjs --spawn",
         "test:e2e-qe-switch": "node tests/playwright/qeQuickEditSwitch.cjs",
         "test:e2e-qe-switch:spawn": "npm run build && node tests/playwright/qeQuickEditSwitch.cjs --spawn",
         "test:e2e": "playwright test",

@@ -224,6 +224,9 @@ router.post(
                     investName: string | null;
                     clientNumber: string | null;
                 };
+                auditAction: 'create' | 'update';
+                auditOld: Record<string, unknown> | null;
+                auditNew: Record<string, unknown>;
             }> = [];
 
             // M3: jawny numer oferty musi być unikalny (I-004) — kolizja
@@ -329,6 +332,8 @@ router.post(
                     effectiveUserId = resolved.effectiveUserId;
                 }
 
+                let auditAction: 'create' | 'update' = 'create';
+                let auditOld: Record<string, unknown> | null = null;
                 if (old) {
                     try {
                         newHistory = JSON.parse(old.history || '[]');
@@ -353,25 +358,8 @@ router.post(
                     };
                     newHistory.unshift(snapshot);
                     if (newHistory.length > 5) newHistory = newHistory.slice(0, 5);
-
-                    logAudit(
-                        'offer',
-                        docId,
-                        authReq.user?.id || '',
-                        'update',
-                        {
-                            state: o.status === 'active' ? 'final' : 'draft',
-                            transportCost: o.transportCost,
-                            items: o.items
-                        },
-                        snapshot
-                    );
-                } else {
-                    logAudit('offer', docId, authReq.user?.id || '', 'create', {
-                        state: o.status === 'active' ? 'final' : 'draft',
-                        transportCost: o.transportCost,
-                        items: o.items
-                    });
+                    auditAction = 'update';
+                    auditOld = snapshot;
                 }
 
                 const state = o.status === 'active' ? 'final' : 'draft';
@@ -433,6 +421,13 @@ router.post(
                         clientName,
                         investName,
                         clientNumber
+                    },
+                    auditAction,
+                    auditOld,
+                    auditNew: {
+                        state,
+                        transportCost: o.transportCost,
+                        items: o.items
                     }
                 });
                 results.push({ id: docId, ok: true });
@@ -520,6 +515,16 @@ router.post(
                             });
                         }
                     }
+                    // Audit w tej samej tx — rollback biznesu cofa wpis.
+                    await logAudit(
+                        'offer',
+                        w.docId,
+                        authReq.user?.id || '',
+                        w.auditAction,
+                        w.auditNew,
+                        w.auditOld,
+                        tx
+                    );
                 }
             }, HOT_TX_OPTS);
             // B1: FTS w tle (kolejka z retry) — odpowiedź nie czeka na indeks.

@@ -597,6 +597,9 @@ router.post(
                     investName: string | null;
                     clientNumber: string | null;
                 };
+                auditAction: 'create' | 'update';
+                auditOld: Record<string, unknown> | null;
+                auditNew: Record<string, unknown>;
             }> = [];
             // M3: jawny numer oferty musi być unikalny (I-004) — jak w ruryCrud.
             const wantedNumbers = new Map<string, string>();
@@ -753,6 +756,8 @@ router.post(
                     }
                 }
 
+                let auditAction: 'create' | 'update' = 'create';
+                let auditOld: Record<string, unknown> | null = null;
                 if (old) {
                     try {
                         newHistory = JSON.parse(old.history || '[]');
@@ -786,16 +791,8 @@ router.post(
                     } catch {
                         auditData = {};
                     }
-                    logAudit(
-                        'studnia_oferta',
-                        docId,
-                        authReq.user?.id || '',
-                        'update',
-                        o,
-                        auditData
-                    );
-                } else {
-                    logAudit('studnia_oferta', docId, authReq.user?.id || '', 'create', o);
+                    auditAction = 'update';
+                    auditOld = auditData;
                 }
 
                 const state = o.status === 'active' ? 'final' : 'draft';
@@ -881,7 +878,10 @@ router.post(
                         clientName,
                         investName,
                         clientNumber
-                    }
+                    },
+                    auditAction,
+                    auditOld,
+                    auditNew: o as Record<string, unknown>
                 });
             }
             // Atomowy zapis wszystkich ofert — all-or-nothing (P1.1 correctness).
@@ -905,6 +905,16 @@ router.post(
                         updateData: w.update,
                         conflictMessage: 'Oferta zmieniona przez innego użytkownika'
                     });
+                    // Audit w tej samej tx — rollback biznesu cofa wpis.
+                    await logAudit(
+                        'studnia_oferta',
+                        w.docId,
+                        authReq.user?.id || '',
+                        w.auditAction,
+                        w.auditNew,
+                        w.auditOld,
+                        tx
+                    );
                 }
             }, HOT_TX_OPTS);
             const results: Record<string, unknown>[] = [];

@@ -141,6 +141,10 @@ describe('Rury Offers CRUD — warstwa zapisu', () => {
 
             expect(res.statusCode).toBe(200);
             expect(res.body.ok).toBe(true);
+            // audit create w tej samej tx (7. arg = tx)
+            const auditCall = (logAudit as jest.Mock).mock.calls[0];
+            expect(auditCall[3]).toBe('create');
+            expect(auditCall[6]).toBeDefined();
             // z transakcją: upsert wołany przez tx, mock $transaction przekazuje ten sam mock
             expect(
                 (prisma.offers_rel.upsert as jest.Mock).mock.calls.length +

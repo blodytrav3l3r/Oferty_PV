@@ -477,6 +477,11 @@ jobs:
                   node tests/playwright/excelEmptyRowAlignment.cjs
                   node tests/playwright/partialOrderRury.cjs
 
+            - name: SPA guard — niezapisane zmiany (reuse :3198)
+              env:
+                  BASE_URL: 'http://localhost:3198'
+              run: node tests/playwright/spa-guard.cjs
+
             - name: E2E spec — care + AI dashboard (reuse :3198)
               env:
                   PLAYWRIGHT_PORT: '3198'

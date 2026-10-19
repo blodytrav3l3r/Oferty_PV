@@ -129,6 +129,10 @@ describe('Studnie Offers CRUD — autoryzacja (IDOR)', () => {
             expect(prisma.offers_studnie_rel.create).toHaveBeenCalledWith({
                 data: expect.objectContaining({ userId: 'user-id', state: 'draft', version: 1 })
             });
+            // audit create w tej samej tx (7. arg = tx)
+            const auditCall = (logAudit as jest.Mock).mock.calls[0];
+            expect(auditCall[3]).toBe('create');
+            expect(auditCall[6]).toBeDefined();
         });
 
         it('brak numeru → NULL w DB (nie pusty string)', async () => {

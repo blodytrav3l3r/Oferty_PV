@@ -28,7 +28,7 @@ const { resolve } = require('path');
 const ROOT = resolve(__dirname, '..', '..');
 const SPAWN = process.argv.includes('--spawn');
 const SPAWN_VERBOSE = process.env.SPAWN_VERBOSE === '1';
-const BASE = SPAWN ? 'http://localhost:3177' : 'http://localhost:3000';
+const BASE = process.env.BASE_URL || (SPAWN ? 'http://localhost:3177' : 'http://localhost:3000');
 
 function resolvePlaywright() {
     try {
