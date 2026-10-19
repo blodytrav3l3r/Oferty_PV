@@ -35,6 +35,14 @@ describe('P2 mapPrismaError', () => {
         expect((calls[0].body as { code: string }).code).toBe('UNIQUE_CONFLICT');
     });
 
+    test('P2003 → 409 FK_CONFLICT', () => {
+        const { calls, res } = mockRes();
+        const err = Object.assign(new Error('Foreign key'), { code: 'P2003' });
+        expect(mapPrismaError(res, err)).toBe(true);
+        expect(calls[0].code).toBe(409);
+        expect((calls[0].body as { code: string }).code).toBe('FK_CONFLICT');
+    });
+
     test('extra doklejane (kontrakt saved: [] w produkcji)', () => {
         const { calls, res } = mockRes();
         const err = Object.assign(new Error('No record'), { code: 'P2025' });

@@ -32,6 +32,29 @@ describe('errorHandler', () => {
         expect(res.body.error).toContain('Zbyt duży payload');
     });
 
+    it('P2002 → 409 UNIQUE_CONFLICT z requestId (mapowanie centralne)', async () => {
+        const err = Object.assign(new Error('Unique'), { code: 'P2002' });
+        const res = await request(testApp(err)).get('/boom');
+        expect(res.statusCode).toBe(409);
+        expect(res.body.code).toBe('UNIQUE_CONFLICT');
+        expect(typeof res.body.requestId).toBe('string');
+    });
+
+    it('P2025 → 404 NOT_FOUND (mapowanie centralne)', async () => {
+        const err = Object.assign(new Error('No record'), { code: 'P2025' });
+        const res = await request(testApp(err)).get('/boom');
+        expect(res.statusCode).toBe(404);
+        expect(res.body.code).toBe('NOT_FOUND');
+    });
+
+    it('P2034 → 429 z Retry-After', async () => {
+        const err = Object.assign(new Error('Transaction conflict'), { code: 'P2034' });
+        const res = await request(testApp(err)).get('/boom');
+        expect(res.statusCode).toBe(429);
+        expect(res.headers['retry-after']).toBe('2');
+        expect(res.body.error).toContain('Konflikt transakcji');
+    });
+
     it('zwykły błąd nadal daje generyczne 500', async () => {
         const res = await request(testApp(new Error('coś padło'))).get('/boom');
         expect(res.statusCode).toBe(500);

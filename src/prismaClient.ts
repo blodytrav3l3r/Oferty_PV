@@ -6,6 +6,7 @@ import path from 'path';
 import { PrismaClient, Prisma } from '../generated/prisma';
 import { resolveProjectRoot } from './utils/paths';
 import { countDbQuery } from './utils/dbQueryCounter';
+import { requireDatabaseUrl } from './utils/databaseUrl';
 import { recordDbQuery } from './utils/metrics';
 
 /**
@@ -38,10 +39,7 @@ function normalizeDatabaseUrl(raw: string): string {
     return 'file:' + abs.replace(/\\/g, '/') + query;
 }
 
-const databaseUrl = normalizeDatabaseUrl(
-    process.env.DATABASE_URL ||
-        'file:../data/app_database.sqlite?connection_limit=1&busy_timeout=30000'
-);
+const databaseUrl = normalizeDatabaseUrl(requireDatabaseUrl(process.env.DATABASE_URL));
 
 export const prisma = new PrismaClient({
     datasources: { db: { url: databaseUrl } },

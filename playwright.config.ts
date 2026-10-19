@@ -10,7 +10,7 @@ const E2E_DB =
 
 export default defineConfig({
     testDir: 'tests/playwright',
-    testMatch: ['**/*.cjs', '**/*.spec.ts'],
+    testMatch: ['**/*.spec.ts'],
     timeout: 30_000,
     expect: { timeout: 5_000 },
     fullyParallel: false,

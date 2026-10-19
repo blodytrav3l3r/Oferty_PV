@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { logger } from '../utils/logger';
 import { recordDbBusy } from '../utils/metrics';
+import { mapPrismaError } from '../utils/prismaErrors';
 
 export function errorHandler(err: Error, req: Request, res: Response, _next: NextFunction) {
     // requestId z loggera (req.id) albo z nagłówka X-Request-Id — do korelacji logów z odpowiedzią.
@@ -23,6 +24,21 @@ export function errorHandler(err: Error, req: Request, res: Response, _next: Nex
     } catch {
         // Ignoruj — nagłówki mogły już zostać wysłane.
     }
+    // Prisma: klasyfikacja po kodzie, nie po treści komunikatu.
+    // P2034 (konflikt transakcji) wymaga Retry-After, więc obsługa tutaj.
+    if ((err as { code?: string }).code === 'P2034') {
+        recordDbBusy();
+        try {
+            res.setHeader('Retry-After', 2);
+        } catch {
+            // Ignoruj — nagłówki mogły już zostać wysłane.
+        }
+        if (!res.headersSent) {
+            res.status(429).json({ error: 'Konflikt transakcji — spróbuj ponownie', requestId });
+            return;
+        }
+    }
+    if (!res.headersSent && mapPrismaError(res, err, { requestId })) return;
     // M: licznik SQLITE_BUSY/lock — contention pisarzy na 1 DB.
     // Heavy-write: zamiast mylącego 500 zwróć 429 + Retry-After (backpressure,
     // klient/load-100 ponawia po odczekaniu; 5xx==0 w DoD).

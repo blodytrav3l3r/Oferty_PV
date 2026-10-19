@@ -477,6 +477,19 @@ jobs:
                   node tests/playwright/excelEmptyRowAlignment.cjs
                   node tests/playwright/partialOrderRury.cjs
 
+            - name: E2E spec — care + AI dashboard (reuse :3198)
+              env:
+                  PLAYWRIGHT_PORT: '3198'
+                  PLAYWRIGHT_BASE_URL: 'http://localhost:3198'
+                  PLAYWRIGHT_REUSE_SERVER: '1'
+              run: |
+                  npx playwright test \
+                    tests/playwright/carePanel.spec.ts \
+                    tests/playwright/carePanelContact.spec.ts \
+                    tests/playwright/carePanelR2R3.spec.ts \
+                    tests/playwright/aiDashboardSmoke.spec.ts \
+                    --project=chromium
+
             - name: Stop serwera
               if: always()
               run: kill $(cat e2e-extended-server.pid) || true

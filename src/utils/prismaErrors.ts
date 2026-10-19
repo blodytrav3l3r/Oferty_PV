@@ -24,5 +24,13 @@ export function mapPrismaError(res: JsonRes, e: unknown, extra?: Record<string, 
         });
         return true;
     }
+    if (code === 'P2003') {
+        res.status(409).json({
+            error: 'Naruszenie więzów integralności',
+            code: 'FK_CONFLICT',
+            ...extra
+        });
+        return true;
+    }
     return false;
 }
