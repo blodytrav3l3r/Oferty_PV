@@ -104,7 +104,7 @@ function exportOfferPDF(id) {
     let transportHtml = '';
     if (transportResult.lines.length > 0) {
         transportHtml = `<h3 style="font-size: var(--fs-md);color:var(--brand-navy);margin-top:18px;margin-bottom:6px"><i data-lucide="truck"></i> Transport (max 24 000 kg / kurs)</h3>
-    <table><th scope="col"ead><tr><th scope="col">Produkt</th><th scope="col" class="text-right">Ilość</th><th scope="col" class="text-right">Waga/szt</th><th scope="col" class="text-right">Łączna waga</th><th scope="col" class="text-right">Max/transport</th><th scope="col" class="text-right">Transporty</th></tr></thead><tbody>`;
+    <table><thead><tr><th scope="col">Produkt</th><th scope="col" class="text-right">Ilość</th><th scope="col" class="text-right">Waga/szt</th><th scope="col" class="text-right">Łączna waga</th><th scope="col" class="text-right">Max/transport</th><th scope="col" class="text-right">Transporty</th></tr></thead><tbody>`;
         transportResult.lines.forEach((l) => {
             transportHtml += `<tr><td>${escapeHtml(l.name)}</td><td class="text-right">${l.quantity}</td><td class="text-right">${fmtInt(l.weightPerPiece)} kg</td><td class="text-right">${fmtInt(l.totalWeight)} kg</td><td class="text-right">${l.maxPerTransport}</td><td class="text-right" style="font-weight:bold">${l.dedicatedTransports}</td></tr>`;
         });
@@ -163,7 +163,7 @@ function exportOfferPDF(id) {
     </div>
   </div>
   <table>
-    <th scope="col"ead><tr><th scope="col">Lp.</th><th scope="col">Indeks</th><th scope="col">Nazwa</th><th scope="col" class="text-right">Cena jedn.</th><th scope="col" class="text-right">Rabat</th><th scope="col" class="text-right">Po rabacie</th><th scope="col" class="text-right">Transport/szt.</th><th scope="col" class="text-right">Ilość</th><th scope="col" class="text-right">Netto</th><th scope="col" class="text-right">Brutto</th></tr></thead>
+    <thead><tr><th scope="col">Lp.</th><th scope="col">Indeks</th><th scope="col">Nazwa</th><th scope="col" class="text-right">Cena jedn.</th><th scope="col" class="text-right">Rabat</th><th scope="col" class="text-right">Po rabacie</th><th scope="col" class="text-right">Transport/szt.</th><th scope="col" class="text-right">Ilość</th><th scope="col" class="text-right">Netto</th><th scope="col" class="text-right">Brutto</th></tr></thead>
     <tbody>${offer.items
         .map((item, i) => {
             const pad = item.unitPrice * (1 - item.discount / 100) + (item.pehdCostPerUnit || 0);
@@ -276,7 +276,7 @@ function renderDiscountModalItems() {
     if (!container) return;
 
     let html = `<table style="width:100%; text-align:left; border-collapse:collapse;">
-    <th scope="col"ead>
+    <thead>
       <tr style="border-bottom:1px solid var(--border); font-size: var(--fs-base); color:var(--text-muted);">
         <th scope="col" style="padding:0.4rem; width:50%;">Produkt</th>
         <th scope="col" style="padding:0.4rem; width:15%; text-align:center;">Rabat (%)</th>

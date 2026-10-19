@@ -197,6 +197,16 @@ body.rury-page > .main:has(#section-builder.active) {
     overflow-y: auto;
 }
 
+/*
+ * Tabela podsumowania oferty (zakładka „Oferta", rury) — kolumny wyśrodkowane.
+ * Tekst opisowy (nazwa produktu, wiersze podsumowań z colspan) zostaje z lewej.
+ * Reguła nadpisuje klasy .th-r-90/.th-r-120, bo ma wyższą specyficzność (2 klasy + element).
+ */
+.offer-summary-table th,
+.offer-summary-table td {
+    text-align: center;
+}
+
 .rury-table {
     width: 100%;
     border-collapse: separate;
