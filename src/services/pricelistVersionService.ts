@@ -80,8 +80,15 @@ export type {
 export {
     countVersionUsage,
     getPrecoReferences,
+    getVersionsSummary,
     resolveActive,
     resolveVersionIdSafe,
     resolveActivePricing
 } from './pricelist/usage';
-export type { VersionUsage, ActivePricing, PrecoReferenceInfo } from './pricelist/usage';
+export type {
+    VersionUsage,
+    ActivePricing,
+    PrecoReferenceInfo,
+    VersionSummaryRef,
+    VersionsSummary
+} from './pricelist/usage';

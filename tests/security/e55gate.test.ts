@@ -175,6 +175,7 @@ jest.mock('../../src/services/pricelistVersionService', () => {
         getVersionDiff: jest.fn(),
         getVersionExportSheets: jest.fn(),
         getVersionPreview: jest.fn(),
+        getVersionsSummary: jest.fn(),
         updateDraft
     };
 });
@@ -266,6 +267,15 @@ describe('E5.5 gate: 401 bez sesji (wszystkie 6 ścieżek)', () => {
         expect(diffMock).not.toHaveBeenCalled();
     });
 
+    it('GET /pricelist-versions/summary → 401', async () => {
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        const summaryMock = require('../../src/services/pricelistVersionService')
+            .getVersionsSummary as jest.Mock;
+        const res = await request(app).get('/api/pricelist-versions/summary').set(anon);
+        expect(res.status).toBe(401);
+        expect(summaryMock).not.toHaveBeenCalled();
+    });
+
     it('POST /ai/predict/batch → 401', async () => {
         const predictMock = setPredict(0.5);
         const res = await request(app)
@@ -341,6 +351,25 @@ describe('E5.5 gate: role i ownership', () => {
             expect(JSON.stringify(res.body)).not.toContain('evil');
         }
         expect(previewMock).not.toHaveBeenCalled();
+    });
+
+    it('versions summary: user → 403, admin → 200', async () => {
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        const summaryMock = require('../../src/services/pricelistVersionService')
+            .getVersionsSummary as jest.Mock;
+        summaryMock.mockResolvedValue({
+            generatedAt: '2026-01-01T00:00:00.000Z',
+            types: {}
+        });
+
+        const denied = await request(app).get('/api/pricelist-versions/summary').set(user);
+        expect(denied.status).toBe(403);
+        expect(summaryMock).not.toHaveBeenCalled();
+
+        const ok = await request(app).get('/api/pricelist-versions/summary').set(admin);
+        expect(ok.status).toBe(200);
+        expect(summaryMock).toHaveBeenCalledTimes(1);
+        expectNoLeak(ok.body);
     });
 
     it('versions diff: user → 403, złe id/against → 400 bez echa, against=id → 400', async () => {

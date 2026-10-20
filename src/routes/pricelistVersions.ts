@@ -22,9 +22,11 @@ import {
     createDraft,
     countVersionUsage,
     deleteVersion,
+    getPrecoReferences,
     getVersionDiff,
     getVersionExportSheets,
     getVersionPreview,
+    getVersionsSummary,
     publishDraft,
     updateDraft
 } from '../services/pricelistVersionService';
@@ -103,12 +105,25 @@ router.get('/', requireAuth, requireAdmin, async (req, res) => {
             orderBy: [{ type: 'asc' }, { seq: 'desc' }]
         });
         // Ile ofert/zamówień trzyma pieczątkę wersji (pod wyszarzony „Usuń" w FE).
-        // Wersji jest mało, więc batch: per wersja 4 county równolegle.
+        // Rury/studnie: 4 county per wersja. PRECO: jedna mapa referencji studni
+        // (getPrecoReferences), bez N+1 i bez 4 countów (te zawsze 0).
+        const hasPreco = versions.some((v) => v.type === 'preco');
+        const precoRefs = hasPreco ? await getPrecoReferences() : null;
         const withUsage = await Promise.all(
-            versions.map(async (v) => ({
-                ...v,
-                usedBy: (await countVersionUsage(v.id)).total
-            }))
+            versions.map(async (v) => {
+                if (v.type === 'preco') {
+                    return {
+                        ...v,
+                        usedBy: precoRefs?.get(v.id)?.count ?? 0,
+                        usedByKind: 'studnieVersions' as const
+                    };
+                }
+                return {
+                    ...v,
+                    usedBy: (await countVersionUsage(v.id)).total,
+                    usedByKind: 'offers' as const
+                };
+            })
         );
         // Autor: nazwa zamiast id (kolumna Autor w panelu). Batch 1 query;
         // nie-user (auto-ensure/backfill) i usunięci zostają słownie po id.
@@ -199,6 +214,16 @@ router.get('/labels', requireAuth, async (req, res) => {
             orderBy: [{ type: 'asc' }, { seq: 'desc' }]
         });
         res.json({ versions });
+    } catch (err) {
+        sendVersionError(res, err);
+    }
+});
+
+/** Skrót stanu cenników: aktywna + najbliższa przyszła SCHEDULED per typ. */
+router.get('/summary', requireAuth, requireAdmin, READ_LIMITER, async (_req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
+    try {
+        res.json(await getVersionsSummary());
     } catch (err) {
         sendVersionError(res, err);
     }

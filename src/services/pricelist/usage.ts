@@ -7,7 +7,7 @@
 import prisma from '../../prismaClient';
 import { logger } from '../../utils/logger';
 import type { PricelistVersion } from '../../../generated/prisma';
-import { RESOLVABLE_STATUSES, requireType, toUtcIso } from './validation';
+import { PRICELIST_TYPES, RESOLVABLE_STATUSES, requireType, toUtcIso } from './validation';
 import type { PricelistType, Tx } from './validation';
 import { getVersionExport, pickPrecoVersionFromTimeline } from './export';
 import { buildPrecoEntryFromSections, cmpText, studnieVersionRowToLegacy } from './liveProjection';
@@ -106,6 +106,68 @@ export async function resolveActive(
         },
         orderBy: [{ effectiveFrom: 'desc' }, { seq: 'desc' }]
     });
+}
+
+/** Minimalna referencja wersji w `/summary` (bez sha/createdBy/note). */
+export interface VersionSummaryRef {
+    id: string;
+    version: string;
+    seq: number;
+    effectiveFrom: string;
+    status: string;
+}
+
+export interface VersionsSummary {
+    generatedAt: string;
+    types: Record<
+        PricelistType,
+        { active: VersionSummaryRef | null; nextScheduled: VersionSummaryRef | null }
+    >;
+}
+
+const SUMMARY_REF_SELECT = {
+    id: true,
+    version: true,
+    seq: true,
+    effectiveFrom: true,
+    status: true
+} as const;
+
+function toSummaryRef(version: PricelistVersion): VersionSummaryRef {
+    return {
+        id: version.id,
+        version: version.version,
+        seq: version.seq,
+        effectiveFrom: version.effectiveFrom,
+        status: version.status
+    };
+}
+
+/** Najwcześniejsza przyszła SCHEDULED (effectiveFrom ASC, seq ASC) — 1 zapytanie. */
+function nextScheduledFor(type: PricelistType, now: string): Promise<VersionSummaryRef | null> {
+    return prisma.pricelistVersion.findFirst({
+        where: { type, status: 'SCHEDULED', effectiveFrom: { gt: now } },
+        orderBy: [{ effectiveFrom: 'asc' }, { seq: 'asc' }],
+        select: SUMMARY_REF_SELECT
+    });
+}
+
+/**
+ * Skrót stanu 3 cenników: aktywna (resolveActive) + najbliższa przyszła
+ * SCHEDULED. Dokładnie 6 zapytań (3× resolveActive + 3× scheduled), zero N+1.
+ */
+export async function getVersionsSummary(): Promise<VersionsSummary> {
+    const generatedAt = new Date().toISOString();
+    const entries = await Promise.all(
+        PRICELIST_TYPES.map(async (type) => {
+            const [active, nextScheduled] = await Promise.all([
+                resolveActive(type, generatedAt),
+                nextScheduledFor(type, generatedAt)
+            ]);
+            return [type, { active: active ? toSummaryRef(active) : null, nextScheduled }] as const;
+        })
+    );
+    return { generatedAt, types: Object.fromEntries(entries) as VersionsSummary['types'] };
 }
 
 /**
