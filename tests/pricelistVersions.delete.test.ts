@@ -277,6 +277,46 @@ describe('DELETE pricelistVersions', () => {
         expect((err as PricelistVersionError).code).toBe('NOT_DELETABLE');
     });
 
+    test('re-check w tx: referencja dodana po pre-checku → 409 i brak delete', async () => {
+        seedVersion({
+            id: 'p-race',
+            type: 'preco',
+            status: 'ARCHIVED',
+            seq: 1,
+            effectiveFrom: '2026-01-01T00:00:00.000Z'
+        });
+        const findMany = txMock.pricelistVersion.findMany as jest.Mock;
+        findMany
+            .mockResolvedValueOnce([])
+            .mockResolvedValueOnce([])
+            .mockResolvedValueOnce([
+                {
+                    id: 's-race',
+                    version: 'v1',
+                    seq: 1,
+                    status: 'DRAFT',
+                    effectiveFrom: '2026-02-01T00:00:00.000Z'
+                }
+            ])
+            .mockResolvedValueOnce([
+                {
+                    id: 'p-race',
+                    version: 'v1',
+                    seq: 1,
+                    status: 'ARCHIVED',
+                    effectiveFrom: '2026-01-01T00:00:00.000Z'
+                }
+            ]);
+
+        const err = await deleteVersion('p-race').catch((e) => e);
+        expect(err).toBeInstanceOf(PricelistVersionError);
+        expect((err as PricelistVersionError).statusCode).toBe(409);
+        expect((err as PricelistVersionError).code).toBe('USED_BY_STUDNIE');
+        expect(versions.some((v) => v.id === 'p-race')).toBe(true);
+        expect(txMock.pricelistVersion.delete).not.toHaveBeenCalled();
+        expect(txMock.pricelistItemPrecoKinety.deleteMany).not.toHaveBeenCalled();
+    });
+
     test('getPrecoReferences mapuje referencje i labelki (max 3)', async () => {
         seedVersion({
             id: 'p-arch',
