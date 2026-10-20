@@ -10,7 +10,7 @@ import express from 'express';
 import { z } from 'zod';
 import { requireAuth, requireAdmin } from '../middleware/auth';
 import { createModuleLock } from '../middleware/writeLock';
-import { PRICELIST_WRITE_LIMITER } from '../middleware/rateLimiters';
+import { PRICELIST_WRITE_LIMITER, READ_LIMITER } from '../middleware/rateLimiters';
 import { logger } from '../utils/logger';
 import {
     PRICELIST_TYPES,
@@ -24,6 +24,7 @@ import {
     deleteVersion,
     getVersionDiff,
     getVersionExportSheets,
+    getVersionPreview,
     publishDraft,
     updateDraft
 } from '../services/pricelistVersionService';
@@ -64,8 +65,30 @@ function isKnownType(value: unknown): value is (typeof PRICELIST_TYPES)[number] 
     return typeof value === 'string' && (PRICELIST_TYPES as readonly string[]).includes(value);
 }
 
+/** Id wersji: tylko bezpieczny alfabet (bez echa surowego id w błędzie, plan §5). */
+const versionIdParamsSchema = z.object({
+    id: z
+        .string()
+        .min(1)
+        .max(64)
+        .regex(/^[A-Za-z0-9_-]+$/)
+});
+
+function parseVersionId(params: unknown): string | null {
+    const parsed = versionIdParamsSchema.safeParse(params);
+    return parsed.success ? parsed.data.id : null;
+}
+
+function sendInvalidId(res: express.Response): void {
+    res.status(400).json({
+        error: 'Nieprawidłowy identyfikator wersji',
+        code: 'INVALID_ID'
+    });
+}
+
 /** Lista wersji (opcjonalny filtr ?type=), najnowsze seq pierwsze. */
 router.get('/', requireAuth, requireAdmin, async (req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
     try {
         const { type } = req.query;
         if (type !== undefined && !isKnownType(type)) {
@@ -130,6 +153,7 @@ router.get('/', requireAuth, requireAdmin, async (req, res) => {
  * pieczątki ofert nie kłamią „legacy"); zły format → 422.
  */
 router.get('/labels', requireAuth, async (req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
     try {
         const { type, ids } = req.query;
         if (type !== undefined && !isKnownType(type)) {
@@ -218,15 +242,12 @@ router.post(
 /** Usunięcie wersji: allowlist jak dziś + archiwalne bez użycia (ACTIVE/BACKDATE zawsze 409). */
 router.delete('/:id', requireAuth, requireAdmin, PRICELIST_WRITE_LIMITER, async (req, res) => {
     try {
-        const parsed = versionIdParamsSchema.safeParse(req.params);
-        if (!parsed.success) {
-            res.status(400).json({
-                error: 'Nieprawidłowy identyfikator wersji',
-                code: 'INVALID_ID'
-            });
+        const id = parseVersionId(req.params);
+        if (!id) {
+            sendInvalidId(res);
             return;
         }
-        const result = await deleteVersion(parsed.data.id, { userId: userIdOf(req) });
+        const result = await deleteVersion(id, { userId: userIdOf(req) });
         res.json(result);
     } catch (err) {
         sendVersionError(res, err);
@@ -251,12 +272,9 @@ const updateDraftBodySchema = z.object({
  */
 router.put('/:id', requireAuth, requireAdmin, PRICELIST_WRITE_LIMITER, async (req, res) => {
     try {
-        const paramsParsed = versionIdParamsSchema.safeParse(req.params);
-        if (!paramsParsed.success) {
-            res.status(400).json({
-                error: 'Nieprawidłowy identyfikator wersji',
-                code: 'INVALID_ID'
-            });
+        const id = parseVersionId(req.params);
+        if (!id) {
+            sendInvalidId(res);
             return;
         }
         const bodyParsed = updateDraftBodySchema.safeParse(req.body ?? {});
@@ -267,12 +285,9 @@ router.put('/:id', requireAuth, requireAdmin, PRICELIST_WRITE_LIMITER, async (re
             });
             return;
         }
-        const version = await updateDraft(
-            paramsParsed.data.id,
-            bodyParsed.data.rows,
-            bodyParsed.data.note,
-            { userId: userIdOf(req) }
-        );
+        const version = await updateDraft(id, bodyParsed.data.rows, bodyParsed.data.note, {
+            userId: userIdOf(req)
+        });
         res.json({ version });
     } catch (err) {
         sendVersionError(res, err);
@@ -290,7 +305,12 @@ router.post(
     PRICELIST_WRITE_LIMITER,
     async (req, res) => {
         try {
-            const version = await publishDraft(req.params.id, { userId: userIdOf(req) });
+            const id = parseVersionId(req.params);
+            if (!id) {
+                sendInvalidId(res);
+                return;
+            }
+            const version = await publishDraft(id, { userId: userIdOf(req) });
             res.json({ version });
         } catch (err) {
             sendVersionError(res, err);
@@ -306,8 +326,13 @@ router.post(
     PRICELIST_WRITE_LIMITER,
     async (req, res) => {
         try {
+            const id = parseVersionId(req.params);
+            if (!id) {
+                sendInvalidId(res);
+                return;
+            }
             const { note } = (req.body ?? {}) as { note?: unknown };
-            const version = await activate(req.params.id, { userId: userIdOf(req), note });
+            const version = await activate(id, { userId: userIdOf(req), note });
             res.json({ version });
         } catch (err) {
             sendVersionError(res, err);
@@ -323,8 +348,13 @@ router.post(
     PRICELIST_WRITE_LIMITER,
     async (req, res) => {
         try {
+            const id = parseVersionId(req.params);
+            if (!id) {
+                sendInvalidId(res);
+                return;
+            }
             const { note } = req.body as { note?: unknown };
-            const version = await applyBackdate(req.params.id, note, {
+            const version = await applyBackdate(id, note, {
                 userId: userIdOf(req)
             });
             res.json({ version });
@@ -335,8 +365,6 @@ router.post(
 );
 
 /** Faza B: rollback — kopia wierszy dowolnej wersji → nowy DRAFT (seq auto). */
-const versionIdParamsSchema = z.object({ id: z.string().min(1) });
-
 router.post(
     '/:id/clone-draft',
     requireAuth,
@@ -344,15 +372,12 @@ router.post(
     PRICELIST_WRITE_LIMITER,
     async (req, res) => {
         try {
-            const parsed = versionIdParamsSchema.safeParse(req.params);
-            if (!parsed.success) {
-                res.status(400).json({
-                    error: 'Nieprawidłowy identyfikator wersji',
-                    code: 'INVALID_ID'
-                });
+            const id = parseVersionId(req.params);
+            if (!id) {
+                sendInvalidId(res);
                 return;
             }
-            const version = await cloneAsDraft(parsed.data.id, { userId: userIdOf(req) });
+            const version = await cloneAsDraft(id, { userId: userIdOf(req) });
             res.status(201).json({ version });
         } catch (err) {
             sendVersionError(res, err);
@@ -376,10 +401,31 @@ router.post(
     }
 );
 
+/** Id wersji: tylko bezpieczny alfabet (bez echa surowego id w błędzie). */
+router.get('/:id/preview', requireAuth, requireAdmin, READ_LIMITER, async (req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
+    try {
+        const id = parseVersionId(req.params);
+        if (!id) {
+            sendInvalidId(res);
+            return;
+        }
+        res.json(await getVersionPreview(id));
+    } catch (err) {
+        sendVersionError(res, err);
+    }
+});
+
 /** Diff wersji względem poprzedniej (seq-1). */
 router.get('/:id/diff', requireAuth, requireAdmin, async (req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
     try {
-        res.json(await getVersionDiff(req.params.id));
+        const id = parseVersionId(req.params);
+        if (!id) {
+            sendInvalidId(res);
+            return;
+        }
+        res.json(await getVersionDiff(id));
     } catch (err) {
         sendVersionError(res, err);
     }
@@ -387,12 +433,14 @@ router.get('/:id/diff', requireAuth, requireAdmin, async (req, res) => {
 
 /** Eksport wersji do XLSX — shape 1:1 z eksportem LIVE (studnie + PRECO same-seq jak F1). */
 router.get('/:id/export', requireAuth, requireAdmin, async (req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
     try {
-        const {
-            version,
-            sheets: live,
-            precoIncluded
-        } = await getVersionExportSheets(req.params.id);
+        const id = parseVersionId(req.params);
+        if (!id) {
+            sendInvalidId(res);
+            return;
+        }
+        const { version, sheets: live, precoIncluded } = await getVersionExportSheets(id);
         if (!isKnownType(version.type)) {
             res.status(422).json({ error: 'Wersja ma nieznany typ', code: 'INVALID_TYPE' });
             return;

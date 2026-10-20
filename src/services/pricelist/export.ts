@@ -185,6 +185,84 @@ export async function getVersionDiff(id: string): Promise<VersionDiff> {
     };
 }
 
+/** Cap wierszy per arkusz w podglądzie (bez paginacji — plan §5). */
+export const MAX_PREVIEW_ROWS = 5000;
+/** Powyżej tego limitu preview → 413 (admin może użyć eksportu — plan §5). */
+export const MAX_COMPARE_ROWS = 20000;
+
+/** Referencja do PRECO, którą eksport studni by dokleił (plan §9.1). */
+export interface VersionPreviewPrecoRef {
+    id: string;
+    version: string;
+    seq: number;
+}
+
+/**
+ * Podgląd wersji (GET /:id/preview): arkuszowe shape LIVE + liczniki.
+ * `precoIncluded`/`precoVersion` występują WYŁĄCZNIE dla `studnie` (dla
+ * rury/preco pola są pominięte — nie istnieje „dołączona PRECO"). PRECO nie
+ * jest doklejana do `sheets`; to zawartość wersji, nie podgląd eksportu.
+ */
+export interface VersionPreview {
+    version: PricelistVersion;
+    sheets: LiveSheetRows;
+    /** Liczniki sprzed capa: suma wierszy i liczba per arkusz. */
+    counts: { totalRows: number; bySheet: Record<string, number> };
+    totalRows: number;
+    truncated: boolean;
+    precoIncluded?: boolean;
+    precoVersion?: VersionPreviewPrecoRef | null;
+}
+
+/**
+ * Podgląd wersji bez eksportu XLSX. Wiersze obcinane do `MAX_PREVIEW_ROWS`
+ * per arkusz; `totalRows`/`bySheet` zostają sprzed capa.
+ * Ponad `MAX_COMPARE_ROWS` → 413 przed cięciem (plan §5).
+ */
+export async function getVersionPreview(id: string): Promise<VersionPreview> {
+    const { version, sections } = await getVersionExport(id);
+    if (!isPricelistType(version.type)) {
+        throw new PricelistVersionError(422, 'INVALID_TYPE', `Wersja ${id} ma nieznany typ`);
+    }
+    const type: PricelistType = version.type;
+    const live = projectVersionToLiveShape(type, sections);
+    const bySheet: Record<string, number> = {};
+    let totalRows = 0;
+    for (const [name, rows] of Object.entries(live)) {
+        bySheet[name] = rows.length;
+        totalRows += rows.length;
+    }
+    if (totalRows > MAX_COMPARE_ROWS) {
+        // ponytail: 413 liczone po load; count-before-findMany gdy duże wersje zaczną boleć.
+        throw new PricelistVersionError(
+            413,
+            'VERSION_TOO_LARGE',
+            `Wersja ${id} ma ${totalRows} wierszy (limit ${MAX_COMPARE_ROWS}) — użyj eksportu`
+        );
+    }
+    let truncated = false;
+    const sheets: LiveSheetRows = {};
+    for (const [name, rows] of Object.entries(live)) {
+        if (rows.length > MAX_PREVIEW_ROWS) truncated = true;
+        sheets[name] = rows.slice(0, MAX_PREVIEW_ROWS);
+    }
+    const preview: VersionPreview = {
+        version,
+        sheets,
+        counts: { totalRows, bySheet },
+        totalRows,
+        truncated
+    };
+    if (type === 'studnie') {
+        const precoVersion = await pickPrecoVersionForStudnie(version);
+        preview.precoIncluded = precoVersion !== null;
+        preview.precoVersion = precoVersion
+            ? { id: precoVersion.id, version: precoVersion.version, seq: precoVersion.seq }
+            : null;
+    }
+    return preview;
+}
+
 export interface PrecoTimelineVersion {
     id: string;
     version: string;

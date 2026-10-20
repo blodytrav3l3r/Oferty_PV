@@ -174,6 +174,7 @@ jest.mock('../../src/services/pricelistVersionService', () => {
         deleteVersion: jest.fn(),
         getVersionDiff: jest.fn(),
         getVersionExportSheets: jest.fn(),
+        getVersionPreview: jest.fn(),
         updateDraft
     };
 });
@@ -247,6 +248,15 @@ describe('E5.5 gate: 401 bez sesji (wszystkie 6 ścieżek)', () => {
         expect(res.status).toBe(401);
     });
 
+    it('GET /pricelist-versions/:id/preview → 401', async () => {
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        const previewMock = require('../../src/services/pricelistVersionService')
+            .getVersionPreview as jest.Mock;
+        const res = await request(app).get('/api/pricelist-versions/v1/preview').set(anon);
+        expect(res.status).toBe(401);
+        expect(previewMock).not.toHaveBeenCalled();
+    });
+
     it('POST /ai/predict/batch → 401', async () => {
         const predictMock = setPredict(0.5);
         const res = await request(app)
@@ -305,6 +315,23 @@ describe('E5.5 gate: role i ownership', () => {
             userId: 'admin-1'
         });
         expectNoLeak(ok.body);
+    });
+
+    it('versions preview: user → 403, admin + złe id → 400 bez echa', async () => {
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        const previewMock = require('../../src/services/pricelistVersionService')
+            .getVersionPreview as jest.Mock;
+        const denied = await request(app).get('/api/pricelist-versions/v1/preview').set(user);
+        expect(denied.status).toBe(403);
+        expect(previewMock).not.toHaveBeenCalled();
+
+        for (const bad of ['..%2Fevil', 'x'.repeat(65)]) {
+            const res = await request(app).get(`/api/pricelist-versions/${bad}/preview`).set(admin);
+            expect(res.status).toBe(400);
+            expect(res.body.code).toBe('INVALID_ID');
+            expect(JSON.stringify(res.body)).not.toContain('evil');
+        }
+        expect(previewMock).not.toHaveBeenCalled();
     });
 
     it('ai batch: zwykły user → 200 (kontrakt: predykcja dla każdego zalogowanego)', async () => {

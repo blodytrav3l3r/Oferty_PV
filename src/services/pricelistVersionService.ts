@@ -64,10 +64,17 @@ export {
     getVersionExportSheets,
     liveSheetsToXlsxSheets,
     getVersionDiff,
+    getVersionPreview,
     pickPrecoVersionForStudnie,
     pickPrecoVersionFromTimeline
 } from './pricelist/export';
-export type { VersionExport, VersionDiff, PrecoTimelineVersion } from './pricelist/export';
+export type {
+    VersionExport,
+    VersionDiff,
+    VersionPreview,
+    VersionPreviewPrecoRef,
+    PrecoTimelineVersion
+} from './pricelist/export';
 
 export {
     countVersionUsage,
