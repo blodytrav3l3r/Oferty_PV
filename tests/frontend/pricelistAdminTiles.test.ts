@@ -191,4 +191,9 @@ describe('SPA: deep-link do panelu wersji', () => {
         expect(rury).toContain('return window.pricelistVersions.openVersionsPanel(');
         expect(studnie).toContain('return window.pricelistVersions.openVersionsPanel(type, {');
     });
+
+    it('nowy iframe (about:blank) nie jest uznawany za gotowy', () => {
+        expect(router).toContain("location.href === 'about:blank'");
+        expect(router).toContain('readyState === ');
+    });
 });

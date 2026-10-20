@@ -421,7 +421,10 @@
             };
 
             try {
-                if (iframe.contentDocument?.readyState === 'complete') {
+                // Nowy iframe ma initially about:blank z readyState=complete —
+                // to nie znaczy, że moduł jest gotowy (deep-link wołał funkcje za wcześnie).
+                const isBlank = iframe.contentWindow?.location.href === 'about:blank';
+                if (iframe.contentDocument?.readyState === 'complete' && !isBlank) {
                     // Reużyty iframe — już załadowany, brak potrzeby 120ms opóźnienia.
                     // Jedna klatka (16ms) wystarcza by zbatchować paint.
                     window.setTimeout(complete, 16);
