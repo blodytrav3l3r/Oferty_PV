@@ -378,6 +378,8 @@ Wymaga autoryzacji (administrator, oprócz etykiet).
 | ------ | ----------------------------------------- | ----- | --------------------------------------------------------------------------------------------------------------------- |
 | GET    | `/api/pricelist-versions`                 | admin | Lista wersji                                                                                                          |
 | GET    | `/api/pricelist-versions/labels`          | auth  | Etykiety wersji                                                                                                       |
+| GET    | `/api/pricelist-versions/summary`         | admin | Aktywna + najbliższa zaplanowana wersja per typ (`rury`, `studnie`, `preco`)                                          |
+| GET    | `/api/pricelist-versions/:id/preview`     | admin | Podgląd zawartości wersji (`max 5000` wierszy/arkusz, `truncated`; `413 VERSION_TOO_LARGE` >20 000)                   |
 | POST   | `/api/pricelist-versions/:type/drafts`    | admin | Nowy szkic wersji (`201` przy utworzeniu)                                                                             |
 | PUT    | `/api/pricelist-versions/:id`             | admin | Edycja wersji                                                                                                         |
 | DELETE | `/api/pricelist-versions/:id`             | admin | Usunięcie wersji (PRECO: `409 USED_BY_STUDNIE`, gdy wskazuje ją wersja studni; ACTIVE/BACKDATE → `409 NOT_DELETABLE`) |

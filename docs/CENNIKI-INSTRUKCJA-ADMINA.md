@@ -34,10 +34,15 @@ mają własne numeracje).
 
 ## 3. Gdzie klikać
 
-Panel „Zarządzanie cennikami" (przycisk „Zarządzaj" w kartotece cennika), zakładki Rury/Studnie.
+Panel „Zarządzanie cennikami" (przycisk „Zarządzaj" w kartotece cennika), zakładki Rury/Studnie/PRECO.
 Tabela wersji: Wersja · Nr · Status · Obowiązuje od (lokalnie + UTC) · Autor · **Użycie**
-(ile ofert/zamówień trzyma pieczątkę) · Notatki · Akcje (Porównaj, Eksport, aktywacja, klon, usuń).
+(ile ofert/zamówień trzyma pieczątkę) · Notatki · Akcje (Podgląd, Porównaj, Eksport, aktywacja, klon, usuń).
 Legenda statusów jest nad tabelą; pełny cykl opisuje też pomoc w panelu.
+
+Na pulpicie admina sekcja **Cenniki** ma 3 kafelki (Rury, Studnie, PRECO): aktywna wersja,
+data wejścia i najbliższa zaplanowana. Klik otwiera od razu panel wersji danego typu
+(deep-link `app.html#/…?tab=pricelist&panel=versions`); PRECO dodatkowo `&pvtype=preco`.
+Przy niezapisanych zmianach w ofercie router najpierw prosi o potwierdzenie.
 
 ## 4. Nowy cennik od zera (draft)
 
@@ -60,7 +65,9 @@ Legenda statusów jest nad tabelą; pełny cykl opisuje też pomoc w panelu.
 ## 6. Porównaj przed publikacją (obowiązkowo)
 
 Przycisk **Porównaj** pokazuje liczniki sekcji (dodane/usunięte/zmienione) oraz
-**top zmian cen** (pozycja, cena przed/po, Δ%, max 100, sort po |Δ%|).
+**top zmian cen** (pozycja, cena przed/po, Δ%, max 100, sort po |Δ%|). Dwa selecty
+pozwalają porównać dowolną wersję z dowolną inną tego samego typu (domyślnie poprzednia).
+**Podgląd** (ikona oka) pokazuje zawartość wersji bez eksportu XLSX.
 Aktywacja też najpierw pokazuje podsumowanie diff i prosi o potwierdzenie
 (wraz z liczbą ofert trzymających tę wersję).
 
@@ -174,7 +181,9 @@ też zostawiają ślad (wcześniej dziurawe — domknięte). Retencja wg zasad b
 - `POST /api/pricelist-versions/:id/backdate` — zatwierdzenie wstecznej (nota ≥ 10)
 - `POST /api/pricelist-versions/activate-due` — ręczny cron zaległych
 - `POST /api/pricelist-versions/:id/clone-draft` — klon do roboczej
-- `GET /api/pricelist-versions/:id/diff` — liczniki + top zmian cen
+- `GET /api/pricelist-versions/summary` — aktywne + zaplanowane per typ (kafelki)
+- `GET /api/pricelist-versions/:id/preview` — zawartość wersji bez XLSX (cap 5000/arkusz)
+- `GET /api/pricelist-versions/:id/diff` — liczniki + top zmian cen (dowolne `?against=`)
 - `GET /api/pricelist-versions/:id/export` — XLSX wersji
 - `GET /api/pricelist-versions/labels` — etykiety na oś czasu (bez cen)
 - `npm run prices:export|import|verify`, `npm run backup` — operacje na danych
