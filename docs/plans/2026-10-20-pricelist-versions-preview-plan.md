@@ -2,6 +2,9 @@
 
 - **Data:** 2026-10-20
 - **Status:** DONE — wdrożone commity: `be727c1`, `1a4b562`, `594ef54`, `82aa0a4`, `5cfa477`, `111c596`, `4adbf91`, `3b8f96f`, `f72d4c1` (docs w toku). Wszystkie fazy 1–6 zrealizowane; preview/diff/summary, parytet PRECO i kafelki z deep-linkiem.
+  E2E Playwright (`tests/playwright/pricelistPreview.cjs`) pozostaje do dodania przy najbliższym
+  uruchomieniu serwera testowego; pokrycie zastępcze: 7 testów `pricelistAdminTiles.test.ts`
+  (deep-link, guard, kolejność panel → preview) + testy backendowe preview/diff/summary.
 - **Wersja aplikacji:** 1.46.5
 - **Zakres:** panel wersji cenników (Rury/Studnie/PRECO), podgląd i porównanie wersji, guard usuwania PRECO, kafelki cenników na pulpicie admina
 - **Poza zakresem:** workflow zatwierdzania, zmiany schematu Prisma, `GET /:id/integrity`, naprawa orders stamp guard, masowe przepisywanie legacy, paginacja >5k wierszy
