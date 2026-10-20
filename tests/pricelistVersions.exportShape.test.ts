@@ -11,8 +11,14 @@
  * - PRECO: public/js/studnie/pricelistImportExport.js:78-147
  */
 
-const versions: Array<{ id: string; type: string; seq: number; version: string; status: string }> =
-    [];
+const versions: Array<{
+    id: string;
+    type: string;
+    seq: number;
+    version: string;
+    status: string;
+    effectiveFrom?: string;
+}> = [];
 const itemsRury: Array<Record<string, unknown>> = [];
 const itemsStudnie: Array<Record<string, unknown>> = [];
 const itemsKonfig: Array<Record<string, unknown>> = [];
@@ -31,20 +37,50 @@ jest.mock('../src/prismaClient', () => ({
                     where,
                     orderBy
                 }: {
-                    where: { type?: string; seq?: number | { lte?: number } };
-                    orderBy?: { seq?: 'asc' | 'desc' };
+                    where: {
+                        type?: string;
+                        seq?: number | { lte?: number };
+                        status?: { in?: string[] };
+                        effectiveFrom?: { lte?: string };
+                    };
+                    orderBy?:
+                        | { seq?: 'asc' | 'desc' }
+                        | Array<{ effectiveFrom?: 'asc' | 'desc'; seq?: 'asc' | 'desc' }>;
                 }) => {
                     const maxSeq =
                         typeof where.seq === 'object' && where.seq !== null
                             ? (where.seq.lte ?? Number.POSITIVE_INFINITY)
                             : (where.seq ?? Number.POSITIVE_INFINITY);
-                    const hit = versions
-                        .filter(
-                            (v) =>
-                                (where.type === undefined || v.type === where.type) &&
-                                v.seq <= maxSeq
-                        )
-                        .sort((a, b) => (orderBy?.seq === 'desc' ? b.seq - a.seq : a.seq - b.seq));
+                    const maxEffectiveFrom = where.effectiveFrom?.lte;
+                    const statuses = where.status?.in;
+                    const hit = versions.filter(
+                        (v) =>
+                            (where.type === undefined || v.type === where.type) &&
+                            (statuses === undefined || statuses.includes(v.status)) &&
+                            (where.seq === undefined || v.seq <= maxSeq) &&
+                            (maxEffectiveFrom === undefined ||
+                                (typeof v.effectiveFrom === 'string' &&
+                                    v.effectiveFrom <= maxEffectiveFrom))
+                    );
+                    const order: Array<{
+                        effectiveFrom?: 'asc' | 'desc';
+                        seq?: 'asc' | 'desc';
+                    }> = Array.isArray(orderBy) ? orderBy : orderBy ? [orderBy] : [];
+                    hit.sort((a, b) => {
+                        for (const part of order) {
+                            if (part.effectiveFrom) {
+                                const ae = a.effectiveFrom ?? '';
+                                const be = b.effectiveFrom ?? '';
+                                const cmp = ae === be ? 0 : ae < be ? -1 : 1;
+                                if (cmp !== 0) return part.effectiveFrom === 'desc' ? -cmp : cmp;
+                            }
+                            if (part.seq) {
+                                const cmp = a.seq - b.seq;
+                                if (cmp !== 0) return part.seq === 'desc' ? -cmp : cmp;
+                            }
+                        }
+                        return 0;
+                    });
                     return hit[0] ?? null;
                 }
             )
@@ -410,11 +446,38 @@ describe('Eksport wersji studni dokleja PRECO (najwyższy seq <=, jak LIVE F1)',
         itemsKinety.length = 0;
         itemsZakresy.length = 0;
         versions.push(
-            { id: 's1', type: 'studnie', seq: 5, version: 'v5', status: 'ACTIVE' },
-            // Status dowolny (snapshot) — DRAFT też doklejane, liczy się seq.
-            { id: 'p5', type: 'preco', seq: 5, version: 'v5', status: 'DRAFT' },
-            { id: 'p9', type: 'preco', seq: 9, version: 'v9', status: 'ACTIVE' },
-            { id: 'r5', type: 'rury', seq: 5, version: 'v5', status: 'ACTIVE' }
+            {
+                id: 's1',
+                type: 'studnie',
+                seq: 5,
+                version: 'v5',
+                status: 'ACTIVE',
+                effectiveFrom: '2026-02-01T00:00:00.000Z'
+            },
+            {
+                id: 'p5',
+                type: 'preco',
+                seq: 5,
+                version: 'v5',
+                status: 'ARCHIVED',
+                effectiveFrom: '2026-01-01T00:00:00.000Z'
+            },
+            {
+                id: 'p9',
+                type: 'preco',
+                seq: 9,
+                version: 'v9',
+                status: 'ACTIVE',
+                effectiveFrom: '2026-03-01T00:00:00.000Z'
+            },
+            {
+                id: 'r5',
+                type: 'rury',
+                seq: 5,
+                version: 'v5',
+                status: 'ACTIVE',
+                effectiveFrom: '2026-02-01T00:00:00.000Z'
+            }
         );
         itemsStudnie.push({
             id: 's1:K1',
@@ -459,6 +522,26 @@ describe('Eksport wersji studni dokleja PRECO (najwyższy seq <=, jak LIVE F1)',
         ]);
     });
 
+    it.each(['DRAFT', 'SCHEDULED', 'BACKDATE_REQUESTED'])(
+        'PRECO %s nie jest doklejane (D1)',
+        async (status) => {
+            const p5 = versions.find((v) => v.id === 'p5');
+            if (!p5) throw new Error('brak p5');
+            p5.status = status;
+            const { sheets, precoIncluded } = await getVersionExportSheets('s1');
+            expect(precoIncluded).toBe(false);
+            expect(sheets['PRECO_Kinety']).toBeUndefined();
+        }
+    );
+
+    it('PRECO BACKDATE jest doklejane (D1)', async () => {
+        const p5 = versions.find((v) => v.id === 'p5');
+        if (!p5) throw new Error('brak p5');
+        p5.status = 'BACKDATE';
+        const { precoIncluded } = await getVersionExportSheets('s1');
+        expect(precoIncluded).toBe(true);
+    });
+
     it('brak preco same-seq → tylko studnie (bez błędu)', async () => {
         versions.splice(
             versions.findIndex((v) => v.id === 'p5'),
@@ -481,7 +564,14 @@ describe('Eksport wersji studni dokleja PRECO (najwyższy seq <=, jak LIVE F1)',
     });
 
     it('starsza PRECO doklejana (najwyższy seq <= eksportowanego)', async () => {
-        versions.push({ id: 'p3', type: 'preco', seq: 3, version: 'v3', status: 'ACTIVE' });
+        versions.push({
+            id: 'p3',
+            type: 'preco',
+            seq: 3,
+            version: 'v3',
+            status: 'ACTIVE',
+            effectiveFrom: '2025-12-01T00:00:00.000Z'
+        });
         itemsKinety.push({
             id: 'p3:k3',
             versionId: 'p3',

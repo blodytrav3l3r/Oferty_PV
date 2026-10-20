@@ -8,12 +8,13 @@ import type { PricelistVersion } from '../../../generated/prisma';
 import type { XlsxSheet } from '../../utils/minimalXlsx';
 import { diffById } from '../priceOverrideService';
 import {
+    PRECO_REFERENCE_STATUSES,
     PricelistVersionError,
     isPricelistType,
     loadVersionItems,
     toComparable
 } from './validation';
-import type { PricelistType } from './validation';
+import type { PricelistType, Tx } from './validation';
 import { projectVersionToLiveShape } from './liveProjection';
 import type { LiveSheetRows } from './liveProjection';
 
@@ -184,11 +185,74 @@ export async function getVersionDiff(id: string): Promise<VersionDiff> {
     };
 }
 
+export interface PrecoTimelineVersion {
+    id: string;
+    version: string;
+    seq: number;
+    status: string;
+    effectiveFrom?: string | null;
+}
+
+function comparePrecoDesc(a: PrecoTimelineVersion, b: PrecoTimelineVersion): number {
+    const ae = a.effectiveFrom ?? '';
+    const be = b.effectiveFrom ?? '';
+    if (ae !== be) return ae < be ? 1 : -1;
+    return b.seq - a.seq;
+}
+
+/**
+ * Wybiera PRECO obowiązującą w dacie wersji studni. D1: tylko
+ * ACTIVE/BACKDATE/ARCHIVED; DRAFT/SCHEDULED/BACKDATE_REQUESTED nigdy nie
+ * trafiają do historycznego eksportu. Wersje bez effectiveFrom (legacy/mocki)
+ * używają fallbacku seq <=.
+ */
+export function pickPrecoVersionFromTimeline(
+    studnie: { effectiveFrom?: string | null; seq: number },
+    precoVersions: readonly PrecoTimelineVersion[]
+): PrecoTimelineVersion | null {
+    const eligible = precoVersions.filter((v) => PRECO_REFERENCE_STATUSES.includes(v.status));
+    if (studnie.effectiveFrom) {
+        return (
+            eligible
+                .filter(
+                    (v) =>
+                        typeof v.effectiveFrom === 'string' &&
+                        v.effectiveFrom <= studnie.effectiveFrom!
+                )
+                .sort(comparePrecoDesc)[0] ?? null
+        );
+    }
+    return eligible.filter((v) => v.seq <= studnie.seq).sort(comparePrecoDesc)[0] ?? null;
+}
+
+type PrecoVersionReader = Pick<Tx['pricelistVersion'], 'findFirst'>;
+
+export async function pickPrecoVersionForStudnie(
+    studnie: { effectiveFrom?: string | null; seq: number },
+    client: { pricelistVersion: PrecoVersionReader } = prisma
+): Promise<PricelistVersion | null> {
+    const statuses = [...PRECO_REFERENCE_STATUSES];
+    if (studnie.effectiveFrom) {
+        return client.pricelistVersion.findFirst({
+            where: {
+                type: 'preco',
+                status: { in: statuses },
+                effectiveFrom: { lte: studnie.effectiveFrom }
+            },
+            orderBy: [{ effectiveFrom: 'desc' }, { seq: 'desc' }]
+        });
+    }
+    return client.pricelistVersion.findFirst({
+        where: { type: 'preco', status: { in: statuses }, seq: { lte: studnie.seq } },
+        orderBy: { seq: 'desc' }
+    });
+}
+
 /**
  * Arkusze eksportu wersji (shape LIVE) — domknięcie asymetrii LIVE vs VERSION.
  * LIVE (GET /api/products-studnie/export.xlsx, F1) dokleja PRECO po arkuszach
  * studni; eksport zamrożonej wersji studni robi to samo: najnowsza wersja
- * PRECO nie nowsza niż eksportowana (seq <=, dowolny status — snapshot),
+ * PRECO obowiązująca w dacie eksportu (D1: status ACTIVE/BACKDATE/ARCHIVED),
  * arkusze PO studni (merge {...studnie, ...preco} jak w F1). Brak starszej
  * lub równej PRECO → tylko studnie (bez błędu, flaga precoIncluded=false).
  * Rury i preco bez zmian.
@@ -203,22 +267,7 @@ export async function getVersionExportSheets(
     const type: PricelistType = version.type;
     const sheets = projectVersionToLiveShape(type, sections);
     if (type !== 'studnie') return { version, sheets, precoIncluded: true };
-    // PRECO: najnowsza wersja obowiązująca w dacie eksportowanej studni
-    // (effectiveFrom <=, sort eff DESC, seq DESC). Fallback seq <= dla
-    // wersji bez effectiveFrom (legacy / mocki testowe).
-    let precoVersion = null as Awaited<ReturnType<typeof prisma.pricelistVersion.findFirst>>;
-    if (version.effectiveFrom) {
-        precoVersion = await prisma.pricelistVersion.findFirst({
-            where: { type: 'preco', effectiveFrom: { lte: version.effectiveFrom } },
-            orderBy: [{ effectiveFrom: 'desc' }, { seq: 'desc' }]
-        });
-    }
-    if (!precoVersion) {
-        precoVersion = await prisma.pricelistVersion.findFirst({
-            where: { type: 'preco', seq: { lte: version.seq } },
-            orderBy: { seq: 'desc' }
-        });
-    }
+    const precoVersion = await pickPrecoVersionForStudnie(version);
     if (!precoVersion) return { version, sheets, precoIncluded: false };
     const preco = await getVersionExport(precoVersion.id);
     return {

@@ -41,6 +41,13 @@ const IMMUTABLE_STATUSES: readonly string[] = ['ACTIVE', 'ARCHIVED', 'BACKDATE']
 /** Statusy brane pod uwagę przy resolveActive. */
 export const RESOLVABLE_STATUSES: readonly string[] = ['ACTIVE', 'BACKDATE'];
 
+/**
+ * Statusy PRECO widoczne w historycznym eksporcie studni. ARCHIVED jest
+ * poprzednią wersją na osi czasu, więc musi być resolvowana. DRAFT,
+ * SCHEDULED i BACKDATE_REQUESTED nie były nigdy widoczne dla ofert.
+ */
+export const PRECO_REFERENCE_STATUSES: readonly string[] = ['ACTIVE', 'BACKDATE', 'ARCHIVED'];
+
 /** Maksymalna długość noty wersji (edycja PUT + nota aktywacji). */
 export const NOTE_MAX = 500;
 
