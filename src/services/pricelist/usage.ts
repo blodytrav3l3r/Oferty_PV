@@ -8,8 +8,8 @@ import prisma from '../../prismaClient';
 import { logger } from '../../utils/logger';
 import type { PricelistVersion } from '../../../generated/prisma';
 import { RESOLVABLE_STATUSES, requireType, toUtcIso } from './validation';
-import type { PricelistType } from './validation';
-import { getVersionExport } from './export';
+import type { PricelistType, Tx } from './validation';
+import { getVersionExport, pickPrecoVersionFromTimeline } from './export';
 import { buildPrecoEntryFromSections, cmpText, studnieVersionRowToLegacy } from './liveProjection';
 
 export interface VersionUsage {
@@ -46,6 +46,45 @@ export async function countUsage(client: UsageClient, id: string): Promise<Versi
 /** Użycie wersji przez oferty/zamówienia (publiczne — pod GET / usedBy). */
 export async function countVersionUsage(id: string): Promise<VersionUsage> {
     return countUsage(prisma as unknown as UsageClient, id);
+}
+
+export interface PrecoReferenceInfo {
+    count: number;
+    labels: string[];
+}
+
+type PrecoReferencesClient = {
+    pricelistVersion: Pick<Tx['pricelistVersion'], 'findMany'>;
+};
+
+/**
+ * Mapuje id PRECO → liczba wersji studni, które ją wybierają (D1), plus max
+ * 3 labelki do komunikatu. Jedna para zapytań zamiast N+1 — używane przez
+ * GET / i guard DELETE.
+ */
+export async function getPrecoReferences(
+    client: PrecoReferencesClient = prisma
+): Promise<Map<string, PrecoReferenceInfo>> {
+    const [studnieVersions, precoVersions] = await Promise.all([
+        client.pricelistVersion.findMany({
+            where: { type: 'studnie' },
+            select: { id: true, version: true, seq: true, status: true, effectiveFrom: true }
+        }),
+        client.pricelistVersion.findMany({
+            where: { type: 'preco' },
+            select: { id: true, version: true, seq: true, status: true, effectiveFrom: true }
+        })
+    ]);
+    const references = new Map<string, PrecoReferenceInfo>();
+    for (const studnie of studnieVersions) {
+        const picked = pickPrecoVersionFromTimeline(studnie, precoVersions);
+        if (!picked) continue;
+        const entry = references.get(picked.id) ?? { count: 0, labels: [] };
+        entry.count += 1;
+        if (entry.labels.length < 3) entry.labels.push(studnie.version);
+        references.set(picked.id, entry);
+    }
+    return references;
 }
 
 /**

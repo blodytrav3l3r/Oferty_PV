@@ -13,6 +13,7 @@
 export {
     PRICELIST_TYPES,
     EDITABLE_STATUSES,
+    PRECO_REFERENCE_STATUSES,
     PricelistVersionError,
     assertEditable,
     requireExportSource,
@@ -62,14 +63,17 @@ export {
     getVersionExport,
     getVersionExportSheets,
     liveSheetsToXlsxSheets,
-    getVersionDiff
+    getVersionDiff,
+    pickPrecoVersionForStudnie,
+    pickPrecoVersionFromTimeline
 } from './pricelist/export';
-export type { VersionExport, VersionDiff } from './pricelist/export';
+export type { VersionExport, VersionDiff, PrecoTimelineVersion } from './pricelist/export';
 
 export {
     countVersionUsage,
+    getPrecoReferences,
     resolveActive,
     resolveVersionIdSafe,
     resolveActivePricing
 } from './pricelist/usage';
-export type { VersionUsage, ActivePricing } from './pricelist/usage';
+export type { VersionUsage, ActivePricing, PrecoReferenceInfo } from './pricelist/usage';

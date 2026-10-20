@@ -26,7 +26,7 @@ import {
 } from './validation';
 import type { CreateDraftOptions, PricelistStatus, PricelistType, VersionRows } from './validation';
 import { getVersionExport } from './export';
-import { countUsage, countVersionUsage } from './usage';
+import { countUsage, countVersionUsage, getPrecoReferences } from './usage';
 import type { UsageClient, VersionUsage } from './usage';
 
 /** Limity retry przy kolizji seq (race dwóch createDraft). */
@@ -553,6 +553,18 @@ export async function activateDue(
 }
 
 /**
+ * DELETE PRECO musi wykluczyć równoległy createDraft studni, który mógłby
+ * dopisać referencję po re-checku. Locki w stałej kolejności preco → studnie
+ * (createDraft studni bierze tylko studnie, więc nie ma cyklu).
+ */
+async function withPrecoDeleteLocks<T>(
+    fn: () => Promise<T>
+): Promise<{ acquired: true; value: T } | { acquired: false }> {
+    const outer = await lockFor('preco').runWithLock(() => lockFor('studnie').runWithLock(fn));
+    return outer.acquired ? outer.value : { acquired: false };
+}
+
+/**
  * Usuwa wersję wraz z pozycjami (tx) + audit DELETE. Allowlist
  * (DRAFT/SCHEDULED/BACKDATE_REQUESTED) kasuje jak dziś. ACTIVE/BACKDATE
  * ZAWSZE 409 NOT_DELETABLE — także przy zerowym użyciu, bo resolveActive
@@ -578,6 +590,16 @@ export async function deleteVersion(
             `Wersji ${id} o statusie ${current.status} nie można usunąć (trzyma historię ofert)`
         );
     }
+    if (current.type === 'preco') {
+        const refs = (await getPrecoReferences()).get(id);
+        if (refs && refs.count > 0) {
+            throw new PricelistVersionError(
+                409,
+                'USED_BY_STUDNIE',
+                `Wersji ${id} używa ${refs.count} wersji studni (${refs.labels.join(', ')}) — historia eksportu chroniona`
+            );
+        }
+    }
     let usage: VersionUsage | null = null;
     if (!DELETABLE_STATUSES.includes(current.status)) {
         usage = await countVersionUsage(id);
@@ -590,8 +612,7 @@ export async function deleteVersion(
         }
     }
     const type = current.type;
-    const lock = lockFor(type);
-    const res = await lock.runWithLock(() =>
+    const runDeleteTx = () =>
         prisma.$transaction(async (tx) => {
             const fresh = await tx.pricelistVersion.findUnique({ where: { id } });
             if (!fresh) {
@@ -603,6 +624,19 @@ export async function deleteVersion(
                     'NOT_DELETABLE',
                     `Wersji ${id} o statusie ${fresh.status} nie można usunąć (trzyma historię ofert)`
                 );
+            }
+            let studnieReferences = 0;
+            if (fresh.type === 'preco') {
+                // Re-check pod lockiem studni: referencja mogła dojść po wstępnym odczycie.
+                const freshRefs = (await getPrecoReferences(tx)).get(id);
+                studnieReferences = freshRefs?.count ?? 0;
+                if (studnieReferences > 0) {
+                    throw new PricelistVersionError(
+                        409,
+                        'USED_BY_STUDNIE',
+                        `Wersji ${id} używa ${studnieReferences} wersji studni (${(freshRefs?.labels ?? []).join(', ')}) — historia eksportu chroniona`
+                    );
+                }
             }
             const allowlisted = DELETABLE_STATUSES.includes(fresh.status);
             if (!allowlisted) {
@@ -621,14 +655,30 @@ export async function deleteVersion(
                 entityId: id,
                 userId: opts.userId,
                 action: 'DELETE',
-                oldData: allowlisted
-                    ? { wersja: fresh.version, status: fresh.status, seq: fresh.seq }
-                    : { wersja: fresh.version, status: fresh.status, seq: fresh.seq, offers: 0 }
+                oldData:
+                    fresh.type === 'preco'
+                        ? {
+                              wersja: fresh.version,
+                              status: fresh.status,
+                              seq: fresh.seq,
+                              studnieReferences
+                          }
+                        : allowlisted
+                          ? { wersja: fresh.version, status: fresh.status, seq: fresh.seq }
+                          : {
+                                wersja: fresh.version,
+                                status: fresh.status,
+                                seq: fresh.seq,
+                                offers: 0
+                            }
             });
             await tx.pricelistVersion.delete({ where: { id } });
             return { id };
-        })
-    );
+        });
+    const res =
+        type === 'preco'
+            ? await withPrecoDeleteLocks(runDeleteTx)
+            : await lockFor(type).runWithLock(runDeleteTx);
     if (!res.acquired) {
         throw new PricelistVersionError(
             503,

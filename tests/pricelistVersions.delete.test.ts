@@ -37,6 +37,9 @@ const txMock = {
         findUnique: jest.fn(async ({ where }: { where: { id: string } }) => {
             return versions.find((v) => v.id === where.id) ?? null;
         }),
+        findMany: jest.fn(async ({ where }: { where?: { type?: string } } = {}) => {
+            return versions.filter((v) => where?.type === undefined || v.type === where.type);
+        }),
         delete: jest.fn(async ({ where }: { where: { id: string } }) => {
             const idx = versions.findIndex((v) => v.id === where.id);
             if (idx === -1) throw new Error('Not found');
@@ -56,6 +59,9 @@ const txMock = {
             return { count: n };
         })
     },
+    pricelistItemPrecoKonfig: { deleteMany: jest.fn(async () => ({ count: 0 })) },
+    pricelistItemPrecoKinety: { deleteMany: jest.fn(async () => ({ count: 0 })) },
+    pricelistItemPrecoZakresy: { deleteMany: jest.fn(async () => ({ count: 0 })) },
     offers_rel: { count: countMock('offers_rel') },
     offers_studnie_rel: { count: countMock('offers_studnie_rel') },
     orders_rury_rel: { count: countMock('orders_rury_rel') },
@@ -73,7 +79,9 @@ jest.mock('../src/prismaClient', () => ({
     default: {
         pricelistVersion: {
             findUnique: (...a: unknown[]) =>
-                (txMock.pricelistVersion.findUnique as (...x: unknown[]) => Promise<unknown>)(...a)
+                (txMock.pricelistVersion.findUnique as (...x: unknown[]) => Promise<unknown>)(...a),
+            findMany: (...a: unknown[]) =>
+                (txMock.pricelistVersion.findMany as (...x: unknown[]) => Promise<unknown>)(...a)
         },
         offers_rel: {
             count: (...a: unknown[]) =>
@@ -102,6 +110,7 @@ jest.mock('../src/utils/logger', () => ({
 import {
     countVersionUsage,
     deleteVersion,
+    getPrecoReferences,
     PricelistVersionError
 } from '../src/services/pricelistVersionService';
 
@@ -125,6 +134,19 @@ function seed(status: string, id?: string): VRow {
     };
     versions.push({ ...v });
     itemsRury.push({ id: `${v.id}:r1`, versionId: v.id }, { id: `${v.id}:r2`, versionId: v.id });
+    return v;
+}
+
+function seedVersion(
+    input: Pick<VRow, 'id' | 'type' | 'status' | 'seq'> & Partial<Pick<VRow, 'effectiveFrom'>>
+): VRow {
+    const v: VRow = {
+        version: `v${input.seq}`,
+        sha256: 'x',
+        effectiveFrom: '2026-01-01T00:00:00.000Z',
+        ...input
+    };
+    versions.push(v);
     return v;
 }
 
@@ -190,5 +212,90 @@ describe('DELETE pricelistVersions', () => {
         const err = await deleteVersion('nope').catch((e) => e);
         expect(err).toBeInstanceOf(PricelistVersionError);
         expect((err as PricelistVersionError).statusCode).toBe(404);
+    });
+
+    test('ARCHIVED PRECO wskazana przez DRAFT studnie → 409 USED_BY_STUDNIE', async () => {
+        seedVersion({
+            id: 'p-arch',
+            type: 'preco',
+            status: 'ARCHIVED',
+            seq: 1,
+            effectiveFrom: '2026-01-01T00:00:00.000Z'
+        });
+        seedVersion({
+            id: 's-draft',
+            type: 'studnie',
+            status: 'DRAFT',
+            seq: 1,
+            effectiveFrom: '2026-02-01T00:00:00.000Z'
+        });
+        const err = await deleteVersion('p-arch').catch((e) => e);
+        expect(err).toBeInstanceOf(PricelistVersionError);
+        expect((err as PricelistVersionError).statusCode).toBe(409);
+        expect((err as PricelistVersionError).code).toBe('USED_BY_STUDNIE');
+        expect((err as Error).message).toContain('1');
+        expect((err as Error).message).toContain('v1');
+        expect(versions.some((v) => v.id === 'p-arch')).toBe(true);
+    });
+
+    test('DRAFT PRECO nie jest referencją (D1) → delete dozwolony', async () => {
+        seedVersion({
+            id: 'p-draft',
+            type: 'preco',
+            status: 'DRAFT',
+            seq: 1,
+            effectiveFrom: '2026-01-01T00:00:00.000Z'
+        });
+        seedVersion({
+            id: 's-draft',
+            type: 'studnie',
+            status: 'DRAFT',
+            seq: 1,
+            effectiveFrom: '2026-02-01T00:00:00.000Z'
+        });
+        await expect(deleteVersion('p-draft')).resolves.toEqual({ id: 'p-draft' });
+        const audit = audits.find((a) => a['action'] === 'DELETE');
+        expect(String(audit?.['oldData'] ?? '')).toContain('studnieReferences');
+    });
+
+    test('ACTIVE PRECO → NOT_DELETABLE przed guardem referencji', async () => {
+        seedVersion({
+            id: 'p-active',
+            type: 'preco',
+            status: 'ACTIVE',
+            seq: 1,
+            effectiveFrom: '2026-01-01T00:00:00.000Z'
+        });
+        seedVersion({
+            id: 's1',
+            type: 'studnie',
+            status: 'ACTIVE',
+            seq: 1,
+            effectiveFrom: '2026-02-01T00:00:00.000Z'
+        });
+        const err = await deleteVersion('p-active').catch((e) => e);
+        expect((err as PricelistVersionError).code).toBe('NOT_DELETABLE');
+    });
+
+    test('getPrecoReferences mapuje referencje i labelki (max 3)', async () => {
+        seedVersion({
+            id: 'p-arch',
+            type: 'preco',
+            status: 'ARCHIVED',
+            seq: 1,
+            effectiveFrom: '2026-01-01T00:00:00.000Z'
+        });
+        for (let i = 1; i <= 4; i++) {
+            seedVersion({
+                id: `s${i}`,
+                type: 'studnie',
+                status: 'DRAFT',
+                seq: i,
+                effectiveFrom: `2026-0${i + 1}-01T00:00:00.000Z`
+            });
+        }
+        const refs = await getPrecoReferences();
+        expect(refs.get('p-arch')?.count).toBe(4);
+        expect(refs.get('p-arch')?.labels).toHaveLength(3);
     });
 });
