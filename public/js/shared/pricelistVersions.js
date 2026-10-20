@@ -12,7 +12,7 @@
     var labelCache = {};
     /** Czy bieżący użytkownik widzi pełną listę (admin) per typ. */
     var canManage = {};
-    /** Mapa getRows per typ (rury/studnie) — rejestrowana przy otwarciu panelu. */
+    /** Mapa getRows per typ (rury/studnie/preco) — rejestrowana przy otwarciu panelu. */
     var getRowsByType = {};
 
     /** Domyślny odczyt wierszy z bieżącego window (fallback przy braku getRows). */
@@ -20,6 +20,7 @@
         if (type === 'rury' && typeof window.products !== 'undefined') return window.products;
         if (type === 'studnie' && typeof window.studnieProducts !== 'undefined')
             return window.studnieProducts;
+        if (type === 'preco') return defaultPrecoRows();
         var w = null;
         try {
             w = window.parent && window.parent !== window ? window.parent : null;
@@ -32,6 +33,17 @@
                 return w.studnieProducts;
         }
         return [];
+    }
+
+    /** PRECO: LIVE nested → flat rows (ten sam shape co import XLSX/API drafts). */
+    function defaultPrecoRows() {
+        var flat = window.pricelistXlsx && window.pricelistXlsx.precoNestedToFlat;
+        if (typeof flat !== 'function') throw new Error('Moduł PRECO niedostępny');
+        var nested =
+            typeof window.collectPrecoFromUI === 'function'
+                ? window.collectPrecoFromUI()
+                : window.precoPricing || {};
+        return flat(nested);
     }
 
     function resolveGetRows(type) {
@@ -95,6 +107,68 @@
             opts.body = JSON.stringify(data);
         }
         return opts;
+    }
+
+    /** Kanoniczny JSON 1:1 z sha256Canonical (BE) — klucze sortowane, tablice w kolejności. */
+    function canonicalStringify(value) {
+        if (Array.isArray(value)) {
+            return '[' + value.map(canonicalStringify).join(',') + ']';
+        }
+        if (value !== null && typeof value === 'object') {
+            var obj = value;
+            return (
+                '{' +
+                Object.keys(obj)
+                    .sort()
+                    .map(function (k) {
+                        return JSON.stringify(k) + ':' + canonicalStringify(obj[k]);
+                    })
+                    .join(',') +
+                '}'
+            );
+        }
+        return JSON.stringify(value);
+    }
+
+    /** Hash wierszy jak BE; null gdy brak WebCrypto (HTTP LAN = brak secure context). */
+    async function precoRowsSha256(rows) {
+        // ponytail: hash tylko w secure context; poza nim zapis tworzy nowy draft.
+        var subtle = window.crypto && window.crypto.subtle;
+        if (!subtle || typeof TextEncoder !== 'function') return null;
+        try {
+            var bytes = new TextEncoder().encode(canonicalStringify(rows));
+            var digest = await subtle.digest('SHA-256', bytes);
+            return Array.prototype.map
+                .call(new Uint8Array(digest), function (b) {
+                    return ('0' + b.toString(16)).slice(-2);
+                })
+                .join('');
+        } catch (_e) {
+            return null;
+        }
+    }
+
+    /** Identyczny DRAFT PRECO (te same rows + data) → PUT zamiast nowego POST. */
+    async function findIdenticalPrecoDraft(rows, effectiveFrom) {
+        var hash = await precoRowsSha256(rows);
+        if (!hash) return null;
+        var versions = await fetchFullList('preco');
+        var wanted;
+        try {
+            wanted = new Date(effectiveFrom).toISOString();
+        } catch (_e) {
+            return null;
+        }
+        for (var i = 0; i < versions.length; i++) {
+            var v = versions[i];
+            if (v.status !== 'DRAFT' || v.sha256 !== hash || !v.effectiveFrom) continue;
+            try {
+                if (new Date(v.effectiveFrom).toISOString() === wanted) return v.id;
+            } catch (_e2) {
+                /* pomiń wersję z niepoprawną datą */
+            }
+        }
+        return null;
     }
 
     /** Etykiety wersji na oś czasu (bez cen) — działa też dla nie-admina. */
@@ -453,12 +527,15 @@
         );
     }
 
-    /** Komórka użycia: ile ofert/zamówień trzyma pieczątkę wersji. */
+    /** Komórka użycia: ile ofert/zamówień albo wersji studni trzyma pieczątkę. */
     function usedByCell(v) {
         if (typeof v.usedBy !== 'number') return '<span class="text-muted">—</span>';
         if (v.usedBy === 0) return '<span class="text-muted">0</span>';
+        var kind = v.usedByKind === 'studnieVersions' ? 'wersji studni' : 'ofert/zamówień';
         return (
-            '<span title="Tyle ofert/zamówień ma pieczątkę tej wersji — zmiana/aktywacja ich nie ruszy (snapshot w ofercie)">' +
+            '<span title="Tyle ' +
+            kind +
+            ' trzyma pieczątkę tej wersji — zmiana/aktywacja ich nie ruszy (snapshot w ofercie)">' +
             '<strong>' +
             esc(String(v.usedBy)) +
             '</strong></span>'
@@ -490,13 +567,19 @@
         );
     }
 
-    /** Powód blokady „Usuń" (null = wolno): ACTIVE/BACKDATE zawsze, reszta tylko z użyciem. */
+    /** Powód blokady „Usuń" (null = wolno): PRECO z referencjami, ACTIVE/BACKDATE zawsze. */
     function deleteReason(v) {
+        if (v.usedByKind === 'studnieVersions' && typeof v.usedBy === 'number' && v.usedBy > 0) {
+            return 'Używana przez ' + v.usedBy + ' wersji studni';
+        }
         if (isDeletable(v.status)) return null;
         if (v.status === 'ACTIVE') return 'Wersja aktywna — nieusuwalna';
         if (v.status === 'BACKDATE') return 'Wersja wsteczna — nieusuwalna';
         if (typeof v.usedBy !== 'number') return 'Brak danych o użyciu — nieusuwalna';
-        if (v.usedBy > 0) return 'Używana przez ' + v.usedBy + ' ofert/zamówień';
+        if (v.usedBy > 0) {
+            var kind = v.usedByKind === 'studnieVersions' ? 'wersji studni' : 'ofert/zamówień';
+            return 'Używana przez ' + v.usedBy + ' ' + kind;
+        }
         return null;
     }
 
@@ -612,6 +695,12 @@
     }
 
     function transferHtml(type) {
+        if (type === 'preco') {
+            return (
+                '<p class="text-muted">Cennik PRECO na żywo (LIVE) — stan roboczy tabel, nie wersja. Wersję zapisujesz przyciskiem „Zapisz jako wersję" powyżej.</p>' +
+                '<div class="pv-row"><span class="pv-row-label">Import / eksport</span><span class="text-muted">Import PRECO odbywa się przez import cennika studni (arkusze PRECO).</span></div>'
+            );
+        }
         var isRury = type === 'rury';
         var importInput =
             '<input type="file" id="pv-import-excel" style="display: none" accept=".xlsx,.xls" data-csp-on="change" data-csp="' +
@@ -666,6 +755,13 @@
         ) {
             out.push('studnie');
         }
+        if (
+            typeof window.collectPrecoFromUI === 'function' &&
+            window.pricelistXlsx &&
+            typeof window.pricelistXlsx.precoNestedToFlat === 'function'
+        ) {
+            out.push('preco');
+        }
         if (out.length === 0) out.push('rury', 'studnie');
         return out;
     }
@@ -678,7 +774,7 @@
     function tabsHtml(activeType) {
         var types = availableTypes();
         if (types.length < 2) return '';
-        var labels = { rury: 'Rury', studnie: 'Studnie' };
+        var labels = { rury: 'Rury', studnie: 'Studnie', preco: 'PRECO' };
         return (
             '<div class="pv-actions" role="tablist" aria-label="Typ cennika">' +
             types
@@ -1225,9 +1321,9 @@
     }
 
     /**
-     * Globalny panel wersji: jeden panel z tabami [Rury|Studnie].
-     * @param {string} type 'rury' | 'studnie' (preselekcja taba)
-     * @param {Function|Object} getRows funkcja wierszy aktywnego typu albo mapa {rury, studnie}
+     * Globalny panel wersji: jeden panel z tabami [Rury|Studnie|PRECO].
+     * @param {string} type 'rury' | 'studnie' | 'preco' (preselekcja taba)
+     * @param {Function|Object} getRows funkcja wierszy aktywnego typu albo mapa {rury, studnie, preco}
      * @param {Function} [getRowsOther] opcjonalna funkcja wierszy drugiego typu
      */
     async function openVersionsPanel(type, getRows, getRowsOther) {
@@ -1235,6 +1331,7 @@
         if (getRows && typeof getRows !== 'function') {
             if (typeof getRows.rury === 'function') getRowsByType.rury = getRows.rury;
             if (typeof getRows.studnie === 'function') getRowsByType.studnie = getRows.studnie;
+            if (typeof getRows.preco === 'function') getRowsByType.preco = getRows.preco;
         } else if (typeof getRows === 'function') {
             getRowsByType[type] = getRows;
         }
@@ -1328,7 +1425,11 @@
                         pvVersionName +
                         (summary ? ' (' + summary + ')' : '') +
                         '? Poprzednia aktywna przejdzie do archiwum.' +
-                        (usedRaw ? ' Tę wersję ma już ' + usedRaw + ' ofert/zamówień.' : '');
+                        (usedRaw
+                            ? ' Tę wersję ma już ' +
+                              usedRaw +
+                              (type === 'preco' ? ' wersji studni.' : ' ofert/zamówień.')
+                            : '');
                     pvConfirm(msg, {
                         title: 'Aktywuj wersję',
                         okText: 'Dalej',
@@ -1511,46 +1612,65 @@
                         });
                 };
                 var submitDraft = function (finalNote) {
-                    apiJson(
-                        API + '/' + encodeURIComponent(type) + '/drafts',
-                        authed('POST', {
-                            rows: rows,
-                            effectiveFrom: effectiveFrom,
-                            note: finalNote || undefined
-                        })
-                    )
-                        .then(function (json) {
-                            var v = json.version || {};
-                            if (isPast || v.status === 'BACKDATE_REQUESTED') {
-                                var bn = finalNote || '';
-                                if (bn.trim().length < 10) {
-                                    openNoteModal(
-                                        'Wersja wsteczna — wymagana nota',
-                                        'Min. 10 znaków uzasadnienia…',
-                                        function (n2) {
-                                            doBackdate(v.id, n2);
-                                        }
-                                    );
-                                    refreshTable(type, true);
+                    var sendDraft = function (draftId) {
+                        var url = draftId
+                            ? API + '/' + encodeURIComponent(draftId)
+                            : API + '/' + encodeURIComponent(type) + '/drafts';
+                        var payload = draftId
+                            ? { rows: rows, note: finalNote || undefined }
+                            : {
+                                  rows: rows,
+                                  effectiveFrom: effectiveFrom,
+                                  note: finalNote || undefined
+                              };
+                        apiJson(url, authed(draftId ? 'PUT' : 'POST', payload))
+                            .then(function (json) {
+                                var v = json.version || {};
+                                if (isPast || v.status === 'BACKDATE_REQUESTED') {
+                                    var bn = finalNote || '';
+                                    if (bn.trim().length < 10) {
+                                        openNoteModal(
+                                            'Wersja wsteczna — wymagana nota',
+                                            'Min. 10 znaków uzasadnienia…',
+                                            function (n2) {
+                                                doBackdate(v.id, n2);
+                                            }
+                                        );
+                                        refreshTable(type, true);
+                                        return;
+                                    }
+                                    doBackdate(v.id, bn);
                                     return;
                                 }
-                                doBackdate(v.id, bn);
-                                return;
-                            }
-                            toast(
-                                'Wersja ' +
-                                    (v.version || '') +
-                                    ' zapisana (' +
-                                    (v.status || '') +
-                                    ') — sprawdź Porównaj przed aktywacją',
-                                'success'
-                            );
-                            refreshTable(type, true).then(function () {
-                                openDiff(v.id, null, type);
+                                toast(
+                                    'Wersja ' +
+                                        (v.version || '') +
+                                        ' zapisana (' +
+                                        (v.status || '') +
+                                        ') — sprawdź Porównaj przed aktywacją',
+                                    'success'
+                                );
+                                refreshTable(type, true).then(function () {
+                                    openDiff(v.id, null, type);
+                                });
+                            })
+                            .catch(function (err) {
+                                toast(friendlyError('Błąd zapisu wersji', err), 'error');
                             });
+                    };
+                    if (type !== 'preco') {
+                        sendDraft(null);
+                        return;
+                    }
+                    findIdenticalPrecoDraft(rows, effectiveFrom)
+                        .then(function (draftId) {
+                            if (draftId) {
+                                toast('Aktualizuję istniejącą wersję roboczą PRECO', 'info');
+                            }
+                            sendDraft(draftId);
                         })
-                        .catch(function (err) {
-                            toast(friendlyError('Błąd zapisu wersji', err), 'error');
+                        .catch(function () {
+                            sendDraft(null);
                         });
                 };
                 if (isPast && note.trim().length < 10) {

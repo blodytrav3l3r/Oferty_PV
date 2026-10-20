@@ -302,17 +302,17 @@ if (typeof document !== 'undefined' && !window.__pricelistDelegated) {
 window.renderStudniePriceList = renderStudniePriceList;
 
 /* ===== Wersje cennika (F3) — panel ze shared/pricelistVersions.js ===== */
-function openStudnieVersionsPanel() {
+function openStudnieVersionsPanel(initialType) {
     if (!window.pricelistVersions) {
         if (typeof showToast === 'function') showToast('Moduł wersji cennika niedostępny', 'error');
         return;
     }
-    window.pricelistVersions.openVersionsPanel(
-        'studnie',
-        function () {
+    var type = initialType === 'preco' ? 'preco' : 'studnie';
+    window.pricelistVersions.openVersionsPanel(type, {
+        studnie: function () {
             return typeof studnieProducts !== 'undefined' ? studnieProducts : [];
         },
-        function () {
+        rury: function () {
             if (typeof products !== 'undefined') return products;
             try {
                 var w = window.parent && window.parent !== window ? window.parent : null;
@@ -321,7 +321,18 @@ function openStudnieVersionsPanel() {
                 /* brak dostępu */
             }
             return [];
+        },
+        preco: function () {
+            var flat = window.pricelistXlsx && window.pricelistXlsx.precoNestedToFlat;
+            if (typeof flat !== 'function') throw new Error('Moduł PRECO niedostępny');
+            var nested =
+                typeof collectPrecoFromUI === 'function'
+                    ? collectPrecoFromUI()
+                    : typeof precoPricing !== 'undefined'
+                      ? precoPricing
+                      : {};
+            return flat(nested);
         }
-    );
+    });
 }
 window.openStudnieVersionsPanel = openStudnieVersionsPanel;
