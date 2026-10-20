@@ -4,6 +4,29 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.47.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.46.5...v1.47.0) (2026-10-20)
+
+### Features
+
+- **api:** podgląd wersji cennika ([82aa0a4](https://github.com/blodytrav3l3r/Oferty_PV/commit/82aa0a461a2e2cee930816b318a590bb59d5f184))
+- **api:** podsumowanie wersji cennikow ([111c596](https://github.com/blodytrav3l3r/Oferty_PV/commit/111c596fbd1892f7348097133db6a8a8d4f84afe))
+- **api:** porownanie dowolnych wersji ([5cfa477](https://github.com/blodytrav3l3r/Oferty_PV/commit/5cfa477adb93b1826a910988bd68e6f9c68c3d2e))
+- **preco:** pelny parytet wersji w panelu cennika ([3b8f96f](https://github.com/blodytrav3l3r/Oferty_PV/commit/3b8f96f417793c78714ba45f267ba73d5f7a7ebc))
+- **ui:** kafelki cennikow na pulpicie admina ([f72d4c1](https://github.com/blodytrav3l3r/Oferty_PV/commit/f72d4c1d6e959be745b81426a7602c6eb217bbc5))
+- **ui:** podglad i porownanie wersji cennika ([4adbf91](https://github.com/blodytrav3l3r/Oferty_PV/commit/4adbf91d822811103f41329d046606be69d2a7d0))
+
+### Bug Fixes
+
+- **preco:** guard usuwania wersji ([1a4b562](https://github.com/blodytrav3l3r/Oferty_PV/commit/1a4b5622d512921ef61a190ad7d56c7e94756579))
+- **preco:** resolver statusow eksportu studni ([be727c1](https://github.com/blodytrav3l3r/Oferty_PV/commit/be727c19e474d318240f5bfbe6b19acf6504b73e))
+- **rury:** poprawny thead tabeli oferty i wysrodkowane kolumny ([9528812](https://github.com/blodytrav3l3r/Oferty_PV/commit/9528812a2665084d97acb42804020ca81099789f))
+- **security:** redirect z public base url i sanityzacja logow ([76d53f3](https://github.com/blodytrav3l3r/Oferty_PV/commit/76d53f328f7cdced4b060d2bccc9389cf955e30d))
+- **ui:** a11y p3 - aria-pressed, etykiety pol i nazwa logo ([0cc0983](https://github.com/blodytrav3l3r/Oferty_PV/commit/0cc0983da078166d8146050b89406b21b6dc29d1))
+- **ui:** dedup preco i odporny deep-link panelu ([969c0fc](https://github.com/blodytrav3l3r/Oferty_PV/commit/969c0fc75d5cd5ae4102ec76cbd1ddb22a084c72))
+- **ui:** deep-link czeka na load iframe ([58393c6](https://github.com/blodytrav3l3r/Oferty_PV/commit/58393c64ebf3f41eb4744ecc6191243873e99b02))
+- **ui:** przyciski krokowe modalu rury 48px z ikona 22px ([1bf42cd](https://github.com/blodytrav3l3r/Oferty_PV/commit/1bf42cd40e2cb0eafafe5dcdeb1fadfb1b69427e))
+- **ui:** szerszy modal dlugosci i koniec banera nowej oferty ([c057ef9](https://github.com/blodytrav3l3r/Oferty_PV/commit/c057ef9b729f3eae07ff61820b8e4b4b3a11f16b))
+
 ### [1.46.5](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.46.4...v1.46.5) (2026-10-19)
 
 ### Bug Fixes

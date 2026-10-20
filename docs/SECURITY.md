@@ -1,6 +1,6 @@
 # Bezpieczeństwo — S.O.K. — System Ofert i Kalkulacji
 
-**Wersja:** 1.46.5  
+**Wersja:** 1.47.0  
 **Ostatnia aktualizacja:** 2026-09-30
 
 > Szczegółowa macierz uprawnień per trasa: `docs/security/permission-matrix.md` (uzupełnienie tego dokumentu, nie drugi SSoT).
