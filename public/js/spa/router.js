@@ -439,6 +439,26 @@
         });
     }
 
+    /** Deep-link odporny na spóźnione skrypty modułu (timeout load ≠ gotowość API). */
+    function waitForFunction(win, name, attempts = 6, delay = 150) {
+        return new Promise((resolve) => {
+            const check = (left) => {
+                let ok = false;
+                try {
+                    ok = typeof win[name] === 'function';
+                } catch (_e) {
+                    ok = false;
+                }
+                if (ok || left <= 0) {
+                    resolve(ok);
+                    return;
+                }
+                window.setTimeout(() => check(left - 1), delay);
+            };
+            check(attempts);
+        });
+    }
+
     function waitForNextIframeLoad(iframe, timeout = 1800) {
         return new Promise((resolve) => {
             let done = false;
@@ -606,7 +626,7 @@
             !_navForceOnce &&
             currentModule !== null &&
             module === currentModule &&
-            params.panel &&
+            params.panel === 'versions' &&
             _isDirtyNow()
         ) {
             const targetHash = window.location.hash;
@@ -731,16 +751,23 @@
             const againstId = asVersionId(params.against);
             try {
                 const iframeWin = iframe.contentWindow;
-                let opened;
-                if (module === 'rury' && typeof iframeWin.openRuryVersionsPanel === 'function') {
-                    opened = iframeWin.openRuryVersionsPanel();
-                } else if (
-                    module === 'studnie' &&
-                    typeof iframeWin.openStudnieVersionsPanel === 'function'
-                ) {
-                    opened = iframeWin.openStudnieVersionsPanel(panelType);
+                const opener =
+                    module === 'rury' ? 'openRuryVersionsPanel' : 'openStudnieVersionsPanel';
+                const hasOpener = await waitForFunction(iframeWin, opener);
+                if (!hasOpener) {
+                    logger.warn('router', '[SpaRouter] Moduł nie wystawił ' + opener);
+                    if (typeof window.showToast === 'function') {
+                        window.showToast('Nie udało się otworzyć panelu wersji cennika', 'error');
+                    }
+                    finishViewTransition(transition);
+                    document.getElementById('spa-main')?.focus();
+                    return;
                 }
-                const openPreview = () => {
+                const opened =
+                    module === 'rury'
+                        ? iframeWin.openRuryVersionsPanel()
+                        : iframeWin.openStudnieVersionsPanel(panelType);
+                const openPreview = (attempt = 0) => {
                     try {
                         const pv = iframeWin.pricelistVersions;
                         if (pv && typeof pv.openFromDeepLink === 'function') {
@@ -749,14 +776,22 @@
                                 versionId,
                                 againstId
                             });
+                        } else if (attempt < 6) {
+                            window.setTimeout(() => openPreview(attempt + 1), 150);
+                        } else {
+                            logger.warn('router', '[SpaRouter] Brak openFromDeepLink w module');
                         }
-                    } catch (_e) {
-                        /* panel otwarty, preview opcjonalny */
+                    } catch (e) {
+                        logger.warn('router', '[SpaRouter] Podgląd z deep-linku:', e);
                     }
                 };
                 if (versionId) Promise.resolve(opened).then(openPreview, openPreview);
-            } catch (_e) {
-                logger.warn('router', '[SpaRouter] Nie udało się otworzyć panelu wersji cennika');
+            } catch (e) {
+                logger.warn(
+                    'router',
+                    '[SpaRouter] Nie udało się otworzyć panelu wersji cennika:',
+                    e
+                );
             }
         }
 

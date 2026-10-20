@@ -15,14 +15,19 @@
         PRECO_Dodatki: 'Dodatki'
     };
 
+    /** Fail-closed fallback: brak globalnego escapera nie może wstrzyknąć HTML. */
+    function escRaw(s) {
+        return String(s ?? '').replace(/[&<>"']/g, function (c) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+        });
+    }
+
     function esc(s) {
-        return typeof window.escapeHtml === 'function' ? window.escapeHtml(s) : String(s ?? '');
+        return typeof window.escapeHtml === 'function' ? window.escapeHtml(s) : escRaw(s);
     }
 
     function escAttr(s) {
-        return typeof window.escapeHtmlAttr === 'function'
-            ? window.escapeHtmlAttr(s)
-            : String(s ?? '');
+        return typeof window.escapeHtmlAttr === 'function' ? window.escapeHtmlAttr(s) : escRaw(s);
     }
 
     function toast(msg, type) {
@@ -124,7 +129,7 @@
                   RENDER_LIMIT +
                   ' z ' +
                   rows.length +
-                  ' wierszy — zawęź wyszukiwaniem albo użyj eksportu.</p>'
+                  ' pasujących wierszy — zawęź wyszukiwaniem albo użyj eksportu.</p>'
                 : '')
         );
     }
@@ -132,7 +137,7 @@
     function tabsHtml(sheetNames, active) {
         if (sheetNames.length < 2) return '';
         return (
-            '<div class="pv-preview-tabs" role="tablist" aria-label="Arkusze wersji">' +
+            '<div class="pv-preview-tabs" aria-label="Arkusze wersji">' +
             sheetNames
                 .map(function (name) {
                     var isActive = name === active;
@@ -194,21 +199,19 @@
         var tabs = overlay.querySelector('#pv-preview-tabs');
         if (tabs) tabs.innerHTML = tabsHtml(sheetNames, state.sheet);
         var body = overlay.querySelector('#pv-preview-body');
+        var sheetRows = state.sheet ? rowsFor(preview, state.sheet) : [];
+        var visibleRows = filterRows(sheetRows, state.query);
         if (body)
             body.innerHTML = state.sheet
-                ? tableHtml(filterRows(rowsFor(preview, state.sheet), state.query))
+                ? tableHtml(visibleRows)
                 : '<p class="text-muted pv-preview-empty">Wersja nie ma zapisanych wierszy.</p>';
         var counter = overlay.querySelector('#pv-preview-count');
         if (counter) {
-            var total = state.sheet ? rowsFor(preview, state.sheet).length : 0;
-            var visible = state.sheet
-                ? filterRows(rowsFor(preview, state.sheet), state.query).length
-                : 0;
             counter.textContent =
                 'Widoczne: ' +
-                visible +
+                visibleRows.length +
                 ' / ' +
-                total +
+                sheetRows.length +
                 ' w arkuszu · łącznie ' +
                 (preview.totalRows ?? 0) +
                 ' w wersji';
@@ -231,7 +234,7 @@
                 '<span class="text-muted" id="pv-preview-count" aria-live="polite"></span>' +
                 '</div>' +
                 '<div id="pv-preview-tabs" role="tablist" aria-label="Arkusze wersji"></div>' +
-                '<div id="pv-preview-body" aria-live="polite"></div>' +
+                '<div id="pv-preview-body"></div>' +
                 '</div></div>'
         });
         var overlay = document.getElementById('pv-preview-modal');

@@ -245,10 +245,14 @@ function trackWrites(page) {
         check('P2 panel otwarty na PRECO', precoTab === 'true', `aria-pressed=${precoTab}`);
 
         await previewFrame.locator('#pv-preview-modal').waitFor({ timeout: 20000 });
+        await previewFrame
+            .locator('#pv-preview-body table')
+            .waitFor({ timeout: 20000 })
+            .catch(() => null);
         const previewText = await previewFrame
             .locator('#pv-preview-body')
             .innerText({ timeout: 20000 });
-        check('P2 preview z deep-linku', /100/.test(previewText), previewText.slice(0, 120));
+        check('P2 preview z deep-linku', /\b100\b/.test(previewText), previewText.slice(0, 120));
         await previewFrame.locator('#pv-preview-modal [data-csp="closeModal"]').first().click();
         check('P4 preview bez mutacji', writesPreview.length === 0, writesPreview.join('; '));
         await previewPage.close();

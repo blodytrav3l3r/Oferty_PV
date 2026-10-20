@@ -121,6 +121,16 @@ describe('frontend: podgląd wersji', () => {
         );
     });
 
+    it('brak globalnego escapera nie wstrzykuje HTML (fallback fail-closed)', async () => {
+        delete (window as unknown as Record<string, unknown>).escapeHtml;
+        delete (window as unknown as Record<string, unknown>).escapeHtmlAttr;
+        window.pricelistVersions.openPreview('v1', 'studnie');
+        await new Promise((resolve) => setTimeout(resolve, 0));
+        const overlay = document.getElementById('pv-preview-modal');
+        expect(overlay.querySelector('img')).toBeNull();
+        expect(overlay.innerHTML).toContain('&lt;img');
+    });
+
     it('deep-link: wersja bez against otwiera podgląd, z against porównanie', () => {
         window.pricelistVersions.openFromDeepLink({ type: 'studnie', versionId: 'v1' });
         expect(window.pricelistVersions._apiJson).toHaveBeenCalledWith(

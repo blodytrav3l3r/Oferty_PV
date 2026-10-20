@@ -49,6 +49,7 @@ function loadDashboard(fetchImpl: any) {
         escapeHtml: (s: unknown) => String(s ?? ''),
         escapeHtmlAttr: (s: unknown) => String(s ?? ''),
         logger: { info() {}, warn() {}, error() {} },
+        showToast: jest.fn(),
         sessionStorage: { getItem: () => null, setItem() {} },
         localStorage: { getItem: () => null, setItem() {}, removeItem() {} },
         window: null as any,
@@ -156,7 +157,7 @@ describe('pulpit admina: kafelki cenników', () => {
         await context.showLoggedIn({ role: 'admin', username: 'a' });
         await flush();
         expect(els['pv-tile-rury-version'].textContent).toBe('—');
-        expect(context.showToast).toBeUndefined();
+        expect(context.showToast).not.toHaveBeenCalled();
     });
 });
 
@@ -174,7 +175,7 @@ describe('SPA: deep-link do panelu wersji', () => {
     });
 
     it('brudna oferta: confirm przed otwarciem panelu', () => {
-        expect(router).toContain('params.panel &&');
+        expect(router).toContain("params.panel === 'versions' &&");
         expect(router).toContain("window.location.hash = _lastCleanHash || '#/' + currentModule");
     });
 
@@ -195,5 +196,11 @@ describe('SPA: deep-link do panelu wersji', () => {
     it('nowy iframe (about:blank) nie jest uznawany za gotowy', () => {
         expect(router).toContain("location.href === 'about:blank'");
         expect(router).toContain('readyState === ');
+    });
+
+    it('timeout load nie kończy się cichym brakiem panelu (retry + toast)', () => {
+        expect(router).toContain('waitForFunction(iframeWin, opener)');
+        expect(router).toContain('Nie udało się otworzyć panelu wersji cennika');
+        expect(router).toContain('openPreview(attempt + 1)');
     });
 });

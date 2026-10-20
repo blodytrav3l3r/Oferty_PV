@@ -55,14 +55,19 @@
         };
     }
 
+    /** Fail-closed fallback: brak globalnego escapera nie może wstrzyknąć HTML. */
+    function escRaw(s) {
+        return String(s ?? '').replace(/[&<>"']/g, function (c) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+        });
+    }
+
     function esc(s) {
-        return typeof window.escapeHtml === 'function' ? window.escapeHtml(s) : String(s ?? '');
+        return typeof window.escapeHtml === 'function' ? window.escapeHtml(s) : escRaw(s);
     }
 
     function escAttr(s) {
-        return typeof window.escapeHtmlAttr === 'function'
-            ? window.escapeHtmlAttr(s)
-            : String(s ?? '');
+        return typeof window.escapeHtmlAttr === 'function' ? window.escapeHtmlAttr(s) : escRaw(s);
     }
 
     function toast(msg, type) {
@@ -148,7 +153,11 @@
         }
     }
 
-    /** Identyczny DRAFT PRECO (te same rows + data) → PUT zamiast nowego POST. */
+    /** Statusy, które panel realnie tworzy (POST drafts = SCHEDULED/BACKDATE,
+     *  klon = DRAFT); tylko DRAFT sprawiał, że dedup nigdy nie trafiał. */
+    var PRECO_DEDUP_STATUSES = ['DRAFT', 'SCHEDULED'];
+
+    /** Identyczna robocza PRECO (te same rows + data) → PUT zamiast nowego POST. */
     async function findIdenticalPrecoDraft(rows, effectiveFrom) {
         var hash = await precoRowsSha256(rows);
         if (!hash) return null;
@@ -161,7 +170,12 @@
         }
         for (var i = 0; i < versions.length; i++) {
             var v = versions[i];
-            if (v.status !== 'DRAFT' || v.sha256 !== hash || !v.effectiveFrom) continue;
+            if (
+                PRECO_DEDUP_STATUSES.indexOf(v.status) === -1 ||
+                v.sha256 !== hash ||
+                !v.effectiveFrom
+            )
+                continue;
             try {
                 if (new Date(v.effectiveFrom).toISOString() === wanted) return v.id;
             } catch (_e2) {
@@ -875,6 +889,13 @@
         if (body) body.innerHTML = renderRows(versions, manageable, type);
         var overlay = document.getElementById('pv-versions-modal');
         if (overlay) icons(overlay);
+        var nextLabel = document.getElementById('pv-next-label');
+        if (nextLabel) {
+            var eff = document.getElementById('pv-eff');
+            var next = nextSeq(versions);
+            nextLabel.value =
+                versionLabel(next, (eff && eff.value) || new Date()) + ' (nr ' + next + ')';
+        }
         return versions;
     }
 
@@ -1100,7 +1121,8 @@
         if (type) {
             try {
                 return await fetchFullList(type);
-            } catch (_e) {
+            } catch (e) {
+                console.warn('[pricelistVersions] lista wersji do diff:', e);
                 return [];
             }
         }
@@ -1115,8 +1137,8 @@
                 ) {
                     return list;
                 }
-            } catch (_e2) {
-                /* sprawdzamy kolejny typ */
+            } catch (e2) {
+                console.warn('[pricelistVersions] lista wersji do diff (' + types[i] + '):', e2);
             }
         }
         return [];
@@ -1143,7 +1165,7 @@
                 '<button class="btn-icon" aria-label="Zamknij" data-csp="closeModal" data-csp-args="[&quot;pv-diff-modal&quot;]"><i data-lucide="x"></i></button></div>' +
                 '<div class="modal-body">' +
                 diffControlsHtml(versions, id, selectedAgainst) +
-                '<div id="pv-diff-body" aria-live="polite">' +
+                '<div id="pv-diff-body">' +
                 diffBodyHtml(diff) +
                 '</div></div></div>'
         });
@@ -1669,7 +1691,8 @@
                             }
                             sendDraft(draftId);
                         })
-                        .catch(function () {
+                        .catch(function (err) {
+                            console.warn('[pricelistVersions] dedup PRECO:', err);
                             sendDraft(null);
                         });
                 };

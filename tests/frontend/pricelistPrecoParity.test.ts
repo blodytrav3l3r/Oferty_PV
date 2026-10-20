@@ -67,9 +67,10 @@ describe('frontend: deduplikacja DRAFT PRECO', () => {
         expect(panel).toContain('.sort()');
         expect(panel).toContain('precoRowsSha256');
     });
-    it('identyczne rows + data → PUT istniejącego DRAFT', () => {
+    it('identyczne rows + data → PUT istniejącej wersji roboczej', () => {
         expect(panel).toContain('findIdenticalPrecoDraft(rows, effectiveFrom)');
-        expect(panel).toContain("v.status !== 'DRAFT' || v.sha256 !== hash");
+        expect(panel).toContain("PRECO_DEDUP_STATUSES = ['DRAFT', 'SCHEDULED']");
+        expect(panel).toContain('PRECO_DEDUP_STATUSES.indexOf(v.status) === -1');
         expect(panel).toContain("authed(draftId ? 'PUT' : 'POST', payload)");
     });
 });

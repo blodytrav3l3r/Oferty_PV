@@ -300,11 +300,8 @@ function showLoggedIn(user) {
                     if (el) el.textContent = text;
                 };
                 const fmtDate = (iso) => {
-                    try {
-                        return new Date(iso).toLocaleDateString('pl-PL');
-                    } catch (_e) {
-                        return '—';
-                    }
+                    const d = new Date(iso);
+                    return Number.isNaN(d.getTime()) ? '—' : d.toLocaleDateString('pl-PL');
                 };
                 ['rury', 'studnie', 'preco'].forEach((type) => {
                     const entry = types[type] || {};
