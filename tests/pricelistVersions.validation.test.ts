@@ -20,7 +20,8 @@ jest.mock('../src/middleware/auth', () => ({
 }));
 
 jest.mock('../src/middleware/rateLimiters', () => ({
-    PRICELIST_WRITE_LIMITER: (_req: any, _res: any, next: any) => next()
+    PRICELIST_WRITE_LIMITER: (_req: any, _res: any, next: any) => next(),
+    READ_LIMITER: (_req: any, _res: any, next: any) => next()
 }));
 
 jest.mock('../src/utils/logger', () => ({
