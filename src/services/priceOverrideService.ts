@@ -689,4 +689,4 @@ class PriceOverrideService {
 }
 
 export const priceOverrideService = new PriceOverrideService();
-export { diffById, sha256Canonical };
+export { diffById, sha256Canonical, canonicalStringify };

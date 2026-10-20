@@ -416,8 +416,11 @@ router.get('/:id/preview', requireAuth, requireAdmin, READ_LIMITER, async (req, 
     }
 });
 
-/** Diff wersji względem poprzedniej (seq-1). */
-router.get('/:id/diff', requireAuth, requireAdmin, async (req, res) => {
+/**
+ * Diff wersji: bez `against` → seq-1 (legacy), z `against` → dowolna wersja
+ * tego samego typu. Zły/niejednoznaczny `against` → 400 bez echa wejścia.
+ */
+router.get('/:id/diff', requireAuth, requireAdmin, READ_LIMITER, async (req, res) => {
     res.setHeader('Cache-Control', 'no-store');
     try {
         const id = parseVersionId(req.params);
@@ -425,7 +428,26 @@ router.get('/:id/diff', requireAuth, requireAdmin, async (req, res) => {
             sendInvalidId(res);
             return;
         }
-        res.json(await getVersionDiff(id));
+        let againstId: string | undefined;
+        if (req.query.against !== undefined) {
+            const parsedAgainst = versionIdParamsSchema.shape.id.safeParse(req.query.against);
+            if (!parsedAgainst.success) {
+                res.status(400).json({
+                    error: 'Nieprawidłowy identyfikator wersji bazowej',
+                    code: 'INVALID_QUERY'
+                });
+                return;
+            }
+            againstId = parsedAgainst.data;
+        }
+        if (againstId === id) {
+            res.status(400).json({
+                error: 'Wersja bazowa porównania musi być inna niż porównywana',
+                code: 'INVALID_QUERY'
+            });
+            return;
+        }
+        res.json(await getVersionDiff(id, againstId));
     } catch (err) {
         sendVersionError(res, err);
     }

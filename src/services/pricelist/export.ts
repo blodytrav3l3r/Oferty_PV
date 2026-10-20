@@ -6,7 +6,7 @@
 import prisma from '../../prismaClient';
 import type { PricelistVersion } from '../../../generated/prisma';
 import type { XlsxSheet } from '../../utils/minimalXlsx';
-import { diffById } from '../priceOverrideService';
+import { canonicalStringify, diffById } from '../priceOverrideService';
 import {
     PRECO_REFERENCE_STATUSES,
     PricelistVersionError,
@@ -68,25 +68,40 @@ export interface VersionDiffChange {
     section: string;
     id: string;
     name: string | null;
-    /** 'added' | 'removed' | 'changed' — changed tylko gdy różni się cena. */
+    /** 'added' | 'removed' | 'changed' — changed tylko gdy różni się cena/pole. */
     kind: 'added' | 'removed' | 'changed';
     before: number | null;
     after: number | null;
     /** (after-before)/before*100, null gdy niepoliczalna. */
     deltaPct: number | null;
+    /** PRECO kinety: które pole się różni. */
+    field?: 'height' | 'cena';
+}
+
+/** Referencja wersji w diffie (from/to). */
+export interface VersionDiffRef {
+    id: string;
+    version: string;
+    seq: number;
 }
 
 export interface VersionDiff {
     version: string;
     previousVersion: string | null;
+    /** Wersja bazowa (`against` albo seq-1); null gdy brak poprzedniej. */
+    from: VersionDiffRef | null;
+    /** Wersja porównywana (`id`). */
+    to: VersionDiffRef;
     sections: Record<string, { added: number; removed: number; changed: number }>;
-    /** Top zmian cenowych (max 100, sort po |deltaPct| malejąco). */
+    /** Top zmian (max 100, sort po |deltaPct| malejąco + tiebreak). */
     changes: VersionDiffChange[];
     truncated: boolean;
 }
 
+type DiffRow = Record<string, unknown>;
+
 /** Pierwsze pole cenowe wiersza (rury/studnie: price, preco kinety: cena). */
-function rowPrice(row: Record<string, unknown>): number | null {
+function rowPrice(row: DiffRow): number | null {
     for (const key of ['price', 'cena']) {
         const v = row[key];
         if (typeof v === 'number' && Number.isFinite(v)) return v;
@@ -94,7 +109,11 @@ function rowPrice(row: Record<string, unknown>): number | null {
     return null;
 }
 
-function rowName(row: Record<string, unknown>): string | null {
+function numberOrNull(value: unknown): number | null {
+    return typeof value === 'number' && Number.isFinite(value) ? value : null;
+}
+
+function rowName(row: DiffRow): string | null {
     for (const key of ['name', 'key', 'label']) {
         const v = row[key];
         if (typeof v === 'string' && v.length > 0) return v;
@@ -102,30 +121,45 @@ function rowName(row: Record<string, unknown>): string | null {
     return null;
 }
 
+function diffDeltaPct(before: number | null, after: number | null): number | null {
+    return before !== null && after !== null && before !== 0
+        ? Math.round(((after - before) / before) * 1000) / 10
+        : null;
+}
+
+function cmpText(a: string, b: string): number {
+    return a < b ? -1 : a > b ? 1 : 0;
+}
+
+/** Sort: |deltaPct| malejąco, potem section/id/field deterministycznie. */
+function sortDiffChanges(changes: VersionDiffChange[]): void {
+    changes.sort(
+        (a, b) =>
+            Math.abs(b.deltaPct ?? 0) - Math.abs(a.deltaPct ?? 0) ||
+            cmpText(a.section, b.section) ||
+            cmpText(a.id, b.id) ||
+            cmpText(a.field ?? '', b.field ?? '')
+    );
+}
+
+function diffRef(v: PricelistVersion | null): VersionDiffRef | null {
+    return v ? { id: v.id, version: v.version, seq: v.seq } : null;
+}
+
 const DIFF_CHANGES_LIMIT = 100;
 
-/** Diff wersji względem poprzedniej (seq-1) przez diffById + top zmian cen. */
-export async function getVersionDiff(id: string): Promise<VersionDiff> {
-    const current = await prisma.pricelistVersion.findUnique({ where: { id } });
-    if (!current) {
-        throw new PricelistVersionError(404, 'NOT_FOUND', `Wersja ${id} nie istnieje`);
-    }
-    if (!isPricelistType(current.type)) {
-        throw new PricelistVersionError(422, 'INVALID_TYPE', `Wersja ${id} ma nieznany typ`);
-    }
-    const type = current.type;
-    const previous = await prisma.pricelistVersion.findFirst({
-        where: { type, seq: current.seq - 1 }
-    });
-    const curItems = await loadVersionItems(prisma, type, current.id);
-    const prevItems = previous
-        ? await loadVersionItems(prisma, type, previous.id)
-        : Object.fromEntries(Object.keys(curItems).map((k) => [k, []]));
+/** Rury/studnie: sections przez diffById, changes tylko przy zmianie ceny. */
+function diffSimpleSections(
+    curItems: Record<string, DiffRow[]>,
+    prevItems: Record<string, DiffRow[]>,
+    previousVersionId: string,
+    currentVersionId: string,
+    changes: VersionDiffChange[]
+): VersionDiff['sections'] {
     const sections: VersionDiff['sections'] = {};
-    const changes: VersionDiffChange[] = [];
     for (const key of Object.keys(curItems)) {
-        const prevRows = toComparable(prevItems[key] ?? [], previous?.id ?? '');
-        const curRows = toComparable(curItems[key], current.id);
+        const prevRows = toComparable(prevItems[key] ?? [], previousVersionId);
+        const curRows = toComparable(curItems[key], currentVersionId);
         sections[key] = diffById(prevRows, curRows);
         const prevById = new Map(prevRows.map((r) => [String(r.id), r]));
         const curById = new Map(curRows.map((r) => [String(r.id), r]));
@@ -141,23 +175,20 @@ export async function getVersionDiff(id: string): Promise<VersionDiff> {
                     after: rowPrice(cur),
                     deltaPct: null
                 });
-            } else {
-                const before = rowPrice(prev);
-                const after = rowPrice(cur);
-                if (before !== after) {
-                    changes.push({
-                        section: key,
-                        id: rowId,
-                        name: rowName(cur) ?? rowName(prev),
-                        kind: 'changed',
-                        before,
-                        after,
-                        deltaPct:
-                            before !== null && after !== null && before !== 0
-                                ? Math.round(((after - before) / before) * 1000) / 10
-                                : null
-                    });
-                }
+                continue;
+            }
+            const before = rowPrice(prev);
+            const after = rowPrice(cur);
+            if (before !== after) {
+                changes.push({
+                    section: key,
+                    id: rowId,
+                    name: rowName(cur) ?? rowName(prev),
+                    kind: 'changed',
+                    before,
+                    after,
+                    deltaPct: diffDeltaPct(before, after)
+                });
             }
         }
         for (const [rowId, prev] of prevById) {
@@ -174,11 +205,268 @@ export async function getVersionDiff(id: string): Promise<VersionDiff> {
             }
         }
     }
-    changes.sort((a, b) => Math.abs(b.deltaPct ?? 0) - Math.abs(a.deltaPct ?? 0));
+    return sections;
+}
+
+type PrecoCounter = { added: number; removed: number; changed: number };
+
+function precoText(row: DiffRow, key: string): string {
+    return String(row[key] ?? '');
+}
+
+function precoNumber(row: DiffRow, key: string): number {
+    const value = row[key];
+    const num = typeof value === 'number' ? value : Number(value);
+    return Number.isFinite(num) ? num : 0;
+}
+
+/** Id wiersza bez prefiksu wersji — wyłącznie deterministyczny tie-break. */
+function precoRowId(row: DiffRow): string {
+    const id = String(row.id ?? '');
+    const versionId = row.versionId;
+    return typeof versionId === 'string' && id.startsWith(`${versionId}:`)
+        ? id.slice(versionId.length + 1)
+        : id;
+}
+
+function cmpBy(fields: Array<[string, 'text' | 'number']>) {
+    return (a: DiffRow, b: DiffRow): number => {
+        for (const [field, kind] of fields) {
+            const cmp =
+                kind === 'number'
+                    ? precoNumber(a, field) - precoNumber(b, field)
+                    : cmpText(precoText(a, field), precoText(b, field));
+            if (cmp !== 0) return cmp;
+        }
+        return cmpText(precoRowId(a), precoRowId(b));
+    };
+}
+
+/** Naturalny klucz po pre-sorcie; duplikaty dostają #2, #3... deterministycznie. */
+function keyedPrecoRows(
+    rows: DiffRow[],
+    baseKey: (row: DiffRow) => string,
+    compare: (a: DiffRow, b: DiffRow) => number
+): Map<string, DiffRow> {
+    const sorted = [...rows].sort(compare);
+    const counts = new Map<string, number>();
+    const out = new Map<string, DiffRow>();
+    for (const row of sorted) {
+        const base = baseKey(row);
+        const seen = (counts.get(base) ?? 0) + 1;
+        counts.set(base, seen);
+        out.set(seen === 1 ? base : `${base}#${seen}`, row);
+    }
+    return out;
+}
+
+/** JSON kanoniczny pola; przy błędzie parse fallback do surowego stringa. */
+function canonicalJsonField(row: DiffRow, field: string): string {
+    const raw = row[field];
+    if (typeof raw !== 'string') return canonicalStringify(raw);
+    try {
+        return canonicalStringify(JSON.parse(raw));
+    } catch {
+        return raw;
+    }
+}
+
+const kinetyKey = (row: DiffRow): string =>
+    `${precoText(row, 'wellDn')}|${precoText(row, 'dn')}|${precoText(row, 'order')}`;
+const zakresyKey = (row: DiffRow): string =>
+    `${precoText(row, 'wellDn')}|${precoText(row, 'label')}|${precoText(row, 'min')}|${precoText(row, 'max')}|${precoText(row, 'order')}`;
+const cmpKinety = cmpBy([
+    ['wellDn', 'number'],
+    ['dn', 'number'],
+    ['order', 'number']
+]);
+const cmpZakresy = cmpBy([
+    ['wellDn', 'number'],
+    ['label', 'text'],
+    ['min', 'number'],
+    ['max', 'number'],
+    ['order', 'number']
+]);
+const cmpKonfig = cmpBy([['key', 'text']]);
+
+function countKeyedDiff(
+    counter: PrecoCounter,
+    prevRows: DiffRow[],
+    curRows: DiffRow[],
+    baseKey: (row: DiffRow) => string,
+    compare: (a: DiffRow, b: DiffRow) => number,
+    equals: (a: DiffRow, b: DiffRow) => boolean
+): void {
+    const prev = keyedPrecoRows(prevRows, baseKey, compare);
+    const cur = keyedPrecoRows(curRows, baseKey, compare);
+    for (const [key, row] of cur) {
+        const before = prev.get(key);
+        if (!before) counter.added++;
+        else if (!equals(before, row)) counter.changed++;
+    }
+    for (const key of prev.keys()) {
+        if (!cur.has(key)) counter.removed++;
+    }
+}
+
+/**
+ * PRECO: klucze naturalne (bez `id` wiersza), konfig/zakresy tylko liczniki,
+ * kinety po polach height/cena. Duplikaty klucza → sufiks #N.
+ */
+function diffPrecoSections(
+    curItems: Record<string, DiffRow[]>,
+    prevItems: Record<string, DiffRow[]>,
+    changes: VersionDiffChange[]
+): VersionDiff['sections'] {
+    const konfig: PrecoCounter = { added: 0, removed: 0, changed: 0 };
+    const kinety: PrecoCounter = { added: 0, removed: 0, changed: 0 };
+    const zakresy: PrecoCounter = { added: 0, removed: 0, changed: 0 };
+
+    countKeyedDiff(
+        konfig,
+        prevItems.konfig ?? [],
+        curItems.konfig ?? [],
+        (row) => precoText(row, 'key'),
+        cmpKonfig,
+        (a, b) => canonicalJsonField(a, 'value') === canonicalJsonField(b, 'value')
+    );
+    countKeyedDiff(
+        zakresy,
+        prevItems.zakresy ?? [],
+        curItems.zakresy ?? [],
+        zakresyKey,
+        cmpZakresy,
+        (a, b) => canonicalJsonField(a, 'grupy') === canonicalJsonField(b, 'grupy')
+    );
+
+    const prevRows = keyedPrecoRows(prevItems.kinety ?? [], kinetyKey, cmpKinety);
+    const curRows = keyedPrecoRows(curItems.kinety ?? [], kinetyKey, cmpKinety);
+    for (const [key, cur] of curRows) {
+        const name = `DN${precoText(cur, 'wellDn')} / rura ${precoText(cur, 'dn')}`;
+        const prev = prevRows.get(key);
+        if (!prev) {
+            kinety.added++;
+            changes.push({
+                section: 'kinety',
+                id: key,
+                name,
+                kind: 'added',
+                before: null,
+                after: numberOrNull(cur.height),
+                deltaPct: null,
+                field: 'height'
+            });
+            continue;
+        }
+        const beforeHeight = numberOrNull(prev.height);
+        const afterHeight = numberOrNull(cur.height);
+        const beforeCena = numberOrNull(prev.cena);
+        const afterCena = numberOrNull(cur.cena);
+        let rowChanged = false;
+        if (beforeHeight !== afterHeight) {
+            rowChanged = true;
+            changes.push({
+                section: 'kinety',
+                id: key,
+                name,
+                kind: 'changed',
+                before: beforeHeight,
+                after: afterHeight,
+                deltaPct: diffDeltaPct(beforeHeight, afterHeight),
+                field: 'height'
+            });
+        }
+        if (beforeCena !== afterCena) {
+            rowChanged = true;
+            changes.push({
+                section: 'kinety',
+                id: key,
+                name,
+                kind: 'changed',
+                before: beforeCena,
+                after: afterCena,
+                deltaPct: diffDeltaPct(beforeCena, afterCena),
+                field: 'cena'
+            });
+        }
+        if (rowChanged) kinety.changed++;
+    }
+    for (const [key, prev] of prevRows) {
+        if (curRows.has(key)) continue;
+        kinety.removed++;
+        changes.push({
+            section: 'kinety',
+            id: key,
+            name: `DN${precoText(prev, 'wellDn')} / rura ${precoText(prev, 'dn')}`,
+            kind: 'removed',
+            before: numberOrNull(prev.height),
+            after: null,
+            deltaPct: null,
+            field: 'height'
+        });
+    }
+
+    return { konfig, kinety, zakresy };
+}
+
+/**
+ * Diff wersji względem `againstId` (dowolna wersja tego samego typu) albo
+ * seq-1, gdy `againstId` brak. `from` = against/seq-1, `to` = `id`.
+ */
+export async function getVersionDiff(id: string, againstId?: string): Promise<VersionDiff> {
+    if (againstId === id) {
+        throw new PricelistVersionError(
+            400,
+            'INVALID_QUERY',
+            'Wersja bazowa porównania musi być inna niż porównywana'
+        );
+    }
+    const current = await prisma.pricelistVersion.findUnique({ where: { id } });
+    if (!current) {
+        throw new PricelistVersionError(404, 'NOT_FOUND', `Wersja ${id} nie istnieje`);
+    }
+    if (!isPricelistType(current.type)) {
+        throw new PricelistVersionError(422, 'INVALID_TYPE', `Wersja ${id} ma nieznany typ`);
+    }
+    const type = current.type;
+    let previous: PricelistVersion | null;
+    if (againstId === undefined) {
+        previous = await prisma.pricelistVersion.findFirst({
+            where: { type, seq: current.seq - 1 }
+        });
+    } else {
+        previous = await prisma.pricelistVersion.findUnique({ where: { id: againstId } });
+        if (!previous) {
+            throw new PricelistVersionError(
+                404,
+                'AGAINST_NOT_FOUND',
+                'Wersja bazowa porównania nie istnieje'
+            );
+        }
+        if (previous.type !== type) {
+            throw new PricelistVersionError(
+                422,
+                'TYPE_MISMATCH',
+                'Wersja bazowa ma inny typ cennika'
+            );
+        }
+    }
+    const curItems = await loadVersionItems(prisma, type, current.id);
+    const prevItems = previous
+        ? await loadVersionItems(prisma, type, previous.id)
+        : Object.fromEntries(Object.keys(curItems).map((k) => [k, []]));
+    const changes: VersionDiffChange[] = [];
+    const sections =
+        type === 'preco'
+            ? diffPrecoSections(curItems, prevItems, changes)
+            : diffSimpleSections(curItems, prevItems, previous?.id ?? '', current.id, changes);
+    sortDiffChanges(changes);
     const truncated = changes.length > DIFF_CHANGES_LIMIT;
     return {
         version: current.version,
         previousVersion: previous?.version ?? null,
+        from: diffRef(previous),
+        to: { id: current.id, version: current.version, seq: current.seq },
         sections,
         changes: changes.slice(0, DIFF_CHANGES_LIMIT),
         truncated

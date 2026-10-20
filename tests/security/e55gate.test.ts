@@ -257,6 +257,15 @@ describe('E5.5 gate: 401 bez sesji (wszystkie 6 ścieżek)', () => {
         expect(previewMock).not.toHaveBeenCalled();
     });
 
+    it('GET /pricelist-versions/:id/diff → 401', async () => {
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        const diffMock = require('../../src/services/pricelistVersionService')
+            .getVersionDiff as jest.Mock;
+        const res = await request(app).get('/api/pricelist-versions/v1/diff').set(anon);
+        expect(res.status).toBe(401);
+        expect(diffMock).not.toHaveBeenCalled();
+    });
+
     it('POST /ai/predict/batch → 401', async () => {
         const predictMock = setPredict(0.5);
         const res = await request(app)
@@ -332,6 +341,79 @@ describe('E5.5 gate: role i ownership', () => {
             expect(JSON.stringify(res.body)).not.toContain('evil');
         }
         expect(previewMock).not.toHaveBeenCalled();
+    });
+
+    it('versions diff: user → 403, złe id/against → 400 bez echa, against=id → 400', async () => {
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        const diffMock = require('../../src/services/pricelistVersionService')
+            .getVersionDiff as jest.Mock;
+        const denied = await request(app).get('/api/pricelist-versions/v1/diff').set(user);
+        expect(denied.status).toBe(403);
+        expect(diffMock).not.toHaveBeenCalled();
+
+        for (const bad of ['..%2Fevil', 'x'.repeat(65)]) {
+            const res = await request(app).get(`/api/pricelist-versions/${bad}/diff`).set(admin);
+            expect(res.status).toBe(400);
+            expect(res.body.code).toBe('INVALID_ID');
+            expect(JSON.stringify(res.body)).not.toContain('evil');
+        }
+
+        const badAgainst = [
+            '?against=',
+            '?against=..%2Fevil',
+            '?against=%3Cscript%3E',
+            `?against=${'x'.repeat(65)}`,
+            '?against=v1&against=v2',
+            '?against[x]=y'
+        ];
+        for (const query of badAgainst) {
+            const res = await request(app)
+                .get(`/api/pricelist-versions/v1/diff${query}`)
+                .set(admin);
+            expect(res.status).toBe(400);
+            expect(res.body.code).toBe('INVALID_QUERY');
+            const body = JSON.stringify(res.body);
+            expect(body).not.toContain('evil');
+            expect(body).not.toContain('script');
+        }
+
+        const same = await request(app)
+            .get('/api/pricelist-versions/v1/diff?against=v1')
+            .set(admin);
+        expect(same.status).toBe(400);
+        expect(same.body.code).toBe('INVALID_QUERY');
+        expect(diffMock).not.toHaveBeenCalled();
+    });
+
+    it('versions diff: 404/422 bez echa id w body, bez audytu zapisu', async () => {
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        const diffMock = require('../../src/services/pricelistVersionService')
+            .getVersionDiff as jest.Mock;
+        diffMock.mockRejectedValueOnce(
+            new PricelistVersionError(
+                404,
+                'AGAINST_NOT_FOUND',
+                'Wersja bazowa porównania nie istnieje'
+            )
+        );
+        const notFound = await request(app)
+            .get('/api/pricelist-versions/v1/diff?against=brak')
+            .set(admin);
+        expect(notFound.status).toBe(404);
+        expect(notFound.body.code).toBe('AGAINST_NOT_FOUND');
+        expect(JSON.stringify(notFound.body)).not.toContain('brak');
+
+        diffMock.mockRejectedValueOnce(
+            new PricelistVersionError(422, 'TYPE_MISMATCH', 'Wersja bazowa ma inny typ cennika')
+        );
+        const mismatch = await request(app)
+            .get('/api/pricelist-versions/v1/diff?against=inna')
+            .set(admin);
+        expect(mismatch.status).toBe(422);
+        expect(mismatch.body.code).toBe('TYPE_MISMATCH');
+        expect(JSON.stringify(mismatch.body)).not.toContain('inna');
+
+        expect(auditMock).not.toHaveBeenCalled();
     });
 
     it('ai batch: zwykły user → 200 (kontrakt: predykcja dla każdego zalogowanego)', async () => {
@@ -575,6 +657,16 @@ describe('E5.5 gate: okablowanie bez zmian zachowania', () => {
         for (const [file, limiter] of wiring) {
             expect(readSrc(file)).toContain(limiter);
         }
+    });
+
+    it('GET /:id/diff: READ_LIMITER po requireAuth/requireAdmin (wiring statyczny)', () => {
+        const src = readSrc('src/routes/pricelistVersions.ts');
+        const start = src.indexOf("'/:id/diff'");
+        expect(start).toBeGreaterThan(-1);
+        const route = src.slice(start, src.indexOf('});', start));
+        expect(route).toContain('READ_LIMITER');
+        expect(route.indexOf('requireAuth')).toBeLessThan(route.indexOf('READ_LIMITER'));
+        expect(route.indexOf('requireAdmin')).toBeLessThan(route.indexOf('READ_LIMITER'));
     });
 
     it('CSP enforce: nonce per-request, zero unsafe-inline dla skryptów', () => {

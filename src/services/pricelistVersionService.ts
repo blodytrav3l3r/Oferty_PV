@@ -71,6 +71,7 @@ export {
 export type {
     VersionExport,
     VersionDiff,
+    VersionDiffRef,
     VersionPreview,
     VersionPreviewPrecoRef,
     PrecoTimelineVersion
