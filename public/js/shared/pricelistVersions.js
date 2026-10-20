@@ -557,9 +557,12 @@
                     v.status === 'BACKDATE_REQUESTED';
                 var actions = manageable
                     ? '<div class="pv-actions">' +
+                      '<button class="btn btn-sm btn-secondary" data-pv-act="preview" data-pv-id="' +
+                      escAttr(v.id) +
+                      '" title="Podgląd zapisanych cen (tylko odczyt)"><i data-lucide="eye"></i> Podgląd</button>' +
                       '<button class="btn btn-sm btn-secondary" data-pv-act="diff" data-pv-id="' +
                       escAttr(v.id) +
-                      '" title="Top zmian cen względem poprzedniej wersji">Porównaj</button>' +
+                      '" title="Porównaj z dowolną wersją (domyślnie poprzednia)">Porównaj</button>' +
                       '<button class="btn btn-sm btn-secondary" data-pv-act="export" data-pv-id="' +
                       escAttr(v.id) +
                       '" data-pv-version="' +
@@ -836,6 +839,12 @@
         return v.toLocaleString('pl-PL', { maximumFractionDigits: 2 });
     }
 
+    function diffKindLabel(c) {
+        if (c.field === 'height') return (c.kind || '') + ' · prosta';
+        if (c.field === 'cena') return (c.kind || '') + ' · cena';
+        return c.kind || '';
+    }
+
     function diffChangesHtml(diff) {
         var list = (diff && diff.changes) || [];
         if (list.length === 0) return '';
@@ -852,7 +861,7 @@
                     esc(c.id || '') +
                     (c.name ? '<br><span class="text-muted">' + esc(c.name) + '</span>' : '') +
                     '</td><td>' +
-                    esc(c.kind || '') +
+                    esc(diffKindLabel(c)) +
                     '</td><td class="text-right">' +
                     esc(fmtPrice(c.before)) +
                     '</td><td class="text-right">' +
@@ -876,14 +885,73 @@
         );
     }
 
-    async function openDiff(id) {
-        var diff;
-        try {
-            diff = await apiJson(API + '/' + encodeURIComponent(id) + '/diff', authed('GET'));
-        } catch (e) {
-            toast('Błąd porównania: ' + e.message, 'error');
-            return;
+    async function fetchDiff(id, againstId) {
+        var url = API + '/' + encodeURIComponent(id) + '/diff';
+        if (againstId) url += '?against=' + encodeURIComponent(againstId);
+        return apiJson(url, authed('GET'));
+    }
+
+    function sortVersions(versions) {
+        return [...versions].sort(function (a, b) {
+            return (b.seq || 0) - (a.seq || 0);
+        });
+    }
+
+    function diffVersionOptions(versions, selectedId, excludeId) {
+        var found = false;
+        var html = sortVersions(versions)
+            .map(function (v) {
+                if (v.id === excludeId) return '';
+                var selected = v.id === selectedId;
+                if (selected) found = true;
+                var label =
+                    (v.version || v.id) +
+                    (v.status ? ' · ' + v.status : '') +
+                    ' (nr ' +
+                    (v.seq ?? '?') +
+                    ')';
+                return (
+                    '<option value="' +
+                    escAttr(v.id) +
+                    '"' +
+                    (selected ? ' selected' : '') +
+                    '>' +
+                    esc(label) +
+                    '</option>'
+                );
+            })
+            .join('');
+        if (!found && selectedId) {
+            html =
+                '<option value="' +
+                escAttr(selectedId) +
+                '" selected>' +
+                esc(selectedId) +
+                '</option>' +
+                html;
         }
+        return html;
+    }
+
+    function diffControlsHtml(versions, currentId, againstId) {
+        return (
+            '<div class="pv-diff-controls" id="pv-diff-controls">' +
+            '<label class="pv-diff-field"><span>Wersja</span>' +
+            '<select class="form-input" data-pv-diff-select="current">' +
+            diffVersionOptions(versions, currentId, null) +
+            '</select></label>' +
+            '<label class="pv-diff-field"><span>Porównaj z</span>' +
+            '<select class="form-input" data-pv-diff-select="against">' +
+            '<option value=""' +
+            (againstId ? '' : ' selected') +
+            '>Poprzednia (auto)</option>' +
+            diffVersionOptions(versions, againstId, currentId) +
+            '</select></label>' +
+            '</div>'
+        );
+    }
+
+    function diffBodyHtml(diff) {
         var SECTION_LABELS = {
             rury: 'Rury',
             studnie: 'Studnie',
@@ -891,6 +959,8 @@
             kinety: 'Kinety',
             zakresy: 'Zakresy'
         };
+        var fromLabel = diff.from ? diff.from.version : null;
+        var toLabel = diff.to ? diff.to.version : diff.version;
         var rows = Object.keys(diff.sections || {})
             .map(function (k) {
                 var s = diff.sections[k];
@@ -907,26 +977,124 @@
                 );
             })
             .join('');
+        return (
+            '<p class="text-muted pv-diff-direction">' +
+            (fromLabel
+                ? 'Od ' + esc(fromLabel) + ' do ' + esc(toLabel)
+                : 'Brak wersji bazowej — wszystko liczone jako dodane (do ' + esc(toLabel) + ')') +
+            '</p>' +
+            '<div class="table-wrap"><table><thead><tr>' +
+            '<th scope="col">Sekcja</th><th scope="col">Dodane</th><th scope="col">Usunięte</th><th scope="col">Zmienione</th>' +
+            '</tr></thead><tbody>' +
+            (rows || '<tr><td colspan="4" class="text-center text-muted">Brak zmian.</td></tr>') +
+            '</tbody></table></div>' +
+            diffChangesHtml(diff)
+        );
+    }
+
+    function setDiffBusy(overlay, busy) {
+        overlay.querySelectorAll('[data-pv-diff-select]').forEach(function (el) {
+            el.disabled = busy;
+        });
+        var body = overlay.querySelector('#pv-diff-body');
+        if (body) body.setAttribute('aria-busy', busy ? 'true' : 'false');
+    }
+
+    async function resolveVersionsForDiff(id, type) {
+        if (type) {
+            try {
+                return await fetchFullList(type);
+            } catch (_e) {
+                return [];
+            }
+        }
+        var types = ['rury', 'studnie', 'preco'];
+        for (var i = 0; i < types.length; i += 1) {
+            try {
+                var list = await fetchFullList(types[i]);
+                if (
+                    list.some(function (v) {
+                        return v.id === id;
+                    })
+                ) {
+                    return list;
+                }
+            } catch (_e2) {
+                /* sprawdzamy kolejny typ */
+            }
+        }
+        return [];
+    }
+
+    async function openDiff(id, againstId, type) {
+        var diff;
+        try {
+            diff = await fetchDiff(id, againstId);
+        } catch (e) {
+            toast('Błąd porównania: ' + e.message, 'error');
+            return;
+        }
+        var versions = await resolveVersionsForDiff(id, type);
+        if (versions.length === 0) {
+            versions = [diff.to, diff.from].filter(Boolean);
+        }
+        var selectedAgainst = againstId && againstId !== id ? againstId : '';
         window.showModal({
             id: 'pv-diff-modal',
             titleId: 'pv-diff-title',
             html:
-                '<div class="modal"><div class="modal-header"><h3 id="pv-diff-title">Porównanie ' +
-                esc(diff.version) +
-                ' ← ' +
-                esc(diff.previousVersion || '∅') +
-                '</h3>' +
+                '<div class="modal modal--pv-diff"><div class="modal-header"><h3 id="pv-diff-title"><i data-lucide="arrow-right-left"></i> Porównanie wersji cennika</h3>' +
                 '<button class="btn-icon" aria-label="Zamknij" data-csp="closeModal" data-csp-args="[&quot;pv-diff-modal&quot;]"><i data-lucide="x"></i></button></div>' +
-                '<div class="modal-body"><div class="table-wrap"><table><thead><tr>' +
-                '<th scope="col">Sekcja</th><th scope="col">Dodane</th><th scope="col">Usunięte</th><th scope="col">Zmienione</th>' +
-                '</tr></thead><tbody>' +
-                (rows ||
-                    '<tr><td colspan="4" class="text-center text-muted">Brak zmian.</td></tr>') +
-                '</tbody></table></div>' +
-                diffChangesHtml(diff) +
-                '</div></div>'
+                '<div class="modal-body">' +
+                diffControlsHtml(versions, id, selectedAgainst) +
+                '<div id="pv-diff-body" aria-live="polite">' +
+                diffBodyHtml(diff) +
+                '</div></div></div>'
         });
-        icons(document.getElementById('pv-diff-modal'));
+        var overlay = document.getElementById('pv-diff-modal');
+        icons(overlay);
+        if (!overlay) return;
+        overlay.addEventListener('change', function (ev) {
+            var select =
+                ev.target && ev.target.closest ? ev.target.closest('[data-pv-diff-select]') : null;
+            if (!select || !overlay.contains(select)) return;
+            var currentSelect = overlay.querySelector('[data-pv-diff-select="current"]');
+            var againstSelect = overlay.querySelector('[data-pv-diff-select="against"]');
+            if (!currentSelect || !againstSelect) return;
+            var nextId = currentSelect.value;
+            var nextAgainst = againstSelect.value;
+            if (nextAgainst === nextId) nextAgainst = '';
+            var controls = overlay.querySelector('#pv-diff-controls');
+            if (controls) {
+                controls.innerHTML = diffControlsHtml(versions, nextId, nextAgainst);
+                icons(controls);
+            }
+            var body = overlay.querySelector('#pv-diff-body');
+            if (body) {
+                body.innerHTML =
+                    '<p class="text-muted pv-diff-direction">Ładowanie porównania…</p>';
+            }
+            setDiffBusy(overlay, true);
+            fetchDiff(nextId, nextAgainst)
+                .then(function (nextDiff) {
+                    var target = overlay.querySelector('#pv-diff-body');
+                    if (target) {
+                        target.innerHTML = diffBodyHtml(nextDiff);
+                        icons(target);
+                    }
+                })
+                .catch(function (err) {
+                    toast('Błąd porównania: ' + err.message, 'error');
+                    var target = overlay.querySelector('#pv-diff-body');
+                    if (target) {
+                        target.innerHTML =
+                            '<p class="color-warn">Nie udało się wczytać porównania.</p>';
+                    }
+                })
+                .finally(function () {
+                    if (document.getElementById('pv-diff-modal')) setDiffBusy(overlay, false);
+                });
+        });
     }
 
     /* Formuła 1:1 z BE versionExportFilename (src/utils/exportFilenames.ts). */
@@ -1127,7 +1295,10 @@
             var act = btn.getAttribute('data-pv-act');
             var id = btn.getAttribute('data-pv-id');
             if (act === 'close') window.closeModal('pv-versions-modal');
-            else if (act === 'diff' && id) openDiff(id);
+            else if (act === 'preview' && id) {
+                var pvPreview = window.pricelistVersions && window.pricelistVersions.openPreview;
+                if (typeof pvPreview === 'function') pvPreview(id, type);
+            } else if (act === 'diff' && id) openDiff(id, null, type);
             else if (act === 'export' && id) {
                 exportVersion(
                     id,
@@ -1375,7 +1546,7 @@
                                 'success'
                             );
                             refreshTable(type, true).then(function () {
-                                openDiff(v.id);
+                                openDiff(v.id, null, type);
                             });
                         })
                         .catch(function (err) {
@@ -1406,6 +1577,8 @@
         hydrateBadges: hydrateBadges,
         hydrateActiveBadges: hydrateActiveBadges,
         openVersionsPanel: openVersionsPanel,
-        openDiff: openDiff
+        openDiff: openDiff,
+        _apiJson: apiJson,
+        _authed: authed
     };
 })();

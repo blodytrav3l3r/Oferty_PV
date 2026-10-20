@@ -991,6 +991,104 @@ html[data-theme='light'] .kartoteka-filter-bar:hover {
 .modal--pv .pv-row + .pv-row {
     border-top: 1px solid var(--border-glass);
 }
+/* Podgląd wersji + porównanie: osobne modale, wspólna rama */
+.modal--pv-preview,
+.modal--pv-diff {
+    width: 95%;
+    max-width: 1500px;
+    max-height: 90vh;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+.modal--pv-preview .modal-header,
+.modal--pv-diff .modal-header {
+    padding: 1rem 1.25rem;
+    margin-bottom: 0;
+    border-bottom: 1px solid var(--border-glass);
+    background: var(--bg-glass);
+}
+.modal--pv-preview .modal-body,
+.modal--pv-diff .modal-body {
+    padding: 1rem 1.25rem 1.25rem;
+    overflow-y: auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+.pv-preview-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem 1.25rem;
+}
+.pv-preview-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+}
+.pv-preview-search {
+    flex: 1 1 18rem;
+}
+.pv-preview-search .form-input {
+    width: 100%;
+}
+.pv-preview-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+.pv-preview-tabs .btn {
+    flex: 0 1 auto;
+}
+.pv-preview-scroll {
+    max-height: 55vh;
+    overflow: auto;
+}
+.pv-preview-scroll table,
+.modal--pv-diff table {
+    width: 100%;
+    min-width: 900px;
+}
+.pv-preview-scroll thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: var(--bg-glass);
+    white-space: nowrap;
+}
+.pv-preview-scroll td,
+.modal--pv-diff td {
+    overflow-wrap: anywhere;
+}
+.pv-preview-empty {
+    margin: 0;
+}
+.pv-diff-controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 0.75rem;
+}
+.pv-diff-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    flex: 1 1 16rem;
+    font-size: var(--fs-sm);
+    color: var(--text-muted);
+}
+.pv-diff-field .form-input {
+    width: 100%;
+}
+.pv-diff-direction {
+    margin: 0;
+}
+.modal--pv-diff .table-wrap {
+    overflow-x: auto;
+}
 .modal--pv .pv-row-label {
     min-width: 9rem;
     font-weight: 600;

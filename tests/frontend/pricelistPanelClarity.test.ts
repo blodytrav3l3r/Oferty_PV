@@ -62,7 +62,7 @@ describe('frontend: diff z cenami przed decyzją', () => {
         expect(panel).toContain('Aktywować wersję');
     });
     it('po zapisie draft auto-otwiera Porównaj', () => {
-        expect(panel).toContain('openDiff(v.id)');
+        expect(panel).toContain('openDiff(v.id, null, type)');
         expect(panel).toContain('sprawdź Porównaj przed aktywacją');
     });
 });
@@ -94,6 +94,29 @@ describe('frontend: jedna wiadomość na kolizję daty', () => {
         expect(panel).toContain('PERIOD_OVERLAP');
         expect(panel).toContain('EFFECTIVE_COLLISION');
         expect(panel).toContain('Kolizja daty obowiązywania');
+    });
+});
+
+describe('frontend: podgląd i porównanie z wersji', () => {
+    it('wiersz ma Podgląd (eye) i Porównaj z wybraną wersją', () => {
+        expect(panel).toContain('data-pv-act="preview"');
+        expect(panel).toContain('data-pv-act="diff"');
+        expect(panel).toContain('openDiff(id, null, type)');
+    });
+    it('diff ma dwa selecty i domyślnie poprzednią wersję', () => {
+        expect(panel).toContain('data-pv-diff-select="current"');
+        expect(panel).toContain('data-pv-diff-select="against"');
+        expect(panel).toContain('Poprzednia (auto)');
+        expect(panel).toContain("url += '?against='");
+    });
+    it('nowy moduł podglądu jest ładowany po module wersji', () => {
+        const rury = fs.readFileSync(path.join(process.cwd(), 'public/rury.html'), 'utf-8');
+        const studnie = fs.readFileSync(path.join(process.cwd(), 'public/studnie.html'), 'utf-8');
+        for (const html of [rury, studnie]) {
+            expect(html.indexOf('pricelistVersions.js')).toBeLessThan(
+                html.indexOf('pricelistVersionPreview.js')
+            );
+        }
     });
 });
 
