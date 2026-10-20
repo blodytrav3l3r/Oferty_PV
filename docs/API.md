@@ -374,20 +374,27 @@ Wymaga autoryzacji (bez wymogu administratora).
 
 Wymaga autoryzacji (administrator, oprócz etykiet).
 
-| Metoda | Ścieżka                                   | Auth  | Opis                                                         |
-| ------ | ----------------------------------------- | ----- | ------------------------------------------------------------ |
-| GET    | `/api/pricelist-versions`                 | admin | Lista wersji                                                 |
-| GET    | `/api/pricelist-versions/labels`          | auth  | Etykiety wersji                                              |
-| POST   | `/api/pricelist-versions/:type/drafts`    | admin | Nowy szkic wersji (`201` przy utworzeniu)                    |
-| PUT    | `/api/pricelist-versions/:id`             | admin | Edycja wersji                                                |
-| DELETE | `/api/pricelist-versions/:id`             | admin | Usunięcie wersji                                             |
-| POST   | `/api/pricelist-versions/:id/publish`     | admin | Publikacja roboczej (DRAFT → SCHEDULED / BACKDATE_REQUESTED) |
-| POST   | `/api/pricelist-versions/:id/activate`    | admin | Aktywacja wersji                                             |
-| POST   | `/api/pricelist-versions/:id/backdate`    | admin | Aktywacja wsteczna                                           |
-| POST   | `/api/pricelist-versions/:id/clone-draft` | admin | Klonowanie szkicu                                            |
-| POST   | `/api/pricelist-versions/activate-due`    | admin | Aktywacja zaplanowanych                                      |
-| GET    | `/api/pricelist-versions/:id/diff`        | admin | Różnice wersji                                               |
-| GET    | `/api/pricelist-versions/:id/export`      | admin | Eksport zamrożonej wersji                                    |
+| Metoda | Ścieżka                                   | Auth  | Opis                                                                                                                  |
+| ------ | ----------------------------------------- | ----- | --------------------------------------------------------------------------------------------------------------------- |
+| GET    | `/api/pricelist-versions`                 | admin | Lista wersji                                                                                                          |
+| GET    | `/api/pricelist-versions/labels`          | auth  | Etykiety wersji                                                                                                       |
+| POST   | `/api/pricelist-versions/:type/drafts`    | admin | Nowy szkic wersji (`201` przy utworzeniu)                                                                             |
+| PUT    | `/api/pricelist-versions/:id`             | admin | Edycja wersji                                                                                                         |
+| DELETE | `/api/pricelist-versions/:id`             | admin | Usunięcie wersji (PRECO: `409 USED_BY_STUDNIE`, gdy wskazuje ją wersja studni; ACTIVE/BACKDATE → `409 NOT_DELETABLE`) |
+| POST   | `/api/pricelist-versions/:id/publish`     | admin | Publikacja roboczej (DRAFT → SCHEDULED / BACKDATE_REQUESTED)                                                          |
+| POST   | `/api/pricelist-versions/:id/activate`    | admin | Aktywacja wersji                                                                                                      |
+| POST   | `/api/pricelist-versions/:id/backdate`    | admin | Aktywacja wsteczna                                                                                                    |
+| POST   | `/api/pricelist-versions/:id/clone-draft` | admin | Klonowanie szkicu                                                                                                     |
+| POST   | `/api/pricelist-versions/activate-due`    | admin | Aktywacja zaplanowanych                                                                                               |
+| GET    | `/api/pricelist-versions/:id/diff`        | admin | Różnice wersji                                                                                                        |
+| GET    | `/api/pricelist-versions/:id/export`      | admin | Eksport zamrożonej wersji                                                                                             |
+
+DELETE wersji PRECO (poza ACTIVE/BACKDATE, które blokuje wcześniej
+`409 NOT_DELETABLE`) jest blokowane, gdy dowolna wersja studni (dowolny status)
+wybiera tę PRECO resolverem eksportu: `409 USED_BY_STUDNIE` z liczbą i max 3
+labelkami. Referencje są re-checkowane w transakcji pod lockami `preco → studnie`
+(stała kolejność, bez cyklu z tworzeniem szkicu studni). Ograniczenie: operacja
+zmieniająca referencję bez locka `studnie` nie jest objęta gwarancją.
 
 ## Domyślne cenniki (`/api/price-overrides`)
 
@@ -400,7 +407,8 @@ Wymaga autoryzacji (administrator). Zapisuje bieżący stan wszystkich cenników
 ## Eksport XLSX cenników
 
 Wymaga autoryzacji. Jeden kształt pliku dla warstw LIVE / VERSION / DEFAULT
-(arkusze i kolumny 1:1; plik studni zawiera też arkusze PRECO).
+(arkusze i kolumny 1:1; plik studni zawiera też arkusze PRECO, o ile eksport
+wersji studni znajdzie kwalifikującą się PRECO).
 
 | Metoda | Ścieżka                                                          | Opis                                                                   |
 | ------ | ---------------------------------------------------------------- | ---------------------------------------------------------------------- |
@@ -414,6 +422,13 @@ zamrożoną wersję ACTIVE (nazwa pliku z labelką wersji; `409 NO_ACTIVE_VERSIO
 gdy brak) — w UI dostępne wyłącznie przez dopisanie parametru do URL;
 przyciski eksportują `live`. Diff wersji (`GET /:id/diff`) zwraca też
 `changes` (top zmian cen: sekcja, pozycja, przed/po, Δ%) i flagę `truncated`.
+
+Dla studni eksport wersji (`GET /:id/export`) i `source=active` dokleja PRECO
+obowiązującą w dacie wersji studni: tylko `ACTIVE`/`BACKDATE`/`ARCHIVED` z
+`effectiveFrom <=` (fallback `seq <=` wyłącznie dla wersji studni bez
+`effectiveFrom`, legacy). Brak kwalifikującej się PRECO nie jest błędem: plik
+zawiera same studnie, a `GET /:id/export` ustawia wtedy nagłówek
+`X-Preco-Included: 0`.
 
 ## Łączny eksport (`/api/export-combined`)
 
@@ -587,7 +602,7 @@ Odpowiedź po przekroczeniu: `429` + nagłówek `Retry-After`.
 | 401    | Brak/nieprawidłowa sesja (brak cookie `authToken`, wygasła lub unieważniona; kody `SESSION_IDLE_EXPIRED` po 1h bezczynności / `SESSION_EXPIRED` po 7d absolute) |
 | 403    | Brak uprawnień (rola, ownership, full-wipe klientów dla nie-admina, revoke share)                                                                               |
 | 404    | Brak zasobu (404 zamiast 403 także przy odmowie dostępu do eksportu — anti-oracle)                                                                              |
-| 409    | Konflikt (zajęty login, `VERSION_CONFLICT` przy ślepym zapisie, duplikat transferu)                                                                             |
+| 409    | Konflikt (zajęty login, `VERSION_CONFLICT` przy ślepym zapisie, `USED_BY_STUDNIE` przy DELETE PRECO, duplikat transferu)                                        |
 | 422    | Błąd semantyczny: nieznany typ wersji, `NON_FINITE_SCORE` w AI batch                                                                                            |
 | 429    | Rate limit (`Retry-After`); także zapis w toku (lock)                                                                                                           |
 | 500    | Wewnętrzny błąd serwera (generyczny, bez wycieku szczegółów)                                                                                                    |

@@ -90,13 +90,20 @@ w modalu) i świadomego checkboxa. Kolizja daty z inną wersją → 409
 - Usunięcie: Robocza/Zaplanowana/Robocza-wsteczna — wolno; ACTIVE/Wsteczna — nigdy
   (nawet przy zerowym użyciu, bo resolver rozdaje je nowym ofertom); Archiwalna —
   tylko bez użycia (`409 USED_BY` z liczbą).
+- PRECO: dodatkowo blokada, gdy **dowolna wersja studni** (też robocza) wybiera tę
+  wersję PRECO w eksporcie → `409 USED_BY_STUDNIE` z liczbą i max 3 labelkami.
+  DRAFT/SCHEDULED/BACKDATE_REQUESTED PRECO nie jest referencją (D1), więc
+  wersja PRECO o takim statusie nie blokuje usunięcia.
 
 ## 10. Import XLSX
 
 Modal celu importu: **na żywo (LIVE)** albo **draft + nota**.
-Studnie+PRECO importują się dwoma requestami (studnie + preco) — przy rozjechanych
-numerach seq eksport wersji studni dobiera PRECO po dacie obowiązywania
-(`effectiveFrom <=`, fallback po seq).
+Studnie+PRECO importują się dwoma requestami (studnie + preco). Eksport wersji
+studni (review i `?source=active`) dokleja PRECO **obowiązującą w dacie wersji
+studni**: tylko statusy `ACTIVE`/`BACKDATE`/`ARCHIVED`, `effectiveFrom <=`.
+Fallback po `seq` działa wyłącznie dla wersji studni bez `effectiveFrom`
+(legacy). Gdy brak kwalifikującej się PRECO — plik zawiera same studnie
+(eksport wersji ustawia wtedy `X-Preco-Included: 0`).
 Tekst w komórkach liczbowych PRECO odrzuci walidacja (422) — popraw komórki, nie API.
 
 ## 11. Eksport XLSX: który przycisk
@@ -139,6 +146,7 @@ Badge „cennik vX · Typ" w ofercie pokazuje wersję z pieczątki (tooltip: dat
 | Nieprawidłowe wiersze: …                           | 422 `INVALID_ROWS`                           | Popraw wskazane pole/wiersz (często tekst w liczbach PRECO)                   |
 | Zapis w toku, spróbuj ponownie                     | 429 / 503 `LOCK_BUSY`                        | Odczekaj ~30 s, nie klikaj wielokrotnie                                       |
 | Wersji … używa N ofert/zamówień                    | 409 `USED_BY` / `NOT_DELETABLE`              | Historia chroniona — nie usuwaj, ewentualnie klonuj                           |
+| Wersji … używa N wersji studni                     | 409 `USED_BY_STUDNIE`                        | Historia eksportu studni chroniona — nie usuwaj tej PRECO                     |
 | Brak aktywnej wersji cennika                       | 409 `NO_ACTIVE_VERSION`                      | Utwórz i aktywuj pierwszą wersję (start serwera robi to sam z LIVE)           |
 | Błąd zapisu wersji (walidacja)                     | 422 `INVALID_DATE` / `NOTE_TOO_LONG`         | Zła data albo nota > 500 znaków                                               |
 
@@ -146,6 +154,9 @@ Badge „cennik vX · Typ" w ofercie pokazuje wersję z pieczątki (tooltip: dat
 
 - Mutacje wersji: tylko admin + limiter zapisów (`429` przy serii).
 - Lock per typ: równoległe zapisy tego samego cennika czekają/kolejkują się.
+- DELETE PRECO: referencje są re-checkowane w transakcji pod lockami `preco → studnie`
+  (stała kolejność, bez cyklu z tworzeniem szkicu studni). Ograniczenie: operacja
+  zmieniająca referencję bez locka `studnie` nie jest objęta gwarancją.
 - `GET /:id/diff|export` i `GET /labels`: do odczytu dla zalogowanych (diff/export wersji — admin).
 
 ## 16. Audyt i historia

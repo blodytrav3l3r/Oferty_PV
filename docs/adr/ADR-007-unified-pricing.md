@@ -22,12 +22,12 @@ doprowadziło do niespójności w:
 
 ### 1. Spójny wzorzec API dla wszystkich modułów
 
-| Endpoint     | Rury                | Studnie             | PRECO                                    |
-| ------------ | ------------------- | ------------------- | ---------------------------------------- |
-| PUT /        | DELETE ALL + INSERT | DELETE ALL + INSERT | DELETE ALL + INSERT (3 tabele)           |
-| PATCH        | /:id (1 rekord)     | /:id (1 rekord)     | / (merge DN, bo struktura hierarchiczna) |
-| DELETE       | /:id                | /:id                | brak (PUT pokrywa)                       |
-| GET /default | zawsze DEFAULT      | zawsze DEFAULT      | zawsze DEFAULT (bez fallbacku)           |
+| Endpoint     | Rury                | Studnie             | PRECO                                                      |
+| ------------ | ------------------- | ------------------- | ---------------------------------------------------------- |
+| PUT /        | DELETE ALL + INSERT | DELETE ALL + INSERT | DELETE ALL + INSERT (3 tabele)                             |
+| PATCH        | /:id (1 rekord)     | /:id (1 rekord)     | / (merge DN, bo struktura hierarchiczna)                   |
+| DELETE       | /:id                | /:id                | brak w LIVE (PUT pokrywa); wersje: guard `USED_BY_STUDNIE` |
+| GET /default | zawsze DEFAULT      | zawsze DEFAULT      | zawsze DEFAULT (bez fallbacku)                             |
 
 ### 2. writeLock na wszystkich modyfikowalnych endpointach
 
@@ -59,6 +59,20 @@ Jeden serwis (`priceOverrideService.ts`) obsługuje wszystkie 3 moduły.
 Rury/Studnie: format records + deletedIds. PRECO: osobny format (konfig/kinety/zakresy)
 ze względu na hierarchiczną strukturę danych.
 
+### 7. Wersje PRECO a eksport i usuwanie (D1/D2, 2026-10-20)
+
+- **D1:** historyczny eksport wersji studni (review i `?source=active`) dokleja PRECO
+  tylko ze statusem `ACTIVE`, `BACKDATE` lub `ARCHIVED`, wybieraną po
+  `effectiveFrom <=` (fallback `seq <=` tylko dla wersji studni bez daty).
+  `DRAFT`, `SCHEDULED` i `BACKDATE_REQUESTED` nie trafiają do eksportu; brak
+  kandydata → plik zawiera same studnie.
+- **D2:** `DELETE /api/pricelist-versions/:id` dla PRECO (poza ACTIVE/BACKDATE,
+  które blokuje wcześniej `409 NOT_DELETABLE`) jest blokowane
+  (`409 USED_BY_STUDNIE`), gdy dowolna wersja studni wskazuje tę PRECO resolverem D1.
+  Re-check w transakcji pod lockami `preco → studnie` zamyka wyścig z
+  `createDraft('studnie')`. Znane ograniczenie: operacja zmieniająca referencję bez
+  locka `studnie` nie jest objęta gwarancją; docelowo kolumna `studnieVersion.precoVersionId`.
+
 ## Konsekwencje
 
 ### Pozytywne
@@ -72,7 +86,10 @@ ze względu na hierarchiczną strukturę danych.
 
 - PRECO nadal ma inny format danych w bazie (3 tabele zamiast 1), co wymaga osobnych ścieżek
   w priceOverrideService.ts
-- PRECO nie wspiera DELETE /:id (nie ma naturalnego ID dla pojedynczej zmiany)
+- PRECO **LIVE** (`/api/preco-pricing`) nie wspiera DELETE /:id (brak naturalnego ID
+  dla pojedynczej zmiany). To ograniczenie warstwy LIVE; wersja PRECO jest usuwalna
+  przez `DELETE /api/pricelist-versions/:id`, o ile nie jest ACTIVE/BACKDATE i nie
+  wskazuje jej żadna wersja studni (`409 USED_BY_STUDNIE`).
 
 ## Uzasadnienie
 

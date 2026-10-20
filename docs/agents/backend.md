@@ -27,6 +27,7 @@ Inwarianty domenowe: `docs/SYSTEM_INVARIANTS.md` (I-001–I-012) — przeczytaj 
 - Brak sekretów w kodzie (`.env`); Zod na wejściu; Prisma (parametryzacja); rate limiting; komunikaty błędów bez wycieków (`/health` minimalne, diagnostyka tylko `/api/admin/system-info` dla admina).
 - CSRF: mutacje wymagają same-origin (`src/middleware/csrf.ts`); cookie `HttpOnly + SameSite=Lax`.
 - Ownership: `src/utils/ownership.ts` (fail-closed dla `null` u nie-admina); optimistic locking `src/utils/versionWrite.ts` (409); `writeLock` dla cenników; idempotency dla create/claim.
+- Wersje cenników: eksport wersji studni (także `?source=active`) dokleja tylko PRECO `ACTIVE`/`BACKDATE`/`ARCHIVED` (resolver po `effectiveFrom`, fallback `seq` tylko dla legacy bez daty); `DELETE` wersji PRECO → `409 USED_BY_STUDNIE`, gdy wskazuje ją dowolna wersja studni (ACTIVE/BACKDATE wcześniej `NOT_DELETABLE`).
 
 ## Czego nie robić
 
