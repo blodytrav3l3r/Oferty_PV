@@ -26,6 +26,8 @@
     let _navForceOnce = false; // nawigacja potwierdzona przez użytkownika
     let _navReverting = false; // cofanie hasha po anulowaniu — przepuść echo hashchange
     let _lastCleanHash = null; // ostatni hash bez niezapisanych zmian
+    // Parametry sterujące panelem/modalem: nie trafiają do src iframe ani klucza reloadu.
+    const _TRANSIENT_PARAMS = new Set(['panel', 'pvtype', 'version', 'against']);
 
     function _isDirtyNow() {
         // SPA-GUARD-PRO P0.1: SSoT w shared/sokDirty.js (flagi + diff draft-vs-SAVED).
@@ -453,6 +455,7 @@
         const base = MODULES[module]?.src || module + '.html';
         const usp = new URLSearchParams();
         Object.entries(params || {}).forEach(([k, v]) => {
+            if (_TRANSIENT_PARAMS.has(k)) return;
             if (v != null && v !== '') usp.set(k, String(v));
         });
         usp.set('v', '2.0');
@@ -465,7 +468,7 @@
         const base = MODULES[module]?.src || module + '.html';
         const usp = new URLSearchParams();
         Object.entries(params || {}).forEach(([k, v]) => {
-            if (k === 'v') return;
+            if (k === 'v' || _TRANSIENT_PARAMS.has(k)) return;
             if (v != null && v !== '') usp.set(k, String(v));
         });
         usp.sort();
@@ -595,6 +598,21 @@
         }
         _navReverting = false;
 
+        // Deep-link panelu wersji cennika przy brudnej ofercie: confirm przed otwarciem.
+        if (
+            !_navForceOnce &&
+            currentModule !== null &&
+            module === currentModule &&
+            params.panel &&
+            _isDirtyNow()
+        ) {
+            const targetHash = window.location.hash;
+            _navReverting = true;
+            window.location.hash = _lastCleanHash || '#/' + currentModule;
+            await _confirmLeaveModule(targetHash);
+            return;
+        }
+
         // P1.2: ten sam moduł, inne ?edit/?order — oferta B nad brudną edycją A.
         // Reload wyrzuciłby widok A bez słowa (gdy A czyste — poprawnie, gdy brudne — guard).
         // Sam ?tab= nie przeładowuje (sekcja w żywym iframe) — poza guardem.
@@ -700,6 +718,44 @@
 
         // Iframe już gotowy (await wyżej) — nawigacja sekcji synchronicznie
         if (tabToShow) showSection(tabToShow);
+
+        if (params.panel === 'versions') {
+            const panelType =
+                module === 'rury' ? 'rury' : params.pvtype === 'preco' ? 'preco' : 'studnie';
+            const asVersionId = (value) =>
+                typeof value === 'string' && /^[A-Za-z0-9_-]{1,64}$/.test(value) ? value : '';
+            const versionId = asVersionId(params.version);
+            const againstId = asVersionId(params.against);
+            try {
+                const iframeWin = iframe.contentWindow;
+                let opened;
+                if (module === 'rury' && typeof iframeWin.openRuryVersionsPanel === 'function') {
+                    opened = iframeWin.openRuryVersionsPanel();
+                } else if (
+                    module === 'studnie' &&
+                    typeof iframeWin.openStudnieVersionsPanel === 'function'
+                ) {
+                    opened = iframeWin.openStudnieVersionsPanel(panelType);
+                }
+                const openPreview = () => {
+                    try {
+                        const pv = iframeWin.pricelistVersions;
+                        if (pv && typeof pv.openFromDeepLink === 'function') {
+                            pv.openFromDeepLink({
+                                type: panelType,
+                                versionId,
+                                againstId
+                            });
+                        }
+                    } catch (_e) {
+                        /* panel otwarty, preview opcjonalny */
+                    }
+                };
+                if (versionId) Promise.resolve(opened).then(openPreview, openPreview);
+            } catch (_e) {
+                logger.warn('router', '[SpaRouter] Nie udało się otworzyć panelu wersji cennika');
+            }
+        }
 
         finishViewTransition(transition);
         document.getElementById('spa-main')?.focus();

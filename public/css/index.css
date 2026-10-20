@@ -483,6 +483,20 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
     box-shadow: var(--shadow-sm);
 }
 
+a.admin-stat-card {
+    color: inherit;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.admin-stat-meta {
+    font-size: var(--fs-xs);
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 .admin-stat-icon {
     font-size: var(--fs-3xl);
     width: 34px;

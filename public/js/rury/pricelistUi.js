@@ -588,7 +588,7 @@ function openRuryVersionsPanel() {
         showToast('Moduł wersji cennika niedostępny', 'error');
         return;
     }
-    window.pricelistVersions.openVersionsPanel(
+    return window.pricelistVersions.openVersionsPanel(
         'rury',
         function () {
             return typeof products !== 'undefined' ? products : [];

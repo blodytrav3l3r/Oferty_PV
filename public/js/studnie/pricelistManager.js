@@ -308,7 +308,7 @@ function openStudnieVersionsPanel(initialType) {
         return;
     }
     var type = initialType === 'preco' ? 'preco' : 'studnie';
-    window.pricelistVersions.openVersionsPanel(type, {
+    return window.pricelistVersions.openVersionsPanel(type, {
         studnie: function () {
             return typeof studnieProducts !== 'undefined' ? studnieProducts : [];
         },

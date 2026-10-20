@@ -286,6 +286,53 @@ function showLoggedIn(user) {
                 window.aiDashboardRender('ai-dashboard-container');
             }, 150);
         }
+        // Kafelki cenników: jedno GET /summary, fail-soft (bez toastu).
+        (async function loadPricelistTiles() {
+            try {
+                const res = await fetch('/api/pricelist-versions/summary', {
+                    credentials: 'same-origin'
+                });
+                if (!res.ok) return;
+                const data = await res.json();
+                const types = data.types || {};
+                const setText = (id, text) => {
+                    const el = document.getElementById(id);
+                    if (el) el.textContent = text;
+                };
+                const fmtDate = (iso) => {
+                    try {
+                        return new Date(iso).toLocaleDateString('pl-PL');
+                    } catch (_e) {
+                        return '—';
+                    }
+                };
+                ['rury', 'studnie', 'preco'].forEach((type) => {
+                    const entry = types[type] || {};
+                    const active = entry.active;
+                    const next = entry.nextScheduled;
+                    setText(
+                        'pv-tile-' + type + '-version',
+                        active && active.version ? active.version : '—'
+                    );
+                    setText(
+                        'pv-tile-' + type + '-date',
+                        active && active.effectiveFrom
+                            ? 'od ' + fmtDate(active.effectiveFrom)
+                            : 'brak aktywnej'
+                    );
+                    setText(
+                        'pv-tile-' + type + '-next',
+                        next && next.version
+                            ? 'Zaplanowana: ' +
+                                  next.version +
+                                  (next.effectiveFrom ? ' · ' + fmtDate(next.effectiveFrom) : '')
+                            : 'Brak zaplanowanej'
+                    );
+                });
+            } catch (_e) {
+                /* fail-soft: kafelki zostają z placeholderem */
+            }
+        })();
     } else {
         document.getElementById('admin-panel').classList.add('hidden');
     }
