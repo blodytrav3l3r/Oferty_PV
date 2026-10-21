@@ -374,29 +374,59 @@ Wymaga autoryzacji (bez wymogu administratora).
 
 Wymaga autoryzacji (administrator, oprócz etykiet).
 
-| Metoda | Ścieżka                                   | Auth  | Opis                                                                                                                  |
-| ------ | ----------------------------------------- | ----- | --------------------------------------------------------------------------------------------------------------------- |
-| GET    | `/api/pricelist-versions`                 | admin | Lista wersji                                                                                                          |
-| GET    | `/api/pricelist-versions/labels`          | auth  | Etykiety wersji                                                                                                       |
-| GET    | `/api/pricelist-versions/summary`         | admin | Aktywna + najbliższa zaplanowana wersja per typ (`rury`, `studnie`, `preco`)                                          |
-| GET    | `/api/pricelist-versions/:id/preview`     | admin | Podgląd zawartości wersji (`max 5000` wierszy/arkusz, `truncated`; `413 VERSION_TOO_LARGE` >20 000)                   |
-| POST   | `/api/pricelist-versions/:type/drafts`    | admin | Nowy szkic wersji (`201` przy utworzeniu)                                                                             |
-| PUT    | `/api/pricelist-versions/:id`             | admin | Edycja wersji                                                                                                         |
-| DELETE | `/api/pricelist-versions/:id`             | admin | Usunięcie wersji (PRECO: `409 USED_BY_STUDNIE`, gdy wskazuje ją wersja studni; ACTIVE/BACKDATE → `409 NOT_DELETABLE`) |
-| POST   | `/api/pricelist-versions/:id/publish`     | admin | Publikacja roboczej (DRAFT → SCHEDULED / BACKDATE_REQUESTED)                                                          |
-| POST   | `/api/pricelist-versions/:id/activate`    | admin | Aktywacja wersji                                                                                                      |
-| POST   | `/api/pricelist-versions/:id/backdate`    | admin | Aktywacja wsteczna                                                                                                    |
-| POST   | `/api/pricelist-versions/:id/clone-draft` | admin | Klonowanie szkicu                                                                                                     |
-| POST   | `/api/pricelist-versions/activate-due`    | admin | Aktywacja zaplanowanych                                                                                               |
-| GET    | `/api/pricelist-versions/:id/diff`        | admin | Różnice wersji                                                                                                        |
-| GET    | `/api/pricelist-versions/:id/export`      | admin | Eksport zamrożonej wersji                                                                                             |
+| Metoda | Ścieżka                                   | Auth  | Opis                                                                                                                                                    |
+| ------ | ----------------------------------------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| GET    | `/api/pricelist-versions`                 | admin | Lista wersji                                                                                                                                            |
+| GET    | `/api/pricelist-versions/labels`          | auth  | Etykiety wersji                                                                                                                                         |
+| GET    | `/api/pricelist-versions/summary`         | admin | Aktywna + najbliższa zaplanowana wersja per typ (`rury`, `studnie`, `preco`)                                                                            |
+| GET    | `/api/pricelist-versions/:id/preview`     | admin | Podgląd zawartości wersji (`max 5000` wierszy/arkusz, `truncated`; `413 VERSION_TOO_LARGE` >20 000)                                                     |
+| POST   | `/api/pricelist-versions/:type/drafts`    | admin | Nowy szkic wersji (`201` przy utworzeniu)                                                                                                               |
+| PUT    | `/api/pricelist-versions/:id`             | admin | Edycja wersji                                                                                                                                           |
+| DELETE | `/api/pricelist-versions/:id`             | admin | Usunięcie wersji (PRECO: `409 USED_BY_STUDNIE`, gdy wskazuje ją wersja studni; obowiązująca/historyczna → `409 NOT_DELETABLE`, używana → `409 USED_BY`) |
+| POST   | `/api/pricelist-versions/:id/approve`     | admin | **Kanoniczna publikacja**: DRAFT → APPROVED (stan wyliczany z `effectiveFrom`)                                                                          |
+| POST   | `/api/pricelist-versions/:id/publish`     | admin | ⚠️ Deprecated alias `approve` (`Deprecation: true`, `Sunset: Wed, 31 Mar 2027 23:59:59 GMT`)                                                            |
+| POST   | `/api/pricelist-versions/:id/activate`    | admin | ⚠️ Deprecated alias `approve` (te same nagłówki)                                                                                                        |
+| POST   | `/api/pricelist-versions/:id/backdate`    | admin | ⚠️ Deprecated alias `approve` z wymaganą notą (te same nagłówki)                                                                                        |
+| POST   | `/api/pricelist-versions/:id/clone-draft` | admin | Klonowanie szkicu                                                                                                                                       |
+| POST   | `/api/pricelist-versions/activate-due`    | admin | `410 Gone` (`code: GONE`) — automatyczna aktywacja usunięta                                                                                             |
+| GET    | `/api/pricelist-versions/:id/checks`      | admin | Kontrola przed publikacją (read-only, doradcza)                                                                                                         |
+| GET    | `/api/pricelist-versions/:id/diff`        | admin | Różnice wersji                                                                                                                                          |
+| GET    | `/api/pricelist-versions/:id/export`      | admin | Eksport zamrożonej wersji                                                                                                                               |
 
-DELETE wersji PRECO (poza ACTIVE/BACKDATE, które blokuje wcześniej
+DELETE wersji PRECO (poza wersjami obowiązującą/historyczną, które blokuje wcześniej
 `409 NOT_DELETABLE`) jest blokowane, gdy dowolna wersja studni (dowolny status)
 wybiera tę PRECO resolverem eksportu: `409 USED_BY_STUDNIE` z liczbą i max 3
 labelkami. Referencje są re-checkowane w transakcji pod lockami `preco → studnie`
 (stała kolejność, bez cyklu z tworzeniem szkicu studni). Ograniczenie: operacja
 zmieniająca referencję bez locka `studnie` nie jest objęta gwarancją.
+
+### Publikacja wersji — `POST /api/pricelist-versions/:id/approve`
+
+Kanoniczny endpoint publikacji. Zapisane statusy to tylko `DRAFT` i `APPROVED`; stany
+`SCHEDULED` / `ACTIVE` / `ARCHIVED` są **wyliczane** z `effectiveFrom` (UTC) i nigdy nie są zapisywane.
+
+| Pole body         | Typ   | Opis                                                                                           |
+| ----------------- | ----- | ---------------------------------------------------------------------------------------------- |
+| `effectiveFrom`   | ISO   | Data wejścia w życie (domyślnie data z wersji)                                                 |
+| `note`            | tekst | Notatka; **min. 10 znaków wymagane przy `effectiveFrom` z przeszłości** (`400 NOTE_TOO_SHORT`) |
+| `checksCheckedAt` | ISO   | Znacznik czasu kontroli z `GET /:id/checks` → odpowiedź może mieć `checksStale: true`          |
+
+Odpowiedź: `{ version, checksStale }`. `checksStale: true` to **ostrzeżenie** (HTTP 200, nie błąd) —
+kontrola była wykonana przed ostatnią edycją wersji; publikacja i tak waliduje warunki krytyczne
+w transakcji.
+
+Błędy: `409 APPROVE_NOT_DRAFT` (zatwierdzać można tylko szkic), `409 EFFECTIVE_COLLISION`
+(dwie zatwierdzone wersje tej samej osi o tej samej dacie), `400 NOTE_TOO_SHORT`,
+`422 INVALID_DATE` / `INVALID_BODY`, `503 LOCK_BUSY`.
+
+Aliasy `publish`, `activate` i `backdate` są **deprecated**: zwracają nagłówki
+`Deprecation: true` i `Sunset: Wed, 31 Mar 2027 23:59:59 GMT` i wygasają z dniem wskazanym
+w nagłówku. `POST /api/pricelist-versions/activate-due` (ręczny trigger crona) zwraca stale
+`410 Gone` (`code: GONE`) — automatycznej aktywacji nie ma, bo stan wynika z daty.
+
+`GET /api/pricelist-versions/:id/checks` jest **read-only i doradcze** (admin): zwraca
+`usage`, `collision`, `liveDiff`, `comparisonToCurrentApproved` oraz `baseVersion.status`
+(zawsze `UNVERIFIABLE` — w schemacie nie ma zapisanego id wersji bazowej).
 
 ## Domyślne cenniki (`/api/price-overrides`)
 
@@ -426,7 +456,7 @@ przyciski eksportują `live`. Diff wersji (`GET /:id/diff`) zwraca też
 `changes` (top zmian cen: sekcja, pozycja, przed/po, Δ%) i flagę `truncated`.
 
 Dla studni eksport wersji (`GET /:id/export`) i `source=active` dokleja PRECO
-obowiązującą w dacie wersji studni: tylko `ACTIVE`/`BACKDATE`/`ARCHIVED` z
+obowiązującą w dacie wersji studni: tylko zatwierdzone (`APPROVED`) z
 `effectiveFrom <=` (fallback `seq <=` wyłącznie dla wersji studni bez
 `effectiveFrom`, legacy). Brak kwalifikującej się PRECO nie jest błędem: plik
 zawiera same studnie, a `GET /:id/export` ustawia wtedy nagłówek
