@@ -623,6 +623,13 @@
             return;
         }
 
+        // Moduł „Cenniki" (panel sterowania cennikami) — tylko dla administratora.
+        // BE wymaga requireAdmin na /api/pricelist-versions/*, więc FE nie udaje roli.
+        if (module === 'cenniki' && window.currentUser && window.currentUser.role !== 'admin') {
+            window.location.hash = '#/rury';
+            return;
+        }
+
         // Guard: zmiana modułu przy niezapisanych zmianach → popup aplikacji (Z-30 SPA)
         if (_navForceOnce) {
             _navForceOnce = false; // nawigacja potwierdzona — przepuść
@@ -835,6 +842,14 @@
             }
 
             window.currentUser = authData.user;
+
+            // Kafelek „Cenniki" tylko dla admina (guard roli w navigate()).
+            const isAdminUser = authData.user && authData.user.role === 'admin';
+            const cennikiTile = document.getElementById('spa-app-cenniki');
+            if (cennikiTile && !isAdminUser) cennikiTile.classList.add('hidden');
+            if (!isAdminUser && (window.location.hash || '').indexOf('#/cenniki') === 0) {
+                window.location.hash = '#/rury';
+            }
 
             // Pobierz datę ostatniej zmiany domyślnych cenników
             if (typeof refreshDefaultsTimestamp === 'function') {

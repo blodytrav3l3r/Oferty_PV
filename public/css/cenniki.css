@@ -84,6 +84,113 @@
     margin-top: auto;
 }
 
+/* ── Kafelki panelu cenników (tokeny S.O.K.: --tile-gap-*, --bg-*, --border) ──
+   Hierarchia: oś → stan → sekcja → pozycja. Kafelek = jednostka informacji. */
+.cenniki-tiles {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: var(--tile-gap-md);
+}
+
+.cenniki-tiles--axes {
+    grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+}
+
+.cenniki-tiles--states {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: var(--tile-gap-sm);
+}
+
+.cenniki-tile {
+    display: flex;
+    flex-direction: column;
+    gap: var(--tile-gap-2xs);
+    padding: var(--tile-gap-sm-plus) var(--tile-gap-xs-plus);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--bg-secondary);
+    min-width: 0;
+}
+
+.cenniki-tile--axis {
+    border-color: var(--border-strong);
+}
+
+.cenniki-tile--state {
+    border-left: 3px solid var(--slate-500);
+}
+
+.cenniki-tile--active {
+    border-left-color: var(--success);
+}
+
+.cenniki-tile--scheduled {
+    border-left-color: var(--accent2);
+}
+
+.cenniki-tile--draft {
+    border-left-color: var(--slate-500);
+}
+
+.cenniki-tile--archived {
+    border-left-color: var(--border-strong);
+}
+
+.cenniki-tile-title {
+    font-weight: 650;
+    font-size: 0.95rem;
+}
+
+.cenniki-tile-rows {
+    display: grid;
+    gap: 2px;
+}
+
+.cenniki-tile-row {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--tile-gap-xs);
+    font-size: 0.82rem;
+}
+
+.cenniki-tile-row > span:first-child {
+    color: var(--text-muted);
+}
+
+.cenniki-tile-row > b {
+    font-variant-numeric: tabular-nums;
+}
+
+.cenniki-tile-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--tile-gap-2xs);
+    margin-top: var(--tile-gap-2xs);
+}
+
+.cenniki-banner {
+    display: flex;
+    gap: var(--tile-gap-xs);
+    align-items: flex-start;
+    padding: var(--tile-gap-sm) var(--tile-gap-sm-plus);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--accent-border-medium);
+    background: rgba(var(--accent-rgb), 0.08);
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+}
+
+.cenniki-banner strong {
+    color: var(--text-primary);
+}
+
+@media (max-width: 640px) {
+    .cenniki-tiles--axes,
+    .cenniki-tiles--states {
+        grid-template-columns: 1fr;
+    }
+}
+
 .cenniki-toolbar {
     display: flex;
     flex-wrap: wrap;

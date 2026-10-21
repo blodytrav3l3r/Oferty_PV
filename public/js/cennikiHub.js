@@ -114,41 +114,60 @@ function renderOverview() {
             const active = data.active;
             const next = data.nextScheduled;
             const collision = Number(data.collisionCount || 0);
+            const draftCount = Number(data.draftCount || 0);
+            const approvedCount = Number(data.approvedCount || 0);
+            const stateTile = (modifier, title, badge, rows) => `
+                <div class="cenniki-tile cenniki-tile--state ${modifier}">
+                    <div class="cenniki-tile-title">${esc(title)}</div>
+                    ${badge}
+                    <div class="cenniki-tile-rows">${rows}</div>
+                </div>`;
+            const row = (label, value) =>
+                `<div class="cenniki-tile-row"><span>${esc(label)}</span><b>${esc(value)}</b></div>`;
+            const states = [
+                stateTile(
+                    'cenniki-tile--active',
+                    'Obowiązuje',
+                    active
+                        ? `<span class="badge badge-ok">${esc(active.version)}</span>`
+                        : '<span class="badge badge-muted">brak</span>',
+                    active ? row('od', formatDate(active.effectiveFrom)) : ''
+                ),
+                stateTile(
+                    'cenniki-tile--scheduled',
+                    'Do wdrożenia',
+                    next
+                        ? `<span class="badge badge-info">${esc(next.version)}</span>`
+                        : '<span class="badge badge-muted">—</span>',
+                    next ? row('od', formatDate(next.effectiveFrom)) : ''
+                ),
+                stateTile(
+                    'cenniki-tile--draft',
+                    'W przygotowaniu',
+                    `<span class="badge badge-muted">${draftCount} szkic${draftCount === 1 ? '' : 'e'}</span>`,
+                    ''
+                ),
+                stateTile(
+                    'cenniki-tile--archived',
+                    'Historyczne',
+                    `<span class="badge badge-muted">${approvedCount} zatwierdzon${approvedCount === 1 ? 'a' : 'ych'}</span>`,
+                    ''
+                )
+            ].join('');
             return `
-                <article class="cenniki-card">
-                    <h2>${esc(TYPE_LABELS[type])}</h2>
-                    <dl>
-                        <div>
-                            <dt>Aktywna</dt>
-                            <dd>${active ? esc(active.version) : 'Brak'}</dd>
-                        </div>
-                        <div>
-                            <dt>Od</dt>
-                            <dd>${active ? formatDate(active.effectiveFrom) : '—'}</dd>
-                        </div>
-                        <div>
-                            <dt>Do wdrożenia</dt>
-                            <dd>${next ? esc(next.version) : 'Brak'}</dd>
-                        </div>
-                        <div>
-                            <dt>Robocze</dt>
-                            <dd>${Number(data.draftCount || 0)}</dd>
-                        </div>
-                        <div>
-                            <dt>Opublikowane</dt>
-                            <dd>${Number(data.approvedCount || 0)}</dd>
-                        </div>
-                        <div>
-                            <dt>Kolizje dat</dt>
-                            <dd>${collision}</dd>
-                        </div>
-                    </dl>
+                <section class="cenniki-tile cenniki-tile--axis" aria-label="Oś cennika ${esc(TYPE_LABELS[type])}">
+                    <div class="cenniki-tile-title">${esc(TYPE_LABELS[type])}</div>
+                    <div class="cenniki-tile-rows">
+                        ${row('Kolizje dat', String(collision))}
+                        ${row('Opublikowane', String(approvedCount))}
+                    </div>
                     ${
                         collision > 0
                             ? `<p class="cenniki-warning">${collision} dat z więcej niż jedną wersją — sprawdź historię.</p>`
                             : ''
                     }
-                    <div class="cenniki-card-actions">
+                    <div class="cenniki-tiles cenniki-tiles--states">${states}</div>
+                    <div class="cenniki-tile-actions">
                         <button class="btn btn-sm btn-secondary" data-cenniki-view-link="historia" data-cenniki-type="${escAttr(type)}">
                             Historia
                         </button>
@@ -159,7 +178,7 @@ function renderOverview() {
                             Edytor
                         </a>
                     </div>
-                </article>`;
+                </section>`;
         })
         .join('');
 }

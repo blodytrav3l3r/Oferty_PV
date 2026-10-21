@@ -231,3 +231,48 @@ describe('S3: hub cenników — deep-link do historii', () => {
         expect(hub).toContain('cenniki-note');
     });
 });
+
+describe('M2: panel cenników — admin-only + kafelki', () => {
+    const hub = read('public/js/cennikiHub.js');
+    const html = read('public/cenniki.html');
+    const css = read('public/css/cenniki.css');
+    const router = read('public/js/spa/router.js');
+    const appHtml = read('public/app.html');
+
+    it('router odcina moduł cenniki dla nie-admina (BE i tak wymaga admina)', () => {
+        expect(router).toContain("module === 'cenniki'");
+        expect(router).toContain("window.currentUser.role !== 'admin'");
+        expect(router).toContain("window.location.hash = '#/rury'");
+    });
+
+    it('kafelek nav „Cenniki" ukryty dla nie-admina', () => {
+        expect(appHtml).toContain('id="spa-app-cenniki"');
+        expect(router).toContain('spa-app-cenniki');
+        expect(router).toContain("cennikiTile.classList.add('hidden')");
+    });
+
+    it('przegląd zbudowany z kafelków: oś → 4 kafelki stanów', () => {
+        expect(html).toContain('cenniki-tiles--axes');
+        expect(hub).toContain('cenniki-tile--axis');
+        expect(hub).toContain('cenniki-tile--active');
+        expect(hub).toContain('cenniki-tile--scheduled');
+        expect(hub).toContain('cenniki-tile--draft');
+        expect(hub).toContain('cenniki-tile--archived');
+        expect(css).toContain('.cenniki-tiles {');
+        expect(css).toContain('.cenniki-tile {');
+    });
+
+    it('komunikat: bufor (szkic) nie zmienia ofert', () => {
+        expect(html).toContain('cenniki-banner');
+        expect(html).toContain('Bufor (szkic) nie zmienia ofert');
+    });
+
+    it('nowe klasy CSS na tokenach S.O.K. (zero własnych hexów)', () => {
+        const start = css.indexOf('.cenniki-tiles {');
+        const end = css.indexOf('.cenniki-toolbar {');
+        expect(start).toBeGreaterThan(-1);
+        const block = css.slice(start, end);
+        expect(block).not.toMatch(/#[0-9a-fA-F]{3,8}/);
+        expect(block).toContain('var(--tile-gap-md)');
+    });
+});

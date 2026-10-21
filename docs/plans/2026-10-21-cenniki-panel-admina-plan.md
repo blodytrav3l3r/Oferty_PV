@@ -317,3 +317,24 @@ Rollback: wszystkie etapy → revert commitów. Migracja S2a jest już wdrożona
 - Bramki zielone: `npm run version:check`, `npm run validate` (w tym `test:quick`), `npm run format`,
   `npm run encoding:check`; testy `test:axe` i `test:e2e-pricelist-preview:spawn` PASS.
 - Migracja statusów (S2a) potwierdzona wdrożona 2026-10-21; M5 = weryfikacja widocznego efektu w UI.
+
+## 11. Realizacja (log)
+
+| Data       | Etap | Zakres                                                                                            | Dowód                                                                                                                                | Commit    |
+| ---------- | ---- | ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | --------- |
+| 2026-10-21 | M0   | Instrukcja admina + `docs/API.md` na model 2 statusów, 4 etykiety, `approve`, transport           | `npm run version:check` EXIT 0, `encoding:check` EXIT 0                                                                              | `679d590` |
+| 2026-10-21 | M1   | FE: `publish`/`backdate`/`activate` → `approve` + checks + `checksStale`, martwe statusy/usunięte | `pricelistApproveFlow.test.ts` 5 PASS; `typecheck:frontend` 0; `lint:frontend` 0; `test:quick` 5100 PASS (8 flaky DB → in-band PASS) | `c7d94a5` |
+| 2026-10-21 | M2   | Admin-only (guard routera + kafelek nav) + Przegląd w kafelkach (oś → 4 stany) + banner           | runtime: `/summary` 200 (rury v3 / studnie v4 / preco v1, `state=ACTIVE`), anonim 401; `pricelistAdminTiles.test.ts` 17 PASS         | (M2)      |
+
+Uwagi:
+
+- Etykiety stanów ujednolicone w 3 miejscach: panel wersji, hub, kafelki pulpitu —
+  **Obowiązuje / Do wdrożenia / W przygotowaniu / Historyczny**. Statusy legacy (`BACKDATE`,
+  `BACKDATE_REQUESTED`) zostają w kodzie jako mapa `LEGACY_STATUS_LABELS` (bazy przed migracją),
+  ale **nie występują** w legendzie ani w filtrze stanów.
+- `test:quick` pod obciążeniem pokazuje flaky DB (transfer/fts5/offers/orders): te same zestawy
+  przechodzą in-band → problem środowiska (SQLite busy timeout), nie zmiany FE.
+- M5 (weryfikacja runtime) wykonany częściowo: BE potwierdzone (`state=ACTIVE`, 1 aktywna/typ).
+  Brak testu `approve` na żywej bazie (tworzyłby realne wersje) → wymaga osobnego GO.
+- Do zrobienia w M3/M4: warstwa 2 (podgląd kafelkowy sekcji/pozycji), pasek stanu w edytorach,
+  sekcja Transport (info) i osobna oś PRECO w panelu.
