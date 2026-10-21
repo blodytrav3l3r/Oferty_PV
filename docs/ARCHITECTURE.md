@@ -502,7 +502,7 @@ Oferty_PV/
 │   └── seed_preco.json              # Seed cenników Preco
 │
 ├── scripts/                         # Skrypty narzędziowe (51 plików)
-│   ├── backup.ts                    # Backup bazy (VACUUM INTO, max 30 kopii)
+│   ├── backup.ts                    # Backup bazy (VACUUM INTO, max 7 kopii)
 │   ├── restore-db.js                # Restore z walidacją (header + integrity_check + WAL cleanup)
 │   ├── check-db.js                  # Weryfikacja schematu przy starcie (ensure-db.bat)
 │   ├── check-version.mjs            # Spójność wersji (VERSION ↔ package.json ↔ CHANGELOG ↔ *.bat ↔ HTML ?v= ↔ docs)

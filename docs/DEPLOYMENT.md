@@ -363,7 +363,7 @@ npm run backup:install-cron
 
 ### Drill restore (miesięcznie)
 
-Retencja: max 30 kopii (`scripts/backup.ts`). Raz w miesiącu na stagingu:
+Retencja: max 7 kopii (`scripts/backup.ts`). Raz w miesiącu na stagingu:
 
 ```bash
 npm run backup

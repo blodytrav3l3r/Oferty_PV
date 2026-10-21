@@ -18,7 +18,11 @@ export function getBackupDir(): string {
 
 const backupDir = getBackupDir();
 
-const MAX_BACKUPS = 30;
+/**
+ * Limit kopii w `data/backups`. Kopia ~1.4 GB (baza rośnie), więc 30 kopii
+ * zajmowało ~37 GB. 7 kopii ~= 10 GB i tydzień historii.
+ */
+export const MAX_BACKUPS = 7;
 
 /**
  * P0.6: czysta selekcja retencji — liczy WYŁĄCZNIE pliki .sqlite

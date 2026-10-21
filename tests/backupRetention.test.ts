@@ -1,5 +1,10 @@
 import * as path from 'path';
-import { selectBackupsForRetention, findOrphanSidecars, getBackupDir } from '../scripts/backup';
+import {
+    selectBackupsForRetention,
+    findOrphanSidecars,
+    getBackupDir,
+    MAX_BACKUPS
+} from '../scripts/backup';
 import { resolveDataDir, resolveProjectRoot } from '../src/utils/paths';
 
 function files(nSqlite: number, nSha: number) {
@@ -14,19 +19,31 @@ function files(nSqlite: number, nSha: number) {
 }
 
 describe('P0.6 retencja backupu', () => {
-    it('liczy wyłącznie .sqlite: 30 sqlite + 30 sha przy limicie 30 -> usuwa 0', () => {
-        expect(selectBackupsForRetention(files(30, 30), 30)).toEqual([]);
+    it('limit retencji to 7 kopii (dysk: 30 kopii ~= 37 GB)', () => {
+        expect(MAX_BACKUPS).toBe(7);
     });
 
-    it('32 sqlite + 32 sha przy limicie 30 -> usuwa dokładnie 2 najstarsze .sqlite', () => {
-        expect(selectBackupsForRetention(files(32, 32), 30)).toEqual([
+    it('domyślny limit: 10 sqlite -> usuwa 3 najstarsze', () => {
+        expect(selectBackupsForRetention(files(10, 10))).toEqual([
+            'backup_2026-01-01_0.sqlite',
+            'backup_2026-01-01_1.sqlite',
+            'backup_2026-01-01_2.sqlite'
+        ]);
+    });
+
+    it('liczy wyłącznie .sqlite: 7 sqlite + 7 sha przy limicie 7 -> usuwa 0', () => {
+        expect(selectBackupsForRetention(files(7, 7), 7)).toEqual([]);
+    });
+
+    it('9 sqlite + 9 sha przy limicie 7 -> usuwa dokładnie 2 najstarsze .sqlite', () => {
+        expect(selectBackupsForRetention(files(9, 9), 7)).toEqual([
             'backup_2026-01-01_0.sqlite',
             'backup_2026-01-01_1.sqlite'
         ]);
     });
 
     it('same sidecary bez limitu przekroczenia -> brak usuwania sqlite', () => {
-        expect(selectBackupsForRetention(files(10, 10), 30)).toEqual([]);
+        expect(selectBackupsForRetention(files(5, 5), 7)).toEqual([]);
     });
 
     it('wykrywa sieroce sidecary (sha bez pary sqlite)', () => {

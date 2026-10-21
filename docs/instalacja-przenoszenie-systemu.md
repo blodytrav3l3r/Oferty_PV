@@ -309,7 +309,7 @@ Docker czyta `.env` z projektu. Jeśli chcesz zmienić hasło:
 npm run backup
 
 # Backup trafia do: data/backups/backup_YYYY-MM-DD_TIMESTAMP.sqlite
-# System zachowuje max 30 kopii, najstarsze usuwa automatycznie
+# System zachowuje max 7 kopii, najstarsze usuwa automatycznie
 ```
 
 ### Przywracanie z backupu:
@@ -339,7 +339,7 @@ data/
 ├── backups/
 │   ├── backup_2026-07-20_123456.sqlite   ← Backup z 20 lipca
 │   ├── backup_2026-07-19_123456.sqlite   ← Backup z 19 lipca
-│   └── ...                                ← Max 30 kopii
+│   └── ...                                ← max 7 kopii
 └── backup/                               ← Stary katalog (starsza metoda)
 ```
 
