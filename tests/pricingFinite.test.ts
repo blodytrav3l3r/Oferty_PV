@@ -1,3 +1,4 @@
+process.env.PRICELIST_WRITE_TARGET = 'live';
 /**
  * D-FIX-2: invalid/non-finite numerics never become silent 0 in pricing.
  * Granica mocka: prismaClient (in-memory; asercje braku zapisu) + auth/limitery.

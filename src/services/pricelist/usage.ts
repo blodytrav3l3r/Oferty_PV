@@ -333,12 +333,21 @@ export async function resolveActivePricing(typeInput: unknown): Promise<ActivePr
     const type: PricelistType = requireType(typeInput);
     const active = await resolveActive(type);
     if (!active) return { data: null, fallback: true, versionId: null };
-    const { sections } = await getVersionExport(active.id);
+    return pricingFromVersion(type, active);
+}
+
+/** Wiersze dowolnej wersji w formacie LEGACY (draft do edytora, active do ofert). */
+export async function pricingFromVersion(
+    typeInput: unknown,
+    version: Pick<PricelistVersion, 'id'>
+): Promise<ActivePricing> {
+    const type: PricelistType = requireType(typeInput);
+    const { sections } = await getVersionExport(version.id);
     if (type === 'rury') {
         const rows = [...(sections.rury ?? [])].sort(
             (a, b) => cmpText(a.category, b.category) || cmpText(a.id, b.id)
         );
-        return { data: rows, fallback: false, versionId: active.id };
+        return { data: rows, fallback: false, versionId: version.id };
     }
     if (type === 'studnie') {
         const rows = [...(sections.studnie ?? [])]
@@ -349,12 +358,12 @@ export async function resolveActivePricing(typeInput: unknown): Promise<ActivePr
                     cmpText(a.id, b.id)
             )
             .map(studnieVersionRowToLegacy);
-        return { data: rows, fallback: false, versionId: active.id };
+        return { data: rows, fallback: false, versionId: version.id };
     }
     const entry = buildPrecoEntryFromSections(sections);
     return {
         data: Object.keys(entry).length > 0 ? [entry] : [{}],
         fallback: false,
-        versionId: active.id
+        versionId: version.id
     };
 }

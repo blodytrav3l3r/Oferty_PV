@@ -84,7 +84,8 @@ export {
     getVersionsSummary,
     resolveActive,
     resolveVersionIdSafe,
-    resolveActivePricing
+    resolveActivePricing,
+    pricingFromVersion
 } from './pricelist/usage';
 export type {
     VersionUsage,

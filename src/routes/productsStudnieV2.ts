@@ -20,6 +20,14 @@ import {
     resolveActivePricing
 } from '../services/pricelistVersionService';
 import { getPrecoDefault, getPrecoLive } from '../services/precoPricing';
+import { logAudit } from '../services/auditService';
+import { recordPricelistFallback, recordPricelistLiveWrite } from '../utils/metrics';
+import {
+    findLatestDraft,
+    getEditorPricing,
+    getPricelistWriteTarget,
+    saveRowsToDraft
+} from '../services/pricelist/writeTarget';
 
 const router = express.Router();
 const writeLimiter = PRICELIST_WRITE_LIMITER;
@@ -249,6 +257,13 @@ router.get('/', requireAuth, async (req, res) => {
     try {
         const source = requirePricingSource(req.query.source);
         let fallbackHeader = false;
+        if (!source && getPricelistWriteTarget() === 'draft') {
+            const editor = await getEditorPricing('studnie');
+            if (!editor.fallback) {
+                res.json({ data: editor.data });
+                return;
+            }
+        }
         if (source === 'active') {
             const active = await resolveActivePricing('studnie');
             if (!active.fallback) {
@@ -260,7 +275,10 @@ router.get('/', requireAuth, async (req, res) => {
         const products = await prisma.productsStudnie.findMany({
             orderBy: [{ category: 'asc' }, { componentType: 'asc' }, { id: 'asc' }]
         });
-        if (fallbackHeader) res.setHeader('X-Pricelist-Fallback', 'live');
+        if (fallbackHeader) {
+            recordPricelistFallback('studnie');
+            res.setHeader('X-Pricelist-Fallback', 'live');
+        }
         res.json({ data: products.map(toLegacy) });
     } catch (err: unknown) {
         if (err instanceof PricelistVersionError) {
@@ -286,11 +304,26 @@ router.put(
         try {
             const result = await runWithLock(async () => {
                 const arr: Record<string, unknown>[] = req.body.data;
+                const mapped = arr.map(fromLegacy);
+
+                if (getPricelistWriteTarget() === 'draft') {
+                    const draft = await saveRowsToDraft('studnie', mapped, req.user?.id);
+                    return {
+                        ok: true,
+                        count: arr.length,
+                        target: 'draft',
+                        versionId: draft.id
+                    };
+                }
 
                 await prisma.$transaction(async (tx) => {
                     await tx.productsStudnie.deleteMany();
-                    const mapped = arr.map(fromLegacy);
                     await tx.productsStudnie.createMany({ data: mapped });
+                });
+
+                recordPricelistLiveWrite('studnie');
+                await logAudit('pricelist_live', 'studnie', req.user?.id ?? '', 'LIVE_WRITE', {
+                    count: arr.length
                 });
 
                 return { ok: true, count: arr.length };
@@ -323,6 +356,13 @@ router.patch(
     writeLimiter,
     validateData(productStudniePatchSchema),
     async (req, res) => {
+        if (getPricelistWriteTarget() === 'draft') {
+            res.status(409).json({
+                error: 'LIVE jest tylko do odczytu; edytuj szkic cennika',
+                code: 'LIVE_READ_ONLY'
+            });
+            return;
+        }
         const { id } = req.params;
         const data: Record<string, unknown> = {};
         for (const key of ALLOWED_FIELDS) {
@@ -342,6 +382,14 @@ router.patch(
                     where: { id },
                     data: converted as never
                 });
+                recordPricelistLiveWrite('studnie');
+                await logAudit(
+                    'pricelist_live',
+                    'studnie',
+                    req.user?.id ?? '',
+                    'PATCH_LIVE_WRITE',
+                    { id }
+                );
                 return { ok: true, data: toLegacy(updated) };
             });
             if (!result.acquired) {
@@ -361,10 +409,21 @@ router.patch(
 // DELETE /:id — usuń jeden produkt
 // ──────────────────────────────────────────
 router.delete('/:id', requireAuth, requireAdmin, writeLimiter, async (req, res) => {
+    if (getPricelistWriteTarget() === 'draft') {
+        res.status(409).json({
+            error: 'LIVE jest tylko do odczytu; edytuj szkic cennika',
+            code: 'LIVE_READ_ONLY'
+        });
+        return;
+    }
     try {
         const result = await runWithLock(async () => {
             const { id } = req.params;
             await prisma.productsStudnie.delete({ where: { id } });
+            recordPricelistLiveWrite('studnie');
+            await logAudit('pricelist_live', 'studnie', req.user?.id ?? '', 'DELETE_LIVE_WRITE', {
+                id
+            });
             return { ok: true };
         });
         if (!result.acquired) {
@@ -384,7 +443,32 @@ router.delete('/:id', requireAuth, requireAdmin, writeLimiter, async (req, res) 
 // wiersze w shape GET (legacy 1/0, dn liczbowe), shape 1:1 z eksportem FE
 router.get('/export.xlsx', requireAuth, async (req, res) => {
     try {
-        const source = requireExportSource(req.query.source);
+        const requested = requireExportSource(req.query.source);
+        // S5 alias: w trybie draft eksport "live" = bieżący szkic (rollback bez zmian FE).
+        const source =
+            requested === 'live' && getPricelistWriteTarget() === 'draft' ? 'draft' : requested;
+        if (source === 'draft') {
+            const draft = await findLatestDraft('studnie');
+            if (!draft) {
+                res.status(409).json({
+                    error: 'Brak szkicu cennika studni',
+                    code: 'NO_DRAFT_VERSION'
+                });
+                return;
+            }
+            const { sheets } = await getVersionExportSheets(draft.id);
+            const xlsx = await buildXlsx(liveSheetsToXlsxSheets(sheets, 'Cennik'));
+            res.setHeader(
+                'Content-Type',
+                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            );
+            res.setHeader(
+                'Content-Disposition',
+                `attachment; filename="Cennik_Studni_${draft.version}_Draft.xlsx"`
+            );
+            res.send(xlsx);
+            return;
+        }
         if (source === 'active') {
             const active = await resolveActive('studnie');
             if (!active) {

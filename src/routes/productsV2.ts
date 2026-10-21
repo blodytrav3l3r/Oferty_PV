@@ -7,6 +7,14 @@ import { pricelistDataSchema, productPatchSchema } from '../validators/offerSche
 import { requireFinitePrice, InvalidPriceError } from '../validators/finiteNumbers';
 import { pricelistLock } from '../middleware/writeLock';
 import prisma from '../prismaClient';
+import { logAudit } from '../services/auditService';
+import { recordPricelistFallback, recordPricelistLiveWrite } from '../utils/metrics';
+import {
+    findLatestDraft,
+    getEditorPricing,
+    getPricelistWriteTarget,
+    saveRowsToDraft
+} from '../services/pricelist/writeTarget';
 import { buildXlsx } from '../utils/minimalXlsx';
 import {
     PricelistVersionError,
@@ -34,6 +42,13 @@ router.get('/', requireAuth, async (req, res) => {
     try {
         const source = requirePricingSource(req.query.source);
         let fallbackHeader = false;
+        if (!source && getPricelistWriteTarget() === 'draft') {
+            const editor = await getEditorPricing('rury');
+            if (!editor.fallback) {
+                res.json({ data: editor.data });
+                return;
+            }
+        }
         if (source === 'active') {
             const active = await resolveActivePricing('rury');
             if (!active.fallback) {
@@ -45,7 +60,10 @@ router.get('/', requireAuth, async (req, res) => {
         const products = await prisma.productsRury.findMany({
             orderBy: [{ category: 'asc' }, { id: 'asc' }]
         });
-        if (fallbackHeader) res.setHeader('X-Pricelist-Fallback', 'live');
+        if (fallbackHeader) {
+            recordPricelistFallback('rury');
+            res.setHeader('X-Pricelist-Fallback', 'live');
+        }
         res.json({ data: products });
     } catch (err: unknown) {
         if (err instanceof PricelistVersionError) {
@@ -82,10 +100,25 @@ router.put(
                     area: item.area != null ? Number(item.area) : null
                 }));
 
+                if (getPricelistWriteTarget() === 'draft') {
+                    const draft = await saveRowsToDraft('rury', mapped, req.user?.id);
+                    return {
+                        ok: true,
+                        count: arr.length,
+                        target: 'draft',
+                        versionId: draft.id
+                    };
+                }
+
                 await prisma.$transaction([
                     prisma.productsRury.deleteMany(),
                     prisma.productsRury.createMany({ data: mapped })
                 ]);
+
+                recordPricelistLiveWrite('rury');
+                await logAudit('pricelist_live', 'rury', req.user?.id ?? '', 'LIVE_WRITE', {
+                    count: arr.length
+                });
 
                 return { ok: true, count: arr.length };
             });
@@ -117,6 +150,13 @@ router.patch(
     writeLimiter,
     validateData(productPatchSchema),
     async (req, res) => {
+        if (getPricelistWriteTarget() === 'draft') {
+            res.status(409).json({
+                error: 'LIVE jest tylko do odczytu; edytuj szkic cennika',
+                code: 'LIVE_READ_ONLY'
+            });
+            return;
+        }
         const { id } = req.params;
         const data: Record<string, unknown> = {};
         for (const key of ALLOWED_FIELDS) {
@@ -132,6 +172,10 @@ router.patch(
         try {
             const result = await runWithLock(async () => {
                 const updated = await prisma.productsRury.update({ where: { id }, data });
+                recordPricelistLiveWrite('rury');
+                await logAudit('pricelist_live', 'rury', req.user?.id ?? '', 'PATCH_LIVE_WRITE', {
+                    id
+                });
                 return { ok: true, data: updated };
             });
             if (!result.acquired) {
@@ -151,10 +195,21 @@ router.patch(
 // DELETE /:id — usuń jeden produkt
 // ──────────────────────────────────────────
 router.delete('/:id', requireAuth, requireAdmin, writeLimiter, async (req, res) => {
+    if (getPricelistWriteTarget() === 'draft') {
+        res.status(409).json({
+            error: 'LIVE jest tylko do odczytu; edytuj szkic cennika',
+            code: 'LIVE_READ_ONLY'
+        });
+        return;
+    }
     try {
         const result = await runWithLock(async () => {
             const { id } = req.params;
             await prisma.productsRury.delete({ where: { id } });
+            recordPricelistLiveWrite('rury');
+            await logAudit('pricelist_live', 'rury', req.user?.id ?? '', 'DELETE_LIVE_WRITE', {
+                id
+            });
             return { ok: true };
         });
         if (!result.acquired) {
@@ -174,7 +229,32 @@ router.delete('/:id', requireAuth, requireAdmin, writeLimiter, async (req, res) 
 // shape 1:1 z eksportem FE (jak GET /:id/export wersji)
 router.get('/export.xlsx', requireAuth, async (req, res) => {
     try {
-        const source = requireExportSource(req.query.source);
+        const requested = requireExportSource(req.query.source);
+        // S5 alias: w trybie draft eksport "live" = bieżący szkic (rollback bez zmian FE).
+        const source =
+            requested === 'live' && getPricelistWriteTarget() === 'draft' ? 'draft' : requested;
+        if (source === 'draft') {
+            const draft = await findLatestDraft('rury');
+            if (!draft) {
+                res.status(409).json({
+                    error: 'Brak szkicu cennika rur',
+                    code: 'NO_DRAFT_VERSION'
+                });
+                return;
+            }
+            const { sheets } = await getVersionExportSheets(draft.id);
+            const xlsx = await buildXlsx(liveSheetsToXlsxSheets(sheets, RURY_LIVE_SHEET));
+            res.setHeader(
+                'Content-Type',
+                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            );
+            res.setHeader(
+                'Content-Disposition',
+                `attachment; filename="Cennik_Rury_${draft.version}_Draft.xlsx"`
+            );
+            res.send(xlsx);
+            return;
+        }
         if (source === 'active') {
             const active = await resolveActive('rury');
             if (!active) {

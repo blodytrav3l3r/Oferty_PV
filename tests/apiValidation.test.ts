@@ -1,3 +1,4 @@
+process.env.PRICELIST_WRITE_TARGET = 'live';
 /**
  * Testy E2E walidacji API (Faza 8)
  * Weryfikacja czy endpointy zwracają 400 dla nieprawidłowych danych

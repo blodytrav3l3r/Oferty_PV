@@ -27,6 +27,11 @@ let busyCount = 0;
 let auditFailures = 0;
 // P2.2: odrzucenia rate-limitera per nazwa (observability brute-force).
 const rateLimitedByName = new Map<string, number>();
+// S5/O3: trwały sygnał użycia LIVE i fallbacków (bramka S6).
+let liveWrites = 0;
+const liveWritesByType = new Map<string, number>();
+let pricelistFallbacks = 0;
+const pricelistFallbacksByType = new Map<string, number>();
 let loopLagMs = 0;
 let loopLagMax = 0;
 let samplerStarted = false;
@@ -112,6 +117,18 @@ export function recordRateLimited(name: string): void {
     rateLimitedByName.set(name, (rateLimitedByName.get(name) ?? 0) + 1);
 }
 
+/** S5/O3: udany zapis do LIVE (per typ cennika). */
+export function recordPricelistLiveWrite(type: string): void {
+    liveWrites++;
+    liveWritesByType.set(type, (liveWritesByType.get(type) ?? 0) + 1);
+}
+
+/** S5/O3: odczyt `?source=active` spadł na LIVE (per typ cennika). */
+export function recordPricelistFallback(type: string): void {
+    pricelistFallbacks++;
+    pricelistFallbacksByType.set(type, (pricelistFallbacksByType.get(type) ?? 0) + 1);
+}
+
 export interface StorageSnapshot {
     dbBytes: number | null;
     walBytes: number | null;
@@ -127,6 +144,12 @@ export interface MetricsSnapshot {
     db: { queries: number; msTotal: number; avgMs: number; busy: number };
     audit: { failures: number };
     ratelimit: { rejected: number; byName: Record<string, number> };
+    pricelist: {
+        liveWrites: number;
+        liveWritesByType: Record<string, number>;
+        fallbacks: number;
+        fallbacksByType: Record<string, number>;
+    };
     storage: StorageSnapshot;
     endpoints: Record<
         string,
@@ -166,6 +189,12 @@ export function getMetricsSnapshot(
         ratelimit: {
             rejected: [...rateLimitedByName.values()].reduce((a, b) => a + b, 0),
             byName: Object.fromEntries(rateLimitedByName)
+        },
+        pricelist: {
+            liveWrites,
+            liveWritesByType: Object.fromEntries(liveWritesByType),
+            fallbacks: pricelistFallbacks,
+            fallbacksByType: Object.fromEntries(pricelistFallbacksByType)
         },
         storage: getStorageSnapshot(),
         endpoints: eps,
@@ -274,6 +303,10 @@ export function resetMetrics(): void {
     busyCount = 0;
     auditFailures = 0;
     rateLimitedByName.clear();
+    liveWrites = 0;
+    liveWritesByType.clear();
+    pricelistFallbacks = 0;
+    pricelistFallbacksByType.clear();
     loopLagMs = 0;
     loopLagMax = 0;
 }

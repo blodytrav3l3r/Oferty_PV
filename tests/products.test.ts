@@ -1,3 +1,4 @@
+process.env.PRICELIST_WRITE_TARGET = 'live';
 import request from 'supertest';
 import express from 'express';
 import productsRouter from '../src/routes/productsV2';

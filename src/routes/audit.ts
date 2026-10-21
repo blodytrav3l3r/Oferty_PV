@@ -23,7 +23,8 @@ const KNOWN_ENTITY_TYPES = [
     'settings',
     'ai_model',
     'ai_transfer',
-    'pricelist_version'
+    'pricelist_version',
+    'pricelist_live'
 ] as const;
 
 function isKnownEntityType(value: unknown): boolean {

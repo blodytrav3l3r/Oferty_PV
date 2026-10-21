@@ -51,11 +51,8 @@ export function getPrecoDefault() {
     );
 }
 
-export async function flattenAndSave(input: Record<string, unknown>, isDefault: boolean) {
-    const konfigTable: any = isDefault ? prisma.precoKonfigDefault : prisma.precoKonfig;
-    const kinetyTable: any = isDefault ? prisma.precoKinetyDefault : prisma.precoKinety;
-    const zakresyTable: any = isDefault ? prisma.precoZakresyDefault : prisma.precoZakresy;
-
+/** Spłaszcza zagnieżdżony PRECO do wierszy wersji (bez zapisu). */
+export function flattenPrecoRows(input: Record<string, unknown>) {
     const konfigRows: { id: string; key: string; value: string }[] = [];
     const kinetyRows: {
         id: string;
@@ -136,14 +133,23 @@ export async function flattenAndSave(input: Record<string, unknown>, isDefault: 
         }
     }
 
+    return { konfig: konfigRows, kinety: kinetyRows, zakresy: zakresyRows };
+}
+
+export async function flattenAndSave(input: Record<string, unknown>, isDefault: boolean) {
+    const konfigTable: any = isDefault ? prisma.precoKonfigDefault : prisma.precoKonfig;
+    const kinetyTable: any = isDefault ? prisma.precoKinetyDefault : prisma.precoKinety;
+    const zakresyTable: any = isDefault ? prisma.precoZakresyDefault : prisma.precoZakresy;
+    const { konfig, kinety, zakresy } = flattenPrecoRows(input);
+
     const ops: any[] = [
         konfigTable.deleteMany(),
         kinetyTable.deleteMany(),
         zakresyTable.deleteMany()
     ];
-    if (konfigRows.length > 0) ops.push(konfigTable.createMany({ data: konfigRows }));
-    if (kinetyRows.length > 0) ops.push(kinetyTable.createMany({ data: kinetyRows }));
-    if (zakresyRows.length > 0) ops.push(zakresyTable.createMany({ data: zakresyRows }));
+    if (konfig.length > 0) ops.push(konfigTable.createMany({ data: konfig }));
+    if (kinety.length > 0) ops.push(kinetyTable.createMany({ data: kinety }));
+    if (zakresy.length > 0) ops.push(zakresyTable.createMany({ data: zakresy }));
 
     await prisma.$transaction(ops);
 }

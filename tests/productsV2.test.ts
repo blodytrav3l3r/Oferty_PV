@@ -22,6 +22,11 @@ jest.mock('../src/utils/logger', () => ({
     logger: { info: jest.fn(), error: jest.fn(), warn: jest.fn(), debug: jest.fn() }
 }));
 
+const logAudit = jest.fn((..._args: unknown[]) => Promise.resolve());
+jest.mock('../src/services/auditService', () => ({
+    logAudit: (...args: unknown[]) => logAudit(...args)
+}));
+
 const prismaMock = {
     productsRury: {
         findMany: jest.fn(),
@@ -30,8 +35,16 @@ const prismaMock = {
         update: jest.fn()
     },
     productsRuryDefault: { findMany: jest.fn() },
+    pricelistVersion: { findFirst: jest.fn() },
     $transaction: jest.fn(async (ops: Promise<unknown>[]) => Promise.all(ops))
 };
+
+const updateDraft = jest.fn();
+const createDraft = jest.fn();
+jest.mock('../src/services/pricelist/lifecycle', () => ({
+    createDraft: (...args: unknown[]) => createDraft(...args),
+    updateDraft: (...args: unknown[]) => updateDraft(...args)
+}));
 
 jest.mock('../src/prismaClient', () => ({
     __esModule: true,
@@ -41,6 +54,9 @@ jest.mock('../src/prismaClient', () => ({
         },
         get productsRuryDefault() {
             return prismaMock.productsRuryDefault;
+        },
+        get pricelistVersion() {
+            return prismaMock.pricelistVersion;
         },
         $transaction: (...args: unknown[]) => (prismaMock.$transaction as any)(...args)
     }
@@ -53,7 +69,10 @@ function app() {
     return a;
 }
 
-beforeEach(() => jest.clearAllMocks());
+beforeEach(() => {
+    jest.clearAllMocks();
+    process.env.PRICELIST_WRITE_TARGET = 'live';
+});
 
 describe('productsV2', () => {
     it('GET / zwraca listę live', async () => {
@@ -91,5 +110,31 @@ describe('productsV2', () => {
         expect(res.status).toBe(200);
         expect(res.body).toEqual({ ok: true, count: 1 });
         expect(prismaMock.$transaction).toHaveBeenCalledTimes(1);
+        expect(logAudit).toHaveBeenCalledWith('pricelist_live', 'rury', 'admin1', 'LIVE_WRITE', {
+            count: 1
+        });
+    });
+
+    it('PRICELIST_WRITE_TARGET=draft -> PUT zapisuje do DRAFT, nie LIVE', async () => {
+        process.env.PRICELIST_WRITE_TARGET = 'draft';
+        prismaMock.pricelistVersion.findFirst.mockResolvedValue({ id: 'd1' });
+        updateDraft.mockResolvedValue({ id: 'd1' });
+        try {
+            const res = await request(app())
+                .put('/')
+                .send({ data: [{ id: 'r1', name: 'Rura', price: 12.5 }] });
+            expect(res.status).toBe(200);
+            expect(res.body).toEqual({
+                ok: true,
+                count: 1,
+                target: 'draft',
+                versionId: 'd1'
+            });
+            expect(updateDraft).toHaveBeenCalled();
+            expect(prismaMock.$transaction).not.toHaveBeenCalled();
+            expect(logAudit).not.toHaveBeenCalled();
+        } finally {
+            process.env.PRICELIST_WRITE_TARGET = 'live';
+        }
     });
 });

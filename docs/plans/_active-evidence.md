@@ -756,3 +756,16 @@ Scope: dopisane na koncu, historia E-001..E-120d nietknieta. Nowe ID E-120f, roz
 - COMMIT: `9640a3c feat(api): cenniki s4 shadow sum, indeksy i budzety` (bez pusha).
 - DEPLOY: backup `backup_2026-10-21_1792579184054.sqlite` (SHA-256 `efd66832…`), `migrate deploy` → `20261021130000_pricelist_version_idx` applied, `migrate status` = up to date, 4/4 indeksy obecne w `sqlite_master`, preflight EXIT 0, serwer `/health` 200.
 - VERIFIED: YES (kod, pomiar, migracja wdrożona).
+
+## Checkpoint E-122 (S5 cenniki: cel zapisu, liczniki O3)
+
+- CLAIM: zapis cennika ma przelacznik `PRICELIST_WRITE_TARGET` (default `draft` = S5), sciezka `draft` zapisuje do najnowszego DRAFT (albo tworzy nowy), a kazdy udany zapis LIVE trafia do `audit_logs` (`entityType=pricelist_live`, `action=LIVE_WRITE`/`PATCH_LIVE_WRITE`/`DELETE_LIVE_WRITE`) i do `/metrics`; fallback `?source=active -> live` ma licznik per typ; w trybie draft endpointy LIVE PATCH/DELETE zwracaja 409 `LIVE_READ_ONLY`.
+- EVIDENCE: `src/services/pricelist/writeTarget.ts`, `src/services/pricelist/usage.ts` (`pricingFromVersion`), `src/services/precoPricing.ts` (`flattenPrecoRows`), `src/routes/productsV2.ts`, `src/routes/productsStudnieV2.ts`, `src/routes/precoPricingV2.ts`, `src/utils/metrics.ts`, `src/routes/audit.ts`, `.env.example`, `tests/pricelistWriteTarget.test.ts`, `tests/productsV2.test.ts`.
+- REPRODUCTION: `npx jest tests/pricelistWriteTarget.test.ts tests/productsV2.test.ts tests/pricingFinite.test.ts tests/pricelistActiveSource.test.ts tests/pricelistExportLive.test.ts --runInBand` -> 71/71 PASS; `npm run test:quick` -> 511/512 suites PASS (1 znany flake `claimIdempotencyHttp`, solo PASS 5/5); `npm run test:e2e-pricelist-preview:spawn` PASS; `npm run test:e2e` 26/27 PASS (1 flake smoke: iframe, solo 3/3 PASS); typecheck/eslint/format:check/version:check/encoding:check bez ERROR.
+- BEFORE: PUT zawsze LIVE, brak audytu LIVE, brak licznikow, brak flagi.
+- AFTER: default `draft`, sciezka draft + odczyt edytora DRAFT -> ACTIVE -> LIVE, audyt LIVE_WRITE/PATCH/DELETE, metryki `pricelist.liveWrites/fallbacks`, `pricelist_live` w allowliscie audytu, `LIVE_READ_ONLY` na PATCH/DELETE rury/studnie/preco; rollback = `PRICELIST_WRITE_TARGET=live`.
+- CHANGE: +1 serwis, +1 test suite, guardy LIVE_READ_ONLY i audyt PATCH/DELETE, pin env `live` w testach legacy; bez zmian schematu.
+- TESTS: j.w.; e2e pricelist PASS; pelny e2e 26/27 (znany flake).
+- DIFF: 12 plikow sledzonych + 2 nowe.
+- COMMIT: brak (zadanie nie mowi commitowac).
+- VERIFIED: YES — kod, testy i e2e zielone; restart/deploy po jawnym GO.

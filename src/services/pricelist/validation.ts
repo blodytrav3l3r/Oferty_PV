@@ -443,15 +443,16 @@ export async function loadVersionItems(
 }
 
 /** Źródło eksportu: tabele LIVE, *Default albo zamrożona ACTIVE. */
-export type PricelistExportSource = 'live' | 'default' | 'active';
+export type PricelistExportSource = 'live' | 'default' | 'active' | 'draft';
 
 /** Walidacja ?source=live|default|active — zły → 422 (jak INVALID_TYPE). */
 export function requireExportSource(value: unknown): PricelistExportSource {
-    if (value === 'live' || value === 'default' || value === 'active') return value;
+    if (value === 'live' || value === 'default' || value === 'active' || value === 'draft')
+        return value;
     throw new PricelistVersionError(
         422,
         'INVALID_SOURCE',
-        `Nieprawidłowe źródło eksportu: ${String(value)} (dozwolone: live, default, active)`
+        `Nieprawidłowe źródło eksportu: ${String(value)} (dozwolone: live, default, active, draft)`
     );
 }
 

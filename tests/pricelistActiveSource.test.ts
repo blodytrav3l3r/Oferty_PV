@@ -1,3 +1,4 @@
+process.env.PRICELIST_WRITE_TARGET = 'live';
 /**
  * Paczka 1: GET cenników z ?source=active czyta ceny z wersji APPROVED
  * przez centralny resolveActivePricing (kształt legacy 1:1 z GET live).
