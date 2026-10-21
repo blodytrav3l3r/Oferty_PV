@@ -1,6 +1,6 @@
 /**
  * F1: draft (seq auto, version nie z inputu), concurrent 2× createDraft,
- * mutacja ACTIVE → 403, ujemna cena → 422, chunking > 25 wierszy.
+ * mutacja APPROVED → 403, ujemna cena → 422, chunking > 25 wierszy.
  */
 
 interface VRow {
@@ -202,7 +202,7 @@ describe('F1 pricelistVersions', () => {
         });
         expect(v1.seq).toBe(1);
         expect(v1.version).toBe('v1-20260901');
-        expect(v1.status).toBe('SCHEDULED');
+        expect(v1.status).toBe('DRAFT');
 
         const v2 = await createDraft('rury', [rura('r1', 110)], {
             effectiveFrom: '2026-10-01T00:00:00.000Z',
@@ -211,12 +211,12 @@ describe('F1 pricelistVersions', () => {
         expect(v2.seq).toBe(2);
         expect(v2.version).toBe('v2-20261001');
 
-        // data w przeszłość względem max → BACKDATE_REQUESTED
+        // data w przeszłości też startuje jako DRAFT (oś czasu przy approve)
         const v3 = await createDraft('rury', [rura('r1', 90)], {
             effectiveFrom: '2026-09-15T00:00:00.000Z'
         });
         expect(v3.seq).toBe(3);
-        expect(v3.status).toBe('BACKDATE_REQUESTED');
+        expect(v3.status).toBe('DRAFT');
     });
 
     test('concurrent 2× createDraft → unikalne seq, brak partial/orphan', async () => {
@@ -247,12 +247,12 @@ describe('F1 pricelistVersions', () => {
         expect(vIds.size).toBe(2);
     });
 
-    test('mutacja ACTIVE odrzucona (403)', async () => {
+    test('mutacja APPROVED odrzucona (403)', async () => {
         const v = await createDraft('rury', [rura('r1')], {
             effectiveFrom: '2026-09-01T00:00:00.000Z'
         });
         const stored = versions.find((x) => x.id === v.id);
-        if (stored) stored.status = 'ACTIVE';
+        if (stored) stored.status = 'APPROVED';
 
         await expect(updateDraft(v.id, [rura('r1', 120)])).rejects.toMatchObject({
             statusCode: 403
@@ -307,7 +307,7 @@ describe('F1 pricelistVersions', () => {
         expect(prisma.pricelistVersion.findFirst).toHaveBeenCalledWith({
             where: {
                 type: 'rury',
-                status: { in: ['ACTIVE', 'BACKDATE'] },
+                status: { in: ['APPROVED'] },
                 effectiveFrom: { lte: '2026-09-10T00:00:00.000Z' }
             },
             orderBy: [{ effectiveFrom: 'desc' }, { seq: 'desc' }]
@@ -369,12 +369,12 @@ describe('updateDraft nota (labelka version niemutowalna)', () => {
         });
     });
 
-    test('nota na niemutowalnej (ACTIVE) → 403', async () => {
+    test('nota na niemutowalnej (APPROVED) → 403', async () => {
         const v = await createDraft('rury', [rura('r1')], {
             effectiveFrom: '2026-09-01T00:00:00.000Z'
         });
         const stored = versions.find((x) => x.id === v.id);
-        if (stored) stored.status = 'ACTIVE';
+        if (stored) stored.status = 'APPROVED';
         await expect(updateDraft(v.id, undefined, 'próba')).rejects.toMatchObject({
             statusCode: 403,
             code: 'IMMUTABLE_VERSION'

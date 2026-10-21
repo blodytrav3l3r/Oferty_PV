@@ -55,6 +55,7 @@
         "prices:export": "ts-node scripts/prices-export.ts",
         "prices:import": "ts-node scripts/prices-import.ts",
         "prices:verify": "ts-node scripts/prices-verify.ts",
+        "pricelist:preflight": "ts-node scripts/pricelist-preflight.ts",
         "import:offers": "ts-node scripts/import-offers.ts",
         "prisma:generate": "prisma generate",
         "prisma:migrate": "prisma migrate dev",

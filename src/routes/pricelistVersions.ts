@@ -16,7 +16,7 @@ import {
     PRICELIST_TYPES,
     PricelistVersionError,
     activate,
-    activateDue,
+    approveVersion,
     applyBackdate,
     cloneAsDraft,
     createDraft,
@@ -31,6 +31,8 @@ import {
     updateDraft
 } from '../services/pricelistVersionService';
 import prisma from '../prismaClient';
+import { deriveState } from '../services/pricelist/validation';
+import { getVersionChecks, isChecksStale } from '../services/pricelist/checks';
 import { buildXlsx, type XlsxSheet } from '../utils/minimalXlsx';
 import { versionExportFilename } from '../utils/exportFilenames';
 
@@ -50,7 +52,11 @@ function lockFor(type: string): ReturnType<typeof createModuleLock> {
 
 function sendVersionError(res: express.Response, err: unknown): void {
     if (err instanceof PricelistVersionError) {
-        res.status(err.statusCode).json({ error: err.message, code: err.code });
+        res.status(err.statusCode).json({
+            error: err.message,
+            code: err.code,
+            ...(err.details === undefined ? {} : { details: err.details })
+        });
         return;
     }
     const message = err instanceof Error ? err.message : 'Unknown error';
@@ -88,8 +94,16 @@ function sendInvalidId(res: express.Response): void {
     });
 }
 
+const ALIAS_SUNSET = 'Wed, 31 Mar 2027 23:59:59 GMT';
+
+/** S2b: aliasy publish/activate/backdate wygasają na rzecz POST /:id/approve. */
+function markDeprecatedAlias(res: express.Response): void {
+    res.setHeader('Deprecation', 'true');
+    res.setHeader('Sunset', ALIAS_SUNSET);
+}
+
 /** Lista wersji (opcjonalny filtr ?type=), najnowsze seq pierwsze. */
-router.get('/', requireAuth, requireAdmin, async (req, res) => {
+router.get('/', requireAuth, requireAdmin, READ_LIMITER, async (req, res) => {
     res.setHeader('Cache-Control', 'no-store');
     try {
         const { type } = req.query;
@@ -100,10 +114,19 @@ router.get('/', requireAuth, requireAdmin, async (req, res) => {
             });
             return;
         }
+        const nowIso = new Date().toISOString();
         const versions = await prisma.pricelistVersion.findMany({
             where: type === undefined ? undefined : { type },
             orderBy: [{ type: 'asc' }, { seq: 'desc' }]
         });
+        const latestByType = new Map<string, string>();
+        for (const v of versions) {
+            if (v.status !== 'APPROVED' || v.effectiveFrom > nowIso) continue;
+            const current = latestByType.get(v.type);
+            if (current === undefined || v.effectiveFrom > current) {
+                latestByType.set(v.type, v.effectiveFrom);
+            }
+        }
         // Ile ofert/zamówień trzyma pieczątkę wersji (pod wyszarzony „Usuń" w FE).
         // Rury/studnie: 4 county per wersja. PRECO: jedna mapa referencji studni
         // (getPrecoReferences), bez N+1 i bez 4 countów (te zawsze 0).
@@ -150,6 +173,12 @@ router.get('/', requireAuth, requireAdmin, async (req, res) => {
         res.json({
             versions: withUsage.map((v) => ({
                 ...v,
+                state: deriveState(
+                    v.status,
+                    v.effectiveFrom,
+                    new Date(nowIso),
+                    latestByType.get(v.type) ?? null
+                ),
                 createdByName:
                     typeof v.createdBy === 'string'
                         ? (authorName.get(v.createdBy) ?? v.createdBy)
@@ -163,11 +192,11 @@ router.get('/', requireAuth, requireAdmin, async (req, res) => {
 
 /**
  * F3: etykiety wersji na oś czasu (bez cen) — dla badge „cennik vX" w ofertach.
- * Bez requireAdmin: tylko ACTIVE/BACKDATE, tylko id/version/seq/effectiveFrom.
+ * Bez requireAdmin: tylko APPROVED z effectiveFrom <= now, tylko id/version/seq/effectiveFrom.
  * Z ?ids=a,b,c (max 50): te wersje BEZ filtra statusu (też archiwalne —
  * pieczątki ofert nie kłamią „legacy"); zły format → 422.
  */
-router.get('/labels', requireAuth, async (req, res) => {
+router.get('/labels', requireAuth, READ_LIMITER, async (req, res) => {
     res.setHeader('Cache-Control', 'no-store');
     try {
         const { type, ids } = req.query;
@@ -197,6 +226,7 @@ router.get('/labels', requireAuth, async (req, res) => {
             const versions = await prisma.pricelistVersion.findMany({
                 where: {
                     ...(type === undefined ? {} : { type }),
+                    ...(req.user?.role === 'admin' ? {} : { status: 'APPROVED' }),
                     id: { in: [...new Set(list)] }
                 },
                 select: { id: true, type: true, seq: true, version: true, effectiveFrom: true },
@@ -208,7 +238,8 @@ router.get('/labels', requireAuth, async (req, res) => {
         const versions = await prisma.pricelistVersion.findMany({
             where: {
                 ...(type === undefined ? {} : { type }),
-                status: { in: ['ACTIVE', 'BACKDATE'] }
+                status: 'APPROVED',
+                effectiveFrom: { lte: new Date().toISOString() }
             },
             select: { id: true, type: true, seq: true, version: true, effectiveFrom: true },
             orderBy: [{ type: 'asc' }, { seq: 'desc' }]
@@ -219,7 +250,7 @@ router.get('/labels', requireAuth, async (req, res) => {
     }
 });
 
-/** Skrót stanu cenników: aktywna + najbliższa przyszła SCHEDULED per typ. */
+/** Skrót stanu cenników: aktywna + najbliższa przyszła APPROVED per typ. */
 router.get('/summary', requireAuth, requireAdmin, READ_LIMITER, async (_req, res) => {
     res.setHeader('Cache-Control', 'no-store');
     try {
@@ -264,7 +295,7 @@ router.post(
     }
 );
 
-/** Usunięcie wersji: allowlist jak dziś + archiwalne bez użycia (ACTIVE/BACKDATE zawsze 409). */
+/** Usunięcie: DRAFT zawsze; APPROVED tylko przyszła bez użycia. */
 router.delete('/:id', requireAuth, requireAdmin, PRICELIST_WRITE_LIMITER, async (req, res) => {
     try {
         const id = parseVersionId(req.params);
@@ -290,7 +321,7 @@ const updateDraftBodySchema = z.object({
 });
 
 /**
- * Edycja wersji (tylko DRAFT/SCHEDULED/BACKDATE_REQUESTED): podmiana wierszy
+ * Edycja wersji (tylko DRAFT): podmiana wierszy
  * i/lub noty. rows undefined = bez podmiany wierszy (sama nota dozwolona);
  * note undefined = nota bez zmian, pusty string czyści notę. Brak obu → 422.
  * Labelka version niemutowalna (nigdy z inputu).
@@ -320,7 +351,7 @@ router.put('/:id', requireAuth, requireAdmin, PRICELIST_WRITE_LIMITER, async (re
 });
 
 /**
- * Publikacja roboczej (DRAFT → SCHEDULED albo BACKDATE_REQUESTED wg daty).
+ * Publikacja roboczej (DRAFT → APPROVED; stan SCHEDULED/ACTIVE z daty).
  * Domyka lukę klonów: DRAFT nie aktywuje się bezpośrednio.
  */
 router.post(
@@ -329,6 +360,7 @@ router.post(
     requireAdmin,
     PRICELIST_WRITE_LIMITER,
     async (req, res) => {
+        markDeprecatedAlias(res);
         try {
             const id = parseVersionId(req.params);
             if (!id) {
@@ -343,13 +375,79 @@ router.post(
     }
 );
 
-/** Aktywacja SCHEDULED (due); opcjonalna nota → wpis audytu ACTIVATE. */
+const isoDateString = z.string().refine((value) => !Number.isNaN(Date.parse(value)), {
+    message: 'Oczekiwano daty ISO'
+});
+
+const approveBodySchema = z.object({
+    effectiveFrom: isoDateString.optional(),
+    note: z.string().optional(),
+    checksCheckedAt: isoDateString.optional()
+});
+
+/**
+ * S2b: docelowa publikacja. effectiveFrom domyślnie z wersji; nota >=10
+ * wymagana tylko dla daty z przeszłości (requirePastNote). Checks doradcze:
+ * edycja po ich policzeniu daje checksStale=true, nie blokuje (200).
+ */
+router.post(
+    '/:id/approve',
+    requireAuth,
+    requireAdmin,
+    PRICELIST_WRITE_LIMITER,
+    async (req, res) => {
+        try {
+            const id = parseVersionId(req.params);
+            if (!id) {
+                sendInvalidId(res);
+                return;
+            }
+            const parsed = approveBodySchema.safeParse(req.body ?? {});
+            if (!parsed.success) {
+                res.status(400).json({
+                    error: 'Nieprawidłowe dane publikacji (daty ISO, note tekstem)',
+                    code: 'INVALID_BODY'
+                });
+                return;
+            }
+            const { effectiveFrom, note, checksCheckedAt } = parsed.data;
+            const version = await approveVersion(id, {
+                userId: userIdOf(req),
+                effectiveFrom,
+                note,
+                requirePastNote: true
+            });
+            const checkedAtIso =
+                checksCheckedAt === undefined ? undefined : new Date(checksCheckedAt).toISOString();
+            let checksStale = false;
+            if (checkedAtIso !== undefined) {
+                try {
+                    checksStale = await isChecksStale(id, checkedAtIso);
+                } catch (err) {
+                    const message = err instanceof Error ? err.message : 'Unknown error';
+                    logger.warn(
+                        'PricelistVersions',
+                        'Nie udało się sprawdzić checksStale',
+                        message
+                    );
+                    checksStale = true;
+                }
+            }
+            res.json({ version, checksStale });
+        } catch (err) {
+            sendVersionError(res, err);
+        }
+    }
+);
+
+/** Alias aktywacji (due, data <= now); opcjonalna nota → audyt APPROVE. */
 router.post(
     '/:id/activate',
     requireAuth,
     requireAdmin,
     PRICELIST_WRITE_LIMITER,
     async (req, res) => {
+        markDeprecatedAlias(res);
         try {
             const id = parseVersionId(req.params);
             if (!id) {
@@ -365,13 +463,14 @@ router.post(
     }
 );
 
-/** Backdate: nota ≥ 10 znaków; kolizja (type, effectiveFrom) → 409. */
+/** Alias backdate: nota ≥ 10 znaków; kolizja (type, effectiveFrom) → 409. */
 router.post(
     '/:id/backdate',
     requireAuth,
     requireAdmin,
     PRICELIST_WRITE_LIMITER,
     async (req, res) => {
+        markDeprecatedAlias(res);
         try {
             const id = parseVersionId(req.params);
             if (!id) {
@@ -410,21 +509,28 @@ router.post(
     }
 );
 
-/** Ręczny trigger crona (awaryjny; cron robi to co 5 min + przy starcie). */
-router.post(
-    '/activate-due',
-    requireAuth,
-    requireAdmin,
-    PRICELIST_WRITE_LIMITER,
-    async (req, res) => {
-        try {
-            const result = await activateDue(undefined, { userId: userIdOf(req) });
-            res.json(result);
-        } catch (err) {
-            sendVersionError(res, err);
+/** S2a: cron usunięty — stary endpoint zostaje jako jawne 410 Gone. */
+router.post('/activate-due', requireAuth, requireAdmin, PRICELIST_WRITE_LIMITER, (_req, res) => {
+    res.status(410).json({
+        error: 'Automatyczna aktywacja została usunięta — użyj /publish lub /approve',
+        code: 'GONE'
+    });
+});
+
+/** S1b: read-only checks wersji (advisory, bez CTA). */
+router.get('/:id/checks', requireAuth, requireAdmin, READ_LIMITER, async (req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
+    try {
+        const id = parseVersionId(req.params);
+        if (!id) {
+            sendInvalidId(res);
+            return;
         }
+        res.json(await getVersionChecks(id));
+    } catch (err) {
+        sendVersionError(res, err);
     }
-);
+});
 
 /** Id wersji: tylko bezpieczny alfabet (bez echa surowego id w błędzie). */
 router.get('/:id/preview', requireAuth, requireAdmin, READ_LIMITER, async (req, res) => {
@@ -479,7 +585,7 @@ router.get('/:id/diff', requireAuth, requireAdmin, READ_LIMITER, async (req, res
 });
 
 /** Eksport wersji do XLSX — shape 1:1 z eksportem LIVE (studnie + PRECO same-seq jak F1). */
-router.get('/:id/export', requireAuth, requireAdmin, async (req, res) => {
+router.get('/:id/export', requireAuth, requireAdmin, READ_LIMITER, async (req, res) => {
     res.setHeader('Cache-Control', 'no-store');
     try {
         const id = parseVersionId(req.params);

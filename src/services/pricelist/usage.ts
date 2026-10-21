@@ -7,8 +7,14 @@
 import prisma from '../../prismaClient';
 import { logger } from '../../utils/logger';
 import type { PricelistVersion } from '../../../generated/prisma';
-import { PRICELIST_TYPES, RESOLVABLE_STATUSES, requireType, toUtcIso } from './validation';
-import type { PricelistType, Tx } from './validation';
+import {
+    PRICELIST_TYPES,
+    RESOLVABLE_STATUSES,
+    deriveState,
+    requireType,
+    toUtcIso
+} from './validation';
+import type { PricelistState, PricelistType, Tx } from './validation';
 import { getVersionExport, pickPrecoVersionFromTimeline } from './export';
 import { buildPrecoEntryFromSections, cmpText, studnieVersionRowToLegacy } from './liveProjection';
 
@@ -88,9 +94,8 @@ export async function getPrecoReferences(
 }
 
 /**
- * Deterministyczne resolveActive: kandydaci ACTIVE/BACKDATE z
- * effectiveFrom <= at, sort effectiveFrom DESC, seq DESC, LIMIT 1.
- * Dokładnie 1 wersja albo null dla każdego at.
+ * Deterministyczne resolveActive: najnowsza APPROVED z effectiveFrom <= at,
+ * sort effectiveFrom DESC, seq DESC, LIMIT 1. Dokładnie 1 wersja albo null.
  */
 export async function resolveActive(
     typeInput: unknown,
@@ -115,14 +120,20 @@ export interface VersionSummaryRef {
     seq: number;
     effectiveFrom: string;
     status: string;
+    state: PricelistState;
+}
+
+export interface VersionsSummaryType {
+    active: VersionSummaryRef | null;
+    nextScheduled: VersionSummaryRef | null;
+    draftCount: number;
+    approvedCount: number;
+    collisionCount: number;
 }
 
 export interface VersionsSummary {
     generatedAt: string;
-    types: Record<
-        PricelistType,
-        { active: VersionSummaryRef | null; nextScheduled: VersionSummaryRef | null }
-    >;
+    types: Record<PricelistType, VersionsSummaryType>;
 }
 
 const SUMMARY_REF_SELECT = {
@@ -133,41 +144,92 @@ const SUMMARY_REF_SELECT = {
     status: true
 } as const;
 
-function toSummaryRef(version: PricelistVersion): VersionSummaryRef {
+function toSummaryRef(
+    version: Pick<PricelistVersion, 'id' | 'version' | 'seq' | 'effectiveFrom' | 'status'>
+): VersionSummaryRef {
     return {
         id: version.id,
         version: version.version,
         seq: version.seq,
         effectiveFrom: version.effectiveFrom,
-        status: version.status
+        status: version.status,
+        state: deriveState(version.status, version.effectiveFrom)
     };
 }
 
-/** Najwcześniejsza przyszła SCHEDULED (effectiveFrom ASC, seq ASC) — 1 zapytanie. */
-function nextScheduledFor(type: PricelistType, now: string): Promise<VersionSummaryRef | null> {
-    return prisma.pricelistVersion.findFirst({
-        where: { type, status: 'SCHEDULED', effectiveFrom: { gt: now } },
+/** Najwcześniejsza przyszła APPROVED (effectiveFrom ASC, seq ASC) — 1 zapytanie. */
+async function nextScheduledFor(
+    type: PricelistType,
+    now: string
+): Promise<VersionSummaryRef | null> {
+    const version = await prisma.pricelistVersion.findFirst({
+        where: { type, status: 'APPROVED', effectiveFrom: { gt: now } },
         orderBy: [{ effectiveFrom: 'asc' }, { seq: 'asc' }],
         select: SUMMARY_REF_SELECT
     });
+    return version ? toSummaryRef(version) : null;
 }
 
 /**
  * Skrót stanu 3 cenników: aktywna (resolveActive) + najbliższa przyszła
- * SCHEDULED. Dokładnie 6 zapytań (3× resolveActive + 3× scheduled), zero N+1.
+ * APPROVED + liczniki. 6 zapytań resolverów + 1 odczyt do liczników.
  */
 export async function getVersionsSummary(): Promise<VersionsSummary> {
     const generatedAt = new Date().toISOString();
-    const entries = await Promise.all(
-        PRICELIST_TYPES.map(async (type) => {
-            const [active, nextScheduled] = await Promise.all([
-                resolveActive(type, generatedAt),
-                nextScheduledFor(type, generatedAt)
-            ]);
-            return [type, { active: active ? toSummaryRef(active) : null, nextScheduled }] as const;
+    const [entries, counterRows] = await Promise.all([
+        Promise.all(
+            PRICELIST_TYPES.map(async (type) => {
+                const [active, nextScheduled] = await Promise.all([
+                    resolveActive(type, generatedAt),
+                    nextScheduledFor(type, generatedAt)
+                ]);
+                return [type, { active, nextScheduled }] as const;
+            })
+        ),
+        prisma.pricelistVersion.findMany({
+            select: { type: true, status: true, effectiveFrom: true }
         })
-    );
-    return { generatedAt, types: Object.fromEntries(entries) as VersionsSummary['types'] };
+    ]);
+
+    const counts = new Map<
+        string,
+        { draft: number; approved: number; dates: Set<string>; dup: Set<string> }
+    >();
+    for (const row of counterRows) {
+        const bucket = counts.get(row.type) ?? {
+            draft: 0,
+            approved: 0,
+            dates: new Set<string>(),
+            dup: new Set<string>()
+        };
+        if (row.status === 'DRAFT') {
+            bucket.draft += 1;
+        } else if (row.status === 'APPROVED') {
+            bucket.approved += 1;
+            if (bucket.dates.has(row.effectiveFrom)) bucket.dup.add(row.effectiveFrom);
+            else bucket.dates.add(row.effectiveFrom);
+        }
+        counts.set(row.type, bucket);
+    }
+
+    return {
+        generatedAt,
+        types: Object.fromEntries(
+            entries.map(([type, { active, nextScheduled }]) => {
+                const bucket = counts.get(type);
+                return [
+                    type,
+                    {
+                        active: active ? toSummaryRef(active) : null,
+                        nextScheduled,
+                        draftCount: bucket?.draft ?? 0,
+                        approvedCount: bucket?.approved ?? 0,
+                        collisionCount: bucket?.dup.size ?? 0
+                    }
+                ];
+            })
+        ) as VersionsSummary['types']
+    };
 }
 
 /**

@@ -451,7 +451,7 @@ describe('Eksport wersji studni dokleja PRECO (najwyższy seq <=, jak LIVE F1)',
                 type: 'studnie',
                 seq: 5,
                 version: 'v5',
-                status: 'ACTIVE',
+                status: 'APPROVED',
                 effectiveFrom: '2026-02-01T00:00:00.000Z'
             },
             {
@@ -459,7 +459,7 @@ describe('Eksport wersji studni dokleja PRECO (najwyższy seq <=, jak LIVE F1)',
                 type: 'preco',
                 seq: 5,
                 version: 'v5',
-                status: 'ARCHIVED',
+                status: 'APPROVED',
                 effectiveFrom: '2026-01-01T00:00:00.000Z'
             },
             {
@@ -467,7 +467,7 @@ describe('Eksport wersji studni dokleja PRECO (najwyższy seq <=, jak LIVE F1)',
                 type: 'preco',
                 seq: 9,
                 version: 'v9',
-                status: 'ACTIVE',
+                status: 'APPROVED',
                 effectiveFrom: '2026-03-01T00:00:00.000Z'
             },
             {
@@ -475,7 +475,7 @@ describe('Eksport wersji studni dokleja PRECO (najwyższy seq <=, jak LIVE F1)',
                 type: 'rury',
                 seq: 5,
                 version: 'v5',
-                status: 'ACTIVE',
+                status: 'APPROVED',
                 effectiveFrom: '2026-02-01T00:00:00.000Z'
             }
         );
@@ -522,22 +522,19 @@ describe('Eksport wersji studni dokleja PRECO (najwyższy seq <=, jak LIVE F1)',
         ]);
     });
 
-    it.each(['DRAFT', 'SCHEDULED', 'BACKDATE_REQUESTED'])(
-        'PRECO %s nie jest doklejane (D1)',
-        async (status) => {
-            const p5 = versions.find((v) => v.id === 'p5');
-            if (!p5) throw new Error('brak p5');
-            p5.status = status;
-            const { sheets, precoIncluded } = await getVersionExportSheets('s1');
-            expect(precoIncluded).toBe(false);
-            expect(sheets['PRECO_Kinety']).toBeUndefined();
-        }
-    );
-
-    it('PRECO BACKDATE jest doklejane (D1)', async () => {
+    it.each(['DRAFT'])('PRECO %s nie jest doklejane (D1)', async (status) => {
         const p5 = versions.find((v) => v.id === 'p5');
         if (!p5) throw new Error('brak p5');
-        p5.status = 'BACKDATE';
+        p5.status = status;
+        const { sheets, precoIncluded } = await getVersionExportSheets('s1');
+        expect(precoIncluded).toBe(false);
+        expect(sheets['PRECO_Kinety']).toBeUndefined();
+    });
+
+    it('PRECO APPROVED jest doklejane (D1)', async () => {
+        const p5 = versions.find((v) => v.id === 'p5');
+        if (!p5) throw new Error('brak p5');
+        p5.status = 'APPROVED';
         const { precoIncluded } = await getVersionExportSheets('s1');
         expect(precoIncluded).toBe(true);
     });
@@ -569,7 +566,7 @@ describe('Eksport wersji studni dokleja PRECO (najwyższy seq <=, jak LIVE F1)',
             type: 'preco',
             seq: 3,
             version: 'v3',
-            status: 'ACTIVE',
+            status: 'APPROVED',
             effectiveFrom: '2025-12-01T00:00:00.000Z'
         });
         itemsKinety.push({

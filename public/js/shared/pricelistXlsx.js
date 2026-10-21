@@ -31,7 +31,7 @@
      * puste/myślniki/em-dash na default (emptyDefaults) lub null.
      * Mutuje i zwraca przekazany produkt (jak dotychczas w callerach).
      */
-    function coerceNumerics(product, numericFields, emptyDefaults) {
+    function coerceNumerics(product, numericFields, emptyDefaults, onInvalid) {
         (numericFields || []).forEach(function (f) {
             var val = product[f];
             if (val === '' || val === undefined || val === null || val === '-' || val === '—') {
@@ -42,9 +42,11 @@
             } else if (typeof val === 'string') {
                 val = val.replace(/\s/g, '').replace(',', '.');
                 var num = parseFloat(val);
+                if (isNaN(num) && typeof onInvalid === 'function') onInvalid(f, product[f]);
                 product[f] = isNaN(num) ? null : num;
             } else {
                 var num2 = parseFloat(val);
+                if (isNaN(num2) && typeof onInvalid === 'function') onInvalid(f, product[f]);
                 product[f] = isNaN(num2) ? null : num2;
             }
         });
@@ -64,31 +66,64 @@
      * Zbiorcza normalizacja surowych wierszy: mapowanie nagłówków, preValidate,
      * walidacja id/name, dedup po id, coerce liczb, postCoerce.
      * opts: { headerToKey, numericFields, emptyDefaults, preValidate(product, raw),
-     *         postCoerce(product, raw), onSkip(index, reason, product) }
-     * reason: 'missing-id-or-name' | 'duplicate-id'.
+     *         postCoerce(product, raw), onSkip(index, reason, product),
+     *         onIssue(index, field, reason, value) }
+     * reason: 'missing-id-or-name' | 'duplicate-id' | 'missing-id' |
+     *         'missing-name' | 'invalid-number'.
      */
     function normalizeRows(rawRows, opts) {
         var o = opts || {};
         var headerToKey = o.headerToKey || {};
         var seenIds = new Set();
         var out = [];
+        var reportIssue = function (index, field, reason, value) {
+            if (typeof o.onIssue === 'function') o.onIssue(index, field, reason, value);
+        };
         (rawRows || []).forEach(function (raw, index) {
             var product = mapHeaders(raw, headerToKey);
             if (typeof o.preValidate === 'function') o.preValidate(product, raw);
             if (!validateProductIdName(product)) {
+                if (!product.id) reportIssue(index, 'id', 'missing-id');
+                if (!product.name) reportIssue(index, 'name', 'missing-name');
                 if (typeof o.onSkip === 'function') o.onSkip(index, 'missing-id-or-name', product);
                 return;
             }
             if (seenIds.has(product.id)) {
+                reportIssue(index, 'id', 'duplicate-id', product.id);
                 if (typeof o.onSkip === 'function') o.onSkip(index, 'duplicate-id', product);
                 return;
             }
             seenIds.add(product.id);
-            coerceNumerics(product, o.numericFields, o.emptyDefaults);
+            coerceNumerics(product, o.numericFields, o.emptyDefaults, function (field, value) {
+                reportIssue(index, field, 'invalid-number', value);
+            });
             if (typeof o.postCoerce === 'function') o.postCoerce(product, raw);
             out.push(product);
         });
         return out;
+    }
+
+    /**
+     * Wspólny kształt błędu importu (wiersz 1 = nagłówek XLSX).
+     * `headerToKey` służy do pokazania ludzkiej nazwy kolumny.
+     */
+    function importIssue(index, field, reason, headerToKey) {
+        var reverse = {};
+        Object.keys(headerToKey || {}).forEach(function (header) {
+            reverse[headerToKey[header]] = header;
+        });
+        var messages = {
+            'missing-id': 'Brak indeksu',
+            'missing-name': 'Brak nazwy',
+            'duplicate-id': 'Zduplikowany indeks',
+            'invalid-number': 'Nieprawidłowa liczba'
+        };
+        return {
+            row: index + 2,
+            column: reverse[field] || field || '—',
+            field: field || '',
+            message: messages[reason] || String(reason)
+        };
     }
 
     /**
@@ -349,14 +384,89 @@
         }
     }
 
+    /**
+     * Modal błędów importu: wiersz / kolumna / problem. Bez częściowego zapisu.
+     * opts: { issues: [{row, column, message}], onClose() }
+     */
+    function openImportErrorsModal(opts) {
+        var o = opts || {};
+        var issues = Array.isArray(o.issues) ? o.issues : [];
+        var MODAL_ID = 'px-import-errors-modal';
+        var escCell = function (value) {
+            return String(value == null ? '' : value).replace(/[&<>"']/g, function (c) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+            });
+        };
+        var rows = issues.slice(0, 100).map(function (issue) {
+            return (
+                '<tr><td>' +
+                escCell(issue.row == null ? '—' : issue.row) +
+                '</td><td>' +
+                escCell(issue.column || issue.field || '—') +
+                '</td><td>' +
+                escCell(issue.message || 'Nieprawidłowa wartość') +
+                '</td></tr>'
+            );
+        });
+        var more =
+            issues.length > 100
+                ? '<p class="text-muted">Pokazano 100 z ' +
+                  issues.length +
+                  ' błędów — popraw plik i zaimportuj ponownie.</p>'
+                : '';
+        function close() {
+            if (typeof window.closeModal === 'function') window.closeModal(MODAL_ID);
+            if (typeof o.onClose === 'function') o.onClose();
+        }
+        window.showModal({
+            id: MODAL_ID,
+            titleId: 'px-import-errors-title',
+            html:
+                '<div class="modal"><div class="modal-header"><h3 id="px-import-errors-title">' +
+                '<i data-lucide="alert-triangle" aria-hidden="true"></i> Import przerwany — błędy w komórkach</h3>' +
+                '<button class="btn-icon" id="px-import-errors-close" aria-label="Zamknij">' +
+                '<i data-lucide="x" aria-hidden="true"></i></button></div>' +
+                '<div class="modal-body"><p class="color-warn">Nie zapisano żadnych wierszy. Popraw wskazane komórki i zaimportuj plik ponownie.</p>' +
+                '<div class="table-wrap"><table><thead><tr><th scope="col">Wiersz</th>' +
+                '<th scope="col">Kolumna</th><th scope="col">Problem</th></tr></thead><tbody>' +
+                (rows.length > 0
+                    ? rows.join('')
+                    : '<tr><td colspan="3" class="text-muted">Brak szczegółów błędu.</td></tr>') +
+                '</tbody></table></div>' +
+                more +
+                '</div></div>'
+        });
+        var overlay = typeof document !== 'undefined' ? document.getElementById(MODAL_ID) : null;
+        if (overlay && window.lucide) window.lucide.createIcons({ root: overlay });
+        var closeButton =
+            typeof document !== 'undefined'
+                ? document.getElementById('px-import-errors-close')
+                : null;
+        if (closeButton && typeof closeButton.addEventListener === 'function') {
+            closeButton.addEventListener('click', close);
+        }
+    }
+
     window.pricelistXlsx = window.pricelistXlsx || {};
     window.pricelistXlsx.mapHeaders = mapHeaders;
     window.pricelistXlsx.coerceNumerics = coerceNumerics;
     window.pricelistXlsx.validateProductIdName = validateProductIdName;
     window.pricelistXlsx.normalizeRows = normalizeRows;
+    window.pricelistXlsx.importIssue = importIssue;
+    window.pricelistXlsx.issuesFromDetails = function (details) {
+        return (Array.isArray(details) ? details : []).map(function (detail) {
+            var d = detail || {};
+            return {
+                row: d.row,
+                column: d.column || d.field,
+                message: d.message
+            };
+        });
+    };
     window.pricelistXlsx.parseWorkbookToJson = parseWorkbookToJson;
     window.pricelistXlsx.buildDraftPayload = buildDraftPayload;
     window.pricelistXlsx.precoNestedToFlat = precoNestedToFlat;
     window.pricelistXlsx.splitStudnieImport = splitStudnieImport;
     window.pricelistXlsx.openImportTargetModal = openImportTargetModal;
+    window.pricelistXlsx.openImportErrorsModal = openImportErrorsModal;
 })();

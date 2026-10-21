@@ -290,6 +290,23 @@
             src: 'zlecenia.html',
             logo: 'Kartoteka Zleceń',
             sections: []
+        },
+        cenniki: {
+            src: 'cenniki.html',
+            logo: 'Cenniki',
+            sections: [
+                {
+                    id: 'przeglad',
+                    icon: '<i data-lucide="layout-grid"></i>',
+                    label: 'Przegląd'
+                },
+                {
+                    id: 'cennik',
+                    icon: '<i data-lucide="clipboard-list"></i>',
+                    label: 'Cennik'
+                },
+                { id: 'historia', icon: '<i data-lucide="history"></i>', label: 'Historia' }
+            ]
         }
     };
 
@@ -298,13 +315,15 @@
     function parseHash() {
         const hash = window.location.hash || '#/rury';
         const [path, queryString] = hash.replace('#/', '').split('?');
-        const module = path || 'rury';
+        const [modulePath, subView] = (path || 'rury').split('/');
+        const module = modulePath || 'rury';
         const params = {};
         if (queryString) {
             new URLSearchParams(queryString).forEach((v, k) => {
                 params[k] = v;
             });
         }
+        if (subView && !params.tab) params.tab = subView;
         return { module, params };
     }
 

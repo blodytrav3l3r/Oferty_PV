@@ -1,5 +1,5 @@
 /**
- * F2: activate / applyBackdate / activateDue + resolveActive-matrix + UTC.
+ * F2/S2a: approveVersion + legacy aliasy (activate/backdate) + resolveActive-matrix.
  * Mock prismy w pamięci z prawdziwą logiką filtrów (findFirst/findMany),
  * żeby macierz overlapping była realnym testem determinizmu, nie echa mocka.
  */
@@ -230,8 +230,8 @@ jest.mock('../src/utils/logger', () => ({
 
 import {
     activate,
-    activateDue,
     applyBackdate,
+    approveVersion,
     createDraft,
     resolveActive
 } from '../src/services/pricelistVersionService';
@@ -275,42 +275,107 @@ afterEach(() => {
     jest.useRealTimers();
 });
 
-describe('F2 activate', () => {
-    test('happy path DRAFT→SCHEDULED→ACTIVE (stare ACTIVE→ARCHIVED + audit)', async () => {
-        seedVersion({ type: 'rury', status: 'ACTIVE', effectiveFrom: '2026-08-01T00:00:00.000Z' });
+describe('S2a approveVersion', () => {
+    test('createDraft zawsze DRAFT (przyszła i przeszła data)', async () => {
+        const future = await createDraft('rury', [rura('r1')], {
+            effectiveFrom: '2099-01-01T00:00:00.000Z'
+        });
+        const past = await createDraft('rury', [rura('r1')], {
+            effectiveFrom: '2020-01-01T00:00:00.000Z'
+        });
+        expect(future.status).toBe('DRAFT');
+        expect(past.status).toBe('DRAFT');
+    });
+
+    test('approve ze zmienioną datą przelicza labelkę v{seq}-data', async () => {
+        const draft = await createDraft('rury', [rura('r1')], {
+            effectiveFrom: '2026-09-01T00:00:00.000Z'
+        });
+        expect(draft.version).toBe('v1-20260901');
+        const approved = await approveVersion(draft.id, {
+            effectiveFrom: '2026-12-15T00:00:00.000Z'
+        });
+        expect(approved.effectiveFrom).toBe('2026-12-15T00:00:00.000Z');
+        expect(approved.version).toBe('v1-20261215');
+    });
+
+    test('approve zapisuje APPROVED + approvedBy/At i audit APPROVE', async () => {
         const draft = await createDraft('rury', [rura('r1', 110)], {
             effectiveFrom: '2026-09-01T00:00:00.000Z'
         });
-        expect(draft.status).toBe('SCHEDULED');
-
-        const active = await activate(draft.id, { userId: 'admin1' });
-        expect(active.status).toBe('ACTIVE');
-        expect(versions.find((v) => v.seq === 1)?.status).toBe('ARCHIVED');
+        const approved = await approveVersion(draft.id, { userId: 'admin1' });
+        expect(approved.status).toBe('APPROVED');
+        expect(approved.effectiveFrom).toBe('2026-09-01T00:00:00.000Z');
+        expect(approved.approvedBy).toBe('admin1');
+        expect(approved.approvedAt).toBeTruthy();
         expect(settings.get('pricelist_defaults_updated_at')).toBeTruthy();
-        expect(settings.get('pricelist_active_updated_at')).toBeTruthy();
         expect(audits).toHaveLength(2);
-        expect(audits[0]).toMatchObject({ entityType: 'pricelist_version', action: 'CREATE' });
-        expect(audits[1]).toMatchObject({ entityType: 'pricelist_version', action: 'ACTIVATE' });
+        expect(audits[1]).toMatchObject({ action: 'APPROVE' });
+        expect(JSON.parse(String(audits[1].oldData))).toEqual({ przed: 'DRAFT' });
+        expect(JSON.parse(String(audits[1].newData))).toMatchObject({
+            po: 'APPROVED',
+            effectiveFrom: '2026-09-01T00:00:00.000Z'
+        });
     });
 
-    test('activate w przeszłość (eff w istniejącym okresie) → 409 PERIOD_OVERLAP', async () => {
-        seedVersion({ type: 'rury', status: 'ACTIVE', effectiveFrom: '2026-10-01T00:00:00.000Z' });
-        const late = seedVersion({
-            type: 'rury',
-            status: 'SCHEDULED',
-            effectiveFrom: '2026-09-15T00:00:00.000Z'
+    test('approve z przeszłą datą bez noty → 400 NOTE_TOO_SHORT, wersja zostaje DRAFT', async () => {
+        const draft = await createDraft('rury', [rura('r1')], {
+            effectiveFrom: '2099-01-01T00:00:00.000Z'
         });
-        await expect(activate(late.id)).rejects.toMatchObject({
+        await expect(
+            approveVersion(draft.id, {
+                effectiveFrom: '2020-01-01T00:00:00.000Z',
+                requirePastNote: true
+            })
+        ).rejects.toMatchObject({ statusCode: 400, code: 'NOTE_TOO_SHORT' });
+        expect(versions.find((v) => v.id === draft.id)?.status).toBe('DRAFT');
+
+        const ok = await approveVersion(draft.id, {
+            effectiveFrom: '2020-01-01T00:00:00.000Z',
+            note: 'korekta wsteczna',
+            requirePastNote: true
+        });
+        expect(ok.status).toBe('APPROVED');
+        expect(ok.effectiveFrom).toBe('2020-01-01T00:00:00.000Z');
+    });
+
+    test('approve z pustą notą nie może wyczyścić uzasadnienia korekty', async () => {
+        const draft = await createDraft('rury', [rura('r1')], {
+            effectiveFrom: '2020-01-01T00:00:00.000Z',
+            note: 'uzasadnienie historyczne'
+        });
+        await expect(
+            approveVersion(draft.id, { note: '', requirePastNote: true })
+        ).rejects.toMatchObject({ statusCode: 400, code: 'NOTE_TOO_SHORT' });
+        expect(versions.find((v) => v.id === draft.id)?.note).toBe('uzasadnienie historyczne');
+    });
+
+    test('powtórny approve tej samej wersji → 409 APPROVE_NOT_DRAFT', async () => {
+        const draft = await createDraft('rury', [rura('r1')], {
+            effectiveFrom: '2026-09-01T00:00:00.000Z'
+        });
+        await approveVersion(draft.id);
+        await expect(approveVersion(draft.id)).rejects.toMatchObject({
             statusCode: 409,
-            code: 'PERIOD_OVERLAP'
+            code: 'APPROVE_NOT_DRAFT'
         });
-        // nic nie zarchiwizowane, statusy nietknięte
-        expect(versions.find((v) => v.seq === 1)?.status).toBe('ACTIVE');
-        expect(versions.find((v) => v.id === late.id)?.status).toBe('SCHEDULED');
-        expect(audits).toHaveLength(0);
     });
 
-    test('activate SCHEDULED przed terminem → 409, BACKDATE_REQUESTED → 409 ze wskazaniem', async () => {
+    test('kolizja (type, effectiveFrom) → 409 EFFECTIVE_COLLISION, drugi zostaje DRAFT', async () => {
+        const eff = '2026-09-15T00:00:00.000Z';
+        const a = await createDraft('rury', [rura('r1', 90)], { effectiveFrom: eff });
+        const b = await createDraft('rury', [rura('r1', 95)], { effectiveFrom: eff });
+        await approveVersion(a.id);
+        await expect(approveVersion(b.id)).rejects.toMatchObject({
+            statusCode: 409,
+            code: 'EFFECTIVE_COLLISION'
+        });
+        expect(versions.find((v) => v.id === b.id)?.status).toBe('DRAFT');
+    });
+});
+
+describe('S2a aliasy legacy', () => {
+    test('activate: przyszła data → ACTIVATE_NOT_DUE, przeszła → APPROVED', async () => {
         const future = await createDraft('rury', [rura('r1')], {
             effectiveFrom: '2099-01-01T00:00:00.000Z'
         });
@@ -319,141 +384,60 @@ describe('F2 activate', () => {
         const past = await createDraft('rury', [rura('r1')], {
             effectiveFrom: '2020-01-01T00:00:00.000Z'
         });
-        expect(past.status).toBe('BACKDATE_REQUESTED');
-        await expect(activate(past.id)).rejects.toMatchObject({
-            code: 'ACTIVATE_NOT_SCHEDULED'
-        });
+        await expect(activate(past.id)).resolves.toMatchObject({ status: 'APPROVED' });
     });
 
-    test('M2: powtórna aktywacja tej samej wersji → 409, dokładnie jedna ACTIVE', async () => {
-        const draft = await createDraft('rury', [rura('r1')], {
-            effectiveFrom: '2026-09-01T00:00:00.000Z'
-        });
-        const active = await activate(draft.id, { userId: 'admin1' });
-        expect(active.status).toBe('ACTIVE');
-        await expect(activate(draft.id, { userId: 'admin1' })).rejects.toMatchObject({
-            statusCode: 409
-        });
-        expect(versions.filter((v) => v.type === 'rury' && v.status === 'ACTIVE')).toHaveLength(1);
-    });
-});
-
-describe('F2 backdate', () => {
-    test('happy path + audit BACKDATE {przed/po}', async () => {
-        seedVersion({ type: 'rury', status: 'ACTIVE', effectiveFrom: '2026-10-01T00:00:00.000Z' });
+    test('backdate: nota < 10 znaków → 400, nic nie zapisane', async () => {
         const draft = await createDraft('rury', [rura('r1', 90)], {
-            effectiveFrom: '2026-09-15T00:00:00.000Z'
-        });
-        expect(draft.status).toBe('BACKDATE_REQUESTED');
-        const done = await applyBackdate(draft.id, 'Korekta historyczna cen wrzesnia', {
-            userId: 'admin1'
-        });
-        expect(done.status).toBe('BACKDATE');
-        expect(done.note).toBe('Korekta historyczna cen wrzesnia');
-        expect(audits).toHaveLength(2);
-        expect(audits[0]).toMatchObject({ action: 'CREATE' });
-        expect(audits[1]).toMatchObject({ action: 'BACKDATE' });
-        expect(JSON.parse(String(audits[1].oldData))).toEqual({ przed: 'BACKDATE_REQUESTED' });
-        expect(JSON.parse(String(audits[1].newData))).toMatchObject({ po: 'BACKDATE' });
-    });
-
-    test('nota < 10 znaków → 400, nic nie zapisane', async () => {
-        seedVersion({ type: 'rury', status: 'ACTIVE', effectiveFrom: '2026-10-01T00:00:00.000Z' });
-        const draft = await createDraft('rury', [rura('r1', 90)], {
-            effectiveFrom: '2026-09-15T00:00:00.000Z'
+            effectiveFrom: '2020-09-15T00:00:00.000Z'
         });
         await expect(applyBackdate(draft.id, 'za krotka')).rejects.toMatchObject({
             statusCode: 400,
             code: 'NOTE_TOO_SHORT'
         });
-        expect(versions.find((v) => v.id === draft.id)?.status).toBe('BACKDATE_REQUESTED');
+        expect(versions.find((v) => v.id === draft.id)?.status).toBe('DRAFT');
         expect(audits).toHaveLength(1);
         expect(audits[0]).toMatchObject({ action: 'CREATE' });
     });
 
-    test('kolizja (type, effectiveFrom) → 409 EFFECTIVE_COLLISION', async () => {
-        seedVersion({ type: 'rury', status: 'ACTIVE', effectiveFrom: '2026-10-01T00:00:00.000Z' });
-        const eff = '2026-09-15T00:00:00.000Z';
-        const a = await createDraft('rury', [rura('r1', 90)], { effectiveFrom: eff });
-        const b = await createDraft('rury', [rura('r1', 95)], { effectiveFrom: eff });
-        await applyBackdate(a.id, 'Pierwsza korekta historyczna');
-        await expect(applyBackdate(b.id, 'Druga korekta historyczna')).rejects.toMatchObject({
-            statusCode: 409,
-            code: 'EFFECTIVE_COLLISION'
+    test('backdate: nota ≥ 10 znaków → APPROVED + nota + audit APPROVE', async () => {
+        const draft = await createDraft('rury', [rura('r1', 90)], {
+            effectiveFrom: '2020-09-15T00:00:00.000Z'
         });
-        expect(versions.find((v) => v.id === b.id)?.status).toBe('BACKDATE_REQUESTED');
+        const done = await applyBackdate(draft.id, 'Korekta historyczna cen wrzesnia', {
+            userId: 'admin1'
+        });
+        expect(done.status).toBe('APPROVED');
+        expect(done.note).toBe('Korekta historyczna cen wrzesnia');
+        expect(audits).toHaveLength(2);
+        expect(JSON.parse(String(audits[1].newData))).toMatchObject({
+            po: 'APPROVED',
+            note: 'Korekta historyczna cen wrzesnia'
+        });
     });
 });
 
-describe('F2 overlapping matrix', () => {
-    test('v1 09-01 / v2 10-01 / v3 09-15 BACKDATE → resolveActive deterministyczny', async () => {
-        seedVersion({ type: 'rury', status: 'ACTIVE', effectiveFrom: '2026-09-01T00:00:00.000Z' });
-        seedVersion({ type: 'rury', status: 'ACTIVE', effectiveFrom: '2026-10-01T00:00:00.000Z' });
+describe('S2a resolveActive matrix (tylko APPROVED)', () => {
+    test('najnowsza APPROVED <= at; DRAFT nigdy nie wygrywa', async () => {
         seedVersion({
             type: 'rury',
-            status: 'BACKDATE',
-            effectiveFrom: '2026-09-15T00:00:00.000Z'
-        });
-
-        const at0910 = await resolveActive('rury', '2026-09-10T00:00:00.000Z');
-        const at0920 = await resolveActive('rury', '2026-09-20T00:00:00.000Z');
-        const at1010 = await resolveActive('rury', '2026-10-10T00:00:00.000Z');
-        expect(at0910?.effectiveFrom).toBe('2026-09-01T00:00:00.000Z');
-        expect(at0920?.effectiveFrom).toBe('2026-09-15T00:00:00.000Z');
-        expect(at1010?.effectiveFrom).toBe('2026-10-01T00:00:00.000Z');
-
-        // macierz: dokładnie 1 wersja albo null dla każdego at (sweep co ~5 dni)
-        for (let day = 25; day <= 45; day++) {
-            const at = `2026-09-${String(day).padStart(2, '0')}T12:00:00.000Z`;
-            if (day > 30) continue; // wrzesień ma 30 dni — październik poniżej
-            const res = await resolveActive('rury', at);
-            expect(res).not.toBeUndefined();
-        }
-        const oct = await resolveActive('rury', '2026-10-05T00:00:00.000Z');
-        expect(oct?.effectiveFrom).toBe('2026-10-01T00:00:00.000Z');
-        const before = await resolveActive('rury', '2026-08-01T00:00:00.000Z');
-        expect(before).toBeNull();
-    });
-});
-
-describe('F2 cron (fake timers)', () => {
-    test('activateDue: SCHEDULED due → ACTIVE, BACKDATE_REQUESTED nigdy auto', async () => {
-        jest.useFakeTimers();
-        jest.setSystemTime(new Date('2026-08-01T00:00:00.000Z'));
-        const due = await createDraft('rury', [rura('r1', 110)], {
+            status: 'APPROVED',
             effectiveFrom: '2026-09-01T00:00:00.000Z'
         });
-        const retro = await createDraft('rury', [rura('r1', 90)], {
-            effectiveFrom: '2026-08-15T00:00:00.000Z'
-        });
-        expect(retro.status).toBe('BACKDATE_REQUESTED');
-
-        jest.setSystemTime(new Date('2026-10-01T00:00:00.000Z'));
-        const res = await activateDue();
-        expect(res.activated).toEqual([due.id]);
-        expect(res.skipped).toHaveLength(0);
-        expect(versions.find((v) => v.id === due.id)?.status).toBe('ACTIVE');
-        expect(versions.find((v) => v.id === retro.id)?.status).toBe('BACKDATE_REQUESTED');
-    });
-
-    test('activateDue: błąd jednej wersji nie blokuje pozostałych', async () => {
-        jest.useFakeTimers();
-        jest.setSystemTime(new Date('2026-10-05T00:00:00.000Z'));
-        seedVersion({ type: 'rury', status: 'ACTIVE', effectiveFrom: '2026-10-01T00:00:00.000Z' });
-        const clash = seedVersion({
+        seedVersion({
             type: 'rury',
-            status: 'SCHEDULED',
-            effectiveFrom: '2026-09-15T00:00:00.000Z'
+            status: 'APPROVED',
+            effectiveFrom: '2026-10-01T00:00:00.000Z'
         });
-        const good = seedVersion({
-            type: 'rury',
-            status: 'SCHEDULED',
-            effectiveFrom: '2026-10-02T00:00:00.000Z'
-        });
-        const res = await activateDue();
-        expect(res.activated).toEqual([good.id]);
-        expect(res.skipped.map((s) => s.id)).toEqual([clash.id]);
-        expect(res.skipped[0].code).toBe('PERIOD_OVERLAP');
+        seedVersion({ type: 'rury', status: 'DRAFT', effectiveFrom: '2026-11-01T00:00:00.000Z' });
+
+        expect((await resolveActive('rury', '2026-09-10T00:00:00.000Z'))?.effectiveFrom).toBe(
+            '2026-09-01T00:00:00.000Z'
+        );
+        expect((await resolveActive('rury', '2026-10-05T00:00:00.000Z'))?.effectiveFrom).toBe(
+            '2026-10-01T00:00:00.000Z'
+        );
+        expect(await resolveActive('rury', '2026-08-01T00:00:00.000Z')).toBeNull();
     });
 });
 
@@ -463,52 +447,5 @@ describe('F2 UTC', () => {
             effectiveFrom: '2026-09-01T02:00:00+02:00'
         });
         expect(v.effectiveFrom).toBe('2026-09-01T00:00:00.000Z');
-    });
-});
-
-describe('activate z notą (opcjonalna, tylko audit)', () => {
-    test('nota trafia do audytu ACTIVATE, wiersz wersji nietknięty poza statusem', async () => {
-        seedVersion({ type: 'rury', status: 'ACTIVE', effectiveFrom: '2026-08-01T00:00:00.000Z' });
-        const draft = await createDraft('rury', [rura('r1', 110)], {
-            effectiveFrom: '2026-09-01T00:00:00.000Z',
-            note: 'nota draftu'
-        });
-        const active = await activate(draft.id, { userId: 'admin1', note: '  aktywacja ok  ' });
-        expect(active.status).toBe('ACTIVE');
-        expect(active.note).toBe('nota draftu');
-        expect(audits).toHaveLength(2);
-        expect(JSON.parse(String(audits[1].newData))).toMatchObject({
-            po: 'ACTIVE',
-            note: 'aktywacja ok'
-        });
-    });
-
-    test('bez noty jak dziś (brak klucza note w audycie)', async () => {
-        seedVersion({ type: 'rury', status: 'ACTIVE', effectiveFrom: '2026-08-01T00:00:00.000Z' });
-        const draft = await createDraft('rury', [rura('r1', 110)], {
-            effectiveFrom: '2026-09-01T00:00:00.000Z'
-        });
-        await activate(draft.id, { userId: 'admin1' });
-        expect(audits).toHaveLength(2);
-        const newData = JSON.parse(String(audits[1].newData)) as Record<string, unknown>;
-        expect('note' in newData).toBe(false);
-    });
-
-    test('pustka = aktywacja bez noty; za długa → 422', async () => {
-        const draft = await createDraft('rury', [rura('r1', 110)], {
-            effectiveFrom: '2026-09-01T00:00:00.000Z'
-        });
-        const active = await activate(draft.id, { note: '   ' });
-        expect(active.status).toBe('ACTIVE');
-        expect('note' in (JSON.parse(String(audits[0].newData)) as object)).toBe(false);
-
-        const draft2 = await createDraft('rury', [rura('r1', 120)], {
-            effectiveFrom: '2026-10-01T00:00:00.000Z'
-        });
-        await expect(activate(draft2.id, { note: 'x'.repeat(501) })).rejects.toMatchObject({
-            statusCode: 422,
-            code: 'NOTE_TOO_LONG'
-        });
-        expect(versions.find((v) => v.id === draft2.id)?.status).toBe('SCHEDULED');
     });
 });

@@ -116,6 +116,7 @@ async function importStudnieFromExcel(event, opts) {
             ];
 
             const dnColKey = HEADER_TO_KEY['dn'] || 'dn';
+            const importIssues = [];
             const normalized = window.pricelistXlsx.normalizeRows(allJson, {
                 headerToKey: HEADER_TO_KEY,
                 numericFields,
@@ -124,6 +125,11 @@ async function importStudnieFromExcel(event, opts) {
                     magazynKLB: 1,
                     formaStandardowa: 1,
                     formaStandardowaKLB: 1
+                },
+                onIssue: (index, field, reason) => {
+                    importIssues.push(
+                        window.pricelistXlsx.importIssue(index, field, reason, HEADER_TO_KEY)
+                    );
                 },
                 onSkip: (index, reason, product) => {
                     if (reason === 'duplicate-id') {
@@ -160,6 +166,11 @@ async function importStudnieFromExcel(event, opts) {
                     }
                 }
             });
+
+            if (importIssues.length > 0) {
+                window.pricelistXlsx.openImportErrorsModal({ issues: importIssues });
+                return;
+            }
 
             if (normalized.length === 0 && !hasPrecoData) {
                 showToast('Brak prawidłowych wierszy do importu (sprawdź Indeks i Nazwę)', 'error');
@@ -199,10 +210,13 @@ async function importStudnieFromExcel(event, opts) {
                             } catch (_e) {
                                 draftBody = null;
                             }
-                            if (!draftRes.ok)
-                                throw new Error(
+                            if (!draftRes.ok) {
+                                const draftError = new Error(
                                     (draftBody && draftBody.error) || 'Błąd HTTP ' + draftRes.status
                                 );
+                                draftError.details = draftBody && draftBody.details;
+                                throw draftError;
+                            }
                             const v = (draftBody && draftBody.version) || {};
                             showToast(
                                 'Wersja robocza zapisana' +
@@ -236,11 +250,14 @@ async function importStudnieFromExcel(event, opts) {
                                     } catch (_e) {
                                         precoBody = null;
                                     }
-                                    if (!precoRes.ok)
-                                        throw new Error(
+                                    if (!precoRes.ok) {
+                                        const precoError = new Error(
                                             (precoBody && precoBody.error) ||
                                                 'Błąd HTTP ' + precoRes.status
                                         );
+                                        precoError.details = precoBody && precoBody.details;
+                                        throw precoError;
+                                    }
                                     const pv = (precoBody && precoBody.version) || {};
                                     showToast(
                                         'Draft PRECO zapisany' +
@@ -253,15 +270,27 @@ async function importStudnieFromExcel(event, opts) {
                                         'Preco draft import error:',
                                         precoErr
                                     );
-                                    showToast(
-                                        'Błąd zapisu draftu PRECO: ' + precoErr.message,
-                                        'error'
+                                    const issues = window.pricelistXlsx.issuesFromDetails(
+                                        precoErr.details
                                     );
+                                    if (issues.length > 0) {
+                                        window.pricelistXlsx.openImportErrorsModal({ issues });
+                                    } else {
+                                        showToast(
+                                            'Błąd zapisu draftu PRECO: ' + precoErr.message,
+                                            'error'
+                                        );
+                                    }
                                 }
                             }
                         } catch (err) {
                             logger.error('pricelistManager', 'Draft import error:', err);
-                            showToast('Błąd zapisu wersji roboczej: ' + err.message, 'error');
+                            const issues = window.pricelistXlsx.issuesFromDetails(err.details);
+                            if (issues.length > 0) {
+                                window.pricelistXlsx.openImportErrorsModal({ issues });
+                            } else {
+                                showToast('Błąd zapisu wersji roboczej: ' + err.message, 'error');
+                            }
                         }
                         return;
                     }

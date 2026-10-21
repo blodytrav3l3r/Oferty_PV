@@ -95,6 +95,8 @@ export interface VersionDiff {
     sections: Record<string, { added: number; removed: number; changed: number }>;
     /** Top zmian (max 100, sort po |deltaPct| malejąco + tiebreak). */
     changes: VersionDiffChange[];
+    /** Liczba wszystkich zmian przed przycięciem do 100. */
+    totalChanges: number;
     truncated: boolean;
 }
 
@@ -461,7 +463,8 @@ export async function getVersionDiff(id: string, againstId?: string): Promise<Ve
             ? diffPrecoSections(curItems, prevItems, changes)
             : diffSimpleSections(curItems, prevItems, previous?.id ?? '', current.id, changes);
     sortDiffChanges(changes);
-    const truncated = changes.length > DIFF_CHANGES_LIMIT;
+    const totalChanges = changes.length;
+    const truncated = totalChanges > DIFF_CHANGES_LIMIT;
     return {
         version: current.version,
         previousVersion: previous?.version ?? null,
@@ -469,6 +472,7 @@ export async function getVersionDiff(id: string, againstId?: string): Promise<Ve
         to: { id: current.id, version: current.version, seq: current.seq },
         sections,
         changes: changes.slice(0, DIFF_CHANGES_LIMIT),
+        totalChanges,
         truncated
     };
 }

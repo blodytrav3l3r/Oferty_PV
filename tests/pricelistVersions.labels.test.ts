@@ -1,6 +1,6 @@
 /**
  * GET /api/pricelist-versions/labels — etykiety bez cen (dostępne dla zalogowanych).
- * Bez ?ids: tylko ACTIVE/BACKDATE. Z ?ids=a,b,c (max 50): te wersje BEZ filtra
+ * Bez ?ids: tylko APPROVED z effectiveFrom <= now. Z ?ids=a,b,c (max 50): te wersje BEZ filtra
  * statusu (pieczątka archiwalna nie kłamie „legacy"); zły format → 422.
  */
 import request from 'supertest';
@@ -38,7 +38,7 @@ const versions: VRow[] = [
         type: 'rury',
         seq: 2,
         version: 'v2-20200102',
-        status: 'ACTIVE',
+        status: 'APPROVED',
         effectiveFrom: '2020-01-02T00:00:00.000Z'
     },
     {
@@ -46,7 +46,7 @@ const versions: VRow[] = [
         type: 'rury',
         seq: 1,
         version: 'v1-20200101',
-        status: 'ARCHIVED',
+        status: 'APPROVED',
         effectiveFrom: '2020-01-01T00:00:00.000Z'
     },
     {
@@ -73,8 +73,11 @@ const versionDelegate = {
             lastWhere = where;
             let out = [...versions];
             if (where?.type !== undefined) out = out.filter((v) => v.type === where.type);
-            const status = (where as { status?: { in: string[] } })?.status;
-            if (status !== undefined) out = out.filter((v) => status.in.includes(v.status));
+            const status = where?.status as string | { in: string[] } | undefined;
+            if (typeof status === 'string') out = out.filter((v) => v.status === status);
+            else if (status !== undefined) out = out.filter((v) => status.in.includes(v.status));
+            const ef = (where as { effectiveFrom?: { lte: string } })?.effectiveFrom;
+            if (ef?.lte !== undefined) out = out.filter((v) => v.effectiveFrom <= ef.lte);
             const idIn = (where as { id?: { in: string[] } })?.id;
             if (idIn !== undefined) out = out.filter((v) => idIn.in.includes(v.id));
             // Prisma select: zwraca tylko wybrane pola (tu: 5 bez cen).
@@ -108,19 +111,23 @@ beforeEach(() => {
 });
 
 describe('GET /api/pricelist-versions/labels', () => {
-    test('bez ids: tylko ACTIVE/BACKDATE (archiwalna ukryta, jak dziś)', async () => {
+    test('bez ids: tylko APPROVED z effectiveFrom <= now (starsza też wraca)', async () => {
         const res = await request(app).get('/api/pricelist-versions/labels?type=rury');
         expect(res.status).toBe(200);
         const ids = (res.body.versions as VRow[]).map((v) => v.id);
         expect(ids).toContain('rury-active');
-        expect(ids).not.toContain('rury-arch');
+        expect(ids).toContain('rury-arch');
         expect(ids).not.toContain('rury-draft');
-        expect(lastWhere).toEqual({ type: 'rury', status: { in: ['ACTIVE', 'BACKDATE'] } });
+        expect(lastWhere).toMatchObject({
+            type: 'rury',
+            status: 'APPROVED',
+            effectiveFrom: { lte: expect.any(String) }
+        });
     });
 
-    test('z ids: zwraca ARCHIVED bez filtra statusu (te same 5 pól, bez cen)', async () => {
+    test('z ids: zwraca APPROVED (te same 5 pól, bez cen)', async () => {
         const res = await request(app).get(
-            '/api/pricelist-versions/labels?type=rury&ids=rury-arch,rury-active'
+            '/api/pricelist-versions/labels?type=rury&ids=rury-arch,rury-active,rury-draft'
         );
         expect(res.status).toBe(200);
         const got = res.body.versions as VRow[];
@@ -130,7 +137,11 @@ describe('GET /api/pricelist-versions/labels', () => {
                 ['effectiveFrom', 'id', 'seq', 'type', 'version'].sort()
             );
         }
-        expect(lastWhere).toEqual({ type: 'rury', id: { in: ['rury-arch', 'rury-active'] } });
+        expect(lastWhere).toEqual({
+            type: 'rury',
+            status: 'APPROVED',
+            id: { in: ['rury-arch', 'rury-active', 'rury-draft'] }
+        });
     });
 
     test('zły format ids → 422 (puste, duplikat przecinka, >50)', async () => {

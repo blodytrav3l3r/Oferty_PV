@@ -2,7 +2,7 @@
 /**
  * backfill-pricelist-v1.ts (F2 — Expand & Contract, krok 2).
  *
- * Tworzy seq:1 v1 ACTIVE (effectiveFrom=now) z tabel LIVE per typ
+ * Tworzy seq:1 v1 APPROVED (effectiveFrom=now) z tabel LIVE per typ
  * (rury, studnie, preco) — wstawianie przez chunkedCreateMany/25.
  *
  * URUCHAMIANIE RĘCZNE (nie w migracji, nie przy starcie):
@@ -87,7 +87,7 @@ async function main(): Promise<void> {
                 type,
                 seq: 1,
                 version: 'v1',
-                status: 'ACTIVE',
+                status: 'APPROVED',
                 effectiveFrom: nowIso,
                 createdBy: 'backfill',
                 note: 'Backfill v1.0.0 z LIVE (F2)',
@@ -95,7 +95,7 @@ async function main(): Promise<void> {
                 createdAt: nowIso
             }
         });
-        console.log(`[backfill] ${type}: v1 ACTIVE, wierszy=${count}, effectiveFrom=${nowIso}`);
+        console.log(`[backfill] ${type}: v1 APPROVED, wierszy=${count}, effectiveFrom=${nowIso}`);
     }
 }
 

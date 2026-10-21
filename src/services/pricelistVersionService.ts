@@ -35,14 +35,14 @@ export {
     createDraft,
     versionLabel,
     updateDraft,
+    approveVersion,
     publishDraft,
     activate,
     applyBackdate,
-    activateDue,
     deleteVersion,
     cloneAsDraft
 } from './pricelist/lifecycle';
-export type { ActivateDueResult, CloneDraftOptions } from './pricelist/lifecycle';
+export type { ApproveVersionOptions, CloneDraftOptions } from './pricelist/lifecycle';
 
 export {
     RURY_LIVE_COLUMNS,

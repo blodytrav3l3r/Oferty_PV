@@ -37,13 +37,13 @@ describe('frontend: PRECO użycie i usuwanie', () => {
     it('usedByCell rozróżnia wersje studni od ofert', () => {
         expect(panel).toContain("v.usedByKind === 'studnieVersions' ? 'wersji studni'");
     });
-    it('deleteReason blokuje PRECO z referencjami przed isDeletable', () => {
+    it('deleteReason blokuje PRECO z referencjami przed sprawdzeniem stanu', () => {
         const reason = panel.slice(
             panel.indexOf('function deleteReason'),
             panel.indexOf('function renderRows')
         );
         expect(reason.indexOf("v.usedByKind === 'studnieVersions'")).toBeLessThan(
-            reason.indexOf('isDeletable(v.status)')
+            reason.indexOf("if (state === 'DRAFT') return null;")
         );
         expect(reason).toContain("'Używana przez ' + v.usedBy + ' wersji studni'");
     });
@@ -69,7 +69,7 @@ describe('frontend: deduplikacja DRAFT PRECO', () => {
     });
     it('identyczne rows + data → PUT istniejącej wersji roboczej', () => {
         expect(panel).toContain('findIdenticalPrecoDraft(rows, effectiveFrom)');
-        expect(panel).toContain("PRECO_DEDUP_STATUSES = ['DRAFT', 'SCHEDULED']");
+        expect(panel).toContain("PRECO_DEDUP_STATUSES = ['DRAFT']");
         expect(panel).toContain('PRECO_DEDUP_STATUSES.indexOf(v.status) === -1');
         expect(panel).toContain("authed(draftId ? 'PUT' : 'POST', payload)");
     });

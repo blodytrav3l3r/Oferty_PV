@@ -232,6 +232,20 @@ describe('Etap E: rury — modal po parsowaniu', () => {
         expect(err[0]).toContain('pusty lub ma zły format');
     });
 
+    test('S3: błąd komórki → modal błędów, zero zapisu i zero modala celu', async () => {
+        const rows = [{ Indeks: 'R1', 'Nazwa produktu': 'Rura A', 'Cena PLN (netto)': 'abc' }];
+        const { sb } = loadRury(undefined, { Arkusz1: rows });
+        const ev = xlsxEvent();
+        await sb.importRuryFromExcel(ev);
+        await flush();
+        expect(sb.window.showModal).toHaveBeenCalledTimes(1);
+        expect(sb.window.showModal.mock.calls[0][0].id).toBe('px-import-errors-modal');
+        expect(sb.window.showModal.mock.calls[0][0].html).toContain('Nieprawidłowa liczba');
+        expect(sb.fetch).not.toHaveBeenCalled();
+        expect(sb.products).toEqual([]);
+        expect(ev.target.value).toBe('');
+    });
+
     test('jawny opts.target (Etap D): bez modala, routing jak dziś', async () => {
         const { sb } = loadRury(async (url, opts) => ({
             ok: true,

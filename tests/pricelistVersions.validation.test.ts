@@ -174,6 +174,12 @@ describe('PUT /:id walidacja', () => {
             .send({ rows: [{ bogus: 1 }] });
         expect(res.status).toBe(422);
         expect(res.body.code).toBe('INVALID_ROWS');
+        expect(Array.isArray(res.body.details)).toBe(true);
+        expect(res.body.details[0]).toMatchObject({
+            section: 'rury',
+            row: 2,
+            field: 'id'
+        });
     });
 
     test('sama nota → 200, trim po stronie serwisu', async () => {

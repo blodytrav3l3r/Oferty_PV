@@ -60,6 +60,8 @@ data/watchdog.last
 /*.sqlite*
 /*.db
 prisma/data/
+/prisma/*.sqlite*
+/prisma/*.db
 
 # Generated
 /generated/prisma

@@ -142,7 +142,7 @@ function version(partial: Partial<VRow> & Pick<VRow, 'id' | 'type'>): VRow {
     return {
         seq: 1,
         version: 'v1',
-        status: 'ACTIVE',
+        status: 'APPROVED',
         effectiveFrom: '2026-01-01T00:00:00.000Z',
         sha256: 'sha',
         ...partial
@@ -165,7 +165,7 @@ beforeEach(() => {
             seq: 1,
             effectiveFrom: '2025-01-01T00:00:00.000Z'
         }),
-        version({ id: 'preco-1', type: 'preco', status: 'ACTIVE' }),
+        version({ id: 'preco-1', type: 'preco', status: 'APPROVED' }),
         version({ id: 'empty-1', type: 'rury', seq: 9 })
     ];
     itemsRury = [
@@ -293,7 +293,7 @@ describe('GET /api/pricelist-versions/:id/preview — kształt', () => {
         expect(res.body.precoVersion).toBeNull();
     });
 
-    test('studnie: DRAFT/SCHEDULED/BACKDATE_REQUESTED PRECO nie są referencją (D1)', async () => {
+    test('studnie: DRAFT PRECO nie jest referencją (D1)', async () => {
         versions = versions.filter((v) => v.id !== 'preco-1');
         versions.push(
             version({
@@ -312,14 +312,14 @@ describe('GET /api/pricelist-versions/:id/preview — kształt', () => {
             version({
                 id: 'preco-scheduled',
                 type: 'preco',
-                status: 'SCHEDULED',
+                status: 'DRAFT',
                 seq: 3,
                 effectiveFrom: '2026-01-01T00:00:00.000Z'
             }),
             version({
                 id: 'preco-bdr',
                 type: 'preco',
-                status: 'BACKDATE_REQUESTED',
+                status: 'DRAFT',
                 seq: 4,
                 effectiveFrom: '2026-01-01T00:00:00.000Z'
             })

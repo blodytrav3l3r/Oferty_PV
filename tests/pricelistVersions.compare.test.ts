@@ -299,6 +299,7 @@ describe('GET /:id/diff — cap, deltaPct i zmiany nie-cenowe', () => {
         const res = await request(app).get('/api/pricelist-versions/rury-big2/diff').set(ADMIN);
         expect(res.status).toBe(200);
         expect(res.body.changes).toHaveLength(100);
+        expect(res.body.totalChanges).toBe(150);
         expect(res.body.changes[0].deltaPct).toBe(50);
         expect(
             res.body.changes.every((c: { deltaPct: number | null }) => c.deltaPct !== null)

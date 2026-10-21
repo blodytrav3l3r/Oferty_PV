@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="pl">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>{{APP_NAME}} — Cenniki</title>
+        <link rel="stylesheet" href="css/style.base.css?v=1.47.0" />
+        <link rel="stylesheet" href="css/style.cards.css?v=1.47.0" />
+        <link rel="stylesheet" href="css/style.responsive.css?v=1.47.0" />
+        <link rel="stylesheet" href="css/style.utilities.css?v=1.47.0" />
+        <link rel="stylesheet" href="css/cenniki.css?v=1.47.0" />
+        <script defer src="js/shared/auth.js?v=1.47.0"></script>
+        <script defer src="js/shared/cspActions.js?v=1.47.0"></script>
+        <script defer src="js/shared/constants.js?v=1.47.0"></script>
+        <script defer src="js/shared/ui.js?v=1.47.0"></script>
+        <script defer src="js/shared/theme.js?v=1.47.0"></script>
+        <script type="module" src="js/shared/escapeHtml.js?v=1.47.0"></script>
+        <script type="module" src="js/shared/modalCore.js?v=1.47.0"></script>
+        <script type="module" src="js/shared/toast.js?v=1.47.0"></script>
+        <script defer src="js/shared/pricelistVersions.js?v=1.47.0"></script>
+        <script defer src="js/shared/pricelistVersionPreview.js?v=1.47.0"></script>
+        <script type="module" src="js/cennikiHub.js?v=1.47.0"></script>
+    </head>
+    <body class="cenniki-page">
+        <main class="cenniki-shell" aria-labelledby="cenniki-title">
+            <header class="cenniki-header">
+                <div>
+                    <p class="cenniki-eyebrow">Cenniki</p>
+                    <h1 id="cenniki-title">Centrum wersji cenników</h1>
+                    <p class="text-muted">
+                        Przegląd, cennik bieżący i historia w jednym miejscu. Operacje zapisu
+                        pozostają w edytorach modułów.
+                    </p>
+                </div>
+                <button class="btn btn-secondary" data-cenniki-refresh>Odśwież</button>
+            </header>
+
+            <div id="cenniki-alert" role="status" aria-live="polite"></div>
+
+            <section id="cenniki-przeglad" class="cenniki-view" data-cenniki-view="przeglad">
+                <div id="cenniki-cards" class="cenniki-cards"></div>
+            </section>
+
+            <section id="cenniki-cennik" class="cenniki-view" data-cenniki-view="cennik" hidden>
+                <div class="cenniki-toolbar">
+                    <label for="cenniki-type">Typ cennika</label>
+                    <select id="cenniki-type" class="form-input">
+                        <option value="rury">Rury</option>
+                        <option value="studnie">Studnie</option>
+                        <option value="preco">PRECO</option>
+                    </select>
+                    <a id="cenniki-editor-link" class="btn btn-secondary" href="rury.html">
+                        Otwórz edytor
+                    </a>
+                </div>
+                <div id="cenniki-current" class="cenniki-current"></div>
+            </section>
+
+            <section id="cenniki-historia" class="cenniki-view" data-cenniki-view="historia" hidden>
+                <div class="cenniki-toolbar">
+                    <label for="cenniki-history-type">Typ</label>
+                    <select id="cenniki-history-type" class="form-input">
+                        <option value="">Wszystkie</option>
+                        <option value="rury">Rury</option>
+                        <option value="studnie">Studnie</option>
+                        <option value="preco">PRECO</option>
+                    </select>
+                    <label for="cenniki-history-state">Stan</label>
+                    <select id="cenniki-history-state" class="form-input">
+                        <option value="">Wszystkie</option>
+                        <option value="DRAFT">Szkic</option>
+                        <option value="SCHEDULED">Zaplanowana</option>
+                        <option value="ACTIVE">Obowiązuje</option>
+                        <option value="BACKDATE">Obowiązuje (korekta)</option>
+                        <option value="BACKDATE_REQUESTED">Szkic (korekta)</option>
+                        <option value="ARCHIVED">Archiwalna</option>
+                    </select>
+                    <span id="cenniki-history-count" class="text-muted"></span>
+                </div>
+                <div class="cenniki-table-wrap">
+                    <table class="cenniki-table">
+                        <thead>
+                            <tr>
+                                <th>Typ</th>
+                                <th>Wersja</th>
+                                <th>Stan</th>
+                                <th>Obowiązuje od</th>
+                                <th>Autor</th>
+                                <th>Nota</th>
+                                <th>Użycie</th>
+                                <th>Kontrola</th>
+                                <th>Akcje</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cenniki-history-body"></tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </body>
+</html>

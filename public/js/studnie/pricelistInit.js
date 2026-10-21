@@ -35,6 +35,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     try {
         window.studnieProducts = await loadStudnieProducts({ source: 'active' });
+        await loadPrecoPricing({ source: 'active' });
         try {
             window.__studnieProductsSettled = true;
         } catch (_) {}

@@ -1,0 +1,198 @@
+.cenniki-page {
+    min-height: 100vh;
+    background: transparent;
+}
+
+.cenniki-shell {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    padding: 1.25rem;
+    max-width: 1280px;
+    margin: 0 auto;
+}
+
+.cenniki-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.cenniki-eyebrow {
+    margin: 0;
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted, #94a3b8);
+}
+
+.cenniki-header h1 {
+    margin: 0.15rem 0 0.35rem;
+    font-size: clamp(1.35rem, 2.2vw, 1.9rem);
+}
+
+.cenniki-view[hidden] {
+    display: none !important;
+}
+
+.cenniki-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1rem;
+}
+
+.cenniki-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    padding: 1rem;
+    border: 1px solid var(--border-color, #334155);
+    border-radius: 0.85rem;
+    background: var(--bg-secondary, #111827);
+}
+
+.cenniki-card h2 {
+    margin: 0;
+    font-size: 1.05rem;
+}
+
+.cenniki-card dl {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem;
+    margin: 0;
+}
+
+.cenniki-card dt {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-muted, #94a3b8);
+}
+
+.cenniki-card dd {
+    margin: 0.1rem 0 0;
+    font-weight: 600;
+}
+
+.cenniki-card-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: auto;
+}
+
+.cenniki-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.65rem;
+    margin-bottom: 0.85rem;
+}
+
+.cenniki-toolbar label {
+    font-size: 0.82rem;
+    color: var(--text-muted, #94a3b8);
+}
+
+.cenniki-current {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.cenniki-table-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--border-color, #334155);
+    border-radius: 0.85rem;
+}
+
+.cenniki-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+}
+
+.cenniki-table th,
+.cenniki-table td {
+    padding: 0.6rem 0.7rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color, #334155);
+    vertical-align: middle;
+}
+
+.cenniki-table th {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-muted, #94a3b8);
+}
+
+.cenniki-table tr:last-child td {
+    border-bottom: 0;
+}
+
+.cenniki-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+}
+
+.cenniki-note {
+    display: inline-block;
+    max-width: 18rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: bottom;
+}
+
+.cenniki-warning {
+    padding: 0.6rem 0.75rem;
+    border-radius: 0.6rem;
+    border: 1px solid #b45309;
+    background: rgba(180, 83, 9, 0.12);
+    color: inherit;
+    font-size: 0.85rem;
+}
+
+.cenniki-empty {
+    padding: 1rem;
+    text-align: center;
+    color: var(--text-muted, #94a3b8);
+}
+
+.checks-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.checks-box {
+    padding: 0.75rem;
+    border: 1px solid var(--border-color, #334155);
+    border-radius: 0.65rem;
+}
+
+.checks-box h4 {
+    margin: 0 0 0.35rem;
+    font-size: 0.85rem;
+}
+
+.checks-box p {
+    margin: 0.15rem 0;
+    font-size: 0.85rem;
+}
+
+@media (max-width: 640px) {
+    .cenniki-shell {
+        padding: 0.85rem;
+    }
+
+    .cenniki-card dl {
+        grid-template-columns: 1fr;
+    }
+}

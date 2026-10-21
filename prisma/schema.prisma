@@ -965,7 +965,9 @@ model user_preferences {
 // ─── F1: Wersjonowanie cenników (Expand & Contract) ─────────────────────
 // Stare tabele LIVE + *_Default działają do Contract (F1 ich nie rusza).
 // seq = źródło prawdy (int per type), version = labelka pochodna (v{seq}).
-// Status = lifecycle techniczny, effectiveFrom = historia biznesowa.
+// Status zapisany: DRAFT | APPROVED. SCHEDULED/ACTIVE/ARCHIVED są WYLICZANE
+// z effectiveFrom (partial unique poniżej: tylko APPROVED zajmuje oś czasu).
+// approvedBy/approvedAt zapisuje approve; approvalStatus jest deprecated (DROP poza v1).
 model PricelistVersion {
   id             String  @id
   type           String
@@ -979,6 +981,7 @@ model PricelistVersion {
   createdAt      String?
   approvedBy     String?
   approvedAt     String?
+  /// @deprecated nie zapisywać — pole zostaje do rebuild tabeli (O5)
   approvalStatus String?
 
   // FK siatka (PricelistItem* -> PricelistVersion, Restrict).

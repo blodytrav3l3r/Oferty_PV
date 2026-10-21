@@ -350,3 +350,98 @@ describe('pricelistXlsx: kontrakt z callerami (Etap B)', () => {
         }
     });
 });
+
+describe('pricelistXlsx: błędy per-komórka (S3)', () => {
+    const headerToKey = {
+        Indeks: 'id',
+        'Nazwa produktu': 'name',
+        'Cena PLN (netto)': 'price'
+    };
+
+    test('normalizeRows raportuje wiersz/kolumnę/powód, nie tylko skip', () => {
+        const { PX } = loadPX();
+        const issues = [];
+        PX.normalizeRows(
+            [
+                { Indeks: 'R1', 'Nazwa produktu': 'A', 'Cena PLN (netto)': 'abc' },
+                { Indeks: 'R2', 'Nazwa produktu': '', 'Cena PLN (netto)': 10 },
+                { Indeks: 'R3', 'Nazwa produktu': 'C', 'Cena PLN (netto)': 10 },
+                { Indeks: 'R3', 'Nazwa produktu': 'D', 'Cena PLN (netto)': 10 }
+            ],
+            {
+                headerToKey,
+                numericFields: ['price'],
+                onIssue: (index, field, reason) =>
+                    issues.push(PX.importIssue(index, field, reason, headerToKey))
+            }
+        );
+        expect(issues).toEqual([
+            { row: 2, column: 'Cena PLN (netto)', field: 'price', message: 'Nieprawidłowa liczba' },
+            { row: 3, column: 'Nazwa produktu', field: 'name', message: 'Brak nazwy' },
+            { row: 5, column: 'Indeks', field: 'id', message: 'Zduplikowany indeks' }
+        ]);
+    });
+
+    test('importIssue: nagłówek XLSX + offset 2, fallback na pole', () => {
+        const { PX } = loadPX();
+        expect(PX.importIssue(0, 'id', 'missing-id', headerToKey)).toEqual({
+            row: 2,
+            column: 'Indeks',
+            field: 'id',
+            message: 'Brak indeksu'
+        });
+        expect(PX.importIssue(4, 'nieznane', 'custom', {})).toMatchObject({
+            row: 6,
+            column: 'nieznane',
+            message: 'custom'
+        });
+    });
+
+    test('issuesFromDetails: 422 details → lista dla modala, odporne na śmieci', () => {
+        const { PX } = loadPX();
+        expect(
+            PX.issuesFromDetails([{ row: 7, column: 'Indeks', message: 'Brak indeksu' }, null])
+        ).toEqual([
+            { row: 7, column: 'Indeks', message: 'Brak indeksu' },
+            { row: undefined, column: undefined, message: undefined }
+        ]);
+        expect(PX.issuesFromDetails(undefined)).toEqual([]);
+    });
+
+    test('openImportErrorsModal: cap 100, escape HTML, zamknięcie', () => {
+        const code = fs.readFileSync(
+            path.join(ROOT, 'public', 'js', 'shared', 'pricelistXlsx.js'),
+            'utf8'
+        );
+        const handlers = {};
+        const sandbox = {
+            window: {
+                showModal: jest.fn(),
+                closeModal: jest.fn()
+            },
+            document: {
+                getElementById: (id) => ({
+                    addEventListener: (ev, fn) => (handlers[id] = fn)
+                })
+            }
+        };
+        vm.createContext(sandbox);
+        vm.runInContext(code, sandbox, { filename: 'pricelistXlsx.js' });
+        const issues = Array.from({ length: 101 }, (_, i) => ({
+            row: i + 2,
+            column: '<b>Indeks</b>',
+            message: 'Brak indeksu'
+        }));
+        const onClose = jest.fn();
+        sandbox.window.pricelistXlsx.openImportErrorsModal({ issues, onClose });
+
+        const opts = sandbox.window.showModal.mock.calls[0][0];
+        const html = opts.html;
+        expect(opts.id).toBe('px-import-errors-modal');
+        expect(html).toContain('&lt;b&gt;Indeks&lt;/b&gt;');
+        expect(html).toContain('Pokazano 100 z 101');
+        handlers['px-import-errors-close']();
+        expect(onClose).toHaveBeenCalledTimes(1);
+        expect(sandbox.window.closeModal).toHaveBeenCalledWith('px-import-errors-modal');
+    });
+});

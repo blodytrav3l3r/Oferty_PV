@@ -144,7 +144,7 @@ function version(partial: Partial<VRow> & Pick<VRow, 'id' | 'type'>): VRow {
     return {
         seq: 1,
         version: 'v1',
-        status: 'ACTIVE',
+        status: 'APPROVED',
         effectiveFrom: '2020-01-01T00:00:00.000Z',
         ...partial
     };
@@ -172,7 +172,7 @@ describe('GET /api/pricelist-versions/summary — dostęp', () => {
 });
 
 describe('GET /api/pricelist-versions/summary — kształt', () => {
-    test('3 typy: active = najnowsza ACTIVE/BACKDATE <= now, nextScheduled = najwcześniejsza przyszła', async () => {
+    test('3 typy: active = najnowsza APPROVED <= now, nextScheduled = najwcześniejsza przyszła APPROVED', async () => {
         versions = [
             version({ id: 'r-old', type: 'rury', seq: 1, effectiveFrom: '2020-01-01T00:00:00Z' }),
             version({ id: 'r-new', type: 'rury', seq: 2, effectiveFrom: '2021-01-01T00:00:00Z' }),
@@ -199,35 +199,35 @@ describe('GET /api/pricelist-versions/summary — kształt', () => {
                 id: 'r-sched-past',
                 type: 'rury',
                 seq: 4,
-                status: 'SCHEDULED',
+                status: 'APPROVED',
                 effectiveFrom: '2020-06-01T00:00:00Z'
             }),
             version({
                 id: 'r-sched-late',
                 type: 'rury',
                 seq: 5,
-                status: 'SCHEDULED',
+                status: 'APPROVED',
                 effectiveFrom: '2999-02-01T00:00:00Z'
             }),
             version({
                 id: 'r-sched-early',
                 type: 'rury',
                 seq: 2,
-                status: 'SCHEDULED',
+                status: 'APPROVED',
                 effectiveFrom: '2999-01-01T00:00:00Z'
             }),
             version({
                 id: 's-active',
                 type: 'studnie',
                 seq: 1,
-                status: 'BACKDATE',
+                status: 'APPROVED',
                 effectiveFrom: '2021-01-01T00:00:00Z'
             }),
             version({
                 id: 's-sched',
                 type: 'studnie',
                 seq: 2,
-                status: 'SCHEDULED',
+                status: 'APPROVED',
                 effectiveFrom: '2999-03-01T00:00:00Z'
             }),
             version({
@@ -240,7 +240,7 @@ describe('GET /api/pricelist-versions/summary — kształt', () => {
                 id: 'p-sched',
                 type: 'preco',
                 seq: 2,
-                status: 'SCHEDULED',
+                status: 'APPROVED',
                 effectiveFrom: '2999-04-01T00:00:00Z'
             })
         ];
@@ -257,14 +257,16 @@ describe('GET /api/pricelist-versions/summary — kształt', () => {
             version: 'v1',
             seq: 2,
             effectiveFrom: '2021-01-01T00:00:00Z',
-            status: 'ACTIVE'
+            status: 'APPROVED',
+            state: 'ACTIVE'
         });
         expect(res.body.types.rury.nextScheduled).toEqual({
-            id: 'r-sched-early',
+            id: 'r-active-2998',
             version: 'v1',
-            seq: 2,
-            effectiveFrom: '2999-01-01T00:00:00Z',
-            status: 'SCHEDULED'
+            seq: 7,
+            effectiveFrom: '2998-01-01T00:00:00Z',
+            status: 'APPROVED',
+            state: 'SCHEDULED'
         });
         expect(res.body.types.studnie.active.id).toBe('s-active');
         expect(res.body.types.studnie.nextScheduled.id).toBe('s-sched');
@@ -274,6 +276,7 @@ describe('GET /api/pricelist-versions/summary — kształt', () => {
             'effectiveFrom',
             'id',
             'seq',
+            'state',
             'status',
             'version'
         ]);
@@ -283,7 +286,13 @@ describe('GET /api/pricelist-versions/summary — kształt', () => {
         const res = await request(app).get('/api/pricelist-versions/summary').set(ADMIN);
         expect(res.status).toBe(200);
         for (const type of ['rury', 'studnie', 'preco']) {
-            expect(res.body.types[type]).toEqual({ active: null, nextScheduled: null });
+            expect(res.body.types[type]).toEqual({
+                active: null,
+                nextScheduled: null,
+                draftCount: 0,
+                approvedCount: 0,
+                collisionCount: 0
+            });
         }
     });
 
@@ -316,7 +325,8 @@ describe('GET /api/pricelist-versions/ — batch PRECO', () => {
 
         expect(byId.get('p1')).toMatchObject({
             usedBy: 1,
-            usedByKind: 'studnieVersions'
+            usedByKind: 'studnieVersions',
+            state: 'ACTIVE'
         });
         expect(byId.get('p2')).toMatchObject({
             usedBy: 0,

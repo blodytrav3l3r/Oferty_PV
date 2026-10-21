@@ -425,11 +425,17 @@ async function importRuryFromExcel(event, opts) {
             }
 
             const numericFields = ['price', 'weight', 'transport', 'area'];
+            const importIssues = [];
             const normalized = window.pricelistXlsx.normalizeRows(json, {
                 headerToKey: RURY_HEADER_TO_KEY,
                 numericFields,
                 preValidate: (product) => {
                     product.category = String(product.category || '').trim() || 'Inne';
+                },
+                onIssue: (index, field, reason) => {
+                    importIssues.push(
+                        window.pricelistXlsx.importIssue(index, field, reason, RURY_HEADER_TO_KEY)
+                    );
                 },
                 onSkip: (index, reason, product) => {
                     if (reason === 'duplicate-id') {
@@ -445,6 +451,11 @@ async function importRuryFromExcel(event, opts) {
                     }
                 }
             });
+
+            if (importIssues.length > 0) {
+                window.pricelistXlsx.openImportErrorsModal({ issues: importIssues });
+                return;
+            }
 
             if (normalized.length === 0) {
                 showToast('Brak prawidłowych wierszy do importu (sprawdź Indeks i Nazwę)', 'error');
@@ -487,10 +498,15 @@ async function importRuryFromExcel(event, opts) {
                             } catch (_e) {
                                 draftBody = null;
                             }
-                            if (!draftRes.ok)
-                                throw new Error(
-                                    (draftBody && draftBody.error) || 'Błąd HTTP ' + draftRes.status
+                            if (!draftRes.ok) {
+                                throw Object.assign(
+                                    new Error(
+                                        (draftBody && draftBody.error) ||
+                                            'Błąd HTTP ' + draftRes.status
+                                    ),
+                                    { details: draftBody && draftBody.details }
                                 );
+                            }
                             const v = (draftBody && draftBody.version) || {};
                             showToast(
                                 'Wersja robocza zapisana' +
@@ -499,7 +515,12 @@ async function importRuryFromExcel(event, opts) {
                             );
                         } catch (err) {
                             logger.error('pricelistUi', 'Draft import error:', err);
-                            showToast('Błąd zapisu wersji roboczej: ' + err.message, 'error');
+                            const issues = window.pricelistXlsx.issuesFromDetails(err.details);
+                            if (issues.length > 0) {
+                                window.pricelistXlsx.openImportErrorsModal({ issues });
+                            } else {
+                                showToast('Błąd zapisu wersji roboczej: ' + err.message, 'error');
+                            }
                         }
                         return;
                     }

@@ -208,7 +208,7 @@ jest.mock('../src/utils/logger', () => ({
 
 import {
     createDraft,
-    activateDue,
+    approveVersion,
     resolveActive,
     resolveActivePricing,
     resolveVersionIdSafe,
@@ -221,6 +221,14 @@ const rura = (id: string, price = 100) => ({
     category: 'Rury Betonowe',
     price
 });
+
+/** Odpowiednik dawnego crona: zatwierdza wszystkie DRAFTy z datą <= teraz. */
+async function activateDue(): Promise<void> {
+    const nowIso = new Date().toISOString();
+    for (const v of [...versions]) {
+        if (v.status === 'DRAFT' && v.effectiveFrom <= nowIso) await approveVersion(v.id);
+    }
+}
 
 beforeEach(() => {
     versions.length = 0;

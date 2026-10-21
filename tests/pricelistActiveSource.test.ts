@@ -1,5 +1,5 @@
 /**
- * Paczka 1: GET cenników z ?source=active czyta ceny z wersji ACTIVE
+ * Paczka 1: GET cenników z ?source=active czyta ceny z wersji APPROVED
  * przez centralny resolveActivePricing (kształt legacy 1:1 z GET live).
  * Brak ACTIVE → LIVE + X-Pricelist-Fallback: live; zły source → 422.
  * Zwykły GET bez source bez zmian. Edycja LIVE po aktywacji nie rusza active.
@@ -148,7 +148,7 @@ function seedAll(): void {
         type: 'rury',
         seq: 1,
         version: 'v1',
-        status: 'ACTIVE',
+        status: 'APPROVED',
         effectiveFrom: EFF,
         sha256: 'x'
     });
@@ -179,7 +179,7 @@ function seedAll(): void {
         type: 'studnie',
         seq: 1,
         version: 'v1',
-        status: 'ACTIVE',
+        status: 'APPROVED',
         effectiveFrom: EFF,
         sha256: 'x'
     });
@@ -226,7 +226,7 @@ function seedAll(): void {
         type: 'preco',
         seq: 1,
         version: 'v1',
-        status: 'ACTIVE',
+        status: 'APPROVED',
         effectiveFrom: EFF,
         sha256: 'x'
     });
@@ -286,7 +286,7 @@ beforeEach(() => {
     seedAll();
 });
 
-describe('Paczka 1: source=active czyta z ACTIVE', () => {
+describe('Paczka 1: source=active czyta z APPROVED', () => {
     test('rury: active 80 vs live 100; plain GET bez zmian i bez nagłówka', async () => {
         const active = await request(app).get('/api/products?source=active');
         expect(active.status).toBe(200);
@@ -346,7 +346,7 @@ describe('Paczka 1: source=active czyta z ACTIVE', () => {
         expect((await request(app).get('/api/products')).body.data[0].price).toBe(999);
     });
 
-    test('brak ACTIVE → LIVE + X-Pricelist-Fallback: live', async () => {
+    test('brak APPROVED → LIVE + X-Pricelist-Fallback: live', async () => {
         versions.length = 0;
         for (const [url, price] of [
             ['/api/products?source=active', 100],

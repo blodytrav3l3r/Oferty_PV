@@ -215,6 +215,7 @@ import {
     updateDraft
 } from '../src/services/pricelistVersionService';
 import { ACTIVE_UPDATED_AT_KEY } from '../src/services/pricelist/lifecycle';
+import { deriveState } from '../src/services/pricelist/validation';
 
 const rura = (id: string, price = 100) => ({
     id,
@@ -232,13 +233,13 @@ beforeEach(() => {
 });
 
 describe('publishDraft — domknięcie ślepej uliczki DRAFT', () => {
-    test('DRAFT z przyszłą datą → SCHEDULED + audit PUBLISH', async () => {
+    test('DRAFT z przyszłą datą → APPROVED (SCHEDULED) + audit APPROVE', async () => {
         versions.push({
             id: 'rury-seed-1',
             type: 'rury',
             seq: 1,
             version: 'v1-20260801',
-            status: 'ACTIVE',
+            status: 'APPROVED',
             effectiveFrom: '2026-08-01T00:00:00.000Z',
             sha256: 'seed'
         });
@@ -246,25 +247,27 @@ describe('publishDraft — domknięcie ślepej uliczki DRAFT', () => {
             id: 'draft-1',
             type: 'rury',
             seq: 2,
-            version: 'v2-20260901',
+            version: 'v2-20990101',
             status: 'DRAFT',
-            effectiveFrom: '2026-09-01T00:00:00.000Z',
+            effectiveFrom: '2099-01-01T00:00:00.000Z',
             sha256: 'draft'
         };
         versions.push({ ...clone });
         const out = await publishDraft('draft-1', { userId: 'admin1' });
-        expect(out.status).toBe('SCHEDULED');
+        expect(out.status).toBe('APPROVED');
+        expect(deriveState(out.status, out.effectiveFrom)).toBe('SCHEDULED');
         expect(audits).toHaveLength(1);
-        expect(audits[0]).toMatchObject({ action: 'PUBLISH' });
+        expect(audits[0]).toMatchObject({ action: 'APPROVE' });
+        expect(settings.has(ACTIVE_UPDATED_AT_KEY)).toBe(false);
     });
 
-    test('DRAFT z przeszłą datą → BACKDATE_REQUESTED', async () => {
+    test('DRAFT z przeszłą datą → APPROVED (ACTIVE) bez noty', async () => {
         versions.push({
             id: 'rury-seed-1',
             type: 'rury',
             seq: 1,
             version: 'v1-20261001',
-            status: 'ACTIVE',
+            status: 'APPROVED',
             effectiveFrom: '2026-10-01T00:00:00.000Z',
             sha256: 'seed'
         });
@@ -278,43 +281,44 @@ describe('publishDraft — domknięcie ślepej uliczki DRAFT', () => {
             sha256: 'draft'
         });
         const out = await publishDraft('draft-1');
-        expect(out.status).toBe('BACKDATE_REQUESTED');
+        expect(out.status).toBe('APPROVED');
+        expect(
+            deriveState(out.status, out.effectiveFrom, new Date('2026-10-21T00:00:00.000Z'))
+        ).toBe('ACTIVE');
     });
 
-    test('nie-DRAFT → 409 PUBLISH_NOT_DRAFT, nic nie ruszone', async () => {
+    test('nie-DRAFT → 409 APPROVE_NOT_DRAFT, nic nie ruszone', async () => {
         versions.push({
             id: 's1',
             type: 'rury',
             seq: 1,
-            version: 'v1-20260901',
-            status: 'SCHEDULED',
-            effectiveFrom: '2026-09-01T00:00:00.000Z',
+            version: 'v1-20990101',
+            status: 'APPROVED',
+            effectiveFrom: '2099-01-01T00:00:00.000Z',
             sha256: 'seed'
         });
         await expect(publishDraft('s1')).rejects.toMatchObject({
             statusCode: 409,
-            code: 'PUBLISH_NOT_DRAFT'
+            code: 'APPROVE_NOT_DRAFT'
         });
         expect(audits).toHaveLength(0);
     });
 
-    test('pełny łańcuch klon → publish → activate', async () => {
+    test('pełny łańcuch klon → publish → stan ACTIVE po dacie', async () => {
         versions.push({
             id: 'draft-1',
             type: 'rury',
             seq: 1,
-            version: 'v1-20260901',
+            version: 'v1-20990101',
             status: 'DRAFT',
-            effectiveFrom: '2026-09-01T00:00:00.000Z',
+            effectiveFrom: '2099-01-01T00:00:00.000Z',
             sha256: 'draft'
         });
         const pub = await publishDraft('draft-1');
-        expect(pub.status).toBe('SCHEDULED');
-        jest.useFakeTimers();
-        jest.setSystemTime(new Date('2026-10-01T00:00:00.000Z'));
-        const active = await activate('draft-1');
-        jest.useRealTimers();
-        expect(active.status).toBe('ACTIVE');
+        expect(pub.status).toBe('APPROVED');
+        expect(
+            deriveState(pub.status, pub.effectiveFrom, new Date('2099-02-01T00:00:00.000Z'))
+        ).toBe('ACTIVE');
     });
 });
 

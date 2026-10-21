@@ -11,7 +11,7 @@ function preco(
 }
 
 describe('D1: pickPrecoVersionFromTimeline', () => {
-    it.each(['DRAFT', 'SCHEDULED', 'BACKDATE_REQUESTED'])('pomija status %s', (status) => {
+    it.each(['DRAFT'])('pomija status %s', (status) => {
         const picked = pickPrecoVersionFromTimeline(
             { effectiveFrom: '2026-02-01T00:00:00.000Z', seq: 5 },
             [preco('p1', 1, status, '2026-01-01T00:00:00.000Z')]
@@ -19,7 +19,7 @@ describe('D1: pickPrecoVersionFromTimeline', () => {
         expect(picked).toBeNull();
     });
 
-    it.each(['ACTIVE', 'BACKDATE', 'ARCHIVED'])('bierze status %s', (status) => {
+    it.each(['APPROVED'])('bierze status %s', (status) => {
         const picked = pickPrecoVersionFromTimeline(
             { effectiveFrom: '2026-02-01T00:00:00.000Z', seq: 5 },
             [preco('p1', 1, status, '2026-01-01T00:00:00.000Z')]
@@ -31,9 +31,9 @@ describe('D1: pickPrecoVersionFromTimeline', () => {
         const picked = pickPrecoVersionFromTimeline(
             { effectiveFrom: '2026-03-01T00:00:00.000Z', seq: 9 },
             [
-                preco('old', 1, 'ARCHIVED', '2026-01-01T00:00:00.000Z'),
-                preco('new-low', 2, 'ACTIVE', '2026-02-01T00:00:00.000Z'),
-                preco('new-high', 3, 'ACTIVE', '2026-02-01T00:00:00.000Z')
+                preco('old', 1, 'APPROVED', '2026-01-01T00:00:00.000Z'),
+                preco('new-low', 2, 'APPROVED', '2026-02-01T00:00:00.000Z'),
+                preco('new-high', 3, 'APPROVED', '2026-02-01T00:00:00.000Z')
             ]
         );
         expect(picked?.id).toBe('new-high');
@@ -42,7 +42,7 @@ describe('D1: pickPrecoVersionFromTimeline', () => {
     it('nie bierze PRECO z przyszłości', () => {
         const picked = pickPrecoVersionFromTimeline(
             { effectiveFrom: '2026-02-01T00:00:00.000Z', seq: 5 },
-            [preco('future', 9, 'ACTIVE', '2026-03-01T00:00:00.000Z')]
+            [preco('future', 9, 'APPROVED', '2026-03-01T00:00:00.000Z')]
         );
         expect(picked).toBeNull();
     });
@@ -50,8 +50,8 @@ describe('D1: pickPrecoVersionFromTimeline', () => {
     it('legacy bez effectiveFrom → fallback seq <=', () => {
         const picked = pickPrecoVersionFromTimeline({ seq: 5 }, [
             preco('old', 3, 'ARCHIVED'),
-            preco('same', 5, 'ACTIVE'),
-            preco('new', 9, 'ACTIVE')
+            preco('same', 5, 'APPROVED'),
+            preco('new', 9, 'APPROVED')
         ]);
         expect(picked?.id).toBe('same');
     });
@@ -59,7 +59,7 @@ describe('D1: pickPrecoVersionFromTimeline', () => {
     it('bez effectiveFrom studni nie bierze PRECO bez daty, gdy jest data', () => {
         const picked = pickPrecoVersionFromTimeline(
             { effectiveFrom: '2026-02-01T00:00:00.000Z', seq: 5 },
-            [preco('no-date', 1, 'ACTIVE')]
+            [preco('no-date', 1, 'APPROVED')]
         );
         expect(picked).toBeNull();
     });

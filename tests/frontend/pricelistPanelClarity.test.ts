@@ -14,8 +14,8 @@ const panel = fs.readFileSync(
 const topbar = fs.readFileSync(path.join(process.cwd(), 'public/js/versionDisplay.js'), 'utf-8');
 
 describe('frontend: statusy mówią co znaczą', () => {
-    it('BACKDATE_REQUESTED to Robocza-wsteczna (nie mylić ze Wsteczną)', () => {
-        expect(panel).toContain("BACKDATE_REQUESTED: 'Robocza-wsteczna'");
+    it('BACKDATE_REQUESTED to Szkic (korekta) — nie mylić z obowiązującą korektą', () => {
+        expect(panel).toContain("BACKDATE_REQUESTED: 'Szkic (korekta)'");
         expect(panel).toContain('badge-warn');
     });
     it('legenda statusów nad tabelą', () => {

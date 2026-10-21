@@ -29,24 +29,51 @@ import type {
 export const PRICELIST_TYPES = ['rury', 'studnie', 'preco'] as const;
 export type PricelistType = (typeof PRICELIST_TYPES)[number];
 
-export type PricelistStatus =
-    'DRAFT' | 'SCHEDULED' | 'ACTIVE' | 'ARCHIVED' | 'BACKDATE_REQUESTED' | 'BACKDATE';
+export type PricelistStatus = 'DRAFT' | 'APPROVED';
 
-/** Statusy edytowalne treściowo (replace wierszy dozwolony). */
-export const EDITABLE_STATUSES: readonly string[] = ['DRAFT', 'SCHEDULED', 'BACKDATE_REQUESTED'];
-
-/** Statusy niemutowalne — mutacja to odpowiednik 403. */
-const IMMUTABLE_STATUSES: readonly string[] = ['ACTIVE', 'ARCHIVED', 'BACKDATE'];
-
-/** Statusy brane pod uwagę przy resolveActive. */
-export const RESOLVABLE_STATUSES: readonly string[] = ['ACTIVE', 'BACKDATE'];
+/** Stan prezentacyjny (S2): dwa statusy zapisane + trzy stany wyliczone. */
+export type PricelistState = PricelistStatus | 'SCHEDULED' | 'ACTIVE' | 'ARCHIVED';
 
 /**
- * Statusy PRECO widoczne w historycznym eksporcie studni. ARCHIVED jest
- * poprzednią wersją na osi czasu, więc musi być resolvowana. DRAFT,
- * SCHEDULED i BACKDATE_REQUESTED nie były nigdy widoczne dla ofert.
+ * Jedno źródło stanu dla UI/API. DRAFT zostaje DRAFT; APPROVED dzieli się po
+ * dacie: przyszła = SCHEDULED, najnowsza przeszła = ACTIVE, wyparta = ARCHIVED.
+ * `latestApproved` to max effectiveFrom APPROVED <= now dla typu (jedno zapytanie).
+ * Legacy statusy sprzed migracji mapują się 1:1 (odczyt starych baz).
  */
-export const PRECO_REFERENCE_STATUSES: readonly string[] = ['ACTIVE', 'BACKDATE', 'ARCHIVED'];
+export function deriveState(
+    status: string,
+    effectiveFrom: string,
+    now = new Date(),
+    latestApproved?: string | null
+): PricelistState {
+    if (status === 'APPROVED') {
+        if (new Date(effectiveFrom).getTime() > now.getTime()) return 'SCHEDULED';
+        if (
+            latestApproved !== undefined &&
+            latestApproved !== null &&
+            effectiveFrom < latestApproved
+        ) {
+            return 'ARCHIVED';
+        }
+        return 'ACTIVE';
+    }
+    return status as PricelistState;
+}
+
+/** Statusy edytowalne treściowo (replace wierszy dozwolony). */
+export const EDITABLE_STATUSES: readonly string[] = ['DRAFT'];
+
+/** Statusy niemutowalne — mutacja to odpowiednik 403. */
+const IMMUTABLE_STATUSES: readonly string[] = ['APPROVED'];
+
+/** Statusy brane pod uwagę przy resolveActive. */
+export const RESOLVABLE_STATUSES: readonly string[] = ['APPROVED'];
+
+/**
+ * Statusy PRECO widoczne w historycznym eksporcie studni. Po S2 jest tylko
+ * APPROVED; stan ARCHIVED jest wyliczany, więc nie może wyciec jako referencja.
+ */
+export const PRECO_REFERENCE_STATUSES: readonly string[] = ['APPROVED'];
 
 /** Maksymalna długość noty wersji (edycja PUT + nota aktywacji). */
 export const NOTE_MAX = 500;
@@ -70,12 +97,15 @@ export interface CreateDraftOptions {
 export class PricelistVersionError extends Error {
     readonly statusCode: number;
     readonly code: string;
+    /** Opcjonalne dane diagnostyczne (np. lista błędów per komórka). */
+    readonly details?: unknown;
 
-    constructor(statusCode: number, code: string, message: string) {
+    constructor(statusCode: number, code: string, message: string, details?: unknown) {
         super(message);
         this.name = 'PricelistVersionError';
         this.statusCode = statusCode;
         this.code = code;
+        this.details = details;
     }
 }
 
@@ -156,6 +186,23 @@ const precoRowsSchema = z.object({
     zakresy: precoZakresyRowSchema.array()
 });
 
+function rowIssue(
+    section: string,
+    path: Array<PropertyKey>,
+    message: string
+): { section: string; row: number | null; field: string; message: string } {
+    const root = typeof path[0] === 'number' ? path[0] : null;
+    const nested = root === null && typeof path[1] === 'number' ? path[1] : null;
+    const index = root ?? nested;
+    const fieldPath = root !== null ? path.slice(1) : path.slice(2);
+    return {
+        section: nested !== null ? String(path[0]) : section,
+        row: index === null ? null : index + 2,
+        field: fieldPath.length > 0 ? String(fieldPath[0]) : '',
+        message
+    };
+}
+
 function throwRowsError(
     section: string,
     issues: Array<{ path: Array<PropertyKey>; message: string }>
@@ -164,7 +211,13 @@ function throwRowsError(
         .slice(0, 5)
         .map((issue) => `${section}${formatIssuePath(issue.path)} — ${issue.message}`)
         .join('; ');
-    throw new PricelistVersionError(422, 'INVALID_ROWS', `Nieprawidłowe wiersze: ${details}`);
+    const cells = issues.slice(0, 100).map((issue) => rowIssue(section, issue.path, issue.message));
+    throw new PricelistVersionError(
+        422,
+        'INVALID_ROWS',
+        `Nieprawidłowe wiersze: ${details}`,
+        cells
+    );
 }
 
 function formatIssuePath(path: Array<PropertyKey>): string {
@@ -193,7 +246,7 @@ export function validateRows(type: PricelistType, rows: unknown): VersionRows {
     return parsed.data;
 }
 
-/** Guard niemutowalności: ACTIVE/ARCHIVED/BACKDATE → 403. */
+/** Guard niemutowalności: APPROVED → 403. */
 export function assertEditable(status: string, id: string): void {
     if (IMMUTABLE_STATUSES.includes(status)) {
         throw new PricelistVersionError(

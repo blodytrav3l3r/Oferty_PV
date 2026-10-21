@@ -204,3 +204,30 @@ describe('SPA: deep-link do panelu wersji', () => {
         expect(router).toContain('openPreview(attempt + 1)');
     });
 });
+
+describe('S3: hub cenników — deep-link do historii', () => {
+    const hub = read('public/js/cennikiHub.js');
+    const html = read('public/cenniki.html');
+
+    it('czyta hash rodzica i obsługuje #/cenniki/historia', () => {
+        expect(hub).toContain('window.parent.location.hash');
+        expect(hub).toContain('/\\/historia(?:[/?]|$)/.test(hash)');
+        expect(hub).toContain("params.tab = 'historia'");
+    });
+
+    it('typ + version/id + against trafiają do preview/diff z allowlistą', () => {
+        expect(hub).toContain('params.version || params.id');
+        expect(hub).toContain("['rury', 'studnie', 'preco'].includes(params.type)");
+        expect(hub).toContain('/^[A-Za-z0-9_-]{1,64}$/.test(id)');
+        expect(hub).toContain('api.openDiff(id, params.against, type)');
+        expect(hub).toContain('api.openPreview(id, type)');
+        expect(hub).toContain('applyDeepLink(attempt + 1)');
+    });
+
+    it('historia ma 9 kolumn z Notą i Kontrolą (checks poza akcjami)', () => {
+        expect(html).toContain('<th>Nota</th>');
+        expect(html).toContain('<th>Kontrola</th>');
+        expect(hub).toContain('colspan="9"');
+        expect(hub).toContain('cenniki-note');
+    });
+});

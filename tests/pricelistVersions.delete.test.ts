@@ -150,20 +150,19 @@ function seedVersion(
     return v;
 }
 
-describe('DELETE pricelistVersions', () => {
-    test.each(['DRAFT', 'SCHEDULED', 'BACKDATE_REQUESTED'])(
-        'status %s kasuje wersję z pozycjami + audit',
-        async (status) => {
-            const v = seed(status);
-            await expect(deleteVersion(v.id)).resolves.toEqual({ id: v.id });
-            expect(versions.find((x) => x.id === v.id)).toBeUndefined();
-            expect(itemsRury.filter((i) => i['versionId'] === v.id)).toHaveLength(0);
-            expect(audits.some((a) => a['action'] === 'DELETE')).toBe(true);
-        }
-    );
+describe('DELETE pricelistVersions (S2a)', () => {
+    test('status DRAFT kasuje wersję z pozycjami + audit', async () => {
+        const v = seed('DRAFT');
+        await expect(deleteVersion(v.id)).resolves.toEqual({ id: v.id });
+        expect(versions.find((x) => x.id === v.id)).toBeUndefined();
+        expect(itemsRury.filter((i) => i['versionId'] === v.id)).toHaveLength(0);
+        expect(audits.some((a) => a['action'] === 'DELETE')).toBe(true);
+    });
 
-    test('ARCHIVED bez użycia kasuje (+audit z offers:0)', async () => {
-        const v = seed('ARCHIVED');
+    test('APPROVED przyszła bez użycia kasuje (+audit z offers:0)', async () => {
+        const v = seed('APPROVED', 'v-future');
+        v.effectiveFrom = '2999-01-01T00:00:00.000Z';
+        versions[0] = v;
         await expect(deleteVersion(v.id)).resolves.toEqual({ id: v.id });
         expect(versions.find((x) => x.id === v.id)).toBeUndefined();
         expect(itemsRury.filter((i) => i['versionId'] === v.id)).toHaveLength(0);
@@ -172,8 +171,10 @@ describe('DELETE pricelistVersions', () => {
         expect(String(audit?.['oldData'] ?? '')).toContain('offers');
     });
 
-    test('ARCHIVED z 2 ofertami → 409 USED_BY z liczbą, nic nie ruszone', async () => {
-        const v = seed('ARCHIVED', 'v-used');
+    test('APPROVED przyszła z 2 ofertami → 409 USED_BY z liczbą, nic nie ruszone', async () => {
+        const v = seed('APPROVED', 'v-used');
+        v.effectiveFrom = '2999-01-01T00:00:00.000Z';
+        versions[0] = v;
         use('offers_rel', v.id, 1);
         use('offers_studnie_rel', v.id, 1);
         const err = await deleteVersion(v.id).catch((e) => e);
@@ -186,8 +187,10 @@ describe('DELETE pricelistVersions', () => {
         expect(itemsRury.filter((i) => i['versionId'] === v.id)).toHaveLength(2);
     });
 
-    test.each(['ACTIVE', 'BACKDATE'])('status %s z zerem → 409 NOT_DELETABLE', async (status) => {
-        const v = seed(status);
+    test('APPROVED przeszła (ACTIVE/ARCHIVED) z zerem → 409 NOT_DELETABLE', async () => {
+        const v = seed('APPROVED', 'v-past');
+        v.effectiveFrom = '2025-01-01T00:00:00.000Z';
+        versions[0] = v;
         const err = await deleteVersion(v.id).catch((e) => e);
         expect(err).toBeInstanceOf(PricelistVersionError);
         expect((err as PricelistVersionError).statusCode).toBe(409);
@@ -197,7 +200,7 @@ describe('DELETE pricelistVersions', () => {
     });
 
     test('countVersionUsage sumuje 4 tabele (offers/orders/total)', async () => {
-        const v = seed('ARCHIVED', 'v-count');
+        const v = seed('APPROVED', 'v-count');
         use('offers_rel', v.id, 1);
         use('offers_studnie_rel', v.id, 1);
         use('orders_rury_rel', v.id, 3);
@@ -214,28 +217,28 @@ describe('DELETE pricelistVersions', () => {
         expect((err as PricelistVersionError).statusCode).toBe(404);
     });
 
-    test('ARCHIVED PRECO wskazana przez DRAFT studnie → 409 USED_BY_STUDNIE', async () => {
+    test('APPROVED przyszła PRECO wskazana przez DRAFT studnie → 409 USED_BY_STUDNIE', async () => {
         seedVersion({
-            id: 'p-arch',
+            id: 'p-future',
             type: 'preco',
-            status: 'ARCHIVED',
+            status: 'APPROVED',
             seq: 1,
-            effectiveFrom: '2026-01-01T00:00:00.000Z'
+            effectiveFrom: '2999-01-01T00:00:00.000Z'
         });
         seedVersion({
             id: 's-draft',
             type: 'studnie',
             status: 'DRAFT',
             seq: 1,
-            effectiveFrom: '2026-02-01T00:00:00.000Z'
+            effectiveFrom: '3000-02-01T00:00:00.000Z'
         });
-        const err = await deleteVersion('p-arch').catch((e) => e);
+        const err = await deleteVersion('p-future').catch((e) => e);
         expect(err).toBeInstanceOf(PricelistVersionError);
         expect((err as PricelistVersionError).statusCode).toBe(409);
         expect((err as PricelistVersionError).code).toBe('USED_BY_STUDNIE');
         expect((err as Error).message).toContain('1');
         expect((err as Error).message).toContain('v1');
-        expect(versions.some((v) => v.id === 'p-arch')).toBe(true);
+        expect(versions.some((v) => v.id === 'p-future')).toBe(true);
     });
 
     test('DRAFT PRECO nie jest referencją (D1) → delete dozwolony', async () => {
@@ -258,20 +261,20 @@ describe('DELETE pricelistVersions', () => {
         expect(String(audit?.['oldData'] ?? '')).toContain('studnieReferences');
     });
 
-    test('ACTIVE PRECO → NOT_DELETABLE przed guardem referencji', async () => {
+    test('PRECO przeszła (ACTIVE) → NOT_DELETABLE przed guardem referencji', async () => {
         seedVersion({
             id: 'p-active',
             type: 'preco',
-            status: 'ACTIVE',
+            status: 'APPROVED',
             seq: 1,
-            effectiveFrom: '2026-01-01T00:00:00.000Z'
+            effectiveFrom: '2025-01-01T00:00:00.000Z'
         });
         seedVersion({
             id: 's1',
             type: 'studnie',
-            status: 'ACTIVE',
+            status: 'APPROVED',
             seq: 1,
-            effectiveFrom: '2026-02-01T00:00:00.000Z'
+            effectiveFrom: '2025-02-01T00:00:00.000Z'
         });
         const err = await deleteVersion('p-active').catch((e) => e);
         expect((err as PricelistVersionError).code).toBe('NOT_DELETABLE');
@@ -281,9 +284,9 @@ describe('DELETE pricelistVersions', () => {
         seedVersion({
             id: 'p-race',
             type: 'preco',
-            status: 'ARCHIVED',
+            status: 'APPROVED',
             seq: 1,
-            effectiveFrom: '2026-01-01T00:00:00.000Z'
+            effectiveFrom: '2999-01-01T00:00:00.000Z'
         });
         const findMany = txMock.pricelistVersion.findMany as jest.Mock;
         findMany
@@ -295,7 +298,7 @@ describe('DELETE pricelistVersions', () => {
                     version: 'v1',
                     seq: 1,
                     status: 'DRAFT',
-                    effectiveFrom: '2026-02-01T00:00:00.000Z'
+                    effectiveFrom: '3000-02-01T00:00:00.000Z'
                 }
             ])
             .mockResolvedValueOnce([
@@ -303,8 +306,8 @@ describe('DELETE pricelistVersions', () => {
                     id: 'p-race',
                     version: 'v1',
                     seq: 1,
-                    status: 'ARCHIVED',
-                    effectiveFrom: '2026-01-01T00:00:00.000Z'
+                    status: 'APPROVED',
+                    effectiveFrom: '2999-01-01T00:00:00.000Z'
                 }
             ]);
 
@@ -321,7 +324,7 @@ describe('DELETE pricelistVersions', () => {
         seedVersion({
             id: 'p-arch',
             type: 'preco',
-            status: 'ARCHIVED',
+            status: 'APPROVED',
             seq: 1,
             effectiveFrom: '2026-01-01T00:00:00.000Z'
         });

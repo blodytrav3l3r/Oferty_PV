@@ -190,10 +190,10 @@ describe('frontend: przycisk Usuń zawsze widoczny (wyszarzony gdy nie wolno)', 
         expect(panel).toContain('data-pv-act="delete"');
         expect(panel).not.toMatch(/isDeletable\(v\.status\)\s*\?\s*'<button/);
     });
-    it('renderRows: enabled dla allowlist albo usedBy===0 poza ACTIVE/BACKDATE; brak usedBy = blokada', () => {
+    it('renderRows: enabled dla DRAFT i przyszłej APPROVED (SCHEDULED); brak usedBy = blokada', () => {
         expect(panel).toContain('usedBy');
-        expect(panel).toContain("v.status === 'ACTIVE'");
-        expect(panel).toContain("v.status === 'BACKDATE'");
+        expect(panel).toContain("state === 'ACTIVE'");
+        expect(panel).toContain("state === 'SCHEDULED'");
         expect(panel).toContain("typeof v.usedBy !== 'number'");
         expect(panel).toContain('v.usedBy > 0');
         expect(panel).toContain('deleteReason');
@@ -201,8 +201,8 @@ describe('frontend: przycisk Usuń zawsze widoczny (wyszarzony gdy nie wolno)', 
     });
     it('renderRows: disabled + title z powodem (aktywna / użycie / brak danych)', () => {
         expect(panel).toContain('disabled');
-        expect(panel).toContain('Wersja aktywna — nieusuwalna');
-        expect(panel).toContain('Wersja wsteczna — nieusuwalna');
+        expect(panel).toContain('Wersja obowiązująca — nieusuwalna');
+        expect(panel).toContain('Wersja historyczna — nieusuwalna');
         expect(panel).toContain('Używana przez ');
         expect(panel).toContain('ofert/zamówień');
         expect(panel).toContain('Brak danych o użyciu — nieusuwalna');
@@ -251,6 +251,10 @@ describe('frontend: widoczność wersji cennika (dopisek typu, pasek, kartoteka)
         expect(panel).toContain('function hydrateActiveBadges(');
         expect(panel).toContain('function activeBadgeHtml(');
         expect(panel).toContain('function pickActiveLabel(');
+        // SSoT osi czasu: aktywna = max effectiveFrom (nie max seq).
+        expect(panel).toMatch(
+            /function pickActiveLabel\(labels\) \{[\s\S]*?effectiveFrom[\s\S]*?return best;/
+        );
         expect(panel).toContain('data-pv-active="');
         expect(panel).toContain('brak aktywnego cennika');
         expect(panel).toContain('hydrateActiveBadges');
@@ -332,7 +336,7 @@ describe('frontend: edycja notatek + notatki przy aktywacji (źródło)', () => 
         expect(panel).toContain('data-lucide="pencil"');
         expect(panel).toContain('title="Edytuj notatki"');
         expect(panel).toContain('pv-note-cell');
-        expect(panel).toContain('function isEditableStatus(status)');
+        expect(panel).toContain('function isEditableStatus(state)');
         expect(panel).toContain('data-pv-note="');
     });
     it('openNoteModal reuse: tryb opcjonalny (required:false, initial, okText)', () => {

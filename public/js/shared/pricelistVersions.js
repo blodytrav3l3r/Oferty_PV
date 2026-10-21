@@ -155,7 +155,7 @@
 
     /** Statusy, które panel realnie tworzy (POST drafts = SCHEDULED/BACKDATE,
      *  klon = DRAFT); tylko DRAFT sprawiał, że dedup nigdy nie trafiał. */
-    var PRECO_DEDUP_STATUSES = ['DRAFT', 'SCHEDULED'];
+    var PRECO_DEDUP_STATUSES = ['DRAFT'];
 
     /** Identyczna robocza PRECO (te same rows + data) → PUT zamiast nowego POST. */
     async function findIdenticalPrecoDraft(rows, effectiveFrom) {
@@ -261,12 +261,14 @@
         );
     }
 
-    /** Aktywna = najwyższy seq spośród ACTIVE/BACKDATE z /labels. */
+    /** Aktywna = najnowszy effectiveFrom spośród APPROVED z /labels.
+     *  SSoT osi czasu: resolver BE wybiera max effectiveFrom, nie max seq
+     *  (backdated approve może mieć wyższy seq i starszą datę). */
     function pickActiveLabel(labels) {
         var best = null;
         Object.keys(labels || {}).forEach(function (id) {
             var v = labels[id];
-            if (!best || (v.seq || 0) > (best.seq || 0)) best = v;
+            if (!best || (v.effectiveFrom || '') > (best.effectiveFrom || '')) best = v;
         });
         return best;
     }
@@ -411,13 +413,40 @@
      *  BACKDATE_REQUESTED to szkic z datą wsteczną — labelka mówi wprost,
      *  że to robocza, nie zatwierdzona historia (BACKDATE). */
     var STATUS_LABELS = {
-        ACTIVE: 'Aktywna',
+        ACTIVE: 'Obowiązuje',
         SCHEDULED: 'Zaplanowana',
-        BACKDATE: 'Wsteczna',
-        BACKDATE_REQUESTED: 'Robocza-wsteczna',
-        DRAFT: 'Robocza',
-        ARCHIVED: 'Archiwalna'
+        BACKDATE: 'Obowiązuje (korekta)',
+        BACKDATE_REQUESTED: 'Szkic (korekta)',
+        DRAFT: 'Szkic',
+        ARCHIVED: 'Archiwalna',
+        APPROVED: 'Zatwierdzona'
     };
+
+    /** Stan z API (`state`) z fallbackiem na raw status (starsze odpowiedzi). */
+    function stateOf(v) {
+        return (v && (v.state || v.status)) || '';
+    }
+
+    function displayStatus(v) {
+        var state = stateOf(v);
+        return STATUS_LABELS[state] || state;
+    }
+
+    function canPublish(state) {
+        return state === 'DRAFT';
+    }
+
+    function canActivate(_state) {
+        return false;
+    }
+
+    function canBackdate(_state) {
+        return false;
+    }
+
+    function canDelete(state) {
+        return isDeletable(state);
+    }
 
     /** Kody kolizji daty (BE): PERIOD_OVERLAP (activate) i EFFECTIVE_COLLISION
      *  (backdate) oznaczają to samo — zajęty effectiveFrom. Jeden komunikat. */
@@ -450,6 +479,8 @@
         BACKDATE:
             '<svg class="badge-status-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>',
         DRAFT: '<svg class="badge-status-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.17 6.83a2.83 2.83 0 0 0-4-4L3.5 16.5 2 22l5.5-1.5Z"/><path d="m15 5 4 4"/></svg>',
+        APPROVED:
+            '<svg class="badge-status-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>',
         ARCHIVED:
             '<svg class="badge-status-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="5" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/></svg>'
     };
@@ -473,7 +504,7 @@
             );
         if (status === 'SCHEDULED')
             return (
-                '<span class="badge-info text-nowrap" style="display:inline-flex;align-items:center;gap:4px" title="Zatwierdzona, wejdzie w życie w dacie Obowiązuje od (cron co 5 min)">' +
+                '<span class="badge-info text-nowrap" style="display:inline-flex;align-items:center;gap:4px" title="Zatwierdzona, wejdzie w życie w dacie Obowiązuje od">' +
                 iconHtml +
                 '</span>'
             );
@@ -557,19 +588,19 @@
     }
 
     /** Wersję można usunąć tylko zanim zacznie żyć (nigdy nie była aktywna). */
-    function isDeletable(status) {
-        return status === 'DRAFT' || status === 'SCHEDULED' || status === 'BACKDATE_REQUESTED';
+    function isDeletable(state) {
+        return state === 'DRAFT' || state === 'SCHEDULED';
     }
 
     /** Statusy z edytowalną treścią i notą (jak EDITABLE_STATUSES w BE). */
-    function isEditableStatus(status) {
-        return status === 'DRAFT' || status === 'SCHEDULED' || status === 'BACKDATE_REQUESTED';
+    function isEditableStatus(state) {
+        return state === 'DRAFT';
     }
 
     /** Komórka notatek: tekst + ołówek (tylko edytowalne, tylko admin). */
     function noteCell(v, manageable) {
         var text = esc(v.note || '—');
-        if (!manageable || !isEditableStatus(v.status)) return text;
+        if (!manageable || !isEditableStatus(stateOf(v))) return text;
         return (
             '<span class="pv-note-cell"><span class="pv-note-text">' +
             text +
@@ -581,20 +612,20 @@
         );
     }
 
-    /** Powód blokady „Usuń" (null = wolno): PRECO z referencjami, ACTIVE/BACKDATE zawsze. */
+    /** Powód blokady „Usuń" (null = wolno): PRECO z referencjami, historia, użycie. */
     function deleteReason(v) {
+        var state = stateOf(v);
         if (v.usedByKind === 'studnieVersions' && typeof v.usedBy === 'number' && v.usedBy > 0) {
             return 'Używana przez ' + v.usedBy + ' wersji studni';
         }
-        if (isDeletable(v.status)) return null;
-        if (v.status === 'ACTIVE') return 'Wersja aktywna — nieusuwalna';
-        if (v.status === 'BACKDATE') return 'Wersja wsteczna — nieusuwalna';
-        if (typeof v.usedBy !== 'number') return 'Brak danych o użyciu — nieusuwalna';
-        if (v.usedBy > 0) {
-            var kind = v.usedByKind === 'studnieVersions' ? 'wersji studni' : 'ofert/zamówień';
-            return 'Używana przez ' + v.usedBy + ' ' + kind;
+        if (state === 'DRAFT') return null;
+        if (state === 'SCHEDULED') {
+            if (typeof v.usedBy !== 'number') return 'Brak danych o użyciu — nieusuwalna';
+            if (v.usedBy > 0) return 'Używana przez ' + v.usedBy + ' ofert/zamówień';
+            return null;
         }
-        return null;
+        if (state === 'ACTIVE') return 'Wersja obowiązująca — nieusuwalna';
+        return 'Wersja historyczna — nieusuwalna';
     }
 
     function renderRows(versions, manageable, type) {
@@ -606,28 +637,28 @@
         var typeTitle = type ? ' title="Typ cennika: ' + escAttr(typeLabel(type)) + '"' : '';
         return versions
             .map(function (v) {
+                var state = stateOf(v);
                 var eff = v.effectiveFrom
                     ? fmtEff(v.effectiveFrom)
                     : '<span class="text-muted">—</span>';
                 var used = typeof v.usedBy === 'number' ? v.usedBy : null;
-                var activation =
-                    v.status === 'DRAFT'
-                        ? '<button class="btn btn-sm btn-primary" data-pv-act="publish" data-pv-id="' +
+                var activation = canPublish(state)
+                    ? '<button class="btn btn-sm btn-primary" data-pv-act="publish" data-pv-id="' +
+                      escAttr(v.id) +
+                      '" title="Wyślij roboczą na oś czasu (zaplanowana albo wsteczna wg daty)">Opublikuj roboczą</button>'
+                    : canActivate(state)
+                      ? '<button class="btn btn-sm btn-primary" data-pv-act="activate" data-pv-id="' +
+                        escAttr(v.id) +
+                        '" data-pv-version="' +
+                        escAttr(v.version || '') +
+                        '" data-pv-used="' +
+                        escAttr(used === null ? '' : String(used)) +
+                        '">Aktywuj</button>'
+                      : canBackdate(state)
+                        ? '<button class="btn btn-sm btn-primary" data-pv-act="backdate" data-pv-id="' +
                           escAttr(v.id) +
-                          '" title="Wyślij roboczą na oś czasu (zaplanowana albo wsteczna wg daty)">Opublikuj roboczą</button>'
-                        : v.status === 'SCHEDULED'
-                          ? '<button class="btn btn-sm btn-primary" data-pv-act="activate" data-pv-id="' +
-                            escAttr(v.id) +
-                            '" data-pv-version="' +
-                            escAttr(v.version || '') +
-                            '" data-pv-used="' +
-                            escAttr(used === null ? '' : String(used)) +
-                            '">Aktywuj</button>'
-                          : v.status === 'BACKDATE_REQUESTED'
-                            ? '<button class="btn btn-sm btn-primary" data-pv-act="backdate" data-pv-id="' +
-                              escAttr(v.id) +
-                              '">Zatwierdź wstecz</button>'
-                            : '';
+                          '">Zatwierdź wstecz</button>'
+                        : '';
                 // Klon dowolnej wersji do nowej roboczej (nie rollback — aktywna nietknięta).
                 var cloneBtn =
                     '<button class="btn btn-sm btn-secondary" data-pv-act="clone" data-pv-id="' +
@@ -648,10 +679,7 @@
                     (reason === null
                         ? ' title="Usuwa wersję i jej pozycje (tylko wersje nigdy nieaktywne)">Usuń</button>'
                         : ' disabled title="' + escAttr(reason) + '">Usuń</button>');
-                var isDraftish =
-                    v.status === 'DRAFT' ||
-                    v.status === 'SCHEDULED' ||
-                    v.status === 'BACKDATE_REQUESTED';
+                var isDraftish = isEditableStatus(state);
                 var actions = manageable
                     ? '<div class="pv-actions">' +
                       '<button class="btn btn-sm btn-secondary" data-pv-act="preview" data-pv-id="' +
@@ -685,7 +713,7 @@
                     esc(String(v.seq ?? '—')) +
                     '</td>' +
                     '<td>' +
-                    statusBadge(v.status) +
+                    statusBadge(stateOf(v)) +
                     '</td>' +
                     '<td>' +
                     eff +
@@ -848,8 +876,8 @@
             saveFormHtml(next, manageable) +
             '</div>' +
             '<p class="text-muted pv-help">Jak to działa: zapis tworzy kopię cennika (nie rusza ofert ani cennika na żywo). ' +
-            'Robocza → Opublikuj roboczą → Zaplanowana (wejdzie sama, cron co 5 min) albo Robocza-wsteczna (wymaga uzasadnienia). ' +
-            'Aktywna wybierana jest po dacie Obowiązuje od; oferty trzymają pieczątkę wersji. ' +
+            'Robocza → Zatwierdź jako Zaplanowana (wejdzie w dacie Obowiązuje od) albo korekta wsteczna (wymaga uzasadnienia). ' +
+            'Aktywna wybierana jest po dacie Obowiązuje od; oferty trzymają pieczęć wersji. ' +
             'Szczegóły: docs/CENNIKI-INSTRUKCJA-ADMINA.md</p>' +
             '<div class="pv-actions pv-legend" aria-label="Legenda statusów">' +
             statusBadge('ACTIVE') +
@@ -964,7 +992,14 @@
 
     function diffChangesHtml(diff) {
         var list = (diff && diff.changes) || [];
-        if (list.length === 0) return '';
+        var total = diff && typeof diff.totalChanges === 'number' ? diff.totalChanges : list.length;
+        var countLine =
+            '<p class="text-muted pv-diff-count">Pokazano ' +
+            list.length +
+            ' z ' +
+            total +
+            ' zmian — pełny diff dostępny w eksporcie XLSX</p>';
+        if (list.length === 0) return countLine;
         var rows = list
             .map(function (c) {
                 var delta =
@@ -991,8 +1026,8 @@
             .join('');
         return (
             '<h4 class="pv-section">Top zmian cen (max 100, sort po |Δ%|)' +
-            (diff.truncated ? ' — lista ucięta' : '') +
             '</h4>' +
+            countLine +
             '<div class="table-wrap"><table><thead><tr>' +
             '<th scope="col">Sekcja</th><th scope="col">Pozycja</th><th scope="col">Typ</th>' +
             '<th scope="col">Przed</th><th scope="col">Po</th><th scope="col">Δ</th>' +
@@ -1244,8 +1279,7 @@
             var blob = await res.blob();
             var a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
-            var isDraftish =
-                status === 'DRAFT' || status === 'SCHEDULED' || status === 'BACKDATE_REQUESTED';
+            var isDraftish = isEditableStatus(status);
             var base = versionExportFilename(type, version || id);
             a.download = isDraftish ? base.replace(/\.xlsx$/, '_REVIEW.xlsx') : base;
             document.body.appendChild(a);
@@ -1721,6 +1755,14 @@
         hydrateActiveBadges: hydrateActiveBadges,
         openVersionsPanel: openVersionsPanel,
         openDiff: openDiff,
+        exportVersion: exportVersion,
+        statusBadge: statusBadge,
+        stateOf: stateOf,
+        displayStatus: displayStatus,
+        canPublish: canPublish,
+        canActivate: canActivate,
+        canBackdate: canBackdate,
+        canDelete: canDelete,
         _apiJson: apiJson,
         _authed: authed
     };
