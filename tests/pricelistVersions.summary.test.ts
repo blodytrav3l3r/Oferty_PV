@@ -292,6 +292,7 @@ describe('GET /api/pricelist-versions/summary — kształt', () => {
                 draft: null,
                 draftCount: 0,
                 approvedCount: 0,
+                archivedCount: 0,
                 collisionCount: 0
             });
         }
@@ -310,6 +311,36 @@ describe('GET /api/pricelist-versions/summary — kształt', () => {
             status: 'DRAFT',
             state: 'DRAFT'
         });
+    });
+
+    test('archivedCount: wypchnięte wersje (data < obowiązującej), kolizja dat nie archiwizuje', async () => {
+        versions = [
+            version({
+                id: 'r-old',
+                type: 'rury',
+                seq: 1,
+                status: 'APPROVED',
+                effectiveFrom: '2025-01-01T00:00:00Z'
+            }),
+            version({
+                id: 'r-active',
+                type: 'rury',
+                seq: 2,
+                status: 'APPROVED',
+                effectiveFrom: '2026-01-01T00:00:00Z'
+            }),
+            // Kolizja dat: ta sama data co obowiązująca → obie obowiązujące, nie archiwalne.
+            version({
+                id: 'r-same-date',
+                type: 'rury',
+                seq: 3,
+                status: 'APPROVED',
+                effectiveFrom: '2026-01-01T00:00:00Z'
+            })
+        ];
+        const res = await request(app).get('/api/pricelist-versions/summary').set(ADMIN);
+        expect(res.status).toBe(200);
+        expect(res.body.types.rury.archivedCount).toBe(1);
     });
 
     test('dokładnie 9 findFirst (3× active + 3× scheduled + 3× draft), brak N+1', async () => {

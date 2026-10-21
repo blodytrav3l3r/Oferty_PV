@@ -194,6 +194,8 @@ export interface VersionsSummaryType {
     draft: VersionSummaryRef | null;
     draftCount: number;
     approvedCount: number;
+    /** Wersje wypchnięte z osi (ARCHIVED = zatwierdzone z datą ≤ teraz minus obowiązująca). */
+    archivedCount: number;
     collisionCount: number;
 }
 
@@ -247,6 +249,16 @@ async function latestDraftFor(type: PricelistType): Promise<VersionSummaryRef | 
 }
 
 /**
+ * Liczba wersji archiwalnych typu: zatwierdzone z datą mniejszą niż najnowsza
+ * zatwierdzona (ta sama reguła co `deriveState` → ARCHIVED). Wersje o tej samej
+ * dacie co obowiązująca NIE są archiwalne (kolizja dat = obie obowiązujące).
+ */
+function countArchived(pastDates: string[], maxPast: string): number {
+    if (!maxPast) return 0;
+    return pastDates.filter((date) => date < maxPast).length;
+}
+
+/**
  * Skrót stanu 3 cenników: aktywna (resolveActive) + najbliższa przyszła
  * APPROVED + liczniki. 6 zapytań resolverów + 1 odczyt do liczników.
  */
@@ -270,12 +282,19 @@ export async function getVersionsSummary(): Promise<VersionsSummary> {
 
     const counts = new Map<
         string,
-        { draft: number; approved: number; dates: Set<string>; dup: Set<string> }
+        {
+            draft: number;
+            approved: number;
+            pastDates: string[];
+            dates: Set<string>;
+            dup: Set<string>;
+        }
     >();
     for (const row of counterRows) {
         const bucket = counts.get(row.type) ?? {
             draft: 0,
             approved: 0,
+            pastDates: [],
             dates: new Set<string>(),
             dup: new Set<string>()
         };
@@ -283,6 +302,8 @@ export async function getVersionsSummary(): Promise<VersionsSummary> {
             bucket.draft += 1;
         } else if (row.status === 'APPROVED') {
             bucket.approved += 1;
+            // Zatwierdzona z datą ≤ teraz: obowiązująca albo archiwalna.
+            if (row.effectiveFrom <= generatedAt) bucket.pastDates.push(row.effectiveFrom);
             if (bucket.dates.has(row.effectiveFrom)) bucket.dup.add(row.effectiveFrom);
             else bucket.dates.add(row.effectiveFrom);
         }
@@ -302,6 +323,11 @@ export async function getVersionsSummary(): Promise<VersionsSummary> {
                         draft: draft ? toSummaryRef(draft) : null,
                         draftCount: bucket?.draft ?? 0,
                         approvedCount: bucket?.approved ?? 0,
+                        // Archiwalne = zatwierdzone z datą < najnowszej zatwierdzonej (jak deriveState).
+                        archivedCount: countArchived(
+                            bucket?.pastDates ?? [],
+                            active?.effectiveFrom ?? ''
+                        ),
                         collisionCount: bucket?.dup.size ?? 0
                     }
                 ];
