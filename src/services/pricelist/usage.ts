@@ -190,6 +190,8 @@ export interface VersionSummaryRef {
 export interface VersionsSummaryType {
     active: VersionSummaryRef | null;
     nextScheduled: VersionSummaryRef | null;
+    /** Najnowszy szkic (DRAFT) typu — null gdy brak. Info dla paska stanu w edytorze. */
+    draft: VersionSummaryRef | null;
     draftCount: number;
     approvedCount: number;
     collisionCount: number;
@@ -234,6 +236,16 @@ async function nextScheduledFor(
     return version ? toSummaryRef(version) : null;
 }
 
+/** Najnowszy szkic (DRAFT) typu — 1 zapytanie (createdAt DESC). */
+async function latestDraftFor(type: PricelistType): Promise<VersionSummaryRef | null> {
+    const version = await prisma.pricelistVersion.findFirst({
+        where: { type, status: 'DRAFT' },
+        orderBy: [{ createdAt: 'desc' }, { seq: 'desc' }],
+        select: SUMMARY_REF_SELECT
+    });
+    return version ? toSummaryRef(version) : null;
+}
+
 /**
  * Skrót stanu 3 cenników: aktywna (resolveActive) + najbliższa przyszła
  * APPROVED + liczniki. 6 zapytań resolverów + 1 odczyt do liczników.
@@ -243,11 +255,12 @@ export async function getVersionsSummary(): Promise<VersionsSummary> {
     const [entries, counterRows] = await Promise.all([
         Promise.all(
             PRICELIST_TYPES.map(async (type) => {
-                const [active, nextScheduled] = await Promise.all([
+                const [active, nextScheduled, draft] = await Promise.all([
                     resolveActive(type, generatedAt),
-                    nextScheduledFor(type, generatedAt)
+                    nextScheduledFor(type, generatedAt),
+                    latestDraftFor(type)
                 ]);
-                return [type, { active, nextScheduled }] as const;
+                return [type, { active, nextScheduled, draft }] as const;
             })
         ),
         prisma.pricelistVersion.findMany({
@@ -279,13 +292,14 @@ export async function getVersionsSummary(): Promise<VersionsSummary> {
     return {
         generatedAt,
         types: Object.fromEntries(
-            entries.map(([type, { active, nextScheduled }]) => {
+            entries.map(([type, { active, nextScheduled, draft }]) => {
                 const bucket = counts.get(type);
                 return [
                     type,
                     {
                         active: active ? toSummaryRef(active) : null,
                         nextScheduled,
+                        draft: draft ? toSummaryRef(draft) : null,
                         draftCount: bucket?.draft ?? 0,
                         approvedCount: bucket?.approved ?? 0,
                         collisionCount: bucket?.dup.size ?? 0

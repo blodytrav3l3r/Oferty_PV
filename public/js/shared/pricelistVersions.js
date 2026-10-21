@@ -1718,6 +1718,93 @@
         });
     }
 
+    /**
+     * Pasek stanu w edytorze cennika (rury/studnie): co admin edytuje (szkic)
+     * vs co liczy oferta (wersja obowiązująca) + skrót do panelu cenników.
+     * Read-only; dla nie-admina (403) pasek zostaje pusty. Jeden fetch /summary
+     * na typ (cache w modułu) — renderowanie tabeli cennika nie odpytuje BE.
+     */
+    var stripCache = {};
+
+    function stripDate(iso) {
+        try {
+            return new Date(iso).toLocaleDateString('pl-PL');
+        } catch (_e) {
+            return iso || '';
+        }
+    }
+
+    async function renderStatusStrip(hostId, type) {
+        var host = document.getElementById(hostId);
+        if (!host) return;
+        if (!stripCache[type]) {
+            stripCache[type] = apiJson('/api/pricelist-versions/summary', authed('GET')).catch(
+                function () {
+                    return null;
+                }
+            );
+        }
+        var json = await stripCache[type];
+        if (!json) {
+            host.innerHTML = '';
+            return;
+        }
+        var data = (json.types || {})[type] || {};
+        var parts = [];
+        if (data.draft) {
+            parts.push(
+                '<span class="badge badge-muted">✎ Szkic ' + esc(data.draft.version) + '</span>'
+            );
+        } else {
+            parts.push('<span class="badge badge-muted">✎ brak szkiców (bufor = edytor)</span>');
+        }
+        if (data.active) {
+            parts.push(
+                '<span class="badge badge-ok">✓ Obowiązuje ' +
+                    esc(data.active.version) +
+                    ' (od ' +
+                    esc(stripDate(data.active.effectiveFrom)) +
+                    ')</span>'
+            );
+        } else {
+            parts.push('<span class="badge badge-muted">brak wersji obowiązującej</span>');
+        }
+        if (data.nextScheduled) {
+            parts.push(
+                '<span class="badge badge-info">◷ Do wdrożenia ' +
+                    esc(data.nextScheduled.version) +
+                    ' (od ' +
+                    esc(stripDate(data.nextScheduled.effectiveFrom)) +
+                    ')</span>'
+            );
+        }
+        parts.push(
+            '<span class="text-muted">Zmiany w edytorze nie ruszają ofert do publikacji.</span>'
+        );
+        var inSpa = false;
+        try {
+            inSpa = !!window.parent && window.parent !== window;
+        } catch (_e2) {
+            inSpa = false;
+        }
+        if (inSpa) {
+            parts.push(
+                '<button class="btn btn-sm btn-secondary" data-pv-strip="panel" type="button">Panel cenników</button>'
+            );
+        }
+        host.innerHTML = parts.join(' ');
+        var panelBtn = host.querySelector('[data-pv-strip="panel"]');
+        if (panelBtn) {
+            panelBtn.addEventListener('click', function () {
+                try {
+                    window.parent.location.hash = '#/cenniki';
+                } catch (_e3) {
+                    /* cross-origin — zostaj na edytorze */
+                }
+            });
+        }
+    }
+
     window.pricelistVersions = {
         fetchLabels: fetchLabels,
         fetchLabelsByIds: fetchLabelsByIds,
@@ -1737,6 +1824,7 @@
         approveVersion: approveVersion,
         fetchChecks: fetchChecks,
         isPastDate: isPastDate,
+        renderStatusStrip: renderStatusStrip,
         _apiJson: apiJson,
         _authed: authed
     };

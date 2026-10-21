@@ -39,6 +39,16 @@ function selectCennikTab(tab) {
     } else {
         renderStudniePriceList();
     }
+    // Pasek stanu pokazuje oś edytowanego zakładki (PRECO to osobna oś).
+    if (
+        window.pricelistVersions &&
+        typeof window.pricelistVersions.renderStatusStrip === 'function'
+    ) {
+        window.pricelistVersions.renderStatusStrip(
+            'pricelist-status-strip',
+            tab === 'preco' ? 'preco' : 'studnie'
+        );
+    }
 }
 
 /* ===== KOLUMNY EKSPORTU ===== */

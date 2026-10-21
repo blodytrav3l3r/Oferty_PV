@@ -95,6 +95,17 @@
     height: 12px;
 }
 
+/* Pasek stanu cennika w edytorze (rury/studnie): co edytujesz (szkic) vs co
+ * liczy oferta (obowiązująca). Kafelki informacji w jednym rzędzie. */
+.pv-status-strip {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--tile-gap-2xs);
+    margin-bottom: var(--tile-gap-xs);
+    font-size: var(--fs-sm);
+}
+
 /* W pasku kroków badge nie bierze udziału we flex (kropki zostają
  * wyśrodkowane jak wcześniej) — doklejony absolutnie do prawej. */
 .wizard-indicator {

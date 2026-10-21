@@ -432,6 +432,13 @@ async function showSectionStudnie(id) {
         window.studnieProducts = await loadStudnieProducts();
         await loadPrecoPricing();
         renderStudniePriceList();
+        // Pasek stanu: co edytujesz (szkic) vs co liczy oferta (obowiązująca).
+        if (
+            window.pricelistVersions &&
+            typeof window.pricelistVersions.renderStatusStrip === 'function'
+        ) {
+            window.pricelistVersions.renderStatusStrip('pricelist-status-strip', 'studnie');
+        }
     } else if (
         (window.__studniePricingSource === 'live' ||
             window.__studniePricingSource === 'live-fallback') &&

@@ -282,13 +282,14 @@ describe('GET /api/pricelist-versions/summary — kształt', () => {
         ]);
     });
 
-    test('pusty stan: active i nextScheduled = null dla 3 typów', async () => {
+    test('pusty stan: active, nextScheduled i draft = null dla 3 typów', async () => {
         const res = await request(app).get('/api/pricelist-versions/summary').set(ADMIN);
         expect(res.status).toBe(200);
         for (const type of ['rury', 'studnie', 'preco']) {
             expect(res.body.types[type]).toEqual({
                 active: null,
                 nextScheduled: null,
+                draft: null,
                 draftCount: 0,
                 approvedCount: 0,
                 collisionCount: 0
@@ -296,14 +297,29 @@ describe('GET /api/pricelist-versions/summary — kształt', () => {
         }
     });
 
-    test('dokładnie 6 findFirst (3× active + 3× scheduled), brak N+1', async () => {
+    test('draft: najnowszy szkic typu (stan DRAFT) dla paska stanu w edytorze', async () => {
+        versions = [
+            version({ id: 'r-draft-old', type: 'rury', seq: 1, status: 'DRAFT' }),
+            version({ id: 'r-draft-new', type: 'rury', seq: 3, status: 'DRAFT' }),
+            version({ id: 'r-active', type: 'rury', seq: 2, status: 'APPROVED' })
+        ];
+        const res = await request(app).get('/api/pricelist-versions/summary').set(ADMIN);
+        expect(res.status).toBe(200);
+        expect(res.body.types.rury.draft).toMatchObject({
+            id: 'r-draft-new',
+            status: 'DRAFT',
+            state: 'DRAFT'
+        });
+    });
+
+    test('dokładnie 9 findFirst (3× active + 3× scheduled + 3× draft), brak N+1', async () => {
         versions = [
             version({ id: 'r1', type: 'rury' }),
             version({ id: 's1', type: 'studnie' }),
             version({ id: 'p1', type: 'preco' })
         ];
         await request(app).get('/api/pricelist-versions/summary').set(ADMIN);
-        expect(versionDelegate.findFirst).toHaveBeenCalledTimes(6);
+        expect(versionDelegate.findFirst).toHaveBeenCalledTimes(9);
     });
 });
 

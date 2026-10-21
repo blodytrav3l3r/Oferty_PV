@@ -42,6 +42,13 @@ async function showSectionRury(id) {
     if (id === 'pricelist') {
         products = await loadProducts();
         renderPriceList();
+        // Pasek stanu: co edytujesz (szkic) vs co liczy oferta (obowiązująca).
+        if (
+            window.pricelistVersions &&
+            typeof window.pricelistVersions.renderStatusStrip === 'function'
+        ) {
+            window.pricelistVersions.renderStatusStrip('pricelist-status-strip', 'rury');
+        }
     } else if (
         (window.__ruryPricingSource === 'live' || window.__ruryPricingSource === 'live-fallback') &&
         (typeof _pricelistDirty === 'undefined' || !_pricelistDirty)
