@@ -339,3 +339,21 @@ Uwagi:
   Brak testu `approve` na żywej bazie (tworzyłby realne wersje) → wymaga osobnego GO.
 - Do zrobienia w M3/M4: warstwa 2 (podgląd kafelkowy sekcji/pozycji), pasek stanu w edytorach,
   sekcja Transport (info) i osobna oś PRECO w panelu.
+
+### 11.1 Review przed pushem (2026-10-22)
+
+`code-reviewer` na diffie M2–M4: **3 blokery + 7 istotnych + drobiazgi**. Status po naprawach:
+
+| ID  | Problem                                                             | Decyzja                                                              |
+| --- | ------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| B1  | `preview.truncated` / `diff.truncated` ignorowane → zaniżone liczby | jawny komunikat „Pokazano X z Y”                                     |
+| B2  | brak limitu renderowania pozycji (tysiące DOM)                      | cap 100 pozycji + „Pokaż kolejne 100”                                |
+| B3  | Transport: brak filtra `TR-*` i kolumny „Ilość/transport”           | filtr `Indeks` zaczyna się od `TR-`, produkty wg liczby na transport |
+| W1  | `archivedCount` niezgodne z `deriveState` przy kolizji dat          | **naprawione w BE** (`c01a13f`): archiwalne = data < obowiązującej   |
+| W2  | brak info, której wersji dotyczą kafelki                            | badge „Podgląd: szkic vX / obowiązująca vY”                          |
+| W3  | dwie różne liczby zmian (BE `totalChanges` vs lokalne)              | jedno źródło: lokalne porównanie previewów                           |
+| W4  | martwy merge `/diff` dla PRECO (niezgodne klucze)                   | porównanie wyłącznie lokalne, bez `/diff` w warstwie 2               |
+| W5  | duplikacja SSoT (etykiety stanów, wybór szkicu)                     | `api.displayStatus()` + `summary.types[type].draft`                  |
+| W6  | `checksStale` gubiony w ścieżce korekty wstecznej                   | wspólny `notifyPublish(json)`                                        |
+| W7  | a11y: `aria-label` na generycznym `div`, toggle bez `aria-pressed`  | `role="group"` + `aria-pressed`                                      |
+| W8  | brak testów zachowania (tylko asercje tekstu)                       | testy: klik sekcja → pozycje; publikacja z notą ≥ 10; limit 100      |
