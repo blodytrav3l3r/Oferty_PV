@@ -780,5 +780,5 @@ Scope: dopisane na koncu, historia E-001..E-120d nietknieta. Nowe ID E-120f, roz
 - CHANGE: +2 pliki produkcyjne (health + CLI), +2 testy, cron +3 pliki tras + 6 plików FE; bez zmian schematu i bez nowych zależności.
 - TESTS: j.w.; `npm run test:axe` -> 5/5 PASS; `npm run test:e2e-pricelist-preview:spawn` -> PASS; `npm run test:e2e` -> 26/27 (znany flake `smokeOfferFlow`, solo 3/3 PASS); `npm run format` + `format:check`/`encoding:check` bez ERROR.
 - DIFF: 14 plików śledzonych + 4 nowe (w tym `THIRD-PARTY-NOTICES.md` — odświeżona data generatora).
-- COMMIT: brak (do commita po jawnym GO; paczka lokalna).
+- COMMIT: `2000f0a` (`feat(api): cenniki s5 close health check i sygnal szkicu`); `31e8bf0` (odświeżenie `THIRD-PARTY-NOTICES.md`).
 - VERIFIED: YES — check na realnej bazie OK, testy i pełny `validate` zielone; `test:e2e` ma tylko znany flake iframe (solo PASS); push/release po jawnym GO.
