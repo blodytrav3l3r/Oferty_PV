@@ -753,5 +753,6 @@ Scope: dopisane na koncu, historia E-001..E-120d nietknieta. Nowe ID E-120f, roz
 - CHANGE: +2 test suites (shadow, batch contract), 1 skrypt perf; brak zmian kontraktu HTTP poza liczbą zapytań.
 - TESTS: `npm run test:quick` 510/511 suites PASS (1 fail = znany flaky `tests/orders/claimIdempotencyHttp.test.ts`, solo 5/5 PASS); typecheck, eslint, format:check, version:check, encoding:check bez ERROR.
 - DIFF: 9 plików śledzonych + 3 nowe (shadow, test, skrypt) + migracja.
-- COMMIT: brak — czeka na GO.
-- VERIFIED: YES dla kodu i pomiaru; migracja F2 NIE wdrożona (czeka na osobne GO).
+- COMMIT: `9640a3c feat(api): cenniki s4 shadow sum, indeksy i budzety` (bez pusha).
+- DEPLOY: backup `backup_2026-10-21_1792579184054.sqlite` (SHA-256 `efd66832…`), `migrate deploy` → `20261021130000_pricelist_version_idx` applied, `migrate status` = up to date, 4/4 indeksy obecne w `sqlite_master`, preflight EXIT 0, serwer `/health` 200.
+- VERIFIED: YES (kod, pomiar, migracja wdrożona).
