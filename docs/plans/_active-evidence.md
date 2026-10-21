@@ -782,3 +782,16 @@ Scope: dopisane na koncu, historia E-001..E-120d nietknieta. Nowe ID E-120f, roz
 - DIFF: 14 plików śledzonych + 4 nowe (w tym `THIRD-PARTY-NOTICES.md` — odświeżona data generatora).
 - COMMIT: `2000f0a` (`feat(api): cenniki s5 close health check i sygnal szkicu`); `31e8bf0` (odświeżenie `THIRD-PARTY-NOTICES.md`).
 - VERIFIED: YES — check na realnej bazie OK, testy i pełny `validate` zielone; `test:e2e` ma tylko znany flake iframe (solo PASS); push/release po jawnym GO.
+
+## Checkpoint E-124 (release 1.48.0 + fix cache-bust dla nowych HTML)
+
+- CLAIM: S4/S5/S5-close wypchnięte na `origin/main` i opublikowane jako release `v1.48.0`; przy okazji naprawiony root cause cache-bustingu — `auto-cache-bust.mjs` miał hardcoded listę HTML, więc `public/cenniki.html` (i `benchmark-tm.html`) zostały w `?v=1.47.0` i `version:check` blokował release.
+- EVIDENCE: `scripts/auto-cache-bust.mjs` (dynamiczne wykrywanie `public/*.html` + `public/templates/*.html`, zgodnie z `scripts/check-version.mjs`), `public/cenniki.html`, `public/benchmark-tm.html`, `VERSION`, `CHANGELOG.md`.
+- REPRODUCTION: `npm run release:minor` (przed fixem) → `✗ HTML: public\cenniki.html → 1.47.0 (≠ VERSION 1.48.0)`; po fixie → `✓ Spójne — wersja zgodna we wszystkich źródłach`; `gh release list` → `v1.48.0` na GitHubie.
+- BEFORE: `HTML_FILES` = 9 plików hardcoded; `cenniki.html`/`benchmark-tm.html` poza zakresem; release potrafił wyjść z niespójnym `?v=`.
+- AFTER: wykrywanie HTML dynamiczne (13 plików, te same katalogi co w `check-version.mjs`); release 1.48.0 zawiera `cenniki.html` w `?v=1.48.0`; `version:check` PASS.
+- CHANGE: +1 skrypt (lista → skan katalogów), 2 pliki HTML zcache-bustowane, bump 1.47.0 → 1.48.0 (CHANGELOG/VERSION/package.json/.bat/docs/HTML).
+- TESTS: `npm run validate` PASS (przed release); `npm run version:check` PASS po fixie i po release; pre-push hook zielony (git-safety 23/23, test:quick PASS) przy obu pushach.
+- DIFF: 1 skrypt + 2 HTML + 34 pliki release.
+- COMMIT: `5031db4` (`fix(config): cache bust dla wszystkich plikow public html`), `131abe5` (`chore(release): 1.48.0`), tag `v1.48.0`, GitHub Release `v1.48.0`.
+- VERIFIED: YES — kod, wersje i release zweryfikowane; do wykonania pozostaje wdrożenie 1.48.0 na serwerze (pull + restart), od którego liczy się okno O3.
