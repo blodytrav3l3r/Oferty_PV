@@ -3,6 +3,9 @@ import {
     selectBackupsForRetention,
     findOrphanSidecars,
     getBackupDir,
+    canPruneOldBackups,
+    classifyVerification,
+    planRetention,
     MAX_BACKUPS
 } from '../scripts/backup';
 import { resolveDataDir, resolveProjectRoot } from '../src/utils/paths';
@@ -54,6 +57,53 @@ describe('P0.6 retencja backupu', () => {
                 'backup_b.sqlite.sha256'
             ])
         ).toEqual(['backup_b.sqlite.sha256']);
+    });
+});
+
+describe('Bramka retencji: stare kopie zostają bez zweryfikowanego backupu', () => {
+    it('tylko zweryfikowany backup pozwala na retencję', () => {
+        expect(canPruneOldBackups('ok')).toBe(true);
+        expect(canPruneOldBackups('corrupt')).toBe(false);
+        expect(canPruneOldBackups('unverified')).toBe(false);
+    });
+
+    it('klasyfikuje błąd: integralność -> corrupt, brak możliwości sprawdzenia -> unverified', () => {
+        expect(classifyVerification('integrity_check: database disk image is malformed')).toBe(
+            'corrupt'
+        );
+        expect(classifyVerification('EBUSY: resource busy or locked')).toBe('unverified');
+    });
+
+    it('plan retencji: 10 kopii przy unverified -> nic nie usuwamy', () => {
+        const plan = planRetention(files(10, 10), 'unverified');
+        expect(plan.toDelete).toEqual([]);
+    });
+
+    it('plan retencji: 10 kopii przy corrupt -> nic nie usuwamy', () => {
+        const plan = planRetention(files(10, 10), 'corrupt');
+        expect(plan.toDelete).toEqual([]);
+    });
+
+    it('plan retencji: 10 kopii przy ok -> usuwa 3 najstarsze', () => {
+        const plan = planRetention(files(10, 10), 'ok');
+        expect(plan.toDelete).toEqual([
+            'backup_2026-01-01_0.sqlite',
+            'backup_2026-01-01_1.sqlite',
+            'backup_2026-01-01_2.sqlite'
+        ]);
+    });
+
+    it('plan retencji: sieroty (sha bez pary sqlite) sprzątane niezależnie od weryfikacji', () => {
+        const plan = planRetention(
+            [
+                { name: 'backup_a.sqlite', mtimeMs: 1 },
+                { name: 'backup_a.sqlite.sha256', mtimeMs: 1 },
+                { name: 'backup_b.sqlite.sha256', mtimeMs: 2 }
+            ],
+            'unverified'
+        );
+        expect(plan.orphanSidecars).toEqual(['backup_b.sqlite.sha256']);
+        expect(plan.toDelete).toEqual([]);
     });
 });
 

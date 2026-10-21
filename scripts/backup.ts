@@ -51,6 +51,44 @@ export function findOrphanSidecars(files: string[]): string[] {
     );
 }
 
+/**
+ * Status weryfikacji świeżego backupu.
+ * - `ok`         — integralność potwierdzona (`PRAGMA integrity_check` = ok)
+ * - `corrupt`    — baza nie przechodzi integrity_check (plik uszkodzony)
+ * - `unverified` — nie dało się sprawdzić (brak node:sqlite, plik zablokowany)
+ */
+export type BackupVerification = 'ok' | 'corrupt' | 'unverified';
+
+/** Błąd integralności → plik uszkodzony; pozostałe błędy → brak możliwości weryfikacji. */
+export function classifyVerification(message: string): BackupVerification {
+    return message.includes('integrity_check') ? 'corrupt' : 'unverified';
+}
+
+/**
+ * Retencja (kasowanie starych kopii) TYLKO dla zweryfikowanego backupu.
+ * Bez weryfikacji stare kopie zostają — nigdy nie zamieniamy działającej
+ * historii na plik, którego integralności nie da się potwierdzić.
+ */
+export function canPruneOldBackups(verification: BackupVerification): boolean {
+    return verification === 'ok';
+}
+
+/**
+ * Plan czyszczenia katalogu backupów. `toDelete` jest puste, gdy nowy backup
+ * nie przeszedł weryfikacji — stare kopie zostają. Sieroce sidecary (`.sha256`
+ * bez pary `.sqlite`) są bezużyteczne niezależnie od weryfikacji.
+ */
+export function planRetention(
+    files: Array<{ name: string; mtimeMs: number }>,
+    verification: BackupVerification
+): { toDelete: string[]; orphanSidecars: string[] } {
+    const orphanSidecars = findOrphanSidecars(files.map((f) => f.name));
+    if (!canPruneOldBackups(verification)) {
+        return { toDelete: [], orphanSidecars };
+    }
+    return { toDelete: selectBackupsForRetention(files), orphanSidecars };
+}
+
 async function main() {
     if (!fs.existsSync(backupDir)) {
         fs.mkdirSync(backupDir, { recursive: true });
@@ -77,7 +115,8 @@ async function main() {
         fs.writeFileSync(backupPath + '.sha256', `${hash}  ${backupName}\n`, 'utf8');
         console.log(`[Backup] SHA-256: ${hash}`);
 
-        // weryfikacja integralności backupu
+        // weryfikacja integralności backupu — bramka przed retencją
+        let verification: BackupVerification = 'unverified';
         try {
             const { DatabaseSync } = await import('node:sqlite');
             const db = new DatabaseSync(backupPath, { readOnly: true });
@@ -85,17 +124,30 @@ async function main() {
             db.close();
             if (row.integrity_check !== 'ok')
                 throw new Error(`integrity_check: ${row.integrity_check}`);
+            verification = 'ok';
             console.log('[Backup] Weryfikacja integralności OK');
         } catch (e: unknown) {
             const msg = e instanceof Error ? e.message : String(e);
+            verification = classifyVerification(msg);
             console.warn('[Backup] Ostrzeżenie weryfikacji:', msg);
-            // nie usuwaj starej kopii jeśli nowa jest uszkodzona
-            if (msg.includes('integrity_check')) {
-                try {
-                    fs.unlinkSync(backupPath);
-                    console.log('[Backup] Usunięto uszkodzony backup');
-                } catch {}
-                throw e;
+        }
+
+        // W katalogu trzymamy WYŁĄCZNIE zweryfikowane kopie: plik, którego
+        // integralności nie da się potwierdzić, wypierałby dobrą kopię
+        // w retencji, więc go usuwamy. Stare kopie zostają na dysku.
+        if (verification !== 'ok') {
+            try {
+                fs.unlinkSync(backupPath);
+                console.log(`[Backup] Usunięto niezweryfikowany backup (${verification})`);
+            } catch (e: unknown) {
+                const msg = e instanceof Error ? e.message : String(e);
+                console.warn(`[Backup] Nie udało się usunąć niezweryfikowanego backupu: ${msg}`);
+            }
+            try {
+                fs.unlinkSync(backupPath + '.sha256');
+            } catch (e: unknown) {
+                const msg = e instanceof Error ? e.message : String(e);
+                console.warn(`[Backup] Nie udało się usunąć sidecara: ${msg}`);
             }
         }
 
@@ -106,10 +158,10 @@ async function main() {
             name: f,
             mtimeMs: fs.statSync(path.join(backupDir, f)).mtimeMs
         }));
-        const toDeleteList = selectBackupsForRetention(withMtime);
+        const { toDelete: toDeleteList, orphanSidecars } = planRetention(withMtime, verification);
 
         // P0.6: sprzątanie sierot — sidecar bez pary .sqlite.
-        for (const f of findOrphanSidecars(files)) {
+        for (const f of orphanSidecars) {
             try {
                 fs.unlinkSync(path.join(backupDir, f));
                 console.log(`[Backup] Usunięto sierocy sidecar: ${f}`);
@@ -132,6 +184,12 @@ async function main() {
         const keptCount = Math.min(kept, MAX_BACKUPS);
 
         console.log(`[Backup] Zachowano ${keptCount}/${MAX_BACKUPS} kopii`);
+
+        // Bramka: bez zweryfikowanego backupu stare kopie zostają, a skrypt
+        // kończy się błędem (cron widzi porażkę zamiast cichego sukcesu).
+        if (!canPruneOldBackups(verification)) {
+            throw new Error(`Backup ${verification} — retencja wstrzymana, stare kopie zachowane`);
+        }
     } catch (error: any) {
         console.error('[Backup] Błąd:', error.message);
         process.exit(1);
