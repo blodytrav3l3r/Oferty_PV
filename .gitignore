@@ -55,6 +55,7 @@ data/*.sqlite*
 data/*.sqlite-shm
 data/*.sqlite-wal
 # Runtime/incydenty (dowody lokalne, stan watchdoga — nie commituj)
+data/perf/
 data/incidents/
 data/watchdog.last
 /*.sqlite*

@@ -23,6 +23,7 @@ import {
 import { offersStudnieBatchSchema, paginationQuerySchema } from '../../validators/offerSchemas';
 import { hasProductionOrdersForOffer } from '../../utils/productionOrderGuard';
 import { resolveActive, resolveVersionIdSafe } from '../../services/pricelistVersionService';
+import { shadowStudnieTotal } from '../../services/pricelist/shadowSum';
 
 const router = express.Router();
 const uuidv4 = crypto.randomUUID.bind(crypto);
@@ -831,6 +832,13 @@ router.post(
                 const wellCount = extractWellsFromOfferData(dataStr).length;
                 // E-2: derived persisted metadata — klient nie ustawia autorytatywnie
                 const totalPrice = deriveStudnieTotalPrice(o as Record<string, unknown>);
+                const shadow = shadowStudnieTotal(blobSrc, totalPrice);
+                if (shadow) {
+                    logger.warn('Offers', 'Shadow sum mismatch (POST oferty studni)', {
+                        docId,
+                        ...shadow
+                    });
+                }
 
                 pending.push({
                     docId,
@@ -1131,6 +1139,20 @@ router.put(
                 }
                 // Kolumna liczy finalny blob (po sciezce keep) — nigdy stale 0.
                 const putWellCount = extractWellsFromOfferData(putDataStr).length;
+                try {
+                    const shadow = shadowStudnieTotal(
+                        JSON.parse(putDataStr) as Record<string, unknown>,
+                        putTotalPrice
+                    );
+                    if (shadow) {
+                        logger.warn('Offers', 'Shadow sum mismatch (PUT oferty studni)', {
+                            docId,
+                            ...shadow
+                        });
+                    }
+                } catch {
+                    // Uszkodzony blob starego wiersza — walidacja zapisu wyżej, tu tylko shadow.
+                }
                 // Historia jak w POST: slim snapshot poprzedniego stanu, max 5.
                 let putHistory: unknown[] = [];
                 let putAuditOld: Record<string, unknown> | null = null;

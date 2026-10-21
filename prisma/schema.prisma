@@ -342,6 +342,7 @@ model offers_rel {
   @@index([investName], map: "idx_offers_investname")
   @@index([userId, createdAt, id], map: "idx_offers_user_created_id")
   @@index([userId, updatedAt, id], map: "idx_offers_user_updated_id")
+  @@index([pricelistVersionId], map: "idx_offers_pricelistversion")
 }
 
 // Główne dokumenty ofert (typ studnie)
@@ -378,6 +379,7 @@ model offers_studnie_rel {
   @@index([totalPrice], map: "idx_offersstud_totalprice")
   @@index([userId, createdAt, id], map: "idx_offersstud_user_created_id")
   @@index([userId, updatedAt, id], map: "idx_offersstud_user_updated_id")
+  @@index([pricelistVersionId], map: "idx_offersstud_pricelistversion")
 }
 
 // Opieka nad oferta (P0.2): historia kontaktow follow-up, append-only.
@@ -489,6 +491,7 @@ model orders_studnie_rel {
 
   @@index([userId], map: "idx_ordstud_user")
   @@index([offerStudnieId], map: "idx_ordstud_offer")
+  @@index([pricelistVersionId], map: "idx_ordstud_pricelistversion")
 }
 
 // Zamówienia na rury
@@ -505,6 +508,7 @@ model orders_rury_rel {
   pricelistVersionId String?
   @@index([userId], map: "idx_ordrury_user")
   @@index([offerId], map: "idx_ordrury_offer")
+  @@index([pricelistVersionId], map: "idx_ordrury_pricelistversion")
 }
 
 model production_order_counters {

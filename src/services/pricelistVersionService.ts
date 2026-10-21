@@ -79,6 +79,7 @@ export type {
 
 export {
     countVersionUsage,
+    countVersionUsageBatch,
     getPrecoReferences,
     getVersionsSummary,
     resolveActive,

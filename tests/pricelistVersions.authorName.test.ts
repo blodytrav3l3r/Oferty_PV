@@ -53,7 +53,7 @@ const versions = [
 
 const users = [{ id: 'usr_admin', username: 'admin', firstName: 'System', lastName: 'Admin' }];
 
-const zero = { count: jest.fn(async () => 0) };
+const zero = { count: jest.fn(async () => 0), groupBy: jest.fn(async () => []) };
 
 jest.mock('../src/prismaClient', () => ({
     __esModule: true,

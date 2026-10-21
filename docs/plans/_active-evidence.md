@@ -742,3 +742,16 @@ Scope: dopisane na koncu, historia E-001..E-120d nietknieta. Nowe ID E-120f, roz
 - DIFF: git diff -- docs/plans/_active-evidence.md.
 - COMMIT: scripts-commit feat-studnie loading, BEZ push.
 - VERIFIED: YES (po zielonym version-check).
+
+## Checkpoint E-121 (S4 cenniki: shadow sum, F1, F2, budżety)
+
+- CLAIM: N+1 listy wersji usunięte (4 groupBy na całą listę), shadow suma studni tylko loguje różnicę, indeksy F2 obecne w schemacie i zmierzone EXPLAIN, budżety 8.2 zmierzone na fixture.
+- EVIDENCE: `src/services/pricelist/usage.ts` (`countUsageBatch`), `src/routes/pricelistVersions.ts` (GET `/`), `src/services/pricelist/shadowSum.ts`, `src/routes/offers/studnieCrud.ts` (POST/PUT), `prisma/schema.prisma` (4 indeksy), `prisma/migrations/20261021130000_pricelist_version_idx/migration.sql`, `scripts/seed-pricelist-perf.ts`.
+- REPRODUCTION: `npm run perf:pricelist -- --reseed` → EXPLAIN 4/4 PASS (COVERING INDEX), summary p95 4.6 ms / checks 371.5 ms / lista 10.9 ms (budżety 200/500/300), batch usage = 5 zapytań dla 400 wersji; `npx jest tests/pricelistShadowSum.test.ts tests/pricelistVersions.summary.test.ts tests/pricelistVersions.f2.test.ts --runInBand` → 24/24 PASS.
+- BEFORE: lista = 4× count na wersję (N+1), brak indeksów `pricelistVersionId`, brak shadow sum, brak fixture/budżetów.
+- AFTER: 4 groupBy na listę + mapa; shadow `{stored, wellsExportTotal, delta}` w logu (bez 422); indeksy w schemacie + migracja; fixture poza repo (`data/perf/`, gitignore).
+- CHANGE: +2 test suites (shadow, batch contract), 1 skrypt perf; brak zmian kontraktu HTTP poza liczbą zapytań.
+- TESTS: `npm run test:quick` 510/511 suites PASS (1 fail = znany flaky `tests/orders/claimIdempotencyHttp.test.ts`, solo 5/5 PASS); typecheck, eslint, format:check, version:check, encoding:check bez ERROR.
+- DIFF: 9 plików śledzonych + 3 nowe (shadow, test, skrypt) + migracja.
+- COMMIT: brak — czeka na GO.
+- VERIFIED: YES dla kodu i pomiaru; migracja F2 NIE wdrożona (czeka na osobne GO).

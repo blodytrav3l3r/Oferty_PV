@@ -34,7 +34,7 @@ jest.mock('../src/services/pricelist/usage', () => {
     const actual = jest.requireActual('../src/services/pricelist/usage');
     return {
         ...actual,
-        countVersionUsage: jest.fn(),
+        countVersionUsageBatch: jest.fn(),
         getPrecoReferences: jest.fn()
     };
 });
@@ -127,9 +127,9 @@ jest.mock('../src/prismaClient', () => ({
 }));
 
 import router from '../src/routes/pricelistVersions';
-import { countVersionUsage, getPrecoReferences } from '../src/services/pricelist/usage';
+import { countVersionUsageBatch, getPrecoReferences } from '../src/services/pricelist/usage';
 
-const countVersionUsageMock = countVersionUsage as jest.Mock;
+const countVersionUsageBatchMock = countVersionUsageBatch as jest.Mock;
 const getPrecoReferencesMock = getPrecoReferences as jest.Mock;
 
 const app = express();
@@ -153,7 +153,7 @@ function version(partial: Partial<VRow> & Pick<VRow, 'id' | 'type'>): VRow {
 beforeEach(() => {
     jest.clearAllMocks();
     versions = [];
-    countVersionUsageMock.mockResolvedValue({ offers: 0, orders: 0, total: 0 });
+    countVersionUsageBatchMock.mockResolvedValue(new Map());
     getPrecoReferencesMock.mockResolvedValue(new Map());
 });
 
@@ -315,7 +315,9 @@ describe('GET /api/pricelist-versions/ — batch PRECO', () => {
             version({ id: 's1', type: 'studnie', seq: 1 })
         ];
         getPrecoReferencesMock.mockResolvedValue(new Map([['p1', { count: 1, labels: ['v2'] }]]));
-        countVersionUsageMock.mockResolvedValue({ offers: 2, orders: 1, total: 3 });
+        countVersionUsageBatchMock.mockResolvedValue(
+            new Map([['s1', { offers: 2, orders: 1, total: 3 }]])
+        );
 
         const res = await request(app).get('/api/pricelist-versions').set(ADMIN);
         expect(res.status).toBe(200);
@@ -335,18 +337,27 @@ describe('GET /api/pricelist-versions/ — batch PRECO', () => {
         expect(byId.get('s1')).toMatchObject({ usedBy: 3, usedByKind: 'offers' });
 
         expect(getPrecoReferencesMock).toHaveBeenCalledTimes(1);
-        expect(countVersionUsageMock).toHaveBeenCalledTimes(1);
-        expect(countVersionUsageMock).toHaveBeenCalledWith('s1');
+        expect(countVersionUsageBatchMock).toHaveBeenCalledTimes(1);
+        expect(countVersionUsageBatchMock).toHaveBeenCalledWith(['s1']);
         expect(versionDelegate.findMany).toHaveBeenCalledTimes(1);
     });
 
     test('brak PRECO: zero zapytań referencji', async () => {
-        versions = [version({ id: 's1', type: 'studnie' })];
-        countVersionUsageMock.mockResolvedValue({ offers: 0, orders: 0, total: 0 });
+        versions = [version({ id: 's1', type: 'studnie' }), version({ id: 'r1', type: 'rury' })];
 
         const res = await request(app).get('/api/pricelist-versions').set(ADMIN);
         expect(res.status).toBe(200);
         expect(getPrecoReferencesMock).not.toHaveBeenCalled();
-        expect(countVersionUsageMock).toHaveBeenCalledWith('s1');
+        expect(countVersionUsageBatchMock).toHaveBeenCalledTimes(1);
+        expect(countVersionUsageBatchMock).toHaveBeenCalledWith(['r1', 's1']);
+    });
+
+    test('F1: 50 wersji → 1 batch, nie 200 countów', async () => {
+        versions = Array.from({ length: 50 }, (_, i) =>
+            version({ id: `s${i}`, type: 'studnie', seq: i + 1 })
+        );
+        await request(app).get('/api/pricelist-versions').set(ADMIN);
+        expect(countVersionUsageBatchMock).toHaveBeenCalledTimes(1);
+        expect(countVersionUsageBatchMock.mock.calls[0][0]).toHaveLength(50);
     });
 });

@@ -35,6 +35,26 @@ export interface UsageClient {
     orders_studnie_rel: UsageCounter;
 }
 
+interface UsageGroupRow {
+    pricelistVersionId: string | null;
+    _count: { _all: number };
+}
+
+interface UsageGroupBy {
+    groupBy(args: {
+        by: ['pricelistVersionId'];
+        where: { pricelistVersionId: { in: string[] } };
+        _count: { _all: true };
+    }): Promise<UsageGroupRow[]>;
+}
+
+export interface UsageBatchClient {
+    offers_rel: UsageGroupBy;
+    offers_studnie_rel: UsageGroupBy;
+    orders_rury_rel: UsageGroupBy;
+    orders_studnie_rel: UsageGroupBy;
+}
+
 /** Ile ofert/zamówień trzyma pieczątkę danej wersji (4× count po pricelistVersionId). */
 export async function countUsage(client: UsageClient, id: string): Promise<VersionUsage> {
     const where = { where: { pricelistVersionId: id } };
@@ -52,6 +72,50 @@ export async function countUsage(client: UsageClient, id: string): Promise<Versi
 /** Użycie wersji przez oferty/zamówienia (publiczne — pod GET / usedBy). */
 export async function countVersionUsage(id: string): Promise<VersionUsage> {
     return countUsage(prisma as unknown as UsageClient, id);
+}
+
+/**
+ * F1: użycie wielu wersji w 4 zapytaniach (groupBy), nie 4×N.
+ * Zwraca mapę id → liczby; brak wiersza = zera.
+ */
+export async function countUsageBatch(
+    client: UsageBatchClient,
+    ids: string[]
+): Promise<Map<string, VersionUsage>> {
+    const result = new Map<string, VersionUsage>();
+    const unique = [...new Set(ids.filter(Boolean))];
+    if (unique.length === 0) return result;
+    const where = { pricelistVersionId: { in: unique } };
+    const args: Parameters<UsageGroupBy['groupBy']>[0] = {
+        by: ['pricelistVersionId'],
+        where,
+        _count: { _all: true }
+    };
+    const [o1, o2, r1, r2] = await Promise.all([
+        client.offers_rel.groupBy(args),
+        client.offers_studnie_rel.groupBy(args),
+        client.orders_rury_rel.groupBy(args),
+        client.orders_studnie_rel.groupBy(args)
+    ]);
+    const add = (rows: UsageGroupRow[], key: 'offers' | 'orders') => {
+        for (const row of rows) {
+            if (!row.pricelistVersionId) continue;
+            const entry = result.get(row.pricelistVersionId) ?? { offers: 0, orders: 0, total: 0 };
+            entry[key] += row._count._all;
+            entry.total = entry.offers + entry.orders;
+            result.set(row.pricelistVersionId, entry);
+        }
+    };
+    add(o1, 'offers');
+    add(o2, 'offers');
+    add(r1, 'orders');
+    add(r2, 'orders');
+    return result;
+}
+
+/** Batch użycia przez prisma (publiczne — pod GET / usedBy). */
+export async function countVersionUsageBatch(ids: string[]): Promise<Map<string, VersionUsage>> {
+    return countUsageBatch(prisma as unknown as UsageBatchClient, ids);
 }
 
 export interface PrecoReferenceInfo {

@@ -20,7 +20,7 @@ import {
     applyBackdate,
     cloneAsDraft,
     createDraft,
-    countVersionUsage,
+    countVersionUsageBatch,
     deleteVersion,
     getPrecoReferences,
     getVersionDiff,
@@ -128,26 +128,23 @@ router.get('/', requireAuth, requireAdmin, READ_LIMITER, async (req, res) => {
             }
         }
         // Ile ofert/zamówień trzyma pieczątkę wersji (pod wyszarzony „Usuń" w FE).
-        // Rury/studnie: 4 county per wersja. PRECO: jedna mapa referencji studni
-        // (getPrecoReferences), bez N+1 i bez 4 countów (te zawsze 0).
+        // F1: rury/studnie liczone batch (4 groupBy na całą listę, nie 4×N).
+        // PRECO: jedna mapa referencji studni (getPrecoReferences).
         const hasPreco = versions.some((v) => v.type === 'preco');
-        const precoRefs = hasPreco ? await getPrecoReferences() : null;
-        const withUsage = await Promise.all(
-            versions.map(async (v) => {
-                if (v.type === 'preco') {
-                    return {
-                        ...v,
-                        usedBy: precoRefs?.get(v.id)?.count ?? 0,
-                        usedByKind: 'studnieVersions' as const
-                    };
-                }
-                return {
-                    ...v,
-                    usedBy: (await countVersionUsage(v.id)).total,
-                    usedByKind: 'offers' as const
-                };
-            })
-        );
+        const offerVersionIds = versions.filter((v) => v.type !== 'preco').map((v) => v.id);
+        const [precoRefs, usageBatch] = await Promise.all([
+            hasPreco ? getPrecoReferences() : Promise.resolve(null),
+            countVersionUsageBatch(offerVersionIds)
+        ]);
+        const withUsage = versions.map((v) => ({
+            ...v,
+            usedBy:
+                v.type === 'preco'
+                    ? (precoRefs?.get(v.id)?.count ?? 0)
+                    : (usageBatch.get(v.id)?.total ?? 0),
+            usedByKind: (v.type === 'preco' ? 'studnieVersions' : 'offers') as
+                'studnieVersions' | 'offers'
+        }));
         // Autor: nazwa zamiast id (kolumna Autor w panelu). Batch 1 query;
         // nie-user (auto-ensure/backfill) i usunięci zostają słownie po id.
         const authorIds = [
