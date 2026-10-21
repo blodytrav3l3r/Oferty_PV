@@ -53,23 +53,26 @@ Nie powstaje drugi dashboard ani duplikat edytora siatki — panel dookoła istn
 | --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
 | R1  | `POST /:id/approve` (kanoniczny) nie ma konsumenta w FE; FE woła aliasy `publish`/`backdate` oznaczone `Deprecation` + `Sunset 2027-03-31`                                  | `src/routes/pricelistVersions.ts:97-103, 354-373`; `public/js/shared/pricelistVersions.js:1462, 1653`                  | `checksStale` nie powstaje; alias `publish` omija guard noty ≥ 10 znaków dla daty wstecznej (`lifecycle.ts:417-422` vs `routes:415`) |
 | R2  | SSoT instrukcja admina opisuje nieistniejący model (statusy `BACKDATE`/`BACKDATE_REQUESTED`, cron co 5 min, `/activate-due`, „Aktywuj” ze `SCHEDULED`, edycja zaplanowanej) | `docs/CENNIKI-INSTRUKCJA-ADMINA.md:24-28, 59-63, 74-81, 96-99, 182`                                                    | admin działa wg instrukcji, której nie ma w runtime                                                                                  |
-| R3  | Martwe statusy w UI: `STATUS_LABELS`/`STATUS_ICONS`/legenda panelu, `STATE_LABELS` huba, 2 martwe opcje filtru                                                              | `public/js/shared/pricelistVersions.js:415-540, 883-889`; `public/js/cennikiHub.js:13-21`; `public/cenniki.html:74-75` | po migracji `BACKDATE*` nie wystąpią; filtr stanów oferuje stany, których nie ma                                                     |
+| R3  | Martwe statusy w UI: `STATUS_LABELS`/`STATUS_ICONS`/legenda panelu, `STATE_LABELS` huba, 2 martwe opcje filtru                                                              | `public/js/shared/pricelistVersions.js:415-540, 883-889`; `public/js/cennikiHub.js:13-21`; `public/cenniki.html:74-75` | w bazie nie ma statusów legacy (2026-10-21) → te etykiety nigdy się nie pokażą; filtr stanów oferuje stany, których nie ma           |
 | R4  | `canActivate`/`canBackdate` = `false` → gałęzie „Aktywuj”/„Zatwierdź wstecz” martwe                                                                                         | `public/js/shared/pricelistVersions.js:439-445`                                                                        | brak CTA do canonical approve; reszta kodu (`act === 'activate'`, `act === 'backdate'`) to dead code                                 |
 | R5  | Brak wskaźnika „edytujesz szkic vs oferty liczą z obowiązującą” w edytorach                                                                                                 | `public/js/rury/pricelistUi.js`, `public/js/studnie/pricelistState.js`                                                 | admin widzi w edytorze szkic, a oferta liczy z innej wersji — ryzyko błędnych cen                                                    |
 | R6  | Etykieta źródła cen w FE myląca: `__ruryPricingSource='live'` / `__studniePricingSource='live'` niezależnie od odpowiedzi BE                                                | `public/js/rury/dataService.js:114`; `public/js/studnie/uiHelpers.js:585`                                              | komentarz „cennik-admin zostaje na LIVE” nie odzwierciedla modelu                                                                    |
 | R7  | Moduł `cenniki` nie jest admin-only; user/pro dostają 403 z `/summary`                                                                                                      | `public/app.html:156-164`; `public/js/spa/router.js:294-310`                                                           | user widzi pusty/zepsuty hub                                                                                                         |
 | R8  | Brak w hubie komunikatu „bufor nie zmienia ofert” (plan centrum §5.1/§5.2)                                                                                                  | `public/cenniki.html:26-33`                                                                                            | ryzyko niezrozumienia, że edycja nie rusza ofert                                                                                     |
 
-### 2.4 Stan wdrożenia migracji statusów (do weryfikacji)
+### 2.4 Stan migracji statusów — zweryfikowany 2026-10-21 (VERIFIED)
 
 - Migracja `prisma/migrations/20261021000000_pricelist_approved/migration.sql` mapuje
   `ACTIVE/SCHEDULED/ARCHIVED/BACKDATE → APPROVED`, `BACKDATE_REQUESTED → DRAFT` i zakłada indeks
   `uq_pricelist_version_approved` (`type`,`effectiveFrom`) `WHERE status='APPROVED'`.
-- Plan centrum §15 ma **S2a deploy odhaczony jako „[ ]”** (backup → preflight EXIT 0 → `migrate deploy`).
-- Preflight z 2026-10-20 (`docs/plans/pricelist-preflight-s0.md`): 8 wersji, `ACTIVE=3`, `ARCHIVED=5`, 0 kolizji.
-- **HYPOTHESIS (do potwierdzenia `npx prisma migrate status`):** dopóki migracja nie jest zastosowana,
-  `resolveActive` (filtr `APPROVED`) zwraca `null` → oferty liczą z LIVE (`X-Pricelist-Fallback: live`),
-  hub pokazuje „Brak aktywnej wersji”, a 3 historyczne wersje `ACTIVE` nie są widoczne jako aktywne.
+- `npx prisma migrate status` → „Database schema is up to date!" (34 migracji, EXIT 0) — **migracja wdrożona**.
+- `npm run pricelist:preflight` → EXIT 0: 8 wersji, `APPROVED=8`, 0 kolizji, 0 nieznanych statusów,
+  historia migracji obecna. W bazie **nie ma** statusów legacy (`BACKDATE`, `BACKDATE_REQUESTED`).
+- `npm run pricelist:health` → EXIT 0: dokładnie 1 aktywna wersja na typ — rury `v3-20260928`
+  (od 2026-09-28), studnie `v4-20261004` (od 2026-10-04), preco `v1`; 0 zapisów `LIVE_WRITE` w 24 h.
+- Konsekwencje: `resolveActive` działa → oferty liczą z wersji obowiązującej (nie LIVE), badge „cennik vX”
+  w ofertach żyje; etykiety `BACKDATE`/`BACKDATE_REQUESTED` w FE i 2 martwe opcje filtru w hubie to
+  potwierdzona szkoda (R3); w bazie 0 szkiców (8/8 `APPROVED`) → „W przygotowaniu” = 0 do pierwszego szkicu.
 
 ## 3. Docelowy UI
 
@@ -99,13 +102,13 @@ Nie powstaje drugi dashboard ani duplikat edytora siatki — panel dookoła istn
 
 ### 3.1 Mapowanie statusów (DB → UI)
 
-| Zapisane w DB                            | Stan wyliczany | Etykieta UI                                | Warunek                                       |
-| ---------------------------------------- | -------------- | ------------------------------------------ | --------------------------------------------- |
-| `DRAFT`                                  | —              | **W przygotowaniu**                        | status zapisany `DRAFT`                       |
-| `APPROVED`                               | `SCHEDULED`    | **Do wdrożenia**                           | `effectiveFrom > now`                         |
-| `APPROVED`                               | `ACTIVE`       | **Obowiązuje**                             | `effectiveFrom <= now`, najnowsza na osi typu |
-| `APPROVED`                               | `ARCHIVED`     | **Historyczny**                            | wyparta przez nowszą `APPROVED`               |
-| legacy `BACKDATE` / `BACKDATE_REQUESTED` | —              | _(etykieta tymczasowa, znika po migracji)_ | do zastosowania migracji S2a                  |
+| Zapisane w DB                            | Stan wyliczany | Etykieta UI                       | Warunek                                       |
+| ---------------------------------------- | -------------- | --------------------------------- | --------------------------------------------- |
+| `DRAFT`                                  | —              | **W przygotowaniu**               | status zapisany `DRAFT`                       |
+| `APPROVED`                               | `SCHEDULED`    | **Do wdrożenia**                  | `effectiveFrom > now`                         |
+| `APPROVED`                               | `ACTIVE`       | **Obowiązuje**                    | `effectiveFrom <= now`, najnowsza na osi typu |
+| `APPROVED`                               | `ARCHIVED`     | **Historyczny**                   | wyparta przez nowszą `APPROVED`               |
+| legacy `BACKDATE` / `BACKDATE_REQUESTED` | —              | _(etykieta martwa — usunąć w M1)_ | brak w bazie od 2026-10-21 (migracja S2a)     |
 
 Reguły:
 
@@ -173,32 +176,30 @@ Reguły:
 
 ## 5. Etapy (autonomia per `docs/AUTONOMY_CONTRACT.md`)
 
-| #      | Etap                | Zakres                                                                                                                                                                    | Brama                                                                                                                                       | Klasyfikacja                 |
-| ------ | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------- |
-| **M0** | Docs                | Przepisanie `CENNIKI-INSTRUKCJA-ADMINA.md` + `docs/API.md` na model 2 statusów i 4 etykiety                                                                               | `npm run version:check`, `npm run format`                                                                                                   | 🟢 działanie + raport        |
-| **M1** | FE correctness      | `publish`→`approve` (+`checksStale`), usunięcie martwych statusów/legendy/filtru, `can*` na 4 stanach, alias-note guard, poprawka `__*PricingSource`                      | `npm run typecheck:frontend`, `npm run lint:frontend`, `npm run test:quick`, `npm run test:frontend`                                        | 🟡 GO na paczkę              |
-| **M2** | Admin-only + oś     | Gating kafelka i routera, warstwa 1 w hubie (oś per typ, 4 statusy, kolizje, użycie), badge „bufor nie zmienia ofert”                                                     | `npm run test:quick`, `npm run test:axe`                                                                                                    | 🟡 GO na paczkę              |
-| **M3** | Edytor + publikacja | Osadzenie istniejącego edytora (iframe) w warstwie 2, pasek stanu, badge trybu w edytorach, CTA „Opublikuj” z kontrolą                                                    | `npm run typecheck:frontend`, `npm run lint:frontend`, `npm run test:quick`, `npm run test:e2e-pricelist-preview:spawn`, `npm run test:axe` | 🟡 GO na paczkę              |
-| **M4** | Sekcje              | Sekcje studni 1:1 z edytorem + osobna oś PRECO w panelu, podsekcja Transport tylko dla studni                                                                             | `npm run test:quick`                                                                                                                        | 🟡 GO na paczkę              |
-| **M5** | **Deploy S2a**      | `npm run backup` → `npm run pricelist:preflight` (EXIT 0) → `npx prisma migrate deploy` → `npx prisma migrate status` → weryfikacja runtime (hub, kafelki, oferta, badge) | weryfikacja runtime + `npm run test:quick`                                                                                                  | 🔴 osobne GO (migracja bazy) |
-| **M6** | Domknięcie          | Warstwa 3 (oś czasu + historia z akcjami), dzienny health check „1 aktywna wersja/typ” (`health.ts`), metryki                                                             | `npm run test:quick`, `npm run validate`                                                                                                    | 🟡 GO na paczkę              |
+| #      | Etap                | Zakres                                                                                                                                                                                                                                              | Brama                                                                                                                                       | Klasyfikacja                  |
+| ------ | ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------- |
+| **M0** | Docs                | Przepisanie `CENNIKI-INSTRUKCJA-ADMINA.md` + `docs/API.md` na model 2 statusów i 4 etykiety                                                                                                                                                         | `npm run version:check`, `npm run format`                                                                                                   | 🟢 działanie + raport         |
+| **M1** | FE correctness      | `publish`→`approve` (+`checksStale`), usunięcie martwych statusów/legendy/filtru, `can*` na 4 stanach, alias-note guard, poprawka `__*PricingSource`                                                                                                | `npm run typecheck:frontend`, `npm run lint:frontend`, `npm run test:quick`, `npm run test:frontend`                                        | 🟡 GO na paczkę               |
+| **M2** | Admin-only + oś     | Gating kafelka i routera, warstwa 1 w hubie (oś per typ, 4 statusy, kolizje, użycie), badge „bufor nie zmienia ofert”                                                                                                                               | `npm run test:quick`, `npm run test:axe`                                                                                                    | 🟡 GO na paczkę               |
+| **M3** | Edytor + publikacja | Osadzenie istniejącego edytora (iframe) w warstwie 2, pasek stanu, badge trybu w edytorach, CTA „Opublikuj” z kontrolą                                                                                                                              | `npm run typecheck:frontend`, `npm run lint:frontend`, `npm run test:quick`, `npm run test:e2e-pricelist-preview:spawn`, `npm run test:axe` | 🟡 GO na paczkę               |
+| **M4** | Sekcje              | Sekcje studni 1:1 z edytorem + osobna oś PRECO w panelu, podsekcja Transport tylko dla studni                                                                                                                                                       | `npm run test:quick`                                                                                                                        | 🟡 GO na paczkę               |
+| **M5** | Weryfikacja runtime | Migracja S2a **już wdrożona** (2026-10-21, `migrate status` OK) → etap = weryfikacja widocznego efektu: hub pokazuje aktywną wersję/typ, kafelki pulpitu nie „brak aktywnej", oferta liczy z wersji (badge „cennik vX"), brak toasta fallbacku LIVE | `npm run pricelist:health` (EXIT 0) + `npm run pricelist:preflight` (EXIT 0) + ręczna obserwacja UI + `npm run test:quick`                  | 🟢 weryfikacja (bez migracji) |
+| **M6** | Domknięcie          | Warstwa 3 (oś czasu + historia z akcjami), dzienny health check „1 aktywna wersja/typ” (`health.ts`), metryki                                                                                                                                       | `npm run test:quick`, `npm run validate`                                                                                                    | 🟡 GO na paczkę               |
 
-Rollback: M0–M4, M6 → revert commitów (bez migracji). M5 → `npm run restore data/backups/backup_*.sqlite`
-
-- `npx prisma migrate resolve --rolled-back` (migracja 20261021000000 ma guardy przed UPDATE, więc
-  nie powinna zostawić częściowych danych).
+Rollback: wszystkie etapy → revert commitów. Migracja S2a jest już wdrożona w bazie — wycofanie jej wymagałoby
+`npm run restore data/backups/backup_*.sqlite` (przed zmianą stanu cenników) i nie jest planowane.
 
 ## 6. Ryzyka i mitigacje
 
-| Ryzyko                                                  | Mitigacja                                                                        |
-| ------------------------------------------------------- | -------------------------------------------------------------------------------- |
-| Duplikacja edytora siatki → drift cen                   | iframe istniejącego edytora (decyzja 3), zero kopii kodu                         |
-| Admin widzi szkic, oferta liczy z innej wersji          | badge trybu w edytorach (M3) + banner w hubie (M2)                               |
-| Korekta wsteczna bez uzasadnienia przez alias `publish` | M1: FE tylko `approve`; alias zostaje z `Deprecation`                            |
-| Migracja S2a bez backupu                                | bramka M5: backup → preflight EXIT 0 → migrate → status; plan awaryjny `restore` |
-| Rozjazd UI po migracji (statusy `BACKDATE*`)            | M1 usuwa martwe etykiety/legendę/filtry przed M5                                 |
-| Rozjazd dokumentacji                                    | M0 przed M1–M4 (instrukcja = kontrakt dla admina)                                |
-| Koszt: 2 iframe'y (rury + studnie)                      | iframe tworzony leniwie, tylko dla aktywnej osi                                  |
+| Ryzyko                                                  | Mitigacja                                                                                                     |
+| ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| Duplikacja edytora siatki → drift cen                   | iframe istniejącego edytora (decyzja 3), zero kopii kodu                                                      |
+| Admin widzi szkic, oferta liczy z innej wersji          | badge trybu w edytorach (M3) + banner w hubie (M2)                                                            |
+| Korekta wsteczna bez uzasadnienia przez alias `publish` | M1: FE tylko `approve`; alias zostaje z `Deprecation`                                                         |
+| Migracja S2a bez backupu                                | wykonana 2026-10-21 (backup + preflight EXIT 0); stan potwierdzony `migrate status`/health — ryzyko zamknięte |
+| Rozjazd UI po migracji (statusy `BACKDATE*`)            | migracja wdrożona 2026-10-21, w bazie brak statusów legacy → M1 usuwa martwe etykiety/legendę/filtry          |
+| Rozjazd dokumentacji                                    | M0 przed M1–M4 (instrukcja = kontrakt dla admina)                                                             |
+| Koszt: 2 iframe'y (rury + studnie)                      | iframe tworzony leniwie, tylko dla aktywnej osi                                                               |
 
 ## 7. Non-goals
 
@@ -223,14 +224,14 @@ Rollback: M0–M4, M6 → revert commitów (bez migracji). M5 → `npm run resto
 
 ## 9. Evidence ledger (do wypełnienia przy realizacji)
 
-| ID    | Twierdzenie                                         | Dowód                                                                                                              | Status                                                    |
-| ----- | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------- |
-| E-001 | Model statusów = 2 zapisane + 3 wyliczane           | `validation.ts:32-61`                                                                                              | VERIFIED                                                  |
-| E-002 | FE nie wywołuje `POST /:id/approve`                 | `public/js/shared/pricelistVersions.js:1462, 1653` (grep `/approve` w `public/` → 0 trafień w kontekście cenników) | VERIFIED                                                  |
-| E-003 | Alias `publish` omija guard noty dla daty wstecznej | `lifecycle.ts:417-422` (`publishDraft` → `approveVersion` bez `requirePastNote`) vs `routes:415`                   | VERIFIED                                                  |
-| E-004 | Moduł `cenniki` nie jest admin-only                 | `app.html:156-164`, `router.js:294-310` (brak kontroli roli)                                                       | VERIFIED                                                  |
-| E-005 | Migracja S2a niewdrożona                            | plan centrum §15 „[ ] S2a deploy” + preflight 2026-10-20 (`ACTIVE=3`, `ARCHIVED=5`)                                | UNVERIFIED (do potwierdzenia `npx prisma migrate status`) |
-| E-006 | Edytor pokazuje DRAFT, oferta liczy z ACTIVE        | `writeTarget.ts:40-45`, `productsV2.ts:46-52` vs `app.js:139`                                                      | VERIFIED                                                  |
+| ID    | Twierdzenie                                             | Dowód                                                                                                                                                                                                 | Status   |
+| ----- | ------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| E-001 | Model statusów = 2 zapisane + 3 wyliczane               | `validation.ts:32-61`                                                                                                                                                                                 | VERIFIED |
+| E-002 | FE nie wywołuje `POST /:id/approve`                     | `public/js/shared/pricelistVersions.js:1462, 1653` (grep `/approve` w `public/` → 0 trafień w kontekście cenników)                                                                                    | VERIFIED |
+| E-003 | Alias `publish` omija guard noty dla daty wstecznej     | `lifecycle.ts:417-422` (`publishDraft` → `approveVersion` bez `requirePastNote`) vs `routes:415`                                                                                                      | VERIFIED |
+| E-004 | Moduł `cenniki` nie jest admin-only                     | `app.html:156-164`, `router.js:294-310` (brak kontroli roli)                                                                                                                                          | VERIFIED |
+| E-005 | Migracja S2a **wdrożona**; w bazie brak statusów legacy | `npx prisma migrate status` → „Database schema is up to date!" (EXIT 0); `npm run pricelist:preflight` → `APPROVED=8`, 0 kolizji (EXIT 0); `npm run pricelist:health` → 1 aktywna wersja/typ (EXIT 0) | VERIFIED |
+| E-006 | Edytor pokazuje DRAFT, oferta liczy z ACTIVE            | `writeTarget.ts:40-45`, `productsV2.ts:46-52` vs `app.js:139`                                                                                                                                         | VERIFIED |
 
 ## 10. Definition of Done
 
@@ -244,4 +245,4 @@ Rollback: M0–M4, M6 → revert commitów (bez migracji). M5 → `npm run resto
 - Instrukcja admina i `docs/API.md` opisują **aktualny** model (2 statusy + 4 etykiety, `approve`, brak crona).
 - Bramki zielone: `npm run version:check`, `npm run validate` (w tym `test:quick`), `npm run format`,
   `npm run encoding:check`; testy `test:axe` i `test:e2e-pricelist-preview:spawn` PASS.
-- M5 (deploy migracji) wykonany osobnym GO z backupem i potwierdzonym `migrate status`.
+- Migracja statusów (S2a) potwierdzona wdrożona 2026-10-21; M5 = weryfikacja widocznego efektu w UI.
