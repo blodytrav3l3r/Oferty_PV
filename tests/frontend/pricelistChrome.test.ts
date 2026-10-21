@@ -345,11 +345,11 @@ describe('frontend: edycja notatek + notatki przy aktywacji (źródło)', () => 
         expect(panel).toContain('o.initial');
         expect(panel).toContain('o.okText');
     });
-    it('aktywacja pyta o opcjonalne notatki (tylko SCHEDULED), pustka = bez notatek', () => {
-        expect(panel).toContain("'Aktywuj wersję'");
-        expect(panel).toContain('Opcjonalne notatki do aktywacji');
-        expect(panel).toContain("required: false, okText: 'Aktywuj'");
-        expect(panel).toContain('trimmed ? { note: note } : undefined');
+    it('publikacja przez approve: korekta wsteczna wymaga noty (min. 10 znaków)', () => {
+        expect(panel).toContain("'/approve'");
+        expect(panel).toContain('function isPastDate(');
+        expect(panel).toContain('Korekta wsteczna — wymagane uzasadnienie');
+        expect(panel).not.toContain("'/activate'");
     });
     it('edycja notatek woła PUT samymi notatkami (bez rows)', () => {
         expect(panel).toContain("'Edytuj notatki'");

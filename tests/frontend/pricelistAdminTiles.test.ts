@@ -140,9 +140,9 @@ describe('pulpit admina: kafelki cenników', () => {
         expect(calls.filter((u) => u.includes('/api/pricelist-versions/summary'))).toHaveLength(1);
         expect(els['pv-tile-rury-version'].textContent).toBe('v12-20261001');
         expect(els['pv-tile-rury-date'].textContent).toContain('od ');
-        expect(els['pv-tile-rury-next'].textContent).toContain('Zaplanowana: v13-20261115');
+        expect(els['pv-tile-rury-next'].textContent).toContain('Do wdrożenia: v13-20261115');
         expect(els['pv-tile-studnie-version'].textContent).toBe('—');
-        expect(els['pv-tile-studnie-next'].textContent).toBe('Brak zaplanowanej');
+        expect(els['pv-tile-studnie-next'].textContent).toBe('Brak do wdrożenia');
         expect(els['pv-tile-preco-version'].textContent).toBe('v3-20260910');
     });
 

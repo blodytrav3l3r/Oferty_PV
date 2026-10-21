@@ -33,17 +33,21 @@ describe('frontend: Użycie wersji widoczne', () => {
         expect(panel).toContain('<th scope="col">Użycie</th>');
         expect(panel).toContain('function usedByCell(v)');
     });
-    it('aktywacja ostrzega o użyciu (blast radius w confirmie)', () => {
-        expect(panel).toContain('data-pv-used="');
+    it('użycie wersji w kolumnie Użycie; publikacja niesie datę obowiązywania', () => {
+        expect(panel).toContain('<th scope="col">Użycie</th>');
+        expect(panel).toContain('data-pv-eff="');
         expect(panel).toContain('ofert/zamówień');
     });
 });
 
 describe('frontend: DRAFT ma drogę na oś czasu', () => {
-    it('przycisk Opublikuj robocza + akcja publish POST /:id/publish', () => {
+    it('przycisk Opublikuj robocza + akcja publish przez kanoniczny approve', () => {
         expect(panel).toContain('data-pv-act="publish"');
         expect(panel).toContain('Opublikuj roboczą');
-        expect(panel).toContain("/publish'");
+        expect(panel).toContain("'/approve'");
+        // Aliasy publish/backdate są deprecated — FE ich nie używa.
+        expect(panel).not.toContain("'/publish'");
+        expect(panel).not.toContain("'/backdate'");
     });
     it('klon mówi wprost: Klonuj do roboczej + następny krok', () => {
         expect(panel).toContain('Klonuj do roboczej');
@@ -57,13 +61,15 @@ describe('frontend: diff z cenami przed decyzją', () => {
         expect(panel).toContain('Top zmian cen');
         expect(panel).toContain('fmtPrice');
     });
-    it('aktywacja najpierw pokazuje podsumowanie diff', () => {
-        expect(panel).toContain("'/diff'");
-        expect(panel).toContain('Aktywować wersję');
+    it('publikacja: kanoniczny approve + kontrola checks przed publikacją', () => {
+        expect(panel).toContain("'/approve'");
+        expect(panel).toContain('function approveVersion(');
+        expect(panel).toContain('checksCheckedAt');
+        expect(panel).toContain('checksStale');
     });
     it('po zapisie draft auto-otwiera Porównaj', () => {
         expect(panel).toContain('openDiff(v.id, null, type)');
-        expect(panel).toContain('sprawdź Porównaj przed aktywacją');
+        expect(panel).toContain('sprawdź Porównaj');
     });
 });
 

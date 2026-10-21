@@ -409,17 +409,23 @@
         return 'v' + seq + '-' + y + m + day;
     }
 
-    /** Etykiety statusów po polsku (klasy badge bez zmian).
-     *  BACKDATE_REQUESTED to szkic z datą wsteczną — labelka mówi wprost,
-     *  że to robocza, nie zatwierdzona historia (BACKDATE). */
+    /** Etykiety stanów (BE `state`, wyliczany z `effectiveFrom`) — SSoT UI.
+     *  4 stany widoczne dla admina: Obowiązuje / Do wdrożenia / W przygotowaniu /
+     *  Historyczny. `APPROVED` to surowy status zapisany (nie stan) — tylko fallback. */
     var STATUS_LABELS = {
         ACTIVE: 'Obowiązuje',
-        SCHEDULED: 'Zaplanowana',
-        BACKDATE: 'Obowiązuje (korekta)',
-        BACKDATE_REQUESTED: 'Szkic (korekta)',
-        DRAFT: 'Szkic',
-        ARCHIVED: 'Archiwalna',
+        SCHEDULED: 'Do wdrożenia',
+        DRAFT: 'W przygotowaniu',
+        ARCHIVED: 'Historyczny',
         APPROVED: 'Zatwierdzona'
+    };
+
+    /** Statusy sprzed migracji 20261021000000 (bazy bez migracji) — tylko odczyt.
+     *  Po migracji w bazie ich nie ma (ACTIVE/SCHEDULED/ARCHIVED/BACKDATE → APPROVED,
+     *  BACKDATE_REQUESTED → DRAFT). */
+    var LEGACY_STATUS_LABELS = {
+        BACKDATE: 'Obowiązuje (korekta)',
+        BACKDATE_REQUESTED: 'Szkic (korekta)'
     };
 
     /** Stan z API (`state`) z fallbackiem na raw status (starsze odpowiedzi). */
@@ -429,19 +435,11 @@
 
     function displayStatus(v) {
         var state = stateOf(v);
-        return STATUS_LABELS[state] || state;
+        return STATUS_LABELS[state] || LEGACY_STATUS_LABELS[state] || state;
     }
 
     function canPublish(state) {
         return state === 'DRAFT';
-    }
-
-    function canActivate(_state) {
-        return false;
-    }
-
-    function canBackdate(_state) {
-        return false;
     }
 
     function canDelete(state) {
@@ -469,6 +467,40 @@
         return prefix + ': ' + (mapped || (err && err.message) || 'nieznany błąd');
     }
 
+    /** true gdy effectiveFrom jest w przeszłości (korekta wsteczna → nota ≥ 10 znaków). */
+    function isPastDate(iso) {
+        if (!iso) return false;
+        var t = Date.parse(iso);
+        if (Number.isNaN(t)) return false;
+        return t < Date.now() - 60000;
+    }
+
+    /**
+     * Kontrola przed publikacją (advisory, read-only). Fail-soft: brak kontroli
+     * nie blokuje publikacji — walidacja krytycznych warunków jest w tx (BE).
+     */
+    async function fetchChecks(id) {
+        try {
+            var json = await apiJson(API + '/' + encodeURIComponent(id) + '/checks', authed('GET'));
+            return json || null;
+        } catch (_e) {
+            return null;
+        }
+    }
+
+    /**
+     * Publikacja: kanoniczny POST /:id/approve (aliasy publish/activate/backdate są
+     * deprecated). checksCheckedAt przekazujemy, żeby BE mógł odpowiedzieć
+     * checksStale=true (200, ostrzeżenie) gdy wersja zmieniła się po kontroli.
+     */
+    async function approveVersion(id, note) {
+        var checks = await fetchChecks(id);
+        var body = {};
+        if (checks && checks.checkedAt) body.checksCheckedAt = checks.checkedAt;
+        if (note && String(note).trim()) body.note = note;
+        return apiJson(API + '/' + encodeURIComponent(id) + '/approve', authed('POST', body));
+    }
+
     /** Ikony Lucide inline SVG — badge statusu wersji cennika. */
     var STATUS_ICONS = {
         ACTIVE: '<svg class="badge-status-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>',
@@ -486,9 +518,9 @@
     };
 
     function statusBadge(status) {
-        // ACTIVE zielony, SCHEDULED niebieski, BACKDATE_REQUESTED bursztyn
-        // (czeka na decyzję), BACKDATE/DRAFT/ARCHIVED szare.
-        var label = STATUS_LABELS[status] || status;
+        // Stany wyliczane: ACTIVE zielony, SCHEDULED niebieski, DRAFT/ARCHIVED szare.
+        // BACKDATE_REQUESTED (legacy) bursztyn — czeka na decyzję.
+        var label = STATUS_LABELS[status] || LEGACY_STATUS_LABELS[status] || status;
         var icon = STATUS_ICONS[status] || '';
         var iconHtml = icon
             ? '<span style="display:inline-flex;align-items:center;gap:3px">' +
@@ -510,7 +542,7 @@
             );
         if (status === 'BACKDATE_REQUESTED')
             return (
-                '<span class="badge-warn text-nowrap" style="display:inline-flex;align-items:center;gap:4px" title="Szkic z datą wsteczną — wymaga uzasadnienia (Zatwierdź wstecz)">' +
+                '<span class="badge-warn text-nowrap" style="display:inline-flex;align-items:center;gap:4px" title="Szkic z datą wsteczną — wymaga uzasadnienia (korekta wsteczna)">' +
                 iconHtml +
                 '</span>'
             );
@@ -522,13 +554,13 @@
             );
         if (status === 'DRAFT')
             return (
-                '<span class="badge-muted text-nowrap" style="display:inline-flex;align-items:center;gap:4px" title="Wersja robocza — opublikuj aby weszła na oś czasu">' +
+                '<span class="badge-muted text-nowrap" style="display:inline-flex;align-items:center;gap:4px" title="Wersja robocza — opublikuj, aby weszła na oś czasu">' +
                 iconHtml +
                 '</span>'
             );
         if (status === 'ARCHIVED')
             return (
-                '<span class="badge-muted text-nowrap" style="display:inline-flex;align-items:center;gap:4px" title="Poprzednia aktywna w archiwum (tylko odczyt)">' +
+                '<span class="badge-muted text-nowrap" style="display:inline-flex;align-items:center;gap:4px" title="Poprzednia obowiązująca w archiwum (tylko odczyt)">' +
                 iconHtml +
                 '</span>'
             );
@@ -641,24 +673,15 @@
                 var eff = v.effectiveFrom
                     ? fmtEff(v.effectiveFrom)
                     : '<span class="text-muted">—</span>';
-                var used = typeof v.usedBy === 'number' ? v.usedBy : null;
+                // Jedno CTA publikacji: DRAFT → approve (data przyszła = Do wdrożenia,
+                // data przeszła = korekta wsteczna, wymaga noty ≥ 10 znaków).
                 var activation = canPublish(state)
                     ? '<button class="btn btn-sm btn-primary" data-pv-act="publish" data-pv-id="' +
                       escAttr(v.id) +
-                      '" title="Wyślij roboczą na oś czasu (zaplanowana albo wsteczna wg daty)">Opublikuj roboczą</button>'
-                    : canActivate(state)
-                      ? '<button class="btn btn-sm btn-primary" data-pv-act="activate" data-pv-id="' +
-                        escAttr(v.id) +
-                        '" data-pv-version="' +
-                        escAttr(v.version || '') +
-                        '" data-pv-used="' +
-                        escAttr(used === null ? '' : String(used)) +
-                        '">Aktywuj</button>'
-                      : canBackdate(state)
-                        ? '<button class="btn btn-sm btn-primary" data-pv-act="backdate" data-pv-id="' +
-                          escAttr(v.id) +
-                          '">Zatwierdź wstecz</button>'
-                        : '';
+                      '" data-pv-eff="' +
+                      escAttr(v.effectiveFrom || '') +
+                      '" title="Wyślij roboczą na oś czasu (data przyszła = Do wdrożenia, data przeszła = korekta wsteczna z uzasadnieniem)">Opublikuj roboczą</button>'
+                    : '';
                 // Klon dowolnej wersji do nowej roboczej (nie rollback — aktywna nietknięta).
                 var cloneBtn =
                     '<button class="btn btn-sm btn-secondary" data-pv-act="clone" data-pv-id="' +
@@ -876,14 +899,13 @@
             saveFormHtml(next, manageable) +
             '</div>' +
             '<p class="text-muted pv-help">Jak to działa: zapis tworzy kopię cennika (nie rusza ofert ani cennika na żywo). ' +
-            'Robocza → Zatwierdź jako Zaplanowana (wejdzie w dacie Obowiązuje od) albo korekta wsteczna (wymaga uzasadnienia). ' +
-            'Aktywna wybierana jest po dacie Obowiązuje od; oferty trzymają pieczęć wersji. ' +
+            'Robocza → Opublikuj: data przyszła = Do wdrożenia (wejdzie w dacie Obowiązuje od), data przeszła = ' +
+            'korekta wsteczna (wymaga uzasadnienia min. 10 znaków). ' +
+            'Obowiązująca wybierana jest po dacie Obowiązuje od; oferty trzymają pieczęć wersji. ' +
             'Szczegóły: docs/CENNIKI-INSTRUKCJA-ADMINA.md</p>' +
             '<div class="pv-actions pv-legend" aria-label="Legenda statusów">' +
             statusBadge('ACTIVE') +
             statusBadge('SCHEDULED') +
-            statusBadge('BACKDATE_REQUESTED') +
-            statusBadge('BACKDATE') +
             statusBadge('DRAFT') +
             statusBadge('ARCHIVED') +
             '</div>' +
@@ -1460,71 +1482,39 @@
                     btn.getAttribute('data-pv-status')
                 );
             } else if (act === 'publish' && id) {
-                apiJson(API + '/' + encodeURIComponent(id) + '/publish', authed('POST'))
-                    .then(function (json) {
-                        var v = json.version || {};
-                        toast(
-                            'Opublikowano: ' + (v.version || '') + ' (' + (v.status || '') + ')',
-                            'success'
-                        );
-                        refreshTable(type, true);
-                    })
-                    .catch(function (err) {
-                        toast(friendlyError('Błąd publikacji', err), 'error');
-                    });
-            } else if (act === 'activate' && id) {
-                var pvVersionName = btn.getAttribute('data-pv-version') || id;
-                var usedRaw = btn.getAttribute('data-pv-used');
-                var goActivate = function (summary) {
-                    var msg =
-                        'Aktywować wersję ' +
-                        pvVersionName +
-                        (summary ? ' (' + summary + ')' : '') +
-                        '? Poprzednia aktywna przejdzie do archiwum.' +
-                        (usedRaw
-                            ? ' Tę wersję ma już ' +
-                              usedRaw +
-                              (type === 'preco' ? ' wersji studni.' : ' ofert/zamówień.')
-                            : '');
-                    pvConfirm(msg, {
-                        title: 'Aktywuj wersję',
-                        okText: 'Dalej',
-                        type: 'warning'
-                    }).then(function (ok) {
-                        if (!ok) return;
-                        openNoteModal(
-                            'Aktywuj wersję',
-                            'Opcjonalne notatki do aktywacji…',
-                            function (note) {
-                                var trimmed = (note || '').trim();
-                                apiJson(
-                                    API + '/' + encodeURIComponent(id) + '/activate',
-                                    authed('POST', trimmed ? { note: note } : undefined)
-                                )
-                                    .then(function () {
-                                        window.closeModal('pv-note-modal');
-                                        toast('Wersja aktywowana', 'success');
-                                        refreshTable(type, true);
-                                    })
-                                    .catch(function (err) {
-                                        toast(friendlyError('Błąd aktywacji', err), 'error');
-                                    });
-                            },
-                            { required: false, okText: 'Aktywuj' }
-                        );
-                    });
-                };
-                apiJson(API + '/' + encodeURIComponent(id) + '/diff', authed('GET'))
-                    .then(function (diff) {
-                        var parts = Object.keys(diff.sections || {}).map(function (k) {
-                            var s = diff.sections[k];
-                            return k + ': +' + s.added + '/-' + s.removed + '/~' + s.changed;
+                var effRaw = btn.getAttribute('data-pv-eff') || '';
+                var isPast = isPastDate(effRaw);
+                var doApprove = function (note) {
+                    approveVersion(id, note)
+                        .then(function (json) {
+                            var v = json.version || {};
+                            toast(
+                                'Opublikowano: ' +
+                                    (v.version || '') +
+                                    (json.checksStale
+                                        ? ' — kontrola nieaktualna, sprawdź różnice'
+                                        : ''),
+                                json.checksStale ? 'warning' : 'success'
+                            );
+                            refreshTable(type, true);
+                        })
+                        .catch(function (err) {
+                            toast(friendlyError('Błąd publikacji', err), 'error');
                         });
-                        goActivate(parts.join(', ') || 'brak zmian');
-                    })
-                    .catch(function () {
-                        goActivate('');
-                    });
+                };
+                if (isPast) {
+                    // Korekta wsteczna: BE wymaga noty ≥ 10 znaków (400 NOTE_TOO_SHORT).
+                    openNoteModal(
+                        'Korekta wsteczna — wymagane uzasadnienie',
+                        'Min. 10 znaków uzasadnienia zmiany historycznej…',
+                        function (note) {
+                            window.closeModal('pv-note-modal');
+                            doApprove(note);
+                        }
+                    );
+                    return;
+                }
+                doApprove();
             } else if (act === 'edit-note' && id) {
                 openNoteModal(
                     'Edytuj notatki',
@@ -1544,25 +1534,6 @@
                         required: false,
                         initial: btn.getAttribute('data-pv-note') || '',
                         okText: 'Zapisz'
-                    }
-                );
-            } else if (act === 'backdate' && id) {
-                openNoteModal(
-                    'Zatwierdź wstecz',
-                    'Uzasadnienie zmiany historycznej…',
-                    function (note) {
-                        apiJson(
-                            API + '/' + encodeURIComponent(id) + '/backdate',
-                            authed('POST', { note: note })
-                        )
-                            .then(function () {
-                                window.closeModal('pv-note-modal');
-                                toast('Wersja wsteczna zatwierdzona', 'success');
-                                refreshTable(type, true);
-                            })
-                            .catch(function (err) {
-                                toast('Błąd zatwierdzenia wstecz: ' + err.message, 'error');
-                            });
                     }
                 );
             } else if (act === 'clone' && id) {
@@ -1650,23 +1621,6 @@
                         return;
                     }
                 }
-                var doBackdate = function (draftId, backNote) {
-                    apiJson(
-                        API + '/' + encodeURIComponent(draftId) + '/backdate',
-                        authed('POST', { note: backNote })
-                    )
-                        .then(function () {
-                            toast('Wersja wsteczna zapisana', 'success');
-                            refreshTable(type, true);
-                        })
-                        .catch(function (err) {
-                            toast(
-                                'Wersja zapisana, zatwierdzenie wstecz nie: ' + err.message,
-                                'warning'
-                            );
-                            refreshTable(type, true);
-                        });
-                };
                 var submitDraft = function (finalNote) {
                     var sendDraft = function (draftId) {
                         var url = draftId
@@ -1682,28 +1636,47 @@
                         apiJson(url, authed(draftId ? 'PUT' : 'POST', payload))
                             .then(function (json) {
                                 var v = json.version || {};
-                                if (isPast || v.status === 'BACKDATE_REQUESTED') {
+                                if (isPast) {
+                                    // Korekta wsteczna: od razu approve z uzasadnieniem
+                                    // (BE wymaga noty ≥ 10 znaków dla daty ≤ teraz).
                                     var bn = finalNote || '';
                                     if (bn.trim().length < 10) {
                                         openNoteModal(
-                                            'Wersja wsteczna — wymagana nota',
+                                            'Korekta wsteczna — wymagane uzasadnienie',
                                             'Min. 10 znaków uzasadnienia…',
                                             function (n2) {
-                                                doBackdate(v.id, n2);
+                                                approveVersion(v.id, n2).then(function () {
+                                                    toast(
+                                                        'Wersja wsteczna opublikowana',
+                                                        'success'
+                                                    );
+                                                    refreshTable(type, true);
+                                                });
                                             }
                                         );
                                         refreshTable(type, true);
                                         return;
                                     }
-                                    doBackdate(v.id, bn);
+                                    approveVersion(v.id, bn)
+                                        .then(function () {
+                                            toast('Wersja wsteczna opublikowana', 'success');
+                                            refreshTable(type, true);
+                                        })
+                                        .catch(function (err) {
+                                            toast(
+                                                'Wersja zapisana, publikacja wsteczna nie: ' +
+                                                    err.message,
+                                                'warning'
+                                            );
+                                            refreshTable(type, true);
+                                        });
                                     return;
                                 }
                                 toast(
                                     'Wersja ' +
                                         (v.version || '') +
-                                        ' zapisana (' +
-                                        (v.status || '') +
-                                        ') — sprawdź Porównaj przed aktywacją',
+                                        ' zapisana jako W przygotowaniu — sprawdź Porównaj, ' +
+                                        'potem „Opublikuj roboczą”',
                                     'success'
                                 );
                                 refreshTable(type, true).then(function () {
@@ -1760,9 +1733,10 @@
         stateOf: stateOf,
         displayStatus: displayStatus,
         canPublish: canPublish,
-        canActivate: canActivate,
-        canBackdate: canBackdate,
         canDelete: canDelete,
+        approveVersion: approveVersion,
+        fetchChecks: fetchChecks,
+        isPastDate: isPastDate,
         _apiJson: apiJson,
         _authed: authed
     };

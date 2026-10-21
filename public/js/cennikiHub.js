@@ -10,14 +10,19 @@ import { showModal } from './shared/modalCore.js';
 const API = '/api/pricelist-versions';
 const EDITORS = { rury: 'rury.html', studnie: 'studnie.html', preco: 'studnie.html' };
 const TYPE_LABELS = { rury: 'Rury', studnie: 'Studnie', preco: 'PRECO' };
+/** Stany wyliczane (BE `state`) → etykiety UI — SSoT jak w shared/pricelistVersions.js. */
 const STATE_LABELS = {
-    DRAFT: 'Szkic',
-    SCHEDULED: 'Zaplanowana',
+    DRAFT: 'W przygotowaniu',
+    SCHEDULED: 'Do wdrożenia',
     ACTIVE: 'Obowiązuje',
-    BACKDATE: 'Obowiązuje (korekta)',
-    BACKDATE_REQUESTED: 'Szkic (korekta)',
-    ARCHIVED: 'Archiwalna',
+    ARCHIVED: 'Historyczny',
     APPROVED: 'Zatwierdzona'
+};
+
+/** Statusy sprzed migracji 20261021000000 (bazy bez migracji) — tylko odczyt. */
+const LEGACY_STATE_LABELS = {
+    BACKDATE: 'Obowiązuje (korekta)',
+    BACKDATE_REQUESTED: 'Szkic (korekta)'
 };
 
 /** @type {Array<Record<string, any>>} */
@@ -34,7 +39,7 @@ function stateOf(version) {
 }
 
 function stateLabel(state) {
-    return STATE_LABELS[state] || state || '—';
+    return STATE_LABELS[state] || LEGACY_STATE_LABELS[state] || state || '—';
 }
 
 function statusBadge(version) {
@@ -122,7 +127,7 @@ function renderOverview() {
                             <dd>${active ? formatDate(active.effectiveFrom) : '—'}</dd>
                         </div>
                         <div>
-                            <dt>Zaplanowana</dt>
+                            <dt>Do wdrożenia</dt>
                             <dd>${next ? esc(next.version) : 'Brak'}</dd>
                         </div>
                         <div>

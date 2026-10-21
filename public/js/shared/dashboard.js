@@ -320,10 +320,10 @@ function showLoggedIn(user) {
                     setText(
                         'pv-tile-' + type + '-next',
                         next && next.version
-                            ? 'Zaplanowana: ' +
+                            ? 'Do wdrożenia: ' +
                                   next.version +
                                   (next.effectiveFrom ? ' · ' + fmtDate(next.effectiveFrom) : '')
-                            : 'Brak zaplanowanej'
+                            : 'Brak do wdrożenia'
                     );
                 });
             } catch (_e) {
