@@ -13,7 +13,7 @@
  * Idempotentne — drugie uruchomienie z tą samą wersją nie generuje zmian.
  */
 
-import { readFileSync, writeFileSync, existsSync } from 'fs';
+import { readFileSync, writeFileSync, existsSync, readdirSync } from 'fs';
 import { resolve } from 'path';
 
 const ROOT = resolve(process.cwd());
@@ -24,17 +24,22 @@ if (!VERSION) {
     process.exit(1);
 }
 
-const HTML_FILES = [
-    'public/app.html',
-    'public/index.html',
-    'public/studnie.html',
-    'public/rury.html',
-    'public/kartoteka.html',
-    'public/zlecenia.html',
-    'public/templates/etykieta.html',
-    'public/templates/ofertaStudnie.html',
-    'public/templates/zlecenie.html'
-];
+// Lista HTML wykrywana dynamicznie — musi pokrywać ten sam zakres co
+// scripts/check-version.mjs (public/*.html + public/templates/*.html),
+// inaczej nowy plik HTML zostaje w starej wersji cache-bustingu.
+const HTML_DIRS = ['public', 'public/templates'];
+
+function discoverHtmlFiles() {
+    const files = [];
+    for (const dir of HTML_DIRS) {
+        const abs = resolve(ROOT, dir);
+        if (!existsSync(abs)) continue;
+        for (const name of readdirSync(abs).sort()) {
+            if (name.endsWith('.html')) files.push(`${dir}/${name}`);
+        }
+    }
+    return files;
+}
 
 const MD_FILES = [
     'README.md',
@@ -118,12 +123,13 @@ function processMdFile(filePath) {
 function main() {
     console.log(`\n  auto-cache-bust  |  VERSION=${VERSION}\n`);
 
+    const htmlFiles = discoverHtmlFiles();
     let changed = 0;
-    for (const htmlFile of HTML_FILES) {
+    for (const htmlFile of htmlFiles) {
         if (processFile(htmlFile)) changed++;
     }
 
-    console.log(`\n  Zmieniono ${changed} z ${HTML_FILES.length} plikow HTML\n`);
+    console.log(`\n  Zmieniono ${changed} z ${htmlFiles.length} plikow HTML\n`);
 
     let mdChanged = 0;
     for (const mdFile of MD_FILES) {
