@@ -74,31 +74,67 @@ Nie powstaje drugi dashboard ani duplikat edytora siatki — panel dookoła istn
   w ofertach żyje; etykiety `BACKDATE`/`BACKDATE_REQUESTED` w FE i 2 martwe opcje filtru w hubie to
   potwierdzona szkoda (R3); w bazie 0 szkiców (8/8 `APPROVED`) → „W przygotowaniu” = 0 do pierwszego szkicu.
 
-## 3. Docelowy UI
+## 3. Docelowy UI — kafelkowy (spójny z resztą S.O.K.)
+
+Język UI panelu = **kafelki** (jak w pozostałych modułach S.O.K.), nie tabele-first.
+Hierarchia 4 poziomów, każdy poziom = siatka kafelków: **OŚ → STAN → SEKCJA → POZYCJA**.
 
 ```
-#cenniki (admin)     zakładki: Przegląd | Cennik | Historia
+#cenniki (admin)    zakładki: Przegląd | Cennik | Historia
 ┌───────────────────────────────────────────────────────────────────────────────┐
-│ WARSTWA 1 — OŚ CENNIKÓW (per typ: Rury | Studnie | PRECO)                     │
-│  Obowiązuje: v12 (od 2026-10-01)   Do wdrożenia: v13 (od 2026-11-01)        │
-│  W przygotowaniu: 2 szkice   Historyczne: 4   Kolizje dat: 0                  │
-│  [Podgląd] [Porównaj] [Kontrola] [Zapisz jako wersję] [Opublikuj →]           │
+│ PRZEGLĄD — kafelki osi (tiles-grid)                                           │
+│  ┌── Rury ──────────┐ ┌── Studnie ─────────┐ ┌── PRECO ───────────┐           │
+│  │ ● Obowiązuje v12 │ │ ● Obowiązuje v8   │ │ ● Obowiązuje v3    │           │
+│  │   od 2026-10-01  │ │   od 2026-09-15    │ │   od 2026-08-01   │           │
+│  │ [Podgląd][Kontrola][Opublikuj →]      │ │ [Podgląd][Kontrola]            │
+│  ├─ Do wdrożenia ────┤ ├─ W przygotowaniu ┤ ├─ Do wdrożenia ─────┤           │
+│  │ v13 · 2026-11-01 │ │ v9 · 1 szkic      │ │ v4 · 2026-11-01   │           │
+│  └──────────────────┘ └───────────────────┘ └────────────────────┘           │
+│  kafelki-podsumowanie: [Szkice 3] [Historyczne 7] [Kolizje 0] [Eksport]       │
 ├───────────────────────────────────────────────────────────────────────────────┤
-│ WARSTWA 2 — TREŚĆ / PODGLĄD (read-only, z API)                                │
-│  Rury:    tabela kategorii (podgląd szkicu lub aktywnej wersji)                │
-│  Studnie: DN1000|DN1200|DN1500|DN2000|DN2500|Styczne|Dennice|Akcesoria|      │
-│           Przejścia|Kinety|Transport      ·  Wkładki PRECO ⟡ (OSOBNA OŚ)      │
-│  pasek stanu: ✎ Szkic v14 (7 zmian) │ ✓ Oferty liczą z Obowiązuje v8 │        │
-│                ◷ Do wdrożenia v13   + [Edytuj w module] [Opublikuj] [Kontrola]│
-│  tabela (podgląd): Indeks | Nazwa | Kategoria | Cena PLN | Δ% vs obowiązująca  │
-│          | Ilość/transport | Stan wiersza   (źródło: GET /:id/preview + diff)  │
-│  prawa kolumna: Kontrola przed publikacją (użycie, kolizja, Δ do LIVE/obowiąz.)│
+│ CENNIK (read-only podgląd) — kafelki osi → kafelki sekcji → kafelki pozycji     │
+│  [Rury] [Studnie] [PRECO]                    ← kafelki-osie (przełącznik)      │
+│  ┌DN1000──┐┌DN1200──┐┌DN1500──┐┌DN2000──┐┌DN2500──┐┌Styczne─┐┌Dennice─┐      │
+│  │12 poz. ││12 poz. ││12 poz. ││12 poz. ││12 poz. ││4 poz.  ││3 poz.  │      │
+│  │Δ +3,2% ││Δ  0,0% ││Δ −1,4% ││Δ +0,8% ││Δ  0,0% ││Δ 0,0%  ││Δ +2,1% │      │
+│  └────────┘└────────┘└────────┘└────────┘└────────┘└────────┘└────────┘      │
+│  ┌Akcesoria┐┌Przejścia┐┌Kinety──┐┌Transport⟡┐┌Wkładki PRECO ⟡┐             │
+│  │ 18 poz.  ││ 9 poz.  ││ 6 poz. ││ 1 poz.   ││ osobna oś     │             │
+│  └──────────┘└─────────┘└────────┘└──────────┘└────────────────┘             │
+│  klik w kafelek sekcji → kafelki pozycji (nazwa · cena · Δ · stan)            │
+│  stan: ✎ Szkic v14 (7 zmian) │ ✓ obowiązuje v8 │ ◷ do wdrożenia v13           │
+│  akcje: [Edytuj w module] [Opublikuj] [Kontrola] [Porównaj] [Zapisz wersję]   │
 ├───────────────────────────────────────────────────────────────────────────────┤
-│ WARSTWA 3 — HISTORIA / OŚ CZASU                                                │
-│  oś czasu per typ (kolor = stan wyliczany) + tabela wersji:                    │
-│  Wersja | Nr | Stan | Obowiązuje od | Autor | Użycie | Notatka | Akcje         │
+│ HISTORIA — kafelki wersji (kafelek = wersja)                                   │
+│  ┌v9 · W przygotowaniu──┐┌v8 · Obowiązuje─────┐┌v6 · Historyczny─────┐        │
+│  │ autor · data · użycie ││ 128 ofert/zamówień ││ 41 · 2026-06-11    │        │
+│  │ nota · [Podgląd][Porównaj][Kontrola][Eksport][Klon][Usuń]                │
 └───────────────────────────────────────────────────────────────────────────────┘
 ```
+
+### 3.0 Zasady kafelków (obowiązujące dla całego panelu)
+
+- **Kafelek jest jednostką informacji.** Każdy kafelek: tytuł + 2–4 pola + akcje. Żadnych tabel
+  w kafelku.
+- **Tabela tylko tam, gdzie dane są z natury wierszowe i gęste:** lista cen > 30 pozycji w sekcji,
+  historia > 20 wersji, eksport do druku. Tabela zawsze z alternatywą kafelkową lub drill-downem.
+- **Drill-down zamiast przeładowania:** klik w kafelek osi → kafelki stanów; kafelek stanu → kafelki sekcji;
+  kafelek sekcji → kafelki pozycji; kafelek pozycji → karta pozycji (cena, Δ, historia zmian).
+  Głębokość linków = deep-link `#/cenniki/...` (działają w obu kierunkach).
+- **Reuse zamiast nowych komponentów:** `.tile`, `.param-tile`, `.card`, `.card-sm`, `.card-compact`,
+  `.tiles-grid`, `.nav-tile`, `.badge` / `.badge-ok` / `.badge-info` / `.badge-muted`, `.status-badge`
+  (`docs/UI_GUIDELINES.md:109-118`). Nowe klasy tylko jako modyfikatory w `public/css/cenniki.css`
+  (`.cenniki-tile--axis/--state/--section/--item`), bez nadpisań bazowych.
+- **Tokeny, nie gołe wartości:** odstępy z `--tile-gap-*`, kolory z `style.base.css`; zero `style="…"`
+  w HTML (CSP), zero nowych hexów.
+- **Status = badge z ikoną**, nie sam kolor (a11y): Obowiązuje `badge-ok`, Do wdrożenia `badge-info`,
+  W przygotowaniu `badge-muted`, Historyczny `badge-muted` (wyciszony).
+- **Kafelek aktywny = `<button>`/`<a>`** z `aria-label` opisującym stan i liczebność
+  („Studnie DN1000 — 12 pozycji, 3 zmienione”), widoczny `:focus-visible`.
+- **Responsywność:** 1 kolumna < 600 px, 2 kolumny 600–1100 px, 3 kolumny > 1100 px
+  (zgodne z `docs/UI_GUIDELINES.md:97`); kafelki osi/sekcji na gridzie auto-fit.
+- **Gęstość:** na kafelku sekcji pokazujemy liczebność i Δ vs obowiązująca — szczegóły po kliknięciu
+  (nie rozlewamy informacji na wszystkich kafelkach).
 
 ### 3.1 Mapowanie statusów (DB → UI)
 
@@ -165,16 +201,16 @@ Reguły:
 
 ### Frontend
 
-| Plik                                                                   | Zmiana                                                                                                                                                                                                                                                  |
-| ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `public/js/spa/router.js`                                              | guard modułu `cenniki`: brak admina → redirect `#/rury`; sekcje modułu zgodne z 3 warstwami.                                                                                                                                                            |
-| `public/app.html`                                                      | kafelek `spa-app-cenniki` widoczny tylko dla admina (toggle po roli, jak `admin-panel`).                                                                                                                                                                |
-| `public/js/cennikiHub.js`                                              | warstwa 1 (oś per typ, statusy, CTA) + warstwa 2 (read-only podgląd treści z `preview`/`diff`) + warstwa 3 (historia/oś czasu) + banner „bufor nie zmienia ofert” + badge stanu + sekcja Transport (info).                                              |
-| `public/cenniki.html`                                                  | sekcje: Rury / Studnie (tabs 1:1 z edytorem, sekcja Transport jako podgląd) / PRECO osobno; filtr stanów tylko 4 realne (bez `BACKDATE*`).                                                                                                              |
-| `public/js/shared/pricelistVersions.js`                                | `publish`/`backdate` → `approve` (+`checksCheckedAt`, `checksStale`); usunięcie `BACKDATE*`, `canActivate`, `canBackdate` i martwych gałęzi `act==='activate'/'backdate'`; 4 etykiety + „Do wdrożenia”; `stateOf` jako jedyne źródło porównań statusów. |
-| `public/js/rury/pricelistUi.js`, `public/js/studnie/pricelistState.js` | pasek stanu edycji (✎ Szkic vN · ✓ Obowiązuje vM) + link „Panel cenników” (`#/cenniki`); toast „Zapisano szkic — opublikuj wersję”. Zakładka „Cennik” zostaje (decyzja 4).                                                                              |
-| `public/js/rury/dataService.js`, `public/js/studnie/uiHelpers.js`      | poprawa `__*PricingSource` (wartość z odpowiedzi BE, nie hardcoded `'live'`).                                                                                                                                                                           |
-| `public/css/cenniki.css`                                               | styl nowych elementów warstwy 1/3 (chipy statusów, oś czasu).                                                                                                                                                                                           |
+| Plik                                                                   | Zmiana                                                                                                                                                                                                                                                                                    |
+| ---------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `public/js/spa/router.js`                                              | guard modułu `cenniki`: brak admina → redirect `#/rury`; sekcje modułu zgodne z 3 warstwami.                                                                                                                                                                                              |
+| `public/app.html`                                                      | kafelek `spa-app-cenniki` widoczny tylko dla admina (toggle po roli, jak `admin-panel`).                                                                                                                                                                                                  |
+| `public/js/cennikiHub.js`                                              | warstwa 1 (oś per typ, statusy, CTA) + warstwa 2 (read-only podgląd treści z `preview`/`diff`) + warstwa 3 (historia/oś czasu) + banner „bufor nie zmienia ofert” + badge stanu + sekcja Transport (info).                                                                                |
+| `public/cenniki.html`                                                  | sekcje: Rury / Studnie (tabs 1:1 z edytorem, sekcja Transport jako podgląd) / PRECO osobno; filtr stanów tylko 4 realne (bez `BACKDATE*`).                                                                                                                                                |
+| `public/js/shared/pricelistVersions.js`                                | `publish`/`backdate` → `approve` (+`checksCheckedAt`, `checksStale`); usunięcie `BACKDATE*`, `canActivate`, `canBackdate` i martwych gałęzi `act==='activate'/'backdate'`; 4 etykiety + „Do wdrożenia”; `stateOf` jako jedyne źródło porównań statusów.                                   |
+| `public/js/rury/pricelistUi.js`, `public/js/studnie/pricelistState.js` | pasek stanu edycji (✎ Szkic vN · ✓ Obowiązuje vM) + link „Panel cenników” (`#/cenniki`); toast „Zapisano szkic — opublikuj wersję”. Zakładka „Cennik” zostaje (decyzja 4).                                                                                                                |
+| `public/js/rury/dataService.js`, `public/js/studnie/uiHelpers.js`      | poprawa `__*PricingSource` (wartość z odpowiedzi BE, nie hardcoded `'live'`).                                                                                                                                                                                                             |
+| `public/css/cenniki.css`                                               | przebudowa panelu na kafelki: `.cenniki-tile` + modyfikatory `--axis/--state/--section/--item`, siatki `.tiles-grid`, odstępy z `--tile-gap-*`; wycofanie dotychczasowych `.cenniki-cards`/`.cenniki-card` (lub przebudowa na modyfikatory). Bez gołych `gap`/hexów, bez inline `style=`. |
 
 ### Dokumentacja
 
@@ -190,21 +226,23 @@ Reguły:
 - nowy: FE wywołuje `POST /:id/approve` (nie `publish`), obsługa `checksStale=true` (200, ostrzeżenie).
 - nowy: admin-gating modułu `cenniki` (user → redirect).
 - nowy: PRECO jako osobna oś (nie pod studniami) w hubie.
+- nowy: panel renderuje kafelki, nie tabele — asercja braku `<table>` w warstwie stanów i sekcji
+  (tylko warstwa historii przy > 20 wersjach dopuszcza tabelę); obecność `aria-label` na kafelkach aktywnych.
 - `tests/frontend/pricelistImportDraft.test.ts` — regresja importu (import → DRAFT, nie APPROVED).
 - `test:axe` — 4 widoki panelu (Przegląd / Cennik / Historia + modal kontroli).
 - `test:e2e-pricelist-preview:spawn` — hub + preview + diff.
 
 ## 5. Etapy (autonomia per `docs/AUTONOMY_CONTRACT.md`)
 
-| #      | Etap                 | Zakres                                                                                                                                                                                                                                                    | Brama                                                                                                                                       | Klasyfikacja                  |
-| ------ | -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------- |
-| **M0** | Docs                 | Przepisanie `CENNIKI-INSTRUKCJA-ADMINA.md` + `docs/API.md` na model 2 statusów i 4 etykiety                                                                                                                                                               | `npm run version:check`, `npm run format`                                                                                                   | 🟢 działanie + raport         |
-| **M1** | FE correctness       | `publish`→`approve` (+`checksStale`), usunięcie martwych statusów/legendy/filtru, `can*` na 4 stanach, alias-note guard, poprawka `__*PricingSource`                                                                                                      | `npm run typecheck:frontend`, `npm run lint:frontend`, `npm run test:quick`, `npm run test:frontend`                                        | 🟡 GO na paczkę               |
-| **M2** | Admin-only + oś      | Gating kafelka i routera, warstwa 1 w hubie (oś per typ, 4 statusy, kolizje, użycie), badge „bufor nie zmienia ofert”                                                                                                                                     | `npm run test:quick`, `npm run test:axe`                                                                                                    | 🟡 GO na paczkę               |
-| **M3** | Podgląd + publikacja | Warstwa 2 w hubie: read-only podgląd treści osi (szkic lub aktywna) z `GET /:id/preview` + Δ z `GET /:id/diff?against=<aktywna>`, sekcje 1:1 z edytorem, pasek stanu w edytorach + link do panelu, CTA „Opublikuj” z kontrolą (bez zagnieżdżonego iframe) | `npm run typecheck:frontend`, `npm run lint:frontend`, `npm run test:quick`, `npm run test:e2e-pricelist-preview:spawn`, `npm run test:axe` | 🟡 GO na paczkę               |
-| **M4** | Sekcje               | Sekcje studni 1:1 z edytorem + osobna oś PRECO w panelu + sekcja Transport (info: pozycja kursu `TR-*` + produkty z ilością/transport + parametry kursu poza cennikiem)                                                                                   | `npm run test:quick`                                                                                                                        | 🟡 GO na paczkę               |
-| **M5** | Weryfikacja runtime  | Migracja S2a **już wdrożona** (2026-10-21, `migrate status` OK) → etap = weryfikacja widocznego efektu: hub pokazuje aktywną wersję/typ, kafelki pulpitu nie „brak aktywnej", oferta liczy z wersji (badge „cennik vX"), brak toasta fallbacku LIVE       | `npm run pricelist:health` (EXIT 0) + `npm run pricelist:preflight` (EXIT 0) + ręczna obserwacja UI + `npm run test:quick`                  | 🟢 weryfikacja (bez migracji) |
-| **M6** | Domknięcie           | Warstwa 3 (oś czasu + historia z akcjami), dzienny health check „1 aktywna wersja/typ” (`health.ts`), metryki                                                                                                                                             | `npm run test:quick`, `npm run validate`                                                                                                    | 🟡 GO na paczkę               |
+| #      | Etap                     | Zakres                                                                                                                                                                                                                                                                                                                   | Brama                                                                                                                                       | Klasyfikacja                  |
+| ------ | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------- |
+| **M0** | Docs                     | Przepisanie `CENNIKI-INSTRUKCJA-ADMINA.md` + `docs/API.md` na model 2 statusów i 4 etykiety                                                                                                                                                                                                                              | `npm run version:check`, `npm run format`                                                                                                   | 🟢 działanie + raport         |
+| **M1** | FE correctness           | `publish`→`approve` (+`checksStale`), usunięcie martwych statusów/legendy/filtru, `can*` na 4 stanach, alias-note guard, poprawka `__*PricingSource`                                                                                                                                                                     | `npm run typecheck:frontend`, `npm run lint:frontend`, `npm run test:quick`, `npm run test:frontend`                                        | 🟡 GO na paczkę               |
+| **M2** | Admin-only + kafelki osi | Gating kafelka i routera, warstwa 1 w hubie jako **siatka kafelków osi** (oś → kafelki stanów: Obowiązuje / Do wdrożenia / W przygotowaniu / Historyczny, z datą, liczebnością, kolizjami, użyciem), banner „bufor nie zmienia ofert”                                                                                    | `npm run test:quick`, `npm run test:axe`                                                                                                    | 🟡 GO na paczkę               |
+| **M3** | Podgląd + publikacja     | Warstwa 2 w hubie jako **drill-down kafelkowy**: kafelki osi → kafelki sekcji (liczebność + Δ vs obowiązująca) → kafelki pozycji (nazwa, cena, Δ, stan); źródło `GET /:id/preview` + `GET /:id/diff?against=<aktywna>`; pasek stanu w edytorach + link do panelu; CTA „Opublikuj” z kontrolą (bez zagnieżdżonego iframe) | `npm run typecheck:frontend`, `npm run lint:frontend`, `npm run test:quick`, `npm run test:e2e-pricelist-preview:spawn`, `npm run test:axe` | 🟡 GO na paczkę               |
+| **M4** | Sekcje                   | Sekcje studni 1:1 z edytorem + osobna oś PRECO w panelu + sekcja Transport (info: pozycja kursu `TR-*` + produkty z ilością/transport + parametry kursu poza cennikiem)                                                                                                                                                  | `npm run test:quick`                                                                                                                        | 🟡 GO na paczkę               |
+| **M5** | Weryfikacja runtime      | Migracja S2a **już wdrożona** (2026-10-21, `migrate status` OK) → etap = weryfikacja widocznego efektu: hub pokazuje aktywną wersję/typ, kafelki pulpitu nie „brak aktywnej", oferta liczy z wersji (badge „cennik vX"), brak toasta fallbacku LIVE                                                                      | `npm run pricelist:health` (EXIT 0) + `npm run pricelist:preflight` (EXIT 0) + ręczna obserwacja UI + `npm run test:quick`                  | 🟢 weryfikacja (bez migracji) |
+| **M6** | Domknięcie               | Warstwa 3 jako **kafelki wersji** (kafelek = wersja: badge stanu, data, autor, użycie, nota, akcje) + opcjonalny widok tabelaryczny przy > 20 wersjach; dzienny health check „1 aktywna wersja/typ” (`health.ts`), metryki                                                                                               | `npm run test:quick`, `npm run validate`                                                                                                    | 🟡 GO na paczkę               |
 
 Rollback: wszystkie etapy → revert commitów. Migracja S2a jest już wdrożona w bazie — wycofanie jej wymagałoby
 `npm run restore data/backups/backup_*.sqlite` (przed zmianą stanu cenników) i nie jest planowane.
@@ -262,6 +300,9 @@ Rollback: wszystkie etapy → revert commitów. Migracja S2a jest już wdrożona
 
 ## 10. Definition of Done
 
+- Panel zbudowany **na kafelkach** w 4 poziomach (oś → stan → sekcja → pozycja), zgodnie z
+  `docs/UI_GUIDELINES.md` (`.tile` / `.card` / `.tiles-grid` / `--tile-gap-*`, brak własnych hexów i inline
+  stylów, status jako badge z ikoną); tabele tylko dla gęstych list (> 30 pozycji / > 20 wersji).
 - Moduł `#/cenniki` widoczny i dostępny **tylko** dla admina; user/pro → redirect.
 - Panel pokazuje dla każdej osi (Rury/Studnie/PRECO): Obowiązuje (z datą), Do wdrożenia, W przygotowaniu,
   Historyczne, kolizje dat, liczbę szkiców, użycie aktywnej wersji.
