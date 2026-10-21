@@ -84,14 +84,14 @@ Nie powstaje drugi dashboard ani duplikat edytora siatki — panel dookoła istn
 │  W przygotowaniu: 2 szkice   Historyczne: 4   Kolizje dat: 0                  │
 │  [Podgląd] [Porównaj] [Kontrola] [Zapisz jako wersję] [Opublikuj →]           │
 ├───────────────────────────────────────────────────────────────────────────────┤
-│ WARSTWA 2 — TREŚĆ / EDYCJA                                                     │
-│  Rury:    tabela kategorii                                                      │
+│ WARSTWA 2 — TREŚĆ / PODGLĄD (read-only, z API)                                │
+│  Rury:    tabela kategorii (podgląd szkicu lub aktywnej wersji)                │
 │  Studnie: DN1000|DN1200|DN1500|DN2000|DN2500|Styczne|Dennice|Akcesoria|      │
 │           Przejścia|Kinety|Transport      ·  Wkładki PRECO ⟡ (OSOBNA OŚ)      │
 │  pasek stanu: ✎ Szkic v14 (7 zmian) │ ✓ Oferty liczą z Obowiązuje v8 │        │
-│                ◷ Do wdrożenia v13   + [Zapisz szkic] [Opublikuj] [Kontrola]   │
-│  tabela: Indeks | Nazwa | Kategoria | Cena PLN (edytowalna) | Δ% vs obowiąz.  │
-│          | Ilość/transport | Stan wiersza                                      │
+│                ◷ Do wdrożenia v13   + [Edytuj w module] [Opublikuj] [Kontrola]│
+│  tabela (podgląd): Indeks | Nazwa | Kategoria | Cena PLN | Δ% vs obowiązująca  │
+│          | Ilość/transport | Stan wiersza   (źródło: GET /:id/preview + diff)  │
 │  prawa kolumna: Kontrola przed publikacją (użycie, kolizja, Δ do LIVE/obowiąz.)│
 ├───────────────────────────────────────────────────────────────────────────────┤
 │ WARSTWA 3 — HISTORIA / OŚ CZASU                                                │
@@ -117,22 +117,42 @@ Reguły:
 - Jeden helper FE (`public/js/shared/pricelistVersions.js`): `stateOf` / `displayStatus` / `can*`.
 - Styl statusów: Obowiązuje = zielony, Do wdrożenia = niebieski, W przygotowaniu = szary, Historyczny = wyciszony.
 
-### 3.2 Decyzje projektowe
+### 3.2 Decyzje projektowe (rozstrzygnięte 2026-10-21)
 
 1. **Zakładka już istnieje** (`#/cenniki`) — rozszerzamy ją, nie tworzymy nowej.
 2. **Admin-only**: kafelek nav + guard routera (user/pro → `#/rury`); BE i tak wymaga `requireAdmin`.
-3. **Edycja w panelu = istniejący edytor w iframe** (`rury.html` / `studnie.html` z `?tab=pricelist`),
-   panel dookoła = sterowanie wersjami i statusami. Zero duplikacji kodu siatki (ryzyko driftu).
-4. **PRECO to osobna oś**, nie sekcja studni: studnia wskazuje PRECO przez resolver po dacie
+3. **Edycja: BEZ zagnieżdżonych iframe'ów i BEZ duplikacji kodu siatki.** Panel = warstwa sterowania +
+   **read-only podgląd treści z API** (`GET /:id/preview` dla szkicu/aktywnej + `GET /:id/diff?against=<aktywna>`
+   dla Δ). Edycja pozostaje w istniejących edytorach (`#/rury`, `#/studnie`), do których panel linkuje.
+    - _Dlaczego nie iframe:_ panel `cenniki.html` już jest iframe'em w SPA, więc iframe w iframe daje
+      zagnieżdżenie, podwójny chrome modułu i zerwany łańcuch `window.parent` (rury/studnie operują na
+      `window.parent`: `public/js/studnie/globals.js:429-444`, `public/js/rury/offerNavigation.js:41-57`).
+    - _Dlaczego nie przeniesienie kodu siatki do `cennikiHub.js`:_ druga kopia renderu kategorii, edycji
+      komórek, zapisu i importu XLSX = najdroższy możliwy drift (cena błędna w ofercie). Odrzucone.
+    - _Podgląd „edytowanego cennika z jednego miejsca”_ spełnia właśnie read-only podgląd szkicu z Δ względem
+      obowiązującej wersji — bez kopiowania edytora.
+4. **Zakładka „Cennik” w modułach rur/studni ZOSTAJE** — to istniejące miejsce pracy admina i miejsce
+   edycji; usunięcie łamie nawyk, deep-linki (`#/rury?tab=pricelist`) i `openRuryVersionsPanel`. Dostaje
+   **pasek stanu** (Szkic vs Obowiązuje) + link „Panel cenników” (`#/cenniki`).
+5. **PRECO to osobna oś**, nie sekcja studni: studnia wskazuje PRECO przez resolver po dacie
    (`export.ts:579-596`, `PRECO_REFERENCE_STATUSES=['APPROVED']`). Zakładka „Wkładki PRECO” w studniach
    edytuje treść osi PRECO, ale **publikacja studni ≠ publikacja PRECO**.
-5. **Transport**: sekcja tylko w studniach (kategoria produktowa `Transport`, kolumna „Ilość/transport”).
-   W rurach transport jest parametrem dokumentu (`js/rury/transport.js`) — poza `PricelistVersion`, więc
-   nie jest sekcją cennika.
-6. **Jedno CTA publikacji**: „Opublikuj” → `POST /:id/approve` (nie alias `publish`), z `effectiveFrom`,
+6. **Transport: nie osobna oś — sekcja informacyjna w osi Rury i osi Studnie.** Model potwierdzony kodem:
+    - w cenniku (wersjonowane): pozycja kursu `TR-RURY` („Transport rur (kurs)") / `TR-STUDNIE`
+      („Transport studni (kurs)"), `category = 'Transport'`, **cena 0** (`data/seed_rury.json:678-685`,
+      `data/seed_studnie.json:21019-21033`) + kolumna „Ilość/transport” per produkt;
+    - poza cennikiem (parametry dokumentu oferty/zamówienia, **niewersjonowane**): cena kursu
+      `transportKm × transportRate` (`public/js/rury/transport.js:93`, `public/js/studnie/offerTransport.js:9`),
+      limit 24 t/kurs (`src/services/ruryTransport.ts:10`), tryb `transportSeparate` (kurs jako osobna pozycja
+      `TR-*` vs wliczony w pozycje).
+    - Wniosek: **cena kursu nie jest cennikiem** → transport nie ma własnej osi wersji i osobnego lifecycle'u.
+      Sekcja „Transport” w panelu pokazuje: pozycję kursu (`TR-*`), produkty z ilością/transport oraz 3 linie
+      faktu (cena kursu = km × stawka, 24 t/kurs, tryb kursu). Zmiany tych parametrów nie ma w panelu —
+      to nie jest cennik.
+7. **Jedno CTA publikacji**: „Opublikuj” → `POST /:id/approve` (nie alias `publish`), z `effectiveFrom`,
    `note` (≥ 10 znaków dla daty ≤ now) i `checksCheckedAt`; odpowiedź `checksStale` → ostrzeżenie, nie błąd.
-7. **Kontrola przed publikacją** (`GET /:id/checks`) = doradcza; publikacja waliduje krytyczne warunki w tx.
-8. **Bufor nie zmienia ofert** — komunikat w hubie i w edytorach (zamknięcie R5/R8).
+8. **Kontrola przed publikacją** (`GET /:id/checks`) = doradcza; publikacja waliduje krytyczne warunki w tx.
+9. **Bufor nie zmienia ofert** — komunikat w hubie i w edytorach (zamknięcie R5/R8).
 
 ## 4. Zakres zmian w kodzie
 
@@ -149,10 +169,10 @@ Reguły:
 | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `public/js/spa/router.js`                                              | guard modułu `cenniki`: brak admina → redirect `#/rury`; sekcje modułu zgodne z 3 warstwami.                                                                                                                                                            |
 | `public/app.html`                                                      | kafelek `spa-app-cenniki` widoczny tylko dla admina (toggle po roli, jak `admin-panel`).                                                                                                                                                                |
-| `public/js/cennikiHub.js`                                              | warstwa 1 (oś per typ, statusy, CTA) + warstwa 3 (historia/oś czasu) + osadzenie edytora (iframe) + banner „bufor nie zmienia ofert” + badge stanu edycji.                                                                                              |
-| `public/cenniki.html`                                                  | sekcje: Rury / Studnie (tabs 1:1 z edytorem) / PRECO osobno; filtr stanów tylko 4 realne + opcjonalnie „Legacy”.                                                                                                                                        |
+| `public/js/cennikiHub.js`                                              | warstwa 1 (oś per typ, statusy, CTA) + warstwa 2 (read-only podgląd treści z `preview`/`diff`) + warstwa 3 (historia/oś czasu) + banner „bufor nie zmienia ofert” + badge stanu + sekcja Transport (info).                                              |
+| `public/cenniki.html`                                                  | sekcje: Rury / Studnie (tabs 1:1 z edytorem, sekcja Transport jako podgląd) / PRECO osobno; filtr stanów tylko 4 realne (bez `BACKDATE*`).                                                                                                              |
 | `public/js/shared/pricelistVersions.js`                                | `publish`/`backdate` → `approve` (+`checksCheckedAt`, `checksStale`); usunięcie `BACKDATE*`, `canActivate`, `canBackdate` i martwych gałęzi `act==='activate'/'backdate'`; 4 etykiety + „Do wdrożenia”; `stateOf` jako jedyne źródło porównań statusów. |
-| `public/js/rury/pricelistUi.js`, `public/js/studnie/pricelistState.js` | badge trybu edycji (Szkic vN / Obowiązuje vM) + link do `#/cenniki`; toast „Zapisano szkic — opublikuj wersję”.                                                                                                                                         |
+| `public/js/rury/pricelistUi.js`, `public/js/studnie/pricelistState.js` | pasek stanu edycji (✎ Szkic vN · ✓ Obowiązuje vM) + link „Panel cenników” (`#/cenniki`); toast „Zapisano szkic — opublikuj wersję”. Zakładka „Cennik” zostaje (decyzja 4).                                                                              |
 | `public/js/rury/dataService.js`, `public/js/studnie/uiHelpers.js`      | poprawa `__*PricingSource` (wartość z odpowiedzi BE, nie hardcoded `'live'`).                                                                                                                                                                           |
 | `public/css/cenniki.css`                                               | styl nowych elementów warstwy 1/3 (chipy statusów, oś czasu).                                                                                                                                                                                           |
 
@@ -176,15 +196,15 @@ Reguły:
 
 ## 5. Etapy (autonomia per `docs/AUTONOMY_CONTRACT.md`)
 
-| #      | Etap                | Zakres                                                                                                                                                                                                                                              | Brama                                                                                                                                       | Klasyfikacja                  |
-| ------ | ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------- |
-| **M0** | Docs                | Przepisanie `CENNIKI-INSTRUKCJA-ADMINA.md` + `docs/API.md` na model 2 statusów i 4 etykiety                                                                                                                                                         | `npm run version:check`, `npm run format`                                                                                                   | 🟢 działanie + raport         |
-| **M1** | FE correctness      | `publish`→`approve` (+`checksStale`), usunięcie martwych statusów/legendy/filtru, `can*` na 4 stanach, alias-note guard, poprawka `__*PricingSource`                                                                                                | `npm run typecheck:frontend`, `npm run lint:frontend`, `npm run test:quick`, `npm run test:frontend`                                        | 🟡 GO na paczkę               |
-| **M2** | Admin-only + oś     | Gating kafelka i routera, warstwa 1 w hubie (oś per typ, 4 statusy, kolizje, użycie), badge „bufor nie zmienia ofert”                                                                                                                               | `npm run test:quick`, `npm run test:axe`                                                                                                    | 🟡 GO na paczkę               |
-| **M3** | Edytor + publikacja | Osadzenie istniejącego edytora (iframe) w warstwie 2, pasek stanu, badge trybu w edytorach, CTA „Opublikuj” z kontrolą                                                                                                                              | `npm run typecheck:frontend`, `npm run lint:frontend`, `npm run test:quick`, `npm run test:e2e-pricelist-preview:spawn`, `npm run test:axe` | 🟡 GO na paczkę               |
-| **M4** | Sekcje              | Sekcje studni 1:1 z edytorem + osobna oś PRECO w panelu, podsekcja Transport tylko dla studni                                                                                                                                                       | `npm run test:quick`                                                                                                                        | 🟡 GO na paczkę               |
-| **M5** | Weryfikacja runtime | Migracja S2a **już wdrożona** (2026-10-21, `migrate status` OK) → etap = weryfikacja widocznego efektu: hub pokazuje aktywną wersję/typ, kafelki pulpitu nie „brak aktywnej", oferta liczy z wersji (badge „cennik vX"), brak toasta fallbacku LIVE | `npm run pricelist:health` (EXIT 0) + `npm run pricelist:preflight` (EXIT 0) + ręczna obserwacja UI + `npm run test:quick`                  | 🟢 weryfikacja (bez migracji) |
-| **M6** | Domknięcie          | Warstwa 3 (oś czasu + historia z akcjami), dzienny health check „1 aktywna wersja/typ” (`health.ts`), metryki                                                                                                                                       | `npm run test:quick`, `npm run validate`                                                                                                    | 🟡 GO na paczkę               |
+| #      | Etap                 | Zakres                                                                                                                                                                                                                                                    | Brama                                                                                                                                       | Klasyfikacja                  |
+| ------ | -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------- |
+| **M0** | Docs                 | Przepisanie `CENNIKI-INSTRUKCJA-ADMINA.md` + `docs/API.md` na model 2 statusów i 4 etykiety                                                                                                                                                               | `npm run version:check`, `npm run format`                                                                                                   | 🟢 działanie + raport         |
+| **M1** | FE correctness       | `publish`→`approve` (+`checksStale`), usunięcie martwych statusów/legendy/filtru, `can*` na 4 stanach, alias-note guard, poprawka `__*PricingSource`                                                                                                      | `npm run typecheck:frontend`, `npm run lint:frontend`, `npm run test:quick`, `npm run test:frontend`                                        | 🟡 GO na paczkę               |
+| **M2** | Admin-only + oś      | Gating kafelka i routera, warstwa 1 w hubie (oś per typ, 4 statusy, kolizje, użycie), badge „bufor nie zmienia ofert”                                                                                                                                     | `npm run test:quick`, `npm run test:axe`                                                                                                    | 🟡 GO na paczkę               |
+| **M3** | Podgląd + publikacja | Warstwa 2 w hubie: read-only podgląd treści osi (szkic lub aktywna) z `GET /:id/preview` + Δ z `GET /:id/diff?against=<aktywna>`, sekcje 1:1 z edytorem, pasek stanu w edytorach + link do panelu, CTA „Opublikuj” z kontrolą (bez zagnieżdżonego iframe) | `npm run typecheck:frontend`, `npm run lint:frontend`, `npm run test:quick`, `npm run test:e2e-pricelist-preview:spawn`, `npm run test:axe` | 🟡 GO na paczkę               |
+| **M4** | Sekcje               | Sekcje studni 1:1 z edytorem + osobna oś PRECO w panelu + sekcja Transport (info: pozycja kursu `TR-*` + produkty z ilością/transport + parametry kursu poza cennikiem)                                                                                   | `npm run test:quick`                                                                                                                        | 🟡 GO na paczkę               |
+| **M5** | Weryfikacja runtime  | Migracja S2a **już wdrożona** (2026-10-21, `migrate status` OK) → etap = weryfikacja widocznego efektu: hub pokazuje aktywną wersję/typ, kafelki pulpitu nie „brak aktywnej", oferta liczy z wersji (badge „cennik vX"), brak toasta fallbacku LIVE       | `npm run pricelist:health` (EXIT 0) + `npm run pricelist:preflight` (EXIT 0) + ręczna obserwacja UI + `npm run test:quick`                  | 🟢 weryfikacja (bez migracji) |
+| **M6** | Domknięcie           | Warstwa 3 (oś czasu + historia z akcjami), dzienny health check „1 aktywna wersja/typ” (`health.ts`), metryki                                                                                                                                             | `npm run test:quick`, `npm run validate`                                                                                                    | 🟡 GO na paczkę               |
 
 Rollback: wszystkie etapy → revert commitów. Migracja S2a jest już wdrożona w bazie — wycofanie jej wymagałoby
 `npm run restore data/backups/backup_*.sqlite` (przed zmianą stanu cenników) i nie jest planowane.
@@ -193,7 +213,7 @@ Rollback: wszystkie etapy → revert commitów. Migracja S2a jest już wdrożona
 
 | Ryzyko                                                  | Mitigacja                                                                                                     |
 | ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| Duplikacja edytora siatki → drift cen                   | iframe istniejącego edytora (decyzja 3), zero kopii kodu                                                      |
+| Duplikacja edytora siatki → drift cen                   | odrzucone obie alternatywy (decyzja 3): podgląd z API, edycja w istniejącym edytorze — zero kopii kodu        |
 | Admin widzi szkic, oferta liczy z innej wersji          | badge trybu w edytorach (M3) + banner w hubie (M2)                                                            |
 | Korekta wsteczna bez uzasadnienia przez alias `publish` | M1: FE tylko `approve`; alias zostaje z `Deprecation`                                                         |
 | Migracja S2a bez backupu                                | wykonana 2026-10-21 (backup + preflight EXIT 0); stan potwierdzony `migrate status`/health — ryzyko zamknięte |
@@ -208,38 +228,48 @@ Rollback: wszystkie etapy → revert commitów. Migracja S2a jest już wdrożona
 - Scalenie PRECO ze studniami; kopiowanie wierszy PRECO do wersji studni.
 - Nowy schemat statusów (2 statusy zapisane wystarczą).
 - Usuwanie tabel LIVE i `*_Default` (S6 — poza v1, osobny GO + bramka O3).
-- Osobna tabela „Transport” dla rur (to parametr dokumentu).
+- Osobna oś wersji dla transportu (cena kursu jest parametrem dokumentu oferty) — sekcja Transport w panelu
+  jest informacyjna; edycja transportu zostaje w modułach (studnie: zakładka Transport, rury: modal oferty).
 - Paginacja Historii (8–100 wersji).
 - Wersjonowanie per podsekcja (DN1000 osobno) — oś czasu jest per typ.
 
-## 8. Otwarte pytania (do rozstrzygnięcia przed M2/M3)
+## 8. Rozstrzygnięte pytania (2026-10-21)
 
-1. **Widoczność modułu:** tylko admin (niewidoczny dla user/pro) czy user/pro dostaje read-only podgląd osi?
-   _Domyślny planu: admin-only; user ma badge „cennik vX” w ofercie._
-2. **Edycja w panelu:** iframe istniejącego edytora (szybko, zero duplikacji) czy przeniesienie kodu siatki do
-   `cennikiHub.js` (jedno okno, koszt: ryzyko driftu)? _Domyślny planu: iframe._
-3. **Zakładka „Cennik” w modułach rury/studnie:** zostaje (link do panelu) czy jest zastąpiona panelem?
-   _Domyślny planu: zostaje, z linkiem do `#/cenniki`._
-4. **Transport:** tylko w studniach (produkty), dla rur poza panelem — zgadza się? _Domyślny planu: tak._
+1. **Widoczność modułu:** **admin-only** (kafelek nav i guard routera; user/pro → redirect `#/rury`).
+   User nadal widzi badge „cennik vX” w ofercie.
+2. **Edycja w panelu:** ani iframe, ani przeniesienie kodu siatki → **read-only podgląd z API**
+   (`GET /:id/preview` + `GET /:id/diff`) w panelu + **edycja w istniejących edytorach** (`#/rury`,
+   `#/studnie`) z paskiem stanu i linkiem do panelu. Uzasadnienie: zagnieżdżony iframe psuje łańcuch
+   `window.parent` (edytory operują na parent), a kopia kodu siatki = drift cen. → decyzja 3.
+3. **Zakładka „Cennik” w modułach rur/studni:** **zostaje** (miejsce edycji + deep-linki + modal wersji),
+   dostaje pasek stanu i link do panelu. → decyzja 4.
+4. **Transport:** **nie osobna oś wersjonowania** — sekcja informacyjna w osi Rury i osi Studnie
+   (pozycja kursu `TR-RURY`/`TR-STUDNIE`, produkty z ilością/transport, parametry kursu jako fakty:
+   cena = km × stawka, 24 t/kurs, tryb `transportSeparate`). Cena kursu jest parametrem oferty, nie cennikiem.
+   → decyzja 6.
 
 ## 9. Evidence ledger (do wypełnienia przy realizacji)
 
-| ID    | Twierdzenie                                             | Dowód                                                                                                                                                                                                 | Status   |
-| ----- | ------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
-| E-001 | Model statusów = 2 zapisane + 3 wyliczane               | `validation.ts:32-61`                                                                                                                                                                                 | VERIFIED |
-| E-002 | FE nie wywołuje `POST /:id/approve`                     | `public/js/shared/pricelistVersions.js:1462, 1653` (grep `/approve` w `public/` → 0 trafień w kontekście cenników)                                                                                    | VERIFIED |
-| E-003 | Alias `publish` omija guard noty dla daty wstecznej     | `lifecycle.ts:417-422` (`publishDraft` → `approveVersion` bez `requirePastNote`) vs `routes:415`                                                                                                      | VERIFIED |
-| E-004 | Moduł `cenniki` nie jest admin-only                     | `app.html:156-164`, `router.js:294-310` (brak kontroli roli)                                                                                                                                          | VERIFIED |
-| E-005 | Migracja S2a **wdrożona**; w bazie brak statusów legacy | `npx prisma migrate status` → „Database schema is up to date!" (EXIT 0); `npm run pricelist:preflight` → `APPROVED=8`, 0 kolizji (EXIT 0); `npm run pricelist:health` → 1 aktywna wersja/typ (EXIT 0) | VERIFIED |
-| E-006 | Edytor pokazuje DRAFT, oferta liczy z ACTIVE            | `writeTarget.ts:40-45`, `productsV2.ts:46-52` vs `app.js:139`                                                                                                                                         | VERIFIED |
+| ID    | Twierdzenie                                                                                                                                                                                         | Dowód                                                                                                                                                                                                                        | Status   |
+| ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| E-001 | Model statusów = 2 zapisane + 3 wyliczane                                                                                                                                                           | `validation.ts:32-61`                                                                                                                                                                                                        | VERIFIED |
+| E-002 | FE nie wywołuje `POST /:id/approve`                                                                                                                                                                 | `public/js/shared/pricelistVersions.js:1462, 1653` (grep `/approve` w `public/` → 0 trafień w kontekście cenników)                                                                                                           | VERIFIED |
+| E-003 | Alias `publish` omija guard noty dla daty wstecznej                                                                                                                                                 | `lifecycle.ts:417-422` (`publishDraft` → `approveVersion` bez `requirePastNote`) vs `routes:415`                                                                                                                             | VERIFIED |
+| E-004 | Moduł `cenniki` nie jest admin-only                                                                                                                                                                 | `app.html:156-164`, `router.js:294-310` (brak kontroli roli)                                                                                                                                                                 | VERIFIED |
+| E-005 | Migracja S2a **wdrożona**; w bazie brak statusów legacy                                                                                                                                             | `npx prisma migrate status` → „Database schema is up to date!" (EXIT 0); `npm run pricelist:preflight` → `APPROVED=8`, 0 kolizji (EXIT 0); `npm run pricelist:health` → 1 aktywna wersja/typ (EXIT 0)                        | VERIFIED |
+| E-006 | Edytor pokazuje DRAFT, oferta liczy z ACTIVE                                                                                                                                                        | `writeTarget.ts:40-45`, `productsV2.ts:46-52` vs `app.js:139`                                                                                                                                                                | VERIFIED |
+| E-007 | Transport: `TR-RURY`/`TR-STUDNIE` to pozycje kursu w cenniku (cena 0); cena kursu (km × stawka), limit 24 t/kurs i tryb `transportSeparate` to parametry dokumentu oferty — poza `PricelistVersion` | `data/seed_rury.json:678-685`, `data/seed_studnie.json:21019-21033`, `src/services/ruryTransport.ts:10`, `public/js/rury/transport.js:93`, `public/js/studnie/offerTransport.js:9`, `src/validators/orderSchemas.ts:358-359` | VERIFIED |
 
 ## 10. Definition of Done
 
 - Moduł `#/cenniki` widoczny i dostępny **tylko** dla admina; user/pro → redirect.
 - Panel pokazuje dla każdej osi (Rury/Studnie/PRECO): Obowiązuje (z datą), Do wdrożenia, W przygotowaniu,
   Historyczne, kolizje dat, liczbę szkiców, użycie aktywnej wersji.
-- Sekcje treści dostępne z panelu (rury; studnie: DN1000…Kinety + Transport; PRECO osobna oś) i jedno miejsce
-  edycji z jawnym wskaźnikiem trybu (Szkic vs Obowiązuje).
+- Sekcje treści dostępne z panelu jako **read-only podgląd** (rury; studnie: DN1000…Kinety + Transport;
+  PRECO osobna oś), z Δ względem obowiązującej wersji; **edycja pozostaje w modułach `#/rury` / `#/studnie`**,
+  gdzie zakładka „Cennik” zostaje i pokazuje jawny wskaźnik trybu (Szkic vs Obowiązuje).
+- Sekcja Transport w obu osiach pokazuje pozycję kursu (`TR-RURY` / `TR-STUDNIE`), produkty z ilością/transport
+  oraz parametry kursu oznaczone jako „poza cennikiem”.
 - Publikacja idzie przez `POST /:id/approve` (bez aliasów), z kontrolą przed publikacją i obsługą `checksStale`.
 - Historia/oś czasu: status, data, autor, użycie, notatka, akcje (Podgląd/Porównaj/Kontrola/Eksport/Klon/Usuń).
 - Instrukcja admina i `docs/API.md` opisują **aktualny** model (2 statusy + 4 etykiety, `approve`, brak crona).
