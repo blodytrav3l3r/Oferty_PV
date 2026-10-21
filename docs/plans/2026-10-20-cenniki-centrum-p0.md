@@ -1,7 +1,7 @@
 # Cenniki — centrum wersji: plan P0
 
 - **Data:** 2026-10-20
-- **Status:** W REALIZACJI — S0–S3 kod gotowy; migracja S2a niewdrożona (czeka na backup + preflight EXIT 0 + osobny GO). Bramki S3 zielone: `test:quick` (1 flaky timeout w `claimIdempotencyHttp`, solo PASS), `test:e2e-pricelist-preview:spawn` PASS, `test:axe` 5/5 PASS (w tym nowy test huba/historii z deep-linkiem).
+- **Status:** W REALIZACJI — S0–S3 wdrożone i wypchnięte; S4 wdrożone lokalnie; S2a migracja wdrożona; S5 kod gotowy lokalnie (`fe1fb66`, brak push/release). S5-close gotowy lokalnie: dzienny check `pricelist:health`, sygnał „Zapisz szkic” w edytorach, testy tras studnie/preco. Bramki S5: `npm run validate` PASS (5092 testy), `test:axe` 5/5 PASS, `test:e2e-pricelist-preview:spawn` PASS, pełny `test:e2e` 26/27 (znany flake iframe, solo 3/3 PASS).
 - **Wersja aplikacji (repo):** 1.47.0
 - **Właściciel:** właściciel produktu S.O.K. (decyzje wiążące) + agent implementujący (wykonanie)
 - **Zakres:** model wersji cenników (Rury / Studnie / PRECO), hub „Cenniki", statusy, kontrakty API, roadmapa S0–S6

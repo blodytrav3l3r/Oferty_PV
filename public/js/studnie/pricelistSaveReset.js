@@ -53,7 +53,12 @@ async function saveStudniePriceList() {
         _studniePricelistDirty = false;
         updateStudnieSaveBtn();
         await refreshStudnieData();
-        showToast('Zapisano cennik studni', 'success');
+        showToast(
+            window.__pricelistWriteTarget === 'draft'
+                ? 'Zapisano szkic studni — opublikuj wersję, aby trafił do ofert'
+                : 'Zapisano cennik studni',
+            'success'
+        );
     } catch (err) {
         logger.error('pricelistManager', 'saveStudniePriceList: wyjątek', err);
         showToast('Błąd zapisu: ' + err.message, 'error');

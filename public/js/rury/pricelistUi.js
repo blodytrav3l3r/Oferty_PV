@@ -10,9 +10,14 @@ let _pricelistDirty = false;
 function updateSaveBtn() {
     const btn = document.getElementById('btn-save-pricelist');
     if (!btn) return;
+    const isDraft = window.__pricelistWriteTarget === 'draft';
+    const label = isDraft ? 'Zapisz szkic' : 'Zapisz';
+    btn.title = isDraft
+        ? 'Zapis tworzy lub aktualizuje szkic; publikacja w panelu wersji'
+        : 'Zapisz zmiany w cenniku';
     btn.innerHTML = _pricelistDirty
-        ? '<i data-lucide="save"></i> Zapisz <span class="color-warn">(!)</span>'
-        : '<i data-lucide="save"></i> Zapisz';
+        ? `<i data-lucide="save"></i> ${label} <span class="color-warn">(!)</span>`
+        : `<i data-lucide="save"></i> ${label}`;
     if (window.lucide) lucide.createIcons({ root: btn });
 }
 
@@ -236,7 +241,12 @@ async function savePriceList() {
         updateSaveBtn();
         renderPriceList();
         if (typeof renderTiles === 'function') renderTiles();
-        showToast('Zapisano cennik', 'success');
+        showToast(
+            window.__pricelistWriteTarget === 'draft'
+                ? 'Zapisano szkic — opublikuj wersję, aby trafił do ofert'
+                : 'Zapisano cennik',
+            'success'
+        );
     } catch (err) {
         logger.error('pricelistUi', 'savePriceList: wyjątek', err);
         showToast('Błąd zapisu: ' + err.message, 'error');

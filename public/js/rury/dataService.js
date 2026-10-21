@@ -108,6 +108,8 @@ async function loadProducts(options) {
             if (res.ok) {
                 const json = await res.json();
                 if (json && Array.isArray(json.data)) {
+                    window.__pricelistWriteTarget =
+                        res.headers.get('X-Pricelist-Write-Target') === 'draft' ? 'draft' : 'live';
                     const fellBack = useActive ? _notifyActiveFallback(res) : false;
                     window.__ruryPricingSource = useActive
                         ? fellBack

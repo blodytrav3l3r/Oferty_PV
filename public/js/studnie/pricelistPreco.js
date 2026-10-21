@@ -107,6 +107,11 @@ function renderPrecoPriceList() {
     });
 
     container.innerHTML = html;
+    const saveBtn = /** @type {HTMLElement | null} */ (container.querySelector('#btn-save-preco'));
+    if (saveBtn && window.__pricelistWriteTarget === 'draft') {
+        saveBtn.title = 'Zapis tworzy lub aktualizuje szkic; publikacja w panelu wersji';
+        saveBtn.innerHTML = '<i data-lucide="save" aria-hidden="true"></i> Zapisz szkic PRECO';
+    }
     if (window.lucide) lucide.createIcons({ root: container });
 
     container.querySelectorAll('[data-preco-field]').forEach(function (input) {

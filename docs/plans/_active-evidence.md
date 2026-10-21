@@ -767,5 +767,18 @@ Scope: dopisane na koncu, historia E-001..E-120d nietknieta. Nowe ID E-120f, roz
 - CHANGE: +1 serwis, +1 test suite, guardy LIVE_READ_ONLY i audyt PATCH/DELETE, pin env `live` w testach legacy; bez zmian schematu.
 - TESTS: j.w.; e2e pricelist PASS; pelny e2e 26/27 (znany flake).
 - DIFF: 12 plikow sledzonych + 2 nowe.
-- COMMIT: brak (zadanie nie mowi commitowac).
-- VERIFIED: YES — kod, testy i e2e zielone; restart/deploy po jawnym GO.
+- COMMIT: `fe1fb66` (`feat(api): cenniki s5 draft default i live read-only`).
+- VERIFIED: YES — kod, testy i e2e zielone; restart dev wykonany, push/release po jawnym GO.
+
+## Checkpoint E-123 (S5-close: dzienny check O3 + sygnał szkicu + testy tras)
+
+- CLAIM: S5 ma dzienny check „dokładnie 1 aktywna/typ” (CLI + cron), edytory rury/studnie/PRECO pokazują cel zapisu („Zapisz szkic” + toast), a trasy studnie/preco oraz alias eksportu `source=live -> draft` mają testy regresyjne.
+- EVIDENCE: `src/services/pricelist/health.ts`, `scripts/check-pricelist-health.ts`, `src/utils/cronService.ts`, `package.json` (`pricelist:health`), `src/routes/productsV2.ts`, `src/routes/productsStudnieV2.ts`, `src/routes/precoPricingV2.ts` (`X-Pricelist-Write-Target`), `public/js/rury/dataService.js`, `public/js/rury/pricelistUi.js`, `public/js/studnie/uiHelpers.js`, `public/js/studnie/pricelistState.js`, `public/js/studnie/pricelistSaveReset.js`, `public/js/studnie/pricelistPreco.js`, `tests/pricelistHealth.test.ts`, `tests/pricelistWriteTargetRoutes.test.ts`.
+- REPRODUCTION: `npm run pricelist:health` -> OK (rury/studnie/preco po 1 ACTIVE, `LIVE_WRITE 24h=0`); `npx jest tests/pricelistHealth.test.ts tests/pricelistWriteTargetRoutes.test.ts --runInBand` -> 13/13 PASS; `npm run validate` -> PASS (5092 testy, 514 suites; `version/typecheck/lint/test:quick/collisions/ratchet/prices:verify`).
+- BEFORE: brak dziennego checku „1 aktywna/typ”; edytor nie odróżniał zapisu szkicu od LIVE; brak testów tras studnie/preco w trybie draft.
+- AFTER: `pricelist:health` (exit 2 przy naruszeniu, `--require-zero-live-writes` dla O3), cron `pricelistHealth` co 24h (log only, bez auto-healu), nagłówek `X-Pricelist-Write-Target`, etykiety/toasty „Zapisz szkic”, jawny `409 NO_DRAFT_VERSION` dla aliasu eksportu.
+- CHANGE: +2 pliki produkcyjne (health + CLI), +2 testy, cron +3 pliki tras + 6 plików FE; bez zmian schematu i bez nowych zależności.
+- TESTS: j.w.; `npm run test:axe` -> 5/5 PASS; `npm run test:e2e-pricelist-preview:spawn` -> PASS; `npm run test:e2e` -> 26/27 (znany flake `smokeOfferFlow`, solo 3/3 PASS); `npm run format` + `format:check`/`encoding:check` bez ERROR.
+- DIFF: 14 plików śledzonych + 4 nowe (w tym `THIRD-PARTY-NOTICES.md` — odświeżona data generatora).
+- COMMIT: brak (do commita po jawnym GO; paczka lokalna).
+- VERIFIED: YES — check na realnej bazie OK, testy i pełny `validate` zielone; `test:e2e` ma tylko znany flake iframe (solo PASS); push/release po jawnym GO.

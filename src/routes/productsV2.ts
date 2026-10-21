@@ -40,6 +40,7 @@ const { runWithLock } = pricelistLock;
 // ──────────────────────────────────────────
 router.get('/', requireAuth, async (req, res) => {
     try {
+        res.setHeader('X-Pricelist-Write-Target', getPricelistWriteTarget());
         const source = requirePricingSource(req.query.source);
         let fallbackHeader = false;
         if (!source && getPricelistWriteTarget() === 'draft') {

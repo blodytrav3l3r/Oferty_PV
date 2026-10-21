@@ -553,6 +553,8 @@ async function loadStudnieProducts(options) {
                 const json = await res.json();
                 if (json && Array.isArray(json.data)) {
                     saved = json.data;
+                    window.__pricelistWriteTarget =
+                        res.headers.get('X-Pricelist-Write-Target') === 'draft' ? 'draft' : 'live';
                     if (useActive) fellBack = _notifyActiveFallback(res);
                     break;
                 }
@@ -616,6 +618,8 @@ async function loadPrecoPricing(options) {
         const json = await res.json();
         if (json.data && Array.isArray(json.data) && json.data.length > 0) {
             precoPricing = json.data[0];
+            window.__pricelistWriteTarget =
+                res.headers.get('X-Pricelist-Write-Target') === 'draft' ? 'draft' : 'live';
             if (useActive) _notifyActiveFallback(res);
             logger.info('uiHelpers', '[PRECO] Załadowano cennik z bazy');
             return;
@@ -645,7 +649,12 @@ async function savePrecoPricing(data) {
             showToast('Błąd zapisu cennika PRECO: ' + (err.error || res.status), 'error');
             return false;
         }
-        showToast('Cennik PRECO zapisany', 'success');
+        showToast(
+            window.__pricelistWriteTarget === 'draft'
+                ? 'Zapisano szkic PRECO — opublikuj wersję, aby trafił do ofert'
+                : 'Cennik PRECO zapisany',
+            'success'
+        );
         return true;
     } catch (err) {
         logger.error('uiHelpers', '[PRECO] Błąd sieci:', err);

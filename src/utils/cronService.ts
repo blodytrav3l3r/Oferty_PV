@@ -56,6 +56,9 @@ class CronService {
         // P1-B: co 24h — kontrola spójności FTS (tylko liczniki + warn, bez auto-rebuildu)
         this.schedule('ftsConsistencyCheck', 24 * 60 * 60 * 1000, () => this.runFtsCheck());
 
+        // S5/O3: co 24h — dokładnie 1 aktywna wersja cennika na typ.
+        this.schedule('pricelistHealth', 24 * 60 * 60 * 1000, () => this.runPricelistHealthCheck());
+
         logger.info('CronService', 'Cron zainicjalizowany (hourly + daily + ml)');
     }
 
@@ -231,6 +234,37 @@ class CronService {
             }
         } catch (e) {
             logger.error('CronService', `[mlSelfEvaluation] failed: ${e}`);
+        }
+    }
+
+    /**
+     * S5/O3: dzienny check cenników. Nie rzuca — raport trafia do logów,
+     * a naruszenia są sygnałem do ręcznej reakcji (brak auto-healu).
+     */
+    async runPricelistHealthCheck(): Promise<void> {
+        try {
+            const { getPricelistHealth } = await import('../services/pricelist/health');
+            const report = await getPricelistHealth();
+            if (!report.ok) {
+                logger.warn(
+                    'CronService',
+                    `[pricelistHealth] NARUSZENIA: ${report.violations
+                        .map((v) => `${v.type}/${v.code}`)
+                        .join(', ')}`
+                );
+            }
+            if (report.liveWrites.count > 0) {
+                logger.warn(
+                    'CronService',
+                    `[pricelistHealth] LIVE_WRITE 24h=${report.liveWrites.count} ` +
+                        JSON.stringify(report.liveWrites.byType)
+                );
+            }
+            if (report.ok && report.liveWrites.count === 0) {
+                logger.info('CronService', '[pricelistHealth] OK: 1 aktywna wersja na typ');
+            }
+        } catch (e) {
+            logger.error('CronService', `[pricelistHealth] failed: ${e}`);
         }
     }
 
