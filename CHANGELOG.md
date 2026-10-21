@@ -4,6 +4,19 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.48.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.47.0...v1.48.0) (2026-10-21)
+
+### Features
+
+- **api:** cenniki s4 shadow sum, indeksy i budzety ([9640a3c](https://github.com/blodytrav3l3r/Oferty_PV/commit/9640a3cbe72e071cae0705eaa3168ddba720525e))
+- **api:** cenniki s5 close health check i sygnal szkicu ([2000f0a](https://github.com/blodytrav3l3r/Oferty_PV/commit/2000f0a83ebf8955e3ce97a26bcb1bae5898af5b))
+- **api:** cenniki s5 draft default i live read-only ([fe1fb66](https://github.com/blodytrav3l3r/Oferty_PV/commit/fe1fb66cb02cb3b29379031ddce1cf2c7747b27b))
+- **api:** centrum cennikow s0-s3 ([e510611](https://github.com/blodytrav3l3r/Oferty_PV/commit/e510611c04f763f843dffcf31f72e4183c02e3e4))
+
+### Bug Fixes
+
+- **config:** cache bust dla wszystkich plikow public html ([5031db4](https://github.com/blodytrav3l3r/Oferty_PV/commit/5031db4de822513ea754faae14eb0a11e17c48b7))
+
 ## [1.47.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.46.5...v1.47.0) (2026-10-20)
 
 ### Features
