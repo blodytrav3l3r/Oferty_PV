@@ -287,16 +287,16 @@ describe('S2a approveVersion', () => {
         expect(past.status).toBe('DRAFT');
     });
 
-    test('approve ze zmienioną datą przelicza labelkę v{seq}-data', async () => {
+    test('approve ze zmienioną datą przelicza labelkę {Prefiks}v{seq}-data', async () => {
         const draft = await createDraft('rury', [rura('r1')], {
             effectiveFrom: '2026-09-01T00:00:00.000Z'
         });
-        expect(draft.version).toBe('v1-20260901');
+        expect(draft.version).toBe('Rv1-20260901');
         const approved = await approveVersion(draft.id, {
             effectiveFrom: '2026-12-15T00:00:00.000Z'
         });
         expect(approved.effectiveFrom).toBe('2026-12-15T00:00:00.000Z');
-        expect(approved.version).toBe('v1-20261215');
+        expect(approved.version).toBe('Rv1-20261215');
     });
 
     test('approve zapisuje APPROVED + approvedBy/At i audit APPROVE', async () => {

@@ -105,13 +105,20 @@ export async function createDraft(
     return res.value;
 }
 
-/** Labelka wersji: v{seq}-{RRRRMMDD} z effectiveFrom (UTC). Seq w nazwie = unikalność per type. */
-export function versionLabel(seq: number, effectiveFromIso: string): string {
+/** Prefiks etykiety per oś (R=rury, S=studnie, P=preco). */
+const TYPE_PREFIX: Record<PricelistType, string> = {
+    rury: 'R',
+    studnie: 'S',
+    preco: 'P'
+};
+
+/** Labelka wersji: {Prefiks}v{seq}-{RRRRMMDD} z effectiveFrom (UTC). */
+export function versionLabel(type: PricelistType, seq: number, effectiveFromIso: string): string {
     const d = new Date(effectiveFromIso);
     const y = d.getUTCFullYear();
     const m = String(d.getUTCMonth() + 1).padStart(2, '0');
     const day = String(d.getUTCDate()).padStart(2, '0');
-    return `v${seq}-${y}${m}${day}`;
+    return `${TYPE_PREFIX[type]}v${seq}-${y}${m}${day}`;
 }
 
 async function createDraftTx(
@@ -135,7 +142,7 @@ async function createDraftTx(
                         id,
                         type,
                         seq,
-                        version: versionLabel(seq, meta.effectiveFrom),
+                        version: versionLabel(type, seq, meta.effectiveFrom),
                         status,
                         effectiveFrom: meta.effectiveFrom,
                         createdBy: meta.createdBy,
@@ -323,7 +330,7 @@ export async function approveVersion(
                         effectiveFrom,
                         ...(effectiveFrom === fresh.effectiveFrom
                             ? {}
-                            : { version: versionLabel(fresh.seq, effectiveFrom) }),
+                            : { version: versionLabel(type, fresh.seq, effectiveFrom) }),
                         approvedBy: opts.userId ?? null,
                         approvedAt: nowIso,
                         ...(note === undefined ? {} : { note })
@@ -611,7 +618,7 @@ export async function cloneAsDraft(
                     id: newId,
                     type,
                     seq,
-                    version: versionLabel(seq, nowIso),
+                    version: versionLabel(type, seq, nowIso),
                     status: 'DRAFT',
                     effectiveFrom: nowIso,
                     createdBy: opts.userId,

@@ -44,8 +44,9 @@ Słownik pojęć:
 | **DEFAULT / price_defaults.json** | Wzorzec do resetu + transfer między komputerami. Nie jest wersją.              | „Zapisz domyślne" / `npm run prices:export                        | import | verify` |
 
 Dwie niezależne osie: **status** (cykl życia) i **effectiveFrom** (miejsce na osi czasu, zawsze UTC).
-Labelka wersji to `v{seq}-{RRRRMMDD}` z daty obowiązywania; `seq` jest per typ (rury/studnie/preco
-mają własne numeracje).
+Labelka wersji to `{Prefiks}v{seq}-{RRRRMMDD}` z daty obowiązywania; `seq` jest per typ
+(rury/studnie/preco mają własne numeracje), a prefiks oznacza oś: **R** = rury, **S** = studnie,
+**P** = PRECO (np. `Sv4-20261004`, `Rv2-20261004`, `Pv1-20260601`).
 
 > Uwaga o bazie: migracja statusów jest wdrożona (`ACTIVE/SCHEDULED/ARCHIVED/BACKDATE → APPROVED`,
 > `BACKDATE_REQUESTED → DRAFT`). Instalacje spoza tej bazy wymagają `npx prisma migrate deploy`,

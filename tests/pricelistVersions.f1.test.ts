@@ -201,7 +201,7 @@ describe('F1 pricelistVersions', () => {
             effectiveFrom: '2026-09-01T00:00:00.000Z'
         });
         expect(v1.seq).toBe(1);
-        expect(v1.version).toBe('v1-20260901');
+        expect(v1.version).toBe('Rv1-20260901');
         expect(v1.status).toBe('DRAFT');
 
         const v2 = await createDraft('rury', [rura('r1', 110)], {
@@ -209,7 +209,7 @@ describe('F1 pricelistVersions', () => {
             note: 'podwyżka'
         });
         expect(v2.seq).toBe(2);
-        expect(v2.version).toBe('v2-20261001');
+        expect(v2.version).toBe('Rv2-20261001');
 
         // data w przeszłości też startuje jako DRAFT (oś czasu przy approve)
         const v3 = await createDraft('rury', [rura('r1', 90)], {

@@ -2,7 +2,7 @@
 /**
  * backfill-pricelist-v1.ts (F2 — Expand & Contract, krok 2).
  *
- * Tworzy seq:1 v1 APPROVED (effectiveFrom=now) z tabel LIVE per typ
+ * Tworzy seq:1 (etykieta {R|S|P}v1-{RRRRMMDD}) APPROVED (effectiveFrom=now) z tabel LIVE per typ
  * (rury, studnie, preco) — wstawianie przez chunkedCreateMany/25.
  *
  * URUCHAMIANIE RĘCZNE (nie w migracji, nie przy starcie):
@@ -17,6 +17,8 @@ import { randomUUID } from 'crypto';
 import prisma, { Prisma } from '../src/prismaClient';
 import { chunkedCreateMany } from '../src/utils/prismaBatch';
 import { sha256Canonical } from '../src/services/priceOverrideService';
+import { versionLabel } from '../src/services/pricelist/lifecycle';
+import type { PricelistType } from '../src/services/pricelist/validation';
 
 type Tx = Prisma.TransactionClient;
 
@@ -86,7 +88,7 @@ async function main(): Promise<void> {
                 id,
                 type,
                 seq: 1,
-                version: 'v1',
+                version: versionLabel(type as PricelistType, 1, nowIso),
                 status: 'APPROVED',
                 effectiveFrom: nowIso,
                 createdBy: 'backfill',
@@ -95,7 +97,9 @@ async function main(): Promise<void> {
                 createdAt: nowIso
             }
         });
-        console.log(`[backfill] ${type}: v1 APPROVED, wierszy=${count}, effectiveFrom=${nowIso}`);
+        console.log(
+            `[backfill] ${type}: ${versionLabel(type as PricelistType, 1, nowIso)} APPROVED, wierszy=${count}, effectiveFrom=${nowIso}`
+        );
     }
 }
 

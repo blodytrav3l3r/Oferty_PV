@@ -399,14 +399,18 @@
         return max + 1;
     }
 
-    /** Podgląd labelki: v{seq}-{RRRRMMDD} z daty (lokalnej lub ISO). */
-    function versionLabel(seq, dateValue) {
+    /** Prefiks etykiety per oś (S=studnie, R=rury, P=preco) — SSoT BE lifecycle.versionLabel. */
+    var TYPE_PREFIX = { rury: 'R', studnie: 'S', preco: 'P' };
+
+    /** Podgląd labelki: {Prefiks}v{seq}-{RRRRMMDD} z daty (lokalnej lub ISO). */
+    function versionLabel(type, seq, dateValue) {
+        var prefix = TYPE_PREFIX[type] || '';
         var d = new Date(dateValue);
-        if (Number.isNaN(d.getTime())) return 'v' + seq;
+        if (Number.isNaN(d.getTime())) return prefix + 'v' + seq;
         var y = d.getFullYear();
         var m = String(d.getMonth() + 1).padStart(2, '0');
         var day = String(d.getDate()).padStart(2, '0');
-        return 'v' + seq + '-' + y + m + day;
+        return prefix + 'v' + seq + '-' + y + m + day;
     }
 
     /** Etykiety stanów (BE `state`, wyliczany z `effectiveFrom`) — SSoT UI.
@@ -862,7 +866,7 @@
         );
     }
 
-    function saveFormHtml(next, manageable) {
+    function saveFormHtml(type, next, manageable) {
         if (!manageable) {
             return '<p class="text-muted">Podgląd wersji (zarządzanie wymaga roli admin).</p>';
         }
@@ -871,7 +875,7 @@
             '<div class="form-row form-row-2">' +
             '<div class="form-group"><label>Nowa wersja (tylko podgląd)</label>' +
             '<input class="form-input" id="pv-next-label" value="' +
-            escAttr(versionLabel(next, new Date()) + ' (nr ' + next + ')') +
+            escAttr(versionLabel(type, next, new Date()) + ' (nr ' + next + ')') +
             '" readonly></div>' +
             '<div class="form-group"><label for="pv-eff">Obowiązuje od (czas lokalny → UTC)</label>' +
             '<input class="form-input" type="datetime-local" id="pv-eff"></div>' +
@@ -896,7 +900,7 @@
             '</div>' +
             '<h4 class="pv-section">Wersje</h4>' +
             '<div id="pv-save-wrap">' +
-            saveFormHtml(next, manageable) +
+            saveFormHtml(type, next, manageable) +
             '</div>' +
             '<p class="text-muted pv-help">Jak to działa: zapis tworzy kopię cennika (nie rusza ofert ani cennika na żywo). ' +
             'Robocza → Opublikuj: data przyszła = Do wdrożenia (wejdzie w dacie Obowiązuje od), data przeszła = ' +
@@ -944,7 +948,7 @@
             var eff = document.getElementById('pv-eff');
             var next = nextSeq(versions);
             nextLabel.value =
-                versionLabel(next, (eff && eff.value) || new Date()) + ' (nr ' + next + ')';
+                versionLabel(type, next, (eff && eff.value) || new Date()) + ' (nr ' + next + ')';
         }
         return versions;
     }
@@ -1321,7 +1325,7 @@
         }
     }
 
-    function initEff(next) {
+    function initEff(type, next) {
         var eff = document.getElementById('pv-eff');
         var warn = document.getElementById('pv-past-warn');
         var ackWrap = document.getElementById('pv-backdate-ack-wrap');
@@ -1336,7 +1340,7 @@
                 warn.style.display = past ? '' : 'none';
                 if (ackWrap) ackWrap.style.display = past ? '' : 'none';
                 if (nextLabel && eff.value) {
-                    nextLabel.value = versionLabel(next, eff.value) + ' (nr ' + next + ')';
+                    nextLabel.value = versionLabel(type, next, eff.value) + ' (nr ' + next + ')';
                 }
             } catch (_e) {
                 warn.style.display = 'none';
@@ -1382,7 +1386,7 @@
         var next = nextSeq(versions);
         var saveWrap = document.getElementById('pv-save-wrap');
         if (saveWrap) {
-            saveWrap.innerHTML = saveFormHtml(next, manageable);
+            saveWrap.innerHTML = saveFormHtml(newType, next, manageable);
             icons(saveWrap);
         }
         var transfer = document.getElementById('pv-transfer');
@@ -1390,7 +1394,7 @@
             transfer.innerHTML = transferHtml(newType);
             icons(transfer);
         }
-        initEff(next);
+        initEff(newType, next);
         try {
             await refreshTable(newType, manageable);
         } catch (e) {
@@ -1440,7 +1444,7 @@
                 refreshTable(type, manageable).catch(function (e) {
                     toast('Błąd odświeżenia: ' + e.message, 'error');
                 });
-                initEff(next);
+                initEff(type, next);
             }
         });
     }
