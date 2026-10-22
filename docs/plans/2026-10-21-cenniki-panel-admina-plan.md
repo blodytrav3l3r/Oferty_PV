@@ -320,12 +320,13 @@ Rollback: wszystkie etapy → revert commitów. Migracja S2a jest już wdrożona
 
 ## 11. Realizacja (log)
 
-| Data       | Etap | Zakres                                                                                            | Dowód                                                                                                                                | Commit    |
-| ---------- | ---- | ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | --------- |
-| 2026-10-21 | M0   | Instrukcja admina + `docs/API.md` na model 2 statusów, 4 etykiety, `approve`, transport           | `npm run version:check` EXIT 0, `encoding:check` EXIT 0                                                                              | `679d590` |
-| 2026-10-21 | M1   | FE: `publish`/`backdate`/`activate` → `approve` + checks + `checksStale`, martwe statusy/usunięte | `pricelistApproveFlow.test.ts` 5 PASS; `typecheck:frontend` 0; `lint:frontend` 0; `test:quick` 5100 PASS (8 flaky DB → in-band PASS) | `c7d94a5` |
-| 2026-10-21 | M2   | Admin-only (guard routera + kafelek nav) + Przegląd w kafelkach (oś → 4 stany) + banner           | runtime: `/summary` 200 (rury v3 / studnie v4 / preco v1, `state=ACTIVE`), anonim 401; `pricelistAdminTiles.test.ts` 17 PASS         | `f14e706` |
-| 2026-10-21 | M3a  | Pasek stanu w edytorach (szkic vs obowiązująca) + `draft` w `/summary` (addytywnie)               | `pricelistStatusStrip.test.ts` 5 PASS; `typecheck` BE+FE 0; `lint:frontend` 0; `test:axe` 5/5 PASS; e2e cenników P1–P5 PASS          | `144311a` |
+| Data       | Etap  | Zakres                                                                                                                                                                                                                     | Dowód                                                                                                                                                                                                      | Commit    |
+| ---------- | ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- |
+| 2026-10-21 | M0    | Instrukcja admina + `docs/API.md` na model 2 statusów, 4 etykiety, `approve`, transport                                                                                                                                    | `npm run version:check` EXIT 0, `encoding:check` EXIT 0                                                                                                                                                    | `679d590` |
+| 2026-10-21 | M1    | FE: `publish`/`backdate`/`activate` → `approve` + checks + `checksStale`, martwe statusy/usunięte                                                                                                                          | `pricelistApproveFlow.test.ts` 5 PASS; `typecheck:frontend` 0; `lint:frontend` 0; `test:quick` 5100 PASS (8 flaky DB → in-band PASS)                                                                       | `c7d94a5` |
+| 2026-10-21 | M2    | Admin-only (guard routera + kafelek nav) + Przegląd w kafelkach (oś → 4 stany) + banner                                                                                                                                    | runtime: `/summary` 200 (rury v3 / studnie v4 / preco v1, `state=ACTIVE`), anonim 401; `pricelistAdminTiles.test.ts` 17 PASS                                                                               | `f14e706` |
+| 2026-10-21 | M3a   | Pasek stanu w edytorach (szkic vs obowiązująca) + `draft` w `/summary` (addytywnie)                                                                                                                                        | `pricelistStatusStrip.test.ts` 5 PASS; `typecheck` BE+FE 0; `lint:frontend` 0; `test:axe` 5/5 PASS; e2e cenników P1–P5 PASS                                                                                | `144311a` |
+| 2026-10-22 | M3+M4 | Warstwa 2 huba: drill-down kafelkowy (oś → sekcje → pozycje), „Podgląd: szkic/obowiązująca”, sekcja Transport (`TR-*` + Ilość/transport + fakty poza cennikiem), osobna oś PRECO, limit 100 pozycji + komunikat o obcięciu | `cennikiHubSections.test.ts` + `pricelistAdminTiles.test.ts` 36 PASS; `typecheck` BE+FE 0; `lint:frontend` 0; `test:quick` 5136 PASS; `test:axe` 5/5 PASS; e2e cenników P1–P5 PASS; podgląd w przeglądarce | `bdcd16e` |
 
 Uwagi:
 
@@ -339,6 +340,11 @@ Uwagi:
   Brak testu `approve` na żywej bazie (tworzyłby realne wersje) → wymaga osobnego GO.
 - Do zrobienia w M3/M4: warstwa 2 (podgląd kafelkowy sekcji/pozycji), pasek stanu w edytorach,
   sekcja Transport (info) i osobna oś PRECO w panelu.
+- **M6 (kafelki wersji w Historii)** — tabela zostaje tylko jako wariant „gęsty" (> 20 wersji);
+  instrukcja admina (`docs/CENNIKI-INSTRUKCJA-ADMINA.md:78`) już obiecuje kafelki wersji.
+- **a11y: pomiar kontrastu w module Cenniki** — iframe ma teraz własne tło (`var(--bg-primary)`)
+  zamiast przezroczystego; wcześniej axe liczyło kontrast na bieli i raportowało fałszywe
+  naruszenia dla badge’ów. Fix w kodzie, nie w filtrze testu.
 
 ### 11.1 Review przed pushem (2026-10-22)
 
