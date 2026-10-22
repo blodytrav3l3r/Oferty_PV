@@ -1,6 +1,9 @@
 .cenniki-page {
     min-height: 100vh;
-    background: transparent;
+    /* Tło jak w reszcie aplikacji (var(--bg-primary) z body) — nie transparent:
+       transparent body iframe'ów powoduje, że axe liczy kontrast na bieli
+       i raportuje fałszywe naruszenia a11y dla tekstu i badge'ów. */
+    background: var(--bg-primary);
 }
 
 .cenniki-shell {
@@ -37,59 +40,13 @@
     display: none !important;
 }
 
-.cenniki-cards {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: 1rem;
-}
-
-.cenniki-card {
-    display: flex;
-    flex-direction: column;
-    gap: 0.65rem;
-    padding: 1rem;
-    border: 1px solid var(--border-color, #334155);
-    border-radius: 0.85rem;
-    background: var(--bg-secondary, #111827);
-}
-
-.cenniki-card h2 {
-    margin: 0;
-    font-size: 1.05rem;
-}
-
-.cenniki-card dl {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.5rem;
-    margin: 0;
-}
-
-.cenniki-card dt {
-    font-size: 0.72rem;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    color: var(--text-muted, #94a3b8);
-}
-
-.cenniki-card dd {
-    margin: 0.1rem 0 0;
-    font-weight: 600;
-}
-
-.cenniki-card-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    margin-top: auto;
-}
-
 /* ── Kafelki panelu cenników (tokeny S.O.K.: --tile-gap-*, --bg-*, --border) ──
    Hierarchia: oś → stan → sekcja → pozycja. Kafelek = jednostka informacji. */
 .cenniki-tiles {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
     gap: var(--tile-gap-md);
+    align-items: start;
 }
 
 .cenniki-tiles--axes {
@@ -184,9 +141,114 @@
     color: var(--text-primary);
 }
 
+/* ── Warstwa 2 (M3/M4): kafelki osi / sekcji / pozycji ─────────────────── */
+.cenniki-state-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--tile-gap-sm);
+    margin-bottom: var(--tile-gap-md);
+}
+
+.cenniki-tiles--sections {
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: var(--tile-gap-sm);
+}
+
+.cenniki-tiles--items {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: var(--tile-gap-sm);
+    margin-top: var(--tile-gap-md);
+}
+
+.cenniki-tile--switch,
+.cenniki-tile--section,
+.cenniki-tile--item {
+    align-items: stretch;
+    text-align: left;
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+}
+
+.cenniki-tile--switch:hover,
+.cenniki-tile--section:hover,
+.cenniki-tile--item:hover {
+    background: var(--bg-hover);
+}
+
+.cenniki-tile--current {
+    border-color: var(--accent);
+}
+
+.cenniki-tile--transport,
+.cenniki-tile--preco {
+    border-style: dashed;
+}
+
+.cenniki-tile-note {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.cenniki-tile-state {
+    align-self: flex-start;
+    padding: 0 var(--tile-gap-xs);
+    border-radius: var(--radius-2xs);
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+}
+
+.cenniki-tile-state--added {
+    background: var(--success-bg);
+    color: var(--success);
+}
+
+.cenniki-tile-state--changed {
+    background: var(--accent-bg);
+    color: var(--accent-text);
+}
+
+.cenniki-facts {
+    margin: 0;
+    padding-left: 1.1rem;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+}
+
+.cenniki-items-note {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--tile-gap-xs);
+    margin-top: var(--tile-gap-md);
+    color: var(--text-muted);
+    font-size: 0.82rem;
+}
+
+.cenniki-items-note[hidden] {
+    display: none;
+}
+
+.cenniki-item-card {
+    margin-top: var(--tile-gap-md);
+    padding: var(--tile-gap-sm-plus);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--bg-secondary);
+}
+
+.cenniki-item-title {
+    margin: 0 0 var(--tile-gap-xs);
+    font-size: 1rem;
+}
+
 @media (max-width: 640px) {
     .cenniki-tiles--axes,
-    .cenniki-tiles--states {
+    .cenniki-tiles--states,
+    .cenniki-tiles--sections,
+    .cenniki-tiles--items {
         grid-template-columns: 1fr;
     }
 }
@@ -202,12 +264,6 @@
 .cenniki-toolbar label {
     font-size: 0.82rem;
     color: var(--text-muted, #94a3b8);
-}
-
-.cenniki-current {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
 }
 
 .cenniki-table-wrap {
@@ -297,9 +353,5 @@
 @media (max-width: 640px) {
     .cenniki-shell {
         padding: 0.85rem;
-    }
-
-    .cenniki-card dl {
-        grid-template-columns: 1fr;
     }
 }

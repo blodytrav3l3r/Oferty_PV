@@ -39,27 +39,46 @@
 
             <section id="cenniki-przeglad" class="cenniki-view" data-cenniki-view="przeglad">
                 <p class="cenniki-banner">
-                    <strong>Bufor (szkic) nie zmienia ofert.</strong>
-                    Dopóki nie opublikujesz wersji, edytowane ceny widoczne są tylko tutaj. Oferty i
-                    zamówienia liczą z wersji <strong>Obowiązuje</strong> (zamrożona kopia cen w
-                    dokumencie).
+                    <span>
+                        <strong>Bufor (szkic) nie zmienia ofert.</strong> Dopóki nie opublikujesz
+                        wersji, edytowane ceny widoczne są tylko tutaj. Oferty i zamówienia liczą z
+                        wersji <strong>Obowiązuje</strong> (zamrożona kopia cen w dokumencie).
+                    </span>
                 </p>
                 <div id="cenniki-cards" class="cenniki-tiles cenniki-tiles--axes"></div>
             </section>
 
             <section id="cenniki-cennik" class="cenniki-view" data-cenniki-view="cennik" hidden>
-                <div class="cenniki-toolbar">
-                    <label for="cenniki-type">Typ cennika</label>
-                    <select id="cenniki-type" class="form-input">
-                        <option value="rury">Rury</option>
-                        <option value="studnie">Studnie</option>
-                        <option value="preco">PRECO</option>
-                    </select>
-                    <a id="cenniki-editor-link" class="btn btn-secondary" href="rury.html">
-                        Otwórz edytor
-                    </a>
-                </div>
-                <div id="cenniki-current" class="cenniki-current"></div>
+                <p class="cenniki-banner">
+                    <span>
+                        <strong>Podgląd read-only.</strong> Treść wersji pochodzi z zamrożonej kopii
+                        cennika — edycja cen pozostaje w modułach Rury i Studnie. Bufor (szkic) nie
+                        zmienia ofert.
+                    </span>
+                </p>
+                <div
+                    id="cenniki-axis-tiles"
+                    class="cenniki-tiles cenniki-tiles--axes"
+                    role="group"
+                    aria-label="Oś cennika"
+                ></div>
+                <div id="cenniki-state-bar" class="cenniki-state-bar" role="status"></div>
+                <p id="cenniki-preview-note" class="cenniki-warning" role="status" hidden></p>
+                <div
+                    id="cenniki-sections"
+                    class="cenniki-tiles cenniki-tiles--sections"
+                    role="group"
+                    aria-label="Sekcje cennika"
+                ></div>
+                <div id="cenniki-items-note" class="cenniki-items-note" role="status" hidden></div>
+                <div
+                    id="cenniki-items"
+                    class="cenniki-tiles cenniki-tiles--items"
+                    role="group"
+                    aria-label="Pozycje sekcji"
+                    hidden
+                ></div>
+                <div id="cenniki-item-card" class="cenniki-item-card" hidden></div>
             </section>
 
             <section id="cenniki-historia" class="cenniki-view" data-cenniki-view="historia" hidden>
@@ -101,5 +120,6 @@
                 </div>
             </section>
         </main>
+        <div id="toast-container" class="toast-container" aria-live="polite"></div>
     </body>
 </html>

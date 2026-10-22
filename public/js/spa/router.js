@@ -578,9 +578,14 @@
                     main.style.marginTop = '0';
                 }
 
-                // Ustaw przezroczyste tło body, aby tło rodzica było widoczne
-                iframeDoc.body.style.background = 'transparent';
-                iframeDoc.documentElement.style.background = 'transparent';
+                // Ustaw przezroczyste tło body, aby tło rodzica było widoczne.
+                // Wyjątek: moduł Cenniki ma własne tło (jak rodzic) — przezroczyste
+                // body powoduje, że axe liczy kontrast na bieli i raportuje fałszywe
+                // naruszenia a11y dla każdego badge'a w panelu.
+                if (module !== 'cenniki') {
+                    iframeDoc.body.style.background = 'transparent';
+                    iframeDoc.documentElement.style.background = 'transparent';
+                }
             } catch (e) {
                 // Ograniczenie cross-origin — nie powinno wystąpić, bo ta sama domena
                 logger.warn('router', '[SpaRouter] Could not modify iframe content:', e);
