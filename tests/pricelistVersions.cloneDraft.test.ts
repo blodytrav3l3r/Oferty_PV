@@ -39,6 +39,7 @@ interface VRow {
     note?: string;
     sha256: string;
     createdAt?: string;
+    updatedAt?: string;
 }
 
 const versions: VRow[] = [];
@@ -206,6 +207,7 @@ describe('POST /:id/clone-draft', () => {
         expect(clone.type).toBe('rury');
         expect(clone.seq).toBe(2);
         expect(clone.id).not.toBe(src.id);
+        expect(clone.updatedAt).toBeTruthy();
 
         // count + wartości wierszy identyczne (biznesowe id bez prefiksu)
         const clonedItems = itemsRury.filter((i) => i.versionId === clone.id);

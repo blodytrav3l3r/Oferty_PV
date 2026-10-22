@@ -185,6 +185,8 @@ export interface VersionSummaryRef {
     effectiveFrom: string;
     status: string;
     state: PricelistState;
+    /** Ostatnia zmiana wersji (szkic: zapis, zatwierdzona: publikacja). ISO UTC. */
+    updatedAt: string | null;
 }
 
 export interface VersionsSummaryType {
@@ -209,11 +211,15 @@ const SUMMARY_REF_SELECT = {
     version: true,
     seq: true,
     effectiveFrom: true,
-    status: true
+    status: true,
+    updatedAt: true
 } as const;
 
 function toSummaryRef(
-    version: Pick<PricelistVersion, 'id' | 'version' | 'seq' | 'effectiveFrom' | 'status'>
+    version: Pick<
+        PricelistVersion,
+        'id' | 'version' | 'seq' | 'effectiveFrom' | 'status' | 'updatedAt'
+    >
 ): VersionSummaryRef {
     return {
         id: version.id,
@@ -221,7 +227,8 @@ function toSummaryRef(
         seq: version.seq,
         effectiveFrom: version.effectiveFrom,
         status: version.status,
-        state: deriveState(version.status, version.effectiveFrom)
+        state: deriveState(version.status, version.effectiveFrom),
+        updatedAt: version.updatedAt ?? null
     };
 }
 

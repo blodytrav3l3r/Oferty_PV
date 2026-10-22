@@ -38,6 +38,17 @@ async function resetStudniePriceList() {
 }
 
 async function saveStudniePriceList() {
+    if (
+        window.pricelistVersions &&
+        typeof window.pricelistVersions.isEditing === 'function' &&
+        !window.pricelistVersions.isEditing('studnie')
+    ) {
+        showToast(
+            'Kliknij „Edytuj szkic" (albo „Utwórz kopię jako szkic"), aby zmieniać cennik studni',
+            'warning'
+        );
+        return;
+    }
     if (!_studniePricelistDirty) {
         showToast('Brak zmian do zapisania', 'info');
         return;
@@ -53,6 +64,12 @@ async function saveStudniePriceList() {
         _studniePricelistDirty = false;
         updateStudnieSaveBtn();
         await refreshStudnieData();
+        if (
+            window.pricelistVersions &&
+            typeof window.pricelistVersions.refreshStatusStrip === 'function'
+        ) {
+            window.pricelistVersions.refreshStatusStrip('studnie');
+        }
         showToast(
             window.__pricelistWriteTarget === 'draft'
                 ? 'Zapisano szkic studni — opublikuj wersję, aby trafił do ofert'

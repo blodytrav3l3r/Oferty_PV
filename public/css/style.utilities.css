@@ -107,6 +107,24 @@
     font-size: var(--fs-sm);
 }
 
+/* Pasek akcji trybu cennika: kopia → edycja → publikacja. Pusty nie zajmuje miejsca. */
+.pv-editor-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--tile-gap-2xs);
+}
+
+.pv-editor-actions:empty {
+    display: none;
+}
+
+/* Podgląd: siatka cennika z atrybutem `inert` — blokada myszy i fokusu,
+ * subtelne wyciszenie, żeby stan „tylko podglądasz" był widoczny. */
+#pricelist-body[inert],
+#studnie-pricelist-body[inert] {
+    opacity: 0.85;
+}
+
 /* W pasku kroków badge nie bierze udziału we flex (kropki zostają
  * wyśrodkowane jak wcześniej) — doklejony absolutnie do prawej. */
 .wizard-indicator {

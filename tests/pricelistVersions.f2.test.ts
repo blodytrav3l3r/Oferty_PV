@@ -15,6 +15,7 @@ interface VRow {
     note?: string;
     sha256: string;
     createdAt?: string;
+    updatedAt?: string;
 }
 
 const versions: VRow[] = [];
@@ -308,6 +309,8 @@ describe('S2a approveVersion', () => {
         expect(approved.effectiveFrom).toBe('2026-09-01T00:00:00.000Z');
         expect(approved.approvedBy).toBe('admin1');
         expect(approved.approvedAt).toBeTruthy();
+        // „ostatnia zmiana" ustawiona przy publikacji
+        expect(approved.updatedAt).toBeTruthy();
         expect(settings.get('pricelist_defaults_updated_at')).toBeTruthy();
         expect(audits).toHaveLength(2);
         expect(audits[1]).toMatchObject({ action: 'APPROVE' });

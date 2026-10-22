@@ -14,6 +14,7 @@ interface VRow {
     note?: string;
     sha256: string;
     createdAt?: string;
+    updatedAt?: string;
 }
 
 const versions: VRow[] = [];
@@ -325,6 +326,10 @@ describe('updateDraft nota (labelka version niemutowalna)', () => {
         // labelka bez zmian
         expect(updated.version).toBe(v.version);
         expect(updated.seq).toBe(v.seq);
+        // „ostatnia zmiana" — znacznik obecny i nie starszy niż przy utworzeniu
+        expect(v.updatedAt).toBeTruthy();
+        expect(updated.updatedAt).toBeTruthy();
+        expect(String(updated.updatedAt) >= String(v.updatedAt)).toBe(true);
     });
 
     test('sama nota bez rows: wiersze i sha nietknięte', async () => {

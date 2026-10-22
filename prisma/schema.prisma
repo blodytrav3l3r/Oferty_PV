@@ -983,6 +983,8 @@ model PricelistVersion {
   note           String?
   sha256         String
   createdAt      String?
+  /// Ostatnia zmiana wersji (szkic: zapis wierszy/noty, publikacja: approve). ISO UTC.
+  updatedAt      String?
   approvedBy     String?
   approvedAt     String?
   /// @deprecated nie zapisywać — pole zostaje do rebuild tabeli (O5)

@@ -325,6 +325,17 @@ function collectPrecoFromUI() {
 }
 
 async function savePrecoFromUI() {
+    if (
+        window.pricelistVersions &&
+        typeof window.pricelistVersions.isEditing === 'function' &&
+        !window.pricelistVersions.isEditing('preco')
+    ) {
+        showToast(
+            'Kliknij „Edytuj szkic" (albo „Utwórz kopię jako szkic"), aby zmieniać cennik PRECO',
+            'warning'
+        );
+        return;
+    }
     if (!_precoDirty) {
         showToast('Brak zmian do zapisania', 'info');
         return;
@@ -339,6 +350,12 @@ async function savePrecoFromUI() {
             _precoDirty = false;
             updatePrecoSaveBtn();
             await refreshAll();
+            if (
+                window.pricelistVersions &&
+                typeof window.pricelistVersions.refreshStatusStrip === 'function'
+            ) {
+                window.pricelistVersions.refreshStatusStrip('preco');
+            }
         }
     } finally {
         btns.forEach((b) => b.removeAttribute('disabled'));

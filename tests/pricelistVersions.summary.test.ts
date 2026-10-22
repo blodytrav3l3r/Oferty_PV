@@ -47,6 +47,7 @@ interface VRow {
     status: string;
     effectiveFrom: string;
     createdBy?: string | null;
+    updatedAt?: string | null;
 }
 
 let versions: VRow[] = [];
@@ -258,7 +259,8 @@ describe('GET /api/pricelist-versions/summary — kształt', () => {
             seq: 2,
             effectiveFrom: '2021-01-01T00:00:00Z',
             status: 'APPROVED',
-            state: 'ACTIVE'
+            state: 'ACTIVE',
+            updatedAt: null
         });
         expect(res.body.types.rury.nextScheduled).toEqual({
             id: 'r-active-2998',
@@ -266,7 +268,8 @@ describe('GET /api/pricelist-versions/summary — kształt', () => {
             seq: 7,
             effectiveFrom: '2998-01-01T00:00:00Z',
             status: 'APPROVED',
-            state: 'SCHEDULED'
+            state: 'SCHEDULED',
+            updatedAt: null
         });
         expect(res.body.types.studnie.active.id).toBe('s-active');
         expect(res.body.types.studnie.nextScheduled.id).toBe('s-sched');
@@ -278,8 +281,32 @@ describe('GET /api/pricelist-versions/summary — kształt', () => {
             'seq',
             'state',
             'status',
+            'updatedAt',
             'version'
         ]);
+    });
+
+    test('updatedAt trafia do /summary (adnotacja „ostatnia zmiana" w pasku)', async () => {
+        versions = [
+            version({
+                id: 'r-active',
+                type: 'rury',
+                seq: 1,
+                status: 'APPROVED',
+                updatedAt: '2026-10-22T12:00:00.000Z'
+            }),
+            version({
+                id: 'r-draft',
+                type: 'rury',
+                seq: 2,
+                status: 'DRAFT',
+                updatedAt: '2026-10-22T14:30:00.000Z'
+            })
+        ];
+        const res = await request(app).get('/api/pricelist-versions/summary').set(ADMIN);
+        expect(res.status).toBe(200);
+        expect(res.body.types.rury.active.updatedAt).toBe('2026-10-22T12:00:00.000Z');
+        expect(res.body.types.rury.draft.updatedAt).toBe('2026-10-22T14:30:00.000Z');
     });
 
     test('pusty stan: active, nextScheduled i draft = null dla 3 typów', async () => {

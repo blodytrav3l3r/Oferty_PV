@@ -40,7 +40,7 @@ describe('frontend: pasek stanu cennika w edytorze', () => {
         expect(shared).toContain('✎ Szkic ');
         expect(shared).toContain('✓ Obowiązuje ');
         expect(shared).toContain('◷ Do wdrożenia ');
-        expect(shared).toContain('Zmiany w edytorze nie ruszają ofert do publikacji');
+        expect(shared).toContain('zmiany w edytorze nie ruszają ofert do publikacji');
     });
 
     it('edytory wołają pasek po załadowaniu cennika', () => {

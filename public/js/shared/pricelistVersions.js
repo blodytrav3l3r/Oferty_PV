@@ -497,11 +497,17 @@
      * deprecated). checksCheckedAt przekazujemy, żeby BE mógł odpowiedzieć
      * checksStale=true (200, ostrzeżenie) gdy wersja zmieniła się po kontroli.
      */
-    async function approveVersion(id, note) {
+    /**
+     * Publikacja: `noteOrOpts` = nota (stary wariant) albo { note, effectiveFrom }.
+     * effectiveFrom = data, od której wersja obowiązuje (datetime-local → UTC ISO).
+     */
+    async function approveVersion(id, noteOrOpts) {
+        var opts = noteOrOpts && typeof noteOrOpts === 'object' ? noteOrOpts : { note: noteOrOpts };
         var checks = await fetchChecks(id);
         var body = {};
         if (checks && checks.checkedAt) body.checksCheckedAt = checks.checkedAt;
-        if (note && String(note).trim()) body.note = note;
+        if (opts.note && String(opts.note).trim()) body.note = opts.note;
+        if (opts.effectiveFrom) body.effectiveFrom = opts.effectiveFrom;
         return apiJson(API + '/' + encodeURIComponent(id) + '/approve', authed('POST', body));
     }
 
@@ -744,10 +750,10 @@
                       '<i data-lucide="pencil"></i> Edytuj</button>'
                     : '<button class="btn btn-sm btn-secondary" data-pv-act="clone" data-pv-id="' +
                       escAttr(v.id) +
-                      '" title="Utwórz wersję roboczą jako kopię wersji ' +
+                      '" title="Utwórz szkic jako kopię wersji ' +
                       escAttr(v.version || '') +
-                      ' i przejdź do edycji (aktywna wersja nie zmieni się)">' +
-                      '<i data-lucide="history"></i> Edytuj jako szkic</button>';
+                      ' i przejdź do edycji (obowiązująca wersja nie zmieni się)">' +
+                      '<i data-lucide="history"></i> Utwórz kopię jako szkic</button>';
                 // „Usuń" zawsze widoczny: enabled gdy wolno (allowlist albo
                 // archiwalna/nieznana-przyszła bez użycia), inaczej wyszarzony z powodem.
                 var reason = deleteReason(v);
@@ -1609,7 +1615,7 @@
                 var cloneMsg =
                     'Utworzyć wersję roboczą jako kopię tej wersji i przejść do jej edycji? Aktywna wersja nie zmieni się.';
                 pvConfirm(cloneMsg, {
-                    title: 'Edytuj jako szkic',
+                    title: 'Utwórz kopię jako szkic',
                     okText: 'Utwórz i edytuj',
                     type: 'warning'
                 }).then(function (ok) {
@@ -1772,12 +1778,30 @@
     }
 
     /**
-     * Pasek stanu w edytorze cennika (rury/studnie): co admin edytuje (szkic)
-     * vs co liczy oferta (wersja obowiązująca) + skrót do panelu cenników.
+     * Pasek stanu w edytorze cennika (rury/studnie/preco): co admin edytuje
+     * (szkic) vs co liczy oferta (wersja obowiązująca) + tryb edycji.
      * Read-only; dla nie-admina (403) pasek zostaje pusty. Jeden fetch /summary
-     * na typ (cache w modułu) — renderowanie tabeli cennika nie odpytuje BE.
+     * na kilka wywołań — akcje unieważniają cache (clearSummaryCache).
      */
-    var stripCache = {};
+    var summaryCache = null;
+
+    /** Po klonie/publikacji zmienia się summary i etykiety — czyścimy oba cache. */
+    function clearSummaryCache() {
+        summaryCache = null;
+        labelCache = {};
+    }
+
+    function fetchSummary() {
+        if (!summaryCache) {
+            summaryCache = apiJson('/api/pricelist-versions/summary', authed('GET')).catch(
+                function () {
+                    summaryCache = null;
+                    return null;
+                }
+            );
+        }
+        return summaryCache;
+    }
 
     function stripDate(iso) {
         try {
@@ -1787,52 +1811,422 @@
         }
     }
 
-    async function renderStatusStrip(hostId, type) {
-        var host = document.getElementById(hostId);
-        if (!host) return;
-        if (!stripCache[type]) {
-            stripCache[type] = apiJson('/api/pricelist-versions/summary', authed('GET')).catch(
-                function () {
-                    return null;
-                }
+    function stripDateTime(iso) {
+        if (!iso) return '';
+        try {
+            return new Date(iso).toLocaleString('pl-PL', {
+                dateStyle: 'short',
+                timeStyle: 'short'
+            });
+        } catch (_e) {
+            return iso;
+        }
+    }
+
+    /** ` · zmiana 22.10.2026, 14:03` — adnotacja „kiedy ostatnio edytowany". */
+    function lastChange(ref) {
+        return ref && ref.updatedAt ? ' · zmiana ' + stripDateTime(ref.updatedAt) : '';
+    }
+
+    /* ===== TRYB EDYCJI (podgląd ↔ edycja szkicu) ===== */
+
+    var STRIP_HOST_ID = 'pricelist-status-strip';
+    /** Oś aktualnie wyświetlana w cenniku (PRECO dzieli kontener ze studniami). */
+    var editorType = 'rury';
+    /** Tryb edycji per oś: false = podgląd (siatka zablokowana), true = edycja szkicu. */
+    var editModes = { rury: false, studnie: false, preco: false };
+    var EDITOR_GRID = {
+        rury: 'pricelist-body',
+        studnie: 'studnie-pricelist-body',
+        preco: 'studnie-pricelist-body'
+    };
+    var EDITOR_SAVE = {
+        rury: 'btn-save-pricelist',
+        studnie: 'btn-save-studnie-pricelist',
+        preco: 'btn-save-preco'
+    };
+    var EDITOR_ADD = { rury: 'btn-add-product', studnie: 'btn-add-studnie-product' };
+
+    function isEditing(type) {
+        return editModes[type] === true;
+    }
+
+    function setEditing(type, on) {
+        editModes[type] = on === true;
+    }
+
+    /**
+     * Podgląd = siatka `inert` (blokuje mysz, fokus i Tab), ukryty „Zapisz"
+     * i wyłączone „Dodaj". Dzięki temu przypadkowa edycja nie tworzy szkicu.
+     */
+    function applyEditorLock(type) {
+        var editing = isEditing(type);
+        var grid = document.getElementById(EDITOR_GRID[type] || '');
+        if (grid) grid.inert = !editing;
+        var saveBtn = document.getElementById(EDITOR_SAVE[type] || '');
+        if (saveBtn) saveBtn.classList.toggle('hidden', !editing);
+        var addBtn = document.getElementById(EDITOR_ADD[type] || '');
+        if (addBtn) addBtn.disabled = !editing;
+        // W trybie edycji kafelek nazywa się „Zapisz szkic" (helper modułu osi).
+        if (editing && type === 'rury' && typeof window.updateSaveBtn === 'function') {
+            window.updateSaveBtn();
+        }
+        if (editing && type === 'studnie' && typeof window.updateStudnieSaveBtn === 'function') {
+            window.updateStudnieSaveBtn();
+        }
+    }
+
+    function modeBtn(act, label, title) {
+        return (
+            '<button type="button" class="btn btn-secondary" data-pv-mode="' +
+            act +
+            '" title="' +
+            escAttr(title) +
+            '">' +
+            esc(label) +
+            '</button>'
+        );
+    }
+
+    /** Pasek akcji cennika: kopia → edycja → publikacja (per stan osi). */
+    function editorActionsHtml(type, data) {
+        var draft = data.draft || null;
+        var active = data.active || null;
+        var out = [];
+        if (isEditing(type)) {
+            out.push(
+                modeBtn(
+                    'cancel',
+                    'Anuluj edycję',
+                    'Wyjdź z edycji szkicu; niezapisane zmiany zostaną odrzucone'
+                )
+            );
+            if (draft) {
+                out.push(
+                    modeBtn('publish', 'Opublikuj…', 'Wybierz datę, od której szkic obowiązuje')
+                );
+            }
+        } else if (draft) {
+            out.push(modeBtn('edit', 'Edytuj szkic', 'Otwórz szkic do edycji'));
+            out.push(modeBtn('publish', 'Opublikuj…', 'Wybierz datę, od której szkic obowiązuje'));
+        } else if (active) {
+            out.push(
+                modeBtn(
+                    'copy',
+                    'Utwórz kopię jako szkic',
+                    'Utwórz szkic z obowiązującego cennika; wersja obowiązująca bez zmian'
+                )
             );
         }
-        var json = await stripCache[type];
-        if (!json) {
-            host.innerHTML = '';
+        return out.join(' ');
+    }
+
+    /**
+     * Odświeża pasek akcji + blokadę siatki dla osi. Wołane po wejściu w cennik,
+     * po zmianie zakładki i po każdej akcji (zapis/klon/publikacja/anulowanie).
+     */
+    async function syncEditor(type, json) {
+        var t = type || editorType;
+        editorType = t;
+        var data;
+        if (json) {
+            data = (json.types || {})[t] || {};
+        } else {
+            var fetched = await fetchSummary();
+            data = fetched ? (fetched.types || {})[t] || {} : {};
+        }
+        var host = document.getElementById('pv-editor-actions');
+        if (host) {
+            host.innerHTML = editorActionsHtml(t, data);
+            icons(host);
+        }
+        applyEditorLock(t);
+        return data;
+    }
+
+    /** Ponowne wczytanie siatki z serwera (anulowanie edycji bez zapisu). */
+    function reloadEditorGrid(type) {
+        if (type === 'rury') {
+            // Pełne odświeżenie sekcji cennika (dane + render) — jedno źródło prawdy.
+            if (typeof window.showSection === 'function') {
+                window.showSection('pricelist');
+                return;
+            }
+            if (typeof window.loadProducts === 'function') window.loadProducts();
             return;
         }
-        var data = (json.types || {})[type] || {};
-        var parts = [];
-        // Brak szkicu nie jest komunikatem — edycja w siatce żyje w LIVE, więc
-        // badge „brak szkiców" tylko mylił. Pokazujemy wyłącznie istniejący szkic.
-        if (data.draft) {
-            parts.push(
-                '<span class="badge badge-muted">✎ Szkic ' + esc(data.draft.version) + '</span>'
-            );
+        if (type === 'preco') {
+            if (typeof window.loadPrecoPricing === 'function') {
+                window.loadPrecoPricing({ source: 'draft' }).then(function () {
+                    if (typeof window.renderPrecoPriceList === 'function') {
+                        window.renderPrecoPriceList();
+                    }
+                });
+            }
+            return;
         }
-        if (data.active) {
-            parts.push(
-                '<span class="badge badge-ok" title="Zmiany w edytorze nie ruszają ofert do publikacji.">✓ Obowiązuje ' +
-                    esc(data.active.version) +
-                    ' (od ' +
-                    esc(stripDate(data.active.effectiveFrom)) +
-                    ')</span>'
-            );
-        } else {
-            parts.push('<span class="badge badge-muted">brak wersji obowiązującej</span>');
-        }
-        if (data.nextScheduled) {
-            parts.push(
-                '<span class="badge badge-info">◷ Do wdrożenia ' +
-                    esc(data.nextScheduled.version) +
-                    ' (od ' +
-                    esc(stripDate(data.nextScheduled.effectiveFrom)) +
-                    ')</span>'
-            );
-        }
-        host.innerHTML = parts.join(' ');
+        if (typeof window.refreshStudnieData === 'function') window.refreshStudnieData();
     }
+
+    async function renderStatusStrip(hostId, type) {
+        var host = document.getElementById(hostId);
+        editorType = type || editorType;
+        var json = await fetchSummary();
+        if (host) {
+            if (!json) {
+                host.innerHTML = '';
+            } else {
+                var data = (json.types || {})[editorType] || {};
+                var parts = [];
+                if (data.draft) {
+                    parts.push(
+                        '<span class="badge badge-muted" title="Szkic nie trafia do ofert do publikacji.">' +
+                            (isEditing(editorType) ? '✎ Edytujesz szkic ' : '✎ Szkic ') +
+                            esc(data.draft.version) +
+                            esc(lastChange(data.draft)) +
+                            '</span>'
+                    );
+                }
+                if (data.active) {
+                    parts.push(
+                        '<span class="badge badge-ok" title="Obowiązuje oferty; zmiany w edytorze nie ruszają ofert do publikacji.">✓ Obowiązuje ' +
+                            esc(data.active.version) +
+                            ' (od ' +
+                            esc(stripDate(data.active.effectiveFrom)) +
+                            ')' +
+                            esc(lastChange(data.active)) +
+                            '</span>'
+                    );
+                } else {
+                    parts.push('<span class="badge badge-muted">brak wersji obowiązującej</span>');
+                }
+                if (data.nextScheduled) {
+                    parts.push(
+                        '<span class="badge badge-info">◷ Do wdrożenia ' +
+                            esc(data.nextScheduled.version) +
+                            ' (od ' +
+                            esc(stripDate(data.nextScheduled.effectiveFrom)) +
+                            ')</span>'
+                    );
+                }
+                host.innerHTML = parts.join(' ');
+            }
+        }
+        return syncEditor(editorType, json);
+    }
+
+    /** Odświeżenie paska + akcji po zapisie (bez przeładowania strony). */
+    function refreshStatusStrip(type) {
+        clearSummaryCache();
+        return renderStatusStrip(STRIP_HOST_ID, type || editorType);
+    }
+
+    /* ===== AKCJE: kopia → edycja → publikacja ===== */
+
+    var PAST_NOTE_MIN = 10;
+
+    function toLocalInput(date) {
+        var d = date || new Date();
+        var pad = function (n) {
+            return String(n).padStart(2, '0');
+        };
+        return (
+            d.getFullYear() +
+            '-' +
+            pad(d.getMonth() + 1) +
+            '-' +
+            pad(d.getDate()) +
+            'T' +
+            pad(d.getHours()) +
+            ':' +
+            pad(d.getMinutes())
+        );
+    }
+
+    /** „Utwórz kopię jako szkic" — kopia ACTIVE; nie tworzy drugiego szkicu. */
+    async function createDraftCopy(type) {
+        var t = type || editorType;
+        var json = await fetchSummary();
+        var data = json ? (json.types || {})[t] || {} : {};
+        if (data.draft) {
+            setEditing(t, true);
+            await syncEditor(t, json);
+            toast('Szkic ' + data.draft.version + ' już istnieje — edytujesz go', 'info');
+            return;
+        }
+        if (!data.active) {
+            toast('Brak wersji obowiązującej — najpierw zapisz cennik', 'warning');
+            return;
+        }
+        try {
+            var res = await apiJson(
+                API + '/' + encodeURIComponent(data.active.id) + '/clone-draft',
+                authed('POST')
+            );
+            var created = (res && res.version) || {};
+            clearSummaryCache();
+            setEditing(t, true);
+            await renderStatusStrip(STRIP_HOST_ID, t);
+            toast(
+                'Utworzono szkic ' + (created.version || '') + ' z ' + data.active.version,
+                'success'
+            );
+        } catch (err) {
+            toast(friendlyError('Błąd tworzenia szkicu', err), 'error');
+        }
+    }
+
+    /** Dialog publikacji: data obowiązywania + nota + podgląd etykiety. */
+    async function openPublishDialog(type) {
+        var t = type || editorType;
+        var json = await fetchSummary();
+        var draft = ((json && json.types) || {})[t] && json.types[t].draft;
+        if (!draft) {
+            toast('Brak szkicu do opublikowania', 'warning');
+            return;
+        }
+        window.showModal({
+            id: 'pv-publish-modal',
+            titleId: 'pv-publish-title',
+            html:
+                '<div class="modal"><div class="modal-header"><h3 id="pv-publish-title"><i data-lucide="rocket"></i> Opublikuj szkic ' +
+                esc(draft.version) +
+                '</h3>' +
+                '<button class="btn-icon" aria-label="Zamknij" data-csp="closeModal" data-csp-args="[&quot;pv-publish-modal&quot;]"><i data-lucide="x"></i></button></div>' +
+                '<div class="modal-body">' +
+                '<p class="text-muted">Publikacja ustawia datę, od której szkic obowiązuje nowe wyceny. Dotychczasowa wersja obowiązująca zostaje w historii.</p>' +
+                '<div class="form-group"><label for="pv-publish-date">Obowiązuje od</label>' +
+                '<input class="form-input" id="pv-publish-date" type="datetime-local"></div>' +
+                '<p class="text-muted" id="pv-publish-hint"></p>' +
+                '<div class="form-group"><label for="pv-publish-note">Nota (opcjonalna)</label>' +
+                '<input class="form-input" id="pv-publish-note" maxlength="500" placeholder="Opis zmiany (dla daty wstecznej: min. 10 znaków)"></div>' +
+                '<p class="color-warn" id="pv-publish-error" role="alert"></p>' +
+                '<div class="pv-actions"><button type="button" class="btn btn-secondary" id="pv-publish-cancel">Anuluj</button>' +
+                '<button type="button" class="btn btn-primary" id="pv-publish-ok"><i data-lucide="rocket"></i> Opublikuj</button></div>' +
+                '</div></div>'
+        });
+        var overlay = document.getElementById('pv-publish-modal');
+        icons(overlay);
+        var dateInput = document.getElementById('pv-publish-date');
+        var noteInput = document.getElementById('pv-publish-note');
+        var hint = document.getElementById('pv-publish-hint');
+        var errBox = document.getElementById('pv-publish-error');
+        var okBtn = document.getElementById('pv-publish-ok');
+        var cancelBtn = document.getElementById('pv-publish-cancel');
+
+        function showErr(msg) {
+            if (errBox) errBox.textContent = msg || '';
+        }
+
+        function updateHint() {
+            showErr('');
+            if (!hint || !dateInput) return;
+            var iso;
+            try {
+                iso = toUtcIso(dateInput.value);
+            } catch (_e) {
+                hint.textContent = 'Podaj datę i godzinę.';
+                return;
+            }
+            var label = versionLabel(t, draft.seq, iso);
+            hint.textContent = isPastDate(iso)
+                ? 'Data w przeszłości — korekta wsteczna; uzasadnienie min. ' +
+                  PAST_NOTE_MIN +
+                  ' znaków. Etykieta po publikacji: ' +
+                  label +
+                  '.'
+                : 'Status: do wdrożenia od ' +
+                  stripDateTime(iso) +
+                  '. Etykieta po publikacji: ' +
+                  label +
+                  '.';
+        }
+
+        if (dateInput) {
+            dateInput.value = toLocalInput(new Date());
+            dateInput.addEventListener('input', updateHint);
+        }
+        updateHint();
+        if (cancelBtn) {
+            cancelBtn.addEventListener('click', function () {
+                if (typeof window.closeModal === 'function') window.closeModal('pv-publish-modal');
+            });
+        }
+        if (okBtn) {
+            okBtn.addEventListener('click', async function () {
+                var iso;
+                try {
+                    iso = toUtcIso(dateInput ? dateInput.value : '');
+                } catch (_e) {
+                    showErr('Podaj prawidłową datę.');
+                    return;
+                }
+                var note = noteInput ? String(noteInput.value || '').trim() : '';
+                if (isPastDate(iso) && note.length < PAST_NOTE_MIN) {
+                    showErr('Data w przeszłości — podaj uzasadnienie (min. 10 znaków).');
+                    return;
+                }
+                okBtn.disabled = true;
+                try {
+                    var res = await approveVersion(draft.id, { effectiveFrom: iso, note: note });
+                    var published = (res && res.version) || {};
+                    clearSummaryCache();
+                    if (typeof window.closeModal === 'function')
+                        window.closeModal('pv-publish-modal');
+                    setEditing(t, false);
+                    await renderStatusStrip(STRIP_HOST_ID, t);
+                    toast(
+                        'Opublikowano ' +
+                            (published.version || draft.version) +
+                            ' — obowiązuje od ' +
+                            stripDate(iso),
+                        'success'
+                    );
+                } catch (err) {
+                    showErr(friendlyError('Błąd publikacji', err));
+                    okBtn.disabled = false;
+                }
+            });
+        }
+    }
+
+    /** Jedna delegacja dla przycisków trybu (CSP-E: bez inline handlerów). */
+    document.addEventListener('click', function (event) {
+        var btn =
+            event.target && event.target.closest ? event.target.closest('[data-pv-mode]') : null;
+        if (!btn) return;
+        var act = btn.getAttribute('data-pv-mode');
+        var type = editorType;
+        if (act === 'edit') {
+            setEditing(type, true);
+            syncEditor(type);
+            toast('Edytujesz szkic — zapis nie zmienia wersji obowiązującej', 'info');
+            return;
+        }
+        if (act === 'cancel') {
+            var discard = function () {
+                setEditing(type, false);
+                reloadEditorGrid(type);
+                renderStatusStrip(STRIP_HOST_ID, type);
+            };
+            if (typeof window.appConfirm === 'function') {
+                pvConfirm('Odrzucić niezapisane zmiany w szkicu?', {
+                    okText: 'Odrzuć i wyjdź',
+                    danger: true
+                }).then(function (ok) {
+                    if (ok) discard();
+                });
+            } else {
+                discard();
+            }
+            return;
+        }
+        if (act === 'copy') {
+            createDraftCopy(type);
+            return;
+        }
+        if (act === 'publish') openPublishDialog(type);
+    });
 
     window.pricelistVersions = {
         fetchLabels: fetchLabels,
@@ -1854,6 +2248,13 @@
         fetchChecks: fetchChecks,
         isPastDate: isPastDate,
         renderStatusStrip: renderStatusStrip,
+        refreshStatusStrip: refreshStatusStrip,
+        syncEditor: syncEditor,
+        isEditing: isEditing,
+        setEditing: setEditing,
+        openPublishDialog: openPublishDialog,
+        createDraftCopy: createDraftCopy,
+        clearSummaryCache: clearSummaryCache,
         _apiJson: apiJson,
         _authed: authed
     };

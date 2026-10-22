@@ -148,7 +148,8 @@ async function createDraftTx(
                         createdBy: meta.createdBy,
                         note: meta.note,
                         sha256: meta.sha256,
-                        createdAt: new Date().toISOString()
+                        createdAt: new Date().toISOString(),
+                        updatedAt: new Date().toISOString()
                     }
                 });
                 await insertVersionItems(tx, type, id, rows);
@@ -217,13 +218,14 @@ export async function updateDraft(
                 throw new PricelistVersionError(404, 'NOT_FOUND', `Wersja ${id} nie istnieje`);
             }
             assertEditable(fresh.status, id);
-            const data: { sha256?: string; note?: string | null } = {};
+            const data: { sha256?: string; note?: string | null; updatedAt?: string } = {};
             if (rows !== null && sha256 !== null) {
                 await deleteVersionItems(tx, type, id);
                 await insertVersionItems(tx, type, id, rows);
                 data.sha256 = sha256;
             }
             if (note !== undefined) data.note = note;
+            data.updatedAt = new Date().toISOString();
             const updated = await tx.pricelistVersion.update({ where: { id }, data });
             await writeAudit(tx, {
                 entityId: id,
@@ -333,6 +335,7 @@ export async function approveVersion(
                             : { version: versionLabel(type, fresh.seq, effectiveFrom) }),
                         approvedBy: opts.userId ?? null,
                         approvedAt: nowIso,
+                        updatedAt: nowIso,
                         ...(note === undefined ? {} : { note })
                     }
                 });
@@ -624,7 +627,8 @@ export async function cloneAsDraft(
                     createdBy: opts.userId,
                     note: opts.note ?? `Klon wersji ${source.version}`,
                     sha256,
-                    createdAt: nowIso
+                    createdAt: nowIso,
+                    updatedAt: nowIso
                 }
             });
             await insertVersionItems(tx, type, newId, validated);

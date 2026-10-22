@@ -225,6 +225,17 @@ async function resetPriceList() {
 }
 
 async function savePriceList() {
+    if (
+        window.pricelistVersions &&
+        typeof window.pricelistVersions.isEditing === 'function' &&
+        !window.pricelistVersions.isEditing('rury')
+    ) {
+        showToast(
+            'Kliknij „Edytuj szkic" (albo „Utwórz kopię jako szkic"), aby zmieniać cennik',
+            'warning'
+        );
+        return;
+    }
     if (!_pricelistDirty) {
         showToast('Brak zmian do zapisania', 'info');
         return;
@@ -241,6 +252,12 @@ async function savePriceList() {
         updateSaveBtn();
         renderPriceList();
         if (typeof renderTiles === 'function') renderTiles();
+        if (
+            window.pricelistVersions &&
+            typeof window.pricelistVersions.refreshStatusStrip === 'function'
+        ) {
+            window.pricelistVersions.refreshStatusStrip('rury');
+        }
         showToast(
             window.__pricelistWriteTarget === 'draft'
                 ? 'Zapisano szkic — opublikuj wersję, aby trafił do ofert'
