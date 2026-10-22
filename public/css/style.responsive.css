@@ -849,10 +849,11 @@ html[data-theme='light'] .kartoteka-filter-bar:hover {
     overflow-wrap: anywhere;
 }
 
-/* Wersje cennika — szeroki modal z tabelą 7-kolumnową (jak modal--clients) */
+/* Wersje cennika — szeroki modal z tabelą 7-kolumnową (jak modal--clients).
+ * Szerokość dobrana pod 1920px: tabela mieści się bez zawijania akcji. */
 .modal--pv {
-    width: 95%;
-    max-width: 1500px;
+    width: 96vw;
+    max-width: 1760px;
     max-height: 90vh;
     padding: 0;
     display: flex;
@@ -915,6 +916,11 @@ html[data-theme='light'] .kartoteka-filter-bar:hover {
 .modal--pv tbody td:nth-child(3) {
     white-space: nowrap;
 }
+/* Data obowiązywania (lokalna + UTC) i autor: jedna linia — kolumny mają miejsce. */
+.modal--pv tbody td:nth-child(4),
+.modal--pv tbody td:nth-child(5) {
+    white-space: nowrap;
+}
 .modal--pv tbody td:nth-child(5) {
     color: var(--text-muted);
 }
@@ -947,6 +953,9 @@ html[data-theme='light'] .kartoteka-filter-bar:hover {
 }
 .modal--pv table .pv-actions {
     justify-content: flex-end;
+    /* Wiersz akcji w jednej linii — przy 1920px starcza miejsca; na wąskim ekranie
+     * tabela przewija się poziomo (table-wrap) zamiast łamać przyciski. */
+    flex-wrap: nowrap;
 }
 /* Taby Rury/Studnie: po połowie szerokości, wyższe */
 .modal--pv [role='tablist'] {
@@ -959,7 +968,6 @@ html[data-theme='light'] .kartoteka-filter-bar:hover {
     font-size: var(--fs-md);
     justify-content: center;
 }
-/* Jedna kolumna akcji: przyciski w równej, zawijanej grupie flex */
 .modal--pv .pv-actions {
     display: flex;
     flex-wrap: wrap;
