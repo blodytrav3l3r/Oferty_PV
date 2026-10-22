@@ -76,11 +76,18 @@ const HUB_DOM = `
     <div id="cenniki-items" hidden></div>
     <div id="cenniki-item-card" hidden></div>
 </section>
-<section data-cennikan-view="historia">
-    <select id="cenniki-history-type"><option value="">Wszystkie</option></select>
-    <select id="cenniki-history-state"><option value="">Wszystkie</option></select>
+<section data-cenniki-view="historia">
+    <div id="cenniki-history-switch" role="group" aria-label="Widok listy wersji" hidden>
+        <button type="button" data-cenniki-history-view="tiles" aria-pressed="true">Kafelki</button>
+        <button type="button" data-cenniki-history-view="table" aria-pressed="false" disabled>Tabela</button>
+    </div>
+    <select id="cenniki-history-type"><option value="">Wszystkie</option><option value="rury">Rury</option><option value="studnie">Studnie</option></select>
+    <select id="cenniki-history-state"><option value="">Wszystkie</option><option value="DRAFT">W przygotowaniu</option><option value="ACTIVE">Obowiązuje</option></select>
     <span id="cenniki-history-count"></span>
-    <table><tbody id="cenniki-history-body"></tbody></table>
+    <div id="cenniki-history-body" class="cenniki-tiles cenniki-tiles--versions" role="group" aria-label="Wersje cenników"></div>
+    <div id="cenniki-history-table-wrap" class="cenniki-table-wrap" hidden>
+        <table class="cenniki-table"><tbody id="cenniki-history-table-body"></tbody></table>
+    </div>
 </section>
 `;
 
@@ -98,6 +105,9 @@ interface HubOptions {
     summary?: any;
     previews?: Record<string, any>;
     approveResult?: any;
+    hash?: string;
+    openPreview?: any;
+    openDiff?: any;
 }
 
 /** Listenerzy `document` z poprzednich instancji huba — muszą zniknąć między testami. */
@@ -148,7 +158,7 @@ function loadHubDom(options: HubOptions) {
         Element: dom.window.Element,
         HTMLSelectElement: dom.window.HTMLSelectElement,
         window: {
-            location: { hash: '' },
+            location: { hash: options.hash || '' },
             addEventListener: () => {},
             showToast,
             MAX_TRANSPORT_WEIGHT: 24000,
@@ -157,8 +167,9 @@ function loadHubDom(options: HubOptions) {
                 isPastDate: (iso: string) => Date.parse(iso) < Date.now() - 60000,
                 approveVersion,
                 statusBadge: () => '<span class="badge"></span>',
-                openPreview: () => {},
-                openDiff: () => {},
+                canDelete: (state: string) => state === 'DRAFT' || state === 'SCHEDULED',
+                openPreview: options.openPreview || (() => {}),
+                openDiff: options.openDiff || (() => {}),
                 fetchChecks: async () => null,
                 exportVersion: () => {}
             }
@@ -567,5 +578,152 @@ describe('M3/M4: warstwa 2 — zachowanie (jsdom)', () => {
         expect(dom.document.getElementById('cenniki-note-input')).toBeNull();
         expect(approveVersion).toHaveBeenCalledTimes(1);
         expect(approveVersion).toHaveBeenCalledWith('d1');
+    });
+});
+
+/* ── M6: warstwa 3 — historia jako kafelki wersji ─────────────────────────── */
+
+describe('M6: warstwa 3 — historia (kafelki wersji)', () => {
+    const hub = read('public/js/cennikiHub.js');
+    const css = read('public/css/cenniki.css');
+
+    const richVersion = (over: any) => ({
+        id: 'd1',
+        version: 'v2',
+        seq: 2,
+        type: 'rury',
+        status: 'DRAFT',
+        state: 'DRAFT',
+        effectiveFrom: '2026-11-01T00:00:00.000Z',
+        createdByName: 'Anna Kowalska',
+        usedBy: 128,
+        note: 'Korekta cen rur po awarii dostawcy',
+        ...over
+    });
+
+    const historyVersions = [
+        richVersion({}),
+        richVersion({
+            id: 'a1',
+            version: 'v1',
+            seq: 1,
+            status: 'APPROVED',
+            state: 'ACTIVE',
+            effectiveFrom: '2026-09-01T00:00:00.000Z'
+        }),
+        richVersion({
+            id: 's1',
+            version: 'v1',
+            seq: 1,
+            type: 'studnie',
+            status: 'APPROVED',
+            state: 'ARCHIVED',
+            effectiveFrom: '2026-05-01T00:00:00.000Z'
+        })
+    ];
+
+    it('kafelki wersji zamiast tabeli (≤ 20 wersji)', async () => {
+        loadHubDom({ versions: historyVersions, summary: summaryWith() });
+        await flush();
+        expect(dom.document.querySelectorAll('.cenniki-tile--version').length).toBe(3);
+        expect(dom.document.querySelector('table')).toBeNull();
+        expect(dom.document.getElementById('cenniki-history-count')?.textContent).toContain(
+            'Pokazano 3 z 3 wersji'
+        );
+    });
+
+    it('kafelek wersji: stan, seq, daty, autor, użycie, nota i 6 akcji', async () => {
+        loadHubDom({ versions: historyVersions, summary: summaryWith() });
+        await flush();
+        const tile = dom.document.querySelector('.cenniki-tile--version');
+        expect(tile?.textContent).toContain('v2');
+        expect(tile?.textContent).toContain('seq 2');
+        expect(tile?.textContent).toContain('Rury');
+        expect(tile?.textContent).toContain('Anna Kowalska');
+        expect(tile?.textContent).toContain('128 ofert/zamówień');
+        expect(tile?.textContent).toContain('UTC:');
+        expect(tile?.querySelector('.cenniki-note')).not.toBeNull();
+        expect(tile?.getAttribute('aria-label')).toContain('Wersja v2');
+        for (const action of ['preview', 'diff', 'checks', 'export', 'clone', 'delete']) {
+            expect(tile?.querySelector(`[data-cenniki-${action}]`)).not.toBeNull();
+        }
+    });
+
+    it('filtry typu i stanu filtrują kafelki', async () => {
+        loadHubDom({ versions: historyVersions, summary: summaryWith() });
+        await flush();
+        const typeSelect = dom.document.getElementById('cenniki-history-type');
+        const stateSelect = dom.document.getElementById('cenniki-history-state');
+        typeSelect.value = 'rury';
+        typeSelect.dispatchEvent(new dom.window.Event('change', { bubbles: true }));
+        expect(dom.document.querySelectorAll('.cenniki-tile--version').length).toBe(2);
+        stateSelect.value = 'ACTIVE';
+        stateSelect.dispatchEvent(new dom.window.Event('change', { bubbles: true }));
+        expect(dom.document.querySelectorAll('.cenniki-tile--version').length).toBe(1);
+        expect(dom.document.querySelector('.cenniki-tile--version')?.textContent).toContain('v1');
+        expect(dom.document.getElementById('cenniki-history-count')?.textContent).toContain(
+            'Pokazano 1 z 3 wersji'
+        );
+    });
+
+    it('przełącznik widoku: tabela tylko dla gęstych list (> 20 wersji)', async () => {
+        loadHubDom({ versions: historyVersions, summary: summaryWith() });
+        await flush();
+        const tableButton = dom.document.querySelector('[data-cenniki-history-view="table"]');
+        expect(tableButton?.disabled).toBe(true);
+        expect(dom.document.querySelector('table')).toBeNull();
+
+        const many = Array.from({ length: 25 }, (_value, index) =>
+            richVersion({ id: `x${index}`, version: `v${index}`, seq: index })
+        );
+        loadHubDom({ versions: many, summary: summaryWith() });
+        await flush();
+        const denseButton = dom.document.querySelector('[data-cenniki-history-view="table"]');
+        expect(denseButton?.disabled).toBe(false);
+        expect(dom.document.querySelector('table')).toBeNull();
+        click(denseButton);
+        expect(dom.document.querySelector('table')).not.toBeNull();
+        expect(dom.document.querySelectorAll('#cenniki-history-table-body tr').length).toBe(25);
+        expect(dom.document.querySelectorAll('.cenniki-tile--version').length).toBe(0);
+    });
+
+    it('deep-link ?type=rury&version=<id> nadal otwiera preview', async () => {
+        const openPreview = jest.fn();
+        loadHubDom({
+            versions: historyVersions,
+            summary: summaryWith(),
+            hash: '#/cenniki/historia?type=rury&version=d1',
+            openPreview
+        });
+        await flush();
+        expect(openPreview).toHaveBeenCalledWith('d1', 'rury');
+        // deep-link filtruje typ → kafelki tylko osi wskazanej w URL
+        expect(dom.document.querySelectorAll('.cenniki-tile--version').length).toBe(2);
+        expect(dom.document.getElementById('cenniki-history-count')?.textContent).toContain(
+            'Pokazano 2 z 3 wersji'
+        );
+    });
+
+    it('próg gęstości w stałej pliku + klasy CSS na tokenach', () => {
+        expect(hub).toContain('const HISTORY_TABLE_THRESHOLD = 20;');
+        expect(hub).toContain('rows.length > HISTORY_TABLE_THRESHOLD');
+        expect(hub).toContain('cenniki-tile--version');
+        expect(css).toContain('.cenniki-tiles--versions');
+        expect(css).toContain('.cenniki-tile--version');
+        expect(css).toContain('.cenniki-view-switch');
+    });
+
+    it('brak inline onclick/style w nowym widoku historii', () => {
+        expect(hub).not.toContain('onclick=');
+        expect(hub).not.toContain('style="');
+    });
+
+    it('kafelek wersji: dane przez esc/escAttr (bez surowych interpolacji)', () => {
+        const source = functionSource(hub, 'renderVersionTile');
+        expect(source).toContain('escAttr(');
+        expect(source).toContain('esc(');
+        expect(source).not.toContain('${version.note}');
+        expect(source).not.toContain('${version.id}');
+        expect(source).not.toContain('${version.createdByName');
     });
 });

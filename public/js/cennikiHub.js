@@ -65,10 +65,20 @@ function noteHtml(note) {
     return `<span class="cenniki-note" title="${escAttr(text)}">${esc(short)}</span>`;
 }
 
-async function apiJson(path) {
+/**
+ * JSON do API wersji cenników. `options.method` pozwala na mutacje
+ * (POST/DELETE) — nagłówki autoryzacji z SSoT (`authHeaders`).
+ */
+async function apiJson(path, options) {
+    const method = (options && options.method) || 'GET';
+    const headers = { Accept: 'application/json' };
+    if (method !== 'GET' && typeof window.authHeaders === 'function') {
+        Object.assign(headers, window.authHeaders());
+    }
     const res = await fetch(API + path, {
+        method,
         credentials: 'same-origin',
-        headers: { Accept: 'application/json' }
+        headers
     });
     if (!res.ok) {
         const body = await res.json().catch(() => ({}));
@@ -1034,6 +1044,98 @@ function openPublishNoteModal(id) {
     update();
 }
 
+/* ── Warstwa 3 (M6): historia jako kafelki wersji ────────────────────────── */
+
+/**
+ * Próg gęstości historii: wariant tabelaryczny tylko powyżej 20 wersji
+ * (plan §3.0 — tabela tylko dla gęstych list; domyślnie kafelki).
+ */
+const HISTORY_TABLE_THRESHOLD = 20;
+
+/** Aktywny widok historii: 'tiles' (domyślny) albo 'table' (gęsty). */
+let historyView = 'tiles';
+
+/** Referencja do tabeli gęstej — w widoku kafelków jest odłączona od DOM. */
+let historyTableRef = null;
+
+/** Rodzic tabeli gęstej (do przywrócenia po odłączeniu w widoku kafelków). */
+let historyTableParent = null;
+
+/** Data obowiązywania: lokalnie (czytelnie) + UTC — jak w panelu wersji. */
+function effectiveFromHtml(value) {
+    const raw = String(value || '');
+    if (!raw) return '<span class="text-muted">—</span>';
+    const date = new Date(raw);
+    if (Number.isNaN(date.getTime())) return esc(raw);
+    const local = date.toLocaleString('pl-PL');
+    const utc = `${date.toISOString().replace('T', ' ').slice(0, 16)} UTC`;
+    return `<span title="${escAttr(raw)}">${esc(local)}<br><span class="text-muted">UTC: ${esc(
+        utc
+    )}</span></span>`;
+}
+
+/** Użycie wersji: liczba + rodzaj (oferty/zamówienia albo wersje studni). */
+function usedByText(version) {
+    if (typeof version.usedBy !== 'number') return '—';
+    const kind = version.usedByKind === 'studnieVersions' ? 'wersji studni' : 'ofert/zamówień';
+    return `${version.usedBy} ${kind}`;
+}
+
+/** Czy wersję można usunąć — SSoT: `window.pricelistVersions.canDelete`. */
+function canDeleteVersion(version) {
+    const api = pv();
+    const state = stateOf(version);
+    if (api && typeof api.canDelete === 'function') return Boolean(api.canDelete(state));
+    return state === 'DRAFT' || state === 'SCHEDULED';
+}
+
+/** Potwierdzenie operacji (appConfirm z fallbackiem) — jak w panelu wersji. */
+function confirmAction(message) {
+    if (typeof window.appConfirm === 'function') return window.appConfirm(message);
+    if (typeof window.confirm === 'function') return Promise.resolve(window.confirm(message));
+    return Promise.resolve(true);
+}
+
+/** Kontener kafelków wersji + tabela gęsta (referencje, nie tylko DOM). */
+function historyHosts() {
+    const body = document.getElementById('cenniki-history-body');
+    let tiles = body;
+    if (body && body.tagName === 'TBODY') {
+        // Uklad legacy: `#cenniki-history-body` = tbody tabeli — kafelki dostaja
+        // wlasny kontener, tabela zostaje wariantem gestym.
+        historyTableRef = body.closest('table');
+        tiles = document.getElementById('cenniki-history-tiles');
+        if (!tiles) {
+            tiles = document.createElement('div');
+            tiles.id = 'cenniki-history-tiles';
+            tiles.className = 'cenniki-tiles cenniki-tiles--versions';
+            tiles.setAttribute('role', 'group');
+            tiles.setAttribute('aria-label', 'Wersje cenników');
+            if (historyTableRef && historyTableRef.parentElement) {
+                historyTableRef.parentElement.insertBefore(tiles, historyTableRef);
+            }
+        }
+    }
+    const tableBody = document.getElementById('cenniki-history-table-body');
+    if (tableBody) historyTableRef = tableBody.closest('table');
+    return { tiles, table: historyTableRef };
+}
+
+/** Odłącza tabelę gęstą od DOM (widok kafelków). */
+function detachHistoryTable() {
+    if (historyTableRef && historyTableRef.isConnected) {
+        historyTableParent = historyTableRef.parentElement;
+        historyTableRef.remove();
+    }
+}
+
+/** Przywraca tabelę gęstą do DOM (widok tabelaryczny). */
+function attachHistoryTable() {
+    if (!historyTableRef || historyTableRef.isConnected) return;
+    const parent = document.getElementById('cenniki-history-table-wrap') || historyTableParent;
+    if (parent) parent.appendChild(historyTableRef);
+}
+
 function filteredVersions() {
     const typeSelect = /** @type {HTMLSelectElement | null} */ (
         document.getElementById('cenniki-history-type')
@@ -1058,24 +1160,83 @@ function collisionKeys() {
     return new Set([...counts.entries()].filter(([, count]) => count > 1).map(([key]) => key));
 }
 
-function renderHistory() {
-    const body = document.getElementById('cenniki-history-body');
-    const count = document.getElementById('cenniki-history-count');
-    if (!body) return;
-    const rows = filteredVersions();
-    const collisions = collisionKeys();
-    if (count) count.textContent = `${rows.length} wersji`;
-    if (rows.length === 0) {
-        body.innerHTML = '<tr><td colspan="9" class="cenniki-empty">Brak wersji.</td></tr>';
-        return;
-    }
-    body.innerHTML = rows
+/**
+ * Kafelek wersji (kafelek = wersja): badge stanu, etykieta + seq, data
+ * obowiązywania (lokalnie + UTC), autor, użycie, nota i akcje.
+ */
+function renderVersionTile(version, collisions) {
+    const id = escAttr(version.id);
+    const type = escAttr(version.type);
+    const label = esc(version.version || '—');
+    const status = escAttr(version.status || '');
+    const hasCollision = collisions.has(`${version.type}\u0000${version.effectiveFrom}`);
+    const usage = usedByText(version);
+    const aria = `Wersja ${version.version || '—'} — ${statusLabel(version)}, od ${formatDate(
+        version.effectiveFrom
+    )}, ${usage}`;
+    const deletable = canDeleteVersion(version);
+    return `
+        <div class="cenniki-tile cenniki-tile--version" role="group" aria-label="${escAttr(aria)}">
+            <div class="cenniki-tile-head">
+                <button type="button" class="cenniki-tile-title cenniki-tile-link" data-cenniki-preview="${id}" data-cenniki-preview-type="${type}" aria-label="${escAttr(aria)}">${label}</button>
+                <span class="text-muted">seq ${Number(version.seq || 0)}</span>
+                ${statusBadge(version)}
+                ${
+                    hasCollision
+                        ? '<span class="badge" title="Więcej niż jedna wersja z tą datą">kolizja</span>'
+                        : ''
+                }
+            </div>
+            <div class="cenniki-tile-rows">
+                <div class="cenniki-tile-row"><span>typ</span><b>${esc(
+                    TYPE_LABELS[version.type] || version.type
+                )}</b></div>
+                <div class="cenniki-tile-row"><span>obowiązuje od</span><b>${effectiveFromHtml(
+                    version.effectiveFrom
+                )}</b></div>
+                <div class="cenniki-tile-row"><span>autor</span><b>${esc(
+                    version.createdByName || version.createdBy || '—'
+                )}</b></div>
+                <div class="cenniki-tile-row"><span>użycie</span><b>${esc(usage)}</b></div>
+            </div>
+            <span class="cenniki-tile-note">${noteHtml(version.note)}</span>
+            <div class="cenniki-tile-actions">
+                <button type="button" class="btn btn-sm btn-secondary" data-cenniki-preview="${id}" data-cenniki-preview-type="${type}">Podgląd</button>
+                <button type="button" class="btn btn-sm btn-secondary" data-cenniki-diff="${id}" data-cenniki-diff-type="${type}">Porównaj</button>
+                <button type="button" class="btn btn-sm btn-secondary" data-cenniki-checks="${id}">Kontrola</button>
+                <button type="button" class="btn btn-sm btn-secondary" data-cenniki-export="${id}" data-cenniki-export-type="${type}" data-cenniki-export-version="${escAttr(
+                    version.version || ''
+                )}" data-cenniki-export-status="${status}">Eksport</button>
+                <button type="button" class="btn btn-sm btn-secondary" data-cenniki-clone="${id}">Klon</button>
+                <button type="button" class="btn btn-sm btn-danger" data-cenniki-delete="${id}" data-cenniki-delete-version="${escAttr(
+                    version.version || ''
+                )}"${
+                    deletable
+                        ? ''
+                        : ' disabled title="Wersja obowiązująca lub historyczna — nieusuwalna"'
+                }>Usuń</button>
+            </div>
+        </div>`;
+}
+
+/** Kafelki wersji — widok domyślny historii. */
+function renderHistoryTiles(rows, collisions) {
+    if (rows.length === 0) return '<p class="cenniki-empty">Brak wersji.</p>';
+    return rows.map((version) => renderVersionTile(version, collisions)).join('');
+}
+
+/** Gęsty wariant historii: tabela 9 kolumn (tylko dla list > 20 wersji). */
+function renderHistoryTable(rows, collisions) {
+    if (rows.length === 0)
+        return '<tr><td colspan="9" class="cenniki-empty">Brak wersji.</td></tr>';
+    return rows
         .map((version) => {
             const id = escAttr(version.id);
             const type = escAttr(version.type);
             const versionLabel = escAttr(version.version || '');
             const status = escAttr(version.status || '');
             const hasCollision = collisions.has(`${version.type}\u0000${version.effectiveFrom}`);
+            const deletable = canDeleteVersion(version);
             return `
                 <tr>
                     <td>${esc(TYPE_LABELS[version.type] || version.type)}</td>
@@ -1093,11 +1254,93 @@ function renderHistory() {
                             <button class="btn btn-sm btn-secondary" data-cenniki-preview="${id}" data-cenniki-preview-type="${type}">Podgląd</button>
                             <button class="btn btn-sm btn-secondary" data-cenniki-diff="${id}" data-cenniki-diff-type="${type}">Porównaj</button>
                             <button class="btn btn-sm btn-secondary" data-cenniki-export="${id}" data-cenniki-export-type="${type}" data-cenniki-export-version="${versionLabel}" data-cenniki-export-status="${status}">Eksport</button>
+                            <button class="btn btn-sm btn-secondary" data-cenniki-clone="${id}">Klon</button>
+                            <button class="btn btn-sm btn-danger" data-cenniki-delete="${id}" data-cenniki-delete-version="${versionLabel}"${deletable ? '' : ' disabled title="Wersja obowiązująca lub historyczna — nieusuwalna"'}>Usuń</button>
                         </div>
                     </td>
                 </tr>`;
         })
         .join('');
+}
+
+/** Stan przełącznika widoku (kafelki / tabela) — tabela tylko dla gęstych list. */
+function renderHistorySwitch(dense) {
+    const switchHost = document.getElementById('cenniki-history-switch');
+    if (!switchHost) return;
+    switchHost.querySelectorAll('[data-cenniki-history-view]').forEach((button) => {
+        const element = /** @type {HTMLButtonElement} */ (button);
+        const isTable = element.getAttribute('data-cenniki-history-view') === 'table';
+        element.setAttribute(
+            'aria-pressed',
+            isTable === (historyView === 'table') ? 'true' : 'false'
+        );
+        if (!isTable) return;
+        element.disabled = !dense;
+        element.title = dense
+            ? 'Widok tabelaryczny'
+            : `Tabela od ${HISTORY_TABLE_THRESHOLD + 1} wersji`;
+    });
+}
+
+function renderHistory() {
+    const rows = filteredVersions();
+    const collisions = collisionKeys();
+    const count = document.getElementById('cenniki-history-count');
+    const hosts = historyHosts();
+    const tableBody = hosts.table ? hosts.table.querySelector('tbody') : null;
+    const wrap = document.getElementById('cenniki-history-table-wrap');
+    const dense = rows.length > HISTORY_TABLE_THRESHOLD;
+    if (count) count.textContent = `Pokazano ${rows.length} z ${versions.length} wersji`;
+    // Tabela tylko dla gestych list (> 20 wersji) — kafelki sa domyslne.
+    if (!dense) historyView = 'tiles';
+    const useTable = historyView === 'table' && dense && Boolean(tableBody);
+    const switchHost = document.getElementById('cenniki-history-switch');
+    if (switchHost) switchHost.hidden = rows.length === 0;
+
+    if (hosts.tiles) {
+        hosts.tiles.hidden = useTable;
+        hosts.tiles.innerHTML = useTable ? '' : renderHistoryTiles(rows, collisions);
+    }
+    if (useTable && tableBody) {
+        tableBody.innerHTML = renderHistoryTable(rows, collisions);
+        attachHistoryTable();
+        if (wrap) wrap.hidden = false;
+    } else {
+        if (tableBody) tableBody.innerHTML = '';
+        detachHistoryTable();
+        if (wrap) wrap.hidden = true;
+    }
+    renderHistorySwitch(dense);
+}
+
+/** Klon wersji → nowy szkic (POST /:id/clone-draft). */
+async function cloneVersion(id) {
+    if (!id) return;
+    try {
+        const json = await apiJson(`/${encodeURIComponent(id)}/clone-draft`, { method: 'POST' });
+        const created = (json && json.version) || {};
+        notify(`Utworzono wersję roboczą ${created.version || ''}`, 'success');
+        await loadData();
+    } catch (error) {
+        notify(`Błąd klonowania: ${error.message || 'nieznany błąd'}`, 'error');
+    }
+}
+
+/** Usunięcie wersji (DELETE /:id) — z potwierdzeniem jak w panelu wersji. */
+async function deleteVersion(id, label) {
+    if (!id) return;
+    const name = label || id;
+    const ok = await confirmAction(
+        `Usunąć wersję ${name} wraz z jej pozycjami? Usunięcie jest trwałe.`
+    );
+    if (!ok) return;
+    try {
+        await apiJson(`/${encodeURIComponent(id)}`, { method: 'DELETE' });
+        notify(`Wersja ${name} usunięta`, 'success');
+        await loadData();
+    } catch (error) {
+        notify(`Błąd usuwania: ${error.message || 'nieznany błąd'}`, 'error');
+    }
 }
 
 function deepLinkParams() {
@@ -1235,6 +1478,28 @@ function renderChecks(checks) {
 document.addEventListener('click', (event) => {
     const target = event.target;
     if (!(target instanceof Element)) return;
+    const historyViewButton = target.closest('[data-cenniki-history-view]');
+    if (historyViewButton) {
+        historyView =
+            historyViewButton.getAttribute('data-cenniki-history-view') === 'table'
+                ? 'table'
+                : 'tiles';
+        renderHistory();
+        return;
+    }
+    const clone = target.closest('[data-cenniki-clone]');
+    if (clone) {
+        void cloneVersion(clone.getAttribute('data-cenniki-clone') || '');
+        return;
+    }
+    const remove = target.closest('[data-cenniki-delete]');
+    if (remove) {
+        void deleteVersion(
+            remove.getAttribute('data-cenniki-delete') || '',
+            remove.getAttribute('data-cenniki-delete-version') || ''
+        );
+        return;
+    }
     const viewLink = target.closest('[data-cenniki-view-link]');
     if (viewLink) {
         const type = viewLink.getAttribute('data-cenniki-type');

@@ -244,11 +244,54 @@
     font-size: 1rem;
 }
 
+/* ── Warstwa 3 (M6): kafelki wersji + przełącznik widoku ─────────────────── */
+.cenniki-tiles--versions {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: var(--tile-gap-md);
+}
+
+.cenniki-tile--version {
+    gap: var(--tile-gap-xs);
+}
+
+.cenniki-tile-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--tile-gap-xs);
+}
+
+.cenniki-tile-link {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font-family: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.cenniki-tile-link:hover {
+    color: var(--accent-text);
+    text-decoration: underline;
+}
+
+.cenniki-view-switch {
+    display: flex;
+    gap: var(--tile-gap-2xs);
+}
+
+.cenniki-view-switch [aria-pressed='true'] {
+    border-color: var(--accent);
+    color: var(--accent-text);
+}
+
 @media (max-width: 640px) {
     .cenniki-tiles--axes,
     .cenniki-tiles--states,
     .cenniki-tiles--sections,
-    .cenniki-tiles--items {
+    .cenniki-tiles--items,
+    .cenniki-tiles--versions {
         grid-template-columns: 1fr;
     }
 }
@@ -264,6 +307,13 @@
 .cenniki-toolbar label {
     font-size: 0.82rem;
     color: var(--text-muted, #94a3b8);
+}
+
+/* Selecty filtrów w pasku narzędzi: szerokość treści, nie 100% (inaczej
+   każdy select zajmuje osobny wiersz). */
+.cenniki-toolbar .form-input {
+    width: auto;
+    min-width: 11rem;
 }
 
 .cenniki-table-wrap {

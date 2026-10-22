@@ -224,11 +224,18 @@ describe('S3: hub cenników — deep-link do historii', () => {
         expect(hub).toContain('applyDeepLink(attempt + 1)');
     });
 
-    it('historia ma 9 kolumn z Notą i Kontrolą (checks poza akcjami)', () => {
+    it('historia: kafelki wersji domyślnie, tabela tylko jako wariant gęsty', () => {
+        // Widok domyślny: kafelki wersji (kafelek = wersja).
+        expect(hub).toContain('cenniki-tile--version');
+        expect(hub).toContain('renderHistoryTiles');
+        expect(html).toContain('cenniki-tiles--versions');
+        expect(html).toMatch(/id="cenniki-history-body"[\s\S]{0,200}role="group"/);
+        // Tabela 9 kolumn (z Notą i Kontrolą) zostaje jako wariant gęsty (> 20 wersji).
         expect(html).toContain('<th>Nota</th>');
         expect(html).toContain('<th>Kontrola</th>');
         expect(hub).toContain('colspan="9"');
         expect(hub).toContain('cenniki-note');
+        expect(hub).toContain('const HISTORY_TABLE_THRESHOLD = 20;');
     });
 });
 

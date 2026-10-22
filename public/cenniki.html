@@ -98,9 +98,40 @@
                         <option value="ACTIVE">Obowiązuje</option>
                         <option value="ARCHIVED">Historyczny</option>
                     </select>
+                    <div
+                        id="cenniki-history-switch"
+                        class="cenniki-view-switch"
+                        role="group"
+                        aria-label="Widok listy wersji"
+                        hidden
+                    >
+                        <button
+                            type="button"
+                            class="btn btn-sm btn-secondary"
+                            data-cenniki-history-view="tiles"
+                            aria-pressed="true"
+                        >
+                            Kafelki
+                        </button>
+                        <button
+                            type="button"
+                            class="btn btn-sm btn-secondary"
+                            data-cenniki-history-view="table"
+                            aria-pressed="false"
+                            disabled
+                        >
+                            Tabela
+                        </button>
+                    </div>
                     <span id="cenniki-history-count" class="text-muted"></span>
                 </div>
-                <div class="cenniki-table-wrap">
+                <div
+                    id="cenniki-history-body"
+                    class="cenniki-tiles cenniki-tiles--versions"
+                    role="group"
+                    aria-label="Wersje cenników"
+                ></div>
+                <div id="cenniki-history-table-wrap" class="cenniki-table-wrap" hidden>
                     <table class="cenniki-table">
                         <thead>
                             <tr>
@@ -115,7 +146,7 @@
                                 <th>Akcje</th>
                             </tr>
                         </thead>
-                        <tbody id="cenniki-history-body"></tbody>
+                        <tbody id="cenniki-history-table-body"></tbody>
                     </table>
                 </div>
             </section>
