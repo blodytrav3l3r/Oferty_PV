@@ -205,81 +205,9 @@ describe('SPA: deep-link do panelu wersji', () => {
     });
 });
 
-describe('S3: hub cenników — deep-link do historii', () => {
-    const hub = read('public/js/cennikiHub.js');
-    const html = read('public/cenniki.html');
-
-    it('czyta hash rodzica i obsługuje #/cenniki/historia', () => {
-        expect(hub).toContain('window.parent.location.hash');
-        expect(hub).toContain('/\\/historia(?:[/?]|$)/.test(hash)');
-        expect(hub).toContain("params.tab = 'historia'");
-    });
-
-    it('typ + version/id + against trafiają do preview/diff z allowlistą', () => {
-        expect(hub).toContain('params.version || params.id');
-        expect(hub).toContain("['rury', 'studnie', 'preco'].includes(params.type)");
-        expect(hub).toContain('/^[A-Za-z0-9_-]{1,64}$/.test(id)');
-        expect(hub).toContain('api.openDiff(id, params.against, type)');
-        expect(hub).toContain('api.openPreview(id, type)');
-        expect(hub).toContain('applyDeepLink(attempt + 1)');
-    });
-
-    it('historia: kafelki wersji domyślnie, tabela tylko jako wariant gęsty', () => {
-        // Widok domyślny: kafelki wersji (kafelek = wersja).
-        expect(hub).toContain('cenniki-tile--version');
-        expect(hub).toContain('renderHistoryTiles');
-        expect(html).toContain('cenniki-tiles--versions');
-        expect(html).toMatch(/id="cenniki-history-body"[\s\S]{0,200}role="group"/);
-        // Tabela 9 kolumn (z Notą i Kontrolą) zostaje jako wariant gęsty (> 20 wersji).
-        expect(html).toContain('<th>Nota</th>');
-        expect(html).toContain('<th>Kontrola</th>');
-        expect(hub).toContain('colspan="9"');
-        expect(hub).toContain('cenniki-note');
-        expect(hub).toContain('const HISTORY_TABLE_THRESHOLD = 20;');
-    });
-});
-
-describe('M2: panel cenników — admin-only + kafelki', () => {
-    const hub = read('public/js/cennikiHub.js');
-    const html = read('public/cenniki.html');
-    const css = read('public/css/cenniki.css');
-    const router = read('public/js/spa/router.js');
-    const appHtml = read('public/app.html');
-
-    it('router odcina moduł cenniki dla nie-admina (BE i tak wymaga admina)', () => {
-        expect(router).toContain("module === 'cenniki'");
-        expect(router).toContain("window.currentUser.role !== 'admin'");
-        expect(router).toContain("window.location.hash = '#/rury'");
-    });
-
-    it('kafelek nav „Cenniki" ukryty dla nie-admina', () => {
-        expect(appHtml).toContain('id="spa-app-cenniki"');
-        expect(router).toContain('spa-app-cenniki');
-        expect(router).toContain("cennikiTile.classList.add('hidden')");
-    });
-
-    it('przegląd zbudowany z kafelków: oś → 4 kafelki stanów', () => {
-        expect(html).toContain('cenniki-tiles--axes');
-        expect(hub).toContain('cenniki-tile--axis');
-        expect(hub).toContain('cenniki-tile--active');
-        expect(hub).toContain('cenniki-tile--scheduled');
-        expect(hub).toContain('cenniki-tile--draft');
-        expect(hub).toContain('cenniki-tile--archived');
-        expect(css).toContain('.cenniki-tiles {');
-        expect(css).toContain('.cenniki-tile {');
-    });
-
-    it('komunikat: bufor (szkic) nie zmienia ofert', () => {
-        expect(html).toContain('cenniki-banner');
-        expect(html).toContain('Bufor (szkic) nie zmienia ofert');
-    });
-
-    it('nowe klasy CSS na tokenach S.O.K. (zero własnych hexów)', () => {
-        const start = css.indexOf('.cenniki-tiles {');
-        const end = css.indexOf('.cenniki-toolbar {');
-        expect(start).toBeGreaterThan(-1);
-        const block = css.slice(start, end);
-        expect(block).not.toMatch(/#[0-9a-fA-F]{3,8}/);
-        expect(block).toContain('var(--tile-gap-md)');
+describe('S3: hub cenników — usunięty', () => {
+    it('strona Centrum cenników nie istnieje w repo', () => {
+        expect(fs.existsSync(path.join(ROOT, 'public/cenniki.html'))).toBe(false);
+        expect(fs.existsSync(path.join(ROOT, 'public/js/cennikiHub.js'))).toBe(false);
     });
 });

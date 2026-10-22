@@ -21,7 +21,7 @@ describe('spa router - Z-73 (restored surface)', () => {
         expect('/app.html#/' + moduleName).toBe('/app.html#/studnie');
     });
 
-    it('parseHash obsługuje subview: #/cenniki/historia → tab=historia', () => {
+    it('parseHash obsługuje subview: #/studnie/historia → tab=historia', () => {
         const src = fs.readFileSync(path.resolve('public/js/spa/router.js'), 'utf-8');
         expect(src).toMatch(/const \[modulePath, subView\] = \(path \|\| 'rury'\)\.split\('\/'\)/);
         expect(src).toMatch(/if \(subView && !params\.tab\) params\.tab = subView/);
@@ -35,12 +35,12 @@ describe('spa router - Z-73 (restored surface)', () => {
             if (subView && !params.tab) params.tab = subView;
             return { module: modulePath || 'rury', params };
         };
-        expect(parse('#/cenniki/historia?type=preco&id=v3')).toEqual({
-            module: 'cenniki',
+        expect(parse('#/studnie/historia?type=preco&id=v3')).toEqual({
+            module: 'studnie',
             params: { type: 'preco', id: 'v3', tab: 'historia' }
         });
-        expect(parse('#/cenniki/historia?tab=przeglad')).toEqual({
-            module: 'cenniki',
+        expect(parse('#/studnie/historia?tab=przeglad')).toEqual({
+            module: 'studnie',
             params: { tab: 'przeglad' }
         });
     });

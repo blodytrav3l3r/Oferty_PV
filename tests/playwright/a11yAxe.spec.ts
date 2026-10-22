@@ -82,42 +82,6 @@ test.describe('a11y axe', () => {
         });
     }
 
-    test('cenniki hub — historia (deep-link) ma 0 naruszeń critical/serious', async ({ page }) => {
-        const login = await page.request.post('/api/auth/login', {
-            data: {
-                username: 'admin',
-                password: process.env.TEST_ADMIN_PASSWORD || 'anim123456'
-            }
-        });
-        expect(login.ok(), `login failed: ${login.status()}`).toBe(true);
-        await page.goto('/app.html#/cenniki/historia?type=rury');
-        const frame = await waitForModuleFrame(page, 'cenniki.html');
-        expect(frame, 'brak iframe cenniki.html').not.toBeNull();
-        await frame!.locator('#cenniki-history-body').waitFor({ timeout: 15000 });
-        const results = await new AxeBuilder({ page })
-            .withTags(['wcag2a', 'wcag2aa'])
-            .exclude('#toast-container')
-            .analyze();
-        const serious = results.violations.filter(
-            (v) => v.impact === 'critical' || v.impact === 'serious'
-        );
-        // Ten sam artefakt co dla modułów: router.js ustawia body iframe na
-        // transparent, więc axe zakłada białe tło canvas. Realnie rodzic ma
-        // #0a0e1a (kontrasty #f1f5f9 i #8a9cae przechodzą). Filtr zawężony do
-        // color-contrast w tym iframe z bg #ffffff.
-        const withoutArtifact = serious.filter((v) => {
-            if (v.id !== 'color-contrast') return true;
-            const nodes = v.nodes || [];
-            if (nodes.length === 0) return true;
-            return !nodes.every((n: any) => {
-                const targets = (n.target || []).flat().join(' ');
-                const bg = n.any?.[0]?.data?.bgColor;
-                return targets.includes('#spa-iframe-cenniki') && bg === '#ffffff';
-            });
-        });
-        expect(withoutArtifact, JSON.stringify(withoutArtifact, null, 2)).toEqual([]);
-    });
-
     test('kartoteka filtry mają dostępne nazwy (aria-label)', async ({ page }) => {
         await page.goto('/app.html#/kartoteka');
         // Kartoteka jest w iframe (SPA) — poczekaj na frame

@@ -34,14 +34,14 @@ i `ARCHIVED` są **wyliczane** z daty `effectiveFrom` (UTC) i nigdy nie są zapi
 
 Słownik pojęć:
 
-| Pojęcie                           | Co to jest                                                                     | Gdzie to widać                                    |
-| --------------------------------- | ------------------------------------------------------------------------------ | ------------------------------------------------- |
-| **LIVE**                          | Robocze tabele cennika (tryb rollbacku). Nie jest wersją.                      | Sekcja „Transfer plików" (opisana jako „na żywo") |
-| **Wersja**                        | Zamrożona kopia cennika: `{type, seq, version, status, effectiveFrom, sha256}` | `#/cenniki` → zakładka „Historia"                 |
-| **Obowiązuje / Do wdrożenia**     | Dwa stany tej samej wersji zatwierdzonej — różni je data wejścia w życie.      | Kafelki osi w `#/cenniki` → „Przegląd"            |
-| **W przygotowaniu**               | Szkic (`DRAFT`). Nie żyje na osi czasu, dopóki go nie opublikujesz.            | Kafelek stanu + „W przygotowaniu" w historii      |
-| **Historyczny**                   | Wersja wyparta przez nowszą — tylko odczyt.                                    | Kafelek stanu „Historyczny"                       |
-| **DEFAULT / price_defaults.json** | Wzorzec do resetu + transfer między komputerami. Nie jest wersją.              | „Zapisz domyślne" / `npm run prices:export        | import | verify` |
+| Pojęcie                           | Co to jest                                                                     | Gdzie to widać                                                    |
+| --------------------------------- | ------------------------------------------------------------------------------ | ----------------------------------------------------------------- |
+| **LIVE**                          | Robocze tabele cennika (tryb rollbacku). Nie jest wersją.                      | Sekcja „Transfer plików" (opisana jako „na żywo")                 |
+| **Wersja**                        | Zamrożona kopia cennika: `{type, seq, version, status, effectiveFrom, sha256}` | Edytor `#/rury` / `#/studnie` → „Cennik" → panel „Wersje cennika" |
+| **Obowiązuje / Do wdrożenia**     | Dwa stany tej samej wersji zatwierdzonej — różni je data wejścia w życie.      | Pasek stanu w edytorze + panel „Wersje cennika"                   |
+| **W przygotowaniu**               | Szkic (`DRAFT`). Nie żyje na osi czasu, dopóki go nie opublikujesz.            | Kafelek stanu + „W przygotowaniu" w historii                      |
+| **Historyczny**                   | Wersja wyparta przez nowszą — tylko odczyt.                                    | Kafelek stanu „Historyczny"                                       |
+| **DEFAULT / price_defaults.json** | Wzorzec do resetu + transfer między komputerami. Nie jest wersją.              | „Zapisz domyślne" / `npm run prices:export                        | import | verify` |
 
 Dwie niezależne osie: **status** (cykl życia) i **effectiveFrom** (miejsce na osi czasu, zawsze UTC).
 Labelka wersji to `v{seq}-{RRRRMMDD}` z daty obowiązywania; `seq` jest per typ (rury/studnie/preco
@@ -69,19 +69,13 @@ własny cykl życia i własną oś czasu.
 
 ## 4. Gdzie klikać
 
-**Moduł SPA `#/cenniki`** (tylko administrator) — trzy widoki:
+**Edycja treści** lives w edytorach: `#/rury` i `#/studnie`, zakładka **„Cennik"**
+(miejsce pracy admina i miejsce deep-linków). Zapis w edytorze tworzy/aktualizuje
+**DRAFT**. W edytorze widać pasek stanu (Szkic vs Obowiązuje).
 
-| Widok        | Co widać                                                                                                                              |
-| ------------ | ------------------------------------------------------------------------------------------------------------------------------------- |
-| **Przegląd** | Kafelki osi (Rury, Studnie, PRECO) → kafelki stanów (Obowiązuje / Do wdrożenia / W przygotowaniu / Historyczny) z datą i liczebnością |
-| **Cennik**   | Read-only podgląd treści: kafelki osi → kafelki sekcji → kafelki pozycji (nazwa, cena, Δ vs obowiązująca)                             |
-| **Historia** | Kafelki wersji: badge stanu, data, autor, użycie, nota, akcje (Podgląd, Porównaj, Kontrola, Eksport, Klon, Usuń)                      |
-
-Panel jest **warstwą sterowania** — nie duplikuje edytora siatki cen.
-
-**Edycja treści** lives w istniejących edytorach: `#/rury` i `#/studnie`, zakładka **„Cennik"**
-(zostaje — to miejsce pracy admina i miejsce deep-linków). Zapis w edytorze tworzy/aktualizuje
-**DRAFT**. W edytorze widać pasek stanu (Szkic vs Obowiązuje) oraz link do panelu `#/cenniki`.
+Panel **„Wersje cennika"** (przycisk w zakładce „Cennik" edytora) pokazuje historię wersji
+danej osi: badge stanu, data, autor, użycie, nota, akcje (Podgląd, Porównaj, Kontrola,
+Eksport, Klon, Usuń). Jest **warstwą sterowania** — nie duplikuje edytora siatki cen.
 
 Uwaga o buforze: edytor czyta `DRAFT → ACTIVE → LIVE`, a oferta liczy z wersji obowiązującej.
 Szkic w edytorze **nie** oznacza, że oferta policzy z niego.

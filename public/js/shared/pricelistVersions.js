@@ -1751,16 +1751,16 @@
         }
         var data = (json.types || {})[type] || {};
         var parts = [];
+        // Brak szkicu nie jest komunikatem — edycja w siatce żyje w LIVE, więc
+        // badge „brak szkiców" tylko mylił. Pokazujemy wyłącznie istniejący szkic.
         if (data.draft) {
             parts.push(
                 '<span class="badge badge-muted">✎ Szkic ' + esc(data.draft.version) + '</span>'
             );
-        } else {
-            parts.push('<span class="badge badge-muted">✎ brak szkiców (bufor = edytor)</span>');
         }
         if (data.active) {
             parts.push(
-                '<span class="badge badge-ok">✓ Obowiązuje ' +
+                '<span class="badge badge-ok" title="Zmiany w edytorze nie ruszają ofert do publikacji.">✓ Obowiązuje ' +
                     esc(data.active.version) +
                     ' (od ' +
                     esc(stripDate(data.active.effectiveFrom)) +
@@ -1778,31 +1778,7 @@
                     ')</span>'
             );
         }
-        parts.push(
-            '<span class="text-muted">Zmiany w edytorze nie ruszają ofert do publikacji.</span>'
-        );
-        var inSpa = false;
-        try {
-            inSpa = !!window.parent && window.parent !== window;
-        } catch (_e2) {
-            inSpa = false;
-        }
-        if (inSpa) {
-            parts.push(
-                '<button class="btn btn-sm btn-secondary" data-pv-strip="panel" type="button">Panel cenników</button>'
-            );
-        }
         host.innerHTML = parts.join(' ');
-        var panelBtn = host.querySelector('[data-pv-strip="panel"]');
-        if (panelBtn) {
-            panelBtn.addEventListener('click', function () {
-                try {
-                    window.parent.location.hash = '#/cenniki';
-                } catch (_e3) {
-                    /* cross-origin — zostaj na edytorze */
-                }
-            });
-        }
     }
 
     window.pricelistVersions = {

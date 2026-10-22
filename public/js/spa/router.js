@@ -290,23 +290,6 @@
             src: 'zlecenia.html',
             logo: 'Kartoteka Zleceń',
             sections: []
-        },
-        cenniki: {
-            src: 'cenniki.html',
-            logo: 'Cenniki',
-            sections: [
-                {
-                    id: 'przeglad',
-                    icon: '<i data-lucide="layout-grid"></i>',
-                    label: 'Przegląd'
-                },
-                {
-                    id: 'cennik',
-                    icon: '<i data-lucide="clipboard-list"></i>',
-                    label: 'Cennik'
-                },
-                { id: 'historia', icon: '<i data-lucide="history"></i>', label: 'Historia' }
-            ]
         }
     };
 
@@ -579,13 +562,8 @@
                 }
 
                 // Ustaw przezroczyste tło body, aby tło rodzica było widoczne.
-                // Wyjątek: moduł Cenniki ma własne tło (jak rodzic) — przezroczyste
-                // body powoduje, że axe liczy kontrast na bieli i raportuje fałszywe
-                // naruszenia a11y dla każdego badge'a w panelu.
-                if (module !== 'cenniki') {
-                    iframeDoc.body.style.background = 'transparent';
-                    iframeDoc.documentElement.style.background = 'transparent';
-                }
+                iframeDoc.body.style.background = 'transparent';
+                iframeDoc.documentElement.style.background = 'transparent';
             } catch (e) {
                 // Ograniczenie cross-origin — nie powinno wystąpić, bo ta sama domena
                 logger.warn('router', '[SpaRouter] Could not modify iframe content:', e);
@@ -624,13 +602,6 @@
         const { module, params } = parseHash();
 
         if (!MODULES[module]) {
-            window.location.hash = '#/rury';
-            return;
-        }
-
-        // Moduł „Cenniki" (panel sterowania cennikami) — tylko dla administratora.
-        // BE wymaga requireAdmin na /api/pricelist-versions/*, więc FE nie udaje roli.
-        if (module === 'cenniki' && window.currentUser && window.currentUser.role !== 'admin') {
             window.location.hash = '#/rury';
             return;
         }
@@ -847,14 +818,6 @@
             }
 
             window.currentUser = authData.user;
-
-            // Kafelek „Cenniki" tylko dla admina (guard roli w navigate()).
-            const isAdminUser = authData.user && authData.user.role === 'admin';
-            const cennikiTile = document.getElementById('spa-app-cenniki');
-            if (cennikiTile && !isAdminUser) cennikiTile.classList.add('hidden');
-            if (!isAdminUser && (window.location.hash || '').indexOf('#/cenniki') === 0) {
-                window.location.hash = '#/rury';
-            }
 
             // Pobierz datę ostatniej zmiany domyślnych cenników
             if (typeof refreshDefaultsTimestamp === 'function') {

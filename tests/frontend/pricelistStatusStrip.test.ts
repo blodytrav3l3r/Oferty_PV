@@ -50,9 +50,7 @@ describe('frontend: pasek stanu cennika w edytorze', () => {
         expect(studnieState).toContain("tab === 'preco' ? 'preco' : 'studnie'");
     });
 
-    it('skrót do panelu cenników (tylko w SPA, bez cross-origin awarii)', () => {
-        expect(shared).toContain('data-pv-strip="panel"');
-        expect(shared).toContain("window.parent.location.hash = '#/cenniki'");
+    it('pasek nie wstrzykuje inline onclick (CSP-E)', () => {
         expect(shared).not.toContain('onclick=');
     });
 });
