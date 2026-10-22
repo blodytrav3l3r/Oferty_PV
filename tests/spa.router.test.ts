@@ -21,6 +21,12 @@ describe('spa router - Z-73 (restored surface)', () => {
         expect('/app.html#/' + moduleName).toBe('/app.html#/studnie');
     });
 
+    it('deep link pvtype=preco otwiera zakładkę PRECO w cenniku studni', () => {
+        const src = fs.readFileSync(path.resolve('public/js/spa/router.js'), 'utf-8');
+        expect(src).toMatch(/params\.pvtype === 'preco'/);
+        expect(src).toMatch(/selectCennikTab\('preco'\)/);
+    });
+
     it('parseHash obsługuje subview: #/studnie/historia → tab=historia', () => {
         const src = fs.readFileSync(path.resolve('public/js/spa/router.js'), 'utf-8');
         expect(src).toMatch(/const \[modulePath, subView\] = \(path \|\| 'rury'\)\.split\('\/'\)/);

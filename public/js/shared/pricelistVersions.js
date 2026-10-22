@@ -583,6 +583,54 @@
         return type;
     }
 
+    /** Hash SPA z edytorem cennika danego typu (PRECO to zakładka w module studnie). */
+    function editorHash(type) {
+        if (type === 'rury') return '#/rury?tab=pricelist';
+        if (type === 'preco') return '#/studnie?tab=pricelist&pvtype=preco';
+        return '#/studnie?tab=pricelist';
+    }
+
+    /**
+     * Zamyka panel wersji i wchodzi w edycję szkicu: grid czyta DRAFT i zapisuje
+     * do niego (nie do LIVE). Toast leci w oknie rodzica, bo iframe modułu może
+     * zostać przeładowany przy zmianie Rury ↔ Studnie.
+     */
+    function openEditorFor(type, label, created) {
+        window.closeModal('pv-versions-modal');
+        var msg =
+            (created ? 'Utworzono szkic ' : 'Edytujesz szkic ') +
+            (label || '') +
+            ' — „Zapisz" trafia do szkicu, LIVE bez zmian';
+        /** @type {any} */
+        var host = window;
+        try {
+            if (window.parent && window.parent !== window) host = window.parent;
+        } catch (_e) {
+            host = window;
+        }
+        var hash = editorHash(type);
+        var current = '';
+        try {
+            current = host.location.hash;
+        } catch (_e2) {
+            current = '';
+        }
+        if (current === hash) {
+            // Ten sam widok → router nie dostanie hashchange, zakładkę przełączamy lokalnie.
+            if (type === 'preco' && typeof window.selectCennikTab === 'function') {
+                window.selectCennikTab('preco');
+            }
+        } else {
+            try {
+                host.location.hash = hash;
+            } catch (_e3) {
+                /* brak dostępu do rodzica — zostaje bieżący widok */
+            }
+        }
+        var notify = typeof host.showToast === 'function' ? host.showToast : window.showToast;
+        if (typeof notify === 'function') notify(msg, 'info');
+    }
+
     function fmtEff(iso) {
         var local = iso;
         try {
@@ -686,14 +734,20 @@
                       escAttr(v.effectiveFrom || '') +
                       '" title="Wyślij roboczą na oś czasu (data przyszła = Do wdrożenia, data przeszła = korekta wsteczna z uzasadnieniem)">Opublikuj roboczą</button>'
                     : '';
-                // Klon dowolnej wersji do nowej roboczej (nie rollback — aktywna nietknięta).
-                var cloneBtn =
-                    '<button class="btn btn-sm btn-secondary" data-pv-act="clone" data-pv-id="' +
-                    escAttr(v.id) +
-                    '" title="Utwórz nową wersję roboczą jako kopię wersji ' +
-                    escAttr(v.version || '') +
-                    ' (aktywna wersja nie zmieni się; klon zaczyna jako Robocza — potem Opublikuj roboczą)">' +
-                    '<i data-lucide="history"></i> Klonuj do roboczej</button>';
+                // DRAFT → wejście w edycję tego szkicu (grid zapisuje do DRAFT).
+                // Reszta statusów jest nieedytowalna → klon jako szkic + wejście do edycji.
+                var isDraft = isEditableStatus(state);
+                var editBtn = isDraft
+                    ? '<button class="btn btn-sm btn-secondary" data-pv-act="edit" data-pv-version="' +
+                      escAttr(v.version || '') +
+                      '" title="Przejdź do edytora cennika — zapis trafia do tego szkicu (LIVE bez zmian)">' +
+                      '<i data-lucide="pencil"></i> Edytuj</button>'
+                    : '<button class="btn btn-sm btn-secondary" data-pv-act="clone" data-pv-id="' +
+                      escAttr(v.id) +
+                      '" title="Utwórz wersję roboczą jako kopię wersji ' +
+                      escAttr(v.version || '') +
+                      ' i przejdź do edycji (aktywna wersja nie zmieni się)">' +
+                      '<i data-lucide="history"></i> Edytuj jako szkic</button>';
                 // „Usuń" zawsze widoczny: enabled gdy wolno (allowlist albo
                 // archiwalna/nieznana-przyszła bez użycia), inaczej wyszarzony z powodem.
                 var reason = deleteReason(v);
@@ -706,9 +760,10 @@
                     (reason === null
                         ? ' title="Usuwa wersję i jej pozycje (tylko wersje nigdy nieaktywne)">Usuń</button>'
                         : ' disabled title="' + escAttr(reason) + '">Usuń</button>');
-                var isDraftish = isEditableStatus(state);
+                var isDraftish = isDraft;
                 var actions = manageable
                     ? '<div class="pv-actions">' +
+                      editBtn +
                       '<button class="btn btn-sm btn-secondary" data-pv-act="preview" data-pv-id="' +
                       escAttr(v.id) +
                       '" title="Podgląd zapisanych cen (tylko odczyt)"><i data-lucide="eye"></i> Podgląd</button>' +
@@ -725,7 +780,6 @@
                       (isDraftish ? ' (review)' : '') +
                       '</button>' +
                       activation +
-                      cloneBtn +
                       deleteBtn +
                       '</div>'
                     : '<span class="text-muted">—</span>';
@@ -1474,6 +1528,7 @@
             var act = btn.getAttribute('data-pv-act');
             var id = btn.getAttribute('data-pv-id');
             if (act === 'close') window.closeModal('pv-versions-modal');
+            else if (act === 'edit') openEditorFor(type, btn.getAttribute('data-pv-version'));
             else if (act === 'preview' && id) {
                 var pvPreview = window.pricelistVersions && window.pricelistVersions.openPreview;
                 if (typeof pvPreview === 'function') pvPreview(id, type);
@@ -1545,23 +1600,17 @@
                     apiJson(API + '/' + encodeURIComponent(id) + '/clone-draft', authed('POST'))
                         .then(function (json) {
                             var v = json.version || {};
-                            toast(
-                                'Utworzono wersję roboczą ' +
-                                    (v.version || '') +
-                                    ' jako kopię wersji — następny krok: Opublikuj roboczą',
-                                'success'
-                            );
-                            refreshTable(type, true);
+                            openEditorFor(type, v.version, true);
                         })
                         .catch(function (err) {
                             toast(friendlyError('Błąd klonowania', err), 'error');
                         });
                 };
                 var cloneMsg =
-                    'Utworzyć nową wersję roboczą jako kopię tej wersji? Aktywna wersja nie zmieni się. Klon zaczyna jako Robocza — potem użyj Opublikuj roboczą.';
+                    'Utworzyć wersję roboczą jako kopię tej wersji i przejść do jej edycji? Aktywna wersja nie zmieni się.';
                 pvConfirm(cloneMsg, {
-                    title: 'Klonuj do roboczej',
-                    okText: 'Klonuj',
+                    title: 'Edytuj jako szkic',
+                    okText: 'Utwórz i edytuj',
                     type: 'warning'
                 }).then(function (ok) {
                     if (ok) doClone();

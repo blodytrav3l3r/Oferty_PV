@@ -744,6 +744,19 @@
         // Iframe już gotowy (await wyżej) — nawigacja sekcji synchronicznie
         if (tabToShow) showSection(tabToShow);
 
+        // Deep link „Edytuj" PRECO: cennik PRECO to zakładka wewnątrz cennika studni.
+        if (module === 'studnie' && params.pvtype === 'preco') {
+            const iframeWin = iframe.contentWindow;
+            void waitForFunction(iframeWin, 'selectCennikTab').then((ok) => {
+                if (!ok) return;
+                try {
+                    iframeWin.selectCennikTab('preco');
+                } catch (e) {
+                    logger.warn('router', '[SpaRouter] Nie udało się otworzyć zakładki PRECO:', e);
+                }
+            });
+        }
+
         if (params.panel === 'versions') {
             const panelType =
                 module === 'rury' ? 'rury' : params.pvtype === 'preco' ? 'preco' : 'studnie';

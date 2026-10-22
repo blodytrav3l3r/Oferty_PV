@@ -153,8 +153,12 @@ zawsze `410 Gone` (`code: GONE`). Automatycznej aktywacji nie ma, bo stan wynika
 
 ## 9. Edycja, klon, usuwanie
 
-- **„Klonuj do roboczej"** (`POST /:id/clone-draft`) kopiuje wiersze dowolnej wersji do nowego DRAFT
-  (wersja obowiązująca nietknięta). Następny krok to zawsze „Opublikuj".
+- **„Edytuj"** w wierszu DRAFT zamyka panel i wchodzi w edytor cennika (Rury/Studnie, a dla PRECO
+  zakładka PRECO w cenniku studni). Pasek statusu pokazuje wtedy `✎ Szkic {labelka}` — zapis
+  w siatce trafia do szkicu, LIVE bez zmian.
+- **„Edytuj jako szkic"** (`POST /:id/clone-draft`) przy wersjach nieedytowalnych kopiuje wiersze
+  dowolnej wersji do nowego DRAFT i od razu otwiera edytor (wersja obowiązująca nietknięta).
+  Następny krok to zawsze „Opublikuj".
 - **Edycja treści**: tylko **DRAFT** (`PUT /:id` — podmiana wierszy + nowe SHA, audyt UPDATE).
   Wersja zatwierdzona jest niemutowalna: `403 IMMUTABLE_VERSION` — sklonuj do szkicu.
   Notatkę edytuje ołówek w kolumnie Notatki (jedyna edytowalna treść wersji zatwierdzonej).

@@ -49,9 +49,11 @@ describe('frontend: DRAFT ma drogę na oś czasu', () => {
         expect(panel).not.toContain("'/publish'");
         expect(panel).not.toContain("'/backdate'");
     });
-    it('klon mówi wprost: Klonuj do roboczej + następny krok', () => {
-        expect(panel).toContain('Klonuj do roboczej');
-        expect(panel).toContain('następny krok: Opublikuj roboczą');
+    it('wiersz ma wejście w edycję: Edytuj (DRAFT) i Edytuj jako szkic (reszta)', () => {
+        expect(panel).toContain('data-pv-act="edit"');
+        expect(panel).toContain('Edytuj jako szkic');
+        expect(panel).toContain('function openEditorFor(');
+        expect(panel).toContain("'#/studnie?tab=pricelist&pvtype=preco'");
     });
 });
 
