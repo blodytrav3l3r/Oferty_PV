@@ -3,6 +3,7 @@
  * najnowszy DRAFT danego typu (domyślnie po S5).
  */
 import prisma from '../../prismaClient';
+import { logger } from '../../utils/logger';
 import { createDraft, updateDraft } from './lifecycle';
 import { pricingFromVersion, resolveActivePricing } from './usage';
 import { requireType } from './validation';
@@ -11,25 +12,53 @@ import type { PricelistType } from './validation';
 
 export type PricelistWriteTarget = 'live' | 'draft';
 
-export function getPricelistWriteTarget(): PricelistWriteTarget {
-    // S5: domyślnie draft; rollback bez zmiany kodu = PRICELIST_WRITE_TARGET=live.
-    return process.env.PRICELIST_WRITE_TARGET === 'live' ? 'live' : 'draft';
+/**
+ * `If-Match: "<sha256>"` → sha256 szkicu. Brak nagłówka / `*` = brak kontroli
+ * (kompatybilność ze starymi klientami). Słabe walidatory (`W/"…"`) odrzucamy
+ * jak mocne — i tak porównujemy dokładny hash.
+ */
+export function parseIfMatch(header: unknown): string | undefined {
+    if (typeof header !== 'string') return undefined;
+    const value = header.trim().replace(/^W\//, '').replace(/^"|"$/g, '');
+    return value.length > 0 && value !== '*' ? value : undefined;
 }
 
-/** Najnowszy DRAFT typu albo null (jeden DRAFT na typ w praktyce). */
+let warnedLive = false;
+
+export function getPricelistWriteTarget(): PricelistWriteTarget {
+    // S5: domyślnie draft; rollback bez zmiany kodu = PRICELIST_WRITE_TARGET=live.
+    if (process.env.PRICELIST_WRITE_TARGET !== 'live') return 'draft';
+    // Rollback: zapis wraca do tabel LIVE, ale oferty dalej czytają wersje ACTIVE.
+    if (!warnedLive) {
+        warnedLive = true;
+        logger.warn(
+            'pricelist',
+            'PRICELIST_WRITE_TARGET=live — zapis trafia do tabel LIVE, oferty czytają ACTIVE (split-brain)'
+        );
+    }
+    return 'live';
+}
+
+/** Najnowszy DRAFT typu albo null (jeden DRAFT na typ — indeks częściowy). */
 export async function findLatestDraft(typeInput: unknown) {
     const type = requireType(typeInput);
     return prisma.pricelistVersion.findFirst({
         where: { type, status: 'DRAFT' },
-        orderBy: { createdAt: 'desc' }
+        // Tie-breaker: dwa szkice z tej samej milisekundy nie mogą wybrać losowo.
+        orderBy: [{ createdAt: 'desc' }, { seq: 'desc' }]
     });
 }
 
 /** Zapis wierszy do draftu: wznów istniejący DRAFT albo utwórz nowy. */
-export async function saveRowsToDraft(typeInput: unknown, rows: unknown, userId?: string) {
+export async function saveRowsToDraft(
+    typeInput: unknown,
+    rows: unknown,
+    userId?: string,
+    expectedSha?: string
+) {
     const type = requireType(typeInput);
     const draft = await findLatestDraft(type);
-    if (draft) return updateDraft(draft.id, rows, undefined, { userId });
+    if (draft) return updateDraft(draft.id, rows, undefined, { userId, expectedSha });
     return createDraft(type, rows, { createdBy: userId });
 }
 

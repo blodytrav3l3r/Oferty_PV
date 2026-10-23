@@ -43,6 +43,18 @@ describe('frontend: pasek stanu cennika w edytorze', () => {
         expect(shared).toContain('zmiany w edytorze nie ruszają ofert do publikacji');
     });
 
+    it('A5: baner mówi wprost, że siatka pokazuje szkic', () => {
+        expect(shared).toContain('pv-draft-banner');
+        expect(shared).toContain('Siatka pokazuje szkic');
+        expect(shared).toContain('oferty liczą z obowiązującej');
+        expect(utilities).toContain('.pv-draft-banner');
+    });
+
+    it('tryb zapisu LIVE jest widoczny w pasku (rollback = split-brain)', () => {
+        expect(shared).toContain('Tryb zapisu LIVE');
+        expect(shared).toContain("window.__pricelistWriteTarget === 'live'");
+    });
+
     it('edytory wołają pasek po załadowaniu cennika', () => {
         expect(ruryNav).toContain("renderStatusStrip('pricelist-status-strip', 'rury')");
         expect(studnieGlobals).toContain("renderStatusStrip('pricelist-status-strip', 'studnie')");

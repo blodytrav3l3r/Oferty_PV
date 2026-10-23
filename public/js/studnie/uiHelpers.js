@@ -592,9 +592,13 @@ function renamePłyty(_p) {
 
 async function saveStudnieProducts(data) {
     try {
+        const extra =
+            window.pricelistVersions && typeof window.pricelistVersions.draftHeaders === 'function'
+                ? await window.pricelistVersions.draftHeaders('studnie')
+                : {};
         const res = await fetch('/api/products-studnie', {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json', ...authHeaders() },
+            headers: { 'Content-Type': 'application/json', ...authHeaders(), ...extra },
             body: JSON.stringify({ data })
         });
         return res.ok;
@@ -638,9 +642,13 @@ async function loadPrecoPricing(options) {
  */
 async function savePrecoPricing(data) {
     try {
+        const extra =
+            window.pricelistVersions && typeof window.pricelistVersions.draftHeaders === 'function'
+                ? await window.pricelistVersions.draftHeaders('preco')
+                : {};
         const res = await fetch('/api/preco-pricing', {
             method: 'PUT',
-            headers: authHeaders(),
+            headers: { ...authHeaders(), 'Content-Type': 'application/json', ...extra },
             body: JSON.stringify({ data })
         });
         if (!res.ok) {

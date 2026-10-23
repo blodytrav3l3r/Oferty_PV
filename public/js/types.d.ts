@@ -24,6 +24,8 @@ interface ApiClient {
     put<T = unknown>(url: string, body?: unknown, opts?: ApiRequestOptions): Promise<T | null>;
     del<T = unknown>(url: string, opts?: ApiRequestOptions): Promise<T | null>;
     patch<T = unknown>(url: string, body?: unknown, opts?: ApiRequestOptions): Promise<T | null>;
+    /** Status ostatniej odpowiedzi błędnej (np. 409 = konflikt szkicu cennika). */
+    lastStatus?: number;
 }
 
 /* ===== Logger ===== */

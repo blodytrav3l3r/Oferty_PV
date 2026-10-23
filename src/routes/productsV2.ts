@@ -13,6 +13,7 @@ import {
     findLatestDraft,
     getEditorPricing,
     getPricelistWriteTarget,
+    parseIfMatch,
     saveRowsToDraft
 } from '../services/pricelist/writeTarget';
 import { buildXlsx } from '../utils/minimalXlsx';
@@ -102,7 +103,12 @@ router.put(
                 }));
 
                 if (getPricelistWriteTarget() === 'draft') {
-                    const draft = await saveRowsToDraft('rury', mapped, req.user?.id);
+                    const draft = await saveRowsToDraft(
+                        'rury',
+                        mapped,
+                        req.user?.id,
+                        parseIfMatch(req.get('If-Match'))
+                    );
                     return {
                         ok: true,
                         count: arr.length,
@@ -132,6 +138,10 @@ router.put(
             // D-FIX-2: invalid numeric input to 400 (przed tx — nic nie zapisane).
             if (err instanceof InvalidPriceError) {
                 res.status(400).json({ error: err.message });
+                return;
+            }
+            if (err instanceof PricelistVersionError) {
+                res.status(err.statusCode).json({ error: err.message, code: err.code });
                 return;
             }
             const message = err instanceof Error ? err.message : 'Unknown error';

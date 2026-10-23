@@ -9,7 +9,6 @@
 import express from 'express';
 import { z } from 'zod';
 import { requireAuth, requireAdmin } from '../middleware/auth';
-import { createModuleLock } from '../middleware/writeLock';
 import { PRICELIST_WRITE_LIMITER, READ_LIMITER } from '../middleware/rateLimiters';
 import { logger } from '../utils/logger';
 import {
@@ -33,22 +32,11 @@ import {
 import prisma from '../prismaClient';
 import { deriveState } from '../services/pricelist/validation';
 import { getVersionChecks, isChecksStale } from '../services/pricelist/checks';
+import { parseIfMatch } from '../services/pricelist/writeTarget';
 import { buildXlsx, type XlsxSheet } from '../utils/minimalXlsx';
 import { versionExportFilename } from '../utils/exportFilenames';
 
 const router = express.Router();
-
-/** Lock per-type (jak service: Map<type, lock>, nie globalny). */
-const routeLocks = new Map<string, ReturnType<typeof createModuleLock>>();
-
-function lockFor(type: string): ReturnType<typeof createModuleLock> {
-    let lock = routeLocks.get(type);
-    if (!lock) {
-        lock = createModuleLock();
-        routeLocks.set(type, lock);
-    }
-    return lock;
-}
 
 function sendVersionError(res: express.Response, err: unknown): void {
     if (err instanceof PricelistVersionError) {
@@ -278,14 +266,12 @@ router.post(
                 effectiveFrom?: string;
                 note?: string;
             };
-            const result = await lockFor(type).runWithLock(() =>
-                createDraft(type, rows, { effectiveFrom, note, createdBy: userIdOf(req) })
-            );
-            if (!result.acquired) {
-                res.status(429).json({ error: 'Zapis w toku, spróbuj ponownie za chwilę' });
-                return;
-            }
-            res.status(201).json({ version: result.value });
+            const result = await createDraft(type, rows, {
+                effectiveFrom,
+                note,
+                createdBy: userIdOf(req)
+            });
+            res.status(201).json({ version: result });
         } catch (err) {
             sendVersionError(res, err);
         }
@@ -339,7 +325,8 @@ router.put('/:id', requireAuth, requireAdmin, PRICELIST_WRITE_LIMITER, async (re
             return;
         }
         const version = await updateDraft(id, bodyParsed.data.rows, bodyParsed.data.note, {
-            userId: userIdOf(req)
+            userId: userIdOf(req),
+            expectedSha: parseIfMatch(req.get('If-Match'))
         });
         res.json({ version });
     } catch (err) {

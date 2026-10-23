@@ -9,6 +9,33 @@
 function _apiWarn(method, url, info) {
     logger.warn('api', method + ' ' + url + ' — ' + info);
 }
+
+/* 409 STALE_DRAFT: inny admin zapisał szkic — pokazujemy powód z serwera
+   i odświeżamy pasek (nowy sha), żeby kolejny zapis miał aktualny If-Match. */
+async function _apiHandleError(verb, url, res) {
+    _apiWarn(verb, url, 'HTTP ' + res.status);
+    // Callerzy widzą tylko null/boolean — status zostaje tu, by nie dublować toastów.
+    window.api.lastStatus = res.status;
+    if (res.status !== 409) return null;
+    let body = null;
+    try {
+        body = await res.json();
+    } catch {
+        return null;
+    }
+    if (!body || body.code !== 'STALE_DRAFT') return null;
+    if (typeof showToast === 'function') {
+        showToast(body.error || 'Szkic zmienił się — odśwież cennik', 'warning');
+    }
+    if (
+        window.pricelistVersions &&
+        typeof window.pricelistVersions.refreshStatusStrip === 'function'
+    ) {
+        window.pricelistVersions.refreshStatusStrip();
+    }
+    return null;
+}
+
 window.api = {
     async get(url) {
         try {
@@ -20,15 +47,19 @@ window.api = {
             return null;
         }
     },
-    async put(url, body) {
+    async put(url, body, opts) {
         try {
             const res = await fetchWithTimeout(url, {
                 method: 'PUT',
-                headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+                headers: {
+                    ...authHeaders(),
+                    'Content-Type': 'application/json',
+                    ...((opts && opts.headers) || {})
+                },
                 body: JSON.stringify(body)
             });
-            if (!res.ok) _apiWarn('PUT', url, 'HTTP ' + res.status);
-            return res.ok ? res.json() : null;
+            if (!res.ok) return _apiHandleError('PUT', url, res);
+            return res.json();
         } catch {
             _apiWarn('PUT', url, 'błąd sieci');
             return null;
@@ -133,8 +164,17 @@ async function loadProducts(options) {
  * @returns {Promise<boolean>} true jeśli zapis się powiódł
  */
 async function saveProducts(data) {
-    const result = await api.put('/api/products', { data });
+    const headers =
+        window.pricelistVersions && typeof window.pricelistVersions.draftHeaders === 'function'
+            ? await window.pricelistVersions.draftHeaders('rury')
+            : {};
+    const result = await api.put('/api/products', { data }, { headers });
     return result !== null;
+}
+
+/** Czy ostatni zapis padł na konflikcie wersji szkicu (powód pokazał `api`). */
+function isStaleDraftError() {
+    return window.api && window.api.lastStatus === 409;
 }
 
 /**
@@ -175,5 +215,6 @@ async function saveOffersData(data) {
 /* ===== Rejestracja globali ===== */
 window.loadProducts = loadProducts;
 window.saveProducts = saveProducts;
+window.isStaleDraftError = isStaleDraftError;
 window.loadOffers = loadOffers;
 window.saveOffersData = saveOffersData;

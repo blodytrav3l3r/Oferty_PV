@@ -46,6 +46,7 @@ interface VRow {
     version: string;
     status: string;
     effectiveFrom: string;
+    sha256?: string;
     createdBy?: string | null;
     updatedAt?: string | null;
 }
@@ -147,6 +148,7 @@ function version(partial: Partial<VRow> & Pick<VRow, 'id' | 'type'>): VRow {
         version: 'v1',
         status: 'APPROVED',
         effectiveFrom: '2020-01-01T00:00:00.000Z',
+        sha256: 'sha256-' + partial.id,
         ...partial
     };
 }
@@ -260,7 +262,8 @@ describe('GET /api/pricelist-versions/summary — kształt', () => {
             effectiveFrom: '2021-01-01T00:00:00Z',
             status: 'APPROVED',
             state: 'ACTIVE',
-            updatedAt: null
+            updatedAt: null,
+            sha256: 'sha256-r-new'
         });
         expect(res.body.types.rury.nextScheduled).toEqual({
             id: 'r-active-2998',
@@ -269,7 +272,8 @@ describe('GET /api/pricelist-versions/summary — kształt', () => {
             effectiveFrom: '2998-01-01T00:00:00Z',
             status: 'APPROVED',
             state: 'SCHEDULED',
-            updatedAt: null
+            updatedAt: null,
+            sha256: 'sha256-r-active-2998'
         });
         expect(res.body.types.studnie.active.id).toBe('s-active');
         expect(res.body.types.studnie.nextScheduled.id).toBe('s-sched');
@@ -279,6 +283,7 @@ describe('GET /api/pricelist-versions/summary — kształt', () => {
             'effectiveFrom',
             'id',
             'seq',
+            'sha256',
             'state',
             'status',
             'updatedAt',

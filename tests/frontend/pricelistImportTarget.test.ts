@@ -83,6 +83,31 @@ function stubCommon(sandbox, { fetchImpl, rowsBySheet }) {
     sandbox.authHeaders = () => ({ Authorization: 'Bearer t' });
     sandbox.appConfirm = async () => true;
     sandbox.showToast = jest.fn();
+    // Kontrakt realnego shared/pricelistVersions.js (ładowany w testach importu:
+    // brak szkicu → POST). Decyzję PUT/POST pokrywa pricelistDraftRows.test.ts.
+    sandbox.window.pricelistVersions = {
+        saveDraftRows: jest.fn(async (type, rows, note) => {
+            const trimmed = note == null ? '' : String(note).trim();
+            const res = await sandbox.fetch('/api/pricelist-versions/' + type + '/drafts', {
+                method: 'POST',
+                headers: { ...sandbox.authHeaders(), 'Content-Type': 'application/json' },
+                body: JSON.stringify(trimmed ? { rows, note: trimmed } : { rows })
+            });
+            let data = null;
+            try {
+                data = await res.json();
+            } catch (_e) {
+                data = null;
+            }
+            if (!res.ok) {
+                const err = new Error((data && data.error) || 'Błąd HTTP ' + res.status);
+                err.details = data && data.details;
+                throw err;
+            }
+            return data;
+        }),
+        refreshStatusStrip: jest.fn()
+    };
     sandbox.logger = { error: jest.fn(), warn: jest.fn(), info: jest.fn() };
     sandbox.ensureXlsx = async () => {};
     sandbox.XLSX = {

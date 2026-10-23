@@ -281,6 +281,8 @@ describe('S2a approveVersion', () => {
         const future = await createDraft('rury', [rura('r1')], {
             effectiveFrom: '2099-01-01T00:00:00.000Z'
         });
+        // Jeden szkic na typ: publikacja zwalnia miejsce na kolejny.
+        await approveVersion(future.id);
         const past = await createDraft('rury', [rura('r1')], {
             effectiveFrom: '2020-01-01T00:00:00.000Z'
         });
@@ -367,8 +369,9 @@ describe('S2a approveVersion', () => {
     test('kolizja (type, effectiveFrom) → 409 EFFECTIVE_COLLISION, drugi zostaje DRAFT', async () => {
         const eff = '2026-09-15T00:00:00.000Z';
         const a = await createDraft('rury', [rura('r1', 90)], { effectiveFrom: eff });
-        const b = await createDraft('rury', [rura('r1', 95)], { effectiveFrom: eff });
         await approveVersion(a.id);
+        // b powstaje po publikacji a — jeden szkic na typ.
+        const b = await createDraft('rury', [rura('r1', 95)], { effectiveFrom: eff });
         await expect(approveVersion(b.id)).rejects.toMatchObject({
             statusCode: 409,
             code: 'EFFECTIVE_COLLISION'
@@ -383,6 +386,10 @@ describe('S2a aliasy legacy', () => {
             effectiveFrom: '2099-01-01T00:00:00.000Z'
         });
         await expect(activate(future.id)).rejects.toMatchObject({ code: 'ACTIVATE_NOT_DUE' });
+
+        // activate nie rusza przyszłej wersji, więc zwalniamy slot bez publikacji.
+        const stored = versions.find((v) => v.id === future.id);
+        if (stored) stored.status = 'APPROVED';
 
         const past = await createDraft('rury', [rura('r1')], {
             effectiveFrom: '2020-01-01T00:00:00.000Z'

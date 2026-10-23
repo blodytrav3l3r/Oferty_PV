@@ -94,11 +94,14 @@
             body = null;
         }
         if (!res.ok) {
-            var err = /** @type {Error & { status?: number; code?: unknown }} */ (
-                new Error((body && body.error) || 'Błąd HTTP ' + res.status)
-            );
+            var err =
+                /** @type {Error & { status?: number; code?: unknown; details?: unknown }} */ (
+                    new Error((body && body.error) || 'Błąd HTTP ' + res.status)
+                );
             err.status = res.status;
             err.code = body && body.code;
+            // Import XLSX pokazuje błędy per komórka z `details`.
+            err.details = body && body.details;
             throw err;
         }
         return body;
@@ -1785,22 +1788,70 @@
      */
     var summaryCache = null;
 
-    /** Po klonie/publikacji zmienia się summary i etykiety — czyścimy oba cache. */
+    /** Referencja szkicu per typ (id + sha256) — `If-Match` i cel importu XLSX. */
+    var draftRefs = {};
+
+    function trackDraftRefs(json) {
+        var types = (json && json.types) || {};
+        Object.keys(TYPE_PREFIX).forEach(function (t) {
+            draftRefs[t] = (types[t] && types[t].draft) || null;
+        });
+    }
+
+    /** Po klonie/publikacji zmienia się summary i etykiety - czyścimy oba cache. */
     function clearSummaryCache() {
         summaryCache = null;
         labelCache = {};
+        draftRefs = {};
     }
 
     function fetchSummary() {
         if (!summaryCache) {
-            summaryCache = apiJson('/api/pricelist-versions/summary', authed('GET')).catch(
-                function () {
+            summaryCache = apiJson('/api/pricelist-versions/summary', authed('GET'))
+                .then(function (json) {
+                    trackDraftRefs(json);
+                    return json;
+                })
+                .catch(function () {
                     summaryCache = null;
                     return null;
-                }
-            );
+                });
         }
         return summaryCache;
+    }
+
+    /** Szkic typu z summary albo null (brak szkicu / brak sieci). */
+    async function draftRef(type) {
+        var t = type || editorType;
+        if (!(t in draftRefs)) await fetchSummary();
+        return draftRefs[t] || null;
+    }
+
+    /**
+     * Nagłówki warunkowego zapisu szkicu. Brak znanego sha = brak `If-Match`
+     * (serwer przyjmie zapis — starszy klient nie jest blokowany).
+     */
+    async function draftHeaders(type) {
+        var ref = await draftRef(type);
+        return ref && ref.sha256 ? { 'If-Match': '"' + ref.sha256 + '"' } : {};
+    }
+
+    /**
+     * Zapis wierszy jako szkic (import XLSX): istniejący szkic edytujemy
+     * (PUT + If-Match), nowy tworzymy (POST). Drugi szkic danego typu
+     * odrzuca serwer (409 DRAFT_EXISTS), więc POST tylko przy braku szkicu.
+     */
+    async function saveDraftRows(type, rows, note) {
+        var ref = await draftRef(type);
+        var payload = { rows: rows };
+        var trimmed = note == null ? '' : String(note).trim();
+        if (trimmed) payload.note = trimmed;
+        var opts = authed(ref ? 'PUT' : 'POST', payload);
+        if (ref) {
+            opts.headers = Object.assign({}, opts.headers, { 'If-Match': '"' + ref.sha256 + '"' });
+            return apiJson(API + '/' + encodeURIComponent(ref.id), opts);
+        }
+        return apiJson(API + '/' + encodeURIComponent(type) + '/drafts', opts);
     }
 
     function stripDate(iso) {
@@ -1978,6 +2029,24 @@
             } else {
                 var data = (json.types || {})[editorType] || {};
                 var parts = [];
+                // A5: siatka pokazuje szkic, nie cennik obowiązujący — musi to być widoczne.
+                if (data.draft) {
+                    parts.push(
+                        '<div class="pv-draft-banner">⚠ Siatka pokazuje szkic <strong>' +
+                            esc(data.draft.version) +
+                            '</strong>' +
+                            (data.active
+                                ? ' — oferty liczą z obowiązującej ' + esc(data.active.version)
+                                : ' — brak wersji obowiązującej') +
+                            '</div>'
+                    );
+                }
+                // Rollback PRICELIST_WRITE_TARGET=live: zapis omija wersje (split-brain).
+                if (window.__pricelistWriteTarget === 'live') {
+                    parts.push(
+                        '<span class="badge badge-warn" title="PRICELIST_WRITE_TARGET=live — zapis idzie do tabel LIVE, oferty czytają wersję obowiązującą.">⚠ Tryb zapisu LIVE</span>'
+                    );
+                }
                 if (data.draft) {
                     parts.push(
                         '<span class="badge badge-muted" title="Szkic nie trafia do ofert do publikacji.">' +
@@ -2254,6 +2323,9 @@
         setEditing: setEditing,
         openPublishDialog: openPublishDialog,
         createDraftCopy: createDraftCopy,
+        draftHeaders: draftHeaders,
+        draftRef: draftRef,
+        saveDraftRows: saveDraftRows,
         clearSummaryCache: clearSummaryCache,
         _apiJson: apiJson,
         _authed: authed

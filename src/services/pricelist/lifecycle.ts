@@ -121,6 +121,10 @@ export function versionLabel(type: PricelistType, seq: number, effectiveFromIso:
     return `${TYPE_PREFIX[type]}v${seq}-${y}${m}${day}`;
 }
 
+/** Jeden szkic na typ — pilnuje tego indeks `ux_pricelist_version_one_draft`. */
+const DRAFT_EXISTS_MESSAGE = (type: string, version: string) =>
+    `Szkic ${version} (${type}) już istnieje — edytuj go zamiast tworzyć kolejny`;
+
 async function createDraftTx(
     type: PricelistType,
     rows: VersionRows,
@@ -130,6 +134,17 @@ async function createDraftTx(
     for (let attempt = 1; attempt <= SEQ_RETRY_LIMIT; attempt++) {
         try {
             return await prisma.$transaction(async (tx) => {
+                const existingDraft = await tx.pricelistVersion.findFirst({
+                    where: { type, status: 'DRAFT' },
+                    select: { version: true }
+                });
+                if (existingDraft) {
+                    throw new PricelistVersionError(
+                        409,
+                        'DRAFT_EXISTS',
+                        DRAFT_EXISTS_MESSAGE(type, existingDraft.version)
+                    );
+                }
                 const agg = await tx.pricelistVersion.aggregate({
                     _max: { seq: true },
                     where: { type }
@@ -169,6 +184,18 @@ async function createDraftTx(
         } catch (err) {
             lastErr = err;
             if (!isUniqueViolation(err)) throw err;
+            // Wyścig dwóch createDraft: przegrany trafia w indeks jednego szkicu.
+            const clash = await prisma.pricelistVersion.findFirst({
+                where: { type, status: 'DRAFT' },
+                select: { version: true }
+            });
+            if (clash) {
+                throw new PricelistVersionError(
+                    409,
+                    'DRAFT_EXISTS',
+                    DRAFT_EXISTS_MESSAGE(type, clash.version)
+                );
+            }
         }
     }
     throw new PricelistVersionError(
@@ -188,7 +215,7 @@ export async function updateDraft(
     id: string,
     rowsInput?: unknown,
     noteInput?: unknown,
-    opts: { userId?: string } = {}
+    opts: { userId?: string; expectedSha?: string } = {}
 ): Promise<PricelistVersion> {
     const current = await prisma.pricelistVersion.findUnique({ where: { id } });
     if (!current) {
@@ -216,6 +243,15 @@ export async function updateDraft(
             const fresh = await tx.pricelistVersion.findUnique({ where: { id } });
             if (!fresh) {
                 throw new PricelistVersionError(404, 'NOT_FOUND', `Wersja ${id} nie istnieje`);
+            }
+            // If-Match: klient pracował na innym sha niż aktualny → nie nadpisujemy po cichu.
+            if (opts.expectedSha !== undefined && fresh.sha256 !== opts.expectedSha) {
+                throw new PricelistVersionError(
+                    409,
+                    'STALE_DRAFT',
+                    `Szkic ${fresh.version} zmienił się od czasu wczytania — odśwież dane`,
+                    { currentSha: fresh.sha256 }
+                );
             }
             assertEditable(fresh.status, id);
             const data: { sha256?: string; note?: string | null; updatedAt?: string } = {};
@@ -609,6 +645,17 @@ export async function cloneAsDraft(
     const lock = lockFor(type);
     const res = await lock.runWithLock(() =>
         prisma.$transaction(async (tx) => {
+            const existingDraft = await tx.pricelistVersion.findFirst({
+                where: { type, status: 'DRAFT' },
+                select: { version: true }
+            });
+            if (existingDraft) {
+                throw new PricelistVersionError(
+                    409,
+                    'DRAFT_EXISTS',
+                    DRAFT_EXISTS_MESSAGE(type, existingDraft.version)
+                );
+            }
             const agg = await tx.pricelistVersion.aggregate({
                 _max: { seq: true },
                 where: { type }

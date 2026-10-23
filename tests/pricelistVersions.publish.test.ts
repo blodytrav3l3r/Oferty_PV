@@ -340,6 +340,9 @@ describe('diff z top zmian cen', () => {
         const v1 = await createDraft('rury', [rura('r1', 100), rura('r2', 50)], {
             effectiveFrom: '2026-09-01T00:00:00.000Z'
         });
+        // Jeden szkic na typ: v1 musi być opublikowana, zanim powstanie v2.
+        const stored = versions.find((v) => v.id === v1.id);
+        if (stored) stored.status = 'APPROVED';
         const v2 = await createDraft('rury', [rura('r1', 110), rura('r3', 70)], {
             effectiveFrom: '2026-10-01T00:00:00.000Z'
         });

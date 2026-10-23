@@ -190,33 +190,12 @@ async function importStudnieFromExcel(event, opts) {
 
                     if (target === 'draft') {
                         try {
-                            const payload = window.pricelistXlsx.buildDraftPayload(
+                            // A6: jeden szkic na typ — helper robi PUT istniejącego / POST nowego.
+                            const draftBody = await window.pricelistVersions.saveDraftRows(
+                                'studnie',
                                 data.normalized,
                                 note
                             );
-                            const draftHeaders = Object.assign(
-                                {},
-                                typeof authHeaders === 'function' ? authHeaders() : {},
-                                { 'Content-Type': 'application/json' }
-                            );
-                            const draftRes = await fetch('/api/pricelist-versions/studnie/drafts', {
-                                method: 'POST',
-                                headers: draftHeaders,
-                                body: JSON.stringify(payload)
-                            });
-                            let draftBody = null;
-                            try {
-                                draftBody = await draftRes.json();
-                            } catch (_e) {
-                                draftBody = null;
-                            }
-                            if (!draftRes.ok) {
-                                const draftError = new Error(
-                                    (draftBody && draftBody.error) || 'Błąd HTTP ' + draftRes.status
-                                );
-                                draftError.details = draftBody && draftBody.details;
-                                throw draftError;
-                            }
                             const v = (draftBody && draftBody.version) || {};
                             showToast(
                                 'Wersja robocza zapisana' +
@@ -232,32 +211,11 @@ async function importStudnieFromExcel(event, opts) {
                                     const flat = window.pricelistXlsx.precoNestedToFlat(
                                         data.precoDataMap
                                     );
-                                    const precoPayload = window.pricelistXlsx.buildDraftPayload(
+                                    const precoBody = await window.pricelistVersions.saveDraftRows(
+                                        'preco',
                                         flat,
                                         note
                                     );
-                                    const precoRes = await fetch(
-                                        '/api/pricelist-versions/preco/drafts',
-                                        {
-                                            method: 'POST',
-                                            headers: draftHeaders,
-                                            body: JSON.stringify(precoPayload)
-                                        }
-                                    );
-                                    let precoBody = null;
-                                    try {
-                                        precoBody = await precoRes.json();
-                                    } catch (_e) {
-                                        precoBody = null;
-                                    }
-                                    if (!precoRes.ok) {
-                                        const precoError = new Error(
-                                            (precoBody && precoBody.error) ||
-                                                'Błąd HTTP ' + precoRes.status
-                                        );
-                                        precoError.details = precoBody && precoBody.details;
-                                        throw precoError;
-                                    }
                                     const pv = (precoBody && precoBody.version) || {};
                                     showToast(
                                         'Draft PRECO zapisany' +

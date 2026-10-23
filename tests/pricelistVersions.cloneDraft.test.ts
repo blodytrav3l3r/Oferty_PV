@@ -68,6 +68,16 @@ const versionDelegate = {
     }),
     findUnique: jest.fn(async ({ where }: { where: { id: string } }) => {
         return versions.find((v) => v.id === where.id) ?? null;
+    }),
+    findFirst: jest.fn(async ({ where }: { where?: { type?: string; status?: string } } = {}) => {
+        const w = where || {};
+        return (
+            versions.find(
+                (v) =>
+                    (w.type === undefined || v.type === w.type) &&
+                    (w.status === undefined || v.status === w.status)
+            ) ?? null
+        );
     })
 };
 
@@ -225,16 +235,15 @@ describe('POST /:id/clone-draft', () => {
         expect(audits[0]).toMatchObject({ entityType: 'pricelist_version', action: 'CLONE' });
     });
 
-    test('klonowanie z DRAFTu też dozwolone (dowolna wersja źródłowa)', async () => {
+    test('drugi klon przy istniejącym szkicu → 409 DRAFT_EXISTS', async () => {
         const src = seedActive();
         const first = await request(app).post(`/api/pricelist-versions/${src.id}/clone-draft`);
         expect(first.status).toBe(201);
         const second = await request(app).post(
             `/api/pricelist-versions/${first.body.version.id}/clone-draft`
         );
-        expect(second.status).toBe(201);
-        expect(second.body.version.status).toBe('DRAFT');
-        expect(second.body.version.seq).toBe(3);
-        expect(versions.filter((v) => v.status === 'DRAFT')).toHaveLength(2);
+        expect(second.status).toBe(409);
+        expect(second.body.code).toBe('DRAFT_EXISTS');
+        expect(versions.filter((v) => v.status === 'DRAFT')).toHaveLength(1);
     });
 });

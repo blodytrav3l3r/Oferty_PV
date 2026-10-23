@@ -63,6 +63,17 @@ const txMock = {
         findUnique: jest.fn(async ({ where }: { where: { id: string } }) => {
             return versions.find((v) => v.id === where.id) ?? null;
         }),
+        findFirst: jest.fn(
+            async ({ where }: { where: { type?: string; status?: string } } = { where: {} }) => {
+                return (
+                    versions.find(
+                        (v) =>
+                            (where.type === undefined || v.type === where.type) &&
+                            (where.status === undefined || v.status === where.status)
+                    ) ?? null
+                );
+            }
+        ),
         update: jest.fn(async ({ where, data }: { where: { id: string }; data: Partial<VRow> }) => {
             const v = versions.find((x) => x.id === where.id);
             if (!v) throw new Error('Not found');
@@ -205,12 +216,19 @@ describe('F1 pricelistVersions', () => {
         expect(v1.version).toBe('Rv1-20260901');
         expect(v1.status).toBe('DRAFT');
 
+        // Jeden szkic na typ: publikacja (APPROVED) zwalnia miejsce na kolejny.
+        const stored1 = versions.find((x) => x.id === v1.id);
+        if (stored1) stored1.status = 'APPROVED';
+
         const v2 = await createDraft('rury', [rura('r1', 110)], {
             effectiveFrom: '2026-10-01T00:00:00.000Z',
             note: 'podwyżka'
         });
         expect(v2.seq).toBe(2);
         expect(v2.version).toBe('Rv2-20261001');
+
+        const stored2 = versions.find((x) => x.id === v2.id);
+        if (stored2) stored2.status = 'APPROVED';
 
         // data w przeszłości też startuje jako DRAFT (oś czasu przy approve)
         const v3 = await createDraft('rury', [rura('r1', 90)], {
@@ -220,8 +238,23 @@ describe('F1 pricelistVersions', () => {
         expect(v3.status).toBe('DRAFT');
     });
 
-    test('concurrent 2× createDraft → unikalne seq, brak partial/orphan', async () => {
-        const barrier = Promise.all([
+    test('drugi DRAFT tego samego typu → 409 DRAFT_EXISTS, brak zapisu', async () => {
+        await createDraft('studnie', [
+            { id: 's1', name: 'S', category: 'C', componentType: 'dennica' }
+        ]);
+        await expect(
+            createDraft('studnie', [
+                { id: 's2', name: 'S2', category: 'C', componentType: 'dennica' }
+            ])
+        ).rejects.toMatchObject({ statusCode: 409, code: 'DRAFT_EXISTS' });
+        expect(versions.filter((v) => v.type === 'studnie' && v.status === 'DRAFT')).toHaveLength(
+            1
+        );
+        expect(itemsStudnie.length).toBe(1);
+    });
+
+    test('concurrent 2× createDraft → jeden szkic, brak partial/orphan', async () => {
+        const results = await Promise.allSettled([
             createDraft(
                 'studnie',
                 [{ id: 's1', name: 'S', category: 'C', componentType: 'dennica' }],
@@ -237,15 +270,37 @@ describe('F1 pricelistVersions', () => {
                 }
             )
         ]);
-        const [a, b] = await barrier;
-        const seqs = [a.seq, b.seq].sort();
-        expect(seqs).toEqual([1, 2]);
-        expect(a.version).not.toBe(b.version);
-        // brak partial: każda wersja ma swoje wiersze
-        expect(versions.length).toBe(2);
-        expect(itemsStudnie.length).toBe(2);
-        const vIds = new Set(itemsStudnie.map((i) => i.versionId));
-        expect(vIds.size).toBe(2);
+        const ok = results.filter((r) => r.status === 'fulfilled');
+        const rejected = results.filter((r) => r.status === 'rejected');
+        expect(ok).toHaveLength(1);
+        expect(rejected).toHaveLength(1);
+        expect(rejected[0]).toMatchObject({
+            status: 'rejected',
+            reason: { statusCode: 409, code: 'DRAFT_EXISTS' }
+        });
+        // brak partial: jeden szkic = jeden komplet wierszy
+        expect(versions).toHaveLength(1);
+        expect(itemsStudnie.length).toBe(1);
+    });
+
+    test('If-Match zgodny → zapis; niezgodny → 409 STALE_DRAFT z currentSha', async () => {
+        const v = await createDraft('rury', [rura('r1', 100)], {
+            effectiveFrom: '2026-09-01T00:00:00.000Z'
+        });
+        const ok = await updateDraft(v.id, [rura('r1', 120)], undefined, {
+            expectedSha: v.sha256
+        });
+        expect(ok.sha256).not.toBe(v.sha256);
+
+        await expect(
+            updateDraft(ok.id, [rura('r1', 130)], undefined, { expectedSha: v.sha256 })
+        ).rejects.toMatchObject({
+            statusCode: 409,
+            code: 'STALE_DRAFT',
+            details: { currentSha: ok.sha256 }
+        });
+        // niezgodny If-Match nic nie zapisuje (nadal 120)
+        expect(itemsRury.find((i) => i.versionId === v.id)?.price).toBe(120);
     });
 
     test('mutacja APPROVED odrzucona (403)', async () => {

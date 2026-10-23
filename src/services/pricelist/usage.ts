@@ -187,6 +187,8 @@ export interface VersionSummaryRef {
     state: PricelistState;
     /** Ostatnia zmiana wersji (szkic: zapis, zatwierdzona: publikacja). ISO UTC. */
     updatedAt: string | null;
+    /** Hash wierszy — klient odsyła go w `If-Match` przy zapisie szkicu. */
+    sha256: string;
 }
 
 export interface VersionsSummaryType {
@@ -212,13 +214,14 @@ const SUMMARY_REF_SELECT = {
     seq: true,
     effectiveFrom: true,
     status: true,
-    updatedAt: true
+    updatedAt: true,
+    sha256: true
 } as const;
 
 function toSummaryRef(
     version: Pick<
         PricelistVersion,
-        'id' | 'version' | 'seq' | 'effectiveFrom' | 'status' | 'updatedAt'
+        'id' | 'version' | 'seq' | 'effectiveFrom' | 'status' | 'updatedAt' | 'sha256'
     >
 ): VersionSummaryRef {
     return {
@@ -228,7 +231,8 @@ function toSummaryRef(
         effectiveFrom: version.effectiveFrom,
         status: version.status,
         state: deriveState(version.status, version.effectiveFrom),
-        updatedAt: version.updatedAt ?? null
+        updatedAt: version.updatedAt ?? null,
+        sha256: version.sha256
     };
 }
 

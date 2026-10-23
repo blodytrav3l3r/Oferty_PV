@@ -20,6 +20,7 @@ import {
     findLatestDraft,
     getEditorPricing,
     getPricelistWriteTarget,
+    parseIfMatch,
     saveRowsToDraft
 } from '../services/pricelist/writeTarget';
 import {
@@ -106,7 +107,8 @@ router.put(
                     const draft = await saveRowsToDraft(
                         'preco',
                         flattenPrecoRows(input),
-                        req.user?.id
+                        req.user?.id,
+                        parseIfMatch(req.get('If-Match'))
                     );
                     return { ok: true, target: 'draft', versionId: draft.id };
                 }
@@ -129,6 +131,10 @@ router.put(
             // D-FIX-2: invalid numeric input to 400 (throw przed tx).
             if (err instanceof InvalidPriceError) {
                 res.status(400).json({ error: err.message });
+                return;
+            }
+            if (err instanceof PricelistVersionError) {
+                res.status(err.statusCode).json({ error: err.message, code: err.code });
                 return;
             }
             const message = err instanceof Error ? err.message : 'Unknown error';

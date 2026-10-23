@@ -38,7 +38,10 @@ jest.mock('../src/services/pricelist/writeTarget', () => ({
     getPricelistWriteTarget: () => 'draft',
     findLatestDraft: (...args: unknown[]) => findLatestDraft(...args),
     saveRowsToDraft: (...args: unknown[]) => saveRowsToDraft(...args),
-    getEditorPricing: (...args: unknown[]) => getEditorPricing(...args)
+    getEditorPricing: (...args: unknown[]) => getEditorPricing(...args),
+    // Kopia parsera nagłówka (realny moduł ciągnie Prismę — tu tylko kontrakt).
+    parseIfMatch: (header: unknown) =>
+        typeof header === 'string' && header.length > 0 ? header.replace(/^"|"$/g, '') : undefined
 }));
 
 function app() {
@@ -85,7 +88,23 @@ describe('S5 draft routes', () => {
         expect(saveRowsToDraft).toHaveBeenCalledWith(
             'studnie',
             [expect.objectContaining({ id: 's1', price: 10 })],
-            'admin1'
+            'admin1',
+            undefined
+        );
+    });
+
+    it('studnie PUT przekazuje If-Match do zapisu szkicu', async () => {
+        const res = await request(app())
+            .put('/api/products-studnie')
+            .set('If-Match', '"abc123"')
+            .send({ data: [{ id: 's1', name: 'Studnia', price: 10 }] });
+
+        expect(res.status).toBe(200);
+        expect(saveRowsToDraft).toHaveBeenCalledWith(
+            'studnie',
+            [expect.objectContaining({ id: 's1' })],
+            'admin1',
+            'abc123'
         );
     });
 
@@ -103,7 +122,8 @@ describe('S5 draft routes', () => {
         expect(saveRowsToDraft).toHaveBeenCalledWith(
             'preco',
             expect.objectContaining({ konfig: expect.any(Array) }),
-            'admin1'
+            'admin1',
+            undefined
         );
     });
 

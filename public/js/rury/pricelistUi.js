@@ -245,7 +245,10 @@ async function savePriceList() {
     try {
         const ok = await saveProducts(products);
         if (!ok) {
-            showToast('Błąd zapisu cennika', 'error');
+            // 409 STALE_DRAFT: powód (i odświeżenie paska) pokazał już `api`.
+            if (typeof isStaleDraftError !== 'function' || !isStaleDraftError()) {
+                showToast('Błąd zapisu cennika', 'error');
+            }
             return;
         }
         _pricelistDirty = false;
@@ -508,38 +511,21 @@ async function importRuryFromExcel(event, opts) {
 
                     if (target === 'draft') {
                         try {
-                            const payload = window.pricelistXlsx.buildDraftPayload(data, note);
-                            const draftHeaders = Object.assign(
-                                {},
-                                typeof authHeaders === 'function' ? authHeaders() : {},
-                                { 'Content-Type': 'application/json' }
+                            // A6: jeden szkic na typ — helper robi PUT istniejącego / POST nowego.
+                            const draftBody = await window.pricelistVersions.saveDraftRows(
+                                'rury',
+                                data,
+                                note
                             );
-                            const draftRes = await fetch('/api/pricelist-versions/rury/drafts', {
-                                method: 'POST',
-                                headers: draftHeaders,
-                                body: JSON.stringify(payload)
-                            });
-                            let draftBody = null;
-                            try {
-                                draftBody = await draftRes.json();
-                            } catch (_e) {
-                                draftBody = null;
-                            }
-                            if (!draftRes.ok) {
-                                throw Object.assign(
-                                    new Error(
-                                        (draftBody && draftBody.error) ||
-                                            'Błąd HTTP ' + draftRes.status
-                                    ),
-                                    { details: draftBody && draftBody.details }
-                                );
-                            }
                             const v = (draftBody && draftBody.version) || {};
                             showToast(
                                 'Wersja robocza zapisana' +
                                     (v.version ? ' (' + v.version + ')' : ''),
                                 'success'
                             );
+                            if (typeof window.pricelistVersions.refreshStatusStrip === 'function') {
+                                window.pricelistVersions.refreshStatusStrip('rury');
+                            }
                         } catch (err) {
                             logger.error('pricelistUi', 'Draft import error:', err);
                             const issues = window.pricelistXlsx.issuesFromDetails(err.details);
