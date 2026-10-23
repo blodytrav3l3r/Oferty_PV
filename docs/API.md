@@ -652,10 +652,12 @@ Pola cenowe, ilości i wymiary nie przyjmują cichych zer. Endpointy `PUT /api/p
 
 Wymaga autoryzacji (administrator). FTS to dane pochodne — status i rebuild wyłącznie dla admina.
 
-| Metoda | Ścieżka                  | Opis                                                                                    |
-| ------ | ------------------------ | --------------------------------------------------------------------------------------- |
-| GET    | `/api/admin/fts-status`  | Szybka kontrola spójności FTS (tylko odczyty)                                           |
-| POST   | `/api/admin/fts-rebuild` | Pełna przebudowa FTS z tabel biznesowych (tylko na żądanie, `{ok, rows, lastProgress}`) |
+| Metoda | Ścieżka                       | Opis                                                                                                             |
+| ------ | ----------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| GET    | `/api/admin/fts-status`       | Szybka kontrola spójności FTS (tylko odczyty)                                                                    |
+| POST   | `/api/admin/fts-rebuild`      | Pełna przebudowa FTS z tabel biznesowych (tylko na żądanie, `{ok, rows, lastProgress}`)                          |
+| GET    | `/api/admin/sessions`         | Aktywne sesje per użytkownik (`{ok, data:[{userId, sessionCount, lastActivityAt}], summary}`; bez tokenów/hashy) |
+| DELETE | `/api/admin/sessions/:userId` | Wymuszone wylogowanie wszystkich sesji użytkownika (`{ok, revoked}`; idempotentne, własna sesja → 400)           |
 
 ---
 
@@ -665,4 +667,5 @@ Wymaga autoryzacji (administrator). FTS to dane pochodne — status i rebuild wy
 - Token: wyłącznie ciasteczko `authToken` (HttpOnly); nagłówek `x-auth-token` jest ignorowany.
 - W produkcji ciasteczko `authToken` ma flagę `Secure` (wymaga HTTPS).
 - Zmiana roli/hasła użytkownika przez admina (`PUT /api/users/:id`) natychmiast unieważnia jego sesje (stara cookie → `401`).
+- Wymuszone wylogowanie (`DELETE /api/admin/sessions/:userId`) kasuje sesje wskazanego użytkownika; jego następne żądanie kończy się `401`. Operacja jest idempotentna (`revoked: 0` = brak sesji), a własna sesja admina jest chroniona (`400 SELF_REVOKE_BLOCKED`).
 - Pełną dokumentację OpenAPI ze schematami i przykładami znajdziesz pod `/api/docs`.

@@ -4,6 +4,10 @@
 let adminUsers = [];
 let editingUserId = null;
 let selectedSubUsers = [];
+// Sesje: mapa userId -> {sessionCount, lastActivityAt}, źródło kafli i badge'y.
+let sessionByUser = {};
+let adminRefreshSeq = 0;
+const revokingUsers = new Set();
 
 function toggleSubUsersList() {
     const role = document.getElementById('new-user-role').value;
@@ -281,7 +285,7 @@ function showLoggedIn(user) {
 
     if (user.role === 'admin') {
         document.getElementById('admin-panel').classList.remove('hidden');
-        loadUsers();
+        refreshAdminSessions();
         loadYearLetter();
         loadMagazynCodes();
         initAiMlToggle();
@@ -415,6 +419,134 @@ async function doLogout() {
     showLogin();
 }
 
+function pluralSessions(n) {
+    const abs = Math.abs(Number(n)) % 100;
+    const last = abs % 10;
+    if (abs === 1) return 'sesja';
+    if (last >= 2 && last <= 4 && (abs < 12 || abs > 14)) return 'sesje';
+    return 'sesji';
+}
+
+function formatRelativeTime(ms) {
+    const value = Number(ms);
+    const diff = Date.now() - value;
+    if (!Number.isFinite(diff) || diff < 60 * 1000) return 'teraz';
+    if (diff < 60 * 60 * 1000) return Math.floor(diff / 60000) + ' min temu';
+    if (diff < 24 * 60 * 60 * 1000) return Math.floor(diff / 3600000) + ' godz. temu';
+    return new Date(value).toLocaleDateString('pl-PL');
+}
+
+function showToastSafe(message, type) {
+    if (typeof window !== 'undefined' && typeof window.showToast === 'function')
+        window.showToast(message, type);
+}
+
+/** Kafle sesji. `summary === null` = błąd odczytu (placeholdery, bez kłamstwa). */
+function renderSessionTiles(summary) {
+    const setText = (id, text) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = text;
+    };
+    const totalAccounts = adminUsers.length;
+    if (!summary) {
+        setText('session-tile-users', '—');
+        setText('session-tile-users-meta', 'brak danych o sesjach');
+        setText('session-tile-count', '—');
+        setText('session-tile-last', '—');
+        setText('session-tile-last-meta', 'w systemie');
+        return;
+    }
+    setText('session-tile-users', (summary.activeUsers || 0) + ' / ' + totalAccounts);
+    setText('session-tile-users-meta', totalAccounts === 1 ? 'konto' : 'kont');
+    setText('session-tile-count', String(summary.activeSessions || 0));
+    const last = Number(summary.lastActivityAt || 0);
+    if (last > 0) {
+        setText('session-tile-last', formatRelativeTime(last));
+        setText('session-tile-last-meta', new Date(last).toLocaleString('pl-PL'));
+    } else {
+        setText('session-tile-last', '—');
+        setText('session-tile-last-meta', 'brak aktywnych sesji');
+    }
+}
+
+/**
+ * Odświeża sesje i tabelę. Kolejność: sesje → users (badge w wierszach) → kafle
+ * (mianownik = liczba kont). Seq-guard: spóźniona odpowiedź nie nadpisze nowszej.
+ */
+async function refreshAdminSessions() {
+    const mySeq = ++adminRefreshSeq;
+    let summary = null;
+    try {
+        const res = await fetch('/api/admin/sessions', { credentials: 'same-origin' });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const json = await res.json();
+        if (mySeq !== adminRefreshSeq) return;
+        const map = {};
+        (json.data || []).forEach((row) => {
+            if (row && row.userId) map[row.userId] = row;
+        });
+        sessionByUser = map;
+        summary = json.summary || {};
+    } catch (e) {
+        if (mySeq !== adminRefreshSeq) return;
+        sessionByUser = {};
+        if (typeof logger !== 'undefined')
+            logger.warn('dashboard', 'sesje: ' + ((e && e.message) || 'błąd'));
+    }
+    await loadUsers();
+    if (mySeq !== adminRefreshSeq) return;
+    renderSessionTiles(summary);
+}
+
+/** Wymuszone wylogowanie użytkownika. Guard: jedno żądanie na usera. */
+async function revokeUserSessions(userId) {
+    if (!userId || revokingUsers.has(userId)) return;
+    // Destrukcyjna akcja: bez modala potwierdzenia nie działamy (fail-closed).
+    if (typeof window.appConfirm !== 'function') {
+        if (typeof logger !== 'undefined')
+            logger.error('dashboard', 'appConfirm niedostępny — revoke przerwany');
+        return;
+    }
+    // Guard PRZED modalem: drugi klik nie otwiera drugiego modala ani requestu.
+    revokingUsers.add(userId);
+    try {
+        const target = adminUsers.find((u) => u.id === userId);
+        const info = sessionByUser[userId];
+        const name = target
+            ? ((target.firstName || '') + ' ' + (target.lastName || '')).trim() || target.username
+            : 'tego użytkownika';
+        const countText = info
+            ? ' (' + info.sessionCount + ' ' + pluralSessions(info.sessionCount) + ')'
+            : '';
+        const confirmed = await window.appConfirm(
+            'Wylogować wszystkie sesje: ' + name + countText + '?',
+            { type: 'danger' }
+        );
+        if (!confirmed) return;
+        const res = await fetch('/api/admin/sessions/' + encodeURIComponent(userId), {
+            method: 'DELETE',
+            credentials: 'same-origin'
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+            showToastSafe(data.error || 'Nie udało się wylogować użytkownika', 'error');
+            return;
+        }
+        showToastSafe(
+            data.revoked > 0
+                ? 'Wylogowano: ' + data.revoked + ' ' + pluralSessions(data.revoked)
+                : 'Brak aktywnych sesji',
+            'info'
+        );
+        await refreshAdminSessions();
+    } catch (e) {
+        if (typeof logger !== 'undefined') logger.error('dashboard', 'revokeUserSessions:', e);
+        showToastSafe('Błąd połączenia z serwerem', 'error');
+    } finally {
+        revokingUsers.delete(userId);
+    }
+}
+
 async function loadUsers() {
     try {
         const res = await fetch('/api/users', { credentials: 'same-origin' });
@@ -436,11 +568,20 @@ async function loadUsers() {
 
         tbody.innerHTML = adminUsers
             .map((u) => {
+                const session = sessionByUser[u.id];
+                const sessionLine = session
+                    ? `<div class="user-email">${session.sessionCount} ${pluralSessions(session.sessionCount)} · ${escapeHtml(formatRelativeTime(session.lastActivityAt))}</div>`
+                    : '';
+                const isSelf =
+                    typeof currentUser !== 'undefined' && currentUser && currentUser.id === u.id;
+                const revokeTitle =
+                    'Wyloguj wszystkie sesje' + (session ? ' (' + session.sessionCount + ')' : '');
                 let html = `
       <tr>
         <td>
             <div class="user-name">${escapeHtml((u.firstName || '') + ' ' + (u.lastName || ''))}</div>
             <div class="user-email">${escapeHtml(u.email || 'brak email')}</div>
+            ${sessionLine}
         </td>
         <td><span class="token-badge text-warn">${escapeHtml(u.symbol || '??')}</span></td>
         <td class="cell-mono">${escapeHtml(u.username)}</td>
@@ -452,6 +593,7 @@ async function loadUsers() {
           <div class="admin-actions-cell">
             <button class="admin-action-btn edit-btn" aria-label="Edytuj użytkownika" data-csp="startEditUser" data-csp-args="${escapeHtmlAttr(JSON.stringify([u.id]))}"><i data-lucide="pencil"></i></button>
             ${u.username !== 'admin' ? `<button class="admin-action-btn delete-btn" aria-label="Usuń użytkownika" data-csp="deleteUser" data-csp-args="${escapeHtmlAttr(JSON.stringify([u.id]))}"><i data-lucide="trash-2"></i></button>` : ''}
+            ${isSelf ? '' : `<button class="admin-action-btn" aria-label="Wyloguj użytkownika" title="${revokeTitle}" data-csp="revokeUserSessions" data-csp-args="${escapeHtmlAttr(JSON.stringify([u.id]))}"><i data-lucide="log-out"></i></button>`}
           </div>
         </td>
       </tr>`;
@@ -639,7 +781,7 @@ async function createUser() {
             return;
         }
         cancelEditUser(); // Clears form and resets state
-        loadUsers();
+        refreshAdminSessions();
     } catch (_e) {
         errorEl.textContent = 'Błąd połączenia';
     }
@@ -649,7 +791,7 @@ async function deleteUser(id) {
     if (!(await appConfirm('Czy na pewno usunąć tego użytkownika?', { type: 'danger' }))) return;
     try {
         await fetch('/api/users/' + id, { method: 'DELETE', credentials: 'same-origin' });
-        loadUsers();
+        refreshAdminSessions();
     } catch (e) {
         logger.error('dashboard', 'deleteUser error:', e);
     }
@@ -965,6 +1107,7 @@ window.doLogout = doLogout;
 window.doLogin = doLogin;
 window.createUser = createUser;
 window.deleteUser = deleteUser;
+window.revokeUserSessions = revokeUserSessions;
 window.showChangePassword = showChangePassword;
 window.saveYearLetter = saveYearLetter;
 window.saveMagazynCodes = saveMagazynCodes;

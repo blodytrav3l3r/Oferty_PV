@@ -899,6 +899,38 @@
                         </div>
                     </div>
 
+                    <!-- Sesje: dane z GET /api/admin/sessions, fail-soft (bez toastu) -->
+                    <div class="admin-stats-row" id="session-tiles" aria-live="polite">
+                        <div class="admin-stat-card">
+                            <div class="admin-stat-icon admin"><i data-lucide="radio"></i></div>
+                            <div class="admin-stat-info">
+                                <div class="admin-stat-value" id="session-tile-users">—</div>
+                                <div class="admin-stat-label">Zalogowani</div>
+                                <div class="admin-stat-meta" id="session-tile-users-meta">—</div>
+                            </div>
+                        </div>
+                        <div class="admin-stat-card">
+                            <div class="admin-stat-icon pro">
+                                <i data-lucide="monitor-smartphone"></i>
+                            </div>
+                            <div class="admin-stat-info">
+                                <div class="admin-stat-value" id="session-tile-count">—</div>
+                                <div class="admin-stat-label">Aktywne sesje</div>
+                                <div class="admin-stat-meta">max 10 / konto</div>
+                            </div>
+                        </div>
+                        <div class="admin-stat-card">
+                            <div class="admin-stat-icon user"><i data-lucide="clock"></i></div>
+                            <div class="admin-stat-info">
+                                <div class="admin-stat-value" id="session-tile-last">—</div>
+                                <div class="admin-stat-label">Ostatnia aktywność</div>
+                                <div class="admin-stat-meta" id="session-tile-last-meta">
+                                    w systemie
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="card admin-card-nopad">
                         <div class="admin-table-wrap">
                             <table class="admin-table">

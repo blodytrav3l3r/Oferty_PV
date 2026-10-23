@@ -149,6 +149,27 @@ function lastActivityOf(session: { createdAt: bigint; lastActivity?: bigint | nu
 }
 
 /**
+ * Czy sesja jest jeszcze ważna. JEDNO źródło reguły dla requireAuth i listy
+ * admina — inaczej panel pokazałby sesję, której auth już nie honoruje.
+ * Strict `<` (na granicy 1h/7d sesja jest jeszcze ważna) — lustro historycznej
+ * logiki getSessionWithStatus. Legacy wiersz bez lastActivity = createdAt.
+ */
+export function isSessionActive(
+    session: { createdAt: bigint | number; lastActivity?: bigint | number | null },
+    now = Date.now()
+): boolean {
+    const created = Number(session.createdAt);
+    return (
+        !(created + SESSION_ABSOLUTE_MAX_MS < now) &&
+        !(
+            lastActivityOf(session as { createdAt: bigint; lastActivity?: bigint | null }) +
+                SESSION_IDLE_TIMEOUT_MS <
+            now
+        )
+    );
+}
+
+/**
  * Pobiera sesję po tokenie wraz z powodem wygaśnięcia.
  * - absolute: now - createdAt > SESSION_ABSOLUTE_MAX_MS (7d)
  * - idle: now - lastActivity > SESSION_IDLE_TIMEOUT_MS (1h)
@@ -163,15 +184,11 @@ export async function getSessionWithStatus(token: string | undefined): Promise<S
         });
         if (!session) return { session: null, reason: null };
         const now = Date.now();
-        if (Number(session.createdAt) + SESSION_ABSOLUTE_MAX_MS < now) {
-            await deleteSession(token);
-            return { session: null, reason: 'absolute' };
-        }
-        if (lastActivityOf(session) + SESSION_IDLE_TIMEOUT_MS < now) {
-            await deleteSession(token);
-            return { session: null, reason: 'idle' };
-        }
-        return { session: session as Session, reason: null };
+        if (isSessionActive(session, now)) return { session: session as Session, reason: null };
+        await deleteSession(token);
+        const reason: SessionExpiredReason =
+            Number(session.createdAt) + SESSION_ABSOLUTE_MAX_MS < now ? 'absolute' : 'idle';
+        return { session: null, reason };
     } catch (e) {
         logger.error('Auth', 'Błąd odczytu sesji', e);
         return { session: null, reason: null };
@@ -243,28 +260,70 @@ export async function deleteSession(token: string): Promise<void> {
 }
 
 /**
- * P1-D: kasuje WSZYSTKIE sesje użytkownika (np. po zmianie hasła).
+ * P1-D: kasuje WSZYSTKIE sesje użytkownika i PROPAGUJE błąd bazy.
  * `exceptToken` (surowy token) — sesja do zachowania (ta, z której zmieniono hasło).
  * Zwraca liczbę skasowanych.
+ *
+ * Osobno od deleteUserSessions, bo panel admina musi rozróżnić „0 sesji" od
+ * „nie udało się skasować" — inaczej pokazałby fałszywe powodzenie, a user
+ * zostałby zalogowany.
+ */
+export async function revokeUserSessions(userId: string, exceptToken?: string): Promise<number> {
+    const keep = exceptToken ? hashToken(exceptToken) : null;
+    const rows = await prisma.sessions.findMany({
+        where: { userId },
+        select: { token: true }
+    });
+    const victims = rows.map((r) => r.token).filter((t) => t !== keep);
+    if (victims.length === 0) return 0;
+    authCacheInvalidateUser(userId, keep ?? undefined);
+    const res = await prisma.sessions.deleteMany({
+        where: { token: { in: victims } }
+    });
+    return res.count;
+}
+
+/**
+ * Stary kontrakt dla istniejących konsumentów (zmiana roli/hasła, usunięcie
+ * usera): błąd DB nie wywraca operacji biznesowej — log + 0. Panel admina
+ * używa revokeUserSessions (rzuca), żeby nie kłamać o powodzeniu.
  */
 export async function deleteUserSessions(userId: string, exceptToken?: string): Promise<number> {
     try {
-        const keep = exceptToken ? hashToken(exceptToken) : null;
-        const rows = await prisma.sessions.findMany({
-            where: { userId },
-            select: { token: true }
-        });
-        const victims = rows.map((r) => r.token).filter((t) => t !== keep);
-        if (victims.length === 0) return 0;
-        authCacheInvalidateUser(userId, keep ?? undefined);
-        const res = await prisma.sessions.deleteMany({
-            where: { token: { in: victims } }
-        });
-        return res.count;
+        return await revokeUserSessions(userId, exceptToken);
     } catch (e) {
         logger.error('Auth', 'Błąd kasowania sesji użytkownika', e);
         return 0;
     }
+}
+
+export interface ActiveSessionSummary {
+    userId: string;
+    sessionCount: number;
+    lastActivityAt: number;
+}
+
+/**
+ * Aktywne sesje zgrupowane po użytkowniku (panel admina).
+ * Filtruje tą samą regułą co requireAuth — zero duplikacji definicji wygaśnięcia.
+ * Nie zwraca tokenów ani hashy (projekcja bez `token`).
+ */
+export async function getActiveSessionsByUser(now = Date.now()): Promise<ActiveSessionSummary[]> {
+    const rows = await prisma.sessions.findMany({
+        select: { userId: true, createdAt: true, lastActivity: true }
+    });
+    const byUser = new Map<string, ActiveSessionSummary>();
+    for (const row of rows) {
+        if (!isSessionActive(row, now)) continue;
+        const seen = lastActivityOf(row);
+        const prev = byUser.get(row.userId);
+        byUser.set(row.userId, {
+            userId: row.userId,
+            sessionCount: (prev?.sessionCount ?? 0) + 1,
+            lastActivityAt: Math.max(prev?.lastActivityAt ?? 0, seen)
+        });
+    }
+    return [...byUser.values()].sort((a, b) => b.lastActivityAt - a.lastActivityAt);
 }
 
 /**
