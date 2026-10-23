@@ -144,6 +144,20 @@ describe('Auth Routes - Z-70', () => {
             expect(res.headers['cache-control']).toBe('no-store');
         });
 
+        it('nie odpowiada 304 na If-None-Match (tożsamość zawsze pełnym 200)', async () => {
+            const first = await request(app)
+                .get('/api/auth/me')
+                .set('Cookie', 'authToken=test-token');
+            const etag = first.headers.etag;
+            expect(etag).toBeDefined();
+            const again = await request(app)
+                .get('/api/auth/me')
+                .set('Cookie', 'authToken=test-token')
+                .set('If-None-Match', etag);
+            expect(again.statusCode).toBe(200);
+            expect(again.body.user).toBeDefined();
+        });
+
         it('powinien zwrócić 401 gdy brak tokenu', async () => {
             const res = await request(app).get('/api/auth/me');
             expect(res.statusCode).toBe(401);

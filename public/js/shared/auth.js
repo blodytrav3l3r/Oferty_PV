@@ -61,12 +61,21 @@ function authReady(force) {
             cache: 'no-store'
         })
             .then(function (res) {
-                if (!res.ok) return null;
+                // 401/403 = brak sesji: wynik ostateczny, wolno go cache'owac.
+                if (res.status === 401 || res.status === 403) return null;
+                if (!res.ok) throw new Error('HTTP ' + res.status);
                 return res.json().then(function (data) {
                     return (data && data.user) || null;
                 });
             })
-            .catch(function () {
+            .catch(function (e) {
+                // Blad przejsciowy (siec/5xx): NIE cache'uj, inaczej jeden
+                // blip przy starcie zabija panele do konca zycia strony.
+                _authReadyPromise = null;
+                try {
+                    if (typeof logger !== 'undefined' && logger.warn)
+                        logger.warn('auth', 'authReady failed', e && e.message);
+                } catch {}
                 return null;
             });
     }

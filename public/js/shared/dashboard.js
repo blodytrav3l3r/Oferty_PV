@@ -54,7 +54,8 @@ window.addEventListener('DOMContentLoaded', async () => {
     };
     const authTimer = setTimeout(() => {
         if (authResolved) return;
-        authResolved = true;
+        // Nie zamykaj sprawy: spozniony (ale wazny) wynik /me ma jeszcze
+        // podmienic formularz na panel zamiast zostawiac usera na loginie.
         html.classList.remove('auth-pending');
         showLogin();
     }, 1500);

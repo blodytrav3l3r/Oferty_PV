@@ -181,6 +181,11 @@ router.get('/me', requireAuth, (req, res) => {
     // no-store: ETag/304 bez body wywalał `res.json()` w klientach i strona
     // udawała wylogowaną mimo ważnej sesji.
     res.set('Cache-Control', 'no-store');
+    // Samo no-store nie wystarcza: Express nadal honoruje If-None-Match i
+    // potrafi zwrócić 304 bez body (sprawdzone surowym HTTP). Tożsamość
+    // zawsze pełnym 200.
+    delete req.headers['if-none-match'];
+    delete req.headers['if-modified-since'];
     res.json({ user: authReq.user });
 });
 

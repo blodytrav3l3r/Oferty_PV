@@ -124,6 +124,26 @@ describe('wariant A: httpOnly-first (P1.4c/d)', () => {
         expect(calls).toBe(2);
     });
 
+    it('authReady() nie cache’uje błędu przejściowego (5xx) — ponawia i loguje', async () => {
+        const { sandbox } = baseSandbox();
+        loadAuth(sandbox);
+        let calls = 0;
+        sandbox.fetch = () => {
+            calls += 1;
+            if (calls === 1) return Promise.resolve({ ok: false, status: 500 });
+            return Promise.resolve({
+                ok: true,
+                status: 200,
+                json: () => Promise.resolve({ user: { id: 'u1' } })
+            });
+        };
+        const authReady = sandbox.window.authReady;
+        await expect(authReady()).resolves.toBeNull();
+        await expect(authReady()).resolves.toEqual({ id: 'u1' });
+        expect(calls).toBe(2);
+        expect(sandbox.logger.warn).toHaveBeenCalled();
+    });
+
     it('fetchJson wymusza credentials i odcina X-Auth-Token callera', async () => {
         const { sandbox } = baseSandbox();
         loadAuth(sandbox);
