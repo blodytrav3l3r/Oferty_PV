@@ -178,6 +178,9 @@ router.post('/logout', async (req, res) => {
 router.get('/me', requireAuth, (req, res) => {
     const authReq = req as AuthenticatedRequest;
     // req.user jest już wypełniony przez middleware requireAuth
+    // no-store: ETag/304 bez body wywalał `res.json()` w klientach i strona
+    // udawała wylogowaną mimo ważnej sesji.
+    res.set('Cache-Control', 'no-store');
     res.json({ user: authReq.user });
 });
 

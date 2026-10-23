@@ -2385,6 +2385,8 @@ export async function loadCarePanel() {
     if (panelLoading) return false;
     const panel = document.getElementById('followup-panel');
     if (!panel) return false;
+    // Sesja potwierdzona zanim strzelimy po dane (inaczej 401 na login page).
+    if (typeof window.authReady === 'function' && !(await window.authReady())) return false;
     panelLoading = true;
     showLoading();
     try {

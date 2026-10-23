@@ -98,6 +98,32 @@ describe('wariant A: httpOnly-first (P1.4c/d)', () => {
         expect(localStorage._size()).toBe(0);
     });
 
+    it('authReady() cache’uje jedno /api/auth/me, 401 → null, force odświeża', async () => {
+        const { sandbox } = baseSandbox();
+        loadAuth(sandbox);
+        let calls = 0;
+        let payload: any = { user: { id: 'u1' } };
+        sandbox.fetch = (url: string, opts: any) => {
+            calls += 1;
+            expect(url).toBe('/api/auth/me');
+            // no-store: 304 bez body psuł res.json() i udawał wylogowanie.
+            expect(opts.cache).toBe('no-store');
+            return Promise.resolve({
+                ok: Boolean(payload),
+                status: payload ? 200 : 401,
+                json: () => Promise.resolve(payload)
+            });
+        };
+        const authReady = sandbox.window.authReady;
+        await expect(authReady()).resolves.toEqual({ id: 'u1' });
+        await expect(authReady()).resolves.toEqual({ id: 'u1' });
+        expect(calls).toBe(1);
+
+        payload = null; // sesja wygasła / wylogowano
+        await expect(authReady(true)).resolves.toBeNull();
+        expect(calls).toBe(2);
+    });
+
     it('fetchJson wymusza credentials i odcina X-Auth-Token callera', async () => {
         const { sandbox } = baseSandbox();
         loadAuth(sandbox);

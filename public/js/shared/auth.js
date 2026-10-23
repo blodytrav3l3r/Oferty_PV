@@ -45,6 +45,35 @@ function authHeaders() {
 }
 
 /**
+ * Stan sesji dla modułów startujących na DOMContentLoaded: jedno
+ * GET /api/auth/me na stronę (cookie httpOnly), wynik `user` albo null.
+ * `no-store` — inaczej 304 bez body wywala `res.json()` i strona udaje
+ * wylogowaną mimo ważnej sesji.
+ * @param {boolean} [force] odśwież cache (po loginie/logoutcie)
+ * @returns {Promise<object|null>}
+ */
+var _authReadyPromise = null;
+function authReady(force) {
+    if (force) _authReadyPromise = null;
+    if (!_authReadyPromise) {
+        _authReadyPromise = fetch('/api/auth/me', {
+            credentials: 'same-origin',
+            cache: 'no-store'
+        })
+            .then(function (res) {
+                if (!res.ok) return null;
+                return res.json().then(function (data) {
+                    return (data && data.user) || null;
+                });
+            })
+            .catch(function () {
+                return null;
+            });
+    }
+    return _authReadyPromise;
+}
+
+/**
  * Okno trzymające brudny dokument (P1.3): najpierw lokalny draft, potem iframe.
  * @param {string} [moduleHint] moduł z __sokDescribeDirty (np. 'studnie')
  * @returns {Window|null}
@@ -357,4 +386,5 @@ if (typeof window !== 'undefined') {
 window.getAuthToken = getAuthToken;
 window.setAuthToken = setAuthToken;
 window.authHeaders = authHeaders;
+window.authReady = authReady;
 window.appLogout = appLogout;

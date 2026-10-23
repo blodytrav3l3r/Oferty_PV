@@ -88,6 +88,8 @@
     async function initPricelistTopbar() {
         var anchor = document.getElementById('app-version-toolbar');
         if (!anchor || document.getElementById('app-pricelists-toolbar')) return;
+        // Nie strzelaj po wersje przed potwierdzeniem sesji (401 w konsoli).
+        if (typeof window.authReady === 'function' && !(await window.authReady())) return;
         var el = document.createElement('span');
         el.id = 'app-pricelists-toolbar';
         el.className = 'header-version header-versions-stack text-muted';

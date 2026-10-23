@@ -136,6 +136,14 @@ describe('Auth Routes - Z-70', () => {
             expect(res.body.user).toBeDefined();
         });
 
+        it('powinien wyłączyć cache (304 bez body psuł res.json() w kliencie)', async () => {
+            const res = await request(app)
+                .get('/api/auth/me')
+                .set('Cookie', 'authToken=test-token');
+            expect(res.statusCode).toBe(200);
+            expect(res.headers['cache-control']).toBe('no-store');
+        });
+
         it('powinien zwrócić 401 gdy brak tokenu', async () => {
             const res = await request(app).get('/api/auth/me');
             expect(res.statusCode).toBe(401);

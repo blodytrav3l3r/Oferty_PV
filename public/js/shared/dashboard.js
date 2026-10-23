@@ -60,10 +60,18 @@ window.addEventListener('DOMContentLoaded', async () => {
     }, 1500);
     // Wariant A: jedyny test sesji to GET /api/auth/me na cookie httpOnly.
     // Brak pre-checku localStorage — cookie jest niewidoczne dla JS.
+    // authReady() (shared/auth.js) cache'uje wynik dla modułów startowych,
+    // więc carePanel/versionDisplay nie strzelają 401 przed logowaniem.
     try {
-        const res = await fetch('/api/auth/me', { credentials: 'same-origin' });
-        const data = await res.json();
-        if (data.user) finish(showLoggedIn, data.user);
+        let user = null;
+        if (typeof window.authReady === 'function') {
+            user = await window.authReady();
+        } else {
+            const res = await fetch('/api/auth/me', { credentials: 'same-origin' });
+            const data = await res.json();
+            user = data.user;
+        }
+        if (user) finish(showLoggedIn, user);
         else finish(showLogin);
     } catch (_e) {
         finish(showLogin);
@@ -376,6 +384,9 @@ async function doLogin(event) {
         // przez serwer). Odpowiedź może jeszcze zawierać data.token (shim
         // wsteczny backendu) — celowo ignorowane.
         sessionStorage.setItem('user', JSON.stringify(data.user));
+        // Cache authReady z fazy "niezalogowany" musi zniknąć, inaczej
+        // carePanel/versionDisplay czekają na reload.
+        if (typeof window.authReady === 'function') await window.authReady(true);
         showLoggedIn(data.user);
     } catch (_e) {
         errorEl.textContent = 'Błąd połączenia z serwerem';
