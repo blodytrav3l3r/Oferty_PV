@@ -880,21 +880,21 @@ a.admin-stat-card {
     color: var(--text-primary);
 }
 
-/* ── Kafle użytkowników (panel admina) ── */
+/* ── Kafle użytkowników (panel admina) — jeden kafel = jeden wiersz ── */
 .admin-users-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr));
-    gap: var(--tile-gap-md, 1rem);
+    display: flex;
+    flex-direction: column;
+    gap: var(--tile-gap-sm, 0.6rem);
 }
 
 .admin-user-tile {
     background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
-    padding: var(--tile-gap-sm-plus, 0.8rem);
+    padding: 0.55rem 0.9rem;
     display: flex;
-    flex-direction: column;
-    gap: var(--tile-gap-sm-plus, 0.8rem);
+    align-items: center;
+    gap: var(--tile-gap-md, 1rem);
     box-shadow: var(--shadow-sm);
     transition:
         border-color 0.15s ease-in-out,
@@ -910,6 +910,8 @@ a.admin-stat-card {
     display: flex;
     align-items: center;
     gap: var(--tile-gap-sm, 0.6rem);
+    flex: 0 0 260px;
+    min-width: 0;
 }
 
 .admin-user-avatar {
@@ -957,8 +959,10 @@ a.admin-stat-card {
 
 .admin-user-facts {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr) minmax(0, 0.55fr) minmax(0, 0.55fr);
     gap: var(--tile-gap-xs-plus, 0.5rem);
+    flex: 1 1 auto;
+    min-width: 0;
 }
 
 .admin-user-fact {
@@ -989,8 +993,8 @@ a.admin-stat-card {
     gap: var(--tile-gap-2xs, 0.3rem);
     font-size: var(--fs-xs);
     color: var(--text-muted);
-    border-top: 1px solid var(--border-table-subtle);
-    padding-top: var(--tile-gap-xs-plus, 0.5rem);
+    flex: 0 0 auto;
+    white-space: nowrap;
 }
 
 .admin-user-session.is-online {
@@ -1003,19 +1007,63 @@ a.admin-stat-card {
     height: 14px;
 }
 
+.admin-user-subs {
+    display: flex;
+    align-items: center;
+    gap: var(--tile-gap-xs, 0.35rem);
+    flex: 0 1 auto;
+    min-width: 0;
+    max-width: 340px;
+}
+
 .admin-user-subs .subordinate-label {
     display: flex;
     align-items: center;
     gap: var(--tile-gap-2xs, 0.3rem);
+    font-size: var(--fs-xs);
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.admin-user-subs .subordinate-badges {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow: hidden;
+    gap: var(--tile-gap-2xs, 0.3rem);
+}
+
+.admin-user-subs .sub-token {
+    white-space: nowrap;
 }
 
 .admin-user-actions {
     display: flex;
     gap: var(--tile-gap-xs, 0.35rem);
     justify-content: flex-end;
-    border-top: 1px solid var(--border-table-subtle);
-    padding-top: var(--tile-gap-xs-plus, 0.5rem);
-    margin-top: auto;
+    flex: 0 0 auto;
+    margin-left: auto;
+}
+
+/* Wąski ekran: kafel zawija się, ale zostaje jedną kartą (nie siatką). */
+@media (max-width: 900px) {
+    .admin-user-tile {
+        flex-wrap: wrap;
+        align-items: flex-start;
+    }
+
+    .admin-user-head,
+    .admin-user-facts,
+    .admin-user-subs {
+        flex: 1 1 100%;
+        max-width: none;
+    }
+
+    .admin-user-session {
+        white-space: normal;
+    }
 }
 
 /* ── Empty State ── */
