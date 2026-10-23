@@ -169,7 +169,7 @@ describe('carePanel', () => {
         vm.createContext(context);
         vm.runInContext(
             code +
-                '\nthis.__careTest = { loadCarePanel, careOpenContact, setQueueSort, setQueueView, setQueueRange, setQueueSearch, normalizeCareSearch, matchCareSearch, findOfferInQueue };',
+                '\nthis.__careTest = { loadCarePanel, careOpenContact, setQueueSort, setQueueView, setQueueRange, setQueueSearch, normalizeCareSearch, matchCareSearch, findOfferInQueue, renderNotifications };',
             context
         );
         return { els, listeners, context };
@@ -283,6 +283,81 @@ describe('carePanel', () => {
         // P4: SLA-box dla każdej roli (user edytuje własne progi).
         expect(els['care-sla-box'].hidden).toBe(false);
         expect(calls.filter((c) => c.includes('/api/care/')).length).toBeGreaterThanOrEqual(3);
+    });
+
+    test('grupowanie: SLA + termin kontaktu tej samej oferty = jedna karta, dwa pill', async () => {
+        const calls: string[] = [];
+        const { els, context } = load({
+            calls,
+            fetchMock: (url: string) => {
+                if (url.endsWith('/api/care/notifications/read')) return okJson({ ok: true });
+                return okJson({});
+            }
+        });
+        (context as any).__careTest.renderNotifications(
+            [
+                {
+                    id: 'n1',
+                    offerKind: 'studnie',
+                    offerId: 'o1',
+                    type: 'SLA_BREACH',
+                    number: 'OS/1',
+                    readAt: null
+                },
+                {
+                    id: 'n2',
+                    offerKind: 'studnie',
+                    offerId: 'o1',
+                    type: 'CALLBACK_DUE',
+                    number: 'OS/1',
+                    readAt: null
+                },
+                {
+                    id: 'n3',
+                    offerKind: 'rury',
+                    offerId: 'o2',
+                    type: 'SLA_BREACH',
+                    number: 'OF/2',
+                    readAt: null
+                }
+            ],
+            3,
+            null,
+            false
+        );
+        const list = els['care-notif-list'];
+        const byClass = (cls: string): any[] => {
+            const out: any[] = [];
+            const walk = (n: any): void => {
+                if (n.className && String(n.className).split(' ').includes(cls)) out.push(n);
+                for (const c of n.children || []) walk(c);
+            };
+            walk(list);
+            return out;
+        };
+        // 3 powiadomienia → 2 oferty; podsumowanie mówi wprost, ile ich jest.
+        expect(byClass('care-notif-summary')[0].textContent).toBe('2 oferty · 3 alerty');
+        expect(byClass('care-notif-grid')[0].children).toHaveLength(2);
+
+        const pills: string[] = [];
+        const collectPills = (n: any): void => {
+            if (n.className && String(n.className).split(' ').includes('ops-pill') && n.textContent)
+                pills.push(n.textContent);
+            for (const c of n.children || []) collectPills(c);
+        };
+        collectPills(list);
+        expect(pills).toContain('Przekroczony SLA');
+        expect(pills).toContain('Termin kontaktu');
+
+        // Odczyt grupy = jeden request zbiorczy z oboma id oferty.
+        const read = byClass('care-icon-btn').find((b) => b.attrs && 'data-notif-read' in b.attrs);
+        expect(read).not.toBeNull();
+        for (const fn of read.handlers || []) await fn();
+        const bulk = calls.filter((c) => c === 'POST /api/care/notifications/read');
+        expect(bulk).toHaveLength(1);
+        expect(
+            calls.filter((c) => c.includes('/read') && !c.endsWith('/notifications/read'))
+        ).toHaveLength(0);
     });
 
     test('NO_CONTACT: jeden pill zamiast sprzecznych + klient w notyfikacji', async () => {

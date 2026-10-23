@@ -902,7 +902,7 @@
                     <!-- Sesje: dane z GET /api/admin/sessions, fail-soft (bez toastu) -->
                     <div class="admin-stats-row" id="session-tiles" aria-live="polite">
                         <div class="admin-stat-card">
-                            <div class="admin-stat-icon admin"><i data-lucide="radio"></i></div>
+                            <div class="admin-stat-icon admin"><i data-lucide="activity"></i></div>
                             <div class="admin-stat-info">
                                 <div class="admin-stat-value" id="session-tile-users">—</div>
                                 <div class="admin-stat-label">Zalogowani</div>
@@ -911,7 +911,7 @@
                         </div>
                         <div class="admin-stat-card">
                             <div class="admin-stat-icon pro">
-                                <i data-lucide="monitor-smartphone"></i>
+                                <i data-lucide="monitor"></i>
                             </div>
                             <div class="admin-stat-info">
                                 <div class="admin-stat-value" id="session-tile-count">—</div>
@@ -931,29 +931,17 @@
                         </div>
                     </div>
 
-                    <div class="card admin-card-nopad">
-                        <div class="admin-table-wrap">
-                            <table class="admin-table">
-                                <thead>
-                                    <tr>
-                                        <th class="col-employee">Pracownik</th>
-                                        <th class="col-sym">Sym.</th>
-                                        <th class="col-login">Login</th>
-                                        <th class="col-contact">Kontakt</th>
-                                        <th class="col-role">Rola</th>
-                                        <th class="col-order-num">Nr Zam.</th>
-                                        <th class="col-prod-num">Nr Zlec.</th>
-                                        <th class="col-actions">Akcje</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="users-table-body"></tbody>
-                            </table>
-                            <div id="admin-empty-state" class="admin-empty-state hidden">
-                                <i data-lucide="users-x"></i>
-                                <div class="empty-title">Brak użytkowników</div>
-                                <div class="empty-desc">Dodaj pierwszego użytkownika poniżej</div>
-                            </div>
-                        </div>
+                    <!-- Użytkownicy: kafle per konto (render w loadUsers) -->
+                    <div
+                        class="admin-users-grid"
+                        id="users-tiles"
+                        role="list"
+                        aria-live="polite"
+                    ></div>
+                    <div id="admin-empty-state" class="admin-empty-state hidden">
+                        <i data-lucide="users-x"></i>
+                        <div class="empty-title">Brak użytkowników</div>
+                        <div class="empty-desc">Dodaj pierwszego użytkownika poniżej</div>
                     </div>
 
                     <div class="admin-section-title">

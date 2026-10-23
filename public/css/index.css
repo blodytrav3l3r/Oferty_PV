@@ -880,6 +880,144 @@ a.admin-stat-card {
     color: var(--text-primary);
 }
 
+/* ── Kafle użytkowników (panel admina) ── */
+.admin-users-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr));
+    gap: var(--tile-gap-md, 1rem);
+}
+
+.admin-user-tile {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: var(--tile-gap-sm-plus, 0.8rem);
+    display: flex;
+    flex-direction: column;
+    gap: var(--tile-gap-sm-plus, 0.8rem);
+    box-shadow: var(--shadow-sm);
+    transition:
+        border-color 0.15s ease-in-out,
+        box-shadow 0.15s ease-in-out;
+}
+
+.admin-user-tile:hover {
+    border-color: var(--accent-border-medium);
+    box-shadow: var(--shadow-lg);
+}
+
+.admin-user-head {
+    display: flex;
+    align-items: center;
+    gap: var(--tile-gap-sm, 0.6rem);
+}
+
+.admin-user-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: var(--fw-extrabold);
+    background: var(--accent-bg);
+    color: var(--accent-hover);
+    flex-shrink: 0;
+}
+
+.admin-user-id {
+    flex: 1;
+    min-width: 0;
+}
+
+.admin-user-id .user-name {
+    font-weight: var(--fw-bold);
+    color: var(--text-primary);
+    font-size: var(--fs-md);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.admin-user-login {
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-size: var(--fs-xs);
+    color: var(--accent-hover);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.admin-user-badges {
+    display: flex;
+    align-items: center;
+    gap: var(--tile-gap-2xs, 0.3rem);
+    flex-shrink: 0;
+}
+
+.admin-user-facts {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--tile-gap-xs-plus, 0.5rem);
+}
+
+.admin-user-fact {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.admin-user-fact .fact-label {
+    font-size: var(--fs-xs);
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+
+.admin-user-fact .fact-value {
+    font-size: var(--fs-base);
+    color: var(--text-secondary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.admin-user-session {
+    display: flex;
+    align-items: center;
+    gap: var(--tile-gap-2xs, 0.3rem);
+    font-size: var(--fs-xs);
+    color: var(--text-muted);
+    border-top: 1px solid var(--border-table-subtle);
+    padding-top: var(--tile-gap-xs-plus, 0.5rem);
+}
+
+.admin-user-session.is-online {
+    color: var(--success-hover);
+}
+
+.admin-user-session i,
+.admin-user-session svg {
+    width: 14px;
+    height: 14px;
+}
+
+.admin-user-subs .subordinate-label {
+    display: flex;
+    align-items: center;
+    gap: var(--tile-gap-2xs, 0.3rem);
+}
+
+.admin-user-actions {
+    display: flex;
+    gap: var(--tile-gap-xs, 0.35rem);
+    justify-content: flex-end;
+    border-top: 1px solid var(--border-table-subtle);
+    padding-top: var(--tile-gap-xs-plus, 0.5rem);
+    margin-top: auto;
+}
+
 /* ── Empty State ── */
 .admin-empty-state {
     display: flex;
@@ -2672,6 +2810,13 @@ html[data-theme='light'] body.index-page.logged-in::before {
     flex: 0 0 auto;
     width: 100%;
     margin: 0 0 8px;
+}
+
+/* Grupowanie per oferta: ile ofert kryje się za liczbą alertów. */
+.care-notif-summary {
+    font-size: var(--fs-xs);
+    color: var(--text-muted);
+    margin: 0 0 6px;
 }
 @media (max-width: 900px) {
     .care-dashboard-grid {

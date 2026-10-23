@@ -377,6 +377,14 @@ function notifCountText(n) {
     return String(n) + ' alertów';
 }
 
+function pluralOferty(n) {
+    const abs = Math.abs(Number(n)) % 100;
+    const last = abs % 10;
+    if (abs === 1) return 'oferta';
+    if (last >= 2 && last <= 4 && (abs < 12 || abs > 14)) return 'oferty';
+    return 'ofert';
+}
+
 function fmtDelay(overdueDays, createdAt) {
     if (overdueDays > 0) {
         if (overdueDays >= 1) return 'Opóźnienie: ' + String(overdueDays) + 'd';
@@ -536,11 +544,41 @@ function renderNotifications(items, unreadCount, mailboxUserId, hasOverflow) {
     const byOffer = new Map(
         queueCache.map((it) => [String(it.offerKind) + ':' + String(it.offerId), it])
     );
+    // Jedna karta na ofertę: SLA i termin kontaktu to dwa powiadomienia tej samej
+    // oferty — bez grupowania użytkownik widzi ten sam komunikat dwa razy.
+    const groups = [];
+    const groupByKey = new Map();
+    for (const item of items.slice(0, 20)) {
+        const key = String(item.offerKind) + ':' + String(item.offerId);
+        const group = groupByKey.get(key);
+        if (group) group.items.push(item);
+        else {
+            const created = { key, items: [item] };
+            groupByKey.set(key, created);
+            groups.push(created);
+        }
+    }
+    const shownNotifications = groups.reduce((sum, g) => sum + g.items.length, 0);
+    if (groups.length < shownNotifications) {
+        const summary = document.createElement('div');
+        summary.className = 'care-notif-summary';
+        summary.textContent =
+            groups.length +
+            ' ' +
+            pluralOferty(groups.length) +
+            ' · ' +
+            notifCountText(shownNotifications);
+        list.appendChild(summary);
+    }
     const grid = document.createElement('div');
     grid.className = 'care-notif-grid';
-    for (const n of items.slice(0, 20)) {
+    for (const group of groups) {
+        // Pola wspólne dla oferty bierzemy z najnowszego powiadomienia grupy.
+        const n = group.items[0];
+        const groupTypes = group.items.map((x) => x.type);
+        const unreadItems = group.items.filter((x) => !x.readAt);
         const kindKey = String(n.offerKind || '').toLowerCase() === 'studnie' ? 'studnie' : 'rury';
-        const isRead = !!n.readAt;
+        const isRead = unreadItems.length === 0;
         const card = document.createElement('div');
         card.className =
             'care-notif-card ' +
@@ -574,10 +612,12 @@ function renderNotifications(items, unreadCount, mailboxUserId, hasOverflow) {
         kind.className = 'ops-pill care-kind-pill is-' + kindKey;
         kind.textContent = kindKey === 'studnie' ? 'STUDNIE' : 'RURY';
         badges.appendChild(kind);
-        const pill = document.createElement('span');
-        pill.className = NOTIF_CLASS[n.type] || 'ops-pill';
-        pill.textContent = NOTIF_LABEL[n.type] || String(n.type);
-        badges.appendChild(pill);
+        for (const type of groupTypes) {
+            const pill = document.createElement('span');
+            pill.className = NOTIF_CLASS[type] || 'ops-pill';
+            pill.textContent = NOTIF_LABEL[type] || String(type);
+            badges.appendChild(pill);
+        }
         l1.appendChild(badges);
         card.appendChild(l1);
         // L2: nr klienta + nazwa (bold) + obiekt (lewo), opóźnienie (prawo).
@@ -668,21 +708,36 @@ function renderNotifications(items, unreadCount, mailboxUserId, hasOverflow) {
                 const read = mkIconBtn(
                     'check',
                     'Oznacz jako przeczytane (' +
-                        (NOTIF_LABEL[n.type] || String(n.type)) +
+                        groupTypes.map((t) => NOTIF_LABEL[t] || String(t)).join(', ') +
                         '): ' +
                         who,
                     'data-notif-read'
                 );
+                // Grupa = kilka powiadomień tej samej oferty: odczyt zbiorczy,
+                // inaczej karta wracałaby jako nieprzeczytana po jednym kliknięciu.
+                const readIds = unreadItems.map((x) => String(x.id));
                 read.addEventListener('click', async () => {
                     if (read.disabled) return;
                     read.disabled = true;
                     let ok = false;
                     try {
-                        const resp = await fetch(
-                            '/api/care/notifications/' + encodeURIComponent(String(n.id)) + '/read',
-                            { method: 'POST', credentials: 'same-origin' }
-                        );
-                        ok = !!resp && resp.ok;
+                        if (readIds.length === 1) {
+                            const resp = await fetch(
+                                '/api/care/notifications/' +
+                                    encodeURIComponent(readIds[0]) +
+                                    '/read',
+                                { method: 'POST', credentials: 'same-origin' }
+                            );
+                            ok = !!resp && resp.ok;
+                        } else {
+                            const resp = await fetch('/api/care/notifications/read', {
+                                method: 'POST',
+                                credentials: 'same-origin',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ ids: readIds })
+                            });
+                            ok = !!resp && resp.ok;
+                        }
                     } catch {
                         ok = false;
                     }
@@ -691,13 +746,16 @@ function renderNotifications(items, unreadCount, mailboxUserId, hasOverflow) {
                         careToastError('Nie oznaczono jako przeczytane — spróbuj ponownie.');
                         return;
                     }
-                    try {
-                        n.readAt = new Date().toISOString();
-                    } catch {
-                        /* best-effort */
+                    const stamp = new Date().toISOString();
+                    for (const x of unreadItems) {
+                        try {
+                            x.readAt = stamp;
+                        } catch {
+                            /* best-effort */
+                        }
                     }
                     careBumpPolling();
-                    rerenderNotifications(-1);
+                    rerenderNotifications(-readIds.length);
                 });
                 actions.appendChild(read);
             } else {
@@ -706,33 +764,37 @@ function renderNotifications(items, unreadCount, mailboxUserId, hasOverflow) {
                     'Cofnij oznaczenie jako przeczytane: ' + who,
                     'data-notif-unread'
                 );
+                const allIds = group.items.map((x) => String(x.id));
                 undo.addEventListener('click', async () => {
                     if (undo.disabled) return;
                     undo.disabled = true;
-                    let ok = false;
-                    try {
-                        const resp = await fetch(
-                            '/api/care/notifications/' +
-                                encodeURIComponent(String(n.id)) +
-                                '/unread',
-                            { method: 'POST', credentials: 'same-origin' }
-                        );
-                        ok = !!resp && resp.ok;
-                    } catch {
-                        ok = false;
-                    }
-                    if (!ok) {
+                    const results = await Promise.all(
+                        allIds.map(async (id) => {
+                            try {
+                                const resp = await fetch(
+                                    '/api/care/notifications/' + encodeURIComponent(id) + '/unread',
+                                    { method: 'POST', credentials: 'same-origin' }
+                                );
+                                return !!resp && resp.ok;
+                            } catch {
+                                return false;
+                            }
+                        })
+                    );
+                    if (results.some((r) => !r)) {
                         undo.disabled = false;
                         careToastError('Nie cofnięto oznaczenia — spróbuj ponownie.');
                         return;
                     }
-                    try {
-                        n.readAt = null;
-                    } catch {
-                        /* best-effort */
+                    for (const x of group.items) {
+                        try {
+                            x.readAt = null;
+                        } catch {
+                            /* best-effort */
+                        }
                     }
                     careBumpPolling();
-                    rerenderNotifications(1);
+                    rerenderNotifications(allIds.length);
                 });
                 actions.appendChild(undo);
             }

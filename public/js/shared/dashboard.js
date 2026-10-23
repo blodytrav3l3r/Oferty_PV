@@ -6,6 +6,8 @@ let editingUserId = null;
 let selectedSubUsers = [];
 // Sesje: mapa userId -> {sessionCount, lastActivityAt}, źródło kafli i badge'y.
 let sessionByUser = {};
+// false = odczyt sesji się nie udał; kafel nie może wtedy kłamać „brak sesji".
+let sessionsKnown = false;
 let adminRefreshSeq = 0;
 const revokingUsers = new Set();
 
@@ -486,10 +488,12 @@ async function refreshAdminSessions() {
             if (row && row.userId) map[row.userId] = row;
         });
         sessionByUser = map;
+        sessionsKnown = true;
         summary = json.summary || {};
     } catch (e) {
         if (mySeq !== adminRefreshSeq) return;
         sessionByUser = {};
+        sessionsKnown = false;
         if (typeof logger !== 'undefined')
             logger.warn('dashboard', 'sesje: ' + ((e && e.message) || 'błąd'));
     }
@@ -547,6 +551,15 @@ async function revokeUserSessions(userId) {
     }
 }
 
+function initialsOf(user) {
+    const first = String(user.firstName || '').trim();
+    const last = String(user.lastName || '').trim();
+    if (first || last) return ((first.charAt(0) || '') + (last.charAt(0) || '')).toUpperCase();
+    return String(user.username || '?')
+        .charAt(0)
+        .toUpperCase();
+}
+
 async function loadUsers() {
     try {
         const res = await fetch('/api/users', { credentials: 'same-origin' });
@@ -555,50 +568,45 @@ async function loadUsers() {
 
         updateStatsBar();
 
-        const tbody = document.getElementById('users-table-body');
+        const grid = document.getElementById('users-tiles');
         const emptyState = document.getElementById('admin-empty-state');
+        if (!grid) return;
 
         if (adminUsers.length === 0) {
-            tbody.innerHTML = '';
+            grid.innerHTML = '';
             if (emptyState) emptyState.classList.remove('hidden');
             return;
         }
 
         if (emptyState) emptyState.classList.add('hidden');
 
-        tbody.innerHTML = adminUsers
+        grid.innerHTML = adminUsers
             .map((u) => {
+                const fullName = ((u.firstName || '') + ' ' + (u.lastName || '')).trim();
+                const label = fullName || u.username;
+                const role = String(u.role || 'user').toLowerCase();
                 const session = sessionByUser[u.id];
-                const sessionLine = session
-                    ? `<div class="user-email">${session.sessionCount} ${pluralSessions(session.sessionCount)} · ${escapeHtml(formatRelativeTime(session.lastActivityAt))}</div>`
-                    : '';
                 const isSelf =
                     typeof currentUser !== 'undefined' && currentUser && currentUser.id === u.id;
+                const sessionText = !sessionsKnown
+                    ? 'Sesje: brak danych'
+                    : session
+                      ? session.sessionCount +
+                        ' ' +
+                        pluralSessions(session.sessionCount) +
+                        ' · ' +
+                        formatRelativeTime(session.lastActivityAt)
+                      : 'Brak aktywnej sesji';
+                const sessionCls = !sessionsKnown
+                    ? 'is-unknown'
+                    : session
+                      ? 'is-online'
+                      : 'is-offline';
                 const revokeTitle =
                     'Wyloguj wszystkie sesje' + (session ? ' (' + session.sessionCount + ')' : '');
-                let html = `
-      <tr>
-        <td>
-            <div class="user-name">${escapeHtml((u.firstName || '') + ' ' + (u.lastName || ''))}</div>
-            <div class="user-email">${escapeHtml(u.email || 'brak email')}</div>
-            ${sessionLine}
-        </td>
-        <td><span class="token-badge text-warn">${escapeHtml(u.symbol || '??')}</span></td>
-        <td class="cell-mono">${escapeHtml(u.username)}</td>
-        <td class="cell-phone">${escapeHtml(u.phone || '—')}</td>
-        <td><span class="badge-role role-${escapeHtml(String(u.role || 'user').toLowerCase())}">${escapeHtml(String(u.role || 'user').toUpperCase())}</span></td>
-        <td class="cell-num">${escapeHtml(String(u.orderStartNumber || 1))}</td>
-        <td class="cell-num">${escapeHtml(String(u.productionOrderStartNumber || 1))}</td>
-        <td>
-          <div class="admin-actions-cell">
-            <button class="admin-action-btn edit-btn" aria-label="Edytuj użytkownika" data-csp="startEditUser" data-csp-args="${escapeHtmlAttr(JSON.stringify([u.id]))}"><i data-lucide="pencil"></i></button>
-            ${u.username !== 'admin' ? `<button class="admin-action-btn delete-btn" aria-label="Usuń użytkownika" data-csp="deleteUser" data-csp-args="${escapeHtmlAttr(JSON.stringify([u.id]))}"><i data-lucide="trash-2"></i></button>` : ''}
-            ${isSelf ? '' : `<button class="admin-action-btn" aria-label="Wyloguj użytkownika" title="${revokeTitle}" data-csp="revokeUserSessions" data-csp-args="${escapeHtmlAttr(JSON.stringify([u.id]))}"><i data-lucide="log-out"></i></button>`}
-          </div>
-        </td>
-      </tr>`;
+                let subUsersHtml = '';
                 if (u.role === 'pro' && u.subUsers && u.subUsers.length > 0) {
-                    const subUsersNames = u.subUsers.map((subId) => {
+                    const names = u.subUsers.map((subId) => {
                         const subU = adminUsers.find((x) => x.id === subId);
                         return subU
                             ? subU.firstName && subU.lastName
@@ -606,24 +614,49 @@ async function loadUsers() {
                                 : subU.username
                             : 'Nieznany';
                     });
-                    html += `
-      <tr class="subordinate-row">
-        <td colspan="8">
-            <div class="subordinate-list">
-                <span class="subordinate-label"><i data-lucide="users"></i> POWIĄZANI HANDLOWCY:</span>
-                <div class="subordinate-badges">
-                    ${subUsersNames.map((name) => `<span class="token-badge sub-token">${escapeHtml(name)}</span>`).join('')}
-                </div>
+                    subUsersHtml = `
+        <div class="admin-user-subs">
+            <span class="subordinate-label"><i data-lucide="users"></i> Powiązani handlowcy</span>
+            <div class="subordinate-badges">
+                ${names.map((name) => `<span class="token-badge sub-token">${escapeHtml(name)}</span>`).join('')}
             </div>
-        </td>
-      </tr>`;
+        </div>`;
                 }
-                return html;
+                return `
+      <article class="admin-user-tile" role="listitem" aria-label="${escapeHtmlAttr(label)}">
+        <div class="admin-user-head">
+            <div class="admin-user-avatar" aria-hidden="true">${escapeHtml(initialsOf(u))}</div>
+            <div class="admin-user-id">
+                <div class="user-name">${escapeHtml(label)}</div>
+                <div class="admin-user-login">@${escapeHtml(u.username)}</div>
+            </div>
+            <div class="admin-user-badges">
+                <span class="token-badge text-warn">${escapeHtml(u.symbol || '??')}</span>
+                <span class="badge-role role-${escapeHtml(role)}">${escapeHtml(role.toUpperCase())}</span>
+            </div>
+        </div>
+        <div class="admin-user-facts">
+            <div class="admin-user-fact"><span class="fact-label">Telefon</span><span class="fact-value">${escapeHtml(u.phone || '—')}</span></div>
+            <div class="admin-user-fact"><span class="fact-label">E-mail</span><span class="fact-value" title="${escapeHtmlAttr(u.email || '')}">${escapeHtml(u.email || 'brak email')}</span></div>
+            <div class="admin-user-fact"><span class="fact-label">Nr zam.</span><span class="fact-value cell-num">${escapeHtml(String(u.orderStartNumber || 1))}</span></div>
+            <div class="admin-user-fact"><span class="fact-label">Nr zlec.</span><span class="fact-value cell-num">${escapeHtml(String(u.productionOrderStartNumber || 1))}</span></div>
+        </div>
+        <div class="admin-user-session ${sessionCls}">
+            <i data-lucide="activity" aria-hidden="true"></i>
+            <span>${escapeHtml(sessionText)}</span>
+        </div>
+        ${subUsersHtml}
+        <div class="admin-user-actions">
+            <button class="admin-action-btn edit-btn" aria-label="Edytuj: ${escapeHtmlAttr(label)}" data-csp="startEditUser" data-csp-args="${escapeHtmlAttr(JSON.stringify([u.id]))}"><i data-lucide="pencil"></i></button>
+            ${u.username !== 'admin' ? `<button class="admin-action-btn delete-btn" aria-label="Usuń: ${escapeHtmlAttr(label)}" data-csp="deleteUser" data-csp-args="${escapeHtmlAttr(JSON.stringify([u.id]))}"><i data-lucide="trash-2"></i></button>` : ''}
+            ${isSelf ? '' : `<button class="admin-action-btn" aria-label="Wyloguj: ${escapeHtmlAttr(label)}" title="${escapeHtmlAttr(revokeTitle)}" data-csp="revokeUserSessions" data-csp-args="${escapeHtmlAttr(JSON.stringify([u.id]))}"><i data-lucide="log-out"></i></button>`}
+        </div>
+      </article>`;
             })
             .join('');
 
         if (typeof lucide !== 'undefined') {
-            lucide.createIcons({ root: tbody });
+            lucide.createIcons({ root: grid });
         }
     } catch (e) {
         logger.error('dashboard', 'loadUsers error:', e);

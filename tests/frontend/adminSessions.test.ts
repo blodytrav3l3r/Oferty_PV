@@ -30,7 +30,16 @@ function loadDashboard(fetchImpl: any, confirmResult = true) {
             innerHTML: '',
             value: '',
             dataset: {},
-            classList: { add() {}, remove() {}, toggle() {} },
+            classList: {
+                _set: new Set<string>(),
+                add(c: string) {
+                    this._set.add(c);
+                },
+                remove(c: string) {
+                    this._set.delete(c);
+                },
+                toggle() {}
+            },
             addEventListener() {},
             setAttribute() {},
             querySelector: () => el('child'),
@@ -128,7 +137,7 @@ describe('pulpit admina: sesje', () => {
     const html = read('public/index.html');
     const adminPanel = html.slice(
         html.indexOf('id="admin-panel"'),
-        html.indexOf('id="users-table-body"')
+        html.indexOf('id="users-tiles"')
     );
 
     it('kafle sesji w #admin-panel, aria-live, bez nowych klas CSS', () => {
@@ -174,12 +183,13 @@ describe('pulpit admina: sesje', () => {
         expect(els['session-tile-count'].textContent).toBe('—');
         expect(context.showToast).not.toHaveBeenCalled();
         expect(context.logger.warn).toHaveBeenCalled();
-        expect(els['users-table-body'].innerHTML).not.toContain('sesje ·');
-        // Revoke nadal dostępny: awaria odczytu nie odbiera adminowi akcji.
-        expect(els['users-table-body'].innerHTML).toContain('data-csp="revokeUserSessions"');
+        expect(els['users-tiles'].innerHTML).not.toContain('sesje ·');
+        // Awaria odczytu nie może kłamać „brak sesji" ani odbierać akcji.
+        expect(els['users-tiles'].innerHTML).toContain('Sesje: brak danych');
+        expect(els['users-tiles'].innerHTML).toContain('data-csp="revokeUserSessions"');
     });
 
-    it('wiersz: badge sesji tylko dla usera z sesjami, brak przycisku dla siebie', async () => {
+    it('kafel: badge sesji tylko dla usera z sesjami, brak przycisku dla siebie', async () => {
         const { context, els } = loadDashboard(async (url: string) => {
             const u = String(url);
             if (u.includes('/api/admin/sessions')) return okJson(sessionsPayload());
@@ -190,11 +200,11 @@ describe('pulpit admina: sesje', () => {
         await context.showLoggedIn(adminUser);
         await flush();
 
-        const rows = els['users-table-body'].innerHTML;
+        const rows = els['users-tiles'].innerHTML;
         expect(rows).toContain('2 sesje ·');
         expect(rows).toContain('1 sesja ·');
         expect(rows).toContain('data-csp="revokeUserSessions"');
-        // Admin nie dostaje przycisku na własnym wierszu: 2 użytkownicy → 1 przycisk.
+        // Admin nie dostaje przycisku na własnym kaflu: 2 użytkownicy → 1 przycisk.
         expect(rows.match(/data-csp="revokeUserSessions"/g) || []).toHaveLength(1);
         expect(rows).toContain('&quot;v&quot;');
     });
@@ -297,5 +307,69 @@ describe('pulpit admina: sesje', () => {
 
         await context.revokeUserSessions('v');
         expect(calls.filter((c) => c.startsWith('DELETE'))).toHaveLength(0);
+    });
+
+    it('kafle: inicjały, rola, login, kontakt i numery w jednym kafelku', async () => {
+        const { context, els } = loadDashboard(async (url: string) => {
+            const u = String(url);
+            if (u.includes('/api/admin/sessions')) return okJson(sessionsPayload());
+            if (u.includes('/api/users')) return okJson(usersPayload());
+            return okJson({});
+        });
+
+        await context.showLoggedIn(adminUser);
+        await flush();
+
+        const html = els['users-tiles'].innerHTML;
+        expect(html.match(/class="admin-user-tile"/g) || []).toHaveLength(2);
+        expect(html).toContain('role="listitem"');
+        expect(html).toContain('>AS<'); // Admin Szef
+        expect(html).toContain('>WN<'); // Wiktor Nowak
+        expect(html).toContain('role-admin');
+        expect(html).toContain('role-user');
+        expect(html).toContain('@admin');
+        expect(html).toContain('@vict');
+        expect(html).toContain('v@e.pl');
+        expect(html).toContain('Nr zam.');
+        expect(html).toContain('Nr zlec.');
+        expect(els['admin-empty-state'].classList._set.has('hidden')).toBe(true);
+    });
+
+    it('kafle: puste konto → chowamy kafle i pokazujemy empty state', async () => {
+        const { context, els } = loadDashboard(async (url: string) => {
+            const u = String(url);
+            if (u.includes('/api/admin/sessions')) return okJson(sessionsPayload());
+            if (u.includes('/api/users')) return okJson({ data: [] });
+            return okJson({});
+        });
+
+        await context.showLoggedIn(adminUser);
+        await flush();
+
+        expect(els['users-tiles'].innerHTML).toBe('');
+        expect(els['admin-empty-state'].classList._set.has('hidden')).toBe(false);
+    });
+
+    it('kafle: dane użytkownika escapowane (XSS w nazwie i mailu)', async () => {
+        const evil = {
+            ...victimUser,
+            firstName: '<img src=x onerror=alert(1)>',
+            lastName: '',
+            email: '"><script>alert(1)</script>'
+        };
+        const { context, els } = loadDashboard(async (url: string) => {
+            const u = String(url);
+            if (u.includes('/api/admin/sessions')) return okJson(sessionsPayload());
+            if (u.includes('/api/users')) return okJson({ data: [evil] });
+            return okJson({});
+        });
+
+        await context.showLoggedIn(adminUser);
+        await flush();
+
+        const html = els['users-tiles'].innerHTML;
+        expect(html).not.toContain('<img');
+        expect(html).not.toContain('<script');
+        expect(html).toContain('&lt;img');
     });
 });
