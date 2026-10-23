@@ -645,12 +645,12 @@ async function loadUsers() {
             <i data-lucide="activity" aria-hidden="true"></i>
             <span>${escapeHtml(sessionText)}</span>
         </div>
-        ${subUsersHtml}
         <div class="admin-user-actions">
             <button class="admin-action-btn edit-btn" aria-label="Edytuj: ${escapeHtmlAttr(label)}" data-csp="startEditUser" data-csp-args="${escapeHtmlAttr(JSON.stringify([u.id]))}"><i data-lucide="pencil"></i></button>
             ${u.username !== 'admin' ? `<button class="admin-action-btn delete-btn" aria-label="Usuń: ${escapeHtmlAttr(label)}" data-csp="deleteUser" data-csp-args="${escapeHtmlAttr(JSON.stringify([u.id]))}"><i data-lucide="trash-2"></i></button>` : ''}
             ${isSelf ? '' : `<button class="admin-action-btn" aria-label="Wyloguj: ${escapeHtmlAttr(label)}" title="${escapeHtmlAttr(revokeTitle)}" data-csp="revokeUserSessions" data-csp-args="${escapeHtmlAttr(JSON.stringify([u.id]))}"><i data-lucide="log-out"></i></button>`}
         </div>
+        ${subUsersHtml}
       </article>`;
             })
             .join('');

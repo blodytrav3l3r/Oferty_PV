@@ -893,8 +893,10 @@ a.admin-stat-card {
     border-radius: var(--radius-md);
     padding: 0.55rem 0.9rem;
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     gap: var(--tile-gap-md, 1rem);
+    row-gap: 0;
     box-shadow: var(--shadow-sm);
     transition:
         border-color 0.15s ease-in-out,
@@ -995,10 +997,22 @@ a.admin-stat-card {
     color: var(--text-muted);
     flex: 0 0 auto;
     white-space: nowrap;
+    padding: 0.15rem 0.5rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-2xs);
+    background: var(--bg-hover);
 }
 
 .admin-user-session.is-online {
     color: var(--success-hover);
+    background: var(--success-bg);
+    border-color: var(--success-border);
+}
+
+.admin-user-session.is-unknown {
+    color: var(--warn-hover);
+    background: var(--warn-bg);
+    border-color: var(--warn-border);
 }
 
 .admin-user-session i,
@@ -1011,9 +1025,11 @@ a.admin-stat-card {
     display: flex;
     align-items: center;
     gap: var(--tile-gap-xs, 0.35rem);
-    flex: 0 1 auto;
+    flex: 1 1 100%;
     min-width: 0;
-    max-width: 340px;
+    margin-top: 0.4rem;
+    padding-top: 0.4rem;
+    border-top: 1px solid var(--border-table-subtle);
 }
 
 .admin-user-subs .subordinate-label {
@@ -1028,10 +1044,16 @@ a.admin-stat-card {
     flex-shrink: 0;
 }
 
+.admin-user-subs .subordinate-label i,
+.admin-user-subs .subordinate-label svg {
+    width: 13px;
+    height: 13px;
+}
+
 .admin-user-subs .subordinate-badges {
     display: flex;
-    flex-wrap: nowrap;
-    overflow: hidden;
+    flex-wrap: wrap;
+    min-width: 0;
     gap: var(--tile-gap-2xs, 0.3rem);
 }
 
