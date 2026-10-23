@@ -318,11 +318,31 @@ function careToastError(msg) {
 
 async function getJson(url) {
     const res = await fetch(url, { credentials: 'same-origin' });
-    if (!res.ok) return null;
-    try {
-        return await res.json();
-    } catch {
+    // Brak sesji = zdarzenie oczekiwane: modal "sesja wygasła", nie pustka.
+    if (res.status === 401) {
+        notifySessionExpired();
         return null;
+    }
+    // 403 = zakres spoza roli (obsługiwany przez wołającego).
+    if (res.status === 403) return null;
+    // 5xx/sieć/JSON: to nie "brak danych" — rzucamy, żeby UI pokazało błąd.
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    return await res.json();
+}
+
+let sessionNotified = false;
+function notifySessionExpired() {
+    if (sessionNotified) return;
+    sessionNotified = true;
+    try {
+        if (
+            typeof window !== 'undefined' &&
+            window.sessionIdle &&
+            typeof window.sessionIdle.notifyUnauthorized === 'function'
+        )
+            window.sessionIdle.notifyUnauthorized({ status: 401 });
+    } catch {
+        /* best-effort: modal to dodatek, dane i tak nie wracają bez sesji */
     }
 }
 
@@ -736,6 +756,7 @@ async function clearNotifications() {
         );
         items = (json && json.items) || [];
     } catch {
+        careToastError('Nie udało się pobrać powiadomień — spróbuj ponownie.');
         return;
     }
     if (items.length === 0) {
@@ -1602,19 +1623,25 @@ export function findOfferInQueue(offerKind, offerId, fallbackLabel) {
 /** Dopaginowanie kolejki cursorem (endpoint /queue, dopisanie bez resetu). */
 async function loadMoreQueue() {
     if (!queueNextCursor) return;
-    const json = await getJson(
-        '/api/care/queue?scope=' +
-            careScope +
-            repQuery() +
-            '&limit=' +
-            QUEUE_LIMIT +
-            '&cursor=' +
-            encodeURIComponent(queueNextCursor) +
-            rangeQuery() +
-            hidePausedQuery() +
-            '&t=' +
-            Date.now()
-    );
+    let json = null;
+    try {
+        json = await getJson(
+            '/api/care/queue?scope=' +
+                careScope +
+                repQuery() +
+                '&limit=' +
+                QUEUE_LIMIT +
+                '&cursor=' +
+                encodeURIComponent(queueNextCursor) +
+                rangeQuery() +
+                hidePausedQuery() +
+                '&t=' +
+                Date.now()
+        );
+    } catch {
+        careToastError('Nie udało się doładować kolejki — spróbuj ponownie.');
+        return;
+    }
     if (!json || !Array.isArray(json.items)) return;
     const seen = new Set(queueCache.map((it) => String(it.offerKind) + ':' + String(it.offerId)));
     for (const it of json.items) {
@@ -2101,6 +2128,7 @@ async function syncRepUI() {
         }
     } catch {
         /* best-effort: select zostaje z samą opcją Wszyscy */
+        careToastError('Nie udało się pobrać listy handlowców.');
     } finally {
         repLoading = false;
     }
@@ -2246,9 +2274,16 @@ async function loadSlaBox() {
 
 async function loadSlaBoxValues() {
     const sel = document.getElementById('care-sla-scope');
-    const sla = await getJson(
-        '/api/care/sla?scope=' + slaScopeToQuery(sel ? sel.value : 'mine') + '&t=' + Date.now()
-    );
+    let sla = null;
+    try {
+        sla = await getJson(
+            '/api/care/sla?scope=' + slaScopeToQuery(sel ? sel.value : 'mine') + '&t=' + Date.now()
+        );
+    } catch {
+        // Progi zostają z ostatniego udanego odczytu — panel pokaże własny
+        // błąd, a listener 'change' nie może wywalić unhandled rejection.
+        return;
+    }
     if (!sla || !sla.sla) return;
     slaUpdatedAtByScope[sel ? sel.value : 'global'] = sla.slaUpdatedAt ?? null;
     const first = document.getElementById('care-sla-first');
@@ -2373,7 +2408,9 @@ async function loadCarePanelLegacy() {
         setSyncText(notif && notif.sync ? notif.sync.skipped : undefined);
         clearError();
     } catch {
-        /* centrum i kolejka best-effort, liczniki już są */
+        // Liczniki są, ale centrum/kolejka nie odświeżyły się — nie udawaj
+        // sukcesu pustą listą.
+        showError();
     }
     return true;
 }

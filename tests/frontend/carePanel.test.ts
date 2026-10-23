@@ -1223,6 +1223,39 @@ describe('carePanel', () => {
         }
     });
 
+    test('500 z API pokazuje błąd zamiast pustego panelu', async () => {
+        const { els, context } = load({
+            fetchMock: (url: string) => {
+                if (url.includes('/api/care/')) return { ok: false, status: 500 };
+                return okJson({});
+            }
+        });
+        await context.__careTest.loadCarePanel();
+        const panel = els['followup-panel'];
+        const hasBanner = (panel.children || []).some(
+            (c: any) => c.dataset && c.dataset.careError === '1'
+        );
+        expect(hasBanner).toBe(true);
+    });
+
+    test('401 woła modal sesji (raz), nie udaje pustego panelu', async () => {
+        const notify = jest.fn();
+        const { els, context } = load({
+            fetchMock: (url: string) => {
+                if (url.includes('/api/care/')) return { ok: false, status: 401 };
+                return okJson({});
+            }
+        });
+        context.window.sessionIdle = { notifyUnauthorized: notify };
+        await context.__careTest.loadCarePanel();
+        expect(notify).toHaveBeenCalledTimes(1);
+        expect(notify.mock.calls[0][0]).toEqual({ status: 401 });
+        const panel = els['followup-panel'];
+        expect(
+            (panel.children || []).some((c: any) => c.dataset && c.dataset.careError === '1')
+        ).toBe(false);
+    });
+
     test('widok grid/list + dopaginowanie cursorem', async () => {
         const mkItem = (offerId: string, clientName: string) => ({
             offerKind: 'rury',
