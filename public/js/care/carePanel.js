@@ -316,6 +316,16 @@ function careToastError(msg) {
     }
 }
 
+/* Diagnostyka bez spamu: logger.warn raz na serię, nie co polling. */
+function careWarn(msg, extra) {
+    try {
+        if (typeof logger !== 'undefined' && logger && typeof logger.warn === 'function')
+            logger.warn('care', msg, extra);
+    } catch {
+        /* best-effort */
+    }
+}
+
 async function getJson(url) {
     const res = await fetch(url, { credentials: 'same-origin' });
     // Brak sesji = zdarzenie oczekiwane: modal "sesja wygasła", nie pustka.
@@ -2303,8 +2313,23 @@ function renderSummary(summary) {
     renderBuckets(summary);
 }
 
+/* /panel padl (5xx): przez minute prosto do legacy — bez bicia w zepsuty
+ * endpoint co tick. Log raz na serię, nie co polling. */
+const PANEL_FAIL_COOLDOWN_MS = 60 * 1000;
+let panelDownUntil = 0;
+let lastPanelError = '';
+
+function logPanelError(msg) {
+    if (lastPanelError === msg) return;
+    lastPanelError = msg;
+    careWarn(msg);
+}
+
 /** Pakiet /panel w 1 requeście. Zwraca 'fresh' | 'stale' | null (błąd). */
 async function loadPanelPacket() {
+    // 5xx przed chwilą: legacy bez strzału w zepsuty endpoint (oszczędza
+    // 1 request na tick pollingu, nie odbiera danych z fallbacku).
+    if (Date.now() < panelDownUntil) return null;
     const headers = {};
     const known = panelEtags[panelKey()];
     if (known) headers['If-None-Match'] = known;
@@ -2322,11 +2347,16 @@ async function loadPanelPacket() {
                 Date.now(),
             { credentials: 'same-origin', headers }
         );
-    } catch {
+    } catch (e) {
+        logPanelError('panel: ' + ((e && e.message) || 'siec'));
         return null;
     }
     if (!resp) return null;
-    if (resp.status === 304) return 'stale';
+    if (resp.status === 304) {
+        panelDownUntil = 0;
+        lastPanelError = '';
+        return 'stale';
+    }
     if (resp.status === 403) {
         // Zakres spoza roli (np. rola cofnięta w trakcie sesji): wróć do
         // Moje zamiast kłamać starymi liczbami. Następny tick dociągnie.
@@ -2337,7 +2367,14 @@ async function loadPanelPacket() {
         syncScopeButtons();
         return null;
     }
-    if (!resp.ok) return null;
+    if (!resp.ok) {
+        // 5xx: log raz + przez minute prosto do legacy (dane nadal widoczne).
+        panelDownUntil = Date.now() + PANEL_FAIL_COOLDOWN_MS;
+        logPanelError('panel HTTP ' + resp.status);
+        return null;
+    }
+    panelDownUntil = 0;
+    lastPanelError = '';
     try {
         const json = await resp.json();
         if (!json || !json.ok || !json.summary || !json.queue) return null;

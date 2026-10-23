@@ -1238,6 +1238,36 @@ describe('carePanel', () => {
         expect(hasBanner).toBe(true);
     });
 
+    test('/panel 5xx: log raz i cooldown, dane dalej z legacy', async () => {
+        const calls: string[] = [];
+        const warn = jest.fn();
+        const { els, context } = load({
+            calls,
+            fetchMock: (url: string) => {
+                if (url.includes('/api/care/panel')) return { ok: false, status: 500 };
+                if (url.includes('/api/care/summary'))
+                    return okJson({ noContact: 0, due: 1, openOk: 0, won: 0, lost: 0 });
+                if (url.includes('/api/care/queue')) return okJson({ items: [] });
+                return okJson({ items: [], unreadCount: 0 });
+            }
+        });
+        context.logger = { warn };
+        await context.__careTest.loadCarePanel();
+        expect(warn).toHaveBeenCalledTimes(1);
+        expect(String(warn.mock.calls[0][1])).toContain('500');
+        const panelCalls = () => calls.filter((c) => c.includes('/api/care/panel')).length;
+        expect(panelCalls()).toBe(1);
+
+        // Kolejny tick w oknie cooldownu: zero strzałów w /panel, dane z legacy.
+        await context.__careTest.loadCarePanel();
+        expect(panelCalls()).toBe(1);
+        expect(warn).toHaveBeenCalledTimes(1);
+        const panel = els['followup-panel'];
+        expect(
+            (panel.children || []).some((c: any) => c.dataset && c.dataset.careError === '1')
+        ).toBe(false);
+    });
+
     test('401 woła modal sesji (raz), nie udaje pustego panelu', async () => {
         const notify = jest.fn();
         const { els, context } = load({
