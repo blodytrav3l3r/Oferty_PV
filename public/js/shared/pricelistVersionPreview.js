@@ -93,15 +93,35 @@
         });
     }
 
+    var NUMERIC_RE = /^-?\d+([.,]\d+)?$/;
+
+    /** Kolumny w pełni liczbowe → wyrównanie do prawej (jak w arkuszu). */
+    function numericColumns(rows, columns) {
+        return columns.filter(function (col) {
+            var seen = false;
+            var ok = rows.every(function (row) {
+                var text = cellText(row[col]).trim();
+                if (text === '') return true;
+                seen = true;
+                return NUMERIC_RE.test(text);
+            });
+            return ok && seen;
+        });
+    }
+
     function tableHtml(rows) {
         if (rows.length === 0) {
             return '<p class="text-muted pv-preview-empty">Brak wierszy w tym arkuszu.</p>';
         }
         var columns = Object.keys(rows[0]);
         var shown = rows.slice(0, RENDER_LIMIT);
+        var numeric = numericColumns(shown, columns);
         var head = columns
             .map(function (col) {
-                return '<th scope="col">' + esc(col) + '</th>';
+                var isNum = numeric.indexOf(col) !== -1;
+                return (
+                    '<th scope="col"' + (isNum ? ' class="is-num"' : '') + '>' + esc(col) + '</th>'
+                );
             })
             .join('');
         var body = shown
@@ -110,7 +130,14 @@
                     '<tr>' +
                     columns
                         .map(function (col) {
-                            return '<td>' + esc(cellText(row[col])) + '</td>';
+                            var isNum = numeric.indexOf(col) !== -1;
+                            return (
+                                '<td' +
+                                (isNum ? ' class="is-num"' : '') +
+                                '>' +
+                                esc(cellText(row[col])) +
+                                '</td>'
+                            );
                         })
                         .join('') +
                     '</tr>'
@@ -119,13 +146,13 @@
             .join('');
         return (
             '<div class="table-wrap pv-preview-scroll" tabindex="0" role="region" aria-label="Wiersze wersji">' +
-            '<table><thead><tr>' +
+            '<table class="pv-table"><thead><tr>' +
             head +
             '</tr></thead><tbody>' +
             body +
             '</tbody></table></div>' +
             (rows.length > RENDER_LIMIT
-                ? '<p class="text-muted">Pokazano pierwsze ' +
+                ? '<p class="pv-note">Pokazano pierwsze ' +
                   RENDER_LIMIT +
                   ' z ' +
                   rows.length +
@@ -137,13 +164,13 @@
     function tabsHtml(sheetNames, active) {
         if (sheetNames.length < 2) return '';
         return (
-            '<div class="pv-preview-tabs" aria-label="Arkusze wersji">' +
+            '<div class="pv-tabs" aria-label="Arkusze wersji">' +
             sheetNames
                 .map(function (name) {
                     var isActive = name === active;
                     return (
-                        '<button type="button" role="tab" class="btn btn-sm ' +
-                        (isActive ? 'btn-primary' : 'btn-secondary') +
+                        '<button type="button" role="tab" class="pv-tab' +
+                        (isActive ? ' is-active' : '') +
                         '" data-pv-preview-sheet="' +
                         escAttr(name) +
                         '" aria-selected="' +
@@ -158,35 +185,96 @@
         );
     }
 
+    function typeLabel(type) {
+        return { rury: 'Rury', studnie: 'Studnie', preco: 'Preco' }[type] || type || '—';
+    }
+
+    function fmtDateTime(iso) {
+        if (!iso) return '—';
+        try {
+            return new Date(iso).toLocaleString('pl-PL', {
+                dateStyle: 'short',
+                timeStyle: 'short'
+            });
+        } catch (_e) {
+            return fmtDate(iso);
+        }
+    }
+
+    /** Stan wyliczany jak w panelu wersji: APPROVED + przyszła data = do wdrożenia. */
+    function stateOfVersion(version) {
+        var status = String((version && (version.state || version.status)) || '');
+        if (status !== 'APPROVED') return status;
+        var t = Date.parse((version && version.effectiveFrom) || '');
+        if (Number.isNaN(t)) return status;
+        return t > Date.now() ? 'SCHEDULED' : 'ACTIVE';
+    }
+
+    var STATUS_META = {
+        ACTIVE: { label: 'Obowiązuje', cls: 'badge-ok' },
+        SCHEDULED: { label: 'Do wdrożenia', cls: 'badge-info' },
+        DRAFT: { label: 'Szkic', cls: 'badge-muted' },
+        ARCHIVED: { label: 'Archiwalna', cls: 'badge-muted' },
+        APPROVED: { label: 'Zatwierdzona', cls: 'badge-info' }
+    };
+
+    function metaItem(label, valueHtml, valueClass) {
+        return (
+            '<div class="pv-meta-item">' +
+            '<span class="pv-meta-label">' +
+            esc(label) +
+            '</span>' +
+            '<span class="pv-meta-value' +
+            (valueClass ? ' ' + valueClass : '') +
+            '">' +
+            valueHtml +
+            '</span>' +
+            '</div>'
+        );
+    }
+
     function metaHtml(preview) {
         var version = preview.version || {};
+        var state = stateOfVersion(version);
+        var meta = STATUS_META[state] || { label: state || '—', cls: 'badge-muted' };
         var sheetCount = Object.keys(preview.sheets || {}).length;
-        var bits = [
-            '<span><strong>Typ:</strong> ' + esc(version.type || '—') + '</span>',
-            '<span><strong>Status:</strong> ' + esc(version.status || '—') + '</span>',
-            '<span><strong>Obowiązuje od:</strong> ' +
-                esc(fmtDate(version.effectiveFrom)) +
-                '</span>',
-            '<span><strong>Wiersze:</strong> ' + esc(String(preview.totalRows ?? 0)) + '</span>',
-            '<span><strong>Arkusze:</strong> ' + esc(String(sheetCount)) + '</span>'
+        var items = [
+            metaItem('Wersja', esc(version.version || '—'), 'pv-meta-value--mono'),
+            metaItem('Typ', esc(typeLabel(version.type))),
+            metaItem(
+                'Status',
+                '<span class="badge ' + meta.cls + '">' + esc(meta.label) + '</span>'
+            ),
+            metaItem(
+                'Obowiązuje od',
+                esc(fmtDateTime(version.effectiveFrom)),
+                'pv-meta-value--date'
+            ),
+            metaItem('Wiersze', esc(String(preview.totalRows ?? 0)), 'pv-meta-value--num'),
+            metaItem('Arkusze', esc(String(sheetCount)), 'pv-meta-value--num')
         ];
         var extra = '';
         if (preview.truncated) {
             extra +=
-                '<p class="color-warn">Podgląd ucięty do 5000 wierszy na arkusz — pełne dane w eksporcie XLSX.</p>';
+                '<p class="pv-note pv-note--warn">Podgląd ucięty do 5000 wierszy na arkusz — pełne dane w eksporcie XLSX.</p>';
         }
         if (preview.precoVersion) {
             extra +=
-                '<p class="text-muted">Do wersji dołączona PRECO ' +
+                '<p class="pv-note">Do wersji dołączona PRECO ' +
                 esc(preview.precoVersion.version) +
                 ' (nr ' +
                 esc(String(preview.precoVersion.seq)) +
                 ').</p>';
         } else if (preview.precoIncluded === false) {
             extra +=
-                '<p class="text-muted">Brak kwalifikującej się wersji PRECO — eksport obejmie tylko studnie.</p>';
+                '<p class="pv-note">Brak kwalifikującej się wersji PRECO — eksport obejmie tylko studnie.</p>';
         }
-        return '<div class="pv-preview-meta text-muted">' + bits.join('') + '</div>' + extra;
+        return (
+            '<div class="pv-meta" role="group" aria-label="Metadane wersji">' +
+            items.join('') +
+            '</div>' +
+            extra
+        );
     }
 
     function renderPreview(overlay, state) {
@@ -208,11 +296,11 @@
         var counter = overlay.querySelector('#pv-preview-count');
         if (counter) {
             counter.textContent =
-                'Widoczne: ' +
+                'Widoczne ' +
                 visibleRows.length +
-                ' / ' +
+                ' z ' +
                 sheetRows.length +
-                ' w arkuszu · łącznie ' +
+                ' · łącznie ' +
                 (preview.totalRows ?? 0) +
                 ' w wersji';
         }
@@ -227,11 +315,12 @@
             html:
                 '<div class="modal modal--pv-preview"><div class="modal-header"><h3 id="pv-preview-title"><i data-lucide="eye"></i> Podgląd wersji cennika</h3>' +
                 '<button class="btn-icon" aria-label="Zamknij" data-csp="closeModal" data-csp-args="[&quot;pv-preview-modal&quot;]"><i data-lucide="x"></i></button></div>' +
-                '<div class="modal-body"><div id="pv-preview-meta"><p class="text-muted">Ładowanie…</p></div>' +
+                '<div class="modal-body"><div id="pv-preview-meta"><p class="text-muted pv-preview-empty">Ładowanie…</p></div>' +
                 '<div class="pv-preview-toolbar">' +
-                '<label class="pv-preview-search"><span class="sr-only">Szukaj w wersji</span>' +
-                '<input type="search" class="form-input" id="pv-preview-search" placeholder="Szukaj w wersji (indeks, nazwa, cena)…" aria-label="Szukaj w wersji"></label>' +
-                '<span class="text-muted" id="pv-preview-count" aria-live="polite"></span>' +
+                '<label class="pv-search"><span class="sr-only">Szukaj w wersji</span>' +
+                '<i data-lucide="search" class="pv-search-icon" aria-hidden="true"></i>' +
+                '<input type="search" class="form-input pv-search-input" id="pv-preview-search" placeholder="Szukaj: indeks, nazwa, cena…" aria-label="Szukaj w wersji"></label>' +
+                '<span class="pv-count" id="pv-preview-count" aria-live="polite"></span>' +
                 '</div>' +
                 '<div id="pv-preview-tabs" role="tablist" aria-label="Arkusze wersji"></div>' +
                 '<div id="pv-preview-body"></div>' +
@@ -269,7 +358,9 @@
                     title.innerHTML =
                         '<i data-lucide="eye"></i> Podgląd ' +
                         esc((preview.version && preview.version.version) || id) +
-                        (type ? ' · ' + esc(type) : '');
+                        (type
+                            ? ' <span class="pv-title-type">' + esc(typeLabel(type)) + '</span>'
+                            : '');
                 }
                 renderPreview(overlay, state);
             })
