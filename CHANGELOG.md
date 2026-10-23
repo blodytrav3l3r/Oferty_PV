@@ -4,6 +4,29 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+### [1.48.1](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.48.0...v1.48.1) (2026-10-23)
+
+### Features
+
+- **offers:** prefiks osi w etykietach wersji cennika ([7292829](https://github.com/blodytrav3l3r/Oferty_PV/commit/72928292d816f00743e05687417b86779683b146))
+- **offers:** przycisk edycji szkicu w panelu wersji cennika ([0997c08](https://github.com/blodytrav3l3r/Oferty_PV/commit/0997c081b0b149c6fe47cdb6b68ff7e3c23aa16f))
+- **ui:** cennik — kopia jako szkic, edycja i publikacja z datą ([17ecf4e](https://github.com/blodytrav3l3r/Oferty_PV/commit/17ecf4e0af468cd0e49852121ba4bdcfa75c60f6))
+- **ui:** historia cennikow jako kafelki wersji ([754f5a8](https://github.com/blodytrav3l3r/Oferty_PV/commit/754f5a82e224e75fde8643cb0681a1ef476b2261))
+- **ui:** panel cennikow admin-only z kafelkami osi ([f14e706](https://github.com/blodytrav3l3r/Oferty_PV/commit/f14e706b74a030dd670a08b6bcaa382d6e0562c3))
+- **ui:** pasek stanu cennika w edytorach ([144311a](https://github.com/blodytrav3l3r/Oferty_PV/commit/144311ab52862343f78bf2b243702f387825d460))
+- **ui:** warstwa 2 panelu cennikow z kafelkami sekcji ([bdcd16e](https://github.com/blodytrav3l3r/Oferty_PV/commit/bdcd16e2da00c8f43a9baed36ca44619e9509d6f))
+
+### Bug Fixes
+
+- **api:** liczba wersji archiwalnych zgodna ze stanem ([c01a13f](https://github.com/blodytrav3l3r/Oferty_PV/commit/c01a13f52cb91fd9fa1923cc0233384ed60ed2c9))
+- **auth:** 200 zamiast 304 na /me i brak cache'owania bledow ([e7fedb7](https://github.com/blodytrav3l3r/Oferty_PV/commit/e7fedb75c54716aa63c88919f245ce6291d753d7))
+- **auth:** no-store na /me i bramka sesji przed requestami ([f45dc46](https://github.com/blodytrav3l3r/Oferty_PV/commit/f45dc46cc46ed3bb09c89e03f91ca1302050d4ba))
+- **offers:** blad api w opiece widoczny, nie pusty panel ([f899303](https://github.com/blodytrav3l3r/Oferty_PV/commit/f899303ce78ebdca1aa6b02aad5ede4c5299e01f))
+- **offers:** log i cooldown panelu opieki przy 5xx ([3eaeb44](https://github.com/blodytrav3l3r/Oferty_PV/commit/3eaeb44e9054b99b7d0f1f1ddd566d89c612616d))
+- **preco:** jeden szkic na typ, if-match i widocznosc trybu zapisu ([e67b101](https://github.com/blodytrav3l3r/Oferty_PV/commit/e67b1011e140f183b2f90ee3bfece1f1949e59e4))
+- **ui:** podgląd wersji cennika — profesjonalny układ ([585c9e8](https://github.com/blodytrav3l3r/Oferty_PV/commit/585c9e8a4838d968b3e44b1c5a73e4c9d584441f))
+- **ui:** publikacja cennika przez approve z kontrola ([c7d94a5](https://github.com/blodytrav3l3r/Oferty_PV/commit/c7d94a53fc740383a5dc25a2cd11075325aeb5b5))
+
 ## [1.48.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.47.0...v1.48.0) (2026-10-21)
 
 ### Features
