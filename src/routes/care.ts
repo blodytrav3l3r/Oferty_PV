@@ -12,8 +12,9 @@ import {
     buildCareQueueView,
     resolveRepOwner,
     CareScope,
-    clampCareLimit,
     CareKind,
+    CareState,
+    clampCareLimit,
     getCareState,
     setCareState,
     clearCareState,
@@ -36,6 +37,7 @@ import {
 } from '../utils/idempotency';
 import { logger } from '../utils/logger';
 import { mapPrismaError } from '../utils/prismaErrors';
+import { encodeAuditPayload } from '../services/auditPayload';
 
 const router = express.Router();
 
@@ -377,9 +379,9 @@ async function writeCareState(
         };
         // prevJson (before-image audytu) czytany WEWNĄTRZ tx — odczyt sprzed
         // transakcji kłamał przy współbieżnym zapisie.
-        const prevJsonTx = async (tx: TxClient): Promise<string | null> => {
+        const prevJsonTx = async (tx: TxClient): Promise<CareState | null> => {
             const prev = await getCareState(tx, kind, id);
-            return prev ? JSON.stringify(prev) : null;
+            return prev ?? null;
         };
         let state;
         if (mode === 'reopen') {
@@ -398,7 +400,7 @@ async function writeCareState(
                         entityId: `${kind}:${id}`,
                         userId: user.id,
                         action: 'reopen',
-                        oldData: prevJson,
+                        oldData: encodeAuditPayload(prevJson),
                         newData: null,
                         createdAt: nowIso
                     }
@@ -429,8 +431,8 @@ async function writeCareState(
                         entityId: `${kind}:${id}`,
                         userId: user.id,
                         action: 'done',
-                        oldData: prevJson,
-                        newData: JSON.stringify({ doneAt: nowIso }),
+                        oldData: encodeAuditPayload(prevJson),
+                        newData: encodeAuditPayload({ doneAt: nowIso }),
                         createdAt: nowIso
                     }
                 });
@@ -467,8 +469,8 @@ async function writeCareState(
                         entityId: `${kind}:${id}`,
                         userId: user.id,
                         action: 'snooze',
-                        oldData: prevJson,
-                        newData: JSON.stringify({ snoozedUntil: until }),
+                        oldData: encodeAuditPayload(prevJson),
+                        newData: encodeAuditPayload({ snoozedUntil: until }),
                         createdAt: nowIso
                     }
                 });
@@ -572,8 +574,8 @@ router.put('/sla', requireAuth, WRITE_LIMITER, async (req, res) => {
                     entityId,
                     userId: user.id,
                     action: 'update',
-                    oldData: JSON.stringify(prevSla),
-                    newData: JSON.stringify(cfg),
+                    oldData: encodeAuditPayload(prevSla),
+                    newData: encodeAuditPayload(cfg),
                     createdAt: nowIso
                 }
             });

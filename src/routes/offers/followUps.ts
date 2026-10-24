@@ -9,6 +9,7 @@ import { canReadWithShare, canWriteDoc } from '../../utils/ownership';
 import { logger } from '../../utils/logger';
 import { mapPrismaError } from '../../utils/prismaErrors';
 import { searchCache } from '../../utils/searchCache';
+import { encodeAuditPayload } from '../../services/auditPayload';
 
 const router = express.Router();
 
@@ -204,7 +205,7 @@ router.post(
                         userId: authReq.user?.id ?? null,
                         action: body.reopen ? 'reopen' : 'create',
                         oldData: null,
-                        newData: JSON.stringify(record),
+                        newData: encodeAuditPayload(record),
                         createdAt: now
                     }
                 });
@@ -338,8 +339,8 @@ router.put(
                         entityId: fuId,
                         userId: authReq.user?.id ?? null,
                         action: 'update',
-                        oldData: JSON.stringify(existing),
-                        newData: JSON.stringify({ ...existing, ...record }),
+                        oldData: encodeAuditPayload(existing),
+                        newData: encodeAuditPayload({ ...existing, ...record }),
                         createdAt: now
                     }
                 });
@@ -407,7 +408,7 @@ router.delete('/:kind/:id/followups/:fuId', requireAuth, writeFollowUpLimiter, a
                     entityId: fuId,
                     userId: authReq.user?.id ?? null,
                     action: 'delete',
-                    oldData: JSON.stringify(existing),
+                    oldData: encodeAuditPayload(existing),
                     newData: null,
                     createdAt: now
                 }

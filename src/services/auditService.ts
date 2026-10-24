@@ -10,6 +10,7 @@ import crypto from 'crypto';
 import { logger } from '../utils/logger';
 import { recordAuditFailure } from '../utils/metrics';
 import { getRequestId } from '../utils/requestContext';
+import { encodeAuditPayload, isTruncatedAuditPayload } from './auditPayload';
 
 const DEBOUNCE_SECONDS = 30;
 const MAX_AUDIT_AGE_DAYS = 180;
@@ -89,11 +90,12 @@ export async function logAudit(
             return;
         }
 
-        // Dla 'create' / 'delete': pełna migawka (snapshot)
+        // Dla 'create' / 'delete': pełna migawka (snapshot), z limitem rozmiaru
+        // (encodeAuditPayload — SSoT dla wszystkich writerów).
         // Użyj raw query aby uniknąć problemów z konwersją dat
         const auditId = generateAuditId();
-        const oldDataStr = oldData ? JSON.stringify(oldData) : null;
-        const newDataStr = newData ? JSON.stringify(newData) : null;
+        const oldDataStr = encodeAuditPayload(oldData);
+        const newDataStr = encodeAuditPayload(newData);
         await db.$executeRaw`
             INSERT INTO audit_logs (id, entityType, entityId, userId, action, oldData, newData, createdAt)
             VALUES (${auditId}, ${entityType}, ${entityId}, ${userId}, ${action}, ${oldDataStr}, ${newDataStr}, ${now})
@@ -147,11 +149,18 @@ async function logUpdateWithDebounce(
         let merged: Record<string, unknown> = {};
         try {
             const prev = recent.newData ? JSON.parse(recent.newData) : {};
-            if (prev && typeof prev === 'object' && !Array.isArray(prev)) merged = prev;
+            if (prev && typeof prev === 'object' && !Array.isArray(prev)) {
+                if (isTruncatedAuditPayload(prev)) {
+                    // Poprzedni wpis był skrócony — nie dziedziczymy markera ani preview.
+                    merged = { _prevTruncatedHash: prev._payloadHash };
+                } else {
+                    merged = prev;
+                }
+            }
         } catch {
             // uszkodzony poprzedni wpis — bierzemy tylko bieżący diff
         }
-        const newDataStr = JSON.stringify({ ...merged, ...diff.changed, _diffMode: true });
+        const newDataStr = encodeAuditPayload({ ...merged, ...diff.changed, _diffMode: true });
         await db.$executeRaw`
             UPDATE audit_logs SET newData = ${newDataStr}, createdAt = ${now} WHERE id = ${recent.id}
         `;
@@ -159,9 +168,9 @@ async function logUpdateWithDebounce(
     }
 
     // Nowy wpis z diffem
-    const newDataStr = JSON.stringify({ ...diff.changed, _diffMode: true });
+    const newDataStr = encodeAuditPayload({ ...diff.changed, _diffMode: true });
     const auditId = generateAuditId();
-    const oldDataStr = JSON.stringify({ ...diff.old, _diffMode: true });
+    const oldDataStr = encodeAuditPayload({ ...diff.old, _diffMode: true });
     await db.$executeRaw`
         INSERT INTO audit_logs (id, entityType, entityId, userId, action, oldData, newData, createdAt)
         VALUES (${auditId}, ${entityType}, ${entityId}, ${userId}, 'update', ${oldDataStr}, ${newDataStr}, ${now})

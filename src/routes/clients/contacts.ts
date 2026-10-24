@@ -9,6 +9,7 @@ import { logger } from '../../utils/logger';
 import { mapPrismaError } from '../../utils/prismaErrors';
 import { searchCache } from '../../utils/searchCache';
 import { splitMergedContact } from '../../utils/contactSplit';
+import { encodeAuditPayload } from '../../services/auditPayload';
 
 const router = express.Router();
 
@@ -256,8 +257,8 @@ router.put(
                         entityId: clientId,
                         userId: authReq.user?.id ?? null,
                         action: 'sync',
-                        oldData: JSON.stringify(oldList),
-                        newData: JSON.stringify(
+                        oldData: encodeAuditPayload(oldList),
+                        newData: encodeAuditPayload(
                             [...updates.map((u) => ({ ...u.data, id: u.id })), ...news].sort(
                                 (a, b) => String(a.id).localeCompare(String(b.id))
                             )

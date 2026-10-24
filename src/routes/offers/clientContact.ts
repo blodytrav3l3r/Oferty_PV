@@ -9,6 +9,7 @@ import { canWriteDoc } from '../../utils/ownership';
 import { logger } from '../../utils/logger';
 import { mapPrismaError } from '../../utils/prismaErrors';
 import { searchCache } from '../../utils/searchCache';
+import { encodeAuditPayload } from '../../services/auditPayload';
 
 const router = express.Router();
 
@@ -168,8 +169,8 @@ router.put(
                         entityId: id,
                         userId: authReq.user?.id ?? null,
                         action: 'update-client-contact',
-                        oldData: JSON.stringify(oldContact),
-                        newData: JSON.stringify({ ...patch, contacts: entries ?? undefined }),
+                        oldData: encodeAuditPayload(oldContact),
+                        newData: encodeAuditPayload({ ...patch, contacts: entries ?? undefined }),
                         createdAt: now
                     }
                 });

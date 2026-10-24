@@ -9,6 +9,7 @@
 import { randomUUID } from 'crypto';
 import { z } from 'zod';
 import type { Prisma } from '../../prismaClient';
+import { encodeAuditPayload } from '../auditPayload';
 import { createModuleLock } from '../../middleware/writeLock';
 import { chunkedCreateMany } from '../../utils/prismaBatch';
 import {
@@ -385,8 +386,8 @@ export async function writeAudit(tx: Tx, entry: AuditEntry): Promise<void> {
             entityId: entry.entityId,
             userId: entry.userId ?? null,
             action: entry.action,
-            oldData: entry.oldData === undefined ? null : JSON.stringify(entry.oldData),
-            newData: entry.newData === undefined ? null : JSON.stringify(entry.newData),
+            oldData: encodeAuditPayload(entry.oldData),
+            newData: encodeAuditPayload(entry.newData),
             createdAt: new Date().toISOString()
         }
     });
