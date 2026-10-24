@@ -335,6 +335,42 @@ describe('pulpit admina: sesje', () => {
         expect(els['admin-empty-state'].classList._set.has('hidden')).toBe(true);
     });
 
+    it('kafle: kolejność edytuj → usuń → status → wyloguj, akcje niedostępne wyblakłe', async () => {
+        const { context, els } = loadDashboard(async (url: string) => {
+            const u = String(url);
+            if (u.includes('/api/admin/sessions')) return okJson(sessionsPayload());
+            if (u.includes('/api/users')) return okJson(usersPayload());
+            return okJson({});
+        });
+
+        await context.showLoggedIn(adminUser);
+        await flush();
+
+        const html = els['users-tiles'].innerHTML;
+        const tiles = html.split('class="admin-user-tile"').slice(1);
+        const [adminTile, victimTile] = tiles;
+
+        // Kolejność w obrębie kafla: edit, delete, pill sesji, wylogowanie.
+        const order = ['edit-btn', 'delete-btn', 'admin-user-session', 'revoke-btn'];
+        const positions = order.map((cls) => victimTile.indexOf(cls));
+        expect(positions.every((p) => p > -1)).toBe(true);
+        expect([...positions].sort((a, b) => a - b)).toEqual(positions);
+
+        // Cudze konto: wszystkie trzy akcje klikalne (data-csp) + ikona power.
+        expect(victimTile).toContain('data-csp="startEditUser"');
+        expect(victimTile).toContain('data-csp="deleteUser"');
+        expect(victimTile).toContain('data-csp="revokeUserSessions"');
+        expect(victimTile).toContain('data-lucide="power"');
+
+        // Własne konto: wylogowanie widoczne, ale disabled i bez data-csp.
+        expect(adminTile).toContain('data-lucide="power"');
+        expect(adminTile).toContain('disabled aria-disabled="true"');
+        expect(adminTile).not.toContain('data-csp="revokeUserSessions"');
+        // Konto systemowe admin: usuwanie też widoczne, ale disabled.
+        expect(adminTile).toContain('data-lucide="trash-2"');
+        expect(adminTile).not.toContain('data-csp="deleteUser"');
+    });
+
     it('kafle: puste konto → chowamy kafle i pokazujemy empty state', async () => {
         const { context, els } = loadDashboard(async (url: string) => {
             const u = String(url);

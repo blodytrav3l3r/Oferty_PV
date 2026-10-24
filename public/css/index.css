@@ -668,8 +668,20 @@ a.admin-stat-card {
 
 .admin-action-btn svg,
 .admin-action-btn i {
-    width: 14px;
-    height: 14px;
+    width: 15px;
+    height: 15px;
+}
+
+/* Akcja niedostępna: widoczna, ale wyblakła i nieklikalna. */
+.admin-action-btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+    background: transparent;
+    border-color: var(--border);
+}
+
+.admin-action-btn:disabled:hover {
+    background: transparent;
 }
 
 .admin-action-btn.edit-btn {
@@ -690,6 +702,17 @@ a.admin-stat-card {
 .admin-action-btn.delete-btn:hover {
     background: var(--danger-bg-hover);
     border-color: var(--danger-border);
+}
+
+.admin-action-btn.revoke-btn {
+    border-color: var(--border);
+    color: var(--text-secondary);
+}
+
+.admin-action-btn.revoke-btn:hover:not(:disabled) {
+    background: var(--accent-bg);
+    border-color: var(--accent-border);
+    color: var(--accent-hover);
 }
 
 /* ── Role Badges: kształt lokalny, kolory z SSoT .role-* (style.utilities.css) ── */
@@ -963,7 +986,7 @@ a.admin-stat-card {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr) minmax(0, 0.55fr) minmax(0, 0.55fr);
     gap: var(--tile-gap-xs-plus, 0.5rem);
-    flex: 1 1 auto;
+    flex: 1 1 0;
     min-width: 0;
 }
 
@@ -979,6 +1002,7 @@ a.admin-stat-card {
     color: var(--text-muted);
     text-transform: uppercase;
     letter-spacing: 0.4px;
+    white-space: nowrap;
 }
 
 .admin-user-fact .fact-value {
@@ -1061,10 +1085,12 @@ a.admin-stat-card {
     white-space: nowrap;
 }
 
-.admin-user-actions {
+.admin-user-controls {
     display: flex;
-    gap: var(--tile-gap-xs, 0.35rem);
+    align-items: center;
     justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: var(--tile-gap-xs, 0.35rem);
     flex: 0 0 auto;
     margin-left: auto;
 }
@@ -1078,9 +1104,15 @@ a.admin-stat-card {
 
     .admin-user-head,
     .admin-user-facts,
-    .admin-user-subs {
+    .admin-user-subs,
+    .admin-user-controls {
         flex: 1 1 100%;
         max-width: none;
+    }
+
+    .admin-user-controls {
+        justify-content: flex-start;
+        margin-left: 0;
     }
 
     .admin-user-session {

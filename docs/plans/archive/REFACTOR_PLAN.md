@@ -259,12 +259,12 @@ removeOfferItem: { type: 'function', params: 1, name: 'removeOfferItem', returns
 for (const [name, expected] of Object.entries(contracts)) {
 const actual = window[name];
 console.assert(typeof actual === expected.type, ${name}: type mismatch);
-    console.assert(actual.length === expected.params, ${name}: param count mismatch);
+console.assert(actual.length === expected.params, ${name}: param count mismatch);
 console.assert(actual.name === expected.name, ${name}: name mismatch);
-    const result = actual(); // wywołaj z dummy params
-    console.assert(
-      expected.returnsPromise ? result instanceof Promise : !(result instanceof Promise),
-      ${name}: return type mismatch
+const result = actual(); // wywołaj z dummy params
+console.assert(
+expected.returnsPromise ? result instanceof Promise : !(result instanceof Promise),
+${name}: return type mismatch
 );
 }
 }

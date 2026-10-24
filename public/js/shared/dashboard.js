@@ -604,6 +604,14 @@ async function loadUsers() {
                       : 'is-offline';
                 const revokeTitle =
                     'Wyloguj wszystkie sesje' + (session ? ' (' + session.sessionCount + ')' : '');
+                // Akcje niedozwolone zostają widoczne (wyblakłe), ale bez data-csp — nie da się ich odpalić.
+                const deleteAttrs =
+                    u.username !== 'admin'
+                        ? ` data-csp="deleteUser" data-csp-args="${escapeHtmlAttr(JSON.stringify([u.id]))}"`
+                        : ' disabled aria-disabled="true" title="Konto systemowe — nie można usunąć"';
+                const revokeAttrs = isSelf
+                    ? ' disabled aria-disabled="true" title="Własne konto — użyj Wyloguj w nagłówku"'
+                    : ` title="${escapeHtmlAttr(revokeTitle)}" data-csp="revokeUserSessions" data-csp-args="${escapeHtmlAttr(JSON.stringify([u.id]))}"`;
                 let subUsersHtml = '';
                 if (u.role === 'pro' && u.subUsers && u.subUsers.length > 0) {
                     const names = u.subUsers.map((subId) => {
@@ -641,14 +649,14 @@ async function loadUsers() {
             <div class="admin-user-fact"><span class="fact-label">Nr zam.</span><span class="fact-value cell-num">${escapeHtml(String(u.orderStartNumber || 1))}</span></div>
             <div class="admin-user-fact"><span class="fact-label">Nr zlec.</span><span class="fact-value cell-num">${escapeHtml(String(u.productionOrderStartNumber || 1))}</span></div>
         </div>
-        <div class="admin-user-session ${sessionCls}">
-            <i data-lucide="activity" aria-hidden="true"></i>
-            <span>${escapeHtml(sessionText)}</span>
-        </div>
-        <div class="admin-user-actions">
+        <div class="admin-user-controls">
             <button class="admin-action-btn edit-btn" aria-label="Edytuj: ${escapeHtmlAttr(label)}" data-csp="startEditUser" data-csp-args="${escapeHtmlAttr(JSON.stringify([u.id]))}"><i data-lucide="pencil"></i></button>
-            ${u.username !== 'admin' ? `<button class="admin-action-btn delete-btn" aria-label="Usuń: ${escapeHtmlAttr(label)}" data-csp="deleteUser" data-csp-args="${escapeHtmlAttr(JSON.stringify([u.id]))}"><i data-lucide="trash-2"></i></button>` : ''}
-            ${isSelf ? '' : `<button class="admin-action-btn" aria-label="Wyloguj: ${escapeHtmlAttr(label)}" title="${escapeHtmlAttr(revokeTitle)}" data-csp="revokeUserSessions" data-csp-args="${escapeHtmlAttr(JSON.stringify([u.id]))}"><i data-lucide="log-out"></i></button>`}
+            <button class="admin-action-btn delete-btn" aria-label="Usuń: ${escapeHtmlAttr(label)}"${deleteAttrs}><i data-lucide="trash-2"></i></button>
+            <div class="admin-user-session ${sessionCls}">
+                <i data-lucide="activity" aria-hidden="true"></i>
+                <span>${escapeHtml(sessionText)}</span>
+            </div>
+            <button class="admin-action-btn revoke-btn" aria-label="Wyloguj: ${escapeHtmlAttr(label)}"${revokeAttrs}><i data-lucide="power"></i></button>
         </div>
         ${subUsersHtml}
       </article>`;
