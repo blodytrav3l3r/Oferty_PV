@@ -170,9 +170,10 @@
             "graphify": {
                 "type": "local",
                 "command": [
-                    "C:\\Users\\blody\\AppData\\Roaming\\uv\\tools\\graphifyy\\Scripts\\python.exe",
-                    "-m",
-                    "graphify.serve",
+                    "uvx",
+                    "--from",
+                    "graphifyy[mcp]",
+                    "graphify-mcp",
                     "--graph",
                     "graphify-out/graph.json"
                 ],
