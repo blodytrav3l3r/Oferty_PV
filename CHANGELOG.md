@@ -4,6 +4,19 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.50.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.49.2...v1.50.0) (2026-10-24)
+
+### Features
+
+- **audit:** archiwizacja duzych wpisow audit_logs ([e7e179a](https://github.com/blodytrav3l3r/Oferty_PV/commit/e7e179a475ad3004f315877c90a7998c8f85aa1c))
+- **audit:** limit 64 kb na payload wpisu audytu ([98e7b31](https://github.com/blodytrav3l3r/Oferty_PV/commit/98e7b31893547553bf582224f32fe28074417dc1))
+- **config:** automatyzacja backupu i monitoring swiezosci ([ce57851](https://github.com/blodytrav3l3r/Oferty_PV/commit/ce578519083549c960739b0824c570cbc8a0b4e7))
+
+### Bug Fixes
+
+- **ci:** normalizacja separatorow w basename + smoke pdf ([aa4714f](https://github.com/blodytrav3l3r/Oferty_PV/commit/aa4714f200c33317cfc7b2a768aaa1d289fd7c0c))
+- **telemetry:** usuniecie sondy batch (400 w konsoli) ([b1c1802](https://github.com/blodytrav3l3r/Oferty_PV/commit/b1c18024ec70a8a79daa4edc93b93ea765af99b1))
+
 ### [1.49.2](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.49.1...v1.49.2) (2026-10-24)
 
 ### Bug Fixes

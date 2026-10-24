@@ -1,5 +1,5 @@
 @echo off
-REM  Wersja: 1.49.2
+REM  Wersja: 1.50.0
 REM ensure-db.bat - Sprawdza i przygotowuje baze danych
 REM Zwraca: errorlevel 0 = OK, 1 = blad krytyczny
 REM Uzycie: call scripts\ensure-db.bat

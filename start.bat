@@ -1,5 +1,5 @@
 @echo off
-REM  Wersja: 1.49.2
+REM  Wersja: 1.50.0
 REM ===========================================================
 REM  start.bat - Jedno wejscie: caly system
 REM  Uruchamia:
@@ -12,7 +12,7 @@ REM ===========================================================
 setlocal ENABLEDELAYEDEXPANSION
 cd /d "%~dp0"
 
-set "APP_VERSION=1.49.2"
+set "APP_VERSION=1.50.0"
 
 set "MODE=dev"
 if /i "%1"=="--prod" set "MODE=prod"
