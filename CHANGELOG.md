@@ -4,6 +4,12 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+### [1.49.1](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.49.0...v1.49.1) (2026-10-24)
+
+### Bug Fixes
+
+- **ui:** wyrazny kafel nowego uzytkownika i stale kolumny ([c3b2202](https://github.com/blodytrav3l3r/Oferty_PV/commit/c3b22023d65aaea2a247bde2206fa2eef6aad7bc))
+
 ## [1.49.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.48.1...v1.49.0) (2026-10-24)
 
 ### Features
