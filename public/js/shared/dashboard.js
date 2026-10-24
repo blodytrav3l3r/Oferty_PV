@@ -12,9 +12,12 @@ let adminRefreshSeq = 0;
 const revokingUsers = new Set();
 
 function toggleSubUsersList() {
-    const role = document.getElementById('new-user-role').value;
+    // Modal może być zamknięty — wtedy pól nie ma w DOM.
+    const roleEl = document.getElementById('new-user-role');
     const container = document.getElementById('sub-users-container');
     const listObj = document.getElementById('sub-users-list');
+    if (!roleEl || !container || !listObj) return;
+    const role = roleEl.value;
     if (role === 'pro') {
         container.classList.remove('hidden');
         const regularUsers = adminUsers.filter((u) => u.role !== 'admin' && u.id !== editingUserId);
@@ -569,68 +572,76 @@ async function loadUsers() {
         updateStatsBar();
 
         const grid = document.getElementById('users-tiles');
-        const emptyState = document.getElementById('admin-empty-state');
         if (!grid) return;
 
-        if (adminUsers.length === 0) {
-            grid.innerHTML = '';
-            if (emptyState) emptyState.classList.remove('hidden');
-            return;
-        }
+        // Kafel „Nowy użytkownik" jest jedynym CTA — widoczny także przy 0 kont.
+        const newUserTile = `
+      <article class="admin-user-tile admin-user-tile--new" role="listitem">
+        <button type="button" class="admin-new-user-btn" aria-label="Nowy użytkownik — dodaj konto" data-csp="openUserModal">
+            <span class="admin-user-avatar admin-user-avatar--new" aria-hidden="true"><i data-lucide="user-plus"></i></span>
+            <span class="admin-user-id">
+                <span class="user-name">Nowy użytkownik</span>
+                <span class="admin-user-login">Dodaj konto</span>
+            </span>
+        </button>
+      </article>`;
 
-        if (emptyState) emptyState.classList.add('hidden');
-
-        grid.innerHTML = adminUsers
-            .map((u) => {
-                const fullName = ((u.firstName || '') + ' ' + (u.lastName || '')).trim();
-                const label = fullName || u.username;
-                const role = String(u.role || 'user').toLowerCase();
-                const session = sessionByUser[u.id];
-                const isSelf =
-                    typeof currentUser !== 'undefined' && currentUser && currentUser.id === u.id;
-                const sessionText = !sessionsKnown
-                    ? 'Sesje: brak danych'
-                    : session
-                      ? session.sessionCount +
-                        ' ' +
-                        pluralSessions(session.sessionCount) +
-                        ' · ' +
-                        formatRelativeTime(session.lastActivityAt)
-                      : 'Brak aktywnej sesji';
-                const sessionCls = !sessionsKnown
-                    ? 'is-unknown'
-                    : session
-                      ? 'is-online'
-                      : 'is-offline';
-                const revokeTitle =
-                    'Wyloguj wszystkie sesje' + (session ? ' (' + session.sessionCount + ')' : '');
-                // Akcje niedozwolone zostają widoczne (wyblakłe), ale bez data-csp — nie da się ich odpalić.
-                const deleteAttrs =
-                    u.username !== 'admin'
-                        ? ` data-csp="deleteUser" data-csp-args="${escapeHtmlAttr(JSON.stringify([u.id]))}"`
-                        : ' disabled aria-disabled="true" title="Konto systemowe — nie można usunąć"';
-                const revokeAttrs = isSelf
-                    ? ' disabled aria-disabled="true" title="Własne konto — użyj Wyloguj w nagłówku"'
-                    : ` title="${escapeHtmlAttr(revokeTitle)}" data-csp="revokeUserSessions" data-csp-args="${escapeHtmlAttr(JSON.stringify([u.id]))}"`;
-                let subUsersHtml = '';
-                if (u.role === 'pro' && u.subUsers && u.subUsers.length > 0) {
-                    const names = u.subUsers.map((subId) => {
-                        const subU = adminUsers.find((x) => x.id === subId);
-                        return subU
-                            ? subU.firstName && subU.lastName
-                                ? subU.firstName + ' ' + subU.lastName
-                                : subU.username
-                            : 'Nieznany';
-                    });
-                    subUsersHtml = `
+        grid.innerHTML =
+            newUserTile +
+            adminUsers
+                .map((u) => {
+                    const fullName = ((u.firstName || '') + ' ' + (u.lastName || '')).trim();
+                    const label = fullName || u.username;
+                    const role = String(u.role || 'user').toLowerCase();
+                    const session = sessionByUser[u.id];
+                    const isSelf =
+                        typeof currentUser !== 'undefined' &&
+                        currentUser &&
+                        currentUser.id === u.id;
+                    const sessionText = !sessionsKnown
+                        ? 'Sesje: brak danych'
+                        : session
+                          ? session.sessionCount +
+                            ' ' +
+                            pluralSessions(session.sessionCount) +
+                            ' · ' +
+                            formatRelativeTime(session.lastActivityAt)
+                          : 'Brak aktywnej sesji';
+                    const sessionCls = !sessionsKnown
+                        ? 'is-unknown'
+                        : session
+                          ? 'is-online'
+                          : 'is-offline';
+                    const revokeTitle =
+                        'Wyloguj wszystkie sesje' +
+                        (session ? ' (' + session.sessionCount + ')' : '');
+                    // Akcje niedozwolone zostają widoczne (wyblakłe), ale bez data-csp — nie da się ich odpalić.
+                    const deleteAttrs =
+                        u.username !== 'admin'
+                            ? ` data-csp="deleteUser" data-csp-args="${escapeHtmlAttr(JSON.stringify([u.id]))}"`
+                            : ' disabled aria-disabled="true" title="Konto systemowe — nie można usunąć"';
+                    const revokeAttrs = isSelf
+                        ? ' disabled aria-disabled="true" title="Własne konto — użyj Wyloguj w nagłówku"'
+                        : ` title="${escapeHtmlAttr(revokeTitle)}" data-csp="revokeUserSessions" data-csp-args="${escapeHtmlAttr(JSON.stringify([u.id]))}"`;
+                    let subUsersHtml = '';
+                    if (u.role === 'pro' && u.subUsers && u.subUsers.length > 0) {
+                        const names = u.subUsers.map((subId) => {
+                            const subU = adminUsers.find((x) => x.id === subId);
+                            return subU
+                                ? subU.firstName && subU.lastName
+                                    ? subU.firstName + ' ' + subU.lastName
+                                    : subU.username
+                                : 'Nieznany';
+                        });
+                        subUsersHtml = `
         <div class="admin-user-subs">
             <span class="subordinate-label"><i data-lucide="users"></i> Powiązani handlowcy</span>
             <div class="subordinate-badges">
                 ${names.map((name) => `<span class="token-badge sub-token">${escapeHtml(name)}</span>`).join('')}
             </div>
         </div>`;
-                }
-                return `
+                    }
+                    return `
       <article class="admin-user-tile" role="listitem" aria-label="${escapeHtmlAttr(label)}">
         <div class="admin-user-head">
             <div class="admin-user-avatar" aria-hidden="true">${escapeHtml(initialsOf(u))}</div>
@@ -660,8 +671,8 @@ async function loadUsers() {
         </div>
         ${subUsersHtml}
       </article>`;
-            })
-            .join('');
+                })
+                .join('');
 
         if (typeof lucide !== 'undefined') {
             lucide.createIcons({ root: grid });
@@ -684,147 +695,290 @@ function updateStatsBar() {
     if (userEl) userEl.textContent = String(counts.user);
 }
 
-function startEditUser(id) {
-    const u = adminUsers.find((x) => x.id === id);
-    if (!u) return;
-    editingUserId = id;
-    const setVal = (id, val) => {
-        const el = document.getElementById(id);
-        if (el) el.value = val;
-    };
-    setVal('new-user-firstname', u.firstName || '');
-    setVal('new-user-lastname', u.lastName || '');
-    setVal('new-user-symbol', u.symbol || '');
-    setVal('new-user-login', u.username);
-    const pwd = document.getElementById('new-user-password');
-    if (pwd) {
-        pwd.value = '';
-        pwd.placeholder = 'Nowe hasło (opcjonalnie)';
-    }
-    setVal('new-user-email', u.email || '');
-    setVal('new-user-phone', u.phone || '');
-    setVal('new-user-order-start', u.orderStartNumber || 1);
-    setVal('new-user-prod-order-start', u.productionOrderStartNumber || 1);
-    setVal('new-user-role', u.role);
-    selectedSubUsers = [...(u.subUsers || [])];
-    toggleSubUsersList();
+/* ── Modal użytkownika: jeden formularz dla dodawania i edycji ───────── */
 
-    const modeLabel = document.getElementById('form-mode-label');
-    if (modeLabel) {
-        modeLabel.classList.remove('hidden');
-        modeLabel.innerHTML =
-            '<i data-lucide="pencil"></i> EDYCJA: ' + escapeHtml(u.firstName || u.username);
-    }
-    const formHeading = document.getElementById('form-heading');
-    if (formHeading) formHeading.textContent = 'Edycja użytkownika';
-    const addBtn = document.getElementById('add-user-btn');
-    if (addBtn) addBtn.innerHTML = '<i data-lucide="save"></i> Zapisz';
-    const cancelBtn = document.getElementById('cancel-edit-btn');
-    if (cancelBtn) cancelBtn.classList.remove('hidden');
-
-    if (typeof lucide !== 'undefined') {
-        lucide.createIcons({ root: modeLabel });
-    }
-}
-
-function cancelEditUser() {
+/** Czyści stan formularza po zamknięciu modala (DOM modala już nie istnieje). */
+function resetUserFormState() {
     editingUserId = null;
-    const setVal = (id, val) => {
-        const el = document.getElementById(id);
-        if (el) el.value = val;
-    };
-    const modeLabel = document.getElementById('form-mode-label');
-    if (modeLabel) modeLabel.classList.add('hidden');
-    const formHeading = document.getElementById('form-heading');
-    if (formHeading) formHeading.textContent = 'Nowy użytkownik';
-    setVal('new-user-firstname', '');
-    setVal('new-user-lastname', '');
-    setVal('new-user-symbol', '');
-    setVal('new-user-login', '');
-    const pwd = document.getElementById('new-user-password');
-    if (pwd) {
-        pwd.value = '';
-        pwd.placeholder = 'Hasło';
-    }
-    setVal('new-user-email', '');
-    setVal('new-user-phone', '');
-    setVal('new-user-order-start', 1);
-    setVal('new-user-prod-order-start', 1);
-    setVal('new-user-role', 'user');
-
-    const addBtn = document.getElementById('add-user-btn');
-    if (addBtn) addBtn.innerHTML = '<i data-lucide="plus"></i> Dodaj';
-    const cancelBtn = document.getElementById('cancel-edit-btn');
-    if (cancelBtn) cancelBtn.classList.add('hidden');
-
     selectedSubUsers = [];
+}
+
+/**
+ * Buduje HTML modala użytkownika. Czysty string → testowalny bez DOM.
+ * Każda wartość z API przechodzi przez escapeHtml/escapeHtmlAttr.
+ */
+function buildUserModalHtml(user) {
+    const u = user || {};
+    const isEdit = !!user;
+    const val = (value, fallback) => {
+        const raw = value === undefined || value === null || value === '' ? fallback : value;
+        return escapeHtmlAttr(String(raw === undefined || raw === null ? '' : raw));
+    };
+    const role = String(u.role || 'user').toLowerCase();
+    const fullName = ((u.firstName || '') + ' ' + (u.lastName || '')).trim();
+    const title = isEdit ? 'Edycja: ' + (fullName || u.username || '') : 'Nowy użytkownik';
+    const roleOption = (value, label) =>
+        `<option value="${value}"${role === value ? ' selected' : ''}>${label}</option>`;
+
+    return `
+<div class="modal modal--lg user-modal">
+    <div class="modal-header user-modal-header">
+        <h3 id="user-modal-title">
+            <i data-lucide="${isEdit ? 'pencil' : 'user-plus'}"></i>
+            <span>${escapeHtml(title)}</span>
+        </h3>
+        <span id="form-mode-label" class="admin-edit-badge${isEdit ? '' : ' hidden'}">
+            <i data-lucide="pencil"></i> TRYB EDYCJI
+        </span>
+        <button type="button" class="admin-action-btn user-modal-close" aria-label="Zamknij okno" data-csp="closeUserModal">
+            <i data-lucide="x"></i>
+        </button>
+    </div>
+    <form id="user-form" class="user-modal-form" novalidate>
+        <div class="uf-form user-modal-body">
+            <div class="uf-section">
+                <div class="uf-section-title"><i data-lucide="contact"></i> Dane osobowe</div>
+                <div class="uf-grid">
+                    <div class="uf-field">
+                        <label for="new-user-firstname">Imię</label>
+                        <input type="text" id="new-user-firstname" class="form-input" placeholder="Imię" autocomplete="given-name" value="${val(u.firstName)}" />
+                    </div>
+                    <div class="uf-field">
+                        <label for="new-user-lastname">Nazwisko</label>
+                        <input type="text" id="new-user-lastname" class="form-input" placeholder="Nazwisko" autocomplete="family-name" value="${val(u.lastName)}" />
+                    </div>
+                    <div class="uf-field">
+                        <label for="new-user-symbol">Symbol</label>
+                        <input type="text" id="new-user-symbol" class="form-input" placeholder="Sym." title="Symbol w numeracji" value="${val(u.symbol)}" />
+                    </div>
+                </div>
+            </div>
+
+            <div class="uf-section">
+                <div class="uf-section-title"><i data-lucide="key-round"></i> Dostęp</div>
+                <div class="uf-grid">
+                    <div class="uf-field">
+                        <label for="new-user-login">Login</label>
+                        <input type="text" id="new-user-login" class="form-input" placeholder="Login" autocomplete="username" aria-required="true" required value="${val(u.username)}" />
+                    </div>
+                    <div class="uf-field">
+                        <label for="new-user-password">Hasło</label>
+                        <input type="password" id="new-user-password" class="form-input" placeholder="${isEdit ? 'Nowe hasło (opcjonalnie)' : 'Hasło'}" autocomplete="new-password"${isEdit ? '' : ' aria-required="true" required'} />
+                    </div>
+                    <div class="uf-field">
+                        <label for="new-user-role">Rola</label>
+                        <select id="new-user-role" class="form-select" data-csp="toggleSubUsersList" data-csp-on="change">
+                            ${roleOption('user', 'USER')}
+                            ${roleOption('pro', 'PRO')}
+                            ${roleOption('admin', 'ADMIN')}
+                        </select>
+                    </div>
+                </div>
+                <div id="sub-users-container" class="hidden sub-users-compact">
+                    <span class="sub-users-title"><i data-lucide="link"></i> Przypisani:</span>
+                    <div id="sub-users-list" class="sub-users-list-compact"></div>
+                </div>
+            </div>
+
+            <div class="uf-section">
+                <div class="uf-section-title"><i data-lucide="mail"></i> Kontakt</div>
+                <div class="uf-grid cols-2">
+                    <div class="uf-field">
+                        <label for="new-user-email">Email</label>
+                        <input type="email" id="new-user-email" class="form-input" placeholder="Email" autocomplete="email" value="${val(u.email)}" />
+                    </div>
+                    <div class="uf-field">
+                        <label for="new-user-phone">Telefon</label>
+                        <input type="text" id="new-user-phone" class="form-input" placeholder="Telefon" autocomplete="tel" value="${val(u.phone)}" />
+                    </div>
+                </div>
+            </div>
+
+            <div class="uf-section">
+                <div class="uf-section-title"><i data-lucide="hash"></i> Numeracja</div>
+                <div class="uf-grid cols-2">
+                    <div class="uf-field">
+                        <label for="new-user-order-start">Nr Zamówień (start)</label>
+                        <input type="number" id="new-user-order-start" class="form-input" min="1" title="Start Zamówień" value="${val(u.orderStartNumber, 1)}" />
+                    </div>
+                    <div class="uf-field">
+                        <label for="new-user-prod-order-start">Nr Zleceń (start)</label>
+                        <input type="number" id="new-user-prod-order-start" class="form-input" min="1" title="Start Zleceń" value="${val(u.productionOrderStartNumber, 1)}" />
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="user-form-error" class="login-error user-form-error" role="alert" aria-live="assertive"></div>
+        <div class="form-actions-inline">
+            <button type="button" class="btn btn-danger btn-sm" data-csp="closeUserModal">Anuluj</button>
+            <button type="submit" id="add-user-btn" class="btn btn-primary btn-sm">
+                <i data-lucide="${isEdit ? 'save' : 'plus'}"></i> ${isEdit ? 'Zapisz' : 'Dodaj'}
+            </button>
+        </div>
+    </form>
+</div>`;
+}
+
+/** Otwiera modal: bez id = tryb dodawania, z id = edycja konta. */
+function openUserModal(id) {
+    if (typeof window.showModal !== 'function') {
+        if (typeof logger !== 'undefined') {
+            logger.error('dashboard', 'showModal niedostępny — modal użytkownika przerwany');
+        }
+        return;
+    }
+    const user = id ? adminUsers.find((x) => x.id === id) || null : null;
+    editingUserId = user ? user.id : null;
+    selectedSubUsers = user && Array.isArray(user.subUsers) ? [...user.subUsers] : [];
+
+    const overlay = window.showModal({
+        id: 'user-modal',
+        titleId: 'user-modal-title',
+        html: buildUserModalHtml(user),
+        onClose: resetUserFormState
+    });
+
+    const form = overlay.querySelector('#user-form');
+    if (form) {
+        form.addEventListener('submit', (event) => {
+            event.preventDefault();
+            createUser();
+        });
+    }
+
     toggleSubUsersList();
 
     if (typeof lucide !== 'undefined') {
-        lucide.createIcons({ root: document.getElementById('user-form-container') });
+        lucide.createIcons({ root: overlay });
     }
+
+    const firstField = overlay.querySelector('#new-user-firstname');
+    if (firstField) firstField.focus();
 }
+
+/** Zamyka i usuwa modal (closeModal(id) tylko ukrywa — ID zostałoby w DOM). */
+function closeUserModal() {
+    const overlay = document.getElementById('user-modal');
+    if (overlay) {
+        if (typeof window.untrapFocus === 'function') window.untrapFocus(overlay);
+        overlay.remove();
+    }
+    if (typeof window.restoreBodyScroll === 'function') window.restoreBodyScroll();
+    resetUserFormState();
+}
+
+function startEditUser(id) {
+    openUserModal(id);
+}
+
+/** Walidacja klienta = mirror registerSchema; backend waliduje ponownie. */
+function validateUserForm(values) {
+    if (values.login.length < 3) {
+        return { message: 'Login musi mieć co najmniej 3 znaki', fieldId: 'new-user-login' };
+    }
+    if (!values.isEditing && values.password.length < 8) {
+        return { message: 'Hasło musi mieć przynajmniej 8 znaków', fieldId: 'new-user-password' };
+    }
+    if (values.isEditing && values.password && values.password.length < 8) {
+        return {
+            message: 'Nowe hasło musi mieć przynajmniej 8 znaków',
+            fieldId: 'new-user-password'
+        };
+    }
+    if (values.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email)) {
+        return { message: 'Niepoprawny format email', fieldId: 'new-user-email' };
+    }
+    if (!['admin', 'user', 'pro'].includes(values.role)) {
+        return { message: 'Niepoprawna rola', fieldId: 'new-user-role' };
+    }
+    if (values.orderStart < 1 || values.prodOrderStart < 1) {
+        return {
+            message: 'Numery startowe muszą być większe od 0',
+            fieldId: 'new-user-order-start'
+        };
+    }
+    return null;
+}
+
+let isSavingUser = false;
 
 async function createUser() {
+    if (isSavingUser) return;
     const g = (id) => {
         const el = document.getElementById(id);
-        return el ? el.value.trim() : '';
+        return el ? String(el.value || '').trim() : '';
     };
-    const firstName = g('new-user-firstname');
-    const lastName = g('new-user-lastname');
-    const symbol = g('new-user-symbol');
-    const login = g('new-user-login');
-    const password = g('new-user-password');
-    const email = g('new-user-email');
-    const phone = g('new-user-phone');
-    const role = g('new-user-role');
-    const errorEl = document.getElementById('admin-error');
+    const values = {
+        login: g('new-user-login'),
+        password: g('new-user-password'),
+        email: g('new-user-email'),
+        role: g('new-user-role') || 'user',
+        isEditing: !!editingUserId,
+        orderStart: parseInt(g('new-user-order-start'), 10) || 1,
+        prodOrderStart: parseInt(g('new-user-prod-order-start'), 10) || 1
+    };
+    const errorEl = document.getElementById('user-form-error');
     if (errorEl) errorEl.textContent = '';
+    document.querySelectorAll('#user-form [aria-invalid="true"]').forEach((el) => {
+        el.removeAttribute('aria-invalid');
+    });
 
-    if (!login) {
-        errorEl.textContent = 'Podaj login';
+    const invalid = validateUserForm(values);
+    if (invalid) {
+        if (errorEl) errorEl.textContent = invalid.message;
+        const field = document.getElementById(invalid.fieldId);
+        if (field) {
+            field.setAttribute('aria-invalid', 'true');
+            field.focus();
+        }
         return;
     }
-    // Dla nowych uzytkownikow haslo jest wymagane
-    if (!editingUserId && !password) {
-        errorEl.textContent = 'Podaj hasło dla nowego użytkownika';
-        return;
-    }
 
+    const submitBtn = document.getElementById('add-user-btn');
+    isSavingUser = true;
+    if (submitBtn) submitBtn.disabled = true;
     try {
-        const isEditing = !!editingUserId;
-        const url = isEditing ? `/api/users/${editingUserId}` : '/api/auth/register';
-        const method = isEditing ? 'PUT' : 'POST';
         const payload = {
-            username: login,
-            role,
-            firstName,
-            lastName,
-            symbol,
-            phone,
-            email,
+            username: values.login,
+            role: values.role,
+            firstName: g('new-user-firstname'),
+            lastName: g('new-user-lastname'),
+            symbol: g('new-user-symbol'),
+            phone: g('new-user-phone'),
+            email: values.email,
             subUsers: selectedSubUsers,
-            orderStartNumber: parseInt(g('new-user-order-start')) || 1,
-            productionOrderStartNumber: parseInt(g('new-user-prod-order-start')) || 1
+            orderStartNumber: values.orderStart,
+            productionOrderStartNumber: values.prodOrderStart
         };
-        if (password) payload.password = password;
+        if (values.password) payload.password = values.password;
 
-        const res = await fetch(url, {
-            method: method,
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'same-origin',
-            body: JSON.stringify(payload)
-        });
-        const data = await res.json();
+        const res = await fetch(
+            values.isEditing ? '/api/users/' + editingUserId : '/api/auth/register',
+            {
+                method: values.isEditing ? 'PUT' : 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'same-origin',
+                body: JSON.stringify(payload)
+            }
+        );
+        const data = await res.json().catch(() => ({}));
         if (!res.ok) {
-            errorEl.textContent =
-                data.error || (isEditing ? 'Błąd zapisu' : 'Błąd tworzenia konta');
+            const message =
+                data && data.error
+                    ? data.error
+                    : values.isEditing
+                      ? 'Błąd zapisu'
+                      : 'Błąd tworzenia konta';
+            if (errorEl) errorEl.textContent = message;
             return;
         }
-        cancelEditUser(); // Clears form and resets state
-        refreshAdminSessions();
+        closeUserModal();
+        await refreshAdminSessions();
     } catch (_e) {
-        errorEl.textContent = 'Błąd połączenia';
+        if (errorEl) errorEl.textContent = 'Błąd połączenia';
+    } finally {
+        isSavingUser = false;
+        if (submitBtn) submitBtn.disabled = false;
     }
 }
 
@@ -1134,14 +1288,14 @@ async function saveMagazynCodes() {
             window.showChangePassword && window.showChangePassword();
         else if (a === 'saveYearLetter') window.saveYearLetter && window.saveYearLetter();
         else if (a === 'saveMagazynCodes') window.saveMagazynCodes && window.saveMagazynCodes();
-        else if (a === 'createUser') window.createUser && window.createUser();
-        else if (a === 'cancelEditUser') window.cancelEditUser && window.cancelEditUser();
     });
 })();
 
 /* ===== Rejestracja globali ===== */
 window.updateSubUsers = updateSubUsers;
 window.startEditUser = startEditUser;
+window.openUserModal = openUserModal;
+window.closeUserModal = closeUserModal;
 
 /* ===== Rejestracja globali ===== */
 window.doLogout = doLogout;

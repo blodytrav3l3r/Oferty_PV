@@ -931,6 +931,63 @@ a.admin-stat-card {
     box-shadow: var(--shadow-lg);
 }
 
+/* Kafel „Nowy użytkownik" — jedyne CTA dodawania konta (zawsze pierwszy). */
+.admin-user-tile--new {
+    padding: 0;
+    border-style: dashed;
+    border-color: var(--accent-border-medium);
+    background: transparent;
+    box-shadow: none;
+}
+
+.admin-user-tile--new:hover {
+    border-color: var(--accent-border);
+    background: var(--accent-bg);
+    box-shadow: var(--shadow-sm);
+}
+
+.admin-new-user-btn {
+    display: flex;
+    align-items: center;
+    gap: var(--tile-gap-sm, 0.6rem);
+    width: 100%;
+    min-height: 46px;
+    padding: 0.55rem 0.9rem;
+    background: transparent;
+    border: 0;
+    border-radius: var(--radius-md);
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.admin-new-user-btn:focus-visible {
+    outline: 2px solid var(--accent-border);
+    outline-offset: 2px;
+}
+
+.admin-new-user-btn .admin-user-id {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.admin-user-avatar--new {
+    background: var(--accent-bg);
+    border: 1px dashed var(--accent-border);
+}
+
+.admin-user-avatar--new svg,
+.admin-user-avatar--new i {
+    width: 18px;
+    height: 18px;
+}
+
+.admin-user-tile--new .user-name {
+    color: var(--accent-hover);
+}
+
 .admin-user-head {
     display: flex;
     align-items: center;
@@ -1095,6 +1152,71 @@ a.admin-stat-card {
     margin-left: auto;
 }
 
+/* ── Modal użytkownika (dodawanie + edycja) ── */
+.user-modal {
+    display: flex;
+    flex-direction: column;
+    width: 92%;
+    max-height: 92vh;
+    padding: 0;
+    overflow: hidden;
+}
+
+.user-modal-header {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin: 0;
+    padding: 1rem 1.2rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.user-modal-header h3 {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    margin: 0;
+    font-size: var(--fs-lg);
+}
+
+.user-modal-header h3 svg,
+.user-modal-header h3 i {
+    width: 16px;
+    height: 16px;
+    color: var(--accent-text);
+}
+
+.user-modal-header .admin-edit-badge {
+    margin-right: 0;
+}
+
+.user-modal-close {
+    margin-left: auto;
+}
+
+.user-modal-form {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.user-modal-body {
+    overflow-y: auto;
+    max-height: 62vh;
+}
+
+.user-form-error {
+    margin: 0 1.1rem;
+}
+
+.user-form-error:empty {
+    display: none;
+}
+
+.user-modal .form-actions-inline {
+    margin-top: auto;
+}
+
 /* Wąski ekran: kafel zawija się, ale zostaje jedną kartą (nie siatką). */
 @media (max-width: 900px) {
     .admin-user-tile {
@@ -1118,45 +1240,18 @@ a.admin-stat-card {
     .admin-user-session {
         white-space: normal;
     }
-}
 
-/* ── Empty State ── */
-.admin-empty-state {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 2.5rem 1rem;
-    text-align: center;
-    gap: 0.6rem;
-}
+    .user-modal-body {
+        max-height: 55vh;
+    }
 
-.admin-empty-state i,
-.admin-empty-state svg {
-    width: 36px;
-    height: 36px;
-    color: var(--text-muted);
-    opacity: 0.35;
-}
-
-.admin-empty-state .empty-title {
-    font-size: var(--fs-lg);
-    font-weight: var(--fw-bold);
-    color: var(--text-secondary);
-}
-
-.admin-empty-state .empty-desc {
-    font-size: var(--fs-sm);
-    color: var(--text-muted);
+    .user-modal .uf-grid,
+    .user-modal .uf-grid.cols-2 {
+        grid-template-columns: 1fr;
+    }
 }
 
 /* ── Formularz admina ── */
-.admin-form-inline {
-    display: flex;
-    flex-direction: column;
-    padding: 0;
-}
-
 .uf-form {
     display: flex;
     flex-direction: column;

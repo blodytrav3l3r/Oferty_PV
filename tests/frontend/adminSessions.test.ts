@@ -332,7 +332,14 @@ describe('pulpit admina: sesje', () => {
         expect(html).toContain('v@e.pl');
         expect(html).toContain('Nr zam.');
         expect(html).toContain('Nr zlec.');
-        expect(els['admin-empty-state'].classList._set.has('hidden')).toBe(true);
+        // Kafel „Nowy użytkownik" jest pierwszy i otwiera modal (CSP, bez inline onclick).
+        expect(
+            html.trimStart().startsWith('<article class="admin-user-tile admin-user-tile--new"')
+        ).toBe(true);
+        expect(html).toContain('data-csp="openUserModal"');
+        expect(html).toContain('data-lucide="user-plus"');
+        expect(html).toContain('aria-label="Nowy użytkownik — dodaj konto"');
+        expect(html).not.toContain('onclick=');
     });
 
     it('kafle: kolejność edytuj → usuń → status → wyloguj, akcje niedostępne wyblakłe', async () => {
@@ -371,7 +378,7 @@ describe('pulpit admina: sesje', () => {
         expect(adminTile).not.toContain('data-csp="deleteUser"');
     });
 
-    it('kafle: puste konto → chowamy kafle i pokazujemy empty state', async () => {
+    it('kafle: puste konto → zostaje tylko kafel Nowy użytkownik', async () => {
         const { context, els } = loadDashboard(async (url: string) => {
             const u = String(url);
             if (u.includes('/api/admin/sessions')) return okJson(sessionsPayload());
@@ -382,8 +389,12 @@ describe('pulpit admina: sesje', () => {
         await context.showLoggedIn(adminUser);
         await flush();
 
-        expect(els['users-tiles'].innerHTML).toBe('');
-        expect(els['admin-empty-state'].classList._set.has('hidden')).toBe(false);
+        const html = els['users-tiles'].innerHTML;
+        expect(html).toContain('admin-user-tile--new');
+        expect(html).toContain('data-csp="openUserModal"');
+        // Żadnego kafla konta — tylko CTA dodawania.
+        expect(html.match(/class="admin-user-tile"/g) || []).toHaveLength(0);
+        expect(els['admin-empty-state']).toBeUndefined();
     });
 
     it('kafle: dane użytkownika escapowane (XSS w nazwie i mailu)', async () => {
