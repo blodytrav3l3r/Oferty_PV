@@ -915,10 +915,10 @@ a.admin-stat-card {
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
     padding: 0.55rem 0.9rem;
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: 260px minmax(0, 1fr) 276px;
     align-items: center;
-    gap: var(--tile-gap-md, 1rem);
+    column-gap: var(--tile-gap-md, 1rem);
     row-gap: 0;
     box-shadow: var(--shadow-sm);
     transition:
@@ -933,16 +933,17 @@ a.admin-stat-card {
 
 /* Kafel „Nowy użytkownik" — jedyne CTA dodawania konta (zawsze pierwszy). */
 .admin-user-tile--new {
+    display: block;
     padding: 0;
     border-style: dashed;
-    border-color: var(--accent-border-medium);
-    background: transparent;
+    border-color: var(--danger);
+    background: var(--danger-bg);
     box-shadow: none;
 }
 
 .admin-user-tile--new:hover {
-    border-color: var(--accent-border);
-    background: var(--accent-bg);
+    border-color: var(--danger-hover);
+    background: rgba(var(--danger-rgb), 0.16);
     box-shadow: var(--shadow-sm);
 }
 
@@ -963,7 +964,7 @@ a.admin-stat-card {
 }
 
 .admin-new-user-btn:focus-visible {
-    outline: 2px solid var(--accent-border);
+    outline: 2px solid var(--danger-hover);
     outline-offset: 2px;
 }
 
@@ -973,19 +974,25 @@ a.admin-stat-card {
     gap: 2px;
 }
 
-.admin-user-avatar--new {
-    background: var(--accent-bg);
-    border: 1px dashed var(--accent-border);
+.admin-user-tile--new .admin-user-avatar {
+    background: rgba(var(--danger-rgb), 0.15);
+    border: 1px dashed var(--danger);
+    color: var(--danger-hover);
 }
 
-.admin-user-avatar--new svg,
-.admin-user-avatar--new i {
-    width: 18px;
-    height: 18px;
+.admin-user-tile--new .admin-user-avatar svg,
+.admin-user-tile--new .admin-user-avatar i {
+    width: 15px;
+    height: 15px;
 }
 
-.admin-user-tile--new .user-name {
-    color: var(--accent-hover);
+.admin-user-tile--new .admin-user-id .user-name {
+    color: var(--danger-hover);
+}
+
+.admin-user-tile--new .admin-user-login {
+    color: var(--danger-hover);
+    opacity: 0.75;
 }
 
 .admin-user-head {
@@ -1098,15 +1105,16 @@ a.admin-stat-card {
 
 .admin-user-session i,
 .admin-user-session svg {
-    width: 14px;
-    height: 14px;
+    width: 15px;
+    height: 15px;
 }
 
+/* Podwładni zajmują cały wiersz pod trzema kolumnami kafla. */
 .admin-user-subs {
     display: flex;
     align-items: center;
     gap: var(--tile-gap-xs, 0.35rem);
-    flex: 1 1 100%;
+    grid-column: 1 / -1;
     min-width: 0;
     margin-top: 0.4rem;
     padding-top: 0.4rem;
@@ -1127,8 +1135,8 @@ a.admin-stat-card {
 
 .admin-user-subs .subordinate-label i,
 .admin-user-subs .subordinate-label svg {
-    width: 13px;
-    height: 13px;
+    width: 15px;
+    height: 15px;
 }
 
 .admin-user-subs .subordinate-badges {
@@ -1217,11 +1225,16 @@ a.admin-stat-card {
     margin-top: auto;
 }
 
-/* Wąski ekran: kafel zawija się, ale zostaje jedną kartą (nie siatką). */
+/* Wąski ekran: kafel wraca do flex i zawija się, ale zostaje jedną kartą. */
 @media (max-width: 900px) {
     .admin-user-tile {
+        display: flex;
         flex-wrap: wrap;
         align-items: flex-start;
+    }
+
+    .admin-user-tile--new {
+        display: block;
     }
 
     .admin-user-head,
