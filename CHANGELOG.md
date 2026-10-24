@@ -4,6 +4,12 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+### [1.49.2](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.49.1...v1.49.2) (2026-10-24)
+
+### Bug Fixes
+
+- **studnie:** podglad cennika preco rozwijal accordiony ([6e11da8](https://github.com/blodytrav3l3r/Oferty_PV/commit/6e11da88cf7e66ba3c2b6302c7b62bb5157ca3b8))
+
 ### [1.49.1](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.49.0...v1.49.1) (2026-10-24)
 
 ### Bug Fixes
