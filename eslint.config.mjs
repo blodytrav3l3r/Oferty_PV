@@ -82,6 +82,22 @@ export default tseslint.config(
         }
     },
     {
+        // Pluginy OpenCode V2: ESM w Node (ten sam kontrakt co .opencode/plugins/graphify.js)
+        files: ['.opencode/plugins/**/*.js'],
+        languageOptions: {
+            ecmaVersion: 'latest',
+            sourceType: 'module',
+            globals: {
+                ...globals.node
+            }
+        },
+        rules: {
+            'no-console': 'off',
+            semi: ['error', 'always'],
+            quotes: ['error', 'single', { avoidEscape: true }]
+        }
+    },
+    {
         files: ['public/js/**/*.{js,ts}'],
         languageOptions: {
             parser: tseslint.parser,

@@ -72,6 +72,11 @@
             "action": "skill",
             "resource": "canvas",
             "effect": "deny"
+        },
+        {
+            "action": "shell",
+            "resource": "git push *",
+            "effect": "ask"
         }
     ],
     "agents": {

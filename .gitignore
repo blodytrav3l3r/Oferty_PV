@@ -108,6 +108,7 @@ check_db_temp.js
 !.opencode/rules/**/*
 # Konfiguracja OpenCode V2 i materialy agenta: wersjonowane (odtwarzalny setup).
 !.opencode/opencode.json
+!.opencode/plugins/
 !.opencode/prompts/
 .opencode/skills/*
 !.opencode/skills/

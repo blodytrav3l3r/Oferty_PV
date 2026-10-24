@@ -4,6 +4,7 @@ dist
 .next
 .cache
 package-lock.json
+ECC/
 *.htm
 *.html.bak
 *.xlsx

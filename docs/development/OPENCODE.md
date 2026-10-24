@@ -33,13 +33,14 @@ Zmiana configu przeładowuje się bez restartu. Weryfikacja: `opencode-cli.exe d
 
 ## 3. Aktywne pluginy
 
-| Plugin                     | Źródło                                                         | Funkcja                                                |
-| -------------------------- | -------------------------------------------------------------- | ------------------------------------------------------ |
-| `claude-mem`               | `~/.config/opencode/plugins/claude-mem` (katalog z `index.ts`) | pamięć sesji + tool `claude_mem_search`                |
-| `caveman`                  | `~/.config/opencode/plugins/caveman`                           | dynamiczny tryb caveman (flagi, parsowanie komend)     |
-| `@dietrichgebert/ponytail` | npm                                                            | 6 skilli + ruleset minimalizmu                         |
-| `open-code-review`         | `~/.config/opencode/plugins/open-code-review.ts`               | tools `ocr_review`, `ocr_health`                       |
-| `graphify`                 | `.opencode/plugins/graphify.js` (wersjonowany)                 | przypomnienie o `graphify-out/` przed pierwszą komendą |
+| Plugin                     | Źródło                                                         | Funkcja                                                                                                       |
+| -------------------------- | -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `claude-mem`               | `~/.config/opencode/plugins/claude-mem` (katalog z `index.ts`) | pamięć sesji + tool `claude_mem_search`                                                                       |
+| `caveman`                  | `~/.config/opencode/plugins/caveman`                           | dynamiczny tryb caveman (flagi, parsowanie komend)                                                            |
+| `@dietrichgebert/ponytail` | npm                                                            | 6 skilli + ruleset minimalizmu                                                                                |
+| `open-code-review`         | `~/.config/opencode/plugins/open-code-review.ts`               | tools `ocr_review`, `ocr_health`                                                                              |
+| `graphify`                 | `.opencode/plugins/graphify.js` (wersjonowany)                 | przypomnienie o `graphify-out/` przed pierwszą komendą                                                        |
+| `git-safety-guard`         | `.opencode/plugins/git-safety-guard.js` (wersjonowany)         | `ask` przed operacją Tier A (`reset --hard`, `clean -f`, `checkout --`, `restore`) — pokrywa bypass `git.exe` |
 
 Zasady: plugin V2 to **katalog z punktem wejścia** (`index.ts` lub `package.json`) **albo pojedynczy plik `.js`** z `export default { id, setup }` (`effect` wg API). Dowód: `graphify.js` działa jako jedna plikowa definicja bez importu pakietu opencode.
 
