@@ -77,7 +77,9 @@ export async function getChromiumStatus(): Promise<ChromiumStatus> {
         // Puppeteer >= 25 zwraca sciezke asynchronicznie; sync wywolanie dawalo
         // TypeError lapany nizej i falszywe "degraded" w /health/pdf.
         const execPath = await puppeteer.executablePath();
-        executableName = path.basename(execPath);
+        // Normalizacja separatorów: na POSIX `path.basename` nie tnie `\`,
+        // więc ścieżka w stylu Windows wyciekłaby do odpowiedzi HTTP w całości.
+        executableName = path.basename(execPath.replace(/\\/g, '/'));
         found = fs.existsSync(execPath);
     } catch {
         found = false;

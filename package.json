@@ -116,7 +116,8 @@
         "git:safety:verify": "node scripts/git-safety/cli.mjs verify",
         "git:safety:restore": "node scripts/git-safety/cli.mjs restore",
         "prepare": "husky",
-        "backfill:offer-counts": "node scripts/backfill-offer-counts.cjs"
+        "backfill:offer-counts": "node scripts/backfill-offer-counts.cjs",
+        "pdf:smoke:package": "node scripts/pdf-package-smoke.mjs"
     },
     "engines": {
         "node": ">=22.13.0"
