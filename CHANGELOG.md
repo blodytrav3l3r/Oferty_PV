@@ -4,6 +4,21 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.49.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.48.1...v1.49.0) (2026-10-24)
+
+### Features
+
+- **auth:** podglad i wymuszone wylogowanie sesji ([f6b648a](https://github.com/blodytrav3l3r/Oferty_PV/commit/f6b648af38623808717923be7fba87e97a80044d))
+- **ui:** akcje kafla w kolejnosci edytuj-usun-status-wyloguj ([294d0be](https://github.com/blodytrav3l3r/Oferty_PV/commit/294d0be60883cc0d238d7d5d0ce8c6a52077abb7))
+- **ui:** kafel nowy uzytkownik i modal dodawania konta ([9fb232d](https://github.com/blodytrav3l3r/Oferty_PV/commit/9fb232d3548c841631c33958bb91dea10d04b737))
+- **ui:** kafle uzytkownikow i grupowanie powiadomien ([f008388](https://github.com/blodytrav3l3r/Oferty_PV/commit/f00838829fc55a8c3e9dd94eb8a2c29d1b70545e))
+
+### Bug Fixes
+
+- **ui:** kafle uzytkownikow jako poziome wiersze ([382797c](https://github.com/blodytrav3l3r/Oferty_PV/commit/382797c150efbb9898ed7e7922b7df3276c33842))
+- **ui:** port status-bar do pluginów opencode 2 ([f83005b](https://github.com/blodytrav3l3r/Oferty_PV/commit/f83005b5335faa49a11b44d1506346b51e03d187))
+- **ui:** powiazani handlowcy w osobnej linii kafelka ([cdbab5d](https://github.com/blodytrav3l3r/Oferty_PV/commit/cdbab5daf973f5a23825197cdabd98494089bbf0))
+
 ### [1.48.1](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.48.0...v1.48.1) (2026-10-23)
 
 ### Features
