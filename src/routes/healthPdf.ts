@@ -33,7 +33,7 @@ async function handleSmoke(_req: express.Request, res: express.Response): Promis
         const buf = await generatePDF(
             '<html><body><h1>S.O.K. — test generowania PDF</h1></body></html>'
         );
-        const status = getChromiumStatus();
+        const status = await getChromiumStatus();
         res.json({ status: status.status, smoke: { ok: true, bytes: buf.length } });
     } catch (e: unknown) {
         const detail = e instanceof Error ? e.stack || e.message : String(e);
@@ -42,7 +42,7 @@ async function handleSmoke(_req: express.Request, res: express.Response): Promis
     }
 }
 
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
     // I-011: publicznie wylacznie minimalny {status}. Pelne pola
     // (user/home/cacheDir/executableName/shmMb/found) nigdy nie opuszczaja serwera.
     if (req.query.smoke === '1') {
@@ -54,7 +54,7 @@ router.get('/', (req, res) => {
         });
         return;
     }
-    const status = getChromiumStatus();
+    const status = await getChromiumStatus();
     res.status(status.status === 'ok' ? 200 : 503).json({ status: status.status });
 });
 

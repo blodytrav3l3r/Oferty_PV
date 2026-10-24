@@ -95,7 +95,7 @@ VERIFIED (YES/NO).
 - **Backend**: TypeScript + Express + Prisma + SQLite (`server.ts`, `src/`, `scripts/`, `tests/`). Warstwy: routes → validators → services → Prisma. Monolit celowy.
 - **Frontend**: Vanilla JS SPA (`app.html` + iframe modułów `studnie.html`/`rury.html`), kod w `public/js/` (nie kompilowany przez `tsc`, sprawdzany przez ESLint + `typecheck:frontend`).
 - **Decyzje (ADR)**: `docs/adr/` — ADR-001 SQLite, ADR-002 Vanilla SPA, ADR-004 Express+Prisma, ADR-005 Express jedynym serwerem, ADR-006 HTTPS/reverse proxy, ADR-007 cenniki, ADR-008 modularyzacja frontendu, ADR-009 mapa produktów studni.
-- **Legacy surface (nie powiększaj)**: 255 plików JS, 1733 przypisań `window.X =`, 0 inline `onclick` w HTML (CSP-E), 21 programistycznych `.onclick =` w `public/js` (stan 2026-10-19). Zasada: NEW globals/inline/inline-styles = 0; nowy kod ESM + `addEventListener`. Excel to protected zone.
+- **Legacy surface (nie powiększaj)**: 256 plików JS, 1771 przypisań `window.X =`, 0 inline `onclick` w HTML (CSP-E), 21 programistycznych `.onclick =` w `public/js` (stan 2026-10-24). Zasada: NEW globals/inline/inline-styles = 0; nowy kod ESM + `addEventListener`. Excel to protected zone.
 - **Zakazane kierunki** (decyzje, nie zaległości): React, PostgreSQL, mikroserwisy, Redis, BullMQ/Kafka, Pact, OpenTelemetry, pełna normalizacja JSON, masowe przepisywanie legacy.
 
 ## Filozofia pracy (skrót)
@@ -115,7 +115,7 @@ VERIFIED (YES/NO).
 - Testy + bramy jakości: `docs/agents/testing.md`.
 - Commity/wersje/release/plany: `docs/agents/release.md`.
 - Komendy + kodowanie: `docs/agents/commands.md`.
-- Baza znanych błędów #1–#47: tabela skrótowa w historii + pełnia `docs/errors-known.md` (SSoT numeracji).
+- Baza znanych błędów #1–#62: tabela skrótowa w historii + pełnia `docs/errors-known.md` (SSoT numeracji).
 
 ### Bezpieczeństwo Git — Git Safety (obowiązkowe, SSoT `docs/development/GIT_SAFETY.md`)
 

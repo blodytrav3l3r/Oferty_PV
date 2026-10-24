@@ -14,11 +14,11 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 
 | Licencja                | Liczba pakietów |
 | ----------------------- | --------------: |
-| MIT                     |            1037 |
-| ISC                     |             101 |
-| Apache-2.0              |              56 |
+| MIT                     |             992 |
+| ISC                     |              98 |
+| Apache-2.0              |              48 |
 | BSD-3-Clause            |              25 |
-| BSD-2-Clause            |              17 |
+| BSD-2-Clause            |              15 |
 | BlueOak-1.0.0           |              10 |
 | MIT OR CC0-1.0          |               5 |
 | MPL-2.0                 |               2 |
@@ -35,7 +35,7 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 
 ## Oprogramowanie firm trzecich
 
-### MIT (1037)
+### MIT (992)
 
 - @apidevtools/json-schema-ref-parser@14.0.1
 - @apidevtools/openapi-schemas@2.1.0
@@ -271,7 +271,6 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - @simple-libs/stream-utils@2.0.0
 - @sinclair/typebox@0.34.52
 - @standard-schema/spec@1.1.0
-- @tootallnate/quickjs-emscripten@0.23.0
 - @tsconfig/node10@1.0.13
 - @tsconfig/node12@1.0.11
 - @tsconfig/node14@1.0.3
@@ -318,7 +317,6 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - @types/tough-cookie@4.0.5
 - @types/yargs-parser@21.0.3
 - @types/yargs@17.0.35
-- @types/yauzl@2.10.3
 - @typescript-eslint/eslint-plugin@8.72.0
 - @typescript-eslint/parser@8.72.0
 - @typescript-eslint/project-service@8.72.0
@@ -370,7 +368,6 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - ansi-regex@5.0.1
 - ansi-regex@5.0.1
 - ansi-regex@5.0.1
-- ansi-regex@5.0.1
 - ansi-regex@6.4.0
 - ansi-styles@3.2.1
 - ansi-styles@4.3.0
@@ -398,7 +395,6 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - array-ify@1.0.0
 - arrify@1.0.1
 - asap@2.0.6
-- ast-types@0.13.4
 - asynckit@0.4.0
 - babel-jest@30.4.1
 - babel-plugin-jest-hoist@30.4.0
@@ -414,7 +410,6 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - balanced-match@1.0.2
 - balanced-match@1.0.2
 - balanced-match@4.0.4
-- basic-ftp@5.3.1
 - binary-extensions@2.3.0
 - body-parser@1.20.9
 - brace-expansion@1.1.21
@@ -431,7 +426,6 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - browserslist@4.29.4
 - bs-logger@0.2.6
 - bser@2.1.2
-- buffer-crc32@0.2.13
 - buffer-from@1.1.2
 - bytes@3.1.2
 - c12@3.1.0
@@ -494,17 +488,9 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - cross-spawn@7.0.6
 - cssstyle@4.6.0
 - dargs@7.0.0
-- data-uri-to-buffer@6.0.2
 - data-urls@5.0.0
 - dateformat@3.0.3
 - debug@2.6.9
-- debug@4.4.3
-- debug@4.4.3
-- debug@4.4.3
-- debug@4.4.3
-- debug@4.4.3
-- debug@4.4.3
-- debug@4.4.3
 - debug@4.4.3
 - debug@4.4.3
 - debug@4.4.3
@@ -525,7 +511,6 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - deep-is@0.1.4
 - deepmerge@4.3.1
 - defu@6.1.7
-- degenerator@5.0.1
 - delayed-stream@1.0.0
 - depd@2.0.0
 - destr@2.0.5
@@ -545,7 +530,6 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - emoji-regex@9.2.2
 - empathic@2.0.0
 - encodeurl@2.0.0
-- end-of-stream@1.4.5
 - env-paths@2.2.1
 - error-ex@1.3.4
 - es-define-property@1.0.1
@@ -573,12 +557,10 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - exsolve@1.1.3
 - fast-check@3.23.2
 - fast-deep-equal@3.1.3
-- fast-fifo@1.3.2
 - fast-json-stable-stringify@2.1.0
 - fast-levenshtein@2.0.6
 - fast-safe-stringify@2.1.1
 - fb-watchman@2.0.4
-- fd-slicer@1.1.0
 - fdir@6.5.0
 - figures@3.2.0
 - file-entry-cache@11.1.5
@@ -603,9 +585,7 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - get-package-type@0.1.0
 - get-pkg-repo@4.2.1
 - get-proto@1.0.1
-- get-stream@5.2.0
 - get-stream@6.0.1
-- get-uri@6.0.5
 - giget@2.0.0
 - git-raw-commits@2.0.11
 - git-remote-origin-url@2.0.0
@@ -640,7 +620,6 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - import-local@3.2.0
 - imurmurhash@0.1.4
 - indent-string@4.0.0
-- ip-address@10.7.4
 - ipaddr.js@1.9.1
 - is-arrayish@0.2.1
 - is-binary-path@2.1.0
@@ -777,6 +756,7 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - leven@3.1.0
 - levn@0.4.1
 - lie@3.3.0
+- lilconfig@3.1.4
 - lines-and-columns@1.2.4
 - lint-staged@17.6.0
 - load-json-file@4.0.0
@@ -810,16 +790,10 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - minimist@1.2.8
 - mitt@3.0.1
 - mkdirp@1.0.4
+- modern-tar@0.8.6
 - modify-values@1.0.1
 - module-details-from-path@1.0.4
 - ms@2.0.0
-- ms@2.1.3
-- ms@2.1.3
-- ms@2.1.3
-- ms@2.1.3
-- ms@2.1.3
-- ms@2.1.3
-- ms@2.1.3
 - ms@2.1.3
 - ms@2.1.3
 - ms@2.1.3
@@ -840,7 +814,6 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - negotiator@0.6.3
 - negotiator@0.6.4
 - neo-async@2.6.2
-- netmask@2.1.1
 - node-fetch-native@1.6.7
 - node-int64@0.4.0
 - node-releases@2.0.60
@@ -869,8 +842,6 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - p-locate@5.0.0
 - p-try@1.0.0
 - p-try@2.2.0
-- pac-proxy-agent@7.2.0
-- pac-resolver@7.0.1
 - parent-module@1.0.1
 - parse-json@4.0.0
 - parse-json@5.2.0
@@ -885,7 +856,6 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - path-to-regexp@0.1.13
 - path-type@3.0.0
 - pathe@2.0.3
-- pend@1.2.0
 - perfect-debounce@1.0.0
 - picomatch@2.3.2
 - picomatch@2.3.2
@@ -914,11 +884,7 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - pretty-format@30.4.1
 - pretty-format@30.5.1
 - process-nextick-args@2.0.1
-- progress@2.0.3
 - proxy-addr@2.0.8
-- proxy-agent@6.5.0
-- proxy-from-env@1.1.0
-- pump@3.0.4
 - punycode@2.3.1
 - pure-rand@6.1.0
 - pure-rand@7.0.1
@@ -963,15 +929,11 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - side-channel-weakmap@1.0.2
 - side-channel@1.1.1
 - slash@3.0.0
-- smart-buffer@4.2.0
-- socks-proxy-agent@8.0.5
-- socks@2.8.10
 - source-map-support@0.5.13
 - spdx-expression-parse@3.0.1
 - split@1.0.1
 - stack-utils@2.0.6
 - statuses@2.0.2
-- streamx@2.28.1
 - string_decoder@1.1.1
 - string-argv@0.3.2
 - string-length@4.0.2
@@ -981,7 +943,6 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - string-width@7.2.0
 - string-width@8.3.0
 - strip-ansi-cjs@6.0.1
-- strip-ansi@6.0.1
 - strip-ansi@6.0.1
 - strip-ansi@6.0.1
 - strip-ansi@6.0.1
@@ -1015,9 +976,6 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - swagger-ui-express@5.0.1
 - symbol-tree@3.2.4
 - synckit@0.11.13
-- tar-fs@3.1.3
-- tar-stream@3.2.2
-- teex@1.0.1
 - text-extensions@1.9.0
 - through@2.3.8
 - through2@2.0.5
@@ -1067,15 +1025,12 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - yargs@16.2.2
 - yargs@16.2.2
 - yargs@17.7.3
-- yargs@17.7.3
 - yargs@18.2.0
-- yauzl@2.10.0
 - yn@3.1.1
 - yocto-queue@0.1.0
-- zod@3.25.76
 - zod@4.6.7
 
-### ISC (101)
+### ISC (98)
 
 - @isaacs/cliui@8.0.2
 - @istanbuljs/load-nyc-config@1.1.0
@@ -1083,7 +1038,6 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - anymatch@3.1.3
 - cliui@7.0.4
 - cliui@7.0.4
-- cliui@8.0.1
 - cliui@8.0.1
 - cliui@9.0.1
 - conventional-changelog-angular@5.0.13
@@ -1129,7 +1083,6 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - lru-cache@10.4.3
 - lru-cache@5.1.1
 - lru-cache@6.0.0
-- lru-cache@7.18.3
 - make-error@1.3.6
 - minimalistic-assert@1.0.1
 - minimatch@3.1.5
@@ -1176,10 +1129,9 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - yargs-parser@20.2.9
 - yargs-parser@21.1.1
 - yargs-parser@21.1.1
-- yargs-parser@21.1.1
 - yargs-parser@22.0.0
 
-### Apache-2.0 (56)
+### Apache-2.0 (48)
 
 - @eslint/config-array@0.23.5
 - @eslint/config-helpers@0.7.0
@@ -1208,34 +1160,26 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - @prisma/engines@6.19.3
 - @prisma/fetch-engine@6.19.3
 - @prisma/get-platform@6.19.3
-- @puppeteer/browsers@2.13.2
+- @puppeteer/browsers@3.2.6
 - @scarf/scarf@1.4.0
-- b4a@1.9.0
-- bare-events@2.9.2
-- bare-fs@4.8.4
-- bare-path@3.1.2
-- bare-stream@2.13.4
-- bare-url@2.5.5
 - baseline-browser-mapping@2.11.32
-- chromium-bidi@14.0.0
+- chromium-bidi@157.0.8090-0
 - doctrine@3.0.0
 - eslint-visitor-keys@3.4.3
 - eslint-visitor-keys@5.0.1
-- events-universal@1.0.1
 - human-signals@2.1.0
 - import-in-the-middle@3.5.2
 - playwright-core@1.64.1
 - playwright@1.64.1
 - prisma@6.19.3
-- puppeteer-core@24.43.1
-- puppeteer@24.43.1
+- puppeteer-core@25.16.0
+- puppeteer@25.16.0
 - spdx-correct@3.2.0
 - swagger-ui-dist@5.34.0
-- text-decoder@1.2.7
 - typescript@6.0.3
 - validate-npm-package-license@3.0.4
 - walker@1.0.8
-- webdriver-bidi-protocol@0.4.1
+- webdriver-bidi-protocol@1.0.1
 - xml-name-validator@5.0.0
 
 ### BSD-3-Clause (25)
@@ -1250,7 +1194,7 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - babel-plugin-istanbul@7.0.1
 - bcryptjs@3.0.3
 - deepmerge-ts@7.1.5
-- devtools-protocol@0.0.1608973
+- devtools-protocol@0.0.1704951
 - diff@4.0.4
 - esquery@1.7.0
 - fast-uri@3.1.9
@@ -1266,19 +1210,17 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - tmpl@1.0.5
 - tough-cookie@5.1.2
 
-### BSD-2-Clause (17)
+### BSD-2-Clause (15)
 
 - dotenv@16.6.1
 - dotenv@17.4.2
 - entities@6.0.1
-- escodegen@2.1.0
 - eslint-scope@9.1.2
 - espree@11.2.0
 - esprima@4.0.1
 - esrecurse@4.3.0
 - estraverse@5.3.0
 - esutils@2.0.3
-- extract-zip@2.0.1
 - normalize-package-data@2.5.0
 - normalize-package-data@2.5.0
 - normalize-package-data@3.0.3
@@ -1360,6 +1302,6 @@ Poniższe pakiety (Apache-2.0) wymagają zachowania noty przy dystrybucji:
 - playwright-core@1.64.1 — zob. `node_modules/playwright-core/NOTICE`
 - playwright@1.64.1 — zob. `node_modules/playwright/NOTICE`
 - prisma@6.19.3 — zob. `node_modules/prisma/NOTICE`
-- puppeteer-core@24.43.1 — zob. `node_modules/puppeteer-core/NOTICE`
-- puppeteer@24.43.1 — zob. `node_modules/puppeteer/NOTICE`
+- puppeteer-core@25.16.0 — zob. `node_modules/puppeteer-core/NOTICE`
+- puppeteer@25.16.0 — zob. `node_modules/puppeteer/NOTICE`
 - typescript@6.0.3 — zob. `node_modules/typescript/NOTICE`

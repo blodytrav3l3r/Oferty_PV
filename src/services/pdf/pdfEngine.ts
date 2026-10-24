@@ -68,13 +68,15 @@ export interface ChromiumStatus {
  * Lekka diagnostyka Chromium bez launchowania przeglądarki (na potrzeby GET /health/pdf).
  * Zwraca tylko basename binarki — pełna ścieżka nie wycieka do odpowiedzi HTTP.
  */
-export function getChromiumStatus(): ChromiumStatus {
+export async function getChromiumStatus(): Promise<ChromiumStatus> {
     const cacheDir =
         process.env.PUPPETEER_CACHE_DIR || path.join(os.homedir(), '.cache', 'puppeteer');
     let executableName: string | null = null;
     let found = false;
     try {
-        const execPath = puppeteer.executablePath();
+        // Puppeteer >= 25 zwraca sciezke asynchronicznie; sync wywolanie dawalo
+        // TypeError lapany nizej i falszywe "degraded" w /health/pdf.
+        const execPath = await puppeteer.executablePath();
         executableName = path.basename(execPath);
         found = fs.existsSync(execPath);
     } catch {

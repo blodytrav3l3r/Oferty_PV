@@ -2,6 +2,16 @@ import request from 'supertest';
 import express from 'express';
 import healthPdfRouter from '../src/routes/healthPdf';
 
+// puppeteer >= 25 jest ESM-only i nie przechodzi przez transform Jesta.
+// requireActual() pdfEngine importuje go, wiec podmieniamy sam pakiet.
+jest.mock('puppeteer', () => ({
+    __esModule: true,
+    default: {
+        executablePath: jest.fn(async () => 'C:\\fake\\cache\\chrome-win64\\chrome.exe'),
+        launch: jest.fn()
+    }
+}));
+
 jest.mock('../src/services/pdf/pdfEngine', () => {
     const actual = jest.requireActual('../src/services/pdf/pdfEngine');
     return {
@@ -71,8 +81,8 @@ describe('Diagnostyka PDF (GET /health/pdf)', () => {
     });
 
     describe('getChromiumStatus (jednostkowo, bez mocka routera)', () => {
-        it('zwraca kontrakt statusu bez pelnej sciezki binarki', () => {
-            const status = pdfEngineActual.getChromiumStatus();
+        it('zwraca kontrakt statusu bez pelnej sciezki binarki', async () => {
+            const status = await pdfEngineActual.getChromiumStatus();
             expect(['ok', 'degraded']).toContain(status.status);
             expect(typeof status.found).toBe('boolean');
             expect(status.cacheDir).toContain('puppeteer');
