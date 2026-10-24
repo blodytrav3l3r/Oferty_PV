@@ -128,9 +128,11 @@ VERIFIED (YES/NO).
 
 Wszystkie plany/taski (`.md`) w `docs/plans/` (wyjątek: `.hermes/`, `.opencode/`). Zakończone: `git mv` do `docs/plans/archive/`.
 
-## Subagenty OpenCode — model w `task` tool
+## Subagenty i konfiguracja OpenCode V2
 
-Model subagentów w `.opencode/opencode.json` (`agent.{type}.model`); wymaga restartu opencode. Bez ustawienia subagent dziedziczy model primary. Workaround: `task(subagent_type: "general", prompt: "Jesteś architektem...")`.
+Runtime: **OpenCode V2** (`opencode-cli.exe` z aplikacji desktop, obecnie 2.1.4). Globalny npm `opencode` 1.x **nie jest wspierany** — odrzuca projektowy config (V2 `permissions`). Szczegóły, lokalizacje plików i lista aktywnych pluginów: `docs/development/OPENCODE.md`.
+
+Model subagentów w `.opencode/opencode.json` (`agents.<id>.model`). Zmiana configu przeładowuje się automatycznie — restart nie jest potrzebny. Bez ustawienia subagent dziedziczy model primary.
 
 ## graphify
 
