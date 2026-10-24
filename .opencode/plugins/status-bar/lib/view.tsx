@@ -5,22 +5,42 @@
 import { createSignal, onCleanup, onMount, For, Show } from 'solid-js';
 import { renderCompact, renderDetailRows } from './layout.js';
 
+/**
+ * Tokeny motywu OpenCode 2 (ResolvedTheme) -> płaskie nazwy, których używa
+ * lib/layout.js. V2 nie ma `primary`/`success`/`borderSubtle` — odpowiedniki:
+ * text.base, text.action.primary.base, text.feedback.<kind>.base, border.base.
+ */
+export function themeTokens(theme) {
+  const t = theme ?? {};
+  const feedback = t.text?.feedback ?? {};
+  return {
+    text: t.text?.base,
+    textMuted: t.text?.muted,
+    primary: t.text?.action?.primary?.base,
+    info: feedback.info?.base,
+    success: feedback.success?.base,
+    warning: feedback.warning?.base,
+    error: feedback.error?.base,
+    borderSubtle: t.border?.base,
+  };
+}
+
 export function StatusBarView(props) {
   const tick = useTick(props.store);
 
   // Szerokość/temat odczytane raz — resize renderera nie jest eventowany do pluginów;
-  // ponytail: pełna reaktywność na resize dopiero, gdy OpenCode da event.
-  const theme = props.api.theme?.current;
-  const width = Number(props.api.renderer?.width) || 100;
+  // shortcut: pełna reaktywność na resize dopiero, gdy OpenCode da event.
+  const tokens = themeTokens(props.theme);
+  const width = Number(props.width) || 100;
 
   return (
     <box flexDirection="row" width="100%" paddingLeft={1} paddingRight={1} height={1}>
-      <Show when={(tick(), renderCompact(props.store.state, theme, width))} keyed>
+      <Show when={(tick(), renderCompact(props.store.state, tokens, width))} keyed>
         {(cells) => (
           <For each={cells}>
             {(cell) => (
               <Show when={cell.separator} fallback={<text fg={cell.fg}>{`${cell.text} `}</text>}>
-                <text fg={theme?.borderSubtle}>│ </text>
+                <text fg={tokens.borderSubtle}>│ </text>
               </Show>
             )}
           </For>
@@ -39,9 +59,9 @@ function useTick(store) {
   return v;
 }
 
-/** Render funkcja dla ui.dialog.replace() — szczegóły sesji (ETAP 13). */
+/** Render funkcja dla ui.dialog.show() — szczegóły sesji. */
 export function DetailsDialog(props) {
-  const t = props.theme ?? {};
+  const t = themeTokens(props.theme);
   const rows = renderDetailRows(props.store.state);
   return (
     <box flexDirection="column" padding={1}>
