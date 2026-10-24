@@ -22,16 +22,14 @@ function files(nSqlite: number, nSha: number) {
 }
 
 describe('P0.6 retencja backupu', () => {
-    it('limit retencji to 7 kopii (dysk: 30 kopii ~= 37 GB)', () => {
-        expect(MAX_BACKUPS).toBe(7);
+    it('limit retencji to 1 kopia (baza kopiowana sposobem zewnętrznym)', () => {
+        expect(MAX_BACKUPS).toBe(1);
     });
 
-    it('domyślny limit: 10 sqlite -> usuwa 3 najstarsze', () => {
-        expect(selectBackupsForRetention(files(10, 10))).toEqual([
-            'backup_2026-01-01_0.sqlite',
-            'backup_2026-01-01_1.sqlite',
-            'backup_2026-01-01_2.sqlite'
-        ]);
+    it('domyślny limit: 10 sqlite -> zostaje tylko najnowsza', () => {
+        const toDelete = selectBackupsForRetention(files(10, 10));
+        expect(toDelete).toHaveLength(9);
+        expect(toDelete).not.toContain('backup_2026-01-01_9.sqlite');
     });
 
     it('liczy wyłącznie .sqlite: 7 sqlite + 7 sha przy limicie 7 -> usuwa 0', () => {
@@ -84,13 +82,10 @@ describe('Bramka retencji: stare kopie zostają bez zweryfikowanego backupu', ()
         expect(plan.toDelete).toEqual([]);
     });
 
-    it('plan retencji: 10 kopii przy ok -> usuwa 3 najstarsze', () => {
+    it('plan retencji: 10 kopii przy ok -> zostaje tylko najnowsza', () => {
         const plan = planRetention(files(10, 10), 'ok');
-        expect(plan.toDelete).toEqual([
-            'backup_2026-01-01_0.sqlite',
-            'backup_2026-01-01_1.sqlite',
-            'backup_2026-01-01_2.sqlite'
-        ]);
+        expect(plan.toDelete).toHaveLength(9);
+        expect(plan.toDelete).not.toContain('backup_2026-01-01_9.sqlite');
     });
 
     it('plan retencji: sieroty (sha bez pary sqlite) sprzątane niezależnie od weryfikacji', () => {

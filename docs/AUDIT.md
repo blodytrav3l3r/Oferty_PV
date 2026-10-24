@@ -91,7 +91,7 @@ Nowa warstwa powyżej historycznego raportu — nie zmienia ocen z 2026-07-09.
 | Schema Prisma       | ✔      | 38 modeli, indeksy (idx_logs_well/source_well, uq_reward_well_action), relacje |
 | Migracje            | ✔      | 3 migracje: baseline + uq_reward + ai_training_run (`prisma/migrations/`)      |
 | Seed danych         | ✔      | prisma/seed.ts + data/seed_*.json (rury, studnie, preco) + startowy AiModel    |
-| Backup              | ✔      | scripts/backup.ts — VACUUM INTO, max 7 kopii                                   |
+| Backup              | ✔      | scripts/backup.ts — VACUUM INTO, max 1 kopia                                   |
 | Restore             | ✔      | scripts/restore-db.js — nagłówek + integrity_check + WAL cleanup (v1.15.1)     |
 | WAL-safe backup     | ✔      | Używa VACUUM INTO dla spójnych snapshotów                                      |
 | PRAGMA user_version | ✔      | Używane — restore-db.js + auto-heal indeksów/FTS5 przy starcie (src/app.ts)    |

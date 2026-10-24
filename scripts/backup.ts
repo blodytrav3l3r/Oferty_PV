@@ -20,9 +20,11 @@ const backupDir = getBackupDir();
 
 /**
  * Limit kopii w `data/backups`. Kopia ~1.4 GB (baza rośnie), więc 30 kopii
- * zajmowało ~37 GB. 7 kopii ~= 10 GB i tydzień historii.
+ * zajmowało ~37 GB. 1 kopia = brak historii: odtwarzanie wyłącznie z ostatniego
+ * stanu. Świadoma decyzja właściciela (2026-10-24) — baza ma być kopiowana
+ * sposobem zewnętrznym, lokalnie trzymamy jedną kopię.
  */
-export const MAX_BACKUPS = 7;
+export const MAX_BACKUPS = 1;
 
 /**
  * P0.6: czysta selekcja retencji — liczy WYŁĄCZNIE pliki .sqlite

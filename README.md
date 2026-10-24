@@ -521,7 +521,7 @@ Projekt zawiera wygodne skrypty dla systemu Windows:
 
 | Komenda                         | Opis                                                                |
 | ------------------------------- | ------------------------------------------------------------------- |
-| `npm run backup`                | Wykonaj backup bazy SQLite (`VACUUM INTO`, max 7 kopii)             |
+| `npm run backup`                | Wykonaj backup bazy SQLite (`VACUUM INTO`, max 1 kopia)             |
 | `npm run restore <plik>`        | Przywróć bazę z pliku backupu (`node scripts/restore-db.js <plik>`) |
 | `npm run backup:install-cron`   | Zainstaluj cron backupu (Windows)                                   |
 | `npm run backup:uninstall-cron` | Odinstaluj cron backupu (Windows)                                   |
@@ -690,7 +690,7 @@ Oferty_PV/
 │   ├── import-export/         # Dokumentacja modułu import/eksport
 │   └── ...                    # ARCHITECTURE, DATABASE, API, SECURITY, COMPONENTS, UI_GUIDELINES
 ├── scripts/                   # Skrypty narzędziowe (46 plików)
-│   ├── backup.ts              # Backup bazy (VACUUM INTO, max 7 kopii)
+│   ├── backup.ts              # Backup bazy (VACUUM INTO, max 1 kopia)
 │   ├── restore-db.js          # Przywracanie bazy z backupu (header + integrity_check + WAL cleanup)
 │   ├── check-db.js            # Weryfikacja schematu przy starcie (ensure-db.bat)
 │   ├── check-version.mjs      # Weryfikacja spójności wersji (VERSION ↔ package.json ↔ CHANGELOG ↔ *.bat ↔ HTML ?v= ↔ docs)
