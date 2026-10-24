@@ -53,6 +53,10 @@ class CronService {
         // Co 24h — housekeeping historii treningów (retencja AiTrainingRun)
         this.schedule('dailyHousekeeping', 24 * 60 * 60 * 1000, () => this.runHousekeeping());
 
+        // Co 24h — backup bazy (retencja + marker świeżości). W procesie aplikacji,
+        // bo rejestracja Task Schedulera wymaga uprawnień administratora.
+        this.schedule('dailyBackup', 24 * 60 * 60 * 1000, () => this.runBackupJob());
+
         // P1-B: co 24h — kontrola spójności FTS (tylko liczniki + warn, bez auto-rebuildu)
         this.schedule('ftsConsistencyCheck', 24 * 60 * 60 * 1000, () => this.runFtsCheck());
 
@@ -220,6 +224,26 @@ class CronService {
             );
         } catch (e) {
             logger.error('CronService', `[housekeeping] failed: ${e}`);
+        }
+    }
+
+    /**
+     * Backup bazy: `VACUUM INTO` + weryfikacja + retencja + marker świeżości.
+     *
+     * Nie rzuca — awaria backupu nie może zatrzymać aplikacji. Porażka zostaje
+     * w logu, a `npm run backup:check` / `/health/backup` pokażą nieświeży marker.
+     */
+    async runBackupJob(): Promise<void> {
+        try {
+            const { runBackup } = await import('../../scripts/backup');
+            const { prisma } = await import('../prismaClient');
+            const res = await runBackup(prisma);
+            logger.info(
+                'CronService',
+                `[backup] OK: ${res.file} (${(res.size / 1024).toFixed(1)} KB, ${res.verification})`
+            );
+        } catch (e) {
+            logger.error('CronService', `[backup] failed: ${e}`);
         }
     }
 

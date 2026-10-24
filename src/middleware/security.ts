@@ -39,6 +39,7 @@ export function httpsRedirect(req: Request, res: Response, next: NextFunction): 
         req.path === '/health' ||
         req.path === '/health/ready' ||
         req.path === '/health/live' ||
+        req.path === '/health/backup' ||
         req.path === '/api/version' ||
         req.path.startsWith('/health/pdf')
     ) {

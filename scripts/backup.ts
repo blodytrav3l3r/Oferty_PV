@@ -4,8 +4,6 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { resolveDataDir } from '../src/utils/paths';
 
-const prisma = new PrismaClient();
-
 /**
  * Kontrakt ścieżki backupu: zawsze `<root>/data/backups`, niezależnie od tego,
  * czy kod działa z `scripts/` (ts-node), czy z `dist/scripts/` (tsc prod).
@@ -25,6 +23,49 @@ const backupDir = getBackupDir();
  * sposobem zewnętrznym, lokalnie trzymamy jedną kopię.
  */
 export const MAX_BACKUPS = 1;
+
+/** Marker świeżości ostatniego udanego backupu (nie jest kopią, retencja go nie liczy). */
+export const BACKUP_MARKER_FILE = '.last-backup.json';
+
+export interface BackupMarker {
+    at: string;
+    file: string;
+    size: number;
+    sha256: string;
+    verification: BackupVerification;
+}
+
+/**
+ * Próg świeżości: doba + 2 h zapasu. Backup w aplikacji startuje od startu
+ * procesu, więc dryfuje przy restartach — samo 24 h dawałoby fałszywe alarmy.
+ */
+export const MAX_BACKUP_AGE_MS = 26 * 60 * 60 * 1000;
+
+/**
+ * Czy ostatni backup jest przestarzały? Brak markera, brak daty i data
+ * nieparsowalna znaczą to samo: nie wiemy, czy kopia jest aktualna → `true`.
+ */
+export function isBackupStale(marker: BackupMarker | null, now: number): boolean {
+    if (!marker || typeof marker.at !== 'string') return true;
+    const at = Date.parse(marker.at);
+    if (!Number.isFinite(at)) return true;
+    return now - at >= MAX_BACKUP_AGE_MS;
+}
+
+export function getBackupMarkerPath(dir: string = backupDir): string {
+    return path.join(dir, BACKUP_MARKER_FILE);
+}
+
+/** Odczyt markera; uszkodzony/brakujący plik → `null` (nie rzuca). */
+export function readBackupMarker(dir: string = backupDir): BackupMarker | null {
+    try {
+        const parsed: unknown = JSON.parse(fs.readFileSync(getBackupMarkerPath(dir), 'utf8'));
+        if (!parsed || typeof (parsed as BackupMarker).at !== 'string') return null;
+        return parsed as BackupMarker;
+    } catch {
+        return null;
+    }
+}
 
 /**
  * P0.6: czysta selekcja retencji — liczy WYŁĄCZNIE pliki .sqlite
@@ -91,7 +132,23 @@ export function planRetention(
     return { toDelete: selectBackupsForRetention(files), orphanSidecars };
 }
 
-async function main() {
+export interface BackupResult {
+    file: string;
+    size: number;
+    sha256: string;
+    verification: BackupVerification;
+    keptCount: number;
+}
+
+/**
+ * Pełny cykl backupu: `VACUUM INTO` → sidecar SHA-256 → weryfikacja
+ * integralności → retencja → marker świeżości.
+ *
+ * Rzuca przy porażce: CLI tłumaczy to na `exit 1` (cron widzi porażkę zamiast
+ * cichego sukcesu), a CronService łapie i loguje — procesu aplikacji nie wolno
+ * zabijać z powodu backupu, dlatego tutaj nie ma `process.exit`.
+ */
+export async function runBackup(prisma: PrismaClient): Promise<BackupResult> {
     if (!fs.existsSync(backupDir)) {
         fs.mkdirSync(backupDir, { recursive: true });
     }
@@ -101,100 +158,127 @@ async function main() {
     const backupName = `backup_${date}_${timestamp}.sqlite`;
     const backupPath = path.join(backupDir, backupName);
 
+    // WAL-safe: SQLite's VACUUM INTO tworzy spójny snapshot niezależnie
+    // od aktywnych połączeń i write-ahead log. Bezpieczne nawet gdy
+    // aplikacja pisze do bazy w trakcie backupu.
+    const targetPath = backupPath.replace(/\\/g, '/');
+    await prisma.$executeRawUnsafe(`VACUUM INTO '${targetPath}'`);
+
+    const stats = fs.statSync(backupPath);
+    if (stats.size === 0) throw new Error('Backup pusty (0 B) — VACUUM nie utworzył pliku');
+    console.log(`[Backup] Utworzono: ${backupPath} (${(stats.size / 1024).toFixed(1)} KB)`);
+
+    // P0-F: SHA-256 backupu — restore weryfikuje przed nadpisaniem bazy.
+    const hash = crypto.createHash('sha256').update(fs.readFileSync(backupPath)).digest('hex');
+    fs.writeFileSync(backupPath + '.sha256', `${hash}  ${backupName}\n`, 'utf8');
+    console.log(`[Backup] SHA-256: ${hash}`);
+
+    // weryfikacja integralności backupu — bramka przed retencją
+    let verification: BackupVerification = 'unverified';
     try {
-        // WAL-safe: SQLite's VACUUM INTO tworzy spójny snapshot niezależnie
-        // od aktywnych połączeń i write-ahead log. Bezpieczne nawet gdy
-        // aplikacja pisze do bazy w trakcie backupu.
-        const targetPath = backupPath.replace(/\\/g, '/');
-        await prisma.$executeRawUnsafe(`VACUUM INTO '${targetPath}'`);
+        const { DatabaseSync } = await import('node:sqlite');
+        const db = new DatabaseSync(backupPath, { readOnly: true });
+        const row = db.prepare('PRAGMA integrity_check').get() as { integrity_check: string };
+        db.close();
+        if (row.integrity_check !== 'ok')
+            throw new Error(`integrity_check: ${row.integrity_check}`);
+        verification = 'ok';
+        console.log('[Backup] Weryfikacja integralności OK');
+    } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        verification = classifyVerification(msg);
+        console.warn('[Backup] Ostrzeżenie weryfikacji:', msg);
+    }
 
-        const stats = fs.statSync(backupPath);
-        if (stats.size === 0) throw new Error('Backup pusty (0 B) — VACUUM nie utworzył pliku');
-        console.log(`[Backup] Utworzono: ${backupPath} (${(stats.size / 1024).toFixed(1)} KB)`);
-
-        // P0-F: SHA-256 backupu — restore weryfikuje przed nadpisaniem bazy.
-        const hash = crypto.createHash('sha256').update(fs.readFileSync(backupPath)).digest('hex');
-        fs.writeFileSync(backupPath + '.sha256', `${hash}  ${backupName}\n`, 'utf8');
-        console.log(`[Backup] SHA-256: ${hash}`);
-
-        // weryfikacja integralności backupu — bramka przed retencją
-        let verification: BackupVerification = 'unverified';
+    // W katalogu trzymamy WYŁĄCZNIE zweryfikowane kopie: plik, którego
+    // integralności nie da się potwierdzić, wypierałby dobrą kopię
+    // w retencji, więc go usuwamy. Stare kopie zostają na dysku.
+    if (verification !== 'ok') {
         try {
-            const { DatabaseSync } = await import('node:sqlite');
-            const db = new DatabaseSync(backupPath, { readOnly: true });
-            const row = db.prepare('PRAGMA integrity_check').get() as { integrity_check: string };
-            db.close();
-            if (row.integrity_check !== 'ok')
-                throw new Error(`integrity_check: ${row.integrity_check}`);
-            verification = 'ok';
-            console.log('[Backup] Weryfikacja integralności OK');
+            fs.unlinkSync(backupPath);
+            console.log(`[Backup] Usunięto niezweryfikowany backup (${verification})`);
         } catch (e: unknown) {
             const msg = e instanceof Error ? e.message : String(e);
-            verification = classifyVerification(msg);
-            console.warn('[Backup] Ostrzeżenie weryfikacji:', msg);
+            console.warn(`[Backup] Nie udało się usunąć niezweryfikowanego backupu: ${msg}`);
         }
-
-        // W katalogu trzymamy WYŁĄCZNIE zweryfikowane kopie: plik, którego
-        // integralności nie da się potwierdzić, wypierałby dobrą kopię
-        // w retencji, więc go usuwamy. Stare kopie zostają na dysku.
-        if (verification !== 'ok') {
-            try {
-                fs.unlinkSync(backupPath);
-                console.log(`[Backup] Usunięto niezweryfikowany backup (${verification})`);
-            } catch (e: unknown) {
-                const msg = e instanceof Error ? e.message : String(e);
-                console.warn(`[Backup] Nie udało się usunąć niezweryfikowanego backupu: ${msg}`);
-            }
-            try {
-                fs.unlinkSync(backupPath + '.sha256');
-            } catch (e: unknown) {
-                const msg = e instanceof Error ? e.message : String(e);
-                console.warn(`[Backup] Nie udało się usunąć sidecara: ${msg}`);
-            }
+        try {
+            fs.unlinkSync(backupPath + '.sha256');
+        } catch (e: unknown) {
+            const msg = e instanceof Error ? e.message : String(e);
+            console.warn(`[Backup] Nie udało się usunąć sidecara: ${msg}`);
         }
+    }
 
-        // P0.6: retencja liczy WYŁĄCZNIE pliki .sqlite (sidecary .sha256
-        // nie są kopiami — wcześniej 30 plików ≈ 15 backupów).
-        const files = fs.readdirSync(backupDir);
-        const withMtime = files.map((f) => ({
-            name: f,
-            mtimeMs: fs.statSync(path.join(backupDir, f)).mtimeMs
-        }));
-        const { toDelete: toDeleteList, orphanSidecars } = planRetention(withMtime, verification);
+    // P0.6: retencja liczy WYŁĄCZNIE pliki .sqlite (sidecary .sha256
+    // nie są kopiami — wcześniej 30 plików ≈ 15 backupów).
+    const files = fs.readdirSync(backupDir);
+    const withMtime = files.map((f) => ({
+        name: f,
+        mtimeMs: fs.statSync(path.join(backupDir, f)).mtimeMs
+    }));
+    const { toDelete: toDeleteList, orphanSidecars } = planRetention(withMtime, verification);
 
-        // P0.6: sprzątanie sierot — sidecar bez pary .sqlite.
-        for (const f of orphanSidecars) {
-            try {
-                fs.unlinkSync(path.join(backupDir, f));
-                console.log(`[Backup] Usunięto sierocy sidecar: ${f}`);
-            } catch {}
+    // P0.6: sprzątanie sierot — sidecar bez pary .sqlite.
+    for (const f of orphanSidecars) {
+        try {
+            fs.unlinkSync(path.join(backupDir, f));
+            console.log(`[Backup] Usunięto sierocy sidecar: ${f}`);
+        } catch {}
+    }
+
+    for (const toDelete of toDeleteList) {
+        fs.unlinkSync(path.join(backupDir, toDelete));
+        // P0.6: kasowanie pary sqlite+sha256 atomowo (względem retencji).
+        try {
+            fs.unlinkSync(path.join(backupDir, toDelete + '.sha256'));
+        } catch {}
+        console.log(`[Backup] Usunięto starą kopię: ${toDelete}`);
+    }
+
+    const kept = withMtime.filter(
+        (f) => f.name.startsWith('backup_') && f.name.endsWith('.sqlite')
+    ).length;
+
+    const keptCount = Math.min(kept, MAX_BACKUPS);
+
+    console.log(`[Backup] Zachowano ${keptCount}/${MAX_BACKUPS} kopii`);
+
+    // Marker świeżości WYŁĄCZNIE po zweryfikowanym backupie. Aktualizacja przy
+    // porażce kłamałaby dokładnie wtedy, gdy monitoring jest potrzebny.
+    if (verification === 'ok') {
+        const marker: BackupMarker = {
+            at: new Date().toISOString(),
+            file: backupName,
+            size: stats.size,
+            sha256: hash,
+            verification
+        };
+        try {
+            fs.writeFileSync(getBackupMarkerPath(), JSON.stringify(marker, null, 2) + '\n', 'utf8');
+            console.log('[Backup] Marker świeżości zapisany');
+        } catch (e: unknown) {
+            const msg = e instanceof Error ? e.message : String(e);
+            console.warn(`[Backup] Nie udało się zapisać markera: ${msg}`);
         }
+    }
 
-        for (const toDelete of toDeleteList) {
-            fs.unlinkSync(path.join(backupDir, toDelete));
-            // P0.6: kasowanie pary sqlite+sha256 atomowo (względem retencji).
-            try {
-                fs.unlinkSync(path.join(backupDir, toDelete + '.sha256'));
-            } catch {}
-            console.log(`[Backup] Usunięto starą kopię: ${toDelete}`);
-        }
+    // Bramka: bez zweryfikowanego backupu stare kopie zostają, a skrypt
+    // kończy się błędem (cron widzi porażkę zamiast cichego sukcesu).
+    if (!canPruneOldBackups(verification)) {
+        throw new Error(`Backup ${verification} — retencja wstrzymana, stare kopie zachowane`);
+    }
 
-        const kept = withMtime.filter(
-            (f) => f.name.startsWith('backup_') && f.name.endsWith('.sqlite')
-        ).length;
+    return { file: backupName, size: stats.size, sha256: hash, verification, keptCount };
+}
 
-        const keptCount = Math.min(kept, MAX_BACKUPS);
-
-        console.log(`[Backup] Zachowano ${keptCount}/${MAX_BACKUPS} kopii`);
-
-        // Bramka: bez zweryfikowanego backupu stare kopie zostają, a skrypt
-        // kończy się błędem (cron widzi porażkę zamiast cichego sukcesu).
-        if (!canPruneOldBackups(verification)) {
-            throw new Error(`Backup ${verification} — retencja wstrzymana, stare kopie zachowane`);
-        }
-    } catch (error: any) {
-        console.error('[Backup] Błąd:', error.message);
-        process.exit(1);
+async function main() {
+    const prisma = new PrismaClient();
+    try {
+        await runBackup(prisma);
+    } catch (error: unknown) {
+        const msg = error instanceof Error ? error.message : String(error);
+        console.error('[Backup] Błąd:', msg);
+        process.exitCode = 1;
     } finally {
         await prisma.$disconnect();
     }

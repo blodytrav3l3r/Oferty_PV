@@ -21,6 +21,7 @@ import { getMetricsSnapshot } from './utils/metrics';
 import { getPdfMetrics } from './services/pdf/pdfEngine';
 import { getFtsQueueMetrics, reconcileFts5 } from './utils/fts5Queue';
 import healthPdfRouter from './routes/healthPdf';
+import { isBackupStale, readBackupMarker, MAX_BACKUP_AGE_MS } from '../scripts/backup';
 import {
     httpsRedirect,
     securityHeaders,
@@ -160,6 +161,34 @@ app.get('/health/ready', async (_req, res) => {
 
 // Diagnostyka PDF (Chromium) — publiczna jak reszta /health, bez auth.
 app.use('/health/pdf', healthPdfRouter);
+
+/**
+ * @openapi
+ * /health/backup:
+ *   get:
+ *     tags: [System]
+ *     summary: Świeżość ostatniego backupu bazy (marker `.last-backup.json`)
+ *     description: Nie dotyka bazy. 200 = kopia młodsza niż limit, 503 = brak lub przestarzała.
+ *     responses:
+ *       200:
+ *         description: Backup świeży
+ *       503:
+ *         description: Brak markera lub backup starszy niż limit
+ */
+app.get('/health/backup', (_req, res) => {
+    const now = Date.now();
+    const marker = readBackupMarker();
+    const stale = isBackupStale(marker, now);
+    const at = marker ? Date.parse(marker.at) : NaN;
+    res.status(stale ? 503 : 200).json({
+        status: stale ? 'stale' : 'ok',
+        ageHours: Number.isFinite(at) ? Math.round(((now - at) / 3_600_000) * 10) / 10 : null,
+        maxAgeHours: MAX_BACKUP_AGE_MS / 3_600_000,
+        lastBackupAt: marker?.at ?? null,
+        file: marker?.file ?? null,
+        timestamp: new Date().toISOString()
+    });
+});
 
 /**
  * @openapi

@@ -522,6 +522,7 @@ Projekt zawiera wygodne skrypty dla systemu Windows:
 | Komenda                         | Opis                                                                |
 | ------------------------------- | ------------------------------------------------------------------- |
 | `npm run backup`                | Wykonaj backup bazy SQLite (`VACUUM INTO`, max 1 kopia)             |
+| `npm run backup:check`          | Sprawdź świeżość ostatniego backupu (exit 1 = brak lub > 26 h)      |
 | `npm run restore <plik>`        | Przywróć bazę z pliku backupu (`node scripts/restore-db.js <plik>`) |
 | `npm run backup:install-cron`   | Zainstaluj cron backupu (Windows)                                   |
 | `npm run backup:uninstall-cron` | Odinstaluj cron backupu (Windows)                                   |

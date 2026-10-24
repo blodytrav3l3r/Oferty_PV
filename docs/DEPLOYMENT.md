@@ -348,18 +348,45 @@ sudo certbot --nginx -d twoja-domena.pl
 
 ## 6. Backup bazy w produkcji
 
-### Cron (Linux)
+### Backup w aplikacji (domyślnie, bez uprawnień administratora)
+
+`CronService` (`src/utils/cronService.ts`, zadanie `dailyBackup`) uruchamia
+`runBackup` co 24 h od startu procesu. Nie wymaga Task Schedulera ani uprawnień
+administratora — warunkiem jest działająca aplikacja.
+
+### Alternatywy (wybierz JEDNĄ — nie łącz)
+
+Nie uruchamiaj crona systemowego, gdy działa backup w aplikacji: powstaną dwie
+kopie dziennie, a przy `MAX_BACKUPS = 1` będą się wzajemnie wypierać i marker
+świeżości przestanie odpowiadać rzeczywistości.
+
+#### Cron (Linux)
 
 ```bash
 # Dodaj do crontab (codziennie o 3:00)
 0 3 * * * cd /path/to/Oferty_PV && npm run backup >> /var/log/sok-oferty-backup.log 2>&1
 ```
 
-### Task Scheduler (Windows)
+#### Task Scheduler (Windows)
 
 ```bash
 npm run backup:install-cron
 ```
+
+### Monitoring świeżości
+
+Każdy udany backup zapisuje `data/backups/.last-backup.json` (`at`, `file`,
+`size`, `sha256`, `verification`). Marker **nie** aktualizuje się przy porażce —
+inaczej monitoring kłamałby dokładnie wtedy, gdy jest potrzebny.
+
+| Sygnał                 | Co robi                                                                 |
+| ---------------------- | ----------------------------------------------------------------------- |
+| `npm run backup:check` | JSON na stdout + exit 0/1; próg 26 h (`MAX_BACKUP_AGE_MS`)              |
+| `GET /health/backup`   | 200 = świeżo, 503 = brak lub przestarzały; nie dotyka bazy              |
+| `BACKUP_ALERT_WEBHOOK` | opcjonalny POST z raportem przy FAIL (ntfy.sh / Telegram / dowolny URL) |
+
+Próg to 26 h, nie 24 h: backup startuje od startu procesu, więc dryfuje przy
+restartach, a samo 24 h dawałoby fałszywe alarmy.
 
 ### Drill restore (miesięcznie)
 
