@@ -10,6 +10,7 @@
 - Coverage gate: `node scripts/coverage-check.mjs --fail` w CI (progi 65/64/61; zmierzone 77.6/76.5/72.3).
 - Macierz security: `tests/security/{csrf,auth,ownership,rateLimit,headers,validation,informationDisclosure,audit}.test.ts` — każdy plik to realna właściwość, nie statystyka.
 - Zakaz obchodzenia: `.only`/`.skip`, `continue-on-error` dla krytycznych, osłabianie asercji, wyłączanie lint/typecheck.
+- `jest` przypięty na `30.4.2` (exact): `jest@30.5.2` koliduje z `@types/jest@30.0.0` i sypie `TS2345 ... not assignable to type 'never'` w mockach. Bump dopiero razem z `@types/jest`.
 
 ## Bramy
 
