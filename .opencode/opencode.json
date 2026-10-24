@@ -1,0 +1,187 @@
+{
+    "$schema": "https://opencode.ai/config.json",
+    "model": "opencode/deepseek-v4.1-flash-free",
+    "default_agent": "build",
+    "instructions": [
+        "AGENTS.md",
+        "CONTRIBUTING.md",
+        ".opencode/rules/common/coding-style.md",
+        ".opencode/rules/common/security.md",
+        ".opencode/rules/common/git-workflow.md",
+        ".opencode/rules/web/security.md",
+        ".opencode/rules/typescript/coding-style.md"
+    ],
+    "skills": [".opencode/skills"],
+    "permissions": [
+        {
+            "action": "external_directory",
+            "resource": "*",
+            "effect": "ask"
+        },
+        {
+            "action": "graphify_list_prs",
+            "resource": "*",
+            "effect": "deny"
+        },
+        {
+            "action": "graphify_get_pr_impact",
+            "resource": "*",
+            "effect": "deny"
+        },
+        {
+            "action": "graphify_triage_prs",
+            "resource": "*",
+            "effect": "deny"
+        },
+        {
+            "action": "skill",
+            "resource": "*",
+            "effect": "allow"
+        },
+        {
+            "action": "skill",
+            "resource": "stitch-*",
+            "effect": "deny"
+        },
+        {
+            "action": "skill",
+            "resource": "react-vite-dashboard",
+            "effect": "deny"
+        },
+        {
+            "action": "skill",
+            "resource": "remotion",
+            "effect": "deny"
+        },
+        {
+            "action": "skill",
+            "resource": "design-md",
+            "effect": "deny"
+        },
+        {
+            "action": "skill",
+            "resource": "taste-design",
+            "effect": "deny"
+        },
+        {
+            "action": "skill",
+            "resource": "shadcn-ui",
+            "effect": "deny"
+        },
+        {
+            "action": "skill",
+            "resource": "canvas",
+            "effect": "deny"
+        }
+    ],
+    "agents": {
+        "title": {
+            "model": "opencode/deepseek-v4.1-flash-free"
+        },
+        "build": {
+            "description": "Primary coding agent for development work",
+            "mode": "primary"
+        },
+        "planner": {
+            "description": "Architectural planning and complex refactoring specialist",
+            "mode": "subagent",
+            "system": "{file:prompts/agents/planner.txt}",
+            "permissions": [
+                {
+                    "action": "edit",
+                    "resource": "*",
+                    "effect": "deny"
+                }
+            ]
+        },
+        "architect": {
+            "description": "System design and scalability specialist",
+            "mode": "subagent",
+            "system": "{file:prompts/agents/architect.txt}",
+            "permissions": [
+                {
+                    "action": "edit",
+                    "resource": "*",
+                    "effect": "deny"
+                }
+            ]
+        },
+        "code-reviewer": {
+            "description": "Code quality and maintainability reviewer",
+            "mode": "subagent",
+            "system": "{file:prompts/agents/code-reviewer.txt}",
+            "permissions": [
+                {
+                    "action": "edit",
+                    "resource": "*",
+                    "effect": "deny"
+                }
+            ]
+        },
+        "silent-failure-hunter": {
+            "description": "Review code for silent failures, swallowed errors, bad fallbacks, and missing error propagation",
+            "mode": "subagent",
+            "system": "{file:prompts/agents/silent-failure-hunter.txt}",
+            "permissions": [
+                {
+                    "action": "edit",
+                    "resource": "*",
+                    "effect": "deny"
+                }
+            ]
+        },
+        "security-reviewer": {
+            "description": "Security analysis and vulnerability detection",
+            "mode": "subagent",
+            "system": "{file:prompts/agents/security-reviewer.txt}"
+        },
+        "tdd-guide": {
+            "description": "Test-driven development enforcement",
+            "mode": "subagent",
+            "system": "{file:prompts/agents/tdd-guide.txt}"
+        },
+        "build-error-resolver": {
+            "description": "Build and TypeScript error fixer",
+            "mode": "subagent",
+            "system": "{file:prompts/agents/build-error-resolver.txt}"
+        },
+        "refactor-cleaner": {
+            "description": "Dead code and duplication remover",
+            "mode": "subagent",
+            "system": "{file:prompts/agents/refactor-cleaner.txt}"
+        },
+        "e2e-runner": {
+            "description": "Playwright E2E testing specialist",
+            "mode": "subagent",
+            "system": "{file:prompts/agents/e2e-runner.txt}"
+        },
+        "doc-updater": {
+            "description": "Documentation updater",
+            "mode": "subagent",
+            "system": "{file:prompts/agents/doc-updater.txt}"
+        },
+        "ponytail-mode": {
+            "description": "Minimalist coding mode (YAGNI, no overengineering, native-first solutions)",
+            "mode": "subagent"
+        }
+    },
+    "mcp": {
+        "servers": {
+            "graphify": {
+                "type": "local",
+                "command": [
+                    "C:\\Users\\blody\\AppData\\Roaming\\uv\\tools\\graphifyy\\Scripts\\python.exe",
+                    "-m",
+                    "graphify.serve",
+                    "--graph",
+                    "graphify-out/graph.json"
+                ],
+                "disabled": false,
+                "timeout": {
+                    "catalog": 30000,
+                    "execution": 30000
+                }
+            }
+        }
+    }
+}
