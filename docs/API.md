@@ -19,17 +19,22 @@ Sprawdzenie statusu serwera. Używany przez Docker HEALTHCHECK i Render health c
 
 ```json
 {
-  "status": "ok",
-  "timestamp": "2026-06-30T12:00:00.000Z",
-  "uptime": 123.45,
-  "memory": { ... },
-  "version": "1.50.0"
+    "status": "ok",
+    "timestamp": "2026-06-30T12:00:00.000Z"
 }
 ```
 
+> Diagnostyka (`version`, `commitHash`, `branch`, `buildDate`, `environment`, `dbVersion`, `uptime`, `memory`) **nie** jest publiczna — wyłącznie `GET /api/admin/system-info` (admin). I-011.
+
 ### `GET /api/version`
 
-Informacje o wersji aplikacji.
+Publiczny numer wersji aplikacji.
+
+**Odpowiedź:**
+
+```json
+{ "version": "1.50.0" }
+```
 
 ### `GET /health/live`
 
@@ -37,7 +42,11 @@ Liveness — czy proces Express odpowiada (publiczny). Odpowiedź: `{status: "ok
 
 ### `GET /health/ready`
 
-Readiness — czy baza gotowa (publiczny, `SELECT 1`). Odpowiedź `200 {status: "ready", db: "ok"}` lub `503 {status: "not_ready", db: "error"}`.
+Readiness — czy baza gotowa (publiczny, `SELECT 1`). Odpowiedź `200 {status: "ready", db: "ok", timestamp}` lub `503 {status: "not_ready", db: "error", timestamp}` (bez klucza `error`).
+
+### `GET /health/backup`
+
+Świeżość ostatniego backupu (marker `.last-backup.json`, nie dotyka bazy). `200 {status: "ok", ageHours, maxAgeHours, lastBackupAt, file, timestamp}` lub `503 {status: "stale", ...}` przy braku/przestarzałej kopii.
 
 ### `GET /health/pdf`
 
@@ -47,13 +56,11 @@ Z `?smoke=1` (wyłącznie sesja admina: 401 anon, 403 non-admin) renderuje jedn�
 
 ### `GET /metrics`
 
-Metryki in-process (tylko admin) — P50/P95 per endpoint, DB, loop-lag, PDF.
+Metryki in-process (tylko admin: 401 anon / 403 non-admin) — P50/P95 per endpoint, DB, loop-lag, PDF.
 
-### `POST /api/csp-report`
+### `GET /api/admin/system-info`
 
-Publiczny endpoint raportów CSP (`Content-Type: application/csp-report`, odpowiedź `204`, log warn przycięty do 2000 znaków).
-
-**Odpowiedź:**
+Diagnostyka systemowa (tylko admin). Zwraca `version`, `commitHash`, `branch`, `buildDate`, `environment`, `dbVersion`, `uptime`, `memory`.
 
 ```json
 {
@@ -62,15 +69,21 @@ Publiczny endpoint raportów CSP (`Content-Type: application/csp-report`, odpowi
     "branch": "main",
     "buildDate": "2026-08-09T00:00:00.000Z",
     "environment": "development",
-    "dbVersion": "1.50.0"
+    "dbVersion": "1.50.0",
+    "uptime": 123.45,
+    "memory": { ... }
 }
 ```
+
+### `POST /api/csp-report`
+
+Publiczny endpoint raportów CSP (`Content-Type: application/csp-report`, odpowiedź `204` bez body, log warn przycięty do 2000 znaków).
 
 ---
 
 ## Autoryzacja (`/api/auth`)
 
-Wszystkie endpointy auth (oprócz login) wymagają autoryzacji przez ciasteczko `authToken` (HttpOnly, jedyny mechanizm). Nagłówek `x-auth-token` jest wygaszony (sunset) — serwer go ignoruje; wywołania API muszą wysyłać cookie (`credentials: include`).
+Wszystkie endpointy auth (oprócz login i logout) wymagają autoryzacji przez ciasteczko `authToken` (HttpOnly, jedyny mechanizm). Nagłówek `x-auth-token` jest wygaszony (sunset) — serwer go ignoruje; wywołania API muszą wysyłać cookie (`credentials: include`).
 
 ### `POST /api/auth/login`
 
@@ -111,7 +124,7 @@ Rejestracja nowego użytkownika (tylko administrator).
 
 ### `POST /api/auth/logout`
 
-Wylogowanie — usunięcie sesji i wyczyszczenie ciasteczka.
+Wylogowanie — usunięcie sesji i wyczyszczenie ciasteczka. Bez `requireAuth`: anonimowe wywołanie zwraca 200 (idempotentne).
 
 ### `GET /api/auth/me`
 
@@ -125,15 +138,15 @@ Zmiana hasła przez zalogowanego użytkownika.
 
 ## Użytkownicy (`/api/users`)
 
-| Metoda | Ścieżka                     | Auth  | Opis                                                               |
-| ------ | --------------------------- | ----- | ------------------------------------------------------------------ |
-| GET    | `/api/users`                | admin | Lista użytkowników                                                 |
-| PUT    | `/api/users/:id`            | admin | Aktualizacja użytkownika (zmiana roli/hasła unieważnia jego sesje) |
-| DELETE | `/api/users/:id`            | admin | Usunięcie użytkownika (blokada 403 gdy ma dokumenty)               |
-| GET    | `/api/users/shareable`      | auth  | Użytkownicy do udostępniania (bez siebie)                          |
-| GET    | `/api/users/for-assignment` | auth  | Użytkownicy do przypisania                                         |
-| GET    | `/api/users/me/preferences` | auth  | Własne preferencje (`{preferences}`)                               |
-| PUT    | `/api/users/me/preferences` | auth  | Zapis własnej preferencji (`{key: "theme", value}`)                |
+| Metoda | Ścieżka                     | Auth  | Opis                                                                                              |
+| ------ | --------------------------- | ----- | ------------------------------------------------------------------------------------------------- |
+| GET    | `/api/users`                | admin | Lista użytkowników                                                                                |
+| PUT    | `/api/users/:id`            | admin | Aktualizacja użytkownika (zmiana roli/hasła unieważnia jego sesje)                                |
+| DELETE | `/api/users/:id`            | admin | Usunięcie użytkownika (blokada 403 gdy ma dokumenty)                                              |
+| GET    | `/api/users/shareable`      | auth  | Użytkownicy do udostępniania (bez siebie)                                                         |
+| GET    | `/api/users/for-assignment` | auth  | Użytkownicy do przypisania                                                                        |
+| GET    | `/api/users/me/preferences` | auth  | Własne preferencje (`{preferences}`)                                                              |
+| PUT    | `/api/users/me/preferences` | auth  | Zapis własnej preferencji (`{key: "theme", value: "light"\|"dark"}` — Zod enum, inny klucz → 400) |
 
 ### `GET /api/users-for-assignment`
 
@@ -150,12 +163,12 @@ skopiować jako własną kopię (duplikat rur). Share oferty obejmuje też odczy
 jej zamówień (dziedziczenie read-only; zapis i PZ bez zmian) — niezależny
 share samego zamówienia (`order_rury` / `order_studnie`) działa bez oferty.
 
-| Metoda | Ścieżka              | Opis                                                                     |
-| ------ | -------------------- | ------------------------------------------------------------------------ |
-| GET    | `/api/shares`        | Lista udostępnień dokumentu (`documentType` + `documentId` w query)      |
-| POST   | `/api/shares`        | Udostępnij dokument (limit 50 odbiorców, `WRITE_LIMITER`)                |
-| POST   | `/api/shares/revoke` | Cofnij udostępnienia wsadowo (`documentType` + `documentId` + `userIds`) |
-| DELETE | `/api/shares/:id`    | Cofnij pojedyncze udostępnienie (`WRITE_LIMITER`)                        |
+| Metoda | Ścieżka              | Opis                                                                             |
+| ------ | -------------------- | -------------------------------------------------------------------------------- |
+| GET    | `/api/shares`        | Lista udostępnień dokumentu (`documentType` + `documentId` w query)              |
+| POST   | `/api/shares`        | Udostępnij dokument (limit 50 odbiorców, `WRITE_LIMITER`)                        |
+| POST   | `/api/shares/revoke` | Cofnij udostępnienia wsadowo (`documentType` + `documentId` + `userIds`, max 50) |
+| DELETE | `/api/shares/:id`    | Cofnij pojedyncze udostępnienie (`WRITE_LIMITER`)                                |
 
 ---
 
@@ -239,15 +252,15 @@ Wymaga autoryzacji.
 
 Wymaga autoryzacji. Alias do `/api/offers-rury/studnie`.
 
-| Metoda | Ścieżka                               | Opis                           |
-| ------ | ------------------------------------- | ------------------------------ |
-| GET    | `/api/offers-studnie`                 | Lista ofert studni             |
-| GET    | `/api/offers-studnie/:id`             | Szczegóły oferty studni        |
-| POST   | `/api/offers-studnie`                 | Utworzenie nowej oferty studni |
-| PUT    | `/api/offers-studnie/:id`             | Aktualizacja oferty studni     |
-| DELETE | `/api/offers-studnie/:id`             | Usunięcie oferty studni        |
-| GET    | `/api/offers-studnie/:id/export-pdf`  | Eksport do PDF                 |
-| GET    | `/api/offers-studnie/:id/export-docx` | Eksport do DOCX                |
+| Metoda | Ścieżka                               | Opis                                               |
+| ------ | ------------------------------------- | -------------------------------------------------- |
+| GET    | `/api/offers-studnie`                 | Lista ofert studni                                 |
+| GET    | `/api/offers-studnie/:id`             | Szczegóły oferty studni                            |
+| POST   | `/api/offers-studnie`                 | Utworzenie nowej oferty studni                     |
+| PUT    | `/api/offers-studnie`                 | Aktualizacja oferty studni (bez `:id` — id w body) |
+| DELETE | `/api/offers-studnie/:id`             | Usunięcie oferty studni                            |
+| GET    | `/api/offers-studnie/:id/export-pdf`  | Eksport do PDF                                     |
+| GET    | `/api/offers-studnie/:id/export-docx` | Eksport do DOCX                                    |
 
 ---
 
@@ -442,17 +455,17 @@ Wymaga autoryzacji. Jeden kształt pliku dla warstw LIVE / VERSION / DEFAULT
 (arkusze i kolumny 1:1; plik studni zawiera też arkusze PRECO, o ile eksport
 wersji studni znajdzie kwalifikującą się PRECO).
 
-| Metoda | Ścieżka                                                          | Opis                                                                   |
-| ------ | ---------------------------------------------------------------- | ---------------------------------------------------------------------- |
-| GET    | `/api/products/export.xlsx?source=live\|default\|active`         | Cennik rur (`Cennik_Rury_Export.xlsx`)                                 |
-| GET    | `/api/products-studnie/export.xlsx?source=live\|default\|active` | Cennik studni + PRECO (`Cennik_Studni_Export.xlsx`)                    |
-| GET    | `/api/preco-pricing/export.xlsx?source=live\|default\|active`    | Samo PRECO (`Cennik_Preco_Export.xlsx`)                                |
-| GET    | `/api/pricelist-versions/:id/export` (administrator)             | Zamrożona wersja (`Cennik_{Rury,Studnie,Preco}_{version}_Export.xlsx`) |
+| Metoda | Ścieżka                                                                 | Opis                                                                   |
+| ------ | ----------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| GET    | `/api/products/export.xlsx?source=live\|default\|active\|draft`         | Cennik rur (`Cennik_Rury_Export.xlsx`)                                 |
+| GET    | `/api/products-studnie/export.xlsx?source=live\|default\|active\|draft` | Cennik studni + PRECO (`Cennik_Studni_Export.xlsx`)                    |
+| GET    | `/api/preco-pricing/export.xlsx?source=live\|default\|active\|draft`    | Samo PRECO (`Cennik_Preco_Export.xlsx`)                                |
+| GET    | `/api/pricelist-versions/:id/export` (administrator)                    | Zamrożona wersja (`Cennik_{Rury,Studnie,Preco}_{version}_Export.xlsx`) |
 
 `source=default` zwraca cennik domyślny (bazowy pod Reset), `source=active`
 zamrożoną wersję ACTIVE (nazwa pliku z labelką wersji; `409 NO_ACTIVE_VERSION`
-gdy brak) — w UI dostępne wyłącznie przez dopisanie parametru do URL;
-przyciski eksportują `live`. Diff wersji (`GET /:id/diff`) zwraca też
+gdy brak), a `source=draft` — bieżący szkic (`409 NO_DRAFT_VERSION` gdy brak) —
+w UI dostępne wyłącznie przez dopisanie parametru do URL; przyciski eksportują `live`. Diff wersji (`GET /:id/diff`) zwraca też
 `changes` (top zmian cen: sekcja, pozycja, przed/po, Δ%) i flagę `truncated`.
 
 Dla studni eksport wersji (`GET /:id/export`) i `source=active` dokleja PRECO
@@ -604,22 +617,76 @@ Obiekt `sync` w odpowiedziach panelu/skrzynki: `{inserted, resolved, deleted}` p
 
 ---
 
+## Endpointy dopełniające (weryfikacja 2026-10-24)
+
+Sekcje powyżej opisują główne powierzchnie; poniżej pełne listy tras, które istnieją
+w kodzie, a wcześniej nie miały wpisu w tym dokumencie.
+
+### Opieka i follow-upy ofert
+
+| Metoda | Ścieżka                                      | Auth | Opis                              |
+| ------ | -------------------------------------------- | ---- | --------------------------------- |
+| POST   | `/api/offers-rury/:kind/:id/followups`       | auth | Dodaj wpis kontaktu               |
+| GET    | `/api/offers-rury/:kind/:id/followups`       | auth | Historia kontaktów oferty         |
+| PUT    | `/api/offers-rury/:kind/:id/followups/:fuId` | auth | Edycja notatki wpisu              |
+| DELETE | `/api/offers-rury/:kind/:id/followups/:fuId` | auth | Usuń wpis kontaktu                |
+| GET    | `/api/offers-rury/followups/stats`           | auth | Statystyki follow-upów            |
+| PUT    | `/api/offers-rury/:kind/:id/client-contact`  | auth | Przypisz osobę kontaktową         |
+| GET    | `/api/care/summary`                          | auth | Podsumowanie kolejki opieki       |
+| GET    | `/api/care/sla`                              | auth | Odczyt progów SLA                 |
+| PUT    | `/api/care/sla`                              | auth | Zapis progów SLA                  |
+| POST   | `/api/care/:kind/:id/snooze`                 | auth | Odłóż pilnowanie oferty           |
+| POST   | `/api/care/:kind/:id/done`                   | auth | Zamknij pilnowanie                |
+| POST   | `/api/care/:kind/:id/reopen`                 | auth | Wznów pilnowanie                  |
+| POST   | `/api/care/notifications/read`               | auth | Oznacz wszystkie jako przeczytane |
+| POST   | `/api/care/notifications/:id/read`           | auth | Oznacz jedno jako przeczytane     |
+| POST   | `/api/care/notifications/:id/unread`         | auth | Oznacz jedno jako nieprzeczytane  |
+
+### Klienci — osoby kontaktowe
+
+| Metoda | Ścieżka                                | Auth | Opis                        |
+| ------ | -------------------------------------- | ---- | --------------------------- |
+| GET    | `/api/clients/:clientId/contacts`      | auth | Lista osób kontaktowych     |
+| PUT    | `/api/clients/:clientId/contacts/sync` | auth | Synchronizacja listy (diff) |
+
+### Zamówienia — eksport oferty źródłowej
+
+| Metoda | Ścieżka                                     | Auth | Opis                    |
+| ------ | ------------------------------------------- | ---- | ----------------------- |
+| POST   | `/api/orders-rury/:id/export-offer-pdf`     | auth | PDF z oferty źródłowej  |
+| POST   | `/api/orders-rury/:id/export-offer-docx`    | auth | DOCX z oferty źródłowej |
+| POST   | `/api/orders-studnie/:id/export-offer-pdf`  | auth | PDF z oferty źródłowej  |
+| POST   | `/api/orders-studnie/:id/export-offer-docx` | auth | DOCX z oferty źródłowej |
+
+### Telemetria AI — zapis wsadowy
+
+| Metoda | Ścieżka                              | Auth | Opis                      |
+| ------ | ------------------------------------ | ---- | ------------------------- |
+| POST   | `/api/telemetry/ai/config-batch`     | auth | Batch konfiguracji        |
+| POST   | `/api/telemetry/ai/acceptance-batch` | auth | Batch akceptacji/rejekcji |
+
+> Uwaga (znany dług, nie kontrakt): router studni jest montowany przed routerem rur,
+> więc część ścieżek `GET /api/orders-studnie/rury/*` wpada w `GET /:id` studni
+> i zwraca 404. Powierzchnia `/api/orders-rury/*` jest jedyną wspieraną.
+
+---
+
 ## Rate Limiting
 
 Odpowiedź po przekroczeniu: `429` + nagłówek `Retry-After`.
 
-| Limiter                 | Okno   | Max prób | Endpointy                                                               |
-| ----------------------- | ------ | -------- | ----------------------------------------------------------------------- |
-| LOGIN_LIMITER           | 1 min  | 10       | `/api/auth/login` (kubełek per IP + login)                              |
-| API_LIMITER             | 15 min | 300      | Większość endpointów `/api/*` (zapis ofert/zamówień ma własne limitery) |
-| WRITE_LIMITER           | 1 min  | 60       | Zapis danych (POST/PUT/DELETE, w tym zlecenia produkcyjne)              |
-| PRICELIST_WRITE_LIMITER | 1 min  | 30       | Cenniki rury (`PUT /api/products`)                                      |
-| PRECO_PRICING_LIMITER   | 1 min  | 20       | Cennik PRECO (`PUT/PATCH /api/preco-pricing`)                           |
-| EXPORT_LIMITER          | 1 min  | 20       | Eksport PDF/DOCX (`/api/export-combined/*`, `/:id/export-*`)            |
-| TELEMETRY_WRITE_LIMITER | 1 min  | 1200     | Zapis telemetrii (`POST /api/telemetry/ai/config                        | event | version | acceptance-full | predict/batch | reward*`) |
-| READ_LIMITER            | 1 min  | 600      | Odczyty telemetrii (dashboard, wiedza, modele, treningi — polling)      |
-| CHANGE_PASSWORD_LIMITER | 15 min | 5        | `/api/auth/change-password` oraz `/api/auth/register` (admin)           |
-| ADMIN_USERS_LIMITER     | 1 min  | 30       | `/api/users/*` (admin)                                                  |
+| Limiter                 | Okno   | Max prób | Endpointy                                                                                                           |
+| ----------------------- | ------ | -------- | ------------------------------------------------------------------------------------------------------------------- |
+| LOGIN_LIMITER           | 1 min  | 10       | `/api/auth/login` (kubełek per IP + login)                                                                          |
+| API_LIMITER             | 15 min | 1200     | Większość endpointów `/api/*` (zapis ofert/zamówień ma własne limitery)                                             |
+| WRITE_LIMITER           | 1 min  | 60       | Zapis danych (POST/PUT/DELETE, w tym zlecenia produkcyjne)                                                          |
+| PRICELIST_WRITE_LIMITER | 1 min  | 30       | Cenniki rury i studnie (`/api/products*`, `/api/products-studnie*`) oraz wszystkie zapisy `/api/pricelist-versions` |
+| PRECO_PRICING_LIMITER   | 1 min  | 20       | Cennik PRECO (`PUT/PATCH /api/preco-pricing`)                                                                       |
+| EXPORT_LIMITER          | 1 min  | 20       | Eksport PDF/DOCX (`/api/export-combined/*`, `/:id/export-*`)                                                        |
+| TELEMETRY_WRITE_LIMITER | 1 min  | 1200     | Zapis telemetrii (`POST /api/telemetry/ai/config                                                                    | event | version | acceptance-full | predict/batch | reward*`) |
+| READ_LIMITER            | 1 min  | 600      | Odczyty telemetrii (dashboard, wiedza, modele, treningi — polling)                                                  |
+| CHANGE_PASSWORD_LIMITER | 15 min | 5        | `/api/auth/change-password` oraz `/api/auth/register` (admin)                                                       |
+| ADMIN_USERS_LIMITER     | 1 min  | 30       | `/api/users/*` (admin)                                                                                              |
 
 ---
 
@@ -628,7 +695,7 @@ Odpowiedź po przekroczeniu: `429` + nagłówek `Retry-After`.
 | Status | Znaczenie w API                                                                                                                                                 |
 | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 200    | Sukces (GET/PUT/PATCH/DELETE zwracają JSON, eksporty — plik)                                                                                                    |
-| 201    | Utworzono wersję cennika (`POST /api/pricelist-versions/:type/drafts`, aktywacje)                                                                               |
+| 201    | Utworzono wersję cennika: `POST /api/pricelist-versions/:type/drafts` oraz `clone-draft` (approve/publish/activate/backdate = 200)                              |
 | 204    | Raport CSP przyjęty (`POST /api/csp-report`, bez body)                                                                                                          |
 | 400    | Błąd walidacji (Zod przez `validateData`, zły format, invalid numeric input — patrz niżej)                                                                      |
 | 401    | Brak/nieprawidłowa sesja (brak cookie `authToken`, wygasła lub unieważniona; kody `SESSION_IDLE_EXPIRED` po 1h bezczynności / `SESSION_EXPIRED` po 7d absolute) |

@@ -3,7 +3,7 @@
 ## Manifest jako SSoT
 
 Identyfikator, kategoria, koszt, zależności, warunki załadowania — wszystko w
-**`.hermes/skills/_manifest.yaml`** (YAML, schema_version: 1).
+**`.hermes/skills/_manifest.yaml`** (YAML, schema_version: 3).
 
 Konsumenci:
 
@@ -48,19 +48,22 @@ przy routing dla feature skills nie potrzeba powtarzać opisu core.
 
 ## Wersjonowanie
 
-Manifest ma `schema_version: 1`. CLI waliduje zgodność przy każdym uruchomieniu.
-Następna wersja schemy wymaga migratora (np. `migrate-v1-to-v2.mjs`).
+Manifest ma `schema_version: 3`. CLI waliduje zgodność przy każdym uruchomieniu.
+Poprzednia wersja schemy (v2) jest zachowana jako `.hermes/skills/_manifest.v2.yaml.bak`;
+nie istnieje osobny skrypt migratora — migracja schemy odbywa się przez aktualizację
+manifestu i `npm run skills:validate`.
 
 ## Pliki
 
 | Plik                                       | Rozmiar | Rola                               |
 | ------------------------------------------ | ------- | ---------------------------------- |
-| `.hermes/skills/_manifest.yaml`            | ~7 KB   | SSoT definicji skilli              |
-| `.hermes/skills/_router.md`                | ~1 KB   | Ładowane zawsze; mówi gdzie szukać |
+| `.hermes/skills/_manifest.yaml`            | ~15 KB  | SSoT definicji skilli              |
+| `.hermes/skills/_router.md`                | ~2.5 KB | Ładowane zawsze; mówi gdzie szukać |
+| `.hermes/skills/_classifier.md`            | ~4.3 KB | Routing: intent → load_when        |
+| `.hermes/skills/_provider-model.yaml`      | ~3.8 KB | Mapa capability → implementacje    |
 | `.hermes/skills/conventions-lite/SKILL.md` | ~4 KB   | Skrót konwencji (CORE)             |
-
-| `docs/ARCHITECTURE-SKILLS.md` | — ten plik | Biała księga architektury |
-| `scripts/skill-cli.mjs` | TBD | CLI: build-manifest, validate, stats |
+| `scripts/skill-cli.mjs`                    | ~31 KB  | CLI skilli (13 subkomend)          |
+| `docs/ARCHITECTURE-SKILLS.md`              | ~7 KB   | Ten plik — biała księga            |
 
 ## Filozofia
 
@@ -97,15 +100,30 @@ Następna wersja schemy wymaga migratora (np. `migrate-v1-to-v2.mjs`).
 
 ### Pliki v2
 
-| Plik                                               | Rozmiar  | Rola                                                         |
-| -------------------------------------------------- | -------- | ------------------------------------------------------------ |
-| `.hermes/skills/_manifest.yaml` (schema_version 2) | ~11 KB   | SSoT: id, capabilities, utility, version, typed deps         |
-| `.hermes/skills/_router.md`                        | ~2.6 KB  | CORE meta-skill — meta-load logic                            |
-| `.hermes/skills/_classifier.md` (nowy)             | ~5 KB    | Routing: intent → load_when (POZA manifestem)                |
-| `.hermes/skills/conventions-lite/SKILL.md`         | ~4 KB    | CORE skrót konwencji                                         |
-| `scripts/skill-cli.mjs` (rozszerzony)              | ~21 KB   | CLI: build-cost, plan, capabilities, validate v2, cost, deps |
-| `docs/ARCHITECTURE-SKILLS.md` (ten plik)           | ~3 KB    | Biała księga v2                                              |
-| `_manifest.yaml --schema_version 1`                | (legacy) | v1 zachowany w historii (commit `e8097ce`)                   |
+| Plik                                               | Rozmiar | Rola                                                                                                                                                           |
+| -------------------------------------------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `.hermes/skills/_manifest.yaml` (schema_version 3) | ~15 KB  | SSoT: id, capabilities, utility, version, typed deps, tier                                                                                                     |
+| `.hermes/skills/_manifest.v2.yaml.bak` (legacy)    | ~11 KB  | Poprzednia schema v2 (backup)                                                                                                                                  |
+| `.hermes/skills/_router.md`                        | ~2.5 KB | CORE meta-skill — meta-load logic                                                                                                                              |
+| `.hermes/skills/_classifier.md`                    | ~4.3 KB | Routing: intent → load_when (POZA manifestem)                                                                                                                  |
+| `.hermes/skills/_provider-model.yaml`              | ~3.8 KB | Capability → implementacje (Provider Pattern)                                                                                                                  |
+| `.hermes/skills/conventions-lite/SKILL.md`         | ~4 KB   | CORE skrót konwencji                                                                                                                                           |
+| `scripts/skill-cli.mjs` (rozszerzony)              | ~31 KB  | CLI: 13 subkomend (build-cost, plan, capabilities, validate, cost, deps, stats, provider-resolve, feedback-record/show, utility-recalc, build-manifest, build) |
+| `docs/ARCHITECTURE-SKILLS.md` (ten plik)           | ~7 KB   | Biała księga v2/v3                                                                                                                                             |
+
+### Wersja 3 — Provider Pattern
+
+v3 (aktualna schema manifestu) zmienia model routingu capability:
+
+- **Capability = service, nie skill.** Skille są implementacjami (providers) capability.
+- `providers:` — mapa `capability → implementations[]` z rankingiem po `tier`.
+- `tier:` — `standard` / `pro` / `lite` (alternatywne implementacje tej samej capability).
+- `replaces:` — skill wskazuje, które wycofane skille zastępuje.
+- `utility_state:` — dynamiczne utility (`base + history + success + recency`).
+- `soft_requires:` — zależność opcjonalna, pomijalna przy małym budżecie.
+- `confidence` / `latency_ms` — kryteria multicriteria dla budget optimizer
+  (`budget_weights`: cost 0.5, utility 0.3, confidence 0.15, latency 0.05).
+- `checksum` / `last_updated` — invalidacja cache.
 
 ### Przykład użycia Context Planner
 

@@ -13,19 +13,19 @@
 
 ## Walidacja i testy
 
-`typecheck`, `typecheck:frontend`, `lint`, `lint:frontend`, `format`, `format:check`, `appname:check`, `collisions:check`, `validate` (pełna: typechecki + linty + appname + licenses + testy + collisions + prices:verify).
+`typecheck`, `typecheck:frontend`, `lint`, `lint:frontend`, `format`, `format:check`, `appname:check`, `collisions:check`, `ratchet:check` (ratchet tras → zapytań DB), `licenses:check`, `validate` (pełna: version:check + typechecki + linty + appname + licenses + testy + collisions + ratchet + prices:verify).
 
-Testy: `npm test` (wszystkie z pokryciem), `test:quick`, `test:quick:lite` (bez migracji, pre-push), `test:git-safety`, `test:frontend`, `test:e2e` (Playwright), `test:axe`, `test:alignment`, `test:e2e-appname`, `test:watch`, `perf:baseline` (initial-load SPA, spawn :3178; `PERF_ONLY=a,b` filtruje strony).
+Testy: `npm test` (wszystkie z pokryciem), `test:quick`, `test:quick:lite` (bez migracji i git-safety, pre-push), `test:git-safety`, `test:frontend`, `test:e2e` (Playwright), `test:axe`, `test:alignment`, `test:parity`, `test:golden`, `test:excel-visual`, `test:excel-slo`, `test:openperf`, `test:e2e-appname`, `test:spa-guard`, `test:e2e-qe-switch`, `test:e2e-pricelist-preview`, `test:watch`, `perf:baseline` (initial-load SPA, spawn :3178; `PERF_ONLY=a,b` filtruje strony).
 
 E2E na izolacji: `PLAYWRIGHT_BASE_URL=http://localhost:PORT` (własny spawn z `DATABASE_URL` na plik testowy) — nigdy default :3000 (dev-serwer/prod DB).
 
 ## AI/ML, benchmark, pomiary
 
-`ai:setup` (diagnostyka modułu AI/ML); `benchmark`, `benchmark:quick`; `measure:telemetry` (wzrost tabel audit/telemetria + progi).
+`ai:setup` (diagnostyka modułu AI/ML); `benchmark`, `benchmark:quick`, `benchmark:autoselect[:quick]`; `measure:telemetry` (wzrost tabel audit/telemetria + progi); `load`, `load:quick`, `load:sustained`; `alerts` (progi metryk).
 
 ## Baza danych
 
-`prisma:generate`, `prisma:migrate` (dev), `prisma:deploy` (produkcja; `db push` wyłącznie legacy bez `_prisma_migrations`), `prisma:seed`, `prisma:studio`, `prisma:reset` (utrata danych!), `prisma:status`, `cleanup:legacy-pricing`, `export:seed`.
+`prisma:generate`, `prisma:migrate` (dev), `prisma:deploy` (produkcja; `db push` wyłącznie legacy bez `_prisma_migrations`), `prisma:seed`, `prisma:studio`, `prisma:reset` (utrata danych!), `prisma:status`, `cleanup:legacy-pricing`, `export:seed`, `pricelist:preflight`, `pricelist:health`, `import:offers`, `backfill:offer-counts`.
 
 ## Backup i cenniki
 
@@ -33,7 +33,7 @@ E2E na izolacji: `PLAYWRIGHT_BASE_URL=http://localhost:PORT` (własny spawn z `D
 
 ## Deploy, licencje, skills
 
-`deploy`, `rollback`, `deploy:check` (szczegóły: `docs/DEPLOY_UPDATE.md`); `licenses:generate`, `licenses:check` (`THIRD-PARTY-NOTICES.md` — nie edytuj ręcznie); `skills:*` (build/stats/validate/cost/deps/capabilities/plan/feedback-record/feedback-show/provider-resolve/utility-recalc).
+`deploy`, `rollback`, `deploy:check`, `deploy:check:pdf`, `pdf:smoke:package` (szczegóły: `docs/DEPLOY_UPDATE.md`); `licenses:generate`, `licenses:check` (`THIRD-PARTY-NOTICES.md` — nie edytuj ręcznie); `git:safety*` (list/inspect/verify/restore); `skills:*` (build, stats, validate, cost, deps, capabilities, plan, feedback-record, feedback-show, provider-resolve, utility-recalc).
 
 ## Kodowanie polskich znaków (encoding policy)
 

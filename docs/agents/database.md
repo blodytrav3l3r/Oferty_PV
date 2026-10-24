@@ -5,7 +5,7 @@
 ## Model
 
 - SQLite WAL, `busy_timeout=30000`, seed paczkami (chunk 25/transakcja), inicjalizacja sekwencyjna (`await`, błędy #1/#2/#12).
-- 48 modeli Prisma; migracje w `prisma/migrations/` (16). Nowe instalacje: `prisma migrate deploy`. `db push` wyłącznie dla baz legacy bez `_prisma_migrations` (jednorazowa konwersja, nie alternatywny model utrzymania).
+- 56 modeli Prisma (3 enumy); migracje w `prisma/migrations/` (36). Nowe instalacje: `prisma migrate deploy`. Rodzina `PricelistVersion` + `PricelistItem*` (wersjonowanie cenników), `AiTransfer`, `client_contacts_rel` i `user_preferences` to część schematu — nie pomijaj ich przy audycie. `db push` wyłącznie dla baz legacy bez `_prisma_migrations` (jednorazowa konwersja, nie alternatywny model utrzymania).
 - N+1: zbiorcze `findMany` + `in` i mapowanie w pamięci (błąd #9). Czyszczenie audit loga partiami + indeks `createdAt` (błąd #11).
 - JSON w kolumnach `String`: dopuszczalny dla snapshotów/telemetrii/konfiguracji; każdy snapshot przez kopertę `{schemaVersion, data}` (`src/utils/snapshots.ts` — `serialize/deserializeSnapshot`). Nie normalizuj wszystkiego; kolumny filtrowane/relacje biznesowe modeluj jawnie.
 - Monitor wzrostu: `npm run measure:telemetry` (telemetria ~0.6 MB/dzień — brak pilnej retencji; audyt ~81 KB/wiersz by design, retencja 180 dni w `cleanupAuditLogs`).

@@ -1,6 +1,6 @@
 # Katalog Komponentów — S.O.K. — System Ofert i Kalkulacji
 
-> Wersja: 1.50.0 | Data: 2026-08-23 | Źródło: analiza CSS (`public/css/` — 11 arkuszy)
+> Wersja: 1.50.0 | Data: 2026-10-24 | Źródło: analiza CSS (`public/css/` — 13 arkuszy źródłowych)
 
 > **SSoT UI/UX, HTML i CSS: `docs/UI_GUIDELINES.md`.** Ten dokument to katalog komponentów
 > (kto/co definiuje); szczegółowe reguły projektowania znajdziesz w wytycznych.
@@ -9,7 +9,7 @@
 
 ## 1. Design Tokens (zmienne CSS)
 
-**Wszystkie zmienne zdefiniowane w `:root` w `public/css/style.base.css` (linie 3–240) — jedyne źródło prawdy (SSoT) tokenów.** Pozostałe arkusze (`style.cards.css`, `style.responsive.css`, `style.utilities.css`) są ładowane we wszystkich wejściówkach i rozszerzają klasy, NIE definiują tokenów.
+**Wszystkie zmienne zdefiniowane w `:root` w `public/css/style.base.css` (linie 3–316) — jedyne źródło prawdy (SSoT) tokenów.** Pozostałe arkusze (`style.cards.css`, `style.responsive.css`, `style.utilities.css`) są ładowane we wszystkich wejściówkach i rozszerzają klasy, NIE definiują tokenów.
 
 ### Kolory
 
@@ -31,7 +31,7 @@
 --text-muted: #64748b;
 
 /* Akcenty */
---accent: #6366f1; /* indigo */
+--accent: #5b5fec; /* indigo */
 --success: #10b981; /* zielony */
 --danger: #ef4444; /* czerwony */
 --warn: #f59e0b; /* żółty */
@@ -43,7 +43,7 @@
 
 | Moduł     | Klasa             | `--logo-start`        | `--logo-end`                |
 | --------- | ----------------- | --------------------- | --------------------------- |
-| Rury      | `.logo-rury`      | `--accent` (#6366f1)  | `--accent2` (#8b5cf6)       |
+| Rury      | `.logo-rury`      | `--accent` (#5b5fec)  | `--accent2` (#8b5cf6)       |
 | Studnie   | `.logo-studnie`   | `--success` (#10b981) | `--success-hover` (#34d399) |
 | Kartoteka | `.logo-kartoteka` | `--warn` (#f59e0b)    | `--warn-hover` (#fbbf24)    |
 | Zlecenia  | `.logo-zlecenia`  | `--pink` (#ec4899)    | `--pink-hover` (#f472b6)    |
@@ -96,7 +96,7 @@ z index.css oraz `.rury-header-*`/`.rury-role-badge`/`.rury-btn-logout` z rury.c
     <span id="header-username" class="header-username"></span>
     <span id="header-role-badge" class="header-role-badge"></span>
     <span id="app-version-toolbar" class="header-version"></span>
-    <button type="button" class="header-logout" onclick="appLogout()">Wyloguj</button>
+    <button type="button" class="header-logout" data-csp="appLogout">Wyloguj</button>
 </div>
 ```
 
@@ -198,8 +198,8 @@ Oznaczenia ról użytkownika — inline badge z kolorem.
 
 | Rola  | Klasa         | Kolor               |
 | ----- | ------------- | ------------------- |
-| Admin | `.role-admin` | czerwony `--danger` |
-| Pro   | `.role-pro`   | żółty `--warn`      |
+| Admin | `.role-admin` | bursztyn `--warn`   |
+| Pro   | `.role-pro`   | fiolet `--accent`   |
 | User  | `.role-user`  | zielony `--success` |
 
 ---
@@ -230,7 +230,9 @@ Oznaczenia ról użytkownika — inline badge z kolorem.
 Okrągły przycisk z ikoną (tylko ikona, bez tekstu).
 
 ```html
-<button class="btn-icon" onclick="edit()">${renderIcon('pencil')}</button>
+<button type="button" class="btn-icon" data-csp="edit" aria-label="Edytuj">
+    ${renderIcon('pencil')}
+</button>
 ```
 
 ### `.btn-order-save`
@@ -345,7 +347,7 @@ Overflow-x auto wrapper dla tabel.
 Rozwijane wiersze w tabeli ofert.
 
 ```html
-<tr class="well-row-header" onclick="toggleWell(this)">
+<tr class="well-row-header" data-csp="toggleWell">
     <td>Nazwa studni</td>
 </tr>
 <tr class="well-details-row hidden">
@@ -362,7 +364,7 @@ Rozwijane wiersze w tabeli ofert.
 Klikana komórka w tabeli.
 
 ```html
-<span class="editable" onclick="editCell(this)">1.5</span>
+<span class="editable" data-csp="editCell">1.5</span>
 ```
 
 ---
@@ -405,11 +407,11 @@ Nagłówek kategorii w katalogu produktów.
 
 ## 8. Modal / Overlay
 
-Klasy `.modal-overlay` (fixed, `inset: 0`, `--z-modal-top`) i `.modal` (karta, max 550px)
-zdefiniowane w `public/css/style.responsive.css:464-509`. Nagłówek/footer: `.modal-header`/`.modal-footer`.
+Klasy `.modal-overlay` (fixed, `inset: 0`, `--z-overlay`) i `.modal` (karta, max 550px)
+zdefiniowane w `public/css/style.responsive.css:576`. Nagłówek/footer: `.modal-header`/`.modal-footer`.
 
 **Tworzenie modalów — wyłącznie przez `public/js/shared/modalCore.js`**
-(wzorzec `modalCore.js:84` tworzy `div.modal-overlay.js-modal-overlay`). Zakaz budowania
+(wzorzec `modalCore.js:111` tworzy `div.modal-overlay.js-modal-overlay`). Zakaz budowania
 modalów inline-styled w JS (stary wzorzec z `ui.js`/`clientManager.js` — do migracji).
 
 ```html
@@ -444,8 +446,9 @@ Kanonem warstw jest `LAYERS`/`LAYERS_EXCEL` w `public/js/studnie/layers.js`
 - **`LAYERS_EXCEL`** — warstwy wewnątrz modala Excel (select overlay 2, sticky column 5,
   sticky header 20/30, resize handle 40, focus border 55).
 
-Klasy CSS używają zmiennych `--z-*` z `style.base.css:218-222`
-(`--z-header: 100`, `--z-sticky-th: 5`, `--z-sticky-dropdown: 50`, `--z-overlay: 2000`, `--z-toast: 5000`).
+Klasy CSS używają zmiennych `--z-*` z `style.base.css:251-256`
+(`--z-header: 100`, `--z-sticky-th: 5`, `--z-sticky-dropdown: 50`, `--z-dropdown: 1000`,
+`--z-overlay: 2000`, `--z-toast: 5000`).
 **Popupy/modale w JS zawsze przez `LAYERS.*` — nigdy twarde wartości z-index.**
 
 ---
@@ -457,7 +460,7 @@ Klasy CSS używają zmiennych `--z-*` z `style.base.css:218-222`
 Podstawowy kafelek w kreatorze studni.
 
 ```html
-<div class="tile ${selected ? 'selected' : ''}" onclick="selectTile(this)">
+<div class="tile ${selected ? 'selected' : ''}" data-csp="selectTile">
     <div class="tile-icon">${icon}</div>
     <div class="tile-label">Nazwa</div>
     <div class="tile-price">${price} zł</div>
@@ -561,14 +564,14 @@ Status oferty (`.has-order` / `.no-order`).
 3-kolumnowy grid: Diagram | Centrum | Lista studni.
 
 ```css
-grid-template-columns: 350px 1fr 350px;
+grid-template-columns: clamp(260px, 18vw, 420px) minmax(0, 1fr) clamp(280px, 20vw, 460px);
 ```
 
-| Breakpoint | Zmiana                       |
-| ---------- | ---------------------------- |
-| 1400px     | 300px → 1fr → 300px          |
-| 1200px     | 1fr → 240px (diagram hidden) |
-| 900px      | 1fr (wszystko w kolumnie)    |
+| Breakpoint | Zmiana                                                          |
+| ---------- | --------------------------------------------------------------- |
+| 1400px     | `clamp(240px, 16vw, 350px)` → 1fr → `clamp(250px, 18vw, 380px)` |
+| 1200px     | 1fr → `clamp(200px, 22vw, 280px)` (diagram hidden)              |
+| 900px      | 1fr (wszystko w kolumnie)                                       |
 
 ### `.well-app-layout.intro-mode`
 
@@ -637,8 +640,9 @@ Oznaczenie osoby odpowiedzialnej / autora oferty.
 
 > SSoT klas utility: `style.base.css` (klasy wspólne) + `style.utilities.css` (utility).
 > Pełna lista w `style.utilities.css` — tu tylko najczęściej używane. Nie dokumentuj
-> klas, które nie istnieją: `.text-accent`, `.text-success`, `.bg-success`, `.bg-warn`,
-> `.bg-*-bg`, `.border-warn` NIE są zdefiniowane — zamiast nich użyj tokenów
+> klas, które nie istnieją. Przykłady klas zdefiniowanych w `style.base.css`:
+> `.text-accent` (349), `.text-success` (361), `.bg-success` (397), `.bg-warn` (415),
+> `.bg-*-bg` (403–421), `.border-warn` (447). Zamiast zgadywania nazwy użyj tokenów
 > `color: var(--accent)` itd. lub klas `.color-*` z utilities.
 
 ### Tekst
@@ -748,4 +752,4 @@ Stosowane przez `.section.active`, `.well-details-container`, `.product-catalog`
 
 ---
 
-_Ostatnia aktualizacja: 2026-08-24_
+_Ostatnia aktualizacja: 2026-10-24_

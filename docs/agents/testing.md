@@ -14,6 +14,6 @@
 
 ## Bramy
 
-- `npm run validate`: typecheck BE+FE, lint BE+FE, appname, licenses, test:quick, collisions, prices:verify.
-- Pre-push: `version:check` + `encoding:check` + typechecki + `test:quick`.
+- `npm run validate`: version:check, typecheck BE+FE, lint BE+FE, appname, licenses, test:quick, collisions, ratchet, prices:verify.
+- Pre-push (`.husky/pre-push`, 4 grupy równoległe): `version:check` + `encoding:check` + `appname:check`; `lint` + `lint:frontend`; `typecheck` + `typecheck:frontend`; `jest` lite (`test:quick:lite` — bez `tests/migrations` i `git-safety`) + `tests/pricelistChunk.test.ts --runInBand` + `test:git-safety`.
 - DoD paczki: P0 open = 0; CSRF/matrix GREEN; typecheck/lint GREEN; `test:quick` GREEN; `version:check` GREEN; migration drift 0; NEW globals/inline/security-exceptions = 0.

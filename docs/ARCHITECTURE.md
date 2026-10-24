@@ -1,7 +1,7 @@
 # Architektura — S.O.K. — System Ofert i Kalkulacji
 
 **Wersja:** 1.50.0  
-**Ostatnia aktualizacja:** 2026-09-30  
+**Ostatnia aktualizacja:** 2026-10-24  
 **Stack:** Express + Prisma + SQLite + VanillaJS SPA + ML Pipeline
 
 ---
@@ -86,17 +86,17 @@ Aplikacja S.O.K. — System Ofert i Kalkulacji to pojedyncza aplikacja webowa (m
 | Technologia | Wersja   | Rola                            |
 | ----------- | -------- | ------------------------------- |
 | Node.js     | >= 22.13 | Środowisko uruchomieniowe       |
-| TypeScript  | ~6.0     | Język programowania             |
-| Express.js  | ~4.22    | Framework webowy                |
-| Prisma      | ~6.0     | ORM (Object-Relational Mapping) |
-| Zod         | ~4.3     | Walidacja danych wejściowych    |
-| bcryptjs    | ~3.0     | Haszowanie haseł                |
-| Helmet      | ~8.1     | Nagłówki bezpieczeństwa HTTP    |
-| Sentry      | ~10.59   | Monitoring błędów               |
-| docx        | ~9.6     | Generowanie dokumentów DOCX     |
-| Puppeteer   | ~24.43   | Generowanie PDF                 |
-| ts-node-dev | ~2.0     | Hot-reload w dev                |
-| Jest        | ~30.0    | Framework testowy               |
+| TypeScript  | ^6.0.2   | Język programowania             |
+| Express.js  | ^4.22.3  | Framework webowy                |
+| Prisma      | ^6.0     | ORM (Object-Relational Mapping) |
+| Zod         | ^4.3     | Walidacja danych wejściowych    |
+| bcryptjs    | ^3.0     | Haszowanie haseł                |
+| Helmet      | ^8.3     | Nagłówki bezpieczeństwa HTTP    |
+| Sentry      | ^10.59   | Monitoring błędów               |
+| docx        | ^9.6     | Generowanie dokumentów DOCX     |
+| Puppeteer   | ^25.16   | Generowanie PDF                 |
+| ts-node-dev | ^2.0     | Hot-reload w dev                |
+| Jest        | 30.4.2   | Framework testowy (pin exact)   |
 | Swagger     | 6.x      | Dokumentacja API                |
 
 ### Warstwy
@@ -107,6 +107,8 @@ Aplikacja S.O.K. — System Ofert i Kalkulacji to pojedyncza aplikacja webowa (m
     - `rateLimiter.ts` / `rateLimiters.ts` — limitowanie żądań per IP (in-memory)
     - `errorHandler.ts` — globalna obsługa błędów
     - `requestLogger.ts` — logowanie żądań HTTP
+    - `csrf.ts` — same-origin dla mutacji (I-010)
+    - `aiMlGuard.ts` — bramka AI/ML (fail-closed przy wyłączonej fladze)
     - `writeLock.ts` — modułowy lock zapisu (`createModuleLock()` → `{ acquireLock, runWithLock }`, per-klucz, timeout 30 s, mutual exclusion) — DRY dla tras zapisu cenników
 
 2. **Routes** (`src/routes/`)
@@ -130,9 +132,23 @@ Aplikacja S.O.K. — System Ofert i Kalkulacji to pojedyncza aplikacja webowa (m
     - `exportCombined.ts` — łączny eksport (PDF/DOCX)
     - `priceOverrides.ts` — nadpisania cen
     - `precoPricingV2.ts` — cenniki Preco
+    - `pricelistVersions.ts` — wersjonowanie cenników (draft/approve/publish/backdate/diff/export)
+    - `care.ts` — opieka nad ofertą (kolejka, SLA, powiadomienia)
+    - `locks.ts` — blokady edycji dokumentów (`doc_locks`, heartbeat, 423)
+    - `aiTransfer.ts` — eksport/import pakietów modeli AI
+    - `userPreferences.ts` — preferencje użytkownika (theme)
+    - `healthPdf.ts` — diagnostyka PDF (`/health/pdf`)
+    - `clients/contacts.ts` — osoby kontaktowe klienta
+    - `offers/followUps.ts`, `offers/followUpStats.ts`, `offers/clientContact.ts` — follow-upy i kontakt przy ofercie
 
 3. **Services** (`src/services/`)
-    - `auditService.ts` — logowanie zmian w bazie
+    - `auditService.ts` — logowanie zmian w bazie (+ retencja 180 dni, I-012)
+    - `auditPayload.ts` — budowa/merge payloadu audytu
+    - `careService.ts` — kolejka opieki, SLA, powiadomienia (throttle 60 s)
+    - `pricelistVersionService.ts` — wersje cenników (snapshot, diff, usage)
+    - `precoPricing.ts` — zapis/flatten cenników PRECO
+    - `ruryTransport.ts` — koszt transportu rur
+    - `sessionAdmin.ts` — wymuszone wylogowanie sesji
     - `pdfGenerator.ts` — generowanie PDF (Puppeteer)
     - `docx/` — generowanie dokumentów DOCX (rury i studnie)
         - `rury/` — builder, content, sections, tables, kartaBudowy
@@ -155,8 +171,11 @@ Aplikacja S.O.K. — System Ofert i Kalkulacji to pojedyncza aplikacja webowa (m
     - `orderSchemas.ts` — schematy dla zamówień
     - `productSchemas.ts` — schematy dla produktów
     - `telemetrySchemas.ts` — schematy dla telemetrii AI
+    - `finiteNumbers.ts` — odrzucanie `NaN`/`Infinity`/ujemnych w polach cenowych
+    - `lockSchemas.ts` — schematy blokad edycji
+    - `priceDefaultsSchemas.ts` — schematy snapshotów cen domyślnych
 
-5. **Utils** (`src/utils/`)
+5. **Utils** (`src/utils/`, 32 pliki — lista poniżej jest wybiórcza)
     - `brandHtml.ts` — brandowanie nagłówka w generowanych dokumentach
     - `cronService.ts` — serwis cron (setInterval)
     - `dbQueryCounter.ts` — licznik zapytań DB (diagnostyka N+1)
@@ -201,7 +220,7 @@ Aplikacja S.O.K. — System Ofert i Kalkulacji to pojedyncza aplikacja webowa (m
   studnie (`_filterChangedWells` + `_wellSnapshot` + `_wellPricingStats`).
 - **Indeksy dedup telemetrii**: migracja `20260815000000_baseline` + definicje
   w `prisma/schema.prisma` (`idx_logs_well`, `idx_logs_source_well`). Auto-heal przy starcie
-  serwera (`src/app.ts`): `CREATE INDEX IF NOT EXISTS` dla obu indeksów obok
+  serwera (`src/initDatabase.ts`): `CREATE INDEX IF NOT EXISTS` dla obu indeksów obok
   `idx_audit_created_at` — instalacje bez historii migracji (`db push`) nie tworzą nowych indeksów.
 - **Auto-heal FTS5** (`src/utils/fts5Sync.ts`): `ensureFts5Schema` tworzy tabelę wirtualną
   FTS5 (`createFts5Table`) + robi `backfillFts5` także wtedy, gdy tabeli brak (świeża baza),
@@ -260,44 +279,49 @@ w HTML/partialach/szablonach — jeden dyspozytor `public/js/shared/cspActions.j
 | Technologia             | Rola                               |
 | ----------------------- | ---------------------------------- |
 | Vanilla JavaScript      | Logika frontendu (brak frameworka) |
-| HTML                    | Widoki (6 plików .html)            |
+| HTML                    | Widoki (7 plików .html)            |
 | CSS                     | Style (w public/css/)              |
 | IndexedDB (opcjonalnie) | Pamięć lokalna dla trybu offline   |
 
 ### Widoki
 
-| Plik             | Opis                        |
-| ---------------- | --------------------------- |
-| `index.html`     | Strona główna / dashboard   |
-| `app.html`       | Główna aplikacja SPA        |
-| `rury.html`      | Zarządzanie ofertami rur    |
-| `studnie.html`   | Zarządzanie ofertami studni |
-| `kartoteka.html` | Kartoteka klientów          |
-| `zlecenia.html`  | Widok zamówień              |
+| Plik                | Opis                        |
+| ------------------- | --------------------------- |
+| `index.html`        | Strona główna / dashboard   |
+| `app.html`          | Główna aplikacja SPA        |
+| `rury.html`         | Zarządzanie ofertami rur    |
+| `studnie.html`      | Zarządzanie ofertami studni |
+| `kartoteka.html`    | Kartoteka klientów          |
+| `zlecenia.html`     | Widok zamówień              |
+| `benchmark-tm.html` | Narzędzie benchmarku (dev)  |
 
 ### Frontend — struktura JS
 
 | Katalog                    | Liczba plików | Opis                                                                     |
 | -------------------------- | ------------- | ------------------------------------------------------------------------ |
-| `public/js/rury/`          | 31            | Logika modułu rur (oferty, cenniki, zamówienia)                          |
-| `public/js/studnie/`       | 144           | Logika modułu studni (konfigurator, oferty, cenniki, excel, zamówienia)  |
-| `public/js/shared/`        | 24            | Wspólne helpery (auth, ui, headerUser, toast, modalCore, StorageService) |
-| `public/js/kartoteka/`     | 8             | Kartoteka ofert i zamówień (kartotekaActions, kartotekaUi, ...)          |
-| `public/js/import-export/` | 11            | Import/eksport XLSX + JSON 1:1 (toolbar.js + rury/studnie/shared)        |
-| `public/js/spa/`           | 4             | Router SPA (router.js, navGuard)                                         |
-| `public/js/admin/`         | 4             | Panel admina (AI dashboard)                                              |
+| `public/js/rury/`          | 30            | Logika modułu rur (oferty, cenniki, zamówienia)                          |
+| `public/js/studnie/`       | 150           | Logika modułu studni (konfigurator, oferty, cenniki, excel, zamówienia)  |
+| `public/js/shared/`        | 39            | Wspólne helpery (auth, ui, headerUser, toast, modalCore, StorageService) |
+| `public/js/kartoteka/`     | 9             | Kartoteka ofert i zamówień (kartotekaActions, kartotekaUi, ...)          |
+| `public/js/import-export/` | 12            | Import/eksport XLSX + JSON 1:1 (toolbar.js + rury/studnie/shared)        |
+| `public/js/spa/`           | 4             | Router SPA (router.js)                                                   |
+| `public/js/admin/`         | 7             | Panel admina (AI dashboard, telemetria)                                  |
+| `public/js/care/`          | 1             | Widok opieki nad ofertą                                                  |
+| `public/js/` (root)        | 4             | Skrypty startowe/globalne                                                |
+
+Razem: 256 plików `.js` w `public/js/`.
 
 Główne pliki rdzeniowe w `public/js/studnie/` po podziale:
 
 - `wellActions.js` → aktywny moduł domenowy (m.in. odświeżanie modala zleceń / stanu),
-  używany przez wiele modułów domeny studni; deleguje część logiki do modułów `actions*.js`
-- `wellManager.js` (277 linii) → deleguje do `actionsWellPainting.js`
-- `wellPopups.js` (322 linie) → deleguje do `popups*.js`
-- `wellTransitions.js` (643 linie) → deleguje do `wellTransitions*.js`
-- `pricelistManager.js` (241 linii) → deleguje do 9 modułów `pricelist*.js`
-- `offerRendering.js` (54 linie) → deleguje do 11 modułów `offer*.js`
-- `orderZlecenia.js` (7 linii) → deleguje do 5 modułów `orderZlecenia*.js`
-- `excelTableManager.js` (335 linii) → deleguje do 19 modułów `excel*.js`
+  używany przez wiele modułów domeny studni; deleguje część logiki do modułów `actions*.js` (13 plików)
+- `wellManager.js` → deleguje do `actionsWellPainting.js` i pozostałych `actions*.js`
+- `wellPopups.js` → deleguje do 6 modułów `popups*.js`
+- `wellTransitions.js` → deleguje do 6 modułów `wellTransitions*.js`
+- `pricelistManager.js` → deleguje do 10 modułów `pricelist*.js`
+- `offerRendering.js` → deleguje do 24 modułów `offer*.js`
+- `orderZlecenia.js` → deleguje do 6 modułów `orderZlecenia*.js`
+- `excelTableManager.js` → deleguje do 28 modułów `excel*.js`
 
 ### Frontend — struktura CSS
 
@@ -314,6 +338,10 @@ Główne pliki rdzeniowe w `public/js/studnie/` po podziale:
 | `public/css/studnie.css`          | Style modułu studni (kreator, diagram, Excel)                        |
 | `public/css/zlecenia.css`         | Style zleceń produkcyjnych                                           |
 | `public/css/spa.css`              | Style shella SPA (`app.html`)                                        |
+| `public/css/studnie/modal.css`    | Style modali modułu studni                                           |
+| `public/css/studnie/offer.css`    | Style oferty studni                                                  |
+
+> `public/css/min/` jest artefaktem builda (`npm run minify:css`, uruchamiany w `prestart`) i nie jest edytowany ręcznie.
 
 > Wszystkie wejściówki (`app.html`, `index.html`, `rury.html`, `studnie.html`, `kartoteka.html`, `zlecenia.html`) ładują wspólne arkusze: `style.base.css` → `style.cards.css` → `style.responsive.css` → `style.utilities.css` (kolejność ma znaczenie dla kaskady) + arkusz modułowy (`index.css`/`rury.css`/`studnie.css`/`zlecenia.css`/`spa.css`). Legacy `public/css/style.css` **nie istnieje** — został usunięty (tokenizacja, 2026-08-03). Pełne wytyczne: `docs/UI_GUIDELINES.md`.
 
@@ -327,18 +355,20 @@ Główne pliki rdzeniowe w `public/js/studnie/` po podziale:
 - Backup przez `VACUUM INTO` (WAL-safe snapshot)
 - Prisma ORM zarządza schematem i migracjami
 
-### Modele (48)
+### Modele (56)
 
 - **users** — użytkownicy systemu
+- **user_preferences** — preferencje użytkownika (m.in. motyw)
 - **sessions** — sesje logowania (token-based)
-- **clients_rel** — baza klientów
-- **productsRury** / **productsRuryDefault** — produkty rury + wzorzec resetu
-- **productsStudnie** / **productsStudnieDefault** — produkty studnie + wzorzec resetu
+- **clients_rel** / **client_contacts_rel** — baza klientów + osoby kontaktowe
+- **ProductsRury** / **ProductsRuryDefault** — produkty rury + wzorzec resetu
+- **ProductsStudnie** / **ProductsStudnieDefault** — produkty studnie + wzorzec resetu
 - **offers_rel** — oferty rur
 - **offers_studnie_rel** — oferty studni
 - **orders_rury_rel** — zamówienia rur
 - **orders_studnie_rel** — zamówienia studni
 - **offer_items_rel** / **offer_studnie_items_rel** — pozycje ofert
+- **offer_follow_ups** / **latest_followup** — follow-upy ofert + widok ostatniego follow-upu
 - **audit_logs** — logi audytowe
 - **settings** — ustawienia (klucz-wartość)
 - **order_counters** / **order_counters_rury** — liczniki numeracji
@@ -346,6 +376,9 @@ Główne pliki rdzeniowe w `public/js/studnie/` po podziale:
 - **PrecoKonfig** / **PrecoKonfigDefault** — konfiguracja Preco
 - **PrecoKinety** / **PrecoKinetyDefault** — kinety Preco
 - **PrecoZakresy** / **PrecoZakresyDefault** — zakresy Preco
+- **PricelistVersion** — wersje cenników (draft/approved/published, backdate)
+- **PricelistItemRury** / **PricelistItemStudnie** — pozycje wersji cennika (rury/studnie)
+- **PricelistItemPrecoKonfig** / **PricelistItemPrecoKinety** / **PricelistItemPrecoZakresy** — pozycje wersji cennika Preco
 - **ai_telemetry_logs** / **ai_telemetry_events** — telemetria AI (logi + zdarzenia)
 - **ai_config_history** — historia wersji konfiguracji
 - **ai_telemetry_versions** — wersje solvera/reguł/AI
@@ -356,14 +389,16 @@ Główne pliki rdzeniowe w `public/js/studnie/` po podziale:
 - **AiModel** — model registry ML (wagi modeli)
 - **AiTrainingRun** — audyt uruchomień treningu ML (kręgosłup audytu, od `20260816000000_ai_training_run`)
 - **AiEvaluation** — dzienne metryki ewaluacji ML
+- **AiTransfer** — pakiety eksportu/importu modeli AI
 - **aiRewardLog** — logi nagród ML (unique `(wellId, action)` — dedup rewardów)
+- **care_states** / **care_sla_config** / **care_sla_scopes** / **care_notifications** — kolejka opieki nad ofertą, SLA, powiadomienia
 - **document_shares** — udostępnianie dokumentów (oferty/zamówienia) między użytkownikami (`GET/POST /api/shares`, batch `POST /api/shares/revoke`, `DELETE /api/shares/:id`)
 - **idempotency_keys** — klucze idempotentności API (`@@id(userId, endpoint, key)`, `idx_idempotency_expires`)
 - **doc_locks** — twarda blokada edycji 1 dokument = 1 użytkownik (TTL 180 s + heartbeat 60 s, `POST/GET /api/locks`, 423 przy cudzej świeżej blokadzie)
 
 - **Indeksy telemetrii**: `idx_logs_well` (wellId) i `idx_logs_source_well` (solverSource, wellId) na
   `ai_telemetry_logs` — migracja `20260815000000_baseline`, idempotentnie odtwarzane
-  przy starcie serwera (`CREATE INDEX IF NOT EXISTS` w `src/app.ts`).
+  przy starcie serwera (`CREATE INDEX IF NOT EXISTS` w `src/initDatabase.ts`).
 
 Szczegóły: [DATABASE.md](DATABASE.md)
 
@@ -394,7 +429,8 @@ Oferty_PV/
 ├── commitlint.config.js             # Conventional commits
 │
 ├── src/                             # Backend
-│   ├── app.ts                      # Konfiguracja Express (auto-heal indeksów + FTS5 przy starcie)
+│   ├── app.ts                      # Konfiguracja Express
+│   ├── initDatabase.ts             # Auto-heal indeksów telemetrii + FTS5 przy starcie
 │   ├── prismaClient.ts             # Klient Prisma (singleton)
 │   ├── helpers.ts                  # Pomocnicze funkcje
 │   ├── version.ts                  # Wersja aplikacji
@@ -408,6 +444,8 @@ Oferty_PV/
 │   │   ├── rateLimiter.ts          # Rate limiting
 │   │   ├── rateLimiters.ts         # Konfiguracja limiterów (API/LOGIN/WRITE/PRICELIST/EXPORT/TELEMETRY_WRITE/READ)
 │   │   ├── writeLock.ts            # Modułowy lock zapisu (createModuleLock, per-klucz, 30 s)
+│   │   ├── csrf.ts                 # Same-origin dla mutacji (I-010)
+│   │   ├── aiMlGuard.ts            # Bramka AI/ML (fail-closed)
 │   │   ├── errorHandler.ts         # Globalna obsługa błędów
 │   │   └── requestLogger.ts        # Logowanie żądań HTTP
 │   ├── routes/
@@ -444,7 +482,7 @@ Oferty_PV/
 │   │   ├── featureFlags.ts         # Feature flags
 │   │   ├── precoPricingV2.ts       # Cenniki Preco
 │   │   ├── priceOverrides.ts       # Nadpisania cen
-│   │   └── shares.ts               # Udostępnianie dokumentów (GET/POST/revoke/DELETE)
+│   │   ├── shares.ts               # Udostępnianie dokumentów (GET/POST/revoke/DELETE)
 │   │   └── admin.ts                # Panel admina (FTS status/rebuild, /api/admin, admin only)
 │   ├── services/
 │   │   ├── auditService.ts         # Usługa audytu
@@ -474,7 +512,7 @@ Oferty_PV/
 │   │   └── telemetrySchemas.ts     # Walidacja telemetrii
 │   └── types/                      # Typy TypeScript
 │
-├── public/                          # Frontend (Vanilla JS, 230 plików)
+├── public/                          # Frontend (Vanilla JS, 337 plików)
 │   ├── index.html                   # Dashboard (Pulpit)
 │   ├── app.html                     # Shell SPA (router hash #/moduł, osadza iframe)
 │   ├── rury.html                    # Moduł rur (iframe)
@@ -482,16 +520,16 @@ Oferty_PV/
 │   ├── kartoteka.html               # Kartoteka ofert i zamówień
 │   ├── zlecenia.html                # Zlecenia produkcyjne (PZ)
 │   ├── favicon.ico                  # Ikona
-│   ├── js/                          # Skrypty JS (230 plików)
-│   ├── css/                         # 11 arkuszy (style.base/cards/responsive/utilities + index/rury/studnie/zlecenia/spa/inter/printModal)
+│   ├── js/                          # Skrypty JS (256 plików)
+│   ├── css/                         # 13 arkuszy źródłowych (style.base/cards/responsive/utilities + index/rury/studnie/zlecenia/spa/inter/printModal + studnie/modal, studnie/offer); public/css/min/ to build
 │   ├── images/                      # logo-sok.svg, letterhead-*.png, b-mark.png, ce-mark.png
 │   ├── partials/                    # Partiale HTML (header, rury/*, studnie/*) — partialLoader
 │   └── templates/                   # 5 szablonów: ofertaRury/Studnie, kartaBudowy, zlecenie, etykieta
 │
-├── prisma/                          # Prisma (48 modeli, 17 migracji)
-│   ├── schema.prisma                # Definicja schematu (856 linii)
+├── prisma/                          # Prisma (56 modeli, 36 migracji)
+│   ├── schema.prisma                # Definicja schematu (1161 linii)
 │   ├── seed.ts                      # Seed danych (ProductsRury/Studnie + Preco + AiModel)
-│   └── migrations/                  # 17 migracji: 20260815000000_baseline … 20260929000000_fk_pricelist_version (pełna lista: prisma/migrations/)
+│   └── migrations/                  # 36 migracji: 20260815000000_baseline … 20261023000000_pricelist_one_draft (pełna lista: prisma/migrations/)
 │
 ├── data/                            # Baza danych
 │   ├── app_database.sqlite          # Główna baza (SQLite)
@@ -501,7 +539,7 @@ Oferty_PV/
 │   ├── seed_studnie.json            # Seed produktów (studnie)
 │   └── seed_preco.json              # Seed cenników Preco
 │
-├── scripts/                         # Skrypty narzędziowe (51 plików)
+├── scripts/                         # Skrypty narzędziowe (76 plików)
 │   ├── backup.ts                    # Backup bazy (VACUUM INTO, max 1 kopia)
 │   ├── restore-db.js                # Restore z walidacją (header + integrity_check + WAL cleanup)
 │   ├── check-db.js                  # Weryfikacja schematu przy starcie (ensure-db.bat)
@@ -649,14 +687,6 @@ zostało już wykonane (TASK-045) — dalsze scalanie nie jest obecnie uzasadnio
 
 ## Moduły compatibility / graniczne
 
-### `public/js/rury/orderManager.js`
-
-Compatibility stub / kandydat do usunięcia. Rzeczywista logika zamówień rur
-znajduje się w `orderItems.js`, `orderCrud.js`, `orderEditMode.js`,
-`orderSummary.js`, `orderKartaBudowy.js` i `orderPrzejscia.js`.
-Plik usunięto jako martwy stub (zero linii kodu, jedyną referencją był tag
-`<script>` w `rury.html`, usunięty razem z plikiem).
-
 ### `public/js/studnie/wellActions.js`
 
 Aktywny moduł domenowy (nie stub), odpowiedzialny m.in. za odświeżanie modala
@@ -698,4 +728,4 @@ Szczegóły: [DEPLOYMENT.md](DEPLOYMENT.md)
 
 ---
 
-_Ostatnia aktualizacja: 2026-09-09_
+_Ostatnia aktualizacja: 2026-10-24_

@@ -3,7 +3,8 @@
 **Silnik:** SQLite  
 **ORM:** Prisma 6.0  
 **Plik bazy:** `data/app_database.sqlite`  
-**Liczba modeli:** 40
+**Liczba modeli:** 56 (3 enumy)  
+**Migracje:** 36 (`prisma/migrations/`, stan 2026-10-24)
 
 ---
 
@@ -55,79 +56,101 @@ Indeks: `idx_users_role` na kolumnie `role`.
 
 #### `sessions` — Sesje logowania
 
-| Kolumna   | Typ        | Opis                       |
-| --------- | ---------- | -------------------------- |
-| token     | String @id | Token sesji (64 znaki hex) |
-| userId    | String     | ID użytkownika             |
-| createdAt | BigInt     | Timestamp utworzenia (ms)  |
+| Kolumna      | Typ        | Opis                                  |
+| ------------ | ---------- | ------------------------------------- |
+| token        | String @id | Token sesji (64 znaki hex)            |
+| userId       | String     | ID użytkownika                        |
+| createdAt    | BigInt     | Timestamp utworzenia (ms)             |
+| lastActivity | BigInt?    | Ostatnia aktywność (ms); idle timeout |
 
-Sesja wygasa po 7 dniach (`SESSION_MAX_AGE_MS`).
+Sesja ma dwa limity: idle 1 h bezczynności (`SESSION_IDLE_TIMEOUT_MS`, liczony z
+`lastActivity`) oraz absolutny max 7 dni od `createdAt` (`SESSION_ABSOLUTE_MAX_MS`).
+Migracja `20261007000000_session_idle`.
 
 #### `clients_rel` — Klienci
 
-| Kolumna      | Typ        | Opis                        |
-| ------------ | ---------- | --------------------------- |
-| id           | String @id | Unikalny identyfikator      |
-| userId       | String?    | ID użytkownika (właściciel) |
-| name         | String?    | Nazwa klienta               |
-| nip          | String?    | NIP                         |
-| address      | String?    | Adres                       |
-| email        | String?    | Email                       |
-| phone        | String?    | Telefon                     |
-| contact      | String?    | Osoba kontaktowa            |
-| clientNumber | String?    | Numer klienta               |
-| createdAt    | String?    | Data utworzenia             |
-| updatedAt    | String?    | Data aktualizacji           |
+| Kolumna      | Typ        | Opis                         |
+| ------------ | ---------- | ---------------------------- |
+| id           | String @id | Unikalny identyfikator       |
+| userId       | String?    | ID użytkownika (właściciel)  |
+| name         | String?    | Nazwa klienta                |
+| nip          | String?    | NIP                          |
+| address      | String?    | Adres                        |
+| email        | String?    | Email                        |
+| phone        | String?    | Telefon                      |
+| contact      | String?    | Osoba kontaktowa             |
+| clientNumber | String?    | Numer klienta (@default("")) |
+| createdAt    | String?    | Data utworzenia              |
+| updatedAt    | String?    | Data aktualizacji            |
 
 Indeks: `idx_clients_user` na kolumnie `userId`.
 
+#### `client_contacts_rel` — Osoby kontaktowe klienta
+
+| Kolumna         | Typ        | Opis                             |
+| --------------- | ---------- | -------------------------------- |
+| id              | String @id | Unikalny identyfikator           |
+| clientId        | String     | ID klienta (indeks)              |
+| name            | String     | Imię i nazwisko                  |
+| phone           | String?    | Telefon                          |
+| email           | String?    | Email                            |
+| position        | String?    | Stanowisko (@default(""))        |
+| isPrimary       | Int        | Główny kontakt 0/1 (@default(0)) |
+| createdByUserId | String?    | Kto dodał                        |
+| createdAt       | String?    | Data utworzenia                  |
+| updatedAt       | String?    | Data aktualizacji                |
+
+Indeks: `idx_client_contacts_client` na `clientId`. Migracja `20261009000001_client_contacts`.
+
 #### `offers_rel` — Oferty (rury)
 
-| Kolumna       | Typ        | Opis                                            |
-| ------------- | ---------- | ----------------------------------------------- |
-| id            | String @id | Unikalny identyfikator                          |
-| userId        | String?    | ID użytkownika (właściciel)                     |
-| clientId      | String?    | ID klienta                                      |
-| state         | String?    | Status oferty (np. `draft`, `sent`, `accepted`) |
-| createdAt     | String?    | Data utworzenia                                 |
-| updatedAt     | String?    | Data aktualizacji                               |
-| transportCost | Float?     | Koszt transportu                                |
-| offer_number  | String?    | Numer oferty                                    |
-| data          | String?    | JSON z danymi oferty                            |
-| history       | String?    | JSON z historią zmian (@default("[]"))          |
-| clientName    | String?    | Nazwa klienta (denormalizacja)                  |
-| investName    | String?    | Nazwa inwestycji (denormalizacja)               |
-| clientNip     | String?    | NIP klienta                                     |
-| clientNumber  | String?    | Numer klienta (@default(""))                    |
-| version       | Int        | Licznik optimistic lockingu (@default(1), 409)  |
+| Kolumna            | Typ        | Opis                                              |
+| ------------------ | ---------- | ------------------------------------------------- |
+| id                 | String @id | Unikalny identyfikator                            |
+| userId             | String?    | ID użytkownika (właściciel)                       |
+| clientId           | String?    | ID klienta                                        |
+| state              | String?    | Status oferty (np. `draft`, `sent`, `accepted`)   |
+| createdAt          | String?    | Data utworzenia                                   |
+| updatedAt          | String?    | Data aktualizacji                                 |
+| transportCost      | Float?     | Koszt transportu                                  |
+| offer_number       | String?    | Numer oferty                                      |
+| data               | String?    | JSON z danymi oferty                              |
+| history            | String?    | JSON z historią zmian (@default("[]"))            |
+| clientName         | String?    | Nazwa klienta (denormalizacja)                    |
+| investName         | String?    | Nazwa inwestycji (denormalizacja)                 |
+| clientNip          | String?    | NIP klienta                                       |
+| clientNumber       | String?    | Numer klienta (@default(""))                      |
+| version            | Int        | Licznik optimistic lockingu (@default(1), 409)    |
+| pricelistVersionId | String?    | Wersja cennika użyta w ofercie (null = legacy v1) |
 
 Relacja: `items offer_items_rel[]` (back-relacja, `onDelete: Restrict`).
 
-Indeksy: `idx_offers_user`, `idx_offers_created`, `idx_offers_updated`, `idx_offers_state`, `idx_offers_number`, `idx_offers_clientname`, `idx_offers_investname`, `idx_offers_user_created_id`, `idx_offers_user_updated_id`.
+Indeksy: `idx_offers_user`, `idx_offers_created`, `idx_offers_updated`, `idx_offers_state`, `idx_offers_clientname`, `idx_offers_investname`, `idx_offers_user_created_id`, `idx_offers_user_updated_id`, `idx_offers_pricelistversion`. Unikalny: `uq_offers_number` na `offer_number` (nie zwykły indeks).
 
 #### `offers_studnie_rel` — Oferty (studnie)
 
-| Kolumna       | Typ        | Opis                                           |
-| ------------- | ---------- | ---------------------------------------------- |
-| id            | String @id | Unikalny identyfikator                         |
-| userId        | String?    | ID użytkownika                                 |
-| clientId      | String?    | ID klienta                                     |
-| state         | String?    | Status                                         |
-| createdAt     | String?    | Data utworzenia                                |
-| updatedAt     | String?    | Data aktualizacji                              |
-| transportCost | Float?     | Koszt transportu                               |
-| offer_number  | String?    | Numer oferty                                   |
-| data          | String?    | JSON z danymi oferty                           |
-| history       | String?    | Historia zmian (@default("[]"))                |
-| clientName    | String?    | Nazwa klienta (denormalizacja)                 |
-| investName    | String?    | Nazwa inwestycji (denormalizacja)              |
-| clientNip     | String?    | NIP klienta                                    |
-| clientNumber  | String?    | Numer klienta (@default(""))                   |
-| wellCount     | Int?       | Licznik studni (@default(0))                   |
-| totalPrice    | Float?     | Cena całkowita (@default(0))                   |
-| version       | Int        | Licznik optimistic lockingu (@default(1), 409) |
+| Kolumna            | Typ        | Opis                                           |
+| ------------------ | ---------- | ---------------------------------------------- |
+| id                 | String @id | Unikalny identyfikator                         |
+| userId             | String?    | ID użytkownika                                 |
+| clientId           | String?    | ID klienta                                     |
+| state              | String?    | Status                                         |
+| createdAt          | String?    | Data utworzenia                                |
+| updatedAt          | String?    | Data aktualizacji                              |
+| transportCost      | Float?     | Koszt transportu                               |
+| offer_number       | String?    | Numer oferty                                   |
+| data               | String?    | JSON z danymi oferty                           |
+| history            | String?    | Historia zmian (@default("[]"))                |
+| clientName         | String?    | Nazwa klienta (denormalizacja)                 |
+| investName         | String?    | Nazwa inwestycji (denormalizacja)              |
+| clientNip          | String?    | NIP klienta                                    |
+| clientNumber       | String?    | Numer klienta (@default(""))                   |
+| wellCount          | Int?       | Licznik studni (@default(0))                   |
+| totalPrice         | Float?     | Cena całkowita (@default(0))                   |
+| version            | Int        | Licznik optimistic lockingu (@default(1), 409) |
+| pricelistVersionId | String?    | Wersja cennika (null = legacy v1)              |
 
-Indeksy: `idx_offersstud_user/created/updated/state/number/clientname/investname/wellcount/totalprice/user_created_id/user_updated_id`.
+Indeksy: `idx_offersstud_user/created/updated/state/clientname/investname/wellcount/totalprice/user_created_id/user_updated_id/pricelistversion`. Unikalny: `uq_offersstud_number` na `offer_number`.
 
 #### `offer_items_rel` — Pozycje oferty (rury)
 
@@ -158,31 +181,33 @@ Indeks: `idx_offstitems_offer` na `offerId`.
 
 #### `orders_rury_rel` — Zamówienia (rury)
 
-| Kolumna   | Typ        | Opis                                      |
-| --------- | ---------- | ----------------------------------------- |
-| id        | String @id | Unikalny identyfikator                    |
-| userId    | String?    | ID użytkownika                            |
-| offerId   | String?    | ID powiązanej oferty                      |
-| createdAt | String?    | Data utworzenia                           |
-| status    | String?    | Status zamówienia                         |
-| data      | String?    | JSON z danymi zamówienia                  |
-| version   | Int        | Licznik optimistic lockingu (@default(1)) |
+| Kolumna            | Typ        | Opis                                      |
+| ------------------ | ---------- | ----------------------------------------- |
+| id                 | String @id | Unikalny identyfikator                    |
+| userId             | String?    | ID użytkownika                            |
+| offerId            | String?    | ID powiązanej oferty                      |
+| createdAt          | String?    | Data utworzenia                           |
+| status             | String?    | Status zamówienia                         |
+| data               | String?    | JSON z danymi zamówienia                  |
+| version            | Int        | Licznik optimistic lockingu (@default(1)) |
+| pricelistVersionId | String?    | Wersja cennika (null = legacy v1)         |
 
-Indeksy: `idx_ordrury_user` na `userId`, `idx_ordrury_offer` na `offerId`.
+Indeksy: `idx_ordrury_user` na `userId`, `idx_ordrury_offer` na `offerId`, `idx_ordrury_pricelistversion` na `pricelistVersionId`.
 
 #### `orders_studnie_rel` — Zamówienia (studnie)
 
-| Kolumna        | Typ        | Opis                                      |
-| -------------- | ---------- | ----------------------------------------- |
-| id             | String @id | Unikalny identyfikator                    |
-| userId         | String?    | ID użytkownika                            |
-| offerStudnieId | String?    | ID powiązanej oferty studni               |
-| createdAt      | String?    | Data utworzenia                           |
-| status         | String?    | Status                                    |
-| data           | String?    | JSON z danymi                             |
-| version        | Int        | Licznik optimistic lockingu (@default(1)) |
+| Kolumna            | Typ        | Opis                                      |
+| ------------------ | ---------- | ----------------------------------------- |
+| id                 | String @id | Unikalny identyfikator                    |
+| userId             | String?    | ID użytkownika                            |
+| offerStudnieId     | String?    | ID powiązanej oferty studni               |
+| createdAt          | String?    | Data utworzenia                           |
+| status             | String?    | Status                                    |
+| data               | String?    | JSON z danymi                             |
+| version            | Int        | Licznik optimistic lockingu (@default(1)) |
+| pricelistVersionId | String?    | Wersja cennika (null = legacy v1)         |
 
-Indeksy: `idx_ordstud_user` na `userId`, `idx_ordstud_offer` na `offerStudnieId`.
+Indeksy: `idx_ordstud_user` na `userId`, `idx_ordstud_offer` na `offerStudnieId`, `idx_ordstud_pricelistversion` na `pricelistVersionId`.
 
 ---
 
@@ -356,9 +381,9 @@ Wzorzec domyślny w `PrecoKonfigDefault`.
 | ------- | ---------- | ------------------ |
 | id      | String @id | Identyfikator      |
 | order   | Int        | Kolejność          |
-| dn      | String?    | Średnica nominalna |
-| wellDn  | String?    | DN studni          |
-| height  | Int?       | Wysokość           |
+| dn      | Int        | Średnica nominalna |
+| wellDn  | Int        | DN studni          |
+| height  | Int        | Wysokość           |
 | cena    | Float      | Cena               |
 
 Wzorzec domyślny w `PrecoKinetyDefault`.
@@ -369,13 +394,37 @@ Wzorzec domyślny w `PrecoKinetyDefault`.
 | ------- | ---------- | ---------------- |
 | id      | String @id | Identyfikator    |
 | order   | Int        | Kolejność        |
-| label   | String?    | Etykieta zakresu |
-| min     | Float?     | Dolna granica    |
-| max     | Float?     | Górna granica    |
-| grupy   | String?    | Grupy (JSON)     |
-| wellDn  | String?    | DN studni        |
+| label   | String     | Etykieta zakresu |
+| min     | Int        | Dolna granica    |
+| max     | Int        | Górna granica    |
+| grupy   | String     | Grupy (JSON)     |
+| wellDn  | Int        | DN studni        |
 
-Wzorzec domyślny w `PrecoZakresyDefault`.
+Wzorzec domyślny w `PrecoZakresyDefault` (te same wymagane typy).
+
+#### Rodzina `PricelistVersion` + `PricelistItem*` — wersjonowanie cenników (F1)
+
+Snapshot cennika publikowany jako niezmienna wersja. Tabele wprowadzone migracją
+`20260926000000_pricelist_versioning` (FK siatki: `20260929000000_fk_pricelist_version`).
+
+| Model                       | Zawartość                                                                                                                         |
+| --------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `PricelistVersion`          | Nagłówek wersji: `type`, `seq`, `version`, `status`, `effectiveFrom`, `sha256`, `createdBy`, `approvedBy/approvedAt`, `updatedAt` |
+| `PricelistItemRury`         | Pozycje cennika rur (`name`, `category`, `price`, `transport`, `weight`, `area`)                                                  |
+| `PricelistItemStudnie`      | Pozycje cennika studni (pełny zestaw pól produktu, w tym dopłaty i przejścia)                                                     |
+| `PricelistItemPrecoKonfig`  | Pary `key`/`value` konfiguracji PRECO                                                                                             |
+| `PricelistItemPrecoKinety`  | Kinety PRECO (`dn`, `wellDn`, `height`, `cena`)                                                                                   |
+| `PricelistItemPrecoZakresy` | Zakresy PRECO (`label`, `min`, `max`, `grupy`, `wellDn`)                                                                          |
+
+`PricelistVersion` ma unikalne `(type, seq)` i `(type, version)` oraz indeks
+`(type, status, effectiveFrom)`. Pozycje wskazują wersję przez `versionId`
+(`onDelete: Restrict` — kod kasuje pozycje w transakcji przed wersją).
+`PricelistVersion.approvalStatus` jest oznaczone `@deprecated` (pole zostaje tylko
+do rebuild tabeli) — stan publikacji trzyma `status` + `approvedBy/approvedAt`.
+
+Oferty i zamówienia wskazują użyty snapshot przez `pricelistVersionId`
+(`offers_rel`, `offers_studnie_rel`, `orders_rury_rel`, `orders_studnie_rel`;
+`null` = rekord legacy sprzed wersjonowania).
 
 ---
 
@@ -456,6 +505,17 @@ Indeksy: `idx_audit_entity` na `(entityType, entityId)` oraz `idx_audit_created_
 | key     | String @id | Klucz ustawienia |
 | value   | String?    | Wartość          |
 
+#### `user_preferences` — Preferencje użytkownika (klucz/wartość)
+
+| Kolumna | Typ     | Opis                         |
+| ------- | ------- | ---------------------------- |
+| userId  | String  | ID użytkownika (część PK)    |
+| key     | String  | Klucz preferencji (część PK) |
+| value   | String? | Wartość (JSON lub string)    |
+
+Klucz główny: `(userId, key)`. Indeks `idx_userprefs_user`. Migracja
+`20260921000000_user_preferences`.
+
 ---
 
 ### 6. Modele danych — AI/ML i telemetria
@@ -502,19 +562,32 @@ Indeksy: `idx_audit_entity` na `(entityType, entityId)` oraz `idx_audit_created_
 | checkedVariants      | Int?       | Liczba sprawdzonych wariantów                         |
 | rankingScore         | Float?     | Wynik rankingu                                        |
 | selectionReason      | String?    | Powód wyboru                                          |
-| wasAutoGenerated     | Boolean?   | Czy wygenerowano automatycznie                        |
-| wasAccepted          | Boolean?   | Czy zaakceptowano                                     |
-| wasRejected          | Boolean?   | Czy odrzucono                                         |
-| wasModified          | Boolean?   | Czy zmodyfikowano                                     |
-| modificationCount    | Int?       | Liczba modyfikacji                                    |
+| wasAutoGenerated     | Boolean    | Czy wygenerowano automatycznie (@default(false))      |
+| wasAccepted          | Boolean    | Czy zaakceptowano (@default(false))                   |
+| wasRejected          | Boolean    | Czy odrzucono (@default(false))                       |
+| wasModified          | Boolean    | Czy zmodyfikowano (@default(false))                   |
+| modificationCount    | Int?       | Liczba modyfikacji (@default(0))                      |
 | confidenceScore      | Float?     | Poziom ufności AI (0-1)                               |
 | learningWeight       | Float?     | Waga learningowa                                      |
-| trainingEligible     | Boolean?   | Czy kwalifikuje się do treningu                       |
-| feedbackProcessed    | Boolean?   | Czy feedback przetworzony                             |
-| configVersion        | Int?       | Wersja konfiguracji                                   |
+| trainingEligible     | Boolean    | Czy kwalifikuje się do treningu (@default(true))      |
+| feedbackProcessed    | Boolean    | Czy feedback przetworzony (@default(false))           |
+| configVersion        | Int?       | Wersja konfiguracji (@default(1))                     |
 | parentConfigId       | String?    | ID konfiguracji rodzica                               |
-| reviewStatus         | String?    | `active`/`archived`/`shadowed`                        |
+| reviewStatus         | String?    | `active`/`archived`/`shadowed` (@default("active"))   |
 | featureSnapshot      | String?    | Kanoniczny snapshot cech (klucz dedup)                |
+| labelSnapshot        | String?    | JSON: wynik / decyzja (labels)                        |
+| predictionSnapshot   | String?    | JSON: przewidywania AI (puste gdy brak AI)            |
+| rewardValue          | Float?     | Wartość nagrody                                       |
+| successRate          | Float?     | Skuteczność                                           |
+| usageCount           | Int?       | Liczba użyć (@default(1))                             |
+| lastUsedAt           | String?    | Ostatnie użycie                                       |
+| lastAcceptedAt       | String?    | Ostatnia akceptacja                                   |
+| lastRejectedAt       | String?    | Ostatnie odrzucenie                                   |
+| manualOverrideFlag   | Boolean    | Ręczne nadpisanie (@default(false))                   |
+| extraMeta            | String?    | JSON: dodatkowe pola                                  |
+
+Indeksy: `idx_logs_wasmodified`, `idx_logs_createdat`, `idx_logs_dn`, `idx_logs_well`,
+`idx_logs_source_well`, `idx_logs_modified_created`.
 
 Dedyplikacja: rekordy `AUTO_JS` z identycznym kanonicznym `featureSnapshot` + `allComponentIds` dla tej samej studni aktualizują istniejący rekord (indeksy `idx_logs_well`, `idx_logs_source_well`).
 
@@ -642,19 +715,19 @@ Wydzielone od zwykłych komponentów ze względu na specyfikę danych.
 | heightMm                | Int        | Wysokość studni (mm)                          |
 | warehouse               | String     | KLB / WL                                      |
 | wellType                | String     | standard / psia_buda / styczna / styczna_1200 |
-| hasReduction            | Boolean?   | Czy redukcja                                  |
-| hasPsiaBuda             | Boolean?   | Czy psia buda                                 |
-| hasStyczna              | Boolean?   | Czy styczna                                   |
-| ringCount               | Int?       | Liczba kręgów                                 |
+| hasReduction            | Boolean    | Czy redukcja (@default(false))                |
+| hasPsiaBuda             | Boolean    | Czy psia buda (@default(false))               |
+| hasStyczna              | Boolean    | Czy styczna (@default(false))                 |
+| ringCount               | Int        | Liczba kręgów (@default(0))                   |
 | bottomType              | String     | Typ dennicy                                   |
 | topType                 | String     | Typ zakończenia                               |
 | kinetaType              | String?    | `preco`/`unolith`/`standard`/`brak` (v6)      |
 | dennicaHeight           | Float?     | Wysokość dennicy (mm) (v6)                    |
-| connectionCount         | Int?       | Liczba połączeń                               |
-| transitionsAboveDennica | Int?       | Przejścia powyżej dennicy                     |
-| totalPrice              | Float?     | Cena całkowita                                |
-| totalWeight             | Float?     | Waga całkowita                                |
-| ringVariety             | Float?     | Entropia Shannona kręgów [0-1]                |
+| connectionCount         | Int        | Liczba połączeń (@default(0))                 |
+| transitionsAboveDennica | Int        | Przejścia powyżej dennicy (@default(0))       |
+| totalPrice              | Float      | Cena całkowita (@default(0))                  |
+| totalWeight             | Float      | Waga całkowita (@default(0))                  |
+| ringVariety             | Float      | Entropia Shannona kręgów [0-1] (@default(0))  |
 | season                  | String     | winter / spring / summer / autumn             |
 | label                   | String     | ACCEPTED / REJECTED / MODIFIED / NO_FEEDBACK  |
 | reward                  | Float      | Nagroda -1.0..+1.0 (@default(0))              |
@@ -680,7 +753,7 @@ Indeksy: `idx_aifeatures_key/label/created`.
 | state                | String?        | Cykl życia: CANDIDATE/APPROVED/PRODUCTION/REJECTED/ROLLED_BACK              |
 | seed                 | Int?           | Seed treningu (metadata/audyt)                                              |
 | featureDistributions | String?        | JSON baseline driftu z TRAIN                                                |
-| active               | Boolean?       | Czy model aktywny                                                           |
+| active               | Boolean        | Czy model aktywny (@default(false))                                         |
 | notes                | String?        | Notatki                                                                     |
 | createdAt            | String         | Data utworzenia                                                             |
 
@@ -743,9 +816,8 @@ Indeksy: `idx_reward_user/action/created`. Unique index `@@unique([wellId, actio
 | deployed               | Boolean    | Czy wdrożono                                                                           |
 | deploymentReason       | String?    | Powód wdrożenia                                                                        |
 | error                  | String?    | Komunikat błędu (gdy FAILED_*)                                                         |
-| createdAt              | String     | Data uruchomienia                                                                      |
 
-Indeksy: `idx_aitrainingrun_started/status`. Tabela wprowadzona w migracji `20260816000000_ai_training_run` — kręgosłup audytu pipeline ML.
+Indeksy: `idx_aitrainingrun_started/status`. Tabela wprowadzona w migracji `20260816000000_ai_training_run` — kręgosłup audytu pipeline ML. Model nie ma kolumny `createdAt` — czas startu to `startedAt`.
 
 #### `document_shares` — Udostępnianie dokumentów
 
@@ -797,29 +869,51 @@ Klucz główny: `(docType, docId)`. Indeksy: `idx_doclocks_user`, `idx_doclocks_
 
 Migracje Prisma znajdują się w katalogu `prisma/migrations/`.
 
-### Lista migracji (14)
+### Lista migracji (36)
 
 Projekt przeszedł z `prisma db push` na pełne migracje — cała historia schematu została
 skonsolidowana w migracji baseline `20260815000000_baseline` (pełny schemat: oferty,
 zamówienia, produkty, cenniki, telemetria AI/ML). Migracja baseline zawiera także indeksy
 na `ai_telemetry_logs` (`idx_logs_well`, `idx_logs_source_well`) pod deduplikację telemetrii.
 
-| Migracja                                 | Opis                                                                                     |
-| ---------------------------------------- | ---------------------------------------------------------------------------------------- |
-| `20260815000000_baseline`                | Baseline pełnego schematu (konwersja z `db push` na migracje) + indeksy dedup telemetrii |
-| `20260815000001_uq_reward_well_action`   | Dedup rewardów przed unique index `(wellId, action)` na `aiRewardLog`                    |
-| `20260816000000_ai_training_run`         | Tabela `AiTrainingRun` (kręgosłup audytu treningów ML)                                   |
-| `20260828000000_add_document_shares`     | Tabela `document_shares` (udostępnianie dokumentów między użytkownikami)                 |
-| `20260831000000_add_wellcount`           | Licznik studni (`wellCount`)                                                             |
-| `20260902000000_add_totalprice`          | Cena całkowita (`totalPrice`)                                                            |
-| `20260902000001_add_performance_indexes` | Indeksy wydajnościowe                                                                    |
-| `20260905000000_add_prod_well_index`     | Indeks `(wellId, elementIndex)` zamówień produkcyjnych                                   |
-| `20260907000000_prod_number_unique`      | Unique `(userId, productionNumber)` zamówień produkcyjnych                               |
-| `20260907000001_prod_version`            | Kolumna `version` (optimistic locking)                                                   |
-| `20260907000002_doc_versions`            | Kolumny `version` ofert i zamówień                                                       |
-| `20260907000003_idempotency_keys`        | Tabela `idempotency_keys`                                                                |
-| `20260907000004_fk_items_offer`          | FK `offer_items_rel.offerId` -> `offers_rel` (Restrict)                                  |
-| `20260908000000_doc_locks`               | Tabela `doc_locks` (twarda blokada edycji 1 dokument = 1 użytkownik)                     |
+| Migracja                                     | Opis                                                                                     |
+| -------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `20260815000000_baseline`                    | Baseline pełnego schematu (konwersja z `db push` na migracje) + indeksy dedup telemetrii |
+| `20260815000001_uq_reward_well_action`       | Dedup rewardów przed unique index `(wellId, action)` na `aiRewardLog`                    |
+| `20260816000000_ai_training_run`             | Tabela `AiTrainingRun` (kręgosłup audytu treningów ML)                                   |
+| `20260828000000_add_document_shares`         | Tabela `document_shares` (udostępnianie dokumentów między użytkownikami)                 |
+| `20260831000000_add_wellcount`               | Licznik studni (`wellCount`)                                                             |
+| `20260902000000_add_totalprice`              | Cena całkowita (`totalPrice`)                                                            |
+| `20260902000001_add_performance_indexes`     | Indeksy wydajnościowe                                                                    |
+| `20260905000000_add_prod_well_index`         | Indeks `(wellId, elementIndex)` zamówień produkcyjnych                                   |
+| `20260907000000_prod_number_unique`          | Unique `(userId, productionNumber)` zamówień produkcyjnych                               |
+| `20260907000001_prod_version`                | Kolumna `version` (optimistic locking)                                                   |
+| `20260907000002_doc_versions`                | Kolumny `version` ofert i zamówień                                                       |
+| `20260907000003_idempotency_keys`            | Tabela `idempotency_keys`                                                                |
+| `20260907000004_fk_items_offer`              | FK `offer_items_rel.offerId` -> `offers_rel` (Restrict)                                  |
+| `20260908000000_doc_locks`                   | Tabela `doc_locks` (twarda blokada edycji 1 dokument = 1 użytkownik)                     |
+| `20260921000000_user_preferences`            | Tabela `user_preferences` (preferencje per user, klucz/wartość)                          |
+| `20260926000000_pricelist_versioning`        | Wersjonowanie cenników: `PricelistVersion` + tabele pozycji                              |
+| `20260929000000_fk_pricelist_version`        | FK pozycji cennika -> wersja (`onDelete: Restrict`)                                      |
+| `20260930000000_p7_ai_transfer`              | Tabela `AiTransfer` (eksport/import pakietów modeli)                                     |
+| `20261007000000_session_idle`                | `sessions.lastActivity` + backfill (idle timeout 1 h)                                    |
+| `20261008000000_offer_follow_ups`            | Tabela `offer_follow_ups` (historia kontaktów, append-only)                              |
+| `20261008000001_fu_terminal_uq`              | Partial unique: max 1 wynik terminalny na `(offerKind, offerId, cycle)`                  |
+| `20261009000000_fu_cycles`                   | Kolumna `cycle` + reguła reopen po wyniku terminalnym                                    |
+| `20261009000001_client_contacts`             | Tabela `client_contacts_rel` (osoby kontaktowe klienta)                                  |
+| `20261010000000_care_p1_states_sla`          | Tabele `care_states` + `care_sla_config`                                                 |
+| `20261010000001_care_p2_notifications`       | Tabela `care_notifications`                                                              |
+| `20261010000002_care_ddl_canonical`          | Kanoniczne DDL tabel care (defaulty global SLA)                                          |
+| `20261010000003_care_notif_uq`               | Partial unique: max 1 nieprzeczytane powiadomienie na klucz                              |
+| `20261010000004_care_sla_scopes`             | Tabela `care_sla_scopes` (nadpisania SLA per zespół/user)                                |
+| `20261011000000_care_studnie_price_backfill` | Backfill `totalPrice` ofert studni z `data.totalBrutto`                                  |
+| `20261012000000_care_followups_updatedAt`    | `offer_follow_ups.updatedAt` + backfill (ETag panelu)                                    |
+| `20261014000000_care_latest_followup`        | Tabela `latest_followup` + triggery INSERT/UPDATE/DELETE                                 |
+| `20261019000000_offer_number_unique`         | `uq_offers_number` / `uq_offersstud_number` (I-004), `''` -> NULL                        |
+| `20261021000000_pricelist_approved`          | `approvedBy` / `approvedAt` wersji cennika                                               |
+| `20261021130000_pricelist_version_idx`       | Indeksy `*_pricelistversion` w 4 tabelach ofert/zamówień                                 |
+| `20261022000000_pricelist_updated_at`        | `PricelistVersion.updatedAt` + backfill                                                  |
+| `20261023000000_pricelist_one_draft`         | Partial unique: max 1 `DRAFT` na typ cennika                                             |
 
 ### Komendy
 
@@ -879,7 +973,8 @@ Backup bazy SQLite realizowany jest przez skrypt `scripts/backup.ts`.
 1. Skrypt używa komendy SQL `VACUUM INTO` do utworzenia spójnego snapshotu bazy
 2. **WAL-safe** — działa bezpiecznie nawet podczas zapisu do bazy przez aplikację
 3. Plik backupu zapisywany do `data/backups/backup_YYYY-MM-DD_TIMESTAMP.sqlite`
-4. Automatyczne usuwanie starych kopii — zachowywane jest max **30** najnowszych backupów
+4. Automatyczne usuwanie starych kopii — zachowywana jest max **1** najnowsza kopia
+   (`MAX_BACKUPS` w `scripts/backup.ts`; zmiana retencji = świadoma decyzja operacyjna)
 
 ### Uruchomienie
 
@@ -934,7 +1029,7 @@ i tak są uzupełniane automatycznie przez auto-heal w `src/app.ts`).
 ### Drill E2E (P1.3, 2026-09-30)
 
 Backup 1,36 GB + SHA-256 + integrity OK; restore na czysty cel +
-`migrate deploy` (17 migracji, none pending); 14/14 tabel identyczne;
+`migrate deploy` (36 migracji, none pending); 14/14 tabel identyczne;
 smoke aplikacji OK. RPO = interwał crona hosta; RTO = ręczny restore (minuty).
 
 Stan bazy (backup, wersja, rozmiar) można sprawdzić przez `GET /health`.

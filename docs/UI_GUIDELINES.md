@@ -18,12 +18,13 @@ Kolejność ładowania w każdej wejściówce (index, app, rury, studnie, kartot
 | `css/style.cards.css`      | Karty ofert, status-badge, komponenty wariantowe                                                                                                                             |
 | `css/style.responsive.css` | Breakpointy, modale (`.modal-overlay`/`.modal`), toasty, wizard                                                                                                              |
 | `css/style.utilities.css`  | Utility classes (zastępują inline style)                                                                                                                                     |
+| `css/printModal.css`       | Podgląd wydruku (UPM) — ukrycie nagłówka/sidebarów, szerokości                                                                                                               |
 | `css/<moduł>.css`          | Style modułowe: `rury.css`, `studnie.css` (+ `studnie/offer.css`, `studnie/modal.css`), `zlecenia.css`, `index.css`, `spa.css`. Kartoteka używa wyłącznie arkuszy wspólnych. |
 
 > **Zasada:** wspólne klasy NIE mogą być nadpisywane per moduł. Warianty modułowe
 > tworzymy przez klasy modyfikatorów (np. `.nav-tile--studnie`), nie przez nadpisania bazowych.
 
-## 2. Design Tokens (SSoT: `public/css/style.base.css:3-300`)
+## 2. Design Tokens (SSoT: `public/css/style.base.css:3-316`)
 
 Wszystkie wartości (kolory, fonty, rozmiary, radius, shadow, z-index) wyłącznie przez
 zmienne `var(--...)`. **Zakaz gołych hexów/kolorów poza `:root`** (wyjątek: pliki vendor).
@@ -74,7 +75,7 @@ zmienne `var(--...)`. **Zakaz gołych hexów/kolorów poza `:root`** (wyjątek: 
 
 **Kanonem warstw jest `LAYERS` / `LAYERS_EXCEL` w `public/js/studnie/layers.js`.**
 Popupy, modale i nakładki tworzone w JS MUSZĄ używać stałych `LAYERS.*` — zakaz twardych
-liczb. Klasy CSS używają zmiennych `--z-*` z `style.base.css:248-253` (`--z-header: 100`, `--z-sticky-th: 5`, `--z-sticky-dropdown: 50`, `--z-overlay: 2000`, `--z-toast: 5000`).
+liczb. Klasy CSS używają zmiennych `--z-*` z `style.base.css:251-256` (`--z-header: 100`, `--z-sticky-th: 5`, `--z-sticky-dropdown: 50`, `--z-dropdown: 1000`, `--z-overlay: 2000`, `--z-toast: 5000`).
 
 | Warstwa                                     | Źródło (JS)                          | CSS var                                          |
 | ------------------------------------------- | ------------------------------------ | ------------------------------------------------ |
@@ -92,8 +93,8 @@ liczb. Klasy CSS używają zmiennych `--z-*` z `style.base.css:248-253` (`--z-he
 
 ## 4. Layout i breakpointy
 
-- Trójkolumnowy grid studni: `.well-app-layout` (`350px 1fr 350px`).
-- Breakpointy (kanon): **1400px** (sidebar 350→300), **1200px** (ukryj diagram),
+- Trójkolumnowy grid studni: `.well-app-layout` (`clamp(260px, 18vw, 420px) minmax(0, 1fr) clamp(280px, 20vw, 460px)`).
+- Breakpointy (kanon): **1400px** (sidebar `clamp(240px,16vw,350px)`), **1200px** (ukryj diagram),
   **1100px**, **900px** (1 kolumna), **768px** (form-row), **600px**, **700px** (header wrap, ukryj teksty kafelków),
   **480px** (centrowanie, ukryj logo text). Lokalne odchylenia modułowe: 860 / 720 / 700 / 640 —
   nie ujednolicaj bez porównania screenshotów przed/po (regresja UI 1.18.0).
@@ -122,7 +123,7 @@ liczb. Klasy CSS używają zmiennych `--z-*` z `style.base.css:248-253` (`--z-he
 ## 6. Modale — jeden wzorzec (`modalCore.js`)
 
 - Modal tworzymy **wyłącznie** przez `public/js/shared/modalCore.js` (klasa
-  `.modal-overlay.js-modal-overlay` + `.modal` zdefiniowane w `style.responsive.css:559+`, `showModal` w `modalCore.js:106`).
+  `.modal-overlay.js-modal-overlay` + `.modal` zdefiniowane w `style.responsive.css:576+`, `showModal` w `modalCore.js:106`).
 - **Zakaz** budowania modalów inline-styled w JS (stary wzorzec z `ui.js`/`clientManager.js`).
 - Zamknięcie Esc/overlay; focus wewnątrz modala; `aria-label` na overlayu i przyciskach.
 - Warstwy przez `LAYERS.*`, szerokości przez `.modal` (max 550px) / warianty szerokie.
