@@ -163,9 +163,9 @@ body.rury-page > .main:has(#section-builder.active) {
         sans-serif;
     cursor: pointer;
     transition:
-        background-color 0.15s ease-in-out,
-        border-color 0.15s ease-in-out,
-        color 0.15s ease-in-out;
+        background-color 0.15s ease,
+        border-color 0.15s ease,
+        color 0.15s ease;
     display: flex;
     align-items: center;
     gap: 0.4rem;
@@ -471,9 +471,9 @@ html[data-theme='light'] .rury-table tbody td input[disabled] {
     border-radius: var(--radius-2xs);
     font-weight: var(--fw-semibold);
     transition:
-        background-color 0.15s ease-in-out,
-        color 0.15s ease-in-out,
-        border-color 0.15s ease-in-out;
+        background-color 0.15s ease,
+        color 0.15s ease,
+        border-color 0.15s ease;
     cursor: pointer;
     user-select: none;
 }
@@ -1250,9 +1250,9 @@ html[data-theme='light'] .pehd-badge {
     color: var(--danger-hover);
     cursor: pointer;
     transition:
-        background-color 0.15s ease-in-out,
-        color 0.15s ease-in-out,
-        border-color 0.15s ease-in-out;
+        background-color 0.15s ease,
+        color 0.15s ease,
+        border-color 0.15s ease;
     line-height: 1.4;
     user-select: none;
 }

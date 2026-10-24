@@ -185,6 +185,40 @@ Zamiast inline style używaj istniejących utility. Najczęściej używane:
 - Jeden `h1` na widok; sekwencyjna hierarchia nagłówków.
 - Toast: auto-dismiss 3–5s (`showToast`).
 
+## 9a. Motion (animacje i przejścia)
+
+S.O.K. to aplikacja robocza, nie landing page: mniej ruchu, szybciej, przewidywalnie.
+Zero nowych zależności animacyjnych (brak Framer Motion/GSAP — ADR-002, vanilla JS).
+Stan wyjściowy: 61 przejść `ease-in-out`/`ease-in` w `public/css` migrujemy **przy
+okazji dotykania modułu**, nie hurtem (zmiana globalna = regresja bez zysku).
+
+- **Czy w ogóle animować?** Akcja powtarzana dziesiątki razy dziennie (klawiatura,
+  nawigacja po wierszach Excela, togglery) — bez animacji. Modale, toasty, dropdowny,
+  stan przycisku — tak. Animacja bez odpowiedzi „po co?" nie wchodzi.
+- **Easing:** wejście/pojawienie się → `ease-out`; ruch na ekranie (modal, drawer) →
+  `ease-in-out`; zmiana koloru/tła/cienia (hover, focus, active) → `ease`;
+  ruch ciągły (pasek postępu, spinner) → `linear`. **Nigdy `ease-in`** na wejściu —
+  opóźnia pierwszą klatkę, w której użytkownik patrzy najbardziej.
+- **Czas:** feedback przycisku 100–160ms; tooltip/popover 125–200ms; dropdown 150–250ms;
+  modal/drawer 200–500ms. UI pod 300ms (checklist §12).
+- **Zmieniaj tylko `transform` i `opacity`** (`background-color`/`border-color`/`color`/
+  `box-shadow` dla stanów). Nigdy `width`/`height`/`padding`/`margin` w przejściu —
+  wymusza layout. `transition: all` zakazane (§11).
+- **Przejścia, nie `@keyframes`,** dla elementów wyzwalanych wielokrotnie (toast,
+  rozwinięcie) — przejście da się przerwać i celować ponownie, keyframe startuje od zera.
+- **Hover tylko pod `@media (hover: hover) and (pointer: fine)`** — na dotyku `:hover`
+  odpala się przy tapnięciu i zostaje „przyklejony".
+- **Feedback naciśnięcia:** `:active { transform: scale(0.97) }` na przyciskach
+  (zakaz dotyczy `hover { scale }`, nie `:active`). Wejście nigdy z `scale(0)` —
+  start od `scale(0.95)` + `opacity: 0`.
+- **`prefers-reduced-motion: reduce`** (już w 14 blokach CSS): wyłączaj ruch i pozycję,
+  zostaw przejścia koloru/opacity, które pomagają zrozumieć zmianę stanu. Nie zeruj
+  wszystkiego — „mniej", nie „nic".
+- **Stan końcowy musi być czytelny bez animacji:** jeśli treść istnieje tylko dzięki
+  przejściu (np. `opacity: 0` bez klasy odsłaniającej), to bug, nie animacja.
+- **Nie animuj `--zmiennych` na kontenerze z wieloma dziećmi** — przelicza style
+  wszystkich dzieci; ustawiaj `transform` na samym elemencie.
+
 ## 10. Konwencje HTML i nazewnictwo klas
 
 - Struktura strony: `<header class="header">` → `<main class="main">` → sekcje
@@ -227,6 +261,8 @@ modyfikator `--<moduł>`. Przy scoped wyrównuj jedynie wartości do tokenów
 | Duplikacja klasy między plikami CSS | jedna definicja w SSoT                     |
 | Nadpisanie klasy bazowej w module   | klasa modyfikatora `--<moduł>`             |
 | `hover { transform: scale }`        | przejście kolor/cien/translateY (-2px)     |
+| `transition: all`                   | konkretne właściwości (§9a)                |
+| `ease-in` na wejściu elementu       | `ease-out` (§9a)                           |
 
 ## 12. Pre-Delivery Checklist (każda zmiana UI)
 
@@ -236,7 +272,7 @@ modyfikator `--<moduł>`. Przy scoped wyrównuj jedynie wartości do tokenów
 - [ ] `lucide.createIcons` po dynamicznym HTML; brak emoji-ikon.
 - [ ] `aria-label` na przyciskach ikonowych; widoczne focus ringi.
 - [ ] Modale przez `modalCore.js` + `LAYERS.*`.
-- [ ] `prefers-reduced-motion` respektowane; transition 150–300ms.
+- [ ] `prefers-reduced-motion` respektowane; transition 150–300ms; easing wg §9a.
 - [ ] Brak poziomego scrolla w 375/768/1024/1440.
 - [ ] Toasty z auto-dismiss; empty states z komunikatem i akcją.
 - [ ] `npm run format` + `npm run lint:frontend` + `node -c <plik.js>`.

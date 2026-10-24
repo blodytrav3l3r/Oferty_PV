@@ -116,6 +116,7 @@ check_db_temp.js
 !.opencode/skills/prisma-patterns/
 !.opencode/skills/database-migrations/
 !.opencode/skills/search-first/
+!.opencode/skills/break-ui/
 # Plugin projektu (hook graphify) — przenośny setup, nie lokalny tooling.
 !.opencode/plugins/
 !.opencode/plugins/graphify.js
