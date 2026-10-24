@@ -8,21 +8,29 @@
 import { escapeHtml } from './escapeHtml.js';
 
 /**
- * Sprawdza, czy istnieje WIDOCZNY overlay modala.
+ * Zwraca widoczne overlaye modali w kolejności DOM (ostatni = wierzchni).
  * Ukryte (display:none) overlaye — np. statyczny transport-modal w DOM
  * albo modale schowane przez closeModal(id) — nie liczą się.
- * Bez tego body zostawało z overflow:hidden i pasek strony znikał.
  */
-export function hasVisibleModalOverlay() {
+export function getVisibleModalOverlays() {
     const overlays = document.querySelectorAll('.js-modal-overlay');
+    const visible = [];
     for (const el of overlays) {
         const display =
             typeof window !== 'undefined' && typeof window.getComputedStyle === 'function'
                 ? window.getComputedStyle(el).display
                 : el.style.display;
-        if (display !== 'none') return true;
+        if (display !== 'none') visible.push(el);
     }
-    return false;
+    return visible;
+}
+
+/**
+ * Sprawdza, czy istnieje WIDOCZNY overlay modala.
+ * Bez tego body zostawało z overflow:hidden i pasek strony znikał.
+ */
+export function hasVisibleModalOverlay() {
+    return getVisibleModalOverlays().length > 0;
 }
 
 export function restoreBodyScroll() {
@@ -32,7 +40,21 @@ export function restoreBodyScroll() {
 }
 
 /**
+ * Zamyka pojedynczy overlay: zwalnia trap fokusa, usuwa węzeł, przywraca scroll.
+ * @param {Element | null | undefined} el
+ */
+function closeOverlayElement(el) {
+    if (!el) return;
+    untrapFocus(el);
+    el.remove();
+    restoreBodyScroll();
+}
+
+/**
  * Zamyka modal (popup) po ID.
+ * Bez ID zamyka JEDEN wierzchni widoczny overlay (LIFO wg kolejności DOM —
+ * wszystkie overlaye są dopinane do body z tym samym z-indexem).
+ * Ukryte overlaye (display:none), np. statyczny transport-modal, zostają w DOM.
  * @param {string} [id] - ID elementu modala
  */
 export function closeModal(id) {
@@ -43,13 +65,12 @@ export function closeModal(id) {
             el.style.display = 'none';
             restoreBodyScroll();
         }
-    } else {
-        document.querySelectorAll('.js-modal-overlay').forEach((m) => {
-            untrapFocus(m);
-            m.remove();
-        });
-        restoreBodyScroll();
+        return;
     }
+    const visible = getVisibleModalOverlays();
+    closeOverlayElement(visible[visible.length - 1]);
+    // Brak widocznego overlaya → i tak odblokuj scroll (closeOverlayElement nic nie robi).
+    restoreBodyScroll();
 }
 
 /**
@@ -73,7 +94,13 @@ export function trapFocus(container) {
                 first.focus();
             }
         }
-        if (e.key === 'Escape') closeModal();
+        if (e.key === 'Escape') {
+            // Kontener z własnym handlerem Escape (showModal z onClose) decyduje sam.
+            if (/** @type {any} */ (container)._ownEscape) return;
+            // Inny handler mógł już usunąć kontener z DOM (np. legacy popup).
+            if (!container.isConnected) return;
+            closeOverlayElement(container);
+        }
     };
     container.addEventListener('keydown', handler);
     /** @type {any} */ (container)._trapFocusHandler = handler;
@@ -118,6 +145,8 @@ export function showModal(opts) {
     document.body.appendChild(overlay);
     document.body.style.overflow = 'hidden';
     /** @type {any} */ (overlay)._previousFocus = document.activeElement;
+    // showModal ma własny handler Escape (respektuje onClose) — trapFocus go nie dubluje.
+    /** @type {any} */ (overlay)._ownEscape = true;
 
     function onOverlayClick(e) {
         if (e.target === overlay) {

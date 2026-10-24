@@ -106,4 +106,90 @@ describe('frontend: restoreBodyScroll ignoruje ukryte overlaye', () => {
         expect(document.querySelector('.js-modal-overlay')).toBeNull();
         expect(document.body.style.overflow).toBe('');
     });
+
+    it('closeModal() bez id nie usuwa ukrytego statycznego overlaya (transport-modal)', () => {
+        const staticOverlay = addOverlay('rury-transport-modal', false);
+        ctx.window.showModal({
+            id: 'b-modal',
+            title: 'B',
+            titleId: 'b-title',
+            html: '<div class="modal"><button>OK</button></div>'
+        });
+        ctx.window.closeModal();
+        expect(document.getElementById('rury-transport-modal')).toBe(staticOverlay);
+        expect(document.getElementById('b-modal')).toBeNull();
+        expect(document.body.style.overflow).toBe('');
+    });
+
+    it('closeModal() bez id zamyka tylko wierzchni overlay (LIFO wg DOM)', () => {
+        addOverlay('lower-modal', true);
+        addOverlay('top-modal', true);
+        ctx.window.closeModal();
+        expect(document.getElementById('top-modal')).toBeNull();
+        expect(document.getElementById('lower-modal')).not.toBeNull();
+        // Nadal widoczny modal → scroll zostaje zablokowany.
+        expect(document.body.style.overflow).toBe('hidden');
+        ctx.window.closeModal();
+        expect(document.getElementById('lower-modal')).toBeNull();
+        expect(document.body.style.overflow).toBe('');
+    });
+
+    it('closeModal() bez id przy braku widocznych overlayów nic nie usuwa', () => {
+        const hidden = addOverlay('rury-transport-modal', false);
+        ctx.window.closeModal();
+        expect(document.getElementById('rury-transport-modal')).toBe(hidden);
+        expect(document.body.style.overflow).toBe('');
+        ctx.window.closeModal();
+        expect(document.getElementById('rury-transport-modal')).toBe(hidden);
+    });
+
+    function pressEscape(el: Element) {
+        el.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    }
+
+    it('Escape (trapFocus) zamyka dokładnie jeden modal — wierzchni', () => {
+        const lower = addOverlay('lower-modal', true);
+        const top = addOverlay('top-modal', true);
+        ctx.window.trapFocus(lower);
+        ctx.window.trapFocus(top);
+        pressEscape(top);
+        expect(document.getElementById('top-modal')).toBeNull();
+        expect(document.getElementById('lower-modal')).not.toBeNull();
+        expect(document.body.style.overflow).toBe('hidden');
+    });
+
+    it('Escape zamyka własny kontener, gdy dwa modale są widoczne', () => {
+        const lower = addOverlay('lower-modal', true);
+        addOverlay('top-modal', true);
+        ctx.window.trapFocus(lower);
+        pressEscape(lower);
+        expect(document.getElementById('lower-modal')).toBeNull();
+        expect(document.getElementById('top-modal')).not.toBeNull();
+        expect(document.body.style.overflow).toBe('hidden');
+    });
+
+    it('Escape w showModal respektuje onClose === false', () => {
+        const overlay = ctx.window.showModal({
+            id: 'guarded-modal',
+            title: 'Guarded',
+            titleId: 'guarded-title',
+            html: '<div class="modal"><button>OK</button></div>',
+            onClose: () => false
+        });
+        pressEscape(overlay);
+        expect(document.getElementById('guarded-modal')).not.toBeNull();
+        expect(document.body.style.overflow).toBe('hidden');
+    });
+
+    it('Escape w showModal zamyka modal i odblokowuje body', () => {
+        const overlay = ctx.window.showModal({
+            id: 'esc-modal',
+            title: 'Esc',
+            titleId: 'esc-title',
+            html: '<div class="modal"><button>OK</button></div>'
+        });
+        pressEscape(overlay);
+        expect(document.getElementById('esc-modal')).toBeNull();
+        expect(document.body.style.overflow).toBe('');
+    });
 });
