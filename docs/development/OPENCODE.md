@@ -39,18 +39,24 @@ Zmiana configu przeładowuje się bez restartu. Weryfikacja: `opencode-cli.exe d
 | `caveman`                  | `~/.config/opencode/plugins/caveman`                           | dynamiczny tryb caveman (flagi, parsowanie komend)     |
 | `@dietrichgebert/ponytail` | npm                                                            | 6 skilli + ruleset minimalizmu                         |
 | `open-code-review`         | `~/.config/opencode/plugins/open-code-review.ts`               | tools `ocr_review`, `ocr_health`                       |
-| `graphify`                 | `.opencode/plugins/graphify.js`                                | przypomnienie o `graphify-out/` przed pierwszą komendą |
+| `graphify`                 | `.opencode/plugins/graphify.js` (wersjonowany)                 | przypomnienie o `graphify-out/` przed pierwszą komendą |
 
-Zasady: lokalny plugin w V2 to **katalog z punktem wejścia** (`index.ts` lub `package.json`), nie pojedynczy plik `.js`. Plugin musi eksportować default z `id` i `setup`/`effect` (`Plugin.define`).
+Zasady: plugin V2 to **katalog z punktem wejścia** (`index.ts` lub `package.json`) **albo pojedynczy plik `.js`** z `export default { id, setup }` (`effect` wg API). Dowód: `graphify.js` działa jako jedna plikowa definicja bez importu pakietu opencode.
 
 Usunięty: `status-bar` (commit `2989c63`) — katalog bez punktu wejścia V2, tracked w ignorowanym katalogu, powodował `WARN failed to capture snapshot` przy każdym tool callu.
 
 ## 4. MCP
 
-| Serwer        | Zakres   | Uwagi                                          |
-| ------------- | -------- | ---------------------------------------------- |
-| `graphify`    | projekt  | lokalny python, graf `graphify-out/graph.json` |
-| `open-design` | globalny | Electron daemon                                |
+| Serwer        | Zakres   | Uwagi                                                                    |
+| ------------- | -------- | ------------------------------------------------------------------------ |
+| `graphify`    | projekt  | `uvx --from graphifyy[mcp] graphify-mcp`, graf `graphify-out/graph.json` |
+| `open-design` | globalny | Electron daemon                                                          |
+
+`graphify` — wymagania i pułapki:
+
+- `uv` ≥ 0.10 w PATH (`uvx`). Extra **`[mcp]` jest obowiązkowe**: `graphifyy` bez extra nie ma modułu `mcp` i serwer kończy się `ImportError`.
+- Pierwszy start po instalacji dociąga zależności (~60 pakietów) — może zbliżyć się do timeoutu MCP 30 s. Kolejne starty są szybkie (cache `uv`).
+- `graphify-out/graph.json` jest gitignored: po świeżym clone uruchom `graphify update .`, inaczej serwer wstanie bez grafu.
 
 ## 5. Skille — kolejność i uprawnienia
 
