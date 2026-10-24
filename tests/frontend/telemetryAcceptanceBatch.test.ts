@@ -5,7 +5,7 @@ import path from 'path';
 import vm from 'vm';
 
 let calls: { url: string; body: any }[] = [];
-let fetchMode: 'ok' | '404' = 'ok';
+let fetchMode: 'ok' | '404' | 'badbody' = 'ok';
 let store: Record<string, string> = {};
 
 function fetchMock(url: string, opts: any) {
@@ -14,6 +14,9 @@ function fetchMock(url: string, opts: any) {
     if (String(url).endsWith('/ai/acceptance-batch')) {
         if (fetchMode === '404') {
             return Promise.resolve({ status: 404, json: () => Promise.reject(new Error('html')) });
+        }
+        if (fetchMode === 'badbody') {
+            return Promise.resolve({ status: 200, json: () => Promise.resolve({ error: 'x' }) });
         }
         return Promise.resolve({
             status: 200,
@@ -102,21 +105,20 @@ describe('telemetry acceptance-batch (FE)', () => {
         expect(calls.filter((c) => c.url.endsWith('/ai/acceptance-full'))).toHaveLength(0);
     });
 
-    test('404 na probe → fallback na single', async () => {
+    test('404 → fallback na single', async () => {
         const sb = loadBridge();
         fetchMode = '404';
         sb.window.telemetryRecordAcceptanceFullBatch([acc(1), acc(2)]);
         await flush();
         expect(calls.filter((c) => c.url.endsWith('/ai/acceptance-full'))).toHaveLength(2);
-        expect(store['telemetry_acceptbatch_off']).toBe('1');
     });
 
-    test('flaga off → od razu single, bez probe', async () => {
+    test('odpowiedź bez updated/duplicates → fallback na single', async () => {
         const sb = loadBridge();
-        store['telemetry_acceptbatch_off'] = '1';
+        fetchMode = 'badbody';
         sb.window.telemetryRecordAcceptanceFullBatch([acc(1)]);
         await flush();
-        expect(calls.filter((c) => c.url.endsWith('/ai/acceptance-batch'))).toHaveLength(0);
+        expect(calls.filter((c) => c.url.endsWith('/ai/acceptance-batch'))).toHaveLength(1);
         expect(calls.filter((c) => c.url.endsWith('/ai/acceptance-full'))).toHaveLength(1);
     });
 

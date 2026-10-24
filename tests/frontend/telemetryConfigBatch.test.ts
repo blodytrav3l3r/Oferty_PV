@@ -5,7 +5,7 @@ import path from 'path';
 import vm from 'vm';
 
 let calls: { url: string; body: any }[] = [];
-let fetchMode: 'ok' | '404' = 'ok';
+let fetchMode: 'ok' | '404' | 'badbody' = 'ok';
 let store: Record<string, string> = {};
 
 function fetchMock(url: string, opts: any) {
@@ -14,6 +14,9 @@ function fetchMock(url: string, opts: any) {
     if (String(url).endsWith('/ai/config-batch')) {
         if (fetchMode === '404') {
             return Promise.resolve({ status: 404, json: () => Promise.reject(new Error('html')) });
+        }
+        if (fetchMode === 'badbody') {
+            return Promise.resolve({ status: 200, json: () => Promise.resolve({ error: 'x' }) });
         }
         return Promise.resolve({
             status: 200,
@@ -121,7 +124,7 @@ describe('telemetry config-batch (FE)', () => {
         expect(w2._lastAutoTelemetryId).toBeUndefined();
     });
 
-    test('404 na probe → fallback na single (chain z singla)', async () => {
+    test('404 → fallback na single (chain z singla)', async () => {
         const sb = loadBridge();
         fetchMode = '404';
         const w1 = well('w1', 'AUTO_JS');
@@ -130,16 +133,15 @@ describe('telemetry config-batch (FE)', () => {
         expect(calls.filter((c) => c.url.endsWith('/ai/config-batch'))).toHaveLength(1);
         expect(calls.filter((c) => c.url.endsWith('/ai/config'))).toHaveLength(1);
         expect(w1._lastAutoTelemetryId).toBe('single-1');
-        expect(store['telemetry_configbatch_off']).toBe('1');
     });
 
-    test('flaga off → od razu single, bez probe', async () => {
+    test('odpowiedź bez created/duplicates → fallback na single', async () => {
         const sb = loadBridge();
-        store['telemetry_configbatch_off'] = '1';
+        fetchMode = 'badbody';
         const w1 = well('w1', 'AUTO_JS');
         sb.window.telemetryRecordConfigBatch([opts(w1)]);
         await flush();
-        expect(calls.filter((c) => c.url.endsWith('/ai/config-batch'))).toHaveLength(0);
+        expect(calls.filter((c) => c.url.endsWith('/ai/config-batch'))).toHaveLength(1);
         expect(calls.filter((c) => c.url.endsWith('/ai/config'))).toHaveLength(1);
     });
 

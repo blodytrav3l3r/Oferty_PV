@@ -589,53 +589,6 @@
     // Cap 50 należy do callera (offerSave slice); tu tylko guard rozmiaru 413.
     const CONFIG_BATCH_SIZE_GUARD = 900000;
     const CONFIG_BATCH_CHUNK = 25;
-    // 0 = nieznany, 1 = wspierany, 2 = brak (stary BE, flaga też w sessionStorage).
-    let configBatchSupport = 0;
-
-    function configBatchSupported() {
-        if (configBatchSupport === 1) return Promise.resolve(true);
-        if (configBatchSupport === 2) return Promise.resolve(false);
-        try {
-            if (
-                typeof sessionStorage !== 'undefined' &&
-                sessionStorage.getItem('telemetry_configbatch_off') === '1'
-            ) {
-                configBatchSupport = 2;
-                return Promise.resolve(false);
-            }
-        } catch (_e) {}
-        if (typeof fetch !== 'function') return Promise.resolve(false);
-        try {
-            const authPart = typeof authHeaders === 'function' ? authHeaders() : {};
-            // Sonda: puste items → 400 gdy endpoint istnieje, 404 na starym BE.
-            // Jeden warn 400/sesję po stronie serwera zamiast N requestów.
-            return fetch(CONFIG_BATCH_URL, {
-                method: 'POST',
-                credentials: 'same-origin',
-                headers: Object.assign({ 'Content-Type': 'application/json' }, authPart),
-                body: '{"items":[]}'
-            }).then(
-                function (res) {
-                    const ok = !!res && res.status !== 404;
-                    if (!ok) {
-                        configBatchSupport = 2;
-                        try {
-                            if (typeof sessionStorage !== 'undefined')
-                                sessionStorage.setItem('telemetry_configbatch_off', '1');
-                        } catch (_e2) {}
-                    } else {
-                        configBatchSupport = 1;
-                    }
-                    return ok;
-                },
-                function () {
-                    return false;
-                }
-            );
-        } catch (_e) {
-            return Promise.resolve(false);
-        }
-    }
 
     function sendConfigChunk(chunk) {
         const payloads = chunk.map(function (b) {
@@ -710,16 +663,10 @@
                     chunks.push(built.slice(j, j + CONFIG_BATCH_CHUNK));
             }
         } catch (_eSize) {}
-        configBatchSupported().then(function (ok) {
-            if (!ok) {
-                singleFallback(built);
-                return;
-            }
-            let chain = Promise.resolve();
-            chunks.forEach(function (ch) {
-                chain = chain.then(function () {
-                    return sendConfigChunk(ch);
-                });
+        let chain = Promise.resolve();
+        chunks.forEach(function (ch) {
+            chain = chain.then(function () {
+                return sendConfigChunk(ch);
             });
         });
     };
@@ -773,50 +720,6 @@
     // Odpowiedź batcha nie niesie łańcucha (acceptance zwraca {success}),
     // więc mapowanie per-index niepotrzebne — liczy się dostarczenie.
     const ACCEPTANCE_BATCH_URL = '/api/telemetry/ai/acceptance-batch';
-    let acceptanceBatchSupport = 0; // 0 nieznany, 1 tak, 2 nie (stary BE)
-
-    function acceptanceBatchSupported() {
-        if (acceptanceBatchSupport === 1) return Promise.resolve(true);
-        if (acceptanceBatchSupport === 2) return Promise.resolve(false);
-        try {
-            if (
-                typeof sessionStorage !== 'undefined' &&
-                sessionStorage.getItem('telemetry_acceptbatch_off') === '1'
-            ) {
-                acceptanceBatchSupport = 2;
-                return Promise.resolve(false);
-            }
-        } catch (_e) {}
-        if (typeof fetch !== 'function') return Promise.resolve(false);
-        try {
-            const authPart = typeof authHeaders === 'function' ? authHeaders() : {};
-            return fetch(ACCEPTANCE_BATCH_URL, {
-                method: 'POST',
-                credentials: 'same-origin',
-                headers: Object.assign({ 'Content-Type': 'application/json' }, authPart),
-                body: '{"items":[]}'
-            }).then(
-                function (res) {
-                    const ok = !!res && res.status !== 404;
-                    if (!ok) {
-                        acceptanceBatchSupport = 2;
-                        try {
-                            if (typeof sessionStorage !== 'undefined')
-                                sessionStorage.setItem('telemetry_acceptbatch_off', '1');
-                        } catch (_e2) {}
-                    } else {
-                        acceptanceBatchSupport = 1;
-                    }
-                    return ok;
-                },
-                function () {
-                    return false;
-                }
-            );
-        } catch (_e) {
-            return Promise.resolve(false);
-        }
-    }
 
     function acceptanceSingleFallback(items) {
         (items || []).forEach(function (options) {
@@ -847,16 +750,10 @@
             });
         }
         if (payloads.length === 0) return;
-        acceptanceBatchSupported().then(function (ok) {
-            if (!ok) {
+        safeFetch(ACCEPTANCE_BATCH_URL, { items: payloads }).then(function (res) {
+            if (!res || (!Array.isArray(res.updated) && !Array.isArray(res.duplicates))) {
                 acceptanceSingleFallback(items);
-                return;
             }
-            safeFetch(ACCEPTANCE_BATCH_URL, { items: payloads }).then(function (res) {
-                if (!res || (!Array.isArray(res.updated) && !Array.isArray(res.duplicates))) {
-                    acceptanceSingleFallback(items);
-                }
-            });
         });
     };
 
