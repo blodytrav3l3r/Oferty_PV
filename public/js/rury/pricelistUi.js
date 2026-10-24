@@ -93,6 +93,10 @@ function renderPriceList() {
 
     container.innerHTML = html;
     if (window.lucide) lucide.createIcons();
+    // Render odtwarza DOM, więc blokada podglądu (inert) musi wrócić.
+    if (window.pricelistVersions && window.pricelistVersions.applyEditorLock) {
+        window.pricelistVersions.applyEditorLock('rury');
+    }
 }
 
 /* ===== EDYCJA INLINE ===== */

@@ -32,10 +32,27 @@ describe('cennik: tryb edycji (podgląd ↔ szkic)', () => {
     });
 
     it('podgląd: siatka inert, „Zapisz" ukryty, „Dodaj" wyłączony', () => {
-        expect(shared).toContain('grid.inert = !editing');
+        expect(shared).toContain('grid.inert = !editing && sections.length === 0');
         expect(shared).toContain("saveBtn.classList.toggle('hidden', !editing)");
         expect(shared).toContain('addBtn.disabled = !editing');
         expect(read('public/css/style.utilities.css')).toContain('#studnie-pricelist-body[inert]');
+    });
+
+    it('podgląd PRECO: inert na rozwinięciach accordionu, nagłówek klikalny', () => {
+        expect(shared).toContain("grid.querySelectorAll('.preco-accordion-body')");
+        expect(shared).toContain('el.inert = !editing');
+        const preco = read('public/js/studnie/pricelistPreco.js');
+        expect(preco).toContain("applyEditorLock('preco')");
+        expect(preco).toContain('class="preco-accordion-head"');
+        expect(preco).toContain('aria-expanded=');
+        expect(preco).toContain('aria-controls="preco-body-');
+    });
+
+    it('render odtwarza DOM — blokada podglądu wraca po każdym renderze', () => {
+        expect(read('public/js/studnie/pricelistManager.js')).toContain(
+            "applyEditorLock('studnie')"
+        );
+        expect(read('public/js/rury/pricelistUi.js')).toContain("applyEditorLock('rury')");
     });
 
     it('zapis poza trybem edycji nie tworzy szkicu po cichu (3 osie)', () => {

@@ -264,6 +264,10 @@ function renderStudniePriceList() {
 
     container.innerHTML = html;
     if (window.lucide) lucide.createIcons();
+    // Render odtwarza DOM, więc blokada podglądu (inert) musi wrócić.
+    if (window.pricelistVersions && window.pricelistVersions.applyEditorLock) {
+        window.pricelistVersions.applyEditorLock('studnie');
+    }
 }
 
 /* ===== Delegacja kliknięć (data-action) — TASK-036 ===== */

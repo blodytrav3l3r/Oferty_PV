@@ -1909,11 +1909,19 @@
     /**
      * Podgląd = siatka `inert` (blokuje mysz, fokus i Tab), ukryty „Zapisz"
      * i wyłączone „Dodaj". Dzięki temu przypadkowa edycja nie tworzy szkicu.
+     * PRECO: `inert` idzie na rozwinięcia accordionów, nie na całą siatkę —
+     * inaczej nie da się rozwinąć DN i podejrzeć cen w podglądzie.
      */
     function applyEditorLock(type) {
         var editing = isEditing(type);
         var grid = document.getElementById(EDITOR_GRID[type] || '');
-        if (grid) grid.inert = !editing;
+        if (grid) {
+            var sections = grid.querySelectorAll('.preco-accordion-body');
+            Array.prototype.forEach.call(sections, function (el) {
+                el.inert = !editing;
+            });
+            grid.inert = !editing && sections.length === 0;
+        }
         var saveBtn = document.getElementById(EDITOR_SAVE[type] || '');
         if (saveBtn) saveBtn.classList.toggle('hidden', !editing);
         var addBtn = document.getElementById(EDITOR_ADD[type] || '');
@@ -2321,6 +2329,7 @@
         syncEditor: syncEditor,
         isEditing: isEditing,
         setEditing: setEditing,
+        applyEditorLock: applyEditorLock,
         openPublishDialog: openPublishDialog,
         createDraftCopy: createDraftCopy,
         draftHeaders: draftHeaders,

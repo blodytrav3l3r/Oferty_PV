@@ -46,11 +46,11 @@ function renderPrecoPriceList() {
         const iconName = isOpen ? 'chevron-down' : 'chevron-right';
 
         html += `<div class="preco-accordion">`;
-        html += `<div class="preco-accordion-head" data-action="togglePrecoAccordion" data-dn="${dn}">`;
-        html += `<span class="preco-accordion-title"><i data-lucide="${iconName}" class="icon-xs"></i> DN${dn}</span>`;
+        html += `<button type="button" class="preco-accordion-head" data-action="togglePrecoAccordion" data-dn="${dn}" aria-expanded="${isOpen ? 'true' : 'false'}" aria-controls="preco-body-${dn}">`;
+        html += `<span class="preco-accordion-title"><span class="preco-accordion-icon"><i data-lucide="${iconName}" class="icon-xs"></i></span> DN${dn}</span>`;
         html += `<span class="preco-accordion-count">${data.kinety.length} pozycji</span>`;
-        html += `</div>`;
-        html += `<div class="preco-accordion-body" style="display:${displayStyle};">`;
+        html += `</button>`;
+        html += `<div class="preco-accordion-body" id="preco-body-${dn}" style="display:${displayStyle};">`;
 
         // Tabela kinet
         html += `<div class="preco-section-head">`;
@@ -120,6 +120,10 @@ function renderPrecoPriceList() {
             updatePrecoSaveBtn();
         });
     });
+    // Render odtwarza DOM, więc blokada podglądu (inert) musi wrócić.
+    if (window.pricelistVersions && window.pricelistVersions.applyEditorLock) {
+        window.pricelistVersions.applyEditorLock('preco');
+    }
 }
 
 function renderPrecoRangeTable(title, table, dn, fieldBase) {
@@ -285,6 +289,7 @@ function togglePrecoAccordion(headerEl, dn) {
     if (!body) return;
     const isOpen = body.style.display !== 'none';
     body.style.display = isOpen ? 'none' : 'block';
+    headerEl.setAttribute('aria-expanded', isOpen ? 'false' : 'true');
 
     window.openPrecoAccordions = window.openPrecoAccordions || new Set();
     if (dn) {
@@ -295,10 +300,15 @@ function togglePrecoAccordion(headerEl, dn) {
         } catch (_e) {}
     }
 
-    const icon = headerEl.querySelector('[data-lucide]');
+    const icon = headerEl.querySelector('.preco-accordion-icon');
     if (icon) {
-        icon.setAttribute('data-lucide', isOpen ? 'chevron-right' : 'chevron-down');
-        if (window.lucide) lucide.createIcons();
+        // Slim lucide (`iconsSlim.js`) zamienia tylko `i[data-lucide]` — stąd
+        // odtworzenie elementu zamiast podmiany atrybutu na istniejącym <svg>.
+        icon.innerHTML =
+            '<i data-lucide="' +
+            (isOpen ? 'chevron-right' : 'chevron-down') +
+            '" class="icon-xs"></i>';
+        if (window.lucide) lucide.createIcons({ root: icon });
     }
 }
 

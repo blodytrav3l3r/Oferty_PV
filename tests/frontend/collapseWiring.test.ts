@@ -139,6 +139,7 @@ describe('studnie/pricelistPreco.js togglePrecoAccordion', () => {
     function fakeHeader(open: boolean) {
         return {
             nextElementSibling: { style: { display: open ? 'block' : 'none' } },
+            setAttribute: () => {},
             querySelector: () => null
         };
     }
