@@ -1,6 +1,8 @@
 /**
  * F1a DOM-golden: golden KONTRAKTU virtualizowanego widoku (DOM = view only),
- * nie 1200 rekordow. SHA-256 canonicalizowanego thead+tbody per tab x6 +
+ * nie 1200 rekordow. SHA-256 canonicalizowanego thead + pierwszych GOLDEN_ROWS
+ * wierszy tbody per tab x6 (liczba wierszy w slice zalezy od metryk fontow
+ * platformy — nie jest czescia kontraktu) +
  * test strukturalny scrolla (top/middle/bottom) + test czulosci na izolowanej
  * kopii fixture.
  *
@@ -34,6 +36,9 @@ const SEED_STUDNIE = require('../../data/seed_studnie.json');
 const OUT = resolveOutPath(OUT_DEFAULT);
 const UPDATE = process.argv.includes('--update');
 const TABS = ['1000', '1200', '1500', '2000', '2500', 'styczne'];
+// Ile wierszy slice wchodzi do hasha. Reszta slice'a i spacer (height = 600 x
+// zmierzona wysokosc wiersza) zaleza od fontow platformy, nie od kodu.
+const GOLDEN_ROWS = 5;
 
 function resolvePlaywright() {
     try {
@@ -174,37 +179,47 @@ async function openFrame(browser, token, fixture) {
 }
 
 async function tabHash(frame, tab) {
-    return frame.evaluate((t) => {
-        excelSwitchTab(t);
-        const cont = document.getElementById('excel-table-container');
-        const thead = cont.querySelector('thead');
-        const tbody = cont.querySelector('tbody');
-        const canonFn = (html) =>
-            String(html)
-                .replace(/\sstyle="([^"]*)"/g, function (mm, st) {
-                    var kept = String(st)
-                        .split(';')
-                        .map(function (s) {
-                            return s.trim();
-                        })
-                        .filter(function (s) {
-                            return s && !/^(min-|max-)?width\s*:|^left\s*:/i.test(s);
-                        });
-                    return kept.length ? ' style="' + kept.join('; ') + '"' : '';
-                })
-                .replace(/&nbsp;|&#160;/g, ' ')
-                .replace(/\d[\d\s]*,?\d*\s*PLN/g, 'N PLN')
-                // aria-valuenow resize = offsetWidth (pomiar platformy) — jak width/left.
-                .replace(/aria-valuenow="[\d.]+"/g, 'aria-valuenow="N"')
-                .replace(/>\s+</g, '><')
-                .trim();
-        const rows = [...tbody.querySelectorAll('tr[data-widx]')];
-        return {
-            html: canonFn(thead.outerHTML) + canonFn(tbody.outerHTML),
-            rows: rows.length,
-            logical: rows.map((r) => r.getAttribute('data-logical-row'))
-        };
-    }, tab);
+    return frame.evaluate(
+        ({ t, maxRows }) => {
+            excelSwitchTab(t);
+            const cont = document.getElementById('excel-table-container');
+            const thead = cont.querySelector('thead');
+            const tbody = cont.querySelector('tbody');
+            const canonFn = (html) =>
+                String(html)
+                    .replace(/\sstyle="([^"]*)"/g, function (mm, st) {
+                        var kept = String(st)
+                            .split(';')
+                            .map(function (s) {
+                                return s.trim();
+                            })
+                            .filter(function (s) {
+                                return s && !/^(min-|max-)?width\s*:|^left\s*:/i.test(s);
+                            });
+                        return kept.length ? ' style="' + kept.join('; ') + '"' : '';
+                    })
+                    .replace(/&nbsp;|&#160;/g, ' ')
+                    .replace(/\d[\d\s]*,?\d*\s*PLN/g, 'N PLN')
+                    // aria-valuenow resize = offsetWidth (pomiar platformy) — jak width/left.
+                    .replace(/aria-valuenow="[\d.]+"/g, 'aria-valuenow="N"')
+                    .replace(/>\s+</g, '><')
+                    .trim();
+            const rows = [...tbody.querySelectorAll('tr[data-widx]')];
+            return {
+                html:
+                    canonFn(thead.outerHTML) +
+                    canonFn(
+                        rows
+                            .slice(0, maxRows)
+                            .map((r) => r.outerHTML)
+                            .join('')
+                    ),
+                rows: rows.length,
+                logical: rows.map((r) => r.getAttribute('data-logical-row'))
+            };
+        },
+        { t: tab, maxRows: GOLDEN_ROWS }
+    );
 }
 
 (async () => {
