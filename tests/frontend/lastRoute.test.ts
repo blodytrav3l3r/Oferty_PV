@@ -135,54 +135,6 @@ describe('Opcja A lastRoute — ostatnia trasa', () => {
         expect(lr.save('#/rury')).toBe(false);
     });
 
-    it('render: brak rekordu → brak karty, rekord → karta z linkiem', () => {
-        const { sandbox, lr } = loadCtx();
-        const created: any[] = [];
-        const parent = {
-            children: [] as any[],
-            insertBefore(node: any) {
-                this.children.push(node);
-                node.parentNode = parent;
-            }
-        };
-        const host = { parentNode: parent };
-        sandbox.document.querySelector = (sel: string) => (sel === '.launch-grid' ? host : null);
-        sandbox.document.createElement = () => {
-            const el: any = { id: '', className: '', innerHTML: '', parentNode: null };
-            created.push(el);
-            return el;
-        };
-        sandbox.document.getElementById = (id: string) =>
-            created.find((el) => el.id === id) || null;
-
-        lr.render({ id: 'u1' });
-        expect(created.length).toBe(0);
-
-        lr.save('#/rury?edit=o7');
-        lr.render({ id: 'u1' });
-        expect(created.length).toBe(1);
-        expect(created[0].id).toBe('last-route');
-        expect(created[0].innerHTML).toContain('app.html#/rury?edit=o7');
-        expect(created[0].innerHTML).toContain('Oferty Rury');
-        expect(created[0].innerHTML).toContain('Otwórz');
-        expect(parent.children.length).toBe(1);
-    });
-
-    it('render: uszkodzony rekord nie tworzy karty', () => {
-        const { sandbox, store, lr } = loadCtx();
-        const created: any[] = [];
-        sandbox.document.createElement = () => {
-            const el: any = { id: '', className: '', innerHTML: '', parentNode: null };
-            created.push(el);
-            return el;
-        };
-        sandbox.document.querySelector = () => ({ parentNode: { insertBefore() {} } });
-        sandbox.document.getElementById = () => null;
-        store.set('sok_last_route_v1_u1', '{"v":1}');
-        expect(() => lr.render({ id: 'u1' })).not.toThrow();
-        expect(created.length).toBe(0);
-    });
-
     it('pagehide zapisuje bieżącą trasę (pojedyncza wizyta w module)', () => {
         const { sandbox, store, listeners } = loadCtx();
         expect(Array.isArray(listeners.pagehide)).toBe(true);

@@ -243,70 +243,158 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
     gap: var(--tile-gap-xs-plus);
 }
 
-/* ── Wróć do…: ostatnia trasa (Opcja A) ── */
-.last-route {
-    display: flex;
+/* ── Wznów pracę: kafelek + popup (szkice lokalne L1, ostatnia trasa) ── */
+.resume-slot {
+    width: 100%;
+    max-width: var(--section-max-width);
+}
+
+.launch-card.resume {
+    width: 100%;
+    font: inherit;
+    color: var(--text-primary);
+    cursor: pointer;
+}
+
+.launch-card.resume::before {
+    background: var(--text-muted);
+}
+
+.launch-card.resume:disabled {
+    opacity: 0.6;
+    filter: grayscale(1);
+    cursor: not-allowed;
+}
+
+.launch-card.resume:disabled:hover {
+    border-color: var(--border);
+    background: var(--bg-card);
+    box-shadow: none;
+}
+
+.launch-card.resume:disabled .resume-chevron {
+    display: none;
+}
+
+.resume-icon {
+    display: inline-flex;
     align-items: center;
-    gap: var(--tile-gap-sm);
-    width: 100%;
-    max-width: var(--section-max-width);
-    padding: var(--tile-gap-sm) var(--tile-gap-lg);
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+    border-radius: var(--radius-sm);
+    background: var(--accent-bg);
+    color: var(--accent-text);
+    border: 1px solid var(--accent-border-dim);
 }
 
-.last-route-label {
-    flex: 1;
+.resume-title {
+    display: block;
+    font-size: var(--fs-2xl);
+    font-weight: var(--fw-bold);
+    color: var(--text-primary);
+}
+
+.resume-sub {
+    display: block;
+    margin-top: 0.15rem;
+    font-size: var(--fs-sm);
     color: var(--text-secondary);
-    font-size: 0.9rem;
 }
 
-.last-route-label strong {
-    color: var(--text-primary);
-}
-
-/* ── Wznów pracę: lokalne drafty (L1) ── */
-.resume-drafts {
-    width: 100%;
-    max-width: var(--section-max-width);
-    padding: var(--tile-gap-lg);
-    background: var(--bg-card);
+.resume-count {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.2rem 0.65rem;
+    border-radius: 999px;
     border: 1px solid var(--border);
-    border-radius: var(--radius);
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-bold);
+    white-space: nowrap;
 }
 
-.resume-drafts-title {
-    margin: 0 0 var(--tile-gap-sm);
-    font-size: 0.95rem;
-    font-weight: 600;
-    color: var(--text-primary);
+.resume-chevron {
+    flex-shrink: 0;
+    color: var(--text-muted);
 }
 
-.resume-drafts-list {
+/* Popup „Wznów pracę" (modalCore.js: .modal-overlay > .modal) */
+.resume-modal {
     display: flex;
     flex-direction: column;
-    gap: var(--tile-gap-sm);
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.resume-modal-hint {
+    margin: 0 0 0.9rem;
+    font-size: var(--fs-sm);
+    color: var(--text-secondary);
+}
+
+.resume-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    max-height: 45vh;
     margin: 0;
     padding: 0;
+    overflow-y: auto;
     list-style: none;
 }
 
-.resume-drafts-item {
+.resume-row {
     display: flex;
     align-items: center;
-    gap: var(--tile-gap-sm);
+    gap: 0.6rem;
+    padding: 0.55rem 0.7rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
 }
 
-.resume-drafts-label {
-    font-weight: 600;
+.resume-row--empty {
+    justify-content: center;
+    color: var(--text-muted);
+    font-size: var(--fs-sm);
+}
+
+.resume-row-main {
+    flex: 1;
+    min-width: 0;
+}
+
+.resume-row-label {
+    display: block;
+    font-size: 0.9rem;
+    font-weight: var(--fw-bold);
     color: var(--text-primary);
 }
 
-.resume-drafts-when {
-    flex: 1;
+.resume-row-meta {
+    display: block;
+    font-size: var(--fs-sm);
     color: var(--text-secondary);
-    font-size: 0.85rem;
+    overflow-wrap: anywhere;
+}
+
+.resume-route {
+    margin-top: 1rem;
+    padding-top: 0.9rem;
+    border-top: 1px solid var(--border-subtle);
+}
+
+.resume-route-title {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-bold);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
 }
 
 /* ── Karty uruchamiania (launch-grid) ── */

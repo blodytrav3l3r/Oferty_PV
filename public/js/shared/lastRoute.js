@@ -17,7 +17,6 @@
     var KEY_PREFIX = 'sok_last_route_v1_';
     var SCHEMA_VERSION = 1;
     var TTL_MS = 30 * 24 * 60 * 60 * 1000;
-    var CONTAINER_ID = 'last-route';
     /** Parametry panelu/modału — nie opisują trasy, nie zapisujemy ich. */
     var TRANSIENT = ['panel', 'pvtype', 'version', 'against', 'tab'];
     var LABELS = {
@@ -26,16 +25,6 @@
         kartoteka: 'Kartoteka',
         zlecenia: 'Zlecenia'
     };
-
-    /** @param {string} s @returns {string} */
-    function esc(s) {
-        return String(s)
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#39;');
-    }
 
     /** @returns {string|null} */
     function resolveUserId() {
@@ -157,38 +146,6 @@
         return null;
     }
 
-    /**
-     * Renderuje kartę „Wróć do…" przed siatką modułów. Brak rekordu → brak karty.
-     * @param {object} [user]
-     */
-    function render(user) {
-        try {
-            if (typeof document === 'undefined' || !document.body) return;
-            var host = document.querySelector('.launch-grid');
-            var existing = document.getElementById(CONTAINER_ID);
-            var record = get(user);
-            if (!record) {
-                if (existing && existing.parentNode) existing.parentNode.removeChild(existing);
-                return;
-            }
-            if (!host) return;
-            var box = existing;
-            if (!box) {
-                box = document.createElement('div');
-                box.id = CONTAINER_ID;
-                box.className = 'last-route';
-                if (host.parentNode) host.parentNode.insertBefore(box, host);
-            }
-            box.innerHTML =
-                '<span class="last-route-label">Wróć do: <strong>' +
-                esc(record.label) +
-                '</strong></span>' +
-                '<a class="btn btn-sm btn-secondary" href="app.html' +
-                esc(record.hash) +
-                '">Otwórz</a>';
-        } catch (_e) {}
-    }
-
     /** @param {object} [user] */
     function clear(user) {
         var userId = user && (user.id === 0 || user.id) ? String(user.id) : resolveUserId();
@@ -203,7 +160,6 @@
         TTL_MS: TTL_MS,
         save: save,
         get: get,
-        render: render,
         clear: clear,
         normalizeHash: normalizeHash
     };
