@@ -493,22 +493,6 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
     margin: 0;
 }
 
-.launch-btn-label {
-    padding: 0.4rem 1rem;
-    background: rgba(var(--white-rgb), 0.05);
-    border-radius: var(--radius-lg);
-    font-size: var(--fs-xs);
-    font-weight: var(--fw-black);
-    letter-spacing: 0.5px;
-    opacity: 0.8;
-}
-
-.launch-card:hover .launch-btn-label {
-    background: var(--white);
-    color: var(--black);
-    opacity: 1;
-}
-
 /* ── Admin Widgets ── */
 .admin-container {
     display: flex;
