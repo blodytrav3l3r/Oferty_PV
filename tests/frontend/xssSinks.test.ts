@@ -64,7 +64,7 @@ describe('P1-FE-ESCAPE: szybkie wygrane (krok 1)', () => {
         const t = read('public/js/rury/transport.js');
         expect(t).toMatch(/partials\/rury\/transport-modal\.html/);
         expect(t).toMatch(/host\.innerHTML = await res\.text\(\)/);
-        const p = read('public/js/studnie/partialLoader.js');
+        const p = read('public/js/shared/partialLoader.js');
         expect(p).toMatch(/getAttribute\('data-partial'\)/);
         expect(p).toMatch(/el\.innerHTML = html/);
     });
