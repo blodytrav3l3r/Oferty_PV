@@ -243,6 +243,29 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
     gap: var(--tile-gap-xs-plus);
 }
 
+/* ── Wróć do…: ostatnia trasa (Opcja A) ── */
+.last-route {
+    display: flex;
+    align-items: center;
+    gap: var(--tile-gap-sm);
+    width: 100%;
+    max-width: var(--section-max-width);
+    padding: var(--tile-gap-sm) var(--tile-gap-lg);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+}
+
+.last-route-label {
+    flex: 1;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.last-route-label strong {
+    color: var(--text-primary);
+}
+
 /* ── Wznów pracę: lokalne drafty (L1) ── */
 .resume-drafts {
     width: 100%;

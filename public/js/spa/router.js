@@ -664,6 +664,12 @@
         // Zapamiętaj hash jako punkt powrotu dla przyszłego anulowania guarda
         _lastCleanHash = window.location.hash;
 
+        // Opcja A: zapamiętaj ostatnią trasę (powrót z pulpitu). Best-effort.
+        try {
+            if (window.lastRoute && typeof window.lastRoute.save === 'function')
+                window.lastRoute.save(window.location.hash);
+        } catch (_eLR) {}
+
         const transition = startViewTransition();
 
         // Aktualizuj nagłówek

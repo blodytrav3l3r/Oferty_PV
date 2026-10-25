@@ -295,6 +295,13 @@ function showLoggedIn(user) {
         } catch (_e) {}
     }
 
+    // Opcja A: „Wróć do…” — ostatnia trasa (bez draftu też działa).
+    if (window.lastRoute && typeof window.lastRoute.render === 'function') {
+        try {
+            window.lastRoute.render(user);
+        } catch (_e) {}
+    }
+
     if (user.role === 'admin') {
         document.getElementById('admin-panel').classList.remove('hidden');
         refreshAdminSessions();
