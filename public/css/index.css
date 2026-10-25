@@ -1004,12 +1004,13 @@ a.admin-stat-card {
 }
 
 .admin-user-avatar {
-    width: 38px;
-    height: 38px;
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
+    font-size: var(--fs-base);
     font-weight: var(--fw-extrabold);
     background: var(--accent-bg);
     color: var(--accent-hover);
@@ -1044,6 +1045,28 @@ a.admin-stat-card {
     align-items: center;
     gap: var(--tile-gap-2xs, 0.3rem);
     flex-shrink: 0;
+}
+
+/* Plakietki w kaflu mają wysokość i promień przycisków akcji (32px) —
+   cały wiersz czyta się jako jeden, równy pas. Stała szerokość role
+   (ADMIN/USER/PRO) trzyma obie plakietki w tej samej kolumnie. */
+.admin-user-badges .token-badge,
+.admin-user-badges .badge-role {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 32px;
+    padding: 0 0.55rem;
+    border-radius: var(--radius-sm);
+    font-size: var(--fs-xs);
+}
+
+.admin-user-badges .token-badge {
+    min-width: 32px;
+}
+
+.admin-user-badges .badge-role {
+    min-width: 60px;
 }
 
 .admin-user-facts {
@@ -1085,10 +1108,21 @@ a.admin-stat-card {
     color: var(--text-muted);
     flex: 0 0 auto;
     white-space: nowrap;
-    padding: 0.15rem 0.5rem;
+    height: 32px;
+    padding: 0 0.55rem;
     border: 1px solid var(--border);
-    border-radius: var(--radius-2xs);
+    border-radius: var(--radius-sm);
     background: var(--bg-hover);
+    justify-self: start;
+    min-width: 0;
+    max-width: 100%;
+}
+
+/* Długi opis sesji skraca się w pigułce, zamiast rozpychać kolumnę. */
+.admin-user-session span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .admin-user-session.is-online {
@@ -1150,14 +1184,13 @@ a.admin-stat-card {
     white-space: nowrap;
 }
 
+/* Stałe kolumny: edytuj | usuń | sesja | wyloguj. Przy flexie szerokość
+   pigułki sesji przesuwała ikony w każdym kaflu o kilka pikseli. */
 .admin-user-controls {
-    display: flex;
+    display: grid;
+    grid-template-columns: 32px 32px minmax(0, 1fr) 32px;
     align-items: center;
-    justify-content: flex-end;
-    flex-wrap: wrap;
     gap: var(--tile-gap-xs, 0.35rem);
-    flex: 0 0 auto;
-    margin-left: auto;
 }
 
 /* ── Modal użytkownika (dodawanie + edycja) ── */
@@ -1243,15 +1276,6 @@ a.admin-stat-card {
     .admin-user-controls {
         flex: 1 1 100%;
         max-width: none;
-    }
-
-    .admin-user-controls {
-        justify-content: flex-start;
-        margin-left: 0;
-    }
-
-    .admin-user-session {
-        white-space: normal;
     }
 
     .user-modal-body {
