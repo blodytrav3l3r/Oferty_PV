@@ -4,6 +4,22 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.51.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.50.0...v1.51.0) (2026-10-25)
+
+### Features
+
+- **api:** serwerowy draft l2 z cas i ttl ([e3e516b](https://github.com/blodytrav3l3r/Oferty_PV/commit/e3e516b402ee9934e06f9e5432d309fa9ae43c92))
+- **ui:** klient l2 synchronizacji draftu z serwerem ([ba22944](https://github.com/blodytrav3l3r/Oferty_PV/commit/ba22944110b576609240ba0ac245841605611387))
+- **ui:** powrot do ostatniej trasy z pulpitu ([edc44a1](https://github.com/blodytrav3l3r/Oferty_PV/commit/edc44a1f7812e59b256718e79260825b22c76af7))
+
+### Bug Fixes
+
+- **api:** naprawa komentarza w loggerze żądań ([d087c0b](https://github.com/blodytrav3l3r/Oferty_PV/commit/d087c0b4951b43fc978bd13916f7b63c139f06ba))
+- **auth:** relogin zastępuje sesję z tego samego cookie ([c907357](https://github.com/blodytrav3l3r/Oferty_PV/commit/c907357eca77257c95a90dc23c295baf56e1e7ae))
+- **ui:** draft nie ginie przy braku miejsca i widoczny stan zapisu ([73eef61](https://github.com/blodytrav3l3r/Oferty_PV/commit/73eef6173ea6481db2a264e5bea607b3c7d88db0))
+- **ui:** kafle użytkowników w jednej kolumnie akcji ([72507de](https://github.com/blodytrav3l3r/Oferty_PV/commit/72507de2c161ddede1f5b244739562a40c89a8a2))
+- **ui:** modal bez id zamyka tylko wierzchni widoczny overlay ([88ce6b5](https://github.com/blodytrav3l3r/Oferty_PV/commit/88ce6b5b0606f34fdf150ec89fd92313da3d9f3c))
+
 ## [1.50.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.49.2...v1.50.0) (2026-10-24)
 
 ### Features
