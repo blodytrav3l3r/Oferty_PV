@@ -570,3 +570,21 @@ Po przywróceniu bazy sprawdź:
 1. Endpoint `/health` zwraca `200 OK`
 2. Lista produktów i ceny zgodne z oczekiwaniami
 3. Historia ofert i klienci dostępni
+
+## 10. CI (GitHub Actions) a wdrożenie
+
+Job `deploy-production` w `.github/workflows/ci.yml` jest **wyłączony domyślnie** — wymaga
+repozytoryjnej zmiennej `RENDER_DEPLOY_ENABLED = true` (warunek na poziomie joba, nie kroku).
+
+| Stan w repo                                | Widok w CI                           | Znaczenie                 |
+| ------------------------------------------ | ------------------------------------ | ------------------------- |
+| brak zmiennej `RENDER_DEPLOY_ENABLED`      | job `skipped`                        | wdrożenie NIE wykonane    |
+| `RENDER_DEPLOY_ENABLED=true`, brak sekretu | job FAIL (`::error::`, krok „Skip…") | konfiguracja niekompletna |
+| zmienna + sekret `RENDER_PROD_DEPLOY_HOOK` | krok „Deploy to Render", `DEPLOYED`  | wdrożenie wykonane        |
+
+Włączenie (tylko jeśli produkcja faktycznie stoi na Render): `Settings → Secrets and variables
+→ Actions` → zmienna `RENDER_DEPLOY_ENABLED=true` + sekret `RENDER_PROD_DEPLOY_HOOK`.
+
+Kontekst: w repo nie ma `render.yaml`, a `scripts/deploy.mjs` obsługuje targety
+`windows|linux|docker` (produkcja PM2 + Caddy — §4). Dlatego domyślny stan `skipped`
+jest poprawny, a zielony status nie oznacza wdrożenia.

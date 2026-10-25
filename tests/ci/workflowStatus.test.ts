@@ -109,4 +109,11 @@ describe('P2.3 e2e classification', () => {
         expect(section).toMatch(/e2e-smoke/);
         expect(section).not.toMatch(/e2e-extended/);
     });
+
+    it('deploy wylaczony domyslnie: brama vars.RENDER_DEPLOY_ENABLED', () => {
+        const idx = CI.indexOf('    deploy-production:');
+        expect(idx).toBeGreaterThan(-1);
+        const section = CI.slice(idx, idx + 1200);
+        expect(section).toMatch(/vars\.RENDER_DEPLOY_ENABLED == 'true'/);
+    });
 });
