@@ -4,6 +4,7 @@ import cookieParser from 'cookie-parser';
 import authRoutes from '../src/routes/auth';
 import prisma from '../src/prismaClient';
 import bcrypt from 'bcryptjs';
+import { createSession, deleteSession } from '../src/middleware/auth';
 
 jest.mock('../src/prismaClient', () => ({
     __esModule: true,
@@ -106,6 +107,67 @@ describe('Auth Routes - Z-70', () => {
                 .post('/api/auth/login')
                 .send({ username: 'admin', password: 'wrong' });
             expect(res.statusCode).toBe(401);
+        });
+
+        it('relogin: kasuje sesję z cookie nadawcy przed utworzeniem nowej', async () => {
+            (prisma.users.findUnique as jest.Mock).mockResolvedValue({
+                id: 'u1',
+                username: 'admin',
+                password: 'hashed',
+                role: 'admin',
+                subUsers: '[]'
+            });
+            (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+
+            const res = await request(app)
+                .post('/api/auth/login')
+                .set('Cookie', 'authToken=old-token')
+                .send({ username: 'admin', password: 'pass' });
+
+            expect(res.statusCode).toBe(200);
+            expect(deleteSession).toHaveBeenCalledWith('old-token');
+            expect(createSession).toHaveBeenCalledWith('u1');
+            const delOrder = (deleteSession as jest.Mock).mock.invocationCallOrder[0];
+            const createOrder = (createSession as jest.Mock).mock.invocationCallOrder[0];
+            expect(delOrder).toBeLessThan(createOrder);
+        });
+
+        it('login bez cookie nie kasuje żadnej sesji (multi-device)', async () => {
+            (prisma.users.findUnique as jest.Mock).mockResolvedValue({
+                id: 'u1',
+                username: 'admin',
+                password: 'hashed',
+                role: 'admin',
+                subUsers: '[]'
+            });
+            (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+
+            const res = await request(app)
+                .post('/api/auth/login')
+                .send({ username: 'admin', password: 'pass' });
+
+            expect(res.statusCode).toBe(200);
+            expect(deleteSession).not.toHaveBeenCalled();
+        });
+
+        it('błędne hasło nie kasuje sesji z cookie (brak rewokacji bez auth)', async () => {
+            (prisma.users.findUnique as jest.Mock).mockResolvedValue({
+                id: 'u1',
+                username: 'admin',
+                password: 'hashed',
+                role: 'admin',
+                subUsers: '[]'
+            });
+            (bcrypt.compare as jest.Mock).mockResolvedValue(false);
+
+            const res = await request(app)
+                .post('/api/auth/login')
+                .set('Cookie', 'authToken=old-token')
+                .send({ username: 'admin', password: 'wrong' });
+
+            expect(res.statusCode).toBe(401);
+            expect(deleteSession).not.toHaveBeenCalled();
+            expect(createSession).not.toHaveBeenCalled();
         });
 
         it('powinien zwrócić 401 gdy user nie istnieje', async () => {

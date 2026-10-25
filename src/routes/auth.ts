@@ -41,6 +41,11 @@ router.post('/login', loginLimiter, validateData(loginSchema), async (req, res) 
             return res.status(401).json({ error: 'Nieprawidłowy login lub hasło' });
         }
 
+        // Ponowne logowanie w tej samej przeglądarce zastępuje starą sesję —
+        // bez tego zostawał osierocony wiersz liczony w panelu admina.
+        // Kasujemy wyłącznie sesję z cookie nadawcy (multi-device nietknięte).
+        const previousToken = req.cookies?.authToken;
+        if (previousToken) await deleteSession(previousToken);
         const token = await createSession(user.id);
 
         let subUsers: string[] = [];

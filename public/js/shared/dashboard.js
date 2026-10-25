@@ -364,6 +364,10 @@ function showLoggedIn(user) {
     } catch (_e) {}
 }
 
+// Podwójny klik „Zaloguj się" tworzył dwie sesje (stara zostawała osierocona
+// i liczyła się w panelu admina) — jeden login naraz.
+let isLoggingIn = false;
+
 async function doLogin(event) {
     if (event) {
         event.preventDefault();
@@ -377,6 +381,8 @@ async function doLogin(event) {
         errorEl.textContent = 'Podaj login i hasło';
         return;
     }
+    if (isLoggingIn) return;
+    isLoggingIn = true;
 
     try {
         const res = await fetch('/api/auth/login', {
@@ -400,6 +406,8 @@ async function doLogin(event) {
         showLoggedIn(data.user);
     } catch (_e) {
         errorEl.textContent = 'Błąd połączenia z serwerem';
+    } finally {
+        isLoggingIn = false;
     }
 }
 

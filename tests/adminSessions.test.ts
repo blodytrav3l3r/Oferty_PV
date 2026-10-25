@@ -162,9 +162,12 @@ function buildApp(): express.Application {
 async function loginAs(
     app: express.Application,
     username: string,
-    password = 'start-pass'
+    password = 'start-pass',
+    cookie?: string
 ): Promise<string> {
-    const res = await request(app).post('/api/auth/login').send({ username, password });
+    const req = request(app).post('/api/auth/login');
+    if (cookie) req.set('Cookie', cookie);
+    const res = await req.send({ username, password });
     expect(res.status).toBe(200);
     return String(res.headers['set-cookie'][0]).split(';')[0];
 }
@@ -314,5 +317,60 @@ describe('admin: lista i revoke sesji', () => {
 
         prismaMock.sessions.findMany.mockRejectedValueOnce(new Error('db down'));
         await expect(deleteUserSessions('v')).resolves.toBe(0);
+    });
+
+    /* ===== Ponowne logowanie: sesja z cookie jest zastępowana ===== */
+
+    const sessionsFor = (userId: string) =>
+        [...sessions.values()].filter((s) => s.userId === userId).length;
+
+    test('relogin w tej samej przeglądarce zastępuje sesję (bez osieroconego wiersza)', async () => {
+        seedUser({ id: 'r1', username: 'relogin1' });
+        const first = await loginAs(app, 'relogin1');
+        expect(sessionsFor('r1')).toBe(1);
+
+        const second = await loginAs(app, 'relogin1', 'start-pass', first);
+        expect(second).not.toBe(first);
+        expect(sessionsFor('r1')).toBe(1);
+
+        // Stare cookie nie działa, nowe tak.
+        expect((await request(app).get('/probe-auth').set('Cookie', first)).status).toBe(401);
+        expect((await request(app).get('/probe-auth').set('Cookie', second)).status).toBe(200);
+    });
+
+    test('login bez cookie (drugie urządzenie) nie kasuje istniejących sesji', async () => {
+        seedUser({ id: 'r2', username: 'relogin2' });
+        const deviceA = await loginAs(app, 'relogin2');
+        const deviceB = await loginAs(app, 'relogin2');
+
+        expect(sessionsFor('r2')).toBe(2);
+        expect((await request(app).get('/probe-auth').set('Cookie', deviceA)).status).toBe(200);
+        expect((await request(app).get('/probe-auth').set('Cookie', deviceB)).status).toBe(200);
+    });
+
+    test('relogin nie kasuje sesji innego użytkownika', async () => {
+        seedUser({ id: 'r3', username: 'relogin3' });
+        seedUser({ id: 'r4', username: 'relogin4' });
+        const otherCookie = await loginAs(app, 'relogin4');
+        const first = await loginAs(app, 'relogin3');
+
+        await loginAs(app, 'relogin3', 'start-pass', first);
+
+        expect(sessionsFor('r3')).toBe(1);
+        expect(sessionsFor('r4')).toBe(1);
+        expect((await request(app).get('/probe-auth').set('Cookie', otherCookie)).status).toBe(200);
+    });
+
+    test('nieudane logowanie nie kasuje sesji z cookie', async () => {
+        seedUser({ id: 'r5', username: 'relogin5' });
+        const first = await loginAs(app, 'relogin5');
+        const res = await request(app)
+            .post('/api/auth/login')
+            .set('Cookie', first)
+            .send({ username: 'relogin5', password: 'zle-haslo' });
+
+        expect(res.status).toBe(401);
+        expect(sessionsFor('r5')).toBe(1);
+        expect((await request(app).get('/probe-auth').set('Cookie', first)).status).toBe(200);
     });
 });
