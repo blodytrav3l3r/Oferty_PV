@@ -15,12 +15,7 @@
         "esModuleInterop": true,
         "allowSyntheticDefaultImports": true,
         "isolatedModules": true,
-        "resolveJsonModule": true,
-        "paths": {
-            "@shared/*": ["./public/js/shared/*"],
-            "@studnie/*": ["./public/js/studnie/*"],
-            "@rury/*": ["./public/js/rury/*"]
-        }
+        "resolveJsonModule": true
     },
     "include": ["public/js/**/*.js", "public/js/**/*.ts"],
     "exclude": ["node_modules", "dist", "data", "*.sqlite"]
