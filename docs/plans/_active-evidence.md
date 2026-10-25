@@ -790,6 +790,7 @@ Scope: dopisane na koncu, historia E-001..E-120d nietknieta. Nowe ID E-120f, roz
 - REPRODUCTION: `npm run release:minor` (przed fixem) → `✗ HTML: public\cenniki.html → 1.47.0 (≠ VERSION 1.48.0)`; po fixie → `✓ Spójne — wersja zgodna we wszystkich źródłach`; `gh release list` → `v1.48.0` na GitHubie.
 - BEFORE: `HTML_FILES` = 9 plików hardcoded; `cenniki.html`/`benchmark-tm.html` poza zakresem; release potrafił wyjść z niespójnym `?v=`.
 - AFTER: wykrywanie HTML dynamiczne (13 plików, te same katalogi co w `check-version.mjs`); release 1.48.0 zawiera `cenniki.html` w `?v=1.48.0`; `version:check` PASS.
+- ADNOTACJA (2026-10-25, E-125): `public/cenniki.html` został usunięty w `95b64e6` (`refactor(ui): usuniecie centrum cennikow ze spa`). Wpis pozostaje jako dowód historyczny release 1.48.0 — nie kasować; stan bieżący: plik nie istnieje.
 - CHANGE: +1 skrypt (lista → skan katalogów), 2 pliki HTML zcache-bustowane, bump 1.47.0 → 1.48.0 (CHANGELOG/VERSION/package.json/.bat/docs/HTML).
 - TESTS: `npm run validate` PASS (przed release); `npm run version:check` PASS po fixie i po release; pre-push hook zielony (git-safety 23/23, test:quick PASS) przy obu pushach.
 - DIFF: 1 skrypt + 2 HTML + 34 pliki release.
