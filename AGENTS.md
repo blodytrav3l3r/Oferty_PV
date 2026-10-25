@@ -106,6 +106,14 @@ VERIFIED (YES/NO).
 - DRY, SRP, KISS; funkcje ~100–150 linii, max 3 poziomy zagnieżdżeń; nazwy: funkcje czasownik+rzeczownik, boolean `is/has/can`; immutability (`[...t].sort(...)`); brak silent fail; Zod na wejściu.
 - Multi-model: po przejęciu sesji podejmij pracę od ostatniego stabilnego stanu (`docs/plans/`, git log); mniejsze modele: zero placeholderów + częstszy `typecheck`; większe: kontrola SRP/DRY/ADR + refaktor po poprzedniku.
 
+## Polityka kontekstu (jakość przede wszystkim, koszt przy okazji)
+
+- Rozpoznanie w **>2 plikach** → subagent `cavecrew-investigator` (zwraca tabelę `file:line`); nie wciągaj treści plików do głównego kontekstu.
+- `read` pliku **>300 linii** → zawsze z `offset`/`limit`; całość tylko gdy edytujesz większość pliku.
+- Pytania „gdzie jest X"/architektura → `graphify` (MCP), nie grep po całym repo.
+- Powrót do zadania z historii → `claude_mem_search` **przed** czytaniem plików.
+- Bramy egzekwuje kod (pre-push/pre-commit), nie proza — nie powtarzaj ich treści w promptcie ani w nowych plikach `instructions`.
+
 ## Routing domenowy (szczegóły)
 
 - Frontend + UI/UX + Excel + Rury/Studnie: `docs/agents/frontend.md` (+ SSoT wizualny `docs/UI_GUIDELINES.md`).

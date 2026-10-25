@@ -30,6 +30,8 @@ V1 i V2 dzielą nazwę komendy `opencode`, więc obecność V1 w `PATH` myli. W 
 
 Pozostałe skille (design, ui-ux-pro-max, slides, brand, banner-design, ui-styling, design-system) są lokalne — `.gitignore` trzyma je poza repo.
 
+`instructions` wstrzykuje 5 plików: `AGENTS.md` + 4 rules (`common/coding-style`, `common/security`, `web/security`, `typescript/coding-style`). Świadomie **poza** injection: `CONTRIBUTING.md` i `.opencode/rules/common/git-workflow.md` — ich treść dublują `AGENTS.md` (bramy, `commit.mjs`, Git Safety) i `docs/agents/release.md` (format commitów, release). Oba zostają w repo dla ludzi; agent sięga po nie tylko na żądanie.
+
 Zmiana configu przeładowuje się bez restartu. Weryfikacja: `opencode-cli.exe debug config` (źródła), `opencode-cli.exe debug agents` (agenci z promptami).
 
 ## 3. Aktywne pluginy
