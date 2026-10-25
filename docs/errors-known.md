@@ -434,3 +434,12 @@ padają na braku uprawnień. Na katalogach te same flagi działają poprawnie.
 **Fix**: pliki dostają jawny `(F)` BEZ `(OI)(CI)`, katalogi z `(OI)(CI)(F)`;
 ratunek właściciela: `icacls .env /grant "DOMAIN\\user:(F)"` (działa bez flag).
 Wzorcowo: `scripts/harden-local-perms.bat` (grant per-typ + snapshot + `--restore-dir`).
+
+## 63. Niestabilne `watchdog.rotate` i `claimIdempotencyHttp` pod pełnym obciążeniem
+
+**Problem**: przy pełnym równoległym obciążeniu (cały zestaw testów, pre-push) sporadycznie nie przechodzą `tests/scripts/watchdog.test.ts` (przypadek `rotate`, exit 2) oraz `tests/orders/claimIdempotencyHttp.test.ts` (naruszenie unique `userId,endpoint,key`). W izolacji oba przechodzą. Zaobserwowane 2026-10-25 przy uruchomionym lokalnym serwerze deweloperskim — korelacja, nie potwierdzona przyczyna.
+**Objaw**: pojedyncze czerwone przebiegi w pełnym zestawie przy zielonych przebiegach izolowanych; ten sam kod, różny wynik.
+**Zakres**: odtwarzalność i ewentualny wpływ na produkcję **nieustalone** — brak potwierdzonej przyczyny, nie klasyfikować jako błędu produkcyjnego.
+**Status**: otwarte — wymaga reprodukcji i analizy przyczyny.
+**Dalsze kroki**: zebrać logi z przebiegów czerwonego i zielonego, ustalić warunki reprodukcji (obciążenie, kolejność, współdzielone zasoby), sprawdzić synchronizację i izolację testów; dopiero potem diagnoza przyczyny.
+**Ograniczenie**: nie osłabiać testów ani nie zwiększać arbitralnie timeoutów tylko po to, by ukryć problem.

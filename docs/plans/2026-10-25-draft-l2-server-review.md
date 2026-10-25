@@ -206,7 +206,7 @@ Testy obowiązkowe (każdy musi paść na starym kodzie = RED, potem GREEN):
 - Migracja przechodzi `migrate deploy` na kopii bazy; backup przed wdrożeniem.
 - Brak zmian w limitach globalnych i w istniejących trasach ofert/zamówień.
 - Dokumentacja: `docs/API.md` (nowe trasy), `docs/SYSTEM_INVARIANTS.md`
-  (nowy inwariant I-013 „draft nigdy nie nadpisuje cicho" — do zatwierdzenia).
+  (nowy inwariant I-013 „draft nigdy nie nadpisuje cicho" — zatwierdzony 2026-10-25).
 
 ## 9. Otwarte pytania (decyzja użytkownika przed GO)
 
@@ -223,7 +223,7 @@ Testy obowiązkowe (każdy musi paść na starym kodzie = RED, potem GREEN):
 
 **Zaimplementowane (backend + klient).** GO otrzymane z limitem 256 KB; pozostałe
 punkty przyjęte jako defaulty z tego dokumentu (50 draftów, TTL 30 dni, drafty
-zostają po wylogowaniu do TTL, brak podglądu admina, I-013 nadal do zatwierdzenia).
+zostają po wylogowaniu do TTL, brak podglądu admina, I-013 zatwierdzony i dodany).
 
 - **Backend** — commit `feat(api): serwerowy draft l2 z cas i ttl`: model `drafts`,
   migracja `20261025000000_add_drafts` (`migrate deploy` OK, `migrate diff` bez
@@ -248,5 +248,8 @@ Decyzje wykonawcze odbiegające od literału protokołu:
 3. **`If-Match` bez meta = 412, nie nadpisanie** — po skasowaniu `localStorage`
    pierwszy push dostaje `DRAFT_PRECONDITION_REQUIRED` i konflikt jest jawny.
 
-Otwarte: I-013 w `docs/SYSTEM_INVARIANTS.md` (wymaga akceptacji treści i numeru)
-oraz wpis nowych tras w `docs/API.md`.
+Otwarte: brak — I-013 dodany do `docs/SYSTEM_INVARIANTS.md` (2026-10-25, po
+akceptacji treści i numeru), wpis nowych tras w `docs/API.md` jest w §`Drafty
+robocze (/api/drafts)`, a niestabilne testy pod pełnym obciążeniem odnotowano jako
+znany problem #63 w `docs/errors-known.md` (status: otwarte, bez potwierdzonej
+przyczyny).

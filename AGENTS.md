@@ -10,7 +10,7 @@ Szczegóły domenowe w `docs/agents/` (routing poniżej) — ten plik to mapa i 
 - `npm run format` (Prettier; respektuj `.prettierrc`, nie nadpisuj ustawień).
 - Commity wyłącznie przez `node scripts/commit.mjs "typ(scope): opis"` (polskie znaki, reguły commitlint).
 - Kodowanie UTF-8 bez BOM (`.bat` ASCII-only); przy ERROR: `npm run encoding:fix`.
-- Inwarianty: `docs/SYSTEM_INVARIANTS.md` (I-001–I-012) — przeczytaj przed zmianą logiki biznesowej; zmiana inwariantu tylko za jawną decyzją.
+- Inwarianty: `docs/SYSTEM_INVARIANTS.md` (I-001–I-013) — przeczytaj przed zmianą logiki biznesowej; zmiana inwariantu tylko za jawną decyzją.
 
 ## Source of Truth Protocol (nadrzędne, EVIDENCE-FIRST)
 
@@ -115,7 +115,7 @@ VERIFIED (YES/NO).
 - Testy + bramy jakości: `docs/agents/testing.md`.
 - Commity/wersje/release/plany: `docs/agents/release.md`.
 - Komendy + kodowanie: `docs/agents/commands.md`.
-- Baza znanych błędów #1–#62: tabela skrótowa w historii + pełnia `docs/errors-known.md` (SSoT numeracji).
+- Baza znanych błędów #1–#63: tabela skrótowa w historii + pełnia `docs/errors-known.md` (SSoT numeracji).
 
 ### Bezpieczeństwo Git — Git Safety (obowiązkowe, SSoT `docs/development/GIT_SAFETY.md`)
 

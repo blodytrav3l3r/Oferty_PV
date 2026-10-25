@@ -127,3 +127,25 @@
 - **Owner:** backend (`src/services/auditService.ts`).
 - **Enforcement:** `recordAuditFailure()` + kontekstowy `logger.error`.
 - **Tests:** `tests/security/audit.test.ts`.
+
+## I-013 — Draft nie może być nadpisany po cichu
+
+- **Invariant:** zapis, autosave, synchronizacja ani odzyskiwanie draftu nie mogą
+  bez jawnej decyzji użytkownika doprowadzić do cichej utraty lub zastąpienia
+  nowszej wersji dokumentu. Konflikt wersji wykryty i jawnie obsłużony; nieudany
+  zapis nie jest przedstawiany jako udany; lokalna kopia draftu zostaje
+  zabezpieczona do rozstrzygnięcia konfliktu; automatyczne ponowienie zapisu nie
+  omija kontroli wersji (żadnego przyjęcia nowszej rewizji bez weryfikacji);
+  odtwarzanie draftu nie nadpisuje automatycznie aktualnego dokumentu.
+- **Owner:** frontend (`public/js/shared/draftStore.js`,
+  `public/js/shared/draftAutosave.js`, `public/js/shared/draftSync.js`) +
+  backend (`src/services/drafts/draftService.ts`, `src/routes/drafts.ts`).
+- **Enforcement:** CAS `If-Match` + `updateMany` z predykatem wersji (count 0 →
+  409 `DRAFT_CONFLICT`; brak nagłówka → 412 `DRAFT_PRECONDITION_REQUIRED`);
+  `_draftSaveState` (błąd/`blocked-storage` nigdy jako `ok`); modal 3 wyborów przy
+  konflikcie + kopia `docId-konflikt-<ts>`; flush `keepalive` jawnie pomija
+  payload > 64 KB (`skipped_keepalive`); odzysk serwerowy tylko po decyzji
+  użytkownika.
+- **Tests:** `tests/drafts/casConcurrency.test.ts`,
+  `tests/drafts/draftsRoutes.test.ts`, `tests/frontend/draftSaveState.test.ts`,
+  `tests/frontend/draftSync.test.ts`, `tests/frontend/draftSyncWiring.test.ts`.

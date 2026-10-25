@@ -8,7 +8,7 @@ Warstwy: `routes` → `validators` → `services` → `Prisma` (+ `auth`, `owner
 
 Decyzje (szczegóły w `docs/adr/`): ADR-001 SQLite produkcyjnie; ADR-002 Vanilla JS SPA; ADR-004 Express + Prisma; ADR-005 Express jedynym serwerem (Vite wycofany); ADR-006 HTTPS przez reverse proxy; ADR-007 ujednolicony cennik; ADR-008 modularyzacja frontendu; ADR-009 mapa produktów studni (`Map<string,Product>` + kontrakt `window.studnieProducts` + `__assertStudnieMapFresh`).
 
-Inwarianty domenowe: `docs/SYSTEM_INVARIANTS.md` (I-001–I-012) — przeczytaj przed zmianą logiki biznesowej.
+Inwarianty domenowe: `docs/SYSTEM_INVARIANTS.md` (I-001–I-013) — przeczytaj przed zmianą logiki biznesowej.
 
 ## Konwencje kodu
 
