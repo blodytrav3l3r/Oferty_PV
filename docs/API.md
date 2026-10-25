@@ -617,6 +617,42 @@ Obiekt `sync` w odpowiedziach panelu/skrzynki: `{inserted, resolved, deleted}` p
 
 ---
 
+## Drafty robocze (`/api/drafts`)
+
+Serwerowa kopia draftu cross-device (L2). Draft jest **prywatny per user** — klucz
+`(userId, kind, docId)` w tabeli, więc cudzy wiersz jest nieosiągalny na poziomie
+zapytania (404, bez ujawniania istnienia). Draft nigdy nie mutuje dokumentu.
+
+| Metoda | Ścieżka                    | Auth | Opis                                                    |
+| ------ | -------------------------- | ---- | ------------------------------------------------------- |
+| GET    | `/api/drafts`              | auth | Metadane własnych draftów (bez `payload`), max 50       |
+| GET    | `/api/drafts/:kind/:docId` | auth | Pełny draft + `ETag: "<version>"` (404 gdy brak/wygasł) |
+| PUT    | `/api/drafts/:kind/:docId` | auth | Zapis z `If-Match: "<version>"` (wymagany dla update)   |
+| DELETE | `/api/drafts/:kind/:docId` | auth | Jawne odrzucenie draftu (204 / 404)                     |
+
+`kind`: `offer_rury` \| `order_rury` \| `offer_studnie` \| `order_studnie`.
+`docId`: 1–128 znaków `[A-Za-z0-9_-]`. Body: `{ payload: object, baseVersion?: int|null }`.
+
+Kody błędów:
+
+| Status | `code`                        | Kiedy                                                       |
+| ------ | ----------------------------- | ----------------------------------------------------------- |
+| 400    | `INVALID_IF_MATCH`            | `If-Match` obecny, ale niepoprawny (nie ciche pominięcie)   |
+| 400    | `DRAFT_INVALID_PAYLOAD`       | `payload` nie jest obiektem / nieserializowalny             |
+| 404    | `DRAFT_NOT_FOUND`             | `If-Match` na nieistniejący draft                           |
+| 409    | `DRAFT_CONFLICT`              | `If-Match` nieaktualny → `serverVersion`, `serverUpdatedAt` |
+| 409    | `DRAFT_LIMIT`                 | 50 draftów osiągnięte → `count`, `limit` (nic nie kasowane) |
+| 412    | `DRAFT_PRECONDITION_REQUIRED` | draft istnieje, brak `If-Match` → `serverVersion`           |
+| 413    | `DRAFT_TOO_LARGE`             | payload > 256 KB → `bytes`, `limit` (poprzedni nietknięty)  |
+
+Limity: payload 256 KB (bajty UTF-8 `JSON.stringify`, liczone serwerowo), 50 draftów
+na użytkownika, TTL 30 dni (leniwe przy odczycie + sweep w housekeepingu).
+Parser: dedykowany `express.json({ limit: '320kb' })` tylko dla tej ścieżki.
+Klient: `public/js/shared/draftSync.js` (offline-first; lokalny zapis nigdy nie
+zależy od sieci, konflikt = trzy jawne wybory, bez auto-merge).
+
+---
+
 ## Endpointy dopełniające (weryfikacja 2026-10-24)
 
 Sekcje powyżej opisują główne powierzchnie; poniżej pełne listy tras, które istnieją

@@ -221,6 +221,32 @@ Testy obowiązkowe (każdy musi paść na starym kodzie = RED, potem GREEN):
 
 ## 10. Status
 
-**NO-GO.** Powyższe jest projektem do akceptacji. Implementacja startuje dopiero
-po: (a) odpowiedziach na sekcję 9, (b) jawnym GO na paczkę L2, (c) potwierdzeniu
-H-1 testem równoległym jako pierwszym commitem L2.
+**Zaimplementowane (backend + klient).** GO otrzymane z limitem 256 KB; pozostałe
+punkty przyjęte jako defaulty z tego dokumentu (50 draftów, TTL 30 dni, drafty
+zostają po wylogowaniu do TTL, brak podglądu admina, I-013 nadal do zatwierdzenia).
+
+- **Backend** — commit `feat(api): serwerowy draft l2 z cas i ttl`: model `drafts`,
+  migracja `20261025000000_add_drafts` (`migrate deploy` OK, `migrate diff` bez
+  driftu), trasy z `If-Match`, limity 256 KB / 50, TTL leniwy + sweep.
+  Testy: `tests/drafts/draftsRoutes.test.ts` (15) + `casConcurrency.test.ts` (2).
+- **H-1 potwierdzona** — dwa niezależne klienty Prisma, równoległy `updateMany`
+  z tą samą wersją → `counts [0,1]`, jeden 409 `VERSION_CONFLICT`; 3/3 przebiegi.
+- **Klient** — `public/js/shared/draftSync.js` (offline-first push z CAS, meta
+  wersji w `localStorage`, trzy jawne wybory konfliktu, `pull`/`list`/`remove`),
+  wpięcie w `draftAutosave.js` (push po potwierdzonym zapisie lokalnym, flush
+  `keepalive` przy wyjściu z karty, odzysk z kopii serwerowej gdy lokalnej nie ma).
+  Testy: `tests/frontend/draftSync.test.ts` (22) + `draftSyncWiring.test.ts` (5).
+
+Decyzje wykonawcze odbiegające od literału protokołu:
+
+1. **`navigator.sendBeacon` nie jest używany** — beacon nie pozwala ustawić
+   `If-Match`, więc omijałby CAS i mógł nadpisać cudzą pracę. Zamiast tego
+   `fetch(..., {keepalive: true})`: te same nagłówki, ten sam limit 64 KB.
+   Payload > 64 KB jest **jawnie pomijany** (`skipped_keepalive`), nie wysyłany bez CAS.
+2. **Kopie konfliktu nie trafiają do „Wznów pracę"** — `docId-konflikt-<ts>` nie jest
+   dokumentem, więc deep-link prowadziłby do pustego formularza; lista je filtruje.
+3. **`If-Match` bez meta = 412, nie nadpisanie** — po skasowaniu `localStorage`
+   pierwszy push dostaje `DRAFT_PRECONDITION_REQUIRED` i konflikt jest jawny.
+
+Otwarte: I-013 w `docs/SYSTEM_INVARIANTS.md` (wymaga akceptacji treści i numeru)
+oraz wpis nowych tras w `docs/API.md`.

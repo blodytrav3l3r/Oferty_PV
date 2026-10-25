@@ -86,6 +86,11 @@
             return;
         }
         var rows = items
+            .filter(function (item) {
+                // Kopie konfliktu (L2) nie są dokumentami: nie da się ich „wznowić"
+                // deep-linkiem, a pokazanie ich tutaj prowadziłoby do pustego formularza.
+                return String(item.docId || '').indexOf('-konflikt-') === -1;
+            })
             .map(function (item) {
                 var cfg = KINDS[item.kind];
                 var label = cfg ? cfg.label : 'Dokument';

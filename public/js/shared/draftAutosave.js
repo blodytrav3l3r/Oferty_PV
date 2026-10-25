@@ -10,6 +10,8 @@
 
 var DRAFT_AUTOSAVE_DEBOUNCE_MS = 2000;
 var DRAFT_MODAL_ID = 'sok-draft-modal';
+/** L2: id modala konfliktu kopii serwerowej. */
+var DRAFT_SYNC_MODAL_ID = 'sok-draft-sync-modal';
 
 /** Zarejestrowane rodzaje w tym module/iframe (np. studnie: offer+order). */
 var _draftInitedKinds = [];
@@ -28,6 +30,16 @@ var DRAFT_SAVE_RETRY_MS = 60000;
 var DRAFT_STATUS_ID = 'draft-save-status';
 /** Flaga oversize per klucz (jeden toast na klucz, nie spam). */
 var _draftOversizeNoted = {};
+/** L2: debounce pushu kopii serwerowej (localStorage zostaje źródłem prawdy). */
+var DRAFT_SYNC_DEBOUNCE_MS = 5000;
+/** L2: oczekujący push per klucz draftu (nadpisuje się nowszym payloadem). */
+var _draftSyncPending = {};
+/** L2: timery debounce pushu per klucz. */
+var _draftSyncTimers = {};
+/** L2: klucze z trwającym żądaniem (jeden push na klucz naraz). */
+var _draftSyncInFlight = {};
+/** L2: jednorazowe zgłoszenia odmowy serwera per klucz+powód (bez spamu). */
+var _draftSyncNoted = {};
 /** Ostatni sweep per userId (throttle 60 s). */
 var _draftLastSweepAt = {};
 /** Ostatni toast multi-tab per klucz (throttle 5 s). */
@@ -991,6 +1003,19 @@ function _draftWriteKind(kind, isFlush) {
     if (res.ok) {
         _draftLastWritten[key] = canon;
         _draftSetSaveState('ok');
+        // L2: kopia serwerowa po potwierdzonym zapisie lokalnym. Flush (wyjście
+        // z karty) idzie od razu z keepalive; zwykły autosave debounce'uje.
+        if (isFlush) {
+            _draftSyncPending[key] = {
+                kind: kind,
+                docId: docId,
+                payload: draft.payload,
+                baseVersion: draft.baseVersion
+            };
+            _draftSyncRun(key, true);
+        } else {
+            _draftSyncSchedule(kind, docId, draft);
+        }
         return true;
     }
     if (res.reason === 'oversize' && !_draftOversizeNoted[key]) {
@@ -1430,10 +1455,23 @@ function _draftShowDraftModal(kind, draft, savedDoc) {
                 _keys.forEach(function (k) {
                     if (_lfp) _draftDismissed[k] = _lfp;
                     window.draftStore.removeDraft(window.localStorage, k);
+                    _draftSyncForget(k);
                     delete _draftLastWritten[k];
                     delete _draftOversizeNoted[k];
                     discarded = true;
                 });
+                // Kopia serwerowa odrzucona jawnie = usuwamy też wiersz na serwerze,
+                // inaczej wracałaby przy każdym wejściu do dokumentu.
+                if (draft && draft._source === 'server') {
+                    try {
+                        _draftG('draftSync').remove({
+                            storage: window.localStorage,
+                            userId: userId,
+                            kind: kind,
+                            docId: draft.docId
+                        });
+                    } catch (_eSrv) {}
+                }
             }
             _draftHideDraftModal();
             if (discarded) _draftToast('Draft odrzucony (zapisana wersja nietknięta)', 'info');
@@ -1748,6 +1786,355 @@ function _draftDiffLinesForModal(kind, draft) {
 }
 
 /**
+ * L2: zgłoszenie odmowy serwera raz per klucz+powód (pasek statusu już istnieje
+ * dla problemów lokalnych; tu chodzi o kopię cross-device, więc tylko raz).
+ * @param {string} key
+ * @param {string} reason
+ * @param {string} msg
+ */
+function _draftSyncNoteOnce(key, reason, msg) {
+    var id = key + '|' + reason;
+    if (_draftSyncNoted[id]) return;
+    _draftSyncNoted[id] = true;
+    _draftReportFailure(reason);
+    _draftToast(msg, 'warning');
+}
+
+/**
+ * L2: zapomina pending push dla klucza (odrzucenie draftu nie może go wskrzesić
+ * na serwerze). Nie rusza meta — to robi draftSync.remove.
+ * @param {string} key
+ */
+function _draftSyncForget(key) {
+    try {
+        if (_draftSyncTimers[key]) {
+            clearTimeout(_draftSyncTimers[key]);
+            _draftSyncTimers[key] = null;
+        }
+        delete _draftSyncPending[key];
+        delete _draftSyncNoted[key + '|too_large'];
+        delete _draftSyncNoted[key + '|limit'];
+        delete _draftSyncNoted[key + '|forbidden'];
+    } catch (_e) {}
+}
+
+/**
+ * L2: harmonogram pushu kopii serwerowej. Zapis lokalny już się udał — ten krok
+ * jest wyłącznie kopią, więc jego błąd nigdy nie zmienia stanu formularza.
+ * @param {string} kind
+ * @param {string} docId
+ * @param {object} draft koperta z draftStore.buildDraft
+ */
+function _draftSyncSchedule(kind, docId, draft) {
+    try {
+        if (!_draftG('draftSync') || !draft || !draft.payload) return;
+        var userId = _draftUserId();
+        if (!userId) return;
+        var key = window.draftStore.buildDraftKey(userId, kind, docId);
+        if (!key) return;
+        _draftSyncPending[key] = {
+            kind: kind,
+            docId: docId,
+            payload: draft.payload,
+            baseVersion: typeof draft.baseVersion === 'number' ? draft.baseVersion : null
+        };
+        if (_draftSyncTimers[key]) clearTimeout(_draftSyncTimers[key]);
+        _draftSyncTimers[key] = setTimeout(function () {
+            _draftSyncTimers[key] = null;
+            _draftSyncRun(key, false);
+        }, DRAFT_SYNC_DEBOUNCE_MS);
+    } catch (_e) {}
+}
+
+/**
+ * L2: wykonanie pushu. Jeden równoległy push na klucz; nowszy pending czeka.
+ * @param {string} key
+ * @param {boolean} keepalive wyjście z karty (limit 64 KB, jawnie pomijane wyżej)
+ */
+function _draftSyncRun(key, keepalive) {
+    try {
+        var sync = _draftG('draftSync');
+        var pending = _draftSyncPending[key];
+        if (!sync || !pending) return;
+        if (_draftSyncTimers[key]) {
+            clearTimeout(_draftSyncTimers[key]);
+            _draftSyncTimers[key] = null;
+        }
+        if (_draftSyncInFlight[key]) return;
+        delete _draftSyncPending[key];
+        var userId = _draftUserId();
+        if (!userId) return;
+        _draftSyncInFlight[key] = true;
+        sync.push({
+            storage: window.localStorage,
+            userId: userId,
+            kind: pending.kind,
+            docId: pending.docId,
+            payload: pending.payload,
+            baseVersion: pending.baseVersion,
+            keepalive: keepalive === true
+        })
+            .then(function (res) {
+                _draftSyncFinish(key, pending, res);
+            })
+            .catch(function () {
+                _draftSyncFinish(key, pending, { status: 'offline' });
+            });
+    } catch (_e) {}
+}
+
+/**
+ * L2: reakcja na wynik pushu. `ok`/`offline`/`error` są ciche (kopia to
+ * best-effort); konflikt i odmowy limitów są jawne.
+ * @param {string} key
+ * @param {object} pending
+ * @param {object} res
+ */
+function _draftSyncFinish(key, pending, res) {
+    try {
+        delete _draftSyncInFlight[key];
+        var status = res && res.status ? res.status : 'error';
+        if (status === 'conflict') {
+            _draftShowSyncConflictModal(key, pending, res);
+        } else if (status === 'too_large') {
+            _draftSyncNoteOnce(
+                key,
+                'too_large',
+                'Kopia serwerowa pominięta: draft przekracza 256 KB. Praca jest zapisana lokalnie.'
+            );
+        } else if (status === 'limit') {
+            _draftSyncNoteOnce(
+                key,
+                'limit',
+                'Limit 50 draftów na serwerze — kopia wstrzymana. Usuń niepotrzebne drafty.'
+            );
+        } else if (status === 'forbidden') {
+            _draftSyncNoteOnce(
+                key,
+                'forbidden',
+                'Kopia serwerowa wstrzymana: sesja wygasła. Praca jest zapisana lokalnie.'
+            );
+        }
+        // Nowy stan w międzyczasie (użytkownik dalej pisał) → dogon go.
+        if (_draftSyncPending[key]) _draftSyncRun(key, false);
+    } catch (_e) {}
+}
+
+/**
+ * L2: modal konfliktu — trzy jawne wybory, żaden nie jest domyślny.
+ * Auto-merge świadomie nie istnieje (bez historii wersji = cicha utrata danych).
+ * @param {string} key
+ * @param {object} pending
+ * @param {object} res {serverVersion, serverUpdatedAt}
+ */
+function _draftShowSyncConflictModal(key, pending, res) {
+    try {
+        var sync = _draftG('draftSync');
+        var showModalFn = _draftG('showModal');
+        if (typeof showModal === 'function') showModalFn = showModal;
+        if (!sync || typeof showModalFn !== 'function') return;
+        var escapeHtml = _draftEscaper('escapeHtml');
+        var escapeHtmlAttr = _draftEscaper('escapeHtmlAttr');
+        var userId = _draftUserId();
+        if (!userId) return;
+        var when = '';
+        try {
+            if (res && res.serverUpdatedAt) {
+                var dt = new Date(res.serverUpdatedAt);
+                if (!isNaN(dt.getTime())) when = ' z ' + dt.toLocaleString('pl-PL');
+            }
+        } catch (_e0) {}
+        var html =
+            '<div class="modal">' +
+            '<div class="modal-header"><h3 id="sok-draft-sync-title"><i data-lucide="alert-triangle" aria-hidden="true"></i> ' +
+            escapeHtml('Draft zmieniony na innym urządzeniu') +
+            '</h3><button type="button" class="btn-icon" data-draft-sync-act="close" aria-label="' +
+            escapeHtmlAttr('Zamknij') +
+            '"><i data-lucide="x" aria-hidden="true"></i></button></div>' +
+            '<div class="text-muted fs-xs-muted">' +
+            escapeHtml(
+                'Ta sama kopia robocza (' +
+                    _draftKindLabelShort(pending.kind) +
+                    ') istnieje w wersji serwerowej' +
+                    when +
+                    '. Wybierz świadomie, którą zachować — nic nie jest nadpisywane automatycznie.'
+            ) +
+            '</div>' +
+            '<div class="modal-footer">' +
+            '<button type="button" class="btn btn-primary btn-sm" data-draft-sync-act="server"><i data-lucide="server" aria-hidden="true"></i> ' +
+            escapeHtml('Użyj serwera') +
+            '</button>' +
+            '<button type="button" class="btn btn-secondary btn-sm" data-draft-sync-act="local"><i data-lucide="monitor" aria-hidden="true"></i> ' +
+            escapeHtml('Użyj lokalnego') +
+            '</button>' +
+            '<button type="button" class="btn btn-secondary btn-sm" data-draft-sync-act="both"><i data-lucide="copy" aria-hidden="true"></i> ' +
+            escapeHtml('Zachowaj oba') +
+            '</button>' +
+            '</div>' +
+            '</div>';
+        var overlay = null;
+        try {
+            overlay = showModalFn({
+                id: DRAFT_SYNC_MODAL_ID,
+                titleId: 'sok-draft-sync-title',
+                html: html,
+                onClose: function () {
+                    _draftHideSyncConflictModal();
+                }
+            });
+        } catch (_e1) {
+            return;
+        }
+        if (!overlay) return;
+        overlay.addEventListener('click', function (ev) {
+            var btn = null;
+            try {
+                btn =
+                    ev.target && typeof ev.target.closest === 'function'
+                        ? ev.target.closest('[data-draft-sync-act]')
+                        : null;
+            } catch (_e2) {}
+            if (!btn) return;
+            var act = btn.getAttribute('data-draft-sync-act');
+            if (act === 'close') {
+                _draftHideSyncConflictModal();
+                return;
+            }
+            _draftSyncApplyChoice(act, userId, pending, res);
+        });
+        try {
+            var lucideG = _draftG('lucide');
+            if (typeof lucide !== 'undefined' && lucide.createIcons)
+                lucide.createIcons({ root: overlay });
+            else if (lucideG && lucideG.createIcons) lucideG.createIcons({ root: overlay });
+        } catch (_e5) {}
+    } catch (_e6) {}
+}
+
+/** Zamknięcie modala konfliktu (bez rzucania). */
+function _draftHideSyncConflictModal() {
+    try {
+        if (typeof document === 'undefined') return;
+        var overlay = document.getElementById(DRAFT_SYNC_MODAL_ID);
+        if (overlay && overlay.parentNode) overlay.parentNode.removeChild(overlay);
+    } catch (_e) {}
+}
+
+/**
+ * L2: wykonanie wyboru z modala konfliktu.
+ * - `server`: payload serwera wchodzi do formularza jako niezapisane zmiany,
+ * - `local`: lokalny payload nadpisuje serwer (CAS na wersję serwera),
+ * - `both`: lokalny ląduje pod `docId-konflikt-<ts>` (tylko localStorage).
+ * @param {string} choice
+ * @param {string} userId
+ * @param {object} pending
+ * @param {object} res
+ */
+function _draftSyncApplyChoice(choice, userId, pending, res) {
+    var sync = _draftG('draftSync');
+    if (!sync || !choice) return;
+    _draftHideSyncConflictModal();
+    sync.resolveConflict({
+        choice: choice,
+        storage: window.localStorage,
+        draftStore: window.draftStore,
+        userId: userId,
+        kind: pending.kind,
+        docId: pending.docId,
+        payload: pending.payload,
+        baseVersion: pending.baseVersion,
+        serverVersion: res && typeof res.serverVersion === 'number' ? res.serverVersion : null
+    })
+        .then(function (out) {
+            var status = out && out.status ? out.status : 'error';
+            if (out && out.conflictCopyKey)
+                _draftToast(
+                    'Kopia lokalna zachowana jako „' +
+                        _draftKindLabelShort(pending.kind) +
+                        ' (kopia konfliktu)"',
+                    'info'
+                );
+            if (status === 'ok') {
+                if (choice === 'local') {
+                    _draftToast('Wersja lokalna wysłana na serwer', 'success');
+                    return;
+                }
+                if (out && out.payload) {
+                    _draftApply(pending.kind, { payload: out.payload });
+                    // Formularz pokazuje teraz wersję serwera: lokalny draft musi
+                    // dogonić ten stan, inaczej recovery zaproponuje starą kopię.
+                    _draftScheduleSave();
+                }
+                return;
+            }
+            _draftToast('Nie udało się rozstrzygnąć konfliktu draftu — spróbuj ponownie', 'error');
+        })
+        .catch(function () {
+            _draftToast('Nie udało się rozstrzygnąć konfliktu draftu — spróbuj ponownie', 'error');
+        });
+}
+
+/**
+ * L2: odzysk z kopii serwerowej, gdy lokalnej nie ma (inne urządzenie).
+ * Ten sam komparator co recovery lokalne — modal tylko dla realnej różnicy.
+ * @param {string} kind
+ * @param {object} cfg
+ * @param {string} docId
+ */
+function _draftCheckServerRecovery(kind, cfg, docId) {
+    try {
+        var sync = _draftG('draftSync');
+        if (!sync || typeof sync.pull !== 'function') return;
+        var userId = _draftUserId();
+        if (!userId) return;
+        var cur = _draftCurrentSaved(kind, cfg, docId);
+        if (!cur || cur.slim) return;
+        sync.pull({ storage: window.localStorage, userId: userId, kind: kind, docId: docId })
+            .then(function (res) {
+                if (!res || res.status !== 'ok' || !res.payload) return;
+                var same = _draftEquivalent(kind, res.payload, cur.payload, cur.isNew, {
+                    ignorePii: true
+                });
+                if (same) {
+                    // Martwy ghost serwerowy (równy SAVED) — usuń, żeby nie wracał.
+                    sync.remove({
+                        storage: window.localStorage,
+                        userId: userId,
+                        kind: kind,
+                        docId: docId
+                    });
+                    return;
+                }
+                var live = null;
+                try {
+                    live = _draftCollectLive(kind);
+                } catch (_eLive) {}
+                if (
+                    live &&
+                    _draftEquivalent(kind, res.payload, live, cur.isNew, { ignorePii: true })
+                )
+                    return;
+                _draftShowDraftModal(
+                    kind,
+                    {
+                        v: 1,
+                        kind: kind,
+                        userId: userId,
+                        docId: docId,
+                        baseVersion: res.baseVersion,
+                        updatedAt: res.updatedAt,
+                        payload: res.payload,
+                        _source: 'server',
+                        _serverVersion: res.version
+                    },
+                    cur.savedDoc
+                );
+            })
+            .catch(function () {});
+    } catch (_e) {}
+}
+
+/**
  * Sprawdza recovery dla rodzaju: popup tylko gdy draft istnieje i NIE jest
  * równoważny SAVED (ten sam komparator co bramka zapisu — _draftEquivalent).
  * @param {string} kind
@@ -1763,7 +2150,12 @@ function _draftCheckRecovery(kind) {
         var key = window.draftStore.buildDraftKey(userId, kind, docId);
         if (!key) return;
         var loaded = window.draftStore.loadDraft(window.localStorage, key);
-        if (loaded.status !== 'ok' || !loaded.draft) return;
+        if (loaded.status !== 'ok' || !loaded.draft) {
+            // L2: brak draftu lokalnego ≠ brak pracy. Kopia serwerowa może być
+            // z innego urządzenia — sprawdzamy ją tym samym komparatorem.
+            _draftCheckServerRecovery(kind, cfg, docId);
+            return;
+        }
         var cur = _draftCurrentSaved(kind, cfg, docId);
         if (!cur || cur.slim) return;
         if (
@@ -1988,5 +2380,9 @@ window.draftAutosave = {
     describeDirty: _draftDescribeDirty,
     liveRowCount: _draftLiveRowCount,
     currentUserId: _draftUserId,
-    describeDiff: _draftDescribeDiff
+    describeDiff: _draftDescribeDiff,
+    SYNC_MODAL_ID: DRAFT_SYNC_MODAL_ID,
+    SYNC_DEBOUNCE_MS: DRAFT_SYNC_DEBOUNCE_MS,
+    syncSchedule: _draftSyncSchedule,
+    syncRun: _draftSyncRun
 };
