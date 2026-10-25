@@ -92,15 +92,19 @@ describe('P2.3 e2e classification', () => {
         }
     });
 
-    it('pr-gate istnieje: tylko PR, blokujący (E6)', () => {
-        const idx = CI.indexOf('    pr-gate:');
-        expect(idx).toBeGreaterThan(-1);
-        const section = CI.slice(idx, idx + 1500);
-        expect(section).toMatch(/pull_request/);
-        expect(section).toMatch(/version:check/);
-        expect(section).toMatch(/prisma validate/);
-        expect(section).toMatch(/prices:verify/);
-        expect(section).not.toMatch(/continue-on-error:\s*true/);
+    it('brak pr-gate: pokrycie version/prisma/prices jest w jobach push-only', () => {
+        expect(CI).not.toMatch(/^\s{4}pr-gate:/m);
+        const versionCheck = CI.slice(
+            CI.indexOf('    version-check:'),
+            CI.indexOf('    drift-check:')
+        );
+        expect(versionCheck).toMatch(/version:check/);
+        expect(versionCheck).toMatch(/prices:verify/);
+        const driftCheck = CI.slice(
+            CI.indexOf('    drift-check:'),
+            CI.indexOf('    deploy-production:')
+        );
+        expect(driftCheck).toMatch(/prisma validate/);
     });
 
     it('deploy wymaga blocking jobow (bez extended)', () => {
