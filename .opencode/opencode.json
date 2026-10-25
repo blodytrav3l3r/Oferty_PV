@@ -4,10 +4,8 @@
     "default_agent": "build",
     "instructions": [
         "AGENTS.md",
-        "CONTRIBUTING.md",
         ".opencode/rules/common/coding-style.md",
         ".opencode/rules/common/security.md",
-        ".opencode/rules/common/git-workflow.md",
         ".opencode/rules/web/security.md",
         ".opencode/rules/typescript/coding-style.md"
     ],
