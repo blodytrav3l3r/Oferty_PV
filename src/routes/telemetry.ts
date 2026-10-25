@@ -5,7 +5,8 @@ import crypto from 'crypto';
 import { logger } from '../utils/logger';
 import { validateData } from '../validators/authSchema';
 import { WRITE_LIMITER } from '../middleware/rateLimiters';
-import { telemetryOverrideSchema } from '../validators/offerSchemas';
+import { telemetryOverrideSchema, draftFailureSchema } from '../validators/offerSchemas';
+import { recordDraftFailure } from '../utils/metrics';
 
 const router = express.Router();
 
@@ -39,6 +40,20 @@ router.post(
             logger.error('Telemetry', 'Błąd zapisu', e);
             return res.status(500).json({ error: 'Wewnętrzny błąd telemetryczny' });
         }
+    }
+);
+
+// POST /api/telemetry/draft-failure — L1: nieudany zapis draftu (bez treści dokumentu)
+router.post(
+    '/draft-failure',
+    requireAuth,
+    WRITE_LIMITER,
+    validateData(draftFailureSchema),
+    (req, res) => {
+        const reason = String(req.body.reason);
+        recordDraftFailure(reason);
+        logger.warn('Draft', `Nieudany zapis draftu: ${reason}`);
+        return res.json({ success: true });
     }
 );
 

@@ -288,6 +288,13 @@ function showLoggedIn(user) {
         window.headerUser.render(user);
     }
 
+    // L1: lokalne drafty do wznowienia (pusta lista = sekcja ukryta).
+    if (window.resumeDrafts && typeof window.resumeDrafts.render === 'function') {
+        try {
+            window.resumeDrafts.render(user);
+        } catch (_e) {}
+    }
+
     if (user.role === 'admin') {
         document.getElementById('admin-panel').classList.remove('hidden');
         refreshAdminSessions();

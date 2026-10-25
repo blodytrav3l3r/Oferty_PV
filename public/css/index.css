@@ -243,6 +243,49 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
     gap: var(--tile-gap-xs-plus);
 }
 
+/* ── Wznów pracę: lokalne drafty (L1) ── */
+.resume-drafts {
+    width: 100%;
+    max-width: var(--section-max-width);
+    padding: var(--tile-gap-lg);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+}
+
+.resume-drafts-title {
+    margin: 0 0 var(--tile-gap-sm);
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.resume-drafts-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--tile-gap-sm);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.resume-drafts-item {
+    display: flex;
+    align-items: center;
+    gap: var(--tile-gap-sm);
+}
+
+.resume-drafts-label {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.resume-drafts-when {
+    flex: 1;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+}
+
 /* ── Karty uruchamiania (launch-grid) ── */
 .launch-grid {
     display: grid;

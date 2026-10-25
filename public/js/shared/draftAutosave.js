@@ -20,8 +20,12 @@ var _draftLastWritten = {};
  * zapis TEGO SAMEGO stanu live; realna zmiana formularza zmienia fingerprint
  * i autosave wraca. Nie czyścić w initKind; czyści logout i clearContext. */
 var _draftDismissed = {};
-/** Karta w trybie zdegradowanym po quota (drafty wyłączone do końca sesji). */
-var _draftSessionDisabled = false;
+/** Stan zapisu draftu: 'ok' | 'quota' | 'storage'. Steruje trwałym paskiem statusu. */
+var _draftSaveState = 'ok';
+/** Timer ponawiania zapisu w stanie blokady (60 s). */
+var _draftRetryTimer = null;
+var DRAFT_SAVE_RETRY_MS = 60000;
+var DRAFT_STATUS_ID = 'draft-save-status';
 /** Flaga oversize per klucz (jeden toast na klucz, nie spam). */
 var _draftOversizeNoted = {};
 /** Ostatni sweep per userId (throttle 60 s). */
@@ -42,6 +46,150 @@ function _draftG(name) {
         if (typeof window !== 'undefined' && window[name] !== undefined) return window[name];
     } catch (_e) {}
     return undefined;
+}
+
+/**
+ * Raport nieudanego zapisu draftu — kod przyczyny, nigdy treść dokumentu.
+ * Best-effort: błąd sieci/telemetrii nie wpływa na zapis lokalny.
+ * @param {string} reason kod przyczyny ('quota'|'storage'|'oversize'|'unknown')
+ */
+function _draftReportFailure(reason) {
+    try {
+        if (typeof fetch !== 'function') return;
+        fetch('/api/telemetry/draft-failure', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify({ reason: reason }),
+            keepalive: true
+        }).catch(function () {});
+    } catch (_e) {}
+}
+
+/**
+ * Komunikat trwałego paska statusu autosave ('' = brak problemu).
+ * @param {string} state
+ * @returns {string}
+ */
+function _draftStatusMessage(state) {
+    if (state === 'quota')
+        return 'Autosave wstrzymany: brak miejsca w przeglądarce. Zmiany NIE są zabezpieczane — zapisz dokument ręcznie.';
+    if (state === 'storage')
+        return 'Autosave wstrzymany: pamięć przeglądarki niedostępna. Zmiany NIE są zabezpieczane — zapisz dokument ręcznie.';
+    return '';
+}
+
+/** Renderuje/usuwa pasek statusu. Nigdy nie rzuca. */
+function _draftRenderSaveState() {
+    try {
+        if (typeof document === 'undefined' || !document.body) return;
+        var el = document.getElementById(DRAFT_STATUS_ID);
+        if (_draftSaveState === 'ok') {
+            if (el && el.parentNode) el.parentNode.removeChild(el);
+            return;
+        }
+        if (!el) {
+            el = document.createElement('div');
+            el.id = DRAFT_STATUS_ID;
+            el.className = 'draft-save-status';
+            el.setAttribute('role', 'status');
+            el.setAttribute('aria-live', 'polite');
+            document.body.appendChild(el);
+        }
+        el.textContent = _draftStatusMessage(_draftSaveState);
+        if (_draftSaveState === 'quota') {
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'btn btn-sm btn-secondary draft-save-status-action';
+            btn.textContent = 'Zwolnij miejsce';
+            btn.addEventListener('click', _draftQuotaConsent);
+            el.appendChild(btn);
+        }
+    } catch (_e) {}
+}
+
+/** Etykieta rodzaju draftu w dialogu zgody (bez zależności od sokDirty). */
+function _draftKindLabelShort(kind) {
+    if (kind === 'offer_rury') return 'Oferta (Rury)';
+    if (kind === 'order_rury') return 'Zamówienie (Rury)';
+    if (kind === 'offer_studnie') return 'Oferta (Studnie)';
+    if (kind === 'order_studnie') return 'Zamówienie (Studnie)';
+    return 'Dokument';
+}
+
+/**
+ * Dialog zgody na usunięcie JEDNEGO niewygasłego draftu (największy).
+ * Bez zgody użytkownika nic nie jest usuwane. Po usunięciu — ponowny zapis.
+ */
+function _draftQuotaConsent() {
+    try {
+        var store = window.draftStore;
+        if (!store) return;
+        var userId = _draftUserId();
+        if (!userId) return;
+        var key = store.largestUserDraftKey(window.localStorage, userId);
+        if (!key) return;
+        var loaded = store.loadDraft(window.localStorage, key);
+        if (loaded.status !== 'ok' || !loaded.draft) return;
+        var d = loaded.draft;
+        var when = '';
+        try {
+            var dt = new Date(d.updatedAt);
+            if (!isNaN(dt.getTime())) when = ' z ' + dt.toLocaleString('pl-PL');
+        } catch (_e0) {}
+        var confirmFn = _draftG('appConfirm');
+        if (typeof confirmFn !== 'function') return;
+        var res = confirmFn(
+            'Brak miejsca w przeglądarce. Usunąć draft „' +
+                _draftKindLabelShort(d.kind) +
+                '”' +
+                when +
+                ', aby zapisać bieżące zmiany?',
+            {
+                title: 'Brak miejsca na draft',
+                type: 'warning',
+                okText: 'Usuń ten draft',
+                cancelText: 'Anuluj'
+            }
+        );
+        if (!res || typeof res.then !== 'function') return;
+        res.then(function (ok) {
+            if (!ok) return;
+            try {
+                store.removeDraft(window.localStorage, key);
+            } catch (_e1) {}
+            _draftSetSaveState('ok');
+            _draftFlushAll();
+        });
+    } catch (_e2) {}
+}
+
+/**
+ * Ustawia stan zapisu i pasek statusu. W stanie blokady ponawia zapis co 60 s.
+ * @param {'ok'|'quota'|'storage'} state
+ */
+function _draftSetSaveState(state) {
+    var next = state === 'quota' || state === 'storage' ? state : 'ok';
+    if (next === _draftSaveState) {
+        _draftRenderSaveState();
+        return;
+    }
+    _draftSaveState = next;
+    _draftRenderSaveState();
+    if (next !== 'ok') _draftReportFailure(next);
+    if (next === 'ok') {
+        try {
+            if (_draftRetryTimer) clearInterval(_draftRetryTimer);
+        } catch (_e0) {}
+        _draftRetryTimer = null;
+        return;
+    }
+    if (_draftRetryTimer) return;
+    _draftRetryTimer = setInterval(function () {
+        try {
+            _draftFlushAll();
+        } catch (_e1) {}
+    }, DRAFT_SAVE_RETRY_MS);
 }
 
 /**
@@ -801,7 +949,6 @@ function _draftDismissKeys(userId, kind, currentDocId, draftDocId) {
  * @returns {boolean}
  */
 function _draftWriteKind(kind, isFlush) {
-    if (_draftSessionDisabled) return false;
     var cfg = _draftKindConfig[kind];
     if (!cfg || !cfg.isActive()) return false;
     var userId = _draftUserId();
@@ -843,22 +990,23 @@ function _draftWriteKind(kind, isFlush) {
     var res = window.draftStore.saveDraft(window.localStorage, draft);
     if (res.ok) {
         _draftLastWritten[key] = canon;
+        _draftSetSaveState('ok');
         return true;
     }
     if (res.reason === 'oversize' && !_draftOversizeNoted[key]) {
         _draftOversizeNoted[key] = true;
+        _draftReportFailure('oversize');
         if (!isFlush)
             _draftToast(
                 '<i data-lucide="alert-triangle"></i> Draft zbyt duży — NIE zostanie zapisany; chroń się jawnym zapisem (Ctrl+S)',
                 'warning'
             );
-    } else if (res.reason === 'quota' && !_draftSessionDisabled) {
-        _draftSessionDisabled = true;
-        if (!isFlush)
-            _draftToast(
-                '<i data-lucide="alert-triangle"></i> Brak miejsca na draft — NIE zostanie zapisany; chroń się jawnym zapisem (Ctrl+S)',
-                'warning'
-            );
+    } else if (res.reason === 'quota') {
+        // Trwały pasek statusu zamiast jednorazowego toastu: użytkownik nie może
+        // sądzić, że zmiany są zabezpieczone, dopóki zapis nie zostanie potwierdzony.
+        _draftSetSaveState('quota');
+    } else if (res.reason === 'error') {
+        _draftSetSaveState('storage');
     }
     return false;
 }
@@ -867,7 +1015,6 @@ function _draftWriteKind(kind, isFlush) {
  * Zapis wszystkich aktywnych rodzajów (debounce 2000 ms).
  */
 function _draftScheduleSave() {
-    if (_draftSessionDisabled) return;
     if (_draftInitedKinds.length === 0) return;
     if (_draftDebounceTimer) clearTimeout(_draftDebounceTimer);
     _draftDebounceTimer = setTimeout(function () {
@@ -1818,6 +1965,11 @@ function _draftLiveRowCount(kind) {
 
 window.draftAutosave = {
     DEBOUNCE_MS: DRAFT_AUTOSAVE_DEBOUNCE_MS,
+    SAVE_RETRY_MS: DRAFT_SAVE_RETRY_MS,
+    STATUS_ID: DRAFT_STATUS_ID,
+    saveState: function () {
+        return _draftSaveState;
+    },
     MODAL_ID: DRAFT_MODAL_ID,
     initKind: _draftInitKind,
     scheduleSave: _draftScheduleSave,

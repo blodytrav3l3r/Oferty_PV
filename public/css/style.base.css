@@ -2922,3 +2922,20 @@ html[data-theme='light'] .app-confirm-btn-cancel:hover {
 html[data-theme='light'] .zlecenia-table tbody tr:hover td {
     color: var(--text-primary);
 }
+
+/* L1: trwały pasek statusu autosave (draftAutosave._draftSetSaveState). */
+.draft-save-status {
+    position: fixed;
+    left: 16px;
+    bottom: 16px;
+    max-width: min(520px, calc(100vw - 32px));
+    padding: 10px 14px;
+    background: var(--danger-bg);
+    border: 1px solid var(--danger-border);
+    border-radius: var(--radius-sm);
+    color: var(--danger-hover);
+    box-shadow: var(--shadow-md);
+    font-size: 13px;
+    line-height: 1.4;
+    z-index: var(--z-toast);
+}

@@ -35,6 +35,9 @@ const pricelistFallbacksByType = new Map<string, number>();
 let loopLagMs = 0;
 let loopLagMax = 0;
 let samplerStarted = false;
+// L1: nieudane zapisy draftu raportowane przez klienta (kod przyczyny).
+let draftFailures = 0;
+const draftFailuresByReason = new Map<string, number>();
 
 function pct(sorted: number[], p: number): number {
     if (sorted.length === 0) return 0;
@@ -129,6 +132,12 @@ export function recordPricelistFallback(type: string): void {
     pricelistFallbacksByType.set(type, (pricelistFallbacksByType.get(type) ?? 0) + 1);
 }
 
+/** L1: nieudany zapis draftu po stronie klienta (kod przyczyny, bez treści). */
+export function recordDraftFailure(reason: string): void {
+    draftFailures++;
+    draftFailuresByReason.set(reason, (draftFailuresByReason.get(reason) ?? 0) + 1);
+}
+
 export interface StorageSnapshot {
     dbBytes: number | null;
     walBytes: number | null;
@@ -151,6 +160,7 @@ export interface MetricsSnapshot {
         fallbacksByType: Record<string, number>;
     };
     storage: StorageSnapshot;
+    drafts: { failures: number; byReason: Record<string, number> };
     endpoints: Record<
         string,
         { n: number; p50: number; p95: number; errors: number; lastMs: number }
@@ -197,6 +207,10 @@ export function getMetricsSnapshot(
             fallbacksByType: Object.fromEntries(pricelistFallbacksByType)
         },
         storage: getStorageSnapshot(),
+        drafts: {
+            failures: draftFailures,
+            byReason: Object.fromEntries(draftFailuresByReason)
+        },
         endpoints: eps,
         pdf,
         fts
@@ -309,4 +323,6 @@ export function resetMetrics(): void {
     pricelistFallbacksByType.clear();
     loopLagMs = 0;
     loopLagMax = 0;
+    draftFailures = 0;
+    draftFailuresByReason.clear();
 }

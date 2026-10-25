@@ -8,6 +8,7 @@ import {
     recordDbQuery,
     recordDbBusy,
     recordAuditFailure,
+    recordDraftFailure,
     getMetricsSnapshot,
     getStorageSnapshot,
     resetMetrics
@@ -72,5 +73,16 @@ describe('M metrics', () => {
         expect(snap.storage).toHaveProperty('lastBackupAt');
         const direct = getStorageSnapshot();
         expect(typeof direct.backups).toBe('number');
+    });
+
+    test('L1: drafts.failures liczy przyczyny osobno, reset zeruje', () => {
+        recordDraftFailure('quota');
+        recordDraftFailure('quota');
+        recordDraftFailure('storage');
+        const snap = getMetricsSnapshot();
+        expect(snap.drafts.failures).toBe(3);
+        expect(snap.drafts.byReason).toEqual({ quota: 2, storage: 1 });
+        resetMetrics();
+        expect(getMetricsSnapshot().drafts).toEqual({ failures: 0, byReason: {} });
     });
 });

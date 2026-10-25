@@ -32,6 +32,33 @@ function loadStore() {
     return sandbox.window.draftStore;
 }
 
+/** Storage z twardym limitem bajtów — modeluje realne QuotaExceeded. */
+function limitedStorage(maxBytes: number) {
+    const base = memStorage();
+    const total = () => {
+        let n = 0;
+        for (const k of base._keys()) n += (base.getItem(k) || '').length;
+        return n;
+    };
+    return {
+        getItem: (k: string) => base.getItem(k),
+        removeItem: (k: string) => base.removeItem(k),
+        key: (i: number) => base.key(i),
+        get length() {
+            return base.length;
+        },
+        setItem: (k: string, v: string) => {
+            const current = (base.getItem(k) || '').length;
+            if (total() - current + String(v).length > maxBytes) {
+                const e: any = new Error('quota');
+                e.name = 'QuotaExceededError';
+                throw e;
+            }
+            return base.setItem(k, v);
+        }
+    };
+}
+
 function quotaStorage(failTimes: number, failFromCall = 1) {
     const base = memStorage();
     let calls = 0;
@@ -262,21 +289,81 @@ describe('P1.1b draftStore — TTL i cleanup', () => {
 });
 
 describe('P1.1b draftStore — quota i last-write-wins', () => {
-    it('quota: usuwa największy draft i ponawia raz', () => {
+    it('quota: NIE usuwa niewygasłego draftu (poprzednia wersja nietknięta)', () => {
         const ds = loadStore();
-        // Pierwszy zapis przechodzi, quota dopiero przy drugim (failFromCall=2).
-        const st = quotaStorage(1, 2);
         const victim = ds.buildDraft({
             userId: 'u1',
             kind: 'offer_rury',
             docId: 'big',
             payload: { fields: { validity: 'v'.repeat(1000) } }
         });
+        // Limit pozwala na jeden duży draft; drugi już się nie zmieści.
+        const st = limitedStorage(JSON.stringify(victim).length + 50);
         expect(ds.saveDraft(st, victim).ok).toBe(true);
         const next = ds.buildDraft({ userId: 'u1', kind: 'offer_rury', docId: 'new', payload: {} });
         const res = ds.saveDraft(st, next);
+        expect(res).toEqual({ ok: false, reason: 'quota' });
+        // Kluczowy kontrakt L1: cicha ewykcja zniesiona.
+        expect(st.getItem('sok_draft_v1_u1_offer_rury_big')).not.toBeNull();
+        expect(st.getItem('sok_draft_v1_u1_offer_rury_new')).toBeNull();
+    });
+
+    it('quota: sweep usuwa tylko wygasłe, ponowna próba się udaje', () => {
+        const ds = loadStore();
+        const now = Date.now();
+        const ttl = ds.TTL_MS;
+        const expiredJson = JSON.stringify({
+            v: 1,
+            kind: 'offer_rury',
+            userId: 'u1',
+            docId: 'old',
+            baseVersion: null,
+            updatedAt: new Date(now - ttl - 1000).toISOString(),
+            expiresAt: new Date(now - 1000).toISOString(),
+            payload: { fields: { validity: 'x'.repeat(200) } }
+        });
+        const fresh = ds.buildDraft({
+            userId: 'u1',
+            kind: 'offer_rury',
+            docId: 'fresh',
+            payload: { fields: { validity: 'y'.repeat(200) } }
+        });
+        const incoming = ds.buildDraft({
+            userId: 'u1',
+            kind: 'offer_rury',
+            docId: 'new',
+            payload: { fields: { validity: 'z'.repeat(200) } }
+        });
+        // Limit dobrany tak, by zmieściły się dwa drafty, ale nie trzy.
+        const maxBytes = JSON.stringify(fresh).length + JSON.stringify(incoming).length + 50;
+        const st = limitedStorage(maxBytes);
+        st.setItem('sok_draft_v1_u1_offer_rury_old', expiredJson);
+        st.setItem('sok_draft_v1_u1_offer_rury_fresh', JSON.stringify(fresh));
+        const res = ds.saveDraft(st, incoming);
         expect(res.ok).toBe(true);
-        expect(st.getItem('sok_draft_v1_u1_offer_rury_big')).toBeNull();
+        expect(st.getItem('sok_draft_v1_u1_offer_rury_old')).toBeNull();
+        expect(st.getItem('sok_draft_v1_u1_offer_rury_fresh')).not.toBeNull();
+    });
+
+    it('quota trwała: żaden draft nie znika, poprzednia wersja zostaje', () => {
+        const ds = loadStore();
+        const fresh = ds.buildDraft({
+            userId: 'u1',
+            kind: 'offer_rury',
+            docId: 'fresh',
+            payload: { fields: { validity: 'y'.repeat(200) } }
+        });
+        const st = limitedStorage(JSON.stringify(fresh).length + 10);
+        st.setItem('sok_draft_v1_u1_offer_rury_fresh', JSON.stringify(fresh));
+        const incoming = ds.buildDraft({
+            userId: 'u1',
+            kind: 'offer_rury',
+            docId: 'new',
+            payload: { fields: { validity: 'z'.repeat(200) } }
+        });
+        expect(ds.saveDraft(st, incoming)).toEqual({ ok: false, reason: 'quota' });
+        expect(st.getItem('sok_draft_v1_u1_offer_rury_fresh')).not.toBeNull();
+        expect(st.getItem('sok_draft_v1_u1_offer_rury_new')).toBeNull();
     });
 
     it('trwała quota → reason quota (SAVED nieblokowany — warstwa odrębna)', () => {
@@ -284,6 +371,26 @@ describe('P1.1b draftStore — quota i last-write-wins', () => {
         const st = quotaStorage(99);
         const d = ds.buildDraft({ userId: 'u1', kind: 'offer_rury', docId: 'new', payload: {} });
         expect(ds.saveDraft(st, d)).toEqual({ ok: false, reason: 'quota' });
+    });
+
+    it('błąd magazynu inny niż quota → reason error (bez ścieżki quota)', () => {
+        const ds = loadStore();
+        const base = memStorage();
+        const st = {
+            getItem: base.getItem,
+            removeItem: base.removeItem,
+            key: base.key,
+            get length() {
+                return base.length;
+            },
+            setItem: () => {
+                const e: any = new Error('denied');
+                e.name = 'SecurityError';
+                throw e;
+            }
+        };
+        const d = ds.buildDraft({ userId: 'u1', kind: 'offer_rury', docId: 'new', payload: {} });
+        expect(ds.saveDraft(st, d)).toEqual({ ok: false, reason: 'error' });
     });
 
     it('last-write-wins: drugi zapis wygrywa', () => {
@@ -347,5 +454,51 @@ describe('P1.1b draftStore — różnica vs SAVED', () => {
             items: 1
         });
         expect(ds.summarizeDraftCounts({})).toEqual({ wells: 0, items: 0 });
+    });
+});
+
+describe('L1 draftStore — lista draftów do wznowienia', () => {
+    it('zwraca tylko poprawne drafty, najnowsze pierwsze', () => {
+        const ds = loadStore();
+        const st = memStorage();
+        const now = Date.now();
+        const mk = (docId: string, ageMs: number) =>
+            JSON.stringify({
+                v: 1,
+                kind: 'offer_rury',
+                userId: 'u1',
+                docId,
+                baseVersion: null,
+                updatedAt: new Date(now - ageMs).toISOString(),
+                expiresAt: new Date(now - ageMs + ds.TTL_MS).toISOString(),
+                payload: { fields: { validity: docId } }
+            });
+        st.setItem('sok_draft_v1_u1_offer_rury_stary', mk('stary', 5000));
+        st.setItem('sok_draft_v1_u1_offer_rury_nowy', mk('nowy', 1000));
+        st.setItem('sok_draft_v1_u1_offer_rury_uszkodzony', '{nie-json');
+        const list = ds.listUserDrafts(st, 'u1');
+        expect(list.map((d: any) => d.docId)).toEqual(['nowy', 'stary']);
+        expect(list[0].kind).toBe('offer_rury');
+        expect(list[0].bytes).toBeGreaterThan(0);
+    });
+
+    it('cudze drafty pominięte, pusta lista bez błędu', () => {
+        const ds = loadStore();
+        const st = memStorage();
+        expect(ds.listUserDrafts(st, 'u1')).toEqual([]);
+        st.setItem(
+            'sok_draft_v1_u2_offer_rury_x',
+            JSON.stringify({
+                v: 1,
+                kind: 'offer_rury',
+                userId: 'u2',
+                docId: 'x',
+                baseVersion: null,
+                updatedAt: new Date().toISOString(),
+                expiresAt: new Date(Date.now() + 60000).toISOString(),
+                payload: { fields: {} }
+            })
+        );
+        expect(ds.listUserDrafts(st, 'u1')).toEqual([]);
     });
 });

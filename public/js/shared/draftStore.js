@@ -376,10 +376,13 @@ function saveDraft(storage, draft) {
         return { ok: true };
     } catch (err) {
         if (!isDraftQuotaError(err)) return { ok: false, reason: 'error' };
-        // Największy draft użytkownika out, jedna ponowna próba.
+        // Brak miejsca: sprzątamy WYŁĄCZNIE wygasłe drafty użytkownika, potem
+        // jedna ponowna próba. Niewygasłych nie ruszamy — usunięcie wymaga
+        // jawnej zgody użytkownika (warstwa UI, largestUserDraftKey jako propozycja).
         try {
-            var victim = largestUserDraftKey(storage, draft.userId, key);
-            if (victim) storage.removeItem(victim);
+            sweepDrafts(storage, draft.userId);
+        } catch (_e) {}
+        try {
             storage.setItem(key, json);
             return { ok: true };
         } catch (err2) {
@@ -387,6 +390,33 @@ function saveDraft(storage, draft) {
             return { ok: false, reason: 'error' };
         }
     }
+}
+
+/**
+ * Lista poprawnych draftów użytkownika (najnowsze pierwsze). Uszkodzone
+ * i wygasłe są usuwane przez loadDraft, więc nie trafiają na listę.
+ * @param {*} storage
+ * @param {string} userId
+ * @param {object} [opts] {now?}
+ * @returns {Array<{key: string, kind: string, docId: string, updatedAt: string, bytes: number, draft: object}>}
+ */
+function listUserDrafts(storage, userId, opts) {
+    var out = [];
+    listUserDraftKeys(storage, userId).forEach(function (key) {
+        var res = loadDraft(storage, key, opts);
+        if (res.status !== 'ok' || !res.draft) return;
+        out.push({
+            key: key,
+            kind: res.draft.kind,
+            docId: res.draft.docId,
+            updatedAt: res.draft.updatedAt,
+            bytes: draftByteSize(res.draft),
+            draft: res.draft
+        });
+    });
+    return out.sort(function (a, b) {
+        return a.updatedAt < b.updatedAt ? 1 : a.updatedAt > b.updatedAt ? -1 : 0;
+    });
 }
 
 /**
@@ -547,6 +577,7 @@ window.draftStore = {
     draftByteSize: draftByteSize,
     isDraftQuotaError: isDraftQuotaError,
     listUserDraftKeys: listUserDraftKeys,
+    listUserDrafts: listUserDrafts,
     loadDraft: loadDraft,
     saveDraft: saveDraft,
     largestUserDraftKey: largestUserDraftKey,
