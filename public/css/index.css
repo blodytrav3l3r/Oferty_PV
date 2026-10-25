@@ -245,11 +245,12 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
 
 /* ── Wznów pracę: kafelek + popup (szkice lokalne L1, ostatnia trasa) ── */
 .resume-slot {
+    display: flex;
     width: 100%;
-    max-width: var(--section-max-width);
 }
 
 .launch-card.resume {
+    flex: 1;
     width: 100%;
     font: inherit;
     color: var(--text-primary);
