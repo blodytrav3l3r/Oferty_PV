@@ -45,6 +45,8 @@ Zmiana configu przeładowuje się bez restartu. Weryfikacja: `opencode-cli.exe d
 
 Zasady: plugin V2 to **katalog z punktem wejścia** (`index.ts` lub `package.json`) **albo pojedynczy plik `.js`** z `export default { id, setup }` (`effect` wg API). Dowód: `graphify.js` działa jako jedna plikowa definicja bez importu pakietu opencode.
 
+`@dietrichgebert/ponytail` jest **wyłączony**: `%APPDATA%\ponytail\config.json` → `defaultMode: "off"` + stan `~/.config/opencode/.ponytail-active` = `off`. Plugin nie ma configu per-projekt (jedyne wejścia: env `PONYTAIL_DEFAULT_MODE`, config w `%APPDATA%`, plik stanu), więc przełącznik jest **globalny** — repo nie może go zawęzić do S.O.K. Włączenie: `/ponytail` lub `/ponytail default full`.
+
 Usunięty: `status-bar` (commit `2989c63`) — katalog bez punktu wejścia V2, tracked w ignorowanym katalogu, powodował `WARN failed to capture snapshot` przy każdym tool callu.
 
 ## 4. MCP
