@@ -112,3 +112,43 @@ Liczniki po zmianach (komenda z §2): `{ js: 260, studnie: 149, win: 1278, adr: 
 
 Nie zrobione świadomie: split solvera, refaktor Excela, grupowanie `public/js/studnie`,
 konsolidacja baseline JSON, podział `telemetryAiMl.ts`. Brak pusha.
+
+## 9. B1–B3: runtime, walidacja, checkpointy (2026-10-25)
+
+### B1 — `partialLoader.js` w runtime (PASS)
+
+Środowisko: izolowany serwer `dist/server.js` na `:3188`, świeża baza `prisma/b1-check.sqlite`
+(`prisma migrate deploy` + `db seed`), bootstrap admina przez `DEFAULT_ADMIN_PASSWORD`
+(hasło testowe inne niż zakazane `anim123456`). Helper sprawdzający był untracked i został usunięty.
+
+| Sprawdzenie                                            | Wynik                                                |
+| ------------------------------------------------------ | ---------------------------------------------------- |
+| `/app.html#/studnie` → iframe `studnie.html`: partiale | 9/9 niepuste, 0 pustych                              |
+| `/app.html#/rury` → iframe `rury.html`: partiale       | 11/11 niepuste, 0 pustych                            |
+| `#partial-modals` i `#partial-header`                  | niepuste                                             |
+| Żądania `partialLoader`                                | wyłącznie `200 /js/shared/partialLoader.js?v=1.51.0` |
+| Żądania `js/studnie/partialLoader.js`                  | 0                                                    |
+| 404 dla `/partials/*`                                  | 0                                                    |
+| Błędy konsoli `partialLoader`/`partiali`               | 0                                                    |
+
+Ustalenie: bezpośrednie `/studnie.html` i `/rury.html` przekierowują do `app.html#/<modul>`
+(SPA), więc weryfikacja runtime musi iść przez `app.html` + iframe — tam partiale ładują się poprawnie.
+
+### B2 — `npm run validate` z kodem wyjścia (PASS)
+
+```text
+npm run validate  →  EXIT=0
+Test Suites: 1 skipped, 539 passed, 539 of 540 total
+Tests:       7 skipped, 5309 passed, 5316 total
+collisions: 45 (baseline 45) | ratchet: 237 (baseline 237) | prices:verify OK
+```
+
+Pełny log: katalog tymczasowy `%TEMP%\opencode\validate-b2.log` (nie commitowany).
+
+### B3 — checkpointy Git (PASS)
+
+- `HEAD=c527462`, branch `main`, `ahead 7`, `git status` pusty.
+- 7 commitów: `8efe4d2`, `23045e3`, `256b1a4`, `37a9617`, `57c1880`, `a19de64`, `c527462`.
+- Brak pusha; historia nieruszana.
+
+Uwaga: CI nie zostało sprawdzone — bez pusha workflow się nie uruchomi.
