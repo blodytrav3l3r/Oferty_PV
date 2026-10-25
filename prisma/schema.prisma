@@ -1159,3 +1159,24 @@ model care_notifications {
   @@index([userId, readAt, createdAt], map: "idx_carenotif_user_read")
   @@index([offerKind, offerId], map: "idx_carenotif_offer")
 }
+
+// L2: serwerowy draft roboczy (cross-device, odzysk po awarii klienta).
+// Klucz per-user: cudzy draft jest nieosiągalny już na poziomie zapytania.
+// `version` dotyczy DRAFTU (CAS zapisu draftu), nie dokumentu — nie mylić
+// z offers_rel.version / orders_*.version. `baseVersion` = wersja dokumentu,
+// na której draft powstał (podstawa komunikatu konfliktu).
+// TTL 30 dni; wygaśnięcie leniwe przy odczycie + sweep w housekeepingu.
+model drafts {
+  userId      String
+  kind        String
+  docId       String
+  baseVersion Int?
+  payload     String
+  bytes       Int
+  version     Int     @default(1)
+  updatedAt   String
+  expiresAt   String
+
+  @@id([userId, kind, docId])
+  @@index([expiresAt], map: "idx_drafts_expires")
+}

@@ -292,9 +292,18 @@ export const telemetryOverrideSchema = z.object({
 
 export type TelemetryOverrideInput = z.infer<typeof telemetryOverrideSchema>;
 
-/** L1: raport nieudanego zapisu draftu — wyłącznie kod przyczyny, bez treści. */
+/** L1/L2: raport nieudanego zapisu draftu — wyłącznie kod przyczyny, bez treści. */
 export const draftFailureSchema = z.object({
-    reason: z.enum(['quota', 'storage', 'oversize', 'unknown'])
+    reason: z.enum([
+        'quota',
+        'storage',
+        'oversize',
+        'unknown',
+        'conflict',
+        'too_large',
+        'limit',
+        'forbidden'
+    ])
 });
 
 export type DraftFailureInput = z.infer<typeof draftFailureSchema>;

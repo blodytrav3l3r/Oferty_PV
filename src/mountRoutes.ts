@@ -34,6 +34,7 @@ import sharesRoutes from './routes/shares';
 import adminRoutes from './routes/admin';
 import locksRoutes from './routes/locks';
 import careRoutes from './routes/care';
+import draftRoutes from './routes/drafts';
 
 /**
  * Montuje wszystkie trasy API + raport CSP + globalny error handler.
@@ -71,6 +72,9 @@ export function mountRoutes(app: express.Express, apiLimiter: express.RequestHan
     // P1.3: parser JSON per-route zamiast globalnego (patrz komentarz wyżej).
     const smallJson = express.json({ limit: '1mb' });
     const largeJson = express.json({ limit: '50mb' });
+    // L2: drafty mają własny, węższy parser. Limit payloadu (256 KB) pilnuje
+    // serwis; parser 320 KB odrzuca nadmiar wcześniej, bez parsowania 1 MB.
+    const draftJson = express.json({ limit: '320kb' });
 
     app.use('/api/auth', apiLimiter, smallJson, authRoutes);
     // Preferencje własne przed /api/users — inaczej ':id' połknęłoby 'me'.
@@ -114,6 +118,7 @@ export function mountRoutes(app: express.Express, apiLimiter: express.RequestHan
     app.use('/api/admin', apiLimiter, smallJson, adminRoutes);
     app.use('/api/locks', apiLimiter, smallJson, locksRoutes);
     app.use('/api/care', apiLimiter, smallJson, careRoutes);
+    app.use('/api/drafts', apiLimiter, draftJson, draftRoutes);
 
     /* ===== RAPORTY VIOLACJI CSP (Faza 1 planu CSP — monitoring) ===== */
     // apiLimiter: endpoint anonimowy, bez niego curl w pętli = log-spam/dysk.

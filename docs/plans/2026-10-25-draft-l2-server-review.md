@@ -142,9 +142,13 @@ daje cichą utratę danych — sprzeczne z celem L1.
 
 - `requireAuth` na wszystkich trasach draftu.
 - `userId` **wyłącznie z sesji** (`authReq.user.id`), nigdy z body/query.
-- `canWriteDoc(user, ownerIdDokumentu)` przy zapisie draftu powiązanego z
-  istniejącym dokumentem (F-010); brak dostępu → **403** bez ujawniania, czy draft
-  istnieje.
+- Izolacja strukturalna: klucz `(userId, kind, docId)` w tabeli — cudzy draft
+  jest nieosiągalny na poziomie zapytania, więc trasa zwraca 404 bez ujawniania,
+  czy wiersz istnieje (brak wyroczni „403 vs 404").
+- **Korekta wobec pierwszej wersji review:** NIE dokładamy `canWriteDoc` do trasy
+  draftu. Draft jest prywatną kopią roboczą, nie mutacją dokumentu; blokowanie po
+  właścicielu dokumentu łamałoby przypadek udostępnienia (`canReadWithShare`) —
+  użytkownik z dostępem do czytania mógłby legalnie pracować na kopii, a dostałby 403. Właściwy guard ownership działa na trasie dokumentu przy przywracaniu.
 - Admin nie dostaje domyślnego wglądu w cudze drafty (draft = brudna praca, nie
   zasób firmowy). Ewentualny podgląd administracyjny = osobna decyzja.
 - CSRF: trasy objęte globalnym middleware (F-013), brak wyjątków.

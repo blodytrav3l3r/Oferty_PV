@@ -225,6 +225,14 @@ class CronService {
         } catch (e) {
             logger.error('CronService', `[housekeeping] failed: ${e}`);
         }
+        // L2: sweep wygasłych draftów serwerowych (TTL 30 dni). Nie rzuca.
+        try {
+            const { sweepExpiredDrafts } = await import('../services/drafts/draftService');
+            const removed = await sweepExpiredDrafts();
+            logger.info('CronService', `[housekeeping] prune drafts: usunięto ${removed}`);
+        } catch (e) {
+            logger.error('CronService', `[housekeeping] drafts failed: ${e}`);
+        }
     }
 
     /**
