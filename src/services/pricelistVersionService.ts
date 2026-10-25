@@ -34,6 +34,8 @@ export type {
 export {
     createDraft,
     versionLabel,
+    effectiveLabel,
+    setLabelOverride,
     updateDraft,
     approveVersion,
     publishDraft,
@@ -42,7 +44,11 @@ export {
     deleteVersion,
     cloneAsDraft
 } from './pricelist/lifecycle';
-export type { ApproveVersionOptions, CloneDraftOptions } from './pricelist/lifecycle';
+export type {
+    ApproveVersionOptions,
+    CloneDraftOptions,
+    SetLabelOverrideOptions
+} from './pricelist/lifecycle';
 
 export {
     RURY_LIVE_COLUMNS,

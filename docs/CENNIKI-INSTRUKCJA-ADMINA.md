@@ -52,6 +52,25 @@ Labelka wersji to `{Prefiks}v{seq}-{RRRRMMDD}` z daty obowiązywania; `seq` jest
 > `BACKDATE_REQUESTED → DRAFT`). Instalacje spoza tej bazy wymagają `npx prisma migrate deploy`,
 > inaczej w bazie mogą zostać statusy legacy, których UI nie zna.
 
+### Ręczna korekta etykiety wersji
+
+W panelu „Wersje cennika" każdy wiersz ma przycisk **Etykieta** (tylko administrator).
+Służy do poprawy **samego napisu** etykiety, gdy jest mylący (np. zła data po imporcie
+albo literówka w nazwie własnej). To operacja kosmetyczna z jawnym ostrzeżeniem:
+
+- **Nie zmienia** cen, pozycji, `seq`, daty obowiązywania (`effectiveFrom`) ani pieczątek
+  ofert i zamówień — te trzymają `pricelistVersionId`, nie napis.
+- **Zmienia** to, co widzą użytkownicy: badge „cennik …" w ofertach, historię i eksporty.
+- Etykieta automatyczna (`{Prefiks}v{seq}-{RRRRMMDD}`) zostaje w bazie jako wartość
+  kanoniczna; w tabeli ręczna korekta jest oznaczona jako **(ręczna)**.
+- **Puste pole** przywraca etykietę automatyczną.
+- Kolizja z etykietą innej wersji tej samej osi jest blokowana (`409 LABEL_COLLISION`).
+- Każda zmiana trafia do audytu (stara i nowa etykieta, autor, data).
+
+Jeśli błędna jest **data obowiązywania**, a nie napis, popraw `effectiveFrom` przy
+publikacji — etykieta automatyczna policzy się ponownie. Ręczna korekta napisu nie
+przesuwa wersji na osi czasu.
+
 ## 3. Osie cenników
 
 Trzy **niezależne osie** wersji: **rury**, **studnie**, **preco**. Każda ma własną numerację `seq`,

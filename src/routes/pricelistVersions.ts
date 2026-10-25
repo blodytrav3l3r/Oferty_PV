@@ -21,12 +21,14 @@ import {
     createDraft,
     countVersionUsageBatch,
     deleteVersion,
+    effectiveLabel,
     getPrecoReferences,
     getVersionDiff,
     getVersionExportSheets,
     getVersionPreview,
     getVersionsSummary,
     publishDraft,
+    setLabelOverride,
     updateDraft
 } from '../services/pricelistVersionService';
 import prisma from '../prismaClient';
@@ -59,6 +61,13 @@ function userIdOf(req: express.Request): string | undefined {
 
 function isKnownType(value: unknown): value is (typeof PRICELIST_TYPES)[number] {
     return typeof value === 'string' && (PRICELIST_TYPES as readonly string[]).includes(value);
+}
+
+/** Wiersz etykiety: `label` = ręczna korekta (labelOverride) albo etykieta pochodna. */
+function withLabel<T extends { version: string; labelOverride?: string | null }>(
+    v: T
+): T & { label: string } {
+    return { ...v, label: effectiveLabel(v) };
 }
 
 /** Id wersji: tylko bezpieczny alfabet (bez echa surowego id w błędzie, plan §5). */
@@ -126,6 +135,7 @@ router.get('/', requireAuth, requireAdmin, READ_LIMITER, async (req, res) => {
         ]);
         const withUsage = versions.map((v) => ({
             ...v,
+            label: effectiveLabel(v),
             usedBy:
                 v.type === 'preco'
                     ? (precoRefs?.get(v.id)?.count ?? 0)
@@ -214,10 +224,17 @@ router.get('/labels', requireAuth, READ_LIMITER, async (req, res) => {
                     ...(req.user?.role === 'admin' ? {} : { status: 'APPROVED' }),
                     id: { in: [...new Set(list)] }
                 },
-                select: { id: true, type: true, seq: true, version: true, effectiveFrom: true },
+                select: {
+                    id: true,
+                    type: true,
+                    seq: true,
+                    version: true,
+                    labelOverride: true,
+                    effectiveFrom: true
+                },
                 orderBy: [{ type: 'asc' }, { seq: 'desc' }]
             });
-            res.json({ versions });
+            res.json({ versions: versions.map(withLabel) });
             return;
         }
         const versions = await prisma.pricelistVersion.findMany({
@@ -226,10 +243,17 @@ router.get('/labels', requireAuth, READ_LIMITER, async (req, res) => {
                 status: 'APPROVED',
                 effectiveFrom: { lte: new Date().toISOString() }
             },
-            select: { id: true, type: true, seq: true, version: true, effectiveFrom: true },
+            select: {
+                id: true,
+                type: true,
+                seq: true,
+                version: true,
+                labelOverride: true,
+                effectiveFrom: true
+            },
             orderBy: [{ type: 'asc' }, { seq: 'desc' }]
         });
-        res.json({ versions });
+        res.json({ versions: versions.map(withLabel) });
     } catch (err) {
         sendVersionError(res, err);
     }
@@ -329,6 +353,43 @@ router.put('/:id', requireAuth, requireAdmin, PRICELIST_WRITE_LIMITER, async (re
             expectedSha: parseIfMatch(req.get('If-Match'))
         });
         res.json({ version });
+    } catch (err) {
+        sendVersionError(res, err);
+    }
+});
+
+/**
+ * Kształt body korekty etykiety: `label` tekst albo null (null/pusty = powrót
+ * do etykiety pochodnej). Długość i znaki waliduje serwis (422).
+ */
+const labelOverrideBodySchema = z.object({
+    label: z.string().max(200).nullable()
+});
+
+/**
+ * Ręczna korekta etykiety wersji (admin, w UI jawne ostrzeżenie).
+ * Nie zmienia seq, effectiveFrom, cen ani pieczątek ofert (te trzymają id);
+ * `label: null` przywraca etykietę pochodną. Każda zmiana trafia do audytu.
+ */
+router.patch('/:id/label', requireAuth, requireAdmin, PRICELIST_WRITE_LIMITER, async (req, res) => {
+    try {
+        const id = parseVersionId(req.params);
+        if (!id) {
+            sendInvalidId(res);
+            return;
+        }
+        const bodyParsed = labelOverrideBodySchema.safeParse(req.body ?? {});
+        if (!bodyParsed.success) {
+            res.status(400).json({
+                error: 'Nieprawidłowe dane korekty etykiety (label: tekst albo null)',
+                code: 'INVALID_BODY'
+            });
+            return;
+        }
+        const version = await setLabelOverride(id, bodyParsed.data.label, {
+            userId: userIdOf(req)
+        });
+        res.json({ version, label: effectiveLabel(version) });
     } catch (err) {
         sendVersionError(res, err);
     }

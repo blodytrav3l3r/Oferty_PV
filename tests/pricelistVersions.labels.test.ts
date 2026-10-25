@@ -28,6 +28,8 @@ interface VRow {
     type: string;
     seq: number;
     version: string;
+    label?: string;
+    labelOverride?: string | null;
     status: string;
     effectiveFrom: string;
 }
@@ -38,6 +40,7 @@ const versions: VRow[] = [
         type: 'rury',
         seq: 2,
         version: 'v2-20200102',
+        labelOverride: null,
         status: 'APPROVED',
         effectiveFrom: '2020-01-02T00:00:00.000Z'
     },
@@ -46,6 +49,7 @@ const versions: VRow[] = [
         type: 'rury',
         seq: 1,
         version: 'v1-20200101',
+        labelOverride: null,
         status: 'APPROVED',
         effectiveFrom: '2020-01-01T00:00:00.000Z'
     },
@@ -54,6 +58,7 @@ const versions: VRow[] = [
         type: 'rury',
         seq: 3,
         version: 'v3-20200103',
+        labelOverride: null,
         status: 'DRAFT',
         effectiveFrom: '2020-01-03T00:00:00.000Z'
     }
@@ -125,7 +130,7 @@ describe('GET /api/pricelist-versions/labels', () => {
         });
     });
 
-    test('z ids: zwraca APPROVED (te same 5 pól, bez cen)', async () => {
+    test('z ids: zwraca APPROVED (te same pola, bez cen, + etykieta efektywna)', async () => {
         const res = await request(app).get(
             '/api/pricelist-versions/labels?type=rury&ids=rury-arch,rury-active,rury-draft'
         );
@@ -134,8 +139,10 @@ describe('GET /api/pricelist-versions/labels', () => {
         expect(got.map((v) => v.id).sort()).toEqual(['rury-active', 'rury-arch']);
         for (const v of got) {
             expect(Object.keys(v).sort()).toEqual(
-                ['effectiveFrom', 'id', 'seq', 'type', 'version'].sort()
+                ['effectiveFrom', 'id', 'label', 'labelOverride', 'seq', 'type', 'version'].sort()
             );
+            // label = etykieta efektywna; bez override równa pochodnej.
+            expect(v.label).toBe(v.version);
         }
         expect(lastWhere).toEqual({
             type: 'rury',

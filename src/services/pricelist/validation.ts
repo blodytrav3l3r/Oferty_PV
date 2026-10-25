@@ -79,6 +79,15 @@ export const PRECO_REFERENCE_STATUSES: readonly string[] = ['APPROVED'];
 /** Maksymalna długość noty wersji (edycja PUT + nota aktywacji). */
 export const NOTE_MAX = 500;
 
+/** Maksymalna długość ręcznej etykiety wersji (labelOverride). */
+export const LABEL_OVERRIDE_MAX = 64;
+
+/**
+ * Dozwolone znaki ręcznej etykiety: litery (także PL), cyfry, spacja
+ * oraz `. _ - /`. Znaki specjalne HTML odrzucamy tu, w UI i tak escapowane.
+ */
+const LABEL_OVERRIDE_PATTERN = /^[\p{L}\p{N} ._\-/]+$/u;
+
 export type RuryRows = ProductsRuryRow[];
 export type StudnieRows = ProductsStudnieRow[];
 export interface PrecoRows {
@@ -367,6 +376,39 @@ export function normalizeNote(noteInput: unknown): string | null | undefined {
         );
     }
     return trimmed === '' ? null : trimmed;
+}
+
+/**
+ * Normalizuje ręczną etykietę wersji (labelOverride): null/undefined/pusty
+ * string = powrót do etykiety pochodnej; inaczej trim + walidacja długości
+ * i znaków (422 INVALID_LABEL / LABEL_TOO_LONG). Nie dotyka seq ani daty.
+ */
+export function normalizeLabelOverride(labelInput: unknown): string | null {
+    if (labelInput === null || labelInput === undefined) return null;
+    if (typeof labelInput !== 'string') {
+        throw new PricelistVersionError(
+            422,
+            'INVALID_LABEL',
+            `Nieprawidłowa etykieta: oczekiwano tekstu (max ${LABEL_OVERRIDE_MAX} znaków)`
+        );
+    }
+    const trimmed = labelInput.trim();
+    if (trimmed === '') return null;
+    if (trimmed.length > LABEL_OVERRIDE_MAX) {
+        throw new PricelistVersionError(
+            422,
+            'LABEL_TOO_LONG',
+            `Etykieta za długa (max ${LABEL_OVERRIDE_MAX} znaków)`
+        );
+    }
+    if (!LABEL_OVERRIDE_PATTERN.test(trimmed)) {
+        throw new PricelistVersionError(
+            422,
+            'INVALID_LABEL',
+            'Etykieta może zawierać litery, cyfry, spację oraz znaki . _ - /'
+        );
+    }
+    return trimmed;
 }
 
 export interface AuditEntry {

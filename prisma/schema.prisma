@@ -981,6 +981,10 @@ model PricelistVersion {
   effectiveFrom  String
   createdBy      String?
   note           String?
+  /// Ręczna korekta etykiety (admin, jawna decyzja z ostrzeżeniem).
+  /// NULL = etykieta pochodna {P}v{seq}-{RRRRMMDD}; kolumna nie zmienia
+  /// seq, effectiveFrom, cen ani pieczątek ofert (te trzymają id).
+  labelOverride  String?
   sha256         String
   createdAt      String?
   /// Ostatnia zmiana wersji (szkic: zapis wierszy/noty, publikacja: approve). ISO UTC.

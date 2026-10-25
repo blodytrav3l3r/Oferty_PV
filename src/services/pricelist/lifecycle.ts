@@ -17,6 +17,7 @@ import {
     isPricelistType,
     isUniqueViolation,
     lockFor,
+    normalizeLabelOverride,
     normalizeNote,
     requireType,
     toUtcIso,
@@ -119,6 +120,15 @@ export function versionLabel(type: PricelistType, seq: number, effectiveFromIso:
     const m = String(d.getUTCMonth() + 1).padStart(2, '0');
     const day = String(d.getUTCDate()).padStart(2, '0');
     return `${TYPE_PREFIX[type]}v${seq}-${y}${m}${day}`;
+}
+
+/**
+ * Etykieta wyświetlana: ręczna korekta (labelOverride) ma pierwszeństwo nad
+ * etykietą pochodną. Pochodna zostaje w `version` jako referencja/kanon.
+ */
+export function effectiveLabel(v: { version: string; labelOverride?: string | null }): string {
+    const manual = typeof v.labelOverride === 'string' ? v.labelOverride.trim() : '';
+    return manual !== '' ? manual : v.version;
 }
 
 /** Jeden szkic na typ — pilnuje tego indeks `ux_pricelist_version_one_draft`. */
@@ -271,6 +281,85 @@ export async function updateDraft(
                 newData: {
                     ...(rows !== null ? { wiersze: 'podmienione', sha256 } : {}),
                     ...(note !== undefined ? { note } : {})
+                }
+            });
+            return updated;
+        })
+    );
+    if (!res.acquired) {
+        throw new PricelistVersionError(
+            503,
+            'LOCK_BUSY',
+            `Zapis wersji ${type} chwilowo zablokowany`
+        );
+    }
+    return res.value;
+}
+
+/** Opcje ręcznej korekty etykiety wersji. */
+export interface SetLabelOverrideOptions {
+    userId?: string;
+}
+
+/**
+ * Ręczna korekta etykiety wersji (admin, jawna decyzja z ostrzeżeniem).
+ * Nie zmienia seq, effectiveFrom, cen ani pieczątek ofert (te trzymają id).
+ * Etykieta pochodna zostaje w `version`; `label: null`/pusty = powrót do niej.
+ * Kolizja z etykietą innej wersji tego samego typu → 409 LABEL_COLLISION.
+ * Każda zmiana trafia do audytu (UPDATE, old/new).
+ */
+export async function setLabelOverride(
+    id: string,
+    labelInput: unknown,
+    opts: SetLabelOverrideOptions = {}
+): Promise<PricelistVersion> {
+    const label = normalizeLabelOverride(labelInput);
+    const current = await prisma.pricelistVersion.findUnique({ where: { id } });
+    if (!current) {
+        throw new PricelistVersionError(404, 'NOT_FOUND', `Wersja ${id} nie istnieje`);
+    }
+    if (!isPricelistType(current.type)) {
+        throw new PricelistVersionError(422, 'INVALID_TYPE', `Wersja ${id} ma nieznany typ`);
+    }
+    const type = current.type;
+    const lock = lockFor(type);
+    const res = await lock.runWithLock(() =>
+        prisma.$transaction(async (tx) => {
+            const fresh = await tx.pricelistVersion.findUnique({ where: { id } });
+            if (!fresh) {
+                throw new PricelistVersionError(404, 'NOT_FOUND', `Wersja ${id} nie istnieje`);
+            }
+            // Override równy etykiecie pochodnej = brak override (jedna prawda).
+            const next = label !== null && label === fresh.version ? null : label;
+            if (next !== null) {
+                const siblings = await tx.pricelistVersion.findMany({
+                    where: { type, id: { not: id } },
+                    select: { id: true, version: true, labelOverride: true }
+                });
+                const clash = siblings.find((s) => effectiveLabel(s) === next);
+                if (clash) {
+                    throw new PricelistVersionError(
+                        409,
+                        'LABEL_COLLISION',
+                        `Etykieta ${next} już istnieje w tym typie (${effectiveLabel(clash)})`
+                    );
+                }
+            }
+            const updated = await tx.pricelistVersion.update({
+                where: { id },
+                data: { labelOverride: next, updatedAt: new Date().toISOString() }
+            });
+            await writeAudit(tx, {
+                entityId: id,
+                userId: opts.userId,
+                action: 'UPDATE',
+                oldData: {
+                    etykieta: effectiveLabel(fresh),
+                    labelOverride: fresh.labelOverride ?? null
+                },
+                newData: {
+                    etykieta: effectiveLabel({ version: fresh.version, labelOverride: next }),
+                    labelOverride: next
                 }
             });
             return updated;

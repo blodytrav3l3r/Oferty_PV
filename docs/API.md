@@ -395,6 +395,7 @@ Wymaga autoryzacji (administrator, oprócz etykiet).
 | GET    | `/api/pricelist-versions/:id/preview`     | admin | Podgląd zawartości wersji (`max 5000` wierszy/arkusz, `truncated`; `413 VERSION_TOO_LARGE` >20 000)                                                     |
 | POST   | `/api/pricelist-versions/:type/drafts`    | admin | Nowy szkic wersji (`201` przy utworzeniu)                                                                                                               |
 | PUT    | `/api/pricelist-versions/:id`             | admin | Edycja wersji                                                                                                                                           |
+| PATCH  | `/api/pricelist-versions/:id/label`       | admin | Ręczna korekta etykiety (`label`: tekst ≤64 znaki albo `null` = etykieta pochodna)                                                                      |
 | DELETE | `/api/pricelist-versions/:id`             | admin | Usunięcie wersji (PRECO: `409 USED_BY_STUDNIE`, gdy wskazuje ją wersja studni; obowiązująca/historyczna → `409 NOT_DELETABLE`, używana → `409 USED_BY`) |
 | POST   | `/api/pricelist-versions/:id/approve`     | admin | **Kanoniczna publikacja**: DRAFT → APPROVED (stan wyliczany z `effectiveFrom`)                                                                          |
 | POST   | `/api/pricelist-versions/:id/publish`     | admin | ⚠️ Deprecated alias `approve` (`Deprecation: true`, `Sunset: Wed, 31 Mar 2027 23:59:59 GMT`)                                                            |
@@ -412,6 +413,22 @@ wybiera tę PRECO resolverem eksportu: `409 USED_BY_STUDNIE` z liczbą i max 3
 labelkami. Referencje są re-checkowane w transakcji pod lockami `preco → studnie`
 (stała kolejność, bez cyklu z tworzeniem szkicu studni). Ograniczenie: operacja
 zmieniająca referencję bez locka `studnie` nie jest objęta gwarancją.
+
+### Ręczna korekta etykiety — `PATCH /api/pricelist-versions/:id/label`
+
+Etykieta wersji jest pochodna: `{R|S|P}v{seq}-{RRRRMMDD}` z `effectiveFrom` (UTC),
+unikalna w obrębie typu. Endpoint pozwala adminowi poprawić **sam napis** etykiety
+(np. myląca data po imporcie) bez ruszania osi czasu.
+
+- `label: "..."` — zapis ręcznej etykiety (override); dozwolone litery (także PL),
+  cyfry, spacja oraz `. _ - /`, max 64 znaki (`422 INVALID_LABEL` / `422 LABEL_TOO_LONG`).
+- `label: null` albo pusty string — powrót do etykiety pochodnej.
+- Wartość równa etykiecie pochodnej nie jest zapisywana jako override.
+- Kolizja z etykietą innej wersji tego samego typu → `409 LABEL_COLLISION`.
+- `version` (etykieta pochodna), `seq`, `effectiveFrom`, ceny i pieczątki ofert
+  (`pricelistVersionId`) pozostają nietknięte; zmiana trafia do audytu (`UPDATE`, old/new).
+- `GET /` i `GET /labels` zwracają dodatkowo `label` = etykieta efektywna
+  (override albo pochodna).
 
 ### Publikacja wersji — `POST /api/pricelist-versions/:id/approve`
 

@@ -70,6 +70,15 @@
         return typeof window.escapeHtmlAttr === 'function' ? window.escapeHtmlAttr(s) : escRaw(s);
     }
 
+    /**
+     * Etykieta wyświetlana: ręczna korekta (labelOverride) ma pierwszeństwo nad
+     * etykietą pochodną. Kanoniczna etykieta zostaje w `version` (referencja).
+     */
+    function labelOf(v) {
+        var manual = v && typeof v.labelOverride === 'string' ? v.labelOverride.trim() : '';
+        return manual !== '' ? manual : (v && v.version) || '';
+    }
+
     function toast(msg, type) {
         if (typeof window.showToast === 'function') window.showToast(msg, type || 'info');
     }
@@ -287,7 +296,7 @@
             );
             return;
         }
-        el.textContent = 'cennik ' + v.version + (label ? ' · ' + label : '');
+        el.textContent = 'cennik ' + labelOf(v) + (label ? ' · ' + label : '');
         var local = '';
         try {
             local = new Date(v.effectiveFrom).toLocaleString();
@@ -297,7 +306,8 @@
         el.setAttribute(
             'title',
             'Wersja ' +
-                v.version +
+                labelOf(v) +
+                (v.labelOverride ? ' (kanoniczna: ' + v.version + ')' : '') +
                 ' (seq ' +
                 v.seq +
                 ')' +
@@ -748,13 +758,13 @@
                 var isDraft = isEditableStatus(state);
                 var editBtn = isDraft
                     ? '<button class="btn btn-sm btn-secondary" data-pv-act="edit" data-pv-version="' +
-                      escAttr(v.version || '') +
+                      escAttr(labelOf(v)) +
                       '" title="Przejdź do edytora cennika — zapis trafia do tego szkicu (LIVE bez zmian)">' +
                       '<i data-lucide="pencil"></i> Edytuj</button>'
                     : '<button class="btn btn-sm btn-secondary" data-pv-act="clone" data-pv-id="' +
                       escAttr(v.id) +
                       '" title="Utwórz szkic jako kopię wersji ' +
-                      escAttr(v.version || '') +
+                      escAttr(labelOf(v)) +
                       ' i przejdź do edycji (obowiązująca wersja nie zmieni się)">' +
                       '<i data-lucide="history"></i> Utwórz kopię jako szkic</button>';
                 // „Usuń" zawsze widoczny: enabled gdy wolno (allowlist albo
@@ -764,7 +774,7 @@
                     '<button class="btn btn-sm btn-danger" data-pv-act="delete" data-pv-id="' +
                     escAttr(v.id) +
                     '" data-pv-version="' +
-                    escAttr(v.version || '') +
+                    escAttr(labelOf(v)) +
                     '"' +
                     (reason === null
                         ? ' title="Usuwa wersję i jej pozycje (tylko wersje nigdy nieaktywne)">Usuń</button>'
@@ -788,6 +798,13 @@
                       '" title="Pobierz XLSX tej wersji do review przed publikacją">Eksport' +
                       (isDraftish ? ' (review)' : '') +
                       '</button>' +
+                      '<button class="btn btn-sm btn-secondary" data-pv-act="label" data-pv-id="' +
+                      escAttr(v.id) +
+                      '" data-pv-label="' +
+                      escAttr(labelOf(v)) +
+                      '" data-pv-canonical="' +
+                      escAttr(v.version || '') +
+                      '" title="Ręczna korekta etykiety wersji (z ostrzeżeniem; nie zmienia cen, daty obowiązywania ani pieczątek ofert)"><i data-lucide="tag"></i> Etykieta</button>' +
                       activation +
                       deleteBtn +
                       '</div>'
@@ -797,7 +814,12 @@
                     '<td><strong' +
                     typeTitle +
                     '>' +
-                    esc(v.version || '—') +
+                    esc(labelOf(v) || '—') +
+                    (v.labelOverride
+                        ? ' <span class="text-muted" title="Ręczna korekta etykiety (kanoniczna: ' +
+                          escAttr(v.version || '') +
+                          ')">(ręczna)</span>'
+                        : '') +
                     '</strong></td>' +
                     '<td class="text-right">' +
                     esc(String(v.seq ?? '—')) +
@@ -1065,6 +1087,75 @@
         document.getElementById('pv-note-ok').addEventListener('click', function () {
             var note = document.getElementById('pv-note-input').value || '';
             onSubmit(note);
+        });
+    }
+
+    /** PATCH /:id/label — ręczna etykieta (null = powrót do pochodnej). */
+    async function saveLabelOverride(id, label) {
+        var json = await apiJson(
+            API + '/' + encodeURIComponent(id) + '/label',
+            authed('PATCH', { label: label })
+        );
+        // Badge w ofertach czytają cache etykiet — po korekcie musi się odświeżyć.
+        labelCache = {};
+        return json;
+    }
+
+    /**
+     * Ręczna korekta etykiety wersji (admin) — jawne ostrzeżenie przed zapisem.
+     * Puste pole (albo wartość równa etykiecie automatycznej) = powrót do niej.
+     * Nie zmienia cen, daty obowiązywania ani pieczątek ofert.
+     */
+    function openLabelModal(v, type) {
+        var canonical = (v && v.version) || '';
+        var current = labelOf(v);
+        window.showModal({
+            id: 'pv-label-modal',
+            titleId: 'pv-label-title',
+            html:
+                '<div class="modal"><div class="modal-header"><h3 id="pv-label-title">Ręczna korekta etykiety wersji</h3>' +
+                '<button class="btn-icon" aria-label="Zamknij" data-csp="closeModal" data-csp-args="[&quot;pv-label-modal&quot;]"><i data-lucide="x"></i></button></div>' +
+                '<div class="modal-body">' +
+                '<p class="color-warn"><strong>Uwaga:</strong> etykieta jest widoczna w ofertach, historii i eksportach. ' +
+                'Korekta nie zmienia cen, daty obowiązywania ani pieczątek ofert (te trzymają id wersji), ' +
+                'ale zmienia to, co widzą użytkownicy. Każda zmiana trafia do audytu.</p>' +
+                '<p class="text-muted">Etykieta automatyczna: <code>' +
+                esc(canonical) +
+                '</code></p>' +
+                '<div class="form-group"><label for="pv-label-input">Nowa etykieta (puste = automatyczna)</label>' +
+                '<input class="form-input" id="pv-label-input" maxlength="64" value="' +
+                escAttr(current) +
+                '"></div>' +
+                '<p class="text-muted">Dozwolone: litery, cyfry, spacja oraz znaki . _ - / (max 64 znaki).</p>' +
+                '<div class="pv-row"><button class="btn btn-primary" id="pv-label-ok">Zapisz etykietę</button>' +
+                '<button class="btn btn-secondary" data-csp="closeModal" data-csp-args="[&quot;pv-label-modal&quot;]">Anuluj</button></div>' +
+                '</div></div>'
+        });
+        icons(document.getElementById('pv-label-modal'));
+        var input = document.getElementById('pv-label-input');
+        var ok = document.getElementById('pv-label-ok');
+        if (!input || !ok) return;
+        input.focus();
+        input.select();
+        ok.addEventListener('click', function () {
+            var raw = (input.value || '').trim();
+            var next = raw === '' || raw === canonical ? null : raw;
+            ok.disabled = true;
+            saveLabelOverride(v.id, next)
+                .then(function () {
+                    window.closeModal('pv-label-modal');
+                    toast(
+                        next === null
+                            ? 'Przywrócono etykietę automatyczną (' + canonical + ')'
+                            : 'Zapisano etykietę: ' + next,
+                        'success'
+                    );
+                    return refreshTable(type, true);
+                })
+                .catch(function (err) {
+                    ok.disabled = false;
+                    toast('Błąd korekty etykiety: ' + err.message, 'error');
+                });
         });
     }
 
@@ -1542,7 +1633,18 @@
                 var pvPreview = window.pricelistVersions && window.pricelistVersions.openPreview;
                 if (typeof pvPreview === 'function') pvPreview(id, type);
             } else if (act === 'diff' && id) openDiff(id, null, type);
-            else if (act === 'export' && id) {
+            else if (act === 'label' && id) {
+                var canonical = btn.getAttribute('data-pv-canonical') || '';
+                var shown = btn.getAttribute('data-pv-label') || canonical;
+                openLabelModal(
+                    {
+                        id: id,
+                        version: canonical,
+                        labelOverride: shown === canonical ? null : shown
+                    },
+                    type
+                );
+            } else if (act === 'export' && id) {
                 exportVersion(
                     id,
                     type,
