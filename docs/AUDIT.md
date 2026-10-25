@@ -48,9 +48,9 @@ Nowa warstwa powyżej historycznego raportu — nie zmienia ocen z 2026-07-09.
 | `src/services/` — logika biznesowa | ✔      | Audit, cenniki, PDF/DOCX, combinedExport, seedExporter, telemetry/learning, ml/*                     |
 | `src/utils/` — narzędzia           | ✔      | Logger, ownership, productionOrderGuard, fts5Sync, searchUtils                                       |
 | `src/validators/` — walidacja Zod  | ✔      | Schematy auth, ofert, zamówień, produktów, telemetrii                                                |
-| `public/` — frontend (SPA)         | ✔      | Vanilla JS, 6 plików HTML (app/index/rury/studnie/kartoteka/zlecenia), 11 arkuszy CSS, 221 plików JS |
-| `tests/` — testy                   | ✔      | ~125 plików testowych, Jest 30 + Playwright (smoke/alignment/appName/a11y)                           |
-| `prisma/` — schema + migracje      | ✔      | Schema 651 linii, 38 modeli, 3 migracje (baseline + uq_reward + ai_training_run)                     |
+| `public/` — frontend (SPA)         | ✔      | Vanilla JS, 6 plików HTML (app/index/rury/studnie/kartoteka/zlecenia), 11 arkuszy CSS, 260 plików JS |
+| `tests/` — testy                   | ✔      | 546 plików testowych, Jest 30 + Playwright (smoke/alignment/appName/a11y)                            |
+| `prisma/` — schema + migracje      | ✔      | Schema 1186 linii, 57 modeli, 38 migracji                                                            |
 | `data/` — baza SQLite + seed       | ✔      | app_database.sqlite + price_defaults.json + seed_*.json                                              |
 | `scripts/` — skrypty narzędziowe   | ✔      | 43 pliki: backup/restore, version guards, bundling, licencje, deploy/rollback                        |
 | `docs/` — dokumentacja             | ✔      | README, ARCHITECTURE, DATABASE, API, SECURITY, COMPONENTS, UI_GUIDELINES, adr/                       |
@@ -113,7 +113,7 @@ Nowa warstwa powyżej historycznego raportu — nie zmienia ocen z 2026-07-09.
 | Element              | Status | Uwagi                                                                                           |
 | -------------------- | ------ | ----------------------------------------------------------------------------------------------- |
 | Framework: Jest 30   | ✔      | ts-jest, coverage, jsdom                                                                        |
-| Liczba testów        | ✔      | ~125 plików testowych / 1867+ testów                                                            |
+| Liczba testów        | ✔      | 546 plików testowych / 1867+ testów                                                             |
 | Testy API            | ✔      | supertest, oferty CRUD (rury/studnie), auth, orders, production                                 |
 | Testy walidacji      | ✔      | Zod schemas (auth/offer/order/product/telemetry)                                                |
 | Testy bezpieczeństwa | ✔      | SQL injection, rate limiter, IDOR/ownership, writeLock, featureFlags, bodyParserLimit           |

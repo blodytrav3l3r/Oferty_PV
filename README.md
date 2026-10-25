@@ -653,44 +653,44 @@ Oferty_PV/
 │   ├── validators/            # Schematy walidacji Zod
 │   ├── utils/                 # Narzędzia (logger, helpers, productionOrderGuard)
 │   └── types/                 # Typy TypeScript
-├── public/                    # Frontend (Vanilla JS SPA, 221 plików JS)
+├── public/                    # Frontend (Vanilla JS SPA, 260 plików JS)
 │   ├── app.html               # Shell SPA (jedyny entry point, router hash)
 │   ├── index.html             # Pulpit / Dashboard
 │   ├── studnie.html           # Moduł studnie (iframe w app.html)
 │   ├── rury.html              # Moduł rury (iframe w app.html)
 │   ├── kartoteka.html         # Kartoteka ofert i zamówień
 │   ├── zlecenia.html          # Zlecenia produkcyjne (PZ)
-│   ├── js/                    # Skrypty JS (221 plików)
-│   │   ├── shared/            # 22 pliki: auth, ui, icons, headerUser, toast, modalCore, StorageService
-│   │   ├── studnie/           # 137 plików: WellManager, solver, ruleEngine, ML hooks, Excel (19 modułów excel*.js)
-│   │   ├── rury/              # 31 plików: OfferItems, offerSummary, PEHD
-│   │   ├── kartoteka/         # 8 plików: kartotekaActions, kartotekaUi, kartotekaInit
-│   │   ├── import-export/     # 11 plików: toolbar.js + rury/studnie/shared (XLSX + JSON 1:1)
-│   │   ├── admin/             # 4 pliki: AI dashboard, aiDashboard
+│   ├── js/                    # Skrypty JS (260 plików)
+│   │   ├── shared/            # 43 pliki: auth, ui, icons, headerUser, toast, modalCore, StorageService
+│   │   ├── studnie/           # 150 plików: WellManager, solver, ruleEngine, ML hooks, Excel (19 modułów excel*.js)
+│   │   ├── rury/              # 30 plików: OfferItems, offerSummary, PEHD
+│   │   ├── kartoteka/         # 9 plików: kartotekaActions, kartotekaUi, kartotekaInit
+│   │   ├── import-export/     # 12 plików: toolbar.js + rury/studnie/shared (XLSX + JSON 1:1)
+│   │   ├── admin/             # 7 plików: AI dashboard, aiDashboard
 │   │   └── spa/               # 4 pliki: router.js, navGuard
 │   ├── css/                   # 11 arkuszy: style.base/cards/responsive/utilities + index/rury/studnie/zlecenia/spa/inter/printModal
 │   ├── images/                # logo-sok.svg, letterhead-*.png, b-mark.png, ce-mark.png
 │   ├── partials/              # Partiale HTML (header, rury/*, studnie/*) ładowane przez partialLoader
 │   └── templates/             # 5 szablonów: ofertaRury/Studnie, kartaBudowy, zlecenie, etykieta
-├── prisma/                    # Schema + migracje Prisma (48 modeli, 856 linii)
-│   ├── schema.prisma          # Definicja schematu (SQLite, 48 modeli)
-│   └── migrations/            # 17 migracji: 20260815000000_baseline … 20260929000000_fk_pricelist_version (pełna lista: prisma/migrations/)
+├── prisma/                    # Schema + migracje Prisma (57 modeli, 1186 linii)
+│   ├── schema.prisma          # Definicja schematu (SQLite, 57 modeli)
+│   └── migrations/            # 38 migracji: 20260815000000_baseline … 20261025120000_add_pricelist_label_override (pełna lista: prisma/migrations/)
 ├── data/                      # Baza SQLite + pliki seed
 │   ├── app_database.sqlite    # Główna baza (SQLite)
 │   ├── price_defaults.json    # Snapshot domyślnych cenników (transfer między instalacjami)
 │   └── seed_*.json            # seed_rury/studnie/preco.json (źródło dla prisma/seed.ts)
-├── tests/                     # Testy (Jest + Playwright, ~125 plików)
+├── tests/                     # Testy (Jest + Playwright, 546 plików)
 │   ├── ml/                    # Testy pipeline'u ML
 │   ├── studnie/               # Testy modułu studnie (Excel, solver, pzGuard)
 │   ├── sales/                 # Testy kartoteki (filtry, batch, search)
 │   ├── playwright/            # Testy Playwright (alignment, appName, a11y, smoke)
 │   └── ...
 ├── docs/                      # Dokumentacja
-│   ├── adr/                   # Decyzje architektoniczne (ADR-001..008)
-│   ├── plans/                 # Plany i taski (+ archive/ — 60+ archiwalnych)
+│   ├── adr/                   # Decyzje architektoniczne (ADR-001..016)
+│   ├── plans/                 # Plany i taski (+ archive/ — 161 archiwalnych)
 │   ├── import-export/         # Dokumentacja modułu import/eksport
 │   └── ...                    # ARCHITECTURE, DATABASE, API, SECURITY, COMPONENTS, UI_GUIDELINES
-├── scripts/                   # Skrypty narzędziowe (46 plików)
+├── scripts/                   # Skrypty narzędziowe (85 plików)
 │   ├── backup.ts              # Backup bazy (VACUUM INTO, max 1 kopia)
 │   ├── restore-db.js          # Przywracanie bazy z backupu (header + integrity_check + WAL cleanup)
 │   ├── check-db.js            # Weryfikacja schematu przy starcie (ensure-db.bat)

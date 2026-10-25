@@ -94,8 +94,8 @@ VERIFIED (YES/NO).
 
 - **Backend**: TypeScript + Express + Prisma + SQLite (`server.ts`, `src/`, `scripts/`, `tests/`). Warstwy: routes → validators → services → Prisma. Monolit celowy.
 - **Frontend**: Vanilla JS SPA (`app.html` + iframe modułów `studnie.html`/`rury.html`), kod w `public/js/` (nie kompilowany przez `tsc`, sprawdzany przez ESLint + `typecheck:frontend`).
-- **Decyzje (ADR)**: `docs/adr/` — ADR-001 SQLite, ADR-002 Vanilla SPA, ADR-004 Express+Prisma, ADR-005 Express jedynym serwerem, ADR-006 HTTPS/reverse proxy, ADR-007 cenniki, ADR-008 modularyzacja frontendu, ADR-009 mapa produktów studni.
-- **Legacy surface (nie powiększaj)**: 256 plików JS, 1771 przypisań `window.X =`, 0 inline `onclick` w HTML (CSP-E), 21 programistycznych `.onclick =` w `public/js` (stan 2026-10-24). Zasada: NEW globals/inline/inline-styles = 0; nowy kod ESM + `addEventListener`. Excel to protected zone.
+- **Decyzje (ADR)**: `docs/adr/` — ADR-001 SQLite, ADR-002 Vanilla SPA, ADR-004 Express+Prisma, ADR-005 Express jedynym serwerem, ADR-006 HTTPS/reverse proxy, ADR-007 cenniki, ADR-008 modularyzacja frontendu, ADR-009 mapa produktów studni, ADR-014 iframe boundary, ADR-016 SLA per zespół (pełna lista: `docs/adr/`).
+- **Legacy surface (nie powiększaj)**: 260 plików JS, 1278 przypisań `window.X =`, 0 inline `onclick` w HTML (CSP-E), 21 programistycznych `.onclick =` w `public/js` (stan 2026-10-25). Zasada: NEW globals/inline/inline-styles = 0; nowy kod ESM + `addEventListener`. Excel to protected zone.
 - **Zakazane kierunki** (decyzje, nie zaległości): React, PostgreSQL, mikroserwisy, Redis, BullMQ/Kafka, Pact, OpenTelemetry, pełna normalizacja JSON, masowe przepisywanie legacy.
 
 ## Filozofia pracy (skrót)

@@ -309,7 +309,7 @@ w HTML/partialach/szablonach — jeden dyspozytor `public/js/shared/cspActions.j
 | `public/js/care/`          | 1             | Widok opieki nad ofertą                                                  |
 | `public/js/` (root)        | 4             | Skrypty startowe/globalne                                                |
 
-Razem: 256 plików `.js` w `public/js/`.
+Razem: 260 plików `.js` w `public/js/`.
 
 Główne pliki rdzeniowe w `public/js/studnie/` po podziale:
 
@@ -520,7 +520,7 @@ Oferty_PV/
 │   ├── kartoteka.html               # Kartoteka ofert i zamówień
 │   ├── zlecenia.html                # Zlecenia produkcyjne (PZ)
 │   ├── favicon.ico                  # Ikona
-│   ├── js/                          # Skrypty JS (256 plików)
+│   ├── js/                          # Skrypty JS (260 plików)
 │   ├── css/                         # 13 arkuszy źródłowych (style.base/cards/responsive/utilities + index/rury/studnie/zlecenia/spa/inter/printModal + studnie/modal, studnie/offer); public/css/min/ to build
 │   ├── images/                      # logo-sok.svg, letterhead-*.png, b-mark.png, ce-mark.png
 │   ├── partials/                    # Partiale HTML (header, rury/*, studnie/*) — partialLoader
