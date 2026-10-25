@@ -86,3 +86,29 @@ Zależności: A0 → A1 → (A2, A3 równolegle) → A4 → A5 → A6. A6 zawsze
 - Świadomie nie zrobione: solver, Excel, grupowanie `studnie`, baseline JSON — z wpisem wyżej.
 
 Szacunek: 4–6 sesji, 5–6 commitów, 0 pushy.
+
+## 8. Checkpoint wykonania (2026-10-25)
+
+| Etap | Commit    | Zakres                                                                             |
+| ---- | --------- | ---------------------------------------------------------------------------------- |
+| A0   | `8efe4d2` | plan + adnotacja E-125 (`cenniki.html` usunięty w `95b64e6`)                       |
+| A1   | `23045e3` | liczniki w 6 plikach: README, AGENTS, CLAUDE, ARCHITECTURE, AUDIT, agents/frontend |
+| A2   | `256b1a4` | usunięty `src/types/index.ts` + 3 aliasy z `tsconfig.frontend.json`                |
+| A4   | `37a9617` | usunięte 2 sieroty `docs/baseline/*.json`                                          |
+| A3   | `57c1880` | `carePanel.test.ts` → 4 suity + `helpers/carePanelHarness.ts`, 53 testy bez zmian  |
+| A5   | `a19de64` | `partialLoader.js`: `studnie/` → `shared/`, 2 tagi HTML + 1 ścieżka testu          |
+
+Weryfikacja:
+
+- `npx tsc --noEmit` → exit 0 (przed i po A2/A3).
+- `npx tsc -p tsconfig.frontend.json --noEmit` → exit 0.
+- `npx jest --testPathPatterns=carePanel` → 5 suit / 61 testów PASS (53 z podziału + 8 istniejących).
+- `npx jest tests/frontend/xssSinks` → 20/20 PASS po przeniesieniu `partialLoader`.
+- `npm run validate` → łańcuch doszedł do ostatniego kroku; `prices:verify` OK, `collisions` 45/45, `ratchet` 237/237.
+- `npm run format:check` → PASS; `version:check` → PASS.
+
+Liczniki po zmianach (komenda z §2): `{ js: 260, studnie: 149, win: 1278, adr: 16, scripts: 85, tests: 549 }`
+(`shared` 44 po przeniesieniu `partialLoader`; `tests` 549 = 546 − 1 + 4).
+
+Nie zrobione świadomie: split solvera, refaktor Excela, grupowanie `public/js/studnie`,
+konsolidacja baseline JSON, podział `telemetryAiMl.ts`. Brak pusha.

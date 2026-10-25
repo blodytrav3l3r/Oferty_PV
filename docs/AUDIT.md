@@ -49,7 +49,7 @@ Nowa warstwa powyżej historycznego raportu — nie zmienia ocen z 2026-07-09.
 | `src/utils/` — narzędzia           | ✔      | Logger, ownership, productionOrderGuard, fts5Sync, searchUtils                                       |
 | `src/validators/` — walidacja Zod  | ✔      | Schematy auth, ofert, zamówień, produktów, telemetrii                                                |
 | `public/` — frontend (SPA)         | ✔      | Vanilla JS, 6 plików HTML (app/index/rury/studnie/kartoteka/zlecenia), 11 arkuszy CSS, 260 plików JS |
-| `tests/` — testy                   | ✔      | 546 plików testowych, Jest 30 + Playwright (smoke/alignment/appName/a11y)                            |
+| `tests/` — testy                   | ✔      | 549 plików testowych, Jest 30 + Playwright (smoke/alignment/appName/a11y)                            |
 | `prisma/` — schema + migracje      | ✔      | Schema 1186 linii, 57 modeli, 38 migracji                                                            |
 | `data/` — baza SQLite + seed       | ✔      | app_database.sqlite + price_defaults.json + seed_*.json                                              |
 | `scripts/` — skrypty narzędziowe   | ✔      | 43 pliki: backup/restore, version guards, bundling, licencje, deploy/rollback                        |
@@ -113,7 +113,7 @@ Nowa warstwa powyżej historycznego raportu — nie zmienia ocen z 2026-07-09.
 | Element              | Status | Uwagi                                                                                           |
 | -------------------- | ------ | ----------------------------------------------------------------------------------------------- |
 | Framework: Jest 30   | ✔      | ts-jest, coverage, jsdom                                                                        |
-| Liczba testów        | ✔      | 546 plików testowych / 1867+ testów                                                             |
+| Liczba testów        | ✔      | 549 plików testowych / 1867+ testów                                                             |
 | Testy API            | ✔      | supertest, oferty CRUD (rury/studnie), auth, orders, production                                 |
 | Testy walidacji      | ✔      | Zod schemas (auth/offer/order/product/telemetry)                                                |
 | Testy bezpieczeństwa | ✔      | SQL injection, rate limiter, IDOR/ownership, writeLock, featureFlags, bodyParserLimit           |

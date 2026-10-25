@@ -661,8 +661,8 @@ Oferty_PV/
 │   ├── kartoteka.html         # Kartoteka ofert i zamówień
 │   ├── zlecenia.html          # Zlecenia produkcyjne (PZ)
 │   ├── js/                    # Skrypty JS (260 plików)
-│   │   ├── shared/            # 43 pliki: auth, ui, icons, headerUser, toast, modalCore, StorageService
-│   │   ├── studnie/           # 150 plików: WellManager, solver, ruleEngine, ML hooks, Excel (19 modułów excel*.js)
+│   │   ├── shared/            # 44 pliki: auth, ui, icons, headerUser, toast, modalCore, StorageService
+│   │   ├── studnie/           # 149 plików: WellManager, solver, ruleEngine, ML hooks, Excel (19 modułów excel*.js)
 │   │   ├── rury/              # 30 plików: OfferItems, offerSummary, PEHD
 │   │   ├── kartoteka/         # 9 plików: kartotekaActions, kartotekaUi, kartotekaInit
 │   │   ├── import-export/     # 12 plików: toolbar.js + rury/studnie/shared (XLSX + JSON 1:1)
@@ -679,7 +679,7 @@ Oferty_PV/
 │   ├── app_database.sqlite    # Główna baza (SQLite)
 │   ├── price_defaults.json    # Snapshot domyślnych cenników (transfer między instalacjami)
 │   └── seed_*.json            # seed_rury/studnie/preco.json (źródło dla prisma/seed.ts)
-├── tests/                     # Testy (Jest + Playwright, 546 plików)
+├── tests/                     # Testy (Jest + Playwright, 549 plików)
 │   ├── ml/                    # Testy pipeline'u ML
 │   ├── studnie/               # Testy modułu studnie (Excel, solver, pzGuard)
 │   ├── sales/                 # Testy kartoteki (filtry, batch, search)

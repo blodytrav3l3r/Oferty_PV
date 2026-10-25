@@ -13,7 +13,7 @@
 
 ## Legacy surface (nie powiększaj)
 
-- 260 plików `public/js` (studnie 150), 1278 zapisów `window.*`, 21 programistycznych `.onclick =` i 0 inline `on*` w HTML, iframe + `defer-order` + partiale = wysokie coupling.
+- 260 plików `public/js` (studnie 149), 1278 zapisów `window.*`, 21 programistycznych `.onclick =` i 0 inline `on*` w HTML, iframe + `defer-order` + partiale = wysokie coupling.
 - Zasada: **NEW `window.*` = 0, NEW `onclick` = 0, NEW inline styles = 0.** Stary kod zostaje; nowy kod to ESM + `addEventListener` + jawne importy/eksporty.
 - Excel (`excel*.js`) to protected zone: one problem → one diff → targeted tests → E2E → weryfikacja manualna. Bez "cleanup Excel".
 
