@@ -69,20 +69,33 @@ describe('frontend: panel Zarządzanie cennikiem (3 przyciski + 3 sekcje)', () =
         'utf-8'
     );
 
-    it('toolbar: Dodaj, Zapisz, Zarządzaj w tej kolejności (rury)', () => {
-        const order = ['> Dodaj', '> Zapisz', '> Zarządzaj'].map((l) => ruryPartial.indexOf(l));
-        expect(order.every((i) => i > -1)).toBe(true);
-        expect(order).toEqual([...order].sort((a, b) => a - b));
+    it('toolbar: tylko tytuł, szukaj i przełącznik Panel (rury)', () => {
+        const toolbar = ruryPartial.slice(
+            ruryPartial.indexOf('<div class="toolbar">'),
+            ruryPartial.indexOf('<div id="pricelist-status-strip"')
+        );
+        expect(toolbar).toContain('data-csp="toggleRuryVersionsPanel"');
+        expect(toolbar).toContain('data-pv-dock-toggle');
+        expect(toolbar).not.toContain('id="pv-editor-actions"');
+        expect(toolbar).not.toContain('id="btn-add-product"');
+        expect(toolbar).not.toContain('id="btn-save-pricelist"');
+        // Akcje żyją w źródle przenoszonym do raila (jeden pasek zarządzania).
+        expect(ruryPartial).toContain('id="pv-grid-actions"');
         expect(ruryPartial).toContain('id="btn-save-pricelist"');
-        expect(ruryPartial).toContain('data-csp="openRuryVersionsPanel"');
         expect(ruryPartial).toContain('title="Zarządzanie cennikiem: wersje, pliki, domyślne"');
     });
-    it('toolbar: Dodaj, Zapisz, Zarządzaj w tej kolejności (studnie)', () => {
-        const order = ['> Dodaj', '> Zapisz', '> Zarządzaj'].map((l) => studniePartial.indexOf(l));
-        expect(order.every((i) => i > -1)).toBe(true);
-        expect(order).toEqual([...order].sort((a, b) => a - b));
+    it('toolbar: tylko tytuł, szukaj i przełącznik Panel (studnie)', () => {
+        const toolbar = studniePartial.slice(
+            studniePartial.indexOf('<div class="toolbar">'),
+            studniePartial.indexOf('<div id="pricelist-status-strip"')
+        );
+        expect(toolbar).toContain('data-csp="toggleStudnieVersionsPanel"');
+        expect(toolbar).toContain('data-pv-dock-toggle');
+        expect(toolbar).not.toContain('id="pv-editor-actions"');
+        expect(toolbar).not.toContain('id="btn-add-studnie-product"');
+        expect(toolbar).not.toContain('id="btn-save-studnie-pricelist"');
+        expect(studniePartial).toContain('id="pv-grid-actions"');
         expect(studniePartial).toContain('id="btn-save-studnie-pricelist"');
-        expect(studniePartial).toContain('data-csp="openStudnieVersionsPanel"');
         expect(studniePartial).toContain('title="Zarządzanie cennikiem: wersje, pliki, domyślne"');
     });
     it('toolbar: brak Wersje/Zapisz domyślne/Eksportuj/Importuj/Przywróć + brak hidden inputów', () => {

@@ -19,6 +19,7 @@ Kolejność ładowania w każdej wejściówce (index, app, rury, studnie, kartot
 | `css/style.responsive.css` | Breakpointy, modale (`.modal-overlay`/`.modal`), toasty, wizard                                                                                                              |
 | `css/style.utilities.css`  | Utility classes (zastępują inline style)                                                                                                                                     |
 | `css/printModal.css`       | Podgląd wydruku (UPM) — ukrycie nagłówka/sidebarów, szerokości                                                                                                               |
+| `css/pricelist-panel.css`  | Rail „Zarządzanie cennikami" (lewy panel w `rury.html`, `studnie.html`, `#/cennik`)                                                                                          |
 | `css/<moduł>.css`          | Style modułowe: `rury.css`, `studnie.css` (+ `studnie/offer.css`, `studnie/modal.css`), `zlecenia.css`, `index.css`, `spa.css`. Kartoteka używa wyłącznie arkuszy wspólnych. |
 
 > **Zasada:** wspólne klasy NIE mogą być nadpisywane per moduł. Warianty modułowe
@@ -127,6 +128,33 @@ liczb. Klasy CSS używają zmiennych `--z-*` z `style.base.css:251-256` (`--z-he
 - **Zakaz** budowania modalów inline-styled w JS (stary wzorzec z `ui.js`/`clientManager.js`).
 - Zamknięcie Esc/overlay; focus wewnątrz modala; `aria-label` na overlayu i przyciskach.
 - Warstwy przez `LAYERS.*`, szerokości przez `.modal` (max 550px) / warianty szerokie.
+
+## 6a. Rail (docked panel) — zarządzanie cennikami
+
+- Panel „Zarządzanie cennikami" jest **railem** (`#pv-dock`), nie modalem: **lewa**
+  krawędź, 380 px, sticky nagłówek, własny scroll (`.pv-dock` w `pricelist-panel.css`).
+- Jeden lewy panel: w `#/cennik` powłoka **nie ma** własnego paska nawigacji — taby
+  typów (Rury/Studnie/PRECO) są na górze raila, a rail jest otwarty zawsze.
+  Na desktopie nie ma przycisku zamykania; na ekranie ≤1024 px rail działa jako
+  drawer z X, a przycisk „Panel” w toolbarze go przywraca.
+- Desktop ≥1025 px: rail **wypycha** treść (`body.pv-dock-open > .main { margin-left }`);
+  poniżej: drawer z backdropem, pełna szerokość na telefonie. W modułach rail startuje
+  pod sticky headerem (`top: var(--header-h)`).
+- Otwieranie: `openVersionsPanel()` (API/deep-link), `toggleVersionsPanel()` (przycisk
+  „Panel” w modułach), `autoOpenVersionsPanel()` (`#/cennik`, zawsze).
+  `aria-expanded` na `[data-pv-dock-toggle]`.
+- **Jeden pasek akcji**: Edytuj/Opublikuj/Dodaj/Zapisz (`#pv-grid-actions`) są
+  przenoszone z sekcji cennika do stałego slotu `.pv-dock__pinned`. Slot żyje poza
+  `#pv-dock-content`, więc ponowny render listy wersji nie kasuje przycisków.
+  Toolbar nad siatką zostaje bez akcji. PRECO zachowuje własny zapis przy tabeli.
+- Stan ma jedno miejsce: otwarty rail chowa `#pricelist-status-strip`
+  (`body.pv-dock-open`), po zamknięciu pasek wraca nad siatkę.
+- Taby w railu w `#/cennik` wołają `parent.CennikHost.activate(type)` — zmiana typu to
+  zmiana modułu w powłoce, nie lokalny render.
+- Wersje renderujemy jako **karty** (`.pv-vcard`) — 8-kolumnowa tabela nie mieści się
+  w 380 px. Akcje przez istniejący dyspozytor `data-pv-act`.
+- Modal zostaje dla dialogów wymagających szerokości (podgląd, diff, etykieta, nota,
+  publikacja).
 
 ## 7. Utility classes (SSoT: `style.utilities.css`)
 

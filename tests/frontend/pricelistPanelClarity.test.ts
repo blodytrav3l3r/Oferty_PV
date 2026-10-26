@@ -30,11 +30,11 @@ describe('frontend: statusy mówią co znaczą', () => {
 
 describe('frontend: Użycie wersji widoczne', () => {
     it('kolumna Użycie w nagłówku i komórka usedByCell', () => {
-        expect(panel).toContain('<th scope="col">Użycie</th>');
+        expect(panel).toContain('<dt>Użycie</dt>');
         expect(panel).toContain('function usedByCell(v)');
     });
-    it('użycie wersji w kolumnie Użycie; publikacja niesie datę obowiązywania', () => {
-        expect(panel).toContain('<th scope="col">Użycie</th>');
+    it('użycie wersji w karcie; publikacja niesie datę obowiązywania', () => {
+        expect(panel).toContain('<dt>Użycie</dt>');
         expect(panel).toContain('data-pv-eff="');
         expect(panel).toContain('ofert/zamówień');
     });

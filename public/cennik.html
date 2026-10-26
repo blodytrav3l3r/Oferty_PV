@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="pl">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta
+            name="description"
+            content="{{APP_NAME}} — cenniki rur, studni i PRECO z bezpośrednią edycją."
+        />
+        <title>{{APP_NAME}} — Cennik</title>
+        <link rel="stylesheet" href="css/style.base.css?v=1.52.0" />
+        <link rel="stylesheet" href="css/style.cards.css?v=1.52.0" />
+        <link rel="stylesheet" href="css/style.responsive.css?v=1.52.0" />
+        <link rel="stylesheet" href="css/style.utilities.css?v=1.52.0" />
+        <link rel="stylesheet" href="css/cennik.css?v=1.52.0" />
+    </head>
+
+    <body class="cennik-module">
+        <header class="header">
+            <div class="header-inner">
+                <div class="header-left">
+                    <div class="logo">
+                        <span>Cennik</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="main">
+            <div class="section active" id="section-cennik">
+                <div class="cennik-page">
+                    <div class="cennik-layout">
+                        <div id="cennik-frames" class="cennik-frames">
+                            <div id="cennik-state" class="cennik-state">Ładowanie cennika...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <div id="toast-container" class="toast-container" aria-live="polite"></div>
+
+        <script defer src="js/shared/theme.js?v=1.52.0"></script>
+        <script defer src="js/cennik/cennik.js?v=1.52.0"></script>
+    </body>
+</html>

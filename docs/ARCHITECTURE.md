@@ -279,21 +279,22 @@ w HTML/partialach/szablonach — jeden dyspozytor `public/js/shared/cspActions.j
 | Technologia             | Rola                               |
 | ----------------------- | ---------------------------------- |
 | Vanilla JavaScript      | Logika frontendu (brak frameworka) |
-| HTML                    | Widoki (7 plików .html)            |
+| HTML                    | Widoki (8 plików .html)            |
 | CSS                     | Style (w public/css/)              |
 | IndexedDB (opcjonalnie) | Pamięć lokalna dla trybu offline   |
 
 ### Widoki
 
-| Plik                | Opis                        |
-| ------------------- | --------------------------- |
-| `index.html`        | Strona główna / dashboard   |
-| `app.html`          | Główna aplikacja SPA        |
-| `rury.html`         | Zarządzanie ofertami rur    |
-| `studnie.html`      | Zarządzanie ofertami studni |
-| `kartoteka.html`    | Kartoteka klientów          |
-| `zlecenia.html`     | Widok zamówień              |
-| `benchmark-tm.html` | Narzędzie benchmarku (dev)  |
+| Plik                | Opis                              |
+| ------------------- | --------------------------------- |
+| `index.html`        | Strona główna / dashboard         |
+| `app.html`          | Główna aplikacja SPA              |
+| `rury.html`         | Zarządzanie ofertami rur          |
+| `studnie.html`      | Zarządzanie ofertami studni       |
+| `kartoteka.html`    | Kartoteka klientów                |
+| `zlecenia.html`     | Widok zamówień                    |
+| `cennik.html`       | Edycja cenników (osadzone moduły) |
+| `benchmark-tm.html` | Narzędzie benchmarku (dev)        |
 
 ### Frontend — struktura JS
 
@@ -307,9 +308,10 @@ w HTML/partialach/szablonach — jeden dyspozytor `public/js/shared/cspActions.j
 | `public/js/spa/`           | 4             | Router SPA (router.js)                                                   |
 | `public/js/admin/`         | 7             | Panel admina (AI dashboard, telemetria)                                  |
 | `public/js/care/`          | 1             | Widok opieki nad ofertą                                                  |
+| `public/js/cennik/`        | 1             | Podgląd aktywnych cenników (read-only)                                   |
 | `public/js/` (root)        | 4             | Skrypty startowe/globalne                                                |
 
-Razem: 260 plików `.js` w `public/js/`.
+Razem: 261 plików `.js` w `public/js/`.
 
 Główne pliki rdzeniowe w `public/js/studnie/` po podziale:
 
@@ -333,6 +335,7 @@ Główne pliki rdzeniowe w `public/js/studnie/` po podziale:
 | `public/css/style.utilities.css`  | Utility classes (zastępują inline style)                             |
 | `public/css/inter.css`            | Font Inter (importowany przez `style.base.css`)                      |
 | `public/css/printModal.css`       | Style podglądu wydruku (UPM)                                         |
+| `public/css/pricelist-panel.css`  | Rail „Zarządzanie cennikami" (lewy panel cenników)                   |
 | `public/css/index.css`            | Style Pulpitu (dashboard)                                            |
 | `public/css/rury.css`             | Style modułu rur                                                     |
 | `public/css/studnie.css`          | Style modułu studni (kreator, diagram, Excel)                        |

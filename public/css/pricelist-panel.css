@@ -1,0 +1,520 @@
+/* ===== Rail „Zarządzanie cennikami" (lewy panel edytorów cenników) ===== */
+
+:root {
+    --pv-dock-w: 380px;
+}
+
+.pv-dock {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: var(--z-header);
+    display: flex;
+    flex-direction: column;
+    width: var(--pv-dock-w);
+    background: var(--bg-secondary);
+    border-right: 1px solid var(--border);
+    box-shadow: 8px 0 24px var(--shadow-color);
+}
+
+/* W modułach rail startuje pod sticky headerem; w #/cennik nagłówek jest ukryty. */
+body:not(.pv-cennik-host) .pv-dock {
+    top: var(--header-h);
+}
+
+/* #/cennik: rail jest jedynym lewym panelem — bez zamykania na desktopie.
+ * Na wąskim ekranie zostaje drawer z X, a „Panel" w toolbarze go przywraca. */
+body.pv-cennik-host .pv-dock__close,
+body.pv-cennik-host [data-pv-dock-toggle] {
+    display: none;
+}
+
+@media (max-width: 1024px) {
+    body.pv-cennik-host .pv-dock__close {
+        display: inline-flex;
+    }
+
+    body.pv-cennik-host [data-pv-dock-toggle] {
+        display: inline-flex;
+    }
+}
+
+.pv-dock[hidden] {
+    display: none;
+}
+
+.pv-dock__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--tile-gap-sm);
+    flex: 0 0 auto;
+    padding: 0.7rem 0.9rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-secondary);
+}
+
+.pv-dock__title {
+    min-width: 0;
+}
+
+.pv-dock__head h3 {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    margin: 0;
+    font-size: var(--fs-lg);
+    font-weight: var(--fw-semibold);
+    color: var(--text-primary);
+}
+
+.pv-dock__subtitle {
+    margin: 0.1rem 0 0;
+    font-size: var(--fs-xs);
+    color: var(--text-muted);
+}
+
+/* Stała strefa: taby typu, stan i akcje siatki. Nie przewija się z listą wersji. */
+.pv-dock__pinned {
+    display: flex;
+    flex: 0 0 auto;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.65rem 0.9rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-secondary);
+}
+
+.pv-dock__body {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    gap: var(--tile-gap-sm);
+    min-height: 0;
+    padding: 0.75rem 0.9rem 2rem;
+    overflow-y: auto;
+}
+
+/* Akcje siatki (przeniesione z toolbara): jeden pasek zamiast dwóch. */
+.pv-grid-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    padding-top: 0.1rem;
+}
+
+.pv-grid-actions__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.pv-grid-actions__title {
+    font-size: var(--fs-xs);
+    font-weight: var(--fw-semibold);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+
+.pv-grid-actions__state {
+    padding: 0.1rem 0.5rem;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font-size: var(--fs-xs);
+    color: var(--text-secondary);
+    background: var(--bg-primary);
+}
+
+.pv-grid-actions__state[data-mode='edit'] {
+    border-color: var(--warn);
+    color: var(--warn-hover);
+    background: var(--warn-bg);
+}
+
+.pv-grid-actions .pv-editor-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.4rem;
+}
+
+.pv-grid-actions .pv-editor-actions .btn,
+.pv-grid-actions__row .btn {
+    width: 100%;
+    justify-content: center;
+}
+
+.pv-grid-actions__row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.4rem;
+}
+
+/* PRECO ma własny „Zapisz" przy tabeli — nie dublujemy Dodaj/Zapisz studni. */
+.pv-grid-actions[data-axis='preco'] .pv-grid-actions__row {
+    display: none;
+}
+
+/* Treść odsuwa się od lewego raila (desktop). Header zostaje pełnej szerokości.
+ * !important, bo studnie.css ustawia `body.studnie-page > .main { margin: 0 !important }`. */
+@media (min-width: 1025px) {
+    body.pv-dock-open > .main {
+        width: calc(100% - var(--pv-dock-w)) !important;
+        max-width: calc(100% - var(--pv-dock-w)) !important;
+        margin-left: var(--pv-dock-w) !important;
+    }
+}
+
+/* Tabele cennika skalują się do okna i są zakotwiczone w treści (bez pływania).
+ * Studnie: pełna szerokość, min. 1080 px → wąskie okno przewija `.table-wrap`.
+ * PRECO: cała sekcja w kolumnie max. 1040 px (nagłówek, tabela i „Dodaj" razem). */
+body.pv-cennik-host #studnie-pricelist-body:has(.preco-accordion) {
+    width: 100%;
+    max-width: 1040px;
+    margin-inline: auto;
+}
+
+body.pv-cennik-host #studnie-pricelist-body table:not(.preco-table) {
+    width: 100%;
+    min-width: 1080px;
+}
+
+body.pv-cennik-host .preco-table {
+    width: 100%;
+}
+
+body.pv-cennik-host .preco-table .preco-input,
+body.pv-cennik-host .preco-table .preco-input--id {
+    width: 100%;
+    max-width: none;
+}
+
+body.pv-cennik-host .preco-wrap {
+    overflow-x: auto;
+}
+
+/* Otwarty rail jest jedynym miejscem stanu — pasek nad siatką znika.
+ * Po zamknięciu stan wraca nad tabelę. */
+body.pv-dock-open #pricelist-status-strip {
+    display: none;
+}
+
+.pv-dock-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: calc(var(--z-header) - 1);
+    background: var(--shadow-color);
+}
+
+.pv-dock-backdrop[hidden] {
+    display: none;
+}
+
+@media (min-width: 1025px) {
+    .pv-dock-backdrop {
+        display: none !important;
+    }
+}
+
+/* ===== Sekcje ===== */
+
+.pv-dock__section {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--bg-primary);
+}
+
+.pv-dock__section > summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem 0.7rem;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    list-style: none;
+    transition: background 0.15s ease;
+}
+
+.pv-dock__section > summary:hover {
+    background: var(--bg-secondary);
+}
+
+.pv-dock__section > summary::-webkit-details-marker {
+    display: none;
+}
+
+.pv-dock__section > summary::after {
+    content: '▾';
+    color: var(--text-muted);
+    font-size: var(--fs-sm);
+    transition: transform 0.15s ease;
+}
+
+.pv-dock__section[open] > summary {
+    border-bottom: 1px solid var(--border);
+    border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+}
+
+.pv-dock__section[open] > summary::after {
+    transform: rotate(180deg);
+}
+
+.pv-dock .pv-section {
+    margin: 0;
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-semibold);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+}
+
+.pv-dock__section-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--tile-gap-sm);
+    padding: 0.7rem;
+    font-size: var(--fs-md);
+    line-height: 1.5;
+}
+
+.pv-dock .pv-help {
+    margin: 0;
+    font-size: var(--fs-md);
+    line-height: 1.55;
+}
+
+.pv-dock .form-row-2,
+.pv-dock .form-row-3 {
+    grid-template-columns: 1fr;
+}
+
+.pv-dock #pv-save-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.pv-dock #pv-save-form .form-input {
+    width: 100%;
+}
+
+.pv-dock #pv-save-form .btn {
+    justify-content: center;
+}
+
+.pv-dock #pv-type-tabs:empty {
+    display: none;
+}
+
+.pv-dock #pv-type-tabs .pv-actions {
+    display: flex;
+    gap: 0.35rem;
+}
+
+.pv-dock #pv-type-tabs .btn {
+    flex: 1 1 0;
+    justify-content: center;
+}
+
+.pv-dock .pv-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    align-items: center;
+}
+
+.pv-dock .pv-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 0.75rem;
+    align-items: center;
+}
+
+.pv-dock .pv-row-label {
+    font-weight: var(--fw-semibold);
+    font-size: var(--fs-md);
+    color: var(--text-muted);
+}
+
+/* Przyciski w railu: większe niż globalny btn-sm, spójne z treścią sekcji. */
+.pv-dock .btn-sm {
+    font-size: var(--fs-md);
+}
+
+.pv-dock .pv-status-strip {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: 0.3rem;
+    margin-bottom: 0;
+}
+
+.pv-dock .pv-status-strip .badge {
+    padding: 2px 8px;
+    font-size: var(--fs-xs);
+    font-weight: var(--fw-medium);
+}
+
+.pv-dock .pv-status-strip:empty {
+    display: none;
+}
+
+/* ===== Lista wersji (karty) ===== */
+
+.pv-version-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.pv-vcard {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    padding: 0.6rem 0.7rem;
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--bg-secondary);
+}
+
+.pv-vcard[data-pv-state='ACTIVE'] {
+    border-left-color: var(--success);
+}
+
+.pv-vcard[data-pv-state='SCHEDULED'] {
+    border-left-color: var(--accent);
+}
+
+.pv-vcard[data-pv-state='DRAFT'] {
+    border-left-color: var(--warn);
+}
+
+.pv-vcard__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.pv-vcard__label {
+    min-width: 0;
+    font-size: var(--fs-md);
+    color: var(--text-primary);
+    overflow-wrap: anywhere;
+}
+
+.pv-vcard__meta {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.25rem 0.6rem;
+    margin: 0;
+}
+
+.pv-vcard__meta > div {
+    min-width: 0;
+}
+
+.pv-vcard__meta dt {
+    font-size: var(--fs-xs);
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+
+.pv-vcard__meta dd {
+    margin: 0;
+    font-size: var(--fs-sm);
+    color: var(--text-secondary);
+    overflow-wrap: anywhere;
+}
+
+.pv-vcard__note {
+    margin: 0;
+    font-size: var(--fs-sm);
+    color: var(--text-muted);
+    overflow-wrap: anywhere;
+}
+
+.pv-vcard__note:empty {
+    display: none;
+}
+
+.pv-vcard__note .pv-note-cell {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    max-width: 100%;
+}
+
+.pv-vcard__note .pv-note-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.pv-vcard__actions .pv-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+}
+
+.pv-vcard__actions .btn {
+    height: 28px;
+    padding: 0 0.5rem;
+    font-size: var(--fs-md);
+}
+
+.pv-vcard__actions .btn svg {
+    width: 14px;
+    height: 14px;
+}
+
+.pv-vcard__actions .btn-danger {
+    margin-left: auto;
+}
+
+.pv-vcard-empty {
+    margin: 0;
+    padding: 0.4rem 0;
+    font-size: var(--fs-sm);
+}
+
+/* ===== Responsywność ===== */
+
+@media (max-width: 1024px) {
+    .pv-dock {
+        width: min(var(--pv-dock-w), 92vw);
+        box-shadow: 16px 0 40px var(--shadow-color);
+    }
+}
+
+@media (max-width: 640px) {
+    .pv-dock {
+        width: 100vw;
+    }
+
+    .pv-vcard__meta {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media print {
+    .pv-dock,
+    .pv-dock-backdrop {
+        display: none !important;
+    }
+
+    body.pv-dock-open > .main {
+        margin-left: 0 !important;
+    }
+
+    /* Druk pokazuje stan cennika, choć rail jest ukryty. */
+    body.pv-dock-open #pricelist-status-strip {
+        display: flex !important;
+    }
+}

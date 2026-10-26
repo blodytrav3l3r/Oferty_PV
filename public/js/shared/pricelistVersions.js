@@ -14,6 +14,11 @@
     var canManage = {};
     /** Mapa getRows per typ (rury/studnie/preco) — rejestrowana przy otwarciu panelu. */
     var getRowsByType = {};
+    /** Id raila — jeden na stronę; brak = strona bez sekcji cennika (kartoteka). */
+    var DOCK_ID = 'pv-dock';
+    var DOCK_BACKDROP_ID = 'pv-dock-backdrop';
+    /** Stan raila: ostatnio wyświetlony typ. */
+    var dockState = { type: null };
 
     /** Domyślny odczyt wierszy z bieżącego window (fallback przy braku getRows). */
     function defaultGetRows(type) {
@@ -615,11 +620,27 @@
      * zostać przeładowany przy zmianie Rury ↔ Studnie.
      */
     function openEditorFor(type, label, created) {
-        window.closeModal('pv-versions-modal');
         var msg =
             (created ? 'Utworzono szkic ' : 'Edytujesz szkic ') +
             (label || '') +
             ' — „Zapisz" trafia do szkicu, LIVE bez zmian';
+        // #/cennik: edycja w miejscu — bez zmiany hasha SPA na #/rury / #/studnie.
+        if (isCennikHost()) {
+            if (type === 'preco' && typeof window.selectCennikTab === 'function') {
+                window.selectCennikTab('preco');
+            }
+            setEditing(type, true);
+            reloadEditorGrid(type);
+            syncEditor(type);
+            refreshTable(type, canManage[type] === true).catch(function () {
+                /* lista odświeży się przy następnym otwarciu */
+            });
+            renderStatusStrip('pv-dock-status', type).catch(function () {
+                /* pasek jest dodatkiem */
+            });
+            toast(msg, 'info');
+            return;
+        }
         /** @type {any} */
         var host = window;
         try {
@@ -733,7 +754,7 @@
 
     function renderRows(versions, manageable, type) {
         if (versions.length === 0) {
-            return '<tr><td colspan="8" class="text-center text-muted">Brak wersji — zapisz pierwszą powyżej.</td></tr>';
+            return '<p class="pv-vcard-empty text-muted">Brak wersji — zapisz pierwszą powyżej.</p>';
         }
         // Wiersz żyje w kontekście taba (typ znany) — bez sufiksu typu w labelce,
         // sam title/tooltip z typem. Badge poza panelem ZAWSZE z typem.
@@ -810,8 +831,11 @@
                       '</div>'
                     : '<span class="text-muted">—</span>';
                 return (
-                    '<tr>' +
-                    '<td><strong' +
+                    '<article class="pv-vcard" data-pv-state="' +
+                    escAttr(state) +
+                    '">' +
+                    '<div class="pv-vcard__head">' +
+                    '<strong class="pv-vcard__label"' +
                     typeTitle +
                     '>' +
                     esc(labelOf(v) || '—') +
@@ -820,29 +844,30 @@
                           escAttr(v.version || '') +
                           ')">(ręczna)</span>'
                         : '') +
-                    '</strong></td>' +
-                    '<td class="text-right">' +
+                    '</strong>' +
+                    statusBadge(state) +
+                    '</div>' +
+                    '<dl class="pv-vcard__meta">' +
+                    '<div><dt>Nr</dt><dd>' +
                     esc(String(v.seq ?? '—')) +
-                    '</td>' +
-                    '<td>' +
-                    statusBadge(stateOf(v)) +
-                    '</td>' +
-                    '<td>' +
+                    '</dd></div>' +
+                    '<div><dt>Obowiązuje od</dt><dd>' +
                     eff +
-                    '</td>' +
-                    '<td>' +
+                    '</dd></div>' +
+                    '<div><dt>Autor</dt><dd>' +
                     esc(v.createdByName || v.createdBy || '—') +
-                    '</td>' +
-                    '<td class="text-right">' +
+                    '</dd></div>' +
+                    '<div><dt>Użycie</dt><dd>' +
                     usedByCell(v) +
-                    '</td>' +
-                    '<td>' +
+                    '</dd></div>' +
+                    '</dl>' +
+                    '<div class="pv-vcard__note">' +
                     noteCell(v, manageable) +
-                    '</td>' +
-                    '<td>' +
+                    '</div>' +
+                    '<div class="pv-vcard__actions">' +
                     actions +
-                    '</td>' +
-                    '</tr>'
+                    '</div>' +
+                    '</article>'
                 );
             })
             .join('');
@@ -894,8 +919,10 @@
     }
 
     /** Typy z załadowanym modułem strony (eksport+import istnieją w window).
-     *  Drugi typ chowamy zamiast wołać w próżnię (ReferenceError na obcej stronie). */
+     *  Drugi typ chowamy zamiast wołać w próżnię (ReferenceError na obcej stronie).
+     *  W #/cennik wszystkie trzy typy są osiągalne przez powłokę. */
     function availableTypes() {
+        if (isCennikHost()) return ['rury', 'studnie', 'preco'];
         var out = [];
         if (
             typeof window.exportRuryToExcel === 'function' &&
@@ -975,41 +1002,166 @@
         );
     }
 
-    function panelHtml(type, next, manageable) {
+    /** Strona hostowana przez #/cennik (iframe z ?host=cennik). */
+    function isCennikHost() {
+        try {
+            return new URLSearchParams(window.location.search).get('host') === 'cennik';
+        } catch (_e) {
+            return false;
+        }
+    }
+
+    /** Taby typów: w #/cennik przełączają moduł w powłoce, w modułach — lokalny typ. */
+    function typeTabsHtml(activeType) {
+        return tabsHtml(activeType);
+    }
+
+    /** #/cennik: przełączenie typu = zmiana iframe w powłoce SPA (parent). */
+    function switchCennikType(type) {
+        try {
+            var w = window.parent;
+            if (w && w !== window && w.CennikHost && typeof w.CennikHost.activate === 'function') {
+                w.CennikHost.activate(type);
+                return true;
+            }
+        } catch (_e) {
+            /* brak dostępu do rodzica */
+        }
+        return false;
+    }
+
+    function dockHtml(type, next, manageable) {
         return (
-            '<div class="modal modal--pv"><div class="modal-header"><h3 id="pv-panel-title"><i data-lucide="layers"></i> Zarządzanie cennikami</h3>' +
-            '<button class="btn-icon" aria-label="Zamknij" data-pv-act="close"><i data-lucide="x"></i></button></div>' +
-            '<div class="modal-body">' +
-            '<div id="pv-type-tabs">' +
-            tabsHtml(type) +
-            '</div>' +
-            '<h4 class="pv-section">Wersje</h4>' +
+            '<details class="pv-dock__section" open>' +
+            '<summary><h4 class="pv-section">Wersje</h4></summary>' +
+            '<div class="pv-dock__section-body">' +
             '<div id="pv-save-wrap">' +
             saveFormHtml(type, next, manageable) +
             '</div>' +
-            '<p class="text-muted pv-help">Jak to działa: zapis tworzy kopię cennika (nie rusza ofert ani cennika na żywo). ' +
-            'Robocza → Opublikuj: data przyszła = Do wdrożenia (wejdzie w dacie Obowiązuje od), data przeszła = ' +
-            'korekta wsteczna (wymaga uzasadnienia min. 10 znaków). ' +
-            'Obowiązująca wybierana jest po dacie Obowiązuje od; oferty trzymają pieczęć wersji. ' +
-            'Szczegóły: docs/CENNIKI-INSTRUKCJA-ADMINA.md</p>' +
             '<div class="pv-actions pv-legend" aria-label="Legenda statusów">' +
             statusBadge('ACTIVE') +
             statusBadge('SCHEDULED') +
             statusBadge('DRAFT') +
             statusBadge('ARCHIVED') +
             '</div>' +
-            '<div class="table-wrap"><table><thead><tr>' +
-            '<th scope="col">Wersja</th><th scope="col">Nr</th><th scope="col">Status</th><th scope="col">Obowiązuje od</th>' +
-            '<th scope="col">Autor</th><th scope="col">Użycie</th><th scope="col">Notatki</th><th scope="col">Akcje</th>' +
-            '</tr></thead><tbody id="pv-versions-body"></tbody></table></div>' +
-            '<h4 class="pv-section">Transfer plików</h4>' +
-            '<div id="pv-transfer">' +
+            '<div id="pv-versions-body" class="pv-version-list"></div>' +
+            '</div>' +
+            '</details>' +
+            '<details class="pv-dock__section">' +
+            '<summary><h4 class="pv-section">Transfer plików</h4></summary>' +
+            '<div class="pv-dock__section-body" id="pv-transfer">' +
             transferHtml(type) +
             '</div>' +
-            '<h4 class="pv-section">Cenniki domyślne</h4>' +
+            '</details>' +
+            '<details class="pv-dock__section">' +
+            '<summary><h4 class="pv-section">Cenniki domyślne</h4></summary>' +
+            '<div class="pv-dock__section-body">' +
             defaultsHtml() +
-            '</div></div>'
+            '</div>' +
+            '</details>' +
+            '<details class="pv-dock__section">' +
+            '<summary><h4 class="pv-section">Jak to działa</h4></summary>' +
+            '<div class="pv-dock__section-body">' +
+            '<p class="text-muted pv-help">Zapis tworzy kopię cennika (nie rusza ofert ani cennika na żywo). ' +
+            'Robocza → Opublikuj: data przyszła = Do wdrożenia (wejdzie w dacie Obowiązuje od), data przeszła = ' +
+            'korekta wsteczna (wymaga uzasadnienia min. 10 znaków). ' +
+            'Obowiązująca wybierana jest po dacie Obowiązuje od; oferty trzymają pieczęć wersji. ' +
+            'Szczegóły: docs/CENNIKI-INSTRUKCJA-ADMINA.md</p>' +
+            '</div>' +
+            '</details>'
         );
+    }
+
+    /**
+     * Przenosi akcje siatki (Edycja/Opublikuj/Dodaj/Zapisz) z sekcji cennika
+     * do stałego slotu raila. Slot żyje poza `#pv-dock-content`, więc
+     * ponowny render listy wersji nie kasuje przycisków.
+     */
+    function mountGridActions() {
+        var slot = document.querySelector('.pv-dock__pinned');
+        var source = document.getElementById('pv-grid-actions');
+        if (!slot || !source || slot.contains(source)) return;
+        source.hidden = false;
+        slot.appendChild(source);
+    }
+
+    /** Tworzy rail + backdrop raz na stronę; brak sekcji cennika = brak raila. */
+    function ensureDock() {
+        var dock = document.getElementById(DOCK_ID);
+        if (dock) {
+            mountGridActions();
+            return dock;
+        }
+        if (!document.getElementById('section-pricelist')) return null;
+        if (isCennikHost()) document.body.classList.add('pv-cennik-host');
+        dock = document.createElement('aside');
+        dock.id = DOCK_ID;
+        dock.className = 'pv-dock';
+        dock.setAttribute('role', 'complementary');
+        dock.setAttribute('aria-label', 'Zarządzanie cennikami');
+        dock.hidden = true;
+        dock.innerHTML =
+            '<div class="pv-dock__head">' +
+            '<div class="pv-dock__title">' +
+            '<h3 id="pv-panel-title"><i data-lucide="layers"></i> Cenniki</h3>' +
+            '<p class="pv-dock__subtitle">Wersje · publikacja · pliki</p>' +
+            '</div>' +
+            '<button type="button" class="btn-icon pv-dock__close" aria-label="Zamknij panel" title="Zamknij panel" data-pv-act="close"><i data-lucide="x"></i></button>' +
+            '</div>' +
+            '<div class="pv-dock__pinned">' +
+            '<div id="pv-type-tabs"></div>' +
+            '<div id="pv-dock-status" class="pv-status-strip" aria-live="polite"></div>' +
+            '</div>' +
+            '<div id="pv-dock-content" class="pv-dock__body"></div>';
+        document.body.appendChild(dock);
+        mountGridActions();
+        var backdrop = document.createElement('div');
+        backdrop.id = DOCK_BACKDROP_ID;
+        backdrop.className = 'pv-dock-backdrop';
+        backdrop.hidden = true;
+        backdrop.addEventListener('click', function () {
+            closeVersionsPanel();
+        });
+        document.body.appendChild(backdrop);
+        return dock;
+    }
+
+    /** Spójny stan: widoczność, klasa body, aria-expanded na przyciskach. */
+    function setDockExpanded(open) {
+        var dock = document.getElementById(DOCK_ID);
+        var backdrop = document.getElementById(DOCK_BACKDROP_ID);
+        if (dock) dock.hidden = !open;
+        if (backdrop) backdrop.hidden = !open;
+        document.body.classList.toggle('pv-dock-open', open);
+        var buttons = document.querySelectorAll('[data-pv-dock-toggle]');
+        Array.prototype.forEach.call(buttons, function (btn) {
+            btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+            btn.classList.toggle('active', open);
+        });
+    }
+
+    function closeVersionsPanel() {
+        setDockExpanded(false);
+    }
+
+    function isVersionsPanelOpen() {
+        var dock = document.getElementById(DOCK_ID);
+        return Boolean(dock && !dock.hidden);
+    }
+
+    /** Toggle dla przycisku „Panel" (moduł i #/cennik). */
+    function toggleVersionsPanel(type) {
+        if (isVersionsPanelOpen()) {
+            closeVersionsPanel();
+            return Promise.resolve();
+        }
+        return openVersionsPanel(type);
+    }
+
+    /** Auto-otwarcie w #/cennik — rail jest tam jedynym lewym panelem. */
+    function autoOpenVersionsPanel(type) {
+        if (!isCennikHost()) return Promise.resolve();
+        return openVersionsPanel(type);
     }
 
     function toUtcIso(localValue) {
@@ -1026,8 +1178,8 @@
         });
         var body = document.getElementById('pv-versions-body');
         if (body) body.innerHTML = renderRows(versions, manageable, type);
-        var overlay = document.getElementById('pv-versions-modal');
-        if (overlay) icons(overlay);
+        var dock = document.getElementById(DOCK_ID);
+        if (dock) icons(dock);
         var nextLabel = document.getElementById('pv-next-label');
         if (nextLabel) {
             var eff = document.getElementById('pv-eff');
@@ -1036,6 +1188,28 @@
                 versionLabel(type, next, (eff && eff.value) || new Date()) + ' (nr ' + next + ')';
         }
         return versions;
+    }
+
+    /**
+     * Wspólne odświeżenie po akcji na wersji: lista w railu + oba paski stanu.
+     * `reloadGrid` tylko wtedy, gdy zmiana dotyczy siatki (usunięcie szkicu,
+     * publikacja) — inaczej nie ruszamy niezapisanych zmian użytkownika.
+     * @param {string} type
+     * @param {{reloadGrid?: boolean}} [opts]
+     */
+    async function afterVersionChange(type, opts) {
+        var o = opts || {};
+        clearSummaryCache();
+        try {
+            await refreshTable(type, canManage[type] === true);
+        } catch (e) {
+            toast('Błąd odświeżenia listy: ' + e.message, 'error');
+        }
+        var json = await fetchSummary();
+        var draft = json && json.types && json.types[type] && json.types[type].draft;
+        if (!draft && isEditing(type)) setEditing(type, false);
+        if (o.reloadGrid) reloadEditorGrid(type);
+        await refreshStatusStrip(type);
     }
 
     /**
@@ -1150,7 +1324,7 @@
                             : 'Zapisano etykietę: ' + next,
                         'success'
                     );
-                    return refreshTable(type, true);
+                    return afterVersionChange(type);
                 })
                 .catch(function (err) {
                     ok.disabled = false;
@@ -1526,7 +1700,7 @@
         state.current = newType;
         var tabs = document.getElementById('pv-type-tabs');
         if (tabs) {
-            tabs.innerHTML = tabsHtml(newType);
+            tabs.innerHTML = typeTabsHtml(newType);
             icons(tabs);
         }
         var versions = [];
@@ -1554,6 +1728,12 @@
         } catch (e) {
             toast('Błąd odświeżenia: ' + e.message, 'error');
         }
+        // Pasek w railu opisuje typ wybrany w railu (bez przestawiania osi siatki).
+        if (document.getElementById('pv-dock-status')) {
+            renderStatusStrip('pv-dock-status', newType).catch(function () {
+                /* pasek jest dodatkiem */
+            });
+        }
     }
 
     /**
@@ -1576,6 +1756,8 @@
         }
         // Preselekcja tylko załadowanego modułu — inaczej fallback na pierwszy dostępny.
         if (!isAvailable(type)) type = availableTypes()[0];
+        var dock = ensureDock();
+        if (!dock) return;
         var versions = [];
         try {
             versions = await fetchFullList(type);
@@ -1585,37 +1767,48 @@
         }
         var manageable = canManage[type] === true;
         var next = nextSeq(versions);
-        window.showModal({
-            id: 'pv-versions-modal',
-            titleId: 'pv-panel-title',
-            html: panelHtml(type, next, manageable),
-            onOpen: function () {
-                var overlay = document.getElementById('pv-versions-modal');
-                if (overlay) {
-                    icons(overlay);
-                    wirePanel(overlay, type);
-                }
-                refreshTable(type, manageable).catch(function (e) {
-                    toast('Błąd odświeżenia: ' + e.message, 'error');
-                });
-                initEff(type, next);
-            }
+        dockState.type = type;
+        var tabs = document.getElementById('pv-type-tabs');
+        if (tabs) {
+            tabs.innerHTML = typeTabsHtml(type);
+            icons(tabs);
+        }
+        var content = document.getElementById('pv-dock-content');
+        if (content) content.innerHTML = dockHtml(type, next, manageable);
+        setDockExpanded(true);
+        icons(dock);
+        wirePanel(dock, type);
+        initEff(type, next);
+        refreshTable(type, manageable).catch(function (e) {
+            toast('Błąd odświeżenia: ' + e.message, 'error');
         });
+        renderStatusStrip('pv-dock-status', type).catch(function () {
+            /* pasek jest dodatkiem — brak /summary nie blokuje panelu */
+        });
+        return dock;
     }
 
     function wirePanel(overlay, initialType) {
-        var state = { current: initialType };
+        var host = /** @type {any} */ (overlay);
+        if (!host.__pvState) host.__pvState = { current: initialType };
+        var state = host.__pvState;
+        state.current = initialType;
         // Reset PRECO działa tylko tam, gdzie załadowany jest moduł PRECO (cennik
         // studni); spod rur przycisk chowamy zamiast wołać w próżnię.
         var precoReset = overlay.querySelector('[data-pv-reset="preco"]');
         if (precoReset && typeof window.loadPrecoDefaults !== 'function') {
             precoReset.style.display = 'none';
         }
+        // Rail jest trwały — listenery wieszamy raz, nie po każdym renderze.
+        if (host.__pvWired) return;
+        host.__pvWired = true;
         overlay.addEventListener('click', function (e) {
             var tab = e.target && e.target.closest ? e.target.closest('[data-pv-tab]') : null;
             if (tab) {
                 var next = tab.getAttribute('data-pv-tab');
                 if (next && next !== state.current && isAvailable(next)) {
+                    // #/cennik: typ = inny moduł w powłoce, nie lokalny render.
+                    if (isCennikHost() && switchCennikType(next)) return;
                     switchType(next, state).catch(function (err) {
                         toast('Błąd przełączania typu: ' + err.message, 'error');
                     });
@@ -1627,7 +1820,7 @@
             var type = state.current;
             var act = btn.getAttribute('data-pv-act');
             var id = btn.getAttribute('data-pv-id');
-            if (act === 'close') window.closeModal('pv-versions-modal');
+            if (act === 'close') closeVersionsPanel();
             else if (act === 'edit') openEditorFor(type, btn.getAttribute('data-pv-version'));
             else if (act === 'preview' && id) {
                 var pvPreview = window.pricelistVersions && window.pricelistVersions.openPreview;
@@ -1666,7 +1859,7 @@
                                         : ''),
                                 json.checksStale ? 'warning' : 'success'
                             );
-                            refreshTable(type, true);
+                            afterVersionChange(type, { reloadGrid: true });
                         })
                         .catch(function (err) {
                             toast(friendlyError('Błąd publikacji', err), 'error');
@@ -1694,7 +1887,7 @@
                             .then(function () {
                                 window.closeModal('pv-note-modal');
                                 toast('Notatki zapisane', 'success');
-                                refreshTable(type, true);
+                                afterVersionChange(type);
                             })
                             .catch(function (err) {
                                 toast('Błąd zapisu notatek: ' + err.message, 'error');
@@ -1729,10 +1922,16 @@
             } else if (act === 'delete' && id) {
                 var versionName = btn.getAttribute('data-pv-version') || id;
                 var doDelete = function () {
-                    apiJson(API + '/' + encodeURIComponent(id), authed('DELETE'))
+                    var wasEdited = false;
+                    Promise.resolve(draftRef(type))
+                        .then(function (ref) {
+                            wasEdited = Boolean(ref && ref.id === id);
+                            return apiJson(API + '/' + encodeURIComponent(id), authed('DELETE'));
+                        })
                         .then(function () {
                             toast('Wersja ' + versionName + ' usunięta', 'success');
-                            refreshTable(type, true);
+                            if (wasEdited) setEditing(type, false);
+                            return afterVersionChange(type, { reloadGrid: wasEdited });
                         })
                         .catch(function (err) {
                             toast(friendlyError('Błąd usuwania', err), 'error');
@@ -1814,17 +2013,17 @@
                                                         'Wersja wsteczna opublikowana',
                                                         'success'
                                                     );
-                                                    refreshTable(type, true);
+                                                    afterVersionChange(type, { reloadGrid: true });
                                                 });
                                             }
                                         );
-                                        refreshTable(type, true);
+                                        afterVersionChange(type);
                                         return;
                                     }
                                     approveVersion(v.id, bn)
                                         .then(function () {
                                             toast('Wersja wsteczna opublikowana', 'success');
-                                            refreshTable(type, true);
+                                            afterVersionChange(type, { reloadGrid: true });
                                         })
                                         .catch(function (err) {
                                             toast(
@@ -1832,7 +2031,7 @@
                                                     err.message,
                                                 'warning'
                                             );
-                                            refreshTable(type, true);
+                                            afterVersionChange(type);
                                         });
                                     return;
                                 }
@@ -1843,7 +2042,7 @@
                                         'potem „Opublikuj roboczą”',
                                     'success'
                                 );
-                                refreshTable(type, true).then(function () {
+                                afterVersionChange(type).then(function () {
                                     openDiff(v.id, null, type);
                                 });
                             })
@@ -2028,6 +2227,13 @@
         if (saveBtn) saveBtn.classList.toggle('hidden', !editing);
         var addBtn = document.getElementById(EDITOR_ADD[type] || '');
         if (addBtn) addBtn.disabled = !editing;
+        var actions = document.getElementById('pv-grid-actions');
+        if (actions) actions.setAttribute('data-axis', type);
+        var stateBadge = document.getElementById('pv-grid-actions-state');
+        if (stateBadge) {
+            stateBadge.textContent = editing ? 'Edycja szkicu' : 'Podgląd';
+            stateBadge.setAttribute('data-mode', editing ? 'edit' : 'view');
+        }
         // W trybie edycji kafelek nazywa się „Zapisz szkic" (helper modułu osi).
         if (editing && type === 'rury' && typeof window.updateSaveBtn === 'function') {
             window.updateSaveBtn();
@@ -2131,13 +2337,17 @@
 
     async function renderStatusStrip(hostId, type) {
         var host = document.getElementById(hostId);
-        editorType = type || editorType;
+        var stripType = type || editorType;
+        // Pasek w module opisuje siatkę; pasek raila w #/cennik jest jedynym
+        // źródłem stanu i steruje blokadą. W module nie przestawia osi siatki.
+        var drivesEditor = hostId !== 'pv-dock-status' || isCennikHost();
+        if (drivesEditor) editorType = stripType;
         var json = await fetchSummary();
         if (host) {
             if (!json) {
                 host.innerHTML = '';
             } else {
-                var data = (json.types || {})[editorType] || {};
+                var data = (json.types || {})[stripType] || {};
                 var parts = [];
                 // A5: siatka pokazuje szkic, nie cennik obowiązujący — musi to być widoczne.
                 if (data.draft) {
@@ -2160,7 +2370,7 @@
                 if (data.draft) {
                     parts.push(
                         '<span class="badge badge-muted" title="Szkic nie trafia do ofert do publikacji.">' +
-                            (isEditing(editorType) ? '✎ Edytujesz szkic ' : '✎ Szkic ') +
+                            (isEditing(stripType) ? '✎ Edytujesz szkic ' : '✎ Szkic ') +
                             esc(data.draft.version) +
                             esc(lastChange(data.draft)) +
                             '</span>'
@@ -2191,13 +2401,19 @@
                 host.innerHTML = parts.join(' ');
             }
         }
-        return syncEditor(editorType, json);
+        return drivesEditor ? syncEditor(stripType, json) : undefined;
     }
 
     /** Odświeżenie paska + akcji po zapisie (bez przeładowania strony). */
     function refreshStatusStrip(type) {
         clearSummaryCache();
-        return renderStatusStrip(STRIP_HOST_ID, type || editorType);
+        var gridType = editorType;
+        var dockType = type || gridType;
+        var jobs = [renderStatusStrip(STRIP_HOST_ID, gridType)];
+        if (document.getElementById('pv-dock-status')) {
+            jobs.push(renderStatusStrip('pv-dock-status', dockType));
+        }
+        return Promise.all(jobs);
     }
 
     /* ===== AKCJE: kopia → edycja → publikacja ===== */
@@ -2371,6 +2587,14 @@
 
     /** Jedna delegacja dla przycisków trybu (CSP-E: bez inline handlerów). */
     document.addEventListener('click', function (event) {
+        // Rail należy do sekcji „Cennik" — zmiana sekcji go zamyka.
+        var navBtn =
+            event.target && event.target.closest
+                ? event.target.closest('.nav-btn[data-section]')
+                : null;
+        if (navBtn && navBtn.getAttribute('data-section') !== 'pricelist') {
+            closeVersionsPanel();
+        }
         var btn =
             event.target && event.target.closest ? event.target.closest('[data-pv-mode]') : null;
         if (!btn) return;
@@ -2416,6 +2640,12 @@
         hydrateBadges: hydrateBadges,
         hydrateActiveBadges: hydrateActiveBadges,
         openVersionsPanel: openVersionsPanel,
+        toggleVersionsPanel: toggleVersionsPanel,
+        autoOpenVersionsPanel: autoOpenVersionsPanel,
+        closeVersionsPanel: closeVersionsPanel,
+        isVersionsPanelOpen: isVersionsPanelOpen,
+        isCennikHost: isCennikHost,
+        afterVersionChange: afterVersionChange,
         openDiff: openDiff,
         exportVersion: exportVersion,
         statusBadge: statusBadge,

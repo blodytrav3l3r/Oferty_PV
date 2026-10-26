@@ -644,3 +644,13 @@ function openRuryVersionsPanel() {
     );
 }
 window.openRuryVersionsPanel = openRuryVersionsPanel;
+
+/** Toolbar „Zarządzaj" = toggle raila (bez duplikatu logiki otwierania). */
+function toggleRuryVersionsPanel() {
+    if (!window.pricelistVersions) {
+        showToast('Moduł wersji cennika niedostępny', 'error');
+        return;
+    }
+    return window.pricelistVersions.toggleVersionsPanel('rury');
+}
+window.toggleRuryVersionsPanel = toggleRuryVersionsPanel;

@@ -18,6 +18,7 @@ const CSS_FILES = [
     'public/css/style.responsive.css',
     'public/css/style.utilities.css',
     'public/css/studnie.css',
+    'public/css/pricelist-panel.css',
     'public/css/studnie/offer.css',
     'public/css/studnie/modal.css',
     'public/css/printModal.css'

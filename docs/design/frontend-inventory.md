@@ -4,16 +4,17 @@
 
 ## Wejściówki i routing
 
-| Plik                      | Rola                      | Kluczowe UI                                                                                                 |
-| ------------------------- | ------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| `app.html`                | shell SPA + router iframe | nav-apps, section-nav, `#spa-main`, transition-layer, toolbar wersji                                        |
-| `public/js/spa/router.js` | routing `#/<moduł>`       | lazy iframe, guard niezapisanych zmian, `openOfferInModule`                                                 |
-| `index.html`              | pulpit + login            | formularz logowania, launch-cards, panel admina, `ai-dashboard-container`                                   |
-| `rury.html`               | host modułu rur           | partiale step1-5 + offer + pricelist, wizard-nav, summary-bar, transport-modal                              |
-| `studnie.html`            | host modułu studni        | layout 3-kol (diagram/konfigurator/lista), partiale step1-4 + offer + pricelist + modals, ~20 plików excel* |
-| `kartoteka.html`          | kartoteka ofert           | filter-bar, tabela ofert, akcje, toolbar import-export                                                      |
-| `zlecenia.html`           | zlecenia produkcyjne      | statystyki, search, filtry, wirtualna tabela `#zlecenia-table`, batch-delete, modal zlecenia                |
-| `benchmark-tm.html`       | benchmark dev             | tabela T avg/TTM/TTI, `<pre>` output                                                                        |
+| Plik                      | Rola                      | Kluczowe UI                                                                                                                                                         |
+| ------------------------- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `app.html`                | shell SPA + router iframe | nav-apps, section-nav, `#spa-main`, transition-layer, toolbar wersji                                                                                                |
+| `public/js/spa/router.js` | routing `#/<moduł>`       | lazy iframe, guard niezapisanych zmian, `openOfferInModule`                                                                                                         |
+| `index.html`              | pulpit + login            | formularz logowania, launch-cards, panel admina, `ai-dashboard-container`                                                                                           |
+| `rury.html`               | host modułu rur           | partiale step1-5 + offer + pricelist, wizard-nav, summary-bar, transport-modal                                                                                      |
+| `studnie.html`            | host modułu studni        | layout 3-kol (diagram/konfigurator/lista), partiale step1-4 + offer + pricelist + modals, ~20 plików excel*                                                         |
+| `kartoteka.html`          | kartoteka ofert           | filter-bar, tabela ofert, akcje, toolbar import-export                                                                                                              |
+| `zlecenia.html`           | zlecenia produkcyjne      | statystyki, search, filtry, wirtualna tabela `#zlecenia-table`, batch-delete, modal zlecenia                                                                        |
+| `cennik.html`             | cennik (host edytorów)    | iframe `rury.html?tab=pricelist&host=cennik`, `studnie.html?...`; tylko rail „Zarządzanie cennikami" (taby Rury/Studnie/PRECO na górze), bez osobnego paska powłoki |
+| `benchmark-tm.html`       | benchmark dev             | tabela T avg/TTM/TTI, `<pre>` output                                                                                                                                |
 
 ## Partiale rur (`public/partials/rury/`)
 
@@ -33,7 +34,7 @@ ofertaRury, ofertaStudnie, kartaBudowy, zlecenie, etykieta — workflow print za
 
 ## JS współdzielone (`public/js/shared/`)
 
-modalCore (jedyny wzorzec modali), toast, StorageService, draftAutosave, lockService, printModal/shareModal, dashboard, headerUser (jedyny writer nagłówka), auth.
+modalCore (jedyny wzorzec modali), toast, StorageService, draftAutosave, lockService, printModal/shareModal, dashboard, headerUser (jedyny writer nagłówka), auth, pricelistVersions (wersje + rail `#pv-dock`).
 
 ## Theme
 

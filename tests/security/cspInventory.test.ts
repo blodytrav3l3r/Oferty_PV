@@ -25,11 +25,12 @@ function count(re: RegExp, s: string): number {
 describe('CSP-A inventory ceiling', () => {
     const files = fs.readdirSync(PUB).filter((f) => f.endsWith('.html'));
 
-    it('7 wejsc HTML (kontrakt powierzchni)', () => {
+    it('8 wejsc HTML (kontrakt powierzchni)', () => {
         expect(files.sort()).toEqual(
             [
                 'app.html',
                 'benchmark-tm.html',
+                'cennik.html',
                 'index.html',
                 'kartoteka.html',
                 'rury.html',

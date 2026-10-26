@@ -93,9 +93,21 @@ własny cykl życia i własną oś czasu.
 (miejsce pracy admina i miejsce deep-linków). Zapis w edytorze tworzy/aktualizuje
 **DRAFT**. W edytorze widać pasek stanu (Szkic vs Obowiązuje).
 
-Panel **„Wersje cennika"** (przycisk w zakładce „Cennik" edytora) pokazuje historię wersji
-danej osi: badge stanu, data, autor, użycie, nota, akcje (Podgląd, Porównaj, Kontrola,
-Eksport, Klon, Usuń). Jest **warstwą sterowania** — nie duplikuje edytora siatki cen.
+Panel **„Zarządzanie cennikami”** (lewy rail, przycisk **„Panel”** w zakładce
+„Cennik” edytora i w `#/cennik`) pokazuje historię wersji danej osi: badge stanu, data,
+autor, użycie, nota, akcje (Edytuj/Utwórz kopię, Podgląd, Porównaj, Eksport, Etykieta,
+Opublikuj roboczą, Usuń). Sekcje raila: **Siatka cen**, **Wersje**, **Transfer plików**,
+**Cenniki domyślne**, **Jak to działa**. Rail jest **jedynym paskiem zarządzania** —
+mieści też akcje siatki (Edytuj szkic / Opublikuj / Dodaj / Zapisz), więc nad tabelą
+zostaje tylko tytuł, szukajka i przełącznik „Panel”. W `#/cennik` rail jest otwarty
+**zawsze** i jest **jedynym lewym panelem** — powłoka nie ma własnego paska nawigacji.
+Na górze raila są taby Rury/Studnie/PRECO, więc nawigacja i zarządzanie to jedno
+miejsce. W modułach rail otwiera przycisk „Panel”.
+
+**Cennik w SPA**: `#/cennik` (kafelek „Cennik" w nagłówku SPA) osadza te same
+edytory co moduły — Rury oraz Studnie/PRECO — więc edycja i zapis działają bez
+przechodzenia na `#/rury` lub `#/studnie`. „Edytuj"/„Utwórz kopię jako szkic"
+zostaje w `#/cennik` (nie zmienia hasha SPA).
 
 Uwaga o buforze: edytor czyta `DRAFT → ACTIVE → LIVE`, a oferta liczy z wersji obowiązującej.
 Szkic w edytorze **nie** oznacza, że oferta policzy z niego.

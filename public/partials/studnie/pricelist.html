@@ -18,35 +18,17 @@
                 aria-label="Szukaj produktu w cenniku"
             />
         </div>
-        <div class="gap-2" style="display: flex; justify-content: flex-end">
-            <div id="pv-editor-actions" class="pv-editor-actions"></div>
-            <button
-                type="button"
-                class="btn btn-primary"
-                id="btn-add-studnie-product"
-                data-csp="showAddStudnieProductModal"
-                title="Dodaj nowy produkt do cennika"
-            >
-                <i data-lucide="plus"></i> Dodaj
-            </button>
-            <button
-                type="button"
-                class="btn btn-secondary"
-                id="btn-save-studnie-pricelist"
-                data-csp="saveStudniePriceList"
-                title="Zapisz zmiany w cenniku"
-            >
-                <i data-lucide="save"></i> Zapisz
-            </button>
-            <button
-                type="button"
-                class="btn btn-secondary"
-                data-csp="openStudnieVersionsPanel"
-                title="Zarządzanie cennikiem: wersje, pliki, domyślne"
-            >
-                <i data-lucide="sliders-horizontal"></i> Zarządzaj
-            </button>
-        </div>
+        <button
+            type="button"
+            class="btn btn-secondary"
+            data-csp="toggleStudnieVersionsPanel"
+            data-pv-dock-toggle
+            aria-controls="pv-dock"
+            aria-expanded="false"
+            title="Zarządzanie cennikiem: wersje, pliki, domyślne"
+        >
+            <i data-lucide="panel-left"></i> Panel
+        </button>
     </div>
     <div id="pricelist-status-strip" class="pv-status-strip" aria-live="polite"></div>
     <div class="gap-1" style="display: flex; margin-bottom: 0.8rem; flex-wrap: wrap">
@@ -163,5 +145,42 @@
     </div>
     <div class="card">
         <div id="studnie-pricelist-body"></div>
+    </div>
+
+    <!-- Akcje siatki: przenoszone do raila „Zarządzanie cennikami" (jedyny pasek akcji). -->
+    <div
+        id="pv-grid-actions"
+        class="pv-grid-actions"
+        role="group"
+        aria-label="Akcje siatki cen"
+        hidden
+    >
+        <div class="pv-grid-actions__head">
+            <span class="pv-grid-actions__title">Siatka cen</span>
+            <span id="pv-grid-actions-state" class="pv-grid-actions__state" data-mode="view">
+                Podgląd
+            </span>
+        </div>
+        <div id="pv-editor-actions" class="pv-editor-actions"></div>
+        <div class="pv-grid-actions__row">
+            <button
+                type="button"
+                class="btn btn-primary"
+                id="btn-add-studnie-product"
+                data-csp="showAddStudnieProductModal"
+                title="Dodaj nowy produkt do cennika"
+            >
+                <i data-lucide="plus"></i> Dodaj
+            </button>
+            <button
+                type="button"
+                class="btn btn-secondary"
+                id="btn-save-studnie-pricelist"
+                data-csp="saveStudniePriceList"
+                title="Zapisz zmiany w cenniku"
+            >
+                <i data-lucide="save"></i> Zapisz
+            </button>
+        </div>
     </div>
 </div>

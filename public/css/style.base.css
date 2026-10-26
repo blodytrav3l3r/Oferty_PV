@@ -334,6 +334,10 @@
     --logo-start: var(--pink);
     --logo-end: var(--pink-hover);
 }
+.logo-cennik {
+    --logo-start: var(--accent2);
+    --logo-end: var(--accent);
+}
 .logo-stop-start {
     stop-color: var(--logo-start);
 }
@@ -927,6 +931,9 @@ body::before {
         min-width: 0;
         max-width: none;
         flex: 0 0 auto;
+        padding: 0.3rem 0.45rem;
+        font-size: var(--fs-sm);
+        gap: var(--tile-gap-2xs);
     }
 }
 

@@ -340,3 +340,18 @@ function openStudnieVersionsPanel(initialType) {
     });
 }
 window.openStudnieVersionsPanel = openStudnieVersionsPanel;
+
+/** Toolbar „Zarządzaj" = toggle raila; typ z aktualnej zakładki cennika. */
+function toggleStudnieVersionsPanel(initialType) {
+    if (!window.pricelistVersions) {
+        if (typeof showToast === 'function') showToast('Moduł wersji cennika niedostępny', 'error');
+        return;
+    }
+    var type =
+        initialType === 'preco' ||
+        (typeof currentCennikTab !== 'undefined' && currentCennikTab === 'preco')
+            ? 'preco'
+            : 'studnie';
+    return window.pricelistVersions.toggleVersionsPanel(type);
+}
+window.toggleStudnieVersionsPanel = toggleStudnieVersionsPanel;

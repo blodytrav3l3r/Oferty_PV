@@ -290,6 +290,11 @@
             src: 'zlecenia.html',
             logo: 'Kartoteka Zleceń',
             sections: []
+        },
+        cennik: {
+            src: 'cennik.html',
+            logo: 'Cennik',
+            sections: []
         }
     };
 
@@ -315,7 +320,8 @@
             rury: 'spa-app-rury',
             studnie: 'spa-app-studnie',
             kartoteka: 'spa-app-kartoteka',
-            zlecenia: 'spa-app-zlecenia'
+            zlecenia: 'spa-app-zlecenia',
+            cennik: 'spa-app-cennik'
         };
         Object.entries(navIds).forEach(([key, id]) => {
             const el = document.getElementById(id);
@@ -339,7 +345,8 @@
                 'logo-rury',
                 'logo-studnie',
                 'logo-kartoteka',
-                'logo-zlecenia'
+                'logo-zlecenia',
+                'logo-cennik'
             );
             logoApp.classList.add('logo-' + module);
         }

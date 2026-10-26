@@ -23,7 +23,8 @@
         rury: 'Oferty Rury',
         studnie: 'Oferty Studnie',
         kartoteka: 'Kartoteka',
-        zlecenia: 'Zlecenia'
+        zlecenia: 'Zlecenia',
+        cennik: 'Cennik'
     };
 
     /** @returns {string|null} */
