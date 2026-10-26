@@ -49,7 +49,7 @@ function makeDom() {
     return { registry, document, makeEl };
 }
 
-function loadCtx() {
+function loadCtx(opts: { fetch?: (url: string) => Promise<any> } = {}) {
     const store = new Map<string, string>();
     const dom = makeDom();
     dom.makeEl('resume-drafts');
@@ -58,6 +58,7 @@ function loadCtx() {
         document: dom.document,
         window: {} as any
     };
+    if (opts.fetch) sandbox.fetch = opts.fetch;
     sandbox.window.localStorage = {
         getItem: (k: string) => (store.has(k) ? store.get(k)! : null),
         setItem: (k: string, v: string) => void store.set(k, String(v)),
@@ -82,19 +83,27 @@ function loadCtx() {
 
 function putDraft(store: Map<string, string>, spec: any) {
     const now = Date.now();
-    store.set(
-        `sok_draft_v1_${spec.userId}_${spec.kind}_${spec.docId}`,
-        JSON.stringify({
-            v: 1,
-            kind: spec.kind,
-            userId: String(spec.userId),
-            docId: spec.docId,
-            baseVersion: null,
-            updatedAt: new Date(now - (spec.ageMs || 0)).toISOString(),
-            expiresAt: new Date(now + 14 * 24 * 3600 * 1000).toISOString(),
-            payload: { fields: { validity: 'x' } }
-        })
-    );
+    const draft: any = {
+        v: 1,
+        kind: spec.kind,
+        userId: String(spec.userId),
+        docId: spec.docId,
+        baseVersion: spec.baseVersion ?? null,
+        updatedAt: new Date(now - (spec.ageMs || 0)).toISOString(),
+        expiresAt: new Date(now + 14 * 24 * 3600 * 1000).toISOString(),
+        payload: spec.payload || { fields: { validity: 'x' } }
+    };
+    if (spec.exit) draft.exit = spec.exit;
+    store.set(`sok_draft_v1_${spec.userId}_${spec.kind}_${spec.docId}`, JSON.stringify(draft));
+}
+
+/** Czeka na rozliczenie łańcucha Promise z hydrate (bez fake timers). */
+function settleAsync() {
+    return new Promise((resolve) => setTimeout(resolve, 0));
+}
+
+function modal(dom: any) {
+    return dom.registry.get('resume-modal');
 }
 
 function setRoute(sandbox: any, record: any) {
@@ -288,5 +297,185 @@ describe('L1 resumeDrafts — kafelek i popup „Wznów pracę"', () => {
             'app.html#/studnie?order=a'
         );
         expect(rd.buildHref({ kind: 'nieznany', docId: 'a' })).toBe('app.html');
+    });
+});
+
+describe('L1 resumeDrafts — firma, budowa i przyczyna przerwania', () => {
+    function listFetch(rows: any[], urls: string[] = []) {
+        return (url: string) => {
+            urls.push(url);
+            return Promise.resolve({ ok: true, json: () => Promise.resolve({ data: rows }) });
+        };
+    }
+
+    it('nazwy firmy i obiektu z API trafiają do wiersza', async () => {
+        const urls: string[] = [];
+        const { store, dom, rd } = loadCtx({
+            fetch: listFetch(
+                [
+                    {
+                        id: 'o1',
+                        clientName: 'ACME Sp. z o.o.',
+                        investName: 'Budowa Wilanów',
+                        version: 3
+                    }
+                ],
+                urls
+            )
+        });
+        putDraft(store, { userId: 'u1', kind: 'offer_rury', docId: 'o1' });
+        rd.openPopup({ id: 'u1' });
+        await settleAsync();
+        const html = modal(dom).innerHTML;
+        expect(html).toContain('Firma: ACME Sp. z o.o.');
+        expect(html).toContain('Obiekt: Budowa Wilanów');
+        expect(urls[0]).toContain('/api/offers-rury?limit=200');
+        expect(html).not.toContain('Wczytywanie nazw');
+    });
+
+    it('brak fetch → jawny komunikat o braku nazw (bez wyjątku)', async () => {
+        const { store, dom, rd } = loadCtx();
+        putDraft(store, { userId: 'u1', kind: 'offer_rury', docId: 'o1' });
+        expect(() => rd.openPopup({ id: 'u1' })).not.toThrow();
+        await settleAsync();
+        expect(modal(dom).innerHTML).toContain('Nazwa firmy i obiektu niedostępne');
+    });
+
+    it('błąd HTTP (403) nie wywraca popupu i daje fallback', async () => {
+        const { store, dom, rd } = loadCtx({
+            fetch: () => Promise.resolve({ ok: false, status: 403 })
+        });
+        putDraft(store, { userId: 'u1', kind: 'order_rury', docId: 'z1' });
+        rd.openPopup({ id: 'u1' });
+        await settleAsync();
+        expect(modal(dom).innerHTML).toContain('Nazwa firmy i obiektu niedostępne');
+    });
+
+    it('nazwa firmy z API jest escapowana (XSS)', async () => {
+        const { store, dom, rd } = loadCtx({
+            fetch: listFetch([
+                { id: 'o1', clientName: '<img src=x onerror=alert(1)>', investName: 'A&B' }
+            ])
+        });
+        putDraft(store, { userId: 'u1', kind: 'offer_rury', docId: 'o1' });
+        rd.openPopup({ id: 'u1' });
+        await settleAsync();
+        const html = modal(dom).innerHTML;
+        expect(html).not.toContain('<img src=x');
+        expect(html).toContain('&lt;img src=x');
+        expect(html).toContain('A&amp;B');
+    });
+
+    it('oferta studni: nazwy z detalu po docId', async () => {
+        const urls: string[] = [];
+        const { store, dom, rd } = loadCtx({
+            fetch: (url: string) => {
+                urls.push(url);
+                return Promise.resolve({
+                    ok: true,
+                    json: () =>
+                        Promise.resolve({
+                            data: {
+                                id: 's1',
+                                data: { clientName: 'Firma S', investName: 'Obiekt S' }
+                            }
+                        })
+                });
+            }
+        });
+        putDraft(store, { userId: 'u1', kind: 'offer_studnie', docId: 's1' });
+        rd.openPopup({ id: 'u1' });
+        await settleAsync();
+        expect(urls).toEqual(['/api/offers-studnie/s1']);
+        expect(modal(dom).innerHTML).toContain('Firma: Firma S');
+    });
+
+    it('nowy dokument: brak zapytań i jawna informacja', async () => {
+        const urls: string[] = [];
+        const { store, dom, rd } = loadCtx({ fetch: listFetch([], urls) });
+        putDraft(store, { userId: 'u1', kind: 'offer_rury', docId: 'new' });
+        rd.openPopup({ id: 'u1' });
+        await settleAsync();
+        expect(urls).toEqual([]);
+        expect(modal(dom).innerHTML).toContain('Dokument jeszcze nie zapisany na serwerze');
+    });
+
+    it('nazwy z API nie są zapisywane w localStorage', async () => {
+        const { store, dom, rd } = loadCtx({
+            fetch: listFetch([{ id: 'o1', clientName: 'Tajna Firma', investName: 'Budowa' }])
+        });
+        putDraft(store, { userId: 'u1', kind: 'offer_rury', docId: 'o1' });
+        const before = JSON.stringify(Array.from(store.entries()));
+        rd.openPopup({ id: 'u1' });
+        await settleAsync();
+        expect(modal(dom).innerHTML).toContain('Tajna Firma');
+        expect(JSON.stringify(Array.from(store.entries()))).toBe(before);
+    });
+
+    it('przyczyna: wyzwalacz wyjścia z koperty', async () => {
+        const { store, dom, rd } = loadCtx();
+        putDraft(store, {
+            userId: 'u1',
+            kind: 'offer_rury',
+            docId: 'o1',
+            exit: { trigger: 'route' }
+        });
+        rd.openPopup({ id: 'u1' });
+        await settleAsync();
+        expect(modal(dom).innerHTML).toContain('Przerwano: przejście do innego modułu');
+    });
+
+    it('przyczyna: konflikt wersji ma priorytet nad wyzwalaczem', async () => {
+        const { store, dom, rd } = loadCtx();
+        putDraft(store, {
+            userId: 'u1',
+            kind: 'offer_rury',
+            docId: 'o1',
+            exit: { trigger: 'hidden' }
+        });
+        putDraft(store, { userId: 'u1', kind: 'offer_rury', docId: 'o1-konflikt-1700000000000' });
+        rd.openPopup({ id: 'u1' });
+        await settleAsync();
+        expect(modal(dom).innerHTML).toContain('konflikt wersji — jest kopia lokalna');
+    });
+
+    it('przyczyna: nowsza wersja na serwerze (meta draftSync)', async () => {
+        const { store, dom, rd } = loadCtx();
+        putDraft(store, { userId: 'u1', kind: 'offer_rury', docId: 'o1', baseVersion: 3 });
+        store.set(
+            'sok_draft_srv_v1_u1_offer_rury_o1',
+            JSON.stringify({ version: 5, updatedAt: null })
+        );
+        rd.openPopup({ id: 'u1' });
+        await settleAsync();
+        expect(modal(dom).innerHTML).toContain('na serwerze nowsza wersja');
+    });
+
+    it('przyczyna: brak danych → jawny komunikat', async () => {
+        const { store, dom, rd } = loadCtx();
+        putDraft(store, { userId: 'u1', kind: 'order_studnie', docId: 'z9' });
+        rd.openPopup({ id: 'u1' });
+        await settleAsync();
+        expect(modal(dom).innerHTML).toContain('Przerwano: brak zapisu przyczyny');
+    });
+
+    it('budowa: studnie ze średnicami i pozycje cennika', async () => {
+        const { store, dom, rd } = loadCtx();
+        putDraft(store, {
+            userId: 'u1',
+            kind: 'offer_studnie',
+            docId: 's1',
+            payload: {
+                fields: { number: 'OF/12/2026' },
+                wells: [{ dn: 1000 }, { dn: 1200 }, { dn: 1200 }],
+                items: [{ productId: 'p1' }, { productId: 'p2' }]
+            }
+        });
+        rd.openPopup({ id: 'u1' });
+        await settleAsync();
+        const html = modal(dom).innerHTML;
+        expect(html).toContain('nr OF/12/2026');
+        expect(html).toContain('3 studnie (DN1000, DN1200)');
+        expect(html).toContain('2 pozycje');
     });
 });

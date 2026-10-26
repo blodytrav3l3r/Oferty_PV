@@ -683,7 +683,7 @@
             // P1.1b: synchroniczny flush draftu opuszczanego modułu (hash nie woła beforeunload).
             try {
                 const _prevWin = iframes[currentModule] && iframes[currentModule].contentWindow;
-                if (_prevWin && _prevWin.draftAutosave) _prevWin.draftAutosave.flushAll();
+                if (_prevWin && _prevWin.draftAutosave) _prevWin.draftAutosave.flushAll('route');
             } catch (_e) {}
             renderSectionNav(module);
         }

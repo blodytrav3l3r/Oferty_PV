@@ -181,6 +181,43 @@ describe('P1.1b draftStore — allowlista', () => {
         expect(d.baseVersion).toBe(3);
         expect(Date.parse(d.expiresAt) - Date.parse(d.updatedAt)).toBe(14 * 24 * 3600 * 1000);
     });
+
+    it('exit: poprawny wyzwalacz zapisany, nieznany odrzucony', () => {
+        const ds = loadStore();
+        const ok = ds.buildDraft({
+            userId: 'u1',
+            kind: 'offer_rury',
+            docId: 'o1',
+            payload: { items: [] },
+            exit: { trigger: 'pagehide' }
+        });
+        expect(ok.exit).toEqual({ trigger: 'pagehide' });
+
+        const bad = ds.buildDraft({
+            userId: 'u1',
+            kind: 'offer_rury',
+            docId: 'o1',
+            payload: { items: [] },
+            exit: { trigger: 'cokolwiek' }
+        });
+        expect(bad.exit).toBeUndefined();
+    });
+
+    it('exit: stara koperta bez exit nadal czytana (bez migracji)', () => {
+        const ds = loadStore();
+        const st = memStorage();
+        const draft = ds.buildDraft({
+            userId: 'u1',
+            kind: 'offer_rury',
+            docId: 'o1',
+            payload: { items: [] }
+        });
+        expect(draft.exit).toBeUndefined();
+        expect(ds.saveDraft(st, draft).ok).toBe(true);
+        const loaded = ds.loadDraft(st, 'sok_draft_v1_u1_offer_rury_o1');
+        expect(loaded.status).toBe('ok');
+        expect(loaded.draft.exit).toBeUndefined();
+    });
 });
 
 describe('P1.1b draftStore — cap 4 MB', () => {

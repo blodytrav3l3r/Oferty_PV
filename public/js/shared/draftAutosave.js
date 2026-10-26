@@ -954,13 +954,48 @@ function _draftDismissKeys(userId, kind, currentDocId, draftDocId) {
     return keys;
 }
 
+/** Musi być zgodne z `draftStore.EXIT_TRIGGERS` (stary cache JS = brak helpera). */
+var DRAFT_EXIT_TRIGGERS = ['pagehide', 'unload', 'hidden', 'route'];
+
+/**
+ * @param {*} raw
+ * @returns {{trigger: string}|null}
+ */
+function _draftExitTag(raw) {
+    var store = window.draftStore;
+    if (store && typeof store.normalizeDraftExit === 'function') {
+        return store.normalizeDraftExit(raw);
+    }
+    var r = raw && typeof raw === 'object' ? raw : null;
+    if (!r || typeof r.trigger !== 'string') return null;
+    return DRAFT_EXIT_TRIGGERS.indexOf(r.trigger) === -1 ? null : { trigger: r.trigger };
+}
+
+/**
+ * Znacznik wyjścia zapisany w istniejącej kopercie (przyczyna przerwania pracy).
+ * Brak/uszkodzona wartość → null.
+ * @param {string} key
+ * @returns {{trigger: string}|null}
+ */
+function _draftStoredExit(key) {
+    try {
+        var raw = window.localStorage.getItem(key);
+        if (!raw) return null;
+        var parsed = JSON.parse(raw);
+        return _draftExitTag(parsed && parsed.exit);
+    } catch (_e) {
+        return null;
+    }
+}
+
 /**
  * Właściwy zapis draftu dla rodzaju. Zwraca false gdy pominięto/zablokowano.
  * @param {string} kind
  * @param {boolean} isFlush wywołanie synchroniczne przy wyjściu (bez toastów-spamu)
+ * @param {string} [exitTrigger] wyzwalacz wyjścia ('pagehide'|'unload'|'hidden'|'route')
  * @returns {boolean}
  */
-function _draftWriteKind(kind, isFlush) {
+function _draftWriteKind(kind, isFlush, exitTrigger) {
     var cfg = _draftKindConfig[kind];
     if (!cfg || !cfg.isActive()) return false;
     var userId = _draftUserId();
@@ -973,7 +1008,16 @@ function _draftWriteKind(kind, isFlush) {
     var payload = _draftCollectLive(kind);
     var canon = window.draftStore.canonicalPayloadJson(payload);
     if (!canon) return false;
-    if (_draftLastWritten[key] === canon) return false;
+    // Znacznik wyjścia: świeży z flushu, inaczej zachowaj poprzedni — zwykły
+    // autosave po powrocie do dokumentu nie kasuje przyczyny przerwania.
+    var storedExit = _draftStoredExit(key);
+    var exitTag = isFlush ? _draftExitTag({ trigger: exitTrigger }) : null;
+    if (!exitTag) exitTag = storedExit;
+    var storedTrigger = storedExit ? storedExit.trigger : null;
+    var nextTrigger = exitTag ? exitTag.trigger : null;
+    // Idempotencja: ten sam payload I ten sam znacznik wyjścia → brak zapisu.
+    // Sam payload bez zmian, a inny trigger (np. pagehide po hidden) → dopisz.
+    if (_draftLastWritten[key] === canon && storedTrigger === nextTrigger) return false;
     // Tombstone Odrzuć (sesyjny): live identyczny ze stanem odrzuconym → brak
     // zapisu. Bez self-heal-delete: obcy draft pod kluczem zostaje nietknięty.
     // Realna zmiana formularza zmienia fingerprint → blokada sama odpada.
@@ -996,7 +1040,8 @@ function _draftWriteKind(kind, isFlush) {
         kind: kind,
         docId: docId,
         baseVersion: baseVersion,
-        payload: payload
+        payload: payload,
+        exit: exitTag || undefined
     });
     if (!draft) return false;
     var res = window.draftStore.saveDraft(window.localStorage, draft);
@@ -1054,11 +1099,12 @@ function _draftScheduleSave() {
 
 /**
  * Synchroniczny flush wszystkich aktywnych rodzajów (wyjście z modułu/karty).
+ * @param {string} [exitTrigger] wyzwalacz wyjścia; brak = zachowaj poprzedni
  */
-function _draftFlushAll() {
+function _draftFlushAll(exitTrigger) {
     _draftInitedKinds.forEach(function (kind) {
         try {
-            _draftWriteKind(kind, true);
+            _draftWriteKind(kind, true, exitTrigger);
         } catch (_e) {}
     });
 }
@@ -2215,10 +2261,14 @@ function _draftInitKind(kind) {
         });
     } catch (_e2) {}
     try {
-        window.addEventListener('pagehide', _draftFlushAll);
-        window.addEventListener('beforeunload', _draftFlushAll);
+        window.addEventListener('pagehide', function () {
+            _draftFlushAll('pagehide');
+        });
+        window.addEventListener('beforeunload', function () {
+            _draftFlushAll('unload');
+        });
         document.addEventListener('visibilitychange', function () {
-            if (document.visibilityState === 'hidden') _draftFlushAll();
+            if (document.visibilityState === 'hidden') _draftFlushAll('hidden');
         });
         // Multi-tab: last-write-wins + jeden toast (bez przeładowania formularza).
         window.addEventListener('storage', function (ev) {

@@ -402,6 +402,45 @@ describe('draft lifecycle — REGRESJA SA/ZS: stale ordersStudnie vs świeży de
         expect(calls.showModal.length).toBe(1);
     });
 });
+
+describe('draft lifecycle — przyczyna przerwania pracy (exit)', () => {
+    function ctx() {
+        const { sandbox, st } = loadCtx();
+        sandbox.editingOfferId = 'o1';
+        sandbox.offers = [];
+        return { sandbox, st };
+    }
+    const readExit = (st: any) =>
+        JSON.parse(st.getItem('sok_draft_v1_u1_offer_rury_o1') || '{}').exit;
+
+    it('flush zapisuje wyzwalacz wyjścia', () => {
+        const { sandbox, st } = ctx();
+        expect(sandbox._draftWriteKind('offer_rury', true, 'route')).toBe(true);
+        expect(readExit(st)).toEqual({ trigger: 'route' });
+    });
+
+    it('inny wyzwalacz nadpisuje exit mimo niezmienionego payloadu', () => {
+        const { sandbox, st } = ctx();
+        sandbox._draftWriteKind('offer_rury', true, 'hidden');
+        expect(readExit(st)).toEqual({ trigger: 'hidden' });
+        expect(sandbox._draftWriteKind('offer_rury', true, 'pagehide')).toBe(true);
+        expect(readExit(st)).toEqual({ trigger: 'pagehide' });
+    });
+
+    it('autosave bez wyzwalacza zachowuje poprzedni exit', () => {
+        const { sandbox, st } = ctx();
+        sandbox._draftWriteKind('offer_rury', true, 'route');
+        sandbox.currentOfferItems[0].quantity = 7;
+        expect(sandbox._draftWriteKind('offer_rury', false)).toBe(true);
+        expect(readExit(st)).toEqual({ trigger: 'route' });
+    });
+
+    it('nieznany wyzwalacz nie trafia do koperty', () => {
+        const { sandbox, st } = ctx();
+        sandbox._draftWriteKind('offer_rury', true, 'cokolwiek');
+        expect(readExit(st)).toBeUndefined();
+    });
+});
 describe('draft lifecycle — zamówienie studni: live full vs SAVED DTO', () => {
     const DTO_WELL = {
         id: 'w1',

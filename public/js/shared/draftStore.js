@@ -93,6 +93,12 @@ var DRAFT_WELL_RUNTIME_KEYS = [
 var DRAFT_VOLATILE_FIELD_KEYS = ['number', 'date'];
 
 /**
+ * Dozwolone wyzwalacze zakończenia pracy (`exit.trigger` w kopercie).
+ * Wartości są stabilne — czyta je pulpit, nie zmieniaj ich bez migracji.
+ */
+var DRAFT_EXIT_TRIGGERS = ['pagehide', 'unload', 'hidden', 'route'];
+
+/**
  * Głęboki klon wartości JSON-owalnych (odcina referencje do obiektów live).
  * @param {*} value
  * @returns {*}
@@ -225,8 +231,21 @@ function stripDraftPiiFields(payload) {
 }
 
 /**
+ * Normalizuje znacznik wyjścia (`exit`). Nieznany wyzwalacz → null, żeby
+ * uszkodzona wartość nie trafiła do koperty ani do UI.
+ * @param {*} raw
+ * @returns {{trigger: string}|null}
+ */
+function normalizeDraftExit(raw) {
+    var r = raw && typeof raw === 'object' ? raw : null;
+    if (!r || typeof r.trigger !== 'string') return null;
+    if (DRAFT_EXIT_TRIGGERS.indexOf(r.trigger) === -1) return null;
+    return { trigger: r.trigger };
+}
+
+/**
  * Buduje kopertę draftu (expiresAt = updatedAt + 14 dni, sliding).
- * @param {object} spec {userId, kind, docId, baseVersion, payload, now?}
+ * @param {object} spec {userId, kind, docId, baseVersion, payload, exit?, now?}
  * @returns {object|null} koperta lub null przy niepoprawnym wejściu
  */
 function buildDraft(spec) {
@@ -234,7 +253,7 @@ function buildDraft(spec) {
     if (!isSupportedDraftKind(s.kind)) return null;
     if (s.userId === undefined || s.userId === null || String(s.userId) === '') return null;
     var now = typeof s.now === 'number' ? s.now : Date.now();
-    return {
+    var draft = {
         v: DRAFT_SCHEMA_VERSION,
         kind: s.kind,
         userId: String(s.userId),
@@ -244,6 +263,11 @@ function buildDraft(spec) {
         expiresAt: new Date(now + DRAFT_TTL_MS).toISOString(),
         payload: stripDraftPiiFields(pickDraftPayload(s.payload))
     };
+    // Pole opcjonalne: walidator toleruje nadmiarowe klucze, więc stare
+    // koperty bez `exit` czytają się bez migracji schematu.
+    var exit = normalizeDraftExit(s.exit);
+    if (exit) draft.exit = exit;
+    return draft;
 }
 
 /**
@@ -567,6 +591,8 @@ window.draftStore = {
     KINDS: DRAFT_KINDS,
     FIELD_KEYS: DRAFT_FIELD_KEYS,
     WELL_RUNTIME_KEYS: DRAFT_WELL_RUNTIME_KEYS,
+    EXIT_TRIGGERS: DRAFT_EXIT_TRIGGERS,
+    normalizeDraftExit: normalizeDraftExit,
     isSupportedDraftKind: isSupportedDraftKind,
     sanitizeDraftDocId: sanitizeDraftDocId,
     buildDraftKey: buildDraftKey,

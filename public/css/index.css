@@ -327,6 +327,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
     display: flex;
     flex-direction: column;
     max-height: 90vh;
+    max-width: 640px;
     overflow-y: auto;
 }
 
@@ -373,6 +374,22 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
     font-size: 0.9rem;
     font-weight: var(--fw-bold);
     color: var(--text-primary);
+}
+
+.resume-row-facts {
+    display: block;
+    margin-top: 0.1rem;
+    font-size: var(--fs-sm);
+    color: var(--text-secondary);
+    overflow-wrap: anywhere;
+}
+
+.resume-row-reason {
+    display: block;
+    margin-top: 0.15rem;
+    font-size: var(--fs-sm);
+    color: var(--text-muted);
+    overflow-wrap: anywhere;
 }
 
 .resume-row-meta {
