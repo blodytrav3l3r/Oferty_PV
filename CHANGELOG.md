@@ -4,6 +4,20 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.52.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.51.0...v1.52.0) (2026-10-26)
+
+### Features
+
+- **api:** reczna korekta etykiety wersji cennika ([22be124](https://github.com/blodytrav3l3r/Oferty_PV/commit/22be124f8c8c871a711568dae634b05975096ebf))
+- **ui:** firma obiekt i przyczyna przerwania w popupie wznow prace ([c1097e4](https://github.com/blodytrav3l3r/Oferty_PV/commit/c1097e416cb333fe8cd9e88a433e9ebda4b34799))
+- **ui:** kafelek i popup wznow pracy z usuwaniem szkicow ([1116d05](https://github.com/blodytrav3l3r/Oferty_PV/commit/1116d050e9bfaf3ad69332debadd188ceb913752))
+- **ui:** kafelek wznow pracy obok kartoteki zlecen ([9c3f6fe](https://github.com/blodytrav3l3r/Oferty_PV/commit/9c3f6fe7833910e4a24cda82e9042700bb5d0253))
+
+### Bug Fixes
+
+- **ci:** deploy tylko przy jawnej zmiennej ([b95f19f](https://github.com/blodytrav3l3r/Oferty_PV/commit/b95f19f1c776dfe1ffd1a0d7e4412b640ac32094))
+- **ui:** szerszy modal wznowienia pracy ([0fdb0bd](https://github.com/blodytrav3l3r/Oferty_PV/commit/0fdb0bde4ecb7632bf12710e330786b354b4d7cb))
+
 ## [1.51.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.50.0...v1.51.0) (2026-10-25)
 
 ### Features

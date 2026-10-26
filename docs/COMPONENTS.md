@@ -1,6 +1,6 @@
 # Katalog Komponentów — S.O.K. — System Ofert i Kalkulacji
 
-> Wersja: 1.51.0 | Data: 2026-10-24 | Źródło: analiza CSS (`public/css/` — 13 arkuszy źródłowych)
+> Wersja: 1.52.0 | Data: 2026-10-24 | Źródło: analiza CSS (`public/css/` — 13 arkuszy źródłowych)
 
 > **SSoT UI/UX, HTML i CSS: `docs/UI_GUIDELINES.md`.** Ten dokument to katalog komponentów
 > (kto/co definiuje); szczegółowe reguły projektowania znajdziesz w wytycznych.
