@@ -18,9 +18,9 @@ function loadProductHelpers(products: any[]) {
         products,
         CATEGORIES: [
             'Rury Betonowe',
-            'Żelbetowe KL.A',
-            'Żelbetowe KL.S',
-            'Duże Żelbetowe II',
+            'Rury Żelbetowe KL. A',
+            'Rury Żelbetowe KL. S',
+            'Duże Rury Żelbetowe',
             'Rury Jajowe Betonowe',
             'Rury Jajowe Żelbetowe',
             'Akcesoria PEHD',

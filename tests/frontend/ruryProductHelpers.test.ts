@@ -50,7 +50,7 @@ const PRODUCTS = [
     { id: 'RTB-0-03-10-K00', category: 'Rury Betonowe' },
     { id: 'RTB-0-03-25-B00', category: 'Rury Betonowe' }, // bosy DN300
     { id: 'RTB-0-05-25-B00', category: 'Rury Betonowe' }, // bosy DN500
-    { id: 'RZB-0-05-20-K00', category: 'Żelbetowe KL. A (II)' }
+    { id: 'RZB-0-05-20-K00', category: 'Rury Żelbetowe KL. A' }
 ];
 
 describe('frontend vm: productHelpers.getSortedRuryItems', () => {
@@ -72,7 +72,7 @@ describe('frontend vm: productHelpers.getSortedRuryItems', () => {
         ];
         const res = w.getSortedRuryItems(items);
         expect(res.sortedCategories[0]).toBe('Rury Betonowe');
-        expect(res.sortedCategories[1]).toBe('Żelbetowe KL. A (II)');
+        expect(res.sortedCategories[1]).toBe('Rury Żelbetowe KL. A');
 
         const betonoweGroups = res.flat.filter((g) => g.cat === 'Rury Betonowe').map((g) => g.dk);
         expect(betonoweGroups).toEqual(['DN 300', 'DN 500']); // rosnąco po DN

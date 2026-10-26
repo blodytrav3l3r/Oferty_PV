@@ -12,7 +12,7 @@ function addOfferItem(productId) {
     const isEditableLength =
         product.category === 'Rury Jajowe Betonowe' ||
         product.category === 'Rury Jajowe Żelbetowe' ||
-        product.category === 'Duże Żelbetowe II';
+        product.category === 'Duże Rury Żelbetowe';
 
     if (isEditableLength) {
         showPipeLengthModal(productId);

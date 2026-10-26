@@ -111,7 +111,7 @@ Pełna baza znanych błędów: `docs/errors-known.md` oraz tabela #1..#39 w sekc
 - Jedyne źródło prawdy: `getSortedRuryItems(items)` w `public/js/rury/productHelpers.js:73` (export `window.getSortedRuryItems` ~:121); wołana z `offerSummaryTab.js:170`, `offerRendering.js:54`, `orderKartaBudowy.js:107-108` — nie duplikuj logiki sortowania
 - Algorytm: `grouped[category][diamKey]` → sort kat wg `CATEGORIES.indexOf()` → sort średnic numerycznie → wewnątrz (cat,diam) Bosy-Bosy pierwsze, potem `lengthM` asc
 - Fallback średnicy: `productId.split('-')[4]` jako int\*100 gdy `getProductDiameter` zwraca null
-- `CATEGORIES` kolejność: Rury Betonowe → Żelbetowe KL.A → Żelbetowe KL.S → Duże Żelbetowe II → Rury Jajowe Betonowe → Rury Jajowe Żelbetowe → Akcesoria PEHD → Uszczelki → Zabezpieczenie transportu
+- `CATEGORIES` kolejność: Rury Betonowe → Rury Żelbetowe KL. A → Rury Żelbetowe KL. S → Duże Rury Żelbetowe → Rury Jajowe Betonowe → Rury Jajowe Żelbetowe → Akcesoria PEHD → Uszczelki → Zabezpieczenie transportu
 
 ### Tabele
 

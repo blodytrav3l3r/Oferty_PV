@@ -42,7 +42,7 @@ Jedyne źródło prawdy: `docs/UI_GUIDELINES.md`. Kluczowe reguły:
 ### Rury
 
 - Sortowanie SSoT: `getSortedRuryItems(items)` w `public/js/rury/productHelpers.js:73` → `{ grouped, sortedCategories, flat }`. Nie duplikuj logiki.
-- Kolejność kategorii: `Rury Betonowe` → `Żelbetowe KL.A` → `Żelbetowe KL.S` → `Duże Żelbetowe II` → `Rury Jajowe Betonowe` → `Rury Jajowe Żelbetowe` → `Akcesoria PEHD` → `Uszczelki` → `Zabezpieczenie transportu`. Średnice numerycznie (fallback: `productId.split('-')[4]` × 100). Bosy-Bosy pierwsze, potem `lengthM` rosnąco.
+- Kolejność kategorii: `Rury Betonowe` → `Rury Żelbetowe KL. A` → `Rury Żelbetowe KL. S` → `Duże Rury Żelbetowe` → `Rury Jajowe Betonowe` → `Rury Jajowe Żelbetowe` → `Akcesoria PEHD` → `Uszczelki` → `Zabezpieczenie transportu`. Średnice numerycznie (fallback: `productId.split('-')[4]` × 100). Bosy-Bosy pierwsze, potem `lengthM` rosnąco.
 - Krok 5: `updateRuryOrderSummary` kopiuje `#offer-items-body` → `#order-items-body`; edycja tylko w `orderEditMode`. Kolumny przez `buildRuryColgroup(extraCols)`. Lp/Nazwa LEFT, liczby RIGHT (`.rury-col-num`, tabular-nums).
 - Przyciski PEHD tylko klasą `.pehd-btn` (bez inline). Akcje PEHD + usuwanie zawsze aktywne. Spinnery `input[type=number]` ukryte w CSS.
 - Nowe itemy: `item.uid = 'rur_' + Date.now() + '_' + Math.random()...`.

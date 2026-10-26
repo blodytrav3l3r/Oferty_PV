@@ -10,9 +10,9 @@ import { resolvePublicDir } from '../../utils/paths';
 
 const CATEGORY_ORDER = [
     'Rury Betonowe',
-    'Żelbetowe KL. A (II)',
-    'Żelbetowe KL. S (I)',
-    'Duże Żelbetowe II',
+    'Rury Żelbetowe KL. A',
+    'Rury Żelbetowe KL. S',
+    'Duże Rury Żelbetowe',
     'Rury Jajowe Betonowe',
     'Rury Jajowe Żelbetowe',
     'Akcesoria PEHD',

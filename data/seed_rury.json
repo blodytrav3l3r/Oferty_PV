@@ -20,7 +20,7 @@
     {
         "id": "RGZ-2-14-30-BU",
         "name": "RURA WITROS ŻELBETOWA II 1400 / 3000 BU",
-        "category": "Duże Żelbetowe II",
+        "category": "Duże Rury Żelbetowe",
         "price": 3800,
         "transport": 4,
         "weight": 5880,
@@ -29,7 +29,7 @@
     {
         "id": "RGZ-2-14-30-BU-BU",
         "name": "RURA WITROS ŻELBETOWA II 1400 / 3000 BU-BU (Bosy-Bosy)",
-        "category": "Duże Żelbetowe II",
+        "category": "Duże Rury Żelbetowe",
         "price": 3800,
         "transport": 4,
         "weight": 5880,
@@ -38,7 +38,7 @@
     {
         "id": "RGZ-2-15-30-BU",
         "name": "RURA WITROS ŻELBETOWA II 1500 / 3000 BU",
-        "category": "Duże Żelbetowe II",
+        "category": "Duże Rury Żelbetowe",
         "price": 4200,
         "transport": 4,
         "weight": 6250,
@@ -47,7 +47,7 @@
     {
         "id": "RGZ-2-15-30-BU-BU",
         "name": "RURA WITROS ŻELBETOWA II 1500 / 3000 BU-BU (Bosy-Bosy)",
-        "category": "Duże Żelbetowe II",
+        "category": "Duże Rury Żelbetowe",
         "price": 4200,
         "transport": 4,
         "weight": 6250,
@@ -56,7 +56,7 @@
     {
         "id": "RGZ-2-16-30-BU",
         "name": "RURA WITROS ŻELBETOWA II 1600 / 3000 BU",
-        "category": "Duże Żelbetowe II",
+        "category": "Duże Rury Żelbetowe",
         "price": 4600,
         "transport": 3,
         "weight": 7085,
@@ -65,7 +65,7 @@
     {
         "id": "RGZ-2-16-30-BU-BU",
         "name": "RURA WITROS ŻELBETOWA II 1600 / 3000 BU-BU (Bosy-Bosy)",
-        "category": "Duże Żelbetowe II",
+        "category": "Duże Rury Żelbetowe",
         "price": 4600,
         "transport": 3,
         "weight": 7085,
@@ -74,7 +74,7 @@
     {
         "id": "RGZ-2-18-30-BU",
         "name": "RURA WITROS ŻELBETOWA II 1800 / 3000 BU",
-        "category": "Duże Żelbetowe II",
+        "category": "Duże Rury Żelbetowe",
         "price": 6000,
         "transport": 3,
         "weight": 8395,
@@ -83,7 +83,7 @@
     {
         "id": "RGZ-2-18-30-BU-BU",
         "name": "RURA WITROS ŻELBETOWA II 1800 / 3000 BU-BU (Bosy-Bosy)",
-        "category": "Duże Żelbetowe II",
+        "category": "Duże Rury Żelbetowe",
         "price": 6000,
         "transport": 3,
         "weight": 8395,
@@ -92,7 +92,7 @@
     {
         "id": "RGZ-2-20-30-BU",
         "name": "RURA WITROS ŻELBETOWA II 2000 / 3000 BU",
-        "category": "Duże Żelbetowe II",
+        "category": "Duże Rury Żelbetowe",
         "price": 7000,
         "transport": 2,
         "weight": 10365,
@@ -101,7 +101,7 @@
     {
         "id": "RGZ-2-20-30-BU-BU",
         "name": "RURA WITROS ŻELBETOWA II 2000 / 3000 BU-BU (Bosy-Bosy)",
-        "category": "Duże Żelbetowe II",
+        "category": "Duże Rury Żelbetowe",
         "price": 7000,
         "transport": 2,
         "weight": 10365,
@@ -110,7 +110,7 @@
     {
         "id": "RGZ-2-22-25-BU",
         "name": "RURA WITROS ŻELBETOWA II 2200 / 2500 BU",
-        "category": "Duże Żelbetowe II",
+        "category": "Duże Rury Żelbetowe",
         "price": 7000,
         "transport": 2,
         "weight": 10365,
@@ -119,7 +119,7 @@
     {
         "id": "RGZ-2-22-25-BU-BU",
         "name": "RURA WITROS ŻELBETOWA II 2200 / 2500 BU-BU (Bosy-Bosy)",
-        "category": "Duże Żelbetowe II",
+        "category": "Duże Rury Żelbetowe",
         "price": 7000,
         "transport": 2,
         "weight": 10365,
@@ -299,7 +299,7 @@
     {
         "id": "RTZ-1-03-10-B00",
         "name": "RURA WITROS KL. S ŻELBETOWA I B-C 40/50 300 / 1000",
-        "category": "Żelbetowe KL. S (I)",
+        "category": "Rury Żelbetowe KL. S",
         "price": 650,
         "transport": 86,
         "weight": 220,
@@ -308,7 +308,7 @@
     {
         "id": "RTZ-1-03-10-K00",
         "name": "RURA WITROS KL. S ŻELBETOWA I BKZ-C 40/50 300 / 1000",
-        "category": "Żelbetowe KL. S (I)",
+        "category": "Rury Żelbetowe KL. S",
         "price": 650,
         "transport": 86,
         "weight": 220,
@@ -317,7 +317,7 @@
     {
         "id": "RTZ-1-03-25-K00",
         "name": "RURA WITROS KL. S ŻELBETOWA I BKZ-C 40/50 300 / 2500",
-        "category": "Żelbetowe KL. S (I)",
+        "category": "Rury Żelbetowe KL. S",
         "price": 650,
         "transport": 43,
         "weight": 550,
@@ -326,7 +326,7 @@
     {
         "id": "RTZ-1-04-10-B00",
         "name": "RURA WITROS KL. S ŻELBETOWA I B-C 40/50 400 / 1000",
-        "category": "Żelbetowe KL. S (I)",
+        "category": "Rury Żelbetowe KL. S",
         "price": 750,
         "transport": 68,
         "weight": 280,
@@ -335,7 +335,7 @@
     {
         "id": "RTZ-1-04-10-K00",
         "name": "RURA WITROS KL. S ŻELBETOWA I BKZ-C 40/50 400 / 1000",
-        "category": "Żelbetowe KL. S (I)",
+        "category": "Rury Żelbetowe KL. S",
         "price": 750,
         "transport": 68,
         "weight": 280,
@@ -344,7 +344,7 @@
     {
         "id": "RTZ-1-04-25-K00",
         "name": "RURA WITROS KL. S ŻELBETOWA I BKZ-C 40/50 400 / 2500",
-        "category": "Żelbetowe KL. S (I)",
+        "category": "Rury Żelbetowe KL. S",
         "price": 750,
         "transport": 34,
         "weight": 700,
@@ -353,7 +353,7 @@
     {
         "id": "RTZ-1-05-10-B00",
         "name": "RURA WITROS KL. S ŻELBETOWA I B-C 40/50 500 / 1000",
-        "category": "Żelbetowe KL. S (I)",
+        "category": "Rury Żelbetowe KL. S",
         "price": 850,
         "transport": 50,
         "weight": 372,
@@ -362,7 +362,7 @@
     {
         "id": "RTZ-1-05-10-K00",
         "name": "RURA WITROS KL. S ŻELBETOWA I BKZ-C 40/50 500 / 1000",
-        "category": "Żelbetowe KL. S (I)",
+        "category": "Rury Żelbetowe KL. S",
         "price": 850,
         "transport": 50,
         "weight": 372,
@@ -371,7 +371,7 @@
     {
         "id": "RTZ-1-05-25-K00",
         "name": "RURA WITROS KL. S ŻELBETOWA I BKZ-C 40/50 500 / 2500",
-        "category": "Żelbetowe KL. S (I)",
+        "category": "Rury Żelbetowe KL. S",
         "price": 850,
         "transport": 25,
         "weight": 930,
@@ -380,7 +380,7 @@
     {
         "id": "RTZ-1-06-10-B00",
         "name": "RURA WITROS KL. S ŻELBETOWA I B-C 40/50 600 / 1000",
-        "category": "Żelbetowe KL. S (I)",
+        "category": "Rury Żelbetowe KL. S",
         "price": 1100,
         "transport": 40,
         "weight": 476,
@@ -389,7 +389,7 @@
     {
         "id": "RTZ-1-06-10-K00",
         "name": "RURA WITROS KL. S ŻELBETOWA I BKZ-C 40/50 600 / 1000",
-        "category": "Żelbetowe KL. S (I)",
+        "category": "Rury Żelbetowe KL. S",
         "price": 1100,
         "transport": 40,
         "weight": 476,
@@ -398,7 +398,7 @@
     {
         "id": "RTZ-1-06-25-K00",
         "name": "RURA WITROS KL. S ŻELBETOWA I BKZ-C 40/50 600 / 2500",
-        "category": "Żelbetowe KL. S (I)",
+        "category": "Rury Żelbetowe KL. S",
         "price": 1100,
         "transport": 20,
         "weight": 1190,
@@ -407,7 +407,7 @@
     {
         "id": "RTZ-1-08-10-B00",
         "name": "RURA WITROS KL. S ŻELBETOWA I B-C 40/50 800 / 1000",
-        "category": "Żelbetowe KL. S (I)",
+        "category": "Rury Żelbetowe KL. S",
         "price": 1750,
         "transport": 24,
         "weight": 760,
@@ -416,7 +416,7 @@
     {
         "id": "RTZ-1-08-10-K00",
         "name": "RURA WITROS KL. S ŻELBETOWA I BKZ-C 40/50 800 / 1000",
-        "category": "Żelbetowe KL. S (I)",
+        "category": "Rury Żelbetowe KL. S",
         "price": 1750,
         "transport": 24,
         "weight": 760,
@@ -425,7 +425,7 @@
     {
         "id": "RTZ-1-08-25-K00",
         "name": "RURA WITROS KL. S ŻELBETOWA I BKZ-C 40/50 800 / 2500",
-        "category": "Żelbetowe KL. S (I)",
+        "category": "Rury Żelbetowe KL. S",
         "price": 1750,
         "transport": 12,
         "weight": 1900,
@@ -434,7 +434,7 @@
     {
         "id": "RTZ-1-10-10-B00",
         "name": "RURA WITROS KL. S ŻELBETOWA I B-C 40/50 1000 / 1000",
-        "category": "Żelbetowe KL. S (I)",
+        "category": "Rury Żelbetowe KL. S",
         "price": 2200,
         "transport": 16,
         "weight": 1196,
@@ -443,7 +443,7 @@
     {
         "id": "RTZ-1-10-10-K00",
         "name": "RURA WITROS KL. S ŻELBETOWA I BKZ-C 40/50 1000 / 1000",
-        "category": "Żelbetowe KL. S (I)",
+        "category": "Rury Żelbetowe KL. S",
         "price": 2200,
         "transport": 16,
         "weight": 1196,
@@ -452,7 +452,7 @@
     {
         "id": "RTZ-1-10-25-K00",
         "name": "RURA WITROS KL. S ŻELBETOWA I BKZ-C 40/50 1000 / 2500",
-        "category": "Żelbetowe KL. S (I)",
+        "category": "Rury Żelbetowe KL. S",
         "price": 2200,
         "transport": 8,
         "weight": 2990,
@@ -461,7 +461,7 @@
     {
         "id": "RTZ-1-12-10-B00",
         "name": "RURA WITROS KL. S ŻELBETOWA I B-C 40/50 1200 / 1000",
-        "category": "Żelbetowe KL. S (I)",
+        "category": "Rury Żelbetowe KL. S",
         "price": 2900,
         "transport": 12,
         "weight": 1650,
@@ -470,7 +470,7 @@
     {
         "id": "RTZ-1-12-10-K00",
         "name": "RURA WITROS KL. S ŻELBETOWA I BKZ-C 40/50 1200 / 1000",
-        "category": "Żelbetowe KL. S (I)",
+        "category": "Rury Żelbetowe KL. S",
         "price": 2900,
         "transport": 12,
         "weight": 1650,
@@ -479,7 +479,7 @@
     {
         "id": "RTZ-1-12-25-K00",
         "name": "RURA WITROS KL. S ŻELBETOWA I BKZ-C 40/50 1200 / 2500",
-        "category": "Żelbetowe KL. S (I)",
+        "category": "Rury Żelbetowe KL. S",
         "price": 2900,
         "transport": 6,
         "weight": 4125,
@@ -488,7 +488,7 @@
     {
         "id": "RTZ-2-03-10-B00",
         "name": "RURA WITROS KL. A ŻELBETOWA II B-C 40/50 300 / 1000",
-        "category": "Żelbetowe KL. A (II)",
+        "category": "Rury Żelbetowe KL. A",
         "price": 350,
         "transport": 86,
         "weight": 220,
@@ -497,7 +497,7 @@
     {
         "id": "RTZ-2-03-10-K00",
         "name": "RURA WITROS KL. A ŻELBETOWA II BKZ-C 40/50 300 / 1000",
-        "category": "Żelbetowe KL. A (II)",
+        "category": "Rury Żelbetowe KL. A",
         "price": 350,
         "transport": 86,
         "weight": 220,
@@ -506,7 +506,7 @@
     {
         "id": "RTZ-2-03-25-K00",
         "name": "RURA WITROS KL. A ŻELBETOWA II BKZ-C 40/50 300 / 2500",
-        "category": "Żelbetowe KL. A (II)",
+        "category": "Rury Żelbetowe KL. A",
         "price": 550,
         "transport": 43,
         "weight": 550,
@@ -515,7 +515,7 @@
     {
         "id": "RTZ-2-04-10-B00",
         "name": "RURA WITROS KL. A ŻELBETOWA II B-C 40/50 400 / 1000",
-        "category": "Żelbetowe KL. A (II)",
+        "category": "Rury Żelbetowe KL. A",
         "price": 450,
         "transport": 68,
         "weight": 280,
@@ -524,7 +524,7 @@
     {
         "id": "RTZ-2-04-10-K00",
         "name": "RURA WITROS KL. A ŻELBETOWA II BKZ-C 40/50 400 / 1000",
-        "category": "Żelbetowe KL. A (II)",
+        "category": "Rury Żelbetowe KL. A",
         "price": 450,
         "transport": 68,
         "weight": 280,
@@ -533,7 +533,7 @@
     {
         "id": "RTZ-2-04-25-K00",
         "name": "RURA WITROS KL. A ŻELBETOWA II BKZ-C 40/50 400 / 2500",
-        "category": "Żelbetowe KL. A (II)",
+        "category": "Rury Żelbetowe KL. A",
         "price": 650,
         "transport": 34,
         "weight": 700,
@@ -542,7 +542,7 @@
     {
         "id": "RTZ-2-05-10-B00",
         "name": "RURA WITROS KL. A ŻELBETOWA II B-C 40/50 500 / 1000",
-        "category": "Żelbetowe KL. A (II)",
+        "category": "Rury Żelbetowe KL. A",
         "price": 550,
         "transport": 50,
         "weight": 372,
@@ -551,7 +551,7 @@
     {
         "id": "RTZ-2-05-10-K00",
         "name": "RURA WITROS KL. A ŻELBETOWA BKZ-C 40/50 500 / 1000",
-        "category": "Żelbetowe KL. A (II)",
+        "category": "Rury Żelbetowe KL. A",
         "price": 550,
         "transport": 50,
         "weight": 372,
@@ -560,7 +560,7 @@
     {
         "id": "RTZ-2-05-25-K00",
         "name": "RURA WITROS KL. A ŻELBETOWA II BKZ-C 40/50 500 / 2500",
-        "category": "Żelbetowe KL. A (II)",
+        "category": "Rury Żelbetowe KL. A",
         "price": 800,
         "transport": 25,
         "weight": 930,
@@ -569,7 +569,7 @@
     {
         "id": "RTZ-2-06-10-B00",
         "name": "RURA WITROS KL. A ŻELBETOWA II B-C 40/50 600 / 1000",
-        "category": "Żelbetowe KL. A (II)",
+        "category": "Rury Żelbetowe KL. A",
         "price": 650,
         "transport": 40,
         "weight": 476,
@@ -578,7 +578,7 @@
     {
         "id": "RTZ-2-06-10-K00",
         "name": "RURA WITROS KL. A ŻELBETOWA II BKZ-C 40/50 600 / 1000",
-        "category": "Żelbetowe KL. A (II)",
+        "category": "Rury Żelbetowe KL. A",
         "price": 650,
         "transport": 40,
         "weight": 476,
@@ -587,7 +587,7 @@
     {
         "id": "RTZ-2-06-25-K00",
         "name": "RURA WITROS KL. A ŻELBETOWA II BKZ-C 40/50 600 / 2500",
-        "category": "Żelbetowe KL. A (II)",
+        "category": "Rury Żelbetowe KL. A",
         "price": 950,
         "transport": 20,
         "weight": 1190,
@@ -596,7 +596,7 @@
     {
         "id": "RTZ-2-08-10-B00",
         "name": "RURA WITROS KL. A ŻELBETOWA II B-C 40/50 800 / 1000",
-        "category": "Żelbetowe KL. A (II)",
+        "category": "Rury Żelbetowe KL. A",
         "price": 850,
         "transport": 24,
         "weight": 760,
@@ -605,7 +605,7 @@
     {
         "id": "RTZ-2-08-10-K00",
         "name": "RURA WITROS KL. A ŻELBETOWA II BKZ-C 40/50 800 / 1000",
-        "category": "Żelbetowe KL. A (II)",
+        "category": "Rury Żelbetowe KL. A",
         "price": 850,
         "transport": 24,
         "weight": 760,
@@ -614,7 +614,7 @@
     {
         "id": "RTZ-2-08-25-K00",
         "name": "RURA WITROS KL. A ŻELBETOWA II BKZ-C 40/50 800 / 2500",
-        "category": "Żelbetowe KL. A (II)",
+        "category": "Rury Żelbetowe KL. A",
         "price": 1450,
         "transport": 12,
         "weight": 1900,
@@ -623,7 +623,7 @@
     {
         "id": "RTZ-2-10-10-B00",
         "name": "RURA WITROS KL. A ŻELBETOWA II B-C 40/50 1000 / 1000",
-        "category": "Żelbetowe KL. A (II)",
+        "category": "Rury Żelbetowe KL. A",
         "price": 1500,
         "transport": 16,
         "weight": 1196,
@@ -632,7 +632,7 @@
     {
         "id": "RTZ-2-10-10-K00",
         "name": "RURA WITROS KL. A ŻELBETOWA II BKZ-C 40/50 1000 / 1000",
-        "category": "Żelbetowe KL. A (II)",
+        "category": "Rury Żelbetowe KL. A",
         "price": 1500,
         "transport": 16,
         "weight": 1196,
@@ -641,7 +641,7 @@
     {
         "id": "RTZ-2-10-25-K00",
         "name": "RURA WITROS KL. A ŻELBETOWA II BKZ-C 40/50 1000 / 2500",
-        "category": "Żelbetowe KL. A (II)",
+        "category": "Rury Żelbetowe KL. A",
         "price": 2000,
         "transport": 8,
         "weight": 2990,
@@ -650,7 +650,7 @@
     {
         "id": "RTZ-2-12-10-B00",
         "name": "RURA WITROS KL. A ŻELBETOWA II B-C 40/50 1200 / 1000",
-        "category": "Żelbetowe KL. A (II)",
+        "category": "Rury Żelbetowe KL. A",
         "price": 1700,
         "transport": 12,
         "weight": 1650,
@@ -659,7 +659,7 @@
     {
         "id": "RTZ-2-12-10-K00",
         "name": "RURA WITROS KL. A ŻELBETOWA II BKZ-C 40/50 1200 / 1000",
-        "category": "Żelbetowe KL. A (II)",
+        "category": "Rury Żelbetowe KL. A",
         "price": 1700,
         "transport": 12,
         "weight": 1650,
@@ -668,7 +668,7 @@
     {
         "id": "RTZ-2-12-25-K00",
         "name": "RURA WITROS KL. A ŻELBETOWA II BKZ-C 40/50 1200 / 2500",
-        "category": "Żelbetowe KL. A (II)",
+        "category": "Rury Żelbetowe KL. A",
         "price": 2600,
         "transport": 6,
         "weight": 4125,

@@ -123,7 +123,7 @@ function renderOfferItems() {
             const isEditableLength =
                 cat === 'Rury Jajowe Betonowe' ||
                 cat === 'Rury Jajowe Żelbetowe' ||
-                cat === 'Duże Żelbetowe II';
+                cat === 'Duże Rury Żelbetowe';
             const lengthEditor =
                 isEditableLength && hasLength && !isLocked
                     ? `<div class="length-editor" data-action="showPipeLengthModal" data-pid="${escapeHtmlAttr(item.productId)}" data-i="${i}" title="Zmień długość rury i automatycznie przelicz wagę oraz transport">

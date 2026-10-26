@@ -14,7 +14,7 @@ function syncGaskets() {
     activeItems.forEach((item) => {
         if (!item.autoAdded && item.quantity > 0) {
             const product = getRuryProductById(item.productId);
-            if (product && product.category === 'Duże Żelbetowe II') {
+            if (product && product.category === 'Duże Rury Żelbetowe') {
                 const diam = getProductDiameter(item.productId);
                 if (diam) {
                     const kw = diam.toString();

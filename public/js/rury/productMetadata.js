@@ -5,9 +5,9 @@
 const CATEGORIES = [
     'Akcesoria PEHD',
     'Rury Betonowe',
-    'Żelbetowe KL. A (II)',
-    'Żelbetowe KL. S (I)',
-    'Duże Żelbetowe II',
+    'Rury Żelbetowe KL. A',
+    'Rury Żelbetowe KL. S',
+    'Duże Rury Żelbetowe',
     'Rury Jajowe Betonowe',
     'Rury Jajowe Żelbetowe',
     'Uszczelki',
