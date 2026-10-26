@@ -168,6 +168,12 @@ async function waitModuleFrame(page, mod) {
         // Killer celowo strzela w nieistniejace id (oczekiwany 404 po delayu).
         if (url.includes('00000000-0000-0000-0000-000000000000')) return;
         if (url.includes('favicon.ico') || text.includes('favicon.ico')) return;
+        // Swiezo utworzone zamowienie nie ma jeszcze szkicu: GET /api/drafts
+        // zwraca 404 jako kontrakt (src/routes/drafts.ts:73), a przegladarka
+        // loguje to jako console.error. Tylko ten przypadek, tylko 404.
+        if (url.includes(`/api/drafts/order_studnie/${ORDER_ID}`) && /status of 404/.test(text)) {
+            return;
+        }
         consoleErrors.push('[console.error] ' + url + ' :: ' + text.slice(0, 200));
     });
     page.on('pageerror', (e) =>
@@ -291,6 +297,7 @@ async function waitModuleFrame(page, mod) {
                 wizard: { globalParams: {}, currentStep: 5 }
             };
             const putResp = await page.request.put(`${BASE}/api/orders-studnie`, {
+                headers: { Origin: BASE, Referer: `${BASE}/app.html#/studnie` },
                 data: { data: [orderDoc] }
             });
             check('seed-PUT', putResp.ok(), `status=${putResp.status()}`);

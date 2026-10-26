@@ -193,7 +193,7 @@ jobs:
                   docker rm test-container
 
     e2e-appname:
-        name: E2E — spójność nazwy aplikacji
+        name: E2E — nazwa aplikacji + harnessy cennika i zamówień
         runs-on: ubuntu-latest
         needs: test
         timeout-minutes: 15
@@ -238,6 +238,17 @@ jobs:
                       e2e-appname-fail.png
                       e2e-appname-server.log
                   if-no-files-found: warn
+
+            # Harnessy spawnują własne serwery i własne bazy (izolacja), ale
+            # uruchamiają dist/server.js — build musi być gotowy.
+            - name: Build (dist dla harnessów spawn)
+              run: npm run build
+
+            - name: E2E cennik — podgląd i diff PRECO (:3179)
+              run: node tests/playwright/pricelistPreview.cjs --spawn
+
+            - name: E2E QE — edycja pól zamówienia (:3177)
+              run: node tests/playwright/qeQuickEditSwitch.cjs --spawn
 
     excel-gates:
         name: Excel — parity + golden + align (blokuje)

@@ -110,10 +110,15 @@ async function startServer() {
         },
         stdio: 'pipe'
     });
-    if (SPAWN_VERBOSE) {
-        server.stderr.on('data', (d) => process.stderr.write(d));
-        server.stdout.on('data', (d) => process.stdout.write(d));
-    }
+    // Handlery MUSZA byc podpiete zawsze: `stdio: 'pipe'` bez konsumenta
+    // zapelnia bufor 64 KB i blokuje serwer (zawieszenie iframe w polowie
+    // zadania). Tryb cichy tylko nie przekazuje danych dalej.
+    server.stderr.on('data', (d) => {
+        if (SPAWN_VERBOSE) process.stderr.write(d);
+    });
+    server.stdout.on('data', (d) => {
+        if (SPAWN_VERBOSE) process.stdout.write(d);
+    });
     const ok = await pollHealth(`${BASE}/health`);
     if (!ok) {
         server.kill();
@@ -140,17 +145,34 @@ function precoRows(price) {
     };
 }
 
+/**
+ * Czeka na gotowy iframe modułu. Re-rozwiazuje uchwyt w petli, bo iframe SPA
+ * potrafi sie przeladowac tuz po `contentFrame()` i stary uchwyt nigdy nie
+ * osiagnie `complete` (flake 1/3 przebiegow z tego samego commita).
+ */
 async function waitModule(page, mod) {
-    const el = await page.waitForSelector(`#spa-iframe-${mod}`, { timeout: 20000 });
-    let frame = await el.contentFrame();
-    if (!frame) frame = page.frames().find((f) => f.url().includes(`${mod}.html`));
-    if (!frame) throw new Error(`Cannot find ${mod} iframe`);
-    await frame.waitForFunction(
-        () => document.readyState === 'complete' && !!document.getElementById('client-name'),
-        null,
-        { timeout: 20000 }
-    );
-    return frame;
+    const deadline = Date.now() + 40000;
+    while (Date.now() < deadline) {
+        const el = await page.$(`#spa-iframe-${mod}`);
+        const frame =
+            (el && (await el.contentFrame())) ||
+            page.frames().find((f) => f.url().includes(`${mod}.html`));
+        if (frame) {
+            const ready = await frame
+                .waitForFunction(
+                    () =>
+                        document.readyState === 'complete' &&
+                        !!document.getElementById('client-name'),
+                    null,
+                    { timeout: 5000 }
+                )
+                .then(() => true)
+                .catch(() => false);
+            if (ready) return frame;
+        }
+        await page.waitForTimeout(500);
+    }
+    throw new Error(`Iframe ${mod} niezaladowal sie w 40s`);
 }
 
 function trackWrites(page) {
@@ -187,28 +209,55 @@ function trackWrites(page) {
         }
     };
 
+    let draftCleanupId = '';
+
     try {
         const login = await context.request.post(`${BASE}/api/auth/login`, {
             data: { username: 'admin', password: ADMIN_PASSWORD }
         });
         check('LOGIN admin', login.status() === 200, `status=${login.status()}`);
 
-        const first = await context.request.post(`${BASE}/api/pricelist-versions/preco/drafts`, {
-            headers: { Origin: BASE },
-            data: { rows: precoRows(100), note: 'E2E preview base' }
-        });
-        const second = await context.request.post(`${BASE}/api/pricelist-versions/preco/drafts`, {
-            headers: { Origin: BASE },
-            data: { rows: precoRows(110), note: 'E2E preview changed' }
-        });
-        const firstBody = first.status() === 201 ? await first.json() : {};
-        const secondBody = second.status() === 201 ? await second.json() : {};
-        const baseVersion = firstBody.version || {};
-        const changedVersion = secondBody.version || {};
+        // Lifecycle PRECO dopuszcza tylko jeden DRAFT na typ (DRAFT_EXISTS, 409),
+        // więc para wersji powstaje jako: szkic bazowy -> publikacja -> szkic zmieniony.
+        const baseDraft = await context.request.post(
+            `${BASE}/api/pricelist-versions/preco/drafts`,
+            {
+                headers: { Origin: BASE },
+                data: { rows: precoRows(100), note: 'E2E preview base' }
+            }
+        );
+        const baseBody = baseDraft.status() === 201 ? await baseDraft.json() : {};
+        const baseVersion = baseBody.version || {};
+
+        const approve = await context.request.post(
+            `${BASE}/api/pricelist-versions/${baseVersion.id}/approve`,
+            {
+                headers: { Origin: BASE },
+                data: { effectiveFrom: new Date().toISOString() }
+            }
+        );
+        const approveBody = approve.status() === 200 ? await approve.json() : {};
+
+        const changedDraft = await context.request.post(
+            `${BASE}/api/pricelist-versions/preco/drafts`,
+            {
+                headers: { Origin: BASE },
+                data: { rows: precoRows(110), note: 'E2E preview changed' }
+            }
+        );
+        const changedBody = changedDraft.status() === 201 ? await changedDraft.json() : {};
+        const changedVersion = changedBody.version || {};
+        draftCleanupId = changedVersion.id || '';
+
         check(
-            'FIXTURE 2 wersje PRECO',
-            Boolean(baseVersion.id && changedVersion.id),
-            `statusy=${first.status()},${second.status()}`
+            'FIXTURE wersja bazowa APPROVED + szkic zmieniony',
+            Boolean(
+                baseVersion.id &&
+                changedVersion.id &&
+                approveBody.version &&
+                approveBody.version.status === 'APPROVED'
+            ),
+            `draft=${baseDraft.status()} approve=${approve.status()} status=${approveBody.version?.status} draft2=${changedDraft.status()}`
         );
 
         const tilesPage = await context.newPage();
@@ -298,6 +347,16 @@ function trackWrites(page) {
         errors.push(`EXCEPTION: ${err && err.message ? err.message : String(err)}`);
         console.log(`  ❌ EXCEPTION: ${err && err.stack ? err.stack : String(err)}`);
     } finally {
+        // Teardown także po błędzie: szkic blokuje kolejne uruchomienie na tej
+        // samej bazie (DRAFT_EXISTS). Wersja APPROVED zostaje — baza i tak jest
+        // odtwarzana od zera przy starcie harnessu.
+        if (draftCleanupId) {
+            await context.request
+                .delete(`${BASE}/api/pricelist-versions/${draftCleanupId}`, {
+                    headers: { Origin: BASE }
+                })
+                .catch(() => {});
+        }
         await browser.close();
         if (server) server.kill();
     }
