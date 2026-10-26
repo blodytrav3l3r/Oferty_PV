@@ -21,7 +21,7 @@
  */
 
 const { execFileSync, spawn } = require('child_process');
-const { join, resolve } = require('path');
+const { join, resolve, delimiter } = require('path');
 
 const ROOT = resolve(__dirname, '..', '..');
 const SPAWN = process.argv.includes('--spawn');
@@ -85,7 +85,7 @@ async function startServer() {
         env: {
             ...process.env,
             DATABASE_URL: dbUrl,
-            PATH: join(ROOT, 'node_modules', '.bin') + ';' + process.env.PATH
+            PATH: join(ROOT, 'node_modules', '.bin') + delimiter + process.env.PATH
         },
         stdio: 'pipe'
     });
