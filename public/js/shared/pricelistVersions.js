@@ -2357,39 +2357,7 @@
                     btn.getAttribute('data-pv-status')
                 );
             } else if (act === 'publish' && id) {
-                var effRaw = btn.getAttribute('data-pv-eff') || '';
-                var isPast = isPastDate(effRaw);
-                var doApprove = function (note) {
-                    approveVersion(id, note)
-                        .then(function (json) {
-                            var v = json.version || {};
-                            toast(
-                                'Opublikowano: ' +
-                                    (v.version || '') +
-                                    (json.checksStale
-                                        ? ' — kontrola nieaktualna, sprawdź różnice'
-                                        : ''),
-                                json.checksStale ? 'warning' : 'success'
-                            );
-                            afterVersionChange(type, { reloadGrid: true });
-                        })
-                        .catch(function (err) {
-                            toast(friendlyError('Błąd publikacji', err), 'error');
-                        });
-                };
-                if (isPast) {
-                    // Korekta wsteczna: BE wymaga noty ≥ 10 znaków (400 NOTE_TOO_SHORT).
-                    openNoteModal(
-                        'Korekta wsteczna — wymagane uzasadnienie',
-                        'Min. 10 znaków uzasadnienia zmiany historycznej…',
-                        function (note) {
-                            window.closeModal('pv-note-modal');
-                            doApprove(note);
-                        }
-                    );
-                    return;
-                }
-                doApprove();
+                openPublishDialog(type, id);
             } else if (act === 'edit-note' && id) {
                 openNoteModal(
                     'Edytuj notatki',
@@ -2935,10 +2903,34 @@
     }
 
     /** Dialog publikacji: data obowiązywania + nota + podgląd etykiety. */
-    async function openPublishDialog(type) {
+    /**
+     * Popup publikacji szkicu: wybór daty i godziny, od której cennik obowiązuje.
+     * `versionId` = wersja kliknięta w pasku akcji (bez niego: bieżący szkic osi).
+     */
+    async function openPublishDialog(type, versionId) {
         var t = type || editorType;
-        var json = await fetchSummary();
-        var draft = ((json && json.types) || {})[t] && json.types[t].draft;
+        var draft = null;
+        if (versionId) {
+            var list = versionsByType[t];
+            if (!list) {
+                try {
+                    list = await fetchFullList(t);
+                } catch (e) {
+                    toast('Błąd listy wersji: ' + e.message, 'error');
+                    return;
+                }
+            }
+            draft = list.filter(function (v) {
+                return v.id === versionId;
+            })[0];
+            if (draft && !isEditableStatus(stateOf(draft))) {
+                toast('Opublikować można tylko wersję roboczą', 'warning');
+                return;
+            }
+        } else {
+            var json = await fetchSummary();
+            draft = ((json && json.types) || {})[t] && json.types[t].draft;
+        }
         if (!draft) {
             toast('Brak szkicu do opublikowania', 'warning');
             return;
@@ -2948,11 +2940,11 @@
             titleId: 'pv-publish-title',
             html:
                 '<div class="modal"><div class="modal-header"><h3 id="pv-publish-title"><i data-lucide="rocket"></i> Opublikuj szkic ' +
-                esc(draft.version) +
+                esc(labelOf(draft) || draft.version) +
                 '</h3>' +
                 '<button class="btn-icon" aria-label="Zamknij" data-csp="closeModal" data-csp-args="[&quot;pv-publish-modal&quot;]"><i data-lucide="x"></i></button></div>' +
                 '<div class="modal-body">' +
-                '<p class="text-muted">Publikacja ustawia datę, od której szkic obowiązuje nowe wyceny. Dotychczasowa wersja obowiązująca zostaje w historii.</p>' +
+                '<p class="text-muted">Wybierz datę i godzinę, od której ten cennik ma obowiązywać. Dotychczasowa wersja obowiązująca zostaje w historii.</p>' +
                 '<div class="form-group"><label for="pv-publish-date">Obowiązuje od</label>' +
                 '<input class="form-input" id="pv-publish-date" type="datetime-local"></div>' +
                 '<p class="text-muted" id="pv-publish-hint"></p>' +
@@ -3028,17 +3020,18 @@
                 try {
                     var res = await approveVersion(draft.id, { effectiveFrom: iso, note: note });
                     var published = (res && res.version) || {};
-                    clearSummaryCache();
                     if (typeof window.closeModal === 'function')
                         window.closeModal('pv-publish-modal');
-                    setEditing(t, false);
-                    await renderStatusStrip(STRIP_HOST_ID, t);
+                    await afterVersionChange(t, { reloadGrid: true });
                     toast(
                         'Opublikowano ' +
                             (published.version || draft.version) +
                             ' — obowiązuje od ' +
-                            stripDate(iso),
-                        'success'
+                            stripDateTime(iso) +
+                            (res && res.checksStale
+                                ? ' — kontrola nieaktualna, sprawdź różnice'
+                                : ''),
+                        res && res.checksStale ? 'warning' : 'success'
                     );
                 } catch (err) {
                     showErr(friendlyError('Błąd publikacji', err));

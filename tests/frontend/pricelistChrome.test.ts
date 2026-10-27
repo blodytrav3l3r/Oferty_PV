@@ -365,7 +365,7 @@ describe('frontend: edycja notatek + notatki przy aktywacji (źródło)', () => 
     it('publikacja przez approve: korekta wsteczna wymaga noty (min. 10 znaków)', () => {
         expect(panel).toContain("'/approve'");
         expect(panel).toContain('function isPastDate(');
-        expect(panel).toContain('Korekta wsteczna — wymagane uzasadnienie');
+        expect(panel).toContain('Data w przeszłości — podaj uzasadnienie (min. 10 znaków).');
         expect(panel).not.toContain("'/activate'");
     });
     it('edycja notatek woła PUT samymi notatkami (bez rows)', () => {

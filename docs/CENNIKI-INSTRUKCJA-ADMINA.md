@@ -107,7 +107,8 @@ Akcje są **jednym wspólnym paskiem** nad listą i działają na zaznaczonym ka
 Edytuj (także opublikowane — w miejscu, z ostrzeżeniem) / Kopia jako szkic,
 **Ustaw jako aktywny**, Porównaj, Eksport, Etykieta,
 Notatki, Opublikuj roboczą, Usuń (niedostępne dla danego stanu są wyszarzone z
-powodem; bez zaznaczenia wszystkie są nieaktywne). Podglądu nie ma jako osobnej
+powodem; bez zaznaczenia wszystkie są nieaktywne). **Opublikuj roboczą** otwiera
+popup z wyborem daty i godziny, od której cennik ma obowiązywać. Podglądu nie ma jako osobnej
 akcji — wersję ogląda się klikając kafelek (tabela w trybie tylko do odczytu).
 
 **Zmiana obowiązującego cennika** („Ustaw jako aktywny”): wskazuje opublikowaną

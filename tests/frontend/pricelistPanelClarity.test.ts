@@ -48,6 +48,10 @@ describe('frontend: DRAFT ma drogę na oś czasu', () => {
         // Aliasy publish/backdate są deprecated — FE ich nie używa.
         expect(panel).not.toContain("'/publish'");
         expect(panel).not.toContain("'/backdate'");
+        // Klik „Opublikuj roboczą” zawsze otwiera popup z datą/godziną.
+        expect(panel).toContain('openPublishDialog(type, id)');
+        expect(panel).toContain('id="pv-publish-date" type="datetime-local"');
+        expect(panel).not.toContain('var doApprove =');
     });
     it('wiersz ma wejście w edycję: Edytuj (DRAFT) i Utwórz kopię jako szkic (reszta)', () => {
         expect(panel).toContain('data-pv-act="edit"');
