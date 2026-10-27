@@ -41,7 +41,12 @@ jest.mock('../src/services/pricelist/writeTarget', () => ({
     getEditorPricing: (...args: unknown[]) => getEditorPricing(...args),
     // Kopia parsera nagłówka (realny moduł ciągnie Prismę — tu tylko kontrakt).
     parseIfMatch: (header: unknown) =>
-        typeof header === 'string' && header.length > 0 ? header.replace(/^"|"$/g, '') : undefined
+        typeof header === 'string' && header.length > 0 ? header.replace(/^"|"$/g, '') : undefined,
+    parseVersionIdHeader: (header: unknown) => {
+        if (typeof header !== 'string') return null;
+        const value = header.trim();
+        return /^[A-Za-z0-9_-]{1,64}$/.test(value) ? value : null;
+    }
 }));
 
 function app() {
@@ -105,6 +110,41 @@ describe('S5 draft routes', () => {
             [expect.objectContaining({ id: 's1' })],
             'admin1',
             'abc123'
+        );
+    });
+
+    it.each([
+        ['/api/products', 'rury'],
+        ['/api/products-studnie', 'studnie'],
+        ['/api/preco-pricing', 'preco']
+    ])('PUT %s z X-Pricelist-Version-Id zapisuje do wersji', async (url, type) => {
+        saveRowsToDraft.mockImplementationOnce(async () => ({
+            id: 'v123',
+            sha256: 'nowy-sha'
+        }));
+        const body =
+            type === 'preco'
+                ? { data: { 1000: { kinety: [] } } }
+                : { data: [{ id: 'x1', name: 'X', price: 10, category: 'K' }] };
+        const res = await request(app())
+            .put(url)
+            .set('X-Pricelist-Version-Id', 'v123')
+            .set('If-Match', '"abc"')
+            .send(body);
+
+        expect(res.status).toBe(200);
+        expect(res.body).toMatchObject({
+            ok: true,
+            target: 'version',
+            versionId: 'v123',
+            sha256: 'nowy-sha'
+        });
+        expect(saveRowsToDraft).toHaveBeenCalledWith(
+            type,
+            expect.anything(),
+            'admin1',
+            'abc',
+            'v123'
         );
     });
 

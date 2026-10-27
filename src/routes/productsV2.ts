@@ -14,6 +14,7 @@ import {
     getEditorPricing,
     getPricelistWriteTarget,
     parseIfMatch,
+    parseVersionIdHeader,
     saveRowsToDraft
 } from '../services/pricelist/writeTarget';
 import { buildXlsx } from '../utils/minimalXlsx';
@@ -102,6 +103,25 @@ router.put(
                     area: item.area != null ? Number(item.area) : null
                 }));
 
+                const editVersionId = parseVersionIdHeader(req.get('X-Pricelist-Version-Id'));
+                if (editVersionId) {
+                    // Jawna edycja opublikowanej wersji (w miejscu, z ostrzeżeniem w UI).
+                    const v = await saveRowsToDraft(
+                        'rury',
+                        mapped,
+                        req.user?.id,
+                        parseIfMatch(req.get('If-Match')),
+                        editVersionId
+                    );
+                    return {
+                        ok: true,
+                        count: arr.length,
+                        target: 'version',
+                        versionId: v.id,
+                        sha256: v.sha256
+                    };
+                }
+
                 if (getPricelistWriteTarget() === 'draft') {
                     const draft = await saveRowsToDraft(
                         'rury',
@@ -116,7 +136,6 @@ router.put(
                         versionId: draft.id
                     };
                 }
-
                 await prisma.$transaction([
                     prisma.productsRury.deleteMany(),
                     prisma.productsRury.createMany({ data: mapped })

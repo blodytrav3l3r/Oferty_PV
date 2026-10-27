@@ -649,6 +649,46 @@
     }
 
     /**
+     * „Edytuj”: szkic → normalny edytor szkicu; opublikowana → edycja w miejscu.
+     * Ostrzeżenie mówi wprost, co zmienia zapis (ceny tej wersji, historia ofert bez zmian).
+     */
+    function openVersionOrDraft(type) {
+        var v = selectedVersion(type);
+        if (!v) return;
+        if (isEditableStatus(stateOf(v))) {
+            openEditorFor(type, labelOf(v));
+            return;
+        }
+        var state = stateOf(v);
+        var kind =
+            state === 'ACTIVE'
+                ? 'obowiązującą'
+                : state === 'SCHEDULED'
+                  ? 'zaplanowaną'
+                  : 'historyczną';
+        var effect =
+            state === 'ACTIVE'
+                ? 'Nowe oferty policzą się z nowych cen od razu.'
+                : 'Wpłynie na podgląd, eksport i przyszłe użycie tej wersji.';
+        pvConfirm(
+            'Edytujesz opublikowaną wersję ' +
+                labelOf(v) +
+                ' (' +
+                kind +
+                '). Zapis podmieni jej ceny w miejscu — ' +
+                effect +
+                ' Istniejące oferty zachowają swoje ceny (mają własne pieczątki). Kontynuować?',
+            {
+                title: 'Edycja wersji ' + labelOf(v),
+                okText: 'Edytuj wersję',
+                type: 'warning'
+            }
+        ).then(function (ok) {
+            if (ok) openVersionEditor(type, v);
+        });
+    }
+
+    /**
      * Zamyka panel wersji i wchodzi w edycję szkicu: grid czyta DRAFT i zapisuje
      * do niego (nie do LIVE). Toast leci w oknie rodzica, bo iframe modułu może
      * zostać przeładowany przy zmianie Rury ↔ Studnie.
@@ -876,6 +916,11 @@
     function openSelectedPreview(type) {
         var v = selectedVersion(type);
         if (!v) return;
+        // Wybór innej wersji kończy ewentualną edycję wersji (dane live ze snapshotu).
+        if (versionEditMode(type)) {
+            clearVersionEdit();
+            setEditing(type, false);
+        }
         showVersionInGrid(type, v);
     }
 
@@ -930,6 +975,26 @@
     /** Snapshot danych siatki — powrót nie gubi niezapisanych zmian. */
     var gridSnapshot = {};
 
+    /**
+     * Tryb edycji OPUBLIKOWANEJ wersji („Edytuj” na kafelku active/historycznej):
+     * zapis idzie do tej wersji, nie do szkicu. null = brak trybu.
+     */
+    var versionEdit = null;
+
+    function versionEditMode(type) {
+        return versionEdit && versionEdit.type === type ? versionEdit : null;
+    }
+
+    /** Po zapisie wersji serwer zwraca nowy sha — bez tego drugi zapis = 409. */
+    function noteVersionSaved(type, json) {
+        var mode = versionEditMode(type);
+        if (mode && json && json.sha256) mode.sha256 = json.sha256;
+    }
+
+    function clearVersionEdit() {
+        versionEdit = null;
+    }
+
     /** Przywraca dane osi bez renderu — gdy siatka należy do innej zakładki. */
     function restoreGridDataOnly(type) {
         var cfg = GRID_STATE[type];
@@ -958,26 +1023,66 @@
         return bar;
     }
 
-    /** Pasek kontekstu nad siatką: która wersja i wyjście do edycji. */
-    function showVersionBar(type, v) {
+    /** Pasek kontekstu nad siatką: która wersja, tryb i wyjście. */
+    function showVersionBar(type, v, editing) {
         var bar = versionBar(type);
         if (!bar) return;
         bar.setAttribute('data-axis', type);
-        bar.innerHTML =
-            '<span class="pv-version-bar__label">Wersja <strong>' +
+        var label =
+            '<span class="pv-version-bar__label">' +
+            (editing ? 'Edycja wersji <strong>' : 'Wersja <strong>') +
             esc(labelOf(v)) +
             '</strong> ' +
             statusBadge(stateOf(v)) +
-            ' — tylko odczyt</span>' +
-            '<button type="button" class="btn btn-secondary btn-sm" id="pv-version-bar-back" title="Wróć do edycji cennika na żywo"><i data-lucide="pencil"></i> Wróć do edycji</button>';
+            (editing ? ' — zapis podmienia ceny tej wersji' : ' — tylko odczyt') +
+            '</span>';
+        bar.innerHTML =
+            label +
+            '<button type="button" class="btn btn-secondary btn-sm" id="pv-version-bar-back" title="' +
+            escAttr(
+                editing
+                    ? 'Wyjdź z edycji wersji i wróć do danych cennika na żywo'
+                    : 'Wróć do edycji cennika na żywo'
+            ) +
+            '"><i data-lucide="pencil"></i> ' +
+            (editing ? 'Zakończ edycję' : 'Wróć do edycji') +
+            '</button>';
         bar.hidden = false;
         icons(bar);
         var back = bar.querySelector('#pv-version-bar-back');
         if (back) {
             back.addEventListener('click', function () {
-                restoreGrid(type);
+                if (editing) exitVersionEdit(type);
+                else restoreGrid(type);
             });
         }
+    }
+
+    /** Wyjście z edycji wersji: dane live wracają ze snapshotu, tryb znika. */
+    function exitVersionEdit(type) {
+        clearVersionEdit();
+        setEditing(type, false);
+        restoreGrid(type);
+        toast('Zakończono edycję wersji', 'info');
+    }
+
+    /** Otwiera OPUBLIKOWANĄ wersję do edycji w miejscu (po ostrzeżeniu w UI). */
+    async function openVersionEditor(type, v) {
+        if (!document.getElementById(EDITOR_GRID[type] || '')) return;
+        if (type === 'preco' && typeof window.selectCennikTab === 'function') {
+            var activeTab = document.querySelector('.cennik-tab.active');
+            if (!activeTab || activeTab.getAttribute('data-tab') !== 'preco') {
+                window.selectCennikTab('preco');
+            }
+        }
+        await showVersionInGrid(type, v);
+        if (!Object.prototype.hasOwnProperty.call(gridSnapshot, type)) return;
+        versionEdit = { type: type, id: v.id, sha256: v.sha256 || '', label: labelOf(v) };
+        setEditing(type, true);
+        applyEditorLock(type);
+        showVersionBar(type, v, true);
+        syncHeaderVersion(labelOf(v));
+        toast('Edytujesz wersję ' + labelOf(v) + ' — zapis zmienia jej ceny', 'warning');
     }
 
     /** Wersja → dane siatki: ten sam plik i parser co import XLSX. */
@@ -1092,6 +1197,7 @@
     /** Powrót do danych edytora (snapshot) + odblokowanie wg trybu osi. */
     function restoreGrid(type) {
         var hadSnapshot = Object.prototype.hasOwnProperty.call(gridSnapshot, type);
+        clearVersionEdit();
         stopVersionLock();
         restoreGridDataOnly(type);
         if (hadSnapshot) {
@@ -1161,6 +1267,7 @@
     function actionsBarHtml(v, manageable, type) {
         var has = Boolean(v) && manageable === true;
         var isDraft = v ? isEditableStatus(stateOf(v)) : false;
+        var canEdit = has && Boolean(v);
         var reason = v ? deleteReason(v) : null;
         var overrideId = type ? activeOverrideIds[type] : null;
         var canActivate = has && Boolean(v) && stateOf(v) === 'ARCHIVED';
@@ -1195,12 +1302,13 @@
             ' data-pv-version="' +
             label +
             '"' +
-            off(canDraft) +
+            off(canEdit) +
             ' title="' +
             tip(
-                canDraft,
-                'Przejdź do edytora cennika — zapis trafia do tego szkicu (LIVE bez zmian)',
-                'Dostępne dla wersji roboczej (szkicu)'
+                canEdit,
+                isDraft
+                    ? 'Przejdź do edytora cennika — zapis trafia do tego szkicu (LIVE bez zmian)'
+                    : 'Edytuj tę opublikowaną wersję w miejscu (ostrzeżenie; zmienia jej ceny)'
             ) +
             '"><i data-lucide="pencil"></i> Edytuj</button>' +
             '<button type="button" class="btn btn-sm btn-secondary" data-pv-act="clone"' +
@@ -2328,7 +2436,7 @@
             var act = btn.getAttribute('data-pv-act');
             var id = btn.getAttribute('data-pv-id');
             if (act === 'close') closeVersionsPanel();
-            else if (act === 'edit') openEditorFor(type, btn.getAttribute('data-pv-version'));
+            else if (act === 'edit') openVersionOrDraft(type);
             else if (act === 'diff' && id) openDiff(id, null, type);
             else if (act === 'label' && id) {
                 var canonical = btn.getAttribute('data-pv-canonical') || '';
@@ -2680,6 +2788,14 @@
      * (serwer przyjmie zapis — starszy klient nie jest blokowany).
      */
     async function draftHeaders(type) {
+        var mode = versionEditMode(type);
+        if (mode) {
+            // Jawna edycja opublikowanej wersji: serwer podmienia jej wiersze.
+            return {
+                'If-Match': '"' + mode.sha256 + '"',
+                'X-Pricelist-Version-Id': mode.id
+            };
+        }
         var ref = await draftRef(type);
         return ref && ref.sha256 ? { 'If-Match': '"' + ref.sha256 + '"' } : {};
     }
@@ -3203,6 +3319,7 @@
         syncHeaderForTab: syncHeaderForTab,
         closeEditorPreview: closeEditorPreview,
         releaseEditorVersion: releaseEditorVersion,
+        noteVersionSaved: noteVersionSaved,
         approveVersion: approveVersion,
         fetchChecks: fetchChecks,
         isPastDate: isPastDate,

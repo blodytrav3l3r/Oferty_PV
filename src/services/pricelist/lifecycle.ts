@@ -302,8 +302,86 @@ export async function updateDraft(
     return res.value;
 }
 
-/** Opcje ręcznej korekty etykiety wersji. */
-export interface SetLabelOverrideOptions {
+/**
+ * Podmienia wiersze OPUBLIKOWANEJ wersji w miejscu (świadoma korekta cen).
+ * Nie rusza statusu, seq, daty ani etykiety — zmienia się tylko zawartość.
+ * Wymaga If-Match (sha z chwili wczytania): równoległa zmiana → 409 STALE_VERSION.
+ * Obowiązująca wersja bumpuje znacznik aktywności (oferty odświeżą ceny).
+ * Każda zmiana trafia do audytu (EDIT_APPROVED z old/new sha).
+ */
+export async function replaceVersionRows(
+    id: string,
+    rowsInput: unknown,
+    opts: { userId?: string; expectedSha?: string } = {}
+): Promise<PricelistVersion> {
+    const current = await prisma.pricelistVersion.findUnique({ where: { id } });
+    if (!current) {
+        throw new PricelistVersionError(404, 'NOT_FOUND', `Wersja ${id} nie istnieje`);
+    }
+    if (!isPricelistType(current.type)) {
+        throw new PricelistVersionError(422, 'INVALID_TYPE', `Wersja ${id} ma nieznany typ`);
+    }
+    if (current.status !== 'APPROVED') {
+        throw new PricelistVersionError(
+            409,
+            'EDIT_NOT_PUBLISHED',
+            `Wersja ${id} nie jest opublikowana (status ${current.status}) — szkic edytuj standardowo`
+        );
+    }
+    const type = current.type;
+    const rows = validateRows(type, rowsInput);
+    const sha256 = sha256Canonical(rows);
+    const lock = lockFor(type);
+    const res = await lock.runWithLock(() =>
+        prisma.$transaction(async (tx) => {
+            const fresh = await tx.pricelistVersion.findUnique({ where: { id } });
+            if (!fresh) {
+                throw new PricelistVersionError(404, 'NOT_FOUND', `Wersja ${id} nie istnieje`);
+            }
+            if (fresh.status !== 'APPROVED') {
+                throw new PricelistVersionError(
+                    409,
+                    'EDIT_NOT_PUBLISHED',
+                    `Wersja ${id} nie jest opublikowana (status ${fresh.status})`
+                );
+            }
+            if (opts.expectedSha !== undefined && fresh.sha256 !== opts.expectedSha) {
+                throw new PricelistVersionError(
+                    409,
+                    'STALE_VERSION',
+                    `Wersja ${fresh.version} zmieniła się od czasu wczytania — odśwież dane`,
+                    { currentSha: fresh.sha256 }
+                );
+            }
+            const nowIso = new Date().toISOString();
+            await deleteVersionItems(tx, type, id);
+            await insertVersionItems(tx, type, id, rows);
+            const updated = await tx.pricelistVersion.update({
+                where: { id },
+                data: { sha256, updatedAt: nowIso }
+            });
+            if (fresh.effectiveFrom <= nowIso) await touchActiveTimestamp(tx, nowIso);
+            await writeAudit(tx, {
+                entityId: id,
+                userId: opts.userId,
+                action: 'EDIT_APPROVED',
+                oldData: { wersja: fresh.version, status: fresh.status, sha256: fresh.sha256 },
+                newData: { sha256, wiersze: 'podmienione' }
+            });
+            return updated;
+        })
+    );
+    if (!res.acquired) {
+        throw new PricelistVersionError(
+            503,
+            'LOCK_BUSY',
+            `Zapis wersji ${type} chwilowo zablokowany`
+        );
+    }
+    return res.value;
+}
+
+/** Opcje ręcznej korekty etykiety wersji. */ export interface SetLabelOverrideOptions {
     userId?: string;
 }
 

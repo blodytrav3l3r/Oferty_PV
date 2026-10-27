@@ -37,6 +37,7 @@ export {
     effectiveLabel,
     setLabelOverride,
     updateDraft,
+    replaceVersionRows,
     approveVersion,
     publishDraft,
     activate,

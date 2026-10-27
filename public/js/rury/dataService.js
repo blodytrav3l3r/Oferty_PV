@@ -169,6 +169,13 @@ async function saveProducts(data) {
             ? await window.pricelistVersions.draftHeaders('rury')
             : {};
     const result = await api.put('/api/products', { data }, { headers });
+    if (
+        result &&
+        window.pricelistVersions &&
+        typeof window.pricelistVersions.noteVersionSaved === 'function'
+    ) {
+        window.pricelistVersions.noteVersionSaved('rury', result);
+    }
     return result !== null;
 }
 

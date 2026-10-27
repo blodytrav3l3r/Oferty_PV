@@ -180,6 +180,12 @@ liczb. Klasy CSS używają zmiennych `--z-*` z `style.base.css:251-256` (`--z-he
   wkładek PRECO" (`syncHeaderForTab` wołane z `selectCennikTab`).
 - Klik w **już zaznaczony** kafelek też otwiera wersję w siatce (inaczej jedyna
   wersja osi, np. PRECO z samym ACTIVE, byłaby niepodglądalna).
+- **Edycja opublikowanej wersji w miejscu**: `draftHeaders(type)` w trybie edycji
+  wersji zwraca `X-Pricelist-Version-Id` + `If-Match` (sha), więc istniejące
+  `PUT /api/products*(-studnie)` / `PUT /api/preco-pricing` zapisują wiersze tej
+  wersji (`replaceVersionRows`, audyt `EDIT_APPROVED`), a nie szkicu. Po zapisie
+  serwer zwraca nowy `sha256` → `noteVersionSaved` (inaczej drugi zapis = 409
+  `STALE_VERSION`). Pasek „Edycja wersji …” ma przycisk „Zakończ edycję”.
 - Zmiana zakładki studni, akcja na wersji i wejście w edycję wracają do danych
   live; przy przejściu na drugą oś jej snapshot jest oddawany bez renderu
   (`restoreOtherAxes`), bo PRECO i studnie dzielą kontener tabeli.

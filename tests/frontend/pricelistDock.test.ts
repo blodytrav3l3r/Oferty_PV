@@ -134,6 +134,13 @@ describe('Rail „Zarządzanie cennikami" (lewy panel edytorów)', () => {
         expect(panel).toContain("'/active/reset'");
         expect(panel).toContain('function applyActiveOverride');
         expect(panel).toContain('var activeOverrideIds');
+        // Edycja opublikowanej wersji: tryb wersji + ostrzeżenie + nagłówki zapisu.
+        expect(panel).toContain('function openVersionOrDraft');
+        expect(panel).toContain('function openVersionEditor');
+        expect(panel).toContain("'X-Pricelist-Version-Id'");
+        expect(panel).toContain('function noteVersionSaved');
+        expect(panel).toContain('Edycja wersji');
+        expect(panel).toContain('Zakończ edycję');
         // Podgląd w modalu zbędny — klik kafelka pokazuje wersję w siatce.
         expect(panel).not.toContain('data-pv-act="preview"');
         expect(panel).toContain('function renderRows(versions, manageable, type)');

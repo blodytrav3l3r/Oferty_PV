@@ -126,10 +126,20 @@ const versionMock = {
         if (idx === -1) throw new Error('Not found');
         const [gone] = versions.splice(idx, 1);
         return gone;
+    }),
+    update: jest.fn(async ({ where, data }: { where: { id: string }; data: Partial<VRow> }) => {
+        const row = versions.find((v) => v.id === where.id);
+        if (!row) throw new Error('Not found');
+        Object.assign(row, data);
+        return { ...row };
     })
 };
 
 const itemMock = {
+    createMany: jest.fn(async ({ data }: { data: Array<Record<string, unknown>> }) => {
+        items.push(...data);
+        return { count: data.length };
+    }),
     deleteMany: jest.fn(async ({ where }: { where: { versionId: string } }) => {
         let count = 0;
         for (let i = items.length - 1; i >= 0; i--) {
@@ -185,6 +195,7 @@ import {
     deleteVersion,
     PricelistVersionError,
     readActiveOverrides,
+    replaceVersionRows,
     resolveActive,
     setActiveVersion
 } from '../src/services/pricelistVersionService';
@@ -328,6 +339,54 @@ describe('publikacja nowej wersji zdejmuje ręczne wskazanie', () => {
 
         expect(settings.has('pricelist_active_override_rury')).toBe(false);
         await expect(resolveActive('rury')).resolves.toMatchObject({ id: 'v2' });
+    });
+});
+
+describe('edycja opublikowanej wersji w miejscu', () => {
+    const rura = (id: string, price: number) => ({
+        id,
+        name: `Rura ${id}`,
+        category: 'Rury Betonowe',
+        price
+    });
+
+    test('podmienia wiersze i sha, status/daty bez zmian + audyt EDIT_APPROVED', async () => {
+        seed({ id: 'v1', seq: 1, status: 'APPROVED', effectiveFrom: '2025-01-01T00:00:00.000Z' });
+        const before = { ...versions[0] };
+
+        const updated = await replaceVersionRows('v1', [rura('R1', 111)], {
+            expectedSha: before.sha256
+        });
+
+        expect(updated.sha256).not.toBe(before.sha256);
+        expect(updated.status).toBe('APPROVED');
+        expect(updated.effectiveFrom).toBe(before.effectiveFrom);
+        const stored = items.filter((i) => i['versionId'] === 'v1');
+        expect(stored).toHaveLength(1);
+        expect(stored[0]['price']).toBe(111);
+        const audit = audits.find((a) => a['action'] === 'EDIT_APPROVED');
+        expect(audit).toBeDefined();
+    });
+
+    test('szkic → 409 EDIT_NOT_PUBLISHED (szkic ma własną ścieżkę)', async () => {
+        seed({ id: 'd1', seq: 1, status: 'DRAFT', effectiveFrom: '2025-01-01T00:00:00.000Z' });
+        const err = await replaceVersionRows('d1', [rura('R1', 100)]).catch((e) => e);
+        expect((err as PricelistVersionError).code).toBe('EDIT_NOT_PUBLISHED');
+    });
+
+    test('nieaktualny sha → 409 STALE_VERSION, wiersze nietknięte', async () => {
+        seed({ id: 'v1', seq: 1, status: 'APPROVED', effectiveFrom: '2025-01-01T00:00:00.000Z' });
+        const err = await replaceVersionRows('v1', [rura('R1', 111)], {
+            expectedSha: 'inny-sha'
+        }).catch((e) => e);
+        expect((err as PricelistVersionError).statusCode).toBe(409);
+        expect((err as PricelistVersionError).code).toBe('STALE_VERSION');
+        expect(items.filter((i) => i['versionId'] === 'v1')).toHaveLength(1);
+    });
+
+    test('brak wersji → 404', async () => {
+        const err = await replaceVersionRows('nope', [rura('R1', 1)]).catch((e) => e);
+        expect((err as PricelistVersionError).statusCode).toBe(404);
     });
 });
 

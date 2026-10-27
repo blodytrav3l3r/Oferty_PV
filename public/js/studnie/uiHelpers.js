@@ -601,6 +601,12 @@ async function saveStudnieProducts(data) {
             headers: { 'Content-Type': 'application/json', ...authHeaders(), ...extra },
             body: JSON.stringify({ data })
         });
+        if (res.ok && window.pricelistVersions) {
+            const json = await res.json().catch(() => null);
+            if (typeof window.pricelistVersions.noteVersionSaved === 'function') {
+                window.pricelistVersions.noteVersionSaved('studnie', json);
+            }
+        }
         return res.ok;
     } catch {
         return false;
@@ -656,6 +662,12 @@ async function savePrecoPricing(data) {
             logger.error('uiHelpers', '[PRECO] Błąd zapisu:', res.status, err);
             showToast('Błąd zapisu cennika PRECO: ' + (err.error || res.status), 'error');
             return false;
+        }
+        const saved = await res.json().catch(() => null);
+        if (saved && window.pricelistVersions) {
+            if (typeof window.pricelistVersions.noteVersionSaved === 'function') {
+                window.pricelistVersions.noteVersionSaved('preco', saved);
+            }
         }
         showToast(
             window.__pricelistWriteTarget === 'draft'

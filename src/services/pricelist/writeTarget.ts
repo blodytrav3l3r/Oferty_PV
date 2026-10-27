@@ -4,9 +4,10 @@
  */
 import prisma from '../../prismaClient';
 import { logger } from '../../utils/logger';
-import { createDraft, updateDraft } from './lifecycle';
+import { createDraft, replaceVersionRows, updateDraft } from './lifecycle';
 import { pricingFromVersion, resolveActivePricing } from './usage';
 import { requireType } from './validation';
+import { PricelistVersionError } from './validation';
 import type { ActivePricing } from './usage';
 import type { PricelistType } from './validation';
 
@@ -24,6 +25,20 @@ export function parseIfMatch(header: unknown): string | undefined {
 }
 
 let warnedLive = false;
+
+/**
+ * `X-Pricelist-Version-Id: <id>` → jawna edycja opublikowanej wersji.
+ * Brak nagłówka = null (zwykły zapis szkicu/LIVE). Zły format → 400.
+ */
+export function parseVersionIdHeader(header: unknown): string | null {
+    if (header === undefined || header === null) return null;
+    const value = typeof header === 'string' ? header.trim() : '';
+    if (value.length === 0) return null;
+    if (!/^[A-Za-z0-9_-]{1,64}$/.test(value)) {
+        throw new PricelistVersionError(400, 'INVALID_ID', 'Nieprawidłowy identyfikator wersji');
+    }
+    return value;
+}
 
 export function getPricelistWriteTarget(): PricelistWriteTarget {
     // S5: domyślnie draft; rollback bez zmiany kodu = PRICELIST_WRITE_TARGET=live.
@@ -50,13 +65,19 @@ export async function findLatestDraft(typeInput: unknown) {
 }
 
 /** Zapis wierszy do draftu: wznów istniejący DRAFT albo utwórz nowy. */
+/**
+ * Zapis wierszy z edytora: `versionId` = jawna edycja opublikowanej wersji
+ * (w miejscu, z ostrzeżeniem), brak = dotychczasowy szkic typu.
+ */
 export async function saveRowsToDraft(
     typeInput: unknown,
     rows: unknown,
     userId?: string,
-    expectedSha?: string
+    expectedSha?: string,
+    versionId?: string
 ) {
     const type = requireType(typeInput);
+    if (versionId) return replaceVersionRows(versionId, rows, { userId, expectedSha });
     const draft = await findLatestDraft(type);
     if (draft) return updateDraft(draft.id, rows, undefined, { userId, expectedSha });
     return createDraft(type, rows, { createdBy: userId });

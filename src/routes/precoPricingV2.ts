@@ -21,6 +21,7 @@ import {
     getEditorPricing,
     getPricelistWriteTarget,
     parseIfMatch,
+    parseVersionIdHeader,
     saveRowsToDraft
 } from '../services/pricelist/writeTarget';
 import {
@@ -103,6 +104,23 @@ router.put(
 
         try {
             const result = await runWithLock(async () => {
+                const editVersionId = parseVersionIdHeader(req.get('X-Pricelist-Version-Id'));
+                if (editVersionId) {
+                    const v = await saveRowsToDraft(
+                        'preco',
+                        flattenPrecoRows(input),
+                        req.user?.id,
+                        parseIfMatch(req.get('If-Match')),
+                        editVersionId
+                    );
+                    return {
+                        ok: true,
+                        target: 'version',
+                        versionId: v.id,
+                        sha256: v.sha256
+                    };
+                }
+
                 if (getPricelistWriteTarget() === 'draft') {
                     const draft = await saveRowsToDraft(
                         'preco',

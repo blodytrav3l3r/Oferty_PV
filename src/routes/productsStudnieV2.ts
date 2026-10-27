@@ -27,6 +27,7 @@ import {
     getEditorPricing,
     getPricelistWriteTarget,
     parseIfMatch,
+    parseVersionIdHeader,
     saveRowsToDraft
 } from '../services/pricelist/writeTarget';
 
@@ -307,6 +308,24 @@ router.put(
             const result = await runWithLock(async () => {
                 const arr: Record<string, unknown>[] = req.body.data;
                 const mapped = arr.map(fromLegacy);
+
+                const editVersionId = parseVersionIdHeader(req.get('X-Pricelist-Version-Id'));
+                if (editVersionId) {
+                    const v = await saveRowsToDraft(
+                        'studnie',
+                        mapped,
+                        req.user?.id,
+                        parseIfMatch(req.get('If-Match')),
+                        editVersionId
+                    );
+                    return {
+                        ok: true,
+                        count: arr.length,
+                        target: 'version',
+                        versionId: v.id,
+                        sha256: v.sha256
+                    };
+                }
 
                 if (getPricelistWriteTarget() === 'draft') {
                     const draft = await saveRowsToDraft(

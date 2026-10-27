@@ -104,7 +104,8 @@ dostaje numer wersji („Cennik Rur”, „Cennik elementów studni”, „Cenni
 PRECO”). Przycisk **„Wróć do edycji”** przywraca dane cennika na żywo (łącznie z
 niezapisanymi zmianami sprzed podglądu).
 Akcje są **jednym wspólnym paskiem** nad listą i działają na zaznaczonym kafelku:
-Edytuj / Kopia jako szkic, **Ustaw jako aktywny**, Porównaj, Eksport, Etykieta,
+Edytuj (także opublikowane — w miejscu, z ostrzeżeniem) / Kopia jako szkic,
+**Ustaw jako aktywny**, Porównaj, Eksport, Etykieta,
 Notatki, Opublikuj roboczą, Usuń (niedostępne dla danego stanu są wyszarzone z
 powodem; bez zaznaczenia wszystkie są nieaktywne). Podglądu nie ma jako osobnej
 akcji — wersję ogląda się klikając kafelek (tabela w trybie tylko do odczytu).
@@ -116,6 +117,17 @@ pieczątki wersji, a data `effectiveFrom` się nie zmienia. Wskazanie jest per o
 (Rury / Studnie / PRECO) i obowiązuje do pierwszej publikacji nowej wersji z datą
 już obowiązującą — wtedy oś czasu znów wygrywa. Przycisk **„Przywróć najnowszy”**
 (cofa wskazanie ręczne) pojawia się tylko wtedy, gdy wskazanie jest ustawione.
+
+**Edycja każdej wersji** („Edytuj” działa też na opublikowanych): wersja robocza
+otwiera normalny edytor szkicu, a obowiązująca/historyczna — edytor **w miejscu**
+z ostrzeżeniem. Zapis podmienia wiersze tej wersji (status, numer i data
+obowiązywania bez zmian), więc: dla obowiązującej **nowe oferty liczą z nowych
+cen od razu**, dla historycznej zmienia się tylko jej zawartość (podgląd, eksport,
+przyszłe użycie). Istniejące oferty zachowują ceny — mają własne pieczątki.
+Zapis jest chroniony sumą kontrolną (`If-Match`): równoległa zmiana → komunikat
+„wersja zmieniła się od czasu wczytania” i trzeba otworzyć ją ponownie.
+Pasek nad tabelą pokazuje „Edycja wersji …”, a **„Zakończ edycję”** wraca do
+danych na żywo.
 
 **Usuwanie wersji**: szkic zawsze; opublikowana tylko wtedy, gdy **nie jest
 obowiązująca** i **żadna oferta ani zamówienie jej nie używa** (PRECO dodatkowo:
