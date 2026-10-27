@@ -811,6 +811,140 @@ html[data-theme='light'] .kartoteka-filter-bar:hover {
     margin-top: 1.2rem;
 }
 
+/* Modal sesji (sessionIdle.js) — SOK: .modal bez zagnieżdżonego boxa i bez inline styles. */
+.modal--session {
+    width: 92%;
+    max-width: 460px;
+}
+
+.modal--session .modal-header h3 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    line-height: 1.3;
+}
+
+.modal--session .modal-header h3 svg {
+    flex-shrink: 0;
+}
+
+.modal--session .session-modal-text {
+    margin: 0 0 0.5rem;
+    font-size: var(--fs-lg);
+    line-height: 1.55;
+    color: var(--text-secondary);
+}
+
+.modal--session .session-modal-text strong {
+    color: var(--text-primary);
+}
+
+.modal--session .session-modal-hint {
+    margin: 0;
+    font-size: var(--fs-sm);
+    line-height: 1.5;
+    color: var(--text-muted);
+}
+
+.modal--session .modal-footer .btn {
+    font-weight: var(--fw-semibold);
+}
+
+/* Modal publikacji wersji (pricelistVersions.js) — formularz + akcje po prawej. */
+.modal--publish {
+    width: 92%;
+    max-width: 520px;
+}
+
+.modal--publish .modal-header h3 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    line-height: 1.3;
+}
+
+.modal--publish .pv-publish-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+}
+
+.modal--publish .pv-publish-lead {
+    margin: 0;
+    font-size: var(--fs-base);
+    line-height: 1.55;
+    color: var(--text-secondary);
+}
+
+.modal--publish .pv-publish-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.modal--publish .pv-publish-field label {
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-semibold);
+    color: var(--text-secondary);
+}
+
+.modal--publish .pv-publish-input {
+    width: 100%;
+    padding: 0.55rem 0.7rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--bg-input);
+    color: var(--text-primary);
+    font: inherit;
+}
+
+.modal--publish .pv-publish-input:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+}
+
+.modal--publish .pv-publish-hint {
+    margin: 0;
+    font-size: var(--fs-sm);
+    line-height: 1.45;
+    color: var(--text-muted);
+}
+
+.modal--publish .pv-publish-error {
+    margin: 0;
+    font-size: var(--fs-sm);
+    line-height: 1.45;
+}
+
+.modal--publish .pv-publish-error:empty {
+    display: none;
+}
+
+.modal--publish .modal-footer {
+    margin-top: 1.1rem;
+}
+
+/* Modal korekty etykiety (pricelistVersions.js) — ostrzeżenie w ramce warn. */
+.modal--publish .pv-label-warn {
+    margin: 0;
+    padding: 0.6rem 0.7rem;
+    border: 1px solid rgba(var(--warn-rgb), 0.35);
+    border-radius: var(--radius-sm);
+    background: rgba(var(--warn-rgb), 0.12);
+    font-size: var(--fs-sm);
+    line-height: 1.5;
+    color: var(--text-primary);
+}
+
+.modal--publish .pv-publish-hint code {
+    padding: 0.05rem 0.3rem;
+    border-radius: var(--radius-2xs);
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    font-family: var(--font-mono, monospace);
+    font-size: var(--fs-sm);
+}
+
 /* Okno "Zamówienia oferty" — szersze, by przyciski i ikony się nie zawijały */
 #offer-orders-modal .modal {
     width: 95%;

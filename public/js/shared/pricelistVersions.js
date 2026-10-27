@@ -1774,23 +1774,26 @@
             id: 'pv-label-modal',
             titleId: 'pv-label-title',
             html:
-                '<div class="modal"><div class="modal-header"><h3 id="pv-label-title">Ręczna korekta etykiety wersji</h3>' +
+                '<div class="modal modal--publish modal--label">' +
+                '<div class="modal-header"><h3 id="pv-label-title"><i data-lucide="tag" class="icon-16-accent"></i> Ręczna korekta etykiety wersji</h3>' +
                 '<button class="btn-icon" aria-label="Zamknij" data-csp="closeModal" data-csp-args="[&quot;pv-label-modal&quot;]"><i data-lucide="x"></i></button></div>' +
-                '<div class="modal-body">' +
-                '<p class="color-warn"><strong>Uwaga:</strong> etykieta jest widoczna w ofertach, historii i eksportach. ' +
+                '<div class="modal-body pv-publish-body">' +
+                '<p class="pv-label-warn"><strong>Uwaga:</strong> etykieta jest widoczna w ofertach, historii i eksportach. ' +
                 'Korekta nie zmienia cen, daty obowiązywania ani pieczątek ofert (te trzymają id wersji), ' +
                 'ale zmienia to, co widzą użytkownicy. Każda zmiana trafia do audytu.</p>' +
-                '<p class="text-muted">Etykieta automatyczna: <code>' +
+                '<p class="pv-publish-hint">Etykieta automatyczna: <code>' +
                 esc(canonical) +
                 '</code></p>' +
-                '<div class="form-group"><label for="pv-label-input">Nowa etykieta (puste = automatyczna)</label>' +
-                '<input class="form-input" id="pv-label-input" maxlength="64" value="' +
+                '<div class="pv-publish-field"><label class="form-label" for="pv-label-input">Nowa etykieta (puste = automatyczna)</label>' +
+                '<input class="pv-publish-input" id="pv-label-input" maxlength="64" value="' +
                 escAttr(current) +
                 '"></div>' +
-                '<p class="text-muted">Dozwolone: litery, cyfry, spacja oraz znaki . _ - / (max 64 znaki).</p>' +
-                '<div class="pv-row"><button class="btn btn-primary" id="pv-label-ok">Zapisz etykietę</button>' +
-                '<button class="btn btn-secondary" data-csp="closeModal" data-csp-args="[&quot;pv-label-modal&quot;]">Anuluj</button></div>' +
-                '</div></div>'
+                '<p class="pv-publish-hint">Dozwolone: litery, cyfry, spacja oraz znaki . _ - / (max 64 znaki).</p>' +
+                '</div>' +
+                '<div class="modal-footer">' +
+                '<button class="btn btn-secondary" data-csp="closeModal" data-csp-args="[&quot;pv-label-modal&quot;]">Anuluj</button>' +
+                '<button class="btn btn-primary" id="pv-label-ok">Zapisz etykietę</button></div>' +
+                '</div>'
         });
         icons(document.getElementById('pv-label-modal'));
         var input = document.getElementById('pv-label-input');
@@ -2488,7 +2491,7 @@
         var label = 'Zapisz';
         var title;
         if (!editing) {
-            title = 'Najpierw wejdź w edycję: „Edytuj szkic” albo „Edytuj” w panelu wersji';
+            title = 'Najpierw wejdź w edycję: „Edytuj” w panelu wersji';
         } else if (versionLabel) {
             title = 'Zapis podmienia ceny wersji ' + versionLabel + ' — bez tworzenia nowej wersji';
         } else if (isDraft) {
@@ -2545,7 +2548,7 @@
         );
     }
 
-    /** Pasek akcji cennika: kopia → edycja → publikacja (per stan osi). */
+    /** Pasek akcji cennika: kopia → edycja (publikacja jest w akcjach wersji na osi). */
     function editorActionsHtml(type, data) {
         var draft = data.draft || null;
         var active = data.active || null;
@@ -2558,14 +2561,10 @@
                     'Wyjdź z edycji szkicu; niezapisane zmiany zostaną odrzucone'
                 )
             );
-            if (draft) {
-                out.push(
-                    modeBtn('publish', 'Opublikuj…', 'Wybierz datę, od której szkic obowiązuje')
-                );
-            }
         } else if (draft) {
-            out.push(modeBtn('edit', 'Edytuj szkic', 'Otwórz szkic do edycji'));
-            out.push(modeBtn('publish', 'Opublikuj…', 'Wybierz datę, od której szkic obowiązuje'));
+            out.push(
+                modeBtn('edit', 'Edytuj', 'Edytuj zaznaczony cennik — otwiera szkic do edycji')
+            );
         } else if (active) {
             out.push(
                 modeBtn(
@@ -2798,21 +2797,23 @@
             id: 'pv-publish-modal',
             titleId: 'pv-publish-title',
             html:
-                '<div class="modal"><div class="modal-header"><h3 id="pv-publish-title"><i data-lucide="rocket"></i> Opublikuj szkic ' +
+                '<div class="modal modal--publish">' +
+                '<div class="modal-header"><h3 id="pv-publish-title"><i data-lucide="rocket" class="icon-16-accent"></i> Opublikuj szkic ' +
                 esc(labelOf(draft) || draft.version) +
                 '</h3>' +
                 '<button class="btn-icon" aria-label="Zamknij" data-csp="closeModal" data-csp-args="[&quot;pv-publish-modal&quot;]"><i data-lucide="x"></i></button></div>' +
-                '<div class="modal-body">' +
-                '<p class="text-muted">Wybierz datę i godzinę, od której ten cennik ma obowiązywać. Dotychczasowa wersja obowiązująca zostaje w historii.</p>' +
-                '<div class="form-group"><label for="pv-publish-date">Obowiązuje od</label>' +
-                '<input class="form-input" id="pv-publish-date" type="datetime-local"></div>' +
-                '<p class="text-muted" id="pv-publish-hint"></p>' +
-                '<div class="form-group"><label for="pv-publish-note">Nota (opcjonalna)</label>' +
-                '<input class="form-input" id="pv-publish-note" maxlength="500" placeholder="Opis zmiany (dla daty wstecznej: min. 10 znaków)"></div>' +
-                '<p class="color-warn" id="pv-publish-error" role="alert"></p>' +
-                '<div class="pv-actions"><button type="button" class="btn btn-secondary" id="pv-publish-cancel">Anuluj</button>' +
+                '<div class="modal-body pv-publish-body">' +
+                '<p class="pv-publish-lead">Wybierz datę i godzinę, od której ten cennik ma obowiązywać. Dotychczasowa wersja obowiązująca zostaje w historii.</p>' +
+                '<div class="pv-publish-field"><label class="form-label" for="pv-publish-date">Obowiązuje od</label>' +
+                '<input class="pv-publish-input" id="pv-publish-date" type="datetime-local">' +
+                '<p class="pv-publish-hint" id="pv-publish-hint"></p></div>' +
+                '<div class="pv-publish-field"><label class="form-label" for="pv-publish-note">Nota (opcjonalna)</label>' +
+                '<input class="pv-publish-input" id="pv-publish-note" maxlength="500" placeholder="Opis zmiany (dla daty wstecznej: min. 10 znaków)"></div>' +
+                '<p class="pv-publish-error color-danger" id="pv-publish-error" role="alert"></p>' +
+                '</div>' +
+                '<div class="modal-footer"><button type="button" class="btn btn-secondary" id="pv-publish-cancel">Anuluj</button>' +
                 '<button type="button" class="btn btn-primary" id="pv-publish-ok"><i data-lucide="rocket"></i> Opublikuj</button></div>' +
-                '</div></div>'
+                '</div>'
         });
         var overlay = document.getElementById('pv-publish-modal');
         icons(overlay);
@@ -2926,7 +2927,7 @@
                 '</ul></section>' +
                 '<section><h4>Jak edytować cennik</h4><ol>' +
                 '<li>Otwórz panel <strong>Panel</strong> i zaznacz wersję na liście.</li>' +
-                '<li>Kliknij <strong>Edytuj szkic</strong> (wersja robocza) albo <strong>Edytuj</strong> (wersja opublikowana — edycja w miejscu z ostrzeżeniem).</li>' +
+                '<li>Kliknij <strong>Edytuj</strong> (wersja robocza) albo <strong>Edytuj</strong> w akcjach wersji (wersja opublikowana — edycja w miejscu z ostrzeżeniem).</li>' +
                 '<li>Zmień ceny w siatce i kliknij <strong>Zapisz</strong> — cel (szkic albo wybrana wersja) pokazuje tooltip przycisku.</li>' +
                 '<li>Po zapisie szkicu kliknij <strong>Opublikuj roboczą</strong> i wybierz datę oraz godzinę wejścia w życie.</li>' +
                 '</ol></section>' +
@@ -3005,7 +3006,6 @@
             createDraftCopy(type);
             return;
         }
-        if (act === 'publish') openPublishDialog(type);
     });
 
     window.pricelistVersions = {

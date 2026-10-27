@@ -52,4 +52,9 @@ describe('frontend: korekta tylko z ostrzeżeniem i tylko dla admina', () => {
         expect(panel).toContain('id="pv-label-ok"');
         expect(panel).toContain('data-csp="closeModal"');
     });
+    it('wygląd zgodny z resztą modali: .modal--publish i stopka z akcjami po prawej', () => {
+        expect(panel).toContain('class="modal modal--publish modal--label"');
+        expect(panel).toContain('class="modal-footer"');
+        expect(panel).toContain('pv-label-warn');
+    });
 });

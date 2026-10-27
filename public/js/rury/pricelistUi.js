@@ -1,4 +1,4 @@
-// @ts-check
+﻿// @ts-check
 /* ===== CENNIK UI (RURY) ===== */
 /* Wydzielone z app.js — odpowiedzialność: renderowanie cennika, edycja inline, import/eksport Excel */
 /* Zależności: products, CATEGORIES (globalne), saveProducts z dataService.js */
@@ -236,7 +236,7 @@ async function savePriceList() {
         !window.pricelistVersions.isEditing('rury')
     ) {
         showToast(
-            'Kliknij „Edytuj szkic" (albo „Utwórz kopię jako szkic"), aby zmieniać cennik',
+            'Kliknij „Edytuj" (albo „Utwórz kopię jako szkic"), aby zmieniać cennik',
             'warning'
         );
         return;

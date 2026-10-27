@@ -1,4 +1,4 @@
-/* ===== CENNIK PRECO — RENDEROWANIE ZAKŁADKI ===== */
+﻿/* ===== CENNIK PRECO — RENDEROWANIE ZAKŁADKI ===== */
 let _precoDirty = false;
 
 /**
@@ -356,7 +356,7 @@ async function savePrecoFromUI() {
         !window.pricelistVersions.isEditing('preco')
     ) {
         showToast(
-            'Kliknij „Edytuj szkic" (albo „Utwórz kopię jako szkic"), aby zmieniać cennik PRECO',
+            'Kliknij „Edytuj" (albo „Utwórz kopię jako szkic"), aby zmieniać cennik PRECO',
             'warning'
         );
         return;

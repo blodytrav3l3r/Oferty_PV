@@ -194,6 +194,7 @@ describe('Rail „Zarządzanie cennikami" (lewy panel edytorów)', () => {
             expect(partial).toContain('id="pv-grid-actions"');
             expect(partial).not.toContain('id="pv-grid-actions-state"');
         }
+        expect(studniePartial).not.toContain('<div class="card">');
     });
 
     it('status w railu: każdy komunikat na pełną szerokość panelu', () => {
@@ -219,6 +220,9 @@ describe('Rail „Zarządzanie cennikami" (lewy panel edytorów)', () => {
         expect(read('public/cennik.html')).not.toContain('cennik-sidebar');
         expect(read('public/css/cennik.css')).not.toContain('.cennik-sidebar');
         expect(read('public/css/cennik.css')).toContain('animation: none !important');
+        expect(read('public/css/cennik.css')).toContain('padding-top: 0 !important');
+        expect(css).toContain('body.pv-cennik-host #section-pricelist');
+        expect(css).toContain('padding-top: var(--tile-gap-sm-plus)');
         expect(read('public/js/cennik/cennik.js')).toContain("main.style.paddingTop = '0'");
         expect(css).toContain('body.pv-cennik-host .pv-dock__close');
         expect(css).toContain('body.pv-cennik-host [data-pv-dock-toggle]');
@@ -249,6 +253,8 @@ describe('Rail „Zarządzanie cennikami" (lewy panel edytorów)', () => {
         expect(css).toContain('body.pv-cennik-host .preco-wrap');
         expect(css).toContain('#studnie-pricelist-body:has(.preco-accordion)');
         expect(css).toContain('max-width: none');
+        expect(css).toContain('body.pv-cennik-host #studnie-pricelist-body .preco-accordion');
+        expect(css).toContain('body.pv-cennik-host #studnie-pricelist-body .preco-table');
         expect(css).toContain('box-sizing: border-box !important');
         expect(css).toContain('padding-left: var(--tile-gap-lg) !important');
         expect(css).toContain('padding-right: var(--tile-gap-lg) !important');

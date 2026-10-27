@@ -146,7 +146,7 @@ Sekcje raila: **Wersje**,
 **„Jak to działa — pełna instrukcja”** otwiera popup z legendą i wyjaśnieniem
 statusów oraz instrukcją edycji, tworzenia nowych cenników,
 publikacji, dat i anulowania wdrożenia. Rail jest **jedynym
-paskiem zarządzania** — mieści też akcje siatki (Edytuj szkic / Opublikuj / Zapisz
+paskiem zarządzania** — mieści też akcje siatki (Edytuj / Opublikuj / Zapisz
 w jednym wierszu), więc nad tabelą zostaje tylko tytuł, szukajka i przełącznik „Panel”.
 W `#/cennik` rail jest otwarty **zawsze** i jest **jedynym lewym panelem** — powłoka
 nie ma własnego paska nawigacji. Na górze raila są taby Rury/Studnie/PRECO, więc

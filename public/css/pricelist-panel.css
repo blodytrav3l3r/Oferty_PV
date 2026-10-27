@@ -153,6 +153,12 @@ body.pv-cennik-host .preco-toolbar {
     display: none;
 }
 
+/* #/cennik: rail dochodzi do górnego paska (iframe bez paddingu u góry),
+ * a treść cennika ma ten sam oddech od paska co sekcja w module Studnie. */
+body.pv-cennik-host #section-pricelist {
+    padding-top: var(--tile-gap-sm-plus);
+}
+
 /* Treść odsuwa się od lewego raila (desktop). Header zostaje pełnej szerokości.
  * !important, bo studnie.css ustawia `body.studnie-page > .main { margin: 0 !important }`. */
 @media (min-width: 1025px) {
@@ -190,6 +196,21 @@ body.pv-cennik-host #studnie-pricelist-body table:not(.preco-table) tbody td {
 body.pv-cennik-host .preco-accordion-head {
     padding: 0.55rem 0.8rem;
     font-size: var(--fs-base);
+}
+
+/* PRECO: akordeon i tabela zawsze na pełną szerokość okna (minus rail i padding). */
+body.pv-cennik-host #studnie-pricelist-body .preco-accordion,
+body.pv-cennik-host #studnie-pricelist-body .preco-wrap,
+body.pv-cennik-host #studnie-pricelist-body .preco-table {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+@media (max-width: 1100px) {
+    body.pv-cennik-host #studnie-pricelist-body .preco-accordion-body {
+        padding: 0.5rem;
+    }
 }
 
 body.pv-cennik-host #studnie-pricelist-body table:not(.preco-table) {

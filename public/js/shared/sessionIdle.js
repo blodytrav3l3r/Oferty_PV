@@ -102,21 +102,29 @@
         if (typeof window.showModal !== 'function') return;
         warnShownForCycle = true;
         var html =
-            '<div class="modal">' +
-            '<div class="app-confirm-modal">' +
-            '<div class="app-confirm-icon"><i data-lucide="alert-triangle" class="icon-32-warn"></i></div>' +
-            '<div class="app-confirm-title" id="session-idle-warn-title">Sesja wkrótce wygaśnie</div>' +
-            '<div class="app-confirm-message" id="session-idle-warn-msg">' +
-            'Brak aktywności od dłuższego czasu. Sesja wygasa po <strong>1 godzinie bezczynności</strong>.<br>' +
+            '<div class="modal modal--session modal--session-warn">' +
+            '<div class="modal-header">' +
+            '<h3 id="session-idle-warn-title">' +
+            '<i data-lucide="alert-triangle" class="icon-32-warn" aria-hidden="true"></i>' +
+            'Sesja wkrótce wygaśnie</h3>' +
+            '</div>' +
+            '<p class="session-modal-text">' +
+            'Brak aktywności od dłuższego czasu. Sesja wygasa po ' +
+            '<strong>1 godzinie bezczynności</strong>.' +
+            '</p>' +
+            '<p class="session-modal-text" id="session-idle-warn-msg">' +
             'Pozostało: <strong id="session-idle-countdown">' +
             esc(fmtCountdown(remainingMs())) +
-            '</strong><br>' +
-            '<span class="text-muted">Niezapisane zmiany są w drafcie — przedłuż sesję, żeby je spokojnie zapisać.</span>' +
-            '</div>' +
-            '<div class="app-confirm-actions">' +
-            '<button class="app-confirm-btn" id="session-idle-logout">Wyloguj</button>' +
-            '<button class="app-confirm-btn" id="session-idle-extend" style="background:var(--warn)">Przedłuż sesję</button>' +
-            '</div>' +
+            '</strong>' +
+            '</p>' +
+            '<p class="session-modal-hint">' +
+            'Niezapisane zmiany są w drafcie — przedłuż sesję, żeby je spokojnie zapisać.' +
+            '</p>' +
+            '<div class="modal-footer">' +
+            '<button type="button" class="btn btn-secondary" id="session-idle-logout">Wyloguj</button>' +
+            '<button type="button" class="btn btn-warn" id="session-idle-extend">' +
+            '<i data-lucide="clock" aria-hidden="true"></i> Przedłuż sesję' +
+            '</button>' +
             '</div>' +
             '</div>';
         var overlay = window.showModal({
@@ -191,17 +199,22 @@
                 ? 'Sesja osiągnęła maksymalny czas (7 dni).'
                 : 'Zostałeś wylogowany po <strong>1 godzinie bezczynności</strong>.';
         var html =
-            '<div class="modal">' +
-            '<div class="app-confirm-modal">' +
-            '<div class="app-confirm-icon"><i data-lucide="log-out" class="icon-32-warn"></i></div>' +
-            '<div class="app-confirm-title" id="session-idle-expired-title">Sesja wygasła</div>' +
-            '<div class="app-confirm-message">' +
+            '<div class="modal modal--session modal--session-danger">' +
+            '<div class="modal-header">' +
+            '<h3 id="session-idle-expired-title">' +
+            '<i data-lucide="log-out" class="icon-32-danger" aria-hidden="true"></i>' +
+            'Sesja wygasła</h3>' +
+            '</div>' +
+            '<p class="session-modal-text">' +
             msg +
-            '<br><span class="text-muted">Niezapisane zmiany zostały w lokalnym drafcie — po ponownym zalogowaniu wróć do dokumentu.</span>' +
-            '</div>' +
-            '<div class="app-confirm-actions">' +
-            '<button class="app-confirm-btn" id="session-idle-login" style="background:var(--warn);flex:1">Zaloguj ponownie</button>' +
-            '</div>' +
+            '</p>' +
+            '<p class="session-modal-hint">' +
+            'Niezapisane zmiany zostały w lokalnym drafcie — po ponownym zalogowaniu wróć do dokumentu.' +
+            '</p>' +
+            '<div class="modal-footer">' +
+            '<button type="button" class="btn btn-primary" id="session-idle-login">' +
+            'Zaloguj ponownie' +
+            '</button>' +
             '</div>' +
             '</div>';
         var overlay = window.showModal({

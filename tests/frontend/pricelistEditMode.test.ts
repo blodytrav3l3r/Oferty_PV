@@ -3,7 +3,7 @@ import path from 'path';
 
 /**
  * UX cennika (wariant A): obowiązujący → „Utwórz kopię jako szkic" →
- * „Edytuj szkic" → „Zapisz szkic" → „Opublikuj" z datą obowiązywania.
+ * „Edytuj" → „Zapisz" → „Opublikuj" z datą obowiązywania.
  * Podgląd blokuje siatkę (`inert`), więc przypadkowa edycja nie tworzy szkicu.
  */
 
@@ -25,12 +25,14 @@ describe('cennik: tryb edycji (podgląd ↔ szkic)', () => {
         expect(studniePartial).not.toContain('id="btn-add-studnie-product"');
     });
 
-    it('trzy stany: kopia obowiązującego / edycja szkicu / publikacja / anulowanie', () => {
+    it('trzy stany: kopia obowiązującego / edycja szkicu / anulowanie (publikacja w akcjach wersji)', () => {
         expect(shared).toContain("'Utwórz kopię jako szkic'");
-        expect(shared).toContain("'Edytuj szkic'");
-        expect(shared).toContain("'Opublikuj…'");
+        expect(shared).toContain("'Edytuj'");
         expect(shared).toContain("'Anuluj edycję'");
         expect(shared).toContain('data-pv-mode=');
+        // „Opublikuj" należy do akcji wersji na osi, nie do paska trybu edycji.
+        expect(shared).not.toContain("modeBtn('publish'");
+        expect(shared).toContain('data-pv-act="publish"');
     });
 
     it('podgląd: siatka inert, „Zapisz" widoczny ale wyłączony', () => {
@@ -98,6 +100,17 @@ describe('cennik: publikacja z wyborem daty', () => {
         expect(shared).toContain('type="datetime-local"');
         expect(shared).toContain('id="pv-publish-hint"');
         expect(shared).toContain('versionLabel(t, draft.seq, iso)');
+    });
+
+    it('dialog używa wzorca SOK: .modal--publish + akcje w stopce po prawej', () => {
+        expect(shared).toContain('class="modal modal--publish"');
+        expect(shared).toContain('class="modal-footer"');
+        expect(shared).not.toContain(
+            'class="pv-actions"><button type="button" class="btn btn-secondary" id="pv-publish-cancel"'
+        );
+        const css = read('public/css/style.responsive.css');
+        expect(css).toContain('.modal--publish {');
+        expect(css).toContain('.modal--publish .pv-publish-input');
     });
 
     it('approve niesie effectiveFrom; data wsteczna wymaga noty min. 10 znaków', () => {

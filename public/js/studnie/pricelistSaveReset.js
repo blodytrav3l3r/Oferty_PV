@@ -1,4 +1,4 @@
-/* ===== RESET / ZAPIS DOMYŚLNYCH ===== */
+﻿/* ===== RESET / ZAPIS DOMYŚLNYCH ===== */
 async function resetStudniePriceList() {
     const btns = document.querySelectorAll('[data-csp*="resetStudniePriceList"]');
     btns.forEach((b) => b.setAttribute('disabled', 'true'));
@@ -44,7 +44,7 @@ async function saveStudniePriceList() {
         !window.pricelistVersions.isEditing('studnie')
     ) {
         showToast(
-            'Kliknij „Edytuj szkic" (albo „Utwórz kopię jako szkic"), aby zmieniać cennik studni',
+            'Kliknij „Edytuj" (albo „Utwórz kopię jako szkic"), aby zmieniać cennik studni',
             'warning'
         );
         return;
