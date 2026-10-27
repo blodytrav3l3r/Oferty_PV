@@ -2,9 +2,18 @@
 let _precoDirty = false;
 
 function updatePrecoSaveBtn() {
-    const btn = document.querySelector('#studnie-pricelist-body button.btn-primary');
+    const btn = document.getElementById('btn-save-preco');
     if (!btn) return;
-    btn.disabled = !_precoDirty;
+    const meta =
+        window.pricelistVersions && typeof window.pricelistVersions.saveButtonMeta === 'function'
+            ? window.pricelistVersions.saveButtonMeta('preco')
+            : { editing: true, label: 'Zapisz', title: 'Zapisz zmiany w cenniku PRECO' };
+    btn.disabled = !meta.editing || !_precoDirty;
+    btn.title = meta.title;
+    btn.innerHTML = _precoDirty
+        ? `<i data-lucide="save" aria-hidden="true"></i> ${meta.label} PRECO <span class="color-warn">(!)</span>`
+        : `<i data-lucide="save" aria-hidden="true"></i> ${meta.label} PRECO`;
+    if (window.lucide) lucide.createIcons({ root: btn });
 }
 
 /**
@@ -107,11 +116,8 @@ function renderPrecoPriceList() {
     });
 
     container.innerHTML = html;
-    const saveBtn = /** @type {HTMLElement | null} */ (container.querySelector('#btn-save-preco'));
-    if (saveBtn && window.__pricelistWriteTarget === 'draft') {
-        saveBtn.title = 'Zapis tworzy lub aktualizuje szkic; publikacja w panelu wersji';
-        saveBtn.innerHTML = '<i data-lucide="save" aria-hidden="true"></i> Zapisz szkic PRECO';
-    }
+    // Etykieta i blokada zapisu zależą od trybu osi (podgląd/szkic/wersja).
+    updatePrecoSaveBtn();
     if (window.lucide) lucide.createIcons({ root: container });
 
     container.querySelectorAll('[data-preco-field]').forEach(function (input) {

@@ -130,8 +130,8 @@ describe('Rail „Zarządzanie cennikami" (lewy panel edytorów)', () => {
         ]) {
             expect(panel).toContain('data-pv-act="' + act + '"');
         }
-        expect(panel).toContain('data-pv-act="activate-reset"');
-        expect(panel).toContain("'/active/reset'");
+        expect(panel).not.toContain('data-pv-act="activate-reset"');
+        expect(panel).not.toContain("'/active/reset'");
         expect(panel).toContain('function applyActiveOverride');
         expect(panel).toContain('var activeOverrideIds');
         // Edycja opublikowanej wersji: tryb wersji + ostrzeżenie + nagłówki zapisu.
@@ -181,7 +181,9 @@ describe('Rail „Zarządzanie cennikami" (lewy panel edytorów)', () => {
         expect(panel).toContain('content.innerHTML = dockHtml');
         expect(panel).toContain('id="pv-dock-content" class="pv-dock__body"');
         expect(panel).toContain("document.getElementById('pv-grid-actions')");
-        expect(panel).toContain("stateBadge.textContent = editing ? 'Edycja szkicu' : 'Podgląd'");
+        expect(panel).toContain('stateBadge.textContent = versionMode');
+        expect(panel).toContain("'Edycja wersji'");
+        expect(panel).toContain("'Zapisz wersję'");
         // PRECO ma własny zapis przy tabeli — rail nie dubluje Dodaj/Zapisz.
         expect(css).toContain(".pv-grid-actions[data-axis='preco'] .pv-grid-actions__row");
         // Stan ma jedno miejsce: otwarty rail chowa pasek nad siatką.

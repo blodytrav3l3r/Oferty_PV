@@ -670,9 +670,15 @@ async function savePrecoPricing(data) {
             }
         }
         showToast(
-            window.__pricelistWriteTarget === 'draft'
-                ? 'Zapisano szkic PRECO — opublikuj wersję, aby trafił do ofert'
-                : 'Cennik PRECO zapisany',
+            window.pricelistVersions &&
+                typeof window.pricelistVersions.versionEditLabel === 'function' &&
+                window.pricelistVersions.versionEditLabel('preco')
+                ? 'Zapisano wersję ' +
+                      window.pricelistVersions.versionEditLabel('preco') +
+                      ' — jej ceny zostały podmienione'
+                : window.__pricelistWriteTarget === 'draft'
+                  ? 'Zapisano szkic PRECO — opublikuj wersję, aby trafił do ofert'
+                  : 'Cennik PRECO zapisany',
             'success'
         );
         return true;

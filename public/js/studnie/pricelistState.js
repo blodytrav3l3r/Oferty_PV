@@ -18,14 +18,15 @@ let _studniePricelistDirty = false; // eslint-disable-line prefer-const -- mutow
 function updateStudnieSaveBtn() {
     const btn = document.getElementById('btn-save-studnie-pricelist');
     if (!btn) return;
-    const isDraft = window.__pricelistWriteTarget === 'draft';
-    const label = isDraft ? 'Zapisz szkic' : 'Zapisz';
-    btn.title = isDraft
-        ? 'Zapis tworzy lub aktualizuje szkic; publikacja w panelu wersji'
-        : 'Zapisz zmiany w cenniku';
+    const meta =
+        window.pricelistVersions && typeof window.pricelistVersions.saveButtonMeta === 'function'
+            ? window.pricelistVersions.saveButtonMeta('studnie')
+            : { editing: true, label: 'Zapisz', title: 'Zapisz zmiany w cenniku' };
+    btn.disabled = !meta.editing;
+    btn.title = meta.title;
     btn.innerHTML = _studniePricelistDirty
-        ? `<i data-lucide="save"></i> ${label} <span class="color-warn">(!)</span>`
-        : `<i data-lucide="save"></i> ${label}`;
+        ? `<i data-lucide="save"></i> ${meta.label} <span class="color-warn">(!)</span>`
+        : `<i data-lucide="save"></i> ${meta.label}`;
     if (window.lucide) lucide.createIcons({ root: btn });
 }
 

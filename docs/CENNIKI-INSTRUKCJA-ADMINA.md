@@ -115,8 +115,7 @@ wersję, z której **nowe** oferty liczą ceny — także starszą niż najnowsz
 Historia zostaje nietknięta: istniejące oferty i zamówienia trzymają własne
 pieczątki wersji, a data `effectiveFrom` się nie zmienia. Wskazanie jest per oś
 (Rury / Studnie / PRECO) i obowiązuje do pierwszej publikacji nowej wersji z datą
-już obowiązującą — wtedy oś czasu znów wygrywa. Przycisk **„Przywróć najnowszy”**
-(cofa wskazanie ręczne) pojawia się tylko wtedy, gdy wskazanie jest ustawione.
+już obowiązującą — wtedy oś czasu znów wygrywa.
 
 **Edycja każdej wersji** („Edytuj” działa też na opublikowanych): wersja robocza
 otwiera normalny edytor szkicu, a obowiązująca/historyczna — edytor **w miejscu**
@@ -127,7 +126,8 @@ przyszłe użycie). Istniejące oferty zachowują ceny — mają własne pieczą
 Zapis jest chroniony sumą kontrolną (`If-Match`): równoległa zmiana → komunikat
 „wersja zmieniła się od czasu wczytania” i trzeba otworzyć ją ponownie.
 Pasek nad tabelą pokazuje „Edycja wersji …”, a **„Zakończ edycję”** wraca do
-danych na żywo.
+danych na żywo. Przycisk zapisu w railu jest **zawsze widoczny**: w podglądzie
+wyszarzony, w edycji szkicu „Zapisz szkic”, a w edycji wersji „Zapisz wersję”.
 
 **Usuwanie wersji**: szkic zawsze; opublikowana tylko wtedy, gdy **nie jest
 obowiązująca** i **żadna oferta ani zamówienie jej nie używa** (PRECO dodatkowo:
@@ -141,6 +141,11 @@ Zapisz), więc nad tabelą zostaje tylko tytuł, szukajka i przełącznik „Pan
 W `#/cennik` rail jest otwarty **zawsze** i jest **jedynym lewym panelem** — powłoka
 nie ma własnego paska nawigacji. Na górze raila są taby Rury/Studnie/PRECO, więc
 nawigacja i zarządzanie to jedno miejsce. W modułach rail otwiera przycisk „Panel”.
+
+**Nowa wersja…** (sekcja **Wersje**) otwiera popup z datą i godziną publikacji
+oraz notą. Zapis tworzy wersję z bieżącego stanu siatki i od razu ją publikuje:
+data przyszła → **Do wdrożenia**, data przeszła → korekta wsteczna (nota min. 10
+znaków + potwierdzenie).
 
 **Cennik w SPA**: `#/cennik` (kafelek „Cennik" w nagłówku SPA) osadza te same
 edytory co moduły — Rury oraz Studnie/PRECO — więc edycja i zapis działają bez

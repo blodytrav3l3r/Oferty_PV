@@ -71,9 +71,15 @@ async function saveStudniePriceList() {
             window.pricelistVersions.refreshStatusStrip('studnie');
         }
         showToast(
-            window.__pricelistWriteTarget === 'draft'
-                ? 'Zapisano szkic studni — opublikuj wersję, aby trafił do ofert'
-                : 'Zapisano cennik studni',
+            window.pricelistVersions &&
+                typeof window.pricelistVersions.versionEditLabel === 'function' &&
+                window.pricelistVersions.versionEditLabel('studnie')
+                ? 'Zapisano wersję ' +
+                      window.pricelistVersions.versionEditLabel('studnie') +
+                      ' — jej ceny zostały podmienione'
+                : window.__pricelistWriteTarget === 'draft'
+                  ? 'Zapisano szkic studni — opublikuj wersję, aby trafił do ofert'
+                  : 'Zapisano cennik studni',
             'success'
         );
     } catch (err) {

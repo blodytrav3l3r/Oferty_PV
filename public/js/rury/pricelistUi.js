@@ -10,14 +10,15 @@ let _pricelistDirty = false;
 function updateSaveBtn() {
     const btn = document.getElementById('btn-save-pricelist');
     if (!btn) return;
-    const isDraft = window.__pricelistWriteTarget === 'draft';
-    const label = isDraft ? 'Zapisz szkic' : 'Zapisz';
-    btn.title = isDraft
-        ? 'Zapis tworzy lub aktualizuje szkic; publikacja w panelu wersji'
-        : 'Zapisz zmiany w cenniku';
+    const meta =
+        window.pricelistVersions && typeof window.pricelistVersions.saveButtonMeta === 'function'
+            ? window.pricelistVersions.saveButtonMeta('rury')
+            : { editing: true, label: 'Zapisz', title: 'Zapisz zmiany w cenniku' };
+    btn.disabled = !meta.editing;
+    btn.title = meta.title;
     btn.innerHTML = _pricelistDirty
-        ? `<i data-lucide="save"></i> ${label} <span class="color-warn">(!)</span>`
-        : `<i data-lucide="save"></i> ${label}`;
+        ? `<i data-lucide="save"></i> ${meta.label} <span class="color-warn">(!)</span>`
+        : `<i data-lucide="save"></i> ${meta.label}`;
     if (window.lucide) lucide.createIcons({ root: btn });
 }
 
@@ -266,9 +267,15 @@ async function savePriceList() {
             window.pricelistVersions.refreshStatusStrip('rury');
         }
         showToast(
-            window.__pricelistWriteTarget === 'draft'
-                ? 'Zapisano szkic — opublikuj wersję, aby trafił do ofert'
-                : 'Zapisano cennik',
+            window.pricelistVersions &&
+                typeof window.pricelistVersions.versionEditLabel === 'function' &&
+                window.pricelistVersions.versionEditLabel('rury')
+                ? 'Zapisano wersję ' +
+                      window.pricelistVersions.versionEditLabel('rury') +
+                      ' — jej ceny zostały podmienione'
+                : window.__pricelistWriteTarget === 'draft'
+                  ? 'Zapisano szkic — opublikuj wersję, aby trafił do ofert'
+                  : 'Zapisano cennik',
             'success'
         );
     } catch (err) {

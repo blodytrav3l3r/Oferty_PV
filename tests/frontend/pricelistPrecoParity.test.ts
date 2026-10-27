@@ -63,16 +63,10 @@ describe('frontend: transfer PRECO', () => {
     });
 });
 
-describe('frontend: deduplikacja DRAFT PRECO', () => {
-    it('hash kanoniczny zgodny z BE (sort kluczy)', () => {
-        expect(panel).toContain('function canonicalStringify(value)');
-        expect(panel).toContain('.sort()');
-        expect(panel).toContain('precoRowsSha256');
-    });
-    it('identyczne rows + data → PUT istniejącej wersji roboczej', () => {
-        expect(panel).toContain('findIdenticalPrecoDraft(rows, effectiveFrom)');
-        expect(panel).toContain("PRECO_DEDUP_STATUSES = ['DRAFT']");
-        expect(panel).toContain('PRECO_DEDUP_STATUSES.indexOf(v.status) === -1');
-        expect(panel).toContain("authed(draftId ? 'PUT' : 'POST', payload)");
+describe('frontend: publikacja PRECO z popupu', () => {
+    it('zapis bieżącej siatki → approve z wybraną datą/godziną', () => {
+        expect(panel).toContain('function submitNewVersion(');
+        expect(panel).toContain('saveDraftRows(t, rows, note)');
+        expect(panel).toContain('approveVersion(draft.id, { effectiveFrom: iso, note: note })');
     });
 });

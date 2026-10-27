@@ -31,11 +31,26 @@ describe('cennik: tryb edycji (podgląd ↔ szkic)', () => {
         expect(shared).toContain('data-pv-mode=');
     });
 
-    it('podgląd: siatka inert, „Zapisz" ukryty, „Dodaj" wyłączony', () => {
+    it('podgląd: siatka inert, „Zapisz" widoczny ale wyłączony, „Dodaj" wyłączony', () => {
         expect(shared).toContain('grid.inert = !editing && sections.length === 0');
-        expect(shared).toContain("saveBtn.classList.toggle('hidden', !editing)");
+        expect(shared).toContain("saveBtn.classList.remove('hidden')");
+        expect(shared).toContain('saveBtn.disabled = !editing');
         expect(shared).toContain('addBtn.disabled = !editing');
         expect(read('public/css/style.utilities.css')).toContain('#studnie-pricelist-body[inert]');
+    });
+
+    it('zapis ma zawsze widoczny przycisk z etykietą celu', () => {
+        expect(shared).toContain('function saveButtonMeta(type)');
+        expect(shared).toContain("'Zapisz wersję'");
+        expect(shared).toContain("'Zapisz szkic'");
+        expect(shared).toContain('function versionEditLabel(type)');
+        for (const file of [
+            'public/js/rury/pricelistUi.js',
+            'public/js/studnie/pricelistState.js',
+            'public/js/studnie/pricelistPreco.js'
+        ]) {
+            expect(read(file)).toContain('saveButtonMeta');
+        }
     });
 
     it('podgląd PRECO: inert na rozwinięciach accordionu, nagłówek klikalny', () => {

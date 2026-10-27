@@ -143,77 +143,6 @@
         return opts;
     }
 
-    /** Kanoniczny JSON 1:1 z sha256Canonical (BE) — klucze sortowane, tablice w kolejności. */
-    function canonicalStringify(value) {
-        if (Array.isArray(value)) {
-            return '[' + value.map(canonicalStringify).join(',') + ']';
-        }
-        if (value !== null && typeof value === 'object') {
-            var obj = value;
-            return (
-                '{' +
-                Object.keys(obj)
-                    .sort()
-                    .map(function (k) {
-                        return JSON.stringify(k) + ':' + canonicalStringify(obj[k]);
-                    })
-                    .join(',') +
-                '}'
-            );
-        }
-        return JSON.stringify(value);
-    }
-
-    /** Hash wierszy jak BE; null gdy brak WebCrypto (HTTP LAN = brak secure context). */
-    async function precoRowsSha256(rows) {
-        // ponytail: hash tylko w secure context; poza nim zapis tworzy nowy draft.
-        var subtle = window.crypto && window.crypto.subtle;
-        if (!subtle || typeof TextEncoder !== 'function') return null;
-        try {
-            var bytes = new TextEncoder().encode(canonicalStringify(rows));
-            var digest = await subtle.digest('SHA-256', bytes);
-            return Array.prototype.map
-                .call(new Uint8Array(digest), function (b) {
-                    return ('0' + b.toString(16)).slice(-2);
-                })
-                .join('');
-        } catch (_e) {
-            return null;
-        }
-    }
-
-    /** Statusy, które panel realnie tworzy (POST drafts = SCHEDULED/BACKDATE,
-     *  klon = DRAFT); tylko DRAFT sprawiał, że dedup nigdy nie trafiał. */
-    var PRECO_DEDUP_STATUSES = ['DRAFT'];
-
-    /** Identyczna robocza PRECO (te same rows + data) → PUT zamiast nowego POST. */
-    async function findIdenticalPrecoDraft(rows, effectiveFrom) {
-        var hash = await precoRowsSha256(rows);
-        if (!hash) return null;
-        var versions = await fetchFullList('preco');
-        var wanted;
-        try {
-            wanted = new Date(effectiveFrom).toISOString();
-        } catch (_e) {
-            return null;
-        }
-        for (var i = 0; i < versions.length; i++) {
-            var v = versions[i];
-            if (
-                PRECO_DEDUP_STATUSES.indexOf(v.status) === -1 ||
-                v.sha256 !== hash ||
-                !v.effectiveFrom
-            )
-                continue;
-            try {
-                if (new Date(v.effectiveFrom).toISOString() === wanted) return v.id;
-            } catch (_e2) {
-                /* pomiń wersję z niepoprawną datą */
-            }
-        }
-        return null;
-    }
-
     /** Etykiety wersji na oś czasu (bez cen) — działa też dla nie-admina. */
     async function fetchLabels(type, force) {
         if (!force && labelCache[type]) return labelCache[type];
@@ -1063,6 +992,7 @@
         clearVersionEdit();
         setEditing(type, false);
         restoreGrid(type);
+        syncEditor(type);
         toast('Zakończono edycję wersji', 'info');
     }
 
@@ -1082,6 +1012,7 @@
         applyEditorLock(type);
         showVersionBar(type, v, true);
         syncHeaderVersion(labelOf(v));
+        syncEditor(type);
         toast('Edytujesz wersję ' + labelOf(v) + ' — zapis zmienia jej ceny', 'warning');
     }
 
@@ -1264,12 +1195,11 @@
     }
 
     /** Pasek akcji: jeden komplet, aktywny dopiero po zaznaczeniu karty. */
-    function actionsBarHtml(v, manageable, type) {
+    function actionsBarHtml(v, manageable) {
         var has = Boolean(v) && manageable === true;
         var isDraft = v ? isEditableStatus(stateOf(v)) : false;
         var canEdit = has && Boolean(v);
         var reason = v ? deleteReason(v) : null;
-        var overrideId = type ? activeOverrideIds[type] : null;
         var canActivate = has && Boolean(v) && stateOf(v) === 'ARCHIVED';
         var idAttr = v ? ' data-pv-id="' + escAttr(v.id) + '"' : '';
         var version = escAttr(v ? v.version || '' : '');
@@ -1288,14 +1218,6 @@
         var canClone = canOpen && !isDraft;
         var canDelete = canOpen && reason === null;
         return (
-            '<p class="pv-selected-label">' +
-            (v
-                ? 'Wybrana: <strong>' +
-                  esc(labelOf(v) || '—') +
-                  '</strong> ' +
-                  statusBadge(stateOf(v))
-                : '<span class="text-muted">Nie wybrano wersji — kliknij kartę.</span>') +
-            '</p>' +
             '<div class="pv-version-actions__grid" role="group" aria-label="Akcje wybranej wersji">' +
             '<button type="button" class="btn btn-sm btn-secondary" data-pv-act="edit"' +
             idAttr +
@@ -1334,12 +1256,6 @@
                 'Dostępne dla opublikowanej wersji, która nie obowiązuje'
             ) +
             '"><i data-lucide="check-circle"></i> Ustaw jako aktywny</button>' +
-            (overrideId
-                ? '<button type="button" class="btn btn-sm btn-secondary" data-pv-act="activate-reset"' +
-                  ' title="' +
-                  escAttr('Wróć do wyboru czasowego — obowiązuje najnowsza opublikowana wersja') +
-                  '">Przywróć najnowszy</button>'
-                : '') +
             '<button type="button" class="btn btn-sm btn-secondary" data-pv-act="diff"' +
             idAttr +
             off(canOpen) +
@@ -1415,7 +1331,7 @@
     function renderActions(type, manageable) {
         var box = document.getElementById('pv-version-actions');
         if (!box) return;
-        box.innerHTML = actionsBarHtml(selectedVersion(type), manageable, type);
+        box.innerHTML = actionsBarHtml(selectedVersion(type), manageable);
         icons(box);
     }
 
@@ -1559,26 +1475,34 @@
         );
     }
 
-    function saveFormHtml(type, next, manageable) {
+    /** Przycisk otwierający popup publikacji nowej wersji (zamiast formularza w railu). */
+    function newVersionButtonHtml(manageable) {
         if (!manageable) {
             return '<p class="text-muted">Podgląd wersji (zarządzanie wymaga roli admin).</p>';
         }
         return (
+            '<button type="button" class="btn btn-primary w-100" data-pv-act="new-version" ' +
+            'title="Utwórz wersję z bieżącego stanu siatki i wybierz datę oraz godzinę publikacji">' +
+            '<i data-lucide="calendar"></i> Nowa wersja…</button>'
+        );
+    }
+
+    function saveFormHtml(type, next) {
+        return (
             '<form id="pv-save-form">' +
-            '<div class="form-row form-row-2">' +
-            '<div class="form-group"><label>Nowa wersja (tylko podgląd)</label>' +
+            '<div class="form-group"><label>Nowa wersja</label>' +
             '<input class="form-input" id="pv-next-label" value="' +
             escAttr(versionLabel(type, next, new Date()) + ' (nr ' + next + ')') +
             '" readonly></div>' +
-            '<div class="form-group"><label for="pv-eff">Obowiązuje od (czas lokalny → UTC)</label>' +
+            '<div class="form-group"><label for="pv-eff">Data i godzina publikacji (czas lokalny → UTC)</label>' +
             '<input class="form-input" type="datetime-local" id="pv-eff"></div>' +
-            '</div>' +
-            '<div id="pv-past-warn" class="color-warn" style="display:none">Data w przeszłości — zapis jako wersja wsteczna (nota min. 10 znaków, bez auto-aktywacji).</div>' +
+            '<div id="pv-past-warn" class="color-warn" style="display:none">Data w przeszłości — publikacja jako korekta wsteczna (nota min. 10 znaków).</div>' +
             '<div class="form-group" id="pv-backdate-ack-wrap" style="display:none"><label><input type="checkbox" id="pv-backdate-ack"> Rozumiem, że przepisuję historię cennika (korekta wsteczna, nie zwykła publikacja)</label></div>' +
             '<div class="form-group"><label for="pv-note">Notatki</label>' +
             '<input class="form-input" id="pv-note" maxlength="500" placeholder="Opis zmiany (dla daty wstecznej: min. 10 znaków)">' +
             '<p class="text-muted" id="pv-note-counter"></p></div>' +
-            '<div class="form-group"><button type="submit" class="btn btn-primary w-100" title="Zapisuje bieżący stan cennika jako nową wersję (kopia wszystkich pozycji). Nie zmienia cen w ofertach ani cennika na żywo — nowa wersja czeka na aktywację (data przyszła) albo zapisuje się jako wsteczna (data przeszła, wymagana nota min. 10 znaków)."><i data-lucide="save"></i> Zapisz jako wersję</button></div>' +
+            '<p class="color-warn" id="pv-new-version-error" role="alert"></p>' +
+            '<div class="form-group"><button type="submit" class="btn btn-primary w-100" title="Tworzy wersję z bieżącego stanu cennika i publikuje ją z wybraną datą i godziną."><i data-lucide="rocket"></i> Opublikuj wersję</button></div>' +
             '</form>'
         );
     }
@@ -1611,13 +1535,13 @@
         return false;
     }
 
-    function dockHtml(type, next, manageable) {
+    function dockHtml(type, manageable) {
         return (
             '<details class="pv-dock__section" open>' +
             '<summary><h4 class="pv-section">Wersje</h4></summary>' +
             '<div class="pv-dock__section-body">' +
             '<div id="pv-save-wrap">' +
-            saveFormHtml(type, next, manageable) +
+            newVersionButtonHtml(manageable) +
             '</div>' +
             '<div class="pv-actions pv-legend" aria-label="Legenda statusów">' +
             statusBadge('ACTIVE') +
@@ -1769,13 +1693,6 @@
         }
         var dock = document.getElementById(DOCK_ID);
         if (dock) icons(dock);
-        var nextLabel = document.getElementById('pv-next-label');
-        if (nextLabel) {
-            var eff = document.getElementById('pv-eff');
-            var next = nextSeq(versions);
-            nextLabel.value =
-                versionLabel(type, next, (eff && eff.value) || new Date()) + ' (nr ' + next + ')';
-        }
         return versions;
     }
 
@@ -2295,18 +2212,10 @@
             tabs.innerHTML = typeTabsHtml(newType);
             icons(tabs);
         }
-        var versions = [];
-        try {
-            versions = await fetchFullList(newType);
-        } catch (e) {
-            toast('Błąd listy wersji: ' + e.message, 'error');
-            return;
-        }
         var manageable = canManage[newType] === true;
-        var next = nextSeq(versions);
         var saveWrap = document.getElementById('pv-save-wrap');
         if (saveWrap) {
-            saveWrap.innerHTML = saveFormHtml(newType, next, manageable);
+            saveWrap.innerHTML = newVersionButtonHtml(manageable);
             icons(saveWrap);
         }
         var transfer = document.getElementById('pv-transfer');
@@ -2314,7 +2223,6 @@
             transfer.innerHTML = transferHtml(newType);
             icons(transfer);
         }
-        initEff(newType, next);
         try {
             await refreshTable(newType, manageable);
         } catch (e) {
@@ -2350,15 +2258,7 @@
         if (!isAvailable(type)) type = availableTypes()[0];
         var dock = ensureDock();
         if (!dock) return;
-        var versions = [];
-        try {
-            versions = await fetchFullList(type);
-        } catch (e) {
-            toast('Błąd listy wersji: ' + e.message, 'error');
-            return;
-        }
         var manageable = canManage[type] === true;
-        var next = nextSeq(versions);
         dockState.type = type;
         var tabs = document.getElementById('pv-type-tabs');
         if (tabs) {
@@ -2366,11 +2266,10 @@
             icons(tabs);
         }
         var content = document.getElementById('pv-dock-content');
-        if (content) content.innerHTML = dockHtml(type, next, manageable);
+        if (content) content.innerHTML = dockHtml(type, manageable);
         setDockExpanded(true);
         icons(dock);
         wirePanel(dock, type);
-        initEff(type, next);
         refreshTable(type, manageable).catch(function (e) {
             toast('Błąd odświeżenia: ' + e.message, 'error');
         });
@@ -2436,6 +2335,7 @@
             var act = btn.getAttribute('data-pv-act');
             var id = btn.getAttribute('data-pv-id');
             if (act === 'close') closeVersionsPanel();
+            else if (act === 'new-version') openNewVersionDialog(type);
             else if (act === 'edit') openVersionOrDraft(type);
             else if (act === 'diff' && id) openDiff(id, null, type);
             else if (act === 'label' && id) {
@@ -2551,21 +2451,6 @@
                             toast(friendlyError('Błąd zmiany cennika', err), 'error');
                         });
                 });
-            } else if (act === 'activate-reset') {
-                pvConfirm(
-                    'Przywrócić wybór czasowy? Znowu będzie obowiązywać najnowsza opublikowana wersja.',
-                    { title: 'Przywróć najnowszy', okText: 'Przywróć', type: 'warning' }
-                ).then(function (ok) {
-                    if (!ok) return;
-                    apiJson(API + '/active/reset', authed('POST', { type: type }))
-                        .then(function () {
-                            toast('Wybór czasowy przywrócony', 'success');
-                            afterVersionChange(type, { reloadGrid: true });
-                        })
-                        .catch(function (err) {
-                            toast(friendlyError('Błąd przywracania', err), 'error');
-                        });
-                });
             } else if (act === 'delete' && id) {
                 var versionName = btn.getAttribute('data-pv-version') || id;
                 var doDelete = function () {
@@ -2604,135 +2489,6 @@
             if (!card) return;
             e.preventDefault();
             card.click();
-        });
-        // Delegacja submit (formularz prze-renderowany przy zmianie taba).
-        overlay.addEventListener('submit', function (ev) {
-            var form = ev.target && ev.target.closest ? ev.target.closest('#pv-save-form') : null;
-            if (!form) return;
-            ev.preventDefault();
-            (function () {
-                var type = state.current;
-                var note = document.getElementById('pv-note').value || '';
-                var effRaw = document.getElementById('pv-eff').value || '';
-                var effectiveFrom;
-                try {
-                    effectiveFrom = effRaw ? toUtcIso(effRaw) : new Date().toISOString();
-                } catch (_e) {
-                    toast('Nieprawidłowa data „Obowiązuje od"', 'error');
-                    return;
-                }
-                var rows;
-                try {
-                    rows = resolveGetRows(type)();
-                } catch (err) {
-                    toast('Błąd odczytu cennika: ' + err.message, 'error');
-                    return;
-                }
-                var isPast = new Date(effectiveFrom).getTime() < Date.now() - 60000;
-                if (isPast) {
-                    var ack = document.getElementById('pv-backdate-ack');
-                    if (ack && !ack.checked) {
-                        toast(
-                            'Zaznacz potwierdzenie korekty wstecznej (przepisujesz historię cennika)',
-                            'warning'
-                        );
-                        return;
-                    }
-                }
-                var submitDraft = function (finalNote) {
-                    var sendDraft = function (draftId) {
-                        var url = draftId
-                            ? API + '/' + encodeURIComponent(draftId)
-                            : API + '/' + encodeURIComponent(type) + '/drafts';
-                        var payload = draftId
-                            ? { rows: rows, note: finalNote || undefined }
-                            : {
-                                  rows: rows,
-                                  effectiveFrom: effectiveFrom,
-                                  note: finalNote || undefined
-                              };
-                        apiJson(url, authed(draftId ? 'PUT' : 'POST', payload))
-                            .then(function (json) {
-                                var v = json.version || {};
-                                if (isPast) {
-                                    // Korekta wsteczna: od razu approve z uzasadnieniem
-                                    // (BE wymaga noty ≥ 10 znaków dla daty ≤ teraz).
-                                    var bn = finalNote || '';
-                                    if (bn.trim().length < 10) {
-                                        openNoteModal(
-                                            'Korekta wsteczna — wymagane uzasadnienie',
-                                            'Min. 10 znaków uzasadnienia…',
-                                            function (n2) {
-                                                approveVersion(v.id, n2).then(function () {
-                                                    toast(
-                                                        'Wersja wsteczna opublikowana',
-                                                        'success'
-                                                    );
-                                                    afterVersionChange(type, { reloadGrid: true });
-                                                });
-                                            }
-                                        );
-                                        afterVersionChange(type);
-                                        return;
-                                    }
-                                    approveVersion(v.id, bn)
-                                        .then(function () {
-                                            toast('Wersja wsteczna opublikowana', 'success');
-                                            afterVersionChange(type, { reloadGrid: true });
-                                        })
-                                        .catch(function (err) {
-                                            toast(
-                                                'Wersja zapisana, publikacja wsteczna nie: ' +
-                                                    err.message,
-                                                'warning'
-                                            );
-                                            afterVersionChange(type);
-                                        });
-                                    return;
-                                }
-                                toast(
-                                    'Wersja ' +
-                                        (v.version || '') +
-                                        ' zapisana jako W przygotowaniu — sprawdź Porównaj, ' +
-                                        'potem „Opublikuj roboczą”',
-                                    'success'
-                                );
-                                afterVersionChange(type).then(function () {
-                                    openDiff(v.id, null, type);
-                                });
-                            })
-                            .catch(function (err) {
-                                toast(friendlyError('Błąd zapisu wersji', err), 'error');
-                            });
-                    };
-                    if (type !== 'preco') {
-                        sendDraft(null);
-                        return;
-                    }
-                    findIdenticalPrecoDraft(rows, effectiveFrom)
-                        .then(function (draftId) {
-                            if (draftId) {
-                                toast('Aktualizuję istniejącą wersję roboczą PRECO', 'info');
-                            }
-                            sendDraft(draftId);
-                        })
-                        .catch(function (err) {
-                            console.warn('[pricelistVersions] dedup PRECO:', err);
-                            sendDraft(null);
-                        });
-                };
-                if (isPast && note.trim().length < 10) {
-                    openNoteModal(
-                        'Data w przeszłości — zapis jako wersja wsteczna',
-                        'Min. 10 znaków uzasadnienia…',
-                        function (n) {
-                            submitDraft(n);
-                        }
-                    );
-                    return;
-                }
-                submitDraft(note);
-            })();
         });
     }
 
@@ -2870,14 +2626,47 @@
         editModes[type] = on === true;
     }
 
+    /** Etykieta wersji edytowanej w miejscu (null = szkic/podgląd). */
+    function versionEditLabel(type) {
+        var mode = versionEditMode(type);
+        return mode ? mode.label : null;
+    }
+
+    /** Wspólny stan przycisku zapisu osi: cel, etykieta i tooltip. */
+    function saveButtonMeta(type) {
+        var editing = isEditing(type);
+        var versionLabel = versionEditLabel(type);
+        var isDraft = window.__pricelistWriteTarget === 'draft';
+        var label = !editing
+            ? 'Zapisz'
+            : versionLabel
+              ? 'Zapisz wersję'
+              : isDraft
+                ? 'Zapisz szkic'
+                : 'Zapisz';
+        var title;
+        if (!editing) {
+            title = 'Najpierw wejdź w edycję: „Edytuj szkic” albo „Edytuj” w panelu wersji';
+        } else if (versionLabel) {
+            title = 'Zapis podmienia ceny wersji ' + versionLabel + ' — bez tworzenia nowej wersji';
+        } else if (isDraft) {
+            title = 'Zapis tworzy lub aktualizuje szkic; publikacja w panelu wersji';
+        } else {
+            title = 'Zapisz zmiany w cenniku';
+        }
+        return { editing: editing, versionLabel: versionLabel, label: label, title: title };
+    }
+
     /**
-     * Podgląd = siatka `inert` (blokuje mysz, fokus i Tab), ukryty „Zapisz"
-     * i wyłączone „Dodaj". Dzięki temu przypadkowa edycja nie tworzy szkicu.
+     * Podgląd = siatka `inert` (blokuje mysz, fokus i Tab), wyłączony „Zapisz"
+     * i „Dodaj". Przycisk zapisu zostaje widoczny, żeby zawsze było jasne,
+     * gdzie zapisać edytowany cennik — w podglądzie jest tylko wyszarzony.
      * PRECO: `inert` idzie na rozwinięcia accordionów, nie na całą siatkę —
      * inaczej nie da się rozwinąć DN i podejrzeć cen w podglądzie.
      */
     function applyEditorLock(type) {
         var editing = isEditing(type);
+        var versionMode = versionEditMode(type);
         var grid = document.getElementById(EDITOR_GRID[type] || '');
         if (grid) {
             var sections = grid.querySelectorAll('.preco-accordion-body');
@@ -2887,22 +2676,33 @@
             grid.inert = !editing && sections.length === 0;
         }
         var saveBtn = document.getElementById(EDITOR_SAVE[type] || '');
-        if (saveBtn) saveBtn.classList.toggle('hidden', !editing);
+        if (saveBtn) {
+            saveBtn.classList.remove('hidden');
+            saveBtn.disabled = !editing;
+        }
         var addBtn = document.getElementById(EDITOR_ADD[type] || '');
         if (addBtn) addBtn.disabled = !editing;
         var actions = document.getElementById('pv-grid-actions');
         if (actions) actions.setAttribute('data-axis', type);
         var stateBadge = document.getElementById('pv-grid-actions-state');
         if (stateBadge) {
-            stateBadge.textContent = editing ? 'Edycja szkicu' : 'Podgląd';
-            stateBadge.setAttribute('data-mode', editing ? 'edit' : 'view');
+            stateBadge.textContent = versionMode
+                ? 'Edycja wersji'
+                : editing
+                  ? 'Edycja szkicu'
+                  : 'Podgląd';
+            stateBadge.setAttribute(
+                'data-mode',
+                versionMode ? 'version' : editing ? 'edit' : 'view'
+            );
         }
-        // W trybie edycji kafelek nazywa się „Zapisz szkic" (helper modułu osi).
-        if (editing && type === 'rury' && typeof window.updateSaveBtn === 'function') {
+        // Etykieta zależy od celu zapisu (szkic / opublikowana wersja) — helper osi.
+        if (type === 'preco') {
+            if (typeof window.updatePrecoSaveBtn === 'function') window.updatePrecoSaveBtn();
+        } else if (type === 'studnie') {
+            if (typeof window.updateStudnieSaveBtn === 'function') window.updateStudnieSaveBtn();
+        } else if (typeof window.updateSaveBtn === 'function') {
             window.updateSaveBtn();
-        }
-        if (editing && type === 'studnie' && typeof window.updateStudnieSaveBtn === 'function') {
-            window.updateStudnieSaveBtn();
         }
     }
 
@@ -3248,6 +3048,106 @@
         }
     }
 
+    /**
+     * Popup „Nowa wersja”: tworzy wersję z bieżącej siatki i publikuje ją
+     * z wybraną datą i godziną (przyszła = do wdrożenia, przeszła = korekta).
+     */
+    async function openNewVersionDialog(type) {
+        var t = type || editorType;
+        if (canManage[t] !== true) {
+            toast('Zarządzanie wersjami wymaga roli admin', 'warning');
+            return;
+        }
+        var versions = [];
+        try {
+            versions = await fetchFullList(t);
+        } catch (e) {
+            toast('Błąd listy wersji: ' + e.message, 'error');
+            return;
+        }
+        var next = nextSeq(versions);
+        window.showModal({
+            id: 'pv-new-version-modal',
+            titleId: 'pv-new-version-title',
+            html:
+                '<div class="modal">' +
+                '<div class="modal-header"><h3 id="pv-new-version-title"><i data-lucide="calendar"></i> Nowa wersja cennika</h3>' +
+                '<button type="button" class="btn-icon" aria-label="Zamknij" data-csp="closeModal" data-csp-args="[&quot;pv-new-version-modal&quot;]"><i data-lucide="x"></i></button></div>' +
+                '<div class="modal-body">' +
+                '<p class="text-muted">Wersja powstanie z bieżącego stanu siatki. Data i godzina decydują, od kiedy nowe oferty policzą te ceny.</p>' +
+                saveFormHtml(t, next) +
+                '</div></div>'
+        });
+        var overlay = document.getElementById('pv-new-version-modal');
+        icons(overlay);
+        initEff(t, next);
+        var form = document.getElementById('pv-save-form');
+        if (form) {
+            form.addEventListener('submit', function (ev) {
+                ev.preventDefault();
+                submitNewVersion(t);
+            });
+        }
+    }
+
+    /** Zapis bieżącej siatki jako wersji + publikacja z datą z popupu. */
+    async function submitNewVersion(type) {
+        var t = type || editorType;
+        var eff = document.getElementById('pv-eff');
+        var noteEl = document.getElementById('pv-note');
+        var ack = document.getElementById('pv-backdate-ack');
+        var errEl = document.getElementById('pv-new-version-error');
+        var submitBtn = document.querySelector('#pv-save-form button[type="submit"]');
+        var showErr = function (msg) {
+            if (errEl) errEl.textContent = msg || '';
+        };
+        showErr('');
+        var iso;
+        try {
+            iso = toUtcIso(eff ? eff.value : '');
+        } catch (_e) {
+            showErr('Podaj prawidłową datę i godzinę publikacji.');
+            return;
+        }
+        var past = isPastDate(iso);
+        var note = noteEl ? String(noteEl.value || '').trim() : '';
+        if (past && ack && !ack.checked) {
+            showErr('Zaznacz potwierdzenie korekty wstecznej (przepisujesz historię cennika).');
+            return;
+        }
+        if (past && note.length < PAST_NOTE_MIN) {
+            showErr('Data w przeszłości — podaj uzasadnienie (min. 10 znaków).');
+            return;
+        }
+        var rows;
+        try {
+            rows = resolveGetRows(t)();
+        } catch (err) {
+            showErr('Błąd odczytu cennika: ' + err.message);
+            return;
+        }
+        if (submitBtn) submitBtn.disabled = true;
+        try {
+            var saved = await saveDraftRows(t, rows, note);
+            var draft = (saved && saved.version) || {};
+            if (!draft.id) throw new Error('Nie udało się zapisać wersji');
+            var approved = await approveVersion(draft.id, { effectiveFrom: iso, note: note });
+            var published = (approved && approved.version) || draft;
+            if (typeof window.closeModal === 'function') window.closeModal('pv-new-version-modal');
+            await afterVersionChange(t, { reloadGrid: true });
+            toast(
+                'Opublikowano ' +
+                    (published.version || '') +
+                    ' — obowiązuje od ' +
+                    stripDateTime(iso),
+                'success'
+            );
+        } catch (err) {
+            showErr(friendlyError('Błąd publikacji', err));
+            if (submitBtn) submitBtn.disabled = false;
+        }
+    }
+
     /** Jedna delegacja dla przycisków trybu (CSP-E: bez inline handlerów). */
     document.addEventListener('click', function (event) {
         // Rail należy do sekcji „Cennik" — zmiana sekcji go zamyka.
@@ -3271,6 +3171,10 @@
         }
         if (act === 'cancel') {
             var discard = function () {
+                if (versionEditMode(type)) {
+                    exitVersionEdit(type);
+                    return;
+                }
                 setEditing(type, false);
                 reloadEditorGrid(type);
                 renderStatusStrip(STRIP_HOST_ID, type);
@@ -3328,6 +3232,8 @@
         syncEditor: syncEditor,
         isEditing: isEditing,
         setEditing: setEditing,
+        versionEditLabel: versionEditLabel,
+        saveButtonMeta: saveButtonMeta,
         applyEditorLock: applyEditorLock,
         openPublishDialog: openPublishDialog,
         createDraftCopy: createDraftCopy,

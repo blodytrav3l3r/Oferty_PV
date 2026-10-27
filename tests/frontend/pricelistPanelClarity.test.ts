@@ -69,9 +69,12 @@ describe('frontend: diff z cenami przed decyzją', () => {
         expect(panel).toContain('checksCheckedAt');
         expect(panel).toContain('checksStale');
     });
-    it('po zapisie draft auto-otwiera Porównaj', () => {
-        expect(panel).toContain('openDiff(v.id, null, type)');
-        expect(panel).toContain('sprawdź Porównaj');
+    it('nowa wersja: popup z datą i godziną publikacji', () => {
+        expect(panel).toContain('function openNewVersionDialog(');
+        expect(panel).toContain('pv-new-version-modal');
+        expect(panel).toContain('type="datetime-local" id="pv-eff"');
+        expect(panel).toContain('function submitNewVersion(');
+        expect(panel).toContain('Opublikuj wersję');
     });
 });
 
