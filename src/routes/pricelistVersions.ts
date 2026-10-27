@@ -17,6 +17,7 @@ import {
     activate,
     approveVersion,
     applyBackdate,
+    cancelScheduledRelease,
     cloneAsDraft,
     createDraft,
     countVersionUsageBatch,
@@ -485,6 +486,30 @@ router.post(
                 }
             }
             res.json({ version, checksStale });
+        } catch (err) {
+            sendVersionError(res, err);
+        }
+    }
+);
+
+/**
+ * Anulowanie zaplanowanego wdrożenia: APPROVED z przyszłą datą → DRAFT.
+ * Wersja nie wejdzie na oś czasu; wraca do edycji jako szkic.
+ */
+router.post(
+    '/:id/cancel-schedule',
+    requireAuth,
+    requireAdmin,
+    PRICELIST_WRITE_LIMITER,
+    async (req, res) => {
+        try {
+            const id = parseVersionId(req.params);
+            if (!id) {
+                sendInvalidId(res);
+                return;
+            }
+            const version = await cancelScheduledRelease(id, { userId: userIdOf(req) });
+            res.json({ version });
         } catch (err) {
             sendVersionError(res, err);
         }

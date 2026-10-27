@@ -312,32 +312,7 @@ function openStudnieVersionsPanel(initialType) {
         return;
     }
     var type = initialType === 'preco' ? 'preco' : 'studnie';
-    return window.pricelistVersions.openVersionsPanel(type, {
-        studnie: function () {
-            return typeof studnieProducts !== 'undefined' ? studnieProducts : [];
-        },
-        rury: function () {
-            if (typeof products !== 'undefined') return products;
-            try {
-                var w = window.parent && window.parent !== window ? window.parent : null;
-                if (w && typeof w.products !== 'undefined') return w.products;
-            } catch (_e) {
-                /* brak dostępu */
-            }
-            return [];
-        },
-        preco: function () {
-            var flat = window.pricelistXlsx && window.pricelistXlsx.precoNestedToFlat;
-            if (typeof flat !== 'function') throw new Error('Moduł PRECO niedostępny');
-            var nested =
-                typeof collectPrecoFromUI === 'function'
-                    ? collectPrecoFromUI()
-                    : typeof precoPricing !== 'undefined'
-                      ? precoPricing
-                      : {};
-            return flat(nested);
-        }
-    });
+    return window.pricelistVersions.openVersionsPanel(type);
 }
 window.openStudnieVersionsPanel = openStudnieVersionsPanel;
 

@@ -42,23 +42,8 @@
         aria-label="Akcje siatki cen"
         hidden
     >
-        <div class="pv-grid-actions__head">
-            <span class="pv-grid-actions__title">Siatka cen</span>
-            <span id="pv-grid-actions-state" class="pv-grid-actions__state" data-mode="view">
-                Podgląd
-            </span>
-        </div>
-        <div id="pv-editor-actions" class="pv-editor-actions"></div>
-        <div class="pv-grid-actions__row">
-            <button
-                type="button"
-                class="btn btn-primary"
-                id="btn-add-product"
-                data-csp="showAddProductModal"
-                title="Dodaj nowy produkt do cennika"
-            >
-                <i data-lucide="plus"></i> Dodaj
-            </button>
+        <div id="pv-editor-actions" class="pv-editor-actions">
+            <div id="pv-mode-actions" class="pv-mode-actions"></div>
             <button
                 type="button"
                 class="btn btn-secondary"

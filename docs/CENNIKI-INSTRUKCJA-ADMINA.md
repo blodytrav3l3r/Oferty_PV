@@ -130,23 +130,31 @@ Pasek nad tabelą pokazuje „Edycja wersji …”, a **„Zakończ edycję”**
 danych na żywo. Przycisk zapisu w railu jest **zawsze widoczny**: w podglądzie
 wyszarzony, w edycji szkicu „Zapisz szkic”, a w edycji wersji „Zapisz wersję”.
 
+**Anulowanie wdrożenia**: wersja **Do wdrożenia** (zaplanowana, jeszcze nieobowiązująca)
+ma przycisk **„Anuluj wdrożenie”** — wraca do szkicu i nie wejdzie w życie w
+zaplanowanej dacie. Wersji już obowiązującej nie można tą drogą wycofać; na osi
+może być tylko jeden szkic, więc gdy inny istnieje, najpierw go opublikuj albo usuń.
+
 **Usuwanie wersji**: szkic zawsze; opublikowana tylko wtedy, gdy **nie jest
 obowiązująca** i **żadna oferta ani zamówienie jej nie używa** (PRECO dodatkowo:
 żadna wersja studni jej nie wskazuje). Wersję obowiązującą trzeba najpierw
 zastąpić inną („Ustaw jako aktywny”) — inaczej 409 `ACTIVE_IN_USE`.
 
-Sekcje raila: **Siatka cen**, **Wersje**,
-**Transfer plików**, **Cenniki domyślne**, **Jak to działa**. Rail jest **jedynym
-paskiem zarządzania** — mieści też akcje siatki (Edytuj szkic / Opublikuj / Dodaj /
-Zapisz), więc nad tabelą zostaje tylko tytuł, szukajka i przełącznik „Panel”.
+Sekcje raila: **Wersje**,
+**Transfer plików**, **Cenniki domyślne**, **Jak to działa**. Kafelek
+**„Jak to działa — pełna instrukcja”** otwiera popup z legendą i wyjaśnieniem
+statusów oraz instrukcją edycji, tworzenia nowych cenników,
+publikacji, dat i anulowania wdrożenia. Rail jest **jedynym
+paskiem zarządzania** — mieści też akcje siatki (Edytuj szkic / Opublikuj / Zapisz
+w jednym wierszu), więc nad tabelą zostaje tylko tytuł, szukajka i przełącznik „Panel”.
 W `#/cennik` rail jest otwarty **zawsze** i jest **jedynym lewym panelem** — powłoka
 nie ma własnego paska nawigacji. Na górze raila są taby Rury/Studnie/PRECO, więc
 nawigacja i zarządzanie to jedno miejsce. W modułach rail otwiera przycisk „Panel”.
 
-**Nowa wersja…** (sekcja **Wersje**) otwiera popup z datą i godziną publikacji
-oraz notą. Zapis tworzy wersję z bieżącego stanu siatki i od razu ją publikuje:
-data przyszła → **Do wdrożenia**, data przeszła → korekta wsteczna (nota min. 10
-znaków + potwierdzenie).
+**Tworzenie nowej wersji**: **„Utwórz kopię jako szkic”** (sekcja **Wersje**),
+edycja siatki i **„Opublikuj roboczą”** z datą, godziną i notą. Data przyszła →
+**Do wdrożenia**, data przeszła → korekta wsteczna (nota min. 10 znaków +
+potwierdzenie).
 
 **Cennik w SPA**: `#/cennik` (kafelek „Cennik" w nagłówku SPA) osadza te same
 edytory co moduły — Rury oraz Studnie/PRECO — więc edycja i zapis działają bez
@@ -211,8 +219,8 @@ to **ostrzeżenie** (HTTP 200), nie błąd. Publikacja i tak waliduje warunki kr
 - Efekt: `DRAFT` → `APPROVED` (zapisany status). Dalej etykieta zależy od daty:
   przyszła → **Do wdrożenia**, przeszła → korekta wsteczna (**Obowiązuje** albo **Historyczny**).
 - Zatwierdzić można **tylko szkic**: inaczej `409 APPROVE_NOT_DRAFT`.
-- Eksport do review: **Eksport (review)** w wierszu pobiera XLSX wersji z sufiksem `_REVIEW` —
-  wyślij do akceptacji przed publikacją.
+- Eksport wersji: endpoint `GET /api/pricelist-versions/:id/export` (XLSX wersji;
+  dla szkicu sufiks `_REVIEW`). W railu nie ma już osobnego przycisku eksportu.
 
 **Deprecated (aliasy, wygasają 31.03.2027)** — odpowiedzi mają nagłówki `Deprecation: true` i
 `Sunset: Wed, 31 Mar 2027 23:59:59 GMT`. Nie używaj ich w nowym kodzie:
@@ -260,12 +268,16 @@ to nadal skoroszyt danej wersji; PRECO ma osobny eksport w swoim wierszu wersji.
 
 ## 11. Eksport XLSX: który przycisk
 
-| Potrzeba                       | Przycisk                                                                            |
-| ------------------------------ | ----------------------------------------------------------------------------------- |
-| Review wersji przed publikacją | Eksport (review) w wierszu tabeli (`GET /:id/export`, sufiks `_REVIEW` dla szkiców) |
-| Stan na żywo                   | „Eksportuj studnie” / „Eksportuj PRECO” w sekcji Transfer plików (LIVE)             |
-| Domyślne / reset               | `GET .../export.xlsx?source=default` (ręczny URL)                                   |
-| Wersja obowiązująca            | `GET .../export.xlsx?source=active` (ręczny URL; `409 NO_ACTIVE_VERSION` gdy brak)  |
+„Na żywo” (LIVE) = bieżące tabele edytora, nie wersja z osi. Sekcja **Transfer plików**
+zawsze dotyczy cennika z aktywnej zakładki (Rury / Studnie / PRECO); przyciski nazywają
+cennik, którego dotyczą.
+
+| Potrzeba                       | Przycisk                                                                                       |
+| ------------------------------ | ---------------------------------------------------------------------------------------------- |
+| Review wersji przed publikacją | `GET /api/pricelist-versions/:id/export` (sufiks `_REVIEW` dla szkiców; bez przycisku w railu) |
+| Stan na żywo                   | „Eksportuj Rury” / „Eksportuj Studnie” / „Eksportuj PRECO” w sekcji Transfer plików (LIVE)     |
+| Domyślne / reset               | `GET .../export.xlsx?source=default` (ręczny URL)                                              |
+| Wersja obowiązująca            | `GET .../export.xlsx?source=active` (ręczny URL; `409 NO_ACTIVE_VERSION` gdy brak)             |
 
 ## 12. Oferty a cennik
 
@@ -282,6 +294,10 @@ Badge „cennik vX · Typ" w ofercie pokazuje wersję z pieczątki (tooltip: dat
 
 - „Zapisz domyślne" = snapshot wszystkich cenników (tabele `*_Default` + plik
   `data/price_defaults.json`).
+- „Przywróć domyślne (Rury / Studnie / PRECO)" działa **tylko na wybranej osi**
+  i tylko na jej module; w `#/cennik` kliknięcie przycisku innej osi przełącza
+  tab i tam pokazuje potwierdzenie. Po przywróceniu kliknij „Zapisz", aby
+  zachować zmiany.
 - Przenosiny: `npm run prices:export` → skopiuj plik → `npm run prices:import`;
   kontrola: `npm run prices:verify` (LIVE vs Default vs plik).
 - Znaczniki czasu są rozdzielone: `pricelist_defaults_updated_at` (snapshot)

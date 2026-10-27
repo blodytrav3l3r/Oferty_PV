@@ -646,22 +646,7 @@ function openRuryVersionsPanel() {
         showToast('Moduł wersji cennika niedostępny', 'error');
         return;
     }
-    return window.pricelistVersions.openVersionsPanel(
-        'rury',
-        function () {
-            return typeof products !== 'undefined' ? products : [];
-        },
-        function () {
-            if (typeof studnieProducts !== 'undefined') return studnieProducts;
-            try {
-                var w = window.parent && window.parent !== window ? window.parent : null;
-                if (w && typeof w.studnieProducts !== 'undefined') return w.studnieProducts;
-            } catch (_e) {
-                /* brak dostępu */
-            }
-            return [];
-        }
-    );
+    return window.pricelistVersions.openVersionsPanel('rury');
 }
 window.openRuryVersionsPanel = openRuryVersionsPanel;
 

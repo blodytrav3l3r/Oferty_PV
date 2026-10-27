@@ -190,7 +190,7 @@ describe('SPA: deep-link do panelu wersji', () => {
 
     it('wrapper paneli zwraca promise (sekwencja panel → preview)', () => {
         expect(rury).toContain('return window.pricelistVersions.openVersionsPanel(');
-        expect(studnie).toContain('return window.pricelistVersions.openVersionsPanel(type, {');
+        expect(studnie).toContain('return window.pricelistVersions.openVersionsPanel(type);');
     });
 
     it('nowy iframe (about:blank) nie jest uznawany za gotowy', () => {

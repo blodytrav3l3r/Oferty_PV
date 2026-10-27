@@ -98,8 +98,19 @@ const settingsMock = {
 
 const versionMock = {
     findUnique: jest.fn(async ({ where }: { where: { id: string } }) => findVersion(where.id)),
-    findFirst: jest.fn(async ({ where }: { where: { id?: string; type?: string } }) =>
-        activeCandidate(where)
+    findFirst: jest.fn(
+        async ({ where }: { where: { id?: string; type?: string; status?: string } }) => {
+            if (where.status === 'DRAFT') {
+                return (
+                    versions.find(
+                        (v) =>
+                            v.status === 'DRAFT' &&
+                            (where.type === undefined || v.type === where.type)
+                    ) ?? null
+                );
+            }
+            return activeCandidate(where as Parameters<typeof activeCandidate>[0]);
+        }
     ),
     findMany: jest.fn(async ({ where }: { where?: { type?: string } } = {}) =>
         versions.filter((v) => where?.type === undefined || v.type === where.type)
@@ -191,6 +202,7 @@ jest.mock('../src/utils/logger', () => ({
 
 import {
     approveVersion,
+    cancelScheduledRelease,
     clearActiveOverride,
     deleteVersion,
     PricelistVersionError,
@@ -386,6 +398,46 @@ describe('edycja opublikowanej wersji w miejscu', () => {
 
     test('brak wersji → 404', async () => {
         const err = await replaceVersionRows('nope', [rura('R1', 1)]).catch((e) => e);
+        expect((err as PricelistVersionError).statusCode).toBe(404);
+    });
+});
+
+describe('anulowanie zaplanowanego wdrożenia', () => {
+    const futureIso = () => new Date(Date.now() + 86400000).toISOString();
+
+    test('zaplanowana → DRAFT, audyt CANCEL_SCHEDULE', async () => {
+        seed({ id: 'sched', seq: 1, status: 'APPROVED', effectiveFrom: futureIso() });
+        const out = await cancelScheduledRelease('sched', { userId: 'u1' });
+        expect(out.status).toBe('DRAFT');
+        expect(versions.find((v) => v.id === 'sched')?.status).toBe('DRAFT');
+        const audit = audits.find((a) => a['action'] === 'CANCEL_SCHEDULE');
+        expect(audit).toBeDefined();
+        expect(String(audit?.['newData'] ?? '')).toContain('DRAFT');
+    });
+
+    test('już obowiązująca → 409 NOT_SCHEDULED, status bez zmian', async () => {
+        seed({
+            id: 'now',
+            seq: 1,
+            status: 'APPROVED',
+            effectiveFrom: new Date(Date.now() - 1000).toISOString()
+        });
+        const err = await cancelScheduledRelease('now').catch((e) => e);
+        expect((err as PricelistVersionError).statusCode).toBe(409);
+        expect((err as PricelistVersionError).code).toBe('NOT_SCHEDULED');
+        expect(versions.find((v) => v.id === 'now')?.status).toBe('APPROVED');
+    });
+
+    test('istniejący szkic na osi → 409 DRAFT_EXISTS', async () => {
+        seed({ id: 'sched', seq: 1, status: 'APPROVED', effectiveFrom: futureIso() });
+        seed({ id: 'draft', seq: 2, status: 'DRAFT', effectiveFrom: futureIso() });
+        const err = await cancelScheduledRelease('sched').catch((e) => e);
+        expect((err as PricelistVersionError).code).toBe('DRAFT_EXISTS');
+        expect(versions.find((v) => v.id === 'sched')?.status).toBe('APPROVED');
+    });
+
+    test('brak wersji → 404', async () => {
+        const err = await cancelScheduledRelease('nope').catch((e) => e);
         expect((err as PricelistVersionError).statusCode).toBe(404);
     });
 });

@@ -1,19 +1,26 @@
 /* ===== CENNIK PRECO — RENDEROWANIE ZAKŁADKI ===== */
 let _precoDirty = false;
 
+/**
+ * Odświeża stan obu przycisków zapisu PRECO (rail + toolbar przy tabeli).
+ */
 function updatePrecoSaveBtn() {
-    const btn = document.getElementById('btn-save-preco');
-    if (!btn) return;
+    const btns = ['btn-save-preco', 'btn-save-preco-rail']
+        .map((id) => document.getElementById(id))
+        .filter(Boolean);
+    if (!btns.length) return;
     const meta =
         window.pricelistVersions && typeof window.pricelistVersions.saveButtonMeta === 'function'
             ? window.pricelistVersions.saveButtonMeta('preco')
             : { editing: true, label: 'Zapisz', title: 'Zapisz zmiany w cenniku PRECO' };
-    btn.disabled = !meta.editing || !_precoDirty;
-    btn.title = meta.title;
-    btn.innerHTML = _precoDirty
-        ? `<i data-lucide="save" aria-hidden="true"></i> ${meta.label} PRECO <span class="color-warn">(!)</span>`
-        : `<i data-lucide="save" aria-hidden="true"></i> ${meta.label} PRECO`;
-    if (window.lucide) lucide.createIcons({ root: btn });
+    btns.forEach((btn) => {
+        btn.disabled = !meta.editing || !_precoDirty;
+        btn.title = meta.title;
+        btn.innerHTML = _precoDirty
+            ? `<i data-lucide="save" aria-hidden="true"></i> ${meta.label} PRECO <span class="color-warn">(!)</span>`
+            : `<i data-lucide="save" aria-hidden="true"></i> ${meta.label} PRECO`;
+        if (window.lucide) lucide.createIcons({ root: btn });
+    });
 }
 
 /**

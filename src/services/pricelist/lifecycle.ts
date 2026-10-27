@@ -600,6 +600,98 @@ export async function approveVersion(
     return res.value;
 }
 
+/**
+ * Anuluje ZAPLANOWANE wdrożenie (APPROVED z effectiveFrom w przyszłości):
+ * wersja wraca do DRAFT i nie wejdzie na oś czasu w zaplanowanej dacie.
+ * Wersji już obowiązującej nie rusza (to nie jest wycofanie cennika).
+ * Jeden szkic na typ — kolizja z istniejącym DRAFT = 409 DRAFT_EXISTS.
+ */
+export async function cancelScheduledRelease(
+    id: string,
+    opts: { userId?: string } = {}
+): Promise<PricelistVersion> {
+    const current = await prisma.pricelistVersion.findUnique({ where: { id } });
+    if (!current) {
+        throw new PricelistVersionError(404, 'NOT_FOUND', `Wersja ${id} nie istnieje`);
+    }
+    if (!isPricelistType(current.type)) {
+        throw new PricelistVersionError(422, 'INVALID_TYPE', `Wersja ${id} ma nieznany typ`);
+    }
+    const type = current.type;
+    const lock = lockFor(type);
+    const res = await lock.runWithLock(() =>
+        prisma.$transaction(async (tx) => {
+            const fresh = await tx.pricelistVersion.findUnique({ where: { id } });
+            if (!fresh) {
+                throw new PricelistVersionError(404, 'NOT_FOUND', `Wersja ${id} nie istnieje`);
+            }
+            const nowIso = new Date().toISOString();
+            if (fresh.status !== 'APPROVED' || fresh.effectiveFrom <= nowIso) {
+                throw new PricelistVersionError(
+                    409,
+                    'NOT_SCHEDULED',
+                    `Anulować można tylko wersję zaplanowaną (jeszcze nieobowiązującą)`
+                );
+            }
+            const draft = await tx.pricelistVersion.findFirst({
+                where: { type, status: 'DRAFT' },
+                select: { version: true }
+            });
+            if (draft) {
+                throw new PricelistVersionError(
+                    409,
+                    'DRAFT_EXISTS',
+                    DRAFT_EXISTS_MESSAGE(type, draft.version)
+                );
+            }
+            const changed = await tx.pricelistVersion.updateMany({
+                where: { id, status: 'APPROVED' },
+                data: {
+                    status: 'DRAFT',
+                    approvedBy: null,
+                    approvedAt: null,
+                    updatedAt: nowIso
+                }
+            });
+            if (changed.count !== 1) {
+                throw new PricelistVersionError(
+                    409,
+                    'CANCEL_RACE',
+                    `Wersja ${id} zmieniła status w trakcie anulowania — odśwież i spróbuj ponownie`
+                );
+            }
+            const row = await tx.pricelistVersion.findUnique({ where: { id } });
+            if (!row) {
+                throw new PricelistVersionError(404, 'NOT_FOUND', `Wersja ${id} nie istnieje`);
+            }
+            // Wskazanie ręczne na tę wersję traci sens po powrocie do szkicu.
+            await tx.settings.deleteMany({
+                where: { key: activeOverrideKey(type), value: id }
+            });
+            await writeAudit(tx, {
+                entityId: id,
+                userId: opts.userId,
+                action: 'CANCEL_SCHEDULE',
+                oldData: {
+                    status: 'APPROVED',
+                    effectiveFrom: fresh.effectiveFrom,
+                    approvedAt: fresh.approvedAt
+                },
+                newData: { status: 'DRAFT' }
+            });
+            return row;
+        })
+    );
+    if (!res.acquired) {
+        throw new PricelistVersionError(
+            503,
+            'LOCK_BUSY',
+            `Zapis wersji ${type} chwilowo zablokowany`
+        );
+    }
+    return res.value;
+}
+
 /** Alias legacy: aktywacja tylko dla daty <= now (guard zachowany z F2). */
 export async function activate(
     id: string,

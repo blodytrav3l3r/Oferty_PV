@@ -12,8 +12,6 @@
     var labelCache = {};
     /** Czy bieżący użytkownik widzi pełną listę (admin) per typ. */
     var canManage = {};
-    /** Mapa getRows per typ (rury/studnie/preco) — rejestrowana przy otwarciu panelu. */
-    var getRowsByType = {};
     /** Id raila — jeden na stronę; brak = strona bez sekcji cennika (kartoteka). */
     var DOCK_ID = 'pv-dock';
     var DOCK_BACKDROP_ID = 'pv-dock-backdrop';
@@ -31,46 +29,6 @@
     };
     /** Oś opisana przez nagłówek — chroni przed spóźnionym fetch/fetchem innej osi. */
     var headerAxis = null;
-
-    /** Domyślny odczyt wierszy z bieżącego window (fallback przy braku getRows). */
-    function defaultGetRows(type) {
-        if (type === 'rury' && typeof window.products !== 'undefined') return window.products;
-        if (type === 'studnie' && typeof window.studnieProducts !== 'undefined')
-            return window.studnieProducts;
-        if (type === 'preco') return defaultPrecoRows();
-        var w = null;
-        try {
-            w = window.parent && window.parent !== window ? window.parent : null;
-        } catch (_e) {
-            w = null;
-        }
-        if (w) {
-            if (type === 'rury' && typeof w.products !== 'undefined') return w.products;
-            if (type === 'studnie' && typeof w.studnieProducts !== 'undefined')
-                return w.studnieProducts;
-        }
-        return [];
-    }
-
-    /** PRECO: LIVE nested → flat rows (ten sam shape co import XLSX/API drafts). */
-    function defaultPrecoRows() {
-        var flat = window.pricelistXlsx && window.pricelistXlsx.precoNestedToFlat;
-        if (typeof flat !== 'function') throw new Error('Moduł PRECO niedostępny');
-        var nested =
-            typeof window.collectPrecoFromUI === 'function'
-                ? window.collectPrecoFromUI()
-                : window.precoPricing || {};
-        return flat(nested);
-    }
-
-    function resolveGetRows(type) {
-        if (typeof getRowsByType[type] === 'function') {
-            return getRowsByType[type];
-        }
-        return function () {
-            return defaultGetRows(type);
-        };
-    }
 
     /** Fail-closed fallback: brak globalnego escapera nie może wstrzyknąć HTML. */
     function escRaw(s) {
@@ -371,14 +329,6 @@
     }
 
     /* ===== MODAL: ZAPISZ JAKO WERSJĘ + TABELA ===== */
-
-    function nextSeq(versions) {
-        var max = 0;
-        versions.forEach(function (v) {
-            if (typeof v.seq === 'number' && v.seq > max) max = v.seq;
-        });
-        return max + 1;
-    }
 
     /** Prefiks etykiety per oś (S=studnie, R=rury, P=preco) — SSoT BE lifecycle.versionLabel. */
     var TYPE_PREFIX = { rury: 'R', studnie: 'S', preco: 'P' };
@@ -1217,6 +1167,7 @@
         var canDraft = canOpen && isDraft;
         var canClone = canOpen && !isDraft;
         var canDelete = canOpen && reason === null;
+        var canCancelSchedule = canOpen && stateOf(v) === 'SCHEDULED';
         return (
             '<div class="pv-version-actions__grid" role="group" aria-label="Akcje wybranej wersji">' +
             '<button type="button" class="btn btn-sm btn-secondary" data-pv-act="edit"' +
@@ -1243,6 +1194,32 @@
                 'Dostępne dla wersji opublikowanej'
             ) +
             '"><i data-lucide="history"></i> Kopia jako szkic</button>' +
+            '<button type="button" class="btn btn-sm btn-secondary" data-pv-act="publish"' +
+            idAttr +
+            ' data-pv-eff="' +
+            eff +
+            '"' +
+            off(canDraft) +
+            ' title="' +
+            tip(
+                canDraft,
+                'Wyślij roboczą na oś czasu (data przyszła = Do wdrożenia, data przeszła = korekta wsteczna z uzasadnieniem)',
+                'Dostępne dla wersji roboczej (szkicu)'
+            ) +
+            '">Opublikuj roboczą</button>' +
+            '<button type="button" class="btn btn-sm btn-secondary" data-pv-act="cancel-schedule"' +
+            idAttr +
+            ' data-pv-version="' +
+            label +
+            '"' +
+            off(canCancelSchedule) +
+            ' title="' +
+            tip(
+                canCancelSchedule,
+                'Anuluj zaplanowane wdrożenie — wersja wróci do szkicu i nie wejdzie w życie w zaplanowanej dacie',
+                'Dostępne dla wersji zaplanowanej (Do wdrożenia)'
+            ) +
+            '"><i data-lucide="undo-2"></i> Anuluj wdrożenie</button>' +
             '<button type="button" class="btn btn-sm btn-secondary" data-pv-act="activate"' +
             idAttr +
             ' data-pv-version="' +
@@ -1262,19 +1239,6 @@
             ' title="' +
             tip(canOpen, 'Porównaj z dowolną wersją (domyślnie poprzednia)') +
             '">Porównaj</button>' +
-            '<button type="button" class="btn btn-sm btn-secondary" data-pv-act="export"' +
-            idAttr +
-            ' data-pv-version="' +
-            version +
-            '" data-pv-status="' +
-            escAttr(v ? v.status || '' : '') +
-            '"' +
-            off(canOpen) +
-            ' title="' +
-            tip(canOpen, 'Pobierz XLSX tej wersji do review przed publikacją') +
-            '">Eksport' +
-            (isDraft ? ' (review)' : '') +
-            '</button>' +
             '<button type="button" class="btn btn-sm btn-secondary" data-pv-act="label"' +
             idAttr +
             ' data-pv-label="' +
@@ -1298,19 +1262,6 @@
             ' title="' +
             tip(canDraft, 'Edytuj notatki', 'Notatki edytujesz w wersji roboczej (szkicu)') +
             '"><i data-lucide="pencil"></i> Notatki</button>' +
-            '<button type="button" class="btn btn-sm btn-secondary" data-pv-act="publish"' +
-            idAttr +
-            ' data-pv-eff="' +
-            eff +
-            '"' +
-            off(canDraft) +
-            ' title="' +
-            tip(
-                canDraft,
-                'Wyślij roboczą na oś czasu (data przyszła = Do wdrożenia, data przeszła = korekta wsteczna z uzasadnieniem)',
-                'Dostępne dla wersji roboczej (szkicu)'
-            ) +
-            '">Opublikuj roboczą</button>' +
             '<button type="button" class="btn btn-sm btn-danger" data-pv-act="delete"' +
             idAttr +
             ' data-pv-version="' +
@@ -1367,13 +1318,25 @@
     }
 
     function transferHtml(type) {
+        var row = function (label, actions) {
+            return (
+                '<div class="pv-row pv-transfer-row">' +
+                '<h5 class="pv-row-label">' +
+                label +
+                '</h5>' +
+                '<div class="pv-actions">' +
+                actions +
+                '</div></div>'
+            );
+        };
         if (type === 'preco') {
             return (
-                '<p class="text-muted">Cennik PRECO na żywo (LIVE) — stan roboczy tabel, nie wersja. Osobny plik: tylko arkusze PRECO_*.</p>' +
-                '<div class="pv-row"><span class="pv-row-label">PRECO (na żywo)</span><span class="pv-actions">' +
-                '<button class="btn btn-sm btn-secondary" data-csp="exportPrecoToExcel" data-csp-args="[]" title="Eksportuj cennik PRECO do osobnego pliku Excel"><i data-lucide="download"></i> Eksportuj PRECO</button>' +
-                '<button class="btn btn-sm btn-secondary" data-csp="$dom" data-csp-args="[&quot;click&quot;, &quot;#pv-import-preco&quot;]" title="Importuj cennik PRECO z osobnego pliku Excel"><i data-lucide="upload"></i> Importuj PRECO</button>' +
-                '</span></div>' +
+                '<p class="text-muted">Cennik na żywo (LIVE) — bieżące tabele edytora, nie wersja z osi. Import i eksport dotyczą cennika: PRECO.</p>' +
+                row(
+                    'PRECO (na żywo)',
+                    '<button class="btn btn-sm btn-secondary" data-csp="exportPrecoToExcel" data-csp-args="[]" title="Eksportuj cennik PRECO (na żywo) do osobnego pliku Excel"><i data-lucide="download"></i> Eksportuj PRECO</button>' +
+                        '<button class="btn btn-sm btn-secondary" data-csp="$dom" data-csp-args="[&quot;click&quot;, &quot;#pv-import-preco&quot;]" title="Importuj do cennika PRECO (na żywo) z osobnego pliku Excel"><i data-lucide="upload"></i> Importuj PRECO</button>'
+                ) +
                 '<input type="file" id="pv-import-preco" style="display: none" accept=".xlsx,.xls" data-csp-on="change" data-csp="importPrecoFromExcel" data-csp-args="[&quot;$event&quot;]">'
             );
         }
@@ -1384,20 +1347,22 @@
             '" data-csp-args="[&quot;$event&quot;]"">';
         if (isRury) {
             return (
-                '<p class="text-muted">Cennik na żywo (LIVE) — stan roboczy tabel, nie wersja. Do review wersji użyj Eksport (review) w wierszu tabeli.</p>' +
-                '<div class="pv-row"><span class="pv-row-label">Rury (na żywo)</span><span class="pv-actions">' +
-                '<button class="btn btn-sm btn-secondary" data-csp="exportRuryToExcel" data-csp-args="[]" title="Eksportuj cennik na żywo do pliku Excel"><i data-lucide="download"></i> Eksportuj</button>' +
-                '<button class="btn btn-sm btn-secondary" data-csp="$dom" data-csp-args="[&quot;click&quot;, &quot;#pv-import-excel&quot;]" title="Importuj cennik z pliku Excel"><i data-lucide="upload"></i> Importuj</button>' +
-                '</span></div>' +
+                '<p class="text-muted">Cennik na żywo (LIVE) — bieżące tabele edytora, nie wersja z osi. Import i eksport dotyczą cennika: Rury.</p>' +
+                row(
+                    'Rury (na żywo)',
+                    '<button class="btn btn-sm btn-secondary" data-csp="exportRuryToExcel" data-csp-args="[]" title="Eksportuj cennik Rury (na żywo) do pliku Excel"><i data-lucide="download"></i> Eksportuj Rury</button>' +
+                        '<button class="btn btn-sm btn-secondary" data-csp="$dom" data-csp-args="[&quot;click&quot;, &quot;#pv-import-excel&quot;]" title="Importuj do cennika Rury (na żywo) z pliku Excel"><i data-lucide="upload"></i> Importuj Rury</button>'
+                ) +
                 importInput
             );
         }
         return (
-            '<p class="text-muted">Cennik na żywo (LIVE) — stan roboczy tabel, nie wersja. Osobny plik: tylko elementy studni.</p>' +
-            '<div class="pv-row"><span class="pv-row-label">Studnie (na żywo)</span><span class="pv-actions">' +
-            '<button class="btn btn-sm btn-secondary" data-csp="exportStudnieToExcel" data-csp-args="[]" title="Eksportuj cennik studni do osobnego pliku Excel"><i data-lucide="download"></i> Eksportuj studnie</button>' +
-            '<button class="btn btn-sm btn-secondary" data-csp="$dom" data-csp-args="[&quot;click&quot;, &quot;#pv-import-excel&quot;]" title="Importuj cennik studni z osobnego pliku Excel"><i data-lucide="upload"></i> Importuj studnie</button>' +
-            '</span></div>' +
+            '<p class="text-muted">Cennik na żywo (LIVE) — bieżące tabele edytora, nie wersja z osi. Import i eksport dotyczą cennika: Studnie.</p>' +
+            row(
+                'Studnie (na żywo)',
+                '<button class="btn btn-sm btn-secondary" data-csp="exportStudnieToExcel" data-csp-args="[]" title="Eksportuj cennik Studnie (na żywo) do osobnego pliku Excel"><i data-lucide="download"></i> Eksportuj Studnie</button>' +
+                    '<button class="btn btn-sm btn-secondary" data-csp="$dom" data-csp-args="[&quot;click&quot;, &quot;#pv-import-excel&quot;]" title="Importuj do cennika Studnie (na żywo) z osobnego pliku Excel"><i data-lucide="upload"></i> Importuj Studnie</button>'
+            ) +
             importInput
         );
     }
@@ -1405,11 +1370,11 @@
     /** Sekcja globalna: widoczna raz, niezależna od taba (te same funkcje). */
     function defaultsHtml() {
         return (
-            '<div class="pv-actions">' +
+            '<div class="pv-actions pv-defaults-actions">' +
             '<button class="btn btn-sm btn-secondary" id="btn-save-defaults" data-csp="saveAllDefaults" data-csp-scope="parent" data-csp-args="[]" title="Zapisz bieżący stan cenników (rury, studnie, PRECO) jako domyślne"><i data-lucide="bookmark"></i> Zapisz domyślne</button>' +
-            '<button class="btn btn-sm btn-secondary" data-csp="resetPriceList" data-csp-args="[]" title="Przywróć domyślne wartości cennika rur (pyta o potwierdzenie)"><i data-lucide="rotate-ccw"></i> Przywróć domyślne (Rury)</button>' +
-            '<button class="btn btn-sm btn-secondary" data-csp="resetStudniePriceList" data-csp-args="[]" title="Przywróć domyślne wartości cennika studni (pyta o potwierdzenie)"><i data-lucide="rotate-ccw"></i> Przywróć domyślne (Studnie)</button>' +
-            '<button class="btn btn-sm btn-secondary" data-pv-reset="preco" data-csp="loadPrecoDefaults" data-csp-args="[]" title="Przywróć domyślne wartości cennika PRECO (pyta o potwierdzenie)"><i data-lucide="rotate-ccw"></i> Przywróć domyślne (PRECO)</button>' +
+            '<button class="btn btn-sm btn-secondary" data-pv-reset="rury" title="Przywróć domyślne wartości tylko cennika rur (pyta o potwierdzenie)"><i data-lucide="rotate-ccw"></i> Przywróć domyślne (Rury)</button>' +
+            '<button class="btn btn-sm btn-secondary" data-pv-reset="studnie" title="Przywróć domyślne wartości tylko cennika studni (pyta o potwierdzenie)"><i data-lucide="rotate-ccw"></i> Przywróć domyślne (Studnie)</button>' +
+            '<button class="btn btn-sm btn-secondary" data-pv-reset="preco" title="Przywróć domyślne wartości tylko cennika PRECO (pyta o potwierdzenie)"><i data-lucide="rotate-ccw"></i> Przywróć domyślne (PRECO)</button>' +
             '</div>' +
             '<p class="text-muted">Zapisz domyślne obejmuje wszystkie cenniki (rury, studnie, PRECO); przywrócenie dotyczy wybranego cennika.</p>'
         );
@@ -1475,38 +1440,6 @@
         );
     }
 
-    /** Przycisk otwierający popup publikacji nowej wersji (zamiast formularza w railu). */
-    function newVersionButtonHtml(manageable) {
-        if (!manageable) {
-            return '<p class="text-muted">Podgląd wersji (zarządzanie wymaga roli admin).</p>';
-        }
-        return (
-            '<button type="button" class="btn btn-primary w-100" data-pv-act="new-version" ' +
-            'title="Utwórz wersję z bieżącego stanu siatki i wybierz datę oraz godzinę publikacji">' +
-            '<i data-lucide="calendar"></i> Nowa wersja…</button>'
-        );
-    }
-
-    function saveFormHtml(type, next) {
-        return (
-            '<form id="pv-save-form">' +
-            '<div class="form-group"><label>Nowa wersja</label>' +
-            '<input class="form-input" id="pv-next-label" value="' +
-            escAttr(versionLabel(type, next, new Date()) + ' (nr ' + next + ')') +
-            '" readonly></div>' +
-            '<div class="form-group"><label for="pv-eff">Data i godzina publikacji (czas lokalny → UTC)</label>' +
-            '<input class="form-input" type="datetime-local" id="pv-eff"></div>' +
-            '<div id="pv-past-warn" class="color-warn" style="display:none">Data w przeszłości — publikacja jako korekta wsteczna (nota min. 10 znaków).</div>' +
-            '<div class="form-group" id="pv-backdate-ack-wrap" style="display:none"><label><input type="checkbox" id="pv-backdate-ack"> Rozumiem, że przepisuję historię cennika (korekta wsteczna, nie zwykła publikacja)</label></div>' +
-            '<div class="form-group"><label for="pv-note">Notatki</label>' +
-            '<input class="form-input" id="pv-note" maxlength="500" placeholder="Opis zmiany (dla daty wstecznej: min. 10 znaków)">' +
-            '<p class="text-muted" id="pv-note-counter"></p></div>' +
-            '<p class="color-warn" id="pv-new-version-error" role="alert"></p>' +
-            '<div class="form-group"><button type="submit" class="btn btn-primary w-100" title="Tworzy wersję z bieżącego stanu cennika i publikuje ją z wybraną datą i godziną."><i data-lucide="rocket"></i> Opublikuj wersję</button></div>' +
-            '</form>'
-        );
-    }
-
     /** Strona hostowana przez #/cennik (iframe z ?host=cennik). */
     function isCennikHost() {
         try {
@@ -1535,20 +1468,63 @@
         return false;
     }
 
-    function dockHtml(type, manageable) {
+    /** Reset domyślnych per oś — funkcje żyją w module danej osi. */
+    var DEFAULTS_RESET_FNS = {
+        rury: 'resetPriceList',
+        studnie: 'resetStudniePriceList',
+        preco: 'loadPrecoDefaults'
+    };
+    var DEFAULTS_RESET_LABELS = { rury: 'Rury', studnie: 'Studnie', preco: 'PRECO' };
+    var DEFAULTS_RESET_TTL_MS = 15000;
+
+    /** Przywraca domyślne tylko wybranej osi; poza jej modułem przełącza tab. */
+    function requestDefaultsReset(type) {
+        var fn = DEFAULTS_RESET_FNS[type];
+        if (!fn) return;
+        var callable = /** @type {any} */ (window)[fn];
+        if (typeof callable === 'function') {
+            callable();
+            return;
+        }
+        if (isCennikHost() && switchCennikType(type)) {
+            try {
+                window.parent.__pvPendingDefaultsReset = { type: type, ts: Date.now() };
+            } catch (_e) {
+                /* brak dostępu do rodzica */
+            }
+            return;
+        }
+        toast(
+            'Otwórz cennik ' +
+                (DEFAULTS_RESET_LABELS[type] || type) +
+                ', aby przywrócić jego domyślne',
+            'info'
+        );
+    }
+
+    /** Po przełączeniu osi w #/cennik dokańcza reset zlecony z innego modułu. */
+    function consumePendingDefaultsReset(type) {
+        try {
+            var w = window.parent;
+            if (!w || w === window || !w.__pvPendingDefaultsReset) return;
+            var pending = w.__pvPendingDefaultsReset;
+            w.__pvPendingDefaultsReset = null;
+            if (pending.type !== type) return;
+            if (Date.now() - (pending.ts || 0) > DEFAULTS_RESET_TTL_MS) return;
+            var fn = DEFAULTS_RESET_FNS[type];
+            if (!fn) return;
+            var callable = /** @type {any} */ (window)[fn];
+            if (typeof callable === 'function') callable();
+        } catch (_e) {
+            /* brak dostępu do rodzica */
+        }
+    }
+
+    function dockHtml(type) {
         return (
             '<details class="pv-dock__section" open>' +
             '<summary><h4 class="pv-section">Wersje</h4></summary>' +
             '<div class="pv-dock__section-body">' +
-            '<div id="pv-save-wrap">' +
-            newVersionButtonHtml(manageable) +
-            '</div>' +
-            '<div class="pv-actions pv-legend" aria-label="Legenda statusów">' +
-            statusBadge('ACTIVE') +
-            statusBadge('SCHEDULED') +
-            statusBadge('DRAFT') +
-            statusBadge('ARCHIVED') +
-            '</div>' +
             '<div id="pv-version-actions" class="pv-version-actions"></div>' +
             '<div id="pv-versions-body" class="pv-version-list"></div>' +
             '</div>' +
@@ -1565,14 +1541,14 @@
             defaultsHtml() +
             '</div>' +
             '</details>' +
-            '<details class="pv-dock__section">' +
+            '<details class="pv-dock__section" open>' +
             '<summary><h4 class="pv-section">Jak to działa</h4></summary>' +
             '<div class="pv-dock__section-body">' +
-            '<p class="text-muted pv-help">Zapis tworzy kopię cennika (nie rusza ofert ani cennika na żywo). ' +
-            'Robocza → Opublikuj: data przyszła = Do wdrożenia (wejdzie w dacie Obowiązuje od), data przeszła = ' +
-            'korekta wsteczna (wymaga uzasadnienia min. 10 znaków). ' +
-            'Obowiązująca wybierana jest po dacie Obowiązuje od; oferty trzymają pieczęć wersji. ' +
-            'Szczegóły: docs/CENNIKI-INSTRUKCJA-ADMINA.md</p>' +
+            '<button type="button" class="pv-help-tile" data-pv-act="show-help">' +
+            '<i data-lucide="book-open" aria-hidden="true"></i>' +
+            '<span><strong>Jak to działa — pełna instrukcja</strong>' +
+            '<small>Edycja, tworzenie nowych cenników, publikacja, daty i anulowanie wdrożenia</small></span>' +
+            '</button>' +
             '</div>' +
             '</details>'
         );
@@ -1667,7 +1643,9 @@
     /** Auto-otwarcie w #/cennik — rail jest tam jedynym lewym panelem. */
     function autoOpenVersionsPanel(type) {
         if (!isCennikHost()) return Promise.resolve();
-        return openVersionsPanel(type);
+        return openVersionsPanel(type).then(function () {
+            consumePendingDefaultsReset(type);
+        });
     }
 
     function toUtcIso(localValue) {
@@ -2113,97 +2091,6 @@
         });
     }
 
-    /* Formuła 1:1 z BE versionExportFilename (src/utils/exportFilenames.ts). */
-    function versionExportFilename(type, version) {
-        var label =
-            type === 'rury'
-                ? 'Rury'
-                : type === 'studnie'
-                  ? 'Studnie'
-                  : type === 'preco'
-                    ? 'Preco'
-                    : type;
-        return 'Cennik_' + label + '_' + version + '_Export.xlsx';
-    }
-
-    async function exportVersion(id, type, version, status) {
-        try {
-            var headers = typeof window.authHeaders === 'function' ? window.authHeaders() : {};
-            var res = await fetch(API + '/' + encodeURIComponent(id) + '/export', {
-                headers: headers
-            });
-            if (!res.ok) throw new Error('Błąd HTTP ' + res.status);
-            var precoIncluded = true;
-            try {
-                precoIncluded = res.headers.get('X-Preco-Included') !== '0';
-            } catch (_h) {
-                /* brak nagłówka = stare API, cisza */
-            }
-            var blob = await res.blob();
-            var a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            var isDraftish = isEditableStatus(status);
-            var base = versionExportFilename(type, version || id);
-            a.download = isDraftish ? base.replace(/\.xlsx$/, '_REVIEW.xlsx') : base;
-            document.body.appendChild(a);
-            a.click();
-            setTimeout(function () {
-                URL.revokeObjectURL(a.href);
-                a.remove();
-            }, 1000);
-            if (!precoIncluded && type === 'studnie') {
-                toast(
-                    'Wersja PRECO o tym samym numerze nie istnieje — wyeksportowano same studnie',
-                    'warning'
-                );
-            }
-        } catch (e) {
-            toast('Błąd eksportu: ' + e.message, 'error');
-        }
-    }
-
-    function initEff(type, next) {
-        var eff = document.getElementById('pv-eff');
-        var warn = document.getElementById('pv-past-warn');
-        var ackWrap = document.getElementById('pv-backdate-ack-wrap');
-        var note = document.getElementById('pv-note');
-        var counter = document.getElementById('pv-note-counter');
-        var nextLabel = document.getElementById('pv-next-label');
-        if (!eff || !warn) return;
-        var check = function () {
-            try {
-                var past =
-                    eff.value && new Date(eff.value).getTime() < Date.now() - 60000 ? true : false;
-                warn.style.display = past ? '' : 'none';
-                if (ackWrap) ackWrap.style.display = past ? '' : 'none';
-                if (nextLabel && eff.value) {
-                    nextLabel.value = versionLabel(type, next, eff.value) + ' (nr ' + next + ')';
-                }
-            } catch (_e) {
-                warn.style.display = 'none';
-            }
-        };
-        var countNote = function () {
-            if (!counter || !note) return;
-            var len = (note.value || '').trim().length;
-            var past =
-                eff.value && new Date(eff.value).getTime() < Date.now() - 60000 ? true : false;
-            counter.textContent = past
-                ? len + '/10 znaków (wymagane dla daty wstecznej)'
-                : len + '/500 znaków';
-        };
-        eff.addEventListener('change', check);
-        eff.addEventListener('input', check);
-        if (note) note.addEventListener('input', countNote);
-        // Domyślnie: teraz (lokalnie).
-        try {
-            var now = new Date(Date.now() - new Date().getTimezoneOffset() * 60000);
-            eff.value = now.toISOString().slice(0, 16);
-        } catch (_e2) {
-            /* brak prefill */
-        }
-    }
-
     /** Przeładowanie formularza (next seq) + transferu + tabeli po zmianie taba. */
     async function switchType(newType, state) {
         state.current = newType;
@@ -2213,11 +2100,6 @@
             icons(tabs);
         }
         var manageable = canManage[newType] === true;
-        var saveWrap = document.getElementById('pv-save-wrap');
-        if (saveWrap) {
-            saveWrap.innerHTML = newVersionButtonHtml(manageable);
-            icons(saveWrap);
-        }
         var transfer = document.getElementById('pv-transfer');
         if (transfer) {
             transfer.innerHTML = transferHtml(newType);
@@ -2239,21 +2121,8 @@
     /**
      * Globalny panel wersji: jeden panel z tabami [Rury|Studnie|PRECO].
      * @param {string} type 'rury' | 'studnie' | 'preco' (preselekcja taba)
-     * @param {Function|Object} getRows funkcja wierszy aktywnego typu albo mapa {rury, studnie, preco}
-     * @param {Function} [getRowsOther] opcjonalna funkcja wierszy drugiego typu
      */
-    async function openVersionsPanel(type, getRows, getRowsOther) {
-        // Kompatybilność wstecz: getRows jako funkcja (pojedynczy typ) albo mapa.
-        if (getRows && typeof getRows !== 'function') {
-            if (typeof getRows.rury === 'function') getRowsByType.rury = getRows.rury;
-            if (typeof getRows.studnie === 'function') getRowsByType.studnie = getRows.studnie;
-            if (typeof getRows.preco === 'function') getRowsByType.preco = getRows.preco;
-        } else if (typeof getRows === 'function') {
-            getRowsByType[type] = getRows;
-        }
-        if (typeof getRowsOther === 'function') {
-            getRowsByType[type === 'rury' ? 'studnie' : 'rury'] = getRowsOther;
-        }
+    async function openVersionsPanel(type) {
         // Preselekcja tylko załadowanego modułu — inaczej fallback na pierwszy dostępny.
         if (!isAvailable(type)) type = availableTypes()[0];
         var dock = ensureDock();
@@ -2266,7 +2135,7 @@
             icons(tabs);
         }
         var content = document.getElementById('pv-dock-content');
-        if (content) content.innerHTML = dockHtml(type, manageable);
+        if (content) content.innerHTML = dockHtml(type);
         setDockExpanded(true);
         icons(dock);
         wirePanel(dock, type);
@@ -2294,16 +2163,16 @@
         if (!host.__pvState) host.__pvState = { current: initialType };
         var state = host.__pvState;
         state.current = initialType;
-        // Reset PRECO działa tylko tam, gdzie załadowany jest moduł PRECO (cennik
-        // studni); spod rur przycisk chowamy zamiast wołać w próżnię.
-        var precoReset = overlay.querySelector('[data-pv-reset="preco"]');
-        if (precoReset && typeof window.loadPrecoDefaults !== 'function') {
-            precoReset.style.display = 'none';
-        }
         // Rail jest trwały — listenery wieszamy raz, nie po każdym renderze.
         if (host.__pvWired) return;
         host.__pvWired = true;
         overlay.addEventListener('click', function (e) {
+            var resetBtn =
+                e.target && e.target.closest ? e.target.closest('[data-pv-reset]') : null;
+            if (resetBtn) {
+                requestDefaultsReset(resetBtn.getAttribute('data-pv-reset'));
+                return;
+            }
             var tab = e.target && e.target.closest ? e.target.closest('[data-pv-tab]') : null;
             if (tab) {
                 var next = tab.getAttribute('data-pv-tab');
@@ -2335,7 +2204,7 @@
             var act = btn.getAttribute('data-pv-act');
             var id = btn.getAttribute('data-pv-id');
             if (act === 'close') closeVersionsPanel();
-            else if (act === 'new-version') openNewVersionDialog(type);
+            else if (act === 'show-help') openHelpDialog();
             else if (act === 'edit') openVersionOrDraft(type);
             else if (act === 'diff' && id) openDiff(id, null, type);
             else if (act === 'label' && id) {
@@ -2349,15 +2218,26 @@
                     },
                     type
                 );
-            } else if (act === 'export' && id) {
-                exportVersion(
-                    id,
-                    type,
-                    btn.getAttribute('data-pv-version'),
-                    btn.getAttribute('data-pv-status')
-                );
             } else if (act === 'publish' && id) {
                 openPublishDialog(type, id);
+            } else if (act === 'cancel-schedule' && id) {
+                var scheduledName = btn.getAttribute('data-pv-version') || id;
+                pvConfirm(
+                    'Anulować wdrożenie wersji ' +
+                        scheduledName +
+                        '? Wersja wróci do szkicu i nie wejdzie w życie w zaplanowanej dacie.',
+                    { title: 'Anuluj wdrożenie', okText: 'Anuluj wdrożenie', type: 'warning' }
+                ).then(function (ok) {
+                    if (!ok) return;
+                    apiJson(API + '/' + encodeURIComponent(id) + '/cancel-schedule', authed('POST'))
+                        .then(function () {
+                            toast('Anulowano wdrożenie ' + scheduledName, 'success');
+                            afterVersionChange(type, { reloadGrid: true });
+                        })
+                        .catch(function (err) {
+                            toast(friendlyError('Błąd anulowania wdrożenia', err), 'error');
+                        });
+                });
             } else if (act === 'edit-note' && id) {
                 openNoteModal(
                     'Edytuj notatki',
@@ -2584,7 +2464,6 @@
         studnie: 'btn-save-studnie-pricelist',
         preco: 'btn-save-preco'
     };
-    var EDITOR_ADD = { rury: 'btn-add-product', studnie: 'btn-add-studnie-product' };
 
     function isEditing(type) {
         return editModes[type] === true;
@@ -2634,7 +2513,6 @@
      */
     function applyEditorLock(type) {
         var editing = isEditing(type);
-        var versionMode = versionEditMode(type);
         var grid = document.getElementById(EDITOR_GRID[type] || '');
         if (grid) {
             var sections = grid.querySelectorAll('.preco-accordion-body');
@@ -2648,22 +2526,8 @@
             saveBtn.classList.remove('hidden');
             saveBtn.disabled = !editing;
         }
-        var addBtn = document.getElementById(EDITOR_ADD[type] || '');
-        if (addBtn) addBtn.disabled = !editing;
         var actions = document.getElementById('pv-grid-actions');
         if (actions) actions.setAttribute('data-axis', type);
-        var stateBadge = document.getElementById('pv-grid-actions-state');
-        if (stateBadge) {
-            stateBadge.textContent = versionMode
-                ? 'Edycja wersji'
-                : editing
-                  ? 'Edycja szkicu'
-                  : 'Podgląd';
-            stateBadge.setAttribute(
-                'data-mode',
-                versionMode ? 'version' : editing ? 'edit' : 'view'
-            );
-        }
         // Etykieta zależy od celu zapisu (szkic / opublikowana wersja) — helper osi.
         if (type === 'preco') {
             if (typeof window.updatePrecoSaveBtn === 'function') window.updatePrecoSaveBtn();
@@ -2733,7 +2597,7 @@
             var fetched = await fetchSummary();
             data = fetched ? (fetched.types || {})[t] || {} : {};
         }
-        var host = document.getElementById('pv-editor-actions');
+        var host = document.getElementById('pv-mode-actions');
         if (host) {
             host.innerHTML = editorActionsHtml(t, data);
             icons(host);
@@ -3041,104 +2905,62 @@
         }
     }
 
-    /**
-     * Popup „Nowa wersja”: tworzy wersję z bieżącej siatki i publikuje ją
-     * z wybraną datą i godziną (przyszła = do wdrożenia, przeszła = korekta).
-     */
-    async function openNewVersionDialog(type) {
-        var t = type || editorType;
-        if (canManage[t] !== true) {
-            toast('Zarządzanie wersjami wymaga roli admin', 'warning');
-            return;
-        }
-        var versions = [];
-        try {
-            versions = await fetchFullList(t);
-        } catch (e) {
-            toast('Błąd listy wersji: ' + e.message, 'error');
-            return;
-        }
-        var next = nextSeq(versions);
+    /** Popup z pełną instrukcją cenników (kafelek w sekcji „Jak to działa”). */
+    function openHelpDialog() {
         window.showModal({
-            id: 'pv-new-version-modal',
-            titleId: 'pv-new-version-title',
+            id: 'pv-help-modal',
+            titleId: 'pv-help-title',
             html:
-                '<div class="modal">' +
-                '<div class="modal-header"><h3 id="pv-new-version-title"><i data-lucide="calendar"></i> Nowa wersja cennika</h3>' +
-                '<button type="button" class="btn-icon" aria-label="Zamknij" data-csp="closeModal" data-csp-args="[&quot;pv-new-version-modal&quot;]"><i data-lucide="x"></i></button></div>' +
+                '<div class="modal pv-help-modal">' +
+                '<div class="modal-header"><h3 id="pv-help-title"><i data-lucide="book-open"></i> Jak działają cenniki</h3>' +
+                '<button type="button" class="btn-icon" aria-label="Zamknij" data-csp="closeModal" data-csp-args="[&quot;pv-help-modal&quot;]"><i data-lucide="x"></i></button></div>' +
                 '<div class="modal-body">' +
-                '<p class="text-muted">Wersja powstanie z bieżącego stanu siatki. Data i godzina decydują, od kiedy nowe oferty policzą te ceny.</p>' +
-                saveFormHtml(t, next) +
+                '<section><h4>Oś czasu wersji</h4>' +
+                '<p class="text-muted">Statusy wersji na osi czasu:</p>' +
+                '<div class="pv-actions pv-legend" aria-label="Legenda statusów">' +
+                statusBadge('ACTIVE') +
+                statusBadge('SCHEDULED') +
+                statusBadge('DRAFT') +
+                statusBadge('ARCHIVED') +
+                '</div>' +
+                '<ul>' +
+                '<li><strong>Obowiązuje</strong> — najnowsza opublikowana wersja, której data już minęła. Z niej liczą nowe oferty.</li>' +
+                '<li><strong>Do wdrożenia</strong> — opublikowana wersja z datą przyszłą. Wejdzie automatycznie w wybranej dacie i godzinie.</li>' +
+                '<li><strong>W przygotowaniu</strong> — szkic. Nie wpływa na oferty ani na cennik obowiązujący.</li>' +
+                '<li><strong>Historyczny</strong> — opublikowana wersja wyparta przez nowszą. Służy do podglądu i eksportu.</li>' +
+                '</ul></section>' +
+                '<section><h4>Jak edytować cennik</h4><ol>' +
+                '<li>Otwórz panel <strong>Panel</strong> i zaznacz wersję na liście.</li>' +
+                '<li>Kliknij <strong>Edytuj szkic</strong> (wersja robocza) albo <strong>Edytuj</strong> (wersja opublikowana — edycja w miejscu z ostrzeżeniem).</li>' +
+                '<li>Zmień ceny w siatce. Przycisk <strong>Zapisz szkic</strong> zapisuje szkic, a <strong>Zapisz wersję</strong> podmienia ceny wybranej wersji.</li>' +
+                '<li>Po zapisie szkicu kliknij <strong>Opublikuj roboczą</strong> i wybierz datę oraz godzinę wejścia w życie.</li>' +
+                '</ol></section>' +
+                '<section><h4>Jak utworzyć nowy cennik</h4><ul>' +
+                '<li><strong>Utwórz kopię jako szkic</strong> — kopia obowiązującej wersji do swobodnej edycji; obowiązujący cennik się nie zmienia.</li>' +
+                '<li><strong>Transfer plików</strong> — import/eksport XLSX cennika z aktywnej zakładki (Rury / Studnie / PRECO). „Na żywo” = bieżące tabele edytora, nie wersja z osi.</li>' +
+                '<li><strong>Cenniki domyślne</strong> — zapis wszystkich osi naraz; przywrócenie działa tylko na wybranej osi (Rury / Studnie / PRECO).</li>' +
+                '</ul></section>' +
+                '<section><h4>Daty publikacji</h4><ul>' +
+                '<li><strong>Data przyszła</strong> — wersja trafia do <em>Do wdrożenia</em> i włącza się sama w tej dacie.</li>' +
+                '<li><strong>Data przeszła</strong> — korekta wsteczna: wymagane uzasadnienie (min. 10 znaków) i potwierdzenie.</li>' +
+                '<li><strong>Teraz</strong> — wersja obowiązuje od razu dla nowych ofert.</li>' +
+                '<li>Ta sama data i godzina na jednej osi = kolizja; zmień termin.</li>' +
+                '</ul></section>' +
+                '<section><h4>Anulowanie i wycofanie</h4><ul>' +
+                '<li><strong>Anuluj wdrożenie</strong> — dla wersji <em>Do wdrożenia</em>: wraca do szkicu i nie wejdzie w zaplanowanej dacie.</li>' +
+                '<li>Wersji już obowiązującej nie wycofasz tą drogą — opublikuj nowszą wersję albo ustaw inną jako aktywną.</li>' +
+                '</ul></section>' +
+                '<section><h4>Oferty a cennik</h4><p>Istniejące oferty i zamówienia trzymają własną pieczęć wersji — zmiana cennika ich nie przelicza. Nowe oferty liczą z wersji <em>Obowiązuje</em>. Edycja wersji obowiązującej w miejscu działa od razu na nowe oferty.</p></section>' +
+                '<section><h4>Bezpieczeństwo zapisu</h4><ul>' +
+                '<li>Zapis jest chroniony sumą kontrolną — równoległa zmiana kończy się komunikatem o nieaktualnej wersji; otwórz ją ponownie.</li>' +
+                '<li>Może istnieć tylko jeden szkic na oś (Rury / Studnie / PRECO).</li>' +
+                '<li>Zarządzanie wersjami wymaga roli administratora.</li>' +
+                '</ul></section>' +
+                '<p class="text-muted">Pełna instrukcja: <code>docs/CENNIKI-INSTRUKCJA-ADMINA.md</code></p>' +
+                '<div class="pv-actions"><button type="button" class="btn btn-primary" data-csp="closeModal" data-csp-args="[&quot;pv-help-modal&quot;]">Zamknij</button></div>' +
                 '</div></div>'
         });
-        var overlay = document.getElementById('pv-new-version-modal');
-        icons(overlay);
-        initEff(t, next);
-        var form = document.getElementById('pv-save-form');
-        if (form) {
-            form.addEventListener('submit', function (ev) {
-                ev.preventDefault();
-                submitNewVersion(t);
-            });
-        }
-    }
-
-    /** Zapis bieżącej siatki jako wersji + publikacja z datą z popupu. */
-    async function submitNewVersion(type) {
-        var t = type || editorType;
-        var eff = document.getElementById('pv-eff');
-        var noteEl = document.getElementById('pv-note');
-        var ack = document.getElementById('pv-backdate-ack');
-        var errEl = document.getElementById('pv-new-version-error');
-        var submitBtn = document.querySelector('#pv-save-form button[type="submit"]');
-        var showErr = function (msg) {
-            if (errEl) errEl.textContent = msg || '';
-        };
-        showErr('');
-        var iso;
-        try {
-            iso = toUtcIso(eff ? eff.value : '');
-        } catch (_e) {
-            showErr('Podaj prawidłową datę i godzinę publikacji.');
-            return;
-        }
-        var past = isPastDate(iso);
-        var note = noteEl ? String(noteEl.value || '').trim() : '';
-        if (past && ack && !ack.checked) {
-            showErr('Zaznacz potwierdzenie korekty wstecznej (przepisujesz historię cennika).');
-            return;
-        }
-        if (past && note.length < PAST_NOTE_MIN) {
-            showErr('Data w przeszłości — podaj uzasadnienie (min. 10 znaków).');
-            return;
-        }
-        var rows;
-        try {
-            rows = resolveGetRows(t)();
-        } catch (err) {
-            showErr('Błąd odczytu cennika: ' + err.message);
-            return;
-        }
-        if (submitBtn) submitBtn.disabled = true;
-        try {
-            var saved = await saveDraftRows(t, rows, note);
-            var draft = (saved && saved.version) || {};
-            if (!draft.id) throw new Error('Nie udało się zapisać wersji');
-            var approved = await approveVersion(draft.id, { effectiveFrom: iso, note: note });
-            var published = (approved && approved.version) || draft;
-            if (typeof window.closeModal === 'function') window.closeModal('pv-new-version-modal');
-            await afterVersionChange(t, { reloadGrid: true });
-            toast(
-                'Opublikowano ' +
-                    (published.version || '') +
-                    ' — obowiązuje od ' +
-                    stripDateTime(iso),
-                'success'
-            );
-        } catch (err) {
-            showErr(friendlyError('Błąd publikacji', err));
-            if (submitBtn) submitBtn.disabled = false;
-        }
+        icons(document.getElementById('pv-help-modal'));
     }
 
     /** Jedna delegacja dla przycisków trybu (CSP-E: bez inline handlerów). */
@@ -3207,7 +3029,6 @@
         isCennikHost: isCennikHost,
         afterVersionChange: afterVersionChange,
         openDiff: openDiff,
-        exportVersion: exportVersion,
         statusBadge: statusBadge,
         stateOf: stateOf,
         displayStatus: displayStatus,

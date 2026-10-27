@@ -136,7 +136,7 @@ describe('frontend: panel Zarządzanie cennikiem (3 przyciski + 3 sekcje)', () =
         expect(panel).toContain('if (types.length < 2) return');
         expect(panel).toContain('if (!isAvailable(type)) type = availableTypes()[0]');
         expect(panel).toContain('isAvailable(next)');
-        expect(panel).toContain('id="pv-save-wrap"');
+        expect(panel).not.toContain('id="pv-save-wrap"');
         expect(panel).toContain('id="pv-transfer"');
     });
     it('PRECO transfer tylko w panelu (toolbar bez Eksportuj/Importuj)', () => {
@@ -149,15 +149,27 @@ describe('frontend: panel Zarządzanie cennikiem (3 przyciski + 3 sekcje)', () =
         expect(preco).not.toContain('import-preco-excel');
         expect(preco).toContain('window.exportPrecoToExcel = exportPrecoToExcel');
     });
-    it('panel: domyślne z resetem PRECO (chowany spod rur)', () => {
-        expect(panel).toContain('data-pv-reset="preco"');
-        expect(panel).toContain('data-csp="loadPrecoDefaults"');
+    it('panel: domyślne z resetem każdej osi osobno (rury / studnie / PRECO)', () => {
+        for (const type of ['rury', 'studnie', 'preco']) {
+            expect(panel).toContain(`data-pv-reset="${type}"`);
+        }
         expect(panel).toContain('> Przywróć domyślne (PRECO)');
-        expect(panel).toContain("typeof window.loadPrecoDefaults !== 'function'");
+        expect(panel).toContain('function requestDefaultsReset(type)');
+        expect(panel).toContain('function consumePendingDefaultsReset(type)');
+        const css = fs.readFileSync(
+            path.join(process.cwd(), 'public/css/pricelist-panel.css'),
+            'utf-8'
+        );
+        expect(css).toMatch(/\.pv-dock \.pv-defaults-actions \.btn \{[^}]*width: 100%/);
     });
     it('panel: transfer woła istniejące eksporty/importy; domyślne globalne raz', () => {
         expect(panel).toContain('data-csp="exportRuryToExcel"');
         expect(panel).toContain('data-csp="exportStudnieToExcel"');
+        expect(panel).toContain('pv-transfer-row');
+        expect(panel).toContain('<h5 class="pv-row-label">');
+        expect(panel).toContain("'Rury (na żywo)'");
+        expect(panel).toContain('bieżące tabele edytora, nie wersja z osi');
+        expect(panel).toContain('Importuj Rury');
         expect(panel).not.toContain('pv-row-label">PRECO<');
         expect(panel).not.toContain('onclick="exportPrecoToExcel()"');
         expect(panel).toContain('id="pv-import-excel"');
@@ -169,27 +181,24 @@ describe('frontend: panel Zarządzanie cennikiem (3 przyciski + 3 sekcje)', () =
         expect(panel).toContain('id="pv-import-preco"');
         expect(panel).toContain('data-csp="importPrecoFromExcel"');
         expect(panel).toContain('data-csp="saveAllDefaults" data-csp-scope="parent"');
-        expect(panel).toContain('data-csp="resetPriceList"');
-        expect(panel).toContain('data-csp="resetStudniePriceList"');
+        expect(panel).not.toContain('data-csp="resetPriceList"');
+        expect(panel).not.toContain('data-csp="resetStudniePriceList"');
         expect(panel).toContain('Przywróć domyślne (Rury)');
         expect(panel).toContain('Przywróć domyślne (Studnie)');
         const saveDefaultsCount = (panel.match(/id="btn-save-defaults"/g) || []).length;
         expect(saveDefaultsCount).toBe(1);
         expect(panel).toContain('obejmuje wszystkie cenniki (rury, studnie, PRECO)');
     });
-    it('panel: eksport ostrzega o braku PRECO same-seq', () => {
-        expect(panel).toContain('X-Preco-Included');
-        expect(panel).toContain('Wersja PRECO o tym samym numerze nie istnieje');
+    it('panel: brak eksportu wersji z raila (tylko transfer LIVE)', () => {
+        expect(panel).not.toContain('data-pv-act="export"');
+        expect(panel).not.toContain('X-Preco-Included');
     });
-    it('panel: otwarcia preselektują tab; getRows per typ (mapa + getRowsOther)', () => {
-        expect(panel).toContain('getRowsByType');
-        expect(panel).toContain('getRowsOther');
-        expect(panel).toContain('resolveGetRows');
+    it('panel: otwarcie preselektuje tab; bez starej mapy getRows', () => {
+        expect(panel).not.toContain('resolveGetRows');
+        expect(panel).not.toContain('getRowsByType');
         expect(panel).toContain('switchType');
         expect(rury).toContain('openVersionsPanel(');
-        expect(studnie).toContain('openVersionsPanel(');
-        expect(rury).toContain('studnieProducts');
-        expect(studnie).toContain('products');
+        expect(studnie).toContain('openVersionsPanel(type)');
     });
 });
 

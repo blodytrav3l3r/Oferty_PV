@@ -14,6 +14,10 @@ const manager = fs.readFileSync(
     path.join(process.cwd(), 'public/js/studnie/pricelistManager.js'),
     'utf-8'
 );
+const preco = fs.readFileSync(
+    path.join(process.cwd(), 'public/js/studnie/pricelistPreco.js'),
+    'utf-8'
+);
 
 describe('frontend: PRECO jako trzeci tab', () => {
     it('tab pojawia się tylko z załadowanym modułem PRECO', () => {
@@ -21,15 +25,18 @@ describe('frontend: PRECO jako trzeci tab', () => {
         expect(panel).toContain('precoNestedToFlat');
         expect(panel).toContain("preco: 'PRECO'");
     });
-    it('domyślny odczyt PRECO to LIVE nested → flat', () => {
-        expect(panel).toContain("if (type === 'preco') return defaultPrecoRows();");
-        expect(panel).toContain('collectPrecoFromUI');
+    it('domyślny odczyt PRECO obsługuje moduł studni', () => {
         expect(panel).toContain('precoNestedToFlat');
+        expect(manager).toContain("initialType === 'preco' ? 'preco' : 'studnie'");
     });
-    it('panel studni rejestruje getRows dla preco', () => {
-        expect(panel).toContain('getRowsByType.preco = getRows.preco');
+    it('panel studni otwiera PRECO bez mapy getRows', () => {
+        expect(panel).not.toContain('getRowsByType');
         expect(manager).toContain('function openStudnieVersionsPanel(initialType)');
-        expect(manager).toContain('preco: function');
+        expect(manager).toContain('openVersionsPanel(type)');
+    });
+    it('zapis PRECO obsługuje przycisk raila i toolbaru', () => {
+        expect(preco).toContain("'btn-save-preco-rail'");
+        expect(preco).toContain("'btn-save-preco'");
     });
 });
 
@@ -64,9 +71,8 @@ describe('frontend: transfer PRECO', () => {
 });
 
 describe('frontend: publikacja PRECO z popupu', () => {
-    it('zapis bieżącej siatki → approve z wybraną datą/godziną', () => {
-        expect(panel).toContain('function submitNewVersion(');
-        expect(panel).toContain('saveDraftRows(t, rows, note)');
+    it('publikacja roboczej → approve z wybraną datą/godziną', () => {
+        expect(panel).toContain('function openPublishDialog(');
         expect(panel).toContain('approveVersion(draft.id, { effectiveFrom: iso, note: note })');
     });
 });

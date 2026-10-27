@@ -40,6 +40,7 @@ export {
     replaceVersionRows,
     approveVersion,
     publishDraft,
+    cancelScheduledRelease,
     activate,
     setActiveVersion,
     clearActiveOverride,

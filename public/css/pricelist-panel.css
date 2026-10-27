@@ -114,58 +114,42 @@ body.pv-cennik-host [data-pv-dock-toggle] {
     padding-top: 0.1rem;
 }
 
-.pv-grid-actions__head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.5rem;
-}
-
-.pv-grid-actions__title {
-    font-size: var(--fs-xs);
-    font-weight: var(--fw-semibold);
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    color: var(--text-muted);
-}
-
-.pv-grid-actions__state {
-    padding: 0.1rem 0.5rem;
-    border: 1px solid var(--border);
-    border-radius: 999px;
-    font-size: var(--fs-xs);
-    color: var(--text-secondary);
-    background: var(--bg-primary);
-}
-
-.pv-grid-actions__state[data-mode='edit'],
-.pv-grid-actions__state[data-mode='version'] {
-    border-color: var(--warn);
-    color: var(--warn-hover);
-    background: var(--warn-bg);
-}
-
 .pv-grid-actions .pv-editor-actions {
     display: flex;
-    flex-direction: column;
+    flex-wrap: wrap;
     align-items: stretch;
     gap: 0.4rem;
 }
 
-.pv-grid-actions .pv-editor-actions .btn,
-.pv-grid-actions__row .btn {
-    width: 100%;
-    justify-content: center;
-}
-
-.pv-grid-actions__row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
+.pv-grid-actions .pv-mode-actions {
+    display: flex;
+    flex: 1 1 auto;
+    flex-wrap: wrap;
     gap: 0.4rem;
 }
 
-/* PRECO ma własny „Zapisz" przy tabeli — nie dublujemy Dodaj/Zapisz studni. */
-.pv-grid-actions[data-axis='preco'] .pv-grid-actions__row {
+.pv-grid-actions .pv-editor-actions .btn {
+    flex: 1 1 0;
+    min-width: 0;
+    justify-content: center;
+}
+
+/* PRECO ma własny „Zapisz" przy tabeli — nie dublujemy zapisu studni w railu. */
+.pv-grid-actions[data-axis='preco'] #btn-save-studnie-pricelist {
+    display: none;
+}
+
+/* Zapis PRECO w railu: widoczny tylko na osi PRECO. */
+#btn-save-preco-rail {
+    display: none;
+}
+
+.pv-grid-actions[data-axis='preco'] #btn-save-preco-rail {
+    display: inline-flex;
+}
+
+/* W #/cennik rail jest zawsze otwarty — zapis PRECO tylko w railu, bez duplikatu. */
+body.pv-cennik-host .preco-toolbar {
     display: none;
 }
 
@@ -291,29 +275,81 @@ body.pv-dock-open #pricelist-status-strip {
     line-height: 1.5;
 }
 
-.pv-dock .pv-help {
-    margin: 0;
+.pv-help-tile {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    width: 100%;
+    padding: 0.65rem 0.7rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    text-align: left;
+    cursor: pointer;
+    transition:
+        border-color 0.15s ease,
+        background 0.15s ease;
+}
+
+.pv-help-tile:hover {
+    border-color: var(--accent-border-dim);
+    background: var(--bg-primary);
+}
+
+.pv-help-tile i {
+    flex: none;
+}
+
+.pv-help-tile strong {
+    display: block;
     font-size: var(--fs-md);
-    line-height: 1.55;
+}
+
+.pv-help-tile small {
+    display: block;
+    color: var(--text-muted);
+    font-size: var(--fs-sm);
+    line-height: 1.4;
+}
+
+.pv-help-modal {
+    width: min(1520px, 92vw);
+    max-width: 92vw;
+}
+
+.pv-help-modal .modal-body {
+    max-height: 78vh;
+    overflow-y: auto;
+}
+
+.pv-help-modal h4 {
+    margin: 1rem 0 0.35rem;
+    font-size: var(--fs-md);
+}
+
+.pv-help-modal .pv-legend {
+    flex-wrap: wrap;
+    margin-bottom: 0.5rem;
+}
+
+.pv-help-modal section:first-child h4 {
+    margin-top: 0;
+}
+
+.pv-help-modal ul,
+.pv-help-modal ol {
+    margin: 0 0 0.5rem 1.1rem;
+    padding: 0;
+}
+
+.pv-help-modal li {
+    margin-bottom: 0.3rem;
 }
 
 .pv-dock .form-row-2,
 .pv-dock .form-row-3 {
     grid-template-columns: 1fr;
-}
-
-#pv-new-version-modal #pv-save-form {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-}
-
-#pv-new-version-modal #pv-save-form .form-input {
-    width: 100%;
-}
-
-#pv-new-version-modal #pv-save-form .btn {
-    justify-content: center;
 }
 
 .pv-dock #pv-type-tabs:empty {
@@ -337,6 +373,18 @@ body.pv-dock-open #pricelist-status-strip {
     align-items: center;
 }
 
+/* Domyślne: kafelki akcji na całą szerokość raila (jeden pod drugim). */
+.pv-dock .pv-defaults-actions {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+}
+
+.pv-dock .pv-defaults-actions .btn {
+    width: 100%;
+    justify-content: center;
+}
+
 .pv-dock .pv-row {
     display: flex;
     flex-wrap: wrap;
@@ -350,6 +398,32 @@ body.pv-dock-open #pricelist-status-strip {
     color: var(--text-muted);
 }
 
+/* Transfer plików: etykieta jako nagłówek, pod nią kafelki import/eksport. */
+.pv-dock .pv-transfer-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.4rem;
+}
+
+.pv-dock .pv-transfer-row .pv-row-label {
+    margin: 0;
+    font-size: var(--fs-sm);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+}
+
+.pv-dock .pv-transfer-row .pv-actions {
+    display: flex;
+    gap: 0.4rem;
+}
+
+.pv-dock .pv-transfer-row .pv-actions .btn {
+    flex: 1 1 0;
+    min-width: 0;
+    justify-content: center;
+}
+
 /* Przyciski w railu: większe niż globalny btn-sm, spójne z treścią sekcji. */
 .pv-dock .btn-sm {
     font-size: var(--fs-md);
@@ -360,11 +434,25 @@ body.pv-dock-open #pricelist-status-strip {
     flex-wrap: wrap;
     justify-content: flex-start;
     gap: 0.3rem;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
     margin-bottom: 0;
 }
 
-.pv-dock .pv-status-strip .badge {
+/* Każdy komunikat zajmuje pełną szerokość raila — długi tekst zawija się,
+ * zamiast kurczyć kafelek do treści. */
+.pv-dock .pv-status-strip .badge,
+.pv-dock .pv-status-strip .pv-draft-banner {
+    flex: 0 0 100%;
+    width: 100%;
+    min-width: 0;
     max-width: 100%;
+    justify-content: flex-start;
+    box-sizing: border-box;
+}
+
+.pv-dock .pv-status-strip .badge {
     padding: 2px 8px;
     font-size: var(--fs-xs);
     font-weight: var(--fw-medium);
@@ -599,6 +687,11 @@ body.pv-dock-open #pricelist-status-strip {
     padding: 0 0.5rem;
     font-size: var(--fs-md);
     justify-content: flex-start;
+}
+
+/* Destrukcyjna akcja na końcu, w osobnym pełnym wierszu. */
+.pv-version-actions__grid [data-pv-act='delete'] {
+    grid-column: 1 / -1;
 }
 
 .pv-version-actions__grid .btn svg {

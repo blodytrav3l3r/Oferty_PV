@@ -12,19 +12,37 @@ const panel = fs.readFileSync(
     'utf-8'
 );
 const topbar = fs.readFileSync(path.join(process.cwd(), 'public/js/versionDisplay.js'), 'utf-8');
+const css = fs.readFileSync(path.join(process.cwd(), 'public/css/pricelist-panel.css'), 'utf-8');
 
 describe('frontend: statusy mówią co znaczą', () => {
     it('BACKDATE_REQUESTED to Szkic (korekta) — nie mylić z obowiązującą korektą', () => {
         expect(panel).toContain("BACKDATE_REQUESTED: 'Szkic (korekta)'");
         expect(panel).toContain('badge-warn');
     });
-    it('legenda statusów nad tabelą', () => {
+    it('legenda statusów w popupie', () => {
         expect(panel).toContain('pv-legend');
         expect(panel).toContain('Legenda statusów');
     });
     it('box pomocy z cyklem życia + link do instrukcji', () => {
-        expect(panel).toContain('pv-help');
+        expect(panel).toContain('pv-help-modal');
         expect(panel).toContain('docs/CENNIKI-INSTRUKCJA-ADMINA.md');
+    });
+    it('legenda i wyjaśnienie statusów tylko w popupie „Jak to działa”', () => {
+        const marker = '<h4 class="pv-section">Jak to działa</h4>';
+        const helpAt = panel.indexOf(marker);
+        const helpEnd = panel.indexOf('</details>', helpAt);
+        const dockHelp = panel.slice(helpAt, helpEnd);
+        expect(helpAt).toBeGreaterThan(-1);
+        expect(dockHelp).not.toContain('pv-legend');
+        expect(dockHelp).not.toContain('Statusy wersji');
+        expect(dockHelp).toContain('data-pv-act="show-help"');
+        const modalAt = panel.indexOf("id: 'pv-help-modal'");
+        const legendAt = panel.indexOf('pv-legend');
+        expect(modalAt).toBeGreaterThan(-1);
+        expect(legendAt).toBeGreaterThan(modalAt);
+        expect(panel).toContain('Statusy wersji na osi czasu');
+        expect(panel).toContain('Jak utworzyć nowy cennik');
+        expect(panel).toContain('Anuluj wdrożenie');
     });
 });
 
@@ -53,6 +71,27 @@ describe('frontend: DRAFT ma drogę na oś czasu', () => {
         expect(panel).toContain('id="pv-publish-date" type="datetime-local"');
         expect(panel).not.toContain('var doApprove =');
     });
+    it('zaplanowane wdrożenie można anulować (powrót do szkicu)', () => {
+        expect(panel).toContain('data-pv-act="cancel-schedule"');
+        expect(panel).toContain("'/cancel-schedule'");
+        expect(panel).toContain('Anuluj wdrożenie');
+    });
+    it('kafelki akcji w kolejności logicznej: edycja → publikacja → analiza → usuń', () => {
+        const order = [
+            'edit',
+            'clone',
+            'publish',
+            'cancel-schedule',
+            'activate',
+            'diff',
+            'label',
+            'edit-note',
+            'delete'
+        ].map((act) => panel.indexOf('data-pv-act="' + act + '"'));
+        expect(order.every((i) => i > -1)).toBe(true);
+        expect(order).toEqual([...order].sort((a, b) => a - b));
+        expect(css).toContain(".pv-version-actions__grid [data-pv-act='delete']");
+    });
     it('wiersz ma wejście w edycję: Edytuj (DRAFT) i Utwórz kopię jako szkic (reszta)', () => {
         expect(panel).toContain('data-pv-act="edit"');
         expect(panel).toContain('Utwórz kopię jako szkic');
@@ -73,31 +112,31 @@ describe('frontend: diff z cenami przed decyzją', () => {
         expect(panel).toContain('checksCheckedAt');
         expect(panel).toContain('checksStale');
     });
-    it('nowa wersja: popup z datą i godziną publikacji', () => {
-        expect(panel).toContain('function openNewVersionDialog(');
-        expect(panel).toContain('pv-new-version-modal');
-        expect(panel).toContain('type="datetime-local" id="pv-eff"');
-        expect(panel).toContain('function submitNewVersion(');
-        expect(panel).toContain('Opublikuj wersję');
+    it('bez przycisku „Nowa wersja…” — tworzenie przez kopię szkicu i publikację', () => {
+        expect(panel).not.toContain('data-pv-act="new-version"');
+        expect(panel).not.toContain('pv-new-version-modal');
+        expect(panel).not.toContain('function openNewVersionDialog(');
+        expect(panel).toContain("'Utwórz kopię jako szkic'");
     });
 });
 
-describe('frontend: eksport review + live vs wersja', () => {
-    it('drafty eksportują z sufiksem _REVIEW', () => {
-        expect(panel).toContain('_REVIEW.xlsx');
+describe('frontend: brak eksportu wersji z raila', () => {
+    it('nie ma akcji Eksport (review)', () => {
+        expect(panel).not.toContain('data-pv-act="export"');
+        expect(panel).not.toContain('_REVIEW.xlsx');
     });
     it('transfer mówi wprost: na żywo (LIVE), nie wersja', () => {
         expect(panel).toContain('na żywo (LIVE)');
-        expect(panel).toContain('Do review wersji użyj Eksport (review)');
+        expect(panel).not.toContain('Eksport (review)');
     });
 });
 
 describe('frontend: backdate z potwierdzeniem i licznikiem', () => {
-    it('checkbox przepisywania historii + licznik 0/10', () => {
-        expect(panel).toContain('pv-backdate-ack');
-        expect(panel).toContain('przepisuję historię cennika');
-        expect(panel).toContain('pv-note-counter');
-        expect(panel).toContain('/10 znaków');
+    it('publikacja: data wsteczna wymaga uzasadnienia min. 10 znaków', () => {
+        expect(panel).toContain('pv-publish-note');
+        expect(panel).toContain('Data w przeszłości — korekta wsteczna');
+        expect(panel).toContain('PAST_NOTE_MIN');
+        expect(panel).toContain('uzasadnienie min. ');
     });
     it('karta: data lokalna, ISO/UTC tylko w tooltipie', () => {
         expect(panel).toContain('function fmtEff');

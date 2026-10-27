@@ -121,7 +121,6 @@ describe('Rail „Zarządzanie cennikami" (lewy panel edytorów)', () => {
             'clone',
             'activate',
             'diff',
-            'export',
             'label',
             'publish',
             'delete',
@@ -158,7 +157,8 @@ describe('Rail „Zarządzanie cennikami" (lewy panel edytorów)', () => {
         expect(order).toEqual([...order].sort((a, b) => a - b));
         // Spójna typografia treści sekcji (nie dziedziczy 16 px z body).
         expect(css).toMatch(/\.pv-dock__section-body \{[^}]*font-size: var\(--fs-md\)/);
-        expect(css).toMatch(/\.pv-dock \.pv-help \{[^}]*font-size: var\(--fs-md\)/);
+        expect(css).toContain('.pv-help-modal .pv-legend');
+        expect(css).toMatch(/\.pv-help-modal \{[^}]*width: min\(1520px, 92vw\)/);
         expect(css).toContain('.pv-dock .btn-sm');
     });
 
@@ -181,17 +181,26 @@ describe('Rail „Zarządzanie cennikami" (lewy panel edytorów)', () => {
         expect(panel).toContain('content.innerHTML = dockHtml');
         expect(panel).toContain('id="pv-dock-content" class="pv-dock__body"');
         expect(panel).toContain("document.getElementById('pv-grid-actions')");
-        expect(panel).toContain('stateBadge.textContent = versionMode');
-        expect(panel).toContain("'Edycja wersji'");
+        expect(panel).not.toContain('stateBadge.textContent = versionMode');
         expect(panel).toContain("'Zapisz wersję'");
-        // PRECO ma własny zapis przy tabeli — rail nie dubluje Dodaj/Zapisz.
-        expect(css).toContain(".pv-grid-actions[data-axis='preco'] .pv-grid-actions__row");
+        // PRECO: zapis w railu, toolbar przy tabeli ukryty w #/cennik.
+        expect(css).toContain(".pv-grid-actions[data-axis='preco'] #btn-save-studnie-pricelist");
+        expect(css).toContain(".pv-grid-actions[data-axis='preco'] #btn-save-preco-rail");
+        expect(css).toContain('body.pv-cennik-host .preco-toolbar');
+        expect(studniePartial).toContain('id="btn-save-preco-rail"');
         // Stan ma jedno miejsce: otwarty rail chowa pasek nad siatką.
         expect(css).toContain('body.pv-dock-open #pricelist-status-strip');
         for (const partial of [ruryPartial, studniePartial]) {
             expect(partial).toContain('id="pv-grid-actions"');
-            expect(partial).toContain('id="pv-grid-actions-state"');
+            expect(partial).not.toContain('id="pv-grid-actions-state"');
         }
+    });
+
+    it('status w railu: każdy komunikat na pełną szerokość panelu', () => {
+        expect(css).toMatch(/\.pv-dock \.pv-status-strip \{[^}]*width: 100%/);
+        expect(css).toMatch(
+            /\.pv-dock \.pv-status-strip \.badge,\s*\.pv-dock \.pv-status-strip \.pv-draft-banner \{[^}]*width: 100%/
+        );
     });
 
     it('#/cennik: edycja w miejscu, bez zmiany hasha SPA', () => {

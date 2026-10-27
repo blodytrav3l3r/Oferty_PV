@@ -19,8 +19,10 @@ describe('cennik: tryb edycji (podgląd ↔ szkic)', () => {
             expect(html).toContain('id="pv-editor-actions"');
             expect(html).toContain('id="pricelist-status-strip"');
         }
-        expect(ruryPartial).toContain('id="btn-add-product"');
-        expect(studniePartial).toContain('id="btn-add-studnie-product"');
+        expect(ruryPartial).toContain('id="pv-mode-actions"');
+        expect(studniePartial).toContain('id="pv-mode-actions"');
+        expect(ruryPartial).not.toContain('id="btn-add-product"');
+        expect(studniePartial).not.toContain('id="btn-add-studnie-product"');
     });
 
     it('trzy stany: kopia obowiązującego / edycja szkicu / publikacja / anulowanie', () => {
@@ -31,11 +33,11 @@ describe('cennik: tryb edycji (podgląd ↔ szkic)', () => {
         expect(shared).toContain('data-pv-mode=');
     });
 
-    it('podgląd: siatka inert, „Zapisz" widoczny ale wyłączony, „Dodaj" wyłączony', () => {
+    it('podgląd: siatka inert, „Zapisz" widoczny ale wyłączony', () => {
         expect(shared).toContain('grid.inert = !editing && sections.length === 0');
         expect(shared).toContain("saveBtn.classList.remove('hidden')");
         expect(shared).toContain('saveBtn.disabled = !editing');
-        expect(shared).toContain('addBtn.disabled = !editing');
+        expect(shared).not.toContain('EDITOR_ADD');
         expect(read('public/css/style.utilities.css')).toContain('#studnie-pricelist-body[inert]');
     });
 
