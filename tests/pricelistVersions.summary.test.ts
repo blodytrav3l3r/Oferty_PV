@@ -124,7 +124,8 @@ jest.mock('../src/prismaClient', () => ({
     __esModule: true,
     default: {
         pricelistVersion: versionDelegate,
-        users: usersDelegate
+        users: usersDelegate,
+        settings: { findMany: jest.fn(async () => []) }
     }
 }));
 

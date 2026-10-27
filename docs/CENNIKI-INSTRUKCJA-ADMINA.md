@@ -104,10 +104,24 @@ dostaje numer wersji („Cennik Rur”, „Cennik elementów studni”, „Cenni
 PRECO”). Przycisk **„Wróć do edycji”** przywraca dane cennika na żywo (łącznie z
 niezapisanymi zmianami sprzed podglądu).
 Akcje są **jednym wspólnym paskiem** nad listą i działają na zaznaczonym kafelku:
-Edytuj / Kopia jako szkic, Porównaj, Eksport, Etykieta, Notatki,
-Opublikuj roboczą, Usuń (niedostępne dla danego stanu są wyszarzone z powodem;
-bez zaznaczenia wszystkie są nieaktywne). Podglądu nie ma jako osobnej akcji —
-wersję ogląda się klikając kafelek (tabela w trybie tylko do odczytu).
+Edytuj / Kopia jako szkic, **Ustaw jako aktywny**, Porównaj, Eksport, Etykieta,
+Notatki, Opublikuj roboczą, Usuń (niedostępne dla danego stanu są wyszarzone z
+powodem; bez zaznaczenia wszystkie są nieaktywne). Podglądu nie ma jako osobnej
+akcji — wersję ogląda się klikając kafelek (tabela w trybie tylko do odczytu).
+
+**Zmiana obowiązującego cennika** („Ustaw jako aktywny”): wskazuje opublikowaną
+wersję, z której **nowe** oferty liczą ceny — także starszą niż najnowsza.
+Historia zostaje nietknięta: istniejące oferty i zamówienia trzymają własne
+pieczątki wersji, a data `effectiveFrom` się nie zmienia. Wskazanie jest per oś
+(Rury / Studnie / PRECO) i obowiązuje do pierwszej publikacji nowej wersji z datą
+już obowiązującą — wtedy oś czasu znów wygrywa. Przycisk **„Przywróć najnowszy”**
+(cofa wskazanie ręczne) pojawia się tylko wtedy, gdy wskazanie jest ustawione.
+
+**Usuwanie wersji**: szkic zawsze; opublikowana tylko wtedy, gdy **nie jest
+obowiązująca** i **żadna oferta ani zamówienie jej nie używa** (PRECO dodatkowo:
+żadna wersja studni jej nie wskazuje). Wersję obowiązującą trzeba najpierw
+zastąpić inną („Ustaw jako aktywny”) — inaczej 409 `ACTIVE_IN_USE`.
+
 Sekcje raila: **Siatka cen**, **Wersje**,
 **Transfer plików**, **Cenniki domyślne**, **Jak to działa**. Rail jest **jedynym
 paskiem zarządzania** — mieści też akcje siatki (Edytuj szkic / Opublikuj / Dodaj /

@@ -40,6 +40,8 @@ export {
     approveVersion,
     publishDraft,
     activate,
+    setActiveVersion,
+    clearActiveOverride,
     applyBackdate,
     deleteVersion,
     cloneAsDraft
@@ -89,6 +91,8 @@ export {
     getPrecoReferences,
     getVersionsSummary,
     resolveActive,
+    readActiveOverride,
+    readActiveOverrides,
     resolveVersionIdSafe,
     resolveActivePricing,
     pricingFromVersion

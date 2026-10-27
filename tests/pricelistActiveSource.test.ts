@@ -37,6 +37,9 @@ interface VRow {
 }
 
 const versions: VRow[] = [];
+
+/** Ręczny wybór obowiązującego cennika (settings per oś) — klucz → id wersji. */
+const overrideSettings = new Map<string, string>();
 const itemsRury: Array<Record<string, unknown>> = [];
 const itemsStudnie: Array<Record<string, unknown>> = [];
 const itemsKonfig: Array<Record<string, unknown>> = [];
@@ -58,6 +61,11 @@ type Where = {
 function matchWhere(v: VRow, where: Where | undefined): boolean {
     if (!where) return true;
     if (where.type !== undefined && v.type !== where.type) return false;
+    if (where.id !== undefined) {
+        if (typeof where.id === 'string') {
+            if (v.id !== where.id) return false;
+        } else if (v.id === where.id.not) return false;
+    }
     if (where.status !== undefined) {
         if (typeof where.status === 'string') {
             if (v.status !== where.status) return false;
@@ -132,7 +140,19 @@ jest.mock('../src/prismaClient', () => ({
         productsStudnie: { findMany: jest.fn(async () => liveStudnie.map((r) => ({ ...r }))) },
         precoKonfig: { findMany: jest.fn(async () => liveKonfig.map((r) => ({ ...r }))) },
         precoKinety: { findMany: jest.fn(async () => liveKinety.map((r) => ({ ...r }))) },
-        precoZakresy: { findMany: jest.fn(async () => liveZakresy.map((r) => ({ ...r }))) }
+        precoZakresy: { findMany: jest.fn(async () => liveZakresy.map((r) => ({ ...r }))) },
+        settings: {
+            findUnique: jest.fn(async ({ where }: { where: { key: string } }) => {
+                const value = overrideSettings.get(where.key);
+                return value === undefined ? null : { key: where.key, value };
+            }),
+            findMany: jest.fn(async ({ where }: { where?: { key?: { in: string[] } } } = {}) => {
+                const keys = where?.key?.in;
+                return [...overrideSettings.entries()]
+                    .filter(([key]) => !keys || keys.includes(key))
+                    .map(([key, value]) => ({ key, value }));
+            })
+        }
     }
 }));
 
@@ -269,6 +289,7 @@ beforeAll(() => {
 });
 
 beforeEach(() => {
+    overrideSettings.clear();
     for (const s of [
         versions,
         itemsRury,
@@ -288,6 +309,34 @@ beforeEach(() => {
 });
 
 describe('Paczka 1: source=active czyta z APPROVED', () => {
+    test('ręczny wybór: source=active bierze wskazaną starszą wersję', async () => {
+        versions.push({
+            id: 'v-rury-old',
+            type: 'rury',
+            seq: 0,
+            version: 'v0',
+            status: 'APPROVED',
+            effectiveFrom: '2020-01-01T00:00:00.000Z',
+            sha256: 'x'
+        });
+        itemsRury.push({
+            id: 'v-rury-old:R9',
+            versionId: 'v-rury-old',
+            name: 'Rura old',
+            category: 'K',
+            price: 70
+        });
+
+        overrideSettings.set('pricelist_active_override_rury', 'v-rury-old');
+        const pinned = await request(app).get('/api/products?source=active');
+        expect(pinned.status).toBe(200);
+        expect(pinned.body.data[0].price).toBe(70);
+
+        overrideSettings.clear();
+        const newest = await request(app).get('/api/products?source=active');
+        expect(newest.body.data[0].price).toBe(80);
+    });
+
     test('rury: active 80 vs live 100; plain GET bez zmian i bez nagłówka', async () => {
         const active = await request(app).get('/api/products?source=active');
         expect(active.status).toBe(200);

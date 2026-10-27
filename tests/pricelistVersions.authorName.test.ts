@@ -68,7 +68,8 @@ jest.mock('../src/prismaClient', () => ({
         offers_rel: zero,
         offers_studnie_rel: zero,
         orders_rury_rel: zero,
-        orders_studnie_rel: zero
+        orders_studnie_rel: zero,
+        settings: { findMany: jest.fn(async () => []) }
     }
 }));
 

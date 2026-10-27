@@ -66,6 +66,12 @@ const txMock = {
     offers_studnie_rel: { count: countMock('offers_studnie_rel') },
     orders_rury_rel: { count: countMock('orders_rury_rel') },
     orders_studnie_rel: { count: countMock('orders_studnie_rel') },
+    settings: {
+        deleteMany: jest.fn(async () => ({ count: 0 })),
+        findUnique: jest.fn(async () => null),
+        findMany: jest.fn(async () => []),
+        upsert: jest.fn(async () => ({}))
+    },
     audit_logs: {
         create: jest.fn(async ({ data }: { data: Record<string, unknown> }) => {
             audits.push(data);
@@ -81,7 +87,36 @@ jest.mock('../src/prismaClient', () => ({
             findUnique: (...a: unknown[]) =>
                 (txMock.pricelistVersion.findUnique as (...x: unknown[]) => Promise<unknown>)(...a),
             findMany: (...a: unknown[]) =>
-                (txMock.pricelistVersion.findMany as (...x: unknown[]) => Promise<unknown>)(...a)
+                (txMock.pricelistVersion.findMany as (...x: unknown[]) => Promise<unknown>)(...a),
+            // resolveActive: najnowsza APPROVED z effectiveFrom <= teraz.
+            findFirst: jest.fn(
+                async ({ where }: { where?: { id?: string; type?: string } } = {}) => {
+                    const nowIso = new Date().toISOString();
+                    const rows = versions
+                        .filter(
+                            (v) =>
+                                (where?.id === undefined || v.id === where.id) &&
+                                (where?.type === undefined || v.type === where.type) &&
+                                v.status === 'APPROVED' &&
+                                v.effectiveFrom <= nowIso
+                        )
+                        .sort(
+                            (a, b) =>
+                                (a.effectiveFrom < b.effectiveFrom
+                                    ? 1
+                                    : a.effectiveFrom > b.effectiveFrom
+                                      ? -1
+                                      : 0) || b.seq - a.seq
+                        );
+                    return rows[0] ?? null;
+                }
+            )
+        },
+        settings: {
+            findUnique: jest.fn(async () => null),
+            findMany: jest.fn(async () => []),
+            deleteMany: jest.fn(async () => ({ count: 0 })),
+            upsert: jest.fn(async () => ({}))
         },
         offers_rel: {
             count: (...a: unknown[]) =>
@@ -187,16 +222,59 @@ describe('DELETE pricelistVersions (S2a)', () => {
         expect(itemsRury.filter((i) => i['versionId'] === v.id)).toHaveLength(2);
     });
 
-    test('APPROVED przeszła (ACTIVE/ARCHIVED) z zerem → 409 NOT_DELETABLE', async () => {
+    test('APPROVED przeszła i obowiązująca → 409 ACTIVE_IN_USE (najpierw wybierz inną)', async () => {
         const v = seed('APPROVED', 'v-past');
         v.effectiveFrom = '2025-01-01T00:00:00.000Z';
         versions[0] = v;
         const err = await deleteVersion(v.id).catch((e) => e);
         expect(err).toBeInstanceOf(PricelistVersionError);
         expect((err as PricelistVersionError).statusCode).toBe(409);
-        expect((err as PricelistVersionError).code).toBe('NOT_DELETABLE');
+        expect((err as PricelistVersionError).code).toBe('ACTIVE_IN_USE');
+        expect((err as Error).message).toContain('obowiązującym cennikiem');
         expect(versions.find((x) => x.id === v.id)).toBeDefined();
         expect(itemsRury.filter((i) => i['versionId'] === v.id)).toHaveLength(2);
+    });
+
+    test('APPROVED historyczna (starsza, nieobowiązująca) bez użycia → kasuje', async () => {
+        seedVersion({
+            id: 'v-old',
+            type: 'rury',
+            status: 'APPROVED',
+            seq: 1,
+            effectiveFrom: '2025-01-01T00:00:00.000Z'
+        });
+        seedVersion({
+            id: 'v-new',
+            type: 'rury',
+            status: 'APPROVED',
+            seq: 2,
+            effectiveFrom: '2026-01-01T00:00:00.000Z'
+        });
+        await expect(deleteVersion('v-old')).resolves.toEqual({ id: 'v-old' });
+        expect(versions.some((v) => v.id === 'v-old')).toBe(false);
+        expect(versions.some((v) => v.id === 'v-new')).toBe(true);
+    });
+
+    test('APPROVED historyczna z 1 ofertą → 409 USED_BY (historia chroniona)', async () => {
+        seedVersion({
+            id: 'v-old',
+            type: 'rury',
+            status: 'APPROVED',
+            seq: 1,
+            effectiveFrom: '2025-01-01T00:00:00.000Z'
+        });
+        seedVersion({
+            id: 'v-new',
+            type: 'rury',
+            status: 'APPROVED',
+            seq: 2,
+            effectiveFrom: '2026-01-01T00:00:00.000Z'
+        });
+        use('offers_rel', 'v-old', 1);
+        const err = await deleteVersion('v-old').catch((e) => e);
+        expect(err).toBeInstanceOf(PricelistVersionError);
+        expect((err as PricelistVersionError).code).toBe('USED_BY');
+        expect(versions.some((v) => v.id === 'v-old')).toBe(true);
     });
 
     test('countVersionUsage sumuje 4 tabele (offers/orders/total)', async () => {
@@ -261,7 +339,7 @@ describe('DELETE pricelistVersions (S2a)', () => {
         expect(String(audit?.['oldData'] ?? '')).toContain('studnieReferences');
     });
 
-    test('PRECO przeszła (ACTIVE) → NOT_DELETABLE przed guardem referencji', async () => {
+    test('PRECO przeszła i obowiązująca → ACTIVE_IN_USE przed guardem referencji', async () => {
         seedVersion({
             id: 'p-active',
             type: 'preco',
@@ -277,7 +355,7 @@ describe('DELETE pricelistVersions (S2a)', () => {
             effectiveFrom: '2025-02-01T00:00:00.000Z'
         });
         const err = await deleteVersion('p-active').catch((e) => e);
-        expect((err as PricelistVersionError).code).toBe('NOT_DELETABLE');
+        expect((err as PricelistVersionError).code).toBe('ACTIVE_IN_USE');
     });
 
     test('re-check w tx: referencja dodana po pre-checku → 409 i brak delete', async () => {

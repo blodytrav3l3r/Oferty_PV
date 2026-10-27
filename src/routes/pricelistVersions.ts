@@ -28,6 +28,9 @@ import {
     getVersionPreview,
     getVersionsSummary,
     publishDraft,
+    readActiveOverrides,
+    setActiveVersion,
+    clearActiveOverride,
     setLabelOverride,
     updateDraft
 } from '../services/pricelistVersionService';
@@ -129,9 +132,10 @@ router.get('/', requireAuth, requireAdmin, READ_LIMITER, async (req, res) => {
         // PRECO: jedna mapa referencji studni (getPrecoReferences).
         const hasPreco = versions.some((v) => v.type === 'preco');
         const offerVersionIds = versions.filter((v) => v.type !== 'preco').map((v) => v.id);
-        const [precoRefs, usageBatch] = await Promise.all([
+        const [precoRefs, usageBatch, activeOverrides] = await Promise.all([
             hasPreco ? getPrecoReferences() : Promise.resolve(null),
-            countVersionUsageBatch(offerVersionIds)
+            countVersionUsageBatch(offerVersionIds),
+            readActiveOverrides()
         ]);
         const withUsage = versions.map((v) => ({
             ...v,
@@ -166,6 +170,8 @@ router.get('/', requireAuth, requireAdmin, READ_LIMITER, async (req, res) => {
             ])
         );
         res.json({
+            // Ręcznie ustawiony obowiązujący cennik per oś (null = wybór czasowy).
+            activeOverrides,
             versions: withUsage.map((v) => ({
                 ...v,
                 state: deriveState(
@@ -479,6 +485,45 @@ router.post(
                 }
             }
             res.json({ version, checksStale });
+        } catch (err) {
+            sendVersionError(res, err);
+        }
+    }
+);
+
+/** Kanoniczna zmiana obowiązującego cennika: nowe oferty biorą ceny z tej wersji. */
+router.post('/:id/active', requireAuth, requireAdmin, PRICELIST_WRITE_LIMITER, async (req, res) => {
+    try {
+        const id = parseVersionId(req.params);
+        if (!id) {
+            sendInvalidId(res);
+            return;
+        }
+        const version = await setActiveVersion(id, { userId: userIdOf(req) });
+        res.json({ version });
+    } catch (err) {
+        sendVersionError(res, err);
+    }
+});
+
+/** Powrót do wyboru czasowego (najnowsza opublikowana wersja obowiązuje). */
+router.post(
+    '/active/reset',
+    requireAuth,
+    requireAdmin,
+    PRICELIST_WRITE_LIMITER,
+    async (req, res) => {
+        try {
+            const { type } = (req.body ?? {}) as { type?: unknown };
+            if (!isKnownType(type)) {
+                res.status(422).json({
+                    error: 'Nieprawidłowy typ cennika (dozwolone: rury, studnie, preco)',
+                    code: 'INVALID_TYPE'
+                });
+                return;
+            }
+            const out = await clearActiveOverride(type, { userId: userIdOf(req) });
+            res.json(out);
         } catch (err) {
             sendVersionError(res, err);
         }

@@ -179,7 +179,17 @@ const txMock = {
                 settings.set(where.key, value);
                 return { key: where.key, value };
             }
-        )
+        ),
+        deleteMany: jest.fn(async ({ where }: { where: { key?: string; value?: string } }) => {
+            let count = 0;
+            for (const [key, value] of [...settings.entries()]) {
+                if (where.key !== undefined && where.key !== key) continue;
+                if (where.value !== undefined && where.value !== value) continue;
+                settings.delete(key);
+                count++;
+            }
+            return { count };
+        })
     },
     audit_logs: {
         create: jest.fn(async ({ data }: { data: Record<string, unknown> }) => {
@@ -198,6 +208,12 @@ jest.mock('../src/prismaClient', () => ({
         pricelistItemPrecoKonfig: txMock.pricelistItemPrecoKonfig,
         pricelistItemPrecoKinety: txMock.pricelistItemPrecoKinety,
         pricelistItemPrecoZakresy: txMock.pricelistItemPrecoZakresy,
+        // Ręczny wybór obowiązującego cennika — brak = wybór czasowy.
+        settings: {
+            findUnique: jest.fn(async () => null),
+            findMany: jest.fn(async () => []),
+            deleteMany: jest.fn(async () => ({ count: 0 }))
+        },
         $transaction: jest.fn(async (fn: (tx: unknown) => Promise<unknown>) => fn(txMock))
     }
 }));

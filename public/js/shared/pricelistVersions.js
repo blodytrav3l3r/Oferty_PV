@@ -249,7 +249,8 @@
         try {
             var json = await apiJson(API + '?type=' + encodeURIComponent(type), authed('GET'));
             canManage[type] = true;
-            return json.versions || [];
+            if (json && json.activeOverrides) activeOverrideIds = json.activeOverrides;
+            return applyActiveOverride(type, json.versions || []);
         } catch (e) {
             if (e && e.status === 403) {
                 canManage[type] = false;
@@ -260,6 +261,27 @@
             }
             throw e;
         }
+    }
+
+    /** Ręcznie ustawiony obowiązujący cennik per oś (id albo null). */
+    var activeOverrideIds = {};
+
+    /**
+     * Ręczny wybór zmienia stan kafelków: wskazana wersja = ACTIVE,
+     * dotychczasowa „najnowsza z daty" = ARCHIVED (nie jest już w użyciu).
+     */
+    function applyActiveOverride(type, list) {
+        var pinned = activeOverrideIds[type];
+        if (!pinned) return list;
+        var exists = list.some(function (v) {
+            return v.id === pinned;
+        });
+        if (!exists) return list;
+        return list.map(function (v) {
+            if (v.id === pinned) return Object.assign({}, v, { state: 'ACTIVE', pinned: true });
+            if (stateOf(v) === 'ACTIVE') return Object.assign({}, v, { state: 'ARCHIVED' });
+            return v;
+        });
     }
 
     /* ===== BADGE „cennik vX" ===== */
@@ -711,9 +733,12 @@
         );
     }
 
-    /** Wersję można usunąć tylko zanim zacznie żyć (nigdy nie była aktywna). */
+    /**
+     * Usunąć można wersję, która nie jest obowiązująca i nic jej nie używa:
+     * szkic, zaplanowana oraz historyczna (ofert zero).
+     */
     function isDeletable(state) {
-        return state === 'DRAFT' || state === 'SCHEDULED';
+        return state === 'DRAFT' || state === 'SCHEDULED' || state === 'ARCHIVED';
     }
 
     /** Statusy z edytowalną treścią i notą (jak EDITABLE_STATUSES w BE). */
@@ -730,20 +755,18 @@
         );
     }
 
-    /** Powód blokady „Usuń" (null = wolno): PRECO z referencjami, historia, użycie. */
+    /** Powód blokady „Usuń" (null = wolno): PRECO z referencjami, obowiązująca, użycie. */
     function deleteReason(v) {
         var state = stateOf(v);
         if (v.usedByKind === 'studnieVersions' && typeof v.usedBy === 'number' && v.usedBy > 0) {
             return 'Używana przez ' + v.usedBy + ' wersji studni';
         }
         if (state === 'DRAFT') return null;
-        if (state === 'SCHEDULED') {
-            if (typeof v.usedBy !== 'number') return 'Brak danych o użyciu — nieusuwalna';
-            if (v.usedBy > 0) return 'Używana przez ' + v.usedBy + ' ofert/zamówień';
-            return null;
-        }
-        if (state === 'ACTIVE') return 'Wersja obowiązująca — nieusuwalna';
-        return 'Wersja historyczna — nieusuwalna';
+        if (state === 'ACTIVE') return 'Wersja obowiązująca — najpierw ustaw inną jako aktywną';
+        // SCHEDULED i ARCHIVED: usuwalne tylko bez pieczątek ofert/zamówień.
+        if (typeof v.usedBy !== 'number') return 'Brak danych o użyciu — nieusuwalna';
+        if (v.usedBy > 0) return 'Używana przez ' + v.usedBy + ' ofert/zamówień';
+        return null;
     }
 
     /** Rok podkategorii: effectiveFrom, fallback data utworzenia. */
@@ -1135,10 +1158,12 @@
     }
 
     /** Pasek akcji: jeden komplet, aktywny dopiero po zaznaczeniu karty. */
-    function actionsBarHtml(v, manageable) {
+    function actionsBarHtml(v, manageable, type) {
         var has = Boolean(v) && manageable === true;
         var isDraft = v ? isEditableStatus(stateOf(v)) : false;
         var reason = v ? deleteReason(v) : null;
+        var overrideId = type ? activeOverrideIds[type] : null;
+        var canActivate = has && Boolean(v) && stateOf(v) === 'ARCHIVED';
         var idAttr = v ? ' data-pv-id="' + escAttr(v.id) + '"' : '';
         var version = escAttr(v ? v.version || '' : '');
         var label = escAttr(v ? labelOf(v) : '');
@@ -1188,6 +1213,25 @@
                 'Dostępne dla wersji opublikowanej'
             ) +
             '"><i data-lucide="history"></i> Kopia jako szkic</button>' +
+            '<button type="button" class="btn btn-sm btn-secondary" data-pv-act="activate"' +
+            idAttr +
+            ' data-pv-version="' +
+            label +
+            '"' +
+            off(canActivate) +
+            ' title="' +
+            tip(
+                canActivate,
+                'Nowe oferty liczą ceny z tej wersji (historia i pieczątki ofert bez zmian)',
+                'Dostępne dla opublikowanej wersji, która nie obowiązuje'
+            ) +
+            '"><i data-lucide="check-circle"></i> Ustaw jako aktywny</button>' +
+            (overrideId
+                ? '<button type="button" class="btn btn-sm btn-secondary" data-pv-act="activate-reset"' +
+                  ' title="' +
+                  escAttr('Wróć do wyboru czasowego — obowiązuje najnowsza opublikowana wersja') +
+                  '">Przywróć najnowszy</button>'
+                : '') +
             '<button type="button" class="btn btn-sm btn-secondary" data-pv-act="diff"' +
             idAttr +
             off(canOpen) +
@@ -1252,7 +1296,7 @@
             ' title="' +
             escAttr(
                 canDelete
-                    ? 'Usuwa wersję i jej pozycje (tylko wersje nigdy nieaktywne)'
+                    ? 'Usuwa wersję i jej pozycje (tylko wersje bez ofert i nieobowiązujące)'
                     : reason || noSelectionHint
             ) +
             '">Usuń</button>' +
@@ -1263,7 +1307,7 @@
     function renderActions(type, manageable) {
         var box = document.getElementById('pv-version-actions');
         if (!box) return;
-        box.innerHTML = actionsBarHtml(selectedVersion(type), manageable);
+        box.innerHTML = actionsBarHtml(selectedVersion(type), manageable, type);
         icons(box);
     }
 
@@ -2378,6 +2422,41 @@
                     type: 'warning'
                 }).then(function (ok) {
                     if (ok) doClone();
+                });
+            } else if (act === 'activate' && id) {
+                var activateMsg =
+                    'Ustawić ' +
+                    (btn.getAttribute('data-pv-version') || id) +
+                    ' jako obowiązujący cennik? Nowe oferty będą liczyć ceny z tej wersji, a dotychczasowe oferty zachowają swoje ceny.';
+                pvConfirm(activateMsg, {
+                    title: 'Ustaw jako aktywny',
+                    okText: 'Ustaw',
+                    type: 'warning'
+                }).then(function (ok) {
+                    if (!ok) return;
+                    apiJson(API + '/' + encodeURIComponent(id) + '/active', authed('POST'))
+                        .then(function () {
+                            toast('Cennik obowiązujący zmieniony', 'success');
+                            afterVersionChange(type, { reloadGrid: true });
+                        })
+                        .catch(function (err) {
+                            toast(friendlyError('Błąd zmiany cennika', err), 'error');
+                        });
+                });
+            } else if (act === 'activate-reset') {
+                pvConfirm(
+                    'Przywrócić wybór czasowy? Znowu będzie obowiązywać najnowsza opublikowana wersja.',
+                    { title: 'Przywróć najnowszy', okText: 'Przywróć', type: 'warning' }
+                ).then(function (ok) {
+                    if (!ok) return;
+                    apiJson(API + '/active/reset', authed('POST', { type: type }))
+                        .then(function () {
+                            toast('Wybór czasowy przywrócony', 'success');
+                            afterVersionChange(type, { reloadGrid: true });
+                        })
+                        .catch(function (err) {
+                            toast(friendlyError('Błąd przywracania', err), 'error');
+                        });
                 });
             } else if (act === 'delete' && id) {
                 var versionName = btn.getAttribute('data-pv-version') || id;

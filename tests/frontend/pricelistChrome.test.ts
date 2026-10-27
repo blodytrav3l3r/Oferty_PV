@@ -207,19 +207,19 @@ describe('frontend: przycisk Usuń zawsze widoczny (wyszarzony gdy nie wolno)', 
         expect(panel).toContain('data-pv-act="delete"');
         expect(panel).not.toMatch(/isDeletable\(v\.status\)\s*\?\s*'<button/);
     });
-    it('renderRows: enabled dla DRAFT i przyszłej APPROVED (SCHEDULED); brak usedBy = blokada', () => {
+    it('renderRows: enabled dla DRAFT, przyszłej (SCHEDULED) i historycznej (ARCHIVED)', () => {
         expect(panel).toContain('usedBy');
         expect(panel).toContain("state === 'ACTIVE'");
         expect(panel).toContain("state === 'SCHEDULED'");
+        expect(panel).toContain("state === 'ARCHIVED'");
         expect(panel).toContain("typeof v.usedBy !== 'number'");
         expect(panel).toContain('v.usedBy > 0');
         expect(panel).toContain('deleteReason');
         expect(panel).toContain('reason === null');
     });
-    it('renderRows: disabled + title z powodem (aktywna / użycie / brak danych)', () => {
+    it('renderRows: disabled + title z powodem (obowiązująca / użycie / brak danych)', () => {
         expect(panel).toContain('disabled');
-        expect(panel).toContain('Wersja obowiązująca — nieusuwalna');
-        expect(panel).toContain('Wersja historyczna — nieusuwalna');
+        expect(panel).toContain('Wersja obowiązująca — najpierw ustaw inną jako aktywną');
         expect(panel).toContain('Używana przez ');
         expect(panel).toContain('ofert/zamówień');
         expect(panel).toContain('Brak danych o użyciu — nieusuwalna');

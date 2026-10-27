@@ -119,6 +119,7 @@ describe('Rail „Zarządzanie cennikami" (lewy panel edytorów)', () => {
         for (const act of [
             'edit',
             'clone',
+            'activate',
             'diff',
             'export',
             'label',
@@ -129,6 +130,10 @@ describe('Rail „Zarządzanie cennikami" (lewy panel edytorów)', () => {
         ]) {
             expect(panel).toContain('data-pv-act="' + act + '"');
         }
+        expect(panel).toContain('data-pv-act="activate-reset"');
+        expect(panel).toContain("'/active/reset'");
+        expect(panel).toContain('function applyActiveOverride');
+        expect(panel).toContain('var activeOverrideIds');
         // Podgląd w modalu zbędny — klik kafelka pokazuje wersję w siatce.
         expect(panel).not.toContain('data-pv-act="preview"');
         expect(panel).toContain('function renderRows(versions, manageable, type)');

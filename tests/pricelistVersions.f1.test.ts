@@ -155,6 +155,13 @@ jest.mock('../src/prismaClient', () => ({
                 (txMock.pricelistVersion.update as (...x: unknown[]) => Promise<unknown>)(...a),
             findFirst: jest.fn(async () => null)
         },
+        // Ręczny wybór obowiązującego cennika (settings per oś) — brak = wybór czasowy.
+        settings: {
+            findUnique: jest.fn(async () => null),
+            findMany: jest.fn(async () => []),
+            deleteMany: jest.fn(async () => ({ count: 0 })),
+            upsert: jest.fn(async () => ({}))
+        },
         $transaction: jest.fn(async (fn: (tx: unknown) => Promise<unknown>) => {
             const snap = {
                 v: versions.length,

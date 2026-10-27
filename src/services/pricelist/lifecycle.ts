@@ -26,7 +26,13 @@ import {
 } from './validation';
 import type { CreateDraftOptions, PricelistStatus, PricelistType, VersionRows } from './validation';
 import { getVersionExport } from './export';
-import { countUsage, countVersionUsage, getPrecoReferences } from './usage';
+import {
+    activeOverrideKey,
+    countUsage,
+    countVersionUsage,
+    getPrecoReferences,
+    resolveActive
+} from './usage';
 import type { UsageClient, VersionUsage } from './usage';
 
 /** Limity retry przy kolizji seq (race dwóch createDraft). */
@@ -486,8 +492,12 @@ export async function approveVersion(
                 }
                 throw err;
             }
-            // Tylko wersja wchodząca od razu zmienia aktywny cennik.
-            if (effectiveFrom <= nowIso) await touchActiveTimestamp(tx, nowIso);
+            // Tylko wersja wchodząca od razu zmienia aktywny cennik — i zdejmuje
+            // ręczny wybór, żeby nowa publikacja znów rządziła osią czasu.
+            if (effectiveFrom <= nowIso) {
+                await touchActiveTimestamp(tx, nowIso);
+                await tx.settings.deleteMany({ where: { key: activeOverrideKey(type) } });
+            }
             await writeAudit(tx, {
                 entityId: id,
                 userId: opts.userId,
@@ -531,8 +541,115 @@ export async function activate(
     return approveVersion(id, { userId: opts.userId, note: opts.note });
 }
 
-/** Alias legacy: korekta wsteczna = approve z wymaganym uzasadnieniem. */
-export async function applyBackdate(
+/**
+ * Ręczne wskazanie obowiązującego cennika: nowe oferty biorą ceny z tej wersji.
+ * Dozwolone dla APPROVED z datą <= now (przyszła wchodzi sama w terminie).
+ * Nie zmienia historii: oferty trzymają własne pieczątki, os czasu zostaje.
+ */
+export async function setActiveVersion(
+    id: string,
+    opts: { userId?: string } = {}
+): Promise<PricelistVersion> {
+    const current = await prisma.pricelistVersion.findUnique({ where: { id } });
+    if (!current) {
+        throw new PricelistVersionError(404, 'NOT_FOUND', `Wersja ${id} nie istnieje`);
+    }
+    if (!isPricelistType(current.type)) {
+        throw new PricelistVersionError(422, 'INVALID_TYPE', `Wersja ${id} ma nieznany typ`);
+    }
+    if (current.status !== 'APPROVED') {
+        throw new PricelistVersionError(
+            409,
+            'ACTIVATE_NOT_APPROVED',
+            `Ustawić jako obowiązującą można tylko wersję opublikowaną (obecny status: ${current.status})`
+        );
+    }
+    const nowIso = new Date().toISOString();
+    if (current.effectiveFrom > nowIso) {
+        throw new PricelistVersionError(
+            409,
+            'ACTIVATE_NOT_DUE',
+            `Wersja ${id} wejdzie w życie ${current.effectiveFrom} — poczekaj na termin`
+        );
+    }
+    const type = current.type;
+    const lock = lockFor(type);
+    const res = await lock.runWithLock(() =>
+        prisma.$transaction(async (tx) => {
+            const fresh = await tx.pricelistVersion.findUnique({ where: { id } });
+            if (!fresh) {
+                throw new PricelistVersionError(404, 'NOT_FOUND', `Wersja ${id} nie istnieje`);
+            }
+            if (fresh.status !== 'APPROVED' || fresh.effectiveFrom > nowIso) {
+                throw new PricelistVersionError(
+                    409,
+                    'ACTIVATE_NOT_DUE',
+                    `Wersja ${id} nie może obowiązywać teraz (status ${fresh.status}, od ${fresh.effectiveFrom})`
+                );
+            }
+            const key = activeOverrideKey(type);
+            await tx.settings.upsert({
+                where: { key },
+                update: { value: id },
+                create: { key, value: id }
+            });
+            await touchActiveTimestamp(tx, nowIso);
+            await writeAudit(tx, {
+                entityId: id,
+                userId: opts.userId,
+                action: 'ACTIVATE',
+                oldData: { tryb: 'wybór ręczny' },
+                newData: { obowiązuje: fresh.version, effectiveFrom: fresh.effectiveFrom }
+            });
+            return fresh;
+        })
+    );
+    if (!res.acquired) {
+        throw new PricelistVersionError(
+            503,
+            'LOCK_BUSY',
+            `Zmiana obowiązującego cennika ${type} chwilowo zablokowana`
+        );
+    }
+    return res.value;
+}
+
+/** Zdejmuje ręczny wybór — obowiązuje znów najnowsza opublikowana wersja. */
+export async function clearActiveOverride(
+    typeInput: unknown,
+    opts: { userId?: string } = {}
+): Promise<{ type: PricelistType; cleared: boolean }> {
+    const type = requireType(typeInput);
+    const nowIso = new Date().toISOString();
+    const lock = lockFor(type);
+    const res = await lock.runWithLock(() =>
+        prisma.$transaction(async (tx) => {
+            const key = activeOverrideKey(type);
+            const removed = await tx.settings.deleteMany({ where: { key } });
+            await touchActiveTimestamp(tx, nowIso);
+            if (removed.count > 0) {
+                await writeAudit(tx, {
+                    entityId: key,
+                    userId: opts.userId,
+                    action: 'ACTIVATE_RESET',
+                    oldData: { tryb: 'wybór ręczny' },
+                    newData: { tryb: 'najnowsza opublikowana' }
+                });
+            }
+            return removed.count > 0;
+        })
+    );
+    if (!res.acquired) {
+        throw new PricelistVersionError(
+            503,
+            'LOCK_BUSY',
+            `Zmiana obowiązującego cennika ${type} chwilowo zablokowana`
+        );
+    }
+    return { type, cleared: res.value };
+}
+
+/** Alias legacy: korekta wsteczna = approve z wymaganym uzasadnieniem. */ export async function applyBackdate(
     id: string,
     noteInput: unknown,
     opts: { userId?: string } = {}
@@ -570,9 +687,9 @@ async function withPrecoDeleteLocks<T>(
 
 /**
  * Usuwa wersję wraz z pozycjami (tx) + audit DELETE.
- * DRAFT: zawsze. APPROVED: tylko przyszła (effectiveFrom > now) i usage=0 —
- * historyczna/aktywna wersja jest nieusuwalna, bo trzyma pieczątki ofert.
- * PRECO z referencjami studni blokuje zawsze (historia eksportu).
+ * DRAFT: zawsze. APPROVED: gdy nie jest obowiązującą i żadna oferta/zamówienie
+ * ani wersja studni (PRECO) jej nie używa — inaczej 409 (historia chroniona).
+ * Wersję obowiązującą trzeba najpierw zastąpić inną (akcja „Ustaw jako aktywny”).
  */
 export async function deleteVersion(
     id: string,
@@ -586,14 +703,22 @@ export async function deleteVersion(
         throw new PricelistVersionError(422, 'INVALID_TYPE', `Wersja ${id} ma nieznany typ`);
     }
     const isDraft = current.status === 'DRAFT';
-    const isFutureApproved =
-        current.status === 'APPROVED' && current.effectiveFrom > new Date().toISOString();
-    if (!isDraft && !isFutureApproved) {
+    if (!isDraft && current.status !== 'APPROVED') {
         throw new PricelistVersionError(
             409,
             'NOT_DELETABLE',
             `Wersji ${id} o statusie ${current.status} nie można usunąć (trzyma historię ofert)`
         );
+    }
+    if (!isDraft) {
+        const active = await resolveActive(current.type);
+        if (active && active.id === id) {
+            throw new PricelistVersionError(
+                409,
+                'ACTIVE_IN_USE',
+                `Wersja ${id} jest obowiązującym cennikiem — najpierw ustaw inną jako aktywną`
+            );
+        }
     }
     if (current.type === 'preco') {
         const refs = (await getPrecoReferences()).get(id);
@@ -624,14 +749,23 @@ export async function deleteVersion(
                 throw new PricelistVersionError(404, 'NOT_FOUND', `Wersja ${id} nie istnieje`);
             }
             const freshDraft = fresh.status === 'DRAFT';
-            const freshFutureApproved =
-                fresh.status === 'APPROVED' && fresh.effectiveFrom > new Date().toISOString();
-            if (!freshDraft && !freshFutureApproved) {
+            if (!freshDraft && fresh.status !== 'APPROVED') {
                 throw new PricelistVersionError(
                     409,
                     'NOT_DELETABLE',
                     `Wersji ${id} o statusie ${fresh.status} nie można usunąć (trzyma historię ofert)`
                 );
+            }
+            if (!freshDraft) {
+                // Re-check w tx: wersja mogła stać się obowiązującą po wstępnym sprawdzeniu.
+                const activeNow = await resolveActive(fresh.type);
+                if (activeNow && activeNow.id === id) {
+                    throw new PricelistVersionError(
+                        409,
+                        'ACTIVE_IN_USE',
+                        `Wersja ${id} jest obowiązującym cennikiem — najpierw ustaw inną jako aktywną`
+                    );
+                }
             }
             let studnieReferences = 0;
             if (fresh.type === 'preco') {
@@ -657,6 +791,10 @@ export async function deleteVersion(
                     );
                 }
             }
+            // Ręczny wybór wskazujący tę wersję nie może zostać po usunięciu.
+            await tx.settings.deleteMany({
+                where: { key: activeOverrideKey(fresh.type as PricelistType), value: id }
+            });
             await deleteVersionItems(tx, type, id);
             await writeAudit(tx, {
                 entityId: id,

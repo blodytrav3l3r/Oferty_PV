@@ -81,6 +81,7 @@ const txMock = {
     offers_studnie_rel: { count: zeroCount() },
     orders_rury_rel: { count: zeroCount() },
     orders_studnie_rel: { count: zeroCount() },
+    settings: { deleteMany: jest.fn(async () => ({ count: 0 })) },
     audit_logs: {
         create: jest.fn(async ({ data }: { data: Record<string, unknown> }) => {
             audits.push({ ...data });
@@ -100,6 +101,7 @@ jest.mock('../src/prismaClient', () => ({
         offers_studnie_rel: { count: zeroCount() },
         orders_rury_rel: { count: zeroCount() },
         orders_studnie_rel: { count: zeroCount() },
+        settings: { findMany: jest.fn(async () => []) },
         $transaction: jest.fn(async (fn: (tx: unknown) => Promise<unknown>) => fn(txMock))
     }
 }));

@@ -175,6 +175,26 @@ const txMock = {
     pricelistItemPrecoKinety: itemDelegate([]),
     pricelistItemPrecoZakresy: itemDelegate([]),
     settings: {
+        findUnique: jest.fn(async ({ where }: { where: { key: string } }) => {
+            const value = settings.get(where.key);
+            return value === undefined ? null : { key: where.key, value };
+        }),
+        findMany: jest.fn(async ({ where }: { where?: { key?: { in: string[] } } } = {}) => {
+            const keys = where?.key?.in;
+            return [...settings.entries()]
+                .filter(([key]) => !keys || keys.includes(key))
+                .map(([key, value]) => ({ key, value }));
+        }),
+        deleteMany: jest.fn(async ({ where }: { where: { key?: string; value?: string } }) => {
+            let count = 0;
+            for (const [key, value] of [...settings.entries()]) {
+                if (where.key !== undefined && where.key !== key) continue;
+                if (where.value !== undefined && where.value !== value) continue;
+                settings.delete(key);
+                count++;
+            }
+            return { count };
+        }),
         upsert: jest.fn(
             async ({
                 where,
@@ -203,6 +223,12 @@ jest.mock('../src/prismaClient', () => ({
     __esModule: true,
     default: {
         pricelistVersion: versionDelegate,
+        // Ręczny wybór obowiązującego cennika — brak = wybór czasowy.
+        settings: {
+            findUnique: jest.fn(async () => null),
+            findMany: jest.fn(async () => []),
+            deleteMany: jest.fn(async () => ({ count: 0 }))
+        },
         $transaction: jest.fn(async (fn: (tx: unknown) => Promise<unknown>) => {
             const snap = JSON.stringify({ versions, itemsRury, itemsStudnie });
             try {

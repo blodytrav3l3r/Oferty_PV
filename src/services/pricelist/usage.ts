@@ -160,6 +160,10 @@ export async function getPrecoReferences(
 /**
  * Deterministyczne resolveActive: najnowsza APPROVED z effectiveFrom <= at,
  * sort effectiveFrom DESC, seq DESC, LIMIT 1. Dokładnie 1 wersja albo null.
+ *
+ * Ręczne ustawienie (settings `pricelist_active_override_<typ>`) ma
+ * pierwszeństwo — ale tylko dla bieżącego czasu (bez `at`), żeby historyczne
+ * rozstrzygnięcia (pieczątki, PRECO w wersjach studni) zostały czysto czasowe.
  */
 export async function resolveActive(
     typeInput: unknown,
@@ -167,6 +171,20 @@ export async function resolveActive(
 ): Promise<PricelistVersion | null> {
     const type = requireType(typeInput);
     const atIso = at === undefined ? new Date().toISOString() : toUtcIso(at, 'at');
+    if (at === undefined) {
+        const pinned = await readActiveOverride(type);
+        if (pinned) {
+            const picked = await prisma.pricelistVersion.findFirst({
+                where: {
+                    id: pinned,
+                    type,
+                    status: { in: [...RESOLVABLE_STATUSES] },
+                    effectiveFrom: { lte: atIso }
+                }
+            });
+            if (picked) return picked;
+        }
+    }
     return prisma.pricelistVersion.findFirst({
         where: {
             type,
@@ -175,6 +193,32 @@ export async function resolveActive(
         },
         orderBy: [{ effectiveFrom: 'desc' }, { seq: 'desc' }]
     });
+}
+
+/** Klucz ustawienia z ręcznie wybranym cennikiem obowiązującym dla osi. */
+export function activeOverrideKey(type: PricelistType): string {
+    return 'pricelist_active_override_' + type;
+}
+
+/** Id wersji wskazanej ręcznie jako obowiązująca (null = brak). */
+export async function readActiveOverride(type: PricelistType): Promise<string | null> {
+    const row = await prisma.settings.findUnique({ where: { key: activeOverrideKey(type) } });
+    const value = row?.value;
+    return typeof value === 'string' && value.length > 0 ? value : null;
+}
+
+/** Mapa ręcznych wyborów dla wszystkich osi (dla GET / listy wersji). */
+export async function readActiveOverrides(): Promise<Record<PricelistType, string | null>> {
+    const rows = await prisma.settings.findMany({
+        where: { key: { in: PRICELIST_TYPES.map(activeOverrideKey) } }
+    });
+    const out = {} as Record<PricelistType, string | null>;
+    for (const type of PRICELIST_TYPES) out[type] = null;
+    for (const row of rows) {
+        const type = PRICELIST_TYPES.find((t) => activeOverrideKey(t) === row.key);
+        if (type && typeof row.value === 'string' && row.value.length > 0) out[type] = row.value;
+    }
+    return out;
 }
 
 /** Minimalna referencja wersji w `/summary` (bez sha/createdBy/note). */
