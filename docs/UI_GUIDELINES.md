@@ -162,6 +162,16 @@ liczb. Klasy CSS używają zmiennych `--z-*` z `style.base.css:251-256` (`--z-he
   wyszarzona z powodem; brak zaznaczenia = wszystkie nieaktywne.
 - Wybór pamiętany per typ (`selectedVersionId`), przeżywa odświeżenie listy; gdy
   zaznaczona wersja zniknie, fallback to wersja obowiązująca.
+- **Zaznaczenie = podgląd w prawej kolumnie**: karta ładuje wersję przez
+  `openInlinePreview(gridId, id, type)` (`pricelistVersionPreview.js`) - host
+  `#pv-inline-preview` powstaje raz za siatką, siatka dostaje `hidden`, podgląd
+  pokazuje metadane, arkusze i tabelę tylko do odczytu + „Wróć do edycji"
+  (`closeInlinePreview`). Nagłówek prawej kolumny (`#pv-title-text`,
+  `#pv-title-version`) pokazuje nazwę osi i numer wyświetlanej wersji:
+  „Cennik Rur" / „Cennik elementów studni" / „Cennik wkładek PRECO"
+  (`syncHeaderForTab` wołane z `selectCennikTab`).
+- Zmiana zakładki studni, akcja na wersji i wejście w edycję zamykają podgląd,
+  żeby siatka i podgląd nie opisywały dwóch różnych wersji.
 - Modal zostaje dla dialogów wymagających szerokości (podgląd, diff, etykieta, nota,
   publikacja).
 

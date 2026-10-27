@@ -233,9 +233,9 @@
         );
     }
 
-    function metaHtml(preview) {
+    function metaHtml(preview, stateKey) {
         var version = preview.version || {};
-        var state = stateOfVersion(version);
+        var state = stateKey || stateOfVersion(version);
         var meta = STATUS_META[state] || { label: state || '—', cls: 'badge-muted' };
         var sheetCount = Object.keys(preview.sheets || {}).length;
         var items = [
@@ -373,6 +373,122 @@
             });
     }
 
+    /* ===== Podgląd w prawej kolumnie (inline, obok siatki edytora) ===== */
+
+    var inlineState = { preview: null, sheet: null, stateKey: null };
+    /** Delegacja zakładek arkuszy wieszana raz na host. */
+    var inlineWired = false;
+
+    /** Host podglądu: tworzony raz, wstawiony zaraz za siatką edytora. */
+    function inlineHost(grid) {
+        var host = document.getElementById('pv-inline-preview');
+        if (host) return host;
+        host = document.createElement('div');
+        host.id = 'pv-inline-preview';
+        host.className = 'pv-inline';
+        host.setAttribute('role', 'region');
+        host.setAttribute('aria-label', 'Podgląd wersji cennika');
+        host.hidden = true;
+        grid.parentNode.insertBefore(host, grid.nextSibling);
+        return host;
+    }
+
+    function renderInline(host) {
+        var preview = inlineState.preview;
+        if (!preview) return;
+        var sheetNames = Object.keys(preview.sheets || {});
+        if (inlineState.sheet && sheetNames.indexOf(inlineState.sheet) === -1) {
+            inlineState.sheet = sheetNames[0];
+        }
+        if (!inlineState.sheet) inlineState.sheet = sheetNames[0];
+        var meta = host.querySelector('#pv-inline-meta');
+        if (meta) meta.innerHTML = metaHtml(preview, inlineState.stateKey);
+        var tabs = host.querySelector('#pv-inline-tabs');
+        if (tabs) tabs.innerHTML = tabsHtml(sheetNames, inlineState.sheet);
+        var body = host.querySelector('#pv-inline-body');
+        if (body) {
+            var rows = inlineState.sheet ? rowsFor(preview, inlineState.sheet) : [];
+            body.innerHTML = inlineState.sheet
+                ? tableHtml(rows)
+                : '<p class="text-muted pv-preview-empty">Wersja nie ma zapisanych wierszy.</p>';
+        }
+        icons(host);
+    }
+
+    /** Zamyka podgląd i przywraca siatkę edytora (wołane też z raila). */
+    function closeInlinePreview() {
+        var host = document.getElementById('pv-inline-preview');
+        if (!host) return;
+        var grid = document.getElementById(host.getAttribute('data-grid') || '');
+        if (grid) grid.hidden = false;
+        var type = host.getAttribute('data-type') || '';
+        host.hidden = true;
+        host.innerHTML = '';
+        inlineState = { preview: null, sheet: null, stateKey: null };
+        var pv = window.pricelistVersions;
+        if (pv && typeof pv.afterInlinePreviewClosed === 'function')
+            pv.afterInlinePreviewClosed(type);
+    }
+
+    /** Podgląd wersji w prawej kolumnie: siatka edytora znika, zostaje odczyt. */
+    function openInlinePreview(gridId, id, type, stateKey) {
+        var grid = gridId ? document.getElementById(gridId) : null;
+        if (!grid || !id) return;
+        var host = inlineHost(grid);
+        host.setAttribute('data-grid', gridId);
+        host.setAttribute('data-type', type || '');
+        host.hidden = false;
+        grid.hidden = true;
+        host.innerHTML =
+            '<div class="pv-inline__head">' +
+            '<p class="pv-inline__title" id="pv-inline-title"><i data-lucide="eye"></i> Ładowanie podglądu…</p>' +
+            '<button type="button" class="btn btn-secondary btn-sm" id="pv-inline-back" title="Wróć do edycji cennika na żywo"><i data-lucide="pencil"></i> Wróć do edycji</button>' +
+            '</div>' +
+            '<div id="pv-inline-meta"></div>' +
+            '<div id="pv-inline-tabs" role="tablist" aria-label="Arkusze wersji"></div>' +
+            '<div id="pv-inline-body"><p class="text-muted pv-preview-empty">Ładowanie…</p></div>';
+        icons(host);
+        var back = host.querySelector('#pv-inline-back');
+        if (back) back.addEventListener('click', closeInlinePreview);
+        if (!inlineWired) {
+            inlineWired = true;
+            host.addEventListener('click', function (ev) {
+                var tab =
+                    ev.target && ev.target.closest
+                        ? ev.target.closest('[data-pv-preview-sheet]')
+                        : null;
+                if (!tab || !inlineState.preview) return;
+                inlineState.sheet = tab.getAttribute('data-pv-preview-sheet');
+                renderInline(host);
+            });
+        }
+        apiJson(API + '/' + encodeURIComponent(id) + '/preview', authed('GET'))
+            .then(function (preview) {
+                inlineState = {
+                    preview: preview,
+                    sheet: Object.keys(preview.sheets || {})[0] || null,
+                    stateKey: stateKey || null
+                };
+                var title = host.querySelector('#pv-inline-title');
+                if (title) {
+                    title.innerHTML =
+                        '<i data-lucide="eye"></i> Podgląd ' +
+                        esc((preview.version && preview.version.version) || id) +
+                        (type
+                            ? ' <span class="pv-title-type">' + esc(typeLabel(type)) + '</span>'
+                            : '');
+                }
+                renderInline(host);
+            })
+            .catch(function (err) {
+                var body = host.querySelector('#pv-inline-body');
+                if (body) {
+                    body.innerHTML = '<p class="color-warn">Nie udało się wczytać podglądu.</p>';
+                }
+                toast('Błąd podglądu wersji: ' + err.message, 'error');
+            });
+    }
+
     function normalizeType(type) {
         return type === 'rury' || type === 'studnie' || type === 'preco' ? type : null;
     }
@@ -395,4 +511,6 @@
         return window.pricelistVersions.openDiff(id, againstId, type);
     };
     window.pricelistVersions.openFromDeepLink = openFromDeepLink;
+    window.pricelistVersions.openInlinePreview = openInlinePreview;
+    window.pricelistVersions.closeInlinePreview = closeInlinePreview;
 })();

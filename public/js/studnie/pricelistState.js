@@ -39,6 +39,20 @@ function selectCennikTab(tab) {
     } else {
         renderStudniePriceList();
     }
+    // Nagłówek: „Cennik wkładek PRECO” vs „Cennik elementów studni” + numer wersji osi.
+    if (
+        window.pricelistVersions &&
+        typeof window.pricelistVersions.syncHeaderForTab === 'function'
+    ) {
+        window.pricelistVersions.syncHeaderForTab(tab === 'preco' ? 'preco' : 'studnie');
+    }
+    // Podgląd wersji dotyczy jednej osi — zmiana zakładki wraca do siatki.
+    if (
+        window.pricelistVersions &&
+        typeof window.pricelistVersions.closeEditorPreview === 'function'
+    ) {
+        window.pricelistVersions.closeEditorPreview(tab === 'preco' ? 'preco' : 'studnie');
+    }
     // Pasek stanu pokazuje oś edytowanego zakładki (PRECO to osobna oś).
     if (
         window.pricelistVersions &&

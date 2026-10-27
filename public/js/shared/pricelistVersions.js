@@ -23,6 +23,14 @@
     var selectedVersionId = {};
     /** Ostatnio pobrane wersje per typ — źródło danych dla paska akcji. */
     var versionsByType = {};
+    /** Tytuł osi w nagłówku prawej kolumny (studnie i PRECO dzielą stronę). */
+    var HEADER_TITLES = {
+        rury: 'Cennik Rur',
+        studnie: 'Cennik elementów studni',
+        preco: 'Cennik wkładek PRECO'
+    };
+    /** Oś opisana przez nagłówek — chroni przed spóźnionym fetch/fetchem innej osi. */
+    var headerAxis = null;
 
     /** Domyślny odczyt wierszy z bieżącego window (fallback przy braku getRows). */
     function defaultGetRows(type) {
@@ -628,6 +636,8 @@
             (created ? 'Utworzono szkic ' : 'Edytujesz szkic ') +
             (label || '') +
             ' — „Zapisz" trafia do szkicu, LIVE bez zmian';
+        // Podgląd wersji nie może zasłaniać edytora, do którego właśnie wchodzimy.
+        closeEditorPreview(type);
         // #/cennik: edycja w miejscu — bez zmiany hasha SPA na #/rury / #/studnie.
         if (isCennikHost()) {
             if (type === 'preco' && typeof window.selectCennikTab === 'function') {
@@ -802,6 +812,74 @@
             if (list[i].id === id) return list[i];
         }
         return null;
+    }
+
+    /* ===== Nagłówek prawej kolumny: nazwa osi + numer cennika ===== */
+
+    function syncHeaderTitle(type) {
+        var title = document.getElementById('pv-title-text');
+        if (title && HEADER_TITLES[type]) title.textContent = HEADER_TITLES[type];
+    }
+
+    function syncHeaderVersion(text) {
+        var badge = document.getElementById('pv-title-version');
+        if (!badge) return;
+        badge.textContent = text || '';
+        badge.hidden = !text;
+    }
+
+    /** Etykieta wersji obowiązującej osi ('' = brak listy w pamięci). */
+    function activeVersionLabel(type) {
+        var act = null;
+        (versionsByType[type] || []).forEach(function (v) {
+            if (!act && stateOf(v) === 'ACTIVE') act = v;
+        });
+        return act ? labelOf(act) : '';
+    }
+
+    /** Nagłówek wg zakładki studni: Wkładki to osobna oś PRECO. */
+    function syncHeaderForTab(type) {
+        headerAxis = type;
+        syncHeaderTitle(type);
+        if (versionsByType[type]) {
+            syncHeaderVersion(activeVersionLabel(type));
+            return;
+        }
+        syncHeaderVersion('');
+        fetchFullList(type)
+            .then(function (list) {
+                versionsByType[type] = list;
+                if (headerAxis === type) syncHeaderVersion(activeVersionLabel(type));
+            })
+            .catch(function () {
+                /* brak listy = zostaje sam tytuł */
+            });
+    }
+
+    /** Po zamknięciu podglądu nagłówek wraca do wersji obowiązującej osi. */
+    function afterInlinePreviewClosed(type) {
+        if (type) syncHeaderVersion(activeVersionLabel(type));
+    }
+
+    /** Wróć do edycji: chowa podgląd i ustawia nagłówek osi. */
+    function closeEditorPreview(type) {
+        var pv = window.pricelistVersions;
+        if (pv && typeof pv.closeInlinePreview === 'function') pv.closeInlinePreview();
+        if (!type) return;
+        headerAxis = type;
+        syncHeaderTitle(type);
+        syncHeaderVersion(activeVersionLabel(type));
+    }
+
+    /** Klik w kartę: zaznaczenie + podgląd tej wersji w prawej kolumnie. */
+    function openSelectedPreview(type) {
+        var v = selectedVersion(type);
+        var pv = window.pricelistVersions;
+        var gridId = EDITOR_GRID[type];
+        if (!v || !pv || typeof pv.openInlinePreview !== 'function' || !gridId) return;
+        if (!document.getElementById(gridId)) return;
+        syncHeaderVersion(labelOf(v));
+        pv.openInlinePreview(gridId, v.id, type, stateOf(v));
     }
 
     /** Karta = wybór wersji; akcje żyją w jednym pasku nad listą. */
@@ -1336,6 +1414,12 @@
         var body = document.getElementById('pv-versions-body');
         if (body) body.innerHTML = renderRows(versions, manageable, type);
         renderActions(type, manageable);
+        var inline = document.getElementById('pv-inline-preview');
+        var previewing = inline && !inline.hidden && inline.getAttribute('data-type') === type;
+        if (!previewing && (headerAxis === null || headerAxis === type)) {
+            headerAxis = type;
+            syncHeaderVersion(activeVersionLabel(type));
+        }
         var dock = document.getElementById(DOCK_ID);
         if (dock) icons(dock);
         var nextLabel = document.getElementById('pv-next-label');
@@ -1358,6 +1442,11 @@
     async function afterVersionChange(type, opts) {
         var o = opts || {};
         clearSummaryCache();
+        // Podgląd pokazywałby nieaktualne ceny po akcji na wersji — wracamy do siatki.
+        var inline = document.getElementById('pv-inline-preview');
+        if (inline && !inline.hidden && inline.getAttribute('data-type') === type) {
+            closeEditorPreview(type);
+        }
         try {
             await refreshTable(type, canManage[type] === true);
         } catch (e) {
@@ -1989,6 +2078,7 @@
                 if (picked && picked !== selectedVersionId[state.current]) {
                     selectedVersionId[state.current] = picked;
                     rerenderCards(state.current);
+                    openSelectedPreview(state.current);
                 }
                 return;
             }
@@ -2838,6 +2928,9 @@
         displayStatus: displayStatus,
         canPublish: canPublish,
         canDelete: canDelete,
+        syncHeaderForTab: syncHeaderForTab,
+        closeEditorPreview: closeEditorPreview,
+        afterInlinePreviewClosed: afterInlinePreviewClosed,
         approveVersion: approveVersion,
         fetchChecks: fetchChecks,
         isPastDate: isPastDate,

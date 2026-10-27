@@ -364,6 +364,60 @@ body.pv-dock-open #pricelist-status-strip {
     display: none;
 }
 
+/* ===== Nagłówek cennika: numer wyświetlanej wersji ===== */
+
+.pv-title-version {
+    display: inline-block;
+    margin-left: 0.5rem;
+    padding: 2px 8px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--bg-secondary);
+    font-size: var(--fs-xs);
+    font-weight: var(--fw-medium);
+    color: var(--text-secondary);
+    vertical-align: middle;
+}
+
+.pv-title-version[hidden] {
+    display: none;
+}
+
+/* ===== Podgląd wersji w prawej kolumnie (obok siatki edytora) ===== */
+
+.pv-inline {
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+    margin-top: 1rem;
+}
+
+.pv-inline[hidden] {
+    display: none;
+}
+
+.pv-inline__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+}
+
+.pv-inline__title {
+    margin: 0;
+    font-size: var(--fs-md);
+    font-weight: var(--fw-semibold, 600);
+    color: var(--text-primary);
+}
+
+.pv-inline__title .pv-title-type {
+    margin-left: 0.35rem;
+    font-size: var(--fs-xs);
+    font-weight: 400;
+    color: var(--text-muted);
+}
+
 /* ===== Lista wersji (karty w podkategoriach rok) ===== */
 
 .pv-version-list {

@@ -51,6 +51,35 @@ describe('Rail „Zarządzanie cennikami" (lewy panel edytorów)', () => {
         expect(css).toContain('.pv-version-actions__grid');
     });
 
+    it('zaznaczenie karty ładuje podgląd wersji w prawej kolumnie', () => {
+        const preview = read('public/js/shared/pricelistVersionPreview.js');
+        expect(panel).toContain('function openSelectedPreview');
+        expect(panel).toContain('openInlinePreview(gridId, v.id, type, stateOf(v))');
+        expect(preview).toContain('function openInlinePreview');
+        expect(preview).toContain('function closeInlinePreview');
+        expect(preview).toContain("id = 'pv-inline-preview'");
+        expect(preview).toContain('Wróć do edycji');
+        expect(preview).toContain('host.hidden = false');
+        expect(preview).toContain('grid.hidden = true');
+        expect(css).toContain('.pv-inline');
+    });
+
+    it('nagłówek: Cennik Rur / elementów studni / wkładek PRECO + numer wersji', () => {
+        expect(panel).toContain("rury: 'Cennik Rur'");
+        expect(panel).toContain("studnie: 'Cennik elementów studni'");
+        expect(panel).toContain("preco: 'Cennik wkładek PRECO'");
+        expect(panel).toContain('function syncHeaderForTab');
+        expect(ruryPartial).toContain('id="pv-title-text">Cennik Rur<');
+        expect(studniePartial).toContain('id="pv-title-text">Cennik elementów studni<');
+        for (const partial of [ruryPartial, studniePartial]) {
+            expect(partial).toContain('id="pv-title-version"');
+        }
+        expect(css).toContain('.pv-title-version');
+        expect(read('public/js/studnie/pricelistState.js')).toContain(
+            "syncHeaderForTab(tab === 'preco' ? 'preco' : 'studnie')"
+        );
+    });
+
     it('komplet akcji CRUD bez zmiany dyspozytora data-pv-act', () => {
         for (const act of [
             'edit',
