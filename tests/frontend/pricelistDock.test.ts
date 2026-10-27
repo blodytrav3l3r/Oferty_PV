@@ -49,6 +49,9 @@ describe('Rail „Zarządzanie cennikami" (lewy panel edytorów)', () => {
         expect(css).toContain('.pv-year__title');
         expect(css).toContain('.pv-vcard.is-selected');
         expect(css).toContain('.pv-version-actions__grid');
+        // Lista wersji przewija się bez widocznego paska (nie zabiera szerokości).
+        expect(css).toContain('scrollbar-width: none');
+        expect(css).toContain('.pv-dock__body::-webkit-scrollbar');
     });
 
     it('zaznaczenie karty pokazuje wersję w tej samej siatce (tylko odczyt)', () => {
