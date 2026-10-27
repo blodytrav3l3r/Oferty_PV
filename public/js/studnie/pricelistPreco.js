@@ -16,9 +16,11 @@ function updatePrecoSaveBtn() {
     btns.forEach((btn) => {
         btn.disabled = !meta.editing || !_precoDirty;
         btn.title = meta.title;
+        // Rail mówi jak Zapisz w Rurach/Studniach; toolbar przy tabeli nazywa oś.
+        const label = btn.id === 'btn-save-preco-rail' ? meta.label : meta.label + ' PRECO';
         btn.innerHTML = _precoDirty
-            ? `<i data-lucide="save" aria-hidden="true"></i> ${meta.label} PRECO <span class="color-warn">(!)</span>`
-            : `<i data-lucide="save" aria-hidden="true"></i> ${meta.label} PRECO`;
+            ? `<i data-lucide="save" aria-hidden="true"></i> ${label} <span class="color-warn">(!)</span>`
+            : `<i data-lucide="save" aria-hidden="true"></i> ${label}`;
         if (window.lucide) lucide.createIcons({ root: btn });
     });
 }

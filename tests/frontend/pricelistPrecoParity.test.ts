@@ -37,6 +37,9 @@ describe('frontend: PRECO jako trzeci tab', () => {
     it('zapis PRECO obsługuje przycisk raila i toolbaru', () => {
         expect(preco).toContain("'btn-save-preco-rail'");
         expect(preco).toContain("'btn-save-preco'");
+        expect(preco).toContain(
+            "btn.id === 'btn-save-preco-rail' ? meta.label : meta.label + ' PRECO'"
+        );
     });
 });
 
