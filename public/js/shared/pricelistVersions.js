@@ -19,6 +19,10 @@
     var DOCK_BACKDROP_ID = 'pv-dock-backdrop';
     /** Stan raila: ostatnio wyświetlony typ. */
     var dockState = { type: null };
+    /** Wybrana karta per typ — akcje w pasku działają na tym zaznaczeniu. */
+    var selectedVersionId = {};
+    /** Ostatnio pobrane wersje per typ — źródło danych dla paska akcji. */
+    var versionsByType = {};
 
     /** Domyślny odczyt wierszy z bieżącego window (fallback przy braku getRows). */
     function defaultGetRows(type) {
@@ -721,18 +725,12 @@
         return state === 'DRAFT';
     }
 
-    /** Komórka notatek: tekst + ołówek (tylko edytowalne, tylko admin). */
-    function noteCell(v, manageable) {
-        var text = esc(v.note || '—');
-        if (!manageable || !isEditableStatus(stateOf(v))) return text;
+    /** Notatki wersji; edycja idzie przez akcję „Notatki” w pasku nad listą. */
+    function noteCell(v) {
         return (
             '<span class="pv-note-cell"><span class="pv-note-text">' +
-            text +
-            '</span> <button class="btn-icon btn-icon-sm btn-icon--dim" data-pv-act="edit-note" data-pv-id="' +
-            escAttr(v.id) +
-            '" data-pv-note="' +
-            escAttr(v.note || '') +
-            '" title="Edytuj notatki" aria-label="Edytuj notatki"><i data-lucide="pencil" aria-hidden="true"></i></button></span>'
+            esc(v.note || '—') +
+            '</span></span>'
         );
     }
 
@@ -752,122 +750,276 @@
         return 'Wersja historyczna — nieusuwalna';
     }
 
-    function renderRows(versions, manageable, type) {
-        if (versions.length === 0) {
-            return '<p class="pv-vcard-empty text-muted">Brak wersji — zapisz pierwszą powyżej.</p>';
+    /** Rok podkategorii: effectiveFrom, fallback data utworzenia. */
+    function yearOf(v) {
+        var m = /^(\d{4})/.exec(String(v.effectiveFrom || v.createdAt || ''));
+        return m ? m[1] : 'Bez daty';
+    }
+
+    /** Podkategorie rok → wersje (najnowszy rok pierwszy, „Bez daty” na końcu). */
+    function groupByYear(versions) {
+        var groups = {};
+        var order = [];
+        versions.forEach(function (v) {
+            var year = yearOf(v);
+            if (!groups[year]) {
+                groups[year] = [];
+                order.push(year);
+            }
+            groups[year].push(v);
+        });
+        order.sort(function (a, b) {
+            if (a === 'Bez daty') return 1;
+            if (b === 'Bez daty') return -1;
+            return Number(b) - Number(a);
+        });
+        return order.map(function (year) {
+            return { year: year, versions: groups[year] };
+        });
+    }
+
+    /** Zaznaczenie: trzymaj wybór użytkownika, inaczej domyślnie wersja obowiązująca. */
+    function resolveSelection(type, versions) {
+        var id = selectedVersionId[type];
+        /** @type {any} */
+        var hit = null;
+        versions.forEach(function (v) {
+            if (v.id === id) hit = v;
+        });
+        if (!hit) {
+            versions.forEach(function (v) {
+                if (!hit && stateOf(v) === 'ACTIVE') hit = v;
+            });
         }
+        selectedVersionId[type] = hit ? hit.id : null;
+        return selectedVersionId[type];
+    }
+
+    function selectedVersion(type) {
+        var list = versionsByType[type] || [];
+        var id = selectedVersionId[type];
+        for (var i = 0; i < list.length; i++) {
+            if (list[i].id === id) return list[i];
+        }
+        return null;
+    }
+
+    /** Karta = wybór wersji; akcje żyją w jednym pasku nad listą. */
+    function versionCardHtml(v, type, selected) {
+        var state = stateOf(v);
+        var eff = v.effectiveFrom ? fmtEff(v.effectiveFrom) : '<span class="text-muted">—</span>';
         // Wiersz żyje w kontekście taba (typ znany) — bez sufiksu typu w labelce,
         // sam title/tooltip z typem. Badge poza panelem ZAWSZE z typem.
         var typeTitle = type ? ' title="Typ cennika: ' + escAttr(typeLabel(type)) + '"' : '';
-        return versions
-            .map(function (v) {
-                var state = stateOf(v);
-                var eff = v.effectiveFrom
-                    ? fmtEff(v.effectiveFrom)
-                    : '<span class="text-muted">—</span>';
-                // Jedno CTA publikacji: DRAFT → approve (data przyszła = Do wdrożenia,
-                // data przeszła = korekta wsteczna, wymaga noty ≥ 10 znaków).
-                var activation = canPublish(state)
-                    ? '<button class="btn btn-sm btn-primary" data-pv-act="publish" data-pv-id="' +
-                      escAttr(v.id) +
-                      '" data-pv-eff="' +
-                      escAttr(v.effectiveFrom || '') +
-                      '" title="Wyślij roboczą na oś czasu (data przyszła = Do wdrożenia, data przeszła = korekta wsteczna z uzasadnieniem)">Opublikuj roboczą</button>'
-                    : '';
-                // DRAFT → wejście w edycję tego szkicu (grid zapisuje do DRAFT).
-                // Reszta statusów jest nieedytowalna → klon jako szkic + wejście do edycji.
-                var isDraft = isEditableStatus(state);
-                var editBtn = isDraft
-                    ? '<button class="btn btn-sm btn-secondary" data-pv-act="edit" data-pv-version="' +
-                      escAttr(labelOf(v)) +
-                      '" title="Przejdź do edytora cennika — zapis trafia do tego szkicu (LIVE bez zmian)">' +
-                      '<i data-lucide="pencil"></i> Edytuj</button>'
-                    : '<button class="btn btn-sm btn-secondary" data-pv-act="clone" data-pv-id="' +
-                      escAttr(v.id) +
-                      '" title="Utwórz szkic jako kopię wersji ' +
-                      escAttr(labelOf(v)) +
-                      ' i przejdź do edycji (obowiązująca wersja nie zmieni się)">' +
-                      '<i data-lucide="history"></i> Utwórz kopię jako szkic</button>';
-                // „Usuń" zawsze widoczny: enabled gdy wolno (allowlist albo
-                // archiwalna/nieznana-przyszła bez użycia), inaczej wyszarzony z powodem.
-                var reason = deleteReason(v);
-                var deleteBtn =
-                    '<button class="btn btn-sm btn-danger" data-pv-act="delete" data-pv-id="' +
-                    escAttr(v.id) +
-                    '" data-pv-version="' +
-                    escAttr(labelOf(v)) +
-                    '"' +
-                    (reason === null
-                        ? ' title="Usuwa wersję i jej pozycje (tylko wersje nigdy nieaktywne)">Usuń</button>'
-                        : ' disabled title="' + escAttr(reason) + '">Usuń</button>');
-                var isDraftish = isDraft;
-                var actions = manageable
-                    ? '<div class="pv-actions">' +
-                      editBtn +
-                      '<button class="btn btn-sm btn-secondary" data-pv-act="preview" data-pv-id="' +
-                      escAttr(v.id) +
-                      '" title="Podgląd zapisanych cen (tylko odczyt)"><i data-lucide="eye"></i> Podgląd</button>' +
-                      '<button class="btn btn-sm btn-secondary" data-pv-act="diff" data-pv-id="' +
-                      escAttr(v.id) +
-                      '" title="Porównaj z dowolną wersją (domyślnie poprzednia)">Porównaj</button>' +
-                      '<button class="btn btn-sm btn-secondary" data-pv-act="export" data-pv-id="' +
-                      escAttr(v.id) +
-                      '" data-pv-version="' +
-                      escAttr(v.version || '') +
-                      '" data-pv-status="' +
-                      escAttr(v.status || '') +
-                      '" title="Pobierz XLSX tej wersji do review przed publikacją">Eksport' +
-                      (isDraftish ? ' (review)' : '') +
-                      '</button>' +
-                      '<button class="btn btn-sm btn-secondary" data-pv-act="label" data-pv-id="' +
-                      escAttr(v.id) +
-                      '" data-pv-label="' +
-                      escAttr(labelOf(v)) +
-                      '" data-pv-canonical="' +
-                      escAttr(v.version || '') +
-                      '" title="Ręczna korekta etykiety wersji (z ostrzeżeniem; nie zmienia cen, daty obowiązywania ani pieczątek ofert)"><i data-lucide="tag"></i> Etykieta</button>' +
-                      activation +
-                      deleteBtn +
-                      '</div>'
-                    : '<span class="text-muted">—</span>';
+        return (
+            '<article class="pv-vcard' +
+            (selected ? ' is-selected' : '') +
+            '" data-pv-state="' +
+            escAttr(state) +
+            '" data-pv-select="' +
+            escAttr(v.id) +
+            '" role="button" tabindex="0" aria-pressed="' +
+            (selected ? 'true' : 'false') +
+            '">' +
+            '<div class="pv-vcard__head">' +
+            '<strong class="pv-vcard__label"' +
+            typeTitle +
+            '>' +
+            esc(labelOf(v) || '—') +
+            (v.labelOverride
+                ? ' <span class="text-muted" title="Ręczna korekta etykiety (kanoniczna: ' +
+                  escAttr(v.version || '') +
+                  ')">(ręczna)</span>'
+                : '') +
+            '</strong>' +
+            statusBadge(state) +
+            '</div>' +
+            '<dl class="pv-vcard__meta">' +
+            '<div><dt>Nr</dt><dd>' +
+            esc(String(v.seq ?? '—')) +
+            '</dd></div>' +
+            '<div><dt>Obowiązuje od</dt><dd>' +
+            eff +
+            '</dd></div>' +
+            '<div><dt>Autor</dt><dd>' +
+            esc(v.createdByName || v.createdBy || '—') +
+            '</dd></div>' +
+            '<div><dt>Użycie</dt><dd>' +
+            usedByCell(v) +
+            '</dd></div>' +
+            '</dl>' +
+            '<div class="pv-vcard__note">' +
+            noteCell(v) +
+            '</div>' +
+            '</article>'
+        );
+    }
+
+    /** Pasek akcji: jeden komplet, aktywny dopiero po zaznaczeniu karty. */
+    function actionsBarHtml(v, manageable) {
+        var has = Boolean(v) && manageable === true;
+        var isDraft = v ? isEditableStatus(stateOf(v)) : false;
+        var reason = v ? deleteReason(v) : null;
+        var idAttr = v ? ' data-pv-id="' + escAttr(v.id) + '"' : '';
+        var version = escAttr(v ? v.version || '' : '');
+        var label = escAttr(v ? labelOf(v) : '');
+        var note = escAttr(v ? v.note || '' : '');
+        var eff = escAttr(v ? v.effectiveFrom || '' : '');
+        var noSelectionHint = 'Zaznacz wersję na liście, aby użyć akcji';
+        var off = function (ok) {
+            return ok ? '' : ' disabled';
+        };
+        var tip = function (ok, okTitle, blockedTitle) {
+            return escAttr(ok ? okTitle : blockedTitle || noSelectionHint);
+        };
+        var canOpen = has && Boolean(v);
+        var canDraft = canOpen && isDraft;
+        var canClone = canOpen && !isDraft;
+        var canDelete = canOpen && reason === null;
+        return (
+            '<p class="pv-selected-label">' +
+            (v
+                ? 'Wybrana: <strong>' +
+                  esc(labelOf(v) || '—') +
+                  '</strong> ' +
+                  statusBadge(stateOf(v))
+                : '<span class="text-muted">Nie wybrano wersji — kliknij kartę.</span>') +
+            '</p>' +
+            '<div class="pv-version-actions__grid" role="group" aria-label="Akcje wybranej wersji">' +
+            '<button type="button" class="btn btn-sm btn-secondary" data-pv-act="edit"' +
+            idAttr +
+            ' data-pv-version="' +
+            label +
+            '"' +
+            off(canDraft) +
+            ' title="' +
+            tip(
+                canDraft,
+                'Przejdź do edytora cennika — zapis trafia do tego szkicu (LIVE bez zmian)',
+                'Dostępne dla wersji roboczej (szkicu)'
+            ) +
+            '"><i data-lucide="pencil"></i> Edytuj</button>' +
+            '<button type="button" class="btn btn-sm btn-secondary" data-pv-act="clone"' +
+            idAttr +
+            off(canClone) +
+            ' title="' +
+            tip(
+                canClone,
+                'Utwórz szkic jako kopię wybranej wersji i przejdź do edycji (obowiązująca wersja nie zmieni się)',
+                'Dostępne dla wersji opublikowanej'
+            ) +
+            '"><i data-lucide="history"></i> Kopia jako szkic</button>' +
+            '<button type="button" class="btn btn-sm btn-secondary" data-pv-act="preview"' +
+            idAttr +
+            off(canOpen) +
+            ' title="' +
+            tip(canOpen, 'Podgląd zapisanych cen (tylko odczyt)') +
+            '"><i data-lucide="eye"></i> Podgląd</button>' +
+            '<button type="button" class="btn btn-sm btn-secondary" data-pv-act="diff"' +
+            idAttr +
+            off(canOpen) +
+            ' title="' +
+            tip(canOpen, 'Porównaj z dowolną wersją (domyślnie poprzednia)') +
+            '">Porównaj</button>' +
+            '<button type="button" class="btn btn-sm btn-secondary" data-pv-act="export"' +
+            idAttr +
+            ' data-pv-version="' +
+            version +
+            '" data-pv-status="' +
+            escAttr(v ? v.status || '' : '') +
+            '"' +
+            off(canOpen) +
+            ' title="' +
+            tip(canOpen, 'Pobierz XLSX tej wersji do review przed publikacją') +
+            '">Eksport' +
+            (isDraft ? ' (review)' : '') +
+            '</button>' +
+            '<button type="button" class="btn btn-sm btn-secondary" data-pv-act="label"' +
+            idAttr +
+            ' data-pv-label="' +
+            label +
+            '" data-pv-canonical="' +
+            version +
+            '"' +
+            off(canOpen) +
+            ' title="' +
+            tip(
+                canOpen,
+                'Ręczna korekta etykiety wersji (z ostrzeżeniem; nie zmienia cen, daty obowiązywania ani pieczątek ofert)'
+            ) +
+            '"><i data-lucide="tag"></i> Etykieta</button>' +
+            '<button type="button" class="btn btn-sm btn-secondary" data-pv-act="edit-note"' +
+            idAttr +
+            ' data-pv-note="' +
+            note +
+            '"' +
+            off(canDraft) +
+            ' title="' +
+            tip(canDraft, 'Edytuj notatki', 'Notatki edytujesz w wersji roboczej (szkicu)') +
+            '"><i data-lucide="pencil"></i> Notatki</button>' +
+            '<button type="button" class="btn btn-sm btn-secondary" data-pv-act="publish"' +
+            idAttr +
+            ' data-pv-eff="' +
+            eff +
+            '"' +
+            off(canDraft) +
+            ' title="' +
+            tip(
+                canDraft,
+                'Wyślij roboczą na oś czasu (data przyszła = Do wdrożenia, data przeszła = korekta wsteczna z uzasadnieniem)',
+                'Dostępne dla wersji roboczej (szkicu)'
+            ) +
+            '">Opublikuj roboczą</button>' +
+            '<button type="button" class="btn btn-sm btn-danger" data-pv-act="delete"' +
+            idAttr +
+            ' data-pv-version="' +
+            label +
+            '"' +
+            off(canDelete) +
+            ' title="' +
+            escAttr(
+                canDelete
+                    ? 'Usuwa wersję i jej pozycje (tylko wersje nigdy nieaktywne)'
+                    : reason || noSelectionHint
+            ) +
+            '">Usuń</button>' +
+            '</div>'
+        );
+    }
+
+    function renderActions(type, manageable) {
+        var box = document.getElementById('pv-version-actions');
+        if (!box) return;
+        box.innerHTML = actionsBarHtml(selectedVersion(type), manageable);
+        icons(box);
+    }
+
+    function renderRows(versions, manageable, type) {
+        versionsByType[type] = versions;
+        if (versions.length === 0) {
+            selectedVersionId[type] = null;
+            return '<p class="pv-vcard-empty text-muted">Brak wersji — zapisz pierwszą powyżej.</p>';
+        }
+        var selectedId = resolveSelection(type, versions);
+        return groupByYear(versions)
+            .map(function (group) {
                 return (
-                    '<article class="pv-vcard" data-pv-state="' +
-                    escAttr(state) +
+                    '<section class="pv-year" data-pv-year="' +
+                    escAttr(group.year) +
                     '">' +
-                    '<div class="pv-vcard__head">' +
-                    '<strong class="pv-vcard__label"' +
-                    typeTitle +
-                    '>' +
-                    esc(labelOf(v) || '—') +
-                    (v.labelOverride
-                        ? ' <span class="text-muted" title="Ręczna korekta etykiety (kanoniczna: ' +
-                          escAttr(v.version || '') +
-                          ')">(ręczna)</span>'
-                        : '') +
-                    '</strong>' +
-                    statusBadge(state) +
+                    '<h5 class="pv-year__title">' +
+                    esc(group.year) +
+                    ' <span class="text-muted">(' +
+                    group.versions.length +
+                    ')</span></h5>' +
+                    '<div class="pv-year__list">' +
+                    group.versions
+                        .map(function (v) {
+                            return versionCardHtml(v, type, v.id === selectedId);
+                        })
+                        .join('') +
                     '</div>' +
-                    '<dl class="pv-vcard__meta">' +
-                    '<div><dt>Nr</dt><dd>' +
-                    esc(String(v.seq ?? '—')) +
-                    '</dd></div>' +
-                    '<div><dt>Obowiązuje od</dt><dd>' +
-                    eff +
-                    '</dd></div>' +
-                    '<div><dt>Autor</dt><dd>' +
-                    esc(v.createdByName || v.createdBy || '—') +
-                    '</dd></div>' +
-                    '<div><dt>Użycie</dt><dd>' +
-                    usedByCell(v) +
-                    '</dd></div>' +
-                    '</dl>' +
-                    '<div class="pv-vcard__note">' +
-                    noteCell(v, manageable) +
-                    '</div>' +
-                    '<div class="pv-vcard__actions">' +
-                    actions +
-                    '</div>' +
-                    '</article>'
+                    '</section>'
                 );
             })
             .join('');
@@ -1048,6 +1200,7 @@
             statusBadge('DRAFT') +
             statusBadge('ARCHIVED') +
             '</div>' +
+            '<div id="pv-version-actions" class="pv-version-actions"></div>' +
             '<div id="pv-versions-body" class="pv-version-list"></div>' +
             '</div>' +
             '</details>' +
@@ -1182,6 +1335,7 @@
         });
         var body = document.getElementById('pv-versions-body');
         if (body) body.innerHTML = renderRows(versions, manageable, type);
+        renderActions(type, manageable);
         var dock = document.getElementById(DOCK_ID);
         if (dock) icons(dock);
         var nextLabel = document.getElementById('pv-next-label');
@@ -1792,6 +1946,16 @@
         return dock;
     }
 
+    /** Zmiana zaznaczenia bez refetchu: karty + pasek akcji. */
+    function rerenderCards(type) {
+        var manageable = canManage[type] === true;
+        var body = document.getElementById('pv-versions-body');
+        if (body) body.innerHTML = renderRows(versionsByType[type] || [], manageable, type);
+        renderActions(type, manageable);
+        var dock = document.getElementById(DOCK_ID);
+        if (dock) icons(dock);
+    }
+
     function wirePanel(overlay, initialType) {
         var host = /** @type {any} */ (overlay);
         if (!host.__pvState) host.__pvState = { current: initialType };
@@ -1816,6 +1980,15 @@
                     switchType(next, state).catch(function (err) {
                         toast('Błąd przełączania typu: ' + err.message, 'error');
                     });
+                }
+                return;
+            }
+            var card = e.target && e.target.closest ? e.target.closest('[data-pv-select]') : null;
+            if (card) {
+                var picked = card.getAttribute('data-pv-select');
+                if (picked && picked !== selectedVersionId[state.current]) {
+                    selectedVersionId[state.current] = picked;
+                    rerenderCards(state.current);
                 }
                 return;
             }
@@ -1953,6 +2126,14 @@
                     if (ok) doDelete();
                 });
             }
+        });
+        // Karta to role="button" — Enter/Spacja zaznaczają jak klik.
+        overlay.addEventListener('keydown', function (e) {
+            if (e.key !== 'Enter' && e.key !== ' ') return;
+            var card = e.target && e.target.closest ? e.target.closest('[data-pv-select]') : null;
+            if (!card) return;
+            e.preventDefault();
+            card.click();
         });
         // Delegacja submit (formularz prze-renderowany przy zmianie taba).
         overlay.addEventListener('submit', function (ev) {

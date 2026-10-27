@@ -348,10 +348,10 @@ describe('frontend: edycja notatek + notatki przy aktywacji (źródło)', () => 
         'utf-8'
     );
 
-    it('kolumna Notatki: ołówek pencil tylko dla edytowalnych (DRAFT/SCHEDULED/BACKDATE_REQUESTED)', () => {
+    it('pasek akcji: Edytuj notatki tylko dla edytowalnych (DRAFT), ołówek i data-pv-note', () => {
         expect(panel).toContain('data-pv-act="edit-note"');
         expect(panel).toContain('data-lucide="pencil"');
-        expect(panel).toContain('title="Edytuj notatki"');
+        expect(panel).toContain('Edytuj notatki');
         expect(panel).toContain('pv-note-cell');
         expect(panel).toContain('function isEditableStatus(state)');
         expect(panel).toContain('data-pv-note="');

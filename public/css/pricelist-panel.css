@@ -353,21 +353,46 @@ body.pv-dock-open #pricelist-status-strip {
 }
 
 .pv-dock .pv-status-strip .badge {
+    max-width: 100%;
     padding: 2px 8px;
     font-size: var(--fs-xs);
     font-weight: var(--fw-medium);
+    white-space: normal;
 }
 
 .pv-dock .pv-status-strip:empty {
     display: none;
 }
 
-/* ===== Lista wersji (karty) ===== */
+/* ===== Lista wersji (karty w podkategoriach rok) ===== */
 
 .pv-version-list {
     display: flex;
     flex-direction: column;
-    gap: 0.6rem;
+    gap: 0.9rem;
+}
+
+.pv-year {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.pv-year__title {
+    margin: 0;
+    padding: 0 0 0.2rem 0.1rem;
+    border-bottom: 1px solid var(--border);
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+}
+
+.pv-year__list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
 }
 
 .pv-vcard {
@@ -379,6 +404,27 @@ body.pv-dock-open #pricelist-status-strip {
     border-left: 3px solid var(--border);
     border-radius: var(--radius-sm);
     background: var(--bg-secondary);
+    cursor: pointer;
+    text-align: left;
+}
+
+.pv-vcard:hover {
+    border-color: var(--accent);
+}
+
+.pv-vcard:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+.pv-vcard.is-selected {
+    border-color: var(--accent);
+    box-shadow: inset 0 0 0 1px var(--accent);
+    background: var(--bg-tertiary, var(--bg-secondary));
+}
+
+.pv-vcard.is-selected .pv-vcard__label {
+    font-weight: var(--fw-semibold, 600);
 }
 
 .pv-vcard[data-pv-state='ACTIVE'] {
@@ -452,30 +498,51 @@ body.pv-dock-open #pricelist-status-strip {
 }
 
 .pv-vcard__note .pv-note-text {
+    display: block;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
-.pv-vcard__actions .pv-actions {
+/* Pasek akcji: jeden komplet nad listą, aktywny po zaznaczeniu karty. */
+.pv-version-actions {
     display: flex;
-    flex-wrap: wrap;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.pv-version-actions:empty {
+    display: none;
+}
+
+.pv-selected-label {
+    margin: 0;
+    font-size: var(--fs-md);
+    color: var(--text-secondary);
+    overflow-wrap: anywhere;
+}
+
+.pv-version-actions__grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
     gap: 0.35rem;
 }
 
-.pv-vcard__actions .btn {
-    height: 28px;
+.pv-version-actions__grid .btn {
+    width: 100%;
+    height: 30px;
     padding: 0 0.5rem;
     font-size: var(--fs-md);
+    justify-content: flex-start;
 }
 
-.pv-vcard__actions .btn svg {
+.pv-version-actions__grid .btn svg {
     width: 14px;
     height: 14px;
 }
 
-.pv-vcard__actions .btn-danger {
-    margin-left: auto;
+.pv-version-actions__grid .btn-danger {
+    grid-column: 1 / -1;
 }
 
 .pv-vcard-empty {

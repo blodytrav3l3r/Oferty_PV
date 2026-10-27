@@ -29,12 +29,26 @@ describe('Rail „Zarządzanie cennikami" (lewy panel edytorów)', () => {
         expect(panel).toContain('dock.hidden = !open');
     });
 
-    it('wersje to karty w liście, nie tabela 8 kolumn', () => {
+    it('wersje to karty w liście, pogrupowane po roku, bez akcji na karcie', () => {
         expect(panel).toContain('id="pv-versions-body" class="pv-version-list"');
-        expect(panel).toContain('class="pv-vcard"');
+        expect(panel).toContain('class="pv-vcard');
         expect(panel).not.toContain('<tbody id="pv-versions-body">');
         expect(panel).toContain('class="pv-vcard__meta"');
-        expect(panel).toContain('class="pv-vcard__actions"');
+        expect(panel).toContain('function groupByYear');
+        expect(panel).toContain('class="pv-year"');
+        expect(panel).toContain('data-pv-select="');
+        expect(panel).not.toContain('pv-vcard__actions');
+    });
+
+    it('jeden pasek akcji dla zaznaczonej wersji (karta tylko wybiera)', () => {
+        expect(panel).toContain('id="pv-version-actions"');
+        expect(panel).toContain('function actionsBarHtml');
+        expect(panel).toContain('function renderActions');
+        expect(panel).toContain('function rerenderCards');
+        expect(panel).toContain('Zaznacz wersję na liście, aby użyć akcji');
+        expect(css).toContain('.pv-year__title');
+        expect(css).toContain('.pv-vcard.is-selected');
+        expect(css).toContain('.pv-version-actions__grid');
     });
 
     it('komplet akcji CRUD bez zmiany dyspozytora data-pv-act', () => {

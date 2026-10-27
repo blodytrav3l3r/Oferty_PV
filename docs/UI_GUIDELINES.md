@@ -151,8 +151,17 @@ liczb. Klasy CSS używają zmiennych `--z-*` z `style.base.css:251-256` (`--z-he
   (`body.pv-dock-open`), po zamknięciu pasek wraca nad siatkę.
 - Taby w railu w `#/cennik` wołają `parent.CennikHost.activate(type)` — zmiana typu to
   zmiana modułu w powłoce, nie lokalny render.
-- Wersje renderujemy jako **karty** (`.pv-vcard`) — 8-kolumnowa tabela nie mieści się
-  w 380 px. Akcje przez istniejący dyspozytor `data-pv-act`.
+- Wersje renderujemy jako **karty** (`.pv-vcard`) w podkategoriach **rok**
+  (`.pv-year`, rok z `effectiveFrom`, fallback `createdAt`) - 8-kolumnowa tabela nie
+  mieści się w 380 px.
+- **Karta wybiera, pasek działa**: kafelek nie ma własnych przycisków, tylko
+  `data-pv-select` + `role="button"` (klik/Enter/Spacja). Jeden wspólny pasek
+  `#pv-version-actions` nad listą renderuje komplet akcji (`data-pv-act`) dla
+  zaznaczonej wersji: Edytuj / Kopia jako szkic, Podgląd, Porównaj, Eksport,
+  Etykieta, Notatki, Opublikuj roboczą, Usuń. Akcja niepasująca do stanu jest
+  wyszarzona z powodem; brak zaznaczenia = wszystkie nieaktywne.
+- Wybór pamiętany per typ (`selectedVersionId`), przeżywa odświeżenie listy; gdy
+  zaznaczona wersja zniknie, fallback to wersja obowiązująca.
 - Modal zostaje dla dialogów wymagających szerokości (podgląd, diff, etykieta, nota,
   publikacja).
 

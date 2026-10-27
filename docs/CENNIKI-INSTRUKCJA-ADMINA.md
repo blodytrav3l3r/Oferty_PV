@@ -94,15 +94,20 @@ własny cykl życia i własną oś czasu.
 **DRAFT**. W edytorze widać pasek stanu (Szkic vs Obowiązuje).
 
 Panel **„Zarządzanie cennikami”** (lewy rail, przycisk **„Panel”** w zakładce
-„Cennik” edytora i w `#/cennik`) pokazuje historię wersji danej osi: badge stanu, data,
-autor, użycie, nota, akcje (Edytuj/Utwórz kopię, Podgląd, Porównaj, Eksport, Etykieta,
-Opublikuj roboczą, Usuń). Sekcje raila: **Siatka cen**, **Wersje**, **Transfer plików**,
-**Cenniki domyślne**, **Jak to działa**. Rail jest **jedynym paskiem zarządzania** —
-mieści też akcje siatki (Edytuj szkic / Opublikuj / Dodaj / Zapisz), więc nad tabelą
-zostaje tylko tytuł, szukajka i przełącznik „Panel”. W `#/cennik` rail jest otwarty
-**zawsze** i jest **jedynym lewym panelem** — powłoka nie ma własnego paska nawigacji.
-Na górze raila są taby Rury/Studnie/PRECO, więc nawigacja i zarządzanie to jedno
-miejsce. W modułach rail otwiera przycisk „Panel”.
+„Cennik” edytora i w `#/cennik`) pokazuje historię wersji danej osi jako **kafelki
+w podkategoriach rok** (rok z daty obowiązywania, szkice bez daty → „Bez daty”).
+Kafelek tylko **wybiera** wersję (klik lub Enter/Spacja; domyślnie zaznaczona jest
+wersja obowiązująca) i pokazuje badge stanu, datę, autora, użycie oraz notę.
+Akcje są **jednym wspólnym paskiem** nad listą i działają na zaznaczonym kafelku:
+Edytuj / Kopia jako szkic, Podgląd, Porównaj, Eksport, Etykieta, Notatki,
+Opublikuj roboczą, Usuń (niedostępne dla danego stanu są wyszarzone z powodem;
+bez zaznaczenia wszystkie są nieaktywne). Sekcje raila: **Siatka cen**, **Wersje**,
+**Transfer plików**, **Cenniki domyślne**, **Jak to działa**. Rail jest **jedynym
+paskiem zarządzania** — mieści też akcje siatki (Edytuj szkic / Opublikuj / Dodaj /
+Zapisz), więc nad tabelą zostaje tylko tytuł, szukajka i przełącznik „Panel”.
+W `#/cennik` rail jest otwarty **zawsze** i jest **jedynym lewym panelem** — powłoka
+nie ma własnego paska nawigacji. Na górze raila są taby Rury/Studnie/PRECO, więc
+nawigacja i zarządzanie to jedno miejsce. W modułach rail otwiera przycisk „Panel”.
 
 **Cennik w SPA**: `#/cennik` (kafelek „Cennik" w nagłówku SPA) osadza te same
 edytory co moduły — Rury oraz Studnie/PRECO — więc edycja i zapis działają bez
