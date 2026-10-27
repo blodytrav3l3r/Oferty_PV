@@ -80,6 +80,21 @@ describe('Rail „Zarządzanie cennikami" (lewy panel edytorów)', () => {
         expect(panel).toContain('function restoreGridDataOnly');
     });
 
+    it('zmiana DN zostaje w wersji; tylko zmiana osi ją zwalnia', () => {
+        const state = read('public/js/studnie/pricelistState.js');
+        // Oś: wszystkie DN = studnie, Wkładki = [preco].
+        expect(state).toContain(
+            "const prevAxis = currentCennikTab === 'preco' ? 'preco' : 'studnie';"
+        );
+        expect(state).toContain("const nextAxis = tab === 'preco' ? 'preco' : 'studnie';");
+        expect(state).toContain('releaseEditorVersion(prevAxis)');
+        expect(state).not.toContain('closeEditorPreview(');
+        expect(panel).toContain('function releaseEditorVersion');
+        expect(panel).toContain('function watchVersionLock');
+        expect(panel).toContain('function versionAxis');
+        expect(panel).toContain("bar.setAttribute('data-axis', type)");
+    });
+
     it('nagłówek: Cennik Rur / elementów studni / wkładek PRECO + numer wersji', () => {
         expect(panel).toContain("rury: 'Cennik Rur'");
         expect(panel).toContain("studnie: 'Cennik elementów studni'");
@@ -91,9 +106,7 @@ describe('Rail „Zarządzanie cennikami" (lewy panel edytorów)', () => {
             expect(partial).toContain('id="pv-title-version"');
         }
         expect(css).toContain('.pv-title-version');
-        expect(read('public/js/studnie/pricelistState.js')).toContain(
-            "syncHeaderForTab(tab === 'preco' ? 'preco' : 'studnie')"
-        );
+        expect(read('public/js/studnie/pricelistState.js')).toContain('syncHeaderForTab(nextAxis)');
     });
 
     it('komplet akcji CRUD bez zmiany dyspozytora data-pv-act', () => {

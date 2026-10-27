@@ -30,6 +30,10 @@ function updateStudnieSaveBtn() {
 }
 
 function selectCennikTab(tab) {
+    // Oś zakładki: PRECO to osobna oś, wszystkie DN to oś studni. Zmiana DN
+    // wewnątrz osi ma zostawić pokazywaną wersję, zmiana osi ją zwalnia.
+    const prevAxis = currentCennikTab === 'preco' ? 'preco' : 'studnie';
+    const nextAxis = tab === 'preco' ? 'preco' : 'studnie';
     currentCennikTab = tab;
     document.querySelectorAll('.cennik-tab').forEach((/** @type {HTMLElement} */ b) => {
         b.classList.toggle('active', b.dataset.tab === tab);
@@ -39,19 +43,30 @@ function selectCennikTab(tab) {
     } else {
         renderStudniePriceList();
     }
+    // Najpierw zwolnienie wersji poprzedniej osi, potem nagłówek nowej —
+    // inaczej nagłówek widzi jeszcze widoczny pasek wersji i zostaje stary numer.
+    if (prevAxis !== nextAxis) {
+        if (
+            window.pricelistVersions &&
+            typeof window.pricelistVersions.releaseEditorVersion === 'function'
+        ) {
+            window.pricelistVersions.releaseEditorVersion(prevAxis);
+        }
+    }
     // Nagłówek: „Cennik wkładek PRECO” vs „Cennik elementów studni” + numer wersji osi.
     if (
         window.pricelistVersions &&
         typeof window.pricelistVersions.syncHeaderForTab === 'function'
     ) {
-        window.pricelistVersions.syncHeaderForTab(tab === 'preco' ? 'preco' : 'studnie');
+        window.pricelistVersions.syncHeaderForTab(nextAxis);
     }
-    // Podgląd wersji dotyczy jednej osi — zmiana zakładki wraca do siatki.
     if (
+        prevAxis === nextAxis &&
         window.pricelistVersions &&
-        typeof window.pricelistVersions.closeEditorPreview === 'function'
+        typeof window.pricelistVersions.applyEditorLock === 'function'
     ) {
-        window.pricelistVersions.closeEditorPreview(tab === 'preco' ? 'preco' : 'studnie');
+        // Ta sama oś: render podmienił wnętrze — blokada trybu wersji wraca.
+        window.pricelistVersions.applyEditorLock(nextAxis);
     }
     // Pasek stanu pokazuje oś edytowanego zakładki (PRECO to osobna oś).
     if (

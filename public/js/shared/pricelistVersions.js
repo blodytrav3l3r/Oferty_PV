@@ -841,6 +841,8 @@
     function syncHeaderForTab(type) {
         headerAxis = type;
         syncHeaderTitle(type);
+        // Siatka pokazuje wersję — numer w nagłówku należy do niej, nie do ACTIVE.
+        if (versionAxis()) return;
         if (versionsByType[type]) {
             syncHeaderVersion(activeVersionLabel(type));
             return;
@@ -951,6 +953,7 @@
     function showVersionBar(type, v) {
         var bar = versionBar(type);
         if (!bar) return;
+        bar.setAttribute('data-axis', type);
         bar.innerHTML =
             '<span class="pv-version-bar__label">Wersja <strong>' +
             esc(labelOf(v)) +
@@ -1028,11 +1031,59 @@
         applyEditorLock(type);
         showVersionBar(type, v);
         syncHeaderVersion(labelOf(v));
+        watchVersionLock(type);
+    }
+
+    /* ===== Blokada siatki w trybie wersji ===== */
+
+    var lockObserver = null;
+
+    /** Oś aktualnie pokazywana w siatce (null = dane edytora). */
+    function versionAxis() {
+        var bar = document.getElementById('pv-version-bar');
+        return bar && !bar.hidden ? bar.getAttribute('data-axis') : null;
+    }
+
+    function stopVersionLock() {
+        if (lockObserver) {
+            lockObserver.disconnect();
+            lockObserver = null;
+        }
+    }
+
+    /**
+     * Renderer podmienia wnętrze kontenera (zmiana DN, szukajka), więc blokadę
+     * trzeba nakładać po każdym renderze — stąd obserwator zamiast haków w każdym
+     * rendererze. `inert` to atrybut, nie dziecko, więc nie ma pętli.
+     */
+    function watchVersionLock(type) {
+        stopVersionLock();
+        var grid = document.getElementById(EDITOR_GRID[type] || '');
+        if (!grid || typeof MutationObserver !== 'function') return;
+        lockObserver = new MutationObserver(function () {
+            var axis = versionAxis();
+            if (axis) applyEditorLock(axis);
+        });
+        lockObserver.observe(grid, { childList: true });
+    }
+
+    /** Zwalnia wersję osi bez renderu — gdy siatkę zaraz przejmie druga oś. */
+    function releaseEditorVersion(type) {
+        if (!type) return;
+        stopVersionLock();
+        restoreGridDataOnly(type);
+        var bar = document.getElementById('pv-version-bar');
+        if (bar) {
+            bar.hidden = true;
+            bar.innerHTML = '';
+        }
+        applyEditorLock(type);
     }
 
     /** Powrót do danych edytora (snapshot) + odblokowanie wg trybu osi. */
     function restoreGrid(type) {
         var hadSnapshot = Object.prototype.hasOwnProperty.call(gridSnapshot, type);
+        stopVersionLock();
         restoreGridDataOnly(type);
         if (hadSnapshot) {
             var cfg = GRID_STATE[type];
@@ -1043,6 +1094,7 @@
         if (bar) {
             bar.hidden = true;
             bar.innerHTML = '';
+            bar.removeAttribute('data-axis');
         }
         applyEditorLock(type);
         syncHeaderVersion(activeVersionLabel(type));
@@ -3097,6 +3149,7 @@
         canDelete: canDelete,
         syncHeaderForTab: syncHeaderForTab,
         closeEditorPreview: closeEditorPreview,
+        releaseEditorVersion: releaseEditorVersion,
         approveVersion: approveVersion,
         fetchChecks: fetchChecks,
         isPastDate: isPastDate,
