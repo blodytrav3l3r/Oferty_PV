@@ -52,8 +52,9 @@ describe('Rail „Zarządzanie cennikami" (lewy panel edytorów)', () => {
         // Lista wersji przewija się bez widocznego paska (nie zabiera szerokości).
         expect(css).toContain('scrollbar-width: none');
         expect(css).toContain('.pv-dock__body::-webkit-scrollbar');
-        // Kafelek: data obowiązywania pełną szerokością od lewej.
+        // Kafelek: data obowiązywania pełną szerokością od lewej, etykieta w linii.
         expect(css).toContain('.pv-vcard__meta > div:first-child');
+        expect(css).toContain('.pv-vcard__meta > div:last-child');
     });
 
     it('zaznaczenie karty pokazuje wersję w tej samej siatce (tylko odczyt)', () => {

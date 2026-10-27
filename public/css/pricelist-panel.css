@@ -526,6 +526,14 @@ body.pv-dock-open #pricelist-status-strip {
 /* Data obowiązywania zajmuje całą szerokość i startuje od lewej. */
 .pv-vcard__meta > div:first-child {
     grid-column: 1 / -1;
+    display: flex;
+    align-items: baseline;
+    gap: 0.35rem;
+}
+
+/* Użycie: przy prawej krawędzi kafelka. */
+.pv-vcard__meta > div:last-child {
+    text-align: right;
 }
 
 .pv-vcard__meta dt {
