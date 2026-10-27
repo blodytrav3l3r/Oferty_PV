@@ -162,16 +162,21 @@ liczb. Klasy CSS używają zmiennych `--z-*` z `style.base.css:251-256` (`--z-he
   wyszarzona z powodem; brak zaznaczenia = wszystkie nieaktywne.
 - Wybór pamiętany per typ (`selectedVersionId`), przeżywa odświeżenie listy; gdy
   zaznaczona wersja zniknie, fallback to wersja obowiązująca.
-- **Zaznaczenie = podgląd w prawej kolumnie**: karta ładuje wersję przez
-  `openInlinePreview(gridId, id, type)` (`pricelistVersionPreview.js`) - host
-  `#pv-inline-preview` powstaje raz za siatką, siatka dostaje `hidden`, podgląd
-  pokazuje metadane, arkusze i tabelę tylko do odczytu + „Wróć do edycji"
-  (`closeInlinePreview`). Nagłówek prawej kolumny (`#pv-title-text`,
-  `#pv-title-version`) pokazuje nazwę osi i numer wyświetlanej wersji:
-  „Cennik Rur" / „Cennik elementów studni" / „Cennik wkładek PRECO"
-  (`syncHeaderForTab` wołane z `selectCennikTab`).
-- Zmiana zakładki studni, akcja na wersji i wejście w edycję zamykają podgląd,
-  żeby siatka i podgląd nie opisywały dwóch różnych wersji.
+- **Zaznaczenie = ta sama siatka, tryb odczytu**: karta ładuje dane wersji przez
+  `GET /api/pricelist-versions/:id/export` + ten sam parser/normalizacja co import
+  XLSX (`ruryImportOptions` / `studnieImportOptions`), więc tabela wygląda
+  identycznie jak w edycji. Nad siatką pojawia się `#pv-version-bar` („Wersja … —
+  tylko odczyt”) z przyciskiem „Wróć do edycji”; siatka jest `inert` (PRECO:
+  `inert` na `.preco-accordion-body`, żeby dało się rozwinąć DN). Dane sprzed
+  podglądu trzyma `gridSnapshot`, więc powrót nie gubi niezapisanych zmian.
+  Nagłówek (`#pv-title-text`, `#pv-title-version`) pokazuje nazwę osi i numer
+  wyświetlanej wersji: „Cennik Rur" / „Cennik elementów studni" / „Cennik
+  wkładek PRECO" (`syncHeaderForTab` wołane z `selectCennikTab`).
+- Klik w **już zaznaczony** kafelek też otwiera wersję w siatce (inaczej jedyna
+  wersja osi, np. PRECO z samym ACTIVE, byłaby niepodglądalna).
+- Zmiana zakładki studni, akcja na wersji i wejście w edycję wracają do danych
+  live; przy przejściu na drugą oś jej snapshot jest oddawany bez renderu
+  (`restoreOtherAxes`), bo PRECO i studnie dzielą kontener tabeli.
 - Modal zostaje dla dialogów wymagających szerokości (podgląd, diff, etykieta, nota,
   publikacja).
 

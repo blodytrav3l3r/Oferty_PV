@@ -35,6 +35,96 @@ async function exportStudnieToExcel() {
     }
 }
 
+/**
+ * Opcje normalizacji wierszy studni — jedno źródło dla importu XLSX i widoku
+ * wersji w siatce (ta sama konwersja = ten sam wygląd tabeli).
+ * @param {Array<any>} importIssues kolekcja błędów (pusta dla widoku wersji)
+ */
+function studnieImportOptions(importIssues) {
+    const dnColKey = HEADER_TO_KEY['dn'] || 'dn';
+    return {
+        headerToKey: HEADER_TO_KEY,
+        numericFields: [
+            'height',
+            'weight',
+            'area',
+            'areaExt',
+            'transport',
+            'price',
+            'doplataPEHD',
+            'malowanieWewnetrzne',
+            'malowanieZewnetrzne',
+            'doplataZelbet',
+            'doplataDrabNierdzewna',
+            'magazynWL',
+            'magazynKLB',
+            'formaStandardowa',
+            'formaStandardowaKLB',
+            'zapasDol',
+            'zapasGora',
+            'zapasDolMin',
+            'zapasGoraMin',
+            'dn',
+            'hMin1',
+            'hMax1',
+            'cena1',
+            'hMin2',
+            'hMax2',
+            'cena2',
+            'hMin3',
+            'hMax3',
+            'cena3'
+        ],
+        emptyDefaults: {
+            magazynWL: 1,
+            magazynKLB: 1,
+            formaStandardowa: 1,
+            formaStandardowaKLB: 1
+        },
+        onIssue: (index, field, reason) => {
+            importIssues.push(
+                window.pricelistXlsx.importIssue(index, field, reason, HEADER_TO_KEY)
+            );
+        },
+        onSkip: (index, reason, product) => {
+            if (reason === 'duplicate-id') {
+                logger.warn(
+                    'pricelistManager',
+                    `[Import Studnie] Row ${index + 2} skipped: duplicate ID ${product.id}`
+                );
+            } else {
+                logger.warn(
+                    'pricelistManager',
+                    `[Import Studnie] Row ${index + 2} skipped: missing ID or Name`
+                );
+            }
+        },
+        postCoerce: (product, raw) => {
+            product.category = String(product.category || '').trim() || 'Inne';
+            product.componentType = String(product.componentType || '').trim();
+            if (product.category.startsWith('Kinety') && !product.componentType) {
+                product.componentType = 'kineta';
+            }
+
+            const rawDn = raw[dnColKey];
+            if (product.dn !== null && typeof rawDn === 'string' && rawDn.includes('/')) {
+                product.dn = rawDn;
+            }
+
+            if (product.magazynWL == null) product.magazynWL = 0;
+            if (product.magazynKLB == null) product.magazynKLB = 0;
+            if (product.formaStandardowa == null) product.formaStandardowa = 1;
+            if (product.formaStandardowaKLB == null) product.formaStandardowaKLB = 1;
+
+            if (typeof renamePłyty === 'function') {
+                renamePłyty(product);
+            }
+        }
+    };
+}
+
+window.studnieImportOptions = studnieImportOptions;
+
 async function importStudnieFromExcel(event, opts) {
     const file = event.target.files[0];
     if (!file) return;
@@ -89,89 +179,11 @@ async function importStudnieFromExcel(event, opts) {
                 return;
             }
 
-            const numericFields = [
-                'height',
-                'weight',
-                'area',
-                'areaExt',
-                'transport',
-                'price',
-                'doplataPEHD',
-                'malowanieWewnetrzne',
-                'malowanieZewnetrzne',
-                'doplataZelbet',
-                'doplataDrabNierdzewna',
-                'magazynWL',
-                'magazynKLB',
-                'formaStandardowa',
-                'formaStandardowaKLB',
-                'zapasDol',
-                'zapasGora',
-                'zapasDolMin',
-                'zapasGoraMin',
-                'dn',
-                'hMin1',
-                'hMax1',
-                'cena1',
-                'hMin2',
-                'hMax2',
-                'cena2',
-                'hMin3',
-                'hMax3',
-                'cena3'
-            ];
-
-            const dnColKey = HEADER_TO_KEY['dn'] || 'dn';
             const importIssues = [];
-            const normalized = window.pricelistXlsx.normalizeRows(allJson, {
-                headerToKey: HEADER_TO_KEY,
-                numericFields,
-                emptyDefaults: {
-                    magazynWL: 1,
-                    magazynKLB: 1,
-                    formaStandardowa: 1,
-                    formaStandardowaKLB: 1
-                },
-                onIssue: (index, field, reason) => {
-                    importIssues.push(
-                        window.pricelistXlsx.importIssue(index, field, reason, HEADER_TO_KEY)
-                    );
-                },
-                onSkip: (index, reason, product) => {
-                    if (reason === 'duplicate-id') {
-                        logger.warn(
-                            'pricelistManager',
-                            `[Import Studnie] Row ${index + 2} skipped: duplicate ID ${product.id}`
-                        );
-                    } else {
-                        logger.warn(
-                            'pricelistManager',
-                            `[Import Studnie] Row ${index + 2} skipped: missing ID or Name`
-                        );
-                    }
-                },
-                postCoerce: (product, raw) => {
-                    product.category = String(product.category || '').trim() || 'Inne';
-                    product.componentType = String(product.componentType || '').trim();
-                    if (product.category.startsWith('Kinety') && !product.componentType) {
-                        product.componentType = 'kineta';
-                    }
-
-                    const rawDn = raw[dnColKey];
-                    if (product.dn !== null && typeof rawDn === 'string' && rawDn.includes('/')) {
-                        product.dn = rawDn;
-                    }
-
-                    if (product.magazynWL == null) product.magazynWL = 0;
-                    if (product.magazynKLB == null) product.magazynKLB = 0;
-                    if (product.formaStandardowa == null) product.formaStandardowa = 1;
-                    if (product.formaStandardowaKLB == null) product.formaStandardowaKLB = 1;
-
-                    if (typeof renamePłyty === 'function') {
-                        renamePłyty(product);
-                    }
-                }
-            });
+            const normalized = window.pricelistXlsx.normalizeRows(
+                allJson,
+                studnieImportOptions(importIssues)
+            );
 
             if (importIssues.length > 0) {
                 window.pricelistXlsx.openImportErrorsModal({ issues: importIssues });

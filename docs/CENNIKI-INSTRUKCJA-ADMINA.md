@@ -98,10 +98,11 @@ Panel **„Zarządzanie cennikami”** (lewy rail, przycisk **„Panel”** w za
 w podkategoriach rok** (rok z daty obowiązywania, szkice bez daty → „Bez daty”).
 Kafelek tylko **wybiera** wersję (klik lub Enter/Spacja; domyślnie zaznaczona jest
 wersja obowiązująca) i pokazuje badge stanu, datę, autora, użycie oraz notę.
-Zaznaczenie **wczytuje podgląd tej wersji w prawej kolumnie** (tylko odczyt, arkusze
-przełączane zakładkami), a nagłówek dostaje numer wersji („Cennik Rur”,
-„Cennik elementów studni”, „Cennik wkładek PRECO”). Przycisk **„Wróć do edycji”**
-chowa podgląd i przywraca siatkę na żywo.
+Zaznaczenie **pokazuje tę wersję w tej samej siatce edytora** (tryb tylko do
+odczytu: pasek „Wersja … — tylko odczyt” nad tabelą, pola zablokowane), a nagłówek
+dostaje numer wersji („Cennik Rur”, „Cennik elementów studni”, „Cennik wkładek
+PRECO”). Przycisk **„Wróć do edycji”** przywraca dane cennika na żywo (łącznie z
+niezapisanymi zmianami sprzed podglądu).
 Akcje są **jednym wspólnym paskiem** nad listą i działają na zaznaczonym kafelku:
 Edytuj / Kopia jako szkic, Podgląd, Porównaj, Eksport, Etykieta, Notatki,
 Opublikuj roboczą, Usuń (niedostępne dla danego stanu są wyszarzone z powodem;

@@ -383,39 +383,33 @@ body.pv-dock-open #pricelist-status-strip {
     display: none;
 }
 
-/* ===== Podgląd wersji w prawej kolumnie (obok siatki edytora) ===== */
+/* ===== Pasek wersji nad siatką (ta sama tabela, tylko odczyt) ===== */
 
-.pv-inline {
-    display: flex;
-    flex-direction: column;
-    gap: 0.7rem;
-    margin-top: 1rem;
-}
-
-.pv-inline[hidden] {
-    display: none;
-}
-
-.pv-inline__head {
+.pv-version-bar {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 0.6rem;
     flex-wrap: wrap;
+    margin-top: 0.8rem;
+    padding: 0.45rem 0.7rem;
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: var(--radius-sm);
+    background: var(--bg-secondary);
 }
 
-.pv-inline__title {
-    margin: 0;
+.pv-version-bar[hidden] {
+    display: none;
+}
+
+.pv-version-bar__label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-wrap: wrap;
     font-size: var(--fs-md);
-    font-weight: var(--fw-semibold, 600);
-    color: var(--text-primary);
-}
-
-.pv-inline__title .pv-title-type {
-    margin-left: 0.35rem;
-    font-size: var(--fs-xs);
-    font-weight: 400;
-    color: var(--text-muted);
+    color: var(--text-secondary);
 }
 
 /* ===== Lista wersji (karty w podkategoriach rok) ===== */

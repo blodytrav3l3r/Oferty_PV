@@ -856,30 +856,196 @@
             });
     }
 
-    /** Po zamknięciu podglądu nagłówek wraca do wersji obowiązującej osi. */
-    function afterInlinePreviewClosed(type) {
-        if (type) syncHeaderVersion(activeVersionLabel(type));
-    }
-
-    /** Wróć do edycji: chowa podgląd i ustawia nagłówek osi. */
+    /** Wróć do edycji: przywraca dane siatki i nagłówek osi. */
     function closeEditorPreview(type) {
-        var pv = window.pricelistVersions;
-        if (pv && typeof pv.closeInlinePreview === 'function') pv.closeInlinePreview();
-        if (!type) return;
-        headerAxis = type;
-        syncHeaderTitle(type);
-        syncHeaderVersion(activeVersionLabel(type));
+        if (type) restoreGrid(type);
     }
 
-    /** Klik w kartę: zaznaczenie + podgląd tej wersji w prawej kolumnie. */
+    /** Klik w kartę: zaznaczenie + ta wersja w prawdziwej siatce edytora. */
     function openSelectedPreview(type) {
         var v = selectedVersion(type);
-        var pv = window.pricelistVersions;
-        var gridId = EDITOR_GRID[type];
-        if (!v || !pv || typeof pv.openInlinePreview !== 'function' || !gridId) return;
-        if (!document.getElementById(gridId)) return;
+        if (!v) return;
+        showVersionInGrid(type, v);
+    }
+
+    /* ===== Wersja w siatce edytora (ta sama tabela, tylko odczyt) ===== */
+
+    /** Odczyt danych osi z window (bez literału `window.X =` — gate kolizji globali). */
+    function readAxisData(name) {
+        return window[name];
+    }
+
+    /** Zapis danych osi: setter z globals.js, inaczej zwykłe przypisanie. */
+    function writeAxisData(name, rows) {
+        var desc = Object.getOwnPropertyDescriptor(window, name);
+        if (desc && typeof desc.set === 'function') {
+            desc.set(rows);
+            return;
+        }
+        window[name] = rows;
+    }
+
+    /** Odczyt/zapis danych siatki per oś + funkcja renderu (te same co edycja). */
+    var GRID_STATE = {
+        rury: {
+            read: function () {
+                return readAxisData('products');
+            },
+            write: function (rows) {
+                writeAxisData('products', rows);
+            },
+            render: 'renderPriceList'
+        },
+        studnie: {
+            read: function () {
+                return readAxisData('studnieProducts');
+            },
+            write: function (rows) {
+                writeAxisData('studnieProducts', rows);
+            },
+            render: 'renderStudniePriceList'
+        },
+        preco: {
+            read: function () {
+                return readAxisData('precoPricing');
+            },
+            write: function (rows) {
+                writeAxisData('precoPricing', rows);
+            },
+            render: 'renderPrecoPriceList'
+        }
+    };
+
+    /** Snapshot danych siatki — powrót nie gubi niezapisanych zmian. */
+    var gridSnapshot = {};
+
+    /** Przywraca dane osi bez renderu — gdy siatka należy do innej zakładki. */
+    function restoreGridDataOnly(type) {
+        var cfg = GRID_STATE[type];
+        if (!cfg || !Object.prototype.hasOwnProperty.call(gridSnapshot, type)) return;
+        cfg.write(gridSnapshot[type]);
+        delete gridSnapshot[type];
+    }
+
+    /** Zamyka podgląd wersji na pozostałych osiach (PRECO i studnie dzielą kontener). */
+    function restoreOtherAxes(type) {
+        Object.keys(GRID_STATE).forEach(function (axis) {
+            if (axis !== type) restoreGridDataOnly(axis);
+        });
+    }
+
+    function versionBar(type) {
+        var grid = document.getElementById(EDITOR_GRID[type] || '');
+        if (!grid) return null;
+        var bar = document.getElementById('pv-version-bar');
+        if (!bar) {
+            bar = document.createElement('div');
+            bar.id = 'pv-version-bar';
+            bar.className = 'pv-version-bar';
+            grid.parentNode.insertBefore(bar, grid);
+        }
+        return bar;
+    }
+
+    /** Pasek kontekstu nad siatką: która wersja i wyjście do edycji. */
+    function showVersionBar(type, v) {
+        var bar = versionBar(type);
+        if (!bar) return;
+        bar.innerHTML =
+            '<span class="pv-version-bar__label">Wersja <strong>' +
+            esc(labelOf(v)) +
+            '</strong> ' +
+            statusBadge(stateOf(v)) +
+            ' — tylko odczyt</span>' +
+            '<button type="button" class="btn btn-secondary btn-sm" id="pv-version-bar-back" title="Wróć do edycji cennika na żywo"><i data-lucide="pencil"></i> Wróć do edycji</button>';
+        bar.hidden = false;
+        icons(bar);
+        var back = bar.querySelector('#pv-version-bar-back');
+        if (back) {
+            back.addEventListener('click', function () {
+                restoreGrid(type);
+            });
+        }
+    }
+
+    /** Wersja → dane siatki: ten sam plik i parser co import XLSX. */
+    async function fetchVersionRows(type, id) {
+        var res = await fetch(API + '/' + encodeURIComponent(id) + '/export', {
+            headers: typeof authHeaders === 'function' ? authHeaders() : {}
+        });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        var buffer = await res.arrayBuffer();
+        if (typeof window.ensureXlsx === 'function') await window.ensureXlsx();
+        var workbook = XLSX.read(new Uint8Array(buffer), { type: 'array' });
+        var parsed = window.pricelistXlsx.parseWorkbookToJson(XLSX, workbook, {
+            firstSheetOnly: type === 'rury',
+            includePreco: type !== 'rury'
+        });
+        if (type === 'rury') {
+            var ruryRows = window.pricelistXlsx.normalizeRows(
+                parsed.rows,
+                window.ruryImportOptions([])
+            );
+            GRID_STATE.rury.write(ruryRows);
+            return;
+        }
+        var split = window.pricelistXlsx.splitStudnieImport(parsed);
+        if (type === 'preco') {
+            GRID_STATE.preco.write(split.precoDataMap || {});
+            return;
+        }
+        GRID_STATE.studnie.write(
+            window.pricelistXlsx.normalizeRows(split.products, window.studnieImportOptions([]))
+        );
+    }
+
+    /** Pokazuje wersję w siatce edytora (bez modala i bez osobnej tabeli). */
+    async function showVersionInGrid(type, v) {
+        var cfg = GRID_STATE[type];
+        if (!cfg || !document.getElementById(EDITOR_GRID[type] || '')) return;
+        // PRECO dzieli kontener ze studniami — najpierw przełącz widoczną zakładkę.
+        if (type === 'preco' && typeof window.selectCennikTab === 'function') {
+            var activeTab = document.querySelector('.cennik-tab.active');
+            if (!activeTab || activeTab.getAttribute('data-tab') !== 'preco') {
+                window.selectCennikTab('preco');
+            }
+        }
+        // Druga oś wraca do danych live, inaczej jej snapshot trzymałby dane wersji.
+        restoreOtherAxes(type);
+        if (!Object.prototype.hasOwnProperty.call(gridSnapshot, type)) {
+            gridSnapshot[type] = cfg.read();
+        }
+        setEditing(type, false);
+        try {
+            await fetchVersionRows(type, v.id);
+        } catch (err) {
+            toast('Błąd wczytania wersji: ' + err.message, 'error');
+            restoreGrid(type);
+            return;
+        }
+        var render = /** @type {any} */ (window)[cfg.render];
+        if (typeof render === 'function') render();
+        applyEditorLock(type);
+        showVersionBar(type, v);
         syncHeaderVersion(labelOf(v));
-        pv.openInlinePreview(gridId, v.id, type, stateOf(v));
+    }
+
+    /** Powrót do danych edytora (snapshot) + odblokowanie wg trybu osi. */
+    function restoreGrid(type) {
+        var hadSnapshot = Object.prototype.hasOwnProperty.call(gridSnapshot, type);
+        restoreGridDataOnly(type);
+        if (hadSnapshot) {
+            var cfg = GRID_STATE[type];
+            var render = cfg ? /** @type {any} */ (window)[cfg.render] : null;
+            if (typeof render === 'function') render();
+        }
+        var bar = document.getElementById('pv-version-bar');
+        if (bar) {
+            bar.hidden = true;
+            bar.innerHTML = '';
+        }
+        applyEditorLock(type);
+        syncHeaderVersion(activeVersionLabel(type));
     }
 
     /** Karta = wybór wersji; akcje żyją w jednym pasku nad listą. */
@@ -1414,8 +1580,8 @@
         var body = document.getElementById('pv-versions-body');
         if (body) body.innerHTML = renderRows(versions, manageable, type);
         renderActions(type, manageable);
-        var inline = document.getElementById('pv-inline-preview');
-        var previewing = inline && !inline.hidden && inline.getAttribute('data-type') === type;
+        var bar = document.getElementById('pv-version-bar');
+        var previewing = bar && !bar.hidden;
         if (!previewing && (headerAxis === null || headerAxis === type)) {
             headerAxis = type;
             syncHeaderVersion(activeVersionLabel(type));
@@ -1442,11 +1608,9 @@
     async function afterVersionChange(type, opts) {
         var o = opts || {};
         clearSummaryCache();
-        // Podgląd pokazywałby nieaktualne ceny po akcji na wersji — wracamy do siatki.
-        var inline = document.getElementById('pv-inline-preview');
-        if (inline && !inline.hidden && inline.getAttribute('data-type') === type) {
-            closeEditorPreview(type);
-        }
+        // Siatka pokazywała wersję — po akcji wracamy do danych edytora.
+        var bar = document.getElementById('pv-version-bar');
+        if (bar && !bar.hidden) restoreGrid(type);
         try {
             await refreshTable(type, canManage[type] === true);
         } catch (e) {
@@ -2075,11 +2239,14 @@
             var card = e.target && e.target.closest ? e.target.closest('[data-pv-select]') : null;
             if (card) {
                 var picked = card.getAttribute('data-pv-select');
-                if (picked && picked !== selectedVersionId[state.current]) {
+                if (!picked) return;
+                // Klik w już zaznaczony kafelek też pokazuje wersję — inaczej jedyna
+                // wersja na osi (np. PRECO z samym ACTIVE) nie da się obejrzeć.
+                if (picked !== selectedVersionId[state.current]) {
                     selectedVersionId[state.current] = picked;
                     rerenderCards(state.current);
-                    openSelectedPreview(state.current);
                 }
+                openSelectedPreview(state.current);
                 return;
             }
             var btn = e.target && e.target.closest ? e.target.closest('[data-pv-act]') : null;
@@ -2930,7 +3097,6 @@
         canDelete: canDelete,
         syncHeaderForTab: syncHeaderForTab,
         closeEditorPreview: closeEditorPreview,
-        afterInlinePreviewClosed: afterInlinePreviewClosed,
         approveVersion: approveVersion,
         fetchChecks: fetchChecks,
         isPastDate: isPastDate,

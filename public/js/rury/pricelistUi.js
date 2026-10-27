@@ -382,6 +382,41 @@ RURY_EXPORT_COLUMNS.forEach((col) => {
     RURY_HEADER_TO_KEY[col.header] = col.key;
 });
 
+/**
+ * Opcje normalizacji wierszy rur — jedno źródło dla importu XLSX i widoku wersji
+ * w siatce (ta sama konwersja = ten sam wygląd tabeli).
+ * @param {Array<any>} importIssues kolekcja błędów (pusta dla widoku wersji)
+ */
+function ruryImportOptions(importIssues) {
+    return {
+        headerToKey: RURY_HEADER_TO_KEY,
+        numericFields: ['price', 'weight', 'transport', 'area'],
+        preValidate: (product) => {
+            product.category = String(product.category || '').trim() || 'Inne';
+        },
+        onIssue: (index, field, reason) => {
+            importIssues.push(
+                window.pricelistXlsx.importIssue(index, field, reason, RURY_HEADER_TO_KEY)
+            );
+        },
+        onSkip: (index, reason, product) => {
+            if (reason === 'duplicate-id') {
+                logger.warn(
+                    'pricelistUi',
+                    `[Import] Wiersz ${index + 2} pominięty: duplikat ID ${product.id}`
+                );
+            } else {
+                logger.warn(
+                    'pricelistUi',
+                    `[Import] Wiersz ${index + 2} pominięty: brak ID lub Nazwy`
+                );
+            }
+        }
+    };
+}
+
+window.ruryImportOptions = ruryImportOptions;
+
 async function exportRuryToExcel() {
     if (!products || products.length === 0) {
         showToast('Brak danych do eksportu', 'error');
@@ -458,33 +493,11 @@ async function importRuryFromExcel(event, opts) {
                 return;
             }
 
-            const numericFields = ['price', 'weight', 'transport', 'area'];
             const importIssues = [];
-            const normalized = window.pricelistXlsx.normalizeRows(json, {
-                headerToKey: RURY_HEADER_TO_KEY,
-                numericFields,
-                preValidate: (product) => {
-                    product.category = String(product.category || '').trim() || 'Inne';
-                },
-                onIssue: (index, field, reason) => {
-                    importIssues.push(
-                        window.pricelistXlsx.importIssue(index, field, reason, RURY_HEADER_TO_KEY)
-                    );
-                },
-                onSkip: (index, reason, product) => {
-                    if (reason === 'duplicate-id') {
-                        logger.warn(
-                            'pricelistUi',
-                            `[Import] Wiersz ${index + 2} pominięty: duplikat ID ${product.id}`
-                        );
-                    } else {
-                        logger.warn(
-                            'pricelistUi',
-                            `[Import] Wiersz ${index + 2} pominięty: brak ID lub Nazwy`
-                        );
-                    }
-                }
-            });
+            const normalized = window.pricelistXlsx.normalizeRows(
+                json,
+                ruryImportOptions(importIssues)
+            );
 
             if (importIssues.length > 0) {
                 window.pricelistXlsx.openImportErrorsModal({ issues: importIssues });

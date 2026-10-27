@@ -51,17 +51,33 @@ describe('Rail „Zarządzanie cennikami" (lewy panel edytorów)', () => {
         expect(css).toContain('.pv-version-actions__grid');
     });
 
-    it('zaznaczenie karty ładuje podgląd wersji w prawej kolumnie', () => {
-        const preview = read('public/js/shared/pricelistVersionPreview.js');
-        expect(panel).toContain('function openSelectedPreview');
-        expect(panel).toContain('openInlinePreview(gridId, v.id, type, stateOf(v))');
-        expect(preview).toContain('function openInlinePreview');
-        expect(preview).toContain('function closeInlinePreview');
-        expect(preview).toContain("id = 'pv-inline-preview'");
-        expect(preview).toContain('Wróć do edycji');
-        expect(preview).toContain('host.hidden = false');
-        expect(preview).toContain('grid.hidden = true');
-        expect(css).toContain('.pv-inline');
+    it('zaznaczenie karty pokazuje wersję w tej samej siatce (tylko odczyt)', () => {
+        expect(panel).toContain('function showVersionInGrid');
+        expect(panel).toContain('function restoreGrid');
+        expect(panel).toContain('var GRID_STATE');
+        expect(panel).toContain("render: 'renderPriceList'");
+        expect(panel).toContain("render: 'renderStudniePriceList'");
+        expect(panel).toContain("render: 'renderPrecoPriceList'");
+        expect(panel).toContain("bar.id = 'pv-version-bar'");
+        expect(panel).toContain('Wróć do edycji');
+        expect(panel).toContain('var gridSnapshot');
+        expect(css).toContain('.pv-version-bar');
+        // Ta sama konwersja wierszy co import XLSX (identyczna tabela jak w edycji).
+        expect(read('public/js/rury/pricelistUi.js')).toContain('window.ruryImportOptions');
+        expect(read('public/js/studnie/pricelistImportExport.js')).toContain(
+            'window.studnieImportOptions'
+        );
+        expect(read('public/js/shared/pricelistVersionPreview.js')).not.toContain('pv-inline');
+    });
+
+    it('klik w zaznaczony kafelek też pokazuje wersję; druga oś wraca do live', () => {
+        // Samo ACTIVE (np. PRECO) nie mogło się otworzyć: warunek `picked !== selected`.
+        expect(panel).not.toContain('if (picked && picked !== selectedVersionId[state.current])');
+        expect(panel).toContain('openSelectedPreview(state.current);');
+        // PRECO i studnie dzielą kontener — snapshot drugiej osi nie może zostać.
+        expect(panel).toContain('function restoreOtherAxes');
+        expect(panel).toContain('restoreOtherAxes(type);');
+        expect(panel).toContain('function restoreGridDataOnly');
     });
 
     it('nagłówek: Cennik Rur / elementów studni / wkładek PRECO + numer wersji', () => {
