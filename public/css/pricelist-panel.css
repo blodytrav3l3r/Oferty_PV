@@ -160,16 +160,36 @@ body.pv-cennik-host .preco-toolbar {
         width: calc(100% - var(--pv-dock-w)) !important;
         max-width: calc(100% - var(--pv-dock-w)) !important;
         margin-left: var(--pv-dock-w) !important;
+        /* Oddech od lewego raila i od prawego scrolla — spójnie na wszystkich osiach. */
+        box-sizing: border-box !important;
+        padding-left: var(--tile-gap-lg) !important;
+        padding-right: var(--tile-gap-lg) !important;
     }
 }
 
 /* Tabele cennika skalują się do okna i są zakotwiczone w treści (bez pływania).
  * Studnie: pełna szerokość, min. 1080 px → wąskie okno przewija `.table-wrap`.
- * PRECO: cała sekcja w kolumnie max. 1040 px (nagłówek, tabela i „Dodaj" razem). */
+ * PRECO: pełna szerokość treści (bez zawężania do 1040 px). */
 body.pv-cennik-host #studnie-pricelist-body:has(.preco-accordion) {
     width: 100%;
-    max-width: 1040px;
-    margin-inline: auto;
+    max-width: none;
+    margin-inline: 0;
+}
+
+body.pv-cennik-host #pricelist-body,
+body.pv-cennik-host #studnie-pricelist-body {
+    width: 100%;
+}
+
+/* Studnie: komfortowe odstępy komórek jak w cenniku rur. */
+body.pv-cennik-host #studnie-pricelist-body table:not(.preco-table) tbody td {
+    padding: 0.4rem 0.5rem;
+}
+
+/* PRECO: nagłówek DN jak nagłówek kategorii w rurach/studniach. */
+body.pv-cennik-host .preco-accordion-head {
+    padding: 0.55rem 0.8rem;
+    font-size: var(--fs-base);
 }
 
 body.pv-cennik-host #studnie-pricelist-body table:not(.preco-table) {

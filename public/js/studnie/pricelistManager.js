@@ -52,6 +52,7 @@ function renderStudniePriceList() {
         uszczelka: '<i data-lucide="circle-check"></i> Uszczelki',
         inne: '<i data-lucide="package"></i> Inne',
         przejscie: '<i data-lucide="link"></i> Nawiercenia / Przejścia',
+        wlaz: '<i data-lucide="circle-dot"></i> Właz',
         transport: '<i data-lucide="truck"></i> Transport',
         dn1000: '<i data-lucide="circle"></i> DN1000',
         dn1200: '<i data-lucide="circle"></i> DN1200',

@@ -22,6 +22,22 @@ body.cennik-module > .main {
     margin: 0;
 }
 
+/* Rail ma dochodzić do górnej krawędzi — zero paddingu nad ramką cennika. */
+body.cennik-module > .main,
+body.cennik-module #section-cennik,
+body.cennik-module .cennik-page,
+body.cennik-module .cennik-layout,
+body.cennik-module .cennik-frames {
+    padding-top: 0 !important;
+    margin-top: 0 !important;
+}
+
+/* fadeIn przesuwa sekcję o 8 px — w module cennika to zostawia pasek nad railem. */
+body.cennik-module #section-cennik {
+    animation: none !important;
+    transform: none !important;
+}
+
 body.cennik-module #section-cennik,
 body.cennik-module .cennik-page {
     display: flex;

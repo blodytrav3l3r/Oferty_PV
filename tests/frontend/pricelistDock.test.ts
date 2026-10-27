@@ -182,7 +182,7 @@ describe('Rail „Zarządzanie cennikami" (lewy panel edytorów)', () => {
         expect(panel).toContain('id="pv-dock-content" class="pv-dock__body"');
         expect(panel).toContain("document.getElementById('pv-grid-actions')");
         expect(panel).not.toContain('stateBadge.textContent = versionMode');
-        expect(panel).toContain("'Zapisz wersję'");
+        expect(panel).toContain("var label = 'Zapisz';");
         // PRECO: zapis w railu, toolbar przy tabeli ukryty w #/cennik.
         expect(css).toContain(".pv-grid-actions[data-axis='preco'] #btn-save-studnie-pricelist");
         expect(css).toContain(".pv-grid-actions[data-axis='preco'] #btn-save-preco-rail");
@@ -218,6 +218,8 @@ describe('Rail „Zarządzanie cennikami" (lewy panel edytorów)', () => {
         expect(panel).toContain("if (isCennikHost()) return ['rury', 'studnie', 'preco']");
         expect(read('public/cennik.html')).not.toContain('cennik-sidebar');
         expect(read('public/css/cennik.css')).not.toContain('.cennik-sidebar');
+        expect(read('public/css/cennik.css')).toContain('animation: none !important');
+        expect(read('public/js/cennik/cennik.js')).toContain("main.style.paddingTop = '0'");
         expect(css).toContain('body.pv-cennik-host .pv-dock__close');
         expect(css).toContain('body.pv-cennik-host [data-pv-dock-toggle]');
     });
@@ -246,7 +248,10 @@ describe('Rail „Zarządzanie cennikami" (lewy panel edytorów)', () => {
         expect(css).toContain('body.pv-cennik-host #studnie-pricelist-body table');
         expect(css).toContain('body.pv-cennik-host .preco-wrap');
         expect(css).toContain('#studnie-pricelist-body:has(.preco-accordion)');
-        expect(css).toContain('max-width: 1040px');
+        expect(css).toContain('max-width: none');
+        expect(css).toContain('box-sizing: border-box !important');
+        expect(css).toContain('padding-left: var(--tile-gap-lg) !important');
+        expect(css).toContain('padding-right: var(--tile-gap-lg) !important');
         expect(css).toContain('min-width: 1080px');
         expect(css).not.toContain('clamp(432px');
         expect(css).toContain('body.pv-dock-open #pricelist-status-strip');

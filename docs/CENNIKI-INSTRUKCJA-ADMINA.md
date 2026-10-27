@@ -127,8 +127,9 @@ przyszłe użycie). Istniejące oferty zachowują ceny — mają własne pieczą
 Zapis jest chroniony sumą kontrolną (`If-Match`): równoległa zmiana → komunikat
 „wersja zmieniła się od czasu wczytania” i trzeba otworzyć ją ponownie.
 Pasek nad tabelą pokazuje „Edycja wersji …”, a **„Zakończ edycję”** wraca do
-danych na żywo. Przycisk zapisu w railu jest **zawsze widoczny**: w podglądzie
-wyszarzony, w edycji szkicu „Zapisz szkic”, a w edycji wersji „Zapisz wersję”.
+danych na żywo. Przycisk zapisu w railu jest **zawsze widoczny** i ma etykietę
+**„Zapisz”** (w podglądzie wyszarzony); cel zapisu — szkic albo wersja — pokazuje
+tooltip.
 
 **Anulowanie wdrożenia**: wersja **Do wdrożenia** (zaplanowana, jeszcze nieobowiązująca)
 ma przycisk **„Anuluj wdrożenie”** — wraca do szkicu i nie wejdzie w życie w

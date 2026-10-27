@@ -2484,13 +2484,8 @@
         var editing = isEditing(type);
         var versionLabel = versionEditLabel(type);
         var isDraft = window.__pricelistWriteTarget === 'draft';
-        var label = !editing
-            ? 'Zapisz'
-            : versionLabel
-              ? 'Zapisz wersję'
-              : isDraft
-                ? 'Zapisz szkic'
-                : 'Zapisz';
+        // Etykieta zawsze „Zapisz" — cel (szkic/wersja) wynika z tooltipa i badge.
+        var label = 'Zapisz';
         var title;
         if (!editing) {
             title = 'Najpierw wejdź w edycję: „Edytuj szkic” albo „Edytuj” w panelu wersji';
@@ -2932,7 +2927,7 @@
                 '<section><h4>Jak edytować cennik</h4><ol>' +
                 '<li>Otwórz panel <strong>Panel</strong> i zaznacz wersję na liście.</li>' +
                 '<li>Kliknij <strong>Edytuj szkic</strong> (wersja robocza) albo <strong>Edytuj</strong> (wersja opublikowana — edycja w miejscu z ostrzeżeniem).</li>' +
-                '<li>Zmień ceny w siatce. Przycisk <strong>Zapisz szkic</strong> zapisuje szkic, a <strong>Zapisz wersję</strong> podmienia ceny wybranej wersji.</li>' +
+                '<li>Zmień ceny w siatce i kliknij <strong>Zapisz</strong> — cel (szkic albo wybrana wersja) pokazuje tooltip przycisku.</li>' +
                 '<li>Po zapisie szkicu kliknij <strong>Opublikuj roboczą</strong> i wybierz datę oraz godzinę wejścia w życie.</li>' +
                 '</ol></section>' +
                 '<section><h4>Jak utworzyć nowy cennik</h4><ul>' +

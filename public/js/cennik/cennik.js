@@ -74,7 +74,7 @@
             }
             const main = doc.querySelector('main.main');
             if (main && main.style) {
-                main.style.paddingTop = 'var(--tile-gap-xs-plus)';
+                main.style.paddingTop = '0';
                 main.style.paddingBottom = 'var(--tile-gap-sm)';
                 main.style.marginTop = '0';
             }

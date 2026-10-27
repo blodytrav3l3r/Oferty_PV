@@ -41,11 +41,11 @@ describe('cennik: tryb edycji (podgląd ↔ szkic)', () => {
         expect(read('public/css/style.utilities.css')).toContain('#studnie-pricelist-body[inert]');
     });
 
-    it('zapis ma zawsze widoczny przycisk z etykietą celu', () => {
+    it('zapis ma zawsze widoczny przycisk z etykietą „Zapisz”', () => {
         expect(shared).toContain('function saveButtonMeta(type)');
-        expect(shared).toContain("'Zapisz wersję'");
-        expect(shared).toContain("'Zapisz szkic'");
+        expect(shared).toContain("var label = 'Zapisz';");
         expect(shared).toContain('function versionEditLabel(type)');
+        expect(shared).toContain('Zapis podmienia ceny wersji');
         for (const file of [
             'public/js/rury/pricelistUi.js',
             'public/js/studnie/pricelistState.js',
