@@ -4,6 +4,29 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.53.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.52.0...v1.53.0) (2026-10-27)
+
+### Features
+
+- **preco:** osobny import i eksport excela dla studni i preco ([01cf9a5](https://github.com/blodytrav3l3r/Oferty_PV/commit/01cf9a5b16e908113baeaa7cdd4eb1fb2a4b2676))
+- **ui:** edycja opublikowanej wersji cennika w miejscu z ostrzezeniem ([195cb50](https://github.com/blodytrav3l3r/Oferty_PV/commit/195cb50a76a7e252c143ee3f7840044d0619d335))
+- **ui:** jeden panel cenników i responsywne tabele ([01fbc7e](https://github.com/blodytrav3l3r/Oferty_PV/commit/01fbc7e12215854ce4accf289e1e2b8370eca8af))
+- **ui:** kafelki wersji po roku i jeden pasek akcji ([b7ba262](https://github.com/blodytrav3l3r/Oferty_PV/commit/b7ba2629c231370efa119f87880b846c772907b6))
+- **ui:** popup publikacji nowej wersji cennika i czytelne zapisy ([ee88e52](https://github.com/blodytrav3l3r/Oferty_PV/commit/ee88e52469181ee640f260854ee3158788bd8eb1))
+- **ui:** reczny wybor obowiazujacego cennika i usuwanie bez ofert ([28ac75b](https://github.com/blodytrav3l3r/Oferty_PV/commit/28ac75b9ae9a1c31210121c99038b446d377e00a))
+- **ui:** uporzadkowanie panelu wersji, transferu i resetow cennika ([3493429](https://github.com/blodytrav3l3r/Oferty_PV/commit/34934295b9032c069284693592c1d493809252cc))
+- **ui:** wersja cennika w siatce edytora zamiast osobnego podgladu ([59a4065](https://github.com/blodytrav3l3r/Oferty_PV/commit/59a40655915e44e9c2e950cb8b0273bd396cc210))
+- **ui:** zaznaczenie kafelka laduje podglad wersji w prawej kolumnie ([a680af8](https://github.com/blodytrav3l3r/Oferty_PV/commit/a680af85578b7f3e38c59b65990449f9b33e9d32))
+
+### Bug Fixes
+
+- **studnie:** zmiana zakladki dn zostaje w trybie wersji cennika ([ee692e3](https://github.com/blodytrav3l3r/Oferty_PV/commit/ee692e3d72f243a36b6f18730147c86220e7c01a))
+- **test:** separator path w harnessie qe dla linux ([84688be](https://github.com/blodytrav3l3r/Oferty_PV/commit/84688beb6ca6a4443475c9e54e4ab9e4f0bba92b))
+- **ui:** etykieta zapisu preco w railu jak w innych osiach ([cc90acb](https://github.com/blodytrav3l3r/Oferty_PV/commit/cc90acb925858476c46cde77ca596792470f045c))
+- **ui:** modale sesji i wersji oraz akcje panelu cennika ([53f6361](https://github.com/blodytrav3l3r/Oferty_PV/commit/53f63615ac3c88c0368e487e39a85baa9c2a0bef))
+- **ui:** publikacja roboczej przez popup z data i godzina ([a88088a](https://github.com/blodytrav3l3r/Oferty_PV/commit/a88088ad0d7a10b6874bd890fb0c03ef98448669))
+- **ui:** spojny uklad cennikow, odstepy od raila i etykieta zapisu ([1326e5a](https://github.com/blodytrav3l3r/Oferty_PV/commit/1326e5a59925f35e74379599f019de7136001124))
+
 ## [1.52.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.51.0...v1.52.0) (2026-10-26)
 
 ### Features
