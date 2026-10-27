@@ -289,12 +289,12 @@ describe('Etap E: studnie — modal po parsowaniu', () => {
         { 'DN Studni': 1000, 'DN Rury': 160, 'Cena prosta (PLN)': 500, 'Dod. wlot (PLN)': 50 }
     ];
 
-    function loadStudnie(fetchImpl) {
+    function loadStudnie(fetchImpl, rowsBySheet) {
         const sb = baseSandbox();
         loadShared(sb);
         stubCommon(sb, {
             fetchImpl,
-            rowsBySheet: { DN1000: STUDNIE_ROWS, PRECO_Kinety: PRECO_ROWS }
+            rowsBySheet: rowsBySheet || { DN1000: STUDNIE_ROWS, PRECO_Kinety: PRECO_ROWS }
         });
         const doc = makeDoc();
         stubModal(sb, doc);
@@ -303,6 +303,7 @@ describe('Etap E: studnie — modal po parsowaniu', () => {
         sb.window.studnieProducts = [];
         sb._studniePricelistDirty = false;
         sb.renderStudniePriceList = () => {};
+        sb.renderPrecoPriceList = () => {};
         sb.renderTiles = () => {};
         sb.updateStudnieSaveBtn = () => {};
         sb.updatePrecoSaveBtn = () => {};
@@ -349,6 +350,47 @@ describe('Etap E: studnie — modal po parsowaniu', () => {
         expect(sb.showToast.mock.calls.find((c) => c[1] === 'warning')).toBeUndefined();
         const precoOk = sb.showToast.mock.calls.find((c) => c[0].includes('Draft PRECO zapisany'));
         expect(precoOk[1]).toBe('success');
+        expect(ev.target.value).toBe('');
+    });
+
+    test('osobny plik studni: import pomija arkusze PRECO', async () => {
+        const { sb, doc } = loadStudnie();
+        await sb.importStudnieProductsFromExcel(xlsxEvent());
+        await flush();
+        doc.handlers['px-import-target-live'].click();
+        await flush();
+        expect(sb.window.studnieProducts).toHaveLength(1);
+        expect(sb.precoPricing).toBeUndefined();
+    });
+
+    test('osobny import PRECO: live ustawia tylko PRECO', async () => {
+        const { sb, doc } = loadStudnie(undefined, { PRECO_Kinety: PRECO_ROWS });
+        await sb.importPrecoFromExcel(xlsxEvent());
+        await flush();
+        expect(sb.window.showModal).toHaveBeenCalledTimes(1);
+        doc.handlers['px-import-target-live'].click();
+        await flush();
+        expect(sb.studnieProducts).toEqual([]);
+        expect(sb.precoPricing[1000].kinety).toEqual([{ dn: 160, prosta: 500, dodWlot: 50 }]);
+        expect(sb.fetch).not.toHaveBeenCalled();
+    });
+
+    test('osobny import PRECO: draft zapisuje jeden POST preco/drafts', async () => {
+        const { sb, doc } = loadStudnie(
+            async () => ({
+                ok: true,
+                json: async () => ({ version: { id: 'p1', version: 'v2' } })
+            }),
+            { PRECO_Kinety: PRECO_ROWS }
+        );
+        const ev = xlsxEvent();
+        await sb.importPrecoFromExcel(ev);
+        await flush();
+        doc.handlers['px-import-target-draft'].click();
+        await flush();
+        expect(sb.fetch).toHaveBeenCalledTimes(1);
+        expect(sb.fetch.mock.calls[0][0]).toBe('/api/pricelist-versions/preco/drafts');
+        expect(sb.studnieProducts).toEqual([]);
         expect(ev.target.value).toBe('');
     });
 });

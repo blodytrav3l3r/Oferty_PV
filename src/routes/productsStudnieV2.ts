@@ -514,11 +514,16 @@ router.get('/export.xlsx', requireAuth, async (req, res) => {
         const live = projectVersionToLiveShape('studnie', {
             studnie: legacy as unknown as Array<Record<string, unknown>>
         });
-        // F1: lustrzaność z importem — doklej PRECO z tego samego źródła
-        // (live → tabele LIVE, default → *Default), kolejność jak stary eksport FE.
-        const precoResult = source === 'live' ? await getPrecoLive() : await getPrecoDefault();
-        const precoEntry = (precoResult.data[0] ?? {}) as Record<string, unknown>;
-        const merged = { ...live, ...projectPrecoNestedToSheets(precoEntry) };
+        // Domyślnie eksport studni zawiera tylko elementy studni. PRECO ma
+        // osobny plik (`/api/preco-pricing/export.xlsx`); `includePreco=1`
+        // zostaje dla zgodności ze starym skoroszytem łączonym.
+        const includePreco = String(req.query.includePreco ?? '0') !== '0';
+        let merged = live;
+        if (includePreco) {
+            const precoResult = source === 'live' ? await getPrecoLive() : await getPrecoDefault();
+            const precoEntry = (precoResult.data[0] ?? {}) as Record<string, unknown>;
+            merged = { ...live, ...projectPrecoNestedToSheets(precoEntry) };
+        }
         const xlsx = await buildXlsx(liveSheetsToXlsxSheets(merged, 'Cennik'));
         res.setHeader(
             'Content-Type',

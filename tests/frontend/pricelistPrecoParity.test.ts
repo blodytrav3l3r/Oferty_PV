@@ -50,14 +50,16 @@ describe('frontend: PRECO użycie i usuwanie', () => {
 });
 
 describe('frontend: transfer PRECO', () => {
-    it('ukrywa import/eksport LIVE i wskazuje import przez studnie', () => {
+    it('ma osobny plik importu i eksportu LIVE', () => {
         const transfer = panel.slice(
             panel.indexOf('function transferHtml'),
             panel.indexOf('function defaultsHtml')
         );
         expect(transfer).toContain("if (type === 'preco')");
-        expect(transfer).toContain('Import PRECO odbywa się przez import cennika studni');
-        expect(transfer).not.toContain("type === 'preco' ? 'export");
+        expect(transfer).toContain('data-csp="exportPrecoToExcel"');
+        expect(transfer).toContain('data-csp="importPrecoFromExcel"');
+        expect(transfer).toContain('id="pv-import-preco"');
+        expect(transfer).not.toContain('Import PRECO odbywa się przez import cennika studni');
     });
 });
 

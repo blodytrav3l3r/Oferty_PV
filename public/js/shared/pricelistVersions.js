@@ -876,14 +876,18 @@
     function transferHtml(type) {
         if (type === 'preco') {
             return (
-                '<p class="text-muted">Cennik PRECO na żywo (LIVE) — stan roboczy tabel, nie wersja. Wersję zapisujesz przyciskiem „Zapisz jako wersję" powyżej.</p>' +
-                '<div class="pv-row"><span class="pv-row-label">Import / eksport</span><span class="text-muted">Import PRECO odbywa się przez import cennika studni (arkusze PRECO).</span></div>'
+                '<p class="text-muted">Cennik PRECO na żywo (LIVE) — stan roboczy tabel, nie wersja. Osobny plik: tylko arkusze PRECO_*.</p>' +
+                '<div class="pv-row"><span class="pv-row-label">PRECO (na żywo)</span><span class="pv-actions">' +
+                '<button class="btn btn-sm btn-secondary" data-csp="exportPrecoToExcel" data-csp-args="[]" title="Eksportuj cennik PRECO do osobnego pliku Excel"><i data-lucide="download"></i> Eksportuj PRECO</button>' +
+                '<button class="btn btn-sm btn-secondary" data-csp="$dom" data-csp-args="[&quot;click&quot;, &quot;#pv-import-preco&quot;]" title="Importuj cennik PRECO z osobnego pliku Excel"><i data-lucide="upload"></i> Importuj PRECO</button>' +
+                '</span></div>' +
+                '<input type="file" id="pv-import-preco" style="display: none" accept=".xlsx,.xls" data-csp-on="change" data-csp="importPrecoFromExcel" data-csp-args="[&quot;$event&quot;]">'
             );
         }
         var isRury = type === 'rury';
         var importInput =
             '<input type="file" id="pv-import-excel" style="display: none" accept=".xlsx,.xls" data-csp-on="change" data-csp="' +
-            (isRury ? 'importRuryFromExcel' : 'importStudnieFromExcel') +
+            (isRury ? 'importRuryFromExcel' : 'importStudnieProductsFromExcel') +
             '" data-csp-args="[&quot;$event&quot;]"">';
         if (isRury) {
             return (
@@ -896,10 +900,10 @@
             );
         }
         return (
-            '<p class="text-muted">Cennik na żywo (LIVE) — stan roboczy tabel, nie wersja. Do review wersji użyj Eksport (review) w wierszu tabeli.</p>' +
-            '<div class="pv-row"><span class="pv-row-label">Studnie + PRECO (na żywo)</span><span class="pv-actions">' +
-            '<button class="btn btn-sm btn-secondary" data-csp="exportStudnieToExcel" data-csp-args="[]" title="Eksportuj cennik na żywo do pliku Excel"><i data-lucide="download"></i> Eksportuj</button>' +
-            '<button class="btn btn-sm btn-secondary" data-csp="$dom" data-csp-args="[&quot;click&quot;, &quot;#pv-import-excel&quot;]" title="Importuj cennik z pliku Excel (zawiera arkusze PRECO)"><i data-lucide="upload"></i> Importuj</button>' +
+            '<p class="text-muted">Cennik na żywo (LIVE) — stan roboczy tabel, nie wersja. Osobny plik: tylko elementy studni.</p>' +
+            '<div class="pv-row"><span class="pv-row-label">Studnie (na żywo)</span><span class="pv-actions">' +
+            '<button class="btn btn-sm btn-secondary" data-csp="exportStudnieToExcel" data-csp-args="[]" title="Eksportuj cennik studni do osobnego pliku Excel"><i data-lucide="download"></i> Eksportuj studnie</button>' +
+            '<button class="btn btn-sm btn-secondary" data-csp="$dom" data-csp-args="[&quot;click&quot;, &quot;#pv-import-excel&quot;]" title="Importuj cennik studni z osobnego pliku Excel"><i data-lucide="upload"></i> Importuj studnie</button>' +
             '</span></div>' +
             importInput
         );

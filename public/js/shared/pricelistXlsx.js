@@ -211,8 +211,12 @@
             var worksheet = workbook.Sheets[sheetName];
             var sheetJson = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
             if (!sheetJson || sheetJson.length === 0) return;
-            if (o.includePreco === true && sheetName.indexOf('PRECO_') === 0) {
-                collectPrecoRows(precoDataMap, sheetName, sheetJson);
+            // Arkusze PRECO_* nigdy nie są wierszami produktów. Import PRECO
+            // czyta je tylko przy includePreco=true; studnie je pomijają.
+            if (sheetName.indexOf('PRECO_') === 0) {
+                if (o.includePreco === true) {
+                    collectPrecoRows(precoDataMap, sheetName, sheetJson);
+                }
                 return;
             }
             rows = rows.concat(sheetJson);

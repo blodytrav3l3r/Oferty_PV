@@ -204,20 +204,22 @@ zawsze `410 Gone` (`code: GONE`). Automatycznej aktywacji nie ma, bo stan wynika
 
 ## 10. Import XLSX
 
-Modal celu importu: **na żywo (LIVE)** albo **draft + nota**. Studnie + PRECO importują się
-dwoma requestami (studnie + PRECO). Eksport wersji studni (review i `?source=active`) dokleja
-PRECO obowiązującą w dacie wersji studni: tylko zatwierdzone (`APPROVED`) z `effectiveFrom <=`.
-Fallback po `seq` działa wyłącznie dla wersji studni bez `effectiveFrom` (legacy). Gdy brak
-kwalifikującej się PRECO — plik zawiera same studnie (eksport wersji ustawia wtedy
-`X-Preco-Included: 0`). Tekst w komórkach liczbowych PRECO odrzuci walidacja (`422 INVALID_ROWS`) —
-popraw komórki, nie API.
+**Transfer plików (LIVE)** ma dwa osobne pliki:
+
+- **Studnie** — tylko elementy studni (`Cennik_Studni_Export.xlsx`); import zapisuje wyłącznie studnie.
+- **PRECO** — tylko arkusze `PRECO_*` (`Cennik_Preco_Export.xlsx`); import zapisuje wyłącznie PRECO.
+
+Modal celu importu: **na żywo (LIVE)** albo **draft + nota**. Każdy plik to jeden request
+(`studnie/drafts` albo `preco/drafts`). Import studni ignoruje arkusze `PRECO_*`; import PRECO
+czyta wyłącznie `PRECO_*` i odrzuca plik bez tych arkuszy. Eksport wersji (review i `?source=active`)
+to nadal skoroszyt danej wersji; PRECO ma osobny eksport w swoim wierszu wersji.
 
 ## 11. Eksport XLSX: który przycisk
 
 | Potrzeba                       | Przycisk                                                                            |
 | ------------------------------ | ----------------------------------------------------------------------------------- |
 | Review wersji przed publikacją | Eksport (review) w wierszu tabeli (`GET /:id/export`, sufiks `_REVIEW` dla szkiców) |
-| Stan na żywo                   | „Eksportuj" w sekcji Transfer plików (opisana jako LIVE)                            |
+| Stan na żywo                   | „Eksportuj studnie” / „Eksportuj PRECO” w sekcji Transfer plików (LIVE)             |
 | Domyślne / reset               | `GET .../export.xlsx?source=default` (ręczny URL)                                   |
 | Wersja obowiązująca            | `GET .../export.xlsx?source=active` (ręczny URL; `409 NO_ACTIVE_VERSION` gdy brak)  |
 

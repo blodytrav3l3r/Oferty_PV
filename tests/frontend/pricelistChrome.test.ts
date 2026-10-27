@@ -163,7 +163,11 @@ describe('frontend: panel Zarządzanie cennikiem (3 przyciski + 3 sekcje)', () =
         expect(panel).toContain('id="pv-import-excel"');
         expect(panel).toContain('data-csp-on="change"');
         expect(panel).toContain('importRuryFromExcel');
-        expect(panel).toContain('importStudnieFromExcel');
+        expect(panel).toContain('importStudnieProductsFromExcel');
+        // PRECO ma osobny plik importu/eksportu (arkusze PRECO_*).
+        expect(panel).toContain('data-csp="exportPrecoToExcel"');
+        expect(panel).toContain('id="pv-import-preco"');
+        expect(panel).toContain('data-csp="importPrecoFromExcel"');
         expect(panel).toContain('data-csp="saveAllDefaults" data-csp-scope="parent"');
         expect(panel).toContain('data-csp="resetPriceList"');
         expect(panel).toContain('data-csp="resetStudniePriceList"');

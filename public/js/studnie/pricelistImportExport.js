@@ -6,9 +6,13 @@ async function exportStudnieToExcel() {
 
     try {
         // Etap C: plik buduje serwer — pobranie zamiast budowania SheetJS (import dalej używa XLSX).
-        const exportRes = await fetch('/api/products-studnie/export.xlsx?source=live', {
-            headers: typeof authHeaders === 'function' ? authHeaders() : {}
-        });
+        // Eksport studni = tylko elementy studni; PRECO ma osobny plik.
+        const exportRes = await fetch(
+            '/api/products-studnie/export.xlsx?source=live&includePreco=0',
+            {
+                headers: typeof authHeaders === 'function' ? authHeaders() : {}
+            }
+        );
         if (!exportRes.ok) throw new Error('Błąd HTTP ' + exportRes.status);
         const exportBlob = await exportRes.blob();
         const exportLink = document.createElement('a');
@@ -41,6 +45,8 @@ async function importStudnieFromExcel(event, opts) {
     // Etap E: bez jawnego opts.target cel wybiera użytkownik w modalu po parsowaniu.
     const explicitTarget = (opts && opts.target) || null;
     const explicitNote = (opts && opts.note) || '';
+    // UI studni importuje wyłącznie elementy studni; PRECO ma osobny plik/import.
+    const includePreco = !(opts && opts.includePreco === false);
 
     const btns = document.querySelectorAll('[data-csp-args*="pv-import-excel"]');
     btns.forEach((b) => b.setAttribute('disabled', 'true'));
@@ -71,7 +77,7 @@ async function importStudnieFromExcel(event, opts) {
             const workbook = XLSX.read(data, { type: 'array' });
 
             const parsed = window.pricelistXlsx.parseWorkbookToJson(XLSX, workbook, {
-                includePreco: true
+                includePreco
             });
             const { products: allJson, precoDataMap } =
                 window.pricelistXlsx.splitStudnieImport(parsed);
@@ -368,6 +374,126 @@ async function fixIncompleteProducts() {
 
 window.exportStudnieToExcel = exportStudnieToExcel;
 window.importStudnieFromExcel = importStudnieFromExcel;
+
+function importStudnieProductsFromExcel(event) {
+    return importStudnieFromExcel(event, { includePreco: false });
+}
+window.importStudnieProductsFromExcel = importStudnieProductsFromExcel;
+
+/**
+ * Osobny import cennika PRECO (plik z /api/preco-pricing/export.xlsx).
+ * Czyta wyłącznie arkusze PRECO_* i zapisuje LIVE albo draft osi PRECO.
+ */
+async function importPrecoFromExcel(event, opts) {
+    const input = /** @type {HTMLInputElement} */ (event.target);
+    const file = input.files[0];
+    if (!file) return;
+    const explicitTarget = (opts && opts.target) || null;
+    const explicitNote = (opts && opts.note) || '';
+    const btns = document.querySelectorAll('[data-csp-args*="pv-import-preco"]');
+    btns.forEach((b) => b.setAttribute('disabled', 'true'));
+    const resetImportInput = () => {
+        btns.forEach((b) => b.removeAttribute('disabled'));
+        input.value = '';
+    };
+
+    if (typeof _precoDirty !== 'undefined' && _precoDirty) {
+        const proceed = await appConfirm(
+            'Masz niezapisane zmiany w cenniku PRECO. Czy kontynuować import? Niezapisane zmiany zostaną utracone.',
+            { title: 'Niezapisane zmiany', type: 'warning' }
+        );
+        if (!proceed) {
+            resetImportInput();
+            return;
+        }
+    }
+
+    let modalShown = false;
+    const reader = new FileReader();
+    reader.onload = async function (e) {
+        try {
+            await ensureXlsx();
+            const data = new Uint8Array(/** @type {ArrayBuffer} */ (e.target.result));
+            const workbook = XLSX.read(data, { type: 'array' });
+            const parsed = window.pricelistXlsx.parseWorkbookToJson(XLSX, workbook, {
+                includePreco: true
+            });
+            const precoDataMap = parsed.precoDataMap || {};
+            if (Object.keys(precoDataMap).length === 0) {
+                showToast(
+                    'Plik nie zawiera arkuszy PRECO_* (użyj eksportu cennika PRECO)',
+                    'error'
+                );
+                return;
+            }
+
+            const finishImport = async (target, note) => {
+                try {
+                    const confirmImport = await appConfirm(
+                        target === 'draft'
+                            ? 'Zapisać PRECO jako wersję roboczą? Cennik na żywo nie zmieni się.'
+                            : 'Zaimportować PRECO na żywo? Aktualny cennik PRECO zostanie zastąpiony.',
+                        { title: 'Import cennika PRECO', type: 'warning' }
+                    );
+                    if (!confirmImport) return;
+
+                    if (target === 'draft') {
+                        const flat = window.pricelistXlsx.precoNestedToFlat(precoDataMap);
+                        const body = await window.pricelistVersions.saveDraftRows(
+                            'preco',
+                            flat,
+                            note
+                        );
+                        const v = (body && body.version) || {};
+                        showToast(
+                            'Draft PRECO zapisany' + (v.version ? ' (' + v.version + ')' : ''),
+                            'success'
+                        );
+                        return;
+                    }
+
+                    precoPricing = precoDataMap;
+                    _precoDirty = true;
+                    updatePrecoSaveBtn();
+                    renderPrecoPriceList();
+                    showToast('Zaimportowano PRECO — zapisz cennik, aby utrwalić', 'success');
+                } catch (err) {
+                    logger.error('pricelistManager', 'PRECO import error:', err);
+                    const issues = window.pricelistXlsx.issuesFromDetails(err.details);
+                    if (issues.length > 0) {
+                        window.pricelistXlsx.openImportErrorsModal({ issues });
+                    } else {
+                        showToast('Błąd importu PRECO: ' + err.message, 'error');
+                    }
+                } finally {
+                    resetImportInput();
+                }
+            };
+
+            if (explicitTarget) {
+                await finishImport(explicitTarget, explicitNote);
+                return;
+            }
+            modalShown = true;
+            window.pricelistXlsx.openImportTargetModal({
+                onPick: (target, note) => finishImport(target, note),
+                onCancel: resetImportInput
+            });
+        } catch (err) {
+            logger.error('pricelistManager', 'PRECO import parse error:', err);
+            showToast('Błąd odczytu pliku PRECO', 'error');
+        } finally {
+            if (!modalShown) resetImportInput();
+        }
+    };
+    reader.onerror = () => {
+        resetImportInput();
+        showToast('Błąd odczytu pliku', 'error');
+    };
+    reader.readAsArrayBuffer(file);
+}
+
+window.importPrecoFromExcel = importPrecoFromExcel;
 
 if (typeof studnieProducts !== 'undefined' && !window.__STUDNIE_APP_ORCHESTRATOR__) {
     setTimeout(fixIncompleteProducts, 1000);
