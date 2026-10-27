@@ -21,6 +21,8 @@
     var selectedVersionId = {};
     /** Ostatnio pobrane wersje per typ — źródło danych dla paska akcji. */
     var versionsByType = {};
+    /** Zzwinięte grupy lat na osi wersji: `<typ>:<rok>` → true. */
+    var collapsedYears = {};
     /** Tytuł osi w nagłówku prawej kolumny (studnie i PRECO dzielą stronę). */
     var HEADER_TITLES = {
         rury: 'Cennik Rur',
@@ -1295,15 +1297,25 @@
         var selectedId = resolveSelection(type, versions);
         return groupByYear(versions)
             .map(function (group) {
+                var collapsed = collapsedYears[type + ':' + group.year] === true;
                 return (
-                    '<section class="pv-year" data-pv-year="' +
+                    '<section class="pv-year' +
+                    (collapsed ? ' is-collapsed' : '') +
+                    '" data-pv-year="' +
                     escAttr(group.year) +
                     '">' +
                     '<h5 class="pv-year__title">' +
+                    '<button type="button" class="pv-year__toggle" data-pv-year-toggle="' +
+                    escAttr(group.year) +
+                    '" aria-expanded="' +
+                    (collapsed ? 'false' : 'true') +
+                    '">' +
+                    '<i data-lucide="chevron-down" class="pv-year__chev" aria-hidden="true"></i>' +
+                    '<span>' +
                     esc(group.year) +
                     ' <span class="text-muted">(' +
                     group.versions.length +
-                    ')</span></h5>' +
+                    ')</span></span></button></h5>' +
                     '<div class="pv-year__list">' +
                     group.versions
                         .map(function (v) {
@@ -2170,6 +2182,20 @@
         if (host.__pvWired) return;
         host.__pvWired = true;
         overlay.addEventListener('click', function (e) {
+            var yearToggle =
+                e.target && e.target.closest ? e.target.closest('[data-pv-year-toggle]') : null;
+            if (yearToggle) {
+                var year = yearToggle.getAttribute('data-pv-year-toggle');
+                var group = yearToggle.closest('.pv-year');
+                if (year && group) {
+                    var key = state.current + ':' + year;
+                    var nextCollapsed = !group.classList.contains('is-collapsed');
+                    collapsedYears[key] = nextCollapsed;
+                    group.classList.toggle('is-collapsed', nextCollapsed);
+                    yearToggle.setAttribute('aria-expanded', nextCollapsed ? 'false' : 'true');
+                }
+                return;
+            }
             var resetBtn =
                 e.target && e.target.closest ? e.target.closest('[data-pv-reset]') : null;
             if (resetBtn) {

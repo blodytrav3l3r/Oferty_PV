@@ -583,6 +583,48 @@ body.pv-dock-open #pricelist-status-strip {
     gap: 0.5rem;
 }
 
+/* Zwijanie grupy roku: nagłówek jest przyciskiem, chevron obraca się po zwinięciu. */
+.pv-year__toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    width: 100%;
+    padding: 0;
+    border: 0;
+    background: none;
+    font: inherit;
+    letter-spacing: inherit;
+    text-transform: inherit;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.pv-year__toggle:hover {
+    color: var(--text-primary);
+}
+
+.pv-year__toggle:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: var(--radius-2xs);
+}
+
+.pv-year__chev {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+    transition: transform 0.15s ease;
+}
+
+.pv-year.is-collapsed .pv-year__chev {
+    transform: rotate(-90deg);
+}
+
+.pv-year.is-collapsed .pv-year__list {
+    display: none;
+}
+
 .pv-vcard {
     display: flex;
     flex-direction: column;

@@ -35,7 +35,7 @@ describe('Rail „Zarządzanie cennikami" (lewy panel edytorów)', () => {
         expect(panel).not.toContain('<tbody id="pv-versions-body">');
         expect(panel).toContain('class="pv-vcard__meta"');
         expect(panel).toContain('function groupByYear');
-        expect(panel).toContain('class="pv-year"');
+        expect(panel).toContain('class="pv-year');
         expect(panel).toContain('data-pv-select="');
         expect(panel).not.toContain('pv-vcard__actions');
     });
@@ -160,6 +160,15 @@ describe('Rail „Zarządzanie cennikami" (lewy panel edytorów)', () => {
         expect(css).toContain('.pv-help-modal .pv-legend');
         expect(css).toMatch(/\.pv-help-modal \{[^}]*width: min\(1520px, 92vw\)/);
         expect(css).toContain('.pv-dock .btn-sm');
+    });
+
+    it('grupy lat na osi wersji można zwijać z nagłówka', () => {
+        expect(panel).toContain('data-pv-year-toggle=');
+        expect(panel).toContain('aria-expanded=');
+        expect(panel).toContain("collapsedYears[type + ':' + group.year]");
+        expect(panel).toContain('class="pv-year__toggle"');
+        expect(css).toContain('.pv-year.is-collapsed .pv-year__list');
+        expect(css).toContain('.pv-year.is-collapsed .pv-year__chev');
     });
 
     it('toggle „Panel” z aria-expanded po obu stronach', () => {
