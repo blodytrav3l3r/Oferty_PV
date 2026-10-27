@@ -1,7 +1,8 @@
 /* ===== Rail „Zarządzanie cennikami" (lewy panel edytorów cenników) ===== */
 
 :root {
-    --pv-dock-w: 380px;
+    /* 418px = 380px + 10% (rail czytelniejszy dla kafelków wersji). */
+    --pv-dock-w: 418px;
 }
 
 .pv-dock {
@@ -520,6 +521,11 @@ body.pv-dock-open #pricelist-status-strip {
 
 .pv-vcard__meta > div {
     min-width: 0;
+}
+
+/* Data obowiązywania zajmuje całą szerokość i startuje od lewej. */
+.pv-vcard__meta > div:first-child {
+    grid-column: 1 / -1;
 }
 
 .pv-vcard__meta dt {

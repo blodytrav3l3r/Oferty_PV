@@ -685,6 +685,7 @@
         if (typeof notify === 'function') notify(msg, 'info');
     }
 
+    /** Data obowiązywania: czytelny zapis lokalny; ISO (UTC) zostaje w tooltipie. */
     function fmtEff(iso) {
         var local = iso;
         try {
@@ -692,22 +693,7 @@
         } catch (_e) {
             /* zostaw ISO */
         }
-        // Jawnie obie strefy bez hovera: lokalna czytelna + krótki UTC.
-        var utcShort = iso;
-        try {
-            utcShort = new Date(iso).toISOString().replace('T', ' ').slice(0, 16) + ' UTC';
-        } catch (_e2) {
-            /* zostaw ISO */
-        }
-        return (
-            '<span title="' +
-            escAttr(iso) +
-            '">' +
-            esc(local) +
-            '<br><span class="text-muted">UTC: ' +
-            esc(utcShort) +
-            '</span></span>'
-        );
+        return '<span title="' + escAttr(iso) + '">' + esc(local) + '</span>';
     }
 
     /** Komórka użycia: ile ofert/zamówień albo wersji studni trzyma pieczątkę. */
@@ -1131,9 +1117,6 @@
             statusBadge(state) +
             '</div>' +
             '<dl class="pv-vcard__meta">' +
-            '<div><dt>Nr</dt><dd>' +
-            esc(String(v.seq ?? '—')) +
-            '</dd></div>' +
             '<div><dt>Obowiązuje od</dt><dd>' +
             eff +
             '</dd></div>' +

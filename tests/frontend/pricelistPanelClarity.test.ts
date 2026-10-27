@@ -92,8 +92,11 @@ describe('frontend: backdate z potwierdzeniem i licznikiem', () => {
         expect(panel).toContain('pv-note-counter');
         expect(panel).toContain('/10 znaków');
     });
-    it('data UTC jawnie w tabeli (lokalnie + UTC bez hovera)', () => {
-        expect(panel).toContain('UTC: ');
+    it('karta: data lokalna, ISO/UTC tylko w tooltipie', () => {
+        expect(panel).toContain('function fmtEff');
+        expect(panel).not.toContain('<br><span class="text-muted">UTC: ');
+        // Numer kolejności nie jest pokazywany na kafelku (zostaje w danych/tooltipie).
+        expect(panel).not.toContain('<dt>Nr</dt>');
     });
 });
 

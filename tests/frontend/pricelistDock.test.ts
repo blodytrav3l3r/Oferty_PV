@@ -52,6 +52,8 @@ describe('Rail „Zarządzanie cennikami" (lewy panel edytorów)', () => {
         // Lista wersji przewija się bez widocznego paska (nie zabiera szerokości).
         expect(css).toContain('scrollbar-width: none');
         expect(css).toContain('.pv-dock__body::-webkit-scrollbar');
+        // Kafelek: data obowiązywania pełną szerokością od lewej.
+        expect(css).toContain('.pv-vcard__meta > div:first-child');
     });
 
     it('zaznaczenie karty pokazuje wersję w tej samej siatce (tylko odczyt)', () => {
@@ -211,7 +213,7 @@ describe('Rail „Zarządzanie cennikami" (lewy panel edytorów)', () => {
     });
 
     it('CSS: 380 px z lewej, wypchnięcie treści, drawer i print', () => {
-        expect(css).toContain('--pv-dock-w: 380px');
+        expect(css).toContain('--pv-dock-w: 418px');
         expect(css).toContain('left: 0');
         expect(css).toContain('border-right: 1px solid var(--border)');
         expect(css).toContain('margin-left: var(--pv-dock-w) !important');
