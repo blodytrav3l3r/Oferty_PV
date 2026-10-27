@@ -108,9 +108,9 @@ describe('frontend: jedna wiadomość na kolizję daty', () => {
     });
 });
 
-describe('frontend: podgląd i porównanie z wersji', () => {
-    it('wiersz ma Podgląd (eye) i Porównaj z wybraną wersją', () => {
-        expect(panel).toContain('data-pv-act="preview"');
+describe('frontend: porównanie z wersji', () => {
+    it('wiersz ma Porównaj; podgląd idzie przez wybór kafelka', () => {
+        expect(panel).not.toContain('data-pv-act="preview"');
         expect(panel).toContain('data-pv-act="diff"');
         expect(panel).toContain('openDiff(id, null, type)');
     });

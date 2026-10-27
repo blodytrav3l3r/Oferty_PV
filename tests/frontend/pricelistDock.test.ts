@@ -119,7 +119,6 @@ describe('Rail „Zarządzanie cennikami" (lewy panel edytorów)', () => {
         for (const act of [
             'edit',
             'clone',
-            'preview',
             'diff',
             'export',
             'label',
@@ -130,6 +129,8 @@ describe('Rail „Zarządzanie cennikami" (lewy panel edytorów)', () => {
         ]) {
             expect(panel).toContain('data-pv-act="' + act + '"');
         }
+        // Podgląd w modalu zbędny — klik kafelka pokazuje wersję w siatce.
+        expect(panel).not.toContain('data-pv-act="preview"');
         expect(panel).toContain('function renderRows(versions, manageable, type)');
         expect(panel).toContain('if (host.__pvWired) return;');
     });

@@ -104,9 +104,11 @@ dostaje numer wersji („Cennik Rur”, „Cennik elementów studni”, „Cenni
 PRECO”). Przycisk **„Wróć do edycji”** przywraca dane cennika na żywo (łącznie z
 niezapisanymi zmianami sprzed podglądu).
 Akcje są **jednym wspólnym paskiem** nad listą i działają na zaznaczonym kafelku:
-Edytuj / Kopia jako szkic, Podgląd, Porównaj, Eksport, Etykieta, Notatki,
+Edytuj / Kopia jako szkic, Porównaj, Eksport, Etykieta, Notatki,
 Opublikuj roboczą, Usuń (niedostępne dla danego stanu są wyszarzone z powodem;
-bez zaznaczenia wszystkie są nieaktywne). Sekcje raila: **Siatka cen**, **Wersje**,
+bez zaznaczenia wszystkie są nieaktywne). Podglądu nie ma jako osobnej akcji —
+wersję ogląda się klikając kafelek (tabela w trybie tylko do odczytu).
+Sekcje raila: **Siatka cen**, **Wersje**,
 **Transfer plików**, **Cenniki domyślne**, **Jak to działa**. Rail jest **jedynym
 paskiem zarządzania** — mieści też akcje siatki (Edytuj szkic / Opublikuj / Dodaj /
 Zapisz), więc nad tabelą zostaje tylko tytuł, szukajka i przełącznik „Panel”.

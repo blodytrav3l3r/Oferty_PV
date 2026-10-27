@@ -1188,12 +1188,6 @@
                 'Dostępne dla wersji opublikowanej'
             ) +
             '"><i data-lucide="history"></i> Kopia jako szkic</button>' +
-            '<button type="button" class="btn btn-sm btn-secondary" data-pv-act="preview"' +
-            idAttr +
-            off(canOpen) +
-            ' title="' +
-            tip(canOpen, 'Podgląd zapisanych cen (tylko odczyt)') +
-            '"><i data-lucide="eye"></i> Podgląd</button>' +
             '<button type="button" class="btn btn-sm btn-secondary" data-pv-act="diff"' +
             idAttr +
             off(canOpen) +
@@ -2291,10 +2285,7 @@
             var id = btn.getAttribute('data-pv-id');
             if (act === 'close') closeVersionsPanel();
             else if (act === 'edit') openEditorFor(type, btn.getAttribute('data-pv-version'));
-            else if (act === 'preview' && id) {
-                var pvPreview = window.pricelistVersions && window.pricelistVersions.openPreview;
-                if (typeof pvPreview === 'function') pvPreview(id, type);
-            } else if (act === 'diff' && id) openDiff(id, null, type);
+            else if (act === 'diff' && id) openDiff(id, null, type);
             else if (act === 'label' && id) {
                 var canonical = btn.getAttribute('data-pv-canonical') || '';
                 var shown = btn.getAttribute('data-pv-label') || canonical;

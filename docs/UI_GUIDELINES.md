@@ -157,9 +157,10 @@ liczb. Klasy CSS używają zmiennych `--z-*` z `style.base.css:251-256` (`--z-he
 - **Karta wybiera, pasek działa**: kafelek nie ma własnych przycisków, tylko
   `data-pv-select` + `role="button"` (klik/Enter/Spacja). Jeden wspólny pasek
   `#pv-version-actions` nad listą renderuje komplet akcji (`data-pv-act`) dla
-  zaznaczonej wersji: Edytuj / Kopia jako szkic, Podgląd, Porównaj, Eksport,
+  zaznaczonej wersji: Edytuj / Kopia jako szkic, Porównaj, Eksport,
   Etykieta, Notatki, Opublikuj roboczą, Usuń. Akcja niepasująca do stanu jest
-  wyszarzona z powodem; brak zaznaczenia = wszystkie nieaktywne.
+  wyszarzona z powodem; brak zaznaczenia = wszystkie nieaktywne. Osobnej akcji
+  „Podgląd” nie ma — wersję pokazuje klik kafelka (siatka w trybie odczytu).
 - Wybór pamiętany per typ (`selectedVersionId`), przeżywa odświeżenie listy; gdy
   zaznaczona wersja zniknie, fallback to wersja obowiązująca.
 - **Zaznaczenie = ta sama siatka, tryb odczytu**: karta ładuje dane wersji przez
