@@ -141,8 +141,14 @@ window.StudnieExternalExportTemplate = {
                 const productId = comp.productId || comp.indeks || '';
                 if (comp._xskip === true) continue;
                 const p = this._productMap ? this._productMap.get(productId) : null;
-                // Właz nie jest pozycją handlową pliku — pomijamy.
-                if (p && p.componentType === 'wlaz') continue;
+                // Właz (WLAZ-110/WLAZ-150) nie jest pozycją handlową pliku — pomijamy.
+                // Fallback po ID: działa też, gdy katalog produktów nie jest załadowany.
+                if (
+                    comp.componentType === 'wlaz' ||
+                    p?.componentType === 'wlaz' ||
+                    /^WLAZ/i.test(productId)
+                )
+                    continue;
                 const quantity = comp.quantity || comp.ilosc || 0;
 
                 let cenaJednostkowa;

@@ -79,6 +79,32 @@ describe('studnie: eksport zewnętrzny = ceny po rabacie', () => {
         expect(rows.some((r) => r.INDEKS_CZESCI === 'WLAZ-1')).toBe(false);
     });
 
+    test('właz po samym ID (WLAZ-110/WLAZ-150) — także bez katalogu', () => {
+        const noCatalog = { ...T, _productMap: null };
+        const out = noCatalog._wellRows(
+            {
+                wells: [
+                    {
+                        name: 'S1',
+                        dn: 1000,
+                        zwienczenie: 'Konus DN1000',
+                        rzednaWlazu: 3,
+                        rzednaDna: 0,
+                        magazyn: 'Kluczbork',
+                        config: [
+                            { productId: 'WLAZ-150', quantity: 1 },
+                            { productId: 'WLAZ-110', quantity: 1 },
+                            { productId: 'KR-1', quantity: 1, frozenPrice: 150 }
+                        ]
+                    }
+                ]
+            },
+            'OS/1',
+            null
+        );
+        expect(out.map((r) => r.INDEKS_CZESCI)).toEqual(['KR-1']);
+    });
+
     test('CENA_JEDNOSTKOWA po rabacie, RABAT pusty', () => {
         expect(rows[0].CENA_JEDNOSTKOWA).toBe(800);
         expect(rows[1].CENA_JEDNOSTKOWA).toBe(150);
