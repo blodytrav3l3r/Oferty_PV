@@ -425,47 +425,30 @@ function ruryImportOptions(importIssues) {
 window.ruryImportOptions = ruryImportOptions;
 
 async function exportRuryToExcel() {
-    if (!products || products.length === 0) {
-        showToast('Brak danych do eksportu', 'error');
+    const pv = window.pricelistVersions;
+    if (!pv || typeof pv.transferVersion !== 'function') {
+        showToast('Panel wersji nie jest gotowy — odśwież stronę', 'error');
         return;
     }
+    const v = await pv.transferVersion('rury');
+    if (!v) {
+        showToast('Brak wersji cennika do eksportu', 'warning');
+        return;
+    }
+    // Popup: który cennik leci do pliku (numer wersji = nazwa pliku).
+    if (!(await pv.transferConfirm('export', 'rury', v))) return;
     try {
-        // Etap C: plik buduje serwer (GET /api/products/export.xlsx), tu tylko pobranie.
-        const headers = typeof authHeaders === 'function' ? authHeaders() : {};
-        const res = await fetch('/api/products/export.xlsx?source=live', { headers });
-        if (!res.ok) throw new Error('Błąd HTTP ' + res.status);
-        const blob = await res.blob();
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        // Nazwa z serwera niesie numer cennika (np. Cennik_Rury_Rv1-20260927_Export.xlsx).
-        a.download =
-            window.pricelistVersions && window.pricelistVersions.downloadNameFrom
-                ? window.pricelistVersions.downloadNameFrom(res, 'Cennik_Rury_Export.xlsx')
-                : 'Cennik_Rury_Export.xlsx';
-        document.body.appendChild(a);
-        a.click();
-        setTimeout(() => {
-            URL.revokeObjectURL(a.href);
-            a.remove();
-        }, 1000);
-        showToast(
-            'Wyeksportowano cennik rur do Excela (' + products.length + ' pozycji)',
-            'success'
-        );
+        const name = await pv.exportVersionXlsx('rury', v);
+        showToast('Wyeksportowano cennik ' + (v.version || '') + ' (' + name + ')', 'success');
     } catch (err) {
         logger.error('pricelistUi', 'Export error:', err);
         showToast('Błąd podczas eksportu do Excela', 'error');
     }
 }
 
-async function importRuryFromExcel(event, opts) {
+async function importRuryFromExcel(event) {
     const file = event.target.files[0];
     if (!file) return;
-    // Etap D: cel importu — 'live' (default, zachowanie jak dziś) albo 'draft'
-    // (POST /api/pricelist-versions/rury/drafts). Etap E: bez jawnego
-    // opts.target cel wybiera użytkownik w modalu po parsowaniu.
-    const explicitTarget = (opts && opts.target) || null;
-    const explicitNote = (opts && opts.note) || '';
 
     const btns = document.querySelectorAll('[data-csp-args*="pv-import-excel"]');
     btns.forEach((b) => b.setAttribute('disabled', 'true'));
@@ -481,13 +464,34 @@ async function importRuryFromExcel(event, opts) {
             { title: 'Niezapisane zmiany', type: 'warning' }
         );
         if (!proceed) {
-            btns.forEach((b) => b.removeAttribute('disabled'));
-            event.target.value = '';
+            resetImportInput();
             return;
         }
     }
 
-    let modalShown = false;
+    // Import trafia do WERSJI wybranej na osi (nie do LIVE) — popup mówi do której.
+    const pv = window.pricelistVersions;
+    if (!pv || typeof pv.transferVersion !== 'function') {
+        showToast('Panel wersji nie jest gotowy — odśwież stronę', 'error');
+        resetImportInput();
+        return;
+    }
+    const targetVersion = await pv.transferVersion('rury');
+    if (!targetVersion) {
+        showToast('Brak wersji cennika — najpierw ją utwórz', 'warning');
+        resetImportInput();
+        return;
+    }
+    if (!(await pv.transferConfirm('import', 'rury', targetVersion))) {
+        resetImportInput();
+        return;
+    }
+    if (!pv.enterVersionEditForImport('rury', targetVersion)) {
+        showToast('Otwórz edytor cennika rur, aby zaimportować plik', 'error');
+        resetImportInput();
+        return;
+    }
+
     const reader = new FileReader();
     reader.onload = async function (e) {
         try {
@@ -520,84 +524,30 @@ async function importRuryFromExcel(event, opts) {
                 return;
             }
 
-            // Etap E: kontynuacja po parsowaniu — cel z modala (UI) albo jawny opts.
-            const finishImport = async (data, target, note) => {
-                try {
-                    if (parsed.sheetCount > 1) {
-                        showToast(
-                            `Plik ma ${parsed.sheetCount} arkuszy — wczytano pierwszy (${parsed.sheetName})`,
-                            'warning'
-                        );
-                    }
-                    const confirmImport = await appConfirm(
-                        target === 'draft'
-                            ? `Zapisać ${data.length} pozycji jako wersję roboczą? Cennik na żywo nie zmieni się.`
-                            : `Zaimportować ${data.length} pozycji? Aktualny cennik zostanie zastąpiony.`,
-                        { title: 'Import cennika', type: 'warning' }
-                    );
-                    if (!confirmImport) return;
-
-                    if (target === 'draft') {
-                        try {
-                            // A6: jeden szkic na typ — helper robi PUT istniejącego / POST nowego.
-                            const draftBody = await window.pricelistVersions.saveDraftRows(
-                                'rury',
-                                data,
-                                note
-                            );
-                            const v = (draftBody && draftBody.version) || {};
-                            showToast(
-                                'Wersja robocza zapisana' +
-                                    (v.version ? ' (' + v.version + ')' : ''),
-                                'success'
-                            );
-                            if (typeof window.pricelistVersions.refreshStatusStrip === 'function') {
-                                window.pricelistVersions.refreshStatusStrip('rury');
-                            }
-                        } catch (err) {
-                            logger.error('pricelistUi', 'Draft import error:', err);
-                            const issues = window.pricelistXlsx.issuesFromDetails(err.details);
-                            if (issues.length > 0) {
-                                window.pricelistXlsx.openImportErrorsModal({ issues });
-                            } else {
-                                showToast('Błąd zapisu wersji roboczej: ' + err.message, 'error');
-                            }
-                        }
-                        return;
-                    }
-
-                    products = data;
-                    _pricelistDirty = true;
-                    updateSaveBtn();
-                    renderPriceList();
-                    showToast(
-                        'Pomyślnie zaimportowano ' +
-                            data.length +
-                            ' pozycji — kliknij Zapisz by zachować',
-                        'success'
-                    );
-                } catch (err) {
-                    logger.error('pricelistUi', 'Import error:', err);
-                    showToast('Błąd podczas importu pliku Excel', 'error');
-                } finally {
-                    resetImportInput();
-                }
-            };
-
-            if (explicitTarget) {
-                await finishImport(normalized, explicitTarget, explicitNote);
-                return;
+            if (parsed.sheetCount > 1) {
+                showToast(
+                    `Plik ma ${parsed.sheetCount} arkuszy — wczytano pierwszy (${parsed.sheetName})`,
+                    'warning'
+                );
             }
-            modalShown = true;
-            window.pricelistXlsx.openImportTargetModal({
-                onPick: (target, note) => finishImport(normalized, target, note),
-                onCancel: resetImportInput
-            });
+            // Wersja jest już otwarta do edycji → „Zapisz” podmieni jej ceny.
+            products = normalized;
+            _pricelistDirty = true;
+            updateSaveBtn();
+            renderPriceList();
+            showToast(
+                'Zaimportowano ' +
+                    normalized.length +
+                    ' pozycji do ' +
+                    (targetVersion.version || 'wersji') +
+                    ' — kliknij Zapisz, aby podmienić ceny tej wersji',
+                'success'
+            );
         } catch (err) {
             logger.error('pricelistUi', 'Import error:', err);
             showToast('Błąd podczas importu pliku Excel', 'error');
         } finally {
-            if (!modalShown) resetImportInput();
+            resetImportInput();
         }
     };
     reader.onerror = () => {

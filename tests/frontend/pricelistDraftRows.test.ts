@@ -1,8 +1,8 @@
 // @ts-nocheck
 /**
- * shared/pricelistVersions.js — saveDraftRows/draftHeaders:
- * jeden szkic na typ → brak szkicu = POST /:type/drafts,
- * istniejący szkic = PUT /:id + If-Match (sha256 z /summary).
+ * shared/pricelistVersions.js — draftHeaders: walidator warunkowego zapisu.
+ * Szkic → If-Match (sha256 z /summary); brak szkicu → brak nagłówka
+ * (starszy klient nie jest blokowany).
  */
 import fs from 'fs';
 import path from 'path';
@@ -56,50 +56,14 @@ const summaryWithDraft = {
     }
 };
 
-describe('saveDraftRows — jeden szkic na typ', () => {
-    it('brak szkicu → POST /:type/drafts z rows i notą', async () => {
-        const sb = loadModule(async (url) => {
-            if (url.endsWith('/summary')) return jsonResponse(emptySummary);
-            return jsonResponse({ version: { id: 'd-new', version: 'Rv1-20261023' } });
-        });
-        const out = await sb.window.pricelistVersions.saveDraftRows(
-            'rury',
-            [{ id: 'r1' }],
-            ' xls '
-        );
-
-        const calls = sb.fetch.mock.calls;
-        const draftCall = calls.find((c) => c[0] === '/api/pricelist-versions/rury/drafts');
-        expect(draftCall).toBeTruthy();
-        expect(draftCall[1].method).toBe('POST');
-        expect(JSON.parse(draftCall[1].body)).toEqual({ rows: [{ id: 'r1' }], note: 'xls' });
-        expect(out.version.id).toBe('d-new');
-    });
-
-    it('istniejący szkic → PUT /:id z If-Match i bez tworzenia drugiego', async () => {
-        const sb = loadModule(async (url) => {
-            if (url.endsWith('/summary')) return jsonResponse(summaryWithDraft);
-            return jsonResponse({ version: { id: 'd1', version: 'Rv2-20261001' } });
-        });
-        const out = await sb.window.pricelistVersions.saveDraftRows('rury', [{ id: 'r9' }]);
-
-        const urls = sb.fetch.mock.calls.map((c) => c[0]);
-        expect(urls).toContain('/api/pricelist-versions/d1');
-        expect(urls).not.toContain('/api/pricelist-versions/rury/drafts');
-        const put = sb.fetch.mock.calls.find((c) => c[0] === '/api/pricelist-versions/d1');
-        expect(put[1].method).toBe('PUT');
-        expect(put[1].headers['If-Match']).toBe('"sha-draft"');
-        expect(JSON.parse(put[1].body)).toEqual({ rows: [{ id: 'r9' }] });
-        expect(out.version.id).toBe('d1');
-    });
-
-    it('draftHeaders: sha szkicu jako walidator If-Match', async () => {
+describe('draftHeaders — warunkowy zapis szkicu', () => {
+    it('sha szkicu jako walidator If-Match', async () => {
         const sb = loadModule(async () => jsonResponse(summaryWithDraft));
         const headers = await sb.window.pricelistVersions.draftHeaders('rury');
         expect(headers).toEqual({ 'If-Match': '"sha-draft"' });
     });
 
-    it('draftHeaders bez szkicu → brak If-Match (starszy klient nie blokowany)', async () => {
+    it('bez szkicu → brak If-Match (starszy klient nie blokowany)', async () => {
         const sb = loadModule(async () => jsonResponse(emptySummary));
         expect(await sb.window.pricelistVersions.draftHeaders('rury')).toEqual({});
     });

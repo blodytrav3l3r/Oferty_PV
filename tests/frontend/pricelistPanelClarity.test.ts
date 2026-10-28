@@ -129,8 +129,8 @@ describe('frontend: brak eksportu wersji z raila', () => {
         expect(panel).not.toContain('data-pv-act="export"');
         expect(panel).not.toContain('_REVIEW.xlsx');
     });
-    it('transfer mówi wprost: na żywo (LIVE), nie wersja', () => {
-        expect(panel).toContain('na żywo (LIVE)');
+    it('transfer mówi wprost: wersja zaznaczona na osi, nie „to co w siatce”', () => {
+        expect(panel).toContain('wersji ZAZNACZONEJ na osi');
         expect(panel).not.toContain('Eksport (review)');
     });
 });

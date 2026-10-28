@@ -4,9 +4,8 @@
  * Czyste funkcje bez DOM/fetch: XLSX i workbook wchodzą jako parametry,
  * zero side-effectów. Używają: rury/pricelistUi.js (importRuryFromExcel,
  * tylko pierwszy arkusz) i studnie/pricelistImportExport.js
- * (importStudnieFromExcel, wszystkie arkusze + PRECO_*).
- * Wyjątek (Etap E): openImportTargetModal — wspólny builder modala wyboru
- * celu importu (Na żywo / Wersja robocza + nota), wołany z obu wrapperów.
+ * (importStudnieFromExcel, wszystkie arkusze bez PRECO_*). Modale (błędów
+ * importu) to jedyne funkcje dotykające DOM.
  * JEDYNY nowy global: window.pricelistXlsx (IIFE, nic poza namespace).
  */
 
@@ -238,18 +237,6 @@
     }
 
     /**
-     * Payload POST /api/pricelist-versions/{rury|studnie}/drafts (Etap D).
-     * Nota: pusta/biała → pominięta (serwer i tak przyjmie brak).
-     * Zwraca NOWY obiekt, nie mutuje rows.
-     */
-    function buildDraftPayload(rows, note) {
-        var payload = { rows: rows };
-        var n = note == null ? '' : String(note).trim();
-        if (n) payload.note = n;
-        return payload;
-    }
-
-    /**
      * PRECO nested→flat 1:1 z flattenAndSave (src/routes/precoPricingV2.ts).
      * Wejście: precoDataMap {DN: {kinety:[{dn,prosta,dodWlot}], <label>:[{min,max,grupy}],
      *   skrzynkaWlazowa, cenaPelnaWysMB, cenaDnoOsadnika}}.
@@ -325,75 +312,6 @@
     function splitStudnieImport(parsed) {
         var p = parsed || {};
         return { products: p.rows || [], precoDataMap: p.precoDataMap || {} };
-    }
-
-    /**
-     * Wspólny modal wyboru celu importu XLSX (Etap E, rury + studnie).
-     * Dwa przyciski zamiast radio (brak stylu radio w projekcie, zero nowego CSS).
-     * Nota przekazywana tylko dla draft; dla live ignorowana (bez ostrzeżenia).
-     * X / Escape / klik w tło = anuluj (onCancel).
-     * opts: { onPick(target, note), onCancel() }
-     * target: 'live' | 'draft'. Dla 'live' note zawsze ''.
-     */
-    function openImportTargetModal(opts) {
-        var o = opts || {};
-        var MODAL_ID = 'px-import-target-modal';
-        function close() {
-            if (typeof window.closeModal === 'function') window.closeModal(MODAL_ID);
-        }
-        function pick(target) {
-            var noteEl =
-                typeof document !== 'undefined'
-                    ? document.getElementById('px-import-target-note')
-                    : null;
-            var note = target === 'draft' && noteEl ? noteEl.value || '' : '';
-            close();
-            if (typeof o.onPick === 'function') o.onPick(target, note);
-        }
-        function cancel() {
-            close();
-            if (typeof o.onCancel === 'function') o.onCancel();
-        }
-        window.showModal({
-            id: MODAL_ID,
-            titleId: 'px-import-target-title',
-            html:
-                '<div class="modal"><div class="modal-header"><h3 id="px-import-target-title">' +
-                '<i data-lucide="upload" aria-hidden="true"></i> Import cennika — wybierz cel</h3>' +
-                '<button class="btn-icon" id="px-import-target-close" aria-label="Zamknij">' +
-                '<i data-lucide="x" aria-hidden="true"></i></button></div>' +
-                '<div class="modal-body"><div class="form-group">' +
-                '<label class="form-label" for="px-import-target-note">Nota</label>' +
-                '<input class="form-input" id="px-import-target-note" maxlength="500" ' +
-                'placeholder="Opis zmiany (dla wersji roboczej, opcjonalnie)"></div>' +
-                '<div class="modal-footer">' +
-                '<button class="btn btn-secondary" id="px-import-target-live">Do cennika na żywo</button>' +
-                '<button class="btn btn-primary" id="px-import-target-draft">Jako wersja robocza</button>' +
-                '</div></div></div>',
-            onClose: cancel
-        });
-        var overlay = typeof document !== 'undefined' ? document.getElementById(MODAL_ID) : null;
-        if (overlay && window.lucide) window.lucide.createIcons({ root: overlay });
-        function bind(id, fn) {
-            var el = typeof document !== 'undefined' ? document.getElementById(id) : null;
-            if (el && typeof el.addEventListener === 'function') el.addEventListener('click', fn);
-        }
-        bind('px-import-target-live', function () {
-            pick('live');
-        });
-        bind('px-import-target-draft', function () {
-            pick('draft');
-        });
-        bind('px-import-target-close', cancel);
-        var noteInput =
-            typeof document !== 'undefined'
-                ? document.getElementById('px-import-target-note')
-                : null;
-        if (noteInput && typeof noteInput.addEventListener === 'function') {
-            noteInput.addEventListener('keydown', function (e) {
-                if (e.key === 'Enter') pick('draft');
-            });
-        }
     }
 
     /**
@@ -476,9 +394,7 @@
         });
     };
     window.pricelistXlsx.parseWorkbookToJson = parseWorkbookToJson;
-    window.pricelistXlsx.buildDraftPayload = buildDraftPayload;
     window.pricelistXlsx.precoNestedToFlat = precoNestedToFlat;
     window.pricelistXlsx.splitStudnieImport = splitStudnieImport;
-    window.pricelistXlsx.openImportTargetModal = openImportTargetModal;
     window.pricelistXlsx.openImportErrorsModal = openImportErrorsModal;
 })();

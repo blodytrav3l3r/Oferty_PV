@@ -420,29 +420,23 @@ async function loadPrecoDefaults() {
 }
 
 async function exportPrecoToExcel() {
-    if (!precoPricing || Object.keys(precoPricing).length === 0) {
-        showToast('Brak danych do eksportu', 'error');
+    const pv = window.pricelistVersions;
+    if (!pv || typeof pv.transferVersion !== 'function') {
+        showToast('Panel wersji nie jest gotowy — odśwież stronę', 'error');
         return;
     }
+    const v = await pv.transferVersion('preco');
+    if (!v) {
+        showToast('Brak wersji cennika PRECO do eksportu', 'warning');
+        return;
+    }
+    if (!(await pv.transferConfirm('export', 'preco', v))) return;
     try {
-        const res = await fetch('/api/preco-pricing/export.xlsx?source=live', {
-            headers: typeof authHeaders === 'function' ? authHeaders() : {}
-        });
-        if (!res.ok) throw new Error('Błąd HTTP ' + res.status);
-        const blob = await res.blob();
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download =
-            window.pricelistVersions && window.pricelistVersions.downloadNameFrom
-                ? window.pricelistVersions.downloadNameFrom(res, 'Cennik_Preco_Export.xlsx')
-                : 'Cennik_Preco_Export.xlsx';
-        document.body.appendChild(a);
-        a.click();
-        setTimeout(function () {
-            URL.revokeObjectURL(a.href);
-            a.remove();
-        }, 1000);
-        showToast('Wyeksportowano cennik PRECO do Excela', 'success');
+        const name = await pv.exportVersionXlsx('preco', v);
+        showToast(
+            'Wyeksportowano cennik PRECO ' + (v.version || '') + ' (' + name + ')',
+            'success'
+        );
     } catch (e) {
         logger.error('pricelistManager', 'Export PRECO error:', e);
         showToast('Błąd podczas eksportu do Excela', 'error');

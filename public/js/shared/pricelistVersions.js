@@ -1382,11 +1382,11 @@
         };
         if (type === 'preco') {
             return (
-                '<p class="text-muted">Cennik na żywo (LIVE) — bieżące tabele edytora, nie wersja z osi. Import i eksport dotyczą cennika: PRECO.</p>' +
+                '<p class="text-muted">Import i eksport dotyczą wersji ZAZNACZONEJ na osi (a bez zaznaczenia — bieżącego szkicu). Popup pokaże numer cennika, którego dotyczy plik. Dotyczy cennika: PRECO.</p>' +
                 row(
-                    'PRECO (na żywo)',
-                    '<button class="btn btn-sm btn-secondary" data-csp="exportPrecoToExcel" data-csp-args="[]" title="Eksportuj cennik PRECO (na żywo) do osobnego pliku Excel"><i data-lucide="download"></i> Eksportuj PRECO</button>' +
-                        '<button class="btn btn-sm btn-secondary" data-csp="$dom" data-csp-args="[&quot;click&quot;, &quot;#pv-import-preco&quot;]" title="Importuj do cennika PRECO (na żywo) z osobnego pliku Excel"><i data-lucide="upload"></i> Importuj PRECO</button>'
+                    'PRECO (wersja z osi)',
+                    '<button class="btn btn-sm btn-secondary" data-csp="exportPrecoToExcel" data-csp-args="[]" title="Eksportuj zaznaczoną wersję cennika PRECO do osobnego pliku Excel"><i data-lucide="download"></i> Eksportuj PRECO</button>' +
+                        '<button class="btn btn-sm btn-secondary" data-csp="$dom" data-csp-args="[&quot;click&quot;, &quot;#pv-import-preco&quot;]" title="Importuj plik do zaznaczonej wersji cennika PRECO"><i data-lucide="upload"></i> Importuj PRECO</button>'
                 ) +
                 '<input type="file" id="pv-import-preco" style="display: none" accept=".xlsx,.xls" data-csp-on="change" data-csp="importPrecoFromExcel" data-csp-args="[&quot;$event&quot;]">'
             );
@@ -1398,21 +1398,21 @@
             '" data-csp-args="[&quot;$event&quot;]"">';
         if (isRury) {
             return (
-                '<p class="text-muted">Cennik na żywo (LIVE) — bieżące tabele edytora, nie wersja z osi. Import i eksport dotyczą cennika: Rury.</p>' +
+                '<p class="text-muted">Import i eksport dotyczą wersji ZAZNACZONEJ na osi (a bez zaznaczenia — bieżącego szkicu). Popup pokaże numer cennika, którego dotyczy plik. Dotyczy cennika: Rury.</p>' +
                 row(
-                    'Rury (na żywo)',
-                    '<button class="btn btn-sm btn-secondary" data-csp="exportRuryToExcel" data-csp-args="[]" title="Eksportuj cennik Rury (na żywo) do pliku Excel"><i data-lucide="download"></i> Eksportuj Rury</button>' +
-                        '<button class="btn btn-sm btn-secondary" data-csp="$dom" data-csp-args="[&quot;click&quot;, &quot;#pv-import-excel&quot;]" title="Importuj do cennika Rury (na żywo) z pliku Excel"><i data-lucide="upload"></i> Importuj Rury</button>'
+                    'Rury (wersja z osi)',
+                    '<button class="btn btn-sm btn-secondary" data-csp="exportRuryToExcel" data-csp-args="[]" title="Eksportuj zaznaczoną wersję cennika Rury do pliku Excel"><i data-lucide="download"></i> Eksportuj Rury</button>' +
+                        '<button class="btn btn-sm btn-secondary" data-csp="$dom" data-csp-args="[&quot;click&quot;, &quot;#pv-import-excel&quot;]" title="Importuj plik do zaznaczonej wersji cennika Rury"><i data-lucide="upload"></i> Importuj Rury</button>'
                 ) +
                 importInput
             );
         }
         return (
-            '<p class="text-muted">Cennik na żywo (LIVE) — bieżące tabele edytora, nie wersja z osi. Import i eksport dotyczą cennika: Studnie.</p>' +
+            '<p class="text-muted">Import i eksport dotyczą wersji ZAZNACZONEJ na osi (a bez zaznaczenia — bieżącego szkicu). Popup pokaże numer cennika, którego dotyczy plik. Dotyczy cennika: Studnie.</p>' +
             row(
-                'Studnie (na żywo)',
-                '<button class="btn btn-sm btn-secondary" data-csp="exportStudnieToExcel" data-csp-args="[]" title="Eksportuj cennik Studnie (na żywo) do osobnego pliku Excel"><i data-lucide="download"></i> Eksportuj Studnie</button>' +
-                    '<button class="btn btn-sm btn-secondary" data-csp="$dom" data-csp-args="[&quot;click&quot;, &quot;#pv-import-excel&quot;]" title="Importuj do cennika Studnie (na żywo) z osobnego pliku Excel"><i data-lucide="upload"></i> Importuj Studnie</button>'
+                'Studnie (wersja z osi)',
+                '<button class="btn btn-sm btn-secondary" data-csp="exportStudnieToExcel" data-csp-args="[]" title="Eksportuj zaznaczoną wersję cennika Studnie do osobnego pliku Excel"><i data-lucide="download"></i> Eksportuj Studnie</button>' +
+                    '<button class="btn btn-sm btn-secondary" data-csp="$dom" data-csp-args="[&quot;click&quot;, &quot;#pv-import-excel&quot;]" title="Importuj plik do zaznaczonej wersji cennika Studnie"><i data-lucide="upload"></i> Importuj Studnie</button>'
             ) +
             importInput
         );
@@ -2495,24 +2495,6 @@
         return ref && ref.sha256 ? { 'If-Match': '"' + ref.sha256 + '"' } : {};
     }
 
-    /**
-     * Zapis wierszy jako szkic (import XLSX): istniejący szkic edytujemy
-     * (PUT + If-Match), nowy tworzymy (POST). Drugi szkic danego typu
-     * odrzuca serwer (409 DRAFT_EXISTS), więc POST tylko przy braku szkicu.
-     */
-    async function saveDraftRows(type, rows, note) {
-        var ref = await draftRef(type);
-        var payload = { rows: rows };
-        var trimmed = note == null ? '' : String(note).trim();
-        if (trimmed) payload.note = trimmed;
-        var opts = authed(ref ? 'PUT' : 'POST', payload);
-        if (ref) {
-            opts.headers = Object.assign({}, opts.headers, { 'If-Match': '"' + ref.sha256 + '"' });
-            return apiJson(API + '/' + encodeURIComponent(ref.id), opts);
-        }
-        return apiJson(API + '/' + encodeURIComponent(type) + '/drafts', opts);
-    }
-
     function stripDate(iso) {
         try {
             return new Date(iso).toLocaleDateString('pl-PL');
@@ -2577,6 +2559,102 @@
 
     /** Krótka nazwa osi w pasku stanu — użytkownik ma widzieć, KTÓRY cennik edytuje. */
     var TYPE_SHORT = { rury: 'Rury', studnie: 'Studnie', preco: 'PRECO' };
+
+    /**
+     * Cel importu/eksportu = wersja ZAZNACZONA na osi; bez zaznaczenia bieżący
+     * szkic, a bez szkicu wersja obowiązująca. Null = brak jakiejkolwiek wersji.
+     */
+    async function transferVersion(type) {
+        var picked = selectedVersion(type);
+        if (picked) return picked;
+        var json = await fetchSummary();
+        var data = (json && json.types && json.types[type]) || {};
+        return data.draft || data.active || null;
+    }
+
+    /** Popup przed transferem: JAKI cennik i co dokładnie się z nim stanie. */
+    function transferConfirm(kind, type, v) {
+        var axis = TYPE_SHORT[type] || type;
+        var label = labelOf(v);
+        var state = stateOf(v);
+        var what =
+            state === 'DRAFT'
+                ? 'szkic'
+                : state === 'ACTIVE'
+                  ? 'wersję obowiązującą'
+                  : state === 'SCHEDULED'
+                    ? 'wersję zaplanowaną'
+                    : 'wersję historyczną';
+        var msg =
+            kind === 'export'
+                ? 'Eksport cennika ' +
+                  axis +
+                  ' — ' +
+                  what +
+                  ' ' +
+                  label +
+                  '. Plik XLSX będzie zawierał pozycje tej wersji wraz z jej numerem.'
+                : 'Import do cennika ' +
+                  axis +
+                  ' — ' +
+                  what +
+                  ' ' +
+                  label +
+                  '. Wiersze z pliku trafią do siatki tej wersji, a „Zapisz” podmieni jej ceny.';
+        if (kind !== 'export' && state !== 'DRAFT') {
+            msg += ' To zmienia OPUBLIKOWANĄ wersję — istniejące oferty zachowają swoje pieczątki.';
+        }
+        return pvConfirm(msg, {
+            title: (kind === 'export' ? 'Eksport cennika ' : 'Import do cennika ') + label,
+            okText: kind === 'export' ? 'Eksportuj' : 'Importuj',
+            type: kind === 'export' ? undefined : 'warning'
+        });
+    }
+
+    /** Pobranie XLSX konkretnej wersji (serwer nazywa plik numerem cennika). */
+    async function exportVersionXlsx(type, v) {
+        var res = await fetch(API + '/' + encodeURIComponent(v.id) + '/export', {
+            headers: typeof window.authHeaders === 'function' ? window.authHeaders() : {}
+        });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        var blob = await res.blob();
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = downloadNameFrom(
+            res,
+            'Cennik_' + (TYPE_SHORT[type] || type) + '_' + labelOf(v) + '.xlsx'
+        );
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(function () {
+            URL.revokeObjectURL(a.href);
+            a.remove();
+        }, 1000);
+        return a.download;
+    }
+
+    /**
+     * Wejście w edycję KONKRETNEJ wersji bez podmiany siatki — import z pliku
+     * sam wypełnia siatkę, a „Zapisz” trafia do tej wersji (X-Pricelist-Version-Id).
+     * Szkic nie idzie przez nagłówek wersji (serwer podmienia tylko opublikowane).
+     */
+    function enterVersionEditForImport(type, v) {
+        if (!document.getElementById(EDITOR_GRID[type] || '')) return false;
+        restoreOtherAxes(type);
+        var cfg = GRID_STATE[type];
+        if (cfg && !Object.prototype.hasOwnProperty.call(gridSnapshot, type)) {
+            gridSnapshot[type] = cfg.read();
+        }
+        versionEdit = isEditableStatus(stateOf(v))
+            ? null
+            : { type: type, id: v.id, sha256: v.sha256 || '', label: labelOf(v) };
+        setEditing(type, true);
+        applyEditorLock(type);
+        showVersionBar(type, v, true);
+        syncHeaderVersion(labelOf(v));
+        syncEditor(type);
+        return true;
+    }
 
     /** Wspólny stan przycisku zapisu osi: cel, etykieta i tooltip. */
     function saveButtonMeta(type) {
@@ -3197,9 +3275,12 @@
         createDraftCopy: createDraftCopy,
         draftHeaders: draftHeaders,
         draftRef: draftRef,
-        saveDraftRows: saveDraftRows,
         clearSummaryCache: clearSummaryCache,
         downloadNameFrom: downloadNameFrom,
+        transferVersion: transferVersion,
+        transferConfirm: transferConfirm,
+        exportVersionXlsx: exportVersionXlsx,
+        enterVersionEditForImport: enterVersionEditForImport,
         _apiJson: apiJson,
         _authed: authed
     };

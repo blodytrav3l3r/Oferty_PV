@@ -50,14 +50,19 @@ describe('nazwa pliku eksportu cennika', () => {
         );
     });
 
-    it('wszystkie trzy eksportery używają nazwy z serwera', () => {
+    it('eksportery pobierają plik przez wspólną ścieżkę wersji (nazwa = numer cennika)', () => {
         for (const file of [
             'public/js/rury/pricelistUi.js',
             'public/js/studnie/pricelistImportExport.js',
             'public/js/studnie/pricelistPreco.js'
         ]) {
             const src = fs.readFileSync(path.join(ROOT, file), 'utf8');
-            expect(src).toContain('downloadNameFrom');
+            expect(src).toContain('exportVersionXlsx');
         }
+        const shared = fs.readFileSync(
+            path.join(ROOT, 'public/js/shared/pricelistVersions.js'),
+            'utf8'
+        );
+        expect(shared).toContain('downloadNameFrom(');
     });
 });

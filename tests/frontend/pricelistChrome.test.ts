@@ -168,8 +168,8 @@ describe('frontend: panel Zarządzanie cennikiem (3 przyciski + 3 sekcje)', () =
         expect(panel).toContain('data-csp="exportStudnieToExcel"');
         expect(panel).toContain('pv-transfer-row');
         expect(panel).toContain('<h5 class="pv-row-label">');
-        expect(panel).toContain("'Rury (na żywo)'");
-        expect(panel).toContain('bieżące tabele edytora, nie wersja z osi');
+        expect(panel).toContain("'Rury (wersja z osi)'");
+        expect(panel).toContain('wersji ZAZNACZONEJ na osi');
         expect(panel).toContain('Importuj Rury');
         expect(panel).not.toContain('pv-row-label">PRECO<');
         expect(panel).not.toContain('onclick="exportPrecoToExcel()"');

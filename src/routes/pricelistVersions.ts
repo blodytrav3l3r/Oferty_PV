@@ -18,6 +18,7 @@ import {
     approveVersion,
     applyBackdate,
     cancelScheduledRelease,
+    cennikMetaSheet,
     cloneAsDraft,
     createDraft,
     countVersionUsageBatch,
@@ -44,6 +45,9 @@ import { buildXlsx, type XlsxSheet } from '../utils/minimalXlsx';
 import { versionExportFilename } from '../utils/exportFilenames';
 
 const router = express.Router();
+
+/** Etykiety osi w arkuszu `_Cennik` (nazwa pliku i tak niesie numer). */
+const TYPE_LABEL: Record<string, string> = { rury: 'Rury', studnie: 'Studnie', preco: 'Preco' };
 
 function sendVersionError(res: express.Response, err: unknown): void {
     if (err instanceof PricelistVersionError) {
@@ -739,9 +743,11 @@ router.get('/:id/export', requireAuth, requireAdmin, READ_LIMITER, async (req, r
                 rows: rows.map((row) => headers.map((h) => toCell(row[h])))
             };
         });
-        const xlsx = await buildXlsx(
-            sheets.length > 0 ? sheets : [{ name: 'Cennik', headers: ['id'], rows: [] }]
-        );
+        const xlsx = await buildXlsx([
+            ...(sheets.length > 0 ? sheets : [{ name: 'Cennik', headers: ['id'], rows: [] }]),
+            // Numer wersji także w pliku (importer pomija arkusze techniczne `_*`).
+            cennikMetaSheet(TYPE_LABEL[version.type] || version.type, version.version)
+        ]);
         res.setHeader(
             'Content-Type',
             'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
