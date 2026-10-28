@@ -57,6 +57,8 @@ const versionDelegate = {
     findFirst: jest.fn(async ({ where, orderBy, select }: any) => {
         const hit = versions.filter((v) => {
             if (where.type !== undefined && v.type !== where.type) return false;
+            if (typeof where.id === 'string' && v.id !== where.id) return false;
+            if (where.id?.not !== undefined && v.id === where.id.not) return false;
             if (typeof where.status === 'string' && v.status !== where.status) return false;
             if (where.status?.in && !where.status.in.includes(v.status)) return false;
             const ef = where.effectiveFrom;
@@ -120,12 +122,21 @@ const usersDelegate = {
     findMany: jest.fn(async () => [])
 };
 
+/** Piny „obowiązujący cennik” per oś (settings `pricelist_active_override_<typ>`). */
+const mockActivePins: Record<string, string> = {};
+
 jest.mock('../src/prismaClient', () => ({
     __esModule: true,
     default: {
         pricelistVersion: versionDelegate,
         users: usersDelegate,
-        settings: { findMany: jest.fn(async () => []) }
+        settings: {
+            findMany: jest.fn(async () => []),
+            findUnique: jest.fn(async ({ where }: { where: { key: string } }) => {
+                const value = mockActivePins[where.key];
+                return value ? { key: where.key, value } : null;
+            })
+        }
     }
 }));
 
@@ -157,6 +168,7 @@ function version(partial: Partial<VRow> & Pick<VRow, 'id' | 'type'>): VRow {
 beforeEach(() => {
     jest.clearAllMocks();
     versions = [];
+    for (const key of Object.keys(mockActivePins)) delete mockActivePins[key];
     countVersionUsageBatchMock.mockResolvedValue(new Map());
     getPrecoReferencesMock.mockResolvedValue(new Map());
 });
@@ -290,6 +302,25 @@ describe('GET /api/pricelist-versions/summary — kształt', () => {
             'updatedAt',
             'version'
         ]);
+    });
+
+    test('active honoruje ręczny wybór (pin) — zgodnie z tym, co liczy oferta', async () => {
+        versions = [
+            version({
+                id: 'r-pinned',
+                type: 'rury',
+                seq: 1,
+                effectiveFrom: '2020-01-01T00:00:00Z'
+            }),
+            version({ id: 'r-newest', type: 'rury', seq: 2, effectiveFrom: '2021-01-01T00:00:00Z' })
+        ];
+        mockActivePins['pricelist_active_override_rury'] = 'r-pinned';
+        const res = await request(app).get('/api/pricelist-versions/summary').set(ADMIN);
+        expect(res.status).toBe(200);
+        expect(res.body.types.rury.active.id).toBe('r-pinned');
+        expect(res.body.types.rury.active.state).toBe('ACTIVE');
+        // Pin nie zmienia licznika archiwum: wypchnięta jest tylko starsza z dat.
+        expect(res.body.types.rury.archivedCount).toBe(1);
     });
 
     test('updatedAt trafia do /summary (adnotacja „ostatnia zmiana" w pasku)', async () => {

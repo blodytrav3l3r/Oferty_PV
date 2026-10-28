@@ -52,9 +52,9 @@
 
 /* ===== Aktywne cenniki w pasku górnym (obok wersji aplikacji) =====
  * Osobny blok — nie rusza initVersionDisplay ani #app-version-toolbar.
- * Format: „Rury vN · Studnie vM" (labelki z /labels, max seq per typ);
- * brak wersji → „brak aktywnego cennika" (muted); niezalogowany → cisza.
- * Zero nowego CSS: istniejące .header-version + .text-muted. */
+ * Format: „Rury vN · Studnie vM" (labelki z /labels; aktywny = activeIds z BE,
+ * czyli pin admina + data); brak wersji → „brak aktywnego cennika" (muted);
+ * niezalogowany → cisza. Zero nowego CSS: istniejące .header-version + .text-muted. */
 (function () {
     'use strict';
 
@@ -69,8 +69,8 @@
         }
     }
 
-    /* Zwraca aktywną wersję typu (max seq) albo null (brak) albo
-     * undefined (niezalogowany/brak dostępu — pasek ma zniknąć). */
+    /* Zwraca aktywną wersję typu z BE (`activeIds` = pin admina + data) albo
+     * null (brak) albo undefined (niezalogowany/brak dostępu — pasek ma zniknąć). */
     async function fetchActiveVersion(type) {
         var res = await fetch('/api/pricelist-versions/labels?type=' + type, {
             headers: pvHeaders()
@@ -78,9 +78,17 @@
         if (res.status === 401 || res.status === 403) return undefined;
         if (!res.ok) throw new Error('HTTP ' + res.status);
         var json = await res.json();
+        var versions = (json && json.versions) || [];
+        var activeId = json && json.activeIds ? json.activeIds[type] : null;
+        if (activeId) {
+            for (var i = 0; i < versions.length; i++) {
+                if (versions[i].id === activeId) return versions[i];
+            }
+        }
+        // Fallback dla starszego BE: max effectiveFrom (SSoT osi czasu), nie max seq.
         var best = null;
-        ((json && json.versions) || []).forEach(function (v) {
-            if (!best || (v.seq || 0) > (best.seq || 0)) best = v;
+        versions.forEach(function (v) {
+            if (!best || (v.effectiveFrom || '') > (best.effectiveFrom || '')) best = v;
         });
         return best;
     }

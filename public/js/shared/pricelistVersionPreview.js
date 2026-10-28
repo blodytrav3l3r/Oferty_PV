@@ -201,13 +201,17 @@
         }
     }
 
-    /** Stan wyliczany jak w panelu wersji: APPROVED + przyszła data = do wdrożenia. */
-    function stateOfVersion(version) {
+    /** Stan wyliczany jak w panelu wersji: APPROVED + przyszła data = do wdrożenia.
+     *  `activeId` = wersja obowiązująca wg resolvera BE (pin admina + data);
+     *  bez niego każda przeszła APPROVED wyglądałaby na obowiązującą. */
+    function stateOfVersion(version, activeId) {
         var status = String((version && (version.state || version.status)) || '');
         if (status !== 'APPROVED') return status;
         var t = Date.parse((version && version.effectiveFrom) || '');
         if (Number.isNaN(t)) return status;
-        return t > Date.now() ? 'SCHEDULED' : 'ACTIVE';
+        if (t > Date.now()) return 'SCHEDULED';
+        if (activeId && version.id !== activeId) return 'ARCHIVED';
+        return 'ACTIVE';
     }
 
     var STATUS_META = {
@@ -233,9 +237,9 @@
         );
     }
 
-    function metaHtml(preview) {
+    function metaHtml(preview, activeId) {
         var version = preview.version || {};
-        var state = stateOfVersion(version);
+        var state = stateOfVersion(version, activeId);
         var meta = STATUS_META[state] || { label: state || '—', cls: 'badge-muted' };
         var sheetCount = Object.keys(preview.sheets || {}).length;
         var items = [
@@ -283,7 +287,7 @@
         if (state.sheet && sheetNames.indexOf(state.sheet) === -1) state.sheet = sheetNames[0];
         if (!state.sheet) state.sheet = sheetNames[0];
         var meta = overlay.querySelector('#pv-preview-meta');
-        if (meta) meta.innerHTML = metaHtml(preview);
+        if (meta) meta.innerHTML = metaHtml(preview, state.activeId);
         var tabs = overlay.querySelector('#pv-preview-tabs');
         if (tabs) tabs.innerHTML = tabsHtml(sheetNames, state.sheet);
         var body = overlay.querySelector('#pv-preview-body');
@@ -350,9 +354,25 @@
             });
         }
         apiJson(API + '/' + encodeURIComponent(id) + '/preview', authed('GET'))
-            .then(function (preview) {
+            .then(async function (preview) {
                 state.preview = preview;
                 state.sheet = Object.keys(preview.sheets || {})[0] || null;
+                // Status „Obowiązuje” musi wskazywać wersję, którą liczy oferta
+                // (pin admina), a nie każdą przeszłą APPROVED.
+                try {
+                    var pv = window.pricelistVersions;
+                    var vType = type || (preview.version && preview.version.type);
+                    if (
+                        pv &&
+                        typeof pv.fetchLabels === 'function' &&
+                        typeof pv.pickActiveLabel === 'function'
+                    ) {
+                        var active = pv.pickActiveLabel(await pv.fetchLabels(vType), vType);
+                        if (active) state.activeId = active.id;
+                    }
+                } catch (_e) {
+                    state.activeId = null;
+                }
                 var title = overlay.querySelector('#pv-preview-title');
                 if (title) {
                     title.innerHTML =

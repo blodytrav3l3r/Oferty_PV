@@ -65,8 +65,34 @@ const versions: VRow[] = [
 ];
 
 let lastWhere: unknown = null;
+/** Pin „obowiązujący cennik” (settings `pricelist_active_override_<typ>`). */
+const mockPins: Record<string, string> = {};
+
+function filterVersions(where: Record<string, unknown> | undefined): VRow[] {
+    let out = [...versions];
+    if (where?.type !== undefined) out = out.filter((v) => v.type === where.type);
+    const status = where?.status as string | { in: string[] } | undefined;
+    if (typeof status === 'string') out = out.filter((v) => v.status === status);
+    else if (status !== undefined) out = out.filter((v) => status.in.includes(v.status));
+    const ef = (where as { effectiveFrom?: { lte: string } })?.effectiveFrom;
+    if (ef?.lte !== undefined) out = out.filter((v) => v.effectiveFrom <= ef.lte);
+    const idWhere = (where as { id?: string | { in?: string[] } })?.id;
+    if (typeof idWhere === 'string') out = out.filter((v) => v.id === idWhere);
+    else if (idWhere?.in !== undefined) out = out.filter((v) => idWhere.in!.includes(v.id));
+    return out;
+}
 
 const versionDelegate = {
+    findFirst: jest.fn(async ({ where }: { where?: Record<string, unknown> }) => {
+        const out = filterVersions(where).sort((a, b) =>
+            a.effectiveFrom === b.effectiveFrom
+                ? b.seq - a.seq
+                : a.effectiveFrom < b.effectiveFrom
+                  ? 1
+                  : -1
+        );
+        return out[0] ?? null;
+    }),
     findMany: jest.fn(
         async ({
             where,
@@ -76,15 +102,7 @@ const versionDelegate = {
             select?: Record<string, boolean>;
         }) => {
             lastWhere = where;
-            let out = [...versions];
-            if (where?.type !== undefined) out = out.filter((v) => v.type === where.type);
-            const status = where?.status as string | { in: string[] } | undefined;
-            if (typeof status === 'string') out = out.filter((v) => v.status === status);
-            else if (status !== undefined) out = out.filter((v) => status.in.includes(v.status));
-            const ef = (where as { effectiveFrom?: { lte: string } })?.effectiveFrom;
-            if (ef?.lte !== undefined) out = out.filter((v) => v.effectiveFrom <= ef.lte);
-            const idIn = (where as { id?: { in: string[] } })?.id;
-            if (idIn !== undefined) out = out.filter((v) => idIn.in.includes(v.id));
+            const out = filterVersions(where);
             // Prisma select: zwraca tylko wybrane pola (tu: 5 bez cen).
             if (select !== undefined) {
                 const keys = Object.keys(select).filter((k) => select[k]);
@@ -101,7 +119,16 @@ const versionDelegate = {
 
 jest.mock('../src/prismaClient', () => ({
     __esModule: true,
-    default: { pricelistVersion: versionDelegate }
+    default: {
+        pricelistVersion: versionDelegate,
+        settings: {
+            findMany: jest.fn(async () => []),
+            findUnique: jest.fn(async ({ where }: { where: { key: string } }) => {
+                const value = mockPins[where.key];
+                return value ? { key: where.key, value } : null;
+            })
+        }
+    }
 }));
 
 import router from '../src/routes/pricelistVersions';
@@ -113,6 +140,7 @@ app.use('/api/pricelist-versions', router);
 beforeEach(() => {
     jest.clearAllMocks();
     lastWhere = null;
+    for (const key of Object.keys(mockPins)) delete mockPins[key];
 });
 
 describe('GET /api/pricelist-versions/labels', () => {
@@ -169,5 +197,31 @@ describe('GET /api/pricelist-versions/labels', () => {
         const res = await request(app).get('/api/pricelist-versions/labels?type=zly&ids=a');
         expect(res.status).toBe(422);
         expect(res.body.code).toBe('INVALID_TYPE');
+    });
+
+    test('activeIds: bez pinu = najnowszy effectiveFrom (resolver BE)', async () => {
+        const res = await request(app).get('/api/pricelist-versions/labels?type=rury');
+        expect(res.status).toBe(200);
+        expect(res.body.activeIds).toEqual({ rury: 'rury-active' });
+    });
+
+    test('activeIds: ręczny wybór (pin) wygrywa z datą — jak w resolveActive', async () => {
+        mockPins['pricelist_active_override_rury'] = 'rury-arch';
+        const res = await request(app).get('/api/pricelist-versions/labels?type=rury');
+        expect(res.status).toBe(200);
+        expect(res.body.activeIds).toEqual({ rury: 'rury-arch' });
+        // Wersje na liście bez zmian — badge historyczne dalej mają etykiety.
+        expect((res.body.versions as VRow[]).map((v) => v.id).sort()).toEqual([
+            'rury-active',
+            'rury-arch'
+        ]);
+    });
+
+    test('activeIds nie wycieka do gałęzi ?ids (tam tylko etykiety pieczątek)', async () => {
+        const res = await request(app).get(
+            '/api/pricelist-versions/labels?type=rury&ids=rury-arch'
+        );
+        expect(res.status).toBe(200);
+        expect(res.body.activeIds).toBeUndefined();
     });
 });

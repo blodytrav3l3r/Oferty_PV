@@ -30,6 +30,7 @@ import {
     getVersionsSummary,
     publishDraft,
     readActiveOverrides,
+    resolveActive,
     setActiveVersion,
     clearActiveOverride,
     setLabelOverride,
@@ -260,7 +261,21 @@ router.get('/labels', requireAuth, READ_LIMITER, async (req, res) => {
             },
             orderBy: [{ type: 'asc' }, { seq: 'desc' }]
         });
-        res.json({ versions: versions.map(withLabel) });
+        // „Aktywny” liczy resolver (pin admina + data), nie max effectiveFrom —
+        // FE bierze stąd badge oferty, żeby nie wskazywał innej wersji niż oferta.
+        // Tylko id obecne na liście: FE nie może dostać wskaźnika bez etykiety
+        // (wersja wchodząca w życie w tej samej ms wypada z listy).
+        const types = [...new Set(versions.map((v) => v.type))].filter((t) =>
+            (PRICELIST_TYPES as readonly string[]).includes(t)
+        );
+        const activeIds: Record<string, string | null> = {};
+        await Promise.all(
+            types.map(async (t) => {
+                const hit = await resolveActive(t);
+                activeIds[t] = hit && versions.some((v) => v.id === hit.id) ? hit.id : null;
+            })
+        );
+        res.json({ versions: versions.map(withLabel), activeIds });
     } catch (err) {
         sendVersionError(res, err);
     }

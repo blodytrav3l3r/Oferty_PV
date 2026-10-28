@@ -40,12 +40,23 @@ interface VRow {
 const versions: VRow[] = [];
 const audits: Array<Record<string, unknown>> = [];
 
-type Where = { id?: string | { not: string }; type?: string; status?: string };
+type Where = {
+    id?: string | { not: string };
+    type?: string;
+    status?: string | { in: string[] };
+    effectiveFrom?: { lte: string };
+};
 
 function matchWhere(v: VRow, where: Where | undefined): boolean {
     if (!where) return true;
     if (where.type !== undefined && v.type !== where.type) return false;
-    if (where.status !== undefined && v.status !== where.status) return false;
+    if (typeof where.status === 'string' && v.status !== where.status) return false;
+    if (where.status && typeof where.status === 'object') {
+        if (!where.status.in.includes(v.status)) return false;
+    }
+    if (where.effectiveFrom?.lte !== undefined && !(v.effectiveFrom <= where.effectiveFrom.lte)) {
+        return false;
+    }
     if (where.id !== undefined) {
         if (typeof where.id === 'string') return v.id === where.id;
         return v.id !== where.id.not;
@@ -56,6 +67,18 @@ function matchWhere(v: VRow, where: Where | undefined): boolean {
 const versionDelegate = {
     findUnique: jest.fn(async ({ where }: { where: { id: string } }) => {
         return versions.find((v) => v.id === where.id) ?? null;
+    }),
+    findFirst: jest.fn(async ({ where }: { where?: Where } = {}) => {
+        const hit = versions
+            .filter((v) => matchWhere(v, where))
+            .sort((a, b) =>
+                a.effectiveFrom === b.effectiveFrom
+                    ? b.seq - a.seq
+                    : a.effectiveFrom < b.effectiveFrom
+                      ? 1
+                      : -1
+            );
+        return hit[0] ? { ...hit[0] } : null;
     }),
     findMany: jest.fn(async ({ where }: { where?: Where } = {}) => {
         return versions.filter((v) => matchWhere(v, where)).map((v) => ({ ...v }));
@@ -82,6 +105,10 @@ jest.mock('../src/prismaClient', () => ({
     __esModule: true,
     default: {
         pricelistVersion: versionDelegate,
+        settings: {
+            findMany: jest.fn(async () => []),
+            findUnique: jest.fn(async () => null)
+        },
         $transaction: jest.fn(async (fn: (tx: unknown) => Promise<unknown>) => fn(txMock))
     }
 }));

@@ -84,6 +84,8 @@ async function ensureOfferDetail(offer) {
 
 /** Migruj stare dane studni (material -> nadbudowa/dennicaMaterial) */
 async function loadSavedOfferStudnie(id_or_doc, optionalId, targetSection, preventStepOverride) {
+    // Nowy kontekst oferty: pieczątka z poprzedniego „Przelicz" nie może wyciec.
+    window.pendingStudnieStampId = null;
     // Twarda blokada: drugi uzytkownik nie otwiera formularza wcale (modal 423).
     if (typeof window !== 'undefined' && window.lockService) {
         const _lockId = typeof id_or_doc === 'object' ? id_or_doc?.id || optionalId : id_or_doc;
@@ -243,8 +245,8 @@ async function loadSavedOfferStudnie(id_or_doc, optionalId, targetSection, preve
             type: 'studnie',
             stampId: normalized.pricelistVersionId || null,
             anchorId: 'offer-form-title-studnie',
-            onRecalc: function () {
-                return recalcStudnieToActive();
+            onRecalc: function (activeId) {
+                return recalcStudnieToActive(activeId);
             }
         });
         window.offerPricelistBanner.badge({

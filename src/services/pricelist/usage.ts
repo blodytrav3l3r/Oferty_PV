@@ -316,6 +316,9 @@ function countArchived(pastDates: string[], maxPast: string): number {
 /**
  * Skrót stanu 3 cenników: aktywna (resolveActive) + najbliższa przyszła
  * APPROVED + liczniki. 6 zapytań resolverów + 1 odczyt do liczników.
+ *
+ * `active` bez `at` — ręczny wybór admina (override) musi być widoczny w UI,
+ * bo to on realnie liczy nowe oferty. `generatedAt` służy tylko osi czasu.
  */
 export async function getVersionsSummary(): Promise<VersionsSummary> {
     const generatedAt = new Date().toISOString();
@@ -323,7 +326,7 @@ export async function getVersionsSummary(): Promise<VersionsSummary> {
         Promise.all(
             PRICELIST_TYPES.map(async (type) => {
                 const [active, nextScheduled, draft] = await Promise.all([
-                    resolveActive(type, generatedAt),
+                    resolveActive(type),
                     nextScheduledFor(type, generatedAt),
                     latestDraftFor(type)
                 ]);
@@ -378,10 +381,11 @@ export async function getVersionsSummary(): Promise<VersionsSummary> {
                         draft: draft ? toSummaryRef(draft) : null,
                         draftCount: bucket?.draft ?? 0,
                         approvedCount: bucket?.approved ?? 0,
-                        // Archiwalne = zatwierdzone z datą < najnowszej zatwierdzonej (jak deriveState).
+                        // Archiwalne = zatwierdzone starsze od najnowszej zatwierdzonej
+                        // (jak deriveState). Nie zależy od pinu — pin zmienia tylko `active`.
                         archivedCount: countArchived(
                             bucket?.pastDates ?? [],
-                            active?.effectiveFrom ?? ''
+                            (bucket?.pastDates ?? []).reduce((a, b) => (a > b ? a : b), '')
                         ),
                         collisionCount: bucket?.dup.size ?? 0
                     }

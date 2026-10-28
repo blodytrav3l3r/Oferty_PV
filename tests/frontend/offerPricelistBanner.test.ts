@@ -91,8 +91,18 @@ function loadBanner({ labels, labelsByIds, doc }) {
     return { sandbox, button, document };
 }
 
-const ACTIVE = { id: 'v2', version: 'v2-20260102', seq: 2 };
-const STAMP = { id: 'v1', version: 'v1-20260101', seq: 1 };
+const ACTIVE = {
+    id: 'v2',
+    version: 'v2-20260102',
+    seq: 2,
+    effectiveFrom: '2026-01-02T00:00:00.000Z'
+};
+const STAMP = {
+    id: 'v1',
+    version: 'v1-20260101',
+    seq: 1,
+    effectiveFrom: '2026-01-01T00:00:00.000Z'
+};
 
 describe('frontend vm: offerPricelistBanner.refresh', () => {
     test('rozjazd: pasek z wersjami i przyciskiem (pieczątka archiwalna via ?ids=)', async () => {
@@ -215,6 +225,24 @@ describe('frontend vm: offerPricelistBanner.refresh', () => {
         await button._listeners.click();
         expect(onRecalc).toHaveBeenCalledTimes(1);
         expect(onRecalc).toHaveBeenCalledWith('v2');
+    });
+
+    test('aktywny pochodzi z pickActiveLabel (pin admina), nie z max seq', async () => {
+        // Pin wskazuje starszy seq — banner musi to respektować jak resolver BE.
+        const { sandbox, document } = loadBanner({
+            labels: { v1: STAMP, v2: ACTIVE },
+            labelsByIds: { v1: STAMP, v2: ACTIVE }
+        });
+        const pick = jest.fn((labels) => labels.v1);
+        sandbox.window.pricelistVersions.pickActiveLabel = pick;
+        const visible = await vm.runInContext(
+            'window.offerPricelistBanner.refresh({type:"studnie",stampId:"v2",anchorId:"offer-form-title-studnie"})',
+            sandbox
+        );
+        expect(pick).toHaveBeenCalledWith(expect.any(Object), 'studnie');
+        expect(visible).toBe(true);
+        const box = document.els['pv-offer-banner-studnie'] || document.host.children[0];
+        expect(box.innerHTML).toContain('aktywny v1-20260101');
     });
 });
 
@@ -608,6 +636,16 @@ describe('frontend static: wpięcie badge w edytory', () => {
         expect(studnieMgr).toContain('stampId: window.pendingStudnieStampId || null');
         expect(studnieSave).toContain('stampId: offerDoc.pricelistVersionId || null');
         expect(studnieSave).toContain('stampId: fresh.pricelistVersionId || null');
+        // onRecalc musi przekazać active.id — inaczej pieczątka nie awansuje (409/kłamie).
+        expect(ruryCrud).toContain('onRecalc: function (activeId)');
+        expect(studnieMgr).toContain('onRecalc: function (activeId)');
+        // …i nie może wyciec z poprzedniej oferty: reset przy ładowaniu dokumentu.
+        expect(ruryCrud).toMatch(
+            /function loadOffer\(id\) \{[\s\S]{0,300}pendingRuryStampId = null;/
+        );
+        expect(studnieMgr).toMatch(
+            /function loadSavedOfferStudnie\([\s\S]{0,300}window\.pendingStudnieStampId = null;/
+        );
     });
     test('reattach w nawigacji wizarda (rury + studnie, kroki 1-5)', () => {
         const ruryWizard = fs.readFileSync(path.join(ROOT, 'public/js/rury/wizard.js'), 'utf8');
@@ -664,5 +702,15 @@ describe('frontend static: kontrakt bannera', () => {
                 'js/shared/offerPricelistBanner.js'
             );
         }
+    });
+    test('SSoT aktywnego: /labels.activeIds → pickActiveLabel (pin admina)', () => {
+        const pv = fs.readFileSync(
+            path.join(ROOT, 'public/js/shared/pricelistVersions.js'),
+            'utf8'
+        );
+        expect(pv).toContain('activeIdsByType[type] = json.activeIds[type]');
+        expect(pv).toContain('pickActiveLabel: pickActiveLabel');
+        expect(BANNER_SRC).toContain('pv.pickActiveLabel(labels, type)');
+        expect(BANNER_SRC).not.toContain('(v.seq || 0) > (best.seq || 0)');
     });
 });

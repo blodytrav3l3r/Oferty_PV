@@ -278,9 +278,9 @@ describe('frontend: widoczność wersji cennika (dopisek typu, pasek, kartoteka)
         expect(panel).toContain('function hydrateActiveBadges(');
         expect(panel).toContain('function activeBadgeHtml(');
         expect(panel).toContain('function pickActiveLabel(');
-        // SSoT osi czasu: aktywna = max effectiveFrom (nie max seq).
+        // SSoT aktywnego: pin admina z BE (`activeIds`), fallback max effectiveFrom.
         expect(panel).toMatch(
-            /function pickActiveLabel\(labels\) \{[\s\S]*?effectiveFrom[\s\S]*?return best;/
+            /function pickActiveLabel\(labels, type\) \{[\s\S]*?activeIdsByType\[type\][\s\S]*?effectiveFrom[\s\S]*?return best;/
         );
         expect(panel).toContain('data-pv-active="');
         expect(panel).toContain('brak aktywnego cennika');
@@ -298,6 +298,10 @@ describe('frontend: widoczność wersji cennika (dopisek typu, pasek, kartoteka)
         expect(topbar).toContain('brak aktywnego cennika');
         expect(topbar).toContain('header-version header-versions-stack text-muted');
         expect(topbar).toContain("insertAdjacentElement('beforebegin', el)");
+        // Aktywny z BE (`activeIds` = pin admina), nie max seq.
+        expect(topbar).toContain('json.activeIds');
+        expect(topbar).toContain('effectiveFrom');
+        expect(topbar).not.toContain('(v.seq || 0) > (best.seq || 0)');
         // textContent, nie innerHTML (kontrakt SEC-01 jak wersja aplikacji).
         expect(topbar).not.toMatch(/pricelists-toolbar['"]?\)\.innerHTML/);
         expect(appHtml).toContain('id="app-version-toolbar"');

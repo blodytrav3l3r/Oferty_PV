@@ -10,6 +10,8 @@
     var API = '/api/pricelist-versions';
     /** Cache etykiet per typ: id -> {version, seq, effectiveFrom}. */
     var labelCache = {};
+    /** Id wersji obowiązującej per typ z BE (pin admina + data) — SSoT badge. */
+    var activeIdsByType = {};
     /** Czy bieżący użytkownik widzi pełną listę (admin) per typ. */
     var canManage = {};
     /** Id raila — jeden na stronę; brak = strona bez sekcji cennika (kartoteka). */
@@ -111,6 +113,10 @@
         (json.versions || []).forEach(function (v) {
             map[v.id] = v;
         });
+        // BE wie, co realnie liczy ofertę (pin admina + data) — nie zgadujemy z seq.
+        if (json.activeIds && Object.prototype.hasOwnProperty.call(json.activeIds, type)) {
+            activeIdsByType[type] = json.activeIds[type] || null;
+        }
         labelCache[type] = map;
         return map;
     }
@@ -201,10 +207,13 @@
         );
     }
 
-    /** Aktywna = najnowszy effectiveFrom spośród APPROVED z /labels.
+    /** Aktywna = wskazana przez BE (`activeIds`, pin admina) albo najnowszy
+     *  effectiveFrom spośród APPROVED z /labels.
      *  SSoT osi czasu: resolver BE wybiera max effectiveFrom, nie max seq
      *  (backdated approve może mieć wyższy seq i starszą datę). */
-    function pickActiveLabel(labels) {
+    function pickActiveLabel(labels, type) {
+        var pinned = type ? activeIdsByType[type] : null;
+        if (pinned && labels && labels[pinned]) return labels[pinned];
         var best = null;
         Object.keys(labels || {}).forEach(function (id) {
             var v = labels[id];
@@ -307,7 +316,7 @@
                 } catch (_e) {
                     return;
                 }
-                var active = pickActiveLabel(labels);
+                var active = pickActiveLabel(labels, t);
                 var label = typeLabel(t);
                 byType[t].forEach(function (el) {
                     if (!active) {
@@ -2391,6 +2400,7 @@
     function clearSummaryCache() {
         summaryCache = null;
         labelCache = {};
+        activeIdsByType = {};
         draftRefs = {};
     }
 
@@ -2946,7 +2956,7 @@
                 statusBadge('ARCHIVED') +
                 '</div>' +
                 '<ul>' +
-                '<li><strong>Obowiązuje</strong> — najnowsza opublikowana wersja, której data już minęła. Z niej liczą nowe oferty.</li>' +
+                '<li><strong>Obowiązuje</strong> - wersja wskazana ręcznie („Ustaw jako aktywny”) albo najnowsza opublikowana, której data już minęła. Z niej liczą nowe oferty.</li>' +
                 '<li><strong>Do wdrożenia</strong> — opublikowana wersja z datą przyszłą. Wejdzie automatycznie w wybranej dacie i godzinie.</li>' +
                 '<li><strong>W przygotowaniu</strong> — szkic. Nie wpływa na oferty ani na cennik obowiązujący.</li>' +
                 '<li><strong>Historyczny</strong> — opublikowana wersja wyparta przez nowszą. Służy do podglądu i eksportu.</li>' +
@@ -3037,6 +3047,7 @@
     window.pricelistVersions = {
         fetchLabels: fetchLabels,
         fetchLabelsByIds: fetchLabelsByIds,
+        pickActiveLabel: pickActiveLabel,
         fetchFullList: fetchFullList,
         badgeHtml: badgeHtml,
         activeBadgeHtml: activeBadgeHtml,

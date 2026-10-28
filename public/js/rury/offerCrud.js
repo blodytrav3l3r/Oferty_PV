@@ -279,6 +279,8 @@ function clearOfferForm() {
 /* ===== ŁADOWANIE OFERTY ===== */
 
 async function loadOffer(id) {
+    // Nowy kontekst oferty: pieczątka z poprzedniego „Przelicz" nie może wyciec.
+    pendingRuryStampId = null;
     // Twarda blokada: drugi uzytkownik nie otwiera formularza wcale (modal 423).
     if (
         window.lockService &&
@@ -439,8 +441,8 @@ async function loadOffer(id) {
             type: 'rury',
             stampId: normalized.pricelistVersionId || null,
             anchorId: 'offer-form-title',
-            onRecalc: function () {
-                return recalcRuryToActive();
+            onRecalc: function (activeId) {
+                return recalcRuryToActive(activeId);
             }
         });
         window.offerPricelistBanner.badge({

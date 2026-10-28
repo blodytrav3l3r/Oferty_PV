@@ -1,8 +1,9 @@
 // @ts-check
 /* ===== BANNER WERSJI CENNIKA W EDYTORZE OFERTY (shared: rury + studnie) ===== */
-/* Pokazuje pasek tylko gdy pieczątka oferty != ACTIVE (max seq z /labels).
- * Brak pieczątki, brak ACTIVE albo błąd fetch → cisza (brak paska).
- * Zależności (globalne): pricelistVersions.fetchLabels/fetchLabelsByIds,
+/* Pokazuje pasek tylko gdy pieczątka oferty != ACTIVE (wersja obowiązująca
+ * z /labels.activeIds — pin admina + data). Brak pieczątki, brak ACTIVE albo
+ * błąd fetch → cisza (brak paska). Zależności (globalne):
+ * pricelistVersions.fetchLabels/fetchLabelsByIds/pickActiveLabel,
  * escapeHtml, appConfirm, showToast, lucide (ikony alert-triangle, refresh-cw
  * z iconsSlim). Bez zmian endpointów BE. */
 
@@ -19,12 +20,17 @@
         return type || '';
     }
 
-    /** Aktywna = najwyższy seq (jak pickActiveLabel w pricelistVersions.js). */
-    function pickActive(labels) {
+    /** Aktywna = SSoT z pricelistVersions (pin admina + data). Lokalny fallback
+     *  tylko gdy moduł jeszcze nie wystawił helpera. */
+    function pickActive(labels, type) {
+        var pv = window.pricelistVersions;
+        if (pv && typeof pv.pickActiveLabel === 'function') {
+            return pv.pickActiveLabel(labels, type);
+        }
         var best = null;
         Object.keys(labels || {}).forEach(function (id) {
             var v = labels[id];
-            if (!best || (v.seq || 0) > (best.seq || 0)) best = v;
+            if (!best || (v.effectiveFrom || '') > (best.effectiveFrom || '')) best = v;
         });
         return best;
     }
@@ -192,7 +198,7 @@
                 console.debug('[pv-badge] brak kotwicy dla typu ' + type);
             return false;
         }
-        var active = pickActive(labels);
+        var active = pickActive(labels, type);
         var label = typeLabel(type);
         var suffix = label ? ' · ' + label : '';
         if (stampId) {
@@ -255,7 +261,7 @@
             hideBanner(type);
             return false;
         }
-        var active = pickActive(labels);
+        var active = pickActive(labels, type);
         // Brak ACTIVE albo zgodność → cisza.
         if (!active || stampId === active.id) {
             hideBanner(type);

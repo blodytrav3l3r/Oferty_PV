@@ -87,6 +87,29 @@ describe('frontend: podgląd wersji', () => {
         expect(overlay.innerHTML).toContain('Akcesoria');
     });
 
+    it('status „Obowiązuje” tylko dla wersji wskazanej przez resolver (pin)', async () => {
+        window.pricelistVersions._apiJson.mockResolvedValueOnce({
+            ...preview,
+            version: {
+                ...preview.version,
+                id: 'v1',
+                status: 'APPROVED',
+                effectiveFrom: '2026-01-01T00:00:00.000Z'
+            }
+        });
+        window.pricelistVersions.fetchLabels = jest.fn(async () => ({
+            v1: { id: 'v1' },
+            v2: { id: 'v2' }
+        }));
+        window.pricelistVersions.pickActiveLabel = jest.fn(() => ({ id: 'v2' }));
+        window.pricelistVersions.openPreview('v1', 'studnie');
+        await new Promise((resolve) => setTimeout(resolve, 0));
+        const overlay = document.getElementById('pv-preview-modal');
+        // Pin na v2 → v1 jest archiwalna, nie „Obowiązuje”.
+        expect(overlay.textContent).toContain('Archiwalna');
+        expect(overlay.querySelector('.badge-ok')).toBeNull();
+    });
+
     it('JSON w komórce renderuje jako tekst, nie HTML', async () => {
         window.pricelistVersions.openPreview('v1', 'studnie');
         await new Promise((resolve) => setTimeout(resolve, 0));
