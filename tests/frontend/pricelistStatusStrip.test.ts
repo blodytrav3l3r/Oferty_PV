@@ -50,6 +50,15 @@ describe('frontend: pasek stanu cennika w edytorze', () => {
         expect(utilities).toContain('.pv-draft-banner');
     });
 
+    it('tryb edycji: banner z osią + obrys siatki (widoczny stan edycji)', () => {
+        expect(shared).toContain('pv-edit-banner');
+        expect(shared).toContain('TRYB EDYCJI');
+        expect(shared).toContain('data-editing');
+        expect(shared).toContain('data-pv-editing');
+        expect(utilities).toContain('.pv-edit-banner');
+        expect(utilities).toContain("[data-pv-editing='1']");
+    });
+
     it('tryb zapisu LIVE jest widoczny w pasku (rollback = split-brain)', () => {
         expect(shared).toContain('Tryb zapisu LIVE');
         expect(shared).toContain("window.__pricelistWriteTarget === 'live'");

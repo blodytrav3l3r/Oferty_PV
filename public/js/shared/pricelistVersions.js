@@ -2531,7 +2531,12 @@
     }
 
     function setEditing(type, on) {
-        editModes[type] = on === true;
+        var next = on === true;
+        if (editModes[type] === next) return;
+        editModes[type] = next;
+        // Pasek stanu pokazuje „TRYB EDYCJI" + oś — musi się przerysować od razu,
+        // także przy wejściu/wyjściu z edycji opublikowanej wersji.
+        refreshStatusStrip(type);
     }
 
     /** Etykieta wersji edytowanej w miejscu (null = szkic/podgląd). */
@@ -2539,6 +2544,9 @@
         var mode = versionEditMode(type);
         return mode ? mode.label : null;
     }
+
+    /** Krótka nazwa osi w pasku stanu — użytkownik ma widzieć, KTÓRY cennik edytuje. */
+    var TYPE_SHORT = { rury: 'Rury', studnie: 'Studnie', preco: 'PRECO' };
 
     /** Wspólny stan przycisku zapisu osi: cel, etykieta i tooltip. */
     function saveButtonMeta(type) {
@@ -2576,6 +2584,8 @@
                 el.inert = !editing;
             });
             grid.inert = !editing && sections.length === 0;
+            // Obrys siatki = ten sam sygnał co pasek „TRYB EDYCJI".
+            grid.setAttribute('data-pv-editing', editing ? '1' : '0');
         }
         var saveBtn = document.getElementById(EDITOR_SAVE[type] || '');
         if (saveBtn) {
@@ -2693,9 +2703,39 @@
         if (host) {
             if (!json) {
                 host.innerHTML = '';
+                host.setAttribute('data-editing', '0');
             } else {
                 var data = (json.types || {})[stripType] || {};
-                var parts = [];
+                var axis = TYPE_SHORT[stripType] || stripType;
+                var editing = isEditing(stripType);
+                // Oś zawsze widoczna — pasek musi mówić, KTÓREGO cennika dotyczy.
+                host.setAttribute('data-editing', editing ? '1' : '0');
+                var parts = [
+                    '<span class="badge badge-muted" title="Oś cennika w tym edytorze">' +
+                        esc(axis) +
+                        '</span>'
+                ];
+                // Tryb edycji: wyraźny pasek, bo zapis idzie do wersji/szkicu,
+                // a nie do ofert. Podgląd nie dostaje tego banera.
+                if (editing) {
+                    var editMode = versionEditMode(stripType);
+                    var target = editMode
+                        ? 'zapis podmienia ceny wersji <strong>' +
+                          esc(editMode.label) +
+                          '</strong> (bez tworzenia nowej wersji)'
+                        : data.draft
+                          ? 'zmiany idą do szkicu <strong>' +
+                            esc(data.draft.version) +
+                            '</strong> — oferty liczą z obowiązującego cennika'
+                          : 'zapis utworzy szkic obowiązujący po publikacji';
+                    parts.push(
+                        '<div class="pv-edit-banner" role="status">✎ TRYB EDYCJI · ' +
+                            esc(axis) +
+                            ' — ' +
+                            target +
+                            '</div>'
+                    );
+                }
                 // A5: siatka pokazuje szkic, nie cennik obowiązujący — musi to być widoczne.
                 if (data.draft) {
                     parts.push(
@@ -2716,8 +2756,7 @@
                 }
                 if (data.draft) {
                     parts.push(
-                        '<span class="badge badge-muted" title="Szkic nie trafia do ofert do publikacji.">' +
-                            (isEditing(stripType) ? '✎ Edytujesz szkic ' : '✎ Szkic ') +
+                        '<span class="badge badge-muted" title="Szkic nie trafia do ofert do publikacji.">✎ Szkic ' +
                             esc(data.draft.version) +
                             esc(lastChange(data.draft)) +
                             '</span>'

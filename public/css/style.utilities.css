@@ -119,6 +119,31 @@
     text-align: left;
 }
 
+/* Tryb edycji cennika: pasek krzyczy, do której wersji idzie zapis, a obrys
+ * siatki dokłada ten sam sygnał przy samej tabeli. Kolor = akcja, nie ostrzeżenie. */
+.pv-status-strip[data-editing='1'] {
+    border-left: 3px solid var(--blue-hover);
+    padding-left: var(--tile-gap-xs);
+}
+
+.pv-edit-banner {
+    flex-basis: 100%;
+    margin-bottom: var(--tile-gap-2xs);
+    padding: var(--tile-gap-2xs) var(--tile-gap-xs);
+    border-left: 3px solid var(--blue-hover);
+    border-radius: var(--radius-sm, 4px);
+    background: rgba(var(--blue-rgb), 0.15);
+    color: var(--blue-hover);
+    text-align: left;
+    font-weight: 600;
+}
+
+#pricelist-body[data-pv-editing='1'],
+#studnie-pricelist-body[data-pv-editing='1'] {
+    outline: 2px solid rgba(var(--blue-rgb), 0.45);
+    outline-offset: -2px;
+}
+
 /* Pasek akcji trybu cennika: kopia → edycja → publikacja. Pusty nie zajmuje miejsca. */
 .pv-editor-actions {
     display: inline-flex;
