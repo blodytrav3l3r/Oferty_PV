@@ -35,6 +35,7 @@ import { logger } from './utils/logger';
 import { cleanupAuditLogs } from './services/auditService';
 import { modelRegistry } from './services/ml/ModelRegistry';
 import { priceOverrideService } from './services/priceOverrideService';
+import { ensureBaselineVersionsAtStartup } from './services/pricelist/bootstrap';
 import { requestLogger } from './middleware/requestLogger';
 import { getVersion } from './version';
 import { APP_NAME } from './constants/appMeta';
@@ -447,6 +448,10 @@ export async function initApp(): Promise<void> {
             err instanceof Error ? err.message : String(err)
         );
     }
+
+    // Świeża instalacja / stara baza: LIVE bez żadnej wersji → oferty spadałyby
+    // na LIVE z toastem. Bootstrap tworzy v1 APPROVED per oś (idempotentnie).
+    await ensureBaselineVersionsAtStartup();
 
     // Auto-heal schematu (indeksy, shares, FTS5) — BE-01: szczegóły w src/initDatabase.ts
     await ensureDatabaseIndexes();

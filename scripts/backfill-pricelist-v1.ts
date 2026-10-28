@@ -2,110 +2,35 @@
 /**
  * backfill-pricelist-v1.ts (F2 — Expand & Contract, krok 2).
  *
- * Tworzy seq:1 (etykieta {R|S|P}v1-{RRRRMMDD}) APPROVED (effectiveFrom=now) z tabel LIVE per typ
- * (rury, studnie, preco) — wstawianie przez chunkedCreateMany/25.
+ * Ręczne uruchomienie bootstrapu wersji bazowej: seq:1 APPROVED
+ * (etykieta {R|S|P}v1-{RRRRMMDD}, effectiveFrom=now) z tabel LIVE per typ
+ * (rury, studnie, preco).
  *
- * URUCHAMIANIE RĘCZNE (nie w migracji, nie przy starcie):
  *   npx ts-node scripts/backfill-pricelist-v1.ts
  *
- * Idempotentny: typ z istniejącą wersją jest pomijany.
- * Po backfillu: verifySnapshot PASS + dymny (oferta v1 → draft v2 → activate).
+ * Serwer robi to samo automatycznie przy starcie (`ensureBaselineVersionsAtStartup`),
+ * więc skrypt jest tylko awaryjnym/świadomym wywołaniem — ta sama, idempotentna
+ * funkcja: typ z istniejącą wersją jest pomijany, pusty LIVE też.
  */
 
 import 'dotenv/config';
-import { randomUUID } from 'crypto';
-import prisma, { Prisma } from '../src/prismaClient';
-import { chunkedCreateMany } from '../src/utils/prismaBatch';
-import { sha256Canonical } from '../src/services/priceOverrideService';
-import { versionLabel } from '../src/services/pricelist/lifecycle';
-import type { PricelistType } from '../src/services/pricelist/validation';
-
-type Tx = Prisma.TransactionClient;
-
-async function backfillRury(versionId: string): Promise<number> {
-    const live = await prisma.productsRury.findMany({ orderBy: { id: 'asc' } });
-    await prisma.$transaction(async (tx: Tx) => {
-        await chunkedCreateMany(
-            tx.pricelistItemRury,
-            live.map((row) => ({ ...row, id: `${versionId}:${row.id}`, versionId }))
-        );
-    });
-    return live.length;
-}
-
-async function backfillStudnie(versionId: string): Promise<number> {
-    const live = await prisma.productsStudnie.findMany({ orderBy: { id: 'asc' } });
-    await prisma.$transaction(async (tx: Tx) => {
-        await chunkedCreateMany(
-            tx.pricelistItemStudnie,
-            live.map((row) => ({ ...row, id: `${versionId}:${row.id}`, versionId }))
-        );
-    });
-    return live.length;
-}
-
-async function backfillPreco(versionId: string): Promise<number> {
-    const [konfig, kinety, zakresy] = await Promise.all([
-        prisma.precoKonfig.findMany({ orderBy: { key: 'asc' } }),
-        prisma.precoKinety.findMany({ orderBy: [{ wellDn: 'asc' }, { order: 'asc' }] }),
-        prisma.precoZakresy.findMany({ orderBy: [{ wellDn: 'asc' }, { order: 'asc' }] })
-    ]);
-    await prisma.$transaction(async (tx: Tx) => {
-        await chunkedCreateMany(
-            tx.pricelistItemPrecoKonfig,
-            konfig.map((row) => ({ ...row, id: `${versionId}:${row.id}`, versionId }))
-        );
-        await chunkedCreateMany(
-            tx.pricelistItemPrecoKinety,
-            kinety.map((row) => ({ ...row, id: `${versionId}:${row.id}`, versionId }))
-        );
-        await chunkedCreateMany(
-            tx.pricelistItemPrecoZakresy,
-            zakresy.map((row) => ({ ...row, id: `${versionId}:${row.id}`, versionId }))
-        );
-    });
-    return konfig.length + kinety.length + zakresy.length;
-}
-
-const BACKFILLERS: Record<string, (versionId: string) => Promise<number>> = {
-    rury: backfillRury,
-    studnie: backfillStudnie,
-    preco: backfillPreco
-};
+import prisma from '../src/prismaClient';
+import { ensureBaselineVersions } from '../src/services/pricelist/bootstrap';
 
 async function main(): Promise<void> {
-    const nowIso = new Date().toISOString();
-    for (const type of Object.keys(BACKFILLERS)) {
-        const existing = await prisma.pricelistVersion.count({ where: { type } });
-        if (existing > 0) {
-            console.log(`[backfill] ${type}: pomijam (istnieje ${existing} wersji)`);
-            continue;
-        }
-        const id = randomUUID();
-        const count = await BACKFILLERS[type](id);
-        await prisma.pricelistVersion.create({
-            data: {
-                id,
-                type,
-                seq: 1,
-                version: versionLabel(type as PricelistType, 1, nowIso),
-                status: 'APPROVED',
-                effectiveFrom: nowIso,
-                createdBy: 'backfill',
-                note: 'Backfill v1.0.0 z LIVE (F2)',
-                sha256: sha256Canonical({ type, count, at: nowIso }),
-                createdAt: nowIso
-            }
-        });
-        console.log(
-            `[backfill] ${type}: ${versionLabel(type as PricelistType, 1, nowIso)} APPROVED, wierszy=${count}, effectiveFrom=${nowIso}`
-        );
+    const created = await ensureBaselineVersions();
+    if (created.length === 0) {
+        console.log('[backfill] Nic do zrobienia — każda oś ma już wersję albo puste LIVE.');
+        return;
+    }
+    for (const info of created) {
+        console.log(`[backfill] ${info.type}: ${info.version} APPROVED, wierszy=${info.rows}`);
     }
 }
 
 main()
     .catch((err: unknown) => {
-        console.error('[backfill] Blad:', err);
+        console.error('[backfill] Błąd:', err);
         process.exit(1);
     })
     .finally(async () => {
