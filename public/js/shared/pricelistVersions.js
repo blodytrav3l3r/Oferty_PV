@@ -3057,7 +3057,7 @@
     }
 
     /** Jedna delegacja dla przycisków trybu (CSP-E: bez inline handlerów). */
-    document.addEventListener('click', function (event) {
+    document.addEventListener('click', async function (event) {
         // Rail należy do sekcji „Cennik" — zmiana sekcji go zamyka.
         var navBtn =
             event.target && event.target.closest
@@ -3072,9 +3072,18 @@
         var act = btn.getAttribute('data-pv-mode');
         var type = editorType;
         if (act === 'edit') {
-            setEditing(type, true);
-            syncEditor(type);
-            toast('Edytujesz szkic — zapis nie zmienia wersji obowiązującej', 'info');
+            // Ten sam tor co „Edytuj" w panelu wersji: reload siatki + wyjście
+            // z podglądu wersji. Samo `setEditing` zostawiało w siatce dane
+            // podglądu (albo LIVE), więc zapis szedł do szkicu z cudzych wierszy.
+            var json = await fetchSummary();
+            var draft = json && json.types && json.types[type] && json.types[type].draft;
+            if (draft) {
+                openEditorFor(type, draft.version);
+            } else {
+                setEditing(type, true);
+                syncEditor(type);
+                toast('Edytujesz cennik — zapis utworzy szkic', 'info');
+            }
             return;
         }
         if (act === 'cancel') {
