@@ -17,7 +17,10 @@ async function exportStudnieToExcel() {
         const exportBlob = await exportRes.blob();
         const exportLink = document.createElement('a');
         exportLink.href = URL.createObjectURL(exportBlob);
-        exportLink.download = 'Cennik_Studni_Export.xlsx';
+        exportLink.download =
+            window.pricelistVersions && window.pricelistVersions.downloadNameFrom
+                ? window.pricelistVersions.downloadNameFrom(exportRes, 'Cennik_Studni_Export.xlsx')
+                : 'Cennik_Studni_Export.xlsx';
         document.body.appendChild(exportLink);
         exportLink.click();
         setTimeout(() => {

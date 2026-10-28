@@ -21,6 +21,8 @@ import { buildXlsx } from '../utils/minimalXlsx';
 import {
     PricelistVersionError,
     RURY_LIVE_SHEET,
+    cennikMetaSheet,
+    currentPricelistLabel,
     getVersionExportSheets,
     liveSheetsToXlsxSheets,
     projectVersionToLiveShape,
@@ -29,6 +31,7 @@ import {
     resolveActive,
     resolveActivePricing
 } from '../services/pricelistVersionService';
+import { versionExportFilename } from '../utils/exportFilenames';
 
 const router = express.Router();
 const writeLimiter = PRICELIST_WRITE_LIMITER;
@@ -318,12 +321,21 @@ router.get('/export.xlsx', requireAuth, async (req, res) => {
         const live = projectVersionToLiveShape('rury', {
             rury: rows as unknown as Array<Record<string, unknown>>
         });
-        const xlsx = await buildXlsx(liveSheetsToXlsxSheets(live, RURY_LIVE_SHEET));
+        // Nazwa pliku i arkusz `_Cennik` niosą numer cennika (szkic → obowiązujący),
+        // więc eksport z edytora nie jest anonimowy.
+        const label = await currentPricelistLabel('rury');
+        const xlsx = await buildXlsx([
+            ...liveSheetsToXlsxSheets(live, RURY_LIVE_SHEET),
+            cennikMetaSheet('Rury', label)
+        ]);
         res.setHeader(
             'Content-Type',
             'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         );
-        res.setHeader('Content-Disposition', 'attachment; filename="Cennik_Rury_Export.xlsx"');
+        res.setHeader(
+            'Content-Disposition',
+            `attachment; filename="${label ? versionExportFilename('rury', label) : 'Cennik_Rury_Export.xlsx'}"`
+        );
         res.send(xlsx);
     } catch (err: unknown) {
         if (err instanceof PricelistVersionError) {

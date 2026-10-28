@@ -416,6 +416,19 @@ export async function resolveVersionIdSafe(typeInput: unknown): Promise<string |
     }
 }
 
+/**
+ * Numer cennika, którego dotyczy eksport z edytora: bieżący szkic (to on jest
+ * zapisywany), a bez szkicu — wersja obowiązująca. Null = brak jakiejkolwiek
+ * wersji (eksport dostaje wtedy nazwę ogólną).
+ */
+export async function currentPricelistLabel(typeInput: unknown): Promise<string | null> {
+    const type = requireType(typeInput);
+    const draft = await latestDraftFor(type);
+    if (draft) return draft.version;
+    const active = await resolveActive(type);
+    return active?.version ?? null;
+}
+
 export interface ActivePricing {
     /** Zawartość pola `data` w response (rury/studnie: wiersze; preco: [entry]). */
     data: unknown;

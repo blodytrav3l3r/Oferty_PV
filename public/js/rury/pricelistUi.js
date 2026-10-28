@@ -437,7 +437,11 @@ async function exportRuryToExcel() {
         const blob = await res.blob();
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
-        a.download = 'Cennik_Rury_Export.xlsx';
+        // Nazwa z serwera niesie numer cennika (np. Cennik_Rury_Rv1-20260927_Export.xlsx).
+        a.download =
+            window.pricelistVersions && window.pricelistVersions.downloadNameFrom
+                ? window.pricelistVersions.downloadNameFrom(res, 'Cennik_Rury_Export.xlsx')
+                : 'Cennik_Rury_Export.xlsx';
         document.body.appendChild(a);
         a.click();
         setTimeout(() => {

@@ -10,6 +10,8 @@ import prisma from '../prismaClient';
 import { buildXlsx } from '../utils/minimalXlsx';
 import {
     PricelistVersionError,
+    cennikMetaSheet,
+    currentPricelistLabel,
     getVersionExportSheets,
     liveSheetsToXlsxSheets,
     projectPrecoNestedToSheets,
@@ -19,6 +21,7 @@ import {
     resolveActive,
     resolveActivePricing
 } from '../services/pricelistVersionService';
+import { versionExportFilename } from '../utils/exportFilenames';
 import { getPrecoDefault, getPrecoLive } from '../services/precoPricing';
 import { logAudit } from '../services/auditService';
 import { recordPricelistFallback, recordPricelistLiveWrite } from '../utils/metrics';
@@ -543,12 +546,19 @@ router.get('/export.xlsx', requireAuth, async (req, res) => {
             const precoEntry = (precoResult.data[0] ?? {}) as Record<string, unknown>;
             merged = { ...live, ...projectPrecoNestedToSheets(precoEntry) };
         }
-        const xlsx = await buildXlsx(liveSheetsToXlsxSheets(merged, 'Cennik'));
+        const label = await currentPricelistLabel('studnie');
+        const xlsx = await buildXlsx([
+            ...liveSheetsToXlsxSheets(merged, 'Cennik'),
+            cennikMetaSheet('Studnie', label)
+        ]);
         res.setHeader(
             'Content-Type',
             'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         );
-        res.setHeader('Content-Disposition', 'attachment; filename="Cennik_Studni_Export.xlsx"');
+        res.setHeader(
+            'Content-Disposition',
+            `attachment; filename="${label ? versionExportFilename('studnie', label) : 'Cennik_Studni_Export.xlsx'}"`
+        );
         res.send(xlsx);
     } catch (err: unknown) {
         if (err instanceof PricelistVersionError) {

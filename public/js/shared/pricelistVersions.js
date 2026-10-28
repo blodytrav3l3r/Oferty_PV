@@ -95,6 +95,24 @@
         return body;
     }
 
+    /**
+     * Nazwa pliku z `Content-Disposition` odpowiedzi (serwer zna numer cennika),
+     * z fallbackiem dla starszego BE — inaczej przeglądarka zapisze generyk.
+     */
+    function downloadNameFrom(res, fallback) {
+        try {
+            var cd =
+                (res && res.headers && typeof res.headers.get === 'function'
+                    ? res.headers.get('Content-Disposition')
+                    : '') || '';
+            var m = /filename="?([^";]+)"?/i.exec(cd);
+            if (m && m[1]) return m[1];
+        } catch (_e) {
+            /* brak nagłówka → fallback */
+        }
+        return fallback;
+    }
+
     function authed(method, data) {
         var headers = typeof window.authHeaders === 'function' ? window.authHeaders() : {};
         var opts = { method: method || 'GET', headers: headers };
@@ -3181,6 +3199,7 @@
         draftRef: draftRef,
         saveDraftRows: saveDraftRows,
         clearSummaryCache: clearSummaryCache,
+        downloadNameFrom: downloadNameFrom,
         _apiJson: apiJson,
         _authed: authed
     };

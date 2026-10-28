@@ -73,6 +73,7 @@ export {
     getVersionExport,
     getVersionExportSheets,
     liveSheetsToXlsxSheets,
+    cennikMetaSheet,
     getVersionDiff,
     getVersionPreview,
     pickPrecoVersionForStudnie,
@@ -96,6 +97,7 @@ export {
     readActiveOverride,
     readActiveOverrides,
     resolveVersionIdSafe,
+    currentPricelistLabel,
     resolveActivePricing,
     pricingFromVersion
 } from './pricelist/usage';

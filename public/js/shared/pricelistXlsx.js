@@ -206,9 +206,17 @@
         var precoDataMap = {};
         var allNames = workbook.SheetNames || [];
         var names = allNames;
-        if (o.firstSheetOnly === true) names = names.slice(0, 1);
+        if (o.firstSheetOnly === true) {
+            names = names
+                .filter(function (n) {
+                    return n.indexOf('_') !== 0;
+                })
+                .slice(0, 1);
+        }
         names.forEach(function (sheetName) {
             var worksheet = workbook.Sheets[sheetName];
+            // Arkusze techniczne (np. `_Cennik` z numerem wersji) — nigdy produkty.
+            if (sheetName.indexOf('_') === 0) return;
             var sheetJson = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
             if (!sheetJson || sheetJson.length === 0) return;
             // Arkusze PRECO_* nigdy nie są wierszami produktów. Import PRECO

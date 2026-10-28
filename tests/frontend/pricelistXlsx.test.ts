@@ -81,6 +81,20 @@ describe('pricelistXlsx: parseWorkbookToJson', () => {
         expect(out.precoDataMap).toEqual({});
     });
 
+    test('arkusz techniczny `_Cennik` pomijany (numer cennika nie jest produktem)', () => {
+        const { PX } = loadPX();
+        const wb = workbook({
+            'Cennik Rury': [{ Indeks: 'R1', 'Nazwa produktu': 'Rura' }],
+            _Cennik: [{ Pole: 'Numer cennika', Wartość: 'Rv1-20260927' }],
+            Druga: [{ Indeks: 'R2', 'Nazwa produktu': 'Inna' }]
+        });
+        const ruryOut = PX.parseWorkbookToJson(fakeXlsx(), wb, { firstSheetOnly: true });
+        expect(ruryOut.rows.map((r) => r.Indeks)).toEqual(['R1']);
+
+        const studnieOut = PX.parseWorkbookToJson(fakeXlsx(), wb, { includePreco: true });
+        expect(studnieOut.rows.map((r) => r.Indeks).sort()).toEqual(['R1', 'R2']);
+    });
+
     test('studnie: DN* łączone, PRECO_* w precoDataMap', () => {
         const { PX } = loadPX();
         const wb = workbook({

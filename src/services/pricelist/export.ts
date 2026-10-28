@@ -47,6 +47,22 @@ export function liveSheetsToXlsxSheets(live: LiveSheetRows, fallbackName: string
     return sheets.length > 0 ? sheets : [{ name: fallbackName, headers: ['id'], rows: [] }];
 }
 
+/**
+ * Arkusz-techniczny z numerem cennika. Nazwa zaczyna się od `_`, więc importer
+ * (FE i backend) pomija go — plik zostaje w pełni re-importowalny.
+ */
+export function cennikMetaSheet(typeLabel: string, label: string | null): XlsxSheet {
+    return {
+        name: '_Cennik',
+        headers: ['Pole', 'Wartość'],
+        rows: [
+            ['Cennik', typeLabel],
+            ['Numer cennika', label || 'brak wersji'],
+            ['Eksport', new Date().toISOString()]
+        ]
+    };
+}
+
 /** Wiersze wersji z biznesowymi id (bez prefiksu versionId:) — pod diff/eksport. */
 export async function getVersionExport(id: string): Promise<VersionExport> {
     const version = await prisma.pricelistVersion.findUnique({ where: { id } });

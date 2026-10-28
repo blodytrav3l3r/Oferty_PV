@@ -26,6 +26,8 @@ import {
 } from '../services/pricelist/writeTarget';
 import {
     PricelistVersionError,
+    cennikMetaSheet,
+    currentPricelistLabel,
     getVersionExportSheets,
     liveSheetsToXlsxSheets,
     projectPrecoNestedToSheets,
@@ -34,6 +36,7 @@ import {
     resolveActive,
     resolveActivePricing
 } from '../services/pricelistVersionService';
+import { versionExportFilename } from '../utils/exportFilenames';
 
 const router = express.Router();
 const writeLimiter = PRECO_PRICING_LIMITER;
@@ -290,12 +293,19 @@ router.get('/export.xlsx', requireAuth, async (req, res) => {
         const result = source === 'live' ? await getPrecoLive() : await getPrecoDefault();
         const entry = (result.data[0] ?? {}) as Record<string, unknown>;
         const live = projectPrecoNestedToSheets(entry);
-        const xlsx = await buildXlsx(liveSheetsToXlsxSheets(live, 'PRECO_Kinety'));
+        const label = await currentPricelistLabel('preco');
+        const xlsx = await buildXlsx([
+            ...liveSheetsToXlsxSheets(live, 'PRECO_Kinety'),
+            cennikMetaSheet('Preco', label)
+        ]);
         res.setHeader(
             'Content-Type',
             'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         );
-        res.setHeader('Content-Disposition', 'attachment; filename="Cennik_Preco_Export.xlsx"');
+        res.setHeader(
+            'Content-Disposition',
+            `attachment; filename="${label ? versionExportFilename('preco', label) : 'Cennik_Preco_Export.xlsx'}"`
+        );
         res.send(xlsx);
     } catch (err: unknown) {
         if (err instanceof PricelistVersionError) {
