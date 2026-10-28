@@ -21,6 +21,7 @@ import { versionedWrite, mapVersionConflict } from '../../utils/versionWrite';
 import { assertDocLockForWrite, mapDocLockConflict } from '../../utils/docLocks';
 import { mapPrismaError } from '../../utils/prismaErrors';
 import { HOT_TX_OPTS } from '../../utils/hotTx';
+import { loadOrderStamps, stampForOrder } from '../../utils/orderStamp';
 import crypto from 'crypto';
 import { logger } from '../../utils/logger';
 
@@ -185,6 +186,15 @@ router.put(
                 }
             }
 
+            // Pieczątka cennika: z oferty, inaczej aktywny cennik (body ignorujemy).
+            const stamps = await loadOrderStamps(
+                'studnie',
+                incoming.map((o: { offerStudnieId?: unknown; offerId?: unknown }) => {
+                    const raw = o.offerStudnieId || o.offerId;
+                    return typeof raw === 'string' ? raw : '';
+                })
+            );
+
             // P0-C/D2: cały batch w jednej transakcji + predykat wersji.
             // P2: dla single-save zapamiętaj nową wersję do odpowiedzi (serwer SSoT).
             let singleVersion: number | null = null;
@@ -204,6 +214,8 @@ router.put(
                         createdAt: createdAtRaw,
                         status,
                         version: clientVersionRaw,
+                        // Pieczątka nie wchodzi do bloba — kolumna jest źródłem prawdy.
+                        pricelistVersionId: _stampIn,
                         ...rest
                     } = o;
                     // P0-D2: baza optimistic lockingu — nie trafia do bloba JSON.
@@ -308,7 +320,8 @@ router.put(
                             offerStudnieId: resolvedOfferId,
                             createdAt: createdAt,
                             status: status || 'new',
-                            data: dataStr
+                            data: dataStr,
+                            pricelistVersionId: stampForOrder(stamps, resolvedOfferId)
                         },
                         updateData: {
                             userId: targetUserId,

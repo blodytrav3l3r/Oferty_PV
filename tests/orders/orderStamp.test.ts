@@ -30,8 +30,13 @@ jest.mock('../../src/prismaClient', () => ({
     __esModule: true,
     default: {
         users: { findUnique: jest.fn() },
-        orders_rury_rel: { findUnique: jest.fn() },
-        orders_studnie_rel: { findUnique: jest.fn() },
+        orders_rury_rel: { findUnique: jest.fn(), create: jest.fn(), updateMany: jest.fn() },
+        orders_studnie_rel: { findUnique: jest.fn(), create: jest.fn(), updateMany: jest.fn() },
+        offers_rel: { findMany: jest.fn(async () => []) },
+        offers_studnie_rel: { findMany: jest.fn(async () => []) },
+        // resolveActive (pin + data) dla zamówień bez powiązanej oferty.
+        pricelistVersion: { findFirst: jest.fn(async () => null) },
+        settings: { findUnique: jest.fn(async () => null) },
         $queryRaw: jest.fn(),
         $transaction: jest.fn()
     },
@@ -55,7 +60,25 @@ beforeEach(() => {
     mockUser.id = 'user-id';
     mockUser.role = 'user';
     mockUser.subUsers = [];
+    (prisma.offers_rel.findMany as jest.Mock).mockResolvedValue([]);
+    (prisma.offers_studnie_rel.findMany as jest.Mock).mockResolvedValue([]);
+    (prisma.pricelistVersion.findFirst as jest.Mock).mockResolvedValue(null);
+    (prisma.settings.findUnique as jest.Mock).mockResolvedValue(null);
+    (prisma.orders_rury_rel.create as jest.Mock).mockResolvedValue({});
+    (prisma.orders_studnie_rel.create as jest.Mock).mockResolvedValue({});
 });
+
+/** Tx delegujący do mocków modelu — create/updateMany przez versionedWrite. */
+function txDelegating(model: 'orders_rury_rel' | 'orders_studnie_rel') {
+    return async (fn: any) =>
+        fn({
+            [model]: {
+                findUnique: (prisma as any)[model].findUnique,
+                create: (prisma as any)[model].create,
+                updateMany: (prisma as any)[model].updateMany
+            }
+        });
+}
 
 const RURY_ROW = {
     id: 'or-1',
@@ -121,6 +144,83 @@ describe('order stamp (rury)', () => {
         expect(updateMany).toHaveBeenCalledTimes(1);
         const written = ((updateMany.mock.calls[0] as any[])[0] as any).data;
         expect('pricelistVersionId' in written).toBe(false);
+    });
+});
+
+describe('order stamp (zapis — dziedziczenie z oferty)', () => {
+    it('create rury: pieczątka z oferty trafia do kolumny, nie do bloba', async () => {
+        (prisma.offers_rel.findMany as jest.Mock).mockResolvedValue([
+            { id: 'off-1', pricelistVersionId: 'v-offer' }
+        ]);
+        (prisma.$transaction as jest.Mock).mockImplementation(txDelegating('orders_rury_rel'));
+        const res = await request(createApp())
+            .put('/api/orders-rury')
+            .send({
+                data: [{ offerId: 'off-1', status: 'new', pricelistVersionId: 'v-injected' }]
+            });
+        expect(res.status).toBe(200);
+        const written = (prisma.orders_rury_rel.create as jest.Mock).mock.calls[0][0].data;
+        // Wartość z body zignorowana — liczy się pieczątka oferty.
+        expect(written.pricelistVersionId).toBe('v-offer');
+        expect(String(written.data)).not.toContain('pricelistVersionId');
+    });
+
+    it('create rury bez oferty: pieczątka = aktualnie obowiązujący cennik', async () => {
+        (prisma.pricelistVersion.findFirst as jest.Mock).mockResolvedValue({ id: 'v-active' });
+        (prisma.$transaction as jest.Mock).mockImplementation(txDelegating('orders_rury_rel'));
+        const res = await request(createApp())
+            .put('/api/orders-rury')
+            .send({ data: [{ status: 'new' }] });
+        expect(res.status).toBe(200);
+        const written = (prisma.orders_rury_rel.create as jest.Mock).mock.calls[0][0].data;
+        expect(written.pricelistVersionId).toBe('v-active');
+    });
+
+    it('create studnie: pieczątka z offers_studnie_rel', async () => {
+        (prisma.offers_studnie_rel.findMany as jest.Mock).mockResolvedValue([
+            { id: 'off-s1', pricelistVersionId: 'v-s' }
+        ]);
+        (prisma.$transaction as jest.Mock).mockImplementation(txDelegating('orders_studnie_rel'));
+        const res = await request(createApp())
+            .put('/api/orders-studnie')
+            .send({
+                data: [
+                    { offerStudnieId: 'off-s1', status: 'new', pricelistVersionId: 'v-injected' }
+                ]
+            });
+        expect(res.status).toBe(200);
+        const written = (prisma.orders_studnie_rel.create as jest.Mock).mock.calls[0][0].data;
+        expect(written.pricelistVersionId).toBe('v-s');
+    });
+
+    it('update nie przyjmuje pieczątki z body (kolumną rządzi serwer)', async () => {
+        (prisma.orders_rury_rel.findUnique as jest.Mock).mockResolvedValue(RURY_ROW);
+        const updateMany = jest.fn(async () => ({ count: 1 }));
+        (prisma.$transaction as jest.Mock).mockImplementation(async (fn: any) =>
+            fn({
+                orders_rury_rel: {
+                    findUnique: prisma.orders_rury_rel.findUnique,
+                    updateMany
+                }
+            })
+        );
+        const res = await request(createApp())
+            .put('/api/orders-rury')
+            .send({
+                data: [
+                    {
+                        id: 'or-1',
+                        version: 1,
+                        offerId: 'off-1',
+                        status: 'new',
+                        pricelistVersionId: 'v-x'
+                    }
+                ]
+            });
+        expect(res.status).toBe(200);
+        const written = (updateMany.mock.calls[0] as any[])[0].data;
+        expect('pricelistVersionId' in written).toBe(false);
+        expect(String(written.data)).not.toContain('pricelistVersionId');
     });
 });
 

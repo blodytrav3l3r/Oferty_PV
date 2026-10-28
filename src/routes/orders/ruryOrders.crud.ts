@@ -25,6 +25,7 @@ import {
     idempotencyKeyFrom
 } from '../../utils/idempotency';
 import { HOT_TX_OPTS } from '../../utils/hotTx';
+import { loadOrderStamps, stampForOrder } from '../../utils/orderStamp';
 import crypto from 'crypto';
 
 const router = express.Router();
@@ -178,6 +179,14 @@ router.put(
         try {
             const incoming = req.body.data || [];
 
+            // Pieczątka cennika: z oferty, inaczej aktywny cennik (body ignorujemy).
+            const stamps = await loadOrderStamps(
+                'rury',
+                incoming.map((o: { offerId?: unknown }) =>
+                    typeof o.offerId === 'string' ? o.offerId : ''
+                )
+            );
+
             // P0-C/D2: cały batch w jednej transakcji + predykat wersji.
             await prisma.$transaction(async (tx) => {
                 for (const o of incoming) {
@@ -194,6 +203,8 @@ router.put(
                         createdAt: createdAtRaw,
                         status,
                         version: clientVersionRaw,
+                        // Pieczątka nie wchodzi do bloba — kolumna jest źródłem prawdy.
+                        pricelistVersionId: _stampIn,
                         ...rest
                     } = o;
                     // P0-D2: baza optimistic lockingu — nie trafia do bloba JSON.
@@ -258,7 +269,8 @@ router.put(
                             offerId: offerId || '',
                             createdAt: createdAt,
                             status: status || 'new',
-                            data: dataStr
+                            data: dataStr,
+                            pricelistVersionId: stampForOrder(stamps, offerId || '')
                         },
                         updateData: {
                             userId: targetUserId,
