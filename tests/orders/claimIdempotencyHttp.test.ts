@@ -52,18 +52,23 @@ afterAll(async () => {
 });
 
 describe('A2 claim/PUT idempotency (HTTP, real DB)', () => {
+    // Klucze muszą być świeże per run: baza jest współdzielona, a wpisy żyją 24 h
+    // (replay starego klucza zwracał numery z poprzedniego runu i psuł ciągłość).
+    const run = `run-${Date.now()}`;
+
     test('claim retry tym samym kluczem → te same numery, licznik +3 raz', async () => {
         const a = app();
+        const key = `bulk-a2-t1-${run}`;
         const r1 = await request(a)
             .post('/api/orders-studnie/claim-production-numbers/admin-1')
-            .set('Idempotency-Key', 'bulk-a2-t1')
+            .set('Idempotency-Key', key)
             .send({ count: 3 });
         expect(r1.status).toBe(200);
         expect(r1.body.seqs).toHaveLength(3);
 
         const r2 = await request(a)
             .post('/api/orders-studnie/claim-production-numbers/admin-1')
-            .set('Idempotency-Key', 'bulk-a2-t1')
+            .set('Idempotency-Key', key)
             .send({ count: 3 });
         expect(r2.status).toBe(200);
         expect(r2.body).toEqual(r1.body);
@@ -71,7 +76,7 @@ describe('A2 claim/PUT idempotency (HTTP, real DB)', () => {
         // Licznik ruszył raz: kolejny zakres zaczyna się po pierwszym.
         const r3 = await request(a)
             .post('/api/orders-studnie/claim-production-numbers/admin-1')
-            .set('Idempotency-Key', 'bulk-a2-t2')
+            .set('Idempotency-Key', `bulk-a2-t2-${run}`)
             .send({ count: 3 });
         expect(r3.status).toBe(200);
         const maxFirst = Math.max(...r1.body.seqs);
@@ -81,14 +86,15 @@ describe('A2 claim/PUT idempotency (HTTP, real DB)', () => {
 
     test('ten sam klucz + inny payload → 409 REUSE (brak nowego zakresu)', async () => {
         const a = app();
+        const key = `bulk-a2-reuse-${run}`;
         const r1 = await request(a)
             .post('/api/orders-studnie/claim-production-numbers/admin-1')
-            .set('Idempotency-Key', 'bulk-a2-reuse')
+            .set('Idempotency-Key', key)
             .send({ count: 2 });
         expect(r1.status).toBe(200);
         const r2 = await request(a)
             .post('/api/orders-studnie/claim-production-numbers/admin-1')
-            .set('Idempotency-Key', 'bulk-a2-reuse')
+            .set('Idempotency-Key', key)
             .send({ count: 5 });
         expect(r2.status).toBe(409);
         expect(r2.body.code).toBe('IDEMPOTENCY_KEY_REUSE');
@@ -119,16 +125,17 @@ describe('A2 claim/PUT idempotency (HTTP, real DB)', () => {
 
     test('D-008 single retry tym samym kluczem → ten sam numer, licznik +1 raz', async () => {
         const a = app();
+        const key = `single-d008-r1-${run}`;
         const r1 = await request(a)
             .post('/api/orders-studnie/claim-production-number/admin-1')
-            .set('Idempotency-Key', 'single-d008-r1')
+            .set('Idempotency-Key', key)
             .send({});
         expect(r1.status).toBe(200);
         expect(r1.body.number).toBeTruthy();
 
         const r2 = await request(a)
             .post('/api/orders-studnie/claim-production-number/admin-1')
-            .set('Idempotency-Key', 'single-d008-r1')
+            .set('Idempotency-Key', key)
             .send({});
         expect(r2.status).toBe(200);
         expect(r2.body).toEqual(r1.body);
@@ -136,7 +143,7 @@ describe('A2 claim/PUT idempotency (HTTP, real DB)', () => {
         // Licznik ruszył raz: świeży klucz daje wyższy seq.
         const r3 = await request(a)
             .post('/api/orders-studnie/claim-production-number/admin-1')
-            .set('Idempotency-Key', 'single-d008-r2')
+            .set('Idempotency-Key', `single-d008-r2-${run}`)
             .send({});
         expect(r3.status).toBe(200);
         expect(r3.body.nextSeq).toBeGreaterThan(r1.body.nextSeq);
@@ -144,14 +151,15 @@ describe('A2 claim/PUT idempotency (HTTP, real DB)', () => {
 
     test('D-008 single ten sam klucz + inny payload → 409 REUSE (kontrakt serwera)', async () => {
         const a = app();
+        const key = `single-d008-reuse-${run}`;
         const r1 = await request(a)
             .post('/api/orders-studnie/claim-production-number/admin-1')
-            .set('Idempotency-Key', 'single-d008-reuse')
+            .set('Idempotency-Key', key)
             .send({});
         expect(r1.status).toBe(200);
         const r2 = await request(a)
             .post('/api/orders-studnie/claim-production-number/admin-1')
-            .set('Idempotency-Key', 'single-d008-reuse')
+            .set('Idempotency-Key', key)
             .send({ other: 'payload' });
         expect(r2.status).toBe(409);
         expect(r2.body.code).toBe('IDEMPOTENCY_KEY_REUSE');
