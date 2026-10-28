@@ -541,10 +541,25 @@
     /**
      * „Edytuj”: szkic → normalny edytor szkicu; opublikowana → edycja w miejscu.
      * Ostrzeżenie mówi wprost, co zmienia zapis (ceny tej wersji, historia ofert bez zmian).
+     * Jedno źródło dla kafelka w sekcji wersji i w pasku trybu edycji.
      */
-    function openVersionOrDraft(type) {
+    async function openVersionOrDraft(type) {
         var v = selectedVersion(type);
-        if (!v) return;
+        if (v) return startVersionEdit(type, v);
+        // Pasek trybu działa też bez otwartego panelu (brak zaznaczenia) —
+        // celuje dokładnie w to, co kafelek w panelu: szkic, a bez szkicu ACTIVE.
+        var json = await fetchSummary();
+        var data = (json && json.types && json.types[type]) || {};
+        var target = data.draft || data.active;
+        if (!target) {
+            toast('Brak wersji do edycji — najpierw zapisz cennik', 'warning');
+            return;
+        }
+        return startVersionEdit(type, target);
+    }
+
+    /** Właściwa akcja kafelka „Edytuj" dla konkretnej wersji. */
+    function startVersionEdit(type, v) {
         if (isEditableStatus(stateOf(v))) {
             openEditorFor(type, labelOf(v));
             return;
@@ -1181,20 +1196,17 @@
         var canCancelSchedule = canOpen && stateOf(v) === 'SCHEDULED';
         return (
             '<div class="pv-version-actions__grid" role="group" aria-label="Akcje wybranej wersji">' +
-            '<button type="button" class="btn btn-sm btn-secondary" data-pv-act="edit"' +
-            idAttr +
-            ' data-pv-version="' +
-            label +
-            '"' +
-            off(canEdit) +
-            ' title="' +
-            tip(
-                canEdit,
-                isDraft
-                    ? 'Przejdź do edytora cennika — zapis trafia do tego szkicu (LIVE bez zmian)'
-                    : 'Edytuj tę opublikowaną wersję w miejscu (ostrzeżenie; zmienia jej ceny)'
-            ) +
-            '"><i data-lucide="pencil"></i> Edytuj</button>' +
+            editTileHtml({
+                act: true,
+                idAttr: idAttr,
+                version: label,
+                disabled: !canEdit,
+                title: canEdit
+                    ? isDraft
+                        ? EDIT_TILE_TITLE
+                        : 'Edytuj tę opublikowaną wersję w miejscu (ostrzeżenie; zmienia jej ceny)'
+                    : noSelectionHint
+            }) +
             '<button type="button" class="btn btn-sm btn-secondary" data-pv-act="clone"' +
             idAttr +
             off(canClone) +
@@ -2616,6 +2628,29 @@
         );
     }
 
+    /**
+     * Kafelek „Edytuj" — JEDEN builder dla sekcji wersji i paska trybu edycji.
+     * Ten sam markup, ikona i etykieta; różni się tylko atrybutem akcji
+     * (`data-pv-act` w panelu, `data-pv-mode` w edytorze) i stanem disabled.
+     * @param {{act?: boolean, idAttr?: string, version?: string, disabled?: boolean, title: string}} o
+     */
+    function editTileHtml(o) {
+        return (
+            '<button type="button" class="btn btn-sm btn-secondary" ' +
+            (o.act ? 'data-pv-act="edit"' : 'data-pv-mode="edit"') +
+            (o.idAttr || '') +
+            (o.version ? ' data-pv-version="' + escAttr(o.version) + '"' : '') +
+            (o.disabled ? ' disabled' : '') +
+            ' title="' +
+            escAttr(o.title) +
+            '"><i data-lucide="pencil"></i> Edytuj</button>'
+        );
+    }
+
+    /** Tooltip kafelka „Edytuj" — wspólny dla panelu i paska trybu. */
+    var EDIT_TILE_TITLE =
+        'Przejdź do edytora cennika — zapis trafia do tego szkicu (LIVE bez zmian)';
+
     /** Pasek akcji cennika: kopia → edycja (publikacja jest w akcjach wersji na osi). */
     function editorActionsHtml(type, data) {
         var draft = data.draft || null;
@@ -2630,9 +2665,8 @@
                 )
             );
         } else if (draft) {
-            out.push(
-                modeBtn('edit', 'Edytuj', 'Edytuj zaznaczony cennik — otwiera szkic do edycji')
-            );
+            // Kopia kafelka z sekcji wersji — ten sam builder i ta sama akcja.
+            out.push(editTileHtml({ title: EDIT_TILE_TITLE }));
         } else if (active) {
             out.push(
                 modeBtn(
@@ -3072,18 +3106,8 @@
         var act = btn.getAttribute('data-pv-mode');
         var type = editorType;
         if (act === 'edit') {
-            // Ten sam tor co „Edytuj" w panelu wersji: reload siatki + wyjście
-            // z podglądu wersji. Samo `setEditing` zostawiało w siatce dane
-            // podglądu (albo LIVE), więc zapis szedł do szkicu z cudzych wierszy.
-            var json = await fetchSummary();
-            var draft = json && json.types && json.types[type] && json.types[type].draft;
-            if (draft) {
-                openEditorFor(type, draft.version);
-            } else {
-                setEditing(type, true);
-                syncEditor(type);
-                toast('Edytujesz cennik — zapis utworzy szkic', 'info');
-            }
+            // Ta sama akcja co kafelek w sekcji wersji — bez własnej logiki.
+            await openVersionOrDraft(type);
             return;
         }
         if (act === 'cancel') {

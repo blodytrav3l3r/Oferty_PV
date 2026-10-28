@@ -27,7 +27,7 @@ describe('cennik: tryb edycji (podgląd ↔ szkic)', () => {
 
     it('trzy stany: kopia obowiązującego / edycja szkicu / anulowanie (publikacja w akcjach wersji)', () => {
         expect(shared).toContain("'Utwórz kopię jako szkic'");
-        expect(shared).toContain("'Edytuj'");
+        expect(shared).toContain('</i> Edytuj</button>');
         expect(shared).toContain("'Anuluj edycję'");
         expect(shared).toContain('data-pv-mode=');
         // „Opublikuj" należy do akcji wersji na osi, nie do paska trybu edycji.

@@ -77,22 +77,26 @@ describe('frontend: DRAFT ma drogę na oś czasu', () => {
         expect(panel).toContain('Anuluj wdrożenie');
     });
     it('kafelki akcji w kolejności logicznej: edycja → publikacja → analiza → usuń', () => {
-        const order = [
-            'edit',
-            'clone',
-            'publish',
-            'cancel-schedule',
-            'activate',
-            'diff',
-            'label',
-            'edit-note',
-            'delete'
-        ].map((act) => panel.indexOf('data-pv-act="' + act + '"'));
+        // „Edytuj" powstaje we wspólnym builderze (kopia kafelka paska trybu),
+        // reszta kafelków to inline markup — kolejność liczona po kotwicach.
+        const anchors = {
+            edit: 'editTileHtml({',
+            clone: 'data-pv-act="clone"',
+            publish: 'data-pv-act="publish"',
+            'cancel-schedule': 'data-pv-act="cancel-schedule"',
+            activate: 'data-pv-act="activate"',
+            diff: 'data-pv-act="diff"',
+            label: 'data-pv-act="label"',
+            'edit-note': 'data-pv-act="edit-note"',
+            delete: 'data-pv-act="delete"'
+        };
+        const order = Object.values(anchors).map((a) => panel.indexOf(a));
         expect(order.every((i) => i > -1)).toBe(true);
         expect(order).toEqual([...order].sort((a, b) => a - b));
         expect(css).toContain(".pv-version-actions__grid [data-pv-act='delete']");
     });
     it('wiersz ma wejście w edycję: Edytuj (DRAFT) i Utwórz kopię jako szkic (reszta)', () => {
+        expect(panel).toContain('function editTileHtml(');
         expect(panel).toContain('data-pv-act="edit"');
         expect(panel).toContain('Utwórz kopię jako szkic');
         expect(panel).toContain('function openEditorFor(');
