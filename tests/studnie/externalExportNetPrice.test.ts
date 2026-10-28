@@ -107,6 +107,44 @@ describe('studnie: eksport zewnętrzny = ceny po rabacie', () => {
         expect(out.map((r) => r.CENA_JEDNOSTKOWA)).toEqual([800, 150]);
         for (const r of out) expect(r.RABAT).toBe('');
     });
+
+    test('zamówienie (frozenPrice): kineta i przejścia doliczone do dennicy', () => {
+        // Wartości z realnej oferty OS/000001/SA/2026 (wellsExport bez `_xp`).
+        const order = {
+            wells: [
+                {
+                    name: 's1',
+                    dn: 1200,
+                    zwienczenie: 'Konus DN1200',
+                    rzednaWlazu: 3,
+                    rzednaDna: 0,
+                    magazyn: 'Kluczbork',
+                    config: [
+                        {
+                            productId: 'DEN-1',
+                            quantity: 1,
+                            frozenPrice: 840,
+                            frozenPriceBase: 1050
+                        },
+                        { productId: 'KR-1', quantity: 2, frozenPrice: 150, frozenPriceBase: 200 },
+                        { productId: 'KIN-1', quantity: 1, frozenPrice: 272, frozenPriceBase: 340 }
+                    ],
+                    przejscia: [
+                        { productId: 'PVC-400', frozenPrice: 264, frozenPriceBase: 330 },
+                        { productId: 'PVC-400', frozenPrice: 264, frozenPriceBase: 330 }
+                    ]
+                }
+            ]
+        };
+        const out = T._wellRows(order, 'OS/3', null);
+        // Kineta nie ma wiersza; dennica = 840 + 272 (kineta) + 528 (2 przejścia).
+        expect(out.map((r) => r.INDEKS_CZESCI)).toEqual(['DEN-1', 'KR-1']);
+        expect(out[0].CENA_JEDNOSTKOWA).toBe(1640);
+        expect(out[1].CENA_JEDNOSTKOWA).toBe(150);
+        const sum = out.reduce((s, r) => s + r.CENA_JEDNOSTKOWA * (Number(r.ILOSC) || 0), 0);
+        // 840 + 2*150 + 272 + 528 = 1940 — cena studni z configu i przejść.
+        expect(Math.round(sum * 100) / 100).toBe(1940);
+    });
 });
 
 describe('rury: eksport zewnętrzny = ceny po rabacie', () => {

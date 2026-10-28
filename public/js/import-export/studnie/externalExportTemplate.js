@@ -22,6 +22,48 @@ window.StudnieExternalExportTemplate = {
         return wMagNad === 'Włocławek' ? 'WL' : 'M0';
     },
 
+    /**
+     * Netto pozycji bez `_xp`: zamrożona cena (zamówienia, stare oferty) albo
+     * cennik z rabatem. `frozenPrice` zawiera już narzuty pozycji.
+     */
+    _legacyNet(well, p, comp, offerDiscounts) {
+        if (comp && comp.frozenPrice != null) return Number(comp.frozenPrice) || 0;
+        if (!p) return 0;
+        const discountKey = well.dn === 'styczna' ? 'styczne' : well.dn;
+        const disc = (offerDiscounts || {})[discountKey] || { dennica: 0, nadbudowa: 0 };
+        const isDennicaType = ['dennica', 'kineta', 'styczna'].includes(p.componentType);
+        const pct = Number(isDennicaType ? disc.dennica || 0 : disc.nadbudowa || 0);
+        return (p.price || 0) * (1 - pct / 100);
+    },
+
+    /**
+     * Kineta i przejścia nie mają własnego wiersza — ich koszt siedzi w wierszu
+     * dennicy, tak jak w kalkulacji `_xp`. Bez tego suma pliku jest za niska.
+     */
+    _dennicaExtras(well, config, offerDiscounts, enriched) {
+        const map = this._productMap;
+        let sum = 0;
+        for (const comp of config) {
+            if (comp._xp !== undefined || comp._xskip === true) continue;
+            const p = map ? map.get(comp.productId || comp.indeks || '') : null;
+            if (!p || p.componentType !== 'kineta') continue;
+            const qty = Number(comp.quantity || comp.ilosc) || 0;
+            sum += this._legacyNet(well, p, comp, offerDiscounts) * qty;
+        }
+        // W ścieżce `_xp` przejścia są już doliczone do ceny hosta.
+        if (enriched) return sum;
+        for (const prz of well.przejscia || []) {
+            const frozen = Number(prz.frozenPrice);
+            if (Number.isFinite(frozen) && frozen > 0) {
+                sum += frozen;
+                continue;
+            }
+            const pp = map ? map.get(prz.productId) : null;
+            if (pp) sum += this._legacyNet(well, pp, null, offerDiscounts);
+        }
+        return sum;
+    },
+
     _wellRows(data, offerNumber, codes) {
         const wellsExport = data.wellsExport || [];
         const hasEnriched =
@@ -45,6 +87,8 @@ window.StudnieExternalExportTemplate = {
             const zakonczenie =
                 well.zwienczenie ||
                 (typeof getWellZwienczenieName === 'function' ? getWellZwienczenieName(well) : '');
+            const enriched = config.some((c) => c._xp !== undefined);
+            const extras = this._dennicaExtras(well, config, offerDiscounts, enriched);
 
             for (const comp of config) {
                 const productId = comp.productId || comp.indeks || '';
@@ -54,20 +98,21 @@ window.StudnieExternalExportTemplate = {
                 let cenaJednostkowa;
 
                 if (comp._xp !== undefined) {
-                    // `_xp` = cena katalogowa, `_xd` = rabat %; wiersze z narzutami
-                    // mają już cenę końcową (`_xd` brak) — mnożnik 1 nic nie zmienia.
-                    cenaJednostkowa = comp._xp * (1 - (Number(comp._xd) || 0) / 100);
+                    // `_xp` bywa ceną katalogową (`_xd` = rabat %) albo już końcową
+                    // (wiersze z narzutami). Rozpoznajemy po `frozenPriceBase`.
+                    const xp = Number(comp._xp) || 0;
+                    const base = Number(comp.frozenPriceBase);
+                    const isCatalogPrice = Number.isFinite(base) && Math.abs(xp - base) < 0.005;
+                    cenaJednostkowa =
+                        isCatalogPrice || !Number.isFinite(base)
+                            ? xp * (1 - (Number(comp._xd) || 0) / 100)
+                            : xp;
                 } else {
                     const p = this._productMap ? this._productMap.get(productId) : null;
+                    // Kineta nie ma wiersza — jej cena jest w dennicy (extras).
                     if (p && p.componentType === 'kineta') continue;
-                    const discountKey = well.dn === 'styczna' ? 'styczne' : well.dn;
-                    const isDennicaType =
-                        p && ['dennica', 'kineta', 'styczna'].includes(p.componentType);
-                    const disc = offerDiscounts[discountKey] || { dennica: 0, nadbudowa: 0 };
-                    const discountPct = Number(
-                        isDennicaType ? disc.dennica || 0 : disc.nadbudowa || 0
-                    );
-                    cenaJednostkowa = (p ? p.price : 0) * (1 - discountPct / 100);
+                    cenaJednostkowa = this._legacyNet(well, p, comp, offerDiscounts);
+                    if (p && p.componentType === 'dennica') cenaJednostkowa += extras;
                 }
 
                 rows.push({
