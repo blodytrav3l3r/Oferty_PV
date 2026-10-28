@@ -3147,36 +3147,39 @@
                 statusBadge('ARCHIVED') +
                 '</div>' +
                 '<ul>' +
-                '<li><strong>Obowiązuje</strong> - wersja wskazana ręcznie („Ustaw jako aktywny”) albo najnowsza opublikowana, której data już minęła. Z niej liczą nowe oferty.</li>' +
-                '<li><strong>Do wdrożenia</strong> — opublikowana wersja z datą przyszłą. Wejdzie automatycznie w wybranej dacie i godzinie.</li>' +
-                '<li><strong>W przygotowaniu</strong> — szkic. Nie wpływa na oferty ani na cennik obowiązujący.</li>' +
-                '<li><strong>Historyczny</strong> — opublikowana wersja wyparta przez nowszą. Służy do podglądu i eksportu.</li>' +
+                '<li><strong>Obowiązuje</strong> — najnowsza opublikowana wersja, której data wejścia już minęła. Z niej liczą nowe oferty. Starszą wersję możesz wskazać ręcznie przyciskiem <strong>Ustaw jako aktywny</strong> — wtedy ona liczy oferty, choć na osi nadal ma etykietę <em>Historyczny</em>.</li>' +
+                '<li><strong>Do wdrożenia</strong> — opublikowana wersja z datą przyszłą. Zaczyna obowiązywać sama w tej dacie: status wynika z daty, nie z zadania w tle.</li>' +
+                '<li><strong>W przygotowaniu</strong> — szkic, dokładnie jeden na oś. Nie wpływa na oferty ani na obowiązujący cennik.</li>' +
+                '<li><strong>Historyczny</strong> — opublikowana, wyparta przez nowszą. Służy do podglądu, porównania, eksportu i ewentualnego wskazania jako aktywna.</li>' +
                 '</ul></section>' +
                 '<section><h4>Jak edytować cennik</h4><ol>' +
-                '<li>Otwórz panel <strong>Panel</strong> i zaznacz wersję na liście.</li>' +
-                '<li>Kliknij <strong>Edytuj</strong> (wersja robocza) albo <strong>Edytuj</strong> w akcjach wersji (wersja opublikowana — edycja w miejscu z ostrzeżeniem).</li>' +
-                '<li>Zmień ceny w siatce i kliknij <strong>Zapisz</strong> — cel (szkic albo wybrana wersja) pokazuje tooltip przycisku.</li>' +
-                '<li>Po zapisie szkicu kliknij <strong>Opublikuj roboczą</strong> i wybierz datę oraz godzinę wejścia w życie.</li>' +
+                '<li>Otwórz <strong>Panel</strong> i zaznacz wersję na liście.</li>' +
+                '<li>Kliknij <strong>Edytuj</strong> — szkic edytujesz normalnie, wersję opublikowaną edytujesz w miejscu (zmienia jej ceny).</li>' +
+                '<li>Zmień ceny w siatce i kliknij <strong>Zapisz</strong> — tooltip przycisku pokazuje, do której wersji trafi zapis.</li>' +
+                '<li>Szkic publikujesz przyciskiem <strong>Opublikuj roboczą</strong>, wybierając datę i godzinę wejścia w życie.</li>' +
                 '</ol></section>' +
                 '<section><h4>Jak utworzyć nowy cennik</h4><ul>' +
-                '<li><strong>Utwórz kopię jako szkic</strong> — kopia obowiązującej wersji do swobodnej edycji; obowiązujący cennik się nie zmienia.</li>' +
-                '<li><strong>Transfer plików</strong> — import/eksport XLSX cennika z aktywnej zakładki (Rury / Studnie / PRECO). „Na żywo” = bieżące tabele edytora, nie wersja z osi.</li>' +
-                '<li><strong>Cenniki domyślne</strong> — zapis wszystkich osi naraz; przywrócenie działa tylko na wybranej osi (Rury / Studnie / PRECO).</li>' +
+                '<li><strong>Kopia jako szkic</strong> — kopia dowolnej opublikowanej wersji do swobodnej edycji; obowiązujący cennik się nie zmienia.</li>' +
+                '<li><strong>Transfer plików</strong> — eksport i import XLSX działają na wersji zaznaczonej na osi (bez zaznaczenia: szkic, a gdy szkicu nie ma — obowiązująca). Plik zawiera numer wersji; import wczytuje ceny do tej wersji i podmienia je po kliknięciu <strong>Zapisz</strong>.</li>' +
+                '<li><strong>Cenniki domyślne</strong> — zapis obejmuje wszystkie osie naraz; przywrócenie domyślnych działa na jednej wybranej osi (Rury / Studnie / PRECO).</li>' +
                 '</ul></section>' +
                 '<section><h4>Daty publikacji</h4><ul>' +
-                '<li><strong>Data przyszła</strong> — wersja trafia do <em>Do wdrożenia</em> i włącza się sama w tej dacie.</li>' +
+                '<li><strong>Data przyszła</strong> — wersja trafia do <em>Do wdrożenia</em> i obowiązuje od tej daty.</li>' +
                 '<li><strong>Data przeszła</strong> — korekta wsteczna: wymagane uzasadnienie (min. 10 znaków) i potwierdzenie.</li>' +
                 '<li><strong>Teraz</strong> — wersja obowiązuje od razu dla nowych ofert.</li>' +
-                '<li>Ta sama data i godzina na jednej osi = kolizja; zmień termin.</li>' +
+                '<li>Ta sama data i godzina na jednej osi = kolizja („Kolizja daty obowiązywania”) — zmień termin.</li>' +
                 '</ul></section>' +
                 '<section><h4>Anulowanie i wycofanie</h4><ul>' +
-                '<li><strong>Anuluj wdrożenie</strong> — dla wersji <em>Do wdrożenia</em>: wraca do szkicu i nie wejdzie w zaplanowanej dacie.</li>' +
-                '<li>Wersji już obowiązującej nie wycofasz tą drogą — opublikuj nowszą wersję albo ustaw inną jako aktywną.</li>' +
+                '<li><strong>Anuluj wdrożenie</strong> — tylko dla wersji <em>Do wdrożenia</em>: wraca do szkicu i nie wejdzie w zaplanowanej dacie.</li>' +
+                '<li><strong>Ustaw jako aktywny</strong> — tylko wersja historyczna (opublikowana, data miniona); wymaga potwierdzenia.</li>' +
+                '<li>Wersji obowiązującej nie usuniesz ani nie wycofasz — opublikuj nowszą albo wskaż inną jako aktywną. Nowa publikacja z datą bieżącą zdejmuje ręczne wskazanie.</li>' +
+                '<li><strong>Usuń</strong> — szkic zawsze; <em>Do wdrożenia</em> i <em>Historyczny</em> tylko wtedy, gdy nie używa ich żadna oferta ani zamówienie.</li>' +
                 '</ul></section>' +
-                '<section><h4>Oferty a cennik</h4><p>Istniejące oferty i zamówienia trzymają własną pieczęć wersji — zmiana cennika ich nie przelicza. Nowe oferty liczą z wersji <em>Obowiązuje</em>. Edycja wersji obowiązującej w miejscu działa od razu na nowe oferty.</p></section>' +
+                '<section><h4>Oferty a cennik</h4><p>Nowa oferta dostaje pieczęć obowiązującej wersji. Zamówienie dziedziczy pieczęć z powiązanej oferty, a bez oferty bierze wersję obowiązującą. Istniejące oferty i zamówienia nie przeliczają się po zmianie cennika — przeliczenie na aktywną wersję jest osobną, jawną akcją („Przelicz do aktywnego”).</p></section>' +
                 '<section><h4>Bezpieczeństwo zapisu</h4><ul>' +
-                '<li>Zapis jest chroniony sumą kontrolną — równoległa zmiana kończy się komunikatem o nieaktualnej wersji; otwórz ją ponownie.</li>' +
+                '<li>Zapis jest chroniony sumą kontrolną SHA-256 wczytanej treści — równoległa zmiana kończy się komunikatem, że szkic lub wersja zmieniły się od czasu wczytania; odśwież dane i zapisz ponownie.</li>' +
                 '<li>Może istnieć tylko jeden szkic na oś (Rury / Studnie / PRECO).</li>' +
+                '<li>Wersji PRECO używanej przez wersję studni nie da się usunąć.</li>' +
                 '<li>Zarządzanie wersjami wymaga roli administratora.</li>' +
                 '</ul></section>' +
                 '<p class="text-muted">Pełna instrukcja: <code>docs/CENNIKI-INSTRUKCJA-ADMINA.md</code></p>' +

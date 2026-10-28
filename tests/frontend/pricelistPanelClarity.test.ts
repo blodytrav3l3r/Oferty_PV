@@ -44,6 +44,20 @@ describe('frontend: statusy mówią co znaczą', () => {
         expect(panel).toContain('Jak utworzyć nowy cennik');
         expect(panel).toContain('Anuluj wdrożenie');
     });
+
+    it('pomoc zgodna ze stanem faktycznym (transfer, aktywacja, zapis)', () => {
+        // Transfer działa na wersji z osi, nie na „bieżących tabelach edytora”.
+        expect(panel).not.toContain('Na żywo” = bieżące tabele edytora');
+        expect(panel).toContain('na wersji zaznaczonej na osi');
+        // Ręczne wskazanie dotyczy tylko wersji historycznej.
+        expect(panel).toContain('Ustaw jako aktywny</strong> — tylko wersja historyczna');
+        // Obowiązującej nie da się usunąć; reszta warunkowana użyciem.
+        expect(panel).toContain('Wersji obowiązującej nie usuniesz ani nie wycofasz');
+        // Zapis chroniony sumą SHA-256, nie „sumą kontrolną” bez nazwy.
+        expect(panel).toContain('SHA-256');
+        // Pieczęć zamówienia dziedziczona z oferty.
+        expect(panel).toContain('Zamówienie dziedziczy pieczęć z powiązanej oferty');
+    });
 });
 
 describe('frontend: Użycie wersji widoczne', () => {
