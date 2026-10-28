@@ -58,12 +58,11 @@ body > .main > .section.active {
  * `body > .main > .section.active` go nie łapał — wysokość rosła, a przewijało
  * się body. W Chromium pasek viewportu jest overlay (chowa się sam), więc po
  * rozwinięciu pozycji oferty pasek bywał niewidoczny. Sekcja dostaje ograniczoną
- * wysokość i to ona jest kontenerem przewijania (klasyczny, zawsze widoczny pasek). */
+ * wysokość i to ona jest kontenerem przewijania (klasyczny, zawsze widoczny pasek).
+ * `display: contents` — wrapper nie jest elementem layoutu, więc ukryta sekcja
+ * (`display: none` z routingu) nie zabiera połowy wysokości aktywnej zakładce. */
 body.studnie-page > .main > #partial-offer {
-    flex: 1 1 auto;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
+    display: contents;
 }
 
 body.studnie-page > .main > #partial-offer > .section.active {
