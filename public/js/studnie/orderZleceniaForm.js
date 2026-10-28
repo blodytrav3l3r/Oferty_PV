@@ -9,6 +9,36 @@ function setZleceniaFilter(filter) {
     renderZleceniaList();
 }
 
+function setZleceniaHideAccepted(hide) {
+    zleceniaHideAccepted = !!hide;
+    try {
+        localStorage.setItem('sok_zlecenia_hide_accepted', zleceniaHideAccepted ? '1' : '0');
+    } catch (_e) {}
+    syncZleceniaHideAcceptedCheckbox();
+    renderZleceniaList();
+}
+
+function toggleZleceniaHideAccepted() {
+    setZleceniaHideAccepted(!zleceniaHideAccepted);
+}
+
+function initZleceniaHideAccepted() {
+    try {
+        const stored = localStorage.getItem('sok_zlecenia_hide_accepted');
+        if (stored !== null) {
+            zleceniaHideAccepted = stored === '1';
+        }
+    } catch (_e) {}
+    syncZleceniaHideAcceptedCheckbox();
+}
+
+function syncZleceniaHideAcceptedCheckbox() {
+    const cb = /** @type {HTMLInputElement|null} */ (
+        document.getElementById('zlecenia-hide-accepted')
+    );
+    if (cb) cb.checked = !!zleceniaHideAccepted;
+}
+
 function renderZleceniaSvgPreview(well) {
     const svg = document.getElementById('zlecenia-svg-preview');
     const info = document.getElementById('zlecenia-well-info-mini');
@@ -952,6 +982,10 @@ function onZleceniaKatChange() {
 }
 
 window.setZleceniaFilter = setZleceniaFilter;
+window.setZleceniaHideAccepted = setZleceniaHideAccepted;
+window.toggleZleceniaHideAccepted = toggleZleceniaHideAccepted;
+window.initZleceniaHideAccepted = initZleceniaHideAccepted;
+window.syncZleceniaHideAcceptedCheckbox = syncZleceniaHideAcceptedCheckbox;
 window.renderZleceniaSvgPreview = renderZleceniaSvgPreview;
 window.selectZleceniaTile = selectZleceniaTile;
 window.onZleceniaStopnieChange = onZleceniaStopnieChange;

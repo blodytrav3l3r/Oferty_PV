@@ -264,12 +264,14 @@ const ZleceniaRender = (() => {
             '<button class="action-btn" aria-label="Drukuj etykiet\u0119" data-csp="printSingleEtykieta" data-csp-scope="AppZlecenia" data-csp-args="' +
             escapeHtmlAttr(JSON.stringify([o.id])) +
             '" title="Drukuj etykiet\u0119"><i data-lucide="tag" aria-hidden="true"></i></button>';
-        if (isDraft) {
-            actions +=
-                '<button class="action-btn action-btn-delete" aria-label="Usu\u0144 zlecenie" data-csp="deleteOrder" data-csp-scope="AppZlecenia" data-csp-args="' +
-                escapeHtmlAttr(JSON.stringify([o.id])) +
-                '" title="Usu\u0144 zlecenie"><i data-lucide="trash-2" aria-hidden="true"></i></button>';
-        }
+        actions +=
+            '<button class="action-btn action-btn-delete" aria-label="Usu\u0144 zlecenie"' +
+            (isDraft
+                ? ' data-csp="deleteOrder" data-csp-scope="AppZlecenia" data-csp-args="' +
+                  escapeHtmlAttr(JSON.stringify([o.id])) +
+                  '" title="Usu\u0144 zlecenie"'
+                : ' disabled title="Nie mo\u017cna usun\u0105\u0107 zaakceptowanego zlecenia"') +
+            '><i data-lucide="trash-2" aria-hidden="true"></i></button>';
 
         return (
             '<tr>\n' +

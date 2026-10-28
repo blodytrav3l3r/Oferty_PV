@@ -2370,6 +2370,11 @@ html[data-theme='light'] #btn-auto-select:disabled {
     background: rgba(var(--danger-rgb), 0.05);
 }
 
+.zlecenia-el-item.is-dimmed {
+    opacity: 0.45;
+    filter: grayscale(0.25);
+}
+
 .zlecenia-header-btn {
     min-width: 100px;
     display: flex;
@@ -2477,6 +2482,29 @@ html[data-theme='light'] #btn-auto-select:disabled {
     padding: 0.4rem 0.5rem;
     border-bottom: 1px solid var(--border-glass);
     background: var(--bg-secondary);
+}
+
+.zl-toggle-wrap {
+    padding: 0.35rem 0.6rem;
+    border-bottom: 1px solid var(--border-glass);
+    background: var(--bg-secondary);
+    display: flex;
+    align-items: center;
+}
+
+.zl-toggle-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: var(--fs-xs);
+    color: var(--text-secondary);
+    cursor: pointer;
+    user-select: none;
+}
+
+.zl-toggle-label input[type='checkbox'] {
+    cursor: pointer;
+    accent-color: var(--accent);
 }
 
 .zlecenia-filter-btn {

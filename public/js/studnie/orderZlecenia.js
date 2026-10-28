@@ -4,6 +4,7 @@ let productionOrders = [];
 let zleceniaElementsList = [];
 let zleceniaSelectedIdx = -1;
 let zleceniaActiveFilter = 'all';
+let zleceniaHideAccepted = false;
 let wellsSnapshotBeforeZlecenia = null;
 
 Object.defineProperty(window, 'productionOrders', {
@@ -32,6 +33,13 @@ Object.defineProperty(window, 'zleceniaActiveFilter', {
     get: () => zleceniaActiveFilter,
     set: (v) => {
         zleceniaActiveFilter = v;
+    }
+});
+Object.defineProperty(window, 'zleceniaHideAccepted', {
+    configurable: true,
+    get: () => zleceniaHideAccepted,
+    set: (v) => {
+        zleceniaHideAccepted = !!v;
     }
 });
 Object.defineProperty(window, 'wellsSnapshotBeforeZlecenia', {

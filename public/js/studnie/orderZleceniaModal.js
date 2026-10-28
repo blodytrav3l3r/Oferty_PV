@@ -82,6 +82,10 @@ function openZleceniaProdukcyjne(targetWellId = null, targetElementIndex = null)
 
     buildZleceniaWellList();
 
+    if (typeof initZleceniaHideAccepted === 'function') {
+        initZleceniaHideAccepted();
+    }
+
     if (zleceniaElementsList.length > 0) {
         let idxToSelect = 0;
         let foundIdx = -1;

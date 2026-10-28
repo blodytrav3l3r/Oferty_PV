@@ -372,6 +372,15 @@
 .action-btn-delete:hover {
     background: rgba(var(--danger-rgb), 0.1);
 }
+.action-btn-delete:disabled,
+.action-btn-delete[disabled] {
+    opacity: 0.35;
+    cursor: not-allowed;
+    border-color: rgba(var(--slate-400-rgb), 0.2);
+    color: var(--text-muted);
+    background: transparent;
+    pointer-events: none;
+}
 
 /* Well name + project */
 .well-cell-name {

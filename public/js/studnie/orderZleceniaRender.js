@@ -116,7 +116,8 @@ function renderZleceniaList() {
             poNum.includes(search);
         if (!matchesSearch) return;
 
-        if (zleceniaActiveFilter === 'saved' && item.status === 'open') return;
+        if (zleceniaHideAccepted && item.status === 'accepted') return;
+        if (zleceniaActiveFilter === 'saved' && item.status !== 'saved') return;
         if (zleceniaActiveFilter === 'accepted' && item.status !== 'accepted') return;
 
         if (!groupedElements[el.wellIndex]) {
@@ -158,6 +159,7 @@ function renderZleceniaList() {
             );
             const isAccepted = savedOrder && savedOrder.status === 'accepted';
             const isActive = i === zleceniaSelectedIdx;
+            const isDimmed = zleceniaActiveFilter === 'all' && (isSaved || isAccepted);
 
             const savedProdOrder = pzGuard.findPzForElement(
                 productionOrders || [],
@@ -170,7 +172,7 @@ function renderZleceniaList() {
                     ? savedProdOrder.productionOrderNumber
                     : '';
 
-            html += `<div class="zlecenia-el-item ${isActive ? 'active' : ''} ${isSaved ? 'saved' : ''} ${isAccepted ? 'accepted' : ''}" data-csp="selectZleceniaElement" data-csp-args="${escapeHtmlAttr(JSON.stringify([i]))}" style="margin-bottom:0.3rem;">
+            html += `<div class="zlecenia-el-item ${isActive ? 'active' : ''} ${isSaved ? 'saved' : ''} ${isAccepted ? 'accepted' : ''} ${isDimmed ? 'is-dimmed' : ''}" data-csp="selectZleceniaElement" data-csp-args="${escapeHtmlAttr(JSON.stringify([i]))}" style="margin-bottom:0.3rem;">
                 <div class="flex-between">
                     <div style="font-size: var(--fs-base); font-weight: var(--fw-bold); color:var(--text-primary);">${escapeHtml(el.product.name)}</div>
                     <div style="display:flex; align-items:center; gap:0.3rem;">
