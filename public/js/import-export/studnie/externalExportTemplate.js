@@ -140,6 +140,9 @@ window.StudnieExternalExportTemplate = {
             for (const comp of config) {
                 const productId = comp.productId || comp.indeks || '';
                 if (comp._xskip === true) continue;
+                const p = this._productMap ? this._productMap.get(productId) : null;
+                // Właz nie jest pozycją handlową pliku — pomijamy.
+                if (p && p.componentType === 'wlaz') continue;
                 const quantity = comp.quantity || comp.ilosc || 0;
 
                 let cenaJednostkowa;
@@ -155,7 +158,6 @@ window.StudnieExternalExportTemplate = {
                             ? xp * (1 - (Number(comp._xd) || 0) / 100)
                             : xp;
                 } else {
-                    const p = this._productMap ? this._productMap.get(productId) : null;
                     // Kineta nie ma wiersza — jej cena jest w dennicy (extras).
                     if (p && p.componentType === 'kineta') continue;
                     cenaJednostkowa = this._legacyNet(well, p, comp, offerDiscounts);

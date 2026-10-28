@@ -39,7 +39,8 @@ describe('studnie: eksport zewnętrzny = ceny po rabacie', () => {
     const catalog = [
         { id: 'DEN-1', componentType: 'dennica', price: 1000 },
         { id: 'KR-1', componentType: 'krag', price: 200 },
-        { id: 'KIN-1', componentType: 'kineta', price: 300 }
+        { id: 'KIN-1', componentType: 'kineta', price: 300 },
+        { id: 'WLAZ-1', componentType: 'wlaz', price: 130 }
     ];
     T._productMap = new Map(catalog.map((p) => [p.id, p]));
 
@@ -53,6 +54,8 @@ describe('studnie: eksport zewnętrzny = ceny po rabacie', () => {
                 rzednaDna: 0,
                 magazyn: 'Kluczbork',
                 config: [
+                    // właz nie trafia do pliku (nie jest pozycją handlową)
+                    { productId: 'WLAZ-1', quantity: 1, _xp: 130, _xd: 25 },
                     // cennik 1000, rabat dennicowy 20% → 800
                     { productId: 'DEN-1', quantity: 1, _xp: 1000, _xd: 20 },
                     // cennik 200, rabat nadbudowy 25% → 150
@@ -70,6 +73,10 @@ describe('studnie: eksport zewnętrzny = ceny po rabacie', () => {
     test('trzy wiersze, kineta pominięta', () => {
         expect(rows).toHaveLength(3);
         expect(rows.map((r) => r.INDEKS_CZESCI)).toEqual(['DEN-1', 'KR-1', 'KR-1']);
+    });
+
+    test('właz nie jest eksportowany', () => {
+        expect(rows.some((r) => r.INDEKS_CZESCI === 'WLAZ-1')).toBe(false);
     });
 
     test('CENA_JEDNOSTKOWA po rabacie, RABAT pusty', () => {
@@ -145,6 +152,7 @@ describe('studnie: eksport zewnętrzny = ceny po rabacie', () => {
                     rzednaDna: 0,
                     magazyn: 'Kluczbork',
                     config: [
+                        { productId: 'WLAZ-1', quantity: 1, frozenPrice: 0, frozenPriceBase: 0 },
                         {
                             productId: 'DEN-1',
                             quantity: 1,
