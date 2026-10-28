@@ -1705,6 +1705,7 @@
     async function afterVersionChange(type, opts) {
         var o = opts || {};
         clearSummaryCache();
+        broadcastActiveChange();
         // Siatka pokazywała wersję — po akcji wracamy do danych edytora.
         var bar = document.getElementById('pv-version-bar');
         if (bar && !bar.hidden) restoreGrid(type);
@@ -2402,6 +2403,27 @@
         labelCache = {};
         activeIdsByType = {};
         draftRefs = {};
+    }
+
+    /** Klucz sygnału „zmieniono obowiązujący cennik” między oknami/iframe. */
+    var ACTIVE_PING_KEY = 'pv-active-changed';
+
+    /** Rozgłoś zmianę aktywnego cennika — inne okna mają własny cache etykiet. */
+    function broadcastActiveChange() {
+        try {
+            window.localStorage.setItem(ACTIVE_PING_KEY, String(Date.now()));
+        } catch (_e) {
+            // Brak storage (tryb prywatny) — inne okna odświeżą się po reloadzie.
+        }
+    }
+
+    // Zmiana pinu w #/cennik nie unieważnia cache modułu rury/studnie (osobny
+    // window). Bez tego banner proponuje nieaktualny cennik, a zapis bije 409.
+    if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
+        window.addEventListener('storage', function (e) {
+            if (!e || e.key !== ACTIVE_PING_KEY) return;
+            clearSummaryCache();
+        });
     }
 
     function fetchSummary() {

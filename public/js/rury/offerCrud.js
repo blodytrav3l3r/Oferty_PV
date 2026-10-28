@@ -171,6 +171,17 @@ async function saveOffer() {
             );
             return;
         }
+        // Cennik obowiązujący zmienił się (pin w innym oknie) — to nie konflikt
+        // edycji: nie podmieniamy formularza, tylko unieważniamy cache etykiet.
+        if (err && err.code === 'STALE_PRICELIST') {
+            if (window.pricelistVersions && window.pricelistVersions.clearSummaryCache)
+                window.pricelistVersions.clearSummaryCache();
+            showToast(
+                'Cennik obowiązujący się zmienił — odśwież stronę i przelicz ofertę ponownie.',
+                'warning'
+            );
+            return;
+        }
         // P0-D2: konflikt wersji — serwer wygrywa, formularz zastąpiony świeżą
         // kopią. Bez auto-merge (wartości kalkulacyjne zależne od siebie).
         // Bezpieczne: loadOffer nie woła save (tylko render/showSection/goToPhase).
