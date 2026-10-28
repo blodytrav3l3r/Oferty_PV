@@ -141,7 +141,7 @@
   `public/js/shared/draftAutosave.js`, `public/js/shared/draftSync.js`) +
   backend (`src/services/drafts/draftService.ts`, `src/routes/drafts.ts`).
 - **Enforcement:** CAS `If-Match` + `updateMany` z predykatem wersji (count 0 →
-  409 `DRAFT_CONFLICT`; brak nagłówka → 412 `DRAFT_PRECONDITION_REQUIRED`);
+  409 `DRAFT_CONFLICT`; brak nagłówka → 428 `DRAFT_PRECONDITION_REQUIRED`);
   `_draftSaveState` (błąd/`blocked-storage` nigdy jako `ok`); modal 3 wyborów przy
   konflikcie + kopia `docId-konflikt-<ts>`; flush `keepalive` jawnie pomija
   payload > 64 KB (`skipped_keepalive`); odzysk serwerowy tylko po decyzji

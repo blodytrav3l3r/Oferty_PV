@@ -77,7 +77,7 @@ describe('L2 drafty — zapis i CAS', () => {
         expect(row?.baseVersion).toBe(3);
     });
 
-    test('nadpisanie bez If-Match → 412, poprzednia treść nietknięta', async () => {
+    test('nadpisanie bez If-Match → 428, poprzednia treść nietknięta', async () => {
         await request(app)
             .put(url('offer_rury', 'o2'))
             .set('x-test-user', USER)
@@ -87,7 +87,8 @@ describe('L2 drafty — zapis i CAS', () => {
             .put(url('offer_rury', 'o2'))
             .set('x-test-user', USER)
             .send({ payload: payload('nowy') });
-        expect(res.status).toBe(412);
+        // 428 (RFC 6585) = brak warunku wstępnego; 412 byłby „warunek nie zaszedł”.
+        expect(res.status).toBe(428);
         expect(res.body.code).toBe('DRAFT_PRECONDITION_REQUIRED');
         expect(res.body.serverVersion).toBe(1);
 

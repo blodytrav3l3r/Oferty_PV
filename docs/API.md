@@ -652,15 +652,15 @@ zapytania (404, bez ujawniania istnienia). Draft nigdy nie mutuje dokumentu.
 
 Kody błędów:
 
-| Status | `code`                        | Kiedy                                                       |
-| ------ | ----------------------------- | ----------------------------------------------------------- |
-| 400    | `INVALID_IF_MATCH`            | `If-Match` obecny, ale niepoprawny (nie ciche pominięcie)   |
-| 400    | `DRAFT_INVALID_PAYLOAD`       | `payload` nie jest obiektem / nieserializowalny             |
-| 404    | `DRAFT_NOT_FOUND`             | `If-Match` na nieistniejący draft                           |
-| 409    | `DRAFT_CONFLICT`              | `If-Match` nieaktualny → `serverVersion`, `serverUpdatedAt` |
-| 409    | `DRAFT_LIMIT`                 | 50 draftów osiągnięte → `count`, `limit` (nic nie kasowane) |
-| 412    | `DRAFT_PRECONDITION_REQUIRED` | draft istnieje, brak `If-Match` → `serverVersion`           |
-| 413    | `DRAFT_TOO_LARGE`             | payload > 256 KB → `bytes`, `limit` (poprzedni nietknięty)  |
+| Status | `code`                        | Kiedy                                                        |
+| ------ | ----------------------------- | ------------------------------------------------------------ |
+| 400    | `INVALID_IF_MATCH`            | `If-Match` obecny, ale niepoprawny (nie ciche pominięcie)    |
+| 400    | `DRAFT_INVALID_PAYLOAD`       | `payload` nie jest obiektem / nieserializowalny              |
+| 404    | `DRAFT_NOT_FOUND`             | `If-Match` na nieistniejący draft                            |
+| 409    | `DRAFT_CONFLICT`              | `If-Match` nieaktualny → `serverVersion`, `serverUpdatedAt`  |
+| 409    | `DRAFT_LIMIT`                 | 50 draftów osiągnięte → `count`, `limit` (nic nie kasowane)  |
+| 428    | `DRAFT_PRECONDITION_REQUIRED` | draft istnieje, brak `If-Match` → `serverVersion` (RFC 6585) |
+| 413    | `DRAFT_TOO_LARGE`             | payload > 256 KB → `bytes`, `limit` (poprzedni nietknięty)   |
 
 Limity: payload 256 KB (bajty UTF-8 `JSON.stringify`, liczone serwerowo), 50 draftów
 na użytkownika, TTL 30 dni (leniwe przy odczycie + sweep w housekeepingu).

@@ -174,12 +174,14 @@ export async function saveDraft(args: {
             if ((e as { code?: string }).code === 'P2002') {
                 const raced = await prisma.drafts.findUnique({
                     where: { userId_kind_docId: key },
-                    select: { version: true }
+                    select: { version: true, updatedAt: true }
                 });
                 return {
                     status: 'conflict',
                     serverVersion: raced?.version ?? 1,
-                    serverUpdatedAt: updatedAt
+                    // Czas zwycięzcy, nie lokalny zegar przegranego — modal pokazuje
+                    // datę kopii serwerowej, nie datę własnej próby zapisu.
+                    serverUpdatedAt: raced?.updatedAt ?? updatedAt
                 };
             }
             throw e;

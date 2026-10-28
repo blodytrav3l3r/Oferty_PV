@@ -135,11 +135,19 @@ function draftSyncLoadMeta(storage, userId, kind, docId) {
  * @param {*} kind
  * @param {*} docId
  * @param {{version: number, updatedAt?: string|null}} meta
- * @returns {boolean} czy udało się zapisać (false = następny zapis dostanie 412)
+ * @param {boolean} [force] pozwól cofnąć wersję (tylko jawne rozstrzygnięcie konfliktu)
+ * @returns {boolean} czy udało się zapisać (false = następny zapis dostanie 428)
  */
-function draftSyncSaveMeta(storage, userId, kind, docId, meta) {
+function draftSyncSaveMeta(storage, userId, kind, docId, meta, force) {
     var key = draftSyncMetaKey(userId, kind, docId);
     if (!key || !storage || !meta || typeof meta.version !== 'number') return false;
+    // Monotoniczność: spóźniona odpowiedź (push/pull starszej wersji) nie może
+    // cofnąć meta — inaczej kolejny push wysyła nieaktualny If-Match i dostaje
+    // fałszywy 409 „zmieniony na innym urządzeniu” bez żadnej konkurencji.
+    if (force !== true) {
+        var current = draftSyncLoadMeta(storage, userId, kind, docId);
+        if (current && current.version > meta.version) return true;
+    }
     try {
         storage.setItem(
             key,
@@ -256,11 +264,12 @@ async function draftSyncPush(args) {
         });
         return { status: 'ok', version: data.version, bytes: data.bytes };
     }
-    if (res.status === 412) {
+    if (res.status === 412 || res.status === 428) {
         return {
             status: 'conflict',
             reason: 'precondition_required',
-            serverVersion: data && typeof data.serverVersion === 'number' ? data.serverVersion : 1
+            serverVersion:
+                data && typeof data.serverVersion === 'number' ? data.serverVersion : null
         };
     }
     if (res.status === 409 && data && data.code === 'DRAFT_CONFLICT') {
@@ -279,6 +288,17 @@ async function draftSyncPush(args) {
     }
     if (res.status === 401 || res.status === 403) {
         return { status: 'forbidden', httpStatus: res.status };
+    }
+    // Wiersz serwerowy zniknął (TTL/DELETE z innego urządzenia), a meta została.
+    // Bez tego push kończy się 404 i synchronizacja tego klucza umiera na zawsze.
+    if (res.status === 404 && meta && a.retryNoMatch !== true) {
+        draftSyncClearMeta(a.storage, a.userId, a.kind, a.docId);
+        var retryArgs = {};
+        for (var prop in a) {
+            if (Object.prototype.hasOwnProperty.call(a, prop)) retryArgs[prop] = a[prop];
+        }
+        retryArgs.retryNoMatch = true;
+        return draftSyncPush(retryArgs);
     }
     return { status: 'error', httpStatus: res.status };
 }
@@ -438,7 +458,8 @@ async function draftSyncResolveConflict(args) {
                   : null;
         if (expected === null) return { status: 'error', reason: 'no_server_version' };
         // Wymuszamy CAS na wersję serwera: meta ustawiona na tę wersję.
-        draftSyncSaveMeta(a.storage, a.userId, a.kind, a.docId, { version: expected });
+        // `force` — świadomie obniżamy wersję do tej, którą podał serwer w 409.
+        draftSyncSaveMeta(a.storage, a.userId, a.kind, a.docId, { version: expected }, true);
         var pushed = await draftSyncPush({
             storage: a.storage,
             userId: a.userId,

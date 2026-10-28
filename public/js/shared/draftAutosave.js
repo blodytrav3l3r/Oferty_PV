@@ -40,6 +40,8 @@ var _draftSyncTimers = {};
 var _draftSyncInFlight = {};
 /** L2: jednorazowe zgłoszenia odmowy serwera per klucz+powód (bez spamu). */
 var _draftSyncNoted = {};
+/** L2: klucze z pokazanym modalem konfliktu — kolejny 409 nie otwiera go w kółko. */
+var _draftSyncConflictShown = {};
 /** Ostatni sweep per userId (throttle 60 s). */
 var _draftLastSweepAt = {};
 /** Ostatni toast multi-tab per klucz (throttle 5 s). */
@@ -1143,6 +1145,19 @@ function _draftClearContext(kind, oldDocId, newDocId) {
             delete _draftDismissed[key];
         }
     });
+    // Kopia serwerowa po SAVED jest martwa: bez DELETE wracałaby jako „starszy
+    // draft do odzyskania”, a meta z nieaktualną wersją psuła CAS kolejnych zapisów.
+    var sync = _draftG('draftSync');
+    if (sync && typeof sync.remove === 'function' && oldDocId !== undefined && oldDocId !== null) {
+        try {
+            sync.remove({
+                storage: window.localStorage,
+                userId: userId,
+                kind: kind,
+                docId: oldDocId
+            }).catch(function () {});
+        } catch (_eRemove) {}
+    }
     try {
         _draftHideDraftModal();
     } catch (_e) {}
@@ -1861,6 +1876,8 @@ function _draftSyncForget(key) {
         delete _draftSyncNoted[key + '|too_large'];
         delete _draftSyncNoted[key + '|limit'];
         delete _draftSyncNoted[key + '|forbidden'];
+        delete _draftSyncNoted[key + '|conflict'];
+        delete _draftSyncConflictShown[key];
     } catch (_e) {}
 }
 
@@ -1941,7 +1958,18 @@ function _draftSyncFinish(key, pending, res) {
         delete _draftSyncInFlight[key];
         var status = res && res.status ? res.status : 'error';
         if (status === 'conflict') {
-            _draftShowSyncConflictModal(key, pending, res);
+            // Modal raz na klucz: bez latchu autosave co 5 s otwierał go w kółko,
+            // także gdy użytkownik świadomie go zamknął bez decyzji.
+            if (_draftSyncConflictShown[key]) {
+                _draftSyncNoteOnce(
+                    key,
+                    'conflict',
+                    'Kopia serwerowa wstrzymana — najpierw rozstrzygnij konflikt draftu.'
+                );
+            } else {
+                _draftSyncConflictShown[key] = true;
+                _draftShowSyncConflictModal(key, pending, res);
+            }
         } else if (status === 'too_large') {
             _draftSyncNoteOnce(
                 key,
@@ -1990,10 +2018,13 @@ function _draftShowSyncConflictModal(key, pending, res) {
                 if (!isNaN(dt.getTime())) when = ' z ' + dt.toLocaleString('pl-PL');
             }
         } catch (_e0) {}
+        // Brak znacznika (np. 428 po skasowanym localStorage) to inny przypadek niż
+        // realna edycja — użytkownik musi wiedzieć, że to nie „ktoś zmienił treść”.
+        var missingTag = res && res.reason === 'precondition_required';
         var html =
             '<div class="modal">' +
             '<div class="modal-header"><h3 id="sok-draft-sync-title"><i data-lucide="alert-triangle" aria-hidden="true"></i> ' +
-            escapeHtml('Draft zmieniony na innym urządzeniu') +
+            escapeHtml('Draft ma nowszą wersję na serwerze') +
             '</h3><button type="button" class="btn-icon" data-draft-sync-act="close" aria-label="' +
             escapeHtmlAttr('Zamknij') +
             '"><i data-lucide="x" aria-hidden="true"></i></button></div>' +
@@ -2003,7 +2034,11 @@ function _draftShowSyncConflictModal(key, pending, res) {
                     _draftKindLabelShort(pending.kind) +
                     ') istnieje w wersji serwerowej' +
                     when +
-                    '. Wybierz świadomie, którą zachować — nic nie jest nadpisywane automatycznie.'
+                    '. Zmiana mogła powstać w innej karcie lub na innym urządzeniu.' +
+                    (missingTag
+                        ? ' Brak znacznika wersji w tej przeglądarce — wybierz, którą kopię zachować.'
+                        : '') +
+                    ' Wybierz świadomie, którą zachować — nic nie jest nadpisywane automatycznie.'
             ) +
             '</div>' +
             '<div class="modal-footer">' +
@@ -2080,6 +2115,14 @@ function _draftSyncApplyChoice(choice, userId, pending, res) {
     var sync = _draftG('draftSync');
     if (!sync || !choice) return;
     _draftHideSyncConflictModal();
+    // Decyzja podjęta — kolejny konflikt tego klucza ma prawo znów otworzyć modal.
+    try {
+        var _choiceKey = window.draftStore.buildDraftKey(userId, pending.kind, pending.docId);
+        if (_choiceKey) {
+            delete _draftSyncConflictShown[_choiceKey];
+            delete _draftSyncNoted[_choiceKey + '|conflict'];
+        }
+    } catch (_eKey) {}
     sync.resolveConflict({
         choice: choice,
         storage: window.localStorage,

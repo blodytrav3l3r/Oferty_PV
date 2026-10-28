@@ -180,6 +180,84 @@ describe('draftSync.push — CAS', () => {
         expect(sync.loadMeta(storage, USER, KIND, DOC)).toBeNull();
     });
 
+    test('428 (RFC 6585) → conflict precondition_required, bez fałszywej wersji 1', async () => {
+        const sync = loadSync();
+        const { fn } = fakeFetch([
+            { status: 428, body: { code: 'DRAFT_PRECONDITION_REQUIRED', serverVersion: 6 } }
+        ]);
+        const res = await sync.push({
+            storage: memStorage(),
+            userId: USER,
+            kind: KIND,
+            docId: DOC,
+            payload: { fields: {} },
+            fetchImpl: fn
+        });
+        expect(res.status).toBe('conflict');
+        expect(res.reason).toBe('precondition_required');
+        expect(res.serverVersion).toBe(6);
+    });
+
+    test('spóźniona odpowiedź pushu nie cofa meta (brak fałszywego 409)', async () => {
+        const sync = loadSync();
+        const storage = memStorage();
+        sync.saveMeta(storage, USER, KIND, DOC, { version: 5 });
+        const { fn, calls } = fakeFetch([
+            { status: 200, body: { version: 3, updatedAt: '2026-10-25T10:00:00.000Z', bytes: 10 } }
+        ]);
+        const res = await sync.push({
+            storage,
+            userId: USER,
+            kind: KIND,
+            docId: DOC,
+            payload: { fields: {} },
+            fetchImpl: fn
+        });
+        expect(res.status).toBe('ok');
+        expect(calls[0].opts.headers['If-Match']).toBe('"5"');
+        // Serwer odpowiedział starszą wersją (wyścig push/pull) — meta zostaje 5.
+        expect(sync.loadMeta(storage, USER, KIND, DOC)?.version).toBe(5);
+    });
+
+    test('spóźniony pull nie cofa meta', async () => {
+        const sync = loadSync();
+        const storage = memStorage();
+        sync.saveMeta(storage, USER, KIND, DOC, { version: 7 });
+        const { fn } = fakeFetch([
+            {
+                status: 200,
+                body: {
+                    data: { payload: { a: 1 }, version: 4, updatedAt: '2026-10-25T09:00:00.000Z' }
+                }
+            }
+        ]);
+        await sync.pull({ storage, userId: USER, kind: KIND, docId: DOC, fetchImpl: fn });
+        expect(sync.loadMeta(storage, USER, KIND, DOC)?.version).toBe(7);
+    });
+
+    test('404 z meta (draft skasowany/TTL) → czyści meta i retry bez If-Match', async () => {
+        const sync = loadSync();
+        const storage = memStorage();
+        sync.saveMeta(storage, USER, KIND, DOC, { version: 4 });
+        const { fn, calls } = fakeFetch([
+            { status: 404, body: { code: 'DRAFT_NOT_FOUND' } },
+            { status: 200, body: { version: 1, updatedAt: '2026-10-25T13:00:00.000Z', bytes: 9 } }
+        ]);
+        const res = await sync.push({
+            storage,
+            userId: USER,
+            kind: KIND,
+            docId: DOC,
+            payload: { fields: {} },
+            fetchImpl: fn
+        });
+        expect(res.status).toBe('ok');
+        expect(calls).toHaveLength(2);
+        expect(calls[0].opts.headers['If-Match']).toBe('"4"');
+        expect(calls[1].opts.headers['If-Match']).toBeUndefined();
+        expect(sync.loadMeta(storage, USER, KIND, DOC)?.version).toBe(1);
+    });
+
     test('413 → too_large z limitem serwera', async () => {
         const sync = loadSync();
         const { fn } = fakeFetch([

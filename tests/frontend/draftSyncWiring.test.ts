@@ -249,4 +249,45 @@ describe('L2 draftSync — wpięcie w autosave', () => {
         const del = net.calls.find((c) => c.opts.method === 'DELETE');
         expect(del).toBeTruthy();
     });
+
+    it('drugi 409 tego samego klucza nie otwiera modala ponownie (latch)', () => {
+        const { sandbox } = loadCtx();
+        dirtyRury(sandbox);
+        const shown: any[] = [];
+        const origShow = sandbox.showModal;
+        sandbox.showModal = (o: any) => {
+            shown.push(o);
+            return origShow(o);
+        };
+        const key = sandbox.window.draftStore.buildDraftKey('u1', 'offer_rury', 'o1');
+        const pending = { kind: 'offer_rury', docId: 'o1', payload: {}, baseVersion: null };
+        const conflict = {
+            status: 'conflict',
+            reason: 'version_mismatch',
+            serverVersion: 5,
+            serverUpdatedAt: '2026-10-25T09:00:00.000Z'
+        };
+        sandbox._draftSyncFinish(key, pending, conflict);
+        sandbox._draftSyncFinish(key, pending, conflict);
+        const modals = shown.filter((o) => o.id === 'sok-draft-sync-modal');
+        expect(modals).toHaveLength(1);
+        // Copy nie twierdzi już, że to na pewno inne urządzenie.
+        expect(modals[0].html).toContain('Draft ma nowszą wersję na serwerze');
+        expect(modals[0].html).not.toContain('Draft zmieniony na innym urządzeniu');
+        expect(modals[0].html).toContain('innej karcie lub na innym urządzeniu');
+    });
+
+    it('SAVED czyści kopię serwerową i meta (brak martwego draftu)', async () => {
+        const { sandbox, net, storage } = loadCtx();
+        dirtyRury(sandbox);
+        const sync = sandbox.window.draftSync;
+        sync.saveMeta(storage, 'u1', 'offer_rury', 'o1', { version: 4, updatedAt: null });
+        net.queue.push({ status: 204, body: null });
+        sandbox._draftClearContext('offer_rury', 'o1');
+        await tick();
+        const del = net.calls.find((c) => c.opts.method === 'DELETE');
+        expect(del).toBeTruthy();
+        expect(del.url).toContain('/api/drafts/offer_rury/o1');
+        expect(sync.loadMeta(storage, 'u1', 'offer_rury', 'o1')).toBeNull();
+    });
 });

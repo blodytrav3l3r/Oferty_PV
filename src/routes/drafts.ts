@@ -112,13 +112,15 @@ router.put(
                     });
                 case 'conflict':
                     return res.status(409).json({
-                        error: 'Draft został zmieniony na innym urządzeniu',
+                        error: 'Draft ma nowszą wersję na serwerze',
                         code: 'DRAFT_CONFLICT',
                         serverVersion: result.serverVersion,
                         serverUpdatedAt: result.serverUpdatedAt
                     });
                 case 'precondition_required':
-                    return res.status(412).json({
+                    // 428 (RFC 6585): brak If-Match to brak warunku wstępnego,
+                    // nie „warunek nie zaszedł” (412) i nie konflikt treści.
+                    return res.status(428).json({
                         error: 'Draft już istnieje — wymagany nagłówek If-Match',
                         code: 'DRAFT_PRECONDITION_REQUIRED',
                         serverVersion: result.serverVersion
