@@ -114,13 +114,12 @@ describe('pulpit admina: kafelki cenników', () => {
         html.indexOf('User Management Widget')
     );
 
-    it('3 kafelki tylko w #admin-panel, jako linki z deep-linkiem', () => {
+    it('3 kafelki tylko w #admin-panel, jako linki do #/cennik z typem', () => {
         expect(admin).toContain('id="pricelist-tiles"');
-        expect(admin).toContain('app.html#/rury?tab=pricelist&amp;panel=versions');
-        expect(admin).toContain('app.html#/studnie?tab=pricelist&amp;panel=versions');
-        expect(admin).toContain(
-            'app.html#/studnie?tab=pricelist&amp;panel=versions&amp;pvtype=preco'
-        );
+        expect(admin).toContain('app.html#/cennik?tab=rury');
+        expect(admin).toContain('app.html#/cennik?tab=studnie');
+        expect(admin).toContain('app.html#/cennik?tab=preco');
+        expect(admin).not.toContain('tab=pricelist');
         expect(admin).toContain('aria-live="polite"');
         expect(admin).toContain('pv-tile-preco-next');
     });

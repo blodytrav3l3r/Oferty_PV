@@ -27,6 +27,13 @@ describe('spa router - Z-73 (restored surface)', () => {
         expect(src).toMatch(/selectCennikTab\('preco'\)/);
     });
 
+    it('deep link #/cennik?tab=… przełącza typ cennika bez reloadu iframe', () => {
+        const src = fs.readFileSync(path.resolve('public/js/spa/router.js'), 'utf-8');
+        expect(src).toMatch(/const CENNIK_TYPES = \['rury', 'studnie', 'preco'\]/);
+        expect(src).toMatch(/module === 'cennik' && CENNIK_TYPES\.includes\(params\.tab\)/);
+        expect(src).toMatch(/hostReady\.activate\(params\.tab\)/);
+    });
+
     it('parseHash obsługuje subview: #/studnie/historia → tab=historia', () => {
         const src = fs.readFileSync(path.resolve('public/js/spa/router.js'), 'utf-8');
         expect(src).toMatch(/const \[modulePath, subView\] = \(path \|\| 'rury'\)\.split\('\/'\)/);

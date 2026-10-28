@@ -253,6 +253,9 @@
         }
     }
 
+    // Typy hostowane przez #/cennik (cennik.html przełącza ramki bez reloadu)
+    const CENNIK_TYPES = ['rury', 'studnie', 'preco'];
+
     // ── Konfiguracja ──
     const MODULES = {
         rury: {
@@ -756,6 +759,40 @@
 
         // Iframe już gotowy (await wyżej) — nawigacja sekcji synchronicznie
         if (tabToShow) showSection(tabToShow);
+
+        // #/cennik: hash z innym typem (rury/studnie/preco) przełącza moduł bez
+        // reloadu iframe — inaczej `?tab=` z adresu zostaje na starym typie.
+        // CennikHost to obiekt (nie funkcja), więc waitForFunction tu nie pasuje.
+        if (module === 'cennik' && CENNIK_TYPES.includes(params.tab)) {
+            const cennikWin = iframe.contentWindow;
+            const hostReady = await new Promise((resolve) => {
+                const check = (left) => {
+                    let host = null;
+                    try {
+                        host = cennikWin.CennikHost;
+                    } catch (_e) {
+                        host = null;
+                    }
+                    if (host && typeof host.activate === 'function') {
+                        resolve(host);
+                        return;
+                    }
+                    if (left <= 0) {
+                        resolve(null);
+                        return;
+                    }
+                    window.setTimeout(() => check(left - 1), 150);
+                };
+                check(8);
+            });
+            if (hostReady) {
+                try {
+                    hostReady.activate(params.tab);
+                } catch (e) {
+                    logger.warn('router', '[SpaRouter] Nie udało się przełączyć typu cennika:', e);
+                }
+            }
+        }
 
         // Deep link „Edytuj" PRECO: cennik PRECO to zakładka wewnątrz cennika studni.
         if (module === 'studnie' && params.pvtype === 'preco') {

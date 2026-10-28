@@ -273,7 +273,7 @@ function trackWrites(page) {
         check('P1 3 kafelki cenników', tiles.length === 3, `links=${tiles.length}`);
         check(
             'P1 deep-link PRECO',
-            tiles.some((t) => /pvtype=preco/.test(t.href || '')),
+            tiles.some((t) => /#\/cennik\?tab=preco/.test(t.href || '')),
             JSON.stringify(tiles.map((t) => t.href))
         );
         await tilesPage.close();
