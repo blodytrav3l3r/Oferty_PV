@@ -52,11 +52,11 @@ window.StudnieExternalExportTemplate = {
                 const quantity = comp.quantity || comp.ilosc || 0;
 
                 let cenaJednostkowa;
-                let rabat = '';
 
                 if (comp._xp !== undefined) {
-                    cenaJednostkowa = comp._xp;
-                    if (comp._xd !== undefined) rabat = comp._xd;
+                    // `_xp` = cena katalogowa, `_xd` = rabat %; wiersze z narzutami
+                    // mają już cenę końcową (`_xd` brak) — mnożnik 1 nic nie zmienia.
+                    cenaJednostkowa = comp._xp * (1 - (Number(comp._xd) || 0) / 100);
                 } else {
                     const p = this._productMap ? this._productMap.get(productId) : null;
                     if (p && p.componentType === 'kineta') continue;
@@ -76,9 +76,10 @@ window.StudnieExternalExportTemplate = {
                     GLEBOKOSC: glebokosc,
                     INDEKS_CZESCI: productId,
                     ILOSC: quantity,
-                    CENA_JEDNOSTKOWA: cenaJednostkowa,
+                    // Cena końcowa po rabacie; RABAT pusty (import bierze cenę wprost).
+                    CENA_JEDNOSTKOWA: Math.round(cenaJednostkowa * 100) / 100,
                     WERSJA: 1,
-                    RABAT: rabat,
+                    RABAT: '',
                     SREDNICA: srednica,
                     ZAKONCZENIE: zakonczenie,
                     MAGAZYN: this._magCodeFor(well, comp, wMagDen, wMagNad, codes),

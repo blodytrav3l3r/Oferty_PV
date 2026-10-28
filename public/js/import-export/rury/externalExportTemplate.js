@@ -1,4 +1,14 @@
 window.RuryExternalExportTemplate = {
+    /**
+     * Cena końcowa pozycji = katalogowa × (1 − rabat%). Kolumna RABAT zostaje
+     * pusta — plik niesie już cenę po rabacie (import bierze ją wprost).
+     */
+    _netUnitPrice(item) {
+        const base = Number(item.unitPrice || item.price || 0) || 0;
+        const disc = Number(item.discount) || 0;
+        return Math.round(base * (1 - disc / 100) * 100) / 100;
+    },
+
     _offerRows(offer, items) {
         const rows = [];
         for (let i = 0; i < items.length; i++) {
@@ -9,9 +19,9 @@ window.RuryExternalExportTemplate = {
                 GLEBOKOSC: '',
                 INDEKS_CZESCI: item.productId || '',
                 ILOSC: item.quantity || 0,
-                CENA_JEDNOSTKOWA: item.unitPrice || item.price || 0,
+                CENA_JEDNOSTKOWA: this._netUnitPrice(item),
                 WERSJA: 1,
-                RABAT: item.discount ? item.discount.toFixed(2) : '',
+                RABAT: '',
                 SREDNICA: '',
                 ZAKONCZENIE: '',
                 MAGAZYN: '',
@@ -128,9 +138,9 @@ window.RuryExternalExportTemplate = {
             GLEBOKOSC: '',
             INDEKS_CZESCI: item.productId || '',
             ILOSC: item.quantity || 0,
-            CENA_JEDNOSTKOWA: item.unitPrice || item.price || 0,
+            CENA_JEDNOSTKOWA: this._netUnitPrice(item),
             WERSJA: 1,
-            RABAT: item.discount ? item.discount.toFixed(2) : '',
+            RABAT: '',
             SREDNICA: '',
             ZAKONCZENIE: '',
             MAGAZYN: '',
