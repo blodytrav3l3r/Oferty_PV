@@ -64,6 +64,45 @@ window.StudnieExternalExportTemplate = {
         return sum;
     },
 
+    /**
+     * Transport „w cenie elementów” (transportSeparate = false): doklejony do
+     * cen jednostkowych proporcjonalnie do wartości wierszy studni, żeby suma
+     * pliku równała się cenie studni z oferty (cena + transport).
+     */
+    _withTransport(rows, transport) {
+        const extra = Number(transport) || 0;
+        const total = rows.reduce(
+            (s, r) => s + (Number(r.CENA_JEDNOSTKOWA) || 0) * (Number(r.ILOSC) || 0),
+            0
+        );
+        if (!(extra > 0) || !(total > 0) || rows.length === 0) return rows;
+        const factor = (total + extra) / total;
+        const scaled = rows.map((r) => ({
+            ...r,
+            CENA_JEDNOSTKOWA: Math.round((Number(r.CENA_JEDNOSTKOWA) || 0) * factor * 100) / 100
+        }));
+        // Korekta groszowa, żeby suma po zaokrągleniach trafiła w cenę studni.
+        const target = Math.round((total + extra) * 100) / 100;
+        const now = scaled.reduce(
+            (s, r) => s + (Number(r.CENA_JEDNOSTKOWA) || 0) * (Number(r.ILOSC) || 0),
+            0
+        );
+        const delta = Math.round((target - now) * 100) / 100;
+        if (delta !== 0) {
+            // Preferuj wiersz o ilości 1 — korekta trafia w cenę co do grosza.
+            const singles = scaled.filter((r) => Number(r.ILOSC) === 1);
+            const host = singles.length
+                ? singles.reduce((a, b) => (b.CENA_JEDNOSTKOWA > a.CENA_JEDNOSTKOWA ? b : a))
+                : [...scaled].reverse().find((r) => Number(r.ILOSC) > 0);
+            if (host) {
+                const qty = Number(host.ILOSC);
+                host.CENA_JEDNOSTKOWA =
+                    Math.round((Number(host.CENA_JEDNOSTKOWA) + delta / qty) * 100) / 100;
+            }
+        }
+        return scaled;
+    },
+
     _wellRows(data, offerNumber, codes) {
         const wellsExport = data.wellsExport || [];
         const hasEnriched =
@@ -72,6 +111,13 @@ window.StudnieExternalExportTemplate = {
         const offerDiscounts = data.wellDiscounts || {};
         const rows = [];
         let lp = 1;
+
+        // Transport per studnia: zamówienia mają go tylko w slim `wellsExport`.
+        const transportByWell = new Map();
+        for (const w of wellsExport) {
+            if (w && w.name != null)
+                transportByWell.set(String(w.name), Number(w.transportCost) || 0);
+        }
 
         for (const well of wells) {
             const config = well.config || well.components || [];
@@ -89,6 +135,7 @@ window.StudnieExternalExportTemplate = {
                 (typeof getWellZwienczenieName === 'function' ? getWellZwienczenieName(well) : '');
             const enriched = config.some((c) => c._xp !== undefined);
             const extras = this._dennicaExtras(well, config, offerDiscounts, enriched);
+            const wellRows = [];
 
             for (const comp of config) {
                 const productId = comp.productId || comp.indeks || '';
@@ -115,7 +162,7 @@ window.StudnieExternalExportTemplate = {
                     if (p && p.componentType === 'dennica') cenaJednostkowa += extras;
                 }
 
-                rows.push({
+                wellRows.push({
                     NUMER_OFERTY: offerNumber,
                     NR_STUDNI: well.name || '',
                     GLEBOKOSC: glebokosc,
@@ -131,6 +178,13 @@ window.StudnieExternalExportTemplate = {
                     LP: lp
                 });
             }
+
+            // „Transport w cenie elementów”: rozdziel na wiersze studni, żeby suma
+            // pliku = cena studni z oferty. Osobna pozycja → wiersz TR-STUDNIE.
+            const transport = data.transportSeparate
+                ? 0
+                : Number(well.transportCost) || transportByWell.get(String(well.name)) || 0;
+            rows.push(...this._withTransport(wellRows, transport));
             lp++;
         }
 

@@ -86,6 +86,31 @@ describe('studnie: eksport zewnętrzny = ceny po rabacie', () => {
         expect(rows[0].LP).toBe(1);
     });
 
+    test('transport „w cenie elementów” rozdzielony na wiersze studni', () => {
+        const withTransport = {
+            ...data,
+            wells: [{ ...data.wells[0], transportCost: 500 }]
+        };
+        const out = T._wellRows(withTransport, 'OS/1', null);
+        const sum = out.reduce((s, r) => s + r.CENA_JEDNOSTKOWA * (Number(r.ILOSC) || 0), 0);
+        const base = rows.reduce((s, r) => s + r.CENA_JEDNOSTKOWA * (Number(r.ILOSC) || 0), 0);
+        expect(Math.round(sum * 100) / 100).toBe(Math.round((base + 500) * 100) / 100);
+        // Wszystkie wiersze proporcjonalnie droższe, RABAT nadal pusty.
+        expect(out[0].CENA_JEDNOSTKOWA).toBeGreaterThan(800);
+        for (const r of out) expect(r.RABAT).toBe('');
+    });
+
+    test('transport osobno: bez rozdziału (wiersz TR-STUDNIE poza _wellRows)', () => {
+        const separate = {
+            ...data,
+            transportSeparate: true,
+            wells: [{ ...data.wells[0], transportCost: 500 }]
+        };
+        const out = T._wellRows(separate, 'OS/1', null);
+        expect(out[0].CENA_JEDNOSTKOWA).toBe(800);
+        expect(out[2].CENA_JEDNOSTKOWA).toBe(870);
+    });
+
     test('legacy bez `_xp`: cennik x (1 - rabat z oferty)', () => {
         const legacy = {
             wellDiscounts: { 1000: { dennica: 20, nadbudowa: 25 } },
