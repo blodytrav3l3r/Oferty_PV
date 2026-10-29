@@ -1,7 +1,7 @@
 #!/bin/sh
 # Pre-push S.O.K. — te same 9 bram co zawsze, ten sam fail-fast.
 # Kroki niezależne idą równolegle w grupach (A→B→C→D sekwencyjnie):
-#   A: version + encoding + appname (~10 s)
+#   A: version + encoding + appname + licenses + collisions + ratchet + prices (~13 s)
 #   B: lint BE + lint FE (~25 s)
 #   C: typecheck BE + typecheck FE (~37 s)
 #   D: test:quick:lite + test:git-safety (~225 s, najdłuższy krok)
@@ -41,7 +41,11 @@ echo "── pre-push A: wersja/kodowanie/nazwa ──"
 run_parallel \
     "npm run version:check" \
     "npm run encoding:check" \
-    "npm run appname:check" || { echo "❌ Grupa A — przerwano push"; exit 1; }
+    "npm run appname:check" \
+    "npm run licenses:check" \
+    "npm run collisions:check" \
+    "npm run ratchet:check" \
+    "npm run prices:verify" || { echo "❌ Grupa A — przerwano push"; exit 1; }
 
 echo "── pre-push B: lint ──"
 run_parallel \

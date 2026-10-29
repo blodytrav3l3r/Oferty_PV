@@ -4,6 +4,7 @@
  *
  * Regeneruje treść pliku w pamięci (generate-licenses.mjs) i porównuje z plikiem
  * na dysku. Rozjazd (np. po dodaniu/aktualizacji pakietu) → exit code 1.
+ * Znacznik daty generowania jest ignorowany — inaczej brama czerwienieje codziennie.
  *
  * Użycie:
  *   node scripts/check-licenses.mjs
@@ -17,6 +18,8 @@ import { buildNotices } from './generate-licenses.mjs';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const LOCKFILE = path.join(ROOT, 'package-lock.json');
 const OUT_FILE = path.join(ROOT, 'THIRD-PARTY-NOTICES.md');
+const DATE_STAMP = /Dane na dzień: \*\*\d{4}-\d{2}-\d{2}\*\*/;
+const stripDateStamp = (text) => text.replace(DATE_STAMP, 'Dane na dzień: **—**');
 
 function main() {
     if (!fs.existsSync(OUT_FILE)) {
@@ -33,7 +36,7 @@ function main() {
     buildNotices(lock)
         .then((expected) => {
             const actual = fs.readFileSync(OUT_FILE, 'utf-8');
-            if (expected === actual) {
+            if (stripDateStamp(expected) === stripDateStamp(actual)) {
                 console.log('✓ THIRD-PARTY-NOTICES.md jest aktualny.');
                 process.exit(0);
             }
