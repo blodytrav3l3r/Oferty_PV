@@ -13,6 +13,11 @@ import prisma from '../../src/prismaClient';
 
 const mockUser: any = { id: 'admin-1', role: 'admin', username: 'admin', subUsers: [] };
 
+// SQLite busy_timeout = 30 s (tests/setupDbIsolation.ts:23, src/utils/writeLock.ts:7),
+// a globalny testTimeout to 10 s — pod równoległym obciążeniem workerów retry
+// transakcji przekraczał 10 s (fałszywy timeout, nie regresja wydajności).
+jest.setTimeout(35000);
+
 jest.mock('../../src/middleware/auth', () => ({
     requireAuth: (req: any, _res: any, next: any) => {
         req.user = { ...mockUser };
