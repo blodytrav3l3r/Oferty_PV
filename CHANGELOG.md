@@ -4,6 +4,22 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.54.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.53.0...v1.54.0) (2026-10-29)
+
+### Features
+
+- **ui:** wskaźnik trybu wirtualizacji excel w toolbarze tabeli ([e604d19](https://github.com/blodytrav3l3r/Oferty_PV/commit/e604d19))
+
+### Bug Fixes
+
+- **preco:** panel wersji otwiera się przy zimnym starcie (deep-link) ([99b5c06](https://github.com/blodytrav3l3r/Oferty_PV/commit/99b5c06))
+
+### Tests
+
+- **ci:** harnessy Playwright bez zaszytych ścieżek przeglądarki + guard w CI i nightly ([99b5c06](https://github.com/blodytrav3l3r/Oferty_PV/commit/99b5c06))
+
+---
+
 ## [1.53.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.52.0...v1.53.0) (2026-10-27)
 
 ### Features
