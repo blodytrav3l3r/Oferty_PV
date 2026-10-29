@@ -134,4 +134,11 @@ describe('cennik: kopia jako szkic nie duplikuje szkicu', () => {
         expect(shared).toContain('/clone-draft');
         expect(shared).toContain('już istnieje — edytujesz go');
     });
+
+    it('sukces kopii odświeża listę wersji i siatkę (bez F5)', () => {
+        const start = shared.indexOf('function createDraftCopy(');
+        const end = shared.indexOf('function openPublishDialog(', start);
+        const body = shared.slice(start, end);
+        expect(body).toContain('afterVersionChange(t, { reloadGrid: true })');
+    });
 });

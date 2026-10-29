@@ -216,6 +216,11 @@ jobs:
             - name: Generate Prisma client
               run: npx prisma generate
 
+            # Harnessy muszą działać na przeglądarce Playwrighta — twarda ścieżka
+            # użytkownika (`C:\Users\...`) wywalała benchmark na runnerze Linux.
+            - name: Guard — brak zaszytych ścieżek Chromium w harnessach
+              run: npx jest tests/frontend/playwrightChromePath.test.ts --no-coverage
+
             - name: Setup Chromium (Playwright)
               run: npx playwright install --with-deps chromium
 

@@ -20,7 +20,7 @@ const fs = require('fs');
 const path = require('path');
 const { buildPerfWells } = require('./excelPerfFixture.cjs');
 const {
-    resolveChromePath,
+    chromeLaunchOptions,
     getLaunchArgs,
     resolveOutPath,
     applyThrottle
@@ -42,9 +42,6 @@ function resolvePlaywright() {
 }
 
 const { chromium } = resolvePlaywright();
-const CHROME_FALLBACK =
-    'C:\\Users\\blody\\AppData\\Local\\ms-playwright\\chromium_headless_shell-1234\\chrome-headless-shell-win64\\chrome-headless-shell.exe';
-const CHROME_PATH = resolveChromePath(CHROME_FALLBACK);
 
 function sleep(ms) {
     return new Promise((r) => setTimeout(r, ms));
@@ -182,11 +179,12 @@ async function openFrame(browser, token) {
 }
 
 (async () => {
-    const browser = await chromium.launch({
-        headless: true,
-        executablePath: CHROME_PATH,
-        args: getLaunchArgs(['--no-sandbox', '--disable-setuid-sandbox'])
-    });
+    const browser = await chromium.launch(
+        chromeLaunchOptions({
+            headless: true,
+            args: getLaunchArgs(['--no-sandbox', '--disable-setuid-sandbox'])
+        })
+    );
     try {
         const loginCtx = await browser.newContext();
         const loginPage = await loginCtx.newPage();

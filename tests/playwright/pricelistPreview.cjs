@@ -286,9 +286,10 @@ function trackWrites(page) {
             { waitUntil: 'domcontentloaded', timeout: 30000 }
         );
         const previewFrame = await waitModule(previewPage, 'studnie');
-        await previewFrame.locator('#pv-versions-modal').waitFor({ timeout: 20000 });
+        // Panel wersji to stały dock (`#pv-dock`), nie dawny modal wersji.
+        await previewFrame.locator('#pv-dock').waitFor({ state: 'visible', timeout: 20000 });
         const precoTab = await previewFrame.evaluate(() => {
-            const tab = document.querySelector('#pv-versions-modal [data-pv-tab="preco"]');
+            const tab = document.querySelector('#pv-dock [data-pv-tab="preco"]');
             return tab ? tab.getAttribute('aria-pressed') : null;
         });
         check('P2 panel otwarty na PRECO', precoTab === 'true', `aria-pressed=${precoTab}`);

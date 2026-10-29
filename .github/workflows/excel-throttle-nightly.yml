@@ -44,6 +44,11 @@ jobs:
             - name: Setup Chromium (Playwright)
               run: npx playwright install --with-deps chromium
 
+            # Ten sam guard co w ci.yml: harnessy nie mogą zależeć od lokalnej
+            # ścieżki przeglądarki (nocny bench padał na `C:\Users\...`).
+            - name: Guard — brak zaszytych ścieżek Chromium w harnessach
+              run: npx jest tests/frontend/playwrightChromePath.test.ts --no-coverage
+
             - name: Start serwera :3000 w tle
               run: |
                   npm run build
