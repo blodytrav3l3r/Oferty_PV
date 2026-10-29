@@ -60,7 +60,13 @@ function loadSandbox(products: any[], overrides: Record<string, any> = {}) {
     };
     context.window = context;
     vm.createContext(context);
-    for (const file of ['transitionZones.js', 'actionsWellPricing.js', 'solverValidation.js']) {
+    for (const file of [
+        'transitionZones.js',
+        'transitionRenderer.js',
+        'drillingProducts.js',
+        'actionsWellPricing.js',
+        'solverValidation.js'
+    ]) {
         vm.runInContext(readSrc(file), context);
     }
     return context;
@@ -91,8 +97,24 @@ describe('findDrillingProductForDn — SSoT wyboru produktu Wiercenie', () => {
         expect(ctx.findDrillingProductForDn(200).drill.id).toBe('Wiercenie-200');
     });
 
-    test('brak wystarczającego DN → null (cicha cena 0)', () => {
-        const ctx = loadSandbox([KRAG, PRZEJSCIE, drilling(110)]);
+    test('brak pozycji >= DN → największy dostępny (podobny rozmiar)', () => {
+        const ctx = loadSandbox([KRAG, PRZEJSCIE, drilling(110), drilling(380)]);
+        const picked = ctx.findDrillingProductForDn(600);
+        expect(picked.drill.id).toBe('Wiercenie-380');
+        expect(picked.dn).toBe(380);
+        expect(picked.exact).toBe(false);
+        expect(picked.price).toBe(250);
+    });
+
+    test('trafienie dokładne ma exact=true i DN z cennika', () => {
+        const ctx = loadSandbox([KRAG, PRZEJSCIE, drilling(110), drilling(160)]);
+        const picked = ctx.findDrillingProductForDn(150);
+        expect(picked.exact).toBe(true);
+        expect(picked.dn).toBe(160);
+    });
+
+    test('pusty cennik Wiercenia → null', () => {
+        const ctx = loadSandbox([KRAG, PRZEJSCIE]);
         expect(ctx.findDrillingProductForDn(160)).toBeNull();
     });
 
@@ -103,13 +125,24 @@ describe('findDrillingProductForDn — SSoT wyboru produktu Wiercenie', () => {
 });
 
 describe('recalculateWellErrors — ostrzeżenie o braku produktu Wiercenie', () => {
-    test('host krag + brak Wiercenia → WARNING z DN przejścia', () => {
+    test('host krag, brak dokładnego DN → notka o najbliższym rozmiarze', () => {
         const ctx = loadSandbox([KRAG, PRZEJSCIE, drilling(110)]);
+        const well = makeWell([{ productId: KRAG.id, quantity: 1 }], PRZYSTANIE_KRAG);
+        ctx.recalculateWellErrors(well);
+        const note = well.configErrors.find((e: string) => e.includes('najbliższy rozmiar'));
+        expect(note).toBeDefined();
+        expect(note).toContain('DN110');
+        expect(note).toContain('DN160');
+        expect(well.configStatus).toBe('WARNING');
+    });
+
+    test('host krag, pusty cennik Wiercenia → WARNING o cenie 0', () => {
+        const ctx = loadSandbox([KRAG, PRZEJSCIE]);
         const well = makeWell([{ productId: KRAG.id, quantity: 1 }], PRZYSTANIE_KRAG);
         ctx.recalculateWellErrors(well);
         const warn = well.configErrors.find((e: string) => e.includes('Brak produktu "Wiercenie"'));
         expect(warn).toBeDefined();
-        expect(warn).toContain('DN≥160');
+        expect(warn).toContain('DN160');
         expect(well.configStatus).toBe('WARNING');
     });
 
@@ -145,6 +178,25 @@ describe('recalculateWellErrors — ostrzeżenie o braku produktu Wiercenie', ()
         expect(well.configErrors.some((e: string) => e.includes('Wiercenie'))).toBe(false);
     });
 
+    test('brak rzędnej dna: notka o wierceniu nadal się pojawia', () => {
+        const ctx = loadSandbox([KRAG, PRZEJSCIE, drilling(110)]);
+        const well = makeWell([{ productId: KRAG.id, quantity: 1 }], PRZYSTANIE_KRAG, {
+            rzednaDna: null
+        });
+        ctx.recalculateWellErrors(well);
+        expect(well.configErrors.some((e: string) => e.includes('najbliższy rozmiar'))).toBe(true);
+    });
+
+    test('otwór powyżej wszystkich segmentów: host z findAssignedElement (parytet z wyceną)', () => {
+        const ctx = loadSandbox([KRAG, PRZEJSCIE, drilling(110)]);
+        const well = makeWell(
+            [{ productId: KRAG.id, quantity: 1 }],
+            [{ productId: 'prz-160', rzednaWlaczenia: '5.0', flowType: 'wylot', angle: 0 }]
+        );
+        ctx.recalculateWellErrors(well);
+        expect(well.configErrors.some((e: string) => e.includes('najbliższy rozmiar'))).toBe(true);
+    });
+
     test('dodanie produktu do cennika usuwa wcześniejsze ostrzeżenie', () => {
         const products = [KRAG, PRZEJSCIE, drilling(110)];
         const ctx = loadSandbox(products);
@@ -168,4 +220,16 @@ describe('recalculateWellErrors — klasyfikacja PEHD przez SOFT_WARNING_MARKERS
         expect(well.configErrors.some((e: string) => e.includes('brak dopłaty PEHD'))).toBe(true);
         expect(well.configStatus).toBe('WARNING');
     });
+});
+
+describe('SSoT wyboru Wiercenia — zero duplikatów w konsumentach', () => {
+    test.each(['offerWellComponentsHelpers.js', 'wellTransitions.js', 'orderHelpers.js'])(
+        '%s używa findDrillingProductForDn',
+        (file: string) => {
+            const code = readSrc(file);
+            expect(code).toContain('findDrillingProductForDn');
+            expect(code).not.toContain('drillDn >= trDn');
+            expect(code).not.toContain("category === 'Wiercenie'");
+        }
+    );
 });

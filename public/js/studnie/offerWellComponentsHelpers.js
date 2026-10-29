@@ -51,18 +51,6 @@ function calculateAssignedPrzejscia(well) {
     }
 
     if (well.przejscia) {
-        // P4-P0: lista Wiercenie + parsowane DN raz per studnia (nie per przejście).
-        const drillingProducts = studnieProducts
-            .filter((x) => x.category === 'Wiercenie')
-            .map((drill) => {
-                let drillDn = parseInt(drill.dn);
-                if (isNaN(drillDn)) {
-                    const match = drill.id.match(/Wiercenie-(\d+)/i);
-                    if (match) drillDn = parseInt(match[1]);
-                }
-                return { drill, drillDn };
-            })
-            .filter((d) => !isNaN(d.drillDn));
         well.przejscia.forEach((pr) => {
             const mmFromBottom = (parseFloat(pr.rzednaWlaczenia || rzDna) - rzDna) * 1000;
 
@@ -98,17 +86,13 @@ function calculateAssignedPrzejscia(well) {
                 ) {
                     const trDn = parseInt(pr.dn) || parseInt(p.dn) || 0;
                     if (trDn > 0) {
-                        let bestDnDiff = Infinity;
-                        drillingProducts.forEach(({ drill, drillDn }) => {
-                            if (drillDn >= trDn) {
-                                if (drillDn - trDn < bestDnDiff) {
-                                    bestDnDiff = drillDn - trDn;
-                                    bestDrillProd = drill;
-                                }
-                            }
-                        });
-                        if (bestDrillProd) {
-                            drillingBasePrice = bestDrillProd.price || 0;
+                        const picked =
+                            typeof findDrillingProductForDn === 'function'
+                                ? findDrillingProductForDn(trDn)
+                                : null;
+                        if (picked) {
+                            bestDrillProd = picked.drill;
+                            drillingBasePrice = picked.price;
                         }
                     }
                 }

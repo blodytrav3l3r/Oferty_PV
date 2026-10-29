@@ -63,13 +63,19 @@ function validateRingJoints(selectedRings, transitions, availableProducts, fixed
         const hcInvertRel = hcInvertAbs - fixedBelowHeight;
         if (hcInvertRel < 0) continue; // Rura w dennicy, nie dotyczy kręgów
 
+        // SSoT zapasów: transitionZones.js. Fallback tylko dla środowisk bez SSoT
+        // (vm/testy ładujące sam ringOptimizer) — w aplikacji stałe są zawsze dostępne.
+        const stdRes =
+            typeof TRANSITION_RESERVE_STD_MM === 'number' ? TRANSITION_RESERVE_STD_MM : 300;
+        const minRes =
+            typeof TRANSITION_RESERVE_MIN_MM === 'number' ? TRANSITION_RESERVE_MIN_MM : 150;
         let zDol, zGora;
         if (mode === 'standard') {
-            zDol = parseFloat(pprod.zapasDol) || 300;
-            zGora = parseFloat(pprod.zapasGora) || 300;
+            zDol = parseFloat(pprod.zapasDol) || stdRes;
+            zGora = parseFloat(pprod.zapasGora) || stdRes;
         } else {
-            zDol = parseFloat(pprod.zapasDolMin) || 150;
-            zGora = parseFloat(pprod.zapasGoraMin) || 150;
+            zDol = parseFloat(pprod.zapasDolMin) || minRes;
+            zGora = parseFloat(pprod.zapasGoraMin) || minRes;
         }
 
         // Strefa niebezpieczna: od (dolna krawędź rury - zapas dolny) do (górna krawędź rury + zapas górny)

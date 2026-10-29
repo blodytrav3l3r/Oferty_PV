@@ -556,28 +556,14 @@ function freezeWellPrices(wellsArr, preserveExisting = false) {
                     ) {
                         const trDn = parseInt(item.dn) || parseInt(p.dn) || 0;
                         if (trDn > 0) {
-                            const drillingProducts = studnieProducts.filter(
-                                (x) => x.category === 'Wiercenie'
-                            );
-                            let bestDrill = null;
-                            let bestDnDiff = Infinity;
-                            drillingProducts.forEach((drill) => {
-                                let drillDn = parseInt(drill.dn);
-                                if (isNaN(drillDn)) {
-                                    const match = drill.id.match(/Wiercenie-(\d+)/i);
-                                    if (match) drillDn = parseInt(match[1]);
-                                }
-                                if (!isNaN(drillDn) && drillDn >= trDn) {
-                                    if (drillDn - trDn < bestDnDiff) {
-                                        bestDnDiff = drillDn - trDn;
-                                        bestDrill = drill;
-                                    }
-                                }
-                            });
-                            if (bestDrill) {
-                                drillingBasePrice = bestDrill.price || 0;
-                                drillProdName = bestDrill.name;
-                                drillProdDn = bestDrill.dn || '';
+                            const picked =
+                                typeof findDrillingProductForDn === 'function'
+                                    ? findDrillingProductForDn(trDn)
+                                    : null;
+                            if (picked) {
+                                drillingBasePrice = picked.price;
+                                drillProdName = picked.drill.name;
+                                drillProdDn = picked.drill.dn || '';
                             }
                         }
                     }

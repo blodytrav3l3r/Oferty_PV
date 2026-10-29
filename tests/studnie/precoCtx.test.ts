@@ -35,7 +35,11 @@ function loadCtx() {
     };
     context.window = context;
     vm.createContext(context);
-    for (const f of ['offerPricingCalc.js', 'offerWellComponentsHelpers.js']) {
+    for (const f of [
+        'offerPricingCalc.js',
+        'drillingProducts.js',
+        'offerWellComponentsHelpers.js'
+    ]) {
         vm.runInContext(
             fs.readFileSync(path.join(__dirname, '../../public/js/studnie', f), 'utf8'),
             context

@@ -27,6 +27,9 @@ function getFormaField(warehouse) {
  * @returns {Object} { minBottomH, highestTop, hasNearBottomPipes, isSettling, needsOTRing, violations }
  */
 function calculateConnectionRequirements(transitions, rzDna) {
+    // SSoT zapasów (transitionZones.js); fallback tylko poza aplikacją (vm/testy).
+    const stdRes = typeof TRANSITION_RESERVE_STD_MM === 'number' ? TRANSITION_RESERVE_STD_MM : 300;
+    const minRes = typeof TRANSITION_RESERVE_MIN_MM === 'number' ? TRANSITION_RESERVE_MIN_MM : 150;
     const result = {
         minBottomH: 0,
         highestTop: 0,
@@ -71,10 +74,10 @@ function calculateConnectionRequirements(transitions, rzDna) {
             dnVal,
             pipeTop,
             isNearBottom,
-            zapasDol: pprod ? parseFloat(pprod.zapasDol) || 300 : 300,
-            zapasGora: pprod ? parseFloat(pprod.zapasGora) || 300 : 300,
-            zapasDolMin: pprod ? parseFloat(pprod.zapasDolMin) || 150 : 150,
-            zapasGoraMin: pprod ? parseFloat(pprod.zapasGoraMin) || 150 : 150
+            zapasDol: pprod ? parseFloat(pprod.zapasDol) || stdRes : stdRes,
+            zapasGora: pprod ? parseFloat(pprod.zapasGora) || stdRes : stdRes,
+            zapasDolMin: pprod ? parseFloat(pprod.zapasDolMin) || minRes : minRes,
+            zapasGoraMin: pprod ? parseFloat(pprod.zapasGoraMin) || minRes : minRes
         });
 
         if (isNearBottom) result.hasNearBottomPipes = true;
@@ -155,6 +158,9 @@ function estimateBottomSection(transitions, rzDna, mode) {
  */
 function getLowestDennica(products, dn, warehouse, transitions, rzDna) {
     const ff = getFormaField(warehouse);
+    // SSoT zapasów (transitionZones.js); fallback tylko poza aplikacją (vm/testy).
+    const stdRes = typeof TRANSITION_RESERVE_STD_MM === 'number' ? TRANSITION_RESERVE_STD_MM : 300;
+    const minRes = typeof TRANSITION_RESERVE_MIN_MM === 'number' ? TRANSITION_RESERVE_MIN_MM : 150;
 
     let dennicy = products.filter((p) => {
         if (dn === 'styczna') {
@@ -210,10 +216,10 @@ function getLowestDennica(products, dn, warehouse, transitions, rzDna) {
                 dnVal = parseFloat(pprod.dn) || 160;
             }
 
-            const zDol = parseFloat(pprod.zapasDol) || 300;
-            const zGora = parseFloat(pprod.zapasGora) || 300;
-            const zDolMin = parseFloat(pprod.zapasDolMin) || 150;
-            const zGoraMin = parseFloat(pprod.zapasGoraMin) || 150;
+            const zDol = parseFloat(pprod.zapasDol) || stdRes;
+            const zGora = parseFloat(pprod.zapasGora) || stdRes;
+            const zDolMin = parseFloat(pprod.zapasDolMin) || minRes;
+            const zGoraMin = parseFloat(pprod.zapasGoraMin) || minRes;
 
             // Próg: rura blisko dna → ignoruj zapas dolny (studnie osadnikowe)
             const isNearBottom = hcInvert <= 0; // Jeśli Z=0 to nie wymagaj zapasu z dołu
@@ -274,6 +280,9 @@ function getLowestDennica(products, dn, warehouse, transitions, rzDna) {
  */
 function getLowestDennicaHybrid(products, dn, warehouse, transitions, rzDna, preferredDn) {
     const ff = getFormaField(warehouse);
+    // SSoT zapasów (transitionZones.js); fallback tylko poza aplikacją (vm/testy).
+    const stdRes = typeof TRANSITION_RESERVE_STD_MM === 'number' ? TRANSITION_RESERVE_STD_MM : 300;
+    const minRes = typeof TRANSITION_RESERVE_MIN_MM === 'number' ? TRANSITION_RESERVE_MIN_MM : 150;
 
     let dennicy = products.filter((p) => {
         if (dn === 'styczna') {
@@ -329,10 +338,10 @@ function getLowestDennicaHybrid(products, dn, warehouse, transitions, rzDna, pre
                 dnVal = parseFloat(pprod.dn.split('/')[1]) || 160;
             else if (pprod.dn) dnVal = parseFloat(pprod.dn) || 160;
 
-            const zDol = parseFloat(pprod.zapasDol) || 300;
-            const zGora = parseFloat(pprod.zapasGora) || 300;
-            const zDolMin = parseFloat(pprod.zapasDolMin) || 150;
-            const zGoraMin = parseFloat(pprod.zapasGoraMin) || 150;
+            const zDol = parseFloat(pprod.zapasDol) || stdRes;
+            const zGora = parseFloat(pprod.zapasGora) || stdRes;
+            const zDolMin = parseFloat(pprod.zapasDolMin) || minRes;
+            const zGoraMin = parseFloat(pprod.zapasGoraMin) || minRes;
             const isNearBottom = hcInvert <= 0;
             const effZDol = isNearBottom ? -9999 : zDol;
             const effZDolMin = isNearBottom ? -9999 : zDolMin;

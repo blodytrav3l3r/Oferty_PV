@@ -848,25 +848,13 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
             ) {
                 const trDn = parseInt(item.dn) || parseInt(p.dn) || 0;
                 if (trDn > 0) {
-                    const drillingProducts = studnieProducts.filter(
-                        (x) => x.category === 'Wiercenie'
-                    );
-                    let bestDnDiff = Infinity;
-                    drillingProducts.forEach((drill) => {
-                        let drillDn = parseInt(drill.dn);
-                        if (isNaN(drillDn)) {
-                            const match = drill.id.match(/Wiercenie-(\d+)/i);
-                            if (match) drillDn = parseInt(match[1]);
-                        }
-                        if (!isNaN(drillDn) && drillDn >= trDn) {
-                            if (drillDn - trDn < bestDnDiff) {
-                                bestDnDiff = drillDn - trDn;
-                                bestDrillProd = drill;
-                            }
-                        }
-                    });
-                    if (bestDrillProd) {
-                        drillingBasePrice = /** @type {any} */ (bestDrillProd).price || 0;
+                    const picked =
+                        typeof findDrillingProductForDn === 'function'
+                            ? findDrillingProductForDn(trDn)
+                            : null;
+                    if (picked) {
+                        bestDrillProd = picked.drill;
+                        drillingBasePrice = picked.price;
                     }
                 }
             }

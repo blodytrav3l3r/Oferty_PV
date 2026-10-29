@@ -42,9 +42,10 @@ function _fallbackTransitionDn(pprod) {
 }
 
 /**
- * Ostrzeżenie: przejście osadzone w kręgu (krag/krag_ot) wymaga wiercenia,
- * ale w cenniku nie ma produktu "Wiercenie" o DN >= DN przejścia.
- * Cicha cena 0 (actionsWellPricing) -> widoczny WARNING zamiast milczenia.
+ * Notka o wierceniu — parytet z wyceną (findDrillingProductForDn).
+ * - brak jakiegokolwiek produktu Wiercenie → WARNING o cenie 0,
+ * - brak dokładnego rozmiaru → notka o użytym najbliższym (cena z cennika).
+ * null = dokładne trafienie, nie ma czego zgłaszać.
  */
 function _drillingWarning(hostType, pprod, pr) {
     if (hostType !== 'krag' && hostType !== 'krag_ot') return null;
@@ -52,8 +53,50 @@ function _drillingWarning(hostType, pprod, pr) {
     if (typeof findDrillingProductForDn !== 'function') return null;
     const trDn = parseInt(pr.dn) || parseInt(pprod && pprod.dn) || 0;
     if (!(trDn > 0)) return null;
-    if (findDrillingProductForDn(trDn)) return null;
-    return `Brak produktu "Wiercenie" DN≥${trDn} w cenniku — koszt wiercenia policzony jako 0`;
+    const picked = findDrillingProductForDn(trDn);
+    if (!picked) {
+        return `Brak produktu "Wiercenie" w cenniku — koszt wiercenia policzony jako 0 (przejście DN${trDn})`;
+    }
+    if (picked.exact) return null;
+    return `Wiercenie DN${picked.dn} (najbliższy rozmiar) dla przejścia DN${trDn} — brak pozycji o DN ≥ ${trDn}`;
+}
+
+/**
+ * Ostrzeżenia o cichej cenie 0 za wiercenie — parytet z wyceną.
+ * Host ustalany tak samo jak w actionsWellPricing (buildConfigMap +
+ * findAssignedElement po dolnej krawędzi otworu), więc ostrzeżenie pojawia się
+ * dokładnie wtedy, gdy wycena dolicza 0. Nie zależy od rzędnej dna ani od
+ * tego, czy otwór wpada w segment luzów.
+ */
+function validateDrillingPricesLive(well) {
+    if (!well || !Array.isArray(well.config) || well.config.length === 0) return [];
+    if (!Array.isArray(well.przejscia) || well.przejscia.length === 0) return [];
+    if (typeof buildConfigMap !== 'function' || typeof findAssignedElement !== 'function')
+        return [];
+    const finder = (id) =>
+        typeof getStudnieProductById === 'function'
+            ? getStudnieProductById(id)
+            : typeof studnieProducts !== 'undefined'
+              ? studnieProducts.find((pr) => pr.id === id)
+              : null;
+    const configMap = buildConfigMap(well, finder, true);
+    if (!configMap || configMap.length === 0) return [];
+    const rzDna = parseFloat(well.rzednaDna) || 0;
+    const out = [];
+    for (const pr of well.przejscia) {
+        const p =
+            typeof resolveStudnieProduct === 'function'
+                ? resolveStudnieProduct(pr.productId)
+                : null;
+        if (!p) continue;
+        let pel = parseFloat(pr.rzednaWlaczenia);
+        if (isNaN(pel)) pel = rzDna;
+        const assigned = findAssignedElement((pel - rzDna) * 1000, configMap);
+        const hostType = assigned && assigned.entry ? assigned.entry.componentType : null;
+        const warn = _drillingWarning(hostType, p, pr);
+        if (warn && !out.includes(warn)) out.push(warn);
+    }
+    return out;
 }
 
 /**
@@ -66,7 +109,8 @@ const SOFT_WARNING_MARKERS = [
     'Wymuszono tolerancję wysokości',
     'luzy minimalne',
     'brak dopłaty PEHD',
-    'Brak produktu "Wiercenie"'
+    'Brak produktu "Wiercenie"',
+    'najbliższy rozmiar'
 ];
 
 /* ===== LIVE WALIDACJA KOLIZJI GEOMETRYCZNYCH ===== */
@@ -232,6 +276,7 @@ function recalculateWellErrors(well) {
                       !e.includes('Rzędna dna') &&
                       !e.includes('brak dopłaty PEHD') &&
                       !e.includes('Brak produktu "Wiercenie"') &&
+                      !e.includes('najbliższy rozmiar') &&
                       !e.includes('Kolizja otworu') &&
                       !e.includes('powyżej płyty redukcyjnej')
               )
@@ -340,11 +385,6 @@ function recalculateWellErrors(well) {
                         const bottomClearance = hc_invert - seg.start; // Python: bottom_clearance
                         const topClearance = seg.end - hole_top; // Python: top_clearance
 
-                        // Cicha cena 0: host krag/krag_ot bez produktu Wiercenie DN>=X.
-                        const drillWarn = _drillingWarning(seg.type, pprod, pr);
-                        if (drillWarn && !liveErrors.includes(drillWarn))
-                            liveErrors.push(drillWarn);
-
                         // Python: is_bottom_most = (idx == 0)
                         const isBottomMost = segIdx === 0;
                         // Python: is_pipe_near_bottom = is_bottom_most and bottom_clearance < z_dol
@@ -400,6 +440,13 @@ function recalculateWellErrors(well) {
                 if (!liveErrors.includes(warnStr)) liveErrors.push(warnStr);
             }
         }
+    }
+
+    // --- OSTRZEŻENIA WIERCENIA (cicha cena 0) ---
+    // Poza blokiem luzów: łapie też studnie bez rzędnej dna i przejścia poza
+    // segmentami (host przez findAssignedElement, jak w wycenie).
+    for (const e of validateDrillingPricesLive(well)) {
+        if (!liveErrors.includes(e)) liveErrors.push(e);
     }
 
     well.configErrors = [...new Set(liveErrors)];
