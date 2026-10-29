@@ -242,3 +242,42 @@ describe('P2: excelOnPrzejscieChange kontrakt AUTO/MANUAL', () => {
         expect(h2.calls.auto).toEqual([0]);
     });
 });
+
+/* =============================================================
+   SSoT zapasów przejścia: getTransitionReserves (300/150 tylko w transitionZones.js)
+   ============================================================= */
+describe('getTransitionReserves SSoT', () => {
+    let ctx: any;
+    beforeAll(() => {
+        ctx = loadTransitionZones();
+    });
+
+    it('brak produktu → same zera', () => {
+        expect(ctx.getTransitionReserves(null)).toEqual({
+            dolStd: 0,
+            goraStd: 0,
+            dolMin: 0,
+            goraMin: 0
+        });
+    });
+
+    it('domyślne zapasy pochodzą ze stałych TRANSITION_* (jedno źródło)', () => {
+        expect(ctx.getTransitionReserves({})).toEqual({
+            dolStd: ctx.TRANSITION_RESERVE_STD_MM,
+            goraStd: ctx.TRANSITION_RESERVE_STD_MM,
+            dolMin: ctx.TRANSITION_RESERVE_MIN_MM,
+            goraMin: ctx.TRANSITION_RESERVE_MIN_MM
+        });
+    });
+
+    it('wartości produktu nadpisują domyślne; puste/NaN → fallback', () => {
+        expect(
+            ctx.getTransitionReserves({
+                zapasDol: '250',
+                zapasGora: '',
+                zapasDolMin: 'abc',
+                zapasGoraMin: 80
+            })
+        ).toEqual({ dolStd: 250, goraStd: 300, dolMin: 150, goraMin: 80 });
+    });
+});

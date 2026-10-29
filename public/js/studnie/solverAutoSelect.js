@@ -566,20 +566,15 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
         const body = getTransitionBody(p.rzednaWlaczenia, well.rzednaDna, prDN);
 
         const bottomEdge = body ? body.bottomMm : 0;
-
-        const parseHoleClearance = (val, fallback = 300) => {
-            if (val === undefined || val === null || val === '') return fallback;
-            const p = parseFloat(val);
-            return isNaN(p) ? fallback : p;
-        };
+        const res = getTransitionReserves(prod || null);
 
         return {
             z: bottomEdge,
             ruraDz: prDN,
-            zdD: prod ? parseHoleClearance(prod.zapasDol, 300) : 0,
-            zdDM: prod ? parseHoleClearance(prod.zapasDolMin, 150) : 0,
-            zdG: prod ? parseHoleClearance(prod.zapasGora, 300) : 0,
-            zdGM: prod ? parseHoleClearance(prod.zapasGoraMin, 150) : 0
+            zdD: res.dolStd,
+            zdDM: res.dolMin,
+            zdG: res.goraStd,
+            zdGM: res.goraMin
         };
     });
 

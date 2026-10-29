@@ -95,11 +95,28 @@ function jointInZone(jointMm, zone) {
     return jointMm >= zone.bottomMm && jointMm <= zone.topMm;
 }
 
+/**
+ * SSoT zapasów przejścia (mm) z produktu; brak produktu → same zera.
+ * Domyślne 300/150 mm żyją wyłącznie w tym pliku (stałe TRANSITION_*).
+ * @param {*} pprod produkt przejścia (może być null)
+ * @returns {{dolStd:number, goraStd:number, dolMin:number, goraMin:number}}
+ */
+function getTransitionReserves(pprod) {
+    if (!pprod) return { dolStd: 0, goraStd: 0, dolMin: 0, goraMin: 0 };
+    return {
+        dolStd: parseTransitionReserve(pprod.zapasDol, TRANSITION_RESERVE_STD_MM),
+        goraStd: parseTransitionReserve(pprod.zapasGora, TRANSITION_RESERVE_STD_MM),
+        dolMin: parseTransitionReserve(pprod.zapasDolMin, TRANSITION_RESERVE_MIN_MM),
+        goraMin: parseTransitionReserve(pprod.zapasGoraMin, TRANSITION_RESERVE_MIN_MM)
+    };
+}
+
 /* ===== Rejestracja globali ===== */
 if (typeof window !== 'undefined') {
     window.getTransitionDn = getTransitionDn;
     window.getTransitionBody = getTransitionBody;
     window.parseTransitionReserve = parseTransitionReserve;
+    window.getTransitionReserves = getTransitionReserves;
     window.getTransitionZone = getTransitionZone;
     window.segmentContainsBody = segmentContainsBody;
     window.jointInZone = jointInZone;

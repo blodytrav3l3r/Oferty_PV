@@ -8,6 +8,67 @@
  * Zależności globalne: studnieProducts, FLOW_TYPES
  */
 
+/* ===== ZAPASY / DN PRZEJŚCIA — SSoT w transitionZones.js ===== */
+/**
+ * Zapasy przejścia (mm). Fallback tylko gdy transitionZones.js się nie załadował;
+ * domyślne 300/150 mm żyją w stałych TRANSITION_* (jedno źródło prawdy).
+ */
+function _transitionReserves(pprod) {
+    if (typeof getTransitionReserves === 'function') return getTransitionReserves(pprod);
+    const std = typeof TRANSITION_RESERVE_STD_MM === 'number' ? TRANSITION_RESERVE_STD_MM : 300;
+    const min = typeof TRANSITION_RESERVE_MIN_MM === 'number' ? TRANSITION_RESERVE_MIN_MM : 150;
+    const pick = (val, fallback) => {
+        if (val === undefined || val === null || val === '') return fallback;
+        const n = parseFloat(val);
+        return isNaN(n) ? fallback : n;
+    };
+    if (!pprod) return { dolStd: 0, goraStd: 0, dolMin: 0, goraMin: 0 };
+    return {
+        dolStd: pick(pprod.zapasDol, std),
+        goraStd: pick(pprod.zapasGora, std),
+        dolMin: pick(pprod.zapasDolMin, min),
+        goraMin: pick(pprod.zapasGoraMin, min)
+    };
+}
+
+/** DN przejścia (mm) — ten sam format cennika '160' / '110/160'. */
+function _fallbackTransitionDn(pprod) {
+    const legacy = typeof TRANSITION_LEGACY_DN_MM === 'number' ? TRANSITION_LEGACY_DN_MM : 160;
+    if (!pprod || pprod.dn == null || pprod.dn === '') return legacy;
+    if (typeof pprod.dn === 'string' && pprod.dn.indexOf('/') !== -1) {
+        return parseFloat(pprod.dn.split('/')[1]) || legacy;
+    }
+    return parseFloat(pprod.dn) || legacy;
+}
+
+/**
+ * Ostrzeżenie: przejście osadzone w kręgu (krag/krag_ot) wymaga wiercenia,
+ * ale w cenniku nie ma produktu "Wiercenie" o DN >= DN przejścia.
+ * Cicha cena 0 (actionsWellPricing) -> widoczny WARNING zamiast milczenia.
+ */
+function _drillingWarning(hostType, pprod, pr) {
+    if (hostType !== 'krag' && hostType !== 'krag_ot') return null;
+    if (pprod && pprod.name && String(pprod.name).toUpperCase().includes('INSITU')) return null;
+    if (typeof findDrillingProductForDn !== 'function') return null;
+    const trDn = parseInt(pr.dn) || parseInt(pprod && pprod.dn) || 0;
+    if (!(trDn > 0)) return null;
+    if (findDrillingProductForDn(trDn)) return null;
+    return `Brak produktu "Wiercenie" DN≥${trDn} w cenniku — koszt wiercenia policzony jako 0`;
+}
+
+/**
+ * Komunikaty miękkie (notki): nie eskalują statusu do ERROR.
+ * Jedno miejsce — status, czyszczenie notek i drop starych ostrzeżeń
+ * muszą używać tej samej listy.
+ */
+const SOFT_WARNING_MARKERS = [
+    'Zastosowana rozszerzona tolerancja',
+    'Wymuszono tolerancję wysokości',
+    'luzy minimalne',
+    'brak dopłaty PEHD',
+    'Brak produktu "Wiercenie"'
+];
+
 /* ===== LIVE WALIDACJA KOLIZJI GEOMETRYCZNYCH ===== */
 // Read-only mirror geometrycznej części checkConflicts() z solverAutoSelect.js:
 // ręczna edycja zmienia geometrię bez uruchamiania solvera, więc stare
@@ -37,26 +98,19 @@ function validateCollisionsLive(well, segments) {
             dnVal = getTransitionDn(pprod || null);
             body = getTransitionBody(pr.rzednaWlaczenia, well.rzednaDna, dnVal);
         } else {
-            if (pprod && pprod.dn && typeof pprod.dn === 'string' && pprod.dn.includes('/'))
-                dnVal = parseFloat(pprod.dn.split('/')[1]) || 160;
-            else if (pprod && pprod.dn) dnVal = parseFloat(pprod.dn) || 160;
-            else dnVal = 160;
+            dnVal = _fallbackTransitionDn(pprod);
             const bottomMm = Math.round((pel - rzDna) * 1000);
             body = { bottomMm: bottomMm, topMm: bottomMm + dnVal };
         }
         if (!body) continue;
         const hBot = body.bottomMm;
         const hTop = body.topMm;
-        const parseRes = (val, fallback) => {
-            if (val === undefined || val === null || val === '') return fallback;
-            const n = parseFloat(val);
-            return isNaN(n) ? fallback : n;
-        };
         // Jak w solverze: brak produktu → zapasy 0 (tylko margines strefy).
-        const zdD = pprod ? parseRes(pprod.zapasDol, 300) : 0;
-        const zdDM = pprod ? parseRes(pprod.zapasDolMin, 150) : 0;
-        const zdG = pprod ? parseRes(pprod.zapasGora, 300) : 0;
-        const zdGM = pprod ? parseRes(pprod.zapasGoraMin, 150) : 0;
+        const res = _transitionReserves(pprod);
+        const zdD = res.dolStd;
+        const zdDM = res.dolMin;
+        const zdG = res.goraStd;
+        const zdGM = res.goraMin;
         let zone;
         if (hasZoneFn) {
             zone = getTransitionZone(
@@ -177,6 +231,7 @@ function recalculateWellErrors(well) {
                       !e.includes('Rzędna włączenia przejścia') &&
                       !e.includes('Rzędna dna') &&
                       !e.includes('brak dopłaty PEHD') &&
+                      !e.includes('Brak produktu "Wiercenie"') &&
                       !e.includes('Kolizja otworu') &&
                       !e.includes('powyżej płyty redukcyjnej')
               )
@@ -260,22 +315,16 @@ function recalculateWellErrors(well) {
                 const pprod = resolveStudnieProduct(pr.productId);
                 if (!pprod) return;
 
-                let dn_val = 160;
-                if (pprod.dn && typeof pprod.dn === 'string' && pprod.dn.includes('/')) {
-                    dn_val = parseFloat(pprod.dn.split('/')[1]) || 160;
-                } else if (pprod.dn) {
-                    dn_val = parseFloat(pprod.dn) || 160;
-                }
+                const dn_val =
+                    typeof getTransitionDn === 'function'
+                        ? getTransitionDn(pprod)
+                        : _fallbackTransitionDn(pprod);
 
-                const parseClearance = (val, defVal) => {
-                    if (val === undefined || val === null || val === '') return defVal;
-                    const p = parseFloat(val);
-                    return isNaN(p) ? defVal : p;
-                };
-                const zg_req = parseClearance(pprod.zapasGora, 300);
-                const zd_req = parseClearance(pprod.zapasDol, 300);
-                const zd_req_min = parseClearance(pprod.zapasDolMin, 150);
-                const zg_req_min = parseClearance(pprod.zapasGoraMin, 150);
+                const res = _transitionReserves(pprod);
+                const zg_req = res.goraStd;
+                const zd_req = res.dolStd;
+                const zd_req_min = res.dolMin;
+                const zg_req_min = res.goraMin;
                 const hc_invert = (pel - rzDna) * 1000; // hole bottom
                 const hole_center = hc_invert + dn_val / 2; // Python: hole_center
                 const hole_top = hc_invert + dn_val; // Python: hole_top
@@ -290,6 +339,11 @@ function recalculateWellErrors(well) {
                     if (hole_center >= seg.start && hole_center < seg.end) {
                         const bottomClearance = hc_invert - seg.start; // Python: bottom_clearance
                         const topClearance = seg.end - hole_top; // Python: top_clearance
+
+                        // Cicha cena 0: host krag/krag_ot bez produktu Wiercenie DN>=X.
+                        const drillWarn = _drillingWarning(seg.type, pprod, pr);
+                        if (drillWarn && !liveErrors.includes(drillWarn))
+                            liveErrors.push(drillWarn);
 
                         // Python: is_bottom_most = (idx == 0)
                         const isBottomMost = segIdx === 0;
@@ -361,13 +415,10 @@ function recalculateWellErrors(well) {
         );
     }
     // Ustal status: twarde błędy → ERROR; same notki (tolerancja / luzy minimalne /
-    // brak dopłaty PEHD) → WARNING
+    // brak dopłaty PEHD / brak produktu Wiercenie) → WARNING.
+    // SSoT listy: SOFT_WARNING_MARKERS (jedno miejsce dla statusu i czyszczenia).
     const hasHardError = well.configErrors.some(
-        (e) =>
-            !e.includes('Zastosowana rozszerzona tolerancja') &&
-            !e.includes('Wymuszono tolerancję wysokości') &&
-            !e.includes('luzy minimalne') &&
-            !e.includes('brak dopłaty PEHD')
+        (e) => !SOFT_WARNING_MARKERS.some((m) => e.includes(m))
     );
     well.configStatus = hasHardError
         ? 'ERROR'

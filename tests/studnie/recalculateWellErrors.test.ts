@@ -16,6 +16,13 @@ describe('recalculateWellErrors — czyszczenie błędów przy pustym configu', 
                 name: 'Krąg DN1000 H=500'
             },
             {
+                id: 'Wiercenie-160',
+                category: 'Wiercenie',
+                dn: '160',
+                price: 250,
+                name: 'Wiercenie DN160'
+            },
+            {
                 id: 'prz-160',
                 componentType: 'przejscie',
                 dn: '160',

@@ -12,6 +12,31 @@ function _getDrillingProducts() {
     return _cachedDrillingProducts;
 }
 
+/**
+ * SSoT wyboru produktu "Wiercenie" dla przejścia: najmniejszy DN >= trDn.
+ * Używane przez wycenę i walidację (ostrzeżenie o cichej cenie 0).
+ * @param {number} trDn DN przejścia (mm)
+ * @returns {{drill: any, price: number} | null} null = brak w cenniku
+ */
+function findDrillingProductForDn(trDn) {
+    if (!(trDn > 0)) return null;
+    /** @type {any} */
+    let bestDrill = null;
+    let bestDnDiff = Infinity;
+    _getDrillingProducts().forEach((drill) => {
+        let drillDn = parseInt(drill.dn);
+        if (isNaN(drillDn)) {
+            const match = drill.id.match(/Wiercenie-(\d+)/i);
+            if (match) drillDn = parseInt(match[1]);
+        }
+        if (!isNaN(drillDn) && drillDn >= trDn && drillDn - trDn < bestDnDiff) {
+            bestDnDiff = drillDn - trDn;
+            bestDrill = drill;
+        }
+    });
+    return bestDrill ? { drill: bestDrill, price: bestDrill.price || 0 } : null;
+}
+
 function calcPrecoPricing(well) {
     return calcPrecoPricingPure(well, {
         precoPricing: precoPricing,
@@ -627,28 +652,8 @@ function calcWellStats(well) {
                     ) {
                         const trDn = parseInt(item.dn) || parseInt(p.dn) || 0;
                         if (trDn > 0) {
-                            const drillingProducts = _getDrillingProducts();
-                            /** @type {{ price?: number } | null} */
-                            let bestDrill = null;
-                            let bestDnDiff = Infinity;
-
-                            drillingProducts.forEach((drill) => {
-                                let drillDn = parseInt(drill.dn);
-                                if (isNaN(drillDn)) {
-                                    const match = drill.id.match(/Wiercenie-(\d+)/i);
-                                    if (match) drillDn = parseInt(match[1]);
-                                }
-                                if (!isNaN(drillDn) && drillDn >= trDn) {
-                                    if (drillDn - trDn < bestDnDiff) {
-                                        bestDnDiff = drillDn - trDn;
-                                        bestDrill = drill;
-                                    }
-                                }
-                            });
-
-                            if (bestDrill) {
-                                drillingBasePrice = bestDrill.price || 0;
-                            }
+                            const picked = findDrillingProductForDn(trDn);
+                            if (picked) drillingBasePrice = picked.price;
                         }
                     }
                 }
@@ -1025,3 +1030,4 @@ window.discountCorruptBadge = discountCorruptBadge;
 
 /* ===== Rejestracja globali ===== */
 window.calcWellStats = calcWellStats;
+window.findDrillingProductForDn = findDrillingProductForDn;
