@@ -37,12 +37,8 @@ function validateRingJoints(selectedRings, transitions, availableProducts, fixed
         const pprod = availableProducts.find((p) => p.id === (t.productId || t.id));
         if (!pprod) continue;
 
-        let dn = 160;
-        if (pprod.dn && typeof pprod.dn === 'string' && pprod.dn.includes('/')) {
-            dn = parseFloat(pprod.dn.split('/')[1]) || 160;
-        } else if (pprod.dn) {
-            dn = parseFloat(pprod.dn) || 160;
-        }
+        // SSoT średnicy (transitionZones.js).
+        const dn = getTransitionDn(pprod);
 
         // Rzędna rury WZGLĘDEM kręgów (zero = fixedBelowHeight)
         let hcInvertAbs;

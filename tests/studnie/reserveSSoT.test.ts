@@ -31,6 +31,41 @@ function loadRuleEngine(products: any[] = [PRODUKT]) {
     return context;
 }
 
+describe('średnica przejścia (DN) — bez lokalnego parsowania', () => {
+    test.each(['ruleEngine.js', 'ringOptimizer.js'])('%s nie parsuje DN samodzielnie', (file) => {
+        const code = readSrc(file);
+        expect(code).not.toContain(".split('/')");
+        expect(code).toContain('getTransitionDn');
+    });
+
+    test('formats cennika: liczba, tekst, ułamek, puste → ta sama reguła SSoT', () => {
+        const ctx = loadRuleEngine();
+        expect(ctx.getTransitionDn({ dn: '160' })).toBe(160);
+        expect(ctx.getTransitionDn({ dn: 160 })).toBe(160);
+        expect(ctx.getTransitionDn({ dn: '110/160' })).toBe(160);
+        expect(ctx.getTransitionDn({ dn: '' })).toBe(160);
+        expect(ctx.getTransitionDn(null)).toBe(160);
+    });
+
+    test('ruleEngine liczy DN produktu przez SSoT (format 110/160)', () => {
+        const ctx = loadRuleEngine([{ ...PRODUKT, dn: '110/160' }]);
+        const res = ctx.calculateConnectionRequirements(
+            [{ productId: PRODUKT.id, rzednaWlaczenia: 1.0 }],
+            0
+        );
+        expect(res.pipes[0].dnVal).toBe(160);
+    });
+
+    test('brak produktu: DN brane z przejścia', () => {
+        const ctx = loadRuleEngine([]);
+        const res = ctx.calculateConnectionRequirements(
+            [{ productId: 'brak', dn: '200', rzednaWlaczenia: 1.0 }],
+            0
+        );
+        expect(res.pipes[0].dnVal).toBe(200);
+    });
+});
+
 describe('zapasy przejścia — bez własnych literałów w konsumentach', () => {
     test.each(['ruleEngine.js', 'ringOptimizer.js'])(
         '%s nie ma lokalnych || 300 / || 150',

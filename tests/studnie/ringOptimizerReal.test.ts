@@ -48,6 +48,9 @@ function makeCtx() {
     sb.window = sb;
     sb.globalThis = sb;
     vm.createContext(sb);
+    vm.runInContext(fs.readFileSync(path.join(JS_DIR, 'transitionZones.js'), 'utf8'), sb, {
+        filename: 'transitionZones.js'
+    });
     vm.runInContext(fs.readFileSync(path.join(JS_DIR, 'ringOptimizer.js'), 'utf8'), sb, {
         filename: 'ringOptimizer.js'
     });

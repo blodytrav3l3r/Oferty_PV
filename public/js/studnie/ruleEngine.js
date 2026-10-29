@@ -57,14 +57,13 @@ function calculateConnectionRequirements(transitions, rzDna) {
                     : studnieProducts.find((x) => x.id === pr.productId)
                 : null;
 
-        let dnVal = 160;
-        if (pprod?.dn) {
-            if (typeof pprod.dn === 'string' && pprod.dn.includes('/'))
-                dnVal = parseFloat(pprod.dn.split('/')[1]) || 160;
-            else dnVal = parseFloat(pprod.dn) || 160;
-        } else if (pr.dn) {
-            dnVal = parseFloat(pr.dn) || 160;
-        }
+        // SSoT średnicy (transitionZones.js). Bez produktu — DN zapisany na przejściu.
+        const dnVal =
+            pprod && pprod.dn != null
+                ? getTransitionDn(pprod)
+                : pr.dn != null
+                  ? parseFloat(pr.dn) || 160
+                  : 160;
 
         const pipeTop = hcInvert + dnVal;
         const isNearBottom = hcInvert <= 0;
@@ -209,12 +208,8 @@ function getLowestDennica(products, dn, warehouse, transitions, rzDna) {
                     : products.find((x) => x.id === pr.productId);
             if (!pprod) continue;
 
-            let dnVal = 160;
-            if (pprod.dn && typeof pprod.dn === 'string' && pprod.dn.includes('/')) {
-                dnVal = parseFloat(pprod.dn.split('/')[1]) || 160;
-            } else if (pprod.dn) {
-                dnVal = parseFloat(pprod.dn) || 160;
-            }
+            // SSoT średnicy (transitionZones.js).
+            const dnVal = getTransitionDn(pprod);
 
             const zDol = parseFloat(pprod.zapasDol) || stdRes;
             const zGora = parseFloat(pprod.zapasGora) || stdRes;
@@ -333,10 +328,8 @@ function getLowestDennicaHybrid(products, dn, warehouse, transitions, rzDna, pre
                     : products.find((x) => x.id === pr.productId);
             if (!pprod) continue;
 
-            let dnVal = 160;
-            if (pprod.dn && typeof pprod.dn === 'string' && pprod.dn.includes('/'))
-                dnVal = parseFloat(pprod.dn.split('/')[1]) || 160;
-            else if (pprod.dn) dnVal = parseFloat(pprod.dn) || 160;
+            // SSoT średnicy (transitionZones.js).
+            const dnVal = getTransitionDn(pprod);
 
             const zDol = parseFloat(pprod.zapasDol) || stdRes;
             const zGora = parseFloat(pprod.zapasGora) || stdRes;

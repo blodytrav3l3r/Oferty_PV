@@ -200,6 +200,7 @@ function makeCtx() {
     vm.createContext(sb);
     for (const f of [
         'globals.js',
+        'transitionZones.js',
         'ruleEngine.js',
         'wellConfigRules.js',
         'ringOptimizer.js',
