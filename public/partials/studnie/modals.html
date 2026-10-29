@@ -335,15 +335,23 @@
                     <i data-lucide="lock"></i> Zaakceptowane
                 </button>
             </div>
-            <div class="zl-toggle-wrap">
-                <label class="zl-toggle-label" for="zlecenia-hide-accepted">
+            <div class="zl-switch-row">
+                <label
+                    class="zl-switch"
+                    for="zlecenia-hide-accepted"
+                    title="Ukrywa zaakceptowane w zakładkach Otwarte i Zapisane"
+                >
                     <input
                         type="checkbox"
+                        role="switch"
                         id="zlecenia-hide-accepted"
                         data-csp="toggleZleceniaHideAccepted"
                         data-csp-on="change"
                     />
-                    <span>Ukryj zaakceptowane</span>
+                    <span class="zl-switch-text">
+                        <i data-lucide="eye-off" aria-hidden="true"></i>
+                        Ukryj zaakceptowane
+                    </span>
                 </label>
             </div>
             <div class="zlecenia-right-list" id="zlecenia-elements-list"></div>

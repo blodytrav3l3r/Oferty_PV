@@ -116,7 +116,12 @@ function renderZleceniaList() {
             poNum.includes(search);
         if (!matchesSearch) return;
 
-        if (zleceniaHideAccepted && item.status === 'accepted') return;
+        if (
+            zleceniaHideAccepted &&
+            zleceniaActiveFilter !== 'accepted' &&
+            item.status === 'accepted'
+        )
+            return;
         if (zleceniaActiveFilter === 'saved' && item.status !== 'saved') return;
         if (zleceniaActiveFilter === 'accepted' && item.status !== 'accepted') return;
 

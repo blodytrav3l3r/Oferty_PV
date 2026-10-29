@@ -2484,29 +2484,6 @@ html[data-theme='light'] #btn-auto-select:disabled {
     background: var(--bg-secondary);
 }
 
-.zl-toggle-wrap {
-    padding: 0.35rem 0.6rem;
-    border-bottom: 1px solid var(--border-glass);
-    background: var(--bg-secondary);
-    display: flex;
-    align-items: center;
-}
-
-.zl-toggle-label {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.45rem;
-    font-size: var(--fs-xs);
-    color: var(--text-secondary);
-    cursor: pointer;
-    user-select: none;
-}
-
-.zl-toggle-label input[type='checkbox'] {
-    cursor: pointer;
-    accent-color: var(--accent);
-}
-
 .zlecenia-filter-btn {
     flex: 1;
     padding: 0.3rem 0.5rem;
