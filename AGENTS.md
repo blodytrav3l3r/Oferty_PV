@@ -101,7 +101,10 @@ VERIFIED (YES/NO).
 ## Filozofia pracy (skrót)
 
 - Read-first: grep/read przed pisaniem; nie reimplementuj helperów z sąsiedztwa (najpierw SSoT: `getSortedRuryItems`, `ownership.ts`, `versionWrite.ts`, `snapshots.ts`).
-- Niejasność → najbardziej logiczny default zgodny z architekturą + krótka notka; pytania tylko gdy ryzyko poważnego błędu.
+- Niejasność → najbardziej logiczny default zgodny z architekturą + krótka notka; pytania tylko gdy ryzyko poważnego błędu **lub akcja z listy 🔴 w `docs/AUTONOMY_CONTRACT.md`** (push, migracje/seed, prod DB, progi ML, destrukcja w gicie).
+- Tradeoffy jawnie: widzisz prostsze rozwiązanie — powiedz przed kodowaniem, nie po; nie wybieraj interpretacji po cichu.
+- Cudzy dead code i niepowiązane poprawki: zgłoś, nie usuwaj; każda zmieniona linia musi wynikać z zadania.
+- Zadanie wieloetapowe → krótki plan z `verify:` na krok.
 - Błąd → rzeczowo i od razu fix; bez placeholderów (`// reszta bez zmian` zakazane); po edycji `typecheck` (BE) / `node -c` (JS).
 - DRY, SRP, KISS; funkcje ~100–150 linii, max 3 poziomy zagnieżdżeń; nazwy: funkcje czasownik+rzeczownik, boolean `is/has/can`; immutability (`[...t].sort(...)`); brak silent fail; Zod na wejściu.
 - Multi-model: po przejęciu sesji podejmij pracę od ostatniego stabilnego stanu (`docs/plans/`, git log); mniejsze modele: zero placeholderów + częstszy `typecheck`; większe: kontrola SRP/DRY/ADR + refaktor po poprzedniku.
@@ -124,6 +127,7 @@ VERIFIED (YES/NO).
 - Commity/wersje/release/plany: `docs/agents/release.md`.
 - Komendy + kodowanie: `docs/agents/commands.md`.
 - Baza znanych błędów #1–#63: tabela skrótowa w historii + pełnia `docs/errors-known.md` (SSoT numeracji).
+- Przed zmianą w Excelu, XSS/CSRF/CSP, Prisma/migracjach, PDF lub kodowaniu: `grep` w `docs/errors-known.md` po temacie — nie odkrywaj znanego błędu drugi raz.
 
 ### Bezpieczeństwo Git — Git Safety (obowiązkowe, SSoT `docs/development/GIT_SAFETY.md`)
 
