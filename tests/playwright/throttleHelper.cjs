@@ -3,8 +3,11 @@
 /**
  * Throttle-x4 helper (F2 baseline): CPU 4x slowdown przez CDP + --disable-gpu.
  * Sterowanie: THROTTLE_X4=1 wlacza, brak = zachowanie bazowe (zero zmian).
- * CHROME_PATH z env, fallback do wbudowanego headless-shell w harnessach.
+ * CHROME_PATH z env = jawny override; brak zmiennej = przegladarka Playwrighta
+ * (w CI instaluje ja `npx playwright install`). Zadnych sciezek uzytkownika.
  */
+
+const fs = require('fs');
 
 const THROTTLE_RATE = 4;
 
@@ -12,8 +15,27 @@ function isThrottleX4() {
     return process.env.THROTTLE_X4 === '1';
 }
 
-function resolveChromePath(fallback) {
-    return process.env.CHROME_PATH || fallback;
+/**
+ * Sciezka przegladarki do launchu.
+ * - brak `CHROME_PATH` → `undefined` (Playwright uzyje wlasnej instalacji),
+ * - `CHROME_PATH` na nieistniejacy plik → throw (blad konfiguracji, nie cichy fallback).
+ * @returns {string|undefined}
+ */
+function resolveChromePath() {
+    const explicit = process.env.CHROME_PATH;
+    if (!explicit) return undefined;
+    if (!fs.existsSync(explicit)) {
+        throw new Error('CHROME_PATH wskazuje nieistniejacy plik: ' + explicit);
+    }
+    return explicit;
+}
+
+/** Opcje launchu: `executablePath` tylko gdy override istnieje. */
+function chromeLaunchOptions(baseOptions) {
+    const options = { ...(baseOptions || {}) };
+    const explicit = resolveChromePath();
+    if (explicit) options.executablePath = explicit;
+    return options;
 }
 
 function getLaunchArgs(baseArgs) {
@@ -42,6 +64,7 @@ module.exports = {
     THROTTLE_RATE,
     isThrottleX4,
     resolveChromePath,
+    chromeLaunchOptions,
     getLaunchArgs,
     resolveOutPath,
     applyThrottle

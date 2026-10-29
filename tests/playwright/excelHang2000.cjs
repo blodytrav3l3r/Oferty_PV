@@ -28,7 +28,7 @@
 const fs = require('fs');
 const path = require('path');
 const { buildPerfWells } = require('./excelPerfFixture.cjs');
-const { resolveChromePath, getLaunchArgs } = require('./throttleHelper.cjs');
+const { chromeLaunchOptions, getLaunchArgs } = require('./throttleHelper.cjs');
 
 const BASE_A = process.env.BENCH_BASE_URL_A || 'http://localhost:3100';
 const BASE_B = process.env.BENCH_BASE_URL_B || 'http://localhost:3101';
@@ -49,9 +49,6 @@ function resolvePlaywright() {
 }
 
 const { chromium } = resolvePlaywright();
-const CHROME_FALLBACK =
-    'C:\\Users\\blody\\AppData\\Local\\ms-playwright\\chromium_headless_shell-1234\\chrome-headless-shell-win64\\chrome-headless-shell.exe';
-const CHROME_PATH = resolveChromePath(CHROME_FALLBACK);
 
 function sleep(ms) {
     return new Promise((r) => setTimeout(r, ms));
@@ -432,11 +429,12 @@ function buildVerdict(m) {
 
 (async () => {
     const tStart = Date.now();
-    const browser = await chromium.launch({
-        headless: true,
-        executablePath: CHROME_PATH,
-        args: getLaunchArgs(['--no-sandbox', '--disable-setuid-sandbox'])
-    });
+    const browser = await chromium.launch(
+        chromeLaunchOptions({
+            headless: true,
+            args: getLaunchArgs(['--no-sandbox', '--disable-setuid-sandbox'])
+        })
+    );
     try {
         const loginA = await loginToken(browser, BASE_A);
         const loginB = await loginToken(browser, BASE_B);

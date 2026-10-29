@@ -7,12 +7,13 @@
  * Run:   node tests/playwright/excelVirtualBench.cjs
  * Wymaga: backend na localhost:3000
  */
-const BASE = 'http://localhost:3000';
+const BASE = process.env.BENCH_BASE_URL || 'http://localhost:3000';
 
 const fs = require('fs');
+const os = require('os');
 const path = require('path');
 const {
-    resolveChromePath,
+    chromeLaunchOptions,
     getLaunchArgs,
     resolveOutPath,
     applyThrottle
@@ -28,9 +29,6 @@ function resolvePlaywright() {
 }
 
 const { chromium } = resolvePlaywright();
-const CHROME_FALLBACK =
-    'C:\\Users\\blody\\AppData\\Local\\ms-playwright\\chromium_headless_shell-1234\\chrome-headless-shell-win64\\chrome-headless-shell.exe';
-const CHROME_PATH = resolveChromePath(CHROME_FALLBACK);
 const BENCH_NS_LIST = process.env.BENCH_NS
     ? process.env.BENCH_NS.split(',')
           .map(Number)
@@ -124,11 +122,12 @@ async function measure(frame, n) {
 }
 
 (async () => {
-    const browser = await chromium.launch({
-        headless: true,
-        executablePath: CHROME_PATH,
-        args: getLaunchArgs(['--no-sandbox', '--disable-setuid-sandbox'])
-    });
+    const browser = await chromium.launch(
+        chromeLaunchOptions({
+            headless: true,
+            args: getLaunchArgs(['--no-sandbox', '--disable-setuid-sandbox'])
+        })
+    );
     try {
         const loginCtx = await browser.newContext();
         const loginPage = await loginCtx.newPage();
@@ -218,6 +217,15 @@ async function measure(frame, n) {
                     {
                         generated: new Date().toISOString(),
                         throttleX4: process.env.THROTTLE_X4 === '1',
+                        // Metadane środowiska: bez nich liczb nie da się porównać z baseline.
+                        meta: {
+                            node: process.version,
+                            os: `${process.platform} ${os.release()}`,
+                            cpu: (os.cpus()[0] || {}).model || 'unknown',
+                            cores: os.cpus().length,
+                            viewport: '1600x1000',
+                            base: BASE
+                        },
                         rows: benchRows
                     },
                     null,

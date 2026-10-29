@@ -23,7 +23,7 @@ const TABS = ['1000', '1200', '1500', '2000', '2500', 'styczne'];
 
 const { buildPerfWells } = require('./excelPerfFixture.cjs');
 const {
-    resolveChromePath,
+    chromeLaunchOptions,
     getLaunchArgs,
     resolveOutPath,
     applyThrottle
@@ -38,9 +38,6 @@ function resolvePlaywright() {
     throw new Error('playwright not found');
 }
 const { chromium } = resolvePlaywright();
-const CHROME_FALLBACK =
-    'C:\\Users\\blody\\AppData\\Local\\ms-playwright\\chromium_headless_shell-1234\\chrome-headless-shell-win64\\chrome-headless-shell.exe';
-const CHROME_PATH = resolveChromePath(CHROME_FALLBACK);
 const OUT_DEFAULT = path.join(__dirname, '../../docs/plans/baseline-excel-heap-f0.json');
 const OUT = resolveOutPath(OUT_DEFAULT);
 
@@ -500,11 +497,12 @@ async function runCycles(browser, token, n, cycles) {
 }
 
 (async () => {
-    const browser = await chromium.launch({
-        headless: true,
-        executablePath: CHROME_PATH,
-        args: getLaunchArgs(['--no-sandbox', '--disable-setuid-sandbox'])
-    });
+    const browser = await chromium.launch(
+        chromeLaunchOptions({
+            headless: true,
+            args: getLaunchArgs(['--no-sandbox', '--disable-setuid-sandbox'])
+        })
+    );
     try {
         const loginCtx = await browser.newContext();
         const loginPage = await loginCtx.newPage();

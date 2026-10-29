@@ -25,17 +25,14 @@ function resolvePlaywright() {
     throw new Error('playwright not found');
 }
 const { chromium } = resolvePlaywright();
-const CHROME_PATH =
-    process.env.CHROME_PATH ||
-    'C:\\Users\\blody\\AppData\\Local\\ms-playwright\\chromium_headless_shell-1234\\chrome-headless-shell-win64\\chrome-headless-shell.exe';
+// Twarda ścieżka Windows psuła CI na Linuksie; jawny override CHROME_PATH sprawdza helper.
+const CHROME_PATH = require('./throttleHelper.cjs').resolveChromePath();
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 (async () => {
-    const browser = await chromium.launch({
-        headless: true,
-        executablePath: CHROME_PATH,
-        args: ['--no-sandbox']
-    });
+    const launchOptions = { headless: true, args: ['--no-sandbox'] };
+    if (CHROME_PATH) launchOptions.executablePath = CHROME_PATH;
+    const browser = await chromium.launch(launchOptions);
     const ctx = await browser.newContext({ viewport: { width: 1600, height: 1000 } });
     const page = await ctx.newPage();
     const failures = [];

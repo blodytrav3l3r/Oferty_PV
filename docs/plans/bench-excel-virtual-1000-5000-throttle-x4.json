@@ -1,0 +1,82 @@
+{
+    "generated": "2026-10-29T19:03:40.110Z",
+    "throttleX4": true,
+    "meta": {
+        "node": "v24.18.0",
+        "os": "win32 10.0.26200",
+        "cpu": "AMD Ryzen 9 5950X 16-Core Processor            ",
+        "cores": 32,
+        "viewport": "1600x1000",
+        "base": "http://localhost:3180"
+    },
+    "rows": [
+        {
+            "n": 1000,
+            "mode": "OFF",
+            "openMs": 37143,
+            "rows": 1000,
+            "nodesByScroll": {
+                "0": 139516,
+                "1": 139516,
+                "0.25": 139516,
+                "0.5": 139516,
+                "0.75": 139516
+            },
+            "cycleMin": 139516,
+            "cycleMax": 139516,
+            "editMs": 2363,
+            "ok": true
+        },
+        {
+            "n": 1000,
+            "mode": "ON",
+            "openMs": 1518,
+            "rows": 65,
+            "nodesByScroll": {
+                "0": 13053,
+                "1": 13070,
+                "0.25": 13055,
+                "0.5": 13055,
+                "0.75": 13055
+            },
+            "cycleMin": 13053,
+            "cycleMax": 13053,
+            "editMs": 1247,
+            "ok": true
+        },
+        {
+            "n": 5000,
+            "mode": "OFF",
+            "openMs": 168009,
+            "rows": 5000,
+            "nodesByScroll": {
+                "0": 679516,
+                "1": 679516,
+                "0.25": 679516,
+                "0.5": 679516,
+                "0.75": 679516
+            },
+            "cycleMin": 679516,
+            "cycleMax": 679516,
+            "editMs": 10473,
+            "ok": true
+        },
+        {
+            "n": 5000,
+            "mode": "ON",
+            "openMs": 1628,
+            "rows": 65,
+            "nodesByScroll": {
+                "0": 13053,
+                "1": 13070,
+                "0.25": 13055,
+                "0.5": 13055,
+                "0.75": 13055
+            },
+            "cycleMin": 13053,
+            "cycleMax": 13053,
+            "editMs": 1273,
+            "ok": true
+        }
+    ]
+}

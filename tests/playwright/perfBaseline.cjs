@@ -32,7 +32,7 @@ function resolvePlaywright() {
 const { chromium } = resolvePlaywright();
 const { resolveChromePath, resolveOutPath } = require('./throttleHelper.cjs');
 
-const CHROME_PATH = resolveChromePath(undefined);
+const CHROME_PATH = resolveChromePath();
 
 const PAGES = [
     ['index', '/index.html'],
@@ -272,7 +272,7 @@ function median(a) {
             };
         }
     }
-    const OUT_DEFAULT = 'C:/Users/blody/AppData/Local/Temp/opencode/p16-baseline.json';
+    const OUT_DEFAULT = join(ROOT, 'docs', 'plans', 'p16-baseline.json');
     const outPath = resolveOutPath(process.env.PERF_OUT || OUT_DEFAULT);
     fs.writeFileSync(
         outPath,
