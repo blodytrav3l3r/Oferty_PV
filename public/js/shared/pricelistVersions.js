@@ -2177,11 +2177,34 @@
      * Globalny panel wersji: jeden panel z tabami [Rury|Studnie|PRECO].
      * @param {string} type 'rury' | 'studnie' | 'preco' (preselekcja taba)
      */
+    /**
+     * Cold start (deep-link/odświeżenie) potrafi wywołać otwarcie panelu zanim
+     * moduł ma w DOM `#section-pricelist` i zarejestrowane osie. Czekamy do
+     * 3 s zamiast cicho rezygnować (panel wracał dopiero po ponownym kliknięciu).
+     * @param {number} [timeoutMs]
+     * @returns {Promise<HTMLElement|null>}
+     */
+    async function waitForDock(timeoutMs) {
+        var deadline = Date.now() + (timeoutMs || 3000);
+        for (;;) {
+            var dock = ensureDock();
+            if (dock && availableTypes().length) return dock;
+            // Brak osi = nie ma czego pokazac w panelu; konczymy i pokazujemy blad.
+            if (Date.now() >= deadline) return availableTypes().length ? dock : null;
+            await new Promise(function (resolve) {
+                window.setTimeout(resolve, 50);
+            });
+        }
+    }
+
     async function openVersionsPanel(type) {
+        var dock = await waitForDock();
+        if (!dock) {
+            toast('Nie udało się otworzyć panelu cennika — brak sekcji cennika', 'error');
+            return null;
+        }
         // Preselekcja tylko załadowanego modułu — inaczej fallback na pierwszy dostępny.
         if (!isAvailable(type)) type = availableTypes()[0];
-        var dock = ensureDock();
-        if (!dock) return;
         var manageable = canManage[type] === true;
         dockState.type = type;
         var tabs = document.getElementById('pv-type-tabs');

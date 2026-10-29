@@ -29,6 +29,14 @@ describe('Rail „Zarządzanie cennikami" (lewy panel edytorów)', () => {
         expect(panel).toContain('dock.hidden = !open');
     });
 
+    // E2E cennika nie może czekać na ID, którego UI nigdy nie tworzy (regres CI).
+    it('E2E cennika celuje w #pv-dock, nie w usunięty #pv-versions-modal', () => {
+        const e2e = read('tests/playwright/pricelistPreview.cjs');
+        expect(e2e).toContain("locator('#pv-dock')");
+        expect(e2e).toContain('#pv-dock [data-pv-tab="preco"]');
+        expect(e2e).not.toContain('pv-versions-modal');
+    });
+
     it('wersje to karty w liście, pogrupowane po roku, bez akcji na karcie', () => {
         expect(panel).toContain('id="pv-versions-body" class="pv-version-list"');
         expect(panel).toContain('class="pv-vcard');
