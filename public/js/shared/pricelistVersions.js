@@ -2975,9 +2975,10 @@
                 authed('POST')
             );
             var created = (res && res.version) || {};
-            clearSummaryCache();
             setEditing(t, true);
-            await renderStatusStrip(STRIP_HOST_ID, t);
+            // Ta sama ścieżka co inne akcje na wersjach: lista w railu + siatka
+            // z DRAFT. Bez tego karta nowego szkicu pojawiała się dopiero po F5.
+            await afterVersionChange(t, { reloadGrid: true });
             toast(
                 'Utworzono szkic ' + (created.version || '') + ' z ' + data.active.version,
                 'success'
