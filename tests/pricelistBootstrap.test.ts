@@ -87,6 +87,8 @@ describe('bootstrap cennika: wersja bazowa z LIVE', () => {
         expect(created.map((c) => c.type)).toEqual(['rury', 'studnie', 'preco']);
         expect(versions).toHaveLength(3);
         for (const v of versions) {
+            // Kontrakt ID tras: bez `:` z ISO, inaczej export/clone-draft → 400 INVALID_ID.
+            expect(v.id).toMatch(/^[A-Za-z0-9_-]{1,64}$/);
             expect(v.status).toBe('APPROVED');
             expect(v.seq).toBe(1);
             expect(v.effectiveFrom).toBe(NOW);

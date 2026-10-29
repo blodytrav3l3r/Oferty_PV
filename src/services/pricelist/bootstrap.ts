@@ -79,9 +79,12 @@ export interface BaselineVersionInfo {
     rows: number;
 }
 
-/** Id wersji bazowej: `<typ>-baseline-<ISO bez znaków spoza [A-Za-z0-9:]>`. */
+/**
+ * Id wersji bazowej: `<typ>-baseline-<ISO bez znaków spoza [A-Za-z0-9_-]>`.
+ * Musi przejść kontrakt ID tras (`[A-Za-z0-9_-]{1,64}`), więc `:` i `.` z ISO wypadają.
+ */
 function baselineVersionId(type: PricelistType, nowIso: string): string {
-    return `${type}-baseline-${nowIso}`.replace(/[^A-Za-z0-9:-]/g, '');
+    return `${type}-baseline-${nowIso}`.replace(/[^A-Za-z0-9_-]/g, '');
 }
 
 /**
