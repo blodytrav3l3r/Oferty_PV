@@ -386,12 +386,17 @@ function openExcelTableModal() {
             /* Focus searcha w toolbarze: inline outline:none gasi globalny ring,
                wiec jawny ring accentem (!important tylko by przebic inline). */
             #excel-search-input:focus-visible { outline:2px solid var(--accent) !important; outline-offset:-1px; }
+            /* Wskaźnik trybu wirtualizacji: kolor zależny od faktycznego trybu patchera. */
+            #excel-virtual-mode[data-mode="virtual"] { color:var(--success-hover); }
+            #excel-virtual-mode[data-mode="legacy"] { color:var(--warn-hover); }
+            #excel-virtual-mode[data-pending="1"] { font-style:italic; }
         </style>
         <div class="excel-topbar">
             <div class="excel-topbar-left">
                 <i data-lucide="table" class="icon-sm excel-topbar-icon"></i>
                 <span class="excel-topbar-title">Tabela konfiguracyjna</span>
                 <span id="excel-well-count" class="excel-count-pill"></span>
+                <span id="excel-virtual-mode" class="excel-count-pill" role="status" aria-live="polite" title="Tryb wirtualizacji tabeli"></span>
                 <span id="excel-selection-summary" class="excel-count-pill" style="display:none;"></span>
             </div>
             <div class="excel-topbar-actions">

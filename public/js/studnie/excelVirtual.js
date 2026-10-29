@@ -766,6 +766,9 @@ function _excelVirtualRenderBody() {
 // Patch _excelRenderTable gdy virtual aktywny (default ON) — pomijaj full tbody w origRender (P0-B double render)
 (function () {
     _excelVirtualEnabled = _excelVirtualIsEnabled();
+    /* Jednoznaczny tryb dla diagnostyki (konsola/CI): 'virtual' tylko gdy patch
+       faktycznie podmienil render; sam _excelVirtualIsEnabled() to bramka env. */
+    window._excelVirtualMode = 'legacy';
     if (!_excelVirtualEnabled) return;
     const origRender = typeof _excelRenderTable === 'function' ? _excelRenderTable : null;
     if (!origRender) return;
@@ -904,6 +907,7 @@ function _excelVirtualRenderBody() {
             return origClose.apply(this, arguments);
         };
     }
+    window._excelVirtualMode = 'virtual';
 })();
 
 // ----- model-driven copy/paste & selection dla virtual -----
@@ -1173,6 +1177,8 @@ if (typeof window !== 'undefined') {
     window._excelVirtualBuildFiltered = _excelVirtualBuildFiltered;
     window._excelVirtualRenderBody = _excelVirtualRenderBody;
     window._excelVirtualIsEnabled = _excelVirtualIsEnabled;
+    /* Sam kill-switch (env), bez stanu patchera — dla wskaźnika „zmiana po przeładowaniu”. */
+    window._excelVirtualSettingEnabled = _excelVirtualIsRequestEnabled;
     window._excelVirtualGetCellValue = _excelVirtualGetCellValue;
     window._excelVirtualIsCellSelected = _excelVirtualIsCellSelected;
     window._excelVirtualGetLogicalCols = function () {

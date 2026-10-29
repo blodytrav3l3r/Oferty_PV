@@ -41,6 +41,49 @@ function _excelRenderTabs() {
 function _excelUpdateWellCount() {
     const el = document.getElementById('excel-well-count');
     if (el) el.textContent = wells.length + ' studni';
+    _excelUpdateVirtualModeBadge();
+}
+
+/* Wskaźnik trybu wirtualizacji. SSoT to window._excelVirtualMode (stan patchera),
+   nie _excelVirtualIsEnabled() — przy małej tabeli DOM jest identyczny w obu trybach.
+   „(po przeładowaniu)” gdy kill-switch zmieniono już po podmianie rendera. */
+function _excelUpdateVirtualModeBadge() {
+    const el = document.getElementById('excel-virtual-mode');
+    if (!el) return;
+    const isVirtual = window._excelVirtualMode === 'virtual';
+    const settingOn =
+        typeof window._excelVirtualSettingEnabled === 'function'
+            ? window._excelVirtualSettingEnabled()
+            : isVirtual;
+    const pending = settingOn !== isVirtual;
+    el.dataset.mode = isVirtual ? 'virtual' : 'legacy';
+    el.dataset.pending = pending ? '1' : '0';
+    el.textContent =
+        'Wirtualizacja: ' + (isVirtual ? 'ON' : 'OFF') + (pending ? ' (po przeładowaniu)' : '');
+    if (pending) {
+        el.title =
+            'Kill-switch zmieniony po uruchomieniu tabeli — nowy tryb zadziała po przeładowaniu.';
+    } else if (isVirtual) {
+        el.title =
+            'Wiersze renderowane okienkiem. Wyłączenie: ?virtual=0 lub localStorage sok_excel_virtual=0.';
+    } else {
+        el.title =
+            'Pełny render wszystkich wierszy. Włączenie: usuń ?virtual=0 i localStorage sok_excel_virtual.';
+    }
+}
+
+/* Zmiana kill-switcha w innej karcie / powrót do karty → odśwież etykietę bez reloadu. */
+if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
+    window.addEventListener('storage', _excelUpdateVirtualModeBadge);
+}
+if (
+    typeof document !== 'undefined' &&
+    typeof document.addEventListener === 'function' &&
+    typeof window !== 'undefined'
+) {
+    document.addEventListener('visibilitychange', function () {
+        if (!document.hidden) _excelUpdateVirtualModeBadge();
+    });
 }
 
 function excelSwitchTab(tab) {
