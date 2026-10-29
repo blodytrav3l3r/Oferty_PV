@@ -223,7 +223,7 @@ describe('L2 drafty — limity', () => {
 });
 
 describe('L2 drafty — izolacja i cykl życia', () => {
-    test('cudzy draft → 404 po obu stronach (brak ujawnienia istnienia)', async () => {
+    test('cudzy draft → GET 404, DELETE 204 (idempotentny, brak ujawnienia istnienia)', async () => {
         await request(app)
             .put(url('offer_rury', 'wspolny-id'))
             .set('x-test-user', OTHER)
@@ -238,7 +238,7 @@ describe('L2 drafty — izolacja i cykl życia', () => {
         const del = await request(app)
             .delete(url('offer_rury', 'wspolny-id'))
             .set('x-test-user', USER);
-        expect(del.status).toBe(404);
+        expect(del.status).toBe(204);
 
         // Wiersz drugiego użytkownika nadal istnieje.
         expect(await prisma.drafts.count({ where: { userId: OTHER } })).toBe(1);
@@ -274,6 +274,13 @@ describe('L2 drafty — izolacja i cykl życia', () => {
             .set('x-test-user', USER)
             .expect(204);
         await request(app).get(url('offer_studnie', 'del1')).set('x-test-user', USER).expect(404);
+    });
+
+    // Placeholder `new` (oferta niezapisana) bywa kasowany zanim push autosave
+    // dojdzie — DELETE musi być idempotentny, inaczej klient widzi 404 w konsoli.
+    test('DELETE nieistniejącego draftu → 204 (idempotentny)', async () => {
+        await request(app).delete(url('offer_studnie', 'new')).set('x-test-user', USER).expect(204);
+        expect(await prisma.drafts.count({ where: { userId: USER } })).toBe(0);
     });
 
     test('wygasły draft → 404 i wiersz usunięty (leniwe TTL)', async () => {

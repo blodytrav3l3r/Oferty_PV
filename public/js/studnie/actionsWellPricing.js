@@ -840,13 +840,11 @@ function getTransitionHostPctSafe(well, disc, hostType) {
     }
 }
 
-// Bezpośrednie odczyty (disc.preco || 0) omijają assert — sanituj: invalid → 0 + flaga.
+// Rabat PRECO: brak klucza = 0 (kontrakt readDiscountPct), jawny invalid → throw.
+// Pusty obiekt wpisu DN (świeża oferta bez rabatów) NIE jest danymi corrupt.
 function safePrecoPct(well, disc) {
     try {
-        const v = disc ? disc.preco : 0;
-        if (typeof v !== 'number' || !Number.isFinite(v) || v < 0 || v > 100)
-            throw new RangeError('Invalid discountPct preco: ' + String(v));
-        return v;
+        return readDiscountPct(disc || {}, 'preco');
     } catch (e) {
         if (!(e instanceof RangeError)) throw e;
         _warnDiscountCorrupt('preco', e, 'dn=' + ((well && well.dn) || '?'));

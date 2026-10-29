@@ -178,6 +178,50 @@ describe('Kontrakt rabatu studni: discountPct ∈ [0,100], invalid → throw', (
         expect(() => ctx.calcWellStats(makeWell({ kineta: 'preco' }))).toThrow(RangeError);
     });
 
+    // safePrecoPct (ścieżka renderu): pusty wpis DN = świeża oferta bez rabatów,
+    // nie dane corrupt. Jawny klucz invalid nadal warnuje (fail-loud).
+    function captureWarns(run: () => unknown): string[] {
+        const warns: string[] = [];
+        ctx.__captureWarns = warns;
+        vm.runInContext(
+            'logger = { warn: function (_scope, msg) { __captureWarns.push(String(msg)); } };',
+            ctx
+        );
+        try {
+            run();
+        } finally {
+            vm.runInContext('logger = undefined;', ctx);
+        }
+        return warns;
+    }
+
+    test('safePrecoPct: pusty wpis DN → 0 bez warnu', () => {
+        const well = makeWell({ kineta: 'preco' });
+        const warns = captureWarns(() => {
+            expect(ctx.safePrecoPct(well, {})).toBe(0);
+        });
+        expect(warns).toEqual([]);
+        expect(ctx.isWellDiscountCorrupt(well)).toBe(false);
+    });
+
+    test('safePrecoPct: brak wpisu DN (undefined) → 0 bez warnu', () => {
+        const well = makeWell({ kineta: 'preco' });
+        const warns = captureWarns(() => {
+            expect(ctx.safePrecoPct(well, undefined)).toBe(0);
+        });
+        expect(warns).toEqual([]);
+    });
+
+    test('safePrecoPct: jawny klucz invalid → 0 + warn + flaga corrupt', () => {
+        const well = makeWell({ kineta: 'preco' });
+        const warns = captureWarns(() => {
+            expect(ctx.safePrecoPct(well, { preco: undefined })).toBe(0);
+        });
+        expect(warns).toHaveLength(1);
+        expect(warns[0]).toContain('Invalid discountPct');
+        expect(ctx.isWellDiscountCorrupt(well)).toBe(true);
+    });
+
     test.each(INVALID)('applyDiscount odrzuca %s (throw, brak zapisu)', (_label, v) => {
         const before = storedJson();
         expect(() => ctx.applyDiscount('1000', 'dennica', v)).toThrow(RangeError);

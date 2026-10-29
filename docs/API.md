@@ -645,7 +645,7 @@ zapytania (404, bez ujawniania istnienia). Draft nigdy nie mutuje dokumentu.
 | GET    | `/api/drafts`              | auth | Metadane własnych draftów (bez `payload`), max 50       |
 | GET    | `/api/drafts/:kind/:docId` | auth | Pełny draft + `ETag: "<version>"` (404 gdy brak/wygasł) |
 | PUT    | `/api/drafts/:kind/:docId` | auth | Zapis z `If-Match: "<version>"` (wymagany dla update)   |
-| DELETE | `/api/drafts/:kind/:docId` | auth | Jawne odrzucenie draftu (204 / 404)                     |
+| DELETE | `/api/drafts/:kind/:docId` | auth | Jawne odrzucenie draftu (204, idempotentny)             |
 
 `kind`: `offer_rury` \| `order_rury` \| `offer_studnie` \| `order_studnie`.
 `docId`: 1–128 znaków `[A-Za-z0-9_-]`. Body: `{ payload: object, baseVersion?: int|null }`.

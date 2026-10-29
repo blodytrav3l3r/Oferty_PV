@@ -161,8 +161,10 @@ router.delete('/:kind/:docId', requireAuth, WRITE_LIMITER, async (req, res) => {
     const target = requireDraftTarget(req, res);
     if (!target) return;
     try {
-        const removed = await deleteDraft(target.userId, target.kind, target.docId);
-        if (!removed) return res.status(404).json({ error: 'Draft nie istnieje' });
+        // Idempotentny: brak draftu = już osiągnięty stan (204). 404 byłby
+        // nieodróżnialny od cudzego draftu i tak, a klient i tak traktuje
+        // oba kody jako sukces (draftSyncRemove).
+        await deleteDraft(target.userId, target.kind, target.docId);
         return res.status(204).end();
     } catch (e) {
         logger.error('Drafts', `Usunięcie draftu nieudane: ${e}`);
