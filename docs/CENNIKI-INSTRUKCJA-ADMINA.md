@@ -163,18 +163,24 @@ przechodzenia na `#/rury` lub `#/studnie`. „Edytuj"/„Utwórz kopię jako szk
 zostaje w `#/cennik` (nie zmienia hasha SPA).
 
 Uwaga o buforze: edytor w `#/cennik` czyta `DRAFT → ACTIVE → LIVE`, a oferta liczy
-z wersji obowiązującej. Szkic w edytorze **nie** oznacza, że oferta policzy z niego.
+z wersji **swojej pieczątki** (`pricelistVersionId`). Szkic w edytorze **nie** oznacza,
+że oferta policzy z niego.
 
 Uwaga o podglądzie w ofercie: zakładka **„Cennik”** w module (`#/studnie`, `#/rury`)
-jest **podglądem** — pokazuje cennik obowiązujący (ACTIVE), ten sam, z którego liczy
-oferta. Szkic widać wyłącznie w trybie edycji w `#/cennik`; przycisk „Edytuj”
-w module przenosi do huba cenników.
+pokazuje cennik **tej wersji, na której stoi oferta** (pieczątka). Nowa oferta bez
+pieczątki pokazuje obowiązujący (ACTIVE). Szkic widać wyłącznie w trybie edycji
+w `#/cennik`; przycisk „Edytuj” w module przenosi do huba cenników.
+
+Uwaga o zmianie cennika w istniejącej ofercie: oferta otwiera się na cenach swojej
+wersji, więc publikacja nowej wersji **nie zmienia jej po cichu**. Nowe ceny wchodzą
+dopiero przez **„Przelicz do aktywnego”** w pasku nad kartą oferty (wtedy pieczątka
+przechodzi na obowiązującą wersję). Zamówienia mają własny snapshot — nie zmieniają się.
 
 ## 5. Nowy cennik od zera (szkic)
 
 1. Wejdź w `#/cennik` → oś **Rury**/**Studnie** → **„Edytuj”** (albo „Utwórz kopię
    jako szkic”) i popraw ceny (ręcznie albo importem XLSX). Zakładka „Cennik”
-   w module oferty jest tylko podglądem wersji obowiązującej.
+   w module oferty jest tylko podglądem wersji, na której stoi oferta.
 2. Zapis tworzy lub aktualizuje **DRAFT** tej osi. Docelowy zapis: `PRICELIST_WRITE_TARGET=draft`
    (domyślnie). Tryb `live` to rollback do starych tabel — wtedy zapis nie tworzy wersji.
 3. Uzupełnij datę obowiązywania i notę (data i nota mogą zostać podane dopiero przy publikacji).

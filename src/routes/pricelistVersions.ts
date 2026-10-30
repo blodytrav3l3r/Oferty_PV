@@ -718,6 +718,53 @@ router.get('/:id/diff', requireAuth, requireAdmin, READ_LIMITER, async (req, res
     }
 });
 
+/**
+ * GET /:id/rows — wiersze wersji w kształcie LIVE (te same arkusze co eksport).
+ * Bez requireAdmin: oferta każdego użytkownika liczy z wersji swojej pieczątki,
+ * więc odczyt cen musi być dostępny bez uprawnień edycji. Tylko wersja
+ * zatwierdzona i już obowiązująca — szkic ani data z przyszłości nigdy nie
+ * trafiają do oferty.
+ */
+router.get('/:id/rows', requireAuth, READ_LIMITER, async (req, res) => {
+    const id = parseVersionId(req.params);
+    if (!id) {
+        sendInvalidId(res);
+        return;
+    }
+    try {
+        const { version, sheets, precoIncluded } = await getVersionExportSheets(id);
+        const effectiveFrom = version.effectiveFrom
+            ? new Date(version.effectiveFrom).getTime()
+            : NaN;
+        if (
+            version.status !== 'APPROVED' ||
+            !Number.isFinite(effectiveFrom) ||
+            effectiveFrom > Date.now()
+        ) {
+            res.status(409).json({
+                error: 'Wersja nie obowiązuje — oferta liczy tylko z zatwierdzonego cennika',
+                code: 'VERSION_NOT_EFFECTIVE'
+            });
+            return;
+        }
+        res.setHeader('Cache-Control', 'no-store');
+        res.json({
+            version: {
+                id: version.id,
+                type: version.type,
+                version: version.version,
+                seq: version.seq,
+                effectiveFrom: version.effectiveFrom,
+                status: version.status
+            },
+            sheets,
+            precoIncluded
+        });
+    } catch (err) {
+        sendVersionError(res, err);
+    }
+});
+
 /** Eksport wersji do XLSX — shape 1:1 z eksportem LIVE (studnie + PRECO same-seq jak F1). */
 router.get('/:id/export', requireAuth, requireAdmin, READ_LIMITER, async (req, res) => {
     res.setHeader('Cache-Control', 'no-store');

@@ -414,6 +414,7 @@ Wymaga autoryzacji (administrator, oprócz etykiet).
 | GET    | `/api/pricelist-versions/labels`          | auth  | Etykiety wersji                                                                                                                                         |
 | GET    | `/api/pricelist-versions/summary`         | admin | Stan osi per typ (`rury`, `studnie`, `preco`): `active`, `nextScheduled`, `draft`, `draftCount`, `approvedCount`, `archivedCount`, `collisionCount`     |
 | GET    | `/api/pricelist-versions/:id/preview`     | admin | Podgląd zawartości wersji (`max 5000` wierszy/arkusz, `truncated`; `413 VERSION_TOO_LARGE` >20 000)                                                     |
+| GET    | `/api/pricelist-versions/:id/rows`        | auth  | Wiersze wersji w kształcie LIVE do odtworzenia cennika oferty (tylko `APPROVED` i `effectiveFrom <= now`, inaczej `409 VERSION_NOT_EFFECTIVE`)          |
 | POST   | `/api/pricelist-versions/:type/drafts`    | admin | Nowy szkic wersji (`201` przy utworzeniu)                                                                                                               |
 | PUT    | `/api/pricelist-versions/:id`             | admin | Edycja wersji                                                                                                                                           |
 | PATCH  | `/api/pricelist-versions/:id/label`       | admin | Ręczna korekta etykiety (`label`: tekst ≤64 znaki albo `null` = etykieta pochodna)                                                                      |

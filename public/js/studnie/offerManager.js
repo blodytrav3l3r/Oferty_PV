@@ -18,6 +18,8 @@ function clearOfferForm() {
     // Pieczątka po „Przelicz do aktywnego" (na window — recalc i zapis
     // żyją w różnych plikach, offerSave.js ładuje się wcześniej).
     window.pendingStudnieStampId = null;
+    // Nowa oferta = cennik obowiązujący, nie wersja poprzedniej oferty.
+    applyStudnieOfferPricelist(null).catch(() => {});
     if (window.offerPricelistBanner) window.offerPricelistBanner.hide('studnie');
     if (window.offerPricelistBanner)
         window.offerPricelistBanner.badge({
@@ -188,7 +190,11 @@ async function loadSavedOfferStudnie(id_or_doc, optionalId, targetSection, preve
     // uniewaznia nieaktualne notki; nietkniete trzymaja.
     if (typeof backfillSolverStamps === 'function') backfillSolverStamps(wells);
 
-    // Mrożenie cen edycji: snapshot live cennika do frozen* (reuse
+    // Cennik oferty: ceny z wersji pieczątki (oferta odtwarza własny cennik),
+    // nie z bieżącego ACTIVE. Brak pieczątki / błąd → ACTIVE z ostrzeżeniem.
+    await applyStudnieOfferPricelist(normalized.pricelistVersionId);
+
+    // Mrożenie cen edycji: snapshot cennika do frozen* (reuse
     // freezeWellPrices z zamówień); recalc omija zamrożone przez
     // isOfferEditFrozen (isFrozenPriceCtx). Transport/ilości edytowalne.
     isOfferEditFrozen = true;
@@ -269,14 +275,42 @@ async function loadSavedOfferStudnie(id_or_doc, optionalId, targetSection, preve
 }
 
 /**
+ * Cennik oferty studni: podstawia dane osi z wersji pieczątki (studnie + PRECO).
+ * Brak pieczątki, wersja nieobowiązująca albo błąd sieci → obowiązujący (ACTIVE)
+ * i jawny komunikat; nigdy cicha podmiana cennika.
+ * @param {string|null|undefined} stampId
+ * @returns {Promise<boolean>} true = cennik z wersji oferty
+ */
+async function applyStudnieOfferPricelist(stampId) {
+    const pv = window.pricelistVersions;
+    if (stampId && pv && typeof pv.applyOfferPricelist === 'function') {
+        try {
+            if (await pv.applyOfferPricelist('studnie', stampId)) return true;
+        } catch (e) {
+            logger.warn('offerManager', 'cennik oferty niedostępny', String(e));
+            showToast(
+                'Nie udało się wczytać cennika oferty (' + stampId + ') — liczę z obowiązującego',
+                'warning'
+            );
+        }
+    }
+    if (pv && typeof pv.setOfferStamp === 'function') pv.setOfferStamp('studnie', null);
+    if (typeof loadStudnieProducts === 'function') {
+        window.studnieProducts = await loadStudnieProducts({ source: 'active' });
+    }
+    if (typeof loadPrecoPricing === 'function') await loadPrecoPricing({ source: 'active' });
+    return false;
+}
+
+/**
  * „Przelicz do aktywnego": czyści freeze (ceny jednostkowe wracają do live
  * ACTIVE), gasi tryb mrożenia i przelicza widok. Transport/ilości nietknięte.
  * activeId z bannera ląduje w window.pendingStudnieStampId — saveOfferStudnie
  * dokleja je jako pieczątkę (serwer weryfikuje zgodność z ACTIVE).
  * @param {string} [activeId] id aktywnej wersji cennika
- * @returns {boolean} true = przeliczono
+ * @returns {Promise<boolean>} true = przeliczono
  */
-function recalcStudnieToActive(activeId) {
+async function recalcStudnieToActive(activeId) {
     if (typeof activeId === 'string' && activeId) window.pendingStudnieStampId = activeId;
     (wells || []).forEach(function (w) {
         if (!w) return;
@@ -297,6 +331,9 @@ function recalcStudnieToActive(activeId) {
         delete w.frozenPrecoSuma;
     });
     isOfferEditFrozen = false;
+    // Ceny muszą pochodzić z ACTIVE — inaczej „przelicz" liczyłby dalej
+    // z cennika wersji oferty.
+    await applyStudnieOfferPricelist(null);
     if (typeof refreshAll === 'function') refreshAll();
     if (typeof renderOfferSummary === 'function') renderOfferSummary();
     // Badge od razu na pending (nie dopiero po zapisie+reload).

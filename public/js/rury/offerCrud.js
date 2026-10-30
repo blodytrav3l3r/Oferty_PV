@@ -263,6 +263,8 @@ function clearOfferForm() {
     editingOfferAssignedUserId = null;
     editingOfferAssignedUserName = '';
     pendingRuryStampId = null;
+    // Nowa oferta = cennik obowiązujący, nie wersja poprzedniej oferty.
+    applyRuryOfferPricelist(null).catch(() => {});
     window.editingOfferCreatedByUserId = null;
     window.editingOfferCreatedByUserName = '';
     if (window.offerPricelistBanner) window.offerPricelistBanner.hide('rury');
@@ -457,6 +459,9 @@ async function loadOffer(id) {
         normalized.zabezpieczenieTransportuEnabled !== undefined
             ? !!normalized.zabezpieczenieTransportuEnabled
             : (normalized.items || []).some((i) => i.productId && i.productId.startsWith('ZT-'));
+    // Cennik oferty: katalog z wersji pieczątki (podgląd cennika i przeliczenia),
+    // pozycje trzymają własne unitPrice ze snapshotu oferty.
+    await applyRuryOfferPricelist(normalized.pricelistVersionId);
     if (typeof updateZabezpieczenieTransportuUI === 'function') updateZabezpieczenieTransportuUI();
     syncTransportSecurity();
     renderOfferItems();
@@ -501,15 +506,43 @@ window.loadSavedOfferData = function (doc, id) {
 /* ===== DUPLIKACJA ===== */
 
 /**
+ * Cennik oferty rur: podstawia dane osi z wersji pieczątki. Pozycje oferty
+ * trzymają własne `unitPrice` (snapshot), więc podmiana dotyczy katalogu:
+ * podglądu cennika i ewentualnego przeliczenia.
+ * Brak pieczątki / błąd → obowiązujący (ACTIVE) z jawnym komunikatem.
+ * @param {string|null|undefined} stampId
+ * @returns {Promise<boolean>} true = katalog z wersji oferty
+ */
+async function applyRuryOfferPricelist(stampId) {
+    const pv = window.pricelistVersions;
+    if (stampId && pv && typeof pv.applyOfferPricelist === 'function') {
+        try {
+            if (await pv.applyOfferPricelist('rury', stampId)) return true;
+        } catch (e) {
+            logger.warn('offerCrud', 'cennik oferty niedostępny', String(e));
+            showToast(
+                'Nie udało się wczytać cennika oferty (' + stampId + ') — liczę z obowiązującego',
+                'warning'
+            );
+        }
+    }
+    if (pv && typeof pv.setOfferStamp === 'function') pv.setOfferStamp('rury', null);
+    if (typeof loadProducts === 'function') products = await loadProducts({ source: 'active' });
+    return false;
+}
+
+/**
  * „Przelicz do aktywnego" (rury): ceny jednostkowe z live cennika ACTIVE.
  * Poza tym zero zmian logiki — unitPrice edycji trzyma zapis (frozen).
  * activeId z bannera ląduje w pendingStampId — saveOffer dokleja je jako
  * pieczątkę (serwer weryfikuje zgodność z ACTIVE, 409 w przeciwnym razie).
  * @param {string} [activeId] id aktywnej wersji cennika
- * @returns {boolean} true = przeliczono
+ * @returns {Promise<boolean>} true = przeliczono
  */
-function recalcRuryToActive(activeId) {
+async function recalcRuryToActive(activeId) {
     if (typeof activeId === 'string' && activeId) pendingRuryStampId = activeId;
+    // Katalog musi być ACTIVE — nie wersja pieczątki, z której liczyła oferta.
+    await applyRuryOfferPricelist(null);
     currentOfferItems.forEach(function (item) {
         if (!item || !item.productId) return;
         const product =

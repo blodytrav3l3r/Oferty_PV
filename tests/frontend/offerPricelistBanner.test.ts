@@ -122,7 +122,7 @@ describe('frontend vm: offerPricelistBanner.refresh', () => {
         const box = document.els['pv-offer-banner-studnie'] || document.host.children[0];
         expect(box.innerHTML).toContain('Oferta na cenniku v1-20260101');
         expect(box.innerHTML).toContain('aktywny v2-20260102');
-        expect(box.innerHTML).toContain('Ceny zamrożone');
+        expect(box.innerHTML).toContain('Ceny z wersji oferty');
         expect(box.innerHTML).toContain('Przelicz do aktywnego');
         // onRecalc podpięty — wołamy dla pokrycia (klik testowany niżej)
         expect(typeof onRecalc).toBe('function');
@@ -679,7 +679,7 @@ describe('frontend static: kontrakt bannera', () => {
         for (const n of icons) expect(slim).toMatch(new RegExp('[\'"]?' + n + '[\'"]?\\s*:'));
     });
     test('polski UI, brak inline onclick, brak fetchy na piechotę', () => {
-        expect(BANNER_SRC).toContain('Ceny zamrożone');
+        expect(BANNER_SRC).toContain('Ceny z wersji oferty');
         expect(BANNER_SRC).toContain('Przelicz do aktywnego');
         expect(BANNER_SRC).not.toContain('onclick=');
         expect(BANNER_SRC).not.toContain('fetch(');

@@ -292,7 +292,7 @@
             (label ? ' · ' + esc(label) : '') +
             '; aktywny ' +
             esc(active.version) +
-            '. Ceny zamrożone.</span>' +
+            '. Ceny z wersji oferty.</span>' +
             '<button type="button" class="btn btn-sm btn-primary" data-pv-recalc>' +
             '<i data-lucide="refresh-cw"></i> Przelicz do aktywnego</button>' +
             '</div>';

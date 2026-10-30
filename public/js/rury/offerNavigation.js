@@ -38,8 +38,12 @@ async function showSectionRury(id) {
     const targetBtn = document.querySelector(`.nav-btn[data-section="${id}"]`);
     if (targetBtn) targetBtn.classList.add('active');
 
-    // Podgląd w module oferty = cennik obowiązujący (ACTIVE): ten sam, z którego
-    // liczy oferta. Dane edytora (szkic/LIVE) tylko w hubie #/cennik.
+    // Podgląd w module oferty = cennik, z którego oferta liczy: wersja pieczątki
+    // oferty, a bez pieczątki ACTIVE. Dane edytora (szkic/LIVE) tylko w #/cennik.
+    const ruryOfferStamp =
+        window.pricelistVersions && typeof window.pricelistVersions.offerStamp === 'function'
+            ? window.pricelistVersions.offerStamp('rury')
+            : null;
     if (id === 'pricelist') {
         const pv = window.pricelistVersions;
         const editingPricing = !!(
@@ -47,9 +51,20 @@ async function showSectionRury(id) {
             typeof pv.isPricelistEditing === 'function' &&
             pv.isPricelistEditing('rury')
         );
-        products = await loadProducts(editingPricing ? undefined : { source: 'active' });
+        if (editingPricing) {
+            products = await loadProducts();
+        } else if (ruryOfferStamp && pv && typeof pv.applyOfferPricelist === 'function') {
+            // Ta sama wersja co pieczątka oferty — siatka nie kłamie o cenniku.
+            try {
+                await pv.applyOfferPricelist('rury', ruryOfferStamp);
+            } catch (_e) {
+                products = await loadProducts({ source: 'active' });
+            }
+        } else {
+            products = await loadProducts({ source: 'active' });
+        }
         renderPriceList();
-        // Pasek stanu: co edytujesz (szkic) vs co liczy oferta (obowiązująca).
+        // Pasek stanu: co edytujesz (szkic) vs co liczy oferta.
         if (
             window.pricelistVersions &&
             typeof window.pricelistVersions.renderStatusStrip === 'function'
@@ -57,6 +72,7 @@ async function showSectionRury(id) {
             window.pricelistVersions.renderStatusStrip('pricelist-status-strip', 'rury');
         }
     } else if (
+        !ruryOfferStamp &&
         (window.__ruryPricingSource === 'live' || window.__ruryPricingSource === 'live-fallback') &&
         (typeof _pricelistDirty === 'undefined' || !_pricelistDirty)
     ) {

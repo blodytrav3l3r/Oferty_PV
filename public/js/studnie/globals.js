@@ -426,17 +426,40 @@ async function showSectionStudnie(id) {
         window.cleanupWellDragListeners();
     }
 
-    // Podgląd w module oferty = cennik obowiązujący (ACTIVE): ten sam, z którego
-    // liczy oferta. Dane edytora (szkic/LIVE) tylko w hubie #/cennik.
+    // Podgląd w module oferty = cennik, z którego oferta liczy: wersja
+    // pieczątki oferty (oferta odtwarza własne ceny), a bez pieczątki ACTIVE.
+    // Dane edytora (szkic/LIVE) tylko w hubie #/cennik.
     // Przypisanie przez window.studnieProducts (kontrakt ADR-009: rebuild mapy).
+    const pvStudnie = window.pricelistVersions;
+    const studnieOfferStamp =
+        pvStudnie && typeof pvStudnie.offerStamp === 'function'
+            ? pvStudnie.offerStamp('studnie')
+            : null;
     if (id === 'pricelist') {
-        const pv = window.pricelistVersions;
         const axisEditing = (axis) =>
-            !!(pv && typeof pv.isPricelistEditing === 'function' && pv.isPricelistEditing(axis));
-        window.studnieProducts = await loadStudnieProducts({
-            source: axisEditing('studnie') ? undefined : 'active'
-        });
-        await loadPrecoPricing({ source: axisEditing('preco') ? undefined : 'active' });
+            !!(
+                pvStudnie &&
+                typeof pvStudnie.isPricelistEditing === 'function' &&
+                pvStudnie.isPricelistEditing(axis)
+            );
+        if (axisEditing('studnie')) {
+            window.studnieProducts = await loadStudnieProducts();
+        } else if (
+            studnieOfferStamp &&
+            pvStudnie &&
+            typeof pvStudnie.applyOfferPricelist === 'function'
+        ) {
+            // Ta sama wersja co pieczątka oferty — siatka nie kłamie o cenniku.
+            try {
+                await pvStudnie.applyOfferPricelist('studnie', studnieOfferStamp);
+            } catch (_e) {
+                window.studnieProducts = await loadStudnieProducts({ source: 'active' });
+            }
+        } else {
+            window.studnieProducts = await loadStudnieProducts({ source: 'active' });
+        }
+        if (axisEditing('preco')) await loadPrecoPricing();
+        else if (!studnieOfferStamp) await loadPrecoPricing({ source: 'active' });
         renderStudniePriceList();
         // Pasek stanu: co edytujesz (szkic) vs co liczy oferta (obowiązująca).
         if (
@@ -446,6 +469,7 @@ async function showSectionStudnie(id) {
             window.pricelistVersions.renderStatusStrip('pricelist-status-strip', 'studnie');
         }
     } else if (
+        !studnieOfferStamp &&
         (window.__studniePricingSource === 'live' ||
             window.__studniePricingSource === 'live-fallback') &&
         (typeof _studniePricelistDirty === 'undefined' || !_studniePricelistDirty) &&

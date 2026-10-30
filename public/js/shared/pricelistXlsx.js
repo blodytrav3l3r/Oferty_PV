@@ -377,6 +377,20 @@
         }
     }
 
+    /**
+     * Arkusze PRECO_* (shape LIVE z wersji cennika) → precoDataMap 1:1 z importem.
+     * Reuse collectPrecoRows; bez XLSX i bez DOM.
+     */
+    function precoSheetsToMap(sheets) {
+        var map = {};
+        Object.keys(sheets || {}).forEach(function (name) {
+            if (name.indexOf('PRECO_') !== 0) return;
+            var rows = sheets[name];
+            if (Array.isArray(rows) && rows.length > 0) collectPrecoRows(map, name, rows);
+        });
+        return map;
+    }
+
     window.pricelistXlsx = window.pricelistXlsx || {};
     window.pricelistXlsx.mapHeaders = mapHeaders;
     window.pricelistXlsx.coerceNumerics = coerceNumerics;
@@ -394,6 +408,7 @@
         });
     };
     window.pricelistXlsx.parseWorkbookToJson = parseWorkbookToJson;
+    window.pricelistXlsx.precoSheetsToMap = precoSheetsToMap;
     window.pricelistXlsx.precoNestedToFlat = precoNestedToFlat;
     window.pricelistXlsx.splitStudnieImport = splitStudnieImport;
     window.pricelistXlsx.openImportErrorsModal = openImportErrorsModal;

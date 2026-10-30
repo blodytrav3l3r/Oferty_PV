@@ -1,13 +1,13 @@
 // @ts-nocheck
 /**
- * Podgląd cennika w module oferty = cennik obowiązujący (ACTIVE), ten sam,
- * z którego liczy oferta. Dane edytora (szkic/LIVE) tylko w hubie #/cennik.
- * Kontrakt pilnuje, żeby wejście w „Cennik" nie podmieniało listy produktów
- * oferty na szkic i żeby pasek nie kłamał o źródle siatki.
+ * Podgląd cennika w module oferty = cennik, z którego oferta liczy: wersja
+ * pieczątki oferty, a bez pieczątki — obowiązujący (ACTIVE). Dane edytora
+ * (szkic/LIVE) tylko w hubie #/cennik. Kontrakt pilnuje, żeby wejście w
+ * „Cennik" nie podmieniało listy produktów oferty na szkic i żeby pasek nie
+ * kłamał o źródle siatki.
  */
 import fs from 'fs';
 import path from 'path';
-import vm from 'vm';
 
 function read(rel: string): string {
     return fs.readFileSync(path.join(process.cwd(), rel), 'utf-8');
@@ -19,28 +19,30 @@ const ruryNav = read('public/js/rury/offerNavigation.js');
 const panel = read('public/js/shared/pricelistVersions.js');
 const editBadgeTest = read('tests/frontend/pricelistEditModeBadge.test.ts');
 
-describe('cennik w ofercie: podgląd z wersji obowiązującej', () => {
-    it('studnie: wejście w cennik ładuje ACTIVE poza edycją', () => {
-        expect(globals).toContain("typeof pv.isPricelistEditing === 'function'");
-        expect(globals).toContain('pv.isPricelistEditing(axis)');
-        expect(globals).toMatch(/source: axisEditing\('studnie'\) \? undefined : 'active'/);
-        expect(globals).toMatch(
-            /loadPrecoPricing\(\{ source: axisEditing\('preco'\) \? undefined : 'active' \}\)/
-        );
-        // Powrót z cennika dalej dogrywa ACTIVE (bez niezapisanych zmian).
+describe('cennik w ofercie: podgląd z cennika oferty', () => {
+    it('studnie: pieczątka oferty → jej wersja, bez pieczątki → ACTIVE', () => {
+        expect(globals).toContain("typeof pvStudnie.offerStamp === 'function'");
+        expect(globals).toMatch(/pvStudnie\.applyOfferPricelist\('studnie', studnieOfferStamp\)/);
+        // Brak pieczątki / błąd pobrania wersji → obowiązujący.
         expect(globals).toContain("loadStudnieProducts({ source: 'active' })");
+        expect(globals).toMatch(
+            /if \(axisEditing\('studnie'\)\) \{\s*window\.studnieProducts = await loadStudnieProducts\(\);/
+        );
+        // Powrót z cennika nie nadpisuje katalogu oferty wersją ACTIVE.
+        expect(globals).toMatch(/!studnieOfferStamp &&/);
     });
 
     it('rury: to samo wejście, bez dotykania danych edytora', () => {
         expect(ruryNav).toContain("pv.isPricelistEditing('rury')");
-        expect(ruryNav).toContain(
-            "products = await loadProducts(editingPricing ? undefined : { source: 'active' });"
-        );
+        expect(ruryNav).toMatch(/pv\.applyOfferPricelist\('rury', ruryOfferStamp\)/);
+        expect(ruryNav).toContain("products = await loadProducts({ source: 'active' });");
+        expect(ruryNav).toMatch(/!ruryOfferStamp &&/);
     });
 
     it('refreshStudnieData: kafelki i Excel dostają to samo źródło co siatka', () => {
+        expect(refresh).toMatch(/pv\.applyOfferPricelist\('studnie', stamp\)/);
         expect(refresh).toContain(
-            "const rows = await loadStudnieProducts(editing ? undefined : { source: 'active' });"
+            "loadStudnieProducts(editing ? undefined : { source: 'active' })"
         );
         expect(refresh).not.toContain("fetch('/api/products-studnie', { headers: authHeaders() })");
     });
@@ -52,6 +54,9 @@ describe('cennik w ofercie: podgląd z wersji obowiązującej', () => {
         expect(panel).toContain('var editingGrid = isPricelistEditing(stripType);');
         expect(panel).toMatch(/if \(data\.draft && editingGrid\) \{/);
         expect(panel).toContain('Podgląd cennika oferty');
+        // Pasek mówi, że siatka pokazuje cennik oferty (wersja pieczątki).
+        expect(panel).toContain('Cennik oferty ');
+        expect(panel).toContain('offerStamp(stripType)');
     });
 
     it('PRECO po wyjściu z edycji wraca do ACTIVE', () => {

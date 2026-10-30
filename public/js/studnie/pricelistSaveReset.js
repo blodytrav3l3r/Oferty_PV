@@ -94,21 +94,25 @@ async function saveStudniePriceList() {
  * Centralne odświeżenie wszystkich widoków konfiguratora po zmianie cennika.
  * Pobiera świeże dane z serwera i przebudowuje: tabelę cennika, kafelki, tabelę Excel.
  * Źródło zależy od kontekstu: edycja (hub) = dane edytora (szkic), podgląd =
- * cennik obowiązujący (ACTIVE) — ten sam, z którego liczy oferta.
+ * cennik oferty (wersja pieczątki), a bez pieczątki — obowiązujący (ACTIVE).
  */
 async function refreshStudnieData() {
     try {
         const pv = window.pricelistVersions;
         const editing =
             pv && typeof pv.isPricelistEditing === 'function' && pv.isPricelistEditing('studnie');
-        const rows = await loadStudnieProducts(editing ? undefined : { source: 'active' });
-        if (Array.isArray(rows)) {
-            window.studnieProducts = rows;
-            renderStudniePriceList();
-            renderTiles();
-            if (typeof window.refreshExcelFromConfig === 'function') {
-                window.refreshExcelFromConfig();
-            }
+        const stamp = pv && typeof pv.offerStamp === 'function' ? pv.offerStamp('studnie') : null;
+        if (!editing && stamp && typeof pv.applyOfferPricelist === 'function') {
+            // Kafelki i Excel muszą liczyć z tego samego cennika co siatka.
+            await pv.applyOfferPricelist('studnie', stamp);
+        } else {
+            const rows = await loadStudnieProducts(editing ? undefined : { source: 'active' });
+            if (Array.isArray(rows)) window.studnieProducts = rows;
+        }
+        renderStudniePriceList();
+        renderTiles();
+        if (typeof window.refreshExcelFromConfig === 'function') {
+            window.refreshExcelFromConfig();
         }
     } catch {
         logger.warn('pricelistSaveReset', 'refreshStudnieData: blad pobierania');

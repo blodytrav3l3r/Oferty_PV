@@ -1047,6 +1047,90 @@
         );
     }
 
+    /**
+     * Wersja cennika → dane osi (kształt LIVE z /rows, bez XLSX i bez modala).
+     * @param {string} type
+     * @param {string} id
+     * @returns {Promise<{rows?: any[], precoMap?: Record<string, any>, label?: string|null}>}
+     */
+    async function fetchOfferVersionData(type, id) {
+        var res = await fetch(API + '/' + encodeURIComponent(id) + '/rows', {
+            headers: typeof authHeaders === 'function' ? authHeaders() : {}
+        });
+        if (!res.ok) {
+            var failure = await res.json().catch(function () {
+                return null;
+            });
+            throw new Error((failure && failure.error) || 'HTTP ' + res.status);
+        }
+        var payload = await res.json();
+        var sheets = payload.sheets || {};
+        var label = (payload.version && payload.version.version) || null;
+        var precoMap = {};
+        if (type !== 'rury' && window.pricelistXlsx && window.pricelistXlsx.precoSheetsToMap) {
+            precoMap = window.pricelistXlsx.precoSheetsToMap(sheets);
+        }
+        if (type === 'preco') return { precoMap: precoMap, label: label };
+        var raw = [];
+        Object.keys(sheets).forEach(function (name) {
+            if (name.indexOf('PRECO_') === 0) return;
+            raw = raw.concat(sheets[name] || []);
+        });
+        var opts = type === 'rury' ? window.ruryImportOptions([]) : window.studnieImportOptions([]);
+        return {
+            rows: window.pricelistXlsx.normalizeRows(raw, opts),
+            precoMap: precoMap,
+            label: label
+        };
+    }
+
+    /* ===== Cennik oferty (pieczątka) ===== */
+    /* Oferta odtwarza własny cennik: dane osi pochodzą z wersji pieczątki,
+     * nie z ACTIVE. Brak pieczątki / błąd = ACTIVE (z ostrzeżeniem w module). */
+    var offerStamps = { rury: null, studnie: null, preco: null };
+    var offerStampLabels = { rury: null, studnie: null, preco: null };
+
+    function setOfferStamp(type, id, label) {
+        if (!type || !Object.prototype.hasOwnProperty.call(offerStamps, type)) return;
+        offerStamps[type] = id || null;
+        offerStampLabels[type] = id ? label || offerStampLabels[type] || null : null;
+    }
+
+    function offerStamp(type) {
+        return Object.prototype.hasOwnProperty.call(offerStamps, type) ? offerStamps[type] : null;
+    }
+
+    function offerStampLabel(type) {
+        return offerStampLabels[type] || null;
+    }
+
+    /**
+     * Podstawia cennik wersji pieczątki do danych osi. Studnie niosą też PRECO
+     * (eksport wersji studni dokleja PRECO obowiązującą w jej dacie).
+     * @param {'rury'|'studnie'|'preco'} type
+     * @param {string} versionId
+     * @returns {Promise<boolean>} true = dane osi pochodzą z wersji
+     */
+    async function applyOfferPricelist(type, versionId) {
+        if (!versionId) {
+            setOfferStamp(type, null);
+            return false;
+        }
+        var data = await fetchOfferVersionData(type, versionId);
+        if (type === 'rury') {
+            GRID_STATE.rury.write(data.rows || []);
+        } else if (type === 'preco') {
+            GRID_STATE.preco.write(data.precoMap || {});
+        } else {
+            GRID_STATE.studnie.write(data.rows || []);
+            if (data.precoMap && Object.keys(data.precoMap).length > 0) {
+                GRID_STATE.preco.write(data.precoMap);
+            }
+        }
+        setOfferStamp(type, versionId, data.label);
+        return true;
+    }
+
     /** Pokazuje wersję w siatce edytora (bez modala i bez osobnej tabeli). */
     async function showVersionInGrid(type, v) {
         var cfg = GRID_STATE[type];
@@ -2969,9 +3053,29 @@
                     );
                 }
                 if (!editingGrid) {
-                    parts.push(
-                        '<span class="badge badge-ok" title="Podgląd w module oferty: siatka pokazuje cennik, z którego liczy ta oferta. Zmiany w szkicu wejdą dopiero po publikacji.">◉ Podgląd cennika oferty</span>'
-                    );
+                    // W ofercie siatka pokazuje cennik wersji pieczątki oferty
+                    // (oferta odtwarza własne ceny), a nie zawsze ACTIVE.
+                    var stampId = offerStamp(stripType);
+                    var stampLabel = offerStampLabel(stripType);
+                    if (stampId) {
+                        var stampIsActive = !!(data.active && data.active.id === stampId);
+                        parts.push(
+                            '<span class="badge ' +
+                                (stampIsActive ? 'badge-ok' : 'badge-warn') +
+                                '" title="' +
+                                (stampIsActive
+                                    ? 'Siatka pokazuje cennik obowiązujący — oferta liczy z tej samej wersji.'
+                                    : 'Siatka pokazuje cennik oferty (wersja archiwalna). Oferta liczy z tej wersji; nowe ceny wejdą przez „Przelicz do aktywnego”.') +
+                                '">◉ Cennik oferty ' +
+                                esc(stampLabel || stampId) +
+                                (stampIsActive ? '' : ' (archiwalny)') +
+                                '</span>'
+                        );
+                    } else {
+                        parts.push(
+                            '<span class="badge badge-ok" title="Podgląd w module oferty: siatka pokazuje cennik obowiązujący, z którego liczy nowa oferta.">◉ Podgląd cennika oferty</span>'
+                        );
+                    }
                 }
                 if (data.active) {
                     parts.push(
@@ -3359,6 +3463,10 @@
         isVersionsPanelOpen: isVersionsPanelOpen,
         isCennikHost: isCennikHost,
         isPricelistEditing: isPricelistEditing,
+        applyOfferPricelist: applyOfferPricelist,
+        offerStamp: offerStamp,
+        offerStampLabel: offerStampLabel,
+        setOfferStamp: setOfferStamp,
         afterVersionChange: afterVersionChange,
         openDiff: openDiff,
         statusBadge: statusBadge,

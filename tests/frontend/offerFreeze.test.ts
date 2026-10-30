@@ -360,7 +360,7 @@ describe('frontend static: mrożenie studni end-to-end w źródle', () => {
         expect(mgr).toContain('isOfferEditFrozen = false');
     });
     test('recalcStudnieToActive czyści frozen* i przelicza', () => {
-        expect(mgr).toContain('function recalcStudnieToActive(activeId)');
+        expect(mgr).toContain('async function recalcStudnieToActive(activeId)');
         for (const f of [
             'delete it.frozenPrice',
             'delete it.frozenPriceBase',
@@ -375,7 +375,7 @@ describe('frontend static: mrożenie studni end-to-end w źródle', () => {
     test('rury: recalc z live, zero zmian logiki render/zapis', () => {
         const crud = readPub('js/rury/offerCrud.js');
         const rendering = readPub('js/rury/offerRendering.js');
-        expect(crud).toContain('function recalcRuryToActive(activeId)');
+        expect(crud).toContain('async function recalcRuryToActive(activeId)');
         expect(crud).toContain('item.unitPrice = product.price');
         expect(crud).toContain('window.recalcRuryToActive = recalcRuryToActive');
         // Logika mrożenia rur nietknięta: unitPrice tylko gdy undefined.
@@ -386,28 +386,29 @@ describe('frontend static: mrożenie studni end-to-end w źródle', () => {
 });
 
 describe('frontend vm: recalc zapisuje pendingStampId (pieczątka do zapisu)', () => {
-    test('rury: recalcRuryToActive(activeId) stempluje pending + przelicza ceny', () => {
+    test('rury: recalcRuryToActive(activeId) stempluje pending + przelicza ceny', async () => {
         const sandbox = {
-            window: {},
+            window: { pricelistVersions: { setOfferStamp: () => {} } },
             console,
             currentOfferItems: [{ productId: 'P1', quantity: 1, discount: 0 }],
             getRuryProductById: () => ({ price: 150 }),
-            renderOfferItems: () => {}
+            renderOfferItems: () => {},
+            loadProducts: async () => [{ id: 'P1', price: 150 }]
         };
         vm.createContext(sandbox);
         vm.runInContext(readPub('js/rury/offerCrud.js'), sandbox, {
             filename: 'offerCrud.js'
         });
-        vm.runInContext('recalcRuryToActive("v9")', sandbox);
+        await vm.runInContext('recalcRuryToActive("v9")', sandbox);
         expect(vm.runInContext('pendingRuryStampId', sandbox)).toBe('v9');
         expect(sandbox.currentOfferItems[0].unitPrice).toBe(150);
         // Bez argumentu (stare wołanie) — pending nietknięte, ceny przeliczone.
         vm.runInContext('pendingRuryStampId = null', sandbox);
-        vm.runInContext('recalcRuryToActive()', sandbox);
+        await vm.runInContext('recalcRuryToActive()', sandbox);
         expect(vm.runInContext('pendingRuryStampId', sandbox)).toBeNull();
     });
 
-    test('studnie: recalcStudnieToActive(activeId) stempluje pending + czyści frozen', () => {
+    test('studnie: recalcStudnieToActive(activeId) stempluje pending + czyści frozen', async () => {
         const sandbox = {
             window: {},
             console,
@@ -417,6 +418,8 @@ describe('frontend vm: recalc zapisuje pendingStampId (pieczątka do zapisu)', (
                     przejscia: []
                 }
             ],
+            loadStudnieProducts: async () => [],
+            loadPrecoPricing: async () => {},
             refreshAll: () => {},
             renderOfferSummary: () => {}
         };
@@ -424,7 +427,7 @@ describe('frontend vm: recalc zapisuje pendingStampId (pieczątka do zapisu)', (
         vm.runInContext(readPub('js/studnie/offerManager.js'), sandbox, {
             filename: 'offerManager.js'
         });
-        vm.runInContext('recalcStudnieToActive("v9")', sandbox);
+        await vm.runInContext('recalcStudnieToActive("v9")', sandbox);
         expect(sandbox.window.pendingStudnieStampId).toBe('v9');
         expect(sandbox.wells[0].config[0].frozenPrice).toBeUndefined();
     });
