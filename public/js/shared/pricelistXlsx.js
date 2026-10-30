@@ -38,8 +38,19 @@
                     emptyDefaults && Object.prototype.hasOwnProperty.call(emptyDefaults, f)
                         ? emptyDefaults[f]
                         : null;
+            } else if (typeof val === 'boolean') {
+                // Wersje cennika niosą flagi jako boolean (Prisma: magazynWL/KLB,
+                // formy) — 1:1 na 1/0. Bez tego parseFloat(true) = NaN gubiło
+                // wartość wersji (false zostaje 0, bo to jawna wartość).
+                product[f] = val ? 1 : 0;
             } else if (typeof val === 'string') {
                 val = val.replace(/\s/g, '').replace(',', '.');
+                var lowered = val.toLowerCase();
+                if (lowered === 'true' || lowered === 'false') {
+                    // Excel zapisuje flagi także jako TRUE/FALSE.
+                    product[f] = lowered === 'true' ? 1 : 0;
+                    return;
+                }
                 var num = parseFloat(val);
                 if (isNaN(num) && typeof onInvalid === 'function') onInvalid(f, product[f]);
                 product[f] = isNaN(num) ? null : num;

@@ -274,6 +274,60 @@ describe('pricelistXlsx: mapHeaders / coerceNumerics / validateProductIdName', (
         expect(s).toEqual({ magazynWL: 1, price: null });
     });
 
+    test('flagi wersji: boolean i TRUE/FALSE zachowują wartość (nie 0 z NaN)', () => {
+        const { PX } = loadPX();
+        const issues = [];
+        const onInvalid = (f, v) => issues.push([f, v]);
+        const p = PX.coerceNumerics(
+            { magazynWL: true, magazynKLB: false, formaStandardowa: true },
+            ['magazynWL', 'magazynKLB', 'formaStandardowa'],
+            {},
+            onInvalid
+        );
+        expect(p).toEqual({ magazynWL: 1, magazynKLB: 0, formaStandardowa: 1 });
+        expect(issues).toEqual([]);
+
+        const s = PX.coerceNumerics(
+            { magazynWL: 'TRUE', magazynKLB: ' false ', formaStandardowa: 'True' },
+            ['magazynWL', 'magazynKLB', 'formaStandardowa'],
+            {},
+            onInvalid
+        );
+        expect(s).toEqual({ magazynWL: 1, magazynKLB: 0, formaStandardowa: 1 });
+        expect(issues).toEqual([]);
+    });
+
+    test('każda wersja trzyma własne flagi (bez dziedziczenia między wersjami)', () => {
+        const { PX } = loadPX();
+        const opts = {
+            headerToKey: STUDNIE_MAP,
+            numericFields: ['price', 'magazynWL', 'formaStandardowa'],
+            emptyDefaults: {}
+        };
+        const v4 = PX.normalizeRows(
+            [
+                { Indeks: 'A', Nazwa: 'A', 'Cena PLN': 10, 'Mag WL': true, 'Forma std. WL': false },
+                { Indeks: 'B', Nazwa: 'B', 'Cena PLN': 20, 'Mag WL': false, 'Forma std. WL': true }
+            ],
+            opts
+        );
+        const v3 = PX.normalizeRows(
+            [
+                { Indeks: 'A', Nazwa: 'A', 'Cena PLN': 10, 'Mag WL': false, 'Forma std. WL': true },
+                { Indeks: 'B', Nazwa: 'B', 'Cena PLN': 20, 'Mag WL': true, 'Forma std. WL': false }
+            ],
+            opts
+        );
+        expect(v4.map((p) => [p.magazynWL, p.formaStandardowa])).toEqual([
+            [1, 0],
+            [0, 1]
+        ]);
+        expect(v3.map((p) => [p.magazynWL, p.formaStandardowa])).toEqual([
+            [0, 1],
+            [1, 0]
+        ]);
+    });
+
     test('walidacja trimuje id/name', () => {
         const { PX } = loadPX();
         const ok = { id: '  R1 ', name: ' Rura ' };

@@ -139,7 +139,14 @@ export function liveSanitizeSheetName(cat: string): string {
     return cat.replace(/[[\]*/\\?:]/g, '_').substring(0, 31);
 }
 
+/**
+ * Wartość wiersza wersji → komórka arkusza LIVE. Flagi (Boolean w Prisma:
+ * magazynWL/KLB, formy) idą jako 1/0 — ten sam kontrakt co legacy
+ * `/api/products-studnie` (toLegacy). Boolean w JSON gubił wartość po stronie
+ * importera i zerował ustawienia wersji.
+ */
 function toLiveValue(value: unknown): unknown {
+    if (typeof value === 'boolean') return value ? 1 : 0;
     return value ?? '';
 }
 

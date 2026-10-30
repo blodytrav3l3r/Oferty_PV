@@ -307,6 +307,30 @@ describe('Etap A: projectVersionToLiveShape — STUDNIE', () => {
     it('pusta sekcja → brak arkuszy', () => {
         expect(projectVersionToLiveShape('studnie', { studnie: [] })).toEqual({});
     });
+
+    it('flagi wersji idą jako 1/0 (boolean nie gubi wartości w imporcie)', () => {
+        const out = projectVersionToLiveShape('studnie', {
+            studnie: [
+                {
+                    id: 'A',
+                    name: 'A',
+                    category: 'Akcesoria studni',
+                    componentType: 'avr',
+                    dn: null,
+                    price: 10,
+                    magazynWL: true,
+                    magazynKLB: false,
+                    formaStandardowa: true,
+                    formaStandardowaKLB: false
+                }
+            ]
+        });
+        const row = out['Akcesoria'][0];
+        expect(row['Mag WL']).toBe(1);
+        expect(row['Mag KLB']).toBe(0);
+        expect(row['Forma std. WL']).toBe(1);
+        expect(row['Forma std. KLB']).toBe(0);
+    });
 });
 
 describe('Etap A: projectVersionToLiveShape — PRECO', () => {
