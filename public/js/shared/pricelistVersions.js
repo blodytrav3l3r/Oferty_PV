@@ -1626,11 +1626,22 @@
      * ponowny render listy wersji nie kasuje przycisków.
      */
     function mountGridActions() {
-        var slot = document.querySelector('.pv-dock__pinned');
         var source = document.getElementById('pv-grid-actions');
-        if (!slot || !source || slot.contains(source)) return;
+        if (!source) return;
+        var dock = document.getElementById(DOCK_ID);
+        var slot = document.querySelector('.pv-dock__pinned');
+        // Otwarty rail: akcje w stałym slocie raila. Zamknięty: obok „Panel" w toolbarze,
+        // żeby „Edytuj/Zapisz" były widoczne bez otwierania panelu.
+        if (dock && !dock.hidden && slot) {
+            if (slot.contains(source)) return;
+            source.hidden = false;
+            slot.appendChild(source);
+            return;
+        }
+        var toggle = document.querySelector('#section-pricelist > .toolbar [data-pv-dock-toggle]');
+        if (!toggle || toggle.nextSibling === source) return;
         source.hidden = false;
-        slot.appendChild(source);
+        toggle.insertAdjacentElement('afterend', source);
     }
 
     /** Tworzy rail + backdrop raz na stronę; brak sekcji cennika = brak raila. */
@@ -1683,6 +1694,8 @@
         if (dock) dock.hidden = !open;
         if (backdrop) backdrop.hidden = !open;
         document.body.classList.toggle('pv-dock-open', open);
+        // Akcje siatki wędrują z railem: otwarty → slot raila, zamknięty → obok „Panel".
+        mountGridActions();
         var buttons = document.querySelectorAll('[data-pv-dock-toggle]');
         Array.prototype.forEach.call(buttons, function (btn) {
             btn.setAttribute('aria-expanded', open ? 'true' : 'false');
@@ -3277,6 +3290,30 @@
             return;
         }
     });
+
+    // Akcje siatki mają być widoczne od razu obok „Panel" — także gdy rail nigdy
+    // nie był otwierany (ensureDock tworzy się dopiero przy otwarciu panelu).
+    var gridActionsMounted = false;
+    function bootGridActions() {
+        if (gridActionsMounted) return;
+        if (!document.getElementById('pv-grid-actions')) return;
+        mountGridActions();
+        gridActionsMounted = true;
+        if (gridActionsObserver) gridActionsObserver.disconnect();
+    }
+    var gridActionsObserver = null;
+    if (typeof document.addEventListener === 'function')
+        document.addEventListener('DOMContentLoaded', bootGridActions);
+    else bootGridActions();
+    if (typeof window.addEventListener === 'function')
+        window.addEventListener('load', bootGridActions);
+    // Partial cennika bywa wstrzykiwany po load — czekamy na pojawienie się akcji.
+    if (!gridActionsMounted && typeof MutationObserver === 'function' && document.documentElement) {
+        gridActionsObserver = new MutationObserver(function () {
+            bootGridActions();
+        });
+        gridActionsObserver.observe(document.documentElement, { childList: true, subtree: true });
+    }
 
     window.pricelistVersions = {
         fetchLabels: fetchLabels,

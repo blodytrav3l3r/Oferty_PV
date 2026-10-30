@@ -31,30 +31,29 @@
         >
             <i data-lucide="panel-left"></i> Panel
         </button>
-    </div>
-    <div id="pricelist-status-strip" class="pv-status-strip" aria-live="polite"></div>
-
-    <!-- Akcje siatki: przenoszone do raila „Zarządzanie cennikami" (jedyny pasek akcji). -->
-    <div
-        id="pv-grid-actions"
-        class="pv-grid-actions"
-        role="group"
-        aria-label="Akcje siatki cen"
-        hidden
-    >
-        <div id="pv-editor-actions" class="pv-editor-actions">
-            <div id="pv-mode-actions" class="pv-mode-actions"></div>
-            <button
-                type="button"
-                class="btn btn-secondary"
-                id="btn-save-pricelist"
-                data-csp="savePriceList"
-                title="Zapisz zmiany w cenniku"
-            >
-                <i data-lucide="save"></i> Zapisz
-            </button>
+        <!-- Akcje siatki obok „Panel": z railem otwartym przenosi je mountGridActions(). -->
+        <div
+            id="pv-grid-actions"
+            class="pv-grid-actions"
+            role="group"
+            aria-label="Akcje siatki cen"
+            hidden
+        >
+            <div id="pv-editor-actions" class="pv-editor-actions">
+                <div id="pv-mode-actions" class="pv-mode-actions"></div>
+                <button
+                    type="button"
+                    class="btn btn-sm btn-secondary"
+                    id="btn-save-pricelist"
+                    data-csp="savePriceList"
+                    title="Zapisz zmiany w cenniku"
+                >
+                    <i data-lucide="save"></i> Zapisz
+                </button>
+            </div>
         </div>
     </div>
+    <div id="pricelist-status-strip" class="pv-status-strip" aria-live="polite"></div>
 
     <div id="pricelist-body" style="margin-top: 1rem"></div>
 </div>

@@ -1,5 +1,5 @@
 <!-- ===== SECTION: PRICE LIST ===== -->
-<div class="section" id="section-pricelist" style="padding: 0.8rem 0 200px">
+<div class="section" id="section-pricelist" style="padding-top: 0.8rem; padding-bottom: 200px">
     <div class="toolbar">
         <h2 class="pricelist-toolbar-title">
             <i data-lucide="clipboard-list"></i>
@@ -31,6 +31,36 @@
         >
             <i data-lucide="panel-left"></i> Panel
         </button>
+        <!-- Akcje siatki obok „Panel": z railem otwartym przenosi je mountGridActions(). -->
+        <div
+            id="pv-grid-actions"
+            class="pv-grid-actions"
+            role="group"
+            aria-label="Akcje siatki cen"
+            hidden
+        >
+            <div id="pv-editor-actions" class="pv-editor-actions">
+                <div id="pv-mode-actions" class="pv-mode-actions"></div>
+                <button
+                    type="button"
+                    class="btn btn-sm btn-secondary"
+                    id="btn-save-studnie-pricelist"
+                    data-csp="saveStudniePriceList"
+                    title="Zapisz zmiany w cenniku"
+                >
+                    <i data-lucide="save"></i> Zapisz
+                </button>
+                <button
+                    type="button"
+                    class="btn btn-sm btn-secondary"
+                    id="btn-save-preco-rail"
+                    data-csp="savePrecoFromUI"
+                    title="Zapisz zmiany w cenniku PRECO"
+                >
+                    <i data-lucide="save"></i> Zapisz
+                </button>
+            </div>
+        </div>
     </div>
     <div id="pricelist-status-strip" class="pv-status-strip" aria-live="polite"></div>
     <div class="gap-1" style="display: flex; margin-bottom: 0.8rem; flex-wrap: wrap">
@@ -146,35 +176,4 @@
         </button>
     </div>
     <div id="studnie-pricelist-body"></div>
-
-    <!-- Akcje siatki: przenoszone do raila „Zarządzanie cennikami" (jedyny pasek akcji). -->
-    <div
-        id="pv-grid-actions"
-        class="pv-grid-actions"
-        role="group"
-        aria-label="Akcje siatki cen"
-        hidden
-    >
-        <div id="pv-editor-actions" class="pv-editor-actions">
-            <div id="pv-mode-actions" class="pv-mode-actions"></div>
-            <button
-                type="button"
-                class="btn btn-secondary"
-                id="btn-save-studnie-pricelist"
-                data-csp="saveStudniePriceList"
-                title="Zapisz zmiany w cenniku"
-            >
-                <i data-lucide="save"></i> Zapisz
-            </button>
-            <button
-                type="button"
-                class="btn btn-secondary"
-                id="btn-save-preco-rail"
-                data-csp="savePrecoFromUI"
-                title="Zapisz zmiany w cenniku PRECO"
-            >
-                <i data-lucide="save"></i> Zapisz
-            </button>
-        </div>
-    </div>
 </div>

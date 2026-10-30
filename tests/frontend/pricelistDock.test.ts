@@ -277,6 +277,48 @@ describe('Rail „Zarządzanie cennikami" (lewy panel edytorów)', () => {
         expect(base).toContain('--bottom-bar-h-mobile: 56px');
     });
 
+    it('akcje siatki siedzą obok „Panel" w toolbarze (widoczne bez otwierania raila)', () => {
+        for (const partial of [studniePartial, ruryPartial]) {
+            const toolbarStart = partial.indexOf('class="toolbar"');
+            const toolbarEnd = partial.indexOf('id="pricelist-status-strip"');
+            const actions = partial.indexOf('id="pv-grid-actions"');
+            const toggle = partial.indexOf('data-pv-dock-toggle');
+            expect(toolbarStart).toBeGreaterThan(-1);
+            expect(toolbarEnd).toBeGreaterThan(toolbarStart);
+            // Akcje w środku toolbara i za przyciskiem „Panel".
+            expect(actions).toBeGreaterThan(toggle);
+            expect(actions).toBeLessThan(toolbarEnd);
+        }
+        // Zamknięty rail: JS przenosi akcje z powrotem za „Panel"; otwarty: do slotu raila.
+        expect(panel).toContain(
+            "var toggle = document.querySelector('#section-pricelist > .toolbar [data-pv-dock-toggle]');"
+        );
+        expect(panel).toContain("toggle.insertAdjacentElement('afterend', source)");
+        expect(panel).toMatch(/function setDockExpanded\(open\) \{[\s\S]*?mountGridActions\(\);/);
+        // Widoczne od razu, bez otwierania raila (partial może dojść po load).
+        expect(panel).toContain('function bootGridActions()');
+        expect(panel).toContain('new MutationObserver(');
+        // Układ poziomy w toolbarze (kolumna jest dla raila), „Panel" ostatni w wierszu.
+        expect(css).toMatch(/\.toolbar \.pv-grid-actions \{[^}]*flex-direction: row/);
+        expect(css).toMatch(
+            /\.toolbar \.pv-grid-actions \.pv-editor-actions \.btn \{[^}]*flex: 0 0 auto/
+        );
+        expect(css).toMatch(/\.toolbar \[data-pv-dock-toggle\] \{\s*order: 1;/);
+        // Szukajka ustępuje miejsca, żeby akcje zostały w tym samym wierszu:
+        // baza 140 px (nie 220), bo wiersz łamie się wg flex-basis przed skurczem.
+        expect(css).toMatch(
+            /\.toolbar:has\(#pv-grid-actions:not\(\[hidden\]\)\) \.search-box \{[^}]*flex: 1 1 140px;[^}]*min-width: 140px/
+        );
+        // Sekcja ma oddech od bocznych krawędzi (oba moduły dzielą partial cennika).
+        expect(css).toMatch(
+            /#section-pricelist \{\s*padding-left: var\(--tile-gap-lg\);\s*padding-right: var\(--tile-gap-lg\);/
+        );
+        // Padding poziomy tylko z CSS — inline w partialu nie może go nadpisać.
+        expect(read('public/partials/studnie/pricelist.html')).not.toMatch(
+            /id="section-pricelist"[^>]*style="[^"]*padding:/
+        );
+    });
+
     it('rail w #/cennik otwiera się zawsze (brak preferencji zamykania)', () => {
         expect(panel).toContain('function autoOpenVersionsPanel(');
         expect(panel).toContain('if (!isCennikHost()) return Promise.resolve();');

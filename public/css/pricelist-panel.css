@@ -132,6 +132,37 @@ body.pv-cennik-host [data-pv-dock-toggle] {
     padding-top: 0.1rem;
 }
 
+/* Rail zamknięty: akcje stoją obok „Panel" w toolbarze — układ poziomy, bez
+ * rozciągania przycisków (te reguły są dla kolumny w railu). */
+.toolbar .pv-grid-actions {
+    flex-direction: row;
+    align-items: center;
+    padding-top: 0;
+}
+
+.toolbar .pv-grid-actions .pv-editor-actions,
+.toolbar .pv-grid-actions .pv-mode-actions {
+    flex: 0 0 auto;
+    flex-wrap: nowrap;
+    align-items: center;
+}
+
+.toolbar .pv-grid-actions .pv-editor-actions .btn {
+    flex: 0 0 auto;
+}
+
+/* „Panel" zostaje ostatni w wierszu — akcje stoją bezpośrednio po jego lewej. */
+.toolbar [data-pv-dock-toggle] {
+    order: 1;
+}
+
+/* Szukajka nie rozpycha wiersza, gdy akcje są widoczne: bazowo 140 px i rośnie
+ * z wolnym miejscem, żeby [akcje][Panel] zostały w tym samym wierszu. */
+.toolbar:has(#pv-grid-actions:not([hidden])) .search-box {
+    flex: 1 1 140px;
+    min-width: 140px;
+}
+
 .pv-grid-actions .pv-editor-actions {
     display: flex;
     flex-wrap: wrap;
@@ -175,6 +206,13 @@ body.pv-cennik-host .preco-toolbar {
  * a treść cennika ma ten sam oddech od paska co sekcja w module Studnie. */
 body.pv-cennik-host #section-pricelist {
     padding-top: var(--tile-gap-sm-plus);
+}
+
+/* Oddech od bocznych krawędzi — toolbar i tabela nie dotykają ramki.
+ * Oba moduły (Studnie, Rury) dzielą ten sam partial cennika. */
+#section-pricelist {
+    padding-left: var(--tile-gap-lg);
+    padding-right: var(--tile-gap-lg);
 }
 
 /* Treść odsuwa się od lewego raila (desktop). Header zostaje pełnej szerokości.
