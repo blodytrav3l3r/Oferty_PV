@@ -43,10 +43,13 @@ describe('frontend: pasek stanu cennika w edytorze', () => {
         expect(shared).toContain('zmiany w edytorze nie ruszają ofert do publikacji');
     });
 
-    it('A5: baner mówi wprost, że siatka pokazuje szkic', () => {
+    it('A5: baner „siatka pokazuje szkic" tylko w trybie edycji', () => {
         expect(shared).toContain('pv-draft-banner');
         expect(shared).toContain('Siatka pokazuje szkic');
         expect(shared).toContain('oferty liczą z obowiązującej');
+        expect(shared).toMatch(/if \(data\.draft && editingGrid\) \{/);
+        // Podgląd w ofercie mówi, że siatka pokazuje cennik obowiązujący.
+        expect(shared).toContain('Podgląd cennika oferty');
         expect(utilities).toContain('.pv-draft-banner');
     });
 

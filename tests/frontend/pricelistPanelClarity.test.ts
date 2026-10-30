@@ -114,7 +114,8 @@ describe('frontend: DRAFT ma drogę na oś czasu', () => {
         expect(panel).toContain('data-pv-act="edit"');
         expect(panel).toContain('Utwórz kopię jako szkic');
         expect(panel).toContain('function openEditorFor(');
-        expect(panel).toContain("'#/studnie?tab=pricelist&pvtype=preco'");
+        // Moduł oferty to podgląd — „Edytuj" prowadzi do huba cenników.
+        expect(panel).toContain("'#/cennik?tab=preco&panel=versions'");
     });
 });
 

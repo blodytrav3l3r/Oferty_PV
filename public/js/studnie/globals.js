@@ -426,11 +426,17 @@ async function showSectionStudnie(id) {
         window.cleanupWellDragListeners();
     }
 
-    // P1: cennik-admin zawsze na LIVE, ekrany ofert na ACTIVE.
+    // Podgląd w module oferty = cennik obowiązujący (ACTIVE): ten sam, z którego
+    // liczy oferta. Dane edytora (szkic/LIVE) tylko w hubie #/cennik.
     // Przypisanie przez window.studnieProducts (kontrakt ADR-009: rebuild mapy).
     if (id === 'pricelist') {
-        window.studnieProducts = await loadStudnieProducts();
-        await loadPrecoPricing();
+        const pv = window.pricelistVersions;
+        const axisEditing = (axis) =>
+            !!(pv && typeof pv.isPricelistEditing === 'function' && pv.isPricelistEditing(axis));
+        window.studnieProducts = await loadStudnieProducts({
+            source: axisEditing('studnie') ? undefined : 'active'
+        });
+        await loadPrecoPricing({ source: axisEditing('preco') ? undefined : 'active' });
         renderStudniePriceList();
         // Pasek stanu: co edytujesz (szkic) vs co liczy oferta (obowiązująca).
         if (

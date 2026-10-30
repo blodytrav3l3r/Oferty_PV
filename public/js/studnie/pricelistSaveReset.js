@@ -93,13 +93,17 @@ async function saveStudniePriceList() {
 /**
  * Centralne odświeżenie wszystkich widoków konfiguratora po zmianie cennika.
  * Pobiera świeże dane z serwera i przebudowuje: tabelę cennika, kafelki, tabelę Excel.
+ * Źródło zależy od kontekstu: edycja (hub) = dane edytora (szkic), podgląd =
+ * cennik obowiązujący (ACTIVE) — ten sam, z którego liczy oferta.
  */
 async function refreshStudnieData() {
     try {
-        const res = await fetch('/api/products-studnie', { headers: authHeaders() });
-        const result = res.ok ? /** @type {any} */ (await res.json()) : null;
-        if (result && Array.isArray(result.data)) {
-            window.studnieProducts = result.data;
+        const pv = window.pricelistVersions;
+        const editing =
+            pv && typeof pv.isPricelistEditing === 'function' && pv.isPricelistEditing('studnie');
+        const rows = await loadStudnieProducts(editing ? undefined : { source: 'active' });
+        if (Array.isArray(rows)) {
+            window.studnieProducts = rows;
             renderStudniePriceList();
             renderTiles();
             if (typeof window.refreshExcelFromConfig === 'function') {

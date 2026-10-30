@@ -162,13 +162,19 @@ edytory co moduły — Rury oraz Studnie/PRECO — więc edycja i zapis działaj
 przechodzenia na `#/rury` lub `#/studnie`. „Edytuj"/„Utwórz kopię jako szkic"
 zostaje w `#/cennik` (nie zmienia hasha SPA).
 
-Uwaga o buforze: edytor czyta `DRAFT → ACTIVE → LIVE`, a oferta liczy z wersji obowiązującej.
-Szkic w edytorze **nie** oznacza, że oferta policzy z niego.
+Uwaga o buforze: edytor w `#/cennik` czyta `DRAFT → ACTIVE → LIVE`, a oferta liczy
+z wersji obowiązującej. Szkic w edytorze **nie** oznacza, że oferta policzy z niego.
+
+Uwaga o podglądzie w ofercie: zakładka **„Cennik”** w module (`#/studnie`, `#/rury`)
+jest **podglądem** — pokazuje cennik obowiązujący (ACTIVE), ten sam, z którego liczy
+oferta. Szkic widać wyłącznie w trybie edycji w `#/cennik`; przycisk „Edytuj”
+w module przenosi do huba cenników.
 
 ## 5. Nowy cennik od zera (szkic)
 
-1. Wejdź w moduł (`#/rury` lub `#/studnie`) → zakładka **„Cennik"** i popraw ceny
-   (ręcznie albo importem XLSX).
+1. Wejdź w `#/cennik` → oś **Rury**/**Studnie** → **„Edytuj”** (albo „Utwórz kopię
+   jako szkic”) i popraw ceny (ręcznie albo importem XLSX). Zakładka „Cennik”
+   w module oferty jest tylko podglądem wersji obowiązującej.
 2. Zapis tworzy lub aktualizuje **DRAFT** tej osi. Docelowy zapis: `PRICELIST_WRITE_TARGET=draft`
    (domyślnie). Tryb `live` to rollback do starych tabel — wtedy zapis nie tworzy wersji.
 3. Uzupełnij datę obowiązywania i notę (data i nota mogą zostać podane dopiero przy publikacji).

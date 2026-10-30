@@ -549,11 +549,11 @@
         return type;
     }
 
-    /** Hash SPA z edytorem cennika danego typu (PRECO to zakładka w module studnie). */
-    function editorHash(type) {
-        if (type === 'rury') return '#/rury?tab=pricelist';
-        if (type === 'preco') return '#/studnie?tab=pricelist&pvtype=preco';
-        return '#/studnie?tab=pricelist';
+    /** Hash huba cenników (#/cennik) dla osi — tam edycja cennika jest realna. */
+    function cennikEditorHash(type) {
+        if (type === 'rury') return '#/cennik?tab=rury&panel=versions';
+        if (type === 'preco') return '#/cennik?tab=preco&panel=versions';
+        return '#/cennik?tab=studnie&panel=versions';
     }
 
     /**
@@ -647,7 +647,9 @@
         } catch (_e) {
             host = window;
         }
-        var hash = editorHash(type);
+        // Moduł oferty (studnie/rury) jest tylko podglądem cennika obowiązującego —
+        // edycja działa w hubie #/cennik, więc „Edytuj” prowadzi tam.
+        var hash = cennikEditorHash(type);
         var current = '';
         try {
             current = host.location.hash;
@@ -667,7 +669,11 @@
             }
         }
         var notify = typeof host.showToast === 'function' ? host.showToast : window.showToast;
-        if (typeof notify === 'function') notify(msg, 'info');
+        if (typeof notify === 'function')
+            notify(
+                'Otwieram edytor cennika w #/cennik — tam zapis trafia do wybranego szkicu lub wersji',
+                'info'
+            );
     }
 
     /** Data obowiązywania: czytelny zapis lokalny; ISO (UTC) zostaje w tooltipie. */
@@ -2595,6 +2601,17 @@
         return editModes[type] === true;
     }
 
+    /**
+     * Czy oś jest w trybie edycji cennika (hub #/cennik albo jawny „Edytuj").
+     * Poza edycją moduł oferty jest wyłącznie podglądem: siatka pokazuje cennik
+     * obowiązujący (ACTIVE), ten sam, z którego liczy oferta.
+     * @param {string} type
+     * @returns {boolean}
+     */
+    function isPricelistEditing(type) {
+        return isEditing(type) || isCennikHost();
+    }
+
     function setEditing(type, on) {
         var next = on === true;
         if (editModes[type] === next) return;
@@ -2864,11 +2881,14 @@
         }
         if (type === 'preco') {
             if (typeof window.loadPrecoPricing === 'function') {
-                window.loadPrecoPricing({ source: 'draft' }).then(function () {
-                    if (typeof window.renderPrecoPriceList === 'function') {
-                        window.renderPrecoPriceList();
-                    }
-                });
+                // Edycja: dane edytora (szkic). Podgląd: cennik obowiązujący.
+                window
+                    .loadPrecoPricing({ source: isPricelistEditing('preco') ? 'draft' : 'active' })
+                    .then(function () {
+                        if (typeof window.renderPrecoPriceList === 'function') {
+                            window.renderPrecoPriceList();
+                        }
+                    });
             }
             return;
         }
@@ -2919,8 +2939,11 @@
                             '</div>'
                     );
                 }
+                // Podgląd (moduł oferty) = cennik obowiązujący; szkic widać tylko
+                // w edycji (hub #/cennik) — inaczej pasek kłamałby o źródle siatki.
+                var editingGrid = isPricelistEditing(stripType);
                 // A5: siatka pokazuje szkic, nie cennik obowiązujący — musi to być widoczne.
-                if (data.draft) {
+                if (data.draft && editingGrid) {
                     parts.push(
                         '<div class="pv-draft-banner">⚠ Siatka pokazuje szkic <strong>' +
                             esc(data.draft.version) +
@@ -2937,12 +2960,17 @@
                         '<span class="badge badge-warn" title="PRICELIST_WRITE_TARGET=live — zapis idzie do tabel LIVE, oferty czytają wersję obowiązującą.">⚠ Tryb zapisu LIVE</span>'
                     );
                 }
-                if (data.draft) {
+                if (data.draft && editingGrid) {
                     parts.push(
                         '<span class="badge badge-muted" title="Szkic nie trafia do ofert do publikacji.">✎ Szkic ' +
                             esc(data.draft.version) +
                             esc(lastChange(data.draft)) +
                             '</span>'
+                    );
+                }
+                if (!editingGrid) {
+                    parts.push(
+                        '<span class="badge badge-ok" title="Podgląd w module oferty: siatka pokazuje cennik, z którego liczy ta oferta. Zmiany w szkicu wejdą dopiero po publikacji.">◉ Podgląd cennika oferty</span>'
                     );
                 }
                 if (data.active) {
@@ -3330,6 +3358,7 @@
         closeVersionsPanel: closeVersionsPanel,
         isVersionsPanelOpen: isVersionsPanelOpen,
         isCennikHost: isCennikHost,
+        isPricelistEditing: isPricelistEditing,
         afterVersionChange: afterVersionChange,
         openDiff: openDiff,
         statusBadge: statusBadge,

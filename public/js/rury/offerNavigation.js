@@ -38,9 +38,16 @@ async function showSectionRury(id) {
     const targetBtn = document.querySelector(`.nav-btn[data-section="${id}"]`);
     if (targetBtn) targetBtn.classList.add('active');
 
-    // P1: cennik-admin zawsze na LIVE, ekrany ofert na ACTIVE.
+    // Podgląd w module oferty = cennik obowiązujący (ACTIVE): ten sam, z którego
+    // liczy oferta. Dane edytora (szkic/LIVE) tylko w hubie #/cennik.
     if (id === 'pricelist') {
-        products = await loadProducts();
+        const pv = window.pricelistVersions;
+        const editingPricing = !!(
+            pv &&
+            typeof pv.isPricelistEditing === 'function' &&
+            pv.isPricelistEditing('rury')
+        );
+        products = await loadProducts(editingPricing ? undefined : { source: 'active' });
         renderPriceList();
         // Pasek stanu: co edytujesz (szkic) vs co liczy oferta (obowiązująca).
         if (

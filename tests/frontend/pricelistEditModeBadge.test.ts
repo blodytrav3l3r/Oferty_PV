@@ -51,15 +51,18 @@ function mount() {
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
 
 describe('pasek stanu: oś cennika + tryb edycji', () => {
-    it('podgląd: badge osi, brak banera edycji', async () => {
+    it('podgląd: badge osi i cennika oferty, bez banera i bez szkicu', async () => {
         const pv = mount();
         await pv.renderStatusStrip('pricelist-status-strip', 'rury');
         const host = document.getElementById('pricelist-status-strip');
         expect(host.textContent).toContain('Rury');
         expect(host.textContent).not.toContain('TRYB EDYCJI');
         expect(host.getAttribute('data-editing')).toBe('0');
-        // Szkic nadal widoczny jako osobny fakt (siatka pokazuje szkic).
-        expect(host.textContent).toContain('Rv4-20261028');
+        // Podgląd = cennik obowiązujący: szkic nie jest pokazywany jako źródło siatki.
+        expect(host.textContent).not.toContain('Rv4-20261028');
+        expect(host.textContent).not.toContain('Siatka pokazuje szkic');
+        expect(host.textContent).toContain('Podgląd cennika oferty');
+        expect(pv.isPricelistEditing('rury')).toBe(false);
     });
 
     it('edycja szkicu: banner TRYB EDYCJI z osią i wersją szkicu + obrys siatki', async () => {
