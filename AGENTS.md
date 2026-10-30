@@ -11,6 +11,7 @@ Szczegóły domenowe w `docs/agents/` (routing poniżej) — ten plik to mapa i 
 - Commity wyłącznie przez `node scripts/commit.mjs "typ(scope): opis"` (polskie znaki, reguły commitlint).
 - Kodowanie UTF-8 bez BOM (`.bat` ASCII-only); przy ERROR: `npm run encoding:fix`.
 - Inwarianty: `docs/SYSTEM_INVARIANTS.md` (I-001–I-013) — przeczytaj przed zmianą logiki biznesowej; zmiana inwariantu tylko za jawną decyzją.
+- Ceny: każda kwota PLN przechodzi przez `roundMoney` (2 miejsca, half-up) — FE `public/js/shared/formatters.js`, BE `src/utils/money.ts`; reguły i checklist: `docs/MONEY_ROUNDING.md`.
 
 ## Source of Truth Protocol (nadrzędne, EVIDENCE-FIRST)
 

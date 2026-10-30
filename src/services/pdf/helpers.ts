@@ -1,7 +1,8 @@
+import { roundMoney } from '../../utils/money';
+
 export function fmtInt(val: number): string {
     return val.toLocaleString('pl-PL', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 }
-
 export function formatDatePL(dateStr: string): string {
     if (!dateStr) return new Date().toLocaleDateString('pl-PL');
     const normalized = /^\d{4}-\d{2}-\d{2}$/.test(dateStr) ? dateStr + 'T00:00:00' : dateStr;
@@ -68,9 +69,11 @@ export function mapWellsToItems(
         const well = w as Record<string, unknown>;
         const dn = String(well.dn ?? 'Inne');
         const share = separateTransport ? Number(well.transportCost ?? 0) : 0;
-        const wellPrice = separateTransport
-            ? Number(well.price ?? Number(well.totalPrice ?? 0) - share)
-            : Number(well.totalPrice ?? well.price ?? 0);
+        const wellPrice = roundMoney(
+            separateTransport
+                ? Number(well.price ?? Number(well.totalPrice ?? 0) - share)
+                : Number(well.totalPrice ?? well.price ?? 0)
+        );
         grandTotal += wellPrice;
         transportTotal += share;
 
@@ -82,10 +85,14 @@ export function mapWellsToItems(
             DN: dn,
             height: Number(well.height ?? 0),
             zwienczenie: String(well.zwienczenie ?? '—'),
-            transportCost: Number(well.transportCost ?? 0)
+            transportCost: roundMoney(Number(well.transportCost ?? 0))
         });
     }
 
     const items = Object.values(itemsByDN).flat();
-    return { items, grandTotal, transportTotal };
+    return {
+        items,
+        grandTotal: roundMoney(grandTotal),
+        transportTotal: roundMoney(transportTotal)
+    };
 }

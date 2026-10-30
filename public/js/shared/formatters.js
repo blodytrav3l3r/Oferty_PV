@@ -5,6 +5,24 @@
  */
 
 /**
+ * SSoT zaokrągleń pieniędzy: 2 miejsca po przecinku, tryb handlowy
+ * (half-up, od zera). Używaj na KAŻDEJ granicy kwoty PLN — cena pozycji,
+ * suma netto, VAT, brutto, transport. Reguła projektu: docs/MONEY_ROUNDING.md.
+ *
+ * `Number.EPSILON` koryguje błąd zapisu binarnego (1.005 → 1.01, 2.675 → 2.68).
+ * Wartości nieliczbowe (NaN/Infinity/null) → 0.
+ * @param {number|string} value
+ * @returns {number}
+ */
+function roundMoney(value) {
+    const n = Number(value);
+    if (!Number.isFinite(n)) return 0;
+    const sign = n < 0 ? -1 : 1;
+    const abs = Math.abs(n);
+    return sign * (Math.round((abs + Number.EPSILON) * 100) / 100);
+}
+
+/**
  * Formatuje liczbę z 2 miejscami po przecinku i spacją tysięczną.
  * @param {number} n
  * @returns {string}
@@ -176,6 +194,7 @@ window.PRINT_TOKENS_CSS = PRINT_TOKENS_CSS;
 window.applyPrintTokens = applyPrintTokens;
 window.fmt = fmt;
 window.fmtInt = fmtInt;
+window.roundMoney = roundMoney;
 
 /* ===== Rejestracja globali ===== */
 window.formatDate = formatDate;

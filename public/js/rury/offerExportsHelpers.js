@@ -2,6 +2,18 @@
 /* ===== HELPERY EKSPORTU OFERT (RURY) ===== */
 /* Pure functions do budowy wierszy arkuszy XLSX — wydzielone z offerExports.js */
 
+// SSoT zaokrągleń: shared/formatters.js → roundMoney (2 miejsca, half-up).
+// Fallback wyłącznie dla sandboxów vm/testów bez formatters.js.
+const _moneyRoundXlsx =
+    typeof roundMoney === 'function'
+        ? roundMoney
+        : (/** @type {number} */ v) => {
+              const n = Number(v);
+              if (!Number.isFinite(n)) return 0;
+              const sign = n < 0 ? -1 : 1;
+              return sign * (Math.round((Math.abs(n) + Number.EPSILON) * 100) / 100);
+          };
+
 /**
  * Buduje wiersze arkusza "Oferta" dla XLSX.
  * @param {object} offer
@@ -56,11 +68,11 @@ function buildOfferXlsxRows(offer, transportDist, costPerTrip, xlsxTransports) {
     offer.items.forEach((item, i) => {
         const priceAfterDiscount = item.unitPrice * (1 - item.discount / 100);
         const pehdCost = item.pehdCostPerUnit || 0;
-        const unitAfterDiscount = priceAfterDiscount + pehdCost;
+        const unitAfterDiscount = _moneyRoundXlsx(priceAfterDiscount + pehdCost);
         const tpu = transportDist[item.productId] || 0;
-        const unitTotal = unitAfterDiscount + tpu;
-        const netto = unitTotal * item.quantity;
-        const brutto = netto * 1.23;
+        const unitTotal = _moneyRoundXlsx(unitAfterDiscount + tpu);
+        const netto = _moneyRoundXlsx(unitTotal * item.quantity);
+        const brutto = _moneyRoundXlsx(netto * 1.23);
 
         totalNetto += netto;
         totalWeight += (item.weight || 0) * item.quantity;
@@ -89,10 +101,11 @@ function buildOfferXlsxRows(offer, transportDist, costPerTrip, xlsxTransports) {
     });
 
     // Osobna pozycja: koszt nie siedzi w cenach jednostkowych — dolicz raz do sumy.
-    if (offer.transportSeparate) totalNetto += transportCost;
+    if (offer.transportSeparate) totalNetto += _moneyRoundXlsx(transportCost);
+    totalNetto = _moneyRoundXlsx(totalNetto);
 
-    const totalVat = totalNetto * 0.23;
-    const totalBrutto = totalNetto + totalVat;
+    const totalVat = _moneyRoundXlsx(totalNetto * 0.23);
+    const totalBrutto = _moneyRoundXlsx(totalNetto + totalVat);
 
     rows.push([]);
     rows.push(['', '', '', '', '', '', '', '', 'RAZEM Netto:', '', totalNetto]);

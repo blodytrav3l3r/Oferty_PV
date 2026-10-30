@@ -4,6 +4,18 @@
  * Deterministyczna: ten sam (well, stats) daje identyczny wpis; pola runtime
  * i treść config nie wpływają na wynik (guard przed ponownym rozdmuchaniem).
  */
+
+// SSoT zaokrągleń: shared/formatters.js → roundMoney (2 miejsca, half-up).
+// Fallback wyłącznie dla sandboxów vm/testów bez formatters.js.
+const _moneyRoundOrder =
+    typeof roundMoney === 'function'
+        ? roundMoney
+        : (/** @type {number} */ v) => {
+              const n = Number(v);
+              if (!Number.isFinite(n)) return 0;
+              const sign = n < 0 ? -1 : 1;
+              return sign * (Math.round((Math.abs(n) + Number.EPSILON) * 100) / 100);
+          };
 function buildWellsExportEntry(well, stats, wellTransportCost, zwienczenie) {
     return {
         name: well.name,
@@ -368,12 +380,12 @@ async function finalizeOrderFromOffer(offer, selectedWells, kartaBudowyData) {
                 : 0),
         0
     );
-    const finalOrderNetto = totalNetto + frozenSum;
+    const finalOrderNetto = _moneyRoundOrder(totalNetto + frozenSum);
 
     order.totalWeight = totalWeight;
     order.totalNetto = finalOrderNetto;
     order.originalTotalNetto = finalOrderNetto;
-    order.totalBrutto = finalOrderNetto * 1.23;
+    order.totalBrutto = _moneyRoundOrder(finalOrderNetto * 1.23);
     order.wellDiscounts = effectiveDiscounts;
 
     // P1: materializacja slim snapshotu na DTO (ten sam kontekst rabatów co totals).
@@ -536,9 +548,9 @@ async function saveOrderStudnieUnsafe() {
             transportKmVal *
             transportRateVal;
     }
-    const orderTotal = totalNetto + totalTransportCostForOffer;
+    const orderTotal = _moneyRoundOrder(totalNetto + totalTransportCostForOffer);
     order.totalNetto = orderTotal;
-    order.totalBrutto = orderTotal * 1.23;
+    order.totalBrutto = _moneyRoundOrder(orderTotal * 1.23);
 
     // P1-A: projekcja skalarna (config/przejscia w wells, nie duplikowane).
     order.wellsExport = wells.map((well) => {
@@ -814,8 +826,8 @@ async function enterOrderEditMode(orderId) {
                     rate;
                 tc = _offerTotalWeight > 0 ? _fullOfferCost * (_t / _offerTotalWeight) : 0;
             }
-            order.totalNetto = _w + tc;
-            order.totalBrutto = (_w + tc) * 1.23;
+            order.totalNetto = _moneyRoundOrder(_w + tc);
+            order.totalBrutto = _moneyRoundOrder(order.totalNetto * 1.23);
         }
 
         wells.forEach((w) => {
@@ -1204,9 +1216,9 @@ async function saveCurrentOrderUnsafe(options = {}) {
             transportRateVal;
         frozenTotal = offerTotalWeight > 0 ? (fullOfferCost * totalWeight) / offerTotalWeight : 0;
     }
-    const orderTotal = totalNetto + frozenTotal;
+    const orderTotal = _moneyRoundOrder(totalNetto + frozenTotal);
     order.totalNetto = orderTotal;
-    order.totalBrutto = orderTotal * 1.23;
+    order.totalBrutto = _moneyRoundOrder(orderTotal * 1.23);
 
     // P1-A: projekcja skalarna (config/przejscia w wells, nie duplikowane).
     order.wellsExport = wells.map((well) => {

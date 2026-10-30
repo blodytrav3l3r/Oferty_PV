@@ -8,6 +8,18 @@ let currentRuryTransportMode = 'full';
 // Rozliczenie transportu: false = wliczony w ceny pozycji, true = osobna pozycja (TR-RURY).
 let currentRuryTransportSeparate = false;
 
+// SSoT zaokrągleń: shared/formatters.js → roundMoney (2 miejsca, half-up).
+// Fallback wyłącznie dla sandboxów vm/testów bez formatters.js.
+const _moneyRoundTransport =
+    typeof roundMoney === 'function'
+        ? roundMoney
+        : (/** @type {number} */ v) => {
+              const n = Number(v);
+              if (!Number.isFinite(n)) return 0;
+              const sign = n < 0 ? -1 : 1;
+              return sign * (Math.round((Math.abs(n) + Number.EPSILON) * 100) / 100);
+          };
+
 // Stan zwinięcia kalkulacji transportu (collapseState, per-user; brak → zwinięta jak dziś).
 try {
     if (
@@ -117,7 +129,7 @@ function calculateTransportDistribution(items, costPerTripOverride) {
         transportResult.lines.forEach((line) => {
             const weightShare = line.totalWeight / totalWeight;
             const itemTransportCost = weightShare * totalTransportCost;
-            distribution[line.productId] = itemTransportCost / line.quantity;
+            distribution[line.productId] = _moneyRoundTransport(itemTransportCost / line.quantity);
         });
     } else {
         if (transportResult.totalTransports <= 0) return distribution;
@@ -128,7 +140,7 @@ function calculateTransportDistribution(items, costPerTripOverride) {
         transportResult.lines.forEach((line) => {
             const weightShare = line.totalWeight / totalWeight;
             const itemTransportCost = weightShare * totalTransportCost;
-            distribution[line.productId] = itemTransportCost / line.quantity;
+            distribution[line.productId] = _moneyRoundTransport(itemTransportCost / line.quantity);
         });
     }
 
@@ -184,8 +196,10 @@ function updateOfferSummary() {
         const basePriceAfterDiscount = item.unitPrice * (1 - item.discount / 100);
         const pehdCost = item.pehdCostPerUnit || 0;
         const surcharge = item.surcharge || 0;
-        const priceAfterDiscount = basePriceAfterDiscount + pehdCost + surcharge;
-        const itemTotal = priceAfterDiscount * item.quantity;
+        const priceAfterDiscount = _moneyRoundTransport(
+            basePriceAfterDiscount + pehdCost + surcharge
+        );
+        const itemTotal = _moneyRoundTransport(priceAfterDiscount * item.quantity);
         if (item.productId && item.productId.startsWith('ZT-')) {
             totalZabezpieczenie += itemTotal;
         } else {
@@ -200,10 +214,13 @@ function updateOfferSummary() {
             ? getRuryTransportCount(activeItems)
             : transportResult.totalTransports;
 
-    const totalTransportCostCalc = displayTransports * costPerTrip;
-    const finalTotalNetto = totalProductsNetto + totalTransportCostCalc + totalZabezpieczenie;
-    const totalVat = finalTotalNetto * 0.23;
-    const totalBrutto = finalTotalNetto + totalVat;
+    const totalTransportCostCalc = _moneyRoundTransport(displayTransports * costPerTrip);
+    const finalTotalNetto = _moneyRoundTransport(
+        totalProductsNetto + totalTransportCostCalc + totalZabezpieczenie
+    );
+    // VAT liczony od zaokrąglonej sumy netto; brutto = netto + zaokrąglony VAT.
+    const totalVat = _moneyRoundTransport(finalTotalNetto * 0.23);
+    const totalBrutto = _moneyRoundTransport(finalTotalNetto + totalVat);
 
     const elProducts = document.getElementById('sum-netto-products');
     if (elProducts) elProducts.textContent = fmt(totalProductsNetto) + ' PLN';

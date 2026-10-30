@@ -1,6 +1,18 @@
 // @ts-check
 /* ===== ZAPIS OFERTY (STUDNIE) ===== */
 
+// SSoT zaokrągleń: shared/formatters.js → roundMoney (2 miejsca, half-up).
+// Fallback wyłącznie dla sandboxów vm/testów bez formatters.js.
+const _moneyRoundOfferSave =
+    typeof roundMoney === 'function'
+        ? roundMoney
+        : (/** @type {number} */ v) => {
+              const n = Number(v);
+              if (!Number.isFinite(n)) return 0;
+              const sign = n < 0 ? -1 : 1;
+              return sign * (Math.round((Math.abs(n) + Number.EPSILON) * 100) / 100);
+          };
+
 /**
  * Usuwa lotne pola runtime ze studni przed wysyłką do backendu.
  * Działa na klonie (structuredClone) — obiekty live w sesji nietknięte.
@@ -150,8 +162,12 @@ async function saveOfferStudnie() {
             wellDiscounts:
                 typeof wellDiscounts !== 'undefined' ? structuredClone(wellDiscounts || {}) : {},
             totalWeight: pricing.totalWeight,
-            totalNetto: pricing.totalNetto + pricing.totalTransportCostForOffer,
-            totalBrutto: (pricing.totalNetto + pricing.totalTransportCostForOffer) * 1.23,
+            totalNetto: _moneyRoundOfferSave(
+                pricing.totalNetto + pricing.totalTransportCostForOffer
+            ),
+            totalBrutto: _moneyRoundOfferSave(
+                _moneyRoundOfferSave(pricing.totalNetto + pricing.totalTransportCostForOffer) * 1.23
+            ),
             wizard: {
                 globalParams: getWizardGlobalParams(),
                 currentStep: typeof currentWizardStep !== 'undefined' ? currentWizardStep : 3,
@@ -484,7 +500,7 @@ function _wellPricingStats(well) {
             const stats = window.calcWellStats(well);
             if (stats && typeof stats.price === 'number' && typeof stats.weight === 'number') {
                 return {
-                    price: Math.round(stats.price * 100) / 100,
+                    price: _moneyRoundOfferSave(stats.price),
                     weight: Math.round(stats.weight * 100) / 100
                 };
             }

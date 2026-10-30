@@ -7,6 +7,7 @@ import type { RuryOfferData } from './types';
 import { loadPdfTemplate } from './templateCache';
 import { loadLetterheadBase64 } from './letterhead';
 import { resolvePublicDir } from '../../utils/paths';
+import { roundMoney } from '../../utils/money';
 
 const CATEGORY_ORDER = [
     'Rury Betonowe',
@@ -145,7 +146,7 @@ export function buildRurySectionHTML(data: RuryOfferData): {
                     surcharge,
                     transportPerUnit
                 });
-                const netto = itemPrice * quantity;
+                const netto = roundMoney(itemPrice * quantity);
 
                 catTotal += netto;
                 grandTotalNet += netto;
@@ -189,6 +190,7 @@ export function buildRurySectionHTML(data: RuryOfferData): {
       </tr>`;
         grandTotalNet += transportTotal;
     }
+    grandTotalNet = roundMoney(grandTotalNet);
 
     const podsumowanie = `<div class="summary-section">
     <table class="summary-table">

@@ -1,6 +1,18 @@
 ﻿// @ts-check
 /* ===== PANEL RABATĂ“W ===== */
 
+// SSoT zaokrągleń: shared/formatters.js → roundMoney (2 miejsca, half-up).
+// Fallback wyłącznie dla sandboxów vm/testów bez formatters.js.
+const _moneyRoundDiscounts =
+    typeof roundMoney === 'function'
+        ? roundMoney
+        : (/** @type {number} */ v) => {
+              const n = Number(v);
+              if (!Number.isFinite(n)) return 0;
+              const sign = n < 0 ? -1 : 1;
+              return sign * (Math.round((Math.abs(n) + Number.EPSILON) * 100) / 100);
+          };
+
 let appConfirmCallback = null;
 
 function handleAppConfirm(result) {
@@ -216,7 +228,9 @@ function updateGlobalPehdDiscount(value) {
                     p.componentType !== 'kineta' &&
                     p.componentType !== 'konus'
                 ) {
-                    currentPehdPrice = Math.round(p.doplataPEHD / getPehdEffectiveArea(p));
+                    currentPehdPrice = _moneyRoundDiscounts(
+                        p.doplataPEHD / getPehdEffectiveArea(p)
+                    );
                     break;
                 }
             }

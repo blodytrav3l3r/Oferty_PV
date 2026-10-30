@@ -3,6 +3,18 @@
 /* Wydzielone z app.js — odpowiedzialność: zapis, ładowanie, duplikacja, usuwanie, historia ofert */
 /* Zależności: offers, currentOfferItems, editingOfferId, editingOfferAssignedUserId/Name, currentUser (globalne) */
 
+// SSoT zaokrągleń: shared/formatters.js → roundMoney (2 miejsca, half-up).
+// Fallback wyłącznie dla sandboxów vm/testów bez formatters.js.
+const _moneyRoundOfferCrud =
+    typeof roundMoney === 'function'
+        ? roundMoney
+        : (/** @type {number} */ v) => {
+              const n = Number(v);
+              if (!Number.isFinite(n)) return 0;
+              const sign = n < 0 ? -1 : 1;
+              return sign * (Math.round((Math.abs(n) + Number.EPSILON) * 100) / 100);
+          };
+
 window.editingOfferCreatedByUserId = null;
 window.editingOfferCreatedByUserName = '';
 window.isSavingOffer = false;
@@ -61,10 +73,11 @@ async function saveOffer() {
     currentOfferItems.forEach((item) => {
         const priceAfterDiscount = item.unitPrice * (1 - item.discount / 100);
         const transportPerUnit = transportDist[item.productId] || 0;
-        totalNetto += (priceAfterDiscount + transportPerUnit) * item.quantity;
+        totalNetto += _moneyRoundOfferCrud((priceAfterDiscount + transportPerUnit) * item.quantity);
     });
     // Osobna pozycja: koszt nie siedzi w cenach jednostkowych — dolicz raz do sumy.
-    if (currentRuryTransportSeparate) totalNetto += transportCost;
+    if (currentRuryTransportSeparate) totalNetto += _moneyRoundOfferCrud(transportCost);
+    totalNetto = _moneyRoundOfferCrud(totalNetto);
 
     const assignedUserRes = await assignOfferSupervisor(
         currentUser,
@@ -124,7 +137,7 @@ async function saveOffer() {
         transportCost: transportCost,
         zabezpieczenieTransportuEnabled: !!window.zabezpieczenieTransportuEnabled,
         totalNetto: totalNetto,
-        totalBrutto: totalNetto * 1.23
+        totalBrutto: _moneyRoundOfferCrud(totalNetto * 1.23)
     });
     // Pieczątka po „Przelicz do aktywnego" — tylko gdy recalc ją ustawił.
     if (pendingRuryStampId) offerDoc.pricelistVersionId = pendingRuryStampId;

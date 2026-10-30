@@ -75,7 +75,7 @@ describe('precoErrorPropagation', () => {
 
     test('calcWellStats: error-state to price:0 + error (nie throw, nie ciche)', () => {
         const src = readSrc('actionsWellPricing.js');
-        expect(src).toMatch(/price:\s*hasError \? 0 : price/);
+        expect(src).toMatch(/price:\s*hasError \? 0 : _moneyRoundPricing\(price\)/);
         expect(src).toMatch(/error:\s*errorMessage/);
         // safeCalcWellStats oznacza studnie flaga (propagacja do UI).
         expect(src).toMatch(/markWellPricingError\(well, s\.error\)/);

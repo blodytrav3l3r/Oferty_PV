@@ -5,6 +5,7 @@ import { buildContactSectionHTML } from './offerUsers';
 import { loadPdfTemplate } from './templateCache';
 import { loadLetterheadBase64 } from './letterhead';
 import { resolvePublicDir } from '../../utils/paths';
+import { roundMoney } from '../../utils/money';
 import { buildRurySectionHTML } from './ruryHtml';
 import { buildStudnieSectionHTML } from './studnieHtml';
 import { generatePDF } from './pdfEngine';
@@ -93,7 +94,7 @@ export async function generateCombinedHTML(
     `;
     }
 
-    const combinedTotal = studnieSection.grandTotal + rurySection.grandTotal;
+    const combinedTotal = roundMoney(studnieSection.grandTotal + rurySection.grandTotal);
 
     const podsumowanieLaczne = `
     <div class="summary-section" style="margin-top:0;">

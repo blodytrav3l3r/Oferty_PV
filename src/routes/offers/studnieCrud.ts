@@ -15,6 +15,7 @@ import { versionedWrite, mapVersionConflict } from '../../utils/versionWrite';
 import { assertDocLockForWrite, mapDocLockConflict } from '../../utils/docLocks';
 import { isUniqueConstraintError, mapPrismaError } from '../../utils/prismaErrors';
 import { HOT_TX_OPTS } from '../../utils/hotTx';
+import { roundMoney } from '../../utils/money';
 import {
     claimIdempotencyKey,
     completeIdempotencyKey,
@@ -211,6 +212,7 @@ function extractWellsFromIncoming(o: Record<string, unknown>): Array<Record<stri
  * FE (offerSave) niesie totalBrutto/totalNetto bez totalPrice — bez tego
  * gałąź kolumna lądowała na 0 mimo żywych danych (kolejka opieki: 0,00 PLN).
  * Kolejność: jawny totalPrice/price > totalBrutto (top/data) > data.totalPrice.
+ * Zawsze zaokrąglone do 2 miejsc (SSoT: src/utils/money.ts).
  */
 export function deriveStudnieTotalPrice(o: Record<string, unknown>): number {
     const d =
@@ -218,8 +220,7 @@ export function deriveStudnieTotalPrice(o: Record<string, unknown>): number {
             ? (o.data as Record<string, unknown>)
             : undefined;
     const raw = o.totalPrice ?? o.price ?? o.totalBrutto ?? d?.totalBrutto ?? d?.totalPrice ?? 0;
-    const n = Number(raw);
-    return isNaN(n) ? 0 : n;
+    return roundMoney(raw);
 }
 
 /**

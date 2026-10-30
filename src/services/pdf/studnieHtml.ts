@@ -5,6 +5,7 @@ import { buildContactSectionHTML } from './offerUsers';
 import { loadPdfTemplate } from './templateCache';
 import { loadLetterheadBase64 } from './letterhead';
 import { resolvePublicDir } from '../../utils/paths';
+import { roundMoney } from '../../utils/money';
 
 /**
  * Buduje sekcję treści oferty studni (tabele per DN + podsumowanie).
@@ -125,6 +126,7 @@ export function buildStudnieSectionHTML(data: StudnieOfferData): {
     </tr>`;
         grandTotal += transportTotal;
     }
+    grandTotal = roundMoney(grandTotal);
     summaryRows += `<tr class="grand-total">
     <td class="text-center">RAZEM NETTO</td>
     <td class="text-center">${summariesForTotal.reduce((s, x) => s + x.count, 0)} szt.</td>

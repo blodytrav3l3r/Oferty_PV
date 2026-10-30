@@ -3,6 +3,18 @@
 // Wybór produktu "Wiercenie" (SSoT) mieszka w drillingProducts.js —
 // wspólny dla wyceny, walidacji i renderu.
 
+// SSoT zaokrągleń: shared/formatters.js → roundMoney (2 miejsca, half-up).
+// Fallback wyłącznie dla sandboxów vm/testów bez formatters.js.
+const _moneyRoundPricing =
+    typeof roundMoney === 'function'
+        ? roundMoney
+        : (/** @type {number} */ v) => {
+              const n = Number(v);
+              if (!Number.isFinite(n)) return 0;
+              const sign = n < 0 ? -1 : 1;
+              return sign * (Math.round((Math.abs(n) + Number.EPSILON) * 100) / 100);
+          };
+
 function calcPrecoPricing(well) {
     return calcPrecoPricingPure(well, {
         precoPricing: precoPricing,
@@ -223,7 +235,7 @@ function getItemAssessedPrice(well, p, applyDiscount = true, item = null) {
             itemPrice += parseFloat(p.malowanieZewnetrzne);
         }
 
-        return itemPrice;
+        return _moneyRoundPricing(itemPrice);
     }
 
     itemPrice = itemPrice * mult;
@@ -288,7 +300,7 @@ function getItemAssessedPrice(well, p, applyDiscount = true, item = null) {
         itemPrice += parseFloat(p.doplataDrabNierdzewna) * mult;
     }
 
-    return itemPrice;
+    return _moneyRoundPricing(itemPrice);
 }
 
 function getItemPriceBreakdown(well, p, applyDiscount, item) {
@@ -381,13 +393,17 @@ function getItemPriceBreakdown(well, p, applyDiscount, item) {
         }
 
         return {
-            base: base,
+            base: _moneyRoundPricing(base),
             pehd: 0,
-            malowanieW: malowanieW,
-            malowanieZ: malowanieZ,
+            malowanieW: _moneyRoundPricing(malowanieW),
+            malowanieZ: _moneyRoundPricing(malowanieZ),
             zelbet: 0,
             nierdzewna: 0,
-            total: base + malowanieW + malowanieZ
+            total: _moneyRoundPricing(
+                _moneyRoundPricing(base) +
+                    _moneyRoundPricing(malowanieW) +
+                    _moneyRoundPricing(malowanieZ)
+            )
         };
     }
 
@@ -452,14 +468,24 @@ function getItemPriceBreakdown(well, p, applyDiscount, item) {
         nierdzewna = parseFloat(p.doplataDrabNierdzewna) * mult;
     }
 
+    const parts = {
+        base: _moneyRoundPricing(base),
+        pehd: _moneyRoundPricing(pehd),
+        malowanieW: _moneyRoundPricing(malowanieW),
+        malowanieZ: _moneyRoundPricing(malowanieZ),
+        zelbet: _moneyRoundPricing(zelbet),
+        nierdzewna: _moneyRoundPricing(nierdzewna)
+    };
     return {
-        base: base,
-        pehd: pehd,
-        malowanieW: malowanieW,
-        malowanieZ: malowanieZ,
-        zelbet: zelbet,
-        nierdzewna: nierdzewna,
-        total: base + pehd + malowanieW + malowanieZ + zelbet + nierdzewna
+        ...parts,
+        total: _moneyRoundPricing(
+            parts.base +
+                parts.pehd +
+                parts.malowanieW +
+                parts.malowanieZ +
+                parts.zelbet +
+                parts.nierdzewna
+        )
     };
 }
 
@@ -705,12 +731,12 @@ function calcWellStats(well) {
     }
 
     return {
-        price: hasError ? 0 : price,
-        priceBase: hasError ? 0 : priceBase,
-        priceDennica: hasError ? 0 : priceDennica,
-        priceDennicaBase: hasError ? 0 : priceDennicaBase,
-        priceNadbudowa: hasError ? 0 : priceNadbudowa,
-        priceNadbudowaBase: hasError ? 0 : priceNadbudowaBase,
+        price: hasError ? 0 : _moneyRoundPricing(price),
+        priceBase: hasError ? 0 : _moneyRoundPricing(priceBase),
+        priceDennica: hasError ? 0 : _moneyRoundPricing(priceDennica),
+        priceDennicaBase: hasError ? 0 : _moneyRoundPricing(priceDennicaBase),
+        priceNadbudowa: hasError ? 0 : _moneyRoundPricing(priceNadbudowa),
+        priceNadbudowaBase: hasError ? 0 : _moneyRoundPricing(priceNadbudowaBase),
         weight: Math.max(0, weight),
         height,
         areaInt,

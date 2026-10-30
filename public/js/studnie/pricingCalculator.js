@@ -5,6 +5,18 @@
    calculateAssignedPrzejscia, getItemPriceBreakdown, calculatePrecoAllocationForItem,
    getItemAssessedPrice, calcTransportCount, MAX_TRANSPORT_WEIGHT (wszystkie globalne) */
 
+// SSoT zaokrągleń: shared/formatters.js → roundMoney (2 miejsca, half-up).
+// Fallback wyłącznie dla sandboxów vm/testów bez formatters.js.
+const _moneyRoundPricingCalc =
+    typeof roundMoney === 'function'
+        ? roundMoney
+        : (/** @type {number} */ v) => {
+              const n = Number(v);
+              if (!Number.isFinite(n)) return 0;
+              const sign = n < 0 ? -1 : 1;
+              return sign * (Math.round((Math.abs(n) + Number.EPSILON) * 100) / 100);
+          };
+
 /**
  * Oblicza pełną wycenę oferty studni: sumy, koszty transportu, dane eksportowe.
  * @param {Array} wells
@@ -195,9 +207,9 @@ function calculateOfferPricing(wells, transportKm, transportRate, transportMode)
     });
 
     return {
-        totalNetto: totalNetto,
+        totalNetto: _moneyRoundPricingCalc(totalNetto),
         totalWeight: totalWeight,
-        totalTransportCostForOffer: totalTransportCostForOffer,
+        totalTransportCostForOffer: _moneyRoundPricingCalc(totalTransportCostForOffer),
         wellsForExport: wellsForExport,
         hasPricingError: hasPricingError,
         errorWells: errorWells

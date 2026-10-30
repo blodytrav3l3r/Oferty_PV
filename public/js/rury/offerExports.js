@@ -9,6 +9,18 @@
 /* renderSavedOffers, saveOffersData z offerCrud.js / dataService.js */
 /* fmt, fmtInt z shared/formatters.js; showToast, appConfirm, closeModal z shared/ui.js */
 
+// SSoT zaokrągleń: shared/formatters.js → roundMoney (2 miejsca, half-up).
+// Fallback wyłącznie dla sandboxów vm/testów bez formatters.js.
+const _moneyRoundExports =
+    typeof roundMoney === 'function'
+        ? roundMoney
+        : (/** @type {number} */ v) => {
+              const n = Number(v);
+              if (!Number.isFinite(n)) return 0;
+              const sign = n < 0 ? -1 : 1;
+              return sign * (Math.round((Math.abs(n) + Number.EPSILON) * 100) / 100);
+          };
+
 /* ===== IMPORT OFERTY Z PLIKU JSON ===== */
 
 function importOfferFromFile() {
@@ -91,14 +103,15 @@ function exportOfferPDF(id) {
     offer.items.forEach((item) => {
         const priceAfterDiscount = item.unitPrice * (1 - item.discount / 100);
         const transportPerUnit = transportDist[item.productId] || 0;
-        totalNetto += (priceAfterDiscount + transportPerUnit) * item.quantity;
+        totalNetto += _moneyRoundExports((priceAfterDiscount + transportPerUnit) * item.quantity);
         totalWeight += (item.weight || 0) * item.quantity;
     });
     // Osobna pozycja: koszt nie siedzi w cenach jednostkowych — dolicz raz do sumy.
-    if (offer.transportSeparate) totalNetto += transportCost;
+    if (offer.transportSeparate) totalNetto += _moneyRoundExports(transportCost);
+    totalNetto = _moneyRoundExports(totalNetto);
 
-    const totalVat = totalNetto * 0.23;
-    const totalBrutto = totalNetto + totalVat;
+    const totalVat = _moneyRoundExports(totalNetto * 0.23);
+    const totalBrutto = _moneyRoundExports(totalNetto + totalVat);
 
     // HTML tabeli transportu
     let transportHtml = '';
@@ -636,8 +649,11 @@ function importOfferFromXlsx() {
                     items.forEach((item) => {
                         const priceAfterDiscount = item.unitPrice * (1 - item.discount / 100);
                         const tpu = transportDist[item.productId] || 0;
-                        totalNetto += (priceAfterDiscount + tpu) * item.quantity;
+                        totalNetto += _moneyRoundExports(
+                            (priceAfterDiscount + tpu) * item.quantity
+                        );
                     });
+                    totalNetto = _moneyRoundExports(totalNetto);
                     // Osobna pozycja: koszt nie siedzi w cenach jednostkowych.
                     if (importFlags.transportSeparate)
                         totalNetto += transportResult.totalTransports * transportCostPerTrip;
@@ -664,9 +680,11 @@ function importOfferFromXlsx() {
                         transportSeparate: importFlags.transportSeparate,
                         transportCostPerTrip,
                         transportCount: transportResult.totalTransports,
-                        transportCost: transportResult.totalTransports * transportCostPerTrip,
+                        transportCost: _moneyRoundExports(
+                            transportResult.totalTransports * transportCostPerTrip
+                        ),
                         totalNetto,
-                        totalBrutto: totalNetto * 1.23,
+                        totalBrutto: _moneyRoundExports(totalNetto * 1.23),
                         createdAt: new Date().toISOString(),
                         updatedAt: new Date().toISOString()
                     };
