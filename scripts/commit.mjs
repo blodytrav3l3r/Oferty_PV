@@ -11,6 +11,7 @@
  *   node scripts/commit.mjs "fix(config): naprawa wersji w docs"
  *   node scripts/commit.mjs "feat(studnie): nowa kolumna w excel" "linia body" "kolejna linia"
  *   node scripts/commit.mjs --amend "fix(config): poprawka treści"
+ *   node scripts/commit.mjs --allow-empty "chore(ui): korekta tematu poprzedniego commita" "body"
  *
  * Walidacja (1:1 z commitlint.config.js):
  *   - typ: feat, fix, refactor, chore, docs, perf, test, style
@@ -54,8 +55,14 @@ const HEADER_MAX = 72;
 const BODY_LINE_MAX = 100;
 
 const argv = process.argv.slice(2);
-const amend = argv[0] === '--amend';
-if (amend) argv.shift();
+let amend = false;
+let allowEmpty = false;
+// Flagi mogą stać w dowolnej kolejności przed wiadomością.
+while (argv[0] === '--amend' || argv[0] === '--allow-empty') {
+    if (argv[0] === '--amend') amend = true;
+    else allowEmpty = true;
+    argv.shift();
+}
 
 const header = argv[0];
 if (!header) {
@@ -101,7 +108,17 @@ const tmp = join(tmpdir(), `sok-commit-${process.pid}.txt`);
 writeFileSync(tmp, message, 'utf-8');
 
 try {
-    execFileSync('git', ['commit', ...(amend ? ['--amend'] : []), '-F', tmp], { stdio: 'inherit' });
+    execFileSync(
+        'git',
+        [
+            'commit',
+            ...(amend ? ['--amend'] : []),
+            ...(allowEmpty ? ['--allow-empty'] : []),
+            '-F',
+            tmp
+        ],
+        { stdio: 'inherit' }
+    );
 } finally {
     try {
         unlinkSync(tmp);
