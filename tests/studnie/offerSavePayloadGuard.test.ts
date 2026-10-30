@@ -5,8 +5,8 @@ import vm from 'vm';
 
 /**
  * Regresja 413: zapis oferty studni leciał do serwera bez sprawdzenia rozmiaru,
- * więc przekroczenie limitu `express.json` (50 MB, `src/mountRoutes.ts`) kończyło
- * się suchym błędem po długim uploadzie. Teraz:
+ * więc przekroczenie limitu `express.json` (`JSON_BODY_LIMITS.offers` w
+ * `src/mountRoutes.ts`) kończyło się suchym błędem po długim uploadzie. Teraz:
  * - klient mierzy payload i blokuje zapis z jawnym komunikatem,
  * - runtime-śmieci nie jadą do backendu,
  * - `wellsExport` nie dubluje `_elemId` (tożsamość PZ, nie treść oferty).
@@ -31,10 +31,10 @@ describe('payload zapisu oferty studni — pomiar i budżet', () => {
     test('limit klienta odpowiada limitowi parsera JSON na /api/offers-rury', () => {
         const limit = read(ctx, 'OFFER_SAVE_PAYLOAD_LIMIT_BYTES');
         const guard = read(ctx, 'OFFER_SAVE_PAYLOAD_GUARD_BYTES');
-        expect(limit).toBe(50 * 1024 * 1024);
+        // Wartość bezwzględna jest kontraktem FE ↔ BE w tests/jsonLimits.test.ts.
+        expect(limit).toBeGreaterThanOrEqual(50 * 1024 * 1024);
+        expect(guard).toBe(Math.floor(limit * 0.9));
         expect(guard).toBeLessThan(limit);
-        // Zapas ≥ 5% — inaczej narzut kodowania i wrapper zjadają margines.
-        expect(guard).toBeLessThanOrEqual(limit * 0.95);
     });
 
     test('mierzy realny kształt żądania `{ data: [offerDoc] }` w bajtach', () => {

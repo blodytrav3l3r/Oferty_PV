@@ -48,11 +48,21 @@ import draftRoutes from './routes/drafts';
  * Mały (1mb): auth, użytkownicy, klienci, audyt, ustawienia, telemetria,
  * flagi, eksporty (tylko ID ofert), udostępnienia, admin, locki, wyszukiwarki —
  * żadna nie przyjmuje tablic rekordów (małe obiekty/zapytania).
- * Duży (50mb): oferty/zamówienia rury+studnie (tablice items/wells z pełnymi
- * configami i snapshotami, do ~3000 studni; XLSX importowany jest w przeglądarce
- * i wysyłany jako JSON na te same trasy ofert/zamówień) oraz bulk PUT cenników
- * (products/products-studnie ~824 pozycje, preco-pricing pełna struktura).
+ * Duży (50mb): zamówienia rury+studnie (tablice items/wells z pełnymi
+ * configami i snapshotami) oraz bulk PUT cenników (products/products-studnie
+ * ~824 pozycje, preco-pricing pełna struktura).
+ * Oferty (128mb): zapis oferty niesie `wells` + `wellsExport` (dwie kopie
+ * configu, ~4 KB na studnię) — 50mb wypadało już przy ~12 000 studni i kończyło
+ * się 413 po długim uploadzie. Limit klienta liczy ten sam próg:
+ * `OFFER_SAVE_PAYLOAD_LIMIT_BYTES` w `public/js/studnie/offerSave.js`
+ * (kontrakt pilnuje `tests/studnie/offerSavePayloadGuard.test.ts`).
  */
+export const JSON_BODY_LIMITS = {
+    small: '1mb',
+    large: '50mb',
+    offers: '128mb',
+    draft: '320kb'
+} as const;
 /**
  * Handler raportu CSP — wydzielony dla testowalności (bez montowania całej aplikacji).
  */
@@ -70,11 +80,13 @@ export function handleCspReport(req: express.Request, res: express.Response): vo
 
 export function mountRoutes(app: express.Express, apiLimiter: express.RequestHandler): void {
     // P1.3: parser JSON per-route zamiast globalnego (patrz komentarz wyżej).
-    const smallJson = express.json({ limit: '1mb' });
-    const largeJson = express.json({ limit: '50mb' });
+    const smallJson = express.json({ limit: JSON_BODY_LIMITS.small });
+    const largeJson = express.json({ limit: JSON_BODY_LIMITS.large });
+    // Oferty: `wells` + `wellsExport` to dwie kopie configu — osobny, większy limit.
+    const offersJson = express.json({ limit: JSON_BODY_LIMITS.offers });
     // L2: drafty mają własny, węższy parser. Limit payloadu (256 KB) pilnuje
     // serwis; parser 320 KB odrzuca nadmiar wcześniej, bez parsowania 1 MB.
-    const draftJson = express.json({ limit: '320kb' });
+    const draftJson = express.json({ limit: JSON_BODY_LIMITS.draft });
 
     app.use('/api/auth', apiLimiter, smallJson, authRoutes);
     // Preferencje własne przed /api/users — inaczej ':id' połknęłoby 'me'.
@@ -90,8 +102,8 @@ export function mountRoutes(app: express.Express, apiLimiter: express.RequestHan
     app.use('/api/products', apiLimiter, largeJson, productRoutes);
     app.use('/api/products-studnie', apiLimiter, largeJson, productStudnieRoutes);
     app.use('/api/offers/search', apiLimiter, smallJson, searchRoutes);
-    app.use('/api/offers-rury', apiLimiter, largeJson, offerRoutes);
-    app.use('/api/offers-studnie', apiLimiter, largeJson, (req, res, next) => {
+    app.use('/api/offers-rury', apiLimiter, offersJson, offerRoutes);
+    app.use('/api/offers-studnie', apiLimiter, offersJson, (req, res, next) => {
         req.url = '/studnie' + req.url;
         offerRoutes(req, res, next);
     });

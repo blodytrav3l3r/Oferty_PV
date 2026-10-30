@@ -262,18 +262,22 @@ Wymaga autoryzacji. Alias do `/api/offers-rury/studnie`.
 | GET    | `/api/offers-studnie/:id/export-pdf`  | Eksport do PDF                                     |
 | GET    | `/api/offers-studnie/:id/export-docx` | Eksport do DOCX                                    |
 
-**Limit payloadu:** body JSON do 50 MB (`largeJson` w `src/mountRoutes.ts`; dotyczy też
-`/api/offers-rury`). Przekroczenie → `413`:
+**Limit payloadu:** body JSON do **128 MB** dla ofert (`JSON_BODY_LIMITS.offers`
+w `src/mountRoutes.ts`; dotyczy `/api/offers-rury` i `/api/offers-studnie`).
+Pozostałe trasy: 50 MB (zamówienia, cenniki), 1 MB (reszta). Przekroczenie → `413`:
 
 ```json
 {
     "error": "Zbyt duży payload żądania (przekroczony limit rozmiaru)",
     "code": "PAYLOAD_TOO_LARGE",
-    "bytes": 53477376,
-    "limit": 52428800,
+    "bytes": 134250496,
+    "limit": 134217728,
     "requestId": "…"
 }
 ```
+
+Limit obowiązuje **po inflacji** ciała — `Content-Encoding: gzip` nie podnosi sufitu,
+zmniejsza tylko transfer.
 
 Frontend mierzy payload przed wysłaniem (`measureOfferSavePayload` w
 `public/js/studnie/offerSave.js`) i blokuje zapis na 90% limitu z jawnym komunikatem

@@ -1,7 +1,8 @@
 /**
  * P1.3 — testy regresyjne limitów rozmiaru JSON per-route.
  * Małe trasy: 1mb (duży payload → 413 z JSON z errorHandler).
- * Duże trasy: 50mb (legalny duży payload oferty → przechodzi).
+ * Duże trasy: 50mb (zamówienia, cenniki).
+ * Oferty: 128mb — zapis niesie `wells` + `wellsExport` (~4 KB na studnię).
  */
 
 // Mock auth middleware
@@ -75,7 +76,22 @@ jest.mock('../src/prismaClient', () => ({
 
 import request from 'supertest';
 import express from 'express';
-import { mountRoutes } from '../src/mountRoutes';
+import fs from 'fs';
+import path from 'path';
+import vm from 'vm';
+import { mountRoutes, JSON_BODY_LIMITS } from '../src/mountRoutes';
+
+/** Limit zadeklarowany po stronie klienta (offerSave.js) — bez duplikowania liczby w teście. */
+function offerSaveLimitBytes(): number {
+    const ctx: any = { window: {}, console };
+    ctx.window = ctx;
+    vm.createContext(ctx);
+    vm.runInContext(
+        fs.readFileSync(path.join(__dirname, '../public/js/studnie/offerSave.js'), 'utf8'),
+        ctx
+    );
+    return vm.runInContext('OFFER_SAVE_PAYLOAD_LIMIT_BYTES', ctx);
+}
 
 function createTestApp() {
     const app = express();
@@ -119,4 +135,33 @@ describe('P1.3 limity JSON per-route', () => {
         expect(res.statusCode).toBe(200);
         expect(res.body).toHaveProperty('ok', true);
     });
+
+    it('sufity: oferty 128mb, reszta 50mb (regresja 413 na dużych ofertach)', () => {
+        expect(JSON_BODY_LIMITS.offers).toBe('128mb');
+        expect(JSON_BODY_LIMITS.large).toBe('50mb');
+        expect(JSON_BODY_LIMITS.small).toBe('1mb');
+    });
+
+    it('limit klienta = limit serwera (kontrakt FE ↔ BE)', () => {
+        const mb = parseInt(String(JSON_BODY_LIMITS.offers).replace('mb', ''), 10);
+        expect(offerSaveLimitBytes()).toBe(mb * 1024 * 1024);
+    });
+
+    it('oferta > 50mb przechodzi na trasie ofert (wcześniej 413)', async () => {
+        // 52 MB: powyżej starego sufitu 50 MB, poniżej nowego 128 MB.
+        const res = await request(app)
+            .post('/api/offers-rury')
+            .send({
+                data: [
+                    {
+                        clientId: 'client-1',
+                        transportCost: 0,
+                        items: [],
+                        wells: [],
+                        note: 'x'.repeat(52 * 1024 * 1024)
+                    }
+                ]
+            });
+        expect(res.statusCode).toBe(200);
+    }, 120000);
 });

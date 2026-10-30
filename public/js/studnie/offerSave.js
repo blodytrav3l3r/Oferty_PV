@@ -15,10 +15,10 @@ const _moneyRoundOfferSave =
 
 /**
  * Limit ciała żądania zapisu oferty. Musi odpowiadać limitowi parsera JSON
- * na `/api/offers-rury` (`largeJson` = 50 MB w `src/mountRoutes.ts`).
+ * na `/api/offers-rury` (`JSON_BODY_LIMITS.offers` w `src/mountRoutes.ts`).
  * @type {number}
  */
-const OFFER_SAVE_PAYLOAD_LIMIT_BYTES = 50 * 1024 * 1024;
+const OFFER_SAVE_PAYLOAD_LIMIT_BYTES = 128 * 1024 * 1024;
 /**
  * Próg blokady po stronie klienta — 10% zapasu na narzut kodowania i wrapper
  * `{ data: [...] }`, żeby serwer nie odrzucił żądania po długim uploadzie.
@@ -242,13 +242,21 @@ async function saveOfferStudnie() {
         const payloadBytes = measureOfferSavePayload(offerDoc);
         const payloadMb = payloadBytes / 1048576;
         // Widoczność rozmiaru w logu — bez tego 413/odrzucenie jest niediagnozowalne.
+        // Liczniki (studnie/pozycje/eksport) pokazują, czy puchnie model danych,
+        // czy payload ma zdublowaną treść.
         if (payloadMb > 4)
             logger.info(
                 'offerManager',
                 '[OfferManager] Payload zapisu oferty studni: ' +
                     payloadMb.toFixed(1) +
                     ' MB, studni: ' +
-                    (offerDoc.wells ? offerDoc.wells.length : 0)
+                    (offerDoc.wells ? offerDoc.wells.length : 0) +
+                    ', pozycji config: ' +
+                    (offerDoc.wells || []).reduce(function (s, w) {
+                        return s + ((w && w.config ? w.config.length : 0) || 0);
+                    }, 0) +
+                    ', wpisów eksportu: ' +
+                    (offerDoc.wellsExport ? offerDoc.wellsExport.length : 0)
             );
         if (isOfferSavePayloadTooLarge(payloadBytes)) {
             showToast(
@@ -471,7 +479,9 @@ async function saveOfferStudnie() {
         }
         if (_kind === 'server' && err && err.status === 413)
             showToast(
-                'Oferta za duża dla serwera (limit 50 MB) — podziel ją lub zgłoś problem.',
+                'Oferta za duża dla serwera (limit ' +
+                    OFFER_SAVE_PAYLOAD_LIMIT_BYTES / 1048576 +
+                    ' MB) — podziel ją lub zgłoś problem.',
                 'error'
             );
         else showToast('Błąd zapisu oferty', 'error');
