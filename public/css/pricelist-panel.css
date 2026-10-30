@@ -24,6 +24,24 @@ body:not(.pv-cennik-host) .pv-dock {
     top: var(--header-h);
 }
 
+/* SPA: moduł w iframe nie ma własnego headera (jest w app.html) i startuje
+ * już pod nim — bez tego raila dzieli od górnej nawigacji 57px (--header-h). */
+body.pv-dock-embedded .pv-dock {
+    top: 0;
+}
+
+/* Dolny pasek kreatora (.wizard-nav-fixed, fixed, ten sam z-index) — rail musi
+ * kończyć się nad nim, inaczej zakrywa jego lewą część. */
+body:has(.wizard-nav-fixed) .pv-dock {
+    bottom: calc(var(--bottom-bar-h) + env(safe-area-inset-bottom, 0px));
+}
+
+@media (max-width: 768px) {
+    body:has(.wizard-nav-fixed) .pv-dock {
+        bottom: calc(var(--bottom-bar-h-mobile) + env(safe-area-inset-bottom, 0px));
+    }
+}
+
 /* #/cennik: rail jest jedynym lewym panelem — bez zamykania na desktopie.
  * Na wąskim ekranie zostaje drawer z X, a „Panel" w toolbarze go przywraca. */
 body.pv-cennik-host .pv-dock__close,

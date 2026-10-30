@@ -245,6 +245,38 @@ describe('Rail „Zarządzanie cennikami" (lewy panel edytorów)', () => {
         expect(css).toContain('body.pv-cennik-host [data-pv-dock-toggle]');
     });
 
+    it('rail kleji się do góry w iframe SPA (brak 57px dziury pod headerem app.html)', () => {
+        // Header jest w app.html, a iframe startuje już pod nim → top: 0.
+        expect(panel).toContain('function isEmbeddedModule()');
+        expect(panel).toContain('if (isEmbeddedModule())');
+        expect(panel).toContain("document.body.classList.add('pv-dock-embedded')");
+        expect(css).toMatch(/body\.pv-dock-embedded \.pv-dock \{\s*top: 0;/);
+        // Regresja kolejności: reguła embedded musi nadpisywać offset z --header-h.
+        expect(css.indexOf('body.pv-dock-embedded .pv-dock')).toBeGreaterThan(
+            css.indexOf('body:not(.pv-cennik-host) .pv-dock')
+        );
+        // Moduły w iframe nie mają własnego headera (sticky pasek jest w app.html).
+        for (const mod of ['public/studnie.html', 'public/rury.html']) {
+            expect(read(mod)).not.toMatch(/<header[^>]*class="header"/);
+        }
+    });
+
+    it('rail nie zakrywa dolnego paska kreatora (.wizard-nav-fixed)', () => {
+        // Pasek jest fixed bottom, ten sam z-index co rail → bez bottom offsetu
+        // rail zasłaniał jego lewą część.
+        expect(css).toMatch(
+            /body:has\(\.wizard-nav-fixed\) \.pv-dock \{\s*bottom: calc\(var\(--bottom-bar-h\) \+ env\(safe-area-inset-bottom, 0px\)\);/
+        );
+        // Mobile: inna wysokość paska (56px), więc osobny offset.
+        expect(css).toMatch(
+            /@media \(max-width: 768px\) \{[^}]*body:has\(\.wizard-nav-fixed\) \.pv-dock \{[^}]*--bottom-bar-h-mobile/
+        );
+        // Wysokości paska to SSoT w style.base.css — nie duplikujemy liczb.
+        const base = read('public/css/style.base.css');
+        expect(base).toContain('--bottom-bar-h: 60px');
+        expect(base).toContain('--bottom-bar-h-mobile: 56px');
+    });
+
     it('rail w #/cennik otwiera się zawsze (brak preferencji zamykania)', () => {
         expect(panel).toContain('function autoOpenVersionsPanel(');
         expect(panel).toContain('if (!isCennikHost()) return Promise.resolve();');

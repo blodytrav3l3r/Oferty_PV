@@ -1500,6 +1500,21 @@
         }
     }
 
+    /**
+     * Moduł (studnie/rury) uruchomiony w iframe SPA. Taki moduł nie ma
+     * własnego headera — sticky pasek jest w `app.html`, a iframe startuje
+     * już pod nim. Bez tego rail dostawał `top: var(--header-h)` (57px)
+     * i wisiał 57px poniżej górnej nawigacji.
+     */
+    function isEmbeddedModule() {
+        try {
+            return !!(window.parent && window.parent !== window);
+        } catch (_e) {
+            // Cross-origin parent = jesteśmy w iframe (nie ma jak odczytać parent).
+            return true;
+        }
+    }
+
     /** Taby typów: w #/cennik przełączają moduł w powłoce, w modułach — lokalny typ. */
     function typeTabsHtml(activeType) {
         return tabsHtml(activeType);
@@ -1627,6 +1642,8 @@
         }
         if (!document.getElementById('section-pricelist')) return null;
         if (isCennikHost()) document.body.classList.add('pv-cennik-host');
+        // Iframe SPA: sticky header żyje w app.html, więc rail kleji się do góry.
+        if (isEmbeddedModule()) document.body.classList.add('pv-dock-embedded');
         dock = document.createElement('aside');
         dock.id = DOCK_ID;
         dock.className = 'pv-dock';
