@@ -59,8 +59,21 @@ export function errorHandler(err: Error, req: Request, res: Response, _next: Nex
     const status = (err as { status?: unknown }).status;
     const type = (err as { type?: unknown }).type;
     if (status === 413 || type === 'entity.too.large') {
+        // bytes/limit z raw-body (err.length/err.limit) — bez nich 413 nie mówi,
+        // jak blisko limitu było żądanie i ile trzeba urwać z payloadu.
+        const tooLarge = err as { length?: unknown; limit?: unknown };
+        const contentLength = Number(req.headers?.['content-length']);
+        const bytes = Number.isFinite(Number(tooLarge.length))
+            ? Number(tooLarge.length)
+            : Number.isFinite(contentLength)
+              ? contentLength
+              : null;
+        const limit = Number.isFinite(Number(tooLarge.limit)) ? Number(tooLarge.limit) : null;
         res.status(413).json({
             error: 'Zbyt duży payload żądania (przekroczony limit rozmiaru)',
+            code: 'PAYLOAD_TOO_LARGE',
+            bytes,
+            limit,
             requestId
         });
         return;

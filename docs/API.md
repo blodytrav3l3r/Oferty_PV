@@ -262,6 +262,23 @@ Wymaga autoryzacji. Alias do `/api/offers-rury/studnie`.
 | GET    | `/api/offers-studnie/:id/export-pdf`  | Eksport do PDF                                     |
 | GET    | `/api/offers-studnie/:id/export-docx` | Eksport do DOCX                                    |
 
+**Limit payloadu:** body JSON do 50 MB (`largeJson` w `src/mountRoutes.ts`; dotyczy też
+`/api/offers-rury`). Przekroczenie → `413`:
+
+```json
+{
+    "error": "Zbyt duży payload żądania (przekroczony limit rozmiaru)",
+    "code": "PAYLOAD_TOO_LARGE",
+    "bytes": 53477376,
+    "limit": 52428800,
+    "requestId": "…"
+}
+```
+
+Frontend mierzy payload przed wysłaniem (`measureOfferSavePayload` w
+`public/js/studnie/offerSave.js`) i blokuje zapis na 90% limitu z jawnym komunikatem
+(rozmiar + liczba studni) — zamiast suchego 413 po długim uploadzie.
+
 ---
 
 ## Zamówienia — Rury (`/api/orders-rury`)

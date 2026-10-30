@@ -18,6 +18,20 @@ const _moneyRoundPricingCalc =
           };
 
 /**
+ * Kopia pozycji config do `wellsExport`. `_elemId` to tożsamość elementu PZ
+ * (`orderZleceniaData`), a nie treść oferty — w eksporcie nieużywana, a przy
+ * tysiącach studni to ~0,5 MB payloadu zapisu.
+ * @param {object} item
+ * @param {object} extra
+ * @returns {object}
+ */
+function _exportConfigItem(item, extra) {
+    const copy = Object.assign({}, item, extra);
+    delete copy._elemId;
+    return copy;
+}
+
+/**
  * Oblicza pełną wycenę oferty studni: sumy, koszty transportu, dane eksportowe.
  * @param {Array} wells
  * @param {number} transportKm
@@ -118,9 +132,9 @@ function calculateOfferPricing(wells, transportKm, transportRate, transportMode)
             magazyn: well.magazyn,
             config: (well.config || []).map(function (item, index) {
                 const p = productMap.get(item.productId);
-                if (!p) return Object.assign({}, item);
+                if (!p) return _exportConfigItem(item, {});
                 if (p.componentType === 'kineta') {
-                    return Object.assign({}, item, { _xskip: true, _xp: 0 });
+                    return _exportConfigItem(item, { _xskip: true, _xp: 0 });
                 }
                 const hasKineta =
                     p.componentType === 'dennica' &&
@@ -186,7 +200,7 @@ function calculateOfferPricing(wells, transportKm, transportRate, transportMode)
                             basePrice += pa2.allocatedCost * precoMult;
                         }
                     }
-                    return Object.assign({}, item, { _xp: basePrice });
+                    return _exportConfigItem(item, { _xp: basePrice });
                 }
                 const discountPct =
                     typeof getWellDiscountPctSafe === 'function'
@@ -194,8 +208,7 @@ function calculateOfferPricing(wells, transportKm, transportRate, transportMode)
                         : getWellDiscountPct(well, p, disc);
                 const _dErr =
                     typeof isWellDiscountCorrupt === 'function' && isWellDiscountCorrupt(well);
-                return Object.assign(
-                    {},
+                return _exportConfigItem(
                     item,
                     _dErr
                         ? { _xp: p.price || 0, _xd: 0, _discountError: true }

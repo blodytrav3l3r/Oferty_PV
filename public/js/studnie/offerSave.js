@@ -14,6 +14,42 @@ const _moneyRoundOfferSave =
           };
 
 /**
+ * Limit ciała żądania zapisu oferty. Musi odpowiadać limitowi parsera JSON
+ * na `/api/offers-rury` (`largeJson` = 50 MB w `src/mountRoutes.ts`).
+ * @type {number}
+ */
+const OFFER_SAVE_PAYLOAD_LIMIT_BYTES = 50 * 1024 * 1024;
+/**
+ * Próg blokady po stronie klienta — 10% zapasu na narzut kodowania i wrapper
+ * `{ data: [...] }`, żeby serwer nie odrzucił żądania po długim uploadzie.
+ * @type {number}
+ */
+const OFFER_SAVE_PAYLOAD_GUARD_BYTES = Math.floor(OFFER_SAVE_PAYLOAD_LIMIT_BYTES * 0.9);
+
+/**
+ * Rozmiar ciała żądania, które faktycznie poleci do `StorageService.saveOffer`
+ * (ten sam kształt: `{ data: [offerDoc] }`), w bajtach UTF-8.
+ * @param {object} offerDoc
+ * @returns {number}
+ */
+function measureOfferSavePayload(offerDoc) {
+    const body = JSON.stringify({ data: [offerDoc] });
+    // Blob liczy bajty UTF-8; bez niego zostaje długość w znakach (zaniża
+    // payload z polskimi znakami, więc próg blokady ma zapas).
+    if (typeof Blob === 'function') return new Blob([body]).size;
+    return body.length;
+}
+
+/**
+ * Czy payload przekracza bezpieczny próg zapisu (przed wysłaniem do serwera).
+ * @param {number} bytes
+ * @returns {boolean}
+ */
+function isOfferSavePayloadTooLarge(bytes) {
+    return Number(bytes) > OFFER_SAVE_PAYLOAD_GUARD_BYTES;
+}
+
+/**
  * Usuwa lotne pola runtime ze studni przed wysyłką do backendu.
  * Działa na klonie (structuredClone) — obiekty live w sesji nietknięte.
  * @param {Array} wellsArr - sklonowana tablica studni z offerDoc
@@ -26,7 +62,11 @@ function stripWellRuntimeFields(wellsArr) {
         '_aiRankInfo',
         '_lastSolveInputHash',
         '_excelLoading',
-        '__resCache'
+        '__resCache',
+        // Snapshot configu przed auto-selekcją solvera (2× config per studnia)
+        // i pieczątka hasha configu — oba odtwarzane w sesji, nie dane oferty.
+        '_preAutoConfig',
+        '_solverErrorsGen'
     ];
     wellsArr.forEach(function (w) {
         if (!w) return;
@@ -198,6 +238,30 @@ async function saveOfferStudnie() {
                 else showToast(v.errors[0], 'error');
                 return false;
             }
+        }
+        const payloadBytes = measureOfferSavePayload(offerDoc);
+        const payloadMb = payloadBytes / 1048576;
+        // Widoczność rozmiaru w logu — bez tego 413/odrzucenie jest niediagnozowalne.
+        if (payloadMb > 4)
+            logger.info(
+                'offerManager',
+                '[OfferManager] Payload zapisu oferty studni: ' +
+                    payloadMb.toFixed(1) +
+                    ' MB, studni: ' +
+                    (offerDoc.wells ? offerDoc.wells.length : 0)
+            );
+        if (isOfferSavePayloadTooLarge(payloadBytes)) {
+            showToast(
+                'Oferta za duża na zapis: ' +
+                    payloadMb.toFixed(1) +
+                    ' MB, studni: ' +
+                    (offerDoc.wells ? offerDoc.wells.length : 0) +
+                    ' (limit serwera ' +
+                    OFFER_SAVE_PAYLOAD_LIMIT_BYTES / 1048576 +
+                    ' MB). Podziel ofertę na mniejsze lub zgłoś problem.',
+                'error'
+            );
+            return false;
         }
         const result = await storageService.saveOffer(offerDoc);
         window.pendingStudnieStampId = null;

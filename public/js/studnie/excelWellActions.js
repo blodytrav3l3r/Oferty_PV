@@ -38,7 +38,10 @@ async function excelSaveAll() {
             const saved = await saveOfferStudnie();
             if (saved === false) {
                 shouldClose = false;
-                showToast('Nie zapisano oferty — popraw wymagane pola', 'warning');
+                showToast(
+                    'Nie zapisano oferty — popraw wymagane pola lub rozmiar danych',
+                    'warning'
+                );
             }
         }
         if (shouldClose) {

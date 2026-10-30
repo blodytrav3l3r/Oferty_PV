@@ -32,6 +32,36 @@ describe('errorHandler', () => {
         expect(res.body.error).toContain('Zbyt duży payload');
     });
 
+    it('413 niesie bytes/limit z body-parsera (diagnoza bez zgadywania)', async () => {
+        const err = Object.assign(new Error('request entity too large'), {
+            status: 413,
+            type: 'entity.too.large',
+            length: 2048,
+            limit: 1024
+        });
+        const res = await request(testApp(err)).get('/boom');
+        expect(res.body).toMatchObject({
+            code: 'PAYLOAD_TOO_LARGE',
+            bytes: 2048,
+            limit: 1024
+        });
+    });
+
+    it('realny overflow parsera → 413 z limitem (runtime, nie tylko mock)', async () => {
+        const app = express();
+        app.post('/upload', express.json({ limit: '1kb' }), (_req, res) => res.json({ ok: true }));
+        app.use(errorHandler);
+        const res = await request(app)
+            .post('/upload')
+            .set('Content-Type', 'application/json')
+            .send({ data: 'x'.repeat(4096) });
+        expect(res.statusCode).toBe(413);
+        expect(res.body.code).toBe('PAYLOAD_TOO_LARGE');
+        expect(res.body.bytes).toBeGreaterThan(1024);
+        expect(res.body.bytes).toBeLessThanOrEqual(4096 + 64);
+        expect(res.body.limit).toBe(1024);
+    });
+
     it('P2002 → 409 UNIQUE_CONFLICT z requestId (mapowanie centralne)', async () => {
         const err = Object.assign(new Error('Unique'), { code: 'P2002' });
         const res = await request(testApp(err)).get('/boom');
