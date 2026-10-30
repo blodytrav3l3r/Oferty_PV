@@ -1046,9 +1046,24 @@ function _draftWriteKind(kind, isFlush, exitTrigger) {
         exit: exitTag || undefined
     });
     if (!draft) return false;
-    var res = window.draftStore.saveDraft(window.localStorage, draft);
+    var res = window.draftStore.saveDraftAuto
+        ? window.draftStore.saveDraftAuto(window.localStorage, draft)
+        : window.draftStore.saveDraft(window.localStorage, draft);
     if (res.ok) {
         _draftLastWritten[key] = canon;
+        // Duże drafty (> DRAFT_SYNC_MAX_BYTES) lądują w IndexedDB: stan „ok" i L2
+        // dopiero po commicie. Serwer ma własny limit payloadu, więc dużej kopii
+        // nie wysyłamy wcale.
+        if (res.write) {
+            res.write.then(function (out) {
+                if (out && out.ok) {
+                    _draftSetSaveState('ok');
+                    return;
+                }
+                _draftSetSaveState(out && out.reason === 'quota' ? 'quota' : 'storage');
+            });
+            return true;
+        }
         _draftSetSaveState('ok');
         // L2: kopia serwerowa po potwierdzonym zapisie lokalnym. Flush (wyjście
         // z karty) idzie od razu z keepalive; zwykły autosave debounce'uje.
@@ -2224,8 +2239,55 @@ function _draftCheckServerRecovery(kind, cfg, docId) {
 }
 
 /**
- * Sprawdza recovery dla rodzaju: popup tylko gdy draft istnieje i NIE jest
- * równoważny SAVED (ten sam komparator co bramka zapisu — _draftEquivalent).
+ * Decyzja recovery dla wczytanego draftu: modal tylko gdy draft istnieje i NIE
+ * jest równoważny SAVED (ten sam komparator co bramka zapisu — _draftEquivalent).
+ * @param {string} kind
+ * @param {object} cfg
+ * @param {string} docId
+ * @param {string} key
+ * @param {object} draft
+ */
+function _draftRecoveryDecide(kind, cfg, docId, key, draft) {
+    _draftHideDraftModal();
+    var cur = _draftCurrentSaved(kind, cfg, docId);
+    if (!cur || cur.slim) return;
+    if (
+        _draftEquivalent(kind, draft.payload, cur.payload, cur.isNew, {
+            ignorePii: true
+        })
+    ) {
+        // Martwy ghost (payload jak SAVED) — ciche sprzatniecie, bez modala.
+        try {
+            window.draftStore.removeDraft(window.localStorage, key);
+            delete _draftLastWritten[key];
+        } catch (_e4) {}
+        return;
+    }
+    // Wariant (v): live po solverze deterministycznie różni się od serwera
+    // (domyślne kinety/uszczelki, auto-dobór) — draft równy temu, co formularz
+    // już pokazuje, nie ma nic do odzyskania. Modal tylko gdy draft różni się
+    // ZARÓWNO od serwera, JAK i od live-at-entry.
+    var livePayload = null;
+    try {
+        livePayload = _draftCollectLive(kind);
+    } catch (_e3) {
+        livePayload = null;
+    }
+    if (
+        livePayload &&
+        _draftEquivalent(kind, draft.payload, livePayload, cur.isNew, {
+            ignorePii: true
+        })
+    )
+        return;
+    _draftLogRecoveryDiff(kind, draft.payload, cur.payload, cur.isNew);
+    _draftShowDraftModal(kind, draft, cur.savedDoc);
+}
+
+/**
+ * Sprawdza recovery dla rodzaju. Draft lokalny czyta synchronicznie; duże drafty
+ * siedzą w IndexedDB, więc brak kopii lokalnej sprawdzamy asynchronicznie
+ * (potem L2: kopia serwerowa). Modal pokazuje się tylko przy realnej różnicy.
  * @param {string} kind
  */
 function _draftCheckRecovery(kind) {
@@ -2239,45 +2301,31 @@ function _draftCheckRecovery(kind) {
         var key = window.draftStore.buildDraftKey(userId, kind, docId);
         if (!key) return;
         var loaded = window.draftStore.loadDraft(window.localStorage, key);
-        if (loaded.status !== 'ok' || !loaded.draft) {
+        if (loaded.status === 'ok' && loaded.draft) {
+            _draftRecoveryDecide(kind, cfg, docId, key, loaded.draft);
+            return;
+        }
+        var settled = false;
+        var useLoaded = function (res) {
+            if (settled) return;
+            settled = true;
+            if (res && res.status === 'ok' && res.draft) {
+                try {
+                    _draftRecoveryDecide(kind, cfg, docId, key, res.draft);
+                } catch (_e5) {}
+                return;
+            }
             // L2: brak draftu lokalnego ≠ brak pracy. Kopia serwerowa może być
             // z innego urządzenia — sprawdzamy ją tym samym komparatorem.
             _draftCheckServerRecovery(kind, cfg, docId);
+        };
+        if (typeof window.draftStore.loadDraftAuto !== 'function') {
+            useLoaded(null);
             return;
         }
-        var cur = _draftCurrentSaved(kind, cfg, docId);
-        if (!cur || cur.slim) return;
-        if (
-            _draftEquivalent(kind, loaded.draft.payload, cur.payload, cur.isNew, {
-                ignorePii: true
-            })
-        ) {
-            // Martwy ghost (payload jak SAVED) — ciche sprzatniecie, bez modala.
-            try {
-                window.draftStore.removeDraft(window.localStorage, key);
-                delete _draftLastWritten[key];
-            } catch (_e4) {}
-            return;
-        }
-        // Wariant (v): live po solverze deterministycznie różni się od serwera
-        // (domyślne kinety/uszczelki, auto-dobór) — draft równy temu, co formularz
-        // już pokazuje, nie ma nic do odzyskania. Modal tylko gdy draft różni się
-        // ZARÓWNO od serwera, JAK i od live-at-entry.
-        var livePayload = null;
-        try {
-            livePayload = _draftCollectLive(kind);
-        } catch (_e3) {
-            livePayload = null;
-        }
-        if (
-            livePayload &&
-            _draftEquivalent(kind, loaded.draft.payload, livePayload, cur.isNew, {
-                ignorePii: true
-            })
-        )
-            return;
-        _draftLogRecoveryDiff(kind, loaded.draft.payload, cur.payload, cur.isNew);
-        _draftShowDraftModal(kind, loaded.draft, cur.savedDoc);
+        window.draftStore.loadDraftAuto(window.localStorage, key).then(useLoaded, function () {
+            useLoaded(null);
+        });
     } catch (_e2) {}
 }
 

@@ -2,7 +2,7 @@
 /* ===== DRAFT STORE (P1.1b) — lokalny draft formularzy, protokół docs/plans/e2-draft-review.md =====
  * Czysta warstwa danych BEZ zależności od DOM i sieci:
  * - klucz: sok_draft_v1_{userId}_{kind}_{docIdOrNew}, schemat v:1, jawny JSON (BEZ szyfrowania),
- * - allowlista pól (bez runtime, bez wellsExport, bez pól osobowych), cap 4 000 000 B, TTL 14 dni sliding,
+ * - allowlista pól (bez runtime, bez wellsExport, bez pól osobowych), cap 200 MB, TTL 14 dni sliding,
  * - SAVED zawsze wygrywa: ten moduł nigdy nie czyta draftu przy zapisie ani go nie wysyła.
  * Wszystkie funkcje przyjmują storage (localStorage lub zamiennik) — testowalne w izolacji.
  * Efekty uboczne (toast, popup recovery, debounce) należą do draftAutosave.js, nie tutaj.
@@ -14,8 +14,15 @@ var DRAFT_SCHEMA_VERSION = 1;
 /** Prefiks klucza draftu w localStorage. */
 var DRAFT_KEY_PREFIX = 'sok_draft_v1_';
 
-/** Maksymalny rozmiar draftu w bajtach (długość stringu JSON przed setItem). */
-var DRAFT_MAX_BYTES = 4000000;
+/** Maksymalny rozmiar draftu w bajtach (długość stringu JSON przed zapisem): 200 MB. */
+var DRAFT_MAX_BYTES = 200 * 1024 * 1024;
+
+/**
+ * Do tego rozmiaru draft idzie do localStorage: zapis synchroniczny, pewny także
+ * w `pagehide`. Większe drafty trafiają do IndexedDB (localStorage odrzuca zapis
+ * przy ~50 MB zależnie od przeglądarki — QuotaExceededError).
+ */
+var DRAFT_SYNC_MAX_BYTES = 4000000;
 
 /** TTL draftu (sliding, odświeżane przy każdym zapisie): 14 dni w ms. */
 var DRAFT_TTL_MS = 14 * 24 * 3600 * 1000;
@@ -297,6 +304,26 @@ function isDraftQuotaError(err) {
 }
 
 /**
+ * Prefiks kluczy draftów użytkownika (wspólny dla localStorage i IndexedDB).
+ * @param {*} userId
+ * @returns {string}
+ */
+function draftUserPrefix(userId) {
+    return DRAFT_KEY_PREFIX + String(userId).replace(/[^A-Za-z0-9_-]/g, '_') + '_';
+}
+
+/**
+ * Backend IndexedDB dla dużych draftów (`draftIdb.js`). Brak wsparcia → null.
+ * @returns {{put: Function, get: Function, keys: Function, del: Function, delPrefix: Function}|null}
+ */
+function draftIdbBackend() {
+    var win = /** @type {any} */ (typeof window !== 'undefined' ? window : null);
+    var idb = win ? win.draftIdb : null;
+    if (!idb || typeof idb.get !== 'function' || typeof idb.put !== 'function') return null;
+    return /** @type {any} */ (idb);
+}
+
+/**
  * Wszystkie klucze draftów danego użytkownika w storage.
  * @param {*} storage
  * @param {*} userId
@@ -305,7 +332,7 @@ function isDraftQuotaError(err) {
 function listUserDraftKeys(storage, userId) {
     var out = [];
     if (!storage || String(userId || '') === '') return out;
-    var prefix = DRAFT_KEY_PREFIX + String(userId).replace(/[^A-Za-z0-9_-]/g, '_') + '_';
+    var prefix = draftUserPrefix(userId);
     var len = 0;
     try {
         len = storage.length;
@@ -325,6 +352,40 @@ function listUserDraftKeys(storage, userId) {
 }
 
 /**
+ * Waliduje surową kopertę draftu. Uszkodzone/przeterminowane/niezgodne wersje
+ * są usuwane przez `remove` (cicho) i zwracany jest powód.
+ * @param {*} raw
+ * @param {number} now
+ * @param {(key: string) => void} [remove]
+ * @param {string} [key]
+ * @returns {{status: string, draft?: object}} status: ok|missing|expired|invalid|version
+ */
+function normalizeDraftRaw(raw, now, remove, key) {
+    /**
+     * @param {string} status
+     * @returns {{status: string}}
+     */
+    function drop(status) {
+        if (typeof remove === 'function' && key) remove(key);
+        return { status: status };
+    }
+    if (raw === null || raw === undefined) return { status: 'missing' };
+    var parsed = null;
+    try {
+        parsed = JSON.parse(raw);
+    } catch (_e) {
+        return drop('invalid');
+    }
+    if (!parsed || typeof parsed !== 'object' || parsed.v !== DRAFT_SCHEMA_VERSION) {
+        return drop(parsed && parsed.v !== undefined ? 'version' : 'invalid');
+    }
+    var exp = Date.parse(parsed.expiresAt);
+    if (isNaN(exp) || exp <= now) return drop('expired');
+    if (!parsed.payload || typeof parsed.payload !== 'object') return drop('invalid');
+    return { status: 'ok', draft: parsed };
+}
+
+/**
  * Odczytuje i waliduje draft spod klucza. Uszkodzone/przeterminowane/niezgodne
  * wersje są usuwane (cicho + zwracany powód), formularz zawsze zostaje na SAVED.
  * @param {*} storage
@@ -340,42 +401,50 @@ function loadDraft(storage, key, opts) {
     } catch (_e) {
         return { status: 'missing' };
     }
-    if (raw === null || raw === undefined) return { status: 'missing' };
-    var parsed = null;
-    try {
-        parsed = JSON.parse(raw);
-    } catch (_e2) {
-        try {
-            storage.removeItem(key);
-        } catch (_e3) {}
-        return { status: 'invalid' };
-    }
-    if (!parsed || typeof parsed !== 'object' || parsed.v !== DRAFT_SCHEMA_VERSION) {
-        try {
-            storage.removeItem(key);
-        } catch (_e4) {}
-        return { status: parsed && parsed.v !== undefined ? 'version' : 'invalid' };
-    }
-    var exp = Date.parse(parsed.expiresAt);
-    if (isNaN(exp) || exp <= now) {
-        try {
-            storage.removeItem(key);
-        } catch (_e5) {}
-        return { status: 'expired' };
-    }
-    if (!parsed.payload || typeof parsed.payload !== 'object') {
-        try {
-            storage.removeItem(key);
-        } catch (_e6) {}
-        return { status: 'invalid' };
-    }
-    return { status: 'ok', draft: parsed };
+    return normalizeDraftRaw(
+        raw,
+        now,
+        function (k) {
+            removeDraft(storage, k);
+        },
+        key
+    );
 }
 
 /**
- * Zapisuje draft (koperta zbudowana przez buildDraft). Cap 4 MB: powyżej —
- * odrzucenie bez zapisu. QuotaExceeded: usuwa największy draft użytkownika,
- * ponawia raz, potem zgłasza quota (SAVED nigdy nie jest blokowany).
+ * Odczyt z obu backendów: kopia lokalna ma priorytet, potem IndexedDB (duże drafty).
+ * @param {*} storage
+ * @param {string} key
+ * @param {object} [opts] {now?}
+ * @returns {Promise<{status: string, draft?: object}>}
+ */
+function loadDraftAuto(storage, key, opts) {
+    var now = opts && typeof opts.now === 'number' ? opts.now : Date.now();
+    var local = loadDraft(storage, key, opts);
+    var idb = key ? draftIdbBackend() : null;
+    if (local.status === 'ok' || !idb) return Promise.resolve(local);
+    return Promise.resolve(idb.get(key))
+        .then(function (raw) {
+            if (raw === null || raw === undefined) return local;
+            return normalizeDraftRaw(
+                raw,
+                now,
+                function (k) {
+                    removeDraft(storage, k);
+                },
+                key
+            );
+        })
+        .catch(function () {
+            return local;
+        });
+}
+
+/**
+ * Zapisuje draft w localStorage (koperta zbudowana przez buildDraft). Powyżej
+ * DRAFT_SYNC_MAX_BYTES — odrzucenie bez zapisu (duże drafty: saveDraftAuto →
+ * IndexedDB). QuotaExceeded: usuwa największy draft użytkownika, ponawia raz,
+ * potem zgłasza quota (SAVED nigdy nie jest blokowany).
  * @param {*} storage
  * @param {object} draft
  * @returns {{ok: boolean, reason?: string}}
@@ -388,7 +457,7 @@ function saveDraft(storage, draft) {
     if (!key) return { ok: false, reason: 'invalid' };
     var size = draftByteSize(draft);
     if (size < 0) return { ok: false, reason: 'invalid' };
-    if (size > DRAFT_MAX_BYTES) return { ok: false, reason: 'oversize' };
+    if (size > DRAFT_SYNC_MAX_BYTES) return { ok: false, reason: 'oversize' };
     var json = null;
     try {
         json = JSON.stringify(draft);
@@ -417,6 +486,50 @@ function saveDraft(storage, draft) {
 }
 
 /**
+ * Zapis z wyborem backendu: do DRAFT_SYNC_MAX_BYTES → localStorage (synchronicznie,
+ * pewne w pagehide), większe → IndexedDB (asynchronicznie, do DRAFT_MAX_BYTES).
+ * Przy `storage: 'idb'` wynik zapisu przychodzi w `write`; wołający musi go użyć
+ * do ustawienia stanu zapisu (samo `ok: true` znaczy „przyjęte do zapisu”).
+ * @param {*} storage
+ * @param {object} draft
+ * @returns {{ok: boolean, reason?: string, storage?: 'local'|'idb', write?: Promise<{ok: boolean, reason?: string}>}}
+ */
+function saveDraftAuto(storage, draft) {
+    if (!draft || draft.v !== DRAFT_SCHEMA_VERSION || !draft.payload) {
+        return { ok: false, reason: 'invalid' };
+    }
+    var key = buildDraftKey(draft.userId, draft.kind, draft.docId);
+    if (!key) return { ok: false, reason: 'invalid' };
+    var size = draftByteSize(draft);
+    if (size < 0) return { ok: false, reason: 'invalid' };
+    if (size > DRAFT_MAX_BYTES) return { ok: false, reason: 'oversize' };
+    if (size <= DRAFT_SYNC_MAX_BYTES) {
+        var local = saveDraft(storage, draft);
+        return { ok: local.ok, reason: local.reason, storage: 'local' };
+    }
+    var idb = draftIdbBackend();
+    if (!idb) return { ok: false, reason: 'oversize' };
+    var json = null;
+    try {
+        json = JSON.stringify(draft);
+    } catch (_e) {
+        return { ok: false, reason: 'invalid' };
+    }
+    // Stara, mniejsza kopia lokalna pod tym kluczem byłaby nieaktualna.
+    try {
+        if (storage && key) storage.removeItem(key);
+    } catch (_e2) {}
+    var write = Promise.resolve(idb.put(key, json))
+        .then(function () {
+            return { ok: true };
+        })
+        .catch(function (err) {
+            return { ok: false, reason: isDraftQuotaError(err) ? 'quota' : 'error' };
+        });
+    return { ok: true, storage: 'idb', write: write };
+}
+
+/**
  * Lista poprawnych draftów użytkownika (najnowsze pierwsze). Uszkodzone
  * i wygasłe są usuwane przez loadDraft, więc nie trafiają na listę.
  * @param {*} storage
@@ -441,6 +554,73 @@ function listUserDrafts(storage, userId, opts) {
     return out.sort(function (a, b) {
         return a.updatedAt < b.updatedAt ? 1 : a.updatedAt > b.updatedAt ? -1 : 0;
     });
+}
+
+/**
+ * Lista draftów z obu backendów (localStorage + IndexedDB). Kopia lokalna
+ * wygrywa przy tym samym kluczu; wynik sortowany jak `listUserDrafts`.
+ * @param {*} storage
+ * @param {string} userId
+ * @param {object} [opts] {now?}
+ * @returns {Promise<Array<{key: string, kind: string, docId: string, updatedAt: string, bytes: number, draft: object}>>}
+ */
+function listUserDraftsAuto(storage, userId, opts) {
+    var local = listUserDrafts(storage, userId, opts);
+    var idb = String(userId || '') !== '' ? draftIdbBackend() : null;
+    if (!idb) return Promise.resolve(local);
+    var now = opts && typeof opts.now === 'number' ? opts.now : Date.now();
+    var prefix = draftUserPrefix(userId);
+    var seen = {};
+    local.forEach(function (item) {
+        seen[item.key] = true;
+    });
+    return Promise.resolve(idb.keys())
+        .then(function (keys) {
+            var wanted = keys.filter(function (k) {
+                return k.indexOf(prefix) === 0 && !seen[k];
+            });
+            return Promise.all(
+                wanted.map(function (k) {
+                    return Promise.resolve(idb.get(k)).then(
+                        function (raw) {
+                            return { key: k, raw: raw };
+                        },
+                        function () {
+                            return { key: k, raw: null };
+                        }
+                    );
+                })
+            );
+        })
+        .then(function (rows) {
+            var out = local.slice();
+            rows.forEach(function (row) {
+                if (row.raw === null || row.raw === undefined) return;
+                var res = normalizeDraftRaw(
+                    row.raw,
+                    now,
+                    function (k) {
+                        removeDraft(storage, k);
+                    },
+                    row.key
+                );
+                if (res.status !== 'ok' || !res.draft) return;
+                out.push({
+                    key: row.key,
+                    kind: res.draft.kind,
+                    docId: res.draft.docId,
+                    updatedAt: res.draft.updatedAt,
+                    bytes: draftByteSize(res.draft),
+                    draft: res.draft
+                });
+            });
+            return out.sort(function (a, b) {
+                return a.updatedAt < b.updatedAt ? 1 : a.updatedAt > b.updatedAt ? -1 : 0;
+            });
+        })
+        .catch(function () {
+            return local;
+        });
 }
 
 /**
@@ -472,7 +652,7 @@ function largestUserDraftKey(storage, userId, protectedKey) {
 }
 
 /**
- * Usuwa jeden draft.
+ * Usuwa jeden draft w obu backendach (IndexedDB best-effort, bez czekania).
  * @param {*} storage
  * @param {string} key
  */
@@ -480,6 +660,11 @@ function removeDraft(storage, key) {
     try {
         if (storage && key) storage.removeItem(key);
     } catch (_e) {}
+    var idb = key ? draftIdbBackend() : null;
+    if (!idb) return;
+    try {
+        Promise.resolve(idb.del(key)).catch(function () {});
+    } catch (_e2) {}
 }
 
 /**
@@ -491,13 +676,64 @@ function removeDraft(storage, key) {
 function removeUserDrafts(storage, userId) {
     var keys = listUserDraftKeys(storage, userId);
     keys.forEach(function (k) {
-        removeDraft(storage, k);
+        try {
+            if (storage) storage.removeItem(k);
+        } catch (_e) {}
     });
+    var idb = String(userId || '') !== '' ? draftIdbBackend() : null;
+    if (idb && typeof idb.delPrefix === 'function') {
+        try {
+            Promise.resolve(idb.delPrefix(draftUserPrefix(userId))).catch(function () {});
+        } catch (_e2) {}
+    }
     return keys.length;
 }
 
 /**
- * Leniwe sprzątanie: usuwa przeterminowane/niezgodne drafty użytkownika.
+ * Sprzątanie kopii w IndexedDB (TTL/wersja). Best-effort: bez wyniku zwrotnego,
+ * nigdy nie blokuje zapisu.
+ * @param {*} userId
+ * @param {object} [opts] {now?}
+ */
+function sweepIdbDrafts(userId, opts) {
+    var idb = String(userId || '') !== '' ? draftIdbBackend() : null;
+    if (!idb) return;
+    var now = opts && typeof opts.now === 'number' ? opts.now : Date.now();
+    var prefix = draftUserPrefix(userId);
+    try {
+        Promise.resolve(idb.keys())
+            .then(function (keys) {
+                return Promise.all(
+                    keys
+                        .filter(function (k) {
+                            return k.indexOf(prefix) === 0;
+                        })
+                        .map(function (k) {
+                            return Promise.resolve(idb.get(k)).then(
+                                function (raw) {
+                                    return normalizeDraftRaw(
+                                        raw,
+                                        now,
+                                        function (dead) {
+                                            removeDraft(null, dead);
+                                        },
+                                        k
+                                    );
+                                },
+                                function () {
+                                    return null;
+                                }
+                            );
+                        })
+                );
+            })
+            .catch(function () {});
+    } catch (_e) {}
+}
+
+/**
+ * Leniwe sprzątanie: usuwa przeterminowane/niezgodne drafty użytkownika
+ * (licznik dotyczy localStorage; IndexedDB sprzątane jest w tle).
  * @param {*} storage
  * @param {*} userId
  * @param {object} [opts] {now?}
@@ -510,6 +746,7 @@ function sweepDrafts(storage, userId, opts) {
         var res = loadDraft(storage, k, opts);
         if (res.status !== 'ok') removed++;
     });
+    sweepIdbDrafts(userId, opts);
     return removed;
 }
 
@@ -587,6 +824,7 @@ window.draftStore = {
     SCHEMA_VERSION: DRAFT_SCHEMA_VERSION,
     KEY_PREFIX: DRAFT_KEY_PREFIX,
     MAX_BYTES: DRAFT_MAX_BYTES,
+    SYNC_MAX_BYTES: DRAFT_SYNC_MAX_BYTES,
     TTL_MS: DRAFT_TTL_MS,
     KINDS: DRAFT_KINDS,
     FIELD_KEYS: DRAFT_FIELD_KEYS,
@@ -604,12 +842,16 @@ window.draftStore = {
     isDraftQuotaError: isDraftQuotaError,
     listUserDraftKeys: listUserDraftKeys,
     listUserDrafts: listUserDrafts,
+    listUserDraftsAuto: listUserDraftsAuto,
     loadDraft: loadDraft,
+    loadDraftAuto: loadDraftAuto,
     saveDraft: saveDraft,
+    saveDraftAuto: saveDraftAuto,
     largestUserDraftKey: largestUserDraftKey,
     removeDraft: removeDraft,
     removeUserDrafts: removeUserDrafts,
     sweepDrafts: sweepDrafts,
+    sweepIdbDrafts: sweepIdbDrafts,
     canonicalPayloadJson: canonicalPayloadJson,
     draftDiffersFromSaved: draftDiffersFromSaved,
     summarizeDraftCounts: summarizeDraftCounts

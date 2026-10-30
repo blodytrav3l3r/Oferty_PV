@@ -43,6 +43,13 @@
      */
     var detailsState = { map: Object.create(null), loaded: false, token: 0 };
 
+    /**
+     * Ostatnia pełna lista szkiców (localStorage + IndexedDB) — źródło dla
+     * popupu przy przemalowaniu, gdy duże drafty nie są w localStorage.
+     * @type {Array<any>}
+     */
+    var draftsCache = [];
+
     /** @param {string} s @returns {string} */
     function esc(s) {
         return String(s)
@@ -172,6 +179,31 @@
         } catch (_e) {
             return [];
         }
+    }
+
+    /**
+     * Szkice z obu backendów: localStorage + IndexedDB (duże drafty). Fallback
+     * zawsze do kopii lokalnej, żeby awaria IndexedDB nie gasiła listy.
+     * @param {object} [user]
+     * @returns {Promise<Array<any>>}
+     */
+    function listDraftsAuto(user) {
+        var local = listDrafts(user);
+        var userId = userIdOf(user);
+        var store = window.draftStore;
+        if (!userId || !store || typeof store.listUserDraftsAuto !== 'function')
+            return Promise.resolve(local);
+        return Promise.resolve(store.listUserDraftsAuto(window.localStorage, userId)).then(
+            function (items) {
+                var out = (items || []).filter(function (item) {
+                    return String(item.docId || '').indexOf('-konflikt-') === -1;
+                });
+                return out;
+            },
+            function () {
+                return local;
+            }
+        );
     }
 
     /** @param {object} [user] @returns {{hash: string, label: string, updatedAt: string}|null} */
@@ -341,17 +373,19 @@
      */
     function hydrate(user) {
         var token = ++detailsState.token;
-        var items = listDrafts(user);
-        if (!items.length) return;
-        fetchDetails(items).then(function (map) {
+        listDraftsAuto(user).then(function (all) {
             if (token !== detailsState.token) return;
-            Object.keys(map).forEach(function (key) {
-                detailsState.map[key] = map[key];
+            if (!all.length) return;
+            fetchDetails(all).then(function (map) {
+                if (token !== detailsState.token) return;
+                Object.keys(map).forEach(function (key) {
+                    detailsState.map[key] = map[key];
+                });
+                detailsState.loaded = true;
+                var overlay = document.getElementById(MODAL_ID);
+                if (!overlay) return;
+                rerenderOverlay(user, overlay);
             });
-            detailsState.loaded = true;
-            var overlay = document.getElementById(MODAL_ID);
-            if (!overlay) return;
-            rerenderOverlay(user, overlay);
         });
     }
 
@@ -514,20 +548,37 @@
 
     /**
      * Kafelek pulpitu. Zawsze widoczny: bez danych jest wyszarzony (disabled).
+     * Najpierw kopia lokalna (natychmiast), potem lista z IndexedDB.
      * @param {object} [user]
      */
     function render(user) {
         var box = document.getElementById(CONTAINER_ID);
         if (!box) return;
-        var drafts = listDrafts(user);
+        draftsCache = listDrafts(user);
+        paintTile(box, user, draftsCache);
+        listDraftsAuto(user).then(function (drafts) {
+            // Kafelek mógł zniknąć (zmiana widoku) — wtedy nie ma czego malować.
+            if (document.getElementById(CONTAINER_ID) !== box) return;
+            draftsCache = drafts;
+            paintTile(box, user, drafts);
+        });
+    }
+
+    /**
+     * @param {HTMLElement} box
+     * @param {object} [user]
+     * @param {Array<any>} [drafts]
+     */
+    function paintTile(box, user, drafts) {
+        var list = drafts || [];
         var route = getRoute(user);
-        var hasData = drafts.length > 0 || !!route;
-        var sub = drafts.length
+        var hasData = list.length > 0 || !!route;
+        var sub = list.length
             ? 'Kopie lokalne w tej przeglądarce'
             : route
               ? 'Ostatnia trasa: ' + route.label
               : 'Brak szkiców do wznowienia';
-        var badge = drafts.length ? countLabel(drafts.length) : route ? 'Ostatnia trasa' : '';
+        var badge = list.length ? countLabel(list.length) : route ? 'Ostatnia trasa' : '';
         box.innerHTML =
             '<button type="button" class="launch-card resume" data-resume-action="open"' +
             (hasData ? ' aria-haspopup="dialog"' : ' disabled') +
@@ -552,9 +603,13 @@
         }
     }
 
-    /** @param {object} [user] @returns {string} */
-    function popupHtml(user) {
-        var drafts = listDrafts(user);
+    /**
+     * @param {object} [user]
+     * @param {Array<any>} [items] lista z listDraftsAuto; brak = pamięć/lokalna
+     * @returns {string}
+     */
+    function popupHtml(user, items) {
+        var drafts = items || (draftsCache.length ? draftsCache : listDrafts(user));
         var total = totalKeys(user);
         var route = getRoute(user);
         var rows = drafts.length
@@ -646,6 +701,9 @@
             var store = window.draftStore;
             if (!store || typeof store.removeDraft !== 'function' || !key) return false;
             store.removeDraft(window.localStorage, key);
+            draftsCache = draftsCache.filter(function (item) {
+                return item.key !== key;
+            });
             return window.localStorage.getItem(key) === null;
         } catch (_e) {
             return false;
@@ -681,6 +739,7 @@
             var store = window.draftStore;
             if (!store || typeof store.removeUserDrafts !== 'function') return false;
             store.removeUserDrafts(window.localStorage, userId);
+            draftsCache = [];
             return totalKeys(user) === 0;
         } catch (_e) {
             return false;
@@ -691,15 +750,16 @@
      * Przemalowuje otwarty popup, zachowując fokus wewnątrz modala.
      * @param {object|undefined} user
      * @param {HTMLElement} overlay
+     * @param {Array<any>} [items]
      */
-    function rerenderOverlay(user, overlay) {
+    function rerenderOverlay(user, overlay, items) {
         // render() podmienia kafelek, więc modalCore traci referencję do elementu
         // sprzed otwarcia — bez tego fokus po zamknięciu nie ma gdzie wrócić.
         var tileBtn = document.querySelector('#resume-drafts [data-resume-action="open"]');
         /** @type {any} */ (overlay)._previousFocus = tileBtn;
         var hadFocus =
             typeof overlay.contains === 'function' && overlay.contains(document.activeElement);
-        overlay.innerHTML = popupHtml(user);
+        overlay.innerHTML = popupHtml(user, items);
         paintIcons(overlay);
         if (!hadFocus) return;
         var next = overlay.querySelector('[data-resume-action="close"]');
@@ -714,11 +774,23 @@
         render(user);
         var overlay = document.getElementById(MODAL_ID);
         if (!overlay) return;
-        if (!listDrafts(user).length && !getRoute(user)) {
+        // Zamknięcie zostaje synchroniczne, gdy nic nie zostało (localStorage
+        // pusty i brak kopii z IndexedDB w pamięci) — bez migotania pustego modala.
+        var local = listDrafts(user);
+        if (!local.length && !draftsCache.length && !getRoute(user)) {
             if (typeof window.closeModal === 'function') window.closeModal(MODAL_ID);
             return;
         }
-        rerenderOverlay(user, overlay);
+        // Najpierw stan z pamięci (bez migotania), potem pełna lista z IndexedDB.
+        rerenderOverlay(user, overlay, draftsCache.length ? draftsCache : local);
+        listDraftsAuto(user).then(function (items) {
+            if (document.getElementById(MODAL_ID) !== overlay) return;
+            if (!items.length && !getRoute(user)) {
+                if (typeof window.closeModal === 'function') window.closeModal(MODAL_ID);
+                return;
+            }
+            rerenderOverlay(user, overlay, items);
+        });
     }
 
     /** @param {object} [user] */
@@ -743,6 +815,13 @@
             handleAction(e, user);
         });
         hydrate(user);
+        // Duże drafty żyją w IndexedDB: modal otwiera się od razu, a pełna lista
+        // (localStorage + IndexedDB) dochodzi chwilę później i przemalowuje wiersze.
+        listDraftsAuto(user).then(function (items) {
+            if (document.getElementById(MODAL_ID) !== overlay) return;
+            draftsCache = items;
+            rerenderOverlay(user, overlay, items);
+        });
     }
 
     /**
@@ -772,7 +851,8 @@
             return;
         }
         if (action === 'delete-all') {
-            var count = totalKeys(user);
+            // Duże szkice żyją w IndexedDB (poza licznikiem kluczy localStorage).
+            var count = Math.max(draftsCache.length, totalKeys(user));
             if (!count) return;
             if (
                 !ask(
