@@ -52,6 +52,8 @@ jest.mock('../../src/utils/productionOrderGuard', () => ({
 jest.mock('../../src/prismaClient', () => ({
     __esModule: true,
     default: {
+        pricelistVersion: { findFirst: jest.fn(async () => ({ id: 'v-active-test' })) },
+        settings: { findUnique: jest.fn(async () => null) },
         offers_studnie_rel: {
             findMany: jest.fn(),
             findUnique: jest.fn(),
@@ -106,6 +108,8 @@ beforeEach(() => {
         if (Array.isArray(arg)) return Promise.all(arg);
         return arg;
     });
+    (prisma.pricelistVersion.findFirst as jest.Mock).mockResolvedValue({ id: 'v-active-test' });
+    (prisma.settings.findUnique as jest.Mock).mockResolvedValue(null);
 });
 
 describe('Studnie Offers CRUD — autoryzacja (IDOR)', () => {

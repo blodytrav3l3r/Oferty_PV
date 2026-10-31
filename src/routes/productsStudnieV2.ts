@@ -23,7 +23,6 @@ import {
 } from '../services/pricelistVersionService';
 import { versionExportFilename } from '../utils/exportFilenames';
 import { getPrecoDefault } from '../services/precoPricing';
-import { recordPricelistFallback } from '../utils/metrics';
 import {
     findLatestDraft,
     getEditorPricing,
@@ -205,7 +204,6 @@ router.get('/', requireAuth, async (req, res) => {
     try {
         res.setHeader('X-Pricelist-Write-Target', getPricelistWriteTarget());
         const source = requirePricingSource(req.query.source);
-        let fallbackHeader = false;
         if (!source) {
             const editor = await getEditorPricing('studnie');
             if (!editor.fallback) {
@@ -215,19 +213,20 @@ router.get('/', requireAuth, async (req, res) => {
         }
         if (source === 'active') {
             const active = await resolveActivePricing('studnie');
-            if (!active.fallback) {
-                res.json({ data: active.data });
+            if (active.fallback) {
+                // Etap 1: brak ACTIVE = brak ceny oferty (bez cichego LIVE).
+                res.status(409).json({
+                    error: 'Brak aktywnego cennika studni — opublikuj wersję',
+                    code: 'NO_ACTIVE_VERSION'
+                });
                 return;
             }
-            fallbackHeader = true;
+            res.json({ data: active.data });
+            return;
         }
         const products = await prisma.productsStudnie.findMany({
             orderBy: [{ category: 'asc' }, { componentType: 'asc' }, { id: 'asc' }]
         });
-        if (fallbackHeader) {
-            recordPricelistFallback('studnie');
-            res.setHeader('X-Pricelist-Fallback', 'live');
-        }
         res.json({ data: products.map(toLegacy) });
     } catch (err: unknown) {
         if (err instanceof PricelistVersionError) {

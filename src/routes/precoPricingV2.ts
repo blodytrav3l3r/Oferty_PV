@@ -8,7 +8,6 @@ import { InvalidPriceError } from '../validators/finiteNumbers';
 import { pricelistLock } from '../middleware/writeLock';
 import { buildXlsx } from '../utils/minimalXlsx';
 import { flattenPrecoRows, getPrecoDefault, getPrecoLive } from '../services/precoPricing';
-import { recordPricelistFallback } from '../utils/metrics';
 import {
     findLatestDraft,
     getEditorPricing,
@@ -43,7 +42,6 @@ router.get('/', requireAuth, async (req, res) => {
     try {
         res.setHeader('X-Pricelist-Write-Target', getPricelistWriteTarget());
         const source = requirePricingSource(req.query.source);
-        let fallbackHeader = false;
         if (!source) {
             const editor = await getEditorPricing('preco');
             if (!editor.fallback) {
@@ -53,17 +51,18 @@ router.get('/', requireAuth, async (req, res) => {
         }
         if (source === 'active') {
             const active = await resolveActivePricing('preco');
-            if (!active.fallback) {
-                res.json({ data: active.data });
+            if (active.fallback) {
+                // Etap 1: brak ACTIVE = brak ceny oferty (bez cichego LIVE).
+                res.status(409).json({
+                    error: 'Brak aktywnego cennika PRECO — opublikuj wersję',
+                    code: 'NO_ACTIVE_VERSION'
+                });
                 return;
             }
-            fallbackHeader = true;
+            res.json({ data: active.data });
+            return;
         }
         const result = await getPrecoLive();
-        if (fallbackHeader) {
-            recordPricelistFallback('preco');
-            res.setHeader('X-Pricelist-Fallback', 'live');
-        }
         res.json(result);
     } catch (err: unknown) {
         if (err instanceof PricelistVersionError) {

@@ -470,8 +470,7 @@ async function showSectionStudnie(id) {
         }
     } else if (
         !studnieOfferStamp &&
-        (window.__studniePricingSource === 'live' ||
-            window.__studniePricingSource === 'live-fallback') &&
+        window.__studniePricingSource === 'live' &&
         (typeof _studniePricelistDirty === 'undefined' || !_studniePricelistDirty) &&
         (typeof _precoDirty === 'undefined' || !_precoDirty)
     ) {

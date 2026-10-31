@@ -395,21 +395,22 @@ describe('Paczka 1: source=active czyta z APPROVED', () => {
         expect((await request(app).get('/api/products')).body.data[0].price).toBe(80);
     });
 
-    test('brak APPROVED → LIVE + X-Pricelist-Fallback: live', async () => {
+    test('brak APPROVED → 409 NO_ACTIVE_VERSION (bez cichego LIVE)', async () => {
         versions.length = 0;
-        for (const [url, price] of [
-            ['/api/products?source=active', 100],
-            ['/api/products-studnie?source=active', 100]
-        ] as const) {
+        for (const url of [
+            '/api/products?source=active',
+            '/api/products-studnie?source=active',
+            '/api/preco-pricing?source=active'
+        ]) {
             const res = await request(app).get(url);
-            expect(res.status).toBe(200);
-            expect(res.body.data[0].price).toBe(price);
-            expect(res.headers['x-pricelist-fallback']).toBe('live');
+            expect(res.status).toBe(409);
+            expect(res.body.code).toBe('NO_ACTIVE_VERSION');
+            expect(res.headers['x-pricelist-fallback']).toBeUndefined();
         }
-        const preco = await request(app).get('/api/preco-pricing?source=active');
-        expect(preco.status).toBe(200);
-        expect(preco.body.data[0]['1000'].skrzynkaWlazowa).toBe(10);
-        expect(preco.headers['x-pricelist-fallback']).toBe('live');
+        // Widok edytora (bez source) dalej czyta LIVE — to nie jest cena oferty.
+        const plain = await request(app).get('/api/products');
+        expect(plain.status).toBe(200);
+        expect(plain.body.data[0].price).toBe(100);
     });
 
     test.each([

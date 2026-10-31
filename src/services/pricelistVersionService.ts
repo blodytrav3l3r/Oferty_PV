@@ -96,12 +96,14 @@ export {
     resolveActive,
     readActiveOverride,
     readActiveOverrides,
+    resolveActiveForStamp,
     resolveVersionIdSafe,
     currentPricelistLabel,
     resolveActivePricing,
     pricingFromVersion
 } from './pricelist/usage';
 export type {
+    ActiveStamp,
     VersionUsage,
     ActivePricing,
     PrecoReferenceInfo,

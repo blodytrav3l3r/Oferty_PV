@@ -19,6 +19,8 @@ jest.mock('../src/utils/logger', () => ({
 jest.mock('../src/prismaClient', () => ({
     __esModule: true,
     default: {
+        pricelistVersion: { findFirst: jest.fn(async () => ({ id: 'v-active-test' })) },
+        settings: { findUnique: jest.fn(async () => null) },
         offers_studnie_rel: {
             findUnique: jest.fn(),
             findMany: jest.fn(),

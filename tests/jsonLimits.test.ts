@@ -36,6 +36,7 @@ jest.mock('../src/routes/offers/exports', () => ({
 jest.mock('../src/prismaClient', () => ({
     __esModule: true,
     default: {
+        pricelistVersion: { findFirst: jest.fn(async () => ({ id: 'v-active-test' })) },
         settings: {
             findUnique: jest.fn().mockResolvedValue(null),
             upsert: jest.fn().mockResolvedValue({})

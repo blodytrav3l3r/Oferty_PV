@@ -228,6 +228,7 @@ import {
     approveVersion,
     resolveActive,
     resolveActivePricing,
+    resolveActiveForStamp,
     resolveVersionIdSafe,
     getVersionExport
 } from '../src/services/pricelistVersionService';
@@ -300,6 +301,19 @@ describe('F3 freeze ofert', () => {
         await createDraft('rury', [rura('r1')], { effectiveFrom: '2020-09-01T00:00:00.000Z' });
         findFirstFails = true;
         await expect(resolveVersionIdSafe('rury')).resolves.toBeNull();
+    });
+
+    test('resolveActiveForStamp rozróżnia brak wersji od błędu odczytu', async () => {
+        // Brak APPROVED: nie błąd, tylko brak cennika (trasa -> 409).
+        await createDraft('rury', [rura('r1')], { effectiveFrom: '2099-01-01T00:00:00.000Z' });
+        await expect(resolveActiveForStamp('rury')).resolves.toEqual({
+            id: null,
+            failed: false
+        });
+
+        // Błąd odczytu: failed=true (trasa -> 503).
+        findFirstFails = true;
+        await expect(resolveActiveForStamp('rury')).resolves.toEqual({ id: null, failed: true });
     });
 
     test('zmiana ACTIVE nie rusza historii (co do grosza) + odtworzenie z versionId', async () => {
@@ -383,7 +397,7 @@ describe('F3 freeze ofert', () => {
             'utf8'
         );
         for (const src of [rury, studnie]) {
-            expect(src).toContain('resolveVersionIdSafe');
+            expect(src).toContain('resolveActiveForStamp');
             expect(src).toContain('pricelistVersionId');
         }
         // Update nie nadpisuje freeze (tylko createData/create).

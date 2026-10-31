@@ -522,42 +522,39 @@ function skipWizardToStep3() {
 
 /* ===== PRZECHOWYWANIE (REST API) ===== */
 
-/* Oferty liczą z wersji ACTIVE (?source=active). Edytor cennika (brak source)
-   czyta DRAFT → ACTIVE → LIVE (getEditorPricing, writeTarget.ts), więc brak
-   source NIE oznacza LIVE. Fallback BE (brak jakiejkolwiek wersji → LIVE +
-   X-Pricelist-Fallback: live) sygnalizujemy jednym toastem na załadowanie
-   strony (flaga window.__activePricingFallbackToastShown). */
-function _notifyActiveFallback(res) {
-    let fallback = false;
-    try {
-        fallback = !!(res && res.headers && res.headers.get('X-Pricelist-Fallback') === 'live');
-    } catch (_e) {
-        fallback = false;
-    }
-    if (fallback && typeof showToast === 'function') {
-        if (typeof window === 'undefined' || !window.__activePricingFallbackToastShown) {
-            if (typeof window !== 'undefined') window.__activePricingFallbackToastShown = true;
-            showToast('Brak aktywnej wersji — oferta liczy z cennika roboczego (LIVE)', 'warning');
-        }
-    }
-    return fallback;
+/* Oferty liczą wyłącznie z wersji ACTIVE (?source=active). Brak aktywnego
+   cennika to błąd blokujący (409 NO_ACTIVE_VERSION) — nie ma już cichego
+   spadku do LIVE z ostrzeżeniem. Komunikat pokazujemy raz na stronę. */
+function _notifyNoActivePricing() {
+    if (typeof showToast !== 'function') return;
+    if (typeof window !== 'undefined' && window.__noActivePricingToastShown) return;
+    if (typeof window !== 'undefined') window.__noActivePricingToastShown = true;
+    showToast(
+        'Brak aktywnego cennika — oferta nie może zostać wyceniona. Opublikuj cennik.',
+        'error'
+    );
 }
 
 async function loadStudnieProducts(options) {
     const useActive = !!(options && options.source === 'active');
     const url = useActive ? '/api/products-studnie?source=active' : '/api/products-studnie';
     let saved = null;
-    let fellBack = false;
     for (let attempt = 0; attempt < 3; attempt++) {
         try {
             const res = await fetchWithTimeout(url, { headers: authHeaders() }, 1000);
+            if (useActive && res.status === 409) {
+                const err = await res.json().catch(() => ({}));
+                if (err && err.code === 'NO_ACTIVE_VERSION') {
+                    _notifyNoActivePricing();
+                    return [];
+                }
+            }
             if (res.ok) {
                 const json = await res.json();
                 if (json && Array.isArray(json.data)) {
                     saved = json.data;
                     window.__pricelistWriteTarget =
                         res.headers.get('X-Pricelist-Write-Target') === 'draft' ? 'draft' : 'live';
-                    if (useActive) fellBack = _notifyActiveFallback(res);
                     break;
                 }
             }
@@ -584,7 +581,7 @@ async function loadStudnieProducts(options) {
         saveStudnieProducts(saved).catch(() => {});
     }
 
-    window.__studniePricingSource = useActive ? (fellBack ? 'live-fallback' : 'active') : 'live';
+    window.__studniePricingSource = useActive ? 'active' : 'live';
     return saved;
 }
 
@@ -627,12 +624,19 @@ async function loadPrecoPricing(options) {
     const url = useActive ? '/api/preco-pricing?source=active' : '/api/preco-pricing';
     try {
         const res = await fetchWithTimeout(url);
+        if (useActive && res.status === 409) {
+            const err = await res.json().catch(() => ({}));
+            if (err && err.code === 'NO_ACTIVE_VERSION') {
+                _notifyNoActivePricing();
+                precoPricing = {};
+                return;
+            }
+        }
         const json = await res.json();
         if (json.data && Array.isArray(json.data) && json.data.length > 0) {
             precoPricing = json.data[0];
             window.__pricelistWriteTarget =
                 res.headers.get('X-Pricelist-Write-Target') === 'draft' ? 'draft' : 'live';
-            if (useActive) _notifyActiveFallback(res);
             logger.info('uiHelpers', '[PRECO] Załadowano cennik z bazy');
             return;
         }

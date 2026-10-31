@@ -7,7 +7,6 @@ import { pricelistDataSchema } from '../validators/offerSchemas';
 import { requireFinitePrice, InvalidPriceError } from '../validators/finiteNumbers';
 import { pricelistLock } from '../middleware/writeLock';
 import prisma from '../prismaClient';
-import { recordPricelistFallback } from '../utils/metrics';
 import {
     findLatestDraft,
     getEditorPricing,
@@ -44,7 +43,6 @@ router.get('/', requireAuth, async (req, res) => {
     try {
         res.setHeader('X-Pricelist-Write-Target', getPricelistWriteTarget());
         const source = requirePricingSource(req.query.source);
-        let fallbackHeader = false;
         if (!source) {
             const editor = await getEditorPricing('rury');
             if (!editor.fallback) {
@@ -54,19 +52,21 @@ router.get('/', requireAuth, async (req, res) => {
         }
         if (source === 'active') {
             const active = await resolveActivePricing('rury');
-            if (!active.fallback) {
-                res.json({ data: active.data });
+            if (active.fallback) {
+                // Etap 1: brak ACTIVE = brak ceny oferty. Cichy fallback do LIVE
+                // dawał oferty wycenione z zamrożonego snapshotu.
+                res.status(409).json({
+                    error: 'Brak aktywnego cennika rur — opublikuj wersję',
+                    code: 'NO_ACTIVE_VERSION'
+                });
                 return;
             }
-            fallbackHeader = true;
+            res.json({ data: active.data });
+            return;
         }
         const products = await prisma.productsRury.findMany({
             orderBy: [{ category: 'asc' }, { id: 'asc' }]
         });
-        if (fallbackHeader) {
-            recordPricelistFallback('rury');
-            res.setHeader('X-Pricelist-Fallback', 'live');
-        }
         res.json({ data: products });
     } catch (err: unknown) {
         if (err instanceof PricelistVersionError) {

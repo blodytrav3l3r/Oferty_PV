@@ -23,7 +23,7 @@ import {
 } from '../../utils/idempotency';
 import { offersStudnieBatchSchema, paginationQuerySchema } from '../../validators/offerSchemas';
 import { hasProductionOrdersForOffer } from '../../utils/productionOrderGuard';
-import { resolveActive, resolveVersionIdSafe } from '../../services/pricelistVersionService';
+import { resolveActive, resolveActiveForStamp } from '../../services/pricelistVersionService';
 import { shadowStudnieTotal } from '../../services/pricelist/shadowSum';
 
 const router = express.Router();
@@ -535,8 +535,20 @@ router.post(
                     });
             }
             const incoming = req.body.data || [req.body];
-            // F3 freeze: jedna aktywna wersja cennika na cały batch (null-safe).
-            const frozenStudnieVersionId = await resolveVersionIdSafe('studnie');
+            // F3 freeze: jedna aktywna wersja cennika na cały batch. Brak ACTIVE
+            // blokuje tworzenie nowej oferty (409), błąd odczytu to 503 — nigdy
+            // cicha pieczątka `null` przy zapisie.
+            const stampStudnie = await resolveActiveForStamp('studnie');
+            if (stampStudnie.failed) {
+                const unavailable = {
+                    error: 'Nie można odczytać aktywnego cennika — spróbuj ponownie',
+                    code: 'PRICELIST_UNAVAILABLE'
+                };
+                if (idemKey)
+                    await completeIdempotencyKey(idemUser, idemEndpoint, idemKey, 503, unavailable);
+                return res.status(503).json(unavailable);
+            }
+            const frozenStudnieVersionId = stampStudnie.id;
 
             // P1.3: batch preload olds — 1 query zamiast N×findUnique
             const incomingIds = incoming
@@ -700,6 +712,23 @@ router.post(
                         return res.status(403).json(forbiddenCreate);
                     }
                     effectiveUserId = resolved.effectiveUserId;
+                }
+                if (!old && !frozenStudnieVersionId) {
+                    // Etap 1: nowa oferta bez aktywnego cennika nie ma z czego
+                    // wycenić — zamiast cichej pieczątki `null` blokujemy zapis.
+                    const noActive = {
+                        error: 'Brak aktywnego cennika — nie można wycenić nowej oferty',
+                        code: 'NO_ACTIVE_VERSION'
+                    };
+                    if (idemKey)
+                        await completeIdempotencyKey(
+                            idemUser,
+                            idemEndpoint,
+                            idemKey,
+                            409,
+                            noActive
+                        );
+                    return res.status(409).json(noActive);
                 }
                 // Guard: pełna blokada studni na zamówieniu (tylko ordered, ignoruj lotne)
                 if (old) {

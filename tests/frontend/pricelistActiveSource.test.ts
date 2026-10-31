@@ -2,8 +2,8 @@
 /* =============================================================
    P1: ekrany OFERT liczą z wersji ACTIVE (?source=active),
    ekrany CENNIKA zostają na LIVE (plain GET bez source).
-   Fallback BE (brak ACTIVE → LIVE + X-Pricelist-Fallback: live)
-   → jeden toast warning na załadowanie; bez nagłówka → cisza.
+   Brak ACTIVE = 409 NO_ACTIVE_VERSION → błąd blokujący (toast error,
+   raz na stronę). Nie ma już fallbacku do LIVE.
    Wzorzec: vm sandbox jak w loadStudnieProductsAuth.test.ts.
    ============================================================= */
 import fs from 'fs';
@@ -16,11 +16,21 @@ const readPub = (rel) => fs.readFileSync(path.join(ROOT, 'public', 'js', rel), '
 const RURY_CODE = readPub('rury/dataService.js');
 const STUDNIE_CODE = readPub('studnie/uiHelpers.js');
 
-function okRes(data, fallback) {
+function okRes(data) {
     return {
         ok: true,
-        headers: { get: (name) => (name === 'X-Pricelist-Fallback' ? fallback || null : null) },
+        status: 200,
+        headers: { get: () => null },
         json: () => Promise.resolve({ data })
+    };
+}
+
+function noActiveRes() {
+    return {
+        ok: false,
+        status: 409,
+        headers: { get: () => null },
+        json: () => Promise.resolve({ code: 'NO_ACTIVE_VERSION' })
     };
 }
 
@@ -72,31 +82,27 @@ describe('P1 rury: loadProducts (dataService.js)', () => {
         expect(sandbox.window.__ruryPricingSource).toBe('live');
     });
 
-    it('fallback header → toast warning RAZ (polski komunikat), bez nagłówka → cisza', async () => {
-        const sandbox = makeSandbox(() =>
-            Promise.resolve(okRes([{ id: 'R-1', price: 10 }], 'live'))
-        );
+    it('409 NO_ACTIVE_VERSION → błąd blokujący RAZ (bez cichego LIVE)', async () => {
+        const sandbox = makeSandbox(() => Promise.resolve(noActiveRes()));
         vm.runInContext(RURY_CODE, sandbox, { filename: 'loader.js' });
-        await vm.runInContext("loadProducts({source:'active'})", sandbox, { timeout: 5000 });
-        await vm.runInContext("loadProducts({source:'active'})", sandbox, { timeout: 5000 });
+        const first = await vm.runInContext("loadProducts({source:'active'})", sandbox, {
+            timeout: 5000
+        });
+        const second = await vm.runInContext("loadProducts({source:'active'})", sandbox, {
+            timeout: 5000
+        });
+        expect(first).toEqual([]);
+        expect(second).toEqual([]);
         expect(sandbox.showToast).toHaveBeenCalledTimes(1);
         expect(sandbox.showToast).toHaveBeenCalledWith(
-            'Brak aktywnej wersji — oferta liczy z cennika roboczego (LIVE)',
-            'warning'
+            'Brak aktywnego cennika — oferta nie może zostać wyceniona. Opublikuj cennik.',
+            'error'
         );
-        expect(sandbox.window.__ruryPricingSource).toBe('live-fallback');
+        expect(sandbox.window.__ruryPricingSource).toBeUndefined();
 
-        const quiet = makeSandbox(() => Promise.resolve(okRes([{ id: 'R-1', price: 10 }], null)));
+        const quiet = makeSandbox(() => Promise.resolve(okRes([{ id: 'R-1', price: 10 }])));
         await run(RURY_CODE, quiet, "loadProducts({source:'active'})");
         expect(quiet.showToast).not.toHaveBeenCalled();
-    });
-
-    it('cennik plain ignoruje nagłówek fallback (cisza)', async () => {
-        const sandbox = makeSandbox(() =>
-            Promise.resolve(okRes([{ id: 'R-1', price: 10 }], 'live'))
-        );
-        await run(RURY_CODE, sandbox, 'loadProducts()');
-        expect(sandbox.showToast).not.toHaveBeenCalled();
     });
 });
 
@@ -146,26 +152,23 @@ describe('P1 studnie: loadStudnieProducts / loadPrecoPricing (uiHelpers.js)', ()
         expect(capturedUrl).toBe('/api/preco-pricing');
     });
 
-    it('fallback header → toast RAZ na stronę (produkty + PRECO razem), brak → cisza', async () => {
-        const sandbox = makeSandbox(() =>
-            Promise.resolve(okRes([{ id: 'KDB-1', price: 100 }], 'live'))
-        );
+    it('409 NO_ACTIVE_VERSION → błąd RAZ na stronę (studnie + PRECO razem)', async () => {
+        const sandbox = makeSandbox(() => Promise.resolve(noActiveRes()));
         vm.runInContext(STUDNIE_CODE, sandbox, { filename: 'loader.js' });
-        await vm.runInContext("loadStudnieProducts({source:'active'})", sandbox, {
+        const products = await vm.runInContext("loadStudnieProducts({source:'active'})", sandbox, {
             timeout: 5000
         });
         await vm.runInContext("loadPrecoPricing({source:'active'})", sandbox, {
             timeout: 5000
         });
+        expect(products).toEqual([]);
         expect(sandbox.showToast).toHaveBeenCalledTimes(1);
         expect(sandbox.showToast).toHaveBeenCalledWith(
-            'Brak aktywnej wersji — oferta liczy z cennika roboczego (LIVE)',
-            'warning'
+            'Brak aktywnego cennika — oferta nie może zostać wyceniona. Opublikuj cennik.',
+            'error'
         );
 
-        const quiet = makeSandbox(() =>
-            Promise.resolve(okRes([{ id: 'KDB-1', price: 100 }], null))
-        );
+        const quiet = makeSandbox(() => Promise.resolve(okRes([{ id: 'KDB-1', price: 100 }])));
         vm.runInContext(STUDNIE_CODE, quiet, { filename: 'loader.js' });
         await vm.runInContext("loadStudnieProducts({source:'active'})", quiet, {
             timeout: 5000

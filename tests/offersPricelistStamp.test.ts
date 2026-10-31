@@ -4,7 +4,11 @@ import request from 'supertest';
 import ruryRouter from '../src/routes/offers/ruryCrud';
 import studnieRouter from '../src/routes/offers/studnieCrud';
 import { hashToken } from '../src/middleware/auth';
-import { resolveActive, resolveVersionIdSafe } from '../src/services/pricelistVersionService';
+import {
+    resolveActive,
+    resolveActiveForStamp,
+    resolveVersionIdSafe
+} from '../src/services/pricelistVersionService';
 
 jest.mock('../src/prismaClient', () => ({
     __esModule: true,
@@ -42,13 +46,15 @@ jest.mock('../src/utils/logger', () => ({
 
 jest.mock('../src/services/pricelistVersionService', () => ({
     resolveActive: jest.fn(),
-    resolveVersionIdSafe: jest.fn(async () => null)
+    resolveVersionIdSafe: jest.fn(async () => null),
+    resolveActiveForStamp: jest.fn(async () => ({ id: 'v-active', failed: false }))
 }));
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const prismaMock = require('../src/prismaClient').default;
 const resolveActiveMock = resolveActive as jest.Mock;
 const resolveVersionIdSafeMock = resolveVersionIdSafe as jest.Mock;
+const resolveActiveForStampMock = resolveActiveForStamp as jest.Mock;
 
 const USER_ROW = {
     id: 'u1',
@@ -122,6 +128,7 @@ const studnieDoc = (over: Record<string, unknown> = {}) => ({
 beforeEach(() => {
     jest.clearAllMocks();
     resolveVersionIdSafeMock.mockResolvedValue(null);
+    resolveActiveForStampMock.mockResolvedValue({ id: 'v-active', failed: false });
     resolveActiveMock.mockResolvedValue({ id: 'v-active' });
 });
 
@@ -297,6 +304,55 @@ describe('offers pricelist stamp (POST-upsert, ścieżka zapisu edytora)', () =>
             .send({ data: [studnieDoc({ pricelistVersionId: 'v-stara' })] });
         expect(res.status).toBe(409);
         expect(res.body.code).toBe('STALE_PRICELIST');
+        expect(prismaMock.$transaction).not.toHaveBeenCalled();
+    });
+});
+
+describe('brak aktywnego cennika blokuje zapis nowej oferty (etap 1)', () => {
+    it('rury: nowa oferta bez ACTIVE -> 409 NO_ACTIVE_VERSION, nic nie zapisane', async () => {
+        authMocks();
+        prismaMock.offers_rel.findMany.mockResolvedValue([]);
+        prismaMock.offer_items_rel.findMany.mockResolvedValue([]);
+        resolveActiveForStampMock.mockResolvedValue({ id: null, failed: false });
+
+        const res = await request(ruryApp())
+            .post('/')
+            .set('Cookie', COOKIE)
+            .send({ data: [ruryDoc()] });
+
+        expect(res.status).toBe(409);
+        expect(res.body.code).toBe('NO_ACTIVE_VERSION');
+        expect(prismaMock.$transaction).not.toHaveBeenCalled();
+    });
+
+    it('studnie: nowa oferta bez ACTIVE -> 409 NO_ACTIVE_VERSION, nic nie zapisane', async () => {
+        authMocks();
+        prismaMock.offers_studnie_rel.findMany.mockResolvedValue([]);
+        resolveActiveForStampMock.mockResolvedValue({ id: null, failed: false });
+
+        const res = await request(studnieApp())
+            .post('/studnie')
+            .set('Cookie', COOKIE)
+            .send({ data: [studnieDoc()] });
+
+        expect(res.status).toBe(409);
+        expect(res.body.code).toBe('NO_ACTIVE_VERSION');
+        expect(prismaMock.$transaction).not.toHaveBeenCalled();
+    });
+
+    it('błąd odczytu cennika -> 503 PRICELIST_UNAVAILABLE (nie 409)', async () => {
+        authMocks();
+        prismaMock.offers_rel.findMany.mockResolvedValue([]);
+        prismaMock.offer_items_rel.findMany.mockResolvedValue([]);
+        resolveActiveForStampMock.mockResolvedValue({ id: null, failed: true });
+
+        const res = await request(ruryApp())
+            .post('/')
+            .set('Cookie', COOKIE)
+            .send({ data: [ruryDoc()] });
+
+        expect(res.status).toBe(503);
+        expect(res.body.code).toBe('PRICELIST_UNAVAILABLE');
         expect(prismaMock.$transaction).not.toHaveBeenCalled();
     });
 });

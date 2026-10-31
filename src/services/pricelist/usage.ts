@@ -396,24 +396,34 @@ export async function getVersionsSummary(): Promise<VersionsSummary> {
 }
 
 /**
- * Null-safe freeze: id aktywnej wersji w chwili utworzenia oferty.
- * Null gdy brak wersji (legacy) albo błąd odczytu — oferta i tak powstaje,
- * snapshot cen w JSON jest źródłem prawdy (Expand & Contract).
+ * Null-safe freeze z rozróżnieniem przyczyny: brak ACTIVE (oferta nie ma z czego
+ * wycenić → 409) vs błąd odczytu (przejściowy → 503). Wcześniejszy
+ * `resolveVersionIdSafe` zwracał null w obu przypadkach, więc nowa oferta bez
+ * cennika zapisywała się z `pricelistVersionId = null`.
  */
-export async function resolveVersionIdSafe(typeInput: unknown): Promise<string | null> {
+export interface ActiveStamp {
+    id: string | null;
+    /** true = odczyt cennika padł (błąd DB), nie mylić z brakiem wersji. */
+    failed: boolean;
+}
+
+export async function resolveActiveForStamp(typeInput: unknown): Promise<ActiveStamp> {
     try {
         const active = await resolveActive(typeInput);
-        return active?.id ?? null;
+        return { id: active?.id ?? null, failed: false };
     } catch (e) {
-        // Null = brak pieczątki (oferta i tak powstaje). Log, żeby błąd odczytu
-        // wersji nie zniknął całkowicie — bez tego freeze psułby się niemo.
-        logger.warn(
-            'Pricelist',
-            'resolveVersionIdSafe: błąd odczytu aktywnej wersji — brak pieczątki',
-            String(e)
-        );
-        return null;
+        logger.error('Pricelist', 'resolveActiveForStamp: błąd odczytu aktywnej wersji', String(e));
+        return { id: null, failed: true };
     }
+}
+
+/**
+ * Null-safe freeze: id aktywnej wersji w chwili utworzenia oferty.
+ * Null gdy brak wersji (legacy) albo błąd odczytu. Do zapisu ofert używaj
+ * `resolveActiveForStamp` — tam brak wersji i błąd muszą być rozróżnione.
+ */
+export async function resolveVersionIdSafe(typeInput: unknown): Promise<string | null> {
+    return (await resolveActiveForStamp(typeInput)).id;
 }
 
 /**

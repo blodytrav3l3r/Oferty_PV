@@ -42,6 +42,8 @@ jest.mock('../../src/utils/fts5Sync', () => ({
 jest.mock('../../src/prismaClient', () => ({
     __esModule: true,
     default: {
+        pricelistVersion: { findFirst: jest.fn(async () => ({ id: 'v-active-test' })) },
+        settings: { findUnique: jest.fn(async () => null) },
         offers_rel: {
             findMany: jest.fn(),
             findUnique: jest.fn(),
@@ -107,6 +109,8 @@ beforeEach(() => {
     });
     (prisma.offers_rel.create as jest.Mock).mockResolvedValue({});
     (prisma.offers_rel.updateMany as jest.Mock).mockResolvedValue({ count: 1 });
+    (prisma.pricelistVersion.findFirst as jest.Mock).mockResolvedValue({ id: 'v-active-test' });
+    (prisma.settings.findUnique as jest.Mock).mockResolvedValue(null);
 });
 
 describe('Rury Offers CRUD — warstwa zapisu', () => {

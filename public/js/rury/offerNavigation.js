@@ -73,7 +73,7 @@ async function showSectionRury(id) {
         }
     } else if (
         !ruryOfferStamp &&
-        (window.__ruryPricingSource === 'live' || window.__ruryPricingSource === 'live-fallback') &&
+        window.__ruryPricingSource === 'live' &&
         (typeof _pricelistDirty === 'undefined' || !_pricelistDirty)
     ) {
         // Powrót z cennika LIVE (bez niezapisanych edycji) — oferty liczą z ACTIVE.

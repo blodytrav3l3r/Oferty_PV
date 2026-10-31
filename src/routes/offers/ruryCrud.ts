@@ -32,7 +32,7 @@ import {
 } from '../../validators/offerSchemas';
 import { recordDbBusy } from '../../utils/metrics';
 import { HOT_TX_OPTS } from '../../utils/hotTx';
-import { resolveActive, resolveVersionIdSafe } from '../../services/pricelistVersionService';
+import { resolveActive, resolveActiveForStamp } from '../../services/pricelistVersionService';
 
 const router = express.Router();
 const uuidv4 = crypto.randomUUID.bind(crypto);
@@ -152,8 +152,20 @@ router.post(
                     });
             }
             const incoming = req.body.data || [req.body];
-            // F3 freeze: jedna aktywna wersja cennika na cały batch (null-safe).
-            const frozenRuryVersionId = await resolveVersionIdSafe('rury');
+            // F3 freeze: jedna aktywna wersja cennika na cały batch. Brak ACTIVE
+            // blokuje tworzenie nowej oferty (409), błąd odczytu to 503 — nigdy
+            // cicha pieczątka `null` przy zapisie.
+            const stampRury = await resolveActiveForStamp('rury');
+            if (stampRury.failed) {
+                const unavailable = {
+                    error: 'Nie można odczytać aktywnego cennika — spróbuj ponownie',
+                    code: 'PRICELIST_UNAVAILABLE'
+                };
+                if (idemKey)
+                    await completeIdempotencyKey(idemUser, idemEndpoint, idemKey, 503, unavailable);
+                return res.status(503).json(unavailable);
+            }
+            const frozenRuryVersionId = stampRury.id;
 
             // P4-P0: prefetch jednym findMany zamiast N+1 findUnique/findMany w pętli.
             const incomingIds: string[] = incoming
@@ -330,6 +342,24 @@ router.post(
                         return res.status(403).json(forbiddenCreate);
                     }
                     effectiveUserId = resolved.effectiveUserId;
+                }
+
+                if (!old && !frozenRuryVersionId) {
+                    // Etap 1: nowa oferta bez aktywnego cennika nie ma z czego
+                    // wycenić — zamiast cichej pieczątki `null` blokujemy zapis.
+                    const noActive = {
+                        error: 'Brak aktywnego cennika — nie można wycenić nowej oferty',
+                        code: 'NO_ACTIVE_VERSION'
+                    };
+                    if (idemKey)
+                        await completeIdempotencyKey(
+                            idemUser,
+                            idemEndpoint,
+                            idemKey,
+                            409,
+                            noActive
+                        );
+                    return res.status(409).json(noActive);
                 }
 
                 let auditAction: 'create' | 'update' = 'create';
