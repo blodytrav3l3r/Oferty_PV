@@ -1,7 +1,9 @@
 # Etap 2 — usunięcie tabel LIVE (roadmap)
 
-> Status: **plan, nie wykonany**. Etap 1 (LIVE tylko do odczytu + detektor +
-> twarde 409) wdrożony 2026-10-31, commity `252b3d7`…`c5de82d`.
+> Status: **kod wykonany 2026-10-31, drop tabel w bazie oczekuje na backup
+> i osobne GO.** Etap 1 (LIVE tylko do odczytu + detektor + twarde 409) wdrożony
+> 2026-10-31, commity `252b3d7`…`c5de82d`. Etap 2: migracja plikowa
+> `20261031120000_drop_pricelist_live` gotowa, niewykonana na żadnej bazie.
 
 ## Cel
 
@@ -19,24 +21,29 @@ Usunąć tabele `ProductsRury`, `ProductsStudnie`, `PrecoKonfig`, `PrecoKinety`,
    po dacie wdrożenia etapu 1.
 4. Backup pliku DB + osobne GO na `prisma migrate` / drop tabel.
 
-## Zakres techniczny
+## Zakres techniczny (wykonany)
 
-- `liveProjection.ts` + eksporty `?source=live|default` — usunąć, zostawić
-  `?source=active|draft|version`.
-- `priceOverrideService.ts` (restore/verify/export JSON) — usunąć wraz z
-  `scripts/prices-import.ts`, `prices-export.ts`, `prices-verify.ts` (detektor
-  przenieść do wersji: ACTIVE vs poprzednia ACTIVE).
+- `?source=live` usunięty (`422 INVALID_SOURCE`); `?source=default` czyta
+  `data/seed_*.json`, zostają `active|draft`.
+- `priceOverrideService.ts`, `routes/priceOverrides.ts`, `scripts/prices-export.ts`
+  i `prices-import.ts` usunięte; `prices-verify.ts` przepisany na seed + ACTIVE.
+  Detektor `drift.ts` (ACTIVE vs LIVE) usunięty razem z LIVE.
 - `productsV2.ts` / `productsStudnieV2.ts` / `precoPricingV2.ts` — GET bez
-  `source` czyta tylko wersje (DRAFT → ACTIVE), bez fallbacku do LIVE.
-- Bootstrap (`ensureBaselineVersionsAtStartup`) — bez LIVE nie ma z czego
-  tworzyć v1: świeża instalacja musi dostać wersję z seeda.
+  `source`: DRAFT → ACTIVE → seed (bez fallbacku do LIVE).
+- Bootstrap (`ensureBaselineVersionsAtStartup`) tworzy v1 z seeda.
+- PDF/DOCX i katalog produktów czytają ACTIVE (fallback seed) — `catalog.ts`.
+- `prisma/seed.ts` tylko model ML; `check-db.js` sprawdza tabele wersji.
 - Guard `tests/pricelistLegacyGuard.test.ts` → allowlista = 0.
-- Migracja: drop tabel LIVE i `*_Default` (osobne GO), po backupie.
+- Migracja `20261031120000_drop_pricelist_live` (drop 10 tabel), **niewykonana**.
+- Frontend: „Zapisz domyślne" usunięte; „Przywróć domyślne" czyta `/default` (seed).
 
 ## Kryteria akceptacji
 
 - Brak referencji do `Products*`/`Preco*`/`*_Default`/`price_defaults` poza
-  historią (guard zielony, allowlista pusta).
-- Oferty, eksporty i PDF-y liczą wyłącznie z wersji; `prices:verify --strict`
-  nie ma czego porównywać (skrypt usunięty lub przepisany na wersje).
+  historią (guard zielony, allowlista pusta). **Spełnione.**
+- Oferty, eksporty i PDF-y liczą wyłącznie z wersji; `prices:verify` sprawdza
+  seed i integralność ACTIVE. **Spełnione.**
 - Świeża instalacja: od razu ACTIVE v1 (seed), nowa oferta zapisuje się bez 409.
+  **Do potwierdzenia testem świeżej instalacji po dropie.**
+- Drop 10 tabel w bazie: backup pliku DB → `prisma migrate deploy` → smoke.
+  **Oczekuje na osobne GO.**

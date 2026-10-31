@@ -29,7 +29,7 @@ E2E na izolacji: `PLAYWRIGHT_BASE_URL=http://localhost:PORT` (własny spawn z `D
 
 ## Backup i cenniki
 
-`backup` (VACUUM INTO), `restore <plik>` (z synchronizacją schematu), `backup:install-cron` / `backup:uninstall-cron` (Windows), `prices:export`, `prices:import`, `audit:integrity`.
+`backup` (VACUUM INTO), `restore <plik>` (z synchronizacją schematu), `backup:install-cron` / `backup:uninstall-cron` (Windows), `prices:verify`, `audit:integrity`.
 
 ## Deploy, licencje, skills
 

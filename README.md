@@ -91,8 +91,8 @@ Instalator automatycznie:
 - Wygeneruje klienta Prisma (`npx prisma generate`)
 - Zsynchronizuje schemat bazy danych (`npx prisma migrate deploy` — domyślnie; `npx prisma db push --skip-generate --accept-data-loss` wyłącznie dla baz legacy utworzonych przez `db push`, bez tabeli `_prisma_migrations`)
 - Zasieje dane początkowe (`npm run prisma:seed`) lub pominie z `--skip-seed`
-- Przy pierwszym uruchomieniu serwera automatycznie odczyta plik `data/price_defaults.json`
-  (jeśli istnieje) zawierający snapshot domyślnych cenników
+- Przy pierwszym uruchomieniu serwera utworzy wersję bazową cennika (`v1`, APPROVED)
+  z plików `data/seed_*.json` — oferty od razu mają z czego liczyć ceny
 
 #### 3. Ręczna instalacja (alternatywa)
 
@@ -280,27 +280,14 @@ Jeśli masz już działającą instalację z wypełnioną bazą cen i produktów
     .\start.bat
     ```
 
-6. **(opcjonalnie)** Jeśli chcesz przenieść również niestandardowe ceny domyślne (rury, studnie, preco),
-   skopiuj plik `data/price_defaults.json` ze starego urządzenia do katalogu `data/` na nowym.
-   Zostanie automatycznie przywrócony przy starcie serwera.
+6. **(opcjonalnie)** Jeśli chcesz przenieść również niestandardowe ceny cennika (rury, studnie, preco),
+   przenieś je jako **wersję cennika**: panel wersji → eksport/import XLSX albo
+   eksport wersji na starym urządzeniu i import na nowym. Plik SQLite nie jest do tego potrzebny.
 
-    > **Lżejsza alternatywa:** Jeśli potrzebujesz przenieść tylko ceny (bez ofert/zamówień),
-    > wystarczy wyeksportować snapshot cen na starym urządzeniu, skopiować plik i zaimportować
-    > na nowym — nie jest potrzebny backup SQLite ani `--skip-seed`:
-    >
-    > ```powershell
-    > # Stare urządzenie — wygeneruj snapshot domyślnych cenników:
-    > npm run prices:export
-    > # → tworzy/kopuję data/price_defaults.json (też przyciskiem "Zapisz domyślne" w Ustawieniach)
-    >
-    > # Nowe urządzenie — po instalacji przywróć ceny (walidacja + raport różnic):
-    > npm run prices:import
-    > # lub ze wskazanego pliku:
-    > npm run prices:import -- data/price_defaults.json
-    > ```
-    >
-    > Przy starcie serwera plik `data/price_defaults.json` (lub ścieżka ze zmiennej
-    > `PRICE_DEFAULTS_PATH`) jest też wczytywany automatycznie na świeżej/istniejącej bazie.
+    > **Ceny żyją wyłącznie w wersjach cennika.** Publikacja wersji (APPROVED) jest
+    > jedynym źródłem cen ofert. „Przywróć domyślne" wczytuje wartości fabryczne
+    > z `data/seed_*.json`; snapshot `data/price_defaults.json` i tabele LIVE
+    > zostały usunięte (etap 2).
 
 #### Co zawiera baza?
 
@@ -501,8 +488,6 @@ Projekt zawiera wygodne skrypty dla systemu Windows:
 | `npm run prisma:status`          | Status migracji                                               |
 | `npm run cleanup:legacy-pricing` | Usuń legacy klucze cennikowe z `settings` (dry-run domyślnie) |
 | `npm run export:seed`            | Eksport cenników z tabel DB do `data/seed_*.json`             |
-| `npm run prices:export`          | Zapis domyślnych cenników do `data/price_defaults.json` (CLI) |
-| `npm run prices:import [plik]`   | Restore cenników z `price_defaults.json` (walidacja + diff)   |
 
 ### AI/ML
 
@@ -672,13 +657,12 @@ Oferty_PV/
 │   ├── images/                # logo-sok.svg, letterhead-*.png, b-mark.png, ce-mark.png
 │   ├── partials/              # Partiale HTML (header, rury/*, studnie/*) ładowane przez partialLoader
 │   └── templates/             # 5 szablonów: ofertaRury/Studnie, kartaBudowy, zlecenie, etykieta
-├── prisma/                    # Schema + migracje Prisma (57 modeli, 1186 linii)
-│   ├── schema.prisma          # Definicja schematu (SQLite, 57 modeli)
-│   └── migrations/            # 38 migracji: 20260815000000_baseline … 20261025120000_add_pricelist_label_override (pełna lista: prisma/migrations/)
+├── prisma/                    # Schema + migracje Prisma (47 modeli)
+│   ├── schema.prisma          # Definicja schematu (SQLite, 47 modeli)
+│   └── migrations/            # 39 migracji: 20260815000000_baseline … 20261031120000_drop_pricelist_live (pełna lista: prisma/migrations/)
 ├── data/                      # Baza SQLite + pliki seed
 │   ├── app_database.sqlite    # Główna baza (SQLite)
-│   ├── price_defaults.json    # Snapshot domyślnych cenników (transfer między instalacjami)
-│   └── seed_*.json            # seed_rury/studnie/preco.json (źródło dla prisma/seed.ts)
+│   └── seed_*.json            # seed_rury/studnie/preco.json (wersja bazowa cennika)
 ├── tests/                     # Testy (Jest + Playwright, 549 plików)
 │   ├── ml/                    # Testy pipeline'u ML
 │   ├── studnie/               # Testy modułu studnie (Excel, solver, pzGuard)

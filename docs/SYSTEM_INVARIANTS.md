@@ -154,17 +154,18 @@
 
 - **Invariant:** oferta jest wyceniana i zapisywana wyłącznie z wersji cennika
   (ACTIVE). Brak wersji to brak zapisu, nigdy cichy spadek do tabel LIVE ani
-  pieczątka `null`. Tabele LIVE są tylko do odczytu; błąd odczytu cennika nie
-  jest maskowany jako brak wersji. Wyjątek: istniejąca oferta zachowuje własną
-  pieczątkę i snapshot cen, więc jej edycja nie wymaga nowej ACTIVE.
+  pieczątka `null`. Tabele LIVE nie istnieją (etap 2: usunięte); błąd odczytu
+  cennika nie jest maskowany jako brak wersji. Wyjątek: istniejąca oferta
+  zachowuje własną pieczątkę i snapshot cen, więc jej edycja nie wymaga nowej
+  ACTIVE.
 - **Owner:** backend (`src/services/pricelist/usage.ts`,
   `src/routes/productsV2.ts`, `src/routes/productsStudnieV2.ts`,
   `src/routes/precoPricingV2.ts`, `src/routes/offers/ruryCrud.ts`,
   `src/routes/offers/studnieCrud.ts`).
 - **Enforcement:** `?source=active` bez ACTIVE → `409 NO_ACTIVE_VERSION`;
   nowa oferta bez ACTIVE → `409 NO_ACTIVE_VERSION`; błąd odczytu →
-  `503 PRICELIST_UNAVAILABLE`; PATCH/DELETE LIVE → `409 LIVE_READ_ONLY`;
-  zapis cennika tylko przez lifecycle wersji (szkic/wersja).
+  `503 PRICELIST_UNAVAILABLE`; zapis cennika tylko przez lifecycle wersji
+  (szkic/wersja); `?source=live` → `422 INVALID_SOURCE`.
 - **Tests:** `tests/pricelistActiveSource.test.ts`,
   `tests/offersPricelistStamp.test.ts`, `tests/productsV2.test.ts`,
   `tests/frontend/pricelistActiveSource.test.ts`.

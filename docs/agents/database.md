@@ -19,5 +19,5 @@
 ## Backup / restore / cenniki
 
 - `npm run backup` (VACUUM INTO + sha256) / `npm run restore <plik>` (nagłówek + `integrity_check` + czyszczenie WAL/SHM). Integralność: `npm run audit:integrity`.
-- Cenniki: `npm run prices:export` / `prices:import` (`data/price_defaults.json`, walidacja sha256); `prices:verify` w `validate`.
+- Cenniki: `npm run prices:verify` (seed + ACTIVE) w `validate`; tabele LIVE i snapshot JSON usunięte w etapie 2.
 - Restore test istnieje (`tests/migrations/restoreRoundtrip.test.ts`) — utrzymuj, nie duplikuj.

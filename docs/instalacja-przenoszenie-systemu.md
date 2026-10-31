@@ -210,26 +210,15 @@ npm run restore -- data/backups/backup_*.sqlite
 
 ### Przeniesienie samych cen (bez ofert/zamówień)
 
-Gdy chcesz przenieść **tylko niestandardowe ceny domyślne** (rury, studnie, preco), bez bazy danych:
+Ceny żyją wyłącznie w wersjach cennika. Aby przenieść tylko ceny:
 
-```powershell
-# 1. Stare urządzenie — wygeneruj snapshot domyślnych cenników:
-npm run prices:export
-#    → tworzy/aktualizuje data/price_defaults.json (to samo robi przycisk
-#      "Zapisz domyślne" w Ustawieniach)
+1. Na starym urządzeniu otwórz panel „Wersje cennika" i wyeksportuj wybraną
+   wersję do XLSX (osobno rury / studnie / PRECO).
+2. Na nowym urządzeniu zaimportuj pliki XLSX w tym samym panelu, zapisz szkic
+   i opublikuj wersję.
 
-# 2. Skopiuj plik na nowe urządzenie:
-#    data/price_defaults.json
-
-# 3. Nowe urządzenie — po instalacji przywróć ceny (walidacja + raport różnic):
-npm run prices:import
-#    lub ze wskazanego pliku:
-npm run prices:import -- data/price_defaults.json
-```
-
-> **Automatycznie:** serwer przy starcie odczytuje `data/price_defaults.json`
-> (lub ścieżkę ze zmiennej `PRICE_DEFAULTS_PATH`) i przywraca ceny, jeśli to plik
-> migawki domyślnych cenników — nie trzeba wtedy wołać `prices:import` ręcznie.
+Nie ma już snapshotu JSON ani tabel LIVE — `prices:export`/`prices:import`
+zostały usunięte w etapie 2.
 
 ### ⚠️ Uwagi przy przenoszeniu:
 
@@ -267,10 +256,9 @@ docker compose up --build -d
 3. Montuje wolumen `sok_data:/var/data` (baza trwała)
 4. Healthcheck co 30s na `/health`
 
-> **Ceny domyślne w Dockerze:** snapshot `data/price_defaults.json` umieszczony w katalogu
-> `./data` na hoście jest widoczny w kontenerze jako `/var/data/price_defaults.json`
-> i automatycznie przywracany przy starcie (jeśli ustawisz `PRICE_DEFAULTS_PATH`
-> na tę ścieżkę w `docker-compose.yml` / `.env`).
+> **Ceny w Dockerze:** cennik jest w bazie `/var/data/app_database.sqlite`
+> (wolumen `./data` na hoście). Po pierwszym starcie bootstrap tworzy wersję
+> bazową z `data/seed_*.json` — snapshot JSON i `PRICE_DEFAULTS_PATH` nie istnieją.
 
 ### Docker — komendy:
 
@@ -496,10 +484,6 @@ SENTRY_DSN=
 
 # Ścieżka do bazy SQLite
 DATABASE_URL=file:../data/app_database.sqlite?connection_limit=1&busy_timeout=30000
-
-# Ścieżka do pliku migawki domyślnych cenników (opcjonalnie; domyślnie data/price_defaults.json)
-# Dla Docker: PRICE_DEFAULTS_PATH=/var/data/price_defaults.json (plik w wolumenie ./data)
-PRICE_DEFAULTS_PATH=
 ```
 
 ### Zmienne dla różnych środowisk:
@@ -639,8 +623,7 @@ git -c core.hooksPath=/dev/null commit -m "opis"
 
 | Komenda                          | Co robi                                                        |
 | -------------------------------- | -------------------------------------------------------------- |
-| `npm run prices:export`          | Zapis domyślnych cenników do `data/price_defaults.json` (CLI)  |
-| `npm run prices:import`          | Restore cenników z `price_defaults.json` (walidacja + raport)  |
+| `npm run prices:verify`          | Sprawdza seed i spójność ACTIVE (`--strict` wymaga wersji)     |
 | `npm run cleanup:legacy-pricing` | Usuwa legacy klucze cennikowe z `settings` (dry-run domyślnie) |
 
 ### Główne pliki i katalogi:

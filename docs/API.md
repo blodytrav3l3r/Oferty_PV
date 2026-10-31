@@ -200,13 +200,15 @@ snapshotem i **nie przyjmują zapisów z aplikacji**:
   → `409 NO_ACTIVE_VERSION`; nie ma już cichego spadku do LIVE.
 - Zapis nowej oferty bez ACTIVE → `409 NO_ACTIVE_VERSION`; błąd odczytu cennika
   → `503 PRICELIST_UNAVAILABLE` (nie udajemy braku wersji).
-- W eksportach `?source=live` jest aliasem do bieżącego szkicu (do etapu 2,
-  w którym tabele LIVE znikną).
+- W eksportach `?source=default` to cennik fabryczny z `data/seed_*.json`;
+  `?source=live` nie istnieje (`422 INVALID_SOURCE`) — tabela LIVE usunięta.
+- Brak jakiejkolwiek wersji: widok edytora startuje z cennika fabrycznego
+  (`data/seed_*.json`); pierwszy zapis tworzy szkic.
 
-Snapshot ze `data/price_defaults.json` nie jest już wczytywany przy starcie
-domyślnie — tylko z `PRICELIST_RESTORE_ON_START=1`. `npm run prices:import` jest
-dry-runem; zapis do LIVE wymaga `-- --force` i zostawia wpis w audycie.
-`npm run prices:verify` porównuje LIVE z ACTIVE (WARN, `--strict` = błąd).
+Cennik nie ma już snapshotu `data/price_defaults.json` ani tabel `*_Default`.
+Jedyne źródło cen to wersje (`PricelistVersion` + `PricelistItem*`). Wersję bazową
+tworzy bootstrap startu. `npm run prices:verify` sprawdza spójność seeda i ACTIVE
+(brak ACTIVE = SKIP; `--strict` = błąd).
 
 ---
 
@@ -504,16 +506,16 @@ w nagłówku. `POST /api/pricelist-versions/activate-due` (ręczny trigger crona
 `410 Gone` (`code: GONE`) — automatycznej aktywacji nie ma, bo stan wynika z daty.
 
 `GET /api/pricelist-versions/:id/checks` jest **read-only i doradcze** (admin): zwraca
-`usage`, `collision`, `liveDiff`, `comparisonToCurrentApproved` oraz `baseVersion.status`
+`usage`, `collision`, `comparisonToCurrentApproved` oraz `baseVersion.status`
 (zawsze `UNVERIFIABLE` — w schemacie nie ma zapisanego id wersji bazowej).
+Etap 2 usunął `liveDiff` — nie ma tabeli LIVE, do której można porównywać.
 
-## Domyślne cenniki (`/api/price-overrides`)
+## Domyślne cenniki (usunięte w etapie 2)
 
-Wymaga autoryzacji (administrator). Zapisuje bieżący stan wszystkich cenników (rury, studnie, PRECO) jako nowe domyślne (`*_Default`) oraz do pliku `data/price_defaults.json` (transfer między komputerami).
-
-| Metoda | Ścieżka                              | Opis                                   |
-| ------ | ------------------------------------ | -------------------------------------- |
-| POST   | `/api/price-overrides/save-defaults` | Zapis bieżących cenników jako domyślne |
+Endpointy `/api/price-overrides` zostały usunięte razem z tabelami `*_Default`
+i snapshotem JSON. „Przywróć domyślne" w panelu cennika czyta
+`GET /api/products/default`, `/api/products-studnie/default`,
+`/api/preco-pricing/default` — serwowane z `data/seed_*.json`.
 
 ## Eksport XLSX cenników
 

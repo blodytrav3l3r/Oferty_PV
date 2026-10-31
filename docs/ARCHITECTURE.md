@@ -536,7 +536,6 @@ Oferty_PV/
 │
 ├── data/                            # Baza danych
 │   ├── app_database.sqlite          # Główna baza (SQLite)
-│   ├── price_defaults.json          # Snapshot domyślnych cenników (transfer między instalacjami)
 │   ├── backups/                     # Kopie zapasowe (VACUUM INTO)
 │   ├── seed_rury.json               # Seed produktów (rury)
 │   ├── seed_studnie.json            # Seed produktów (studnie)
@@ -560,8 +559,6 @@ Oferty_PV/
 │   ├── skill-cli.mjs                # CLI skilli (build-cost, stats, capabilities)
 │   ├── export-settings-to-seed.mjs  # Eksport cenników z tabel DB do data/seed_*.json
 │   ├── cleanup-legacy-settings.cjs  # Usunięcie legacy kluczy cennikowych z settings
-│   ├── prices-export.ts             # Zapis domyślnych cenników do price_defaults.json (CLI)
-│   ├── prices-import.ts             # Restore cenników z price_defaults.json (CLI, walidacja + diff)
 │   ├── deploy-core.cjs              # Rdzeń deploy (testowalny, kroki per target)
 │   ├── deploy.mjs / rollback.mjs    # Deploy/rollback produkcji (backup + migracje + smoke check)
 │   ├── post-deploy-check.mjs        # Smoke check /health po deploy

@@ -34,14 +34,14 @@ i `ARCHIVED` są **wyliczane** z daty `effectiveFrom` (UTC) i nigdy nie są zapi
 
 Słownik pojęć:
 
-| Pojęcie                           | Co to jest                                                                     | Gdzie to widać                                                    |
-| --------------------------------- | ------------------------------------------------------------------------------ | ----------------------------------------------------------------- |
-| **LIVE**                          | Robocze tabele cennika (tryb rollbacku). Nie jest wersją.                      | Sekcja „Transfer plików" (opisana jako „na żywo")                 |
-| **Wersja**                        | Zamrożona kopia cennika: `{type, seq, version, status, effectiveFrom, sha256}` | Edytor `#/rury` / `#/studnie` → „Cennik" → panel „Wersje cennika" |
-| **Obowiązuje / Do wdrożenia**     | Dwa stany tej samej wersji zatwierdzonej — różni je data wejścia w życie.      | Pasek stanu w edytorze + panel „Wersje cennika"                   |
-| **W przygotowaniu**               | Szkic (`DRAFT`). Nie żyje na osi czasu, dopóki go nie opublikujesz.            | Kafelek stanu + „W przygotowaniu" w historii                      |
-| **Historyczny**                   | Wersja wyparta przez nowszą — tylko odczyt.                                    | Kafelek stanu „Historyczny"                                       |
-| **DEFAULT / price_defaults.json** | Wzorzec do resetu + transfer między komputerami. Nie jest wersją.              | „Zapisz domyślne" / `npm run prices:export                        | import | verify` |
+| Pojęcie                       | Co to jest                                                                     | Gdzie to widać                                                    |
+| ----------------------------- | ------------------------------------------------------------------------------ | ----------------------------------------------------------------- |
+| **LIVE**                      | Robocze tabele cennika (tryb rollbacku). Nie jest wersją.                      | Sekcja „Transfer plików" (opisana jako „na żywo")                 |
+| **Wersja**                    | Zamrożona kopia cennika: `{type, seq, version, status, effectiveFrom, sha256}` | Edytor `#/rury` / `#/studnie` → „Cennik" → panel „Wersje cennika" |
+| **Obowiązuje / Do wdrożenia** | Dwa stany tej samej wersji zatwierdzonej — różni je data wejścia w życie.      | Pasek stanu w edytorze + panel „Wersje cennika"                   |
+| **W przygotowaniu**           | Szkic (`DRAFT`). Nie żyje na osi czasu, dopóki go nie opublikujesz.            | Kafelek stanu + „W przygotowaniu" w historii                      |
+| **Historyczny**               | Wersja wyparta przez nowszą — tylko odczyt.                                    | Kafelek stanu „Historyczny"                                       |
+| **Cennik fabryczny**          | Wartości z `data/seed_*.json`; punkt wyjścia resetu. Nie jest wersją.          | „Przywróć domyślne" (panel wersji)                                |
 
 Dwie niezależne osie: **status** (cykl życia) i **effectiveFrom** (miejsce na osi czasu, zawsze UTC).
 Labelka wersji to `{Prefiks}v{seq}-{RRRRMMDD}` z daty obowiązywania; `seq` jest per typ
@@ -316,22 +316,19 @@ niezgodny stamp przy zapisie to 409 („odśwież i przelicz ponownie").
 Badge „cennik vX · Typ" w ofercie pokazuje wersję z pieczątki (tooltip: data UTC);
 „(bieżący)" oznacza podgląd obowiązującej przy braku pieczątki.
 
-## 13. DEFAULT i transfer między komputerami
+## 13. Cennik fabryczny i transfer między komputerami
 
-- „Zapisz domyślne" = snapshot wszystkich cenników (tabele `*_Default` + plik
-  `data/price_defaults.json`).
-- „Przywróć domyślne (Rury / Studnie / PRECO)" działa **tylko na wybranej osi**
-  i tylko na jej module; w `#/cennik` kliknięcie przycisku innej osi przełącza
-  tab i tam pokazuje potwierdzenie. Po przywróceniu kliknij „Zapisz", aby
-  zachować zmiany.
-- Przenosiny: `npm run prices:export` → skopiuj plik → `npm run prices:import`
-  (domyślnie **dry-run**: pokazuje diff, nic nie zapisuje) → zapis:
-  `npm run prices:import -- --force` (wpis w audycie). Kontrola:
-  `npm run prices:verify` (LIVE vs Default vs plik **oraz ACTIVE vs LIVE**;
-  `--strict` zamienia rozjazd ACTIVE vs LIVE na błąd).
-- Snapshot `data/price_defaults.json` **nie** wczytuje się już przy starcie
-  domyślnie — tylko z `PRICELIST_RESTORE_ON_START=1` (świadome nadpisanie LIVE).
-- Znaczniki czasu są rozdzielone: `pricelist_defaults_updated_at` (snapshot)
+- **Etap 2:** tabele LIVE, kopie `*_Default` i snapshot `data/price_defaults.json`
+  nie istnieją. Jedyne źródło cen to wersje cennika; „Zapisz domyślne" zostało usunięte.
+- „Przywróć domyślne (Rury / Studnie / PRECO)" ładuje **wartości fabryczne**
+  z `data/seed_*.json` i działa tylko na wybranej osi; w `#/cennik` kliknięcie
+  przycisku innej osi przełącza tab i tam pokazuje potwierdzenie. Po przywróceniu
+  kliknij „Zapisz", aby utworzyć/zmienić szkic, potem opublikuj.
+- Przenosiny cen: eksport wersji do XLSX na starym urządzeniu → import XLSX
+  (panel „Wersje cennika" → transfer) na nowym. Nie ma już transferu JSON.
+- Kontrola: `npm run prices:verify` sprawdza seed i spójność ACTIVE
+  (`--strict` wymaga opublikowanej wersji).
+- Znaczniki czasu są rozdzielone: `pricelist_defaults_updated_at` (reset fabryczny)
   i `pricelist_active_updated_at` (publikacje wersji).
 
 ## 14. Troubleshooting
@@ -383,4 +380,4 @@ Akcje `CREATE / UPDATE / APPROVE / DELETE / CLONE` zapisywane są w `audit_logs`
 - deprecated: `POST /:id/publish`, `POST /:id/activate`, `POST /:id/backdate`
   (`Deprecation: true`, `Sunset: Wed, 31 Mar 2027 23:59:59 GMT`)
 - `POST /api/pricelist-versions/activate-due` — `410 Gone` (cron usunięty)
-- `npm run prices:export|import|verify`, `npm run backup` — operacje na danych
+- `npm run prices:verify`, `npm run backup` — operacje na danych
