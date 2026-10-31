@@ -17,20 +17,20 @@ V1 i V2 dzielą nazwę komendy `opencode`, więc obecność V1 w `PATH` myli. W 
 
 ## 2. Pliki konfiguracyjne
 
-| Plik                                | Zakres                                                 | W repo |
-| ----------------------------------- | ------------------------------------------------------ | ------ |
-| `.opencode/opencode.json`           | projekt: model, agenci, permissions, MCP, instructions | tak    |
-| `~/.config/opencode/opencode.json`  | globalnie: `plugins`, `mcp.servers`                    | nie    |
-| `~/.config/opencode/opencode.jsonc` | globalnie: `providers` (V1 `provider`, normalizowane)  | nie    |
-| `~/.config/opencode/cli.json`       | tylko klient TUI (motyw, keybindy, pluginy TUI)        | nie    |
-| `.opencode/prompts/agents/*.txt`    | system prompty 10 agentów                              | tak    |
-| `.opencode/rules/**`                | kontrakt inżynierski (rules)                           | tak    |
-| `.opencode/skills/<id>/SKILL.md`    | 5 skilli specyficznych dla S.O.K.                      | tak    |
-| `.caveman.json`                     | projekt: domyślny tryb caveman (`defaultMode`)         | tak    |
+| Plik                                | Zakres                                                                  | W repo |
+| ----------------------------------- | ----------------------------------------------------------------------- | ------ |
+| `.opencode/opencode.json`           | projekt: model, agenci, permissions, MCP, instructions                  | tak    |
+| `~/.config/opencode/opencode.json`  | globalnie: `plugins`, `mcp.servers`                                     | nie    |
+| `~/.config/opencode/opencode.jsonc` | globalnie: `providers` (V1 `provider`, normalizowane)                   | nie    |
+| `~/.config/opencode/cli.json`       | tylko klient TUI (motyw, keybindy, pluginy TUI)                         | nie    |
+| `.opencode/prompts/agents/*.txt`    | system prompty 10 agentów                                               | tak    |
+| `.opencode/rules/**`                | kontrakt inżynierski (rules; wstrzykiwane tylko wpisy z `instructions`) | tak    |
+| `.opencode/skills/<id>/SKILL.md`    | 5 skilli specyficznych dla S.O.K.                                       | tak    |
+| `.caveman.json`                     | projekt: domyślny tryb caveman (`defaultMode`)                          | tak    |
 
 Pozostałe skille (design, ui-ux-pro-max, slides, brand, banner-design, ui-styling, design-system) są lokalne — `.gitignore` trzyma je poza repo.
 
-`instructions` wstrzykuje 5 plików: `AGENTS.md` + 4 rules (`common/coding-style`, `common/security`, `web/security`, `typescript/coding-style`). Świadomie **poza** injection: `CONTRIBUTING.md` i `.opencode/rules/common/git-workflow.md` — ich treść dublują `AGENTS.md` (bramy, `commit.mjs`, Git Safety) i `docs/agents/release.md` (format commitów, release). Oba zostają w repo dla ludzi; agent sięga po nie tylko na żądanie.
+`instructions` wstrzykuje 3 pliki: `AGENTS.md` + 2 scalone rules (`coding-style`, `security`). Scalanie usunęło duplikaty między `common/*` i `typescript/*`/`web/*` (te same normy, inne źródło). Świadomie **poza** injection: `CONTRIBUTING.md` oraz pozostałe pliki `.opencode/rules/**` (`git-workflow`, `development-workflow`, `code-review`, `testing`, `performance`, `ui-ux`, `typescript/security`, `typescript/testing`, `web/*`) — ich treść dubluje `AGENTS.md` (bramy, `commit.mjs`, Git Safety) i `docs/agents/*.md`. Zostają w repo dla ludzi; agent sięga po nie tylko na żądanie.
 
 Zmiana configu przeładowuje się bez restartu. Weryfikacja: `opencode-cli.exe debug config` (źródła), `opencode-cli.exe debug agents` (agenci z promptami).
 

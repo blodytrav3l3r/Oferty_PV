@@ -1,8 +1,8 @@
 # Coding Style (zaadaptowano pod S.O.K.)
 
-> Zrodlo: ECC common/coding-style.md. Limity rozmiaru zgodne z AGENTS.md projektu
-> (funkcje ~100-150 linii, pliki ~1000-1500, zagniezdzenie max 3). To, co w AGENTS.md,
-> jest nadrzedne.
+> Zrodlo: ECC common/coding-style.md + typescript/coding-style.md + common/agents.md.
+> Limity rozmiaru zgodne z AGENTS.md projektu (funkcje ~100-150 linii, pliki ~1000-1500,
+> zagniezdzenie max 3). To, co w AGENTS.md, jest nadrzedne.
 
 ## Immutability (CRITICAL)
 
@@ -14,8 +14,8 @@ CORRECT: update(original, field, value) -> zwraca nowa kopie ze zmiana
 ```
 
 Rationale: niezmiennosc zapobiega ukrytym efektom ubocznym, ulatwia debugowanie.
-
-> Powiazane: baza bledow #15 - przed sortowaniem zawsze kopia: `[...tablica].sort(...)`.
+W typach preferuj `readonly`. Przed sortowaniem zawsze kopia: `[...tablica].sort(...)`
+(baza bledow #15).
 
 ## Core Principles
 
@@ -36,15 +36,11 @@ Rationale: niezmiennosc zapobiega ukrytym efektom ubocznym, ulatwia debugowanie.
 - Nie buduj funkcji ani abstrakcji, zanim nie sa potrzebne
 - Unikaj spekulacyjnej generycznosci
 
-## File Organization
+### Strong Typing
 
-- MANY SMALL FILES > FEW LARGE FILES
-- Preferowane rozmiary (AGENTS.md, zalecenia nie sztywne):
-    - Funkcje: ~100-150 linii
-    - Klasy: ~500-800 linii
-    - Pliki: ~1000-1500 linii
-- Nie dziel wylacznie ze wzgledu na liczbe linii - najpierw ocen spojnosc odpowiedzialnosci (SRP)
-- Spojny, czytelny kod > sztuczne trzymanie limitow
+- Kazda wartosc ma jawny typ (nigdy `any` bez powodu)
+- Uzywaj `unknown` zamiast `any` dla nieznanych danych
+- Type guards dla zawężania typow z zewnetrznych danych
 
 ## Error Handling
 
@@ -52,6 +48,8 @@ Rationale: niezmiennosc zapobiega ukrytym efektom ubocznym, ulatwia debugowanie.
 - Przyjazne komunikaty w kodzie UI
 - Szczegolowy kontekst bledu na serwerze
 - NIGDY nie polykaj bledow po cichu (silent fail - patrz agent silent-failure-hunter)
+- Error boundaries i konwersja bledow do domenowych na granicy serwisu
+- Obsluga `PrismaClientKnownRequestError` na granicy serwisu (baza bledow #9, trapy Prisma)
 
 ## Input Validation
 
@@ -68,6 +66,27 @@ Rationale: niezmiennosc zapobiega ukrytym efektom ubocznym, ulatwia debugowanie.
 - Boolean: przedrostek `is`, `has`, `can`, `should`
 - Interfejsy/typy/komponenty: PascalCase
 - Stale: UPPER_SNAKE_CASE
+- Identyfikatory w kodzie po angielsku; komentarze, commity, CHANGELOG po polsku
+
+## File Organization
+
+- MANY SMALL FILES > FEW LARGE FILES
+- Preferowane rozmiary (AGENTS.md, zalecenia nie sztywne):
+    - Funkcje: ~100-150 linii
+    - Klasy: ~500-800 linii
+    - Pliki: ~1000-1500 linii
+- Nie dziel wylacznie ze wzgledu na liczbe linii - najpierw ocen spojnosc odpowiedzialnosci (SRP)
+- Spojny, czytelny kod > sztuczne trzymanie limitow
+
+## Specific S.O.K. Patterns
+
+- Backend: `src/`, `server.ts`, `scripts/`, `tests/`
+- Kompilacja tsc tylko dla: `src/**`, `server.ts`, `scripts/**`, `tests/**`
+- Frontend (public/js/) NIE jest kompilowany przez tsc - sprawdzany przez
+  `typecheck:frontend` i `lint:frontend`
+- Walidacja danych: `zod` v4 (w dependencies)
+- DTO w odpowiedziach API - nigdy surowe encje Prisma
+- Prettier: pojedyncze cudzyslopy `'`, sredniki `;`, wciecia spacjami (bez tabulatorow)
 
 ## Code Smells to Avoid
 
@@ -83,6 +102,17 @@ Uzywaj nazwanych stalych dla progow, timeoutow, limitow.
 
 Dziel duze funkcje na skupione czesci z jasna odpowiedzialnoscia.
 
+## Workflow Rules
+
+1. **Zakaz placeholderow**: NIGDY nie skracaj kodu komentarzami typu
+   `// ... reszta kodu bez zmian` lub `/* TODO: reszta logiki */`. Kazda modyfikacja
+   dostarcza kompletny, gotowy do uruchomienia kod.
+2. **Sekwencyjne dzialanie**: nie uruchamiaj rownoleglych zapisow do bazy (SQLITE_BUSY,
+   baza bledow #2).
+3. **Przyznanie sie do bledow**: rzeczowo przyznaj sie do bledu i napraw go bez
+   przesadnych przeprosin.
+4. **Weryfikacja po edycji**: `typecheck` (BE) / `node -c` (JS), potem `npm run format`.
+
 ## Code Quality Checklist
 
 - [ ] Kod czytelny i dobrze nazwany
@@ -93,3 +123,5 @@ Dziel duze funkcje na skupione czesci z jasna odpowiedzialnoscia.
 - [ ] Brak twardo zakodowanych wartosci (stale lub config)
 - [ ] Wzorce immutability
 - [ ] `escapeHtml` przy interpolacji do innerHTML
+- [ ] Typy jawnie zdefiniowane (bez `any`)
+- [ ] `zod` do walidacji danych wejsciowych
