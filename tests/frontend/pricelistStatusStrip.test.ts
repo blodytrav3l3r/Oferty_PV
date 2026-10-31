@@ -62,9 +62,9 @@ describe('frontend: pasek stanu cennika w edytorze', () => {
         expect(utilities).toContain("[data-pv-editing='1']");
     });
 
-    it('tryb zapisu LIVE jest widoczny w pasku (rollback = split-brain)', () => {
-        expect(shared).toContain('Tryb zapisu LIVE');
-        expect(shared).toContain("window.__pricelistWriteTarget === 'live'");
+    it('badge trybu zapisu LIVE nie istnieje (LIVE tylko do odczytu)', () => {
+        expect(shared).not.toContain('Tryb zapisu LIVE');
+        expect(shared).not.toContain("window.__pricelistWriteTarget === 'live'");
     });
 
     it('edytory wołają pasek po załadowaniu cennika', () => {

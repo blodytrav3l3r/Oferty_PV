@@ -3038,12 +3038,8 @@
                             '</div>'
                     );
                 }
-                // Rollback PRICELIST_WRITE_TARGET=live: zapis omija wersje (split-brain).
-                if (window.__pricelistWriteTarget === 'live') {
-                    parts.push(
-                        '<span class="badge badge-warn" title="PRICELIST_WRITE_TARGET=live — zapis idzie do tabel LIVE, oferty czytają wersję obowiązującą.">⚠ Tryb zapisu LIVE</span>'
-                    );
-                }
+                // Etap 1: zapis do LIVE jest wyłączony (zawsze szkic/wersja) —
+                // badge trybu LIVE nie ma już stanu, który mógłby go zapalić.
                 if (data.draft && editingGrid) {
                     parts.push(
                         '<span class="badge badge-muted" title="Szkic nie trafia do ofert do publikacji.">✎ Szkic ' +
