@@ -4,6 +4,12 @@
     "default_agent": "build",
     "instructions": ["AGENTS.md", ".opencode/rules/coding-style.md", ".opencode/rules/security.md"],
     "skills": [".opencode/skills"],
+    "compaction": {
+        "tail_turns": 6,
+        "keep": {
+            "tokens": 40000
+        }
+    },
     "permissions": [
         {
             "action": "external_directory",
