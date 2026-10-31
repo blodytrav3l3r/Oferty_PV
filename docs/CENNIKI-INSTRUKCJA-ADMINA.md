@@ -305,10 +305,12 @@ cennik, którego dotyczą.
 
 Nowa oferta dostaje pieczątkę wersji obowiązującej w chwili utworzenia
 (`pricelistVersionId`, null = legacy sprzed wersjonowania) oraz **snapshot cen w dokumencie —
-to on jest źródłem prawdy**. Zmiana cennika nie rusza ofert. Oferta liczy z wersji obowiązującej
-(`?source=active`); gdy aktywnej wersji brak — fallback do LIVE z nagłówkiem
-`X-Pricelist-Fallback: live`. Przeliczenie do nowego cennika to jawna operacja
-(„Przelicz do aktywnego"); niezgodny stamp przy zapisie to 409 („odśwież i przelicz ponownie").
+to on jest źródłem prawdy**. Zmiana cennika nie rusza ofert. Oferta z pieczątką liczy z tej
+wersji (`GET /api/pricelist-versions/:id/rows`, tylko APPROVED i efektywna); podgląd bez
+pieczątki liczy z wersji obowiązującej (`?source=active`); gdy aktywnej wersji brak — fallback
+do LIVE z nagłówkiem `X-Pricelist-Fallback: live`. Przeliczenie do nowego cennika to jawna
+operacja („Przelicz do aktywnego"); niezgodny stamp przy zapisie to 409 („odśwież i przelicz
+ponownie").
 Badge „cennik vX · Typ" w ofercie pokazuje wersję z pieczątki (tooltip: data UTC);
 „(bieżący)" oznacza podgląd obowiązującej przy braku pieczątki.
 

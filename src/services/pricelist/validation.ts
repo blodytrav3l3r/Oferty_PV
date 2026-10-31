@@ -499,7 +499,9 @@ export function requireExportSource(value: unknown): PricelistExportSource {
     );
 }
 
-/** Walidacja ?source= dla GET cenników — brak = dotychczasowy LIVE bez zmian. */
+/** Walidacja ?source= dla GET cenników — brak = ścieżka edytora
+ *  (DRAFT → ACTIVE → LIVE wg getEditorPricing), 'active' = wymuszona wersja
+ *  obowiązująca. */
 export type PricingSource = 'active';
 
 export function requirePricingSource(value: unknown): PricingSource | undefined {

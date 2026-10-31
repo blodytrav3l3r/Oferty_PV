@@ -522,9 +522,11 @@ function skipWizardToStep3() {
 
 /* ===== PRZECHOWYWANIE (REST API) ===== */
 
-/* P1: oferty liczą z wersji ACTIVE (?source=active), cennik-admin zostaje na LIVE.
-   Fallback BE (brak ACTIVE → LIVE + X-Pricelist-Fallback: live) sygnalizujemy
-   jednym toastem na załadowanie strony (flaga window.__activePricingFallbackToastShown). */
+/* Oferty liczą z wersji ACTIVE (?source=active). Edytor cennika (brak source)
+   czyta DRAFT → ACTIVE → LIVE (getEditorPricing, writeTarget.ts), więc brak
+   source NIE oznacza LIVE. Fallback BE (brak jakiejkolwiek wersji → LIVE +
+   X-Pricelist-Fallback: live) sygnalizujemy jednym toastem na załadowanie
+   strony (flaga window.__activePricingFallbackToastShown). */
 function _notifyActiveFallback(res) {
     let fallback = false;
     try {
@@ -618,7 +620,7 @@ async function saveStudnieProducts(data) {
 /**
  * Ładuje cennik PRECO z backendu.
  * @param {{source?: string}} [options] - source:'active' → ceny z wersji ACTIVE (ekrany ofert);
- *   brak → cennik roboczy LIVE (cennik-admin).
+ *   brak → ścieżka edytora cennika: DRAFT → ACTIVE → LIVE (decyduje serwer).
  */
 async function loadPrecoPricing(options) {
     const useActive = !!(options && options.source === 'active');
