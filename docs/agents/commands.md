@@ -25,7 +25,7 @@ E2E na izolacji: `PLAYWRIGHT_BASE_URL=http://localhost:PORT` (własny spawn z `D
 
 ## Baza danych
 
-`prisma:generate`, `prisma:migrate` (dev), `prisma:deploy` (produkcja; `db push` wyłącznie legacy bez `_prisma_migrations`), `prisma:seed`, `prisma:studio`, `prisma:reset` (utrata danych!), `prisma:status`, `cleanup:legacy-pricing`, `export:seed`, `pricelist:preflight`, `pricelist:health`, `import:offers`, `backfill:offer-counts`.
+`prisma:generate`, `prisma:migrate` (dev), `prisma:deploy` (produkcja; `db push` wyłącznie legacy bez `_prisma_migrations`), `prisma:seed`, `prisma:studio`, `prisma:reset` (utrata danych!), `prisma:status`, `export:seed`, `pricelist:preflight`, `pricelist:health`, `import:offers`, `backfill:offer-counts`.
 
 ## Backup i cenniki
 

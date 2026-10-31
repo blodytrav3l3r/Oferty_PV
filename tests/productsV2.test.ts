@@ -34,7 +34,6 @@ jest.mock('../src/prismaClient', () => ({
             update: (...args: unknown[]) => update(...args),
             delete: (...args: unknown[]) => deleteRow(...args)
         },
-        productsRuryDefault: { findMany: jest.fn(async () => []) },
         settings: { findUnique: jest.fn(async () => null) },
         pricelistVersion: { findFirst: jest.fn(async () => null) }
     }

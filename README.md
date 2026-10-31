@@ -477,17 +477,16 @@ Projekt zawiera wygodne skrypty dla systemu Windows:
 
 ### Baza danych (Prisma)
 
-| Komenda                          | Opis                                                          |
-| -------------------------------- | ------------------------------------------------------------- |
-| `npm run prisma:generate`        | Generuj klienta Prisma                                        |
-| `npm run prisma:migrate`         | Utwórz migrację dev                                           |
-| `npm run prisma:deploy`          | Zastosuj migracje w produkcji                                 |
-| `npm run prisma:seed`            | Zasiej dane początkowe                                        |
-| `npm run prisma:studio`          | Otwórz Prisma Studio (UI bazy)                                |
-| `npm run prisma:reset`           | Reset bazy danych                                             |
-| `npm run prisma:status`          | Status migracji                                               |
-| `npm run cleanup:legacy-pricing` | Usuń legacy klucze cennikowe z `settings` (dry-run domyślnie) |
-| `npm run export:seed`            | Eksport cenników z tabel DB do `data/seed_*.json`             |
+| Komenda                   | Opis                                               |
+| ------------------------- | -------------------------------------------------- |
+| `npm run prisma:generate` | Generuj klienta Prisma                             |
+| `npm run prisma:migrate`  | Utwórz migrację dev                                |
+| `npm run prisma:deploy`   | Zastosuj migracje w produkcji                      |
+| `npm run prisma:seed`     | Zasiej dane początkowe                             |
+| `npm run prisma:studio`   | Otwórz Prisma Studio (UI bazy)                     |
+| `npm run prisma:reset`    | Reset bazy danych                                  |
+| `npm run prisma:status`   | Status migracji                                    |
+| `npm run export:seed`     | Eksport cenników z wersji DB do `data/seed_*.json` |
 
 ### AI/ML
 

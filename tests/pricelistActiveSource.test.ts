@@ -1,8 +1,8 @@
 /**
  * Paczka 1: GET cenników z ?source=active czyta ceny z wersji APPROVED
- * przez centralny resolveActivePricing (kształt legacy 1:1 z GET live).
- * Brak ACTIVE → 409 NO_ACTIVE_VERSION (bez cichego LIVE); zły source → 422.
- * Zwykły GET bez source = widok edytora (szkic → ACTIVE → LIVE).
+ * przez centralny resolveActivePricing (kształt legacy 1:1 z wersją).
+ * Brak ACTIVE → 409 NO_ACTIVE_VERSION (bez cichego fallbacku); zły source → 422.
+ * Zwykły GET bez source = widok edytora (szkic → ACTIVE → seed).
  */
 
 import request from 'supertest';
@@ -45,11 +45,6 @@ const itemsStudnie: Array<Record<string, unknown>> = [];
 const itemsKonfig: Array<Record<string, unknown>> = [];
 const itemsKinety: Array<Record<string, unknown>> = [];
 const itemsZakresy: Array<Record<string, unknown>> = [];
-const liveRury: Array<Record<string, unknown>> = [];
-const liveStudnie: Array<Record<string, unknown>> = [];
-const liveKonfig: Array<Record<string, unknown>> = [];
-const liveKinety: Array<Record<string, unknown>> = [];
-const liveZakresy: Array<Record<string, unknown>> = [];
 
 type Where = {
     type?: string;
@@ -136,11 +131,6 @@ jest.mock('../src/prismaClient', () => ({
         pricelistItemPrecoKonfig: itemDelegate(itemsKonfig),
         pricelistItemPrecoKinety: itemDelegate(itemsKinety),
         pricelistItemPrecoZakresy: itemDelegate(itemsZakresy),
-        productsRury: { findMany: jest.fn(async () => liveRury.map((r) => ({ ...r }))) },
-        productsStudnie: { findMany: jest.fn(async () => liveStudnie.map((r) => ({ ...r }))) },
-        precoKonfig: { findMany: jest.fn(async () => liveKonfig.map((r) => ({ ...r }))) },
-        precoKinety: { findMany: jest.fn(async () => liveKinety.map((r) => ({ ...r }))) },
-        precoZakresy: { findMany: jest.fn(async () => liveZakresy.map((r) => ({ ...r }))) },
         settings: {
             findUnique: jest.fn(async ({ where }: { where: { key: string } }) => {
                 const value = overrideSettings.get(where.key);
@@ -163,7 +153,6 @@ import precoRouter from '../src/routes/precoPricingV2';
 const EFF = '2020-01-01T00:00:00.000Z';
 
 function seedAll(): void {
-    liveRury.push({ id: 'R1', name: 'Rura R1', category: 'K', price: 100 });
     versions.push({
         id: 'v-rury-1',
         type: 'rury',
@@ -181,20 +170,6 @@ function seedAll(): void {
         price: 80
     });
 
-    liveStudnie.push({
-        id: 'S1',
-        name: 'Krąg',
-        category: 'Kręgi',
-        componentType: 'krag',
-        dn: '1000',
-        height: 500,
-        magazynWL: true,
-        magazynKLB: false,
-        formaStandardowa: true,
-        formaStandardowaKLB: false,
-        active: true,
-        price: 100
-    });
     versions.push({
         id: 'v-studnie-1',
         type: 'studnie',
@@ -220,28 +195,6 @@ function seedAll(): void {
         price: 80
     });
 
-    liveKonfig.push({
-        id: 'k-live',
-        key: '1000',
-        value: JSON.stringify({ skrzynkaWlazowa: 10, cenaDnoOsadnika: 20, cenaPelnaWysMB: 30 })
-    });
-    liveKinety.push({
-        id: 'kin-live',
-        order: 0,
-        dn: 160,
-        wellDn: 1000,
-        height: 500,
-        cena: 11
-    });
-    liveZakresy.push({
-        id: 'z-live',
-        order: 0,
-        label: 'spadekKineta',
-        min: 0,
-        max: 100,
-        grupy: JSON.stringify({ '110-160': 50 }),
-        wellDn: 1000
-    });
     versions.push({
         id: 'v-preco-1',
         type: 'preco',
@@ -290,19 +243,7 @@ beforeAll(() => {
 
 beforeEach(() => {
     overrideSettings.clear();
-    for (const s of [
-        versions,
-        itemsRury,
-        itemsStudnie,
-        itemsKonfig,
-        itemsKinety,
-        itemsZakresy,
-        liveRury,
-        liveStudnie,
-        liveKonfig,
-        liveKinety,
-        liveZakresy
-    ]) {
+    for (const s of [versions, itemsRury, itemsStudnie, itemsKonfig, itemsKinety, itemsZakresy]) {
         s.length = 0;
     }
     seedAll();
@@ -374,26 +315,6 @@ describe('Paczka 1: source=active czyta z APPROVED', () => {
         const plain = await request(app).get('/api/preco-pricing');
         expect(plain.body.data[0]['1000'].skrzynkaWlazowa).toBe(99);
         expect(plain.body.data[0]['1000'].kinety[0].dodWlot).toBe(77);
-    });
-
-    test('edycja tabel LIVE nie zmienia source=active ani widoku edytora', async () => {
-        liveRury[0].price = 999;
-        liveStudnie[0].price = 999;
-        liveKonfig[0].value = JSON.stringify({
-            skrzynkaWlazowa: 999,
-            cenaDnoOsadnika: 20,
-            cenaPelnaWysMB: 30
-        });
-
-        expect((await request(app).get('/api/products?source=active')).body.data[0].price).toBe(80);
-        expect(
-            (await request(app).get('/api/products-studnie?source=active')).body.data[0].price
-        ).toBe(80);
-        expect(
-            (await request(app).get('/api/preco-pricing?source=active')).body.data[0]['1000']
-                .skrzynkaWlazowa
-        ).toBe(99);
-        expect((await request(app).get('/api/products')).body.data[0].price).toBe(80);
     });
 
     test('brak APPROVED → 409 NO_ACTIVE_VERSION (bez cichego LIVE)', async () => {

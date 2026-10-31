@@ -2,42 +2,6 @@ import { InvalidPriceError, requireFinitePrice } from '../validators/finiteNumbe
 
 export const RANGE_TYPES = ['spadekKineta', 'spadekMufa', 'uniesienie', 'redukcja'] as const;
 
-export async function formatPrecoResponse(konfigTable: any, kinetyTable: any, zakresyTable: any) {
-    const [konfigRows, kinetyRows, zakresyRows] = await Promise.all([
-        konfigTable.findMany(),
-        kinetyTable.findMany({ orderBy: [{ dn: 'asc' }, { height: 'asc' }] }),
-        zakresyTable.findMany({ orderBy: { order: 'asc' } })
-    ]);
-
-    if (konfigRows.length === 0 && zakresyRows.length === 0) {
-        return { data: [{}] };
-    }
-
-    const entry: Record<string, unknown> = {};
-
-    for (const row of konfigRows) {
-        const wellDn = Number(row.key);
-        const parsed = JSON.parse(row.value);
-        const kinety = kinetyRows
-            .filter((k: any) => k.wellDn === wellDn)
-            .map((k: any) => ({ dn: k.dn, prosta: k.height, dodWlot: k.cena, order: k.order }));
-        const ranges: Record<string, unknown> = {};
-        for (const label of RANGE_TYPES) {
-            ranges[label] = zakresyRows
-                .filter((z: any) => z.label === label && z.wellDn === wellDn)
-                .map((z: any) => ({
-                    order: z.order,
-                    min: z.min,
-                    max: z.max,
-                    grupy: JSON.parse(z.grupy)
-                }));
-        }
-        entry[row.key] = { ...parsed, kinety, ...ranges };
-    }
-
-    return { data: [entry] };
-}
-
 /** Spłaszcza zagnieżdżony PRECO do wierszy wersji (bez zapisu). */
 export function flattenPrecoRows(input: Record<string, unknown>) {
     const konfigRows: { id: string; key: string; value: string }[] = [];

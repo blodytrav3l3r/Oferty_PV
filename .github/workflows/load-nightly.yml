@@ -46,7 +46,7 @@ jobs:
             - name: Przygotuj testową bazę SQLite
               run: npx prisma db push --skip-generate
 
-            - name: Seed bazy (produkty + preco)
+            - name: Seed bazy (użytkownik, modele AI, ustawienia)
               run: npm run prisma:seed
 
             - name: Start serwera w tle

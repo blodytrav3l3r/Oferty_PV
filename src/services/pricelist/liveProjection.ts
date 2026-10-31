@@ -276,7 +276,7 @@ export function projectVersionToLiveShape(
 }
 
 /**
- * Projekcja kształtu zagnieżdżonego PRECO (formatPrecoResponse: entry
+ * Projekcja kształtu zagnieżdżonego PRECO (entry
  * { DN: { scalar, kinety, spadekKineta... } }) na 3 arkusze 1:1 z FE
  * (pricelistImportExport.js:78-147). Puste sekcje → brak arkusza (jak FE).
  */
@@ -354,8 +354,7 @@ export function studnieVersionRowToLegacy(row: Record<string, unknown>): Record<
 }
 
 /**
- * Sekcje wersji preco → entry zagnieżdżone per DN (kopia semantyki
- * formatPrecoResponse z precoPricingV2.ts: konfig value JSON → scalary;
+ * Sekcje wersji preco → entry zagnieżdżone per DN (konfig value JSON → scalary;
  * kinety {dn, prosta: height, dodWlot: cena, order}; zakresy per label
  * z grupy JSON; sort kinety dn/height, zakresy order).
  */

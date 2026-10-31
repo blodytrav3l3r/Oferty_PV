@@ -21,7 +21,6 @@ import {
     projectVersionToLiveShape,
     requireExportSource
 } from '../src/services/pricelistVersionService';
-import { formatPrecoResponse } from '../src/services/precoPricing';
 
 const RURY_ROW = {
     id: 'R1',
@@ -261,28 +260,5 @@ describe('F1: eksport studni dokleja PRECO z tego samego źródła', () => {
             'DN1000',
             'Przejścia'
         ]);
-    });
-
-    it('formatPrecoResponse czyta z podanych tabel (live albo *Default)', async () => {
-        const table = (rows: Array<Record<string, unknown>>) => ({
-            findMany: jest.fn().mockResolvedValue(rows)
-        });
-        const konfig = table([{ key: '1000', value: '{"skrzynkaWlazowa":5}' }]);
-        const kinety = table([{ dn: 160, wellDn: 1000, height: 500, cena: 11, order: 0 }]);
-        const zakresy = table([]);
-        const result = await formatPrecoResponse(konfig, kinety, zakresy);
-        expect(konfig.findMany).toHaveBeenCalled();
-        expect(kinety.findMany).toHaveBeenCalled();
-        expect(zakresy.findMany).toHaveBeenCalled();
-        expect(result.data[0]).toEqual({
-            '1000': {
-                skrzynkaWlazowa: 5,
-                kinety: [{ dn: 160, prosta: 500, dodWlot: 11, order: 0 }],
-                spadekKineta: [],
-                spadekMufa: [],
-                uniesienie: [],
-                redukcja: []
-            }
-        });
     });
 });

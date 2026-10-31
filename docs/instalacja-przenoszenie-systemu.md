@@ -620,10 +620,10 @@ git -c core.hooksPath=/dev/null commit -m "opis"
 
 ### Komendy cen:
 
-| Komenda                          | Co robi                                                        |
-| -------------------------------- | -------------------------------------------------------------- |
-| `npm run prices:verify`          | Sprawdza seed i spójność ACTIVE (`--strict` wymaga wersji)     |
-| `npm run cleanup:legacy-pricing` | Usuwa legacy klucze cennikowe z `settings` (dry-run domyślnie) |
+| Komenda                    | Co robi                                                    |
+| -------------------------- | ---------------------------------------------------------- |
+| `npm run prices:verify`    | Sprawdza seed i spójność ACTIVE (`--strict` wymaga wersji) |
+| `npm run pricelist:health` | Sprawdza czy istnieje dokładnie 1 aktywna wersja na typ    |
 
 ### Główne pliki i katalogi:
 

@@ -38,7 +38,7 @@ jobs:
             - name: Przygotuj testowa baze SQLite
               run: npx prisma db push --skip-generate
 
-            - name: Seed bazy (produkty + preco)
+            - name: Seed bazy (użytkownik, modele AI, ustawienia)
               run: npm run prisma:seed
 
             - name: Setup Chromium (Playwright)

@@ -75,7 +75,7 @@ export function buildPrecoJson(
             obj = {};
         }
         // Zakresy mają osobna tabele — usuwamy je z value, zeby zrodlem prawdy
-        // była tabela precoZakresy (patrz formatPrecoResponse).
+        // była tabela precoZakresy.
         for (const label of RANGE_TYPES) delete obj[label];
         byDn[k.key] = obj;
     }

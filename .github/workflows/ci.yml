@@ -283,7 +283,7 @@ jobs:
             - name: Przygotuj testową bazę SQLite
               run: npx prisma db push --skip-generate
 
-            - name: Seed bazy (produkty + preco)
+            - name: Seed bazy (użytkownik, modele AI, ustawienia)
               run: npm run prisma:seed
 
             - name: Setup Chromium (Playwright)
@@ -367,7 +367,7 @@ jobs:
             - name: Przygotuj testową bazę SQLite
               run: npx prisma db push --skip-generate
 
-            - name: Seed bazy (produkty + preco)
+            - name: Seed bazy (użytkownik, modele AI, ustawienia)
               run: npm run prisma:seed
 
             - name: Setup Chromium (Playwright)
@@ -402,7 +402,7 @@ jobs:
             - name: Przygotuj testową bazę SQLite
               run: npx prisma db push --skip-generate
 
-            - name: Seed bazy (produkty + preco)
+            - name: Seed bazy (użytkownik, modele AI, ustawienia)
               run: npm run prisma:seed
 
             - name: Setup Chromium (Playwright)
@@ -438,7 +438,7 @@ jobs:
             - name: Przygotuj testową bazę SQLite
               run: npx prisma db push --skip-generate
 
-            - name: Seed bazy (produkty + preco)
+            - name: Seed bazy (użytkownik, modele AI, ustawienia)
               run: npm run prisma:seed
 
             - name: Setup Chromium (Playwright)
@@ -517,7 +517,7 @@ jobs:
             - name: Przygotuj testową bazę SQLite
               run: npx prisma db push --skip-generate
 
-            - name: Seed bazy (produkty + preco)
+            - name: Seed bazy (użytkownik, modele AI, ustawienia)
               run: npm run prisma:seed
 
             - name: Start serwera w tle
@@ -573,11 +573,14 @@ jobs:
             - name: Generate Prisma client
               run: npx prisma generate
 
-            - name: Seed testowej bazy (cenniki do prices:verify)
+            - name: Seed testowej bazy (użytkownik, modele AI, ustawienia)
               run: npx prisma db push --skip-generate && npx ts-node prisma/seed.ts
 
-            - name: Spójność cenników LIVE = Default = plik
-              run: npm run prices:verify
+            - name: Bootstrap v1 (3x ACTIVE), check cenników i bramka cen
+              run: |
+                  npx ts-node scripts/backfill-pricelist-v1.ts
+                  npm run pricelist:health
+                  npm run prices:verify -- --strict
 
     drift-check:
         name: DB schema sanity (blokuje)

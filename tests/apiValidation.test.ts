@@ -74,7 +74,6 @@ jest.mock('../src/prismaClient', () => ({
                         update: jest.fn(),
                         delete: jest.fn()
                     },
-                    productsRuryDefault: { findMany: jest.fn().mockResolvedValue([]) },
                     productsStudnie: {
                         findMany: jest.fn(),
                         deleteMany: jest.fn(),
@@ -82,7 +81,6 @@ jest.mock('../src/prismaClient', () => ({
                         update: jest.fn(),
                         delete: jest.fn()
                     },
-                    productsStudnieDefault: { findMany: jest.fn().mockResolvedValue([]) },
                     precoKonfig: {
                         findMany: jest.fn(),
                         deleteMany: jest.fn(),
@@ -94,21 +92,6 @@ jest.mock('../src/prismaClient', () => ({
                         createMany: jest.fn().mockResolvedValue({ count: 0 })
                     },
                     precoZakresy: {
-                        findMany: jest.fn(),
-                        deleteMany: jest.fn(),
-                        createMany: jest.fn().mockResolvedValue({ count: 0 })
-                    },
-                    precoKonfigDefault: {
-                        findMany: jest.fn(),
-                        deleteMany: jest.fn(),
-                        createMany: jest.fn().mockResolvedValue({ count: 0 })
-                    },
-                    precoKinetyDefault: {
-                        findMany: jest.fn(),
-                        deleteMany: jest.fn(),
-                        createMany: jest.fn().mockResolvedValue({ count: 0 })
-                    },
-                    precoZakresyDefault: {
                         findMany: jest.fn(),
                         deleteMany: jest.fn(),
                         createMany: jest.fn().mockResolvedValue({ count: 0 })
@@ -131,7 +114,6 @@ jest.mock('../src/prismaClient', () => ({
             update: jest.fn(),
             delete: jest.fn()
         },
-        productsRuryDefault: { findMany: jest.fn() },
         productsStudnie: {
             findMany: jest.fn(),
             deleteMany: jest.fn(),
@@ -139,13 +121,9 @@ jest.mock('../src/prismaClient', () => ({
             update: jest.fn(),
             delete: jest.fn()
         },
-        productsStudnieDefault: { findMany: jest.fn() },
         precoKonfig: { findMany: jest.fn(), deleteMany: jest.fn(), createMany: jest.fn() },
         precoKinety: { findMany: jest.fn(), deleteMany: jest.fn(), createMany: jest.fn() },
         precoZakresy: { findMany: jest.fn(), deleteMany: jest.fn(), createMany: jest.fn() },
-        precoKonfigDefault: { findMany: jest.fn(), deleteMany: jest.fn(), createMany: jest.fn() },
-        precoKinetyDefault: { findMany: jest.fn(), deleteMany: jest.fn(), createMany: jest.fn() },
-        precoZakresyDefault: { findMany: jest.fn(), deleteMany: jest.fn(), createMany: jest.fn() },
         ai_telemetry_logs: { create: jest.fn() },
         users: { update: jest.fn(), findUnique: jest.fn() },
         settings: { findUnique: jest.fn(), update: jest.fn(), create: jest.fn() }
