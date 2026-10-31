@@ -4,6 +4,18 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.55.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.54.0...v1.55.0) (2026-10-31)
+
+### Features
+
+- **api:** cennik tylko z wersji i seeda — usunięcie tabel LIVE, `*_Default` i snapshotu JSON ([544c58b](https://github.com/blodytrav3l3r/Oferty_PV/commit/544c58b))
+
+### Documentation
+
+- **docs:** etap 2 — cennik wyłącznie z wersji i seeda ([fe7e054](https://github.com/blodytrav3l3r/Oferty_PV/commit/fe7e054))
+
+---
+
 ## [1.54.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.53.0...v1.54.0) (2026-10-29)
 
 ### Features
