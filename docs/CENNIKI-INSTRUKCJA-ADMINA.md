@@ -279,6 +279,15 @@ Modal celu importu: **na żywo (LIVE)** albo **draft + nota**. Każdy plik to je
 czyta wyłącznie `PRECO_*` i odrzuca plik bez tych arkuszy. Eksport wersji (review i `?source=active`)
 to nadal skoroszyt danej wersji; PRECO ma osobny eksport w swoim wierszu wersji.
 
+**Import studni bez kolumn flag** (`Mag WL`, `Mag KLB`, `Forma std. WL`, `Forma std. KLB`):
+brak kolumny = wszystkie pozycje dostają `0` (niedostępne) i import pokazuje ostrzeżenie
+z nazwami brakujących kolumn. Pusta komórka w istniejącej kolumnie = `1`. Import nie
+zgaduje dostępności po cichu.
+
+**Edycja PRECO:** puste lub niepoprawne pole blokuje zapis (toast z listą pól).
+Wcześniej taka komórka zapisywała się jako `0 zł`. Zakresy muszą mieć `max > 0`
+i `max >= min` — przedział `max < min` nigdy się nie dopasowuje i dawał cenę `0 zł`.
+
 ## 11. Eksport XLSX: który przycisk
 
 „Na żywo” (LIVE) = bieżące tabele edytora, nie wersja z osi. Sekcja **Transfer plików**

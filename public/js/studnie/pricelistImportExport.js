@@ -99,16 +99,36 @@ function studnieImportOptions(importIssues) {
                 product.dn = rawDn;
             }
 
+            // Brak kolumny w pliku = pozycja niedostepna (0) dla WSZYSTKICH flag.
+            // Dawniej magazyn dostawal 0, a forma 1 - ten sam plik roznie
+            // wlaczal pozycje i nikt o tym nie wiedzial.
             if (product.magazynWL == null) product.magazynWL = 0;
             if (product.magazynKLB == null) product.magazynKLB = 0;
-            if (product.formaStandardowa == null) product.formaStandardowa = 1;
-            if (product.formaStandardowaKLB == null) product.formaStandardowaKLB = 1;
+            if (product.formaStandardowa == null) product.formaStandardowa = 0;
+            if (product.formaStandardowaKLB == null) product.formaStandardowaKLB = 0;
 
             if (typeof renamePłyty === 'function') {
                 renamePłyty(product);
             }
         }
     };
+}
+
+/**
+ * Kolumny flag, ktorych brak w pliku (wtedy postCoerce ustawia 0).
+ * Zwraca czytelne nazwy naglowkow — import ostrzega, zamiast robic to cicho.
+ * @param {Array<any>} rows wiersze po mapowaniu naglowkow
+ */
+function findMissingFlagColumns(rows) {
+    const present = rows.length > 0 ? Object.keys(rows[0]) : [];
+    return [
+        ['magazynWL', 'Mag WL'],
+        ['magazynKLB', 'Mag KLB'],
+        ['formaStandardowa', 'Forma std. WL'],
+        ['formaStandardowaKLB', 'Forma std. KLB']
+    ]
+        .filter((pair) => !present.includes(pair[0]))
+        .map((pair) => pair[1]);
 }
 
 window.studnieImportOptions = studnieImportOptions;
@@ -185,6 +205,16 @@ async function importStudnieFromExcel(event) {
             if (importIssues.length > 0) {
                 window.pricelistXlsx.openImportErrorsModal({ issues: importIssues });
                 return;
+            }
+
+            const missingFlagColumns = findMissingFlagColumns(allJson);
+            if (missingFlagColumns.length > 0) {
+                showToast(
+                    'Brak kolumn w pliku: ' +
+                        missingFlagColumns.join(', ') +
+                        ' — te pozycje dostaną 0 (niedostępne w magazynie/formie)',
+                    'warning'
+                );
             }
 
             if (normalized.length === 0) {

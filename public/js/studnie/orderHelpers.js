@@ -606,7 +606,13 @@ function freezeWellPreco(well, preserveExisting = false) {
     if (typeof calcPrecoPricing !== 'function') return;
     try {
         const preco = calcPrecoPricing(well);
-        well.frozenPrecoSuma = preco && !preco.error ? preco.suma || 0 : 0;
+        // Blad calc nie moze utrwalic 0 zl w zamowieniu - brak mrozenia
+        // znaczy "przelicz pozniej", a nie "cena 0".
+        if (preco && !preco.error && Number.isFinite(preco.suma)) {
+            well.frozenPrecoSuma = preco.suma;
+        } else {
+            delete well.frozenPrecoSuma;
+        }
     } catch (_e) {
         // pasywnie — brak mrożenia zamiast wywalenia zapisu
     }

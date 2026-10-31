@@ -111,13 +111,24 @@
         const result = emptyResult();
 
         const dnStudni = parseInt(well.dn);
-        if (!dnStudni || !precoPricing[dnStudni]) return result;
+        if (!dnStudni) return result;
+        // Brak cennika dla DN to nie "0 zl" — bez tego oferta liczyła się po cichu
+        // na zero. `error` jest czytany przez calcWellStats/precoErrorPropagation.
+        if (!precoPricing[dnStudni]) {
+            result.error = 'Brak cennika PRECO dla DN' + well.dn;
+            return result;
+        }
         const cennik = precoPricing[dnStudni];
 
         if (well.wkladkaOsadnikPreco === 'tak') {
             const heightMm = parseFloat(well.wkladkaOsadnikH) || 0;
-            const baseCost = cennik.cenaDnoOsadnika || 0;
-            const heightCost = (heightMm / 1000) * (cennik.cenaPelnaWysMB || 0);
+            const baseCost = cennik.cenaDnoOsadnika;
+            const pricePerM = cennik.cenaPelnaWysMB;
+            if (!Number.isFinite(baseCost) || (heightMm > 0 && !Number.isFinite(pricePerM))) {
+                result.error = 'Niepełny cennik PRECO (osadnik) dla DN' + well.dn;
+                return result;
+            }
+            const heightCost = heightMm > 0 ? (heightMm / 1000) * pricePerM : 0;
             result.bazowa = baseCost;
             result.bazowaDN = [well.dn];
             result.bazowaEtykiety = ['Osadnik'];

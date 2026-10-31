@@ -404,6 +404,11 @@ Wymaga autoryzacji (bez wymogu administratora).
 | GET    | `/api/preco-pricing/default`     | auth  | Pobranie domyślnego cennika Preco                                   |
 | GET    | `/api/preco-pricing/export.xlsx` | auth  | Eksport XLSX (`?source=live\|default`)                              |
 
+Walidacja zakresów PRECO (`spadekKineta`, `spadekMufa`, `uniesienie`, `redukcja`): `max`
+musi być `> 0` i `>= min`. Zakres `max < min` nigdy się nie dopasowuje w kalkulacji
+i dawał cenę `0 zł` bez sygnału — dlatego zapis kończy się `400` (`preco-pricing`,
+`InvalidPriceError`) i `422` przy zapisie wersji (zod `precoZakresyRowSchema`).
+
 ## Wersje cenników (`/api/pricelist-versions`)
 
 Wymaga autoryzacji (administrator, oprócz etykiet).

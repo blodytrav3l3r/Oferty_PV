@@ -1,5 +1,5 @@
 import prisma from '../prismaClient';
-import { requireFinitePrice } from '../validators/finiteNumbers';
+import { InvalidPriceError, requireFinitePrice } from '../validators/finiteNumbers';
 
 export const RANGE_TYPES = ['spadekKineta', 'spadekMufa', 'uniesienie', 'redukcja'] as const;
 
@@ -117,12 +117,21 @@ export function flattenPrecoRows(input: Record<string, unknown>) {
                     for (const item of arr) {
                         const it = item as Record<string, unknown>;
                         const grupy = (it.grupy as Record<string, unknown>) ?? {};
+                        const minV = requireFinitePrice(it.min, `zakresy[${zakresIdx}].min`);
+                        const maxV = requireFinitePrice(it.max, `zakresy[${zakresIdx}].max`);
+                        // Zakres z max <= 0 albo max < min nie dopasuje sie nigdy
+                        // (_findPrecoRange zwraca wtedy 0 zl) — blokujemy przed tx.
+                        if (maxV <= 0 || maxV < minV) {
+                            throw new InvalidPriceError(
+                                `zakresy[${zakresIdx}].max (wymagane max >= min i max > 0)`
+                            );
+                        }
                         zakresyRows.push({
                             id: `preco_zakres_${label}_${zakresIdx}`,
                             order: (it.order as number) ?? zakresIdx,
                             label,
-                            min: requireFinitePrice(it.min, `zakresy[${zakresIdx}].min`),
-                            max: requireFinitePrice(it.max, `zakresy[${zakresIdx}].max`),
+                            min: minV,
+                            max: maxV,
                             grupy: JSON.stringify(grupy),
                             wellDn: dn
                         });

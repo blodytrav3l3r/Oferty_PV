@@ -71,15 +71,27 @@ export const precoKinetyRowSchema = z.object({
     cena: z.number().finite().nonnegative()
 });
 
-export const precoZakresyRowSchema = z.object({
-    id: z.string(),
-    order: z.number().int(),
-    label: z.string(),
-    min: z.number().int(),
-    max: z.number().int(),
-    grupy: z.string(),
-    wellDn: z.number().int()
-});
+/**
+ * Zakres bez trafialnego przedzialu jest martwy: `_findPrecoRange`
+ * (`public/js/studnie/precoCalcCore.js`) nie dopasuje go i zwroci 0 zl
+ * bez zadnego sygnalu (realny przypadek: DN2000 redukcja 901-1000 max=10,
+ * DN2500 uniesienie 401-500 max=400). Dlatego max musi byc dodatni
+ * i nie mniejszy od min.
+ */
+export const precoZakresyRowSchema = z
+    .object({
+        id: z.string(),
+        order: z.number().int(),
+        label: z.string(),
+        min: z.number().int(),
+        max: z.number().int(),
+        grupy: z.string(),
+        wellDn: z.number().int()
+    })
+    .refine((row) => row.max > 0 && row.max >= row.min, {
+        path: ['max'],
+        message: 'Zakres PRECO wymaga max >= min i max > 0 (inaczej cena nigdy się nie dopasuje)'
+    });
 
 export type ProductsRuryRow = z.infer<typeof productsRuryRowSchema>;
 export type ProductsStudnieRow = z.infer<typeof productsStudnieRowSchema>;

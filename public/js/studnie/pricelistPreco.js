@@ -1,5 +1,7 @@
 ﻿/* ===== CENNIK PRECO — RENDEROWANIE ZAKŁADKI ===== */
 let _precoDirty = false;
+/** Puste/niepoprawne pola PRECO z ostatniego collect (blokuja zapis). */
+let _precoInputIssues = [];
 
 /**
  * Odświeża stan obu przycisków zapisu PRECO (rail + toolbar przy tabeli).
@@ -327,12 +329,19 @@ function togglePrecoAccordion(headerEl, dn) {
     }
 }
 
+/**
+ * Zbiera PRECO z UI. Puste/niepoprawne pole NIE jest juz cicho zerowane
+ * (dawniej kazda niepoprawna wartosc konczyla sie cena 0 zl): zachowujemy
+ * poprzednia wartosc i zapamietujemy pole, a zapis zostaje zablokowany.
+ */
 function collectPrecoFromUI() {
     const data = structuredClone(precoPricing);
+    const issues = [];
     document.querySelectorAll('[data-preco-field]').forEach((/** @type {HTMLElement} */ input) => {
         const dn = input.dataset.precoDn;
         const fieldPath = input.dataset.precoField;
-        const val = parseFloat(input.value) || 0;
+        const raw = String(input.value).trim();
+        const val = raw === '' ? NaN : Number(raw);
 
         if (!data[dn]) return;
 
@@ -344,8 +353,13 @@ function collectPrecoFromUI() {
             target = target[key];
         }
         const lastKey = parts[parts.length - 1];
+        if (!Number.isFinite(val) || val < 0) {
+            issues.push('DN' + dn + ' ' + fieldPath);
+            return;
+        }
         target[lastKey] = val;
     });
+    _precoInputIssues = issues;
     return data;
 }
 
@@ -369,6 +383,12 @@ async function savePrecoFromUI() {
     btns.forEach((b) => b.setAttribute('disabled', 'true'));
     try {
         const data = collectPrecoFromUI();
+        if (_precoInputIssues.length > 0) {
+            const head = _precoInputIssues.slice(0, 5).join(', ');
+            const more = _precoInputIssues.length > 5 ? ` (+${_precoInputIssues.length - 5})` : '';
+            showToast('Popraw puste lub niepoprawne pola PRECO: ' + head + more, 'error');
+            return;
+        }
         precoPricing = data;
         const ok = await savePrecoPricing(data);
         if (ok) {
