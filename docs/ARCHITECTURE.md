@@ -358,14 +358,12 @@ Główne pliki rdzeniowe w `public/js/studnie/` po podziale:
 - Backup przez `VACUUM INTO` (WAL-safe snapshot)
 - Prisma ORM zarządza schematem i migracjami
 
-### Modele (56)
+### Modele (47)
 
 - **users** — użytkownicy systemu
 - **user_preferences** — preferencje użytkownika (m.in. motyw)
 - **sessions** — sesje logowania (token-based)
 - **clients_rel** / **client_contacts_rel** — baza klientów + osoby kontaktowe
-- **ProductsRury** / **ProductsRuryDefault** — produkty rury + wzorzec resetu
-- **ProductsStudnie** / **ProductsStudnieDefault** — produkty studnie + wzorzec resetu
 - **offers_rel** — oferty rur
 - **offers_studnie_rel** — oferty studni
 - **orders_rury_rel** — zamówienia rur
@@ -376,12 +374,10 @@ Główne pliki rdzeniowe w `public/js/studnie/` po podziale:
 - **settings** — ustawienia (klucz-wartość)
 - **order_counters** / **order_counters_rury** — liczniki numeracji
 - **production_orders_rel** / **production_order_counters** / **recycled_production_numbers** — produkcja
-- **PrecoKonfig** / **PrecoKonfigDefault** — konfiguracja Preco
-- **PrecoKinety** / **PrecoKinetyDefault** — kinety Preco
-- **PrecoZakresy** / **PrecoZakresyDefault** — zakresy Preco
-- **PricelistVersion** — wersje cenników (draft/approved/published, backdate)
+- **PricelistVersion** — wersje cenników (draft/approved/published, backdate; jedyne źródło cen)
 - **PricelistItemRury** / **PricelistItemStudnie** — pozycje wersji cennika (rury/studnie)
 - **PricelistItemPrecoKonfig** / **PricelistItemPrecoKinety** / **PricelistItemPrecoZakresy** — pozycje wersji cennika Preco
+- **drafts** — synchronizacja szkiców ofert / cennika
 - **ai_telemetry_logs** / **ai_telemetry_events** — telemetria AI (logi + zdarzenia)
 - **ai_config_history** — historia wersji konfiguracji
 - **ai_telemetry_versions** — wersje solvera/reguł/AI
@@ -529,10 +525,10 @@ Oferty_PV/
 │   ├── partials/                    # Partiale HTML (header, rury/*, studnie/*) — partialLoader
 │   └── templates/                   # 5 szablonów: ofertaRury/Studnie, kartaBudowy, zlecenie, etykieta
 │
-├── prisma/                          # Prisma (56 modeli, 36 migracji)
-│   ├── schema.prisma                # Definicja schematu (1161 linii)
-│   ├── seed.ts                      # Seed danych (ProductsRury/Studnie + Preco + AiModel)
-│   └── migrations/                  # 36 migracji: 20260815000000_baseline … 20261023000000_pricelist_one_draft (pełna lista: prisma/migrations/)
+├── prisma/                          # Prisma (47 modeli)
+│   ├── schema.prisma                # Definicja schematu
+│   ├── seed.ts                      # Seed danych początkowych (admin, modele AI, ustawienia)
+│   └── migrations/                  # Migracje schematu (pełna lista: prisma/migrations/)
 │
 ├── data/                            # Baza danych
 │   ├── app_database.sqlite          # Główna baza (SQLite)
@@ -541,13 +537,16 @@ Oferty_PV/
 │   ├── seed_studnie.json            # Seed produktów (studnie)
 │   └── seed_preco.json              # Seed cenników Preco
 │
-├── scripts/                         # Skrypty narzędziowe (76 plików)
+├── scripts/                         # Skrypty narzędziowe
 │   ├── backup.ts                    # Backup bazy (VACUUM INTO, max 1 kopia)
 │   ├── restore-db.js                # Restore z walidacją (header + integrity_check + WAL cleanup)
 │   ├── check-db.js                  # Weryfikacja schematu przy starcie (ensure-db.bat)
 │   ├── check-version.mjs            # Spójność wersji (VERSION ↔ package.json ↔ CHANGELOG ↔ *.bat ↔ HTML ?v= ↔ docs)
 │   ├── check-appname.cjs            # Nazwa aplikacji (pre-push, APP_NAME SSoT)
 │   ├── check-global-collisions.mjs  # Kolizje globali window.*
+│   ├── check-pricelist-health.ts    # Dzienny check "dokładnie 1 aktywna wersja na typ"
+│   ├── prices-verify.ts             # Bramka integralności seeda i wersji ACTIVE
+│   ├── backfill-pricelist-v1.ts     # Awaryjny/ręczny bootstrap v1 APPROVED z seeda
 │   ├── auto-cache-bust.mjs          # Cache-bust ?v= w HTML przy release
 │   ├── auto-docs-version.mjs        # Wersje w README/docs przy release
 │   ├── auto-bat-version.mjs         # Wersje w *.bat przy release
@@ -557,8 +556,7 @@ Oferty_PV/
 │   ├── copy-prisma-client.mjs       # Kopiowanie generated/prisma → dist/generated
 │   ├── encoding-integrity.js        # Kodowanie UTF-8 + mojibake (staged/pre-push/CI)
 │   ├── skill-cli.mjs                # CLI skilli (build-cost, stats, capabilities)
-│   ├── export-settings-to-seed.mjs  # Eksport cenników z tabel DB do data/seed_*.json
-│   ├── cleanup-legacy-settings.cjs  # Usunięcie legacy kluczy cennikowych z settings
+│   ├── export-settings-to-seed.mjs  # Eksport cenników z wersji DB do data/seed_*.json
 │   ├── deploy-core.cjs              # Rdzeń deploy (testowalny, kroki per target)
 │   ├── deploy.mjs / rollback.mjs    # Deploy/rollback produkcji (backup + migracje + smoke check)
 │   ├── post-deploy-check.mjs        # Smoke check /health po deploy

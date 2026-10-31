@@ -807,8 +807,8 @@ model user_preferences {
   @@index([userId], map: "idx_userprefs_user")
 }
 
-// ─── F1: Wersjonowanie cenników (Expand & Contract) ─────────────────────
-// Stare tabele LIVE + *_Default działają do Contract (F1 ich nie rusza).
+// ─── Wersjonowanie cenników ─────────────────────────────────────────────
+// Jedyne źródło cen w systemie (dawne tabele LIVE i *_Default zostały usunięte).
 // seq = źródło prawdy (int per type), version = labelka pochodna ({R|S|P}v{seq}-{RRRRMMDD}).
 // Status zapisany: DRAFT | APPROVED. SCHEDULED/ACTIVE/ARCHIVED są WYLICZANE
 // z effectiveFrom (partial unique poniżej: tylko APPROVED zajmuje oś czasu).

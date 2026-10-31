@@ -188,57 +188,55 @@ Typy dokumentów: `offer`, `offer_studnie`, `order_rury`, `order_studnie`.
 
 ---
 
-## Cennik: LIVE tylko do odczytu (etap 1)
+## Cennik i wersjonowanie (architektura bez tabel LIVE)
 
-Tabele LIVE (`ProductsRury`, `ProductsStudnie`, `Preco*`) są zamrożonym
-snapshotem i **nie przyjmują zapisów z aplikacji**:
+Jedyne źródło prawdy o cenach w systemie to wersje (`PricelistVersion` + `PricelistItem*`).
+Dawne tabele LIVE (`ProductsRury`, `ProductsStudnie`, `Preco*`) oraz tabele `*_Default` zostały trwale usunięte.
 
 - `PUT /api/products`, `PUT /api/products-studnie`, `PUT /api/preco-pricing` —
-  zapis zawsze do wersji (szkic; `X-Pricelist-Version-Id` = jawna edycja wersji).
-- `PATCH`/`DELETE` tych ścieżek — `409 LIVE_READ_ONLY` (edycja tylko przez wersje).
+  zapis zawsze do wersji (szkic DRAFT; `X-Pricelist-Version-Id` = jawna edycja wersji).
+- Ścieżki `PATCH /:id` i `DELETE /:id` nie istnieją (404; cała edycja pozycji odbywa się przez wersje).
 - `?source=active` (ekrany ofert) czyta **wyłącznie** wersję ACTIVE. Brak ACTIVE
-  → `409 NO_ACTIVE_VERSION`; nie ma już cichego spadku do LIVE.
+  → `409 NO_ACTIVE_VERSION` (brak cen do oferty).
 - Zapis nowej oferty bez ACTIVE → `409 NO_ACTIVE_VERSION`; błąd odczytu cennika
-  → `503 PRICELIST_UNAVAILABLE` (nie udajemy braku wersji).
+  → `503 PRICELIST_UNAVAILABLE`.
 - W eksportach `?source=default` to cennik fabryczny z `data/seed_*.json`;
-  `?source=live` nie istnieje (`422 INVALID_SOURCE`) — tabela LIVE usunięta.
-- Brak jakiejkolwiek wersji: widok edytora startuje z cennika fabrycznego
-  (`data/seed_*.json`); pierwszy zapis tworzy szkic.
+  `?source=live` nie istnieje (`422 INVALID_SOURCE`).
+- Brak jakiejkolwiek wersji w bazie: widok edytora startuje z cennika fabrycznego
+  (`data/seed_*.json`); pierwszy zapis tworzy szkic DRAFT.
 
 Cennik nie ma już snapshotu `data/price_defaults.json` ani tabel `*_Default`.
-Jedyne źródło cen to wersje (`PricelistVersion` + `PricelistItem*`). Wersję bazową
-tworzy bootstrap startu. `npm run prices:verify` sprawdza spójność seeda i ACTIVE
-(brak ACTIVE = SKIP; `--strict` = błąd).
+Wersję bazową na świeżej instalacji tworzy bootstrap (`ensureBaselineVersionsAtStartup` / `scripts/backfill-pricelist-v1.ts`).
+`npm run prices:verify` sprawdza spójność seeda i ACTIVE (brak ACTIVE = SKIP; `--strict` = błąd).
+`npm run pricelist:health` sprawdza regułę „dokładnie 1 aktywna wersja na typ".
 
 ---
 
 ## Produkty — Rury (`/api/products`)
 
-| Metoda | Ścieżka                     | Auth  | Opis                                   |
-| ------ | --------------------------- | ----- | -------------------------------------- |
-| GET    | `/api/products`             | auth  | Lista wszystkich produktów (rur)       |
-| PUT    | `/api/products`             | admin | Zapis cennika do szkicu (nie do LIVE)  |
-| PATCH  | `/api/products/:id`         | admin | Wyłączone: `409 LIVE_READ_ONLY`        |
-| DELETE | `/api/products/:id`         | admin | Wyłączone: `409 LIVE_READ_ONLY`        |
-| GET    | `/api/products/export.xlsx` | auth  | Eksport XLSX (`?source=live\|default`) |
-| GET    | `/api/products/default`     | auth  | Domyślny cennik rur                    |
+| Metoda | Ścieżka                       | Auth  | Opis                                             |
+| ------ | ----------------------------- | ----- | ------------------------------------------------ |
+| GET    | `/api/products`               | auth  | Cennik edytora (DRAFT → ACTIVE → seed)           |
+| GET    | `/api/products?source=active` | auth  | Obowiązujący cennik ACTIVE dla kalkulatora ofert |
+| PUT    | `/api/products`               | admin | Zapis cennika do szkicu lub wersji               |
+| GET    | `/api/products/export.xlsx`   | auth  | Eksport XLSX (`?source=active\|draft\|default`)  |
+| GET    | `/api/products/default`       | auth  | Domyślny cennik fabryczny rur                    |
 
-Produkty są ładowane przez `prisma/seed.ts` z pliku `data/seed_rury.json`. Seed nie jest uruchamiany automatycznie przy starcie serwera — wykonuje go `scripts/ensure-db.bat` → `scripts/check-db.js` → `prisma/seed.ts` (ręcznie: `npm run prisma:seed`).
+Cennik fabryczny jest serwowany z pliku `data/seed_rury.json`.
 
 ---
 
 ## Produkty — Studnie (`/api/products-studnie`)
 
-| Metoda | Ścieżka                             | Auth  | Opis                                           |
-| ------ | ----------------------------------- | ----- | ---------------------------------------------- |
-| GET    | `/api/products-studnie`             | auth  | Lista wszystkich produktów (studni)            |
-| PUT    | `/api/products-studnie`             | admin | Zapis cennika do szkicu (nie do LIVE)          |
-| PATCH  | `/api/products-studnie/:id`         | admin | Wyłączone: `409 LIVE_READ_ONLY`                |
-| DELETE | `/api/products-studnie/:id`         | admin | Wyłączone: `409 LIVE_READ_ONLY`                |
-| GET    | `/api/products-studnie/export.xlsx` | auth  | Eksport XLSX + PRECO (`?source=live\|default`) |
-| GET    | `/api/products-studnie/default`     | auth  | Domyślny cennik studni                         |
+| Metoda | Ścieżka                               | Auth  | Opis                                                    |
+| ------ | ------------------------------------- | ----- | ------------------------------------------------------- |
+| GET    | `/api/products-studnie`               | auth  | Cennik edytora (DRAFT → ACTIVE → seed)                  |
+| GET    | `/api/products-studnie?source=active` | auth  | Obowiązujący cennik ACTIVE dla kalkulatora ofert        |
+| PUT    | `/api/products-studnie`               | admin | Zapis cennika do szkicu lub wersji                      |
+| GET    | `/api/products-studnie/export.xlsx`   | auth  | Eksport XLSX + PRECO (`?source=active\|draft\|default`) |
+| GET    | `/api/products-studnie/default`       | auth  | Domyślny cennik fabryczny studni                        |
 
-Produkty są ładowane przez `prisma/seed.ts` z pliku `data/seed_studnie.json` (nie automatycznie przy starcie serwera).
+Cennik fabryczny jest serwowany z pliku `data/seed_studnie.json`.
 
 ---
 
@@ -420,13 +418,13 @@ Wymaga autoryzacji (bez wymogu administratora).
 
 ## Preco Pricing (`/api/preco-pricing`)
 
-| Metoda | Ścieżka                          | Auth  | Opis                                                                |
-| ------ | -------------------------------- | ----- | ------------------------------------------------------------------- |
-| GET    | `/api/preco-pricing`             | auth  | Pobranie cennika Preco                                              |
-| PUT    | `/api/preco-pricing`             | admin | Pełny zapis struktury PRECO (niepoprawne liczby → 400, brak zapisu) |
-| PATCH  | `/api/preco-pricing`             | admin | Częściowa aktualizacja (scalenie z live, ta sama walidacja)         |
-| GET    | `/api/preco-pricing/default`     | auth  | Pobranie domyślnego cennika Preco                                   |
-| GET    | `/api/preco-pricing/export.xlsx` | auth  | Eksport XLSX (`?source=live\|default`)                              |
+| Metoda | Ścieżka                            | Auth  | Opis                                             |
+| ------ | ---------------------------------- | ----- | ------------------------------------------------ |
+| GET    | `/api/preco-pricing`               | auth  | Cennik edytora Preco (DRAFT → ACTIVE → seed)     |
+| GET    | `/api/preco-pricing?source=active` | auth  | Obowiązujący cennik ACTIVE dla kalkulatora ofert |
+| PUT    | `/api/preco-pricing`               | admin | Zapis struktury PRECO do szkicu lub wersji       |
+| GET    | `/api/preco-pricing/default`       | auth  | Domyślny cennik fabryczny Preco                  |
+| GET    | `/api/preco-pricing/export.xlsx`   | auth  | Eksport XLSX (`?source=active\|draft\|default`)  |
 
 Walidacja zakresów PRECO (`spadekKineta`, `spadekMufa`, `uniesienie`, `redukcja`): `max`
 musi być `> 0` i `>= min`. Zakres `max < min` nigdy się nie dopasowuje w kalkulacji
