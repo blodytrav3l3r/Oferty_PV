@@ -27,18 +27,13 @@ function vacuumInto(src: string, dest: string) {
     db.close();
 }
 
-function insertWell(db: DatabaseSync) {
-    db.prepare('INSERT INTO ProductsRury (id, name, category, price) VALUES (?, ?, ?, ?)').run(
-        'r_1',
-        'Rura',
-        'Rury Betonowe',
-        99.0
-    );
+function insertRow(db: DatabaseSync) {
+    db.prepare('INSERT INTO clients_rel (id, name) VALUES (?, ?)').run('r_1', 'Klient');
 }
 
-function countRury(dbPath: string): number {
+function countRows(dbPath: string): number {
     const db = new DatabaseSync(dbPath, { readOnly: true });
-    const r = db.prepare('SELECT count(*) AS n FROM ProductsRury').get();
+    const r = db.prepare('SELECT count(*) AS n FROM clients_rel').get();
     db.close();
     return (r as { n: number }).n;
 }
@@ -49,21 +44,21 @@ describe('A4.6 rollback (pre/post baseline)', () => {
         try {
             project.runPrisma(['db', 'push', '--skip-generate']);
             let db = new DatabaseSync(project.dbPath);
-            insertWell(db);
+            insertRow(db);
             db.close();
-            expect(countRury(project.dbPath)).toBe(1);
+            expect(countRows(project.dbPath)).toBe(1);
 
             const backupPath = path.join(project.dir, 'legacy_backup.sqlite');
             vacuumInto(project.dbPath, backupPath);
 
             db = new DatabaseSync(project.dbPath);
-            db.prepare('DELETE FROM ProductsRury').run();
+            db.prepare('DELETE FROM clients_rel').run();
             db.close();
-            expect(countRury(project.dbPath)).toBe(0);
+            expect(countRows(project.dbPath)).toBe(0);
 
             // restore legacy przez kopie pliku (schemat juz w bazie)
             fs.copyFileSync(backupPath, project.dbPath);
-            expect(countRury(project.dbPath)).toBe(1);
+            expect(countRows(project.dbPath)).toBe(1);
 
             // straznik: restore-db.js --yes na legacy backupie -> kontrolowany blad
             const r = spawnSync(process.execPath, [SCRIPT, backupPath, '--yes'], {
@@ -90,17 +85,17 @@ describe('A4.6 rollback (pre/post baseline)', () => {
         try {
             project.runPrisma(['migrate', 'deploy']);
             let db = new DatabaseSync(project.dbPath);
-            insertWell(db);
+            insertRow(db);
             db.close();
-            expect(countRury(project.dbPath)).toBe(1);
+            expect(countRows(project.dbPath)).toBe(1);
 
             const backupPath = path.join(project.dir, 'managed_backup.sqlite');
             vacuumInto(project.dbPath, backupPath);
 
             db = new DatabaseSync(project.dbPath);
-            db.prepare('DELETE FROM ProductsRury').run();
+            db.prepare('DELETE FROM clients_rel').run();
             db.close();
-            expect(countRury(project.dbPath)).toBe(0);
+            expect(countRows(project.dbPath)).toBe(0);
 
             const out = execFileSync(process.execPath, [SCRIPT, backupPath, '--yes'], {
                 cwd: ROOT,
@@ -113,7 +108,7 @@ describe('A4.6 rollback (pre/post baseline)', () => {
                 stdio: ['ignore', 'pipe', 'pipe']
             });
             expect(out).toContain('[OK] Schemat zsynchronizowany');
-            expect(countRury(project.dbPath)).toBe(1);
+            expect(countRows(project.dbPath)).toBe(1);
 
             const db2 = new DatabaseSync(project.dbPath, { readOnly: true });
             const mig = db2
@@ -189,14 +184,14 @@ describe('A4.6 rollback (pre/post baseline)', () => {
         try {
             project.runPrisma(['migrate', 'deploy']);
             let db = new DatabaseSync(project.dbPath);
-            insertWell(db);
+            insertRow(db);
             db.close();
 
             const backupPath = path.join(project.dir, 'wal_backup.sqlite');
             vacuumInto(project.dbPath, backupPath);
 
             db = new DatabaseSync(project.dbPath);
-            db.prepare('DELETE FROM ProductsRury').run();
+            db.prepare('DELETE FROM clients_rel').run();
             db.close();
 
             /* Stwórz boczne pliki -wal/-shm (symulacja starej sesji) */
@@ -216,7 +211,7 @@ describe('A4.6 rollback (pre/post baseline)', () => {
 
             expect(fs.existsSync(project.dbPath + '-wal')).toBe(false);
             expect(fs.existsSync(project.dbPath + '-shm')).toBe(false);
-            expect(countRury(project.dbPath)).toBe(1);
+            expect(countRows(project.dbPath)).toBe(1);
         } finally {
             project.cleanup();
         }

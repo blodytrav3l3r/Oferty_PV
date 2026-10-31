@@ -96,10 +96,6 @@
             if (typeof window.activatePreviewPanel === 'function') {
                 window.activatePreviewPanel();
             }
-        } else if (name === '$parentSaveAllDefaults') {
-            if (window.parent && typeof window.parent.saveAllDefaults === 'function') {
-                window.parent.saveAllDefaults();
-            }
         } else if (name === '$hashLink') {
             window.location.hash = args[0];
         } else if (name === '$resetColumnsAndClose') {

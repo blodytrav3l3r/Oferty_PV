@@ -7,6 +7,7 @@
 
 import request from 'supertest';
 import express from 'express';
+import { getSeedRury } from '../src/services/pricelist/seedData';
 
 jest.mock('../src/middleware/auth', () => ({
     requireAuth: (req: any, _res: any, next: any) => {
@@ -407,10 +408,10 @@ describe('Paczka 1: source=active czyta z APPROVED', () => {
             expect(res.body.code).toBe('NO_ACTIVE_VERSION');
             expect(res.headers['x-pricelist-fallback']).toBeUndefined();
         }
-        // Widok edytora (bez source) dalej czyta LIVE — to nie jest cena oferty.
+        // Widok edytora (bez source) startuje z cennika fabrycznego (seed).
         const plain = await request(app).get('/api/products');
         expect(plain.status).toBe(200);
-        expect(plain.body.data[0].price).toBe(100);
+        expect(plain.body.data).toEqual(getSeedRury());
     });
 
     test.each([

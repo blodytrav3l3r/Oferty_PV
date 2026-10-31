@@ -34,7 +34,6 @@ import { csrfProtection } from './middleware/csrf';
 import { logger } from './utils/logger';
 import { cleanupAuditLogs } from './services/auditService';
 import { modelRegistry } from './services/ml/ModelRegistry';
-import { priceOverrideService } from './services/priceOverrideService';
 import { ensureBaselineVersionsAtStartup } from './services/pricelist/bootstrap';
 import { requestLogger } from './middleware/requestLogger';
 import { getVersion } from './version';
@@ -438,22 +437,7 @@ export async function initApp(): Promise<void> {
         );
     }
 
-    // Przywróć domyślne cenniki z price_defaults.json — tylko jawnym flagiem.
-    // Etap 1: LIVE jest zamrożone; cichy restore przy każdym starcie nadpisywałby
-    // je snapshotem (rozjazd ACTIVE vs LIVE bez śladu w audycie).
-    if (process.env.PRICELIST_RESTORE_ON_START === '1') {
-        try {
-            await priceOverrideService.restoreDefaultsFromJson();
-        } catch (err) {
-            logger.warn(
-                'Server',
-                'Nie udało się przywrócić domyślnych cenników z JSON:',
-                err instanceof Error ? err.message : String(err)
-            );
-        }
-    }
-
-    // Świeża instalacja / stara baza: LIVE bez żadnej wersji → oferty spadałyby
+    // Świeża instalacja / stara baza: brak wersji cennika → oferty spadałyby
     // na LIVE z toastem. Bootstrap tworzy v1 APPROVED per oś (idempotentnie).
     await ensureBaselineVersionsAtStartup();
 

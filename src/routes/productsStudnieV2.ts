@@ -6,7 +6,6 @@ import { PRICELIST_WRITE_LIMITER } from '../middleware/rateLimiters';
 import { pricelistDataSchema } from '../validators/offerSchemas';
 import { requireFinitePrice, InvalidPriceError } from '../validators/finiteNumbers';
 import { pricelistLock } from '../middleware/writeLock';
-import prisma from '../prismaClient';
 import { buildXlsx } from '../utils/minimalXlsx';
 import {
     PricelistVersionError,
@@ -22,7 +21,7 @@ import {
     resolveActivePricing
 } from '../services/pricelistVersionService';
 import { versionExportFilename } from '../utils/exportFilenames';
-import { getPrecoDefault } from '../services/precoPricing';
+import { getSeedPrecoNested, getSeedStudnie } from '../services/pricelist/seedData';
 import {
     findLatestDraft,
     getEditorPricing,
@@ -198,7 +197,7 @@ function toLegacy(p: StudnieProductRaw): StudnieProductLegacy {
 }
 
 // ──────────────────────────────────────────
-// GET / — wszystkie produkty z ProductsStudnie
+// GET / — cennik dla edytora: DRAFT → ACTIVE → seed (brak wersji = fabryka)
 // ──────────────────────────────────────────
 router.get('/', requireAuth, async (req, res) => {
     try {
@@ -206,10 +205,13 @@ router.get('/', requireAuth, async (req, res) => {
         const source = requirePricingSource(req.query.source);
         if (!source) {
             const editor = await getEditorPricing('studnie');
-            if (!editor.fallback) {
-                res.json({ data: editor.data });
-                return;
-            }
+            // Brak wersji: edytor startuje z cennika fabrycznego (seed).
+            res.json({
+                data: editor.fallback
+                    ? (getSeedStudnie() as unknown as StudnieProductRaw[]).map(toLegacy)
+                    : editor.data
+            });
+            return;
         }
         if (source === 'active') {
             const active = await resolveActivePricing('studnie');
@@ -222,12 +224,7 @@ router.get('/', requireAuth, async (req, res) => {
                 return;
             }
             res.json({ data: active.data });
-            return;
         }
-        const products = await prisma.productsStudnie.findMany({
-            orderBy: [{ category: 'asc' }, { componentType: 'asc' }, { id: 'asc' }]
-        });
-        res.json({ data: products.map(toLegacy) });
     } catch (err: unknown) {
         if (err instanceof PricelistVersionError) {
             res.status(err.statusCode).json({ error: err.message, code: err.code });
@@ -332,9 +329,7 @@ router.delete('/:id', requireAuth, requireAdmin, writeLimiter, (_req, res) => {
 // wiersze w shape GET (legacy 1/0, dn liczbowe), shape 1:1 z eksportem FE
 router.get('/export.xlsx', requireAuth, async (req, res) => {
     try {
-        const requested = requireExportSource(req.query.source);
-        // Etap 1: eksport "live" = bieżący szkic (jak dotąd w trybie draft).
-        const source = requested === 'live' ? 'draft' : requested;
+        const source = requireExportSource(req.query.source);
         if (source === 'draft') {
             const draft = await findLatestDraft('studnie');
             if (!draft) {
@@ -379,12 +374,9 @@ router.get('/export.xlsx', requireAuth, async (req, res) => {
             res.send(xlsx);
             return;
         }
-        // Etap 1: `?source=live` aliasuje do szkicu, więc tu zostaje tylko
-        // `default` — eksport tabel LIVE nie jest już dostępny.
-        const rows = await prisma.productsStudnieDefault.findMany({
-            orderBy: [{ category: 'asc' }, { componentType: 'asc' }, { id: 'asc' }]
-        });
-        const legacy = (rows as unknown as StudnieProductRaw[]).map(toLegacy);
+        // Etap 2: `default` = fabryczny seed (tabele domyslne już nie istnieją).
+        const rows = getSeedStudnie() as unknown as StudnieProductRaw[];
+        const legacy = rows.map(toLegacy);
         const live = projectVersionToLiveShape('studnie', {
             studnie: legacy as unknown as Array<Record<string, unknown>>
         });
@@ -394,9 +386,10 @@ router.get('/export.xlsx', requireAuth, async (req, res) => {
         const includePreco = String(req.query.includePreco ?? '0') !== '0';
         let merged = live;
         if (includePreco) {
-            const precoResult = await getPrecoDefault();
-            const precoEntry = (precoResult.data[0] ?? {}) as Record<string, unknown>;
-            merged = { ...live, ...projectPrecoNestedToSheets(precoEntry) };
+            merged = {
+                ...live,
+                ...projectPrecoNestedToSheets(getSeedPrecoNested() as Record<string, unknown>)
+            };
         }
         const label = await currentPricelistLabel('studnie');
         const xlsx = await buildXlsx([
@@ -424,13 +417,11 @@ router.get('/export.xlsx', requireAuth, async (req, res) => {
 });
 
 // ──────────────────────────────────────────
-// GET /default — domyślne produkty z ProductsStudnieDefault
+// GET /default — fabryczny cennik studni z data/seed_studnie.json
 // ──────────────────────────────────────────
 router.get('/default', requireAuth, async (_req, res) => {
     try {
-        const products = await prisma.productsStudnieDefault.findMany({
-            orderBy: [{ category: 'asc' }, { componentType: 'asc' }, { id: 'asc' }]
-        });
+        const products = getSeedStudnie() as unknown as StudnieProductRaw[];
         res.json({ data: products.map(toLegacy) });
     } catch (err: unknown) {
         const message = err instanceof Error ? err.message : 'Unknown error';

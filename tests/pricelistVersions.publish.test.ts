@@ -375,9 +375,9 @@ describe('diff z top zmian cen', () => {
 });
 
 describe('source=active + osobny klucz timestampu', () => {
-    test("requireExportSource akceptuje 'active'", () => {
+    test("requireExportSource akceptuje 'active', odrzuca 'live'", () => {
         expect(requireExportSource('active')).toBe('active');
-        expect(requireExportSource('live')).toBe('live');
+        expect(() => requireExportSource('live')).toThrow();
     });
 
     test('activate bumpuje oba klucze', async () => {

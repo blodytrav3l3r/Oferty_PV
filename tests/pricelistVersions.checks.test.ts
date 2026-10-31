@@ -1,5 +1,5 @@
 /**
- * S1b: GET /:id/checks — kontrakt read-only (użycie, kolizja, LIVE, bieżąca).
+ * S1b: GET /:id/checks — kontrakt read-only (użycie, kolizja, bieżąca wersja).
  * Serwis testowany bez HTTP; zależności DB/eksportu zmockowane.
  */
 
@@ -18,14 +18,6 @@ jest.mock('../src/services/pricelist/usage', () => ({
     resolveActive: jest.fn()
 }));
 
-jest.mock('../src/services/priceOverrideService', () => {
-    const actual = jest.requireActual('../src/services/priceOverrideService');
-    return {
-        ...actual,
-        priceOverrideService: { buildPricePackage: jest.fn() }
-    };
-});
-
 import prisma from '../src/prismaClient';
 import { getVersionExport } from '../src/services/pricelist/export';
 import {
@@ -33,7 +25,6 @@ import {
     getPrecoReferences,
     resolveActive
 } from '../src/services/pricelist/usage';
-import { priceOverrideService } from '../src/services/priceOverrideService';
 import { getVersionChecks } from '../src/services/pricelist/checks';
 
 const findMany = prisma.pricelistVersion.findMany as jest.Mock;
@@ -41,7 +32,6 @@ const getVersionExportMock = getVersionExport as jest.Mock;
 const countUsageMock = countVersionUsage as jest.Mock;
 const precoRefsMock = getPrecoReferences as jest.Mock;
 const resolveActiveMock = resolveActive as jest.Mock;
-const buildPackageMock = priceOverrideService.buildPricePackage as jest.Mock;
 
 function version(overrides: Record<string, unknown> = {}) {
     return {
@@ -55,22 +45,13 @@ function version(overrides: Record<string, unknown> = {}) {
     };
 }
 
-function packageData() {
-    return {
-        rury: [{ id: 'a', price: 10 }],
-        studnie: [],
-        preco: { konfig: [], kinety: [], zakresy: [] }
-    };
-}
-
 beforeEach(() => {
     jest.clearAllMocks();
     findMany.mockResolvedValue([]);
-    buildPackageMock.mockResolvedValue(packageData());
 });
 
 describe('getVersionChecks', () => {
-    test('brak aktywnej: NO_CURRENT, usage ofert, kolizja i diff LIVE', async () => {
+    test('brak aktywnej: NO_CURRENT, usage ofert i kolizja', async () => {
         getVersionExportMock.mockResolvedValue({
             version: version(),
             sections: { rury: [{ id: 'a', price: 12 }] }
@@ -85,12 +66,6 @@ describe('getVersionChecks', () => {
         expect(checks.usage).toEqual({ offers: 2, orders: 1, total: 3, kind: 'offers' });
         expect(checks.collision.hasCollision).toBe(true);
         expect(checks.collision.versions).toHaveLength(1);
-        expect(checks.liveDiff).toEqual({
-            section: 'rury',
-            added: 0,
-            removed: 0,
-            changed: 1
-        });
         expect(checks.baseVersion.status).toBe('UNVERIFIABLE');
         expect(checks.comparisonToCurrentApproved.status).toBe('NO_CURRENT');
     });
@@ -119,11 +94,6 @@ describe('getVersionChecks', () => {
         });
         precoRefsMock.mockResolvedValue(new Map([['v1', { count: 4, labels: ['v1'] }]]));
         resolveActiveMock.mockResolvedValue(null);
-        buildPackageMock.mockResolvedValue({
-            rury: [],
-            studnie: [],
-            preco: { konfig: [{ id: 'k1', cena: 1 }], kinety: [], zakresy: [] }
-        });
 
         const checks = await getVersionChecks('v1');
 
@@ -133,12 +103,6 @@ describe('getVersionChecks', () => {
             orders: 0,
             total: 4,
             kind: 'studnieVersions'
-        });
-        expect(checks.liveDiff).toEqual({
-            section: 'preco',
-            added: 0,
-            removed: 0,
-            changed: 0
         });
     });
 });

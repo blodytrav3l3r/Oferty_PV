@@ -5,6 +5,7 @@
 import express from 'express';
 import request from 'supertest';
 import productsRouter from '../src/routes/productsV2';
+import { getSeedRury } from '../src/services/pricelist/seedData';
 
 jest.mock('../src/middleware/auth', () => ({
     requireAuth: (req: any, _res: any, next: any) => {
@@ -75,11 +76,11 @@ describe('productsV2', () => {
         expect(findMany).not.toHaveBeenCalled();
     });
 
-    it('GET / bez wersji -> LIVE (bez nagłówka fallbacku przy braku source)', async () => {
+    it('GET / bez wersji → cennik fabryczny z seeda', async () => {
         getEditorPricing.mockResolvedValue({ data: null, fallback: true });
         const res = await request(app()).get('/');
         expect(res.status).toBe(200);
-        expect(res.body).toEqual({ data: [{ id: 'r1', price: 10 }] });
+        expect(res.body).toEqual({ data: getSeedRury() });
         expect(res.headers['x-pricelist-write-target']).toBe('draft');
     });
 

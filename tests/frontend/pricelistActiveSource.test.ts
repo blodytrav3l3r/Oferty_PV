@@ -79,7 +79,7 @@ describe('P1 rury: loadProducts (dataService.js)', () => {
         });
         await run(RURY_CODE, sandbox, 'loadProducts()');
         expect(urls).toEqual(['/api/products']);
-        expect(sandbox.window.__ruryPricingSource).toBe('live');
+        expect(sandbox.window.__ruryPricingSource).toBe('draft');
     });
 
     it('409 NO_ACTIVE_VERSION → błąd blokujący RAZ (bez cichego LIVE)', async () => {

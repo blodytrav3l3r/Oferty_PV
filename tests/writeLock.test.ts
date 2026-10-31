@@ -124,12 +124,7 @@ describe('runWithLock (helper DRY)', () => {
     });
 
     it('wszystkie trasy cenników używają wspólnego pricelistLock', () => {
-        const routes = [
-            'productsV2.ts',
-            'productsStudnieV2.ts',
-            'precoPricingV2.ts',
-            'priceOverrides.ts'
-        ];
+        const routes = ['productsV2.ts', 'productsStudnieV2.ts', 'precoPricingV2.ts'];
         for (const file of routes) {
             const src = fs.readFileSync(path.join(__dirname, '..', 'src', 'routes', file), 'utf8');
             expect(src).toMatch(/import \{ pricelistLock \} from '\.\.\/middleware\/writeLock'/);

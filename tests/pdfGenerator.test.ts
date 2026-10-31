@@ -28,6 +28,7 @@ jest.mock('puppeteer', () => ({
 }));
 
 import { buildContactSectionHTML } from '../src/services/pdf/offerUsers';
+import { getRuryCategoryMap } from '../src/services/pricelist/catalog';
 
 // Mock logger
 jest.mock('../src/utils/logger', () => ({
@@ -48,9 +49,13 @@ jest.mock('../src/prismaClient', () => ({
         clients_rel: { findUnique: jest.fn() },
         offers_studnie_rel: { findUnique: jest.fn() },
         orders_studnie_rel: { findUnique: jest.fn() },
-        users: { findUnique: jest.fn() },
-        productsRury: { findMany: jest.fn() }
+        users: { findUnique: jest.fn() }
     }
+}));
+
+// Etap 2: kategoria rury z ACTIVE (fallback seed), nie z tabeli LIVE.
+jest.mock('../src/services/pricelist/catalog', () => ({
+    getRuryCategoryMap: jest.fn().mockResolvedValue(new Map())
 }));
 
 describe('pdfGenerator Service', () => {
@@ -88,9 +93,9 @@ describe('pdfGenerator Service', () => {
             (prisma.offers_rel.findUnique as jest.Mock).mockResolvedValue(mockOffer);
             (prisma.clients_rel.findUnique as jest.Mock).mockResolvedValue(mockClient);
             (prisma.offer_items_rel.findMany as jest.Mock).mockResolvedValue(mockItems);
-            (prisma.productsRury.findMany as jest.Mock).mockResolvedValue([
-                { id: 'p-1', category: 'Rury Betonowe' }
-            ]);
+            (getRuryCategoryMap as jest.Mock).mockResolvedValue(
+                new Map([['p-1', 'Rury Betonowe']])
+            );
 
             const result = await pdfGen.generateOfferRuryPDF('o-1');
             expect(result).toBeInstanceOf(Buffer);

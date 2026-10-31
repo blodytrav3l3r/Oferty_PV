@@ -1,5 +1,6 @@
 import prisma from '../../prismaClient';
 import { logger } from '../../utils/logger';
+import { getRuryCategoryMap } from '../pricelist/catalog';
 import { canReadWithShare } from '../../utils/ownership';
 import type { User } from '../../helpers';
 import { mapWellsToItems } from './helpers';
@@ -41,11 +42,7 @@ async function enrichRuryItemsWithCategories(items: unknown[]): Promise<unknown[
     const productIds = missingCategories.map((it) =>
         String((it as { productId?: string }).productId)
     );
-    const products = await prisma.productsRury.findMany({
-        where: { id: { in: productIds } },
-        select: { id: true, category: true }
-    });
-    const categoryById = new Map(products.map((p) => [p.id, p.category]));
+    const categoryById = await getRuryCategoryMap(productIds);
 
     return items.map((it) => {
         const item = it as Record<string, unknown>;

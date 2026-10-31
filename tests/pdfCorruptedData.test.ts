@@ -47,9 +47,13 @@ jest.mock('../src/prismaClient', () => ({
         offers_studnie_rel: { findUnique: jest.fn() },
         orders_rury_rel: { findUnique: jest.fn() },
         orders_studnie_rel: { findUnique: jest.fn() },
-        users: { findUnique: jest.fn() },
-        productsRury: { findMany: jest.fn() }
+        users: { findUnique: jest.fn() }
     }
+}));
+
+// Etap 2: kategoria rury z ACTIVE/seed, nie z tabeli LIVE.
+jest.mock('../src/services/pricelist/catalog', () => ({
+    getRuryCategoryMap: jest.fn(async () => new Map())
 }));
 
 const TEMPLATE =
@@ -69,7 +73,6 @@ describe('D-014: corrupt blob → oznaczony dokument, valid → bez zmian', () =
         });
         (prisma.clients_rel.findUnique as jest.Mock).mockResolvedValue(null);
         (prisma.users.findUnique as jest.Mock).mockResolvedValue(null);
-        (prisma.productsRury.findMany as jest.Mock).mockResolvedValue([]);
         (prisma.offer_items_rel.findMany as jest.Mock).mockResolvedValue([]);
     });
 

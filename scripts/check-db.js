@@ -30,11 +30,13 @@ const REQUIRED_TABLES = [
 ];
 
 const PRODUCT_TABLES = [
-    'ProductsRury',
-    'ProductsStudnie',
-    'PrecoKonfig',
-    'PrecoKinety',
-    'PrecoZakresy'
+    'PricelistVersion',
+    'PricelistItemRury',
+    'PricelistItemStudnie',
+    'PricelistItemPrecoKonfig',
+    'PricelistItemPrecoKinety',
+    'PricelistItemPrecoZakresy',
+    'AiModel'
 ];
 
 // Indeksy wymagane do sprawnej deduplikacji telemetrii AI (dedup AUTO_JS).
@@ -45,12 +47,10 @@ const REQUIRED_INDEXES = [
     { index: 'idx_logs_source_well', table: 'ai_telemetry_logs' }
 ];
 
-// Tabele ktore musza zawierac dane po udanym seedzie
-const PRODUCT_DATA_CHECKS = [
-    { table: 'ProductsRury', minRows: 1 },
-    { table: 'ProductsStudnie', minRows: 1 },
-    { table: 'PrecoKonfig', minRows: 1 }
-];
+// Tabele, ktore musza zawierac dane po udanym seedzie.
+// Etap 2: cennik nie jest seedowany (wersje bazowe tworzy bootstrap startu),
+// zostaje startowy model ML, zeby predykcje mialy czym odpowiedziec.
+const PRODUCT_DATA_CHECKS = [{ table: 'AiModel', minRows: 1 }];
 
 if (!fs.existsSync(DB_PATH)) {
     console.error('[check-db] Brak pliku bazy: ' + DB_PATH);
@@ -181,44 +181,10 @@ if (result.missingIndexes && result.missingIndexes.length > 0) {
 }
 
 if (result.emptyProduct.length > 0) {
-    console.error('[check-db] PUSTE TABELE PRODUKTOW: ' + result.emptyProduct.join(', '));
+    console.error('[check-db] BRAK DANYCH STARTOWYCH: ' + result.emptyProduct.join(', '));
     console.error('[check-db] Wymagany seed — uruchom npx ts-node prisma/seed.ts');
     process.exit(2);
 }
 
-// Warn-only: brak wersji ACTIVE → oferty liczą z LIVE (toast). Naprawia
-// auto-ensure przy starcie albo ręcznie: npx ts-node scripts/backfill-pricelist-v1.ts
-try {
-    const sqlite = require('node:sqlite');
-    const db2 = new sqlite.DatabaseSync(DB_PATH, { readOnly: true });
-    try {
-        const hasPv = db2
-            .prepare(
-                "SELECT name FROM sqlite_master WHERE type='table' AND name='PricelistVersion'"
-            )
-            .get();
-        if (hasPv) {
-            const missing = [];
-            for (const t of ['rury', 'studnie', 'preco']) {
-                const row = db2
-                    .prepare('SELECT COUNT(*) as cnt FROM "PricelistVersion" WHERE type=?')
-                    .get(t);
-                if (!row || row.cnt === 0) missing.push(t);
-            }
-            if (missing.length > 0) {
-                console.warn(
-                    '[check-db] BRAK WERSJI CENNIKA (' +
-                        missing.join(', ') +
-                        ') — oferta liczy z LIVE. Start serwera utworzy v1 automatycznie.'
-                );
-            }
-        }
-    } finally {
-        db2.close();
-    }
-} catch (_e) {
-    /* cisza — brak node:sqlite to nie błąd wersji */
-}
-
-console.log('[check-db] OK — wszystkie tabele, dane produktow i indeksy obecne.');
+console.log('[check-db] OK — wszystkie tabele i indeksy obecne (wersje cennika: bootstrap).');
 process.exit(0);

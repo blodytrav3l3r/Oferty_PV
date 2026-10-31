@@ -126,9 +126,10 @@ describe('P0-F kill/recovery', () => {
         try {
             project.runPrisma(['migrate', 'deploy']);
             const db = new DatabaseSync(project.dbPath);
-            db.prepare(
-                'INSERT INTO ProductsRury (id, name, category, price) VALUES (?, ?, ?, ?)'
-            ).run('r_old', 'Rura stara', 'Rury Betonowe', 11.0);
+            db.prepare('INSERT INTO clients_rel (id, name) VALUES (?, ?)').run(
+                'r_old',
+                'Klient stary'
+            );
             db.close();
 
             const backupPath = path.join(project.dir, 'old_backup.sqlite');
@@ -159,7 +160,7 @@ describe('P0-F kill/recovery', () => {
             expect(out).toContain('[OK] Schemat zsynchronizowany');
             const check = new DatabaseSync(project.dbPath, { readOnly: true });
             const n = (
-                check.prepare('SELECT COUNT(*) AS n FROM ProductsRury').get() as { n: number }
+                check.prepare('SELECT COUNT(*) AS n FROM clients_rel').get() as { n: number }
             ).n;
             check.close();
             expect(n).toBe(1);

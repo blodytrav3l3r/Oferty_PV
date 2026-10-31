@@ -53,8 +53,6 @@
         "export:seed": "node scripts/export-settings-to-seed.mjs",
         "cleanup:legacy-pricing": "node scripts/cleanup-legacy-settings.cjs",
         "fix:relief-heights": "node scripts/fix-relief-heights.mjs",
-        "prices:export": "ts-node scripts/prices-export.ts",
-        "prices:import": "ts-node scripts/prices-import.ts",
         "prices:verify": "ts-node scripts/prices-verify.ts",
         "pricelist:preflight": "ts-node scripts/pricelist-preflight.ts",
         "pricelist:health": "ts-node scripts/check-pricelist-health.ts",

@@ -1,28 +1,27 @@
 /**
  * Bootstrap wersji bazowej cennika.
  *
- * Świeża instalacja (`install.bat` → migrate → `prisma/seed.ts`) wypełnia tylko
- * tabele LIVE + `*Default`. Żadna migracja ani seed nie tworzy wiersza
- * `PricelistVersion`, więc `resolveActive()` (status APPROVED + effectiveFrom)
- * zwraca null i nowa oferta nie ma z czego się wycenić (`409 NO_ACTIVE_VERSION`).
+ * Świeża instalacja (`install.bat` → migrate → `prisma/seed.ts`) nie ma jeszcze
+ * żadnej wersji cennika, więc `resolveActive()` zwraca null i nowa oferta nie ma
+ * z czego się wycenić (`409 NO_ACTIVE_VERSION`).
  *
  * `ensureBaselineVersions()` domyka tę lukę: dla osi BEZ żadnej wersji tworzy
- * seq:1 APPROVED z bieżącego LIVE. Idempotentne — oś z jakąkolwiek wersją
- * (także szkicem) jest pomijana, więc ręcznej pracy admina to nie nadpisuje.
+ * seq:1 APPROVED z plików `data/seed_*.json`. Idempotentne — oś z jakąkolwiek
+ * wersją (także szkicem) jest pomijana, więc pracy admina to nie nadpisuje.
  */
 
-import prisma, { Prisma } from '../../prismaClient';
+import prisma from '../../prismaClient';
 import { chunkedCreateMany } from '../../utils/prismaBatch';
-import { sha256Canonical } from '../priceOverrideService';
+import { sha256Canonical } from './canonical';
 import { versionLabel } from './lifecycle';
+import { getSeedPrecoItems, getSeedRuryItems, getSeedStudnieItems } from './seedData';
 import { PRICELIST_TYPES } from './validation';
 import type { PricelistType } from './validation';
 import { logger } from '../../utils/logger';
 
-/** Pozycje wersji trzymają złożony klucz `<versionId>:<liveId>`. */
+/** Pozycje wersji trzymają złożony klucz `<versionId>:<seedId>`. */
 const VERSION_ITEMS_CHUNK = 100;
 
-type Tx = Prisma.TransactionClient;
 type ItemRow = { id: string; versionId: string } & Record<string, unknown>;
 
 type ItemTable =
@@ -37,38 +36,20 @@ interface LoadGroup {
     rows: ItemRow[];
 }
 
-/** Wiersze LIVE w kształcie pozycji wersji (przepisane 1:1, nowy klucz). */
-const LOADERS: Record<PricelistType, (tx: Tx, versionId: string) => Promise<LoadGroup[]>> = {
-    rury: async (tx, versionId) => {
-        const live = await tx.productsRury.findMany({ orderBy: { id: 'asc' } });
+/** Wiersze z seed_*.json w kształcie pozycji wersji (bez odczytu LIVE). */
+const LOADERS: Record<PricelistType, (versionId: string) => LoadGroup[]> = {
+    rury: (versionId) => [
+        { table: 'pricelistItemRury', rows: getSeedRuryItems(versionId) as ItemRow[] }
+    ],
+    studnie: (versionId) => [
+        { table: 'pricelistItemStudnie', rows: getSeedStudnieItems(versionId) as ItemRow[] }
+    ],
+    preco: (versionId) => {
+        const { konfig, kinety, zakresy } = getSeedPrecoItems(versionId);
         return [
-            {
-                table: 'pricelistItemRury',
-                rows: live.map((row) => ({ ...row, id: `${versionId}:${row.id}`, versionId }))
-            }
-        ];
-    },
-    studnie: async (tx, versionId) => {
-        const live = await tx.productsStudnie.findMany({ orderBy: { id: 'asc' } });
-        return [
-            {
-                table: 'pricelistItemStudnie',
-                rows: live.map((row) => ({ ...row, id: `${versionId}:${row.id}`, versionId }))
-            }
-        ];
-    },
-    preco: async (tx, versionId) => {
-        const [konfig, kinety, zakresy] = await Promise.all([
-            tx.precoKonfig.findMany({ orderBy: { key: 'asc' } }),
-            tx.precoKinety.findMany({ orderBy: [{ wellDn: 'asc' }, { order: 'asc' }] }),
-            tx.precoZakresy.findMany({ orderBy: [{ wellDn: 'asc' }, { order: 'asc' }] })
-        ]);
-        const tag = (rows: { id: string }[], prefix: string) =>
-            rows.map((row) => ({ ...row, id: `${versionId}:${prefix}:${row.id}`, versionId }));
-        return [
-            { table: 'pricelistItemPrecoKonfig', rows: tag(konfig, 'konfig') },
-            { table: 'pricelistItemPrecoKinety', rows: tag(kinety, 'kinety') },
-            { table: 'pricelistItemPrecoZakresy', rows: tag(zakresy, 'zakresy') }
+            { table: 'pricelistItemPrecoKonfig', rows: konfig as ItemRow[] },
+            { table: 'pricelistItemPrecoKinety', rows: kinety as ItemRow[] },
+            { table: 'pricelistItemPrecoZakresy', rows: zakresy as ItemRow[] }
         ];
     }
 };
@@ -106,7 +87,7 @@ export async function ensureBaselineVersions(
         if (existing > 0) continue;
         const inserted = await client.$transaction(async (tx) => {
             const versionId = baselineVersionId(type, nowIso);
-            const groups = await LOADERS[type](tx, versionId);
+            const groups = LOADERS[type](versionId);
             const total = groups.reduce((sum, group) => sum + group.rows.length, 0);
             if (total === 0) return null;
             const version = versionLabel(type, 1, nowIso);
@@ -120,7 +101,7 @@ export async function ensureBaselineVersions(
                     status: 'APPROVED',
                     effectiveFrom: nowIso,
                     createdBy: 'bootstrap',
-                    note: 'Wersja bazowa z cennika LIVE (bootstrap startu)',
+                    note: 'Wersja bazowa z data/seed_*.json (bootstrap startu)',
                     sha256: sha256Canonical({ type, rows: total, at: nowIso }),
                     createdAt: nowIso
                 }

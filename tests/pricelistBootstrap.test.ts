@@ -1,7 +1,7 @@
 /**
- * Bootstrap wersji bazowej: świeża instalacja ma ceny LIVE, ale zero wierszy
- * `PricelistVersion` → oferty spadały na LIVE z toastem „Brak aktywnej wersji”.
- * `ensureBaselineVersions` tworzy v1 APPROVED per oś, idempotentnie.
+ * Bootstrap wersji bazowej: świeża instalacja nie ma żadnej wersji cennika,
+ * a oferty wymagają ACTIVE (409 bez niej). `ensureBaselineVersions` tworzy
+ * v1 APPROVED per oś z plików `data/seed_*.json`, idempotentnie.
  */
 
 jest.mock('../src/utils/logger', () => ({
@@ -9,6 +9,7 @@ jest.mock('../src/utils/logger', () => ({
 }));
 
 import { ensureBaselineVersions } from '../src/services/pricelist/bootstrap';
+import { getSeedRury, getSeedStudnie } from '../src/services/pricelist/seedData';
 import type prismaClient from '../src/prismaClient';
 
 type Row = Record<string, unknown>;
@@ -27,18 +28,10 @@ type VersionRow = {
 
 const NOW = '2026-10-28T09:00:00.000Z';
 
-function makeClient(live: {
-    rury?: Row[];
-    studnie?: Row[];
-    precoKonfig?: Row[];
-    precoKinety?: Row[];
-    precoZakresy?: Row[];
-    versions?: VersionRow[];
-}) {
-    const versions: VersionRow[] = [...(live.versions ?? [])];
+function makeClient(input: { versions?: VersionRow[] } = {}) {
+    const versions: VersionRow[] = [...(input.versions ?? [])];
     const items: Row[] = [];
-    const table = (rows: Row[] = []) => ({
-        findMany: jest.fn().mockResolvedValue(rows),
+    const table = () => ({
         createMany: jest.fn(async ({ data }: { data: Row[] }) => {
             items.push(...data);
             return { count: data.length };
@@ -56,11 +49,7 @@ function makeClient(live: {
                 return data;
             })
         },
-        productsRury: table(live.rury),
-        productsStudnie: table(live.studnie),
-        precoKonfig: table(live.precoKonfig),
-        precoKinety: table(live.precoKinety),
-        precoZakresy: table(live.precoZakresy),
+        // Tabele LIVE nie są już czytane przez bootstrap — brak w mocku to test.
         pricelistItemRury: table(),
         pricelistItemStudnie: table(),
         pricelistItemPrecoKonfig: table(),
@@ -71,17 +60,12 @@ function makeClient(live: {
     return { client: client as unknown as typeof prismaClient, versions, items };
 }
 
-const rury = [{ id: 'R-1', name: 'Rura A', category: 'A', price: 10 }];
-const studnie = [{ id: 'S-1', name: 'Studnia A', category: 'A', price: 20 }];
-const preco = {
-    precoKonfig: [{ id: 'P-K1', key: 'cena', value: '1' }],
-    precoKinety: [{ id: 'P-KI1', wellDn: 'DN1000', order: 0 }],
-    precoZakresy: [{ id: 'P-Z1', wellDn: 'DN1000', order: 0 }]
-};
+const SEED_RURY = getSeedRury().length;
+const SEED_STUDNIE = getSeedStudnie().length;
 
-describe('bootstrap cennika: wersja bazowa z LIVE', () => {
-    it('brak wersji + LIVE → trzy APPROVED v1 z jednym effectiveFrom', async () => {
-        const { client, versions, items } = makeClient({ rury, studnie, ...preco });
+describe('bootstrap cennika: wersja bazowa z seed_*.json', () => {
+    it('brak wersji → trzy APPROVED v1 z jednym effectiveFrom', async () => {
+        const { client, versions, items } = makeClient();
         const created = await ensureBaselineVersions(client, NOW);
 
         expect(created.map((c) => c.type)).toEqual(['rury', 'studnie', 'preco']);
@@ -101,13 +85,15 @@ describe('bootstrap cennika: wersja bazowa z LIVE', () => {
             'Rv1-20261028',
             'Sv1-20261028'
         ]);
-        // Pozycje skopiowane z LIVE (klucz `<versionId>:<liveId>`).
-        expect(items).toHaveLength(5);
-        expect(items.map((r) => r.id)).toContain(`${versions[0].id}:R-1`);
+        // Pozycje z seeda (klucz `<versionId>:<seedId>`), bez odczytu LIVE.
+        const ruryItems = items.filter((r) => String(r.id).startsWith(`${versions[0].id}:`));
+        expect(ruryItems).toHaveLength(SEED_RURY);
+        expect(items.filter((r) => r.versionId === versions[1].id)).toHaveLength(SEED_STUDNIE);
+        expect(items.filter((r) => r.versionId === versions[2].id).length).toBeGreaterThan(0);
     });
 
     it('drugie wywołanie jest no-op (idempotencja)', async () => {
-        const { client, versions } = makeClient({ rury, studnie, ...preco });
+        const { client, versions } = makeClient();
         await ensureBaselineVersions(client, NOW);
         const again = await ensureBaselineVersions(client, NOW);
         expect(again).toEqual([]);
@@ -124,16 +110,9 @@ describe('bootstrap cennika: wersja bazowa z LIVE', () => {
             effectiveFrom: NOW,
             sha256: 'x'
         };
-        const { client, versions } = makeClient({ rury, studnie, ...preco, versions: [draft] });
+        const { client, versions } = makeClient({ versions: [draft] });
         const created = await ensureBaselineVersions(client, NOW);
         expect(created.map((c) => c.type)).toEqual(['studnie', 'preco']);
         expect(versions.filter((v) => v.type === 'rury')).toHaveLength(1);
-    });
-
-    it('pusty LIVE → bez wersji (oferty zostają na LIVE, bez pustej APPROVED)', async () => {
-        const { client, versions } = makeClient({ rury: [], studnie: [], precoKonfig: [] });
-        const created = await ensureBaselineVersions(client, NOW);
-        expect(created).toEqual([]);
-        expect(versions).toEqual([]);
     });
 });

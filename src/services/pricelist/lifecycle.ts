@@ -8,7 +8,7 @@
 import { randomUUID } from 'crypto';
 import prisma from '../../prismaClient';
 import type { PricelistVersion } from '../../../generated/prisma';
-import { sha256Canonical } from '../priceOverrideService';
+import { sha256Canonical } from './canonical';
 import {
     PricelistVersionError,
     assertEditable,

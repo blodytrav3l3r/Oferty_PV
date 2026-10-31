@@ -1,4 +1,3 @@
-import prisma from '../prismaClient';
 import { InvalidPriceError, requireFinitePrice } from '../validators/finiteNumbers';
 
 export const RANGE_TYPES = ['spadekKineta', 'spadekMufa', 'uniesienie', 'redukcja'] as const;
@@ -37,18 +36,6 @@ export async function formatPrecoResponse(konfigTable: any, kinetyTable: any, za
     }
 
     return { data: [entry] };
-}
-
-export function getPrecoLive() {
-    return formatPrecoResponse(prisma.precoKonfig, prisma.precoKinety, prisma.precoZakresy);
-}
-
-export function getPrecoDefault() {
-    return formatPrecoResponse(
-        prisma.precoKonfigDefault,
-        prisma.precoKinetyDefault,
-        prisma.precoZakresyDefault
-    );
 }
 
 /** Spłaszcza zagnieżdżony PRECO do wierszy wersji (bez zapisu). */
@@ -143,22 +130,4 @@ export function flattenPrecoRows(input: Record<string, unknown>) {
     }
 
     return { konfig: konfigRows, kinety: kinetyRows, zakresy: zakresyRows };
-}
-
-export async function flattenAndSave(input: Record<string, unknown>, isDefault: boolean) {
-    const konfigTable: any = isDefault ? prisma.precoKonfigDefault : prisma.precoKonfig;
-    const kinetyTable: any = isDefault ? prisma.precoKinetyDefault : prisma.precoKinety;
-    const zakresyTable: any = isDefault ? prisma.precoZakresyDefault : prisma.precoZakresy;
-    const { konfig, kinety, zakresy } = flattenPrecoRows(input);
-
-    const ops: any[] = [
-        konfigTable.deleteMany(),
-        kinetyTable.deleteMany(),
-        zakresyTable.deleteMany()
-    ];
-    if (konfig.length > 0) ops.push(konfigTable.createMany({ data: konfig }));
-    if (kinety.length > 0) ops.push(kinetyTable.createMany({ data: kinety }));
-    if (zakresy.length > 0) ops.push(zakresyTable.createMany({ data: zakresy }));
-
-    await prisma.$transaction(ops);
 }

@@ -485,17 +485,16 @@ export async function loadVersionItems(
     return { konfig: asRecords(konfig), kinety: asRecords(kinety), zakresy: asRecords(zakresy) };
 }
 
-/** Źródło eksportu: tabele LIVE, *Default albo zamrożona ACTIVE. */
-export type PricelistExportSource = 'live' | 'default' | 'active' | 'draft';
+/** Źródło eksportu: seed (default), zamrożona ACTIVE albo bieżący szkic. */
+export type PricelistExportSource = 'default' | 'active' | 'draft';
 
-/** Walidacja ?source=live|default|active — zły → 422 (jak INVALID_TYPE). */
+/** Walidacja ?source=default|active|draft — zły → 422 (jak INVALID_TYPE). */
 export function requireExportSource(value: unknown): PricelistExportSource {
-    if (value === 'live' || value === 'default' || value === 'active' || value === 'draft')
-        return value;
+    if (value === 'default' || value === 'active' || value === 'draft') return value;
     throw new PricelistVersionError(
         422,
         'INVALID_SOURCE',
-        `Nieprawidłowe źródło eksportu: ${String(value)} (dozwolone: live, default, active, draft)`
+        `Nieprawidłowe źródło eksportu: ${String(value)} (dozwolone: default, active, draft)`
     );
 }
 

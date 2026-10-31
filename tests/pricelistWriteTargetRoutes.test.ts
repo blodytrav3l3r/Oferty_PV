@@ -171,11 +171,11 @@ describe('S5 draft routes', () => {
         ['/api/products/export.xlsx', 'rury'],
         ['/api/products-studnie/export.xlsx', 'studnie'],
         ['/api/preco-pricing/export.xlsx', 'preco']
-    ])('%s?source=live aliasuje do DRAFT', async (url, type) => {
+    ])('%s?source=live → 422 (tabela LIVE nie istnieje)', async (url, _type) => {
         const res = await request(app()).get(`${url}?source=live`);
 
-        expect(res.status).toBe(409);
-        expect(res.body.code).toBe('NO_DRAFT_VERSION');
-        expect(findLatestDraft).toHaveBeenCalledWith(type);
+        expect(res.status).toBe(422);
+        expect(res.body.code).toBe('INVALID_SOURCE');
+        expect(findLatestDraft).not.toHaveBeenCalled();
     });
 });

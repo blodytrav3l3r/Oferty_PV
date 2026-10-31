@@ -6,7 +6,7 @@
 import prisma from '../../prismaClient';
 import type { PricelistVersion } from '../../../generated/prisma';
 import type { XlsxSheet } from '../../utils/minimalXlsx';
-import { canonicalStringify, diffById } from '../priceOverrideService';
+import { canonicalStringify, diffById } from './canonical';
 import {
     PRECO_REFERENCE_STATUSES,
     PricelistVersionError,

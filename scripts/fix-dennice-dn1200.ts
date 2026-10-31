@@ -2,7 +2,7 @@
  * Naprawa cen 5 dennic DN1200 w wersjach cennika studni.
  *
  * Rozjazd (wykryty przez `prices:verify`, sekcja ACTIVE vs LIVE):
- *   LIVE = Default = data/price_defaults.json = 1150,
+ *   dane historyczne (LIVE) = 1150,
  *   Sv1..Sv4 = 1050.
  * Oferty licza z ACTIVE, wiec klient dostawal 1050, a eksport pokazywal 1150.
  *
@@ -111,7 +111,7 @@ async function main(): Promise<void> {
         effectiveFrom: new Date().toISOString()
     });
     console.log(`[dennice] Zatwierdzono ${approved.version} jako ACTIVE.`);
-    console.log('[dennice] Sprawdz: npm run prices:verify (oczekiwane: changed=0 dla ceny).');
+    console.log('[dennice] Sprawdz: npm run prices:verify (ACTIVE spójne, ceny dodatnie).');
 }
 
 main()

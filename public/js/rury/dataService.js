@@ -142,7 +142,7 @@ async function loadProducts(options) {
                 if (json && Array.isArray(json.data)) {
                     window.__pricelistWriteTarget =
                         res.headers.get('X-Pricelist-Write-Target') === 'draft' ? 'draft' : 'live';
-                    window.__ruryPricingSource = useActive ? 'active' : 'live';
+                    window.__ruryPricingSource = useActive ? 'active' : 'draft';
                     return json.data;
                 }
             }

@@ -17,11 +17,6 @@ fi
 # Upewniamy się, że katalog danych istnieje
 mkdir -p /var/data
 
-# Migawka domyslnych cen z wolumenu (./data na hoscie) - serwer ja przywroci przy starcie
-if [ -z "$PRICE_DEFAULTS_PATH" ]; then
-    export PRICE_DEFAULTS_PATH="/var/data/price_defaults.json"
-fi
-
 # Jeśli baza danych nie istnieje w wolumenie, kopiujemy tę z obrazu (jeśli istnieje)
 DB_FILE="/var/data/app_database.sqlite"
 

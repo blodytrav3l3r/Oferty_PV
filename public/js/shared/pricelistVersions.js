@@ -1512,12 +1512,11 @@
     function defaultsHtml() {
         return (
             '<div class="pv-actions pv-defaults-actions">' +
-            '<button class="btn btn-sm btn-secondary" id="btn-save-defaults" data-csp="saveAllDefaults" data-csp-scope="parent" data-csp-args="[]" title="Zapisz bieżący stan cenników (rury, studnie, PRECO) jako domyślne"><i data-lucide="bookmark"></i> Zapisz domyślne</button>' +
             '<button class="btn btn-sm btn-secondary" data-pv-reset="rury" title="Przywróć domyślne wartości tylko cennika rur (pyta o potwierdzenie)"><i data-lucide="rotate-ccw"></i> Przywróć domyślne (Rury)</button>' +
             '<button class="btn btn-sm btn-secondary" data-pv-reset="studnie" title="Przywróć domyślne wartości tylko cennika studni (pyta o potwierdzenie)"><i data-lucide="rotate-ccw"></i> Przywróć domyślne (Studnie)</button>' +
             '<button class="btn btn-sm btn-secondary" data-pv-reset="preco" title="Przywróć domyślne wartości tylko cennika PRECO (pyta o potwierdzenie)"><i data-lucide="rotate-ccw"></i> Przywróć domyślne (PRECO)</button>' +
             '</div>' +
-            '<p class="text-muted">Zapisz domyślne obejmuje wszystkie cenniki (rury, studnie, PRECO); przywrócenie dotyczy wybranego cennika.</p>'
+            '<p class="text-muted">Przywrócenie dotyczy wybranego cennika i wczytuje wartości fabryczne (pliki seed).</p>'
         );
     }
 

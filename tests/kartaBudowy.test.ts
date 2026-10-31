@@ -3,15 +3,20 @@ import {
     generateKartaBudowyRuryPDF
 } from '../src/services/pdf/kartaBudowy';
 import prisma from '../src/prismaClient';
+import { getCatalogStudnieRows } from '../src/services/pricelist/catalog';
 import * as pdfEngine from '../src/services/pdf/pdfEngine';
 
 jest.mock('../src/prismaClient', () => ({
     __esModule: true,
     default: {
         orders_studnie_rel: { findUnique: jest.fn() },
-        orders_rury_rel: { findUnique: jest.fn() },
-        productsStudnieDefault: { findMany: jest.fn().mockResolvedValue([]) }
+        orders_rury_rel: { findUnique: jest.fn() }
     }
+}));
+
+// Etap 2: metadane elementów studni przychodzą z ACTIVE (fallback seed), nie z `*Default`.
+jest.mock('../src/services/pricelist/catalog', () => ({
+    getCatalogStudnieRows: jest.fn().mockResolvedValue([])
 }));
 
 jest.mock('../src/services/pdf/pdfEngine', () => ({
@@ -105,7 +110,7 @@ describe('kartaBudowy - Z-71', () => {
                 ]
             })
         });
-        (prisma.productsStudnieDefault.findMany as jest.Mock).mockResolvedValue([
+        (getCatalogStudnieRows as jest.Mock).mockResolvedValue([
             {
                 id: 'DEN-1000',
                 componentType: 'dennica',

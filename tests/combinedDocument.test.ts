@@ -5,6 +5,7 @@ import { buildCombinedDocument } from '../src/services/docx/combined';
 import { generateCombinedHTML } from '../src/services/pdf/combinedHtml';
 import type { RuryOfferData, StudnieOfferData } from '../src/services/pdf/types';
 import prisma from '../src/prismaClient';
+import { getRuryCategoryMap } from '../src/services/pricelist/catalog';
 
 jest.mock('fs', () => ({
     readFileSync: jest.fn(),
@@ -24,6 +25,11 @@ jest.mock('puppeteer', () => ({
 
 jest.mock('../src/utils/logger', () => ({
     logger: { info: jest.fn(), warn: jest.fn(), debug: jest.fn(), error: jest.fn() }
+}));
+
+// Etap 2: kategoria rury z ACTIVE (fallback seed), nie z tabeli LIVE.
+jest.mock('../src/services/pricelist/catalog', () => ({
+    getRuryCategoryMap: jest.fn()
 }));
 
 jest.mock('../src/prismaClient', () => ({
@@ -99,9 +105,9 @@ describe('Wydruk łączny — spójny dokument', () => {
         (prisma.offers_studnie_rel.findUnique as jest.Mock).mockResolvedValue(mockStudnieOffer);
         (prisma.clients_rel.findUnique as jest.Mock).mockResolvedValue(mockClient);
         (prisma.users.findUnique as jest.Mock).mockResolvedValue(null);
-        (prisma.productsRury.findMany as jest.Mock).mockResolvedValue([
-            { id: 'P-300-2-1', category: 'Rury Betonowe' }
-        ]);
+        (getRuryCategoryMap as jest.Mock).mockResolvedValue(
+            new Map([['P-300-2-1', 'Rury Betonowe']])
+        );
     });
 
     describe('DOCX — buildCombinedDocument', () => {

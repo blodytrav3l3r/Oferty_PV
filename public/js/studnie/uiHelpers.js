@@ -581,7 +581,7 @@ async function loadStudnieProducts(options) {
         saveStudnieProducts(saved).catch(() => {});
     }
 
-    window.__studniePricingSource = useActive ? 'active' : 'live';
+    window.__studniePricingSource = useActive ? 'active' : 'draft';
     return saved;
 }
 

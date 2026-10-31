@@ -1,5 +1,5 @@
 /**
- * Schematy walidacji Zod dla snapshotu cenników (price_defaults.json).
+ * Schematy walidacji Zod dla wierszy cennika (używane przez walidację wersji).
  *
  * Kontrakt pól 1:1 z modelami Prisma (schema.prisma). Zod daje wczesną
  * diagnostykę per pole przy restore; Prisma pozostaje twardym guardem

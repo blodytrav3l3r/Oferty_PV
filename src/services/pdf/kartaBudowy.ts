@@ -4,6 +4,7 @@ import { logger } from '../../utils/logger';
 import { resolvePublicDir } from '../../utils/paths';
 import { escapeHtml } from './helpers';
 import { loadPdfTemplate } from './templateCache';
+import { getCatalogStudnieRows } from '../pricelist/catalog';
 import { generatePDF } from './pdfEngine';
 import type { KartaBudowyMeta, KartaBudowyOrderData } from '../../types/kartaBudowy';
 
@@ -150,7 +151,8 @@ export async function generateKartaBudowyPDF(orderId: string): Promise<Buffer> {
         { componentType: string; category: string; dn: number | string; height: number }
     >();
     try {
-        const products = await prisma.productsStudnieDefault.findMany();
+        // Etap 2: metadane z ACTIVE (fallback seed), bez tabel domyslnych.
+        const products = await getCatalogStudnieRows();
         for (const p of products) {
             allProducts.set(p.id, {
                 componentType: p.componentType || '',

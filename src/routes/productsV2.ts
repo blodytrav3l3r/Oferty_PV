@@ -6,7 +6,6 @@ import { PRICELIST_WRITE_LIMITER } from '../middleware/rateLimiters';
 import { pricelistDataSchema } from '../validators/offerSchemas';
 import { requireFinitePrice, InvalidPriceError } from '../validators/finiteNumbers';
 import { pricelistLock } from '../middleware/writeLock';
-import prisma from '../prismaClient';
 import {
     findLatestDraft,
     getEditorPricing,
@@ -30,6 +29,7 @@ import {
     resolveActivePricing
 } from '../services/pricelistVersionService';
 import { versionExportFilename } from '../utils/exportFilenames';
+import { getSeedRury } from '../services/pricelist/seedData';
 
 const router = express.Router();
 const writeLimiter = PRICELIST_WRITE_LIMITER;
@@ -37,7 +37,7 @@ const writeLimiter = PRICELIST_WRITE_LIMITER;
 const { runWithLock } = pricelistLock;
 
 // ──────────────────────────────────────────
-// GET / — wszystkie produkty z ProductsRury
+// GET / — cennik dla edytora: DRAFT → ACTIVE → seed (brak wersji = fabryka)
 // ──────────────────────────────────────────
 router.get('/', requireAuth, async (req, res) => {
     try {
@@ -45,10 +45,10 @@ router.get('/', requireAuth, async (req, res) => {
         const source = requirePricingSource(req.query.source);
         if (!source) {
             const editor = await getEditorPricing('rury');
-            if (!editor.fallback) {
-                res.json({ data: editor.data });
-                return;
-            }
+            // Brak jakiejkolwiek wersji: edytor startuje z cennika fabrycznego
+            // (seed). Zapis utworzy DRAFT — nie ma już tabeli LIVE do czytania.
+            res.json({ data: editor.fallback ? getSeedRury() : editor.data });
+            return;
         }
         if (source === 'active') {
             const active = await resolveActivePricing('rury');
@@ -62,12 +62,7 @@ router.get('/', requireAuth, async (req, res) => {
                 return;
             }
             res.json({ data: active.data });
-            return;
         }
-        const products = await prisma.productsRury.findMany({
-            orderBy: [{ category: 'asc' }, { id: 'asc' }]
-        });
-        res.json({ data: products });
     } catch (err: unknown) {
         if (err instanceof PricelistVersionError) {
             res.status(err.statusCode).json({ error: err.message, code: err.code });
@@ -182,9 +177,7 @@ router.delete('/:id', requireAuth, requireAdmin, writeLimiter, (_req, res) => {
 // shape 1:1 z eksportem FE (jak GET /:id/export wersji)
 router.get('/export.xlsx', requireAuth, async (req, res) => {
     try {
-        const requested = requireExportSource(req.query.source);
-        // Etap 1: eksport "live" = bieżący szkic (jak dotąd w trybie draft).
-        const source = requested === 'live' ? 'draft' : requested;
+        const source = requireExportSource(req.query.source);
         if (source === 'draft') {
             const draft = await findLatestDraft('rury');
             if (!draft) {
@@ -229,11 +222,8 @@ router.get('/export.xlsx', requireAuth, async (req, res) => {
             res.send(xlsx);
             return;
         }
-        // Etap 1: `?source=live` aliasuje do szkicu, więc tu zostaje tylko
-        // `default` — eksport tabel LIVE nie jest już dostępny.
-        const rows = await prisma.productsRuryDefault.findMany({
-            orderBy: [{ category: 'asc' }, { id: 'asc' }]
-        });
+        // Etap 2: `default` = fabryczny seed (tabele domyslne już nie istnieją).
+        const rows = getSeedRury();
         const live = projectVersionToLiveShape('rury', {
             rury: rows as unknown as Array<Record<string, unknown>>
         });
@@ -265,14 +255,11 @@ router.get('/export.xlsx', requireAuth, async (req, res) => {
 });
 
 // ──────────────────────────────────────────
-// GET /default — domyślny cennik
+// GET /default — fabryczny cennik z data/seed_rury.json
 // ──────────────────────────────────────────
 router.get('/default', requireAuth, async (_req, res) => {
     try {
-        const products = await prisma.productsRuryDefault.findMany({
-            orderBy: [{ category: 'asc' }, { id: 'asc' }]
-        });
-        res.json({ data: products });
+        res.json({ data: getSeedRury() });
     } catch (err: unknown) {
         const message = err instanceof Error ? err.message : 'Unknown error';
         logger.error('ProductsV2', 'GET /default error', message);

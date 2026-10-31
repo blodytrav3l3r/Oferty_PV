@@ -2,9 +2,10 @@
 /**
  * export-settings-to-seed.mjs
  *
- * Eksportuje aktualne cenniki z produkcyjnych tabel DB (ProductsRury,
- * ProductsStudnie, PrecoKonfig + PrecoKinety) do plikow seed JSON.
- * Zapisuje w data/seed_rury.json, data/seed_studnie.json, data/seed_preco.json.
+ * Eksportuje aktualny cennik (ACTIVE wersja: PricelistVersion + PricelistItem*)
+ * do plikow seed JSON: data/seed_rury.json, data/seed_studnie.json,
+ * data/seed_preco.json. To one zasilają wersję bazową świeżej instalacji
+ * i „Przywróć domyślne".
  *
  * Uzycie:
  *   node scripts/export-settings-to-seed.mjs
@@ -222,31 +223,52 @@ async function main() {
     let results;
 
     try {
-        const queries = [];
+        const now = new Date().toISOString();
+
+        /** ACTIVE per oś: ręczne wskazanie z settings albo najnowsza APPROVED. */
+        async function activeVersionId(type) {
+            const key = 'pricelist_active_override_' + type;
+            const override = await prisma.settings.findUnique({ where: { key } });
+            if (override?.value) return override.value;
+            const v = await prisma.pricelistVersion.findFirst({
+                where: { type, status: 'APPROVED', effectiveFrom: { lte: now } },
+                orderBy: [{ effectiveFrom: 'desc' }, { seq: 'desc' }]
+            });
+            return v?.id ?? null;
+        }
+
+        /** Pozycje wersji bez klucza wersji (id = oryginalny indeks produktu). */
+        async function activeItems(type, delegate) {
+            const versionId = await activeVersionId(type);
+            if (!versionId) return [];
+            const rows = await delegate.findMany({ where: { versionId } });
+            return rows.map((row) => {
+                const { versionId: _v, ...rest } = row;
+                const rawId = String(row.id);
+                return { ...rest, id: rawId.slice(rawId.lastIndexOf(':') + 1) };
+            });
+        }
+
         const wantRury = keys.includes('pricelist_rury');
         const wantStudnie = keys.includes('pricelist_studnie');
         const wantPreco = keys.includes('preco_pricing');
 
-        if (wantRury) queries.push(prisma.productsRury.findMany({ orderBy: { id: 'asc' } }));
-        if (wantStudnie) queries.push(prisma.productsStudnie.findMany({ orderBy: { id: 'asc' } }));
-        if (wantPreco) {
-            queries.push(prisma.precoKonfig.findMany({ orderBy: { key: 'asc' } }));
-            queries.push(
-                prisma.precoKinety.findMany({ orderBy: [{ wellDn: 'asc' }, { order: 'asc' }] })
+        results = {};
+        if (wantRury)
+            results.pricelist_rury = processPricelist(
+                await activeItems('rury', prisma.pricelistItemRury)
             );
-            queries.push(
-                prisma.precoZakresy.findMany({ orderBy: [{ wellDn: 'asc' }, { order: 'asc' }] })
+        if (wantStudnie) {
+            results.pricelist_studnie = processPricelist(
+                await activeItems('studnie', prisma.pricelistItemStudnie)
             );
         }
-
-        const rows = await Promise.all(queries);
-
-        results = {};
-        let i = 0;
-        if (wantRury) results.pricelist_rury = processPricelist(rows[i++]);
-        if (wantStudnie) results.pricelist_studnie = processPricelist(rows[i++]);
         if (wantPreco) {
-            results.preco_pricing = processPreco(rows[i], rows[i + 1], rows[i + 2]);
+            results.preco_pricing = processPreco(
+                await activeItems('preco', prisma.pricelistItemPrecoKonfig),
+                await activeItems('preco', prisma.pricelistItemPrecoKinety),
+                await activeItems('preco', prisma.pricelistItemPrecoZakresy)
+            );
         }
     } finally {
         await prisma.$disconnect();

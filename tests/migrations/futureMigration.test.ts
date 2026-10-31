@@ -27,16 +27,17 @@ describe('A4.5 przyszly workflow migracji', () => {
         addMigration(
             project,
             TEST_MIGRATION,
-            `-- AlterTable\nALTER TABLE "ProductsRury" ADD COLUMN "testColumn" TEXT;`
+            `-- AlterTable\nALTER TABLE "clients_rel" ADD COLUMN "testColumn" TEXT;`
         );
         try {
             project.runPrisma(['db', 'push', '--skip-generate']);
 
             const db = new DatabaseSync(project.dbPath);
             db.exec('PRAGMA foreign_keys = ON');
-            db.prepare(
-                'INSERT INTO ProductsRury (id, name, category, price) VALUES (?, ?, ?, ?)'
-            ).run('legacy_rury_1', 'Rura legacy', 'Rury Betonowe', 200.0);
+            db.prepare('INSERT INTO clients_rel (id, name) VALUES (?, ?)').run(
+                'legacy_client_1',
+                'Klient legacy'
+            );
             db.close();
 
             project.runPrisma(['migrate', 'resolve', '--applied', BASELINE]);
@@ -47,12 +48,12 @@ describe('A4.5 przyszly workflow migracji', () => {
             expect(/database schema is up to date/i.test(status)).toBe(true);
 
             const db2 = new DatabaseSync(project.dbPath, { readOnly: true });
-            const cols = db2.prepare('PRAGMA table_info(ProductsRury)').all() as { name: string }[];
-            const rury = db2.prepare('SELECT count(*) AS n FROM ProductsRury').get();
+            const cols = db2.prepare('PRAGMA table_info(clients_rel)').all() as { name: string }[];
+            const rows = db2.prepare('SELECT count(*) AS n FROM clients_rel').get();
             db2.close();
 
             expect(cols.some((c) => c.name === 'testColumn')).toBe(true);
-            expect((rury as { n: number }).n).toBe(1);
+            expect((rows as { n: number }).n).toBe(1);
         } finally {
             project.cleanup();
         }

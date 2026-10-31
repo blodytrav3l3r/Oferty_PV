@@ -3,8 +3,9 @@ import express from 'express';
 import productsRouter from '../src/routes/productsV2';
 
 /**
- * P1.5: kontrakt GET /api/products (wczesniej placeholder bez routera, zawsze 404).
- * Bez wersji cennika: 200 {data} z LIVE; blad DB -> 500; brak sesji -> 401.
+ * P1.5: kontrakt GET /api/products (kiedys placeholder bez routera, zawsze 404).
+ * Etap 2: widok edytora czyta wersję (szkic → ACTIVE), a bez wersji — seed.
+ * Błąd odczytu -> 500; brak sesji -> 401.
  */
 
 const rows = [
@@ -15,19 +16,14 @@ const rows = [
 let currentUser: { id: string; role: string } | null = { id: 'u1', role: 'user' };
 let failDb = false;
 
-jest.mock('../src/prismaClient', () => ({
-    __esModule: true,
-    default: {
-        productsRury: {
-            findMany: jest.fn(async () => {
-                if (failDb) throw new Error('db down');
-                return rows.map((r) => ({ ...r }));
-            })
-        },
-        // Brak wersji cennika i brak ręcznego wyboru -> trasa czyta LIVE.
-        pricelistVersion: { findFirst: jest.fn(async () => null) },
-        settings: { findUnique: jest.fn(async () => null) }
-    }
+const getEditorPricing = jest.fn(async (_type?: unknown) => {
+    if (failDb) throw new Error('db down');
+    return { data: rows.map((r) => ({ ...r })), fallback: false };
+});
+
+jest.mock('../src/services/pricelist/writeTarget', () => ({
+    getPricelistWriteTarget: () => 'draft',
+    getEditorPricing: (type?: unknown) => getEditorPricing(type)
 }));
 
 jest.mock('../src/middleware/auth', () => ({
@@ -59,7 +55,7 @@ beforeEach(() => {
     jest.clearAllMocks();
 });
 
-describe('products GET / (live)', () => {
+describe('products GET / (wersje)', () => {
     it('zwraca 200 {data} z wierszami cennika', async () => {
         const res = await request(createApp()).get('/api/products');
         expect(res.status).toBe(200);

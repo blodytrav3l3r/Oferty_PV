@@ -1,7 +1,7 @@
 /**
- * Etap C: eksport XLSX cenników LIVE i DEFAULT z serwera.
+ * Etap C: eksport XLSX cenników DEFAULT (seed) i wersji z serwera.
  * Poziom serwisu (mock sections, bez DB): shape live == shape version
- * (arkusze/kolumny/kolejność), source live|default, zły source → 422.
+ * (arkusze/kolumny/kolejność), source default|active|draft, zły source → 422.
  *
  * SSoT kształtu (jak Etap A):
  * - RURY: public/js/rury/pricelistUi.js:336 RURY_EXPORT_COLUMNS
@@ -58,12 +58,14 @@ const STUDNIE_LEGACY_ROWS = [
 ];
 
 describe('Etap C: requireExportSource', () => {
-    it('live|default przechodzi', () => {
-        expect(requireExportSource('live')).toBe('live');
+    it('default|active|draft przechodzi', () => {
         expect(requireExportSource('default')).toBe('default');
+        expect(requireExportSource('active')).toBe('active');
+        expect(requireExportSource('draft')).toBe('draft');
     });
 
-    it.each([['LIVE'], [''], [undefined], [null], ['wersja']])(
+    // Etap 2: tabela LIVE nie istnieje, więc `?source=live` jest błędem.
+    it.each([['live'], ['LIVE'], [''], [undefined], [null], ['wersja']])(
         'zły source %p → 422 INVALID_SOURCE',
         (source) => {
             let err: unknown = null;

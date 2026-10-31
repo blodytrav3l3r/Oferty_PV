@@ -1,7 +1,7 @@
 /**
  * F1: Wersjonowanie cenników — drafty per typ + resolveActive.
  *
- * Obok starego priceOverrideService (LIVE + *_Default działają do Contract).
+ * Etap 2: jedyne źródło cen — wersje cennika (tabele LIVE usunięte).
  *
  * FASADA (split 5 modułów, zero zmian API/zachowania): implementacja mieszka
  * w src/services/pricelist/ (validation, lifecycle, liveProjection, export,

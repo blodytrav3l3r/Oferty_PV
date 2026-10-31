@@ -1,10 +1,13 @@
 /**
- * S1b: read-only „checks" wersji — użycie, kolizja daty, różnica do LIVE,
- * porównanie z bieżącą aktywną. Zero zapisów, zero CTA. Admin only (route).
+ * S1b: read-only „checks" wersji — użycie, kolizja daty, porównanie z bieżącą
+ * aktywną. Zero zapisów, zero CTA. Admin only (route).
+ *
+ * Etap 2: brak diffu do tabel LIVE — jedynym punktem odniesienia jest bieżąca
+ * wersja APPROVED (`comparisonToCurrentApproved`).
  */
 
 import prisma from '../../prismaClient';
-import { diffById, priceOverrideService } from '../priceOverrideService';
+import { diffById } from './canonical';
 import { getVersionExport } from './export';
 import { resolveActive, countVersionUsage, getPrecoReferences } from './usage';
 
@@ -20,7 +23,6 @@ export interface VersionChecks {
         effectiveFrom: string;
         versions: Array<{ id: string; version: string; seq: number; status: string }>;
     };
-    liveDiff: { section: string; added: number; removed: number; changed: number } | null;
     baseVersion: { status: 'UNVERIFIABLE'; reason: string };
     comparisonToCurrentApproved: {
         status: CheckStatus;
@@ -29,30 +31,11 @@ export interface VersionChecks {
     };
 }
 
-function liveSection(
-    type: string,
-    pkg: Awaited<ReturnType<typeof priceOverrideService.buildPricePackage>>
-): { name: string; rows: Array<Record<string, unknown>> } | null {
-    if (type === 'rury') return { name: 'rury', rows: pkg.rury as Array<Record<string, unknown>> };
-    if (type === 'studnie') {
-        return { name: 'studnie', rows: pkg.studnie as Array<Record<string, unknown>> };
-    }
-    if (type === 'preco') {
-        return {
-            name: 'preco',
-            rows: [...pkg.preco.konfig, ...pkg.preco.kinety, ...pkg.preco.zakresy] as Array<
-                Record<string, unknown>
-            >
-        };
-    }
-    return null;
-}
-
 export async function getVersionChecks(id: string): Promise<VersionChecks> {
     const { version, sections } = await getVersionExport(id);
     const type = version.type;
 
-    const [usage, collisions, active, pkg] = await Promise.all([
+    const [usage, collisions, active] = await Promise.all([
         type === 'preco'
             ? getPrecoReferences().then((refs) => ({
                   offers: 0,
@@ -71,8 +54,7 @@ export async function getVersionChecks(id: string): Promise<VersionChecks> {
             select: { id: true, version: true, seq: true, status: true },
             orderBy: { seq: 'asc' }
         }),
-        resolveActive(type),
-        priceOverrideService.buildPricePackage()
+        resolveActive(type)
     ]);
 
     const sectionNames =
@@ -95,7 +77,6 @@ export async function getVersionChecks(id: string): Promise<VersionChecks> {
         comparisonStatus = differs ? 'DIFFERS' : 'MATCH';
     }
 
-    const live = liveSection(type, pkg);
     return {
         versionId: id,
         checkedAt: new Date().toISOString(),
@@ -106,15 +87,6 @@ export async function getVersionChecks(id: string): Promise<VersionChecks> {
             effectiveFrom: version.effectiveFrom,
             versions: collisions
         },
-        liveDiff: live
-            ? {
-                  section: live.name,
-                  ...diffById(
-                      live.rows,
-                      sectionNames.flatMap((name) => sections[name] ?? [])
-                  )
-              }
-            : null,
         baseVersion: {
             status: 'UNVERIFIABLE',
             reason: 'Brak zapisanego ID wersji bazowej (schemat do S3).'

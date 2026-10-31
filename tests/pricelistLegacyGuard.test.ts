@@ -1,9 +1,10 @@
 /**
- * Contract guard (F3): fail-closed na legacy cenników.
+ * Contract guard (etap 2): fail-closed na legacy cenników.
  *
- * Użycie `price_defaults` / `_Default` / `restoreDefaultsFromJson` poza
- * allowlistą = FAIL. Allowlista = Expand-faza (stare LIVE działa do Contract);
- * Contract usunie wpisy i zacieśni guard do zera.
+ * Każda referencja do starego snapshotu JSON, tabel domyślnych albo restore
+ * z pliku = FAIL. Allowlista jest pusta — tabele LIVE i snapshot nie istnieją,
+ * więc każda referencja to regresja. Wzorce składamy z fragmentów, żeby ten
+ * plik nie łapał sam siebie.
  */
 
 import * as fs from 'fs';
@@ -11,33 +12,14 @@ import * as path from 'path';
 
 const ROOT = path.join(__dirname, '..');
 
-/** Pliki z legacy dozwolone do Contract (Expand & Contract). */
-const ALLOWLIST = new Set(
-    [
-        // Silnik legacy LIVE + *_Default (działa do Contract).
-        'src/services/priceOverrideService.ts',
-        'src/validators/priceDefaultsSchemas.ts',
-        // Klucz fresh-guarda pricelist_defaults_updated_at (F1/F2, nietknięte).
-        'src/services/pricelistVersionService.ts',
-        // Startowy restore snapshotu (app.ts:356, usuwany w Contract).
-        'src/app.ts',
-        // Transfer maszyn starym JSON do końca F3.
-        'scripts/prices-export.ts',
-        'scripts/prices-import.ts',
-        'scripts/prices-verify.ts',
-        // Jednorazowa naprawa martwych zakresow PRECO (LIVE + Default + wersje).
-        'scripts/fix-preco-ranges.ts',
-        // Jednorazowa naprawa cen 5 dennic DN1200 w wersjach studni.
-        'scripts/fix-dennice-dn1200.ts',
-        'scripts/add-transport-products.mjs',
-        'scripts/docker-entrypoint.sh',
-        // Testy silnika legacy + ten guard (wzorce w literałach).
-        'tests/priceOverrideService.test.ts',
-        'tests/pricelistLegacyGuard.test.ts'
-    ].map((p) => path.normalize(p))
-);
+/** Pusta po etapie 2 — wyjątków nie ma. */
+const ALLOWLIST = new Set<string>();
 
-const PATTERNS = [/price_defaults/, /_Default/, /restoreDefaultsFromJson/];
+const PATTERNS = [
+    new RegExp('price' + '_defaults'),
+    new RegExp('_' + 'Default'),
+    new RegExp('restoreDefaults' + 'FromJson')
+];
 const SCAN_DIRS = ['src', 'scripts', 'public/js', 'tests'];
 const SCAN_FILES = ['server.ts'];
 const SKIP_DIRS = new Set(['node_modules', '.git', 'coverage', 'dist', 'build']);
@@ -79,10 +61,7 @@ describe('pricelistLegacyGuard (fail-closed)', () => {
         expect(violations).toEqual([]);
     });
 
-    test('allowlista istnieje i jest niepusta (Expand; Contract ją wyzeruje)', () => {
-        for (const rel of ALLOWLIST) {
-            expect(fs.existsSync(path.join(ROOT, rel))).toBe(true);
-        }
-        expect(ALLOWLIST.size).toBeGreaterThan(0);
+    test('allowlista jest pusta (etap 2: zero wyjątków)', () => {
+        expect(ALLOWLIST.size).toBe(0);
     });
 });

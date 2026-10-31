@@ -7,7 +7,8 @@ import { precoPricingUpdateSchema } from '../validators/offerSchemas';
 import { InvalidPriceError } from '../validators/finiteNumbers';
 import { pricelistLock } from '../middleware/writeLock';
 import { buildXlsx } from '../utils/minimalXlsx';
-import { flattenPrecoRows, getPrecoDefault, getPrecoLive } from '../services/precoPricing';
+import { flattenPrecoRows } from '../services/precoPricing';
+import { getSeedPrecoNested } from '../services/pricelist/seedData';
 import {
     findLatestDraft,
     getEditorPricing,
@@ -36,7 +37,7 @@ const writeLimiter = PRECO_PRICING_LIMITER;
 const { runWithLock } = pricelistLock;
 
 // ──────────────────────────────────────────
-// GET / — pełna struktura PRECO z Preco* tables
+// GET / — cennik PRECO dla edytora: DRAFT → ACTIVE → seed (brak wersji = fabryka)
 // ──────────────────────────────────────────
 router.get('/', requireAuth, async (req, res) => {
     try {
@@ -44,10 +45,9 @@ router.get('/', requireAuth, async (req, res) => {
         const source = requirePricingSource(req.query.source);
         if (!source) {
             const editor = await getEditorPricing('preco');
-            if (!editor.fallback) {
-                res.json({ data: editor.data });
-                return;
-            }
+            // Brak wersji: edytor startuje z cennika fabrycznego (seed).
+            res.json(editor.fallback ? { data: [getSeedPrecoNested()] } : { data: editor.data });
+            return;
         }
         if (source === 'active') {
             const active = await resolveActivePricing('preco');
@@ -60,10 +60,7 @@ router.get('/', requireAuth, async (req, res) => {
                 return;
             }
             res.json({ data: active.data });
-            return;
         }
-        const result = await getPrecoLive();
-        res.json(result);
     } catch (err: unknown) {
         if (err instanceof PricelistVersionError) {
             res.status(err.statusCode).json({ error: err.message, code: err.code });
@@ -161,9 +158,7 @@ router.patch('/', requireAuth, requireAdmin, writeLimiter, (_req, res) => {
 // projekcja kształtu zagnieżdżonego 1:1 z eksportem FE
 router.get('/export.xlsx', requireAuth, async (req, res) => {
     try {
-        const requested = requireExportSource(req.query.source);
-        // Etap 1: eksport "live" = bieżący szkic (jak dotąd w trybie draft).
-        const source = requested === 'live' ? 'draft' : requested;
+        const source = requireExportSource(req.query.source);
         if (source === 'draft') {
             const draft = await findLatestDraft('preco');
             if (!draft) {
@@ -208,11 +203,8 @@ router.get('/export.xlsx', requireAuth, async (req, res) => {
             res.send(xlsx);
             return;
         }
-        // Etap 1: `?source=live` aliasuje do szkicu, więc tu zostaje tylko
-        // `default` — eksport tabel LIVE nie jest już dostępny.
-        const result = await getPrecoDefault();
-        const entry = (result.data[0] ?? {}) as Record<string, unknown>;
-        const live = projectPrecoNestedToSheets(entry);
+        // Etap 2: `default` = fabryczny seed (tabele domyslne już nie istnieją).
+        const live = projectPrecoNestedToSheets(getSeedPrecoNested() as Record<string, unknown>);
         const label = await currentPricelistLabel('preco');
         const xlsx = await buildXlsx([
             ...liveSheetsToXlsxSheets(live, 'PRECO_Kinety'),
@@ -239,12 +231,11 @@ router.get('/export.xlsx', requireAuth, async (req, res) => {
 });
 
 // ──────────────────────────────────────────
-// GET /default — fabryczne wartości PRECO z Preco*Default tables
+// GET /default — fabryczny cennik PRECO z data/seed_preco.json
 // ──────────────────────────────────────────
 router.get('/default', requireAuth, async (_req, res) => {
     try {
-        const result = await getPrecoDefault();
-        res.json(result);
+        res.json({ data: [getSeedPrecoNested()] });
     } catch (err: unknown) {
         const message = err instanceof Error ? err.message : 'Unknown error';
         logger.error('PrecoPricingV2', 'GET /default error', message);

@@ -12,6 +12,7 @@ import {
     BorderStyle
 } from 'docx';
 import { logger } from '../../../utils/logger';
+import { getCatalogStudnieRows } from '../../pricelist/catalog';
 import prisma from '../../../prismaClient';
 import type {
     KartaBudowyMeta,
@@ -351,7 +352,8 @@ export async function generateKartaBudowyDOCX(orderId: string): Promise<Buffer> 
         { componentType: string; category: string; dn: number | string; height: number }
     >();
     try {
-        const products = await prisma.productsStudnieDefault.findMany();
+        // Etap 2: metadane z ACTIVE (fallback seed), bez tabel domyslnych.
+        const products = await getCatalogStudnieRows();
         for (const p of products) {
             allProducts.set(p.id, {
                 componentType: p.componentType || '',

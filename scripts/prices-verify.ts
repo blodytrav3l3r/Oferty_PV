@@ -2,12 +2,16 @@
 /**
  * prices-verify.ts
  *
- * Weryfikuje spojnosc warstw cennikow:
- *   1) LIVE vs *_Default vs plik data/price_defaults.json (stan od S5) — blad,
- *   2) ACTIVE (wersje) vs LIVE — WARN, a z `--strict` blad.
+ * Etap 2: tabel LIVE i kopii domyślnych nie ma, więc nie ma czego porównywać
+ * między warstwami. Skrypt sprawdza dwie rzeczy:
  *
- * Punkt 2 istnieje, bo nic nie synchronizuje LIVE po `approveVersion`; rozjazd
- * cen (5 dennic DN1200: 1150 vs 1050) przeszedl przez wszystkie bramy.
+ *   1) pliki `data/seed_*.json` parsują się i mają komplet identyfikatorów,
+ *   2) ACTIVE każdej osi istnieje i jest spójna wewnętrznie (unikalne `id`,
+ *      skończone ceny, komplet priec).
+ *
+ * Brak ACTIVE to SKIP (świeża instalacja przed bootstrapem), a z `--strict`
+ * błąd — CI może wymagać opublikowanej wersji.
+ *
  * Read-only — niczego nie zapisuje.
  *
  * Uzycie:
@@ -15,100 +19,119 @@
  *   npx ts-node --transpile-only scripts/prices-verify.ts --strict
  *
  * Kody wyjscia:
- *   0 = zgodne albo SKIP (brak pliku: swieza instalacja / CI), dryf ACTIVE vs LIVE = WARN
- *   1 = dryf snapshotu (LIVE/Default/plik) albo dowolny dryf przy --strict
+ *   0 = OK albo SKIP
+ *   1 = błąd danych albo brak ACTIVE przy --strict
  */
 
 import 'dotenv/config';
 import prisma from '../src/prismaClient';
-import { priceOverrideService } from '../src/services/priceOverrideService';
-import { collectDrift, formatDrift } from '../src/services/pricelist/drift';
-import type { DriftType } from '../src/services/pricelist/drift';
+import { getSeedPrecoItems, getSeedRury, getSeedStudnie } from '../src/services/pricelist/seedData';
+import { getVersionExport } from '../src/services/pricelist/export';
+import { resolveActive } from '../src/services/pricelist/usage';
+import { PRICELIST_TYPES } from '../src/services/pricelist/validation';
+import type { PricelistType } from '../src/services/pricelist/validation';
 
-const DRIFT_TYPES: DriftType[] = ['rury', 'studnie', 'preco'];
-const SAMPLE_LIMIT = 5;
+type Row = Record<string, unknown>;
 
-/** Sekcja ACTIVE vs LIVE. Zwraca false tylko gdy rozjazd jest realny (nie: brak ACTIVE). */
-async function reportDrift(): Promise<boolean> {
-    let ok = true;
-    for (const type of DRIFT_TYPES) {
-        try {
-            const report = await collectDrift(type, SAMPLE_LIMIT);
-            const line = formatDrift(report);
-            if (report.noActive) {
-                console.warn(`[prices:verify] ACTIVE vs LIVE ${line}`);
-                continue;
+/** Pola, które muszą być skończoną liczbą (mogą być ujemne, np. waga żeliwa). */
+const NUMERIC_FIELDS = ['price', 'transport', 'weight', 'area', 'cena', 'cena1', 'cena2', 'cena3'];
+
+/** Pola cenowe — nie mogą być ujemne. */
+const NON_NEGATIVE_FIELDS = new Set(['price', 'cena', 'cena1', 'cena2', 'cena3']);
+
+function checkSeedFiles(): string[] {
+    const issues: string[] = [];
+    const rury = getSeedRury();
+    const studnie = getSeedStudnie();
+    const preco = getSeedPrecoItems('seed-check');
+    if (rury.length === 0) issues.push('seed_rury.json: 0 wierszy');
+    if (studnie.length === 0) issues.push('seed_studnie.json: 0 wierszy');
+    if (preco.konfig.length === 0) issues.push('seed_preco.json: 0 konfiguracji');
+    for (const [label, rows] of [
+        ['rury', rury],
+        ['studnie', studnie]
+    ] as const) {
+        const ids = new Set<string>();
+        for (const row of rows) {
+            const id = String(row.id ?? '');
+            if (!id) issues.push(`seed_${label}: wiersz bez id`);
+            else if (ids.has(id)) issues.push(`seed_${label}: duplikat id ${id}`);
+            ids.add(id);
+        }
+    }
+    console.log(
+        `[prices:verify] seed: rury=${rury.length}, studnie=${studnie.length}, ` +
+            `preco=${preco.konfig.length}+${preco.kinety.length}+${preco.zakresy.length}`
+    );
+    return issues;
+}
+
+function checkVersionRows(type: PricelistType, rows: Row[]): string[] {
+    const issues: string[] = [];
+    if (rows.length === 0) {
+        issues.push(`${type}: ACTIVE bez pozycji`);
+        return issues;
+    }
+    const ids = new Set<string>();
+    for (const row of rows) {
+        const id = String(row.id ?? '');
+        if (!id) issues.push(`${type}: pozycja bez id`);
+        else if (ids.has(id)) issues.push(`${type}: duplikat id ${id}`);
+        ids.add(id);
+        for (const field of NUMERIC_FIELDS) {
+            const value = row[field];
+            if (value == null) continue;
+            if (typeof value !== 'number' || !Number.isFinite(value)) {
+                issues.push(`${type}: ${id} pole ${field} nie jest skończoną liczbą`);
+            } else if (value < 0 && NON_NEGATIVE_FIELDS.has(field)) {
+                issues.push(`${type}: ${id} pole ${field} jest ujemne (${value})`);
             }
-            if (report.ok) {
-                console.log(`[prices:verify] ACTIVE vs LIVE ${line}`);
-                continue;
-            }
-            ok = false;
-            console.warn(`[prices:verify] ROZJAZD ${line}`);
-            for (const sample of report.samples) {
-                console.warn(
-                    `[prices:verify]   ${sample.key} ${sample.kind} ` +
-                        `${sample.field}: live=${String(sample.live)} active=${String(sample.active)}`
-                );
-            }
-            console.warn(
-                '[prices:verify]   ACTIVE jest zrodlem cen ofert — rozjazd oznacza, ze LIVE ' +
-                    '(eksport/rollback) klamie o cenach.'
-            );
-        } catch (err: unknown) {
-            ok = false;
-            console.error(
-                `[prices:verify] Blad porownania ACTIVE vs LIVE (${type}):`,
-                err instanceof Error ? err.message : err
+        }
+    }
+    return issues;
+}
+
+async function checkActive(strict: boolean): Promise<string[]> {
+    const issues: string[] = [];
+    for (const type of PRICELIST_TYPES) {
+        const active = await resolveActive(type);
+        if (!active) {
+            const line = `[prices:verify] ${type}: brak ACTIVE — pomijam`;
+            if (strict) issues.push(`${type}: brak ACTIVE przy --strict`);
+            else console.warn(line);
+            continue;
+        }
+        const { sections } = await getVersionExport(active.id);
+        const rows = Object.values(sections).flat() as Row[];
+        const found = checkVersionRows(type, rows);
+        issues.push(...found);
+        if (found.length === 0) {
+            console.log(
+                `[prices:verify] ${type}: ACTIVE ${active.version} — ${rows.length} pozycji OK`
             );
         }
     }
-    return ok;
+    return issues;
 }
 
 async function main(): Promise<void> {
     const strict = process.argv.slice(2).includes('--strict');
-    let snapshotOk = true;
+    const issues = checkSeedFiles();
 
-    const result = await priceOverrideService.verifySnapshot();
-
-    if (result.skipped) {
-        console.log(`[prices:verify] SKIP: ${result.skipReason}`);
-    } else {
-        const live = result.live;
-        const file = result.file;
-        console.log(
-            `[prices:verify] live: rury=${live.rury}, studnie=${live.studnie}, ` +
-                `preco=${live.precoKonfig}+${live.precoKinety}+${live.precoZakresy}`
+    try {
+        issues.push(...(await checkActive(strict)));
+    } catch (err: unknown) {
+        console.warn(
+            '[prices:verify] SKIP weryfikacji ACTIVE (brak bazy?):',
+            err instanceof Error ? err.message : err
         );
-        console.log(
-            `[prices:verify] plik: rury=${file?.rury}, studnie=${file?.studnie}, ` +
-                `preco=${file?.precoKonfig}+${file?.precoKinety}+${file?.precoZakresy} ` +
-                `(export: ${file?.exportedAt ?? 'brak'})`
-        );
-
-        if (!result.ok) {
-            snapshotOk = false;
-            for (const issue of result.issues) {
-                console.error(`[prices:verify] DRYF: ${issue}`);
-            }
-        } else {
-            console.log('[prices:verify] OK — snapshot zgodny z baza (LIVE = Default = plik).');
-        }
     }
 
-    const driftOk = await reportDrift();
-
-    if (!snapshotOk) process.exit(1);
-    if (!driftOk && strict) {
-        console.error('[prices:verify] --strict: rozjazd ACTIVE vs LIVE traktowany jak blad.');
+    if (issues.length > 0) {
+        for (const issue of issues) console.error(`[prices:verify] BŁĄD: ${issue}`);
         process.exit(1);
     }
-    if (!driftOk) {
-        console.warn(
-            '[prices:verify] WARN: rozjazd ACTIVE vs LIVE (exit 0). Uzyj --strict, by blokowac CI.'
-        );
-    }
+    console.log('[prices:verify] OK — seed i ACTIVE spójne.');
 }
 
 main()

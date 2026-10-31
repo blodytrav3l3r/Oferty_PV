@@ -185,14 +185,13 @@ describe('frontend: panel Zarządzanie cennikiem (3 przyciski + 3 sekcje)', () =
         expect(panel).toContain('data-csp="exportPrecoToExcel"');
         expect(panel).toContain('id="pv-import-preco"');
         expect(panel).toContain('data-csp="importPrecoFromExcel"');
-        expect(panel).toContain('data-csp="saveAllDefaults" data-csp-scope="parent"');
+        expect(panel).not.toContain('data-csp="saveAllDefaults"');
+        expect(panel).not.toContain('id="btn-save-defaults"');
         expect(panel).not.toContain('data-csp="resetPriceList"');
         expect(panel).not.toContain('data-csp="resetStudniePriceList"');
         expect(panel).toContain('Przywróć domyślne (Rury)');
         expect(panel).toContain('Przywróć domyślne (Studnie)');
-        const saveDefaultsCount = (panel.match(/id="btn-save-defaults"/g) || []).length;
-        expect(saveDefaultsCount).toBe(1);
-        expect(panel).toContain('obejmuje wszystkie cenniki (rury, studnie, PRECO)');
+        expect(panel).toContain('wartości fabryczne (pliki seed)');
     });
     it('panel: brak eksportu wersji z raila (tylko transfer LIVE)', () => {
         expect(panel).not.toContain('data-pv-act="export"');
