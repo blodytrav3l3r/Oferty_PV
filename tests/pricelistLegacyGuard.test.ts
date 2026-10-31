@@ -25,6 +25,8 @@ const ALLOWLIST = new Set(
         'scripts/prices-export.ts',
         'scripts/prices-import.ts',
         'scripts/prices-verify.ts',
+        // Jednorazowa naprawa martwych zakresow PRECO (LIVE + Default + wersje).
+        'scripts/fix-preco-ranges.ts',
         'scripts/add-transport-products.mjs',
         'scripts/docker-entrypoint.sh',
         // Testy silnika legacy + ten guard (wzorce w literałach).
