@@ -72,6 +72,121 @@
             "effect": "deny"
         },
         {
+            "action": "skill",
+            "resource": "babysit",
+            "effect": "deny"
+        },
+        {
+            "action": "skill",
+            "resource": "banner-design",
+            "effect": "deny"
+        },
+        {
+            "action": "skill",
+            "resource": "brand",
+            "effect": "deny"
+        },
+        {
+            "action": "skill",
+            "resource": "design",
+            "effect": "deny"
+        },
+        {
+            "action": "skill",
+            "resource": "design-system",
+            "effect": "deny"
+        },
+        {
+            "action": "skill",
+            "resource": "gepeto",
+            "effect": "deny"
+        },
+        {
+            "action": "skill",
+            "resource": "migrate-to-builds",
+            "effect": "deny"
+        },
+        {
+            "action": "skill",
+            "resource": "migrate-to-skills",
+            "effect": "deny"
+        },
+        {
+            "action": "skill",
+            "resource": "pinokio",
+            "effect": "deny"
+        },
+        {
+            "action": "skill",
+            "resource": "sdk",
+            "effect": "deny"
+        },
+        {
+            "action": "skill",
+            "resource": "site-md",
+            "effect": "deny"
+        },
+        {
+            "action": "skill",
+            "resource": "slides",
+            "effect": "deny"
+        },
+        {
+            "action": "skill",
+            "resource": "statusline",
+            "effect": "deny"
+        },
+        {
+            "action": "skill",
+            "resource": "ui-styling",
+            "effect": "deny"
+        },
+        {
+            "action": "skill",
+            "resource": "create-hook",
+            "effect": "deny"
+        },
+        {
+            "action": "skill",
+            "resource": "create-rule",
+            "effect": "deny"
+        },
+        {
+            "action": "skill",
+            "resource": "create-skill",
+            "effect": "deny"
+        },
+        {
+            "action": "skill",
+            "resource": "create-subagent",
+            "effect": "deny"
+        },
+        {
+            "action": "skill",
+            "resource": "update-cli-config",
+            "effect": "deny"
+        },
+        {
+            "action": "skill",
+            "resource": "update-cursor-settings",
+            "effect": "deny"
+        },
+        {
+            "action": "skill",
+            "resource": "loop",
+            "effect": "deny"
+        },
+        {
+            "action": "skill",
+            "resource": "enhance-prompt",
+            "effect": "deny"
+        },
+        {
+            "action": "skill",
+            "resource": "split-to-prs",
+            "effect": "deny"
+        },
+        {
             "action": "shell",
             "resource": "git push *",
             "effect": "ask"
