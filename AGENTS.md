@@ -112,10 +112,13 @@ VERIFIED (YES/NO).
 
 ## Polityka kontekstu (jakość przede wszystkim, koszt przy okazji)
 
-- Rozpoznanie w **>2 plikach** → subagent `cavecrew-investigator` (zwraca tabelę `file:line`); nie wciągaj treści plików do głównego kontekstu.
+- Rozpoznanie w **>2 plikach** → subagent `cavecrew-investigator` (zwraca tabelę `file:line`); nie wciągaj treści plików do głównego kontekstu. `Explore` zwraca prozę — używaj go tylko, gdy potrzebujesz narracji.
 - `read` pliku **>300 linii** → zawsze z `offset`/`limit`; całość tylko gdy edytujesz większość pliku.
+- Szukanie konkretnego fragmentu → `grep` z kontekstem (`-C 3`), nie `read` całego pliku.
 - Pytania „gdzie jest X"/architektura → `graphify` (MCP), nie grep po całym repo.
 - Powrót do zadania z historii → `claude_mem_search` **przed** czytaniem plików.
+- `ocr_review`: najpierw `preview: true`; potem `exclude` na `graphify-out/`, `dist/`, `node_modules/`, snapshoty; wznowienie przez `resume`.
+- Jedno zadanie = jedna sesja; `session_rename` przy zmianie wątku.
 - Bramy egzekwuje kod (pre-push/pre-commit), nie proza — nie powtarzaj ich treści w promptcie ani w nowych plikach `instructions`.
 
 ## Routing domenowy (szczegóły)
@@ -149,7 +152,11 @@ Model subagentów w `.opencode/opencode.json` (`agents.<id>.model`). Zmiana conf
 
 ## graphify
 
-Knowledge graph w `graphify-out/`. Na `/graphify`: `query` → `path` → `explain`; `GRAPH_REPORT.md` tylko do szerokiego przeglądu. Po zmianie kodu: `graphify update .`.
+Knowledge graph w `graphify-out/`. Na `/graphify`: `query` → `path` → `explain`. Po zmianie kodu: `graphify update .`.
+
+- `query_graph` z `token_budget: 1000–1200` i `depth: 2`; szerszy budżet tylko gdy pytanie obejmuje cały moduł.
+- **Zakaz czytania `GRAPH_REPORT.md`** (225 KB ≈ 56k tokenów) w głównym wątku — to artefakt do przeglądu poza agentem; do architektury wystarczy `query_graph` lub `god_nodes`.
+- `graph.json` (11,9 MB) jest generowany i gitignored — nigdy nie czytaj go bezpośrednio.
 
 ## Kontrakt autonomii agenta (SSoT `docs/AUTONOMY_CONTRACT.md` z 2026-09-21)
 

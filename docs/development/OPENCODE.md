@@ -92,12 +92,23 @@ Narzędzia działają na **różnych końcach** kosztu — mylenie ich prowadzi 
 | subagenci `cavecrew-*`             | **input**             | `cavecrew-investigator`/`-reviewer` zwracają skompresowaną tabelę zamiast plików  |
 | `graphify` (MCP + `graphify-out/`) | **input**             | pytanie do węzła grafu zamiast czytania całych plików                             |
 
+Baseline zmierzony 2026-10-31 (przed optymalizacją):
+
+| Warstwa                                                                  | Rozmiar                   |
+| ------------------------------------------------------------------------ | ------------------------- |
+| instrukcje (AGENTS.md + 4 pliki rules + globalny AGENTS.md)              | 21 724 zn.                |
+| opisy skilli w katalogu sesji (46 wpisów, 58 unikalnych źródeł)          | 14 646 zn.                |
+| schematy tooli (browser 45, graphify 7, ocr 2, opencode 8, claude_mem 1) | ~8–10k tokenów (szacunek) |
+
 Zasady:
 
 - Domyślny tryb caveman jest pinowany w repo przez `.caveman.json` (`defaultMode`), nie przez config użytkownika — zachowanie identyczne na każdej maszynie z pluginem.
 - `.caveman/` (stan pluginu) jest gitignored; `.caveman.json` (decyzja projektu) jest w repo. Nie mylić tych ścieżek.
 - Duże rozpoznanie kodu robić subagentem `cavecrew-investigator`, nie serią `read` w głównym kontekście.
 - `ponytail` pinowany na konkretną wersję: `@latest` zmienia zachowanie skilli bez zmiany w repo.
+- Katalog skilli filtruje `permissions` z `action: "skill"`; `deny` usuwa wpis z katalogu sesji **bez** kasowania katalogu na dysku (bundle `~/.agents/skills` jest współdzielony z innymi narzędziami).
+- `graphify`: `token_budget` 1000–1200 i `depth` 2; `GRAPH_REPORT.md` (225 KB ≈ 56k tokenów) nie jest do czytania w agencie.
+- Prefix stały (instrukcje + katalog + schematy) jest stabilny, więc u dostawcy leci jako cache-read; zmiany configu wprowadzać paczką, bo unieważniają cache.
 
 ## 8. Znane pułapki
 
