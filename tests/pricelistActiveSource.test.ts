@@ -1,9 +1,8 @@
-process.env.PRICELIST_WRITE_TARGET = 'live';
 /**
  * Paczka 1: GET cenników z ?source=active czyta ceny z wersji APPROVED
  * przez centralny resolveActivePricing (kształt legacy 1:1 z GET live).
  * Brak ACTIVE → LIVE + X-Pricelist-Fallback: live; zły source → 422.
- * Zwykły GET bez source bez zmian. Edycja LIVE po aktywacji nie rusza active.
+ * Zwykły GET bez source = widok edytora (szkic → ACTIVE → LIVE).
  */
 
 import request from 'supertest';
@@ -337,7 +336,7 @@ describe('Paczka 1: source=active czyta z APPROVED', () => {
         expect(newest.body.data[0].price).toBe(80);
     });
 
-    test('rury: active 80 vs live 100; plain GET bez zmian i bez nagłówka', async () => {
+    test('rury: source=active 80; plain GET = widok edytora (ACTIVE 80)', async () => {
         const active = await request(app).get('/api/products?source=active');
         expect(active.status).toBe(200);
         expect(active.body.data).toHaveLength(1);
@@ -346,7 +345,7 @@ describe('Paczka 1: source=active czyta z APPROVED', () => {
 
         const plain = await request(app).get('/api/products');
         expect(plain.status).toBe(200);
-        expect(plain.body.data[0].price).toBe(100);
+        expect(plain.body.data[0].price).toBe(80);
         expect(plain.headers['x-pricelist-fallback']).toBeUndefined();
     });
 
@@ -360,7 +359,7 @@ describe('Paczka 1: source=active czyta z APPROVED', () => {
         expect(active.body.data[0].dn).toBe(1000);
 
         const plain = await request(app).get('/api/products-studnie');
-        expect(plain.body.data[0].price).toBe(100);
+        expect(plain.body.data[0].price).toBe(80);
     });
 
     test('preco: nested per DN z wersji (scalars + kinety + zakresy)', async () => {
@@ -372,11 +371,11 @@ describe('Paczka 1: source=active czyta z APPROVED', () => {
         expect(entry['1000'].spadekKineta[0].grupy).toEqual({ '110-160': 55 });
 
         const plain = await request(app).get('/api/preco-pricing');
-        expect(plain.body.data[0]['1000'].skrzynkaWlazowa).toBe(10);
-        expect(plain.body.data[0]['1000'].kinety[0].dodWlot).toBe(11);
+        expect(plain.body.data[0]['1000'].skrzynkaWlazowa).toBe(99);
+        expect(plain.body.data[0]['1000'].kinety[0].dodWlot).toBe(77);
     });
 
-    test('edycja LIVE po aktywacji nie zmienia source=active', async () => {
+    test('edycja tabel LIVE nie zmienia source=active ani widoku edytora', async () => {
         liveRury[0].price = 999;
         liveStudnie[0].price = 999;
         liveKonfig[0].value = JSON.stringify({
@@ -393,7 +392,7 @@ describe('Paczka 1: source=active czyta z APPROVED', () => {
             (await request(app).get('/api/preco-pricing?source=active')).body.data[0]['1000']
                 .skrzynkaWlazowa
         ).toBe(99);
-        expect((await request(app).get('/api/products')).body.data[0].price).toBe(999);
+        expect((await request(app).get('/api/products')).body.data[0].price).toBe(80);
     });
 
     test('brak APPROVED → LIVE + X-Pricelist-Fallback: live', async () => {

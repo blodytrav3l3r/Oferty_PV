@@ -3,7 +3,7 @@ import { requireAuth, requireAdmin } from '../middleware/auth';
 import { logger } from '../utils/logger';
 import { validateData } from '../validators/authSchema';
 import { PRICELIST_WRITE_LIMITER } from '../middleware/rateLimiters';
-import { pricelistDataSchema, productStudniePatchSchema } from '../validators/offerSchemas';
+import { pricelistDataSchema } from '../validators/offerSchemas';
 import { requireFinitePrice, InvalidPriceError } from '../validators/finiteNumbers';
 import { pricelistLock } from '../middleware/writeLock';
 import prisma from '../prismaClient';
@@ -22,9 +22,8 @@ import {
     resolveActivePricing
 } from '../services/pricelistVersionService';
 import { versionExportFilename } from '../utils/exportFilenames';
-import { getPrecoDefault, getPrecoLive } from '../services/precoPricing';
-import { logAudit } from '../services/auditService';
-import { recordPricelistFallback, recordPricelistLiveWrite } from '../utils/metrics';
+import { getPrecoDefault } from '../services/precoPricing';
+import { recordPricelistFallback } from '../utils/metrics';
 import {
     findLatestDraft,
     getEditorPricing,
@@ -38,43 +37,6 @@ const router = express.Router();
 const writeLimiter = PRICELIST_WRITE_LIMITER;
 
 const { runWithLock } = pricelistLock;
-
-const ALLOWED_FIELDS = [
-    'name',
-    'category',
-    'componentType',
-    'dn',
-    'height',
-    'weight',
-    'price',
-    'area',
-    'areaExt',
-    'transport',
-    'magazynWL',
-    'magazynKLB',
-    'formaStandardowa',
-    'formaStandardowaKLB',
-    'active',
-    'zapasDol',
-    'zapasGora',
-    'zapasDolMin',
-    'zapasGoraMin',
-    'spocznikH',
-    'hMin1',
-    'hMax1',
-    'cena1',
-    'hMin2',
-    'hMax2',
-    'cena2',
-    'hMin3',
-    'hMax3',
-    'cena3',
-    'doplataPEHD',
-    'doplataZelbet',
-    'doplataDrabNierdzewna',
-    'malowanieWewnetrzne',
-    'malowanieZewnetrzne'
-] as const;
 
 type StudnieProductRaw = {
     id: string;
@@ -194,25 +156,6 @@ function fromLegacy(p: Record<string, unknown>): StudnieProductRaw {
     };
 }
 
-function fromLegacyPatch(patch: Record<string, unknown>): Record<string, unknown> {
-    const result: Record<string, unknown> = {};
-    const booleanFields = [
-        'magazynWL',
-        'magazynKLB',
-        'formaStandardowa',
-        'formaStandardowaKLB',
-        'active'
-    ];
-    for (const [key, value] of Object.entries(patch)) {
-        if (booleanFields.includes(key)) {
-            result[key] = value === 1 || value === true;
-        } else {
-            result[key] = value;
-        }
-    }
-    return result;
-}
-
 function toLegacy(p: StudnieProductRaw): StudnieProductLegacy {
     const dnVal: number | string | null =
         p.dn != null ? (isNaN(Number(p.dn)) ? p.dn : Number(p.dn)) : null;
@@ -263,7 +206,7 @@ router.get('/', requireAuth, async (req, res) => {
         res.setHeader('X-Pricelist-Write-Target', getPricelistWriteTarget());
         const source = requirePricingSource(req.query.source);
         let fallbackHeader = false;
-        if (!source && getPricelistWriteTarget() === 'draft') {
+        if (!source) {
             const editor = await getEditorPricing('studnie');
             if (!editor.fallback) {
                 res.json({ data: editor.data });
@@ -330,32 +273,18 @@ router.put(
                     };
                 }
 
-                if (getPricelistWriteTarget() === 'draft') {
-                    const draft = await saveRowsToDraft(
-                        'studnie',
-                        mapped,
-                        req.user?.id,
-                        parseIfMatch(req.get('If-Match'))
-                    );
-                    return {
-                        ok: true,
-                        count: arr.length,
-                        target: 'draft',
-                        versionId: draft.id
-                    };
-                }
-
-                await prisma.$transaction(async (tx) => {
-                    await tx.productsStudnie.deleteMany();
-                    await tx.productsStudnie.createMany({ data: mapped });
-                });
-
-                recordPricelistLiveWrite('studnie');
-                await logAudit('pricelist_live', 'studnie', req.user?.id ?? '', 'LIVE_WRITE', {
-                    count: arr.length
-                });
-
-                return { ok: true, count: arr.length };
+                const draft = await saveRowsToDraft(
+                    'studnie',
+                    mapped,
+                    req.user?.id,
+                    parseIfMatch(req.get('If-Match'))
+                );
+                return {
+                    ok: true,
+                    count: arr.length,
+                    target: 'draft',
+                    versionId: draft.id
+                };
             });
             if (!result.acquired) {
                 res.status(429).json({ error: 'Zapis w toku, spróbuj ponownie za chwilę' });
@@ -380,95 +309,23 @@ router.put(
 );
 
 // ──────────────────────────────────────────
-// PATCH /:id — edytuj jeden produkt
+// PATCH /:id — wyłączone: LIVE jest tylko do odczytu (etap 1)
 // ──────────────────────────────────────────
-router.patch(
-    '/:id',
-    requireAuth,
-    requireAdmin,
-    writeLimiter,
-    validateData(productStudniePatchSchema),
-    async (req, res) => {
-        if (getPricelistWriteTarget() === 'draft') {
-            res.status(409).json({
-                error: 'LIVE jest tylko do odczytu; edytuj szkic cennika',
-                code: 'LIVE_READ_ONLY'
-            });
-            return;
-        }
-        const { id } = req.params;
-        const data: Record<string, unknown> = {};
-        for (const key of ALLOWED_FIELDS) {
-            if (req.body[key] !== undefined) {
-                data[key] = req.body[key];
-            }
-        }
-        if (Object.keys(data).length === 0) {
-            res.status(400).json({ error: 'Brak pól do aktualizacji' });
-            return;
-        }
-
-        try {
-            const result = await runWithLock(async () => {
-                const converted = fromLegacyPatch(data);
-                const updated = await prisma.productsStudnie.update({
-                    where: { id },
-                    data: converted as never
-                });
-                recordPricelistLiveWrite('studnie');
-                await logAudit(
-                    'pricelist_live',
-                    'studnie',
-                    req.user?.id ?? '',
-                    'PATCH_LIVE_WRITE',
-                    { id }
-                );
-                return { ok: true, data: toLegacy(updated) };
-            });
-            if (!result.acquired) {
-                res.status(429).json({ error: 'Zapis w toku, spróbuj ponownie za chwilę' });
-                return;
-            }
-            res.json(result.value);
-        } catch (err: unknown) {
-            const message = err instanceof Error ? err.message : 'Unknown error';
-            logger.error('ProductsStudnieV2', 'PATCH error', message);
-            res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
-        }
-    }
-);
+router.patch('/:id', requireAuth, requireAdmin, writeLimiter, (_req, res) => {
+    res.status(409).json({
+        error: 'LIVE jest tylko do odczytu; edytuj szkic cennika',
+        code: 'LIVE_READ_ONLY'
+    });
+});
 
 // ──────────────────────────────────────────
-// DELETE /:id — usuń jeden produkt
+// DELETE /:id — wyłączone: LIVE jest tylko do odczytu (etap 1)
 // ──────────────────────────────────────────
-router.delete('/:id', requireAuth, requireAdmin, writeLimiter, async (req, res) => {
-    if (getPricelistWriteTarget() === 'draft') {
-        res.status(409).json({
-            error: 'LIVE jest tylko do odczytu; edytuj szkic cennika',
-            code: 'LIVE_READ_ONLY'
-        });
-        return;
-    }
-    try {
-        const result = await runWithLock(async () => {
-            const { id } = req.params;
-            await prisma.productsStudnie.delete({ where: { id } });
-            recordPricelistLiveWrite('studnie');
-            await logAudit('pricelist_live', 'studnie', req.user?.id ?? '', 'DELETE_LIVE_WRITE', {
-                id
-            });
-            return { ok: true };
-        });
-        if (!result.acquired) {
-            res.status(429).json({ error: 'Zapis w toku, spróbuj ponownie za chwilę' });
-            return;
-        }
-        res.json(result.value);
-    } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : 'Unknown error';
-        logger.error('ProductsStudnieV2', 'DELETE error', message);
-        res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
-    }
+router.delete('/:id', requireAuth, requireAdmin, writeLimiter, (_req, res) => {
+    res.status(409).json({
+        error: 'LIVE jest tylko do odczytu; edytuj szkic cennika',
+        code: 'LIVE_READ_ONLY'
+    });
 });
 
 // ──────────────────────────────────────────
@@ -477,9 +334,8 @@ router.delete('/:id', requireAuth, requireAdmin, writeLimiter, async (req, res) 
 router.get('/export.xlsx', requireAuth, async (req, res) => {
     try {
         const requested = requireExportSource(req.query.source);
-        // S5 alias: w trybie draft eksport "live" = bieżący szkic (rollback bez zmian FE).
-        const source =
-            requested === 'live' && getPricelistWriteTarget() === 'draft' ? 'draft' : requested;
+        // Etap 1: eksport "live" = bieżący szkic (jak dotąd w trybie draft).
+        const source = requested === 'live' ? 'draft' : requested;
         if (source === 'draft') {
             const draft = await findLatestDraft('studnie');
             if (!draft) {
@@ -524,14 +380,11 @@ router.get('/export.xlsx', requireAuth, async (req, res) => {
             res.send(xlsx);
             return;
         }
-        const rows =
-            source === 'live'
-                ? await prisma.productsStudnie.findMany({
-                      orderBy: [{ category: 'asc' }, { componentType: 'asc' }, { id: 'asc' }]
-                  })
-                : await prisma.productsStudnieDefault.findMany({
-                      orderBy: [{ category: 'asc' }, { componentType: 'asc' }, { id: 'asc' }]
-                  });
+        // Etap 1: `?source=live` aliasuje do szkicu, więc tu zostaje tylko
+        // `default` — eksport tabel LIVE nie jest już dostępny.
+        const rows = await prisma.productsStudnieDefault.findMany({
+            orderBy: [{ category: 'asc' }, { componentType: 'asc' }, { id: 'asc' }]
+        });
         const legacy = (rows as unknown as StudnieProductRaw[]).map(toLegacy);
         const live = projectVersionToLiveShape('studnie', {
             studnie: legacy as unknown as Array<Record<string, unknown>>
@@ -542,7 +395,7 @@ router.get('/export.xlsx', requireAuth, async (req, res) => {
         const includePreco = String(req.query.includePreco ?? '0') !== '0';
         let merged = live;
         if (includePreco) {
-            const precoResult = source === 'live' ? await getPrecoLive() : await getPrecoDefault();
+            const precoResult = await getPrecoDefault();
             const precoEntry = (precoResult.data[0] ?? {}) as Record<string, unknown>;
             merged = { ...live, ...projectPrecoNestedToSheets(precoEntry) };
         }

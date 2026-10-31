@@ -3,19 +3,12 @@ import { requireAuth, requireAdmin } from '../middleware/auth';
 import { logger } from '../utils/logger';
 import { PRECO_PRICING_LIMITER } from '../middleware/rateLimiters';
 import { validateData } from '../validators/authSchema';
-import { precoPricingUpdateSchema, precoPricingPatchSchema } from '../validators/offerSchemas';
+import { precoPricingUpdateSchema } from '../validators/offerSchemas';
 import { InvalidPriceError } from '../validators/finiteNumbers';
 import { pricelistLock } from '../middleware/writeLock';
 import { buildXlsx } from '../utils/minimalXlsx';
-import {
-    flattenAndSave,
-    flattenPrecoRows,
-    getPrecoDefault,
-    getPrecoLive,
-    RANGE_TYPES
-} from '../services/precoPricing';
-import { logAudit } from '../services/auditService';
-import { recordPricelistFallback, recordPricelistLiveWrite } from '../utils/metrics';
+import { flattenPrecoRows, getPrecoDefault, getPrecoLive } from '../services/precoPricing';
+import { recordPricelistFallback } from '../utils/metrics';
 import {
     findLatestDraft,
     getEditorPricing,
@@ -51,7 +44,7 @@ router.get('/', requireAuth, async (req, res) => {
         res.setHeader('X-Pricelist-Write-Target', getPricelistWriteTarget());
         const source = requirePricingSource(req.query.source);
         let fallbackHeader = false;
-        if (!source && getPricelistWriteTarget() === 'draft') {
+        if (!source) {
             const editor = await getEditorPricing('preco');
             if (!editor.fallback) {
                 res.json({ data: editor.data });
@@ -124,24 +117,13 @@ router.put(
                     };
                 }
 
-                if (getPricelistWriteTarget() === 'draft') {
-                    const draft = await saveRowsToDraft(
-                        'preco',
-                        flattenPrecoRows(input),
-                        req.user?.id,
-                        parseIfMatch(req.get('If-Match'))
-                    );
-                    return { ok: true, target: 'draft', versionId: draft.id };
-                }
-
-                await flattenAndSave(input, false);
-
-                recordPricelistLiveWrite('preco');
-                await logAudit('pricelist_live', 'preco', req.user?.id ?? '', 'LIVE_WRITE', {
-                    sections: ['konfig', 'kinety', 'zakresy']
-                });
-
-                return { ok: true };
+                const draft = await saveRowsToDraft(
+                    'preco',
+                    flattenPrecoRows(input),
+                    req.user?.id,
+                    parseIfMatch(req.get('If-Match'))
+                );
+                return { ok: true, target: 'draft', versionId: draft.id };
             });
             if (!result.acquired) {
                 res.status(429).json({ error: 'Zapis w toku, spróbuj ponownie za chwilę' });
@@ -166,76 +148,14 @@ router.put(
 );
 
 // ──────────────────────────────────────────
-// PATCH / — częściowa aktualizacja
-// Odczytuje aktualny stan, głęboko scala DN entry, zapisuje do live
+// PATCH / — wyłączone: LIVE jest tylko do odczytu (etap 1)
 // ──────────────────────────────────────────
-router.patch(
-    '/',
-    requireAuth,
-    requireAdmin,
-    writeLimiter,
-    validateData(precoPricingPatchSchema),
-    async (req, res) => {
-        if (getPricelistWriteTarget() === 'draft') {
-            res.status(409).json({
-                error: 'LIVE jest tylko do odczytu; edytuj szkic cennika',
-                code: 'LIVE_READ_ONLY'
-            });
-            return;
-        }
-        const patch = req.body.data as Record<string, unknown>;
-        if (!patch || typeof patch !== 'object') {
-            res.status(400).json({ error: 'Nieprawidłowy format danych' });
-            return;
-        }
-
-        try {
-            const result = await runWithLock(async () => {
-                const current = await getPrecoLive();
-                const entry: Record<string, unknown> =
-                    current.data.length > 0
-                        ? { ...(current.data[0] as Record<string, unknown>) }
-                        : {};
-
-                for (const [key, value] of Object.entries(patch)) {
-                    const dn = Number(key);
-                    if (
-                        !Number.isNaN(dn) &&
-                        typeof value === 'object' &&
-                        value !== null &&
-                        !Array.isArray(value)
-                    ) {
-                        const existing = (entry[key] as Record<string, unknown>) || {};
-                        entry[key] = { ...existing, ...(value as Record<string, unknown>) };
-                    } else if ((RANGE_TYPES as readonly string[]).includes(key)) {
-                        entry[key] = value;
-                    }
-                }
-
-                await flattenAndSave(entry, false);
-                recordPricelistLiveWrite('preco');
-                await logAudit('pricelist_live', 'preco', req.user?.id ?? '', 'PATCH_LIVE_WRITE', {
-                    keys: Object.keys(patch)
-                });
-                return { ok: true };
-            });
-            if (!result.acquired) {
-                res.status(429).json({ error: 'Zapis w toku, spróbuj ponownie za chwilę' });
-                return;
-            }
-            res.json(result.value);
-        } catch (err: unknown) {
-            // D-FIX-2: invalid numeric input to 400 (flattenAndSave waliduje).
-            if (err instanceof InvalidPriceError) {
-                res.status(400).json({ error: err.message });
-                return;
-            }
-            const message = err instanceof Error ? err.message : 'Unknown error';
-            logger.error('PrecoPricingV2', 'PATCH error', message);
-            res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
-        }
-    }
-);
+router.patch('/', requireAuth, requireAdmin, writeLimiter, (_req, res) => {
+    res.status(409).json({
+        error: 'LIVE jest tylko do odczytu; edytuj szkic cennika',
+        code: 'LIVE_READ_ONLY'
+    });
+});
 
 // ──────────────────────────────────────────
 // GET /export.xlsx?source=live|default|active — sama część PRECO (Etap C),
@@ -243,9 +163,8 @@ router.patch(
 router.get('/export.xlsx', requireAuth, async (req, res) => {
     try {
         const requested = requireExportSource(req.query.source);
-        // S5 alias: w trybie draft eksport "live" = bieżący szkic (rollback bez zmian FE).
-        const source =
-            requested === 'live' && getPricelistWriteTarget() === 'draft' ? 'draft' : requested;
+        // Etap 1: eksport "live" = bieżący szkic (jak dotąd w trybie draft).
+        const source = requested === 'live' ? 'draft' : requested;
         if (source === 'draft') {
             const draft = await findLatestDraft('preco');
             if (!draft) {
@@ -290,7 +209,9 @@ router.get('/export.xlsx', requireAuth, async (req, res) => {
             res.send(xlsx);
             return;
         }
-        const result = source === 'live' ? await getPrecoLive() : await getPrecoDefault();
+        // Etap 1: `?source=live` aliasuje do szkicu, więc tu zostaje tylko
+        // `default` — eksport tabel LIVE nie jest już dostępny.
+        const result = await getPrecoDefault();
         const entry = (result.data[0] ?? {}) as Record<string, unknown>;
         const live = projectPrecoNestedToSheets(entry);
         const label = await currentPricelistLabel('preco');

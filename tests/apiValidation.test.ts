@@ -1,4 +1,3 @@
-process.env.PRICELIST_WRITE_TARGET = 'live';
 /**
  * Testy E2E walidacji API (Faza 8)
  * Weryfikacja czy endpointy zwracają 400 dla nieprawidłowych danych
@@ -37,6 +36,16 @@ jest.mock('../src/utils/logger', () => ({
         error: jest.fn(),
         warn: jest.fn()
     }
+}));
+
+// Etap 1: zapis cennika zawsze do szkicu (LIVE tylko do odczytu) — bez DB.
+jest.mock('../src/services/pricelist/writeTarget', () => ({
+    getPricelistWriteTarget: () => 'draft',
+    findLatestDraft: jest.fn(async () => null),
+    getEditorPricing: jest.fn(async () => ({ data: [], fallback: true })),
+    saveRowsToDraft: jest.fn(async () => ({ id: 'draft-1' })),
+    parseIfMatch: () => undefined,
+    parseVersionIdHeader: () => null
 }));
 
 // Mock offer exports

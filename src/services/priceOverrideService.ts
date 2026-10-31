@@ -340,10 +340,12 @@ class PriceOverrideService {
      * @param filePath - ścieżka snapshotu (domyślnie data/price_defaults.json)
      * @param options.force - true = pomiń guard timestamp (CLI prices:import);
      *                        false = pomiń restore gdy baza ma timestamp >= exportedAt (start)
+     * @param options.dryRun - true = policz diff i zwróć podsumowanie bez zapisu
+     *                        (domyślne zachowanie CLI prices:import)
      */
     async restoreDefaultsFromJson(
         filePath?: string,
-        options: { force?: boolean } = {}
+        options: { force?: boolean; dryRun?: boolean } = {}
     ): Promise<RestoreSummary | null> {
         const target = filePath ?? this.defaultsPath;
 
@@ -498,6 +500,23 @@ class PriceOverrideService {
             precoKinety: diffById(curKinety, kinety),
             precoZakresy: diffById(curZakresy, zakresy)
         };
+
+        if (options.dryRun) {
+            logger.info(
+                'PriceOverride',
+                'Dry-run: nic nie zapisano (użyj --force, by zastosować import)'
+            );
+            return {
+                rury: rury.length,
+                studnie: studnie.length,
+                precoKonfig: konfig.length,
+                precoKinety: kinety.length,
+                precoZakresy: zakresy.length,
+                diff,
+                skippedGuard: false,
+                schemaVersion
+            };
+        }
 
         await prisma.$transaction(async (tx) => {
             for (const table of [

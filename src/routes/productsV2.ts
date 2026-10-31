@@ -3,12 +3,11 @@ import { requireAuth, requireAdmin } from '../middleware/auth';
 import { logger } from '../utils/logger';
 import { validateData } from '../validators/authSchema';
 import { PRICELIST_WRITE_LIMITER } from '../middleware/rateLimiters';
-import { pricelistDataSchema, productPatchSchema } from '../validators/offerSchemas';
+import { pricelistDataSchema } from '../validators/offerSchemas';
 import { requireFinitePrice, InvalidPriceError } from '../validators/finiteNumbers';
 import { pricelistLock } from '../middleware/writeLock';
 import prisma from '../prismaClient';
-import { logAudit } from '../services/auditService';
-import { recordPricelistFallback, recordPricelistLiveWrite } from '../utils/metrics';
+import { recordPricelistFallback } from '../utils/metrics';
 import {
     findLatestDraft,
     getEditorPricing,
@@ -36,8 +35,6 @@ import { versionExportFilename } from '../utils/exportFilenames';
 const router = express.Router();
 const writeLimiter = PRICELIST_WRITE_LIMITER;
 
-const ALLOWED_FIELDS = ['name', 'category', 'price', 'transport', 'weight', 'area'] as const;
-
 const { runWithLock } = pricelistLock;
 
 // ──────────────────────────────────────────
@@ -48,7 +45,7 @@ router.get('/', requireAuth, async (req, res) => {
         res.setHeader('X-Pricelist-Write-Target', getPricelistWriteTarget());
         const source = requirePricingSource(req.query.source);
         let fallbackHeader = false;
-        if (!source && getPricelistWriteTarget() === 'draft') {
+        if (!source) {
             const editor = await getEditorPricing('rury');
             if (!editor.fallback) {
                 res.json({ data: editor.data });
@@ -125,31 +122,18 @@ router.put(
                     };
                 }
 
-                if (getPricelistWriteTarget() === 'draft') {
-                    const draft = await saveRowsToDraft(
-                        'rury',
-                        mapped,
-                        req.user?.id,
-                        parseIfMatch(req.get('If-Match'))
-                    );
-                    return {
-                        ok: true,
-                        count: arr.length,
-                        target: 'draft',
-                        versionId: draft.id
-                    };
-                }
-                await prisma.$transaction([
-                    prisma.productsRury.deleteMany(),
-                    prisma.productsRury.createMany({ data: mapped })
-                ]);
-
-                recordPricelistLiveWrite('rury');
-                await logAudit('pricelist_live', 'rury', req.user?.id ?? '', 'LIVE_WRITE', {
-                    count: arr.length
-                });
-
-                return { ok: true, count: arr.length };
+                const draft = await saveRowsToDraft(
+                    'rury',
+                    mapped,
+                    req.user?.id,
+                    parseIfMatch(req.get('If-Match'))
+                );
+                return {
+                    ok: true,
+                    count: arr.length,
+                    target: 'draft',
+                    versionId: draft.id
+                };
             });
             if (!result.acquired) {
                 res.status(429).json({ error: 'Zapis w toku, spróbuj ponownie za chwilę' });
@@ -174,87 +158,23 @@ router.put(
 );
 
 // ──────────────────────────────────────────
-// PATCH /:id — edytuj jeden produkt
+// PATCH /:id — wyłączone: LIVE jest tylko do odczytu (etap 1)
 // ──────────────────────────────────────────
-router.patch(
-    '/:id',
-    requireAuth,
-    requireAdmin,
-    writeLimiter,
-    validateData(productPatchSchema),
-    async (req, res) => {
-        if (getPricelistWriteTarget() === 'draft') {
-            res.status(409).json({
-                error: 'LIVE jest tylko do odczytu; edytuj szkic cennika',
-                code: 'LIVE_READ_ONLY'
-            });
-            return;
-        }
-        const { id } = req.params;
-        const data: Record<string, unknown> = {};
-        for (const key of ALLOWED_FIELDS) {
-            if (req.body[key] !== undefined) {
-                data[key] = req.body[key];
-            }
-        }
-        if (Object.keys(data).length === 0) {
-            res.status(400).json({ error: 'Brak pól do aktualizacji' });
-            return;
-        }
-
-        try {
-            const result = await runWithLock(async () => {
-                const updated = await prisma.productsRury.update({ where: { id }, data });
-                recordPricelistLiveWrite('rury');
-                await logAudit('pricelist_live', 'rury', req.user?.id ?? '', 'PATCH_LIVE_WRITE', {
-                    id
-                });
-                return { ok: true, data: updated };
-            });
-            if (!result.acquired) {
-                res.status(429).json({ error: 'Zapis w toku, spróbuj ponownie za chwilę' });
-                return;
-            }
-            res.json(result.value);
-        } catch (err: unknown) {
-            const message = err instanceof Error ? err.message : 'Unknown error';
-            logger.error('ProductsV2', 'PATCH error', message);
-            res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
-        }
-    }
-);
+router.patch('/:id', requireAuth, requireAdmin, writeLimiter, (_req, res) => {
+    res.status(409).json({
+        error: 'LIVE jest tylko do odczytu; edytuj szkic cennika',
+        code: 'LIVE_READ_ONLY'
+    });
+});
 
 // ──────────────────────────────────────────
-// DELETE /:id — usuń jeden produkt
+// DELETE /:id — wyłączone: LIVE jest tylko do odczytu (etap 1)
 // ──────────────────────────────────────────
-router.delete('/:id', requireAuth, requireAdmin, writeLimiter, async (req, res) => {
-    if (getPricelistWriteTarget() === 'draft') {
-        res.status(409).json({
-            error: 'LIVE jest tylko do odczytu; edytuj szkic cennika',
-            code: 'LIVE_READ_ONLY'
-        });
-        return;
-    }
-    try {
-        const result = await runWithLock(async () => {
-            const { id } = req.params;
-            await prisma.productsRury.delete({ where: { id } });
-            recordPricelistLiveWrite('rury');
-            await logAudit('pricelist_live', 'rury', req.user?.id ?? '', 'DELETE_LIVE_WRITE', {
-                id
-            });
-            return { ok: true };
-        });
-        if (!result.acquired) {
-            res.status(429).json({ error: 'Zapis w toku, spróbuj ponownie za chwilę' });
-            return;
-        }
-        res.json(result.value);
-    } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : 'Unknown error';
-        logger.error('ProductsV2', 'DELETE error', message);
-        res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
-    }
+router.delete('/:id', requireAuth, requireAdmin, writeLimiter, (_req, res) => {
+    res.status(409).json({
+        error: 'LIVE jest tylko do odczytu; edytuj szkic cennika',
+        code: 'LIVE_READ_ONLY'
+    });
 });
 
 // ──────────────────────────────────────────
@@ -263,9 +183,8 @@ router.delete('/:id', requireAuth, requireAdmin, writeLimiter, async (req, res) 
 router.get('/export.xlsx', requireAuth, async (req, res) => {
     try {
         const requested = requireExportSource(req.query.source);
-        // S5 alias: w trybie draft eksport "live" = bieżący szkic (rollback bez zmian FE).
-        const source =
-            requested === 'live' && getPricelistWriteTarget() === 'draft' ? 'draft' : requested;
+        // Etap 1: eksport "live" = bieżący szkic (jak dotąd w trybie draft).
+        const source = requested === 'live' ? 'draft' : requested;
         if (source === 'draft') {
             const draft = await findLatestDraft('rury');
             if (!draft) {
@@ -310,14 +229,11 @@ router.get('/export.xlsx', requireAuth, async (req, res) => {
             res.send(xlsx);
             return;
         }
-        const rows =
-            source === 'live'
-                ? await prisma.productsRury.findMany({
-                      orderBy: [{ category: 'asc' }, { id: 'asc' }]
-                  })
-                : await prisma.productsRuryDefault.findMany({
-                      orderBy: [{ category: 'asc' }, { id: 'asc' }]
-                  });
+        // Etap 1: `?source=live` aliasuje do szkicu, więc tu zostaje tylko
+        // `default` — eksport tabel LIVE nie jest już dostępny.
+        const rows = await prisma.productsRuryDefault.findMany({
+            orderBy: [{ category: 'asc' }, { id: 'asc' }]
+        });
         const live = projectVersionToLiveShape('rury', {
             rury: rows as unknown as Array<Record<string, unknown>>
         });

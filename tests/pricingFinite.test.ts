@@ -1,9 +1,8 @@
-process.env.PRICELIST_WRITE_TARGET = 'live';
 /**
  * D-FIX-2: invalid/non-finite numerics never become silent 0 in pricing.
- * Granica mocka: prismaClient (in-memory; asercje braku zapisu) + auth/limitery.
+ * Granica mocka: zapis szkicu (saveRowsToDraft) + auth/limitery.
  * Kontrakt: null/''/'abc'/NaN/±Infinity/ujemne → 400 + ZERO zapisów;
- * poprawne liczby i numeryczne stringi → 200.
+ * poprawne liczby i numeryczne stringi → 200 z zapisem do szkicu.
  */
 import request from 'supertest';
 import express from 'express';
@@ -26,75 +25,16 @@ jest.mock('../src/middleware/rateLimiters', () => ({
     PRECO_PRICING_LIMITER: (_req: any, _res: any, next: any) => next()
 }));
 
-const calls: { op: string; data?: unknown }[] = [];
+jest.mock('../src/prismaClient', () => ({ __esModule: true, default: {} }));
 
-function table() {
-    return {
-        findMany: jest.fn(async () => []),
-        deleteMany: jest.fn(async () => {
-            calls.push({ op: 'deleteMany' });
-            return { count: 0 };
-        }),
-        createMany: jest.fn(async ({ data }: any) => {
-            calls.push({ op: 'createMany', data });
-            return { count: (data as unknown[]).length };
-        })
-    };
-}
-
-const precoKonfig = table();
-const precoKinety = table();
-const precoZakresy = table();
-
-jest.mock('../src/prismaClient', () => ({
-    __esModule: true,
-    default: {
-        productsRury: {
-            deleteMany: jest.fn(async () => {
-                calls.push({ op: 'rury.deleteMany' });
-                return { count: 0 };
-            }),
-            createMany: jest.fn(async ({ data }: any) => {
-                calls.push({ op: 'rury.createMany', data });
-                return { count: (data as unknown[]).length };
-            })
-        },
-        productsStudnie: {
-            deleteMany: jest.fn(async () => {
-                calls.push({ op: 'studnie.deleteMany' });
-                return { count: 0 };
-            }),
-            createMany: jest.fn(async ({ data }: any) => {
-                calls.push({ op: 'studnie.createMany', data });
-                return { count: (data as unknown[]).length };
-            })
-        },
-        precoKonfig,
-        precoKinety,
-        precoZakresy,
-        precoKonfigDefault: table(),
-        precoKinetyDefault: table(),
-        precoZakresyDefault: table(),
-        $transaction: jest.fn(async (arg: any) => {
-            if (Array.isArray(arg)) {
-                for (const op of arg) await op;
-                return [];
-            }
-            const tx = {
-                productsStudnie: {
-                    deleteMany: jest.fn(async () => {
-                        calls.push({ op: 'studnie.deleteMany' });
-                        return { count: 0 };
-                    }),
-                    createMany: jest.fn(async ({ data }: any) => {
-                        calls.push({ op: 'studnie.createMany', data });
-                        return { count: (data as unknown[]).length };
-                    })
-                }
-            };
-            return arg(tx);
-        })
-    }
+const saveRowsToDraft = jest.fn();
+jest.mock('../src/services/pricelist/writeTarget', () => ({
+    getPricelistWriteTarget: () => 'draft',
+    findLatestDraft: jest.fn(async () => null),
+    getEditorPricing: jest.fn(async () => ({ data: null, fallback: true })),
+    saveRowsToDraft: (...args: unknown[]) => saveRowsToDraft(...args),
+    parseIfMatch: () => undefined,
+    parseVersionIdHeader: () => null
 }));
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -140,8 +80,8 @@ describe('D-FIX-2 requireFinitePrice (unit)', () => {
 describe('D-FIX-2 routes: invalid price -> 400, zero zapisów', () => {
     let app: express.Application;
     beforeEach(() => {
-        calls.length = 0;
         jest.clearAllMocks();
+        saveRowsToDraft.mockResolvedValue({ id: 'draft-1' });
         app = buildApp();
     });
 
@@ -150,7 +90,7 @@ describe('D-FIX-2 routes: invalid price -> 400, zero zapisów', () => {
             .put('/api/products-v2')
             .send({ data: [{ id: 'p1', name: 'R', category: 'K', price }] });
         expect(res.status).toBe(400);
-        expect(calls).toEqual([]);
+        expect(saveRowsToDraft).not.toHaveBeenCalled();
     });
 
     test('PUT rury poprawne ceny -> 200 (liczba i numeric string)', async () => {
@@ -158,20 +98,23 @@ describe('D-FIX-2 routes: invalid price -> 400, zero zapisów', () => {
             .put('/api/products-v2')
             .send({ data: [...VALID_RURY, { id: 'p2', name: 'R2', category: 'K', price: '13' }] });
         expect(res.status).toBe(200);
-        const created = calls.find((c) => c.op === 'rury.createMany');
-        expect(created).toBeDefined();
-        expect(created!.data).toEqual([
-            expect.objectContaining({ id: 'p1', price: 12.5 }),
-            expect.objectContaining({ id: 'p2', price: 13 })
-        ]);
+        expect(saveRowsToDraft).toHaveBeenCalledWith(
+            'rury',
+            [
+                expect.objectContaining({ id: 'p1', price: 12.5 }),
+                expect.objectContaining({ id: 'p2', price: 13 })
+            ],
+            'admin-1',
+            undefined
+        );
     });
 
-    test.each([null, '', 'abc'])('PUT studnie price=%p -> 400, brak createMany', async (price) => {
+    test.each([null, '', 'abc'])('PUT studnie price=%p -> 400, brak zapisu', async (price) => {
         const res = await request(app)
             .put('/api/products-studnie-v2')
             .send({ data: [{ id: 's1', name: 'S', category: 'K', price }] });
         expect(res.status).toBe(400);
-        expect(calls.filter((c) => c.op === 'studnie.createMany')).toEqual([]);
+        expect(saveRowsToDraft).not.toHaveBeenCalled();
     });
 
     test('PUT studnie poprawna cena -> 200', async () => {
@@ -179,20 +122,25 @@ describe('D-FIX-2 routes: invalid price -> 400, zero zapisów', () => {
             .put('/api/products-studnie-v2')
             .send({ data: VALID_STUDNIE });
         expect(res.status).toBe(200);
+        expect(saveRowsToDraft).toHaveBeenCalledWith(
+            'studnie',
+            [expect.objectContaining({ id: 's1', price: 10 })],
+            'admin-1',
+            undefined
+        );
     });
 
     test.each([
         [{ '1000': { kinety: [{ dn: 200, prosta: 500, dodWlot: null, order: 0 }] } }],
         [{ '1000': { kinety: [{ dn: 200, prosta: '', dodWlot: 100, order: 0 }] } }],
         [{ '1000': { kinety: [{ dn: 200, prosta: 500, dodWlot: 'abc', order: 0 }] } }]
-    ])('PUT preco invalid -> 400, brak deleteMany', async (data) => {
+    ])('PUT preco invalid -> 400, brak zapisu', async (data) => {
         const res = await request(app).put('/api/preco-v2').send({ data });
         expect(res.status).toBe(400);
-        expect(precoKinety.deleteMany).not.toHaveBeenCalled();
-        expect(precoKonfig.deleteMany).not.toHaveBeenCalled();
+        expect(saveRowsToDraft).not.toHaveBeenCalled();
     });
 
-    test('PUT preco zakresy min invalid -> 400', async () => {
+    test('PUT preco zakresy min invalid -> 400, brak zapisu', async () => {
         const res = await request(app)
             .put('/api/preco-v2')
             .send({
@@ -206,7 +154,7 @@ describe('D-FIX-2 routes: invalid price -> 400, zero zapisów', () => {
                 ]
             });
         expect(res.status).toBe(400);
-        expect(precoZakresy.deleteMany).not.toHaveBeenCalled();
+        expect(saveRowsToDraft).not.toHaveBeenCalled();
     });
 
     test('PUT preco poprawne -> 200', async () => {
@@ -214,7 +162,12 @@ describe('D-FIX-2 routes: invalid price -> 400, zero zapisów', () => {
             .put('/api/preco-v2')
             .send({ data: [VALID_PRECO] });
         expect(res.status).toBe(200);
-        expect(precoKinety.createMany).toHaveBeenCalled();
+        expect(saveRowsToDraft).toHaveBeenCalledWith(
+            'preco',
+            expect.objectContaining({ konfig: expect.any(Array) }),
+            'admin-1',
+            undefined
+        );
     });
 });
 

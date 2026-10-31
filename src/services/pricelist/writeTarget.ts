@@ -1,9 +1,9 @@
 /**
- * S5: cel zapisu cennika. `live` = stare tabele LIVE (rollback), `draft` =
- * najnowszy DRAFT danego typu (domyślnie po S5).
+ * Etap 1 konsolidacji: LIVE jest zamrożone (tylko odczyt), każdy zapis idzie do
+ * wersji. Typ `live` zostaje do etapu 2 (usunięcie tabel LIVE), ale żadna ścieżka
+ * go już nie zwraca.
  */
 import prisma from '../../prismaClient';
-import { logger } from '../../utils/logger';
 import { createDraft, replaceVersionRows, updateDraft } from './lifecycle';
 import { pricingFromVersion, resolveActivePricing } from './usage';
 import { requireType } from './validation';
@@ -24,8 +24,6 @@ export function parseIfMatch(header: unknown): string | undefined {
     return value.length > 0 && value !== '*' ? value : undefined;
 }
 
-let warnedLive = false;
-
 /**
  * `X-Pricelist-Version-Id: <id>` → jawna edycja opublikowanej wersji.
  * Brak nagłówka = null (zwykły zapis szkicu/LIVE). Zły format → 400.
@@ -40,18 +38,13 @@ export function parseVersionIdHeader(header: unknown): string | null {
     return value;
 }
 
+/**
+ * Zapis do LIVE jest wyłączony na stałe (etap 1). Zmienna
+ * `PRICELIST_WRITE_TARGET` została usunięta — nie ma trybu, w którym aplikacja
+ * pisze do tabel LIVE; zostaje tylko CLI importu ze snapshotu.
+ */
 export function getPricelistWriteTarget(): PricelistWriteTarget {
-    // S5: domyślnie draft; rollback bez zmiany kodu = PRICELIST_WRITE_TARGET=live.
-    if (process.env.PRICELIST_WRITE_TARGET !== 'live') return 'draft';
-    // Rollback: zapis wraca do tabel LIVE, ale oferty dalej czytają wersje ACTIVE.
-    if (!warnedLive) {
-        warnedLive = true;
-        logger.warn(
-            'pricelist',
-            'PRICELIST_WRITE_TARGET=live — zapis trafia do tabel LIVE, oferty czytają ACTIVE (split-brain)'
-        );
-    }
-    return 'live';
+    return 'draft';
 }
 
 /** Najnowszy DRAFT typu albo null (jeden DRAFT na typ — indeks częściowy). */

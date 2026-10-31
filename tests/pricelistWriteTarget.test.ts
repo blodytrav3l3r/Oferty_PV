@@ -36,22 +36,20 @@ jest.mock('../src/prismaClient', () => ({
 beforeEach(() => {
     jest.clearAllMocks();
     resetMetrics();
-    delete process.env.PRICELIST_WRITE_TARGET;
 });
 
 describe('getPricelistWriteTarget', () => {
-    it('default = draft (S5)', () => {
+    it('zawsze zwraca draft — zapis do LIVE jest wylaczony', () => {
         expect(getPricelistWriteTarget()).toBe('draft');
     });
 
-    it('PRICELIST_WRITE_TARGET=draft przelacza zapis', () => {
-        process.env.PRICELIST_WRITE_TARGET = 'draft';
-        expect(getPricelistWriteTarget()).toBe('draft');
-    });
-
-    it('PRICELIST_WRITE_TARGET=live zostaje live', () => {
+    it('PRICELIST_WRITE_TARGET jest ignorowany (brak trybu zapisu LIVE)', () => {
         process.env.PRICELIST_WRITE_TARGET = 'live';
-        expect(getPricelistWriteTarget()).toBe('live');
+        try {
+            expect(getPricelistWriteTarget()).toBe('draft');
+        } finally {
+            delete process.env.PRICELIST_WRITE_TARGET;
+        }
     });
 });
 

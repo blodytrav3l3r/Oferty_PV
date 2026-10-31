@@ -1,11 +1,10 @@
-process.env.PRICELIST_WRITE_TARGET = 'live';
 import request from 'supertest';
 import express from 'express';
 import productsRouter from '../src/routes/productsV2';
 
 /**
  * P1.5: kontrakt GET /api/products (wczesniej placeholder bez routera, zawsze 404).
- * Live source (bez ?source): 200 {data} z Prisma; blad DB -> 500; brak sesji -> 401.
+ * Bez wersji cennika: 200 {data} z LIVE; blad DB -> 500; brak sesji -> 401.
  */
 
 const rows = [
@@ -24,7 +23,10 @@ jest.mock('../src/prismaClient', () => ({
                 if (failDb) throw new Error('db down');
                 return rows.map((r) => ({ ...r }));
             })
-        }
+        },
+        // Brak wersji cennika i brak ręcznego wyboru -> trasa czyta LIVE.
+        pricelistVersion: { findFirst: jest.fn(async () => null) },
+        settings: { findUnique: jest.fn(async () => null) }
     }
 }));
 
