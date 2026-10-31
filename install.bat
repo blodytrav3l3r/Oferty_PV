@@ -149,8 +149,8 @@ if not defined SKIP_SEED (
             echo [INFO] Jesli przenosisz baze z innego urzadzenia, uruchom:
             echo [INFO]   install.bat --skip-seed
             echo [INFO]   npm run restore data/backups/nazwa_backupu.sqlite
-            echo [INFO] Lekka alternatywa: skopiuj price_defaults.json do data\
-            echo [INFO] ^(ceny zostana przywrocone automatycznie po starcie^)
+            echo [INFO] Ceny z innej instalacji przeniesiesz jako wersje cennika:
+            echo [INFO] panel "Wersje cennika" - eksport/import XLSX (bez pliku JSON).
             pause
             exit /b 1
         )
@@ -172,16 +172,12 @@ echo ===========================================================
 echo   Instalacja zakonczona
 echo ===========================================================
 echo.
-echo [INFO] Jesli masz wlasne ceny domyslne z innej instalacji,
-echo [INFO] skopiuj plik price_defaults.json do katalogu data\
-echo [INFO] przed uruchomieniem start.bat.
-echo [INFO] ^(na starym urzadzeniu: npm run prices:export lub przycisk "Zapisz domyslne"^).
+echo [INFO] Ceny z innej instalacji przeniesiesz jako wersje cennika:
+echo [INFO] panel "Wersje cennika" - eksport XLSX na starym, import na nowym.
 echo.
 echo Uruchom start.bat aby zaczac prace.
 echo.
 echo UWAGA: Jesli przenosisz baze z innego urzadzenia, uruchom:
 echo   npm run restore data/backups/nazwa_pliku.sqlite
 echo.
-echo Lekka alternatywa: skopiuj price_defaults.json do data\
-echo (ceny zostana przywrocone automatycznie po starcie).
 endlocal

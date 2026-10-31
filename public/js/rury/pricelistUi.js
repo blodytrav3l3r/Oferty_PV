@@ -200,7 +200,7 @@ async function resetPriceList() {
     btns.forEach((b) => b.setAttribute('disabled', 'true'));
     if (
         !(await appConfirm(
-            'Przywrócić cennik do Twojego zapisanego cennika domyślnego? Utracisz niezapisane i najnowsze zmiany.',
+            'Przywrócić fabryczny cennik rur (pliki seed)? Utracisz niezapisane i najnowsze zmiany.',
             { title: 'Przywróć domyślne', type: 'warning' }
         ))
     ) {

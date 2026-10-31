@@ -80,10 +80,9 @@ Przy pierwszym uruchomieniu na nowym komputerze (bez istniejącej bazy danych):
     .\install.bat   # Windows
     bash install.sh # Linux
     ```
-    Instalator: skopiuje `.env`, zainstaluje zależności, skonfiguruje bazę i załaduje dane początkowe (produkty, cenniki, konto admina).
-    Po pierwszym uruchomieniu serwera automatycznie odczytany jest plik `data/price_defaults.json`
-    (jeśli istnieje) zawierający snapshot domyślnych cenników — pozwala przenieść niestandardowe
-    ceny z innej instalacji.
+    Instalator: skopiuje `.env`, zainstaluje zależności, skonfiguruje bazę i załaduje dane początkowe (produkty, konto admina).
+    Przy pierwszym starcie serwer założy wersję cennika `v1` (ACTIVE) z plików `data/seed_*.json`.
+    Niestandardowe ceny przeniesiesz między instalacjami przez panel „Wersje cennika” (eksport/import XLSX).
 3. Uruchom serwer:
     ```bash
     .\start.bat
@@ -114,14 +113,10 @@ Podczas pracy z istniejącą bazą cenników na nowym urządzeniu:
     .\start.bat
     ```
 6. Upewnij się, że `DEFAULT_ADMIN_PASSWORD` w `.env` jest zgodne z poprzednią instalacją.
-7. (opcjonalnie) Jeśli chcesz przenieść niestandardowe ceny domyślne (rury, studnie, preco),
-   skopiuj plik `data/price_defaults.json` ze starego urządzenia do katalogu `data/` na nowym.
-   Zostanie automatycznie przywrócony przy starcie serwera.
-
-    > **Lżejsza alternatywa:** Jeśli potrzebujesz przenieść tylko ceny (bez ofert/zamówień),
-    > wygeneruj snapshot cen na starym urządzeniu (`npm run prices:export` lub przycisk
-    > "Zapisz domyślne"), skopiuj `data/price_defaults.json`, a na nowym zaimportuj:
-    > `npm run prices:import` — nie jest potrzebny backup SQLite ani `--skip-seed`.
+7. (opcjonalnie) Jeśli chcesz przenieść tylko ceny (bez ofert/zamówień):
+   na starym urządzeniu wyeksportuj cennik do XLSX w panelu „Wersje cennika”,
+   a na nowym zaimportuj ten plik jako nową wersję i zatwierdź ją (ACTIVE).
+   Nie jest potrzebny backup SQLite ani `--skip-seed`.
 
 ## Aktualizacja istniejącej instalacji (schemat bazy)
 

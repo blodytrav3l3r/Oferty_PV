@@ -1,10 +1,15 @@
 /**
  * Katalog produktów dla PDF/DOCX: ACTIVE (jeśli jest), w przeciwnym razie seed.
  * Zastępuje odczyty tabel LIVE i `*Default`.
+ *
+ * Błąd odczytu wersji nie może przejść cicho: dokument trafiłby do klienta
+ * z fabrycznymi cenami/metadanymi. Dlatego każdy błąd jest logowany jako
+ * `error`, a fallback do seeda zostaje tylko po to, by PDF się wyrenderował.
  */
 import { getSeedRury, getSeedStudnie } from './seedData';
 import { getVersionExport } from './export';
 import { resolveActive } from './usage';
+import { logger } from '../../utils/logger';
 
 export interface CatalogStudnieRow {
     id: string;
@@ -26,19 +31,36 @@ function toStudnieRow(row: Row): CatalogStudnieRow {
     };
 }
 
+/**
+ * Wiersze ACTIVE dla osi albo `null`, gdy wersji nie ma / jest pusta.
+ * Błąd odczytu trafia do logu jako `error` (nie jest maskowany).
+ */
+async function getActiveRows(
+    type: 'rury' | 'studnie',
+    section: 'rury' | 'studnie'
+): Promise<Row[] | null> {
+    let activeId: string | null = null;
+    try {
+        const active = await resolveActive(type);
+        if (!active) return null;
+        activeId = active.id;
+        const { sections } = await getVersionExport(active.id);
+        const rows = (sections[section] ?? []) as Row[];
+        return rows.length > 0 ? rows : null;
+    } catch (err: unknown) {
+        logger.error(
+            'PricelistCatalog',
+            `Nie udało się odczytać ACTIVE (${type}${activeId ? `, ${activeId}` : ''}) — fallback do seeda`,
+            err instanceof Error ? err.message : String(err)
+        );
+        return null;
+    }
+}
+
 /** Metadane elementów studni (componentType/kategoria/dn/wysokość). */
 export async function getCatalogStudnieRows(): Promise<CatalogStudnieRow[]> {
-    try {
-        const active = await resolveActive('studnie');
-        if (active) {
-            const { sections } = await getVersionExport(active.id);
-            const rows = (sections.studnie ?? []) as Row[];
-            if (rows.length > 0) return rows.map(toStudnieRow);
-        }
-    } catch {
-        // Brak bazy/wersji: katalog z seeda (PDF nie może paść bez metadanych).
-    }
-    return getSeedStudnie().map(toStudnieRow);
+    const rows = await getActiveRows('studnie', 'studnie');
+    return (rows ?? getSeedStudnie()).map(toStudnieRow);
 }
 
 /** Kategoria rury po id (do PDF ofert, gdy pozycja nie niesie kategorii). */
@@ -52,15 +74,6 @@ export async function getRuryCategoryMap(productIds: string[]): Promise<Map<stri
         }
         return map;
     };
-    try {
-        const active = await resolveActive('rury');
-        if (active) {
-            const { sections } = await getVersionExport(active.id);
-            const rows = (sections.rury ?? []) as Row[];
-            if (rows.length > 0) return collect(rows);
-        }
-    } catch {
-        // j.w. — fallback do seeda
-    }
-    return collect(getSeedRury());
+    const rows = await getActiveRows('rury', 'rury');
+    return collect(rows ?? getSeedRury());
 }

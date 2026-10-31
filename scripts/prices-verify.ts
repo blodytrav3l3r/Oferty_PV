@@ -10,7 +10,9 @@
  *      skończone ceny, komplet priec).
  *
  * Brak ACTIVE to SKIP (świeża instalacja przed bootstrapem), a z `--strict`
- * błąd — CI może wymagać opublikowanej wersji.
+ * błąd — CI może wymagać opublikowanej wersji. Baza bez wdrożonego schematu
+ * też jest SKIP; każdy inny błąd odczytu (niedostępna baza, dryf schematu)
+ * kończy skrypt kodem 1.
  *
  * Read-only — niczego nie zapisuje.
  *
@@ -20,7 +22,7 @@
  *
  * Kody wyjscia:
  *   0 = OK albo SKIP
- *   1 = błąd danych albo brak ACTIVE przy --strict
+ *   1 = błąd danych, błąd odczytu bazy albo brak ACTIVE przy --strict
  */
 
 import 'dotenv/config';
@@ -114,6 +116,19 @@ async function checkActive(strict: boolean): Promise<string[]> {
     return issues;
 }
 
+/**
+ * Baza bez wdrożonego schematu (zero tabel) to SKIP, nie awaria.
+ * Brak pojedynczej tabeli w bazie z danymi to dryf schematu — twardy błąd,
+ * inaczej `validate` przechodzi przy niedostępnej lub rozjechanej bazie.
+ */
+async function isUninitializedDb(err: unknown): Promise<boolean> {
+    if ((err as { code?: unknown })?.code !== 'P2021') return false;
+    const rows = await prisma.$queryRawUnsafe<Array<{ c: bigint | number }>>(
+        "SELECT count(*) AS c FROM sqlite_master WHERE type = 'table'"
+    );
+    return Number(rows[0]?.c ?? 0) === 0;
+}
+
 async function main(): Promise<void> {
     const strict = process.argv.slice(2).includes('--strict');
     const issues = checkSeedFiles();
@@ -121,10 +136,15 @@ async function main(): Promise<void> {
     try {
         issues.push(...(await checkActive(strict)));
     } catch (err: unknown) {
-        console.warn(
-            '[prices:verify] SKIP weryfikacji ACTIVE (brak bazy?):',
-            err instanceof Error ? err.message : err
-        );
+        if (await isUninitializedDb(err)) {
+            console.warn(
+                '[prices:verify] SKIP: baza bez wdrożonego schematu — uruchom `prisma migrate deploy`.'
+            );
+        } else {
+            issues.push(
+                `nie można odczytać ACTIVE: ${err instanceof Error ? err.message : String(err)}`
+            );
+        }
     }
 
     if (issues.length > 0) {

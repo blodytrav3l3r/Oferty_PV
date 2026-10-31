@@ -222,14 +222,14 @@ zostały usunięte w etapie 2.
 
 ### ⚠️ Uwagi przy przenoszeniu:
 
-| Kwestia            | Zalecenie                                                                                                                                                                                   |
-| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Wersja systemu** | Powinna być taka sama na obu komputerach (sprawdź `VERSION`)                                                                                                                                |
-| **Różne wersje**   | Po restore uruchom `install.bat --skip-seed` — zaktualizuje schemat bazy                                                                                                                    |
-| **Typ bazy**       | Baza z backupu może być legacy (utworzona przez `db push`) — nie ma tabeli `_prisma_migrations`; na niej `migrate deploy` zawodzi, użyj `db push`. Nowe/świeże bazy: `migrate deploy`       |
-| **Migracje**       | `migrate deploy` (domyślnie) lub `db push` (legacy) doda brakujące tabele i indeksy (w tym `idx_logs_well` / `idx_logs_source_well`), nie usunie danych                                     |
-| **Bezpieczeństwo** | Po przeniesieniu zmień hasło admina w panelu użytkownika                                                                                                                                    |
-| **Brak ACTIVE**    | `git pull` nie rusza DB — stara baza ma LIVE bez wersji, oferta liczy z LIVE (toast). Start serwera tworzy v1 ACTIVE automatycznie; ręcznie: `npx ts-node scripts/backfill-pricelist-v1.ts` |
+| Kwestia            | Zalecenie                                                                                                                                                                                                  |
+| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Wersja systemu** | Powinna być taka sama na obu komputerach (sprawdź `VERSION`)                                                                                                                                               |
+| **Różne wersje**   | Po restore uruchom `install.bat --skip-seed` — zaktualizuje schemat bazy                                                                                                                                   |
+| **Typ bazy**       | Baza z backupu może być legacy (utworzona przez `db push`) — nie ma tabeli `_prisma_migrations`; na niej `migrate deploy` zawodzi, użyj `db push`. Nowe/świeże bazy: `migrate deploy`                      |
+| **Migracje**       | `migrate deploy` (domyślnie) lub `db push` (legacy) doda brakujące tabele i indeksy (w tym `idx_logs_well` / `idx_logs_source_well`), nie usunie danych                                                    |
+| **Bezpieczeństwo** | Po przeniesieniu zmień hasło admina w panelu użytkownika                                                                                                                                                   |
+| **Brak ACTIVE**    | `git pull` nie rusza DB — baza bez wersji cennika nie ma z czego liczyć oferty. Start serwera tworzy v1 ACTIVE z `data/seed_*.json` automatycznie; ręcznie: `npx ts-node scripts/backfill-pricelist-v1.ts` |
 
 ---
 
@@ -488,14 +488,13 @@ DATABASE_URL=file:../data/app_database.sqlite?connection_limit=1&busy_timeout=30
 
 ### Zmienne dla różnych środowisk:
 
-| Zmienna                  |  Lokalnie (dev)  |            Docker             |
-| ------------------------ | :--------------: | :---------------------------: |
-| `PORT`                   |  10000 lub 3000  |             10000             |
-| `HOST`                   |     0.0.0.0      |            0.0.0.0            |
-| `NODE_ENV`               |   development    |          production           |
-| `DEFAULT_ADMIN_PASSWORD` |   **Wymagane**   |         **Wymagane**          |
-| `DATABASE_URL`           | file:../data/... |      file:/var/data/...       |
-| `PRICE_DEFAULTS_PATH`    |  (opcjonalnie)   | /var/data/price_defaults.json |
+| Zmienna                  |  Lokalnie (dev)  |       Docker       |
+| ------------------------ | :--------------: | :----------------: |
+| `PORT`                   |  10000 lub 3000  |       10000        |
+| `HOST`                   |     0.0.0.0      |      0.0.0.0       |
+| `NODE_ENV`               |   development    |     production     |
+| `DEFAULT_ADMIN_PASSWORD` |   **Wymagane**   |    **Wymagane**    |
+| `DATABASE_URL`           | file:../data/... | file:/var/data/... |
 
 ---
 

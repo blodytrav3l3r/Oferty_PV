@@ -99,8 +99,8 @@ if [ "$SKIP_SEED" = false ]; then
             log OK "Seed OK"
         else
             warn "Seed nie powiodl sie - dane juz istnieja?"
-        echo "  Lekka alternatywa: skopiuj price_defaults.json do data/"
-        echo "  (ceny zostana przywrocone automatycznie po starcie)"
+        echo "  Ceny przeniesiesz jako wersje cennika: panel Wersje cennika"
+        echo "  (eksport XLSX na starym urzadzeniu, import na nowym)"
         fi
     fi
 else
@@ -123,9 +123,8 @@ echo "Nastepne kroki:"
 echo "  bash prod.sh"
 echo "  URL: http://localhost:3000"
 echo ""
-echo "INFO: Jesli masz wlasne ceny domyslne, skopiuj"
-echo "  price_defaults.json do katalogu data/ przed startem."
-echo "  (na starym urzadzeniu: npm run prices:export lub przycisk 'Zapisz domyslne')"
+echo "INFO: Ceny z innej instalacji przeniesiesz jako wersje cennika:"
+echo "  panel 'Wersje cennika' - eksport XLSX na starym, import na nowym."
 echo ""
 echo "UWAGA: Jesli przenosisz baze z innego urzadzenia, uruchom:"
 echo "  npm run restore data/backups/nazwa_pliku.sqlite"
