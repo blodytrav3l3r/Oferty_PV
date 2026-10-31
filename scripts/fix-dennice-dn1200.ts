@@ -19,11 +19,8 @@
  */
 import { prisma } from '../src/prismaClient';
 import { getVersionExport } from '../src/services/pricelist/export';
-import {
-    approveVersion,
-    cloneAsDraft,
-    replaceVersionRows
-} from '../src/services/pricelist/lifecycle';
+import { approveVersion, cloneAsDraft, updateDraft } from '../src/services/pricelist/lifecycle';
+import { findLatestDraft } from '../src/services/pricelist/writeTarget';
 import { resolveActive } from '../src/services/pricelist/usage';
 
 /** Docelowa cena dennicy = zrodlo prawdy (LIVE/Default/JSON). */
@@ -88,19 +85,24 @@ async function main(): Promise<void> {
         return;
     }
 
+    const strayDraft = await findLatestDraft('studnie');
+    if (strayDraft) {
+        console.error(
+            `[dennice] Istnieje szkic ${strayDraft.version} (${strayDraft.id}) — dokończ go albo usuń przed ponownym uruchomieniem.`
+        );
+        process.exitCode = 1;
+        return;
+    }
+
     const draft = await cloneAsDraft(active.id, { userId: USER_ID, note: NOTE });
     console.log(`[dennice] Utworzono szkic ${draft.version} (${draft.id})`);
 
     const patched = rows.map((row) =>
         DENNICE.includes(String(row.id)) ? { ...row, price: TARGET_PRICE } : row
     );
-    const saved = await replaceVersionRows(
-        draft.id,
-        { ...sections, studnie: patched },
-        {
-            userId: USER_ID
-        }
-    );
+    const saved = await updateDraft(draft.id, patched, NOTE, {
+        userId: USER_ID
+    });
     console.log(`[dennice] Poprawiono ceny. sha256: ${saved.sha256}`);
 
     const approved = await approveVersion(draft.id, {
