@@ -285,14 +285,7 @@ class CronService {
                         .join(', ')}`
                 );
             }
-            if (report.liveWrites.count > 0) {
-                logger.warn(
-                    'CronService',
-                    `[pricelistHealth] LIVE_WRITE 24h=${report.liveWrites.count} ` +
-                        JSON.stringify(report.liveWrites.byType)
-                );
-            }
-            if (report.ok && report.liveWrites.count === 0) {
+            if (report.ok) {
                 logger.info('CronService', '[pricelistHealth] OK: 1 aktywna wersja na typ');
             }
         } catch (e) {

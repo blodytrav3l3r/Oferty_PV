@@ -17,6 +17,7 @@ import {
     parseVersionIdHeader,
     saveRowsToDraft
 } from '../services/pricelist/writeTarget';
+import { pickEditorData } from '../services/pricelist/editorPayload';
 import {
     PricelistVersionError,
     cennikMetaSheet,
@@ -44,9 +45,10 @@ router.get('/', requireAuth, async (req, res) => {
         res.setHeader('X-Pricelist-Write-Target', getPricelistWriteTarget());
         const source = requirePricingSource(req.query.source);
         if (!source) {
-            const editor = await getEditorPricing('preco');
             // Brak wersji: edytor startuje z cennika fabrycznego (seed).
-            res.json(editor.fallback ? { data: [getSeedPrecoNested()] } : { data: editor.data });
+            res.json({
+                data: pickEditorData(await getEditorPricing('preco'), () => [getSeedPrecoNested()])
+            });
             return;
         }
         if (source === 'active') {
@@ -142,16 +144,6 @@ router.put(
         }
     }
 );
-
-// ──────────────────────────────────────────
-// PATCH / — wyłączone: LIVE jest tylko do odczytu (etap 1)
-// ──────────────────────────────────────────
-router.patch('/', requireAuth, requireAdmin, writeLimiter, (_req, res) => {
-    res.status(409).json({
-        error: 'LIVE jest tylko do odczytu; edytuj szkic cennika',
-        code: 'LIVE_READ_ONLY'
-    });
-});
 
 // ──────────────────────────────────────────
 // GET /export.xlsx?source=live|default|active — sama część PRECO (Etap C),

@@ -639,6 +639,14 @@ jobs:
             - name: Status migracji po seedzie
               run: npx prisma migrate status
 
+            # Świeża instalacja nie ma żadnej wersji cennika: bootstrap zakłada
+            # v1 ACTIVE per oś z `data/seed_*.json`, a `--strict` wymaga ACTIVE
+            # na każdej osi (regres „cennik wyłącznie z wersji").
+            - name: Bootstrap v1 (3x ACTIVE) i bramka cen
+              run: |
+                  npx ts-node scripts/backfill-pricelist-v1.ts
+                  npx ts-node scripts/prices-verify.ts --strict
+
     deploy-production:
         name: Deploy — produkcja (main)
         runs-on: ubuntu-latest

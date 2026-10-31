@@ -1,7 +1,6 @@
 /**
- * Etap 1 konsolidacji: LIVE jest zamrożone (tylko odczyt), każdy zapis idzie do
- * wersji. Typ `live` zostaje do etapu 2 (usunięcie tabel LIVE), ale żadna ścieżka
- * go już nie zwraca.
+ * Etap 2 (usunięcie LIVE): każdy zapis idzie do wersji — szkicu albo wskazanej
+ * wersji opublikowanej. Typ `live` zostaje tylko w nagłówku odpowiedzi.
  */
 import prisma from '../../prismaClient';
 import { createDraft, replaceVersionRows, updateDraft } from './lifecycle';
@@ -11,7 +10,7 @@ import { PricelistVersionError } from './validation';
 import type { ActivePricing } from './usage';
 import type { PricelistType } from './validation';
 
-export type PricelistWriteTarget = 'live' | 'draft';
+export type PricelistWriteTarget = 'draft';
 
 /**
  * `If-Match: "<sha256>"` → sha256 szkicu. Brak nagłówka / `*` = brak kontroli
@@ -76,10 +75,7 @@ export async function saveRowsToDraft(
     return createDraft(type, rows, { createdBy: userId });
 }
 
-/**
- * Wiersze dla edytora admina: DRAFT -> ACTIVE -> null (trasa czyta LIVE).
- * `fallback` = brak jakiejkolwiek wersji (zachowanie jak resolveActivePricing).
- */
+/** Cennik edytora: DRAFT -> ACTIVE -> seed fabryczny (brak jakiejkolwiek wersji). */
 export async function getEditorPricing(typeInput: unknown): Promise<ActivePricing> {
     const type: PricelistType = requireType(typeInput);
     const draft = await findLatestDraft(type);

@@ -21,7 +21,6 @@ describe('evaluatePricelistHealth', () => {
                 version('preco', 'p1', '2026-10-01T00:00:00.000Z'),
                 version('rury', 'r2', '2026-11-01T00:00:00.000Z')
             ],
-            [],
             { now: NOW }
         );
 
@@ -37,7 +36,6 @@ describe('evaluatePricelistHealth', () => {
                 version('studnie', 's1', '2026-10-01T00:00:00.000Z'),
                 version('preco', 'p1', '2026-10-01T00:00:00.000Z')
             ],
-            [],
             { now: NOW }
         );
 
@@ -56,7 +54,6 @@ describe('evaluatePricelistHealth', () => {
                 version('studnie', 's1', '2026-10-01T00:00:00.000Z'),
                 version('preco', 'p1', '2026-10-01T00:00:00.000Z')
             ],
-            [],
             { now: NOW }
         );
 
@@ -73,7 +70,6 @@ describe('evaluatePricelistHealth', () => {
                 version('studnie', 's1', '2026-10-01T00:00:00.000Z'),
                 version('preco', 'p1', '2026-10-01T00:00:00.000Z')
             ],
-            [],
             { now: NOW }
         );
 
@@ -84,24 +80,5 @@ describe('evaluatePricelistHealth', () => {
                 expect.objectContaining({ type: 'rury', code: 'NO_ACTIVE_VERSION' })
             ])
         );
-    });
-
-    it('counts LIVE writes by type in window', () => {
-        const report = evaluatePricelistHealth(
-            [
-                version('rury', 'r1', '2026-10-01T00:00:00.000Z'),
-                version('studnie', 's1', '2026-10-01T00:00:00.000Z'),
-                version('preco', 'p1', '2026-10-01T00:00:00.000Z')
-            ],
-            [
-                { entityId: 'rury', action: 'LIVE_WRITE', createdAt: '2026-10-21T10:00:00.000Z' },
-                { entityId: 'rury', action: 'PATCH_LIVE_WRITE', createdAt: null },
-                { entityId: 'preco', action: 'DELETE_LIVE_WRITE', createdAt: null }
-            ],
-            { now: NOW, since: new Date('2026-10-20T12:00:00.000Z') }
-        );
-
-        expect(report.liveWrites.count).toBe(3);
-        expect(report.liveWrites.byType).toEqual({ rury: 2, preco: 1 });
     });
 });

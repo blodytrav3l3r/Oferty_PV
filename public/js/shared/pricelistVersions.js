@@ -2813,7 +2813,6 @@
     function saveButtonMeta(type) {
         var editing = isEditing(type);
         var versionLabel = versionEditLabel(type);
-        var isDraft = window.__pricelistWriteTarget === 'draft';
         // Etykieta zawsze „Zapisz" — cel (szkic/wersja) wynika z tooltipa i badge.
         var label = 'Zapisz';
         var title;
@@ -2821,10 +2820,8 @@
             title = 'Najpierw wejdź w edycję: „Edytuj” w panelu wersji';
         } else if (versionLabel) {
             title = 'Zapis podmienia ceny wersji ' + versionLabel + ' — bez tworzenia nowej wersji';
-        } else if (isDraft) {
-            title = 'Zapis tworzy lub aktualizuje szkic; publikacja w panelu wersji';
         } else {
-            title = 'Zapisz zmiany w cenniku';
+            title = 'Zapis tworzy lub aktualizuje szkic; publikacja w panelu wersji';
         }
         return { editing: editing, versionLabel: versionLabel, label: label, title: title };
     }

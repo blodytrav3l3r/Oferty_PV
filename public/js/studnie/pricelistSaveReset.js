@@ -77,9 +77,7 @@ async function saveStudniePriceList() {
                 ? 'Zapisano wersję ' +
                       window.pricelistVersions.versionEditLabel('studnie') +
                       ' — jej ceny zostały podmienione'
-                : window.__pricelistWriteTarget === 'draft'
-                  ? 'Zapisano szkic studni — opublikuj wersję, aby trafił do ofert'
-                  : 'Zapisano cennik studni',
+                : 'Zapisano szkic studni — opublikuj wersję, aby trafił do ofert',
             'success'
         );
     } catch (err) {

@@ -442,14 +442,14 @@ export async function currentPricelistLabel(typeInput: unknown): Promise<string 
 export interface ActivePricing {
     /** Zawartość pola `data` w response (rury/studnie: wiersze; preco: [entry]). */
     data: unknown;
-    /** true = brak ACTIVE: `?source=active` → 409, edytor czyta LIVE. */
+    /** true = brak ACTIVE: `?source=active` → 409, edytor startuje z seeda. */
     fallback: boolean;
     versionId: string | null;
 }
 
 /**
- * Ceny z wersji ACTIVE w kształcie LEGACY. Brak ACTIVE → fallback (data null,
- * trasa czyta LIVE jak dziś). Jedyny switch per-type w paczce.
+ * Ceny z wersji ACTIVE w kształcie LEGACY. Brak ACTIVE → fallback (data null):
+ * edytor startuje z seeda (`pickEditorData`). Jedyny switch per-type w paczce.
  */
 export async function resolveActivePricing(typeInput: unknown): Promise<ActivePricing> {
     const type: PricelistType = requireType(typeInput);

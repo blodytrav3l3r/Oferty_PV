@@ -2,16 +2,11 @@
  * S5/O3: dzienny check "dokładnie 1 aktywna wersja na typ".
  *
  * Aktywna = najnowsza APPROVED z effectiveFrom <= now. Stan jest wyliczany
- * (jak w resolverze), więc check nie mutuje bazy. LIVE_WRITE z audytu jest
- * raportowany osobno — to sygnał O3, nie warunek checku.
+ * (jak w resolverze), więc check nie mutuje bazy.
  */
 import prisma from '../../prismaClient';
 import { PRICELIST_TYPES } from './validation';
 import type { PricelistType } from './validation';
-
-export const DEFAULT_LIVE_WRITE_WINDOW_MS = 24 * 60 * 60 * 1000;
-
-const LIVE_WRITE_ACTIONS = ['LIVE_WRITE', 'PATCH_LIVE_WRITE', 'DELETE_LIVE_WRITE'] as const;
 
 export interface PricelistHealthVersion {
     id: string;
@@ -19,12 +14,6 @@ export interface PricelistHealthVersion {
     version: string;
     status: string;
     effectiveFrom: string;
-}
-
-export interface PricelistLiveWrite {
-    entityId: string;
-    action: string;
-    createdAt: string | null;
 }
 
 export type HealthViolationCode =
@@ -41,11 +30,6 @@ export interface PricelistHealthReport {
     checkedAt: string;
     active: Record<PricelistType, PricelistHealthVersion | null>;
     violations: HealthViolation[];
-    liveWrites: {
-        since: string;
-        count: number;
-        byType: Record<string, number>;
-    };
 }
 
 function isValidDate(value: string): boolean {
@@ -54,11 +38,9 @@ function isValidDate(value: string): boolean {
 
 export function evaluatePricelistHealth(
     versions: PricelistHealthVersion[],
-    liveWrites: PricelistLiveWrite[],
-    options: { now?: Date; since?: Date } = {}
+    options: { now?: Date } = {}
 ): PricelistHealthReport {
     const now = options.now ?? new Date();
-    const since = options.since ?? new Date(now.getTime() - DEFAULT_LIVE_WRITE_WINDOW_MS);
     const active = {} as Record<PricelistType, PricelistHealthVersion | null>;
     const violations: HealthViolation[] = [];
 
@@ -107,45 +89,22 @@ export function evaluatePricelistHealth(
         }
     }
 
-    const byType: Record<string, number> = {};
-    for (const write of liveWrites) {
-        const type = byType[write.entityId] ?? 0;
-        byType[write.entityId] = type + 1;
-    }
-
     return {
         ok: violations.length === 0,
         checkedAt: now.toISOString(),
         active,
-        violations,
-        liveWrites: {
-            since: since.toISOString(),
-            count: liveWrites.length,
-            byType
-        }
+        violations
     };
 }
 
 export async function getPricelistHealth(
-    options: { now?: Date; since?: Date } = {}
+    options: { now?: Date } = {}
 ): Promise<PricelistHealthReport> {
     const now = options.now ?? new Date();
-    const since = options.since ?? new Date(now.getTime() - DEFAULT_LIVE_WRITE_WINDOW_MS);
+    const versions = await prisma.pricelistVersion.findMany({
+        where: { status: 'APPROVED' },
+        select: { id: true, type: true, version: true, status: true, effectiveFrom: true }
+    });
 
-    const [versions, liveWrites] = await Promise.all([
-        prisma.pricelistVersion.findMany({
-            where: { status: 'APPROVED' },
-            select: { id: true, type: true, version: true, status: true, effectiveFrom: true }
-        }),
-        prisma.audit_logs.findMany({
-            where: {
-                entityType: 'pricelist_live',
-                action: { in: [...LIVE_WRITE_ACTIONS] },
-                createdAt: { gte: since.toISOString() }
-            },
-            select: { entityId: true, action: true, createdAt: true }
-        })
-    ]);
-
-    return evaluatePricelistHealth(versions, liveWrites, { now, since });
+    return evaluatePricelistHealth(versions, { now });
 }

@@ -90,17 +90,15 @@ describe('productsV2', () => {
         expect(res.body.code).toBe('INVALID_SOURCE');
     });
 
-    it('PATCH /:id → 409 LIVE_READ_ONLY, bez zapisu', async () => {
+    it('PATCH /:id nie istnieje (edycja tylko przez PUT szkicu)', async () => {
         const res = await request(app()).patch('/r1').send({ price: 99 });
-        expect(res.status).toBe(409);
-        expect(res.body.code).toBe('LIVE_READ_ONLY');
+        expect(res.status).toBe(404);
         expect(update).not.toHaveBeenCalled();
     });
 
-    it('DELETE /:id → 409 LIVE_READ_ONLY, bez zapisu', async () => {
+    it('DELETE /:id nie istnieje (edycja tylko przez PUT szkicu)', async () => {
         const res = await request(app()).delete('/r1');
-        expect(res.status).toBe(409);
-        expect(res.body.code).toBe('LIVE_READ_ONLY');
+        expect(res.status).toBe(404);
         expect(deleteRow).not.toHaveBeenCalled();
     });
 

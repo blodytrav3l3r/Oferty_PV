@@ -6,12 +6,7 @@ import {
     getPricelistWriteTarget,
     saveRowsToDraft
 } from '../src/services/pricelist/writeTarget';
-import {
-    getMetricsSnapshot,
-    recordPricelistFallback,
-    recordPricelistLiveWrite,
-    resetMetrics
-} from '../src/utils/metrics';
+import { resetMetrics } from '../src/utils/metrics';
 
 const createDraft = jest.fn();
 const updateDraft = jest.fn();
@@ -88,19 +83,5 @@ describe('getEditorPricing', () => {
         resolveActivePricing.mockResolvedValue({ data: [], fallback: false });
         await getEditorPricing('rury');
         expect(resolveActivePricing).toHaveBeenCalledWith('rury');
-    });
-});
-
-describe('liczniki O3', () => {
-    it('zlicza LIVE_WRITE i fallback per typ', () => {
-        recordPricelistLiveWrite('rury');
-        recordPricelistLiveWrite('rury');
-        recordPricelistLiveWrite('preco');
-        recordPricelistFallback('studnie');
-        const p = getMetricsSnapshot().pricelist;
-        expect(p.liveWrites).toBe(3);
-        expect(p.liveWritesByType).toEqual({ rury: 2, preco: 1 });
-        expect(p.fallbacks).toBe(1);
-        expect(p.fallbacksByType).toEqual({ studnie: 1 });
     });
 });

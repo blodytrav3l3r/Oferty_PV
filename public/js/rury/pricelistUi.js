@@ -273,9 +273,7 @@ async function savePriceList() {
                 ? 'Zapisano wersję ' +
                       window.pricelistVersions.versionEditLabel('rury') +
                       ' — jej ceny zostały podmienione'
-                : window.__pricelistWriteTarget === 'draft'
-                  ? 'Zapisano szkic — opublikuj wersję, aby trafił do ofert'
-                  : 'Zapisano cennik',
+                : 'Zapisano szkic — opublikuj wersję, aby trafił do ofert',
             'success'
         );
     } catch (err) {

@@ -30,6 +30,7 @@ import {
     parseVersionIdHeader,
     saveRowsToDraft
 } from '../services/pricelist/writeTarget';
+import { pickEditorData } from '../services/pricelist/editorPayload';
 
 const router = express.Router();
 const writeLimiter = PRICELIST_WRITE_LIMITER;
@@ -204,12 +205,11 @@ router.get('/', requireAuth, async (req, res) => {
         res.setHeader('X-Pricelist-Write-Target', getPricelistWriteTarget());
         const source = requirePricingSource(req.query.source);
         if (!source) {
-            const editor = await getEditorPricing('studnie');
             // Brak wersji: edytor startuje z cennika fabrycznego (seed).
             res.json({
-                data: editor.fallback
-                    ? (getSeedStudnie() as unknown as StudnieProductRaw[]).map(toLegacy)
-                    : editor.data
+                data: pickEditorData(await getEditorPricing('studnie'), () =>
+                    (getSeedStudnie() as unknown as StudnieProductRaw[]).map(toLegacy)
+                )
             });
             return;
         }
@@ -303,26 +303,6 @@ router.put(
         }
     }
 );
-
-// ──────────────────────────────────────────
-// PATCH /:id — wyłączone: LIVE jest tylko do odczytu (etap 1)
-// ──────────────────────────────────────────
-router.patch('/:id', requireAuth, requireAdmin, writeLimiter, (_req, res) => {
-    res.status(409).json({
-        error: 'LIVE jest tylko do odczytu; edytuj szkic cennika',
-        code: 'LIVE_READ_ONLY'
-    });
-});
-
-// ──────────────────────────────────────────
-// DELETE /:id — wyłączone: LIVE jest tylko do odczytu (etap 1)
-// ──────────────────────────────────────────
-router.delete('/:id', requireAuth, requireAdmin, writeLimiter, (_req, res) => {
-    res.status(409).json({
-        error: 'LIVE jest tylko do odczytu; edytuj szkic cennika',
-        code: 'LIVE_READ_ONLY'
-    });
-});
 
 // ──────────────────────────────────────────
 // GET /export.xlsx?source=live|default|active — XLSX z serwera (Etap C),
