@@ -11,8 +11,7 @@
 import fs from 'fs';
 import path from 'path';
 import { ZAKRESY_TYPES } from '../../constants/precoSizes';
-
-const DATA_DIR = path.join(__dirname, '..', '..', '..', 'data');
+import { resolveDataDir } from '../../utils/paths';
 
 export type SeedRow = Record<string, unknown>;
 
@@ -23,7 +22,7 @@ let cache: {
 } | null = null;
 
 function readJson(fileName: string): unknown {
-    return JSON.parse(fs.readFileSync(path.join(DATA_DIR, fileName), 'utf-8'));
+    return JSON.parse(fs.readFileSync(path.join(resolveDataDir(), fileName), 'utf-8'));
 }
 
 function load(): NonNullable<typeof cache> {

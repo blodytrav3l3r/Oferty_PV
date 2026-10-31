@@ -12,6 +12,7 @@
 
 import fs from 'fs';
 import path from 'path';
+import { resolveDataDir } from '../utils/paths';
 
 interface KonfigRow {
     id: string;
@@ -41,9 +42,9 @@ interface ZakresyRow {
 export type { KonfigRow, KinetyRow, ZakresyRow };
 
 const OUTPUT_MAP = {
-    rury: path.join(__dirname, '..', '..', 'data', 'seed_rury.json'),
-    studnie: path.join(__dirname, '..', '..', 'data', 'seed_studnie.json'),
-    preco: path.join(__dirname, '..', '..', 'data', 'seed_preco.json')
+    rury: path.join(resolveDataDir(), 'seed_rury.json'),
+    studnie: path.join(resolveDataDir(), 'seed_studnie.json'),
+    preco: path.join(resolveDataDir(), 'seed_preco.json')
 };
 
 export function buildPricelistJson(items: Record<string, unknown>[]): string {
