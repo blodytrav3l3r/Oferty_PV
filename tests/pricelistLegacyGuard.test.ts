@@ -27,6 +27,8 @@ const ALLOWLIST = new Set(
         'scripts/prices-verify.ts',
         // Jednorazowa naprawa martwych zakresow PRECO (LIVE + Default + wersje).
         'scripts/fix-preco-ranges.ts',
+        // Jednorazowa naprawa cen 5 dennic DN1200 w wersjach studni.
+        'scripts/fix-dennice-dn1200.ts',
         'scripts/add-transport-products.mjs',
         'scripts/docker-entrypoint.sh',
         // Testy silnika legacy + ten guard (wzorce w literałach).
