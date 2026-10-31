@@ -188,16 +188,38 @@ Typy dokumentów: `offer`, `offer_studnie`, `order_rury`, `order_studnie`.
 
 ---
 
+## Cennik: LIVE tylko do odczytu (etap 1)
+
+Tabele LIVE (`ProductsRury`, `ProductsStudnie`, `Preco*`) są zamrożonym
+snapshotem i **nie przyjmują zapisów z aplikacji**:
+
+- `PUT /api/products`, `PUT /api/products-studnie`, `PUT /api/preco-pricing` —
+  zapis zawsze do wersji (szkic; `X-Pricelist-Version-Id` = jawna edycja wersji).
+- `PATCH`/`DELETE` tych ścieżek — `409 LIVE_READ_ONLY` (edycja tylko przez wersje).
+- `?source=active` (ekrany ofert) czyta **wyłącznie** wersję ACTIVE. Brak ACTIVE
+  → `409 NO_ACTIVE_VERSION`; nie ma już cichego spadku do LIVE.
+- Zapis nowej oferty bez ACTIVE → `409 NO_ACTIVE_VERSION`; błąd odczytu cennika
+  → `503 PRICELIST_UNAVAILABLE` (nie udajemy braku wersji).
+- W eksportach `?source=live` jest aliasem do bieżącego szkicu (do etapu 2,
+  w którym tabele LIVE znikną).
+
+Snapshot ze `data/price_defaults.json` nie jest już wczytywany przy starcie
+domyślnie — tylko z `PRICELIST_RESTORE_ON_START=1`. `npm run prices:import` jest
+dry-runem; zapis do LIVE wymaga `-- --force` i zostawia wpis w audycie.
+`npm run prices:verify` porównuje LIVE z ACTIVE (WARN, `--strict` = błąd).
+
+---
+
 ## Produkty — Rury (`/api/products`)
 
-| Metoda | Ścieżka                     | Auth  | Opis                                           |
-| ------ | --------------------------- | ----- | ---------------------------------------------- |
-| GET    | `/api/products`             | auth  | Lista wszystkich produktów (rur)               |
-| PUT    | `/api/products`             | admin | Hurtowy zapis cennika (usuń wszystko + utwórz) |
-| PATCH  | `/api/products/:id`         | admin | Edycja jednego produktu                        |
-| DELETE | `/api/products/:id`         | admin | Usunięcie produktu                             |
-| GET    | `/api/products/export.xlsx` | auth  | Eksport XLSX (`?source=live\|default`)         |
-| GET    | `/api/products/default`     | auth  | Domyślny cennik rur                            |
+| Metoda | Ścieżka                     | Auth  | Opis                                   |
+| ------ | --------------------------- | ----- | -------------------------------------- |
+| GET    | `/api/products`             | auth  | Lista wszystkich produktów (rur)       |
+| PUT    | `/api/products`             | admin | Zapis cennika do szkicu (nie do LIVE)  |
+| PATCH  | `/api/products/:id`         | admin | Wyłączone: `409 LIVE_READ_ONLY`        |
+| DELETE | `/api/products/:id`         | admin | Wyłączone: `409 LIVE_READ_ONLY`        |
+| GET    | `/api/products/export.xlsx` | auth  | Eksport XLSX (`?source=live\|default`) |
+| GET    | `/api/products/default`     | auth  | Domyślny cennik rur                    |
 
 Produkty są ładowane przez `prisma/seed.ts` z pliku `data/seed_rury.json`. Seed nie jest uruchamiany automatycznie przy starcie serwera — wykonuje go `scripts/ensure-db.bat` → `scripts/check-db.js` → `prisma/seed.ts` (ręcznie: `npm run prisma:seed`).
 
@@ -208,9 +230,9 @@ Produkty są ładowane przez `prisma/seed.ts` z pliku `data/seed_rury.json`. See
 | Metoda | Ścieżka                             | Auth  | Opis                                           |
 | ------ | ----------------------------------- | ----- | ---------------------------------------------- |
 | GET    | `/api/products-studnie`             | auth  | Lista wszystkich produktów (studni)            |
-| PUT    | `/api/products-studnie`             | admin | Hurtowy zapis cennika (usuń wszystko + utwórz) |
-| PATCH  | `/api/products-studnie/:id`         | admin | Edycja jednego produktu                        |
-| DELETE | `/api/products-studnie/:id`         | admin | Usunięcie produktu                             |
+| PUT    | `/api/products-studnie`             | admin | Zapis cennika do szkicu (nie do LIVE)          |
+| PATCH  | `/api/products-studnie/:id`         | admin | Wyłączone: `409 LIVE_READ_ONLY`                |
+| DELETE | `/api/products-studnie/:id`         | admin | Wyłączone: `409 LIVE_READ_ONLY`                |
 | GET    | `/api/products-studnie/export.xlsx` | auth  | Eksport XLSX + PRECO (`?source=live\|default`) |
 | GET    | `/api/products-studnie/default`     | auth  | Domyślny cennik studni                         |
 
@@ -509,7 +531,9 @@ wersji studni znajdzie kwalifikującą się PRECO).
 `source=default` zwraca cennik domyślny (bazowy pod Reset), `source=active`
 zamrożoną wersję ACTIVE (nazwa pliku z labelką wersji; `409 NO_ACTIVE_VERSION`
 gdy brak), a `source=draft` — bieżący szkic (`409 NO_DRAFT_VERSION` gdy brak) —
-w UI dostępne wyłącznie przez dopisanie parametru do URL; przyciski eksportują `live`. Diff wersji (`GET /:id/diff`) zwraca też
+w UI dostępne wyłącznie przez dopisanie parametru do URL; przyciski eksportują `live`.
+W etapie 1 `source=live` aliasuje do `draft` (tabele LIVE nie są już eksportowane);
+parametr zniknie razem z LIVE. Diff wersji (`GET /:id/diff`) zwraca też
 `changes` (top zmian cen: sekcja, pozycja, przed/po, Δ%) i flagę `truncated`.
 
 Dla studni eksport wersji (`GET /:id/export`) i `source=active` dokleja PRECO

@@ -1,7 +1,7 @@
 /**
  * Paczka 1: GET cenników z ?source=active czyta ceny z wersji APPROVED
  * przez centralny resolveActivePricing (kształt legacy 1:1 z GET live).
- * Brak ACTIVE → LIVE + X-Pricelist-Fallback: live; zły source → 422.
+ * Brak ACTIVE → 409 NO_ACTIVE_VERSION (bez cichego LIVE); zły source → 422.
  * Zwykły GET bez source = widok edytora (szkic → ACTIVE → LIVE).
  */
 

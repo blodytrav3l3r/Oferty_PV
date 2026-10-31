@@ -442,7 +442,7 @@ export async function currentPricelistLabel(typeInput: unknown): Promise<string 
 export interface ActivePricing {
     /** Zawartość pola `data` w response (rury/studnie: wiersze; preco: [entry]). */
     data: unknown;
-    /** true = brak ACTIVE, trasa czyta LIVE + stawia X-Pricelist-Fallback: live. */
+    /** true = brak ACTIVE: `?source=active` → 409, edytor czyta LIVE. */
     fallback: boolean;
     versionId: string | null;
 }

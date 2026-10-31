@@ -4,7 +4,7 @@
  * Świeża instalacja (`install.bat` → migrate → `prisma/seed.ts`) wypełnia tylko
  * tabele LIVE + `*Default`. Żadna migracja ani seed nie tworzy wiersza
  * `PricelistVersion`, więc `resolveActive()` (status APPROVED + effectiveFrom)
- * zwraca null i oferty spadają na LIVE z `X-Pricelist-Fallback: live`.
+ * zwraca null i nowa oferta nie ma z czego się wycenić (`409 NO_ACTIVE_VERSION`).
  *
  * `ensureBaselineVersions()` domyka tę lukę: dla osi BEZ żadnej wersji tworzy
  * seq:1 APPROVED z bieżącego LIVE. Idempotentne — oś z jakąkolwiek wersją

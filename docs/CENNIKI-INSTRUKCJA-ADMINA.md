@@ -181,8 +181,9 @@ przechodzi na obowiązującą wersję). Zamówienia mają własny snapshot — n
 1. Wejdź w `#/cennik` → oś **Rury**/**Studnie** → **„Edytuj”** (albo „Utwórz kopię
    jako szkic”) i popraw ceny (ręcznie albo importem XLSX). Zakładka „Cennik”
    w module oferty jest tylko podglądem wersji, na której stoi oferta.
-2. Zapis tworzy lub aktualizuje **DRAFT** tej osi. Docelowy zapis: `PRICELIST_WRITE_TARGET=draft`
-   (domyślnie). Tryb `live` to rollback do starych tabel — wtedy zapis nie tworzy wersji.
+2. Zapis tworzy lub aktualizuje **DRAFT** tej osi. Tabele LIVE (stary snapshot) są
+   **tylko do odczytu** — `PATCH`/`DELETE` zwracają `409 LIVE_READ_ONLY`, a `PUT`
+   zawsze trafia do wersji. Nie ma przełącznika zapisu do LIVE.
 3. Uzupełnij datę obowiązywania i notę (data i nota mogą zostać podane dopiero przy publikacji).
 4. Uruchom **Kontrolę** i **Porównaj** (sekcja 7).
 5. **Opublikuj** → `POST /:id/approve` (sekcja 8).
@@ -307,10 +308,11 @@ Nowa oferta dostaje pieczątkę wersji obowiązującej w chwili utworzenia
 (`pricelistVersionId`, null = legacy sprzed wersjonowania) oraz **snapshot cen w dokumencie —
 to on jest źródłem prawdy**. Zmiana cennika nie rusza ofert. Oferta z pieczątką liczy z tej
 wersji (`GET /api/pricelist-versions/:id/rows`, tylko APPROVED i efektywna); podgląd bez
-pieczątki liczy z wersji obowiązującej (`?source=active`); gdy aktywnej wersji brak — fallback
-do LIVE z nagłówkiem `X-Pricelist-Fallback: live`. Przeliczenie do nowego cennika to jawna
-operacja („Przelicz do aktywnego"); niezgodny stamp przy zapisie to 409 („odśwież i przelicz
-ponownie").
+pieczątki liczy z wersji obowiązującej (`?source=active`). Gdy aktywnej wersji **brak**:
+`409 NO_ACTIVE_VERSION` przy odczycie cennika **i przy zapisie nowej oferty** — nie ma już
+fallbacku do LIVE. Błąd odczytu cennika to `503 PRICELIST_UNAVAILABLE` (nie udajemy braku
+wersji). Przeliczenie do nowego cennika to jawna operacja („Przelicz do aktywnego");
+niezgodny stamp przy zapisie to 409 („odśwież i przelicz ponownie").
 Badge „cennik vX · Typ" w ofercie pokazuje wersję z pieczątki (tooltip: data UTC);
 „(bieżący)" oznacza podgląd obowiązującej przy braku pieczątki.
 
@@ -322,8 +324,13 @@ Badge „cennik vX · Typ" w ofercie pokazuje wersję z pieczątki (tooltip: dat
   i tylko na jej module; w `#/cennik` kliknięcie przycisku innej osi przełącza
   tab i tam pokazuje potwierdzenie. Po przywróceniu kliknij „Zapisz", aby
   zachować zmiany.
-- Przenosiny: `npm run prices:export` → skopiuj plik → `npm run prices:import`;
-  kontrola: `npm run prices:verify` (LIVE vs Default vs plik).
+- Przenosiny: `npm run prices:export` → skopiuj plik → `npm run prices:import`
+  (domyślnie **dry-run**: pokazuje diff, nic nie zapisuje) → zapis:
+  `npm run prices:import -- --force` (wpis w audycie). Kontrola:
+  `npm run prices:verify` (LIVE vs Default vs plik **oraz ACTIVE vs LIVE**;
+  `--strict` zamienia rozjazd ACTIVE vs LIVE na błąd).
+- Snapshot `data/price_defaults.json` **nie** wczytuje się już przy starcie
+  domyślnie — tylko z `PRICELIST_RESTORE_ON_START=1` (świadome nadpisanie LIVE).
 - Znaczniki czasu są rozdzielone: `pricelist_defaults_updated_at` (snapshot)
   i `pricelist_active_updated_at` (publikacje wersji).
 
