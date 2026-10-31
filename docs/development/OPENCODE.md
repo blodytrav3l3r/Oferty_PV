@@ -100,6 +100,8 @@ Baseline zmierzony 2026-10-31 (przed optymalizacją):
 | opisy skilli w katalogu sesji (46 wpisów, 58 unikalnych źródeł)          | 14 646 zn.                |
 | schematy tooli (browser 45, graphify 7, ocr 2, opencode 8, claude_mem 1) | ~8–10k tokenów (szacunek) |
 
+Po optymalizacji 2026-10-31: instrukcje 18 722 zn. (~4 680 tok., wcześniej 21 724), opisy skilli 4 398 zn. (~1 100 tok., 20 wpisów w katalogu, wcześniej 46). Schematy tooli bez zmian — `browser` (45 tooli) świadomie zostawiony.
+
 Zasady:
 
 - Domyślny tryb caveman jest pinowany w repo przez `.caveman.json` (`defaultMode`), nie przez config użytkownika — zachowanie identyczne na każdej maszynie z pluginem.
