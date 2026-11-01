@@ -175,7 +175,7 @@ Aplikacja S.O.K. — System Ofert i Kalkulacji to pojedyncza aplikacja webowa (m
     - `lockSchemas.ts` — schematy blokad edycji
     - `priceDefaultsSchemas.ts` — schematy snapshotów cen domyślnych
 
-5. **Utils** (`src/utils/`, 32 pliki — lista poniżej jest wybiórcza)
+5. **Utils** (`src/utils/` — lista poniżej jest wybiórcza)
     - `brandHtml.ts` — brandowanie nagłówka w generowanych dokumentach
     - `cronService.ts` — serwis cron (setInterval)
     - `dbQueryCounter.ts` — licznik zapytań DB (diagnostyka N+1)
@@ -302,7 +302,7 @@ w HTML/partialach/szablonach — jeden dyspozytor `public/js/shared/cspActions.j
 | -------------------------- | ------------- | ------------------------------------------------------------------------ |
 | `public/js/rury/`          | 30            | Logika modułu rur (oferty, cenniki, zamówienia)                          |
 | `public/js/studnie/`       | 150           | Logika modułu studni (konfigurator, oferty, cenniki, excel, zamówienia)  |
-| `public/js/shared/`        | 39            | Wspólne helpery (auth, ui, headerUser, toast, modalCore, StorageService) |
+| `public/js/shared/`        | 44            | Wspólne helpery (auth, ui, headerUser, toast, modalCore, StorageService) |
 | `public/js/kartoteka/`     | 9             | Kartoteka ofert i zamówień (kartotekaActions, kartotekaUi, ...)          |
 | `public/js/import-export/` | 12            | Import/eksport XLSX + JSON 1:1 (toolbar.js + rury/studnie/shared)        |
 | `public/js/spa/`           | 4             | Router SPA (router.js)                                                   |
@@ -311,7 +311,7 @@ w HTML/partialach/szablonach — jeden dyspozytor `public/js/shared/cspActions.j
 | `public/js/cennik/`        | 1             | Podgląd aktywnych cenników (read-only)                                   |
 | `public/js/` (root)        | 4             | Skrypty startowe/globalne                                                |
 
-Razem: 261 plików `.js` w `public/js/`.
+Suma plików `.js` i komendy pomiarowe: `docs/agents/metrics.md`.
 
 Główne pliki rdzeniowe w `public/js/studnie/` po podziale:
 
@@ -511,7 +511,7 @@ Oferty_PV/
 │   │   └── telemetrySchemas.ts     # Walidacja telemetrii
 │   └── types/                      # Typy TypeScript
 │
-├── public/                          # Frontend (Vanilla JS, 337 plików)
+├── public/                          # Frontend (Vanilla JS)
 │   ├── index.html                   # Dashboard (Pulpit)
 │   ├── app.html                     # Shell SPA (router hash #/moduł, osadza iframe)
 │   ├── rury.html                    # Moduł rur (iframe)
@@ -519,13 +519,13 @@ Oferty_PV/
 │   ├── kartoteka.html               # Kartoteka ofert i zamówień
 │   ├── zlecenia.html                # Zlecenia produkcyjne (PZ)
 │   ├── favicon.ico                  # Ikona
-│   ├── js/                          # Skrypty JS (260 plików)
-│   ├── css/                         # 13 arkuszy źródłowych (style.base/cards/responsive/utilities + index/rury/studnie/zlecenia/spa/inter/printModal + studnie/modal, studnie/offer); public/css/min/ to build
+│   ├── js/                          # Skrypty JS
+│   ├── css/                         # 15 arkuszy źródłowych (style.base/cards/responsive/utilities + index/rury/studnie/zlecenia/spa/inter/printModal/cennik/pricelist-panel + studnie/modal, studnie/offer); public/css/min/ to build
 │   ├── images/                      # logo-sok.svg, letterhead-*.png, b-mark.png, ce-mark.png
 │   ├── partials/                    # Partiale HTML (header, rury/*, studnie/*) — partialLoader
 │   └── templates/                   # 5 szablonów: ofertaRury/Studnie, kartaBudowy, zlecenie, etykieta
 │
-├── prisma/                          # Prisma (47 modeli)
+├── prisma/                          # Prisma
 │   ├── schema.prisma                # Definicja schematu
 │   ├── seed.ts                      # Seed danych początkowych (admin, modele AI, ustawienia)
 │   └── migrations/                  # Migracje schematu (pełna lista: prisma/migrations/)

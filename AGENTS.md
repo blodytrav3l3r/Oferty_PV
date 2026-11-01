@@ -38,7 +38,7 @@ Twarde reguły dowodowe, Evidence Ledger i szablon checkpointu: `docs/agents/evi
 - **Backend**: TypeScript + Express + Prisma + SQLite (`server.ts`, `src/`, `scripts/`, `tests/`). Warstwy: routes → validators → services → Prisma. Monolit celowy.
 - **Frontend**: Vanilla JS SPA (`app.html` + iframe modułów `studnie.html`/`rury.html`), kod w `public/js/` (nie kompilowany przez `tsc`, sprawdzany przez ESLint + `typecheck:frontend`).
 - **Decyzje (ADR)**: `docs/adr/` — ADR-001 SQLite, ADR-002 Vanilla SPA, ADR-004 Express+Prisma, ADR-005 Express jedynym serwerem, ADR-006 HTTPS/reverse proxy, ADR-007 cenniki, ADR-008 modularyzacja frontendu, ADR-009 mapa produktów studni, ADR-014 iframe boundary, ADR-016 SLA per zespół (pełna lista: `docs/adr/`).
-- **Legacy surface (nie powiększaj)**: 260 plików JS, 1278 przypisań `window.X =`, 0 inline `onclick` w HTML (CSP-E), 21 programistycznych `.onclick =` w `public/js` (stan 2026-10-25). Zasada: NEW globals/inline/inline-styles = 0; nowy kod ESM + `addEventListener`. Excel to protected zone.
+- **Legacy surface (nie powiększaj)**: bieżące liczby i komendy pomiarowe: `docs/agents/metrics.md`. Zasada: NEW globals/inline/inline-styles = 0; nowy kod ESM + `addEventListener`. Excel to protected zone.
 - **Zakazane kierunki** (decyzje, nie zaległości): React, PostgreSQL, mikroserwisy, Redis, BullMQ/Kafka, Pact, OpenTelemetry, pełna normalizacja JSON, masowe przepisywanie legacy.
 
 ## Filozofia pracy (skrót)
@@ -52,13 +52,27 @@ Twarde reguły dowodowe, Evidence Ledger i szablon checkpointu: `docs/agents/evi
 - DRY, SRP, KISS; funkcje ~100–150 linii, max 3 poziomy zagnieżdżeń; nazwy: funkcje czasownik+rzeczownik, boolean `is/has/can`; immutability (`[...t].sort(...)`); brak silent fail; Zod na wejściu.
 - Multi-model: po przejęciu sesji podejmij pracę od ostatniego stabilnego stanu (`docs/plans/`, git log); mniejsze modele: zero placeholderów + częstszy `typecheck`; większe: kontrola SRP/DRY/ADR + refaktor po poprzedniku.
 
-## Polityka kontekstu (jakość przede wszystkim, koszt przy okazji)
+## Efektywność tokenowa i komunikacja (jakość przede wszystkim, koszt przy okazji)
+
+Cel: najmniej kontekstu, kodu i tekstu, ile wystarczy do następnej poprawnej i weryfikowalnej decyzji. Oszczędność nigdy nie obniża poprawności, bezpieczeństwa, wymaganego zakresu testów ani zgodności z zasadami projektu.
+
+- **Styl odpowiedzi**: wynik/decyzja najpierw; potem tylko fakty potrzebne do potwierdzenia wyniku; „następny krok" wyłącznie gdy wymaga decyzji użytkownika. Nie powtarzaj pytania, znanych faktów o projekcie ani wcześniejszych ustaleń; nie opisuj doboru narzędzi ani rutynowego toku rozumowania. Rozwijaj odpowiedź tylko przy złożoności, ryzyku lub na wyraźną prośbę.
+- **Wyjątki od skrótu** (pełne zdania, nie skrót): ostrzeżenie bezpieczeństwa, akcja nieodwracalna (🔴 w `docs/AUTONOMY_CONTRACT.md`), pytanie do użytkownika, potwierdzenie kolejności kroków.
+- **Kod w odpowiedzi**: nie wklejaj niezmienionego kodu; podaj `ścieżka:linia` i tylko zmienione fragmenty (z 1–2 liniami kontekstu); bez komentarzy opisujących oczywiste działanie.
+- **Weryfikacja**: najpierw najmniejszy właściwy test lub komenda; rozszerzaj zakres gdy wymagają tego bramy projektu, zmiana dotyka szerszego obszaru, podstawowa weryfikacja padła albo zadanie wymaga pełnej walidacji. Zakaz uruchamiania testów i skanów „na pokaz".
+- **Decyzje**: gdy dane wystarczają — jedno rozwiązanie, bez listy spekulacyjnych alternatyw. Prostsze rozwiązanie zgłoś raz, przed kodowaniem (nie po). Gdy brakuje informacji: wskaż czego brakuje, dlaczego blokuje decyzję, i wykonaj najmniejsze użyteczne sprawdzenie albo zadaj jedno pytanie.
+- **Zakończenie**: kończ gdy kryteria akceptacji są spełnione i wymagana weryfikacja przeszła; bez niezwiązanego sprzątania, optymalizacji i refaktorów.
+
+Dyscyplina kontekstu:
 
 - Rozpoznanie w **>2 plikach** → subagent `cavecrew-investigator` (zwraca tabelę `file:line`); nie wciągaj treści plików do głównego kontekstu. `Explore` zwraca prozę — używaj go tylko, gdy potrzebujesz narracji.
 - `read` pliku **>300 linii** → zawsze z `offset`/`limit`; całość tylko gdy edytujesz większość pliku.
 - Szukanie konkretnego fragmentu → `grep` z kontekstem (`-C 3`), nie `read` całego pliku.
 - Pytania „gdzie jest X"/architektura → `graphify` (MCP), nie grep po całym repo.
 - Powrót do zadania z historii → `claude_mem_search` **przed** czytaniem plików.
+- Nie wczytuj plików, logów i dokumentacji „na wszelki wypadek"; nie analizuj ponownie plików niezmienionych w tej sesji.
+- Zadanie wskazuje plik, ścieżkę, błąd lub lokalizację → startuj tam; zakres analizy proporcjonalny do złożoności zadania.
+- Duże wyjście komendy → filtruj i ograniczaj w samej komendzie, nie wciągaj pełnych logów ani rekurencyjnych listingów.
 - `ocr_review`: najpierw `preview: true`; potem `exclude` na `graphify-out/`, `dist/`, `node_modules/`, snapshoty; wznowienie przez `resume`.
 - Jedno zadanie = jedna sesja; `session_rename` przy zmianie wątku.
 - Bramy egzekwuje kod (pre-push/pre-commit), nie proza — nie powtarzaj ich treści w promptcie ani w nowych plikach `instructions`.
@@ -73,7 +87,7 @@ Twarde reguły dowodowe, Evidence Ledger i szablon checkpointu: `docs/agents/evi
 - Commity/wersje/release/plany: `docs/agents/release.md`.
 - Komendy + kodowanie: `docs/agents/commands.md`.
 - Evidence-first (pełny protokół, audyty P0/P1): `docs/agents/evidence.md`.
-- Baza znanych błędów #1–#63: tabela skrótowa w historii + pełnia `docs/errors-known.md` (SSoT numeracji).
+- Znane błędy: `docs/errors-known.md` — SSoT numeracji, opisów, statusów i historii.
 - Przed zmianą w Excelu, XSS/CSRF/CSP, Prisma/migracjach, PDF lub kodowaniu: `grep` w `docs/errors-known.md` po temacie — nie odkrywaj znanego błędu drugi raz.
 
 ### Bezpieczeństwo Git — Git Safety (obowiązkowe, SSoT `docs/development/GIT_SAFETY.md`)
@@ -89,7 +103,7 @@ Wszystkie plany/taski (`.md`) w `docs/plans/` (wyjątek: `.hermes/`, `.opencode/
 
 ## Subagenty i konfiguracja OpenCode V2
 
-Runtime: **OpenCode V2** (`opencode-cli.exe` z aplikacji desktop, obecnie 2.1.4). Globalny npm `opencode` 1.x **nie jest wspierany** — odrzuca projektowy config (V2 `permissions`). Szczegóły, lokalizacje plików i lista aktywnych pluginów: `docs/development/OPENCODE.md`.
+Runtime: **OpenCode V2** (`opencode-cli.exe` z aplikacji desktop). Globalny npm `opencode` 1.x **nie jest wspierany** — odrzuca projektowy config (V2 `permissions`). Szczegóły, lokalizacje plików i lista aktywnych pluginów: `docs/development/OPENCODE.md`.
 
 Model subagentów w `.opencode/opencode.json` (`agents.<id>.model`). Zmiana configu przeładowuje się automatycznie — restart nie jest potrzebny. Bez ustawienia subagent dziedziczy model primary.
 
@@ -98,8 +112,8 @@ Model subagentów w `.opencode/opencode.json` (`agents.<id>.model`). Zmiana conf
 Knowledge graph w `graphify-out/`. Na `/graphify`: `query` → `path` → `explain`. Po zmianie kodu: `graphify update .`.
 
 - `query_graph` z `token_budget: 1000–1200` i `depth: 2`; szerszy budżet tylko gdy pytanie obejmuje cały moduł.
-- **Zakaz czytania `GRAPH_REPORT.md`** (225 KB ≈ 56k tokenów) w głównym wątku — to artefakt do przeglądu poza agentem; do architektury wystarczy `query_graph` lub `god_nodes`.
-- `graph.json` (11,9 MB) jest generowany i gitignored — nigdy nie czytaj go bezpośrednio.
+- **Zakaz czytania `GRAPH_REPORT.md`** w głównym wątku — to artefakt do przeglądu poza agentem; do architektury wystarczy `query_graph` lub `god_nodes`.
+- `graph.json` jest generowany i gitignored — nigdy nie czytaj go bezpośrednio.
 
 ## Kontrakt autonomii agenta (SSoT `docs/AUTONOMY_CONTRACT.md` z 2026-09-21)
 

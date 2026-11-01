@@ -637,32 +637,32 @@ Oferty_PV/
 │   ├── validators/            # Schematy walidacji Zod
 │   ├── utils/                 # Narzędzia (logger, helpers, productionOrderGuard)
 │   └── types/                 # Typy TypeScript
-├── public/                    # Frontend (Vanilla JS SPA, 260 plików JS)
+├── public/                    # Frontend (Vanilla JS SPA; liczby plików: docs/agents/metrics.md)
 │   ├── app.html               # Shell SPA (jedyny entry point, router hash)
 │   ├── index.html             # Pulpit / Dashboard
 │   ├── studnie.html           # Moduł studnie (iframe w app.html)
 │   ├── rury.html              # Moduł rury (iframe w app.html)
 │   ├── kartoteka.html         # Kartoteka ofert i zamówień
 │   ├── zlecenia.html          # Zlecenia produkcyjne (PZ)
-│   ├── js/                    # Skrypty JS (260 plików)
+│   ├── js/                    # Skrypty JS
 │   │   ├── shared/            # 44 pliki: auth, ui, icons, headerUser, toast, modalCore, StorageService
-│   │   ├── studnie/           # 149 plików: WellManager, solver, ruleEngine, ML hooks, Excel (19 modułów excel*.js)
+│   │   ├── studnie/           # 150 plików: WellManager, solver, ruleEngine, ML hooks, Excel (28 modułów excel*.js)
 │   │   ├── rury/              # 30 plików: OfferItems, offerSummary, PEHD
 │   │   ├── kartoteka/         # 9 plików: kartotekaActions, kartotekaUi, kartotekaInit
 │   │   ├── import-export/     # 12 plików: toolbar.js + rury/studnie/shared (XLSX + JSON 1:1)
 │   │   ├── admin/             # 7 plików: AI dashboard, aiDashboard
 │   │   └── spa/               # 4 pliki: router.js, navGuard
-│   ├── css/                   # 11 arkuszy: style.base/cards/responsive/utilities + index/rury/studnie/zlecenia/spa/inter/printModal
+│   ├── css/                   # 15 arkuszy: style.base/cards/responsive/utilities + index/rury/studnie/zlecenia/spa/inter/printModal/cennik/pricelist-panel
 │   ├── images/                # logo-sok.svg, letterhead-*.png, b-mark.png, ce-mark.png
 │   ├── partials/              # Partiale HTML (header, rury/*, studnie/*) ładowane przez partialLoader
 │   └── templates/             # 5 szablonów: ofertaRury/Studnie, kartaBudowy, zlecenie, etykieta
-├── prisma/                    # Schema + migracje Prisma (47 modeli)
-│   ├── schema.prisma          # Definicja schematu (SQLite, 47 modeli)
-│   └── migrations/            # 39 migracji: 20260815000000_baseline … 20261031120000_drop_pricelist_live (pełna lista: prisma/migrations/)
+├── prisma/                    # Schema + migracje Prisma
+│   ├── schema.prisma          # Definicja schematu (SQLite)
+│   └── migrations/            # Migracje: 20260815000000_baseline … 20261031120000_drop_pricelist_live (pełna lista: prisma/migrations/)
 ├── data/                      # Baza SQLite + pliki seed
 │   ├── app_database.sqlite    # Główna baza (SQLite)
 │   └── seed_*.json            # seed_rury/studnie/preco.json (wersja bazowa cennika)
-├── tests/                     # Testy (Jest + Playwright, 549 plików)
+├── tests/                     # Testy (Jest + Playwright)
 │   ├── ml/                    # Testy pipeline'u ML
 │   ├── studnie/               # Testy modułu studnie (Excel, solver, pzGuard)
 │   ├── sales/                 # Testy kartoteki (filtry, batch, search)
@@ -673,7 +673,7 @@ Oferty_PV/
 │   ├── plans/                 # Plany i taski (+ archive/ — 161 archiwalnych)
 │   ├── import-export/         # Dokumentacja modułu import/eksport
 │   └── ...                    # ARCHITECTURE, DATABASE, API, SECURITY, COMPONENTS, UI_GUIDELINES
-├── scripts/                   # Skrypty narzędziowe (85 plików)
+├── scripts/                   # Skrypty narzędziowe
 │   ├── backup.ts              # Backup bazy (VACUUM INTO, max 1 kopia)
 │   ├── restore-db.js          # Przywracanie bazy z backupu (header + integrity_check + WAL cleanup)
 │   ├── check-db.js            # Weryfikacja schematu przy starcie (ensure-db.bat)

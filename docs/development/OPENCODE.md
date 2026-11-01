@@ -7,11 +7,11 @@
 
 ## 1. Runtime
 
-| Element      | Wartość                                                                                                              |
-| ------------ | -------------------------------------------------------------------------------------------------------------------- |
-| Wersja       | OpenCode **V2** (obecnie 2.1.4), CLI z aplikacji desktop: `<Programs>\opencode-aidesktop\resources\opencode-cli.exe` |
-| Niewspierane | globalny npm `opencode` 1.x — odrzuca projektowy config (`V2 permissions are not supported by OpenCode V1`)          |
-| Sprawdzenie  | `opencode-cli.exe --version` → `opencode v2.x.y`                                                                     |
+| Element      | Wartość                                                                                                                                     |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| Wersja       | OpenCode **V2** (obecnie 2.2.5, sprawdzone 2026-11-01), CLI z aplikacji desktop: `<Programs>\opencode-aidesktop\resources\opencode-cli.exe` |
+| Niewspierane | globalny npm `opencode` 1.x — odrzuca projektowy config (`V2 permissions are not supported by OpenCode V1`)                                 |
+| Sprawdzenie  | `opencode-cli.exe --version` → `opencode v2.x.y`                                                                                            |
 
 V1 i V2 dzielą nazwę komendy `opencode`, więc obecność V1 w `PATH` myli. W tym repo używamy wyłącznie V2.
 
@@ -111,7 +111,7 @@ Zasady:
 - Duże rozpoznanie kodu robić subagentem `cavecrew-investigator`, nie serią `read` w głównym kontekście.
 - `ponytail` pinowany na konkretną wersję: `@latest` zmienia zachowanie skilli bez zmiany w repo.
 - Katalog skilli filtruje `permissions` z `action: "skill"`; `deny` usuwa wpis z katalogu sesji **bez** kasowania katalogu na dysku (bundle `~/.agents/skills` jest współdzielony z innymi narzędziami).
-- `graphify`: `token_budget` 1000–1200 i `depth` 2; `GRAPH_REPORT.md` (225 KB ≈ 56k tokenów) nie jest do czytania w agencie.
+- `graphify`: `token_budget` 1000–1200 i `depth` 2; `GRAPH_REPORT.md` nie jest do czytania w agencie.
 - Prefix stały (instrukcje + katalog + schematy) jest stabilny, więc u dostawcy leci jako cache-read; zmiany configu wprowadzać paczką, bo unieważniają cache.
 
 ## 8. Znane pułapki
