@@ -49,6 +49,12 @@ async function recordEditorPrint(orderId, kind) {
         );
         if (!res.ok) {
             logger.error('printManager', 'recordEditorPrint: HTTP ' + res.status);
+            if (res.status === 409) {
+                showToast(
+                    'Licznik wydruku nie zapisany — zlecenie zmienione równolegle. Odśwież listę zleceń.',
+                    'error'
+                );
+            }
         }
     } catch (err) {
         logger.error('printManager', 'recordEditorPrint error:', err);
@@ -332,6 +338,10 @@ function formatBlindKinetaRow(label, p, findProductFn) {
 async function printZlecenie() {
     // Auto-zapis zlecenia + synchronizacja oferty/zamówienia przed wydrukiem
     const orderId = await saveProductionOrder();
+    if (!orderId) {
+        showToast('Wydruk wstrzymany — zlecenie nie zostało zapisane', 'error');
+        return;
+    }
 
     const data = collectPrintData();
     if (!data) return;
@@ -830,6 +840,10 @@ function buildZlecenieHtml(template, data) {
 async function printEtykieta() {
     // Auto-zapis zlecenia + synchronizacja oferty/zamówienia przed wydrukiem
     const orderId = await saveProductionOrder();
+    if (!orderId) {
+        showToast('Wydruk wstrzymany — zlecenie nie zostało zapisane', 'error');
+        return;
+    }
 
     const data = collectPrintData();
     if (!data) return;

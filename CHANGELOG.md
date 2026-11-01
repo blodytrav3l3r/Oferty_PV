@@ -4,6 +4,15 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.55.5](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.55.4...v1.55.5) (2026-11-01)
+
+### Bug Fixes
+
+- **studnie:** wydruk z edytora wstrzymany, gdy auto-zapis zlecenia się nie powiedzie — brak rozjazdu między papierem a licznikiem
+- **ui:** konflikt wersji (409) przy liczniku wydruków pokazuje toast zamiast cichego rollbacku (edycja i lista zleceń)
+
+---
+
 ## [1.55.4](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.55.3...v1.55.4) (2026-11-01)
 
 ### Bug Fixes

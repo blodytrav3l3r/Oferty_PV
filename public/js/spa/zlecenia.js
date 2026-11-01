@@ -595,6 +595,15 @@ const AppZlecenia = (() => {
     }
 
     /**
+     * Błąd HTTP z kodem — catch rozpoznaje 409 (konflikt wersji licznika).
+     * @param {Response} res
+     * @returns {Error & { status: number }}
+     */
+    function httpError(res) {
+        return Object.assign(new Error('HTTP ' + res.status), { status: res.status });
+    }
+
+    /**
      * Rejestruje potwierdzone uruchomienie wydruku (wołane dopiero po kliku
      * [Drukuj] w modalu potwierdzenia). Fire-and-forget: UI dostaje
      * optymistyczny +1, serwer rozstrzyga (reconciliacja, rollback przy błędzie).
@@ -620,7 +629,7 @@ const AppZlecenia = (() => {
                     '/api/orders-studnie/production/' + encodeURIComponent(ids[0]) + '/print-count',
                     { method: 'POST', headers, body: JSON.stringify({ kind }) }
                 );
-                if (!res.ok) throw new Error('HTTP ' + res.status);
+                if (!res.ok) throw httpError(res);
                 const json = await res.json();
                 applyServerPrintCounts({ [ids[0]]: json });
             } else {
@@ -633,7 +642,7 @@ const AppZlecenia = (() => {
                         headers,
                         body: JSON.stringify({ ids: chunk, kind })
                     });
-                    if (!res.ok) throw new Error('HTTP ' + res.status);
+                    if (!res.ok) throw httpError(res);
                     const json = await res.json();
                     applyServerPrintCounts(json.counts || {});
                     (json.failed || []).forEach((f) => {
@@ -646,6 +655,14 @@ const AppZlecenia = (() => {
             refreshPrintCells(ids);
         } catch (error) {
             logger.error('zlecenia', 'recordPrint error:', error);
+            const status =
+                error && typeof error === 'object' && 'status' in error ? error.status : 0;
+            if (status === 409) {
+                showToast(
+                    'Licznik wydruku nie zapisany — zlecenie zmienione równolegle. Odśwież listę zleceń.',
+                    'error'
+                );
+            }
             prev.forEach((snap, id) => {
                 const o = findOrderById(id);
                 if (o) restorePrintCounts(o, snap);

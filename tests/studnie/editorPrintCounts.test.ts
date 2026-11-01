@@ -72,4 +72,22 @@ describe('licznik wydruków z edytora zlecenia', () => {
     it('saveProductionOrder zwraca id zapisanego zlecenia', () => {
         expect(zleceniaModal).toMatch(/showToast\([\s\S]*?'success'\);\s*return order\.id;/);
     });
+
+    it('nieudany zapis blokuje wydruk (brak cichego wydruku bez licznika)', () => {
+        for (const fn of ['async function printZlecenie', 'async function printEtykieta']) {
+            const start = printManager.indexOf(fn);
+            const block = printManager.slice(start, start + 400);
+            expect(block).toMatch(
+                /const orderId = await saveProductionOrder\(\);\s*if \(!orderId\) \{[\s\S]*?return;\s*\}/
+            );
+        }
+    });
+
+    it('konflikt wersji (409) pokazuje toast, nie tylko log', () => {
+        const idx = printManager.indexOf('res.status === 409');
+        expect(idx).toBeGreaterThan(-1);
+        const block = printManager.slice(idx, idx + 300);
+        expect(block).toContain('showToast(');
+        expect(block).toContain("'error'");
+    });
 });

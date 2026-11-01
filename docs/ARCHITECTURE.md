@@ -1,6 +1,6 @@
 # Architektura — S.O.K. — System Ofert i Kalkulacji
 
-**Wersja:** 1.55.4  
+**Wersja:** 1.55.5  
 **Ostatnia aktualizacja:** 2026-10-24  
 **Stack:** Express + Prisma + SQLite + VanillaJS SPA + ML Pipeline
 

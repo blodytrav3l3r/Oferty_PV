@@ -73,3 +73,21 @@ describe('Kartoteka — podświetlanie aktywnych filtrów', () => {
         expect(loadFn).toContain('this._syncFilterUI();');
     });
 });
+
+describe('Zlecenia — licznik wydruków', () => {
+    test('konflikt wersji (409) przy liczniku pokazuje toast', () => {
+        const js = fs.readFileSync('public/js/spa/zlecenia.js', 'utf-8');
+        const idx = js.indexOf("'status' in error");
+        expect(idx).toBeGreaterThan(-1);
+        const block = js.slice(idx, idx + 400);
+        expect(block).toContain('status === 409');
+        expect(block).toContain('showToast(');
+    });
+
+    test('błąd HTTP niesie kod statusu (httpError)', () => {
+        const js = fs.readFileSync('public/js/spa/zlecenia.js', 'utf-8');
+        expect(js).toContain('function httpError(res)');
+        expect(js).toContain('throw httpError(res);');
+        expect(js).not.toContain("throw new Error('HTTP ' + res.status);");
+    });
+});
