@@ -54,6 +54,7 @@ export default {
 
     async loadLocalOffers() {
         logger.info('kartotekaUi', 'loadLocalOffers: Delegowanie do searchOffers...');
+        this._syncFilterUI();
         await this.searchOffers(this.buildSearchParams());
         this.notifyOrderMutation();
     },

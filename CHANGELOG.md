@@ -4,6 +4,15 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.55.2](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.55.1...v1.55.2) (2026-11-01)
+
+### Bug Fixes
+
+- **ui:** podświetlanie aktywnych filtrów w kartotece (LOS, „Bez wstrzymanych”) i zleceniach (presety dat, hover statusów) oraz kafelki podsumowania przeniesione obok przycisków statusu
+- **kartoteka:** preset „30 dni” w pasku filtrów
+
+---
+
 ## [1.55.1](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.55.0...v1.55.1) (2026-11-01)
 
 ### Features

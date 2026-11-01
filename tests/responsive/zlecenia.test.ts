@@ -31,8 +31,45 @@ describe('Kartoteka Zleceń — responsywność', () => {
         expect(html).not.toContain('zlecenia-virtual-toolbar');
     });
 
+    test('kafelki podsumowania są w pierwszym rzędzie, obok statusów', () => {
+        const html = fs.readFileSync('public/zlecenia.html', 'utf-8');
+        const statsIdx = html.indexOf('id="zlecenia-stats"');
+        expect(statsIdx).toBeGreaterThan(html.indexOf('data-filter="accepted"'));
+        expect(statsIdx).toBeLessThan(html.indexOf('ka-filter-row ka-filter-row--secondary'));
+    });
+
     test('zlecenia.html ma .zlecenia-page', () => {
         const html = fs.readFileSync('public/zlecenia.html', 'utf-8');
         expect(html).toContain('class="zlecenia-page"');
+    });
+
+    test('hover paska filtrów nie gasi aktywnego przycisku', () => {
+        const css = fs.readFileSync('public/css/style.responsive.css', 'utf-8');
+        expect(css).toContain('.kartoteka-filter-bar button:not(.active):hover');
+        expect(css).not.toMatch(/\.kartoteka-filter-bar button:hover\s*\{/);
+    });
+
+    test('presety dat podświetlają się według wartości pól', () => {
+        const js = fs.readFileSync('public/js/spa/zlecenia.js', 'utf-8');
+        expect(js).toContain('function syncDatePresetState()');
+        expect(js).toContain("btn.classList.toggle('active', isActive)");
+        expect(js).toContain('syncDatePresetState();');
+    });
+});
+
+describe('Kartoteka — podświetlanie aktywnych filtrów', () => {
+    test('wszystkie typy przycisków filtra mają styl aktywnego stanu', () => {
+        const css = fs.readFileSync('public/css/style.responsive.css', 'utf-8');
+        expect(css).toContain('.kartoteka-filter-bar .ka-followup-filter-btn.active');
+        expect(css).toContain('.kartoteka-filter-bar .ka-hide-paused-btn.active');
+    });
+
+    test('każde ładowanie ofert synchronizuje stan przycisków', () => {
+        const js = fs.readFileSync('public/js/kartoteka/kartotekaSearch.js', 'utf-8');
+        const loadFn = js.slice(
+            js.indexOf('async loadLocalOffers()'),
+            js.indexOf('onSearchInput()')
+        );
+        expect(loadFn).toContain('this._syncFilterUI();');
     });
 });

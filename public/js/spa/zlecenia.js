@@ -57,6 +57,36 @@ const AppZlecenia = (() => {
         const dateToInput = document.getElementById('zlecenia-date-to');
         if (dateFromInput) dateFromInput.value = today;
         if (dateToInput) dateToInput.value = today;
+        syncDatePresetState();
+    }
+
+    const DATE_PRESETS = [
+        { id: 'zlecenia-preset-today', daysBack: 0 },
+        { id: 'zlecenia-preset-7d', daysBack: 6 },
+        { id: 'zlecenia-preset-30d', daysBack: 29 }
+    ];
+
+    function buildDatePresetRange(daysBack) {
+        const to = new Date();
+        const from = new Date();
+        from.setDate(from.getDate() - daysBack);
+        return { from: isoLocalDate(from), to: isoLocalDate(to) };
+    }
+
+    /** Podświetla preset tylko gdy oba pola dat odpowiadają jego zakresowi. */
+    function syncDatePresetState() {
+        const fromInput = document.getElementById('zlecenia-date-from');
+        const toInput = document.getElementById('zlecenia-date-to');
+        const fromVal = fromInput ? fromInput.value : '';
+        const toVal = toInput ? toInput.value : '';
+        DATE_PRESETS.forEach(({ id, daysBack }) => {
+            const btn = document.getElementById(id);
+            if (!btn) return;
+            const range = buildDatePresetRange(daysBack);
+            const isActive = fromVal === range.from && toVal === range.to;
+            btn.classList.toggle('active', isActive);
+            btn.classList.toggle('btn-secondary', !isActive);
+        });
     }
 
     async function init() {
@@ -156,11 +186,13 @@ const AppZlecenia = (() => {
         const dateToInput = document.getElementById('zlecenia-date-to');
         if (dateFromInput) {
             dateFromInput.addEventListener('change', () => {
+                syncDatePresetState();
                 searchOffers(buildSearchParams());
             });
         }
         if (dateToInput) {
             dateToInput.addEventListener('change', () => {
+                syncDatePresetState();
                 searchOffers(buildSearchParams());
             });
         }
@@ -169,6 +201,7 @@ const AppZlecenia = (() => {
             dateClearBtn.addEventListener('click', () => {
                 if (dateFromInput) dateFromInput.value = '';
                 if (dateToInput) dateToInput.value = '';
+                syncDatePresetState();
                 searchOffers(buildSearchParams());
             });
         }
@@ -180,42 +213,26 @@ const AppZlecenia = (() => {
         }
 
         // Presety dat: Dziś / 7 dni / 30 dni
-        const presetToday = document.getElementById('zlecenia-preset-today');
-        const preset7d = document.getElementById('zlecenia-preset-7d');
-        const preset30d = document.getElementById('zlecenia-preset-30d');
-        function applyDatePreset(fromVal, toVal) {
-            if (dateFromInput) dateFromInput.value = fromVal;
-            if (dateToInput) dateToInput.value = toVal;
+        function applyDatePreset(daysBack) {
+            const range = buildDatePresetRange(daysBack);
+            if (dateFromInput) dateFromInput.value = range.from;
+            if (dateToInput) dateToInput.value = range.to;
+            syncDatePresetState();
             searchOffers(buildSearchParams());
         }
-        if (presetToday) {
-            presetToday.addEventListener('click', () => {
-                const today = isoLocalDate(new Date());
-                applyDatePreset(today, today);
-            });
-        }
-        if (preset7d) {
-            preset7d.addEventListener('click', () => {
-                const to = new Date();
-                const from = new Date();
-                from.setDate(from.getDate() - 6);
-                applyDatePreset(isoLocalDate(from), isoLocalDate(to));
-            });
-        }
-        if (preset30d) {
-            preset30d.addEventListener('click', () => {
-                const to = new Date();
-                const from = new Date();
-                from.setDate(from.getDate() - 29);
-                applyDatePreset(isoLocalDate(from), isoLocalDate(to));
-            });
-        }
+        DATE_PRESETS.forEach(({ id, daysBack }) => {
+            const btn = document.getElementById(id);
+            if (btn) btn.addEventListener('click', () => applyDatePreset(daysBack));
+        });
+        syncDatePresetState();
     }
 
     function setFilter(filter) {
         activeFilter = filter;
         document.querySelectorAll('.zlecenia-filter-tab').forEach((btn) => {
-            btn.classList.toggle('active', btn.dataset.filter === filter);
+            const isActive = btn.dataset.filter === filter;
+            btn.classList.toggle('active', isActive);
+            btn.classList.toggle('btn-secondary', !isActive);
         });
         searchOffers(buildSearchParams());
     }
@@ -437,13 +454,15 @@ const AppZlecenia = (() => {
         if (sortSelect) sortSelect.value = 'createdAt-desc';
         activeFilter = 'all';
         document.querySelectorAll('.zlecenia-filter-tab').forEach((btn) => {
-            btn.classList.toggle('active', btn.dataset.filter === 'all');
+            const isActive = btn.dataset.filter === 'all';
+            btn.classList.toggle('active', isActive);
+            btn.classList.toggle('btn-secondary', !isActive);
         });
+        syncDatePresetState();
         searchOffers(buildSearchParams());
     }
 
     /* ===== ZDARZENIA TABELI (delegacja checkboxów) ===== */
-
     function setupTableEvents() {
         const tbody = document.getElementById('zlecenia-table-body');
         if (!tbody) return;

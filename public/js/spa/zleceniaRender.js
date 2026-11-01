@@ -137,15 +137,12 @@ const ZleceniaRender = (() => {
             ).length;
         }
 
-        const sourceLabel = stats ? 'z całego zbioru' : 'z załadowanych';
-
         container.innerHTML = `
             <div class="zlecenia-stat-card">
                 <div class="zlecenia-stat-icon zlecenia-stat-icon--accent"><i data-lucide="layers" aria-hidden="true"></i></div>
                 <div class="zlecenia-stat-info">
                     <div class="zlecenia-stat-value">${total}</div>
                     <div class="zlecenia-stat-label">Wszystkie zlecenia</div>
-                    <div class="zlecenia-stat-source">${sourceLabel}</div>
                 </div>
             </div>
             <div class="zlecenia-stat-card">
@@ -153,7 +150,6 @@ const ZleceniaRender = (() => {
                 <div class="zlecenia-stat-info">
                     <div class="zlecenia-stat-value">${accepted}</div>
                     <div class="zlecenia-stat-label">Zatwierdzone</div>
-                    <div class="zlecenia-stat-source">${sourceLabel}</div>
                 </div>
             </div>
             <div class="zlecenia-stat-card">
@@ -161,7 +157,6 @@ const ZleceniaRender = (() => {
                 <div class="zlecenia-stat-info">
                     <div class="zlecenia-stat-value">${draft}</div>
                     <div class="zlecenia-stat-label">Oczekujące</div>
-                    <div class="zlecenia-stat-source">${sourceLabel}</div>
                 </div>
             </div>
             <div class="zlecenia-stat-card">
@@ -169,7 +164,6 @@ const ZleceniaRender = (() => {
                 <div class="zlecenia-stat-info">
                     <div class="zlecenia-stat-value">${todayCount}</div>
                     <div class="zlecenia-stat-label">Dodane dziś</div>
-                    <div class="zlecenia-stat-source">${sourceLabel}</div>
                 </div>
             </div>
         `;

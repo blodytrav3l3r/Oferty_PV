@@ -6,23 +6,24 @@
     padding: 0 var(--section-pad-x);
 }
 
-/* Pasek statystyk podsumowania */
+/* Kafelki podsumowania — w pasku filtrów, obok przycisków statusu */
 .zlecenia-stats {
     display: flex;
-    gap: var(--tile-gap-sm);
-    margin-bottom: var(--section-gap-lg);
+    gap: var(--tile-gap-xs-plus);
+    margin-left: auto;
     flex-wrap: wrap;
+    justify-content: flex-end;
 }
 .zlecenia-stat-card {
-    flex: 1;
-    min-width: 160px;
+    flex: 0 1 auto;
+    min-width: 0;
     background: var(--bg-secondary);
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
-    padding: 0.55rem 0.9rem;
+    padding: 0.2rem 0.55rem;
     display: flex;
     align-items: center;
-    gap: var(--tile-gap-sm);
+    gap: 0.45rem;
     transition:
         border-color 0.15s ease-in-out,
         box-shadow 0.15s ease-in-out;
@@ -36,9 +37,9 @@
     box-shadow: var(--shadow-sm);
 }
 .zlecenia-stat-icon {
-    font-size: var(--fs-3xl);
-    width: 34px;
-    height: 34px;
+    font-size: var(--fs-2xl);
+    width: 24px;
+    height: 24px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -47,23 +48,30 @@
     box-shadow: inset 0 0 10px rgba(var(--black-rgb), 0.2);
 }
 .zlecenia-stat-info {
-    flex: 1;
+    display: flex;
+    align-items: baseline;
+    gap: 0.35rem;
+    flex-wrap: wrap;
+    min-width: 0;
 }
 .zlecenia-stat-value {
-    font-size: var(--fs-4xl);
+    font-size: var(--fs-2xl);
     font-weight: var(--fw-extrabold);
     color: var(--text-primary);
-    line-height: 1.2;
+    line-height: 1.1;
     letter-spacing: -0.3px;
     font-family: 'Inter', sans-serif;
+    min-width: 5ch;
+    font-variant-numeric: tabular-nums;
 }
 .zlecenia-stat-label {
     font-size: var(--fs-2xs);
     font-weight: var(--fw-bold);
     color: var(--text-muted);
     text-transform: uppercase;
-    letter-spacing: 0.6px;
-    margin-top: 1px;
+    letter-spacing: 0.4px;
+    margin-top: 0;
+    white-space: nowrap;
 }
 
 /* Zakładki filtrów (pasek: .kartoteka-filter-bar z style.responsive.css) */
@@ -502,6 +510,8 @@
     .zlecenia-stats {
         display: grid;
         grid-template-columns: 1fr 1fr;
+        width: 100%;
+        margin-left: 0;
     }
 }
 
@@ -524,6 +534,8 @@
 @media (max-width: 600px) {
     .zlecenia-stats {
         grid-template-columns: 1fr;
+        width: 100%;
+        margin-left: 0;
     }
     .zlecenia-stat-card {
         min-width: auto;
@@ -645,12 +657,7 @@
     width: 18px;
     height: 18px;
 }
-/* Źródło wartości statystyk — cały zbiór lub załadowane okno */
-.zlecenia-stat-source {
-    font-size: var(--fs-xs);
-    color: var(--text-muted);
-    margin-top: 2px;
-}
+/* Źródło wartości statystyk — usunięte; kafelki pokazują tylko licznik i etykietę */
 /* Wskaźnik końca listy — animowany pierścień + komunikat */
 .zlecenia-sentinel {
     display: flex;

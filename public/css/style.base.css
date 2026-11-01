@@ -2796,6 +2796,8 @@ html[data-theme='light'] .header-logout:hover {
 html[data-theme='light'] .btn-primary,
 html[data-theme='light'] .kartoteka-filter-bar .ka-type-filter-btn.active,
 html[data-theme='light'] .kartoteka-filter-bar .ka-filter-btn.active,
+html[data-theme='light'] .kartoteka-filter-bar .ka-followup-filter-btn.active,
+html[data-theme='light'] .kartoteka-filter-bar .ka-hide-paused-btn.active,
 html[data-theme='light'] .kartoteka-filter-bar .ka-date-preset-btn.active {
     background: var(--accent);
     border-color: var(--accent);

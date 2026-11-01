@@ -299,6 +299,8 @@ html[data-theme='light'] .kartoteka-filter-bar:hover {
 
 .kartoteka-filter-bar .ka-type-filter-btn.active,
 .kartoteka-filter-bar .ka-filter-btn.active,
+.kartoteka-filter-bar .ka-followup-filter-btn.active,
+.kartoteka-filter-bar .ka-hide-paused-btn.active,
 .kartoteka-filter-bar .ka-date-preset-btn.active {
     background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
     border-color: transparent;
@@ -323,7 +325,7 @@ html[data-theme='light'] .kartoteka-filter-bar:hover {
     color: var(--text-secondary);
     white-space: nowrap;
 }
-.kartoteka-filter-bar button:hover {
+.kartoteka-filter-bar button:not(.active):hover {
     background: var(--bg-glass);
     border-color: var(--bg-tertiary);
     color: var(--text-primary);
