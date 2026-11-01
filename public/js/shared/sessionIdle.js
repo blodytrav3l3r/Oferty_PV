@@ -14,15 +14,16 @@
  * - keepalive co 15 min TYLKO gdy user był aktywny <15 min i karta widoczna
  *   (GET /api/auth/me dotyka lastActivity serwera). Brak aktywności = brak
  *   requestów = serwer wygasza sesję po 1h — zgodnie z regułą.
- * - warn-modal 5 min przed przewidywanym końcem idle (55 min od ostatniej
+ * - warn-modal 10 min przed przewidywanym końcem idle (50 min od ostatniej
  *   aktywności) z licznikiem; `Przedłuż` = touch serwera.
+ * - expired-modal pojawia się sam przy końcu idle (bez odświeżenia strony).
  * - `notifyUnauthorized(err)` — wołane przy 401 z zapisu/odczytu; pokazuje
  *   expired-modal RAZ (draft zostaje — przekierowanie dopiero po kliknięciu).
  */
 
 (function () {
     var IDLE_MS = 60 * 60 * 1000; // 1h — lustro SESSION_IDLE_TIMEOUT_MS
-    var WARN_BEFORE_MS = 5 * 60 * 1000; // ostrzeżenie 5 min przed
+    var WARN_BEFORE_MS = 10 * 60 * 1000; // ostrzeżenie 10 min przed
     var KEEPALIVE_MS = 15 * 60 * 1000; // keepalive max co 15 min
     var ACTIVITY_THROTTLE_MS = 30 * 1000;
 
@@ -92,6 +93,19 @@
                 lastUserActivity = Date.now();
                 lastKeepalive = Date.now();
                 warnShownForCycle = false;
+                return res;
+            }
+            // Keepalive/focus trafia na wygasłą sesję → modal bez czekania na akcję.
+            if (res.status === 401) {
+                return res
+                    .json()
+                    .catch(function () {
+                        return {};
+                    })
+                    .then(function (body) {
+                        showExpired(body && body.code === 'SESSION_EXPIRED' ? 'absolute' : 'idle');
+                        return res;
+                    });
             }
             return res;
         });
@@ -267,8 +281,13 @@
             if (typeof document !== 'undefined' && document.hidden) return;
             var now = Date.now();
             var left = remainingMs();
-            // Warn 5 min przed końcem idle — tylko gdy karta żyje.
-            if (!warnShownForCycle && left <= WARN_BEFORE_MS && left > 0) showWarn();
+            // Koniec idle: modal sam, nawet gdy warn był zamknięty lub pominięty.
+            if (left <= 0) {
+                showExpired('idle');
+                return;
+            }
+            // Warn 10 min przed końcem idle — tylko gdy karta żyje.
+            if (!warnShownForCycle && left <= WARN_BEFORE_MS) showWarn();
             // Samoczynne wygaszenie timera po stronie klienta nie wylogowuje —
             // źródłem prawdy jest 401 serwera; expired-modal pokaże się z
             // notifyUnauthorized albo z odliczania warn-modal.
@@ -302,7 +321,13 @@
         });
         try {
             document.addEventListener('visibilitychange', function () {
-                if (!document.hidden) markActivity();
+                if (document.hidden) return;
+                // Powrót po długim ukryciu: najpierw koniec idle, potem aktywność.
+                if (remainingMs() <= 0) {
+                    showExpired('idle');
+                    return;
+                }
+                markActivity();
             });
         } catch (_e) {}
         if (!window._sessionIdleInterval) {

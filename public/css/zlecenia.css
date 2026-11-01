@@ -66,18 +66,7 @@
     margin-top: 1px;
 }
 
-/* Zakładki filtrów */
-.zlecenia-header {
-    display: flex;
-    align-items: center;
-    margin-bottom: var(--tile-gap-sm-plus);
-    gap: var(--tile-gap-sm-plus);
-}
-.zlecenia-filters {
-    display: flex;
-    gap: var(--tile-gap-xs);
-    flex-shrink: 0;
-}
+/* Zakładki filtrów (pasek: .kartoteka-filter-bar z style.responsive.css) */
 .zlecenia-filter-tab {
     height: 34px;
     padding: 0 0.9rem;
@@ -115,25 +104,11 @@
     outline-offset: 2px;
 }
 
-.zlecenia-header .search-box {
-    max-width: none;
-}
-.zlecenia-header .btn-secondary.btn-sm {
-    height: 34px;
-}
-.zlecenia-header .search-box input {
-    height: 34px;
-}
-
-/* Filtrowanie dat — zakres od-do */
 .zlecenia-date-filter {
     display: flex;
     align-items: center;
     gap: 0.4rem;
     flex-shrink: 0;
-}
-.zlecenia-date-filter input[type='date'] {
-    color-scheme: dark;
 }
 .zlecenia-date-sep {
     color: var(--text-muted);
@@ -531,21 +506,9 @@
 }
 
 @media (max-width: 768px) {
-    .zlecenia-header {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 0.6rem;
-    }
-    .zlecenia-filters {
-        flex: 1 1 100%;
-        justify-content: stretch;
-    }
-    .zlecenia-filters .zlecenia-filter-tab {
-        flex: 1;
+    .zlecenia-filter-tab {
+        flex: 1 1 auto;
         text-align: center;
-    }
-    .zlecenia-header .search-box {
-        max-width: 100%;
     }
     /* Ukryj mniej ważne kolumny */
     .zlecenia-table th:nth-child(4),  /* Budowa / Studnia */
@@ -649,88 +612,15 @@
     opacity: 0.75;
 }
 
-/* Toolbar dodatkowych filtrów — daty, użytkownik, czyszczenie */
-.zlecenia-virtual-toolbar {
-    display: flex;
-    gap: 0.6rem;
-    align-items: center;
-    flex-wrap: wrap;
-    margin-bottom: 0.8rem;
-}
-.zlecenia-virtual-toolbar .form-select,
-.zlecenia-virtual-toolbar .form-input {
-    width: auto;
-}
-/* Jednolity styl kontrolek toolbaru zleceń */
-.zlecenia-virtual-toolbar .form-select.zlecenia-select-sm,
-.zlecenia-virtual-toolbar .zlecenia-date-filter input[type='date'],
-.zlecenia-virtual-toolbar .btn-secondary.btn-sm {
-    height: 34px;
-    padding: 0 0.7rem;
-    font-size: var(--fs-md);
-    background: var(--bg-tertiary);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    color: var(--text-secondary);
-    transition:
-        background-color 0.2s,
-        border-color 0.2s,
-        color 0.2s;
-}
-/* Select — zachowaj miejsce na natywną strzałkę */
-.zlecenia-virtual-toolbar .form-select.zlecenia-select-sm {
-    padding-right: 2rem;
-    color-scheme: dark;
-}
-/* Najechanie — wszystkie kontrolki toolbaru */
-.zlecenia-virtual-toolbar .form-select.zlecenia-select-sm:hover,
-.zlecenia-virtual-toolbar .zlecenia-date-filter input[type='date']:hover,
-.zlecenia-virtual-toolbar .btn-secondary.btn-sm:hover {
-    background: var(--bg-hover);
-    border-color: var(--bg-tertiary);
-    color: var(--text-primary);
-}
-/* Fokus — spójna obwódka akcentowa */
-.zlecenia-virtual-toolbar .zlecenia-filter-tab:focus-visible,
-.zlecenia-virtual-toolbar .form-select.zlecenia-select-sm:focus-visible,
-.zlecenia-virtual-toolbar .zlecenia-date-filter input[type='date']:focus-visible,
-.zlecenia-virtual-toolbar .btn-secondary.btn-sm:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 2px;
-}
-.zlecenia-virtual-toolbar .form-select.zlecenia-select-sm:focus,
-.zlecenia-virtual-toolbar .zlecenia-date-filter input[type='date']:focus {
-    border-color: var(--accent);
-}
-.zlecenia-virtual-toolbar .toolbar-label {
-    color: var(--text-muted);
-    font-size: var(--fs-sm);
-    font-weight: var(--fw-bold);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-.zlecenia-virtual-toolbar .zlecenia-date-filter input[type='date'] {
-    width: 145px;
-    color-scheme: dark;
-}
-@media (max-width: 480px) {
-    .zlecenia-virtual-toolbar .zlecenia-date-filter input[type='date'] {
-        width: 120px;
-    }
-}
-@media (max-width: 375px) {
-    .zlecenia-virtual-toolbar .zlecenia-date-filter input[type='date'] {
-        width: 105px;
-    }
-}
-/* Wariant B — dedykowane filtry nr zlecenia/zamówienia */
+/* Dedykowane filtry nr zlecenia/zamówienia */
 .zlecenia-filter-input {
+    width: 150px;
     min-width: 120px;
 }
 @media (max-width: 768px) {
     .zlecenia-filter-input {
         flex: 1 1 140px;
-        width: auto !important;
+        width: auto;
     }
 }
 
@@ -796,11 +686,8 @@
 }
 
 /* Tryb jasny — natywne kontrolki muszą mieć jasny color-scheme.
-   Reguły dark z tego pliku (specyficzność klasy + atrybutu) wygrywają
-   z globalnym `html[data-theme='light'] input/select` ze style.base.css. */
-html[data-theme='light'] .zlecenia-date-filter input[type='date'],
-html[data-theme='light'] .zlecenia-virtual-toolbar .form-select.zlecenia-select-sm,
-html[data-theme='light'] .zlecenia-virtual-toolbar .zlecenia-date-filter input[type='date'] {
+   Reguła dark z tego pliku wygrywa z globalnym `html[data-theme='light'] input`. */
+html[data-theme='light'] .zlecenia-date-filter input[type='date'] {
     color-scheme: light;
 }
 

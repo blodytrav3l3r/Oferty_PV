@@ -33,6 +33,21 @@
     padding: 0.6rem 0.8rem;
 }
 
+/* input[type=date] — ikona kalendarza z tokenu motywu (glif natywny ukryty:
+   pole jest readonly i otwiera popover S.O.K. z shared/datePicker.js).
+   !important, bo moduły nadpisują background/padding shorthandem. */
+input[type='date'] {
+    background-image: var(--sok-calendar-icon) !important;
+    background-repeat: no-repeat !important;
+    background-position: right 0.55rem center !important;
+    background-size: 16px 16px !important;
+    padding-right: 2rem !important;
+    cursor: pointer;
+}
+input[type='date']::-webkit-calendar-picker-indicator {
+    display: none;
+}
+
 /* Status badges — kafelek (w tyle co btn-sm: border-radius 5px, kompaktowy) */
 .badge-ok,
 .badge-info,

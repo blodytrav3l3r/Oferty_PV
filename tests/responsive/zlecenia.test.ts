@@ -15,12 +15,20 @@ describe('Kartoteka Zleceń — responsywność', () => {
         expect(mqMatch).not.toBeNull();
     });
 
-    test('768px zmienia zlecenia-header na kolumnę', () => {
+    test('768px rozciąga zakładki statusu (pasek filtrów zawija)', () => {
         const css = fs.readFileSync('public/css/zlecenia.css', 'utf-8');
         const mqMatch = css.match(
-            /@media\s*\(max-width:\s*768px\)[\s\S]*?\.zlecenia-header[\s\S]*?flex-direction\s*:\s*column/
+            /@media\s*\(max-width:\s*768px\)[\s\S]*?\.zlecenia-filter-tab[\s\S]*?flex\s*:\s*1 1 auto/
         );
         expect(mqMatch).not.toBeNull();
+    });
+
+    test('pasek filtrów zleceń używa układu kartoteki', () => {
+        const html = fs.readFileSync('public/zlecenia.html', 'utf-8');
+        expect(html).toContain('class="kartoteka-filter-bar zlecenia-filter-bar"');
+        expect(html).toContain('class="ka-search-row"');
+        expect(html).toContain('ka-filter-row ka-filter-row--secondary');
+        expect(html).not.toContain('zlecenia-virtual-toolbar');
     });
 
     test('zlecenia.html ma .zlecenia-page', () => {

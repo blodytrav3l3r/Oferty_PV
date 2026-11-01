@@ -75,11 +75,11 @@
                 } catch (e) {}
             })();
         </script>
-        <link rel="stylesheet" href="css/style.base.css?v=1.55.0" />
-        <link rel="stylesheet" href="css/style.cards.css?v=1.55.0" />
-        <link rel="stylesheet" href="css/style.responsive.css?v=1.55.0" />
-        <link rel="stylesheet" href="css/style.utilities.css?v=1.55.0" />
-        <link rel="stylesheet" href="css/zlecenia.css?v=1.55.0" />
+        <link rel="stylesheet" href="css/style.base.css?v=1.55.1" />
+        <link rel="stylesheet" href="css/style.cards.css?v=1.55.1" />
+        <link rel="stylesheet" href="css/style.responsive.css?v=1.55.1" />
+        <link rel="stylesheet" href="css/style.utilities.css?v=1.55.1" />
+        <link rel="stylesheet" href="css/zlecenia.css?v=1.55.1" />
     </head>
 
     <body>
@@ -115,193 +115,198 @@
 
                     <!-- Main card -->
                     <section style="margin-bottom: var(--section-gap-lg)">
-                        <!-- Header: search + refresh -->
-                        <div class="zlecenia-header">
-                            <div
-                                class="search-box"
-                                style="margin: 0; position: relative; flex: 1; min-width: 300px"
-                            >
-                                <svg
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    stroke-width="2"
-                                    style="
-                                        position: absolute;
-                                        left: 0.7rem;
-                                        top: 50%;
-                                        transform: translateY(-50%);
-                                        width: 1rem;
-                                        color: var(--text-muted);
-                                    "
-                                >
-                                    <circle cx="11" cy="11" r="7" />
-                                    <path d="m21 21-4.35-4.35" />
-                                </svg>
-                                <input
-                                    type="text"
-                                    id="zlecenia-search-input"
-                                    class="form-input form-input-sm"
-                                    placeholder="Szukaj: studnia, budowa, element, SNR, opiekun, nr zlecenia/zamówienia..."
-                                    style="
-                                        font-weight: normal;
-                                        padding-left: 2.4rem !important;
-                                        width: 100%;
-                                    "
-                                />
+                        <!-- Pasek filtrów: status / zakres dat / szukaj (wzór kartoteki) -->
+                        <div class="kartoteka-filter-bar zlecenia-filter-bar" id="zlecenia-toolbar">
+                            <!-- Wiersz 1: status -->
+                            <div class="ka-filter-row">
+                                <div class="ka-filter-group">
+                                    <span class="ka-label">Status:</span>
+                                    <button
+                                        type="button"
+                                        class="btn btn-sm zlecenia-filter-tab active ka-pill"
+                                        data-filter="all"
+                                        data-zl="setFilter"
+                                        data-zl-arg="all"
+                                    >
+                                        Wszystkie
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="btn btn-sm btn-secondary zlecenia-filter-tab ka-pill"
+                                        data-filter="draft"
+                                        data-zl="setFilter"
+                                        data-zl-arg="draft"
+                                    >
+                                        <i data-lucide="hourglass-2"></i> Oczekujące
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="btn btn-sm btn-secondary zlecenia-filter-tab ka-pill"
+                                        data-filter="accepted"
+                                        data-zl="setFilter"
+                                        data-zl-arg="accepted"
+                                    >
+                                        <i data-lucide="check-check"></i> Zatwierdzone
+                                    </button>
+                                </div>
                             </div>
 
-                            <button
-                                type="button"
-                                class="btn btn-secondary btn-sm"
-                                data-zl="loadOrders"
-                                title="Odśwież bazę zleceń"
-                                style="flex-shrink: 0"
-                            >
-                                <i data-lucide="refresh-cw"></i> Odśwież
-                            </button>
+                            <!-- Wiersz 2: zakres dat, numery, opiekun, sortowanie -->
+                            <div class="ka-filter-row ka-filter-row--secondary">
+                                <div
+                                    class="ka-filter-group zlecenia-date-filter"
+                                    id="zlecenia-date-filter"
+                                >
+                                    <span class="ka-label">Data:</span>
+                                    <button
+                                        type="button"
+                                        id="zlecenia-preset-today"
+                                        class="btn btn-secondary btn-sm ka-date-preset-btn"
+                                        title="Ustaw daty na dziś"
+                                        aria-label="Filtr: dziś"
+                                    >
+                                        Dziś
+                                    </button>
+                                    <button
+                                        type="button"
+                                        id="zlecenia-preset-7d"
+                                        class="btn btn-secondary btn-sm ka-date-preset-btn"
+                                        title="Ostatnie 7 dni"
+                                        aria-label="Filtr: ostatnie 7 dni"
+                                    >
+                                        7 dni
+                                    </button>
+                                    <button
+                                        type="button"
+                                        id="zlecenia-preset-30d"
+                                        class="btn btn-secondary btn-sm ka-date-preset-btn"
+                                        title="Ostatnie 30 dni"
+                                        aria-label="Filtr: ostatnie 30 dni"
+                                    >
+                                        30 dni
+                                    </button>
+                                    <input
+                                        type="date"
+                                        id="zlecenia-date-from"
+                                        class="form-input form-input-sm"
+                                        title="Data od"
+                                        aria-label="Data od"
+                                    />
+                                    <span class="zlecenia-date-sep" aria-hidden="true"
+                                        >&ndash;</span
+                                    >
+                                    <input
+                                        type="date"
+                                        id="zlecenia-date-to"
+                                        class="form-input form-input-sm"
+                                        title="Data do"
+                                        aria-label="Data do"
+                                    />
+                                    <button
+                                        type="button"
+                                        id="zlecenia-date-clear"
+                                        class="btn btn-sm btn-secondary"
+                                        title="Wyczyść filtr dat"
+                                        aria-label="Wyczyść filtr dat"
+                                    >
+                                        <i data-lucide="x"></i>
+                                    </button>
+                                </div>
 
-                            <button
-                                type="button"
-                                id="zlecenia-clear-filters"
-                                class="btn btn-secondary btn-sm"
-                                data-zl="clearAllFilters"
-                                title="Wyczyść wszystkie aktywne filtry"
-                                style="flex-shrink: 0"
-                            >
-                                Wyczyść filtry (0)
-                            </button>
-                        </div>
+                                <div class="ka-filter-group">
+                                    <span class="ka-label">Nr:</span>
+                                    <input
+                                        type="text"
+                                        id="zlecenia-prod-number-input"
+                                        class="form-input form-input-sm zlecenia-filter-input"
+                                        placeholder="Nr zlecenia"
+                                        aria-label="Nr zlecenia"
+                                        title="Filtruj po numerze zlecenia produkcyjnego"
+                                    />
+                                    <input
+                                        type="text"
+                                        id="zlecenia-sales-number-input"
+                                        class="form-input form-input-sm zlecenia-filter-input"
+                                        placeholder="Nr zamówienia"
+                                        aria-label="Nr zamówienia"
+                                        title="Filtruj po numerze zamówienia handlowego"
+                                    />
+                                </div>
 
-                        <!-- Toolbar dodatkowych filtrów: status, daty, użytkownik -->
-                        <div class="zlecenia-virtual-toolbar" id="zlecenia-toolbar">
-                            <div class="zlecenia-filters">
-                                <button
-                                    type="button"
-                                    class="zlecenia-filter-tab active"
-                                    data-filter="all"
-                                    data-zl="setFilter"
-                                    data-zl-arg="all"
-                                >
-                                    Wszystkie
-                                </button>
-                                <button
-                                    type="button"
-                                    class="zlecenia-filter-tab"
-                                    data-filter="draft"
-                                    data-zl="setFilter"
-                                    data-zl-arg="draft"
-                                >
-                                    <i data-lucide="hourglass-2"></i> Oczekujące
-                                </button>
-                                <button
-                                    type="button"
-                                    class="zlecenia-filter-tab"
-                                    data-filter="accepted"
-                                    data-zl="setFilter"
-                                    data-zl-arg="accepted"
-                                >
-                                    <i data-lucide="check-check"></i> Zatwierdzone
-                                </button>
+                                <div class="ka-filter-group">
+                                    <span class="ka-label">Opiekun:</span>
+                                    <select
+                                        id="zlecenia-user-filter"
+                                        class="btn btn-sm ka-select"
+                                        aria-label="Użytkownik"
+                                        title="Filtruj po użytkowniku"
+                                    >
+                                        <option value="">Użytkownik: wszyscy</option>
+                                    </select>
+                                </div>
+
+                                <div class="ka-filter-actions">
+                                    <select
+                                        id="zlecenia-sort-select"
+                                        class="btn btn-sm ka-select"
+                                        aria-label="Sortowanie"
+                                        title="Sortowanie wyników"
+                                    >
+                                        <option value="createdAt-desc">Data ↓ (najnowsze)</option>
+                                        <option value="createdAt-asc">Data ↑ (najstarsze)</option>
+                                        <option value="productionOrderNumber-asc">
+                                            Nr zlecenia A→Z
+                                        </option>
+                                        <option value="productionOrderNumber-desc">
+                                            Nr zlecenia Z→A
+                                        </option>
+                                    </select>
+                                    <button
+                                        type="button"
+                                        id="zlecenia-clear-filters"
+                                        class="btn btn-secondary btn-sm ka-pill"
+                                        data-zl="clearAllFilters"
+                                        title="Wyczyść wszystkie aktywne filtry"
+                                    >
+                                        Wyczyść filtry (0)
+                                    </button>
+                                </div>
                             </div>
 
-                            <div class="zlecenia-date-filter" id="zlecenia-date-filter">
-                                <span class="toolbar-label">Data od</span>
-                                <input
-                                    type="date"
-                                    id="zlecenia-date-from"
-                                    class="form-input form-input-sm"
-                                    title="Data od"
-                                    aria-label="Data od"
-                                />
-                                <span class="zlecenia-date-sep" aria-hidden="true">&ndash;</span>
-                                <span class="toolbar-label">Data do</span>
-                                <input
-                                    type="date"
-                                    id="zlecenia-date-to"
-                                    class="form-input form-input-sm"
-                                    title="Data do"
-                                    aria-label="Data do"
-                                />
+                            <!-- Wiersz 3: szukaj + odśwież + reset -->
+                            <div class="ka-search-row">
+                                <div class="search-box ka-search-box">
+                                    <svg
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        stroke-width="2"
+                                        class="ka-search-icon"
+                                        aria-hidden="true"
+                                    >
+                                        <circle cx="11" cy="11" r="7" />
+                                        <path d="m21 21-4.35-4.35" />
+                                    </svg>
+                                    <label for="zlecenia-search-input" class="sr-only"
+                                        >Szukaj zlecenia</label
+                                    >
+                                    <input
+                                        type="text"
+                                        id="zlecenia-search-input"
+                                        class="form-input form-input-sm ka-search-input"
+                                        placeholder="Szukaj: studnia, budowa, element, SNR, opiekun, nr zlecenia/zamówienia..."
+                                    />
+                                </div>
+
                                 <button
                                     type="button"
-                                    id="zlecenia-date-clear"
-                                    class="btn btn-sm btn-secondary"
-                                    title="Wyczyść filtr dat"
-                                    aria-label="Wyczyść filtr dat"
+                                    class="btn btn-secondary btn-sm ka-pill ka-noshrink"
+                                    data-zl="loadOrders"
+                                    title="Odśwież bazę zleceń"
                                 >
-                                    <i data-lucide="x"></i>
+                                    <i data-lucide="refresh-cw"></i> Odśwież
                                 </button>
                             </div>
-
-                            <input
-                                type="text"
-                                id="zlecenia-prod-number-input"
-                                class="form-input form-input-sm zlecenia-filter-input"
-                                placeholder="Nr zlecenia"
-                                aria-label="Nr zlecenia"
-                                title="Filtruj po numerze zlecenia produkcyjnego"
-                                style="width: 150px"
-                            />
-                            <input
-                                type="text"
-                                id="zlecenia-sales-number-input"
-                                class="form-input form-input-sm zlecenia-filter-input"
-                                placeholder="Nr zamówienia"
-                                aria-label="Nr zamówienia"
-                                title="Filtruj po numerze zamówienia handlowego"
-                                style="width: 150px"
-                            />
-
-                            <span class="toolbar-label">Opiekun:</span>
-                            <select
-                                id="zlecenia-user-filter"
-                                class="form-select zlecenia-select-sm"
-                                aria-label="Użytkownik"
-                                title="Filtruj po użytkowniku"
-                            >
-                                <option value="">Użytkownik: wszyscy</option>
-                            </select>
-
-                            <select
-                                id="zlecenia-sort-select"
-                                class="form-select zlecenia-select-sm"
-                                aria-label="Sortowanie"
-                                title="Sortowanie wyników"
-                            >
-                                <option value="createdAt-desc">Data ↓ (najnowsze)</option>
-                                <option value="createdAt-asc">Data ↑ (najstarsze)</option>
-                                <option value="productionOrderNumber-asc">Nr zlecenia A→Z</option>
-                                <option value="productionOrderNumber-desc">Nr zlecenia Z→A</option>
-                            </select>
-
-                            <button
-                                type="button"
-                                id="zlecenia-preset-today"
-                                class="btn btn-secondary btn-sm"
-                                title="Ustaw daty na dziś"
-                                aria-label="Filtr: dziś"
-                            >
-                                Dziś
-                            </button>
-                            <button
-                                type="button"
-                                id="zlecenia-preset-7d"
-                                class="btn btn-secondary btn-sm"
-                                title="Ostatnie 7 dni"
-                                aria-label="Filtr: ostatnie 7 dni"
-                            >
-                                7 dni
-                            </button>
-                            <button
-                                type="button"
-                                id="zlecenia-preset-30d"
-                                class="btn btn-secondary btn-sm"
-                                title="Ostatnie 30 dni"
-                                aria-label="Filtr: ostatnie 30 dni"
-                            >
-                                30 dni
-                            </button>
                         </div>
 
                         <!-- Batch action bar (visible when items selected) -->
@@ -399,24 +404,25 @@
         <div id="toast-container" class="toast-container" aria-live="polite"></div>
 
         <!-- Dependencies -->
-        <script src="js/shared/formatters.js?v=1.55.0"></script>
-        <script src="js/shared/auth.js?v=1.55.0"></script>
-        <script src="js/shared/cspActions.js?v=1.55.0"></script>
-        <script src="js/shared/logger.js?v=1.55.0"></script>
-        <script src="js/shared/constants.js?v=1.55.0"></script>
-        <script type="module" src="js/shared/escapeHtml.js?v=1.55.0"></script>
-        <script type="module" src="js/shared/modalCore.js?v=1.55.0"></script>
-        <script type="module" src="js/shared/toast.js?v=1.55.0"></script>
-        <script type="module" src="js/shared/fetchJson.js?v=1.55.0"></script>
-        <script type="module" src="js/shared/debounce.js?v=1.55.0"></script>
-        <script src="js/shared/ui.js?v=1.55.0"></script>
-        <script src="js/shared/sessionIdle.js?v=1.55.0"></script>
-        <script src="js/shared/sokDirty.js?v=1.55.0"></script>
-        <script src="js/shared/theme.js?v=1.55.0"></script>
-        <script src="js/spa/zleceniaHelpers.js?v=1.55.0"></script>
-        <script src="js/spa/zleceniaRender.js?v=1.55.0"></script>
-        <script src="js/spa/zlecenia.js?v=1.55.0"></script>
-        <script src="js/shared/iconsSlim.js?v=1.55.0"></script>
+        <script src="js/shared/formatters.js?v=1.55.1"></script>
+        <script src="js/shared/auth.js?v=1.55.1"></script>
+        <script src="js/shared/cspActions.js?v=1.55.1"></script>
+        <script src="js/shared/logger.js?v=1.55.1"></script>
+        <script src="js/shared/constants.js?v=1.55.1"></script>
+        <script type="module" src="js/shared/escapeHtml.js?v=1.55.1"></script>
+        <script type="module" src="js/shared/modalCore.js?v=1.55.1"></script>
+        <script type="module" src="js/shared/toast.js?v=1.55.1"></script>
+        <script type="module" src="js/shared/fetchJson.js?v=1.55.1"></script>
+        <script type="module" src="js/shared/debounce.js?v=1.55.1"></script>
+        <script src="js/shared/ui.js?v=1.55.1"></script>
+        <script src="js/shared/sessionIdle.js?v=1.55.1"></script>
+        <script src="js/shared/datePicker.js?v=1.55.1"></script>
+        <script src="js/shared/sokDirty.js?v=1.55.1"></script>
+        <script src="js/shared/theme.js?v=1.55.1"></script>
+        <script src="js/spa/zleceniaHelpers.js?v=1.55.1"></script>
+        <script src="js/spa/zleceniaRender.js?v=1.55.1"></script>
+        <script src="js/spa/zlecenia.js?v=1.55.1"></script>
+        <script src="js/shared/iconsSlim.js?v=1.55.1"></script>
 
         <!-- Wymuszenie jedynego punktu wejścia: app.html#/<module> (+ query) -->
         <script>

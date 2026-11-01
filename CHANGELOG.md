@@ -4,6 +4,14 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.55.1](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.55.0...v1.55.1) (2026-11-01)
+
+### Features
+
+- **ui:** pasek filtrów w kartotece i zleceniach wedle jednolitego układu S.O.K., współdzielony kalendarz dla pól daty oraz automatyczne wygaszanie sesji po bezczynności
+
+---
+
 ## [1.55.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.54.0...v1.55.0) (2026-10-31)
 
 ### Features

@@ -35,6 +35,16 @@ describe('modale sesji: wzorzec SOK', () => {
         expect(css).toContain('.modal--session .session-modal-hint');
     });
 
+    it('ostrzega 10 min przed i pokazuje wygaśnięcie bez odświeżenia', () => {
+        expect(src).toContain('var WARN_BEFORE_MS = 10 * 60 * 1000;');
+        // tick: koniec idle → expired-modal, nie czekamy na 401 z akcji usera.
+        expect(src).toMatch(/if \(left <= 0\) \{\s*showExpired\('idle'\);/);
+        // keepalive/focus: 401 z /auth/me też otwiera modal.
+        expect(src).toContain(
+            "showExpired(body && body.code === 'SESSION_EXPIRED' ? 'absolute' : 'idle');"
+        );
+    });
+
     it('zachowuje id używane przez logikę (licznik, akcje)', () => {
         expect(src).toContain('id="session-idle-countdown"');
         expect(src).toContain('id="session-idle-warn-title"');
