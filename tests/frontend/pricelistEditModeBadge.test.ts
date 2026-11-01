@@ -3,8 +3,8 @@
  */
 // @ts-nocheck
 /* Tryb edycji cennika musi być widoczny i wskazywać OŚ (rury/studnie/PRECO):
- * pasek stanu dostaje badge osi zawsze, a w edycji pełnowymiarowy banner
- * „TRYB EDYCJI" + obrys siatki. Podgląd = cisza (bez banera).
+ * pasek stanu stoi w toolbarze obok szukajki, a w edycji dokłada
+ * pełnowymiarowy banner „TRYB EDYCJI" + obrys siatki. Podgląd = cisza (bez banera).
  */
 import fs from 'fs';
 import path from 'path';
@@ -51,11 +51,10 @@ function mount() {
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
 
 describe('pasek stanu: oś cennika + tryb edycji', () => {
-    it('podgląd: badge osi i cennika oferty, bez banera i bez szkicu', async () => {
+    it('podgląd: badge cennika oferty, bez osi, bez banera i bez szkicu', async () => {
         const pv = mount();
         await pv.renderStatusStrip('pricelist-status-strip', 'rury');
         const host = document.getElementById('pricelist-status-strip');
-        expect(host.textContent).toContain('Rury');
         expect(host.textContent).not.toContain('TRYB EDYCJI');
         expect(host.getAttribute('data-editing')).toBe('0');
         // Podgląd = cennik obowiązujący: szkic nie jest pokazywany jako źródło siatki.
@@ -93,10 +92,11 @@ describe('pasek stanu: oś cennika + tryb edycji', () => {
         expect(document.getElementById('pricelist-body').getAttribute('data-pv-editing')).toBe('0');
     });
 
-    it('PRECO ma własną nazwę osi (nie „Studnie")', async () => {
+    it('PRECO: pasek bez badge osi, pokazuje obowiązujący cennik osi', async () => {
         const pv = mount();
         await pv.renderStatusStrip('pricelist-status-strip', 'preco');
         const host = document.getElementById('pricelist-status-strip');
-        expect(host.textContent).toContain('PRECO');
+        expect(host.textContent).not.toContain('PRECO');
+        expect(host.textContent).toContain('brak wersji obowiązującej');
     });
 });

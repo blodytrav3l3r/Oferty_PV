@@ -62,6 +62,15 @@ describe('frontend: odstęp pod tabelą oferty (RAZEM znad stopki)', () => {
         expect(section.style.paddingBottom).toBe('200px');
     });
 
+    it('mierzy pasek przewijania sekcji do --offer-scrollbar-w (stopka go nie zasłania)', () => {
+        const calls: Array<[string, string]> = [];
+        const section = stubEl({ offsetWidth: 1000, clientWidth: 990 });
+        section.style.setProperty = (k: string, v: string) => calls.push([k, v]);
+        const ctx = loadUI({ 'section-offer': section });
+        vm.runInContext('applyOfferFooterSpacing()', ctx);
+        expect(calls).toEqual([['--offer-scrollbar-w', '10px']]);
+    });
+
     it('wiersz RAZEM ma stabilne id do autoscrolla', () => {
         const file = path.join(process.cwd(), 'public/js/studnie/offerSummaryTable.js');
         const content = fs.readFileSync(file, 'utf-8');

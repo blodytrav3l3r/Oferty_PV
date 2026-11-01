@@ -29,6 +29,14 @@ function applyOfferFooterSpacing() {
     if (!section) return;
     section.style.paddingBottom =
         Math.max(getOfferFixedBottomHeight(), OFFER_FOOTER_SPACING_FALLBACK_PX) + 'px';
+    // Stopka jest fixed wobec viewportu — odejmij pasek przewijania sekcji,
+    // żeby go nie zasłaniała (CSS: right: var(--offer-scrollbar-w)).
+    if (section.style && typeof section.style.setProperty === 'function') {
+        section.style.setProperty(
+            '--offer-scrollbar-w',
+            section.offsetWidth - section.clientWidth + 'px'
+        );
+    }
 }
 window.applyOfferFooterSpacing = applyOfferFooterSpacing;
 

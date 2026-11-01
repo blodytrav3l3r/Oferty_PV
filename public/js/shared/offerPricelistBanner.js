@@ -285,7 +285,7 @@
         var box = ensureContainer(type, opts && opts.anchorId);
         var label = typeLabel(type);
         box.innerHTML =
-            '<div class="card" role="status" style="padding:0.5rem 0.75rem;display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap">' +
+            '<div class="pv-offer-notice" role="status">' +
             '<i data-lucide="alert-triangle"></i>' +
             '<span>Oferta na cenniku ' +
             esc(stamp.version) +

@@ -73,7 +73,7 @@ describe('frontend: panel Zarządzanie cennikiem (3 przyciski + 3 sekcje)', () =
     it('toolbar: tytuł, szukaj, Panel + akcje siatki obok niego (rury)', () => {
         const toolbar = ruryPartial.slice(
             ruryPartial.indexOf('<div class="toolbar">'),
-            ruryPartial.indexOf('<div id="pricelist-status-strip"')
+            ruryPartial.indexOf('<div id="pricelist-body"')
         );
         expect(toolbar).toContain('data-csp="toggleRuryVersionsPanel"');
         expect(toolbar).toContain('data-pv-dock-toggle');
@@ -91,7 +91,7 @@ describe('frontend: panel Zarządzanie cennikiem (3 przyciski + 3 sekcje)', () =
     it('toolbar: tytuł, szukaj, Panel + akcje siatki obok niego (studnie)', () => {
         const toolbar = studniePartial.slice(
             studniePartial.indexOf('<div class="toolbar">'),
-            studniePartial.indexOf('<div id="pricelist-status-strip"')
+            studniePartial.indexOf('<div class="gap-1"')
         );
         expect(toolbar).toContain('data-csp="toggleStudnieVersionsPanel"');
         expect(toolbar).toContain('data-pv-dock-toggle');

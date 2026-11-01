@@ -258,7 +258,9 @@
     position: fixed;
     bottom: var(--bottom-bar-h);
     left: 0;
-    right: 0;
+    /* Szerokość paska przewijania #section-offer mierzy offerSummaryUI.js —
+     * bez tego fixed stopka zasłania pasek. */
+    right: var(--offer-scrollbar-w, 0px);
     background: var(--bg-secondary);
     border-top: 1px solid var(--border-glass);
     padding: var(--tile-gap-sm-plus) var(--tile-gap-lg);

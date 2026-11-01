@@ -95,6 +95,35 @@
     height: 12px;
 }
 
+/* Oferta na archiwalnym cenniku (offerPricelistBanner.js): ostrzeżenie z akcją
+ * przeliczenia. Ton i kształt jak .pv-draft-banner, CTA zostaje po prawej. */
+.pv-offer-notice {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--tile-gap-sm);
+    padding: var(--tile-gap-xs-plus) var(--tile-gap-sm-plus);
+    border: 1px solid var(--warn-border);
+    border-left: 3px solid var(--warn);
+    border-radius: var(--radius-sm, 4px);
+    background: var(--warn-bg);
+    color: var(--warn-hover);
+    font-size: var(--fs-sm);
+    line-height: 1.4;
+}
+
+.pv-offer-notice > svg {
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+    color: var(--warn);
+}
+
+.pv-offer-notice > span {
+    flex: 1 1 16rem;
+    min-width: 0;
+}
+
 /* Pasek stanu cennika w edytorze (rury/studnie): co edytujesz (szkic) vs co
  * liczy oferta (obowiązująca). Kafelki informacji w jednym rzędzie. */
 .pv-status-strip {
@@ -105,6 +134,13 @@
     gap: var(--tile-gap-2xs);
     margin-bottom: var(--tile-gap-xs);
     font-size: var(--fs-sm);
+}
+
+/* W toolbarze pasek stoi obok szukajki — bez marginesu pod spodem. */
+.toolbar .pv-status-strip {
+    margin-bottom: 0;
+    flex: 0 1 auto;
+    min-width: 0;
 }
 
 /* A5: pełna szerokość nad badge'ami — admin musi widzieć, że siatka to szkic. */

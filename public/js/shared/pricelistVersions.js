@@ -21,6 +21,8 @@
     var dockState = { type: null };
     /** Wybrana karta per typ — akcje w pasku działają na tym zaznaczeniu. */
     var selectedVersionId = {};
+    /** Filtr listy per oś: true = karty ARCHIVED ukryte (stan pamięci, nie zapis). */
+    var hideArchived = {};
     /** Ostatnio pobrane wersje per typ — źródło danych dla paska akcji. */
     var versionsByType = {};
     /** Zzwinięte grupy lat na osi wersji: `<typ>:<rok>` → true. */
@@ -1423,39 +1425,61 @@
             selectedVersionId[type] = null;
             return '<p class="pv-vcard-empty text-muted">Brak wersji — zapisz pierwszą powyżej.</p>';
         }
-        var selectedId = resolveSelection(type, versions);
-        return groupByYear(versions)
-            .map(function (group) {
-                var collapsed = collapsedYears[type + ':' + group.year] === true;
-                return (
-                    '<section class="pv-year' +
-                    (collapsed ? ' is-collapsed' : '') +
-                    '" data-pv-year="' +
-                    escAttr(group.year) +
-                    '">' +
-                    '<h5 class="pv-year__title">' +
-                    '<button type="button" class="pv-year__toggle" data-pv-year-toggle="' +
-                    escAttr(group.year) +
-                    '" aria-expanded="' +
-                    (collapsed ? 'false' : 'true') +
-                    '">' +
-                    '<i data-lucide="chevron-down" class="pv-year__chev" aria-hidden="true"></i>' +
-                    '<span>' +
-                    esc(group.year) +
-                    ' <span class="text-muted">(' +
-                    group.versions.length +
-                    ')</span></span></button></h5>' +
-                    '<div class="pv-year__list">' +
-                    group.versions
-                        .map(function (v) {
-                            return versionCardHtml(v, type, v.id === selectedId);
-                        })
-                        .join('') +
-                    '</div>' +
-                    '</section>'
-                );
-            })
-            .join('');
+        var hidden = hideArchived[type] === true;
+        var visible = hidden
+            ? versions.filter(function (v) {
+                  return stateOf(v) !== 'ARCHIVED';
+              })
+            : versions;
+        var toggle =
+            '<button type="button" class="pv-version-filter" data-pv-hide-archived aria-pressed="' +
+            (hidden ? 'true' : 'false') +
+            '">' +
+            (hidden ? 'Pokaż historyczne' : 'Ukryj historyczne') +
+            '</button>';
+        if (visible.length === 0) {
+            selectedVersionId[type] = null;
+            return (
+                toggle +
+                '<p class="pv-vcard-empty text-muted">Wszystkie wersje historyczne są ukryte.</p>'
+            );
+        }
+        var selectedId = resolveSelection(type, visible);
+        return (
+            toggle +
+            groupByYear(visible)
+                .map(function (group) {
+                    var collapsed = collapsedYears[type + ':' + group.year] === true;
+                    return (
+                        '<section class="pv-year' +
+                        (collapsed ? ' is-collapsed' : '') +
+                        '" data-pv-year="' +
+                        escAttr(group.year) +
+                        '">' +
+                        '<h5 class="pv-year__title">' +
+                        '<button type="button" class="pv-year__toggle" data-pv-year-toggle="' +
+                        escAttr(group.year) +
+                        '" aria-expanded="' +
+                        (collapsed ? 'false' : 'true') +
+                        '">' +
+                        '<i data-lucide="chevron-down" class="pv-year__chev" aria-hidden="true"></i>' +
+                        '<span>' +
+                        esc(group.year) +
+                        ' <span class="text-muted">(' +
+                        group.versions.length +
+                        ')</span></span></button></h5>' +
+                        '<div class="pv-year__list">' +
+                        group.versions
+                            .map(function (v) {
+                                return versionCardHtml(v, type, v.id === selectedId);
+                            })
+                            .join('') +
+                        '</div>' +
+                        '</section>'
+                    );
+                })
+                .join('')
+        );
     }
 
     function transferHtml(type) {
@@ -1827,6 +1851,10 @@
 
     async function refreshTable(type, manageable) {
         var versions = await fetchFullList(type);
+        // canManage ustawia dopiero fetchFullList — wartość przekazana przez
+        // openVersionsPanel jest na pierwszym otwarciu false i blokowała akcje
+        // do zmiany zaznaczenia.
+        manageable = canManage[type] === true;
         versions.sort(function (a, b) {
             return (b.seq || 0) - (a.seq || 0);
         });
@@ -2394,6 +2422,13 @@
                         toast('Błąd przełączania typu: ' + err.message, 'error');
                     });
                 }
+                return;
+            }
+            var hideBtn =
+                e.target && e.target.closest ? e.target.closest('[data-pv-hide-archived]') : null;
+            if (hideBtn) {
+                hideArchived[state.current] = !hideArchived[state.current];
+                rerenderCards(state.current);
                 return;
             }
             var card = e.target && e.target.closest ? e.target.closest('[data-pv-select]') : null;
@@ -2991,13 +3026,8 @@
                 var data = (json.types || {})[stripType] || {};
                 var axis = TYPE_SHORT[stripType] || stripType;
                 var editing = isEditing(stripType);
-                // Oś zawsze widoczna — pasek musi mówić, KTÓREGO cennika dotyczy.
                 host.setAttribute('data-editing', editing ? '1' : '0');
-                var parts = [
-                    '<span class="badge badge-muted" title="Oś cennika w tym edytorze">' +
-                        esc(axis) +
-                        '</span>'
-                ];
+                var parts = [];
                 // Tryb edycji: wyraźny pasek, bo zapis idzie do wersji/szkicu,
                 // a nie do ofert. Podgląd nie dostaje tego banera.
                 if (editing) {

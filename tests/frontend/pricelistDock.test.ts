@@ -65,6 +65,18 @@ describe('Rail „Zarządzanie cennikami" (lewy panel edytorów)', () => {
         expect(css).toContain('.pv-vcard__meta > div:last-child');
     });
 
+    it('akcje działają od razu po otwarciu — canManage czytany po fetchu, nie z otwarcia', () => {
+        expect(panel).toContain('manageable = canManage[type] === true;');
+    });
+
+    it('filtr „Ukryj historyczne" chowa karty ARCHIVED (stan w pamięci)', () => {
+        expect(panel).toContain('var hideArchived = {}');
+        expect(panel).toContain('data-pv-hide-archived');
+        expect(panel).toContain("stateOf(v) !== 'ARCHIVED'");
+        expect(panel).toContain('Wszystkie wersje historyczne są ukryte.');
+        expect(css).toContain('.pv-version-filter');
+    });
+
     it('zaznaczenie karty pokazuje wersję w tej samej siatce (tylko odczyt)', () => {
         expect(panel).toContain('function showVersionInGrid');
         expect(panel).toContain('function restoreGrid');
@@ -280,7 +292,8 @@ describe('Rail „Zarządzanie cennikami" (lewy panel edytorów)', () => {
     it('akcje siatki siedzą obok „Panel" w toolbarze (widoczne bez otwierania raila)', () => {
         for (const partial of [studniePartial, ruryPartial]) {
             const toolbarStart = partial.indexOf('class="toolbar"');
-            const toolbarEnd = partial.indexOf('id="pricelist-status-strip"');
+            // Koniec toolbara = początek treści pod nim (pasek stanu też jest w toolbarze).
+            const toolbarEnd = partial.search(/<div (?:id="pricelist-body"|class="gap-1")/);
             const actions = partial.indexOf('id="pv-grid-actions"');
             const toggle = partial.indexOf('data-pv-dock-toggle');
             expect(toolbarStart).toBeGreaterThan(-1);

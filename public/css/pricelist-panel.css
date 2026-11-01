@@ -288,8 +288,8 @@ body.pv-cennik-host .preco-wrap {
     overflow-x: auto;
 }
 
-/* Otwarty rail jest jedynym miejscem stanu — pasek nad siatką znika.
- * Po zamknięciu stan wraca nad tabelę. */
+/* Otwarty rail jest jedynym miejscem stanu — pasek w toolbarze znika.
+ * Po zamknięciu stan wraca do toolbara. */
 body.pv-dock-open #pricelist-status-strip {
     display: none;
 }
@@ -846,6 +846,27 @@ body.pv-dock-open #pricelist-status-strip {
     margin: 0;
     padding: 0.4rem 0;
     font-size: var(--fs-sm);
+}
+
+/* Filtr listy wersji: ukrywanie historycznych (ARCHIVED) — stan w pamięci. */
+.pv-version-filter {
+    align-self: flex-end;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--text-secondary);
+    font: inherit;
+    font-size: var(--fs-sm);
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.pv-version-filter:hover {
+    color: var(--text-primary);
+}
+
+.pv-version-filter[aria-pressed='true'] {
+    color: var(--accent-text);
 }
 
 /* ===== Responsywność ===== */
