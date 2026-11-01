@@ -385,9 +385,11 @@ async function _saveProductionOrderInner() {
         }
         refreshGlobalMetrics();
         showToast(`<i data-lucide="check-circle-2"></i> Zlecenie produkcyjne zapisane`, 'success');
+        return order.id;
     } catch (err) {
         logger.error('orderManager', 'saveProductionOrder error:', err);
         showToast('<i data-lucide="x-circle"></i> Błąd zapisu: ' + err.message, 'error');
+        return null;
     }
 }
 

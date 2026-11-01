@@ -208,12 +208,22 @@
                 padding: 4px !important;
             }
 
-            /* --- SVG auto-fit: wektorowe skalowanie tekstu do kontenera --- */
-            .cell-snr-value svg,
-            .cell-order-value svg {
-                display: block;
+            /* --- Auto-fit tekstu: JS dobiera font-size do komórki (bez ucinania) --- */
+            .cell-snr-value .fit-text,
+            .cell-order-value .fit-text {
+                display: flex;
+                align-items: center;
+                justify-content: center;
                 width: 100%;
                 height: 100%;
+                overflow: hidden;
+            }
+            .fit-text > span {
+                display: block;
+                white-space: nowrap;
+                line-height: 1;
+                font-family: Calibri, Arial, sans-serif;
+                font-weight: bold;
             }
 
             @media print {
@@ -223,30 +233,6 @@
                 }
             }
         </style>
-        <script>
-            /**
-             * Dopasowuje viewBox elementu SVG do rzeczywistych wymiarów tekstu.
-             * Dzięki temu tekst SVG automatycznie skaluje się do wielkości kontenera
-             * — działa identycznie na ekranie i w wydruku (wektor, nie piksele).
-             */
-            function fitSvgText(svgId) {
-                const svg = document.getElementById(svgId);
-                if (!svg) return;
-                const text = svg.querySelector('text');
-                if (!text) return;
-
-                const bbox = text.getBBox();
-                if (bbox.width === 0 || bbox.height === 0) return;
-
-                // Dodajemy niewielki padding (5% wysokości) żeby litery nie dotykały krawędzi
-                const padX = bbox.height * 0.1;
-                const padY = bbox.height * 0.1;
-                svg.setAttribute(
-                    'viewBox',
-                    `${bbox.x - padX} ${bbox.y - padY} ${bbox.width + 2 * padX} ${bbox.height + 2 * padY}`
-                );
-            }
-        </script>
     </head>
     <body>
         <!-- ZNACZNIK POZIOMU STRONY (Wielokrotny wydruk operuje na tym bloku) -->
@@ -281,23 +267,13 @@
 
                 <!-- ================================================ -->
                 <!-- WIERSZ 4: (P.V. rowspan) | NUMER STUDNI WARTOŚĆ   -->
-                <!-- Używamy SVG — tekst skaluje się wektorowo         -->
+                <!-- Font dopasowuje JS (fitLabelText) — bez ucinania -->
                 <!-- ================================================ -->
                 <tr>
                     <td class="cell-snr-value">
-                        <svg id="snr-svg" preserveAspectRatio="xMidYMid meet">
-                            <text
-                                x="0"
-                                y="0"
-                                text-anchor="middle"
-                                dominant-baseline="central"
-                                font-family="Calibri, Arial, sans-serif"
-                                font-weight="bold"
-                                font-size="100"
-                            >
-                                {{SNR}}
-                            </text>
-                        </svg>
+                        <div class="fit-text" id="snr-box" data-fit-max="100">
+                            <span>{{SNR}}</span>
+                        </div>
                     </td>
                 </tr>
 
@@ -380,38 +356,14 @@
                 </tr>
                 <tr>
                     <td class="cell-order-value">
-                        <svg id="order-svg" preserveAspectRatio="xMidYMid meet">
-                            <text
-                                x="0"
-                                y="0"
-                                text-anchor="middle"
-                                dominant-baseline="central"
-                                font-family="Calibri, Arial, sans-serif"
-                                font-weight="bold"
-                                font-size="150"
-                            >
-                                {{NR_ZLECENIA}}
-                            </text>
-                        </svg>
+                        <div class="fit-text" id="order-box" data-fit-max="150">
+                            <span>{{NR_ZLECENIA}}</span>
+                        </div>
                     </td>
                 </tr>
             </table>
         </div>
         <!-- KONIEC BLOKU "page" -->
-        <script>
-            // Dopasowanie viewBox SVG do tekstu — po pełnym załadowaniu czcionek
-            function runFit() {
-                fitSvgText('snr-svg');
-                fitSvgText('order-svg');
-            }
-            if (document.fonts && document.fonts.ready) {
-                document.fonts.ready.then(runFit);
-            } else {
-                setTimeout(runFit, 200);
-            }
-            // Fallback retry for slow font loading
-            setTimeout(runFit, 400);
-        </script>
-        <script src="../js/shared/iconsSlim.js?v=1.55.3"></script>
+        <script src="../js/shared/iconsSlim.js?v=1.55.4"></script>
     </body>
 </html>

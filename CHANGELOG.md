@@ -4,6 +4,15 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.55.4](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.55.3...v1.55.4) (2026-11-01)
+
+### Bug Fixes
+
+- **studnie:** wydruki zlecenia i etykiety wykonane z edytora doliczają się do liczników „Wydruki” w kartotece zleceń (ten sam endpoint co wydruki z listy, po potwierdzeniu [Drukuj])
+- **studnie:** numer studni klienta i numer zlecenia P.V. na etykiecie opraw są widoczne — dopasowanie fontu do komórki przeniesione do `silentPrint` (inline skrypt szablonu blokował CSP w iframe wydruku)
+
+---
+
 ## [1.55.3](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.55.2...v1.55.3) (2026-11-01)
 
 ### Bug Fixes

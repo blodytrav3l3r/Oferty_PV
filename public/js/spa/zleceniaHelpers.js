@@ -544,22 +544,20 @@ function buildEtykietaPayload(po) {
     };
 }
 
-/** Buduje pełny HTML etykiety z danych PO, z unikalnymi ID SVG dla trybu wsadowego */
+/** Buduje pełny HTML etykiety z danych PO, z unikalnymi ID kontenerów dla trybu wsadowego */
 function buildEtykietaFromPO(template, po, pageIndex) {
     if (pageIndex === undefined) pageIndex = 0;
 
     const payload = buildEtykietaPayload(po);
 
-    // Użyj unikalnych ID SVG dla każdej strony przy drukowaniu wsadowym
-    const snrSvgId = 'snr-svg-' + pageIndex;
-    const orderSvgId = 'order-svg-' + pageIndex;
+    // Użyj unikalnych ID kontenerów dla każdej strony przy drukowaniu wsadowym
+    const snrBoxId = 'snr-box-' + pageIndex;
+    const orderBoxId = 'order-box-' + pageIndex;
 
-    // Zastąp ID SVG w szablonie unikalnymi dla każdej strony
+    // Zastąp ID kontenerów w szablonie unikalnymi dla każdej strony
     let html = renderTemplate(template, payload);
-    html = html.replaceAll('id="snr-svg"', 'id="' + snrSvgId + '"');
-    html = html.replaceAll('id="order-svg"', 'id="' + orderSvgId + '"');
-    html = html.replaceAll("fitSvgText('snr-svg')", "fitSvgText('" + snrSvgId + "')");
-    html = html.replaceAll("fitSvgText('order-svg')", "fitSvgText('" + orderSvgId + "')");
+    html = html.replaceAll('id="snr-box"', 'id="' + snrBoxId + '"');
+    html = html.replaceAll('id="order-box"', 'id="' + orderBoxId + '"');
 
     return html;
 }
@@ -569,15 +567,15 @@ function buildZlecenieFromPageBlock(pageTemplate, po) {
     return renderTemplate(pageTemplate, buildZleceniePayload(po));
 }
 
-/** Buduje pojedynczy blok strony etykiety z unikalnymi ID SVG */
+/** Buduje pojedynczy blok strony etykiety z unikalnymi ID kontenerów */
 function buildEtykietaPageBlock(pageTemplate, po, pageIndex) {
     const payload = buildEtykietaPayload(po);
 
     let html = renderTemplate(pageTemplate, payload);
 
-    // Zastąp ID SVG unikalnymi ID dla każdej strony
-    html = html.replaceAll('id="snr-svg"', 'id="snr-svg-' + pageIndex + '"');
-    html = html.replaceAll('id="order-svg"', 'id="order-svg-' + pageIndex + '"');
+    // Zastąp ID kontenerów unikalnymi ID dla każdej strony
+    html = html.replaceAll('id="snr-box"', 'id="snr-box-' + pageIndex + '"');
+    html = html.replaceAll('id="order-box"', 'id="order-box-' + pageIndex + '"');
 
     return html;
 }

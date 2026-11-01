@@ -8,6 +8,54 @@
 const templateCache = new Map();
 
 /**
+ * Potwierdzenie wydruku z edytora — licznik rośnie tylko po świadomym
+ * kliknięciu [Drukuj], nie na samo otwarcie dialogu systemowego.
+ * Esc/Anuluj/overlay dają false = brak liczenia (spójnie z listą zleceń).
+ * @param {string} title
+ * @param {string} documentName
+ * @param {string} orderNumber
+ */
+async function confirmEditorPrint(title, documentName, orderNumber) {
+    if (typeof window.appConfirm !== 'function') return false;
+    return window.appConfirm(
+        'Wydrukować ' +
+            documentName +
+            '?\n' +
+            (orderNumber || '—') +
+            '\n\nLicznik: potwierdzone uruchomienie wydruku.',
+        { title, okText: 'Drukuj', cancelText: 'Anuluj', type: 'info' }
+    );
+}
+
+/**
+ * Dolicza wydruk wykonany bezpośrednio z edytora zlecenia do licznika
+ * widocznego w kartotece zleceń (ten sam endpoint co wydruki z listy).
+ * @param {string|null|undefined} orderId
+ * @param {'zlecenie'|'etykieta'} kind
+ */
+async function recordEditorPrint(orderId, kind) {
+    if (!orderId) return;
+    try {
+        const res = await fetch(
+            '/api/orders-studnie/production/' + encodeURIComponent(orderId) + '/print-count',
+            {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(typeof authHeaders === 'function' ? authHeaders() : {})
+                },
+                body: JSON.stringify({ kind })
+            }
+        );
+        if (!res.ok) {
+            logger.error('printManager', 'recordEditorPrint: HTTP ' + res.status);
+        }
+    } catch (err) {
+        logger.error('printManager', 'recordEditorPrint error:', err);
+    }
+}
+
+/**
  * Zwraca szablon pobierany jednorazowo (teraz pobiera na nowo co kliknięcie by aktualizować zmiany graficzne w locie).
  */
 async function getTemplate(path) {
@@ -283,7 +331,7 @@ function formatBlindKinetaRow(label, p, findProductFn) {
 
 async function printZlecenie() {
     // Auto-zapis zlecenia + synchronizacja oferty/zamówienia przed wydrukiem
-    await saveProductionOrder();
+    const orderId = await saveProductionOrder();
 
     const data = collectPrintData();
     if (!data) return;
@@ -294,7 +342,10 @@ async function printZlecenie() {
     if (!template) return;
 
     const html = buildZlecenieHtml(template, data);
+    const ok = await confirmEditorPrint('Wydruk zlecenia', 'zlecenie', data.productionOrderNumber);
+    if (!ok) return;
     silentPrint(html);
+    recordEditorPrint(orderId, 'zlecenie');
 }
 
 function getPowlokaString(well) {
@@ -778,7 +829,7 @@ function buildZlecenieHtml(template, data) {
 /** Buduje listę komponentów studni dla etykiety. */
 async function printEtykieta() {
     // Auto-zapis zlecenia + synchronizacja oferty/zamówienia przed wydrukiem
-    await saveProductionOrder();
+    const orderId = await saveProductionOrder();
 
     const data = collectPrintData();
     if (!data) return;
@@ -789,7 +840,10 @@ async function printEtykieta() {
     if (!template) return;
 
     const html = buildEtykietaHtml(template, data);
+    const ok = await confirmEditorPrint('Wydruk etykiety', 'etykietę', data.productionOrderNumber);
+    if (!ok) return;
     silentPrint(html);
+    recordEditorPrint(orderId, 'etykieta');
 }
 
 // ===== GLOBAL EXPORTS =====

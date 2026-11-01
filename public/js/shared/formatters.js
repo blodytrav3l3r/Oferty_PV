@@ -114,6 +114,48 @@ function renderTemplate(template, dataObj) {
     });
 }
 
+/**
+ * Dopasowuje font w komórkach wydruku (`.fit-text[data-fit-max]`) do
+ * dostępnej szerokości i wysokości komórki — bez ucinania tekstu.
+ *
+ * Uruchamiane w kontekście dokumentu wydruku (iframe), bo skrypt inline
+ * z szablonu jest blokowany przez CSP (nonce rodzica ≠ nonce szablonu).
+ * Współczynnik 0.9: iframe ma 1200px, a A4 landscape po marginesach ~1062px.
+ */
+function fitPrintedText(doc) {
+    const boxes = doc.querySelectorAll('.fit-text[data-fit-max]');
+    boxes.forEach((box) => {
+        const span = box.querySelector('span');
+        const cell = box.closest('td') || box.parentElement;
+        if (!span || !cell) return;
+
+        const cs = doc.defaultView.getComputedStyle(cell);
+        const padX = (parseFloat(cs.paddingLeft) || 0) + (parseFloat(cs.paddingRight) || 0);
+        const padY = (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0);
+        const availW = (cell.clientWidth - padX) * 0.9;
+        const availH = cell.clientHeight - padY;
+        if (availW <= 0 || availH <= 0) return;
+
+        const maxPx = parseFloat(box.getAttribute('data-fit-max')) || 16;
+        const minPx = 8;
+        let size = maxPx;
+        const apply = () => {
+            span.style.fontSize = size + 'px';
+        };
+        apply();
+        for (let i = 0; i < 16; i++) {
+            const textW = span.getBoundingClientRect().width;
+            const textH = span.getBoundingClientRect().height;
+            if (textW <= availW && textH <= availH) break;
+            const ratio = Math.min(availW / Math.max(textW, 1), availH / Math.max(textH, 1));
+            const next = Math.max(minPx, Math.floor(size * ratio * 0.97));
+            if (next >= size) break;
+            size = next;
+            apply();
+        }
+    });
+}
+
 /** Print HTML silently using a hidden iframe */
 function silentPrint(htmlString) {
     const iframe = document.createElement('iframe');
@@ -128,6 +170,12 @@ function silentPrint(htmlString) {
 
     iframe.onload = () => {
         setTimeout(() => {
+            try {
+                fitPrintedText(doc);
+            } catch (err) {
+                if (typeof logger !== 'undefined')
+                    logger.error('formatters', 'fitPrintedText:', err);
+            }
             iframe.contentWindow.focus();
             iframe.contentWindow.print();
             setTimeout(() => {
@@ -200,5 +248,6 @@ window.roundMoney = roundMoney;
 window.formatDate = formatDate;
 window.renderTemplate = renderTemplate;
 window.silentPrint = silentPrint;
+window.fitPrintedText = fitPrintedText;
 window.paramLabel = paramLabel;
 window.ensureDisplayIndices = ensureDisplayIndices;

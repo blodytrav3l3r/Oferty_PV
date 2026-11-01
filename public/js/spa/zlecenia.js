@@ -807,7 +807,7 @@ const AppZlecenia = (() => {
         const template = await fetchTemplate('templates/etykieta.html');
         if (!template) return;
 
-        // Wyodrębnij wielokrotnego użytku blok strony i funkcję fitSvgText z szablonu
+        // Wyodrębnij wielokrotnego użytku blok strony (font dopasowuje silentPrint)
         const pageStartIdx = template.indexOf('<div class="page">');
         const pageEndComment = template.indexOf('<!-- KONIEC BLOKU "page" -->');
         if (pageStartIdx < 0 || pageEndComment < 0) {
@@ -822,29 +822,15 @@ const AppZlecenia = (() => {
         const batchPageStyle =
             '<style>.page { page-break-after: always; } .page:last-child { page-break-after: auto; }</style>';
 
-        // Zbuduj każdą stronę z unikalnymi ID SVG
+        // Zbuduj każdą stronę z unikalnymi ID kontenerów
         let allPages = '';
-        let allFitCalls = '';
 
         orders.forEach((po, i) => {
-            const populatedPage = buildEtykietaPageBlock(pageTemplate, po, i);
-            allPages += populatedPage + '\n';
-            allFitCalls += "fitSvgText('snr-svg-" + i + "'); fitSvgText('order-svg-" + i + "');\n";
+            allPages += buildEtykietaPageBlock(pageTemplate, po, i) + '\n';
         });
 
-        // Zbuduj końcowy dokument ze skryptem dopasowania SVG
-        const fitScript =
-            '\n<script>\nfunction runAllFit() {\n' +
-            allFitCalls +
-            '}\nif (document.fonts && document.fonts.ready) {\n    document.fonts.ready.then(runAllFit);\n} else {\n    setTimeout(runAllFit, 200);\n}\nsetTimeout(runAllFit, 400);\n</script>';
-
         const finalHTML =
-            headSection +
-            batchPageStyle +
-            '</head>\n<body>\n' +
-            allPages +
-            fitScript +
-            '\n</body></html>';
+            headSection + batchPageStyle + '</head>\n<body>\n' + allPages + '\n</body></html>';
         const preview = orders.map((po) => describeOrder(po)).join('\n');
         const ok = await confirmPrintRun(
             'Wydruk etykiet',
