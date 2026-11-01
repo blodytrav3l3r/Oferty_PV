@@ -4,6 +4,14 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.55.3](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.55.2...v1.55.3) (2026-11-01)
+
+### Bug Fixes
+
+- **a11y:** usunięty `aria-expanded` z pól daty kalendarza S.O.K. — axe `aria-allowed-attr` blokował CI dla studnie/rury
+
+---
+
 ## [1.55.2](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.55.1...v1.55.2) (2026-11-01)
 
 ### Bug Fixes

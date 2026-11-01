@@ -168,7 +168,6 @@
         panel.hidden = false;
         render();
         position();
-        input.setAttribute('aria-expanded', 'true');
         var focusTarget = panel.querySelector(
             '.sok-datepicker-day.is-selected, .sok-datepicker-day.is-today'
         );
@@ -179,7 +178,6 @@
         if (!panel || panel.hidden) return;
         panel.hidden = true;
         if (activeInput) {
-            activeInput.setAttribute('aria-expanded', 'false');
             activeInput.focus();
         }
         activeInput = null;
@@ -259,7 +257,6 @@
         input.setAttribute('data-sok-datepicker', '1');
         input.setAttribute('readonly', 'readonly');
         input.setAttribute('aria-haspopup', 'dialog');
-        input.setAttribute('aria-expanded', 'false');
         input.addEventListener('click', function () {
             openFor(input);
         });

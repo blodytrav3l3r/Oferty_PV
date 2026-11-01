@@ -54,7 +54,7 @@ describe('kalendarz S.O.K. dla pól daty', () => {
         const panel = openPanel();
         expect(input.readOnly).toBe(true);
         expect(input.getAttribute('aria-haspopup')).toBe('dialog');
-        expect(input.getAttribute('aria-expanded')).toBe('true');
+        expect(input.hasAttribute('aria-expanded')).toBe(false);
         expect(panel.hidden).toBe(false);
         expect(panel.getAttribute('role')).toBe('dialog');
         expect(panel.querySelectorAll('.sok-datepicker-day').length).toBe(42);
@@ -68,7 +68,7 @@ describe('kalendarz S.O.K. dla pól daty', () => {
         expect(input.value).toBe('2026-11-15');
         expect(changes).toBe(1);
         expect((document.querySelector('.sok-datepicker') as HTMLElement).hidden).toBe(true);
-        expect(input.getAttribute('aria-expanded')).toBe('false');
+        expect(input.hasAttribute('aria-expanded')).toBe(false);
     });
 
     it('Escape zamyka panel i wraca focus na pole', () => {
