@@ -35,6 +35,7 @@ import { logger } from './utils/logger';
 import { cleanupAuditLogs } from './services/auditService';
 import { modelRegistry } from './services/ml/ModelRegistry';
 import { ensureBaselineVersionsAtStartup } from './services/pricelist/bootstrap';
+import { ensureSlaConfigRow } from './services/careService';
 import { requestLogger } from './middleware/requestLogger';
 import { getVersion } from './version';
 import { APP_NAME } from './constants/appMeta';
@@ -440,6 +441,26 @@ export async function initApp(): Promise<void> {
     // Świeża instalacja / stara baza: brak wersji cennika → oferty spadałyby
     // na LIVE z toastem. Bootstrap tworzy v1 APPROVED per oś (idempotentnie).
     await ensureBaselineVersionsAtStartup();
+
+    // Opieka: wiersz SLA global ma istnieć i mieć czytelne wartości, żeby
+    // panel/notyfikacje nie jechały na defaultcie z kodu i nie kończyły się
+    // INVALID_SLA_CONFIG (500). Idempotentne.
+    try {
+        const slaHeal = await ensureSlaConfigRow(prisma);
+        if (slaHeal.created) logger.info('Care', 'Utworzono domyślny wiersz SLA (24/7/72)');
+        if (slaHeal.globalRepaired || slaHeal.scopedRepaired > 0) {
+            logger.warn('Care', 'Naprawiono uszkodzoną konfigurację SLA (reset pól do 24/7/72)', {
+                globalRepaired: slaHeal.globalRepaired,
+                scopedRepaired: slaHeal.scopedRepaired
+            });
+        }
+    } catch (err) {
+        logger.warn(
+            'Care',
+            'Nie udało się upewnić wiersza SLA — fallback 24/7/72:',
+            err instanceof Error ? err.message : String(err)
+        );
+    }
 
     // Auto-heal schematu (indeksy, shares, FTS5) — BE-01: szczegóły w src/initDatabase.ts
     await ensureDatabaseIndexes();

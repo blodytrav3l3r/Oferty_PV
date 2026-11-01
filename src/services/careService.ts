@@ -712,17 +712,22 @@ export interface SlaConfig {
 
 export const DEFAULT_SLA: SlaConfig = { firstContactH: 24, staleD: 7, escalationH: 72 };
 
-/** F8: wartość pola SLA z DB musi być dodatnią liczbą (jak w slaSchema PUT).
- * Uszkodzony wiersz = throw (widoczny 500), nie ciche maskowanie defaultem. */
-function strictSlaField(v: unknown, name: string): number {
+/** F8: wartość pola SLA z DB musi być dodatnią liczbą (jak w slaSchema PUT). */
+function isSlaFieldValid(v: unknown): boolean {
     const n = Number(v);
-    if (!Number.isFinite(n) || n < 1) {
+    return Number.isFinite(n) && n >= 1;
+}
+
+/** Uszkodzony wiersz = throw (widoczny 500), nie ciche maskowanie defaultem.
+ * Naprawa należy do `ensureSlaConfigRow` przy starcie — odczyt zostaje głośny. */
+function strictSlaField(v: unknown, name: string): number {
+    if (!isSlaFieldValid(v)) {
         throw Object.assign(new Error(`Nieprawidłowa konfiguracja SLA: ${name}`), {
             status: 500,
             code: 'INVALID_SLA_CONFIG'
         });
     }
-    return n;
+    return Number(v);
 }
 export const MAX_SNOOZE_DAYS = 28;
 
@@ -823,6 +828,83 @@ export async function clearCareState(
     );
 }
 
+/** Pola wiersza SLA do naprawy — te same reguły, które odrzuca odczyt. */
+function slaFieldFixes(row: SlaConfig): Prisma.Sql[] {
+    const fixes: Prisma.Sql[] = [];
+    if (!isSlaFieldValid(row.firstContactH)) {
+        fixes.push(Prisma.sql`"firstContactH" = ${DEFAULT_SLA.firstContactH}`);
+    }
+    if (!isSlaFieldValid(row.staleD)) {
+        fixes.push(Prisma.sql`"staleD" = ${DEFAULT_SLA.staleD}`);
+    }
+    if (!isSlaFieldValid(row.escalationH)) {
+        fixes.push(Prisma.sql`"escalationH" = ${DEFAULT_SLA.escalationH}`);
+    }
+    return fixes;
+}
+
+export interface SlaHealResult {
+    /** Wiersz global nie istniał i został utworzony. */
+    created: boolean;
+    /** Wiersz global istniał, ale miał nieczytelne wartości — zresetowany do defaultu. */
+    globalRepaired: boolean;
+    /** Liczba wierszy `care_sla_scopes` z nieczytelnymi wartościami (naprawione pola). */
+    scopedRepaired: number;
+}
+
+/**
+ * Auto-heal startu: wiersz `care_sla_config.global` ma istnieć i mieć czytelne
+ * wartości, żeby opieka nie jechała na defaultcie z kodu i nie kończyła się
+ * `INVALID_SLA_CONFIG` (500) przy każdym odczycie panelu.
+ *
+ * Idempotentne: istniejący, poprawny wiersz (także wartości zmienione przez
+ * admina) zostaje nietknięty; naprawiane są tylko pola nieczytelne.
+ */
+export async function ensureSlaConfigRow(
+    db: QueryRawDb & { $executeRaw: (...args: any[]) => Promise<number> },
+    nowIso: string = new Date().toISOString()
+): Promise<SlaHealResult> {
+    const inserted = await db.$executeRaw(
+        Prisma.sql`INSERT INTO "care_sla_config" ("id", "firstContactH", "staleD", "escalationH", "updatedBy", "updatedAt")
+            VALUES ('global', ${DEFAULT_SLA.firstContactH}, ${DEFAULT_SLA.staleD}, ${DEFAULT_SLA.escalationH}, 'bootstrap', ${nowIso})
+            ON CONFLICT ("id") DO NOTHING`
+    );
+
+    const globalRow = (
+        await db.$queryRaw<Array<SlaConfig>>(
+            Prisma.sql`SELECT "firstContactH", "staleD", "escalationH" FROM "care_sla_config" WHERE "id" = 'global'`
+        )
+    )[0];
+    let globalRepaired = false;
+    if (globalRow) {
+        const fixes = slaFieldFixes(globalRow);
+        if (fixes.length > 0) {
+            await db.$executeRaw(
+                Prisma.sql`UPDATE "care_sla_config" SET ${Prisma.join(fixes)}, "updatedBy" = 'bootstrap', "updatedAt" = ${nowIso} WHERE "id" = 'global'`
+            );
+            globalRepaired = true;
+        }
+    }
+
+    const scopedRows = await db.$queryRaw<
+        Array<SlaConfig & { scopeType: string; scopeId: string }>
+    >(
+        Prisma.sql`SELECT "scopeType", "scopeId", "firstContactH", "staleD", "escalationH" FROM "care_sla_scopes"`
+    );
+    let scopedRepaired = 0;
+    // Sekwencyjnie: równoległe zapisy do SQLite = SQLITE_BUSY.
+    for (const row of scopedRows) {
+        const fixes = slaFieldFixes(row);
+        if (fixes.length === 0) continue;
+        await db.$executeRaw(
+            Prisma.sql`UPDATE "care_sla_scopes" SET ${Prisma.join(fixes)}, "updatedBy" = 'bootstrap', "updatedAt" = ${nowIso} WHERE "scopeType" = ${row.scopeType} AND "scopeId" = ${row.scopeId}`
+        );
+        scopedRepaired += 1;
+    }
+
+    return { created: inserted > 0, globalRepaired, scopedRepaired };
+}
+
 export async function getSlaConfig(db: RawDb): Promise<SlaConfig> {
     const rows = await db.$queryRaw<Array<SlaConfig>>(
         Prisma.sql`SELECT "firstContactH", "staleD", "escalationH" FROM "care_sla_config" WHERE "id" = 'global'`
@@ -830,8 +912,10 @@ export async function getSlaConfig(db: RawDb): Promise<SlaConfig> {
     const r = rows[0];
     // F8: brak wiersza = default 24/7/72 (pusta/legacy DB działa).
     // Uszkodzony wiersz = głośny błąd, nie ciche maskowanie defaultem.
+    // Brak wiersza to stan poprawny (docs/OPIEKA.md) — DEBUG, nie WARN:
+    // getEffectiveSla woła to przy każdym panelu/notyfikacji = spam w logach.
     if (!r) {
-        logger.warn('Care', 'Brak wiersza SLA (default 24/7/72)');
+        logger.debug('Care', 'Brak wiersza SLA (default 24/7/72)');
         return { ...DEFAULT_SLA };
     }
     return {

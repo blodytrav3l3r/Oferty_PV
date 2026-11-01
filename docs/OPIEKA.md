@@ -1,6 +1,6 @@
 # Opieka nad ofertą — hub
 
-**Wersja:** 1.55.5
+**Wersja:** 1.55.6
 **Ostatnia aktualizacja:** 2026-10-11
 
 > Warstwa opieki nad istniejącym modelem ofert, nie drugi CRM.
@@ -171,9 +171,20 @@ unieważnia 304, test w `careEtagOwner.test.ts`.
 ## Progi SLA (F8: default 24/7/72)
 
 Brak wiersza `care_sla_config.global` = progi domyślne (`firstContactH: 24`,
-`staleD: 7`, `escalationH: 72`) — opieka działa na pustej bazie. Uszkodzony
-wiersz (wartość `< 1` lub nieliczbowa) = głośny błąd `INVALID_SLA_CONFIG`
-(500), nie ciche maskowanie. Zapis przez `PUT /api/care/sla` waliduje zakresy
+`staleD: 7`, `escalationH: 72`) — opieka działa na pustej bazie. Wiersz jest
+tworzony automatycznie przy starcie serwera (`ensureSlaConfigRow` w
+`careService.ts`, `INSERT … ON CONFLICT DO NOTHING`): świeża instalacja dostaje
+go od razu, a istniejące wartości (także zmienione przez admina) zostają
+nietknięte. Fallback z kodu nadal działa dla bazy, której start jeszcze nie
+wykonał.
+
+Naprawa uszkodzonych progów (ten sam auto-heal startu): pole nieczytelne
+(nieliczbowe, `< 1` albo NULL) jest resetowane do wartości domyślnej, pozostałe
+pola wiersza zostają. Dotyczy wiersza globalnego i progów per zespół/user
+(`care_sla_scopes`, naprawiane pole po polu). Dzięki temu `INVALID_SLA_CONFIG`
+nie utrzymuje się po restarcie. Odczyt nadal jest głośny: wiersz uszkodzony już
+po starcie (ręczna edycja w działającej bazie) zwraca `INVALID_SLA_CONFIG` (500),
+nie ciche maskowanie. Zapis przez `PUT /api/care/sla` waliduje zakresy
 (Zod `min(1)`).
 
 Próg efektywny (ADR-016, `getEffectiveSla` w `careService.ts:734-748`):

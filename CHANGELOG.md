@@ -4,6 +4,14 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.55.6](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.55.5...v1.55.6) (2026-11-01)
+
+### Bug Fixes
+
+- **offers:** opieka startuje z poprawnymi progami SLA — wiersz `care_sla_config.global` tworzony przy starcie, a nieczytelne wartości (globalne i per zespół/user) resetowane pole po polu do 24/7/72, więc `INVALID_SLA_CONFIG` nie utrzymuje się po restarcie; brak wiersza logowany jako DEBUG zamiast WARN
+
+---
+
 ## [1.55.5](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.55.4...v1.55.5) (2026-11-01)
 
 ### Bug Fixes
