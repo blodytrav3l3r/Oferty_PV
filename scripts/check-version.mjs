@@ -177,6 +177,35 @@ for (const d of docErrors) {
     errors.push(`Dokumentacja: ${d}  (≠ VERSION ${versionFile})`);
 }
 
+// ── Runbooki wdrożeniowe: numer wersji wyłącznie jako placeholder X.Y.Z ──
+// `deploy.mjs`/`git checkout` dostają tag z argumentu, więc zaszyty numer zawsze
+// się zestarzeje (auto-docs-version nie podmienia komend). Konwencja repo: vX.Y.Z.
+const HARDCODED_RELEASE_RES = [
+    /(deploy\.mjs\s+\S+\s+v)(\d+\.\d+\.\d+)/g,
+    /(git checkout v)(\d+\.\d+\.\d+)/g,
+    /(git tag -a v)(\d+\.\d+\.\d+)/g
+];
+const hardcodedErrors = [];
+
+for (const file of docFiles) {
+    const content = read(file);
+    if (content == null) continue;
+    for (const re of HARDCODED_RELEASE_RES) {
+        re.lastIndex = 0;
+        let m;
+        while ((m = re.exec(content)) !== null) {
+            const line = content.slice(0, m.index).split('\n').length;
+            hardcodedErrors.push(
+                `${file.replace(ROOT + '\\', '')}:${line} → "${m[1]}${m[2]}" (użyj vX.Y.Z)`
+            );
+        }
+    }
+}
+allVersions['Runbooki deploy (X.Y.Z)'] = hardcodedErrors.length === 0 ? 'OK' : 'NIEZGODNE';
+for (const h of hardcodedErrors) {
+    errors.push(`Runbook: ${h}`);
+}
+
 // ── Wersja w HTML (cache-bust ?v=) — utrzymywana przez auto-cache-bust.mjs ──
 const HTML_DIRS = [resolve(ROOT, 'public'), resolve(ROOT, 'public', 'templates')];
 const HTML_VERSION_RE = /(\?v=)(\d+\.\d+\.\d+)/g;

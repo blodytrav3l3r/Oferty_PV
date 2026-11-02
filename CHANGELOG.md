@@ -4,6 +4,17 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.55.17](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.55.16...v1.55.17) (2026-11-02)
+
+### Bug Fixes
+
+- **release:** `npm run version:patch|minor|major` sam propaguje numer do wszystkich źródeł (`?v=` w HTML, markery w README/docs, `APP_VERSION` w `.bat`, `package-lock.json`) — koniec z ręcznym uruchamianiem skryptów po bumpie; ten sam `version:propagate` działa jako hook `postbump` w `standard-version`
+- **docs:** runbook `docs/DEPLOY_HTTPS_IT.md` nie zawiera już zaszytego numeru wersji — komendy używają placeholdera `vX.Y.Z`, zgodnie z resztą dokumentacji deployu
+- **release:** `npm run version:check` blokuje zaszyty numer w komendach runbooków (`deploy.mjs … vX.Y.Z`, `git checkout v…`, `git tag -a v…`) — nowy wiersz raportu „Runbooki deploy (X.Y.Z)”
+- **docs:** `docs/VERSIONING.md` opisuje kanoniczną ścieżkę `npm run version:*` i automatyczną propagację zamiast wyłącznie historycznego `release:*`
+
+---
+
 ## [1.55.16](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.55.15...v1.55.16) (2026-11-02)
 
 ### Bug Fixes

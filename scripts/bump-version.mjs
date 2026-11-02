@@ -11,8 +11,10 @@
  *   node scripts/bump-version.mjs major                 # MAJOR bump (2.0.0 → 3.0.0)
  *   node scripts/bump-version.mjs 2.1.5                 # konkretna wersja
  *
- * Po bump uruchom: npm run version:check (zweryfikuj spójność)
- * Następnie zaktualizuj CHANGELOG.md ręcznie lub przez agenta version-guardian.
+ * Po bump skrypt sam rozpropagowuje numer: cache-bust w HTML, markery w README
+ * i docs/*.md, pliki .bat oraz package-lock.json.
+ * Następnie zaktualizuj CHANGELOG.md ręcznie lub przez agenta version-guardian
+ * (treść wpisu wymaga kontekstu zmian) i uruchom npm run version:check.
  */
 
 import { readFileSync, writeFileSync, existsSync } from 'fs';
@@ -75,9 +77,7 @@ const current = readCurrent();
 const pkgCur = readPkgVersion();
 
 if (current !== pkgCur) {
-    fail(
-        `VERSION (${current}) ≠ package.json (${pkgCur}). Napraw ręcznie przed bump.`
-    );
+    fail(`VERSION (${current}) ≠ package.json (${pkgCur}). Napraw ręcznie przed bump.`);
 }
 
 if (!arg) {
@@ -95,14 +95,18 @@ writeFiles(next);
 
 console.log('  ✓ VERSION zaktualizowany');
 console.log('  ✓ package.json version zaktualizowany');
+
+// Propagacja numeru do wszystkich źródeł — jedno miejsce (npm run version:propagate),
+// używane także przez standard-version (`release:*`) przez hook postbump.
+console.log('  Propagacja wersji:');
+execSync('npm run version:propagate', { stdio: 'inherit', cwd: ROOT });
+
 console.log('\n  Aktualne zmiany (git diff --stat):\n');
 const diff = gitDiff();
 diff.split('\n').forEach((l) => {
     if (l) console.log(`    ${l}`);
 });
-console.log(
-    '\n  Następnie: zaktualizuj CHANGELOG.md ręcznie lub przez agenta version-guardian.'
-);
+console.log('\n  Następnie: zaktualizuj CHANGELOG.md ręcznie lub przez agenta version-guardian.');
 console.log(
     '  Commit:   git add VERSION package.json CHANGELOG.md && git commit -m "chore(release): ' +
         next +

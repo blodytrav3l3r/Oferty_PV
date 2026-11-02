@@ -33,27 +33,26 @@ Spójność wszystkich źródeł weryfikuje `npm run version:check` (detale i pe
 
 ## Automatyzacja
 
-Do podbijania wersji służy `standard-version`:
+Kanoniczna ścieżka: `npm run version:patch` (skrypt `scripts/bump-version.mjs`).
 
 ```bash
-# Podbicie patch (np. 1.0.0 → 1.0.1)
-npm run release:patch
-
-# Podbicie minor (np. 1.0.0 → 1.1.0)
-npm run release:minor
-
-# Podbicie major (np. 1.0.0 → 2.0.0)
-npm run release:major
-
-# Symulacja (dry-run, bez zmian)
-npm run release:dry
+npm run version:patch    # 1.0.0 → 1.0.1
+npm run version:minor    # 1.0.0 → 1.1.0
+npm run version:major    # 1.0.0 → 2.0.0
+npm run version:bump 1.2.3   # konkretna wersja
 ```
 
-Każde wydanie:
+Bump jest atomowy i sam propaguje numer (`npm run version:propagate`):
 
-1. Podbija wersję w `VERSION` i `package.json`
-2. Aktualizuje `CHANGELOG.md`
-3. Tworzy commita z tagiem (np. `v1.1.0`)
+1. `VERSION` + `package.json`
+2. `?v=` w HTML (`public/*.html`, `public/templates/*.html`)
+3. markery `**Wersja:**` / `> Wersja:` / `"version"` / `"dbVersion"` / `?v=` w `README.md` i `docs/*.md`
+4. `APP_VERSION` w plikach `.bat`
+5. `package-lock.json`
+
+Poza automatem zostaje wyłącznie `CHANGELOG.md` (wpis wymaga treści zmian) — dodaj go i uruchom `npm run version:check`, który blokuje commit przy jakimkolwiek rozjeździe. Ten sam `version:propagate` uruchamia się jako hook `postbump` w `standard-version` (`npm run release:*`, ścieżka historyczna).
+
+Numer wersji w dokumentacji: w runbookach i komendach deployu pisz `vX.Y.Z` (placeholder), nigdy konkretnego numeru — `version:check` zgłasza zaszyty numer w `deploy.mjs` / `git checkout v…` / `git tag -a v…` jako błąd.
 
 ## Baza danych
 
