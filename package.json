@@ -1,6 +1,6 @@
 {
     "name": "sok-oferty",
-    "version": "1.55.18",
+    "version": "1.55.19",
     "main": "dist/server.js",
     "scripts": {
         "start": "node dist/server.js",
@@ -177,7 +177,7 @@
     },
     "standard-version": {
         "scripts": {
-            "postbump": "npm run version:propagate"
+            "postbump": "npm run version:propagate && git add -u"
         }
     },
     "lint-staged": {

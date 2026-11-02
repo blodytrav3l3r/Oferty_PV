@@ -4,6 +4,8 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+### [1.55.19](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.55.18...v1.55.19) (2026-11-02)
+
 ### [1.55.18](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.55.17...v1.55.18) (2026-11-02)
 
 ### Bug Fixes
