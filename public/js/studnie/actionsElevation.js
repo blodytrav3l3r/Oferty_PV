@@ -66,6 +66,19 @@ function updateElevations() {
     }, 300);
 }
 
+function applyDoplataColor(el, value) {
+    if (value > 0) {
+        el.classList.add('color-success', 'fw-700');
+        el.classList.remove('color-danger', 'color-accent');
+    } else if (value < 0) {
+        el.classList.add('color-danger', 'fw-700');
+        el.classList.remove('color-success', 'color-accent');
+    } else {
+        el.classList.add('color-accent');
+        el.classList.remove('color-success', 'color-danger', 'fw-700');
+    }
+}
+
 function syncElevationInputs() {
     const well = getCurrentWell();
     const wlazInput = document.getElementById('input-rzedna-wlazu');
@@ -90,17 +103,7 @@ function syncElevationInputs() {
     if (doplataInput) {
         const dVal = well.doplata != null ? well.doplata : 0;
         doplataInput.value = dVal;
-
-        if (dVal > 0) {
-            doplataInput.classList.add('color-success', 'fw-700');
-            doplataInput.classList.remove('color-danger', 'color-accent');
-        } else if (dVal < 0) {
-            doplataInput.classList.add('color-danger', 'fw-700');
-            doplataInput.classList.remove('color-success', 'color-accent');
-        } else {
-            doplataInput.classList.add('color-accent');
-            doplataInput.classList.remove('color-success', 'color-danger', 'fw-700');
-        }
+        applyDoplataColor(doplataInput, dVal);
     }
     if (numerInput) {
         numerInput.value = well.numer || '';
@@ -259,16 +262,7 @@ function updateDoplata() {
     if (dVal !== null && domEl.value.trim().startsWith('=')) domEl.value = String(dVal);
     well.doplata = dVal;
 
-    if (dVal > 0) {
-        domEl.classList.add('color-success', 'fw-700');
-        domEl.classList.remove('color-danger', 'color-accent');
-    } else if (dVal < 0) {
-        domEl.classList.add('color-danger', 'fw-700');
-        domEl.classList.remove('color-success', 'color-accent');
-    } else {
-        domEl.classList.add('color-accent');
-        domEl.classList.remove('color-success', 'color-danger', 'fw-700');
-    }
+    applyDoplataColor(domEl, dVal);
 
     // Dopłata wchodzi do ceny 1:1 — kafelek od razu, pełny refresh z debounce.
     if (typeof updateSummary === 'function') {
@@ -294,6 +288,16 @@ const _debouncedRefreshFull = window.debounce
           updateSummary();
           renderOfferSummary();
       };
+
+if (typeof document !== 'undefined') {
+    document.addEventListener('input', (e) => {
+        const target = e.target;
+        if (!(target instanceof HTMLElement) || target.id !== 'input-doplata') return;
+        const raw = target.value === '' ? 0 : parseCalcExpression(target.value);
+        if (raw === null) return;
+        applyDoplataColor(target, raw);
+    });
+}
 
 /* ===== Rejestracja globali ===== */
 window.updateElevations = updateElevations;
