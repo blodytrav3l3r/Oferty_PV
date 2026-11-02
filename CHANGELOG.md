@@ -4,6 +4,16 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.55.11](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.55.10...v1.55.11) (2026-11-02)
+
+### Bug Fixes
+
+- **ui:** pasek nawigacji nie nachodzi już na siebie i nie zawija etykiet — kafle aplikacji i diagnostyka zajmują pierwszy wiersz, nawigacja sekcji zawsze drugi (pełna szerokość, przewijana w poziomie bez widocznego scrollbara)
+- **ui:** etykiety kafli mają `white-space: nowrap` + `text-overflow: ellipsis` (skracanie zamiast zawijania), a brakujące miejsce odbiera przewijanie kontenera, nie sąsiednie elementy
+- **ui:** diagnostyka w nagłówku znika stopniowo zanim zabraknie miejsca — status AI ≤1700 px, aktywne cenniki ≤1400 px, nazwa użytkownika ≤1300 px, wersja ≤1199 px, rola ≤1150 px, etykiety kafli ≤1000 px, logo ≤600 px
+
+---
+
 ## [1.55.10](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.55.9...v1.55.10) (2026-11-02)
 
 ### Features

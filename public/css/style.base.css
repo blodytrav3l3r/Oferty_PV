@@ -535,6 +535,7 @@ body::before {
 
 .header-inner {
     max-width: 100%;
+    min-width: 0;
     margin: 0 auto;
     display: flex;
     justify-content: space-between;
@@ -542,7 +543,9 @@ body::before {
     min-height: var(--header-h);
     padding: 0.3rem 1rem 0.3rem 0.75rem;
     gap: 0.5rem;
-    flex-wrap: nowrap;
+    /* Pasek układa się wierszami: logo+kafle+diagnostyka, niżej nawigacja
+       sekcji. Zawijanie nigdy nie tnie etykiet w środku kafla. */
+    flex-wrap: wrap;
 }
 
 .header-left {
@@ -555,11 +558,15 @@ body::before {
 }
 
 .header-center {
-    flex: 0 1 auto;
+    /* Nawigacja sekcji zawsze w drugim wierszu, na pełną szerokość — inaczej
+       zabierała miejsce kafelkom aplikacji i nachodziła na diagnostykę. */
+    order: 3;
+    flex: 1 0 100%;
     display: flex;
     align-items: center;
     justify-content: flex-start;
     min-width: 0;
+    overflow: hidden;
 }
 
 .header-right {
@@ -567,8 +574,14 @@ body::before {
     align-items: center;
     justify-content: flex-end;
     gap: 0.5rem;
-    flex-wrap: wrap;
+    flex: 0 0 auto;
+    flex-wrap: nowrap;
     min-width: 0;
+}
+
+.header-right > * {
+    min-width: 0;
+    flex-shrink: 1;
 }
 
 .logo {
@@ -645,6 +658,15 @@ body::before {
     display: flex;
     gap: 0.35rem;
     flex-wrap: nowrap;
+    min-width: 0;
+    /* Sekcja nie mieści się? Przewijanie w poziomie zamiast nachodzenia. */
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+}
+
+.nav::-webkit-scrollbar {
+    display: none;
 }
 
 .nav-apps {
@@ -656,6 +678,14 @@ body::before {
     flex: 0 1 auto;
     min-width: 0;
     flex-wrap: nowrap;
+    /* Brak miejsca: kafle przewijają się w poziomie zamiast nachodzić na siebie. */
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+}
+
+.nav-apps::-webkit-scrollbar {
+    display: none;
 }
 
 /* Podstawowa konfiguracja kafelków dla górnego menu */
@@ -686,7 +716,6 @@ body::before {
         box-shadow 0.25s;
     cursor: pointer;
     position: relative;
-    flex-shrink: 0;
 }
 
 .nav-btn {
@@ -861,6 +890,7 @@ body::before {
 .nav-tile-icon {
     font-size: var(--fs-2xl);
     display: block;
+    flex-shrink: 0;
 }
 
 .nav-tile-text {
@@ -868,7 +898,10 @@ body::before {
     font-weight: var(--fw-semibold);
     letter-spacing: 0.2px;
     white-space: nowrap;
-    flex-shrink: 0;
+    min-width: 0;
+    flex-shrink: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .nav-tile:focus-visible {
@@ -941,26 +974,21 @@ body::before {
 
 @media (max-width: 900px) {
     .header-inner {
-        flex-wrap: wrap;
-        gap: 0.5rem;
+        gap: 0.4rem;
     }
     .nav-apps {
-        flex-wrap: wrap;
         gap: var(--tile-gap-xs);
     }
 }
 
 @media (max-width: 700px) {
     .header-inner {
-        flex-wrap: wrap;
         min-height: auto;
         padding: 0.3rem 0.8rem;
         gap: 0.3rem;
     }
     .header-left {
-        flex-wrap: wrap;
         gap: 0.3rem;
-        width: 100%;
     }
     .header-left .logo {
         min-width: 0;
@@ -969,32 +997,24 @@ body::before {
         padding-left: 0;
         margin-left: 0;
         border-left: none;
-        flex-wrap: wrap;
     }
     .nav-tile {
         padding: 0.3rem 0.5rem;
         min-width: 0;
     }
-    .nav-tile-text {
-        display: none;
-    }
     .header-center {
         display: flex;
-        width: 100%;
         min-width: 0;
     }
     .header-center .nav {
         max-width: 100%;
-        overflow-x: auto;
         -webkit-overflow-scrolling: touch;
         padding-bottom: 2px;
     }
     .header-right {
         font-size: var(--fs-sm);
-        flex-wrap: wrap;
         justify-content: flex-end;
         gap: var(--tile-gap-xs);
-        width: 100%;
     }
     .logo {
         font-size: var(--fs-2xl);
@@ -1011,6 +1031,59 @@ body::before {
     }
     .nav-tile-icon {
         font-size: var(--fs-3xl);
+    }
+}
+
+/* ── Responsywność paska nawigacji ───────────────────────────────────
+   Układ: wiersz 1 = logo + kafle aplikacji + diagnostyka, wiersz 2 =
+   nawigacja sekcji. Diagnostyka w prawym rogu znika stopniowo, zanim
+   zabraknie miejsca na kafle. */
+@media (max-width: 1700px) {
+    #ai-status-indicator {
+        display: none;
+    }
+}
+
+@media (max-width: 1400px) {
+    .header-inner {
+        gap: 0.3rem;
+    }
+    #app-pricelists-toolbar {
+        display: none;
+    }
+}
+
+@media (max-width: 1300px) {
+    #header-username {
+        display: none;
+    }
+}
+
+@media (max-width: 1199px) {
+    #app-version-toolbar {
+        display: none;
+    }
+}
+
+@media (max-width: 1150px) {
+    #header-role-badge {
+        display: none;
+    }
+}
+
+@media (max-width: 1000px) {
+    .nav-tile-text {
+        display: none;
+    }
+}
+
+/* Najwęższe okna: bez logo w nagłówku, kafle ikon zostają w całości. */
+@media (max-width: 600px) {
+    .header-left .logo {
+        display: none;
+    }
+    .nav-tile {
+        padding: 0.25rem 0.3rem;
     }
 }
 
