@@ -138,4 +138,12 @@ describe('scripts/frontend-deps-analyze.mjs — P1.1', () => {
         );
         expect(second).toBe(raw);
     });
+
+    test('P1.2: gate frontend-deps-check.mjs blokuje nowe krawedzie (exit 1)', () => {
+        const checkScript = join(__dirname, '..', 'scripts', 'frontend-deps-check.mjs');
+        // Wywolanie check powinno przejsc dla biezacego stanu repozytorium (exit 0)
+        const checkOut = execFileSync('node', [checkScript], { encoding: 'utf8' });
+        expect(checkOut).toContain('Frontend Dependencies Guard');
+        expect(checkOut).toContain('OK');
+    });
 });
