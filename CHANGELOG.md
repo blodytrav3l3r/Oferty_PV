@@ -4,6 +4,14 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.55.9](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.55.8...v1.55.9) (2026-11-02)
+
+### Bug Fixes
+
+- **release:** domknięcie linii 1.55.x — tagi `v1.55.7` i `v1.55.8` nadrobione, numeracja `VERSION`/`package.json`/docs zgodna; brak zmian funkcjonalnych
+
+---
+
 ## [1.55.8](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.55.7...v1.55.8) (2026-11-02)
 
 ### Bug Fixes
