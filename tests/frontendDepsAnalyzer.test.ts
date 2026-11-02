@@ -163,7 +163,9 @@ describe('scripts/frontend-deps-analyze.mjs — P1.1', () => {
         expect(contract.publicFacade).toHaveProperty('emitExcelMutated');
         expect(contract.publicFacade).toHaveProperty('excelRefreshActiveTable');
         expect(contract.publicFacade).toHaveProperty('markExcelListStale');
-        expect(contract.legacyAllowlist).toHaveProperty('_excelDirty');
-        expect(contract.legacyAllowlist).toHaveProperty('_excelClearResCache');
+        expect(contract.publicFacade).toHaveProperty('excelClearResolutionCache');
+        expect(contract.publicFacade).toHaveProperty('excelSyncWellComponents');
+        expect(contract.publicFacade).toHaveProperty('isExcelDirty');
+        expect(Object.keys(contract.legacyAllowlist)).toHaveLength(0);
     });
 });

@@ -60,7 +60,7 @@
             "allowedCallers": ["public/js/studnie/displayUnits.js"]
         },
         "excelBulkController": {
-            "defFile": null,
+            "defFile": "public/js/studnie/excelBulkJob.js",
             "allowedCallers": []
         },
         "getExcelSelectedWellIndex": {
@@ -78,33 +78,15 @@
         "excelAutoSelectWell": {
             "defFile": "public/js/studnie/excelAutoSelect.js",
             "allowedCallers": ["public/js/studnie/popupsKonusPehd.js"]
-        }
-    },
-    "legacyAllowlist": {
-        "_excelClearResCache": {
+        },
+        "excelClearResolutionCache": {
             "defFile": "public/js/studnie/excelHelpers.js",
             "allowedCallers": ["public/js/studnie/diagramRenderer.js"]
         },
-        "_excelDebouncedRefresh": {
+        "excelSyncWellComponents": {
             "defFile": "public/js/studnie/excelPolling.js",
             "allowedCallers": ["public/js/studnie/diagramRenderer.js"]
-        },
-        "_excelDirty": {
-            "defFile": "public/js/studnie/excelState.js",
-            "allowedCallers": [
-                "public/js/shared/draftAutosave.js",
-                "public/js/shared/sokDirty.js",
-                "public/js/shared/ui.js",
-                "public/js/studnie/offerManager.js"
-            ]
-        },
-        "_excelRefreshAutoCells": {
-            "defFile": "public/js/studnie/excelTableBody.js",
-            "allowedCallers": ["public/js/studnie/diagramRenderer.js"]
-        },
-        "_excelRefreshKragCells": {
-            "defFile": "public/js/studnie/excelChangeHandlers.js",
-            "allowedCallers": ["public/js/studnie/diagramRenderer.js"]
         }
-    }
+    },
+    "legacyAllowlist": {}
 }

@@ -241,6 +241,21 @@ declare function generateOfferNotes(onlyIfEmpty?: boolean): void;
 declare function _excelImmediatePreview(wIdx?: number): void;
 declare function _excelUpdateLeftPreview(wIdx: number): void;
 declare function _excelClearResCache(well: any): void;
+declare function excelClearResolutionCache(well: any): void;
+declare function excelSyncWellComponents(well: any): void;
+declare function isExcelDirty(): boolean;
+declare function setExcelDirty(val: boolean): void;
+declare function isExcelQuiet(): boolean;
+declare function markExcelListStale(): void;
+declare function excelAutoSelectWell(wellIndex: number): Promise<void>;
+declare function getExcelSelectedWellIndex(): number;
+declare function isExcelPasteInProgress(): boolean;
+declare function emitExcelMutated(): void;
+declare function excelRefreshActiveTable(): void;
+declare function excelRefreshDisplayUnits(): void;
+declare function excelSwitchTab(tab: string): void;
+declare function excelOpenWellParams(idx: number): void;
+declare function closeExcelParamsPopup(): void;
 
 /* ===== Globalne deklaracje dla studnie/ (częściowa — patrz docelowe typowanie) ===== */
 declare var XLSX: any;

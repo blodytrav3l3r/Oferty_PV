@@ -22,8 +22,13 @@
             if (typeof isExcelDirty === 'function' && isExcelDirty()) return true;
         } catch (_e0) {}
         try {
-            if (typeof _excelDirty !== 'undefined' && _excelDirty) return true;
-        } catch (_e) {}
+            if (
+                typeof window !== 'undefined' &&
+                typeof window.isExcelDirty === 'function' &&
+                window.isExcelDirty()
+            )
+                return true;
+        } catch (_e1) {}
         try {
             if (typeof window !== 'undefined' && window._excelDirty) return true;
         } catch (_e2) {}

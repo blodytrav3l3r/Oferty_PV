@@ -343,6 +343,18 @@ function _excelClearResCache(well) {
     }
 }
 
+function excelClearResolutionCache(well) {
+    if (typeof _excelClearResCache === 'function') {
+        _excelClearResCache(well);
+    } else if (well) {
+        delete well.__resCache;
+        delete well.__availCache;
+    }
+}
+if (typeof window !== 'undefined') {
+    window.excelClearResolutionCache = excelClearResolutionCache;
+}
+
 /* Cache listy dostępnych produktów per studnia (P4-P0): getAvailableProducts +
    filterByWellParams raz per well zamiast per komórka rendera. Unieważniane
    centralnie przez _excelClearResCache + kluczem parametrów (magazyn/

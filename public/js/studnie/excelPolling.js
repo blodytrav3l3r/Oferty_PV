@@ -417,3 +417,25 @@ function _excelDebouncedRefresh(editedWIdx) {
     }
     _excelRefreshTimer = setTimeout(_excelFlushDebouncedRefresh, _EXCEL_REFRESH_DEBOUNCE_MS);
 }
+
+function excelSyncWellComponents(well) {
+    if (!well) return;
+    try {
+        var wIdx = typeof wells !== 'undefined' && Array.isArray(wells) ? wells.indexOf(well) : -1;
+        if (wIdx >= 0 && typeof document !== 'undefined') {
+            var otRow = document.querySelector('tr[data-widx="' + wIdx + '"]');
+            if (otRow) {
+                if (typeof _excelRefreshAutoCells === 'function')
+                    _excelRefreshAutoCells(wIdx, otRow);
+                if (typeof _excelRefreshKragCells === 'function')
+                    _excelRefreshKragCells(wIdx, otRow);
+            }
+        }
+    } catch (_eOtRow) {}
+    if (typeof _excelDebouncedRefresh === 'function') {
+        _excelDebouncedRefresh();
+    }
+}
+if (typeof window !== 'undefined') {
+    window.excelSyncWellComponents = excelSyncWellComponents;
+}

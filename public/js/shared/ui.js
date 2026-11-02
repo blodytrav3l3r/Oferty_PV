@@ -804,7 +804,12 @@ function _isWizardDirty() {
     } catch (_e) {}
     try {
         if (typeof isExcelDirty === 'function' && isExcelDirty()) return true;
-        if (typeof _excelDirty !== 'undefined' && _excelDirty) return true;
+        if (
+            typeof window !== 'undefined' &&
+            typeof window.isExcelDirty === 'function' &&
+            window.isExcelDirty()
+        )
+            return true;
         if (typeof window._excelDirty !== 'undefined' && window._excelDirty) return true;
         if (typeof window._wizardDirty !== 'undefined' && window._wizardDirty) return true;
         const spaIframes = document.querySelectorAll('iframe.spa-module-iframe');

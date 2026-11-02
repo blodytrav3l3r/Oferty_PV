@@ -878,7 +878,6 @@ function _draftIsDirty(kind) {
     if (kind === 'offer_rury' || kind === 'order_rury') return true;
     try {
         if (typeof isExcelDirty === 'function' && isExcelDirty()) return true;
-        if (typeof _excelDirty !== 'undefined' && _excelDirty) return true;
     } catch (_e) {}
     if (
         typeof window !== 'undefined' &&
@@ -1358,7 +1357,8 @@ function _draftApply(kind, draft) {
         try {
             if (typeof emitExcelMutated === 'function') emitExcelMutated();
             else if (typeof setExcelDirty === 'function') setExcelDirty(true);
-            else _excelDirty = true;
+            else if (typeof window !== 'undefined' && typeof window.setExcelDirty === 'function')
+                window.setExcelDirty(true);
         } catch (_e9) {}
         if (typeof refreshAll === 'function') {
             try {

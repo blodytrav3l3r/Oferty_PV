@@ -265,7 +265,8 @@ async function loadSavedOfferStudnie(id_or_doc, optionalId, targetSection, preve
     // checkRecovery ponizej postawi je na nowo, jesli odtworzy draft.
     try {
         if (typeof setExcelDirty === 'function') setExcelDirty(false);
-        else if (typeof _excelDirty !== 'undefined') _excelDirty = false;
+        else if (typeof window !== 'undefined' && typeof window.setExcelDirty === 'function')
+            window.setExcelDirty(false);
     } catch (_e) {}
     try {
         if (window.draftAutosave && typeof window.draftAutosave.resetWizardDirty === 'function')
