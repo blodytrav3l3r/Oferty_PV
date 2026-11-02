@@ -4,6 +4,14 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.55.12](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.55.11...v1.55.12) (2026-11-02)
+
+### Bug Fixes
+
+- **ui:** wskaźnik AI w nagłówku to teraz mała kwadratowa ikona (kropka statusu) — pełny opis `AI 40% · model · data` rozwija się po najechaniu lub fokusie klawiatury (`:hover`/`:focus-within`), bez zajmowania miejsca w pasku na stałe
+
+---
+
 ## [1.55.11](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.55.10...v1.55.11) (2026-11-02)
 
 ### Bug Fixes

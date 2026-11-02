@@ -754,6 +754,26 @@ body::before {
     background: var(--slate-500);
 }
 
+/* Wskaźnik AI: domyślnie mała kwadratowa ikona z kropką statusu, pełny opis
+   rozwija się po najechaniu lub fokusie — nie zabiera miejsca w pasku. */
+#ai-status-indicator {
+    max-width: 2.25rem;
+    padding-inline: 0;
+    justify-content: center;
+    overflow: hidden;
+    cursor: help;
+    transition:
+        max-width 0.25s ease,
+        padding 0.25s ease;
+}
+
+#ai-status-indicator:hover,
+#ai-status-indicator:focus-within {
+    max-width: 26rem;
+    padding-inline: 0.8rem;
+    justify-content: flex-start;
+}
+
 .header-username {
     display: inline-flex;
     align-items: center;
