@@ -18,6 +18,7 @@ import {
     validateData
 } from '../validators/authSchema';
 import { logger } from '../utils/logger';
+import { isHttpsEnabled } from '../middleware/security';
 
 const router = express.Router();
 
@@ -26,7 +27,10 @@ const loginLimiter = LOGIN_LIMITER;
 // Secure flag na ciastku — ustawiana, gdy żądanie realnie przyszło po HTTPS
 // (respektuje trust proxy). Dzięki temu login działa po HTTP na LAN bez flagi
 // Chrome; COOKIE_SECURE=true wymusza Secure także po HTTP (edge case).
-const isCookieSecure = (req: express.Request) => req.secure || process.env.COOKIE_SECURE === 'true';
+// W trybie awaryjnym HTTP (ADR-017) Secure jest zawsze zdjęte: przeglądarka
+// odrzuca takie ciastko po HTTP i logowanie wpada w pętlę.
+const isCookieSecure = (req: express.Request) =>
+    isHttpsEnabled() && (req.secure || process.env.COOKIE_SECURE === 'true');
 
 // POST /api/auth/login
 router.post('/login', loginLimiter, validateData(loginSchema), async (req, res) => {

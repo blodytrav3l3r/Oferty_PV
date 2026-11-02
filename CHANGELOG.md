@@ -4,6 +4,19 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.55.10](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.55.9...v1.55.10) (2026-11-02)
+
+### Features
+
+- **config:** flaga `HTTPS_ENABLED` z jawnym trybem awaryjnym HTTP dla LAN/VPN (ADR-017) — przy `false` brak przekierowania 302 na HTTPS, brak HSTS, CSP bez `upgrade-insecure-requests` i cookie sesji bez flagi `Secure`; pozostałe zabezpieczenia Helmeta (CSP, nosniff, Referrer-Policy, Permissions-Policy) zostają aktywne
+- **config:** konfiguracja Helmeta przeniesiona do `buildHelmetOptions()` w `src/middleware/security.ts` — tryb transportu testowalny bez bootowania aplikacji
+
+### Bug Fixes
+
+- **security:** `upgrade-insecure-requests` z domyślnej polityki Helmeta przepisywał `fetch('/api/...')` na HTTPS po HTTP i blokował zapis ofert (`ERR_SSL_PROTOCOL_ERROR`)
+
+---
+
 ## [1.55.9](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.55.8...v1.55.9) (2026-11-02)
 
 ### Bug Fixes

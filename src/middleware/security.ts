@@ -1,6 +1,19 @@
 import { Request, Response, NextFunction } from 'express';
 import crypto from 'crypto';
+import type { HelmetOptions } from 'helmet';
 import { logger } from '../utils/logger';
+
+/**
+ * Czy transport HTTPS jest włączony. `HTTPS_ENABLED=false` to jawny tryb
+ * awaryjny LAN/VPN (ADR-017): brak przekierowania, brak HSTS i brak
+ * `upgrade-insecure-requests`. Bez tego ostatniego przeglądarka przepisuje
+ * każde `fetch('/api/...')` ze strony po HTTP na https — żądanie nie ma gdzie
+ * trafić i zapis oferty pada z ERR_SSL_PROTOCOL_ERROR.
+ * Każda inna wartość (brak zmiennej, `true`) = HTTPS włączone.
+ */
+export function isHttpsEnabled(): boolean {
+    return process.env.HTTPS_ENABLED !== 'false';
+}
 
 // Dozwolony Host: hostname (RFC 1123) z opcjonalnym portem. Blokuje wstrzyknięcia
 // (np. `evil.com`, `a@b`, CRLF) przy budowaniu adresu przekierowania.
@@ -32,6 +45,11 @@ function resolveHttpsBase(req: Request): string | null {
  * Przekierowuje żądania HTTP na HTTPS w środowisku produkcyjnym.
  */
 export function httpsRedirect(req: Request, res: Response, next: NextFunction): void {
+    // Tryb awaryjny HTTP (ADR-017): nie ma dokąd przekierować.
+    if (!isHttpsEnabled()) {
+        next();
+        return;
+    }
     // Healthcheck Dockera i endpoint wersji działają po HTTP — nie przekierowuj ich na HTTPS.
     // /health/ready i /health/live muszą być na liście: Docker HEALTHCHECK pyta
     // /health/ready po plain HTTP wewnątrz kontenera (inaczej 302 → wieczne unhealthy).
@@ -79,12 +97,58 @@ export function securityHeaders(_req: Request, res: Response, next: NextFunction
     res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
     res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
 
-    if (process.env.NODE_ENV === 'production') {
+    if (process.env.NODE_ENV === 'production' && isHttpsEnabled()) {
         // Wartość MUSI się zgadzać z Caddyfile (header HSTS) — jedno źródło prawdy.
         res.setHeader('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload');
     }
 
     next();
+}
+
+/**
+ * Dyrektywy CSP (CSP-E: zero `unsafe-inline` dla skryptów — inline `<script>`
+ * dostają per-request nonce, handlery wyeliminowane na rzecz dyspozytora
+ * `data-csp`; `script-src-attr` celowo bez wpisu). `style-src` zostaje
+ * z `unsafe-inline` (`style="..."` nie wykonuje JS — ryzyko szczątkowe).
+ */
+const CSP_DIRECTIVES = {
+    defaultSrc: ["'self'"],
+    scriptSrc: [
+        "'self'",
+        (_req: unknown, res: unknown) =>
+            `'nonce-${(res as { locals?: { cspNonce?: string } }).locals?.cspNonce ?? 'missing'}'`
+    ],
+    styleSrc: ["'self'", "'unsafe-inline'"],
+    imgSrc: ["'self'", 'data:', 'blob:'],
+    connectSrc: ["'self'"],
+    fontSrc: ["'self'"],
+    objectSrc: ["'none'"],
+    mediaSrc: ["'self'"],
+    frameSrc: ["'self'"],
+    // Clickjacking: obce domeny nie osadzą SPA; własne iframe'y (same-origin)
+    // działają (X-Frame-Options zdjęte celowo).
+    frameAncestors: ["'self'"]
+};
+
+/**
+ * Konfiguracja Helmeta. Helmet dokłada `upgrade-insecure-requests` i HSTS
+ * **domyślnie**, niezależnie od naszego middleware — w trybie HTTP
+ * (`HTTPS_ENABLED=false`) oba muszą zniknąć, a reszta zabezpieczeń zostaje.
+ */
+export function buildHelmetOptions(): HelmetOptions {
+    const httpsEnabled = isHttpsEnabled();
+    return {
+        contentSecurityPolicy: {
+            directives: {
+                ...CSP_DIRECTIVES,
+                ...(httpsEnabled ? {} : { upgradeInsecureRequests: null })
+            }
+        },
+        // HSTS po HTTP to kłamstwo: przeglądarka i tak go zignoruje, a przy
+        // powrocie na nazwę hosta zostaje w cache na 2 lata.
+        strictTransportSecurity: httpsEnabled ? undefined : false,
+        crossOriginEmbedderPolicy: false
+    };
 }
 
 /**

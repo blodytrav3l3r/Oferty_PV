@@ -27,7 +27,8 @@ import {
     securityHeaders,
     charsetMiddleware,
     cspNonceMiddleware,
-    cspReportOnly
+    cspReportOnly,
+    buildHelmetOptions
 } from './middleware/security';
 import { createRateLimiter } from './middleware/rateLimiter';
 import { csrfProtection } from './middleware/csrf';
@@ -254,36 +255,9 @@ app.get('/api/docs.json', (_req, res) => {
 /* ===== BEZPIECZEŃSTWO ===== */
 // Nonce MUSI powstać przed helmet (dyrektywa scriptSrc czyta res.locals.cspNonce).
 app.use(cspNonceMiddleware);
-app.use(
-    helmet({
-        contentSecurityPolicy: {
-            directives: {
-                defaultSrc: ["'self'"],
-                // CSP-E: zero unsafe-inline dla skryptów — inline <script> dostają
-                // per-request nonce (injectAppNameScript), handlery wyeliminowane
-                // (dyspozytor data-csp). script-src-attr celowo bez wpisu (fallback
-                // do script-src). style-src zostaje z unsafe-inline (style="..."
-                // nie wykonuje JS — ryzyko szczątkowe, udokumentowane w ADR).
-                scriptSrc: [
-                    "'self'",
-                    (_req: unknown, res: unknown) =>
-                        `'nonce-${(res as { locals?: { cspNonce?: string } }).locals?.cspNonce ?? 'missing'}'`
-                ],
-                styleSrc: ["'self'", "'unsafe-inline'"],
-                imgSrc: ["'self'", 'data:', 'blob:'],
-                connectSrc: ["'self'"],
-                fontSrc: ["'self'"],
-                objectSrc: ["'none'"],
-                mediaSrc: ["'self'"],
-                frameSrc: ["'self'"],
-                // Clickjacking: obce domeny nie osadzą SPA; własne iframe'y
-                // (same-origin) działają (X-Frame-Options zdjęte celowo).
-                frameAncestors: ["'self'"]
-            }
-        },
-        crossOriginEmbedderPolicy: false
-    })
-);
+// Konfiguracja CSP + HSTS żyje w middleware/security.ts (buildHelmetOptions) —
+// dzięki temu tryb HTTP (HTTPS_ENABLED=false) jest testowalny bez bootowania app.
+app.use(helmet(buildHelmetOptions()));
 app.use(securityHeaders);
 app.use(charsetMiddleware);
 app.use(httpsRedirect);

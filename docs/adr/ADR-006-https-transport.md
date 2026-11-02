@@ -4,6 +4,11 @@
 **Data:** 2026-07-24
 **Autor:** Hermes Agent
 
+> Wyjątek operacyjny: awaryjny tryb HTTP w LAN/VPN (`HTTPS_ENABLED=false`) opisuje
+> ADR-017 (`docs/adr/ADR-017-awaryjny-http-w-lan-za-vpn.md`). HTTPS pozostaje
+> decyzją docelową; ADR-017 nie zmienia architektury, tylko dopuszcza jawny tryb
+> serwisowy.
+
 ## Kontekst
 
 Aplikacja S.O.K. działała dotychczas na czystym HTTP. Nowoczesne przeglądarki

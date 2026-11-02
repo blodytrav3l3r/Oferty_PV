@@ -700,15 +700,15 @@ describe('E5.5 gate: okablowanie bez zmian zachowania', () => {
 
     it('CSP enforce: nonce per-request, zero unsafe-inline dla skryptów', () => {
         const appSrc = readSrc('src/app.ts');
+        const secSrc = readSrc('src/middleware/security.ts');
         expect(appSrc).toContain('cspNonceMiddleware');
-        expect(appSrc).toContain('nonce-');
-        expect(appSrc).not.toContain(`scriptSrc: ["'self'", "'unsafe-inline'"]`);
-        expect(appSrc).toContain(`frameAncestors: ["'self'"]`);
-        const helmetBlock = appSrc.slice(
-            appSrc.indexOf('helmet({'),
-            appSrc.indexOf('})', appSrc.indexOf('helmet({')) + 2
-        );
-        expect(helmetBlock).not.toMatch(/https?:\/\//);
+        expect(appSrc).toContain('buildHelmetOptions()');
+        // Dyrektywy CSP żyją w middleware/security.ts (testowalne bez bootowania app).
+        expect(secSrc).toContain('nonce-');
+        expect(secSrc).not.toContain(`scriptSrc: ["'self'", "'unsafe-inline'"]`);
+        expect(secSrc).toContain(`frameAncestors: ["'self'"]`);
+        const cspBlock = secSrc.slice(secSrc.indexOf('const CSP_DIRECTIVES'));
+        expect(cspBlock).not.toMatch(/https?:\/\//);
     });
 
     it('nagłówki twarde bez zmian (HSTS 2 lata, Permissions-Policy, nosniff)', () => {
