@@ -4453,14 +4453,6 @@
         },
         {
             "page": "public/studnie.html",
-            "name": "_excelAutoSelectForWell",
-            "userFile": "public/js/studnie/popupsKonusPehd.js",
-            "defFile": "public/js/studnie/excelAutoSelect.js",
-            "defKind": "lexical",
-            "confidence": "CONFIRMED"
-        },
-        {
-            "page": "public/studnie.html",
             "name": "_excelAutoSetWlaz",
             "userFile": "public/js/studnie/excelCopyPaste.js",
             "defFile": "public/js/studnie/excelHelpers.js",
@@ -5861,14 +5853,6 @@
         },
         {
             "page": "public/studnie.html",
-            "name": "_excelListStale",
-            "userFile": "public/js/studnie/wellVirtual.js",
-            "defFile": "public/js/studnie/excelState.js",
-            "defKind": "lexical",
-            "confidence": "CONFIRMED"
-        },
-        {
-            "page": "public/studnie.html",
             "name": "_excelLoadColumnVisibility",
             "userFile": "public/js/studnie/excelModal.js",
             "defFile": "public/js/studnie/excelState.js",
@@ -6391,14 +6375,6 @@
             "page": "public/studnie.html",
             "name": "_excelQuietDepth",
             "userFile": "public/js/studnie/excelAutoSelect.js",
-            "defFile": "public/js/studnie/excelState.js",
-            "defKind": "lexical",
-            "confidence": "CONFIRMED"
-        },
-        {
-            "page": "public/studnie.html",
-            "name": "_excelQuietDepth",
-            "userFile": "public/js/studnie/solverAutoSelect.js",
             "defFile": "public/js/studnie/excelState.js",
             "defKind": "lexical",
             "confidence": "CONFIRMED"
@@ -11725,6 +11701,14 @@
         },
         {
             "page": "public/studnie.html",
+            "name": "excelAutoSelectWell",
+            "userFile": "public/js/studnie/popupsKonusPehd.js",
+            "defFile": "public/js/studnie/excelAutoSelect.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
             "name": "excelClearSearch",
             "userFile": "public/js/studnie/excelModal.js",
             "defFile": "public/js/studnie/excelHelpers.js",
@@ -14869,6 +14853,14 @@
         },
         {
             "page": "public/studnie.html",
+            "name": "isExcelQuiet",
+            "userFile": "public/js/studnie/solverAutoSelect.js",
+            "defFile": "public/js/studnie/excelState.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
             "name": "isFrozenPriceCtx",
             "userFile": "public/js/studnie/actionsConfigRender.js",
             "defFile": "public/js/studnie/orderHelpers.js",
@@ -16056,6 +16048,14 @@
             "name": "magFieldFor",
             "userFile": "public/js/studnie/popupsKonusPehd.js",
             "defFile": "public/js/studnie/wellConfigRules.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "markExcelListStale",
+            "userFile": "public/js/studnie/wellVirtual.js",
+            "defFile": "public/js/studnie/excelState.js",
             "defKind": "window",
             "confidence": "CONFIRMED"
         },

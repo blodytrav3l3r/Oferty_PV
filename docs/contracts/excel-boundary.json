@@ -66,13 +66,21 @@
         "getExcelSelectedWellIndex": {
             "defFile": "public/js/studnie/excelState.js",
             "allowedCallers": ["public/js/studnie/wellNotesModal.js"]
+        },
+        "isExcelQuiet": {
+            "defFile": "public/js/studnie/excelState.js",
+            "allowedCallers": ["public/js/studnie/solverAutoSelect.js"]
+        },
+        "markExcelListStale": {
+            "defFile": "public/js/studnie/excelState.js",
+            "allowedCallers": ["public/js/studnie/wellVirtual.js"]
+        },
+        "excelAutoSelectWell": {
+            "defFile": "public/js/studnie/excelAutoSelect.js",
+            "allowedCallers": ["public/js/studnie/popupsKonusPehd.js"]
         }
     },
     "legacyAllowlist": {
-        "_excelAutoSelectForWell": {
-            "defFile": "public/js/studnie/excelAutoSelect.js",
-            "allowedCallers": ["public/js/studnie/popupsKonusPehd.js"]
-        },
         "_excelClearResCache": {
             "defFile": "public/js/studnie/excelHelpers.js",
             "allowedCallers": ["public/js/studnie/diagramRenderer.js"]
@@ -89,14 +97,6 @@
                 "public/js/shared/ui.js",
                 "public/js/studnie/offerManager.js"
             ]
-        },
-        "_excelListStale": {
-            "defFile": "public/js/studnie/excelState.js",
-            "allowedCallers": ["public/js/studnie/wellVirtual.js"]
-        },
-        "_excelQuietDepth": {
-            "defFile": "public/js/studnie/excelState.js",
-            "allowedCallers": ["public/js/studnie/solverAutoSelect.js"]
         },
         "_excelRefreshAutoCells": {
             "defFile": "public/js/studnie/excelTableBody.js",

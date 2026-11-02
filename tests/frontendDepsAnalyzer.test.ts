@@ -162,7 +162,8 @@ describe('scripts/frontend-deps-analyze.mjs — P1.1', () => {
         expect(contract.publicFacade).toHaveProperty('excelSwitchTab');
         expect(contract.publicFacade).toHaveProperty('emitExcelMutated');
         expect(contract.publicFacade).toHaveProperty('excelRefreshActiveTable');
+        expect(contract.publicFacade).toHaveProperty('markExcelListStale');
         expect(contract.legacyAllowlist).toHaveProperty('_excelDirty');
-        expect(contract.legacyAllowlist).toHaveProperty('_excelListStale');
+        expect(contract.legacyAllowlist).toHaveProperty('_excelClearResCache');
     });
 });

@@ -138,7 +138,11 @@ window.autoSelectComponents = async function autoSelectComponents(autoTriggered 
                 : null;
         // --- Pokaż loading w UI ---
         well.configStatus = 'LOADING';
-        const __excelQuiet = typeof _excelQuietDepth !== 'undefined' && _excelQuietDepth > 0;
+        const __excelQuiet =
+            (typeof isExcelQuiet === 'function' && isExcelQuiet()) ||
+            (typeof window !== 'undefined' &&
+                typeof window.isExcelQuiet === 'function' &&
+                window.isExcelQuiet());
         if (__bulkQuiet) {
             if (__bulkStats) __bulkStats.rendersSkipped++;
         } else if (!__excelQuiet && typeof refreshAll === 'function') {

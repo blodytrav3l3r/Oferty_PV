@@ -276,3 +276,12 @@ async function _excelRunAutoSelectForWell(wIdx) {
                 '<svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor" class="d-block"><polygon points="3,2 15,8 3,14"/></svg>';
     }
 }
+
+async function excelAutoSelectWell(wellIndex) {
+    if (typeof _excelAutoSelectForWell === 'function') {
+        await _excelAutoSelectForWell(wellIndex);
+    }
+}
+if (typeof window !== 'undefined') {
+    window.excelAutoSelectWell = excelAutoSelectWell;
+}

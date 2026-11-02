@@ -140,7 +140,11 @@ describe('konusPehdResolver: sciezka Excel (Parametry tej studni)', () => {
         sandbox._excelAutoSelectForWell = async () => {
             excelAutoRuns++;
         };
-        // Overlay Excela otwarty → gałąź _excelAutoSelectForWell (nie krok-3).
+        // Overlay Excela otwarty → gałąź excelAutoSelectWell / _excelAutoSelectForWell (nie krok-3).
+        sandbox.excelAutoSelectWell = async (wIdx: number) => {
+            excelAutoRuns++;
+        };
+        sandbox._excelAutoSelectForWell = sandbox.excelAutoSelectWell;
         sandbox.document = {
             getElementById: (id: string) => (id === 'excel-table-overlay' ? {} : null)
         };

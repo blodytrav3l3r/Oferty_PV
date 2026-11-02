@@ -100,12 +100,20 @@ function getExcelSelectedWellIndex() {
     }
     return -1;
 }
+function isExcelQuiet() {
+    return Boolean(typeof _excelQuietDepth !== 'undefined' && _excelQuietDepth > 0);
+}
+function markExcelListStale() {
+    _excelListStale = true;
+}
 if (typeof window !== 'undefined') {
     window.emitExcelMutated = emitExcelMutated;
     window.isExcelDirty = isExcelDirty;
     window.setExcelDirty = setExcelDirty;
     window.isExcelPasteInProgress = isExcelPasteInProgress;
     window.getExcelSelectedWellIndex = getExcelSelectedWellIndex;
+    window.isExcelQuiet = isExcelQuiet;
+    window.markExcelListStale = markExcelListStale;
 }
 
 // eslint-disable-next-line no-unused-vars -- eksportowany przez window.KINETA_OPTIONS

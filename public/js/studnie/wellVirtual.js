@@ -526,13 +526,14 @@ function _wellVirtualRenderBody() {
         // F3: panel rabatów za overlayem Excela niewidoczny (sidebar pod modalem) —
         // skip paint + wspólna flaga _excelListStale, flush przy close
         // (_excelCloseOverlay → renderWellsList, closeExcelTableModal → refreshAll).
-        if (
-            typeof document !== 'undefined' &&
-            document.getElementById('excel-table-overlay') &&
-            typeof _excelListStale !== 'undefined'
-        ) {
+        if (typeof document !== 'undefined' && document.getElementById('excel-table-overlay')) {
             try {
-                _excelListStale = true;
+                if (typeof markExcelListStale === 'function') markExcelListStale();
+                else if (
+                    typeof window !== 'undefined' &&
+                    typeof window.markExcelListStale === 'function'
+                )
+                    window.markExcelListStale();
             } catch (_eStale) {}
         } else if (typeof renderDiscountPanel === 'function') {
             try {

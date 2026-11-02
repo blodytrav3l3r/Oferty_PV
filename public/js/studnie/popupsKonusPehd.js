@@ -172,12 +172,15 @@ window.resolveKonusPehd = async function (wellIndex, type) {
 
         // Z Excela (overlay otwarty): re-solve w kontekście Excela —
         // tabela + preview + kafelek Ceny od razu, nie przy najbliższej edycji.
-        if (
-            typeof document !== 'undefined' &&
-            document.getElementById('excel-table-overlay') &&
-            typeof _excelAutoSelectForWell === 'function'
-        ) {
-            await _excelAutoSelectForWell(wellIndex);
+        if (typeof document !== 'undefined' && document.getElementById('excel-table-overlay')) {
+            const runner =
+                typeof excelAutoSelectWell === 'function'
+                    ? excelAutoSelectWell
+                    : typeof window !== 'undefined' &&
+                        typeof window.excelAutoSelectWell === 'function'
+                      ? window.excelAutoSelectWell
+                      : null;
+            if (runner) await runner(wellIndex);
         } else if (currentWizardStep === 3) {
             await autoSelectComponents(true);
             refreshAll();
