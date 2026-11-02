@@ -172,7 +172,7 @@
         "ts-node": "^10.9.2",
         "ts-node-dev": "^2.0.0",
         "typescript": "^6.0.2",
-        "typescript-eslint": "^8.67.0"
+        "typescript-eslint": "^8.72.1"
     },
     "lint-staged": {
         "*.{js,ts,mjs}": [
