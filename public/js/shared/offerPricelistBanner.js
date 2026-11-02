@@ -72,7 +72,7 @@
         if (el && typeof el.remove === 'function') el.remove();
     }
 
-    /* ===== STAŁY BADGE „Cennik: vX" W NAGŁÓWKU EDYTORA ===== */
+    /* ===== STAŁY BADGE Z NUMEREM CENNIKA („vX") W NAGŁÓWKU EDYTORA ===== */
     /* Zawsze widoczny: pieczątka oferty, „legacy" bez pieczątki albo aktywny
      * dla nowej oferty. Kotwica główna: #wizard-indicator (stały we wszystkich
      * krokach); fallback: tytuł kroku. Jawny brak body-append — badge w body
@@ -199,8 +199,6 @@
             return false;
         }
         var active = pickActive(labels, type);
-        var label = typeLabel(type);
-        var suffix = label ? ' · ' + label : '';
         if (stampId) {
             var stamp = labels[stampId];
             if (!stamp && typeof pv.fetchLabelsByIds === 'function') {
@@ -215,14 +213,14 @@
                 return paintBadge(
                     type,
                     opts && opts.anchorId,
-                    'Cennik: ' + stamp.version + suffix,
-                    'Wersja cennika oferty'
+                    stamp.version,
+                    'Wersja cennika oferty: ' + stamp.version
                 );
             }
             return paintBadge(
                 type,
                 opts && opts.anchorId,
-                'Cennik: legacy' + suffix,
+                'legacy',
                 'Oferta sprzed wersjonowania cenników'
             );
         }
@@ -233,7 +231,7 @@
         return paintBadge(
             type,
             opts && opts.anchorId,
-            'Cennik: ' + active.version + ' (aktywny)' + suffix,
+            active.version,
             'Aktywny cennik — nowa oferta liczy po nim'
         );
     }

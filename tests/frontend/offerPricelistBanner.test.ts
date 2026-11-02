@@ -371,7 +371,7 @@ describe('frontend vm: offerPricelistBanner.badge (stały badge w nagłówku)', 
         );
         expect(visible).toBe(true);
         const badge = document.badgeEls['pv-offer-badge-studnie'];
-        expect(badge.textContent).toBe('Cennik: v2-20260102 (aktywny) · Studnie');
+        expect(badge.textContent).toBe('v2-20260102');
         const wizard = document.getElementById('wizard-indicator');
         expect(wizard.children).toContain(badge);
         expect(document.inserted).toHaveLength(0);
@@ -387,9 +387,7 @@ describe('frontend vm: offerPricelistBanner.badge (stały badge w nagłówku)', 
             sandbox
         );
         expect(visible).toBe(true);
-        expect(document.badgeEls['pv-offer-badge-studnie'].textContent).toBe(
-            'Cennik: v1-20260101 · Studnie'
-        );
+        expect(document.badgeEls['pv-offer-badge-studnie'].textContent).toBe('v1-20260101');
     });
 
     test('ukryty tytuł kroku → wizard, nie ślepa kotwica', async () => {
@@ -414,7 +412,7 @@ describe('frontend vm: offerPricelistBanner.badge (stały badge w nagłówku)', 
             sandbox
         );
         expect(visible).toBe(true);
-        expect(document.badgeEls['pv-offer-badge-rury'].textContent).toBe('Cennik: legacy · Rury');
+        expect(document.badgeEls['pv-offer-badge-rury'].textContent).toBe('legacy');
     });
 
     test('brak ACTIVE i brak pieczątki → cisza', async () => {
@@ -480,7 +478,7 @@ describe('frontend vm: offerPricelistBanner.badge (stały badge w nagłówku)', 
         expect(badge.className).toContain('badge-info');
         const html = (badge as any).innerHTML as string;
         expect(html).toContain('data-lucide="tag"');
-        expect(html).toContain('Cennik: v2-20260102 (aktywny)');
+        expect(html).toContain('v2-20260102');
         expect(sandbox.window.lucide.createIcons).toHaveBeenCalled();
         // CSS: kafel + margin-left:auto (prawo), tokeny projektu
         const css = fs.readFileSync(path.join(ROOT, 'public/css/style.utilities.css'), 'utf8');
@@ -528,9 +526,7 @@ describe('frontend vm: offerPricelistBanner.badge (stały badge w nagłówku)', 
             sandbox
         );
         expect(document.createdCount()).toBe(before);
-        expect(document.badgeEls['pv-offer-badge-studnie'].textContent).toBe(
-            'Cennik: v1-20260101 · Studnie'
-        );
+        expect(document.badgeEls['pv-offer-badge-studnie'].textContent).toBe('v1-20260101');
     });
 
     test('badge wraca do wizard-indicator po wejściu w builder (relokacja)', async () => {
@@ -561,7 +557,7 @@ describe('frontend vm: offerPricelistBanner.badge (stały badge w nagłówku)', 
             sandbox
         );
         expect(wiz.children).toContain(badge);
-        expect(badge.textContent).toBe('Cennik: v1-20260101 · Studnie');
+        expect(badge.textContent).toBe('v1-20260101');
     });
 
     test('reattach() przemalowuje badge na ostatniej pieczątce (nawigacja kroków)', async () => {
@@ -583,9 +579,7 @@ describe('frontend vm: offerPricelistBanner.badge (stały badge w nagłówku)', 
         expect(sandbox.window.pricelistVersions.fetchLabels.mock.calls.length).toBeGreaterThan(
             calls
         );
-        expect(document.badgeEls['pv-offer-badge-studnie'].textContent).toBe(
-            'Cennik: v1-20260101 · Studnie'
-        );
+        expect(document.badgeEls['pv-offer-badge-studnie'].textContent).toBe('v1-20260101');
     });
 
     test('reattach() bez historii → badge aktywnego (nowa oferta w builderze)', async () => {
@@ -595,9 +589,7 @@ describe('frontend vm: offerPricelistBanner.badge (stały badge w nagłówku)', 
             sandbox
         );
         expect(visible).toBe(true);
-        expect(document.badgeEls['pv-offer-badge-rury'].textContent).toBe(
-            'Cennik: v2-20260102 (aktywny) · Rury'
-        );
+        expect(document.badgeEls['pv-offer-badge-rury'].textContent).toBe('v2-20260102');
     });
 
     test('badge bez fetchy na piechotę, bez onclick i bez body-append', () => {

@@ -4,6 +4,14 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.55.13](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.55.12...v1.55.13) (2026-11-02)
+
+### Bug Fixes
+
+- **ui:** badge cennika w nagłówku edytora pokazuje tylko numer wersji (`Sv6-20261031`) — bez prefiksu „Cennik:", bez „(aktywny)" i bez nazwy modułu; kontekst przeniesiony do atrybutu `title`
+
+---
+
 ## [1.55.12](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.55.11...v1.55.12) (2026-11-02)
 
 ### Bug Fixes
