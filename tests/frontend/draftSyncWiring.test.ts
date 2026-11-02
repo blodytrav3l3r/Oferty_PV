@@ -147,6 +147,20 @@ describe('L2 draftSync — wpięcie w autosave', () => {
         expect(sandbox.window.draftAutosave.saveState()).toBe('ok');
     });
 
+    it("nowa oferta (docId 'new') nie wysyła kopii serwerowej — brak fałszywego konfliktu", async () => {
+        const { sandbox, store, net } = loadCtx();
+        sandbox.editingOfferId = null;
+        sandbox.offers = [];
+        sandbox.getOfferFormFields = () => ({ ...RURY_FIELDS, clientName: 'NOWA' });
+        sandbox.currentOfferItems = [{ uid: 'rur_1', productId: 'p', quantity: 5 }];
+        expect(sandbox._draftWriteKind('offer_rury', true)).toBe(true);
+        await tick();
+        expect(net.calls).toHaveLength(0);
+        expect(sandbox.document.getElementById('sok-draft-sync-modal')).toBeNull();
+        expect(store.size).toBeGreaterThan(0);
+        expect(sandbox.window.draftAutosave.saveState()).toBe('ok');
+    });
+
     it('flush wysyła If-Match z meta i aktualizuje meta po 200', async () => {
         const { sandbox, net, storage } = loadCtx();
         dirtyRury(sandbox);

@@ -1934,6 +1934,13 @@ function _draftSyncRun(key, keepalive) {
         var sync = _draftG('draftSync');
         var pending = _draftSyncPending[key];
         if (!sync || !pending) return;
+        // Niezapisana oferta nie ma tożsamości dokumentu (docId 'new') — kopia
+        // serwerowa tylko generuje fałszywe konflikty CAS i nie jest nigdzie
+        // pokazywana. Draft lokalny wystarcza.
+        if (pending.docId === 'new') {
+            delete _draftSyncPending[key];
+            return;
+        }
         if (_draftSyncTimers[key]) {
             clearTimeout(_draftSyncTimers[key]);
             _draftSyncTimers[key] = null;

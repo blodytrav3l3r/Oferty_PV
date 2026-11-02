@@ -135,6 +135,22 @@ async function saveOfferStudnie() {
 
     fields.validity = normalizeValidityValue(fields.validity);
 
+    // Bramy zapisu przed pytaniem o opiekuna: pusta oferta i błędne przejścia
+    // nie mogą otwierać wyboru opiekuna dla dokumentu, którego nie da się zapisać.
+    if (!wells || wells.length === 0) {
+        showToast('Błąd: Nie można zapisać pustej oferty.', 'error');
+        return false;
+    }
+    if (typeof validatePrzejsciaForSave === 'function') {
+        const v = validatePrzejsciaForSave(wells);
+        if (!v.valid) {
+            if (typeof showPrzejsciaValidationPopup === 'function')
+                showPrzejsciaValidationPopup(v.errors);
+            else showToast(v.errors[0], 'error');
+            return false;
+        }
+    }
+
     // --- KONIEC TELEMETRII ---
 
     isSavingOffer = true;
@@ -226,19 +242,6 @@ async function saveOfferStudnie() {
         if (window.pendingStudnieStampId)
             offerDoc.pricelistVersionId = window.pendingStudnieStampId;
 
-        if (!offerDoc.wells || offerDoc.wells.length === 0) {
-            showToast('Błąd: Nie można zapisać pustej oferty.', 'error');
-            return false;
-        }
-        if (typeof validatePrzejsciaForSave === 'function') {
-            const v = validatePrzejsciaForSave(offerDoc.wells);
-            if (!v.valid) {
-                if (typeof showPrzejsciaValidationPopup === 'function')
-                    showPrzejsciaValidationPopup(v.errors);
-                else showToast(v.errors[0], 'error');
-                return false;
-            }
-        }
         const payloadBytes = measureOfferSavePayload(offerDoc);
         const payloadMb = payloadBytes / 1048576;
         // Widoczność rozmiaru w logu — bez tego 413/odrzucenie jest niediagnozowalne.
