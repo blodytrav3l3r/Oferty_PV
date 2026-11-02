@@ -81,6 +81,42 @@ describe('seed preco', () => {
         }
     });
 
+    it('zakresy uniesienie/redukcja: max > 0, max >= min i brak nakładania', () => {
+        const { zakresy } = getSeedPrecoItems(VERSION_ID);
+        const byKey = new Map<string, Array<{ order: number; min: number; max: number }>>();
+        for (const row of zakresy) {
+            const label = String(row.label);
+            if (label !== 'uniesienie' && label !== 'redukcja') continue;
+            const key = `${String(row.wellDn)}|${label}`;
+            const list = byKey.get(key) ?? [];
+            list.push({
+                order: Number(row.order),
+                min: Number(row.min),
+                max: Number(row.max)
+            });
+            byKey.set(key, list);
+        }
+
+        const violations: string[] = [];
+        for (const [key, list] of byKey) {
+            const sorted = [...list].sort((a, b) => a.order - b.order);
+            for (const r of sorted) {
+                if (!(r.max > 0) || r.max < r.min) {
+                    violations.push(`${key} order ${r.order}: ${r.min}-${r.max}`);
+                }
+            }
+            for (let i = 1; i < sorted.length; i++) {
+                if (sorted[i].min <= sorted[i - 1].max) {
+                    violations.push(
+                        `${key}: ${sorted[i - 1].min}-${sorted[i - 1].max} nachodzi na ${sorted[i].min}-${sorted[i].max}`
+                    );
+                }
+            }
+        }
+
+        expect(violations).toEqual([]);
+    });
+
     it('wersja zagnieżdżona (dla `?source=default`) jest niezależną kopią', () => {
         const nested = getSeedPrecoNested();
         const keys = Object.keys(nested);

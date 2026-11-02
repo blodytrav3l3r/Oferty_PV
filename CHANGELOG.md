@@ -4,6 +4,15 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.55.7](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.55.6...v1.55.7) (2026-11-02)
+
+### Bug Fixes
+
+- **preco:** DN1200 → uniesienie wiersz 36 ma zakres 301–400 zamiast 301–600 (nachodził na 401–500 i liczył złą cenę); żywy cennik Pv2-20261027 poprawiony w miejscu przez `replaceVersionRows` (audyt `EDIT_APPROVED`, nowy SHA)
+- **preco:** seed fabryczny zsynchronizowany z aktywnym cennikiem — naprawione zakresy DN1200 (401–500, 501–600, 601–700, 701–800), DN2000 redukcja 901–1000, DN2500 uniesienie 401–500, DN2500 redukcja 50–100; test `pricelistSeedData` pilnuje `max > 0`, `max >= min` i braku nakładania
+
+---
+
 ## [1.55.6](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.55.5...v1.55.6) (2026-11-01)
 
 ### Bug Fixes
