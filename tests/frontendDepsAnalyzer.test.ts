@@ -139,11 +139,29 @@ describe('scripts/frontend-deps-analyze.mjs — P1.1', () => {
         expect(second).toBe(raw);
     });
 
-    test('P1.2: gate frontend-deps-check.mjs blokuje nowe krawedzie (exit 1)', () => {
+    test('P1.2: gate frontend-deps-check.mjs blokuje nowe krawedzie (exit 0 dla HEAD)', () => {
         const checkScript = join(__dirname, '..', 'scripts', 'frontend-deps-check.mjs');
         // Wywolanie check powinno przejsc dla biezacego stanu repozytorium (exit 0)
         const checkOut = execFileSync('node', [checkScript], { encoding: 'utf8' });
-        expect(checkOut).toContain('Frontend Dependencies Guard');
+        expect(checkOut).toContain('Frontend Dependencies & Excel Boundary Guard');
         expect(checkOut).toContain('OK');
+    });
+
+    test('P2: kontrakt Excel Boundary wykrywa nieautoryzowane odwolania do wnetrza klastra', () => {
+        const contractPath = join(__dirname, '..', 'docs', 'contracts', 'excel-boundary.json');
+        const contract = JSON.parse(
+            execFileSync(
+                'node',
+                [
+                    '-e',
+                    `console.log(require('fs').readFileSync('${contractPath.replace(/\\/g, '\\\\')}', 'utf8'))`
+                ],
+                { encoding: 'utf8' }
+            )
+        );
+        expect(contract.publicFacade).toHaveProperty('excelSwitchTab');
+        expect(contract.publicFacade).toHaveProperty('emitExcelMutated');
+        expect(contract.legacyAllowlist).toHaveProperty('_excelDirty');
+        expect(contract.legacyAllowlist).toHaveProperty('_excelActiveTab');
     });
 });

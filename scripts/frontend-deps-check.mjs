@@ -22,7 +22,12 @@ const execFileP = promisify(execFile);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, '..');
 const BASELINE_PATH = path.join(__dirname, 'frontend-deps-baseline.json');
+const CONTRACT_PATH = path.join(REPO_ROOT, 'docs', 'contracts', 'excel-boundary.json');
 const ANALYZE_SCRIPT = path.join(__dirname, 'frontend-deps-analyze.mjs');
+
+function isExcelCluster(file) {
+    return /studnie\/excel[^/]*\.js$/.test(file);
+}
 
 function buildEdgeKey(e) {
     return `${e.page}|${e.name}|${e.userFile}|${e.defFile}|${e.defKind}`;
@@ -97,8 +102,13 @@ async function main() {
     const baselineData = JSON.parse(fs.readFileSync(BASELINE_PATH, 'utf8'));
     const baselineKeys = new Set(baselineData.edges.map(buildEdgeKey));
 
+    const contractData = fs.existsSync(CONTRACT_PATH)
+        ? JSON.parse(fs.readFileSync(CONTRACT_PATH, 'utf8'))
+        : null;
+
     const newEdges = [];
     const suspectedEdges = [];
+    const boundaryViolations = [];
 
     for (const [key, edge] of currentEdgeMap) {
         if (!baselineKeys.has(key)) {
@@ -106,6 +116,32 @@ async function main() {
         }
         if (edge.confidence === 'SUSPECTED') {
             suspectedEdges.push(edge);
+        }
+
+        // P2: Excel Boundary Check — ochrona klastra excel*.js
+        if (contractData && isExcelCluster(edge.defFile) && !isExcelCluster(edge.userFile)) {
+            const isFacade = Boolean(
+                contractData.publicFacade && contractData.publicFacade[edge.name]
+            );
+            const legacyEntry =
+                contractData.legacyAllowlist && contractData.legacyAllowlist[edge.name];
+
+            if (!isFacade && !legacyEntry) {
+                boundaryViolations.push({
+                    type: 'UNAUTHORIZED_EXCEL_INTERNAL',
+                    ...edge,
+                    reason: `Global "${edge.name}" jest prywatny dla klastra Excel i nie należy do Fasady Publicznej.`
+                });
+            } else if (legacyEntry) {
+                const allowedCallers = legacyEntry.allowedCallers || [];
+                if (!allowedCallers.includes(edge.userFile)) {
+                    boundaryViolations.push({
+                        type: 'NEW_CALLER_TO_LEGACY_ALLOWLIST',
+                        ...edge,
+                        reason: `Global "${edge.name}" jest na liście wycieków legacy — zakaz dodawania nowych callerów (${edge.userFile}).`
+                    });
+                }
+            }
         }
     }
 
@@ -117,29 +153,48 @@ async function main() {
         console.log(
             JSON.stringify(
                 {
-                    passed: newEdges.length === 0 && suspectedEdges.length === 0,
+                    passed:
+                        newEdges.length === 0 &&
+                        suspectedEdges.length === 0 &&
+                        boundaryViolations.length === 0,
                     baselineCount,
                     currentCount,
                     newEdgesCount: newEdges.length,
                     suspectedEdgesCount: suspectedEdges.length,
+                    boundaryViolationsCount: boundaryViolations.length,
                     removedEdgesCount,
                     newEdges,
-                    suspectedEdges
+                    suspectedEdges,
+                    boundaryViolations
                 },
                 null,
                 2
             )
         );
-        process.exit(newEdges.length === 0 && suspectedEdges.length === 0 ? 0 : 1);
+        process.exit(
+            newEdges.length === 0 && suspectedEdges.length === 0 && boundaryViolations.length === 0
+                ? 0
+                : 1
+        );
     }
 
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log('  Frontend Dependencies Guard (P1.2)');
+    console.log('  Frontend Dependencies & Excel Boundary Guard (P2)');
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     console.log(`  Krawędzie baseline:  ${baselineCount}`);
     console.log(`  Bieżące krawędzie:   ${currentCount}`);
 
     let hasErrors = false;
+
+    if (boundaryViolations.length > 0) {
+        hasErrors = true;
+        console.error(
+            `\n  ✖ BŁĄD P2 (Excel Boundary): Wykryto ${boundaryViolations.length} naruszeń kontraktu granicy Excela:`
+        );
+        for (const v of boundaryViolations) {
+            console.error(`    - [${v.page}] ${v.name} w ${v.userFile} -> ${v.reason}`);
+        }
+    }
 
     if (suspectedEdges.length > 0) {
         hasErrors = true;

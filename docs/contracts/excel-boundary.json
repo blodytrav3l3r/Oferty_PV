@@ -1,0 +1,125 @@
+{
+    "schemaVersion": 1,
+    "cluster": "public/js/studnie/excel*.js",
+    "description": "Boundary contract for Excel cluster — isolates protected spreadsheet engine from outer modules",
+    "publicFacade": {
+        "excelSwitchTab": {
+            "defFile": "public/js/studnie/excelTabs.js",
+            "allowedCallers": ["public/js/studnie/diagramRenderer.js"]
+        },
+        "emitExcelMutated": {
+            "defFile": "public/js/studnie/excelState.js",
+            "allowedCallers": ["public/js/shared/draftAutosave.js"]
+        },
+        "isEmptyPrzejscie": {
+            "defFile": "public/js/studnie/excelHelpers.js",
+            "allowedCallers": [
+                "public/js/studnie/solverValidation.js",
+                "public/js/studnie/wellTransitions.js"
+            ]
+        },
+        "excelOpenWellParams": {
+            "defFile": "public/js/studnie/excelWellActions.js",
+            "allowedCallers": ["public/js/studnie/popupsKonusPehd.js"]
+        },
+        "closeExcelParamsPopup": {
+            "defFile": "public/js/studnie/excelWellActions.js",
+            "allowedCallers": ["public/js/studnie/popupsKonusPehd.js"]
+        }
+    },
+    "legacyAllowlist": {
+        "_excelActiveTab": {
+            "defFile": "public/js/studnie/excelState.js",
+            "allowedCallers": [
+                "public/js/studnie/displayUnits.js",
+                "public/js/studnie/wellTransitionsPopup.js"
+            ]
+        },
+        "_excelAutoSelectForWell": {
+            "defFile": "public/js/studnie/excelAutoSelect.js",
+            "allowedCallers": ["public/js/studnie/popupsKonusPehd.js"]
+        },
+        "_excelBulkCancel": {
+            "defFile": "public/js/studnie/excelBulkJob.js",
+            "allowedCallers": ["public/js/studnie/orderBulk.js"]
+        },
+        "_excelBulkHideProgress": {
+            "defFile": "public/js/studnie/excelBulkJob.js",
+            "allowedCallers": ["public/js/studnie/orderBulk.js"]
+        },
+        "_excelBulkIsAborted": {
+            "defFile": "public/js/studnie/excelBulkJob.js",
+            "allowedCallers": ["public/js/studnie/orderBulk.js"]
+        },
+        "_excelBulkShowProgress": {
+            "defFile": "public/js/studnie/excelBulkJob.js",
+            "allowedCallers": ["public/js/studnie/orderBulk.js"]
+        },
+        "_excelClearResCache": {
+            "defFile": "public/js/studnie/excelHelpers.js",
+            "allowedCallers": ["public/js/studnie/diagramRenderer.js"]
+        },
+        "_excelDebouncedRefresh": {
+            "defFile": "public/js/studnie/excelPolling.js",
+            "allowedCallers": ["public/js/studnie/diagramRenderer.js"]
+        },
+        "_excelDirty": {
+            "defFile": "public/js/studnie/excelState.js",
+            "allowedCallers": [
+                "public/js/shared/draftAutosave.js",
+                "public/js/shared/sokDirty.js",
+                "public/js/shared/ui.js",
+                "public/js/studnie/offerManager.js"
+            ]
+        },
+        "_excelLastClickedCell": {
+            "defFile": "public/js/studnie/excelState.js",
+            "allowedCallers": ["public/js/studnie/wellNotesModal.js"]
+        },
+        "_excelListStale": {
+            "defFile": "public/js/studnie/excelState.js",
+            "allowedCallers": ["public/js/studnie/wellVirtual.js"]
+        },
+        "_excelNewBulkAbort": {
+            "defFile": "public/js/studnie/excelBulkJob.js",
+            "allowedCallers": ["public/js/studnie/orderBulk.js"]
+        },
+        "_excelPasteInProgress": {
+            "defFile": "public/js/studnie/excelState.js",
+            "allowedCallers": [
+                "public/js/studnie/actionsElevation.js",
+                "public/js/studnie/wellTransitions.js"
+            ]
+        },
+        "_excelQuietDepth": {
+            "defFile": "public/js/studnie/excelState.js",
+            "allowedCallers": ["public/js/studnie/solverAutoSelect.js"]
+        },
+        "_excelRefreshAutoCells": {
+            "defFile": "public/js/studnie/excelTableBody.js",
+            "allowedCallers": [
+                "public/js/studnie/diagramRenderer.js",
+                "public/js/studnie/displayUnits.js"
+            ]
+        },
+        "_excelRefreshKragCells": {
+            "defFile": "public/js/studnie/excelChangeHandlers.js",
+            "allowedCallers": ["public/js/studnie/diagramRenderer.js"]
+        },
+        "_excelRenderTable": {
+            "defFile": "public/js/studnie/excelTableRenderer.js",
+            "allowedCallers": [
+                "public/js/studnie/displayUnits.js",
+                "public/js/studnie/wellTransitionsPopup.js"
+            ]
+        },
+        "_excelRowSelectStates": {
+            "defFile": "public/js/studnie/excelState.js",
+            "allowedCallers": ["public/js/studnie/wellNotesModal.js"]
+        },
+        "_excelSelectedCells": {
+            "defFile": "public/js/studnie/excelState.js",
+            "allowedCallers": ["public/js/studnie/wellNotesModal.js"]
+        }
+    }
+}
