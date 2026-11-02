@@ -561,9 +561,13 @@ body::before {
     flex: 1 1 0;
     display: flex;
     align-items: center;
-    justify-content: flex-start;
+    /* Trzy sekcje modułu (Konfiguracja/Oferta/Cennik) wyśrodkowane w wolnym
+       miejscu między kaflami aplikacji a diagnostyką. */
+    justify-content: center;
     min-width: 0;
-    overflow: hidden;
+    /* Widoczne, bo animacja hover podnosi kafle 2 px; przycinanie robi
+       wyłącznie kontener przewijający .nav. */
+    overflow: visible;
 }
 
 .header-right {
@@ -660,6 +664,10 @@ body::before {
     overflow-x: auto;
     overflow-y: hidden;
     scrollbar-width: none;
+    /* Miejsce na animację hover (translateY -2px) — kontener przewijający
+       przycina wszystko powyżej, więc robimy zapas i cofamy go marginesem. */
+    padding-top: 4px;
+    margin-top: -4px;
 }
 
 .nav::-webkit-scrollbar {
@@ -679,6 +687,9 @@ body::before {
     overflow-x: auto;
     overflow-y: hidden;
     scrollbar-width: none;
+    /* Zapas na hover (translateY -2px), cofnięty marginesem. */
+    padding-top: 4px;
+    margin-top: -4px;
 }
 
 .nav-apps::-webkit-scrollbar {
@@ -1062,18 +1073,21 @@ body::before {
    diagnostyka. Diagnostyka w prawym rogu znika stopniowo, zanim
    zabraknie miejsca na kafle. Gdy miejsca brakuje, nawigacja sekcji
    przewija się w poziomie — nigdy nie zawija i nie nachodzi. */
-@media (max-width: 1700px) {
+@media (max-width: 1850px) {
     #app-pricelists-toolbar {
+        display: none;
+    }
+}
+
+@media (max-width: 1700px) {
+    /* Etykiety kafli ustępują nawigacji sekcji (ikony zostają). */
+    .nav-tile-text {
         display: none;
     }
 }
 
 @media (max-width: 1500px) {
     #header-username {
-        display: none;
-    }
-    /* Średnie okno: etykiety kafli ustępują nawigacji sekcji (ikony zostają). */
-    .nav-tile-text {
         display: none;
     }
 }

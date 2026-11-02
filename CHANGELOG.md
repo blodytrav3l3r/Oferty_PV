@@ -4,6 +4,24 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.55.16](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.55.15...v1.55.16) (2026-11-02)
+
+### Bug Fixes
+
+- **ui:** animacja hover kafli nawigacji (`translateY(-2px)`) nie jest już przycinana — kontenery przewijające `.nav` i `.nav-apps` mają 4 px zapasu u góry (cofnięte marginesem), a `.header-center` nie przycina pionowo; górna krawędź przycisku zostaje w pełni widoczna
+
+---
+
+## [1.55.15](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.55.14...v1.55.15) (2026-11-02)
+
+### Bug Fixes
+
+- **ui:** trzy sekcje modułu (Konfiguracja, Oferta, Cennik) są wyśrodkowane w wolnym miejscu paska nagłówka zamiast dosunięte do lewej
+- **ui:** kafel aplikacji „Cennik" nazywa się teraz „Menadżer cenników" (widoczna etykieta i `aria-label`)
+- **ui:** progi zwijania diagnostyki dopasowane do szerszej etykiety — aktywne cenniki ≤1850 px, etykiety kafli ≤1700 px, nazwa użytkownika ≤1500 px, status AI ≤1000 px, wersja ≤1199 px, rola ≤1150 px, logo ≤600 px
+
+---
+
 ## [1.55.14](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.55.13...v1.55.14) (2026-11-02)
 
 ### Bug Fixes
