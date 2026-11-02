@@ -235,6 +235,38 @@ describe('draftSync.push — CAS', () => {
         expect(sync.loadMeta(storage, USER, KIND, DOC)?.version).toBe(7);
     });
 
+    test('pull z persistMeta:false nie rusza meta i zwraca tożsamość wiersza', async () => {
+        const sync = loadSync();
+        const storage = memStorage();
+        sync.saveMeta(storage, USER, KIND, DOC, { version: 2 });
+        const { fn } = fakeFetch([
+            {
+                status: 200,
+                body: {
+                    data: {
+                        kind: KIND,
+                        docId: DOC,
+                        payload: { a: 1 },
+                        version: 6,
+                        updatedAt: '2026-10-25T09:00:00.000Z'
+                    }
+                }
+            }
+        ]);
+        const res = await sync.pull({
+            storage,
+            userId: USER,
+            kind: KIND,
+            docId: DOC,
+            fetchImpl: fn,
+            persistMeta: false
+        });
+        expect(res.status).toBe('ok');
+        expect(res.kind).toBe(KIND);
+        expect(res.docId).toBe(DOC);
+        expect(sync.loadMeta(storage, USER, KIND, DOC)?.version).toBe(2);
+    });
+
     test('404 z meta (draft skasowany/TTL) → czyści meta i retry bez If-Match', async () => {
         const sync = loadSync();
         const storage = memStorage();

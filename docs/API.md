@@ -717,7 +717,10 @@ Limity: payload 256 KB (bajty UTF-8 `JSON.stringify`, liczone serwerowo), 50 dra
 na użytkownika, TTL 30 dni (leniwe przy odczycie + sweep w housekeepingu).
 Parser: dedykowany `express.json({ limit: '320kb' })` tylko dla tej ścieżki.
 Klient: `public/js/shared/draftSync.js` (offline-first; lokalny zapis nigdy nie
-zależy od sieci, konflikt = trzy jawne wybory, bez auto-merge).
+zależy od sieci, konflikt = trzy jawne wybory, bez auto-merge). Po 409/428 klient
+może dogonić `meta` bez udziału użytkownika wyłącznie wtedy, gdy serwer zwraca
+identyczny payload (porównanie kanoniczne) i tę samą tożsamość `kind`/`docId`;
+różna treść zawsze kończy się modalem.
 
 ---
 

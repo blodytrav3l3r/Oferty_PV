@@ -145,10 +145,15 @@
   `_draftSaveState` (błąd/`blocked-storage` nigdy jako `ok`); modal 3 wyborów przy
   konflikcie + kopia `docId-konflikt-<ts>`; flush `keepalive` jawnie pomija
   payload > 64 KB (`skipped_keepalive`); odzysk serwerowy tylko po decyzji
-  użytkownika.
+  użytkownika. Self-heal meta po 409/428 jest ograniczony: jedna próba na klucz
+  w sesji i tylko przy identycznym payloadzie (`canonicalPayloadJson`), tej samej
+  tożsamości `kind`/`docId` oraz wciąż aktualnej próbie zapisu — różna treść
+  nigdy nie jest nadpisywana, zawsze kończy się modalem. 409 i 428 mają odrębne
+  komunikaty (nieaktualny vs brakujący znacznik wersji).
 - **Tests:** `tests/drafts/casConcurrency.test.ts`,
   `tests/drafts/draftsRoutes.test.ts`, `tests/frontend/draftSaveState.test.ts`,
-  `tests/frontend/draftSync.test.ts`, `tests/frontend/draftSyncWiring.test.ts`.
+  `tests/frontend/draftSync.test.ts`, `tests/frontend/draftSyncWiring.test.ts`,
+  `tests/frontend/draftSyncHeal.test.ts`.
 
 ## I-014 — Cena oferty pochodzi wyłącznie z wersji cennika
 

@@ -306,8 +306,8 @@ async function draftSyncPush(args) {
 /**
  * Pobranie draftu z serwera. `null` = brak/nieosiągalny (bez rozróżniania
  * 404 od błędu sieci na poziomie API modułu — trasa i tak nie ujawnia cudzych).
- * @param {object} args `{storage, userId, kind, docId, fetchImpl?}`
- * @returns {Promise<{status: string, payload?: *, version?: number, updatedAt?: string, baseVersion?: number|null, httpStatus?: number}>}
+ * @param {object} args `{storage, userId, kind, docId, fetchImpl?, persistMeta?}`
+ * @returns {Promise<{status: string, kind?: string, docId?: string, payload?: *, version?: number, updatedAt?: string, baseVersion?: number|null, httpStatus?: number}>}
  */
 async function draftSyncPull(args) {
     var a = args || {};
@@ -330,12 +330,19 @@ async function draftSyncPull(args) {
     var data = await draftSyncJson(res);
     var d = data && data.data ? data.data : null;
     if (!d || typeof d.version !== 'number') return { status: 'error', httpStatus: res.status };
-    draftSyncSaveMeta(a.storage, a.userId, a.kind, a.docId, {
-        version: d.version,
-        updatedAt: d.updatedAt
-    });
+    // Self-heal czyta serwer bez skutków ubocznych: meta wolno ruszyć dopiero po
+    // porównaniu treści i sprawdzeniu, że próba zapisu jest wciąż aktualna.
+    if (a.persistMeta !== false) {
+        draftSyncSaveMeta(a.storage, a.userId, a.kind, a.docId, {
+            version: d.version,
+            updatedAt: d.updatedAt
+        });
+    }
     return {
         status: 'ok',
+        // Tożsamość wiersza serwerowego — self-heal porównuje ją z próbą zapisu.
+        kind: d.kind,
+        docId: d.docId,
         payload: d.payload,
         version: d.version,
         updatedAt: d.updatedAt,

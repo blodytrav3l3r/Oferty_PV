@@ -191,11 +191,25 @@ describe('L2 draftSync — wpięcie w autosave', () => {
                 serverUpdatedAt: '2026-10-25T09:00:00.000Z'
             }
         });
+        // Self-heal: serwer ma inną treść → brak zgody na dogonienie meta, modal.
+        net.queue.push({
+            status: 200,
+            body: {
+                data: {
+                    kind: 'offer_rury',
+                    docId: 'o1',
+                    payload: { fields: { clientName: 'INNA' }, items: [] },
+                    version: 5,
+                    updatedAt: '2026-10-25T09:00:00.000Z'
+                }
+            }
+        });
         net.queue.push({
             status: 200,
             body: { version: 6, updatedAt: '2026-10-25T11:00:00.000Z' }
         });
         sandbox._draftWriteKind('offer_rury', true);
+        await tick();
         await tick();
 
         const overlay = sandbox.document.getElementById('sok-draft-sync-modal');
@@ -207,9 +221,11 @@ describe('L2 draftSync — wpięcie w autosave', () => {
         };
         overlay.handlers.click({ target: { closest: () => btn } });
         await tick();
+        await tick();
 
-        expect(net.calls).toHaveLength(2);
-        expect(net.calls[1].opts.headers['If-Match']).toBe('"5"');
+        const puts = net.calls.filter((c: any) => c.opts.method === 'PUT');
+        expect(puts).toHaveLength(2);
+        expect(puts[1].opts.headers['If-Match']).toBe('"5"');
         expect(sync.loadMeta(storage, 'u1', 'offer_rury', 'o1')?.version).toBe(6);
     });
 

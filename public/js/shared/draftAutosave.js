@@ -42,6 +42,12 @@ var _draftSyncInFlight = {};
 var _draftSyncNoted = {};
 /** L2: klucze z pokazanym modalem konfliktu — kolejny 409 nie otwiera go w kółko. */
 var _draftSyncConflictShown = {};
+/** L2: token bieżącej próby pushu per klucz — chroni self-heal przed wyścigiem. */
+var _draftSyncAttempt = {};
+/** L2: klucze, dla których w tej sesji wykorzystano jedyną próbę self-heal. */
+var _draftSyncHealTried = {};
+/** L2: klucze z trwającym self-heal (drugi 409 nie startuje kolejnego pullu). */
+var _draftSyncHealPending = {};
 /** Ostatni sweep per userId (throttle 60 s). */
 var _draftLastSweepAt = {};
 /** Ostatni toast multi-tab per klucz (throttle 5 s). */
@@ -1893,6 +1899,9 @@ function _draftSyncForget(key) {
         delete _draftSyncNoted[key + '|forbidden'];
         delete _draftSyncNoted[key + '|conflict'];
         delete _draftSyncConflictShown[key];
+        delete _draftSyncAttempt[key];
+        delete _draftSyncHealTried[key];
+        delete _draftSyncHealPending[key];
     } catch (_e) {}
 }
 
@@ -1925,6 +1934,119 @@ function _draftSyncSchedule(kind, docId, draft) {
 }
 
 /**
+ * L2: kanoniczny JSON payloadu draftu (sortowanie kluczy); null przy błędzie.
+ * Do self-heal używamy PORÓWNANIA ŚCISŁEGO, nie `_draftEquivalent` — komparator
+ * recovery normalizuje domyślne, sortuje pozycje i wycina PII, więc mógłby uznać
+ * za „równe" payloady różniące się realną treścią oferty (np. dopłatą studni).
+ * Oba payloady są już po `buildDraft` (PII zdjęte), więc porównanie bajtów
+ * kanonicznych nie gubi pól istotnych dla treści.
+ * @param {*} payload
+ * @returns {string|null}
+ */
+function _draftSyncCanonical(payload) {
+    try {
+        return window.draftStore.canonicalPayloadJson(payload) || null;
+    } catch (_e) {
+        return null;
+    }
+}
+
+/**
+ * L2: czy lokalna kopia nadal odpowiada próbie, której wynik właśnie wrócił.
+ * Sprawdza tożsamość dokumentu (kind + docId) i dokładnie ten sam payload.
+ * @param {string} key
+ * @param {string} kind
+ * @param {string} docId
+ * @param {string} canon
+ * @returns {boolean}
+ */
+function _draftSyncLocalDraftMatches(key, kind, docId, canon) {
+    try {
+        var loaded = window.draftStore.loadDraft(window.localStorage, key);
+        if (!loaded || loaded.status !== 'ok' || !loaded.draft) return false;
+        if (String(loaded.draft.kind) !== String(kind)) return false;
+        if (String(loaded.draft.docId) !== String(docId)) return false;
+        return _draftSyncCanonical(loaded.draft.payload) === canon;
+    } catch (_e) {
+        return false;
+    }
+}
+
+/**
+ * L2: czy próba pushu jest wciąż aktualna (nie ma nowszego zapisu w kolejce).
+ * @param {string} key
+ * @param {object} pending
+ * @returns {boolean}
+ */
+function _draftSyncAttemptCurrent(key, pending) {
+    if (!pending || typeof pending.attempt !== 'number') return false;
+    if (_draftSyncAttempt[key] !== pending.attempt) return false;
+    var queued = _draftSyncPending[key];
+    if (!queued) return true;
+    return _draftSyncCanonical(queued.payload) === _draftSyncCanonical(pending.payload);
+}
+
+/**
+ * L2: ograniczony self-heal konfliktu. Meta dogania serwer TYLKO wtedy, gdy
+ * serwer ma DOKŁADNIE ten sam payload, ten sam dokument i próba jest wciąż
+ * aktualna. Żadna inna ścieżka nie rusza meta — różna treść zawsze zostaje
+ * dla użytkownika (modal), nigdy nie jest nadpisywana.
+ * @param {string} key
+ * @param {object} pending
+ * @returns {Promise<boolean>} true = meta dogoniła serwer, można ponowić push
+ */
+function _draftSyncTryHeal(key, pending) {
+    var sync = _draftG('draftSync');
+    var userId = _draftUserId();
+    if (!sync || typeof sync.pull !== 'function' || !userId || !pending) {
+        return Promise.resolve(false);
+    }
+    var kind = pending.kind;
+    var docId = pending.docId;
+    var canon = _draftSyncCanonical(pending.payload);
+    if (!canon) return Promise.resolve(false);
+    // Przed siecią: bez aktualnej próby i lokalnej kopii nie ma czego uzgadniać.
+    if (!_draftSyncAttemptCurrent(key, pending)) return Promise.resolve(false);
+    if (!_draftSyncLocalDraftMatches(key, kind, docId, canon)) return Promise.resolve(false);
+    return sync
+        .pull({
+            storage: window.localStorage,
+            userId: userId,
+            kind: kind,
+            docId: docId,
+            persistMeta: false
+        })
+        .then(function (pulled) {
+            if (!pulled || pulled.status !== 'ok' || !pulled.payload) return false;
+            // Tożsamość i stan usunięcia: 404/`missing` nigdy nie jest „identyczną
+            // kopią"; obcy kind/docId to nie nasz dokument.
+            if (String(pulled.kind) !== String(kind)) return false;
+            if (String(pulled.docId) !== String(docId)) return false;
+            if (typeof pulled.version !== 'number' || pulled.version < 1) return false;
+            // PORÓWNANIE ŚCISŁE — patrz komentarz _draftSyncCanonical.
+            if (_draftSyncCanonical(pulled.payload) !== canon) return false;
+            // Po pullu ponownie: nowszy zapis/pending unieważnia wynik pullu.
+            if (!_draftSyncAttemptCurrent(key, pending)) return false;
+            if (!_draftSyncLocalDraftMatches(key, kind, docId, canon)) return false;
+            // Wymuszamy wersję serwera: to nadal CAS — treść jest identyczna,
+            // więc żadna wersja nie jest nadpisywana.
+            return (
+                sync.saveMeta(
+                    window.localStorage,
+                    userId,
+                    kind,
+                    docId,
+                    { version: pulled.version, updatedAt: pulled.updatedAt || null },
+                    true
+                ) === true
+            );
+        })
+        .catch(function () {
+            return false;
+        });
+}
+
+/**
  * L2: wykonanie pushu. Jeden równoległy push na klucz; nowszy pending czeka.
  * @param {string} key
  * @param {boolean} keepalive wyjście z karty (limit 64 KB, jawnie pomijane wyżej)
@@ -1945,10 +2067,18 @@ function _draftSyncRun(key, keepalive) {
             clearTimeout(_draftSyncTimers[key]);
             _draftSyncTimers[key] = null;
         }
+        // Self-heal w toku: nowy push czeka w kolejce, żeby nie zmienił wersji
+        // serwera w trakcie porównania (wynik pullu byłby nieaktualny).
+        if (_draftSyncHealPending[key]) return;
         if (_draftSyncInFlight[key]) return;
         delete _draftSyncPending[key];
         var userId = _draftUserId();
         if (!userId) return;
+        // Token próby: self-heal po pullu może działać tylko na tej próbie,
+        // której wynik dopiero co przyszedł — nie na stanie po nowszym zapisie.
+        var attempt = (_draftSyncAttempt[key] || 0) + 1;
+        _draftSyncAttempt[key] = attempt;
+        pending.attempt = attempt;
         _draftSyncInFlight[key] = true;
         sync.push({
             storage: window.localStorage,
@@ -1980,18 +2110,37 @@ function _draftSyncFinish(key, pending, res) {
         delete _draftSyncInFlight[key];
         var status = res && res.status ? res.status : 'error';
         if (status === 'conflict') {
-            // Modal raz na klucz: bez latchu autosave co 5 s otwierał go w kółko,
-            // także gdy użytkownik świadomie go zamknął bez decyzji.
-            if (_draftSyncConflictShown[key]) {
-                _draftSyncNoteOnce(
-                    key,
-                    'conflict',
-                    'Kopia serwerowa wstrzymana — najpierw rozstrzygnij konflikt draftu.'
-                );
-            } else {
-                _draftSyncConflictShown[key] = true;
-                _draftShowSyncConflictModal(key, pending, res);
+            // Jedna, ograniczona próba self-heal na klucz w sesji. Dogonienie meta
+            // jest dozwolone tylko przy IDENTYCZNYM payloadzie i aktualnej próbie
+            // (patrz _draftSyncTryHeal) — różna treść zawsze trafia do modala.
+            if (
+                typeof pending.attempt === 'number' &&
+                !_draftSyncHealTried[key] &&
+                !_draftSyncConflictShown[key]
+            ) {
+                _draftSyncHealTried[key] = true;
+                _draftSyncHealPending[key] = true;
+                _draftSyncTryHeal(key, pending)
+                    .then(function (healed) {
+                        delete _draftSyncHealPending[key];
+                        if (healed) {
+                            if (_draftSyncAttemptCurrent(key, pending) && !_draftSyncPending[key]) {
+                                _draftSyncPending[key] = pending;
+                            }
+                            _draftSyncTail(key);
+                            return;
+                        }
+                        _draftSyncReportConflict(key, pending, res);
+                        _draftSyncTail(key);
+                    })
+                    .catch(function () {
+                        delete _draftSyncHealPending[key];
+                        _draftSyncReportConflict(key, pending, res);
+                        _draftSyncTail(key);
+                    });
+                return;
             }
+            _draftSyncReportConflict(key, pending, res);
         } else if (status === 'too_large') {
             _draftSyncNoteOnce(
                 key,
@@ -2011,9 +2160,35 @@ function _draftSyncFinish(key, pending, res) {
                 'Kopia serwerowa wstrzymana: sesja wygasła. Praca jest zapisana lokalnie.'
             );
         }
-        // Nowy stan w międzyczasie (użytkownik dalej pisał) → dogon go.
-        if (_draftSyncPending[key]) _draftSyncRun(key, false);
+        _draftSyncTail(key);
     } catch (_e) {}
+}
+
+/**
+ * L2: jawne zgłoszenie konfliktu — modal raz na klucz (latch), potem tylko nota.
+ * @param {string} key
+ * @param {object} pending
+ * @param {object} res
+ */
+function _draftSyncReportConflict(key, pending, res) {
+    if (_draftSyncConflictShown[key]) {
+        _draftSyncNoteOnce(
+            key,
+            'conflict',
+            'Kopia serwerowa wstrzymana — najpierw rozstrzygnij konflikt draftu.'
+        );
+        return;
+    }
+    _draftSyncConflictShown[key] = true;
+    _draftShowSyncConflictModal(key, pending, res);
+}
+
+/**
+ * L2: dogonienie stanu po zakończeniu obsługi pushu.
+ * @param {string} key
+ */
+function _draftSyncTail(key) {
+    if (_draftSyncPending[key]) _draftSyncRun(key, false);
 }
 
 /**
@@ -2040,28 +2215,33 @@ function _draftShowSyncConflictModal(key, pending, res) {
                 if (!isNaN(dt.getTime())) when = ' z ' + dt.toLocaleString('pl-PL');
             }
         } catch (_e0) {}
-        // Brak znacznika (np. 428 po skasowanym localStorage) to inny przypadek niż
-        // realna edycja — użytkownik musi wiedzieć, że to nie „ktoś zmienił treść”.
+        // Brak znacznika (428) i nieaktualny znacznik (409) to różne przyczyny:
+        // 428 = ta przeglądarka nie zna wersji, 409 = ktoś podniósł wersję.
         var missingTag = res && res.reason === 'precondition_required';
+        var title = missingTag
+            ? 'Brak znacznika wersji draftu'
+            : 'Draft ma nowszą wersję na serwerze';
+        var body = missingTag
+            ? 'Ta przeglądarka nie ma zapisanego znacznika wersji kopii roboczej (' +
+              _draftKindLabelShort(pending.kind) +
+              '), a na serwerze istnieje kopia' +
+              when +
+              '. Nic nie zostało nadpisane — wybierz świadomie, którą kopię zachować.'
+            : 'Ta sama kopia robocza (' +
+              _draftKindLabelShort(pending.kind) +
+              ') istnieje w wersji serwerowej' +
+              when +
+              '. Zmiana mogła powstać w innej karcie lub na innym urządzeniu.' +
+              ' Wybierz świadomie, którą zachować — nic nie jest nadpisywane automatycznie.';
         var html =
             '<div class="modal">' +
             '<div class="modal-header"><h3 id="sok-draft-sync-title"><i data-lucide="alert-triangle" aria-hidden="true"></i> ' +
-            escapeHtml('Draft ma nowszą wersję na serwerze') +
+            escapeHtml(title) +
             '</h3><button type="button" class="btn-icon" data-draft-sync-act="close" aria-label="' +
             escapeHtmlAttr('Zamknij') +
             '"><i data-lucide="x" aria-hidden="true"></i></button></div>' +
             '<div class="text-muted fs-xs-muted">' +
-            escapeHtml(
-                'Ta sama kopia robocza (' +
-                    _draftKindLabelShort(pending.kind) +
-                    ') istnieje w wersji serwerowej' +
-                    when +
-                    '. Zmiana mogła powstać w innej karcie lub na innym urządzeniu.' +
-                    (missingTag
-                        ? ' Brak znacznika wersji w tej przeglądarce — wybierz, którą kopię zachować.'
-                        : '') +
-                    ' Wybierz świadomie, którą zachować — nic nie jest nadpisywane automatycznie.'
-            ) +
+            escapeHtml(body) +
             '</div>' +
             '<div class="modal-footer">' +
             '<button type="button" class="btn btn-primary btn-sm" data-draft-sync-act="server"><i data-lucide="server" aria-hidden="true"></i> ' +
