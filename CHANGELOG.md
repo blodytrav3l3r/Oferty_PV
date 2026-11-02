@@ -4,6 +4,15 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.55.8](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.55.7...v1.55.8) (2026-11-02)
+
+### Bug Fixes
+
+- **preco:** błędne wartości cennika PRECO są kolorowane od razu przy edycji — puste/ujemne pole, zakres `max <= 0`, `max < min` oraz nachodzenie kolejnych wierszy `uniesienie`/`redukcja` (oba końce kolizji); zapis blokowany z opisem wiersza, bez czekania na 422 z backendu
+- **preco:** `collectPrecoFromUI` wyeksponowane na `window` — sprawdzenie w `pricelistVersions.js` wreszcie trafia w funkcję
+
+---
+
 ## [1.55.7](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.55.6...v1.55.7) (2026-11-02)
 
 ### Bug Fixes

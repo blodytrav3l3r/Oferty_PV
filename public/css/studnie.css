@@ -5760,6 +5760,19 @@ td.excel-tr-selected .excel-sel-wrap > div {
     font-size: var(--fs-md);
 }
 
+/* Walidacja PRECO: pole z błędem (puste/liczba ujemna, zakres max <= 0,
+   max < min, nachodzenie wierszy) — czerwona obwódka i tło, w obu motywach. */
+.preco-table .preco-input.preco-input--invalid {
+    border-color: var(--danger);
+    background: var(--danger-bg);
+    color: var(--text-primary);
+}
+
+.preco-table .preco-input.preco-input--invalid:focus {
+    outline-color: var(--danger);
+    border-color: var(--danger-hover);
+}
+
 .preco-table .preco-input--id {
     max-width: 64px;
     text-align: left;

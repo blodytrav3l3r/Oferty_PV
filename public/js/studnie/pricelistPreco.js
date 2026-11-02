@@ -134,9 +134,13 @@ function renderPrecoPriceList() {
     container.querySelectorAll('[data-preco-field]').forEach(function (input) {
         input.addEventListener('input', function () {
             _precoDirty = true;
+            // Walidacja na bieżąco: kolor błędnych pól i zakresów.
+            collectPrecoFromUI();
             updatePrecoSaveBtn();
         });
     });
+    // Wczytany szkic/wersja może już zawierać błędne wartości — pokaż je od razu.
+    collectPrecoFromUI();
     // Render odtwarza DOM, więc blokada podglądu (inert) musi wrócić.
     if (window.pricelistVersions && window.pricelistVersions.applyEditorLock) {
         window.pricelistVersions.applyEditorLock('preco');
@@ -333,15 +337,19 @@ function togglePrecoAccordion(headerEl, dn) {
  * Zbiera PRECO z UI. Puste/niepoprawne pole NIE jest juz cicho zerowane
  * (dawniej kazda niepoprawna wartosc konczyla sie cena 0 zl): zachowujemy
  * poprzednia wartosc i zapamietujemy pole, a zapis zostaje zablokowany.
+ * Błędne pola i niespójne zakresy dostają czerwoną obwódkę.
  */
 function collectPrecoFromUI() {
     const data = structuredClone(precoPricing);
     const issues = [];
+    const fields = new Map();
     document.querySelectorAll('[data-preco-field]').forEach((/** @type {HTMLElement} */ input) => {
         const dn = input.dataset.precoDn;
         const fieldPath = input.dataset.precoField;
         const raw = String(input.value).trim();
         const val = raw === '' ? NaN : Number(raw);
+        const invalid = !Number.isFinite(val) || val < 0;
+        setPrecoInputInvalid(input, invalid);
 
         if (!data[dn]) return;
 
@@ -352,15 +360,82 @@ function collectPrecoFromUI() {
             if (target[key] === undefined) continue;
             target = target[key];
         }
-        const lastKey = parts[parts.length - 1];
-        if (!Number.isFinite(val) || val < 0) {
+        if (invalid) {
             issues.push('DN' + dn + ' ' + fieldPath);
             return;
         }
-        target[lastKey] = val;
+        target[parts[parts.length - 1]] = val;
+        fields.set(dn + '|' + fieldPath, { dn, fieldPath, val, input });
     });
+    issues.push(...markPrecoRangeIssues(fields));
     _precoInputIssues = issues;
     return data;
+}
+
+/** Koloruje pole z błędem; `reason` trafia też do tooltipa (title). */
+function setPrecoInputInvalid(input, invalid, reason) {
+    input.classList.toggle('preco-input--invalid', invalid);
+    if (invalid) {
+        input.setAttribute('aria-invalid', 'true');
+        input.title = reason || 'Nieprawidłowa wartość';
+    } else {
+        input.removeAttribute('aria-invalid');
+        input.removeAttribute('title');
+    }
+}
+
+/**
+ * Zakresy uniesienie/redukcja: `max > 0`, `max >= min` i brak nachodzenia
+ * kolejnych wierszy. Spadek kinety/mufy ma inną oś i bywa nachodzący z
+ * założenia, więc go nie obejmuje. Zwraca opisy błędów dla toasta.
+ */
+function markPrecoRangeIssues(fields) {
+    const issues = [];
+    const tables = new Map();
+    for (const { dn, fieldPath, val, input } of fields.values()) {
+        const m = /^(uniesienie|redukcja)\.(\d+)\.(min|max)$/.exec(fieldPath);
+        if (!m) continue;
+        const key = dn + '|' + m[1];
+        if (!tables.has(key)) tables.set(key, new Map());
+        const rows = tables.get(key);
+        const row = rows.get(Number(m[2])) ?? {};
+        row[m[3]] = val;
+        row[m[3] + 'Input'] = input;
+        rows.set(Number(m[2]), row);
+    }
+    for (const [key, rows] of tables) {
+        const [dn, label] = key.split('|');
+        let prevRow = null;
+        let prevMax = null;
+        for (const [index, row] of [...rows.entries()].sort((a, b) => a[0] - b[0])) {
+            const { min, max } = row;
+            const badMax = max !== undefined && (!(max > 0) || (min !== undefined && max < min));
+            const overlap = min !== undefined && prevMax !== null && min <= prevMax;
+            if (badMax || overlap) {
+                const reason = badMax
+                    ? 'Zakres wymaga max > 0 i max >= min'
+                    : `Zakres nachodzi na poprzedni (do ${prevMax})`;
+                if (row.minInput) setPrecoInputInvalid(row.minInput, true, reason);
+                if (row.maxInput) setPrecoInputInvalid(row.maxInput, true, reason);
+                // Kolorujemy oba końce kolizji — nie wiadomo, który wiersz jest błędny.
+                if (overlap && prevRow && prevRow.maxInput) {
+                    setPrecoInputInvalid(
+                        prevRow.maxInput,
+                        true,
+                        `Zakres nachodzi na następny (od ${min})`
+                    );
+                }
+                issues.push(
+                    `DN${dn} ${label}, wiersz ${index + 1}: ${min ?? '?'}–${max ?? '?'} — ${reason}`
+                );
+            }
+            if (max !== undefined) {
+                prevRow = row;
+                prevMax = max;
+            }
+        }
+    }
+    return issues;
 }
 
 async function savePrecoFromUI() {
@@ -465,6 +540,7 @@ async function exportPrecoToExcel() {
 
 window.renderPrecoPriceList = renderPrecoPriceList;
 window.exportPrecoToExcel = exportPrecoToExcel;
+window.collectPrecoFromUI = collectPrecoFromUI;
 window.savePrecoFromUI = savePrecoFromUI;
 window.loadPrecoDefaults = loadPrecoDefaults;
 window.togglePrecoAccordion = togglePrecoAccordion;
