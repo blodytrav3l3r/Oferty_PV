@@ -50,7 +50,7 @@ Bump jest atomowy i sam propaguje numer (`npm run version:propagate`):
 4. `APP_VERSION` w plikach `.bat`
 5. `package-lock.json`
 
-Poza automatem zostaje wyłącznie `CHANGELOG.md` (wpis wymaga treści zmian) — dodaj go i uruchom `npm run version:check`, który blokuje commit przy jakimkolwiek rozjeździe. Ten sam `version:propagate` uruchamia się jako hook `postbump` w `standard-version` (`npm run release:*`, ścieżka historyczna).
+Poza automatem zostaje wyłącznie `CHANGELOG.md` (wpis wymaga treści zmian) — dodaj go i uruchom `npm run version:check`, który blokuje commit przy jakimkolwiek rozjeździe. Ten sam `version:propagate` uruchamia się jako hook `postbump` w `standard-version` (`npm run release:*`, ścieżka historyczna) razem z `git add -u`, żeby pliki propagacji trafiły do commita release, a nie zostały w worktree.
 
 Numer wersji w dokumentacji: w runbookach i komendach deployu pisz `vX.Y.Z` (placeholder), nigdy konkretnego numeru — `version:check` zgłasza zaszyty numer w `deploy.mjs` / `git checkout v…` / `git tag -a v…` jako błąd.
 

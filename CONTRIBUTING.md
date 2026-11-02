@@ -42,10 +42,13 @@ Proces release:
 
 1. `npm run release` automatycznie dobiera typ wersji na podstawie commitów
 2. Aktualizuje `VERSION`, `package.json` i `package-lock.json` (lista plików z `bumpFiles` w `.versionrc.json`) oraz `CHANGELOG.md` (`infile`)
-3. Hook `postbump` uruchamia **trzy skrypty**:
+3. Hook `postbump` (`standard-version.scripts.postbump` w `package.json`) uruchamia `npm run version:propagate`, czyli **trzy skrypty**:
     - `scripts/auto-cache-bust.mjs` — aktualizuje `?v=` we wszystkich HTML (w tym `public/templates/*.html`) do nowej wersji
     - `scripts/auto-docs-version.mjs` — aktualizuje wersję w dokumentacji `README.md` + `docs/*.md` (`**Wersja:**`, `**Wersja aplikacji:**`, `> Wersja:`) oraz przykłady JSON `"version"`/`"dbVersion"` w `docs/API.md`
     - `scripts/auto-bat-version.mjs` — aktualizuje wersję w skryptach `.bat` (start, install, build, setup-ai, ensure-db)
+
+    Hook kończy się `git add -u` — bez tego `--commit-all` commitował tylko `bumpFiles` + `CHANGELOG.md`, a propagacja zostawała w worktree po commicie.
+
 4. Tworzy commit `chore(release): X.Y.Z` (release commituje wszystkie zmiany — flaga `--commit-all`) oraz tag git
 5. Po pushu tagów GitHub automatycznie tworzy Release
 6. Po zmianie wersji zrestartuj serwer

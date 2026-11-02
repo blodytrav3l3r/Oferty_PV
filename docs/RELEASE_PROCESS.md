@@ -30,7 +30,9 @@ To wykonuje:
   z `bumpFiles` w `.versionrc.json`; `VERSION` aktualizowany przez
   `scripts/version-updater.mjs`)
 - Aktualizację `CHANGELOG.md` (plik wskazany jako `infile`)
-- Hook `postbump` uruchamia **trzy skrypty**:
+- Hook `postbump` (klucz `standard-version.scripts.postbump` w `package.json`;
+  `.versionrc.json` trzyma tylko `bumpFiles`/`infile`/`tagPrefix`) uruchamia
+  `npm run version:propagate && git add -u`, czyli **trzy skrypty**:
     - `scripts/auto-cache-bust.mjs` — podmienia `?v=` we wszystkich plikach HTML
       (w tym `public/templates/*.html`) na nową wersję
     - `scripts/auto-docs-version.mjs` — aktualizuje wersję w dokumentacji
@@ -39,6 +41,11 @@ To wykonuje:
       `"version"`/`"dbVersion"` w `docs/API.md`
     - `scripts/auto-bat-version.mjs` — aktualizuje wersję w skryptach `.bat`
       (start, install, build, setup-ai, ensure-db)
+
+    Hook kończy się `git add -u`. Bez tego etapu commit `--commit-all` obejmował
+    tylko `bumpFiles` + `CHANGELOG.md`, a pliki propagacji zostawały w worktree już
+    po commicie i tagu (tag wskazywał stan bez `?v=`, docs i `.bat`).
+
 - Commita `chore(release): X.Y.Z` (release commituje wszystkie zmiany — flaga `--commit-all`)
 - Tag `vX.Y.Z`
 
