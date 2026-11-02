@@ -543,9 +543,9 @@ body::before {
     min-height: var(--header-h);
     padding: 0.3rem 1rem 0.3rem 0.75rem;
     gap: 0.5rem;
-    /* Pasek układa się wierszami: logo+kafle+diagnostyka, niżej nawigacja
-       sekcji. Zawijanie nigdy nie tnie etykiet w środku kafla. */
-    flex-wrap: wrap;
+    /* Pasek zawsze w jednej linii — brakujące miejsce odbiera przewijanie
+       nawigacji sekcji, nigdy zawijanie czy nachodzenie kafelków. */
+    flex-wrap: nowrap;
 }
 
 .header-left {
@@ -553,15 +553,12 @@ body::before {
     align-items: center;
     justify-content: flex-start;
     gap: 0.6rem;
-    flex: 0 0 auto;
+    flex: 0 1 auto;
     min-width: 0;
 }
 
 .header-center {
-    /* Nawigacja sekcji zawsze w drugim wierszu, na pełną szerokość — inaczej
-       zabierała miejsce kafelkom aplikacji i nachodziła na diagnostykę. */
-    order: 3;
-    flex: 1 0 100%;
+    flex: 1 1 0;
     display: flex;
     align-items: center;
     justify-content: flex-start;
@@ -754,24 +751,30 @@ body::before {
     background: var(--slate-500);
 }
 
-/* Wskaźnik AI: domyślnie mała kwadratowa ikona z kropką statusu, pełny opis
+/* Wskaźnik AI: domyślnie sama wartość procentowa (np. „40%”), pełny opis
    rozwija się po najechaniu lub fokusie — nie zabiera miejsca w pasku. */
 #ai-status-indicator {
-    max-width: 2.25rem;
-    padding-inline: 0;
-    justify-content: center;
+    padding-inline: 0.6rem;
     overflow: hidden;
     cursor: help;
-    transition:
-        max-width 0.25s ease,
-        padding 0.25s ease;
 }
 
-#ai-status-indicator:hover,
-#ai-status-indicator:focus-within {
-    max-width: 26rem;
-    padding-inline: 0.8rem;
-    justify-content: flex-start;
+#ai-status-short {
+    display: inline;
+}
+
+#ai-status-indicator:hover #ai-status-short,
+#ai-status-indicator:focus-within #ai-status-short {
+    display: none;
+}
+
+#ai-status-indicator #ai-status-text {
+    display: none;
+}
+
+#ai-status-indicator:hover #ai-status-text,
+#ai-status-indicator:focus-within #ai-status-text {
+    display: inline;
 }
 
 .header-username {
@@ -1055,11 +1058,22 @@ body::before {
 }
 
 /* ── Responsywność paska nawigacji ───────────────────────────────────
-   Układ: wiersz 1 = logo + kafle aplikacji + diagnostyka, wiersz 2 =
-   nawigacja sekcji. Diagnostyka w prawym rogu znika stopniowo, zanim
-   zabraknie miejsca na kafle. */
+   Układ: jeden wiersz = logo + kafle aplikacji + nawigacja sekcji +
+   diagnostyka. Diagnostyka w prawym rogu znika stopniowo, zanim
+   zabraknie miejsca na kafle. Gdy miejsca brakuje, nawigacja sekcji
+   przewija się w poziomie — nigdy nie zawija i nie nachodzi. */
 @media (max-width: 1700px) {
-    #ai-status-indicator {
+    #app-pricelists-toolbar {
+        display: none;
+    }
+}
+
+@media (max-width: 1500px) {
+    #header-username {
+        display: none;
+    }
+    /* Średnie okno: etykiety kafli ustępują nawigacji sekcji (ikony zostają). */
+    .nav-tile-text {
         display: none;
     }
 }
@@ -1067,15 +1081,6 @@ body::before {
 @media (max-width: 1400px) {
     .header-inner {
         gap: 0.3rem;
-    }
-    #app-pricelists-toolbar {
-        display: none;
-    }
-}
-
-@media (max-width: 1300px) {
-    #header-username {
-        display: none;
     }
 }
 
@@ -1091,8 +1096,9 @@ body::before {
     }
 }
 
+/* Wąskie okna: wskaźnik AI ustępuje nawigacji sekcji (pełny opis zostaje w tooltipie). */
 @media (max-width: 1000px) {
-    .nav-tile-text {
+    #ai-status-indicator {
         display: none;
     }
 }

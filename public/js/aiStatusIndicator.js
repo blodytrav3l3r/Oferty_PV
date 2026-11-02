@@ -16,17 +16,19 @@
     let badge = null;
     let dot = null;
     let text = null;
+    let short = null;
     let _lastFetch = 0;
     let _lastKnowledgeFetch = 0;
     // X11: uchwyt pojedynczego timera pollingu (częstotliwość bez zmian).
     let _pollTimer = null;
 
     function getElements() {
-        if (badge && dot && text) return true;
+        if (badge && dot && text && short) return true;
         badge = document.getElementById('ai-status-indicator');
         dot = document.getElementById('ai-status-dot');
         text = document.getElementById('ai-status-text');
-        return !!(badge && dot && text);
+        short = document.getElementById('ai-status-short');
+        return !!(badge && dot && text && short);
     }
 
     function updateFromStatus(status) {
@@ -36,6 +38,7 @@
             dot.style.background = 'var(--slate-400)';
             dot.style.boxShadow = 'none';
             text.textContent = 'AI Wyłączone';
+            short.textContent = 'Off';
             text.title =
                 'Moduł AI/ML wyłączony przez administratora — predykcje i treningi zablokowane';
             badge.style.visibility = 'visible';
@@ -52,6 +55,7 @@
             if (status.mlOnline) {
                 dot.style.background = pct > 0 ? 'var(--success)' : 'var(--slate-500)';
                 text.textContent = 'AI ' + pct + '% · ' + model + ' · ' + date;
+                short.textContent = pct + '%';
                 text.title =
                     (pct > 0
                         ? 'AI ranking aktywny (' + pct + '%)'
@@ -78,6 +82,7 @@
                 dot.style.background = 'var(--slate-400)';
                 dot.style.boxShadow = 'none';
                 text.textContent = 'AI Offline';
+                short.textContent = 'Offline';
                 text.title = 'Brak wytrenowanego modelu ML — ranking techniczny';
             }
 

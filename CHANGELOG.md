@@ -4,6 +4,16 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.55.14](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.55.13...v1.55.14) (2026-11-02)
+
+### Bug Fixes
+
+- **ui:** pasek nagłówka wrócił do jednego wiersza — logo, kafle aplikacji, nawigacja sekcji i diagnostyka w jednej linii; brak miejsca odbiera przewijanie nawigacji w poziomie, nie zawijanie ani nachodzenie elementów
+- **ui:** wskaźnik AI pokazuje w stanie zwiniętym wartość procentową (`40%`, `100%`, `Offline`) i mieści pełne `100%`; pełny opis `AI 40% · model · data` rozwija się po najechaniu lub fokusie klawiatury
+- **ui:** diagnostyka znika stopniowo — aktywne cenniki ≤1700 px, nazwa użytkownika i etykiety kafli ≤1500 px, status AI ≤1000 px, wersja ≤1199 px, rola ≤1150 px, logo ≤600 px
+
+---
+
 ## [1.55.13](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.55.12...v1.55.13) (2026-11-02)
 
 ### Bug Fixes
