@@ -230,12 +230,18 @@ function checkWellNumerDuplicate(newNumer, inputEl) {
         if (isDuplicate) {
             inputEl.classList.add('border-danger-subtle', 'color-danger');
             inputEl.style.boxShadow = '0 0 10px rgba(var(--danger-rgb), 0.2)';
-            const inBulk = typeof _excelPasteInProgress !== 'undefined' && _excelPasteInProgress;
-            if (!inBulk)
+            const inBulk =
+                (typeof isExcelPasteInProgress === 'function' && isExcelPasteInProgress()) ||
+                (typeof window !== 'undefined' &&
+                    typeof window.isExcelPasteInProgress === 'function' &&
+                    window.isExcelPasteInProgress());
+            if (!inBulk) {
+                const safeNum = typeof escapeHtml === 'function' ? escapeHtml(trimmed) : trimmed;
                 showToast(
-                    `<i data-lucide="alert-triangle"></i> Numer studni "${trimmed}" już istnieje! Zmień numer, aby uniknąć duplikatów.`,
+                    `<i data-lucide="alert-triangle"></i> Numer studni "${safeNum}" już istnieje! Zmień numer, aby uniknąć duplikatów.`,
                     'error'
                 );
+            }
             return true;
         }
     }

@@ -264,7 +264,8 @@ async function loadSavedOfferStudnie(id_or_doc, optionalId, targetSection, preve
     // False-positive guard: wyczysc stale flagi brudu z poprzedniego dokumentu.
     // checkRecovery ponizej postawi je na nowo, jesli odtworzy draft.
     try {
-        if (typeof _excelDirty !== 'undefined') _excelDirty = false;
+        if (typeof setExcelDirty === 'function') setExcelDirty(false);
+        else if (typeof _excelDirty !== 'undefined') _excelDirty = false;
     } catch (_e) {}
     try {
         if (window.draftAutosave && typeof window.draftAutosave.resetWizardDirty === 'function')

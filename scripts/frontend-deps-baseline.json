@@ -1,7 +1,7 @@
 {
     "schemaVersion": 1,
     "generatedAt": "2026-11-02",
-    "totalEdges": 2838,
+    "totalEdges": 2837,
     "edges": [
         {
             "page": "public/app.html",
@@ -4166,14 +4166,6 @@
         {
             "page": "public/studnie.html",
             "name": "_excelActiveTab",
-            "userFile": "public/js/studnie/displayUnits.js",
-            "defFile": "public/js/studnie/excelState.js",
-            "defKind": "lexical",
-            "confidence": "CONFIRMED"
-        },
-        {
-            "page": "public/studnie.html",
-            "name": "_excelActiveTab",
             "userFile": "public/js/studnie/excelAutoSelect.js",
             "defFile": "public/js/studnie/excelState.js",
             "defKind": "lexical",
@@ -4278,6 +4270,14 @@
         {
             "page": "public/studnie.html",
             "name": "_excelActiveTab",
+            "userFile": "public/js/studnie/excelTableRenderer.js",
+            "defFile": "public/js/studnie/excelState.js",
+            "defKind": "lexical",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "_excelActiveTab",
             "userFile": "public/js/studnie/excelTabs.js",
             "defFile": "public/js/studnie/excelState.js",
             "defKind": "lexical",
@@ -4303,14 +4303,6 @@
             "page": "public/studnie.html",
             "name": "_excelActiveTab",
             "userFile": "public/js/studnie/excelWellActions.js",
-            "defFile": "public/js/studnie/excelState.js",
-            "defKind": "lexical",
-            "confidence": "CONFIRMED"
-        },
-        {
-            "page": "public/studnie.html",
-            "name": "_excelActiveTab",
-            "userFile": "public/js/studnie/wellTransitionsPopup.js",
             "defFile": "public/js/studnie/excelState.js",
             "defKind": "lexical",
             "confidence": "CONFIRMED"
@@ -4577,38 +4569,6 @@
             "userFile": "public/js/studnie/excelChangeHandlers.js",
             "defFile": "public/js/studnie/excelPasteSeq.js",
             "defKind": "lexical",
-            "confidence": "CONFIRMED"
-        },
-        {
-            "page": "public/studnie.html",
-            "name": "_excelBulkCancel",
-            "userFile": "public/js/studnie/orderBulk.js",
-            "defFile": "public/js/studnie/excelBulkJob.js",
-            "defKind": "window",
-            "confidence": "CONFIRMED"
-        },
-        {
-            "page": "public/studnie.html",
-            "name": "_excelBulkHideProgress",
-            "userFile": "public/js/studnie/orderBulk.js",
-            "defFile": "public/js/studnie/excelBulkJob.js",
-            "defKind": "window",
-            "confidence": "CONFIRMED"
-        },
-        {
-            "page": "public/studnie.html",
-            "name": "_excelBulkIsAborted",
-            "userFile": "public/js/studnie/orderBulk.js",
-            "defFile": "public/js/studnie/excelBulkJob.js",
-            "defKind": "window",
-            "confidence": "CONFIRMED"
-        },
-        {
-            "page": "public/studnie.html",
-            "name": "_excelBulkShowProgress",
-            "userFile": "public/js/studnie/orderBulk.js",
-            "defFile": "public/js/studnie/excelBulkJob.js",
-            "defKind": "window",
             "confidence": "CONFIRMED"
         },
         {
@@ -5853,14 +5813,6 @@
         },
         {
             "page": "public/studnie.html",
-            "name": "_excelLastClickedCell",
-            "userFile": "public/js/studnie/wellNotesModal.js",
-            "defFile": "public/js/studnie/excelState.js",
-            "defKind": "lexical",
-            "confidence": "CONFIRMED"
-        },
-        {
-            "page": "public/studnie.html",
             "name": "_excelLastClickedCol",
             "userFile": "public/js/studnie/excelSelection.js",
             "defFile": "public/js/studnie/excelState.js",
@@ -6141,14 +6093,6 @@
         },
         {
             "page": "public/studnie.html",
-            "name": "_excelNewBulkAbort",
-            "userFile": "public/js/studnie/orderBulk.js",
-            "defFile": "public/js/studnie/excelBulkJob.js",
-            "defKind": "window",
-            "confidence": "CONFIRMED"
-        },
-        {
-            "page": "public/studnie.html",
             "name": "_excelNormalizeHeaderFonts",
             "userFile": "public/js/studnie/excelColumnVisibility.js",
             "defFile": "public/js/studnie/excelState.js",
@@ -6286,14 +6230,6 @@
         {
             "page": "public/studnie.html",
             "name": "_excelPasteInProgress",
-            "userFile": "public/js/studnie/actionsElevation.js",
-            "defFile": "public/js/studnie/excelState.js",
-            "defKind": "lexical",
-            "confidence": "CONFIRMED"
-        },
-        {
-            "page": "public/studnie.html",
-            "name": "_excelPasteInProgress",
             "userFile": "public/js/studnie/excelChangeHandlers.js",
             "defFile": "public/js/studnie/excelState.js",
             "defKind": "lexical",
@@ -6303,14 +6239,6 @@
             "page": "public/studnie.html",
             "name": "_excelPasteInProgress",
             "userFile": "public/js/studnie/excelUndo.js",
-            "defFile": "public/js/studnie/excelState.js",
-            "defKind": "lexical",
-            "confidence": "CONFIRMED"
-        },
-        {
-            "page": "public/studnie.html",
-            "name": "_excelPasteInProgress",
-            "userFile": "public/js/studnie/wellTransitions.js",
             "defFile": "public/js/studnie/excelState.js",
             "defKind": "lexical",
             "confidence": "CONFIRMED"
@@ -6598,7 +6526,7 @@
         {
             "page": "public/studnie.html",
             "name": "_excelRefreshAutoCells",
-            "userFile": "public/js/studnie/displayUnits.js",
+            "userFile": "public/js/studnie/excelChangeHandlers.js",
             "defFile": "public/js/studnie/excelTableBody.js",
             "defKind": "lexical",
             "confidence": "CONFIRMED"
@@ -6606,7 +6534,7 @@
         {
             "page": "public/studnie.html",
             "name": "_excelRefreshAutoCells",
-            "userFile": "public/js/studnie/excelChangeHandlers.js",
+            "userFile": "public/js/studnie/excelTableRenderer.js",
             "defFile": "public/js/studnie/excelTableBody.js",
             "defKind": "lexical",
             "confidence": "CONFIRMED"
@@ -6664,14 +6592,6 @@
             "name": "_excelRenderSortIndicator",
             "userFile": "public/js/studnie/excelVirtual.js",
             "defFile": "public/js/studnie/excelSort.js",
-            "defKind": "lexical",
-            "confidence": "CONFIRMED"
-        },
-        {
-            "page": "public/studnie.html",
-            "name": "_excelRenderTable",
-            "userFile": "public/js/studnie/displayUnits.js",
-            "defFile": "public/js/studnie/excelTableRenderer.js",
             "defKind": "lexical",
             "confidence": "CONFIRMED"
         },
@@ -6783,14 +6703,6 @@
             "page": "public/studnie.html",
             "name": "_excelRenderTable",
             "userFile": "public/js/studnie/excelWellActions.js",
-            "defFile": "public/js/studnie/excelTableRenderer.js",
-            "defKind": "lexical",
-            "confidence": "CONFIRMED"
-        },
-        {
-            "page": "public/studnie.html",
-            "name": "_excelRenderTable",
-            "userFile": "public/js/studnie/wellTransitionsPopup.js",
             "defFile": "public/js/studnie/excelTableRenderer.js",
             "defKind": "lexical",
             "confidence": "CONFIRMED"
@@ -7005,14 +6917,6 @@
         },
         {
             "page": "public/studnie.html",
-            "name": "_excelRowSelectStates",
-            "userFile": "public/js/studnie/wellNotesModal.js",
-            "defFile": "public/js/studnie/excelState.js",
-            "defKind": "lexical",
-            "confidence": "CONFIRMED"
-        },
-        {
-            "page": "public/studnie.html",
             "name": "_excelRunAutoSelectForWell",
             "userFile": "public/js/studnie/excelCellNavigation.js",
             "defFile": "public/js/studnie/excelAutoSelect.js",
@@ -7199,14 +7103,6 @@
             "page": "public/studnie.html",
             "name": "_excelSelectedCells",
             "userFile": "public/js/studnie/excelWellActions.js",
-            "defFile": "public/js/studnie/excelState.js",
-            "defKind": "lexical",
-            "confidence": "CONFIRMED"
-        },
-        {
-            "page": "public/studnie.html",
-            "name": "_excelSelectedCells",
-            "userFile": "public/js/studnie/wellNotesModal.js",
             "defFile": "public/js/studnie/excelState.js",
             "defKind": "lexical",
             "confidence": "CONFIRMED"
@@ -11110,6 +11006,14 @@
         {
             "page": "public/studnie.html",
             "name": "escapeHtml",
+            "userFile": "public/js/studnie/actionsElevation.js",
+            "defFile": "public/js/shared/escapeHtml.js",
+            "defKind": "window-module",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "escapeHtml",
             "userFile": "public/js/studnie/actionsTiles.js",
             "defFile": "public/js/shared/escapeHtml.js",
             "defKind": "window-module",
@@ -11857,6 +11761,30 @@
             "userFile": "public/js/studnie/popupsKonusPehd.js",
             "defFile": "public/js/studnie/excelWellActions.js",
             "defKind": "lexical",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "excelRefreshActiveTable",
+            "userFile": "public/js/studnie/displayUnits.js",
+            "defFile": "public/js/studnie/excelTableRenderer.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "excelRefreshActiveTable",
+            "userFile": "public/js/studnie/wellTransitionsPopup.js",
+            "defFile": "public/js/studnie/excelTableRenderer.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "excelRefreshDisplayUnits",
+            "userFile": "public/js/studnie/displayUnits.js",
+            "defFile": "public/js/studnie/excelTableRenderer.js",
+            "defKind": "window",
             "confidence": "CONFIRMED"
         },
         {
@@ -13176,6 +13104,14 @@
             "name": "getElementStatus",
             "userFile": "public/js/studnie/orderZleceniaRender.js",
             "defFile": "public/js/studnie/orderZleceniaHelpers.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "getExcelSelectedWellIndex",
+            "userFile": "public/js/studnie/wellNotesModal.js",
+            "defFile": "public/js/studnie/excelState.js",
             "defKind": "window",
             "confidence": "CONFIRMED"
         },
@@ -14888,6 +14824,46 @@
             "name": "isEmptyPrzejscie",
             "userFile": "public/js/studnie/wellTransitions.js",
             "defFile": "public/js/studnie/excelHelpers.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "isExcelDirty",
+            "userFile": "public/js/shared/draftAutosave.js",
+            "defFile": "public/js/studnie/excelState.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "isExcelDirty",
+            "userFile": "public/js/shared/sokDirty.js",
+            "defFile": "public/js/studnie/excelState.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "isExcelDirty",
+            "userFile": "public/js/shared/ui.js",
+            "defFile": "public/js/studnie/excelState.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "isExcelPasteInProgress",
+            "userFile": "public/js/studnie/actionsElevation.js",
+            "defFile": "public/js/studnie/excelState.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "isExcelPasteInProgress",
+            "userFile": "public/js/studnie/wellTransitions.js",
+            "defFile": "public/js/studnie/excelState.js",
             "defKind": "window",
             "confidence": "CONFIRMED"
         },
@@ -19136,6 +19112,22 @@
             "name": "selectZleceniaElement",
             "userFile": "public/js/studnie/orderZleceniaModal.js",
             "defFile": "public/js/studnie/orderZleceniaRender.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "setExcelDirty",
+            "userFile": "public/js/shared/draftAutosave.js",
+            "defFile": "public/js/studnie/excelState.js",
+            "defKind": "window",
+            "confidence": "CONFIRMED"
+        },
+        {
+            "page": "public/studnie.html",
+            "name": "setExcelDirty",
+            "userFile": "public/js/studnie/offerManager.js",
+            "defFile": "public/js/studnie/excelState.js",
             "defKind": "window",
             "confidence": "CONFIRMED"
         },

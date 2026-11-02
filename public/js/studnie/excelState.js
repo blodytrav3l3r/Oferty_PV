@@ -62,8 +62,50 @@ let _excelFilteredCacheWellsLen = -1;
 function emitExcelMutated() {
     _excelDirty = true;
 }
+function isExcelDirty() {
+    return _excelDirty;
+}
+function setExcelDirty(val) {
+    _excelDirty = Boolean(val);
+}
+function isExcelPasteInProgress() {
+    return Boolean(typeof _excelPasteInProgress !== 'undefined' && _excelPasteInProgress);
+}
+function getExcelSelectedWellIndex() {
+    // 1. Checkboxy w Excelu
+    if (typeof _excelRowSelectStates !== 'undefined') {
+        const total = typeof wells !== 'undefined' && Array.isArray(wells) ? wells.length : 0;
+        for (let i = 0; i < total; i++) {
+            if (_excelRowSelectStates[i]) {
+                return i;
+            }
+        }
+    }
+    // 2. Ostatnio kliknięta komórka w Excelu
+    if (
+        typeof _excelLastClickedCell !== 'undefined' &&
+        _excelLastClickedCell &&
+        typeof _excelLastClickedCell.wIdx === 'number'
+    ) {
+        return _excelLastClickedCell.wIdx;
+    }
+    // 3. Zaznaczone komórki
+    if (
+        typeof _excelSelectedCells !== 'undefined' &&
+        Array.isArray(_excelSelectedCells) &&
+        _excelSelectedCells.length > 0
+    ) {
+        const first = _excelSelectedCells[0];
+        if (first && typeof first.wIdx === 'number') return first.wIdx;
+    }
+    return -1;
+}
 if (typeof window !== 'undefined') {
     window.emitExcelMutated = emitExcelMutated;
+    window.isExcelDirty = isExcelDirty;
+    window.setExcelDirty = setExcelDirty;
+    window.isExcelPasteInProgress = isExcelPasteInProgress;
+    window.getExcelSelectedWellIndex = getExcelSelectedWellIndex;
 }
 
 // eslint-disable-next-line no-unused-vars -- eksportowany przez window.KINETA_OPTIONS

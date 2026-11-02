@@ -217,19 +217,13 @@ function _displayUnitsRerender() {
         if (typeof renderWellsList === 'function' && !window._renderingWellsList) renderWellsList();
     } catch (_e) {}
     try {
-        if (
-            typeof _excelRenderTable === 'function' &&
-            document.getElementById('excel-table-overlay') &&
-            typeof _excelActiveTab !== 'undefined'
-        )
-            _excelRenderTable(_excelActiveTab);
-        else if (typeof _excelRefreshAutoCells === 'function') {
-            const cont = document.getElementById('excel-table-container');
-            if (cont)
-                cont.querySelectorAll('tr[data-widx]').forEach(function (tr) {
-                    const wIdx = parseInt(tr.getAttribute('data-widx'), 10);
-                    if (!isNaN(wIdx)) _excelRefreshAutoCells(wIdx, tr);
-                });
+        if (typeof excelRefreshDisplayUnits === 'function') {
+            excelRefreshDisplayUnits();
+        } else if (
+            typeof excelRefreshActiveTable === 'function' &&
+            document.getElementById('excel-table-overlay')
+        ) {
+            excelRefreshActiveTable();
         }
     } catch (_e) {}
 }

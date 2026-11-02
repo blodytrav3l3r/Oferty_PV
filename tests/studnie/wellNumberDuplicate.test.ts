@@ -12,13 +12,23 @@ describe('checkWellNumerDuplicate (actionsElevation.js)', () => {
     }
 
     function runScript(wells, currentWellIndex, extraGlobals = {}) {
+        let pasteInProgress =
+            extraGlobals.isExcelPasteInProgress !== undefined
+                ? Boolean(extraGlobals.isExcelPasteInProgress)
+                : Boolean(extraGlobals._excelPasteInProgress);
         const context = {
             wells,
             currentWellIndex,
             getCurrentWell: () => wells[currentWellIndex] || wells[0] || null,
             showToast: jest.fn(),
-            window: { debounce: null },
-            _excelPasteInProgress: false,
+            window: {
+                debounce: null,
+                isExcelPasteInProgress: () => pasteInProgress
+            },
+            isExcelPasteInProgress: () => pasteInProgress,
+            setPasteInProgress: (val) => {
+                pasteInProgress = Boolean(val);
+            },
             ...extraGlobals
         };
         const code = fs.readFileSync(
@@ -119,18 +129,18 @@ describe('checkWellNumerDuplicate (actionsElevation.js)', () => {
         expect(ctx.checkWellNumerDuplicate(' Ss1', makeInput())).toBe(true);
     });
 
-    test('bulk paste: toast wyciszony gdy _excelPasteInProgress true, detekcja nadal true', () => {
+    test('bulk paste: toast wyciszony gdy isExcelPasteInProgress true, detekcja nadal true', () => {
         const wells = [
             { id: 'w1', name: 'Ss1', numer: 'Ss1' },
             { id: 'w2', name: 'Ss1', numer: 'Ss1' }
         ];
-        const ctx = runScript(wells, 0, { _excelPasteInProgress: true });
+        const ctx = runScript(wells, 0, { isExcelPasteInProgress: true });
         const input = makeInput();
         expect(ctx.checkWellNumerDuplicate('Ss1', input)).toBe(true);
         expect(ctx.showToast).not.toHaveBeenCalled();
         expect(input.classList.add).toHaveBeenCalledWith('border-danger-subtle', 'color-danger');
         // po zakończeniu paste toast wraca
-        ctx._excelPasteInProgress = false;
+        ctx.setPasteInProgress(false);
         const input2 = makeInput();
         // need fresh showToast mock
         ctx.showToast.mockClear();

@@ -142,7 +142,17 @@ function _excelNewBulkAbort() {
     return _excelBulkAbort;
 }
 
+const excelBulkController = {
+    newAbort: _excelNewBulkAbort,
+    isAborted: _excelBulkIsAborted,
+    showProgress: _excelBulkShowProgress,
+    hideProgress: _excelBulkHideProgress,
+    cancel: _excelBulkCancel,
+    runJob: _excelRunBulkJob
+};
+
 if (typeof window !== 'undefined') {
+    window.excelBulkController = excelBulkController;
     window._excelBulkShowProgress = _excelBulkShowProgress;
     window._excelBulkHideProgress = _excelBulkHideProgress;
     window._excelBulkCancel = _excelBulkCancel;

@@ -802,3 +802,44 @@ function _excelApplyStickyColumns(retry) {
         }
     }
 }
+
+function excelRefreshActiveTable() {
+    const tab =
+        typeof _excelActiveTab !== 'undefined'
+            ? _excelActiveTab
+            : typeof window !== 'undefined' && typeof window._excelActiveTab !== 'undefined'
+              ? window._excelActiveTab
+              : undefined;
+    if (typeof _excelRenderTable === 'function' && typeof tab !== 'undefined') {
+        _excelRenderTable(tab);
+    }
+}
+function excelRefreshDisplayUnits() {
+    const tab =
+        typeof _excelActiveTab !== 'undefined'
+            ? _excelActiveTab
+            : typeof window !== 'undefined' && typeof window._excelActiveTab !== 'undefined'
+              ? window._excelActiveTab
+              : undefined;
+    if (
+        typeof _excelRenderTable === 'function' &&
+        document.getElementById('excel-table-overlay') &&
+        typeof tab !== 'undefined'
+    ) {
+        _excelRenderTable(tab);
+        return;
+    }
+    if (typeof _excelRefreshAutoCells === 'function') {
+        const cont = document.getElementById('excel-table-container');
+        if (cont) {
+            cont.querySelectorAll('tr[data-widx]').forEach(function (tr) {
+                const wIdx = parseInt(tr.getAttribute('data-widx'), 10);
+                if (!isNaN(wIdx)) _excelRefreshAutoCells(wIdx, tr);
+            });
+        }
+    }
+}
+if (typeof window !== 'undefined') {
+    window.excelRefreshActiveTable = excelRefreshActiveTable;
+    window.excelRefreshDisplayUnits = excelRefreshDisplayUnits;
+}

@@ -795,7 +795,7 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
     // Przebuduj tablicę przejść w posortowanej kolejności – pomijaj gdy Excel otwarty (mutacja psuje indeksy kolumn wklejania)
     const _isExcelOpen =
         typeof document !== 'undefined' && !!document.getElementById('excel-table-overlay');
-    const _isPaste = typeof _excelPasteInProgress !== 'undefined' && _excelPasteInProgress;
+    const _isPaste = typeof isExcelPasteInProgress === 'function' && isExcelPasteInProgress();
     const _sortedPrzejscia = sorted.map((s) => s.item);
     // Mutuj źródło tylko poza Excelem – w Excelu kolejność kolumn = indeks, nie sort
     if (!_isExcelOpen && !_isPaste) {

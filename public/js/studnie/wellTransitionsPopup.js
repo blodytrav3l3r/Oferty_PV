@@ -94,7 +94,7 @@ function closePrzejsciaVisibilityPopup(containerId) {
         if (typeof restoreBodyScroll === 'function') restoreBodyScroll();
     }
     if (containerId === 'excel') {
-        if (typeof _excelRenderTable === 'function') _excelRenderTable(_excelActiveTab);
+        if (typeof excelRefreshActiveTable === 'function') excelRefreshActiveTable();
         return;
     }
     renderInlinePrzejsciaApp(containerId);

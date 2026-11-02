@@ -960,27 +960,54 @@ async function executeBulkGeneration(elements) {
         showToast('Brak użytkownika do numeracji zleceń', 'error');
         return;
     }
-    // Świeży kontroler na start — _excelBulkCancel() z progressu anuluje ten przebieg.
+    // Świeży kontroler na start — excelBulkController.cancel() z progressu anuluje ten przebieg.
     let signal = null;
-    if (typeof _excelNewBulkAbort === 'function') {
-        const ctl = _excelNewBulkAbort();
+    if (
+        typeof window !== 'undefined' &&
+        window.excelBulkController &&
+        typeof window.excelBulkController.newAbort === 'function'
+    ) {
+        const ctl = window.excelBulkController.newAbort();
         signal = ctl && ctl.signal ? ctl.signal : null;
     }
-    const isAborted = () =>
-        typeof _excelBulkIsAborted === 'function'
-            ? _excelBulkIsAborted(signal)
-            : !!(signal && signal.aborted);
+    const isAborted = () => {
+        if (
+            typeof window !== 'undefined' &&
+            window.excelBulkController &&
+            typeof window.excelBulkController.isAborted === 'function'
+        ) {
+            return window.excelBulkController.isAborted(signal);
+        }
+        return !!(signal && signal.aborted);
+    };
 
-    // Progress z Anuluj (istniejący scheduler UI z excelBulkJob.js).
-    const showBulkProgress =
-        typeof _excelBulkShowProgress === 'function'
-            ? (done) =>
-                  _excelBulkShowProgress('Generowanie zleceń...', done, built.length, () => {
-                      if (typeof _excelBulkCancel === 'function') _excelBulkCancel();
-                  })
-            : () => {};
-    const hideBulkProgress =
-        typeof _excelBulkHideProgress === 'function' ? _excelBulkHideProgress : () => {};
+    // Progress z Anuluj (istniejący scheduler UI z excelBulkJob.js via excelBulkController).
+    const showBulkProgress = (done) => {
+        if (
+            typeof window !== 'undefined' &&
+            window.excelBulkController &&
+            typeof window.excelBulkController.showProgress === 'function'
+        ) {
+            window.excelBulkController.showProgress(
+                'Generowanie zleceń...',
+                done,
+                built.length,
+                () => {
+                    if (typeof window.excelBulkController.cancel === 'function')
+                        window.excelBulkController.cancel();
+                }
+            );
+        }
+    };
+    const hideBulkProgress = () => {
+        if (
+            typeof window !== 'undefined' &&
+            window.excelBulkController &&
+            typeof window.excelBulkController.hideProgress === 'function'
+        ) {
+            window.excelBulkController.hideProgress();
+        }
+    };
     showBulkProgress(0);
 
     // Klucz przebiegu (A2): stabilny dla retry tej samej operacji, nowy

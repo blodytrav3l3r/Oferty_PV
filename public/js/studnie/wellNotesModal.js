@@ -189,33 +189,13 @@ function openWellNotesForCurrent() {
 
 function openWellNotesForExcelSelection() {
     let idx = -1;
-    // 1. Checkboxy w Excelu
-    if (typeof _excelRowSelectStates !== 'undefined') {
-        for (let i = 0; i < (typeof wells !== 'undefined' ? wells.length : 0); i++) {
-            if (_excelRowSelectStates[i]) {
-                idx = i;
-                break;
-            }
-        }
-    }
-    // 2. Ostatnio kliknięta komórka w Excelu
-    if (
-        idx === -1 &&
-        typeof _excelLastClickedCell !== 'undefined' &&
-        _excelLastClickedCell &&
-        typeof _excelLastClickedCell.wIdx === 'number'
+    if (typeof getExcelSelectedWellIndex === 'function') {
+        idx = getExcelSelectedWellIndex();
+    } else if (
+        typeof window !== 'undefined' &&
+        typeof window.getExcelSelectedWellIndex === 'function'
     ) {
-        idx = _excelLastClickedCell.wIdx;
-    }
-    // 3. Zaznaczone komórki
-    if (
-        idx === -1 &&
-        typeof _excelSelectedCells !== 'undefined' &&
-        Array.isArray(_excelSelectedCells) &&
-        _excelSelectedCells.length > 0
-    ) {
-        const first = _excelSelectedCells[0];
-        if (first && typeof first.wIdx === 'number') idx = first.wIdx;
+        idx = window.getExcelSelectedWellIndex();
     }
     // 4. Aktywny index studni
     if (

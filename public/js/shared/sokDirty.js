@@ -19,6 +19,9 @@
 
     function _localFlagsDirty() {
         try {
+            if (typeof isExcelDirty === 'function' && isExcelDirty()) return true;
+        } catch (_e0) {}
+        try {
             if (typeof _excelDirty !== 'undefined' && _excelDirty) return true;
         } catch (_e) {}
         try {
@@ -36,6 +39,16 @@
             if (typeof w.__sokIsDirty === 'function' && w.__sokIsDirty !== __sokIsDirty)
                 return w.__sokIsDirty() === true;
         } catch (_e) {}
+        try {
+            if (w && typeof w.isExcelDirty === 'function' && w.isExcelDirty()) return true;
+            if (
+                w &&
+                w.window &&
+                typeof w.window.isExcelDirty === 'function' &&
+                w.window.isExcelDirty()
+            )
+                return true;
+        } catch (_eEx) {}
         try {
             if (w && w._excelDirty) return true;
         } catch (_e2) {}
@@ -351,7 +364,12 @@
                         try {
                             dirtySrc.excelFlag = !!(
                                 w &&
-                                (w._excelDirty || (w.window && w.window._excelDirty))
+                                ((typeof w.isExcelDirty === 'function' && w.isExcelDirty()) ||
+                                    (w.window &&
+                                        typeof w.window.isExcelDirty === 'function' &&
+                                        w.window.isExcelDirty()) ||
+                                    w._excelDirty ||
+                                    (w.window && w.window._excelDirty))
                             );
                         } catch (_eF2) {}
                         try {

@@ -803,6 +803,7 @@ function _isWizardDirty() {
         if (typeof window.__sokIsDirty === 'function') return window.__sokIsDirty() === true;
     } catch (_e) {}
     try {
+        if (typeof isExcelDirty === 'function' && isExcelDirty()) return true;
         if (typeof _excelDirty !== 'undefined' && _excelDirty) return true;
         if (typeof window._excelDirty !== 'undefined' && window._excelDirty) return true;
         if (typeof window._wizardDirty !== 'undefined' && window._wizardDirty) return true;
@@ -811,6 +812,7 @@ function _isWizardDirty() {
             try {
                 const w = /** @type {HTMLIFrameElement} */ (iframe).contentWindow;
                 if (!w) continue;
+                if (typeof w.isExcelDirty === 'function' && w.isExcelDirty()) return true;
                 if (w._excelDirty) return true;
                 if (w.window && w.window._excelDirty) return true;
                 if (w._wizardDirty) return true;

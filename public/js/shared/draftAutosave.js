@@ -877,8 +877,15 @@ function _draftCurrentSaved(kind, cfg, docId) {
 function _draftIsDirty(kind) {
     if (kind === 'offer_rury' || kind === 'order_rury') return true;
     try {
+        if (typeof isExcelDirty === 'function' && isExcelDirty()) return true;
         if (typeof _excelDirty !== 'undefined' && _excelDirty) return true;
     } catch (_e) {}
+    if (
+        typeof window !== 'undefined' &&
+        typeof window.isExcelDirty === 'function' &&
+        window.isExcelDirty()
+    )
+        return true;
     if (_draftG('_excelDirty')) return true;
     if (_draftG('_wizardDirty')) return true;
     return true; // diff poniżej i tak odrzuci brak zmian
@@ -1350,6 +1357,7 @@ function _draftApply(kind, draft) {
         } catch (_e8) {}
         try {
             if (typeof emitExcelMutated === 'function') emitExcelMutated();
+            else if (typeof setExcelDirty === 'function') setExcelDirty(true);
             else _excelDirty = true;
         } catch (_e9) {}
         if (typeof refreshAll === 'function') {
