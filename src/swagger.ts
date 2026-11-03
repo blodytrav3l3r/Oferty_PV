@@ -11,7 +11,7 @@ const options: swaggerJsdoc.Options = {
             description:
                 'Generator ofert handlowych dla branży kanalizacyjnej. Zarządzanie produktami (rury betonowe, studnie), ofertami, zamówieniami, klientami i wycenami Preco.',
             contact: {
-                name: 'WITROS'
+                name: 'S.O.K.'
             }
         },
         servers: [{ url: '/', description: 'Lokalny serwer' }],
