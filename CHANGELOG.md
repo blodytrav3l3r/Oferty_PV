@@ -4,6 +4,12 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+### [1.55.20](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.55.19...v1.55.20) (2026-11-03)
+
+### Bug Fixes
+
+- **release:** postbump stageuje propagację wersji ([c7f09c8](https://github.com/blodytrav3l3r/Oferty_PV/commit/c7f09c80440704f1e45f92c61bda00a2e3a14ae3))
+
 ### [1.55.19](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.55.18...v1.55.19) (2026-11-02)
 
 ### [1.55.18](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.55.17...v1.55.18) (2026-11-02)
